@@ -2,15 +2,11 @@
 -- Supabase (PostgreSQL 15 ou plus récent).
 --
 -- PROPOSITION À RELIRE AVANT TOUTE EXÉCUTION.
--- 1. Faire une sauvegarde du projet Supabase.
--- 2. Vérifier qu'aucun outil ne lit encore la table actuelle public.representations :
---    elle est conservée telle quelle sous le nom public.representations_v0.
--- 3. Exécuter ce script dans l'éditeur SQL de Supabase, d'un seul bloc (transaction).
+-- À exécuter uniquement dans un projet Supabase NEUF, créé au nom de la compagnie
+-- (compte rattaché à admin@crescite.fr), jamais dans un projet personnel.
+-- Exécuter ce script dans l'éditeur SQL de Supabase, d'un seul bloc (transaction).
 
 begin;
-
--- 0. Conserver la table actuelle (25 dates 2026-2027, structure plate)
-alter table if exists public.representations rename to representations_v0;
 
 -- 1. Types
 create type public.public_cible as enum ('tout_public', 'scolaire');
@@ -230,7 +226,7 @@ join public.lieux l on l.id = r.lieu_id
 where r.visible_site and r.statut in ('confirmee', 'contrat_signe');
 grant select on public.agenda_public to anon, authenticated;
 
--- 8. Reprise des 25 dates de la table actuelle
+-- 8. Les spectacles du répertoire (textes complets à reprendre depuis crescite.fr)
 insert into public.spectacles (slug, titre, sous_titre, annee_creation, pass_culture) values
   ('cleophene', 'Cléophène', 'd’après Rodogune de Pierre Corneille', 2024, false),
   ('ci-gisait-cyrano', 'Ci-gisait Cyrano', 'd’après Cyrano de Bergerac d’Edmond Rostand', 2023, true),
@@ -238,30 +234,8 @@ insert into public.spectacles (slug, titre, sous_titre, annee_creation, pass_cul
   ('mon-royaume', 'Mon Royaume pour un cheval', 'Romeo & Juliet, d’après Shakespeare', 2013, true),
   ('imaginaire-force', 'L’imaginaire forcé', 'd’après Le Mariage forcé de Molière', 2012, true),
   ('la-folle-idee', 'La Folle Idée', 'texte d’Angelo Jossec et Corinne Meyniel', 2021, false),
-  ('macbeth-fatum', 'Macbeth – Fatum', 'd’après Shakespeare', 2016, false),
-  ('a-la-barre', 'À la barre, peine perdue ?', null, null, false)   -- à confirmer : production Crescite ?
+  ('macbeth-fatum', 'Macbeth – Fatum', 'd’après Shakespeare', 2016, false)
 on conflict (slug) do nothing;
-
-insert into public.lieux (nom, commune)
-select distinct v.lieu, v.ville from public.representations_v0 v
-on conflict (nom, commune) do nothing;
-
-insert into public.representations (spectacle_id, lieu_id, jour, heure, horaire_texte, public, reservation_url, statut, visible_site)
-select s.id, l.id, v.jour,
-       case when v.heure ~ '^\d{1,2}h\d{2}$' then replace(v.heure, 'h', ':')::time end,
-       case when v.heure !~ '^\d{1,2}h\d{2}$' then nullif(v.heure, '') end,
-       (case when v.scolaire then 'scolaire' else 'tout_public' end)::public.public_cible,
-       nullif(v.reservation_url, ''), 'confirmee', true
-from public.representations_v0 v
-join public.lieux l on l.nom = v.lieu and l.commune = v.ville
-join public.spectacles s on s.slug = case
-  when v.spectacle ilike 'cléophène%' then 'cleophene'
-  when v.spectacle ilike 'bérénice%' then 'berenice'
-  when v.spectacle ilike '%imaginaire%' then 'imaginaire-force'
-  when v.spectacle ilike '%cyrano%' then 'ci-gisait-cyrano'
-  when v.spectacle ilike '%royaume%' then 'mon-royaume'
-  when v.spectacle ilike 'à la barre%' then 'a-la-barre'
-end;
 
 commit;
 

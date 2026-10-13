@@ -796,8 +796,9 @@
     function renderDates() {
       const n = days.length, first = days[0];
       const inDays = first ? Math.round((parse(first.jour) - TODAY) / 864e5) : 0;
+      const when = d => d.items[0].precision === 'month' ? `${MOIS[parse(d.jour).getMonth()]} ${parse(d.jour).getFullYear()}, dates à confirmer` : longDate(d.jour);
       pDates.innerHTML = `<div class="rm-head"><h3>Mes dates</h3><span class="date-pro">${n} jours de jeu à venir${first ? ` · prochain dans ${inDays} jours` : ''} · ${esc(mine.map(s => bySlug[s].titre).join(' et '))}</span></div>
-        <ul class="my-dates">${days.map((d, i) => `<li class="my-date"><div><h4>${esc(longDate(d.jour))} · ${esc(bySlug[d.slug].titre)}</h4><p>${esc(d.lieu)}</p><p>${esc(hours(d))}</p></div>
+        <ul class="my-dates">${days.map((d, i) => `<li class="my-date"><div><h4>${esc(when(d))} · ${esc(bySlug[d.slug].titre)}</h4><p>${esc(d.lieu)}</p><p>${esc(hours(d))}</p></div>
         <div class="date-actions"><span class="status">confirmée</span><button class="btn-sm" type="button" data-route="${i}">Feuille de route</button></div></li>`).join('')}</ul>
         <p style="margin-top:16px"><button class="btn-sm primary" type="button" id="sub-ical">S’abonner depuis mon agenda</button> <span class="example">démo</span></p>`;
       $$('[data-route]', pDates).forEach(b => b.addEventListener('click', () => { chosen = days[Number(b.dataset.route)]; renderRoute(); selectTab($('#tt-route')); $('#tt-route').focus(); }));

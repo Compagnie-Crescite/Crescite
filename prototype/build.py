@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Assemble prototype/dist/index.html (single self-contained file) from prototype/src and data/.
 
-Les fichiers privés de la compagnie (logo 2.0, photos, instantané Supabase) sont lus dans private/,
-dossier exclu du dépôt public. S'ils manquent, le prototype est construit avec des substituts neutres.
+Les fichiers privés de la compagnie (logo 2.0, photos) sont lus dans private/, dossier exclu du dépôt
+public. S'ils manquent, le prototype est construit avec des substituts neutres. Toutes les dates viennent
+du relevé public du site (data/).
 
 Usage: python3 prototype/build.py
 """
@@ -51,19 +52,17 @@ def placeholder_photo(title: str) -> str:
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode()
 
 
-def slug_from_supabase(name: str):
-    n = name.lower()
-    if n.startswith("cléophène"):
-        return "cleophene"
-    if n.startswith("bérénice"):
-        return "berenice"
-    if "imaginaire" in n:
-        return "imaginaire-force"
-    if "cyrano" in n:
-        return "ci-gisait-cyrano"
-    if "royaume" in n:
-        return "mon-royaume"
-    return None
+MOIS_RE = "janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre"
+
+
+def times_of(details: str):
+    """Horaires cités dans le texte d'une date : par jour (« 29 janvier à 14h ») ou communs (« 14h et 20h »)."""
+    head = details.split(" : ")[0]
+    per_day = {int(d): f"{int(h):02d}h{m or '00'}" for d, h, m in
+               re.findall(rf"(\d{{1,2}})(?:er)?\s+(?:{MOIS_RE})\s+à\s+(\d{{1,2}})h(\d{{2}})?", head)}
+    if per_day:
+        return {d: [t] for d, t in per_day.items()}, []
+    return {}, [f"{int(h):02d}h{m or '00'}" for h, m in re.findall(r"\b(\d{1,2})h(\d{2})?\b", head)]
 
 
 def main():
@@ -71,9 +70,6 @@ def main():
     shows.sort(key=lambda s: SHOW_ORDER.index(s["slug"]))
     rows = json.loads((ROOT / "data" / "representations-site-2016-2027.json").read_text(encoding="utf-8"))
     mp = json.loads((SRC / "map.json").read_text(encoding="utf-8"))
-    supa_path = PRIVATE / "data" / "supabase-representations-2026-10-13.json"
-    supa = json.loads(supa_path.read_text(encoding="utf-8")) if supa_path.exists() else None
-
     photos, missing = {}, 0
     for s in shows:
         f = PRIVATE / "photos" / s["photo"]
@@ -95,7 +91,7 @@ def main():
             "id": r["id"], "slug": r["spectacle_slug"], "start": r["date_debut"], "end": r["date_fin"],
             "days": r["jours"], "precision": r["precision"], "time": r["heure"],
             "commune": r["commune"], "dep": r["departement"], "lat": r["lat"], "lon": r["lon"],
-            "venue": r["lieu"], "type": r["type"], "details": r["details"], "links": r["liens"],
+            "venue": (r["lieu"] or "").split(" : ")[0] or None, "type": r["type"], "details": r["details"], "links": r["liens"],
             "label": r["intitule_original"].split("—")[0].strip(), "n": r["nb_representations"],
         })
 
@@ -105,18 +101,16 @@ def main():
         slug = r["spectacle_slug"] if r["spectacle_slug"] in MAP_SHOWS else "autres"
         tour.append([slug, int(r["saison"][:4]), "S" if r["type"] == "scolaire" else "P", pindex[key], r["date_debut"]])
 
+    # Espace troupe (exemple) : les dates publiées des spectacles, une ligne par jour et par horaire
     troupe = []
-    if supa is not None:
-        for r in supa:
-            troupe.append({"id": r["id"], "slug": slug_from_supabase(r["spectacle"]), "spectacle": r["spectacle"],
-                           "lieu": r["lieu"], "ville": r["ville"], "jour": r["jour"], "heure": r["heure"],
-                           "scolaire": r["scolaire"], "url": r["reservation_url"] or None})
-    else:  # substitut public : les dates publiées sur le site
-        for r in season:
-            for day in (r["days"] or [r["start"]]):
-                troupe.append({"id": r["id"], "slug": r["slug"], "spectacle": r["slug"], "lieu": f'{r["venue"] or r["commune"]} ({r["dep"]})',
-                               "ville": r["commune"], "jour": day, "heure": r["time"], "scolaire": r["type"] == "scolaire",
-                               "url": (r["links"] or [None])[0]})
+    for r in season:
+        per_day, times = times_of(r["details"] or "")
+        for day in (r["days"] or [r["start"]]):
+            hours = per_day.get(int(day[-2:]), []) if per_day else times
+            for h in (hours or [None]):
+                troupe.append({"id": r["id"], "slug": r["slug"], "lieu": f'{r["venue"] or r["commune"]}, {r["commune"]} ({r["dep"]})',
+                               "ville": r["commune"], "jour": day, "heure": h, "scolaire": r["type"] == "scolaire",
+                               "precision": r["precision"], "url": (r["links"] or [None])[0]})
 
     venues = sorted({f'{r["lieu"]}|{r["commune"]}|{r["departement"]}' for r in perf if r["lieu"]})
     data = {
@@ -124,7 +118,7 @@ def main():
         "places": [{"c": p["c"], "dep": p["dep"], "x": p["xy"][0] if p["xy"] else None,
                     "y": p["xy"][1] if p["xy"] else None, "lat": p["lat"], "lon": p["lon"]} for p in places],
         "map": mp, "troupe": troupe, "cities": CITIES, "venues": venues, "mapShows": MAP_SHOWS,
-        "builtFrom": "crescite.fr, relevé du 13 octobre 2026 ; Supabase representations, 13 octobre 2026",
+        "builtFrom": "crescite.fr, relevé du 13 octobre 2026",
     }
 
     logo_path = PRIVATE / "brand" / "crescite-logo-2.0.svg"
@@ -147,7 +141,7 @@ def main():
     html = html.replace("/*__DATA__*/null", payload).replace("/*__APP__*/", app)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(html, encoding="utf-8")
-    mode = "complet" if (supa is not None and logo_path.exists() and not missing) else "public (substituts)"
+    mode = "complet" if (logo_path.exists() and not missing) else "public (substituts)"
     print(f"wrote {OUT.relative_to(ROOT)} ({OUT.stat().st_size / 1024:.0f} Ko), version {mode} : "
           f"{len(season)} dates de saison, {len(tour)} dates de carte, {len(troupe)} dates troupe, {missing} photo(s) manquante(s)")
 
