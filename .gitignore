@@ -1,0 +1,5 @@
+# Fichiers privés de la compagnie : jamais dans ce dépôt public
+# (logo 2.0 non publié, photos sous droits, dates internes Supabase, audit de sécurité)
+private/
+# Prototype assemblé : il embarque les fichiers privés quand ils sont présents
+prototype/dist/

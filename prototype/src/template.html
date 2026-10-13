@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crescite 2.0</title>
+<meta name="description" content="Prototype de refonte du site de la compagnie de théâtre Crescite (Rouen) : navigation en tentacules, agenda, carte de tournée et espace troupe.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500;1,6..96,600&display=swap">
+<style>
+/* Layout : une scène noire (la pieuvre), puis la « salle » : une colonne de programme de 70 caractères,
+   la carte et l'espace troupe en pleine largeur. La scène reste noire ; la salle suit le thème. */
+:root {
+  --bg: #13080e;          /* noir de salle, teinté aubergine */
+  --bg-2: #1b0d15;        /* bandeaux */
+  --card: #23121d;        /* cartes */
+  --line: #3d2433;        /* filets */
+  --fg: #f7ecf1;          /* texte */
+  --fg-2: #cbb3c1;        /* texte secondaire */
+  --accent: #bc3e80;      /* magenta du logo 2.0 */
+  --accent-ink: #e46aa6;  /* magenta lisible sur le fond */
+  --on-accent: #ffffff;
+  --sco: #8fb8ff;         /* repère « scolaire » (badge, jamais seul : toujours avec le mot) */
+  --sco-bg: #1d2740;
+  --tp-bg: #3a1830;
+  --focus: #ffb0d6;
+  --shadow: 0 18px 50px rgba(0, 0, 0, .45);
+  /* la scène : identique dans les deux thèmes */
+  --stage-bg: #0f060b;
+  --stage-fg: #f7ecf1;
+  --stage-fg-2: #c8b0be;
+  --stage-glow: #3a1229;
+  --tentacle: #c2448a;
+  --tentacle-deep: #7e1f55;
+  --sucker: #f5bdd8;
+  --font-display: "Bodoni Moda", "Bodoni 72", Didot, "Times New Roman", serif;
+  --font-text: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --step--1: .875rem;
+  --step-0: 1rem;
+  --step-1: 1.2rem;
+  --step-2: 1.55rem;
+  --step-3: clamp(1.9rem, 1.2rem + 2.6vw, 2.8rem);
+  --step-4: clamp(2.4rem, 1.4rem + 4.2vw, 4.4rem);
+  --radius: 14px;
+  --gutter: clamp(16px, 4vw, 48px);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #fbf5f7; --bg-2: #f4e7ee; --card: #ffffff; --line: #e7d3dd; --fg: #22101a; --fg-2: #654f5b;
+    --accent: #bc3e80; --accent-ink: #9f2d69; --on-accent: #ffffff; --sco: #1f4fa8; --sco-bg: #e3ebfb; --tp-bg: #f7dbe9;
+    --focus: #8e2460; --shadow: 0 18px 50px rgba(80, 20, 50, .16); color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #fbf5f7; --bg-2: #f4e7ee; --card: #ffffff; --line: #e7d3dd; --fg: #22101a; --fg-2: #654f5b;
+  --accent: #bc3e80; --accent-ink: #9f2d69; --on-accent: #ffffff; --sco: #1f4fa8; --sco-bg: #e3ebfb; --tp-bg: #f7dbe9;
+  --focus: #8e2460; --shadow: 0 18px 50px rgba(80, 20, 50, .16); color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #13080e; --bg-2: #1b0d15; --card: #23121d; --line: #3d2433; --fg: #f7ecf1; --fg-2: #cbb3c1;
+  --accent: #bc3e80; --accent-ink: #e46aa6; --on-accent: #ffffff; --sco: #8fb8ff; --sco-bg: #1d2740; --tp-bg: #3a1830;
+  --focus: #ffb0d6; --shadow: 0 18px 50px rgba(0, 0, 0, .45); color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 84px; }
+:root[data-calm="1"] { scroll-behavior: auto; }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-text); font-size: 1.125rem; line-height: 1.55; }
+img { max-width: 100%; display: block; }
+a { color: var(--accent-ink); text-underline-offset: .18em; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 6px; }
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip { position: absolute; left: 12px; top: -60px; z-index: 100; background: var(--accent); color: var(--on-accent); padding: 10px 16px; border-radius: 10px; font-weight: 700; }
+.skip:focus { top: 12px; }
+[hidden] { display: none !important; }
+
+/* ---------- bandeau prototype + en-tête ---------- */
+.proto-banner { background: var(--accent); color: var(--on-accent); font-size: var(--step--1); padding: 8px var(--gutter); text-align: center; }
+.proto-banner a { color: inherit; font-weight: 700; }
+.site-header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  padding: 10px var(--gutter); background: color-mix(in srgb, var(--stage-bg) 88%, transparent); color: var(--stage-fg);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--stage-fg); text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 1.15rem; }
+.brand svg { width: 38px; height: 38px; }
+.site-nav ul { display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; flex-wrap: wrap; }
+.site-nav a { display: block; padding: 8px 12px; color: var(--stage-fg); text-decoration: none; border-radius: 999px; font-size: var(--step--1); font-weight: 600; }
+.site-nav a:hover { background: rgba(255, 255, 255, .08); }
+.controls { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid rgba(255, 255, 255, .18); border-radius: 999px; padding: 3px; gap: 2px; margin: 0; }
+.seg legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 6px 12px; border-radius: 999px; font-size: var(--step--1); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.seg input:checked + label { background: var(--accent); color: var(--on-accent); }
+.seg input:focus-visible + label { outline: 3px solid var(--focus); outline-offset: 2px; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .18); background: transparent; color: var(--stage-fg); font-size: var(--step--1); font-weight: 600; cursor: pointer; }
+.toggle[aria-pressed="true"] { background: var(--stage-fg); color: var(--stage-bg); }
+.toggle svg { width: 16px; height: 16px; }
+.header-label { font-size: var(--step--1); color: var(--stage-fg-2); }
+.menu-btn { display: none; margin-left: auto; }
+
+/* ---------- la scène (pieuvre) ---------- */
+.stage { position: relative; overflow: hidden; background: radial-gradient(60% 55% at 50% 48%, var(--stage-glow) 0%, var(--stage-bg) 70%); color: var(--stage-fg);
+  height: clamp(640px, 88vh, 880px); isolation: isolate; }
+.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; touch-action: pan-y; cursor: grab; }
+.stage.is-grabbing .stage-canvas, .stage.is-grabbing { cursor: grabbing; }
+.stage-logo { position: absolute; z-index: 2; left: 0; top: 0; width: var(--logo, 280px); height: var(--logo, 280px); transform: translate(var(--lx, 0px), var(--ly, 0px)); pointer-events: none; filter: drop-shadow(0 12px 40px rgba(188, 62, 128, .35)); }
+.stage-logo svg { width: 100%; height: 100%; overflow: visible; }
+.stage-logo .t-group { transform-box: fill-box; transform-origin: 50% 0%; }
+.motion .stage-logo .tg-1 { animation: sway 7s ease-in-out infinite; }
+.motion .stage-logo .tg-2 { animation: sway 6s ease-in-out -2s infinite reverse; }
+.motion .stage-logo .tg-3 { animation: sway 6.5s ease-in-out -1s infinite; }
+.motion .stage-logo .tg-4 { animation: sway 7.5s ease-in-out -3s infinite reverse; }
+.motion .stage-logo #blob { animation: breathe 6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+@keyframes sway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+.stage-copy { position: absolute; z-index: 3; left: var(--gutter); top: clamp(18px, 3.5vh, 36px); max-width: min(540px, 44vw); pointer-events: none; }
+.eyebrow { font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: .08em; text-transform: uppercase; color: var(--stage-fg-2); margin: 0 0 8px; }
+.stage-copy h1 { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: clamp(1.9rem, 1.2rem + 2.2vw, 3rem); line-height: 1.05; margin: 0; text-wrap: balance; }
+.stage-copy p.sub { margin: 10px 0 0; color: var(--stage-fg-2); max-width: 46ch; }
+.tentacle-labels { position: absolute; inset: 0; z-index: 4; margin: 0; padding: 0; list-style: none; pointer-events: none; }
+.t-label { position: absolute; left: 0; top: 0; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
+  background: none; border: 0; padding: 6px 8px; text-align: left; color: var(--stage-fg); max-width: min(300px, 64vw); border-radius: 10px; will-change: transform; }
+.t-label.right { text-align: right; }
+.t-label.lv1 { background: rgba(15, 6, 11, .74); box-shadow: 0 10px 30px rgba(0, 0, 0, .45); transition: background .2s; }
+.t-label { transition: opacity .25s ease; }
+.stage.has-active .t-label:not(.is-active) { opacity: .2; }
+.t-label.is-active { z-index: 6; background: rgba(15, 6, 11, .9); }
+.t-title { display: block; font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: clamp(1.15rem, .95rem + .8vw, 1.6rem); line-height: 1.1; text-shadow: 0 2px 14px rgba(0, 0, 0, .8); }
+.t-meta { display: block; font-family: var(--font-mono); font-size: .8rem; color: var(--stage-fg-2); margin-top: 3px; text-shadow: 0 2px 10px rgba(0, 0, 0, .9); }
+.t-when { display: block; font-family: var(--font-mono); font-size: .8rem; color: #ffc4df; margin-top: 2px; text-shadow: 0 2px 10px rgba(0, 0, 0, .9); }
+.t-reveal { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .25s ease; }
+.t-reveal > span { overflow: hidden; }
+.t-label.lv1 .t-reveal, .t-label:focus-visible .t-reveal { grid-template-rows: 1fr; }
+.t-reveal-inner { display: block; padding-top: 6px; font-size: .95rem; line-height: 1.35; color: var(--stage-fg); max-width: 30ch; }
+.t-label.right .t-reveal-inner { margin-left: auto; }
+.t-next, .t-release { display: block; margin-top: 6px; font-family: var(--font-mono); font-size: .8rem; color: #ffd1e6; opacity: 0; transition: opacity .2s; }
+.t-label.lv2 .t-next, .t-label.lv3 .t-release { opacity: 1; }
+.t-release { color: #fff; background: var(--accent); display: inline-block; padding: 3px 9px; border-radius: 999px; }
+.t-label:hover .t-title, .t-label:focus-visible .t-title, .t-label.lv1 .t-title { color: #ffc9e2; }
+.t-label.is-sucked { opacity: 0; transition: opacity .35s ease; }
+.stage-hint { position: absolute; z-index: 3; left: 50%; bottom: 74px; transform: translateX(-50%); margin: 0; display: flex; align-items: center; gap: 10px; font-size: var(--step--1); color: var(--stage-fg-2); pointer-events: none; transition: opacity .6s; white-space: nowrap; }
+.stage-hint.is-hidden { opacity: 0; }
+.hand { width: 26px; height: 26px; display: inline-block; color: var(--stage-fg-2); }
+.hand svg { width: 100%; height: 100%; }
+.motion .hand { animation: pull 2.2s ease-in-out infinite; }
+@keyframes pull { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(26px); } }
+.stage-cta { position: absolute; z-index: 3; left: 50%; bottom: 18px; transform: translateX(-50%); white-space: nowrap; display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; background: var(--stage-fg); color: var(--stage-bg); border-radius: 999px; font-weight: 700; text-decoration: none; }
+.stage-cta:hover { background: #ffd6ea; }
+
+/* ---------- salle : sections ---------- */
+.section { padding-block: clamp(56px, 8vw, 104px); padding-inline: var(--gutter); }
+.section + .section { border-top: 1px solid var(--line); }
+.wrap { max-width: 1180px; margin: 0 auto; }
+.section-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; margin-bottom: 28px; }
+.section-head h2 { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: var(--step-4); line-height: 1; margin: 0; text-wrap: balance; }
+.section-head p { margin: 0; color: var(--fg-2); max-width: 52ch; }
+.kicker { font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px; }
+
+/* grille des spectacles */
+.show-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 20px; margin: 0; padding: 0; list-style: none; }
+.show-card { position: relative; display: flex; flex-direction: column; height: 100%; width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; text-align: left; padding: 0; cursor: pointer; transition: transform .25s ease, box-shadow .25s ease; }
+.show-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.show-card img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+.show-card .sc-body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.sc-title { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.45rem; line-height: 1.1; }
+.sc-sub { color: var(--fg-2); font-size: var(--step--1); }
+.sc-next { margin-top: auto; padding-top: 10px; font-family: var(--font-mono); font-size: .82rem; color: var(--accent-ink); }
+.sc-next.none { color: var(--fg-2); }
+
+/* agenda */
+.filters { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: end; margin-bottom: 22px; padding: 16px; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius); }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > span, .field > label { font-size: var(--step--1); font-weight: 600; color: var(--fg-2); }
+.input, select.input { min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg); min-width: 0; }
+.seg.light { border-color: var(--line); background: var(--card); }
+.seg.light label { color: var(--fg); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 16px; border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); font-weight: 700; cursor: pointer; text-decoration: none; }
+.btn.ghost { background: transparent; color: var(--accent-ink); }
+.btn-sm { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--fg); font-size: var(--step--1); font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
+.btn-sm:hover { border-color: var(--accent); color: var(--accent-ink); }
+.btn-sm.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.result-line { font-family: var(--font-mono); font-size: var(--step--1); color: var(--fg-2); margin: 0 0 12px; }
+.month { margin: 28px 0 10px; font-family: var(--font-display); font-style: italic; font-size: var(--step-2); }
+.dates { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.date { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 16px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.date.is-new { outline: 2px solid var(--accent); }
+.date-cal { display: grid; justify-items: center; text-align: center; line-height: 1.05; padding: 8px 4px; border-radius: 10px; background: var(--bg-2); font-variant-numeric: tabular-nums; }
+.date-cal .dow { font-size: .78rem; color: var(--fg-2); text-transform: uppercase; letter-spacing: .06em; }
+.date-cal .day { font-family: var(--font-display); font-size: 2rem; font-weight: 700; }
+.date-cal .mon { font-size: .82rem; font-weight: 600; }
+.date-main { min-width: 0; display: grid; gap: 2px; }
+.date-show { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.linklike { background: none; border: 0; padding: 0; color: var(--fg); font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.3rem; cursor: pointer; text-align: left; }
+.linklike:hover { color: var(--accent-ink); text-decoration: underline; }
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px; font-size: .78rem; font-weight: 700; }
+.badge.tp { background: var(--tp-bg); color: var(--accent-ink); }
+.badge.sco { background: var(--sco-bg); color: var(--sco); }
+.badge.new { background: var(--accent); color: var(--on-accent); }
+.date-where { margin: 0; font-weight: 600; }
+.date-where .km { font-family: var(--font-mono); font-weight: 400; color: var(--accent-ink); font-size: .9rem; }
+.date-detail { margin: 0; color: var(--fg-2); font-size: var(--step--1); overflow-wrap: anywhere; }
+.date-pro { margin: 4px 0 0; font-family: var(--font-mono); font-size: .8rem; color: var(--fg-2); }
+.date-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.past-note { margin-top: 18px; color: var(--fg-2); font-size: var(--step--1); }
+
+/* carte */
+.map-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 28px; align-items: start; }
+.map-wrap { position: relative; width: 100%; aspect-ratio: 800 / 780; max-width: 100%; }
+.map-wrap svg, .map-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-wrap canvas { touch-action: pan-y; }
+.map-land { fill: var(--bg-2); stroke: var(--line); stroke-width: .7; }
+.map-outline { fill: none; stroke: var(--fg-2); stroke-opacity: .55; stroke-width: 1.1; }
+.map-foreign { fill: var(--bg); stroke: var(--line); stroke-width: .7; stroke-dasharray: 2 3; }
+.map-head { position: absolute; width: 46px; height: 46px; transform: translate(-50%, -50%); pointer-events: none; filter: drop-shadow(0 4px 14px rgba(188, 62, 128, .5)); }
+.map-tip { position: absolute; z-index: 5; pointer-events: none; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; box-shadow: var(--shadow); max-width: 280px; font-size: var(--step--1); transform: translate(-50%, calc(-100% - 14px)); }
+.map-tip strong { display: block; font-size: 1rem; }
+.map-tip ul { margin: 6px 0 0; padding-left: 18px; }
+.map-panel { display: grid; gap: 18px; }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat { padding: 12px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line); }
+.stat b { display: block; font-family: var(--font-display); font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .82rem; color: var(--fg-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); font-size: var(--step--1); font-weight: 600; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.season-ctl { display: grid; gap: 8px; }
+.season-ctl output { font-family: var(--font-mono); font-size: var(--step--1); color: var(--accent-ink); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); margin-top: 20px; }
+table { border-collapse: collapse; width: 100%; font-size: var(--step--1); }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--bg-2); position: sticky; top: 0; }
+td.num { font-variant-numeric: tabular-nums; text-align: right; }
+
+/* espace troupe */
+.app-frame { border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: var(--card); box-shadow: var(--shadow); }
+.app-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 16px; background: var(--bg-2); border-bottom: 1px solid var(--line); }
+.app-bar .who { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: var(--step--1); }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab { padding: 8px 14px; border-radius: 999px; border: 0; background: transparent; font-weight: 700; cursor: pointer; color: var(--fg-2); }
+.tab[aria-selected="true"] { background: var(--card); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line); }
+.tabpanel { padding: clamp(16px, 3vw, 28px); }
+.example { display: inline-block; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-2); border: 1px dashed var(--fg-2); border-radius: 6px; padding: 1px 6px; vertical-align: middle; }
+.my-dates { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.my-date { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.my-date h4 { margin: 0; font-size: 1rem; }
+.my-date p { margin: 0; color: var(--fg-2); font-size: var(--step--1); }
+.status { font-size: .75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--tp-bg); color: var(--accent-ink); }
+.roadmap { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; }
+.rm-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--bg-2); min-width: 0; }
+.rm-card h4 { margin: 0 0 8px; font-size: 1rem; }
+.rm-card dl { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: var(--step--1); }
+.rm-card dt { font-family: var(--font-mono); color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.rm-card dd { margin: 0; }
+.rm-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 16px; }
+.rm-head h3 { margin: 0; font-family: var(--font-display); font-style: italic; font-size: var(--step-3); }
+.admin-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 24px; align-items: start; }
+.form { display: grid; gap: 14px; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; }
+.cast-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; }
+.switch input { width: 20px; height: 20px; accent-color: var(--accent); }
+.preview { position: sticky; top: 90px; display: grid; gap: 10px; }
+.preview h4 { margin: 0; font-size: var(--step--1); color: var(--fg-2); font-weight: 600; }
+
+/* à propos + pied de page */
+.about { max-width: 70ch; }
+.about ul { padding-left: 20px; }
+.site-footer { padding-block: 40px; padding-inline: var(--gutter); background: var(--stage-bg); color: var(--stage-fg-2); font-size: var(--step--1); }
+.site-footer .wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 24px; }
+.site-footer strong { color: var(--stage-fg); }
+.site-footer p { margin: 0 0 6px; }
+
+/* ---------- panneau spectacle (le centre) ---------- */
+dialog.panel { width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0; padding: 0; border: 0; background: var(--bg); color: var(--fg); overflow: auto; overscroll-behavior: contain; }
+dialog.panel::backdrop { background: var(--stage-bg); }
+.panel-bar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: calc(10px + env(safe-area-inset-top, 0px)) var(--gutter) 10px; background: color-mix(in srgb, var(--bg) 90%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.panel-hero { position: relative; min-height: min(62vh, 560px); display: grid; align-items: end; color: #fff; background: var(--stage-bg); overflow: hidden; }
+.panel-hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.panel-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15, 6, 11, 0) 30%, rgba(15, 6, 11, .9) 100%); }
+.motion .panel-hero img { animation: curtain 1.1s cubic-bezier(.7, 0, .2, 1) both; }
+@keyframes curtain { from { clip-path: inset(0 50% 0 50%); transform: scale(1.08); } to { clip-path: inset(0 0 0 0); transform: scale(1); } }
+.panel-hero-text { position: relative; z-index: 1; padding: 24px var(--gutter) 28px; max-width: 1180px; width: 100%; margin: 0 auto; }
+.panel-hero-text .eyebrow { color: #f1d6e4; }
+.panel-hero h2 { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: clamp(2.6rem, 1.4rem + 6vw, 6rem); line-height: .95; margin: 0; text-wrap: balance; }
+.panel-hero h2 .ch { display: inline-block; }
+.motion .panel-hero h2 .ch { animation: rise .7s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 28ms + .35s); }
+@keyframes rise { from { opacity: 0; transform: translateY(.45em) rotate(4deg); } to { opacity: 1; transform: none; } }
+.panel-sub { margin: 10px 0 0; font-size: var(--step-1); color: #f1d6e4; }
+.panel-credit { position: absolute; z-index: 1; right: 12px; top: 12px; font-size: .75rem; color: #f1d6e4; background: rgba(0, 0, 0, .45); padding: 2px 8px; border-radius: 6px; }
+.panel-main { max-width: 1180px; margin: 0 auto; padding: 24px var(--gutter) 64px; display: grid; gap: 28px; }
+.profile-tabs { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.profile-tabs .tab { font-size: 1rem; }
+.panel-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; }
+.quote { font-family: var(--font-display); font-style: italic; font-size: var(--step-3); line-height: 1.12; margin: 0 0 16px; text-wrap: balance; }
+.prose { max-width: 66ch; }
+.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 16px; margin: 0; }
+.facts dt { color: var(--fg-2); font-size: var(--step--1); }
+.facts dd { margin: 0; font-weight: 600; }
+.doc-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.doc-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.mini-dates { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mini-dates li { padding: 10px 12px; border-radius: 10px; background: var(--bg-2); }
+.mini-dates b { font-family: var(--font-mono); font-size: .85rem; color: var(--accent-ink); display: block; }
+
+#ink { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 2147483000; pointer-events: none; opacity: 1; transition: opacity .3s ease; }
+#ink.fade { opacity: 0; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 700; box-shadow: var(--shadow); opacity: 0; transition: opacity .25s; pointer-events: none; max-width: calc(100% - 32px); }
+.toast.show { opacity: 1; }
+
+@media (max-width: 960px) {
+  .map-layout, .admin-grid, .panel-cols { grid-template-columns: minmax(0, 1fr); }
+  .preview { position: static; }
+}
+@media (max-width: 720px) {
+  .menu-btn { display: inline-flex; }
+  .site-header:not(.is-open) .site-nav, .site-header:not(.is-open) .controls { display: none; }
+  .site-nav { order: 3; width: 100%; }
+  .site-nav ul { flex-direction: column; }
+  .site-nav a { font-size: 1.05rem; padding: 10px 4px; border-radius: 8px; }
+  .controls { order: 4; margin-left: 0; width: 100%; padding-bottom: 6px; }
+  .header-label { display: block; width: 100%; }
+  .seg { flex-wrap: wrap; }
+  .site-header { position: relative; top: 0; }
+  .stage { height: 940px; }
+  .t-title { font-size: 1.12rem; }
+  .t-meta { display: none; }
+  .t-when { font-size: .74rem; }
+  .t-label { background: rgba(15, 6, 11, .55); }
+  .stage-copy { max-width: none; right: var(--gutter); }
+  .stage-hint { bottom: 70px; }
+  .date { grid-template-columns: 64px minmax(0, 1fr); }
+  .date-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .stat b { font-size: 1.5rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+<div class="proto-banner" role="note">Prototype de refonte du site crescite.fr · octobre 2026 · dates, textes et photos issus du site actuel · <a href="#a-propos">ce qui est réel, ce qui est à compléter</a></div>
+<header class="site-header">
+  <a class="brand" href="#top" aria-label="Crescite, retour à la pieuvre"><!--MARK_SVG--><span>crescite</span></a>
+  <button class="toggle menu-btn" type="button" id="menu-btn" aria-expanded="false" aria-controls="site-nav header-controls">Menu</button>
+  <nav class="site-nav" id="site-nav" aria-label="Navigation principale">
+    <ul>
+      <li><a href="#spectacles">Spectacles</a></li>
+      <li><a href="#agenda">Agenda</a></li>
+      <li><a href="#tournee">Tournée</a></li>
+      <li><a href="#troupe">Espace troupe</a></li>
+    </ul>
+  </nav>
+  <div class="controls" id="header-controls">
+    <span class="header-label" id="profile-label">Je viens</span>
+    <fieldset class="seg" aria-labelledby="profile-label">
+      <legend>Je viens</legend>
+      <input type="radio" name="profile" id="pf-public" value="public" checked><label for="pf-public">voir un spectacle</label>
+      <input type="radio" name="profile" id="pf-classe" value="classe"><label for="pf-classe">avec une classe</label>
+      <input type="radio" name="profile" id="pf-pro" value="pro"><label for="pf-pro">programmer</label>
+    </fieldset>
+    <button class="toggle" id="calm-toggle" type="button" aria-pressed="false" title="Couper toutes les animations">Mode calme</button>
+    <button class="toggle" id="theme-toggle" type="button" aria-pressed="false" title="Changer la lumière de la salle">Lumière salle</button>
+  </div>
+</header>
+
+<main id="contenu">
+  <section class="stage" id="top" aria-labelledby="stage-title">
+    <div class="stage-copy">
+      <p class="eyebrow">Compagnie Crescite · théâtre · Rouen, depuis 2012</p>
+      <h1 id="stage-title">Des spectacles comme des tentacules.</h1>
+      <p class="sub">Attrapez-en une et tirez : elle vous mène au cœur de la pièce.</p>
+    </div>
+    <canvas class="stage-canvas" aria-hidden="true"></canvas>
+    <div class="stage-logo" aria-hidden="true"><!--LOGO_SVG--></div>
+    <ul class="tentacle-labels" aria-label="Spectacles : tirez une tentacule, ou choisissez-la au clavier puis appuyez sur Entrée"></ul>
+    <p class="stage-hint" aria-hidden="true"><span class="hand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11.5v-2a1.5 1.5 0 0 1 3 0V12"/><path d="M14 10.5a1.5 1.5 0 0 1 3 0V12"/><path d="M17 11.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.5a6 6 0 0 1-4.8-2.4L4.3 14.6a1.6 1.6 0 0 1 2.5-2L8 14"/></svg></span><span class="hint-text">Attrapez une tentacule et tirez-la</span></p>
+    <a class="stage-cta" href="#agenda">Voir les prochaines dates</a>
+  </section>
+
+  <section class="section" id="spectacles" aria-labelledby="h-spectacles">
+    <div class="wrap">
+      <div class="section-head">
+        <div><p class="kicker">Le répertoire</p><h2 id="h-spectacles">Les spectacles</h2></div>
+        <p>Les mêmes spectacles que les tentacules, en liste simple. Chaque carte ouvre la page du spectacle.</p>
+      </div>
+      <ul class="show-grid" id="show-grid"></ul>
+    </div>
+  </section>
+
+  <section class="section" id="agenda" aria-labelledby="h-agenda">
+    <div class="wrap">
+      <div class="section-head">
+        <div><p class="kicker">Saison 2026-2027</p><h2 id="h-agenda">Prochaines dates</h2></div>
+        <p>Une seule liste, tenue à jour depuis la base. Les dates passées s’archivent d’elles-mêmes.</p>
+      </div>
+      <form class="filters" id="agenda-filters" role="search" aria-label="Filtrer les dates">
+        <fieldset class="seg light" aria-label="Public">
+          <legend>Public</legend>
+          <input type="radio" name="ag-type" id="ag-all" value="all" checked><label for="ag-all">Toutes</label>
+          <input type="radio" name="ag-type" id="ag-tp" value="tout_public"><label for="ag-tp">Tout public</label>
+          <input type="radio" name="ag-type" id="ag-sco" value="scolaire"><label for="ag-sco">Scolaires</label>
+        </fieldset>
+        <div class="field"><label for="ag-show">Spectacle</label><select class="input" id="ag-show"><option value="">Tous les spectacles</option></select></div>
+        <div class="field"><label for="ag-city">Près de chez moi</label><input class="input" id="ag-city" list="city-list" placeholder="Votre ville, par ex. Caen" autocomplete="off"><datalist id="city-list"></datalist></div>
+        <button class="btn ghost" type="reset" id="ag-reset">Tout afficher</button>
+      </form>
+      <p class="result-line" id="ag-count" aria-live="polite"></p>
+      <div id="agenda-list"></div>
+      <p class="past-note" id="past-note"></p>
+    </div>
+  </section>
+
+  <section class="section" id="tournee" aria-labelledby="h-tournee">
+    <div class="wrap">
+      <div class="section-head">
+        <div><p class="kicker">2016 – 2027</p><h2 id="h-tournee">La pieuvre sur la carte</h2></div>
+        <p>Depuis Rouen, une tentacule pour chaque commune où la compagnie a joué. Survolez une ville pour voir ses dates.</p>
+      </div>
+      <div class="map-layout">
+        <div>
+          <div class="map-wrap" id="map-wrap">
+            <svg id="map-svg" viewBox="0 0 800 780" role="img" aria-labelledby="map-desc"><desc id="map-desc">Carte de France et de Belgique. Des tentacules partent de Rouen vers les communes de tournée. La même information existe sous forme de tableau, bouton « Voir la liste ».</desc></svg>
+            <canvas id="map-canvas" aria-hidden="true"></canvas>
+            <div class="map-head" id="map-head" aria-hidden="true"><!--MARK_SVG--></div>
+            <div class="map-tip" id="map-tip" hidden></div>
+          </div>
+        </div>
+        <div class="map-panel">
+          <div class="stat-row" aria-live="polite">
+            <div class="stat"><b id="st-dates">0</b><span>dates</span></div>
+            <div class="stat"><b id="st-communes">0</b><span>communes</span></div>
+            <div class="stat"><b id="st-deps">0</b><span>départements</span></div>
+          </div>
+          <div class="season-ctl">
+            <label for="season-range"><strong>Saison</strong> <output id="season-out" for="season-range">toutes</output></label>
+            <input type="range" id="season-range" min="2015" max="2026" step="1" value="2015" aria-valuetext="toutes les saisons">
+            <div class="chips"><button class="btn-sm primary" type="button" id="season-play">Rejouer dix ans de tournée</button></div>
+          </div>
+          <div class="field"><span id="map-show-label">Spectacles</span><div class="chips" id="map-chips" role="group" aria-labelledby="map-show-label"></div></div>
+          <fieldset class="seg light" aria-label="Public">
+            <legend>Public</legend>
+            <input type="radio" name="map-type" id="mt-all" value="all" checked><label for="mt-all">Tous</label>
+            <input type="radio" name="map-type" id="mt-tp" value="tout_public"><label for="mt-tp">Tout public</label>
+            <input type="radio" name="map-type" id="mt-sco" value="scolaire"><label for="mt-sco">Scolaires</label>
+          </fieldset>
+          <button class="btn-sm" type="button" id="map-list-toggle" aria-expanded="false" aria-controls="map-table">Voir la liste des communes</button>
+        </div>
+      </div>
+      <div class="table-wrap" id="map-table" hidden>
+        <table><caption class="sr-only">Communes de tournée, selon les filtres choisis</caption>
+          <thead><tr><th scope="col">Commune</th><th scope="col">Département</th><th scope="col">Dates</th><th scope="col">Spectacles</th><th scope="col">Dernière date</th></tr></thead>
+          <tbody id="map-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="troupe" aria-labelledby="h-troupe">
+    <div class="wrap">
+      <div class="section-head">
+        <div><p class="kicker">Espace interne · aperçu</p><h2 id="h-troupe">L’espace troupe</h2></div>
+        <p>Chaque comédien voit ses dates et sa feuille de route ; l’administratrice ajoute une date en quelques champs. Exemple calculé à partir des distributions publiées et de la base Supabase.</p>
+      </div>
+      <div class="app-frame">
+        <div class="app-bar">
+          <div class="tabs" role="tablist" aria-label="Espace troupe">
+            <button class="tab" role="tab" id="tt-dates" aria-controls="tp-dates" aria-selected="true">Mes dates</button>
+            <button class="tab" role="tab" id="tt-route" aria-controls="tp-route" aria-selected="false" tabindex="-1">Feuille de route</button>
+            <button class="tab" role="tab" id="tt-admin" aria-controls="tp-admin" aria-selected="false" tabindex="-1">Administration</button>
+          </div>
+          <div class="who"><span class="avatar" aria-hidden="true">AV</span><span><strong>Adrien Vada</strong> · comédien <span class="example">exemple</span></span></div>
+        </div>
+        <div class="tabpanel" role="tabpanel" id="tp-dates" aria-labelledby="tt-dates"></div>
+        <div class="tabpanel" role="tabpanel" id="tp-route" aria-labelledby="tt-route" hidden></div>
+        <div class="tabpanel" role="tabpanel" id="tp-admin" aria-labelledby="tt-admin" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="a-propos" aria-labelledby="h-apropos">
+    <div class="wrap about">
+      <p class="kicker">À propos de ce prototype</p>
+      <h2 id="h-apropos" class="section-head" style="display:block"><span style="font-family:var(--font-display);font-style:italic;font-size:var(--step-3)">Ce qui est réel, ce qui est à compléter</span></h2>
+      <ul>
+        <li>Réel : les textes, distributions et photos des spectacles, les 464 dates publiées de 2016 à 2027 (relevé du 13 octobre 2026), les dates de la base Supabase pour l’espace troupe, le logo 2.0 vectorisé.</li>
+        <li>À compléter : fiches techniques, dossiers de diffusion et pédagogiques, contacts nommés, adresses exactes des lieux. Ils sont signalés « à fournir » ou « exemple ».</li>
+        <li>Rien n’est envoyé ni enregistré : les dates ajoutées dans l’onglet Administration restent dans cette page.</li>
+        <li>Accessibilité : chaque tentacule est aussi un bouton (Tab puis Entrée), « Mode calme » coupe les animations, la carte a sa version tableau.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div><p><strong>Compagnie Crescite</strong></p><p>72 boulevard d’Orléans, 76100 Rouen</p><p>SIRET 749 941 761 00035 · APE 9001Z</p><p>Licence L-R-24-002837, catégorie 2</p></div>
+    <div><p>Conventionnée par la Ville de Rouen, soutenue par la DRAC et la Région Normandie, le Département de Seine-Maritime et l’ODIA Normandie.</p></div>
+    <div><p>Prototype de refonte, octobre 2026. Photos : Arnaud Bertereau – Agence Mona, Olivier Héron, Alban Van Wassenhove, Thomas Cartron, Lauren Toulin.</p></div>
+  </div>
+</footer>
+
+<dialog class="panel" id="panel" aria-labelledby="panel-title"></dialog>
+<canvas id="ink" aria-hidden="true" hidden></canvas>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>const DATA = /*__DATA__*/null;</script>
+<script>
+/*__APP__*/
+</script>
+</body>
+</html>
