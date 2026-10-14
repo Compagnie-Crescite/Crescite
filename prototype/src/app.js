@@ -376,7 +376,7 @@
       t.label.style.opacity = show.toFixed(3);
       t.label.classList.toggle('is-active', t === act);
       const lv = t.mode === 'suck' ? t.level : Math.max(t.hover > 0.5 ? 1 : 0, t.tension >= 0.85 ? 3 : t.tension >= 0.4 ? 2 : t.tension >= 0.1 ? 1 : 0);
-      if (lv !== t.level) { t.level = lv; for (const k of [1, 2, 3]) t.label.classList.toggle('lv' + k, lv >= k); }
+      if (lv !== t.level) { t.level = lv; for (const k of [1, 2, 3]) t.label.classList.toggle('lv' + k, lv >= k); setTimeout(() => { t.lh = t.label.offsetHeight; }, 330); }
     }
 
     /* ---------- animation : uniquement quand quelque chose change ---------- */
