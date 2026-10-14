@@ -68,21 +68,37 @@
   };
   const osm = (lat, lon) => `https://www.openstreetmap.org/directions?to=${lat}%2C${lon}`;
 
-  /* ===================== réglages : profil, calme, lumière ===================== */
+  /* ===================== réglages : la porte choisie, calme, lumière ===================== */
+  const DOORS_OF = { voir: 'public', programmer: 'pro', etablissements: 'classe' };
+  const DOOR_NAME = { public: 'Je viens voir', pro: 'Je programme', classe: 'Je fais venir dans mon établissement' };
+  const DOOR_TOAST = {
+    public: 'Porte « Je viens voir » : dates, lieux et réservations en avant.',
+    pro: 'Porte « Je programme » : fiches, équipes et documents en avant.',
+    classe: 'Porte « Je fais venir dans mon établissement » : spectacles qui se déplacent, Pass Culture et ateliers en avant.'
+  };
+  /* la porte choisie colore la lecture de tout le site : cartes, agenda, page d'un spectacle */
+  function setProfile(k, announce) {
+    if (!DOOR_NAME[k]) return;
+    state.profile = k; store.set('profile', k);
+    $$('.home-door').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.door === k)));
+    $$('.door-link').forEach(a => a.classList.toggle('is-lens', a.dataset.door === k));
+    Grid.render(); Agenda.render();
+    if (announce) toast(DOOR_TOAST[k]);
+  }
   function initMenu() {
-    const btn = $('#menu-btn'), hd = $('.site-header');
-    btn.addEventListener('click', () => { const open = !hd.classList.contains('is-open'); hd.classList.toggle('is-open', open); btn.setAttribute('aria-expanded', String(open)); btn.textContent = open ? 'Fermer' : 'Menu'; });
-    $$('.site-nav a').forEach(a => a.addEventListener('click', () => { hd.classList.remove('is-open'); btn.setAttribute('aria-expanded', 'false'); btn.textContent = 'Menu'; }));
+    const sheet = $('#sheet-menu'), btns = [$('#menu-btn'), $('#tab-more')];
+    const set = open => { sheet.hidden = !open; btns.forEach(b => b.setAttribute('aria-expanded', String(open))); };
+    btns.forEach(b => b.addEventListener('click', () => set(sheet.hidden)));
+    $$('a', sheet).forEach(a => a.addEventListener('click', () => set(false)));
+    $$('[data-proxy]', sheet).forEach(b => b.addEventListener('click', () => { $('#' + b.dataset.proxy).click(); set(false); }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !sheet.hidden) set(false); });
+    document.addEventListener('click', e => { if (!sheet.hidden && !sheet.contains(e.target) && !btns.some(b => b.contains(e.target))) set(false); });
   }
   function initControls() {
-    const radios = $$('input[name="profile"]');
-    radios.forEach(r => { r.checked = r.value === state.profile; r.addEventListener('change', () => {
-      state.profile = r.value; store.set('profile', r.value); Agenda.render();
-      toast(r.value === 'pro' ? 'Vue programmateur : fiches techniques et contacts en avant.' : r.value === 'classe' ? 'Vue enseignant : ressources scolaires en avant.' : 'Vue spectateur.');
-    }); });
+    $$('.door-link').forEach(a => a.classList.toggle('is-lens', a.dataset.door === state.profile));
     const calmBtn = $('#calm-toggle');
     const syncCalm = () => { calmBtn.setAttribute('aria-pressed', String(state.calm)); syncMotion(); };
-    calmBtn.addEventListener('click', () => { state.calm = !state.calm; store.set('calm', state.calm ? '1' : '0'); syncCalm(); Stage.wake(); TourMap.wake(); });
+    calmBtn.addEventListener('click', () => { state.calm = !state.calm; store.set('calm', state.calm ? '1' : '0'); syncCalm(); Stage.wake(); TourMap.wake(); toast(state.calm ? 'Mode calme : plus aucune animation.' : 'Animations rétablies.'); });
     reduceMQ.addEventListener?.('change', syncMotion);
     syncCalm();
     const themeBtn = $('#theme-toggle');
@@ -94,11 +110,19 @@
     lightMQ.addEventListener?.('change', syncTheme);
     syncTheme();
   }
+  /* ouvrir un spectacle depuis n'importe quel bouton [data-open], avec l'encre de son univers */
+  function openShow(slug, fromEl) {
+    const s = bySlug[slug]; if (!s) return;
+    const u = s.univers.couleurs;
+    if (motionOK() && fromEl) { const r = fromEl.getBoundingClientRect(); Ink.cover(r.left + r.width / 2, r.top + r.height / 2, () => Panel.open(slug, { from: fromEl, viaInk: true }), [u.accent, u.fond]); }
+    else Panel.open(slug, { from: fromEl });
+  }
+  document.addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b && !b.closest('#panel')) { e.preventDefault(); openShow(b.dataset.open, b); } });
 
-  /* ===================== encre (transition) ===================== */
+  /* ===================== encre (transition), aux couleurs de l'univers visité ===================== */
   const Ink = (() => {
     const cv = $('#ink'), ctx = cv.getContext('2d');
-    let W = 0, H = 0, raf = 0;
+    let W = 0, H = 0, raf = 0, last = ['#bc3e80', '#5c1640'];
     const size = () => {
       W = window.innerWidth; H = window.innerHeight; const dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -108,13 +132,14 @@
       ctx.beginPath();
       for (let i = 0; i <= 72; i++) {
         const a = i / 72 * Math.PI * 2;
-        const rr = r * (1 + 0.07 * Math.sin(5 * a + t * 4) + 0.05 * Math.sin(9 * a - t * 5) + 0.03 * Math.sin(14 * a + t * 7));
+        const rr = r * (1 + 0.05 * Math.sin(5 * a + t * 3) + 0.03 * Math.sin(9 * a - t * 4));
         const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
         if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
       }
       ctx.closePath(); ctx.fill();
     };
-    function run(x, y, grow, dur, done) {
+    function run(x, y, grow, dur, done, cols) {
+      if (cols) last = cols;
       size(); cv.hidden = false; cv.classList.remove('fade');
       const maxR = Math.hypot(Math.max(x, W - x), Math.max(y, H - y)) * 1.2;
       const t0 = performance.now();
@@ -122,271 +147,306 @@
       const frame = now => {
         const p = clamp((now - t0) / dur, 0, 1), e = grow ? easeInOut(p) : 1 - easeInOut(p), t = now / 1000;
         ctx.clearRect(0, 0, W, H);
-        ctx.fillStyle = '#bc3e80'; blob(x, y, maxR * e, t);
-        ctx.fillStyle = '#5c1640'; blob(x, y, maxR * clamp((e - 0.2) / 0.8, 0, 1), t + 3);
+        ctx.fillStyle = last[0]; blob(x, y, maxR * e, t);
+        ctx.fillStyle = last[1]; blob(x, y, maxR * clamp((e - 0.2) / 0.8, 0, 1), t + 3);
         if (p < 1) raf = requestAnimationFrame(frame);
         else { if (!grow) { cv.hidden = true; ctx.clearRect(0, 0, W, H); } done && done(); }
       };
       raf = requestAnimationFrame(frame);
     }
-    const cover = (x, y, done) => run(x, y, true, 520, done);
-    const uncover = (x, y, done) => run(x, y, false, 560, done);
-    const fill = () => { size(); cv.hidden = false; ctx.fillStyle = '#5c1640'; ctx.fillRect(0, 0, W, H); };
+    const cover = (x, y, done, cols) => run(x, y, true, 560, done, cols);
+    const uncover = (x, y, done, cols) => run(x, y, false, 600, done, cols);
+    const fill = col => { size(); cv.hidden = false; cv.classList.remove('fade'); ctx.fillStyle = col || last[1]; ctx.fillRect(0, 0, W, H); };
     const fadeOut = () => { cv.classList.add('fade'); setTimeout(() => { cv.hidden = true; cv.classList.remove('fade'); ctx.clearRect(0, 0, W, H); }, 320); };
     return { cover, uncover, fill, fadeOut };
   })();
 
   /* ===================== la scène : la pieuvre ===================== */
+  /* Le logo 2.0 est dessiné sur le canevas et chaque spectacle prolonge l'un de ses huit bras. Le
+     prolongement part de l'extrémité exacte du bras (même position, même direction, même épaisseur),
+     glisse sous les autres traits du logo avec un liseré net, rejoint son titre, le souligne et s'enroule.
+     Au repos rien ne bouge : seuls l'ouverture, le survol et la traction animent les bras. */
   const Stage = (() => {
     const el = $('.stage'), cv = $('.stage-canvas'), ctx = cv.getContext('2d');
-    const logo = $('.stage-logo'), ul = $('.tentacle-labels'), hint = $('.stage-hint');
-    const N = 24;
-    let W = 0, H = 0, cx = 0, cy = 0, S = 0, mobile = false, pullDist = 140, raf = 0, visible = true, last = performance.now();
-    let pointer = { x: -1e4, y: -1e4 }, grab = null, lastPointerAct = 0, rot = 0;
-    let beckon = { T: null, t0: 0, next: performance.now() + 3500 };
-    const T = SHOWS.map((show, i) => ({
-      i, show, slug: show.slug,
-      pts: Array.from({ length: N }, () => ({ x: 0, y: 0, px: 0, py: 0 })),
-      rest: Array.from({ length: N }, () => ({ x: 0, y: 0 })),
-      base: { x: 0, y: 0 }, tipHome: { x: 0, y: 0 }, tip: { x: 0, y: 0 }, len: 1,
-      sign: i % 2 ? 1 : -1, phase: i * 1.73, right: true, level: -1, tension: 0,
-      focus: false, hover: false, mode: 'idle', t0: 0, scale: 1, label: null, avail: 0, init: false
-    }));
-
-    /* étiquettes : de vrais boutons, accessibles au clavier */
-    T.forEach(t => {
-      const s = t.show, nx = nextOf(s.slug);
-      const meta = s.annee ? `création ${s.annee}` : 'collèges, lycées, théâtres';
-      const when = nx ? `prochaine date : ${shortDate(nx.start)}, ${nx.commune}` : (s.annee ? 'hors tournée cette saison' : 'projets avec les établissements');
-      const li = document.createElement('li');
-      li.innerHTML = `<button class="t-label" type="button" data-i="${t.i}" aria-describedby="tl-d-${t.i}">
-        <span class="t-title">${esc(s.titre)}</span><span class="t-meta">${esc(meta)}</span><span class="t-when">${esc(when)}</span>
-        <span class="t-reveal"><span><span class="t-reveal-inner" id="tl-d-${t.i}">${esc(s.accroche)}
-        <span class="t-next">${nx ? esc(nx.details || `${dateText(nx)} · ${nx.commune} (${nx.dep})`) : 'Toute la page du spectacle vous attend au centre.'}</span>
-        <span class="t-release">Lâchez pour entrer</span></span></span></span></button>`;
-      ul.appendChild(li);
-      t.label = li.firstElementChild;
+    const ul = $('.tentacle-labels'), hint = $('.stage-hint'), copy = $('.stage-copy');
+    const lay = document.createElement('canvas'), lctx = lay.getContext('2d');
+    const msk = document.createElement('canvas'), mctx = msk.getContext('2d');
+    const AR = DATA.arms, BOX = AR.box, W0 = AR.width, GAPL = AR.gap;
+    const paths = $$('.stage-logo .t-group').map(p => new Path2D(p.getAttribute('d')));
+    const INK = [247, 236, 241];
+    const ROWS_D = { A1outer: 0, A1inner: 1, A2: 2, C1: 3 };
+    const LANE = { A1outer: 0, A1inner: 1, A2: 2, C1: 3 };
+    const ROWS_M = ['C1L', 'C1R', 'A2L', 'A2R', 'A1innerL', 'A1innerR', 'A1outerL', 'A1outerR'];
+    const INTRO = ['A1outerL', 'A1outerR', 'A1innerL', 'A1innerR', 'A2L', 'A2R', 'C1L', 'C1R'];
+    let W = 0, H = 0, dpr = 1, s = 0.5, ox = 0, oy = 0, mobile = false, gut = 24, pmax = 110;
+    let raf = 0, visible = true, logoAlpha = 1, introT0 = 0, introOn = false, hovered = null, order = [];
+    let grab = null, lastPointerAct = 0, beckonT = null, beckonTimer = 0;
+    const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const T = SHOWS.map((show, i) => {
+      const arm = DATA.armOf[show.slug];
+      return { i, show, slug: show.slug, arm, side: arm.slice(-1), key: arm.slice(0, -1), A: AR.arms[arm],
+        col: hexRgb(show.univers.couleurs.scene), P: [], cum: [], L: 1, sOwn: 0, sExit: 0, sUnder: 0, sCurl: 0,
+        U: 60, ulead: 0, th: 30, lw: 120, grow: 1, hover: 0, focus: false, curl: 1, beck: 0,
+        pull: { x: 0, y: 0 }, pull0: { x: 0, y: 0 }, tension: 0, mode: 'idle', t0: 0, fired: false, level: -1,
+        target: { x: 0, y: 0 }, tdir: { x: -1, y: 0 }, lane: 0, maxW: 200, label: null };
     });
+
+    /* étiquettes : de vrais boutons, dans l'ordre du répertoire pour le clavier */
+    T.forEach(t => {
+      const s_ = t.show, nx = nextOf(s_.slug);
+      const meta = s_.annee ? `création ${s_.annee}${s_.duree ? ' · ' + s_.duree : ''}` : 'collèges, lycées, théâtres';
+      const when = nx ? `→ ${shortDate(nx.start)} · ${nx.commune}` : (s_.annee ? 'pas de date annoncée' : 'avec les établissements');
+      const li = document.createElement('li');
+      li.innerHTML = `<button class="t-label" type="button" data-i="${t.i}" aria-describedby="tl-d-${t.i}" style="--c:${s_.univers.couleurs.scene}">
+        <span class="t-title"><span class="t-tt">${esc(s_.titre)}</span></span><span class="t-info"><span class="t-meta">${esc(meta)}</span><span class="t-when">${nx ? '<span class="sr-only">prochaine date : </span>' : ''}${esc(when)}</span>
+        <span class="t-reveal"><span><span class="t-reveal-inner" id="tl-d-${t.i}">${esc(s_.accroche)}<span class="t-release">Lâchez : la pieuvre vous emmène</span></span></span></span></span></button>`;
+      ul.appendChild(li);
+      t.label = li.firstElementChild; t.tt = $('.t-tt', t.label); t.ttl = $('.t-title', t.label);
+    });
+
+    /* ---------- géométrie ---------- */
+    function bez(out, p0, p1, p2, p3, n) {
+      for (let k = 1; k <= n; k++) {
+        const u = k / n, a = (1 - u) ** 3, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u * u, d = u ** 3;
+        out.push([a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]);
+      }
+    }
+    function buildPath(t) {
+      const P = t.A.pts.map(([x, y]) => [ox + x * s, oy + y * s]);
+      const iExit = P.length - 1, E = P[iExit], ed = t.A.exitdir, td = t.tdir;
+      const tx = t.target.x + t.pull.x, ty = t.target.y + t.pull.y;
+      let F = E, fd = ed;
+      if (mobile) {
+        // un crochet ou un S jusqu'au couloir, puis une descente droite : des parallèles, comme une portée
+        const lane = t.lane, drop = clamp(Math.abs(E[0] - lane) * 0.75, 24, 74), yq = E[1] + drop, h = drop * 0.6;
+        bez(P, E, [E[0] + ed[0] * h, E[1] + ed[1] * h], [lane, yq - h], [lane, yq], 18);
+        const yf = Math.max(yq + 1, t.target.y - 24);
+        P.push([lane, yf]); F = [lane, yf]; fd = [0, 1];
+      }
+      const d = Math.hypot(tx - F[0], ty - F[1]), k = d * (mobile ? 0.5 : 0.42);
+      bez(P, F, [F[0] + fd[0] * k, F[1] + fd[1] * k], [tx - td.x * k, ty - td.y * k], [tx, ty], mobile ? 12 : 36);
+      const iUnder = P.length - 1, ulen = t.U + t.ulead + 10, nU = Math.max(2, Math.round(ulen / 6));
+      for (let j = 1; j <= nU; j++) P.push([tx + td.x * ulen * j / nU, ty + td.y * ulen * j / nU]);
+      const iCurl = P.length - 1;
+      // la pointe s'enroule vers le haut, courbure croissante ; tirer la déroule
+      const Lc = mobile ? 44 : 62, n = 24, du = Lc / n, sign = td.x < 0 ? 1 : -1;
+      const kap0 = 1.5 * Math.PI * 2.3 / Lc * t.curl * (1 - 0.92 * t.tension);
+      let ang = Math.atan2(td.y, td.x), x = P[iCurl][0], y = P[iCurl][1];
+      for (let j = 1; j <= n; j++) {
+        const kap = kap0 * Math.pow((j - 0.5) / n, 1.3);
+        ang += sign * kap * du * 0.5; x += Math.cos(ang) * du; y += Math.sin(ang) * du; ang += sign * kap * du * 0.5;
+        P.push([x, y]);
+      }
+      const cum = [0];
+      for (let j = 1; j < P.length; j++) cum.push(cum[j - 1] + Math.hypot(P[j][0] - P[j - 1][0], P[j][1] - P[j - 1][1]));
+      t.P = P; t.cum = cum; t.L = cum[cum.length - 1];
+      t.sOwn = cum[t.A.own]; t.sExit = cum[iExit]; t.sUnder = cum[iUnder]; t.sCurl = cum[iCurl];
+    }
+    const wRoot = () => Math.max(W0 * s, 1.6);
+    function widthAt(t, u) {
+      const w0 = wRoot(), w1 = Math.max(w0 * 0.7, 1.4);
+      let w;
+      if (u <= t.sExit) w = w0;
+      else if (u <= t.sUnder) w = lerp(w0, w1, smooth(t.sExit, t.sUnder, u));
+      else if (u <= t.sCurl) w = w1;
+      else w = lerp(w1, 0.45, Math.pow((u - t.sCurl) / Math.max(1, t.L - t.sCurl), 0.85));
+      if (u > t.sExit) w *= 1 + 0.55 * t.hover * smooth(t.sExit, t.sExit + 28, u);
+      return w;
+    }
+
+    /* masque : le logo épaissi d'un liseré, sauf autour de la racine de chaque bras prolongé */
+    function buildMask() {
+      const g = mctx, gap = Math.max(GAPL, 1.1 / s);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, msk.width, msk.height);
+      g.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+      g.fillStyle = g.strokeStyle = '#000'; g.lineWidth = 2 * gap; g.lineJoin = 'round';
+      for (const p of paths) { g.fill(p); g.stroke(p); }
+      g.globalCompositeOperation = 'destination-out'; g.lineCap = 'butt'; g.lineWidth = W0 + 2 * gap + 3;
+      for (const t of T) {
+        if (t.A.under) continue;                       // bras rentré : il sort de sous un autre trait, liseré compris
+        const pts = t.A.pts, end = Math.min(pts.length - 1, t.A.own + 2);
+        g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+        for (let j = 1; j <= end; j++) g.lineTo(pts[j][0], pts[j][1]);
+        g.stroke();
+      }
+      g.globalCompositeOperation = 'source-over';
+    }
 
     function layout() {
       const r = el.getBoundingClientRect();
-      W = r.width; H = r.height; mobile = W < 720;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (r.width < 10 || r.height < 10) return;           // vue masquée : on attendra son retour
+      W = r.width; H = r.height; mobile = W < 760; gut = mobile ? 16 : clamp(W * 0.033, 24, 48);
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      for (const c of [cv, lay, msk]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+      el.classList.toggle('is-mobile', mobile);
+      T.forEach(t => t.label.classList.toggle('right', mobile ? t.side === 'R' : t.side === 'L'));
+      const [bx0, by0, bx1, by1] = BOX, bw = bx1 - bx0, bh = by1 - by0, bcx = (bx0 + bx1) / 2;
+      const top = copy.offsetTop + copy.offsetHeight;
       if (!mobile) {
-        S = clamp(Math.min(W, H) * 0.33, 190, 310); cx = W / 2; cy = H * 0.52;
-        const rx = Math.min(W * 0.34, 500), ry = Math.min(H * 0.35, 290);
-        const angles = [-30, 0, 28, 56, 124, 152, 180, 206];
-        T.forEach((t, i) => {
-          const a = angles[i] * Math.PI / 180, f = (angles[i] === 0 || angles[i] === 180) ? 0.88 : 1;
-          t.tipHome = { x: cx + Math.cos(a) * rx * f, y: cy + Math.sin(a) * ry };
-          t.base = { x: cx + Math.cos(a) * S * 0.2, y: cy + Math.sin(a) * S * 0.16 + S * 0.06 };
-          t.right = Math.cos(a) >= 0;
+        const colW = clamp(W * 0.2, 190, 300), gapX = clamp(W * 0.045, 40, 80);
+        s = clamp(Math.min((W - 2 * gut - 2 * colW - 2 * gapX) / bw, (H - top - 260) / bh), 0.28, 0.62);
+        ox = W / 2 - bcx * s; oy = top + 14 - by0 * s;
+        const xL = W / 2 - bw / 2 * s - gapX, xR = W / 2 + bw / 2 * s + gapX;
+        const y1 = oy + 575 * s, y4 = Math.max(y1 + 210, H - 150);
+        T.forEach(t => {
+          const L_ = t.side === 'L';
+          t.target = { x: L_ ? xL : xR, y: lerp(y1, y4, ROWS_D[t.key] / 3) };
+          t.tdir = { x: L_ ? -1 : 1, y: 0 }; t.ulead = 0;
+          t.maxW = Math.max(150, L_ ? xL - gut : W - gut - xR);
         });
-        pullDist = clamp(Math.min(W, H) * 0.2, 110, 170);
+        pmax = clamp(Math.min(W, H) * 0.14, 90, 130);
+        order = [...T].sort((a, b) => (a.side === b.side ? 0 : a.side === 'L' ? -1 : 1) || ROWS_D[a.key] - ROWS_D[b.key]);
       } else {
-        S = clamp(W * 0.4, 130, 170); cx = W / 2; cy = 210 + S * 0.5;
-        const y0 = cy + S * 0.6 + 34, row = Math.min(60, (H - 160 - y0) / 7);
-        T.forEach((t, i) => {
-          const left = i % 2 === 0;
-          t.tipHome = { x: left ? 20 : W - 20, y: y0 + i * row };
-          const a = (left ? 128 : 52) * Math.PI / 180;
-          t.base = { x: cx + Math.cos(a) * S * 0.22 + (left ? -1 : 1) * (i >> 1) * 3, y: cy + Math.sin(a) * S * 0.2 };
-          t.right = left;
+        s = clamp((W - 60) / bw, 0.24, 0.42);
+        ox = W / 2 - bcx * s; oy = top + 8 - by0 * s;
+        const lanes = [14, 23, 32, 41], rr = 10, textX = 54, y0 = oy + by1 * s + 86, rowH = 64;
+        T.forEach(t => {
+          const L_ = t.side === 'L', lane = L_ ? lanes[LANE[t.key]] : W - lanes[LANE[t.key]];
+          t.lane = lane; t.target = { x: lane + (L_ ? rr : -rr), y: y0 + ROWS_M.indexOf(t.arm) * rowH };
+          t.tdir = { x: L_ ? 1 : -1, y: 0 };
+          t.ulead = L_ ? textX - t.target.x : t.target.x - (W - textX);
+          t.maxW = W - 2 * textX;
         });
-        pullDist = 100;
+        pmax = 80;
+        order = [...T].sort((a, b) => ROWS_M.indexOf(a.arm) - ROWS_M.indexOf(b.arm));
       }
-      logo.style.setProperty('--logo', S + 'px');
-      T.forEach(t => { t.lh = t.label.offsetHeight; });
-      T.forEach(t => { t.tip.x = t.tipHome.x; t.tip.y = t.tipHome.y; t.avail = -1; buildRest(t, performance.now()); if (!t.init) { t.pts.forEach((p, k) => { p.x = p.px = t.rest[k].x; p.y = p.py = t.rest[k].y; }); t.init = true; } });
-      draw();
+      T.forEach(t => { t.label.style.maxWidth = t.maxW + 'px'; });
+      T.forEach(t => { t.U = Math.min(t.maxW, t.tt.getBoundingClientRect().width); t.th = t.ttl.offsetHeight; t.lw = t.label.offsetWidth; t.lh = t.label.offsetHeight; });
+      if (!mobile) for (const side of ['L', 'R']) {
+        // rangées régulières, mais un titre sur deux lignes repousse les suivants : jamais de chevauchement
+        let bottom = -Infinity;
+        T.filter(t => t.side === side).sort((a, b) => ROWS_D[a.key] - ROWS_D[b.key]).forEach(t => {
+          t.target.y = Math.max(t.target.y, bottom + 16 + t.th - 7);
+          bottom = t.target.y - t.th + 7 + t.lh;
+        });
+      }
+      T.forEach(buildPath);
+      buildMask();
+      el.style.setProperty('--gy', (oy + (by0 + by1) / 2 * s).toFixed(0) + 'px');
+      render();
     }
 
-    function beckonAmount(t, now) {
-      if (beckon.T !== t) return 0;
-      const p = (now - beckon.t0) / 1700;
-      if (p >= 1) { beckon.T = null; return 0; }
-      return Math.sin(Math.PI * p);
-    }
-
-    /* courbe de repos : une « tortue » qui ondule et s'enroule au bout, recalée de la base au bout */
-    function buildRest(t, now) {
-      const live = motionOK();
-      const sw = live ? Math.sin(now * 0.0009 + t.phase) : 0;
-      const sw2 = live ? Math.sin(now * 0.0014 + t.phase * 1.7) : 0;
-      const bk = live ? beckonAmount(t, now) : 0;
-      const P = t.rest;
-      let x = 0, y = 0, h = 0;
-      for (let k = 0; k < N; k++) {
-        const s = k / (N - 1);
-        P[k].x = x; P[k].y = y;
-        const curl = t.sign * (2.4 + 4.2 * bk) * smooth(0.6, 1, s) * s;
-        const kap = t.sign * 1.15 * Math.sin(Math.PI * 2 * 1.05 * s + t.phase) * 0.85 + 0.75 * sw * (0.3 + s) + 0.45 * sw2 * s * s + curl * 3;
-        h += kap / (N - 1);
-        x += Math.cos(h) / (N - 1); y += Math.sin(h) / (N - 1);
-      }
-      const ex = P[N - 1].x, ey = P[N - 1].y, le = Math.hypot(ex, ey) || 1;
-      const dx = t.tip.x - t.base.x, dy = t.tip.y - t.base.y, L = Math.hypot(dx, dy);
-      const sc = (L / le) * t.scale, ang = Math.atan2(dy, dx) - Math.atan2(ey, ex);
-      const ca = Math.cos(ang) * sc, sa = Math.sin(ang) * sc;
-      let len = 0;
-      for (let k = 0; k < N; k++) {
-        const X = P[k].x, Y = P[k].y;
-        P[k].x = t.base.x + X * ca - Y * sa; P[k].y = t.base.y + X * sa + Y * ca;
-        if (k) len += Math.hypot(P[k].x - P[k - 1].x, P[k].y - P[k - 1].y);
-      }
-      t.len = Math.max(len, 1);
-    }
-
-    function step(t, now) {
-      const grabbed = grab && grab.T === t;
-      // le bout se tend vers le visiteur (curiosité), sauf en mode calme
-      let gx = t.tipHome.x, gy = t.tipHome.y;
-      if (motionOK() && !grabbed && t.mode === 'idle') {
-        const d = Math.hypot(pointer.x - t.tipHome.x, pointer.y - t.tipHome.y);
-        if (d < 200) { const f = (1 - d / 200) * 0.28; gx += (pointer.x - t.tipHome.x) * f; gy += (pointer.y - t.tipHome.y) * f; }
-      }
-      t.tip.x = lerp(t.tip.x, gx, 0.12); t.tip.y = lerp(t.tip.y, gy, 0.12);
-      if (t.mode === 'suck') {
-        const p = clamp((now - t.t0) / 560, 0, 1); t.scale = 1 - 0.93 * easeInOut(p);
-        if (p > 0.18) t.label.classList.add('is-sucked');
-        if (p >= 0.62 && !t.fired) { t.fired = true; openFromStage(t); }
-        if (p >= 1) t.mode = 'hidden';
-      } else if (t.mode === 'grow') {
-        const p = clamp((now - t.t0) / 900, 0, 1); t.scale = 0.07 + 0.93 * easeOut(p);
-        if (p > 0.4) t.label.classList.remove('is-sucked');
-        if (p >= 1) { t.mode = 'idle'; t.scale = 1; }
-      } else if (t.mode === 'auto') {
-        const p = clamp((now - t.t0) / 700, 0, 1), e = easeOut(p);
-        const ox = t.tipHome.x - cx, oy = t.tipHome.y - cy, ol = Math.hypot(ox, oy) || 1;
-        grab = { T: t, x: t.tipHome.x + ox / ol * pullDist * 1.05 * e, y: t.tipHome.y + oy / ol * pullDist * 1.05 * e, auto: true, ox: 0, oy: 0 };
-        if (p >= 1) { grab = null; suck(t); }
-      }
-      buildRest(t, now);
-      const P = t.pts, R = t.rest;
-      const isGrab = grab && grab.T === t;
-      for (let k = 1; k < N; k++) {
-        const p = P[k], r = R[k], s = k / (N - 1);
-        let stiff = 0.17 - 0.1 * s;
-        if (isGrab) stiff *= 0.22;
-        if (t.mode === 'suck' || t.mode === 'grow') stiff = 0.38;
-        const vx = (p.x - p.px) * 0.8, vy = (p.y - p.py) * 0.8;
-        p.px = p.x; p.py = p.y;
-        p.x += vx + (r.x - p.x) * stiff; p.y += vy + (r.y - p.y) * stiff;
-      }
-      P[0].x = P[0].px = R[0].x; P[0].y = P[0].py = R[0].y;
-      if (isGrab) {
-        let gxp = grab.x + (grab.ox || 0), gyp = grab.y + (grab.oy || 0);
-        const bx = gxp - t.base.x, by = gyp - t.base.y, bl = Math.hypot(bx, by), maxR = t.len * 1.7;
-        if (bl > maxR) { gxp = t.base.x + bx / bl * maxR; gyp = t.base.y + by / bl * maxR; }
-        const tp = P[N - 1]; tp.x = tp.px = gxp; tp.y = tp.py = gyp;
-        t.tension = clamp((Math.hypot(gxp - t.tipHome.x, gyp - t.tipHome.y) - 8) / pullDist, 0, 1);
-      } else if (t.mode === 'idle') t.tension = Math.max(0, t.tension - 0.06);
-      const seg = t.len / (N - 1), maxSeg = seg * (isGrab ? 1.9 : 1.2);
-      for (let it = 0; it < 3; it++) {
-        for (let k = 1; k < N; k++) {
-          const a = P[k - 1], b = P[k];
-          const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 1e-6;
-          if (d > maxSeg) {
-            const diff = (d - maxSeg) / d;
-            if (k === 1) { b.x -= dx * diff; b.y -= dy * diff; }
-            else if (isGrab && k === N - 1) { a.x += dx * diff; a.y += dy * diff; }
-            else { a.x += dx * diff * 0.5; a.y += dy * diff * 0.5; b.x -= dx * diff * 0.5; b.y -= dy * diff * 0.5; }
-          }
-        }
-      }
-    }
-
-    function drawTentacle(t) {
-      const P = t.pts, n = N;
-      const wBase = S * (mobile ? 0.085 : 0.075), wTip = 1.4;
-      const Lp = [], Rp = [], Wd = [];
+    /* ---------- dessin ---------- */
+    function drawT(g, t, alpha) {
+      const P = t.P, cum = t.cum, n = P.length, sMax = t.sOwn + t.grow * (t.L - t.sOwn);
+      if (sMax <= t.sOwn + 0.5 && t.grow <= 0) return;
+      const front = t.grow < 1 ? 12 : 0, Lp = [], Rp = [];
       for (let k = 0; k < n; k++) {
+        let u = cum[k], x = P[k][0], y = P[k][1];
+        if (u > sMax) { const q = (sMax - cum[k - 1]) / Math.max(1e-6, u - cum[k - 1]); x = lerp(P[k - 1][0], x, q); y = lerp(P[k - 1][1], y, q); u = sMax; }
         const a = P[Math.max(0, k - 1)], b = P[Math.min(n - 1, k + 1)];
-        let tx = b.x - a.x, ty = b.y - a.y; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-        const s = k / (n - 1), w = (wBase * Math.pow(1 - s, 0.85) + wTip) / 2 * (t.mode === 'idle' ? 1 : 0.6 + 0.4 * t.scale);
-        Lp.push([P[k].x - ty * w, P[k].y + tx * w]); Rp.push([P[k].x + ty * w, P[k].y - tx * w]); Wd.push(w);
+        let tx = b[0] - a[0], ty = b[1] - a[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+        let w = widthAt(t, u) / 2;
+        if (front) w *= Math.pow(clamp((sMax - u) / front, 0, 1), 0.6);
+        Lp.push([x - ty * w, y + tx * w]); Rp.push([x + ty * w, y - tx * w]);
+        if (u >= sMax) break;
       }
-      ctx.beginPath(); ctx.moveTo(Lp[0][0], Lp[0][1]);
-      for (let k = 1; k < n - 1; k++) ctx.quadraticCurveTo(Lp[k][0], Lp[k][1], (Lp[k][0] + Lp[k + 1][0]) / 2, (Lp[k][1] + Lp[k + 1][1]) / 2);
-      ctx.lineTo(Lp[n - 1][0], Lp[n - 1][1]);
-      const ex = P[n - 1].x + (P[n - 1].x - P[n - 2].x) * 0.9, ey = P[n - 1].y + (P[n - 1].y - P[n - 2].y) * 0.9;
-      ctx.quadraticCurveTo(ex, ey, Rp[n - 1][0], Rp[n - 1][1]);
-      for (let k = n - 2; k > 0; k--) ctx.quadraticCurveTo(Rp[k][0], Rp[k][1], (Rp[k][0] + Rp[k - 1][0]) / 2, (Rp[k][1] + Rp[k - 1][1]) / 2);
-      ctx.lineTo(Rp[0][0], Rp[0][1]); ctx.closePath();
-      const g = ctx.createLinearGradient(P[0].x, P[0].y, P[n - 1].x, P[n - 1].y);
-      g.addColorStop(0, '#5c1640'); g.addColorStop(0.35, '#a8336f'); g.addColorStop(1, t.level > 0 ? '#f08cbf' : '#d55a99');
-      ctx.fillStyle = g;
-      const lit = t.level > 0 || t.focus || grab && grab.T === t;
-      if (lit) { ctx.shadowColor = 'rgba(240,140,191,.75)'; ctx.shadowBlur = 26; }
-      ctx.fill(); ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(245,189,216,.5)';
-      for (let k = 3; k < n - 2; k += 2) {
-        const r = Math.max(0.7, Wd[k] * 0.38);
-        ctx.beginPath(); ctx.arc(Rp[k][0] * 0.62 + P[k].x * 0.38, Rp[k][1] * 0.62 + P[k].y * 0.38, r, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = 1.1; ctx.beginPath();
-      for (let k = 1; k < n - 1; k++) { const x = Lp[k][0] * 0.5 + P[k].x * 0.5, y = Lp[k][1] * 0.5 + P[k].y * 0.5; if (k === 1) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-      ctx.stroke();
+      g.beginPath(); g.moveTo(Lp[0][0], Lp[0][1]);
+      for (let k = 1; k < Lp.length; k++) g.lineTo(Lp[k][0], Lp[k][1]);
+      for (let k = Rp.length - 1; k >= 0; k--) g.lineTo(Rp[k][0], Rp[k][1]);
+      g.closePath();
+      const c = t.col, h = t.hover;
+      g.fillStyle = `rgba(${Math.round(lerp(INK[0], c[0], h))},${Math.round(lerp(INK[1], c[1], h))},${Math.round(lerp(INK[2], c[2], h))},${alpha})`;
+      g.fill();
+    }
+    function activeT() { return grab ? grab.t : T.find(t => t.mode === 'suck' || t.mode === 'auto') || hovered || T.find(t => t.focus) || null; }
+    function render() {
+      const act = activeT();
+      el.classList.toggle('has-active', !!act);
+      lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, lay.width, lay.height);
+      lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      for (const t of T) if (t.mode !== 'hidden' && t !== act) drawT(lctx, t, act ? 0.32 : 1);
+      if (act && act.mode !== 'hidden') drawT(lctx, act, 1);
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      lctx.globalCompositeOperation = 'destination-out'; lctx.drawImage(msk, 0, 0); lctx.globalCompositeOperation = 'source-over';
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(lay, 0, 0);
+      ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+      ctx.globalAlpha = logoAlpha; ctx.fillStyle = 'rgb(247,236,241)';
+      for (const p of paths) ctx.fill(p);
+      ctx.globalAlpha = 1;
+      for (const t of T) placeLabel(t, act);
+    }
+    function placeLabel(t, act) {
+      const al = t.label.classList.contains('right');
+      const tx = t.target.x + t.pull.x + t.tdir.x * t.ulead, ty = t.target.y + t.pull.y;
+      const lx = clamp(al ? tx - t.lw : tx, 8, Math.max(8, W - t.lw - 8)), ly = clamp(ty - t.th + 7, 8, Math.max(8, H - t.lh - 8));
+      t.label.style.transform = `translate(${lx.toFixed(1)}px, ${ly.toFixed(1)}px)`;
+      const show = t.mode === 'hidden' || t.mode === 'suck' ? 0 : smooth(0.7, 1, t.grow);
+      t.label.style.opacity = show.toFixed(3);
+      t.label.classList.toggle('is-active', t === act);
+      const lv = t.mode === 'suck' ? t.level : Math.max(t.hover > 0.5 ? 1 : 0, t.tension >= 0.85 ? 3 : t.tension >= 0.4 ? 2 : t.tension >= 0.1 ? 1 : 0);
+      if (lv !== t.level) { t.level = lv; for (const k of [1, 2, 3]) t.label.classList.toggle('lv' + k, lv >= k); }
     }
 
-    function placeLabel(t) {
-      const tip = t.pts[N - 1], gap = mobile ? 10 : 16;
-      // l'étiquette suit le bout ; si elle sortirait de la scène, elle passe de l'autre côté
-      const roomR = W - 12 - (tip.x + gap), roomL = tip.x - gap - 12;
-      let right = t.right;
-      if (right && roomR < 170 && roomL > roomR) right = false;
-      else if (!right && roomL < 170 && roomR > roomL) right = true;
-      const half = (t.lh || 50) / 2 + 8;
-      const x = right ? tip.x + gap : tip.x - gap, y = clamp(tip.y, half, Math.max(half, H - half));
-      const avail = Math.round(right ? roomR : roomL);
-      if (Math.abs(avail - t.avail) > 6) { t.avail = avail; t.label.style.maxWidth = clamp(avail, 120, 300) + 'px'; }
-      t.label.classList.toggle('right', !right);
-      t.label.style.transform = right ? `translate(${x}px, calc(${y}px - 50%))` : `translate(calc(${x}px - 100%), calc(${y}px - 50%))`;
-      const base = t.hover || t.focus ? 1 : 0;
-      const lv = t.mode !== 'idle' && t.mode !== 'auto' ? t.level : Math.max(base, t.tension >= 0.85 ? 3 : t.tension >= 0.42 ? 2 : t.tension >= 0.12 ? 1 : 0);
-      if (lv !== t.level) {
-        t.level = lv;
-        t.label.classList.toggle('lv1', lv >= 1); t.label.classList.toggle('lv2', lv >= 2); t.label.classList.toggle('lv3', lv >= 3);
-        setTimeout(() => { t.lh = t.label.offsetHeight; }, 280);
+    /* ---------- animation : uniquement quand quelque chose change ---------- */
+    function step(t, now) {
+      let busy = false;
+      const want = (t === hovered || t.focus || (grab && grab.t === t) || t.mode === 'auto' || t.mode === 'suck') ? 1 : 0;
+      if (Math.abs(t.hover - want) > 0.004) { t.hover += (want - t.hover) * (motionOK() ? 0.2 : 1); busy = true; } else t.hover = want;
+      const curlTo = 1 + 0.14 * t.hover + 0.24 * t.beck;
+      if (Math.abs(t.curl - curlTo) > 0.002) { t.curl += (curlTo - t.curl) * 0.22; busy = true; } else t.curl = curlTo;
+      if (t === beckonT) {
+        const q = (now - t.t0b) / 1700;
+        if (q >= 1) { t.beck = 0; beckonT = null; } else { t.beck = Math.sin(Math.PI * q) ** 2; busy = true; }
       }
+      const q = clamp((now - t.t0) / (t.mode === 'auto' ? 420 : t.mode === 'spring' ? 560 : t.mode === 'suck' ? 520 : 820), 0, 1);
+      if (t.mode === 'auto') {
+        const e = easeOut(q); t.pull = { x: t.pull0.x * e, y: t.pull0.y * e }; t.tension = clamp(Math.hypot(t.pull.x, t.pull.y) / pmax, 0, 1);
+        if (q >= 1) suck(t, now); busy = true;
+      } else if (t.mode === 'spring') {
+        const c1 = 1.70158, c3 = c1 + 1, e = 1 + c3 * Math.pow(q - 1, 3) + c1 * Math.pow(q - 1, 2);
+        t.pull = { x: t.pull0.x * (1 - e), y: t.pull0.y * (1 - e) }; t.tension = clamp(Math.hypot(t.pull.x, t.pull.y) / pmax, 0, 1);
+        if (q >= 1) { t.mode = 'idle'; t.pull = { x: 0, y: 0 }; t.tension = 0; } busy = true;
+      } else if (t.mode === 'suck') {
+        t.tension = 1; t.grow = 1 - easeInOut(q);
+        if (q >= 0.5 && !t.fired) { t.fired = true; openFromStage(t); }
+        if (q >= 1) { t.mode = 'hidden'; t.pull = { x: 0, y: 0 }; } busy = true;
+      } else if (t.mode === 'grow') {
+        t.grow = easeOut(q); t.tension = 1 - q;
+        if (q >= 1) { t.mode = 'idle'; t.grow = 1; t.tension = 0; } busy = true;
+      }
+      return busy;
     }
-
-    function draw() {
-      // la tentacule tirée passe au premier plan, les autres étiquettes s'effacent
-      const active = grab ? grab.T : T.find(t => t.mode === 'suck') || null;
-      el.classList.toggle('has-active', !!active);
-      for (const t of T) t.label.classList.toggle('is-active', t === active);
-      ctx.clearRect(0, 0, W, H);
-      for (const t of T) if (t.mode !== 'hidden') drawTentacle(t);
-      for (const t of T) placeLabel(t);
-      const tx = motionOK() ? clamp((pointer.x - cx) / W, -0.5, 0.5) * 6 : 0;
-      rot = lerp(rot, pointer.x > -1e3 ? tx : 0, 0.08);
-      logo.style.transform = `translate(${cx - S / 2}px, ${cy - S / 2}px) rotate(${rot.toFixed(2)}deg)`;
-    }
-
     function frame(now) {
       raf = 0;
       if (!visible) return;
-      const dt = now - last; last = now;
-      if (motionOK() && !grab && now > beckon.next) {
-        const idle = T.filter(t => t.mode === 'idle' && !t.hover && !t.focus);
-        if (idle.length) { beckon.T = idle[Math.floor(Math.random() * idle.length)]; beckon.t0 = now; }
-        beckon.next = now + 4200 + Math.random() * 2600;
+      let busy = false;
+      if (introOn) {
+        const e = now - introT0;
+        logoAlpha = smooth(0, 560, e);
+        T.forEach(t => { t.grow = easeInOut(clamp((e - 520 - INTRO.indexOf(t.arm) * 85) / 1200, 0, 1)); });
+        if (e > 520 + 7 * 85 + 1200) { introOn = false; logoAlpha = 1; T.forEach(t => { t.grow = 1; }); if (store.get('pulled') !== '1') hint.classList.remove('is-hidden'); scheduleBeckon(); }
+        busy = true;
       }
-      const steps = dt > 40 ? 2 : 1;
-      for (let s = 0; s < steps; s++) for (const t of T) if (t.mode !== 'hidden') step(t, now);
-      draw();
-      raf = requestAnimationFrame(frame);
+      for (const t of T) busy = step(t, now) || busy;
+      T.forEach(buildPath);
+      render();
+      if (busy || grab) raf = requestAnimationFrame(frame);
     }
-    const wake = () => { if (!raf && visible) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+    const wake = () => { if (!raf && visible) raf = requestAnimationFrame(frame); };
+    function scheduleBeckon() {
+      clearTimeout(beckonTimer);
+      if (!motionOK()) return;
+      beckonTimer = setTimeout(() => {
+        const idle = T.filter(t => t.mode === 'idle' && t !== hovered && !t.focus && t !== beckonT);
+        if (visible && !grab && !hovered && idle.length && performance.now() - lastPointerAct > 3500) {
+          beckonT = idle[Math.floor(Math.random() * idle.length)]; beckonT.t0b = performance.now(); wake();
+        }
+        scheduleBeckon();
+      }, 6500 + Math.random() * 3500);
+    }
 
+    /* ---------- interaction ---------- */
     function local(e) { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
-    function nearest(x, y) {
-      let best = null, bd = 36 * 36;
+    function hit(x, y) {
+      let best = null, bd = 18 * 18;
       for (const t of T) {
         if (t.mode !== 'idle') continue;
-        for (let k = Math.floor(N * 0.3); k < N; k++) { const p = t.pts[k], d = (p.x - x) ** 2 + (p.y - y) ** 2; if (d < bd) { bd = d; best = t; } }
+        for (let k = 0; k < t.P.length; k++) {
+          if (t.cum[k] < t.sExit) continue;
+          const d = (t.P[k][0] - x) ** 2 + (t.P[k][1] - y) ** 2; if (d < bd) { bd = d; best = t; }
+        }
       }
       return best;
     }
@@ -394,144 +454,334 @@
     function startGrab(t, e, target) {
       if (!t || t.mode !== 'idle' || e.button > 0) return;
       e.preventDefault();
-      const p = local(e), tip = t.pts[N - 1];
-      grab = { T: t, id: e.pointerId, x: p.x, y: p.y, ox: tip.x - p.x, oy: tip.y - p.y, sx: e.clientX, sy: e.clientY, moved: 0 };
+      const p = local(e);
+      grab = { t, id: e.pointerId, x0: p.x, y0: p.y, moved: 0 };
       try { target.setPointerCapture(e.pointerId); } catch (err) { /* capture indisponible */ }
-      el.classList.add('is-grabbing'); hideHint(); wake();
+      el.classList.add('is-grabbing'); hideHint(); lastPointerAct = performance.now(); wake();
     }
     function moveGrab(e) {
-      const p = local(e); pointer = p;
-      if (grab && !grab.auto && e.pointerId === grab.id) {
-        grab.x = p.x; grab.y = p.y; grab.moved = Math.max(grab.moved, Math.hypot(e.clientX - grab.sx, e.clientY - grab.sy));
+      const p = local(e);
+      if (grab && e.pointerId === grab.id) {
+        const t = grab.t, vx = p.x - grab.x0, vy = p.y - grab.y0, len = Math.hypot(vx, vy);
+        grab.moved = Math.max(grab.moved, len);
+        const R = pmax * 1.3, lr = R * (1 - Math.exp(-len / R)), f = len ? lr / len : 0;
+        t.pull = { x: vx * f, y: vy * f }; t.tension = clamp(lr / pmax, 0, 1);
+        wake(); return;
       }
-      wake();
+      if (e.pointerType === 'mouse') {
+        const h = hit(p.x, p.y);
+        if (h !== hovered && !(hovered && hovered.labelHover)) { hovered = h; el.classList.toggle('over-tentacle', !!h); wake(); }
+      }
     }
     function endGrab(e) {
-      if (!grab || grab.auto || e.pointerId !== grab.id) return;
-      const t = grab.T, moved = grab.moved;
-      grab = null; el.classList.remove('is-grabbing');
-      lastPointerAct = performance.now();
+      if (!grab || e.pointerId !== grab.id) return;
+      const t = grab.t, moved = grab.moved;
+      grab = null; el.classList.remove('is-grabbing'); lastPointerAct = performance.now();
       if (moved < 6) activate(t);
-      else if (t.tension >= 0.85) suck(t);
+      else if (t.tension >= 0.85) suck(t, performance.now());
+      else { t.mode = 'spring'; t.t0 = performance.now(); t.pull0 = { ...t.pull }; }
+      wake();
     }
     function activate(t) {
       if (!t || t.mode !== 'idle') return;
       hideHint();
       if (!motionOK()) { Panel.open(t.slug, { from: t.label }); return; }
-      t.mode = 'auto'; t.t0 = performance.now(); wake();
+      // traction automatique : on éloigne le titre de la pieuvre, puis elle l'avale
+      const cx = ox + (BOX[0] + BOX[2]) / 2 * s, cy = oy + (BOX[1] + BOX[3]) / 2 * s;
+      const lx = t.target.x + t.tdir.x * (t.U / 2 + t.ulead), ly = t.target.y;
+      const dx = lx - cx, dy = ly - cy, dl = Math.hypot(dx, dy) || 1;
+      t.mode = 'auto'; t.t0 = performance.now(); t.pull0 = { x: dx / dl * pmax * 1.05, y: dy / dl * pmax * 1.05 };
+      wake();
     }
-    function suck(t) { t.mode = 'suck'; t.t0 = performance.now(); t.fired = false; store.set('pulled', '1'); wake(); }
+    function suck(t, now) { t.mode = 'suck'; t.t0 = now; t.fired = false; store.set('pulled', '1'); hideHint(); wake(); }
+    function center() { const r = el.getBoundingClientRect(); return { x: r.left + ox + (BOX[0] + BOX[2]) / 2 * s, y: r.top + oy + (BOX[1] + BOX[3]) / 2 * s }; }
     function openFromStage(t) {
-      const r = el.getBoundingClientRect();
-      Ink.cover(r.left + cx, r.top + cy, () => Panel.open(t.slug, { from: t.label, viaInk: true }));
+      const c = center(), u = t.show.univers.couleurs;
+      Ink.cover(c.x, c.y, () => Panel.open(t.slug, { from: t.label, viaInk: true }), [u.accent, u.fond]);
     }
     function returnAll() {
       const now = performance.now();
-      T.forEach(t => { if (t.mode === 'hidden' || t.mode === 'suck') { t.mode = 'grow'; t.t0 = now; t.scale = 0.07; t.fired = false; } });
+      T.forEach(t => { if (t.mode === 'hidden' || t.mode === 'suck') { t.mode = 'grow'; t.t0 = now; t.grow = 0; t.fired = false; t.pull = { x: 0, y: 0 }; } });
       wake();
     }
-    function center() { const r = el.getBoundingClientRect(); return { x: r.left + cx, y: r.top + cy }; }
 
-    cv.addEventListener('pointerdown', e => startGrab(nearest(...Object.values(local(e))), e, cv));
+    cv.addEventListener('pointerdown', e => { const p = local(e); startGrab(hit(p.x, p.y), e, cv); });
     el.addEventListener('pointermove', moveGrab);
-    el.addEventListener('pointerleave', () => { pointer = { x: -1e4, y: -1e4 }; });
+    el.addEventListener('pointerleave', () => { if (hovered && !hovered.labelHover) { hovered = null; el.classList.remove('over-tentacle'); wake(); } });
     window.addEventListener('pointerup', endGrab);
-    window.addEventListener('pointercancel', e => { if (grab && e.pointerId === grab.id) { grab = null; el.classList.remove('is-grabbing'); } });
+    window.addEventListener('pointercancel', e => { if (grab && e.pointerId === grab.id) { const t = grab.t; grab = null; el.classList.remove('is-grabbing'); t.mode = 'spring'; t.t0 = performance.now(); t.pull0 = { ...t.pull }; wake(); } });
     T.forEach(t => {
       const b = t.label;
       b.addEventListener('pointerdown', e => startGrab(t, e, b));
       b.addEventListener('click', () => { if (performance.now() - lastPointerAct > 450) activate(t); });
-      b.addEventListener('mouseenter', () => { t.hover = true; wake(); });
-      b.addEventListener('mouseleave', () => { t.hover = false; });
+      b.addEventListener('mouseenter', () => { t.labelHover = true; hovered = t; wake(); });
+      b.addEventListener('mouseleave', () => { t.labelHover = false; if (hovered === t) hovered = null; wake(); });
       b.addEventListener('focus', () => { t.focus = true; wake(); });
-      b.addEventListener('blur', () => { t.focus = false; });
+      b.addEventListener('blur', () => { t.focus = false; wake(); });
       b.addEventListener('keydown', e => {
         const k = e.key, dir = k === 'ArrowRight' || k === 'ArrowDown' ? 1 : k === 'ArrowLeft' || k === 'ArrowUp' ? -1 : 0;
-        if (dir) { e.preventDefault(); T[(t.i + dir + T.length) % T.length].label.focus(); }
+        if (dir) { e.preventDefault(); const j = order.indexOf(t); order[(j + dir + order.length) % order.length].label.focus(); }
       });
     });
     new ResizeObserver(() => layout()).observe(el);
     new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) wake(); }, { threshold: 0.01 }).observe(el);
     document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (visible) wake(); });
-    if (store.get('pulled') === '1') hideHint();
-    layout(); wake();
-    return { wake, returnAll, center, labelOf: slug => T.find(t => t.slug === slug)?.label };
+    hint.classList.add('is-hidden');
+    el.classList.add('is-live');
+    layout();
+    if (motionOK() && window.scrollY < 40) { introOn = true; introT0 = performance.now(); logoAlpha = 0; T.forEach(t => { t.grow = 0; }); render(); wake(); }
+    else { if (store.get('pulled') !== '1') hint.classList.remove('is-hidden'); scheduleBeckon(); }
+    return { wake: () => { scheduleBeckon(); wake(); }, returnAll, center, labelOf: slug => T.find(t => t.slug === slug)?.label };
   })();
 
-  /* ===================== le centre : page spectacle ===================== */
+  /* ===================== le centre : la page d'un spectacle ===================== */
+  /* Chaque spectacle a son univers (couleurs, typographie, motif) et se lit au défilement :
+     ouverture épinglée, accroche mot à mot, effet signature, récit, trois portes, dates, générique.
+     En « Mode calme » ou avec « réduire les animations », tout s'affiche à plat, sans épinglage. */
   const Panel = (() => {
     const dlg = $('#panel');
-    let current = null, from = null;
-    const tabsDef = [['public', 'Je viens voir le spectacle'], ['classe', 'Je viens avec une classe'], ['pro', 'Je programme']];
+    let current = null, from = null, sraf = 0, scrolly = [], pushed = false;
+    const DOORS = [['public', 'Je viens voir', 'les dates, les lieux, la réservation'],
+                   ['pro', 'Je programme', 'la fiche, l’équipe, les documents'],
+                   ['classe', 'Je fais venir dans mon établissement', 'le spectacle ou la compagnie chez vous']];
     const nextDates = (slug, type) => upcoming().filter(r => r.slug === slug && (!type || r.type === type));
-    const miniDates = list => list.length ? `<ul class="mini-dates">${list.slice(0, 5).map(r => `<li><b>${esc(dateText(r))}</b>${esc(r.commune)} (${esc(r.dep)}) · ${r.type === 'scolaire' ? 'scolaire' : 'tout public'}${r.details ? `<br><span style="color:var(--fg-2);font-size:.9rem">${esc(r.details)}</span>` : ''}</li>`).join('')}</ul>` : '<p>Aucune date annoncée pour l’instant.</p>';
     const todo = label => `<li><span>${esc(label)}</span><span class="example">à fournir</span></li>`;
-    function tabPublic(s) {
-      return `<div class="panel-cols"><div class="prose"><p class="quote">« ${esc(s.accroche)} »</p><p>${esc(s.texte)}</p>
-        ${s.video ? `<p><a class="btn" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div>
-        <div><h3>Prochaines dates</h3>${miniDates(nextDates(s.slug))}
-        <p style="margin-top:12px"><button class="btn-sm" type="button" data-agenda="${esc(s.slug)}">Toutes les dates dans l’agenda</button></p></div></div>`;
+    const words = txt => txt.trim().split(/\s+/).map((w, i) => `<span class="w" style="--i:${i}">${esc(w)}</span>`).join(' ');
+    // lettre à lettre pour l'animation, mais groupées par mot : un titre ne se coupe jamais au milieu d'un mot
+    const letters = txt => { let i = 0; return txt.split(' ').map(w => `<span class="wd">${Array.from(w).map(c => `<span class="ch" style="--i:${i++}">${esc(c)}</span>`).join('')}</span>`).join(' '); };
+
+    /* ---------- les effets signature ---------- */
+    const SIG = {
+      jumeaux(s, g) {
+        return `<div class="sig sig-jumeaux"><div class="twin l"><img src="${DATA.photos[s.slug]}" alt=""></div><div class="twin r"><img src="${DATA.photos[s.slug]}" alt=""></div>
+          <svg class="crown" viewBox="0 0 120 70" aria-hidden="true"><path pathLength="1" d="M8 62 L14 18 L38 42 L60 8 L82 42 L106 18 L112 62 Z M8 62 H112"/></svg>
+          <p class="sig-q">${esc(g.question)}</p>
+          <blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite></blockquote></div>`;
+      },
+      nez(s, g) {
+        return `<div class="sig sig-nez"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>
+          <blockquote class="nez-lines"><p>${g.vers.map((v, i) => `<span style="--i:${i}">${esc(v)}</span>`).join(' ')}</p><cite>${esc(g.source)}</cite></blockquote></div>`;
+      },
+      cercle(s, g) {
+        return `<div class="sig sig-cercle"><div class="ring-photo"><img src="${DATA.photos[s.slug]}" alt=""></div>
+          <svg class="ring" viewBox="0 0 400 400" aria-hidden="true"><defs><path id="ring-a" d="M200 200m-178 0a178 178 0 1 1 356 0a178 178 0 1 1-356 0"/><path id="ring-b" d="M200 200m-146 0a146 146 0 1 1 292 0a146 146 0 1 1-292 0"/></defs>
+            <circle class="ring-line" cx="200" cy="200" r="194" pathLength="1"/>
+            <g class="ring-rot"><text><textPath href="#ring-a">${esc(g.vers)} · </textPath></text></g>
+            <g class="ring-rot2"><text class="latin"><textPath href="#ring-b">${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · </textPath></text></g></svg>
+          <blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite><p class="sig-latin"><i lang="la">${esc(g.latin)}</i> : ${esc(g.latin_sens)}</p></blockquote></div>`;
+      },
+      paperboard(s, g) {
+        return `<div class="sig sig-board"><div class="easel" aria-hidden="true"></div><ol class="sheets">${g.feuilles.map((f, i) => `<li class="sheet" style="--i:${i};--z:${g.feuilles.length - i}">
+          <span class="l1">${esc(f[0])}</span><span class="l2">${esc(f[1])}</span><span class="src">${esc(f[2])}</span></li>`).join('')}</ol>
+          <p class="sig-note">Shakespeare condensé, commenté, et parfois traduit au feutre.</p></div>`;
+      },
+      annotations(s, g) {
+        let n = 0;
+        const html = esc(g.texte).replace(/\[([^\]]+)\]/g, (m, w) => { const i = n++; return `<span class="ann" style="--i:${i}">${w}<span class="ann-note" aria-hidden="true">${esc(g.notes[i])}</span></span>`; });
+        return `<div class="sig sig-ann"><blockquote class="ann-text"><p>${html}</p><cite>${esc(g.source)}</cite></blockquote>
+          <p class="ann-marge">${esc(g.marge)}</p>
+          <p class="sr-only">Notes : ${(g.texte.match(/\[([^\]]+)\]/g) || []).map((w, i) => `${esc(w.slice(1, -1))} veut dire ${esc(g.notes[i])}`).join(' ; ')}.</p></div>`;
+      },
+      horloge(s, g) {
+        const ticks = Array.from({ length: 60 }, (_, i) => `<line x1="100" y1="${i % 5 ? 12 : 8}" x2="100" y2="${i % 5 ? 16 : 22}" transform="rotate(${i * 6} 100 100)"/>`).join('');
+        const nums = Array.from({ length: 12 }, (_, i) => { const a = (i + 1) * Math.PI / 6; return `<text x="${(100 + Math.sin(a) * 66).toFixed(1)}" y="${(100 - Math.cos(a) * 66 + 7).toFixed(1)}">${i + 1}</text>`; }).join('');
+        return `<div class="sig sig-clock"><p class="stamp" aria-hidden="true">Grève</p>
+          <svg class="clock" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><g class="ticks">${ticks}</g><g class="nums">${nums}</g>
+            <line class="hand-h" x1="100" y1="100" x2="100" y2="54"/><line class="hand-m" x1="100" y1="100" x2="100" y2="30"/><circle class="pin" cx="100" cy="100" r="4"/></svg>
+          <ol class="steps">${g.etapes.map((e, i) => `<li style="--i:${i}"><b>${esc(g.heures[i])}</b> ${esc(e)}</li>`).join('')}</ol></div>`;
+      },
+      fil(s, g) {
+        return `<div class="sig sig-fil"><svg class="thread" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M-20 120 C 260 40, 420 260, 300 420 S 120 760, 420 780 S 860 560, 760 340 S 520 120, 700 60 S 1000 200, 1040 520"/></svg>
+          <blockquote class="fil-vers"><p lang="en">${esc(g.vers)}</p><cite>${esc(g.source)}</cite></blockquote>
+          <dl class="fil-num">${g.chiffres.map(([a, b], i) => `<div style="--i:${i}"><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl></div>`;
+      },
+      heures(s, g) {
+        return `<div class="sig sig-heures"><svg class="gauge" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="88" class="g0"/><circle cx="100" cy="100" r="88" class="g1" pathLength="1"/></svg>
+          <p class="big"><span class="count" data-n="${g.nombre}">${g.nombre}</span><span class="unit">${esc(g.unite)}</span><span class="per">${esc(g.periode)}</span></p>
+          <ul class="mots">${g.mots.map((m, i) => `<li style="--i:${i}">${esc(m)}</li>`).join('')}</ul></div>`;
+      }
+    };
+    /* effets qui demandent un peu de calcul en plus des variables CSS */
+    const FX = {
+      horloge(sec, p) {
+        const h = sec.querySelector('.hand-h'), m = sec.querySelector('.hand-m');
+        if (h) { h.setAttribute('transform', `rotate(${240 + p * 300} 100 100)`); m.setAttribute('transform', `rotate(${p * 3600} 100 100)`); }
+        const k = Math.min(4, Math.floor(p * 5.2));
+        sec.querySelectorAll('.steps li').forEach((li, i) => li.classList.toggle('on', i <= k && p > 0.02));
+      },
+      heures(sec, p) {
+        const c = sec.querySelector('.count'); if (c) c.textContent = Math.round(Number(c.dataset.n) * easeOut(clamp(p * 1.25, 0, 1)));
+      }
+    };
+
+    /* ---------- les trois portes ---------- */
+    function doorPublic(s) {
+      const list = nextDates(s.slug);
+      return `<div class="door-grid"><div><h4>Prochaines dates</h4>${datesList(list.slice(0, 6))}
+        <p class="door-more"><button class="btn-sm" type="button" data-agenda="${esc(s.slug)}">Toutes les dates dans l’agenda</button></p></div>
+        <div><h4>En pratique</h4><dl class="facts">${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}<dt>À partir de</dt><dd>âge conseillé <span class="example">à fournir</span></dd>
+        <dt>Réserver</dt><dd>auprès du lieu de chaque date</dd></dl>
+        ${s.video ? `<p><a class="btn" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div></div>`;
     }
-    function tabClasse(s) {
-      return `<div class="panel-cols"><div class="prose"><p class="quote">${esc(s.scolaire_note || 'Contactez la compagnie pour construire un projet avec votre établissement.')}</p>
-        <dl class="facts"><dt>Durée</dt><dd>${esc(s.duree || 'à préciser')}</dd><dt>Niveaux conseillés</dt><dd>à préciser <span class="example">à fournir</span></dd>
-        <dt>Guide du CRED76</dt><dd>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">fiche du spectacle</a>` : 'non référencé'}</dd>
-        <dt>Pass Culture</dt><dd>${s.pass_culture ? 'offre collective (ADAGE)' : 'non référencé'}</dd></dl>
-        <h3>Ressources</h3><ul class="doc-list">${todo('Dossier pédagogique')}${todo('Pistes d’ateliers avant et après le spectacle')}</ul></div>
-        <div><h3>Prochaines dates scolaires</h3>${miniDates(nextDates(s.slug, 'scolaire'))}
-        <p style="margin-top:12px"><button class="btn-sm" type="button" data-open="actions-culturelles">Les actions culturelles</button></p></div></div>`;
-    }
-    function tabPro(s) {
+    function doorPro(s) {
       const eq = (s.equipe || []).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
-      return `<div class="panel-cols"><div>
-        <dl class="facts">${s.annee ? `<dt>Création</dt><dd>${s.annee}</dd>` : ''}${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}
+      return `<div class="door-grid"><div><h4>La fiche</h4><dl class="facts">${s.annee ? `<dt>Création</dt><dd>${s.annee}</dd>` : ''}${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}
         ${cast(s) ? `<dt>Au plateau</dt><dd>${cast(s)} comédien${cast(s) > 1 ? 's' : ''}</dd>` : ''}${eq}</dl>
-        ${s.distribution?.length ? `<h3>Distribution</h3><p>${esc(s.distribution.join(', '))}</p>` : ''}
-        ${s.copro ? `<h3>Coproduction</h3><p>${esc(s.copro)}</p>` : ''}${s.soutiens ? `<h3>Soutiens</h3><p>${esc(s.soutiens)}</p>` : ''}</div>
-        <div><h3>Documents</h3><ul class="doc-list">${todo('Dossier de diffusion (PDF)')}${todo('Fiche technique (PDF)')}${todo('Photos haute définition')}
-        ${s.video ? `<li><span>Vidéo</span><a href="${esc(s.video)}" target="_blank" rel="noopener">ouvrir</a></li>` : ''}</ul>
-        <h3>Contact diffusion</h3><p>Nom, téléphone et e-mail <span class="example">à fournir</span></p>
-        <h3>Dates à venir</h3>${miniDates(nextDates(s.slug))}</div></div>`;
+        ${s.copro ? `<h4>Coproduction</h4><p>${esc(s.copro)}</p>` : ''}${s.soutiens ? `<h4>Soutiens</h4><p>${esc(s.soutiens)}</p>` : ''}</div>
+        <div><h4>Documents</h4><ul class="doc-list">${todo('Dossier de diffusion (PDF)')}${todo('Fiche technique (PDF)')}${todo('Conditions financières')}${todo('Photos haute définition')}
+        ${s.video ? `<li><span>Vidéo intégrale ou teaser</span><a href="${esc(s.video)}" target="_blank" rel="noopener">ouvrir</a></li>` : ''}</ul>
+        <h4>Contact diffusion</h4><p>Nom, téléphone et e-mail <span class="example">à fournir</span></p>
+        <h4>Calendrier de tournée</h4>${datesList(nextDates(s.slug).slice(0, 4), true)}</div></div>`;
     }
+    function doorClasse(s) {
+      const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
+      const badge = { etablissement: 'Peut venir dans votre établissement', salle: 'Se joue en salle : venez avec vos classes', a_confirmer: 'Accueil dans l’établissement à confirmer' }[e.mode];
+      return `<div class="door-grid"><div><p class="door-badge is-${e.mode}">${esc(badge)}</p><p class="door-lead">${esc(e.texte)}</p>
+        ${s.scolaire_note ? `<p>${esc(s.scolaire_note)}</p>` : ''}
+        <dl class="facts"><dt>Pass Culture</dt><dd>${s.pass_culture ? 'offre collective, réservable sur ADAGE' : 'non référencé'}</dd>
+        <dt>Guide du CRED76</dt><dd>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">fiche du spectacle</a>` : 'non référencé'}</dd>
+        <dt>Niveaux conseillés</dt><dd>à préciser <span class="example">à fournir</span></dd></dl>
+        <h4>Ressources</h4><ul class="doc-list">${todo('Dossier pédagogique')}${todo('Pistes d’ateliers avant et après')}${todo('Besoins techniques en établissement')}</ul></div>
+        <div><h4>Dates scolaires</h4>${datesList(nextDates(s.slug, 'scolaire').slice(0, 5))}
+        ${s.slug !== 'actions-culturelles' ? '<p class="door-more"><button class="btn-sm" type="button" data-open="actions-culturelles">Ateliers et actions culturelles</button></p>' : ''}
+        <p class="door-more"><a class="btn" href="mailto:contact@crescite.fr?subject=${encodeURIComponent('Faire venir ' + s.titre + ' dans mon établissement')}">Construire un projet avec la compagnie</a></p></div></div>`;
+    }
+    function datesList(list, pro) {
+      if (!list.length) return '<p class="muted">Aucune date annoncée pour l’instant.</p>';
+      return `<ul class="mini-dates">${list.map(r => `<li><b>${esc(dateText(r))}</b>${esc(r.venue ? r.venue + ', ' : '')}${esc(r.commune)} (${esc(r.dep)}) · ${r.type === 'scolaire' ? 'scolaire' : 'tout public'}${!pro && (r.links || [])[0] ? ` · <a href="${esc(r.links[0])}" target="_blank" rel="noopener">réserver</a>` : ''}</li>`).join('')}</ul>`;
+    }
+
+    /* ---------- la page ---------- */
     function render(s) {
-      const tab = state.profile;
-      const letters = Array.from(s.titre).map((c, i) => c === ' ' ? ' ' : `<span class="ch" style="--i:${i}">${esc(c)}</span>`).join('');
-      dlg.innerHTML = `<div class="panel-bar"><button class="btn-sm" type="button" id="panel-back">← Retour à la pieuvre</button></div>
-        <div class="panel-hero"><img src="${DATA.photos[s.slug]}" alt="Photo de ${esc(s.titre)} par la compagnie Crescite"><span class="panel-credit">${esc(s.credit)}</span>
-        <div class="panel-hero-text"><p class="eyebrow">${esc([s.annee ? 'création ' + s.annee : null, s.duree].filter(Boolean).join(' · '))}</p>
-        <h2 id="panel-title"><span class="sr-only">${esc(s.titre)}</span><span aria-hidden="true">${letters}</span></h2><p class="panel-sub">${esc(s.sous_titre)}</p></div></div>
-        <div class="panel-main"><div class="profile-tabs" role="tablist" aria-label="Lire cette page en tant que">
-        ${tabsDef.map(([k, l]) => `<button class="tab" role="tab" id="pt-${k}" aria-controls="pp-${k}" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}">${l}</button>`).join('')}</div>
-        <div role="tabpanel" id="pp-public" aria-labelledby="pt-public" ${tab === 'public' ? '' : 'hidden'}>${tabPublic(s)}</div>
-        <div role="tabpanel" id="pp-classe" aria-labelledby="pt-classe" ${tab === 'classe' ? '' : 'hidden'}>${tabClasse(s)}</div>
-        <div role="tabpanel" id="pp-pro" aria-labelledby="pt-pro" ${tab === 'pro' ? '' : 'hidden'}>${tabPro(s)}</div></div>`;
-      $('#panel-back', dlg).addEventListener('click', close);
-      Tabs.wire($('.profile-tabs', dlg));
+      const u = s.univers, c = u.couleurs, tab = state.profile, idx = SHOWS.indexOf(s), nxt = SHOWS[(idx + 1) % SHOWS.length], nu = nxt.univers.couleurs;
+      dlg.dataset.u = u.motif;
+      dlg.classList.toggle('u-light', !!u.clair);
+      dlg.style.cssText = `--u-bg:${c.fond};--u-bg2:${c.fond2};--u-fg:${c.texte};--u-fg2:${c.texte2};--u-ac:${c.accent};--u-ac2:${c.accent2};--u-font:"${u.police}";--u-style:${u.style};--u-weight:${u.graisse}`;
+      const dates = nextDates(s.slug);
+      const crew = [...(s.distribution || []).map(n => ['Au plateau', n]), ...(s.equipe || [])];
+      dlg.innerHTML = `<div class="panel-bar"><button class="btn-sm" type="button" id="panel-back">← Retour à la pieuvre</button>
+          <span class="bar-title" aria-hidden="true">${esc(s.titre)}</span>
+          <span class="bar-doors" aria-hidden="true">${DOORS.map(([k, l]) => `<button class="bar-door" type="button" tabindex="-1" data-door="${k}">${esc(l)}</button>`).join('')}</span>
+          <span class="bar-progress" aria-hidden="true"></span></div>
+        <article class="show" aria-labelledby="panel-title">
+          <section class="sx sx-hero" data-scrolly><div class="sx-pin">
+            <div class="hero-photo"><img src="${DATA.photos[s.slug]}" alt="Photo de ${esc(s.titre)}, ${esc(s.credit)}" style="object-position:${u.focale ?? 50}% 50%"></div>
+            <div class="hero-motif" aria-hidden="true"></div>
+            <div class="hero-text"><p class="eyebrow">${esc([s.annee ? 'création ' + s.annee : null, s.duree, u.nom].filter(Boolean).join(' · '))}</p>
+              <h2 id="panel-title"><span class="sr-only">${esc(s.titre)}</span><span aria-hidden="true">${letters(s.titre)}</span></h2>
+              <p class="hero-sub">${esc(s.sous_titre)}</p></div>
+            <p class="scroll-cue" aria-hidden="true"><span></span>Faites défiler</p>
+            <span class="hero-credit">${esc(s.credit)}</span></div></section>
+          <section class="sx sx-hook" data-scrolly aria-label="L’accroche"><div class="sx-pin"><p class="hook" style="--n:${s.accroche.split(/\s+/).length}">${words(s.accroche)}</p></div></section>
+          <section class="sx sx-sig" data-scrolly data-fx="${u.motif}" aria-label="${esc(u.nom)}"><div class="sx-pin">${SIG[u.motif](s, u.signature)}</div></section>
+          <section class="sx sx-story" data-scrolly><div class="story-wrap">
+            <div class="story-text"><p class="kicker">Le spectacle</p><p class="dropcap">${esc(s.texte)}</p>
+              ${s.video ? `<p><a class="btn u-btn" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div>
+            <figure class="story-photo"><img src="${DATA.photos[s.slug]}" alt=""><figcaption>${esc(s.credit)}</figcaption></figure></div></section>
+          <section class="sx sx-doors" id="portes-${esc(s.slug)}"><div class="doors-wrap"><h3 class="sx-h">Trois portes pour entrer</h3>
+            <div class="doors" role="tablist" aria-label="Je suis…">${DOORS.map(([k, l, d], i) => `<button class="door" role="tab" id="pt-${k}" aria-controls="pp-${k}" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}">
+              <span class="door-n" aria-hidden="true">${i + 1}</span><span class="door-l">${esc(l)}</span><span class="door-d">${esc(d)}</span></button>`).join('')}</div>
+            <div class="door-panel" role="tabpanel" id="pp-public" aria-labelledby="pt-public" ${tab === 'public' ? '' : 'hidden'}>${doorPublic(s)}</div>
+            <div class="door-panel" role="tabpanel" id="pp-pro" aria-labelledby="pt-pro" ${tab === 'pro' ? '' : 'hidden'}>${doorPro(s)}</div>
+            <div class="door-panel" role="tabpanel" id="pp-classe" aria-labelledby="pt-classe" ${tab === 'classe' ? '' : 'hidden'}>${doorClasse(s)}</div></div></section>
+          ${dates.length ? `<section class="sx sx-dates${dates.length > 3 ? ' is-track' : ''}" data-scrolly aria-labelledby="dates-h"><div class="sx-pin">
+            <h3 class="sx-h" id="dates-h">${dates.length} date${dates.length > 1 ? 's' : ''} à venir</h3>
+            <ol class="track">${dates.map(r => { const d = parse(r.start); return `<li class="dcard"><span class="dc-day">${r.precision === 'month' ? '·' : d.getDate()}</span>
+              <span class="dc-mon">${esc(MOIS[d.getMonth()])} ${d.getFullYear()}</span><span class="dc-where">${esc(r.commune)} <small>(${esc(r.dep)})</small></span>
+              <span class="dc-venue">${esc(r.venue || '')}</span><span class="badge ${r.type === 'scolaire' ? 'sco' : 'tp'}">${r.type === 'scolaire' ? 'Scolaire' : 'Tout public'}</span>
+              <span class="dc-act">${(r.links || [])[0] ? `<a href="${esc(r.links[0])}" target="_blank" rel="noopener">Infos</a>` : ''}<button type="button" data-ics="${r.id}">Agenda</button></span></li>`; }).join('')}</ol></div></section>` : ''}
+          ${crew.length ? `<section class="sx sx-credits" aria-labelledby="cred-h"><h3 class="sx-h" id="cred-h">Le générique</h3>
+            <dl class="credits">${crew.map(([k, v]) => `<div class="cr"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+            ${s.copro || s.soutiens ? `<p class="partners">${esc([s.copro, s.soutiens].filter(Boolean).join(' · '))}</p>` : ''}</section>` : ''}
+          <section class="sx-next" style="--n-bg:${nu.fond};--n-fg:${nu.texte};--n-ac:${nu.accent};--n-font:'${nxt.univers.police}';--n-style:${nxt.univers.style}">
+            <button type="button" class="next-btn" data-next="${esc(nxt.slug)}"><span class="next-k">La tentacule suivante</span><span class="next-t">${esc(nxt.titre)}</span><span class="next-s">${esc(nxt.sous_titre)}</span></button></section>
+        </article>`;
+      $('#panel-back', dlg).addEventListener('click', () => close());
+      const selectDoor = Tabs.wire($('.doors', dlg), tabEl => {
+        const k = tabEl.id.replace('pt-', '');
+        $$('.bar-door', dlg).forEach(b => b.classList.toggle('on', b.dataset.door === k));
+        setProfile(k, false);
+      });
+      $$('.bar-door', dlg).forEach(b => { b.classList.toggle('on', b.dataset.door === tab); b.addEventListener('click', () => { const t = $('#pt-' + b.dataset.door, dlg); selectDoor(t); $('.sx-doors', dlg).scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto' }); t.focus({ preventScroll: true }); }); });
       $$('[data-agenda]', dlg).forEach(b => b.addEventListener('click', () => { const slug = b.dataset.agenda; close(() => Agenda.focusShow(slug)); }));
-      $$('[data-open]', dlg).forEach(b => b.addEventListener('click', () => open(b.dataset.open, { from })));
+      $$('[data-open]', dlg).forEach(b => b.addEventListener('click', () => go(b.dataset.open)));
+      $('[data-next]', dlg).addEventListener('click', e => go(e.currentTarget.dataset.next));
+      $$('[data-ics]', dlg).forEach(b => b.addEventListener('click', () => {
+        const r = seasonRows.find(x => String(x.id) === b.dataset.ics);
+        downloadICS(`${s.titre} – Compagnie Crescite`, r.start, r.end, `${r.venue || ''} ${r.commune} (${r.dep})`.trim(), r.details);
+      }));
+      scrolly = $$('[data-scrolly]', dlg);
+      sizeTracks();
+      $$('.cr', dlg).forEach(el => io.observe(el));
+      update();
+    }
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { root: dlg, threshold: 0.2 });
+
+    /* ---------- le moteur du défilement : une variable --p par chapitre ---------- */
+    function sizeTracks() {
+      const sec = $('.sx-dates.is-track', dlg); if (!sec) return;
+      const tr = $('.track', sec), extra = Math.max(0, tr.scrollWidth - dlg.clientWidth + 64);
+      sec.style.setProperty('--track', extra + 'px');
+      sec.style.height = still() ? '' : `calc(100vh + ${extra}px)`;
+    }
+    const still = () => !motionOK();
+    function update() {
+      sraf = 0;
+      const vh = dlg.clientHeight;
+      for (const sec of scrolly) {
+        const r = sec.getBoundingClientRect(), span = r.height - vh;
+        const p = still() ? 1 : span > 40 ? clamp(-r.top / span, 0, 1) : clamp((vh - r.top) / (vh + r.height), 0, 1);
+        sec.style.setProperty('--p', p.toFixed(4));
+        const fx = sec.dataset.fx; if (fx && FX[fx]) FX[fx](sec, p);
+      }
+      const max = dlg.scrollHeight - vh, pr = max > 0 ? dlg.scrollTop / max : 0;
+      dlg.style.setProperty('--read', pr.toFixed(4));
+      dlg.classList.toggle('past-hero', dlg.scrollTop > vh * 0.8);
+    }
+    dlg.addEventListener('scroll', () => { if (!sraf) sraf = requestAnimationFrame(update); }, { passive: true });
+    window.addEventListener('resize', () => { if (dlg.open) { sizeTracks(); update(); } });
+
+    function go(slug) {
+      const s = bySlug[slug]; if (!s) return;
+      if (!motionOK()) { open(slug, { from }); return; }
+      const u = s.univers.couleurs;
+      Ink.cover(window.innerWidth / 2, window.innerHeight - 60, () => open(slug, { from, viaInk: true }), [u.accent, u.fond]);
     }
     function open(slug, opts = {}) {
       const s = bySlug[slug]; if (!s) return;
-      current = slug; from = opts.from || document.activeElement;
+      const was = dlg.open;
+      current = slug; from = opts.from || (was ? from : document.activeElement);
+      // une adresse par spectacle : #/spectacles/cleophene, avec le bouton retour du navigateur
+      if (!opts.fromRoute) {
+        if (!was) { history.pushState(null, '', '#/spectacles/' + slug); pushed = true; }
+        else history.replaceState(null, '', '#/spectacles/' + slug);
+      }
+      dlg.classList.toggle('still', !motionOK());
+      if (!was) dlg.showModal();
       render(s);
-      if (!dlg.open) dlg.showModal();
-      dlg.scrollTop = 0;
+      dlg.scrollTop = 0; update();
       $('#panel-back', dlg).focus({ preventScroll: true });
       if (opts.viaInk) Ink.fadeOut();
     }
-    function close(after) {
+    function close(after, opts = {}) {
       if (!dlg.open) return;
-      const done = () => { if (typeof after === 'function') after(); else if (from && document.contains(from)) from.focus({ preventScroll: true }); };
+      const s = bySlug[current], u = s ? s.univers.couleurs : null;
+      const done = () => { if (typeof after === 'function') after(); else if (from && document.contains(from) && from.offsetParent) from.focus({ preventScroll: true }); };
+      if (!opts.fromRoute) {
+        const here = '#/' + (Router.current() === 'accueil' ? '' : Router.current());
+        if (pushed && typeof after !== 'function') history.back(); else history.replaceState(null, '', here);
+      }
+      pushed = false;
       if (motionOK() && typeof after !== 'function') {
-        Ink.fill(); dlg.close();
-        let c = Stage.center();
-        if (from && document.contains(from) && !from.classList.contains('t-label')) { const r = from.getBoundingClientRect(); c = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+        Ink.fill(u ? u.fond : null); dlg.close();
+        let c = Router.current() === 'accueil' ? Stage.center() : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        if (from && document.contains(from) && from.offsetParent && !from.classList.contains('t-label')) { const r = from.getBoundingClientRect(); c = { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
         Stage.returnAll();
-        Ink.uncover(c.x, clamp(c.y, 60, window.innerHeight - 60), done);
+        Ink.uncover(c.x, clamp(c.y, 60, window.innerHeight - 60), done, u ? [u.accent, u.fond] : null);
       } else { dlg.close(); Stage.returnAll(); done(); }
     }
     dlg.addEventListener('cancel', e => { e.preventDefault(); close(); });
-    return { open, close };
+    return { open, close, isOpen: () => dlg.open, current: () => current };
   })();
 
   /* onglets accessibles (flèches gauche/droite) */
@@ -553,22 +803,77 @@
     }
   };
 
-  /* ===================== grille des spectacles ===================== */
-  function renderGrid() {
-    const ul = $('#show-grid');
-    ul.innerHTML = SHOWS.map(s => {
-      const nx = nextOf(s.slug);
-      const next = s.slug === 'actions-culturelles' ? '<span class="sc-next">Pour les établissements</span>' : nx ? `<span class="sc-next">Prochaine date : ${esc(shortDate(nx.start))} · ${esc(nx.commune)}</span>` : '<span class="sc-next none">Pas de date annoncée</span>';
-      return `<li><button class="show-card" type="button" data-open="${s.slug}"><img src="${DATA.photos[s.slug]}" alt="" loading="lazy">
-        <span class="sc-body"><span class="sc-title">${esc(s.titre)}</span><span class="sc-sub">${esc(s.sous_titre)}${s.annee ? ' · ' + s.annee : ''}</span>${next}</span></button></li>`;
-    }).join('');
-    $$('[data-open]', ul).forEach(b => b.addEventListener('click', () => {
-      if (motionOK()) { const r = b.getBoundingClientRect(); Ink.cover(r.left + r.width / 2, r.top + r.height / 2, () => Panel.open(b.dataset.open, { from: b, viaInk: true })); }
-      else Panel.open(b.dataset.open, { from: b });
-    }));
+  /* ===================== petites aides de rendu ===================== */
+  const uvars = s => { const c = s.univers.couleurs; return `--u-bg:${c.fond};--u-fg:${c.texte};--u-ac:${c.accent};--u-font:'${s.univers.police}';--u-style:${s.univers.style}`; };
+  const ETAB = { etablissement: 'Peut venir dans votre établissement', salle: 'En salle, avec vos classes', a_confirmer: 'Accueil en établissement à confirmer' };
+  const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
+  function locate(ok) {
+    if (!navigator.geolocation) { toast('La localisation n’est pas disponible sur cet appareil : indiquez votre ville.'); return; }
+    navigator.geolocation.getCurrentPosition(ok, () => toast('Localisation refusée ou indisponible : indiquez plutôt votre ville.'), { timeout: 8000, maximumAge: 600000 });
   }
+  const fakeSend = (form, msg) => form.addEventListener('submit', e => {
+    e.preventDefault();
+    const bad = $$('[required]', form).find(i => !i.value.trim() || (i.type === 'email' && !/^\S+@\S+\.\S+$/.test(i.value)));
+    if (bad) { bad.focus(); toast('Il manque un champ : ' + ($(`label[for="${bad.id}"]`)?.textContent || 'à compléter') + '.'); return; }
+    toast(msg); form.reset();
+  });
 
-  /* ===================== agenda ===================== */
+  /* ===================== spectacles : la grille, lue avec la porte choisie ===================== */
+  const Grid = (() => {
+    const ul = $('#show-grid'), filt = $('#grid-filters');
+    const PATTERN = ['big', '', '', 'wide', 'wide', '', '', ''];
+    let f = 'all';
+    const match = s => f === 'all' || (f === 'tour' && !!nextOf(s.slug)) || (f === 'etab' && (s.etablissement || {}).mode === 'etablissement') || (f === 'new' && s.annee >= 2018);
+    function render() {
+      const k = state.profile, list = SHOWS.filter(match);
+      $('#grid-door').textContent = DOOR_NAME[k];
+      ul.innerHTML = list.map((s, i) => {
+        const nx = nextOf(s.slug);
+        let line;
+        if (k === 'pro') line = [s.annee ? 'création ' + s.annee : 'sur mesure', s.duree, cast(s) ? cast(s) + ' au plateau' : null].filter(Boolean).join(' · ');
+        else if (k === 'classe') line = (ETAB[(s.etablissement || {}).mode] || '') + (s.pass_culture ? ' · Pass Culture' : '');
+        else line = s.slug === 'actions-culturelles' ? 'Pour les établissements' : nx ? `Prochaine date : ${shortDate(nx.start)} · ${nx.commune}` : 'Pas de date annoncée';
+        const tag = s.annee === 2024 ? 'Nouvelle création' : nx ? 'En tournée' : s.annee ? 'Au répertoire' : 'Toute l’année';
+        return `<li class="${list.length >= 6 ? PATTERN[i] || '' : ''}"><button class="show-card" type="button" data-open="${s.slug}" style="${uvars(s)}">
+          <img src="${DATA.photos[s.slug]}" alt="" loading="lazy"><span class="sc-tag">${esc(tag)}</span>
+          <span class="sc-body"><span class="sc-title">${esc(s.titre)}</span><span class="sc-sub">${esc(s.sous_titre)}${s.annee ? ' · ' + s.annee : ''}</span><span class="sc-next">${esc(line)}</span></span></button></li>`;
+      }).join('') || '<li style="grid-column:1/-1"><p>Aucun spectacle ne correspond à ce filtre.</p></li>';
+    }
+    filt.addEventListener('click', e => {
+      const b = e.target.closest('[data-f]'); if (!b) return;
+      f = b.dataset.f; $$('[data-f]', filt).forEach(x => x.setAttribute('aria-pressed', String(x === b))); render();
+    });
+    return { render };
+  })();
+
+  /* ===================== accueil : prochainement, chiffres ===================== */
+  const Home = (() => {
+    function next() {
+      $('#next-strip').innerHTML = upcoming().slice(0, 10).map(r => {
+        const s = bySlug[r.slug], d = parse(r.start);
+        return `<li class="next-card"><button type="button" data-open="${r.slug}" style="${uvars(s)}" aria-label="${esc(s.titre)}, ${esc(dateText(r))}, ${esc(r.commune)}">
+          <span class="nc-day">${r.precision === 'month' ? '·' : d.getDate()}</span><span class="nc-mon">${MOIS[d.getMonth()]} ${d.getFullYear()}</span>
+          <span class="nc-t">${esc(s.titre)}</span><span class="nc-w">${esc(r.commune)} (${esc(r.dep)}) · ${r.type === 'scolaire' ? 'scolaire' : 'tout public'}</span></button></li>`;
+      }).join('');
+    }
+    function numbers() {
+      const st = DATA.stats, dl = $('#numbers');
+      const items = [[st.dates, 'dates publiées depuis 2016'], [st.communes, 'communes où la compagnie a joué'], [st.deps, 'départements'], [SHOWS.filter(s => s.annee).length, 'spectacles au répertoire'], [260, 'heures d’éducation artistique en 2023-2024']];
+      dl.innerHTML = items.map(([n, l]) => `<div><dt data-n="${n}">${motionOK() ? 0 : n}</dt><dd>${esc(l)}</dd></div>`).join('');
+      if (!motionOK()) return;
+      const io = new IntersectionObserver(es => {
+        if (!es[0].isIntersecting) return;
+        io.disconnect();
+        const t0 = performance.now(), els = $$('dt', dl);
+        const tick = now => { const e = easeOut(clamp((now - t0) / 1400, 0, 1)); els.forEach(el => { el.textContent = Math.round(Number(el.dataset.n) * e); }); if (e < 1) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+      }, { threshold: 0.4 });
+      io.observe(dl);
+    }
+    return { init() { next(); numbers(); } };
+  })();
+
+  /* ===================== agenda : liste, calendrier, carte ===================== */
   const Agenda = (() => {
     const box = $('#agenda-list'), count = $('#ag-count'), sel = $('#ag-show'), city = $('#ag-city'), form = $('#agenda-filters'), dl = $('#city-list');
     const cityIndex = new Map();
@@ -577,13 +882,15 @@
     dl.innerHTML = Array.from(cityIndex.values()).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(c => `<option value="${esc(c[0])}"></option>`).join('');
     SHOWS.filter(s => s.slug !== 'actions-culturelles').forEach(s => sel.insertAdjacentHTML('beforeend', `<option value="${s.slug}">${esc(s.titre)}</option>`));
     const f = { type: 'all', show: '', origin: null, originName: '' };
+    let mode = 'list', calMonth = null, calDay = null;
+    const filtered = () => upcoming().filter(r => (f.type === 'all' || r.type === f.type) && (!f.show || r.slug === f.show));
     function item(r, dist) {
       const s = bySlug[r.slug] || { titre: r.slug }, d = parse(r.start);
       const multi = r.precision === 'range' || (r.days && r.days.length > 1);
-      const pro = state.profile === 'pro' ? `<p class="date-pro">${[s.duree ? 'durée ' + s.duree : null, cast(s) ? cast(s) + ' comédiens au plateau' : null, r.n ? r.n + ' représentation' + (r.n > 1 ? 's' : '') : null].filter(Boolean).join(' · ')}</p>` : '';
-      const classe = state.profile === 'classe' && (s.cred76 || s.pass_culture) ? `<p class="date-pro">${[s.cred76 ? 'guide CRED76' : null, s.pass_culture ? 'Pass Culture, offre collective' : null].filter(Boolean).join(' · ')}</p>` : '';
+      const pro = state.profile === 'pro' ? `<p class="date-pro">${[s.duree ? 'durée ' + s.duree : null, cast(s) ? cast(s) + ' comédiens au plateau' : null, r.n ? plural(r.n, 'représentation') : null].filter(Boolean).join(' · ')}</p>` : '';
+      const classe = state.profile === 'classe' ? `<p class="date-pro">${[ETAB[(s.etablissement || {}).mode], s.cred76 ? 'guide CRED76' : null, s.pass_culture ? 'Pass Culture, offre collective' : null].filter(Boolean).join(' · ')}</p>` : '';
       const link = (r.links || [])[0];
-      return `<li class="date${r.isNew ? ' is-new' : ''}">
+      return `<li class="date${r.isNew ? ' is-new' : ''}" style="--sc:${s.univers ? s.univers.couleurs.scene : 'var(--line)'}">
         <div class="date-cal" aria-hidden="true"><span class="dow">${r.precision === 'month' ? 'mois' : JOURSC[d.getDay()]}</span><span class="day">${r.precision === 'month' ? '·' : d.getDate()}</span><span class="mon">${MOISC[d.getMonth()]}</span></div>
         <div class="date-main"><p class="date-show"><button class="linklike" type="button" data-open="${esc(r.slug)}">${esc(s.titre)}</button>
           <span class="badge ${r.type === 'scolaire' ? 'sco' : 'tp'}">${r.type === 'scolaire' ? 'Scolaire' : 'Tout public'}</span>${r.isNew ? '<span class="badge new">Nouvelle date</span>' : ''}</p>
@@ -593,13 +900,18 @@
           <button class="btn-sm" type="button" data-ics="${r.id}">Ajouter à mon agenda</button>
           ${r.lat != null ? `<a class="btn-sm" href="${osm(r.lat, r.lon)}" target="_blank" rel="noopener">Itinéraire</a>` : ''}</div></li>`;
     }
-    function render() {
-      let list = upcoming().filter(r => (f.type === 'all' || r.type === f.type) && (!f.show || r.slug === f.show));
-      let html = '';
+    function wireICS(el) {
+      $$('[data-ics]', el).forEach(b => b.addEventListener('click', () => {
+        const r = seasonRows.find(x => String(x.id) === b.dataset.ics); const s = bySlug[r.slug];
+        downloadICS(`${s.titre} – Compagnie Crescite`, r.start, r.end, `${r.venue || ''} ${r.commune} (${r.dep})`.trim(), r.details);
+      }));
+    }
+    function renderList() {
+      let list = filtered(), html = '';
       if (f.origin) {
         list = list.map(r => ({ r, d: r.lat != null ? km(f.origin[0], f.origin[1], r.lat, r.lon) : 1e9 })).sort((a, b) => a.d - b.d);
         html = `<ul class="dates">${list.map(x => item(x.r, x.d < 1e9 ? x.d : null)).join('')}</ul>`;
-        count.textContent = `${list.length} date${list.length > 1 ? 's' : ''}, de la plus proche à la plus lointaine de ${f.originName}.`;
+        count.textContent = `${plural(list.length, 'date')}, de la plus proche à la plus lointaine de ${f.originName}.`;
       } else {
         let month = '';
         list.forEach(r => {
@@ -608,17 +920,60 @@
           html += item(r, null);
         });
         if (month) html += '</ul>';
-        count.textContent = `${list.length} date${list.length > 1 ? 's' : ''} à venir${f.show ? ' pour ' + bySlug[f.show].titre : ''}${f.type !== 'all' ? (f.type === 'scolaire' ? ', scolaires' : ', tout public') : ''}.`;
+        count.textContent = `${plural(list.length, 'date')} à venir${f.show ? ' pour ' + bySlug[f.show].titre : ''}${f.type !== 'all' ? (f.type === 'scolaire' ? ', scolaires' : ', tout public') : ''}.`;
       }
       box.innerHTML = html || '<p>Aucune date ne correspond à ces filtres.</p>';
-      $$('[data-open]', box).forEach(b => b.addEventListener('click', () => Panel.open(b.dataset.open, { from: b })));
-      $$('[data-ics]', box).forEach(b => b.addEventListener('click', () => {
-        const r = seasonRows.find(x => String(x.id) === b.dataset.ics); const s = bySlug[r.slug];
-        downloadICS(`${s.titre} – Compagnie Crescite`, r.start, r.end, `${r.venue || ''} ${r.commune} (${r.dep})`.trim(), r.details);
-      }));
+      wireICS(box);
       const past = seasonRows.filter(r => r.end < todayISO);
       $('#past-note').textContent = past.length ? `Archivées automatiquement depuis le début de la saison : ${past.map(r => `${r.commune} (${dateText(r)})`).join(', ')}.` : '';
     }
+    function renderCal() {
+      const all = filtered(), list = all.filter(r => r.precision !== 'month'), fuzzy = all.length - list.length;
+      if (!calMonth) { calMonth = list[0] ? parse(list[0].start) : new Date(TODAY); calMonth.setDate(1); }
+      const y = calMonth.getFullYear(), m = calMonth.getMonth(), start = new Date(y, m, 1 - (new Date(y, m, 1).getDay() + 6) % 7);
+      const byDay = new Map();
+      list.forEach(r => (r.days && r.days.length ? r.days : [r.start]).forEach(d => { if (!byDay.has(d)) byDay.set(d, []); byDay.get(d).push(r); }));
+      let cells = '';
+      for (let i = 0; i < 42; i++) {
+        const d = new Date(start); d.setDate(start.getDate() + i);
+        if (i === 35 && d.getMonth() !== m) break;
+        const iso = isoOf(d), evs = byDay.get(iso) || [], out = d.getMonth() !== m;
+        cells += `<button type="button" class="cal-day${out ? ' out' : ''}${iso === todayISO ? ' today' : ''}${evs.length ? ' has' : ''}" data-day="${iso}" ${evs.length ? `aria-pressed="${iso === calDay}"` : 'disabled'} aria-label="${esc(longDate(iso))}${evs.length ? ', ' + plural(evs.length, 'date') : ''}">
+          <span class="cal-n">${d.getDate()}</span>${evs.slice(0, 2).map(r => { const s = bySlug[r.slug]; return `<span class="cal-ev" style="${uvars(s)}">${esc(s.titre)} · ${esc(r.commune)}</span>`; }).join('')}${evs.length > 2 ? `<span class="cal-more">+${evs.length - 2}</span>` : ''}</button>`;
+      }
+      const day = calDay && byDay.get(calDay);
+      $('#ag-cal').innerHTML = `<div class="cal-head"><button class="btn-sm" type="button" data-cal="-1" aria-label="Mois précédent">←</button><h2 aria-live="polite">${MOIS[m]} ${y}</h2><button class="btn-sm" type="button" data-cal="1" aria-label="Mois suivant">→</button></div>
+        <div class="cal-grid">${['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'].map(x => `<span class="cal-dow" aria-hidden="true">${x}</span>`).join('')}${cells}</div>
+        <div class="cal-detail" aria-live="polite">${day ? `<h3 class="month">${esc(longDate(calDay))}</h3><ul class="dates">${day.map(r => item(r, null)).join('')}</ul>` : '<p class="muted">Choisissez un jour marqué pour voir ses dates.</p>'}
+        ${fuzzy ? `<p class="muted">${plural(fuzzy, 'date')} au mois, sans jour précis : voir la liste.</p>` : ''}</div>`;
+      $$('[data-cal]', $('#ag-cal')).forEach(b => b.addEventListener('click', () => { calMonth = new Date(y, m + Number(b.dataset.cal), 1); calDay = null; renderCal(); }));
+      $$('[data-day]:not([disabled])', $('#ag-cal')).forEach(b => b.addEventListener('click', () => { calDay = b.dataset.day; renderCal(); $('#ag-cal .cal-detail').scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'nearest' }); }));
+      wireICS($('#ag-cal'));
+    }
+    function renderMap() {
+      const M = DATA.map, list = filtered().filter(r => r.xy), groups = new Map();
+      list.forEach(r => { const k = r.xy.join(','); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+      const pins = [...groups.entries()].map(([k, rs]) => {
+        const r = rs[0], col = bySlug[r.slug].univers.couleurs.scene;
+        return `<g class="ag-pin" tabindex="0" role="button" data-k="${k}" aria-label="${esc(r.commune)} : ${plural(rs.length, 'date')}"><circle cx="${r.xy[0]}" cy="${r.xy[1]}" r="${(6 + Math.min(8, rs.length * 1.4)).toFixed(1)}" fill="${col}"/></g>`;
+      }).join('');
+      $('#ag-map').innerHTML = `<svg viewBox="0 0 800 780" role="group" aria-label="Carte des prochaines dates"><path class="map-foreign" d="${M.belgium}"/><g>${M.depts.map(d => `<path class="map-land" d="${d.d}"/>`).join('')}</g><path class="map-outline" d="${M.outline}"/>${pins}</svg><div class="map-tip" id="ag-tip" hidden></div>`;
+      const shows = [...new Set(list.map(r => r.slug))];
+      $('#ag-legend').innerHTML = shows.map(sl => `<span><i style="--c:${bySlug[sl].univers.couleurs.scene}"></i>${esc(bySlug[sl].titre)}</span>`).join('') || '<span>Aucune date ne correspond.</span>';
+      const tip = $('#ag-tip');
+      const show = g => {
+        const rs = groups.get(g.dataset.k), [x, y] = rs[0].xy;
+        tip.innerHTML = `<strong>${esc(rs[0].commune)} (${esc(rs[0].dep)})</strong><ul>${rs.map(r => `<li>${esc(bySlug[r.slug].titre)} · ${esc(dateText(r))}</li>`).join('')}</ul>`;
+        tip.style.left = (x / 800 * 100) + '%'; tip.style.top = (y / 780 * 100) + '%'; tip.hidden = false;
+      };
+      $$('.ag-pin', $('#ag-map')).forEach(g => {
+        g.addEventListener('mouseenter', () => show(g)); g.addEventListener('focus', () => show(g));
+        g.addEventListener('mouseleave', () => { tip.hidden = true; }); g.addEventListener('blur', () => { tip.hidden = true; });
+        g.addEventListener('click', () => { const rs = groups.get(g.dataset.k); if (rs.length === 1) openShow(rs[0].slug, g); else show(g); });
+        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const rs = groups.get(g.dataset.k); openShow(rs[0].slug, g); } });
+      });
+    }
+    function render() { renderList(); if (mode === 'cal') renderCal(); if (mode === 'map') renderMap(); }
     form.addEventListener('change', e => {
       if (e.target.name === 'ag-type') f.type = e.target.value;
       if (e.target === sel) f.show = sel.value;
@@ -626,14 +981,112 @@
     });
     city.addEventListener('change', () => {
       const c = cityIndex.get(norm(city.value));
-      if (city.value && !c) { f.origin = null; count.textContent = `Ville inconnue : essayez une grande ville voisine.`; return; }
+      if (city.value && !c) { f.origin = null; count.textContent = 'Ville inconnue : essayez une grande ville voisine.'; return; }
       f.origin = c ? [c[1], c[2]] : null; f.originName = c ? c[0] : ''; render();
     });
-    form.addEventListener('reset', () => { setTimeout(() => { f.type = 'all'; f.show = ''; f.origin = null; render(); }, 0); });
+    $('#ag-geo').addEventListener('click', () => locate(p => { f.origin = [p.coords.latitude, p.coords.longitude]; f.originName = 'votre position'; city.value = ''; render(); }));
+    $('#ag-sub').addEventListener('click', () => toast('Dans la version réelle : un lien iCal à ajouter une fois pour toutes à Google Agenda, Apple Calendrier ou Outlook.'));
+    form.addEventListener('reset', () => { setTimeout(() => { f.type = 'all'; f.show = ''; f.origin = null; calDay = null; render(); }, 0); });
     form.addEventListener('submit', e => e.preventDefault());
-    function focusShow(slug) { sel.value = slug; f.show = slug; render(); $('#agenda').scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto' }); }
+    Tabs.wire($('[data-view="agenda"] .view-tabs'), tab => { mode = { 'agt-list': 'list', 'agt-cal': 'cal', 'agt-map': 'map' }[tab.id]; render(); });
+    function focusShow(slug) { sel.value = slug; f.show = slug; render(); location.hash = '#/agenda'; }
     function add(r) { seasonRows.push(r); render(); TourMap.refresh(); }
-    return { render, focusShow, add };
+    return { render, focusShow, add, lookup: name => cityIndex.get(norm(name)) || null };
+  })();
+
+  /* ===================== la compagnie : créations, troupe ===================== */
+  const Compagnie = (() => {
+    function timeline() {
+      const items = SHOWS.filter(s => s.annee).map(s => ({ y: s.annee, s }));
+      items.push({ y: 2016, fact: ['Le relevé commence', 'Première saison des dates publiées sur le site.'] });
+      items.push({ y: 2023, fact: ['260 heures', 'd’éducation artistique sur la saison 2023-2024.'] });
+      items.push({ y: 2026, fact: [plural(DATA.season.length, 'date'), 'annoncées pour la saison 2026-2027.'] });
+      items.sort((a, b) => a.y - b.y || (a.fact ? 1 : -1));
+      $('#timeline').innerHTML = items.map(it => it.s
+        ? `<li class="tl-item" style="${uvars(it.s)}"><span class="tl-year">${it.y}</span><span class="tl-dot"></span><button type="button" data-open="${it.s.slug}"><span class="t">${esc(it.s.titre)}</span><span class="s">${esc(it.s.sous_titre)}</span></button></li>`
+        : `<li class="tl-item fact"><span class="tl-year">${it.y}</span><span class="tl-dot" style="background:var(--fg-2)"></span><button type="button" tabindex="-1" aria-hidden="true" style="cursor:default"><span class="t">${esc(it.fact[0])}</span><span class="s">${esc(it.fact[1])}</span></button></li>`).join('');
+    }
+    function people() {
+      const actors = new Map(), crew = new Map();
+      SHOWS.forEach(s => {
+        (s.distribution || []).forEach(n => n.split(/\s+ou\s+/).forEach(x => { const k = x.trim(); if (!actors.has(k)) actors.set(k, new Set()); actors.get(k).add(s.slug); }));
+        (s.equipe || []).forEach(([role, v]) => v.split(/\s+et\s+/).forEach(x => { const k = x.trim(); if (!crew.has(k)) crew.set(k, { roles: new Set(), shows: new Set() }); crew.get(k).roles.add(role.toLowerCase()); crew.get(k).shows.add(s.slug); }));
+      });
+      const dots = set => `<span class="dots" aria-hidden="true">${[...set].map(sl => `<i style="--c:${bySlug[sl].univers.couleurs.scene}"></i>`).join('')}</span>`;
+      $('#people').innerHTML = [...actors.entries()].sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0], 'fr'))
+        .map(([n, set]) => `<li class="person"><b>${esc(n)}</b><span>${esc([...set].map(sl => bySlug[sl].titre).join(', '))}</span>${dots(set)}</li>`).join('');
+      $('#crew').innerHTML = [...crew.entries()].sort((a, b) => b[1].shows.size - a[1].shows.size || a[0].localeCompare(b[0], 'fr'))
+        .map(([n, o]) => `<li class="person"><b>${esc(n)}</b><span>${esc([...o.roles].join(', '))}</span>${dots(o.shows)}</li>`).join('');
+    }
+    return { init() { timeline(); people(); } };
+  })();
+
+  /* ===================== porte 1 : je viens voir ===================== */
+  const Voir = (() => {
+    let origin = null, originName = '';
+    function render() {
+      let list = upcoming().filter(r => r.type === 'tout_public');
+      if (origin) list = list.map(r => ({ ...r, d: r.lat != null ? km(origin[0], origin[1], r.lat, r.lon) : 1e9 })).sort((a, b) => a.d - b.d);
+      list = list.slice(0, 6);
+      $('#near-sub').textContent = origin ? `Les prochaines dates tout public, de la plus proche à la plus lointaine de ${originName}.` : 'Les prochaines dates tout public. Indiquez votre ville pour les classer par distance.';
+      $('#near-list').innerHTML = list.map(r => { const s = bySlug[r.slug]; return `<li><button type="button" data-open="${r.slug}" style="${uvars(s)}">
+        <span class="km">${origin && r.d < 1e9 ? `à ${Math.round(r.d)} km · ` : ''}${esc(dateText(r))}</span><span class="t">${esc(s.titre)}</span><span>${esc(r.venue ? r.venue + ', ' : '')}${esc(r.commune)} (${esc(r.dep)})</span></button></li>`; }).join('') || '<li>Aucune date tout public annoncée pour l’instant.</li>';
+    }
+    $('#near-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const c = Agenda.lookup($('#near-city').value);
+      if (!c) { toast('Ville inconnue : essayez une grande ville voisine.'); return; }
+      origin = [c[1], c[2]]; originName = c[0]; render();
+    });
+    $('#near-geo').addEventListener('click', () => locate(p => { origin = [p.coords.latitude, p.coords.longitude]; originName = 'votre position'; render(); }));
+    fakeSend($('#news-form'), 'Inscription notée : dans la version réelle, vous recevrez les dates près de chez vous.');
+    return { init: render };
+  })();
+
+  /* ===================== porte 2 : je programme ===================== */
+  const Programmer = (() => {
+    function table() {
+      const yes = v => v ? '<span class="yes">oui</span>' : '<span class="no">non</span>';
+      $('#rep-table').insertAdjacentHTML('beforeend', `<thead><tr><th scope="col">Spectacle</th><th scope="col">Création</th><th scope="col">Durée</th><th scope="col">Au plateau</th><th scope="col">Dans l’établissement</th><th scope="col">Pass Culture</th><th scope="col">CRED76</th><th scope="col">Dates 2026-2027</th></tr></thead>
+        <tbody>${SHOWS.map(s => `<tr><td><button class="linklike" type="button" data-open="${s.slug}">${esc(s.titre)}</button></td><td>${s.annee || '—'}</td><td>${esc(s.duree || 'à préciser')}</td>
+          <td>${cast(s) ? plural(cast(s), 'comédien') : '—'}</td><td>${esc({ etablissement: 'oui', salle: 'en salle', a_confirmer: 'à confirmer' }[(s.etablissement || {}).mode] || '—')}</td>
+          <td>${yes(s.pass_culture)}</td><td>${yes(s.cred76)}</td><td class="num">${DATA.season.filter(r => r.slug === s.slug).length}</td></tr>`).join('')}</tbody>`);
+    }
+    function gantt() {
+      const months = [8, 9, 10, 11, 0, 1, 2, 3, 4, 5, 6, 7].map((m, i) => ({ m, y: i < 4 ? 2026 : 2027 }));
+      const rows = SHOWS.filter(s => s.slug !== 'actions-culturelles').map(s => {
+        const on = months.map(({ m, y }) => seasonRows.some(r => r.slug === s.slug && (() => { const a = parse(r.start), b = parse(r.end); return a <= new Date(y, m + 1, 0) && b >= new Date(y, m, 1); })()));
+        const bars = []; on.forEach((v, i) => { if (v) { if (bars.length && bars[bars.length - 1][1] === i) bars[bars.length - 1][1] = i + 1; else bars.push([i, i + 1]); } });
+        const label = on.some(Boolean) ? months.filter((_, i) => on[i]).map(({ m }) => MOIS[m]).join(', ') : 'aucune date publiée';
+        return `<span class="gantt-name">${esc(s.titre)}</span><div class="gantt-row" role="img" aria-label="${esc(s.titre)} : ${esc(label)}" style="--c:${s.univers.couleurs.scene}">${bars.map(([a, b]) => `<i style="left:${(a / 12 * 100).toFixed(2)}%;width:${((b - a) / 12 * 100).toFixed(2)}%"></i>`).join('')}</div>`;
+      }).join('');
+      $('#gantt').innerHTML = `<span></span><div class="gantt-months" aria-hidden="true">${months.map(({ m }) => `<span><span class="m-l">${MOISC[m]}</span><span class="m-s">${MOIS[m][0].toUpperCase()}</span></span>`).join('')}</div>${rows}`;
+    }
+    function venues() {
+      $('#venues-pro').innerHTML = DATA.venuesPro.map(([l, c, d, n]) => `<li>${esc(l)}, ${esc(c)} <span>${plural(n, 'date')}</span></li>`).join('');
+    }
+    function form() {
+      $('#pf-shows').innerHTML = SHOWS.filter(s => s.annee).map(s => `<button class="chip" type="button" aria-pressed="false" data-s="${s.slug}">${esc(s.titre)}</button>`).join('');
+      $('#pf-shows').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true')); });
+      fakeSend($('#pro-form'), 'Demande prête : dans la version réelle, elle part à la chargée de diffusion avec les dossiers demandés.');
+    }
+    return { init() { table(); gantt(); venues(); form(); } };
+  })();
+
+  /* ===================== porte 3 : je fais venir dans mon établissement ===================== */
+  const Etablissements = (() => {
+    function groups() {
+      const G = [['etablissement', 'Peuvent venir dans votre établissement', 'var(--d-classe)'], ['salle', 'En salle, avec vos classes', 'var(--d-pro)'], ['a_confirmer', 'Accueil dans l’établissement à confirmer', 'var(--fg-2)']];
+      $('#etab-groups').innerHTML = G.map(([k, title, c]) => {
+        const list = SHOWS.filter(s => (s.etablissement || {}).mode === k);
+        if (!list.length) return '';
+        return `<div class="etab-group"><h3><i style="--c:${c}"></i>${esc(title)}</h3><ul class="mini-cards">${list.map(s => `<li><button type="button" data-open="${s.slug}" style="${uvars(s)};--img:url('${DATA.photos[s.slug]}')">
+          <span class="t">${esc(s.titre)}</span><span class="s">${esc(s.etablissement.texte)}</span></button></li>`).join('')}</ul></div>`;
+      }).join('');
+    }
+    function schools() { $('#venues-schools').innerHTML = DATA.venuesSchools.map(([l, c, d, n]) => `<li>${esc(l)}, ${esc(c)} <span>${plural(n, 'date')}</span></li>`).join(''); }
+    fakeSend($('#etab-form'), 'Projet noté : dans la version réelle, la compagnie vous recontacte avec une proposition et un devis.');
+    return { init() { groups(); schools(); } };
   })();
 
   /* ===================== carte de tournée ===================== */
@@ -783,12 +1236,22 @@
 
   /* ===================== espace troupe ===================== */
   const Troupe = (() => {
-    const who = 'Adrien Vada';
-    const mine = SHOWS.filter(s => (s.distribution || []).some(n => n.includes(who))).map(s => s.slug);
-    const rows = DATA.troupe.filter(r => mine.includes(r.slug) && r.jour >= todayISO).sort((a, b) => a.jour.localeCompare(b.jour) || (a.heure || '').localeCompare(b.heure || ''));
-    const days = [];
-    rows.forEach(r => { const k = r.jour + '|' + r.slug + '|' + r.lieu; let d = days.find(x => x.k === k); if (!d) { d = { k, jour: r.jour, slug: r.slug, lieu: r.lieu, ville: r.ville, items: [] }; days.push(d); } d.items.push(r); });
-    let chosen = days[0];
+    // chaque comédien choisit son nom (en vrai : sa connexion) et ne voit que ses dates
+    const names = [...new Set(SHOWS.flatMap(s => (s.distribution || []).flatMap(n => n.split(/\s+ou\s+/).map(x => x.trim()))))].sort((a, b) => a.localeCompare(b, 'fr'));
+    let who = store.get('who') || 'Adrien Vada', mine = [], days = [], chosen = null;
+    if (!names.includes(who)) who = names[0];
+    function compute() {
+      mine = SHOWS.filter(s => (s.distribution || []).some(n => n.split(/\s+ou\s+/).map(x => x.trim()).includes(who))).map(s => s.slug);
+      const rows = DATA.troupe.filter(r => mine.includes(r.slug) && r.jour >= todayISO).sort((a, b) => a.jour.localeCompare(b.jour) || (a.heure || '').localeCompare(b.heure || ''));
+      days = [];
+      rows.forEach(r => { const k = r.jour + '|' + r.slug + '|' + r.lieu; let d = days.find(x => x.k === k); if (!d) { d = { k, jour: r.jour, slug: r.slug, lieu: r.lieu, ville: r.ville, items: [] }; days.push(d); } d.items.push(r); });
+      chosen = days[0] || null;
+      $('#who-av').textContent = who.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+    const whoSel = $('#who-sel');
+    whoSel.innerHTML = names.map(n => `<option${n === who ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    whoSel.addEventListener('change', () => { who = whoSel.value; store.set('who', who); compute(); renderDates(); renderRoute(); });
+    compute();
     const pDates = $('#tp-dates'), pRoute = $('#tp-route'), pAdmin = $('#tp-admin');
     const selectTab = Tabs.wire($('.app-frame .tabs'));
     const coordsOf = ville => { const p = DATA.places.find(x => norm(x.c) === norm(ville)); return p ? [p.lat, p.lon] : null; };
@@ -797,8 +1260,8 @@
       const n = days.length, first = days[0];
       const inDays = first ? Math.round((parse(first.jour) - TODAY) / 864e5) : 0;
       const when = d => d.items[0].precision === 'month' ? `${MOIS[parse(d.jour).getMonth()]} ${parse(d.jour).getFullYear()}, dates à confirmer` : longDate(d.jour);
-      pDates.innerHTML = `<div class="rm-head"><h3>Mes dates</h3><span class="date-pro">${n} jours de jeu à venir${first ? ` · prochain dans ${inDays} jours` : ''} · ${esc(mine.map(s => bySlug[s].titre).join(' et '))}</span></div>
-        <ul class="my-dates">${days.map((d, i) => `<li class="my-date"><div><h4>${esc(when(d))} · ${esc(bySlug[d.slug].titre)}</h4><p>${esc(d.lieu)}</p><p>${esc(hours(d))}</p></div>
+      pDates.innerHTML = `<div class="rm-head"><h3>Mes dates</h3><span class="date-pro">${n ? `${n} jours de jeu à venir${first ? ` · prochain dans ${inDays} jours` : ''}` : 'aucune date publiée à venir'} · ${esc(mine.map(s => bySlug[s].titre).join(', ') || 'pas de distribution publiée')}</span></div>
+        <ul class="my-dates">${days.map((d, i) => `<li class="my-date" style="--sc:${bySlug[d.slug].univers.couleurs.scene}"><div><h4>${esc(when(d))} · ${esc(bySlug[d.slug].titre)}</h4><p>${esc(d.lieu)}</p><p>${esc(hours(d))}</p></div>
         <div class="date-actions"><span class="status">confirmée</span><button class="btn-sm" type="button" data-route="${i}">Feuille de route</button></div></li>`).join('')}</ul>
         <p style="margin-top:16px"><button class="btn-sm primary" type="button" id="sub-ical">S’abonner depuis mon agenda</button> <span class="example">démo</span></p>`;
       $$('[data-route]', pDates).forEach(b => b.addEventListener('click', () => { chosen = days[Number(b.dataset.route)]; renderRoute(); selectTab($('#tt-route')); $('#tt-route').focus(); }));
@@ -883,10 +1346,59 @@
     renderDates(); renderRoute(); renderAdmin();
   })();
 
+  /* ===================== navigation : des onglets, une page à la fois ===================== */
+  const Router = (() => {
+    const views = Object.fromEntries($$('.view').map(v => [v.dataset.view, v]));
+    const done = new Set();
+    const enter = { accueil: () => Home.init(), compagnie: () => Compagnie.init(), voir: () => Voir.init(), programmer: () => Programmer.init(), etablissements: () => Etablissements.init() };
+    let current = null;
+    const parseHash = () => { const [v, a] = decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('/'); return { v: v || 'accueil', a: a || null }; };
+    function moveInk() {
+      const ink = $('.tab-ink'), cur = $('.tab-link[aria-current="page"]'), nav = $('.tabs-nav');
+      if (!cur || !nav.offsetParent) { ink.style.opacity = '0'; return; }
+      const n = nav.getBoundingClientRect(), r = cur.getBoundingClientRect();
+      ink.style.opacity = '1'; ink.style.width = Math.max(20, r.width - 24) + 'px'; ink.style.transform = `translateX(${(r.left - n.left + 12).toFixed(1)}px)`;
+    }
+    function mark(v) {
+      $$('.tab-link, .door-link, .troupe-link, .tabbar a, .sheet-menu a').forEach(a => {
+        const t = (a.getAttribute('href') || '').replace(/^#\/?/, '').split('/')[0] || 'accueil';
+        if (t === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+      moveInk();
+    }
+    function show(v) {
+      if (!views[v]) v = 'accueil';
+      if (v === current) return;
+      const first = current === null, el = views[v];
+      Object.entries(views).forEach(([k, x]) => { x.hidden = k !== v; });
+      if (!done.has(v)) { done.add(v); if (enter[v]) enter[v](); }
+      if (v === 'spectacles') Grid.render();
+      if (!first && motionOK()) { el.classList.remove('is-entering'); void el.offsetWidth; el.classList.add('is-entering'); }
+      current = v; mark(v);
+      document.title = v === 'accueil' ? 'Crescite 2.0' : `${el.querySelector('h1')?.textContent || ''} · Crescite`;
+      if (!first) { window.scrollTo(0, 0); const h = el.querySelector('h1'); if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); } }
+    }
+    function route() {
+      const { v, a } = parseHash();
+      if (v === 'spectacles' && a && bySlug[a]) {
+        if (!current) show(DATA.armOf[a] ? 'accueil' : 'spectacles');
+        if (!Panel.isOpen() || Panel.current() !== a) Panel.open(a, { fromRoute: true });
+        return;
+      }
+      if (Panel.isOpen()) Panel.close(null, { fromRoute: true });
+      show(v);
+      if (DOORS_OF[v] && DOORS_OF[v] !== state.profile) setProfile(DOORS_OF[v], false);
+    }
+    window.addEventListener('hashchange', route);
+    window.addEventListener('resize', moveInk);
+    if (document.fonts) document.fonts.ready.then(moveInk);
+    return { route, moveInk, current: () => current };
+  })();
+
   /* ===================== démarrage ===================== */
   initMenu();
   initControls();
-  renderGrid();
+  $$('.home-door').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.door === state.profile)));
   Agenda.render();
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#panel').open) { e.preventDefault(); Panel.close(); } });
+  Router.route();
 })();
