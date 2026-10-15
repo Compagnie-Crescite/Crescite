@@ -723,7 +723,7 @@ footer p { margin: 0 0 6px; }
       porte(etab, `<ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${titre(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
         <p>${D.shows.filter(s => s.passCulture).length} spectacles sont proposés sur le Pass Culture (offre collective).</p>`);
     $('#compagnie-corps').innerHTML = `<div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
-      <dl class="chiffres"><div><dt>${D.stats.dates}</dt><dd>représentations depuis 2016</dd></div><div><dt>${D.stats.communes}</dt><dd>communes</dd></div><div><dt>${D.stats.departements}</dt><dd>départements</dd></div></dl>`;
+      <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl>`;
     $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
       <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
   }
@@ -778,7 +778,7 @@ footer p { margin: 0 0 6px; }
       current = s.slug;
       const pal = s.palette, i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
       const dates = D.dates.filter(d => d.slug === s.slug), n = s.distribution.length;
-      const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null].filter(Boolean);
+      const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null, s.representations ? ['Représentations', `${s.representations.n}, ${s.representations.quand}`] : null].filter(Boolean);
       const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
       const [voir, prog, etab] = D.doors;
       const choix = ['voir', 'programmer', 'etablissement'].includes(porte) ? porte : 'voir';

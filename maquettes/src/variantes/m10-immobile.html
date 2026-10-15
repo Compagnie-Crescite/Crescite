@@ -215,7 +215,7 @@ footer p { margin: 0 0 6px; }
       <section class="bloc" id="compagnie" aria-labelledby="h-co"><div class="wrap">
         <div class="entete"><h2 id="h-co">La compagnie</h2></div>
         <div class="compagnie"><div><p class="grand">${esc(C.presentation)}</p><p>Mise en scène de tout le répertoire : ${esc(C.miseEnScene)}.</p></div>
-          <dl class="chiffres"><div><dt>${D.stats.dates}</dt><dd>dates depuis 2016</dd></div><div><dt>${D.stats.communes}</dt><dd>communes</dd></div><div><dt>${D.stats.departements}</dt><dd>départements</dd></div></dl></div>
+          <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl></div>
       </div></section>`;
     main.querySelector('[data-tout]').addEventListener('click', e => { e.preventDefault(); $('#liste-dates').innerHTML = D.dates.map(ligneDate).join(''); e.currentTarget.remove(); });
     scene();

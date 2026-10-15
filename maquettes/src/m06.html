@@ -267,10 +267,10 @@ footer p { margin: 0 0 6px; }
       <section class="ouverture" aria-labelledby="h1"><div class="wrap">
         <div><p class="surtitre">Compagnie de théâtre · Rouen · depuis ${C.depuis}</p>
           <h1 id="h1">Des spectacles qui partent de Rouen et vont chercher leur public.</h1>${trait()}
-          <p class="chiffre"><b>${D.stats.dates} représentations</b> depuis 2016, dans <b>${D.stats.communes} communes</b> : des théâtres, des collèges, des lycées.</p>
+          <p class="chiffre"><b>${D.stats.representationsTexte} représentations</b> depuis ${D.stats.depuis}, des théâtres aux collèges et aux lycées, en France, en Belgique, en Suisse et en Tunisie.</p>
           <div class="saison"><p>Saison ${esc(D.saison)} : <b>${D.dates.length} dates dans ${communes} communes</b>.</p>
             <div class="boutons"><a class="bouton" href="#/" data-ancre="agenda">Les prochaines dates</a><a class="bouton second" href="#/" data-ancre="spectacles">Les spectacles</a></div></div></div>
-        ${carte(tous, D.dates, '#bc3e80', `La saison ${D.saison} · Depuis 2016`)}
+        ${carte(tous, D.dates, '#bc3e80', `La saison ${D.saison} · Les dates publiées sur le site depuis 2016`)}
       </div></section>
       <section class="bloc" id="spectacles" aria-labelledby="h-sp"><div class="wrap">
         <div class="entete"><h2 id="h-sp">Les spectacles</h2></div>
@@ -289,7 +289,7 @@ footer p { margin: 0 0 6px; }
       <section class="bloc" id="compagnie" aria-labelledby="h-co"><div class="wrap">
         <div class="entete"><h2 id="h-co">La compagnie</h2></div>
         <div class="compagnie"><div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
-          <dl class="chiffres"><div><dt>${D.stats.dates}</dt><dd>représentations depuis 2016</dd></div><div><dt>${D.stats.communes}</dt><dd>communes</dd></div><div><dt>${D.stats.departements}</dt><dd>départements</dd></div></dl></div>
+          <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl></div>
       </div></section>`;
     let ouvert = false;
     const liste = $('#liste-dates'), tout = $('#tout');
@@ -305,8 +305,8 @@ footer p { margin: 0 0 6px; }
     const s = bySlug[slug]; if (!s) return accueil();
     const i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
     const dates = D.dates.filter(d => d.slug === slug), n = s.distribution.length;
-    const passe = K.parSpectacle[slug] || [], nPasse = passe.reduce((a, [, k]) => a + k, 0);
-    const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null].filter(Boolean);
+    const passe = K.parSpectacle[slug] || [];
+    const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null, s.representations ? ['Représentations', `${s.representations.n}, ${s.representations.quand}`] : null].filter(Boolean);
     const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
     const choix = ['voir', 'programmer', 'etablissement'].includes(porte) ? porte : 'voir';
     document.title = `${s.titre} · Compagnie Crescite`;
@@ -325,8 +325,8 @@ footer p { margin: 0 0 6px; }
       <section class="bloc" aria-labelledby="h-ou"><div class="wrap">
         <div class="entete"><h2 id="h-ou">Où le voir</h2></div>
         <div class="ou-voir">
-          ${passe.length || dates.length ? carte(passe, dates, s.couleurTexteClair, `Les dates à venir · Déjà joué ici depuis ${Math.max(2016, s.annee || 2016)}`) : `<p class="resume">${esc(e.texte || 'Les actions culturelles se construisent avec chaque établissement.')}</p>`}
-          <div>${passe.length ? `<p class="resume">Déjà ${nPasse} représentation${nPasse > 1 ? 's' : ''} dans ${passe.length} commune${passe.length > 1 ? 's' : ''}.</p>` : ''}
+          ${passe.length || dates.length ? carte(passe, dates, s.couleurTexteClair, `Les dates à venir · Les dates passées publiées sur le site`) : `<p class="resume">${esc(e.texte || 'Les actions culturelles se construisent avec chaque établissement.')}</p>`}
+          <div>${s.representations ? `<p class="resume"><b>${s.representations.n} représentations</b> ${esc(s.representations.quand)}.${passe.length ? ` La carte en montre ${passe.length} commune${passe.length > 1 ? 's' : ''}, celles des dates publiées sur le site.` : ''}</p>` : ''}
             ${dates.length ? `<ul class="dates">${dates.map(d => ligneDate(d, true)).join('')}</ul>` : (passe.length ? '<p>Aucune date annoncée pour l’instant.</p>' : `<p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Actions culturelles')}">Construire un projet avec la compagnie</a></p>`)}</div>
         </div>
       </div></section>

@@ -379,7 +379,7 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
             <div><dt>Mise en scène</dt><dd>${fr(C.miseEnScene)}</dd></div>
             <div><dt>Implantation</dt><dd>${fr(C.ville)}, depuis ${C.depuis}</dd></div>
             <div><dt>Répertoire</dt><dd>${PIECES.length}${NB}spectacles</dd></div>
-            <div><dt>Tournées</dt><dd>${st.dates}${NB}dates publiées depuis 2016, dans ${st.communes}${NB}communes et ${st.departements}${NB}départements</dd></div>
+            <div><dt>Tournées</dt><dd>${st.representationsTexte}${NB}représentations depuis ${st.depuis}, au moins ${st.parAnMin}${NB}par an depuis ${st.parAnDepuis}, en France, en Belgique, en Suisse et en Tunisie</dd></div>
           </dl>
         </div>
         <div class="co-part"><h3 class="lbl">Partenaires</h3><ul class="plain">${C.partenaires.map(p => `<li>${fr(p)}</li>`).join('')}</ul></div>

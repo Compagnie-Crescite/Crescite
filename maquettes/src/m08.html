@@ -403,9 +403,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
         <p class="cie-text">${fr(C.presentation)}</p>
         <p class="cie-facts">Mise en scène&nbsp;: ${esc(C.miseEnScene)}</p>
         <ul class="stats">
-          <li><span class="stat-n">${st.dates}</span><span class="stat-l">dates publiées depuis 2016</span></li>
-          <li><span class="stat-n">${st.communes}</span><span class="stat-l">communes de tournée</span></li>
-          <li><span class="stat-n">${st.departements}</span><span class="stat-l">départements</span></li>
+          <li><span class="stat-n">${st.representationsCourt}</span><span class="stat-l">représentations depuis ${st.depuis}</span></li>
+          <li><span class="stat-n">${st.parAnMin}</span><span class="stat-l">par an au moins, depuis ${st.parAnDepuis}</span></li>
+          <li><span class="stat-n">${st.pays}</span><span class="stat-l">pays : ${st.paysListe.join(', ')}</span></li>
           <li><span class="stat-n">${st.heuresEAC}&nbsp;h</span><span class="stat-l">d’éducation artistique en 2023-2024</span></li>
         </ul>
       </div>

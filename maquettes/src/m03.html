@@ -622,11 +622,11 @@ svg { flex: none; }
         </div>
         <div class="stats">
           <ul>
-            <li><b>${esc(st.dates)}</b><span>dates de tournée</span></li>
-            <li><b>${esc(st.communes)}</b><span>communes</span></li>
-            <li><b>${esc(st.departements)}</b><span>départements</span></li>
+            <li><b>${esc(st.representationsCourt)}</b><span>représentations depuis ${st.depuis}</span></li>
+            <li><b>${esc(st.parAnMin)}</b><span>par an au moins, depuis ${st.parAnDepuis}</span></li>
+            <li><b>${esc(st.pays)}</b><span>pays : ${esc(st.paysListe.join(', '))}</span></li>
           </ul>
-          <p class="stats-note lab">Relevé des tournées depuis la saison 2016-2017, saison en cours comprise.</p>
+          <p class="stats-note lab">Chiffres de la compagnie au 31 juillet 2026. Le site ne publie qu’une partie des dates.</p>
         </div>
       </div>
     </section>`;

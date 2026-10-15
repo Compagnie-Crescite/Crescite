@@ -103,6 +103,21 @@ def photos(shows):
     return out
 
 
+# La diffusion, d'après le dossier artistique 2027-2028 de la compagnie (chiffres au 31 juillet 2026).
+# Le site ne publie qu'une partie des dates (environ un tiers) : ses lignes servent à la carte, pas aux totaux.
+DIFFUSION = {
+    "depuis": 2011, "representations": 1500, "texte": "plus de 1\u202f500", "court": "1\u202f500+",
+    "parAnMin": 86, "parAnDepuis": 2014, "pays": ["France", "Belgique", "Suisse", "Tunisie"],
+    "heuresEACAn": 200, "source": "dossier artistique 2027-2028, au 31 juillet 2026",
+    "parSpectacle": {
+        "imaginaire-force": (492, "au 31 juillet 2026"), "mon-royaume": (779, "au 31 juillet 2026"),
+        "macbeth-fatum": (40, "jusqu’en mai 2019"), "berenice": (67, "au 31 juillet 2026"),
+        "la-folle-idee": (13, "jusqu’en mars 2023"), "ci-gisait-cyrano": (176, "au 31 juillet 2026"),
+        "cleophene": (16, "au 31 juillet 2026"),
+    },
+}
+
+
 def build_data():
     shows = json.loads((ROOT / "prototype" / "src" / "shows.json").read_text(encoding="utf-8"))
     shows.sort(key=lambda s: proto.SHOW_ORDER.index(s["slug"]))
@@ -162,6 +177,7 @@ def build_data():
             # l'univers complet, pour les maquettes qui le mettent en scène : palette, motif et texte de l'effet signature
             "palette": c, "clair": bool(s["univers"].get("clair")), "motif": s["univers"]["motif"], "signature": s["univers"]["signature"],
             "prochaine": nxt, "nbDates": sum(1 for d in dates if d["slug"] == s["slug"]),
+            "representations": dict(zip(("n", "quand"), DIFFUSION["parSpectacle"][s["slug"]])) if s["slug"] in DIFFUSION["parSpectacle"] else None,
         })
     D = {
         "company": {
@@ -179,9 +195,16 @@ def build_data():
         ],
         "shows": out_shows,
         "dates": dates,
+        # dates, communes, départements : ce que le site publie depuis 2016 (pour la carte) ;
+        # representations…, parAnMin, pays : la diffusion réelle, d'après le dossier de la compagnie
         "stats": {"dates": len(perf), "communes": len({(r["commune"], r["departement"]) for r in perf}),
                   "departements": len({r["departement"] for r in perf if r["departement"] != "BE"}), "heuresEAC": 260,
-                  "datesSaison": len(dates)},
+                  "datesSaison": len(dates),
+                  "representations": DIFFUSION["representations"], "representationsTexte": DIFFUSION["texte"],
+                  "representationsCourt": DIFFUSION["court"], "depuis": DIFFUSION["depuis"],
+                  "parAnMin": DIFFUSION["parAnMin"], "parAnDepuis": DIFFUSION["parAnDepuis"],
+                  "pays": len(DIFFUSION["pays"]), "paysListe": DIFFUSION["pays"], "heuresEACAn": DIFFUSION["heuresEACAn"],
+                  "source": DIFFUSION["source"]},
         "saison": "2026-2027",
         "logo": logo_variants(),
         "arms": arms_data(),

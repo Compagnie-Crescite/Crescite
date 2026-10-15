@@ -566,9 +566,9 @@ ${SHOWS.map(chapitre).join('')}
         <p class="compagnie-ms">Mise en scène : ${esc(C.miseEnScene)}</p>
       </div>
       <dl class="chiffres">
-        <div><dt>dates de 2016 à 2027</dt><dd>${D.stats.dates}</dd></div>
-        <div><dt>communes</dt><dd>${D.stats.communes}</dd></div>
-        <div><dt>départements</dt><dd>${D.stats.departements}</dd></div>
+        <div><dt>représentations depuis ${D.stats.depuis}</dt><dd>${D.stats.representationsCourt}</dd></div>
+        <div><dt>représentations par an au moins, depuis ${D.stats.parAnDepuis}</dt><dd>${D.stats.parAnMin}</dd></div>
+        <div><dt>pays : ${D.stats.paysListe.join(', ')}</dt><dd>${D.stats.pays}</dd></div>
         <div><dt>heures d’éducation artistique en 2023-2024</dt><dd>${D.stats.heuresEAC}</dd></div>
       </dl>
     </div>

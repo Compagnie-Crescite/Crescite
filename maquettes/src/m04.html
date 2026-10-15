@@ -475,9 +475,9 @@ section[id],footer[id],#dossier{scroll-margin-top:24px}
           <p class="cie-text">Mise en scène : <strong>${esc(C.miseEnScene)}</strong></p>
         </div>
         <dl class="stats">
-          <div class="stat"><dt>représentations depuis la saison <span class="nw">2016-2017</span></dt><dd>${esc(st.dates)}</dd></div>
-          <div class="stat"><dt>communes où la compagnie a joué</dt><dd>${esc(st.communes)}</dd></div>
-          <div class="stat"><dt>départements</dt><dd>${esc(st.departements)}</dd></div>
+          <div class="stat"><dt>représentations depuis <span class="nw">${st.depuis}</span></dt><dd>${esc(st.representationsCourt)}</dd></div>
+          <div class="stat"><dt>représentations par an au moins, depuis ${st.parAnDepuis}</dt><dd>${esc(st.parAnMin)}</dd></div>
+          <div class="stat"><dt>pays : ${esc(st.paysListe.join(', '))}</dt><dd>${esc(st.pays)}</dd></div>
           <div class="stat"><dt>heures d’éducation artistique en <span class="nw">2023-2024</span></dt><dd>${esc(st.heuresEAC)}</dd></div>
         </dl>
       </div>

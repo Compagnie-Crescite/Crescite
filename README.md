@@ -77,6 +77,12 @@ code INSEE, département, coordonnées, lieu, public (scolaire ou tout public), 
 quand il est indiqué, texte d'origine et page source. Le classement scolaire / tout public est déduit des intitulés
 (collège, lycée, « scolaire ») : à vérifier pour les saisons 2016 à 2020.
 
+Ce relevé ne contient que les dates **publiées** sur le site : une ligne peut couvrir plusieurs représentations,
+et beaucoup de représentations n'y figurent pas. Le dossier artistique 2027-2028 de la compagnie compte plus de
+1 500 représentations depuis 2011 (au moins 86 par an depuis 2014), quand le site en liste 460 lignes depuis 2016,
+soit environ un tiers. Les maquettes affichent donc les totaux du dossier (`DIFFUSION` dans `maquettes/build.py`)
+et n'utilisent le relevé que pour l'agenda et les cartes.
+
 ## Base de données
 
 La compagnie n'a pas encore de base de données : il faut créer un projet Supabase à son nom (rattaché à

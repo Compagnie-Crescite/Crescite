@@ -330,7 +330,7 @@ a.d-title::after{content:"";position:absolute;inset:0}
 
   function home() {
     const st = D.stats;
-    const stats = [[st.dates, 'dates de représentation'], [st.communes, 'communes'], [st.departements, 'départements'], [st.heuresEAC, 'heures d’éducation artistique sur une saison']];
+    const stats = [[st.representationsCourt, 'représentations depuis ' + st.depuis], [st.parAnMin, 'représentations par an au moins, depuis ' + st.parAnDepuis], [st.pays, 'pays : ' + st.paysListe.join(', ')], [st.heuresEAC, 'heures d’éducation artistique sur une saison']];
     return `
     <section class="hero" aria-labelledby="h-home">
       <h1 class="hero-logo" id="h-home" tabindex="-1"><span class="sr">${esc(C.nom)}</span><span aria-hidden="true">${D.logo.octopusWord}</span></h1>

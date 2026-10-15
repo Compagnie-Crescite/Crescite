@@ -755,9 +755,9 @@ ul,ol{padding:0;list-style:none}
             <p>Mise en scène : ${esc(C.miseEnScene)}.</p>
           </div>
           <dl class="chiffres">
-            <div class="chiffre"><dt>dates jouées ou annoncées depuis 2016</dt><dd>${st.dates}</dd></div>
-            <div class="chiffre"><dt>communes sur la route</dt><dd>${st.communes}</dd></div>
-            <div class="chiffre"><dt>départements traversés</dt><dd>${st.departements}</dd></div>
+            <div class="chiffre"><dt>représentations depuis ${st.depuis}</dt><dd>${st.representationsCourt}</dd></div>
+            <div class="chiffre"><dt>représentations par an au moins, depuis ${st.parAnDepuis}</dt><dd>${st.parAnMin}</dd></div>
+            <div class="chiffre"><dt>pays : ${st.paysListe.join(', ')}</dt><dd>${st.pays}</dd></div>
             <div class="chiffre"><dt>heures d’éducation artistique en 2023-2024</dt><dd>${st.heuresEAC}</dd></div>
           </dl>
         </div>
