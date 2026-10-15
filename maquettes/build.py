@@ -233,7 +233,7 @@ def captures(names):
     with tempfile.TemporaryDirectory() as tmp:
         subprocess.run(["node", str(ROOT / "maquettes" / "shoot.mjs"), tmp, *names], check=True)
         for n in names:
-            for view, width in (("home", 1200), ("show", 1200), ("mobile", 390), ("mshow", 390), ("full", 640)):
+            for view, width in (("home", 1200), ("show", 1200), ("agenda", 1200), ("mobile", 390), ("mshow", 390), ("full", 640)):
                 f = Path(tmp) / f"{n}-{view}.png"
                 if not f.exists():
                     continue

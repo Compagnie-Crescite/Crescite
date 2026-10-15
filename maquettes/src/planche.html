@@ -131,7 +131,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
   <header class="tete"><div class="wrap">
     <p class="surtitre">Partie publique du site · proposition du 14 octobre 2026</p>
     <h1>Dix maquettes, de la plus sobre à la plus évoluée</h1>
-    <p class="chapo">Les dix partent des mêmes contenus (les huit spectacles, les 31 dates de la saison, les trois portes, la compagnie) et respectent les mêmes règles de clarté. Elles ne diffèrent que par la manière de les montrer : de la page imprimée à la pieuvre qu’on tire. La tentacule y est tantôt un thème (la 06 : les tournées qui partent de Rouen), tantôt un dessin (la 10).</p>
+    <p class="chapo">Les dix partent des mêmes contenus (les huit spectacles, les 31 dates de la saison, les trois portes, la compagnie) et respectent les mêmes règles de clarté. Elles ne diffèrent que par la manière de les montrer : de la page imprimée à la pieuvre qu’on tire. La tentacule y est tantôt un thème (la 06 : les tournées qui partent de Rouen), tantôt un dessin (la 10). Chacune est un petit site à onglets : Accueil, Spectacles, Agenda, La compagnie, Contact, et une page par spectacle.</p>
     <div class="deux">
       <div><h2>Pourquoi le prototype semblait « bordélique »</h2><ol>
         <li><b>Trop de choses se disputaient l’attention</b> sur le premier écran : huit étiquettes avec chacune trois lignes (titre, année et durée, prochaine date), une bulle d’aide, un bouton, des bras qui bougeaient seuls.</li>
@@ -255,7 +255,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
         <div class="actions">${dispo(m.n) ? `<button class="bouton" type="button" data-ouvrir="${m.n}">Ouvrir la maquette</button><button class="bouton second" type="button" data-ouvrir="${m.n}" data-tel="1">Au téléphone</button>${P.web ? `<a class="bouton second" href="${m.n}.html" target="_blank" rel="noopener">Lien direct ↗</a>` : ''}` : ''}</div></div>
       <p class="principe">${esc(m.principe)}</p>
       <div class="captures">
-        <div class="col bureau">${img(m.n, 'home', 'Accueil, écran d’ordinateur', `Accueil de la maquette ${num(m)}`)}${img(m.n, 'show', 'Page d’un spectacle (Bérénice)', `Page Bérénice de la maquette ${num(m)}`)}</div>
+        <div class="col bureau">${img(m.n, 'home', 'Accueil, écran d’ordinateur', `Accueil de la maquette ${num(m)}`)}${img(m.n, 'agenda', 'L’onglet Agenda', `Onglet Agenda de la maquette ${num(m)}`)}${img(m.n, 'show', 'Page d’un spectacle (Bérénice)', `Page Bérénice de la maquette ${num(m)}`)}</div>
         <div class="col">${img(m.n, 'mobile', 'Accueil, téléphone', `Accueil au téléphone, maquette ${num(m)}`)}${img(m.n, 'mshow', 'Ci-gisait Cyrano, téléphone', `Page Ci-gisait Cyrano au téléphone, maquette ${num(m)}`)}</div>
         <div class="col">${img(m.n, 'full', 'L’accueil en entier (faites défiler)', `Accueil complet de la maquette ${num(m)}`)}</div>
       </div>
