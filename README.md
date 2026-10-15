@@ -64,6 +64,9 @@ de clarté communes : un seul étage d’en-tête et quatre entrées au plus, de
 spectacle distingué par sa couleur et sa photo seulement, les prochaines dates à un clic. De la 01 (« Le programme
 de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis en ordre) ; la 06
 (« Les bras de la tournée ») fait de la tentacule un thème : la carte des tournées qui partent de Rouen.
+`maquettes/src/synthese.html` assemble la proposition retenue en un site de cinq pages : l’accueil et les cartes de
+la 06, l’agenda filtrable de la 03 relié à la carte, les portes à liens directs de la 04 (le site retient la porte
+choisie), et l’effet signature de chaque spectacle repris de la 10.
 `maquettes/dist/maquettes.html` réunit les captures, le principe, les forces et les limites de chacune, et ouvre
 chaque maquette en grand. Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
 

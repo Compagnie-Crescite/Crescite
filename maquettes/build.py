@@ -224,7 +224,7 @@ def main():
     D, photo_urls = build_data()
     DIST.mkdir(parents=True, exist_ok=True)
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    names = args or sorted(p.stem for p in SRC.glob("m[0-9][0-9].html"))
+    names = args or sorted(p.stem for p in SRC.glob("m[0-9][0-9].html")) + (["synthese"] if (SRC / "synthese.html").exists() else [])
     for n in names:
         out = DIST / f"{n}.html"
         out.write_text(assemble(n, D, photo_urls), encoding="utf-8")
