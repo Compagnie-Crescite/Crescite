@@ -8,6 +8,7 @@ Usage :
   python3 maquettes/build.py              toutes les maquettes et la planche (maquettes/dist/)
   python3 maquettes/build.py m03          une seule maquette : maquettes/dist/m03.html
   python3 maquettes/build.py --captures   les maquettes, leurs captures (Playwright, maquettes/dist/shots/) et la planche
+  python3 maquettes/build.py --pages      en plus, le site GitHub Pages dans docs/ (planche en index, une page par maquette)
 
 Les fichiers privés (logo 2.0, photos) sont lus dans private/ ; sans eux, des substituts neutres.
 """
@@ -243,6 +244,19 @@ def captures(names):
     print(f"captures : {len(names)} maquettes dans {shots.relative_to(ROOT)}")
 
 
+def pages(D, photo_urls, names):
+    """Le site GitHub Pages (docs/) : la planche en index, et chaque maquette en page à part, hors des moteurs de recherche."""
+    docs = ROOT / "docs"
+    docs.mkdir(exist_ok=True)
+    for n in names:
+        html = assemble(n, D, photo_urls).replace("<head>", '<head>\n<meta name="robots" content="noindex">', 1)
+        (docs / f"{n}.html").write_text(html, encoding="utf-8")
+    build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
+    (docs / ".nojekyll").write_text("", encoding="utf-8")
+    size = sum(f.stat().st_size for f in docs.iterdir()) / 1024 / 1024
+    print(f"pages : {len(names)} maquettes et la planche dans docs/ ({size:.1f} Mo)")
+
+
 def main():
     D, photo_urls = build_data()
     DIST.mkdir(parents=True, exist_ok=True)
@@ -258,10 +272,13 @@ def main():
     planche = SRC / "planche.html"
     if not args and planche.exists():
         build_planche(D, photo_urls, names)
+        if "--pages" in sys.argv:
+            pages(D, photo_urls, names)
 
 
-def build_planche(D, photo_urls, names):
-    """La planche : les dix maquettes côte à côte, captures comprises, chacune ouvrable en grand."""
+def build_planche(D, photo_urls, names, web=False, dest=None):
+    """La planche : les dix maquettes côte à côte, captures comprises, chacune ouvrable en grand.
+    En fichier, elle embarque chaque maquette ; en ligne (web), elle ouvre les pages publiées à côté d'elle."""
     from PIL import Image
     shots = DIST / "shots"
     sources, images, sizes = {}, {}, {}
@@ -271,9 +288,12 @@ def build_planche(D, photo_urls, names):
             images[f.stem] = "data:image/webp;base64," + base64.b64encode(f.read_bytes()).decode()
             sizes[f.stem] = list(Image.open(f).size)
     html = (SRC / "planche.html").read_text(encoding="utf-8")
-    payload = json.dumps({"D": dict(D, photos=photo_urls), "sources": sources, "images": images, "sizes": sizes}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    data = {"web": True, "pages": names} if web else {"D": dict(D, photos=photo_urls), "sources": sources}
+    payload = json.dumps(dict(data, images=images, sizes=sizes), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace("/*__PLANCHE__*/null", payload)
-    out = DIST / "maquettes.html"
+    if web:
+        html = html.replace("<head>", '<head>\n<meta name="robots" content="noindex">', 1)
+    out = dest or DIST / "maquettes.html"
     out.write_text(html, encoding="utf-8")
     print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko), {len(images)} captures")
 

@@ -166,7 +166,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
   </div></section>
   <div id="synthese"></div>
 </main>
-<footer><div class="wrap">Maquettes construites avec les vrais contenus du site et la base des dates de tournée. Photos et logo 2.0 : usage interne, ne pas diffuser.</div></footer>
+<footer><div class="wrap">Maquettes de travail pour la refonte de crescite.fr, construites avec les vrais contenus du site, la base des dates de tournée et le dossier artistique 2027-2028 de la compagnie.</div></footer>
 
 <dialog id="vue" aria-labelledby="vue-titre">
   <div class="vue-barre"><strong id="vue-titre"></strong>
@@ -229,7 +229,9 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
   ];
   const num = m => m.num || m.n.slice(1);
   const pts = (v, nom) => `<span class="pts" aria-label="${nom} : ${v} sur 3">${[1, 2, 3].map(k => `<i class="${k <= v ? 'p' : ''}" aria-hidden="true"></i>`).join('')}</span>`;
-  $('#sommaire').innerHTML = M.map(m => `<a href="#${m.n}">${m.n.slice(1)}</a>`).join('') + '<a href="#recommandation">Conseil</a>' + (P.sources.synthese ? '<a href="#synthese-a">Synthèse</a>' : '');
+  // la planche en fichier embarque chaque maquette ; la planche en ligne (P.web) ouvre les pages publiées à côté d'elle
+  const dispo = n => (P.web ? (P.pages || []).includes(n) : !!(P.sources && P.sources[n]));
+  $('#sommaire').innerHTML = M.map(m => `<a href="#${m.n}">${m.n.slice(1)}</a>`).join('') + '<a href="#recommandation">Conseil</a>' + (dispo('synthese') ? '<a href="#synthese-a">Synthèse</a>' : '');
   $('#echelle tbody').innerHTML = M.map(m => `<tr><td class="n">${m.n.slice(1)}</td><td class="nom"><a href="#${m.n}">${esc(m.nom)}</a></td><td>${esc(m.voit)}</td>
     <td class="pts">${pts(m.mvt, 'Mouvement')}</td><td class="pts">${pts(m.pieuvre, 'Tentacules')}</td><td class="pts">${pts(m.effort, 'Effort')}</td></tr>`).join('');
   const dim = k => (P.sizes && P.sizes[k] ? ` width="${P.sizes[k][0]}" height="${P.sizes[k][1]}"` : '');
@@ -250,7 +252,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
     extras: [{ titre: 'Les autres pages', items: [['synthese-extra1', 'L’agenda : filtres, recherche, liste par mois et carte reliée'], ['synthese-extra2', 'Une commune choisie sur la carte : la liste ne garde que ses dates'], ['synthese-extra3', 'La Folle Idée : « Où le voir », les tournées passées'], ['synthese-extra4', 'Les spectacles, filtrés « Dans votre établissement »']] }] };
   const article = m => `<article class="maq${m.num === 'S' ? ' syn' : ''}" id="${m.n === 'synthese' ? 'synthese-a' : m.n}" aria-labelledby="t-${m.n}"><div class="wrap">
       <div class="maq-tete"><span class="maq-n" aria-hidden="true">${num(m)}</span><div><p class="niv">${esc(m.niveau)}</p><h2 id="t-${m.n}">${esc(m.nom)}</h2></div>
-        <div class="actions">${P.sources[m.n] ? `<button class="bouton" type="button" data-ouvrir="${m.n}">Ouvrir la maquette</button><button class="bouton second" type="button" data-ouvrir="${m.n}" data-tel="1">Au téléphone</button>` : ''}</div></div>
+        <div class="actions">${dispo(m.n) ? `<button class="bouton" type="button" data-ouvrir="${m.n}">Ouvrir la maquette</button><button class="bouton second" type="button" data-ouvrir="${m.n}" data-tel="1">Au téléphone</button>${P.web ? `<a class="bouton second" href="${m.n}.html" target="_blank" rel="noopener">Lien direct ↗</a>` : ''}` : ''}</div></div>
       <p class="principe">${esc(m.principe)}</p>
       <div class="captures">
         <div class="col bureau">${img(m.n, 'home', 'Accueil, écran d’ordinateur', `Accueil de la maquette ${num(m)}`)}${img(m.n, 'show', 'Page d’un spectacle (Bérénice)', `Page Bérénice de la maquette ${num(m)}`)}</div>
@@ -262,7 +264,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
         <div class="moins"><h3>Ce qui coince</h3><ul>${m.moins.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>
     </div></article>`;
   $('#maquettes').innerHTML = M.map(article).join('');
-  if (P.sources.synthese) $('#synthese').innerHTML = article(SYN);
+  if (dispo('synthese')) $('#synthese').innerHTML = article(SYN);
   $('#reco-texte').innerHTML = `<p><b>La 06 comme base.</b> C’est la synthèse : un site aussi clair que la 02, où le thème tentaculaire dit quelque chose de vrai sur la compagnie, qui part de Rouen et va chercher son public jusque dans les classes, au lieu d’être un décor. Les cartes servent aussi les programmateurs et les établissements.</p>
     <ol>
       <li><b>L’accueil de la <a href="#m06">06</a></b> : la phrase, les chiffres, la carte des tournées, puis les spectacles.</li>
@@ -277,7 +279,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
 
 
   /* ouvrir une maquette : la page assemblée avec ses données, dans un cadre plein écran */
-  const data = JSON.stringify(P.D).replace(/<\//g, '<\\/');
+  const data = P.web ? '' : JSON.stringify(P.D).replace(/<\//g, '<\\/');
   // dans un cadre srcdoc, les liens « #/… » se résoudraient sur l'adresse de la planche : on fixe la base
   const page = n => P.sources[n].replace('/*__DATA__*/null', () => data).replace(/<head[^>]*>/i, h => h + '<base href="about:srcdoc">');
   const vue = $('#vue'), cadre = $('#vue-cadre');
@@ -287,7 +289,8 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
     if (o) {
       const m = [...M, SYN].find(x => x.n === o.dataset.ouvrir);
       $('#vue-titre').textContent = `${num(m)} · ${m.nom}`;
-      cadre.srcdoc = page(m.n); taille(o.dataset.tel ? 'tel' : 'bureau');
+      if (P.web) cadre.src = `${m.n}.html`; else cadre.srcdoc = page(m.n);
+      taille(o.dataset.tel ? 'tel' : 'bureau');
       vue.showModal(); return;
     }
     const l = e.target.closest('[data-loupe]');
@@ -295,7 +298,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
   });
   vue.querySelectorAll('[data-taille]').forEach(b => b.addEventListener('click', () => taille(b.dataset.taille)));
   $('#vue-fermer').addEventListener('click', () => vue.close());
-  vue.addEventListener('close', () => { cadre.removeAttribute('srcdoc'); });
+  vue.addEventListener('close', () => { cadre.removeAttribute('srcdoc'); cadre.src = 'about:blank'; });
   $('#loupe').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 
   /* le sommaire suit la lecture */
@@ -303,7 +306,7 @@ dialog::backdrop { background: rgba(10, 5, 8, .82); }
   const obs = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) liens.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id)); }), { rootMargin: '-45% 0px -50% 0px' });
   document.querySelectorAll('article.maq, #recommandation').forEach(el => obs.observe(el));
   // la synthèse : annoncée à la fin de la recommandation
-  if (P.sources.synthese) $('#reco-texte').insertAdjacentHTML('beforeend', '<p><a href="#synthese-a"><b>Voir la synthèse assemblée →</b></a></p>');
+  if (dispo('synthese')) $('#reco-texte').insertAdjacentHTML('beforeend', '<p><a href="#synthese-a"><b>Voir la synthèse assemblée →</b></a></p>');
 })();
 </script>
 </body>

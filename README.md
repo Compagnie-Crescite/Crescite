@@ -68,7 +68,12 @@ de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le 
 la 06, l’agenda filtrable de la 03 relié à la carte, les portes à liens directs de la 04 (le site retient la porte
 choisie), et l’effet signature de chaque spectacle repris de la 10.
 `maquettes/dist/maquettes.html` réunit les captures, le principe, les forces et les limites de chacune, et ouvre
-chaque maquette en grand. Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
+chaque maquette en grand.
+
+**En ligne.** `python3 maquettes/build.py --pages` écrit le site GitHub Pages dans `docs/` : la planche en page
+d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.html`…), exclues des moteurs de
+recherche. Ces pages embarquent le logo 2.0 et les photos : leur publication a été décidée par la compagnie.
+Adresse : https://adrienvada.github.io/Crescite/ (Pages servi depuis le dossier `docs/` de la branche principale). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
 
 ## Données
 
