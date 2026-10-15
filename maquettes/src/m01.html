@@ -25,13 +25,13 @@ img{display:block;max-width:100%}
 a{color:inherit;text-decoration-line:underline;text-decoration-thickness:1px;text-underline-offset:.2em;text-decoration-color:var(--rule)}
 @media (hover:hover){a:hover{color:var(--mag);text-decoration-color:currentColor}.menu:hover,.brand:hover .brand-n,.pg-next:hover .lbl{color:var(--mag)}}
 :focus-visible{outline:2px solid var(--mag);outline-offset:3px}
-main:focus,section:focus,footer:focus{outline:none}
+main:focus,section:focus,footer:focus,h1[tabindex="-1"]:focus{outline:none}
 sup{font-size:.62em;line-height:0;vertical-align:.52em;margin-left:.02em}
 i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
 .sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .skip{position:absolute;left:var(--m);top:-4rem;background:var(--paper);padding:.5rem 0;z-index:2}
 .skip:focus{top:.5rem}
-.sc,.lbl,.sec-h,.c-pub,.ag thead th,.mrow th,.facts dt,.f-l{font-variant-caps:all-small-caps;letter-spacing:.07em;font-weight:520}
+.sc,.lbl,.sec-h,.c-pub,.ag thead th,.facts dt,.f-l{font-variant-caps:all-small-caps;letter-spacing:.07em;font-weight:520}
 .ac{font-variant-caps:all-small-caps;letter-spacing:.04em;font-weight:500}
 .nw{white-space:nowrap}
 .af{font-style:italic;color:var(--ink2)}
@@ -48,20 +48,32 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
 .octo{display:block;width:34px}
 .octo svg{display:block;width:100%;height:auto}
 .brand-n{font-weight:500;letter-spacing:.005em}
-.nav ul{display:flex;gap:2.25rem}
-.nav a{text-decoration:none}
+.nav{align-self:stretch;margin-bottom:-1px}
+.nav ul{display:flex;gap:2.25rem;height:100%}
+.nav li{display:flex}
+.nav a{display:flex;align-items:center;text-decoration:none}
+.nav a[aria-current="page"]{box-shadow:inset 0 -2px 0 var(--mag)}
 .menu{display:none;font:inherit;color:var(--ink);background:none;border:0;padding:.5rem 0;cursor:pointer}
 
 .hero{padding-top:var(--sec)}
 .hero-t{grid-column:1/span 9;font-size:var(--fs-hero);line-height:1.15;letter-spacing:-.012em;text-wrap:balance}
 .hero-m{grid-column:1/span 9;margin-top:var(--s3);color:var(--ink2);font-variant-numeric:tabular-nums}
 
-.sec{margin-top:var(--sec);border-top:1px solid var(--ink);padding-top:var(--s1);scroll-margin-top:var(--s2)}
-.sec-h{font-size:var(--fs-m);line-height:2rem;font-weight:500;letter-spacing:.08em}
-.sec-h .num{display:inline-block;width:calc((100% + var(--g)) / 12);color:var(--mag)}
+.pg-h{padding-top:var(--sec)}
+.pg-t{grid-column:1/-1;font-size:var(--fs-show);line-height:1.02;font-weight:400;letter-spacing:-.018em;text-wrap:balance}
+.pg-l{grid-column:1/span 8;margin-top:var(--s3);font-size:var(--fs-m);line-height:2.125rem;color:var(--ink2);text-wrap:pretty}
+.pg-l a{color:var(--ink)}
+
+.sec{margin-top:var(--sec);border-top:1px solid var(--ink);padding-top:var(--s1)}
+.sec-h{display:flex;align-items:baseline;font-size:var(--fs-m);line-height:2rem;font-weight:500;letter-spacing:.08em}
+.sec-h .num{flex:none;min-width:calc((100% + var(--g)) / 12);padding-right:.5em;color:var(--mag)}
 .sec-b{margin-top:var(--s4)}
+.sec--m{margin-top:var(--s4)}
+.sec--m1{margin-top:var(--sec)}
+.sec--m .sec-b{margin-top:var(--s2)}
 .more{margin-top:var(--s2)}
 .more a,.door-a a,.pg-back{text-decoration:none}
+.intro{max-width:40em;color:var(--ink2)}
 
 .ag{display:block;width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums lining-nums}
 .ag caption{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -71,15 +83,13 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
 .ag tbody:last-child tr:last-child{border-bottom:1px solid var(--rule)}
 .ag th,.ag td{display:block;padding:0;text-align:left;font-weight:400;min-width:0}
 .ag thead th{color:var(--ink2);font-weight:500}
+.ag--nh thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .c-date{grid-column:1/span 3}
 .c-show{grid-column:4/span 3}
 .c-place{grid-column:7/span 4}
 .c-pub{grid-column:11/span 2;color:var(--ink2);font-weight:500}
 .ag--one .c-place{grid-column:4/span 5}
 .ag--one .c-pub{grid-column:9/span 4}
-.mrow{padding-top:var(--s3)!important;border-top:0!important}
-.mrow th{grid-column:1/-1;font-weight:520}
-.ag tbody + tbody .mrow{padding-top:var(--s4)!important}
 .d1{display:block;white-space:nowrap}
 .wd{display:inline-block;width:2.2em}
 .dn{display:inline-block;width:1.1em;text-align:right}
@@ -97,6 +107,7 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
 .ix-y{width:2.6em}
 .ix-d{width:3.3em;text-align:right}
 .ix-ph{display:none}
+.ix-note{grid-column:1/span 9;margin-top:var(--s2);color:var(--ink2)}
 @media (hover:hover) and (pointer:fine) and (min-width:1024px){
   .ix:hover,.ix:hover .ix-st,.ix:hover .ix-m,.ix:focus-visible,.ix:focus-visible .ix-st,.ix:focus-visible .ix-m{color:var(--mag)}
   .ix:hover .ix-ph,.ix:focus-visible .ix-ph{display:block;position:absolute;left:calc(100% + var(--g));top:50%;width:200px;transform:translateY(-50%);pointer-events:none}
@@ -105,6 +116,7 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
 
 .doors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--g)}
 .door{display:grid;grid-template-rows:subgrid;grid-row:span 3;align-content:start}
+.doors--c .door{grid-row:span 4}
 .door-t{font-size:var(--fs-m);line-height:2rem;font-style:italic;font-weight:400;margin-bottom:var(--s1)}
 .door .door-a{margin-top:var(--s2)}
 .door .kv{margin-top:var(--s1)}
@@ -125,8 +137,19 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
 .kv dt{font-variant-caps:all-small-caps;letter-spacing:.07em;font-weight:520;color:var(--ink2)}
 .kv dd{margin:0}
 
-.site-f{margin-top:var(--sec);border-top:1px solid var(--rule);padding-block:var(--s2) var(--s4);font-size:var(--fs-s);line-height:1.5rem;color:var(--ink2);scroll-margin-top:var(--s2)}
-.f-c{grid-column:span 4}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--g);row-gap:var(--s2)}
+.figs li{border-top:1px solid var(--rule);padding-top:var(--s1)}
+.fig-n{display:block;font-size:var(--fs-hero);line-height:1.15;letter-spacing:-.01em;font-variant-numeric:lining-nums}
+.fig-l{display:block;margin-top:.5rem;color:var(--ink2)}
+.src{margin-top:var(--s2);font-size:var(--fs-s);line-height:1.5rem;color:var(--ink2)}
+.cast{margin-top:var(--s3);columns:3;column-gap:var(--g)}
+.cast li{break-inside:avoid;padding-bottom:var(--s1)}
+.cast-n{display:block}
+.cast-s{display:block;font-size:var(--fs-s);line-height:1.5rem;color:var(--ink2)}
+
+.site-f{margin-top:var(--sec);border-top:1px solid var(--rule);padding-block:var(--s2) var(--s4);font-size:var(--fs-s);line-height:1.5rem;color:var(--ink2)}
+.site-f .grid{row-gap:var(--s2)}
+.f-c{grid-column:span 3}
 .f-l{display:block;color:var(--ink);font-weight:520}
 .f-c p + p{margin-top:var(--s1)}
 
@@ -154,28 +177,31 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
 .pg-back{grid-column:1/span 4}
 .pg-next{grid-column:9/span 4;text-decoration:none}
 .pg-next .lbl{color:var(--ink2)}
-.pg-t{display:block;margin-top:.25rem;font-size:var(--fs-l);line-height:2.625rem;font-style:italic}
+.pg-t2{display:block;margin-top:.25rem;font-size:var(--fs-l);line-height:2.625rem;font-style:italic}
 
 @media (max-width:1023px){
   :root{--g:24px}
-  .hero-t,.hero-m{grid-column:1/span 11}
-  .ix-list{grid-column:1/-1}
+  .hero-t,.hero-m,.pg-l{grid-column:1/span 11}
+  .ix-list,.ix-note{grid-column:1/-1}
   .ix{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"t m" "s s"}
   .co-text{grid-column:1/span 7}
   .co-part{grid-column:8/span 5}
   .show-txt{grid-column:1/span 7}
   .facts-col{grid-column:9/span 4}
+  .cast{columns:2}
+  .f-c{grid-column:span 6}
 }
 @media (max-width:759px){
   :root{--g:16px}
   .menu{display:block}
-  .nav{display:none;flex-basis:100%}
+  .nav{display:none;flex-basis:100%;align-self:auto;margin-bottom:0}
   .nav.open{display:block}
-  .nav ul{flex-direction:column;gap:0;padding-bottom:var(--s1)}
-  .nav li{border-top:1px solid var(--rule)}
+  .nav ul{flex-direction:column;gap:0;height:auto;padding-bottom:var(--s1)}
+  .nav li{display:block;border-top:1px solid var(--rule)}
   .nav a{display:block;padding-block:.625rem}
-  .hero-t,.hero-m{grid-column:1/-1}
-  .sec-h .num{width:2.6em}
+  .nav a[aria-current="page"]{box-shadow:none;color:var(--mag);font-weight:520}
+  .hero-t,.hero-m,.pg-l{grid-column:1/-1}
+  .sec-h .num{min-width:3.25em}
   .sec-b{margin-top:var(--s3)}
   .ag thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .ag tr{grid-template-columns:minmax(0,1fr) auto;column-gap:var(--s1)}
@@ -184,7 +210,6 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
   .ag .c-show,.ag .c-place,.ag--one .c-place{grid-column:1/-1}
   .ag .c-show{margin-top:.25rem}
   .ag--one .c-place{margin-top:.25rem}
-  .ag tbody:first-of-type .mrow{padding-top:0!important}
   .ix{grid-template-columns:minmax(0,1fr);grid-template-areas:"t" "s" "m"}
   .ix-t{font-size:var(--fs-m);line-height:2rem}
   .ix-y,.ix-d{width:auto}
@@ -193,12 +218,13 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
   .door{display:block}
   .door + .door{margin-top:var(--s3)}
   .door .door-a{margin-top:var(--s1)}
+  .figs{grid-template-columns:minmax(0,1fr)}
+  .cast{columns:1}
   .co-text,.co-part,.show-txt,.facts-col,.f-c,.pg-back,.pg-next,.exergue,.prose,.mentions{grid-column:1/-1}
   .show-txt{display:contents}
   .facts-col{order:1}
   .mentions{order:2}
   .co-part,.facts-col{margin-top:var(--s3)}
-  .f-c + .f-c{margin-top:var(--s2)}
   .show-ph{margin-inline:calc(-1 * var(--m))}
   .show-ph figcaption{padding-inline:var(--m)}
   .pg-next{margin-top:var(--s2)}
@@ -216,16 +242,16 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
     <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
     <nav class="nav" id="nav" aria-label="Navigation principale">
       <ul>
-        <li><a href="#repertoire">Spectacles</a></li>
-        <li><a href="#agenda">Agenda</a></li>
-        <li><a href="#compagnie">La compagnie</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a href="#/spectacles">Spectacles</a></li>
+        <li><a href="#/agenda">Agenda</a></li>
+        <li><a href="#/compagnie">La compagnie</a></li>
+        <li><a href="#/contact">Contact</a></li>
       </ul>
     </nav>
   </div>
 </header>
 <main id="main" tabindex="-1"></main>
-<footer class="site-f" id="contact" tabindex="-1">
+<footer class="site-f">
   <div class="wrap grid" id="foot"></div>
 </footer>
 <script>const D = /*__DATA__*/null;</script>
@@ -236,6 +262,8 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
   const WD = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
   const MO = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
   const ML = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const ROM = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+  const NUMW = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix', 'onze', 'douze'];
   const AR = {
     r: '<svg class="ar" viewBox="0 0 18 10" aria-hidden="true" focusable="false"><path d="M0 5h16.6M12.4 .8 16.6 5l-4.2 4.2"/></svg>',
     l: '<svg class="ar" viewBox="0 0 18 10" aria-hidden="true" focusable="false"><path d="M18 5H1.4M5.6 .8 1.4 5l4.2 4.2"/></svg>',
@@ -249,8 +277,10 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
   const isPiece = s => !!(s.annee || (s.distribution && s.distribution.length));
   const PIECES = SHOWS.filter(isPiece);
   const main = document.getElementById('main');
+  const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const cap = v => v.charAt(0).toUpperCase() + v.slice(1);
   function fr(v, works) {
     let h = esc(v)
       .replace(/«\s*/g, '«' + NB).replace(/\s*»/g, NB + '»')
@@ -328,62 +358,113 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
   function row(r, one) {
     return `<tr role="row"><td role="cell" class="c-date">${dateCell(r)}</td>${one ? '' : `<td role="cell" class="c-show"><a href="#/spectacle/${esc(r.slug)}">${fr(r.titre)}</a></td>`}<td role="cell" class="c-place">${placeCell(r)}</td><td role="cell" class="c-pub">${pub(r)}</td></tr>`;
   }
-  function agenda(rows, { one = false, groups = false, caption = '' } = {}) {
-    const head = `<thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col" class="c-date">Date</th>${one ? '' : '<th role="columnheader" scope="col" class="c-show">Spectacle</th>'}<th role="columnheader" scope="col" class="c-place">Lieu</th><th role="columnheader" scope="col" class="c-pub">Public</th></tr></thead>`;
-    let body = '';
-    if (groups) {
-      const by = new Map();
-      rows.forEach(r => { const a = pd(r.iso), k = a.getFullYear() + '-' + a.getMonth(); if (!by.has(k)) by.set(k, []); by.get(k).push(r); });
-      for (const [k, list] of by) {
-        const [y, m] = k.split('-').map(Number);
-        body += `<tbody role="rowgroup"><tr role="row" class="mrow"><th role="rowheader" scope="rowgroup" colspan="${one ? 3 : 4}">${ML[m]} ${y}</th></tr>${list.map(r => row(r, one)).join('')}</tbody>`;
-      }
-    } else body = `<tbody role="rowgroup">${rows.map(r => row(r, one)).join('')}</tbody>`;
-    return `<table class="ag${one ? ' ag--one' : ''}" role="table"><caption>${esc(caption)}</caption>${head}${body}</table>`;
+  function agenda(rows, { one = false, caption = '', head = true } = {}) {
+    const th = `<thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col" class="c-date">Date</th>${one ? '' : '<th role="columnheader" scope="col" class="c-show">Spectacle</th>'}<th role="columnheader" scope="col" class="c-place">Lieu</th><th role="columnheader" scope="col" class="c-pub">Public</th></tr></thead>`;
+    return `<table class="ag${one ? ' ag--one' : ''}${head ? '' : ' ag--nh'}" role="table"><caption>${esc(caption)}</caption>${th}<tbody role="rowgroup">${rows.map(r => row(r, one)).join('')}</tbody></table>`;
   }
 
-  const sec = (id, num, title, body) => `<section class="sec" id="${id}" aria-labelledby="h-${id}"><h2 class="sec-h" id="h-${id}">${num ? `<span class="num" aria-hidden="true">${num}</span>` : ''}${title}</h2><div class="sec-b">${body}</div></section>`;
+  const sec = (id, num, title, body, cls) => `<section class="sec${cls ? ' ' + cls : ''}" id="${id}" aria-labelledby="h-${id}"><h2 class="sec-h" id="h-${id}">${num ? `<span class="num" aria-hidden="true">${num}</span>` : ''}<span>${title}</span></h2><div class="sec-b">${body}</div></section>`;
+  const pageHead = (title, lead) => `<div class="pg-h grid"><h1 class="pg-t" tabindex="-1">${title}</h1>${lead ? `<p class="pg-l">${lead}</p>` : ''}</div>`;
 
   function indexRow(s) {
     return `<li><a class="ix" href="#/spectacle/${esc(s.slug)}"><span class="ix-t">${fr(s.titre)}</span><span class="ix-st">${subt(s.sousTitre)}</span><span class="ix-m"><span class="ix-y">${s.annee ?? ''}</span><span class="ix-d">${s.duree ? fr(s.duree) : ''}</span></span><span class="ix-ph" aria-hidden="true"><img src="${D.photos[s.slug]}" alt="" decoding="async" style="object-position:${Number(s.focale ?? 50)}% 50%"></span></a></li>`;
   }
+  const index = list => `<ol class="ix-list">${list.map(indexRow).join('')}</ol>`;
 
-  function homeView(full) {
-    const dates = D.dates;
-    const doorLinks = {
-      voir: ['#agenda', 'Toutes les dates'],
-      programmer: ['#repertoire', 'Le répertoire'],
-      etablissement: BY['actions-culturelles'] ? ['#/spectacle/actions-culturelles', 'Les actions culturelles'] : ['#repertoire', 'Le répertoire']
-    };
-    const doors = D.doors.map(d => {
-      const [href, label] = doorLinks[d.key] || ['#repertoire', 'Le répertoire'];
-      return `<div class="door"><h3 class="door-t">${fr(d.titre)}</h3><p>${fr(d.texte)}</p><p class="door-a"><a href="${href}">${arrowed(label, 'r')}</a></p></div>`;
-    }).join('');
-    const st = D.stats;
-    const ag = full
-      ? agenda(dates, { groups: true, caption: `Toutes les dates de la saison ${D.saison}` })
-      : agenda(dates.slice(0, 6), { caption: 'Les six prochaines dates' }) + `<p class="more"><a href="#agenda">${arrowed('Tout l’agenda', 'r')}</a></p>`;
+  const DOOR_LINKS = {
+    voir: ['#/agenda', 'Toutes les dates'],
+    programmer: ['#/spectacles', 'Le répertoire'],
+    etablissement: BY['actions-culturelles'] ? ['#/spectacle/actions-culturelles', 'Les actions culturelles'] : ['#/spectacles', 'Le répertoire']
+  };
+  function doors(contact) {
+    return `<div class="doors${contact ? ' doors--c' : ''}">${D.doors.map(d => {
+      const [href, label] = DOOR_LINKS[d.key] || ['#/spectacles', 'Le répertoire'];
+      return `<div class="door"><h3 class="door-t">${fr(d.titre)}</h3><p>${fr(d.texte)}</p>${contact ? `<dl class="kv"><div><dt>Contact</dt><dd>${AF}</dd></div></dl>` : ''}<p class="door-a"><a href="${href}">${arrowed(label, 'r')}</a></p></div>`;
+    }).join('')}</div>`;
+  }
+
+  function homeView() {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const up = D.dates.filter(r => pd(r.fin) >= today);
+    const next = (up.length ? up : D.dates).slice(0, 5);
     return `<div class="wrap">
       <section class="hero grid" aria-labelledby="h-home">
-        <h1 class="sr" id="h-home">${esc(C.nom)}</h1>
+        <h1 class="sr" id="h-home" tabindex="-1">${esc(C.nom)}</h1>
         <p class="hero-t">${fr(C.presentation)}</p>
-        <p class="hero-m">Saison ${esc(D.saison)} · <a href="#agenda">${st.datesSaison}${NB}dates</a></p>
+        <p class="hero-m">Saison ${esc(D.saison)} · <a href="#/agenda">${D.stats.datesSaison}${NB}dates</a> · <a href="#/spectacles">${PIECES.length}${NB}spectacles</a></p>
       </section>
-      ${sec('agenda', 'I.', 'À venir', ag)}
-      ${sec('repertoire', 'II.', 'Le répertoire', `<div class="grid"><ol class="ix-list">${SHOWS.map(indexRow).join('')}</ol></div>`)}
-      ${sec('portes', 'III.', 'Vous êtes…', `<div class="doors">${doors}</div>`)}
-      ${sec('compagnie', 'IV.', 'La compagnie', `<div class="grid co-g">
+      ${sec('a-venir', 'I.', 'À venir', agenda(next, { caption: 'Les prochaines dates' }) + `<p class="more"><a href="#/agenda">${arrowed('Tout l’agenda', 'r')}</a></p>`)}
+      ${sec('portes', 'II.', 'Vous êtes…', doors(false))}
+    </div>`;
+  }
+
+  function spectaclesView() {
+    const ac = SHOWS.filter(s => !isPiece(s));
+    const ys = PIECES.map(s => s.annee).filter(Boolean);
+    const n = PIECES.length;
+    const byOne = n && PIECES.every(s => (s.equipe || []).some(([r, w]) => /^mise en scène/i.test(r) && w === C.miseEnScene));
+    const lead = `${cap(NUMW[n] || String(n))} spectacles${byOne ? ' mis en scène par ' + fr(C.miseEnScene) : ''}${ys.length ? `, créés entre ${Math.min(...ys)} et ${Math.max(...ys)}` : ''}${ac.length ? ', et des actions culturelles' : ''}.`;
+    return `<div class="wrap">
+      ${pageHead('Le répertoire', lead)}
+      ${sec('spectacles', 'I.', 'Les spectacles', `<div class="grid">${index(PIECES)}</div>`)}
+      ${ac.length ? sec('eac', 'II.', 'L’éducation artistique', `<div class="grid">${index(ac)}${ac.filter(s => s.accroche).map(s => `<p class="ix-note">${fr(s.accroche)}</p>`).join('')}</div>`) : ''}
+    </div>`;
+  }
+
+  function agendaView() {
+    const all = D.dates;
+    const sco = all.filter(r => r.public === 'Scolaire').length;
+    const by = new Map();
+    all.forEach(r => { const a = pd(r.iso), k = a.getFullYear() * 12 + a.getMonth(); if (!by.has(k)) by.set(k, []); by.get(k).push(r); });
+    const months = [...by].map(([k, list], i) => {
+      const y = Math.floor(k / 12), m = k % 12;
+      return sec(`m-${y}-${m + 1}`, (ROM[i] || i + 1) + '.', cap(ML[m]) + ' ' + y, agenda(list, { caption: `Dates de ${ML[m]} ${y}`, head: i === 0 }), i ? 'sec--m' : 'sec--m sec--m1');
+    }).join('');
+    const lead = `Saison ${esc(D.saison)}${NB}: ${all.length}${NB}dates${sco ? `, dont ${sco}${NB}scolaires` : ''}. Le signe${NB}${AR.ne}<span class="sr"> (flèche)</span> renvoie au site du lieu.`;
+    return `<div class="wrap">${pageHead('L’agenda', lead)}${months}</div>`;
+  }
+
+  function compagnieView() {
+    const st = D.stats;
+    const cast = new Map();
+    PIECES.forEach(s => (s.distribution || []).forEach(v => String(v).split(/\s+ou\s+/).forEach(n => {
+      n = n.trim();
+      if (!n) return;
+      if (!cast.has(n)) cast.set(n, []);
+      if (!cast.get(n).includes(s)) cast.get(n).push(s);
+    })));
+    const sur = n => n.split(' ').slice(1).join(' ') || n;
+    const names = [...cast.keys()].sort((a, b) => sur(a).localeCompare(sur(b), 'fr', { sensitivity: 'base' }) || a.localeCompare(b, 'fr'));
+    const figs = [
+      [st.representationsCourt, `représentations depuis ${st.depuis}`],
+      [st.parAnMin, `représentations par an au moins, depuis ${st.parAnDepuis}`],
+      [st.pays, `pays${NB}: ${st.paysListe.join(', ')}`]
+    ];
+    return `<div class="wrap">
+      ${pageHead('La compagnie', fr(C.presentation))}
+      ${sec('projet', 'I.', 'Le projet', `<div class="grid co-g">
         <div class="co-text">
           <p class="co-lead">${fr(C.intention)}</p>
           <dl class="kv2">
             <div><dt>Mise en scène</dt><dd>${fr(C.miseEnScene)}</dd></div>
             <div><dt>Implantation</dt><dd>${fr(C.ville)}, depuis ${C.depuis}</dd></div>
-            <div><dt>Répertoire</dt><dd>${PIECES.length}${NB}spectacles</dd></div>
-            <div><dt>Tournées</dt><dd>${st.representationsTexte}${NB}représentations depuis ${st.depuis}, au moins ${st.parAnMin}${NB}par an depuis ${st.parAnDepuis}, en France, en Belgique, en Suisse et en Tunisie</dd></div>
+            <div><dt>Répertoire</dt><dd><a href="#/spectacles">${PIECES.length}${NB}spectacles</a></dd></div>
+            <div><dt>Éducation artistique</dt><dd>${st.heuresEAC}${NB}heures en 2023-2024</dd></div>
           </dl>
         </div>
         <div class="co-part"><h3 class="lbl">Partenaires</h3><ul class="plain">${C.partenaires.map(p => `<li>${fr(p)}</li>`).join('')}</ul></div>
       </div>`)}
+      ${sec('chiffres', 'II.', 'En chiffres', `<ul class="figs">${figs.map(([v, l]) => `<li><span class="fig-n">${fr(String(v))}</span><span class="fig-l">${fr(l)}</span></li>`).join('')}</ul><p class="src">Source${NB}: ${fr(st.source)}.</p>`)}
+      ${sec('plateau', 'III.', 'Au plateau', `<p class="intro">Les interprètes des spectacles du répertoire, par ordre alphabétique.</p><ul class="cast">${names.map(n => `<li><span class="cast-n">${fr(n)}</span><span class="cast-s">${cast.get(n).map(s => `<i>${fr(s.titre)}</i>`).join(', ')}</span></li>`).join('')}</ul>`)}
+    </div>`;
+  }
+
+  function contactView() {
+    const [rue, ville] = String(C.adresse).split(/,\s*/);
+    return `<div class="wrap">
+      ${pageHead('Contact', `${esc(C.nom)}, ${fr(rue)}${ville ? ', ' + fr(ville) : ''}.<br>${mail()}`)}
+      ${sec('vous', 'I.', 'Vous êtes…', doors(true))}
+      ${sec('lettre', 'II.', 'La lettre d’information', `<p>Inscription${NB}: ${AF}</p>`)}
     </div>`;
   }
 
@@ -424,8 +505,8 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
     const next = PIECES[(i + 1) % PIECES.length] || PIECES[0];
 
     return `<article class="wrap show">
-      <nav class="crumb" aria-label="Fil d’Ariane"><a href="#repertoire">Répertoire</a><span class="sep" aria-hidden="true">/</span><span aria-current="page"><i>${fr(s.titre)}</i></span></nav>
-      <h1 class="show-t">${fr(s.titre)}</h1>
+      <nav class="crumb" aria-label="Fil d’Ariane"><a href="#/spectacles">Le répertoire</a><span class="sep" aria-hidden="true">/</span><span aria-current="page"><i>${fr(s.titre)}</i></span></nav>
+      <h1 class="show-t" tabindex="-1">${fr(s.titre)}</h1>
       <p class="show-st">${subt(s.sousTitre)}</p>
       <figure class="show-ph"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${Number(s.focale ?? 50)}% 50%">${s.credit ? `<figcaption>${fr(s.credit)}</figcaption>` : ''}</figure>
       <div class="grid show-b">
@@ -443,8 +524,8 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
         <div class="door"><h3 class="door-t">${doorT('etablissement')}</h3><div>${etab}</div><div></div></div>
       </div>`)}
       <nav class="pager grid" aria-label="Autres spectacles">
-        <a class="pg-back" href="#repertoire">${arrowed('Tout le répertoire', 'l', true)}</a>
-        ${next && next !== s ? `<a class="pg-next" href="#/spectacle/${esc(next.slug)}"><span class="lbl">Spectacle suivant${NB}${AR.r}</span><span class="pg-t">${fr(next.titre)}</span></a>` : ''}
+        <a class="pg-back" href="#/spectacles">${arrowed('Tout le répertoire', 'l', true)}</a>
+        ${next && next !== s ? `<a class="pg-next" href="#/spectacle/${esc(next.slug)}"><span class="lbl">Spectacle suivant${NB}${AR.r}</span><span class="pg-t2">${fr(next.titre)}</span></a>` : ''}
       </nav>
     </article>`;
   }
@@ -453,6 +534,7 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
     const [rue, ville] = String(C.adresse).split(/,\s*/);
     return `<div class="f-c"><p><span class="f-l">${esc(C.nom)}</span>${fr(rue)}${ville ? '<br>' + fr(ville) : ''}</p></div>
       <div class="f-c"><p><span class="f-l">Écrire</span>${mail()}</p></div>
+      <div class="f-c"><p><span class="f-l">Partenaires</span>${C.partenaires.map(p => fr(p)).join('<br>')}</p></div>
       <div class="f-c"><p><span class="f-l">Siret</span>${fr(C.siret)}</p><p><span class="f-l">Licence</span>${esc(C.licence)}</p></div>`;
   }
 
@@ -471,33 +553,44 @@ i i,em i,.ix-t i,.exergue i,.door-t i{font-style:normal}
   btn.addEventListener('click', () => setMenu(!nav.classList.contains('open')));
   nav.addEventListener('click', e => { if (e.target.closest('a')) setMenu(false); });
 
-  let current = '';
+  const TABS = {
+    '': [homeView, ''],
+    spectacles: [spectaclesView, 'Le répertoire'],
+    agenda: [agendaView, 'L’agenda'],
+    compagnie: [compagnieView, 'La compagnie'],
+    contact: [contactView, 'Contact']
+  };
+  const ALIAS = { repertoire: 'spectacles', portes: '', accueil: '' };
+  const links = [...nav.querySelectorAll('a')];
+  let first = true;
   function route() {
-    const h = location.hash || '#/';
-    const m = h.match(/^#\/spectacle\/([^/?#]+)/);
-    const s = m && BY[decodeURIComponent(m[1])];
+    const h = location.hash;
+    let path = h.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, '');
+    try { path = decodeURIComponent(path); } catch (e) { path = ''; }
+    const m = path.match(/^spectacle\/([^/]+)/);
+    const s = m ? BY[m[1]] : null;
+    let key = s ? 'spectacles' : has(ALIAS, path) ? ALIAS[path] : path;
+    if (!s && !has(TABS, key)) key = '';
+    if (!s && h && !h.startsWith('#/')) { try { history.replaceState(null, '', key ? '#/' + key : '#/'); } catch (e) { /* adresse laissée telle quelle */ } }
     if (s) {
-      if (current !== 'show:' + s.slug) { main.innerHTML = showView(s); current = 'show:' + s.slug; }
-      document.title = s.titre + ' — ' + C.nom;
-      window.scrollTo(0, 0);
-      main.focus({ preventScroll: true });
-      return;
+      main.innerHTML = showView(s);
+      document.title = s.titre + ' · ' + C.nom;
+    } else {
+      const [view, label] = TABS[key];
+      main.innerHTML = view();
+      document.title = label ? label + ' · ' + C.nom : C.nom + ' — théâtre à ' + C.ville;
     }
-    const key = h === '#agenda' ? 'home:full' : 'home';
-    const changed = current !== key;
-    if (changed) { main.innerHTML = homeView(key === 'home:full'); current = key; }
-    document.title = C.nom + ' — théâtre à ' + C.ville;
-    const id = /^#[a-z][\w-]*$/i.test(h) ? h.slice(1) : '';
-    const el = id && document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ block: 'start' });
-      if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
-      el.focus({ preventScroll: true });
-    } else if (changed || h === '#/') {
-      window.scrollTo(0, 0);
-      if (changed) main.focus({ preventScroll: true });
-    }
+    links.forEach(a => { if (key && a.getAttribute('href') === '#/' + key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    setMenu(false);
+    window.scrollTo(0, 0);
+    if (!first) (main.querySelector('h1') || main).focus({ preventScroll: true });
+    first = false;
   }
+  document.querySelector('.skip').addEventListener('click', e => { e.preventDefault(); (main.querySelector('h1') || main).focus(); });
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="#/"]');
+    if (a && a.getAttribute('href') === location.hash && e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); route(); }
+  });
   window.addEventListener('hashchange', route);
   route();
 })();

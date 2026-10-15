@@ -40,6 +40,7 @@ ul,ol{padding:0;list-style:none}
 button{font:inherit;color:inherit}
 sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 :focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+[tabindex="-1"]:focus,[tabindex="-1"]:focus-visible{outline:none}
 [hidden]{display:none!important}
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .skip{position:absolute;left:16px;top:-100px;z-index:100;background:var(--ink);color:#fff;padding:12px 16px;border-radius:6px;font-weight:600;text-decoration:none}
@@ -61,6 +62,9 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 .link:hover{text-decoration-color:currentColor}
 .link-ext{display:inline-flex;align-items:center;gap:6px;font-weight:500;text-decoration:none;white-space:nowrap}
 .link-ext:hover{text-decoration:underline}
+.go{display:inline-flex;align-items:center;gap:8px;font-weight:600;text-decoration:none}
+.go:hover{text-decoration:underline}
+.go:hover .i-arrow{color:var(--magenta)}
 .overline{font:600 var(--fs-label)/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--grey)}
 .badge{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;font:500 var(--fs-label)/1 var(--sans);letter-spacing:.01em;white-space:nowrap;color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule-paper)}
 .badge--school{background:var(--paper);box-shadow:none}
@@ -111,13 +115,23 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 
 /* sections */
 .section{padding-top:var(--sec)}
-.section--paper{background:var(--paper);padding-bottom:var(--sec);margin-top:var(--sec)}
+.section--end{padding-bottom:var(--sec)}
 .sec-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 32px;border-top:1px solid var(--ink);padding-top:22px;margin-bottom:40px;scroll-margin-top:32px}
 .sec-head h2{font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
 .sec-meta{color:var(--grey)}
+.more{margin-top:32px}
+
+/* pages des onglets */
+.page{padding-bottom:var(--sec)}
+.page-head{background:var(--paper)}
+.page-head-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:20px;align-items:end;align-items:last baseline;padding-top:64px;padding-bottom:60px}
+.page-head-title{grid-column:1/span 7}
+.page-title{margin-top:18px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em}
+.page-lead{grid-column:8/span 5;font-size:var(--fs-lead);line-height:1.55;color:var(--grey);max-width:30em}
+.page-body{padding-top:64px}
 
 /* répertoire */
-.notice{display:flex;align-items:center;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;margin:-12px 0 40px;padding:16px 20px;border-radius:6px;background:var(--paper)}
+.notice{display:flex;align-items:center;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;margin:0 0 40px;padding:16px 20px;border-radius:6px;background:var(--paper)}
 .notice p{max-width:60em}
 .notice strong{font-weight:600}
 .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--gap);row-gap:0;margin-bottom:-64px}
@@ -133,6 +147,16 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 .card-title a:focus-visible::after{outline:2px solid var(--ink);outline-offset:6px}
 .card-sub{margin-top:6px;color:var(--grey)}
 .card-next{margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)}
+.rep{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:32px;align-items:start}
+.rep-text{grid-column:1/span 5}
+.rep-list{font:400 var(--fs-s2)/1.22 var(--serif);letter-spacing:-.005em}
+.rep-list a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em;text-decoration-color:var(--rule-paper)}
+.rep-list a:hover{text-decoration-color:currentColor}
+.rep-text .btn{margin-top:32px}
+.rep-photos{grid-column:7/span 6;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rep-photo{aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--paper)}
+.rep-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.65,.25,1)}
+.rep-photos:hover img{transform:scale(1.04)}
 
 /* listes de dates */
 .rows{border-top:1px solid var(--rule)}
@@ -150,19 +174,47 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 .row-place{grid-column:2;grid-row:2;margin-top:4px;color:var(--grey)}
 .row-public{justify-self:start}
 .row-link{justify-self:end}
-.more{margin-top:32px}
 .empty{padding:28px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:var(--fs-lead);color:var(--grey)}
+.months{display:grid;row-gap:72px}
+.month{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);border-top:1px solid var(--ink)}
+.month-head{grid-column:1/span 3;align-self:start;position:sticky;top:16px;padding-top:18px}
+.month-head h2{font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
+.month-head p{margin-top:10px;color:var(--grey)}
+.month .rows{grid-column:4/span 9;border-top:0}
 
 /* la compagnie */
 .company{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px}
 .company-text{grid-column:1/span 6}
 .quote{font:400 var(--fs-s2)/1.18 var(--serif);letter-spacing:-.005em;max-width:20em}
-.company-text p+p{margin-top:20px}
-.company-text .lead{margin-top:28px;font-size:var(--fs-lead);line-height:1.65;max-width:34em}
-.stats{grid-column:8/span 5;align-self:start;border-top:1px solid var(--rule-paper)}
-.stat{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:baseline;column-gap:16px;padding:22px 0 20px;border-bottom:1px solid var(--rule-paper)}
-.stat-n{font:400 3.75rem/.9 var(--serif);letter-spacing:-.02em}
+.company-text .lead{margin-top:28px;max-width:34em}
+.figures{grid-column:8/span 5;align-self:start}
+.figures .overline{margin-bottom:12px}
+.stats{border-top:1px solid var(--rule)}
+.stat{display:grid;grid-template-columns:168px minmax(0,1fr);align-items:baseline;column-gap:16px;padding:22px 0 20px;border-bottom:1px solid var(--rule)}
+.stat-n{font:400 3.75rem/.9 var(--serif);letter-spacing:-.02em;white-space:nowrap}
 .stat-l{font-size:var(--fs-lead)}
+.figures-src{margin-top:16px;color:var(--grey)}
+.cast{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--gap)}
+.cast li{padding:16px 0 20px;border-top:1px solid var(--rule)}
+.cast-name{font:400 var(--fs-s1)/1.15 var(--serif);letter-spacing:-.005em}
+.cast-shows{margin-top:6px;color:var(--grey)}
+.partners{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));column-gap:var(--gap)}
+.partners li{padding:16px 0 20px;border-top:1px solid var(--rule);font-size:var(--fs-lead)}
+
+/* contact */
+.coords{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:32px}
+.coord{grid-column:span 3}
+.coord--mail{grid-column:1/span 6}
+.coord .overline{margin-bottom:12px}
+.coord-mail{font:400 var(--fs-s3)/1.05 var(--serif);letter-spacing:-.01em}
+.coord-mail a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em;text-decoration-color:var(--rule-paper)}
+.coord-mail a:hover{text-decoration-color:currentColor}
+.coord-v{font-size:var(--fs-lead);line-height:1.5}
+.cdoors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,auto);column-gap:var(--gap)}
+.cdoor{position:relative;display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:14px;padding-right:32px}
+.cdoor+.cdoor::before{content:"";position:absolute;top:0;bottom:0;left:calc(var(--gap) / -2);width:1px;background:var(--rule)}
+.cdoor-title{font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
+.cdoor .facts{margin-top:6px}
 
 /* pied de page */
 .site-footer{background:var(--ink);color:#fff;padding:var(--sec) 0 32px}
@@ -257,14 +309,30 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   .nav-main ul{display:block}
   .nav-main li{border-bottom:1px solid var(--rule)}
   .nav-main a{padding:16px 0;font-size:1.25rem}
-  .nav-main a[aria-current]{text-decoration:none;font-weight:600}
+  .nav-main a[aria-current]{font-weight:600;text-underline-offset:6px}
   .header-cta{display:flex;width:100%;margin-top:20px}
   .doors-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
   .door{grid-row:auto;grid-template-rows:none;padding:24px 0 26px}
   .door+.door::before{left:0;right:0;top:0;bottom:auto;width:auto;height:1px}
   .hero-text{grid-column:1/-1;padding-right:0;gap:32px}
   .hero-photo{grid-column:1/-1;margin-top:32px;aspect-ratio:16/10}
-  .company-text,.stats{grid-column:1/-1}
+  .page-head-title,.page-lead{grid-column:1/-1}
+  .page-head-grid{row-gap:16px;padding-top:44px;padding-bottom:44px}
+  .page-body{padding-top:48px}
+  .months{row-gap:56px}
+  .month{display:block}
+  .month-head{position:static;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 24px;padding:18px 0 6px}
+  .month-head p{margin-top:0}
+  .rep-text,.rep-photos{grid-column:1/-1}
+  .rep-photos{order:-1}
+  .company-text,.figures{grid-column:1/-1}
+  .cast{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .coord{grid-column:span 6}
+  .coord--mail{grid-column:1/-1}
+  .cdoors{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  .cdoor{grid-row:auto;grid-template-rows:none;padding:28px 0 32px}
+  .cdoor:first-child{padding-top:0}
+  .cdoor+.cdoor::before{left:0;right:0;top:0;bottom:auto;width:auto;height:1px}
   .foot-contact{grid-column:1/-1}
   .foot-col,.foot-col:first-of-type{grid-column:span 6}
   .split>:first-child,.split>:last-child{grid-column:1/-1}
@@ -276,8 +344,11 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   .hero{padding:28px 0 40px}
   .hero-title{margin-top:14px}
   .hero-photo{aspect-ratio:4/3;margin-top:28px}
+  .page-head-grid{padding-top:36px;padding-bottom:36px}
+  .page-body{padding-top:40px}
   .cards{grid-template-columns:minmax(0,1fr);row-gap:48px;margin-bottom:0}
   .card{grid-row:auto;grid-template-rows:none;padding-bottom:0}
+  .rep-list{font-size:1.625rem}
   .sec-head{margin-bottom:28px;padding-top:18px}
   .row{grid-template-columns:60px minmax(0,1fr);align-items:start;row-gap:12px;padding:18px 0}
   .dblock-d{font-size:2.25rem}
@@ -287,8 +358,12 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   .row-public,.row-link{grid-column:2;justify-self:start;margin-left:18px}
   .row-public{grid-row:2}
   .row-link{grid-row:2;justify-self:end}
-  .stat{grid-template-columns:112px minmax(0,1fr)}
+  .stat{grid-template-columns:136px minmax(0,1fr)}
   .stat-n{font-size:3rem}
+  .cast{grid-template-columns:minmax(0,1fr)}
+  .cast li{padding:14px 0 16px}
+  .cast-name{font-size:1.375rem}
+  .coord{grid-column:1/-1}
   .foot-col,.foot-col:first-of-type{grid-column:1/-1}
   .foot-bottom{margin-top:56px}
   .show-hero{min-height:360px}
@@ -302,7 +377,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
-  .card:hover .card-photo img,.next-grid:hover .next-photo img{transform:none}
+  .card:hover .card-photo img,.next-grid:hover .next-photo img,.rep-photos:hover img{transform:none}
 }
 </style>
 </head>
@@ -326,7 +401,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   </div>
 </header>
 <main id="main" tabindex="-1"></main>
-<footer class="site-footer" id="contact"></footer>
+<footer class="site-footer" id="pied"></footer>
 <noscript><p style="padding:24px">Cette page a besoin de JavaScript pour afficher les spectacles et les dates.</p></noscript>
 <script>const D = /*__DATA__*/null;</script>
 <script>
@@ -335,6 +410,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   const SHOWS = D.shows || [];
   const DATES = D.dates || [];
   const C = D.company || {};
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const BY = Object.fromEntries(SHOWS.map(s => [s.slug, s]));
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -343,11 +419,17 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   // typographie française : espaces insécables avant : ; ! ? » et après «
   const t = v => esc(v).replace(/ :/g, ' :').replace(/ ([;!?»])/g, ' $1').replace(/« /g, '« ');
   const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+  const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
   const TODO = '<span class="todo">à fournir</span>';
   const ARROW = '<svg class="i-arrow" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M2.5 10h14M11 4.5l5.5 5.5-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
   const EXT = '<svg class="i-ext" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5 3h8v8M13 3L3.5 12.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
   const main = $('#main');
   const header = $('.site-header');
+  const ACTIONS = 'actions-culturelles';
+  const PLAYS = SHOWS.filter(s => s.slug !== ACTIONS);
+  const HAS_ACTIONS = PLAYS.length < SHOWS.length;
+  const REPERTOIRE = `${plural(PLAYS.length, 'spectacle')}${HAS_ACTIONS ? ' et les actions culturelles' : ''}`;
+  const photo = (s, cls) => `<img${cls ? ` class="${cls}"` : ''} src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${Number(s.focale) || 50}% 50%">`;
 
   /* ---------- dates ---------- */
   const TIME = /^\d{1,2}\s?h\s?\d{0,2}$/i;
@@ -365,27 +447,27 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   const where = d => `${t(d.commune)} (${esc(d.dep)})`;
   const colorOf = slug => (BY[slug] || {}).couleurTexteClair || 'var(--ink)';
 
-  function dateBlock(d) {
+  function dateBlock(d, weekday) {
     if (d.precision === 'month') {
       return `<time class="dblock dblock--month" datetime="${esc(d.iso.slice(0, 7))}"><span class="dblock-d">${esc(d.mois)}</span><span class="dblock-m">à préciser</span></time>`;
     }
-    return `<time class="dblock" datetime="${esc(d.iso)}"><span class="dblock-d">${dayNum(d)}</span><span class="dblock-m">${esc(d.mois)}</span></time>`;
+    return `<time class="dblock" datetime="${esc(d.iso)}"><span class="dblock-d">${dayNum(d)}</span><span class="dblock-m">${esc(weekday && d.joursem ? d.joursem : d.mois)}</span></time>`;
   }
   function badge(d) {
     return `<span class="badge${d.public === 'Scolaire' ? ' badge--school' : ''}">${esc(d.public)}</span>`;
   }
-  function dateRow(d, ctx, hidden) {
+  function dateRow(d, ctx, hidden, weekday) {
     const lieu = lieuOf(d);
-    const title = ctx === 'home'
+    const title = ctx === 'list'
       ? `<a href="#/spectacle/${esc(d.slug)}">${t(d.titre)}</a>`
       : `${t(d.commune)} <span class="row-dep">(${esc(d.dep)})</span>`;
-    const place = ctx === 'home'
+    const place = ctx === 'list'
       ? [lieu ? `${t(lieu)}, ${where(d)}` : where(d), ...extras(d).map(t)].join(' · ')
       : [lieu ? t(lieu) : '', ...extras(d).map(t)].filter(Boolean).join(' · ');
     const info = d.lien
       ? `<a class="link-ext" href="${esc(d.lien)}" target="_blank" rel="noopener">Infos${EXT}<span class="sr-only"> : ${t(d.titre)}, ${esc(d.label)}, ${t(d.commune)} (nouvel onglet)</span></a>`
       : '';
-    return `<li class="row"${hidden ? ' hidden' : ''}>${dateBlock(d)}
+    return `<li class="row"${hidden ? ' hidden' : ''}>${dateBlock(d, weekday)}
       <div class="row-main"><span class="dot" style="--c:${colorOf(d.slug)}" aria-hidden="true"></span><h3 class="row-title">${title}</h3>${place ? `<p class="row-place">${place}</p>` : ''}</div>
       <p class="row-public">${badge(d)}</p><p class="row-link">${info}</p></li>`;
   }
@@ -399,12 +481,20 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     return `<ol class="rows" id="${id}">${rows}</ol>${more}`;
   }
 
+  /* ---------- en-tête d'onglet ---------- */
+  function pageHead(over, title, lead) {
+    return `<header class="page-head"><div class="wrap page-head-grid">
+      <div class="page-head-title"><p class="overline">${over}</p><h1 class="page-title" tabindex="-1">${title}</h1></div>
+      ${lead ? `<p class="page-lead">${lead}</p>` : ''}
+    </div></header>`;
+  }
+
   /* ---------- accueil ---------- */
   const MODES = {
     programmer: ['Je programme.', 'Choisissez un spectacle : sa page s’ouvre directement sur la fiche pour programmateurs (documents, production, contact).'],
     etablissement: ['Je fais venir dans mon établissement.', 'Choisissez un spectacle : sa page s’ouvre directement sur l’accueil en établissement, le Pass Culture et le guide du CRED76.'],
   };
-  const DOOR_HREF = { voir: '#/agenda', programmer: '#/spectacles/programmer', etablissement: '#/spectacles/etablissement' };
+  const DOOR_HREF = { voir: '#/agenda', programmer: '#/spectacles?voir=programmer', etablissement: '#/spectacles?voir=etablissement' };
 
   function withArrow(text) {
     const words = String(text).split(' ');
@@ -415,7 +505,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     const p = s.prochaine;
     const next = p ? `<span class="muted">Prochaine date&nbsp;:</span> ${shortDate(p)}, ${t(p.commune)}` : '<span class="muted">Pas de date annoncée</span>';
     return `<li class="card" data-slug="${esc(s.slug)}">
-      <div class="card-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${Number(s.focale) || 50}% 50%"></div>
+      <div class="card-photo">${photo(s)}</div>
       <h3 class="card-title"><a href="#/spectacle/${esc(s.slug)}">${t(s.titre)}</a></h3>
       <p class="card-sub">${t(s.sousTitre)}</p>
       <p class="card-next">${next}</p></li>`;
@@ -423,12 +513,9 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
   function homeView() {
     const d0 = DATES[0];
     const hs = (d0 && BY[d0.slug]) || SHOWS[0];
-    const nShows = SHOWS.filter(s => s.slug !== 'actions-culturelles').length;
-    const hasActions = SHOWS.some(s => s.slug === 'actions-culturelles');
-    const [motto, ...restIntent] = String(C.intention || '').split(' : ');
-    const intentLead = restIntent.join(' : ');
-    const S = D.stats || {};
-    return `<h1 class="sr-only">${esc(C.nom)}, théâtre à ${esc(C.ville)}</h1>
+    const strip = PLAYS.filter(s => s !== hs).slice(0, 4);
+    const titles = PLAYS.map(s => `<a href="#/spectacle/${esc(s.slug)}">${t(s.titre)}</a>`).join(', ');
+    return `<h1 class="sr-only" tabindex="-1">${esc(C.nom)}, théâtre à ${esc(C.ville)}</h1>
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap hero-grid">
         <div class="hero-text">
@@ -444,7 +531,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
             <a class="btn btn-primary" href="#/spectacle/${esc(hs.slug)}">Voir le spectacle${ARROW}</a>
           </div>
         </div>
-        <figure class="hero-photo"><img src="${D.photos[hs.slug]}" alt="Photo de ${esc(hs.titre)}" style="object-position:${Number(hs.focale) || 50}% 50%"></figure>
+        <figure class="hero-photo">${photo(hs)}</figure>
       </div>
     </section>
     <section class="doors" aria-labelledby="doors-title">
@@ -453,39 +540,39 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
         ${(D.doors || []).map(dr => `<li class="door"><h3 class="door-title"><a href="${DOOR_HREF[dr.key] || '#/spectacles'}">${withArrow(dr.titre)}</a></h3><p class="door-text">${t(dr.texte)}</p></li>`).join('')}
       </ul>
     </section>
-    <section class="section" id="spectacles" aria-labelledby="rep-title">
+    <section class="section" aria-labelledby="dates-title">
       <div class="wrap">
-        <div class="sec-head" data-target="spectacles"><h2 id="rep-title">Le répertoire</h2><p class="sec-meta">${nShows} spectacles${hasActions ? ' et les actions culturelles' : ''}</p></div>
-        <div class="notice" id="mode-notice" hidden></div>
-        <ul class="cards">${SHOWS.map(card).join('')}</ul>
+        <div class="sec-head"><h2 id="dates-title">Prochaines dates</h2><p class="sec-meta">${plural(DATES.length, 'date')}, saison ${esc(D.saison)}</p></div>
+        ${dateList(DATES.slice(0, 3), 'list', 3, 'home-dates')}
+        <p class="more"><a class="btn btn-secondary btn-sm" href="#/agenda">Tout l’agenda${ARROW}</a></p>
       </div>
     </section>
-    <section class="section" id="agenda" aria-labelledby="agenda-title">
+    <section class="section section--end" aria-labelledby="rep-title">
       <div class="wrap">
-        <div class="sec-head" data-target="agenda"><h2 id="agenda-title">Prochaines dates</h2><p class="sec-meta">Saison ${esc(D.saison)}</p></div>
-        ${dateList(DATES, 'home', 6, 'agenda-list')}
-      </div>
-    </section>
-    <section class="section section--paper" id="compagnie" aria-labelledby="cie-title">
-      <div class="wrap">
-        <div class="sec-head" data-target="compagnie"><h2 id="cie-title">La compagnie</h2><p class="sec-meta">${esc(C.ville)}, depuis ${esc(C.depuis)}</p></div>
-        <div class="company">
-          <div class="company-text">
-            ${intentLead ? `<p class="quote">${t(motto)}&nbsp;: ${t(intentLead)}</p>` : `<p class="quote">${t(C.intention)}</p>`}
-            <p class="lead">${t(C.presentation)}</p>
-            <p class="lead">Mise en scène&nbsp;: ${t(C.miseEnScene)}.</p>
+        <div class="sec-head"><h2 id="rep-title">Le répertoire</h2><p class="sec-meta">${REPERTOIRE}</p></div>
+        <div class="rep">
+          <div class="rep-text">
+            <p class="rep-list">${titles}${HAS_ACTIONS ? ` et les <a href="#/spectacle/${ACTIONS}">actions culturelles</a>` : ''}.</p>
+            <a class="btn btn-secondary btn-sm" href="#/spectacles">Voir les spectacles${ARROW}</a>
           </div>
-          <ul class="stats">
-            <li class="stat"><span class="stat-n">${esc(S.representationsCourt)}</span><span class="stat-l">représentations depuis ${S.depuis}</span></li>
-            <li class="stat"><span class="stat-n">${esc(S.parAnMin)}</span><span class="stat-l">par an au moins, depuis ${S.parAnDepuis}</span></li>
-            <li class="stat"><span class="stat-n">${esc(S.pays)}</span><span class="stat-l">pays : ${esc(S.paysListe.join(', '))}</span></li>
-          </ul>
+          <a class="rep-photos" href="#/spectacles" tabindex="-1" aria-hidden="true">${strip.map(s => `<span class="rep-photo">${photo(s)}</span>`).join('')}</a>
         </div>
       </div>
     </section>`;
   }
+
+  /* ---------- spectacles ---------- */
+  function spectaclesView() {
+    const lead = `${plural(PLAYS.length, 'spectacle')} mis en scène par ${C.miseEnScene}${HAS_ACTIONS ? ', et les actions culturelles' : ''}. Chaque page réunit les dates, la fiche pour les programmateurs et l’accueil en établissement.`;
+    return `<div class="page">${pageHead('Le répertoire', 'Les spectacles', t(lead))}
+      <div class="page-body"><div class="wrap">
+        <div class="notice" id="mode-notice" hidden></div>
+        <ul class="cards">${SHOWS.map(card).join('')}</ul>
+      </div></div>
+    </div>`;
+  }
   function setMode(mode) {
-    const m = MODES[mode];
+    const m = mode && own(MODES, mode) ? MODES[mode] : null;
     const box = $('#mode-notice');
     if (!box) return;
     $$('.card').forEach(li => {
@@ -501,11 +588,121 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     }
   }
 
+  /* ---------- agenda ---------- */
+  function agendaView() {
+    const school = DATES.filter(d => d.public === 'Scolaire').length;
+    const groups = [];
+    DATES.forEach(d => {
+      const k = String(d.iso).slice(0, 7);
+      let g = groups[groups.length - 1];
+      if (!g || g.k !== k) groups.push(g = { k, label: `${cap(d.moisLong)} ${d.annee}`, list: [] });
+      g.list.push(d);
+    });
+    const lead = `${plural(DATES.length, 'date')} cette saison${school ? `, dont ${school} pour les scolaires` : ''}. Chaque date indique son lieu et son public ; la réservation se fait auprès du lieu.`;
+    return `<div class="page">${pageHead(`Saison ${esc(D.saison)}`, 'L’agenda', t(lead))}
+      <div class="page-body"><div class="wrap months">
+        ${groups.length ? groups.map(g => `<section class="month" aria-labelledby="m-${g.k}">
+          <div class="month-head"><h2 id="m-${g.k}">${esc(g.label)}</h2><p>${plural(g.list.length, 'date')}</p></div>
+          <ol class="rows">${g.list.map(d => dateRow(d, 'list', false, true)).join('')}</ol>
+        </section>`).join('') : '<p class="empty">Aucune date annoncée pour l’instant.</p>'}
+      </div></div>
+    </div>`;
+  }
+
+  /* ---------- la compagnie ---------- */
+  function companyView() {
+    const S = D.stats || {};
+    const [motto, ...restIntent] = String(C.intention || '').split(' : ');
+    const intentLead = restIntent.join(' : ');
+    const directed = PLAYS.filter(s => (s.equipe || []).some(([k, v]) => /^mise en scène/i.test(k) && v === C.miseEnScene)).length;
+    const cast = new Map();
+    SHOWS.forEach(s => (s.distribution || []).forEach(entry => {
+      const names = String(entry).split(/\s+ou\s+/).map(n => n.trim()).filter(Boolean);
+      names.forEach(n => {
+        if (!cast.has(n)) cast.set(n, []);
+        cast.get(n).push(t(s.titre) + (names.length > 1 ? ' (en alternance)' : ''));
+      });
+    }));
+    const people = [...cast].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
+    return `<div class="page">${pageHead(`${esc(C.ville)}, depuis ${esc(C.depuis)}`, 'La compagnie', t(C.presentation))}
+      <section class="section page-body" aria-labelledby="cie-intent">
+        <div class="wrap">
+          <div class="sec-head"><h2 id="cie-intent">L’intention</h2></div>
+          <div class="company">
+            <div class="company-text">
+              <p class="quote">${intentLead ? `${t(motto)}&nbsp;: ${t(intentLead)}` : t(C.intention)}</p>
+              ${directed ? `<p class="lead">${t(C.miseEnScene)} signe la mise en scène ${directed === PLAYS.length ? 'de tous les spectacles du répertoire' : `de ${plural(directed, 'spectacle')} du répertoire`}.</p>` : `<p class="lead">Mise en scène&nbsp;: ${t(C.miseEnScene)}.</p>`}
+            </div>
+            <div class="figures">
+              <h3 class="overline">En chiffres</h3>
+              <ul class="stats">
+                <li class="stat"><span class="stat-n">${esc(S.representationsCourt)}</span><span class="stat-l">représentations depuis ${esc(S.depuis)}</span></li>
+                <li class="stat"><span class="stat-n">${esc(S.parAnMin)}</span><span class="stat-l">par an au moins, depuis ${esc(S.parAnDepuis)}</span></li>
+                <li class="stat"><span class="stat-n">${esc(S.pays)}</span><span class="stat-l">pays&nbsp;: ${esc((S.paysListe || []).join(', '))}</span></li>
+              </ul>
+              ${S.source ? `<p class="figures-src">Source&nbsp;: ${t(S.source)}.</p>` : ''}
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section" aria-labelledby="cie-cast">
+        <div class="wrap">
+          <div class="sec-head"><h2 id="cie-cast">Au plateau</h2><p class="sec-meta">${plural(people.length, 'artiste')} dans les spectacles du répertoire</p></div>
+          <ul class="cast">${people.map(([n, list]) => `<li><p class="cast-name">${t(n)}</p><p class="cast-shows">${list.join(', ')}</p></li>`).join('')}</ul>
+        </div>
+      </section>
+      <section class="section" aria-labelledby="cie-part">
+        <div class="wrap">
+          <div class="sec-head"><h2 id="cie-part">Partenaires</h2></div>
+          <ul class="partners">${(C.partenaires || []).map(p => `<li>${t(p)}</li>`).join('')}</ul>
+        </div>
+      </section>
+    </div>`;
+  }
+
+  /* ---------- contact ---------- */
+  const DOOR_GO = { voir: ['#/agenda', 'Tout l’agenda'], programmer: ['#/spectacles?voir=programmer', 'Les fiches des spectacles'], etablissement: ['#/spectacles?voir=etablissement', 'Les spectacles en établissement'] };
+  function contactView() {
+    const [street, ...rest] = String(C.adresse || '').split(', ');
+    return `<div class="page">${pageHead(esc(C.nom), 'Contact', t('Venir voir un spectacle, le programmer ou le faire venir dans un établissement : écrivez à la compagnie.'))}
+      <section class="section page-body" aria-labelledby="c-coord">
+        <div class="wrap">
+          <div class="sec-head"><h2 id="c-coord">Coordonnées</h2></div>
+          <div class="coords">
+            <div class="coord coord--mail"><h3 class="overline">E-mail</h3><p class="coord-mail"><a href="mailto:${esc(C.email)}">${esc(C.email)}</a></p></div>
+            <div class="coord"><h3 class="overline">Adresse</h3><p class="coord-v">${esc(C.nom)}<br>${t(street)}${rest.length ? `<br>${t(rest.join(', '))}` : ''}</p></div>
+            <div class="coord"><h3 class="overline">Téléphone</h3><p class="coord-v">${TODO}</p></div>
+          </div>
+        </div>
+      </section>
+      <section class="section" aria-labelledby="c-doors">
+        <div class="wrap">
+          <div class="sec-head"><h2 id="c-doors">Selon votre demande</h2></div>
+          <ul class="cdoors">${(D.doors || []).map(dr => {
+            const [href, label] = DOOR_GO[dr.key] || ['#/spectacles', 'Les spectacles'];
+            return `<li class="cdoor">
+              <h3 class="cdoor-title">${t(dr.titre)}</h3>
+              <p class="door-text">${t(dr.texte)}</p>
+              <div class="facts"><dl>${row('Contact', TODO)}${row('E-mail', `<a class="link" href="${mail(dr.titre)}">${esc(C.email)}</a>`)}</dl></div>
+              <p><a class="go" href="${href}">${label}${ARROW}</a></p>
+            </li>`;
+          }).join('')}</ul>
+        </div>
+      </section>
+      <section class="section" aria-labelledby="c-lettre">
+        <div class="wrap">
+          <div class="sec-head"><h2 id="c-lettre">La lettre d’information</h2></div>
+          <p class="lead">Les nouvelles dates et les créations de la compagnie, par e-mail. <span class="nowrap">Inscription&nbsp;: ${TODO}</span></p>
+        </div>
+      </section>
+    </div>`;
+  }
+
   /* ---------- page spectacle ---------- */
   const SUBNAV = [['spectacle', 'Le spectacle'], ['dates', 'Les dates'], ['programmer', 'Je programme'], ['etablissement', 'Je fais venir dans mon établissement']];
   const MODE_LABEL = { etablissement: 'Vient dans votre établissement', salle: 'Se joue en salle de spectacle', a_confirmer: 'Accueil en établissement à confirmer' };
-  const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  const mail = subject => `mailto:${esc(C.email)}?subject=${encodeURIComponent(subject)}`;
+  function row(k, v) { return `<div><dt>${k}</dt><dd>${v}</dd></div>`; }
+  function mail(subject) { return `mailto:${esc(C.email)}?subject=${encodeURIComponent(subject)}`; }
 
   function showView(s) {
     const i = SHOWS.indexOf(s);
@@ -525,7 +722,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     const nxp = nx.prochaine;
     return `<article class="show" style="--c:${esc(s.couleurTexteClair)}">
       <header class="show-hero">
-        <img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${Number(s.focale) || 50}% 50%">
+        ${photo(s)}
         <div class="wrap show-hero-text">
           <p class="overline overline--light"><a class="back" href="#/spectacles">${ARROW}Tous les spectacles</a></p>
           <h1 class="show-title" tabindex="-1">${t(s.titre)}</h1>
@@ -627,7 +824,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
                 <p class="next-go" style="margin-top:16px" aria-hidden="true">Découvrir le spectacle${ARROW}</p>
               </div>
             </div>
-            <div class="next-photo"><img src="${D.photos[nx.slug]}" alt="Photo de ${esc(nx.titre)}" style="object-position:${Number(nx.focale) || 50}% 50%"></div>
+            <div class="next-photo">${photo(nx)}</div>
           </div>
         </div>
       </section>
@@ -636,8 +833,8 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 
   /* ---------- pied de page ---------- */
   function footer() {
-    $('#contact').innerHTML = `<div class="wrap">
-      <div class="sec-head" data-target="contact"><h2>Contact</h2></div>
+    $('#pied').innerHTML = `<div class="wrap">
+      <div class="sec-head"><h2>Écrire à la compagnie</h2></div>
       <div class="foot">
         <div class="foot-contact">
           <p class="foot-mail"><a href="mailto:${esc(C.email)}">${esc(C.email)}</a></p>
@@ -673,7 +870,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     if (ev.key === 'Escape' && header.classList.contains('is-open')) { setMenu(false); toggle.focus(); }
   });
 
-  /* ---------- voir plus de dates ---------- */
+  /* ---------- voir plus de dates (page spectacle) ---------- */
   main.addEventListener('click', ev => {
     const b = ev.target.closest('[data-more]');
     if (!b) return;
@@ -714,21 +911,28 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     requestAnimationFrame(() => { ticking = false; trackSub(); });
   }, { passive: true });
 
-  /* ---------- routeur ---------- */
-  const TITLE_HOME = `${C.nom} · Théâtre à ${C.ville}`;
+  /* ---------- routeur : une page par onglet ---------- */
+  const VIEWS = {
+    home: [homeView, `${C.nom} · Théâtre à ${C.ville}`],
+    spectacles: [spectaclesView, `Les spectacles · ${C.nom}`],
+    agenda: [agendaView, `L’agenda · ${C.nom}`],
+    compagnie: [companyView, `La compagnie · ${C.nom}`],
+    contact: [contactView, `Contact · ${C.nom}`],
+  };
+  const SUBKEYS = SUBNAV.map(([k]) => k);
   let currentKey = null;
   function parse() {
-    const parts = decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('/').filter(Boolean);
-    if (parts[0] === 'spectacle' && BY[parts[1]]) return { view: 'show', slug: parts[1], section: parts[2] || null };
-    return { view: 'home', section: parts[0] || null, mode: parts[1] || null };
+    const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
+    let parts = [];
+    try { parts = decodeURIComponent(path).split('/').filter(Boolean); } catch (err) { parts = []; }
+    const q = new URLSearchParams(qs || '');
+    if (parts[0] === 'spectacle' && own(BY, parts[1])) return { view: 'show', slug: parts[1], section: SUBKEYS.includes(parts[2]) ? parts[2] : null };
+    if (parts[0] && parts[0] !== 'home' && own(VIEWS, parts[0])) return { view: parts[0], mode: q.get('voir') || parts[1] || null };
+    return { view: 'home' };
   }
-  function targetOf(r) {
-    if (!r.section) return null;
-    return $(`.sec-head[data-target="${CSS.escape(r.section)}"]`) || (r.section === 'main' ? main : null);
-  }
-  function route(initial) {
+  function route(initial, again) {
     const r = parse();
-    const key = r.view === 'show' ? 'show:' + r.slug : 'home';
+    const key = r.view === 'show' ? 'show:' + r.slug : r.view;
     const changed = key !== currentKey;
     if (changed) {
       currentKey = key;
@@ -739,22 +943,23 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
         subLinks = $$('.subnav a');
         subHeads = SUBNAV.map(([k]) => $(`.sec-head[data-target="${k}"]`));
       } else {
-        main.innerHTML = homeView();
-        document.title = TITLE_HOME;
+        main.innerHTML = VIEWS[r.view][0]();
+        document.title = VIEWS[r.view][1];
         subLinks = []; subHeads = [];
       }
+      const tab = r.view === 'show' ? 'spectacles' : r.view;
       $$('.nav-main a').forEach(a => {
-        if (r.view === 'show' && a.dataset.nav === 'spectacles') a.setAttribute('aria-current', 'true');
+        if (a.dataset.nav === tab) a.setAttribute('aria-current', 'page');
         else a.removeAttribute('aria-current');
       });
     }
-    if (r.view === 'home') setMode(r.section === 'spectacles' ? r.mode : null);
+    if (r.view === 'spectacles') setMode(r.mode);
     setMenu(false);
-    const target = targetOf(r);
+    const target = r.view === 'show' && r.section ? $(`.sec-head[data-target="${r.section}"]`) : null;
     if (target) target.scrollIntoView({ block: 'start' });
-    else if (changed) window.scrollTo(0, 0);
-    if (changed && !initial) {
-      const h = r.view === 'show' ? $('.show-title') : main;
+    else if (changed || again) window.scrollTo(0, 0);
+    if ((changed || again) && !initial && !target) {
+      const h = $('h1', main);
       if (h) h.focus({ preventScroll: true });
     }
     trackSub();
@@ -766,7 +971,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     if (!a || ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
     const href = a.getAttribute('href');
     if (href === '#main') { ev.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); return; }
-    if (href === location.hash || (href === '#/' && !location.hash)) { ev.preventDefault(); route(false); }
+    if (href === location.hash || (href === '#/' && !location.hash)) { ev.preventDefault(); route(false, true); }
   });
   window.addEventListener('hashchange', () => route(false));
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -778,7 +983,7 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 
   logos();
   footer();
-  logos($('#contact'));
+  logos($('#pied'));
   const first = route(true);
   if (first && document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (window.scrollY > 0) first.scrollIntoView({ block: 'start' }); });
 })();

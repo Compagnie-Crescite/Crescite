@@ -56,7 +56,8 @@ animations » est respecté.
 ```sh
 python3 maquettes/build.py              # les dix maquettes et la planche (maquettes/dist/, non versionné)
 python3 maquettes/build.py m06          # une seule maquette
-python3 maquettes/build.py --captures   # avec les captures de la planche (Playwright et Chromium)
+python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
+node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les onglets de chaque maquette et signale les anomalies
 ```
 
 Dix façons de montrer les mêmes contenus (spectacles, dates de la saison, trois portes, compagnie), sous des règles
@@ -64,11 +65,12 @@ de clarté communes : un seul étage d’en-tête et quatre entrées au plus, de
 spectacle distingué par sa couleur et sa photo seulement, les prochaines dates à un clic. De la 01 (« Le programme
 de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis en ordre) ; la 06
 (« Les bras de la tournée ») fait de la tentacule un thème : la carte des tournées qui partent de Rouen.
+Chacune est un petit site à onglets : Accueil, Spectacles, Agenda, La compagnie, Contact, et une page par spectacle.
 `maquettes/src/synthese.html` assemble la proposition retenue en un site de cinq pages : l’accueil et les cartes de
 la 06, l’agenda filtrable de la 03 relié à la carte, les portes à liens directs de la 04 (le site retient la porte
 choisie), et l’effet signature de chaque spectacle repris de la 10.
-`maquettes/dist/maquettes.html` réunit les captures, le principe, les forces et les limites de chacune, et ouvre
-chaque maquette en grand.
+`maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
+dessous, et pour chacune son principe, ses forces et ses limites (« À propos »).
 
 **En ligne.** `python3 maquettes/build.py --pages` écrit le site GitHub Pages dans `docs/` : la planche en page
 d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.html`…). Ces pages embarquent le logo

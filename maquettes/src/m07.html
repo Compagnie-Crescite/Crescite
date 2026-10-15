@@ -203,6 +203,7 @@ a.plus:hover .fl{transform:translateX(.25rem)}
 .lettre-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h3);line-height:1.1}
 .lettre p{color:var(--blanc-doux)}
 .pied-ecrire[hidden] + .pied-grille{padding-top:0}
+.chiffre-plus{font-family:var(--sans);font-style:normal;font-weight:400;font-size:.8em;margin-left:.06em}
 
 /* Page spectacle */
 .retour{display:inline-flex;align-items:center;gap:.6rem;margin-bottom:1.75rem;font-weight:600;font-size:1rem;text-decoration:none;color:var(--blanc-doux);transition:color .25s}
@@ -820,7 +821,7 @@ a.plus:hover .fl{transform:translateX(.25rem)}
             <p>${fr(`Mise en scène : ${C.miseEnScene}.`)}</p>
           </div>
           <dl class="chiffres">
-            <div class="chiffre"><dt>représentations depuis ${st.depuis}</dt><dd>${st.representationsCourt}</dd></div>
+            <div class="chiffre"><dt>représentations depuis ${st.depuis}</dt><dd>${esc(st.representationsCourt).replace(/\+$/, '<span class="chiffre-plus">+</span>')}</dd></div>
             <div class="chiffre"><dt>représentations par an au moins, depuis ${st.parAnDepuis}</dt><dd>${st.parAnMin}</dd></div>
             <div class="chiffre"><dt>${fr(`pays : ${st.paysListe.join(', ')}`)}</dt><dd>${st.pays}</dd></div>
             <div class="chiffre"><dt>heures d’éducation artistique en 2023-2024</dt><dd>${st.heuresEAC}</dd></div>

@@ -751,7 +751,7 @@ main { min-height: calc(100vh - var(--haut)); }
   /* ---------- les dates : un jour, plusieurs jours ou un mois seul ---------- */
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
   const pluriel = (n, un, plus) => `${n} ${n > 1 ? plus : un}`;
-  const quand = d => d.precision === 'month' ? cap(d.moisLong) : (d.fin !== d.iso ? d.label.replace(/\s\d{4}$/, '') : `${d.joursem} ${d.jour === 1 ? '1er' : d.jour} ${d.mois}`);
+  const quand = d => d.precision === 'month' ? cap(d.moisLong) : (d.fin !== d.iso ? d.label.replace(/\s\d{4}$/, '').replace(d.moisLong, d.mois) : `${d.joursem} ${d.jour === 1 ? '1er' : d.jour} ${d.mois}`);
   // un « lieu » qui est une heure ou une note n'est pas un lieu
   const lieu = d => {
     const v = (d.lieu || '').trim(), ou = `${esc(d.commune)} (${esc(d.dep)})`;
@@ -795,7 +795,7 @@ main { min-height: calc(100vh - var(--haut)); }
     D.dates.forEach(d => { const k = d.iso.slice(0, 7); if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
     const nSco = D.dates.filter(d => d.public === 'Scolaire').length, nCom = new Set(D.dates.map(d => d.commune + d.dep)).size;
     $('#v-agenda').innerHTML = tete('L’agenda', `Saison ${esc(D.saison)} : ${D.dates.length} dates dans ${nCom} communes, dont ${nSco} scolaires. Pour réserver, adressez-vous au lieu qui accueille le spectacle.`) +
-      `<section class="bloc" aria-label="Les dates, mois par mois"><div class="wrap">${[...mois.values()].map(ds => `<div class="mois-groupe"><h2>${cap(ds[0].moisLong)} ${ds[0].annee}<small>${pluriel(ds.length, 'date', 'dates')}</small></h2><ul class="dates">${ds.map(ligneDate).join('')}</ul></div>`).join('')}</div></section>`;
+      `<section class="bloc" aria-label="Les dates, mois par mois"><div class="wrap">${[...mois.values()].map(ds => `<div class="mois-groupe"><h2>${cap(ds[0].moisLong)} <small>${ds[0].annee} · ${pluriel(ds.length, 'date', 'dates')}</small></h2><ul class="dates">${ds.map(ligneDate).join('')}</ul></div>`).join('')}</div></section>`;
     // la compagnie : présentation, chiffres, artistes au plateau, partenaires
     const troupe = new Map();
     D.shows.forEach(s => s.distribution.forEach(x => x.split(/\s+ou\s+/).forEach(n => { n = n.trim(); if (!troupe.has(n)) troupe.set(n, []); if (!troupe.get(n).includes(s)) troupe.get(n).push(s); })));
