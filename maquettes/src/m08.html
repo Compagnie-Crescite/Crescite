@@ -41,8 +41,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .brand-name{font:400 1.625rem/1 var(--serif);letter-spacing:-.005em;padding-bottom:3px}
 .site-nav{padding:0 var(--gx)}
 .site-nav ul{display:flex;gap:36px}
-.site-nav a{font-weight:500;text-decoration:none;padding:6px 0}
-.site-nav a:hover{text-decoration:underline}
+.site-nav a{position:relative;display:block;font-weight:500;text-decoration:none;padding:6px 0}
+.site-nav a::after{content:"";position:absolute;left:0;right:0;bottom:calc(50% - (var(--hh) + 1px) / 2);height:3px;background:transparent}
+.site-nav a:hover::after{background:var(--rule-s)}
+.site-nav a[aria-current="page"]::after{background:var(--ink)}
 .menu-btn{display:none;font-weight:500;padding:10px 0 10px 16px;margin-right:var(--gx)}
 
 /* Sommaire et aperçu */
@@ -80,6 +82,11 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .band-body{padding:88px var(--gx) 96px;min-width:0}
 .band-title{font:400 var(--t2)/1.05 var(--serif);letter-spacing:-.012em}
 .band-sub{margin-top:14px;color:var(--gray);max-width:30ch}
+.band-page{border-top:0}
+.band-page>.band-head,.band-page>.band-body{padding-top:56px}
+.page-title{font:400 var(--t1)/1 var(--serif);letter-spacing:-.018em;text-wrap:balance}
+.page-sub{margin-top:18px;color:var(--gray-t);max-width:34ch;text-wrap:pretty}
+.toc .page-sub{margin-bottom:36px}
 
 .doors li{display:grid;grid-template-columns:56px 1fr;padding:26px 0 28px;border-top:1px solid var(--rule)}
 .doors li:last-child{border-bottom:1px solid var(--rule)}
@@ -100,7 +107,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .ag-meta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .ag-meta .eyebrow{letter-spacing:.06em}
 .ag-meta a{font-weight:500;white-space:nowrap}
-.more{margin-top:24px;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:var(--rule-s);padding:6px 0}
+.more{display:inline-block;margin-top:24px;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:var(--rule-s);padding:6px 0}
 .more:hover{text-decoration-color:currentColor}
 
 .quote{font:italic 400 var(--t3)/1.3 var(--serif);max-width:32ch;text-wrap:pretty}
@@ -109,6 +116,31 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 .stats{margin-top:48px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;border-top:1px solid var(--rule);padding-top:26px}
 .stat-n{display:block;font:400 var(--t3)/1 var(--serif)}
 .stat-l{display:block;margin-top:10px;font-size:var(--t6);line-height:1.45;color:var(--gray)}
+
+/* Onglet Agenda */
+.ag-group{scroll-margin-top:calc(var(--hh) + 24px)}
+.ag-group+.ag-group{margin-top:72px}
+.ag-group .ag-list>li:first-child{border-top:0}
+.ag-index{margin-top:44px;max-width:26rem}
+.ag-index .eyebrow{margin-bottom:8px}
+.ag-index a{display:flex;align-items:baseline;gap:14px;padding:5px 0;text-decoration:none}
+.ag-index a:hover .ai-m{text-decoration:underline}
+.ai-lead{flex:1 1 auto;min-width:20px;height:1px;background:var(--rule);transform:translateY(-.3rem)}
+.ai-n{flex:none;font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray-t)}
+@media (min-width:860px) and (min-height:720px){.band-stick{position:sticky;top:calc(var(--hh) + 40px)}}
+
+/* Onglets La compagnie et Contact */
+.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px;border-bottom:1px solid var(--rule)}
+.people li{padding:16px 0 17px;border-top:1px solid var(--rule)}
+.p-name{display:block;font:400 var(--t4)/1.3 var(--serif)}
+.p-shows{display:block;margin-top:4px;color:var(--gray)}
+.coord>div{display:grid;grid-template-columns:minmax(140px,12rem) 1fr;gap:4px 24px;align-items:baseline;padding:18px 0 19px;border-top:1px solid var(--rule)}
+.coord>div:last-child{border-bottom:1px solid var(--rule)}
+.coord dt{font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray-t)}
+.coord dd{font-size:var(--t4);line-height:1.45}
+.coord a{font-weight:600;text-decoration-color:var(--rule-s)}
+.coord a:hover{text-decoration-color:currentColor}
+.door-meta{margin-top:12px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
 
 /* Page spectacle */
 .show{display:grid;grid-template-columns:45fr 55fr}
@@ -220,6 +252,13 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   .toc-foot{padding-top:24px}
   .band-head{padding:56px var(--gx) 0}
   .band-body{padding:28px var(--gx) 64px}
+  .band-page>.band-head{padding-top:32px}
+  .band-page>.band-body{padding-top:24px}
+  .page-title{font-size:2.75rem;line-height:1.02}
+  .page-sub{margin-top:12px}
+  .toc .page-sub{margin-bottom:16px}
+  .ag-index{display:none}
+  .ag-group+.ag-group{margin-top:48px}
   .doors li{grid-template-columns:40px 1fr}
   .quote{font-size:1.5rem}
   .cie-text{font-size:var(--t5)}
@@ -247,6 +286,9 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   .site-nav ul{flex-direction:column;gap:0}
   .site-nav li+li{border-top:1px solid var(--rule)}
   .site-nav a{display:block;padding:14px 0;font:400 1.5rem/1.2 var(--serif)}
+  .site-nav a::after{left:0;right:auto;top:16px;bottom:16px;width:3px;height:auto}
+  .site-nav a[aria-current="page"]{padding-left:18px}
+  .people,.coord>div{grid-template-columns:1fr}
   .ag-list>li,.dl-list>li{grid-template-columns:1fr}
   .ag-meta,.dl-meta{text-align:left;align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:4px 16px;margin-top:4px}
   .tablist{flex-direction:column;gap:0;border-bottom:0}
@@ -269,15 +311,15 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
   <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
   <nav class="site-nav" id="nav" aria-label="Navigation principale">
     <ul>
-      <li><a href="#/">Spectacles</a></li>
-      <li><a href="#agenda">Agenda</a></li>
-      <li><a href="#compagnie">La compagnie</a></li>
-      <li><a href="#contact">Contact</a></li>
+      <li><a href="#/spectacles">Spectacles</a></li>
+      <li><a href="#/agenda">Agenda</a></li>
+      <li><a href="#/compagnie">La compagnie</a></li>
+      <li><a href="#/contact">Contact</a></li>
     </ul>
   </nav>
 </header>
 <main id="main" tabindex="-1"></main>
-<footer class="site-foot" id="contact"></footer>
+<footer class="site-foot"></footer>
 <script>const D = /*__DATA__*/null;</script>
 <script>
 (() => {

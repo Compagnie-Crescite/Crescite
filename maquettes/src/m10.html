@@ -11,7 +11,8 @@
 /* Maquette 10 · « La pieuvre vivante, rangée ».
    Le prototype animé, remis en ordre : les huit bras du logo se prolongent jusqu'aux titres, on les tire
    pour entrer dans un spectacle. Au repos, rien ne bouge. Chaque spectacle garde sa couleur, sa photo et
-   un seul effet au défilement ; tout le reste (textes, dates, portes) suit la même mise en page claire. */
+   un seul effet au défilement ; tout le reste (textes, dates, portes) suit la même mise en page claire.
+   Chaque entrée du menu ouvre sa page ; un bras venu du bord de l'écran y souligne le titre. */
 :root {
   --nuit: #150a11; --lait: #f6f1ea; --lait-2: #e9e1d6; --encre: #1b1216; --gris: #675b61;
   --blanc: #f7ecf1; --blanc-2: #c9b7c1; --magenta: #bc3e80; --magenta-texte: #a8306f;
@@ -40,6 +41,7 @@ img { display: block; max-width: 100%; }
 .nav { margin-left: auto; display: flex; gap: 6px; }
 .nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; color: var(--blanc-2); font-weight: 600; font-size: .95rem; }
 .nav a:hover { color: var(--blanc); }
+.nav a[aria-current="page"] { color: var(--blanc); text-decoration: underline 2px var(--magenta); text-underline-offset: 9px; }
 .menu { display: none; margin-left: auto; background: none; border: 1px solid rgba(255, 255, 255, .25); color: var(--blanc); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); }
 
 /* ---------- la scène : la pieuvre et ses huit bras ---------- */
@@ -67,8 +69,8 @@ section.bloc { padding: clamp(56px, 8vw, 104px) 0; }
 section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
 .entete { display: flex; justify-content: space-between; align-items: baseline; gap: 16px 32px; flex-wrap: wrap; margin-bottom: 28px; }
 .entete h2 { margin: 0; font: italic 500 clamp(2rem, 1.4rem + 2vw, 3rem)/1 var(--serif); }
-.entete a, .entete button.lien { font: 600 1rem var(--sans); color: var(--magenta-texte); text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; }
-.entete a:hover, .entete button.lien:hover { text-decoration: underline; }
+.entete a { font: 600 1rem var(--sans); color: var(--magenta-texte); text-decoration: none; }
+.entete a:hover { text-decoration: underline; }
 .dates { list-style: none; margin: 0; padding: 0; }
 .dates li { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr) 110px; gap: 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--lait-2); }
 .dates time { font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -86,6 +88,7 @@ section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
 .porte li a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
 .porte li a:hover { color: var(--dct); }
 .porte li small { color: var(--gris); white-space: nowrap; }
+.porte li.ligne { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); }
 .porte .bas > p { margin: 0; color: var(--gris); }
 .porte .suite { font-weight: 700; color: var(--dct); text-decoration: none; }
 .porte .suite:hover { text-decoration: underline; }
@@ -98,6 +101,48 @@ footer { background: var(--nuit); color: var(--blanc-2); padding: 44px 0; font-s
 footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 footer strong { color: var(--blanc); }
 footer p { margin: 0 0 6px; }
+
+/* ---------- les onglets : une page chacun ---------- */
+main { min-height: calc(100vh - var(--haut)); }
+.page-tete { overflow: hidden; background: radial-gradient(80% 160% at 12% 100%, #2a1220 0%, var(--nuit) 70%); color: var(--blanc); padding: clamp(48px, 7vw, 96px) 0 clamp(44px, 6vw, 80px); }
+.page-tete h1 { margin: 0; font: italic 500 clamp(2.8rem, 1.8rem + 3.6vw, 5.2rem)/1 var(--serif); }
+.page-tete h1 span { position: relative; display: inline-block; padding-bottom: 22px; }
+/* le bras arrive du bord de l'écran, souligne le titre et s'enroule */
+.page-tete h1 span::after { content: ""; position: absolute; left: -100vw; right: -32px; bottom: 0; height: 32px; background: linear-gradient(var(--magenta), var(--magenta)) 0 27px / calc(100% - 31px) 3px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23bc3e80' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") right top / 32px 32px no-repeat; }
+.page-tete p { margin: 26px 0 0; max-width: 60ch; font-size: 1.15rem; color: var(--blanc-2); }
+.page-tete + section.bloc { padding-top: clamp(40px, 6vw, 72px); }
+.chapo { margin: -8px 0 26px; max-width: 62ch; color: var(--gris); }
+.etiquette { margin: 0 0 10px; font: 700 .8rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
+/* les spectacles : la pieuvre de l'accueil, en liste */
+.repertoire { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--lait-2); }
+.repertoire a { display: grid; grid-template-columns: clamp(180px, 20vw, 250px) minmax(0, 1fr) minmax(190px, 250px); gap: clamp(20px, 3vw, 44px); align-items: center; padding: 24px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
+.rp-photo { aspect-ratio: 3 / 2; overflow: hidden; background: var(--lait-2); }
+.rp-photo img { width: 100%; height: 100%; object-fit: cover; }
+.repertoire h2 { margin: 0; font: italic 500 clamp(1.7rem, 1.2rem + 1.2vw, 2.4rem)/1.08 var(--serif); text-wrap: balance; }
+.repertoire h2::after { content: ""; display: block; width: 56px; height: 3px; margin-top: 14px; border-radius: 2px; background: var(--c); transition: width .3s; }
+.repertoire a:hover h2::after { width: 120px; }
+.rp-texte p { margin: 12px 0 0; color: var(--gris); }
+.rp-quand { margin: 0; }
+.rp-quand > * { display: block; }
+.rp-quand small { margin-bottom: 4px; font: 700 .8rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
+.rp-quand .n { margin-top: 4px; color: var(--gris); }
+/* l'agenda : mois par mois */
+.mois-groupe { display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); gap: 0 clamp(24px, 4vw, 56px); border-top: 2px solid var(--encre); margin-bottom: clamp(32px, 4vw, 48px); }
+.mois-groupe h2 { position: sticky; top: calc(var(--haut) + 16px); align-self: start; margin: 0; padding-top: 14px; font: italic 500 clamp(1.7rem, 1.3rem + 1vw, 2.2rem)/1.1 var(--serif); }
+.mois-groupe h2 small { display: block; margin-top: 6px; font: 400 .95rem/1.3 var(--sans); color: var(--gris); }
+.mois-groupe .dates li:last-child { border-bottom: 0; }
+/* la compagnie */
+.artistes { list-style: none; margin: 0; padding: 0; columns: 3 240px; column-gap: clamp(24px, 4vw, 56px); }
+.artistes li { break-inside: avoid; padding: 12px 0 13px; border-top: 1px solid var(--lait-2); }
+.artistes b { display: block; font-weight: 600; }
+.artistes span { display: block; font: italic 500 1.05rem/1.35 var(--serif); color: var(--gris); }
+.partenaires { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 clamp(20px, 3vw, 40px); }
+.partenaires li { padding: 14px 0; border-top: 1px solid var(--lait-2); font-weight: 600; }
+/* contact */
+.coord { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
+.coord .mail { font: italic 500 clamp(1.9rem, 1.3rem + 2vw, 3.2rem)/1.1 var(--serif); color: var(--magenta-texte); text-decoration: none; overflow-wrap: anywhere; }
+.coord .mail:hover { text-decoration: underline; }
+.coord address { font-style: normal; font-size: 1.15rem; }
 
 /* ---------- la page d'un spectacle ---------- */
 /* l'univers (couleurs, photo, un effet) ne vit que dans l'ouverture et l'effet signature ;
@@ -249,7 +294,8 @@ footer p { margin: 0 0 6px; }
 #ink.fade { opacity: 0; }
 
 @media (max-width: 900px) {
-  .compagnie, .corps, .panneau { grid-template-columns: minmax(0, 1fr); }
+  .compagnie, .corps, .panneau, .coord, .mois-groupe { grid-template-columns: minmax(0, 1fr); }
+  .mois-groupe h2 { position: static; padding-bottom: 4px; }
   .portes { grid-template-columns: minmax(0, 1fr); gap: 34px; }
   footer .wrap { grid-template-columns: minmax(0, 1fr); }
   .sig-clock { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 28px; }

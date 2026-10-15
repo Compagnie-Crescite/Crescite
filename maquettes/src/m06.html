@@ -11,7 +11,8 @@
 /* Maquette 06 · « Les bras de la tournée ».
    La tentacule devient un thème, pas un dessin du logo : les tournées partent de Rouen vers chaque
    commune où la compagnie a joué. La saison en cours en magenta, les années passées en gris.
-   Chaque page spectacle montre sa propre carte. Le reste du site est clair et classique. */
+   Le site se lit par onglets : l'accueil et sa carte, puis une page par entrée du menu ;
+   l'agenda, la compagnie et chaque spectacle ont leur propre carte. */
 :root {
   --papier: #f6f2eb; --papier-2: #ece5da; --carte: #e4dccf; --encre: #1d1418; --gris: #5f565a; --filet: #dcd3c6;
   --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418;
@@ -33,7 +34,7 @@ img { display: block; max-width: 100%; }
 .trait { display: block; width: 92px; height: 16px; margin-top: 10px; overflow: visible; }
 .trait path { fill: none; stroke: var(--c, var(--magenta)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 
-/* en-tête */
+/* en-tête : un étage, quatre onglets */
 .top { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--papier) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--filet); }
 .top .wrap { display: flex; align-items: center; gap: 24px; height: 64px; max-width: none; }
 .marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 1.1rem; letter-spacing: .01em; }
@@ -42,6 +43,7 @@ img { display: block; max-width: 100%; }
 .nav { margin-left: auto; display: flex; gap: 4px; }
 .nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: 500; font-size: .97rem; color: var(--gris); }
 .nav a:hover { color: var(--encre); background: var(--papier-2); }
+.nav a[aria-current="page"] { color: var(--encre); text-decoration-line: underline; text-decoration-color: var(--magenta); text-decoration-thickness: 2px; text-underline-offset: 9px; }
 .menu { display: none; margin-left: auto; background: none; border: 1px solid var(--filet); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); color: var(--encre); }
 
 /* ouverture : la phrase de la compagnie et la carte des tournées */
@@ -59,6 +61,8 @@ img { display: block; max-width: 100%; }
 .bouton { display: inline-block; padding: 11px 18px; border-radius: 999px; background: var(--encre); color: var(--papier); border: 1.5px solid var(--encre); text-decoration: none; font-weight: 600; font-size: .97rem; }
 .bouton.second { background: transparent; color: var(--encre); }
 .bouton:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+
+/* la carte des tournées */
 figure.carte { margin: 0; }
 .carte svg { display: block; width: 100%; height: auto; max-height: calc(100svh - 150px); }
 .carte .pays { fill: var(--carte); }
@@ -74,12 +78,17 @@ figure.carte { margin: 0; }
 .legende i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 8px; background: var(--c, var(--magenta)); }
 .legende i.passe { background: color-mix(in srgb, var(--encre) 30%, transparent); }
 
+/* les pages des onglets : un titre, son trait, une phrase */
+.page-titre { padding-top: clamp(36px, 5vw, 64px); padding-bottom: clamp(30px, 4vw, 48px); }
+.page-titre h1 { margin: 0; font: italic 400 clamp(2.4rem, 1.6rem + 2.6vw, 3.6rem)/1.05 var(--serif); text-wrap: balance; }
+.page-titre .trait { width: 120px; height: 20px; margin-top: 16px; }
+.page-titre p { margin: 20px 0 0; max-width: 62ch; font-size: 1.12rem; color: var(--gris); }
+
 /* sections ordinaires */
 section.bloc { padding: clamp(52px, 7vw, 96px) 0; border-top: 1px solid var(--filet); }
+section.bloc.premier { border-top: 0; padding-top: 0; }
 .entete { display: flex; justify-content: space-between; align-items: end; gap: 12px 32px; flex-wrap: wrap; margin-bottom: 30px; }
 .entete h2 { margin: 0; font: italic 400 clamp(2rem, 1.4rem + 1.8vw, 2.8rem)/1.05 var(--serif); }
-.entete a, .entete button.lien { font: 600 1rem var(--sans); color: var(--magenta-texte); text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; }
-.entete a:hover, .entete button.lien:hover { text-decoration: underline; }
 .cartes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 22px; list-style: none; margin: 0; padding: 0; }
 .cartes a { display: block; text-decoration: none; }
 .cartes figure { margin: 0 0 14px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; background: var(--papier-2); }
@@ -90,14 +99,14 @@ section.bloc { padding: clamp(52px, 7vw, 96px) 0; border-top: 1px solid var(--fi
 .cartes .st { display: block; margin-top: 4px; font-size: .9rem; color: var(--gris); }
 .cartes .quand { display: block; margin-top: 8px; font-size: .9rem; font-weight: 600; }
 .dates { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--encre); }
-.dates li { display: grid; grid-template-columns: 130px minmax(0, 1.1fr) minmax(0, 1fr) 100px; gap: 20px; align-items: baseline; padding: 15px 0; border-bottom: 1px solid var(--filet); }
-.dates time { font-weight: 600; font-variant-numeric: tabular-nums; }
+.dates li { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 2px 20px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--filet); }
+.dates time { grid-row: 1 / span 2; font-weight: 600; font-variant-numeric: tabular-nums; }
 .dates time small { display: block; font-weight: 400; color: var(--gris); font-size: .85rem; }
-.dates a { font: italic 500 1.3rem/1.2 var(--serif); text-decoration: none; }
-.dates a::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: .15em; }
-.dates a:hover { color: var(--magenta-texte); }
-.dates .ou { color: var(--gris); }
-.dates .pub { font-size: .82rem; font-weight: 600; text-align: right; }
+.dates li > a { grid-column: 2; grid-row: 1; font: italic 500 1.3rem/1.2 var(--serif); text-decoration: none; }
+.dates li > a::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: .15em; }
+.dates li > a:hover { color: var(--magenta-texte); }
+.dates .ou { grid-column: 2; color: var(--gris); }
+.dates .pub { grid-column: 3; grid-row: 1; font-size: .82rem; font-weight: 600; text-align: right; }
 .portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 0 clamp(20px, 3vw, 40px); }
 .porte { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 10px; align-content: start; }
 .porte h3 { margin: 0; font: italic 500 1.65rem/1.15 var(--serif); }
@@ -108,13 +117,42 @@ section.bloc { padding: clamp(52px, 7vw, 96px) 0; border-top: 1px solid var(--fi
 .porte li a:hover { color: var(--magenta-texte); }
 .porte li small { color: var(--gris); white-space: nowrap; }
 .porte .bas > p { margin: 0; color: var(--gris); }
+.porte .bas .faits { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--filet); }
 .porte .suite { font-weight: 600; color: var(--magenta-texte); text-decoration: none; }
 .porte .suite:hover { text-decoration: underline; }
+
+/* l'agenda : la liste par mois, et la carte de la saison à côté */
+.agenda { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.agenda-carte { position: sticky; top: 88px; }
+.agenda-carte .carte svg { max-height: calc(100svh - 150px); }
+.mois { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 44px 0 12px; font: italic 500 1.65rem/1.2 var(--serif); }
+.agenda-liste > .mois:first-child { margin-top: 0; }
+.mois small { font: 400 .9rem var(--sans); color: var(--gris); }
+
+/* la compagnie */
 .compagnie { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
 .compagnie p.grand { margin: 0 0 18px; font: 400 clamp(1.35rem, 1.1rem + .9vw, 1.9rem)/1.35 var(--serif); }
 .chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; align-self: start; }
 .chiffres dt { font: 400 2.6rem/1 var(--serif); }
 .chiffres dd { margin: 6px 0 0; color: var(--gris); font-size: .9rem; }
+.tournees { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+.tournees .entete { margin-bottom: 22px; }
+.tournees p { margin: 0 0 22px; max-width: 42ch; }
+.artistes { list-style: none; margin: 0; padding: 0; columns: 3 230px; column-gap: clamp(24px, 4vw, 48px); }
+.artistes li { break-inside: avoid; padding: 11px 0; border-bottom: 1px solid var(--filet); }
+.artistes b { display: block; font-weight: 600; }
+.artistes span { display: block; font-size: .92rem; color: var(--gris); }
+.artistes a { text-decoration: none; }
+.artistes a:hover { color: var(--magenta-texte); text-decoration: underline; }
+.partenaires { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 24px; }
+.partenaires li { padding: 14px 0; border-top: 1px solid var(--encre); font: italic 500 1.3rem/1.25 var(--serif); }
+
+/* contact */
+.coordonnees { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px clamp(20px, 3vw, 40px); padding-top: 22px; border-top: 1px solid var(--encre); }
+.coordonnees h2 { margin: 0 0 10px; font-size: .8rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
+.coordonnees p { margin: 0; font: 400 1.35rem/1.4 var(--serif); }
+.coordonnees a { color: var(--magenta-texte); }
+
 footer { background: var(--nuit); color: #d8cdd1; padding: 44px 0; font-size: .92rem; }
 footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 footer strong { color: #fff; }
@@ -140,7 +178,7 @@ footer p { margin: 0 0 6px; }
 .faits dd { margin: 0; font-weight: 500; }
 .ou-voir { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
 .ou-voir .resume { margin: 0 0 18px; font-size: 1.1rem; }
-.ou-voir .dates li { grid-template-columns: 120px minmax(0, 1fr) 90px; }
+.ou-voir .dates li { grid-template-columns: 130px minmax(0, 1fr) auto; }
 .onglets { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--filet); margin-bottom: 26px; }
 .onglets button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 0; margin: 0 26px -1px 0; font: italic 500 1.3rem var(--serif); color: var(--gris); cursor: pointer; }
 .onglets button:hover { color: var(--encre); }
@@ -159,18 +197,21 @@ footer p { margin: 0 0 6px; }
 .suivant:hover b { color: var(--ct); }
 
 @media (max-width: 1000px) {
-  .ouverture .wrap, .compagnie, .corps, .tete .wrap, .ou-voir, .panneau { grid-template-columns: minmax(0, 1fr); }
+  .ouverture .wrap, .compagnie, .corps, .tete .wrap, .ou-voir, .panneau, .agenda, .tournees, .coordonnees { grid-template-columns: minmax(0, 1fr); }
   .cartes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .portes { grid-template-columns: minmax(0, 1fr); gap: 34px; }
   footer .wrap { grid-template-columns: minmax(0, 1fr); }
-  .carte svg { max-height: none; }
+  .carte svg, .agenda-carte .carte svg { max-height: none; }
+  .agenda-carte { position: static; order: -1; }
 }
 @media (max-width: 760px) {
   .nav { display: none; position: absolute; left: 0; right: 0; top: 64px; background: var(--papier); flex-direction: column; padding: 8px var(--gout) 18px; border-bottom: 1px solid var(--filet); }
   .top.ouvert .nav { display: flex; }
+  .nav a[aria-current="page"] { text-underline-offset: 6px; }
   .menu { display: inline-block; }
   .cartes { grid-template-columns: minmax(0, 1fr); }
-  .dates li, .ou-voir .dates li { grid-template-columns: 1fr; gap: 2px; }
+  .dates li, .ou-voir .dates li { grid-template-columns: minmax(0, 1fr); }
+  .dates li > *, .dates time { grid-column: 1; grid-row: auto; }
   .dates .pub { text-align: left; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
@@ -181,30 +222,42 @@ footer p { margin: 0 0 6px; }
   <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
   <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
   <nav class="nav" id="nav" aria-label="Navigation principale">
-    <a href="#/" data-ancre="spectacles">Spectacles</a><a href="#/" data-ancre="agenda">Agenda</a><a href="#/" data-ancre="compagnie">La compagnie</a><a href="#/" data-ancre="contact">Contact</a>
+    <a href="#/spectacles">Spectacles</a><a href="#/agenda">Agenda</a><a href="#/compagnie">La compagnie</a><a href="#/contact">Contact</a>
   </nav>
 </div></header>
 <main id="main"></main>
-<footer id="contact"><div class="wrap" id="pied"></div></footer>
+<footer><div class="wrap" id="pied"></div></footer>
 <script>const D = /*__DATA__*/null;</script>
 <script>
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   // échappe le texte, et pose les espaces insécables de la ponctuation française
-  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»])/g, ' $1').replace(/« /g, '« ');
-  const titre = t => esc(t).replace(/ – /g, ' – ');
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»])/g, ' $1').replace(/« /g, '« ');
+  const titre = t => esc(t).replace(/ – /g, ' – ');
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const pluriel = (n, un, plus) => `${n} ${n > 1 ? plus : un}`;
   const doux = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
   const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
+  const SPECTACLES = D.shows.filter(s => s.annee);
   const C = D.company, K = D.carte, main = $('#main');
+  const COMMUNES = new Set(D.dates.map(d => d.commune + d.dep)).size;
   $('#marque').innerHTML = D.logo.mark;
   $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
     <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
   // le motif : une onde qui s'enroule au bout, comme la pointe d'une tentacule
   const trait = c => `<svg class="trait" viewBox="0 0 120 20" aria-hidden="true"${c ? ` style="--c:${c}"` : ''}><path d="M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13"/></svg>`;
   const prochaine = s => s.prochaine ? `${s.prochaine.jour} ${s.prochaine.mois}, ${s.prochaine.commune}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements');
-  const ligneDate = (d, court) => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.iso}">${esc(d.joursem + ' ' + d.jour + ' ' + d.mois)}<small>${d.annee}</small></time>
-    ${court ? '' : `<a href="#/spectacle/${d.slug}">${titre(d.titre)}</a>`}<span class="ou">${esc(d.lieu ? d.lieu + ', ' : '')}${esc(d.commune)} (${esc(d.dep)})</span><span class="pub">${esc(d.public)}</span></li>`;
+  // une date : un jour, plusieurs jours ou un mois seul ; un « lieu » qui est une heure ou une note n'est pas un lieu
+  const quand = d => d.precision === 'month' ? `${cap(d.moisLong)} ${d.annee}` : (d.fin !== d.iso ? d.label.replace(/\s\d{4}$/, '') : `${d.joursem} ${d.jour} ${d.mois}`);
+  const lieu = d => {
+    const v = (d.lieu || '').trim(), ou = `${esc(d.commune)} (${esc(d.dep)})`;
+    if (/^\d{1,2}\s*h\s*\d{0,2}$/i.test(v)) return `${ou}, à ${esc(v.replace(/\s+/g, ''))}`;
+    if (/^diptyque$/i.test(v)) return `${ou}, en diptyque`;
+    return `${v ? esc(v) + ', ' : ''}${ou}`;
+  };
+  const ligneDate = (d, court) => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.iso}">${esc(quand(d))}<small>${d.precision === 'month' ? 'jour à préciser' : d.annee}</small></time>
+    ${court ? '' : `<a href="#/spectacle/${d.slug}">${titre(d.titre)}</a>`}<span class="ou">${lieu(d)}</span><span class="pub">${esc(d.public)}</span></li>`;
 
   /* ---------- la carte : un bras par commune, de Rouen jusqu'à elle ---------- */
   // une courbe qui part de Rouen et tourne toujours dans le même sens ; épaisse au départ, fine au bout
@@ -224,95 +277,148 @@ footer p { margin: 0 0 6px; }
     return `M${G.join('L')}L${Dr.reverse().join('L')}Z`;
   }
   let nCarte = 0;
-  // passe : [[indice de commune, nombre de dates]] ; saison : les dates à venir, en couleur
-  function carte(passe, saison, couleur, legende) {
-    const id = 'pousse' + (++nCarte), [rx, ry] = K.rouen;
+  // passe : [[indice de commune, nombre de dates]] ; saison : des dates, en couleur ; legende : [saison, passé].
+  // Chaque carte a son clipPath : un cercle qui s'ouvre depuis Rouen et fait pousser les bras.
+  function carte(passe, saison, couleur, [lSaison = '', lPasse = '']) {
+    const id = 'pousse' + (++nCarte), [rx, ry] = K.rouen, anime = doux();
     const parLieu = new Map();
     saison.forEach(d => { if (!d.xy) return; const k = d.xy.join(); const e = parLieu.get(k) || { xy: d.xy, dates: [] }; e.dates.push(d); parLieu.set(k, e); });
-    const anim = doux() ? `<animate attributeName="r" from="0" to="820" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>` : '';
+    const leg = [saison.length ? lSaison : '', passe.length ? lPasse : ''];
     return `<figure class="carte" style="--c:${couleur}">
-      <svg viewBox="${K.viewBox}" role="img" aria-label="${esc(legende)}">
-        <defs><clipPath id="${id}"><circle cx="${rx}" cy="${ry}" r="${doux() ? 0 : 820}">${anim}</circle></clipPath></defs>
+      <svg viewBox="${K.viewBox}" role="img" aria-label="${esc(leg.filter(Boolean).join(', '))}">
+        <defs><clipPath id="${id}"><circle cx="${rx}" cy="${ry}" r="${anime ? 0 : 820}">${anime ? '<animate attributeName="r" from="0" to="820" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>' : ''}</circle></clipPath></defs>
         <path class="voisin" d="${K.belgique}"/><path class="voisin" d="${K.luxembourg}"/><path class="pays" d="${K.contour}"/>
         <g clip-path="url(#${id})">
           ${passe.map(([i, n]) => `<path class="bras-passe" d="${bras(K.lieux[i].xy, n, 1)}"/>`).join('')}
           ${passe.map(([i]) => `<circle class="bout-passe" cx="${K.lieux[i].xy[0]}" cy="${K.lieux[i].xy[1]}" r="2.2"/>`).join('')}
           ${[...parLieu.values()].map(e => `<path class="bras-saison" d="${bras(e.xy, e.dates.length * 2, 1.2)}"/>`).join('')}
-          ${[...parLieu.values()].map(e => `<circle class="bout-saison" cx="${e.xy[0]}" cy="${e.xy[1]}" r="4.2"><title>${esc(e.dates[0].commune)} (${esc(e.dates[0].dep)}) : ${e.dates.map(d => `${d.jour} ${d.mois}, ${d.titre}`).join(' ; ')}</title></circle>`).join('')}
+          ${[...parLieu.values()].map(e => `<circle class="bout-saison" cx="${e.xy[0]}" cy="${e.xy[1]}" r="4.2"><title>${esc(e.dates[0].commune)} (${esc(e.dates[0].dep)}) : ${e.dates.map(d => `${esc(quand(d))}, ${titre(d.titre)}`).join(' ; ')}</title></circle>`).join('')}
         </g>
         <circle class="rouen" cx="${rx}" cy="${ry}" r="5.5"/><text class="rouen-nom" x="${rx + 10}" y="${ry - 9}">Rouen</text>
       </svg>
-      <figcaption class="legende">${saison.length ? `<span><i></i>${esc(legende.split(' · ')[0])}</span>` : ''}${passe.length ? `<span><i class="passe"></i>${esc(legende.split(' · ')[1] || '')}</span>` : ''}</figcaption>
+      <figcaption class="legende">${leg[0] ? `<span><i></i>${esc(leg[0])}</span>` : ''}${leg[1] ? `<span><i class="passe"></i>${esc(leg[1])}</span>` : ''}</figcaption>
     </figure>`;
   }
 
   /* ---------- les trois portes : chacune donne tout de suite ses réponses ---------- */
+  const porte = (p, corps) => `<div class="porte" style="--dc:${p.couleur}"><h3>${esc(p.titre)}${trait(p.couleur)}</h3><p>${esc(p.texte)}</p><div class="bas">${corps}</div></div>`;
   function portes() {
     const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
-    const porte = (p, corps) => `<div class="porte" style="--dc:${p.couleur}"><h3>${esc(p.titre)}${trait(p.couleur)}</h3><p>${esc(p.texte)}</p><div class="bas">${corps}</div></div>`;
-    return porte(voir, `<ul>${D.dates.slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(d.jour + ' ' + d.mois)}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/" data-ancre="agenda">Toutes les dates →</a>`) +
-      porte(prog, `<ul><li><a href="#/" data-ancre="spectacles"><span>Le répertoire</span><small>${D.shows.length - 1} spectacles</small></a></li>
+    const jour = d => d.precision === 'month' ? `${d.moisLong} ${d.annee}` : `${d.jour} ${d.mois}`;
+    return porte(voir, `<ul>${D.dates.filter(d => d.public !== 'Scolaire').slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(jour(d))}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/agenda">Tout l’agenda →</a>`) +
+      porte(prog, `<ul><li><a href="#/spectacles"><span>Le répertoire</span><small>${SPECTACLES.length} spectacles</small></a></li>
         <li><a href="#/spectacle/${D.shows[0].slug}/programmer"><span>Fiches techniques</span><small>par spectacle</small></a></li>
         <li><a href="mailto:${C.email}?subject=Programmation"><span>Écrire à la diffusion</span><small>${esc(C.email)}</small></a></li></ul>`) +
       porte(etab, `<ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${titre(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
         <p>${D.shows.filter(s => s.passCulture).length} spectacles sont proposés sur le Pass Culture (offre collective).</p>`);
   }
 
-  /* ---------- accueil ---------- */
+  /* ---------- accueil : la phrase, la carte, puis les trois portes ---------- */
   function accueil() {
-    document.title = 'Compagnie Crescite · théâtre, Rouen';
-    const communes = new Set(D.dates.map(d => d.commune + d.dep)).size;
-    const tous = K.lieux.map((l, i) => [i, l.n]);
     main.innerHTML = `
       <section class="ouverture" aria-labelledby="h1"><div class="wrap">
         <div><p class="surtitre">Compagnie de théâtre · Rouen · depuis ${C.depuis}</p>
-          <h1 id="h1">Des spectacles qui partent de Rouen et vont chercher leur public.</h1>${trait()}
+          <h1 id="h1" tabindex="-1">Des spectacles qui partent de Rouen et vont chercher leur public.</h1>${trait()}
           <p class="chiffre"><b>${D.stats.representationsTexte} représentations</b> depuis ${D.stats.depuis}, des théâtres aux collèges et aux lycées, en France, en Belgique, en Suisse et en Tunisie.</p>
-          <div class="saison"><p>Saison ${esc(D.saison)} : <b>${D.dates.length} dates dans ${communes} communes</b>.</p>
-            <div class="boutons"><a class="bouton" href="#/" data-ancre="agenda">Les prochaines dates</a><a class="bouton second" href="#/" data-ancre="spectacles">Les spectacles</a></div></div></div>
-        ${carte(tous, D.dates, '#bc3e80', `La saison ${D.saison} · Les dates publiées sur le site depuis 2016`)}
+          <div class="saison"><p>Saison ${esc(D.saison)} : <b>${D.dates.length} dates dans ${COMMUNES} communes</b>.</p>
+            <div class="boutons"><a class="bouton" href="#/agenda">Les prochaines dates</a><a class="bouton second" href="#/spectacles">Les spectacles</a></div></div></div>
+        ${carte(K.lieux.map((l, i) => [i, l.n]), D.dates, '#bc3e80', [`La saison ${D.saison}`, 'Les dates publiées sur le site depuis 2016'])}
       </div></section>
-      <section class="bloc" id="spectacles" aria-labelledby="h-sp"><div class="wrap">
-        <div class="entete"><h2 id="h-sp">Les spectacles</h2></div>
+      <section class="bloc" aria-labelledby="h-po"><div class="wrap">
+        <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
+        <div class="portes">${portes()}</div>
+      </div></section>`;
+    return 'Compagnie Crescite · théâtre, Rouen';
+  }
+
+  /* ---------- les spectacles ---------- */
+  function spectacles() {
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">Les spectacles</h1>${trait()}<p>Le répertoire compte ${SPECTACLES.length} spectacles, tous mis en scène par ${esc(C.miseEnScene)}, et des actions culturelles menées avec les établissements. Sur la page de chaque spectacle, sa carte montre où il a joué et où le voir cette saison.</p></div>
+      <section class="bloc premier" aria-label="Le répertoire"><div class="wrap">
         <ul class="cartes">${D.shows.map(s => `<li><a href="#/spectacle/${s.slug}" style="--ct:${s.couleurTexteClair}">
           <figure><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%" loading="lazy"></figure>
           <h3>${titre(s.titre)}</h3>${trait(s.couleurTexteClair)}<span class="st">${esc(s.sousTitre)}</span><span class="quand">${esc(prochaine(s))}</span></a></li>`).join('')}</ul>
-      </div></section>
-      <section class="bloc" id="agenda" aria-labelledby="h-ag"><div class="wrap">
-        <div class="entete"><h2 id="h-ag">Prochaines dates</h2><button class="lien" type="button" id="tout" aria-controls="liste-dates" aria-expanded="false"></button></div>
-        <ul class="dates" id="liste-dates"></ul>
-      </div></section>
-      <section class="bloc" id="portes" aria-labelledby="h-po"><div class="wrap">
-        <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
-        <div class="portes">${portes()}</div>
-      </div></section>
-      <section class="bloc" id="compagnie" aria-labelledby="h-co"><div class="wrap">
-        <div class="entete"><h2 id="h-co">La compagnie</h2></div>
-        <div class="compagnie"><div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
-          <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl></div>
       </div></section>`;
-    let ouvert = false;
-    const liste = $('#liste-dates'), tout = $('#tout');
-    const draw = () => { liste.innerHTML = (ouvert ? D.dates : D.dates.slice(0, 6)).map(d => ligneDate(d)).join(''); tout.textContent = ouvert ? 'Moins de dates' : `Toutes les dates (${D.dates.length})`; tout.setAttribute('aria-expanded', ouvert); };
-    tout.addEventListener('click', () => { ouvert = !ouvert; draw(); });
-    draw();
+    return 'Les spectacles · Compagnie Crescite';
+  }
+
+  /* ---------- l'agenda : toute la saison par mois, et sa carte ---------- */
+  function agenda() {
+    const mois = new Map();
+    D.dates.forEach(d => { const k = d.iso.slice(0, 7); if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">L’agenda</h1>${trait()}<p>Saison ${esc(D.saison)} : ${D.dates.length} dates dans ${COMMUNES} communes, dans les théâtres, les collèges et les lycées. Les dates tout public se réservent auprès du lieu qui accueille le spectacle.</p></div>
+      <section class="bloc premier" aria-label="Les dates de la saison"><div class="wrap agenda">
+        <div class="agenda-liste">${[...mois.values()].map(ds => `<h2 class="mois">${cap(ds[0].moisLong)} ${ds[0].annee}<small>${pluriel(ds.length, 'date', 'dates')}</small></h2>
+          <ul class="dates">${ds.map(d => ligneDate(d)).join('')}</ul>`).join('')}</div>
+        <div class="agenda-carte">${carte([], D.dates, '#bc3e80', [`La saison ${D.saison} : un bras par commune`])}</div>
+      </div></section>`;
+    return 'L’agenda · Compagnie Crescite';
+  }
+
+  /* ---------- la compagnie ---------- */
+  function compagnie() {
+    const artistes = new Map();
+    SPECTACLES.forEach(s => s.distribution.flatMap(n => n.split(/\s+ou\s+/)).forEach(n => {
+      if (!artistes.has(n)) artistes.set(n, []);
+      if (!artistes.get(n).includes(s)) artistes.get(n).push(s);
+    }));
+    const noms = [...artistes].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">La compagnie</h1>${trait()}</div>
+      <section class="bloc premier" aria-label="Présentation"><div class="wrap compagnie">
+        <div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
+        <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-to"><div class="wrap tournees">
+        <div><div class="entete"><h2 id="h-to">La carte des tournées</h2></div>
+          <p>Chaque bras part de Rouen vers l’une des ${K.lieux.length} communes des dates publiées sur le site depuis 2016. Plus il est épais, plus la compagnie y a joué.</p>
+          <a class="bouton second" href="#/agenda">L’agenda de la saison</a></div>
+        ${carte(K.lieux.map((l, i) => [i, l.n]), [], '#bc3e80', ['', 'Les dates publiées sur le site depuis 2016'])}
+      </div></section>
+      <section class="bloc" aria-labelledby="h-ar"><div class="wrap">
+        <div class="entete"><h2 id="h-ar">Au plateau</h2></div>
+        <ul class="artistes">${noms.map(([n, ss]) => `<li><b>${esc(n)}</b><span>${ss.map(s => `<a href="#/spectacle/${s.slug}">${titre(s.titre)}</a>`).join(', ')}</span></li>`).join('')}</ul>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-pa"><div class="wrap">
+        <div class="entete"><h2 id="h-pa">Partenaires</h2></div>
+        <ul class="partenaires">${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      </div></section>`;
+    return 'La compagnie · Compagnie Crescite';
+  }
+
+  /* ---------- contact ---------- */
+  function contact() {
+    const [rue, ville] = C.adresse.split(', ');
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">Contact</h1>${trait()}<p>Une date, une programmation, un projet dans votre établissement : écrivez à la compagnie.</p></div>
+      <section class="bloc premier" aria-label="Coordonnées"><div class="wrap coordonnees">
+        <div><h2>Adresse</h2><p>${esc(C.nom)}<br>${esc(rue)}<br>${esc(ville)}</p></div>
+        <div><h2>E-mail</h2><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
+        <div><h2>Lettre d’information</h2><p>Inscription <span class="afournir">à fournir</span></p></div>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-de"><div class="wrap">
+        <div class="entete"><h2 id="h-de">Selon votre demande</h2></div>
+        <div class="portes">${D.doors.map(p => porte(p, `<dl class="faits"><dt>Contact</dt><dd><span class="afournir">à fournir</span></dd><dt>E-mail</dt><dd><a href="mailto:${C.email}?subject=${encodeURIComponent(p.titre)}">${esc(C.email)}</a></dd></dl>`)).join('')}</div>
+      </div></section>`;
+    return 'Contact · Compagnie Crescite';
   }
 
   /* ---------- page d'un spectacle ---------- */
   const MODE = { etablissement: 'Peut venir dans votre établissement', salle: 'Se joue en salle : venez avec vos classes', a_confirmer: 'Accueil dans l’établissement à confirmer' };
   const docs = l => `<ul class="docs">${l.map(x => `<li><span>${esc(x)}</span><span class="afournir">à fournir</span></li>`).join('')}</ul>`;
-  function spectacle(slug, porte) {
+  function spectacle(slug, choixPorte) {
     const s = bySlug[slug]; if (!s) return accueil();
     const i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
     const dates = D.dates.filter(d => d.slug === slug), n = s.distribution.length;
     const passe = K.parSpectacle[slug] || [];
     const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null, s.representations ? ['Représentations', `${s.representations.n}, ${s.representations.quand}`] : null].filter(Boolean);
     const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
-    const choix = ['voir', 'programmer', 'etablissement'].includes(porte) ? porte : 'voir';
-    document.title = `${s.titre} · Compagnie Crescite`;
+    const choix = ['voir', 'programmer', 'etablissement'].includes(choixPorte) ? choixPorte : 'voir';
     main.innerHTML = `
       <section class="tete" aria-labelledby="titre-sp"><div class="wrap">
-        <div><p class="fil"><a href="#/">Accueil</a> / <a href="#/" data-ancre="spectacles">Spectacles</a></p>
+        <div><p class="fil"><a href="#/">Accueil</a> / <a href="#/spectacles">Spectacles</a></p>
           <h1 id="titre-sp" tabindex="-1">${titre(s.titre)}</h1>${trait(s.couleurTexteClair)}
           <p class="st">${esc(s.sousTitre)}</p>
           <p class="prochaine">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})` : 'Aucune date annoncée pour l’instant.'}</p></div>
@@ -325,8 +431,8 @@ footer p { margin: 0 0 6px; }
       <section class="bloc" aria-labelledby="h-ou"><div class="wrap">
         <div class="entete"><h2 id="h-ou">Où le voir</h2></div>
         <div class="ou-voir">
-          ${passe.length || dates.length ? carte(passe, dates, s.couleurTexteClair, `Les dates à venir · Les dates passées publiées sur le site`) : `<p class="resume">${esc(e.texte || 'Les actions culturelles se construisent avec chaque établissement.')}</p>`}
-          <div>${s.representations ? `<p class="resume"><b>${s.representations.n} représentations</b> ${esc(s.representations.quand)}.${passe.length ? ` La carte en montre ${passe.length} commune${passe.length > 1 ? 's' : ''}, celles des dates publiées sur le site.` : ''}</p>` : ''}
+          ${passe.length || dates.length ? carte(passe, dates, s.couleurTexteClair, ['Les dates à venir', 'Les dates passées publiées sur le site']) : `<p class="resume">${esc(e.texte || 'Les actions culturelles se construisent avec chaque établissement.')}</p>`}
+          <div>${s.representations ? `<p class="resume"><b>${s.representations.n} représentations</b> ${esc(s.representations.quand)}.${passe.length ? ` La carte en montre ${pluriel(passe.length, 'commune', 'communes')}, celles des dates publiées sur le site.` : ''}</p>` : ''}
             ${dates.length ? `<ul class="dates">${dates.map(d => ligneDate(d, true)).join('')}</ul>` : (passe.length ? '<p>Aucune date annoncée pour l’instant.</p>' : `<p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Actions culturelles')}">Construire un projet avec la compagnie</a></p>`)}</div>
         </div>
       </div></section>
@@ -335,7 +441,7 @@ footer p { margin: 0 0 6px; }
         <div class="onglets" role="tablist" aria-label="Vous êtes">${D.doors.map(p => `<button role="tab" id="o-${p.key}" aria-controls="p-${p.key}" aria-selected="${p.key === choix}" tabindex="${p.key === choix ? 0 : -1}" style="--dc:${p.couleur}">${esc(p.titre)}</button>`).join('')}</div>
         <div class="panneau" role="tabpanel" id="p-voir" aria-labelledby="o-voir" tabindex="0"${choix === 'voir' ? '' : ' hidden'}>
           <div><h3>En pratique</h3><dl class="faits">${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}<dt>Âge conseillé</dt><dd><span class="afournir">à fournir</span></dd><dt>Réserver</dt><dd>auprès du lieu de chaque date</dd></dl></div>
-          <div><h3>Les dates</h3><p>${dates.length ? `${dates.length} date${dates.length > 1 ? 's' : ''} cette saison, sur la carte ci-dessus.` : 'Aucune date annoncée pour l’instant.'}</p>
+          <div><h3>Les dates</h3><p>${dates.length ? `${pluriel(dates.length, 'date', 'dates')} cette saison, sur la carte ci-dessus.` : 'Aucune date annoncée pour l’instant.'}</p>
             <p><a href="mailto:${C.email}?subject=${encodeURIComponent('Être prévenu des dates de ' + s.titre)}">Être prévenu des prochaines dates</a></p></div></div>
         <div class="panneau" role="tabpanel" id="p-programmer" aria-labelledby="o-programmer" tabindex="0"${choix === 'programmer' ? '' : ' hidden'}>
           <div><h3>La fiche</h3><dl class="faits">${[...fiche, ...s.equipe].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
@@ -355,29 +461,25 @@ footer p { margin: 0 0 6px; }
       t.addEventListener('click', () => sel(t));
       t.addEventListener('keydown', ev => { const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (d) { const n2 = tabs[(k + d + tabs.length) % tabs.length]; n2.focus(); sel(n2); } });
     });
+    return `${s.titre} · Compagnie Crescite`;
   }
 
-  /* ---------- navigation ---------- */
-  let vue = null, ancre = null;
+  /* ---------- navigation : une page par onglet ---------- */
+  const PAGES = new Map([['', accueil], ['spectacles', spectacles], ['agenda', agenda], ['compagnie', compagnie], ['contact', contact]]);
+  const fermer = () => { $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
   function route() {
-    const m = location.hash.match(/^#\/spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?/);
-    if (m && bySlug[m[1]]) {
-      spectacle(m[1], m[2]); vue = 'spectacle'; scrollTo(0, 0);
-      if (m[2]) $('#portes-sp').scrollIntoView();
-      $('#titre-sp').focus({ preventScroll: true });
-    } else {
-      accueil(); vue = 'accueil'; scrollTo(0, 0);
-      if (ancre) { const id = ancre; ancre = null; document.getElementById(id)?.scrollIntoView(); }
-    }
+    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0];
+    const m = chemin.match(/^spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?$/), sp = !!(m && bySlug[m[1]]);
+    document.title = sp ? spectacle(m[1], m[2]) : (PAGES.get(chemin) || accueil)();
+    const actif = sp ? '#/spectacles' : `#/${chemin}`;
+    $$('.nav a').forEach(a => { if (a.getAttribute('href') === actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    fermer();
+    scrollTo(0, 0);
+    if (sp && m[2]) $('#portes-sp').scrollIntoView();
+    $('h1', main).focus({ preventScroll: true });
   }
-  document.addEventListener('click', e => {
-    const a = e.target.closest('a[data-ancre]'); if (!a) return;
-    e.preventDefault(); $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false');
-    const id = a.dataset.ancre;
-    if (vue === 'spectacle') { ancre = id; location.hash = '#/'; return; }
-    document.getElementById(id)?.scrollIntoView({ behavior: doux() ? 'smooth' : 'auto' });
-  });
   $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
+  $('.top').addEventListener('click', e => { if (e.target.closest('a')) fermer(); });
   addEventListener('hashchange', route);
   route();
 })();

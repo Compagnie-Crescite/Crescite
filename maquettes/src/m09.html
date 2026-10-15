@@ -24,6 +24,7 @@
   --ease:cubic-bezier(.22,.7,.12,1);
   --t-ouverture:clamp(3rem,min(8.4vw,13.5vh),7.5rem);
   --t-titre:clamp(2.5rem,min(5.6vw,9.4vh),5rem);
+  --t-page:clamp(2.5rem,5.2vw,4.75rem);
   --t-grand:clamp(2.125rem,3.6vw,3.25rem);
   --t-moyen:clamp(1.375rem,2vw,1.75rem);
   --t-corps:1.0625rem;
@@ -59,8 +60,12 @@ ul,ol{padding:0;list-style:none}
 .marque-mot{font-size:1.375rem;font-weight:600;line-height:1;letter-spacing:-.02em;margin-top:-3px}
 .nav ul{display:flex;align-items:center;gap:clamp(22px,2.8vw,44px)}
 .nav a{position:relative;display:block;padding:10px 0;font-size:1rem;font-weight:500;letter-spacing:.01em;text-decoration:none}
+.nav a::before{content:attr(data-texte);display:block;height:0;overflow:hidden;visibility:hidden;font-weight:600}
 .nav a::after{content:"";position:absolute;left:0;right:0;bottom:5px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .45s var(--ease)}
 .nav a:hover::after,.nav a[aria-current="page"]::after{transform:scaleX(1);transform-origin:left}
+.nav a[aria-current="page"]{font-weight:600}
+.nav a[aria-current="page"]::after{height:2px;bottom:4px;background:var(--magenta-vif)}
+.tete[data-ton="clair"] .nav a[aria-current="page"]::after{background:var(--magenta)}
 .menu-bouton{display:none}
 
 /* sommaire */
@@ -150,12 +155,55 @@ ul,ol{padding:0;list-style:none}
 .chiffres > div{display:flex;flex-direction:column-reverse;justify-content:flex-end;border-top:1px solid var(--trait);padding-top:18px}
 .chiffres dd{font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1;font-variant-numeric:lining-nums}
 .chiffres dt{margin-top:10px;color:var(--muet);max-width:14em}
+.chiffres-source{margin-top:28px;font-size:var(--t-petit);color:var(--muet)}
+
+/* les onglets : une page par entrée du menu, sur papier */
+.page > .bloc:first-child{padding-top:calc(var(--tete-h) + clamp(48px,9vh,104px))}
+.page-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-page);line-height:1;letter-spacing:-.012em;margin-top:16px;text-wrap:balance}
+.page-intro{margin-top:22px;color:var(--muet);max-width:30em}
+.section-tete .bloc-titre{margin-top:0}
+.section-corps{margin-top:32px}
+
+/* répertoire */
+.repertoire{display:grid;grid-template-columns:minmax(0,1fr);margin-top:clamp(40px,7vh,72px);border-top:1px solid var(--encre)}
+.carte{position:relative;display:grid;grid-template-columns:104px minmax(0,1fr);gap:0 18px;align-items:start;padding:20px 0;border-bottom:1px solid var(--trait)}
+.carte-photo{position:relative;overflow:hidden;aspect-ratio:4/5;background:var(--fond)}
+.carte-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focale,50%) 50%;transition:transform 1.2s var(--ease)}
+.carte:hover .carte-photo img{transform:scale(1.04)}
+.carte-num{font-size:var(--t-petit);font-weight:600;letter-spacing:.2em;color:var(--ink);font-variant-numeric:tabular-nums}
+.carte-titre{margin-top:6px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:1.5rem;line-height:1.1;text-wrap:balance}
+.carte-titre a{text-decoration:none}
+.carte-titre a::after{content:"";position:absolute;inset:0}
+.carte-titre a:focus-visible{outline:none}
+.carte:has(a:focus-visible){outline:2px solid var(--encre);outline-offset:6px}
+.carte:hover .carte-titre a{text-decoration:underline}
+.carte-sous{margin-top:6px;color:var(--muet)}
+.carte-date{margin-top:14px;font-weight:500}
+.carte-date.est-vide{font-weight:400;color:var(--muet)}
+.carte-date .surtitre{margin-bottom:4px}
+
+/* la compagnie : intention, plateau, partenaires */
+.intention-pieuvre{display:block;width:84px;margin-bottom:24px;color:var(--magenta)}
+.intention-pieuvre svg{width:100%;height:auto}
+.intention-texte{font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1.14;letter-spacing:-.008em;max-width:20em;text-wrap:balance}
+.artistes,.partenaires-liste{display:grid;grid-template-columns:minmax(0,1fr);column-gap:clamp(20px,2.6vw,40px);border-top:1px solid var(--encre)}
+.artistes li,.partenaires-liste li{display:flex;flex-direction:column;padding:14px 0 15px;border-bottom:1px solid var(--trait)}
+.artiste-nom{font-weight:600}
+.artiste-pieces{color:var(--muet)}
+
+/* contact */
+.contact-adresse{margin-top:18px;font-style:normal;color:var(--muet)}
+.lettre{margin-top:56px;padding-top:18px;border-top:1px solid var(--encre);max-width:26em}
+.lettre p + p{margin-top:8px}
+.porte-ligne{display:block}
+.porte-ligne + .porte-ligne{margin-top:4px}
 
 /* pied de page */
 .pied{background:var(--nuit);color:var(--creme);padding:clamp(80px,13vh,136px) var(--marge) 36px;--muet:var(--creme-2)}
 .pied .grille{row-gap:48px}
-.pied-courriel{display:inline-block;margin-top:16px;font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1.08;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .5s var(--ease);word-break:break-word}
-.pied-courriel:hover{background-size:100% 1px}
+.pied-courriel,.contact-courriel{display:inline-block;margin-top:16px;font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1.08;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .5s var(--ease);word-break:break-word}
+.pied-courriel:hover,.contact-courriel:hover{background-size:100% 1px}
+.contact-courriel{margin-top:32px}
 .pied-adresse{margin-top:20px;color:var(--creme-2);font-style:normal}
 .pied-titre{font-size:var(--t-petit);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--creme-2);margin-bottom:14px}
 .pied-liste li + li{margin-top:6px}
@@ -257,6 +305,9 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .nav li{border-bottom:1px solid rgba(243,238,233,.12)}
   .nav a{padding:16px 0;font-family:Gloock,Georgia,serif;font-weight:400;font-size:2rem;line-height:1.2}
   .nav a::after{display:none}
+  .nav a[aria-current="page"]{font-weight:400;color:var(--magenta-vif)}
+  .nav a[aria-current="page"]::after{display:block;left:auto;right:2px;top:50%;bottom:auto;width:10px;height:10px;border-radius:50%;transform:translateY(-50%);background:var(--magenta-vif)}
+  .tete[data-ton="clair"] .nav a[aria-current="page"]::after{background:var(--magenta-vif)}
   .chap-0{padding-bottom:120px}
   .date{grid-template-columns:6.5rem minmax(0,1fr)}
   .date-num{font-size:1.375rem}
@@ -276,6 +327,9 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .dates-liste--seule .date-public,.dates-liste--seule .date-action{grid-column:3}
   .portes-liste{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(5,auto);gap:0 clamp(20px,2.6vw,40px)}
   .porte{display:grid;grid-row:span 5;grid-template-rows:subgrid;align-content:start;justify-items:start}
+  .repertoire{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:clamp(20px,3vw,40px)}
+  .carte{grid-template-columns:128px minmax(0,1fr);gap:0 22px}
+  .artistes,.partenaires-liste{grid-template-columns:repeat(2,minmax(0,1fr))}
   .onglets{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:clamp(20px,2.6vw,40px)}
   .onglet{flex-direction:column;align-items:flex-start;gap:10px;padding:0 0 22px}
   .panneau-grille{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,6vw,96px)}
@@ -295,6 +349,13 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .portes-liste{grid-column:1/-1}
   .compagnie-texte{grid-column:1/span 6}
   .chiffres{grid-column:8/-1;margin-top:8px}
+  .chiffres-source{grid-column:8/-1}
+  .page-spectacles .page-tete{grid-column:1/span 8}
+  .repertoire{grid-column:1/-1}
+  .section-tete{grid-column:1/span 4}
+  .section-corps{grid-column:5/-1;margin-top:0}
+  .contact-principal{grid-column:1/span 7}
+  .lettre{grid-column:9/-1;align-self:end;margin-top:0}
   .pied-contact{grid-column:1/span 6}
   .pied-partenaires{grid-column:7/span 3}
   .pied-mentions{grid-column:10/-1}
@@ -326,7 +387,8 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .bouton{margin-top:clamp(22px,4vh,38px)}
   .chap-0{display:flex;min-height:100vh}
   .chap0-logo{width:min(40vw,60vh)}
-  .libre{scroll-snap-align:start;scroll-margin-bottom:400vh}
+  .fin{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding-top:calc(var(--tete-h) + 40px);padding-bottom:72px;scroll-snap-align:start;scroll-margin-bottom:400vh}
+  .fin > .grille{width:100%}
 
   .sommaire{display:block;position:fixed;right:var(--marge);bottom:clamp(28px,5.5vh,52px);z-index:40;transition:opacity .45s var(--ease),visibility .45s}
   .sommaire.est-cache{opacity:0;visibility:hidden}
