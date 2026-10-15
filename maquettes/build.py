@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble les dix maquettes de la partie publique et la planche qui les compare.
+"""Assemble les dix maquettes de la partie publique, la synthèse, et la planche qui les présente par onglets.
 
 Chaque maquette est un fichier maquettes/src/mNN.html qui lit ses contenus dans l'objet D (spectacles,
 dates, portes, compagnie, logo, photos). Le script remplace /*__DATA__*/null par ces données.
@@ -283,26 +283,20 @@ def main():
 
 
 def build_planche(D, photo_urls, names, web=False, dest=None):
-    """La planche : les dix maquettes côte à côte, captures comprises, chacune ouvrable en grand.
-    En fichier, elle embarque chaque maquette ; en ligne (web), elle ouvre les pages publiées à côté d'elle."""
-    from PIL import Image
-    shots = DIST / "shots"
-    sources, images, sizes = {}, {}, {}
-    for n in names:
-        sources[n] = (SRC / f"{n}.html").read_text(encoding="utf-8")
-        for f in sorted(shots.glob(f"{n}-*.webp")):
-            images[f.stem] = "data:image/webp;base64," + base64.b64encode(f.read_bytes()).decode()
-            sizes[f.stem] = list(Image.open(f).size)
+    """La planche : une barre d'onglets en haut, chaque maquette chargée en plein écran dessous.
+    En fichier, elle embarque chaque maquette avec ses données ; en ligne (web), elle charge les pages publiées à côté d'elle."""
     html = (SRC / "planche.html").read_text(encoding="utf-8")
-    data = {"web": True, "pages": names} if web else {"D": dict(D, photos=photo_urls), "sources": sources}
-    payload = json.dumps(dict(data, images=images, sizes=sizes), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    if web:
+        data = {"web": True, "pages": names}
+    else:
+        data = {"D": dict(D, photos=photo_urls), "sources": {n: (SRC / f"{n}.html").read_text(encoding="utf-8") for n in names}}
+    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace("/*__PLANCHE__*/null", payload)
     if web:
         html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
     out = dest or DIST / "maquettes.html"
     out.write_text(html, encoding="utf-8")
-    print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko), {len(images)} captures")
-
+    print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
 
 if __name__ == "__main__":
     main()
