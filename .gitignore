@@ -3,3 +3,9 @@
 private/
 # Prototype assemblé : il embarque les fichiers privés quand ils sont présents
 prototype/dist/
+
+# Maquettes assemblées : elles embarquent le logo et les photos quand private/ est présent
+maquettes/dist/
+
+# Caches Python
+__pycache__/

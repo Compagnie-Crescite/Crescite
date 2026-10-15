@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compagnie Crescite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Maquette 06 · « Les bras de la tournée ».
+   La tentacule devient un thème, pas un dessin du logo : les tournées partent de Rouen vers chaque
+   commune où la compagnie a joué. La saison en cours en magenta, les années passées en gris.
+   Chaque page spectacle montre sa propre carte. Le reste du site est clair et classique. */
+:root {
+  --papier: #f6f2eb; --papier-2: #ece5da; --carte: #e4dccf; --encre: #1d1418; --gris: #5f565a; --filet: #dcd3c6;
+  --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418;
+  --serif: "Spectral", Georgia, serif; --sans: "Work Sans", system-ui, sans-serif;
+  --gout: clamp(18px, 4vw, 56px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+body { margin: 0; background: var(--papier); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
+[tabindex="-1"]:focus { outline: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 0 var(--gout); }
+[hidden] { display: none !important; }
+
+/* le motif : un trait qui ondule et s'enroule, sous les titres */
+.trait { display: block; width: 92px; height: 16px; margin-top: 10px; overflow: visible; }
+.trait path { fill: none; stroke: var(--c, var(--magenta)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+
+/* en-tête */
+.top { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--papier) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--filet); }
+.top .wrap { display: flex; align-items: center; gap: 24px; height: 64px; max-width: none; }
+.marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 1.1rem; letter-spacing: .01em; }
+.marque span.l { width: 34px; }
+.marque svg { width: 100%; height: auto; display: block; }
+.nav { margin-left: auto; display: flex; gap: 4px; }
+.nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: 500; font-size: .97rem; color: var(--gris); }
+.nav a:hover { color: var(--encre); background: var(--papier-2); }
+.menu { display: none; margin-left: auto; background: none; border: 1px solid var(--filet); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); color: var(--encre); }
+
+/* ouverture : la phrase de la compagnie et la carte des tournées */
+.ouverture { padding: clamp(28px, 4vw, 56px) 0 clamp(40px, 5vw, 72px); }
+.ouverture .wrap { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
+.surtitre { margin: 0 0 16px; font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.ouverture h1 { margin: 0; font: italic 400 clamp(2.2rem, 1.4rem + 2.6vw, 3.6rem)/1.08 var(--serif); text-wrap: balance; }
+.ouverture .trait { width: 120px; height: 20px; margin-top: 18px; }
+.chiffre { margin: 22px 0 0; font-size: 1.12rem; max-width: 34ch; }
+.chiffre b { font-weight: 600; }
+.saison { margin: 26px 0 0; padding: 16px 0 0; border-top: 1px solid var(--filet); }
+.saison p { margin: 0 0 14px; }
+.saison b { color: var(--magenta-texte); }
+.boutons { display: flex; gap: 10px; flex-wrap: wrap; }
+.bouton { display: inline-block; padding: 11px 18px; border-radius: 999px; background: var(--encre); color: var(--papier); border: 1.5px solid var(--encre); text-decoration: none; font-weight: 600; font-size: .97rem; }
+.bouton.second { background: transparent; color: var(--encre); }
+.bouton:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+figure.carte { margin: 0; }
+.carte svg { display: block; width: 100%; height: auto; max-height: calc(100svh - 150px); }
+.carte .pays { fill: var(--carte); }
+.carte .voisin { fill: var(--papier-2); }
+.carte .bras-passe { fill: color-mix(in srgb, var(--encre) 24%, transparent); }
+.carte .bras-saison { fill: var(--c, var(--magenta)); }
+.carte .bout-passe { fill: color-mix(in srgb, var(--encre) 40%, transparent); }
+.carte .bout-saison { fill: var(--c, var(--magenta)); stroke: var(--papier); stroke-width: 1.5; }
+.carte .bout-saison:hover { r: 6; }
+.carte .rouen { fill: var(--encre); }
+.carte .rouen-nom { font: italic 500 17px var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--carte); stroke-width: 4px; }
+.carte figcaption { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 10px; font-size: .88rem; color: var(--gris); }
+.legende i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 8px; background: var(--c, var(--magenta)); }
+.legende i.passe { background: color-mix(in srgb, var(--encre) 30%, transparent); }
+
+/* sections ordinaires */
+section.bloc { padding: clamp(52px, 7vw, 96px) 0; border-top: 1px solid var(--filet); }
+.entete { display: flex; justify-content: space-between; align-items: end; gap: 12px 32px; flex-wrap: wrap; margin-bottom: 30px; }
+.entete h2 { margin: 0; font: italic 400 clamp(2rem, 1.4rem + 1.8vw, 2.8rem)/1.05 var(--serif); }
+.entete a, .entete button.lien { font: 600 1rem var(--sans); color: var(--magenta-texte); text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; }
+.entete a:hover, .entete button.lien:hover { text-decoration: underline; }
+.cartes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 22px; list-style: none; margin: 0; padding: 0; }
+.cartes a { display: block; text-decoration: none; }
+.cartes figure { margin: 0 0 14px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; background: var(--papier-2); }
+.cartes img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+.cartes a:hover img { transform: scale(1.03); }
+.cartes h3 { margin: 0; font: italic 500 1.45rem/1.15 var(--serif); }
+.cartes a:hover h3 { color: var(--ct); }
+.cartes .st { display: block; margin-top: 4px; font-size: .9rem; color: var(--gris); }
+.cartes .quand { display: block; margin-top: 8px; font-size: .9rem; font-weight: 600; }
+.dates { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--encre); }
+.dates li { display: grid; grid-template-columns: 130px minmax(0, 1.1fr) minmax(0, 1fr) 100px; gap: 20px; align-items: baseline; padding: 15px 0; border-bottom: 1px solid var(--filet); }
+.dates time { font-weight: 600; font-variant-numeric: tabular-nums; }
+.dates time small { display: block; font-weight: 400; color: var(--gris); font-size: .85rem; }
+.dates a { font: italic 500 1.3rem/1.2 var(--serif); text-decoration: none; }
+.dates a::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: .15em; }
+.dates a:hover { color: var(--magenta-texte); }
+.dates .ou { color: var(--gris); }
+.dates .pub { font-size: .82rem; font-weight: 600; text-align: right; }
+.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 0 clamp(20px, 3vw, 40px); }
+.porte { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 10px; align-content: start; }
+.porte h3 { margin: 0; font: italic 500 1.65rem/1.15 var(--serif); }
+.porte h3 .trait { --c: var(--dc); }
+.porte > p { margin: 0; color: var(--gris); }
+.porte ul { list-style: none; margin: 6px 0 14px; padding: 0; border-top: 1px solid var(--filet); }
+.porte li a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--filet); text-decoration: none; }
+.porte li a:hover { color: var(--magenta-texte); }
+.porte li small { color: var(--gris); white-space: nowrap; }
+.porte .bas > p { margin: 0; color: var(--gris); }
+.porte .suite { font-weight: 600; color: var(--magenta-texte); text-decoration: none; }
+.porte .suite:hover { text-decoration: underline; }
+.compagnie { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
+.compagnie p.grand { margin: 0 0 18px; font: 400 clamp(1.35rem, 1.1rem + .9vw, 1.9rem)/1.35 var(--serif); }
+.chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; align-self: start; }
+.chiffres dt { font: 400 2.6rem/1 var(--serif); }
+.chiffres dd { margin: 6px 0 0; color: var(--gris); font-size: .9rem; }
+footer { background: var(--nuit); color: #d8cdd1; padding: 44px 0; font-size: .92rem; }
+footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+footer strong { color: #fff; }
+footer p { margin: 0 0 6px; }
+
+/* page d'un spectacle */
+.tete .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(24px, 5vw, 72px); align-items: center; padding-top: clamp(28px, 4vw, 56px); padding-bottom: clamp(40px, 5vw, 72px); }
+.fil { margin: 0 0 18px; font-size: .9rem; color: var(--gris); }
+.fil a { text-decoration: none; }
+.fil a:hover { text-decoration: underline; }
+.tete h1 { margin: 0; font: italic 400 clamp(2.8rem, 1.6rem + 4vw, 5.2rem)/1 var(--serif); text-wrap: balance; }
+.tete .trait { width: 130px; height: 22px; margin-top: 16px; }
+.tete .st { margin: 18px 0 0; font-size: 1.15rem; color: var(--gris); }
+.tete .prochaine { margin: 18px 0 0; font-weight: 600; }
+.tete figure { margin: 0; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; }
+.tete figure img { width: 100%; height: 100%; object-fit: cover; }
+.tete figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
+.corps { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
+.accroche { margin: 0 0 22px; font: italic 400 clamp(1.45rem, 1.1rem + 1.1vw, 2.1rem)/1.25 var(--serif); text-wrap: balance; }
+.corps p { max-width: 64ch; }
+.faits { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 18px; font-size: .97rem; align-content: start; }
+.faits dt { color: var(--gris); }
+.faits dd { margin: 0; font-weight: 500; }
+.ou-voir { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
+.ou-voir .resume { margin: 0 0 18px; font-size: 1.1rem; }
+.ou-voir .dates li { grid-template-columns: 120px minmax(0, 1fr) 90px; }
+.onglets { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--filet); margin-bottom: 26px; }
+.onglets button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 0; margin: 0 26px -1px 0; font: italic 500 1.3rem var(--serif); color: var(--gris); cursor: pointer; }
+.onglets button:hover { color: var(--encre); }
+.onglets button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--dc); }
+.panneau { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); }
+.panneau h3 { margin: 0 0 10px; font-size: .8rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
+.panneau p { margin: 0 0 14px; }
+.panneau .faits { margin-bottom: 18px; }
+.docs { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--filet); }
+.docs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--filet); }
+.afournir { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); border: 1px dashed var(--gris); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.suivant { display: block; text-decoration: none; padding: clamp(40px, 6vw, 72px) 0; border-top: 1px solid var(--filet); background: var(--papier-2); }
+.suivant .wrap { display: block; }
+.suivant small { display: block; color: var(--gris); margin-bottom: 6px; }
+.suivant b { font: italic 400 clamp(2rem, 1.4rem + 2.4vw, 3.4rem)/1.05 var(--serif); }
+.suivant:hover b { color: var(--ct); }
+
+@media (max-width: 1000px) {
+  .ouverture .wrap, .compagnie, .corps, .tete .wrap, .ou-voir, .panneau { grid-template-columns: minmax(0, 1fr); }
+  .cartes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portes { grid-template-columns: minmax(0, 1fr); gap: 34px; }
+  footer .wrap { grid-template-columns: minmax(0, 1fr); }
+  .carte svg { max-height: none; }
+}
+@media (max-width: 760px) {
+  .nav { display: none; position: absolute; left: 0; right: 0; top: 64px; background: var(--papier); flex-direction: column; padding: 8px var(--gout) 18px; border-bottom: 1px solid var(--filet); }
+  .top.ouvert .nav { display: flex; }
+  .menu { display: inline-block; }
+  .cartes { grid-template-columns: minmax(0, 1fr); }
+  .dates li, .ou-voir .dates li { grid-template-columns: 1fr; gap: 2px; }
+  .dates .pub { text-align: left; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
+  <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav class="nav" id="nav" aria-label="Navigation principale">
+    <a href="#/" data-ancre="spectacles">Spectacles</a><a href="#/" data-ancre="agenda">Agenda</a><a href="#/" data-ancre="compagnie">La compagnie</a><a href="#/" data-ancre="contact">Contact</a>
+  </nav>
+</div></header>
+<main id="main"></main>
+<footer id="contact"><div class="wrap" id="pied"></div></footer>
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+  // échappe le texte, et pose les espaces insécables de la ponctuation française
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»])/g, ' $1').replace(/« /g, '« ');
+  const titre = t => esc(t).replace(/ – /g, ' – ');
+  const doux = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
+  const C = D.company, K = D.carte, main = $('#main');
+  $('#marque').innerHTML = D.logo.mark;
+  $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
+    <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
+  // le motif : une onde qui s'enroule au bout, comme la pointe d'une tentacule
+  const trait = c => `<svg class="trait" viewBox="0 0 120 20" aria-hidden="true"${c ? ` style="--c:${c}"` : ''}><path d="M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13"/></svg>`;
+  const prochaine = s => s.prochaine ? `${s.prochaine.jour} ${s.prochaine.mois}, ${s.prochaine.commune}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements');
+  const ligneDate = (d, court) => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.iso}">${esc(d.joursem + ' ' + d.jour + ' ' + d.mois)}<small>${d.annee}</small></time>
+    ${court ? '' : `<a href="#/spectacle/${d.slug}">${titre(d.titre)}</a>`}<span class="ou">${esc(d.lieu ? d.lieu + ', ' : '')}${esc(d.commune)} (${esc(d.dep)})</span><span class="pub">${esc(d.public)}</span></li>`;
+
+  /* ---------- la carte : un bras par commune, de Rouen jusqu'à elle ---------- */
+  // une courbe qui part de Rouen et tourne toujours dans le même sens ; épaisse au départ, fine au bout
+  function bras([x, y], n, echelle) {
+    const [rx, ry] = K.rouen, dx = x - rx, dy = y - ry, d = Math.hypot(dx, dy);
+    if (d < 7) return '';
+    const qx = (rx + x) / 2 - dy * 0.24, qy = (ry + y) / 2 + dx * 0.24, N = 26, G = [], Dr = [];
+    const w0 = Math.min(6, 1.3 + Math.sqrt(n) * 0.8) * echelle, w1 = 0.5 * echelle;
+    for (let k = 0; k <= N; k++) {
+      const t = k / N, a = (1 - t) ** 2, b = 2 * (1 - t) * t, c = t * t;
+      const px = a * rx + b * qx + c * x, py = a * ry + b * qy + c * y;
+      let tx = 2 * (1 - t) * (qx - rx) + 2 * t * (x - qx), ty = 2 * (1 - t) * (qy - ry) + 2 * t * (y - qy);
+      const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+      const w = (w0 * (1 - t) + w1 * t) / 2;
+      G.push(`${(px - ty * w).toFixed(1)} ${(py + tx * w).toFixed(1)}`); Dr.push(`${(px + ty * w).toFixed(1)} ${(py - tx * w).toFixed(1)}`);
+    }
+    return `M${G.join('L')}L${Dr.reverse().join('L')}Z`;
+  }
+  let nCarte = 0;
+  // passe : [[indice de commune, nombre de dates]] ; saison : les dates à venir, en couleur
+  function carte(passe, saison, couleur, legende) {
+    const id = 'pousse' + (++nCarte), [rx, ry] = K.rouen;
+    const parLieu = new Map();
+    saison.forEach(d => { if (!d.xy) return; const k = d.xy.join(); const e = parLieu.get(k) || { xy: d.xy, dates: [] }; e.dates.push(d); parLieu.set(k, e); });
+    const anim = doux() ? `<animate attributeName="r" from="0" to="820" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>` : '';
+    return `<figure class="carte" style="--c:${couleur}">
+      <svg viewBox="${K.viewBox}" role="img" aria-label="${esc(legende)}">
+        <defs><clipPath id="${id}"><circle cx="${rx}" cy="${ry}" r="${doux() ? 0 : 820}">${anim}</circle></clipPath></defs>
+        <path class="voisin" d="${K.belgique}"/><path class="voisin" d="${K.luxembourg}"/><path class="pays" d="${K.contour}"/>
+        <g clip-path="url(#${id})">
+          ${passe.map(([i, n]) => `<path class="bras-passe" d="${bras(K.lieux[i].xy, n, 1)}"/>`).join('')}
+          ${passe.map(([i]) => `<circle class="bout-passe" cx="${K.lieux[i].xy[0]}" cy="${K.lieux[i].xy[1]}" r="2.2"/>`).join('')}
+          ${[...parLieu.values()].map(e => `<path class="bras-saison" d="${bras(e.xy, e.dates.length * 2, 1.2)}"/>`).join('')}
+          ${[...parLieu.values()].map(e => `<circle class="bout-saison" cx="${e.xy[0]}" cy="${e.xy[1]}" r="4.2"><title>${esc(e.dates[0].commune)} (${esc(e.dates[0].dep)}) : ${e.dates.map(d => `${d.jour} ${d.mois}, ${d.titre}`).join(' ; ')}</title></circle>`).join('')}
+        </g>
+        <circle class="rouen" cx="${rx}" cy="${ry}" r="5.5"/><text class="rouen-nom" x="${rx + 10}" y="${ry - 9}">Rouen</text>
+      </svg>
+      <figcaption class="legende">${saison.length ? `<span><i></i>${esc(legende.split(' · ')[0])}</span>` : ''}${passe.length ? `<span><i class="passe"></i>${esc(legende.split(' · ')[1] || '')}</span>` : ''}</figcaption>
+    </figure>`;
+  }
+
+  /* ---------- les trois portes : chacune donne tout de suite ses réponses ---------- */
+  function portes() {
+    const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
+    const porte = (p, corps) => `<div class="porte" style="--dc:${p.couleur}"><h3>${esc(p.titre)}${trait(p.couleur)}</h3><p>${esc(p.texte)}</p><div class="bas">${corps}</div></div>`;
+    return porte(voir, `<ul>${D.dates.slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(d.jour + ' ' + d.mois)}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/" data-ancre="agenda">Toutes les dates →</a>`) +
+      porte(prog, `<ul><li><a href="#/" data-ancre="spectacles"><span>Le répertoire</span><small>${D.shows.length - 1} spectacles</small></a></li>
+        <li><a href="#/spectacle/${D.shows[0].slug}/programmer"><span>Fiches techniques</span><small>par spectacle</small></a></li>
+        <li><a href="mailto:${C.email}?subject=Programmation"><span>Écrire à la diffusion</span><small>${esc(C.email)}</small></a></li></ul>`) +
+      porte(etab, `<ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${titre(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
+        <p>${D.shows.filter(s => s.passCulture).length} spectacles sont proposés sur le Pass Culture (offre collective).</p>`);
+  }
+
+  /* ---------- accueil ---------- */
+  function accueil() {
+    document.title = 'Compagnie Crescite · théâtre, Rouen';
+    const communes = new Set(D.dates.map(d => d.commune + d.dep)).size;
+    const tous = K.lieux.map((l, i) => [i, l.n]);
+    main.innerHTML = `
+      <section class="ouverture" aria-labelledby="h1"><div class="wrap">
+        <div><p class="surtitre">Compagnie de théâtre · Rouen · depuis ${C.depuis}</p>
+          <h1 id="h1">Des spectacles qui partent de Rouen et vont chercher leur public.</h1>${trait()}
+          <p class="chiffre"><b>${D.stats.dates} représentations</b> depuis 2016, dans <b>${D.stats.communes} communes</b> : des théâtres, des collèges, des lycées.</p>
+          <div class="saison"><p>Saison ${esc(D.saison)} : <b>${D.dates.length} dates dans ${communes} communes</b>.</p>
+            <div class="boutons"><a class="bouton" href="#/" data-ancre="agenda">Les prochaines dates</a><a class="bouton second" href="#/" data-ancre="spectacles">Les spectacles</a></div></div></div>
+        ${carte(tous, D.dates, '#bc3e80', `La saison ${D.saison} · Depuis 2016`)}
+      </div></section>
+      <section class="bloc" id="spectacles" aria-labelledby="h-sp"><div class="wrap">
+        <div class="entete"><h2 id="h-sp">Les spectacles</h2></div>
+        <ul class="cartes">${D.shows.map(s => `<li><a href="#/spectacle/${s.slug}" style="--ct:${s.couleurTexteClair}">
+          <figure><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%" loading="lazy"></figure>
+          <h3>${titre(s.titre)}</h3>${trait(s.couleurTexteClair)}<span class="st">${esc(s.sousTitre)}</span><span class="quand">${esc(prochaine(s))}</span></a></li>`).join('')}</ul>
+      </div></section>
+      <section class="bloc" id="agenda" aria-labelledby="h-ag"><div class="wrap">
+        <div class="entete"><h2 id="h-ag">Prochaines dates</h2><button class="lien" type="button" id="tout" aria-controls="liste-dates" aria-expanded="false"></button></div>
+        <ul class="dates" id="liste-dates"></ul>
+      </div></section>
+      <section class="bloc" id="portes" aria-labelledby="h-po"><div class="wrap">
+        <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
+        <div class="portes">${portes()}</div>
+      </div></section>
+      <section class="bloc" id="compagnie" aria-labelledby="h-co"><div class="wrap">
+        <div class="entete"><h2 id="h-co">La compagnie</h2></div>
+        <div class="compagnie"><div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
+          <dl class="chiffres"><div><dt>${D.stats.dates}</dt><dd>représentations depuis 2016</dd></div><div><dt>${D.stats.communes}</dt><dd>communes</dd></div><div><dt>${D.stats.departements}</dt><dd>départements</dd></div></dl></div>
+      </div></section>`;
+    let ouvert = false;
+    const liste = $('#liste-dates'), tout = $('#tout');
+    const draw = () => { liste.innerHTML = (ouvert ? D.dates : D.dates.slice(0, 6)).map(d => ligneDate(d)).join(''); tout.textContent = ouvert ? 'Moins de dates' : `Toutes les dates (${D.dates.length})`; tout.setAttribute('aria-expanded', ouvert); };
+    tout.addEventListener('click', () => { ouvert = !ouvert; draw(); });
+    draw();
+  }
+
+  /* ---------- page d'un spectacle ---------- */
+  const MODE = { etablissement: 'Peut venir dans votre établissement', salle: 'Se joue en salle : venez avec vos classes', a_confirmer: 'Accueil dans l’établissement à confirmer' };
+  const docs = l => `<ul class="docs">${l.map(x => `<li><span>${esc(x)}</span><span class="afournir">à fournir</span></li>`).join('')}</ul>`;
+  function spectacle(slug, porte) {
+    const s = bySlug[slug]; if (!s) return accueil();
+    const i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
+    const dates = D.dates.filter(d => d.slug === slug), n = s.distribution.length;
+    const passe = K.parSpectacle[slug] || [], nPasse = passe.reduce((a, [, k]) => a + k, 0);
+    const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null].filter(Boolean);
+    const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
+    const choix = ['voir', 'programmer', 'etablissement'].includes(porte) ? porte : 'voir';
+    document.title = `${s.titre} · Compagnie Crescite`;
+    main.innerHTML = `
+      <section class="tete" aria-labelledby="titre-sp"><div class="wrap">
+        <div><p class="fil"><a href="#/">Accueil</a> / <a href="#/" data-ancre="spectacles">Spectacles</a></p>
+          <h1 id="titre-sp" tabindex="-1">${titre(s.titre)}</h1>${trait(s.couleurTexteClair)}
+          <p class="st">${esc(s.sousTitre)}</p>
+          <p class="prochaine">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})` : 'Aucune date annoncée pour l’instant.'}</p></div>
+        <figure><img src="${D.photos[slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
+      </div></section>
+      <section class="bloc"><div class="wrap corps">
+        <div><h2 class="sr">Le spectacle</h2><p class="accroche">${esc(s.accroche)}</p><p>${esc(s.texte)}</p>${s.video ? `<p><a class="bouton second" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div>
+        <dl class="faits">${[...fiche, ...s.equipe.slice(0, 6)].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-ou"><div class="wrap">
+        <div class="entete"><h2 id="h-ou">Où le voir</h2></div>
+        <div class="ou-voir">
+          ${passe.length || dates.length ? carte(passe, dates, s.couleurTexteClair, `Les dates à venir · Déjà joué ici depuis ${Math.max(2016, s.annee || 2016)}`) : `<p class="resume">${esc(e.texte || 'Les actions culturelles se construisent avec chaque établissement.')}</p>`}
+          <div>${passe.length ? `<p class="resume">Déjà ${nPasse} représentation${nPasse > 1 ? 's' : ''} dans ${passe.length} commune${passe.length > 1 ? 's' : ''}.</p>` : ''}
+            ${dates.length ? `<ul class="dates">${dates.map(d => ligneDate(d, true)).join('')}</ul>` : (passe.length ? '<p>Aucune date annoncée pour l’instant.</p>' : `<p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Actions culturelles')}">Construire un projet avec la compagnie</a></p>`)}</div>
+        </div>
+      </div></section>
+      <section class="bloc" id="portes-sp" aria-labelledby="h-vous"><div class="wrap">
+        <div class="entete"><h2 id="h-vous">Vous êtes…</h2></div>
+        <div class="onglets" role="tablist" aria-label="Vous êtes">${D.doors.map(p => `<button role="tab" id="o-${p.key}" aria-controls="p-${p.key}" aria-selected="${p.key === choix}" tabindex="${p.key === choix ? 0 : -1}" style="--dc:${p.couleur}">${esc(p.titre)}</button>`).join('')}</div>
+        <div class="panneau" role="tabpanel" id="p-voir" aria-labelledby="o-voir" tabindex="0"${choix === 'voir' ? '' : ' hidden'}>
+          <div><h3>En pratique</h3><dl class="faits">${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}<dt>Âge conseillé</dt><dd><span class="afournir">à fournir</span></dd><dt>Réserver</dt><dd>auprès du lieu de chaque date</dd></dl></div>
+          <div><h3>Les dates</h3><p>${dates.length ? `${dates.length} date${dates.length > 1 ? 's' : ''} cette saison, sur la carte ci-dessus.` : 'Aucune date annoncée pour l’instant.'}</p>
+            <p><a href="mailto:${C.email}?subject=${encodeURIComponent('Être prévenu des dates de ' + s.titre)}">Être prévenu des prochaines dates</a></p></div></div>
+        <div class="panneau" role="tabpanel" id="p-programmer" aria-labelledby="o-programmer" tabindex="0"${choix === 'programmer' ? '' : ' hidden'}>
+          <div><h3>La fiche</h3><dl class="faits">${[...fiche, ...s.equipe].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+            ${s.coproduction ? `<h3>Coproduction</h3><p>${esc(s.coproduction)}</p>` : ''}</div>
+          <div><h3>Documents</h3>${docs(['Dossier de diffusion', 'Fiche technique', 'Conditions financières', 'Photos haute définition'])}
+            <h3>Contact diffusion</h3><p>Nom et téléphone <span class="afournir">à fournir</span> · <a href="mailto:${C.email}?subject=${encodeURIComponent('Programmation : ' + s.titre)}">${esc(C.email)}</a></p></div></div>
+        <div class="panneau" role="tabpanel" id="p-etablissement" aria-labelledby="o-etablissement" tabindex="0"${choix === 'etablissement' ? '' : ' hidden'}>
+          <div><h3>${esc(MODE[e.mode] || MODE.a_confirmer)}</h3><p>${esc(e.texte)}</p>${s.noteScolaire ? `<p>${esc(s.noteScolaire)}</p>` : ''}
+            <dl class="faits"><dt>Pass Culture</dt><dd>${s.passCulture ? 'offre collective, sur ADAGE' : 'non référencé'}</dd><dt>Guide du CRED76</dt><dd>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">fiche du spectacle</a>` : 'non référencé'}</dd></dl></div>
+          <div><h3>Ressources</h3>${docs(['Dossier pédagogique', 'Pistes d’ateliers', 'Besoins techniques en établissement'])}
+            <p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Faire venir ' + s.titre + ' dans mon établissement')}">Construire un projet avec la compagnie</a></p></div></div>
+      </div></section>
+      <a class="suivant" href="#/spectacle/${nx.slug}" style="--ct:${nx.couleurTexteClair}"><span class="wrap"><small>Spectacle suivant</small><b>${titre(nx.titre)}</b>${trait(nx.couleurTexteClair)}</span></a>`;
+    const tabs = $$('[role="tab"]', main);
+    const sel = t => tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; });
+    tabs.forEach((t, k) => {
+      t.addEventListener('click', () => sel(t));
+      t.addEventListener('keydown', ev => { const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (d) { const n2 = tabs[(k + d + tabs.length) % tabs.length]; n2.focus(); sel(n2); } });
+    });
+  }
+
+  /* ---------- navigation ---------- */
+  let vue = null, ancre = null;
+  function route() {
+    const m = location.hash.match(/^#\/spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?/);
+    if (m && bySlug[m[1]]) {
+      spectacle(m[1], m[2]); vue = 'spectacle'; scrollTo(0, 0);
+      if (m[2]) $('#portes-sp').scrollIntoView();
+      $('#titre-sp').focus({ preventScroll: true });
+    } else {
+      accueil(); vue = 'accueil'; scrollTo(0, 0);
+      if (ancre) { const id = ancre; ancre = null; document.getElementById(id)?.scrollIntoView(); }
+    }
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[data-ancre]'); if (!a) return;
+    e.preventDefault(); $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false');
+    const id = a.dataset.ancre;
+    if (vue === 'spectacle') { ancre = id; location.hash = '#/'; return; }
+    document.getElementById(id)?.scrollIntoView({ behavior: doux() ? 'smooth' : 'auto' });
+  });
+  $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
+  addEventListener('hashchange', route);
+  route();
+})();
+</script>
+</body>
+</html>

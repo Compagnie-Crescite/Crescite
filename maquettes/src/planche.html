@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dix maquettes · Crescite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500&family=Instrument+Sans:wght@400;600;700&display=swap">
+<style>
+/* La planche : les dix maquettes de la partie publique, de la plus sobre à la plus évoluée. */
+:root {
+  --fond: #f6f1ea; --fond-2: #ece4d9; --carte: #fffdf9; --encre: #1b1216; --gris: #62565c; --filet: #ddd3c6;
+  --magenta: #a8306f; --nuit: #150a11;
+  --serif: "Bodoni Moda", Didot, serif; --sans: "Instrument Sans", system-ui, sans-serif;
+  --gout: clamp(16px, 4vw, 56px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 70px; }
+body { margin: 0; background: var(--fond); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
+a { color: var(--magenta); }
+img { display: block; max-width: 100%; }
+:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 var(--gout); }
+
+.barre { position: sticky; top: 0; z-index: 20; background: var(--nuit); color: #f7ecf1; }
+.barre .wrap { display: flex; align-items: center; gap: 18px; height: 56px; }
+.barre strong { font: italic 500 1.2rem var(--serif); white-space: nowrap; }
+.barre nav { margin-left: auto; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.barre nav a { color: #d9c7d1; text-decoration: none; font-weight: 600; font-size: .9rem; padding: 6px 8px; border-radius: 6px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.barre nav a:hover, .barre nav a.on { color: #fff; background: rgba(255, 255, 255, .1); }
+
+header.tete { padding: clamp(48px, 8vw, 96px) 0 clamp(32px, 5vw, 56px); }
+.surtitre { margin: 0 0 12px; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+h1 { margin: 0; max-width: 18ch; font: italic 500 clamp(2.6rem, 1.6rem + 4vw, 5rem)/1 var(--serif); text-wrap: balance; }
+.chapo { margin: 22px 0 0; max-width: 62ch; font-size: 1.2rem; }
+.deux { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 5vw, 64px); margin-top: clamp(32px, 5vw, 56px); }
+.deux h2 { margin: 0 0 12px; font: italic 500 1.6rem/1.15 var(--serif); }
+.deux ol, .deux ul { margin: 0; padding-left: 1.2em; }
+.deux li { margin-bottom: 8px; }
+.deux li::marker { color: var(--magenta); font-weight: 700; }
+
+section.bloc { padding: clamp(40px, 6vw, 72px) 0; border-top: 1px solid var(--filet); }
+section.bloc > .wrap > h2 { margin: 0 0 8px; font: italic 500 clamp(2rem, 1.4rem + 2vw, 3rem)/1.05 var(--serif); }
+.note { margin: 0 0 24px; color: var(--gris); max-width: 70ch; }
+.echelle { width: 100%; border-collapse: collapse; font-size: .97rem; }
+.echelle th, .echelle td { text-align: left; padding: 11px 12px 11px 0; border-bottom: 1px solid var(--filet); vertical-align: baseline; }
+.echelle thead th { font-size: .78rem; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); font-weight: 700; }
+.echelle td.n { font-variant-numeric: tabular-nums; color: var(--gris); width: 3em; }
+.echelle td.nom a { font: italic 500 1.2rem var(--serif); color: var(--encre); text-decoration: none; }
+.echelle td.nom a:hover { color: var(--magenta); }
+.echelle td.pts { white-space: nowrap; }
+.pts i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 50%; border: 1.5px solid var(--encre); }
+.pts i.p { background: var(--encre); }
+.echelle-defile { overflow-x: auto; }
+
+article.maq { padding: clamp(44px, 6vw, 80px) 0; border-top: 1px solid var(--filet); }
+article.maq:nth-of-type(even) { background: var(--fond-2); }
+.maq-tete { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 24px; align-items: end; margin-bottom: 22px; }
+.maq-n { font: 500 clamp(3rem, 2rem + 3vw, 4.8rem)/.8 var(--serif); color: var(--magenta); font-variant-numeric: lining-nums; }
+.maq-tete h2 { margin: 0; font: italic 500 clamp(1.8rem, 1.2rem + 2vw, 2.8rem)/1.05 var(--serif); text-wrap: balance; }
+.maq-tete .niv { margin: 0 0 6px; font-weight: 700; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.bouton { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; border: 1.5px solid var(--encre); background: var(--encre); color: var(--fond); font: 700 .95rem var(--sans); text-decoration: none; cursor: pointer; }
+.bouton.second { background: transparent; color: var(--encre); }
+.bouton:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.principe { margin: 0 0 26px; max-width: 72ch; font-size: 1.12rem; }
+.captures { display: grid; grid-template-columns: minmax(0, 3.2fr) minmax(0, 1fr) minmax(0, 1.05fr); gap: 14px; align-items: start; }
+.captures .col { display: grid; gap: 14px; }
+.cap { margin: 0; }
+.cap button { display: block; width: 100%; padding: 0; border: 1px solid var(--filet); background: var(--carte); cursor: zoom-in; border-radius: 6px; overflow: hidden; }
+.cap img { width: 100%; height: auto; }
+.cap figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
+.cap.page .defile { max-height: 760px; overflow-y: auto; border: 1px solid var(--filet); border-radius: 6px; background: var(--carte); }
+.cap.page .defile button { border: 0; border-radius: 0; }
+.extras { margin-top: 18px; }
+.extras h3 { margin: 0 0 10px; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.extras .rang { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.manque { display: grid; place-items: center; aspect-ratio: 16 / 10; border: 1px dashed var(--gris); border-radius: 6px; color: var(--gris); font-size: .9rem; }
+.bilan { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 4vw, 48px); margin-top: 26px; }
+.bilan h3 { margin: 0 0 8px; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; }
+.bilan ul { margin: 0; padding-left: 1.1em; }
+.bilan li { margin-bottom: 6px; }
+.bilan .plus h3 { color: #1f6b4f; }
+.bilan .moins h3 { color: #9a3412; }
+
+.reco { background: var(--nuit); color: #f7ecf1; }
+.reco .wrap > h2 { color: #fff; }
+.reco p, .reco li { max-width: 70ch; }
+.reco a { color: #f4a3cc; }
+.reco ol { padding-left: 1.2em; }
+.reco li { margin-bottom: 10px; }
+.reco li::marker { color: #f4a3cc; font-weight: 700; }
+footer { padding: 30px 0 40px; color: var(--gris); font-size: .9rem; }
+
+/* la maquette ouverte en grand */
+dialog { border: 0; padding: 0; max-width: none; max-height: none; }
+dialog::backdrop { background: rgba(10, 5, 8, .82); }
+#vue { width: 100vw; height: 100vh; height: 100dvh; background: #2a2226; color: #fff; }
+#vue[open] { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.vue-barre { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: var(--nuit); flex-wrap: wrap; }
+.vue-barre strong { font: italic 500 1.1rem var(--serif); margin-right: auto; }
+.vue-barre button, .vue-barre a { background: rgba(255, 255, 255, .08); color: #fff; border: 1px solid rgba(255, 255, 255, .2); border-radius: 999px; padding: 6px 14px; font: 600 .9rem var(--sans); cursor: pointer; text-decoration: none; }
+.vue-barre button[aria-pressed="true"] { background: #fff; color: var(--nuit); }
+.vue-cadre { display: grid; justify-items: center; overflow: auto; padding: 0; }
+#vue iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+#vue.tel .vue-cadre { padding: 16px 0; }
+#vue.tel iframe { width: 390px; max-width: 100%; height: min(844px, 100%); border-radius: 18px; box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+#loupe { width: min(96vw, 1500px); max-height: 94vh; background: var(--carte); border-radius: 8px; overflow: auto; }
+#loupe img { width: 100%; height: auto; }
+#loupe form { position: sticky; top: 0; display: flex; justify-content: flex-end; padding: 8px; background: linear-gradient(var(--carte), transparent); }
+
+@media (max-width: 900px) {
+  .deux, .bilan { grid-template-columns: minmax(0, 1fr); }
+  .extras .rang { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .captures { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .captures .col.bureau { grid-column: 1 / -1; }
+  .maq-tete { grid-template-columns: auto minmax(0, 1fr); }
+  .actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .barre strong { display: none; }
+  .barre nav { margin-left: 0; }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<div class="barre"><div class="wrap"><strong>Crescite · dix maquettes</strong><nav aria-label="Les maquettes" id="sommaire"></nav></div></div>
+<main>
+  <header class="tete"><div class="wrap">
+    <p class="surtitre">Partie publique du site · proposition du 14 octobre 2026</p>
+    <h1>Dix maquettes, de la plus sobre à la plus évoluée</h1>
+    <p class="chapo">Les dix partent des mêmes contenus (les huit spectacles, les 31 dates de la saison, les trois portes, la compagnie) et respectent les mêmes règles de clarté. Elles ne diffèrent que par la manière de les montrer : de la page imprimée à la pieuvre qu’on tire. La tentacule y est tantôt un thème (la 06 : les tournées qui partent de Rouen), tantôt un dessin (la 10).</p>
+    <div class="deux">
+      <div><h2>Pourquoi le prototype semblait « bordélique »</h2><ol>
+        <li><b>Trop de choses se disputaient l’attention</b> sur le premier écran : huit étiquettes avec chacune trois lignes (titre, année et durée, prochaine date), une bulle d’aide, un bouton, des bras qui bougeaient seuls.</li>
+        <li><b>Un en-tête à deux étages</b> : les trois portes au-dessus, onglets, mode calme, lumière et menu en dessous. Le regard ne savait pas où commencer.</li>
+        <li><b>Huit typographies</b>, une par spectacle. Chaque page avait du caractère, mais l’ensemble ne ressemblait plus à un seul site.</li>
+      </ol></div>
+      <div><h2>Les règles communes aux dix</h2><ul>
+        <li>Un seul étage d’en-tête et quatre entrées au plus : Spectacles, Agenda, La compagnie, Contact.</li>
+        <li>Deux familles de polices au plus. Un spectacle se distingue par sa couleur et sa photo, jamais par sa typographie.</li>
+        <li>Un seul message par écran, des alignements stricts, du texte courant d’au moins 16 px et des contrastes suffisants.</li>
+        <li>Les trois portes avec leurs mots exacts : « Je viens voir », « Je programme », « Je fais venir dans mon établissement ».</li>
+        <li>Les prochaines dates à un clic au plus de l’accueil.</li>
+        <li>Uniquement la partie publique : ni espace troupe, ni administration. Ce qui manque est marqué « à fournir ».</li>
+      </ul></div>
+    </div>
+  </div></header>
+
+  <section class="bloc" aria-labelledby="h-echelle"><div class="wrap">
+    <h2 id="h-echelle">L’échelle</h2>
+    <p class="note">Trois repères pour comparer, de 0 à 3 : la part de mouvement, la place du thème tentaculaire (au-delà du logo, présent partout), et l’effort de réalisation puis d’entretien.</p>
+    <div class="echelle-defile"><table class="echelle" id="echelle">
+      <thead><tr><th scope="col">N°</th><th scope="col">Maquette</th><th scope="col">Ce qu’on voit d’abord</th><th scope="col">Mouvement</th><th scope="col">Tentacules</th><th scope="col">Effort</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div></section>
+
+  <div id="maquettes"></div>
+
+  <section class="bloc reco" id="recommandation" aria-labelledby="h-reco"><div class="wrap">
+    <h2 id="h-reco">Ce que je recommande</h2>
+    <div id="reco-texte"></div>
+  </div></section>
+</main>
+<footer><div class="wrap">Maquettes construites avec les vrais contenus du site et la base des dates de tournée. Photos et logo 2.0 : usage interne, ne pas diffuser.</div></footer>
+
+<dialog id="vue" aria-labelledby="vue-titre">
+  <div class="vue-barre"><strong id="vue-titre"></strong>
+    <button type="button" data-taille="bureau" aria-pressed="true">Ordinateur</button><button type="button" data-taille="tel" aria-pressed="false">Téléphone</button>
+    <button type="button" id="vue-fermer">Fermer</button></div>
+  <div class="vue-cadre"><iframe id="vue-cadre" title="Maquette"></iframe></div>
+</dialog>
+<dialog id="loupe" aria-label="Capture agrandie"><form method="dialog"><button class="bouton second" type="submit">Fermer</button></form><img id="loupe-img" alt=""></dialog>
+
+<script>const P = /*__PLANCHE__*/null;</script>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  /* les dix, de la plus sobre à la plus évoluée */
+  const M = [
+    { n: 'm01', nom: 'Le programme de salle', niveau: 'La plus sobre', voit: 'Une phrase, puis le programme : dates, répertoire, portes', mvt: 0, pieuvre: 0, effort: 1,
+      principe: 'Le site comme un programme de théâtre imprimé : du papier, de l’encre et des filets, une seule police, aucune animation. Tout se lit de haut en bas en quatre sections numérotées : À venir, Le répertoire, Vous êtes…, La compagnie.',
+      plus: ['Lecture immédiate, chargement instantané', 'Un soin typographique de livre : rien ne vieillit', 'La plus simple à tenir à jour'],
+      moins: ['Peu d’images : l’émotion des spectacles attend les pages intérieures', 'La pieuvre n’est qu’un petit signe dans l’en-tête', 'Peut sembler austère au jeune public'] },
+    { n: 'm02', nom: 'La maison', niveau: 'Sobre', voit: 'Le spectacle à l’affiche, puis les trois portes', mvt: 0, pieuvre: 0, effort: 1,
+      principe: 'La clarté d’un théâtre public : un spectacle à l’affiche en grand, les trois portes juste dessous, une grille de cartes pour le répertoire, des repères identiques d’une section à l’autre.',
+      plus: ['Des conventions que tout le monde connaît : on trouve sans chercher', 'Les photos portent l’émotion', 'Les trois portes visibles dès le premier écran'],
+      moins: ['Ressemble à beaucoup de sites culturels', 'L’identité de la pieuvre passe au second plan'] },
+    { n: 'm03', nom: 'La saison', niveau: 'L’agenda d’abord', voit: 'Les dates de la saison, filtrables par ville', mvt: 0, pieuvre: 0, effort: 2,
+      principe: 'Pour une compagnie qui tourne, la première question est « quand et où ? ». L’accueil est l’agenda : les dates groupées par mois, un filtre tout public ou scolaire, une recherche par ville ou par spectacle, et à côté la liste des spectacles en tournée avec leur nombre de dates. Les spectacles ne se distinguent que par une pastille de couleur.',
+      plus: ['Répond tout de suite à la question des spectateurs et des programmateurs', 'Montre la vitalité de la tournée : 31 dates, 25 communes', 'Recherche et filtres immédiats, sans changer de page'],
+      moins: ['Moins de place pour l’univers des spectacles', 'Exige un agenda toujours à jour'] },
+    { n: 'm04', nom: 'Trois portes', niveau: 'Le public d’abord', voit: '« Par où entrez-vous ? » et trois grandes portes', mvt: 1, pieuvre: 0, effort: 2,
+      principe: 'Le premier écran demande « par où entrez-vous ? ». Trois grandes portes, chacune dans sa couleur et avec ses liens directs : chaque public a son chemin. Le site retient la porte choisie : la page d’un spectacle s’ouvre sur l’onglet de cette porte.',
+      plus: ['Chaque public trouve son chemin en un clic', 'Met en valeur le travail avec les établissements', 'Très lisible au téléphone'],
+      moins: ['Les spectacles n’apparaissent qu’au deuxième écran', 'Demande à chacun de se ranger dans une case'] },
+    { n: 'm05', nom: 'Magenta', niveau: 'La marque en grand', voit: 'La tache magenta et la pieuvre blanche', mvt: 1, pieuvre: 1, effort: 2,
+      principe: 'Le logo 2.0 donne toute l’identité : le magenta en aplat, la pieuvre blanche, une seule famille de caractères, forte et large, en capitales, et des photos en bichromie. Une fine ligne-tentacule sert de séparateur. Chaque page spectacle devient une affiche dans sa couleur.',
+      plus: ['Identité reconnaissable au premier coup d’œil', 'Une affiche moderne et assumée', 'Se décline facilement : réseaux, affiches, dossiers'],
+      moins: ['Le magenta partout peut écraser les couleurs des spectacles', 'Les capitales larges supportent mal les titres longs'] },
+    { n: 'm06', nom: 'Les bras de la tournée', niveau: 'La tentacule comme thème', voit: 'La carte : les tournées partent de Rouen comme des tentacules', mvt: 1, pieuvre: 2, effort: 2,
+      principe: 'La tentacule devient un thème plutôt qu’un dessin : sur la carte de l’accueil, un bras part de Rouen vers chacune des communes où la compagnie a joué, la saison en cours en magenta. Chaque page spectacle a sa propre carte, « Où le voir ». Une onde qui s’enroule souligne les titres. Pour le reste, un site clair et classique.',
+      plus: ['Le thème dit quelque chose de vrai : la compagnie va chercher son public, jusque dans les classes', 'Une image forte faite de vraies données : 460 représentations, 147 communes', 'La carte sert aussi les programmateurs et les établissements'],
+      moins: ['Exige une base de dates tenue à jour, avec des lieux bien localisés', 'Moins de place pour les photos sur le premier écran'] },
+    { n: 'm07', nom: 'Le noir et la lumière', niveau: 'Théâtral', voit: 'Une photo de spectacle en plein écran', mvt: 2, pieuvre: 0, effort: 2,
+      principe: 'La scène dans le noir : une photo à la fois, en plein écran ; les huit titres en bas de l’écran, comme un programme, changent la photo en fondu.',
+      plus: ['Spectaculaire, met les photos en valeur', 'Navigation évidente : un titre, une photo'],
+      moins: ['Dépend de photos en haute définition (celles du site actuel sont petites)', 'La photo change seule toutes les 7 secondes (avec un bouton pause) : à couper pour un site plus calme', 'Plus lent à parcourir qu’une liste'] },
+    { n: 'm08', nom: 'Le sommaire', niveau: 'Éditorial', voit: 'La liste des spectacles et l’aperçu de celui qu’on survole', mvt: 2, pieuvre: 0, effort: 2,
+      principe: 'Un sommaire et un aperçu : la liste des spectacles en grand à gauche, l’aperçu du spectacle survolé à droite (photo, accroche, prochaine date), qui prend une teinte de sa couleur. La page d’un spectacle reprend le principe : une colonne fixe (titre, faits, portes) et une colonne qui défile.',
+      plus: ['Élégant comme un magazine, limpide comme une table des matières', 'Tout le répertoire visible d’un coup', 'La même grille partout : on ne se perd jamais'],
+      moins: ['Le survol n’existe pas au téléphone : il faut une autre lecture', 'L’aperçu change dès que la souris passe'] },
+    { n: 'm09', nom: 'Un spectacle par écran', niveau: 'Chapitres', voit: 'La compagnie, puis un écran par spectacle', mvt: 3, pieuvre: 1, effort: 3,
+      principe: 'L’accueil se lit comme une suite de chapitres : la compagnie d’abord (le logo et son intention), puis un écran par spectacle, avec son fond, sa couleur et sa photo ; un sommaire en traits fins indique où l’on est. Après les chapitres, la page redevient claire : dates, portes, compagnie.',
+      plus: ['Immersif : chaque spectacle a son moment', 'Une seule chose à la fois, un geste par chapitre', 'Le logo en grand dès l’ouverture'],
+      moins: ['Neuf écrans à parcourir avant d’arriver à l’agenda', 'Le défilement aimanté peut gêner certains visiteurs', 'La pieuvre n’est qu’un logo, pas une navigation'] },
+    { n: 'm10', nom: 'La pieuvre vivante, rangée', niveau: 'La plus évoluée', voit: 'La pieuvre : on tire un bras pour entrer', mvt: 3, pieuvre: 3, effort: 3,
+      principe: 'Le prototype remis en ordre : les bras du logo mènent aux titres et on les tire pour entrer dans un spectacle (l’encre de son univers recouvre l’écran). Rien ne bouge au repos. Chaque page spectacle garde sa couleur, sa photo et un seul effet au défilement ; tout le reste est commun.',
+      plus: ['L’idée la plus singulière, et un geste qu’on retient', 'L’univers de chaque spectacle vit dans sa page', 'Même typographie partout : le site reste un'],
+      moins: ['La plus longue à réaliser et à entretenir', 'Au téléphone, les bras deviennent des couloirs plus chargés', 'Le geste « tirer » doit se découvrir (un clic suffit aussi)'],
+      extras: [
+        { titre: 'Un effet par spectacle, au défilement', items: [['m10-extra1', 'Bérénice : le cercle et le vers qui tourne'], ['m10-extra2', 'Ci-gisait Cyrano : la tirade du nez'], ['m10-extra3', 'Macbeth – Fatum : le fil rouge'], ['m10-extra4', 'La Folle Idée : l’horloge de la grève']] },
+        { titre: 'Variante : la même pieuvre, immobile', items: [['m10-v1', 'Les bras deviennent des traits fixes ; au survol, le bras et le titre prennent la couleur du spectacle'], ['m10-v2', 'Au téléphone : la pieuvre, puis la liste']] } ] },
+  ];
+  const pts = (v, nom) => `<span class="pts" aria-label="${nom} : ${v} sur 3">${[1, 2, 3].map(k => `<i class="${k <= v ? 'p' : ''}" aria-hidden="true"></i>`).join('')}</span>`;
+  $('#sommaire').innerHTML = M.map(m => `<a href="#${m.n}">${m.n.slice(1)}</a>`).join('') + '<a href="#recommandation">Conseil</a>';
+  $('#echelle tbody').innerHTML = M.map(m => `<tr><td class="n">${m.n.slice(1)}</td><td class="nom"><a href="#${m.n}">${esc(m.nom)}</a></td><td>${esc(m.voit)}</td>
+    <td class="pts">${pts(m.mvt, 'Mouvement')}</td><td class="pts">${pts(m.pieuvre, 'Tentacules')}</td><td class="pts">${pts(m.effort, 'Effort')}</td></tr>`).join('');
+  const dim = k => (P.sizes && P.sizes[k] ? ` width="${P.sizes[k][0]}" height="${P.sizes[k][1]}"` : '');
+  const img = (n, vue, legende, alt) => {
+    const src = P.images[`${n}-${vue}`], d = dim(`${n}-${vue}`);
+    return `<figure class="cap ${vue === 'full' ? 'page' : ''}">${src ? (vue === 'full'
+      ? `<div class="defile"><button type="button" data-loupe="${n}-${vue}"><img src="${src}" alt="${esc(alt)}"${d} loading="lazy"></button></div>`
+      : `<button type="button" data-loupe="${n}-${vue}"><img src="${src}" alt="${esc(alt)}"${d} loading="lazy"></button>`) : '<div class="manque">Capture à venir</div>'}<figcaption>${esc(legende)}</figcaption></figure>`;
+  };
+  const extras = m => (m.extras || []).map(g => {
+    const items = g.items.filter(([k]) => P.images[k]);
+    return items.length ? `<div class="extras"><h3>${esc(g.titre)}</h3><div class="rang">${items.map(([k, alt]) => `<figure class="cap"><button type="button" data-loupe="${k}"><img src="${P.images[k]}" alt="${esc(alt)}"${dim(k)} loading="lazy"></button><figcaption>${esc(alt)}</figcaption></figure>`).join('')}</div></div>` : '';
+  }).join('');
+  $('#maquettes').innerHTML = M.map(m => `<article class="maq" id="${m.n}" aria-labelledby="t-${m.n}"><div class="wrap">
+      <div class="maq-tete"><span class="maq-n" aria-hidden="true">${m.n.slice(1)}</span><div><p class="niv">${m.n.slice(1)} · ${esc(m.niveau)}</p><h2 id="t-${m.n}">${esc(m.nom)}</h2></div>
+        <div class="actions">${P.sources[m.n] ? `<button class="bouton" type="button" data-ouvrir="${m.n}">Ouvrir la maquette</button><button class="bouton second" type="button" data-ouvrir="${m.n}" data-tel="1">Au téléphone</button>` : ''}</div></div>
+      <p class="principe">${esc(m.principe)}</p>
+      <div class="captures">
+        <div class="col bureau">${img(m.n, 'home', 'Accueil, écran d’ordinateur', `Accueil de la maquette ${m.n.slice(1)}`)}${img(m.n, 'show', 'Page d’un spectacle (Bérénice)', `Page Bérénice de la maquette ${m.n.slice(1)}`)}</div>
+        <div class="col">${img(m.n, 'mobile', 'Accueil, téléphone', `Accueil au téléphone, maquette ${m.n.slice(1)}`)}${img(m.n, 'mshow', 'Ci-gisait Cyrano, téléphone', `Page Ci-gisait Cyrano au téléphone, maquette ${m.n.slice(1)}`)}</div>
+        <div class="col">${img(m.n, 'full', 'L’accueil en entier (faites défiler)', `Accueil complet de la maquette ${m.n.slice(1)}`)}</div>
+      </div>
+      ${extras(m)}
+      <div class="bilan"><div class="plus"><h3>Ce qui marche</h3><ul>${m.plus.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
+        <div class="moins"><h3>Ce qui coince</h3><ul>${m.moins.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>
+    </div></article>`).join('');
+  $('#reco-texte').innerHTML = `<p><b>La 06 comme base.</b> C’est la synthèse : un site aussi clair que la 02, où le thème tentaculaire dit quelque chose de vrai sur la compagnie, qui part de Rouen et va chercher son public jusque dans les classes, au lieu d’être un décor. Les cartes servent aussi les programmateurs et les établissements.</p>
+    <ol>
+      <li><b>L’accueil de la <a href="#m06">06</a></b> : la phrase, les chiffres, la carte des tournées, puis les spectacles.</li>
+      <li><b>L’agenda de la <a href="#m03">03</a></b>, sur la page Agenda : filtres tout public ou scolaires, recherche par ville ou par spectacle.</li>
+      <li><b>Les portes à liens directs</b>, comme dans la 06 et la <a href="#m04">04</a> : chaque porte donne ses réponses sans page intermédiaire.</li>
+      <li><b>Les pages spectacle</b> : la carte « Où le voir » de la 06 ; plus tard, si le budget le permet, un effet au défilement par spectacle, comme dans la <a href="#m10">10</a>.</li>
+    </ol>
+    <p>La pieuvre de la 10 n’est pas perdue : elle peut vivre ailleurs (une page de saison, une affiche animée, une bande-annonce pour les réseaux) sans porter la navigation du site.</p>
+    <p>Si vous voulez la solution la plus sûre et la plus rapide à mettre en ligne : la <a href="#m02">02</a>, « La maison ».</p>
+    <p><b>À vérifier dans la base des dates.</b> Trois lieux ne sont pas des lieux : « diptyque » à Ostwald et à Briançon, « 20h30 » à Saint-Genest-Lerpt. Les maquettes les affichent proprement, mais il faut corriger la source.</p>`;
+
+
+  /* ouvrir une maquette : la page assemblée avec ses données, dans un cadre plein écran */
+  const data = JSON.stringify(P.D).replace(/<\//g, '<\\/');
+  // dans un cadre srcdoc, les liens « #/… » se résoudraient sur l'adresse de la planche : on fixe la base
+  const page = n => P.sources[n].replace('/*__DATA__*/null', () => data).replace(/<head[^>]*>/i, h => h + '<base href="about:srcdoc">');
+  const vue = $('#vue'), cadre = $('#vue-cadre');
+  const taille = t => { vue.classList.toggle('tel', t === 'tel'); vue.querySelectorAll('[data-taille]').forEach(b => b.setAttribute('aria-pressed', b.dataset.taille === t)); };
+  document.addEventListener('click', e => {
+    const o = e.target.closest('[data-ouvrir]');
+    if (o) {
+      const m = M.find(x => x.n === o.dataset.ouvrir);
+      $('#vue-titre').textContent = `${m.n.slice(1)} · ${m.nom}`;
+      cadre.srcdoc = page(m.n); taille(o.dataset.tel ? 'tel' : 'bureau');
+      vue.showModal(); return;
+    }
+    const l = e.target.closest('[data-loupe]');
+    if (l) { $('#loupe-img').src = P.images[l.dataset.loupe]; $('#loupe-img').alt = l.querySelector('img').alt; $('#loupe').showModal(); }
+  });
+  vue.querySelectorAll('[data-taille]').forEach(b => b.addEventListener('click', () => taille(b.dataset.taille)));
+  $('#vue-fermer').addEventListener('click', () => vue.close());
+  vue.addEventListener('close', () => { cadre.removeAttribute('srcdoc'); });
+  $('#loupe').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.close(); });
+
+  /* le sommaire suit la lecture */
+  const liens = [...document.querySelectorAll('#sommaire a')];
+  const obs = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) liens.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id)); }), { rootMargin: '-45% 0px -50% 0px' });
+  document.querySelectorAll('article.maq, #recommandation').forEach(el => obs.observe(el));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saison 2026-2027 — Compagnie Crescite</title>
+<meta name="description" content="Compagnie Crescite, théâtre, Rouen : l’agenda de la saison, les spectacles en tournée et le répertoire.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400&family=Space+Grotesk:wght@400..700&display=swap">
+<style>
+:root {
+  --paper: #f4f1ea;
+  --paper-2: #ebe6db;
+  --field: #fbf9f5;
+  --ink: #141414;
+  --ink-2: #57524a;
+  --rule: #dcd6cb;
+  --rule-2: #bfb7a8;
+  --mag: #bc3e80;
+  --mag-ink: #a3306c;
+  --sg: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --at: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --gut: clamp(16px, 4vw, 48px);
+  --gap: 24px;
+  --head: 72px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--head) + 16px); }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.125rem/1.5 var(--at); font-kerning: normal; }
+img { display: block; max-width: 100%; }
+a { color: inherit; text-underline-offset: .18em; text-decoration-thickness: 1px; }
+h1, h2, h3 { font-family: var(--sg); font-weight: 500; margin: 0; line-height: 1.1; letter-spacing: -.02em; }
+p, figure, dl, dd { margin: 0; }
+ul, ol { list-style: none; margin: 0; padding: 0; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+svg { flex: none; }
+:focus-visible { outline: 3px solid var(--mag); outline-offset: 2px; }
+[tabindex="-1"]:focus { outline: none; }
+[hidden] { display: none !important; }
+.sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.skip { position: absolute; left: 8px; top: -60px; z-index: 50; background: var(--ink); color: var(--paper); padding: 10px 16px; font-weight: 700; }
+.skip:focus { top: 8px; }
+
+.wrap { width: 100%; max-width: calc(1320px + 2 * var(--gut)); margin-inline: auto; padding-inline: var(--gut); }
+.g12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); }
+.dot { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--ink-2)); }
+.lab { font-size: .9375rem; line-height: 1.35; color: var(--ink-2); }
+.tbc { color: var(--ink-2); font-style: italic; }
+
+/* En-tête */
+.site-head { position: sticky; top: 0; z-index: 30; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.head-in { height: var(--head); align-items: center; }
+.head-l { grid-column: 1 / 9; display: flex; align-items: center; gap: 56px; min-width: 0; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 600 1.5rem/1 var(--sg); letter-spacing: -.03em; }
+.brand-mark { width: 34px; height: 34px; }
+.brand-mark svg { display: block; width: 100%; height: auto; }
+.nav ul { display: flex; gap: 32px; }
+.nav a { display: block; padding: 8px 0; text-decoration: none; font-weight: 600; font-size: 1rem; border-bottom: 2px solid transparent; }
+.nav a:hover { border-bottom-color: var(--rule-2); }
+.nav a[aria-current="page"] { border-bottom-color: var(--mag); }
+.menu-btn { display: none; align-items: center; gap: 8px; margin-left: auto; height: 40px; padding: 0 14px; border: 1px solid var(--ink); border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
+.field { position: relative; }
+.field svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--ink-2); pointer-events: none; }
+.field input { width: 100%; height: 44px; padding: 0 14px 0 42px; border: 1px solid var(--rule-2); border-radius: 999px; background: var(--field); font-size: 1rem; }
+.field input::placeholder { color: var(--ink-2); opacity: 1; }
+.field input:focus-visible { outline-offset: 0; border-color: var(--ink); }
+.field input::-webkit-search-cancel-button { cursor: pointer; }
+.search { grid-column: 9 / 13; }
+
+/* Ouverture */
+.hero { padding-top: 52px; padding-bottom: 40px; row-gap: 32px; align-items: end; }
+.hero-main { grid-column: 1 / 9; }
+.saison { font-size: 4rem; line-height: .95; letter-spacing: -.045em; }
+.hero-sum { margin-top: 18px; font: 400 1.375rem/1.3 var(--sg); letter-spacing: -.01em; color: var(--ink-2); }
+.hero-sum b { font-weight: 600; color: var(--ink); }
+.seg { display: inline-flex; margin-top: 28px; padding: 3px; border: 1px solid var(--ink); border-radius: 999px; }
+.seg button { height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
+.seg button:hover { background: var(--paper-2); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.doors { grid-column: 9 / 13; }
+.doors .lab { margin-bottom: 8px; }
+.doors li { border-top: 1px solid var(--rule); }
+.doors li:last-child { border-bottom: 1px solid var(--rule); }
+.doors a { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; padding: 8px 0; text-decoration: none; font-weight: 600; font-size: 1.0625rem; line-height: 1.3; }
+.doors a svg { color: var(--mag); }
+.doors a:hover span { text-decoration: underline; }
+
+/* Agenda */
+.body { align-items: start; background: linear-gradient(var(--ink), var(--ink)) no-repeat; background-size: 100% 1px; background-origin: content-box; background-clip: content-box; }
+.msearch { display: none; }
+.agenda { grid-column: 1 / 9; grid-row: 1; min-width: 0; }
+.status { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; min-height: 60px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
+.count { font-size: 1rem; color: var(--ink-2); }
+.count b { font: 600 1.375rem/1 var(--sg); color: var(--ink); }
+.status-act { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; }
+.linkbtn { padding: 0; border: 0; background: none; font-weight: 600; font-size: 1rem; text-decoration: underline; text-underline-offset: .18em; text-decoration-thickness: 1px; }
+.status-act a { font-weight: 600; font-size: 1rem; }
+.month { margin-top: 44px; }
+.month-h { display: flex; align-items: baseline; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--ink); font-size: 2rem; }
+.month-h .yr { color: var(--ink-2); font-weight: 400; }
+.month-h .mc { margin-left: auto; font: 400 .9375rem var(--at); letter-spacing: 0; color: var(--ink-2); }
+.row { display: grid; grid-template-columns: 148px minmax(0, 1fr) 116px 72px; column-gap: var(--gap); align-items: start; padding: 19px 0 18px; border-bottom: 1px solid var(--rule); }
+.when { font-family: var(--sg); }
+.day { font-size: 3rem; font-weight: 500; line-height: .82; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.day sup { font-size: .4em; letter-spacing: 0; vertical-align: .95em; margin-left: 2px; }
+.rest.c { margin-left: 0; }
+.rest { margin-left: 6px; font-size: 1.125rem; font-weight: 500; letter-spacing: -.01em; }
+.wd { display: block; margin-top: 8px; font-family: var(--at); }
+.when-tbc { display: block; padding-top: 2px; font: italic 400 .9375rem/1.35 var(--at); color: var(--ink-2); max-width: 8em; }
+.t-link { display: inline-flex; align-items: baseline; gap: 10px; font: 500 1.375rem/1.2 var(--sg); letter-spacing: -.015em; text-decoration: none; }
+.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
+.where { margin-top: 6px; line-height: 1.4; }
+.where b { font-weight: 700; }
+.sep { color: var(--rule-2); margin: 0 .45em; }
+.aud { padding-top: 2px; }
+.more { padding-top: 5px; text-align: right; }
+.badge { display: inline-block; padding: 4px 10px 5px; border: 1px solid var(--rule-2); border-radius: 999px; font-size: .9375rem; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+.badge.sc { background: var(--paper-2); border-color: var(--paper-2); }
+.infos { display: inline-flex; align-items: center; gap: 5px; color: var(--mag-ink); font-weight: 700; font-size: 1rem; text-decoration: underline; }
+.empty { padding: 36px 0; border-bottom: 1px solid var(--rule); }
+.empty-t { font: 500 1.375rem/1.3 var(--sg); margin-bottom: 8px; }
+
+/* Les spectacles en tournée */
+.tour { grid-column: 9 / 13; grid-row: 1; position: sticky; top: calc(var(--head) + 24px); min-width: 0; }
+.tour-h { display: flex; align-items: center; min-height: 60px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 1.375rem; }
+.tour-list { position: relative; }
+.tour-item { display: flex; align-items: stretch; border-bottom: 1px solid var(--rule); }
+.tour-btn { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 50px; padding: 0 12px 0 10px; border: 0; background: none; text-align: left; font-weight: 600; font-size: 1rem; line-height: 1.25; }
+.tour-btn:hover { background: var(--paper-2); }
+.tour-name { flex: 1; min-width: 0; }
+.tour-n { font: 500 1.125rem/1 var(--sg); font-variant-numeric: tabular-nums; }
+.tour-n.zero { color: var(--ink-2); font-weight: 400; }
+.tour-go { display: grid; place-items: center; width: 48px; flex: none; border-left: 1px solid var(--rule); color: var(--ink); }
+.tour-go:hover { background: var(--paper-2); color: var(--mag-ink); }
+.tour-item.on .tour-btn { background: var(--ink); color: var(--paper); }
+.tour-item.on .tour-n { color: var(--paper); }
+.tour-item.on .dot { box-shadow: 0 0 0 2px var(--paper); }
+.tour-hint { margin-top: 14px; }
+.tour-cols { display: flex; justify-content: space-between; padding: 12px 60px 6px 10px; }
+
+/* Répertoire, compagnie */
+.sec { margin-top: 112px; }
+.sec-head { align-items: end; padding-bottom: 14px; border-bottom: 1px solid var(--ink); }
+.sec-head h2 { grid-column: 1 / 9; font-size: 2rem; }
+.sec-head p { grid-column: 9 / 13; }
+.ctx { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-top: 20px; padding: 14px 18px; background: var(--paper-2); }
+.ctx p { flex: 1 1 420px; }
+.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 44px var(--gap); margin-top: 32px; }
+.card { display: block; text-decoration: none; }
+.card-img { display: block; aspect-ratio: 3 / 2; overflow: hidden; background: var(--paper-2); }
+.card-img img { width: 100%; height: 100%; object-fit: cover; }
+.card-t { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; font: 500 1.375rem/1.2 var(--sg); letter-spacing: -.015em; }
+.card:hover .card-t span:last-child { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
+.card-s { display: block; margin-top: 4px; padding-left: 22px; }
+.card-x { display: block; margin-top: 8px; padding-left: 22px; font-size: .9375rem; font-weight: 600; }
+.co-body { margin-top: 36px; }
+.co-text { grid-column: 1 / 8; }
+.co-lead { font: 400 1.75rem/1.3 var(--sg); letter-spacing: -.02em; }
+.co-text p + p { margin-top: 18px; max-width: 62ch; }
+.stats { grid-column: 9 / 13; }
+.stats li { display: flex; align-items: baseline; gap: 16px; padding: 12px 0 14px; border-bottom: 1px solid var(--rule); }
+.stats li:first-child { padding-top: 0; }
+.stats b { min-width: 3.2ch; font: 500 3rem/1 var(--sg); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.stats-note { margin-top: 12px; }
+
+/* Pied de page */
+.site-foot { margin-top: 128px; padding: 56px 0 28px; background: var(--ink); color: #efebe3; }
+.site-foot a { color: #fff; }
+.site-foot :focus-visible { outline-color: #f07ab6; }
+.foot { row-gap: 32px; }
+.f-brand { grid-column: 1 / 5; }
+.f-brand p { margin-top: 14px; color: #c9c3b8; max-width: 26ch; }
+.f-col { grid-column: span 4; }
+.f-col h2 { font-size: 1.375rem; margin-bottom: 12px; }
+.f-col address { font-style: normal; }
+.f-col li + li { margin-top: 2px; }
+.f-legal { margin-top: 48px; padding-top: 18px; border-top: 1px solid #3a3733; color: #c9c3b8; font-size: .9375rem; }
+
+/* Page spectacle */
+.show { padding-top: 28px; }
+.back a { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1rem; text-decoration: none; }
+.back a:hover span { text-decoration: underline; }
+.back svg { transform: scaleX(-1); }
+.show-head { margin-top: 28px; }
+.show-t { display: flex; align-items: baseline; gap: 20px; font-size: 4rem; line-height: 1; letter-spacing: -.045em; }
+.show-t .dot { position: relative; top: -.08em; width: 22px; height: 22px; }
+.show-sub { margin-top: 14px; padding-left: 42px; font: 400 1.375rem/1.3 var(--sg); letter-spacing: -.01em; color: var(--ink-2); }
+.band-sec { margin-top: 44px; border-top: 1px solid var(--ink); }
+.band-head { display: flex; align-items: center; gap: 8px 20px; flex-wrap: wrap; min-height: 64px; padding: 10px 0; }
+.band-head h2 { font-size: 1.375rem; }
+.band-nav { display: flex; gap: 8px; margin-left: auto; }
+.band-nav button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--ink); border-radius: 50%; background: none; }
+.band-nav button:disabled { border-color: var(--rule); color: var(--rule-2); cursor: default; }
+.band-nav button:first-child svg { transform: scaleX(-1); }
+.band { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 244px; gap: 12px; overflow-x: auto; padding-bottom: 14px; scrollbar-width: thin; scrollbar-color: var(--rule-2) transparent; }
+.dcard { display: flex; flex-direction: column; min-height: 100%; padding: 18px 18px 16px; background: var(--field); border: 1px solid var(--rule); }
+.dcard .day { font-size: 3rem; }
+.dcard .wd { margin-top: 10px; }
+.dcard .where { margin-top: 14px; }
+.dc-lieu { margin-top: 2px; font-size: 1rem; line-height: 1.35; color: var(--ink-2); }
+.dc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 16px; }
+.none-box { padding: 22px 24px; background: var(--paper-2); }
+.none-box p:first-child { font: 500 1.375rem/1.3 var(--sg); }
+.none-box p + p { margin-top: 6px; }
+.show-grid { margin-top: 56px; row-gap: 40px; }
+.show-photo { grid-column: 1 / 9; }
+.show-photo img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--paper-2); }
+.show-photo figcaption { margin-top: 8px; }
+.facts { grid-column: 9 / 13; grid-row: 1 / span 2; }
+.facts h2 { font-size: 1.375rem; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
+.facts dl > div { padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
+.facts dt { font-size: .9375rem; color: var(--ink-2); }
+.facts dd { margin-top: 2px; font-weight: 600; }
+.team li { display: flex; flex-direction: column; font-weight: 400; }
+.team li + li { margin-top: 8px; }
+.team span { font-size: .9375rem; color: var(--ink-2); }
+.team b { font-weight: 600; }
+.show-text { grid-column: 1 / 9; }
+.accroche { font: 400 2rem/1.25 var(--sg); letter-spacing: -.025em; max-width: 26em; }
+.show-text p + p { margin-top: 20px; max-width: 64ch; }
+.tabs-sec { margin-top: 88px; }
+.tabs-h { font-size: 2rem; margin-bottom: 18px; }
+.tablist { display: flex; border-bottom: 1px solid var(--ink); }
+.tab { position: relative; padding: 14px 22px 15px; border: 0; background: none; font-weight: 700; font-size: 1.0625rem; color: var(--ink-2); }
+.tab:first-child { padding-left: 0; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); }
+.tab[aria-selected="true"]::after { content: ""; position: absolute; left: 22px; right: 22px; bottom: -1px; height: 4px; background: var(--mag); }
+.tab:first-child[aria-selected="true"]::after { left: 0; }
+.panel { padding-top: 36px; }
+.panel-grid { row-gap: 32px; }
+.p-main { grid-column: 1 / 8; }
+.p-side { grid-column: 9 / 13; }
+.p-lead { font: 400 1.375rem/1.4 var(--sg); letter-spacing: -.01em; }
+.p-main > * + * { margin-top: 18px; }
+.p-h { font-size: 1.375rem; margin-bottom: 10px; }
+.kv > div { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: 4px 20px; padding: 11px 0 12px; border-bottom: 1px solid var(--rule); }
+.kv > div:first-child { border-top: 1px solid var(--rule); }
+.kv dt { color: var(--ink-2); font-size: .9375rem; padding-top: 2px; }
+.kv dd { font-weight: 600; }
+.kv dd .tbc { font-weight: 400; }
+.mini li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
+.mini li:first-child { border-top: 1px solid var(--rule); }
+.mini b { font-weight: 700; }
+.contact-box { padding: 20px 22px; border: 1px solid var(--ink); }
+.contact-box p + p { margin-top: 6px; }
+.contact-box a { font-weight: 700; color: var(--mag-ink); }
+.next { margin-top: 96px; border-top: 1px solid var(--ink); }
+.next a { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 0 0; text-decoration: none; }
+.next .lab { display: block; margin-bottom: 8px; }
+.next-t { display: flex; align-items: baseline; gap: 14px; font: 500 2rem/1.1 var(--sg); letter-spacing: -.025em; }
+.next-t .dot { width: 16px; height: 16px; }
+.next a:hover .next-txt { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .12em; }
+.next-arrow { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid var(--ink); border-radius: 50%; }
+
+@media (max-width: 1180px) {
+  .head-l { gap: 32px; }
+  .nav ul { gap: 22px; }
+  .row { grid-template-columns: 132px minmax(0, 1fr) 112px; grid-template-areas: "when what aud" "when what more"; }
+  .row .when { grid-area: when; } .row .what { grid-area: what; } .row .aud { grid-area: aud; } .row .more { grid-area: more; text-align: left; padding-top: 8px; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  :root { --head: 64px; --gap: 16px; }
+  .head-in { display: flex; }
+  .head-l { flex: 1; }
+  .menu-btn { display: inline-flex; }
+  .search { display: none; }
+  .nav { display: none; position: absolute; top: var(--head); left: 0; right: 0; padding: 4px var(--gut) 20px; background: var(--field); border-bottom: 1px solid var(--ink); box-shadow: 0 18px 32px rgba(20, 20, 20, .16); }
+  .nav.open { display: block; }
+  .nav ul { flex-direction: column; gap: 0; }
+  .nav a { padding: 14px 0; border-bottom: 1px solid var(--rule); font-size: 1.0625rem; }
+  .nav li:last-child a { border-bottom: 0; }
+  .nav a[aria-current="page"] { border-bottom-color: var(--rule); box-shadow: inset 4px 0 0 var(--mag); padding-left: 14px; }
+  .hero { padding-top: 26px; padding-bottom: 26px; row-gap: 24px; }
+  .hero-main, .doors { grid-column: 1 / -1; }
+  .saison { font-size: clamp(2.375rem, 11vw, 4rem); }
+  .hero-sum { font-size: 1.1875rem; margin-top: 12px; }
+  .seg { display: flex; width: 100%; margin-top: 22px; }
+  .seg button { flex: 1 1 auto; padding: 0 8px; }
+  .body { background: none; }
+  .msearch { display: block; grid-column: 1 / -1; padding-top: 0; }
+  .tour, .agenda { grid-column: 1 / -1; grid-row: auto; position: static; }
+  .tour { margin-top: 14px; }
+  .tour-h { min-height: 0; padding: 0 0 10px; border: 0; font-size: 1.125rem; }
+  .tour-cols, .tour-hint, .tour-go { display: none; }
+  .tour-list { display: flex; gap: 8px; overflow-x: auto; margin-inline: calc(-1 * var(--gut)); padding: 0 var(--gut) 10px; scrollbar-width: none; }
+  .tour-list::-webkit-scrollbar { display: none; }
+  .tour-item { border: 0; flex: none; }
+  .tour-btn { min-height: 42px; padding: 0 14px 0 12px; gap: 9px; border: 1px solid var(--rule-2); border-radius: 999px; white-space: nowrap; background: var(--field); }
+  .tour-item.on .tour-btn { border-color: var(--ink); }
+  .agenda { margin-top: 8px; border-top: 1px solid var(--ink); }
+  .month { margin-top: 32px; }
+  .month-h { font-size: 1.625rem; }
+  .row { grid-template-columns: 80px minmax(0, 1fr); grid-template-areas: "when what" "when meta"; column-gap: 14px; padding: 16px 0 17px; }
+  .row .aud, .row .more { grid-area: meta; padding-top: 12px; }
+  .row .aud { justify-self: start; }
+  .row .more { justify-self: start; margin-left: 124px; padding-top: 16px; }
+  .day, .dcard .day { font-size: 2.5rem; }
+  .rest, .rest.c { display: block; margin: 6px 0 0; font-size: 1rem; }
+  .rest .cm { display: none; }
+  .wd { margin-top: 6px; }
+  .t-link { font-size: 1.25rem; gap: 9px; }
+  .sec { margin-top: 80px; }
+  .sec-head h2, .sec-head p { grid-column: 1 / -1; }
+  .sec-head p { margin-top: 8px; }
+  .cards { gap: 32px var(--gap); }
+  .card-t { font-size: 1.125rem; gap: 8px; }
+  .card-t .dot { width: 10px; height: 10px; }
+  .card-s, .card-x { padding-left: 0; font-size: .9375rem; }
+  .co-text, .stats { grid-column: 1 / -1; }
+  .co-lead { font-size: 1.375rem; }
+  .stats { margin-top: 32px; }
+  .stats b { font-size: 2.5rem; }
+  .f-brand, .f-col { grid-column: 1 / -1; }
+  .show-t { font-size: clamp(2.25rem, 10vw, 4rem); gap: 14px; }
+  .show-t .dot { width: 16px; height: 16px; }
+  .show-sub { padding-left: 30px; font-size: 1.1875rem; }
+  .band-nav { display: none; }
+  .band { grid-auto-columns: 232px; margin-inline: calc(-1 * var(--gut)); padding-inline: var(--gut); scroll-padding-inline: var(--gut); }
+  .show-photo, .facts, .show-text, .p-main, .p-side { grid-column: 1 / -1; grid-row: auto; }
+  .accroche { font-size: 1.5rem; }
+  .tabs-h { font-size: 1.625rem; }
+  .tablist { flex-direction: column; border-bottom: 0; border-top: 1px solid var(--ink); }
+  .tab { padding: 14px 0 15px 18px; text-align: left; border-bottom: 1px solid var(--rule); }
+  .tab:first-child { padding-left: 18px; }
+  .tab[aria-selected="true"]::after, .tab:first-child[aria-selected="true"]::after { left: 0; right: auto; top: 0; bottom: 0; width: 4px; height: auto; }
+  .panel { padding-top: 28px; }
+  .kv > div { grid-template-columns: 1fr; }
+  .next-t { font-size: 1.5rem; }
+  .next-arrow { width: 48px; height: 48px; }
+}
+@media (max-width: 420px) {
+  .row .more { margin-left: 0; padding-top: 12px; }
+  .row .aud + .more { margin-left: 120px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+<header class="site-head">
+  <div class="wrap g12 head-in">
+    <div class="head-l">
+      <a class="brand" href="#/" aria-label="Crescite, accueil"><span class="brand-mark" id="brand-mark" aria-hidden="true"></span><span>crescite</span></a>
+      <nav class="nav" id="nav" aria-label="Navigation principale">
+        <ul>
+          <li><a href="#/agenda" data-nav="agenda">Agenda</a></li>
+          <li><a href="#/spectacles" data-nav="spectacles">Spectacles</a></li>
+          <li><a href="#/compagnie" data-nav="compagnie">La compagnie</a></li>
+          <li><a href="#/contact" data-nav="contact">Contact</a></li>
+        </ul>
+      </nav>
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    </div>
+    <form class="search field" role="search" action="#" onsubmit="return false">
+      <label class="sr" for="q">Rechercher une ville ou un spectacle</label>
+      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.75" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="q" type="search" placeholder="Ville ou spectacle" autocomplete="off" spellcheck="false">
+    </form>
+  </div>
+</header>
+<main id="main" tabindex="-1"></main>
+<footer class="site-foot" id="contact"></footer>
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  'use strict';
+  const SH = D.shows;
+  const BY = Object.fromEntries(SH.map(s => [s.slug, s]));
+  const MOISL = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const MOISC = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  const JC = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+  const DOOR_HREF = { voir: '#/agenda/voir', programmer: '#/spectacles/programmer', etablissement: '#/spectacles/etablissement' };
+  const DOOR = Object.fromEntries(D.doors.map(d => [d.key, d]));
+  const ARROW = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const EXT = '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" focusable="false"><path d="M5.5 3.5h7v7M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const LOUPE = '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.75" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[’'`\-–—.,;:()«»"]/g, ' ').replace(/\s+/g, ' ').trim();
+  const cap = v => v ? v.charAt(0).toUpperCase() + v.slice(1) : v;
+  const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+  const joinFr = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1];
+  const wdOf = (y, m, d) => new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+  const isShow = s => !!(s.annee || s.distribution.length);
+
+  function placeOf(l) {
+    const v = (l || '').trim();
+    if (!v) return { venue: null, note: null };
+    if (/^\d{1,2}\s*h\s*\d{0,2}$/i.test(v)) return { venue: null, note: v.replace(/\s+/g, '') };
+    if (/^diptyque$/i.test(v)) return { venue: null, note: 'en diptyque' };
+    return { venue: v, note: null };
+  }
+
+  function whenOf(d, y, m) {
+    if (d.precision === 'month') return { big: '', er: false, rest: '', sub: 'jour à préciser', sr: `${d.moisLong} ${y}, jour à préciser`, tbc: true };
+    if (d.precision === 'range' && d.fin > d.iso) {
+      const [fy, fm, fd] = d.fin.split('-').map(Number);
+      return { big: String(d.jour), er: false, rest: `au ${fd}${fm !== m ? ' ' + MOISC[fm - 1] : ''}`, sub: `du ${JC[wdOf(y, m, d.jour)]} au ${JC[wdOf(fy, fm, fd)]}`, sr: d.label };
+    }
+    const head = d.label.split(' ' + d.moisLong)[0];
+    const nums = /^[\d\s,eter]+$/.test(head) ? (head.match(/\d+/g) || []).map(Number) : [];
+    if (nums.length > 1) {
+      return { big: String(nums[0]), er: nums[0] === 1, rest: head.replace(/^\d+(er)?/, '').trim(), sub: joinFr(nums.map(n => JC[wdOf(y, m, n)])), sr: d.label };
+    }
+    return { big: String(d.jour), er: d.jour === 1, rest: '', sub: d.joursemLong, sr: `${d.joursemLong} ${d.label}` };
+  }
+
+  const DATES = D.dates.map((d, i) => {
+    const [y, m] = d.iso.split('-').map(Number);
+    const s = BY[d.slug];
+    const place = placeOf(d.lieu);
+    return Object.assign({}, d, {
+      i, y, m, ym: d.iso.slice(0, 7), place,
+      color: s ? s.couleurTexteClair : '#57524a',
+      when: whenOf(d, y, m),
+      hay: ' ' + norm([d.titre, s && s.sousTitre, d.commune, d.dep, place.venue, place.note, d.public, d.moisLong].join(' ')),
+    });
+  }).sort((a, b) => a.ym.localeCompare(b.ym) || (a.precision === 'month') - (b.precision === 'month') || a.iso.localeCompare(b.iso) || a.i - b.i);
+  const COUNT = Object.fromEntries(SH.map(s => [s.slug, DATES.filter(d => d.slug === s.slug).length]));
+  const NCOMMUNES = new Set(DATES.map(d => d.commune + '|' + d.dep)).size;
+
+  const S = { view: null, pub: 'all', q: '', show: null, door: null };
+  const PUBS = [['all', 'Toutes'], ['Tout public', 'Tout public'], ['Scolaire', 'Scolaires']];
+  const main = document.getElementById('main');
+  const qInputs = () => [...document.querySelectorAll('#q, #q2')];
+
+  function matches(d) {
+    if (S.pub !== 'all' && d.public !== S.pub) return false;
+    if (S.show && d.slug !== S.show) return false;
+    const toks = norm(S.q).split(' ').filter(Boolean);
+    return toks.every(t => d.hay.includes(t));
+  }
+
+  function whereHtml(d, card) {
+    const sep = '<span class="sep" aria-hidden="true">·</span><span class="sr">, </span>';
+    const head = `<b>${esc(d.commune)}</b> (${esc(d.dep)})`;
+    const venue = d.place.venue ? esc(card ? cap(d.place.venue) : d.place.venue) : '<span class="tbc">lieu à préciser</span>';
+    const note = d.place.note ? esc(d.place.note) : '';
+    if (card) return `<p class="where">${head}</p><p class="dc-lieu">${venue}${note ? sep + note : ''}</p>`;
+    return `<p class="where">${head}${sep}${venue}${note ? sep + note : ''}</p>`;
+  }
+
+  const badge = d => `<span class="badge ${d.public === 'Scolaire' ? 'sc' : 'tp'}">${esc(d.public)}</span>`;
+  const infos = d => d.lien ? `<a class="infos" href="${esc(d.lien)}" target="_blank" rel="noopener" aria-label="Infos : ${esc(d.titre)}, ${esc(d.commune)}, ${esc(d.label)} (nouvel onglet)">Infos${EXT}</a>` : '';
+
+  function bigDay(w) {
+    return `<span class="day">${esc(w.big)}${w.er ? '<sup>er</sup>' : ''}</span>${w.rest ? (w.rest.charAt(0) === ',' ? `<span class="rest c"><span class="cm">, </span>${esc(w.rest.slice(1).trim())}</span>` : `<span class="rest">${esc(w.rest)}</span>`) : ''}`;
+  }
+
+  function rowHtml(d) {
+    const w = d.when;
+    const when = w.tbc
+      ? `<span class="when-tbc" aria-hidden="true">Jour à préciser</span>`
+      : `<span aria-hidden="true">${bigDay(w)}<span class="wd lab">${esc(w.sub)}</span></span>`;
+    return `<li class="row">
+      <div class="when">${when}<span class="sr">${esc(w.sr)}</span></div>
+      <div class="what">
+        <a class="t-link" href="#/spectacle/${d.slug}"><span class="dot" style="--c:${d.color}" aria-hidden="true"></span><span class="t-txt">${esc(d.titre)}</span></a>
+        ${whereHtml(d)}
+      </div>
+      <div class="aud">${badge(d)}</div>
+      <div class="more">${infos(d)}</div>
+    </li>`;
+  }
+
+  function listHtml(res) {
+    if (!res.length) return emptyHtml();
+    const groups = [];
+    for (const d of res) {
+      let g = groups[groups.length - 1];
+      if (!g || g.ym !== d.ym) groups.push(g = { ym: d.ym, y: d.y, m: d.m, items: [] });
+      g.items.push(d);
+    }
+    return groups.map(g => `<section class="month" aria-labelledby="m-${g.ym}">
+      <h3 class="month-h" id="m-${g.ym}"><span>${cap(MOISL[g.m - 1])}</span><span class="yr">${g.y}</span><span class="mc">${plural(g.items.length, 'date', 'dates')}</span></h3>
+      <ol>${g.items.map(rowHtml).join('')}</ol>
+    </section>`).join('');
+  }
+
+  function emptyHtml() {
+    const s = S.show && BY[S.show];
+    if (s && !COUNT[s.slug]) {
+      return `<div class="empty"><p class="empty-t">Aucune date annoncée pour l’instant pour ${esc(s.titre)}.</p>
+        <p><a href="#/spectacle/${s.slug}">Voir la page du spectacle</a> ou <button type="button" class="linkbtn" data-clear>afficher toutes les dates</button>.</p></div>`;
+    }
+    return `<div class="empty"><p class="empty-t">Aucune date ne correspond${S.q.trim() ? ` à « ${esc(S.q.trim())} »` : ' à ces filtres'}.</p>
+      <p>Essayez une autre ville ou un autre spectacle, ou <button type="button" class="linkbtn" data-clear>effacez les filtres</button>.</p></div>`;
+  }
+
+  function filtersLabel() {
+    const parts = [];
+    if (S.show) parts.push(BY[S.show].titre);
+    if (S.pub !== 'all') parts.push(S.pub === 'Scolaire' ? 'scolaires' : 'tout public');
+    if (S.q.trim()) parts.push(`« ${S.q.trim()} »`);
+    return parts.join(', ');
+  }
+
+  function updateAgenda() {
+    if (S.view !== 'home') return;
+    const res = DATES.filter(matches);
+    const filtered = S.pub !== 'all' || S.show || S.q.trim();
+    document.getElementById('list').innerHTML = listHtml(res);
+    const count = document.getElementById('count');
+    const txt = filtered
+      ? `<b>${res.length}</b> ${res.length > 1 ? 'dates' : 'date'} sur ${DATES.length}<span class="sr"> : ${esc(filtersLabel())}</span>`
+      : `<b>${res.length}</b> dates à venir`;
+    if (count.innerHTML !== txt) count.innerHTML = txt;
+    const s = S.show && BY[S.show];
+    document.getElementById('status-act').innerHTML =
+      (s ? `<a href="#/spectacle/${s.slug}">Voir la page de ${esc(s.titre)}</a>` : '') +
+      (filtered ? '<button type="button" class="linkbtn" data-clear>Effacer les filtres</button>' : '');
+    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pub === S.pub)));
+    document.querySelectorAll('.tour-item').forEach(li => {
+      const on = li.dataset.show === S.show;
+      li.classList.toggle('on', on);
+      li.querySelector('.tour-btn').setAttribute('aria-pressed', String(on));
+    });
+  }
+
+  function clearFilters() {
+    S.pub = 'all'; S.show = null; S.q = '';
+    qInputs().forEach(i => { i.value = ''; });
+    updateAgenda();
+  }
+
+  function tourHtml() {
+    return SH.map(s => `<li class="tour-item" data-show="${s.slug}">
+      <button type="button" class="tour-btn" data-show="${s.slug}" aria-pressed="false">
+        <span class="dot" style="--c:${s.couleurTexteClair}" aria-hidden="true"></span>
+        <span class="tour-name">${esc(s.titre)}</span>
+        <span class="tour-n${COUNT[s.slug] ? '' : ' zero'}">${COUNT[s.slug]}<span class="sr"> ${COUNT[s.slug] > 1 ? 'dates' : 'date'}</span></span>
+      </button>
+      <a class="tour-go" href="#/spectacle/${s.slug}" aria-label="Page du spectacle ${esc(s.titre)}" title="Page du spectacle">${ARROW}</a>
+    </li>`).join('');
+  }
+
+  function progLine(s) {
+    if (!isShow(s)) return '';
+    return [s.annee && `Création ${s.annee}`, s.duree, s.distribution.length && plural(s.distribution.length, 'comédien', 'comédiens')].filter(Boolean).join(' · ');
+  }
+  function etabLine(s) {
+    const e = s.etablissement || {};
+    const mode = { etablissement: 'Vient dans l’établissement', salle: 'Se joue en salle', a_confirmer: 'Accueil à confirmer' }[e.mode] || '';
+    return [mode, s.passCulture && 'Pass Culture'].filter(Boolean).join(' · ');
+  }
+
+  function cardHtml(s) {
+    const extra = S.door === 'programmer' ? progLine(s) : S.door === 'etablissement' ? etabLine(s) : '';
+    return `<li><a class="card" href="#/spectacle/${s.slug}${S.door ? '/' + S.door : ''}">
+      <span class="card-img"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></span>
+      <span class="card-t"><span class="dot" style="--c:${s.couleurTexteClair}" aria-hidden="true"></span><span>${esc(s.titre)}</span></span>
+      <span class="card-s lab">${esc(s.sousTitre)}</span>
+      ${extra ? `<span class="card-x">${esc(extra)}</span>` : ''}
+    </a></li>`;
+  }
+
+  function repInner() {
+    const n = SH.filter(isShow).length;
+    const ctx = S.door ? `<div class="ctx">
+        <p><b>${esc(DOOR[S.door].titre)}</b> · ${S.door === 'programmer' ? 'Sous chaque titre : création, durée, nombre de comédiens.' : 'Sous chaque titre : où il se joue, et s’il est au Pass Culture.'} Chaque fiche s’ouvre sur l’onglet qui vous concerne.</p>
+        <button type="button" class="linkbtn" data-nodoor>Revenir à l’affichage simple</button>
+      </div>` : '';
+    return `<div class="g12 sec-head">
+        <h2 id="h-rep" tabindex="-1">Le répertoire</h2>
+        <p class="lab">${n} spectacles et les actions culturelles de la compagnie, à voir, à programmer, à faire venir.</p>
+      </div>
+      ${ctx}
+      <ul class="cards">${SH.map(cardHtml).join('')}</ul>`;
+  }
+
+  function homeHtml() {
+    const first = DATES[0], last = DATES[DATES.length - 1];
+    const span = first && last ? `, de ${MOISL[first.m - 1]} ${first.y} à ${MOISL[last.m - 1]} ${last.y}` : '';
+    const c = D.company, st = D.stats;
+    return `<div id="agenda">
+      <section class="wrap g12 hero" aria-labelledby="h1">
+        <div class="hero-main">
+          <h1 class="saison" id="h1" tabindex="-1">Saison ${esc(D.saison)}</h1>
+          <p class="hero-sum"><b>${plural(DATES.length, 'date', 'dates')}</b> dans <b>${plural(NCOMMUNES, 'commune', 'communes')}</b>${span}</p>
+          <div class="seg" role="group" aria-label="Filtrer les dates par public">
+            ${PUBS.map(([k, l]) => `<button type="button" data-pub="${k}" aria-pressed="${S.pub === k}">${l}</button>`).join('')}
+          </div>
+        </div>
+        <nav class="doors" aria-label="Accès directs">
+          <p class="lab">Accès directs</p>
+          <ul>${D.doors.map(d => `<li><a href="${DOOR_HREF[d.key]}"><span>${esc(d.titre)}</span>${ARROW}</a></li>`).join('')}</ul>
+        </nav>
+      </section>
+      <div class="wrap g12 body">
+        <div class="msearch field">
+          <label class="sr" for="q2">Rechercher une ville ou un spectacle</label>
+          ${LOUPE}<input id="q2" type="search" placeholder="Ville ou spectacle" autocomplete="off" spellcheck="false">
+        </div>
+        <aside class="tour" aria-labelledby="h-tour">
+          <h2 class="tour-h" id="h-tour">Les spectacles en tournée</h2>
+          <div class="tour-cols lab" aria-hidden="true"><span>Spectacle</span><span>Dates</span></div>
+          <ul class="tour-list">${tourHtml()}</ul>
+          <p class="tour-hint lab">Choisissez un spectacle pour n’afficher que ses dates ; un second clic retire le filtre. La flèche ouvre sa page.</p>
+        </aside>
+        <section class="agenda" aria-labelledby="h-agenda">
+          <h2 class="sr" id="h-agenda" tabindex="-1">Les dates de la saison</h2>
+          <div class="status">
+            <p class="count" id="count" role="status" aria-live="polite" aria-atomic="true"></p>
+            <div class="status-act" id="status-act"></div>
+          </div>
+          <div id="list"></div>
+        </section>
+      </div>
+    </div>
+    <section class="wrap sec" id="spectacles" aria-labelledby="h-rep">${repInner()}</section>
+    <section class="wrap sec" id="compagnie" aria-labelledby="h-co">
+      <div class="g12 sec-head"><h2 id="h-co" tabindex="-1">La compagnie</h2><p class="lab">${esc(c.nom)}, ${esc(c.ville)}, depuis ${esc(c.depuis)}.</p></div>
+      <div class="g12 co-body">
+        <div class="co-text">
+          <p class="co-lead">${esc(c.intention)}</p>
+          <p>${esc(c.presentation)}</p>
+          <p>Mise en scène des spectacles : ${esc(c.miseEnScene)}.</p>
+        </div>
+        <div class="stats">
+          <ul>
+            <li><b>${esc(st.dates)}</b><span>dates de tournée</span></li>
+            <li><b>${esc(st.communes)}</b><span>communes</span></li>
+            <li><b>${esc(st.departements)}</b><span>départements</span></li>
+          </ul>
+          <p class="stats-note lab">Relevé des tournées depuis la saison 2016-2017, saison en cours comprise.</p>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  function dcardHtml(d) {
+    const w = d.when;
+    const top = w.tbc
+      ? `<span class="day">${esc(cap(d.moisLong))}</span><span class="wd lab">${d.y}, jour à préciser</span>`
+      : `${bigDay(w)}<span class="wd lab">${esc(w.sub)} · ${esc(d.mois)} ${d.y}</span>`;
+    return `<li class="dcard">
+      <p class="when" aria-hidden="true">${top}</p><p class="sr">${esc(w.sr)}</p>
+      ${whereHtml(d, true)}
+      <div class="dc-foot">${badge(d)}${infos(d)}</div>
+    </li>`;
+  }
+
+  function factsHtml(s) {
+    const tbc = '<span class="tbc">à fournir</span>';
+    const rows = isShow(s) ? [
+      ['Création', s.annee ? esc(s.annee) : tbc],
+      ['Durée', s.duree ? esc(s.duree) : tbc],
+      ['Au plateau', s.distribution.length ? plural(s.distribution.length, 'comédien', 'comédiens') : tbc],
+      ['Équipe', s.equipe.length ? `<ul class="team">${s.equipe.map(([r, n]) => `<li><span>${esc(r)}</span><b>${esc(n)}</b></li>`).join('')}</ul>` : tbc],
+    ] : [
+      ['Format', esc(cap(s.sousTitre))],
+      ['Pour qui', 'Collèges, lycées et théâtres'],
+      ['Soutiens', s.soutiens ? esc(s.soutiens) : tbc],
+    ];
+    return `<aside class="facts" aria-labelledby="h-facts"><h2 id="h-facts">En bref</h2><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl></aside>`;
+  }
+
+  function contactBox(s, sujet) {
+    const mail = `mailto:${D.company.email}?subject=${encodeURIComponent(sujet + ' : ' + s.titre)}`;
+    return `<div class="contact-box"><p class="lab">Contact</p><p><a href="${esc(mail)}">${esc(D.company.email)}</a></p><p class="lab">${esc(D.company.adresse)}</p></div>`;
+  }
+
+  function panelVoir(s, dates) {
+    const tp = dates.filter(d => d.public === 'Tout public');
+    const list = tp.length ? `<ul class="mini">${tp.map(d => `<li><span><b>${esc(d.when.tbc ? cap(d.label) : (d.when.rest ? cap(d.label) : `${cap(d.joursemLong)} ${d.label}`))}</b><br>${esc(d.commune)} (${esc(d.dep)})${d.place.venue ? ', ' + esc(d.place.venue) : ''}${d.place.note ? ', ' + esc(d.place.note) : ''}</span>${infos(d)}</li>`).join('')}</ul>`
+      : `<div class="none-box"><p>Aucune représentation tout public annoncée pour l’instant.</p><p>Les prochaines dates paraîtront ici et dans l’agenda de la saison.</p></div>`;
+    return `<div class="g12 panel-grid">
+      <div class="p-main">
+        <h3 class="p-h">${tp.length ? `${plural(tp.length, 'représentation', 'représentations')} tout public` : 'Représentations tout public'}</h3>
+        ${list}
+        ${tp.length ? '<p class="lab">La réservation se fait auprès de chaque lieu : suivez le lien « Infos » de la date.</p>' : ''}
+      </div>
+      <div class="p-side">${contactBox(s, 'Venir voir')}</div>
+    </div>`;
+  }
+
+  function panelProg(s) {
+    const tbc = '<span class="tbc">à fournir</span>';
+    const fiche = isShow(s) ? [
+      ['Création', s.annee ? esc(s.annee) : tbc],
+      ['Durée', s.duree ? esc(s.duree) : tbc],
+      ['Au plateau', s.distribution.length ? plural(s.distribution.length, 'comédien', 'comédiens') : tbc],
+      ['Distribution', s.distribution.length ? s.distribution.map(esc).join('<br>') : tbc],
+      ['Coproduction', s.coproduction ? esc(s.coproduction) : tbc],
+      ['Soutiens', s.soutiens ? esc(s.soutiens) : tbc],
+    ] : [
+      ['Format', esc(cap(s.sousTitre))],
+      ['Soutiens', s.soutiens ? esc(s.soutiens) : tbc],
+    ];
+    const docs = [
+      ['Fiche technique', tbc],
+      ['Dossier de diffusion', tbc],
+      ['Conditions financières', tbc],
+      ['Vidéo', s.video ? `<a class="infos" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo${EXT}</a>` : tbc],
+    ];
+    return `<div class="g12 panel-grid">
+      <div class="p-main">
+        <h3 class="p-h">Fiche du spectacle</h3>
+        <dl class="kv">${fiche.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+      </div>
+      <div class="p-side">
+        <h3 class="p-h">Documents</h3>
+        <dl class="kv">${docs.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+        <div style="margin-top:24px">${contactBox(s, 'Programmation')}</div>
+      </div>
+    </div>`;
+  }
+
+  function panelEtab(s) {
+    const e = s.etablissement || {};
+    const mode = { etablissement: 'Dans l’établissement', salle: 'En salle de spectacle', a_confirmer: 'À confirmer avec la compagnie' }[e.mode];
+    const rows = [
+      ['Où il se joue', mode ? esc(mode) : '<span class="tbc">à fournir</span>'],
+      ['Pass Culture', s.passCulture ? 'Offre collective disponible' : '<span class="tbc">pas d’offre référencée</span>'],
+      ['Guide du CRED76', s.cred76 ? `<a class="infos" href="${esc(s.cred76)}" target="_blank" rel="noopener">Voir la fiche du guide${EXT}</a>` : '<span class="tbc">pas de fiche référencée</span>'],
+    ];
+    return `<div class="g12 panel-grid">
+      <div class="p-main">
+        <p class="p-lead">${e.texte ? esc(e.texte) : '<span class="tbc">à fournir</span>'}</p>
+        ${s.noteScolaire ? `<p>${esc(s.noteScolaire)}</p>` : ''}
+        <dl class="kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+      </div>
+      <div class="p-side">${contactBox(s, 'Établissement')}</div>
+    </div>`;
+  }
+
+  const TABS = [['voir', panelVoir], ['programmer', panelProg], ['etablissement', panelEtab]];
+
+  function showHtml(s, tab) {
+    const i = SH.indexOf(s), nx = SH[(i + 1) % SH.length];
+    const dates = DATES.filter(d => d.slug === s.slug);
+    const band = dates.length
+      ? `<div class="band-head"><h2 id="h-dates">Les dates</h2><p class="lab">${plural(dates.length, 'date', 'dates')} cette saison</p>
+          <div class="band-nav" hidden><button type="button" data-band="-1" aria-label="Dates précédentes">${ARROW}</button><button type="button" data-band="1" aria-label="Dates suivantes">${ARROW}</button></div></div>
+         <ol class="band" tabindex="0" aria-labelledby="h-dates">${dates.map(dcardHtml).join('')}</ol>`
+      : `<div class="band-head"><h2 id="h-dates">Les dates</h2></div>
+         <div class="none-box"><p>Aucune date annoncée pour l’instant.</p><p>Pour accueillir ${esc(s.titre)}, écrivez à <a href="mailto:${esc(D.company.email)}">${esc(D.company.email)}</a>.</p></div>`;
+    return `<article class="wrap show" style="--c:${s.couleurTexteClair}">
+      <p class="back"><a href="#/agenda">${ARROW}<span>Toute la saison</span></a></p>
+      <header class="show-head">
+        <h1 class="show-t" id="h1" tabindex="-1"><span class="dot" aria-hidden="true"></span><span>${esc(s.titre)}</span></h1>
+        <p class="show-sub">${esc(s.sousTitre)}</p>
+      </header>
+      <section class="band-sec" aria-labelledby="h-dates">${band}</section>
+      <div class="g12 show-grid">
+        <figure class="show-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption class="lab">${esc(s.credit)}</figcaption>` : ''}</figure>
+        ${factsHtml(s)}
+        <div class="show-text"><p class="accroche">${esc(s.accroche)}</p><p>${esc(s.texte)}</p></div>
+      </div>
+      <section class="tabs-sec" aria-labelledby="h-tabs">
+        <h2 class="tabs-h" id="h-tabs">Selon votre projet</h2>
+        <div class="tablist" role="tablist" aria-labelledby="h-tabs">
+          ${TABS.map(([k]) => `<button type="button" class="tab" role="tab" id="tab-${k}" data-tab="${k}" aria-controls="panel-${k}" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}">${esc(DOOR[k].titre)}</button>`).join('')}
+        </div>
+        ${TABS.map(([k, fn]) => `<div class="panel" role="tabpanel" id="panel-${k}" aria-labelledby="tab-${k}" tabindex="0"${k === tab ? '' : ' hidden'}>${fn(s, dates)}</div>`).join('')}
+      </section>
+      <nav class="next" aria-label="Spectacle suivant">
+        <a href="#/spectacle/${nx.slug}">
+          <span><span class="lab">Spectacle suivant</span><span class="next-t"><span class="dot" style="--c:${nx.couleurTexteClair}" aria-hidden="true"></span><span class="next-txt">${esc(nx.titre)}</span></span></span>
+          <span class="next-arrow" aria-hidden="true">${ARROW}</span>
+        </a>
+      </nav>
+    </article>`;
+  }
+
+  function footHtml() {
+    const c = D.company;
+    const adr = c.adresse.split(', ');
+    return `<div class="wrap g12 foot">
+      <div class="f-brand">
+        <a class="brand" href="#/" aria-label="Crescite, accueil"><span class="brand-mark" aria-hidden="true">${D.logo.mark}</span><span>crescite</span></a>
+        <p>${esc(c.nom)}, théâtre, ${esc(c.ville)}, depuis ${esc(c.depuis)}.</p>
+      </div>
+      <div class="f-col">
+        <h2>Contact</h2>
+        <address>${adr.map(esc).join('<br>')}</address>
+        <p style="margin-top:8px"><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>
+      </div>
+      <div class="f-col">
+        <h2>Partenaires</h2>
+        <ul>${c.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      </div>
+    </div>
+    <div class="wrap"><p class="f-legal">SIRET ${esc(c.siret)} · Licence ${esc(c.licence)}</p></div>`;
+  }
+
+  function setNav(key) {
+    document.querySelectorAll('.nav a').forEach(a => {
+      if (a.dataset.nav === key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+
+  function syncBand() {
+    const band = main.querySelector('.band');
+    const nav = main.querySelector('.band-nav');
+    if (!band || !nav) return;
+    const over = band.scrollWidth > band.clientWidth + 2;
+    nav.hidden = !over;
+    const [prev, next] = nav.querySelectorAll('button');
+    prev.disabled = band.scrollLeft < 4;
+    next.disabled = band.scrollLeft + band.clientWidth > band.scrollWidth - 4;
+  }
+
+  function selectTab(btn, focus) {
+    const tabs = [...main.querySelectorAll('[role="tab"]')];
+    tabs.forEach(t => {
+      const on = t === btn;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) btn.focus();
+    const slug = location.hash.split('/')[2];
+    if (slug) history.replaceState(null, '', `#/spectacle/${slug}${btn.dataset.tab === 'voir' ? '' : '/' + btn.dataset.tab}`);
+  }
+
+  function scrollToSection(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ block: 'start' });
+    const h = el.querySelector('h1, h2');
+    if (h && h.tabIndex === -1) h.focus({ preventScroll: true });
+  }
+
+  let firstRoute = true;
+  function route() {
+    const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
+    closeMenu();
+    if (parts[0] === 'spectacle' && BY[parts[1]]) {
+      const s = BY[parts[1]];
+      const tab = TABS.some(([k]) => k === parts[2]) ? parts[2] : 'voir';
+      S.view = 'show';
+      main.innerHTML = showHtml(s, tab);
+      document.title = `${s.titre} — Compagnie Crescite`;
+      setNav('spectacles');
+      window.scrollTo(0, 0);
+      if (!firstRoute) document.getElementById('h1').focus({ preventScroll: true });
+      requestAnimationFrame(syncBand);
+      firstRoute = false;
+      return;
+    }
+    const key = parts[0];
+    const wasHome = S.view === 'home';
+    if (key === 'agenda' && parts[1] === 'voir') S.pub = 'Tout public';
+    if (key === 'spectacles') S.door = DOOR_HREF[parts[1]] ? (parts[1] === 'voir' ? null : parts[1]) : null;
+    if (!wasHome) {
+      S.view = 'home';
+      main.innerHTML = homeHtml();
+      qInputs().forEach(i => { i.value = S.q; });
+    } else if (key === 'spectacles') {
+      document.getElementById('spectacles').innerHTML = repInner();
+    }
+    updateAgenda();
+    document.title = `Saison ${D.saison} — Compagnie Crescite`;
+    setNav(key === 'spectacles' || key === 'compagnie' || key === 'contact' ? key : 'agenda');
+    if (key === 'spectacles' || key === 'compagnie' || key === 'contact') scrollToSection(key);
+    else if (key === 'agenda') { window.scrollTo(0, 0); if (!firstRoute) document.getElementById('h1').focus({ preventScroll: true }); }
+    else if (!wasHome) { window.scrollTo(0, 0); if (!firstRoute) document.getElementById('h1').focus({ preventScroll: true }); }
+    firstRoute = false;
+  }
+
+  const menuBtn = document.querySelector('.menu-btn');
+  const nav = document.getElementById('nav');
+  function closeMenu() { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
+  menuBtn.addEventListener('click', () => {
+    const open = !nav.classList.contains('open');
+    nav.classList.toggle('open', open);
+    menuBtn.setAttribute('aria-expanded', String(open));
+  });
+
+  function onSearch(v) {
+    S.q = v;
+    qInputs().forEach(i => { if (i.value !== v) i.value = v; });
+    if (S.view !== 'home') { location.hash = '#/agenda'; return; }
+    updateAgenda();
+  }
+
+  document.addEventListener('input', e => {
+    if (e.target.id === 'q' || e.target.id === 'q2') onSearch(e.target.value);
+  });
+  document.addEventListener('keydown', e => {
+    if ((e.target.id === 'q' || e.target.id === 'q2') && e.key === 'Escape') { onSearch(''); }
+    if (e.key === 'Escape' && nav.classList.contains('open')) { closeMenu(); menuBtn.focus(); }
+    const t = e.target.closest && e.target.closest('[role="tab"]');
+    if (t) {
+      const tabs = [...main.querySelectorAll('[role="tab"]')];
+      const i = tabs.indexOf(t);
+      const j = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+      if (j !== undefined) { e.preventDefault(); selectTab(tabs[(j + tabs.length) % tabs.length], true); }
+    }
+  });
+  document.addEventListener('click', e => {
+    const el = e.target.closest('button, a');
+    if (!el) return;
+    if (el.matches('a[href^="#/"]') && el.getAttribute('href') === location.hash) { e.preventDefault(); route(); return; }
+    if (el.matches('.nav a')) closeMenu();
+    if (el.dataset.pub) { S.pub = el.dataset.pub; updateAgenda(); }
+    else if (el.matches('.tour-btn')) { S.show = S.show === el.dataset.show ? null : el.dataset.show; updateAgenda(); }
+    else if (el.hasAttribute('data-clear')) { clearFilters(); document.getElementById('h-agenda').focus({ preventScroll: true }); }
+    else if (el.hasAttribute('data-nodoor')) { S.door = null; history.replaceState(null, '', '#/spectacles'); document.getElementById('spectacles').innerHTML = repInner(); document.getElementById('h-rep').focus(); }
+    else if (el.dataset.band) { const b = main.querySelector('.band'); b.scrollBy({ left: Number(el.dataset.band) * (b.clientWidth - 60), behavior: 'auto' }); }
+    else if (el.matches('[role="tab"]')) selectTab(el, false);
+  });
+  main.addEventListener('scroll', e => { if (e.target.classList && e.target.classList.contains('band')) syncBand(); }, true);
+  window.addEventListener('resize', syncBand);
+  window.addEventListener('hashchange', route);
+
+  document.getElementById('brand-mark').innerHTML = D.logo.mark;
+  document.querySelector('.site-foot').innerHTML = footHtml();
+  route();
+})();
+</script>
+</body>
+</html>

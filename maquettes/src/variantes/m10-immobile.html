@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compagnie Crescite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500;1,6..96,600&family=Instrument+Sans:wght@400;600;700&display=swap">
+<style>
+/* Variante immobile de la maquette 10 (ancienne maquette 06, « La pieuvre au repos »).
+   Le concept de la pieuvre, réduit à l'essentiel : le logo, huit traits fins qui partent de ses bras,
+   huit titres d'une seule taille. Rien ne bouge. Le reste du site est une page claire et ordinaire. */
+:root {
+  --nuit: #150a11; --nuit-2: #1f0f19; --lait: #f6f1ea; --lait-2: #ede6dc; --encre: #1b1216; --gris: #675b61;
+  --blanc: #f7ecf1; --blanc-2: #c9b7c1; --trait: rgba(247, 236, 241, .58); --magenta: #bc3e80; --magenta-texte: #a8306f;
+  --serif: "Bodoni Moda", "Bodoni 72", Didot, serif; --sans: "Instrument Sans", system-ui, sans-serif;
+  --gout: clamp(18px, 4vw, 56px);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--lait); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 var(--gout); }
+
+/* en-tête : un seul étage */
+.top { position: sticky; top: 0; z-index: 20; background: var(--nuit); color: var(--blanc); border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.top .wrap { display: flex; align-items: center; gap: 24px; height: 64px; max-width: none; }
+.marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 1.1rem; }
+.marque span.l { width: 46px; color: var(--blanc); }
+.nav { margin-left: auto; display: flex; gap: 6px; }
+.nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; color: var(--blanc-2); font-weight: 600; font-size: .95rem; }
+.nav a:hover, .nav a[aria-current="page"] { color: var(--blanc); }
+.menu { display: none; margin-left: auto; background: none; border: 1px solid rgba(255, 255, 255, .25); color: var(--blanc); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); }
+
+/* la scène : la pieuvre et ses huit titres */
+.scene { position: relative; background: radial-gradient(48% 52% at 50% var(--gy, 46%), #2a1220 0%, var(--nuit) 70%); color: var(--blanc); height: clamp(640px, calc(100svh - 64px), 860px); overflow: hidden; }
+.scene svg.pieuvre { position: absolute; inset: 0; width: 100%; height: 100%; }
+.scene .phrase { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); margin: 0; color: var(--blanc-2); font-size: .95rem; text-align: center; width: max-content; max-width: calc(100% - 2 * var(--gout)); }
+.scene h1 { position: absolute; left: 50%; top: clamp(26px, 5vh, 52px); transform: translateX(-50%); margin: 0; font: italic 500 clamp(1.6rem, 1.1rem + 1.4vw, 2.4rem)/1.1 var(--serif); text-align: center; width: max-content; max-width: calc(100% - 2 * var(--gout)); }
+.titres { list-style: none; margin: 0; padding: 0; }
+.titre { position: absolute; left: 0; top: 0; display: block; text-decoration: none; color: var(--blanc); }
+.titre .t { display: block; font: italic 500 clamp(1.2rem, .95rem + .7vw, 1.6rem)/1.15 var(--serif); text-wrap: balance; }
+.titre .d { display: block; font-size: .82rem; color: var(--blanc-2); opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+.titre.droite { text-align: right; }
+.titre:hover .t, .titre:focus-visible .t { color: var(--c); }
+.titre:hover .d, .titre:focus-visible .d { opacity: 1; transform: none; }
+.scene.actif .titre:not(.on) { opacity: .4; }
+.scene .ligne { fill: none; stroke: var(--blanc); stroke-width: var(--w, 3px); stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s, opacity .2s; }
+.scene.actif .ligne { opacity: .35; }
+.scene.actif .ligne.on { opacity: 1; stroke: var(--c); }
+/* téléphone : la pieuvre, puis une liste */
+.liste-tel { display: none; list-style: none; margin: 0; padding: 0 var(--gout) 36px; }
+.liste-tel a { display: grid; grid-template-columns: 22px 1fr; gap: 0 12px; padding: 12px 0; border-top: 1px solid rgba(255, 255, 255, .1); text-decoration: none; }
+.liste-tel i { width: 22px; height: 2px; background: var(--c); margin-top: .8em; }
+.liste-tel b { font: italic 500 1.3rem/1.2 var(--serif); }
+.liste-tel span { grid-column: 2; font-size: .85rem; color: var(--blanc-2); }
+
+/* le reste de l'accueil : clair et ordinaire */
+section.bloc { padding: clamp(56px, 8vw, 104px) 0; }
+section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
+.entete { display: flex; justify-content: space-between; align-items: baseline; gap: 16px 32px; flex-wrap: wrap; margin-bottom: 28px; }
+.entete h2 { margin: 0; font: italic 500 clamp(2rem, 1.4rem + 2vw, 3rem)/1 var(--serif); }
+.entete a { font-weight: 600; color: var(--magenta-texte); text-decoration: none; }
+.entete a:hover { text-decoration: underline; }
+.dates { list-style: none; margin: 0; padding: 0; }
+.dates li { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr) 110px; gap: 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--lait-2); }
+.dates time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.dates time small { display: block; font-weight: 400; color: var(--gris); font-size: .85rem; }
+.dates a { font: italic 500 1.3rem/1.2 var(--serif); text-decoration: none; }
+.dates a:hover { color: var(--magenta-texte); }
+.dates a::before { content: ""; display: inline-block; width: 18px; height: 2px; background: var(--c); vertical-align: middle; margin-right: 10px; }
+.dates .ou { color: var(--gris); }
+.dates .pub { font-size: .82rem; font-weight: 600; text-align: right; }
+.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 0; border-top: 1px solid var(--encre); }
+.porte { padding: 26px 26px 30px 0; display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 10px; align-content: start; }
+.porte + .porte { padding-left: 26px; border-left: 1px solid var(--lait-2); }
+.porte h3 { margin: 0; font: italic 500 1.75rem/1.1 var(--serif); }
+.porte > p { margin: 0; color: var(--gris); }
+.porte ul { list-style: none; margin: 6px 0 14px; padding: 0; border-top: 1px solid var(--lait-2); }
+.porte .bas > p { margin: 0; color: var(--gris); }
+.porte li a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
+.porte li a:hover { color: var(--magenta-texte); }
+.porte li small { color: var(--gris); white-space: nowrap; }
+.porte .suite { font-weight: 700; color: var(--magenta-texte); text-decoration: none; }
+.porte .suite:hover { text-decoration: underline; }
+.compagnie { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
+.compagnie p.grand { margin: 0; font: 500 clamp(1.4rem, 1.1rem + 1vw, 2rem)/1.3 var(--serif); }
+.chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; }
+.chiffres dt { font: 500 2.6rem/1 var(--serif); }
+.chiffres dd { margin: 4px 0 0; color: var(--gris); font-size: .9rem; }
+footer { background: var(--nuit); color: var(--blanc-2); padding: 44px 0; font-size: .92rem; }
+footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+footer strong { color: var(--blanc); }
+footer p { margin: 0 0 6px; }
+
+/* page d'un spectacle */
+.tete { background: var(--fond, var(--nuit)); color: var(--blanc); overflow: hidden; }
+.tete h1 { position: relative; }
+.tete h1::before { content: ""; position: absolute; right: calc(100% + 18px); top: .56em; width: 100vw; height: 3px; border-radius: 2px; background: var(--c); }
+.tete .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: clamp(28px, 5vw, 72px); align-items: center; padding-top: clamp(40px, 6vw, 80px); padding-bottom: clamp(40px, 6vw, 80px); }
+.fil { font-size: .9rem; color: var(--blanc-2); margin: 0 0 18px; }
+.fil a { text-decoration: none; }
+.fil a:hover { text-decoration: underline; }
+.tete h1 { margin: 0; font: italic 500 clamp(2.8rem, 1.6rem + 4.4vw, 5.6rem)/.98 var(--serif); text-wrap: balance; }
+.tete .st { margin: 14px 0 0; color: var(--blanc-2); font-size: 1.1rem; }
+.tete .prochaine { margin: 26px 0 0; padding-top: 18px; border-top: 2px solid var(--c); display: flex; gap: 10px 24px; flex-wrap: wrap; align-items: baseline; }
+.tete .prochaine b { font-weight: 700; }
+.tete figure { margin: 0; aspect-ratio: 4 / 5; overflow: hidden; }
+.tete figure img { width: 100%; height: 100%; object-fit: cover; }
+.corps { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
+.accroche { margin: 0 0 22px; font: italic 500 clamp(1.5rem, 1.1rem + 1.2vw, 2.2rem)/1.2 var(--serif); }
+.faits { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 18px; font-size: .97rem; }
+.faits dt { color: var(--gris); }
+.faits dd { margin: 0; font-weight: 600; }
+.onglets { display: flex; gap: 0; border-bottom: 1px solid var(--lait-2); margin-bottom: 24px; flex-wrap: wrap; }
+.onglets button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 12px 18px 12px 0; margin-right: 18px; font: italic 500 1.25rem var(--serif); color: var(--gris); cursor: pointer; }
+.onglets button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--magenta); }
+.panneau p { max-width: 64ch; }
+.afournir { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); border: 1px dashed var(--gris); padding: 0 6px; border-radius: 4px; }
+.suivant { display: block; background: var(--nuit); color: var(--blanc); text-decoration: none; padding: clamp(40px, 6vw, 72px) 0; }
+.suivant .wrap { display: block; }
+.suivant small { display: block; color: var(--blanc-2); margin-bottom: 6px; }
+.suivant b { font: italic 500 clamp(2rem, 1.4rem + 2.4vw, 3.6rem)/1 var(--serif); }
+.suivant:hover b { color: var(--c); }
+
+@media (max-width: 900px) {
+  .compagnie, .corps, .tete .wrap { grid-template-columns: minmax(0, 1fr); }
+  .portes { grid-template-columns: minmax(0, 1fr); }
+  .porte + .porte { padding-left: 0; border-left: 0; border-top: 1px solid var(--lait-2); }
+  footer .wrap { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .nav { display: none; position: absolute; left: 0; right: 0; top: 64px; background: var(--nuit); flex-direction: column; padding: 8px var(--gout) 18px; }
+  .top.ouvert .nav { display: flex; }
+  .menu { display: inline-block; }
+  .scene { height: auto; padding: 22px 0 0; }
+  .scene h1 { position: static; transform: none; width: auto; padding: 0 var(--gout); font-size: 1.6rem; }
+  .scene svg.pieuvre, .scene .titres, .scene .phrase { display: none; }
+  .logo-tel { display: block !important; width: 78%; margin: 22px auto 10px; color: var(--blanc); }
+  .liste-tel { display: block; }
+  .dates li { grid-template-columns: 1fr; gap: 2px; }
+  .dates .pub { text-align: left; }
+}
+.logo-tel { display: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
+  <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav class="nav" id="nav" aria-label="Navigation principale">
+    <a href="#/" data-ancre="repertoire">Spectacles</a><a href="#/" data-ancre="agenda">Agenda</a><a href="#/" data-ancre="compagnie">La compagnie</a><a href="#/" data-ancre="contact">Contact</a>
+  </nav>
+</div></header>
+<main id="main"></main>
+<footer id="contact"><div class="wrap" id="pied"></div></footer>
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
+  const main = $('#main');
+  $('#marque').innerHTML = D.logo.octopus;
+  const C = D.company;
+  $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
+    <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
+  const titre = t => esc(t).replace(/ – /g, '\u00a0– ');
+  const dateCourte = d => `${d.joursem} ${d.jour} ${d.mois}`;
+  const ligneDate = d => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.iso}">${esc(dateCourte(d))}<small>${d.annee}</small></time>
+    <a href="#/spectacle/${d.slug}">${esc(d.titre)}</a><span class="ou">${esc(d.lieu ? d.lieu + ', ' : '')}${esc(d.commune)} (${esc(d.dep)})</span><span class="pub">${esc(d.public)}</span></li>`;
+
+  /* les trois portes : chacune donne tout de suite ses réponses */
+  function portes() {
+    const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
+    const nPass = D.shows.filter(s => s.passCulture).length;
+    return `<div class="porte"><h3>${esc(voir.titre)}</h3><p>${esc(voir.texte)}</p>
+        <div class="bas"><ul>${D.dates.slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${esc(d.titre)}</span><small>${esc(d.jour + ' ' + d.mois)}, ${esc(d.commune)}</small></a></li>`).join('')}</ul>
+        <a class="suite" href="#/" data-ancre="agenda">Toutes les dates →</a></div></div>
+      <div class="porte"><h3>${esc(prog.titre)}</h3><p>${esc(prog.texte)}</p>
+        <div class="bas"><ul><li><a href="#/" data-ancre="main"><span>Le répertoire</span><small>${D.shows.length - 1} spectacles</small></a></li>
+          <li><a href="#/spectacle/${D.shows[0].slug}/programmer"><span>Fiches techniques</span><small>par spectacle</small></a></li>
+          <li><a href="mailto:${C.email}?subject=Programmation"><span>Écrire à la diffusion</span><small>${esc(C.email)}</small></a></li></ul></div></div>
+      <div class="porte"><h3>${esc(etab.titre)}</h3><p>${esc(etab.texte)}</p>
+        <div class="bas"><ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${esc(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
+        <p>${nPass} spectacles sont proposés sur le Pass Culture (offre collective).</p></div></div>`;
+  }
+
+  /* ---------- accueil ---------- */
+  function accueil() {
+    document.title = 'Compagnie Crescite · théâtre, Rouen';
+    main.innerHTML = `
+      <section class="scene" aria-labelledby="h1">
+        <h1 id="h1">Sept spectacles, huit bras.</h1>
+        <svg class="pieuvre" aria-hidden="true"></svg>
+        <ul class="titres" aria-label="Les spectacles">${D.shows.map(s => `<li><a class="titre" href="#/spectacle/${s.slug}" data-slug="${s.slug}" style="--c:${s.couleur}">
+          <span class="t">${titre(s.titre)}</span><span class="d">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.jour + ' ' + s.prochaine.mois)}, ${esc(s.prochaine.commune)}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements')}</span></a></li>`).join('')}</ul>
+        <div class="logo-tel" aria-hidden="true">${D.logo.octopus}</div>
+        <ul class="liste-tel">${D.shows.map(s => `<li><a href="#/spectacle/${s.slug}" style="--c:${s.couleur}"><i></i><b>${esc(s.titre)}</b><span>${s.prochaine ? `${esc(s.prochaine.jour + ' ' + s.prochaine.mois)}, ${esc(s.prochaine.commune)}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements')}</span></a></li>`).join('')}</ul>
+        <p class="phrase">Une compagnie de théâtre de Rouen. Choisissez un titre.</p>
+      </section>
+      <section class="bloc" id="agenda" aria-labelledby="h-ag"><div class="wrap">
+        <div class="entete"><h2 id="h-ag">Prochaines dates</h2><a href="#/" data-tout="1">Toutes les dates (${D.dates.length})</a></div>
+        <ul class="dates" id="liste-dates">${D.dates.slice(0, 6).map(ligneDate).join('')}</ul>
+      </div></section>
+      <section class="bloc" id="portes" aria-labelledby="h-po"><div class="wrap">
+        <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
+        <div class="portes">${portes()}</div>
+      </div></section>
+      <section class="bloc" id="compagnie" aria-labelledby="h-co"><div class="wrap">
+        <div class="entete"><h2 id="h-co">La compagnie</h2></div>
+        <div class="compagnie"><div><p class="grand">${esc(C.presentation)}</p><p>Mise en scène de tout le répertoire : ${esc(C.miseEnScene)}.</p></div>
+          <dl class="chiffres"><div><dt>${D.stats.dates}</dt><dd>dates depuis 2016</dd></div><div><dt>${D.stats.communes}</dt><dd>communes</dd></div><div><dt>${D.stats.departements}</dt><dd>départements</dd></div></dl></div>
+      </div></section>`;
+    main.querySelector('[data-tout]').addEventListener('click', e => { e.preventDefault(); $('#liste-dates').innerHTML = D.dates.map(ligneDate).join(''); e.currentTarget.remove(); });
+    scene();
+  }
+
+  /* ---------- la pieuvre : géométrie des bras, aucun mouvement ---------- */
+  function scene() {
+    const el = $('.scene'), svg = $('svg.pieuvre', el), A = D.arms, [bx0, by0, bx1, by1] = A.box;
+    const order = { A1outer: 0, A1inner: 1, A2: 2, C1: 3 };
+    const bez = (o, p0, p1, p2, p3, n) => { for (let k = 1; k <= n; k++) { const u = k / n, a = (1 - u) ** 3, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u * u, d = u ** 3; o.push([a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]); } };
+    function draw() {
+      const W = el.clientWidth, H = el.clientHeight;
+      if (W < 760) { svg.innerHTML = ''; return; }
+      const h1 = $('h1', el).getBoundingClientRect(), top = h1.bottom - el.getBoundingClientRect().top;
+      const colW = Math.min(300, W * 0.2), gapX = Math.max(36, W * 0.035);
+      const s = Math.min((W - 2 * 48 - 2 * colW - 2 * gapX) / (bx1 - bx0), (H - top - 230) / (by1 - by0), 0.56);
+      const ox = W / 2 - (bx0 + bx1) / 2 * s, oy = top + 26 - by0 * s;
+      const xL = W / 2 - (bx1 - bx0) / 2 * s - gapX, xR = W / 2 + (bx1 - bx0) / 2 * s + gapX;
+      const y1 = oy + 560 * s, y4 = Math.max(y1 + 200, H - 120);
+      el.style.setProperty('--gy', (oy + (by0 + by1) / 2 * s).toFixed(0) + 'px');
+      const tr = ([x, y]) => [ox + x * s, oy + y * s];
+      let lignes = '', masque = '';
+      D.shows.forEach(sh => {
+        const key = A.armOf[sh.slug], arm = A.arms[key], gauche = key.endsWith('L');
+        const lab = el.querySelector(`.titre[data-slug="${sh.slug}"]`);
+        lab.classList.toggle('droite', gauche);
+        lab.style.maxWidth = Math.max(140, gauche ? xL - 12 - 28 : W - 28 - xR - 12) + 'px';
+        const ty = y1 + (y4 - y1) * order[key.slice(0, -1)] / 3, tx = gauche ? xL : xR;
+        const P = arm.pts.map(tr), E = P[P.length - 1], ed = arm.exitdir;
+        const d = Math.hypot(tx - E[0], ty - E[1]) * 0.42, td = gauche ? -1 : 1;
+        bez(P, E, [E[0] + ed[0] * d, E[1] + ed[1] * d], [tx - td * d, ty], [tx, ty], 30);
+        lignes += `<path class="ligne" data-slug="${sh.slug}" style="--c:${sh.couleur}" d="M${P.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L')}"/>`;
+        if (!arm.under) { const k = Math.min(arm.pts.length - 1, arm.own + 2); masque += `<path d="M${arm.pts.slice(0, k + 1).map(p => p.join(' ')).join('L')}" stroke="white" stroke-width="${A.width + 2 * A.gap + 3}" fill="none"/>`; }
+        // titre : le trait arrive à son bord intérieur, à mi-hauteur de la première ligne
+        const th = lab.querySelector('.t').getBoundingClientRect().height, lw = lab.offsetWidth;
+        lab.style.transform = `translate(${(gauche ? tx - 12 - lw : tx + 12).toFixed(1)}px, ${(ty - Math.min(th, 30) / 2 - 2).toFixed(1)}px)`;
+      });
+      const g = `translate(${ox.toFixed(2)} ${oy.toFixed(2)}) scale(${s.toFixed(4)})`;
+      const formes = D.logo.octopusPaths.map(p => `<path d="${p}"/>`).join('');
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.style.setProperty('--w', (A.width * s).toFixed(2) + 'px');
+      svg.innerHTML = `<defs><mask id="sous" maskUnits="userSpaceOnUse" x="0" y="0" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="white"/>
+          <g transform="${g}" fill="black" stroke="black" stroke-width="${(2 * Math.max(A.gap, 1.2 / s)).toFixed(2)}" stroke-linejoin="round">${formes}</g>
+          <g transform="${g}" stroke-linecap="butt">${masque}</g></mask></defs>
+        <g mask="url(#sous)">${lignes}</g>
+        <g transform="${g}" fill="var(--blanc)" fill-rule="evenodd">${formes}</g>`;
+    }
+    const on = slug => {
+      el.classList.toggle('actif', !!slug);
+      el.querySelectorAll('[data-slug]').forEach(x => x.classList.toggle('on', x.dataset.slug === slug));
+    };
+    el.querySelectorAll('.titre').forEach(a => {
+      a.addEventListener('mouseenter', () => on(a.dataset.slug)); a.addEventListener('mouseleave', () => on(null));
+      a.addEventListener('focus', () => on(a.dataset.slug)); a.addEventListener('blur', () => on(null));
+    });
+    draw();
+    if (document.fonts) document.fonts.ready.then(draw);
+    window.onresize = () => { if ($('.scene')) draw(); };
+  }
+
+  /* ---------- page d'un spectacle ---------- */
+  function spectacle(slug, porte) {
+    const s = bySlug[slug]; if (!s) return accueil();
+    const i = D.shows.indexOf(s), suiv = D.shows[(i + 1) % D.shows.length];
+    const dates = D.dates.filter(d => d.slug === slug);
+    document.title = `${s.titre} · Compagnie Crescite`;
+    const n = s.distribution.length;
+    const faits = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null, ...s.equipe.slice(0, 5)].filter(Boolean);
+    const e = s.etablissement || {};
+    main.innerHTML = `
+      <section class="tete" style="--c:${s.couleur};--fond:${s.fondSombre}"><div class="wrap">
+        <div><p class="fil"><a href="#/">Accueil</a> / <a href="#/">Spectacles</a></p>
+          <h1>${titre(s.titre)}</h1><p class="st">${esc(s.sousTitre)}</p>
+          <p class="prochaine">${s.prochaine ? `<b>Prochaine date</b><span>${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})</span>` : '<span>Aucune date annoncée pour l’instant.</span>'}</p></div>
+        <figure><img src="${D.photos[slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></figure>
+      </div></section>
+      <section class="bloc"><div class="wrap corps">
+        <div><p class="accroche">« ${esc(s.accroche)} »</p><p>${esc(s.texte)}</p></div>
+        <dl class="faits">${faits.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+      </div></section>
+      <section class="bloc"><div class="wrap">
+        <div class="entete"><h2>Les dates</h2></div>
+        ${dates.length ? `<ul class="dates">${dates.map(ligneDate).join('')}</ul>` : '<p>Aucune date annoncée pour l’instant.</p>'}
+      </div></section>
+      <section class="bloc"><div class="wrap">
+        <div class="onglets" role="tablist" aria-label="Vous êtes">${D.doors.map((p, k) => `<button role="tab" id="o-${p.key}" aria-controls="p-${p.key}" aria-selected="${k === 0}" tabindex="${k ? -1 : 0}">${esc(p.titre)}</button>`).join('')}</div>
+        <div class="panneau" role="tabpanel" id="p-voir" aria-labelledby="o-voir"><p>${dates.length ? `${dates.length} date${dates.length > 1 ? 's' : ''} cette saison. Chaque date se réserve auprès du lieu qui accueille le spectacle.` : 'Pas de date annoncée pour l’instant : inscrivez-vous pour être prévenu.'}</p>${s.duree ? `<p>Durée : ${esc(s.duree)}. Âge conseillé : <span class="afournir">à fournir</span></p>` : ''}</div>
+        <div class="panneau" role="tabpanel" id="p-programmer" aria-labelledby="o-programmer" hidden><p>Dossier de diffusion, fiche technique et conditions : <span class="afournir">à fournir</span></p>${s.coproduction ? `<p>Coproduction : ${esc(s.coproduction)}</p>` : ''}<p>Contact : <a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
+        <div class="panneau" role="tabpanel" id="p-etablissement" aria-labelledby="o-etablissement" hidden><p>${esc(e.texte || '')}</p><p>Pass Culture : ${s.passCulture ? 'offre collective' : 'non référencé'} · Guide du CRED76 : ${s.cred76 ? 'oui' : 'non référencé'}.</p><p>Pour l’accueillir : <a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
+      </div></section>
+      <a class="suivant" href="#/spectacle/${suiv.slug}" style="--c:${suiv.couleur}"><span class="wrap"><small>Spectacle suivant</small><b>${esc(suiv.titre)} →</b></span></a>`;
+    const tabs = [...main.querySelectorAll('[role="tab"]')];
+    const sel = t => tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; });
+    if (porte) sel(tabs.find(t => t.id === 'o-' + porte) || tabs[0]);
+    tabs.forEach((t, k) => { t.addEventListener('click', () => sel(t)); t.addEventListener('keydown', ev => { const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (d) { const n2 = tabs[(k + d + tabs.length) % tabs.length]; n2.focus(); sel(n2); } }); });
+  }
+
+  /* ---------- navigation ---------- */
+  function route() {
+    const m = location.hash.match(/^#\/spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?/);
+    if (m) spectacle(m[1], m[2]); else accueil();
+    window.scrollTo(0, 0);
+    if (m && m[2]) document.getElementById('o-' + m[2])?.closest('section').scrollIntoView();
+  }
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[data-ancre]'); if (!a) return;
+    const id = a.dataset.ancre === 'repertoire' ? 'main' : a.dataset.ancre;
+    e.preventDefault(); $('.top').classList.remove('ouvert');
+    const go = () => document.getElementById(id)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    if (location.hash.startsWith('#/spectacle')) { location.hash = '#/'; setTimeout(go, 60); } else go();
+  });
+  $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
+  window.addEventListener('hashchange', route);
+  route();
+})();
+</script>
+</body>
+</html>

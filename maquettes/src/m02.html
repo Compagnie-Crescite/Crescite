@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compagnie Crescite · Théâtre à Rouen</title>
+<meta name="description" content="Compagnie Crescite, théâtre à Rouen depuis 2012 : les spectacles, les prochaines dates, l’accueil des programmateurs et des établissements scolaires.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600&display=swap">
+<style>
+:root{
+  --white:#ffffff;
+  --ink:#111111;
+  --grey:#6a6a6a;
+  --paper:#f3f1ee;
+  --magenta:#bc3e80;
+  --magenta-dark:#a1336c;
+  --rule:#e3dfd9;
+  --rule-paper:#d9d4cc;
+  --serif:"Instrument Serif","Times New Roman",Georgia,serif;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --pad:clamp(16px,4vw,56px);
+  --gap:24px;
+  --max:1312px;
+  --sec:clamp(64px,7vw,104px);
+  --fs-label:.8125rem;
+  --fs-lead:1.125rem;
+  --fs-s1:1.625rem;
+  --fs-s2:2rem;
+  --fs-s3:clamp(2rem,1.5rem + 1.4vw,2.75rem);
+  --fs-s4:clamp(2.75rem,1.6rem + 3.2vw,4.5rem);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--white);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-underline-offset:.22em;text-decoration-thickness:1px}
+h1,h2,h3,p,ul,ol,dl,dd,figure{margin:0}
+h1,h2,h3{font-weight:400}
+ul,ol{padding:0;list-style:none}
+button{font:inherit;color:inherit}
+sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+[hidden]{display:none!important}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:16px;top:-100px;z-index:100;background:var(--ink);color:#fff;padding:12px 16px;border-radius:6px;font-weight:600;text-decoration:none}
+.skip:focus{top:12px}
+.wrap{width:100%;max-width:calc(var(--max) + 2 * var(--pad));margin:0 auto;padding:0 var(--pad)}
+.nowrap{white-space:nowrap}
+.muted{color:var(--grey)}
+
+/* boutons et liens */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border:0;border-radius:6px;font:600 1rem/1.2 var(--sans);text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn-primary{background:var(--magenta);color:#fff}
+.btn-primary:hover{background:var(--magenta-dark)}
+.btn-secondary{background:transparent;color:var(--magenta);box-shadow:inset 0 0 0 1.5px var(--magenta)}
+.btn-secondary:hover{background:var(--magenta);color:#fff}
+.btn-sm{min-height:44px;padding:0 18px}
+.i-arrow,.i-ext{width:1em;height:1em;flex:none}
+.i-ext{width:.8em;height:.8em}
+.link{font-weight:500;text-decoration:underline;text-decoration-color:var(--rule-paper)}
+.link:hover{text-decoration-color:currentColor}
+.link-ext{display:inline-flex;align-items:center;gap:6px;font-weight:500;text-decoration:none;white-space:nowrap}
+.link-ext:hover{text-decoration:underline}
+.overline{font:600 var(--fs-label)/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--grey)}
+.badge{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;font:500 var(--fs-label)/1 var(--sans);letter-spacing:.01em;white-space:nowrap;color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule-paper)}
+.badge--school{background:var(--paper);box-shadow:none}
+.todo{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;font:500 var(--fs-label)/1 var(--sans);color:var(--grey);background:var(--paper);white-space:nowrap}
+
+/* en-tête */
+.site-header{position:relative;z-index:40;background:var(--white);border-bottom:1px solid var(--rule)}
+.bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:80px}
+.brand{justify-self:start;display:inline-flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
+.brand-mark{width:36px;height:36px;flex:none}
+.brand-mark svg{width:100%;height:auto}
+.brand-word{font:600 1.25rem/1 var(--sans);letter-spacing:-.015em;padding-bottom:2px}
+.menu{display:contents}
+.nav-main ul{display:flex;gap:40px}
+.nav-main a{display:block;padding:10px 0;font:500 1rem/1.25 var(--sans);text-decoration:none;color:var(--ink)}
+.nav-main a:hover{text-decoration:underline;text-underline-offset:8px}
+.nav-main a[aria-current]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:8px}
+.header-cta{justify-self:end}
+.menu-toggle{display:none}
+
+/* ouverture */
+.hero{padding:40px 0 56px}
+.hero-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap)}
+.hero-text{grid-column:1/span 5;display:flex;flex-direction:column;justify-content:space-between;gap:40px;padding-right:24px}
+.hero-title{margin-top:20px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em}
+.hero-sub{margin-top:18px;font-size:var(--fs-lead);line-height:1.5;color:var(--grey);max-width:26em}
+.hero-next{border-top:1px solid var(--rule);padding-top:20px}
+.hero-when{margin-top:10px;font:500 var(--fs-lead)/1.4 var(--sans)}
+.hero-where{margin-top:4px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:var(--fs-lead);line-height:1.4;color:var(--grey)}
+.hero-next .btn{margin-top:28px}
+.hero-photo{grid-column:6/span 7;aspect-ratio:3/2;border-radius:6px;overflow:hidden;background:var(--paper)}
+.hero-photo img{width:100%;height:100%;object-fit:cover}
+
+/* les trois portes */
+.doors{background:var(--paper)}
+.doors-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto;column-gap:var(--gap)}
+.door{position:relative;display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:10px;padding:36px 32px 40px 0}
+.door+.door::before{content:"";position:absolute;top:0;bottom:0;left:calc(var(--gap) / -2);width:1px;background:var(--rule-paper)}
+.door-title{font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
+.door-title a{text-decoration:none}
+.door-title a::after{content:"";position:absolute;inset:0}
+.door-title .i-arrow{display:inline-block;width:.72em;height:.72em;margin-left:.3em;vertical-align:-.02em}
+.door-text{color:var(--grey);max-width:24em}
+.door:hover .door-title a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
+.door:hover .i-arrow{color:var(--magenta)}
+.door-title a:focus-visible{outline:none}
+.door-title a:focus-visible::after{outline:2px solid var(--ink);outline-offset:-2px}
+
+/* sections */
+.section{padding-top:var(--sec)}
+.section--paper{background:var(--paper);padding-bottom:var(--sec);margin-top:var(--sec)}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 32px;border-top:1px solid var(--ink);padding-top:22px;margin-bottom:40px;scroll-margin-top:32px}
+.sec-head h2{font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
+.sec-meta{color:var(--grey)}
+
+/* répertoire */
+.notice{display:flex;align-items:center;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;margin:-12px 0 40px;padding:16px 20px;border-radius:6px;background:var(--paper)}
+.notice p{max-width:60em}
+.notice strong{font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--gap);row-gap:0;margin-bottom:-64px}
+.card{position:relative;display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;padding-bottom:64px}
+.card-photo{aspect-ratio:4/5;border-radius:6px;overflow:hidden;background:var(--paper)}
+.card-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.65,.25,1)}
+.card:hover .card-photo img{transform:scale(1.04)}
+.card-title{margin-top:18px;font:400 var(--fs-s1)/1.12 var(--serif);letter-spacing:-.005em}
+.card-title a{text-decoration:none}
+.card-title a::after{content:"";position:absolute;inset:0;border-radius:6px}
+.card:hover .card-title a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
+.card-title a:focus-visible{outline:none}
+.card-title a:focus-visible::after{outline:2px solid var(--ink);outline-offset:6px}
+.card-sub{margin-top:6px;color:var(--grey)}
+.card-next{margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)}
+
+/* listes de dates */
+.rows{border-top:1px solid var(--rule)}
+.row{display:grid;grid-template-columns:96px minmax(0,1fr) 148px 104px;align-items:center;column-gap:16px;padding:20px 0;border-bottom:1px solid var(--rule)}
+.dblock{display:flex;flex-direction:column;align-items:flex-start}
+.dblock-d{font:400 2.75rem/.9 var(--serif);letter-spacing:-.01em}
+.dblock-m{margin-top:8px;font:500 var(--fs-label)/1.1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
+.dblock--month .dblock-d{font-size:var(--fs-s2);line-height:1}
+.row-main{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center}
+.dot{grid-column:1;grid-row:1;width:10px;height:10px;border-radius:50%;background:var(--c,var(--ink))}
+.row-title{grid-column:2;grid-row:1;font:400 var(--fs-s1)/1.15 var(--serif);letter-spacing:-.005em}
+.row-title a{text-decoration:none}
+.row-title a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
+.row-dep{color:var(--grey)}
+.row-place{grid-column:2;grid-row:2;margin-top:4px;color:var(--grey)}
+.row-public{justify-self:start}
+.row-link{justify-self:end}
+.more{margin-top:32px}
+.empty{padding:28px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:var(--fs-lead);color:var(--grey)}
+
+/* la compagnie */
+.company{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px}
+.company-text{grid-column:1/span 6}
+.quote{font:400 var(--fs-s2)/1.18 var(--serif);letter-spacing:-.005em;max-width:20em}
+.company-text p+p{margin-top:20px}
+.company-text .lead{margin-top:28px;font-size:var(--fs-lead);line-height:1.65;max-width:34em}
+.stats{grid-column:8/span 5;align-self:start;border-top:1px solid var(--rule-paper)}
+.stat{display:grid;grid-template-columns:132px minmax(0,1fr);align-items:baseline;column-gap:16px;padding:22px 0 20px;border-bottom:1px solid var(--rule-paper)}
+.stat-n{font:400 3.75rem/.9 var(--serif);letter-spacing:-.02em}
+.stat-l{font-size:var(--fs-lead)}
+
+/* pied de page */
+.site-footer{background:var(--ink);color:#fff;padding:var(--sec) 0 32px}
+.site-footer :focus-visible{outline-color:#fff}
+.site-footer .sec-head{border-top-color:rgba(255,255,255,.9)}
+.foot{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:40px}
+.foot-contact{grid-column:1/span 5}
+.foot-mail{font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
+.foot-mail a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em;text-decoration-color:rgba(255,255,255,.4)}
+.foot-mail a:hover{text-decoration-color:#fff}
+.foot-addr{margin-top:16px;font-size:var(--fs-lead);color:rgba(255,255,255,.72)}
+.foot-col{grid-column:span 3}
+.foot-col:first-of-type{grid-column:7/span 3}
+.foot-col h3{margin-bottom:14px;font:600 var(--fs-label)/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+.foot-col li+li{margin-top:6px}
+.foot-col p+p{margin-top:6px}
+.foot-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px 32px;margin-top:72px;padding-top:24px;border-top:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.72)}
+.foot-brand{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+
+/* page spectacle */
+.show-hero{position:relative;height:60vh;min-height:380px;max-height:760px;overflow:hidden;background:var(--ink)}
+.show-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.show-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(12,10,11,.82) 0%,rgba(12,10,11,.5) 30%,rgba(12,10,11,0) 62%)}
+.show-hero-text{position:absolute;z-index:1;left:0;right:0;bottom:0;margin:0 auto;padding-bottom:48px;color:#fff}
+.back{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:none}
+.back:hover{text-decoration:underline}
+.back .i-arrow{transform:scaleX(-1)}
+.show-title{margin-top:18px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em;max-width:14em;text-wrap:balance}
+.show-sub{margin-top:14px;font-size:var(--fs-lead);line-height:1.5;color:rgba(255,255,255,.88);max-width:36em}
+.overline--light{color:rgba(255,255,255,.88)}
+.subnav{position:sticky;top:0;z-index:30;background:var(--white);border-bottom:1px solid var(--rule)}
+.subnav ul{display:flex;gap:40px;overflow-x:auto;scrollbar-width:none}
+.subnav ul::-webkit-scrollbar{display:none}
+.subnav a{display:block;padding:18px 0 16px;border-bottom:2px solid transparent;font:500 1rem/1.25 var(--sans);color:var(--grey);text-decoration:none;white-space:nowrap}
+.subnav a:hover{color:var(--ink)}
+.subnav a[aria-current]{color:var(--ink);border-bottom-color:var(--c,var(--ink))}
+.subnav a:focus-visible{outline-offset:-2px}
+.show .sec-head{scroll-margin-top:96px}
+.subnav+.section{padding-top:56px}
+.show-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px}
+.show-main{grid-column:1/span 6}
+.show-aside{grid-column:8/span 5}
+.accroche{font:400 var(--fs-s2)/1.18 var(--serif);letter-spacing:-.005em;max-width:20em}
+.body-text{margin-top:28px;font-size:var(--fs-lead);line-height:1.7;max-width:36em}
+.show-main .btn{margin-top:32px}
+.facts+.facts{margin-top:40px}
+.facts h3{margin-bottom:12px}
+.facts dl{border-top:1px solid var(--rule)}
+.facts dl>div{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:16px;padding:11px 0 12px;border-bottom:1px solid var(--rule)}
+.facts dt{color:var(--grey)}
+.lead{font-size:var(--fs-lead);line-height:1.65}
+.split{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px}
+.split>:first-child{grid-column:1/span 6}
+.split>:last-child{grid-column:8/span 5}
+.intro{margin:-16px 0 32px;font-size:var(--fs-lead);color:var(--grey);max-width:40em}
+.docs{border-top:1px solid var(--rule)}
+.docs li{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.block+.block{margin-top:40px}
+.block h3{margin-bottom:12px}
+.block .btn{margin-top:28px}
+.mode{margin-bottom:16px}
+.next{padding:var(--sec) 0}
+.next-grid{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:24px}
+.next-text{grid-column:1/span 5;display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding-right:24px}
+.next-title{margin-top:20px;font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
+.next-title a{text-decoration:none}
+.next-title a::after{content:"";position:absolute;inset:0;border-radius:6px}
+.next-title a:focus-visible{outline:none}
+.next-title a:focus-visible::after{outline:2px solid var(--ink);outline-offset:6px}
+.next-grid:hover .next-title a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.14em}
+.next-sub{margin-top:12px;color:var(--grey);font-size:var(--fs-lead)}
+.next-go{display:inline-flex;align-items:center;gap:10px;font-weight:600}
+.next-go .i-arrow{width:1.25em;height:1.25em}
+.next-grid:hover .next-go{color:var(--magenta)}
+.next-photo{grid-column:6/span 7;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:var(--paper)}
+.next-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.65,.25,1)}
+.next-grid:hover .next-photo img{transform:scale(1.04)}
+
+/* tablette */
+@media (max-width:1100px){
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .show-main{grid-column:1/-1}
+  .show-aside{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--gap)}
+  .facts+.facts{margin-top:0}
+}
+@media (max-width:899px){
+  .bar{grid-template-columns:1fr auto;height:68px}
+  .menu-toggle{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 4px 0 12px;margin-right:-4px;border:0;background:none;font:600 1rem/1 var(--sans);cursor:pointer}
+  .menu-toggle svg{width:22px;height:22px}
+  .menu{display:none;position:absolute;top:100%;left:0;right:0;padding:8px var(--pad) 24px;background:var(--white);border-bottom:1px solid var(--rule);box-shadow:0 24px 32px -24px rgba(17,17,17,.25)}
+  .site-header.is-open .menu{display:block}
+  .nav-main ul{display:block}
+  .nav-main li{border-bottom:1px solid var(--rule)}
+  .nav-main a{padding:16px 0;font-size:1.25rem}
+  .nav-main a[aria-current]{text-decoration:none;font-weight:600}
+  .header-cta{display:flex;width:100%;margin-top:20px}
+  .doors-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  .door{grid-row:auto;grid-template-rows:none;padding:24px 0 26px}
+  .door+.door::before{left:0;right:0;top:0;bottom:auto;width:auto;height:1px}
+  .hero-text{grid-column:1/-1;padding-right:0;gap:32px}
+  .hero-photo{grid-column:1/-1;margin-top:32px;aspect-ratio:16/10}
+  .company-text,.stats{grid-column:1/-1}
+  .foot-contact{grid-column:1/-1}
+  .foot-col,.foot-col:first-of-type{grid-column:span 6}
+  .split>:first-child,.split>:last-child{grid-column:1/-1}
+  .next-text{grid-column:1/-1;padding-right:0}
+  .next-photo{grid-column:1/-1;grid-row:1}
+}
+/* téléphone */
+@media (max-width:599px){
+  .hero{padding:28px 0 40px}
+  .hero-title{margin-top:14px}
+  .hero-photo{aspect-ratio:4/3;margin-top:28px}
+  .cards{grid-template-columns:minmax(0,1fr);row-gap:48px;margin-bottom:0}
+  .card{grid-row:auto;grid-template-rows:none;padding-bottom:0}
+  .sec-head{margin-bottom:28px;padding-top:18px}
+  .row{grid-template-columns:60px minmax(0,1fr);align-items:start;row-gap:12px;padding:18px 0}
+  .dblock-d{font-size:2.25rem}
+  .dblock--month .dblock-d{font-size:1.625rem}
+  .row-main{grid-template-columns:18px minmax(0,1fr)}
+  .row-title{font-size:1.375rem}
+  .row-public,.row-link{grid-column:2;justify-self:start;margin-left:18px}
+  .row-public{grid-row:2}
+  .row-link{grid-row:2;justify-self:end}
+  .stat{grid-template-columns:112px minmax(0,1fr)}
+  .stat-n{font-size:3rem}
+  .foot-col,.foot-col:first-of-type{grid-column:1/-1}
+  .foot-bottom{margin-top:56px}
+  .show-hero{min-height:360px}
+  .show-hero-text{padding-bottom:32px}
+  .subnav .wrap{padding:0}
+  .subnav ul{gap:28px;padding:0 var(--pad)}
+  .show-aside{display:block}
+  .facts+.facts{margin-top:40px}
+  .facts dl>div{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
+  .docs li{min-height:52px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+  .card:hover .card-photo img,.next-grid:hover .next-photo img{transform:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+<header class="site-header" id="top">
+  <div class="wrap bar">
+    <a class="brand" href="#/" aria-label="Compagnie Crescite, accueil"><span class="brand-mark" data-logo="mark"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu"><span data-menu-label>Menu</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-menu-icon d="M3 8h18M3 16h18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+    <div class="menu" id="menu">
+      <nav class="nav-main" aria-label="Navigation principale">
+        <ul>
+          <li><a href="#/spectacles" data-nav="spectacles">Spectacles</a></li>
+          <li><a href="#/agenda" data-nav="agenda">Agenda</a></li>
+          <li><a href="#/compagnie" data-nav="compagnie">La compagnie</a></li>
+          <li><a href="#/contact" data-nav="contact">Contact</a></li>
+        </ul>
+      </nav>
+      <a class="btn btn-primary header-cta" href="#/agenda">Prochaines dates</a>
+    </div>
+  </div>
+</header>
+<main id="main" tabindex="-1"></main>
+<footer class="site-footer" id="contact"></footer>
+<noscript><p style="padding:24px">Cette page a besoin de JavaScript pour afficher les spectacles et les dates.</p></noscript>
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  'use strict';
+  const SHOWS = D.shows || [];
+  const DATES = D.dates || [];
+  const C = D.company || {};
+  const BY = Object.fromEntries(SHOWS.map(s => [s.slug, s]));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+  const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ESC[c]);
+  // typographie française : espaces insécables avant : ; ! ? » et après «
+  const t = v => esc(v).replace(/ :/g, ' :').replace(/ ([;!?»])/g, ' $1').replace(/« /g, '« ');
+  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+  const TODO = '<span class="todo">à fournir</span>';
+  const ARROW = '<svg class="i-arrow" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M2.5 10h14M11 4.5l5.5 5.5-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+  const EXT = '<svg class="i-ext" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5 3h8v8M13 3L3.5 12.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+  const main = $('#main');
+  const header = $('.site-header');
+
+  /* ---------- dates ---------- */
+  const TIME = /^\d{1,2}\s?h\s?\d{0,2}$/i;
+  const lieuOf = d => { const l = (d.lieu || '').trim(); return !l || TIME.test(l) || /^diptyque$/i.test(l) ? '' : l; };
+  const extras = d => {
+    const out = [];
+    if (d.precision !== 'day' || d.fin !== d.iso) out.push(d.label);
+    if (TIME.test((d.lieu || '').trim())) out.push(d.lieu.trim());
+    if (/^diptyque$/i.test((d.lieu || '').trim())) out.push('en diptyque');
+    return out;
+  };
+  const dayNum = d => d.jour === 1 ? '1<sup>er</sup>' : String(d.jour);
+  const shortDate = d => d.precision === 'month' ? `${esc(d.moisLong)} ${d.annee}` : `${dayNum(d)} ${esc(d.mois)}`;
+  const longDate = d => d.precision === 'day' && d.fin === d.iso ? `${cap(d.joursemLong)} ${esc(d.label)}` : esc(cap(d.label));
+  const where = d => `${t(d.commune)} (${esc(d.dep)})`;
+  const colorOf = slug => (BY[slug] || {}).couleurTexteClair || 'var(--ink)';
+
+  function dateBlock(d) {
+    if (d.precision === 'month') {
+      return `<time class="dblock dblock--month" datetime="${esc(d.iso.slice(0, 7))}"><span class="dblock-d">${esc(d.mois)}</span><span class="dblock-m">à préciser</span></time>`;
+    }
+    return `<time class="dblock" datetime="${esc(d.iso)}"><span class="dblock-d">${dayNum(d)}</span><span class="dblock-m">${esc(d.mois)}</span></time>`;
+  }
+  function badge(d) {
+    return `<span class="badge${d.public === 'Scolaire' ? ' badge--school' : ''}">${esc(d.public)}</span>`;
+  }
+  function dateRow(d, ctx, hidden) {
+    const lieu = lieuOf(d);
+    const title = ctx === 'home'
+      ? `<a href="#/spectacle/${esc(d.slug)}">${t(d.titre)}</a>`
+      : `${t(d.commune)} <span class="row-dep">(${esc(d.dep)})</span>`;
+    const place = ctx === 'home'
+      ? [lieu ? `${t(lieu)}, ${where(d)}` : where(d), ...extras(d).map(t)].join(' · ')
+      : [lieu ? t(lieu) : '', ...extras(d).map(t)].filter(Boolean).join(' · ');
+    const info = d.lien
+      ? `<a class="link-ext" href="${esc(d.lien)}" target="_blank" rel="noopener">Infos${EXT}<span class="sr-only"> : ${t(d.titre)}, ${esc(d.label)}, ${t(d.commune)} (nouvel onglet)</span></a>`
+      : '';
+    return `<li class="row"${hidden ? ' hidden' : ''}>${dateBlock(d)}
+      <div class="row-main"><span class="dot" style="--c:${colorOf(d.slug)}" aria-hidden="true"></span><h3 class="row-title">${title}</h3>${place ? `<p class="row-place">${place}</p>` : ''}</div>
+      <p class="row-public">${badge(d)}</p><p class="row-link">${info}</p></li>`;
+  }
+  function dateList(list, ctx, limit, id) {
+    if (!list.length) return '<p class="empty">Aucune date annoncée pour l’instant.</p>';
+    const rows = list.map((d, i) => dateRow(d, ctx, i >= limit)).join('');
+    const rest = list.length - limit;
+    const more = rest > 0
+      ? `<p class="more"><button class="btn btn-secondary btn-sm" type="button" data-more="${id}" data-limit="${limit}" data-rest="${rest}" aria-expanded="false" aria-controls="${id}">Voir les ${rest} autres dates</button></p>`
+      : '';
+    return `<ol class="rows" id="${id}">${rows}</ol>${more}`;
+  }
+
+  /* ---------- accueil ---------- */
+  const MODES = {
+    programmer: ['Je programme.', 'Choisissez un spectacle : sa page s’ouvre directement sur la fiche pour programmateurs (documents, production, contact).'],
+    etablissement: ['Je fais venir dans mon établissement.', 'Choisissez un spectacle : sa page s’ouvre directement sur l’accueil en établissement, le Pass Culture et le guide du CRED76.'],
+  };
+  const DOOR_HREF = { voir: '#/agenda', programmer: '#/spectacles/programmer', etablissement: '#/spectacles/etablissement' };
+
+  function withArrow(text) {
+    const words = String(text).split(' ');
+    const last = words.pop();
+    return `${t(words.join(' '))}${words.length ? ' ' : ''}<span class="nowrap">${t(last)}${ARROW}</span>`;
+  }
+  function card(s) {
+    const p = s.prochaine;
+    const next = p ? `<span class="muted">Prochaine date&nbsp;:</span> ${shortDate(p)}, ${t(p.commune)}` : '<span class="muted">Pas de date annoncée</span>';
+    return `<li class="card" data-slug="${esc(s.slug)}">
+      <div class="card-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${Number(s.focale) || 50}% 50%"></div>
+      <h3 class="card-title"><a href="#/spectacle/${esc(s.slug)}">${t(s.titre)}</a></h3>
+      <p class="card-sub">${t(s.sousTitre)}</p>
+      <p class="card-next">${next}</p></li>`;
+  }
+  function homeView() {
+    const d0 = DATES[0];
+    const hs = (d0 && BY[d0.slug]) || SHOWS[0];
+    const nShows = SHOWS.filter(s => s.slug !== 'actions-culturelles').length;
+    const hasActions = SHOWS.some(s => s.slug === 'actions-culturelles');
+    const [motto, ...restIntent] = String(C.intention || '').split(' : ');
+    const intentLead = restIntent.join(' : ');
+    const S = D.stats || {};
+    return `<h1 class="sr-only">${esc(C.nom)}, théâtre à ${esc(C.ville)}</h1>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-text">
+          <div>
+            <p class="overline">À l’affiche</p>
+            <h2 class="hero-title" id="hero-title">${t(hs.titre)}</h2>
+            <p class="hero-sub">${t(hs.sousTitre)}</p>
+          </div>
+          <div class="hero-next">
+            ${d0 ? `<p class="overline">Prochaine date</p>
+            <p class="hero-when">${longDate(d0)}</p>
+            <p class="hero-where"><span>${where(d0)}</span>${badge(d0)}</p>` : '<p class="overline">Pas de date annoncée</p>'}
+            <a class="btn btn-primary" href="#/spectacle/${esc(hs.slug)}">Voir le spectacle${ARROW}</a>
+          </div>
+        </div>
+        <figure class="hero-photo"><img src="${D.photos[hs.slug]}" alt="Photo de ${esc(hs.titre)}" style="object-position:${Number(hs.focale) || 50}% 50%"></figure>
+      </div>
+    </section>
+    <section class="doors" aria-labelledby="doors-title">
+      <h2 class="sr-only" id="doors-title">Trois entrées : choisissez la vôtre</h2>
+      <ul class="wrap doors-grid">
+        ${(D.doors || []).map(dr => `<li class="door"><h3 class="door-title"><a href="${DOOR_HREF[dr.key] || '#/spectacles'}">${withArrow(dr.titre)}</a></h3><p class="door-text">${t(dr.texte)}</p></li>`).join('')}
+      </ul>
+    </section>
+    <section class="section" id="spectacles" aria-labelledby="rep-title">
+      <div class="wrap">
+        <div class="sec-head" data-target="spectacles"><h2 id="rep-title">Le répertoire</h2><p class="sec-meta">${nShows} spectacles${hasActions ? ' et les actions culturelles' : ''}</p></div>
+        <div class="notice" id="mode-notice" hidden></div>
+        <ul class="cards">${SHOWS.map(card).join('')}</ul>
+      </div>
+    </section>
+    <section class="section" id="agenda" aria-labelledby="agenda-title">
+      <div class="wrap">
+        <div class="sec-head" data-target="agenda"><h2 id="agenda-title">Prochaines dates</h2><p class="sec-meta">Saison ${esc(D.saison)}</p></div>
+        ${dateList(DATES, 'home', 6, 'agenda-list')}
+      </div>
+    </section>
+    <section class="section section--paper" id="compagnie" aria-labelledby="cie-title">
+      <div class="wrap">
+        <div class="sec-head" data-target="compagnie"><h2 id="cie-title">La compagnie</h2><p class="sec-meta">${esc(C.ville)}, depuis ${esc(C.depuis)}</p></div>
+        <div class="company">
+          <div class="company-text">
+            ${intentLead ? `<p class="quote">${t(motto)}&nbsp;: ${t(intentLead)}</p>` : `<p class="quote">${t(C.intention)}</p>`}
+            <p class="lead">${t(C.presentation)}</p>
+            <p class="lead">Mise en scène&nbsp;: ${t(C.miseEnScene)}.</p>
+          </div>
+          <ul class="stats">
+            <li class="stat"><span class="stat-n">${esc(S.dates)}</span><span class="stat-l">dates depuis 2016</span></li>
+            <li class="stat"><span class="stat-n">${esc(S.communes)}</span><span class="stat-l">communes</span></li>
+            <li class="stat"><span class="stat-n">${esc(S.departements)}</span><span class="stat-l">départements</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>`;
+  }
+  function setMode(mode) {
+    const m = MODES[mode];
+    const box = $('#mode-notice');
+    if (!box) return;
+    $$('.card').forEach(li => {
+      const a = $('.card-title a', li);
+      a.setAttribute('href', `#/spectacle/${li.dataset.slug}${m ? '/' + mode : ''}`);
+    });
+    if (m) {
+      box.innerHTML = `<p><strong>${t(m[0])}</strong> ${t(m[1])}</p><a class="link" href="#/spectacles">Revenir aux pages complètes</a>`;
+      box.hidden = false;
+    } else {
+      box.hidden = true;
+      box.innerHTML = '';
+    }
+  }
+
+  /* ---------- page spectacle ---------- */
+  const SUBNAV = [['spectacle', 'Le spectacle'], ['dates', 'Les dates'], ['programmer', 'Je programme'], ['etablissement', 'Je fais venir dans mon établissement']];
+  const MODE_LABEL = { etablissement: 'Vient dans votre établissement', salle: 'Se joue en salle de spectacle', a_confirmer: 'Accueil en établissement à confirmer' };
+  const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+  const mail = subject => `mailto:${esc(C.email)}?subject=${encodeURIComponent(subject)}`;
+
+  function showView(s) {
+    const i = SHOWS.indexOf(s);
+    const nx = SHOWS[(i + 1) % SHOWS.length];
+    const list = DATES.filter(d => d.slug === s.slug);
+    const school = list.filter(d => d.public === 'Scolaire').length;
+    const isShow = !!(s.annee || (s.distribution || []).length);
+    const n = (s.distribution || []).length;
+    const brief = isShow ? [
+      row('Création', s.annee ? esc(s.annee) : TODO),
+      row('Durée', s.duree ? t(s.duree) : TODO),
+      row('Au plateau', n ? `${n} comédien${n > 1 ? 's' : ''}` : TODO),
+      n ? row('Avec', s.distribution.map(t).join('<br>')) : '',
+    ].join('') : '';
+    const team = (s.equipe || []).map(([k, v]) => row(t(k), t(v))).join('');
+    const e = s.etablissement || {};
+    const nxp = nx.prochaine;
+    return `<article class="show" style="--c:${esc(s.couleurTexteClair)}">
+      <header class="show-hero">
+        <img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${Number(s.focale) || 50}% 50%">
+        <div class="wrap show-hero-text">
+          <p class="overline overline--light"><a class="back" href="#/spectacles">${ARROW}Tous les spectacles</a></p>
+          <h1 class="show-title" tabindex="-1">${t(s.titre)}</h1>
+          <p class="show-sub">${t(s.sousTitre)}</p>
+        </div>
+      </header>
+      <nav class="subnav" aria-label="Sur cette page">
+        <div class="wrap"><ul>${SUBNAV.map(([k, label]) => `<li><a href="#/spectacle/${esc(s.slug)}/${k}" data-sub="${k}">${label}</a></li>`).join('')}</ul></div>
+      </nav>
+      <section class="section" id="s-spectacle" aria-labelledby="h-spectacle">
+        <div class="wrap">
+          <div class="sec-head" data-target="spectacle"><h2 id="h-spectacle">Le spectacle</h2>${s.annee ? `<p class="sec-meta">Création ${esc(s.annee)}</p>` : ''}</div>
+          <div class="show-grid">
+            <div class="show-main">
+              <p class="accroche">${t(s.accroche)}</p>
+              <p class="body-text">${t(s.texte)}</p>
+              ${s.video ? `<a class="btn btn-secondary" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo${EXT}<span class="sr-only"> (nouvel onglet)</span></a>` : ''}
+            </div>
+            <div class="show-aside">
+              ${brief ? `<div class="facts"><h3 class="overline">En bref</h3><dl>${brief}</dl></div>` : ''}
+              ${team || s.credit ? `<div class="facts"><h3 class="overline">Équipe</h3><dl>${team}${s.credit ? row('Photo', t(s.credit)) : ''}</dl></div>` : ''}
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section" id="s-dates" aria-labelledby="h-dates">
+        <div class="wrap">
+          <div class="sec-head" data-target="dates"><h2 id="h-dates">Les dates</h2><p class="sec-meta">${list.length ? `${list.length} date${list.length > 1 ? 's' : ''}, saison ${esc(D.saison)}` : `Saison ${esc(D.saison)}`}</p></div>
+          <p class="intro">Je viens voir&nbsp;: chaque date indique son lieu et son public&nbsp;; la réservation se fait auprès du lieu.</p>
+          ${dateList(list, 'show', 8, 'show-list')}
+        </div>
+      </section>
+      <section class="section" id="s-programmer" aria-labelledby="h-programmer">
+        <div class="wrap">
+          <div class="sec-head" data-target="programmer"><h2 id="h-programmer">Je programme</h2><p class="sec-meta">Fiche pour les programmateurs</p></div>
+          <div class="split">
+            <div>
+              <h3 class="overline" style="margin-bottom:12px">Documents</h3>
+              <ul class="docs">
+                <li><span>Dossier de diffusion</span>${TODO}</li>
+                <li><span>Fiche technique</span>${TODO}</li>
+                <li><span>Conditions financières</span>${TODO}</li>
+                <li><span>Photos haute définition</span>${TODO}</li>
+                <li><span>Vidéo du spectacle</span>${s.video ? `<a class="link-ext" href="${esc(s.video)}" target="_blank" rel="noopener">Voir${EXT}<span class="sr-only"> la vidéo (nouvel onglet)</span></a>` : TODO}</li>
+              </ul>
+            </div>
+            <div>
+              <div class="block facts">
+                <h3 class="overline">Production</h3>
+                <dl>${s.coproduction ? row('Coproduction', t(s.coproduction)) : ''}${s.soutiens ? row('Soutiens', t(s.soutiens)) : ''}${!s.coproduction && !s.soutiens ? row('Partenaires', TODO) : ''}</dl>
+              </div>
+              <div class="block">
+                <h3 class="overline">Tournée</h3>
+                <p>${list.length ? `${list.length} date${list.length > 1 ? 's' : ''} annoncée${list.length > 1 ? 's' : ''} pour la saison ${esc(D.saison)}. <a class="link" href="#/spectacle/${esc(s.slug)}/dates">Voir les dates</a>` : 'Aucune date annoncée pour l’instant.'}</p>
+              </div>
+              <div class="block">
+                <h3 class="overline">Contact diffusion</h3>
+                <p><a class="link" href="${mail('Programmation : ' + s.titre)}">${esc(C.email)}</a></p>
+                <p class="muted" style="margin-top:6px">Personne chargée de la diffusion&nbsp;: ${TODO}</p>
+                <a class="btn btn-primary" href="${mail('Dossier de diffusion : ' + s.titre)}">Demander le dossier</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="section" id="s-etablissement" aria-labelledby="h-etab">
+        <div class="wrap">
+          <div class="sec-head" data-target="etablissement"><h2 id="h-etab">Je fais venir dans mon établissement</h2></div>
+          <div class="split">
+            <div>
+              ${MODE_LABEL[e.mode] ? `<p class="badge mode">${MODE_LABEL[e.mode]}</p>` : ''}
+              <p class="accroche">${t(e.texte || s.noteScolaire || '')}</p>
+              <a class="btn btn-primary" style="margin-top:32px" href="${mail('Faire venir ' + s.titre + ' dans mon établissement')}">Écrire à la compagnie</a>
+            </div>
+            <div class="facts">
+              <h3 class="overline">Pour les établissements</h3>
+              <dl>
+                ${row('Pass Culture', s.passCulture ? 'Offre collective' : 'Non référencé')}
+                ${row('Guide du CRED76', s.cred76 ? `<a class="link-ext" href="${esc(s.cred76)}" target="_blank" rel="noopener">Voir la fiche${EXT}<span class="sr-only"> du CRED76 (nouvel onglet)</span></a>` : 'Non référencé')}
+                ${row('Dates scolaires', school ? `${school} cette saison` : 'Aucune annoncée')}
+                ${row('Niveaux conseillés', TODO)}
+                ${row('Dossier pédagogique', TODO)}
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="next" aria-labelledby="next-title">
+        <div class="wrap">
+          <div class="sec-head" style="margin-bottom:32px"><p class="overline" style="color:var(--ink)">Spectacle suivant</p></div>
+          <div class="next-grid">
+            <div class="next-text">
+              <div>
+                <h2 class="next-title" id="next-title" style="margin-top:0"><a href="#/spectacle/${esc(nx.slug)}">${t(nx.titre)}</a></h2>
+                <p class="next-sub">${t(nx.sousTitre)}</p>
+              </div>
+              <div>
+                <p class="muted">${nxp ? `Prochaine date&nbsp;: ${shortDate(nxp)}, ${t(nxp.commune)}` : 'Pas de date annoncée'}</p>
+                <p class="next-go" style="margin-top:16px" aria-hidden="true">Découvrir le spectacle${ARROW}</p>
+              </div>
+            </div>
+            <div class="next-photo"><img src="${D.photos[nx.slug]}" alt="Photo de ${esc(nx.titre)}" style="object-position:${Number(nx.focale) || 50}% 50%"></div>
+          </div>
+        </div>
+      </section>
+    </article>`;
+  }
+
+  /* ---------- pied de page ---------- */
+  function footer() {
+    $('#contact').innerHTML = `<div class="wrap">
+      <div class="sec-head" data-target="contact"><h2>Contact</h2></div>
+      <div class="foot">
+        <div class="foot-contact">
+          <p class="foot-mail"><a href="mailto:${esc(C.email)}">${esc(C.email)}</a></p>
+          <p class="foot-addr">${esc(C.nom)}<br>${t(C.adresse)}</p>
+        </div>
+        <div class="foot-col"><h3>Partenaires</h3><ul>${(C.partenaires || []).map(p => `<li>${t(p)}</li>`).join('')}</ul></div>
+        <div class="foot-col"><h3>Mentions</h3><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>
+      </div>
+      <div class="foot-bottom">
+        <a class="foot-brand" href="#/" aria-label="Compagnie Crescite, accueil"><span class="brand-mark" data-logo="mark"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
+        <p>Compagnie de théâtre, ${esc(C.ville)}, depuis ${esc(C.depuis)}</p>
+      </div>
+    </div>`;
+  }
+  function logos(root = document) {
+    $$('[data-logo]', root).forEach(el => {
+      el.innerHTML = D.logo[el.dataset.logo] || '';
+      const svg = $('svg', el);
+      if (svg) { svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('focusable', 'false'); svg.removeAttribute('role'); svg.removeAttribute('aria-label'); }
+    });
+  }
+
+  /* ---------- menu (téléphone) ---------- */
+  const toggle = $('.menu-toggle');
+  function setMenu(open) {
+    header.classList.toggle('is-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    $('[data-menu-label]').textContent = open ? 'Fermer' : 'Menu';
+    $('[data-menu-icon]').setAttribute('d', open ? 'M5 5l14 14M19 5L5 19' : 'M3 8h18M3 16h18');
+  }
+  toggle.addEventListener('click', () => setMenu(!header.classList.contains('is-open')));
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && header.classList.contains('is-open')) { setMenu(false); toggle.focus(); }
+  });
+
+  /* ---------- voir plus de dates ---------- */
+  main.addEventListener('click', ev => {
+    const b = ev.target.closest('[data-more]');
+    if (!b) return;
+    const open = b.getAttribute('aria-expanded') !== 'true';
+    const limit = Number(b.dataset.limit);
+    $$(`#${b.dataset.more} .row`).forEach((li, i) => { if (i >= limit) li.hidden = !open; });
+    b.setAttribute('aria-expanded', String(open));
+    b.textContent = open ? 'Afficher moins de dates' : `Voir les ${b.dataset.rest} autres dates`;
+  });
+
+  /* ---------- sous-navigation active ---------- */
+  let subLinks = [], subHeads = [];
+  function trackSub() {
+    if (!subLinks.length) return;
+    const nav = $('.subnav');
+    const line = nav.getBoundingClientRect().bottom + 48;
+    let k = 0;
+    subHeads.forEach((h, i) => { if (h.getBoundingClientRect().top <= line) k = i; });
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+      const lastVisible = subHeads.map((h, i) => [h.getBoundingClientRect().top, i]).filter(([top]) => top < window.innerHeight).pop();
+      if (lastVisible) k = Math.max(k, lastVisible[1]);
+    }
+    subLinks.forEach((a, i) => {
+      if (i === k) {
+        if (!a.hasAttribute('aria-current')) {
+          a.setAttribute('aria-current', 'true');
+          const ul = a.closest('ul');
+          const r = a.getBoundingClientRect(), u = ul.getBoundingClientRect();
+          if (r.left < u.left || r.right > u.right) ul.scrollLeft += r.left - u.left - 16;
+        }
+      } else a.removeAttribute('aria-current');
+    });
+  }
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => { ticking = false; trackSub(); });
+  }, { passive: true });
+
+  /* ---------- routeur ---------- */
+  const TITLE_HOME = `${C.nom} · Théâtre à ${C.ville}`;
+  let currentKey = null;
+  function parse() {
+    const parts = decodeURIComponent(location.hash.replace(/^#\/?/, '')).split('/').filter(Boolean);
+    if (parts[0] === 'spectacle' && BY[parts[1]]) return { view: 'show', slug: parts[1], section: parts[2] || null };
+    return { view: 'home', section: parts[0] || null, mode: parts[1] || null };
+  }
+  function targetOf(r) {
+    if (!r.section) return null;
+    return $(`.sec-head[data-target="${CSS.escape(r.section)}"]`) || (r.section === 'main' ? main : null);
+  }
+  function route(initial) {
+    const r = parse();
+    const key = r.view === 'show' ? 'show:' + r.slug : 'home';
+    const changed = key !== currentKey;
+    if (changed) {
+      currentKey = key;
+      if (r.view === 'show') {
+        const s = BY[r.slug];
+        main.innerHTML = showView(s);
+        document.title = `${s.titre} · ${C.nom}`;
+        subLinks = $$('.subnav a');
+        subHeads = SUBNAV.map(([k]) => $(`.sec-head[data-target="${k}"]`));
+      } else {
+        main.innerHTML = homeView();
+        document.title = TITLE_HOME;
+        subLinks = []; subHeads = [];
+      }
+      $$('.nav-main a').forEach(a => {
+        if (r.view === 'show' && a.dataset.nav === 'spectacles') a.setAttribute('aria-current', 'true');
+        else a.removeAttribute('aria-current');
+      });
+    }
+    if (r.view === 'home') setMode(r.section === 'spectacles' ? r.mode : null);
+    setMenu(false);
+    const target = targetOf(r);
+    if (target) target.scrollIntoView({ block: 'start' });
+    else if (changed) window.scrollTo(0, 0);
+    if (changed && !initial) {
+      const h = r.view === 'show' ? $('.show-title') : main;
+      if (h) h.focus({ preventScroll: true });
+    }
+    trackSub();
+    return target;
+  }
+
+  document.addEventListener('click', ev => {
+    const a = ev.target.closest('a[href^="#"]');
+    if (!a || ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+    const href = a.getAttribute('href');
+    if (href === '#main') { ev.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); return; }
+    if (href === location.hash || (href === '#/' && !location.hash)) { ev.preventDefault(); route(false); }
+  });
+  window.addEventListener('hashchange', () => route(false));
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+  const icon = document.createElement('link');
+  icon.rel = 'icon';
+  icon.href = 'data:image/svg+xml,' + encodeURIComponent(D.logo.mark || '');
+  document.head.appendChild(icon);
+
+  logos();
+  footer();
+  logos($('#contact'));
+  const first = route(true);
+  if (first && document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (window.scrollY > 0) first.scrollIntoView({ block: 'start' }); });
+})();
+</script>
+</body>
+</html>

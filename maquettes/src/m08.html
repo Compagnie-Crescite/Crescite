@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compagnie Crescite, théâtre à Rouen</title>
+<meta name="description" content="Compagnie Crescite, théâtre à Rouen : sept spectacles, des actions culturelles, les prochaines dates.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..600;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap">
+<style>
+:root{
+  --ivory:#f5f1ea;--ink:#191414;--gray:#6f6560;--gray-t:#615853;
+  --rule:rgba(25,20,20,.14);--rule-s:rgba(25,20,20,.3);
+  --serif:"DM Serif Display",Georgia,"Times New Roman",serif;
+  --sans:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --t1:clamp(2.75rem,5vw,4.5rem);--t2:clamp(2.25rem,3.4vw,3rem);--t3:1.75rem;--t4:1.25rem;--t5:1.0625rem;--t6:.875rem;
+  --hh:72px;--gx:clamp(20px,3.9vw,56px);--fade:350ms;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ivory);color:var(--ink);font:400 var(--t5)/1.6 var(--sans);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img{display:block;max-width:100%}
+h1,h2,h3{margin:0;font-weight:400}
+p,ul,ol,dl,dd,figure{margin:0;padding:0}
+ul,ol{list-style:none}
+a{color:inherit;text-decoration-thickness:1px;text-underline-offset:.22em}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:1px}
+[tabindex="-1"]:focus{outline:none}
+[hidden]{display:none!important}
+.nw{white-space:nowrap}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:var(--gx);top:-60px;z-index:50;background:var(--ink);color:var(--ivory);padding:10px 16px;text-decoration:none}
+.skip:focus{top:12px}
+.eyebrow{display:block;font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
+
+/* En-tête */
+.site-head{position:sticky;top:0;z-index:30;height:var(--hh);display:grid;grid-template-columns:45fr 55fr;align-items:center;background:var(--ivory);border-bottom:1px solid var(--rule)}
+.brand{justify-self:start;display:inline-flex;align-items:center;gap:12px;margin-left:var(--gx);text-decoration:none}
+.brand-mark{width:34px;height:34px;flex:none}
+.brand-mark svg,.foot-logo svg{display:block;width:100%;height:auto}
+.brand-name{font:400 1.625rem/1 var(--serif);letter-spacing:-.005em;padding-bottom:3px}
+.site-nav{padding:0 var(--gx)}
+.site-nav ul{display:flex;gap:36px}
+.site-nav a{font-weight:500;text-decoration:none;padding:6px 0}
+.site-nav a:hover{text-decoration:underline}
+.menu-btn{display:none;font-weight:500;padding:10px 0 10px 16px;margin-right:var(--gx)}
+
+/* Sommaire et aperçu */
+.som{display:grid;grid-template-columns:45fr 55fr;min-height:calc(100svh - var(--hh))}
+.toc{display:flex;flex-direction:column;padding:56px var(--gx) 44px}
+.toc-kicker{font:500 var(--t5)/1.5 var(--sans);margin-bottom:24px}
+.toc-list li+li{margin-top:2px}
+.toc-list li.toc-sep{margin-top:22px}
+.toc-link{display:block;padding:7px 0;text-decoration:none}
+.toc-row{display:flex;align-items:last baseline;gap:16px}
+.toc-title{font:400 var(--t2)/1.06 var(--serif);letter-spacing:-.012em;text-wrap:balance;text-decoration:underline;text-decoration-color:transparent;text-decoration-thickness:4px;text-underline-offset:.15em;text-decoration-skip-ink:none}
+.toc-lead{flex:1 1 auto;min-width:20px;height:1px;background:var(--rule);transform:translateY(-.32rem)}
+.toc-year{flex:none;font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray)}
+.toc-link.is-active .toc-title{color:var(--ct);text-decoration-color:var(--c)}
+.toc-extra{display:none}
+.toc-foot{margin-top:auto;padding-top:32px;align-self:flex-start;font-weight:500;text-decoration:none;color:var(--gray-t)}
+.toc-foot:hover{color:var(--ink);text-decoration:underline}
+
+.pv{background-color:var(--tint,var(--ivory));transition:background-color var(--fade) ease}
+.pv-in{position:sticky;top:var(--hh);height:calc(100svh - var(--hh));min-height:520px;padding:56px var(--gx) 44px;display:grid}
+.pv-layer{grid-area:1/1;display:flex;flex-direction:column;min-height:0;width:min(100%,calc((100svh - var(--hh) - 352px) * 1.25));opacity:0;visibility:hidden;transition:opacity var(--fade) ease,visibility 0s linear var(--fade)}
+.pv-layer.is-on{opacity:1;visibility:visible;z-index:1;transition:opacity var(--fade) ease,visibility 0s}
+.pv-fig img{width:100%;aspect-ratio:5/4;object-fit:cover;background:rgba(25,20,20,.08)}
+.pv-cap{margin-top:8px;text-align:right;font-size:var(--t6);color:var(--gray-t)}
+.pv-acc{margin:18px 0 24px;font:italic 400 var(--t3)/1.25 var(--serif);text-wrap:pretty}
+.pv-foot{margin-top:auto;padding-top:18px;border-top:1px solid var(--rule-s);display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 32px}
+.pv-date{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.pv-date .eyebrow{color:var(--gray-t)}
+.pv-link{font-weight:600;text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:2px;text-underline-offset:.3em}
+.pv-link:hover{text-decoration-color:currentColor}
+
+/* Bandeaux de l'accueil */
+.band{display:grid;grid-template-columns:45fr 55fr;border-top:1px solid var(--rule);scroll-margin-top:var(--hh)}
+.band-head{padding:88px var(--gx) 0}
+.band-body{padding:88px var(--gx) 96px;min-width:0}
+.band-title{font:400 var(--t2)/1.05 var(--serif);letter-spacing:-.012em}
+.band-sub{margin-top:14px;color:var(--gray);max-width:30ch}
+
+.doors li{display:grid;grid-template-columns:56px 1fr;padding:26px 0 28px;border-top:1px solid var(--rule)}
+.doors li:last-child{border-bottom:1px solid var(--rule)}
+.door-num{font:500 var(--t6)/2.6 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray)}
+.door-title{font:400 var(--t3)/1.2 var(--serif)}
+.door-text{margin-top:6px;color:var(--gray)}
+.door-links{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px}
+.door-links a{font-weight:500;text-decoration-color:var(--rule-s)}
+.door-links a:hover{text-decoration-color:currentColor}
+
+.ag-list>li{display:grid;grid-template-columns:minmax(150px,13.5rem) 1fr auto;gap:4px 28px;align-items:baseline;padding:18px 0 19px;border-top:1px solid var(--rule)}
+.ag-list>li:last-child{border-bottom:1px solid var(--rule)}
+.ag-date{font-weight:600;font-variant-numeric:tabular-nums}
+.ag-show{font:400 var(--t4)/1.3 var(--serif);text-decoration:none}
+.ag-show:hover{text-decoration:underline}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:10px;vertical-align:.12em}
+.ag-place{color:var(--gray);margin-top:2px}
+.ag-meta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.ag-meta .eyebrow{letter-spacing:.06em}
+.ag-meta a{font-weight:500;white-space:nowrap}
+.more{margin-top:24px;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:var(--rule-s);padding:6px 0}
+.more:hover{text-decoration-color:currentColor}
+
+.quote{font:italic 400 var(--t3)/1.3 var(--serif);max-width:32ch;text-wrap:pretty}
+.cie-text{margin-top:28px;font-size:var(--t4);line-height:1.55;max-width:38ch}
+.cie-facts{margin-top:20px;color:var(--gray)}
+.stats{margin-top:48px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;border-top:1px solid var(--rule);padding-top:26px}
+.stat-n{display:block;font:400 var(--t3)/1 var(--serif)}
+.stat-l{display:block;margin-top:10px;font-size:var(--t6);line-height:1.45;color:var(--gray)}
+
+/* Page spectacle */
+.show{display:grid;grid-template-columns:45fr 55fr}
+.show-side{background-color:var(--tint)}
+.show-side-in{position:sticky;top:var(--hh);max-height:calc(100svh - var(--hh));overflow-y:auto;padding:36px var(--gx) 40px}
+.show-head{display:block}
+.show-top{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.back{font-weight:500;text-decoration:none}
+.back:hover{text-decoration:underline}
+.folio{font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray-t)}
+.show-title{margin-top:36px;font:400 var(--t1)/1 var(--serif);letter-spacing:-.018em;text-wrap:balance}
+.show-title.is-long{font-size:clamp(2.5rem,3.9vw,3.5rem);line-height:1.04}
+.show-sub{margin-top:14px;font-size:var(--t4);line-height:1.4;color:var(--gray-t)}
+.facts{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+.facts>div:only-child{grid-column:1/-1}
+.facts dt{font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray-t)}
+.facts dd{margin-top:3px}
+.portes-nav{margin-top:32px}
+.portes-nav li{border-top:1px solid var(--rule-s)}
+.portes-nav li:last-child{border-bottom:1px solid var(--rule-s)}
+.portes-nav a{display:grid;grid-template-columns:1fr auto;gap:0 16px;padding:12px 0 13px;text-decoration:none}
+.portes-nav a:hover .pn-t{text-decoration:underline}
+.pn-t{font-weight:600}
+.pn-s{grid-column:1;color:var(--gray-t);font-size:var(--t6)}
+.pn-a{grid-column:2;grid-row:1/3;align-self:center}
+
+.show-main{min-width:0}
+.show-fig img{width:100%;aspect-ratio:3/2;object-fit:cover}
+.show-cap{padding:10px var(--gx) 0;text-align:right;font-size:var(--t6);color:var(--gray)}
+.show-body{padding:36px var(--gx) 96px}
+.show-acc{font:italic 400 var(--t3)/1.3 var(--serif);max-width:34ch;text-wrap:pretty}
+.show-text{margin-top:22px;max-width:62ch}
+.sec{margin-top:72px;scroll-margin-top:calc(var(--hh) + 24px)}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--ink)}
+.sec-title{font:400 var(--t3)/1.2 var(--serif)}
+.dl-list>li{display:grid;grid-template-columns:minmax(140px,12.5rem) 1fr auto;gap:2px 24px;align-items:baseline;padding:14px 0 15px;border-bottom:1px solid var(--rule)}
+.dl-date{font-weight:600}
+.dl-place{color:var(--ink)}
+.dl-meta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.dl-meta a{font-weight:500;white-space:nowrap}
+.none{color:var(--gray);padding:16px 0}
+
+.tablist{display:flex;gap:32px;border-bottom:1px solid var(--rule)}
+.tab{position:relative;padding:14px 0 15px;font-weight:600;color:var(--gray);text-align:left}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink)}
+.tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--ink)}
+.panel{padding-top:28px}
+.panel:focus-visible{outline-offset:6px}
+.panel p+p{margin-top:12px}
+.panel-lead{font:400 var(--t4)/1.45 var(--sans);max-width:46ch}
+.big-date{margin-top:6px;font:400 var(--t3)/1.2 var(--serif)}
+.btn{display:inline-block;margin-top:18px;padding:12px 20px;background:var(--ink);color:var(--ivory);font-weight:600;text-decoration:none}
+.btn:hover{background:#3a3131}
+.muted{color:var(--gray)}
+.fiche{display:grid;grid-template-columns:minmax(120px,11rem) 1fr;gap:12px 24px;margin-top:4px}
+.fiche dt{font:500 var(--t6)/1.6 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
+.fiche dd li+li{margin-top:2px}
+.sub-title,.panel .sub-title{margin-top:32px;margin-bottom:10px;font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
+.docs li{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid var(--rule)}
+.docs li:last-child{border-bottom:1px solid var(--rule)}
+.status{position:relative;padding-left:20px;font-weight:600}
+.status::before{content:"";position:absolute;left:0;top:.52em;width:9px;height:9px;border-radius:50%;background:var(--c)}
+
+.next{margin-top:88px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;padding:32px;background-color:var(--tint);text-decoration:none}
+.next-title{display:block;margin-top:10px;font:400 var(--t2)/1.05 var(--serif);letter-spacing:-.012em}
+.next-go{display:inline-block;margin-top:14px;font-weight:600;text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:2px;text-underline-offset:.3em}
+.next:hover .next-go{text-decoration-color:currentColor}
+.next img{width:176px;aspect-ratio:5/4;object-fit:cover}
+
+/* Pied de page */
+.site-foot{display:grid;grid-template-columns:45fr 55fr;background:var(--ink);color:var(--ivory);scroll-margin-top:var(--hh)}
+.site-foot .eyebrow{color:#b9afa6;margin-bottom:12px}
+.foot-brand{padding:72px var(--gx)}
+.foot-logo{width:112px}
+.foot-line{margin-top:20px;color:#b9afa6;max-width:30ch}
+.foot-cols{padding:72px var(--gx);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
+.foot-cols li+li{margin-top:4px}
+.foot-cols p+p{margin-top:4px}
+.site-foot a{text-decoration-color:rgba(245,241,234,.4)}
+.site-foot a:hover{text-decoration-color:currentColor}
+.site-foot :focus-visible{outline-color:var(--ivory)}
+.muted-d{color:#b9afa6}
+
+@media (max-width:1100px){
+  .site-nav ul{gap:24px}
+  .ag-list>li,.dl-list>li{grid-template-columns:1fr auto;}
+  .ag-date,.dl-date{grid-column:1/-1}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .foot-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:859px){
+  :root{--hh:60px}
+  .som,.band,.show,.site-foot{display:block}
+  .pv{display:none}
+  .toc{padding:28px var(--gx) 48px}
+  .toc-kicker{margin-bottom:12px}
+  .toc-title{font-size:2rem;line-height:1.1}
+  .toc-link{padding:16px 0 18px}
+  .toc-list li+li{margin-top:0;border-top:1px solid var(--rule)}
+  .toc-list li.toc-sep{margin-top:0}
+  .toc-lead{display:none}
+  .toc-row{justify-content:space-between}
+  .toc-extra{display:grid;grid-template-columns:112px 1fr;gap:16px;align-items:center;margin-top:12px}
+  .toc-extra img{width:112px;aspect-ratio:5/4;object-fit:cover}
+  .toc-next{display:block;font-size:1rem;line-height:1.45}
+  .toc-next .eyebrow{font-size:.8125rem;margin-bottom:2px}
+  .toc-link.is-active .toc-title{color:inherit;text-decoration-color:transparent}
+  .toc-foot{padding-top:24px}
+  .band-head{padding:56px var(--gx) 0}
+  .band-body{padding:28px var(--gx) 64px}
+  .doors li{grid-template-columns:40px 1fr}
+  .quote{font-size:1.5rem}
+  .cie-text{font-size:var(--t5)}
+  .foot-brand{padding:56px var(--gx) 0}
+  .foot-cols{padding:40px var(--gx) 56px;grid-template-columns:1fr}
+  .show{display:grid;grid-template-columns:minmax(0,1fr)}
+  .show-side,.show-side-in,.show-main{display:contents}
+  .show-head{order:1;background-color:var(--tint);padding:20px var(--gx) 28px}
+  .show-fig{order:2}
+  .show-meta{order:3;padding:0 var(--gx)}
+  .show-body{order:4;padding:36px var(--gx) 64px}
+  .show-title,.show-title.is-long{margin-top:28px;font-size:2.75rem;line-height:1.02}
+  .facts{margin-top:28px}
+  .show-fig img{aspect-ratio:4/3}
+  .sec{margin-top:56px}
+  .next{margin-top:64px;padding:24px;grid-template-columns:1fr}
+  .next img{display:none}
+  .next-title{font-size:2.25rem}
+}
+@media (max-width:719px){
+  .site-head{display:flex;justify-content:space-between}
+  .menu-btn{display:block}
+  .site-nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--ivory);border-bottom:1px solid var(--rule);padding:8px var(--gx) 20px}
+  .menu-open .site-nav{display:block}
+  .site-nav ul{flex-direction:column;gap:0}
+  .site-nav li+li{border-top:1px solid var(--rule)}
+  .site-nav a{display:block;padding:14px 0;font:400 1.5rem/1.2 var(--serif)}
+  .ag-list>li,.dl-list>li{grid-template-columns:1fr}
+  .ag-meta,.dl-meta{text-align:left;align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:4px 16px;margin-top:4px}
+  .tablist{flex-direction:column;gap:0;border-bottom:0}
+  .tab{padding:13px 0 13px 18px;border-top:1px solid var(--rule)}
+  .tab:last-child{border-bottom:1px solid var(--rule)}
+  .tab[aria-selected="true"]::after{left:0;right:auto;top:10px;bottom:10px;width:3px;height:auto}
+  .fiche{grid-template-columns:1fr;gap:2px}
+  .fiche dd{margin-bottom:12px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+<header class="site-head" id="top">
+  <a class="brand" href="#/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">crescite</span><span class="sr-only">, retour à l’accueil</span></a>
+  <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav class="site-nav" id="nav" aria-label="Navigation principale">
+    <ul>
+      <li><a href="#/">Spectacles</a></li>
+      <li><a href="#agenda">Agenda</a></li>
+      <li><a href="#compagnie">La compagnie</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+<main id="main" tabindex="-1"></main>
+<footer class="site-foot" id="contact"></footer>
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  'use strict';
+  const S = D.shows;
+  const C = D.company;
+  const idx = new Map(S.map((s, i) => [s.slug, i]));
+  const main = document.getElementById('main');
+  const head = document.querySelector('.site-head');
+  const menuBtn = document.querySelector('.menu-btn');
+  const DOORS = Object.fromEntries(D.doors.map(d => [d.key, d]));
+  const MOIS = { janvier: 'janv.', février: 'févr.', mars: 'mars', avril: 'avr.', mai: 'mai', juin: 'juin', juillet: 'juil.', août: 'août', septembre: 'sept.', octobre: 'oct.', novembre: 'nov.', décembre: 'déc.' };
+
+  const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fr = v => esc(v).replace(/ ([:;!?»])/g, ' $1').replace(/« /g, '« ').replace(/(\d) (h|heures|dates|comédiens?)\b/g, '$1 $2');
+  const tint = c => `color-mix(in srgb, ${c} 12%, #f5f1ea)`;
+  const isShow = s => !!(s.annee || s.distribution.length);
+  const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+  const ext = (href, label) => `<a href="${esc(href)}" target="_blank" rel="noopener">${label}<span class="sr-only"> (nouvel onglet)</span>&nbsp;<span aria-hidden="true">↗</span></a>`;
+  const mail = `<a href="mailto:${esc(C.email)}">${esc(C.email)}</a>`;
+
+  const timeOf = d => /^\d{1,2}h\d{0,2}$/.test(d.lieu || '') ? d.lieu : null;
+  const venue = d => d.lieu && !timeOf(d) && d.lieu !== 'diptyque' ? d.lieu : null;
+  const town = d => `${d.commune}\u00a0(${d.dep === 'BE' ? 'Belgique' : d.dep})`;
+  const nw = v => esc(v).replace(/(\S*-\S*)/g, '<span class="nw">$1</span>');
+  const place = d => [venue(d), town(d)].filter(Boolean).join(', ') + (d.lieu === 'diptyque' ? ', en diptyque' : '');
+  const shortLabel = d => d.label.replace(/janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre/g, m => MOIS[m]);
+  const dateTxt = d => (d.precision === 'day' && d.iso === d.fin ? d.joursem + ' ' : '') + shortLabel(d) + (timeOf(d) ? ', ' + timeOf(d) : '');
+  const datesOf = s => D.dates.filter(d => d.slug === s.slug);
+  const photo = (s, cls = '') => `<img${cls ? ` class="${cls}"` : ''} src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale ?? 50}% 50%" decoding="async">`;
+  const MODE = { etablissement: 'Se déplace dans les établissements', salle: 'Se joue en salle de spectacle', a_confirmer: 'Accueil dans l’établissement à confirmer' };
+
+  function setLogo(el, svg) {
+    el.innerHTML = svg;
+    const g = el.querySelector('svg');
+    if (g) { g.setAttribute('aria-hidden', 'true'); g.setAttribute('focusable', 'false'); g.removeAttribute('role'); g.removeAttribute('aria-label'); }
+  }
+
+  /* Accueil */
+  function homeHTML() {
+    const toc = S.map((s, i) => `
+      <li${isShow(s) ? '' : ' class="toc-sep"'}>
+        <a class="toc-link${i === 0 ? ' is-active' : ''}" href="#/spectacle/${s.slug}" data-i="${i}" style="--c:${s.couleur};--ct:${s.couleurTexteClair}">
+          <span class="toc-row"><span class="toc-title">${fr(s.titre)}</span>${s.annee ? `<span class="toc-lead" aria-hidden="true"></span><span class="toc-year">${s.annee}</span>` : ''}</span>
+          <span class="toc-extra">${photo(s)}<span class="toc-next"><span class="eyebrow">Prochaine date</span>${s.prochaine ? `${esc(dateTxt(s.prochaine))}<br>${esc(town(s.prochaine))}` : 'Aucune date annoncée pour l’instant'}</span></span>
+        </a>
+      </li>`).join('');
+
+    const layers = S.map((s, i) => `
+      <div class="pv-layer${i === 0 ? ' is-on' : ''}" data-i="${i}" style="--c:${s.couleur}">
+        <figure class="pv-fig">${photo(s)}${s.credit ? `<figcaption class="pv-cap">${esc(s.credit)}</figcaption>` : ''}</figure>
+        <p class="pv-acc">${fr(s.accroche)}</p>
+        <div class="pv-foot">
+          <p class="pv-date"><span class="eyebrow">Prochaine date</span><span>${s.prochaine ? esc(`${dateTxt(s.prochaine)} · ${town(s.prochaine)}`) : 'Aucune date annoncée pour l’instant'}</span></p>
+          <a class="pv-link" href="#/spectacle/${s.slug}">${isShow(s) ? 'Voir le spectacle' : 'Voir les actions culturelles'}<span class="sr-only"> ${esc(s.titre)}</span>&nbsp;<span aria-hidden="true">→</span></a>
+        </div>
+      </div>`).join('');
+
+    const travels = S.filter(s => s.etablissement && (s.etablissement.mode === 'etablissement' || s.passCulture || s.cred76));
+    const doorLinks = {
+      voir: `<a href="#agenda">Les prochaines dates</a>`,
+      programmer: S.filter(isShow).map(s => `<a href="#/spectacle/${s.slug}/programmer">${fr(s.titre)}</a>`).join(''),
+      etablissement: travels.map(s => `<a href="#/spectacle/${s.slug}/etablissement">${fr(s.titre)}</a>`).join('')
+    };
+    const doors = D.doors.map((d, i) => `
+      <li>
+        <span class="door-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <h3 class="door-title">${esc(d.titre)}</h3>
+          <p class="door-text">${fr(d.texte)}</p>
+          <p class="door-links">${doorLinks[d.key] || ''}</p>
+        </div>
+      </li>`).join('');
+
+    const agRow = (d, hide) => {
+      const s = S[idx.get(d.slug)];
+      return `<li${hide ? ' hidden data-more' : ''}>
+        <p class="ag-date">${esc(dateTxt(d))}</p>
+        <div><a class="ag-show" href="#/spectacle/${d.slug}"><span class="dot" style="--c:${s ? s.couleur : 'currentColor'}" aria-hidden="true"></span>${fr(d.titre)}</a><p class="ag-place">${nw(place(d))}</p></div>
+        <div class="ag-meta"><span class="eyebrow">${esc(d.public)}</span>${d.lien ? ext(d.lien, 'Réserver') : ''}</div>
+      </li>`;
+    };
+    const st = D.stats;
+
+    return `
+    <section class="som" aria-labelledby="som-h">
+      <div class="toc">
+        <h1 class="toc-kicker" id="som-h" tabindex="-1">Sept spectacles et des actions culturelles.</h1>
+        <ul class="toc-list">${toc}</ul>
+        <a class="toc-foot" href="#agenda">Saison ${esc(D.saison)} · ${plural(D.dates.length, 'date', 'dates')} à l’agenda <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="pv" role="region" aria-label="Aperçu du spectacle" style="--tint:${tint(S[0].couleur)}">
+        <div class="pv-in">${layers}</div>
+      </div>
+    </section>
+
+    <section class="band" aria-labelledby="portes-h">
+      <div class="band-head">
+        <h2 class="band-title" id="portes-h">Par où commencer&nbsp;?</h2>
+        <p class="band-sub">Trois portes, selon ce que vous cherchez.</p>
+      </div>
+      <div class="band-body"><ol class="doors">${doors}</ol></div>
+    </section>
+
+    <section class="band" id="agenda" aria-labelledby="agenda-h">
+      <div class="band-head">
+        <h2 class="band-title" id="agenda-h">Prochaines dates</h2>
+        <p class="band-sub">Saison ${esc(D.saison)}, en salle et dans les établissements scolaires.</p>
+      </div>
+      <div class="band-body">
+        <ul class="ag-list" id="ag-list">${D.dates.map((d, i) => agRow(d, i >= 6)).join('')}</ul>
+        ${D.dates.length > 6 ? `<button class="more" type="button" aria-expanded="false" aria-controls="ag-list">Voir les ${D.dates.length} dates de la saison</button>` : ''}
+      </div>
+    </section>
+
+    <section class="band" id="compagnie" aria-labelledby="cie-h">
+      <div class="band-head">
+        <h2 class="band-title" id="cie-h">La compagnie</h2>
+        <p class="band-sub">Théâtre, ${esc(C.ville)}, depuis ${esc(C.depuis)}.</p>
+      </div>
+      <div class="band-body">
+        <p class="quote">${fr(C.intention)}</p>
+        <p class="cie-text">${fr(C.presentation)}</p>
+        <p class="cie-facts">Mise en scène&nbsp;: ${esc(C.miseEnScene)}</p>
+        <ul class="stats">
+          <li><span class="stat-n">${st.dates}</span><span class="stat-l">dates publiées depuis 2016</span></li>
+          <li><span class="stat-n">${st.communes}</span><span class="stat-l">communes de tournée</span></li>
+          <li><span class="stat-n">${st.departements}</span><span class="stat-l">départements</span></li>
+          <li><span class="stat-n">${st.heuresEAC}&nbsp;h</span><span class="stat-l">d’éducation artistique en 2023-2024</span></li>
+        </ul>
+      </div>
+    </section>`;
+  }
+
+  function bindHome() {
+    const links = [...main.querySelectorAll('.toc-link')];
+    const layers = [...main.querySelectorAll('.pv-layer')];
+    const pv = main.querySelector('.pv');
+    let cur = 0;
+    const activate = i => {
+      if (i === cur || Number.isNaN(i)) return;
+      cur = i;
+      pv.style.setProperty('--tint', tint(S[i].couleur));
+      layers.forEach((l, k) => l.classList.toggle('is-on', k === i));
+      links.forEach((a, k) => a.classList.toggle('is-active', k === i));
+    };
+    const list = main.querySelector('.toc-list');
+    const pick = e => { const a = e.target.closest('.toc-link'); if (a) activate(+a.dataset.i); };
+    list.addEventListener('mouseover', pick);
+    list.addEventListener('focusin', pick);
+    const more = main.querySelector('.more');
+    if (more) more.addEventListener('click', () => {
+      const open = more.getAttribute('aria-expanded') !== 'true';
+      main.querySelectorAll('[data-more]').forEach(li => { li.hidden = !open; });
+      more.setAttribute('aria-expanded', String(open));
+      more.textContent = open ? 'Afficher moins de dates' : `Voir les ${D.dates.length} dates de la saison`;
+    });
+  }
+
+  /* Page spectacle */
+  function facts(s) {
+    if (!isShow(s)) return s.soutiens ? [['Avec le soutien de', s.soutiens]] : [];
+    const n = s.distribution.length;
+    const lead = s.equipe[0];
+    return [
+      ['Création', s.annee ?? 'à fournir'],
+      ['Durée', s.duree ?? 'à fournir'],
+      ['Au plateau', n ? plural(n, 'comédien', 'comédiens') : 'à fournir'],
+      lead ? [lead[0], lead[1]] : ['Équipe', 'à fournir']
+    ];
+  }
+
+  function showHTML(s) {
+    const i = idx.get(s.slug);
+    const next = S[(i + 1) % S.length];
+    const dates = datesOf(s);
+    const pub = dates.filter(d => d.public === 'Tout public');
+    const firstPub = pub[0];
+    const n = s.distribution.length;
+    const info = {
+      voir: pub.length ? `${plural(pub.length, 'date', 'dates')} tout public` : dates.length ? 'Pas de date tout public annoncée' : 'Aucune date annoncée',
+      programmer: isShow(s) ? 'Fiche, équipe, documents' : 'Fiche et documents',
+      etablissement: MODE[s.etablissement?.mode] || 'À fournir'
+    };
+    const dl = (d, hide) => `<li${hide ? ' hidden data-more' : ''}>
+      <p class="dl-date">${esc(dateTxt(d))}</p>
+      <p class="dl-place">${nw(place(d))}</p>
+      <div class="dl-meta"><span class="eyebrow">${esc(d.public)}</span>${d.lien ? ext(d.lien, 'Réserver') : ''}</div>
+    </li>`;
+    const LIMIT = 8;
+
+    const voir = pub.length ? `
+      <p class="panel-lead">Prochaine représentation tout public&nbsp;:</p>
+      <p class="big-date">${esc(dateTxt(firstPub))}</p>
+      <p>${nw(place(firstPub))}</p>
+      ${firstPub.lien ? `<a class="btn" href="${esc(firstPub.lien)}" target="_blank" rel="noopener">Réserver auprès du lieu<span class="sr-only"> (nouvel onglet)</span> <span aria-hidden="true">↗</span></a>` : `<p class="muted">Lien de réservation&nbsp;: à fournir.</p>`}
+      <p class="sub-title">Bon à savoir</p>
+      <p>${pub.length > 1 ? `Les ${pub.length} dates tout public sont dans la liste ci-dessus, avec leur lien de réservation quand il existe.` : 'C’est la seule date tout public annoncée pour l’instant.'}${dates.length > pub.length ? ' Les dates marquées « Scolaire » sont des représentations pour les classes.' : ''}</p>
+      <p>Une question, un groupe&nbsp;? ${mail}</p>` : `
+      <p class="panel-lead">${dates.length ? 'Pas de représentation tout public annoncée pour l’instant&nbsp;: les dates de la saison sont des représentations scolaires.' : 'Aucune date annoncée pour l’instant.'}</p>
+      <p style="margin-top:14px">Pour être prévenu des prochaines dates&nbsp;: ${mail}</p>`;
+
+    const fiche = [];
+    if (isShow(s)) {
+      fiche.push(['Création', esc(s.annee ?? 'à fournir')], ['Durée', esc(s.duree ?? 'à fournir')]);
+      fiche.push(['Au plateau', n ? `${plural(n, 'comédien', 'comédiens')}&nbsp;: ${s.distribution.map(esc).join(', ')}` : 'à fournir']);
+      fiche.push(['Équipe', s.equipe.length ? `<ul>${s.equipe.map(([r, p]) => `<li>${esc(r)}&nbsp;: ${esc(p)}</li>`).join('')}</ul>` : 'à fournir']);
+    }
+    if (s.coproduction) fiche.push(['Coproduction', fr(s.coproduction)]);
+    if (s.soutiens) fiche.push(['Soutiens', fr(s.soutiens)]);
+    fiche.push(['Captation', s.video ? ext(s.video, 'Voir la vidéo') : 'à fournir']);
+    const programmer = `
+      <dl class="fiche">${fiche.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
+      <p class="sub-title">Documents</p>
+      <ul class="docs">
+        <li><span>Dossier de diffusion</span><span class="muted">à fournir</span></li>
+        <li><span>Fiche technique</span><span class="muted">à fournir</span></li>
+        <li><span>Conditions financières</span><span class="muted">à fournir</span></li>
+      </ul>
+      <p style="margin-top:20px">Programmer ce spectacle&nbsp;: ${mail}</p>`;
+
+    const et = s.etablissement || {};
+    const etablissement = `
+      <p class="status" style="--c:${s.couleur}">${esc(MODE[et.mode] || 'à fournir')}</p>
+      <p class="panel-lead" style="margin-top:14px">${fr(et.texte || 'à fournir')}</p>
+      <dl class="fiche" style="margin-top:24px">
+        <dt>Pass Culture</dt><dd>${s.passCulture ? 'Proposé en offre collective' : 'Non référencé'}</dd>
+        <dt>Guide CRED76</dt><dd>${s.cred76 ? ext(s.cred76, 'Voir la fiche du guide') : 'Non référencé'}</dd>
+      </dl>
+      <p style="margin-top:20px">Organiser une venue&nbsp;: ${mail}</p>`;
+
+    const panels = { voir, programmer, etablissement };
+    const keys = ['voir', 'programmer', 'etablissement'];
+
+    return `
+    <article class="show" style="--tint:${tint(s.couleur)};--c:${s.couleur}">
+      <div class="show-side">
+        <div class="show-side-in">
+          <header class="show-head">
+            <div class="show-top"><a class="back" href="#/"><span aria-hidden="true">←</span> Sommaire</a><span class="folio"><span aria-hidden="true">${String(i + 1).padStart(2, '0')} / ${String(S.length).padStart(2, '0')}</span><span class="sr-only">Entrée ${i + 1} sur ${S.length} du sommaire</span></span></div>
+            <h1 class="show-title${s.titre.length > 18 ? ' is-long' : ''}" tabindex="-1">${fr(s.titre)}</h1>
+            <p class="show-sub">${fr(s.sousTitre)}</p>
+          </header>
+          <div class="show-meta">
+            ${facts(s).length ? `<dl class="facts">${facts(s).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${fr(v)}</dd></div>`).join('')}</dl>` : ''}
+            <nav class="portes-nav" aria-label="Trois portes">
+              <ul>${keys.map(k => `<li><a href="#/spectacle/${s.slug}/${k}"><span class="pn-t">${esc(DOORS[k].titre)}</span><span class="pn-s">${esc(info[k])}</span><span class="pn-a" aria-hidden="true">↓</span></a></li>`).join('')}</ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+      <div class="show-main">
+        <figure class="show-fig">${photo(s)}${s.credit ? `<figcaption class="show-cap">${esc(s.credit)}</figcaption>` : ''}</figure>
+        <div class="show-body">
+          <p class="show-acc">${fr(s.accroche)}</p>
+          <p class="show-text">${fr(s.texte)}</p>
+
+          <section class="sec" id="dates" aria-labelledby="dates-h">
+            <div class="sec-head"><h2 class="sec-title" id="dates-h">Dates</h2><span class="eyebrow">Saison ${esc(D.saison)}</span></div>
+            ${dates.length ? `<ul class="dl-list" id="dl-list">${dates.map((d, k) => dl(d, k >= LIMIT)).join('')}</ul>
+            ${dates.length > LIMIT ? `<button class="more" type="button" aria-expanded="false" aria-controls="dl-list">Voir les ${dates.length} dates</button>` : ''}` : `<p class="none">Aucune date annoncée pour l’instant.</p>`}
+          </section>
+
+          <section class="sec" id="portes" aria-labelledby="portes-h">
+            <h2 class="sr-only" id="portes-h">Trois portes</h2>
+            <div class="tablist" role="tablist" aria-label="Trois portes">
+              ${keys.map((k, j) => `<button class="tab" type="button" role="tab" id="tab-${k}" data-k="${k}" aria-controls="panel-${k}" aria-selected="${j === 0}" tabindex="${j === 0 ? 0 : -1}">${esc(DOORS[k].titre)}</button>`).join('')}
+            </div>
+            ${keys.map((k, j) => `<div class="panel" role="tabpanel" id="panel-${k}" data-k="${k}" aria-labelledby="tab-${k}" tabindex="0"${j === 0 ? '' : ' hidden'}>${panels[k]}</div>`).join('')}
+          </section>
+
+          <a class="next" href="#/spectacle/${next.slug}" style="--tint:${tint(next.couleur)};--c:${next.couleur}">
+            <span><span class="eyebrow">Suivant dans le sommaire</span><span class="next-title">${fr(next.titre)}</span><span class="next-go">${isShow(next) ? 'Voir le spectacle' : 'Voir les actions culturelles'} <span aria-hidden="true">→</span></span></span>
+            ${photo(next)}
+          </a>
+        </div>
+      </div>
+    </article>`;
+  }
+
+  function selectTab(key, focus) {
+    const root = document.getElementById('portes');
+    if (!root) return;
+    root.querySelectorAll('[role="tab"]').forEach(t => {
+      const on = t.dataset.k === key;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      if (on && focus) t.focus({ preventScroll: true });
+    });
+    root.querySelectorAll('[role="tabpanel"]').forEach(p => { p.hidden = p.dataset.k !== key; });
+  }
+
+  function bindShow(s) {
+    const tabs = [...main.querySelectorAll('[role="tab"]')];
+    const go = (t, focus) => { selectTab(t.dataset.k, focus); history.replaceState(null, '', `#/spectacle/${s.slug}/${t.dataset.k}`); };
+    tabs.forEach((t, k) => {
+      t.addEventListener('click', () => go(t, false));
+      t.addEventListener('keydown', e => {
+        const n = tabs.length;
+        const to = { ArrowRight: k + 1, ArrowDown: k + 1, ArrowLeft: k - 1 + n, ArrowUp: k - 1 + n, Home: 0, End: n - 1 }[e.key];
+        if (to === undefined) return;
+        e.preventDefault();
+        go(tabs[to % n], true);
+      });
+    });
+    const more = main.querySelector('.more');
+    if (more) more.addEventListener('click', () => {
+      const open = more.getAttribute('aria-expanded') !== 'true';
+      main.querySelectorAll('[data-more]').forEach(li => { li.hidden = !open; });
+      more.setAttribute('aria-expanded', String(open));
+      more.textContent = open ? 'Afficher moins de dates' : `Voir les ${main.querySelectorAll('.dl-list > li').length} dates`;
+    });
+  }
+
+  /* Pied de page */
+  function footerHTML() {
+    return `
+      <div class="foot-brand">
+        <div class="foot-logo"></div>
+        <p class="foot-line">${esc(C.nom)}, théâtre à ${esc(C.ville)} depuis ${esc(C.depuis)}.</p>
+      </div>
+      <div class="foot-cols">
+        <section aria-labelledby="f-contact"><h2 class="eyebrow" id="f-contact">Contact</h2><p>${esc(C.adresse)}</p><p>${mail}</p></section>
+        <section aria-labelledby="f-part"><h2 class="eyebrow" id="f-part">Partenaires</h2><ul>${C.partenaires.map(p => `<li>${nw(p)}</li>`).join('')}</ul></section>
+        <section aria-labelledby="f-mentions"><h2 class="eyebrow" id="f-mentions">Mentions</h2><p class="muted-d">SIRET ${esc(C.siret)}</p><p class="muted-d">Licence ${esc(C.licence)}</p></section>
+      </div>`;
+  }
+
+  /* Routeur */
+  let view = null;
+  const parse = () => {
+    const h = location.hash;
+    const m = h.match(/^#\/spectacle\/([a-z0-9-]+)(?:\/(voir|programmer|etablissement))?\/?$/);
+    if (m && idx.has(m[1])) return { kind: 'show', slug: m[1], porte: m[2] || null };
+    return { kind: 'home', anchor: /^#[a-z][\w-]*$/i.test(h) ? h.slice(1) : null };
+  };
+
+  function route(first) {
+    const r = parse();
+    const key = r.kind === 'show' ? 'show:' + r.slug : 'home';
+    const changed = key !== view;
+    if (changed) {
+      view = key;
+      if (r.kind === 'show') {
+        const s = S[idx.get(r.slug)];
+        main.innerHTML = showHTML(s);
+        bindShow(s);
+        document.title = `${s.titre} · ${C.nom}`;
+      } else {
+        main.innerHTML = homeHTML();
+        bindHome();
+        document.title = `${C.nom}, théâtre à ${C.ville}`;
+      }
+      window.scrollTo(0, 0);
+      if (!first) { const h1 = main.querySelector('h1'); if (h1) h1.focus({ preventScroll: true }); }
+    }
+    if (r.kind === 'show' && r.porte) {
+      selectTab(r.porte, !first);
+      const el = document.getElementById('portes');
+      if (el) el.scrollIntoView({ block: 'start' });
+    } else if (r.kind === 'home' && r.anchor) {
+      const el = document.getElementById(r.anchor);
+      if (el) el.scrollIntoView({ block: 'start' });
+    } else if (r.kind === 'home' && !changed) {
+      window.scrollTo(0, 0);
+    }
+  }
+
+  function closeMenu() {
+    if (menuBtn.getAttribute('aria-expanded') === 'true') {
+      menuBtn.setAttribute('aria-expanded', 'false');
+      menuBtn.textContent = 'Menu';
+      head.classList.remove('menu-open');
+    }
+  }
+  menuBtn.addEventListener('click', () => {
+    const open = menuBtn.getAttribute('aria-expanded') !== 'true';
+    menuBtn.setAttribute('aria-expanded', String(open));
+    menuBtn.textContent = open ? 'Fermer' : 'Menu';
+    head.classList.toggle('menu-open', open);
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    closeMenu();
+    const href = a.getAttribute('href');
+    if (href === '#main') { e.preventDefault(); main.focus(); return; }
+    if (href === location.hash || (href === '#/' && !location.hash)) { e.preventDefault(); route(false); }
+  });
+
+  setLogo(document.querySelector('.brand-mark'), D.logo.mark);
+  const foot = document.querySelector('.site-foot');
+  foot.innerHTML = footerHTML();
+  setLogo(foot.querySelector('.foot-logo'), D.logo.full);
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.addEventListener('hashchange', () => route(false));
+  route(true);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compagnie Crescite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500;1,6..96,600&family=Instrument+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<style>
+/* Maquette 10 · « La pieuvre vivante, rangée ».
+   Le prototype animé, remis en ordre : les huit bras du logo se prolongent jusqu'aux titres, on les tire
+   pour entrer dans un spectacle. Au repos, rien ne bouge. Chaque spectacle garde sa couleur, sa photo et
+   un seul effet au défilement ; tout le reste (textes, dates, portes) suit la même mise en page claire. */
+:root {
+  --nuit: #150a11; --lait: #f6f1ea; --lait-2: #e9e1d6; --encre: #1b1216; --gris: #675b61;
+  --blanc: #f7ecf1; --blanc-2: #c9b7c1; --magenta: #bc3e80; --magenta-texte: #a8306f;
+  --serif: "Bodoni Moda", "Bodoni 72", Didot, serif; --sans: "Instrument Sans", system-ui, sans-serif;
+  --gout: clamp(18px, 4vw, 56px); --haut: 64px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--lait); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
+[tabindex="-1"]:focus { outline: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.evitement { position: absolute; left: 8px; top: -80px; z-index: 80; background: #fff; color: #000; padding: 8px 14px; border-radius: 6px; }
+.evitement:focus { top: 8px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 var(--gout); }
+[hidden] { display: none !important; }
+
+/* en-tête : un seul étage, le même partout */
+.top { position: sticky; top: 0; z-index: 40; height: var(--haut); background: var(--nuit); color: var(--blanc); border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.top .wrap { max-width: none; height: 100%; display: flex; align-items: center; gap: 24px; }
+.marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 1.1rem; }
+.marque span.l { width: 46px; color: var(--blanc); }
+.marque svg { width: 100%; height: auto; display: block; }
+.nav { margin-left: auto; display: flex; gap: 6px; }
+.nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; color: var(--blanc-2); font-weight: 600; font-size: .95rem; }
+.nav a:hover { color: var(--blanc); }
+.menu { display: none; margin-left: auto; background: none; border: 1px solid rgba(255, 255, 255, .25); color: var(--blanc); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); }
+
+/* ---------- la scène : la pieuvre et ses huit bras ---------- */
+.stage { position: relative; height: clamp(620px, calc(100svh - var(--haut)), 900px); background: radial-gradient(52% 56% at 50% var(--gy, 45%), #2a1220 0%, var(--nuit) 72%); color: var(--blanc); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage-copy { position: relative; z-index: 2; text-align: center; padding: clamp(24px, 4.6vh, 50px) var(--gout) 0; pointer-events: none; }
+.stage-copy h1 { margin: 0; font: italic 500 clamp(1.6rem, 1.1rem + 1.4vw, 2.4rem)/1.1 var(--serif); text-wrap: balance; }
+.stage-foot { position: absolute; left: 0; right: 0; bottom: 26px; margin: 0; padding: 0 var(--gout); text-align: center; color: var(--blanc-2); font-size: .95rem; pointer-events: none; }
+.t-labels { list-style: none; margin: 0; padding: 0; }
+.t-label { position: absolute; left: 0; top: 0; z-index: 3; display: block; color: var(--blanc); text-decoration: none; cursor: grab; touch-action: none; -webkit-user-drag: none; -webkit-touch-callout: none; transition: opacity .25s, color .2s; }
+.t-label.right { text-align: right; }
+.t-title { display: block; font: italic 500 clamp(1.2rem, .95rem + .7vw, 1.6rem)/1.15 var(--serif); text-wrap: balance; }
+.t-when { position: absolute; top: calc(100% + 8px); left: 0; right: 0; font-size: .82rem; line-height: 1.2; color: var(--blanc-2); white-space: nowrap; opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+.t-label.right .t-when { text-align: right; }
+.t-label.is-active { color: var(--c); }
+.t-label.is-active .t-when { opacity: 1; transform: none; }
+.stage.has-active .t-label:not(.is-active) { opacity: .45; }
+.stage.over-tentacle { cursor: grab; }
+.stage.is-grabbing, .stage.is-grabbing .t-label { cursor: grabbing; }
+.stage.is-mobile .t-when { opacity: 1; transform: none; top: calc(100% + 6px); }
+.stage.is-mobile .t-title { font-size: 1.2rem; }
+
+/* ---------- l'accueil, sous la scène : clair et ordinaire ---------- */
+section.bloc { padding: clamp(56px, 8vw, 104px) 0; }
+section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
+.entete { display: flex; justify-content: space-between; align-items: baseline; gap: 16px 32px; flex-wrap: wrap; margin-bottom: 28px; }
+.entete h2 { margin: 0; font: italic 500 clamp(2rem, 1.4rem + 2vw, 3rem)/1 var(--serif); }
+.entete a, .entete button.lien { font: 600 1rem var(--sans); color: var(--magenta-texte); text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; }
+.entete a:hover, .entete button.lien:hover { text-decoration: underline; }
+.dates { list-style: none; margin: 0; padding: 0; }
+.dates li { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr) 110px; gap: 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--lait-2); }
+.dates time { font-weight: 700; font-variant-numeric: tabular-nums; }
+.dates time small { display: block; font-weight: 400; color: var(--gris); font-size: .85rem; }
+.dates a { font: italic 500 1.3rem/1.2 var(--serif); text-decoration: none; }
+.dates a:hover { color: var(--magenta-texte); }
+.dates a::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; margin-right: 10px; }
+.dates .ou { color: var(--gris); }
+.dates .pub { font-size: .82rem; font-weight: 600; text-align: right; }
+.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 0 clamp(20px, 3vw, 40px); }
+.porte { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 10px; align-content: start; padding-top: 22px; border-top: 4px solid var(--dc); }
+.porte h3 { margin: 0; font: italic 500 1.75rem/1.1 var(--serif); }
+.porte > p { margin: 0; color: var(--gris); }
+.porte ul { list-style: none; margin: 6px 0 14px; padding: 0; border-top: 1px solid var(--lait-2); }
+.porte li a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
+.porte li a:hover { color: var(--dct); }
+.porte li small { color: var(--gris); white-space: nowrap; }
+.porte .bas > p { margin: 0; color: var(--gris); }
+.porte .suite { font-weight: 700; color: var(--dct); text-decoration: none; }
+.porte .suite:hover { text-decoration: underline; }
+.compagnie { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
+.compagnie p.grand { margin: 0 0 18px; font: 500 clamp(1.4rem, 1.1rem + 1vw, 2rem)/1.3 var(--serif); }
+.chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; align-self: start; }
+.chiffres dt { font: 500 2.6rem/1 var(--serif); }
+.chiffres dd { margin: 4px 0 0; color: var(--gris); font-size: .9rem; }
+footer { background: var(--nuit); color: var(--blanc-2); padding: 44px 0; font-size: .92rem; }
+footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+footer strong { color: var(--blanc); }
+footer p { margin: 0 0 6px; }
+
+/* ---------- la page d'un spectacle ---------- */
+/* l'univers (couleurs, photo, un effet) ne vit que dans l'ouverture et l'effet signature ;
+   le reste de la page a la même forme pour tous les spectacles */
+.show { --bg: var(--nuit); --bg2: #1f0f19; --fg: var(--blanc); --fg2: var(--blanc-2); --ac: var(--magenta); --ac2: #e9d7b0; --sc: var(--magenta); --act: var(--magenta-texte); }
+.sx { position: relative; }
+.sx-pin { position: sticky; top: var(--haut); height: calc(100vh - var(--haut)); height: calc(100svh - var(--haut)); overflow: hidden; }
+.sx-hero { height: 170vh; background: var(--bg); color: #fff; }
+.hero-photo { position: absolute; inset: 0; overflow: hidden; background: var(--bg); }
+.hero-photo img { width: 100%; height: 100%; object-fit: cover; transform: scale(calc(1.08 - var(--p, 0) * .08)); filter: brightness(calc(.92 - var(--p, 0) * .45)); }
+.hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--bg) 88%, transparent) 0%, color-mix(in srgb, var(--bg) 50%, transparent) 42%, transparent 72%), linear-gradient(0deg, color-mix(in srgb, var(--bg) 85%, transparent) 0%, transparent 42%); }
+.hero-text { position: absolute; left: 0; right: 0; bottom: clamp(40px, 10vh, 110px); max-width: 1180px; margin: 0 auto; padding: 0 var(--gout); transform: translateY(calc(var(--p, 0) * -10vh)); }
+.fil-ariane { margin: 0 0 16px; font-size: .9rem; color: rgba(255, 255, 255, .8); }
+.fil-ariane a { text-decoration: none; }
+.fil-ariane a:hover { text-decoration: underline; }
+.hero-text h1 { margin: 0; max-width: 12ch; font: italic 500 clamp(3rem, 1.6rem + 5.4vw, 7.2rem)/.95 var(--serif); text-wrap: balance; }
+/* le bras qui vous a amené : il souligne le titre et s'allonge au défilement */
+.hero-text h1::after { content: ""; display: block; width: calc(90px + var(--p, 0) * min(320px, 40vw)); height: 4px; margin-top: 22px; border-radius: 2px; background: var(--sc); }
+.hero-sub { margin: 18px 0 0; font-size: 1.15rem; color: rgba(255, 255, 255, .88); max-width: 46ch; }
+.hero-next { margin: 10px 0 0; font-weight: 600; }
+.hero-credit { position: absolute; right: var(--gout); bottom: 14px; margin: 0; font-size: .75rem; color: rgba(255, 255, 255, .65); }
+.cue { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); margin: 0; font-size: .8rem; color: rgba(255, 255, 255, .7); opacity: calc(1 - var(--p, 0) * 5); }
+
+.sx-sig { height: 300vh; background: var(--bg2); color: var(--fg); }
+.sig { position: relative; height: 100%; overflow: hidden; }
+.sig blockquote { margin: 0; }
+.sig cite { display: block; margin-top: 14px; font: 600 .76rem/1.4 var(--sans); font-style: normal; letter-spacing: .07em; text-transform: uppercase; color: var(--fg2); }
+.sig-vers > p:first-child { margin: 0; font: italic 500 clamp(1.5rem, 1rem + 2vw, 2.8rem)/1.12 var(--serif); text-wrap: balance; }
+/* Cléophène : les jumeaux */
+.sig-jumeaux .twin { position: absolute; top: 14%; height: 54%; width: min(26vw, 400px); overflow: hidden; border: 1px solid var(--ac); }
+.sig-jumeaux .twin.l { left: calc(50% - min(13vw, 200px) - clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
+.sig-jumeaux .twin.r { left: calc(50% - min(13vw, 200px) + clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
+.sig-jumeaux .twin img { width: 100%; height: 100%; object-fit: cover; }
+.sig-jumeaux .twin.r img { transform: scaleX(-1); }
+.sig-jumeaux .crown { position: absolute; left: 50%; top: 3%; width: 92px; transform: translateX(-50%); fill: none; stroke: var(--ac); stroke-width: 2.5; stroke-linejoin: round; }
+.sig-jumeaux .crown path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, var(--p) * 2.2, 1)); }
+.sig-q { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); width: min(15vw, 230px); margin: 0; text-align: center; font: italic 600 clamp(1.2rem, 1rem + 1vw, 1.8rem)/1.15 var(--serif); color: var(--ac); opacity: clamp(0, (var(--p) - .5) * 5, 1); }
+.sig-jumeaux .sig-vers { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); width: min(900px, 90%); text-align: center; opacity: clamp(0, (var(--p) - .62) * 5, 1); }
+/* Cyrano : la tirade du nez */
+.sig-nez { display: grid; place-items: center; padding: 0 var(--gout); }
+.sig-nez .moon { position: absolute; right: 9vw; top: 8%; width: clamp(70px, 11vw, 150px); fill: var(--ac); transform: translateY(calc((1 - var(--p)) * 30vh)); }
+.nez-lines p { margin: 0; text-align: center; font-family: var(--serif); font-style: italic; font-weight: 600; line-height: 1.04; }
+.nez-lines span { display: block; font-size: calc(1.3rem + var(--i) * 1.2vw); opacity: clamp(0, (var(--p) * 6.2 - var(--i) - .2) * 2, 1); transform: translateY(calc((1 - clamp(0, var(--p) * 6.2 - var(--i) - .2, 1)) * 40px)); }
+.nez-lines span:last-child { color: var(--ac); font-size: clamp(2.4rem, 1rem + 6vw, 7rem); }
+.nez-lines cite { text-align: center; opacity: clamp(0, (var(--p) - .85) * 8, 1); }
+/* Bérénice : le cercle */
+.sig-cercle { display: grid; place-items: center; }
+.ring-photo { position: absolute; left: 50%; top: 40%; width: min(40vh, 60vw); aspect-ratio: 1; transform: translate(-50%, -50%) scale(calc(.62 + var(--p) * .38)); clip-path: circle(50%); }
+.ring-photo img { width: 100%; height: 100%; object-fit: cover; }
+.ring { position: absolute; left: 50%; top: 40%; width: min(64vh, 90vw); transform: translate(-50%, -50%); overflow: visible; }
+.ring text { font-family: var(--serif); font-style: italic; font-size: 14px; letter-spacing: .8px; fill: var(--fg); }
+.ring text.latin { font-family: var(--sans); font-style: normal; font-weight: 600; font-size: 10.5px; letter-spacing: 5px; fill: var(--ac); }
+.ring-line { fill: none; stroke: var(--ac); stroke-width: 1.2; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
+.ring-rot { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * 150deg)); }
+.ring-rot2 { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * -110deg)); }
+.sig-cercle .sig-vers { position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%); width: min(860px, 92%); text-align: center; opacity: clamp(0, (var(--p) - .62) * 5, 1); }
+.sig-cercle .sig-vers > p:first-child { font-size: clamp(1.1rem, .8rem + 1.2vw, 1.9rem); }
+.sig-latin { margin: 8px 0 0; font-size: .9rem; color: var(--fg2); }
+/* Mon Royaume pour un cheval : le paperboard */
+.sig-board { display: grid; place-items: center; }
+.sheets { list-style: none; margin: 0; padding: 0; position: absolute; left: 50%; top: 9%; width: min(600px, 80vw); height: 64%; transform: translateX(-50%); perspective: 1600px; }
+.sheet { position: absolute; inset: 0; z-index: var(--z); display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 7%; background: #fffdf8 linear-gradient(transparent 96%, #d7e3f4 96%) 0 0 / 100% 2.2em; border: 1px solid #d9d0bf; box-shadow: 0 18px 40px rgba(20, 20, 50, .16); transform-origin: 50% 0; backface-visibility: hidden; transform: rotateX(calc(clamp(0, var(--p) * 4.6 - var(--i) - .35, 1) * -168deg)); }
+.sheet:last-child { transform: none; }
+.sheet .l1 { font: italic 500 clamp(1.7rem, 1rem + 2.6vw, 3.1rem)/1.02 var(--serif); color: var(--ac2); }
+.sheet .l2 { font: italic 500 clamp(1.4rem, .9rem + 2vw, 2.5rem)/1.06 var(--serif); color: var(--ac); }
+.sheet .src { font: 600 .76rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: #5a5f78; margin-top: 8px; }
+.sig-board .sig-note { position: absolute; left: 0; right: 0; bottom: 6%; margin: 0; padding: 0 var(--gout); text-align: center; font: italic 500 1.25rem var(--serif); color: var(--fg); }
+/* L'imaginaire forcé : les annotations */
+.sig-ann { display: grid; place-items: center; padding: 0 var(--gout); }
+.ann-text { max-width: 34ch; }
+.ann-text p { margin: 0; font: italic 500 clamp(1.25rem, .8rem + 1.5vw, 2.2rem)/1.7 var(--serif); }
+.ann { position: relative; white-space: nowrap; --k: clamp(0, var(--p) * 3.6 - var(--i) * .9 - .25, 1); }
+.ann::before { content: ""; position: absolute; inset: -.06em -.3em -.02em; border: 2.5px solid var(--ac); border-radius: 50%; transform: rotate(-3deg); clip-path: inset(0 calc((1 - var(--k)) * 100%) 0 0); }
+.ann-note { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -.1em); font: 600 .5em/1 var(--sans); font-style: normal; letter-spacing: .02em; color: var(--ac); white-space: nowrap; opacity: var(--k); }
+.ann-text cite { text-align: right; }
+.ann-marge { position: absolute; right: max(4vw, 16px); bottom: 9%; width: min(270px, 40vw); margin: 0; font: italic 500 1.15rem/1.35 var(--serif); color: var(--ac2); opacity: clamp(0, (var(--p) - .78) * 6, 1); }
+/* La Folle Idée : l'horloge */
+.sig-clock { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 4vw; padding: 0 max(var(--gout), 5vw); }
+.clock { width: min(44vh, 36vw); justify-self: center; overflow: visible; }
+.clock > circle { fill: none; stroke: var(--fg); stroke-width: 3; }
+.clock .ticks line { stroke: var(--fg); stroke-width: 1.5; stroke-linecap: round; }
+.clock .nums text { font: 600 14px var(--sans); fill: var(--fg); text-anchor: middle; }
+.clock .hand-h { stroke: var(--fg); stroke-width: 6; stroke-linecap: round; }
+.clock .hand-m { stroke: var(--ac); stroke-width: 3.5; stroke-linecap: round; }
+.clock .pin { fill: var(--ac2); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; font: italic 500 clamp(1.3rem, 1rem + 1.2vw, 2.1rem)/1.15 var(--serif); }
+.steps li { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); align-items: baseline; opacity: .2; transition: opacity .4s, transform .4s; transform: translateX(-10px); }
+.steps li.on { opacity: 1; transform: none; }
+.steps b { font: 700 .6em var(--sans); font-style: normal; color: var(--ac); letter-spacing: .04em; }
+.stamp { position: absolute; left: 50%; top: 6%; margin: 0; font: 700 clamp(1.6rem, 1.1rem + 2vw, 3rem) var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ac); border: 4px solid var(--ac); padding: 0 .4em; transform: translateX(-50%) rotate(-6deg) scale(calc(1.5 - clamp(0, var(--p) * 8, 1) * .5)); opacity: clamp(0, var(--p) * 8, 1); }
+/* Macbeth – Fatum : le fil rouge */
+.sig-fil { display: grid; place-items: center; padding: 0 var(--gout); }
+.thread { position: absolute; inset: 0; width: 100%; height: 100%; }
+.thread path { fill: none; stroke: var(--ac); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
+.fil-vers { position: relative; text-align: center; }
+.fil-vers p { margin: 0; font: italic 600 clamp(2.4rem, 1rem + 5.4vw, 6.6rem)/1 var(--serif); text-wrap: balance; color: color-mix(in srgb, var(--fg) calc((1 - clamp(0, (var(--p) - .4) * 3, 1)) * 100%), var(--ac)); }
+.fil-num { position: absolute; left: 0; right: 0; bottom: 7%; margin: 0; display: flex; justify-content: center; gap: clamp(20px, 6vw, 90px); }
+.fil-num div { text-align: center; opacity: clamp(0, var(--p) * 5 - 2.6 - var(--i) * .5, 1); }
+.fil-num dt { font: 600 clamp(2rem, 1.2rem + 2.4vw, 3.4rem)/1 var(--serif); color: var(--ac); }
+.fil-num dd { margin: 4px 0 0; font-size: .85rem; color: var(--fg2); }
+/* Actions culturelles : les heures */
+.sig-heures { display: grid; place-items: center; }
+.gauge { position: absolute; left: 50%; top: 45%; width: min(60vh, 80vw); transform: translate(-50%, -50%) rotate(-90deg); }
+.gauge circle { fill: none; stroke-width: 8; }
+.gauge .g0 { stroke: color-mix(in srgb, var(--ac) 16%, transparent); }
+.gauge .g1 { stroke: var(--ac); stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
+.sig-heures .big { position: relative; margin: -6vh 0 0; display: grid; justify-items: center; text-align: center; }
+.sig-heures .count { font: 500 clamp(4rem, 2rem + 8vw, 10rem)/.9 var(--serif); color: var(--ac); font-variant-numeric: tabular-nums; }
+.sig-heures .unit { font: italic 500 clamp(1.2rem, 1rem + .8vw, 1.8rem) var(--serif); }
+.sig-heures .per { font-size: .85rem; color: var(--fg2); margin-top: 6px; }
+.mots { position: absolute; left: 0; right: 0; bottom: 6%; list-style: none; margin: 0; padding: 0 var(--gout); display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mots li { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--ac); font-weight: 600; color: var(--ac); opacity: clamp(0, var(--p) * 7 - var(--i) - 1.5, 1); }
+
+/* la suite de la page : la même pour tous */
+.corps { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
+.accroche { margin: 0 0 22px; font: italic 500 clamp(1.5rem, 1.1rem + 1.2vw, 2.2rem)/1.2 var(--serif); text-wrap: balance; }
+.corps p { max-width: 64ch; }
+.faits { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 18px; font-size: .97rem; align-content: start; }
+.faits dt { color: var(--gris); }
+.faits dd { margin: 0; font-weight: 600; }
+.bouton { display: inline-block; padding: 10px 18px; border-radius: 999px; border: 1.5px solid currentColor; font-weight: 700; text-decoration: none; }
+.bouton:hover { background: var(--encre); color: var(--lait); border-color: var(--encre); }
+.onglets { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--lait-2); margin-bottom: 26px; }
+.onglets button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 0; margin: 0 26px -1px 0; font: italic 500 1.3rem var(--serif); color: var(--gris); cursor: pointer; }
+.onglets button:hover { color: var(--encre); }
+.onglets button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--dc); }
+.panneau { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); }
+.panneau h3 { margin: 0 0 10px; font: 700 .8rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
+.panneau p { margin: 0 0 14px; }
+.panneau .faits { margin-bottom: 18px; }
+.docs { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--lait-2); }
+.docs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); }
+.afournir { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); border: 1px dashed var(--gris); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.badge { display: inline-block; margin: 0 0 12px; padding: 4px 12px; border-radius: 999px; background: var(--dc); color: #fff; font-weight: 700; font-size: .85rem; }
+.suivant { display: block; background: var(--n-bg); color: #fff; text-decoration: none; padding: clamp(44px, 7vw, 80px) 0; }
+.suivant .wrap { display: block; }
+.suivant small { display: block; color: rgba(255, 255, 255, .75); margin-bottom: 8px; font-size: .95rem; }
+.suivant b { font: italic 500 clamp(2rem, 1.4rem + 2.4vw, 3.6rem)/1 var(--serif); }
+.suivant b::after { content: ""; display: block; width: 90px; height: 4px; margin-top: 18px; border-radius: 2px; background: var(--n-sc); transition: width .3s; }
+.suivant:hover b::after { width: 200px; }
+
+/* immobile : réduire les animations */
+.still .sx { height: auto !important; }
+.still .sx-pin { position: relative; top: 0; height: auto; min-height: 78vh; overflow: hidden; }
+.still .sx-sig .sig { min-height: 86vh; }
+.still .steps li { opacity: 1; transform: none; }
+
+#ink { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; transition: opacity .32s; }
+#ink.fade { opacity: 0; }
+
+@media (max-width: 900px) {
+  .compagnie, .corps, .panneau { grid-template-columns: minmax(0, 1fr); }
+  .portes { grid-template-columns: minmax(0, 1fr); gap: 34px; }
+  footer .wrap { grid-template-columns: minmax(0, 1fr); }
+  .sig-clock { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 28px; }
+  .clock { width: min(32vh, 60vw); }
+}
+@media (max-width: 760px) {
+  .nav { display: none; position: absolute; left: 0; right: 0; top: var(--haut); background: var(--nuit); flex-direction: column; padding: 8px var(--gout) 18px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+  .top.ouvert .nav { display: flex; }
+  .menu { display: inline-block; }
+  .stage { height: auto; min-height: 980px; }
+  .stage-foot { bottom: 22px; }
+  .dates li { grid-template-columns: 1fr; gap: 2px; }
+  .dates .pub { text-align: left; }
+  .sig-jumeaux .twin { width: 40vw; height: 34%; top: 16%; }
+  .sig-jumeaux .twin.l { left: calc(50% - 20vw - clamp(0, var(--p) * 1.6, 1) * 23vw); }
+  .sig-jumeaux .twin.r { left: calc(50% - 20vw + clamp(0, var(--p) * 1.6, 1) * 23vw); }
+  .sig-q { top: 60%; width: 84vw; }
+  .sig-jumeaux .sig-vers > p:first-child { font-size: 1.3rem; }
+  .ann-marge { position: static; margin-top: 24px; width: auto; }
+  .sig-ann { align-content: center; }
+  .hero-text h1 { font-size: clamp(2.6rem, 11vw, 3.6rem); }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<a class="evitement" href="#main">Aller au contenu</a>
+<header class="top"><div class="wrap">
+  <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
+  <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+  <nav class="nav" id="nav" aria-label="Navigation principale">
+    <a href="#/" data-ancre="main">Spectacles</a><a href="#/" data-ancre="agenda">Agenda</a><a href="#/" data-ancre="compagnie">La compagnie</a><a href="#/" data-ancre="contact">Contact</a>
+  </nav>
+</div></header>
+<main id="main" tabindex="-1">
+  <div id="v-accueil">
+    <section class="stage" aria-labelledby="stage-h">
+      <div class="stage-copy"><h1 id="stage-h">Tirez un bras pour entrer dans un spectacle.</h1></div>
+      <canvas class="stage-canvas" aria-hidden="true"></canvas>
+      <ul class="t-labels" aria-label="Les spectacles"></ul>
+      <p class="stage-foot">Compagnie de théâtre · Rouen · depuis 2012</p>
+    </section>
+    <section class="bloc" id="agenda" aria-labelledby="h-ag"><div class="wrap">
+      <div class="entete"><h2 id="h-ag">Prochaines dates</h2><button class="lien" type="button" id="tout" aria-controls="liste-dates" aria-expanded="false"></button></div>
+      <ul class="dates" id="liste-dates"></ul>
+    </div></section>
+    <section class="bloc" id="portes" aria-labelledby="h-po"><div class="wrap">
+      <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
+      <div class="portes" id="portes-liste"></div>
+    </div></section>
+    <section class="bloc" id="compagnie" aria-labelledby="h-co"><div class="wrap">
+      <div class="entete"><h2 id="h-co">La compagnie</h2></div>
+      <div class="compagnie" id="compagnie-corps"></div>
+    </div></section>
+  </div>
+  <div id="v-spectacle" hidden></div>
+</main>
+<footer id="contact"><div class="wrap" id="pied"></div></footer>
+<canvas id="ink" hidden aria-hidden="true"></canvas>
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  /* ---------- outils ---------- */
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  const easeInOut = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const easeOut = t => 1 - Math.pow(1 - t, 3);
+  // échappe le texte, et pose les espaces insécables de la ponctuation française
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+  const titre = t => esc(t).replace(/ – /g, ' – ');
+  const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
+  const motionOK = () => !reduceMQ.matches;
+  const syncMotion = () => document.documentElement.classList.toggle('still', !motionOK());
+  syncMotion(); reduceMQ.addEventListener('change', syncMotion);
+  const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
+  const C = D.company;
+  const prochaine = s => s.prochaine ? `${s.prochaine.jour} ${s.prochaine.mois}, ${s.prochaine.commune}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements');
+
+  /* ---------- encre : la transition, aux couleurs du spectacle ---------- */
+  const Ink = (() => {
+    const cv = $('#ink'), ctx = cv.getContext('2d');
+    let W = 0, H = 0, raf = 0, cols = ['#bc3e80', '#150a11'], on = false;
+    const size = () => { W = innerWidth; H = innerHeight; const dpr = Math.min(2, devicePixelRatio || 1); cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+    const blob = (x, y, r, t) => {
+      if (r <= 0) return;
+      ctx.beginPath();
+      for (let i = 0; i <= 72; i++) { const a = i / 72 * Math.PI * 2, rr = r * (1 + 0.04 * Math.sin(5 * a + t * 3) + 0.025 * Math.sin(9 * a - t * 4)); const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+      ctx.closePath(); ctx.fill();
+    };
+    function run(x, y, grow, dur, done, c) {
+      if (c) cols = c;
+      size(); cv.hidden = false; cv.classList.remove('fade'); on = true;
+      const maxR = Math.hypot(Math.max(x, W - x), Math.max(y, H - y)) * 1.15, t0 = performance.now();
+      cancelAnimationFrame(raf);
+      const frame = now => {
+        const p = clamp((now - t0) / dur, 0, 1), e = grow ? easeInOut(p) : 1 - easeInOut(p), t = now / 1000;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = cols[0]; blob(x, y, maxR * e, t);
+        ctx.fillStyle = cols[1]; blob(x, y, maxR * clamp((e - 0.2) / 0.8, 0, 1), t + 3);
+        if (p < 1) raf = requestAnimationFrame(frame);
+        else { if (!grow) { cv.hidden = true; on = false; } done && done(); }
+      };
+      raf = requestAnimationFrame(frame);
+    }
+    return {
+      cover: (x, y, done, c) => run(x, y, true, 540, done, c),
+      uncover: (x, y, done, c) => run(x, y, false, 600, done, c),
+      fill: col => { size(); cv.hidden = false; cv.classList.remove('fade'); on = true; ctx.fillStyle = col; ctx.fillRect(0, 0, W, H); },
+      fadeOut: () => { if (!on) return; cv.classList.add('fade'); setTimeout(() => { cv.hidden = true; cv.classList.remove('fade'); on = false; }, 330); },
+      active: () => on,
+    };
+  })();
+
+  /* ---------- la scène : le logo et ses huit bras prolongés ---------- */
+  /* Chaque spectacle prolonge l'un des huit bras du logo : même départ, même direction, même épaisseur.
+     Le prolongement glisse sous les autres traits (liseré net), rejoint son titre, le souligne et s'enroule.
+     Rien ne bouge au repos : seuls l'ouverture, le survol et la traction animent les bras. */
+  const Stage = (() => {
+    const el = $('.stage'), cv = $('.stage-canvas', el), ctx = cv.getContext('2d');
+    const ul = $('.t-labels', el), copy = $('.stage-copy', el), foot = $('.stage-foot', el);
+    const lay = document.createElement('canvas'), lctx = lay.getContext('2d');
+    const msk = document.createElement('canvas'), mctx = msk.getContext('2d');
+    const AR = D.arms, BOX = AR.box, W0 = AR.width, GAPL = AR.gap;
+    const paths = D.logo.octopusPaths.map(d => new Path2D(d));
+    const INK = [247, 236, 241];
+    const ROWS_D = { A1outer: 0, A1inner: 1, A2: 2, C1: 3 }, LANE = ROWS_D;
+    const ROWS_M = ['C1L', 'C1R', 'A2L', 'A2R', 'A1innerL', 'A1innerR', 'A1outerL', 'A1outerR'];
+    const INTRO = ['A1outerL', 'A1outerR', 'A1innerL', 'A1innerR', 'A2L', 'A2R', 'C1L', 'C1R'];
+    let W = 0, H = 0, dpr = 1, s = 0.5, ox = 0, oy = 0, mobile = false, gut = 24, pmax = 110;
+    let raf = 0, visible = true, logoAlpha = 1, introT0 = 0, introOn = false, hovered = null, order = [], grab = null, lastPointerAct = 0;
+    const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const T = D.shows.map((show, i) => {
+      const arm = AR.armOf[show.slug];
+      return { i, show, slug: show.slug, arm, side: arm.slice(-1), key: arm.slice(0, -1), A: AR.arms[arm], col: hexRgb(show.couleur),
+        P: [], cum: [], L: 1, sOwn: 0, sExit: 0, sUnder: 0, sCurl: 0, U: 60, ulead: 0, th: 30, lw: 120, lh: 30,
+        grow: 1, hover: 0, focus: false, curl: 1, pull: { x: 0, y: 0 }, pull0: { x: 0, y: 0 }, tension: 0, mode: 'idle', t0: 0, fired: false,
+        target: { x: 0, y: 0 }, tdir: { x: -1, y: 0 }, lane: 0, maxW: 200, label: null };
+    });
+    T.forEach(t => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a class="t-label" href="#/spectacle/${t.slug}" draggable="false" style="--c:${t.show.couleur}"><span class="t-title"><span class="t-tt">${titre(t.show.titre)}</span></span><span class="t-when">${t.show.prochaine ? '<span class="sr">, prochaine date : </span>' : '<span class="sr">, </span>'}${esc(prochaine(t.show))}</span></a>`;
+      ul.appendChild(li);
+      t.label = li.firstElementChild; t.tt = $('.t-tt', t.label); t.ttl = $('.t-title', t.label);
+    });
+
+    function bez(out, p0, p1, p2, p3, n) {
+      for (let k = 1; k <= n; k++) { const u = k / n, a = (1 - u) ** 3, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u * u, d = u ** 3; out.push([a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]); }
+    }
+    function buildPath(t) {
+      const P = t.A.pts.map(([x, y]) => [ox + x * s, oy + y * s]);
+      const iExit = P.length - 1, E = P[iExit], ed = t.A.exitdir, td = t.tdir;
+      const tx = t.target.x + t.pull.x, ty = t.target.y + t.pull.y;
+      let F = E, fd = ed;
+      if (mobile) {
+        // un crochet jusqu'à son couloir, puis une descente droite : des parallèles, comme une portée
+        const lane = t.lane, drop = clamp(Math.abs(E[0] - lane) * 0.75, 24, 74), yq = E[1] + drop, h = drop * 0.6;
+        bez(P, E, [E[0] + ed[0] * h, E[1] + ed[1] * h], [lane, yq - h], [lane, yq], 18);
+        const yf = Math.max(yq + 1, t.target.y - 24);
+        P.push([lane, yf]); F = [lane, yf]; fd = [0, 1];
+      }
+      const d = Math.hypot(tx - F[0], ty - F[1]), k = d * (mobile ? 0.5 : 0.42);
+      bez(P, F, [F[0] + fd[0] * k, F[1] + fd[1] * k], [tx - td.x * k, ty - td.y * k], [tx, ty], mobile ? 12 : 36);
+      const iUnder = P.length - 1, ulen = t.U + t.ulead + 10, nU = Math.max(2, Math.round(ulen / 6));
+      for (let j = 1; j <= nU; j++) P.push([tx + td.x * ulen * j / nU, ty + td.y * ulen * j / nU]);
+      const iCurl = P.length - 1;
+      // la pointe s'enroule vers le haut ; tirer la déroule
+      const Lc = mobile ? 40 : 56, n = 24, du = Lc / n, sign = td.x < 0 ? 1 : -1;
+      const kap0 = 1.5 * Math.PI * 2.3 / Lc * t.curl * (1 - 0.92 * t.tension);
+      let ang = Math.atan2(td.y, td.x), x = P[iCurl][0], y = P[iCurl][1];
+      for (let j = 1; j <= n; j++) { const kap = kap0 * Math.pow((j - 0.5) / n, 1.3); ang += sign * kap * du * 0.5; x += Math.cos(ang) * du; y += Math.sin(ang) * du; ang += sign * kap * du * 0.5; P.push([x, y]); }
+      const cum = [0];
+      for (let j = 1; j < P.length; j++) cum.push(cum[j - 1] + Math.hypot(P[j][0] - P[j - 1][0], P[j][1] - P[j - 1][1]));
+      t.P = P; t.cum = cum; t.L = cum[cum.length - 1];
+      t.sOwn = cum[t.A.own]; t.sExit = cum[iExit]; t.sUnder = cum[iUnder]; t.sCurl = cum[iCurl];
+    }
+    const wRoot = () => Math.max(W0 * s, 1.6);
+    function widthAt(t, u) {
+      const w0 = wRoot(), w1 = Math.max(w0 * 0.7, 1.4);
+      let w;
+      if (u <= t.sExit) w = w0;
+      else if (u <= t.sUnder) w = lerp(w0, w1, smooth(t.sExit, t.sUnder, u));
+      else if (u <= t.sCurl) w = w1;
+      else w = lerp(w1, 0.45, Math.pow((u - t.sCurl) / Math.max(1, t.L - t.sCurl), 0.85));
+      if (u > t.sExit) w *= 1 + 0.45 * t.hover * smooth(t.sExit, t.sExit + 28, u);
+      return w;
+    }
+    /* masque : le logo épaissi d'un liseré, sauf autour de la racine de chaque bras prolongé */
+    function buildMask() {
+      const g = mctx, gap = Math.max(GAPL, 1.1 / s);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, msk.width, msk.height);
+      g.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+      g.fillStyle = g.strokeStyle = '#000'; g.lineWidth = 2 * gap; g.lineJoin = 'round';
+      for (const p of paths) { g.fill(p); g.stroke(p); }
+      g.globalCompositeOperation = 'destination-out'; g.lineCap = 'butt'; g.lineWidth = W0 + 2 * gap + 3;
+      for (const t of T) {
+        if (t.A.under) continue;
+        const pts = t.A.pts, end = Math.min(pts.length - 1, t.A.own + 2);
+        g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+        for (let j = 1; j <= end; j++) g.lineTo(pts[j][0], pts[j][1]);
+        g.stroke();
+      }
+      g.globalCompositeOperation = 'source-over';
+    }
+    function layout() {
+      const r = el.getBoundingClientRect();
+      if (r.width < 10 || r.height < 10) return;
+      W = r.width; mobile = W < 760; gut = mobile ? 16 : clamp(W * 0.033, 24, 48);
+      el.classList.toggle('is-mobile', mobile);
+      T.forEach(t => t.label.classList.toggle('right', mobile ? t.side === 'R' : t.side === 'L'));
+      const [bx0, by0, bx1, by1] = BOX, bw = bx1 - bx0, bh = by1 - by0, bcx = (bx0 + bx1) / 2;
+      const top = copy.offsetTop + copy.offsetHeight;
+      if (!mobile) {
+        H = r.height;
+        const colW = clamp(W * 0.2, 190, 300), gapX = clamp(W * 0.04, 36, 70);
+        s = clamp(Math.min((W - 2 * gut - 2 * colW - 2 * gapX) / bw, (H - top - 250) / bh), 0.28, 0.58);
+        ox = W / 2 - bcx * s; oy = top + 20 - by0 * s;
+        const xL = W / 2 - bw / 2 * s - gapX, xR = W / 2 + bw / 2 * s + gapX;
+        const y1 = oy + 570 * s, y4 = Math.max(y1 + 210, H - 130);
+        T.forEach(t => {
+          const L_ = t.side === 'L';
+          t.target = { x: L_ ? xL : xR, y: lerp(y1, y4, ROWS_D[t.key] / 3) };
+          t.tdir = { x: L_ ? -1 : 1, y: 0 }; t.ulead = 0;
+          t.maxW = Math.max(150, L_ ? xL - gut : W - gut - xR);
+        });
+        pmax = clamp(Math.min(W, H) * 0.14, 90, 130);
+        order = [...T].sort((a, b) => (a.side === b.side ? 0 : a.side === 'L' ? -1 : 1) || ROWS_D[a.key] - ROWS_D[b.key]);
+      } else {
+        s = clamp((W - 60) / bw, 0.24, 0.42);
+        ox = W / 2 - bcx * s; oy = top + 10 - by0 * s;
+        const lanes = [14, 23, 32, 41], rr = 10, textX = 54, y0 = oy + by1 * s + 92, rowH = 70;
+        T.forEach(t => {
+          const L_ = t.side === 'L', lane = L_ ? lanes[LANE[t.key]] : W - lanes[LANE[t.key]];
+          t.lane = lane; t.target = { x: lane + (L_ ? rr : -rr), y: y0 + ROWS_M.indexOf(t.arm) * rowH };
+          t.tdir = { x: L_ ? 1 : -1, y: 0 };
+          t.ulead = L_ ? textX - t.target.x : t.target.x - (W - textX);
+          t.maxW = W - 2 * textX;
+        });
+        H = y0 + 7 * rowH + 110;
+        el.style.minHeight = H + 'px';
+        pmax = 80;
+        order = [...T].sort((a, b) => ROWS_M.indexOf(a.arm) - ROWS_M.indexOf(b.arm));
+      }
+      if (!mobile) el.style.minHeight = '';
+      dpr = Math.min(2, devicePixelRatio || 1);
+      for (const c of [cv, lay, msk]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+      T.forEach(t => { t.label.style.maxWidth = t.maxW + 'px'; });
+      T.forEach(t => { t.U = Math.min(t.maxW, t.tt.getBoundingClientRect().width); t.th = t.ttl.offsetHeight; t.lw = t.label.offsetWidth; t.lh = t.label.offsetHeight; });
+      if (!mobile) for (const side of ['L', 'R']) {
+        // rangées régulières ; un titre sur deux lignes repousse les suivants
+        let bottom = -Infinity;
+        T.filter(t => t.side === side).sort((a, b) => ROWS_D[a.key] - ROWS_D[b.key]).forEach(t => {
+          t.target.y = Math.max(t.target.y, bottom + 34 + t.th + 3);
+          bottom = t.target.y + 3 + t.lh - t.th;
+        });
+      }
+      T.forEach(buildPath);
+      buildMask();
+      el.style.setProperty('--gy', (oy + (by0 + by1) / 2 * s).toFixed(0) + 'px');
+      render();
+    }
+    function drawT(g, t, alpha) {
+      const P = t.P, cum = t.cum, n = P.length, sMax = t.sOwn + t.grow * (t.L - t.sOwn);
+      if (sMax <= t.sOwn + 0.5 && t.grow <= 0) return;
+      const front = t.grow < 1 ? 12 : 0, Lp = [], Rp = [];
+      for (let k = 0; k < n; k++) {
+        let u = cum[k], x = P[k][0], y = P[k][1];
+        if (u > sMax) { const q = (sMax - cum[k - 1]) / Math.max(1e-6, u - cum[k - 1]); x = lerp(P[k - 1][0], x, q); y = lerp(P[k - 1][1], y, q); u = sMax; }
+        const a = P[Math.max(0, k - 1)], b = P[Math.min(n - 1, k + 1)];
+        let tx = b[0] - a[0], ty = b[1] - a[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+        let w = widthAt(t, u) / 2;
+        if (front) w *= Math.pow(clamp((sMax - u) / front, 0, 1), 0.6);
+        Lp.push([x - ty * w, y + tx * w]); Rp.push([x + ty * w, y - tx * w]);
+        if (u >= sMax) break;
+      }
+      g.beginPath(); g.moveTo(Lp[0][0], Lp[0][1]);
+      for (let k = 1; k < Lp.length; k++) g.lineTo(Lp[k][0], Lp[k][1]);
+      for (let k = Rp.length - 1; k >= 0; k--) g.lineTo(Rp[k][0], Rp[k][1]);
+      g.closePath();
+      const c = t.col, h = t.hover;
+      g.fillStyle = `rgba(${Math.round(lerp(INK[0], c[0], h))},${Math.round(lerp(INK[1], c[1], h))},${Math.round(lerp(INK[2], c[2], h))},${alpha})`;
+      g.fill();
+    }
+    const activeT = () => (grab ? grab.t : T.find(t => t.mode === 'suck' || t.mode === 'auto') || hovered || T.find(t => t.focus) || null);
+    function render() {
+      const act = activeT();
+      el.classList.toggle('has-active', !!act);
+      lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, lay.width, lay.height);
+      lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      for (const t of T) if (t.mode !== 'hidden' && t !== act) drawT(lctx, t, act ? 0.32 : 1);
+      if (act && act.mode !== 'hidden') drawT(lctx, act, 1);
+      lctx.setTransform(1, 0, 0, 1, 0, 0);
+      lctx.globalCompositeOperation = 'destination-out'; lctx.drawImage(msk, 0, 0); lctx.globalCompositeOperation = 'source-over';
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.drawImage(lay, 0, 0);
+      ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+      ctx.globalAlpha = logoAlpha; ctx.fillStyle = 'rgb(247,236,241)';
+      for (const p of paths) ctx.fill(p);
+      ctx.globalAlpha = 1;
+      for (const t of T) placeLabel(t, act);
+    }
+    function placeLabel(t, act) {
+      const al = t.label.classList.contains('right');
+      const tx = t.target.x + t.pull.x + t.tdir.x * t.ulead, ty = t.target.y + t.pull.y;
+      const lx = clamp(al ? tx - t.lw : tx, 8, Math.max(8, W - t.lw - 8)), ly = clamp(ty - t.th - 3, 8, Math.max(8, H - t.lh - 8));
+      t.label.style.transform = `translate(${lx.toFixed(1)}px, ${ly.toFixed(1)}px)`;
+      t.label.style.opacity = (t.mode === 'hidden' || t.mode === 'suck' ? 0 : smooth(0.7, 1, t.grow)).toFixed(3);
+      t.label.classList.toggle('is-active', t === act);
+    }
+    function step(t, now) {
+      let busy = false;
+      const want = (t === hovered || t.focus || (grab && grab.t === t) || t.mode === 'auto' || t.mode === 'suck') ? 1 : 0;
+      if (Math.abs(t.hover - want) > 0.004) { t.hover += (want - t.hover) * (motionOK() ? 0.22 : 1); busy = true; } else t.hover = want;
+      const curlTo = 1 + 0.12 * t.hover;
+      if (Math.abs(t.curl - curlTo) > 0.002) { t.curl += (curlTo - t.curl) * 0.22; busy = true; } else t.curl = curlTo;
+      const q = clamp((now - t.t0) / (t.mode === 'auto' ? 420 : t.mode === 'spring' ? 560 : t.mode === 'suck' ? 520 : 820), 0, 1);
+      if (t.mode === 'auto') {
+        const e = easeOut(q); t.pull = { x: t.pull0.x * e, y: t.pull0.y * e }; t.tension = clamp(Math.hypot(t.pull.x, t.pull.y) / pmax, 0, 1);
+        if (q >= 1) suck(t, now); busy = true;
+      } else if (t.mode === 'spring') {
+        const c1 = 1.70158, c3 = c1 + 1, e = 1 + c3 * Math.pow(q - 1, 3) + c1 * Math.pow(q - 1, 2);
+        t.pull = { x: t.pull0.x * (1 - e), y: t.pull0.y * (1 - e) }; t.tension = clamp(Math.hypot(t.pull.x, t.pull.y) / pmax, 0, 1);
+        if (q >= 1) { t.mode = 'idle'; t.pull = { x: 0, y: 0 }; t.tension = 0; } busy = true;
+      } else if (t.mode === 'suck') {
+        t.tension = 1; t.grow = 1 - easeInOut(q);
+        if (q >= 0.5 && !t.fired) { t.fired = true; enter(t); }
+        if (q >= 1) { t.mode = 'hidden'; t.pull = { x: 0, y: 0 }; } busy = true;
+      } else if (t.mode === 'grow') {
+        t.grow = easeOut(q); t.tension = 1 - q;
+        if (q >= 1) { t.mode = 'idle'; t.grow = 1; t.tension = 0; } busy = true;
+      }
+      return busy;
+    }
+    function frame(now) {
+      raf = 0;
+      if (!visible) return;
+      let busy = false;
+      if (introOn) {
+        const e = now - introT0;
+        logoAlpha = smooth(0, 500, e);
+        T.forEach(t => { t.grow = easeInOut(clamp((e - 420 - INTRO.indexOf(t.arm) * 70) / 1000, 0, 1)); });
+        if (e > 420 + 7 * 70 + 1000) { introOn = false; logoAlpha = 1; T.forEach(t => { t.grow = 1; }); }
+        busy = true;
+      }
+      for (const t of T) busy = step(t, now) || busy;
+      T.forEach(buildPath);
+      render();
+      if (busy || grab) raf = requestAnimationFrame(frame);
+    }
+    const wake = () => { if (!raf && visible) raf = requestAnimationFrame(frame); };
+
+    /* ---------- tirer un bras ---------- */
+    const local = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    function hit(x, y) {
+      let best = null, bd = 18 * 18;
+      for (const t of T) {
+        if (t.mode !== 'idle') continue;
+        for (let k = 0; k < t.P.length; k++) { if (t.cum[k] < t.sExit) continue; const d = (t.P[k][0] - x) ** 2 + (t.P[k][1] - y) ** 2; if (d < bd) { bd = d; best = t; } }
+      }
+      return best;
+    }
+    function startGrab(t, e, target) {
+      if (!t || t.mode !== 'idle' || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      const p = local(e);
+      grab = { t, id: e.pointerId, x0: p.x, y0: p.y, moved: 0 };
+      try { target.setPointerCapture(e.pointerId); } catch (err) { /* capture indisponible */ }
+      el.classList.add('is-grabbing'); lastPointerAct = performance.now(); wake();
+    }
+    function moveGrab(e) {
+      const p = local(e);
+      if (grab && e.pointerId === grab.id) {
+        const t = grab.t, vx = p.x - grab.x0, vy = p.y - grab.y0, len = Math.hypot(vx, vy);
+        grab.moved = Math.max(grab.moved, len);
+        const R = pmax * 1.3, lr = R * (1 - Math.exp(-len / R)), f = len ? lr / len : 0;
+        t.pull = { x: vx * f, y: vy * f }; t.tension = clamp(lr / pmax, 0, 1);
+        wake(); return;
+      }
+      if (e.pointerType === 'mouse') {
+        const h = hit(p.x, p.y);
+        if (h !== hovered && !(hovered && hovered.labelHover)) { hovered = h; el.classList.toggle('over-tentacle', !!h); wake(); }
+      }
+    }
+    function endGrab(e) {
+      if (!grab || e.pointerId !== grab.id) return;
+      const t = grab.t, moved = grab.moved;
+      grab = null; el.classList.remove('is-grabbing'); lastPointerAct = performance.now();
+      if (moved < 6) activate(t);
+      else if (t.tension >= 0.85) suck(t, performance.now());
+      else { t.mode = 'spring'; t.t0 = performance.now(); t.pull0 = { ...t.pull }; }
+      wake();
+    }
+    function activate(t) {
+      if (!t || t.mode !== 'idle') return;
+      if (!motionOK()) { location.hash = '#/spectacle/' + t.slug; return; }
+      // un clic tire le bras pour vous : le titre s'éloigne, puis la pieuvre l'avale
+      const cx = ox + (BOX[0] + BOX[2]) / 2 * s, cy = oy + (BOX[1] + BOX[3]) / 2 * s;
+      const lx = t.target.x + t.tdir.x * (t.U / 2 + t.ulead), ly = t.target.y;
+      const dx = lx - cx, dy = ly - cy, dl = Math.hypot(dx, dy) || 1;
+      t.mode = 'auto'; t.t0 = performance.now(); t.pull0 = { x: dx / dl * pmax * 1.05, y: dy / dl * pmax * 1.05 };
+      wake();
+    }
+    function suck(t, now) { t.mode = 'suck'; t.t0 = now; t.fired = false; wake(); }
+    function center() { const r = el.getBoundingClientRect(); return { x: r.left + ox + (BOX[0] + BOX[2]) / 2 * s, y: r.top + oy + (BOX[1] + BOX[3]) / 2 * s }; }
+    function enter(t) { const c = center(); Ink.cover(c.x, c.y, () => { location.hash = '#/spectacle/' + t.slug; }, [t.show.couleur, t.show.fondSombre]); }
+    function returnAll(instant) {
+      const now = performance.now();
+      T.forEach(t => {
+        if (t.mode !== 'idle') { t.mode = instant ? 'idle' : 'grow'; t.t0 = now; t.grow = instant ? 1 : 0; t.fired = false; t.pull = { x: 0, y: 0 }; t.tension = 0; }
+        t.focus = false; t.labelHover = false;
+      });
+      hovered = null; grab = null; el.classList.remove('is-grabbing', 'over-tentacle');
+      layout(); wake();
+    }
+
+    cv.addEventListener('pointerdown', e => { const p = local(e); startGrab(hit(p.x, p.y), e, cv); });
+    el.addEventListener('pointermove', moveGrab);
+    el.addEventListener('pointerleave', () => { if (hovered && !hovered.labelHover) { hovered = null; el.classList.remove('over-tentacle'); wake(); } });
+    addEventListener('pointerup', endGrab);
+    addEventListener('pointercancel', e => { if (grab && e.pointerId === grab.id) { const t = grab.t; grab = null; el.classList.remove('is-grabbing'); t.mode = 'spring'; t.t0 = performance.now(); t.pull0 = { ...t.pull }; wake(); } });
+    T.forEach(t => {
+      const b = t.label;
+      b.addEventListener('pointerdown', e => startGrab(t, e, b));
+      b.addEventListener('click', e => {
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        if (performance.now() - lastPointerAct > 450) activate(t);
+      });
+      b.addEventListener('mouseenter', () => { t.labelHover = true; hovered = t; wake(); });
+      b.addEventListener('mouseleave', () => { t.labelHover = false; if (hovered === t) hovered = null; wake(); });
+      b.addEventListener('focus', () => { t.focus = true; wake(); });
+      b.addEventListener('blur', () => { t.focus = false; wake(); });
+      b.addEventListener('keydown', e => {
+        const k = e.key, dir = k === 'ArrowRight' || k === 'ArrowDown' ? 1 : k === 'ArrowLeft' || k === 'ArrowUp' ? -1 : 0;
+        if (dir) { e.preventDefault(); const j = order.indexOf(t); order[(j + dir + order.length) % order.length].label.focus(); }
+      });
+    });
+    new ResizeObserver(() => layout()).observe(el);
+    new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) wake(); }, { threshold: 0.01 }).observe(el);
+    document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (visible) wake(); });
+    function start() {
+      layout();
+      if (motionOK() && scrollY < 40) { introOn = true; introT0 = performance.now(); logoAlpha = 0; T.forEach(t => { t.grow = 0; }); render(); wake(); }
+    }
+    if (document.fonts) document.fonts.ready.then(() => layout());
+    return { start, layout, returnAll, center };
+  })();
+
+  /* ---------- l'accueil, sous la scène ---------- */
+  const ligneDate = d => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.iso}">${esc(d.joursem + ' ' + d.jour + ' ' + d.mois)}<small>${d.annee}</small></time>
+    <a href="#/spectacle/${d.slug}">${titre(d.titre)}</a><span class="ou">${esc(d.lieu ? d.lieu + ', ' : '')}${esc(d.commune)} (${esc(d.dep)})</span><span class="pub">${esc(d.public)}</span></li>`;
+  function accueil() {
+    const liste = $('#liste-dates'), tout = $('#tout');
+    let ouvert = false;
+    const draw = () => {
+      liste.innerHTML = (ouvert ? D.dates : D.dates.slice(0, 6)).map(ligneDate).join('');
+      tout.textContent = ouvert ? 'Moins de dates' : `Toutes les dates (${D.dates.length})`;
+      tout.setAttribute('aria-expanded', ouvert);
+    };
+    tout.addEventListener('click', () => { ouvert = !ouvert; draw(); });
+    draw();
+    const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
+    const porte = (p, corps) => `<div class="porte" style="--dc:${p.couleurVive};--dct:${p.couleur}"><h3>${esc(p.titre)}</h3><p>${esc(p.texte)}</p><div class="bas">${corps}</div></div>`;
+    $('#portes-liste').innerHTML =
+      porte(voir, `<ul>${D.dates.slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(d.jour + ' ' + d.mois)}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/" data-ancre="agenda">Toutes les dates →</a>`) +
+      porte(prog, `<ul><li><a href="#/" data-ancre="main"><span>Le répertoire</span><small>${D.shows.length - 1} spectacles</small></a></li>
+        <li><a href="#/spectacle/${D.shows[0].slug}/programmer"><span>Fiches techniques</span><small>par spectacle</small></a></li>
+        <li><a href="mailto:${C.email}?subject=Programmation"><span>Écrire à la diffusion</span><small>${esc(C.email)}</small></a></li></ul>`) +
+      porte(etab, `<ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${titre(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
+        <p>${D.shows.filter(s => s.passCulture).length} spectacles sont proposés sur le Pass Culture (offre collective).</p>`);
+    $('#compagnie-corps').innerHTML = `<div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
+      <dl class="chiffres"><div><dt>${D.stats.dates}</dt><dd>représentations depuis 2016</dd></div><div><dt>${D.stats.communes}</dt><dd>communes</dd></div><div><dt>${D.stats.departements}</dt><dd>départements</dd></div></dl>`;
+    $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
+      <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
+  }
+
+  /* ---------- la page d'un spectacle ---------- */
+  const Show = (() => {
+    const view = $('#v-spectacle');
+    let current = null, secs = [], sraf = 0;
+    const SIG = {
+      jumeaux: (s, g) => `<div class="sig sig-jumeaux"><div class="twin l"><img src="${D.photos[s.slug]}" alt=""></div><div class="twin r"><img src="${D.photos[s.slug]}" alt=""></div>
+        <svg class="crown" viewBox="0 0 120 70" aria-hidden="true"><path pathLength="1" d="M8 62 L14 18 L38 42 L60 8 L82 42 L106 18 L112 62 Z M8 62 H112"/></svg>
+        <p class="sig-q">${esc(g.question)}</p><blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite></blockquote></div>`,
+      nez: (s, g) => `<div class="sig sig-nez"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>
+        <blockquote class="nez-lines"><p>${g.vers.map((v, i) => `<span style="--i:${i}">${esc(v)}</span>`).join(' ')}</p><cite>${esc(g.source)}</cite></blockquote></div>`,
+      cercle: (s, g) => `<div class="sig sig-cercle"><div class="ring-photo"><img src="${D.photos[s.slug]}" alt=""></div>
+        <svg class="ring" viewBox="0 0 400 400" aria-hidden="true"><defs><path id="ring-a" d="M200 200m-178 0a178 178 0 1 1 356 0a178 178 0 1 1-356 0"/><path id="ring-b" d="M200 200m-146 0a146 146 0 1 1 292 0a146 146 0 1 1-292 0"/></defs>
+          <circle class="ring-line" cx="200" cy="200" r="194" pathLength="1"/><g class="ring-rot"><text><textPath href="#ring-a">${esc(g.vers)} · </textPath></text></g>
+          <g class="ring-rot2"><text class="latin"><textPath href="#ring-b">${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · </textPath></text></g></svg>
+        <blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite><p class="sig-latin"><i lang="la">${esc(g.latin)}</i> : ${esc(g.latin_sens)}</p></blockquote></div>`,
+      paperboard: (s, g) => `<div class="sig sig-board"><ol class="sheets">${g.feuilles.map((f, i) => `<li class="sheet" style="--i:${i};--z:${g.feuilles.length - i}"${i ? ' aria-hidden="true"' : ''}>
+        <span class="l1" lang="${i === 1 ? 'fr' : 'en'}">${esc(f[0])}</span><span class="l2" lang="${i === 1 ? 'fr' : 'en'}">${esc(f[1])}</span><span class="src">${esc(f[2])}</span></li>`).join('')}</ol>
+        <p class="sig-note">Shakespeare condensé, commenté, et parfois traduit au feutre.</p></div>`,
+      annotations: (s, g) => { let n = 0; const html = esc(g.texte).replace(/\[([^\]]+)\]/g, (m, w) => { const i = n++; return `<span class="ann" style="--i:${i}">${w}<span class="ann-note" aria-hidden="true">${esc(g.notes[i])}</span></span>`; });
+        return `<div class="sig sig-ann"><blockquote class="ann-text"><p>${html}</p><cite>${esc(g.source)}</cite></blockquote><p class="ann-marge">${esc(g.marge)}</p>
+          <p class="sr">Notes : ${(g.texte.match(/\[([^\]]+)\]/g) || []).map((w, i) => `${esc(w.slice(1, -1))} veut dire ${esc(g.notes[i])}`).join(' ; ')}.</p></div>`; },
+      horloge: (s, g) => {
+        const ticks = Array.from({ length: 60 }, (_, i) => `<line x1="100" y1="${i % 5 ? 12 : 8}" x2="100" y2="${i % 5 ? 16 : 22}" transform="rotate(${i * 6} 100 100)"/>`).join('');
+        const nums = Array.from({ length: 12 }, (_, i) => { const a = (i + 1) * Math.PI / 6; return `<text x="${(100 + Math.sin(a) * 66).toFixed(1)}" y="${(100 - Math.cos(a) * 66 + 5).toFixed(1)}">${i + 1}</text>`; }).join('');
+        return `<div class="sig sig-clock"><p class="stamp" aria-hidden="true">Grève</p><svg class="clock" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><g class="ticks">${ticks}</g><g class="nums">${nums}</g>
+          <line class="hand-h" x1="100" y1="100" x2="100" y2="54"/><line class="hand-m" x1="100" y1="100" x2="100" y2="30"/><circle class="pin" cx="100" cy="100" r="4"/></svg>
+          <ol class="steps">${g.etapes.map((e, i) => `<li><b>${esc(g.heures[i])}</b><span>${esc(e)}</span></li>`).join('')}</ol></div>`;
+      },
+      fil: (s, g) => `<div class="sig sig-fil"><svg class="thread" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M-20 120 C 260 40, 420 260, 300 420 S 120 760, 420 780 S 860 560, 760 340 S 520 120, 700 60 S 1000 200, 1040 520"/></svg>
+        <blockquote class="fil-vers"><p lang="en">${esc(g.vers)}</p><cite>${esc(g.source)}</cite></blockquote>
+        <dl class="fil-num">${g.chiffres.map(([a, b], i) => `<div style="--i:${i}"><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl></div>`,
+      heures: (s, g) => `<div class="sig sig-heures"><svg class="gauge" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="88" class="g0"/><circle cx="100" cy="100" r="88" class="g1" pathLength="1"/></svg>
+        <p class="big"><span class="count" data-n="${g.nombre}">${g.nombre}</span><span class="unit">${esc(g.unite)}</span><span class="per">${esc(g.periode)}</span></p>
+        <ul class="mots">${g.mots.map((m, i) => `<li style="--i:${i}">${esc(m)}</li>`).join('')}</ul></div>`,
+    };
+    const FX = {
+      horloge(sec, p) {
+        const h = $('.hand-h', sec), m = $('.hand-m', sec);
+        if (h) { h.setAttribute('transform', `rotate(${240 + p * 300} 100 100)`); m.setAttribute('transform', `rotate(${p * 3600} 100 100)`); }
+        const k = Math.min(4, Math.floor(p * 5.2));
+        $$('.steps li', sec).forEach((li, i) => li.classList.toggle('on', !motionOK() || (i <= k && p > 0.02)));
+      },
+      heures(sec, p) { const c = $('.count', sec); if (c) c.textContent = Math.round(Number(c.dataset.n) * easeOut(clamp(p * 1.25, 0, 1))); },
+    };
+    const docs = labels => `<ul class="docs">${labels.map(l => `<li><span>${esc(l)}</span><span class="afournir">à fournir</span></li>`).join('')}</ul>`;
+    const MODE = { etablissement: 'Peut venir dans votre établissement', salle: 'Se joue en salle : venez avec vos classes', a_confirmer: 'Accueil dans l’établissement à confirmer' };
+    function render(s, porte) {
+      current = s.slug;
+      const pal = s.palette, i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
+      const dates = D.dates.filter(d => d.slug === s.slug), n = s.distribution.length;
+      const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null].filter(Boolean);
+      const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
+      const [voir, prog, etab] = D.doors;
+      const choix = ['voir', 'programmer', 'etablissement'].includes(porte) ? porte : 'voir';
+      document.title = `${s.titre} · Compagnie Crescite`;
+      view.innerHTML = `<article class="show" aria-labelledby="titre-sp" style="--bg:${s.fondSombre};--bg2:${pal.fond2};--fg:${pal.texte};--fg2:${pal.texte2};--ac:${pal.accent};--ac2:${pal.accent2};--sc:${s.couleur};--act:${s.couleurTexteClair}">
+        <section class="sx sx-hero" data-scrolly><div class="sx-pin">
+          <div class="hero-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></div>
+          <div class="hero-text"><p class="fil-ariane"><a href="#/">Accueil</a> / <a href="#/" data-ancre="main">Spectacles</a></p>
+            <h1 id="titre-sp" tabindex="-1">${titre(s.titre)}</h1><p class="hero-sub">${esc(s.sousTitre)}</p>
+            <p class="hero-next">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})` : 'Aucune date annoncée pour l’instant.'}</p></div>
+          ${s.credit ? `<p class="hero-credit">${esc(s.credit)}</p>` : ''}<p class="cue" aria-hidden="true">Faites défiler</p></div></section>
+        <section class="sx sx-sig" data-scrolly data-fx="${s.motif}" aria-label="Extrait"><div class="sx-pin">${SIG[s.motif](s, s.signature)}</div></section>
+        <section class="bloc"><div class="wrap corps">
+          <div><h2 class="sr">Le spectacle</h2><p class="accroche">${esc(s.accroche)}</p><p>${esc(s.texte)}</p>${s.video ? `<p><a class="bouton" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div>
+          <dl class="faits">${[...fiche, ...s.equipe.slice(0, 6)].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+        </div></section>
+        <section class="bloc" aria-labelledby="h-dates"><div class="wrap">
+          <div class="entete"><h2 id="h-dates">${dates.length ? `${dates.length} date${dates.length > 1 ? 's' : ''} à venir` : 'Les dates'}</h2></div>
+          ${dates.length ? `<ul class="dates">${dates.map(ligneDate).join('')}</ul>` : '<p>Aucune date annoncée pour l’instant.</p>'}
+        </div></section>
+        <section class="bloc" id="portes-sp" aria-labelledby="h-vous"><div class="wrap">
+          <div class="entete"><h2 id="h-vous">Vous êtes…</h2></div>
+          <div class="onglets" role="tablist" aria-label="Vous êtes">${D.doors.map(p => `<button role="tab" id="o-${p.key}" aria-controls="p-${p.key}" aria-selected="${p.key === choix}" tabindex="${p.key === choix ? 0 : -1}" style="--dc:${p.couleur}">${esc(p.titre)}</button>`).join('')}</div>
+          <div class="panneau" role="tabpanel" id="p-voir" aria-labelledby="o-voir" tabindex="0"${choix === 'voir' ? '' : ' hidden'}>
+            <div><h3>En pratique</h3><dl class="faits">${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}<dt>Âge conseillé</dt><dd><span class="afournir">à fournir</span></dd><dt>Réserver</dt><dd>auprès du lieu de chaque date</dd></dl></div>
+            <div><h3>Les dates</h3><p>${dates.length ? `${dates.length} date${dates.length > 1 ? 's' : ''} cette saison, listée${dates.length > 1 ? 's' : ''} plus haut. La prochaine : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)}.` : 'Aucune date annoncée pour l’instant.'}</p>
+              <p><a href="mailto:${C.email}?subject=${encodeURIComponent('Être prévenu des dates de ' + s.titre)}">Être prévenu des prochaines dates</a></p></div></div>
+          <div class="panneau" role="tabpanel" id="p-programmer" aria-labelledby="o-programmer" tabindex="0"${choix === 'programmer' ? '' : ' hidden'}>
+            <div><h3>La fiche</h3><dl class="faits">${[...fiche, ...s.equipe].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+              ${s.coproduction ? `<h3>Coproduction</h3><p>${esc(s.coproduction)}</p>` : ''}${s.soutiens ? `<h3>Soutiens</h3><p>${esc(s.soutiens)}</p>` : ''}</div>
+            <div><h3>Documents</h3>${docs(['Dossier de diffusion', 'Fiche technique', 'Conditions financières', 'Photos haute définition'])}
+              <h3>Contact diffusion</h3><p>Nom et téléphone <span class="afournir">à fournir</span> · <a href="mailto:${C.email}?subject=${encodeURIComponent('Programmation : ' + s.titre)}">${esc(C.email)}</a></p></div></div>
+          <div class="panneau" role="tabpanel" id="p-etablissement" aria-labelledby="o-etablissement" tabindex="0"${choix === 'etablissement' ? '' : ' hidden'}>
+            <div><p class="badge" style="--dc:${etab.couleur}">${esc(MODE[e.mode] || MODE.a_confirmer)}</p><p>${esc(e.texte)}</p>${s.noteScolaire ? `<p>${esc(s.noteScolaire)}</p>` : ''}
+              <dl class="faits"><dt>Pass Culture</dt><dd>${s.passCulture ? 'offre collective, sur ADAGE' : 'non référencé'}</dd><dt>Guide du CRED76</dt><dd>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">fiche du spectacle</a>` : 'non référencé'}</dd></dl></div>
+            <div><h3>Ressources</h3>${docs(['Dossier pédagogique', 'Pistes d’ateliers', 'Besoins techniques en établissement'])}
+              <p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Faire venir ' + s.titre + ' dans mon établissement')}">Construire un projet avec la compagnie</a></p></div></div>
+        </div></section>
+        <a class="suivant" href="#/spectacle/${nx.slug}" style="--n-bg:${nx.fondSombre};--n-sc:${nx.couleur}"><span class="wrap"><small>Spectacle suivant</small><b>${titre(nx.titre)}</b></span></a>
+      </article>`;
+      const tabs = $$('[role="tab"]', view);
+      const sel = t => tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; });
+      tabs.forEach((t, k) => {
+        t.addEventListener('click', () => sel(t));
+        t.addEventListener('keydown', ev => { const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (d) { const n2 = tabs[(k + d + tabs.length) % tabs.length]; n2.focus(); sel(n2); } });
+      });
+      secs = $$('[data-scrolly]', view);
+      update();
+    }
+    function update() {
+      sraf = 0;
+      const vh = innerHeight;
+      for (const sec of secs) {
+        const r = sec.getBoundingClientRect(), span = r.height - vh;
+        const p = !motionOK() ? 1 : span > 40 ? clamp((-r.top + 64) / span, 0, 1) : 1;
+        sec.style.setProperty('--p', p.toFixed(4));
+        const fx = sec.dataset.fx; if (fx && FX[fx]) FX[fx](sec, p);
+      }
+    }
+    addEventListener('scroll', () => { if (!view.hidden && !sraf) sraf = requestAnimationFrame(update); }, { passive: true });
+    addEventListener('resize', () => { if (!view.hidden) update(); });
+    return { render, current: () => current };
+  })();
+
+  /* ---------- navigation ---------- */
+  const accueilV = $('#v-accueil'), spectacleV = $('#v-spectacle');
+  let vue = null, ancre = null;
+  function route() {
+    const m = location.hash.match(/^#\/spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?/);
+    const s = m && bySlug[m[1]];
+    if (s) {
+      accueilV.hidden = true; spectacleV.hidden = false; vue = 'spectacle';
+      Show.render(s, m[2]);
+      scrollTo(0, 0);
+      if (m[2]) $('#portes-sp').scrollIntoView();
+      $('#titre-sp').focus({ preventScroll: true });
+      Ink.fadeOut();
+    } else {
+      const venait = vue === 'spectacle' ? bySlug[Show.current()] : null;
+      if (venait && motionOK() && !Ink.active()) Ink.fill(venait.fondSombre);
+      spectacleV.hidden = true; spectacleV.innerHTML = ''; accueilV.hidden = false; vue = 'accueil';
+      document.title = 'Compagnie Crescite · théâtre, Rouen';
+      scrollTo(0, 0);
+      if (venait) Stage.returnAll(!motionOK()); else Stage.layout();
+      if (venait && motionOK()) { const c = Stage.center(); Ink.uncover(c.x, clamp(c.y, 60, innerHeight - 60), null, [venait.couleur, venait.fondSombre]); }
+      if (ancre) { const id = ancre; ancre = null; requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView()); }
+    }
+  }
+  // un lien vers un spectacle, ailleurs que sur la scène : l'encre de son univers part du clic
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#/spectacle/"]');
+    if (!a || a.classList.contains('t-label') || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !motionOK()) return;
+    const s = bySlug[a.getAttribute('href').split('/')[2]]; if (!s) return;
+    e.preventDefault();
+    Ink.cover(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, () => { location.hash = a.getAttribute('href'); }, [s.couleur, s.fondSombre]);
+  });
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[data-ancre]'); if (!a) return;
+    e.preventDefault(); $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false');
+    const id = a.dataset.ancre;
+    if (vue === 'spectacle') { ancre = id === 'main' ? null : id; location.hash = '#/'; return; }
+    (id === 'main' ? $('.stage') : document.getElementById(id))?.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto' });
+  });
+  $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
+  $('#marque').innerHTML = D.logo.octopus;
+  accueil();
+  addEventListener('hashchange', route);
+  route();
+  if (vue === 'accueil') Stage.start();
+})();
+</script>
+</body>
+</html>

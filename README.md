@@ -13,6 +13,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | Dossier | Contenu |
 | --- | --- |
 | `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
+| `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, et la planche qui les compare. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. |
 | `supabase/migrations/` | Modèle de données proposé pour la future base de la compagnie : dates, lieux, tournées, troupe, feuilles de route, règles d'accès. **Non exécuté** : à relire avant usage. |
 | `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle. |
@@ -49,6 +50,22 @@ Ce qui est proposé : les univers, les textes marqués « proposition ». Ce qui
 Accessibilité : chaque titre de la pieuvre est un bouton (Tab, flèches, Entrée), « Mode calme » coupe les
 animations et l’épinglage des pages, la carte a une version tableau, le réglage système « réduire les
 animations » est respecté.
+
+## Maquettes
+
+```sh
+python3 maquettes/build.py              # les dix maquettes et la planche (maquettes/dist/, non versionné)
+python3 maquettes/build.py m06          # une seule maquette
+python3 maquettes/build.py --captures   # avec les captures de la planche (Playwright et Chromium)
+```
+
+Dix façons de montrer les mêmes contenus (spectacles, dates de la saison, trois portes, compagnie), sous des règles
+de clarté communes : un seul étage d’en-tête et quatre entrées au plus, deux familles de polices au plus, un
+spectacle distingué par sa couleur et sa photo seulement, les prochaines dates à un clic. De la 01 (« Le programme
+de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis en ordre) ; la 06
+(« Les bras de la tournée ») fait de la tentacule un thème : la carte des tournées qui partent de Rouen.
+`maquettes/dist/maquettes.html` réunit les captures, le principe, les forces et les limites de chacune, et ouvre
+chaque maquette en grand. Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
 
 ## Données
 

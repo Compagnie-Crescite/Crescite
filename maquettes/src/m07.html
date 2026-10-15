@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compagnie Crescite · Théâtre à Rouen</title>
+<meta name="description" content="Compagnie Crescite, théâtre à Rouen depuis 2012 : les spectacles, les dates de tournée, la compagnie.">
+<meta name="theme-color" content="#0b0809">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,600&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --noir:#0b0809; --blanc:#f4eee9; --gris:#a59a96;
+  --blanc-doux:rgba(244,238,233,.84);
+  --trait:rgba(244,238,233,.15); --trait-fort:rgba(244,238,233,.34);
+  --c:#f4eee9;
+  --serif:'Bodoni Moda','Bodoni 72',Didot,'Times New Roman',serif;
+  --sans:'Figtree',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --pad:clamp(1.25rem,4.2vw,4rem);
+  --max:86rem;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --fs-scene:clamp(2.875rem,6.6vw,6.25rem);
+  --fs-h1:clamp(3.25rem,8.2vw,7.75rem);
+  --fs-h2:clamp(2.5rem,4.8vw,4.5rem);
+  --fs-h3:clamp(1.75rem,2.9vw,2.75rem);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--noir);-webkit-text-size-adjust:100%;overflow-x:clip}
+html.fige{overflow:hidden}
+body{margin:0;background:var(--noir);color:var(--blanc);font-family:var(--sans);font-size:1.0625rem;line-height:1.6;overflow-x:clip;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+img,svg{display:block;max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit}
+p,h1,h2,h3,dl,dd,ul,ol,figure,blockquote{margin:0}
+ul,ol{padding:0;list-style:none}
+[hidden]{display:none!important}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--blanc);outline-offset:4px}
+[tabindex="-1"]:focus{outline:none}
+::selection{background:var(--blanc);color:var(--noir)}
+.sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.evitement{position:fixed;left:1rem;top:1rem;z-index:100;padding:.75rem 1.1rem;background:var(--blanc);color:var(--noir);font-weight:600;text-decoration:none;transform:translateY(-200%)}
+.evitement:focus{transform:none}
+.wrap{width:min(100%,calc(var(--max) + 2*var(--pad)));margin-inline:auto;padding-inline:var(--pad)}
+.serif{font-family:var(--serif);font-style:italic;font-weight:600}
+.sur{font-size:.875rem;font-weight:600;line-height:1.3;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
+.lien{color:var(--blanc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.28em;text-decoration-color:var(--trait-fort);transition:text-decoration-color .25s,color .25s}
+.lien:hover{text-decoration-color:var(--c)}
+.afournir{color:var(--gris);font-style:italic}
+
+/* En-tête */
+.tete{position:fixed;inset:0 0 auto;z-index:50;border-bottom:1px solid transparent;transition:background-color .4s var(--ease),border-color .4s var(--ease)}
+.tete.plein{background:rgba(11,8,9,.94);border-bottom-color:var(--trait)}
+.tete-in{display:flex;align-items:center;justify-content:space-between;gap:2rem;height:5.25rem}
+.marque{position:relative;z-index:2;display:flex;align-items:center;gap:.8rem;color:var(--blanc);text-decoration:none}
+.marque-pieuvre{width:4.5rem}
+.marque-mot{width:5.6rem;margin-top:.2rem}
+.marque-mot.texte{width:auto;font-weight:600;font-size:1.3rem;letter-spacing:.01em;line-height:1}
+.marque svg{width:100%;height:auto}
+.nav ul{display:flex;gap:clamp(1.25rem,2.6vw,2.5rem)}
+.nav a{position:relative;display:block;padding:.4rem 0;font-weight:600;font-size:1rem;letter-spacing:.02em;text-decoration:none;color:var(--blanc)}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:.1rem;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
+.nav a:hover::after,.nav a[aria-current]::after{transform:scaleX(1)}
+.menu-btn{display:none}
+
+/* Scène : la photo plein écran */
+.scene{position:relative;display:grid;grid-template-rows:1fr auto;height:100vh;height:100svh;min-height:40rem;overflow:hidden;background:var(--noir);isolation:isolate}
+.scene-visuel{position:absolute;inset:0;z-index:0}
+.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s var(--ease)}
+.ph.on{opacity:1}
+.spot{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;opacity:.45;transition:opacity 1s var(--ease);background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),rgba(255,239,220,.95) 0,rgba(255,239,220,.42) 11vmax,rgba(255,239,220,0) 27vmax)}
+.scene.lumiere .spot{opacity:1}
+.ombre{position:absolute;inset:0;pointer-events:none;background:
+  linear-gradient(180deg,rgba(11,8,9,.78) 0,rgba(11,8,9,0) 9.5rem),
+  linear-gradient(0deg,rgba(11,8,9,.97) 0,rgba(11,8,9,.86) 13%,rgba(11,8,9,.42) 40%,rgba(11,8,9,0) 64%),
+  linear-gradient(90deg,rgba(11,8,9,.8) 0,rgba(11,8,9,.4) 36%,rgba(11,8,9,0) 62%)}
+.grain{position:absolute;inset:0;pointer-events:none;opacity:.11;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.scene-corps{position:relative;z-index:2;align-self:end;padding-bottom:clamp(2rem,4.5vh,3.25rem)}
+.scene-txt{max-width:46rem;transition:opacity .32s var(--ease),transform .32s var(--ease)}
+.scene-txt.sort{opacity:0;transform:translateY(.5rem)}
+.scene-sur{display:flex;align-items:center;gap:.9rem;font-weight:600;font-size:1rem;letter-spacing:.03em;color:var(--blanc-doux)}
+.scene-sur::before{content:"";width:2.5rem;height:1px;background:var(--c);transition:background-color .6s}
+.scene-titre{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-scene);line-height:.96;letter-spacing:-.012em;margin-top:1rem;text-wrap:balance}
+.scene-sous{font-size:1.25rem;line-height:1.45;color:var(--blanc-doux);margin-top:1.1rem;max-width:36rem}
+.scene-date{margin-top:1.5rem;font-size:1.0625rem;color:var(--blanc)}
+.scene-date span{color:var(--gris);margin-right:.6rem}
+.btn{display:inline-flex;align-items:center;gap:.85rem;margin-top:1.9rem;padding:1rem 1.5rem;border:1px solid rgba(244,238,233,.72);background:rgba(11,8,9,.2);color:var(--blanc);font-weight:600;font-size:1rem;line-height:1;letter-spacing:.02em;text-decoration:none;transition:background-color .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease)}
+.btn .fl{transition:transform .3s var(--ease)}
+.btn:hover{background:var(--c);border-color:var(--c);color:var(--noir)}
+.btn:hover .fl{transform:translateX(.25rem)}
+.programme{position:relative;z-index:2;border-top:1px solid var(--trait)}
+.programme-in{display:flex;align-items:center;gap:1.25rem;padding-block:.9rem 1.15rem}
+.titres{display:flex;flex-wrap:wrap;gap:.2rem clamp(1rem,1.5vw,1.6rem);flex:1;min-width:0}
+.titre{position:relative;appearance:none;background:none;border:0;margin:0;padding:.45rem 0 .55rem;cursor:pointer;white-space:nowrap;color:rgba(244,238,233,.62);font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1rem,1.12vw,1.0625rem);line-height:1.2;transition:color .3s var(--ease)}
+.titre::after,.titre .fil{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease),opacity .4s}
+.titre:hover,.titre[aria-selected="true"]{color:var(--blanc)}
+.titre:hover::after,.titre[aria-selected="true"]::after{transform:scaleX(1)}
+.titre .fil{display:none}
+.scene.joue .titre[aria-selected="true"]::after{opacity:.3}
+.scene.joue .titre[aria-selected="true"] .fil{display:block;animation:fil 7s linear forwards}
+@keyframes fil{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pause{flex:none;display:grid;place-items:center;width:2.5rem;height:2.5rem;border:1px solid var(--trait-fort);border-radius:50%;background:none;cursor:pointer;transition:border-color .3s}
+.pause:hover{border-color:var(--blanc)}
+.pause svg{width:.75rem;height:.75rem;fill:currentColor}
+.credit{position:absolute;right:var(--pad);bottom:1.35rem;z-index:2;font-size:.875rem;color:var(--gris)}
+
+/* Sections sur noir */
+.bloc{padding-block:clamp(5rem,9vw,8.5rem);scroll-margin-top:3rem}
+.bloc + .bloc{border-top:1px solid var(--trait)}
+.bloc-tete{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:1.5rem 3rem;align-items:end}
+.bloc-titre{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h2);line-height:1;letter-spacing:-.01em;margin-top:1rem}
+.bloc-intro{font-size:1.125rem;color:var(--blanc-doux);max-width:34rem}
+
+/* Agenda */
+.agenda{margin-top:clamp(2.5rem,4.5vw,4rem)}
+.mois + .mois{margin-top:2.5rem}
+.mois-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.375rem;line-height:1.2;color:var(--gris);padding-bottom:.85rem;border-bottom:1px solid var(--trait)}
+.date{position:relative;display:grid;grid-template-columns:10.5rem minmax(0,1.15fr) minmax(0,1fr) 10.5rem;gap:.5rem 2rem;align-items:baseline;padding:1.3rem 0 1.3rem 1.5rem;border-bottom:1px solid var(--trait);transition:background-color .35s var(--ease)}
+.date::before{content:"";position:absolute;left:0;top:1.25rem;bottom:1.25rem;width:2px;background:var(--c)}
+.date:hover{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 11%,transparent),transparent 70%)}
+.date-n{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.75rem;line-height:1.05}
+.date-n.txt{font-size:1.25rem}
+.date-s{display:block;margin-top:.3rem;font-size:.9375rem;color:var(--gris)}
+.date-t a{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.4375rem;line-height:1.2;text-decoration:none;color:var(--blanc);background:linear-gradient(var(--c),var(--c)) 0 100%/0 1px no-repeat;transition:background-size .4s var(--ease)}
+.date-t a:hover{background-size:100% 1px}
+.date-c{display:block;font-weight:600}
+.date-v{display:block;color:var(--gris)}
+.date-p{text-align:right}
+.dates--seul .date{grid-template-columns:10.5rem minmax(0,1fr) 10.5rem}
+.date-pub{display:block;color:var(--blanc-doux)}
+.date-lien{display:inline-block;margin-top:.2rem}
+.plus{display:inline-flex;align-items:center;gap:.7rem;margin-top:2.25rem;padding:.9rem 1.35rem;border:1px solid var(--trait-fort);background:none;font-weight:600;font-size:1rem;line-height:1;cursor:pointer;transition:border-color .3s}
+.plus:hover{border-color:var(--blanc)}
+.plus .fl{transition:transform .3s var(--ease)}
+.plus[aria-expanded="true"] .fl{transform:rotate(180deg)}
+.vide{margin-top:2.5rem;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.5rem,2.4vw,2rem);line-height:1.25}
+
+/* Les trois portes */
+.portes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:clamp(2.5rem,4.5vw,4rem);border-top:1px solid var(--trait)}
+.porte{padding:2.5rem 2.5rem .5rem 0}
+.porte + .porte{padding-left:2.5rem;border-left:1px solid var(--trait)}
+.porte-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.75rem,2.5vw,2.375rem);line-height:1.08;text-wrap:balance}
+.porte-txt{margin-top:1.1rem;color:var(--blanc-doux);max-width:30ch}
+.porte-liens{margin-top:1.6rem}
+.porte-liens li + li{margin-top:.55rem}
+.porte-liens .fl{color:var(--gris);margin-left:.15rem}
+
+/* Le répertoire */
+.rep{margin-top:clamp(2.5rem,4.5vw,4rem);border-top:1px solid var(--trait)}
+.rep a{position:relative;display:grid;grid-template-columns:3.25rem minmax(0,1.25fr) minmax(0,1fr) 8.5rem;gap:.35rem 2rem;align-items:baseline;padding:1.35rem 0 1.45rem;border-bottom:1px solid var(--trait);text-decoration:none;color:var(--blanc)}
+.rep a::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--c);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease)}
+.rep a:hover::after,.rep a:focus-visible::after{transform:scaleX(1)}
+.rep-n{font-size:.9375rem;font-weight:600;letter-spacing:.08em;color:var(--gris);transition:color .3s}
+.rep-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h3);line-height:1.05;letter-spacing:-.008em;transition:color .35s var(--ease)}
+.rep-s{color:var(--gris)}
+.rep-m{text-align:right;color:var(--blanc-doux);white-space:nowrap}
+.rep a:hover .rep-t,.rep a:focus-visible .rep-t,.rep a:hover .rep-n{color:var(--c)}
+
+/* La compagnie */
+.cie{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2.5rem 1.5rem;margin-top:clamp(2.5rem,4.5vw,4rem)}
+.cie-citation{grid-column:1/span 6;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.75rem,2.7vw,2.5rem);line-height:1.2;text-wrap:pretty}
+.cie-txt{grid-column:8/span 5;font-size:1.125rem;color:var(--blanc-doux)}
+.cie-txt p + p{margin-top:1rem}
+.chiffres{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--trait);margin-top:1rem}
+.chiffre{display:flex;flex-direction:column-reverse;justify-content:flex-end;padding:1.75rem 1.5rem 0 0}
+.chiffre + .chiffre{padding-left:1.5rem;border-left:1px solid var(--trait)}
+.chiffre dd{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2.5rem,4vw,3.75rem);line-height:1}
+.chiffre dt{margin-top:.7rem;color:var(--gris)}
+.chiffres-note{grid-column:1/-1;font-size:.9375rem;color:var(--gris)}
+
+/* Pied de page */
+.pied{border-top:1px solid var(--trait);padding-block:clamp(4.5rem,8vw,7rem) 2.5rem;scroll-margin-top:3rem}
+.pied-ecrire{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem 3rem;padding-bottom:clamp(3rem,5vw,4.5rem);border-bottom:1px solid var(--trait)}
+.pied-ecrire .bloc-titre{margin-top:.75rem}
+.pied-mail{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.5rem,2.6vw,2.25rem);line-height:1.2;text-decoration:none;color:var(--blanc);background:linear-gradient(var(--blanc),var(--blanc)) 0 100%/100% 1px no-repeat;padding-bottom:.15rem;overflow-wrap:anywhere}
+.pied-grille{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,3fr) minmax(0,3fr) minmax(0,2fr);gap:2.5rem 2rem;padding-top:clamp(2.5rem,4vw,3.5rem)}
+.pied-logo{width:8.5rem;color:var(--blanc)}
+.pied-logo svg{width:100%;height:auto}
+.pied-t{font-size:.875rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gris);margin-bottom:1rem}
+.pied address{font-style:normal}
+.pied li + li{margin-top:.35rem}
+.pied-bas{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem 2rem;margin-top:clamp(3rem,5vw,4.5rem);font-size:.9375rem;color:var(--gris)}
+
+/* Page spectacle */
+.retour{display:inline-flex;align-items:center;gap:.6rem;margin-bottom:1.75rem;font-weight:600;font-size:1rem;text-decoration:none;color:var(--blanc-doux);transition:color .25s}
+.retour:hover{color:var(--blanc)}
+.retour .fl{transition:transform .3s var(--ease)}
+.retour:hover .fl{transform:translateX(-.25rem)}
+.scene--spectacle .scene-titre{font-size:var(--fs-h1);line-height:.93;margin-top:1.1rem}
+.scene--spectacle .scene-txt{max-width:60rem}
+.scene--spectacle .scene-corps{padding-bottom:clamp(2.75rem,7vh,4.5rem)}
+.intro{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2.5rem 1.5rem;align-items:start}
+.accroche{grid-column:1/span 6;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.75rem,2.9vw,2.625rem);line-height:1.18;text-wrap:pretty}
+.accroche::before{content:"";display:block;width:3rem;height:2px;background:var(--c);margin-bottom:1.75rem}
+.texte{grid-column:8/span 5;font-size:1.1875rem;line-height:1.7;color:var(--blanc-doux)}
+.texte .lien{display:inline-block;margin-top:1.5rem}
+.faits{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(3.5rem,6vw,5.5rem);border-top:1px solid var(--trait)}
+.fait{padding:1.75rem 1.5rem 0 0}
+.fait + .fait{padding-left:1.5rem;border-left:1px solid var(--trait)}
+.fait dt{font-size:.875rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
+.fait-v{display:block;margin-top:.75rem;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2.25rem,3.6vw,3.25rem);line-height:1}
+.fait-v small{font-size:.5em;letter-spacing:0;margin-left:.3em}
+.fait-v.txt{font-size:clamp(1.375rem,2vw,1.75rem);line-height:1.2}
+.fait-v.afournir{font-family:var(--sans);font-style:italic;font-weight:400;font-size:1.0625rem;color:var(--gris)}
+.fait-d{margin-top:.8rem;color:var(--blanc-doux)}
+.equipe{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.4rem 1.5rem;margin-top:2.75rem}
+.equipe-titre{grid-column:1/-1;font-size:.875rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
+.equipe dt{color:var(--gris);font-size:.9375rem}
+.equipe dd{font-weight:600}
+.onglets{display:flex;flex-wrap:wrap;gap:.5rem clamp(1.5rem,3vw,3rem);margin-top:clamp(2.5rem,4.5vw,4rem);border-bottom:1px solid var(--trait)}
+.onglet{position:relative;appearance:none;background:none;border:0;padding:0 0 1.1rem;margin:0;cursor:pointer;color:var(--gris);font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.375rem,2.1vw,1.875rem);line-height:1.15;text-align:left;transition:color .3s}
+.onglet::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--c);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+.onglet:hover,.onglet[aria-selected="true"]{color:var(--blanc)}
+.onglet:hover::after{transform:scaleX(.35)}
+.onglet[aria-selected="true"]::after{transform:scaleX(1)}
+.panneau{padding-top:clamp(2.25rem,4vw,3.25rem)}
+.panneau-grille{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2.5rem 3rem}
+.panneau-grille > div{min-width:0}
+.panneau-lead{grid-column:1/-1;font-size:1.3125rem;line-height:1.5;max-width:46rem}
+.p-t{font-size:.875rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gris);margin-bottom:.75rem}
+.p-grand{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.625rem;line-height:1.2;margin-bottom:.35rem}
+.panneau p + p{margin-top:.6rem}
+.panneau .doux{color:var(--blanc-doux)}
+.suivant{position:relative;display:grid;align-items:end;height:min(72vh,44rem);min-height:24rem;overflow:hidden;text-decoration:none;color:var(--blanc);isolation:isolate;border-top:1px solid var(--trait)}
+.suivant img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.62);transition:filter .8s var(--ease),transform 1.2s var(--ease)}
+.suivant::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(11,8,9,.92) 0,rgba(11,8,9,.35) 45%,rgba(11,8,9,.5) 100%)}
+.suivant:hover img{filter:brightness(.8);transform:scale(1.02)}
+.suivant-in{display:block;padding-bottom:clamp(2.5rem,6vh,4rem)}
+.suivant-t{display:block;max-width:22ch;font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-scene);line-height:1;margin-top:1rem;text-wrap:balance}
+.suivant-t .fl{display:inline-block;margin-left:.35em;font-family:var(--sans);font-style:normal;font-weight:400;font-size:.5em;color:var(--c);transition:transform .4s var(--ease)}
+.suivant:hover .suivant-t .fl{transform:translateX(.5rem)}
+.suivant-s{margin-top:.9rem;font-size:1.125rem;color:var(--blanc-doux)}
+
+/* Tablette */
+@media (max-width:1100px){
+  .date,.dates--seul .date{grid-template-columns:9rem minmax(0,1fr) minmax(0,1fr);}
+  .date-p{grid-column:3;text-align:left}
+  .dates--seul .date-p{grid-column:auto}
+  .rep a{grid-template-columns:2.75rem minmax(0,1fr) 7.5rem}
+  .rep-s{grid-column:2;grid-row:2}
+  .rep-m{grid-column:3;grid-row:1}
+  .cie-citation{grid-column:1/span 7}
+  .cie-txt{grid-column:8/span 5}
+  .chiffres{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .chiffre:nth-child(3){padding-left:0;border-left:0}
+  .chiffre:nth-child(n+3){margin-top:1.5rem;border-top:1px solid var(--trait)}
+  .pied-grille{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .faits{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fait:nth-child(3){padding-left:0;border-left:0}
+  .fait:nth-child(n+3){margin-top:1.75rem;border-top:1px solid var(--trait)}
+  .equipe{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  .menu-btn{position:relative;z-index:2;display:inline-flex;align-items:center;gap:.7rem;padding:.6rem 0;background:none;border:0;cursor:pointer;font-weight:600;font-size:1rem;letter-spacing:.02em}
+  .menu-ico{position:relative;width:1.5rem;height:.6rem}
+  .menu-ico::before,.menu-ico::after{content:"";position:absolute;left:0;right:0;height:1.5px;background:currentColor;transition:transform .35s var(--ease),top .35s var(--ease)}
+  .menu-ico::before{top:0}.menu-ico::after{top:calc(100% - 1.5px)}
+  .tete.ouvert .menu-ico::before{top:calc(50% - .75px);transform:rotate(45deg)}
+  .tete.ouvert .menu-ico::after{top:calc(50% - .75px);transform:rotate(-45deg)}
+  .nav{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;padding:6rem var(--pad) 3rem;background:var(--noir);visibility:hidden;opacity:0;transition:opacity .35s var(--ease),visibility 0s .35s}
+  .tete.ouvert .nav{visibility:visible;opacity:1;transition:opacity .35s var(--ease)}
+  .nav ul{flex-direction:column;gap:.25rem}
+  .nav a{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2.25rem,9vw,3.25rem);line-height:1.25;letter-spacing:0;padding:.35rem 0}
+  .nav a::after{display:none}
+  .tete.ouvert{background:var(--noir)}
+  .bloc-tete{grid-template-columns:1fr;align-items:start}
+  .portes{grid-template-columns:1fr}
+  .porte,.porte + .porte{padding:2.25rem 0 2.25rem;border-left:0}
+  .porte + .porte{border-top:1px solid var(--trait)}
+  .porte-txt{max-width:40ch}
+  .cie-citation,.cie-txt{grid-column:1/-1}
+  .intro .accroche,.intro .texte{grid-column:1/-1}
+  .texte{max-width:40rem}
+  .panneau-grille{grid-template-columns:1fr 1fr}
+}
+
+/* Téléphone */
+@media (max-width:760px){
+  body{font-size:1.0625rem}
+  .tete-in{height:4.25rem}
+  .marque-pieuvre{width:3.6rem}
+  .marque-mot{width:4.6rem}
+  .scene{display:block;height:auto;min-height:0}
+  .scene-visuel{position:relative;height:70vh;height:70svh;min-height:24rem}
+  .spot{display:none}
+  .ombre{background:linear-gradient(180deg,rgba(11,8,9,.7) 0,rgba(11,8,9,0) 7rem),linear-gradient(0deg,var(--noir) 0,rgba(11,8,9,.8) 20%,rgba(11,8,9,.2) 50%,rgba(11,8,9,0) 62%)}
+  .scene-corps{margin-top:-9.5rem;padding-bottom:1.75rem}
+  .scene-sous{font-size:1.125rem}
+  .scene-date{margin-top:1.15rem}
+  .btn{margin-top:1.4rem;width:100%;justify-content:space-between}
+  .programme{border-top:1px solid var(--trait)}
+  .programme-in{padding-inline:0;gap:0;padding-block:.35rem .5rem}
+  .titres{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;padding-inline:var(--pad);gap:1.4rem;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  .titres::-webkit-scrollbar{display:none}
+  .titre{scroll-snap-align:start;scroll-margin-left:var(--pad);font-size:1.0625rem;padding-block:.75rem}
+  .pause{display:none}
+  .scene--spectacle .scene-corps{margin-top:-11rem;padding-bottom:3rem}
+  .scene--spectacle .scene-titre{font-size:clamp(2.75rem,13vw,3.5rem)}
+  .credit{position:static;padding:0 var(--pad) 0;margin-top:-1.5rem;margin-bottom:2rem}
+  .bloc{padding-block:4.25rem}
+  .date,.dates--seul .date{grid-template-columns:6.25rem minmax(0,1fr);gap:.3rem 1rem;padding:1.15rem 0 1.15rem 1rem}
+  .date::before{top:1.1rem;bottom:1.1rem}
+  .date-j{grid-row:1/span 3}
+  .date-t,.date-l,.date-p,.dates--seul .date-p{grid-column:2}
+  .date-p{text-align:left}
+  .date-pub{display:inline;margin-right:.9rem}
+  .date-n{font-size:1.375rem}
+  .date-n.txt{font-size:1.0625rem}
+  .date-t a{font-size:1.3125rem}
+  .rep a{grid-template-columns:2.25rem minmax(0,1fr);gap:.3rem .75rem;padding:1.15rem 0 1.25rem}
+  .rep-s,.rep-m{grid-column:2;grid-row:auto;text-align:left;white-space:normal}
+  .rep-m{font-size:.9375rem}
+  .chiffres,.faits{grid-template-columns:1fr 1fr}
+  .chiffre,.fait{padding-right:.75rem}
+  .chiffre + .chiffre,.fait + .fait{padding-left:1rem}
+  .chiffre:nth-child(3),.fait:nth-child(3){padding-left:0}
+  .pied-grille{grid-template-columns:1fr}
+  .equipe{grid-template-columns:1fr}
+  .onglets{flex-direction:column;gap:0;border-bottom:0}
+  .onglet{padding:.95rem 0 .95rem 1rem;border-left:1px solid var(--trait);font-size:1.375rem}
+  .onglet::after{left:-1px;right:auto;top:0;bottom:0;width:2px;height:auto;transform:scaleY(0);transform-origin:top}
+  .onglet[aria-selected="true"]::after{transform:scaleY(1)}
+  .onglet:hover::after{transform:scaleY(0)}
+  .onglet[aria-selected="true"]:hover::after{transform:scaleY(1)}
+  .panneau-grille{grid-template-columns:1fr}
+  .suivant{height:56vh;min-height:20rem}
+  .suivant-t{font-size:clamp(2.25rem,11vw,3rem)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .pause{display:none}
+}
+</style>
+</head>
+<body>
+<a class="evitement" href="#contenu">Aller au contenu</a>
+<header class="tete" id="tete">
+  <div class="tete-in wrap">
+    <a class="marque" href="#/" aria-label="Compagnie Crescite, accueil">
+      <span class="marque-pieuvre" id="marque-pieuvre" aria-hidden="true"></span>
+      <span class="marque-mot" id="marque-mot" aria-hidden="true"></span>
+    </a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><span class="menu-ico" aria-hidden="true"></span><span class="menu-txt">Menu</span></button>
+    <nav class="nav" id="nav" aria-label="Navigation principale">
+      <ul>
+        <li><a href="#/spectacles" data-nav="spectacles">Spectacles</a></li>
+        <li><a href="#/agenda" data-nav="agenda">Agenda</a></li>
+        <li><a href="#/compagnie" data-nav="compagnie">La compagnie</a></li>
+        <li><a href="#/contact" data-nav="contact">Contact</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="contenu" tabindex="-1"></main>
+<footer class="pied" id="contact"></footer>
+<noscript><p style="padding:2rem">Ce site a besoin de JavaScript pour afficher les spectacles et les dates.</p></noscript>
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  'use strict';
+  const doc = document, root = doc.documentElement;
+  const $ = (s, r = doc) => r.querySelector(s);
+  const $$ = (s, r = doc) => Array.from(r.querySelectorAll(s));
+  const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ESC[c]);
+  const fr = s => esc(String(s ?? '').replace(/\s+([;:!?»])/g, ' $1').replace(/«\s+/g, '« '));
+  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+  const reduit = matchMedia('(prefers-reduced-motion: reduce)');
+  const souris = matchMedia('(hover: hover) and (pointer: fine)');
+  const mobile = matchMedia('(max-width: 760px)');
+
+  const SHOWS = D.shows;
+  const PAR_SLUG = Object.fromEntries(SHOWS.map(s => [s.slug, s]));
+  const C = D.company;
+  const FL = '<span class="fl" aria-hidden="true">→</span>';
+  const EXT = '<span class="fl" aria-hidden="true">↗</span><span class="sr"> (nouvel onglet)</span>';
+  const MOIS = 'janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre';
+
+  const estSpectacle = s => !!s.annee;
+  const estHeure = v => /^\d{1,2}h\d{0,2}$/.test(v || '');
+  const lieuDe = d => d.lieu && d.lieu !== 'diptyque' && !estHeure(d.lieu) ? d.lieu : null;
+  const noteDe = d => {
+    if (estHeure(d.lieu)) return 'à ' + d.lieu;
+    if (d.lieu === 'diptyque') {
+      const autre = D.dates.find(x => x !== d && x.lieu === 'diptyque' && x.iso === d.iso && x.commune === d.commune);
+      return autre ? 'en diptyque avec ' + autre.titre : 'en diptyque';
+    }
+    return null;
+  };
+  const ou = d => `${d.commune}\u00a0(${d.dep})`;
+  const unJour = d => d.precision === 'day' && d.iso === d.fin;
+  const quand = d => unJour(d) ? `${d.joursemLong} ${d.label}` : d.label;
+  const jours = d => {
+    if (d.precision === 'month') return '';
+    const n = (d.label.match(new RegExp(`\\b(${MOIS})\\b`, 'g')) || []).length;
+    if (n > 1) return d.label.replace(/\s+\d{4}$/, '');
+    const m = d.label.match(new RegExp(`^(.*?)\\s+(${MOIS})\\b`));
+    return m ? m[1] : String(d.jour);
+  };
+  const surDe = s => estSpectacle(s) ? [`Création ${s.annee}`, s.duree].filter(Boolean).join(' · ') : cap(s.sousTitre);
+  const datesDe = slug => D.dates.filter(d => d.slug === slug);
+  const pluriel = (n, un, plusieurs) => `${n} ${n > 1 ? plusieurs : un}`;
+  const mail = `mailto:${C.email}`;
+
+  /* En-tête : la pieuvre et le mot du logo */
+  $('#marque-pieuvre').innerHTML = D.logo.octopus;
+  (function mot() {
+    const cible = $('#marque-mot');
+    const tmp = doc.createElement('div');
+    tmp.style.cssText = 'position:absolute;left:-9999px;top:0;width:500px;visibility:hidden';
+    tmp.innerHTML = D.logo.octopusWord;
+    doc.body.appendChild(tmp);
+    const chemins = tmp.querySelectorAll('path');
+    const p = chemins[chemins.length - 1];
+    let svg = '';
+    try {
+      const b = p.getBBox();
+      if (b.width > 0) svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x - 2} ${b.y - 2} ${b.width + 4} ${b.height + 4}" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="${p.getAttribute('d')}"/></svg>`;
+    } catch (e) { svg = ''; }
+    tmp.remove();
+    if (svg) cible.innerHTML = svg;
+    else { cible.textContent = 'crescite'; cible.classList.add('texte'); }
+  })();
+  const icone = doc.createElement('link');
+  icone.rel = 'icon';
+  icone.href = 'data:image/svg+xml,' + encodeURIComponent(D.logo.mark);
+  doc.head.appendChild(icone);
+
+  /* Pied de page */
+  const [rue, ville] = C.adresse.split(/,\s*/);
+  $('#contact').innerHTML = `
+    <div class="wrap">
+      <div class="pied-ecrire">
+        <div><p class="sur">Contact</p><h2 class="bloc-titre">Écrire à la compagnie</h2></div>
+        <a class="pied-mail" href="${mail}">${esc(C.email)}</a>
+      </div>
+      <div class="pied-grille">
+        <div><div class="pied-logo" aria-hidden="true">${D.logo.octopusWord}</div></div>
+        <div>
+          <h3 class="pied-t">Adresse</h3>
+          <address>${esc(C.nom)}<br>${esc(rue)}<br>${esc(ville || '')}</address>
+        </div>
+        <div>
+          <h3 class="pied-t">Partenaires</h3>
+          <ul>${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+        </div>
+        <div>
+          <h3 class="pied-t">Le site</h3>
+          <ul>
+            <li><a class="lien" href="#/spectacles">Spectacles</a></li>
+            <li><a class="lien" href="#/agenda">Agenda</a></li>
+            <li><a class="lien" href="#/compagnie">La compagnie</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="pied-bas">
+        <p>${esc(C.nom)} · ${esc(C.ville)}, depuis ${C.depuis}</p>
+        <p>SIRET ${esc(C.siret)} · Licence ${esc(C.licence)}</p>
+      </div>
+    </div>`;
+
+  /* Agenda */
+  function ligne(d, cache, avecTitre) {
+    const s = PAR_SLUG[d.slug];
+    const j = jours(d);
+    const lieu = lieuDe(d), note = noteDe(d);
+    const t = avecTitre
+      ? `<div class="date-t"><a href="#/spectacle/${esc(d.slug)}">${fr(d.titre)}</a></div>` : '';
+    const lien = d.lien
+      ? `<a class="lien date-lien" href="${esc(d.lien)}" target="_blank" rel="noopener">Site du lieu ${EXT}</a>` : '';
+    return `<li class="date" style="--c:${esc(s ? s.couleur : '#f4eee9')}"${cache ? ' hidden data-suite' : ''}>
+      <div class="date-j">${j ? `<span class="date-n">${esc(j)}</span>` : '<span class="date-n txt">jour à préciser</span>'}${unJour(d) ? `<span class="date-s">${esc(d.joursemLong)}</span>` : ''}</div>
+      ${t}
+      <div class="date-l"><span class="date-c">${esc(ou(d))}</span>${lieu ? `<span class="date-v">${fr(lieu)}</span>` : ''}${note ? `<span class="date-v">${fr(note)}</span>` : ''}</div>
+      <div class="date-p"><span class="date-pub">${esc(d.public)}</span>${lien}</div>
+    </li>`;
+  }
+  function agenda(liste, { limite = Infinity, avecTitre = true } = {}) {
+    const groupes = [];
+    liste.forEach((d, i) => {
+      const k = d.iso.slice(0, 7);
+      let g = groupes[groupes.length - 1];
+      if (!g || g.k !== k) { g = { k, d, lignes: [] }; groupes.push(g); }
+      g.lignes.push([d, i >= limite]);
+    });
+    return groupes.map(g => {
+      const tousCaches = g.lignes.every(([, c]) => c);
+      return `<div class="mois"${tousCaches ? ' hidden data-suite' : ''}>
+        <h3 class="mois-t">${esc(cap(g.d.moisLong))} ${g.d.annee}</h3>
+        <ol class="dates${avecTitre ? '' : ' dates--seul'}">${g.lignes.map(([d, c]) => ligne(d, c, avecTitre)).join('')}</ol>
+      </div>`;
+    }).join('');
+  }
+  function boutonSuite(total, limite) {
+    if (total <= limite) return '';
+    return `<button class="plus" type="button" aria-expanded="false" data-plus="${total - limite}">
+      <span class="plus-txt">Voir les ${total - limite} autres dates</span><span class="fl" aria-hidden="true">↓</span></button>`;
+  }
+  function brancherSuite(zone) {
+    const b = $('.plus', zone);
+    if (!b) return;
+    b.addEventListener('click', () => {
+      const ouvert = b.getAttribute('aria-expanded') === 'true';
+      $$('[data-suite]', zone).forEach(el => { el.hidden = ouvert; });
+      b.setAttribute('aria-expanded', String(!ouvert));
+      $('.plus-txt', b).textContent = ouvert ? `Voir les ${b.dataset.plus} autres dates` : 'Replier la liste';
+      if (!ouvert) {
+        const premier = $('.date[data-suite] a', zone);
+        if (premier) premier.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  /* La scène : photo plein écran, halo, fondu enchaîné */
+  const photo = s => D.photos[s.slug];
+  const cadrage = s => `${s.focale ?? 50}% 35%`;
+  function visuel(s, double) {
+    const img = (on) => `<img class="ph${on ? ' on' : ''}" src="${on ? photo(s) : ''}" alt="${on ? esc('Photo de ' + s.titre) : ''}"${on ? '' : ' aria-hidden="true"'} style="object-position:${cadrage(s)}" decoding="async">`;
+    return `<div class="scene-visuel">${img(true)}${double ? img(false) : ''}
+      <div class="spot" aria-hidden="true"></div><div class="ombre" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div></div>`;
+  }
+  function halo(sc) {
+    const spot = $('.spot', sc);
+    let x = 50, y = 40, tx = 50, ty = 40, raf = 0;
+    const repos = () => { x = tx = +(sc.dataset.focale || 50); y = ty = 38; poser(); };
+    const poser = () => { spot.style.setProperty('--sx', x.toFixed(2) + '%'); spot.style.setProperty('--sy', y.toFixed(2) + '%'); };
+    const boucle = () => {
+      x += (tx - x) * .1; y += (ty - y) * .1; poser();
+      raf = Math.abs(tx - x) + Math.abs(ty - y) > .05 ? requestAnimationFrame(boucle) : 0;
+    };
+    repos();
+    sc.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse' || !souris.matches || reduit.matches || mobile.matches) return;
+      const r = sc.getBoundingClientRect();
+      tx = (e.clientX - r.left) / r.width * 100; ty = (e.clientY - r.top) / r.height * 100;
+      sc.classList.add('lumiere');
+      if (!raf) raf = requestAnimationFrame(boucle);
+    });
+    sc.addEventListener('pointerleave', () => { sc.classList.remove('lumiere'); });
+    return { repos: () => { if (!sc.classList.contains('lumiere')) { cancelAnimationFrame(raf); raf = 0; repos(); } } };
+  }
+
+  let actif = 0;
+  let nettoyer = [];
+  function sceneAccueil() {
+    const s = SHOWS[actif];
+    return `<section class="scene" id="scene" aria-roledescription="carrousel" aria-label="Les spectacles, un à la fois" data-focale="${s.focale ?? 50}" style="--c:${esc(s.couleur)}">
+      ${visuel(s, true)}
+      <div class="scene-corps wrap">
+        <div class="scene-txt" id="scene-panneau" role="tabpanel" aria-roledescription="diapositive" aria-labelledby="titre-${actif}">${texteScene(s)}</div>
+      </div>
+      <div class="programme">
+        <div class="programme-in wrap">
+          <div class="titres" role="tablist" aria-label="Choisir un spectacle">
+            ${SHOWS.map((x, i) => `<button class="titre" type="button" role="tab" id="titre-${i}" aria-controls="scene-panneau" aria-selected="${i === actif}" tabindex="${i === actif ? 0 : -1}" style="--c:${esc(x.couleur)}">${fr(x.titre)}<span class="fil" aria-hidden="true"></span></button>`).join('')}
+          </div>
+          <button class="pause" type="button" id="pause" aria-pressed="false" aria-label="Mettre en pause le défilement des spectacles"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="2.6" height="10"/><rect x="7.4" y="1" width="2.6" height="10"/></svg></button>
+        </div>
+      </div>
+    </section>`;
+  }
+  function texteScene(s) {
+    const p = s.prochaine;
+    const date = p
+      ? `<span>Prochaine date</span>${fr(quand(p))}, ${esc(ou(p))}`
+      : (estSpectacle(s) ? 'Aucune date annoncée pour l’instant' : fr(s.noteScolaire || ''));
+    return `<p class="scene-sur">${fr(surDe(s))}</p>
+      <h2 class="scene-titre">${fr(s.titre)}</h2>
+      ${estSpectacle(s) ? `<p class="scene-sous">${fr(s.sousTitre)}</p>` : `<p class="scene-sous">${fr(s.accroche)}</p>`}
+      <p class="scene-date">${date}</p>
+      <a class="btn" href="#/spectacle/${esc(s.slug)}">${estSpectacle(s) ? 'Entrer dans le spectacle' : 'Découvrir les actions culturelles'} ${FL}</a>`;
+  }
+  function brancherCarrousel(sc) {
+    const onglets = $$('.titre', sc);
+    const panneau = $('#scene-panneau', sc);
+    const calques = $$('.ph', sc);
+    const rangee = $('.titres', sc);
+    const btnPause = $('#pause', sc);
+    const lumiere = halo(sc);
+    let montre = actif, occupe = false, attente = null, survolT = 0;
+    const pauses = { survol: false, focus: false, vue: false, page: false, user: false };
+
+    const etat = () => {
+      const joue = !reduit.matches && !Object.values(pauses).some(Boolean);
+      sc.classList.toggle('joue', joue);
+      panneau.setAttribute('aria-live', joue ? 'off' : 'polite');
+    };
+    const versOnglet = i => {
+      if (rangee.scrollWidth <= rangee.clientWidth + 2) return;
+      const t = onglets[i];
+      const pad = parseFloat(getComputedStyle(rangee).paddingLeft) || 0;
+      rangee.scrollTo({ left: Math.max(0, t.offsetLeft - pad), behavior: reduit.matches ? 'auto' : 'smooth' });
+    };
+    const peindre = i => {
+      montre = i;
+      const s = SHOWS[i];
+      const vu = calques.find(c => c.classList.contains('on')) || calques[0];
+      const neuf = calques.find(c => c !== vu);
+      neuf.src = photo(s);
+      neuf.style.objectPosition = cadrage(s);
+      const montrer = () => {
+        neuf.alt = 'Photo de ' + s.titre; neuf.removeAttribute('aria-hidden');
+        neuf.classList.add('on'); vu.classList.remove('on');
+        vu.alt = ''; vu.setAttribute('aria-hidden', 'true');
+      };
+      (neuf.decode ? neuf.decode() : Promise.resolve()).then(montrer, montrer);
+      sc.style.setProperty('--c', s.couleur);
+      sc.dataset.focale = s.focale ?? 50;
+      lumiere.repos();
+      const ecrire = () => {
+        panneau.innerHTML = texteScene(s);
+        panneau.setAttribute('aria-labelledby', 'titre-' + i);
+        panneau.classList.remove('sort');
+      };
+      if (reduit.matches) ecrire();
+      else { panneau.classList.add('sort'); setTimeout(ecrire, 260); }
+    };
+    const file = i => {
+      if (occupe) { attente = i; return; }
+      if (i === montre) return;
+      occupe = true;
+      peindre(i);
+      setTimeout(() => {
+        occupe = false;
+        if (attente !== null) { const a = attente; attente = null; file(a); }
+      }, reduit.matches ? 0 : 640);
+    };
+    const choisir = (i, focus) => {
+      if (i !== actif) {
+        actif = i;
+        onglets.forEach((t, k) => { t.setAttribute('aria-selected', String(k === i)); t.tabIndex = k === i ? 0 : -1; });
+        file(i);
+        versOnglet(i);
+      }
+      if (focus) onglets[i].focus();
+    };
+
+    onglets.forEach((t, i) => {
+      t.addEventListener('click', () => choisir(i));
+      t.addEventListener('focus', () => choisir(i));
+      t.addEventListener('pointerenter', e => {
+        if (e.pointerType !== 'mouse') return;
+        clearTimeout(survolT);
+        survolT = setTimeout(() => choisir(i), 110);
+      });
+      t.addEventListener('pointerleave', () => clearTimeout(survolT));
+      t.addEventListener('keydown', e => {
+        const n = onglets.length;
+        const k = { ArrowRight: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+        if (k !== undefined) { e.preventDefault(); choisir(k, true); }
+      });
+    });
+    sc.addEventListener('animationend', e => {
+      if (e.animationName === 'fil' && sc.classList.contains('joue')) choisir((actif + 1) % SHOWS.length);
+    });
+    sc.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { pauses.survol = true; etat(); } });
+    sc.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { pauses.survol = false; etat(); } });
+    sc.addEventListener('focusin', () => { pauses.focus = true; etat(); });
+    sc.addEventListener('focusout', e => { if (!sc.contains(e.relatedTarget)) { pauses.focus = false; etat(); } });
+    btnPause.addEventListener('click', () => {
+      pauses.user = !pauses.user;
+      btnPause.setAttribute('aria-pressed', String(pauses.user));
+      btnPause.setAttribute('aria-label', pauses.user ? 'Reprendre le défilement des spectacles' : 'Mettre en pause le défilement des spectacles');
+      btnPause.innerHTML = pauses.user
+        ? '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.2v9.6L10.6 6z"/></svg>'
+        : '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="2.6" height="10"/><rect x="7.4" y="1" width="2.6" height="10"/></svg>';
+      etat();
+    });
+    const io = 'IntersectionObserver' in window ? new IntersectionObserver(([e]) => { pauses.vue = e.intersectionRatio < .4; etat(); }, { threshold: [0, .4, 1] }) : null;
+    if (io) io.observe(sc);
+    const visible = () => { pauses.page = doc.hidden; etat(); };
+    doc.addEventListener('visibilitychange', visible);
+    reduit.addEventListener('change', etat);
+    etat();
+    versOnglet(actif);
+    nettoyer.push(() => { if (io) io.disconnect(); doc.removeEventListener('visibilitychange', visible); reduit.removeEventListener('change', etat); clearTimeout(survolT); });
+  }
+
+  /* Accueil */
+  function accueil() {
+    const LIMITE = 7;
+    const premier = D.dates[0], dernier = D.dates[D.dates.length - 1];
+    const etab = SHOWS.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
+    const nbPass = SHOWS.filter(s => s.passCulture).length;
+    const st = D.stats;
+    return `<h1 class="sr">Compagnie Crescite, théâtre à Rouen</h1>
+    ${sceneAccueil()}
+    <section class="bloc" id="agenda" aria-labelledby="t-agenda">
+      <div class="wrap">
+        <div class="bloc-tete">
+          <div><p class="sur">Saison ${esc(D.saison)}</p><h2 class="bloc-titre" id="t-agenda" tabindex="-1">En tournée</h2></div>
+          <p class="bloc-intro">${pluriel(D.dates.length, 'date', 'dates')} de ${esc(premier.moisLong)} ${premier.annee} à ${esc(dernier.moisLong)} ${dernier.annee}, en salle comme dans les classes. La réservation se fait auprès de chaque lieu.</p>
+        </div>
+        <div class="agenda" id="agenda-liste">${agenda(D.dates, { limite: LIMITE })}</div>
+        ${boutonSuite(D.dates.length, LIMITE)}
+      </div>
+    </section>
+    <section class="bloc" id="portes" aria-labelledby="t-portes">
+      <div class="wrap">
+        <div class="bloc-tete">
+          <div><p class="sur">Trois portes</p><h2 class="bloc-titre" id="t-portes" tabindex="-1">Par où entrer</h2></div>
+          <p class="bloc-intro">Selon ce qui vous amène, une porte et les informations utiles, sans détour.</p>
+        </div>
+        <div class="portes">
+          <div class="porte">
+            <h3 class="porte-t">${esc(D.doors[0].titre)}</h3>
+            <p class="porte-txt">${fr(D.doors[0].texte)}</p>
+            <ul class="porte-liens">
+              <li><a class="lien" href="#/agenda">Les ${D.dates.length} prochaines dates</a></li>
+              <li><a class="lien" href="#/spectacle/${esc(premier.slug)}">Prochaine date : ${esc(premier.label)}, ${esc(premier.commune)}</a></li>
+            </ul>
+          </div>
+          <div class="porte">
+            <h3 class="porte-t">${esc(D.doors[1].titre)}</h3>
+            <p class="porte-txt">${fr(D.doors[1].texte)}</p>
+            <ul class="porte-liens">
+              <li><a class="lien" href="#/spectacles">Le répertoire, spectacle par spectacle</a></li>
+              <li><a class="lien" href="${mail}">Écrire à la compagnie</a></li>
+            </ul>
+          </div>
+          <div class="porte">
+            <h3 class="porte-t">${esc(D.doors[2].titre)}</h3>
+            <p class="porte-txt">${fr(D.doors[2].texte)}</p>
+            <ul class="porte-liens">
+              ${etab.map(s => `<li><a class="lien" href="#/spectacle/${esc(s.slug)}">${fr(s.titre)}</a></li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="bloc" id="repertoire" aria-labelledby="t-rep">
+      <div class="wrap">
+        <div class="bloc-tete">
+          <div><p class="sur">${pluriel(SHOWS.filter(estSpectacle).length, 'spectacle', 'spectacles')} et des ateliers</p><h2 class="bloc-titre" id="t-rep" tabindex="-1">Le répertoire</h2></div>
+          <p class="bloc-intro">Mise en scène d’${esc(C.miseEnScene)}. ${nbPass} spectacles sont proposés aux établissements dans l’offre collective du Pass Culture.</p>
+        </div>
+        <ol class="rep">
+          ${SHOWS.map((s, i) => `<li><a href="#/spectacle/${esc(s.slug)}" style="--c:${esc(s.couleur)}">
+            <span class="rep-n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+            <span class="rep-t">${fr(s.titre)}</span>
+            <span class="rep-s">${fr(s.sousTitre)}</span>
+            <span class="rep-m">${s.annee ? s.annee : 'Toute l’année'}${s.nbDates ? ` · ${pluriel(s.nbDates, 'date', 'dates')}` : ''}</span>
+          </a></li>`).join('')}
+        </ol>
+      </div>
+    </section>
+    <section class="bloc" id="compagnie" aria-labelledby="t-cie">
+      <div class="wrap">
+        <div class="bloc-tete">
+          <div><p class="sur">${esc(C.ville)}, depuis ${C.depuis}</p><h2 class="bloc-titre" id="t-cie" tabindex="-1">La compagnie</h2></div>
+        </div>
+        <div class="cie">
+          <blockquote class="cie-citation"><p>« ${fr(C.intention)} »</p></blockquote>
+          <div class="cie-txt">
+            <p>${fr(C.presentation)}</p>
+            <p>Mise en scène : ${esc(C.miseEnScene)}.</p>
+          </div>
+          <dl class="chiffres">
+            <div class="chiffre"><dt>dates jouées ou annoncées depuis 2016</dt><dd>${st.dates}</dd></div>
+            <div class="chiffre"><dt>communes sur la route</dt><dd>${st.communes}</dd></div>
+            <div class="chiffre"><dt>départements traversés</dt><dd>${st.departements}</dd></div>
+            <div class="chiffre"><dt>heures d’éducation artistique en 2023-2024</dt><dd>${st.heuresEAC}</dd></div>
+          </dl>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  /* Page spectacle */
+  function faits(s) {
+    const n = s.distribution.length;
+    const af = '<span class="fait-v afournir">à fournir</span>';
+    if (!estSpectacle(s)) {
+      return `<dl class="faits">
+        <div class="fait"><dt>Éducation artistique</dt><dd><span class="fait-v">${D.stats.heuresEAC}<small>heures</small></span><p class="fait-d">sur la saison 2023-2024</p></dd></div>
+        <div class="fait"><dt>Où</dt><dd><span class="fait-v txt">Collèges, lycées, théâtres</span></dd></div>
+        <div class="fait"><dt>Avec qui</dt><dd><span class="fait-v txt">Les comédiens de la compagnie</span></dd></div>
+        <div class="fait"><dt>Soutiens</dt><dd>${s.soutiens ? `<span class="fait-v txt">${fr(s.soutiens)}</span>` : af}</dd></div>
+      </dl>`;
+    }
+    return `<dl class="faits">
+      <div class="fait"><dt>Création</dt><dd>${s.annee ? `<span class="fait-v">${s.annee}</span>` : af}</dd></div>
+      <div class="fait"><dt>Durée</dt><dd>${s.duree ? `<span class="fait-v">${esc(s.duree)}</span>` : af}</dd></div>
+      <div class="fait"><dt>Au plateau</dt><dd>${n ? `<span class="fait-v">${n}<small>${n > 1 ? 'comédiens' : 'comédien'}</small></span><p class="fait-d">${s.distribution.map(esc).join(', ')}</p>` : af}</dd></div>
+      <div class="fait"><dt>Cette saison</dt><dd>${s.nbDates ? `<span class="fait-v">${s.nbDates}<small>${s.nbDates > 1 ? 'dates' : 'date'}</small></span><p class="fait-d"><a class="lien" href="#/spectacle/${esc(s.slug)}/dates">Voir les dates</a></p>` : '<span class="fait-v afournir">Aucune date annoncée pour l’instant</span>'}</dd></div>
+    </dl>
+    ${s.equipe.length ? `<dl class="equipe"><p class="equipe-titre">Équipe</p>${s.equipe.map(([r, nom]) => `<div><dt>${esc(r)}</dt><dd>${esc(nom)}</dd></div>`).join('')}</dl>` : ''}`;
+  }
+  function panneaux(s, dates) {
+    const p = s.prochaine;
+    const af = '<span class="afournir">à fournir</span>';
+    const video = s.video ? `<a class="lien" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo ${EXT}</a>` : af;
+    const voir = `<div class="panneau-grille">
+      <div><p class="p-t">Prochaine date</p>${p
+        ? `<p class="p-grand">${fr(quand(p))}</p><p class="doux">${esc(ou(p))}${lieuDe(p) ? ', ' + fr(lieuDe(p)) : ''}</p><p class="doux">${esc(p.public)}</p>`
+        : `<p class="p-grand">${estSpectacle(s) ? 'Aucune date annoncée pour l’instant' : fr(s.noteScolaire || '')}</p>`}</div>
+      <div><p class="p-t">Réserver</p><p class="doux">La billetterie est tenue par chaque lieu d’accueil. Quand le lieu a publié sa page, le lien « Site du lieu » figure à côté de la date.</p>${dates.length ? `<p><a class="lien" href="#/spectacle/${esc(s.slug)}/dates">${dates.length > 1 ? `Les ${dates.length} dates de ce spectacle` : 'La date de ce spectacle'}</a></p>` : ''}</div>
+      <div><p class="p-t">Être prévenu</p><p class="doux">Pour connaître les prochaines dates près de chez vous :</p><p><a class="lien" href="${mail}">${esc(C.email)}</a></p></div>
+    </div>`;
+    const prog = `<div class="panneau-grille">
+      <div><p class="p-t">Documents</p>
+        <p>Fiche technique : ${af}</p><p>Dossier de diffusion : ${af}</p><p>Conditions financières : ${af}</p><p>Vidéo : ${video}</p></div>
+      <div><p class="p-t">Production</p>
+        ${s.coproduction ? `<p class="doux"><b>Coproduction.</b> ${fr(s.coproduction)}</p>` : ''}
+        ${s.soutiens ? `<p class="doux"><b>Soutiens.</b> ${fr(s.soutiens)}</p>` : ''}
+        ${!s.coproduction && !s.soutiens ? `<p>${af}</p>` : ''}</div>
+      <div><p class="p-t">Tournée et contact</p>
+        <p class="doux">${dates.length ? `${pluriel(dates.length, 'date annoncée', 'dates annoncées')} cette saison.` : 'Aucune date annoncée pour l’instant.'}</p>
+        <p><a class="lien" href="${mail}">${esc(C.email)}</a></p></div>
+    </div>`;
+    const e = s.etablissement || {};
+    const etab = `<div class="panneau-grille">
+      <p class="panneau-lead">${fr(e.texte || 'à fournir')}</p>
+      <div><p class="p-t">Pass Culture</p><p class="doux">${s.passCulture ? 'Proposé dans l’offre collective du Pass Culture.' : 'Pas d’offre collective Pass Culture annoncée.'}</p></div>
+      <div><p class="p-t">Guide du CRED 76</p>${s.cred76 ? `<p class="doux">Référencé au guide du CRED de Seine-Maritime.</p><p><a class="lien" href="${esc(s.cred76)}" target="_blank" rel="noopener">La fiche du guide ${EXT}</a></p>` : '<p class="doux">Non référencé au guide du CRED de Seine-Maritime.</p>'}</div>
+      <div><p class="p-t">Préparer la venue</p>${s.noteScolaire ? `<p class="doux">${fr(s.noteScolaire)}</p>` : ''}<p><a class="lien" href="${mail}">${esc(C.email)}</a></p></div>
+    </div>`;
+    return [voir, prog, etab];
+  }
+  function spectacle(s) {
+    const i = SHOWS.indexOf(s);
+    const suivant = SHOWS[(i + 1) % SHOWS.length];
+    const dates = datesDe(s.slug);
+    const LIMITE = 8;
+    const contenus = panneaux(s, dates);
+    return `<section class="scene scene--spectacle" id="scene" aria-labelledby="t-spectacle" data-focale="${s.focale ?? 50}" style="--c:${esc(s.couleur)}">
+      ${visuel(s, false)}
+      <div class="scene-corps wrap">
+        <div class="scene-txt">
+          <a class="retour" href="#/spectacles"><span class="fl" aria-hidden="true">←</span> Tous les spectacles</a>
+          <p class="scene-sur">${fr(surDe(s))}</p>
+          <h1 class="scene-titre" id="t-spectacle" tabindex="-1">${fr(s.titre)}</h1>
+          ${estSpectacle(s) ? `<p class="scene-sous">${fr(s.sousTitre)}</p>` : ''}
+          <p class="scene-date">${s.prochaine ? `<span>Prochaine date</span>${fr(quand(s.prochaine))}, ${esc(ou(s.prochaine))}` : (estSpectacle(s) ? 'Aucune date annoncée pour l’instant' : fr(s.noteScolaire || ''))}</p>
+        </div>
+      </div>
+      ${s.credit ? `<p class="credit">Photo ${fr(s.credit)}</p>` : ''}
+    </section>
+    <div style="--c:${esc(s.couleur)}">
+      <section class="bloc" aria-label="Le spectacle">
+        <div class="wrap">
+          <div class="intro">
+            <p class="accroche">${fr(s.accroche)}</p>
+            <div class="texte"><p>${fr(s.texte)}</p></div>
+          </div>
+          ${faits(s)}
+        </div>
+      </section>
+      <section class="bloc" id="dates" aria-labelledby="t-dates">
+        <div class="wrap">
+          <div class="bloc-tete">
+            <div><p class="sur">Saison ${esc(D.saison)}</p><h2 class="bloc-titre" id="t-dates" tabindex="-1">${estSpectacle(s) ? 'Les dates' : 'Les rendez-vous'}</h2></div>
+            ${dates.length ? `<p class="bloc-intro">${pluriel(dates.length, 'date annoncée', 'dates annoncées')}. La réservation se fait auprès de chaque lieu.</p>` : ''}
+          </div>
+          ${dates.length
+            ? `<div class="agenda" id="dates-liste">${agenda(dates, { limite: LIMITE, avecTitre: false })}</div>${boutonSuite(dates.length, LIMITE)}`
+            : `<p class="vide">Aucune date annoncée pour l’instant.</p>`}
+        </div>
+      </section>
+      <section class="bloc" aria-labelledby="t-portes-s">
+        <div class="wrap">
+          <div class="bloc-tete">
+            <div><p class="sur">Trois portes</p><h2 class="bloc-titre" id="t-portes-s">Par où entrer</h2></div>
+          </div>
+          <div class="onglets" role="tablist" aria-label="Les trois portes">
+            ${D.doors.map((d, k) => `<button class="onglet" type="button" role="tab" id="porte-${k}" aria-controls="panneau-${k}" aria-selected="${k === 0}" tabindex="${k === 0 ? 0 : -1}">${esc(d.titre)}</button>`).join('')}
+          </div>
+          ${contenus.map((c, k) => `<div class="panneau" role="tabpanel" id="panneau-${k}" aria-labelledby="porte-${k}" tabindex="0"${k ? ' hidden' : ''}>${c}</div>`).join('')}
+        </div>
+      </section>
+    </div>
+    <a class="suivant" href="#/spectacle/${esc(suivant.slug)}" style="--c:${esc(suivant.couleur)}">
+      <img src="${photo(suivant)}" alt="Photo de ${esc(suivant.titre)}" style="object-position:${cadrage(suivant)}" decoding="async">
+      <span class="suivant-in wrap">
+        <span class="sur">${estSpectacle(suivant) ? 'Spectacle suivant' : 'Et aussi'}</span>
+        <span class="suivant-t">${fr(suivant.titre)}<span class="fl" aria-hidden="true">→</span></span>
+        <span class="suivant-s" style="display:block">${fr(suivant.sousTitre)}</span>
+      </span>
+    </a>`;
+  }
+  function brancherOnglets(zone) {
+    const tabs = $$('[role="tab"]', zone);
+    const activer = (t, focus) => {
+      tabs.forEach(x => {
+        const on = x === t;
+        x.setAttribute('aria-selected', String(on));
+        x.tabIndex = on ? 0 : -1;
+        $('#' + x.getAttribute('aria-controls')).hidden = !on;
+      });
+      if (focus) t.focus();
+    };
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => activer(t));
+      t.addEventListener('keydown', e => {
+        const n = tabs.length;
+        const k = { ArrowRight: (i + 1) % n, ArrowDown: (i + 1) % n, ArrowLeft: (i - 1 + n) % n, ArrowUp: (i - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
+        if (k !== undefined) { e.preventDefault(); activer(tabs[k], true); }
+      });
+    });
+  }
+
+  /* Navigation par l’ancre */
+  const main = $('#contenu');
+  const tete = $('#tete');
+  const menuBtn = $('#menu-btn');
+  let vue = null;
+  const SECTIONS = { agenda: 'agenda', spectacles: 'repertoire', compagnie: 'compagnie', contact: 'contact' };
+
+  function fermerMenu(rendreFocus) {
+    if (!tete.classList.contains('ouvert')) return;
+    tete.classList.remove('ouvert');
+    root.classList.remove('fige');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    $('.menu-txt', menuBtn).textContent = 'Menu';
+    if (rendreFocus) menuBtn.focus();
+  }
+  menuBtn.addEventListener('click', () => {
+    const ouvert = !tete.classList.contains('ouvert');
+    tete.classList.toggle('ouvert', ouvert);
+    root.classList.toggle('fige', ouvert);
+    menuBtn.setAttribute('aria-expanded', String(ouvert));
+    $('.menu-txt', menuBtn).textContent = ouvert ? 'Fermer' : 'Menu';
+    if (ouvert) $('.nav a', tete).focus();
+  });
+  doc.addEventListener('keydown', e => { if (e.key === 'Escape') fermerMenu(true); });
+  mobile.addEventListener('change', () => fermerMenu(false));
+
+  const enTete = () => tete.classList.toggle('plein', scrollY > 24);
+  addEventListener('scroll', enTete, { passive: true });
+
+  function aller(cible, doux) {
+    if (!cible) return;
+    cible.scrollIntoView({ behavior: doux && !reduit.matches ? 'smooth' : 'auto', block: 'start' });
+    const titre = cible.querySelector('h2[tabindex="-1"]');
+    if (titre) titre.focus({ preventScroll: true });
+  }
+  function router(depuisClic) {
+    const h = location.hash || '#/';
+    if (!h.startsWith('#/')) return;
+    const parts = h.slice(2).split('/').filter(Boolean);
+    let cle, section = null;
+    if (parts[0] === 'spectacle' && PAR_SLUG[parts[1]]) { cle = 'spectacle:' + parts[1]; section = parts[2] || null; }
+    else { cle = 'accueil'; section = SECTIONS[parts[0]] || null; }
+    if (section === 'contact' && vue) { aller($('#contact'), true); fermerMenu(false); return; }
+    const change = cle !== vue;
+    if (change) {
+      nettoyer.forEach(f => f()); nettoyer = [];
+      const precedente = vue;
+      vue = cle;
+      if (cle === 'accueil') {
+        if (precedente && precedente.startsWith('spectacle:')) actif = Math.max(0, SHOWS.findIndex(s => s.slug === precedente.slice(10)));
+        main.innerHTML = accueil();
+        brancherCarrousel($('#scene', main));
+        brancherSuite($('#agenda', main));
+        doc.title = 'Compagnie Crescite · Théâtre à Rouen';
+      } else {
+        const s = PAR_SLUG[parts[1]];
+        main.innerHTML = spectacle(s);
+        halo($('#scene', main));
+        brancherSuite($('#dates', main));
+        brancherOnglets(main);
+        doc.title = `${s.titre} · Compagnie Crescite`;
+      }
+      $$('.nav a').forEach(a => a.toggleAttribute('aria-current', cle !== 'accueil' && a.dataset.nav === 'spectacles'));
+      if (cle !== 'accueil') $$('.nav a[data-nav="spectacles"]').forEach(a => a.setAttribute('aria-current', 'true'));
+    }
+    fermerMenu(false);
+    if (section) {
+      const cible = section === 'contact' ? $('#contact') : $('#' + section, main);
+      if (change) { scrollTo(0, 0); requestAnimationFrame(() => aller(cible, false)); }
+      else aller(cible, true);
+    } else {
+      scrollTo({ top: 0, behavior: !change && depuisClic && !reduit.matches ? 'smooth' : 'auto' });
+      if (change && precedenteExiste) { const t = $('h1[tabindex="-1"]', main); if (t) t.focus({ preventScroll: true }); }
+    }
+    precedenteExiste = true;
+    enTete();
+  }
+  let precedenteExiste = false;
+  doc.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#/"]');
+    if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (a.getAttribute('href') === location.hash) { e.preventDefault(); router(true); }
+  });
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  addEventListener('hashchange', () => router(true));
+  router(false);
+})();
+</script>
+</body>
+</html>
