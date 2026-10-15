@@ -244,12 +244,18 @@ def captures(names):
     print(f"captures : {len(names)} maquettes dans {shots.relative_to(ROOT)}")
 
 
+# Les maquettes en ligne ne doivent pas apparaître dans les moteurs de recherche. GitHub Pages ne permet pas
+# d'en-tête X-Robots-Tag, et un robots.txt dans un sous-dossier est ignoré (et bloquer l'exploration empêcherait
+# les robots de lire la consigne) : la consigne passe donc par une balise meta, dans le HTML initial de chaque page.
+NOINDEX = '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">'
+
+
 def pages(D, photo_urls, names):
     """Le site GitHub Pages (docs/) : la planche en index, et chaque maquette en page à part, hors des moteurs de recherche."""
     docs = ROOT / "docs"
     docs.mkdir(exist_ok=True)
     for n in names:
-        html = assemble(n, D, photo_urls).replace("<head>", '<head>\n<meta name="robots" content="noindex">', 1)
+        html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
     build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
     (docs / ".nojekyll").write_text("", encoding="utf-8")
@@ -292,7 +298,7 @@ def build_planche(D, photo_urls, names, web=False, dest=None):
     payload = json.dumps(dict(data, images=images, sizes=sizes), ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace("/*__PLANCHE__*/null", payload)
     if web:
-        html = html.replace("<head>", '<head>\n<meta name="robots" content="noindex">', 1)
+        html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
     out = dest or DIST / "maquettes.html"
     out.write_text(html, encoding="utf-8")
     print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko), {len(images)} captures")
