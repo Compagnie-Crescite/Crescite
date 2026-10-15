@@ -73,7 +73,8 @@ chaque maquette en grand.
 **En ligne.** `python3 maquettes/build.py --pages` écrit le site GitHub Pages dans `docs/` : la planche en page
 d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.html`…), exclues des moteurs de
 recherche. Ces pages embarquent le logo 2.0 et les photos : leur publication a été décidée par la compagnie.
-Adresse : https://adrienvada.github.io/Crescite/ (Pages servi depuis le dossier `docs/` de la branche principale). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
+Adresse : https://adrienvada.fr/Crescite/ (le compte GitHub redirige ses pages vers le domaine adrienvada.fr ;
+Pages est servi depuis le dossier `docs/` de la branche principale). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
 
 ## Données
 
