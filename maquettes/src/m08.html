@@ -358,8 +358,8 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     if (g) { g.setAttribute('aria-hidden', 'true'); g.setAttribute('focusable', 'false'); g.removeAttribute('role'); g.removeAttribute('aria-label'); }
   }
 
-  /* Accueil */
-  function homeHTML() {
+  /* Sommaire : l'accueil et l'onglet Spectacles */
+  function somHTML(page) {
     const toc = S.map((s, i) => `
       <li${isShow(s) ? '' : ' class="toc-sep"'}>
         <a class="toc-link${i === 0 ? ' is-active' : ''}" href="#/spectacle/${s.slug}" data-i="${i}" style="--c:${s.couleur};--ct:${s.couleurTexteClair}">
@@ -378,83 +378,26 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
         </div>
       </div>`).join('');
 
-    const travels = S.filter(s => s.etablissement && (s.etablissement.mode === 'etablissement' || s.passCulture || s.cred76));
-    const doorLinks = {
-      voir: `<a href="#agenda">Les prochaines dates</a>`,
-      programmer: S.filter(isShow).map(s => `<a href="#/spectacle/${s.slug}/programmer">${fr(s.titre)}</a>`).join(''),
-      etablissement: travels.map(s => `<a href="#/spectacle/${s.slug}/etablissement">${fr(s.titre)}</a>`).join('')
-    };
-    const doors = D.doors.map((d, i) => `
-      <li>
-        <span class="door-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
-        <div>
-          <h3 class="door-title">${esc(d.titre)}</h3>
-          <p class="door-text">${fr(d.texte)}</p>
-          <p class="door-links">${doorLinks[d.key] || ''}</p>
-        </div>
-      </li>`).join('');
-
-    const agRow = (d, hide) => {
-      const s = S[idx.get(d.slug)];
-      return `<li${hide ? ' hidden data-more' : ''}>
-        <p class="ag-date">${esc(dateTxt(d))}</p>
-        <div><a class="ag-show" href="#/spectacle/${d.slug}"><span class="dot" style="--c:${s ? s.couleur : 'currentColor'}" aria-hidden="true"></span>${fr(d.titre)}</a><p class="ag-place">${nw(place(d))}</p></div>
-        <div class="ag-meta"><span class="eyebrow">${esc(d.public)}</span>${d.lien ? ext(d.lien, 'Réserver') : ''}</div>
-      </li>`;
-    };
-    const st = D.stats;
+    const years = S.filter(s => s.annee).map(s => s.annee);
+    const head = page
+      ? `<h1 class="page-title" id="som-h" tabindex="-1">Les spectacles</h1>
+        <p class="page-sub">Sept spectacles, créés entre ${Math.min(...years)} et ${Math.max(...years)}, et des actions culturelles.</p>`
+      : `<h1 class="toc-kicker" id="som-h" tabindex="-1">Sept spectacles et des actions culturelles.</h1>`;
 
     return `
     <section class="som" aria-labelledby="som-h">
       <div class="toc">
-        <h1 class="toc-kicker" id="som-h" tabindex="-1">Sept spectacles et des actions culturelles.</h1>
+        ${head}
         <ul class="toc-list">${toc}</ul>
-        <a class="toc-foot" href="#agenda">Saison ${esc(D.saison)} · ${plural(D.dates.length, 'date', 'dates')} à l’agenda <span aria-hidden="true">↓</span></a>
+        <a class="toc-foot" href="#/agenda">Saison ${esc(D.saison)} · ${plural(D.dates.length, 'date', 'dates')} à l’agenda <span aria-hidden="true">→</span></a>
       </div>
       <div class="pv" role="region" aria-label="Aperçu du spectacle" style="--tint:${tint(S[0].couleur)}">
         <div class="pv-in">${layers}</div>
       </div>
-    </section>
-
-    <section class="band" aria-labelledby="portes-h">
-      <div class="band-head">
-        <h2 class="band-title" id="portes-h">Par où commencer&nbsp;?</h2>
-        <p class="band-sub">Trois portes, selon ce que vous cherchez.</p>
-      </div>
-      <div class="band-body"><ol class="doors">${doors}</ol></div>
-    </section>
-
-    <section class="band" id="agenda" aria-labelledby="agenda-h">
-      <div class="band-head">
-        <h2 class="band-title" id="agenda-h">Prochaines dates</h2>
-        <p class="band-sub">Saison ${esc(D.saison)}, en salle et dans les établissements scolaires.</p>
-      </div>
-      <div class="band-body">
-        <ul class="ag-list" id="ag-list">${D.dates.map((d, i) => agRow(d, i >= 6)).join('')}</ul>
-        ${D.dates.length > 6 ? `<button class="more" type="button" aria-expanded="false" aria-controls="ag-list">Voir les ${D.dates.length} dates de la saison</button>` : ''}
-      </div>
-    </section>
-
-    <section class="band" id="compagnie" aria-labelledby="cie-h">
-      <div class="band-head">
-        <h2 class="band-title" id="cie-h">La compagnie</h2>
-        <p class="band-sub">Théâtre, ${esc(C.ville)}, depuis ${esc(C.depuis)}.</p>
-      </div>
-      <div class="band-body">
-        <p class="quote">${fr(C.intention)}</p>
-        <p class="cie-text">${fr(C.presentation)}</p>
-        <p class="cie-facts">Mise en scène&nbsp;: ${esc(C.miseEnScene)}</p>
-        <ul class="stats">
-          <li><span class="stat-n">${st.representationsCourt}</span><span class="stat-l">représentations depuis ${st.depuis}</span></li>
-          <li><span class="stat-n">${st.parAnMin}</span><span class="stat-l">par an au moins, depuis ${st.parAnDepuis}</span></li>
-          <li><span class="stat-n">${st.pays}</span><span class="stat-l">pays : ${st.paysListe.join(', ')}</span></li>
-          <li><span class="stat-n">${st.heuresEAC}&nbsp;h</span><span class="stat-l">d’éducation artistique en 2023-2024</span></li>
-        </ul>
-      </div>
     </section>`;
   }
 
-  function bindHome() {
+  function bindSom() {
     const links = [...main.querySelectorAll('.toc-link')];
     const layers = [...main.querySelectorAll('.pv-layer')];
     const pv = main.querySelector('.pv');
@@ -470,13 +413,181 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
     const pick = e => { const a = e.target.closest('.toc-link'); if (a) activate(+a.dataset.i); };
     list.addEventListener('mouseover', pick);
     list.addEventListener('focusin', pick);
-    const more = main.querySelector('.more');
-    if (more) more.addEventListener('click', () => {
-      const open = more.getAttribute('aria-expanded') !== 'true';
-      main.querySelectorAll('[data-more]').forEach(li => { li.hidden = !open; });
-      more.setAttribute('aria-expanded', String(open));
-      more.textContent = open ? 'Afficher moins de dates' : `Voir les ${D.dates.length} dates de la saison`;
+  }
+
+  const agRow = d => {
+    const s = S[idx.get(d.slug)];
+    return `<li>
+        <p class="ag-date">${esc(dateTxt(d))}</p>
+        <div><a class="ag-show" href="#/spectacle/${d.slug}"><span class="dot" style="--c:${s ? s.couleur : 'currentColor'}" aria-hidden="true"></span>${fr(d.titre)}</a><p class="ag-place">${nw(place(d))}</p></div>
+        <div class="ag-meta"><span class="eyebrow">${esc(d.public)}</span>${d.lien ? ext(d.lien, 'Réserver') : ''}</div>
+      </li>`;
+  };
+  const nb = (k, one, many) => `${k}&nbsp;${k > 1 ? many : one}`;
+
+  /* Accueil : le sommaire, les trois portes, les trois prochaines dates */
+  function homeHTML() {
+    const travels = S.filter(s => s.etablissement && (s.etablissement.mode === 'etablissement' || s.passCulture || s.cred76));
+    const doorLinks = {
+      voir: `<a href="#/agenda">L’agenda de la saison</a>`,
+      programmer: S.filter(isShow).map(s => `<a href="#/spectacle/${s.slug}/programmer">${fr(s.titre)}</a>`).join(''),
+      etablissement: travels.map(s => `<a href="#/spectacle/${s.slug}/etablissement">${fr(s.titre)}</a>`).join('')
+    };
+    const doors = D.doors.map((d, i) => `
+      <li>
+        <span class="door-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <h3 class="door-title">${esc(d.titre)}</h3>
+          <p class="door-text">${fr(d.texte)}</p>
+          <p class="door-links">${doorLinks[d.key] || ''}</p>
+        </div>
+      </li>`).join('');
+    const next = D.dates.slice(0, 3);
+
+    return somHTML(false) + `
+    <section class="band" aria-labelledby="portes-h">
+      <div class="band-head">
+        <h2 class="band-title" id="portes-h">Par où commencer&nbsp;?</h2>
+        <p class="band-sub">Trois portes, selon ce que vous cherchez.</p>
+      </div>
+      <div class="band-body"><ol class="doors">${doors}</ol></div>
+    </section>
+
+    <section class="band" aria-labelledby="agenda-h">
+      <div class="band-head">
+        <h2 class="band-title" id="agenda-h">Prochaines dates</h2>
+        <p class="band-sub">Saison ${esc(D.saison)}, en salle et dans les établissements scolaires.</p>
+      </div>
+      <div class="band-body">
+        ${next.length ? `<ul class="ag-list">${next.map(agRow).join('')}</ul>` : '<p class="none">Aucune date annoncée pour l’instant.</p>'}
+        <a class="more" href="#/agenda">Tout l’agenda <span aria-hidden="true">→</span></a>
+      </div>
+    </section>`;
+  }
+
+  /* Onglet Agenda : toutes les dates de la saison, groupées par mois */
+  function agendaHTML() {
+    const groups = [];
+    D.dates.forEach(d => {
+      const k = d.iso.slice(0, 7);
+      let g = groups[groups.length - 1];
+      if (!g || g.k !== k) groups.push(g = { k, label: `${d.moisLong.charAt(0).toUpperCase()}${d.moisLong.slice(1)} ${d.annee}`, dates: [] });
+      g.dates.push(d);
     });
+    const tp = D.dates.filter(d => d.public === 'Tout public').length;
+    const sc = D.dates.length - tp;
+    return `
+    <section class="band band-page" aria-labelledby="ag-h">
+      <div class="band-head">
+        <div class="band-stick">
+          <h1 class="page-title" id="ag-h" tabindex="-1">L’agenda</h1>
+          <p class="page-sub">${D.dates.length ? `La saison ${esc(D.saison)} en ${nb(D.dates.length, 'date', 'dates')}&nbsp;: ${tp}&nbsp;tout public, ${nb(sc, 'scolaire', 'scolaires')}. Les réservations se font auprès de chaque lieu.` : `Saison ${esc(D.saison)}.`}</p>
+          ${groups.length > 1 ? `<nav class="ag-index" aria-label="Mois de la saison">
+            <p class="eyebrow" aria-hidden="true">Par mois</p>
+            <ol>${groups.map(g => `<li><a href="#/agenda?mois=${g.k}"><span class="ai-m">${g.label}</span><span class="ai-lead" aria-hidden="true"></span><span class="ai-n">${g.dates.length}<span class="sr-only"> ${g.dates.length > 1 ? 'dates' : 'date'}</span></span></a></li>`).join('')}</ol>
+          </nav>` : ''}
+        </div>
+      </div>
+      <div class="band-body">${groups.length ? groups.map(g => `
+        <section class="ag-group" id="mois-${g.k}" aria-labelledby="mois-${g.k}-h">
+          <div class="sec-head"><h2 class="sec-title" id="mois-${g.k}-h" tabindex="-1">${g.label}</h2><span class="eyebrow">${nb(g.dates.length, 'date', 'dates')}</span></div>
+          <ul class="ag-list">${g.dates.map(agRow).join('')}</ul>
+        </section>`).join('') : '<p class="none">Aucune date annoncée pour l’instant.</p>'}
+      </div>
+    </section>`;
+  }
+
+  /* Onglet La compagnie */
+  function compagnieHTML() {
+    const st = D.stats;
+    const cast = new Map();
+    S.forEach(s => s.distribution.forEach(e => e.split(/\s+ou\s+/).forEach(p => {
+      const nom = p.trim();
+      if (!cast.has(nom)) cast.set(nom, []);
+      if (!cast.get(nom).includes(s)) cast.get(nom).push(s);
+    })));
+    const fam = nom => nom.split(' ').slice(1).join(' ') || nom;
+    const people = [...cast].sort((a, b) => fam(a[0]).localeCompare(fam(b[0]), 'fr') || a[0].localeCompare(b[0], 'fr'));
+    return `
+    <section class="band band-page" aria-labelledby="cie-h">
+      <div class="band-head">
+        <h1 class="page-title" id="cie-h" tabindex="-1">La compagnie</h1>
+        <p class="page-sub">Théâtre, ${esc(C.ville)}, depuis ${esc(C.depuis)}.</p>
+      </div>
+      <div class="band-body">
+        <p class="quote">${fr(C.intention)}</p>
+        <p class="cie-text">${fr(C.presentation)}</p>
+        <p class="cie-facts">Mise en scène&nbsp;: ${esc(C.miseEnScene)}</p>
+        <ul class="stats">
+          <li><span class="stat-n">${esc(st.representationsCourt)}</span><span class="stat-l">représentations depuis ${st.depuis}</span></li>
+          <li><span class="stat-n">${st.parAnMin}</span><span class="stat-l">par an au moins, depuis ${st.parAnDepuis}</span></li>
+          <li><span class="stat-n">${st.pays}</span><span class="stat-l">pays&nbsp;: ${esc(st.paysListe.join(', '))}</span></li>
+          <li><span class="stat-n">${st.heuresEAC}&nbsp;h</span><span class="stat-l">d’éducation artistique en 2023-2024</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="band" aria-labelledby="plateau-h">
+      <div class="band-head">
+        <h2 class="band-title" id="plateau-h">Au plateau</h2>
+        <p class="band-sub">Les interprètes des spectacles du répertoire, par ordre alphabétique.</p>
+      </div>
+      <div class="band-body">
+        <ul class="people">${people.map(([nom, shows]) => `<li><span class="p-name">${esc(nom)}</span><span class="p-shows">${shows.map(s => fr(s.titre)).join(', ')}</span></li>`).join('')}</ul>
+      </div>
+    </section>
+
+    <section class="band" aria-labelledby="part-h">
+      <div class="band-head">
+        <h2 class="band-title" id="part-h">Partenaires</h2>
+      </div>
+      <div class="band-body">
+        <ul class="people">${C.partenaires.map(p => `<li><span class="p-name">${nw(p)}</span></li>`).join('')}</ul>
+      </div>
+    </section>`;
+  }
+
+  /* Onglet Contact */
+  function contactHTML() {
+    const ac = S.find(s => !isShow(s));
+    const go = {
+      voir: ['#/agenda', 'L’agenda de la saison'],
+      programmer: ['#/spectacles', 'Les spectacles'],
+      etablissement: ac ? [`#/spectacle/${ac.slug}`, fr(ac.titre)] : ['#/spectacles', 'Les spectacles']
+    };
+    const doors = D.doors.map((d, i) => `
+      <li>
+        <span class="door-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <h3 class="door-title">${esc(d.titre)}</h3>
+          <p class="door-text">${fr(d.texte)}</p>
+          <p class="door-meta"><span class="eyebrow">Contact dédié</span><span class="muted">à fournir</span></p>
+          ${go[d.key] ? `<p class="door-links"><a href="${go[d.key][0]}">${go[d.key][1]}</a></p>` : ''}
+        </div>
+      </li>`).join('');
+    return `
+    <section class="band band-page" aria-labelledby="ct-h">
+      <div class="band-head">
+        <h1 class="page-title" id="ct-h" tabindex="-1">Contact</h1>
+        <p class="page-sub">Une question, une date, un projet d’accueil&nbsp;: écrivez à la compagnie.</p>
+      </div>
+      <div class="band-body">
+        <dl class="coord">
+          <div><dt>Nom</dt><dd>${esc(C.nom)}</dd></div>
+          <div><dt>Adresse</dt><dd>${esc(C.adresse)}</dd></div>
+          <div><dt>E-mail</dt><dd>${mail}</dd></div>
+          <div><dt>Lettre d’information</dt><dd class="muted">Inscription&nbsp;: à fournir</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="band" aria-labelledby="qui-h">
+      <div class="band-head">
+        <h2 class="band-title" id="qui-h">Qui contacter&nbsp;?</h2>
+        <p class="band-sub">Un contact par porte, selon ce que vous cherchez.</p>
+      </div>
+      <div class="band-body"><ol class="doors">${doors}</ol></div>
+    </section>`;
   }
 
   /* Page spectacle */
@@ -559,7 +670,7 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       <div class="show-side">
         <div class="show-side-in">
           <header class="show-head">
-            <div class="show-top"><a class="back" href="#/"><span aria-hidden="true">←</span> Sommaire</a><span class="folio"><span aria-hidden="true">${String(i + 1).padStart(2, '0')} / ${String(S.length).padStart(2, '0')}</span><span class="sr-only">Entrée ${i + 1} sur ${S.length} du sommaire</span></span></div>
+            <div class="show-top"><a class="back" href="#/spectacles"><span aria-hidden="true">←</span> Les spectacles</a><span class="folio"><span aria-hidden="true">${String(i + 1).padStart(2, '0')} / ${String(S.length).padStart(2, '0')}</span><span class="sr-only">Entrée ${i + 1} sur ${S.length} du sommaire</span></span></div>
             <h1 class="show-title${s.titre.length > 18 ? ' is-long' : ''}" tabindex="-1">${fr(s.titre)}</h1>
             <p class="show-sub">${fr(s.sousTitre)}</p>
           </header>
@@ -648,19 +759,29 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
       </div>`;
   }
 
-  /* Routeur */
+  /* Routeur : l'accueil, quatre onglets, les pages spectacle */
+  const TABS = {
+    spectacles: { titre: 'Les spectacles', html: () => somHTML(true), bind: bindSom },
+    agenda: { titre: 'L’agenda', html: agendaHTML },
+    compagnie: { titre: 'La compagnie', html: compagnieHTML },
+    contact: { titre: 'Contact', html: contactHTML }
+  };
+  const navLinks = [...document.querySelectorAll('.site-nav a')];
   let view = null;
   const parse = () => {
-    const h = location.hash;
-    const m = h.match(/^#\/spectacle\/([a-z0-9-]+)(?:\/(voir|programmer|etablissement))?\/?$/);
-    if (m && idx.has(m[1])) return { kind: 'show', slug: m[1], porte: m[2] || null };
-    return { kind: 'home', anchor: /^#[a-z][\w-]*$/i.test(h) ? h.slice(1) : null };
+    const [path, qs] = location.hash.slice(1).split('?');
+    const q = new URLSearchParams(qs || '');
+    const m = path.match(/^\/spectacle\/([a-z0-9-]+)(?:\/(voir|programmer|etablissement))?\/?$/);
+    if (m && idx.has(m[1])) return { kind: 'show', slug: m[1], porte: m[2] || null, q };
+    const t = (path.match(/^\/([a-z]+)\/?$/) || [])[1];
+    return { kind: t && Object.hasOwn(TABS, t) ? t : 'home', q };
   };
 
   function route(first) {
     const r = parse();
-    const key = r.kind === 'show' ? 'show:' + r.slug : 'home';
+    const key = r.kind === 'show' ? 'show:' + r.slug : r.kind;
     const changed = key !== view;
+    closeMenu();
     if (changed) {
       view = key;
       if (r.kind === 'show') {
@@ -668,22 +789,30 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
         main.innerHTML = showHTML(s);
         bindShow(s);
         document.title = `${s.titre} · ${C.nom}`;
-      } else {
+      } else if (r.kind === 'home') {
         main.innerHTML = homeHTML();
-        bindHome();
+        bindSom();
         document.title = `${C.nom}, théâtre à ${C.ville}`;
+      } else {
+        const t = TABS[r.kind];
+        main.innerHTML = t.html();
+        if (t.bind) t.bind();
+        document.title = `${t.titre} · ${C.nom}`;
       }
+      const tab = r.kind === 'show' ? 'spectacles' : r.kind;
+      navLinks.forEach(a => { if (a.getAttribute('href') === '#/' + tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
       window.scrollTo(0, 0);
       if (!first) { const h1 = main.querySelector('h1'); if (h1) h1.focus({ preventScroll: true }); }
     }
+    const mois = r.kind === 'agenda' ? document.getElementById('mois-' + r.q.get('mois')) : null;
     if (r.kind === 'show' && r.porte) {
       selectTab(r.porte, !first);
       const el = document.getElementById('portes');
       if (el) el.scrollIntoView({ block: 'start' });
-    } else if (r.kind === 'home' && r.anchor) {
-      const el = document.getElementById(r.anchor);
-      if (el) el.scrollIntoView({ block: 'start' });
-    } else if (r.kind === 'home' && !changed) {
+    } else if (mois) {
+      mois.scrollIntoView({ block: 'start' });
+      if (!first) mois.querySelector('h2').focus({ preventScroll: true });
+    } else if (!changed) {
       window.scrollTo(0, 0);
     }
   }

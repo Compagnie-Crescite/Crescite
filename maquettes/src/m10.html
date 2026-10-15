@@ -309,6 +309,12 @@ main { min-height: calc(100vh - var(--haut)); }
   .stage-foot { bottom: 22px; }
   .dates li { grid-template-columns: 1fr; gap: 2px; }
   .dates .pub { text-align: left; }
+  .nav a[aria-current="page"] { text-underline-offset: 6px; }
+  .repertoire a { grid-template-columns: 104px minmax(0, 1fr); gap: 10px 16px; align-items: start; padding: 18px 0; }
+  .rp-photo { grid-row: span 2; aspect-ratio: 4 / 5; }
+  .rp-quand { grid-column: 2; font-size: .95rem; }
+  .repertoire h2::after { margin-top: 10px; }
+  .rp-texte p { margin-top: 8px; }
   .sig-jumeaux .twin { width: 40vw; height: 34%; top: 16%; }
   .sig-jumeaux .twin.l { left: calc(50% - 20vw - clamp(0, var(--p) * 1.6, 1) * 23vw); }
   .sig-jumeaux .twin.r { left: calc(50% - 20vw + clamp(0, var(--p) * 1.6, 1) * 23vw); }
@@ -327,33 +333,29 @@ main { min-height: calc(100vh - var(--haut)); }
   <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
   <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
   <nav class="nav" id="nav" aria-label="Navigation principale">
-    <a href="#/" data-ancre="main">Spectacles</a><a href="#/" data-ancre="agenda">Agenda</a><a href="#/" data-ancre="compagnie">La compagnie</a><a href="#/" data-ancre="contact">Contact</a>
+    <a href="#/spectacles">Spectacles</a><a href="#/agenda">Agenda</a><a href="#/compagnie">La compagnie</a><a href="#/contact">Contact</a>
   </nav>
 </div></header>
 <main id="main" tabindex="-1">
   <div id="v-accueil">
     <section class="stage" aria-labelledby="stage-h">
-      <div class="stage-copy"><h1 id="stage-h">Tirez un bras pour entrer dans un spectacle.</h1></div>
+      <div class="stage-copy"><h1 id="stage-h" tabindex="-1">Tirez un bras pour entrer dans un spectacle.</h1></div>
       <canvas class="stage-canvas" aria-hidden="true"></canvas>
       <ul class="t-labels" aria-label="Les spectacles"></ul>
       <p class="stage-foot">Compagnie de théâtre · Rouen · depuis 2012</p>
     </section>
-    <section class="bloc" id="agenda" aria-labelledby="h-ag"><div class="wrap">
-      <div class="entete"><h2 id="h-ag">Prochaines dates</h2><button class="lien" type="button" id="tout" aria-controls="liste-dates" aria-expanded="false"></button></div>
-      <ul class="dates" id="liste-dates"></ul>
-    </div></section>
     <section class="bloc" id="portes" aria-labelledby="h-po"><div class="wrap">
       <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
       <div class="portes" id="portes-liste"></div>
     </div></section>
-    <section class="bloc" id="compagnie" aria-labelledby="h-co"><div class="wrap">
-      <div class="entete"><h2 id="h-co">La compagnie</h2></div>
-      <div class="compagnie" id="compagnie-corps"></div>
-    </div></section>
   </div>
+  <div id="v-spectacles" hidden></div>
+  <div id="v-agenda" hidden></div>
+  <div id="v-compagnie" hidden></div>
+  <div id="v-contact" hidden></div>
   <div id="v-spectacle" hidden></div>
 </main>
-<footer id="contact"><div class="wrap" id="pied"></div></footer>
+<footer><div class="wrap" id="pied"></div></footer>
 <canvas id="ink" hidden aria-hidden="true"></canvas>
 <script>const D = /*__DATA__*/null;</script>
 <script>
@@ -746,32 +748,90 @@ main { min-height: calc(100vh - var(--haut)); }
     return { start, layout, returnAll, center };
   })();
 
-  /* ---------- l'accueil, sous la scène ---------- */
-  const ligneDate = d => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.iso}">${esc(d.joursem + ' ' + d.jour + ' ' + d.mois)}<small>${d.annee}</small></time>
-    <a href="#/spectacle/${d.slug}">${titre(d.titre)}</a><span class="ou">${esc(d.lieu ? d.lieu + ', ' : '')}${esc(d.commune)} (${esc(d.dep)})</span><span class="pub">${esc(d.public)}</span></li>`;
+  /* ---------- les dates : un jour, plusieurs jours ou un mois seul ---------- */
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const pluriel = (n, un, plus) => `${n} ${n > 1 ? plus : un}`;
+  const quand = d => d.precision === 'month' ? cap(d.moisLong) : (d.fin !== d.iso ? d.label.replace(/\s\d{4}$/, '') : `${d.joursem} ${d.jour === 1 ? '1er' : d.jour} ${d.mois}`);
+  // un « lieu » qui est une heure ou une note n'est pas un lieu
+  const lieu = d => {
+    const v = (d.lieu || '').trim(), ou = `${esc(d.commune)} (${esc(d.dep)})`;
+    if (/^\d{1,2}\s*h\s*\d{0,2}$/i.test(v)) return `${ou}, à ${esc(v.replace(/\s+/g, ''))}`;
+    if (/^diptyque$/i.test(v)) return `${ou}, en diptyque`;
+    return `${v ? esc(v) + ', ' : ''}${ou}`;
+  };
+  const ligneDate = d => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.precision === 'month' ? d.iso.slice(0, 7) : d.iso}">${esc(quand(d))}<small>${d.precision === 'month' ? `${d.annee}, jour à préciser` : d.annee}</small></time>
+    <a href="#/spectacle/${d.slug}">${titre(d.titre)}</a><span class="ou">${lieu(d)}</span><span class="pub">${esc(d.public)}</span></li>`;
+
+  /* ---------- l'accueil, sous la scène : les trois portes ---------- */
   function accueil() {
-    const liste = $('#liste-dates'), tout = $('#tout');
-    let ouvert = false;
-    const draw = () => {
-      liste.innerHTML = (ouvert ? D.dates : D.dates.slice(0, 6)).map(ligneDate).join('');
-      tout.textContent = ouvert ? 'Moins de dates' : `Toutes les dates (${D.dates.length})`;
-      tout.setAttribute('aria-expanded', ouvert);
-    };
-    tout.addEventListener('click', () => { ouvert = !ouvert; draw(); });
-    draw();
     const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
     const porte = (p, corps) => `<div class="porte" style="--dc:${p.couleurVive};--dct:${p.couleur}"><h3>${esc(p.titre)}</h3><p>${esc(p.texte)}</p><div class="bas">${corps}</div></div>`;
     $('#portes-liste').innerHTML =
-      porte(voir, `<ul>${D.dates.slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(d.jour + ' ' + d.mois)}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/" data-ancre="agenda">Toutes les dates →</a>`) +
-      porte(prog, `<ul><li><a href="#/" data-ancre="main"><span>Le répertoire</span><small>${D.shows.length - 1} spectacles</small></a></li>
+      porte(voir, `<ul>${D.dates.slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(d.jour + ' ' + d.mois)}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/agenda">Tout l’agenda (${D.dates.length} dates) →</a>`) +
+      porte(prog, `<ul><li><a href="#/spectacles"><span>Le répertoire</span><small>${D.shows.length - 1} spectacles</small></a></li>
         <li><a href="#/spectacle/${D.shows[0].slug}/programmer"><span>Fiches techniques</span><small>par spectacle</small></a></li>
         <li><a href="mailto:${C.email}?subject=Programmation"><span>Écrire à la diffusion</span><small>${esc(C.email)}</small></a></li></ul>`) +
       porte(etab, `<ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${titre(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
         <p>${D.shows.filter(s => s.passCulture).length} spectacles sont proposés sur le Pass Culture (offre collective).</p>`);
-    $('#compagnie-corps').innerHTML = `<div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
-      <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl>`;
     $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
       <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
+  }
+
+  /* ---------- les onglets : une page chacun ---------- */
+  const tete = (h, intro) => `<div class="page-tete"><div class="wrap"><h1 tabindex="-1"><span>${h}</span></h1><p>${intro}</p></div></div>`;
+  function pages() {
+    const nSp = D.shows.filter(s => s.annee).length, ac = D.shows.find(s => !s.annee);
+    // les spectacles : la pieuvre de l'accueil, en liste
+    $('#v-spectacles').innerHTML = tete('Les spectacles', `${nSp} spectacles mis en scène par ${esc(C.miseEnScene)}, et des actions culturelles. Ils se jouent en salle et, pour plusieurs, dans les collèges et les lycées.`) +
+      `<section class="bloc" aria-label="Le répertoire"><div class="wrap"><ul class="repertoire">${D.shows.map(s => {
+        const p = s.prochaine;
+        const q = p ? `<small>Prochaine date</small><b>${esc(p.label)}</b><span>${esc(p.commune)} (${esc(p.dep)})${p.public === 'Scolaire' ? ', scolaire' : ''}</span><span class="n">${pluriel(s.nbDates, 'date', 'dates')} cette saison</span>`
+          : s.annee ? '<small>Prochaine date</small><span>Aucune date annoncée pour l’instant</span>' : '<small>Calendrier</small><span>Sur projet, avec chaque établissement</span>';
+        return `<li><a href="#/spectacle/${s.slug}" style="--c:${s.couleurTexteClair}"><div class="rp-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></div>
+          <div class="rp-texte"><h2>${titre(s.titre)}</h2><p>${esc(s.sousTitre)}</p></div><p class="rp-quand">${q}</p></a></li>`;
+      }).join('')}</ul></div></section>`;
+    // l'agenda : toute la saison, mois par mois
+    const mois = new Map();
+    D.dates.forEach(d => { const k = d.iso.slice(0, 7); if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
+    const nSco = D.dates.filter(d => d.public === 'Scolaire').length, nCom = new Set(D.dates.map(d => d.commune + d.dep)).size;
+    $('#v-agenda').innerHTML = tete('L’agenda', `Saison ${esc(D.saison)} : ${D.dates.length} dates dans ${nCom} communes, dont ${nSco} scolaires. Pour réserver, adressez-vous au lieu qui accueille le spectacle.`) +
+      `<section class="bloc" aria-label="Les dates, mois par mois"><div class="wrap">${[...mois.values()].map(ds => `<div class="mois-groupe"><h2>${cap(ds[0].moisLong)} ${ds[0].annee}<small>${pluriel(ds.length, 'date', 'dates')}</small></h2><ul class="dates">${ds.map(ligneDate).join('')}</ul></div>`).join('')}</div></section>`;
+    // la compagnie : présentation, chiffres, artistes au plateau, partenaires
+    const troupe = new Map();
+    D.shows.forEach(s => s.distribution.forEach(x => x.split(/\s+ou\s+/).forEach(n => { n = n.trim(); if (!troupe.has(n)) troupe.set(n, []); if (!troupe.get(n).includes(s)) troupe.get(n).push(s); })));
+    const nom = n => n.split(' ').slice(1).join(' ') || n;
+    $('#v-compagnie').innerHTML = tete('La compagnie', esc(C.intention)) + `
+      <section class="bloc" aria-labelledby="h-co"><div class="wrap"><h2 id="h-co" class="sr">Présentation</h2>
+        <div class="compagnie"><div><p class="grand">${esc(C.presentation)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
+          <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl></div>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-ar"><div class="wrap">
+        <div class="entete"><h2 id="h-ar">Au plateau</h2><a href="#/spectacles">Les spectacles →</a></div>
+        <p class="chapo">Les comédiennes et les comédiens du répertoire, avec leurs spectacles.</p>
+        <ul class="artistes">${[...troupe.entries()].sort((a, b) => nom(a[0]).localeCompare(nom(b[0]), 'fr') || a[0].localeCompare(b[0], 'fr')).map(([n, ss]) => `<li><b>${esc(n)}</b><span>${ss.map(s => titre(s.titre)).join(', ')}</span></li>`).join('')}</ul>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-pa"><div class="wrap">
+        <div class="entete"><h2 id="h-pa">Partenaires</h2></div>
+        <ul class="partenaires">${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      </div></section>`;
+    // contact : la compagnie, puis un interlocuteur par porte
+    const vers = { voir: ['#/agenda', 'L’agenda de la saison'], programmer: ['#/spectacles', 'Le répertoire'], etablissement: [`#/spectacle/${ac.slug}`, 'Les actions culturelles'] };
+    $('#v-contact').innerHTML = tete('Contact', 'Une date, une programmation, un projet avec votre établissement : écrivez-nous.') + `
+      <section class="bloc" aria-labelledby="h-ad"><div class="wrap coord"><h2 id="h-ad" class="sr">Coordonnées</h2>
+        <div><p class="etiquette">Écrire</p><a class="mail" href="mailto:${C.email}">${esc(C.email)}</a></div>
+        <div><p class="etiquette">Adresse</p><address><strong>${esc(C.nom)}</strong><br>${esc(C.adresse)}</address></div>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-de"><div class="wrap">
+        <div class="entete"><h2 id="h-de">Selon votre demande</h2></div>
+        <div class="portes">${D.doors.map(p => `<div class="porte" style="--dc:${p.couleurVive};--dct:${p.couleur}"><h3>${esc(p.titre)}</h3><p>${esc(p.texte)}</p><div class="bas"><ul>
+          <li class="ligne"><span>Interlocuteur</span><span class="afournir">à fournir</span></li><li class="ligne"><span>Téléphone</span><span class="afournir">à fournir</span></li>
+          <li><a href="mailto:${C.email}?subject=${encodeURIComponent(p.titre)}"><span>Écrire</span><small>${esc(C.email)}</small></a></li></ul>
+          ${vers[p.key] ? `<a class="suite" href="${vers[p.key][0]}">${vers[p.key][1]} →</a>` : ''}</div></div>`).join('')}</div>
+      </div></section>
+      <section class="bloc" aria-labelledby="h-le"><div class="wrap">
+        <div class="entete"><h2 id="h-le">La lettre de la compagnie</h2></div>
+        <p>Pour recevoir les nouvelles dates : inscription <span class="afournir">à fournir</span>.</p>
+      </div></section>`;
   }
 
   /* ---------- la page d'un spectacle ---------- */
@@ -832,7 +892,7 @@ main { min-height: calc(100vh - var(--haut)); }
       view.innerHTML = `<article class="show" aria-labelledby="titre-sp" style="--bg:${s.fondSombre};--bg2:${pal.fond2};--fg:${pal.texte};--fg2:${pal.texte2};--ac:${pal.accent};--ac2:${pal.accent2};--sc:${s.couleur};--act:${s.couleurTexteClair}">
         <section class="sx sx-hero" data-scrolly><div class="sx-pin">
           <div class="hero-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></div>
-          <div class="hero-text"><p class="fil-ariane"><a href="#/">Accueil</a> / <a href="#/" data-ancre="main">Spectacles</a></p>
+          <div class="hero-text"><p class="fil-ariane"><a href="#/">Accueil</a> / <a href="#/spectacles">Spectacles</a></p>
             <h1 id="titre-sp" tabindex="-1">${titre(s.titre)}</h1><p class="hero-sub">${esc(s.sousTitre)}</p>
             <p class="hero-next">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})` : 'Aucune date annoncée pour l’instant.'}</p></div>
           ${s.credit ? `<p class="hero-credit">${esc(s.credit)}</p>` : ''}<p class="cue" aria-hidden="true">Faites défiler</p></div></section>
@@ -889,29 +949,52 @@ main { min-height: calc(100vh - var(--haut)); }
     return { render, current: () => current };
   })();
 
-  /* ---------- navigation ---------- */
-  const accueilV = $('#v-accueil'), spectacleV = $('#v-spectacle');
-  let vue = null, ancre = null;
+  /* ---------- navigation : une page par onglet ---------- */
+  const VUES = {
+    '': { el: $('#v-accueil'), titre: 'Compagnie Crescite · théâtre, Rouen' },
+    spectacles: { el: $('#v-spectacles'), titre: 'Les spectacles · Compagnie Crescite' },
+    agenda: { el: $('#v-agenda'), titre: 'L’agenda · Compagnie Crescite' },
+    compagnie: { el: $('#v-compagnie'), titre: 'La compagnie · Compagnie Crescite' },
+    contact: { el: $('#v-contact'), titre: 'Contact · Compagnie Crescite' },
+  };
+  const spectacleV = $('#v-spectacle');
+  let vue = null, scene = false;
+  const fermeMenu = () => { $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   function route() {
-    const m = location.hash.match(/^#\/spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?/);
+    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/$/, '');
+    const m = chemin.match(/^spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?$/);
     const s = m && bySlug[m[1]];
+    const cle = s ? 'spectacle' : (Object.hasOwn(VUES, chemin) ? chemin : '');
+    const venait = vue === 'spectacle' ? bySlug[Show.current()] : null;
+    const actif = s ? '#/spectacles' : cle && '#/' + cle;
+    $$('.nav a').forEach(a => { if (a.getAttribute('href') === actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    fermeMenu();
     if (s) {
-      accueilV.hidden = true; spectacleV.hidden = false; vue = 'spectacle';
+      Object.values(VUES).forEach(v => { v.el.hidden = true; });
+      spectacleV.hidden = false; vue = 'spectacle';
       Show.render(s, m[2]);
       scrollTo(0, 0);
       if (m[2]) $('#portes-sp').scrollIntoView();
       $('#titre-sp').focus({ preventScroll: true });
       Ink.fadeOut();
-    } else {
-      const venait = vue === 'spectacle' ? bySlug[Show.current()] : null;
-      if (venait && motionOK() && !Ink.active()) Ink.fill(venait.fondSombre);
-      spectacleV.hidden = true; spectacleV.innerHTML = ''; accueilV.hidden = false; vue = 'accueil';
-      document.title = 'Compagnie Crescite · théâtre, Rouen';
-      scrollTo(0, 0);
-      if (venait) Stage.returnAll(!motionOK()); else Stage.layout();
-      if (venait && motionOK()) { const c = Stage.center(); Ink.uncover(c.x, clamp(c.y, 60, innerHeight - 60), null, [venait.couleur, venait.fondSombre]); }
-      if (ancre) { const id = ancre; ancre = null; requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView()); }
+      return;
     }
+    // en quittant un spectacle, l'encre se retire : vers la pieuvre sur l'accueil, vers le centre ailleurs
+    if (venait && motionOK() && !Ink.active()) Ink.fill(venait.fondSombre);
+    const v = VUES[cle];
+    spectacleV.hidden = true; spectacleV.innerHTML = '';
+    Object.values(VUES).forEach(x => { x.el.hidden = x !== v; });
+    vue = cle || 'accueil';
+    document.title = v.titre;
+    scrollTo(0, 0);
+    // la scène n'est mesurée que visible : la première fois elle s'ouvre, ensuite ses bras sont remis en place
+    if (cle === '') { if (scene) Stage.returnAll(!motionOK()); else { scene = true; Stage.start(); } }
+    if (venait && motionOK()) {
+      const c = cle === '' ? Stage.center() : { x: innerWidth / 2, y: innerHeight / 2 };
+      Ink.uncover(c.x, clamp(c.y, 60, innerHeight - 60), null, [venait.couleur, venait.fondSombre]);
+    } else Ink.fadeOut();
+    $('h1', v.el).focus({ preventScroll: true });
   }
   // un lien vers un spectacle, ailleurs que sur la scène : l'encre de son univers part du clic
   document.addEventListener('click', e => {
@@ -921,19 +1004,15 @@ main { min-height: calc(100vh - var(--haut)); }
     e.preventDefault();
     Ink.cover(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, () => { location.hash = a.getAttribute('href'); }, [s.couleur, s.fondSombre]);
   });
-  document.addEventListener('click', e => {
-    const a = e.target.closest('a[data-ancre]'); if (!a) return;
-    e.preventDefault(); $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false');
-    const id = a.dataset.ancre;
-    if (vue === 'spectacle') { ancre = id === 'main' ? null : id; location.hash = '#/'; return; }
-    (id === 'main' ? $('.stage') : document.getElementById(id))?.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto' });
-  });
   $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
+  $('#nav').addEventListener('click', e => { if (e.target.closest('a')) fermeMenu(); });
+  // l'évitement ne change pas d'adresse : il mène au contenu de la page courante
+  $('.evitement').addEventListener('click', e => { e.preventDefault(); $('#main').focus(); });
   $('#marque').innerHTML = D.logo.octopus;
   accueil();
+  pages();
   addEventListener('hashchange', route);
   route();
-  if (vue === 'accueil') Stage.start();
 })();
 </script>
 </body>

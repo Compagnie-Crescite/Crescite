@@ -115,6 +115,7 @@ ul,ol{padding:0;list-style:none}
 .grille{display:grid;grid-template-columns:minmax(0,1fr);column-gap:clamp(16px,2.2vw,32px);max-width:1320px;margin:0 auto}
 .bloc-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-grand);line-height:1.04;letter-spacing:-.01em;margin-top:14px;text-wrap:balance}
 .bloc-intro{margin-top:18px;color:var(--muet);max-width:24em}
+.agenda-corps{margin-top:clamp(36px,6vh,56px)}
 .bouton-texte{display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:13px 22px;border:1px solid currentColor;border-radius:999px;font-weight:600;font-size:1rem;line-height:1.2;transition:background-color .3s,color .3s}
 .bouton-texte:hover{background:var(--encre);color:var(--papier)}
 
@@ -344,12 +345,13 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
 @media (min-width:960px){
   .grille{grid-template-columns:repeat(12,minmax(0,1fr))}
   .agenda .bloc-tete{grid-column:1/span 4;align-self:start;position:sticky;top:calc(var(--tete-h) + 48px)}
-  .agenda-corps{grid-column:5/-1}
+  .agenda-corps{grid-column:5/-1;margin-top:0}
   .portes .bloc-tete{grid-column:1/span 8;margin-bottom:clamp(44px,7vh,72px)}
   .portes-liste{grid-column:1/-1}
   .compagnie-texte{grid-column:1/span 6}
   .chiffres{grid-column:8/-1;margin-top:8px}
-  .chiffres-source{grid-column:8/-1}
+  .chiffres-col{grid-column:8/-1;align-self:start}
+  .chiffres-col .chiffres{margin-top:8px}
   .page-spectacles .page-tete{grid-column:1/span 8}
   .repertoire{grid-column:1/-1}
   .section-tete{grid-column:1/span 4}
@@ -365,6 +367,11 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .faits{grid-column:8/-1;align-self:start}
   .fiche-portes .bloc-tete{grid-column:1/span 8}
   .onglets,.panneau{grid-column:1/-1}
+}
+@media (min-width:1100px){
+  .repertoire{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(48px,7vh,72px) clamp(20px,2.6vw,40px);border-top:0}
+  .carte{grid-template-columns:minmax(0,1fr);padding:0;border-bottom:0}
+  .carte-photo{aspect-ratio:4/3;margin-bottom:20px}
 }
 
 /* bureau : un chapitre par écran */
@@ -461,19 +468,20 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   <button class="menu-bouton" id="menu-bouton" type="button" aria-expanded="false" aria-controls="nav-principale"><span class="menu-icone" aria-hidden="true"></span><span class="menu-texte">Menu</span></button>
   <nav class="nav" id="nav-principale" aria-label="Navigation principale">
     <ul>
-      <li><a href="#/spectacles" data-nav="spectacles">Spectacles</a></li>
-      <li><a href="#/agenda">Agenda</a></li>
-      <li><a href="#/compagnie">La compagnie</a></li>
-      <li><a href="#/contact">Contact</a></li>
+      <li><a href="#/spectacles" data-onglet="spectacles" data-texte="Spectacles">Spectacles</a></li>
+      <li><a href="#/agenda" data-onglet="agenda" data-texte="Agenda">Agenda</a></li>
+      <li><a href="#/compagnie" data-onglet="compagnie" data-texte="La compagnie">La compagnie</a></li>
+      <li><a href="#/contact" data-onglet="contact" data-texte="Contact">Contact</a></li>
     </ul>
   </nav>
 </header>
 <nav class="sommaire est-cache" id="sommaire" aria-label="Sommaire des chapitres"><ol></ol></nav>
 <main id="contenu" tabindex="-1">
   <div id="vue-accueil" hidden></div>
+  <div id="vue-page" hidden></div>
   <div id="vue-spectacle" hidden></div>
 </main>
-<footer class="pied" id="contact" data-ton="sombre"></footer>
+<footer class="pied" id="pied" data-ton="sombre"></footer>
 <script>const D = /*__DATA__*/null;</script>
 <script>
 (() => {
@@ -498,7 +506,8 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   const sommaire = $('#sommaire');
   const vueAccueil = $('#vue-accueil');
   const vueSpectacle = $('#vue-spectacle');
-  const pied = $('#contact');
+  const vuePage = $('#vue-page');
+  const pied = $('#pied');
   const courriel = `<a href="mailto:${esc(C.email)}">${esc(C.email)}</a>`;
 
   /* une couleur de spectacle, assombrie pour se lire sur le papier */
@@ -525,7 +534,7 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   };
   const sousJour = (d) => (d.precision === 'month' ? 'jour à préciser' : d.iso === d.fin ? d.joursemLong : '');
 
-  function listeDates(liste, avecTitre) {
+  function listeDates(liste, avecTitre, niveau = 'h3') {
     const groupes = [];
     for (const d of liste) {
       const cle = `${d.moisLong} ${d.annee}`;
@@ -533,7 +542,7 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
       if (g && g.cle === cle) g.items.push(d); else groupes.push({ cle, items: [d] });
     }
     return `<div class="dates">${groupes.map((g) => `
-      <h3 class="dates-mois">${esc(cap(g.cle))}</h3>
+      <${niveau} class="dates-mois">${esc(cap(g.cle))}</${niveau}>
       <ul class="dates-liste${avecTitre ? '' : ' dates-liste--seule'}">${g.items.map((d) => ligneDate(d, avecTitre)).join('')}</ul>`).join('')}</div>`;
   }
   function ligneDate(d, avecTitre) {
@@ -572,67 +581,174 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
 </section>`;
   }
 
-  function accueilHTML() {
-    const [voir, prog, etab] = D.doors;
-    const p0 = DATES[0];
-    const nbPass = SHOWS.filter((s) => s.passCulture).length;
-    const nbSpectacles = SHOWS.filter((s) => s.slug !== 'actions-culturelles').length;
-    const porte = (d, i, detail, href, lien) => `
+  /* les trois portes : à la fin de l'accueil et sur la page contact */
+  const NB_SPECTACLES = SHOWS.filter((s) => s.slug !== 'actions-culturelles').length;
+  const LIENS_PORTES = [['#/agenda', 'Tout l’agenda'], ['#/spectacles', 'Tous les spectacles'], ['#/spectacle/actions-culturelles', 'Les actions culturelles']];
+  const porte = (d, i, detail) => `
       <article class="porte" style="--porte:${d.couleur}">
         <p class="porte-num" aria-hidden="true">${deux(i + 1)}</p>
         <h3 class="porte-titre">${esc(d.titre)}</h3>
         <p class="porte-texte">${t(d.texte)}</p>
         <p class="porte-detail">${detail}</p>
-        <a class="porte-lien" href="${href}">${lien}<span aria-hidden="true">→</span></a>
+        <a class="porte-lien" href="${LIENS_PORTES[i][0]}">${LIENS_PORTES[i][1]}<span aria-hidden="true">→</span></a>
       </article>`;
+
+  function accueilHTML() {
+    const pTP = DATES.find((d) => d.public === 'Tout public') || DATES[0];
+    const nbPass = SHOWS.filter((s) => s.passCulture).length;
+    const details = [
+      pTP ? `Prochaine date tout public : ${esc(dateLongue(pTP).toLowerCase())}, ${esc(pTP.commune)} (${esc(pTP.dep)}).` : 'Aucune date annoncée pour l’instant.',
+      `${NB_SPECTACLES} spectacles au répertoire, et des actions culturelles.`,
+      `${nbPass} spectacles en offre collective Pass Culture.`,
+    ];
     return `
 <section class="chap chap-0" id="chap-0" data-chap="0" data-ton="chapitre" aria-labelledby="t-chap-0">
   <h1 class="chap0-logo" id="t-chap-0" tabindex="-1"><span class="sr">Compagnie Crescite, théâtre à Rouen</span><span class="chap0-svg" aria-hidden="true">${D.logo.octopusWord}</span></h1>
   <p class="chap0-intention">${t(C.intention)}</p>
-  <a class="chap0-indice" href="#/spectacles"><span>${SHOWS.length} spectacles · faites défiler</span><span class="indice-trait" aria-hidden="true"></span></a>
+  <a class="chap0-indice" href="#chap-1"><span>${SHOWS.length} spectacles · faites défiler</span><span class="indice-trait" aria-hidden="true"></span></a>
 </section>
 ${SHOWS.map(chapitre).join('')}
-<div class="libre" id="libre" data-ton="clair">
-  <section class="bloc agenda" id="agenda" aria-labelledby="t-agenda">
+<section class="libre bloc portes fin" id="portes" data-ton="clair" aria-labelledby="t-portes">
+  <div class="grille">
+    <header class="bloc-tete">
+      <p class="surtitre">Trois portes</p>
+      <h2 class="bloc-titre" id="t-portes">Par où entrer ?</h2>
+    </header>
+    <div class="portes-liste">${D.doors.map((d, i) => porte(d, i, details[i])).join('')}</div>
+  </div>
+</section>`;
+  }
+
+  /* les pages des onglets, sur papier */
+  const entetePage = (surtitre, titre, intro, classe = '') => `
+      <header class="page-tete${classe}">
+        <p class="surtitre">${surtitre}</p>
+        <h1 class="page-titre" id="t-page" tabindex="-1">${titre}</h1>
+        ${intro ? `<p class="page-intro">${intro}</p>` : ''}
+      </header>`;
+
+  function carte(s, i) {
+    const p = s.prochaine;
+    const date = s.slug === 'actions-culturelles'
+      ? `<p class="carte-date est-vide">${esc(s.noteScolaire || '')}</p>`
+      : p
+        ? `<p class="carte-date"><span class="surtitre">Prochaine date</span>${esc(cap(p.label))} · ${esc(p.commune)} (${esc(p.dep)})</p>`
+        : '<p class="carte-date est-vide">Aucune date annoncée pour l’instant</p>';
+    return `
+      <li class="carte" style="--ink:${encre(s.couleur)};--fond:${s.fondSombre};--focale:${s.focale ?? 50}%">
+        <div class="carte-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}"></div>
+        <div class="carte-texte">
+          <p class="carte-num" aria-hidden="true">${deux(i + 1)}</p>
+          <h2 class="carte-titre"><a href="#/spectacle/${esc(s.slug)}">${t(s.titre)}</a></h2>
+          <p class="carte-sous">${esc(s.sousTitre)}</p>
+          ${date}
+        </div>
+      </li>`;
+  }
+
+  function pageSpectacles() {
+    return `
+<div class="page libre" data-ton="clair">
+  <section class="bloc page-spectacles" aria-labelledby="t-page">
     <div class="grille">
-      <header class="bloc-tete">
-        <p class="surtitre">Agenda · saison ${esc(D.saison)}</p>
-        <h2 class="bloc-titre" id="t-agenda" tabindex="-1">Prochaines dates</h2>
-        <p class="bloc-intro">${DATES.length} dates cette saison, en salle et dans les établissements scolaires.</p>
-      </header>
+      ${entetePage('Répertoire', 'Les spectacles', `${NB_SPECTACLES} spectacles au répertoire, et des actions culturelles menées avec les établissements. Chacun a sa page : ses dates, de quoi le programmer, de quoi l’accueillir.`)}
+      <ul class="repertoire">${SHOWS.map(carte).join('')}</ul>
+    </div>
+  </section>
+</div>`;
+  }
+
+  function pageAgenda() {
+    const nb = (p) => DATES.filter((d) => d.public === p).length;
+    const sansLien = DATES.some((d) => !d.lien && d.public === 'Tout public');
+    return `
+<div class="page libre" data-ton="clair">
+  <section class="bloc agenda" aria-labelledby="t-page">
+    <div class="grille">
+      ${entetePage(`Agenda · saison ${esc(D.saison)}`, 'L’agenda', `${DATES.length} dates cette saison : ${nb('Tout public')} tout public et ${nb('Scolaire')} scolaires, en salle et dans les établissements. Chaque titre mène à la page du spectacle.`, ' bloc-tete')}
       <div class="agenda-corps">
-        <div id="agenda-liste">${listeDates(DATES.slice(0, 7), true)}</div>
-        ${DATES.length > 7 ? `<button class="bouton-texte" type="button" id="agenda-tout" aria-expanded="false" aria-controls="agenda-liste">Afficher les ${DATES.length} dates</button>` : ''}
+        ${listeDates(DATES, true, 'h2')}
+        ${sansLien ? '<p class="note">Lien de réservation : <span class="a-fournir">à fournir</span> pour les dates qui n’en ont pas encore.</p>' : ''}
       </div>
     </div>
   </section>
-  <section class="bloc portes" id="portes" aria-labelledby="t-portes">
-    <div class="grille">
-      <header class="bloc-tete">
-        <p class="surtitre">Trois portes</p>
-        <h2 class="bloc-titre" id="t-portes">Par où entrer ?</h2>
-      </header>
-      <div class="portes-liste">
-        ${porte(voir, 0, p0 ? `Prochaine date : ${esc(dateLongue(p0).toLowerCase())}, ${esc(p0.commune)} (${esc(p0.dep)}).` : 'Aucune date annoncée pour l’instant.', '#/agenda', 'Voir l’agenda')}
-        ${porte(prog, 1, `${nbSpectacles} spectacles au répertoire, et des actions culturelles.`, '#/spectacles', 'Parcourir les spectacles')}
-        ${porte(etab, 2, `${nbPass} spectacles en offre collective Pass Culture.`, '#/spectacle/actions-culturelles', 'Les actions culturelles')}
-      </div>
-    </div>
-  </section>
-  <section class="bloc compagnie" id="compagnie" aria-labelledby="t-compagnie">
+</div>`;
+  }
+
+  function pageCompagnie() {
+    const artistes = new Map();
+    for (const s of SHOWS) for (const e of s.distribution) for (const nom of e.split(/\s+ou\s+/)) {
+      if (!artistes.has(nom)) artistes.set(nom, []);
+      artistes.get(nom).push(s.titre);
+    }
+    const liste = [...artistes].sort(([a], [b]) => a.localeCompare(b, 'fr'));
+    const S = D.stats;
+    return `
+<div class="page libre" data-ton="clair">
+  <section class="bloc compagnie" aria-labelledby="t-page">
     <div class="grille">
       <div class="compagnie-texte">
-        <p class="surtitre">${esc(C.ville)}, depuis ${C.depuis}</p>
-        <h2 class="bloc-titre" id="t-compagnie" tabindex="-1">La compagnie</h2>
+        ${entetePage(`${esc(C.ville)}, depuis ${C.depuis}`, 'La compagnie', '')}
         <p class="compagnie-lead">${t(C.presentation)}</p>
         <p class="compagnie-ms">Mise en scène : ${esc(C.miseEnScene)}</p>
       </div>
-      <dl class="chiffres">
-        <div><dt>représentations depuis ${D.stats.depuis}</dt><dd>${D.stats.representationsCourt}</dd></div>
-        <div><dt>représentations par an au moins, depuis ${D.stats.parAnDepuis}</dt><dd>${D.stats.parAnMin}</dd></div>
-        <div><dt>pays : ${D.stats.paysListe.join(', ')}</dt><dd>${D.stats.pays}</dd></div>
-        <div><dt>heures d’éducation artistique en 2023-2024</dt><dd>${D.stats.heuresEAC}</dd></div>
-      </dl>
+      <div class="chiffres-col">
+        <dl class="chiffres">
+          <div><dt>représentations depuis ${S.depuis}</dt><dd>${esc(S.representationsCourt)}</dd></div>
+          <div><dt>représentations par an au moins, depuis ${S.parAnDepuis}</dt><dd>${S.parAnMin}</dd></div>
+          <div><dt>pays : ${esc(S.paysListe.join(', '))}</dt><dd>${S.pays}</dd></div>
+          <div><dt>heures d’éducation artistique en 2023-2024</dt><dd>${S.heuresEAC}</dd></div>
+        </dl>
+        <p class="chiffres-source">Source : ${esc(S.source)}.</p>
+      </div>
+    </div>
+  </section>
+  <section class="bloc" aria-labelledby="t-intention">
+    <div class="grille">
+      <div class="section-tete"><span class="intention-pieuvre" aria-hidden="true">${D.logo.octopus}</span><h2 class="bloc-titre" id="t-intention">L’intention</h2></div>
+      <p class="intention-texte section-corps">${t(C.intention)}</p>
+    </div>
+  </section>
+  <section class="bloc" aria-labelledby="t-plateau">
+    <div class="grille">
+      <div class="section-tete"><h2 class="bloc-titre" id="t-plateau">Au plateau</h2><p class="bloc-intro">${liste.length} interprètes dans les distributions du répertoire.</p></div>
+      <ul class="artistes section-corps">${liste.map(([nom, pieces]) => `<li><span class="artiste-nom">${esc(nom)}</span><span class="artiste-pieces">${pieces.map((x) => t(x)).join(', ')}</span></li>`).join('')}</ul>
+    </div>
+  </section>
+  <section class="bloc" aria-labelledby="t-partenaires">
+    <div class="grille">
+      <div class="section-tete"><h2 class="bloc-titre" id="t-partenaires">Partenaires</h2></div>
+      <ul class="partenaires-liste section-corps">${C.partenaires.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
+    </div>
+  </section>
+</div>`;
+  }
+
+  function pageContact() {
+    const contactPorte = `<span class="porte-ligne">Contact dédié : <span class="a-fournir">à fournir</span></span><span class="porte-ligne">En attendant : ${courriel}</span>`;
+    return `
+<div class="page libre" data-ton="clair">
+  <section class="bloc" aria-labelledby="t-page">
+    <div class="grille">
+      <div class="contact-principal">
+        ${entetePage(esc(C.nom), 'Contact', '')}
+        <a class="contact-courriel" href="mailto:${esc(C.email)}">${esc(C.email)}</a>
+        <address class="contact-adresse">${esc(C.nom)}<br>${esc(C.adresse)}</address>
+      </div>
+      <div class="lettre">
+        <h2 class="panneau-titre">Lettre d’information</h2>
+        <p>Pour recevoir les prochaines dates de la compagnie.</p>
+        <p>Inscription : <span class="a-fournir">à fournir</span></p>
+      </div>
+    </div>
+  </section>
+  <section class="bloc portes" aria-labelledby="t-portes-contact">
+    <div class="grille">
+      <header class="bloc-tete">
+        <p class="surtitre">Trois portes</p>
+        <h2 class="bloc-titre" id="t-portes-contact">Un contact par porte</h2>
+      </header>
+      <div class="portes-liste">${D.doors.map((d, i) => porte(d, i, contactPorte)).join('')}</div>
     </div>
   </section>
 </div>`;
@@ -724,7 +840,7 @@ ${SHOWS.map(chapitre).join('')}
 <article class="fiche" style="--fond:${s.fondSombre};--accent:${s.couleur};--ink:${encre(s.couleur)};--focale:${s.focale ?? 50}%">
   <section class="ouverture" data-ton="chapitre" aria-labelledby="t-fiche">
     <div class="ouv-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}">${s.credit ? `<p class="ouv-credit">Photo ${esc(s.credit)}</p>` : ''}</div>
-    <div class="ouv-haut"><a class="retour" href="#/spectacles" data-retour="${esc(s.slug)}"><span aria-hidden="true">←</span> Tous les spectacles</a></div>
+    <div class="ouv-haut"><a class="retour" href="#/spectacles"><span aria-hidden="true">←</span> Tous les spectacles</a></div>
     <div class="ouv-contenu">
       <p class="chap-num"><span class="sr">Spectacle </span><b>${deux(n)}</b> / ${TOTAL}</p>
       <h1 class="ouv-titre" id="t-fiche" tabindex="-1">${t(s.titre)}</h1>
@@ -875,7 +991,6 @@ ${SHOWS.map(chapitre).join('')}
       planifier();
     });
   }
-  brancherDepli($('#agenda-tout'), $('#agenda-liste'), DATES, true, 7);
 
   /* menu du téléphone */
   const bMenu = $('#menu-bouton');
@@ -887,65 +1002,71 @@ ${SHOWS.map(chapitre).join('')}
   bMenu.addEventListener('click', () => menu(bMenu.getAttribute('aria-expanded') !== 'true'));
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && tete.classList.contains('menu-ouvert')) { menu(false); bMenu.focus(); } });
 
-  /* routeur */
-  const CIBLES = { '#/spectacles': 'chap-1', '#/agenda': 'agenda', '#/compagnie': 'compagnie', '#/contact': 'contact' };
-  let retourVers = null;
+  /* l'indice du premier écran fait défiler jusqu'au premier spectacle */
+  $('.chap0-indice', vueAccueil).addEventListener('click', (e) => {
+    e.preventDefault();
+    allerA($('#chap-1'), true);
+    const h = $('#t-chap-1');
+    h.tabIndex = -1;
+    h.focus({ preventScroll: true });
+  });
+
+  /* routeur : une vue par onglet ; l'aimant et le sommaire n'existent que sur l'accueil */
+  const PAGES = {
+    spectacles: ['Les spectacles', pageSpectacles],
+    agenda: ['L’agenda', pageAgenda],
+    compagnie: ['La compagnie', pageCompagnie],
+    contact: ['Contact', pageContact],
+  };
+  const liensNav = $$('[data-onglet]', tete);
   function router(initial) {
     const h = location.hash || '#/';
-    if (!h.startsWith('#/')) return;
+    if (!h.startsWith('#/') && vue) return;
     menu(false);
-    const m = h.match(/^#\/spectacle\/([\w-]+)$/);
+    const chemin = h.replace(/^#\/?/, '').split('?')[0];
+    const m = chemin.match(/^spectacle\/([\w-]+)$/);
     const s = m && PAR_SLUG[m[1]];
+    const page = !s && Object.hasOwn(PAGES, chemin) ? PAGES[chemin] : null;
+    vue = s ? 'spectacle' : page ? chemin : 'accueil';
     doc.classList.remove('aimante');
+    vueAccueil.hidden = vue !== 'accueil';
+    vuePage.hidden = !page;
+    vueSpectacle.hidden = !s;
+    vuePage.innerHTML = page ? page[1]() : '';
+    vueSpectacle.innerHTML = s ? spectacleHTML(s) : '';
+    let titre;
     if (s) {
-      vue = 'spectacle';
-      vueSpectacle.innerHTML = spectacleHTML(s);
       brancherOnglets(vueSpectacle);
       brancherDepli($('#fiche-dates-tout'), $('#fiche-dates'), datesDe(s.slug), false, LIMITE);
-      vueAccueil.hidden = true;
-      vueSpectacle.hidden = false;
-      zones = [...$$('[data-ton]', vueSpectacle), pied];
       document.title = `${s.titre} · Compagnie Crescite`;
-      $('[data-nav="spectacles"]').setAttribute('aria-current', 'page');
-      scrollTo(0, 0);
-      if (!initial) $('#t-fiche').focus({ preventScroll: true });
+      titre = $('#t-fiche');
+    } else if (page) {
+      document.title = `${page[0]} · Compagnie Crescite`;
+      titre = $('#t-page');
     } else {
-      const deja = vue === 'accueil';
-      vue = 'accueil';
-      vueSpectacle.hidden = true;
-      vueSpectacle.innerHTML = '';
-      vueAccueil.hidden = false;
-      zones = [...$$('[data-ton]', vueAccueil), pied];
       document.title = 'Compagnie Crescite · Théâtre à Rouen';
-      $('[data-nav="spectacles"]').removeAttribute('aria-current');
-      let id = CIBLES[h];
-      if (h === '#/spectacles' && retourVers) id = `chap-${SHOWS.indexOf(PAR_SLUG[retourVers]) + 1}`;
-      retourVers = null;
-      const cible = id && document.getElementById(id);
-      if (cible) allerA(cible, deja);
-      else scrollTo(0, 0);
-      if (!initial) {
-        const titre = cible ? $('h1, h2', cible.id === 'contact' ? pied : cible) : $('#t-chap-0');
-        if (titre) { if (!titre.hasAttribute('tabindex')) titre.tabIndex = -1; titre.focus({ preventScroll: true }); }
-      }
+      titre = $('#t-chap-0');
     }
+    const onglet = s ? 'spectacles' : page ? chemin : '';
+    for (const a of liensNav) {
+      if (a.dataset.onglet === onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    }
+    sommaire.hidden = vue !== 'accueil';
+    zones = [...$$('[data-ton]', s ? vueSpectacle : page ? vuePage : vueAccueil), pied];
+    scrollTo(0, 0);
     majAimant();
     actif = null;
     majEtat();
+    if (!initial && titre) titre.focus({ preventScroll: true });
   }
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[href^="#/"]');
-    if (!a) return;
-    if (a.dataset.retour) retourVers = a.dataset.retour;
-    if (a.getAttribute('href') === location.hash) { e.preventDefault(); router(false); }
+    if (a && a.getAttribute('href') === location.hash) { e.preventDefault(); router(false); }
   });
   $('.evitement').addEventListener('click', (e) => { e.preventDefault(); $('#contenu').focus(); });
   addEventListener('hashchange', () => router(false));
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   router(true);
-  if (document.fonts && location.hash && CIBLES[location.hash]) {
-    document.fonts.ready.then(() => { if (scrollY > 0) allerA(document.getElementById(CIBLES[location.hash]), false); });
-  }
 })();
 </script>
 </body>

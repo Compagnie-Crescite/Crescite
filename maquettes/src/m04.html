@@ -390,15 +390,17 @@ button{cursor:pointer}
   const header = $('.site-header');
   const menuBtn = $('.menu-btn');
   const mailto = subject => `mailto:${C.email}${subject ? `?subject=${encodeURIComponent(subject)}` : ''}`;
-  const ATELIERS = bySlug['actions-culturelles'] ? '#/spectacle/actions-culturelles' : '#repertoire';
+  const setHash = h => { try { history.replaceState(null, '', h); } catch (e) { /* adresse inchangée */ } };
+  const ATELIERS = bySlug['actions-culturelles'] ? '#/spectacle/actions-culturelles' : '#/spectacles';
 
   const DEPS = { '04': 'Alpes-de-Haute-Provence', '05': 'Hautes-Alpes', '08': 'Ardennes', '14': 'Calvados', '27': 'Eure', '35': 'Ille-et-Vilaine', '42': 'Loire', '50': 'Manche', '53': 'Mayenne', '54': 'Meurthe-et-Moselle', '61': 'Orne', '67': 'Bas-Rhin', '68': 'Haut-Rhin', '76': 'Seine-Maritime', '78': 'Yvelines', '88': 'Vosges' };
   const depName = code => DEPS[code] || `Département ${code}`;
+  const DEP_CODES = [...new Set(DATES.map(d => d.dep))].sort((a, b) => depName(a).localeCompare(depName(b), 'fr'));
 
   const DOOR_LINKS = {
-    voir: [['Les prochaines dates', '#dates'], ['Les spectacles tout public', '#tout-public'], ['Près de chez moi', '#pres-de-chez-moi']],
-    programmer: [['Le répertoire', '#repertoire'], ['Le calendrier de tournée', '#calendrier'], ['Demander un dossier', '#dossier']],
-    etablissement: [['Les spectacles qui se déplacent', '#se-deplacent'], ['Pass Culture et CRED76', '#pass-culture'], ['Les ateliers', ATELIERS]],
+    voir: [['Les prochaines dates', '#/agenda'], ['Les spectacles tout public', '#/spectacles?voir=tout-public'], ['Près de chez moi', '#/agenda?focus=departement']],
+    programmer: [['Le répertoire', '#/spectacles'], ['Le calendrier de tournée', '#/agenda'], ['Demander un dossier', '#/contact?focus=dossier']],
+    etablissement: [['Les spectacles qui se déplacent', '#/spectacles?voir=se-deplacent'], ['Pass Culture et CRED76', '#/spectacles?voir=pass-culture'], ['Les ateliers', ATELIERS]],
   };
 
   const hasPublicDate = s => DATES.some(d => d.slug === s.slug && d.public === 'Tout public');
@@ -409,7 +411,7 @@ button{cursor:pointer}
     { id: 'pass-culture', label: 'Pass Culture et CRED76', door: 'etablissement', test: s => s.passCulture || !!s.cred76, note: n => `${count(n, 'spectacle')} en offre collective Pass Culture ou au guide du CRED76 (Seine-Maritime).` },
   ];
 
-  const state = { key: null, filter: FILTERS[0].id, dep: '', full: false, door: 0 };
+  const state = { filter: FILTERS[0].id, dep: '', door: 0 };
   try { state.door = Math.min(DOORS.length - 1, Math.max(0, parseInt(sessionStorage.getItem('crescite-porte'), 10) || 0)); } catch (e) { state.door = 0; }
   const remember = i => { state.door = i; try { sessionStorage.setItem('crescite-porte', String(i)); } catch (e) { /* stockage indisponible */ } };
 
@@ -426,6 +428,8 @@ button{cursor:pointer}
     return { ville: `${d.commune} (${d.dep})`, detail: lieu };
   }
   const shortDate = d => d.precision === 'month' ? `${d.moisLong} ${d.annee}` : `${d.jour === 1 ? '1er' : d.jour} ${d.mois} ${d.annee}`;
+  const dateText = d => d.precision === 'day' && d.iso === d.fin ? `${d.joursemLong} ${d.label}` : d.label;
+  const fromMonth = m => `${/^[aeiouéè]/i.test(m) ? 'd’' : 'de '}${m}`;
   const host = url => /vimeo/.test(url) ? 'Vimeo' : /youtu/.test(url) ? 'YouTube' : 'la vidéo';
   const photo = (s, y = 50) => {
     const src = D.photos && D.photos[s.slug];
@@ -467,70 +471,49 @@ button{cursor:pointer}
     const n = s.prochaine;
     return `<li class="card">
       <div class="card-photo">${photo(s)}</div>
-      <h3 class="card-title"><a href="#/spectacle/${esc(s.slug)}">${esc(s.titre)}</a></h3>
+      <h2 class="card-title"><a href="#/spectacle/${esc(s.slug)}">${esc(s.titre)}</a></h2>
       <p class="card-sub">${esc(cap(s.sousTitre))}</p>
       <div class="card-foot"><p class="card-next"><span class="card-next-lbl">Prochaine date</span>${n ? `<span class="nw">${esc(shortDate(n))}</span>, <span class="nw">${esc(n.commune)}</span>` : '<span class="muted">Aucune pour l’instant</span>'}</p></div>
     </li>`;
   }
 
+  function pageHead(kicker, title, after) {
+    return `<header class="page-hero">
+      <div class="wrap">
+        <p class="hero-kicker">${kicker}</p>
+        <h1 class="page-title" tabindex="-1">${title}</h1>
+        ${after}
+      </div>
+    </header>`;
+  }
+
   function homeHTML() {
-    const deps = [...new Set(DATES.map(d => d.dep))].sort((a, b) => depName(a).localeCompare(depName(b), 'fr'));
-    const st = D.stats;
+    const d = DATES[0];
+    const next = d ? `Prochaine date : <strong>${esc(dateText(d))}</strong>, ${esc(d.titre)} à ${esc(place(d).ville)}.` : 'Aucune date annoncée pour l’instant.';
     return `
     <section class="hero" aria-labelledby="hero-title">
       <div class="wrap">
         <p class="hero-kicker">Compagnie de théâtre à ${esc(C.ville)} depuis ${esc(C.depuis)}, en salle comme dans les classes.</p>
-        <h1 class="hero-title" id="hero-title">Par où entrez-vous ?</h1>
+        <h1 class="hero-title" id="hero-title" tabindex="-1">Par où entrez-vous ?</h1>
         <ol class="doors">${DOORS.map(doorHTML).join('')}</ol>
-      </div>
-    </section>
-    <section class="section" id="repertoire" aria-labelledby="rep-title">
-      <div class="wrap">
-        <div class="section-head">
-          <h2 class="section-title" id="rep-title" tabindex="-1">Le répertoire</h2>
-          <div class="filters" role="group" aria-label="Filtrer le répertoire">${FILTERS.map(filterBtn).join('')}</div>
-        </div>
-        <p class="filter-note" id="filter-note" aria-live="polite"></p>
-        <ul class="cards" id="cards"></ul>
-      </div>
-    </section>
-    <section class="section" id="dates" aria-labelledby="dates-title">
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <h2 class="section-title" id="dates-title" tabindex="-1">Prochaines dates</h2>
-            <p class="section-lede" id="dates-lede" aria-live="polite"></p>
-          </div>
-          <div class="dep" id="pres-de-chez-moi">
-            <label for="dep-select">Près de chez moi</label>
-            <select id="dep-select">
-              <option value="">Tous les départements</option>
-              ${deps.map(c => `<option value="${esc(c)}">${esc(depName(c))} (${esc(c)})</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div id="dates-body"></div>
-        <p class="dates-more"><button type="button" class="btn-line" id="calendrier" aria-controls="dates-body" aria-expanded="false"></button></p>
-      </div>
-    </section>
-    <section class="section" id="compagnie" aria-labelledby="cie-title">
-      <div class="wrap cie">
-        <div>
-          <h2 class="section-title" id="cie-title" tabindex="-1">La compagnie</h2>
-          <p class="cie-lead">${esc(C.intention)}</p>
-          <p class="cie-text">${esc(C.presentation)}</p>
-          <p class="cie-text">Mise en scène : <strong>${esc(C.miseEnScene)}</strong></p>
-        </div>
-        <dl class="stats">
-          <div class="stat"><dt>représentations depuis <span class="nw">${st.depuis}</span></dt><dd>${esc(st.representationsCourt)}</dd></div>
-          <div class="stat"><dt>représentations par an au moins, depuis ${st.parAnDepuis}</dt><dd>${esc(st.parAnMin)}</dd></div>
-          <div class="stat"><dt>pays : ${esc(st.paysListe.join(', '))}</dt><dd>${esc(st.pays)}</dd></div>
-          <div class="stat"><dt>heures d’éducation artistique en <span class="nw">2023-2024</span></dt><dd>${esc(st.heuresEAC)}</dd></div>
-        </dl>
+        <p class="hero-next"><span>${next}</span><a class="hero-next-link" href="#/agenda">Tout l’agenda <span class="hero-next-n">(${count(DATES.length, 'date')})</span><span aria-hidden="true">→</span></a></p>
       </div>
     </section>`;
   }
 
+  function spectaclesHTML(q) {
+    const v = q.get('voir');
+    state.filter = FILTERS.some(f => f.id === v) ? v : FILTERS[0].id;
+    const n = SHOWS.filter(s => s.distribution.length).length;
+    return `${pageHead('Le répertoire', 'Les spectacles', `<p class="page-lede">${count(n, 'spectacle')}${bySlug['actions-culturelles'] ? ' et les actions culturelles' : ''}, avec leur prochaine date. Choisissez une porte pour filtrer.</p>`)}
+    <section class="section section--first" aria-label="Le répertoire">
+      <div class="wrap">
+        <div class="filters" role="group" aria-label="Filtrer le répertoire">${FILTERS.map(filterBtn).join('')}</div>
+        <p class="filter-note" id="filter-note" aria-live="polite"></p>
+        <ul class="cards" id="cards"></ul>
+      </div>
+    </section>`;
+  }
   function renderCards() {
     const f = FILTERS.find(x => x.id === state.filter) || FILTERS[0];
     const list = SHOWS.filter(f.test);
@@ -542,6 +525,15 @@ button{cursor:pointer}
     $$('.filter', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === id)));
     renderCards();
   }
+  function bindSpectacles() {
+    renderCards();
+    $$('.filter', main).forEach(b => b.addEventListener('click', () => {
+      const f = FILTERS.find(x => x.id === b.dataset.f);
+      setFilter(f.id);
+      if (f.door) remember(doorIndex(f.door));
+      setHash(f === FILTERS[0] ? '#/spectacles' : `#/spectacles?voir=${f.id}`);
+    }));
+  }
 
   function byMonth(ds) {
     const out = [];
@@ -552,43 +544,145 @@ button{cursor:pointer}
     });
     return out;
   }
+  function agendaHTML(q) {
+    const v = q.get('dep');
+    state.dep = DEP_CODES.includes(v) ? v : '';
+    const nTP = DATES.filter(d => d.public === 'Tout public').length, nSco = DATES.length - nTP;
+    const first = DATES[0], last = DATES[DATES.length - 1];
+    const span = first ? `, ${fromMonth(first.moisLong)} ${first.annee} à ${last.moisLong} ${last.annee}` : '';
+    return `${pageHead(`Saison ${esc(D.saison)}`, 'L’agenda', `<p class="page-lede">${count(DATES.length, 'date')}${span} : ${nTP} tout public et ${nSco} ${nSco > 1 ? 'scolaires' : 'scolaire'}.</p>`)}
+    <section class="section section--first" aria-label="Les dates de la saison">
+      <div class="wrap">
+        <div class="agenda-bar">
+          <div class="dep" id="pres-de-chez-moi">
+            <label for="dep-select">Près de chez moi</label>
+            <select id="dep-select">
+              <option value="">Tous les départements</option>
+              ${DEP_CODES.map(c => `<option value="${esc(c)}"${c === state.dep ? ' selected' : ''}>${esc(depName(c))} (${esc(c)})</option>`).join('')}
+            </select>
+          </div>
+          <p class="agenda-status" id="dates-lede" aria-live="polite"></p>
+        </div>
+        <div id="dates-body"></div>
+      </div>
+    </section>`;
+  }
   function renderDates() {
     const list = DATES.filter(d => !state.dep || d.dep === state.dep);
-    const body = $('#dates-body');
-    if (!list.length) body.innerHTML = '<p class="empty">Aucune date annoncée dans ce département pour l’instant.</p>';
-    else if (state.full) body.innerHTML = byMonth(list).map(([m, ds]) => `<h3 class="month">${esc(m)}</h3><ol class="rows">${ds.map(d => rowHTML(d, false)).join('')}</ol>`).join('');
-    else body.innerHTML = `<ol class="rows">${list.slice(0, 6).map(d => rowHTML(d, false)).join('')}</ol>`;
-    const scope = state.dep ? `${depName(state.dep)} : ${count(list.length, 'date')} cette saison` : `Saison ${D.saison} : ${count(list.length, 'date')}`;
-    $('#dates-lede').textContent = `${scope}${!state.full && list.length > 6 ? ', voici les 6 prochaines' : ''}.`;
-    const btn = $('#calendrier');
-    btn.hidden = list.length <= 6;
-    btn.setAttribute('aria-expanded', String(state.full));
-    btn.innerHTML = state.full ? 'Revenir aux 6 prochaines dates' : `Voir le calendrier de tournée <span class="muted nw">(${list.length} dates)</span>`;
+    $('#dates-body').innerHTML = list.length
+      ? byMonth(list).map(([m, ds]) => `<h2 class="month">${esc(m)}</h2><ol class="rows">${ds.map(d => rowHTML(d, false)).join('')}</ol>`).join('')
+      : '<p class="empty">Aucune date annoncée dans ce département pour l’instant.</p>';
+    $('#dates-lede').textContent = state.dep ? `${depName(state.dep)} : ${count(list.length, 'date')} cette saison.` : 'Toutes les dates de la saison, mois par mois.';
+  }
+  function bindAgenda(q) {
+    renderDates();
+    const box = $('#pres-de-chez-moi'), sel = $('#dep-select');
+    sel.addEventListener('change', () => {
+      state.dep = sel.value;
+      box.classList.remove('is-target');
+      remember(doorIndex('voir'));
+      renderDates();
+      setHash(state.dep ? `#/agenda?dep=${state.dep}` : '#/agenda');
+    });
+    if (q.get('focus') !== 'departement') return null;
+    box.classList.add('is-target');
+    return sel;
   }
 
-  function bindHome() {
-    renderCards();
-    renderDates();
-    $$('.filter', main).forEach(b => b.addEventListener('click', () => {
-      const f = FILTERS.find(x => x.id === b.dataset.f);
-      setFilter(f.id);
-      if (f.door) remember(doorIndex(f.door));
+  function artistsHTML() {
+    const roles = new Map();
+    SHOWS.forEach(s => s.distribution.forEach(entry => {
+      const names = entry.split(/\s+ou\s+/);
+      names.forEach(name => {
+        if (!roles.has(name)) roles.set(name, []);
+        roles.get(name).push({ s, alt: names.length > 1 });
+      });
     }));
-    const sel = $('#dep-select');
-    sel.value = state.dep;
-    sel.addEventListener('change', () => { state.dep = sel.value; remember(doorIndex('voir')); renderDates(); });
-    $('#calendrier').addEventListener('click', () => {
-      state.full = !state.full;
-      if (state.full) remember(doorIndex('programmer'));
-      renderDates();
-    });
+    const surname = n => n.split(' ').slice(1).join(' ') || n;
+    return [...roles.entries()]
+      .sort((a, b) => surname(a[0]).localeCompare(surname(b[0]), 'fr') || a[0].localeCompare(b[0], 'fr'))
+      .map(([name, list]) => `<li class="artist"><p class="artist-name">${esc(name)}</p><p class="artist-shows">${list.map(r => `<a href="#/spectacle/${esc(r.s.slug)}">${esc(r.s.titre)}</a>${r.alt ? ' (en alternance)' : ''}`).join(', ')}</p></li>`).join('');
+  }
+  function compagnieHTML() {
+    const st = D.stats;
+    return `${pageHead(`Théâtre à ${esc(C.ville)} depuis ${esc(C.depuis)}`, 'La compagnie', `<p class="page-lead">${esc(C.intention)}</p>`)}
+    <section class="section section--first" aria-labelledby="cie-pres">
+      <div class="wrap cie">
+        <div>
+          <h2 class="section-title" id="cie-pres">Présentation</h2>
+          <p class="cie-text">${esc(C.presentation)}</p>
+          <p class="cie-text">Mise en scène : <strong>${esc(C.miseEnScene)}</strong></p>
+        </div>
+        <div>
+          <h2 class="vh">En chiffres</h2>
+          <dl class="stats">
+            <div class="stat"><dt>représentations depuis <span class="nw">${st.depuis}</span></dt><dd>${esc(st.representationsCourt)}</dd></div>
+            <div class="stat"><dt>représentations par an au moins, depuis ${st.parAnDepuis}</dt><dd>${esc(st.parAnMin)}</dd></div>
+            <div class="stat"><dt>pays : ${esc(st.paysListe.join(', '))}</dt><dd>${esc(st.pays)}</dd></div>
+            <div class="stat"><dt>heures d’éducation artistique en <span class="nw">2023-2024</span></dt><dd>${esc(st.heuresEAC)}</dd></div>
+          </dl>
+          ${st.source ? `<p class="stats-src">Source : ${esc(st.source)}.</p>` : ''}
+        </div>
+      </div>
+    </section>
+    <section class="section" aria-labelledby="cie-cast">
+      <div class="wrap">
+        <div class="section-head"><div><h2 class="section-title" id="cie-cast">Au plateau</h2><p class="section-lede">Les comédiennes et les comédiens du répertoire, avec leurs spectacles.</p></div></div>
+        <ul class="artists">${artistsHTML()}</ul>
+      </div>
+    </section>
+    <section class="section" aria-labelledby="cie-part">
+      <div class="wrap">
+        <div class="section-head"><h2 class="section-title" id="cie-part">Partenaires</h2></div>
+        <ul class="partners">${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
+      </div>
+    </section>`;
+  }
+
+  function contactHTML() {
+    const more = {
+      voir: `<p class="cblock-more"><a class="link" href="#/agenda" data-door="${doorIndex('voir')}">Les dates et les réservations</a> <span aria-hidden="true">→</span></p>`,
+      programmer: '<p class="cblock-sub">Demander un dossier</p><p class="cblock-note">Dossier de diffusion, fiche technique, vidéo : précisez le spectacle et votre lieu.</p>',
+      etablissement: `<p class="cblock-more"><a class="link" href="#/spectacles?voir=pass-culture" data-door="${doorIndex('etablissement')}">Pass Culture et CRED76</a> <span aria-hidden="true">→</span></p>`,
+    };
+    const cta = { voir: ['Écrire à la compagnie', 'Je viens voir'], programmer: ['Demander un dossier', 'Demande de dossier'], etablissement: ['Écrire à la compagnie', 'Venue dans un établissement'] };
+    const block = (d, i) => {
+      const [label, subject] = cta[d.key] || ['Écrire à la compagnie', d.titre];
+      return `<li class="cblock"${d.key === 'programmer' ? ' id="dossier" tabindex="-1"' : ''} style="--c:${esc(d.couleur)}">
+        <p class="cblock-num" aria-hidden="true">${i + 1}</p>
+        <h3 class="cblock-title">${esc(d.titre)}</h3>
+        <p class="cblock-text">${esc(d.texte)}</p>
+        <dl class="kv"><div><dt>Contact</dt><dd>${TBD}</dd></div></dl>
+        ${more[d.key] || ''}
+        <p class="cblock-cta"><a class="btn" href="${esc(mailto(subject))}">${esc(label)}</a></p>
+      </li>`;
+    };
+    return `${pageHead(esc(C.nom), 'Contact', `<p class="page-mail"><a href="${esc(mailto())}">${esc(C.email)}</a></p><p class="page-lede">${esc(C.adresse)}</p>`)}
+    <section class="section section--first" aria-labelledby="contact-doors">
+      <div class="wrap">
+        <div class="section-head"><div><h2 class="section-title" id="contact-doors">Par où entrez-vous ?</h2><p class="section-lede">Écrivez depuis votre porte : l’objet du message est déjà rempli.</p></div></div>
+        <ol class="cblocks">${DOORS.map(block).join('')}</ol>
+      </div>
+    </section>
+    <section class="section" aria-labelledby="contact-letter">
+      <div class="wrap letter">
+        <h2 class="section-title" id="contact-letter">La lettre d’information</h2>
+        <p>Inscription : ${TBD}</p>
+      </div>
+    </section>`;
+  }
+  function bindContact(q) {
+    if (q.get('focus') !== 'dossier') return null;
+    const b = $('#dossier');
+    b.classList.add('is-target');
+    return b;
   }
 
   function panelVoir(s) {
     const ds = DATES.filter(d => d.slug === s.slug);
     if (!ds.length) return `<div class="panel-head"><h3 class="panel-title">Prochaines dates</h3></div>
       <p class="empty">Aucune date annoncée pour l’instant.</p>
-      <p class="panel-more"><a class="link" href="#dates">Toutes les dates de la compagnie</a> <span aria-hidden="true">→</span></p>`;
+      <p class="panel-more"><a class="link" href="#/agenda">Tout l’agenda de la compagnie</a> <span aria-hidden="true">→</span></p>`;
     const rest = ds.slice(6);
     return `<div class="panel-head"><h3 class="panel-title">Prochaines dates</h3><p class="panel-lede">${count(ds.length, 'date')} cette saison</p></div>
       <ol class="rows">${ds.slice(0, 6).map(d => rowHTML(d, true)).join('')}</ol>
@@ -623,7 +717,7 @@ button{cursor:pointer}
       ['Pass Culture', s.passCulture ? 'Disponible en offre collective.' : 'Pas d’offre collective à ce jour.'],
       ['CRED76', s.cred76 ? extLink(s.cred76, 'Voir la fiche du guide', `CRED76 : ${s.titre}`) : 'Pas de fiche au guide du CRED76.'],
     ];
-    if (s.slug !== 'actions-culturelles' && ATELIERS !== '#repertoire') tiles.push(['Les ateliers', `<a class="link" href="${ATELIERS}" data-door="${doorIndex('etablissement')}">Ateliers, rencontres, résidences</a>`]);
+    if (s.slug !== 'actions-culturelles' && ATELIERS !== '#/spectacles') tiles.push(['Les ateliers', `<a class="link" href="${ATELIERS}" data-door="${doorIndex('etablissement')}">Ateliers, rencontres, résidences</a>`]);
     return `<p class="etab-lead">${e.texte ? esc(e.texte) : TBD}</p>
       <dl class="tiles">${tiles.map(([k, v]) => `<div class="tile"><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
       <p class="panel-cta"><a class="btn" href="${esc(mailto(`Venue dans un établissement : ${s.titre}`))}">Écrire à la compagnie</a></p>`;
@@ -652,10 +746,10 @@ button{cursor:pointer}
     return `<article class="show" style="--sc:${esc(s.couleur)}">
       <header class="show-hero">
         <div class="wrap">
-          <a class="back" href="#repertoire"><span aria-hidden="true">←</span> Le répertoire</a>
+          <a class="back" href="#/spectacles"><span aria-hidden="true">←</span> Les spectacles</a>
           <div class="show-hero-grid">
             <div>
-              <h1 class="show-title">${esc(s.titre)}</h1>
+              <h1 class="show-title" tabindex="-1">${esc(s.titre)}</h1>
               <p class="show-sub">${esc(cap(s.sousTitre))}</p>
             </div>
             <figure class="show-photo">${photo(s, 30)}${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
@@ -680,7 +774,7 @@ button{cursor:pointer}
           <span><span class="next-label">Spectacle suivant</span><span class="next-title">${esc(next.titre)}</span><span class="next-sub">${esc(cap(next.sousTitre))}</span></span>
           <span class="next-photo">${photo(next)}</span>
         </a>
-        <p class="next-back"><a class="link" href="#repertoire">Retour au répertoire</a></p>
+        <p class="next-back"><a class="link" href="#/spectacles">Tous les spectacles</a></p>
       </nav>
     </article>`;
   }
@@ -716,6 +810,7 @@ button{cursor:pointer}
       b.setAttribute('aria-expanded', String(open));
       b.textContent = open ? 'Afficher moins de dates' : b.dataset.label;
     }));
+    return null;
   }
 
   function footerHTML() {
@@ -727,7 +822,7 @@ button{cursor:pointer}
           <p><a class="foot-mail" href="${esc(mailto())}">${esc(C.email)}</a></p>
           <p class="foot-muted">${esc(C.adresse)}</p>
         </div>
-        <div class="foot-col" id="dossier">
+        <div class="foot-col">
           <h3 class="foot-sub">Demander un dossier</h3>
           <p class="foot-muted">Dossier de diffusion, fiche technique, vidéo : précisez le spectacle et votre lieu.</p>
           <a class="btn btn--light" href="${esc(mailto('Demande de dossier'))}">Écrire à la compagnie</a>
@@ -746,52 +841,38 @@ button{cursor:pointer}
     el.classList.add('is-fading');
   }
 
-  function jump(id) {
-    let target = document.getElementById(id);
-    let focus = null;
-    if (FILTERS.some(f => f.id === id)) {
-      setFilter(id);
-      target = $('#repertoire');
-      focus = $('#rep-title');
-    } else if (id === 'pres-de-chez-moi') {
-      target = $('#dates');
-      focus = $('#dep-select');
-    } else if (id === 'calendrier') {
-      state.full = true;
-      renderDates();
-      target = $('#dates');
-      focus = $('#dates-title');
-    } else if (target) {
-      focus = target.hasAttribute('tabindex') ? target : target.querySelector('h2[tabindex="-1"]');
-    }
-    if (!target) return;
-    target.scrollIntoView({ block: 'start' });
-    if (focus) focus.focus({ preventScroll: true });
-  }
-
-  function view(key, anchor) {
-    if (key !== state.key) {
-      state.key = key;
-      const s = key.startsWith('show:') ? bySlug[key.slice(5)] : null;
-      root.style.setProperty('--top', s ? s.fondSombre : 'var(--aub)');
-      main.innerHTML = s ? showHTML(s) : homeHTML();
-      if (s) bindShow(); else bindHome();
-      document.title = s ? `${s.titre} · ${C.nom}` : `${C.nom} · théâtre à ${C.ville}`;
-      fade(main);
-      if (!anchor) window.scrollTo(0, 0);
-    }
-    if (anchor) jump(anchor);
-  }
+  const PAGES = {
+    '': { title: `${C.nom} · théâtre à ${C.ville}`, html: homeHTML },
+    spectacles: { title: `Les spectacles · ${C.nom}`, html: spectaclesHTML, bind: bindSpectacles },
+    agenda: { title: `L’agenda · ${C.nom}`, html: agendaHTML, bind: bindAgenda },
+    compagnie: { title: `La compagnie · ${C.nom}`, html: compagnieHTML },
+    contact: { title: `Contact · ${C.nom}`, html: contactHTML, bind: bindContact },
+  };
 
   function route() {
     let h = location.hash || '';
     try { h = decodeURIComponent(h); } catch (e) { h = location.hash; }
-    const m = /^#\/spectacle\/([^/?#]+)/.exec(h);
-    if (m && bySlug[m[1]]) return view(`show:${m[1]}`);
-    if (!h || h === '#' || h.startsWith('#/')) return view('home');
-    const id = h.slice(1);
-    if (state.key && document.getElementById(id)) return jump(id);
-    view('home', id);
+    const [path, qs] = h.replace(/^#\/?/, '').split('?');
+    const q = new URLSearchParams(qs || '');
+    const m = /^spectacle\/([^/]+)/.exec(path);
+    const s = m ? bySlug[m[1]] : null;
+    const name = s ? 'spectacles' : Object.prototype.hasOwnProperty.call(PAGES, path) ? path : '';
+    const page = PAGES[name];
+    closeMenu();
+    root.style.setProperty('--top', s ? s.fondSombre : 'var(--aub)');
+    root.dataset.view = s ? 'spectacle' : name || 'accueil';
+    main.innerHTML = s ? showHTML(s) : page.html(q);
+    const target = s ? bindShow() : page.bind ? page.bind(q) : null;
+    document.title = s ? `${s.titre} · ${C.nom}` : page.title;
+    $$('.site-nav a').forEach(a => {
+      if (name && a.dataset.tab === name) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+    fade(main);
+    window.scrollTo(0, 0);
+    const h1 = $('h1', main);
+    if (h1) h1.focus({ preventScroll: true });
+    if (target) target.focus();
   }
 
   const closeMenu = () => { header.classList.remove('nav-open'); menuBtn.setAttribute('aria-expanded', 'false'); };
@@ -809,14 +890,14 @@ button{cursor:pointer}
     if (!a) return;
     if (a.dataset.door) remember(+a.dataset.door);
     const href = a.getAttribute('href');
-    if (href === '#/' && state.key === 'home') window.scrollTo(0, 0);
-    else if (href === location.hash) { e.preventDefault(); route(); }
+    if (href === '#main') { e.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); }
+    else if (href === location.hash || (href === '#/' && !location.hash)) { e.preventDefault(); route(); }
   });
 
   root.style.setProperty('--tp', doorBy('voir').couleur);
   root.style.setProperty('--scol', doorBy('etablissement').couleur);
   $('.brand').innerHTML = D.logo.octopusWord;
-  $('#contact').innerHTML = footerHTML();
+  $('.site-footer').innerHTML = footerHTML();
   window.addEventListener('hashchange', route);
   route();
 })();

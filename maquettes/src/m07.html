@@ -22,6 +22,7 @@
   --fs-h1:clamp(3.25rem,8.2vw,7.75rem);
   --fs-h2:clamp(2.5rem,4.8vw,4.5rem);
   --fs-h3:clamp(1.75rem,2.9vw,2.75rem);
+  --fs-page:clamp(3rem,7vw,6.25rem);
 }
 *,*::before,*::after{box-sizing:border-box}
 html{background:var(--noir);-webkit-text-size-adjust:100%;overflow-x:clip}
@@ -59,7 +60,8 @@ ul,ol{padding:0;list-style:none}
 .nav ul{display:flex;gap:clamp(1.25rem,2.6vw,2.5rem)}
 .nav a{position:relative;display:block;padding:.4rem 0;font-weight:600;font-size:1rem;letter-spacing:.02em;text-decoration:none;color:var(--blanc)}
 .nav a::after{content:"";position:absolute;left:0;right:0;bottom:.1rem;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
-.nav a:hover::after,.nav a[aria-current]::after{transform:scaleX(1)}
+.nav a:hover::after,.nav a[aria-current="page"]::after{transform:scaleX(1)}
+.nav a[aria-current="page"]::after{height:2px;bottom:0}
 .menu-btn{display:none}
 
 /* Scène : la photo plein écran */
@@ -165,7 +167,7 @@ ul,ol{padding:0;list-style:none}
 .chiffre + .chiffre{padding-left:1.5rem;border-left:1px solid var(--trait)}
 .chiffre dd{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2.5rem,4vw,3.75rem);line-height:1}
 .chiffre dt{margin-top:.7rem;color:var(--gris)}
-.chiffres-note{grid-column:1/-1;font-size:.9375rem;color:var(--gris)}
+.chiffres-note{grid-column:1/-1;font-size:1rem;color:var(--gris)}
 
 /* Pied de page */
 .pied{border-top:1px solid var(--trait);padding-block:clamp(4.5rem,8vw,7rem) 2.5rem;scroll-margin-top:3rem}
@@ -179,6 +181,28 @@ ul,ol{padding:0;list-style:none}
 .pied address{font-style:normal}
 .pied li + li{margin-top:.35rem}
 .pied-bas{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.5rem 2rem;margin-top:clamp(3rem,5vw,4.5rem);font-size:.9375rem;color:var(--gris)}
+
+/* Les pages des onglets */
+.page{padding-top:5.25rem;background:radial-gradient(min(62rem,150vw) min(34rem,100vw) at 14% 5.25rem,rgba(255,239,220,.09),rgba(255,239,220,0) 72%) no-repeat}
+.page-tete{padding-top:clamp(3.75rem,8vw,7rem)}
+.page-tete-in{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:1.75rem 3rem;align-items:end}
+.page-titre{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-page);line-height:.95;letter-spacing:-.012em;margin-top:1.1rem;text-wrap:balance}
+.page-intro{font-size:1.125rem;color:var(--blanc-doux);max-width:34rem}
+.bloc--haut{padding-top:0}
+a.plus{text-decoration:none;color:var(--blanc)}
+a.plus:hover .fl{transform:translateX(.25rem)}
+.noms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:3rem;margin-top:clamp(2.5rem,4.5vw,4rem)}
+.noms li{min-width:0;padding:1.1rem 0 1.25rem;border-top:1px solid var(--trait)}
+.nom-n{display:block;font-weight:600;font-size:1.125rem;line-height:1.35}
+.nom-s{display:block;margin-top:.2rem;color:var(--gris);line-height:1.45}
+.contact-coord{display:grid;gap:1.1rem;justify-items:start}
+.contact-coord address{font-style:normal;color:var(--blanc-doux)}
+.porte-contact{margin-top:1.1rem}
+.porte-contact + p{margin-top:.35rem}
+.lettre{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:1rem 3rem;align-items:baseline;margin-top:clamp(3.5rem,6vw,5rem);padding-top:2.5rem;border-top:1px solid var(--trait)}
+.lettre-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h3);line-height:1.1}
+.lettre p{color:var(--blanc-doux)}
+.pied-ecrire[hidden] + .pied-grille{padding-top:0}
 
 /* Page spectacle */
 .retour{display:inline-flex;align-items:center;gap:.6rem;margin-bottom:1.75rem;font-weight:600;font-size:1rem;text-decoration:none;color:var(--blanc-doux);transition:color .25s}
@@ -248,6 +272,7 @@ ul,ol{padding:0;list-style:none}
   .fait:nth-child(3){padding-left:0;border-left:0}
   .fait:nth-child(n+3){margin-top:1.75rem;border-top:1px solid var(--trait)}
   .equipe{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .noms{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:900px){
   .menu-btn{position:relative;z-index:2;display:inline-flex;align-items:center;gap:.7rem;padding:.6rem 0;background:none;border:0;cursor:pointer;font-weight:600;font-size:1rem;letter-spacing:.02em}
@@ -260,7 +285,10 @@ ul,ol{padding:0;list-style:none}
   .tete.ouvert .nav{visibility:visible;opacity:1;transition:opacity .35s var(--ease)}
   .nav ul{flex-direction:column;gap:.25rem}
   .nav a{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2.25rem,9vw,3.25rem);line-height:1.25;letter-spacing:0;padding:.35rem 0}
-  .nav a::after{display:none}
+  .nav a{display:inline-block}
+  .nav a::after{bottom:.3rem;height:2px}
+  .nav a:hover::after{transform:scaleX(0)}
+  .nav a[aria-current="page"]::after{transform:scaleX(1);bottom:.3rem}
   .tete.ouvert{background:var(--noir)}
   .bloc-tete{grid-template-columns:1fr;align-items:start}
   .portes{grid-template-columns:1fr}
@@ -271,6 +299,7 @@ ul,ol{padding:0;list-style:none}
   .intro .accroche,.intro .texte{grid-column:1/-1}
   .texte{max-width:40rem}
   .panneau-grille{grid-template-columns:1fr 1fr}
+  .page-tete-in,.lettre{grid-template-columns:1fr;align-items:start}
 }
 
 /* Téléphone */
@@ -323,6 +352,8 @@ ul,ol{padding:0;list-style:none}
   .onglet[aria-selected="true"]:hover::after{transform:scaleY(1)}
   .panneau-grille{grid-template-columns:1fr}
   .suivant{height:56vh;min-height:20rem}
+  .page{padding-top:4.25rem}
+  .noms{grid-template-columns:1fr}
   .suivant-t{font-size:clamp(2.25rem,11vw,3rem)}
 }
 @media (prefers-reduced-motion:reduce){
@@ -351,7 +382,7 @@ ul,ol{padding:0;list-style:none}
   </div>
 </header>
 <main id="contenu" tabindex="-1"></main>
-<footer class="pied" id="contact"></footer>
+<footer class="pied" id="pied"></footer>
 <noscript><p style="padding:2rem">Ce site a besoin de JavaScript pour afficher les spectacles et les dates.</p></noscript>
 <script>const D = /*__DATA__*/null;</script>
 <script>
@@ -369,7 +400,7 @@ ul,ol{padding:0;list-style:none}
   const mobile = matchMedia('(max-width: 760px)');
 
   const SHOWS = D.shows;
-  const PAR_SLUG = Object.fromEntries(SHOWS.map(s => [s.slug, s]));
+  const PAR_SLUG = Object.assign(Object.create(null), Object.fromEntries(SHOWS.map(s => [s.slug, s])));
   const C = D.company;
   const FL = '<span class="fl" aria-hidden="true">→</span>';
   const EXT = '<span class="fl" aria-hidden="true">↗</span><span class="sr"> (nouvel onglet)</span>';
@@ -427,9 +458,9 @@ ul,ol{padding:0;list-style:none}
 
   /* Pied de page */
   const [rue, ville] = C.adresse.split(/,\s*/);
-  $('#contact').innerHTML = `
+  $('#pied').innerHTML = `
     <div class="wrap">
-      <div class="pied-ecrire">
+      <div class="pied-ecrire" id="pied-ecrire">
         <div><p class="sur">Contact</p><h2 class="bloc-titre">Écrire à la compagnie</h2></div>
         <a class="pied-mail" href="${mail}">${esc(C.email)}</a>
       </div>
@@ -449,6 +480,7 @@ ul,ol{padding:0;list-style:none}
             <li><a class="lien" href="#/spectacles">Spectacles</a></li>
             <li><a class="lien" href="#/agenda">Agenda</a></li>
             <li><a class="lien" href="#/compagnie">La compagnie</a></li>
+            <li><a class="lien" href="#/contact">Contact</a></li>
           </ul>
         </div>
       </div>
@@ -474,7 +506,7 @@ ul,ol{padding:0;list-style:none}
       <div class="date-p"><span class="date-pub">${esc(d.public)}</span>${lien}</div>
     </li>`;
   }
-  function agenda(liste, { limite = Infinity, avecTitre = true } = {}) {
+  function agenda(liste, { limite = Infinity, avecTitre = true, hn = 3 } = {}) {
     const groupes = [];
     liste.forEach((d, i) => {
       const k = d.iso.slice(0, 7);
@@ -485,7 +517,7 @@ ul,ol{padding:0;list-style:none}
     return groupes.map(g => {
       const tousCaches = g.lignes.every(([, c]) => c);
       return `<div class="mois"${tousCaches ? ' hidden data-suite' : ''}>
-        <h3 class="mois-t">${esc(cap(g.d.moisLong))} ${g.d.annee}</h3>
+        <h${hn} class="mois-t">${esc(cap(g.d.moisLong))} ${g.d.annee}</h${hn}>
         <ol class="dates${avecTitre ? '' : ' dates--seul'}">${g.lignes.map(([d, c]) => ligne(d, c, avecTitre)).join('')}</ol>
       </div>`;
     }).join('');
@@ -540,7 +572,11 @@ ul,ol{padding:0;list-style:none}
   }
 
   let actif = 0;
+  let pauseVoulue = false;
   let nettoyer = [];
+  const ICO_PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="2.6" height="10"/><rect x="7.4" y="1" width="2.6" height="10"/></svg>';
+  const ICO_LIRE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.2v9.6L10.6 6z"/></svg>';
+  const nomPause = () => pauseVoulue ? 'Reprendre le défilement des spectacles' : 'Mettre en pause le défilement des spectacles';
   function sceneAccueil() {
     const s = SHOWS[actif];
     return `<section class="scene" id="scene" aria-roledescription="carrousel" aria-label="Les spectacles, un à la fois" data-focale="${s.focale ?? 50}" style="--c:${esc(s.couleur)}">
@@ -553,7 +589,7 @@ ul,ol{padding:0;list-style:none}
           <div class="titres" role="tablist" aria-label="Choisir un spectacle">
             ${SHOWS.map((x, i) => `<button class="titre" type="button" role="tab" id="titre-${i}" aria-controls="scene-panneau" aria-selected="${i === actif}" tabindex="${i === actif ? 0 : -1}" style="--c:${esc(x.couleur)}">${fr(x.titre)}<span class="fil" aria-hidden="true"></span></button>`).join('')}
           </div>
-          <button class="pause" type="button" id="pause" aria-pressed="false" aria-label="Mettre en pause le défilement des spectacles"><svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="2.6" height="10"/><rect x="7.4" y="1" width="2.6" height="10"/></svg></button>
+          <button class="pause" type="button" id="pause" aria-pressed="${pauseVoulue}" aria-label="${nomPause()}">${pauseVoulue ? ICO_LIRE : ICO_PAUSE}</button>
         </div>
       </div>
     </section>`;
@@ -576,11 +612,11 @@ ul,ol{padding:0;list-style:none}
     const rangee = $('.titres', sc);
     const btnPause = $('#pause', sc);
     const lumiere = halo(sc);
-    let montre = actif, occupe = false, attente = null, survolT = 0;
-    const pauses = { survol: false, focus: false, vue: false, page: false, user: false };
+    let montre = actif, occupe = false, attente = null, survolT = 0, arret = false;
+    const pauses = { survol: false, focus: false, vue: false, page: false, user: pauseVoulue };
 
     const etat = () => {
-      const joue = !reduit.matches && !Object.values(pauses).some(Boolean);
+      const joue = !arret && !reduit.matches && !Object.values(pauses).some(Boolean);
       sc.classList.toggle('joue', joue);
       panneau.setAttribute('aria-live', joue ? 'off' : 'polite');
     };
@@ -650,19 +686,17 @@ ul,ol{padding:0;list-style:none}
       });
     });
     sc.addEventListener('animationend', e => {
-      if (e.animationName === 'fil' && sc.classList.contains('joue')) choisir((actif + 1) % SHOWS.length);
+      if (!arret && e.animationName === 'fil' && sc.classList.contains('joue')) choisir((actif + 1) % SHOWS.length);
     });
     sc.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { pauses.survol = true; etat(); } });
     sc.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { pauses.survol = false; etat(); } });
     sc.addEventListener('focusin', () => { pauses.focus = true; etat(); });
     sc.addEventListener('focusout', e => { if (!sc.contains(e.relatedTarget)) { pauses.focus = false; etat(); } });
     btnPause.addEventListener('click', () => {
-      pauses.user = !pauses.user;
-      btnPause.setAttribute('aria-pressed', String(pauses.user));
-      btnPause.setAttribute('aria-label', pauses.user ? 'Reprendre le défilement des spectacles' : 'Mettre en pause le défilement des spectacles');
-      btnPause.innerHTML = pauses.user
-        ? '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.2v9.6L10.6 6z"/></svg>'
-        : '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="2.6" height="10"/><rect x="7.4" y="1" width="2.6" height="10"/></svg>';
+      pauseVoulue = pauses.user = !pauses.user;
+      btnPause.setAttribute('aria-pressed', String(pauseVoulue));
+      btnPause.setAttribute('aria-label', nomPause());
+      btnPause.innerHTML = pauseVoulue ? ICO_LIRE : ICO_PAUSE;
       etat();
     });
     const io = 'IntersectionObserver' in window ? new IntersectionObserver(([e]) => { pauses.vue = e.intersectionRatio < .4; etat(); }, { threshold: [0, .4, 1] }) : null;
@@ -672,32 +706,20 @@ ul,ol{padding:0;list-style:none}
     reduit.addEventListener('change', etat);
     etat();
     versOnglet(actif);
-    nettoyer.push(() => { if (io) io.disconnect(); doc.removeEventListener('visibilitychange', visible); reduit.removeEventListener('change', etat); clearTimeout(survolT); });
+    nettoyer.push(() => { arret = true; etat(); if (io) io.disconnect(); doc.removeEventListener('visibilitychange', visible); reduit.removeEventListener('change', etat); clearTimeout(survolT); });
   }
 
-  /* Accueil */
+  /* Accueil : la scène, les trois portes, les prochaines dates */
   function accueil() {
-    const LIMITE = 7;
-    const premier = D.dates[0], dernier = D.dates[D.dates.length - 1];
+    const premier = D.dates[0];
+    const prochaines = D.dates.slice(0, 3);
     const etab = SHOWS.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
-    const nbPass = SHOWS.filter(s => s.passCulture).length;
-    const st = D.stats;
-    return `<h1 class="sr">Compagnie Crescite, théâtre à Rouen</h1>
+    return `<h1 class="sr" tabindex="-1">Compagnie Crescite, théâtre à Rouen</h1>
     ${sceneAccueil()}
-    <section class="bloc" id="agenda" aria-labelledby="t-agenda">
-      <div class="wrap">
-        <div class="bloc-tete">
-          <div><p class="sur">Saison ${esc(D.saison)}</p><h2 class="bloc-titre" id="t-agenda" tabindex="-1">En tournée</h2></div>
-          <p class="bloc-intro">${pluriel(D.dates.length, 'date', 'dates')} de ${esc(premier.moisLong)} ${premier.annee} à ${esc(dernier.moisLong)} ${dernier.annee}, en salle comme dans les classes. La réservation se fait auprès de chaque lieu.</p>
-        </div>
-        <div class="agenda" id="agenda-liste">${agenda(D.dates, { limite: LIMITE })}</div>
-        ${boutonSuite(D.dates.length, LIMITE)}
-      </div>
-    </section>
     <section class="bloc" id="portes" aria-labelledby="t-portes">
       <div class="wrap">
         <div class="bloc-tete">
-          <div><p class="sur">Trois portes</p><h2 class="bloc-titre" id="t-portes" tabindex="-1">Par où entrer</h2></div>
+          <div><p class="sur">Trois portes</p><h2 class="bloc-titre" id="t-portes">Par où entrer</h2></div>
           <p class="bloc-intro">Selon ce qui vous amène, une porte et les informations utiles, sans détour.</p>
         </div>
         <div class="portes">
@@ -706,7 +728,7 @@ ul,ol{padding:0;list-style:none}
             <p class="porte-txt">${fr(D.doors[0].texte)}</p>
             <ul class="porte-liens">
               <li><a class="lien" href="#/agenda">Les ${D.dates.length} prochaines dates</a></li>
-              <li><a class="lien" href="#/spectacle/${esc(premier.slug)}">Prochaine date : ${esc(premier.label)}, ${esc(premier.commune)}</a></li>
+              ${premier ? `<li><a class="lien" href="#/spectacle/${esc(premier.slug)}">${fr(`Prochaine date : ${premier.label}, ${premier.commune}`)}</a></li>` : ''}
             </ul>
           </div>
           <div class="porte">
@@ -714,7 +736,7 @@ ul,ol{padding:0;list-style:none}
             <p class="porte-txt">${fr(D.doors[1].texte)}</p>
             <ul class="porte-liens">
               <li><a class="lien" href="#/spectacles">Le répertoire, spectacle par spectacle</a></li>
-              <li><a class="lien" href="${mail}">Écrire à la compagnie</a></li>
+              <li><a class="lien" href="#/contact">Écrire à la compagnie</a></li>
             </ul>
           </div>
           <div class="porte">
@@ -727,12 +749,31 @@ ul,ol{padding:0;list-style:none}
         </div>
       </div>
     </section>
-    <section class="bloc" id="repertoire" aria-labelledby="t-rep">
+    <section class="bloc" id="prochaines" aria-labelledby="t-prochaines">
       <div class="wrap">
         <div class="bloc-tete">
-          <div><p class="sur">${pluriel(SHOWS.filter(estSpectacle).length, 'spectacle', 'spectacles')} et des ateliers</p><h2 class="bloc-titre" id="t-rep" tabindex="-1">Le répertoire</h2></div>
-          <p class="bloc-intro">Mise en scène d’${esc(C.miseEnScene)}. ${nbPass} spectacles sont proposés aux établissements dans l’offre collective du Pass Culture.</p>
+          <div><p class="sur">Saison ${esc(D.saison)}</p><h2 class="bloc-titre" id="t-prochaines">Prochaines dates</h2></div>
+          <p class="bloc-intro">${pluriel(D.dates.length, 'date', 'dates')} cette saison, en salle comme dans les classes. La réservation se fait auprès de chaque lieu.</p>
         </div>
+        ${prochaines.length ? `<div class="agenda">${agenda(prochaines)}</div>` : '<p class="vide">Aucune date annoncée pour l’instant.</p>'}
+        <a class="plus" href="#/agenda">Tout l’agenda ${FL}</a>
+      </div>
+    </section>`;
+  }
+
+  /* Les onglets : une page chacun */
+  function tetePage(sur, titre, cote = '') {
+    return `<div class="page-tete"><div class="wrap page-tete-in">
+      <div><p class="sur">${sur}</p><h1 class="page-titre" tabindex="-1">${titre}</h1></div>
+      ${cote}
+    </div></div>`;
+  }
+  function pageSpectacles() {
+    const nbPass = SHOWS.filter(s => s.passCulture).length;
+    return `<div class="page">
+      ${tetePage(`${pluriel(SHOWS.filter(estSpectacle).length, 'spectacle', 'spectacles')} et des ateliers`, 'Le répertoire',
+        `<p class="page-intro">Mise en scène d’${esc(C.miseEnScene)}. ${nbPass} spectacles sont proposés aux établissements dans l’offre collective du Pass Culture.</p>`)}
+      <div class="bloc bloc--haut"><div class="wrap">
         <ol class="rep">
           ${SHOWS.map((s, i) => `<li><a href="#/spectacle/${esc(s.slug)}" style="--c:${esc(s.couleur)}">
             <span class="rep-n" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
@@ -741,28 +782,84 @@ ul,ol{padding:0;list-style:none}
             <span class="rep-m">${s.annee ? s.annee : 'Toute l’année'}${s.nbDates ? ` · ${pluriel(s.nbDates, 'date', 'dates')}` : ''}</span>
           </a></li>`).join('')}
         </ol>
-      </div>
-    </section>
-    <section class="bloc" id="compagnie" aria-labelledby="t-cie">
-      <div class="wrap">
-        <div class="bloc-tete">
-          <div><p class="sur">${esc(C.ville)}, depuis ${C.depuis}</p><h2 class="bloc-titre" id="t-cie" tabindex="-1">La compagnie</h2></div>
-        </div>
+      </div></div>
+    </div>`;
+  }
+  function pageAgenda() {
+    const premier = D.dates[0], dernier = D.dates[D.dates.length - 1];
+    const intro = premier
+      ? `${pluriel(D.dates.length, 'date', 'dates')} de ${esc(premier.moisLong)} ${premier.annee} à ${esc(dernier.moisLong)} ${dernier.annee}, en salle comme dans les classes. La réservation se fait auprès de chaque lieu.`
+      : 'Aucune date annoncée pour l’instant.';
+    return `<div class="page">
+      ${tetePage(`Saison ${esc(D.saison)}`, 'En tournée', `<p class="page-intro">${intro}</p>`)}
+      <div class="bloc bloc--haut"><div class="wrap">
+        ${premier ? `<div class="agenda">${agenda(D.dates, { hn: 2 })}</div>` : ''}
+      </div></div>
+    </div>`;
+  }
+  function artistes() {
+    const m = new Map();
+    SHOWS.filter(estSpectacle).forEach(s => s.distribution.forEach(entree => entree.split(/\s+ou\s+/).forEach(n => {
+      const nom = n.trim();
+      if (!nom) return;
+      if (!m.has(nom)) m.set(nom, []);
+      if (!m.get(nom).includes(s)) m.get(nom).push(s);
+    })));
+    return [...m.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
+  }
+  function pageCompagnie() {
+    const st = D.stats;
+    const noms = artistes();
+    return `<div class="page">
+      ${tetePage(`${esc(C.ville)}, depuis ${C.depuis}`, 'La compagnie')}
+      <div class="bloc bloc--haut"><div class="wrap">
         <div class="cie">
           <blockquote class="cie-citation"><p>« ${fr(C.intention)} »</p></blockquote>
           <div class="cie-txt">
             <p>${fr(C.presentation)}</p>
-            <p>Mise en scène : ${esc(C.miseEnScene)}.</p>
+            <p>${fr(`Mise en scène : ${C.miseEnScene}.`)}</p>
           </div>
           <dl class="chiffres">
             <div class="chiffre"><dt>représentations depuis ${st.depuis}</dt><dd>${st.representationsCourt}</dd></div>
             <div class="chiffre"><dt>représentations par an au moins, depuis ${st.parAnDepuis}</dt><dd>${st.parAnMin}</dd></div>
-            <div class="chiffre"><dt>pays : ${st.paysListe.join(', ')}</dt><dd>${st.pays}</dd></div>
+            <div class="chiffre"><dt>${fr(`pays : ${st.paysListe.join(', ')}`)}</dt><dd>${st.pays}</dd></div>
             <div class="chiffre"><dt>heures d’éducation artistique en 2023-2024</dt><dd>${st.heuresEAC}</dd></div>
           </dl>
+          ${st.source ? `<p class="chiffres-note">${fr(`Source : ${st.source}.`)}</p>` : ''}
         </div>
-      </div>
-    </section>`;
+      </div></div>
+      <section class="bloc" aria-labelledby="t-plateau"><div class="wrap">
+        <div class="bloc-tete">
+          <div><p class="sur">Les distributions</p><h2 class="bloc-titre" id="t-plateau">Au plateau</h2></div>
+          <p class="bloc-intro">${pluriel(noms.length, 'comédien', 'comédiens')} dans les spectacles du répertoire, avec les pièces où ils jouent.</p>
+        </div>
+        <ul class="noms">${noms.map(([n, l]) => `<li><span class="nom-n">${esc(n)}</span><span class="nom-s">${l.map(s => fr(s.titre)).join(', ')}</span></li>`).join('')}</ul>
+      </div></section>
+      <section class="bloc" aria-labelledby="t-partenaires"><div class="wrap">
+        <h2 class="bloc-titre" id="t-partenaires">Partenaires</h2>
+        <ul class="noms">${C.partenaires.map(p => `<li><span class="nom-n">${esc(p)}</span></li>`).join('')}</ul>
+      </div></section>
+    </div>`;
+  }
+  function pageContact() {
+    return `<div class="page">
+      ${tetePage('Contact', 'Écrire à la compagnie', `<div class="contact-coord">
+        <a class="pied-mail" href="${mail}">${esc(C.email)}</a>
+        <address>${esc(C.nom)}<br>${esc(rue)}<br>${esc(ville || '')}</address>
+      </div>`)}
+      <div class="bloc bloc--haut"><div class="wrap">
+        <div class="portes">${D.doors.map(d => `<div class="porte">
+          <h2 class="porte-t">${esc(d.titre)}</h2>
+          <p class="porte-txt">${fr(d.texte)}</p>
+          <p class="porte-contact">Contact : <span class="afournir">à fournir</span></p>
+          <p><a class="lien" href="${mail}?subject=${encodeURIComponent(d.titre)}">${esc(C.email)}</a></p>
+        </div>`).join('')}</div>
+        <div class="lettre">
+          <h2 class="lettre-t">La lettre d’information</h2>
+          <p>Inscription : <span class="afournir">à fournir</span></p>
+        </div>
+      </div></div>
+    </div>`;
   }
 
   /* Page spectacle */
@@ -898,12 +995,18 @@ ul,ol{padding:0;list-style:none}
     });
   }
 
-  /* Navigation par l’ancre */
+  /* Navigation par onglets */
   const main = $('#contenu');
   const tete = $('#tete');
   const menuBtn = $('#menu-btn');
-  let vue = null;
-  const SECTIONS = { agenda: 'agenda', spectacles: 'repertoire', compagnie: 'compagnie', contact: 'contact' };
+  const piedEcrire = $('#pied-ecrire');
+  const ONGLETS = new Map([
+    ['spectacles', ['Le répertoire', pageSpectacles]],
+    ['agenda', ['L’agenda', pageAgenda]],
+    ['compagnie', ['La compagnie', pageCompagnie]],
+    ['contact', ['Contact', pageContact]],
+  ]);
+  let vue = null, surPhoto = true, premiere = true;
 
   function fermerMenu(rendreFocus) {
     if (!tete.classList.contains('ouvert')) return;
@@ -924,58 +1027,59 @@ ul,ol{padding:0;list-style:none}
   doc.addEventListener('keydown', e => { if (e.key === 'Escape') fermerMenu(true); });
   mobile.addEventListener('change', () => fermerMenu(false));
 
-  const enTete = () => tete.classList.toggle('plein', scrollY > 24);
+  const enTete = () => tete.classList.toggle('plein', !surPhoto || scrollY > 24);
   addEventListener('scroll', enTete, { passive: true });
 
   function aller(cible, doux) {
-    if (!cible) return;
     cible.scrollIntoView({ behavior: doux && !reduit.matches ? 'smooth' : 'auto', block: 'start' });
     const titre = cible.querySelector('h2[tabindex="-1"]');
     if (titre) titre.focus({ preventScroll: true });
   }
   function router(depuisClic) {
-    const h = location.hash || '#/';
-    if (!h.startsWith('#/')) return;
-    const parts = h.slice(2).split('/').filter(Boolean);
-    let cle, section = null;
-    if (parts[0] === 'spectacle' && PAR_SLUG[parts[1]]) { cle = 'spectacle:' + parts[1]; section = parts[2] || null; }
-    else { cle = 'accueil'; section = SECTIONS[parts[0]] || null; }
-    if (section === 'contact' && vue) { aller($('#contact'), true); fermerMenu(false); return; }
+    const h = location.hash;
+    if (h && !h.startsWith('#/') && vue) return;
+    const parts = (h.startsWith('#/') ? h.slice(2).split('?')[0] : '').split('/').filter(Boolean);
+    let cle = 'accueil', onglet = null, section = null;
+    if (parts[0] === 'spectacle' && PAR_SLUG[parts[1]]) { cle = 'spectacle:' + parts[1]; onglet = 'spectacles'; section = parts[2] || null; }
+    else if (ONGLETS.has(parts[0])) cle = onglet = parts[0];
     const change = cle !== vue;
     if (change) {
       nettoyer.forEach(f => f()); nettoyer = [];
       const precedente = vue;
       vue = cle;
+      surPhoto = cle === 'accueil' || cle.startsWith('spectacle:');
       if (cle === 'accueil') {
         if (precedente && precedente.startsWith('spectacle:')) actif = Math.max(0, SHOWS.findIndex(s => s.slug === precedente.slice(10)));
         main.innerHTML = accueil();
         brancherCarrousel($('#scene', main));
-        brancherSuite($('#agenda', main));
         doc.title = 'Compagnie Crescite · Théâtre à Rouen';
-      } else {
+      } else if (surPhoto) {
         const s = PAR_SLUG[parts[1]];
         main.innerHTML = spectacle(s);
         halo($('#scene', main));
         brancherSuite($('#dates', main));
         brancherOnglets(main);
         doc.title = `${s.titre} · Compagnie Crescite`;
+      } else {
+        const [nom, page] = ONGLETS.get(cle);
+        main.innerHTML = page();
+        doc.title = `${nom} · Compagnie Crescite`;
       }
-      $$('.nav a').forEach(a => a.toggleAttribute('aria-current', cle !== 'accueil' && a.dataset.nav === 'spectacles'));
-      if (cle !== 'accueil') $$('.nav a[data-nav="spectacles"]').forEach(a => a.setAttribute('aria-current', 'true'));
+      piedEcrire.hidden = cle === 'contact';
+      $$('.nav a').forEach(a => { if (a.dataset.nav === onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     }
     fermerMenu(false);
-    if (section) {
-      const cible = section === 'contact' ? $('#contact') : $('#' + section, main);
+    const cible = section ? doc.getElementById(section) : null;
+    if (cible && main.contains(cible)) {
       if (change) { scrollTo(0, 0); requestAnimationFrame(() => aller(cible, false)); }
       else aller(cible, true);
     } else {
       scrollTo({ top: 0, behavior: !change && depuisClic && !reduit.matches ? 'smooth' : 'auto' });
-      if (change && precedenteExiste) { const t = $('h1[tabindex="-1"]', main); if (t) t.focus({ preventScroll: true }); }
+      if (change && !premiere) { const t = $('h1[tabindex="-1"]', main); if (t) t.focus({ preventScroll: true }); }
     }
-    precedenteExiste = true;
+    premiere = false;
     enTete();
   }
-  let precedenteExiste = false;
   doc.addEventListener('click', e => {
     const a = e.target.closest('a[href^="#/"]');
     if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
