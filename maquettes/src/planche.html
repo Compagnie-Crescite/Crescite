@@ -130,16 +130,13 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     { n: 'm10', court: 'Pieuvre', nom: 'La pieuvre vivante, rangée', niveau: 'La plus évoluée', voit: 'La pieuvre : on tire un bras pour entrer', mvt: 3, pieuvre: 3, effort: 3,
       principe: 'Le prototype remis en ordre : les bras du logo mènent aux titres et on les tire pour entrer dans un spectacle (l’encre de son univers recouvre l’écran). Rien ne bouge au repos. Chaque page spectacle garde sa couleur, sa photo et un seul effet au défilement ; tout le reste est commun.',
       plus: ['L’idée la plus singulière, et un geste qu’on retient', 'L’univers de chaque spectacle vit dans sa page', 'Même typographie partout : le site reste un'],
-      moins: ['La plus longue à réaliser et à entretenir', 'Au téléphone, les bras deviennent des couloirs plus chargés', 'Le geste « tirer » doit se découvrir (un clic suffit aussi)'],
-      extras: [
-        { titre: 'Un effet par spectacle, au défilement', items: [['m10-extra1', 'Bérénice : le cercle et le vers qui tourne'], ['m10-extra2', 'Ci-gisait Cyrano : la tirade du nez'], ['m10-extra3', 'Macbeth – Fatum : le fil rouge'], ['m10-extra4', 'La Folle Idée : l’horloge de la grève']] },
+      moins: ['La plus longue à réaliser et à entretenir', 'Au téléphone, les bras deviennent des couloirs plus chargés', 'Le geste « tirer » doit se découvrir (un clic suffit aussi)'] },
         { titre: 'Variante : la même pieuvre, immobile', items: [['m10-v1', 'Les bras deviennent des traits fixes ; au survol, le bras et le titre prennent la couleur du spectacle'], ['m10-v2', 'Au téléphone : la pieuvre, puis la liste']] } ] },
   ];
   const SYN = { n: 'synthese', num: 'S', court: 'Synthèse', nom: 'La synthèse : la 06, enrichie', niveau: 'La proposition retenue, en site complet',
-    principe: 'Ce que je recommande, assemblé en un site de cinq pages (Accueil, Spectacles, Agenda, La compagnie, Contact) : l’accueil et les cartes de la 06 ; l’agenda de la 03 relié à la carte (choisir une commune filtre la liste, survoler une date allume son bras) ; les portes de la 04 avec leurs liens directs, et le site qui retient la porte choisie pour ouvrir chaque fiche sur le bon onglet ; pour chaque spectacle, une seule bande à ses couleurs avec l’effet de la 10. Tout le reste est commun.',
-    plus: ['Le thème tentaculaire porte une information utile à chaque public', 'Chaque spectacle garde son univers dans une seule bande ; le reste du site ne change pas', 'Une base prête à développer : chaque page et chaque spectacle a son adresse'],
-    moins: ['La bande épinglée des spectacles est la partie la plus coûteuse : elle peut venir dans un second temps', 'Contacts par porte, documents, âges conseillés : à fournir par la compagnie'],
-    extras: [{ titre: 'Les autres pages', items: [['synthese-extra1', 'L’agenda : filtres, recherche, liste par mois et carte reliée'], ['synthese-extra2', 'Une commune choisie sur la carte : la liste ne garde que ses dates'], ['synthese-extra3', 'La Folle Idée : « Où le voir », les tournées passées'], ['synthese-extra4', 'Les spectacles, filtrés « Dans votre établissement »']] }] };
+    principe: 'Ce que je recommande, assemblé en un site complet : l’ouverture sur le logo, l’accueil et les cartes de la 06 ; l’agenda de la 03 relié à la carte (choisir une commune filtre la liste, survoler une date allume son bras) ; les portes de la 04 ; pour chaque spectacle, une bande à ses couleurs avec l’effet de la 10. Tout le reste est commun.',
+    plus: ['Le thème tentaculaire porte une information utile à chaque public', 'Chaque spectacle garde son univers dans une seule bande ; le reste du site ne change pas', 'Une base prête à développer : chaque page, chaque spectacle et chaque saison a son adresse'],
+    moins: ['La bande des spectacles est la partie la plus coûteuse : elle peut venir dans un second temps'] };
   const TOUTES = [...M, SYN];
   const num = m => m.num || m.n.slice(1);
   // la planche en fichier embarque chaque maquette ; la planche en ligne (P.web) charge les pages publiées à côté d'elle
@@ -196,7 +193,8 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <div class="moins"><h4>Ce qui coince</h4><ul>${m.moins.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>
       <div class="demarche">
         <h3>La démarche</h3>
-        <p>Les dix partent des mêmes contenus (les huit spectacles, les 31 dates de la saison, les trois portes, la compagnie) et respectent les mêmes règles de clarté. Elles ne diffèrent que par la manière de les montrer : de la page imprimée à la pieuvre qu’on tire. La tentacule y est tantôt un thème (la 06 : les tournées qui partent de Rouen), tantôt un dessin (la 10). Chacune est un petit site à onglets : Accueil, Spectacles, Agenda, La compagnie, Contact, et une page par spectacle.</p>
+        <p>Les dix partent du même contenu : le texte exact de crescite.fr, page par page (les spectacles, les onze saisons et leurs dates, la présentation de la compagnie, les actions culturelles, l’espace pro, le contact), plus Cassandres, création 2027. Rien n’y est réécrit ; seule la carte des tournées s’ajoute, dessinée dans l’univers de chaque maquette. Elles ne diffèrent que par la manière de montrer ce contenu : de la page imprimée à la pieuvre qu’on tire.</p>
+        <p>Chacune s’ouvre sur le logo en grand : au clic, à la molette ou en glissant vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. Chacune est ensuite un petit site à onglets (Spectacles, Agenda, La compagnie, Actions culturelles, Espace Pro, Contact), avec une page par spectacle et par saison.</p>
         <div>
       <div><h4 style="margin:18px 0 6px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase">Pourquoi le prototype semblait « bordélique »</h4><ol>
         <li><b>Trop de choses se disputaient l’attention</b> sur le premier écran : huit étiquettes avec chacune trois lignes (titre, année et durée, prochaine date), une bulle d’aide, un bouton, des bras qui bougeaient seuls.</li>
@@ -204,12 +202,14 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <li><b>Huit typographies</b>, une par spectacle. Chaque page avait du caractère, mais l’ensemble ne ressemblait plus à un seul site.</li>
       </ol></div>
       <div><h4 style="margin:18px 0 6px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase">Les règles communes aux dix</h4><ul>
-        <li>Un seul étage d’en-tête et quatre entrées au plus : Spectacles, Agenda, La compagnie, Contact.</li>
+        <li>Un seul étage d’en-tête et six onglets : Spectacles, Agenda, La compagnie, Actions culturelles, Espace Pro, Contact.</li>
+        <li>Le texte du site d’origine, mot pour mot. Seule la carte des tournées s’ajoute.</li>
         <li>Deux familles de polices au plus. Un spectacle se distingue par sa couleur et sa photo, jamais par sa typographie.</li>
         <li>Un seul message par écran, des alignements stricts, du texte courant d’au moins 16 px et des contrastes suffisants.</li>
-        <li>Les trois portes avec leurs mots exacts : « Je viens voir », « Je programme », « Je fais venir dans mon établissement ».</li>
+        <li>Les trois portes, réduites à leurs libellés : « Je viens voir » mène à l’agenda, « Je programme » à l’Espace Pro, « Je fais venir dans mon établissement » aux Actions culturelles.</li>
+        <li>La pieuvre ne compte pas les spectacles : aucun bras n’est attribué à un titre.</li>
         <li>Les prochaines dates à un clic au plus de l’accueil.</li>
-        <li>Uniquement la partie publique : ni espace troupe, ni administration. Ce qui manque est marqué « à fournir ».</li>
+        <li>Uniquement la partie publique : ni espace troupe, ni administration.</li>
       </ul></div>
     </div>
         <h3>L’échelle</h3>
@@ -219,14 +219,14 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <h3>Ce que je recommande</h3>
         <p><b>La 06 comme base.</b> C’est la synthèse : un site aussi clair que la 02, où le thème tentaculaire dit quelque chose de vrai sur la compagnie, qui part de Rouen et va chercher son public jusque dans les classes, au lieu d’être un décor. Les cartes servent aussi les programmateurs et les établissements.</p>
     <ol>
-      <li><b>L’accueil de la <a href="#m06" data-aller="m06">06</a></b> : la phrase, les chiffres, la carte des tournées, puis les spectacles.</li>
-      <li><b>L’agenda de la <a href="#m03" data-aller="m03">03</a></b>, sur la page Agenda : filtres tout public ou scolaires, recherche par ville ou par spectacle.</li>
-      <li><b>Les portes à liens directs</b>, comme dans la 06 et la <a href="#m04" data-aller="m04">04</a> : chaque porte donne ses réponses sans page intermédiaire.</li>
-      <li><b>Les pages spectacle</b> : la carte « Où le voir » de la 06 ; plus tard, si le budget le permet, un effet au défilement par spectacle, comme dans la <a href="#m10" data-aller="m10">10</a>.</li>
+      <li><b>L’accueil de la <a href="#m06" data-aller="m06">06</a></b> : la carte des tournées, qui pousse depuis Rouen quand le logo s’ouvre, puis les spectacles.</li>
+      <li><b>L’agenda de la <a href="#m03" data-aller="m03">03</a></b>, sur la page Agenda : filtres par spectacle, recherche par ville, et la carte reliée à la liste.</li>
+      <li><b>Les trois portes</b> de la <a href="#m04" data-aller="m04">04</a>, réduites à leurs libellés : elles mènent à l’agenda, à l’Espace Pro et aux Actions culturelles.</li>
+      <li><b>Les pages spectacle</b> : la carte des tournées de la 06, sous « Actuellement en tournée » ; plus tard, si le budget le permet, un effet au défilement par spectacle, comme dans la <a href="#m10" data-aller="m10">10</a>.</li>
     </ol>
     <p>La pieuvre de la 10 n’est pas perdue : elle peut vivre ailleurs (une page de saison, une affiche animée, une bande-annonce pour les réseaux) sans porter la navigation du site.</p>
     <p>Si vous voulez la solution la plus sûre et la plus rapide à mettre en ligne : la <a href="#m02" data-aller="m02">02</a>, « La maison ».</p>
-    <p><b>Les chiffres de diffusion</b> viennent du dossier artistique 2027-2028 (au 31 juillet 2026) : plus de 1 500 représentations depuis 2011, au moins 86 par an depuis 2014. Le site n’en publie qu’une partie, environ un tiers : ses dates servent aux cartes et à l’agenda, pas aux totaux.</p>
+    <p><b>Le texte d’origine, tel quel</b>, avec ses incohérences et ses fautes, pour qu’on les voie et qu’on les corrige dans le futur site. Par exemple : L’imaginaire forcé est « création 2012 » sur sa page et « création 2011 » sur les pages de saison ; « conventionnée la Ville de Rouen » (il manque « par ») ; « l’un des plus beau poème » ; les pages spectacle annoncent encore « Actuellement en tournée » des dates de 2025-2026 (les maquettes y mettent les dates à venir des pages de saison). Les chiffres de diffusion du dossier artistique (plus de 1 500 représentations depuis 2011) n’y figurent pas.</p>
     <p><b>À vérifier dans la base des dates.</b> Trois lieux ne sont pas des lieux : « diptyque » à Ostwald et à Briançon, « 20h30 » à Saint-Genest-Lerpt. Les maquettes les affichent proprement, mais il faut corriger la source.</p>
         ${dispo('synthese') ? '<p><button class="outil" type="button" data-aller="synthese" style="color:#a8306f;padding:0;font-size:1rem">Voir la synthèse assemblée →</button></p>' : ''}
       </div>`;

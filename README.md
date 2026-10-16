@@ -14,7 +14,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | --- | --- |
 | `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
 | `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, et la planche qui les compare. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
-| `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. |
+| `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`) et fiche de Cassandres (`cassandres.json`). |
 | `supabase/migrations/` | Modèle de données proposé pour la future base de la compagnie : dates, lieux, tournées, troupe, feuilles de route, règles d'accès. **Non exécuté** : à relire avant usage. |
 | `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle. |
 
@@ -57,18 +57,23 @@ animations » est respecté.
 python3 maquettes/build.py              # les dix maquettes et la planche (maquettes/dist/, non versionné)
 python3 maquettes/build.py m06          # une seule maquette
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
-node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les onglets de chaque maquette et signale les anomalies
+node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
+python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 
-Dix façons de montrer les mêmes contenus (spectacles, dates de la saison, trois portes, compagnie), sous des règles
-de clarté communes : un seul étage d’en-tête et quatre entrées au plus, deux familles de polices au plus, un
-spectacle distingué par sa couleur et sa photo seulement, les prochaines dates à un clic. De la 01 (« Le programme
-de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis en ordre) ; la 06
-(« Les bras de la tournée ») fait de la tentacule un thème : la carte des tournées qui partent de Rouen.
-Chacune est un petit site à onglets : Accueil, Spectacles, Agenda, La compagnie, Contact, et une page par spectacle.
-`maquettes/src/synthese.html` assemble la proposition retenue en un site de cinq pages : l’accueil et les cartes de
-la 06, l’agenda filtrable de la 03 relié à la carte, les portes à liens directs de la 04 (le site retient la porte
-choisie), et l’effet signature de chaque spectacle repris de la 10.
+Dix façons de montrer le même contenu : **le texte exact de crescite.fr**, page par page (spectacles, onze saisons
+de dates, présentation de la compagnie, actions culturelles, espace pro, contact, mentions légales), plus
+Cassandres, création 2027. Rien n'y est réécrit ; seule la **carte des tournées** s'ajoute, dessinée dans l'univers
+de chaque maquette avec l'outil commun `maquettes/src/carte.js`. Chacune **s'ouvre sur le logo en grand**
+(`maquettes/src/intro.js`) : au clic, à la molette ou en glissant vers le bas, ses tentacules ondulent, il grossit et
+le site apparaît à travers lui. Chacune est ensuite un petit site à onglets : Spectacles, Agenda, La compagnie,
+Actions culturelles, Espace Pro, Contact, une page par spectacle et par saison. Les trois portes (« Je viens voir »,
+« Je programme », « Je fais venir dans mon établissement ») ne gardent que leurs libellés, et la pieuvre ne compte
+pas les spectacles. De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée »,
+le prototype remis en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème.
+`maquettes/src/synthese.html` assemble la proposition retenue : l’accueil et les cartes de la 06, l’agenda de la 03
+relié à la carte, les portes de la 04 et l’effet de chaque spectacle repris de la 10.
+`onglets.mjs` compare chaque texte affiché au texte d'origine et signale tout texte qui n'en vient pas.
 `maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
 dessous, et pour chacune son principe, ses forces et ses limites (« À propos »).
 
@@ -88,8 +93,12 @@ quand il est indiqué, texte d'origine et page source. Le classement scolaire / 
 Ce relevé ne contient que les dates **publiées** sur le site : une ligne peut couvrir plusieurs représentations,
 et beaucoup de représentations n'y figurent pas. Le dossier artistique 2027-2028 de la compagnie compte plus de
 1 500 représentations depuis 2011 (au moins 86 par an depuis 2014), quand le site en liste 460 lignes depuis 2016,
-soit environ un tiers. Les maquettes affichent donc les totaux du dossier (`DIFFUSION` dans `maquettes/build.py`)
-et n'utilisent le relevé que pour l'agenda et les cartes.
+soit environ un tiers. Les maquettes n'affichent aucun total : elles reprennent le texte du site, et le relevé
+ne sert qu'à placer les dates sur les cartes.
+
+`data/site-crescite.json` : le texte des pages publiques de crescite.fr tel qu'il est publié, fautes comprises
+(inline `em`, `strong`, listes et liens gardés). `data/cassandres.json` : le texte de Cassandres, relevé sur la page
+du projet en attendant sa page sur le site de la compagnie.
 
 ## Base de données
 
