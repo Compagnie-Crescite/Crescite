@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Assemble les dix maquettes de la partie publique, la synthèse, et la planche qui les présente par onglets.
 
-Chaque maquette est un fichier maquettes/src/mNN.html qui lit ses contenus dans l'objet D (spectacles,
-dates, portes, compagnie, logo, photos). Le script remplace /*__DATA__*/null par ces données.
+Chaque maquette est un fichier maquettes/src/mNN.html qui lit ses contenus dans l'objet D : le texte exact de
+crescite.fr (D.site, D.shows, D.dates, D.saisons), le logo, les photos et la carte des tournées. Le script remplace
+/*__DATA__*/null par ces données et ajoute juste après les outils communs : la carte des tournées
+(maquettes/src/carte.js) et l'ouverture sur le logo (maquettes/src/intro.js).
 
 Usage :
   python3 maquettes/build.py              toutes les maquettes et la planche (maquettes/dist/)
@@ -73,6 +75,8 @@ def logo_variants():
     return {
         # les tracés de la pieuvre seule (coordonnées du dessin 1536 px), pour les maquettes qui la dessinent elles-mêmes
         "octopusPaths": [d_of(k) for k in ("tentacles-left", "head-left", "head-right", "tentacles-right")],
+        # le mot « crescite » et la tache magenta, seuls (pour l'ouverture, qui les anime séparément)
+        "motPath": word, "tachePath": blob,
         # la pieuvre seule, couleur du texte (CSS color)
         "octopus": svg("250 340 1042 576", f'<g fill="currentColor" fill-rule="evenodd">{octo}</g>', "Crescite"),
         # la pieuvre et le mot « crescite », couleur du texte
@@ -97,125 +101,287 @@ def arms_data():
 
 
 def photos(shows):
+    """Les photos (privées) des spectacles et de la page Actions culturelles, en data URL ; sinon un substitut neutre."""
     out = {}
-    for s in shows:
-        f = PRIVATE / "photos" / s["photo"]
-        out[s["slug"]] = ("data:image/webp;base64," + base64.b64encode(f.read_bytes()).decode()) if f.exists() else proto.placeholder_photo(s["titre"])
+    for slug, titre in [(s["slug"], s["titre"]) for s in shows] + [("actions-culturelles", "Actions culturelles")]:
+        f = PRIVATE / "photos" / f"{slug}.webp"
+        out[slug] = ("data:image/webp;base64," + base64.b64encode(f.read_bytes()).decode()) if f.exists() else proto.placeholder_photo(titre)
     return out
 
 
-# La diffusion, d'après le dossier artistique 2027-2028 de la compagnie (chiffres au 31 juillet 2026).
-# Le site ne publie qu'une partie des dates (environ un tiers) : ses lignes servent à la carte, pas aux totaux.
-DIFFUSION = {
-    "depuis": 2011, "representations": 1500, "texte": "plus de 1\u202f500", "court": "1\u202f500+",
-    "parAnMin": 86, "parAnDepuis": 2014, "pays": ["France", "Belgique", "Suisse", "Tunisie"],
-    "heuresEACAn": 200, "source": "dossier artistique 2027-2028, au 31 juillet 2026",
-    "parSpectacle": {
-        "imaginaire-force": (492, "au 31 juillet 2026"), "mon-royaume": (779, "au 31 juillet 2026"),
-        "macbeth-fatum": (40, "jusqu’en mai 2019"), "berenice": (67, "au 31 juillet 2026"),
-        "la-folle-idee": (13, "jusqu’en mars 2023"), "ci-gisait-cyrano": (176, "au 31 juillet 2026"),
-        "cleophene": (16, "au 31 juillet 2026"),
-    },
+# Les maquettes reprennent le texte exact de crescite.fr (data/site-crescite.json, relevé par data/site_crescite.py),
+# plus Cassandres, création 2027 (data/cassandres.json). Rien d'autre n'est écrit pour elles : seule la carte des
+# tournées s'ajoute, tracée à partir des dates que le site publie.
+ORDRE = ["cassandres", "cleophene", "ci-gisait-cyrano", "la-folle-idee", "berenice", "macbeth-fatum", "mon-royaume", "imaginaire-force"]
+
+# L'univers de Cassandres (couleurs seulement) : la chaleur de 2077 sur la nuit bleue des photos du projet.
+UNIVERS_CASSANDRES = {"nom": "La chronologie", "motif": "chronologie", "focale": 50,
+                      "couleurs": {"fond": "#0b1018", "fond2": "#121b28", "texte": "#e8edf3", "texte2": "#9fb0c3",
+                                   "accent": "#ff7a2f", "accent2": "#3d6fb6", "scene": "#ff7a2f"}}
+
+# Les communes des saisons anciennes absentes de la base des dates : coordonnées approchées, pour la carte seulement.
+COMMUNES_EN_PLUS = {
+    "Loiron|53": (48.067, -0.933), "Conches-en-Ouche|27": (48.958, 0.940), "Bellac|87": (46.122, 1.049),
+    "Vitrolles|13": (43.460, 5.248), "Istres|13": (43.513, 4.988), "Grand-Quevilly|76": (49.409, 1.039),
+    "Lunéville|54": (48.589, 6.496), "Cholet|49": (47.060, -0.879), "Hénin-Beaumont|62": (50.421, 2.951),
+    "Mayenne|53": (48.303, -0.614), "Alençon|61": (48.432, 0.091), "Oissel|76": (49.342, 1.094),
+    "Vernouillet|28": (48.721, 1.360), "Avignon|84": (43.949, 4.806), "Corbie|80": (49.909, 2.509),
+    "Avranches|50": (48.684, -1.357), "Saint-Omer|62": (50.767, 2.265), "Gacé|61": (48.795, 0.296),
+    "Pont-Audemer|27": (49.355, 0.515),
 }
+
+# Les trois portes : seulement leurs libellés, vers les pages d'origine qui servent chaque public.
+PORTES = [
+    {"cle": "voir", "texte": "Je viens voir", "href": "#/agenda", "couleur": "#c2306f", "couleurVive": "#f07ab6"},
+    {"cle": "programmer", "texte": "Je programme", "href": "#/espace-pro", "couleur": "#8a6410", "couleurVive": "#e8bc5c"},
+    {"cle": "etablissement", "texte": "Je fais venir dans mon établissement", "href": "#/actions-culturelles", "couleur": "#127a6a", "couleurVive": "#5fd0bd"},
+]
+# Les onglets : ceux des maquettes, plus Actions culturelles et Espace Pro, pages du site d'origine.
+MENU = [
+    {"id": "spectacles", "texte": "Spectacles", "href": "#/spectacles"},
+    {"id": "agenda", "texte": "Agenda", "href": "#/agenda"},
+    {"id": "compagnie", "texte": "La compagnie", "href": "#/compagnie"},
+    {"id": "actions", "texte": "Actions culturelles", "href": "#/actions-culturelles"},
+    {"id": "pro", "texte": "Espace Pro", "href": "#/espace-pro"},
+    {"id": "contact", "texte": "Contact", "href": "#/contact"},
+]
+
+
+def _norm(s):
+    import unicodedata
+    s = unicodedata.normalize("NFKD", (s or "").replace("’", "'").replace("\xa0", " "))
+    s = "".join(c for c in s if not unicodedata.combining(c)).lower()
+    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
+def projection(places):
+    """La projection de la carte : conique conforme de Lambert (parallèles 44° et 49°), recalée sur les communes connues."""
+    import math
+    f1, f2, f0 = map(math.radians, (44, 49, 46.5))
+    n = math.log(math.cos(f1) / math.cos(f2)) / math.log(math.tan(math.pi / 4 + f2 / 2) / math.tan(math.pi / 4 + f1 / 2))
+    F = math.cos(f1) * math.tan(math.pi / 4 + f1 / 2) ** n / n
+    rho = lambda f: F / math.tan(math.pi / 4 + f / 2) ** n
+
+    def lcc(lon, lat):
+        r, th = rho(math.radians(lat)), n * math.radians(lon - 3)
+        return r * math.sin(th), rho(f0) - r * math.cos(th)
+
+    pts = [(lcc(p["lon"], p["lat"]), p["xy"]) for p in places if p.get("xy") and p.get("lat") is not None]
+    # moindres carrés pour x = a·u + b·v + c et y = d·u + e·v + f
+    def solve(target):
+        M = [[0.0] * 3 for _ in range(3)]
+        V = [0.0] * 3
+        for (u, v), xy in pts:
+            row = (u, v, 1.0)
+            for i in range(3):
+                V[i] += row[i] * xy[target]
+                for j in range(3):
+                    M[i][j] += row[i] * row[j]
+        for i in range(3):                               # élimination de Gauss
+            piv = max(range(i, 3), key=lambda r: abs(M[r][i]))
+            M[i], M[piv], V[i], V[piv] = M[piv], M[i], V[piv], V[i]
+            for r in range(i + 1, 3):
+                k = M[r][i] / M[i][i]
+                for c in range(i, 3):
+                    M[r][c] -= k * M[i][c]
+                V[r] -= k * V[i]
+        x = [0.0] * 3
+        for i in (2, 1, 0):
+            x[i] = (V[i] - sum(M[i][c] * x[c] for c in range(i + 1, 3))) / M[i][i]
+        return x
+    cx, cy = solve(0), solve(1)
+    return lambda lon, lat: [round(cx[0] * u + cx[1] * v + cx[2], 1), round(cy[0] * u + cy[1] * v + cy[2], 1)] if (u := lcc(lon, lat)[0]) is not None and (v := lcc(lon, lat)[1]) is not None else None
 
 
 def build_data():
-    shows = json.loads((ROOT / "prototype" / "src" / "shows.json").read_text(encoding="utf-8"))
-    shows.sort(key=lambda s: proto.SHOW_ORDER.index(s["slug"]))
+    site = json.loads((ROOT / "data" / "site-crescite.json").read_text(encoding="utf-8"))
+    cass = json.loads((ROOT / "data" / "cassandres.json").read_text(encoding="utf-8"))
+    proto_shows = {s["slug"]: s for s in json.loads((ROOT / "prototype" / "src" / "shows.json").read_text(encoding="utf-8"))}
     rows = json.loads((ROOT / "data" / "representations-site-2016-2027.json").read_text(encoding="utf-8"))
-    perf = [r for r in rows if r["type"] in ("scolaire", "tout_public") and r["lat"] is not None]
-    today = date.today().isoformat()
-    season = sorted([r for r in perf if r["saison"] == "2026-2027" and r["date_fin"] >= today], key=lambda r: (r["date_debut"], r["id"]))
-    titles = {s["slug"]: s["titre"] for s in shows}
-
-    def date_row(r):
-        y, m, d = map(int, r["date_debut"].split("-"))
-        wd = date(y, m, d).weekday()
-        return {
-            "slug": r["spectacle_slug"], "titre": titles.get(r["spectacle_slug"], r["spectacle_slug"]),
-            "iso": r["date_debut"], "fin": r["date_fin"], "jour": d, "mois": MOISC[m - 1], "moisLong": MOIS[m - 1], "annee": y,
-            "joursem": JOURSC[wd], "joursemLong": JOURS[wd], "precision": r["precision"],
-            "label": r["intitule_original"].split("—")[0].strip() if r["precision"] != "month" else f"{MOIS[m - 1]} {y}, jour à préciser",
-            "commune": r["commune"], "dep": r["departement"], "lieu": (r["lieu"] or "").split(" : ")[0] or None,
-            "public": "Scolaire" if r["type"] == "scolaire" else "Tout public", "lien": (r["liens"] or [None])[0],
-        }
-
-    dates = [date_row(r) for r in season]
-    # la carte des tournées : le contour de la France, Rouen, et chaque commune déjà visitée (coordonnées projetées)
     mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
-    places = mp["places"]
-    pindex = {p["k"]: i for i, p in enumerate(places)}
-    key = lambda r: pindex.get(f'{r["commune"]}|{r["departement"]}')
-    for d, r in zip(dates, season):
-        k = key(r)
-        d["xy"] = places[k]["xy"] if k is not None else None
-    counts, by_show = {}, {}
-    for r in perf:
-        k = key(r)
-        if k is None or not places[k]["xy"] or r["date_debut"] >= today:
-            continue                    # les années passées seulement : la saison à venir a ses propres traits
-        counts[k] = counts.get(k, 0) + 1
-        by_show.setdefault(r["spectacle_slug"], {}).setdefault(k, 0)
-        by_show[r["spectacle_slug"]][k] += 1
-    order = sorted(counts)
-    lieux = [{"c": places[k]["c"], "dep": places[k]["dep"], "xy": places[k]["xy"], "n": counts[k]} for k in order]
-    li = {k: i for i, k in enumerate(order)}
-    carte = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"], "rouen": mp["rouen"],
-             "lieux": lieux, "parSpectacle": {slug: [[li[k], n] for k, n in sorted(v.items())] for slug, v in by_show.items()}}
+    today = date.today().isoformat()
+    proj = projection(mp["places"])
+
+    # ---- les lieux : chaque commune déjà visitée, projetée sur la carte ----
+    lieux, lindex = [], {}
+    byname = {(_norm(p["c"]), p["dep"]): p for p in mp["places"] if p.get("xy")}
+
+    def lieu(commune, dep, lat=None, lon=None):
+        p = byname.get((_norm(commune), dep))
+        xy = p["xy"] if p else (proj(lon, lat) if lat is not None else None)
+        if not xy:
+            return None
+        k = f"{p['c'] if p else commune}|{dep}"
+        if k not in lindex:
+            lindex[k] = len(lieux)
+            lieux.append({"c": p["c"] if p else commune, "dep": dep, "xy": xy})
+        return lindex[k]
+
+    def lieu_de_ligne(ligne, repli=None):
+        """La commune d'une ligne qui n'est pas dans la base : « …, Duclair (76) » ; sinon le lieu du groupe."""
+        for texte in (ligne, repli or ""):
+            for name, dep in reversed(re.findall(r"([^,—–():]+?)\s*\((\d{2}|\d[AB])\)", texte)):
+                words = re.split(r"\s+", re.sub(r"^.*(?:\b(?:de|du|à|au)\s+|\bd[’'])(?=[A-ZÉ])", "", name.strip()).strip())
+                for i in range(len(words)):                       # « Scène conventionnée de Lunéville » → « Lunéville »
+                    cand = " ".join(words[i:])
+                    if (_norm(cand), dep) in byname:
+                        return lieu(cand, dep)
+                    hit = next((k for k in COMMUNES_EN_PLUS if _norm(k.split("|")[0]) == _norm(cand) and k.endswith("|" + dep)), None)
+                    if hit:
+                        lat, lon = COMMUNES_EN_PLUS[hit]
+                        return lieu(hit.split("|")[0], dep, lat, lon)
+        return None
+
+    # ---- les saisons, telles que le site les publie ; chaque date reliée à la base (jour, commune) ----
+    base = {}
+    for r in rows:
+        base.setdefault((r["saison"], _norm(r["intitule_original"])), r)
+    slug_de = {}
+    for slug, sp in site["spectacles"].items():
+        slug_de[_norm(" ".join(sp["titreLignes"]))] = slug
+    saisons = {}
+    for saison, S in site["saisons"].items():
+        groupes = []
+        for g in S["spectacles"]:
+            slug = (g["lien"] or "").replace("#/spectacle/", "") or slug_de.get(_norm(g["titre"]))
+            if slug not in site["spectacles"]:
+                slug = next((v for k, v in slug_de.items() if _norm(g["titre"]).startswith(k[:12])), None)
+            dates = []
+            for dt in g["dates"]:
+                r = base.get((saison, _norm(dt["ligne"])))
+                l = lieu(r["commune"], r["departement"], r["lat"], r["lon"]) if r and r["lat"] is not None else lieu_de_ligne(dt["ligne"], g["sousTitre"])
+                lien = dt.get("lien") or next((x["lien"] for x in dt["details"] if x.get("lien")), None)
+                dates.append({"ligne": dt["ligne"], "details": dt["details"], "etat": dt.get("etat"), "lien": lien,
+                              "iso": r["date_debut"] if r else None, "fin": r["date_fin"] if r else None,
+                              "precision": r["precision"] if r else None, "l": l})
+            groupes.append({"titre": g["titre"], "sousTitre": g["sousTitre"], "creation": g["creation"], "slug": slug, "dates": dates})
+        saisons[saison] = {"titre": S["titre"], "spectacles": groupes}
+
+    # ---- les spectacles : le texte de leur page, leur univers (couleurs) et leur photo ----
+    menu_sp = next(m for m in site["menu"] if m["texte"] == "Spectacles")["sous"][1:]
+    titres_menu = dict(zip(site["spectacles"].keys(), menu_sp))
+    en_tournee = {d["lien"].replace("#/spectacle/", "") for d in site["accueil"]["diaporama"] if d.get("lien")}
+    sous_titres = {}
+    for saison in saisons.values():                         # le sous-titre le plus récent de chaque spectacle
+        for g in saison["spectacles"]:
+            if g["slug"] and g["slug"] not in sous_titres and g["sousTitre"]:
+                sous_titres[g["slug"]] = g["sousTitre"]
+    a_venir = []
+    for saison in (D_SAISON,):
+        for g in saisons[saison]["spectacles"]:
+            for dt in g["dates"]:
+                if dt["fin"] and dt["fin"] >= today:
+                    a_venir.append((g, dt))
+    a_venir.sort(key=lambda gd: (gd[1]["iso"], ORDRE.index(gd[0]["slug"]) if gd[0]["slug"] in ORDRE else 99))
+
+    def date_row(g, dt):
+        date_txt, _, lieu_txt = dt["ligne"].partition(" — ")
+        l = dt["l"]
+        return {"slug": g["slug"], "titre": titres_menu.get(g["slug"], g["titre"]), "ligne": dt["ligne"],
+                "ligneDate": date_txt.strip(), "ligneLieu": lieu_txt.strip(), "details": dt["details"], "lien": dt["lien"],
+                "iso": dt["iso"], "fin": dt["fin"], "precision": dt["precision"],
+                "commune": lieux[l]["c"] if l is not None else None, "dep": lieux[l]["dep"] if l is not None else None,
+                "xy": lieux[l]["xy"] if l is not None else None, "l": l}
+
+    dates = [date_row(g, dt) for g, dt in a_venir]
     out_shows = []
-    for s in shows:
-        c = s["univers"]["couleurs"]
-        nxt = next((d for d in dates if d["slug"] == s["slug"]), None)
-        out_shows.append({
-            "slug": s["slug"], "titre": s["titre"], "sousTitre": s["sous_titre"], "annee": s.get("annee"), "duree": s.get("duree"),
-            "accroche": s["accroche"], "texte": s["texte"], "distribution": s.get("distribution") or [], "equipe": s.get("equipe") or [],
-            "coproduction": s.get("copro"), "soutiens": s.get("soutiens"), "credit": s.get("credit"), "video": s.get("video"),
-            "passCulture": bool(s.get("pass_culture")), "cred76": s.get("cred76"), "noteScolaire": s.get("scolaire_note"),
-            "etablissement": s.get("etablissement"),
-            # une couleur par spectacle : vive sur fond sombre, assombrie pour du texte sur fond clair, et un fond profond
-            "couleur": c["scene"], "couleurTexteClair": for_light(c["scene"]), "fondSombre": c["fond"] if not s["univers"].get("clair") else "#1a1016",
-            "focale": s["univers"].get("focale", 50),
-            # l'univers complet, pour les maquettes qui le mettent en scène : palette, motif et texte de l'effet signature
-            "palette": c, "clair": bool(s["univers"].get("clair")), "motif": s["univers"]["motif"], "signature": s["univers"]["signature"],
-            "prochaine": nxt, "nbDates": sum(1 for d in dates if d["slug"] == s["slug"]),
-            "representations": dict(zip(("n", "quand"), DIFFUSION["parSpectacle"][s["slug"]])) if s["slug"] in DIFFUSION["parSpectacle"] else None,
-        })
+    for slug in ORDRE:
+        if slug == "cassandres":
+            sp, u = cass, UNIVERS_CASSANDRES
+            extra = {"statut": cass["statut"], "genre": cass["genre"], "cadre": cass["cadre"], "extraits": cass["extraits"],
+                     "tournee": cass["tournee"], "source": cass["source"], "sousTitre": cass["genre"],
+                     "avec": None, "mentions": [], "duree": None, "production": [], "credit": None, "medias": []}
+        else:
+            sp, u = site["spectacles"][slug], proto_shows[slug]["univers"]
+            extra = {"statut": None, "sousTitre": sous_titres.get(slug), "avec": sp["avec"], "mentions": sp["mentions"],
+                     "duree": sp["duree"], "production": sp["production"], "credit": sp["credit"], "medias": sp["medias"],
+                     "tournee": {"titre": sp["tournee"]["titre"] or "Actuellement en tournée", "texte": None}, "source": sp["url"]}
+        c = u["couleurs"]
+        mine = [d for d in dates if d["slug"] == slug]
+        out_shows.append(dict({
+            "slug": slug, "titre": titres_menu.get(slug, sp["titreLignes"][0]), "titreLignes": sp["titreLignes"],
+            "creation": sp["creation"], "annee": int(re.search(r"\d{4}", sp["creation"]).group()),
+            "fiche": sp["fiche"], "texte": sp["texte"], "enTournee": slug in en_tournee,
+            "prochaine": mine[0] if mine else None, "nbDates": len(mine),
+            # l'univers : une couleur vive sur fond sombre, assombrie pour du texte sur fond clair, et un fond profond
+            "couleur": c["scene"], "couleurTexteClair": for_light(c["scene"]), "fondSombre": c["fond"] if not u.get("clair") else "#1a1016",
+            "palette": c, "clair": bool(u.get("clair")), "motif": u["motif"], "focale": u.get("focale", 50),
+        }, **extra))
+
+    # ---- la carte : les communes, et les bras par saison, par spectacle, à venir ----
+    def compte(items):
+        n = {}
+        for l in items:
+            if l is not None:
+                n[l] = n.get(l, 0) + 1
+        return [[l, k] for l, k in sorted(n.items())]
+    par_saison = {s: compte(dt["l"] for g in S["spectacles"] for dt in g["dates"]) for s, S in saisons.items()}
+    par_spectacle = {}
+    for sl in ORDRE:
+        passe = [dt["l"] for S in saisons.values() for g in S["spectacles"] if g["slug"] == sl for dt in g["dates"]
+                 if not (dt["fin"] and dt["fin"] >= today)]
+        par_spectacle[sl] = {"passe": compte(passe), "aVenir": compte(d["l"] for d in dates if d["slug"] == sl)}
+    carte = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"],
+             "rouen": mp["rouen"], "lieux": lieux, "parSaison": par_saison, "parSpectacle": par_spectacle,
+             "aVenir": compte(d["l"] for d in dates)}
+
+    a = site["accueil"]
+    noms_saisons = next(m for m in site["menu"] if m["texte"].startswith("Saison"))["sous"]
     D = {
-        "company": {
-            "nom": "Compagnie Crescite", "ville": "Rouen", "depuis": 2012, "adresse": "72 boulevard d’Orléans, 76100 Rouen",
-            "email": "contact@crescite.fr", "siret": "749 941 761 00035", "licence": "L-R-24-002837",
-            "presentation": "Compagnie de théâtre implantée à Rouen, conventionnée par la Ville de Rouen. Elle joue autant dans les théâtres que dans les collèges et les lycées.",
-            "intention": "Des spectacles comme des tentacules : ils partent de Rouen et vont chercher leur public, en salle comme dans les classes.",
-            "miseEnScene": "Angelo Jossec",
-            "partenaires": ["Ville de Rouen", "DRAC Normandie", "Région Normandie", "Département de Seine-Maritime", "ODIA Normandie"],
+        "saison": D_SAISON, "aujourdhui": today,
+        "site": {
+            "nom": a["coordonnees"]["nom"], "titreSuffixe": "crescite", "accueil": "Accueil",
+            "menu": MENU, "portes": PORTES,
+            "diaporama": [{"slug": d["lien"].replace("#/spectacle/", "") if d.get("lien") else None, "surtitre": d["surtitre"],
+                           "titre": d["titre"], "bouton": d["bouton"], "credit": d["credit"], "href": d["lien"]} for d in a["diaporama"]],
+            "donateurs": a["donateurs"][0] if a.get("donateurs") else None,
+            "compagnie": {"titre": a["presentationTitre"], "paragraphes": a["presentation"], "datesTitre": a["datesTitre"], "dates": a["dates"]},
+            "actions": {"titre": site["actions"]["blocs"][0]["titre"], "blocs": [h for b in site["actions"]["blocs"][1:] for h in b.get("html", [])],
+                        "credit": site["actions"]["credit"]},
+            "pro": dict(site["espacePro"], titrePage="Espace Pro"),
+            "contact": site["contact"],
+            "coordonnees": a["coordonnees"], "ecrire": {"texte": a["ecrire"]["texte"], "href": "#/contact"},
+            "facebook": {"texte": a["facebook"]["texte"], "href": None} if a.get("facebook") else None,
+            "partenaires": a["pied"]["partenaires"],
+            "liensLegaux": [{"texte": "Mentions légales", "href": "#/mentions-legales"},
+                            {"texte": "Politique de confidentialité", "href": "#/politique-de-confidentialite"}],
+            "legal": {k: {"titre": site[k][0]["titre"], "blocs": [h for b in site[k][1:] for h in b.get("html", [])]}
+                      for k in ("mentions-legales", "politique-de-confidentialite")},
+            "libelles": {"enTournee": "EN TOURNÉE", "decouvrir": "découvrir", "actuellementEnTournee": "Actuellement en tournée",
+                         "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison"},
+            "saisons": [{"saison": s, "titre": saisons[s]["titre"], "menu": noms_saisons[i] if i < len(noms_saisons) else saisons[s]["titre"],
+                         "href": "#/agenda" if s == D_SAISON else f"#/agenda/{s}"} for i, s in enumerate(saisons)],
         },
-        "doors": [
-            {"key": "voir", "titre": "Je viens voir", "texte": "Une date près de chez moi, un lieu, une réservation.", "couleur": "#c2306f", "couleurVive": "#f07ab6"},
-            {"key": "programmer", "titre": "Je programme", "texte": "Le répertoire, les fiches techniques, le calendrier de tournée.", "couleur": "#8a6410", "couleurVive": "#e8bc5c"},
-            {"key": "etablissement", "titre": "Je fais venir dans mon établissement", "texte": "Les spectacles qui se déplacent, les ateliers, le Pass Culture.", "couleur": "#127a6a", "couleurVive": "#5fd0bd"},
-        ],
         "shows": out_shows,
         "dates": dates,
-        # dates, communes, départements : ce que le site publie depuis 2016 (pour la carte) ;
-        # representations…, parAnMin, pays : la diffusion réelle, d'après le dossier de la compagnie
-        "stats": {"dates": len(perf), "communes": len({(r["commune"], r["departement"]) for r in perf}),
-                  "departements": len({r["departement"] for r in perf if r["departement"] != "BE"}), "heuresEAC": 260,
-                  "datesSaison": len(dates),
-                  "representations": DIFFUSION["representations"], "representationsTexte": DIFFUSION["texte"],
-                  "representationsCourt": DIFFUSION["court"], "depuis": DIFFUSION["depuis"],
-                  "parAnMin": DIFFUSION["parAnMin"], "parAnDepuis": DIFFUSION["parAnDepuis"],
-                  "pays": len(DIFFUSION["pays"]), "paysListe": DIFFUSION["pays"], "heuresEACAn": DIFFUSION["heuresEACAn"],
-                  "source": DIFFUSION["source"]},
-        "saison": "2026-2027",
+        "saisons": saisons,
         "logo": logo_variants(),
         "arms": arms_data(),
         "carte": carte,
     }
-    return D, photos(shows)
+    return D, photos(out_shows)
+
+
+D_SAISON = "2026-2027"
+
+
+DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
+
+
+OUTILS = ("carte.js", "intro.js")
+
+
+def avec_outils(name, src):
+    """Ajoute, juste après les données D, les outils communs : la carte des tournées (carte.js) et l'ouverture
+    sur le logo (intro.js)."""
+    if DATA_LIGNE not in src:
+        raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
+    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS)
+    return src.replace(DATA_LIGNE, DATA_LIGNE + js, 1)
 
 
 def assemble(name, D, photo_urls):
-    src = (SRC / f"{name}.html").read_text(encoding="utf-8")
+    src = avec_outils(name, (SRC / f"{name}.html").read_text(encoding="utf-8"))
     data = dict(D, photos=photo_urls)
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     if "/*__DATA__*/null" not in src:
@@ -289,7 +455,7 @@ def build_planche(D, photo_urls, names, web=False, dest=None):
     if web:
         data = {"web": True, "pages": names}
     else:
-        data = {"D": dict(D, photos=photo_urls), "sources": {n: (SRC / f"{n}.html").read_text(encoding="utf-8") for n in names}}
+        data = {"D": dict(D, photos=photo_urls), "sources": {n: avec_outils(n, (SRC / f"{n}.html").read_text(encoding="utf-8")) for n in names}}
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace("/*__PLANCHE__*/null", payload)
     if web:

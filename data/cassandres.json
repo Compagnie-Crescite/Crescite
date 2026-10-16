@@ -1,0 +1,23 @@
+{
+ "_note": "Cassandres, création 2027 : textes relevés tels quels sur la page du projet (source) ; « création 2027 » selon la compagnie. Le spectacle n'a pas encore de page sur crescite.fr.",
+ "source": "https://adrienvada.fr/spectacles/cassandres/",
+ "slug": "cassandres",
+ "titre": "Cassandres",
+ "titreLignes": ["Cassandres"],
+ "creation": "création 2027",
+ "statut": "En création",
+ "genre": "Fiction d’anticipation",
+ "fiche": [{"libelle": null, "valeur": "Angelo Jossec"}],
+ "texte": [
+  "Sous couvert d’une enquête policière, Cassandre(s) imagine le quotidien de la génération 2000 arrivée au terme de son espérance de vie : la forme est au service du divertissement quand le fond est l’objet de la diversion. Pour que l’anticipation ne soit pas reçue comme de la science-fiction, le spectacle s’ouvre sur une chronologie de notre développement agro-industriel, de 1850 à 2077 — un générique qui fait basculer la fiction du côté du probable."
+ ],
+ "cadre": "Grand-Paris · 27 millions d’habitants · Espérance de vie : 51,2 ans",
+ "extraits": [
+  {"citation": "« Il fait chaud. Mais on s’en accommode avec cette docilité morne qu’on observe souvent chez les animaux d’élevage. »", "source": "Narrateur, partie 2 — Paris, août 2077, trente-huit degrés"},
+  {"citation": "« Tout ce qui est dit ici n’est pas du domaine de la fiction. »", "source": "Premier carton, partie 1"},
+  {"citation": "« Les “progrès agricoles” du XXᵉ siècle n’auront consisté qu’à doubler les rendements des cultures pour en bazarder le tiers. »", "source": "Rémi, partie 1"},
+  {"citation": "« La fin ou la faim ? » — « Les deux. »", "source": "Charline et Rémi, prologue"},
+  {"citation": "« Dans les abattoirs, ils mettent de la musique douce pour attendrir les chairs. »", "source": "Lauren, prologue"}
+ ],
+ "tournee": {"titre": "Spectacle en création", "texte": "Les dates de tournée seront annoncées ici."}
+}
