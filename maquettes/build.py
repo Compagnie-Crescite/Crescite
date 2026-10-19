@@ -345,7 +345,8 @@ def build_data():
             "partenaires": a["pied"]["partenaires"],
             "liensLegaux": [{"texte": "Mentions légales", "href": "#/mentions-legales"},
                             {"texte": "Politique de confidentialité", "href": "#/politique-de-confidentialite"}],
-            "legal": {k: {"titre": site[k][0]["titre"], "blocs": [h for b in site[k][1:] for h in b.get("html", [])]}
+            # les mentions légales d'origine, sans le bloc de l'agence qui a conçu l'ancien site (comme son crédit en pied de page)
+            "legal": {k: {"titre": site[k][0]["titre"], "blocs": [h for b in site[k][1:] for h in b.get("html", []) if "Conception et réalisation" not in h]}
                       for k in ("mentions-legales", "politique-de-confidentialite")},
             "libelles": {"enTournee": "EN TOURNÉE", "decouvrir": "découvrir", "actuellementEnTournee": "Actuellement en tournée",
                          "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison"},

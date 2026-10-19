@@ -151,7 +151,7 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
 .seasons ul{columns:4;column-gap:var(--g)}
 .seasons li{padding:.3rem 0;break-inside:avoid}
 .seasons a{text-decoration:none}
-.seasons a[aria-current="page"]{color:var(--mag);font-weight:520}
+.seasons .cur{color:var(--mag);font-weight:520}
 
 /* spectacles */
 .rep{margin-top:var(--s4);border-top:1px solid var(--ink)}
@@ -360,20 +360,14 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
   const loin = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6;
   const etiquette = x => `${CARTE.nom(x)}${x.dates && x.dates.length ? ' : ' + x.dates.map(d => d.ligne).join(' ; ') : ''}`;
   function plate({ lieux = [], passe = [], semis = [], num = new Map(), label = '' } = {}) {
-    const id = 'pl' + (++nPl);
-    const [bx, by, bw, bh] = CARTE.viewBox.split(/\s+/).map(Number), e = Math.max(bw, bh) / 800;
-    const I = [bx - 6 * e, by - 6 * e, bw + 12 * e, bh + 12 * e], O = [I[0] - 7 * e, I[1] - 7 * e, I[2] + 14 * e, I[3] + 14 * e];
-    const vb = [O[0] - 2 * e, O[1] - 2 * e, O[2] + 4 * e, O[3] + 4 * e].map(v => +v.toFixed(1)).join(' ');
-    const rect = (r, c) => `<rect${c ? ` class="${c}"` : ''} x="${r[0].toFixed(1)}" y="${r[1].toFixed(1)}" width="${r[2].toFixed(1)}" height="${r[3].toFixed(1)}"/>`;
-    let tk = '';
-    const pas = 25 * e, f = v => v.toFixed(1);
-    for (let x = I[0] + pas; x < I[0] + I[2] - pas / 2; x += pas) tk += `M${f(x)} ${f(O[1])}V${f(I[1])}M${f(x)} ${f(I[1] + I[3])}V${f(O[1] + O[3])}`;
-    for (let y = I[1] + pas; y < I[1] + I[3] - pas / 2; y += pas) tk += `M${f(O[0])} ${f(y)}H${f(I[0])}M${f(I[0] + I[2])} ${f(y)}H${f(O[0] + O[2])}`;
-    PL.set(id, { items: lieux.map(x => ({ l: x.l, num: num.get(x.l) ?? '', x: x.xy[0], y: x.xy[1] })), inner: [I[0] + 3 * e, I[1] + 3 * e, I[0] + I[2] - 3 * e, I[1] + I[3] - 3 * e] });
+    const id = 'pl' + (++nPl), e = 1, f = v => v.toFixed(1);
+    const tous = [...lieux, ...passe];
+    PL.set(id, { items: lieux.map(x => ({ l: x.l, num: num.get(x.l) ?? '', x: x.xy[0], y: x.xy[1] })),
+      france: CARTE.viewBox.split(/\s+/).map(Number), serre: tous.length ? CARTE.cadre(tous, { marge: 40, min: 260 }).split(/\s+/).map(Number) : null });
     const trait = x => CARTE.trait(x.xy, { courbe: .2 });
-    return `<svg class="pl" id="${id}" viewBox="${vb}" ${lieux.length ? 'role="group"' : 'role="img"'} aria-label="${esc(label)}">
-      <defs><clipPath id="${id}-c">${rect(I)}</clipPath></defs>
-      ${rect(O, 'pl-f1')}${rect(I, 'pl-f2')}<path class="pl-tk" d="${tk}"/>
+    return `<svg class="pl" id="${id}" viewBox="${CARTE.viewBox}" ${lieux.length ? 'role="group"' : 'role="img"'} aria-label="${esc(label)}">
+      <defs><clipPath id="${id}-c"><rect class="pl-clip"/></clipPath></defs>
+      <rect class="pl-f1"/><rect class="pl-f2"/><path class="pl-tk"/>
       <g clip-path="url(#${id}-c)">
         <path class="pl-voisin" d="${CARTE.fond.belgique}"/><path class="pl-voisin" d="${CARTE.fond.luxembourg}"/><path class="pl-pays" d="${CARTE.fond.pays}"/>
         ${passe.filter(loin).map(x => `<path class="pl-passe" d="${trait(x)}"/>`).join('')}
@@ -393,11 +387,23 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
     if (!P) return;
     const W = svg.getBoundingClientRect().width;
     if (!W) return;
-    const u = svg.viewBox.baseVal.width / W;
-    if (P.u && Math.abs(P.u - u) < u * .01) return;
-    P.u = u;
+    const cle = W < 560 && P.serre ? 'serre' : 'france';
+    if (P.W === W && P.cle === cle) return;
+    P.W = W; P.cle = cle;
+    // le cadre : double filet gradué, à 6 px de la carte ; u = unités de la carte par pixel
+    const [bx, by, bw, bh] = P[cle], u = bw / (W - 28), f = v => v.toFixed(1);
+    const I = [bx - 6 * u, by - 6 * u, bw + 12 * u, bh + 12 * u], O = [I[0] - 6 * u, I[1] - 6 * u, I[2] + 12 * u, I[3] + 12 * u];
+    svg.setAttribute('viewBox', [O[0] - 2 * u, O[1] - 2 * u, O[2] + 4 * u, O[3] + 4 * u].map(f).join(' '));
+    const pose = (sel, r) => { const n = svg.querySelector(sel); ['x', 'y', 'width', 'height'].forEach((k, i) => n.setAttribute(k, f(r[i]))); };
+    pose('.pl-f1', O); pose('.pl-f2', I); pose('.pl-clip', I);
+    let tk = '';
+    const pas = 18 * u;
+    for (let x = I[0] + pas; x < I[0] + I[2] - pas / 2; x += pas) tk += `M${f(x)} ${f(O[1])}V${f(I[1])}M${f(x)} ${f(I[1] + I[3])}V${f(O[1] + O[3])}`;
+    for (let y = I[1] + pas; y < I[1] + I[3] - pas / 2; y += pas) tk += `M${f(O[0])} ${f(y)}H${f(I[0])}M${f(I[0] + I[2])} ${f(y)}H${f(O[0] + O[2])}`;
+    svg.querySelector('.pl-tk').setAttribute('d', tk);
+    P.inner = [I[0] + 3 * u, I[1] + 3 * u, I[0] + I[2] - 3 * u, I[1] + I[3] - 3 * u];
     svg.style.setProperty('--u', u.toFixed(4));
-    const fs = (W < 560 ? 11.5 : 12.5) * u, H = fs * .74, gap = 2.4 * u, pr = 2.9 * u, rr = 4.4 * u, f = v => v.toFixed(1);
+    const fs = (W < 560 ? 11.5 : 12.5) * u, H = fs * .74, gap = 2.4 * u, pr = 2.9 * u, rr = 4.4 * u;
     svg.querySelectorAll('.pl-pt').forEach(c => c.setAttribute('r', f(pr)));
     svg.querySelectorAll('.pl-hit').forEach(c => c.setAttribute('r', f(11 * u)));
     svg.querySelectorAll('.pl-sm').forEach(c => c.setAttribute('r', (1.25 * u).toFixed(2)));
@@ -558,7 +564,7 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
   }
 
   const chip = () => `<p class="flt" hidden><button type="button" class="flt-b" aria-pressed="true"><span class="flt-t"></span>${ICON.x}</button></p>`;
-  const saisonsNav = cur => `<nav class="seasons" aria-label="${esc(S.libelles.saison)}"><ul>${S.saisons.filter((x, i) => cur || i > 0).map(x => `<li><a href="${esc(x.href)}"${x.saison === cur ? ' aria-current="page"' : ''}>${esc(x.titre)}</a></li>`).join('')}</ul></nav>`;
+  const saisonsNav = cur => `<nav class="seasons" aria-label="${esc(S.libelles.saison)}"><ul>${S.saisons.filter((x, i) => cur || i > 0).map(x => `<li>${x.saison === cur ? `<span class="cur">${esc(x.titre)}</span>` : `<a href="${esc(x.href)}">${esc(x.titre)}</a>`}</li>`).join('')}</ul></nav>`;
 
   function agenda() {
     const num = numeroter(D.dates), G = [];
@@ -732,6 +738,7 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
   const VUES = { '': accueil, spectacles, agenda, compagnie, 'actions-culturelles': actions, 'espace-pro': pro, contact,
     'mentions-legales': () => legal('mentions-legales'), 'politique-de-confidentialite': () => legal('politique-de-confidentialite') };
   function route() {
+    PL.clear();
     let path = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, '');
     try { path = decodeURIComponent(path); } catch (err) { path = ''; }
     const [a, b, c] = path.split('/');
@@ -741,7 +748,6 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
     else if (a === 'agenda' && (!b || b === D.saison)) v = agenda();
     else if (!b && Object.prototype.hasOwnProperty.call(VUES, a)) v = VUES[a]();
     else { v = accueil(); try { history.replaceState(null, '', '#/'); } catch (err) { /* adresse laissée telle quelle */ } }
-    PL.clear();
     main.innerHTML = v.html;
     document.title = `${v.titre} - ${S.titreSuffixe}`;
     liens.forEach(x => { if (x.dataset.id === v.onglet) x.setAttribute('aria-current', 'page'); else x.removeAttribute('aria-current'); });

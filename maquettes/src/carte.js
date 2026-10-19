@@ -4,6 +4,7 @@
 
    CARTE.viewBox, CARTE.rouen ([x, y]), CARTE.fond.{pays, belgique, luxembourg} : chemins SVG (attribut d)
    CARTE.lieux                          toutes les communes [{c, dep, xy}] ; « l » est l'indice dans ce tableau
+   (aVenir, saison et spectacle ramènent l'outre-mer dans un encart en bas à gauche : x.encart, x.xyReel ; CARTE.ENCART)
    CARTE.aVenir()                       les communes des dates à venir : [{l, c, dep, xy, n, dates: [D.dates…]}]
    CARTE.saison('2019-2020')            les communes d'une saison : [{l, c, dep, xy, n, dates: [lignes de D.saisons]}]
    CARTE.spectacle(slug)                {aVenir: [...], passe: [...]} : les communes d'un spectacle, à venir et passées
@@ -21,8 +22,12 @@ const CARTE = (() => {
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const mouvement = () => !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
+  // une commune hors du cadre de la France (l'outre-mer : Saint-Denis de La Réunion) est ramenée dans un encart,
+  // en bas à gauche : x.encart vaut alors true, et x.xyReel garde sa position projetée
+  const VB = K.viewBox.split(/\s+/).map(Number), ENCART = [VB[0] + 66, VB[1] + VB[3] - 74];
+  const dansCadre = ([x, y]) => x >= VB[0] && x <= VB[0] + VB[2] && y >= VB[1] && y <= VB[1] + VB[3];
   function regroupe(paires, datesDe) {
-    return paires.map(([l, n]) => ({ l, ...K.lieux[l], n, dates: datesDe(l) }))
+    return paires.map(([l, n]) => { const p = K.lieux[l], hors = !dansCadre(p.xy); return { l, ...p, xy: hors ? ENCART : p.xy, xyReel: p.xy, encart: hors, n, dates: datesDe(l) }; })
       .sort((a, b) => Math.hypot(a.xy[0] - R[0], a.xy[1] - R[1]) - Math.hypot(b.xy[0] - R[0], b.xy[1] - R[1]));
   }
   const aVenir = () => regroupe(K.aVenir, l => D.dates.filter(d => d.l === l));
@@ -111,6 +116,7 @@ const CARTE = (() => {
     return `<svg class="carte ${esc(classe)}" viewBox="${box}" ${interactif ? `aria-label="${esc(titre)}"` : `role="img" aria-label="${esc(titre)}"`} data-forme="${forme}">
       <defs><clipPath id="${id}"><circle cx="${R[0]}" cy="${R[1]}" r="${anime ? 0 : rayon}">${anime ? `<animate attributeName="r" from="0" to="${rayon}" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>` : ''}</circle></clipPath></defs>
       <path class="carte-voisin" d="${K.belgique}"/><path class="carte-voisin" d="${K.luxembourg}"/><path class="carte-pays" d="${K.contour}"/>
+      ${[...lieux, ...passe].some(x => x.encart) ? `<circle class="carte-encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="${(24 * echelle).toFixed(1)}" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="3 4"/>` : ''}
       <g clip-path="url(#${id})">
         ${passe.map(x => `<path class="carte-bras-passe" ${forme === 'bras' ? tracer(x, 1.6, 0.4) : `d="${trait(x.xy, { courbe })}"`}/>`).join('')}
         ${passe.map(x => `<circle class="carte-bout-passe" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(1.8 * echelle).toFixed(2)}"/>`).join('')}
@@ -134,6 +140,6 @@ const CARTE = (() => {
       g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choix(l); } });
     });
   }
-  return { K, viewBox: K.viewBox, rouen: R, fond: { pays: K.contour, belgique: K.belgique, luxembourg: K.luxembourg }, lieux: K.lieux,
+  return { K, viewBox: K.viewBox, rouen: R, ENCART, fond: { pays: K.contour, belgique: K.belgique, luxembourg: K.luxembourg }, lieux: K.lieux,
     aVenir, saison, spectacle, nom, bras, trait, bout, longueur, cadre, svg, lier, mouvement };
 })();

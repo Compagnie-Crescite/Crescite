@@ -71,6 +71,8 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
 .carte .reseau path { fill: color-mix(in srgb, var(--encre) 16%, transparent); }
 .carte .reseau .point { r: calc(var(--k) * 1.9px); fill: color-mix(in srgb, var(--encre) 40%, transparent); }
 .carte .reseau .cible { r: calc(var(--k) * 6px); fill: transparent; }
+.carte-sp .reseau path { fill: color-mix(in srgb, var(--encre) 30%, transparent); }
+.carte-sp .reseau .point { fill: color-mix(in srgb, var(--encre) 55%, transparent); }
 .carte .reseau .actif .point { r: calc(var(--k) * 3.4px); fill: var(--encre); }
 .carte .bras { fill: var(--c); transition: opacity .25s; }
 .carte .bras.actif { stroke: var(--c); stroke-width: calc(var(--k) * 1.3px); stroke-linejoin: round; }
@@ -90,7 +92,7 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
 .carte .rouen-g { pointer-events: none; }
 .carte .rouen { r: calc(var(--k) * 5.5px); fill: var(--encre); }
 .carte .rouen-nom { font: italic 600 calc(var(--k) * 15px) var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--terre); stroke-width: calc(var(--k) * 3.5px); stroke-linejoin: round; }
-.carte .onde { r: calc(var(--k) * 5px); fill: none; stroke: var(--c); stroke-width: calc(var(--k) * 1.6px); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.carte .onde { r: calc(var(--k) * 5px); fill: none; stroke: var(--c); stroke-width: 1.6; vector-effect: non-scaling-stroke; opacity: 0; transform-box: fill-box; transform-origin: center; }
 .carte.pousse .onde { animation: onde 1.6s cubic-bezier(.2, .6, .3, 1); }
 .carte.attend .onde { animation: onde 2.8s cubic-bezier(.2, .6, .3, 1) infinite; }
 @keyframes onde { from { transform: scale(1); opacity: .9; } to { transform: scale(10); opacity: 0; } }
@@ -189,8 +191,10 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
 .cartes-sp .statut { position: absolute; left: 12px; top: 12px; }
 
 /* l'agenda : la liste, et la carte de la saison à côté */
-.agenda { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
-.agenda-carte { position: sticky; top: 84px; }
+.agenda, .tournee-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); grid-template-areas: "titre carte" "liste carte"; grid-template-rows: auto 1fr; column-gap: clamp(28px, 5vw, 72px); align-items: start; }
+.agenda > .page-titre, .tournee-titre { grid-area: titre; }
+.agenda > .liste, .tournee-g > .liste { grid-area: liste; }
+.agenda-carte, .tournee-g > .carte { grid-area: carte; position: sticky; top: 84px; padding-top: clamp(16px, 2.5vw, 36px); }
 .agenda-carte svg { max-height: calc(100svh - 110px); }
 .mois { margin: 38px 0 4px; font: italic 500 1.55rem/1.2 var(--serif); }
 .mois::first-letter { text-transform: uppercase; }
@@ -310,12 +314,11 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
 .extraits p { margin: 0; font: italic 400 1.3rem/1.35 var(--serif); }
 .extraits footer { margin-top: 6px; font-size: .85rem; color: var(--gris); }
 .tournee { padding: clamp(40px, 6vw, 80px) 0; border-top: 1px solid var(--filet); }
-.tournee-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
-.tournee-g > .carte { position: sticky; top: 84px; }
 .tournee-g > .carte svg { max-height: calc(100svh - 110px); }
 .tournee .date { grid-template-columns: 6.8rem minmax(0, 1fr); }
-.tournee p { margin: 0; font-size: 1.1rem; }
+.tournee-titre p { margin: 0 0 20px; font-size: 1.1rem; }
 .carte-sp.seule { max-width: 860px; margin: 0 auto; }
+.carte-sp.seule svg { border-radius: 18px; background: color-mix(in srgb, var(--papier-2) 70%, var(--papier)); }
 .suivant { display: block; padding: clamp(36px, 5vw, 64px) 0; background: var(--papier-2); text-decoration: none; }
 .suivant .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .suivant b { font: italic 400 clamp(1.8rem, 1.3rem + 2.2vw, 3.2rem)/1.05 var(--serif); }
@@ -340,8 +343,9 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
 .intro.ouverture-06 .intro-indice { color: #f6f2eb; }
 
 @media (max-width: 1000px) {
-  .agenda, .tournee-g, .corps .wrap, .tete .wrap, .actions, .contact { grid-template-columns: minmax(0, 1fr); }
-  .agenda-carte, .tournee-g > .carte { position: static; order: -1; }
+  .corps .wrap, .tete .wrap, .actions, .contact { grid-template-columns: minmax(0, 1fr); }
+  .agenda, .tournee-g { grid-template-columns: minmax(0, 1fr); grid-template-areas: "titre" "carte" "liste"; grid-template-rows: none; }
+  .agenda-carte, .tournee-g > .carte { position: static; padding: 0 0 22px; }
   .agenda-carte svg, .tournee-g > .carte svg { max-height: none; }
   .photo-cote { position: static; }
   .cartes-sp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -413,7 +417,8 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
   const R = CARTE.rouen, VB = CARTE.viewBox.split(/\s+/).map(Number);
   const ENCART = [66, 706];   // l'outre-mer, hors du cadre : un encart au large, en bas à gauche
   const hors = xy => xy[0] < VB[0] || xy[1] < VB[1] || xy[0] > VB[0] + VB[2] || xy[1] > VB[1] + VB[3];
-  const ou = x => hors(x.xy) ? ENCART : x.xy;
+  const dehors = x => x.encart || hors(x.xy);   // CARTE ramène déjà l'outre-mer dans l'encart (x.encart)
+  const ou = x => dehors(x) ? ENCART : x.xy;
   const loin = x => { const p = ou(x); return Math.hypot(p[0] - R[0], p[1] - R[1]); };
   const largeur = n => Math.min(8, 2.4 + Math.sqrt(n) * 1.25);
   // la forme d'un bras (la courbe de CARTE.bras) qui pousse : la courbe de Rouen jusqu'à g (0 → 1), effilée jusqu'à
@@ -453,12 +458,12 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
   const RO = window.ResizeObserver ? new ResizeObserver(es => es.forEach(e => { echelle(e.target); const b = $('.bulle', e.target); if (b && !b.classList.contains('epinglee')) b.hidden = true; })) : null;
   let nCarte = 0;
   // lieux : les communes en avant (en couleur, nommées, au clavier) ; passe : le réseau en retrait, en gris
-  function carte({ lieux = [], passe = [], couleur = 'var(--magenta)', titre = '', classe = '', bulle = false, pousse = true } = {}) {
+  function carte({ lieux = [], passe = [], couleur = 'var(--magenta)', titre = '', classe = '', bulle = false, pousse = true, cadre = CARTE.viewBox } = {}) {
     const id = 'carte' + (++nCarte), vide = pousse && mouvement() && lieux.length > 0;
-    REG.set(id, { lieux, passe, bulle, vide, par: new Map() });
-    const encart = [...lieux, ...passe].some(x => hors(x.xy));
+    REG.set(id, { lieux, passe, bulle, vide, par: new Map(), box: cadre.split(/\s+/).map(Number) });
+    const encart = [...lieux, ...passe].some(dehors);
     return `<figure class="carte ${classe}" id="${id}" style="--c:${couleur}">
-      <svg viewBox="${CARTE.viewBox}" ${lieux.length ? 'role="group"' : 'role="img"'} aria-label="${esc(titre)}">
+      <svg viewBox="${cadre}" ${lieux.length ? 'role="group"' : 'role="img"'} aria-label="${esc(titre)}">
         <defs><clipPath id="${id}-clip"><circle class="clip" cx="${R[0]}" cy="${R[1]}" r="${vide && passe.length ? 0 : 1200}"/></clipPath></defs>
         <use href="#fr-be" class="voisin"/><use href="#fr-lu" class="voisin"/><use href="#fr-pays" class="pays"/>
         ${encart ? `<circle class="encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="24"/>` : ''}
@@ -469,12 +474,12 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
   // l'échelle de l'écran, pour garder les noms, les points et les traits à la même taille en pixels
   function echelle(fig) {
     const svg = $('svg', fig), m = svg && svg.getScreenCTM();
-    const k = m && m.a > 0 ? 1 / m.a : VB[2] / ((svg && svg.clientWidth) || VB[2]);
+    const k = m && m.a > 0 ? 1 / m.a : (svg ? svg.viewBox.baseVal.width : VB[2]) / ((svg && svg.clientWidth) || VB[2]);
     if (svg) svg.style.setProperty('--k', k.toFixed(3));
     return k;
   }
   function activer(fig) {
-    const reg = REG.get(fig.id), k = echelle(fig), lw = Math.max(1, k * .75);
+    const reg = REG.get(fig.id), k = echelle(fig), lw = k * .9;
     const rn = $('.rouen-nom', fig);
     rn.setAttribute('x', (R[0] + 9 * k).toFixed(1)); rn.setAttribute('y', (R[1] - 8 * k).toFixed(1));
     $('.reseau', fig).innerHTML = reg.passe.map(x => `<path d="${forme(ou(x), largeur(x.n) * .5 * lw, .3)}"/>`).join('') +
@@ -484,10 +489,10 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
     if (RO) RO.observe(fig);
   }
   // les noms des communes : les plus lointaines d'abord, à droite du point ou à gauche, sans se chevaucher
-  function noms(tri, k, a) {
+  function noms(tri, k, a, [bx, by, bw, bh] = VB) {
     const fs = 12.5 * k, h = fs * 1.2, ecart = 7 * k;
     const boites = [[R[0] + 8 * k, R[1] - 22 * k, 46 * k, 17 * k]];
-    const libre = b => b[0] > 4 && b[0] + b[2] < VB[2] - 4 && b[1] > 4 && b[1] + b[3] < VB[3] - 4 &&
+    const libre = b => b[0] > bx + 4 * k && b[0] + b[2] < bx + bw - 4 * k && b[1] > by + 4 * k && b[1] + b[3] < by + bh - 4 * k &&
       boites.every(c => b[0] >= c[0] + c[2] || c[0] >= b[0] + b[2] || b[1] >= c[1] + c[3] || c[1] >= b[1] + b[3]);
     return tri.map(x => {
       const [px, py] = ou(x), w = x.c.length * fs * .47;
@@ -500,7 +505,7 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
   }
   // les bras en avant : vides s'ils doivent pousser, sinon posés
   function garnir(fig, lieux, { vide = false } = {}) {
-    const reg = REG.get(fig.id), k = echelle(fig), lw = Math.max(1, k * .75), a = vide ? '' : ' arrive';
+    const reg = REG.get(fig.id), k = echelle(fig), lw = k * .9, a = vide ? '' : ' arrive';
     reg.lieux = lieux;
     reg.par = new Map(reg.passe.map(x => [x.l, x]));
     lieux.forEach(x => reg.par.set(x.l, x));
@@ -509,7 +514,7 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
     g.innerHTML = tri.map(x => { const p = ou(x), w = largeur(x.n) * lw; return `<path class="bras" data-l="${x.l}" data-x="${p[0]}" data-y="${p[1]}" data-w="${w.toFixed(2)}" d="${vide ? '' : forme(p, w)}"/>`; }).join('')
       + tri.filter(x => loin(x) > 16).map(x => `<path class="bout${a}" data-l="${x.l}" pathLength="1" d="${CARTE.bout(ou(x), { r: 4.4 * lw, tours: 1.1 })}"/>`).join('')
       + tri.map(x => { const [px, py] = ou(x); return `<g class="carte-lieu${a}" data-l="${x.l}" tabindex="0" role="button" aria-label="${esc(etiquette(x))}"><circle class="cible" cx="${px}" cy="${py}"/><circle class="point" cx="${px}" cy="${py}"/></g>`; }).join('')
-      + noms(tri, k, a);
+      + noms(tri, k, a, reg.box);
     CARTE.lier(g, { survol: l => survoler(fig, l), choix: l => choisir(fig, l) });
   }
   // les bras poussent depuis Rouen, chacun à son rythme ; le réseau gris s'ouvre en cercle autour de Rouen
@@ -602,7 +607,7 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
   const filtreHTML = () => `<div class="filtre" hidden><span></span><button type="button" aria-label="Fermer">${croix}</button></div>`;
   // une petite carte de saison, pour l'agenda : ses bras à l'encre, en magenta au survol
   function mini(s) {
-    const lieux = CARTE.saison(s.saison), encart = lieux.some(x => hors(x.xy));
+    const lieux = CARTE.saison(s.saison), encart = lieux.some(dehors);
     return `<li class="mini"><a href="${s.href}"><svg viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr-pays" class="pays"/>
       ${encart ? `<circle class="encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="24"/>` : ''}${lieux.map(x => `<path class="bras" d="${forme(ou(x), largeur(x.n) * 2.3, 1.2)}"/>`).join('')}
       <circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="10"/></svg><span>${esc(s.titre)}</span></a></li>`;
@@ -681,8 +686,8 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
     const groupes = [];
     D.dates.forEach(d => { const m = coupe(d.ligneDate)[1], g = groupes[groupes.length - 1]; if (g && g.m === m) g.ds.push(d); else groupes.push({ m, ds: [d] }); });
     main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">${esc(SAISON.titre)}</h1>${trait()}</div>
       <div class="wrap agenda">
+        <div class="page-titre"><h1 tabindex="-1">${esc(SAISON.titre)}</h1>${trait()}</div>
         <div class="liste">${filtreHTML()}${groupes.map(g => `<section class="groupe"><h2 class="mois">${esc(g.m)}</h2><ul class="dates">${g.ds.map(d => ligneDate(d)).join('')}</ul></section>`).join('')}</div>
         <div class="agenda-carte">${carte({ lieux: CARTE.aVenir(), titre: SAISON.titre, classe: 'carte-agenda', bulle: true })}</div>
       </div>
@@ -695,9 +700,9 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
   function saison(id) {
     const data = D.saisons[id], courante = id === SAISON.saison;
     main.innerHTML = `
-      <div class="wrap page-titre"><p class="fil"><a href="#/agenda">${esc(onglet('agenda'))}</a></p><h1 tabindex="-1">${esc(data.titre)}</h1>${trait()}
-        <div class="ruban">${S.saisons.map(x => `<a href="${x.href}" aria-label="${esc(x.titre)}"${x.saison === id ? ' class="courante" aria-current="page"' : ''}>${esc(x.saison)}</a>`).join('')}</div></div>
       <div class="wrap agenda">
+        <div class="page-titre"><p class="fil"><a href="#/agenda">${esc(onglet('agenda'))}</a></p><h1 tabindex="-1">${esc(data.titre)}</h1>${trait()}
+          <div class="ruban">${S.saisons.map(x => `<a href="${x.href}" aria-label="${esc(x.titre)}"${x.saison === id ? ' class="courante" aria-current="page"' : ''}>${esc(x.saison)}</a>`).join('')}</div></div>
         <div class="liste">${filtreHTML()}${data.spectacles.map(g => `<section class="groupe sp-saison"${g.slug && bySlug[g.slug] ? ` style="--c:${bySlug[g.slug].couleurTexteClair}"` : ''}>
           <h2>${g.slug && bySlug[g.slug] ? `<a href="#/spectacle/${g.slug}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
           ${g.sousTitre ? `<p class="st">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="cr">${esc(g.creation)}</p>` : ''}
@@ -797,11 +802,11 @@ main:has(> .suivant:last-child) { padding-bottom: 0; }
       ...s.mentions.map(m => `<p class="mention">${m}</p>`),
       ...s.production.map(p => `<p class="prod">${p}</p>`)].join('');
     let tournee = '';
-    if (s.statut) tournee = `<section class="tournee"><div class="wrap tournee-g"><div><h2>${esc(s.tournee.titre)}</h2><p>${esc(s.tournee.texte)}</p></div>
+    if (s.statut) tournee = `<section class="tournee"><div class="wrap tournee-g"><div class="tournee-titre"><h2>${esc(s.tournee.titre)}</h2><p>${esc(s.tournee.texte)}</p></div>
       ${carte({ couleur: s.couleurTexteClair, titre: s.tournee.titre, classe: 'carte-sp attend' })}</div></section>`;
-    else if (avenir.length) tournee = `<section class="tournee"><div class="wrap tournee-g"><div class="liste"><h2>${esc(s.tournee.titre)}</h2>${filtreHTML()}<ul class="dates">${avenir.map(d => ligneDate(d, true)).join('')}</ul></div>
+    else if (avenir.length) tournee = `<section class="tournee"><div class="wrap tournee-g"><div class="tournee-titre"><h2>${esc(s.tournee.titre)}</h2></div><div class="liste">${filtreHTML()}<ul class="dates">${avenir.map(d => ligneDate(d, true)).join('')}</ul></div>
       ${carte({ lieux: T.aVenir, passe: T.passe, couleur: s.couleurTexteClair, titre: s.tournee.titre, classe: 'carte-sp', bulle: true })}</div></section>`;
-    else if (T.passe.length) tournee = `<section class="tournee"><div class="wrap">${carte({ lieux: T.passe, couleur: 'var(--encre)', titre: s.titre, classe: 'carte-sp seule', bulle: true })}</div></section>`;
+    else if (T.passe.length) tournee = `<section class="tournee"><div class="wrap">${carte({ lieux: T.passe, couleur: 'var(--encre)', titre: s.titre, classe: 'carte-sp seule', bulle: true, cadre: CARTE.cadre(T.passe.filter(x => !dehors(x)), { marge: 50, min: 240 }) })}</div></section>`;
     main.innerHTML = `
       <section class="tete" style="--ct:${s.couleurTexteClair}"><div class="wrap">
         <div><p class="fil"><a href="#/">${esc(S.accueil)}</a><span aria-hidden="true">/</span><a href="#/spectacles">${esc(onglet('spectacles'))}</a></p>

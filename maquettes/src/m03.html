@@ -106,10 +106,7 @@ svg { flex: none; }
 .when { font-family: var(--sg); line-height: 1; }
 .j-big { font-size: 3rem; font-weight: 500; line-height: .82; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .j-big sup { font-size: .4em; letter-spacing: 0; vertical-align: .95em; margin-left: 1px; }
-.j-pre, .j-rest { font-size: 1.125rem; font-weight: 500; letter-spacing: -.01em; }
-.j-pre { margin-right: .3em; }
-.j-rest { margin-left: .3em; }
-.j-rest.c { margin-left: 0; }
+.j-pre, .j-rest, .j-v { font-size: 1.125rem; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; }
 .j-mo { font-size: 1.75rem; font-weight: 500; letter-spacing: -.03em; }
 .j-sous { display: block; margin-top: 9px; font: 400 .9375rem/1.3 var(--at); color: var(--ink-2); }
 .what { min-width: 0; overflow-wrap: anywhere; }
@@ -123,7 +120,7 @@ svg { flex: none; }
 .det a svg { display: inline; margin-left: 4px; vertical-align: -1px; }
 .ag-accueil .mois { margin-top: 22px; }
 .ag-accueil .mois-h { font-size: 1.5rem; padding-bottom: 8px; }
-.ag-accueil .row { grid-template-columns: 112px minmax(0, 1fr); column-gap: 18px; padding: 13px 0 14px; }
+.ag-accueil .row { grid-template-columns: 124px minmax(0, 1fr); column-gap: 18px; padding: 13px 0 14px; }
 .ag-accueil .j-big { font-size: 2.375rem; }
 .ag-accueil .j-mo { font-size: 1.5rem; }
 .ag-accueil .t-link { font-size: 1.1875rem; }
@@ -159,7 +156,7 @@ svg { flex: none; }
 .carte-lieu.hors { opacity: .16 !important; pointer-events: none; }
 .carte-m03 .noms, .carte-m03 .rouen-nom { pointer-events: none; }
 .carte-m03.pousse .noms { animation: apparait .5s 1.2s both; }
-.carte-m03 .nom, .carte-m03 .rouen-nom { font-size: calc(12.5px * var(--k, 1)); font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: calc(3.5px * var(--k, 1)); stroke-linejoin: round; }
+.carte-m03 .nom, .carte-m03 .rouen-nom { font-size: var(--fs, 12.5px); font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: calc(3.5px * var(--k, 1)); stroke-linejoin: round; }
 .carte-m03 .rouen-nom { font-weight: 700; }
 .carte-m03 .nom { transition: opacity .25s; }
 .carte-m03 .nom .dep, .carte-m03 .nom-passe { fill: var(--ink-2); font-weight: 400; }
@@ -274,7 +271,9 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .dcard .where, .dcard .det { padding-left: 0; }
 .dcard .where { margin-top: 14px; }
 .t-carte { grid-column: 8 / 13; position: sticky; top: calc(var(--head) + 16px); }
-.t-carte.seule { grid-column: 1 / 9; position: static; }
+.t-carte.seule { grid-column: 1 / 8; position: static; }
+.t-carte.seule .bras-passe { opacity: .7; }
+.t-carte.seule .pt-passe { opacity: 1; }
 .t-cr { grid-column: 1 / 6; }
 
 /* La compagnie, Actions culturelles, mentions */
@@ -364,10 +363,10 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
   .field { width: 100%; }
   .ag-grid > .ag-carte, .ag-grid > .ag-liste { grid-column: 1 / -1; grid-row: auto; position: static; }
   .ag-carte svg { max-height: none; }
-  .row, .ag-accueil .row { grid-template-columns: 86px minmax(0, 1fr); column-gap: 14px; padding: 14px 0 15px; }
+  .row, .ag-accueil .row { grid-template-columns: 96px minmax(0, 1fr); column-gap: 14px; padding: 14px 0 15px; }
   .j-big, .ag-accueil .j-big { font-size: 2.25rem; }
   .j-mo, .ag-accueil .j-mo { font-size: 1.375rem; }
-  .j-pre, .j-rest { font-size: 1rem; }
+  .j-pre, .j-rest, .j-v { font-size: .9375rem; }
   .t-link, .ag-accueil .t-link { font-size: 1.125rem; gap: 9px; }
   .mois-h { font-size: 1.5rem; }
   .diapo { grid-auto-columns: minmax(220px, 62%); }
@@ -435,9 +434,10 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
     if (!m[1]) return { grand: `<span class="j-mo">${esc(m[2])}</span>`, sous: m[3] };
     const p = /^(du)?\s*(\d+)(er)?(.*)$/.exec(m[1]);
     if (!p) return { grand: `<span class="j-rest c">${esc(m[1])}</span>`, sous: `${m[2]} ${m[3]}` };
-    const reste = p[4].trim();
+    const reste = p[4].trim(), virgule = reste[0] === ',', suite = virgule ? reste.slice(1).trim() : reste;
     return {
-      grand: `${p[1] ? `<span class="j-pre">${p[1]}</span>` : ''}<span class="j-big">${p[2]}${p[3] ? '<sup>er</sup>' : ''}</span>${reste ? `<span class="j-rest${reste[0] === ',' ? ' c' : ''}">${esc(reste)}</span>` : ''}`,
+      grand: [p[1] && `<span class="j-pre">${p[1]}</span>`, `<span class="j-big">${p[2]}${p[3] ? '<sup>er</sup>' : ''}</span>${virgule ? '<span class="j-v">,</span>' : ''}`,
+        suite && `<span class="j-rest">${esc(suite)}</span>`].filter(Boolean).join(' '),
       sous: `${m[2]} ${m[3]}`,
     };
   }
@@ -466,10 +466,10 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
     });
     const pas = Math.min(.06, 1 / Math.max(1, paires.length)), delai = new Map(), masques = [], bras = [];
     paires.forEach((p, i) => {
-      const w0 = Math.min(8, 2.8 + Math.sqrt(p.n) * 1.4), d = (i * pas).toFixed(3);
+      const w0 = Math.min(10, 3.4 + Math.sqrt(p.n) * 1.8), d = (i * pas).toFixed(3);
       if (!delai.has(p.x.l)) delai.set(p.x.l, d);
       masques.push(`<mask id="${id}-${i}"><path d="${CARTE.trait(p.x.xy, { courbe: p.courbe })}" pathLength="1" stroke-width="${(w0 + 8).toFixed(1)}" style="--d:${d}s"/></mask>`);
-      bras.push(`<path class="bras" data-l="${p.x.l}" data-slug="${p.slug}" fill="${col(p.slug)}" mask="url(#${id}-${i})" d="${CARTE.bras(p.x.xy, { w0, w1: .8, courbe: p.courbe })}"/>`);
+      bras.push(`<path class="bras" data-l="${p.x.l}" data-slug="${p.slug}" fill="${col(p.slug)}" mask="url(#${id}-${i})" d="${CARTE.bras(p.x.xy, { w0, w1: 1, courbe: p.courbe })}"/>`);
     });
     const ici = new Set(lieux.map(x => x.l)), autres = passe.filter(x => loin(x) && !ici.has(x.l));
     const etiquette = x => `${CARTE.nom(x)} : ${x.dates.map(d => d.ligne).join(' ; ')}`;
@@ -495,8 +495,8 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
   function etiqueter(svg) {
     const vb = svg.viewBox.baseVal, rc = svg.getBoundingClientRect();
     if (!rc.width || !rc.height) return;
-    const k = Math.max(vb.width / rc.width, vb.height / rc.height), fs = 12.5 * k, pad = 3 * k, R = CARTE.rouen;
-    svg.style.setProperty('--k', k.toFixed(4));
+    const k = Math.max(vb.width / rc.width, vb.height / rc.height), fs = (rc.width < 520 ? 11.5 : 12.5) * k, pad = 3 * k, R = CARTE.rouen;
+    svg.style.setProperty('--k', k.toFixed(4)); svg.style.setProperty('--fs', fs.toFixed(3) + 'px');
     const boites = [[R[0] - 11 * k, R[1] - 11 * k, R[0] + 11 * k, R[1] + 11 * k]];
     const rn = svg.querySelector('.rouen-nom');
     rn.setAttribute('x', (R[0] + 12 * k).toFixed(1)); rn.setAttribute('y', (R[1] - 12 * k).toFixed(1));
@@ -613,7 +613,7 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
     const diapo = SITE.diaporama.map(x => {
       const s = BY[x.slug] || {};
       return `<li class="dia" style="--c:${col(x.slug)}">
-        <a class="dia-img" href="${x.href}" tabindex="-1" aria-hidden="true"><img src="${D.photos[x.slug]}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 50%"></a>
+        <a class="dia-img" href="${x.href}" tabindex="-1" aria-hidden="true"><img src="${D.photos[x.slug]}" alt="" style="object-position:${s.focale ?? 50}% 50%"></a>
         <p class="dia-sur">${esc(x.surtitre)}</p>
         <h2 class="dia-t"><span class="dot" aria-hidden="true"></span><span>${x.titre.map(esc).join('<br>')}</span></h2>
         <a class="dia-go" href="${x.href}" aria-label="${esc(x.bouton)} : ${esc(x.titre.join(' '))}">${esc(x.bouton)}${ARROW}</a>
@@ -645,7 +645,7 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 
   const spectaclesHtml = () => `${tete(MENU.spectacles.texte)}
     <div class="wrap"><ul class="cards">${SH.map(s => `<li><a class="card" href="#/spectacle/${s.slug}" style="--c:${s.couleurTexteClair}">
-      <span class="card-img"><img src="${D.photos[s.slug]}" alt="" loading="lazy" style="object-position:${s.focale}% 50%">${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</span>
+      <span class="card-img"><img src="${D.photos[s.slug]}" alt="" style="object-position:${s.focale}% 50%">${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</span>
       <span class="card-t"><span class="dot" aria-hidden="true"></span><span class="card-tt">${esc(s.titre)}</span></span>
       ${s.sousTitre ? `<span class="card-s">${s.sousTitre}</span>` : ''}${s.creation ? `<span class="card-c">${esc(s.creation)}</span>` : ''}
       ${s.prochaine ? `<span class="card-n">${esc(s.prochaine.ligne)}</span>` : ''}
@@ -715,7 +715,7 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
     return `${tete(a.titre)}
       <div class="wrap g12 act">
         <div class="act-text prose">${a.blocs.map(bloc).join('')}</div>
-        <figure class="act-fig"><img src="${D.photos['actions-culturelles']}" alt="${esc(a.titre)}" loading="lazy">${a.credit ? `<figcaption>${esc(a.credit)}</figcaption>` : ''}</figure>
+        <figure class="act-fig"><img src="${D.photos['actions-culturelles']}" alt="${esc(a.titre)}">${a.credit ? `<figcaption>${esc(a.credit)}</figcaption>` : ''}</figure>
       </div>`;
   }
   function proHtml() {
