@@ -3,305 +3,415 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compagnie Crescite · théâtre à Rouen</title>
-<meta name="description" content="Compagnie Crescite, théâtre à Rouen : les spectacles, l’agenda de la saison, la compagnie.">
+<title>Accueil - crescite</title>
 <meta name="theme-color" content="#bc3e80">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap">
 <style>
 :root{
-  --magenta:#bc3e80;--magenta-deep:#8e2a5f;--ink:#1a1016;--ink-soft:#5e4b56;--pink:#fff4f8;--white:#fff;
+  --magenta:#bc3e80;--magenta-deep:#8e2a5f;--ink:#1a1016;--ink-soft:#5e4b56;--rose:#fff4f8;--white:#fff;
   --line:rgba(26,16,22,.16);--head:76px;--gut:clamp(16px,4vw,56px);--max:1280px;
   color-scheme:light;
 }
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:calc(var(--head) + 16px)}
 body{margin:0;background:var(--white);color:var(--ink);font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-size:18px;line-height:1.55;font-weight:400;font-stretch:100%;-webkit-font-smoothing:antialiased}
 img,svg{display:block;max-width:100%}
 a{color:inherit;text-underline-offset:.2em;text-decoration-thickness:1.5px}
-button{font:inherit;color:inherit}
-h1,h2,h3,p,figure,dl,dd{margin:0}
+button,input,textarea{font:inherit;color:inherit}
+h1,h2,h3,p,figure,blockquote{margin:0}
 :focus-visible{outline:3px solid var(--focus,var(--ink));outline-offset:3px}
 [tabindex="-1"]:focus{outline:none}
 .sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .skip{position:absolute;left:16px;top:-100px;z-index:60;padding:12px 18px;background:var(--white);color:var(--ink);font-weight:700;text-decoration:none}
 .skip:focus{top:12px}
 .wrap{width:100%;max-width:calc(var(--max) + 2 * var(--gut));margin-inline:auto;padding-inline:var(--gut)}
-.disp{font-stretch:125%;font-weight:900;text-transform:uppercase;line-height:.92;letter-spacing:-.01em;text-wrap:balance}
-.lbl{font-size:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;line-height:1.3}
+.disp{font-stretch:125%;font-weight:900;text-transform:uppercase;line-height:.94;letter-spacing:-.01em;text-wrap:balance}
+.lbl{font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;line-height:1.3}
 .ico{width:1em;height:1em;flex:none}
-.arm{display:block;width:154px;height:28px;color:var(--accent,var(--magenta));overflow:visible}
-.tbd{display:inline-block;padding:0 8px;border:1.5px dashed currentColor;border-radius:6px;color:var(--ink-soft);font-size:15px;font-weight:600;font-stretch:100%;letter-spacing:0;text-transform:none;line-height:1.5;white-space:nowrap}
-.plain{margin:0;padding:0;list-style:none}
 
-.site-head{position:sticky;top:0;z-index:40;background:var(--magenta);color:var(--white);--focus:var(--white)}
+/* la ligne-tentacule */
+.sep{display:flex;align-items:center;width:100%;height:26px;color:var(--sep,var(--magenta))}
+.sep svg{height:26px;overflow:visible}
+.sep-vague{flex:1 1 0;min-width:0}
+.sep-boucle{flex:none;width:46px}
+
+/* l'en-tête */
+.site-head{position:sticky;top:0;z-index:40;background:var(--magenta);color:#fff;--focus:#fff}
 .head-row{display:flex;align-items:center;justify-content:space-between;gap:24px;height:var(--head)}
-.brand{display:inline-flex;align-items:center;gap:14px;color:var(--white);text-decoration:none}
-.brand-mark{width:78px;flex:none}
+.brand{display:inline-flex;align-items:center;gap:12px;flex:none;color:#fff;text-decoration:none}
+.brand-mark{width:64px}
 .brand-mark svg{width:100%;height:auto}
-.brand-word{font-stretch:125%;font-weight:800;font-size:25px;line-height:1;letter-spacing:-.01em}
-.nav ul{display:flex;gap:clamp(22px,2.8vw,44px);margin:0;padding:0;list-style:none}
-.nav a{display:block;padding:8px 0 5px;border-bottom:3px solid transparent;font-size:16px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;transition:border-color .2s}
+.brand-word{font-stretch:125%;font-weight:800;font-size:23px;line-height:1;letter-spacing:-.01em}
+.nav ul{display:flex;gap:clamp(18px,2.1vw,34px);margin:0;padding:0;list-style:none}
+.nav a{display:block;padding:8px 0 5px;border-bottom:3px solid transparent;font-size:15px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;text-decoration:none;white-space:nowrap;transition:border-color .2s}
 .nav a:hover{border-bottom-color:rgba(255,255,255,.5)}
-.nav a[aria-current="page"]{border-bottom-color:var(--white)}
+.nav a[aria-current="page"]{border-bottom-color:#fff}
 .menu-btn{display:none}
 
-.hero{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100svh - var(--head));padding:32px var(--gut) 72px;background:var(--magenta);color:var(--white);text-align:center;--focus:var(--white)}
-.hero-logo{width:min(50vw,calc((100svh - var(--head) - 330px) * 1.336),860px);min-width:min(220px,76vw)}
-.hero-logo svg{width:100%;height:auto}
-.hero-intent{max-width:34ch;margin-top:clamp(28px,4svh,44px);font-size:clamp(20px,1.8vw,25px);line-height:1.4;font-weight:500;text-wrap:balance}
-.hero-cta{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:clamp(28px,4svh,40px)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:56px;padding:0 30px;border:2px solid var(--white);border-radius:999px;background:var(--white);color:var(--magenta-deep);font-stretch:125%;font-weight:800;font-size:16px;line-height:1;letter-spacing:.03em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:background-color .25s,color .25s}
-.btn:hover{background:transparent;color:var(--white)}
-.btn--ink{border-color:var(--ink);background:var(--ink);color:var(--white)}
-.btn--ink:hover{background:var(--white);color:var(--ink)}
+/* les boutons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:54px;padding:0 28px;border:2px solid #fff;border-radius:999px;background:#fff;color:var(--magenta-deep);font-stretch:125%;font-weight:800;font-size:15px;line-height:1;letter-spacing:.05em;text-transform:uppercase;text-decoration:none;cursor:pointer;transition:background-color .25s,color .25s}
+.btn .ico{width:18px;height:18px;transition:transform .25s}
+.btn:hover{background:transparent;color:#fff}
+.btn:hover .ico{transform:translateX(4px)}
+.btn--ink{border-color:var(--ink);background:var(--ink);color:#fff}
+.btn--ink:hover{background:transparent;color:var(--ink)}
+.btn--mag{border-color:var(--magenta);background:var(--magenta);color:#fff}
+.btn--mag:hover{background:transparent;color:var(--magenta-deep)}
+.tag{display:inline-block;padding:3px 11px;border:1.5px solid currentColor;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.1em;line-height:1.4;text-transform:uppercase;white-space:nowrap}
+.tag--plein{border-color:var(--magenta);background:var(--magenta);color:#fff}
 
-.page-head{padding:clamp(40px,5vw,72px) 0 clamp(56px,6.4vw,96px);background:var(--magenta);color:var(--white);--accent:var(--white);--focus:var(--white)}
-.page-head-in{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:40px}
-.page-head-in>.arm,.page-title{grid-column:1/-1}
-.page-head-in>.arm{margin-bottom:clamp(16px,2vw,28px)}
-.page-title{font-size:clamp(44px,8.4vw,124px)}
-.page-intro{max-width:44ch;margin-top:clamp(20px,2.4vw,32px);font-size:clamp(20px,1.8vw,25px);font-weight:500;line-height:1.4;text-wrap:pretty}
-.page-meta{padding-bottom:6px;text-align:right}
+/* l'accueil : le bandeau EN TOURNÉE, en bichromie */
+.bd{position:relative;height:calc(100svh - var(--head));min-height:540px;max-height:1000px;background:var(--magenta);color:#fff;overflow:hidden;isolation:isolate;--focus:#fff}
+.bd-haut{position:absolute;z-index:3;top:clamp(20px,3.6svh,40px);left:0;right:0;pointer-events:none}
+.bd-sur{display:inline-flex;align-items:center;gap:12px;padding:10px 18px 9px;border:2px solid #fff;border-radius:999px;font-stretch:125%;font-weight:800;font-size:clamp(13px,1.1vw,16px);letter-spacing:.2em;line-height:1;text-transform:uppercase;pointer-events:auto}
+.bd-sur::before{content:"";width:9px;height:9px;border-radius:50%;background:#fff;animation:pouls 2.2s ease-in-out infinite}
+@keyframes pouls{50%{opacity:.25}}
+.bd-slides{position:absolute;inset:0}
+.bd-slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity 1s ease,visibility 0s linear 1s}
+.bd-slide.is-on{opacity:1;visibility:visible;transition:opacity 1s ease}
+.bd-photo{position:absolute;inset:0;background:var(--magenta);isolation:isolate}
+.bd-photo img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.18) brightness(1.08);mix-blend-mode:multiply;transform:scale(1.07);transition:transform 9s linear}
+.bd-slide.is-on .bd-photo img{transform:scale(1)}
+.bd-slide::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(to top,rgba(42,7,27,.84),rgba(42,7,27,.36) 44%,rgba(42,7,27,0) 70%),linear-gradient(to bottom,rgba(42,7,27,.42),rgba(42,7,27,0) 24%)}
+.bd-txt{position:absolute;z-index:2;left:0;right:0;bottom:clamp(104px,15svh,156px);display:flex;flex-direction:column;align-items:flex-start;gap:clamp(18px,3svh,32px)}
+.bd-titre{max-width:100%;font-size:clamp(46px,9.2vw,148px)}
+.bd-l{display:block;overflow:hidden;padding-top:.14em;margin-top:-.14em}
+.bd-l>span{display:inline-block;transform:translateY(110%);transition:transform .9s cubic-bezier(.2,.75,.1,1)}
+.bd-l+.bd-l>span{transition-delay:.08s}
+.bd-l+.bd-l+.bd-l>span{transition-delay:.16s}
+.bd-slide.is-on .bd-l>span{transform:none}
+.bd.attend .bd-l>span{transform:translateY(110%)}
+.bd-pied{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px}
+.bd-pied .btn{opacity:0;transform:translateY(10px);transition:opacity .6s ease .3s,transform .6s ease .3s,background-color .25s,color .25s}
+.bd-slide.is-on .bd-pied .btn{opacity:1;transform:none}
+.bd.attend .bd-pied .btn{opacity:0}
+.bd-credit{font-size:13px;letter-spacing:.04em}
+.bd-bas{position:absolute;z-index:3;left:0;right:0;bottom:clamp(20px,3.4svh,38px);display:flex;align-items:flex-end;gap:20px}
+.bd-sel{flex:1 1 auto;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:clamp(10px,1.4vw,20px);margin:0;padding:0;list-style:none}
+.bd-b{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:10px;width:100%;height:100%;padding:10px 0 0;border:0;background:none;color:#fff;text-align:left;cursor:pointer}
+.bd-b-t{font-size:12px;font-weight:700;letter-spacing:.12em;line-height:1.3;text-transform:uppercase;opacity:.82;transition:opacity .3s}
+.bd-b-t span{display:block}
+.bd-b:hover .bd-b-t,.bd-b[aria-current] .bd-b-t{opacity:1}
+.bd-b-l{display:block;height:3px;border-radius:3px;background:rgba(255,255,255,.34);overflow:hidden}
+.bd-b-l span{display:block;height:100%;background:#fff;transform:scaleX(0);transform-origin:left}
+.bd-b[aria-current] .bd-b-l span{animation:plein 7s linear forwards}
+.bd.arret .bd-b[aria-current] .bd-b-l span{animation-play-state:paused}
+@keyframes plein{to{transform:scaleX(1)}}
+.bd-pause{flex:none;display:grid;place-items:center;width:44px;height:44px;border:2px solid #fff;border-radius:50%;background:none;color:#fff;cursor:pointer}
+.bd-pause .ico{width:16px;height:16px}
+.bd-pause .i-l,.bd-pause[aria-pressed="true"] .i-p{display:none}
+.bd-pause[aria-pressed="true"] .i-l{display:block}
 
-.sec{padding:clamp(80px,9vw,128px) 0}
-.page-head+.sec{padding-top:clamp(56px,6.4vw,96px)}
-.sec--pink{background:var(--pink)}
-.sec-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:20px 32px;margin-bottom:clamp(40px,5vw,72px)}
-.sec-head .arm{grid-column:1/-1}
-.sec-title{font-size:clamp(36px,7.4vw,96px)}
-.sec-title--sm{font-size:clamp(32px,4.6vw,64px)}
-.sec-aside{padding-bottom:6px;color:var(--ink-soft);font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+/* les trois portes */
+.portes{background:#fff}
+.portes ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;padding:0;list-style:none}
+.porte{display:flex;align-items:flex-end;gap:18px;height:100%;min-height:clamp(132px,14vw,200px);padding:clamp(22px,2.4vw,36px) clamp(18px,2.6vw,40px);border-bottom:2px solid var(--magenta);color:var(--magenta-deep);text-decoration:none;transition:background-color .3s,color .3s;--focus:var(--magenta-deep)}
+.porte-t{display:block;flex:1 1 auto;min-width:0;font-stretch:125%;font-weight:900;font-size:clamp(20px,2vw,30px);line-height:1.04;text-transform:uppercase;text-wrap:balance}
+.porte .ico{width:clamp(26px,2.2vw,36px);height:clamp(26px,2.2vw,36px);transition:transform .3s}
+.portes li+li .porte{border-left:2px solid var(--magenta)}
+.porte:hover{background:var(--magenta);color:#fff}
+.porte:hover .ico{transform:translateX(6px)}
+.porte:focus-visible{outline-offset:-8px}
 
+/* l'affiche de la tournée */
+.aff-sec{padding:clamp(64px,8vw,120px) 0;background:var(--magenta);color:#fff;--focus:#fff;--sep:#fff}
+.aff-grille{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-rows:auto 1fr;grid-template-areas:"tete carte" "liste carte";column-gap:clamp(32px,4.4vw,80px);align-items:start}
+.aff-tete{grid-area:tete}
+.aff-carte{grid-area:carte;align-self:center}
+.aff-liste{grid-area:liste}
+.aff-sur{margin-bottom:16px}
+.aff-titre{margin-bottom:clamp(20px,2.4vw,30px);font-size:clamp(44px,6vw,92px)}
+.prochaines{margin:clamp(20px,2.4vw,30px) 0 clamp(28px,3vw,40px);padding:0;list-style:none;border-top:1px solid rgba(255,255,255,.45)}
+.pr{transition:opacity .3s}
+.pr a{display:flex;flex-direction:column;gap:2px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.45);text-decoration:none;transition:padding .25s}
+.pr-date{font-stretch:125%;font-weight:900;font-size:clamp(18px,1.6vw,22px);line-height:1.12;text-transform:uppercase}
+.pr-lieu{font-weight:600;line-height:1.35}
+.pr-titre{font-size:13px;font-weight:700;letter-spacing:.12em;line-height:1.35;text-transform:uppercase}
+.pr a:hover,.pr.lit a{padding-left:12px}
+.prochaines.a-survol .pr:not(.lit){opacity:.45}
+
+/* la carte : des bras blancs épais, aux bouts enroulés, sur le magenta */
+.aff{position:relative}
+.aff-svg{width:100%;height:auto;overflow:visible;font-family:Archivo,"Helvetica Neue",Arial,sans-serif}
+.aff-pays{fill:rgba(255,255,255,.1);stroke:rgba(255,255,255,.6);stroke-width:1.2;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.aff-voisin{fill:rgba(255,255,255,.04);stroke:rgba(255,255,255,.3);stroke-width:1;vector-effect:non-scaling-stroke}
+.aff-b{fill:#fff}
+.aff-s{fill:none;stroke:#fff;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1 2;stroke-dashoffset:0}
+.aff-mt{stroke-dasharray:1 2;stroke-dashoffset:0}
+.aff-passe{fill:#fff;opacity:.5}
+.aff-pt{fill:#fff;opacity:.75}
+.aff-rouen{fill:#fff}
+.aff-anneau{fill:none;stroke:#fff;stroke-width:1.5;vector-effect:non-scaling-stroke;transform-box:fill-box;transform-origin:center;animation:anneau 2.8s ease-out infinite}
+@keyframes anneau{from{transform:scale(.6);opacity:.9}to{transform:scale(1.7);opacity:0}}
+.aff-nom,.aff-rouen-nom{fill:#fff;stroke:var(--magenta);stroke-linejoin:round;paint-order:stroke;font-weight:700;font-stretch:112%;letter-spacing:.04em;text-transform:uppercase;pointer-events:none;transition:opacity .5s ease var(--tn,0s)}
+.aff-rouen-nom{font-weight:900;font-stretch:125%;letter-spacing:.06em}
+.aff-lieu{cursor:pointer}
+.aff-cible{fill:transparent}
+.aff-lieu:focus{outline:none}
+.aff-lieu:focus-visible .aff-cible{stroke:#fff;stroke-width:2.5;vector-effect:non-scaling-stroke}
+.aff-t,.aff-passe,.aff-pt{transition:opacity .3s}
+.aff-svg.vit .aff-nom{transition-delay:0s}
+.aff-svg.a-survol .aff-t:not(.on),.aff-svg.a-survol .aff-nom:not(.on){opacity:.26}
+.aff-svg.a-survol .aff-passe:not(.on){opacity:.22}
+.aff-passe.on,.aff-pt.on{opacity:1}
+.aff-svg.attend .aff-mt,.aff-svg.attend .aff-s{stroke-dashoffset:1}
+.aff-svg.attend .aff-nom,.aff-svg.attend .aff-rouen-nom{opacity:0}
+.aff-svg.pousse .aff-mt{animation:pousse var(--d,1s) cubic-bezier(.5,0,.2,1) var(--t,0s) both}
+.aff-svg.pousse .aff-s{animation:pousse .8s cubic-bezier(.3,0,.2,1) var(--t,0s) both}
+@keyframes pousse{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+.aff--grand .aff-svg.vit .aff-t{transform-box:view-box;transform-origin:var(--ox) var(--oy);animation:ondule 6s ease-in-out infinite alternate;animation-delay:calc(var(--i) * -.85s)}
+@keyframes ondule{from{transform:rotate(-.55deg)}to{transform:rotate(.55deg)}}
+.aff-tip{position:absolute;z-index:5;left:0;top:0;width:max-content;max-width:min(300px,86%);padding:12px 16px 14px;background:#fff;color:var(--magenta-deep);box-shadow:0 14px 34px rgba(58,13,39,.28);pointer-events:none;font-size:15px;line-height:1.35;text-align:left}
+.tip-nom{color:var(--ink);font-stretch:125%;font-weight:900;font-size:16px;line-height:1.15;text-transform:uppercase}
+.aff-tip ul{display:grid;gap:6px;margin:8px 0 0;padding:0;list-style:none}
+.aff-tip b{display:block;font-weight:800}
+
+/* les en-têtes de page et les sections */
+.ph{padding:clamp(36px,4.6vw,68px) 0 clamp(48px,5.6vw,84px);background:var(--magenta);color:#fff;--focus:#fff;--sep:#fff}
+.ph .sep{max-width:440px;margin-bottom:clamp(16px,2vw,26px)}
+.ph-titre{font-size:clamp(42px,8vw,120px)}
+.retour{display:inline-flex;align-items:center;gap:10px;margin-bottom:clamp(16px,2vw,26px);font-size:15px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none}
+.retour .ico{width:20px;height:20px;transform:scaleX(-1)}
+.retour:hover{text-decoration:underline}
+.sec{padding:clamp(60px,7.6vw,112px) 0}
+.sec--rose{background:var(--rose)}
+.sec-titre{margin:16px 0 clamp(26px,3.4vw,44px);color:var(--magenta);font-size:clamp(32px,4.4vw,62px)}
+.lead{font-size:clamp(20px,1.8vw,24px);line-height:1.45;font-weight:500}
+.prose{max-width:68ch;overflow-wrap:break-word}
+.prose>*+*{margin-top:1em}
+.prose h2{margin-top:1.7em;color:var(--magenta);font-stretch:125%;font-weight:900;font-size:clamp(21px,2vw,28px);line-height:1.1;text-transform:uppercase}
+.prose h2:first-child{margin-top:0}
+.prose ul{padding-left:1.15em}
+.prose li+li{margin-top:.55em}
+.prose a{color:var(--magenta-deep)}
+.cie-acc{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(28px,5vw,88px);align-items:start}
+.cie-acc .sec-titre{margin-bottom:0}
+.cie-acc .btn{margin-top:30px}
+.dons{padding:clamp(40px,5vw,64px) 0;background:var(--rose);color:var(--ink-soft);font-size:15px;line-height:1.65}
+.dons p{max-width:118ch;margin-top:16px}
+
+/* l'agenda et les saisons */
+.ag{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,4.4vw,80px);align-items:start}
+.ag>.ag-carte{grid-column:2;grid-row:1;position:sticky;top:calc(var(--head) + 24px)}
+.ag>.liste{grid-column:1;grid-row:1}
+.ag-carte{padding:clamp(16px,1.8vw,26px);background:var(--magenta);color:#fff;--focus:#fff}
+.aff-seule{max-width:780px;margin-inline:auto}
+.filtre{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.chip{display:inline-flex;align-items:center;gap:10px;min-height:42px;padding:0 16px;border:2px solid #fff;border-radius:999px;background:#fff;color:var(--magenta-deep);font-weight:800;font-size:14px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.chip:hover{background:transparent;color:#fff}
+.chip .ico{width:16px;height:16px}
+.grp+.grp{margin-top:clamp(40px,5vw,64px)}
+.mois{display:flex;align-items:center;gap:18px;margin-bottom:4px;color:var(--magenta);font-size:clamp(22px,2.2vw,30px)}
+.mois::after{content:"";flex:1;height:2px;background:currentColor}
+.rs{margin:0;padding:0;list-style:none}
+.r{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr);gap:6px clamp(18px,2.4vw,36px);padding:20px 0;border-bottom:1px solid var(--line);transition:opacity .3s}
+.r-when{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.r-big{font-stretch:125%;font-weight:900;font-size:clamp(20px,2vw,28px);line-height:1.02;text-transform:uppercase}
+.r-small{color:var(--ink-soft);font-size:13px;font-weight:700;letter-spacing:.12em;line-height:1.3;text-transform:uppercase}
+.r-what{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.r-titre{color:var(--magenta-deep);font-stretch:125%;font-weight:800;font-size:clamp(16px,1.4vw,19px);line-height:1.2;text-transform:uppercase;text-decoration:none}
+.r-titre:hover{text-decoration:underline}
+.r-lieu{font-weight:700;line-height:1.3}
+.r-det{max-width:100%;color:var(--ink-soft);font-size:16px;line-height:1.45;overflow-wrap:break-word}
+.r .ext{color:var(--magenta-deep)}
+.ext{font-weight:600}
+.ext .ico{display:inline-block;width:.8em;height:.8em;margin-left:.25em;vertical-align:-.05em}
+.liste.a-survol .r:not(.lit){opacity:.3}
+.r.lit .r-big{color:var(--magenta)}
+.r--s .r-big{font-size:16px;font-stretch:112%;font-weight:800;line-height:1.25}
+.r--annule .r-big{text-decoration:line-through}
+.r .tag{color:var(--magenta-deep)}
+.sg-titre{font-size:clamp(24px,2.8vw,40px)}
+.sg-titre a{text-decoration:none}
+.sg-titre a:hover{color:var(--magenta)}
+.sg-sous{margin-top:8px;font-size:19px;line-height:1.4}
+.sg-crea{margin-top:6px;color:var(--magenta-deep)}
+.sg .rs{margin-top:16px;border-top:2px solid var(--ink)}
+.saisons ul{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:0 clamp(20px,3vw,40px);margin:22px 0 0;padding:0;list-style:none}
+.saisons a{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;border-bottom:1px solid var(--line);color:var(--magenta-deep);font-stretch:125%;font-weight:800;font-size:clamp(17px,1.5vw,21px);line-height:1.15;text-transform:uppercase;text-decoration:none}
+.saisons a .ico{width:20px;height:20px;transition:transform .25s}
+.saisons a:hover{color:var(--magenta)}
+.saisons a:hover .ico{transform:translateX(5px)}
+
+/* les spectacles */
+.vgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(48px,6vw,88px) clamp(24px,4vw,56px)}
+.vg{position:relative;display:flex;flex-direction:column;align-items:flex-start}
+.vg-photo{align-self:stretch;aspect-ratio:3/2;margin-bottom:22px}
 .duo{position:relative;overflow:hidden;background:var(--magenta);isolation:isolate;transition:background-color .5s ease}
-.duo img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1) brightness(1.16);mix-blend-mode:multiply;transition:filter .5s ease}
+.duo img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.12) brightness(1.12);mix-blend-mode:multiply;transition:transform .8s ease}
+.vg:hover .duo,.vg:focus-within .duo{background:var(--c)}
+.vg:hover .duo img{transform:scale(1.03)}
+.vg-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;color:var(--magenta-deep)}
+.vg-titre{margin-bottom:12px;font-size:clamp(28px,3.1vw,44px)}
+.vg-titre a{text-decoration:none;transition:color .25s}
+.vg-titre a::after{content:"";position:absolute;inset:0}
+.vg-titre a:focus-visible{outline:none}
+.vg-titre a:focus-visible::after{outline:3px solid var(--ink);outline-offset:8px}
+.vg:hover .vg-titre a{color:var(--magenta)}
+.vg-sous{margin-bottom:8px;color:var(--ink-soft)}
+.vg-crea{color:var(--magenta-deep)}
 
-.cards{--rowgap:clamp(56px,7vw,96px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:clamp(24px,4vw,56px);row-gap:0;margin-bottom:calc(-1 * var(--rowgap))}
-.card{position:relative;display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0}
-.card-photo{aspect-ratio:3/2;margin-bottom:24px}
-.card-title{margin-bottom:12px;font-size:clamp(28px,3.3vw,48px)}
-.card-title a{text-decoration:none;transition:color .25s}
-.card-title a::after{content:"";position:absolute;inset:0}
-.card-title a:focus-visible{outline:none}
-.card-title a:focus-visible::after{outline:3px solid var(--ink);outline-offset:8px}
-.card-sub{max-width:44ch;margin-bottom:20px;color:var(--ink-soft)}
-.card-next{display:flex;flex-wrap:wrap;align-items:baseline;align-self:start;gap:4px 14px;margin-bottom:var(--rowgap);padding-top:16px;border-top:1px solid var(--line);font-size:17px}
-.card-next .lbl{color:var(--magenta-deep)}
-.card:hover .card-title a{color:var(--magenta)}
-.card:hover .duo,.card:focus-within .duo{background:var(--white)}
-.card:hover .duo img,.card:focus-within .duo img{filter:grayscale(0) contrast(1) brightness(1)}
-
-.doors{padding:clamp(72px,8vw,112px) 0;background:var(--magenta);color:var(--white);--accent:var(--white);--focus:var(--white)}
-.hero+.doors{padding-top:clamp(16px,2.4vw,32px)}
-.doors .tbd{color:var(--white)}
-.doors-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:clamp(16px,2vw,28px);row-gap:0}
-.door{display:grid;grid-row:span 3;grid-template-rows:subgrid;row-gap:0;padding:clamp(26px,2.6vw,38px);border:1.5px solid rgba(255,255,255,.88);color:var(--white);text-decoration:none;transition:background-color .25s,color .25s}
-.door-title{margin-bottom:16px;font-stretch:125%;font-weight:800;font-size:clamp(22px,2vw,28px);line-height:1.08;text-transform:uppercase;text-wrap:balance}
-.door-text{max-width:30ch;margin-bottom:28px;line-height:1.45}
-.door-go{align-self:end;width:36px;height:36px}
-a.door:hover{background:var(--white);color:var(--magenta-deep)}
-.door--info{grid-row:span 4}
-.door-contact{margin-bottom:28px}
-.door--info .btn{justify-self:start;align-self:end;min-height:48px;padding:0 24px}
-
-.dates{display:grid;grid-template-columns:max-content minmax(0,1fr) minmax(170px,250px) minmax(150px,max-content);column-gap:clamp(18px,2.6vw,40px);margin:0;padding:0;border-top:2px solid var(--ink);list-style:none}
-.dates--show{grid-template-columns:max-content minmax(0,1fr) max-content minmax(150px,max-content)}
-.date{position:relative;display:grid;grid-column:1/-1;grid-template-columns:subgrid;align-items:center;padding:22px 0;border-bottom:1px solid var(--line)}
-.d-when time{display:flex;flex-direction:column;gap:6px}
-.d-big{font-stretch:125%;font-weight:900;font-size:clamp(22px,2.2vw,30px);line-height:1;text-transform:uppercase;white-space:nowrap}
-.d-small{color:var(--ink-soft);font-size:15px;line-height:1.2}
-.d-what{display:flex;flex-direction:column;gap:5px;min-width:0}
-.d-title{font-stretch:125%;font-weight:800;font-size:clamp(17px,1.5vw,20px);line-height:1.2;text-transform:uppercase;text-decoration:none;transition:color .25s}
-a.d-title::after{content:"";position:absolute;inset:0}
-.date:hover a.d-title{color:var(--magenta)}
-.d-detail{color:var(--ink-soft);font-size:16px;line-height:1.4}
-.d-where{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-.d-place{font-weight:600;line-height:1.3}
-.tag{display:inline-block;padding:3px 11px;border:1.5px solid currentColor;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.08em;line-height:1.4;text-transform:uppercase;white-space:nowrap}
-.tag--sco{color:var(--magenta-deep)}
-.d-link{justify-self:end}
-.ext{position:relative;z-index:1;display:inline-flex;align-items:center;gap:6px;font-weight:600;white-space:nowrap}
-.ext .ico{width:.85em;height:.85em}
-.more{margin-top:36px}
-
-.agenda{display:grid;grid-template-columns:max-content minmax(0,1fr) minmax(170px,250px) minmax(150px,max-content);column-gap:clamp(18px,2.6vw,40px)}
-.month{display:grid;grid-column:1/-1;grid-template-columns:subgrid}
-.month+.month{margin-top:clamp(56px,6vw,88px)}
-.month-h{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 16px;margin-bottom:14px}
-.month-name{color:var(--magenta);font-size:clamp(24px,2.4vw,32px)}
-.month-n{color:var(--ink-soft)}
-.month .dates{grid-column:1/-1;grid-template-columns:subgrid}
-
-.cie{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(40px,6vw,96px);align-items:start}
-.lead{font-size:clamp(21px,2vw,27px);line-height:1.42;font-weight:500;text-wrap:pretty}
-.cie-sheet{margin-top:clamp(32px,3.6vw,48px)}
-.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 28px}
-.stats>div{display:flex;flex-direction:column-reverse;justify-content:flex-end;gap:8px;padding-top:14px;border-top:2px solid var(--magenta)}
-.stats dd{color:var(--magenta);font-stretch:125%;font-weight:900;font-size:clamp(34px,3.5vw,56px);line-height:1}
-.stats dt{font-size:16px;line-height:1.35}
-.stats-src{margin-top:32px;color:var(--ink-soft);font-size:16px}
-.cast-intro{max-width:52ch;margin-bottom:clamp(28px,3vw,40px);color:var(--ink-soft)}
-.cast{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:clamp(20px,3vw,40px);margin:0;padding:0;border-top:2px solid var(--ink);list-style:none}
-.cast li{display:flex;flex-direction:column;gap:4px;padding:16px 0 18px;border-bottom:1px solid var(--line)}
-.cast b{font-stretch:125%;font-weight:800;font-size:18px;line-height:1.25}
-.cast span{color:var(--ink-soft);font-size:16px;line-height:1.45}
-.cast a{text-decoration-thickness:1px}
-.cast a:hover{color:var(--magenta-deep)}
-
-.contact{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(36px,6vw,96px);align-items:start}
-.contact-k{margin-bottom:18px;color:var(--magenta-deep)}
-.contact-mail{display:inline-block;font-stretch:125%;font-weight:800;font-size:clamp(26px,3.4vw,48px);line-height:1.1;text-decoration:none;overflow-wrap:anywhere;transition:color .25s}
-.contact-mail:hover{color:var(--magenta-deep);text-decoration:underline}
-
-.site-foot{padding:clamp(64px,8vw,104px) 0 36px;background:var(--magenta-deep);color:var(--white);--focus:var(--white)}
-.foot-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,5fr) minmax(0,4fr);gap:44px clamp(32px,4vw,64px);align-items:start}
-.foot-logo{display:block;width:clamp(120px,12vw,168px);color:var(--white)}
-.foot-logo svg{width:100%;height:auto}
-.foot-h{margin-bottom:16px;color:#f7d9e9;font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-.foot-mail{display:inline-block;font-stretch:125%;font-weight:800;font-size:clamp(22px,2.4vw,32px);line-height:1.15;text-decoration:none;overflow-wrap:anywhere}
-.foot-mail:hover{text-decoration:underline}
-.foot-addr{margin-top:14px}
-.foot-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
-.foot-legal{display:flex;flex-wrap:wrap;gap:6px 28px;margin-top:clamp(48px,6vw,80px);padding-top:20px;border-top:1px solid rgba(255,255,255,.3);color:#f7d9e9;font-size:15px}
-
+/* la page d'un spectacle */
 .sh{display:flex;flex-direction:column;min-height:calc(100svh - var(--head));background:var(--c);color:var(--ink);--focus:var(--ink)}
 .sh-photo{position:relative;flex:1 1 auto;min-height:clamp(220px,42svh,560px);overflow:hidden;background:var(--c);isolation:isolate}
 .sh-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.2) brightness(1.08);mix-blend-mode:multiply}
-.sh-photo::after{content:"";position:absolute;inset:auto 0 0;z-index:1;height:62%;background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--c) 6%,transparent) 18%,color-mix(in srgb,var(--c) 22%,transparent) 38%,color-mix(in srgb,var(--c) 50%,transparent) 58%,color-mix(in srgb,var(--c) 80%,transparent) 78%,var(--c) 96%)}
-.sh-text{padding-top:6px;padding-bottom:clamp(40px,5vw,72px)}
-.back{display:inline-flex;align-items:center;gap:10px;font-size:16px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none}
-.back:hover{text-decoration:underline}
-.back .ico{width:20px;height:20px;transform:scaleX(-1)}
-.sh-text .back{margin-bottom:clamp(14px,2vw,28px)}
-.sh-title{font-size:min(150px,calc(min(100vw - 2 * var(--gut),var(--max)) * 1.8 / var(--len)))}
-.sh-sub{max-width:48ch;margin-top:clamp(14px,1.6vw,22px);font-size:clamp(19px,1.7vw,24px);font-weight:500;line-height:1.35}
-
+.sh-photo::after{content:"";position:absolute;inset:auto 0 0;z-index:1;height:62%;background:linear-gradient(to bottom,transparent,color-mix(in srgb,var(--c) 22%,transparent) 38%,color-mix(in srgb,var(--c) 80%,transparent) 78%,var(--c) 96%)}
+.sh-txt{padding-top:6px;padding-bottom:clamp(34px,4.4vw,60px)}
+.sh-titre{font-size:clamp(34px,calc(min(100vw - 2 * var(--gut),var(--max)) / (var(--len) * .92)),150px)}
+.sh-titre span{display:block}
+.sh-sous{max-width:48ch;margin-top:clamp(14px,1.6vw,22px);font-size:clamp(19px,1.7vw,24px);font-weight:500;line-height:1.35}
+.sh-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:18px}
+.sh-credit{margin-left:auto;font-size:13px;letter-spacing:.03em}
+.sp{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(36px,6vw,96px);align-items:start}
+.fiche-col{display:grid;gap:18px;padding-top:18px;border-top:2px solid var(--ink);font-size:16px;line-height:1.5}
+.fiche{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.f-k{font-weight:800}
+.f-duree{font-stretch:125%;font-weight:900;font-size:18px;text-transform:uppercase}
+.f-prod p+p{margin-top:8px}
+.fiche-col a{color:var(--accent)}
+.medias ul{display:grid;gap:10px;margin:8px 0 0;padding:0;list-style:none}
+.media{display:inline-flex;align-items:flex-start;gap:10px;font-weight:700;text-decoration:none}
+.media .ico{width:18px;height:18px;margin-top:3px}
+.media:hover span{text-decoration:underline}
+.media-par{display:block;margin-left:28px;color:var(--ink-soft);font-size:15px}
+.medias-g{margin-top:10px;color:var(--accent)}
+.cadre{margin-top:32px;padding:14px 0;border-top:2px solid var(--accent);border-bottom:2px solid var(--accent);color:var(--accent);font-stretch:125%;font-weight:800;font-size:15px;letter-spacing:.06em;line-height:1.4;text-transform:uppercase}
+.extraits{display:grid;gap:28px;margin-top:36px}
+.extraits blockquote{font-size:clamp(20px,1.9vw,26px);font-weight:600;line-height:1.35;text-wrap:pretty}
+.extraits figcaption{margin-top:8px;color:var(--ink-soft);font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.tour-txt{font-size:clamp(20px,1.8vw,24px);font-weight:500}
 .show .sec+.sec{padding-top:0}
-.eyebrow{display:flex;align-items:center;gap:18px;margin-bottom:clamp(32px,4vw,52px)}
-.eyebrow h2{color:var(--accent,var(--magenta-deep));font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
-.intro{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(36px,6vw,96px);align-items:start}
-.accroche{margin-bottom:28px;font-size:clamp(24px,2.4vw,32px);line-height:1.3;font-weight:600;text-wrap:pretty}
-.texte{max-width:62ch}
-.intro-photo img{width:100%;height:auto}
-.intro-photo figcaption{margin-top:10px;color:var(--ink-soft);font-size:15px}
-.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;margin-top:clamp(48px,6vw,80px);padding-top:22px;border-top:2px solid var(--ink)}
-.facts>div{display:flex;flex-direction:column;gap:8px}
-.facts dt{color:var(--accent);font-size:14px;font-weight:700;letter-spacing:.12em;line-height:1.3;text-transform:uppercase}
-.facts dd{font-stretch:125%;font-weight:800;font-size:clamp(20px,2vw,26px);line-height:1.15}
-
-.tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:clamp(40px,5vw,64px)}
-.tab{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;min-height:104px;padding:20px 22px;border:1.5px solid var(--ink);background:var(--white);color:var(--ink);font-stretch:125%;font-weight:800;font-size:clamp(16px,1.3vw,19px);line-height:1.15;text-align:left;text-transform:uppercase;cursor:pointer;transition:background-color .25s}
-.tab:hover{background:var(--pink)}
-.tab[aria-selected="true"]{border-color:var(--c);background:var(--c)}
-.tab-go{width:26px;height:26px;flex:none}
-.tab[aria-selected="true"] .tab-go{transform:rotate(90deg)}
-.panel:focus-visible{outline-offset:10px}
-.panel-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(36px,6vw,96px);align-items:start}
-.panel-h{margin-bottom:16px;color:var(--accent,var(--magenta-deep));font-size:14px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
-.panel-h:not(:first-child){margin-top:44px}
-.sheet{border-top:2px solid var(--ink)}
-.sheet>div{display:grid;grid-template-columns:minmax(110px,180px) minmax(0,1fr);gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
-.sheet dt{font-weight:700}
-.crew{display:grid;gap:4px;margin:0;padding:0;list-style:none}
-.crew span{color:var(--ink-soft)}
-.crew span::after{content:" · "}
-.docs{margin:0 0 4px;padding:0;border-top:2px solid var(--ink);list-style:none}
-.docs li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:14px 0;border-bottom:1px solid var(--line)}
-.panel-p{margin-bottom:28px}
-.panel .btn--ink{margin-top:32px}
-.panel-p+.btn--ink{margin-top:0}
-.none{padding:30px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line);font-stretch:125%;font-weight:800;font-size:clamp(22px,2.4vw,30px);line-height:1.1;text-transform:uppercase}
-.panel-note{margin-top:24px;color:var(--ink-soft)}
-
-.back-row{padding-bottom:clamp(40px,5vw,64px)}
-.next{display:block;padding:clamp(56px,7vw,104px) 0;background:var(--c);color:var(--ink);text-decoration:none;--focus:var(--ink)}
+.next{display:block;padding:clamp(52px,6.6vw,100px) 0;background:var(--c);color:var(--ink);text-decoration:none;--focus:var(--ink)}
 .next:focus-visible{outline-offset:-8px}
 .next-in{display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
-.next-txt{display:flex;flex:1;flex-direction:column;gap:16px;min-width:0}
-.next-title{display:block;font-size:clamp(40px,7vw,104px)}
-.next-go{width:clamp(44px,5vw,72px);height:clamp(44px,5vw,72px);flex:none}
-.next:hover .next-title{text-decoration:underline;text-decoration-thickness:.07em;text-underline-offset:.08em}
+.next-t{flex:1;min-width:0;font-size:clamp(36px,6.4vw,96px)}
+.next-t span{display:block}
+.next-go{width:clamp(44px,5vw,72px);height:clamp(44px,5vw,72px);flex:none;transition:transform .3s}
+.next:hover .next-go{transform:translateX(8px)}
+
+/* la compagnie, les actions, les formulaires */
+.annees{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:0 clamp(20px,3vw,40px);margin:0;padding:0;list-style:none}
+.annees li{display:flex;flex-direction:column;gap:6px;padding:18px 0 24px;border-top:2px solid var(--magenta)}
+.an{color:var(--magenta);font-size:clamp(40px,4.2vw,62px)}
+.an-t{font-weight:700;font-size:18px;line-height:1.3}
+a.an-t{text-decoration:none}
+a.an-t:hover{color:var(--magenta-deep);text-decoration:underline}
+.act{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(36px,6vw,96px);align-items:start}
+.act-photo{position:sticky;top:calc(var(--head) + 24px)}
+.act-photo .duo{aspect-ratio:4/5}
+.act-photo:hover .duo{background:var(--magenta-deep)}
+.cr{margin-top:10px;color:var(--ink-soft);font-size:14px}
+.contact{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(36px,6vw,96px);align-items:start}
+.etroit{max-width:760px}
+.form{display:grid;gap:22px;max-width:640px}
+.champ{display:grid;gap:8px}
+.champ label,.calc label{font-size:14px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.champ input,.champ textarea,.calc input{width:100%;min-height:52px;padding:12px 16px;border:2px solid var(--ink);border-radius:0;background:#fff;font-size:18px}
+.champ textarea{min-height:170px;resize:vertical}
+.form input:focus-visible,.form textarea:focus-visible{outline:3px solid var(--magenta);outline-offset:2px}
+.case{display:flex;align-items:flex-start;gap:12px;line-height:1.4}
+.case input{width:22px;height:22px;margin:1px 0 0;flex:none;accent-color:var(--magenta)}
+.case a{color:var(--magenta-deep)}
+.calc{display:flex;align-items:center;gap:14px}
+.calc input{width:76px}
+.form .btn{justify-self:start}
+.coord{padding:clamp(24px,3vw,40px);background:var(--magenta);color:#fff;--focus:#fff}
+.coord-nom{margin-bottom:12px;font-stretch:125%;font-weight:900;font-size:clamp(22px,2.2vw,30px);line-height:1.05;text-transform:uppercase}
+.coord p+p{margin-top:12px}
+
+/* le pied de page */
+.pied{padding:clamp(56px,7vw,96px) 0 32px;background:var(--magenta-deep);color:#fff;--focus:#fff;--sep:#fff}
+.pied-grille{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,4fr) minmax(0,5fr);gap:40px clamp(32px,4vw,64px);align-items:start}
+.pied-logo{display:block;width:clamp(130px,12vw,176px);color:#fff}
+.pied-logo svg{width:100%;height:auto}
+.pied-nom{margin-bottom:10px;font-stretch:125%;font-weight:900;font-size:clamp(20px,1.8vw,24px);line-height:1.1;text-transform:uppercase}
+.pied-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin-top:22px}
+.pied .btn{min-height:46px;padding:0 22px}
+.pied-fb{font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.pied-part{font-size:16px;line-height:1.6}
+.pied .sep{margin:clamp(40px,5vw,64px) 0 18px}
+.pied-bas{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 32px;font-size:14px}
+.pied-legal,.pied-ll{display:flex;flex-wrap:wrap;gap:4px 22px}
 
 .rv.is-wait{opacity:0;transform:translateY(18px)}
 .rv.is-wait.is-in{opacity:1;transform:none;transition:opacity .8s ease,transform .8s ease}
+.intro.m05-intro .intro-indice{opacity:1}
 
-@media (max-width:1100px){
-  .dates,.dates--show,.agenda,.month{display:block}
-  .date{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"when when" "what what" "where where" "link link";gap:10px 16px;padding:20px 0}
-  .date--show{grid-template-areas:"when where" "what what" "link link"}
-  .d-when{grid-area:when}.d-what{grid-area:what}.d-where{grid-area:where}.d-link{grid-area:link;justify-self:start}
-  .d-when time{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
-  .d-where{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 14px}
-  .d-link:empty{display:none}
-  .cast{grid-template-columns:repeat(3,minmax(0,1fr))}
-}
-@media (max-width:900px){
-  .doors-grid,.tabs{grid-template-columns:1fr}
-  .doors-grid{row-gap:16px}
-  .door{display:flex;flex-direction:column;grid-row:auto}
-  .door-go,.door--info .btn{align-self:flex-start}
-  .tab{min-height:0;align-items:center}
-  .intro,.panel-grid,.cie,.contact{grid-template-columns:1fr}
-  .facts{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:32px}
-  .foot-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-  .foot-logo{grid-column:1/-1}
-  .cast{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media (max-width:860px){
-  :root{--head:64px}
-  .brand-mark{width:60px}
-  .brand-word{font-size:21px}
-  .menu-btn{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border:1.5px solid var(--white);border-radius:999px;background:none;color:var(--white);font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
-  .nav{position:absolute;top:100%;left:0;right:0;display:none;padding:8px var(--gut) 28px;border-top:1px solid rgba(255,255,255,.35);background:var(--magenta-deep);box-shadow:0 18px 32px rgba(26,16,22,.25)}
+@media (max-width:1279.98px){
+  .menu-btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 18px;border:1.5px solid #fff;border-radius:999px;background:none;color:#fff;font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+  .menu-btn .ico{width:20px;height:20px}
+  .menu-btn[aria-expanded="true"]{background:#fff;color:var(--magenta-deep)}
+  .nav{position:absolute;top:100%;left:0;right:0;display:none;max-height:calc(100svh - var(--head));overflow:auto;padding:8px var(--gut) 28px;border-top:1px solid rgba(255,255,255,.35);background:var(--magenta-deep);box-shadow:0 18px 32px rgba(26,16,22,.25)}
   .nav.is-open{display:block}
-  .nav ul{flex-direction:column;gap:0}
-  .nav a{padding:16px 0;border-bottom:1px solid rgba(255,255,255,.3);font-stretch:125%;font-weight:800;font-size:24px;letter-spacing:0}
+  .nav ul{flex-direction:column;gap:0;max-width:var(--max);margin-inline:auto}
+  .nav a{padding:15px 0;border-bottom:1px solid rgba(255,255,255,.3);font-stretch:125%;font-weight:800;font-size:clamp(20px,4.6vw,28px);letter-spacing:0}
   .nav a:hover,.nav a[aria-current="page"]{border-bottom-color:rgba(255,255,255,.3);text-decoration:underline;text-underline-offset:.25em}
   .nav a[aria-current="page"]{text-decoration-thickness:3px}
 }
-@media (max-width:700px){
-  .cards{grid-template-columns:minmax(0,1fr)}
-  .hero-logo{width:min(76vw,calc((100svh - var(--head) - 360px) * 1.336))}
-  .sec-head,.page-head-in{grid-template-columns:minmax(0,1fr)}
-  .sec-aside{padding-bottom:0}
-  .page-meta{margin-top:18px;padding-bottom:0;text-align:left}
+@media (max-width:1100px){
+  .ag{grid-template-columns:minmax(0,1fr)}
+  .ag>.ag-carte,.ag>.liste{grid-column:1;grid-row:auto}
+  .ag>.ag-carte{position:static;width:100%;max-width:680px}
 }
-@media (max-width:520px){
-  .hero-cta{flex-direction:column;align-self:stretch;align-items:stretch;max-width:340px;margin-inline:auto;width:100%}
-  .facts,.stats,.foot-grid,.cast{grid-template-columns:minmax(0,1fr)}
-  .facts{row-gap:22px}
-  .btn{padding:0 22px}
-  .sheet>div{grid-template-columns:minmax(0,1fr);gap:4px}
+@media (max-width:980px){
+  .aff-grille{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-template-areas:"tete" "carte" "liste"}
+  .aff-carte{margin:8px 0 12px}
+  .sp,.act,.contact,.cie-acc{grid-template-columns:minmax(0,1fr)}
+  .act-photo{position:static;max-width:560px}
+  .pied-grille{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .pied-logo{grid-column:1/-1}
+}
+@media (max-width:860px){
+  :root{--head:64px}
+  .brand-mark{width:54px}
+  .brand-word{font-size:20px}
+}
+@media (max-width:760px){
+  .portes ul{grid-template-columns:minmax(0,1fr)}
+  .porte{min-height:0;align-items:center;padding:22px var(--gut)}
+  .portes li+li .porte{border-left:0}
+  .vgs{grid-template-columns:minmax(0,1fr)}
+  .bd-b-t{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .bd-b{padding:16px 0 12px}
+  .r{grid-template-columns:minmax(0,1fr);gap:8px}
+  .r-when{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+  .pied-grille{grid-template-columns:minmax(0,1fr)}
+  .sh-credit{flex-basis:100%;margin-left:0}
 }
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{transition:none!important;animation:none!important}
+  *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
   .rv.is-wait{opacity:1;transform:none}
+  .bd-pause{display:none}
+  .bd-b[aria-current] .bd-b-l span{transform:none}
 }
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Aller au contenu</a>
 <svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
-  <symbol id="i-arm" viewBox="0 0 220 40"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d="M2 28C30 28 40 12 66 12S98 30 124 30S152 16 170 13C186 10 198 18 196 27C194 34 184 35 181 29C179 25 183 21 187 23"/></symbol>
+  <symbol id="i-vague" viewBox="0 0 400 26" preserveAspectRatio="none"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke" d="M0 15C40 5 80 5 120 14S200 25 240 14 320 3 360 12 396 16 400 14"/></symbol>
+  <symbol id="i-boucle" viewBox="0 0 46 26"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d="M0 14C9 14 16 9 24 6.5C33 4 42 8 40.5 16C39.3 22 31 23 29 18.5C27.6 15.3 30.5 12.5 33.5 14"/></symbol>
   <symbol id="i-go" viewBox="0 0 32 32"><path fill="none" stroke="currentColor" stroke-width="2.6" d="M3 16h24M17 6l10 10-10 10"/></symbol>
   <symbol id="i-ext" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" d="M6 18 17.5 6.5M8 6h10v10"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15l12.5-7.5z"/></symbol>
+  <symbol id="i-son" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M4 9v6M9 5v14M14 8v8M19 10v4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path fill="currentColor" d="M6 4h4v16H6zM14 4h4v16h-4z"/></symbol>
+  <symbol id="i-lecture" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5v15l12.5-7.5z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M3 7c4-2 6 2 9 0s5-2 9 0M3 12h18M3 17c4 2 6-2 9 0s5 2 9 0"/></symbol>
 </svg>
 <header class="site-head">
   <div class="wrap head-row">
-    <a class="brand" href="#/" aria-label="Compagnie Crescite, accueil"><span class="brand-mark" id="brand-mark" aria-hidden="true"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
-    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><span class="menu-label">Menu</span></button>
-    <nav class="nav" id="nav" aria-label="Navigation principale">
-      <ul>
-        <li><a href="#/spectacles" data-nav="spectacles">Spectacles</a></li>
-        <li><a href="#/agenda" data-nav="agenda">Agenda</a></li>
-        <li><a href="#/compagnie" data-nav="compagnie">La compagnie</a></li>
-        <li><a href="#/contact" data-nav="contact">Contact</a></li>
-      </ul>
-    </nav>
+    <a class="brand" id="brand" href="#/"><span class="brand-mark" id="brand-mark" aria-hidden="true"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-menu"></use></svg><span class="menu-label"></span></button>
+    <nav class="nav" id="nav"><ul></ul></nav>
   </div>
 </header>
 <main id="main" tabindex="-1"></main>
-<footer class="site-foot" id="pied"></footer>
+<footer class="pied" id="pied"></footer>
 <script>const D = /*__DATA__*/null;</script>
 <script>
 (() => {
@@ -309,251 +419,420 @@ a.d-title::after{content:"";position:absolute;inset:0}
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const C = D.company, SHOWS = D.shows, BY = Object.fromEntries(SHOWS.map(s => [s.slug, s]));
+  const S = D.site, L = S.libelles, SHOWS = D.shows, BY = Object.fromEntries(SHOWS.map(s => [s.slug, s]));
+  const MENU = Object.fromEntries(S.menu.map(m => [m.id, m]));
+  const SAISON0 = S.saisons[0];
   const main = $('#main');
+  const bouge = () => CARTE.mouvement();
 
-  const keep = {
-    get: k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } },
-    set: (k, v) => { try { sessionStorage.setItem(k, v); } catch (e) { return null; } }
-  };
-  const DOORS = D.doors.map(d => d.key);
-  let door = DOORS.includes(keep.get('crescite-porte')) ? keep.get('crescite-porte') : DOORS[0];
-  const setDoor = k => { if (DOORS.includes(k)) { door = k; keep.set('crescite-porte', k); } };
-  const DOOR_HREF = { voir: '#/agenda', programmer: '#/spectacles', etablissement: '#/spectacles' };
+  const use = (id, cls = 'ico') => `<svg class="${cls}" aria-hidden="true" focusable="false"><use href="#${id}"></use></svg>`;
+  const sep = () => `<div class="sep" aria-hidden="true"><svg class="sep-vague" focusable="false"><use href="#i-vague"></use></svg><svg class="sep-boucle" focusable="false"><use href="#i-boucle"></use></svg></div>`;
+  const ext = (href, html, cls = 'ext') => `<a class="${cls}" href="${esc(href)}" target="_blank" rel="noopener">${html}${use('i-ext')}<span class="sr"> (nouvel onglet)</span></a>`;
+  const titreTxt = t => esc(t).replace(/ – /g, '&nbsp;– ');
+  const bloc = b => /^\s*<(h[1-6]|ul|ol|p|div|table|blockquote|figure)\b/i.test(b) ? b : `<p>${b}</p>`;
 
-  const TBD = '<span class="tbd">à fournir</span>';
-  const use = (id, cls) => `<svg class="${cls}" aria-hidden="true" focusable="false"><use href="#${id}"></use></svg>`;
-  const arm = () => use('i-arm', 'arm');
-  const title = t => esc(t).replace(/ – /g, '&nbsp;– ');
-  const place = d => d.commune + (d.dep ? ` (${d.dep})` : '');
-  const when = d => (d.precision === 'day' && d.iso === d.fin ? `${d.joursemLong} ` : '') + d.label;
-  const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
-  const NB = ['zéro', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix'];
-  const words = n => NB[n] || String(n);
-  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
-  const ext = (href, text) => `<a class="ext" href="${esc(href)}" target="_blank" rel="noopener">${text}${use('i-ext', 'ico')}<span class="sr"> (nouvel onglet)</span></a>`;
-  const mail = (subject, s) => `mailto:${C.email}?subject=${encodeURIComponent(`${subject} : ${s.titre}`)}`;
-
-  const lum = h => {
-    const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
-    return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
-  };
+  // une couleur d'accent lisible sur blanc, tirée de la couleur du spectacle
+  const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
   const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
-  const deep = hex => {
+  const fonce = hex => {
     let rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)), c = hex;
-    while (ratio(c, '#ffffff') < 4.6 && rgb.some(Boolean)) {
-      rgb = rgb.map(v => Math.floor(v * .92));
-      c = '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('');
-    }
+    while (ratio(c, '#ffffff') < 4.6 && rgb.some(Boolean)) { rgb = rgb.map(v => Math.floor(v * .92)); c = '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join(''); }
     return c;
   };
 
-  function dateRow(d, full) {
-    const month = d.precision === 'month';
-    const multi = !month && (d.precision !== 'day' || d.iso !== d.fin);
-    const big = month ? d.moisLong : `${d.jour} ${d.mois}`;
-    const small = month ? `${d.annee} · jour à préciser` : `${d.joursemLong} · ${d.annee}`;
-    const detail = [multi ? d.label : '', d.lieu].filter(Boolean).join(' · ');
-    const head = full ? `<a class="d-title" href="#/spectacle/${d.slug}">${title(d.titre)}</a>` : `<span class="d-title">${esc(place(d))}</span>`;
-    const tag = `<span class="tag${d.public === 'Scolaire' ? ' tag--sco' : ''}">${esc(d.public)}</span>`;
-    return `<li class="date${full ? '' : ' date--show'}">`
-      + `<p class="d-when"><time datetime="${d.iso}"><span class="d-big">${esc(big)}</span><span class="d-small">${esc(small)}</span></time></p>`
-      + `<div class="d-what">${head}${detail ? `<span class="d-detail">${esc(detail)}</span>` : ''}</div>`
-      + `<div class="d-where">${full ? `<span class="d-place">${esc(place(d))}</span>` : ''}${tag}</div>`
-      + `<p class="d-link">${d.lien ? ext(d.lien, 'Infos et réservation') : ''}</p></li>`;
+  /* ---------- les lignes de date, composées sans rien réécrire ---------- */
+  const RE_MOIS = /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) (\d{4})\s*$/;
+  function decoupe(t) {
+    const m = String(t).match(RE_MOIS);
+    if (!m) return { grand: t, petit: '', mois: t };
+    const jour = t.slice(0, m.index).trim(), mois = `${m[1]} ${m[2]}`;
+    return jour ? { grand: jour, petit: mois, mois } : { grand: m[1], petit: m[2], mois };
+  }
+  const details = d => {
+    const avecLien = d.details.some(x => x.lien);
+    return d.details.map((x, i) => { const href = x.lien || (!avecLien && i === 0 ? d.lien : null); return `<p class="r-det">${href ? ext(href, esc(x.texte)) : esc(x.texte)}</p>`; }).join('');
+  };
+  function rangee(d, avecTitre = true) {
+    const k = decoupe(d.ligneDate);
+    const lieu = !d.details.length && d.lien ? ext(d.lien, esc(d.ligneLieu)) : esc(d.ligneLieu);
+    return `<li class="r" data-l="${d.l ?? ''}"><p class="r-when"><span class="r-big">${esc(k.grand)}</span>${k.petit ? `<span class="r-small">${esc(k.petit)}</span>` : ''}</p>`
+      + `<div class="r-what">${avecTitre ? `<a class="r-titre" href="#/spectacle/${esc(d.slug)}">${titreTxt(d.titre)}</a>` : ''}<p class="r-lieu">${lieu}</p>${details(d)}</div></li>`;
+  }
+  function rangeeSaison(d) {
+    const i = d.ligne.indexOf(' — '), quand = i > 0 ? d.ligne.slice(0, i) : d.ligne, ou = i > 0 ? d.ligne.slice(i + 3) : '';
+    const q = !d.details.length && d.lien ? ext(d.lien, esc(quand)) : esc(quand);
+    return `<li class="r r--s${d.etat && /annul/i.test(d.etat) ? ' r--annule' : ''}" data-l="${d.l ?? ''}"><p class="r-when"><span class="r-big">${q}</span>${d.etat ? `<span class="tag">${esc(d.etat)}</span>` : ''}</p>`
+      + `<div class="r-what">${ou ? `<p class="r-lieu">${esc(ou)}</p>` : ''}${details(d)}</div></li>`;
   }
 
-  function card(s) {
-    const n = s.prochaine;
-    return `<article class="card rv">
-      <div class="duo card-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale ?? 50}% 40%"></div>
-      <h2 class="card-title disp" data-fit="cards"><a href="#/spectacle/${s.slug}">${title(s.titre)}</a></h2>
-      <p class="card-sub">${esc(s.sousTitre)}</p>
-      <p class="card-next"><span class="lbl">Prochaine date</span><span>${n ? esc(`${when(n)} · ${place(n)}`) : 'Aucune date annoncée pour l’instant'}</span></p>
+  /* ---------- la carte-affiche : des bras blancs épais, enroulés au bout, qui poussent depuis Rouen ---------- */
+  const R = CARTE.rouen, [VX, VY, VW, VH] = CARTE.viewBox.split(/\s+/).map(Number), E = Math.max(VW, VH) / 800;
+  const loin = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6;
+  const courbeDe = x => (x.xy[0] >= R[0] ? -.24 : .24);
+  const quand = d => d.ligneDate || String(d.ligne || '').split(' — ')[0];
+  const etiquette = x => `${CARTE.nom(x)}${x.dates && x.dates.length ? ' : ' + x.dates.map(quand).join(' ; ') : ''}`;
+  const REG = {};
+  let nAff = 0;
+  function affiche({ lieux = [], passe = [], titre = '', grand = false } = {}) {
+    const id = 'aff' + (++nAff), f = grand ? 1.3 : 1;
+    const bras = lieux.filter(loin), ps = passe.filter(loin);
+    const tete = lieux.find(x => !loin(x)) || (lieux.length ? null : passe.find(x => !loin(x)));
+    const actifs = lieux.length ? lieux : ps.length <= 40 ? [...ps, ...(tete ? [tete] : [])] : [];
+    const clic = new Set(actifs.map(x => x.l));
+    REG[id] = new Map(actifs.map(x => [x.l, x]));
+    const larg = x => (5.5 + Math.sqrt(x.n || 1) * 2.4) * E * f;
+    const tps = bras.map((x, i) => ({ d: .55 + CARTE.longueur(x.xy, { courbe: courbeDe(x) }) / 620, t: .15 + i * .06 }));
+    const fin = Math.max(1.4, ...tps.map(a => a.t + a.d + .8));
+    const lieu = x => `<g class="carte-lieu aff-lieu" data-l="${x.l}" role="button" tabindex="0" aria-label="${esc(etiquette(x))}"><circle class="aff-cible" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(12 * E).toFixed(1)}"/></g>`;
+    const masque = (mid, contenu) => `<mask id="${mid}" maskUnits="userSpaceOnUse" x="${VX}" y="${VY}" width="${VW}" height="${VH}">${contenu}</mask>`;
+    const mt = (x, w, d, t) => `<path class="aff-mt" d="${CARTE.trait(x.xy, { courbe: courbeDe(x) })}" pathLength="1" fill="none" stroke="#fff" stroke-width="${w.toFixed(1)}" style="--d:${d.toFixed(2)}s;--t:${t.toFixed(2)}s"/>`;
+    const noms = bras.length ? bras : ps.length <= 40 ? ps : [];
+    const defs = (ps.length ? masque(`${id}-p`, ps.map((x, i) => mt(x, 6 * E, .6 + CARTE.longueur(x.xy, { courbe: courbeDe(x) }) / 900, i * .012)).join('')) : '')
+      + bras.map((x, i) => masque(`${id}-${i}`, mt(x, larg(x) + 10 * E, tps[i].d, tps[i].t))).join('');
+    const svg = `<svg class="aff-svg${bouge() ? ' attend' : ' vit'}" viewBox="${CARTE.viewBox}" data-fin="${fin.toFixed(2)}" style="--ox:${(R[0] - VX).toFixed(1)}px;--oy:${(R[1] - VY).toFixed(1)}px" role="${clic.size ? 'group' : 'img'}" aria-label="${esc(titre)}">
+      <defs>${defs}</defs>
+      <path class="aff-voisin" d="${CARTE.fond.belgique}"/><path class="aff-voisin" d="${CARTE.fond.luxembourg}"/><path class="aff-pays" d="${CARTE.fond.pays}"/>
+      ${ps.length ? `<g class="aff-passes" mask="url(#${id}-p)">${ps.map(x => `<path class="aff-passe" data-l="${x.l}" d="${CARTE.bras(x.xy, { w0: 2.6 * E, w1: .7 * E, courbe: courbeDe(x) })}"/>`).join('')}</g><g>${ps.map(x => `<circle class="aff-pt" data-l="${x.l}" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(2.3 * E).toFixed(2)}"/>`).join('')}</g>` : ''}
+      ${bras.map((x, i) => `<g class="aff-t" data-l="${x.l}" style="--i:${i}"><path class="aff-b" mask="url(#${id}-${i})" d="${CARTE.bras(x.xy, { w0: larg(x), w1: 1.7 * E * f, courbe: courbeDe(x) })}"/><path class="aff-s" data-l="${x.l}" pathLength="1" d="${CARTE.bout(x.xy, { r: 5.2 * E * f, tours: 1.3, courbe: courbeDe(x) })}" stroke-width="${(1.8 * E * f).toFixed(2)}" style="--t:${(tps[i].t + tps[i].d * .9).toFixed(2)}s"/>${clic.has(x.l) ? lieu(x) : ''}</g>`).join('')}
+      ${bras.length ? '' : ps.filter(x => clic.has(x.l)).map(lieu).join('')}
+      <g class="aff-tete"${tete ? ` data-l="${tete.l}"` : ''}><circle class="aff-anneau" cx="${R[0]}" cy="${R[1]}" r="${(14 * E * f).toFixed(1)}"/><circle class="aff-rouen" cx="${R[0]}" cy="${R[1]}" r="${(8.5 * E * f).toFixed(1)}"/>${tete && clic.has(tete.l) ? lieu(tete) : ''}</g>
+      <g><text class="aff-rouen-nom" x="${R[0]}" y="${R[1]}">Rouen</text>${noms.map((x, i) => `<text class="aff-nom" data-l="${x.l}" data-x="${x.xy[0]}" data-y="${x.xy[1]}" data-n="${x.n || 1}" x="${x.xy[0]}" y="${x.xy[1]}" style="--tn:${bras.length ? (tps[i].t + tps[i].d).toFixed(2) : '.8'}s">${esc(x.c)}</text>`).join('')}</g>
+    </svg>`;
+    return `<div class="aff${grand ? ' aff--grand' : ''}" id="${id}">${svg}<div class="aff-tip" hidden></div></div>`;
+  }
+
+  // les noms des communes : posés là où il y a de la place, à une taille lisible quelle que soit la largeur
+  function placer(wrap) {
+    const svg = wrap && $('svg', wrap);
+    if (!svg) return;
+    const w = svg.getBoundingClientRect().width;
+    if (!w) return;
+    const k = VW / w, f = wrap.classList.contains('aff--grand') ? 1.3 : 1;
+    const fs = (f > 1 ? 12.5 : 11.5) * k, pad = 2.5 * k, ecart = 3 * k, rt = 15 * E * f;
+    const boites = [{ x0: R[0] - rt, x1: R[0] + rt, y0: R[1] - rt, y1: R[1] + rt }];
+    const libre = (b, l) => b.x0 >= VX + 2 && b.x1 <= VX + VW - 2 && b.y0 >= VY + 2 && b.y1 <= VY + VH - 2
+      && !boites.some(o => o.l !== l && b.x0 < o.x1 + pad && b.x1 > o.x0 - pad && b.y0 < o.y1 + pad && b.y1 > o.y0 - pad);
+    const spi = new Map();
+    $$('.aff-s', svg).forEach(s => { const b = s.getBBox(), o = { l: +s.dataset.l, x0: b.x, x1: b.x + b.width, y0: b.y, y1: b.y + b.height }; spi.set(o.l, o); boites.push(o); });
+    const essayer = (t, cands, l) => {
+      const tw = t.getComputedTextLength(), fz = +t.getAttribute('font-size');
+      for (const [tx, ty, a] of cands) {
+        const x0 = a === 'start' ? tx : a === 'end' ? tx - tw : tx - tw / 2, b = { x0, x1: x0 + tw, y0: ty - fz * .8, y1: ty + fz * .2 };
+        if (libre(b, l)) { t.setAttribute('x', tx.toFixed(1)); t.setAttribute('y', ty.toFixed(1)); t.setAttribute('text-anchor', a); boites.push(b); return true; }
+      }
+      return false;
+    };
+    const rn = $('.aff-rouen-nom', svg), rf = fs * 1.12;
+    rn.setAttribute('font-size', rf.toFixed(2)); rn.setAttribute('stroke-width', (3.4 * k).toFixed(2));
+    const rc = [[R[0] - rt - ecart, R[1] + rf * .35, 'end'], [R[0] + rt * .2, R[1] - rt - ecart, 'start'], [R[0] - rt * .2, R[1] - rt - ecart, 'end'], [R[0] + rt + ecart, R[1] + rf * .35, 'start'], [R[0], R[1] + rt + rf, 'middle']];
+    if (!essayer(rn, rc, -1)) { rn.setAttribute('x', rc[0][0].toFixed(1)); rn.setAttribute('y', rc[0][1].toFixed(1)); rn.setAttribute('text-anchor', 'end'); }
+    const dist = t => Math.hypot(+t.dataset.x - R[0], +t.dataset.y - R[1]);
+    $$('.aff-nom', svg).sort((a, b) => (+b.dataset.n - +a.dataset.n) || (dist(b) - dist(a))).forEach(t => {
+      t.style.display = '';
+      t.setAttribute('font-size', fs.toFixed(2)); t.setAttribute('stroke-width', (3 * k).toFixed(2));
+      const l = +t.dataset.l, x = +t.dataset.x, y = +t.dataset.y, s = spi.get(l) || { x0: x - 3 * E, x1: x + 3 * E, y0: y - 3 * E, y1: y + 3 * E };
+      if (!essayer(t, [[s.x1 + ecart, y + fs * .35, 'start'], [s.x0 - ecart, y + fs * .35, 'end'], [x, s.y0 - ecart, 'middle'], [x, s.y1 + ecart + fs * .8, 'middle']], l)) t.style.display = 'none';
+    });
+  }
+
+  // la carte vit : elle pousse quand on la voit, s'éclaire au survol, choisit au clic
+  function initAffiche(wrap, { lignes, survol, choix } = {}) {
+    if (!wrap) return null;
+    const svg = $('svg', wrap), tip = $('.aff-tip', wrap), reg = REG[wrap.id] || new Map();
+    placer(wrap);
+    if (svg.classList.contains('attend')) {
+      const go = () => { svg.classList.remove('attend'); svg.classList.add('pousse'); setTimeout(() => svg.classList.add('vit'), +svg.dataset.fin * 1000); };
+      if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(es => { if (es.some(en => en.isIntersecting)) { io.disconnect(); go(); } }, { threshold: .2 });
+        io.observe(svg);
+      } else go();
+    }
+    let fixe = null;
+    const montre = l => {
+      const on = l != null && reg.has(l);
+      svg.classList.toggle('a-survol', on);
+      $$('[data-l]', svg).forEach(n => n.classList.toggle('on', on && +n.dataset.l === l));
+      if (!on) { tip.hidden = true; return; }
+      const x = reg.get(l);
+      tip.innerHTML = `<p class="tip-nom">${esc(CARTE.nom(x))}</p>${lignes ? `<ul>${lignes(x)}</ul>` : ''}`;
+      tip.hidden = false;
+      const wr = wrap.getBoundingClientRect(), sr = svg.getBoundingClientRect();
+      const X = sr.left - wr.left + (x.xy[0] - VX) / VW * sr.width, Y = sr.top - wr.top + (x.xy[1] - VY) / VH * sr.height;
+      const tw = tip.offsetWidth, th = tip.offsetHeight;
+      let lx = X + 18;
+      if (lx + tw > wr.width - 4) lx = X - 18 - tw;
+      lx = Math.max(4, Math.min(lx, wr.width - tw - 4));
+      tip.style.left = `${lx}px`;
+      tip.style.top = `${Math.max(4, Math.min(Y - th / 2, wr.height - th - 4))}px`;
+    };
+    CARTE.lier(svg, {
+      survol: l => { montre(l ?? fixe); if (survol) survol(l ?? fixe); },
+      choix: l => { fixe = fixe === l ? null : l; montre(fixe); if (survol) survol(fixe); if (choix) choix(fixe); }
+    });
+    return {
+      montre: l => montre(l ?? fixe),
+      choisir: l => { fixe = l; montre(l); if (survol) survol(l); },
+      liberer: () => { fixe = null; montre(null); if (survol) survol(null); }
+    };
+  }
+  const plus = (arr, n, f) => arr.slice(0, n).map(f).join('') + (arr.length > n ? '<li aria-hidden="true">…</li>' : '');
+  const lignesAvenir = x => plus(x.dates, 5, d => `<li><b>${esc(d.ligneDate)}</b>${titreTxt(d.titre)}</li>`);
+  const lignesSaison = x => plus(x.dates, 5, d => `<li><b>${esc(quand(d))}</b>${d.spectacle ? titreTxt(d.spectacle) : ''}</li>`);
+  function relier(liste, ctl) {
+    if (!liste || !ctl) return;
+    $$('[data-l]', liste).forEach(r => {
+      if (r.dataset.l === '') return;
+      const l = +r.dataset.l;
+      r.addEventListener('mouseenter', () => ctl.montre(l)); r.addEventListener('mouseleave', () => ctl.montre(null));
+      r.addEventListener('focusin', () => ctl.montre(l)); r.addEventListener('focusout', () => ctl.montre(null));
+    });
+  }
+  function eclairer(liste, l) {
+    if (!liste) return;
+    liste.classList.toggle('a-survol', l != null);
+    $$('[data-l]', liste).forEach(r => r.classList.toggle('lit', l != null && r.dataset.l !== '' && +r.dataset.l === l));
+  }
+
+  /* ---------- les vues ---------- */
+  const entete = (h1, avant = '') => `<section class="ph" aria-labelledby="h-page"><div class="wrap">${avant || sep()}<h1 class="ph-titre disp" id="h-page" tabindex="-1" data-fit="page">${esc(h1)}</h1></div></section>`;
+
+  function bandeau() {
+    const B = S.diaporama;
+    return `<section class="bd${INTRO.ouverte() ? ' attend' : ''}" aria-labelledby="h-accueil" style="--n:${B.length}">
+      <div class="wrap bd-haut"><h1 class="bd-sur" id="h-accueil" tabindex="-1">${esc(L.enTournee)}</h1></div>
+      <div class="bd-slides">${B.map((x, i) => `<article class="bd-slide${i ? '' : ' is-on'}"${i ? ' aria-hidden="true" inert' : ''}>
+        <div class="bd-photo"><img src="${D.photos[x.slug] || ''}" alt="" style="object-position:${(BY[x.slug] || {}).focale ?? 50}% 35%"></div>
+        <div class="wrap bd-txt">
+          <h2 class="bd-titre disp" id="bd-t${i}" data-fit="bd">${x.titre.map(t => `<span class="bd-l"><span>${esc(t)}</span></span>`).join('')}</h2>
+          <p class="bd-pied"><a class="btn" href="${esc(x.href)}" aria-describedby="bd-t${i}">${esc(x.bouton)}${use('i-go')}</a>${x.credit ? `<span class="bd-credit">${esc(x.credit)}</span>` : ''}</p>
+        </div></article>`).join('')}</div>
+      <div class="wrap bd-bas">
+        <ol class="bd-sel">${B.map((x, i) => `<li><button type="button" class="bd-b"${i ? '' : ' aria-current="true"'}><span class="bd-b-t">${x.titre.map(t => `<span>${esc(t)}</span>`).join(' ')}</span><span class="bd-b-l"><span></span></span></button></li>`).join('')}</ol>
+        <button type="button" class="bd-pause" aria-pressed="false" aria-label="Pause">${use('i-pause', 'ico i-p')}${use('i-lecture', 'ico i-l')}</button>
+      </div>
+    </section>`;
+  }
+  let bdCtl = null;
+  function initBandeau(root) {
+    if (!root) return null;
+    const slides = $$('.bd-slide', root), btns = $$('.bd-b', root), pause = $('.bd-pause', root), bas = $('.bd-bas', root);
+    let i = 0, arret = !bouge(), dessus = false;
+    const etat = () => root.classList.toggle('arret', arret || dessus || root.classList.contains('attend'));
+    const aller = j => {
+      i = (j + slides.length) % slides.length;
+      slides.forEach((s, k) => { const on = k === i; s.classList.toggle('is-on', on); s.inert = !on; if (on) s.removeAttribute('aria-hidden'); else s.setAttribute('aria-hidden', 'true'); });
+      btns.forEach((b, k) => { if (k === i) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+    };
+    btns.forEach((b, k) => b.addEventListener('click', () => {
+      if (k === i) { const f = $('.bd-b-l span', b); f.style.animation = 'none'; void f.offsetWidth; f.style.animation = ''; }
+      aller(k);
+    }));
+    root.addEventListener('animationend', e => { if (e.animationName === 'plein' && e.target.closest('.bd-b') === btns[i]) aller(i + 1); });
+    pause.addEventListener('click', () => { arret = !arret; pause.setAttribute('aria-pressed', String(arret)); etat(); });
+    if (arret) pause.setAttribute('aria-pressed', 'true');
+    bas.addEventListener('mouseenter', () => { dessus = true; etat(); });
+    bas.addEventListener('mouseleave', () => { dessus = false; etat(); });
+    root.addEventListener('focusin', e => { if (e.target.closest('.bd-bas, .bd-pied')) { dessus = true; etat(); } });
+    root.addEventListener('focusout', () => { dessus = false; etat(); });
+    etat();
+    return { demarrer() { if (!root.isConnected) return; root.classList.remove('attend'); etat(); } };
+  }
+
+  function pageAccueil() {
+    const C = S.compagnie;
+    return bandeau() + `
+    <div class="portes"><ul>${S.portes.map(p => `<li><a class="porte" href="${esc(p.href)}"><span class="porte-t" data-fit="porte">${esc(p.texte)}</span>${use('i-go')}</a></li>`).join('')}</ul></div>
+    <section class="aff-sec" aria-labelledby="h-aff">
+      <div class="wrap aff-grille">
+        <div class="aff-tete"><p class="lbl aff-sur">${esc(L.actuellementEnTournee)}</p><h2 class="aff-titre disp" id="h-aff" data-fit="aff">${esc(SAISON0.titre)}</h2>${sep()}</div>
+        <div class="aff-carte">${affiche({ lieux: CARTE.aVenir(), titre: SAISON0.titre, grand: true })}</div>
+        <div class="aff-liste">
+          <ol class="prochaines">${D.dates.slice(0, 5).map(d => `<li class="pr" data-l="${d.l ?? ''}"><a href="#/spectacle/${esc(d.slug)}"><span class="pr-date">${esc(d.ligneDate)}</span><span class="pr-lieu">${esc(d.ligneLieu)}</span><span class="pr-titre">${titreTxt(d.titre)}</span></a></li>`).join('')}</ol>
+          <a class="btn" href="${esc(MENU.agenda.href)}">${esc(MENU.agenda.texte)}${use('i-go')}</a>
+        </div>
+      </div>
+    </section>
+    <section class="sec" aria-labelledby="h-cie">
+      <div class="wrap cie-acc">
+        <div>${sep()}<h2 class="sec-titre disp" id="h-cie" data-fit="sec">${esc(C.titre)}</h2></div>
+        <div><p class="lead">${C.paragraphes[0]}</p><a class="btn btn--mag" href="${esc(MENU.compagnie.href)}">${esc(MENU.compagnie.texte)}${use('i-go')}</a></div>
+      </div>
+    </section>
+    <div class="dons"><div class="wrap">${sep()}<p>${S.donateurs}</p></div></div>`;
+  }
+  let filtreAgenda = null;
+  function initAccueil() {
+    bdCtl = initBandeau($('.bd', main));
+    const liste = $('.prochaines', main);
+    const ctl = initAffiche($('.aff', main), {
+      lignes: lignesAvenir, survol: l => eclairer(liste, l),
+      choix: l => { if (l != null) { filtreAgenda = l; location.hash = MENU.agenda.href; } }
+    });
+    relier(liste, ctl);
+  }
+
+  function vignette(s) {
+    const tags = `${s.statut ? `<span class="tag tag--plein">${esc(s.statut)}</span>` : ''}${s.enTournee ? `<span class="tag">${esc(L.enTournee)}</span>` : ''}`;
+    return `<article class="vg rv" style="--c:${s.couleur}">
+      <div class="vg-photo duo"><img src="${D.photos[s.slug]}" alt="" style="object-position:${s.focale ?? 50}% 40%"></div>
+      ${tags ? `<p class="vg-tags">${tags}</p>` : ''}
+      <h2 class="vg-titre disp" data-fit="vg"><a href="#/spectacle/${s.slug}">${titreTxt(s.titre)}</a></h2>
+      ${s.sousTitre ? `<p class="vg-sous">${s.sousTitre}</p>` : ''}${s.creation ? `<p class="vg-crea lbl">${esc(s.creation)}</p>` : ''}
     </article>`;
   }
+  const pageSpectacles = () => entete(MENU.spectacles.texte) + `<section class="sec"><div class="wrap"><div class="vgs">${SHOWS.map(vignette).join('')}</div></div></section>`;
 
-  function pageHead(h, intro, meta) {
-    return `<section class="page-head" aria-labelledby="h-page">
-      <div class="wrap page-head-in">${arm()}<h1 class="page-title disp" id="h-page" data-fit="page" tabindex="-1">${esc(h)}</h1>
-        <p class="page-intro">${intro}</p>${meta ? `<p class="page-meta lbl">${meta}</p>` : ''}</div>
-    </section>`;
-  }
-
-  function home() {
-    return `
-    <section class="hero" aria-labelledby="h-home">
-      <h1 class="hero-logo" id="h-home" tabindex="-1"><span class="sr">${esc(C.nom)}</span><span aria-hidden="true">${D.logo.octopusWord}</span></h1>
-      <p class="hero-intent">${esc(C.intention)}</p>
-      <p class="hero-cta"><a class="btn" href="#/spectacles">Les spectacles</a><a class="btn" href="#/agenda">Les dates</a></p>
-    </section>
-    <section class="doors" aria-labelledby="h-doors">
-      <div class="wrap">
-        <div class="eyebrow rv">${arm()}<h2 id="h-doors">Trois portes d’entrée</h2></div>
-        <div class="doors-grid">${D.doors.map(d => `<a class="door rv" href="${DOOR_HREF[d.key] || '#/spectacles'}" data-door="${esc(d.key)}"><h3 class="door-title">${esc(d.titre)}</h3><p class="door-text">${esc(d.texte)}</p>${use('i-go', 'door-go')}</a>`).join('')}</div>
-      </div>
-    </section>
-    <section class="sec" aria-labelledby="h-next">
-      <div class="wrap">
-        <div class="sec-head rv">${arm()}<h2 class="sec-title sec-title--sm disp" id="h-next" data-fit="sec">Prochaines dates</h2><p class="sec-aside">Saison ${esc(D.saison)} · ${plural(D.dates.length, 'date')}</p></div>
-        <ol class="dates rv">${D.dates.slice(0, 3).map(d => dateRow(d, true)).join('')}</ol>
-        <p class="more rv"><a class="btn btn--ink" href="#/agenda">Tout l’agenda${use('i-go', 'ico')}</a></p>
-      </div>
-    </section>`;
-  }
-
-  function pageShows() {
-    const plays = SHOWS.filter(s => s.annee).length, others = SHOWS.length - plays;
-    const touring = SHOWS.filter(s => s.nbDates).length;
-    return pageHead('Spectacles',
-      `${cap(words(plays))} spectacles du répertoire${others ? ', et les actions culturelles menées autour d’eux' : ''}.`,
-      touring ? `${touring} en tournée · saison ${esc(D.saison)}` : '')
-      + `<section class="sec" aria-label="Le répertoire"><div class="wrap"><div class="cards">${SHOWS.map(card).join('')}</div></div></section>`;
-  }
-
+  const saisonsNav = cur => `<section class="sec sec--rose"><div class="wrap"><nav class="saisons" aria-label="${esc(L.saison)}">${sep()}<ul>${S.saisons.filter(x => x.saison !== cur).map(x => `<li><a href="${esc(x.href)}">${esc(x.titre)}${use('i-go')}</a></li>`).join('')}</ul></nav></div></section>`;
   function pageAgenda() {
-    const ds = D.dates, a = ds[0], z = ds[ds.length - 1];
-    const sco = ds.filter(d => d.public === 'Scolaire').length;
-    const months = [];
-    ds.forEach(d => {
-      const k = d.iso.slice(0, 7);
-      let m = months[months.length - 1];
-      if (!m || m.k !== k) months.push(m = { k, label: `${d.moisLong} ${d.annee}`, list: [] });
-      m.list.push(d);
-    });
-    const intro = a ? `Toutes les dates de la saison ${esc(D.saison)}, de ${esc(a.moisLong)} ${a.annee} à ${esc(z.moisLong)} ${z.annee}, en tout public comme en séance scolaire.` : 'Aucune date annoncée pour l’instant.';
-    return pageHead('Agenda', intro, `${plural(ds.length, 'date')} · ${ds.length - sco} tout public · ${plural(sco, 'scolaire')}`)
-      + `<section class="sec" aria-label="Les dates, mois par mois"><div class="wrap agenda">${months.map(m => `<section class="month rv" aria-labelledby="m-${m.k}"><h2 class="month-h" id="m-${m.k}"><span class="month-name disp">${esc(m.label)}</span><span class="month-n lbl">${plural(m.list.length, 'date')}</span></h2><ol class="dates">${m.list.map(d => dateRow(d, true)).join('')}</ol></section>`).join('')}</div></section>`;
+    const groupes = [];
+    D.dates.forEach(d => { const m = decoupe(d.ligneDate).mois; let g = groupes[groupes.length - 1]; if (!g || g.m !== m) groupes.push(g = { m, l: [] }); g.l.push(d); });
+    return entete(SAISON0.titre) + `<section class="sec"><div class="wrap ag">
+        <div class="ag-carte">${affiche({ lieux: CARTE.aVenir(), titre: SAISON0.titre })}<div class="filtre" hidden></div></div>
+        <div class="liste">${groupes.map((g, i) => `<section class="grp" aria-labelledby="mo-${i}"><h2 class="mois" id="mo-${i}"><span class="disp">${esc(g.m)}</span></h2><ol class="rs">${g.l.map(d => rangee(d)).join('')}</ol></section>`).join('')}</div>
+      </div></section>` + saisonsNav(D.saison);
+  }
+  function pageSaison(id, titre) {
+    const X = D.saisons[id];
+    return entete(titre, `<a class="retour" href="${esc(MENU.agenda.href)}">${use('i-go')}${esc(MENU.agenda.texte)}</a>`) + `<section class="sec"><div class="wrap ag">
+        <div class="ag-carte">${affiche({ lieux: CARTE.saison(id), titre })}<div class="filtre" hidden></div></div>
+        <div class="liste">${X.spectacles.map((g, i) => `<section class="grp sg" aria-labelledby="sg-${i}">
+          <h2 class="sg-titre disp" id="sg-${i}">${g.slug && BY[g.slug] ? `<a href="#/spectacle/${g.slug}">${titreTxt(g.titre)}</a>` : titreTxt(g.titre)}</h2>
+          ${g.sousTitre ? `<p class="sg-sous">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="lbl sg-crea">${esc(g.creation)}</p>` : ''}
+          <ol class="rs">${g.dates.map(rangeeSaison).join('')}</ol></section>`).join('')}</div>
+      </div></section>` + saisonsNav(id);
+  }
+  function initListe(lignes) {
+    const wrap = $('.aff', main), liste = $('.liste', main), boite = $('.filtre', main);
+    if (!wrap || !liste) return null;
+    let ctl = null;
+    const filtrer = l => {
+      const garde = r => l == null || (r.dataset.l !== '' && +r.dataset.l === l);
+      $$('.r', liste).forEach(r => { r.hidden = !garde(r); });
+      $$('.grp', liste).forEach(g => { g.hidden = !$$('.r', g).some(r => !r.hidden); });
+      if (!boite) return;
+      if (l == null) { boite.hidden = true; boite.innerHTML = ''; return; }
+      boite.innerHTML = `<button type="button" class="chip" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[l]))}${use('i-x')}</button>`;
+      boite.hidden = false;
+      $('button', boite).addEventListener('click', () => { ctl.liberer(); filtrer(null); });
+      if (liste.getBoundingClientRect().top < 0) liste.scrollIntoView({ block: 'start' });
+    };
+    ctl = initAffiche(wrap, { lignes, survol: l => eclairer(liste, l), choix: boite ? filtrer : null });
+    relier(liste, ctl);
+    return { ctl, filtrer };
+  }
+  function initAgenda() {
+    const o = initListe(lignesAvenir);
+    if (o && filtreAgenda != null) { const l = filtreAgenda; o.ctl.choisir(l); o.filtrer(l); }
+    filtreAgenda = null;
+  }
+
+  function medias(list) {
+    if (!list || !list.length) return '';
+    const G = [];
+    list.forEach(m => { const g = m.groupe || ''; let x = G.find(y => y.g === g); if (!x) G.push(x = { g, l: [] }); x.l.push(m); });
+    return `<div class="medias">${G.map(x => `${x.g ? `<p class="lbl medias-g">${esc(x.g)}</p>` : ''}<ul>${x.l.map(m => `<li><a class="media" href="${esc(m.url)}" target="_blank" rel="noopener">${use(m.type === 'audio' ? 'i-son' : 'i-play')}<span>${esc(m.titre || m.url)}</span><span class="sr"> (nouvel onglet)</span></a>${m.par ? `<span class="media-par">${esc(m.par)}</span>` : ''}</li>`).join('')}</ul>`).join('')}</div>`;
+  }
+  function pageShow(s) {
+    const i = SHOWS.indexOf(s), nx = SHOWS[(i + 1) % SHOWS.length];
+    const dates = D.dates.filter(d => d.slug === s.slug), geo = CARTE.spectacle(s.slug);
+    const len = Math.max(4, ...s.titreLignes.map(t => t.length));
+    const fiche = [
+      s.fiche.length ? `<ul class="fiche">${s.fiche.map(x => `<li>${x.libelle ? `<span class="f-k">${esc(x.libelle)}</span> ` : ''}${x.valeur}</li>`).join('')}</ul>` : '',
+      s.avec ? `<p><span class="f-k">${esc(s.avec.libelle)}</span> ${s.avec.valeur}</p>` : '',
+      s.duree ? `<p class="f-duree">${esc(s.duree)}</p>` : '',
+      ...s.mentions.map(m => `<p>${m}</p>`),
+      s.production.length ? `<div class="f-prod">${s.production.map(p => `<p>${p}</p>`).join('')}</div>` : '',
+      medias(s.medias)
+    ].join('');
+    const projet = s.extraits ? `${s.cadre ? `<p class="cadre">${esc(s.cadre)}</p>` : ''}<div class="extraits">${s.extraits.map(x => `<figure><blockquote>${esc(x.citation)}</blockquote>${x.source ? `<figcaption>${esc(x.source)}</figcaption>` : ''}</figure>`).join('')}</div>` : '';
+    const genre = s.genre && s.genre !== s.sousTitre ? `<p class="lead">${esc(s.genre)}</p>` : '';
+    let tour = '';
+    if (dates.length) tour = `<section class="sec" aria-labelledby="h-tour"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-tour" data-fit="sec">${esc(s.tournee.titre)}</h2>
+        <div class="ag"><div class="ag-carte">${affiche({ lieux: geo.aVenir, passe: geo.passe, titre: s.tournee.titre })}</div><div class="liste"><ol class="rs">${dates.map(d => rangee(d, false)).join('')}</ol></div></div></div></section>`;
+    else if (s.tournee && s.tournee.texte) tour = `<section class="sec" aria-labelledby="h-tour"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-tour" data-fit="sec">${esc(s.tournee.titre)}</h2><p class="tour-txt">${esc(s.tournee.texte)}</p></div></section>`;
+    else if (geo.passe.length) tour = `<section class="sec" aria-label="${esc(s.titre)}"><div class="wrap"><div class="ag-carte aff-seule">${affiche({ passe: geo.passe, titre: s.titre })}</div></div></section>`;
+    return `<div class="show" style="--c:${s.couleur};--accent:${fonce(s.couleur)}">
+      <section class="sh" aria-labelledby="h-page">
+        <div class="sh-photo"><img src="${D.photos[s.slug]}" alt="" style="object-position:${s.focale ?? 50}% 30%"></div>
+        <div class="wrap sh-txt">
+          <a class="retour" href="${esc(MENU.spectacles.href)}">${use('i-go')}${esc(MENU.spectacles.texte)}</a>
+          <h1 class="sh-titre disp" id="h-page" tabindex="-1" data-fit="sh" style="--len:${len}">${s.titreLignes.map(t => `<span>${esc(t)}</span>`).join(' ')}</h1>
+          ${s.sousTitre ? `<p class="sh-sous">${s.sousTitre}</p>` : ''}
+          <p class="sh-meta">${s.creation ? `<span class="lbl">${esc(s.creation)}</span>` : ''}${s.statut ? `<span class="tag">${esc(s.statut)}</span>` : ''}${s.enTournee ? `<span class="tag">${esc(L.enTournee)}</span>` : ''}${s.credit ? `<span class="sh-credit">${esc(s.credit)}</span>` : ''}</p>
+        </div>
+      </section>
+      <section class="sec"><div class="wrap sp">
+        <div class="prose">${genre}${s.texte.map(p => `<p>${p}</p>`).join('')}${projet}</div>
+        ${fiche ? `<div class="fiche-col">${fiche}</div>` : ''}
+      </div></section>
+      ${tour}
+      <a class="next" href="#/spectacle/${nx.slug}" style="--c:${nx.couleur}"><span class="wrap next-in"><span class="next-t disp" data-fit="next">${nx.titreLignes.map(t => `<span>${esc(t)}</span>`).join(' ')}</span>${use('i-go', 'next-go')}</span></a>
+    </div>`;
+  }
+  function initShow() {
+    const wrap = $('.aff', main);
+    if (!wrap) return;
+    const liste = $('.liste', main);
+    relier(liste, initAffiche(wrap, { lignes: liste ? lignesAvenir : lignesSaison, survol: liste ? l => eclairer(liste, l) : null }));
   }
 
   function pageCie() {
-    const st = D.stats;
-    const stats = [[st.representationsCourt, 'représentations depuis ' + st.depuis], [st.parAnMin, 'représentations par an au moins, depuis ' + st.parAnDepuis], [st.pays, 'pays : ' + st.paysListe.join(', ')], [st.heuresEAC, 'heures d’éducation artistique sur une saison']];
-    const cast = new Map();
-    SHOWS.forEach(s => s.distribution.forEach(n => n.split(' ou ').forEach(p => {
-      const k = p.trim();
-      if (!cast.has(k)) cast.set(k, []);
-      cast.get(k).push([s, n.includes(' ou ')]);
-    })));
-    const names = [...cast].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
-    return pageHead('La compagnie', esc(C.intention), `${esc(C.ville)} · depuis ${esc(C.depuis)}`) + `
-    <section class="sec sec--pink" aria-label="Présentation et chiffres">
-      <div class="wrap cie">
-        <div class="rv">
-          <p class="lead">${esc(C.presentation)}</p>
-          <dl class="sheet cie-sheet">
-            <div><dt>Mise en scène</dt><dd>${esc(C.miseEnScene)}</dd></div>
-            <div><dt>Partenaires</dt><dd><ul class="plain">${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul></dd></div>
-          </dl>
-        </div>
-        <div class="rv">
-          <dl class="stats">${stats.map(([v, l]) => `<div><dt>${esc(l)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-          ${st.source ? `<p class="stats-src">Source : ${esc(st.source)}</p>` : ''}
-        </div>
-      </div>
-    </section>
-    <section class="sec" aria-labelledby="h-cast">
-      <div class="wrap">
-        <div class="eyebrow rv">${arm()}<h2 id="h-cast">Au plateau</h2></div>
-        <p class="cast-intro rv">Les ${names.length} interprètes des spectacles du répertoire.</p>
-        <ul class="cast rv">${names.map(([n, list]) => `<li><b>${esc(n)}</b><span>${list.map(([s, alt]) => `<a href="#/spectacle/${s.slug}">${title(s.titre)}</a>${alt ? ' (en alternance)' : ''}`).join(', ')}</span></li>`).join('')}</ul>
-      </div>
-    </section>`;
+    const C = S.compagnie;
+    return entete(C.titre) + `<section class="sec"><div class="wrap"><div class="prose">${C.paragraphes.map((p, i) => `<p${i ? '' : ' class="lead"'}>${p}</p>`).join('')}</div></div></section>
+      <section class="sec sec--rose" aria-labelledby="h-dates"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-dates" data-fit="sec">${esc(C.datesTitre)}</h2>
+        <ol class="annees">${C.dates.map(d => { const s = SHOWS.find(x => String(x.annee) === String(d.annee)); return `<li><span class="an disp">${esc(d.annee)}</span>${s ? `<a class="an-t" href="#/spectacle/${s.slug}">${titreTxt(d.titre)}</a>` : `<span class="an-t">${titreTxt(d.titre)}</span>`}</li>`; }).join('')}</ol>
+      </div></section>`;
   }
-
+  function pageActions() {
+    const A = S.actions;
+    return entete(A.titre) + `<section class="sec"><div class="wrap act"><div class="prose">${A.blocs.map(bloc).join('')}</div>
+      <figure class="act-photo"><div class="duo"><img src="${D.photos['actions-culturelles']}" alt=""></div>${A.credit ? `<figcaption class="cr">${esc(A.credit)}</figcaption>` : ''}</figure></div></section>`;
+  }
+  function pagePro() {
+    const P = S.pro;
+    return entete(P.titre) + `<section class="sec"><div class="wrap etroit"><form class="form" novalidate>
+      <p class="lead">${esc(P.texte)}</p>
+      <p class="champ"><label for="pro-mdp">${esc(P.champ)}</label><input id="pro-mdp" name="pro-mdp" type="password" autocomplete="current-password"></p>
+      <p><button class="btn btn--ink" type="submit">${esc(P.bouton)}</button></p></form></div></section>`;
+  }
   function pageContact() {
-    return pageHead('Contact', 'Une question, une programmation, un projet avec vos élèves : écrivez à la compagnie.', '') + `
-    <section class="sec" aria-labelledby="h-write">
-      <div class="wrap contact">
-        <div class="rv"><h2 class="contact-k lbl" id="h-write">Écrire à la compagnie</h2><a class="contact-mail" href="mailto:${esc(C.email)}">${esc(C.email)}</a></div>
-        <dl class="sheet rv">
-          <div><dt>Nom</dt><dd>${esc(C.nom)}</dd></div>
-          <div><dt>Adresse</dt><dd>${esc(C.adresse)}</dd></div>
-          <div><dt>Lettre d’information</dt><dd>${TBD}</dd></div>
-        </dl>
-      </div>
-    </section>
-    <section class="doors" aria-labelledby="h-doors">
-      <div class="wrap">
-        <div class="eyebrow rv">${arm()}<h2 id="h-doors">Selon votre demande</h2></div>
-        <div class="doors-grid">${D.doors.map(d => `<div class="door door--info rv"><h3 class="door-title">${esc(d.titre)}</h3><p class="door-text">${esc(d.texte)}</p><p class="door-contact">Contact dédié : ${TBD}</p><a class="btn" href="mailto:${esc(C.email)}?subject=${encodeURIComponent(d.titre)}">Écrire<span class="sr"> : ${esc(d.titre)}</span></a></div>`).join('')}</div>
-      </div>
-    </section>`;
-  }
-
-  function show(s) {
-    const i = SHOWS.indexOf(s), nx = SHOWS[(i + 1) % SHOWS.length];
-    const dates = D.dates.filter(d => d.slug === s.slug);
-    const n = s.distribution.length, lead = s.equipe[0];
-    const dl = rows => rows.map(([k, v, raw]) => `<div><dt>${esc(k)}</dt><dd>${v == null || v === '' ? TBD : raw ? v : esc(v)}</dd></div>`).join('');
-    const facts = [['Création', s.annee], ['Durée', s.duree], ['Au plateau', n ? plural(n, 'comédien') : null], [lead ? lead[0] : 'Mise en scène', lead ? lead[1] : null]];
-    const panels = {
-      voir: (dates.length ? `<h3 class="sr">Les dates</h3><ol class="dates dates--show">${dates.map(d => dateRow(d, false)).join('')}</ol>` : `<p class="none">Aucune date annoncée pour l’instant</p>`)
-        + `<p class="panel-note">Une question ? Écrivez à <a href="${mail('Venir voir', s)}">${esc(C.email)}</a></p>`,
-      programmer: `<div class="panel-grid">
-          <div><h3 class="panel-h">La fiche</h3><dl class="sheet">${dl([
-            ['Création', s.annee], ['Durée', s.duree],
-            ['Au plateau', n ? `${plural(n, 'comédien')} : ${s.distribution.join(', ')}` : null],
-            ['Équipe', s.equipe.length ? `<ul class="crew">${s.equipe.map(([r, p]) => `<li><span>${esc(r)}</span>${esc(p)}</li>`).join('')}</ul>` : null, true],
-            ['Coproduction', s.coproduction], ['Soutiens', s.soutiens]])}</dl></div>
-          <div><h3 class="panel-h">Documents</h3><ul class="docs"><li><span>Dossier de diffusion</span>${TBD}</li><li><span>Fiche technique</span>${TBD}</li><li><span>Vidéo</span>${s.video ? ext(s.video, 'Voir la vidéo') : TBD}</li><li><span>Photos haute définition</span>${TBD}</li></ul>
-            <h3 class="panel-h">Calendrier de tournée</h3><p class="panel-p">${s.nbDates ? `${plural(s.nbDates, 'date')} annoncée${s.nbDates > 1 ? 's' : ''} pour la saison ${esc(D.saison)}` : 'Aucune date annoncée pour l’instant'}</p>
-            <a class="btn btn--ink" href="${mail('Programmation', s)}">Écrire à la compagnie</a></div>
-        </div>`,
-      etablissement: `<div class="panel-grid">
-          <div><h3 class="panel-h">Dans votre établissement</h3><p class="lead">${s.etablissement && s.etablissement.texte ? esc(s.etablissement.texte) : TBD}</p></div>
-          <div><h3 class="panel-h">Dispositifs</h3><dl class="sheet">${dl([
-            ['Pass Culture', s.passCulture ? 'Offre collective disponible' : 'Non référencé'],
-            ['Guide du CRED76', s.cred76 ? ext(s.cred76, 'Voir la fiche') : 'Non référencé', !!s.cred76]])}</dl>
-            <a class="btn btn--ink" href="${mail('Accueil en établissement', s)}">Écrire à la compagnie</a></div>
-        </div>`
+    const C = S.contact, K = S.coordonnees, pol = S.liensLegaux.find(x => /confidentialit/i.test(x.texte));
+    const at = pol ? C.consentement.toLowerCase().indexOf(pol.texte.toLowerCase()) : -1;
+    const consent = at >= 0 ? `${esc(C.consentement.slice(0, at))}<a href="${esc(pol.href)}">${esc(C.consentement.slice(at, at + pol.texte.length))}</a>${esc(C.consentement.slice(at + pol.texte.length))}` : esc(C.consentement);
+    const champ = (c, n) => {
+      const id = 'c-' + n;
+      if (/message/i.test(c)) return `<p class="champ"><label for="${id}">${esc(c)}</label><textarea id="${id}" name="${id}" rows="6"></textarea></p>`;
+      const type = /mail/i.test(c) ? 'email' : /t[ée]l[ée]phone/i.test(c) ? 'tel' : 'text';
+      const auto = type === 'email' ? 'email' : type === 'tel' ? 'tel' : /^nom/i.test(c) ? 'name' : /ville/i.test(c) ? 'address-level2' : 'off';
+      return `<p class="champ"><label for="${id}">${esc(c)}</label><input id="${id}" name="${id}" type="${type}" autocomplete="${auto}"></p>`;
     };
-    return `<div class="show" style="--c:${s.couleur};--accent:${deep(s.couleur)}">
-      <section class="sh" aria-labelledby="h-show">
-        <div class="sh-photo"><img src="${D.photos[s.slug]}" alt="" style="object-position:${s.focale ?? 50}% 25%"></div>
-        <div class="wrap sh-text">
-          <a class="back" href="#/spectacles">${use('i-go', 'ico')}Tous les spectacles</a>
-          <h1 class="sh-title disp" id="h-show" data-fit="hero" tabindex="-1" style="--len:${(s.titre.length * .85).toFixed(2)}">${title(s.titre)}</h1>
-          <p class="sh-sub">${esc(s.sousTitre)}</p>
-        </div>
-      </section>
-      <section class="sec" aria-labelledby="h-intro">
-        <div class="wrap">
-          <div class="eyebrow rv">${arm()}<h2 id="h-intro">Le spectacle</h2></div>
-          <div class="intro">
-            <div class="rv"><p class="accroche">${esc(s.accroche)}</p><p class="texte">${esc(s.texte)}</p></div>
-            <figure class="intro-photo rv"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}"><figcaption>${s.credit ? `Photo ${esc(s.credit)}` : `Crédit photo ${TBD}`}</figcaption></figure>
-          </div>
-          <dl class="facts rv">${dl(facts)}</dl>
-        </div>
-      </section>
-      <section class="sec" aria-labelledby="h-prat">
-        <div class="wrap">
-          <div class="eyebrow rv">${arm()}<h2 id="h-prat">En pratique</h2></div>
-          <div class="rv">
-            <div class="tabs" role="tablist" aria-labelledby="h-prat">${D.doors.map(d => `<button class="tab" type="button" role="tab" id="tab-${d.key}" data-key="${d.key}" aria-controls="pan-${d.key}" aria-selected="${d.key === door}" tabindex="${d.key === door ? 0 : -1}"><span>${esc(d.titre)}</span>${use('i-go', 'tab-go')}</button>`).join('')}</div>
-            ${D.doors.map(d => `<div class="panel" role="tabpanel" id="pan-${d.key}" aria-labelledby="tab-${d.key}" tabindex="0"${d.key === door ? '' : ' hidden'}>${panels[d.key] || ''}</div>`).join('')}
-          </div>
-        </div>
-      </section>
-      <nav class="sh-next" aria-label="Autres spectacles">
-        <div class="wrap back-row"><a class="back" href="#/spectacles">${use('i-go', 'ico')}Tous les spectacles</a></div>
-        <a class="next" href="#/spectacle/${nx.slug}" style="--c:${nx.couleur}"><span class="wrap next-in"><span class="next-txt"><span class="lbl">Spectacle suivant</span><span class="next-title disp" data-fit="next">${title(nx.titre)}</span></span>${use('i-go', 'next-go')}</span></a>
-      </nav>
-    </div>`;
+    return entete(C.titre) + `<section class="sec"><div class="wrap contact">
+      <form class="form" novalidate>${C.champs.map(champ).join('')}
+        <p class="case"><input type="checkbox" id="c-ok" name="c-ok"><label for="c-ok">${consent}</label></p>
+        <p class="calc"><label for="c-calc">${esc(C.calcul)}</label><input id="c-calc" name="c-calc" inputmode="numeric" maxlength="2" autocomplete="off"></p>
+        <p><button class="btn btn--ink" type="submit">${esc(C.bouton)}</button></p>
+      </form>
+      <aside class="coord" aria-label="${esc(K.nom)}"><p class="coord-nom">${esc(K.nom)}</p><p>${K.adresse.map(esc).join('<br>')}</p><p>${esc(S.facebook.texte)}</p></aside>
+    </div></section>`;
   }
+  const pageLegal = p => entete(S.legal[p].titre) + `<section class="sec"><div class="wrap"><div class="prose">${S.legal[p].blocs.map(bloc).join('')}</div></div></section>`;
+  const initForms = () => $$('form', main).forEach(f => f.addEventListener('submit', e => e.preventDefault()));
 
-  function footer() {
+  function pied() {
+    const K = S.coordonnees, fb = S.facebook.href ? `<a class="pied-fb" href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span class="pied-fb">${esc(S.facebook.texte)}</span>`;
     return `<div class="wrap">
-      <div class="foot-grid">
-        <a class="foot-logo" href="#/" aria-label="${esc(C.nom)}, accueil"><span aria-hidden="true">${D.logo.octopusWord}</span></a>
-        <div><h2 class="foot-h">Contact</h2><a class="foot-mail" href="mailto:${esc(C.email)}">${esc(C.email)}</a><p class="foot-addr">${esc(C.nom)}<br>${esc(C.adresse)}</p></div>
-        <div><h2 class="foot-h">Partenaires</h2><ul class="foot-list">${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>
+      <div class="pied-grille">
+        <a class="pied-logo" href="#/" aria-label="${esc(S.nom)}, ${esc(S.accueil)}"><span aria-hidden="true">${D.logo.octopusWord}</span></a>
+        <div><p class="pied-nom">${esc(K.nom)}</p><p>${K.adresse.map(esc).join('<br>')}</p>
+          <p class="pied-actions"><a class="btn" href="${esc(S.ecrire.href)}">${esc(S.ecrire.texte)}${use('i-go')}</a>${fb}</p></div>
+        <p class="pied-part">${S.partenaires}</p>
       </div>
-      <p class="foot-legal"><span>${esc(C.nom)}</span><span>SIRET ${esc(C.siret)}</span><span>Licence ${esc(C.licence)}</span></p>
+      ${sep()}
+      <div class="pied-bas"><p class="pied-legal">${K.legal.map(t => `<span>${esc(t)}</span>`).join('')}</p><p class="pied-ll">${S.liensLegaux.map(a => `<a href="${esc(a.href)}">${esc(a.texte)}</a>`).join('')}</p></div>
     </div>`;
   }
 
+  /* ---------- l'ajustement des grands titres, l'apparition au défilement ---------- */
   function fit() {
     const groups = {};
     $$('[data-fit]').forEach(el => { el.style.fontSize = ''; (groups[el.dataset.fit] ||= []).push(el); });
@@ -574,94 +853,82 @@ a.d-title::after{content:"";position:absolute;inset:0}
       if (k < 1) els.forEach((el, j) => { el.style.fontSize = `${Math.floor(base[j] * k * .98)}px`; });
     });
   }
-
   const reveal = (() => {
-    const calm = matchMedia('(prefers-reduced-motion: reduce)');
     const io = 'IntersectionObserver' in window ? new IntersectionObserver(list => list.forEach(en => {
       if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); }
     }), { rootMargin: '0px 0px -8% 0px' }) : null;
-    let armed = false;
-    const hide = () => {
-      if (!io || calm.matches) return;
+    let arme = false;
+    const cacher = () => {
+      if (!io || !bouge()) return;
       const vh = innerHeight;
       $$('.rv:not(.is-wait)').forEach(el => { if (el.getBoundingClientRect().top > vh) { el.classList.add('is-wait'); io.observe(el); } });
     };
-    addEventListener('scroll', () => { if (!armed) { armed = true; hide(); } }, { passive: true });
-    return { reset() { if (io) io.disconnect(); if (armed) hide(); } };
+    addEventListener('scroll', () => { if (!arme) { arme = true; cacher(); } }, { passive: true });
+    return { reset() { if (io) io.disconnect(); if (arme) cacher(); } };
   })();
 
-  function initTabs() {
-    const tabs = $$('[role="tab"]', main);
-    const pick = (t, focus) => {
-      tabs.forEach(x => {
-        const on = x === t;
-        x.setAttribute('aria-selected', String(on));
-        x.tabIndex = on ? 0 : -1;
-        document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
-      });
-      setDoor(t.dataset.key);
-      if (focus) t.focus();
-    };
-    tabs.forEach((t, i) => {
-      t.addEventListener('click', () => pick(t));
-      t.addEventListener('keydown', e => {
-        const k = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
-        if (k === undefined) return;
-        e.preventDefault();
-        pick(tabs[(k + tabs.length) % tabs.length], true);
-      });
-    });
-  }
-
+  /* ---------- le menu et les adresses ---------- */
   const menuBtn = $('#menu-btn'), nav = $('#nav');
-  const setMenu = open => {
-    menuBtn.setAttribute('aria-expanded', String(open));
-    nav.classList.toggle('is-open', open);
-    $('.menu-label', menuBtn).textContent = open ? 'Fermer' : 'Menu';
-  };
-  menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('is-open')) { setMenu(false); menuBtn.focus(); } });
-
-  const PAGES = { spectacles: ['Les spectacles', pageShows], agenda: ['L’agenda', pageAgenda], compagnie: ['La compagnie', pageCie], contact: ['Contact', pageContact] };
-  let view = null;
-  function route(e) {
+  const setMenu = open => { menuBtn.setAttribute('aria-expanded', String(open)); nav.classList.toggle('is-open', open); };
+  function resoudre(p) {
+    if (p === 'spectacles') return { cle: p, nav: 'spectacles', titre: MENU.spectacles.texte, rendu: pageSpectacles };
+    if (p === 'agenda' || p === `agenda/${D.saison}`) return { cle: 'agenda', nav: 'agenda', titre: MENU.agenda.texte, rendu: pageAgenda, init: initAgenda };
+    let m = p.match(/^agenda\/(\d{4}-\d{4})$/);
+    if (m && D.saisons[m[1]]) {
+      const meta = S.saisons.find(x => x.saison === m[1]), t = meta ? meta.titre : D.saisons[m[1]].titre;
+      return { cle: p, nav: 'agenda', titre: t, rendu: () => pageSaison(m[1], t), init: () => initListe(lignesSaison) };
+    }
+    if (p === 'compagnie') return { cle: p, nav: 'compagnie', titre: MENU.compagnie.texte, rendu: pageCie };
+    if (p === 'actions-culturelles') return { cle: p, nav: 'actions', titre: MENU.actions.texte, rendu: pageActions };
+    if (p === 'espace-pro') return { cle: p, nav: 'pro', titre: S.pro.titrePage, rendu: pagePro, init: initForms };
+    if (p === 'contact') return { cle: p, nav: 'contact', titre: MENU.contact.texte, rendu: pageContact, init: initForms };
+    if (Object.hasOwn(S.legal, p)) return { cle: p, nav: null, titre: S.legal[p].titre, rendu: () => pageLegal(p) };
+    m = p.match(/^spectacle\/([\w-]+)$/);
+    if (m && BY[m[1]]) { const s = BY[m[1]]; return { cle: p, nav: 'spectacles', titre: s.titre, rendu: () => pageShow(s), init: initShow }; }
+    return { cle: 'accueil', nav: null, titre: S.accueil, rendu: pageAccueil, init: initAccueil };
+  }
+  let vueCle = null;
+  function route() {
     const h = location.hash;
-    if (h && !h.startsWith('#/') && view) return;
-    const path = h.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, '');
-    const m = path.match(/^spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?$/);
-    const s = m && BY[m[1]] ? BY[m[1]] : null;
-    if (s && m[2]) setDoor(m[2]);
-    const page = !s && Object.hasOwn(PAGES, path) ? PAGES[path] : null;
-    const key = s ? `spectacle/${s.slug}` : page ? path : 'accueil';
-    if (key !== view) {
-      view = key;
-      main.innerHTML = s ? show(s) : page ? page[1]() : home();
-      document.title = s ? `${s.titre} · ${C.nom}` : page ? `${page[0]} · ${C.nom}` : `${C.nom} · théâtre à ${C.ville}`;
-      const tab = s ? 'spectacles' : key;
-      $$('.nav a').forEach(a => { if (a.dataset.nav === tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-      if (s) initTabs();
+    if (h && !h.startsWith('#/') && vueCle) return;
+    const v = resoudre(h.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, ''));
+    if (v.cle !== vueCle) {
+      vueCle = v.cle;
+      main.innerHTML = v.rendu();
+      document.title = `${v.titre} - ${S.titreSuffixe}`;
+      $$('a', nav).forEach(a => { if (a.dataset.nav === v.nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
       fit();
-      window.scrollTo(0, 0);
+      if (v.init) v.init();
       reveal.reset();
-    } else window.scrollTo(0, 0);
+    }
+    window.scrollTo(0, 0);
     setMenu(false);
-    if (e) { const t = $('h1', main); if (t) t.focus({ preventScroll: true }); }
+    if (!INTRO.ouverte()) { const t = $('h1', main); if (t) t.focus({ preventScroll: true }); }
   }
 
+  $('#brand').setAttribute('aria-label', `${S.nom}, ${S.accueil}`);
   $('#brand-mark').innerHTML = D.logo.octopus;
-  $('#pied').innerHTML = footer();
+  $('ul', nav).innerHTML = S.menu.map(m => `<li><a href="${esc(m.href)}" data-nav="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('');
+  nav.setAttribute('aria-label', L.menu);
+  $('.menu-label', menuBtn).textContent = L.menu;
+  $('#pied').innerHTML = pied();
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   $('.skip').addEventListener('click', e => { e.preventDefault(); main.focus(); });
+  menuBtn.addEventListener('click', () => setMenu(menuBtn.getAttribute('aria-expanded') !== 'true'));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('is-open')) { setMenu(false); menuBtn.focus(); } });
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href^="#/"]');
     if (!a) return;
-    if (a.dataset.door) setDoor(a.dataset.door);
-    if (a.getAttribute('href') === (location.hash || '#/')) { e.preventDefault(); route(e); }
+    if (a.closest('#nav')) setMenu(false);
+    if (a.getAttribute('href') === (location.hash || '#/')) { e.preventDefault(); route(); }
   });
-  addEventListener('hashchange', route);
   let raf = 0;
-  addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(fit); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  const reajuster = () => { fit(); $$('.aff', main).forEach(placer); };
+  addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(reajuster); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(reajuster);
+  // l'ouverture : la pieuvre et le mot en blanc sur l'aplat magenta ; après la révélation, le bandeau se met en marche
+  INTRO.ouvrir({ fond: '#bc3e80', encre: '#ffffff', classe: 'm05-intro', apres: () => { if (bdCtl) bdCtl.demarrer(); } });
+  addEventListener('hashchange', route);
   route();
 })();
 </script>

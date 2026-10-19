@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compagnie Crescite · Théâtre à Rouen</title>
-<meta name="description" content="Compagnie Crescite, théâtre à Rouen depuis 2012 : les spectacles, les prochaines dates, l’accueil des programmateurs et des établissements scolaires.">
+<title>Accueil - crescite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600&display=swap">
 <style>
 :root{
@@ -14,6 +15,7 @@
   --paper:#f3f1ee;
   --magenta:#bc3e80;
   --magenta-dark:#a1336c;
+  --magenta-soft:#f8eaf1;
   --rule:#e3dfd9;
   --rule-paper:#d9d4cc;
   --serif:"Instrument Serif","Times New Roman",Georgia,serif;
@@ -27,18 +29,18 @@
   --fs-s1:1.625rem;
   --fs-s2:2rem;
   --fs-s3:clamp(2rem,1.5rem + 1.4vw,2.75rem);
-  --fs-s4:clamp(2.75rem,1.6rem + 3.2vw,4.5rem);
+  --fs-s4:clamp(2.5rem,1.6rem + 3.2vw,4.5rem);
+  --ease:cubic-bezier(.2,.65,.25,1);
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--white);color:var(--ink);font:400 1rem/1.6 var(--sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;overflow-x:hidden}
 img,svg{display:block;max-width:100%}
 a{color:inherit;text-underline-offset:.22em;text-decoration-thickness:1px}
-h1,h2,h3,p,ul,ol,dl,dd,figure{margin:0}
+h1,h2,h3,p,ul,ol,dl,dd,figure,blockquote{margin:0}
 h1,h2,h3{font-weight:400}
 ul,ol{padding:0;list-style:none}
-button{font:inherit;color:inherit}
-sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
+button,input,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
 [tabindex="-1"]:focus,[tabindex="-1"]:focus-visible{outline:none}
 [hidden]{display:none!important}
@@ -46,810 +48,907 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
 .skip{position:absolute;left:16px;top:-100px;z-index:100;background:var(--ink);color:#fff;padding:12px 16px;border-radius:6px;font-weight:600;text-decoration:none}
 .skip:focus{top:12px}
 .wrap{width:100%;max-width:calc(var(--max) + 2 * var(--pad));margin:0 auto;padding:0 var(--pad)}
-.nowrap{white-space:nowrap}
-.muted{color:var(--grey)}
+.i{width:1em;height:1em;flex:none}
 
-/* boutons et liens */
+/* boutons, liens, petits libellés */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border:0;border-radius:6px;font:600 1rem/1.2 var(--sans);text-decoration:none;cursor:pointer;white-space:nowrap}
 .btn-primary{background:var(--magenta);color:#fff}
 .btn-primary:hover{background:var(--magenta-dark)}
-.btn-secondary{background:transparent;color:var(--magenta);box-shadow:inset 0 0 0 1.5px var(--magenta)}
-.btn-secondary:hover{background:var(--magenta);color:#fff}
-.btn-sm{min-height:44px;padding:0 18px}
-.i-arrow,.i-ext{width:1em;height:1em;flex:none}
-.i-ext{width:.8em;height:.8em}
-.link{font-weight:500;text-decoration:underline;text-decoration-color:var(--rule-paper)}
-.link:hover{text-decoration-color:currentColor}
-.link-ext{display:inline-flex;align-items:center;gap:6px;font-weight:500;text-decoration:none;white-space:nowrap}
-.link-ext:hover{text-decoration:underline}
-.go{display:inline-flex;align-items:center;gap:8px;font-weight:600;text-decoration:none}
+.btn .i{transition:transform .3s var(--ease)}
+.btn:hover .i{transform:translateX(4px)}
+.go{display:inline-flex;align-items:center;gap:10px;font-weight:600;text-decoration:none}
+.go .i{color:var(--magenta);transition:transform .3s var(--ease)}
 .go:hover{text-decoration:underline}
-.go:hover .i-arrow{color:var(--magenta)}
+.go:hover .i{transform:translateX(4px)}
 .overline{font:600 var(--fs-label)/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--grey)}
-.badge{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:13px;font:500 var(--fs-label)/1 var(--sans);letter-spacing:.01em;white-space:nowrap;color:var(--ink);box-shadow:inset 0 0 0 1px var(--rule-paper)}
-.badge--school{background:var(--paper);box-shadow:none}
-.todo{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:4px;font:500 var(--fs-label)/1 var(--sans);color:var(--grey);background:var(--paper);white-space:nowrap}
+.overline a{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.overline a:hover{text-decoration:underline}
+.accent{color:var(--magenta-dark)}
+.statut{display:inline-flex;align-items:center;height:26px;padding:0 11px;border-radius:13px;background:var(--magenta);color:#fff;font:600 var(--fs-label)/1 var(--sans);letter-spacing:.02em;text-transform:none;white-space:nowrap}
 
 /* en-tête */
 .site-header{position:relative;z-index:40;background:var(--white);border-bottom:1px solid var(--rule)}
-.bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:80px}
-.brand{justify-self:start;display:inline-flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none}
-.brand-mark{width:36px;height:36px;flex:none}
-.brand-mark svg{width:100%;height:auto}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:24px;height:80px}
+.brand{display:inline-flex;align-items:center;gap:10px;flex:none;color:var(--ink);text-decoration:none}
+.brand-mark{width:38px;height:38px;flex:none}
+.brand-mark svg{width:100%;height:100%}
 .brand-word{font:600 1.25rem/1 var(--sans);letter-spacing:-.015em;padding-bottom:2px}
-.menu{display:contents}
-.nav-main ul{display:flex;gap:40px}
-.nav-main a{display:block;padding:10px 0;font:500 1rem/1.25 var(--sans);text-decoration:none;color:var(--ink)}
-.nav-main a:hover{text-decoration:underline;text-underline-offset:8px}
-.nav-main a[aria-current]{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:8px}
-.header-cta{justify-self:end}
+.menu ul{display:flex;gap:32px}
+.menu a{display:block;padding:10px 0 8px;border-bottom:2px solid transparent;font:500 1rem/1.25 var(--sans);color:var(--ink);text-decoration:none;white-space:nowrap;transition:border-color .2s}
+.menu a:hover{border-bottom-color:var(--rule-paper)}
+.menu a[aria-current="page"]{border-bottom-color:var(--magenta)}
 .menu-toggle{display:none}
 
-/* ouverture */
-.hero{padding:40px 0 56px}
-.hero-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap)}
-.hero-text{grid-column:1/span 5;display:flex;flex-direction:column;justify-content:space-between;gap:40px;padding-right:24px}
-.hero-title{margin-top:20px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em}
-.hero-sub{margin-top:18px;font-size:var(--fs-lead);line-height:1.5;color:var(--grey);max-width:26em}
-.hero-next{border-top:1px solid var(--rule);padding-top:20px}
-.hero-when{margin-top:10px;font:500 var(--fs-lead)/1.4 var(--sans)}
-.hero-where{margin-top:4px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:var(--fs-lead);line-height:1.4;color:var(--grey)}
-.hero-next .btn{margin-top:28px}
-.hero-photo{grid-column:6/span 7;aspect-ratio:3/2;border-radius:6px;overflow:hidden;background:var(--paper)}
-.hero-photo img{width:100%;height:100%;object-fit:cover}
+/* accueil : le bandeau */
+.hero{padding-top:40px}
+.hero-stage{display:grid}
+.slide{grid-area:1/1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);opacity:0;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .45s}
+.slide.on{opacity:1;visibility:visible;transition:opacity .6s ease}
+.slide-text{grid-column:1/span 5;display:flex;flex-direction:column;justify-content:center;padding:16px 24px 16px 0}
+.slide-text .overline{color:var(--magenta-dark)}
+.slide-title{margin-top:16px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em}
+.slide-title span{display:block}
+.slide-sub{margin-top:16px;font-size:var(--fs-lead);line-height:1.5;color:var(--grey)}
+.slide-date{display:flex;align-items:flex-start;gap:10px;margin-top:28px;padding-top:18px;border-top:1px solid var(--rule);font:500 var(--fs-lead)/1.4 var(--sans)}
+.slide-date .i{margin-top:.2em;color:var(--magenta)}
+.slide-text .btn{align-self:flex-start;margin-top:28px}
+.slide-photo{position:relative;grid-column:6/span 7;aspect-ratio:3/2;border-radius:6px;overflow:hidden;background:var(--paper)}
+.slide-photo img{width:100%;height:100%;object-fit:cover}
+.credit{position:absolute;right:12px;bottom:10px;max-width:calc(100% - 24px);font-size:.75rem;line-height:1.3;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
+.slide.anime .slide-text>*{animation:monte .8s var(--ease) both;animation-delay:calc(var(--k,0) * 80ms)}
+.hero.avant .slide-text>*{opacity:0}
+.hero.pose .slide.on .slide-photo img{animation:pose 1.8s var(--ease) both}
+@keyframes monte{from{opacity:0;transform:translateY(18px)}}
+@keyframes pose{from{transform:scale(1.08)}}
+.hero-nav{display:flex;align-items:flex-start;gap:24px;margin-top:32px;border-top:1px solid var(--rule)}
+.hero-tabs{flex:1;min-width:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:var(--gap)}
+.hero-tab{position:relative;display:block;width:100%;padding:14px 0 6px;border:0;background:none;text-align:left;font:500 .9375rem/1.3 var(--sans);color:var(--grey);cursor:pointer;transition:color .2s}
+.hero-tab span{display:block}
+.hero-tab::before{content:"";position:absolute;left:0;right:0;top:-1px;height:3px;background:transparent;transition:background .3s}
+.hero-tab:hover{color:var(--ink)}
+.hero-tab:hover::before{background:var(--rule-paper)}
+.hero-tab[aria-current="true"]{color:var(--ink)}
+.hero-tab[aria-current="true"]::before{background:var(--magenta)}
+.hero-fleches{display:flex;gap:8px;padding-top:12px}
+.rond{display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid var(--rule-paper);border-radius:50%;background:var(--white);cursor:pointer;transition:border-color .2s,color .2s}
+.rond:hover{border-color:var(--magenta);color:var(--magenta)}
+.rond .i{width:18px;height:18px}
 
-/* les trois portes */
-.doors{background:var(--paper)}
-.doors-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto;column-gap:var(--gap)}
-.door{position:relative;display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:10px;padding:36px 32px 40px 0}
-.door+.door::before{content:"";position:absolute;top:0;bottom:0;left:calc(var(--gap) / -2);width:1px;background:var(--rule-paper)}
-.door-title{font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
-.door-title a{text-decoration:none}
-.door-title a::after{content:"";position:absolute;inset:0}
-.door-title .i-arrow{display:inline-block;width:.72em;height:.72em;margin-left:.3em;vertical-align:-.02em}
-.door-text{color:var(--grey);max-width:24em}
-.door:hover .door-title a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
-.door:hover .i-arrow{color:var(--magenta)}
-.door-title a:focus-visible{outline:none}
-.door-title a:focus-visible::after{outline:2px solid var(--ink);outline-offset:-2px}
+/* accueil : les trois portes */
+.portes{margin-top:clamp(40px,5vw,64px)}
+.portes-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--gap)}
+.porte{border-top:1px solid var(--ink)}
+.porte a{display:flex;align-items:baseline;justify-content:space-between;gap:16px;height:100%;padding:20px 0 28px;font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em;text-decoration:none}
+.porte .i{width:.72em;height:.72em;color:var(--magenta);transition:transform .3s var(--ease)}
+.porte a:hover span{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
+.porte a:hover .i{transform:translateX(6px)}
 
-/* sections */
-.section{padding-top:var(--sec)}
-.section--end{padding-bottom:var(--sec)}
-.sec-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 32px;border-top:1px solid var(--ink);padding-top:22px;margin-bottom:40px;scroll-margin-top:32px}
-.sec-head h2{font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
-.sec-meta{color:var(--grey)}
-.more{margin-top:32px}
+/* accueil : la tournée, en large bande */
+.tour{margin-top:clamp(48px,6vw,88px);padding:var(--sec) 0;background:var(--paper)}
+.tour-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:40px;align-items:center}
+.tour-text{grid-column:1/span 4}
+.tour-carte{grid-column:5/span 8}
+.sec-title{margin-top:14px;font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
+.mini{margin-top:28px;border-top:1px solid var(--rule-paper)}
+.mini li{border-bottom:1px solid var(--rule-paper)}
+.mini a{position:relative;display:block;padding:13px 8px 13px 16px;text-decoration:none;transition:background .2s}
+.mini a::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:2px;background:transparent;transition:background .2s}
+.mini li.survol a,.mini a:hover{background:rgba(255,255,255,.7)}
+.mini li.survol a::before,.mini a:hover::before,.mini a:focus-visible::before{background:var(--magenta)}
+.mini-d{display:block;font:600 .75rem/1.3 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--magenta-dark)}
+.mini-t{display:block;margin-top:3px;font:400 1.375rem/1.15 var(--serif)}
+.mini-l{display:block;margin-top:2px;color:var(--grey)}
+.tour-go{margin-top:24px}
+.merci{padding:56px 0 var(--sec)}
+.merci p{max-width:70em;font-size:.875rem;line-height:1.65;color:var(--grey)}
 
-/* pages des onglets */
+/* la carte des tournées */
+.k-carte{position:relative;--terre:var(--paper);--voisin:#ebe7e1;--bord:#d3ccc2}
+.k-carte.k-papier{--terre:#ffffff;--voisin:#e7e2db}
+.k{width:100%;height:auto;aspect-ratio:800/780;overflow:hidden;-webkit-user-select:none;user-select:none}
+.k-pays{fill:var(--terre);stroke:var(--bord);stroke-width:1.1;stroke-linejoin:round}
+.k-voisin{fill:var(--voisin);stroke:var(--bord);stroke-width:.7;stroke-linejoin:round}
+.k-passes{opacity:0;transition:opacity .9s ease .2s}
+.k-on .k-passes{opacity:.9}
+.k-passe{fill:#b8aea2}
+.k-passe-pt{fill:#a59a8d}
+.k-bras,.k-nom{transition:opacity .25s}
+.k-bras-f{fill:var(--magenta);transition:fill .2s}
+.k-pousse{fill:none;stroke:#fff;stroke-dasharray:1 1;stroke-dashoffset:1}
+.k-on .k-pousse{stroke-dashoffset:0;transition:stroke-dashoffset 1.1s cubic-bezier(.4,.1,.2,1) var(--d,0ms)}
+.k-lieu{cursor:pointer;transition:opacity .25s}
+.k-carte:not(.k-on) .k-lieu{opacity:0}
+.k-on .k-lieu{animation:apparait .45s ease backwards;animation-delay:calc(var(--d,0ms) + 750ms)}
+@keyframes apparait{from{opacity:0}}
+.k-lieu:focus{outline:none}
+.k-cible{fill:transparent}
+.k-point{fill:#fff;stroke:var(--magenta);stroke-width:2;vector-effect:non-scaling-stroke;transition:fill .2s}
+.k-maison .k-point{fill:var(--magenta);stroke:#fff}
+.k-lieu:focus-visible .k-point{stroke:var(--ink);stroke-width:3}
+.k-rouen{fill:var(--ink);stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke}
+.k-rouen-nom{font:600 13px var(--sans);fill:var(--ink);paint-order:stroke;stroke:var(--terre);stroke-width:4px;stroke-linejoin:round}
+.k-noms{opacity:0;transition:opacity .6s ease 1.3s}
+.k-on .k-noms{opacity:1}
+.k-nom{font-family:var(--sans);font-weight:500;fill:var(--ink);paint-order:stroke;stroke:var(--terre);stroke-linejoin:round;pointer-events:none}
+.k-nom.k-cache{display:none}
+.k-nom.k-actif{display:inline;font-weight:600;fill:var(--magenta-dark)}
+.k-survol .k-bras:not(.k-actif){opacity:.2}
+.k-survol .k-nom:not(.k-actif){opacity:.3}
+.k-bras.k-actif .k-bras-f,.k-bras.k-choisi .k-bras-f{fill:var(--magenta-dark)}
+.k-lieu.k-actif .k-point,.k-lieu.k-choisi .k-point{fill:var(--magenta)}
+.k-on .k-off{opacity:.14}
+.k-info{position:absolute;z-index:5;left:0;top:0;width:max-content;max-width:min(300px,86%);padding:12px 14px;border-radius:6px;background:#fff;box-shadow:0 10px 30px -10px rgba(17,17,17,.35),0 0 0 1px rgba(17,17,17,.07);font-size:.875rem;line-height:1.4;pointer-events:none;overflow-wrap:anywhere}
+.k-info-nom{font-weight:600}
+.k-info ul{margin-top:6px}
+.k-info li{color:var(--grey)}
+.k-info li+li{margin-top:3px}
+.k-info b{font-weight:500;color:var(--ink)}
+
+/* pages */
 .page{padding-bottom:var(--sec)}
 .page-head{background:var(--paper)}
-.page-head-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:20px;align-items:end;align-items:last baseline;padding-top:64px;padding-bottom:60px}
-.page-head-title{grid-column:1/span 7}
-.page-title{margin-top:18px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em}
-.page-lead{grid-column:8/span 5;font-size:var(--fs-lead);line-height:1.55;color:var(--grey);max-width:30em}
-.page-body{padding-top:64px}
+.page-head .wrap{padding-top:56px;padding-bottom:52px}
+.page-title{margin-top:14px;max-width:16em;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em;text-wrap:balance}
+.page-head .page-title:first-child{margin-top:0}
+.page-body{padding-top:56px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px 32px;margin-bottom:36px;padding-top:22px;border-top:1px solid var(--ink)}
+.sec-head h2{font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
+.sec-head h2 a{text-decoration:none}
+.sec-head h2 a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.14em}
 
-/* répertoire */
-.notice{display:flex;align-items:center;justify-content:space-between;gap:16px 32px;flex-wrap:wrap;margin:0 0 40px;padding:16px 20px;border-radius:6px;background:var(--paper)}
-.notice p{max-width:60em}
-.notice strong{font-weight:600}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--gap);row-gap:0;margin-bottom:-64px}
-.card{position:relative;display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;padding-bottom:64px}
-.card-photo{aspect-ratio:4/5;border-radius:6px;overflow:hidden;background:var(--paper)}
-.card-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.65,.25,1)}
+/* spectacles */
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:var(--gap);row-gap:0;margin-bottom:-56px}
+.card{position:relative;display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;padding-bottom:56px}
+.card-photo{position:relative;aspect-ratio:4/5;border-radius:6px;overflow:hidden;background:var(--paper)}
+.card-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease)}
 .card:hover .card-photo img{transform:scale(1.04)}
-.card-title{margin-top:18px;font:400 var(--fs-s1)/1.12 var(--serif);letter-spacing:-.005em}
+.card-photo .statut{position:absolute;left:12px;top:12px}
+.card-crea{margin-top:16px}
+.card-title{margin-top:6px;font:400 var(--fs-s1)/1.12 var(--serif);letter-spacing:-.005em}
 .card-title a{text-decoration:none}
 .card-title a::after{content:"";position:absolute;inset:0;border-radius:6px}
 .card:hover .card-title a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
 .card-title a:focus-visible{outline:none}
 .card-title a:focus-visible::after{outline:2px solid var(--ink);outline-offset:6px}
 .card-sub{margin-top:6px;color:var(--grey)}
-.card-next{margin-top:16px;padding-top:12px;border-top:1px solid var(--rule)}
-.rep{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:32px;align-items:start}
-.rep-text{grid-column:1/span 5}
-.rep-list{font:400 var(--fs-s2)/1.22 var(--serif);letter-spacing:-.005em}
-.rep-list a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em;text-decoration-color:var(--rule-paper)}
-.rep-list a:hover{text-decoration-color:currentColor}
-.rep-text .btn{margin-top:32px}
-.rep-photos{grid-column:7/span 6;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.rep-photo{aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--paper)}
-.rep-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.65,.25,1)}
-.rep-photos:hover img{transform:scale(1.04)}
 
-/* listes de dates */
-.rows{border-top:1px solid var(--rule)}
-.row{display:grid;grid-template-columns:96px minmax(0,1fr) 148px 104px;align-items:center;column-gap:16px;padding:20px 0;border-bottom:1px solid var(--rule)}
+/* agenda et saisons */
+.agenda{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:32px;align-items:start}
+.agenda-carte{grid-column:1/span 5;position:sticky;top:24px}
+.agenda-liste{grid-column:7/span 6;min-width:0}
+.filtres{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:32px}
+.filtres-l{margin-right:6px}
+.filtres-carte{margin:16px 0 0}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border:1px solid var(--rule-paper);border-radius:18px;background:var(--white);font:500 .875rem/1.2 var(--sans);text-align:left;cursor:pointer;transition:border-color .2s,background .2s,color .2s}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--magenta);border-color:var(--magenta);color:#fff}
+.chip .i{width:12px;height:12px}
+.mois+.mois{margin-top:48px}
+.mois-t{padding-top:14px;border-top:1px solid var(--ink);font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
+.rows{margin-top:8px}
+.row{display:grid;grid-template-columns:112px minmax(0,1fr);column-gap:20px;padding:18px 12px;border-bottom:1px solid var(--rule);transition:background .2s,box-shadow .2s}
+.rows>.row:last-child{border-bottom:0}
+.row.survol{background:var(--magenta-soft);box-shadow:inset 3px 0 0 var(--magenta)}
 .dblock{display:flex;flex-direction:column;align-items:flex-start}
-.dblock-d{font:400 2.75rem/.9 var(--serif);letter-spacing:-.01em}
-.dblock-m{margin-top:8px;font:500 var(--fs-label)/1.1 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
-.dblock--month .dblock-d{font-size:var(--fs-s2);line-height:1}
-.row-main{display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center}
-.dot{grid-column:1;grid-row:1;width:10px;height:10px;border-radius:50%;background:var(--c,var(--ink))}
-.row-title{grid-column:2;grid-row:1;font:400 var(--fs-s1)/1.15 var(--serif);letter-spacing:-.005em}
+.dblock-d{font:400 2.5rem/.95 var(--serif);letter-spacing:-.01em}
+.dblock-d.moyen{font-size:1.5rem;line-height:1.05}
+.dblock-d.long{font-size:1.25rem;line-height:1.1}
+.dblock-m{margin-top:6px;font:600 .75rem/1.25 var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--grey)}
+.row-main{min-width:0;overflow-wrap:anywhere}
+.row-title{font:400 var(--fs-s1)/1.12 var(--serif);letter-spacing:-.005em}
 .row-title a{text-decoration:none}
 .row-title a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
-.row-dep{color:var(--grey)}
-.row-place{grid-column:2;grid-row:2;margin-top:4px;color:var(--grey)}
-.row-public{justify-self:start}
-.row-link{justify-self:end}
-.empty{padding:28px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:var(--fs-lead);color:var(--grey)}
-.months{display:grid;row-gap:72px}
-.month{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);border-top:1px solid var(--ink)}
-.month-head{grid-column:1/span 3;align-self:start;position:sticky;top:16px;padding-top:18px}
-.month-head h2{font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
-.month-head p{margin-top:10px;color:var(--grey)}
-.month .rows{grid-column:4/span 9;border-top:0}
-
-/* la compagnie */
-.company{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px}
-.company-text{grid-column:1/span 6}
-.quote{font:400 var(--fs-s2)/1.18 var(--serif);letter-spacing:-.005em;max-width:20em}
-.company-text .lead{margin-top:28px;max-width:34em}
-.figures{grid-column:8/span 5;align-self:start}
-.figures .overline{margin-bottom:12px}
-.stats{border-top:1px solid var(--rule)}
-.stat{display:grid;grid-template-columns:168px minmax(0,1fr);align-items:baseline;column-gap:16px;padding:22px 0 20px;border-bottom:1px solid var(--rule)}
-.stat-n{font:400 3.75rem/.9 var(--serif);letter-spacing:-.02em;white-space:nowrap}
-.stat-l{font-size:var(--fs-lead)}
-.figures-src{margin-top:16px;color:var(--grey)}
-.cast{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:var(--gap)}
-.cast li{padding:16px 0 20px;border-top:1px solid var(--rule)}
-.cast-name{font:400 var(--fs-s1)/1.15 var(--serif);letter-spacing:-.005em}
-.cast-shows{margin-top:6px;color:var(--grey)}
-.partners{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));column-gap:var(--gap)}
-.partners li{padding:16px 0 20px;border-top:1px solid var(--rule);font-size:var(--fs-lead)}
-
-/* contact */
-.coords{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:32px}
-.coord{grid-column:span 3}
-.coord--mail{grid-column:1/span 6}
-.coord .overline{margin-bottom:12px}
-.coord-mail{font:400 var(--fs-s3)/1.05 var(--serif);letter-spacing:-.01em}
-.coord-mail a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em;text-decoration-color:var(--rule-paper)}
-.coord-mail a:hover{text-decoration-color:currentColor}
-.coord-v{font-size:var(--fs-lead);line-height:1.5}
-.cdoors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,auto);column-gap:var(--gap)}
-.cdoor{position:relative;display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:14px;padding-right:32px}
-.cdoor+.cdoor::before{content:"";position:absolute;top:0;bottom:0;left:calc(var(--gap) / -2);width:1px;background:var(--rule)}
-.cdoor-title{font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
-.cdoor .facts{margin-top:6px}
-
-/* pied de page */
-.site-footer{background:var(--ink);color:#fff;padding:var(--sec) 0 32px}
-.site-footer :focus-visible{outline-color:#fff}
-.site-footer .sec-head{border-top-color:rgba(255,255,255,.9)}
-.foot{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:40px}
-.foot-contact{grid-column:1/span 5}
-.foot-mail{font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
-.foot-mail a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em;text-decoration-color:rgba(255,255,255,.4)}
-.foot-mail a:hover{text-decoration-color:#fff}
-.foot-addr{margin-top:16px;font-size:var(--fs-lead);color:rgba(255,255,255,.72)}
-.foot-col{grid-column:span 3}
-.foot-col:first-of-type{grid-column:7/span 3}
-.foot-col h3{margin-bottom:14px;font:600 var(--fs-label)/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.72)}
-.foot-col li+li{margin-top:6px}
-.foot-col p+p{margin-top:6px}
-.foot-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px 32px;margin-top:72px;padding-top:24px;border-top:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.72)}
-.foot-brand{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+.row-lieu{display:flex;align-items:flex-start;gap:6px;margin-top:4px;font-weight:500}
+.row-lieu .i{width:.95em;height:.95em;margin-top:.22em;color:var(--magenta)}
+.row-details{margin-top:6px;color:var(--grey)}
+.row-details li+li{margin-top:4px}
+.row-details a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule-paper)}
+.row-details a:hover{text-decoration-color:currentColor}
+.row-details .i{display:inline;width:.75em;height:.75em;margin-left:5px;vertical-align:-.05em}
+.grp+.grp{margin-top:56px}
+.grp-head{padding-top:14px;border-top:1px solid var(--ink)}
+.grp-t{margin-top:6px;font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
+.grp-head .overline+.grp-t{margin-top:6px}
+.grp-head .grp-t:first-child{margin-top:0}
+.grp-t a{text-decoration:none}
+.grp-t a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
+.grp-sub{margin-top:6px;color:var(--grey)}
+.srow{grid-template-columns:minmax(0,1fr)}
+.srow-d{font-weight:600}
+.etat{display:inline-flex;align-items:center;height:22px;margin-left:6px;padding:0 9px;border-radius:11px;background:var(--magenta-soft);color:var(--magenta-dark);font:600 .75rem/1 var(--sans);vertical-align:.1em;white-space:nowrap}
+.saisons{margin-top:var(--sec);padding-top:22px;border-top:1px solid var(--ink)}
+.saisons ul{display:flex;flex-wrap:wrap;gap:8px}
+.saisons a{display:inline-flex;align-items:center;min-height:40px;padding:0 16px;border:1px solid var(--rule-paper);border-radius:20px;font:500 .9375rem/1.2 var(--sans);text-decoration:none;transition:border-color .2s}
+.saisons a:hover{border-color:var(--ink)}
+.saisons a[aria-current]{background:var(--ink);border-color:var(--ink);color:#fff}
 
 /* page spectacle */
-.show-hero{position:relative;height:60vh;min-height:380px;max-height:760px;overflow:hidden;background:var(--ink)}
-.show-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.show-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(12,10,11,.82) 0%,rgba(12,10,11,.5) 30%,rgba(12,10,11,0) 62%)}
-.show-hero-text{position:absolute;z-index:1;left:0;right:0;bottom:0;margin:0 auto;padding-bottom:48px;color:#fff}
-.back{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:none}
+.show-hero{position:relative;height:62vh;min-height:420px;max-height:760px;overflow:hidden;background:var(--ink)}
+.show-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.show-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(12,10,11,.86) 0%,rgba(12,10,11,.5) 36%,rgba(12,10,11,0) 68%)}
+.show-hero-text{position:absolute;z-index:1;left:0;right:0;bottom:0;margin:0 auto;padding-bottom:44px;color:#fff}
+.back{display:inline-flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font:600 var(--fs-label)/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase}
 .back:hover{text-decoration:underline}
-.back .i-arrow{transform:scaleX(-1)}
-.show-title{margin-top:18px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em;max-width:14em;text-wrap:balance}
-.show-sub{margin-top:14px;font-size:var(--fs-lead);line-height:1.5;color:rgba(255,255,255,.88);max-width:36em}
-.overline--light{color:rgba(255,255,255,.88)}
-.subnav{position:sticky;top:0;z-index:30;background:var(--white);border-bottom:1px solid var(--rule)}
-.subnav ul{display:flex;gap:40px;overflow-x:auto;scrollbar-width:none}
-.subnav ul::-webkit-scrollbar{display:none}
-.subnav a{display:block;padding:18px 0 16px;border-bottom:2px solid transparent;font:500 1rem/1.25 var(--sans);color:var(--grey);text-decoration:none;white-space:nowrap}
-.subnav a:hover{color:var(--ink)}
-.subnav a[aria-current]{color:var(--ink);border-bottom-color:var(--c,var(--ink))}
-.subnav a:focus-visible{outline-offset:-2px}
-.show .sec-head{scroll-margin-top:96px}
-.subnav+.section{padding-top:56px}
-.show-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px}
-.show-main{grid-column:1/span 6}
-.show-aside{grid-column:8/span 5}
-.accroche{font:400 var(--fs-s2)/1.18 var(--serif);letter-spacing:-.005em;max-width:20em}
-.body-text{margin-top:28px;font-size:var(--fs-lead);line-height:1.7;max-width:36em}
-.show-main .btn{margin-top:32px}
-.facts+.facts{margin-top:40px}
-.facts h3{margin-bottom:12px}
-.facts dl{border-top:1px solid var(--rule)}
-.facts dl>div{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:16px;padding:11px 0 12px;border-bottom:1px solid var(--rule)}
-.facts dt{color:var(--grey)}
-.lead{font-size:var(--fs-lead);line-height:1.65}
-.split{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px}
-.split>:first-child{grid-column:1/span 6}
-.split>:last-child{grid-column:8/span 5}
-.intro{margin:-16px 0 32px;font-size:var(--fs-lead);color:var(--grey);max-width:40em}
-.docs{border-top:1px solid var(--rule)}
-.docs li{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:56px;padding:10px 0;border-bottom:1px solid var(--rule)}
-.block+.block{margin-top:40px}
-.block h3{margin-bottom:12px}
-.block .btn{margin-top:28px}
-.mode{margin-bottom:16px}
-.next{padding:var(--sec) 0}
-.next-grid{position:relative;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:24px}
-.next-text{grid-column:1/span 5;display:flex;flex-direction:column;justify-content:space-between;gap:32px;padding-right:24px}
-.next-title{margin-top:20px;font:400 var(--fs-s3)/1.04 var(--serif);letter-spacing:-.01em}
-.next-title a{text-decoration:none}
-.next-title a::after{content:"";position:absolute;inset:0;border-radius:6px}
-.next-title a:focus-visible{outline:none}
-.next-title a:focus-visible::after{outline:2px solid var(--ink);outline-offset:6px}
-.next-grid:hover .next-title a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.14em}
-.next-sub{margin-top:12px;color:var(--grey);font-size:var(--fs-lead)}
-.next-go{display:inline-flex;align-items:center;gap:10px;font-weight:600}
-.next-go .i-arrow{width:1.25em;height:1.25em}
-.next-grid:hover .next-go{color:var(--magenta)}
-.next-photo{grid-column:6/span 7;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:var(--paper)}
-.next-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s cubic-bezier(.2,.65,.25,1)}
-.next-grid:hover .next-photo img{transform:scale(1.04)}
+.show-crea{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin-top:22px;font:600 var(--fs-label)/1.3 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.92)}
+.show-title{margin-top:12px;font:400 var(--fs-s4)/.98 var(--serif);letter-spacing:-.01em}
+.show-title span{display:block}
+.show-sub{margin-top:14px;font-size:var(--fs-lead);color:rgba(255,255,255,.92)}
+.show-cadre{margin-top:8px;font-size:.9375rem;color:rgba(255,255,255,.82)}
+.show-credit{padding-top:10px;text-align:right;font-size:.75rem;color:var(--grey)}
+.show-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px;padding-top:48px}
+.show-main{grid-column:1/span 7;min-width:0}
+.show-aside{grid-column:9/span 4;min-width:0}
+.texte p{max-width:38em;font-size:var(--fs-lead);line-height:1.7}
+.texte p+p{margin-top:1em}
+.extraits{display:grid;gap:28px;margin-top:44px}
+.extrait{padding-left:20px;border-left:3px solid var(--magenta)}
+.extrait p{font:400 1.625rem/1.22 var(--serif)}
+.extrait cite{display:block;margin-top:8px;font-style:normal;font-size:.875rem;color:var(--grey)}
+.medias{margin-top:44px}
+.medias h3{margin:24px 0 8px}
+.medias ul{border-top:1px solid var(--rule)}
+.medias a{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);text-decoration:none}
+.medias a:hover .m-t{text-decoration:underline}
+.ico{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:50%;background:var(--magenta);color:#fff}
+.ico .i{width:16px;height:16px}
+.m-t{display:block;font-weight:500}
+.m-par{display:block;font-size:.875rem;color:var(--grey)}
+.fiche{border-top:1px solid var(--rule)}
+.fiche li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:16px;padding:10px 0 11px;border-bottom:1px solid var(--rule)}
+.fiche .lib{color:var(--grey)}
+.fiche .seul{grid-column:1/-1}
+.duree{margin-top:16px;font-weight:500}
+.mentions{display:grid;gap:10px;margin-top:20px}
+.mentions p{padding:12px 14px;border-radius:6px;background:var(--paper);font-size:.9375rem}
+.mentions a{text-decoration-color:var(--magenta)}
+.production{display:grid;gap:8px;margin-top:24px;font-size:.875rem;line-height:1.55;color:var(--grey)}
+.production strong{font-weight:600;color:var(--ink)}
+.tournee{padding-top:var(--sec)}
+.tournee-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:32px;align-items:start}
+.tournee-liste{grid-column:1/span 6;min-width:0}
+.tournee-liste.rows{margin-top:0}
+.tournee-carte{grid-column:8/span 5}
+.tournee-seule{grid-column:3/span 8;padding-top:22px;border-top:1px solid var(--ink)}
+.tournee-texte{font-size:var(--fs-lead)}
+.autres-s{padding-top:var(--sec)}
+.autres{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px var(--gap)}
+.autre{position:relative}
+.autre-photo{aspect-ratio:3/2;border-radius:6px;overflow:hidden;background:var(--paper)}
+.autre-photo img{width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease)}
+.autre:hover .autre-photo img{transform:scale(1.04)}
+.autre-t{margin-top:12px;font:400 1.375rem/1.15 var(--serif)}
+.autre-t a{text-decoration:none}
+.autre-t a::after{content:"";position:absolute;inset:0;border-radius:6px}
+.autre:hover .autre-t a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em}
+.autre-c{margin-top:2px;font-size:.875rem;color:var(--grey)}
 
-/* tablette */
-@media (max-width:1100px){
-  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .show-main{grid-column:1/-1}
-  .show-aside{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--gap)}
-  .facts+.facts{margin-top:0}
-}
-@media (max-width:899px){
-  .bar{grid-template-columns:1fr auto;height:68px}
-  .menu-toggle{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 4px 0 12px;margin-right:-4px;border:0;background:none;font:600 1rem/1 var(--sans);cursor:pointer}
+/* la compagnie, les actions, les pages de texte */
+.cie{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px;align-items:start}
+.cie-texte{grid-column:1/span 7}
+.cie-texte p{font-size:var(--fs-lead);line-height:1.7}
+.cie-texte p+p{margin-top:1em}
+.cie-texte p:first-child{font:400 1.75rem/1.32 var(--serif);letter-spacing:-.005em}
+.cie-dates{grid-column:9/span 4;position:sticky;top:24px}
+.cie-dates h2{padding-top:14px;border-top:1px solid var(--ink);font:400 var(--fs-s2)/1.1 var(--serif)}
+.annees{margin-top:12px}
+.annees li{display:grid;grid-template-columns:52px 64px minmax(0,1fr);align-items:center;column-gap:14px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.an-photo{width:52px;height:52px;border-radius:4px;overflow:hidden;background:var(--paper)}
+.an-photo img{width:100%;height:100%;object-fit:cover}
+.an{font:400 1.75rem/1 var(--serif);color:var(--magenta-dark)}
+.annees a{font-weight:500;text-decoration:none}
+.annees a:hover{text-decoration:underline}
+.actions{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:40px;align-items:start}
+.actions .prose{grid-column:1/span 6;grid-row:1}
+.actions-photo{grid-column:8/span 5;grid-row:1;position:sticky;top:24px}
+.actions-photo img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px}
+.credit-l{margin-top:8px;text-align:right;font-size:.75rem;color:var(--grey)}
+.prose{overflow-wrap:anywhere}
+.prose h2{margin:44px 0 14px;font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
+.prose h3{margin:32px 0 10px;font:600 1.125rem/1.3 var(--sans)}
+.prose>:first-child{margin-top:0}
+.prose p{margin-top:14px;font-size:var(--fs-lead);line-height:1.7}
+.prose ul{margin-top:14px;padding-left:1.2em;list-style:disc}
+.prose li{margin-top:10px;font-size:var(--fs-lead);line-height:1.6}
+.prose li::marker{color:var(--magenta)}
+.prose a{text-decoration-color:var(--magenta)}
+.prose-legal{max-width:52em}
+.prose-legal p,.prose-legal li{font-size:1rem}
+
+/* formulaires */
+.contact{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:48px;align-items:start}
+.contact .form{grid-column:1/span 7}
+.coords{grid-column:9/span 4;padding-top:22px;border-top:1px solid var(--ink)}
+.coords-nom{font:400 var(--fs-s1)/1.15 var(--serif)}
+.coords p+p{margin-top:12px}
+.form{display:grid;gap:20px}
+.champ label{display:block;margin-bottom:6px;font-weight:500}
+.champ input,.champ textarea{display:block;width:100%;min-height:48px;padding:10px 14px;border:1px solid var(--rule-paper);border-radius:6px;background:var(--white);transition:border-color .2s}
+.champ textarea{min-height:168px;resize:vertical}
+.champ input:hover,.champ textarea:hover,.calcul input:hover{border-color:#b9b1a6}
+.champ input:focus-visible,.champ textarea:focus-visible,.calcul input:focus-visible{outline:2px solid var(--magenta);outline-offset:1px;border-color:var(--magenta)}
+.consent{display:flex;align-items:flex-start;gap:12px}
+.consent input{flex:none;width:20px;height:20px;margin:2px 0 0;accent-color:var(--magenta)}
+.consent a{text-decoration-color:var(--magenta)}
+.calcul{display:flex;align-items:center;gap:12px}
+.calcul label{font-weight:500}
+.calcul input{width:64px;min-height:44px;padding:8px 10px;border:1px solid var(--rule-paper);border-radius:6px;text-align:center}
+.form .btn{justify-self:start}
+.pro{max-width:640px;padding:32px;border-radius:6px;background:var(--paper)}
+.pro .lead{font-size:var(--fs-lead)}
+.pro-ligne{display:flex;flex-wrap:wrap;gap:12px}
+.pro-ligne input{flex:1 1 220px;width:auto}
+
+/* pied de page */
+.site-footer{padding:72px 0 32px;background:var(--ink);color:#fff}
+.site-footer :focus-visible{outline-color:#fff}
+.foot{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:40px}
+.foot-id{grid-column:1/span 4}
+.foot-brand{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none}
+.foot-addr{margin-top:20px;line-height:1.55;color:rgba(255,255,255,.78)}
+.foot-addr strong{font-weight:600;color:#fff}
+.foot-contact{grid-column:5/span 3}
+.foot-ecrire{display:inline-flex;align-items:center;gap:12px;font:400 var(--fs-s2)/1.1 var(--serif);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.18em;text-decoration-color:rgba(255,255,255,.4)}
+.foot-ecrire:hover{text-decoration-color:#fff}
+.foot-ecrire .i{width:.6em;height:.6em;color:#ec8fbd}
+.foot-fb{margin-top:16px;color:rgba(255,255,255,.78)}
+.foot-part{grid-column:9/span 4;font-size:.9375rem;line-height:1.6;color:rgba(255,255,255,.78)}
+.foot-bas{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px 32px;margin-top:56px;padding-top:22px;border-top:1px solid rgba(255,255,255,.18);font-size:.875rem;color:rgba(255,255,255,.72)}
+.foot-legal{display:flex;flex-wrap:wrap;gap:4px 20px}
+.foot-bas ul{display:flex;flex-wrap:wrap;gap:8px 24px}
+.foot-bas a{text-decoration:none}
+.foot-bas a:hover{text-decoration:underline}
+
+/* l'ouverture, habillée */
+.intro.maison .intro-indice,.intro.maison .intro-choc{color:var(--magenta)}
+.intro.maison::after{content:"";position:absolute;inset:clamp(10px,1.6vw,22px);border:1px solid rgba(188,62,128,.28);border-radius:4px;pointer-events:none;transition:opacity .3s}
+.intro.maison.part::after{opacity:0}
+
+/* le menu replié, sous 1280 px */
+@media (max-width:1279.98px){
+  .bar{height:68px}
+  .menu-toggle{display:inline-flex;align-items:center;gap:10px;min-height:44px;margin-right:-4px;padding:0 4px 0 12px;border:0;background:none;font:600 1rem/1 var(--sans);cursor:pointer}
   .menu-toggle svg{width:22px;height:22px}
   .menu{display:none;position:absolute;top:100%;left:0;right:0;padding:8px var(--pad) 24px;background:var(--white);border-bottom:1px solid var(--rule);box-shadow:0 24px 32px -24px rgba(17,17,17,.25)}
-  .site-header.is-open .menu{display:block}
-  .nav-main ul{display:block}
-  .nav-main li{border-bottom:1px solid var(--rule)}
-  .nav-main a{padding:16px 0;font-size:1.25rem}
-  .nav-main a[aria-current]{font-weight:600;text-underline-offset:6px}
-  .header-cta{display:flex;width:100%;margin-top:20px}
-  .doors-grid{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
-  .door{grid-row:auto;grid-template-rows:none;padding:24px 0 26px}
-  .door+.door::before{left:0;right:0;top:0;bottom:auto;width:auto;height:1px}
-  .hero-text{grid-column:1/-1;padding-right:0;gap:32px}
-  .hero-photo{grid-column:1/-1;margin-top:32px;aspect-ratio:16/10}
-  .page-head-title,.page-lead{grid-column:1/-1}
-  .page-head-grid{row-gap:16px;padding-top:44px;padding-bottom:44px}
-  .page-body{padding-top:48px}
-  .months{row-gap:56px}
-  .month{display:block}
-  .month-head{position:static;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 24px;padding:18px 0 6px}
-  .month-head p{margin-top:0}
-  .rep-text,.rep-photos{grid-column:1/-1}
-  .rep-photos{order:-1}
-  .company-text,.figures{grid-column:1/-1}
-  .cast{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .coord{grid-column:span 6}
-  .coord--mail{grid-column:1/-1}
-  .cdoors{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
-  .cdoor{grid-row:auto;grid-template-rows:none;padding:28px 0 32px}
-  .cdoor:first-child{padding-top:0}
-  .cdoor+.cdoor::before{left:0;right:0;top:0;bottom:auto;width:auto;height:1px}
-  .foot-contact{grid-column:1/-1}
-  .foot-col,.foot-col:first-of-type{grid-column:span 6}
-  .split>:first-child,.split>:last-child{grid-column:1/-1}
-  .next-text{grid-column:1/-1;padding-right:0}
-  .next-photo{grid-column:1/-1;grid-row:1}
+  .site-header.ouvert .menu{display:block}
+  .menu ul{display:block;max-width:var(--max);margin:0 auto}
+  .menu li{border-bottom:1px solid var(--rule)}
+  .menu a{padding:16px 0 16px 14px;border-bottom:0;border-left:3px solid transparent;font-size:1.25rem}
+  .menu a:hover{border-left-color:var(--rule-paper)}
+  .menu a[aria-current="page"]{border-left-color:var(--magenta);font-weight:600}
 }
-/* téléphone */
+@media (max-width:1100px){
+  .cards,.autres{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tour-text{grid-column:1/span 5}
+  .tour-carte{grid-column:6/span 7}
+}
+@media (max-width:899px){
+  .hero{padding-top:20px}
+  .slide{display:flex;flex-direction:column}
+  .slide-photo{order:-1;aspect-ratio:16/10}
+  .slide-text{padding:24px 0 8px}
+  .hero-tabs{grid-auto-columns:minmax(140px,1fr);overflow-x:auto;scrollbar-width:none}
+  .hero-tabs::-webkit-scrollbar{display:none}
+  .portes-grid{grid-template-columns:minmax(0,1fr)}
+  .porte a{padding:18px 0 22px}
+  .tour-text,.tour-carte,.agenda-carte,.agenda-liste,.show-main,.show-aside,.tournee-liste,.tournee-carte,.tournee-seule,.cie-texte,.cie-dates,.contact .form,.coords,.foot-id,.foot-contact,.foot-part{grid-column:1/-1}
+  .agenda-carte,.cie-dates,.actions-photo{position:static}
+  .actions-photo,.actions .prose{grid-column:1/-1;grid-row:auto}
+}
 @media (max-width:599px){
-  .hero{padding:28px 0 40px}
-  .hero-title{margin-top:14px}
-  .hero-photo{aspect-ratio:4/3;margin-top:28px}
-  .page-head-grid{padding-top:36px;padding-bottom:36px}
-  .page-body{padding-top:40px}
-  .cards{grid-template-columns:minmax(0,1fr);row-gap:48px;margin-bottom:0}
-  .card{grid-row:auto;grid-template-rows:none;padding-bottom:0}
-  .rep-list{font-size:1.625rem}
-  .sec-head{margin-bottom:28px;padding-top:18px}
-  .row{grid-template-columns:60px minmax(0,1fr);align-items:start;row-gap:12px;padding:18px 0}
-  .dblock-d{font-size:2.25rem}
-  .dblock--month .dblock-d{font-size:1.625rem}
-  .row-main{grid-template-columns:18px minmax(0,1fr)}
+  .slide-photo{aspect-ratio:4/3}
+  .slide-title{margin-top:12px}
+  .page-head .wrap{padding-top:36px;padding-bottom:36px}
+  .page-body{padding-top:36px}
+  .cards{grid-template-columns:minmax(0,1fr)}
+  .row{grid-template-columns:76px minmax(0,1fr);column-gap:14px;padding:16px 8px}
+  .srow{grid-template-columns:minmax(0,1fr)}
+  .dblock-d{font-size:2rem}
+  .dblock-d.moyen{font-size:1.25rem}
+  .dblock-d.long{font-size:1.0625rem}
   .row-title{font-size:1.375rem}
-  .row-public,.row-link{grid-column:2;justify-self:start;margin-left:18px}
-  .row-public{grid-row:2}
-  .row-link{grid-row:2;justify-self:end}
-  .stat{grid-template-columns:136px minmax(0,1fr)}
-  .stat-n{font-size:3rem}
-  .cast{grid-template-columns:minmax(0,1fr)}
-  .cast li{padding:14px 0 16px}
-  .cast-name{font-size:1.375rem}
-  .coord{grid-column:1/-1}
-  .foot-col,.foot-col:first-of-type{grid-column:1/-1}
-  .foot-bottom{margin-top:56px}
-  .show-hero{min-height:360px}
-  .show-hero-text{padding-bottom:32px}
-  .subnav .wrap{padding:0}
-  .subnav ul{gap:28px;padding:0 var(--pad)}
-  .show-aside{display:block}
-  .facts+.facts{margin-top:40px}
-  .facts dl>div{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)}
-  .docs li{min-height:52px}
+  .fiche li{grid-template-columns:minmax(0,1fr)}
+  .show-hero{height:56vh;min-height:380px}
+  .show-hero-text{padding-bottom:28px}
+  .pro{padding:20px}
+  .annees li{grid-template-columns:44px 56px minmax(0,1fr);column-gap:12px}
+  .an-photo{width:44px;height:44px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
-  .card:hover .card-photo img,.next-grid:hover .next-photo img,.rep-photos:hover img{transform:none}
 }
 </style>
 </head>
 <body>
 <a class="skip" href="#main">Aller au contenu</a>
-<header class="site-header" id="top">
+<header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="#/" aria-label="Compagnie Crescite, accueil"><span class="brand-mark" data-logo="mark"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu"><span data-menu-label>Menu</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-menu-icon d="M3 8h18M3 16h18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
-    <div class="menu" id="menu">
-      <nav class="nav-main" aria-label="Navigation principale">
-        <ul>
-          <li><a href="#/spectacles" data-nav="spectacles">Spectacles</a></li>
-          <li><a href="#/agenda" data-nav="agenda">Agenda</a></li>
-          <li><a href="#/compagnie" data-nav="compagnie">La compagnie</a></li>
-          <li><a href="#/contact" data-nav="contact">Contact</a></li>
-        </ul>
-      </nav>
-      <a class="btn btn-primary header-cta" href="#/agenda">Prochaines dates</a>
-    </div>
+    <a class="brand" href="#/"><span class="brand-mark" data-logo="mark"></span><span class="brand-word"></span></a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu"><span data-menu-label></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-menu-icon d="M3 8h18M3 16h18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+    <nav class="menu" id="menu"><ul></ul></nav>
   </div>
 </header>
 <main id="main" tabindex="-1"></main>
 <footer class="site-footer" id="pied"></footer>
-<noscript><p style="padding:24px">Cette page a besoin de JavaScript pour afficher les spectacles et les dates.</p></noscript>
 <script>const D = /*__DATA__*/null;</script>
 <script>
 (() => {
   'use strict';
-  const SHOWS = D.shows || [];
-  const DATES = D.dates || [];
-  const C = D.company || {};
-  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  const S = D.site, SHOWS = D.shows || [], DATES = D.dates || [];
+  const own = (o, k) => o != null && Object.prototype.hasOwnProperty.call(o, k);
   const BY = Object.fromEntries(SHOWS.map(s => [s.slug, s]));
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ESC[c]);
-  // typographie française : espaces insécables avant : ; ! ? » et après «
-  const t = v => esc(v).replace(/ :/g, ' :').replace(/ ([;!?»])/g, ' $1').replace(/« /g, '« ');
-  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
-  const plural = (n, w) => `${n} ${w}${n > 1 ? 's' : ''}`;
-  const TODO = '<span class="todo">à fournir</span>';
-  const ARROW = '<svg class="i-arrow" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M2.5 10h14M11 4.5l5.5 5.5-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
-  const EXT = '<svg class="i-ext" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5 3h8v8M13 3L3.5 12.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
-  const main = $('#main');
-  const header = $('.site-header');
-  const ACTIONS = 'actions-culturelles';
-  const PLAYS = SHOWS.filter(s => s.slug !== ACTIONS);
-  const HAS_ACTIONS = PLAYS.length < SHOWS.length;
-  const REPERTOIRE = `${plural(PLAYS.length, 'spectacle')}${HAS_ACTIONS ? ' et les actions culturelles' : ''}`;
-  const photo = (s, cls) => `<img${cls ? ` class="${cls}"` : ''} src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${Number(s.focale) || 50}% 50%">`;
+  const $ = (q, r = document) => r.querySelector(q);
+  const $$ = (q, r = document) => [...r.querySelectorAll(q)];
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ico = d => `<svg class="i" viewBox="0 0 20 20" aria-hidden="true" focusable="false">${d}</svg>`;
+  const ARROW = ico('<path d="M2.5 10h14M11 4.5l5.5 5.5-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.6"/>');
+  const BACK = ico('<path d="M17.5 10h-14M9 4.5L3.5 10 9 15.5" fill="none" stroke="currentColor" stroke-width="1.6"/>');
+  const PREV = ico('<path d="M12.5 4.5L7 10l5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.6"/>');
+  const NEXT = ico('<path d="M7.5 4.5L13 10l-5.5 5.5" fill="none" stroke="currentColor" stroke-width="1.6"/>');
+  const EXT = ico('<path d="M7 4h9v9M16 4L5 15" fill="none" stroke="currentColor" stroke-width="1.6"/>');
+  const PIN = ico('<path d="M10 18s-5.5-5.2-5.5-9.3a5.5 5.5 0 0 1 11 0C15.5 12.8 10 18 10 18z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="8.6" r="2" fill="currentColor"/>');
+  const PLAY = ico('<path d="M7 4.5v11l9-5.5z" fill="currentColor"/>');
+  const SON = ico('<path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z" fill="currentColor"/><path d="M13.5 7a4 4 0 0 1 0 6M15.5 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5"/>');
+  const CROIX = ico('<path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="1.8"/>');
+  const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const main = $('#main'), header = $('.site-header'), toggle = $('.menu-toggle');
+  const onglet = id => (S.menu.find(m => m.id === id) || {}).texte || '';
+  const photo = (slug, alt = '', focale = 50) => `<img src="${D.photos[slug]}" alt="${esc(alt)}" style="object-position:${Number(focale) || 50}% 50%">`;
+  const lignes = arr => (arr || []).map(l => `<span>${esc(l)}</span>`).join(' ');
+  const bloc = b => /^\s*<(h[1-6]|ul|ol|p|div|table|blockquote|figure)\b/i.test(b) ? b : `<p>${b}</p>`;
+  const tete = (h1, over = '') => `<header class="page-head"><div class="wrap">${over ? `<p class="overline">${over}</p>` : ''}<h1 class="page-title" tabindex="-1">${h1}</h1></div></header>`;
 
-  /* ---------- dates ---------- */
-  const TIME = /^\d{1,2}\s?h\s?\d{0,2}$/i;
-  const lieuOf = d => { const l = (d.lieu || '').trim(); return !l || TIME.test(l) || /^diptyque$/i.test(l) ? '' : l; };
-  const extras = d => {
+  /* ---------- les lignes de date, découpées sans rien réécrire ---------- */
+  const MOIS_RE = /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\s+\d{4}\s*$/i;
+  function decoupe(t) {
+    t = String(t || '');
+    const m = t.match(MOIS_RE);
+    if (!m) return [t, ''];
+    const a = t.slice(0, m.index).trim(), b = t.slice(m.index).trim();
+    if (a) return [a, b];
+    const i = b.indexOf(' ');
+    return [b.slice(0, i), b.slice(i + 1)];
+  }
+  function dblock(t) {
+    const [a, b] = decoupe(t);
+    const taille = a.length <= 4 ? '' : a.length <= 8 ? ' moyen' : ' long';
+    return `<p class="dblock"><span class="dblock-d${taille}">${esc(a)}</span>${b ? ` <span class="dblock-m">${esc(b)}</span>` : ''}</p>`;
+  }
+  function details(list) {
+    if (!list || !list.length) return '';
+    return `<ul class="row-details">${list.map(x => `<li>${x.lien ? `<a href="${esc(x.lien)}" target="_blank" rel="noopener">${esc(x.texte)}${EXT}</a>` : esc(x.texte)}</li>`).join('')}</ul>`;
+  }
+  function rangee(d, sansTitre) {
+    return `<li class="row" data-l="${d.l ?? ''}" data-slug="${esc(d.slug)}">${dblock(d.ligneDate)}
+      <div class="row-main">${sansTitre
+        ? `<p class="row-title">${esc(d.ligneLieu)}</p>`
+        : `<h3 class="row-title"><a href="#/spectacle/${esc(d.slug)}">${esc(d.titre)}</a></h3><p class="row-lieu">${PIN}<span>${esc(d.ligneLieu)}</span></p>`}${details(d.details)}</div></li>`;
+  }
+  function rangeeSaison(d) {
+    const t = String(d.ligne || ''), i = t.indexOf(' — ');
+    const a = i < 0 ? t : t.slice(0, i), b = i < 0 ? '' : t.slice(i + 3);
+    return `<li class="row srow"${d.l != null ? ` data-l="${d.l}"` : ''}><div class="row-main">
+      <p class="srow-d">${esc(a)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${b ? `<p class="row-lieu">${PIN}<span>${esc(b)}</span></p>` : ''}${details(d.details)}</div></li>`;
+  }
+  function parMois(list) {
     const out = [];
-    if (d.precision !== 'day' || d.fin !== d.iso) out.push(d.label);
-    if (TIME.test((d.lieu || '').trim())) out.push(d.lieu.trim());
-    if (/^diptyque$/i.test((d.lieu || '').trim())) out.push('en diptyque');
+    list.forEach(d => {
+      const k = String(d.iso).slice(0, 7);
+      let g = out[out.length - 1];
+      if (!g || g.k !== k) out.push(g = { k, label: `${MOIS[+k.slice(5, 7) - 1]} ${k.slice(0, 4)}`, list: [] });
+      g.list.push(d);
+    });
     return out;
-  };
-  const dayNum = d => d.jour === 1 ? '1<sup>er</sup>' : String(d.jour);
-  const shortDate = d => d.precision === 'month' ? `${esc(d.moisLong)} ${d.annee}` : `${dayNum(d)} ${esc(d.mois)}`;
-  const longDate = d => d.precision === 'day' && d.fin === d.iso ? `${cap(d.joursemLong)} ${esc(d.label)}` : esc(cap(d.label));
-  const where = d => `${t(d.commune)} (${esc(d.dep)})`;
-  const colorOf = slug => (BY[slug] || {}).couleurTexteClair || 'var(--ink)';
-
-  function dateBlock(d, weekday) {
-    if (d.precision === 'month') {
-      return `<time class="dblock dblock--month" datetime="${esc(d.iso.slice(0, 7))}"><span class="dblock-d">${esc(d.mois)}</span><span class="dblock-m">à préciser</span></time>`;
-    }
-    return `<time class="dblock" datetime="${esc(d.iso)}"><span class="dblock-d">${dayNum(d)}</span><span class="dblock-m">${esc(weekday && d.joursem ? d.joursem : d.mois)}</span></time>`;
-  }
-  function badge(d) {
-    return `<span class="badge${d.public === 'Scolaire' ? ' badge--school' : ''}">${esc(d.public)}</span>`;
-  }
-  function dateRow(d, ctx, hidden, weekday) {
-    const lieu = lieuOf(d);
-    const title = ctx === 'list'
-      ? `<a href="#/spectacle/${esc(d.slug)}">${t(d.titre)}</a>`
-      : `${t(d.commune)} <span class="row-dep">(${esc(d.dep)})</span>`;
-    const place = ctx === 'list'
-      ? [lieu ? `${t(lieu)}, ${where(d)}` : where(d), ...extras(d).map(t)].join(' · ')
-      : [lieu ? t(lieu) : '', ...extras(d).map(t)].filter(Boolean).join(' · ');
-    const info = d.lien
-      ? `<a class="link-ext" href="${esc(d.lien)}" target="_blank" rel="noopener">Infos${EXT}<span class="sr-only"> : ${t(d.titre)}, ${esc(d.label)}, ${t(d.commune)} (nouvel onglet)</span></a>`
-      : '';
-    return `<li class="row"${hidden ? ' hidden' : ''}>${dateBlock(d, weekday)}
-      <div class="row-main"><span class="dot" style="--c:${colorOf(d.slug)}" aria-hidden="true"></span><h3 class="row-title">${title}</h3>${place ? `<p class="row-place">${place}</p>` : ''}</div>
-      <p class="row-public">${badge(d)}</p><p class="row-link">${info}</p></li>`;
-  }
-  function dateList(list, ctx, limit, id) {
-    if (!list.length) return '<p class="empty">Aucune date annoncée pour l’instant.</p>';
-    const rows = list.map((d, i) => dateRow(d, ctx, i >= limit)).join('');
-    const rest = list.length - limit;
-    const more = rest > 0
-      ? `<p class="more"><button class="btn btn-secondary btn-sm" type="button" data-more="${id}" data-limit="${limit}" data-rest="${rest}" aria-expanded="false" aria-controls="${id}">Voir les ${rest} autres dates</button></p>`
-      : '';
-    return `<ol class="rows" id="${id}">${rows}</ol>${more}`;
   }
 
-  /* ---------- en-tête d'onglet ---------- */
-  function pageHead(over, title, lead) {
-    return `<header class="page-head"><div class="wrap page-head-grid">
-      <div class="page-head-title"><p class="overline">${over}</p><h1 class="page-title" tabindex="-1">${title}</h1></div>
-      ${lead ? `<p class="page-lead">${lead}</p>` : ''}
-    </div></header>`;
+  /* ---------- la carte : des bras magenta qui poussent depuis Rouen ---------- */
+  const VB = String(CARTE.viewBox).split(/\s+/).map(Number), RO = CARTE.rouen;
+  const dist = x => Math.hypot(x.xy[0] - RO[0], x.xy[1] - RO[1]);
+  const dans = x => x && x.xy && x.xy[0] >= VB[0] && x.xy[0] <= VB[0] + VB[2] && x.xy[1] >= VB[1] && x.xy[1] <= VB[1] + VB[3];
+  const CARTES = {};
+  let nK = 0;
+  function carte({ lieux = [], passe = [], titre = '', info = null, choix = null, papier = false } = {}) {
+    const id = 'k' + (++nK);
+    lieux = lieux.filter(dans); passe = passe.filter(dans);
+    CARTES[id] = { lieux, info, choix, survol: null };
+    const loin = Math.max(1, ...lieux.map(dist));
+    const delai = x => Math.round(dist(x) / loin * 700);
+    const larg = x => Math.min(9, 3 + Math.sqrt(x.n || 1) * 1.6);
+    const etiquette = x => CARTE.nom(x) + ((x.dates || []).length ? ' : ' + x.dates.map(d => d.ligneDate ? `${d.ligneDate}, ${d.titre}` : d.ligne).join(' ; ') : '');
+    const bras = lieux.map((x, i) => {
+      const d = CARTE.bras(x.xy, { w0: larg(x), w1: .8 });
+      if (!d) return '';
+      return `<g class="k-bras" data-l="${x.l}" style="--d:${delai(x)}ms"><mask id="${id}m${i}" maskUnits="userSpaceOnUse" x="${VB[0]}" y="${VB[1]}" width="${VB[2]}" height="${VB[3]}"><path class="k-pousse" d="${CARTE.trait(x.xy)}" pathLength="1" stroke-width="${(larg(x) + 8).toFixed(1)}"/></mask><path class="k-bras-f" d="${d}" mask="url(#${id}m${i})"/></g>`;
+    }).join('');
+    const passes = passe.map(x => {
+      const d = CARTE.bras(x.xy, { w0: 1.8, w1: .4 });
+      return `${d ? `<path class="k-passe" d="${d}"/>` : ''}<circle class="k-passe-pt" cx="${x.xy[0]}" cy="${x.xy[1]}" r="1.8"/>`;
+    }).join('');
+    const points = lieux.map(x => `<g class="carte-lieu k-lieu${dist(x) < 6 ? ' k-maison' : ''}" data-l="${x.l}" style="--d:${delai(x)}ms" role="button" tabindex="0" aria-label="${esc(etiquette(x))}"><circle class="k-cible" cx="${x.xy[0]}" cy="${x.xy[1]}" r="12"/><circle class="k-point" cx="${x.xy[0]}" cy="${x.xy[1]}" r="4"/></g>`).join('');
+    return `<div class="k-carte${papier ? ' k-papier' : ''}" data-k="${id}">
+      <svg class="k" viewBox="${VB.join(' ')}" role="${lieux.length ? 'group' : 'img'}" aria-label="${esc(titre)}">
+        <path class="k-voisin" d="${CARTE.fond.belgique}"/><path class="k-voisin" d="${CARTE.fond.luxembourg}"/><path class="k-pays" d="${CARTE.fond.pays}"/>
+        <g class="k-passes">${passes}</g><g class="k-brass">${bras}</g>
+        <circle class="k-rouen" cx="${RO[0]}" cy="${RO[1]}" r="6"/><text class="k-rouen-nom" x="${RO[0] + 9}" y="${RO[1] - 9}">Rouen</text>
+        <g class="k-lieux">${points}</g><g class="k-noms" aria-hidden="true"></g>
+      </svg><div class="k-info" hidden></div></div>`;
   }
+  // les noms des communes, placés sans se chevaucher, à taille constante à l'écran
+  function placerNoms(w) {
+    const cfg = CARTES[w.dataset.k], svg = $('svg', w), m = svg && svg.getScreenCTM && svg.getScreenCTM();
+    if (!cfg || !m || !m.a) return;
+    const u = 1 / m.a, fs = 12 * u, rp = 4.5 * u, e = rp + 3 * u, rfs = 13 * u;
+    $$('.k-point', svg).forEach(c => c.setAttribute('r', rp.toFixed(2)));
+    $$('.k-cible', svg).forEach(c => c.setAttribute('r', (13 * u).toFixed(2)));
+    $$('.k-passe-pt', svg).forEach(c => c.setAttribute('r', (2 * u).toFixed(2)));
+    $('.k-rouen', svg).setAttribute('r', (6 * u).toFixed(2));
+    const rt = $('.k-rouen-nom', svg);
+    rt.setAttribute('x', (RO[0] + 9 * u).toFixed(1)); rt.setAttribute('y', (RO[1] - 9 * u).toFixed(1));
+    rt.style.fontSize = rfs.toFixed(2) + 'px'; rt.style.strokeWidth = (4 * u).toFixed(2) + 'px';
+    const B = [], boite = (x0, y0, wd, h, l = null) => ({ x0, y0, x1: x0 + wd, y1: y0 + h, l });
+    B.push(boite(RO[0] + 8 * u, RO[1] - 9 * u - rfs, 5 * rfs * .62 + 2 * u, rfs * 1.25));
+    B.push(boite(RO[0] - 7 * u, RO[1] - 7 * u, 14 * u, 14 * u));
+    cfg.lieux.forEach(x => B.push(boite(x.xy[0] - rp, x.xy[1] - rp, 2 * rp, 2 * rp, x.l)));
+    const libre = (b, l) => b.x0 >= VB[0] && b.y0 >= VB[1] && b.x1 <= VB[0] + VB[2] && b.y1 <= VB[1] + VB[3]
+      && !B.some(o => o.l !== l && b.x0 < o.x1 && o.x0 < b.x1 && b.y0 < o.y1 && o.y0 < b.y1);
+    const sw = (3.5 * u).toFixed(2);
+    const tri = cfg.lieux.filter(x => dist(x) >= 6).sort((a, b) => (b.n || 0) - (a.n || 0) || dist(b) - dist(a));
+    $('.k-noms', svg).innerHTML = tri.map(x => {
+      const [px, py] = x.xy, tw = x.c.length * fs * .58, h = fs * 1.2;
+      const C = [
+        { x: px + e, y: py + fs * .36, an: 'start', b: boite(px + e - u, py - fs * .62, tw + 2 * u, h) },
+        { x: px - e, y: py + fs * .36, an: 'end', b: boite(px - e - tw - u, py - fs * .62, tw + 2 * u, h) },
+        { x: px, y: py - e, an: 'middle', b: boite(px - tw / 2 - u, py - e - fs * .95, tw + 2 * u, h) },
+        { x: px, y: py + e + fs * .85, an: 'middle', b: boite(px - tw / 2 - u, py + e, tw + 2 * u, h) },
+      ];
+      const ok = C.find(c => libre(c.b, x.l)), c = ok || C[0];
+      if (ok) B.push(ok.b);
+      return `<text class="k-nom${ok ? '' : ' k-cache'}" data-l="${x.l}" x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.an}" style="font-size:${fs.toFixed(2)}px;stroke-width:${sw}px">${esc(x.c)}</text>`;
+    }).join('');
+  }
+  function placerInfo(w, l) {
+    const info = $('.k-info', w), p = $(`.k-lieu[data-l="${l}"] .k-point`, w);
+    if (!p) return;
+    const r = p.getBoundingClientRect(), W = w.getBoundingClientRect();
+    const cx = r.left + r.width / 2 - W.left, cy = r.top + r.height / 2 - W.top, iw = info.offsetWidth, ih = info.offsetHeight;
+    let x = cx + 16, y = cy - ih - 12;
+    if (x + iw > W.width) x = cx - iw - 16;
+    if (x < 0) x = Math.max(0, Math.min(W.width - iw, cx - iw / 2));
+    if (y < 0) y = cy + 16;
+    info.style.left = Math.round(x) + 'px'; info.style.top = Math.round(y) + 'px';
+  }
+  function surligner(w, l) {
+    const cfg = CARTES[w.dataset.k];
+    if (!cfg) return;
+    $$('.k-actif', w).forEach(n => n.classList.remove('k-actif'));
+    const x = l == null ? null : cfg.lieux.find(v => v.l === l), info = $('.k-info', w);
+    w.classList.toggle('k-survol', !!x);
+    if (x) {
+      $$(`[data-l="${l}"]`, w).forEach(n => n.classList.add('k-actif'));
+      const t = $(`.k-nom[data-l="${l}"]`, w);
+      if (t) t.parentNode.appendChild(t);
+      if (cfg.info) { info.innerHTML = `<p class="k-info-nom">${esc(CARTE.nom(x))}</p>${cfg.info(x)}`; info.hidden = false; placerInfo(w, l); }
+    } else info.hidden = true;
+    if (cfg.survol) cfg.survol(x ? l : null);
+  }
+  const voir = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('k-on'); voir.unobserve(e.target); }
+  }), { threshold: .2 }) : null;
+  function monter(root) {
+    Object.keys(CARTES).forEach(k => { if (!document.querySelector(`[data-k="${k}"]`)) delete CARTES[k]; });
+    $$('.k-carte', root).forEach(w => {
+      const cfg = CARTES[w.dataset.k];
+      if (!cfg) return;
+      placerNoms(w);
+      CARTE.lier(w, { survol: l => surligner(w, l), choix: l => cfg.choix && cfg.choix(l) });
+      if (voir && CARTE.mouvement()) voir.observe(w); else w.classList.add('k-on');
+    });
+  }
+  // une liste reliée à sa carte : survoler une ligne montre sa commune, survoler une commune met ses lignes en avant
+  function relier(liste, w) {
+    const cfg = w && CARTES[w.dataset.k];
+    if (!liste || !cfg) return;
+    const ls = new Set(cfg.lieux.map(x => x.l));
+    const items = $$('[data-l]', liste).filter(r => r.dataset.l !== '' && ls.has(+r.dataset.l));
+    cfg.survol = l => items.forEach(r => r.classList.toggle('survol', l != null && +r.dataset.l === l));
+    items.forEach(r => {
+      const l = +r.dataset.l;
+      r.addEventListener('mouseenter', () => surligner(w, l));
+      r.addEventListener('mouseleave', () => surligner(w, null));
+      r.addEventListener('focusin', () => surligner(w, l));
+      r.addEventListener('focusout', () => surligner(w, null));
+    });
+  }
+  // filtrer une liste par commune (choisie sur la carte) ou par spectacle
+  function filtrer(page, w, F) {
+    const cfg = CARTES[w.dataset.k], lv = r => (r.dataset.l === undefined || r.dataset.l === '') ? null : +r.dataset.l;
+    $$('.row', page).forEach(r => { r.hidden = (!!F.slug && r.dataset.slug !== F.slug) || (F.l != null && lv(r) !== F.l); });
+    $$('.mois, .grp', page).forEach(g => { g.hidden = !$$('.row', g).some(r => !r.hidden); });
+    const actifs = new Set(cfg.lieux.filter(x => (F.l == null || x.l === F.l) && (!F.slug || (x.dates || []).some(d => d.slug === F.slug))).map(x => x.l));
+    const filtre = !!F.slug || F.l != null;
+    $$('svg [data-l]', w).forEach(n => { const l = +n.dataset.l; n.classList.toggle('k-off', filtre && !actifs.has(l)); n.classList.toggle('k-choisi', F.l === l); });
+    $$('[data-f]', page).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === F.slug)));
+    const cl = $('[data-fl]', page), x = cfg.lieux.find(v => v.l === F.l);
+    if (cl) { cl.hidden = !x; if (x) $('span', cl).textContent = CARTE.nom(x); }
+  }
+  const quelques = (list, f) => list.slice(0, 6).map(f).join('') + (list.length > 6 ? '<li>…</li>' : '');
+  const infoDates = x => `<ul>${quelques(x.dates || [], d => `<li><b>${esc(d.ligneDate)}</b> ${esc(d.titre)}</li>`)}</ul>`;
+  const infoSaison = x => `<ul>${quelques(x.dates || [], d => `<li><b>${esc(String(d.ligne).split(' — ')[0])}</b> ${esc(d.spectacle || '')}</li>`)}</ul>`;
+  const infoSpectacle = x => `<ul>${quelques(x.dates || [], d => `<li><b>${esc(d.ligneDate || String(d.ligne).split(' — ')[0])}</b></li>`)}</ul>`;
+  const versAgenda = l => { location.hash = '#/agenda?l=' + l; };
+  const saisonsNav = cle => `<div class="wrap"><nav class="saisons" aria-label="${esc(S.libelles.saison)}"><ul>${(cle ? S.saisons : S.saisons.slice(1)).map(x => `<li><a href="${esc(x.href)}"${x.saison === cle ? ' aria-current="true"' : ''}>${esc(x.titre)}</a></li>`).join('')}</ul></nav></div>`;
 
   /* ---------- accueil ---------- */
-  const MODES = {
-    programmer: ['Je programme.', 'Choisissez un spectacle : sa page s’ouvre directement sur la fiche pour programmateurs (documents, production, contact).'],
-    etablissement: ['Je fais venir dans mon établissement.', 'Choisissez un spectacle : sa page s’ouvre directement sur l’accueil en établissement, le Pass Culture et le guide du CRED76.'],
-  };
-  const DOOR_HREF = { voir: '#/agenda', programmer: '#/spectacles?voir=programmer', etablissement: '#/spectacles?voir=etablissement' };
-
-  function withArrow(text) {
-    const words = String(text).split(' ');
-    const last = words.pop();
-    return `${t(words.join(' '))}${words.length ? ' ' : ''}<span class="nowrap">${t(last)}${ARROW}</span>`;
-  }
-  function card(s) {
-    const p = s.prochaine;
-    const next = p ? `<span class="muted">Prochaine date&nbsp;:</span> ${shortDate(p)}, ${t(p.commune)}` : '<span class="muted">Pas de date annoncée</span>';
-    return `<li class="card" data-slug="${esc(s.slug)}">
-      <div class="card-photo">${photo(s)}</div>
-      <h3 class="card-title"><a href="#/spectacle/${esc(s.slug)}">${t(s.titre)}</a></h3>
-      <p class="card-sub">${t(s.sousTitre)}</p>
-      <p class="card-next">${next}</p></li>`;
-  }
-  function homeView() {
-    const d0 = DATES[0];
-    const hs = (d0 && BY[d0.slug]) || SHOWS[0];
-    const strip = PLAYS.filter(s => s !== hs).slice(0, 4);
-    const titles = PLAYS.map(s => `<a href="#/spectacle/${esc(s.slug)}">${t(s.titre)}</a>`).join(', ');
-    return `<h1 class="sr-only" tabindex="-1">${esc(C.nom)}, théâtre à ${esc(C.ville)}</h1>
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="wrap hero-grid">
-        <div class="hero-text">
-          <div>
-            <p class="overline">À l’affiche</p>
-            <h2 class="hero-title" id="hero-title">${t(hs.titre)}</h2>
-            <p class="hero-sub">${t(hs.sousTitre)}</p>
-          </div>
-          <div class="hero-next">
-            ${d0 ? `<p class="overline">Prochaine date</p>
-            <p class="hero-when">${longDate(d0)}</p>
-            <p class="hero-where"><span>${where(d0)}</span>${badge(d0)}</p>` : '<p class="overline">Pas de date annoncée</p>'}
-            <a class="btn btn-primary" href="#/spectacle/${esc(hs.slug)}">Voir le spectacle${ARROW}</a>
-          </div>
-        </div>
-        <figure class="hero-photo">${photo(hs)}</figure>
-      </div>
-    </section>
-    <section class="doors" aria-labelledby="doors-title">
-      <h2 class="sr-only" id="doors-title">Trois entrées : choisissez la vôtre</h2>
-      <ul class="wrap doors-grid">
-        ${(D.doors || []).map(dr => `<li class="door"><h3 class="door-title"><a href="${DOOR_HREF[dr.key] || '#/spectacles'}">${withArrow(dr.titre)}</a></h3><p class="door-text">${t(dr.texte)}</p></li>`).join('')}
-      </ul>
-    </section>
-    <section class="section" aria-labelledby="dates-title">
+  function accueil() {
+    const dia = S.diaporama || [], s0 = S.saisons[0];
+    const html = `<h1 class="sr-only" tabindex="-1">${esc(S.nom)}</h1>
+    <section class="hero" aria-label="${esc(S.libelles.enTournee)}">
       <div class="wrap">
-        <div class="sec-head"><h2 id="dates-title">Prochaines dates</h2><p class="sec-meta">${plural(DATES.length, 'date')}, saison ${esc(D.saison)}</p></div>
-        ${dateList(DATES.slice(0, 3), 'list', 3, 'home-dates')}
-        <p class="more"><a class="btn btn-secondary btn-sm" href="#/agenda">Tout l’agenda${ARROW}</a></p>
+        <div class="hero-stage">${dia.map((d, i) => {
+          const s = BY[d.slug] || {}, p = s.prochaine;
+          return `<article class="slide${i ? '' : ' on'}"${i ? ' aria-hidden="true" inert' : ''}>
+            <div class="slide-text">
+              <p class="overline" style="--k:0">${esc(d.surtitre)}</p>
+              <h2 class="slide-title" style="--k:1">${lignes(d.titre)}</h2>
+              ${s.sousTitre ? `<p class="slide-sub" style="--k:2">${s.sousTitre}</p>` : ''}
+              ${p ? `<p class="slide-date" style="--k:3">${PIN}<span>${esc(p.ligne)}</span></p>` : ''}
+              <a class="btn btn-primary" style="--k:4" href="${esc(d.href)}">${esc(d.bouton)}${ARROW}</a>
+            </div>
+            <figure class="slide-photo">${photo(d.slug, (d.titre || []).join(' '), s.focale)}${d.credit ? `<figcaption class="credit">${esc(d.credit)}</figcaption>` : ''}</figure>
+          </article>`;
+        }).join('')}</div>
+        ${dia.length > 1 ? `<div class="hero-nav">
+          <div class="hero-tabs">${dia.map((d, i) => `<button class="hero-tab" type="button" data-go="${i}"${i ? '' : ' aria-current="true"'}>${lignes(d.titre)}</button>`).join('')}</div>
+          <div class="hero-fleches"><button class="rond" type="button" data-pas="-1">${PREV}</button><button class="rond" type="button" data-pas="1">${NEXT}</button></div>
+        </div>` : ''}
       </div>
     </section>
-    <section class="section section--end" aria-labelledby="rep-title">
-      <div class="wrap">
-        <div class="sec-head"><h2 id="rep-title">Le répertoire</h2><p class="sec-meta">${REPERTOIRE}</p></div>
-        <div class="rep">
-          <div class="rep-text">
-            <p class="rep-list">${titles}${HAS_ACTIONS ? ` et les <a href="#/spectacle/${ACTIONS}">actions culturelles</a>` : ''}.</p>
-            <a class="btn btn-secondary btn-sm" href="#/spectacles">Voir les spectacles${ARROW}</a>
-          </div>
-          <a class="rep-photos" href="#/spectacles" tabindex="-1" aria-hidden="true">${strip.map(s => `<span class="rep-photo">${photo(s)}</span>`).join('')}</a>
+    <div class="portes"><ul class="wrap portes-grid">${S.portes.map(p => `<li class="porte"><a href="${esc(p.href)}"><span>${esc(p.texte)}</span>${ARROW}</a></li>`).join('')}</ul></div>
+    <section class="tour" aria-labelledby="h-tour">
+      <div class="wrap tour-grid">
+        <div class="tour-text">
+          <p class="overline accent">${esc(s0.titre)}</p>
+          <h2 class="sec-title" id="h-tour">${esc(S.libelles.actuellementEnTournee)}</h2>
+          <ol class="mini">${DATES.slice(0, 6).map(d => `<li data-l="${d.l ?? ''}"><a href="#/spectacle/${esc(d.slug)}"><span class="mini-d">${esc(d.ligneDate)}</span><span class="mini-t">${esc(d.titre)}</span><span class="mini-l">${esc(d.ligneLieu)}</span></a></li>`).join('')}</ol>
+          <p class="tour-go"><a class="go" href="#/agenda">${esc(onglet('agenda'))}${ARROW}</a></p>
         </div>
+        <div class="tour-carte">${carte({ lieux: CARTE.aVenir(), titre: S.libelles.actuellementEnTournee, info: infoDates, choix: versAgenda, papier: true })}</div>
       </div>
-    </section>`;
+    </section>
+    <section class="merci"><div class="wrap"><p>${S.donateurs}</p></div></section>`;
+    return { titre: S.accueil, onglet: null, html, init() { diaporama(); relier($('.mini', main), $('.tour .k-carte', main)); } };
+  }
+  function diaporama() {
+    const h = $('.hero', main), slides = h ? $$('.slide', h) : [];
+    if (slides.length < 2) return;
+    const tabs = $$('.hero-tab', h), fleches = $$('[data-pas]', h);
+    const nom = k => (S.diaporama[(k + slides.length) % slides.length].titre || []).join(' ');
+    let i = 0;
+    const etiquettes = () => fleches.forEach(b => b.setAttribute('aria-label', nom(i + Number(b.dataset.pas))));
+    const aller = k => {
+      k = (k + slides.length) % slides.length;
+      if (k === i) return;
+      const a = slides[i], b = slides[k];
+      a.classList.remove('on', 'anime'); a.setAttribute('aria-hidden', 'true'); a.inert = true;
+      b.classList.remove('anime'); void b.offsetWidth;
+      b.classList.add('on', 'anime'); b.removeAttribute('aria-hidden'); b.inert = false;
+      tabs.forEach((t, j) => { if (j === k) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); });
+      i = k; etiquettes();
+    };
+    tabs.forEach((t, j) => t.addEventListener('click', () => aller(j)));
+    fleches.forEach(b => b.addEventListener('click', () => aller(i + Number(b.dataset.pas))));
+    const scene = $('.hero-stage', h);
+    let x0 = null;
+    scene.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+    scene.addEventListener('touchend', e => {
+      if (x0 == null) return;
+      const dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 50) aller(i + (dx < 0 ? 1 : -1));
+    });
+    etiquettes();
+  }
+  // après l'ouverture : le titre monte, la photo se pose
+  function revele() {
+    const h = $('.hero', main);
+    if (!h) return;
+    h.classList.remove('avant');
+    const on = $('.slide.on', h);
+    if (on) { on.classList.remove('anime'); void on.offsetWidth; on.classList.add('anime'); }
+    h.classList.add('pose');
   }
 
   /* ---------- spectacles ---------- */
-  function spectaclesView() {
-    const lead = `${plural(PLAYS.length, 'spectacle')} mis en scène par ${C.miseEnScene}${HAS_ACTIONS ? ', et les actions culturelles' : ''}. Chaque page réunit les dates, la fiche pour les programmateurs et l’accueil en établissement.`;
-    return `<div class="page">${pageHead('Le répertoire', 'Les spectacles', t(lead))}
-      <div class="page-body"><div class="wrap">
-        <div class="notice" id="mode-notice" hidden></div>
-        <ul class="cards">${SHOWS.map(card).join('')}</ul>
-      </div></div>
-    </div>`;
+  function spectacles() {
+    const html = `<div class="page">${tete(esc(S.libelles.spectacles))}
+      <div class="wrap page-body"><ul class="cards">${SHOWS.map(s => `<li class="card">
+        <div class="card-photo">${photo(s.slug, '', s.focale)}${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</div>
+        <p class="overline card-crea">${esc(s.creation || '')}</p>
+        <h2 class="card-title"><a href="#/spectacle/${esc(s.slug)}">${esc(s.titre)}</a></h2>
+        <p class="card-sub">${s.sousTitre || ''}</p></li>`).join('')}</ul></div></div>`;
+    return { titre: onglet('spectacles'), onglet: 'spectacles', html };
   }
-  function setMode(mode) {
-    const m = mode && own(MODES, mode) ? MODES[mode] : null;
-    const box = $('#mode-notice');
-    if (!box) return;
-    $$('.card').forEach(li => {
-      const a = $('.card-title a', li);
-      a.setAttribute('href', `#/spectacle/${li.dataset.slug}${m ? '/' + mode : ''}`);
-    });
-    if (m) {
-      box.innerHTML = `<p><strong>${t(m[0])}</strong> ${t(m[1])}</p><a class="link" href="#/spectacles">Revenir aux pages complètes</a>`;
-      box.hidden = false;
-    } else {
-      box.hidden = true;
-      box.innerHTML = '';
+
+  /* ---------- agenda : la saison en cours, sa carte, les saisons passées ---------- */
+  function agenda(r) {
+    const s0 = S.saisons[0], lieux = CARTE.aVenir(), slugs = new Set(DATES.map(d => d.slug)), F = { slug: null, l: null };
+    let page = null, w = null;
+    const choix = l => {
+      F.l = F.l === l ? null : l; F.slug = null; filtrer(page, w, F);
+      if (F.l != null && innerWidth < 900) $('.agenda-liste', page).scrollIntoView({ behavior: CARTE.mouvement() ? 'smooth' : 'auto', block: 'start' });
+    };
+    const html = `<div class="page">${tete(esc(s0.titre), esc(onglet('agenda')))}
+      <div class="wrap page-body agenda" data-page>
+        <div class="agenda-carte">${carte({ lieux, titre: s0.titre, info: infoDates, choix })}</div>
+        <div class="agenda-liste">
+          <div class="filtres">
+            <span class="overline filtres-l">${esc(S.libelles.spectacles)}</span>
+            ${SHOWS.filter(s => slugs.has(s.slug)).map(s => `<button class="chip" type="button" data-f="${esc(s.slug)}" aria-pressed="false">${esc(s.titre)}</button>`).join('')}
+            <button class="chip" type="button" data-fl aria-pressed="true" hidden><span></span>${CROIX}</button>
+          </div>
+          ${parMois(DATES).map(g => `<section class="mois" aria-labelledby="m${g.k}"><h2 class="mois-t" id="m${g.k}">${esc(g.label)}</h2><ol class="rows">${g.list.map(d => rangee(d)).join('')}</ol></section>`).join('')}
+        </div>
+      </div>
+      ${saisonsNav(null)}
+    </div>`;
+    return { titre: onglet('agenda'), onglet: 'agenda', html, init() {
+      page = $('[data-page]', main); w = $('.k-carte', page);
+      relier($('.agenda-liste', page), w);
+      $$('[data-f]', page).forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.f ? null : b.dataset.f; F.l = null; filtrer(page, w, F); }));
+      $('[data-fl]', page).addEventListener('click', () => { F.l = null; filtrer(page, w, F); });
+      if (r.l != null && lieux.some(x => x.l === r.l)) { F.l = r.l; filtrer(page, w, F); }
+    } };
+  }
+  function saison(cle) {
+    const Sa = D.saisons[cle], F = { slug: null, l: null };
+    let page = null, w = null;
+    const choix = l => {
+      F.l = F.l === l ? null : l; filtrer(page, w, F);
+      if (F.l != null && innerWidth < 900) $('.agenda-liste', page).scrollIntoView({ behavior: CARTE.mouvement() ? 'smooth' : 'auto', block: 'start' });
+    };
+    const html = `<div class="page">${tete(esc(Sa.titre), `<a href="#/agenda">${BACK}${esc(onglet('agenda'))}</a>`)}
+      <div class="wrap page-body agenda" data-page>
+        <div class="agenda-carte">${carte({ lieux: CARTE.saison(cle), titre: Sa.titre, info: infoSaison, choix })}
+          <div class="filtres filtres-carte"><button class="chip" type="button" data-fl aria-pressed="true" hidden><span></span>${CROIX}</button></div></div>
+        <div class="agenda-liste">${Sa.spectacles.map(g => `<section class="grp">
+          <div class="grp-head">${g.creation ? `<p class="overline">${esc(g.creation)}</p>` : ''}<h2 class="grp-t">${g.slug && own(BY, g.slug) ? `<a href="#/spectacle/${esc(g.slug)}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>${g.sousTitre ? `<p class="grp-sub">${g.sousTitre}</p>` : ''}</div>
+          <ul class="rows">${g.dates.map(rangeeSaison).join('')}</ul></section>`).join('')}</div>
+      </div>
+      ${saisonsNav(cle)}
+    </div>`;
+    return { titre: Sa.titre, onglet: 'agenda', html, init() {
+      page = $('[data-page]', main); w = $('.k-carte', page);
+      relier($('.agenda-liste', page), w);
+      $('[data-fl]', page).addEventListener('click', () => { F.l = null; filtrer(page, w, F); });
+    } };
+  }
+
+  /* ---------- page d'un spectacle ---------- */
+  function medias(s) {
+    const M = s.medias || [], G = [];
+    M.forEach(m => { const k = m.groupe || ''; let g = G.find(x => x.k === k); if (!g) G.push(g = { k, list: [] }); g.list.push(m); });
+    return M.length ? `<div class="medias">${G.map(g => `${g.k ? `<h3 class="overline">${esc(g.k)}</h3>` : ''}<ul>${g.list.map(m => `<li><a href="${esc(m.url)}" target="_blank" rel="noopener"><span class="ico">${m.type === 'audio' ? SON : PLAY}</span><span><span class="m-t">${esc(m.titre || s.titre)}</span>${m.par ? `<span class="m-par">${esc(m.par)}</span>` : ''}</span></a></li>`).join('')}</ul>`).join('')}</div>` : '';
+  }
+  function spectacle(s) {
+    const T = CARTE.spectacle(s.slug), dates = DATES.filter(d => d.slug === s.slug);
+    const i = SHOWS.indexOf(s), autres = [1, 2, 3, 4].map(k => SHOWS[(i + k) % SHOWS.length]).filter(x => x !== s);
+    const fiche = [...(s.fiche || []).map(f => `<li>${f.libelle ? `<span class="lib">${esc(f.libelle)}</span><span>${f.valeur}</span>` : `<span class="seul">${f.valeur}</span>`}</li>`),
+      s.avec ? `<li><span class="lib">${esc(s.avec.libelle)}</span><span>${s.avec.valeur}</span></li>` : ''].join('');
+    const extraits = (s.extraits || []).length ? `<div class="extraits">${s.extraits.map(x => `<blockquote class="extrait"><p>${esc(x.citation)}</p>${x.source ? `<cite>${esc(x.source)}</cite>` : ''}</blockquote>`).join('')}</div>` : '';
+    let tour = '';
+    if (dates.length) {
+      tour = `<section class="wrap tournee" aria-labelledby="h-tournee"><div class="sec-head"><h2 id="h-tournee">${esc((s.tournee && s.tournee.titre) || S.libelles.actuellementEnTournee)}</h2></div>
+        <div class="tournee-grid"><ol class="rows tournee-liste">${dates.map(d => rangee(d, true)).join('')}</ol>
+        <div class="tournee-carte">${carte({ lieux: T.aVenir, passe: T.passe, titre: s.titre, info: infoSpectacle, choix: versAgenda })}</div></div></section>`;
+    } else if (s.tournee && s.tournee.texte) {
+      tour = `<section class="wrap tournee" aria-labelledby="h-tournee"><div class="sec-head"><h2 id="h-tournee">${esc(s.tournee.titre)}</h2></div>
+        <div class="tournee-grid"><p class="tournee-texte tournee-liste">${esc(s.tournee.texte)}</p><div class="tournee-carte">${carte({ passe: T.passe, titre: s.titre })}</div></div></section>`;
+    } else if (T.passe.length) {
+      tour = `<section class="wrap tournee" aria-label="${esc(s.titre)}"><div class="tournee-grid"><div class="tournee-seule">${carte({ passe: T.passe, titre: s.titre })}</div></div></section>`;
     }
-  }
-
-  /* ---------- agenda ---------- */
-  function agendaView() {
-    const school = DATES.filter(d => d.public === 'Scolaire').length;
-    const groups = [];
-    DATES.forEach(d => {
-      const k = String(d.iso).slice(0, 7);
-      let g = groups[groups.length - 1];
-      if (!g || g.k !== k) groups.push(g = { k, label: `${cap(d.moisLong)} ${d.annee}`, list: [] });
-      g.list.push(d);
-    });
-    const lead = `${plural(DATES.length, 'date')} cette saison${school ? `, dont ${school} pour les scolaires` : ''}. Chaque date indique son lieu et son public ; la réservation se fait auprès du lieu.`;
-    return `<div class="page">${pageHead(`Saison ${esc(D.saison)}`, 'L’agenda', t(lead))}
-      <div class="page-body"><div class="wrap months">
-        ${groups.length ? groups.map(g => `<section class="month" aria-labelledby="m-${g.k}">
-          <div class="month-head"><h2 id="m-${g.k}">${esc(g.label)}</h2><p>${plural(g.list.length, 'date')}</p></div>
-          <ol class="rows">${g.list.map(d => dateRow(d, 'list', false, true)).join('')}</ol>
-        </section>`).join('') : '<p class="empty">Aucune date annoncée pour l’instant.</p>'}
-      </div></div>
-    </div>`;
-  }
-
-  /* ---------- la compagnie ---------- */
-  function companyView() {
-    const S = D.stats || {};
-    const [motto, ...restIntent] = String(C.intention || '').split(' : ');
-    const intentLead = restIntent.join(' : ');
-    const directed = PLAYS.filter(s => (s.equipe || []).some(([k, v]) => /^mise en scène/i.test(k) && v === C.miseEnScene)).length;
-    const cast = new Map();
-    SHOWS.forEach(s => (s.distribution || []).forEach(entry => {
-      const names = String(entry).split(/\s+ou\s+/).map(n => n.trim()).filter(Boolean);
-      names.forEach(n => {
-        if (!cast.has(n)) cast.set(n, []);
-        cast.get(n).push(t(s.titre) + (names.length > 1 ? ' (en alternance)' : ''));
-      });
-    }));
-    const people = [...cast].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
-    return `<div class="page">${pageHead(`${esc(C.ville)}, depuis ${esc(C.depuis)}`, 'La compagnie', t(C.presentation))}
-      <section class="section page-body" aria-labelledby="cie-intent">
-        <div class="wrap">
-          <div class="sec-head"><h2 id="cie-intent">L’intention</h2></div>
-          <div class="company">
-            <div class="company-text">
-              <p class="quote">${intentLead ? `${t(motto)}&nbsp;: ${t(intentLead)}` : t(C.intention)}</p>
-              ${directed ? `<p class="lead">${t(C.miseEnScene)} signe la mise en scène ${directed === PLAYS.length ? 'de tous les spectacles du répertoire' : `de ${plural(directed, 'spectacle')} du répertoire`}.</p>` : `<p class="lead">Mise en scène&nbsp;: ${t(C.miseEnScene)}.</p>`}
-            </div>
-            <div class="figures">
-              <h3 class="overline">En chiffres</h3>
-              <ul class="stats">
-                <li class="stat"><span class="stat-n">${esc(S.representationsCourt)}</span><span class="stat-l">représentations depuis ${esc(S.depuis)}</span></li>
-                <li class="stat"><span class="stat-n">${esc(S.parAnMin)}</span><span class="stat-l">par an au moins, depuis ${esc(S.parAnDepuis)}</span></li>
-                <li class="stat"><span class="stat-n">${esc(S.pays)}</span><span class="stat-l">pays&nbsp;: ${esc((S.paysListe || []).join(', '))}</span></li>
-              </ul>
-              ${S.source ? `<p class="figures-src">Source&nbsp;: ${t(S.source)}.</p>` : ''}
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="section" aria-labelledby="cie-cast">
-        <div class="wrap">
-          <div class="sec-head"><h2 id="cie-cast">Au plateau</h2><p class="sec-meta">${plural(people.length, 'artiste')} dans les spectacles du répertoire</p></div>
-          <ul class="cast">${people.map(([n, list]) => `<li><p class="cast-name">${t(n)}</p><p class="cast-shows">${list.join(', ')}</p></li>`).join('')}</ul>
-        </div>
-      </section>
-      <section class="section" aria-labelledby="cie-part">
-        <div class="wrap">
-          <div class="sec-head"><h2 id="cie-part">Partenaires</h2></div>
-          <ul class="partners">${(C.partenaires || []).map(p => `<li>${t(p)}</li>`).join('')}</ul>
-        </div>
-      </section>
-    </div>`;
-  }
-
-  /* ---------- contact ---------- */
-  const DOOR_GO = { voir: ['#/agenda', 'Tout l’agenda'], programmer: ['#/spectacles?voir=programmer', 'Les fiches des spectacles'], etablissement: ['#/spectacles?voir=etablissement', 'Les spectacles en établissement'] };
-  function contactView() {
-    const [street, ...rest] = String(C.adresse || '').split(', ');
-    return `<div class="page">${pageHead(esc(C.nom), 'Contact', t('Venir voir un spectacle, le programmer ou le faire venir dans un établissement : écrivez à la compagnie.'))}
-      <section class="section page-body" aria-labelledby="c-coord">
-        <div class="wrap">
-          <div class="sec-head"><h2 id="c-coord">Coordonnées</h2></div>
-          <div class="coords">
-            <div class="coord coord--mail"><h3 class="overline">E-mail</h3><p class="coord-mail"><a href="mailto:${esc(C.email)}">${esc(C.email)}</a></p></div>
-            <div class="coord"><h3 class="overline">Adresse</h3><p class="coord-v">${esc(C.nom)}<br>${t(street)}${rest.length ? `<br>${t(rest.join(', '))}` : ''}</p></div>
-            <div class="coord"><h3 class="overline">Téléphone</h3><p class="coord-v">${TODO}</p></div>
-          </div>
-        </div>
-      </section>
-      <section class="section" aria-labelledby="c-doors">
-        <div class="wrap">
-          <div class="sec-head"><h2 id="c-doors">Selon votre demande</h2></div>
-          <ul class="cdoors">${(D.doors || []).map(dr => {
-            const [href, label] = DOOR_GO[dr.key] || ['#/spectacles', 'Les spectacles'];
-            return `<li class="cdoor">
-              <h3 class="cdoor-title">${t(dr.titre)}</h3>
-              <p class="door-text">${t(dr.texte)}</p>
-              <div class="facts"><dl>${row('Contact', TODO)}${row('E-mail', `<a class="link" href="${mail(dr.titre)}">${esc(C.email)}</a>`)}</dl></div>
-              <p><a class="go" href="${href}">${label}${ARROW}</a></p>
-            </li>`;
-          }).join('')}</ul>
-        </div>
-      </section>
-      <section class="section" aria-labelledby="c-lettre">
-        <div class="wrap">
-          <div class="sec-head"><h2 id="c-lettre">La lettre d’information</h2></div>
-          <p class="lead">Les nouvelles dates et les créations de la compagnie, par e-mail. <span class="nowrap">Inscription&nbsp;: ${TODO}</span></p>
-        </div>
-      </section>
-    </div>`;
-  }
-
-  /* ---------- page spectacle ---------- */
-  const SUBNAV = [['spectacle', 'Le spectacle'], ['dates', 'Les dates'], ['programmer', 'Je programme'], ['etablissement', 'Je fais venir dans mon établissement']];
-  const MODE_LABEL = { etablissement: 'Vient dans votre établissement', salle: 'Se joue en salle de spectacle', a_confirmer: 'Accueil en établissement à confirmer' };
-  function row(k, v) { return `<div><dt>${k}</dt><dd>${v}</dd></div>`; }
-  function mail(subject) { return `mailto:${esc(C.email)}?subject=${encodeURIComponent(subject)}`; }
-
-  function showView(s) {
-    const i = SHOWS.indexOf(s);
-    const nx = SHOWS[(i + 1) % SHOWS.length];
-    const list = DATES.filter(d => d.slug === s.slug);
-    const school = list.filter(d => d.public === 'Scolaire').length;
-    const isShow = !!(s.annee || (s.distribution || []).length);
-    const n = (s.distribution || []).length;
-    const brief = isShow ? [
-      row('Création', s.annee ? esc(s.annee) : TODO),
-      row('Durée', s.duree ? t(s.duree) : TODO),
-      row('Au plateau', n ? `${n} comédien${n > 1 ? 's' : ''}` : TODO),
-      n ? row('Avec', s.distribution.map(t).join('<br>')) : '',
-    ].join('') : '';
-    const team = (s.equipe || []).map(([k, v]) => row(t(k), t(v))).join('');
-    const e = s.etablissement || {};
-    const nxp = nx.prochaine;
-    return `<article class="show" style="--c:${esc(s.couleurTexteClair)}">
-      <header class="show-hero">
-        ${photo(s)}
+    const html = `<article class="show">
+      <header class="show-hero">${photo(s.slug, s.titre, s.focale)}
         <div class="wrap show-hero-text">
-          <p class="overline overline--light"><a class="back" href="#/spectacles">${ARROW}Tous les spectacles</a></p>
-          <h1 class="show-title" tabindex="-1">${t(s.titre)}</h1>
-          <p class="show-sub">${t(s.sousTitre)}</p>
+          <p><a class="back" href="#/spectacles">${BACK}${esc(onglet('spectacles'))}</a></p>
+          <p class="show-crea">${s.creation ? `<span>${esc(s.creation)}</span>` : ''}${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</p>
+          <h1 class="show-title" tabindex="-1">${lignes(s.titreLignes && s.titreLignes.length ? s.titreLignes : [s.titre])}</h1>
+          ${s.sousTitre ? `<p class="show-sub">${s.sousTitre}</p>` : ''}
+          ${s.genre && s.genre !== s.sousTitre ? `<p class="show-sub">${esc(s.genre)}</p>` : ''}
+          ${s.cadre ? `<p class="show-cadre">${esc(s.cadre)}</p>` : ''}
         </div>
       </header>
-      <nav class="subnav" aria-label="Sur cette page">
-        <div class="wrap"><ul>${SUBNAV.map(([k, label]) => `<li><a href="#/spectacle/${esc(s.slug)}/${k}" data-sub="${k}">${label}</a></li>`).join('')}</ul></div>
-      </nav>
-      <section class="section" id="s-spectacle" aria-labelledby="h-spectacle">
-        <div class="wrap">
-          <div class="sec-head" data-target="spectacle"><h2 id="h-spectacle">Le spectacle</h2>${s.annee ? `<p class="sec-meta">Création ${esc(s.annee)}</p>` : ''}</div>
-          <div class="show-grid">
-            <div class="show-main">
-              <p class="accroche">${t(s.accroche)}</p>
-              <p class="body-text">${t(s.texte)}</p>
-              ${s.video ? `<a class="btn btn-secondary" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo${EXT}<span class="sr-only"> (nouvel onglet)</span></a>` : ''}
-            </div>
-            <div class="show-aside">
-              ${brief ? `<div class="facts"><h3 class="overline">En bref</h3><dl>${brief}</dl></div>` : ''}
-              ${team || s.credit ? `<div class="facts"><h3 class="overline">Équipe</h3><dl>${team}${s.credit ? row('Photo', t(s.credit)) : ''}</dl></div>` : ''}
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="section" id="s-dates" aria-labelledby="h-dates">
-        <div class="wrap">
-          <div class="sec-head" data-target="dates"><h2 id="h-dates">Les dates</h2><p class="sec-meta">${list.length ? `${list.length} date${list.length > 1 ? 's' : ''}, saison ${esc(D.saison)}` : `Saison ${esc(D.saison)}`}</p></div>
-          <p class="intro">Je viens voir&nbsp;: chaque date indique son lieu et son public&nbsp;; la réservation se fait auprès du lieu.</p>
-          ${dateList(list, 'show', 8, 'show-list')}
-        </div>
-      </section>
-      <section class="section" id="s-programmer" aria-labelledby="h-programmer">
-        <div class="wrap">
-          <div class="sec-head" data-target="programmer"><h2 id="h-programmer">Je programme</h2><p class="sec-meta">Fiche pour les programmateurs</p></div>
-          <div class="split">
-            <div>
-              <h3 class="overline" style="margin-bottom:12px">Documents</h3>
-              <ul class="docs">
-                <li><span>Dossier de diffusion</span>${TODO}</li>
-                <li><span>Fiche technique</span>${TODO}</li>
-                <li><span>Conditions financières</span>${TODO}</li>
-                <li><span>Photos haute définition</span>${TODO}</li>
-                <li><span>Vidéo du spectacle</span>${s.video ? `<a class="link-ext" href="${esc(s.video)}" target="_blank" rel="noopener">Voir${EXT}<span class="sr-only"> la vidéo (nouvel onglet)</span></a>` : TODO}</li>
-              </ul>
-            </div>
-            <div>
-              <div class="block facts">
-                <h3 class="overline">Production</h3>
-                <dl>${s.coproduction ? row('Coproduction', t(s.coproduction)) : ''}${s.soutiens ? row('Soutiens', t(s.soutiens)) : ''}${!s.coproduction && !s.soutiens ? row('Partenaires', TODO) : ''}</dl>
-              </div>
-              <div class="block">
-                <h3 class="overline">Tournée</h3>
-                <p>${list.length ? `${list.length} date${list.length > 1 ? 's' : ''} annoncée${list.length > 1 ? 's' : ''} pour la saison ${esc(D.saison)}. <a class="link" href="#/spectacle/${esc(s.slug)}/dates">Voir les dates</a>` : 'Aucune date annoncée pour l’instant.'}</p>
-              </div>
-              <div class="block">
-                <h3 class="overline">Contact diffusion</h3>
-                <p><a class="link" href="${mail('Programmation : ' + s.titre)}">${esc(C.email)}</a></p>
-                <p class="muted" style="margin-top:6px">Personne chargée de la diffusion&nbsp;: ${TODO}</p>
-                <a class="btn btn-primary" href="${mail('Dossier de diffusion : ' + s.titre)}">Demander le dossier</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="section" id="s-etablissement" aria-labelledby="h-etab">
-        <div class="wrap">
-          <div class="sec-head" data-target="etablissement"><h2 id="h-etab">Je fais venir dans mon établissement</h2></div>
-          <div class="split">
-            <div>
-              ${MODE_LABEL[e.mode] ? `<p class="badge mode">${MODE_LABEL[e.mode]}</p>` : ''}
-              <p class="accroche">${t(e.texte || s.noteScolaire || '')}</p>
-              <a class="btn btn-primary" style="margin-top:32px" href="${mail('Faire venir ' + s.titre + ' dans mon établissement')}">Écrire à la compagnie</a>
-            </div>
-            <div class="facts">
-              <h3 class="overline">Pour les établissements</h3>
-              <dl>
-                ${row('Pass Culture', s.passCulture ? 'Offre collective' : 'Non référencé')}
-                ${row('Guide du CRED76', s.cred76 ? `<a class="link-ext" href="${esc(s.cred76)}" target="_blank" rel="noopener">Voir la fiche${EXT}<span class="sr-only"> du CRED76 (nouvel onglet)</span></a>` : 'Non référencé')}
-                ${row('Dates scolaires', school ? `${school} cette saison` : 'Aucune annoncée')}
-                ${row('Niveaux conseillés', TODO)}
-                ${row('Dossier pédagogique', TODO)}
-              </dl>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="next" aria-labelledby="next-title">
-        <div class="wrap">
-          <div class="sec-head" style="margin-bottom:32px"><p class="overline" style="color:var(--ink)">Spectacle suivant</p></div>
-          <div class="next-grid">
-            <div class="next-text">
-              <div>
-                <h2 class="next-title" id="next-title" style="margin-top:0"><a href="#/spectacle/${esc(nx.slug)}">${t(nx.titre)}</a></h2>
-                <p class="next-sub">${t(nx.sousTitre)}</p>
-              </div>
-              <div>
-                <p class="muted">${nxp ? `Prochaine date&nbsp;: ${shortDate(nxp)}, ${t(nxp.commune)}` : 'Pas de date annoncée'}</p>
-                <p class="next-go" style="margin-top:16px" aria-hidden="true">Découvrir le spectacle${ARROW}</p>
-              </div>
-            </div>
-            <div class="next-photo">${photo(nx)}</div>
-          </div>
-        </div>
+      ${s.credit ? `<p class="wrap show-credit">${esc(s.credit)}</p>` : ''}
+      <div class="wrap show-grid">
+        <div class="show-main"><div class="texte">${(s.texte || []).map(p => `<p>${p}</p>`).join('')}</div>${extraits}${medias(s)}</div>
+        <aside class="show-aside">
+          ${fiche ? `<ul class="fiche">${fiche}</ul>` : ''}
+          ${s.duree ? `<p class="duree">${esc(s.duree)}</p>` : ''}
+          ${(s.mentions || []).length ? `<div class="mentions">${s.mentions.map(m => `<p>${m}</p>`).join('')}</div>` : ''}
+          ${(s.production || []).length ? `<div class="production">${s.production.map(p => `<p>${p}</p>`).join('')}</div>` : ''}
+        </aside>
+      </div>
+      ${tour}
+      <section class="wrap autres-s" aria-labelledby="h-autres"><div class="sec-head"><h2 id="h-autres"><a href="#/spectacles">${esc(onglet('spectacles'))}</a></h2></div>
+        <ul class="autres">${autres.map(x => `<li class="autre"><div class="autre-photo">${photo(x.slug, '', x.focale)}</div><h3 class="autre-t"><a href="#/spectacle/${esc(x.slug)}">${esc(x.titre)}</a></h3><p class="autre-c">${esc(x.creation || '')}</p></li>`).join('')}</ul>
       </section>
     </article>`;
+    return { titre: s.titre, onglet: 'spectacles', html, init() { if (dates.length) relier($('.tournee-liste', main), $('.tournee .k-carte', main)); } };
+  }
+
+  /* ---------- la compagnie, les actions culturelles, l'espace pro, le contact, les pages légales ---------- */
+  function compagnie() {
+    const C = S.compagnie;
+    const html = `<div class="page">${tete(esc(C.titre))}
+      <div class="wrap page-body cie">
+        <div class="cie-texte">${C.paragraphes.map(p => `<p>${p}</p>`).join('')}</div>
+        <aside class="cie-dates" aria-labelledby="h-dates"><h2 id="h-dates">${esc(C.datesTitre)}</h2>
+          <ol class="annees">${C.dates.map(d => {
+            const s = SHOWS.find(x => String(x.annee) === String(d.annee));
+            return `<li><span class="an-photo">${s ? photo(s.slug, '', s.focale) : ''}</span><span class="an">${esc(d.annee)}</span>${s ? `<a href="#/spectacle/${esc(s.slug)}">${esc(d.titre)}</a>` : `<span>${esc(d.titre)}</span>`}</li>`;
+          }).join('')}</ol></aside>
+      </div></div>`;
+    return { titre: onglet('compagnie'), onglet: 'compagnie', html };
+  }
+  function actions() {
+    const A = S.actions;
+    const html = `<div class="page">${tete(esc(A.titre))}
+      <div class="wrap page-body actions">
+        <div class="prose">${A.blocs.map(bloc).join('')}</div>
+        <figure class="actions-photo">${photo('actions-culturelles', A.titre)}${A.credit ? `<figcaption class="credit-l">${esc(A.credit)}</figcaption>` : ''}</figure>
+      </div></div>`;
+    return { titre: onglet('actions'), onglet: 'actions', html };
+  }
+  function pro() {
+    const P = S.pro;
+    const html = `<div class="page">${tete(esc(P.titre), esc(P.titrePage))}
+      <div class="wrap page-body"><form class="form pro" data-rien>
+        <p class="lead">${esc(P.texte)}</p>
+        <div class="champ"><label for="pro-mdp">${esc(P.champ)}</label><div class="pro-ligne"><input id="pro-mdp" type="password" autocomplete="current-password"><button class="btn btn-primary" type="submit">${esc(P.bouton)}</button></div></div>
+      </form></div></div>`;
+    return { titre: P.titrePage, onglet: 'pro', html };
+  }
+  function contact() {
+    const K = S.contact, co = S.coordonnees, types = ['text', 'email', 'tel', 'text'], auto = ['name', 'email', 'tel', 'address-level2'];
+    const c = K.consentement, j = c.indexOf('politique');
+    const consent = j < 0 ? `<a href="#/politique-de-confidentialite">${esc(c)}</a>` : `${esc(c.slice(0, j))}<a href="#/politique-de-confidentialite">${esc(c.slice(j))}</a>`;
+    const html = `<div class="page">${tete(esc(K.titre), esc(onglet('contact')))}
+      <div class="wrap page-body contact">
+        <form class="form" data-rien>
+          ${K.champs.map((ch, i) => i === K.champs.length - 1
+            ? `<div class="champ"><label for="c${i}">${esc(ch)}</label><textarea id="c${i}" rows="6"></textarea></div>`
+            : `<div class="champ"><label for="c${i}">${esc(ch)}</label><input id="c${i}" type="${types[i] || 'text'}" autocomplete="${auto[i] || 'off'}"></div>`).join('')}
+          <div class="consent"><input type="checkbox" id="c-ok"><label for="c-ok">${consent}</label></div>
+          <div class="calcul"><label for="c-calc">${esc(K.calcul)}</label><input id="c-calc" inputmode="numeric" maxlength="2"></div>
+          <button class="btn btn-primary" type="submit">${esc(K.bouton)}</button>
+        </form>
+        <aside class="coords"><p class="coords-nom">${esc(co.nom)}</p><p>${co.adresse.map(esc).join('<br>')}</p>
+          <p>${S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : esc(S.facebook.texte)}</p></aside>
+      </div></div>`;
+    return { titre: onglet('contact'), onglet: 'contact', html };
+  }
+  function legal(cle) {
+    const L = S.legal[cle];
+    return { titre: L.titre, onglet: null, html: `<div class="page">${tete(esc(L.titre))}<div class="wrap page-body"><div class="prose prose-legal">${L.blocs.map(bloc).join('')}</div></div></div>` };
   }
 
   /* ---------- pied de page ---------- */
-  function footer() {
-    $('#pied').innerHTML = `<div class="wrap">
-      <div class="sec-head"><h2>Écrire à la compagnie</h2></div>
-      <div class="foot">
-        <div class="foot-contact">
-          <p class="foot-mail"><a href="mailto:${esc(C.email)}">${esc(C.email)}</a></p>
-          <p class="foot-addr">${esc(C.nom)}<br>${t(C.adresse)}</p>
+  function pied() {
+    const co = S.coordonnees;
+    $('#pied').innerHTML = `<div class="wrap foot">
+        <div class="foot-id">
+          <a class="foot-brand" href="#/" aria-label="${esc(S.nom)}"><span class="brand-mark" data-logo="mark"></span><span class="brand-word">${esc(S.titreSuffixe)}</span></a>
+          <p class="foot-addr"><strong>${esc(co.nom)}</strong><br>${co.adresse.map(esc).join('<br>')}</p>
         </div>
-        <div class="foot-col"><h3>Partenaires</h3><ul>${(C.partenaires || []).map(p => `<li>${t(p)}</li>`).join('')}</ul></div>
-        <div class="foot-col"><h3>Mentions</h3><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>
+        <div class="foot-contact">
+          <a class="foot-ecrire" href="${esc(S.ecrire.href)}">${esc(S.ecrire.texte)}${ARROW}</a>
+          <p class="foot-fb">${S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : esc(S.facebook.texte)}</p>
+        </div>
+        <div class="foot-part"><p>${S.partenaires}</p></div>
       </div>
-      <div class="foot-bottom">
-        <a class="foot-brand" href="#/" aria-label="Compagnie Crescite, accueil"><span class="brand-mark" data-logo="mark"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
-        <p>Compagnie de théâtre, ${esc(C.ville)}, depuis ${esc(C.depuis)}</p>
-      </div>
-    </div>`;
+      <div class="wrap foot-bas">
+        <p class="foot-legal">${co.legal.map(x => `<span>${esc(x)}</span>`).join('')}</p>
+        <ul>${S.liensLegaux.map(l => `<li><a href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join('')}</ul>
+      </div>`;
   }
-  function logos(root = document) {
+  function logos(root) {
     $$('[data-logo]', root).forEach(el => {
       el.innerHTML = D.logo[el.dataset.logo] || '';
       const svg = $('svg', el);
@@ -857,135 +956,85 @@ sup{font-size:.55em;line-height:0;vertical-align:.75em;margin-left:.04em}
     });
   }
 
-  /* ---------- menu (téléphone) ---------- */
-  const toggle = $('.menu-toggle');
-  function setMenu(open) {
-    header.classList.toggle('is-open', open);
-    toggle.setAttribute('aria-expanded', String(open));
-    $('[data-menu-label]').textContent = open ? 'Fermer' : 'Menu';
-    $('[data-menu-icon]').setAttribute('d', open ? 'M5 5l14 14M19 5L5 19' : 'M3 8h18M3 16h18');
+  /* ---------- menu replié ---------- */
+  function setMenu(o) {
+    header.classList.toggle('ouvert', o);
+    toggle.setAttribute('aria-expanded', String(o));
+    $('[data-menu-icon]').setAttribute('d', o ? 'M5 5l14 14M19 5L5 19' : 'M3 8h18M3 16h18');
   }
-  toggle.addEventListener('click', () => setMenu(!header.classList.contains('is-open')));
-  document.addEventListener('keydown', ev => {
-    if (ev.key === 'Escape' && header.classList.contains('is-open')) { setMenu(false); toggle.focus(); }
-  });
+  toggle.addEventListener('click', () => setMenu(!header.classList.contains('ouvert')));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && header.classList.contains('ouvert')) { setMenu(false); toggle.focus(); } });
 
-  /* ---------- voir plus de dates (page spectacle) ---------- */
-  main.addEventListener('click', ev => {
-    const b = ev.target.closest('[data-more]');
-    if (!b) return;
-    const open = b.getAttribute('aria-expanded') !== 'true';
-    const limit = Number(b.dataset.limit);
-    $$(`#${b.dataset.more} .row`).forEach((li, i) => { if (i >= limit) li.hidden = !open; });
-    b.setAttribute('aria-expanded', String(open));
-    b.textContent = open ? 'Afficher moins de dates' : `Voir les ${b.dataset.rest} autres dates`;
-  });
-
-  /* ---------- sous-navigation active ---------- */
-  let subLinks = [], subHeads = [];
-  function trackSub() {
-    if (!subLinks.length) return;
-    const nav = $('.subnav');
-    const line = nav.getBoundingClientRect().bottom + 48;
-    let k = 0;
-    subHeads.forEach((h, i) => { if (h.getBoundingClientRect().top <= line) k = i; });
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
-      const lastVisible = subHeads.map((h, i) => [h.getBoundingClientRect().top, i]).filter(([top]) => top < window.innerHeight).pop();
-      if (lastVisible) k = Math.max(k, lastVisible[1]);
-    }
-    subLinks.forEach((a, i) => {
-      if (i === k) {
-        if (!a.hasAttribute('aria-current')) {
-          a.setAttribute('aria-current', 'true');
-          const ul = a.closest('ul');
-          const r = a.getBoundingClientRect(), u = ul.getBoundingClientRect();
-          if (r.left < u.left || r.right > u.right) ul.scrollLeft += r.left - u.left - 16;
-        }
-      } else a.removeAttribute('aria-current');
-    });
-  }
-  let ticking = false;
-  window.addEventListener('scroll', () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => { ticking = false; trackSub(); });
-  }, { passive: true });
-
-  /* ---------- routeur : une page par onglet ---------- */
-  const VIEWS = {
-    home: [homeView, `${C.nom} · Théâtre à ${C.ville}`],
-    spectacles: [spectaclesView, `Les spectacles · ${C.nom}`],
-    agenda: [agendaView, `L’agenda · ${C.nom}`],
-    compagnie: [companyView, `La compagnie · ${C.nom}`],
-    contact: [contactView, `Contact · ${C.nom}`],
+  /* ---------- routeur : une vue par adresse ---------- */
+  const VUES = {
+    accueil, spectacles, agenda, compagnie, actions, pro, contact,
+    saison: r => saison(r.saison), spectacle: r => spectacle(BY[r.slug]), legal: r => legal(r.cle),
   };
-  const SUBKEYS = SUBNAV.map(([k]) => k);
-  let currentKey = null;
   function parse() {
-    const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
-    let parts = [];
-    try { parts = decodeURIComponent(path).split('/').filter(Boolean); } catch (err) { parts = []; }
-    const q = new URLSearchParams(qs || '');
-    if (parts[0] === 'spectacle' && own(BY, parts[1])) return { view: 'show', slug: parts[1], section: SUBKEYS.includes(parts[2]) ? parts[2] : null };
-    if (parts[0] && parts[0] !== 'home' && own(VIEWS, parts[0])) return { view: parts[0], mode: q.get('voir') || parts[1] || null };
-    return { view: 'home' };
+    const [chemin, qs] = location.hash.replace(/^#\/?/, '').split('?');
+    let p = [];
+    try { p = decodeURIComponent(chemin || '').split('/').filter(Boolean); } catch (err) { p = []; }
+    const [a, b] = p, q = new URLSearchParams(qs || ''), seul = p.length === 1;
+    if (!a) return { vue: 'accueil' };
+    if (a === 'agenda' && p.length <= 2 && (!b || b === D.saison)) {
+      const l = q.get('l');
+      return { vue: 'agenda', l: l != null && l !== '' && !isNaN(+l) ? +l : null };
+    }
+    if (a === 'agenda' && p.length === 2 && own(D.saisons, b)) return { vue: 'saison', saison: b };
+    if (a === 'spectacle' && p.length === 2 && own(BY, b)) return { vue: 'spectacle', slug: b };
+    const simples = { spectacles: 'spectacles', compagnie: 'compagnie', 'actions-culturelles': 'actions', 'espace-pro': 'pro', contact: 'contact' };
+    if (seul && own(simples, a)) return { vue: simples[a] };
+    if (seul && own(S.legal, a)) return { vue: 'legal', cle: a };
+    return { vue: 'accueil', inconnu: true };
   }
-  function route(initial, again) {
+  let courant = null;
+  function route(force) {
     const r = parse();
-    const key = r.view === 'show' ? 'show:' + r.slug : r.view;
-    const changed = key !== currentKey;
-    if (changed) {
-      currentKey = key;
-      if (r.view === 'show') {
-        const s = BY[r.slug];
-        main.innerHTML = showView(s);
-        document.title = `${s.titre} · ${C.nom}`;
-        subLinks = $$('.subnav a');
-        subHeads = SUBNAV.map(([k]) => $(`.sec-head[data-target="${k}"]`));
-      } else {
-        main.innerHTML = VIEWS[r.view][0]();
-        document.title = VIEWS[r.view][1];
-        subLinks = []; subHeads = [];
-      }
-      const tab = r.view === 'show' ? 'spectacles' : r.view;
-      $$('.nav-main a').forEach(a => {
-        if (a.dataset.nav === tab) a.setAttribute('aria-current', 'page');
-        else a.removeAttribute('aria-current');
-      });
-    }
-    if (r.view === 'spectacles') setMode(r.mode);
+    if (r.inconnu) history.replaceState(null, '', '#/');
     setMenu(false);
-    const target = r.view === 'show' && r.section ? $(`.sec-head[data-target="${r.section}"]`) : null;
-    if (target) target.scrollIntoView({ block: 'start' });
-    else if (changed || again) window.scrollTo(0, 0);
-    if ((changed || again) && !initial && !target) {
-      const h = $('h1', main);
-      if (h) h.focus({ preventScroll: true });
-    }
-    trackSub();
-    return target;
+    const k = [r.vue, r.slug, r.saison, r.cle, r.l].join('|');
+    if (k === courant && !force) return;
+    courant = k;
+    const v = VUES[r.vue](r);
+    main.innerHTML = v.html;
+    document.title = `${v.titre} - ${S.titreSuffixe}`;
+    $$('.menu a').forEach(a => { if (a.dataset.id === v.onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    monter(main);
+    if (v.init) v.init();
+    window.scrollTo(0, 0);
+    const h = $('h1', main);
+    if (h) h.focus({ preventScroll: true });
   }
-
-  document.addEventListener('click', ev => {
-    const a = ev.target.closest('a[href^="#"]');
-    if (!a || ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const href = a.getAttribute('href');
-    if (href === '#main') { ev.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); return; }
-    if (href === location.hash || (href === '#/' && !location.hash)) { ev.preventDefault(); route(false, true); }
+    if (href === '#main') { e.preventDefault(); main.focus({ preventScroll: true }); main.scrollIntoView(); return; }
+    if (href.startsWith('#/') && (href === location.hash || (href === '#/' && !location.hash.replace(/^#\/?/, '')))) { e.preventDefault(); route(true); }
   });
-  window.addEventListener('hashchange', () => route(false));
+  main.addEventListener('submit', e => { if (e.target.closest('[data-rien]')) e.preventDefault(); });
+  let tempo = 0;
+  addEventListener('resize', () => {
+    clearTimeout(tempo);
+    tempo = setTimeout(() => $$('.k-carte', main).forEach(w => { placerNoms(w); surligner(w, null); }), 150);
+  });
+  addEventListener('hashchange', () => route());
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-  const icon = document.createElement('link');
-  icon.rel = 'icon';
-  icon.href = 'data:image/svg+xml,' + encodeURIComponent(D.logo.mark || '');
-  document.head.appendChild(icon);
-
-  logos();
-  footer();
-  logos($('#pied'));
-  const first = route(true);
-  if (first && document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (window.scrollY > 0) first.scrollIntoView({ block: 'start' }); });
+  /* ---------- démarrage ---------- */
+  $('.menu ul').innerHTML = S.menu.map(m => `<li><a href="${esc(m.href)}" data-id="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('');
+  $('[data-menu-label]').textContent = S.libelles.menu;
+  $('.brand').setAttribute('aria-label', S.nom);
+  $('.brand-word').textContent = S.titreSuffixe;
+  pied();
+  logos(document);
+  const icone = document.createElement('link');
+  icone.rel = 'icon';
+  icone.href = 'data:image/svg+xml,' + encodeURIComponent(D.logo.mark || '');
+  document.head.appendChild(icone);
+  route(true);
+  INTRO.ouvrir({ degrade: [[0, '#ffffff'], [.62, '#fbfaf8'], [1, '#eeeae4']], encre: '#ffffff', tache: true, classe: 'maison', apres: revele });
+  if (INTRO.ouverte()) { const h = $('.hero', main); if (h) h.classList.add('avant'); }
 })();
 </script>
 </body>
