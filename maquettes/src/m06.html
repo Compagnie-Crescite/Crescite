@@ -3,485 +3,856 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compagnie Crescite</title>
+<title>Accueil - crescite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;1,400;1,500&family=Work+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
 /* Maquette 06 · « Les bras de la tournée ».
-   La tentacule devient un thème, pas un dessin du logo : les tournées partent de Rouen vers chaque
-   commune où la compagnie a joué. La saison en cours en magenta, les années passées en gris.
-   Le site se lit par onglets : l'accueil et sa carte, puis une page par entrée du menu ;
-   l'agenda, la compagnie et chaque spectacle ont leur propre carte. */
+   La tentacule devient un thème : les tournées partent de Rouen vers chaque commune où la compagnie joue.
+   L'ouverture : la pieuvre magenta sur l'encre ; quand elle a grossi et révélé l'accueil, ses bras deviennent ceux
+   de la carte, qui poussent depuis Rouen. La saison en cours en magenta, les saisons passées à l'encre, le réseau
+   de toutes les tournées en gris ; chaque saison passée a sa carte. Tout le texte vient de D (le site d'origine). */
 :root {
-  --papier: #f6f2eb; --papier-2: #ece5da; --carte: #e4dccf; --encre: #1d1418; --gris: #5f565a; --filet: #dcd3c6;
+  --papier: #f6f2eb; --papier-2: #ece5da; --terre: #e3d9ca; --encre: #1d1418; --gris: #5f565a; --filet: #dcd3c6;
   --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418;
   --serif: "Spectral", Georgia, serif; --sans: "Work Sans", system-ui, sans-serif;
-  --gout: clamp(18px, 4vw, 56px);
+  --gout: clamp(16px, 4vw, 56px);
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: 76px; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 84px; }
 body { margin: 0; background: var(--papier); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
 a { color: inherit; }
 img { display: block; max-width: 100%; }
+button, input, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
-[tabindex="-1"]:focus { outline: none; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.wrap { max-width: 1240px; margin: 0 auto; padding: 0 var(--gout); }
+h1[tabindex="-1"]:focus { outline: none; }
 [hidden] { display: none !important; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 var(--gout); }
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
-/* le motif : un trait qui ondule et s'enroule, sous les titres */
-.trait { display: block; width: 92px; height: 16px; margin-top: 10px; overflow: visible; }
+/* le motif : une onde qui s'enroule au bout, comme la pointe d'une tentacule */
+.trait { display: block; width: 110px; height: 18px; margin-top: 12px; overflow: visible; }
 .trait path { fill: none; stroke: var(--c, var(--magenta)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.fleche { width: 1.1em; height: 1.1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s; }
+a:hover .fleche { transform: translateX(4px); }
 
-/* en-tête : un étage, quatre onglets */
-.top { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--papier) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--filet); }
-.top .wrap { display: flex; align-items: center; gap: 24px; height: 64px; max-width: none; }
-.marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 1.1rem; letter-spacing: .01em; }
-.marque span.l { width: 34px; }
-.marque svg { width: 100%; height: auto; display: block; }
-.nav { margin-left: auto; display: flex; gap: 4px; }
-.nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: 500; font-size: .97rem; color: var(--gris); }
+/* en-tête : la marque et les six onglets */
+.top { position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--papier) 93%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-bottom: 1px solid var(--filet); }
+.barre { display: flex; align-items: center; gap: 20px; height: 64px; max-width: 1600px; margin: 0 auto; padding: 0 var(--gout); }
+.marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 600 1.2rem/1 var(--sans); letter-spacing: .01em; }
+.marque .l { width: 38px; }
+.marque svg { display: block; width: 100%; height: auto; }
+.nav { margin-left: auto; display: flex; gap: 2px; }
+.nav a { padding: 8px 12px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: .98rem; color: var(--gris); white-space: nowrap; }
 .nav a:hover { color: var(--encre); background: var(--papier-2); }
-.nav a[aria-current="page"] { color: var(--encre); text-decoration-line: underline; text-decoration-color: var(--magenta); text-decoration-thickness: 2px; text-underline-offset: 9px; }
-.menu { display: none; margin-left: auto; background: none; border: 1px solid var(--filet); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); color: var(--encre); }
+.nav a[aria-current="page"] { color: var(--encre); text-decoration: underline 2px var(--magenta); text-underline-offset: 9px; }
+.menu { display: none; margin-left: auto; align-items: center; gap: 8px; padding: 7px 15px; border: 1px solid var(--filet); border-radius: 999px; background: none; font-weight: 600; cursor: pointer; }
+.menu svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+@media (max-width: 1279.98px) {
+  .menu { display: inline-flex; }
+  .nav { display: none; position: absolute; top: 64px; left: 0; right: 0; flex-direction: column; gap: 0; padding: 6px var(--gout) 22px; background: var(--papier); border-bottom: 1px solid var(--filet); box-shadow: 0 18px 30px -18px rgb(29 20 24 / .35); }
+  .top.ouvert .nav { display: flex; }
+  .nav a { padding: 13px 2px; border-radius: 0; border-bottom: 1px solid var(--filet); font-size: 1.12rem; }
+  .nav a:hover { background: none; }
+  .nav a[aria-current="page"] { text-underline-offset: 6px; }
+}
 
-/* ouverture : la phrase de la compagnie et la carte des tournées */
-.ouverture { padding: clamp(28px, 4vw, 56px) 0 clamp(40px, 5vw, 72px); }
-.ouverture .wrap { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
-.surtitre { margin: 0 0 16px; font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
-.ouverture h1 { margin: 0; font: italic 400 clamp(2.2rem, 1.4rem + 2.6vw, 3.6rem)/1.08 var(--serif); text-wrap: balance; }
-.ouverture .trait { width: 120px; height: 20px; margin-top: 18px; }
-.chiffre { margin: 22px 0 0; font-size: 1.12rem; max-width: 34ch; }
-.chiffre b { font-weight: 600; }
-.saison { margin: 26px 0 0; padding: 16px 0 0; border-top: 1px solid var(--filet); }
-.saison p { margin: 0 0 14px; }
-.saison b { color: var(--magenta-texte); }
-.boutons { display: flex; gap: 10px; flex-wrap: wrap; }
-.bouton { display: inline-block; padding: 11px 18px; border-radius: 999px; background: var(--encre); color: var(--papier); border: 1.5px solid var(--encre); text-decoration: none; font-weight: 600; font-size: .97rem; }
-.bouton.second { background: transparent; color: var(--encre); }
-.bouton:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+main { display: block; min-height: 60vh; padding-bottom: clamp(56px, 7vw, 104px); }
+main:has(> .suivant:last-child) { padding-bottom: 0; }
 
-/* la carte des tournées */
-figure.carte { margin: 0; }
-.carte svg { display: block; width: 100%; height: auto; max-height: calc(100svh - 150px); }
-.carte .pays { fill: var(--carte); }
-.carte .voisin { fill: var(--papier-2); }
-.carte .bras-passe { fill: color-mix(in srgb, var(--encre) 24%, transparent); }
-.carte .bras-saison { fill: var(--c, var(--magenta)); }
-.carte .bout-passe { fill: color-mix(in srgb, var(--encre) 40%, transparent); }
-.carte .bout-saison { fill: var(--c, var(--magenta)); stroke: var(--papier); stroke-width: 1.5; }
-.carte .bout-saison:hover { r: 6; }
-.carte .rouen { fill: var(--encre); }
-.carte .rouen-nom { font: italic 500 17px var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--carte); stroke-width: 4px; }
-.carte figcaption { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 10px; font-size: .88rem; color: var(--gris); }
-.legende i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 8px; background: var(--c, var(--magenta)); }
-.legende i.passe { background: color-mix(in srgb, var(--encre) 30%, transparent); }
+/* ---------- la carte des tournées ---------- */
+.carte { --c: var(--magenta); position: relative; margin: 0; }
+.carte svg { --k: 1; display: block; width: 100%; height: auto; }
+.carte .pays { fill: var(--terre); }
+.carte .voisin { fill: color-mix(in srgb, var(--terre) 45%, var(--papier)); }
+.carte .encart { fill: none; stroke: color-mix(in srgb, var(--encre) 35%, transparent); stroke-width: calc(var(--k) * 1px); stroke-dasharray: calc(var(--k) * 3px) calc(var(--k) * 3px); }
+.carte .reseau { transition: opacity .3s; }
+.carte .reseau path { fill: color-mix(in srgb, var(--encre) 16%, transparent); }
+.carte .reseau .point { r: calc(var(--k) * 1.9px); fill: color-mix(in srgb, var(--encre) 40%, transparent); }
+.carte .reseau .cible { r: calc(var(--k) * 6px); fill: transparent; }
+.carte .reseau .actif .point { r: calc(var(--k) * 3.4px); fill: var(--encre); }
+.carte .bras { fill: var(--c); transition: opacity .25s; }
+.carte .bras.actif { stroke: var(--c); stroke-width: calc(var(--k) * 1.3px); stroke-linejoin: round; }
+.carte .bout { fill: none; stroke: var(--c); stroke-width: calc(var(--k) * 1.4px); stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .9s cubic-bezier(.3, .7, .3, 1), opacity .25s; }
+.carte .bout.arrive { stroke-dashoffset: 0; }
+.carte .carte-lieu { cursor: pointer; outline: none; }
+.carte .vif .cible { r: calc(var(--k) * 11px); fill: transparent; }
+.carte .vif .point { r: calc(var(--k) * 3.8px); fill: var(--c); stroke: var(--papier); stroke-width: calc(var(--k) * 1.4px); transform: scale(0); transform-box: fill-box; transform-origin: center; transition: transform .5s cubic-bezier(.3, 1.7, .5, 1); }
+.carte .vif .arrive .point { transform: scale(1); }
+.carte .vif .actif .point, .carte .vif .carte-lieu:focus-visible .point, .carte .vif .choisi .point { r: calc(var(--k) * 5.6px); stroke: var(--encre); stroke-width: calc(var(--k) * 1.8px); }
+.carte.survole .bras:not(.actif), .carte.survole .bout:not(.actif) { opacity: .22; }
+.carte.survole .reseau { opacity: .55; }
+.carte .nom { font: italic 500 calc(var(--k) * 12.5px) var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--papier); stroke-width: calc(var(--k) * 3.2px); stroke-linejoin: round; pointer-events: none; opacity: 0; transition: opacity .45s; }
+.carte .nom.arrive:not(.cache) { opacity: 1; }
+.carte.survole .nom:not(.actif) { opacity: .2; }
+.carte .nom.actif { opacity: 1; font-weight: 600; }
+.carte .rouen-g { pointer-events: none; }
+.carte .rouen { r: calc(var(--k) * 5.5px); fill: var(--encre); }
+.carte .rouen-nom { font: italic 600 calc(var(--k) * 15px) var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--terre); stroke-width: calc(var(--k) * 3.5px); stroke-linejoin: round; }
+.carte .onde { r: calc(var(--k) * 5px); fill: none; stroke: var(--c); stroke-width: calc(var(--k) * 1.6px); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.carte.pousse .onde { animation: onde 1.6s cubic-bezier(.2, .6, .3, 1); }
+.carte.attend .onde { animation: onde 2.8s cubic-bezier(.2, .6, .3, 1) infinite; }
+@keyframes onde { from { transform: scale(1); opacity: .9; } to { transform: scale(10); opacity: 0; } }
+.bulle { position: absolute; z-index: 6; width: max-content; max-width: min(300px, 86%); padding: 10px 14px 11px; border-radius: 10px; background: var(--encre); color: var(--papier); font-size: .86rem; line-height: 1.4; pointer-events: none; box-shadow: 0 14px 30px -14px rgb(29 20 24 / .55); }
+.bulle.epinglee { pointer-events: auto; }
+.bulle b { display: block; margin-bottom: 4px; font: italic 500 1.12rem/1.2 var(--serif); }
+.bulle ul { list-style: none; margin: 0; padding: 0; }
+.bulle li { padding: 4px 0; border-top: 1px solid rgb(255 255 255 / .14); }
+.bulle li span { display: block; font-weight: 600; }
+.bulle a { color: #f3a6cd; }
+.bulle em { color: #d9ced3; }
 
-/* les pages des onglets : un titre, son trait, une phrase */
-.page-titre { padding-top: clamp(36px, 5vw, 64px); padding-bottom: clamp(30px, 4vw, 48px); }
-.page-titre h1 { margin: 0; font: italic 400 clamp(2.4rem, 1.6rem + 2.6vw, 3.6rem)/1.05 var(--serif); text-wrap: balance; }
+/* la frise des saisons : chacune redessine les bras de la carte */
+.ruban { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: .86rem; }
+.ruban .lib { margin-right: 8px; font-size: .74rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
+.ruban a { padding: 4px 9px; border: 1px solid transparent; border-radius: 999px; color: var(--gris); text-decoration: none; font-variant-numeric: tabular-nums; white-space: nowrap; transition: background .2s, color .2s; }
+.ruban a:hover, .ruban a:focus-visible, .ruban a.vu { color: var(--encre); border-color: var(--filet); background: var(--papier-2); }
+.ruban a.courante { color: #fff; border-color: var(--magenta-texte); background: var(--magenta-texte); }
+
+/* ---------- accueil : la carte en grand ---------- */
+.une { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 8fr); grid-template-areas: "titre carte" "dates carte" "dates ruban"; grid-template-rows: auto 1fr auto; column-gap: clamp(28px, 4vw, 72px); max-width: 1600px; margin: 0 auto; padding: clamp(14px, 2.2vw, 30px) var(--gout) clamp(40px, 5vw, 72px); }
+.une-titre { grid-area: titre; padding-top: clamp(10px, 4vh, 56px); }
+.une-carte { grid-area: carte; }
+.une-carte svg { max-height: calc(100svh - 150px); }
+.une-ruban { grid-area: ruban; margin-top: 10px; }
+.une-dates { grid-area: dates; }
+.une h1 { margin: 0; font: italic 400 clamp(2.6rem, 1.4rem + 3.3vw, 4.7rem)/1 var(--serif); letter-spacing: -.01em; text-wrap: balance; }
+.une h1 small { display: block; margin: 0 0 18px; font: 600 .8rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.une .trait { width: 128px; height: 22px; margin-top: 18px; }
+.prochaines { list-style: none; margin: 30px 0 0; padding: 0; border-top: 1px solid var(--encre); }
+.prochaines a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 16px; padding: 11px 8px 11px 0; border-bottom: 1px solid var(--filet); text-decoration: none; transition: background .25s, padding .25s; }
+.prochaines .q { font-weight: 600; }
+.prochaines .o { grid-column: 1; color: var(--gris); }
+.prochaines .t { grid-column: 2; grid-row: 1 / span 2; align-self: center; max-width: 15ch; text-align: right; font: italic 500 1.12rem/1.15 var(--serif); }
+.prochaines li.actif a, .prochaines a:hover { padding-left: 10px; background: linear-gradient(90deg, color-mix(in srgb, var(--magenta) 13%, transparent), transparent); }
+.suite { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; font-weight: 600; color: var(--magenta-texte); text-decoration: none; }
+.portes-s, .bandeau-s { padding: clamp(40px, 6vw, 88px) 0 0; }
+.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(12px, 2vw, 24px); }
+.porte { display: flex; flex-direction: column; justify-content: space-between; gap: 28px; min-height: 196px; padding: 22px 24px 24px; border-radius: 16px; background: var(--papier-2); text-decoration: none; transition: background .3s; }
+.porte-bras { width: 160px; height: 48px; overflow: visible; }
+.porte-bras path { fill: none; stroke: var(--dc); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+.porte:hover .porte-bras path, .porte:focus-visible .porte-bras path { animation: dessine 1s cubic-bezier(.3, .7, .3, 1); }
+@keyframes dessine { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.porte .bas { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.porte .bas span { font: italic 500 clamp(1.5rem, 1.1rem + 1.1vw, 2.05rem)/1.12 var(--serif); text-wrap: balance; }
+.porte .fleche { width: 1.6rem; height: 1.6rem; color: var(--dc); }
+.porte:hover { background: color-mix(in srgb, var(--dc) 13%, var(--papier)); }
+.bandeau { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.bandeau a { position: relative; display: block; overflow: hidden; border-radius: 14px; background: var(--nuit); color: #fff; text-decoration: none; }
+.bandeau figure { margin: 0; aspect-ratio: 3 / 4; }
+.bandeau img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s; }
+.bandeau a:hover img { transform: scale(1.05); }
+.bandeau a::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(20 10 15 / 0) 38%, rgb(20 10 15 / .86)); pointer-events: none; }
+.bandeau figcaption { position: absolute; top: 10px; right: 12px; z-index: 1; font-size: .7rem; color: rgb(255 255 255 / .88); text-shadow: 0 1px 3px rgb(0 0 0 / .7); }
+.bandeau .txt { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 1; display: grid; gap: 6px; }
+.bandeau .sur { font-size: .7rem; font-weight: 600; letter-spacing: .12em; color: #f3a6cd; }
+.bandeau .ti { font: italic 500 1.4rem/1.1 var(--serif); }
+.bandeau .btn { justify-self: start; margin-top: 6px; padding: 4px 12px; border: 1px solid rgb(255 255 255 / .7); border-radius: 999px; font-size: .84rem; font-weight: 600; transition: background .2s, border-color .2s; }
+.bandeau a:hover .btn { border-color: var(--magenta); background: var(--magenta); }
+.donateurs p { margin: clamp(40px, 5vw, 64px) 0 0; padding-top: 20px; border-top: 1px solid var(--filet); max-width: 120ch; font-size: .84rem; line-height: 1.65; color: var(--gris); }
+@media (max-width: 1099.98px) {
+  .une { grid-template-columns: minmax(0, 1fr); grid-template-areas: "titre" "carte" "ruban" "dates"; grid-template-rows: none; }
+  .une-titre { padding: 8px 0 18px; }
+  .une-carte svg { max-height: none; }
+  .bandeau { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(210px, 38%); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; }
+  .bandeau li { scroll-snap-align: start; }
+}
+
+/* ---------- pages ---------- */
+.page-titre { padding-top: clamp(34px, 5vw, 64px); padding-bottom: clamp(26px, 3.4vw, 44px); }
+.page-titre h1 { margin: 0; font: italic 400 clamp(2.4rem, 1.5rem + 2.8vw, 3.9rem)/1.05 var(--serif); text-wrap: balance; }
 .page-titre .trait { width: 120px; height: 20px; margin-top: 16px; }
-.page-titre p { margin: 20px 0 0; max-width: 62ch; font-size: 1.12rem; color: var(--gris); }
-
-/* sections ordinaires */
-section.bloc { padding: clamp(52px, 7vw, 96px) 0; border-top: 1px solid var(--filet); }
-section.bloc.premier { border-top: 0; padding-top: 0; }
-.entete { display: flex; justify-content: space-between; align-items: end; gap: 12px 32px; flex-wrap: wrap; margin-bottom: 30px; }
-.entete h2 { margin: 0; font: italic 400 clamp(2rem, 1.4rem + 1.8vw, 2.8rem)/1.05 var(--serif); }
-.cartes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 22px; list-style: none; margin: 0; padding: 0; }
-.cartes a { display: block; text-decoration: none; }
-.cartes figure { margin: 0 0 14px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; background: var(--papier-2); }
-.cartes img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
-.cartes a:hover img { transform: scale(1.03); }
-.cartes h3 { margin: 0; font: italic 500 1.45rem/1.15 var(--serif); }
-.cartes a:hover h3 { color: var(--ct); }
-.cartes .st { display: block; margin-top: 4px; font-size: .9rem; color: var(--gris); }
-.cartes .quand { display: block; margin-top: 8px; font-size: .9rem; font-weight: 600; }
-.dates { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--encre); }
-.dates li { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 2px 20px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--filet); }
-.dates time { grid-row: 1 / span 2; font-weight: 600; font-variant-numeric: tabular-nums; }
-.dates time small { display: block; font-weight: 400; color: var(--gris); font-size: .85rem; }
-.dates li > a { grid-column: 2; grid-row: 1; font: italic 500 1.3rem/1.2 var(--serif); text-decoration: none; }
-.dates li > a::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: .15em; }
-.dates li > a:hover { color: var(--magenta-texte); }
-.dates .ou { grid-column: 2; color: var(--gris); }
-.dates .pub { grid-column: 3; grid-row: 1; font-size: .82rem; font-weight: 600; text-align: right; }
-.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 0 clamp(20px, 3vw, 40px); }
-.porte { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 10px; align-content: start; }
-.porte h3 { margin: 0; font: italic 500 1.65rem/1.15 var(--serif); }
-.porte h3 .trait { --c: var(--dc); }
-.porte > p { margin: 0; color: var(--gris); }
-.porte ul { list-style: none; margin: 6px 0 14px; padding: 0; border-top: 1px solid var(--filet); }
-.porte li a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--filet); text-decoration: none; }
-.porte li a:hover { color: var(--magenta-texte); }
-.porte li small { color: var(--gris); white-space: nowrap; }
-.porte .bas > p { margin: 0; color: var(--gris); }
-.porte .bas .faits { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--filet); }
-.porte .suite { font-weight: 600; color: var(--magenta-texte); text-decoration: none; }
-.porte .suite:hover { text-decoration: underline; }
-
-/* l'agenda : la liste par mois, et la carte de la saison à côté */
-.agenda { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
-.agenda-carte { position: sticky; top: 88px; }
-.agenda-carte .carte svg { max-height: calc(100svh - 150px); }
-.mois { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 44px 0 12px; font: italic 500 1.65rem/1.2 var(--serif); }
-.agenda-liste > .mois:first-child { margin-top: 0; }
-.mois small { font: 400 .9rem var(--sans); color: var(--gris); }
-
-/* la compagnie */
-.compagnie { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
-.compagnie p.grand { margin: 0 0 18px; font: 400 clamp(1.35rem, 1.1rem + .9vw, 1.9rem)/1.35 var(--serif); }
-.chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; align-self: start; }
-.chiffres dt { font: 400 2.6rem/1 var(--serif); }
-.chiffres dd { margin: 6px 0 0; color: var(--gris); font-size: .9rem; }
-.tournees { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
-.tournees .entete { margin-bottom: 22px; }
-.tournees p { margin: 0 0 22px; max-width: 42ch; }
-.artistes { list-style: none; margin: 0; padding: 0; columns: 3 230px; column-gap: clamp(24px, 4vw, 48px); }
-.artistes li { break-inside: avoid; padding: 11px 0; border-bottom: 1px solid var(--filet); }
-.artistes b { display: block; font-weight: 600; }
-.artistes span { display: block; font-size: .92rem; color: var(--gris); }
-.artistes a { text-decoration: none; }
-.artistes a:hover { color: var(--magenta-texte); text-decoration: underline; }
-.partenaires { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 24px; }
-.partenaires li { padding: 14px 0; border-top: 1px solid var(--encre); font: italic 500 1.3rem/1.25 var(--serif); }
-
-/* contact */
-.coordonnees { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px clamp(20px, 3vw, 40px); padding-top: 22px; border-top: 1px solid var(--encre); }
-.coordonnees h2 { margin: 0 0 10px; font-size: .8rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
-.coordonnees p { margin: 0; font: 400 1.35rem/1.4 var(--serif); }
-.coordonnees a { color: var(--magenta-texte); }
-
-footer { background: var(--nuit); color: #d8cdd1; padding: 44px 0; font-size: .92rem; }
-footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-footer strong { color: #fff; }
-footer p { margin: 0 0 6px; }
-
-/* page d'un spectacle */
-.tete .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(24px, 5vw, 72px); align-items: center; padding-top: clamp(28px, 4vw, 56px); padding-bottom: clamp(40px, 5vw, 72px); }
-.fil { margin: 0 0 18px; font-size: .9rem; color: var(--gris); }
+.page-titre .ruban { margin-top: 26px; }
+.fil { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 0 14px; font-size: .9rem; color: var(--gris); }
 .fil a { text-decoration: none; }
 .fil a:hover { text-decoration: underline; }
-.tete h1 { margin: 0; font: italic 400 clamp(2.8rem, 1.6rem + 4vw, 5.2rem)/1 var(--serif); text-wrap: balance; }
+.texte p, .texte li { max-width: 70ch; }
+.texte h2 { margin: 1.6em 0 .5em; font: italic 500 clamp(1.5rem, 1.2rem + 1vw, 2rem)/1.2 var(--serif); }
+.texte h2:first-child { margin-top: 0; }
+.texte ul { padding-left: 1.2em; }
+.texte li { margin: .55em 0; }
+.texte a { color: var(--magenta-texte); }
+
+/* les spectacles */
+.cartes-sp { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 38px 22px; }
+.cartes-sp a { display: block; text-decoration: none; }
+.cartes-sp figure { position: relative; margin: 0 0 14px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 12px; background: var(--papier-2); }
+.cartes-sp img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
+.cartes-sp a:hover img { transform: scale(1.04); }
+.cartes-sp h2 { margin: 0; font: italic 500 1.45rem/1.15 var(--serif); }
+.cartes-sp a:hover h2 { color: var(--ct); }
+.cartes-sp .trait { width: 78px; height: 14px; margin-top: 8px; }
+.cartes-sp .st { margin: 8px 0 0; font-size: .95rem; color: var(--gris); }
+.cr { margin: 4px 0 0; font-size: .78rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
+.statut { display: inline-block; padding: 4px 11px; border-radius: 999px; background: var(--ct, var(--magenta)); color: #fff; font-size: .74rem; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; }
+.cartes-sp .statut { position: absolute; left: 12px; top: 12px; }
+
+/* l'agenda : la liste, et la carte de la saison à côté */
+.agenda { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.agenda-carte { position: sticky; top: 84px; }
+.agenda-carte svg { max-height: calc(100svh - 110px); }
+.mois { margin: 38px 0 4px; font: italic 500 1.55rem/1.2 var(--serif); }
+.mois::first-letter { text-transform: uppercase; }
+.liste > .groupe:first-of-type .mois { margin-top: 0; }
+.dates, .lignes { list-style: none; margin: 0; padding: 0; }
+.date { --c: var(--magenta); display: grid; grid-template-columns: 6.8rem minmax(0, 1fr); gap: 4px 18px; padding: 14px 6px 14px 0; border-top: 1px solid var(--filet); transition: opacity .2s, background .2s; }
+.date .quand { margin: 0; }
+.date .j { display: block; font: 500 1.45rem/1.1 var(--serif); }
+.date .j.mo { font-size: 1.15rem; }
+.date .m { display: block; margin-top: 2px; font-size: .82rem; color: var(--gris); }
+.date .sp { display: inline-block; font: italic 500 1.25rem/1.2 var(--serif); text-decoration: none; }
+.date .sp::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 9px; border-radius: 50%; background: var(--c); vertical-align: .12em; }
+.date .sp:hover { color: var(--magenta-texte); }
+.date .lieu { display: block; font-weight: 600; }
+.det { list-style: none; margin: 2px 0 0; padding: 0; font-size: .94rem; color: var(--gris); }
+.det a { color: var(--magenta-texte); }
+.liste.survole .date:not(.actif), .liste.survole .ligne:not(.actif) { opacity: .3; }
+.date.actif, .ligne.actif { background: linear-gradient(90deg, color-mix(in srgb, var(--c, var(--magenta)) 13%, transparent), transparent 75%); }
+.filtre { display: flex; align-items: center; gap: 6px; margin: 0 0 18px; }
+.filtre span { padding: 4px 0; font: italic 500 1.35rem var(--serif); }
+.filtre button { display: inline-grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--filet); border-radius: 50%; background: var(--papier-2); cursor: pointer; }
+.filtre svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.passees { margin-top: clamp(48px, 6vw, 88px); padding-top: clamp(30px, 4vw, 52px); border-top: 1px solid var(--filet); }
+.minis { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 30px 22px; }
+.mini a { display: block; text-decoration: none; }
+.mini svg { display: block; width: 100%; height: auto; }
+.mini .pays { fill: var(--terre); }
+.mini .encart { fill: none; stroke: color-mix(in srgb, var(--encre) 30%, transparent); stroke-width: 3; stroke-dasharray: 8 8; }
+.mini .bras { fill: color-mix(in srgb, var(--encre) 74%, transparent); transition: fill .3s; }
+.mini .rouen { fill: var(--encre); }
+.mini span { display: block; margin-top: 8px; font: italic 500 1.12rem/1.2 var(--serif); }
+.mini a:hover .bras, .mini a:focus-visible .bras { fill: var(--magenta); }
+.mini a:hover span { color: var(--magenta-texte); }
+.sp-saison { --c: var(--gris); padding: 22px 0 26px; border-top: 1px solid var(--encre); }
+.liste > .sp-saison:first-of-type { border-top: 0; padding-top: 0; }
+.sp-saison h2 { margin: 0; font: italic 500 clamp(1.4rem, 1.15rem + .9vw, 1.9rem)/1.15 var(--serif); }
+.sp-saison h2 a { text-decoration: none; }
+.sp-saison h2 a:hover { color: var(--magenta-texte); }
+.sp-saison .st { margin: 4px 0 0; color: var(--gris); }
+.sp-saison .cr { margin-bottom: 12px; }
+.ligne { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: 2px 16px; padding: 9px 6px 9px 0; border-top: 1px solid var(--filet); font-size: .95rem; transition: opacity .2s; }
+.ligne .lq { font-weight: 600; }
+.ligne .lo a { color: var(--magenta-texte); }
+.ligne .det, .ligne .etat-t { grid-column: 2; }
+.ligne.etat .lq, .ligne.etat .lo { text-decoration: line-through; color: var(--gris); }
+.etat-t { justify-self: start; font-size: .8rem; font-weight: 600; color: var(--magenta-texte); }
+
+/* la compagnie */
+.compagnie .texte p { font-size: 1.08rem; }
+.compagnie .texte p.grand { font: 400 clamp(1.3rem, 1.05rem + .9vw, 1.72rem)/1.45 var(--serif); }
+.frise-s { margin-top: clamp(40px, 6vw, 80px); padding-top: clamp(34px, 5vw, 60px); border-top: 1px solid var(--filet); }
+.frise-s h2, .tournee h2 { margin: 0 0 20px; font: italic 400 clamp(2rem, 1.4rem + 1.8vw, 2.9rem)/1.05 var(--serif); }
+.frise-bras { display: block; width: 100%; height: auto; overflow: visible; }
+.frise-bras .b { fill: var(--magenta); }
+.frise-bras circle { fill: var(--papier); stroke: var(--encre); stroke-width: 2.6; }
+.frise-l { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 12px; text-align: center; }
+.frise-l .an { display: block; font: 500 1.9rem/1 var(--serif); }
+.frise-l .ti { display: block; margin-top: 6px; font: italic 400 1.02rem/1.25 var(--serif); color: var(--gris); }
+
+/* actions culturelles, espace pro, contact, pages légales */
+.actions { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.photo-cote { margin: 0; position: sticky; top: 88px; }
+.photo-cote img { width: 100%; border-radius: 14px; }
+.photo-cote figcaption, .tete-photo figcaption { margin-top: 6px; font-size: .78rem; color: var(--gris); text-align: right; }
+.formulaire { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; align-content: start; }
+.formulaire > p { grid-column: 1 / -1; margin: 0; }
+.champ { display: grid; gap: 6px; font-weight: 500; }
+.champ.large { grid-column: 1 / -1; }
+.champ input, .champ textarea, .calcul input { width: 100%; padding: 11px 13px; border: 1px solid #cdc2b3; border-radius: 8px; background: #fffdf9; }
+.champ input:focus, .champ textarea:focus, .calcul input:focus { outline: 2px solid var(--magenta); outline-offset: 0; border-color: transparent; }
+.accord { grid-column: 1 / -1; display: flex; align-items: flex-start; gap: 10px; }
+.accord input { flex: none; width: 18px; height: 18px; margin-top: 4px; accent-color: var(--magenta); }
+.accord a { color: var(--magenta-texte); }
+.calcul { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.calcul input { width: 4.6em; padding: 8px 10px; }
+.bouton { justify-self: start; padding: 12px 26px; border: 0; border-radius: 999px; background: var(--encre); color: var(--papier); font-weight: 600; cursor: pointer; transition: background .2s; }
+.bouton:hover { background: var(--magenta-texte); }
+.pro-f { grid-template-columns: minmax(0, 1fr); max-width: 520px; }
+.contact { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.coord { padding: 22px 24px; border-radius: 16px; background: var(--papier-2); }
+.coord p { margin: 0 0 8px; }
+.coord .nm { font: italic 500 1.4rem/1.2 var(--serif); }
+.legal { overflow-wrap: anywhere; }
+
+/* page d'un spectacle */
+.tete .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(24px, 5vw, 72px); align-items: center; padding-top: clamp(26px, 4vw, 56px); padding-bottom: clamp(36px, 5vw, 72px); }
+.tete h1 { margin: 0; font: italic 400 clamp(2.7rem, 1.5rem + 4vw, 5.2rem)/1 var(--serif); text-wrap: balance; }
+.tete h1 span { display: block; }
 .tete .trait { width: 130px; height: 22px; margin-top: 16px; }
-.tete .st { margin: 18px 0 0; font-size: 1.15rem; color: var(--gris); }
-.tete .prochaine { margin: 18px 0 0; font-weight: 600; }
-.tete figure { margin: 0; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; }
-.tete figure img { width: 100%; height: 100%; object-fit: cover; }
-.tete figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
-.corps { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
-.accroche { margin: 0 0 22px; font: italic 400 clamp(1.45rem, 1.1rem + 1.1vw, 2.1rem)/1.25 var(--serif); text-wrap: balance; }
-.corps p { max-width: 64ch; }
-.faits { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 18px; font-size: .97rem; align-content: start; }
-.faits dt { color: var(--gris); }
-.faits dd { margin: 0; font-weight: 500; }
-.ou-voir { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
-.ou-voir .resume { margin: 0 0 18px; font-size: 1.1rem; }
-.ou-voir .dates li { grid-template-columns: 130px minmax(0, 1fr) auto; }
-.onglets { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--filet); margin-bottom: 26px; }
-.onglets button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 0; margin: 0 26px -1px 0; font: italic 500 1.3rem var(--serif); color: var(--gris); cursor: pointer; }
-.onglets button:hover { color: var(--encre); }
-.onglets button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--dc); }
-.panneau { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); }
-.panneau h3 { margin: 0 0 10px; font-size: .8rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
-.panneau p { margin: 0 0 14px; }
-.panneau .faits { margin-bottom: 18px; }
-.docs { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--filet); }
-.docs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--filet); }
-.afournir { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); border: 1px dashed var(--gris); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
-.suivant { display: block; text-decoration: none; padding: clamp(40px, 6vw, 72px) 0; border-top: 1px solid var(--filet); background: var(--papier-2); }
-.suivant .wrap { display: block; }
-.suivant small { display: block; color: var(--gris); margin-bottom: 6px; }
-.suivant b { font: italic 400 clamp(2rem, 1.4rem + 2.4vw, 3.4rem)/1.05 var(--serif); }
+.tete .cr { margin-top: 18px; color: var(--ct); }
+.tete .st { margin: 6px 0 0; font-size: 1.2rem; color: var(--gris); }
+.tete .cadre { margin: 14px 0 0; font-size: .92rem; letter-spacing: .03em; color: var(--gris); }
+.tete .statut { margin: 0 0 16px; }
+.tete-photo { margin: 0; }
+.tete-photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; }
+.corps { padding: clamp(40px, 6vw, 80px) 0; border-top: 1px solid var(--filet); }
+.corps .wrap { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 88px); }
+.corps .texte > p:first-child { font: 400 clamp(1.22rem, 1.05rem + .7vw, 1.55rem)/1.45 var(--serif); }
+.fiche { align-self: start; font-size: .95rem; }
+.fiche .f { margin: 0; padding: 8px 0; border-bottom: 1px solid var(--filet); }
+.fiche .f:first-child { border-top: 1px solid var(--encre); }
+.fiche .lib { color: var(--gris); }
+.fiche .duree { margin: 16px 0 0; font-weight: 600; }
+.fiche .mention { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--papier-2); font-size: .9rem; }
+.fiche .prod { margin: 12px 0 0; font-size: .88rem; color: var(--gris); }
+.fiche a { color: var(--magenta-texte); }
+.medias { margin-top: 36px; }
+.medias h3 { margin: 18px 0 6px; font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.medias ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filet); }
+.medias li { padding: 10px 0; border-bottom: 1px solid var(--filet); }
+.medias a { display: inline-flex; align-items: center; gap: 10px; font-weight: 500; text-decoration: none; }
+.medias a:hover span { color: var(--magenta-texte); text-decoration: underline; }
+.medias svg { width: 26px; height: 26px; flex: none; }
+.medias small { display: block; margin: 2px 0 0 36px; color: var(--gris); }
+.extraits { display: grid; gap: 22px; margin: 34px 0 0; }
+.extraits blockquote { margin: 0; padding-left: 18px; border-left: 3px solid var(--ct); }
+.extraits p { margin: 0; font: italic 400 1.3rem/1.35 var(--serif); }
+.extraits footer { margin-top: 6px; font-size: .85rem; color: var(--gris); }
+.tournee { padding: clamp(40px, 6vw, 80px) 0; border-top: 1px solid var(--filet); }
+.tournee-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 72px); align-items: start; }
+.tournee-g > .carte { position: sticky; top: 84px; }
+.tournee-g > .carte svg { max-height: calc(100svh - 110px); }
+.tournee .date { grid-template-columns: 6.8rem minmax(0, 1fr); }
+.tournee p { margin: 0; font-size: 1.1rem; }
+.carte-sp.seule { max-width: 860px; margin: 0 auto; }
+.suivant { display: block; padding: clamp(36px, 5vw, 64px) 0; background: var(--papier-2); text-decoration: none; }
+.suivant .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.suivant b { font: italic 400 clamp(1.8rem, 1.3rem + 2.2vw, 3.2rem)/1.05 var(--serif); }
+.suivant .fleche { width: 2.4rem; height: 2.4rem; }
 .suivant:hover b { color: var(--ct); }
 
+/* pied de page */
+.pied { background: var(--nuit); color: #d9ced3; font-size: .92rem; line-height: 1.55; }
+.pied .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr) minmax(0, 1.5fr); gap: 28px clamp(24px, 4vw, 64px); padding-top: 52px; padding-bottom: 34px; }
+.pied p { margin: 0 0 10px; }
+.pied .nm { color: #fff; font: italic 500 1.35rem/1.2 var(--serif); margin: 0; }
+.pied .trait { margin: 8px 0 14px; }
+.pied .lg { font-size: .8rem; color: #a99ca2; }
+.pied a { color: #fff; }
+.pied .ecrire { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 12px; font: italic 500 1.35rem var(--serif); text-decoration: none; }
+.pied .ecrire:hover { color: #f3a6cd; }
+.pied .part { color: #bfb2b8; }
+.pied .bas { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 24px; padding-top: 20px; border-top: 1px solid rgb(255 255 255 / .12); font-size: .82rem; }
+.pied .bas a { color: #bfb2b8; }
+
+/* l'ouverture, dans l'encre de la maquette */
+.intro.ouverture-06 .intro-indice { color: #f6f2eb; }
+
 @media (max-width: 1000px) {
-  .ouverture .wrap, .compagnie, .corps, .tete .wrap, .ou-voir, .panneau, .agenda, .tournees, .coordonnees { grid-template-columns: minmax(0, 1fr); }
-  .cartes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .portes { grid-template-columns: minmax(0, 1fr); gap: 34px; }
-  footer .wrap { grid-template-columns: minmax(0, 1fr); }
-  .carte svg, .agenda-carte .carte svg { max-height: none; }
-  .agenda-carte { position: static; order: -1; }
+  .agenda, .tournee-g, .corps .wrap, .tete .wrap, .actions, .contact { grid-template-columns: minmax(0, 1fr); }
+  .agenda-carte, .tournee-g > .carte { position: static; order: -1; }
+  .agenda-carte svg, .tournee-g > .carte svg { max-height: none; }
+  .photo-cote { position: static; }
+  .cartes-sp { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .minis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .pied .wrap { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
-  .nav { display: none; position: absolute; left: 0; right: 0; top: 64px; background: var(--papier); flex-direction: column; padding: 8px var(--gout) 18px; border-bottom: 1px solid var(--filet); }
-  .top.ouvert .nav { display: flex; }
-  .nav a[aria-current="page"] { text-underline-offset: 6px; }
-  .menu { display: inline-block; }
-  .cartes { grid-template-columns: minmax(0, 1fr); }
-  .dates li, .ou-voir .dates li { grid-template-columns: minmax(0, 1fr); }
-  .dates li > *, .dates time { grid-column: 1; grid-row: auto; }
-  .dates .pub { text-align: left; }
+  .portes { grid-template-columns: minmax(0, 1fr); }
+  .porte { min-height: 0; }
+  .bandeau { grid-auto-columns: 74%; }
+  .cartes-sp, .formulaire { grid-template-columns: minmax(0, 1fr); }
+  .minis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ligne { grid-template-columns: minmax(0, 1fr); }
+  .ligne .det, .ligne .etat-t { grid-column: 1; }
+  .ruban { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; }
+  .frise-bras { display: none; }
+  .frise-l { grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0; padding-left: 20px; border-left: 3px solid var(--magenta); text-align: left; }
+  .frise-l li { padding: 10px 0; }
+  .frise-l .an { font-size: 1.5rem; }
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
-  <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
-  <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-  <nav class="nav" id="nav" aria-label="Navigation principale">
-    <a href="#/spectacles">Spectacles</a><a href="#/agenda">Agenda</a><a href="#/compagnie">La compagnie</a><a href="#/contact">Contact</a>
-  </nav>
+<header class="top"><div class="barre">
+  <a class="marque" href="#/"><span class="l" aria-hidden="true"></span><span class="mq"></span></a>
+  <button class="menu" type="button" aria-expanded="false" aria-controls="nav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7c3-2.2 6 2.2 9 0s6-2.2 9 0M3 12c3-2.2 6 2.2 9 0s6-2.2 9 0M3 17c3-2.2 6 2.2 9 0s6-2.2 9 0"/></svg><span></span></button>
+  <nav class="nav" id="nav"></nav>
 </div></header>
 <main id="main"></main>
-<footer><div class="wrap" id="pied"></div></footer>
+<footer class="pied"><div class="wrap" id="pied"></div></footer>
 <script>const D = /*__DATA__*/null;</script>
 <script>
 (() => {
   const $ = (s, el = document) => el.querySelector(s);
-  const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
-  // échappe le texte, et pose les espaces insécables de la ponctuation française
-  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»])/g, ' $1').replace(/« /g, '« ');
-  const titre = t => esc(t).replace(/ – /g, ' – ');
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const pluriel = (n, un, plus) => `${n} ${n > 1 ? plus : un}`;
-  const doux = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const S = D.site, L = S.libelles, main = $('#main');
   const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
-  const SPECTACLES = D.shows.filter(s => s.annee);
-  const C = D.company, K = D.carte, main = $('#main');
-  const COMMUNES = new Set(D.dates.map(d => d.commune + d.dep)).size;
-  $('#marque').innerHTML = D.logo.mark;
-  $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
-    <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
-  // le motif : une onde qui s'enroule au bout, comme la pointe d'une tentacule
+  const onglet = id => (S.menu.find(m => m.id === id) || {}).texte || '';
+  const SAISON = S.saisons[0];
+  const mouvement = CARTE.mouvement;
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const sortie = t => 1 - (1 - t) ** 3, douce = t => t < .5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2;
+  const bloc = b => /^\s*<(h\d|ul|ol|p|div|blockquote)\b/i.test(b) ? b : `<p>${b}</p>`;
+  // « 8, 10 et 11 décembre 2026 » → ['8, 10 et 11', 'décembre 2026'] ; « mars 2027 » → ['', 'mars 2027']
+  const coupe = s => { const m = String(s).match(/^(.*?)\s*(\S+\s+\d{4})$/); return m ? [m[1], m[2]] : ['', String(s)]; };
+  const externe = (href, html) => href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${html}</a>` : html;
   const trait = c => `<svg class="trait" viewBox="0 0 120 20" aria-hidden="true"${c ? ` style="--c:${c}"` : ''}><path d="M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13"/></svg>`;
-  const prochaine = s => s.prochaine ? `${s.prochaine.jour} ${s.prochaine.mois}, ${s.prochaine.commune}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements');
-  // une date : un jour, plusieurs jours ou un mois seul ; un « lieu » qui est une heure ou une note n'est pas un lieu
-  const quand = d => d.precision === 'month' ? `${cap(d.moisLong)} ${d.annee}` : (d.fin !== d.iso ? d.label.replace(/\s\d{4}$/, '') : `${d.joursem} ${d.jour} ${d.mois}`);
-  const lieu = d => {
-    const v = (d.lieu || '').trim(), ou = `${esc(d.commune)} (${esc(d.dep)})`;
-    if (/^\d{1,2}\s*h\s*\d{0,2}$/i.test(v)) return `${ou}, à ${esc(v.replace(/\s+/g, ''))}`;
-    if (/^diptyque$/i.test(v)) return `${ou}, en diptyque`;
-    return `${v ? esc(v) + ', ' : ''}${ou}`;
-  };
-  const ligneDate = (d, court) => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.iso}">${esc(quand(d))}<small>${d.precision === 'month' ? 'jour à préciser' : d.annee}</small></time>
-    ${court ? '' : `<a href="#/spectacle/${d.slug}">${titre(d.titre)}</a>`}<span class="ou">${lieu(d)}</span><span class="pub">${esc(d.public)}</span></li>`;
+  const fleche = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6"/></svg>';
+  const croix = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+
+  /* ---------- en-tête, pied de page, fond de carte commun ---------- */
+  $('.marque .l').innerHTML = D.logo.mark;
+  $('.marque .mq').textContent = S.titreSuffixe;
+  $('.menu span').textContent = L.menu;
+  const nav = $('#nav');
+  nav.setAttribute('aria-label', L.menu);
+  nav.innerHTML = S.menu.map(m => `<a href="${m.href}">${esc(m.texte)}</a>`).join('');
+  const C = S.coordonnees;
+  $('#pied').innerHTML = `
+    <div><p class="nm">${esc(C.nom)}</p>${trait()}<p>${C.adresse.map(esc).join('<br>')}</p><p class="lg">${C.legal.map(esc).join('<br>')}</p></div>
+    <div><a class="ecrire" href="${S.ecrire.href}">${esc(S.ecrire.texte)}${fleche}</a><p>${S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : esc(S.facebook.texte)}</p></div>
+    <div class="part"><p>${S.partenaires}</p></div>
+    <div class="bas">${S.liensLegaux.map(l => `<a href="${l.href}">${esc(l.texte)}</a>`).join('')}</div>`;
+  document.body.insertAdjacentHTML('afterbegin', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr-pays" d="${CARTE.fond.pays}"/><path id="fr-be" d="${CARTE.fond.belgique}"/><path id="fr-lu" d="${CARTE.fond.luxembourg}"/></defs></svg>`);
 
   /* ---------- la carte : un bras par commune, de Rouen jusqu'à elle ---------- */
-  // une courbe qui part de Rouen et tourne toujours dans le même sens ; épaisse au départ, fine au bout
-  function bras([x, y], n, echelle) {
-    const [rx, ry] = K.rouen, dx = x - rx, dy = y - ry, d = Math.hypot(dx, dy);
-    if (d < 7) return '';
-    const qx = (rx + x) / 2 - dy * 0.24, qy = (ry + y) / 2 + dx * 0.24, N = 26, G = [], Dr = [];
-    const w0 = Math.min(6, 1.3 + Math.sqrt(n) * 0.8) * echelle, w1 = 0.5 * echelle;
+  const R = CARTE.rouen, VB = CARTE.viewBox.split(/\s+/).map(Number);
+  const ENCART = [66, 706];   // l'outre-mer, hors du cadre : un encart au large, en bas à gauche
+  const hors = xy => xy[0] < VB[0] || xy[1] < VB[1] || xy[0] > VB[0] + VB[2] || xy[1] > VB[1] + VB[3];
+  const ou = x => hors(x.xy) ? ENCART : x.xy;
+  const loin = x => { const p = ou(x); return Math.hypot(p[0] - R[0], p[1] - R[1]); };
+  const largeur = n => Math.min(8, 2.4 + Math.sqrt(n) * 1.25);
+  // la forme d'un bras (la courbe de CARTE.bras) qui pousse : la courbe de Rouen jusqu'à g (0 → 1), effilée jusqu'à
+  // sa pointe ; tant qu'il pousse il ondule un peu (onde), puis se pose
+  function forme([x, y], w0, w1 = .5, g = 1, onde = 0) {
+    const [rx, ry] = R, dx = x - rx, dy = y - ry;
+    if (g <= 0 || Math.hypot(dx, dy) < 6) return '';
+    const qx = (rx + x) / 2 - dy * .24, qy = (ry + y) / 2 + dx * .24;
+    const ax = rx + (qx - rx) * g, ay = ry + (qy - ry) * g;
+    const bx = (1 - g) ** 2 * rx + 2 * (1 - g) * g * qx + g * g * x, by = (1 - g) ** 2 * ry + 2 * (1 - g) * g * qy + g * g * y;
+    const W0 = w0 * (.35 + .65 * g), N = 24, G = [], Dr = [];
     for (let k = 0; k <= N; k++) {
       const t = k / N, a = (1 - t) ** 2, b = 2 * (1 - t) * t, c = t * t;
-      const px = a * rx + b * qx + c * x, py = a * ry + b * qy + c * y;
-      let tx = 2 * (1 - t) * (qx - rx) + 2 * t * (x - qx), ty = 2 * (1 - t) * (qy - ry) + 2 * t * (y - qy);
+      let px = a * rx + b * ax + c * bx, py = a * ry + b * ay + c * by;
+      let tx = 2 * (1 - t) * (ax - rx) + 2 * t * (bx - ax), ty = 2 * (1 - t) * (ay - ry) + 2 * t * (by - ay);
       const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-      const w = (w0 * (1 - t) + w1 * t) / 2;
+      const o = onde * Math.sin((t * 2.4 - g * 2) * Math.PI) * t;
+      px -= ty * o; py += tx * o;
+      const w = (W0 * (1 - t) + w1 * t) / 2;
       G.push(`${(px - ty * w).toFixed(1)} ${(py + tx * w).toFixed(1)}`); Dr.push(`${(px + ty * w).toFixed(1)} ${(py - tx * w).toFixed(1)}`);
     }
     return `M${G.join('L')}L${Dr.reverse().join('L')}Z`;
   }
+  const etiquette = x => `${CARTE.nom(x)} : ${x.dates.map(d => d.ligne).join(' ; ')}`;
+  const ligneBulle = d => d.ligneDate
+    ? `<li><span>${esc(d.ligneDate)}</span><a href="#/spectacle/${d.slug}">${esc(d.titre)}</a></li>`
+    : `<li>${esc(d.ligne)}${d.spectacle ? ` <em>${esc(d.spectacle)}</em>` : ''}</li>`;
+  // toutes les communes de toutes les saisons : le réseau gris de l'accueil
+  let reseau = null;
+  const RESEAU = () => reseau || (reseau = (() => {
+    const m = new Map();
+    S.saisons.forEach(s => CARTE.saison(s.saison).forEach(x => { const e = m.get(x.l); if (e) { e.n += x.n; e.dates.push(...x.dates); } else m.set(x.l, { ...x, dates: [...x.dates] }); }));
+    return [...m.values()];
+  })());
+
+  const REG = new Map(), ANIM = new Set();
+  const RO = window.ResizeObserver ? new ResizeObserver(es => es.forEach(e => { echelle(e.target); const b = $('.bulle', e.target); if (b && !b.classList.contains('epinglee')) b.hidden = true; })) : null;
   let nCarte = 0;
-  // passe : [[indice de commune, nombre de dates]] ; saison : des dates, en couleur ; legende : [saison, passé].
-  // Chaque carte a son clipPath : un cercle qui s'ouvre depuis Rouen et fait pousser les bras.
-  function carte(passe, saison, couleur, [lSaison = '', lPasse = '']) {
-    const id = 'pousse' + (++nCarte), [rx, ry] = K.rouen, anime = doux();
-    const parLieu = new Map();
-    saison.forEach(d => { if (!d.xy) return; const k = d.xy.join(); const e = parLieu.get(k) || { xy: d.xy, dates: [] }; e.dates.push(d); parLieu.set(k, e); });
-    const leg = [saison.length ? lSaison : '', passe.length ? lPasse : ''];
-    return `<figure class="carte" style="--c:${couleur}">
-      <svg viewBox="${K.viewBox}" role="img" aria-label="${esc(leg.filter(Boolean).join(', '))}">
-        <defs><clipPath id="${id}"><circle cx="${rx}" cy="${ry}" r="${anime ? 0 : 820}">${anime ? '<animate attributeName="r" from="0" to="820" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>' : ''}</circle></clipPath></defs>
-        <path class="voisin" d="${K.belgique}"/><path class="voisin" d="${K.luxembourg}"/><path class="pays" d="${K.contour}"/>
-        <g clip-path="url(#${id})">
-          ${passe.map(([i, n]) => `<path class="bras-passe" d="${bras(K.lieux[i].xy, n, 1)}"/>`).join('')}
-          ${passe.map(([i]) => `<circle class="bout-passe" cx="${K.lieux[i].xy[0]}" cy="${K.lieux[i].xy[1]}" r="2.2"/>`).join('')}
-          ${[...parLieu.values()].map(e => `<path class="bras-saison" d="${bras(e.xy, e.dates.length * 2, 1.2)}"/>`).join('')}
-          ${[...parLieu.values()].map(e => `<circle class="bout-saison" cx="${e.xy[0]}" cy="${e.xy[1]}" r="4.2"><title>${esc(e.dates[0].commune)} (${esc(e.dates[0].dep)}) : ${e.dates.map(d => `${esc(quand(d))}, ${titre(d.titre)}`).join(' ; ')}</title></circle>`).join('')}
-        </g>
-        <circle class="rouen" cx="${rx}" cy="${ry}" r="5.5"/><text class="rouen-nom" x="${rx + 10}" y="${ry - 9}">Rouen</text>
-      </svg>
-      <figcaption class="legende">${leg[0] ? `<span><i></i>${esc(leg[0])}</span>` : ''}${leg[1] ? `<span><i class="passe"></i>${esc(leg[1])}</span>` : ''}</figcaption>
-    </figure>`;
+  // lieux : les communes en avant (en couleur, nommées, au clavier) ; passe : le réseau en retrait, en gris
+  function carte({ lieux = [], passe = [], couleur = 'var(--magenta)', titre = '', classe = '', bulle = false, pousse = true } = {}) {
+    const id = 'carte' + (++nCarte), vide = pousse && mouvement() && lieux.length > 0;
+    REG.set(id, { lieux, passe, bulle, vide, par: new Map() });
+    const encart = [...lieux, ...passe].some(x => hors(x.xy));
+    return `<figure class="carte ${classe}" id="${id}" style="--c:${couleur}">
+      <svg viewBox="${CARTE.viewBox}" ${lieux.length ? 'role="group"' : 'role="img"'} aria-label="${esc(titre)}">
+        <defs><clipPath id="${id}-clip"><circle class="clip" cx="${R[0]}" cy="${R[1]}" r="${vide && passe.length ? 0 : 1200}"/></clipPath></defs>
+        <use href="#fr-be" class="voisin"/><use href="#fr-lu" class="voisin"/><use href="#fr-pays" class="pays"/>
+        ${encart ? `<circle class="encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="24"/>` : ''}
+        <g class="reseau" clip-path="url(#${id}-clip)"></g><g class="vif"></g>
+        <g class="rouen-g" aria-hidden="true"><circle class="onde" cx="${R[0]}" cy="${R[1]}"/><circle class="rouen" cx="${R[0]}" cy="${R[1]}"/><text class="rouen-nom" x="${R[0] + 9}" y="${R[1] - 8}">Rouen</text></g>
+      </svg>${bulle ? '<div class="bulle" hidden></div>' : ''}</figure>`;
+  }
+  // l'échelle de l'écran, pour garder les noms, les points et les traits à la même taille en pixels
+  function echelle(fig) {
+    const svg = $('svg', fig), m = svg && svg.getScreenCTM();
+    const k = m && m.a > 0 ? 1 / m.a : VB[2] / ((svg && svg.clientWidth) || VB[2]);
+    if (svg) svg.style.setProperty('--k', k.toFixed(3));
+    return k;
+  }
+  function activer(fig) {
+    const reg = REG.get(fig.id), k = echelle(fig), lw = Math.max(1, k * .75);
+    const rn = $('.rouen-nom', fig);
+    rn.setAttribute('x', (R[0] + 9 * k).toFixed(1)); rn.setAttribute('y', (R[1] - 8 * k).toFixed(1));
+    $('.reseau', fig).innerHTML = reg.passe.map(x => `<path d="${forme(ou(x), largeur(x.n) * .5 * lw, .3)}"/>`).join('') +
+      reg.passe.map(x => { const [px, py] = ou(x); return `<g class="carte-lieu" data-l="${x.l}"><circle class="cible" cx="${px}" cy="${py}"/><circle class="point" cx="${px}" cy="${py}"/><title>${esc(CARTE.nom(x))}</title></g>`; }).join('');
+    CARTE.lier($('.reseau', fig), { survol: l => survoler(fig, l), choix: l => choisir(fig, l) });
+    garnir(fig, reg.lieux, { vide: reg.vide });
+    if (RO) RO.observe(fig);
+  }
+  // les noms des communes : les plus lointaines d'abord, à droite du point ou à gauche, sans se chevaucher
+  function noms(tri, k, a) {
+    const fs = 12.5 * k, h = fs * 1.2, ecart = 7 * k;
+    const boites = [[R[0] + 8 * k, R[1] - 22 * k, 46 * k, 17 * k]];
+    const libre = b => b[0] > 4 && b[0] + b[2] < VB[2] - 4 && b[1] > 4 && b[1] + b[3] < VB[3] - 4 &&
+      boites.every(c => b[0] >= c[0] + c[2] || c[0] >= b[0] + b[2] || b[1] >= c[1] + c[3] || c[1] >= b[1] + b[3]);
+    return tri.map(x => {
+      const [px, py] = ou(x), w = x.c.length * fs * .47;
+      let gauche = false, b = [px + ecart, py - h / 2, w, h];
+      if (!libre(b)) { gauche = true; b = [px - ecart - w, py - h / 2, w, h]; }
+      const ok = loin(x) > 10 && libre(b);
+      if (ok) boites.push(b);
+      return `<text class="nom${ok ? '' : ' cache'}${a}" data-l="${x.l}" x="${(gauche ? px - ecart : px + ecart).toFixed(1)}" y="${(py + fs * .34).toFixed(1)}"${gauche ? ' text-anchor="end"' : ''}>${esc(x.c)}</text>`;
+    }).join('');
+  }
+  // les bras en avant : vides s'ils doivent pousser, sinon posés
+  function garnir(fig, lieux, { vide = false } = {}) {
+    const reg = REG.get(fig.id), k = echelle(fig), lw = Math.max(1, k * .75), a = vide ? '' : ' arrive';
+    reg.lieux = lieux;
+    reg.par = new Map(reg.passe.map(x => [x.l, x]));
+    lieux.forEach(x => reg.par.set(x.l, x));
+    const tri = [...lieux].sort((p, q) => loin(q) - loin(p));
+    const g = $('.vif', fig);
+    g.innerHTML = tri.map(x => { const p = ou(x), w = largeur(x.n) * lw; return `<path class="bras" data-l="${x.l}" data-x="${p[0]}" data-y="${p[1]}" data-w="${w.toFixed(2)}" d="${vide ? '' : forme(p, w)}"/>`; }).join('')
+      + tri.filter(x => loin(x) > 16).map(x => `<path class="bout${a}" data-l="${x.l}" pathLength="1" d="${CARTE.bout(ou(x), { r: 4.4 * lw, tours: 1.1 })}"/>`).join('')
+      + tri.map(x => { const [px, py] = ou(x); return `<g class="carte-lieu${a}" data-l="${x.l}" tabindex="0" role="button" aria-label="${esc(etiquette(x))}"><circle class="cible" cx="${px}" cy="${py}"/><circle class="point" cx="${px}" cy="${py}"/></g>`; }).join('')
+      + noms(tri, k, a);
+    CARTE.lier(g, { survol: l => survoler(fig, l), choix: l => choisir(fig, l) });
+  }
+  // les bras poussent depuis Rouen, chacun à son rythme ; le réseau gris s'ouvre en cercle autour de Rouen
+  function pousser(fig, { reseau: avecReseau = true, vite = false } = {}) {
+    cancelAnimationFrame(fig._raf); fig.dataset.poussee = '1';
+    const clip = $('.clip', fig), bras = $$('.vif .bras', fig);
+    const arriver = l => $$(`.vif [data-l="${l}"]`, fig).forEach(e => e.classList.add('arrive'));
+    if (!mouvement()) {
+      bras.forEach(b => b.setAttribute('d', forme([+b.dataset.x, +b.dataset.y], +b.dataset.w)));
+      $$('.vif [data-l]', fig).forEach(e => e.classList.add('arrive'));
+      if (clip) clip.setAttribute('r', 1200);
+      return;
+    }
+    ANIM.add(fig);
+    fig.classList.remove('pousse'); void fig.getBoundingClientRect(); fig.classList.add('pousse');
+    const lg = bras.map(b => Math.hypot(b.dataset.x - R[0], b.dataset.y - R[1])), lm = Math.max(80, ...lg);
+    const plan = bras.map((b, i) => ({ b, xy: [+b.dataset.x, +b.dataset.y], w: +b.dataset.w, l: b.dataset.l,
+      d0: (vite ? 0 : 150) + Math.random() * (vite ? 140 : 420), dur: (vite ? 320 : 520) + (vite ? 420 : 1050) * lg[i] / lm }));
+    const t0 = performance.now(), TR = 1800, ouvrir = avecReseau && clip && +clip.getAttribute('r') < 1200;
+    const pas = now => {
+      const t = now - t0;
+      let encore = false;
+      if (ouvrir) { clip.setAttribute('r', (1200 * douce(clamp(t / TR))).toFixed(1)); encore = t < TR; }
+      for (const p of plan) {
+        if (p.fini) continue;
+        const u = clamp((t - p.d0) / p.dur);
+        if (u >= 1) { p.fini = true; p.b.setAttribute('d', forme(p.xy, p.w)); arriver(p.l); continue; }
+        encore = true;
+        if (u > 0) { const g = sortie(u); p.b.setAttribute('d', forme(p.xy, p.w, .5, g, 8 * (1 - g))); }
+      }
+      if (encore) fig._raf = requestAnimationFrame(pas); else ANIM.delete(fig);
+    };
+    fig._raf = requestAnimationFrame(pas);
+  }
+  function survoler(fig, l) {
+    const reg = REG.get(fig.id);
+    if (!reg) return;
+    fig.classList.toggle('survole', l != null);
+    $$('[data-l]', fig).forEach(e => e.classList.toggle('actif', l != null && +e.dataset.l === l));
+    if (reg.onSurvol) reg.onSurvol(l);
+    if (reg.bulle && reg.epingle == null) bulle(fig, l);
+  }
+  function choisir(fig, l) {
+    const reg = REG.get(fig.id);
+    if (!reg) return;
+    if (reg.onChoix) return reg.onChoix(l);
+    if (!reg.bulle) return;
+    reg.epingle = reg.epingle === l ? null : l;
+    bulle(fig, reg.epingle, true);
+  }
+  const depingler = () => REG.forEach((reg, id) => { if (reg.epingle != null) { reg.epingle = null; const f = document.getElementById(id); if (f) bulle(f, null); } });
+  // la bulle d'une commune : son nom et ses lignes de date, près du point
+  function bulle(fig, l, epinglee = false) {
+    const reg = REG.get(fig.id), b = $('.bulle', fig), x = l == null ? null : reg.par.get(l);
+    if (!b) return;
+    if (!x) { b.hidden = true; b.classList.remove('epinglee'); return; }
+    b.innerHTML = `<b>${esc(CARTE.nom(x))}</b><ul>${x.dates.slice(0, 6).map(ligneBulle).join('')}</ul>`;
+    b.classList.toggle('epinglee', epinglee);
+    b.hidden = false;
+    const m = $('svg', fig).getScreenCTM(), r = fig.getBoundingClientRect(), [px, py] = ou(x);
+    const sx = m.a * px + m.c * py + m.e - r.left, sy = m.b * px + m.d * py + m.f - r.top, w = b.offsetWidth, h = b.offsetHeight;
+    let gauche = sx + 16;
+    if (gauche + w > r.width) gauche = sx - 16 - w;
+    b.style.left = clamp(gauche, 0, Math.max(0, r.width - w)) + 'px';
+    b.style.top = clamp(sy - h / 2, 0, Math.max(0, r.height - h)) + 'px';
+  }
+  // une liste reliée à la carte : survoler une ligne montre son bras, choisir une commune filtre la liste
+  function relier(fig, liste) {
+    const reg = REG.get(fig.id), filtre = $('.filtre', liste);
+    const lignes = $$('.date, .ligne', liste);
+    let choisi = null;
+    reg.onSurvol = l => {
+      liste.classList.toggle('survole', l != null && lignes.some(e => +e.dataset.l === l));
+      lignes.forEach(e => e.classList.toggle('actif', l != null && +e.dataset.l === l));
+    };
+    reg.onChoix = l => {
+      choisi = l == null || choisi === l ? null : l;
+      lignes.forEach(e => { e.hidden = choisi != null && +e.dataset.l !== choisi; });
+      $$('.groupe', liste).forEach(g => { g.hidden = choisi != null && !$$('.date, .ligne', g).some(e => !e.hidden); });
+      $$('.vif .carte-lieu', fig).forEach(g => g.classList.toggle('choisi', +g.dataset.l === choisi));
+      if (filtre) { filtre.hidden = choisi == null; if (choisi != null) $('span', filtre).textContent = CARTE.nom(reg.par.get(choisi)); }
+      if (choisi != null && liste.getBoundingClientRect().top < 0) liste.scrollIntoView({ behavior: mouvement() ? 'smooth' : 'auto' });
+    };
+    if (filtre) $('button', filtre).addEventListener('click', () => reg.onChoix(null));
+    lignes.forEach(e => {
+      e.addEventListener('mouseenter', () => survoler(fig, +e.dataset.l));
+      e.addEventListener('mouseleave', () => survoler(fig, null));
+    });
+  }
+  const filtreHTML = () => `<div class="filtre" hidden><span></span><button type="button" aria-label="Fermer">${croix}</button></div>`;
+  // une petite carte de saison, pour l'agenda : ses bras à l'encre, en magenta au survol
+  function mini(s) {
+    const lieux = CARTE.saison(s.saison), encart = lieux.some(x => hors(x.xy));
+    return `<li class="mini"><a href="${s.href}"><svg viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr-pays" class="pays"/>
+      ${encart ? `<circle class="encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="24"/>` : ''}${lieux.map(x => `<path class="bras" d="${forme(ou(x), largeur(x.n) * 2.3, 1.2)}"/>`).join('')}
+      <circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="10"/></svg><span>${esc(s.titre)}</span></a></li>`;
   }
 
-  /* ---------- les trois portes : chacune donne tout de suite ses réponses ---------- */
-  const porte = (p, corps) => `<div class="porte" style="--dc:${p.couleur}"><h3>${esc(p.titre)}${trait(p.couleur)}</h3><p>${esc(p.texte)}</p><div class="bas">${corps}</div></div>`;
-  function portes() {
-    const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
-    const jour = d => d.precision === 'month' ? `${d.moisLong} ${d.annee}` : `${d.jour} ${d.mois}`;
-    return porte(voir, `<ul>${D.dates.filter(d => d.public !== 'Scolaire').slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(jour(d))}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/agenda">Tout l’agenda →</a>`) +
-      porte(prog, `<ul><li><a href="#/spectacles"><span>Le répertoire</span><small>${SPECTACLES.length} spectacles</small></a></li>
-        <li><a href="#/spectacle/${D.shows[0].slug}/programmer"><span>Fiches techniques</span><small>par spectacle</small></a></li>
-        <li><a href="mailto:${C.email}?subject=Programmation"><span>Écrire à la diffusion</span><small>${esc(C.email)}</small></a></li></ul>`) +
-      porte(etab, `<ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${titre(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
-        <p>${D.shows.filter(s => s.passCulture).length} spectacles sont proposés sur le Pass Culture (offre collective).</p>`);
+  /* ---------- les lignes de date ---------- */
+  const details = d => d.details.length ? `<ul class="det">${d.details.map(x => `<li>${externe(x.lien, esc(x.texte))}</li>`).join('')}</ul>` : '';
+  // une date à venir : le jour en grand, le mois dessous, puis le spectacle, la commune et les détails
+  function ligneDate(d, sansTitre = false) {
+    const [j, m] = coupe(d.ligneDate), s = bySlug[d.slug];
+    return `<li class="date" data-l="${d.l}" style="--c:${s ? s.couleurTexteClair : 'var(--magenta)'}">
+      <p class="quand">${j ? `<span class="j">${esc(j)}</span><span class="m">${esc(m)}</span>` : `<span class="j mo">${esc(m)}</span>`}</p>
+      <div>${sansTitre ? '' : `<a class="sp" href="#/spectacle/${d.slug}">${esc(d.titre)}</a>`}<span class="lieu">${esc(d.ligneLieu)}</span>${details(d)}</div></li>`;
+  }
+  // une ligne d'une saison, comme sur sa page d'origine : la date, le lieu (lien s'il existe), les détails, l'état
+  function ligneSaison(d) {
+    const i = d.ligne.indexOf(' — '), q = i > 0 ? d.ligne.slice(0, i) : d.ligne, o = i > 0 ? d.ligne.slice(i + 3) : '';
+    return `<li class="ligne${d.etat ? ' etat' : ''}" data-l="${d.l}"><span class="lq">${o ? esc(q) : externe(d.lien, esc(q))}</span>${o ? `<span class="lo">${externe(d.lien, esc(o))}</span>` : ''}${details(d)}${d.etat ? `<span class="etat-t">${esc(d.etat)}</span>` : ''}</li>`;
   }
 
-  /* ---------- accueil : la phrase, la carte, puis les trois portes ---------- */
+  /* ---------- accueil : l'ouverture, puis la carte des tournées en grand ---------- */
+  const porteBras = '<svg class="porte-bras" viewBox="0 0 190 56" aria-hidden="true"><path pathLength="1" d="M4 46 C 30 46, 46 14, 84 16 S 132 46, 160 30 C 174 22, 180 10, 171 6 C 164 3, 158 11, 164 15"/></svg>';
   function accueil() {
     main.innerHTML = `
-      <section class="ouverture" aria-labelledby="h1"><div class="wrap">
-        <div><p class="surtitre">Compagnie de théâtre · Rouen · depuis ${C.depuis}</p>
-          <h1 id="h1" tabindex="-1">Des spectacles qui partent de Rouen et vont chercher leur public.</h1>${trait()}
-          <p class="chiffre"><b>${D.stats.representationsTexte} représentations</b> depuis ${D.stats.depuis}, des théâtres aux collèges et aux lycées, en France, en Belgique, en Suisse et en Tunisie.</p>
-          <div class="saison"><p>Saison ${esc(D.saison)} : <b>${D.dates.length} dates dans ${COMMUNES} communes</b>.</p>
-            <div class="boutons"><a class="bouton" href="#/agenda">Les prochaines dates</a><a class="bouton second" href="#/spectacles">Les spectacles</a></div></div></div>
-        ${carte(K.lieux.map((l, i) => [i, l.n]), D.dates, '#bc3e80', [`La saison ${D.saison}`, 'Les dates publiées sur le site depuis 2016'])}
-      </div></section>
-      <section class="bloc" aria-labelledby="h-po"><div class="wrap">
-        <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
-        <div class="portes">${portes()}</div>
-      </div></section>`;
-    return 'Compagnie Crescite · théâtre, Rouen';
+      <section class="une">
+        <div class="une-titre"><h1 tabindex="-1"><small>${esc(S.nom)}</small>${esc(L.actuellementEnTournee)}</h1>${trait()}</div>
+        ${carte({ lieux: CARTE.aVenir(), passe: RESEAU(), titre: SAISON.titre, classe: 'une-carte', bulle: true })}
+        <div class="une-ruban ruban"><span class="lib">${esc(L.saison)}</span>${S.saisons.map((s, i) => `<a href="${s.href}" data-saison="${s.saison}" aria-label="${esc(s.titre)}"${i ? '' : ' class="courante"'}>${esc(s.saison)}</a>`).join('')}</div>
+        <div class="une-dates"><ol class="prochaines">${D.dates.slice(0, 5).map(d => `<li data-l="${d.l}"><a href="#/spectacle/${d.slug}"><span class="q">${esc(d.ligneDate)}</span><span class="o">${esc(d.ligneLieu)}</span><span class="t">${esc(d.titre)}</span></a></li>`).join('')}</ol>
+          <a class="suite" href="#/agenda">${esc(onglet('agenda'))}${fleche}</a></div>
+      </section>
+      <section class="portes-s"><div class="wrap portes">${S.portes.map(p => `<a class="porte" href="${p.href}" style="--dc:${p.couleur}">${porteBras}<span class="bas"><span>${esc(p.texte)}</span>${fleche}</span></a>`).join('')}</div></section>
+      <section class="bandeau-s" aria-label="${esc(L.enTournee)}"><div class="wrap"><ul class="bandeau">${S.diaporama.map(b => `<li><a href="${b.href}">
+        <figure><img src="${D.photos[b.slug]}" alt="" loading="lazy" style="object-position:${bySlug[b.slug] ? bySlug[b.slug].focale : 50}% 50%"><figcaption>${esc(b.credit)}</figcaption></figure>
+        <span class="txt"><span class="sur">${esc(b.surtitre)}</span><span class="ti">${b.titre.map(esc).join('<br>')}</span><span class="btn">${esc(b.bouton)}</span></span></a></li>`).join('')}</ul></div></section>
+      <section class="donateurs"><div class="wrap"><p>${S.donateurs}</p></div></section>`;
+    const fig = $('.une-carte', main);
+    activer(fig);
+    // la frise des saisons : survoler une saison redessine ses bras (à l'encre), la saison en cours en magenta
+    const ruban = $('.une-ruban', main);
+    let vue = SAISON.saison;
+    const voir = s => {
+      if (s === vue) return;
+      vue = s;
+      $$('a', ruban).forEach(a => a.classList.toggle('vu', a.dataset.saison === s && s !== SAISON.saison));
+      fig.style.setProperty('--c', s === SAISON.saison ? 'var(--magenta)' : 'var(--encre)');
+      $('svg', fig).setAttribute('aria-label', (S.saisons.find(x => x.saison === s) || SAISON).titre);
+      garnir(fig, s === SAISON.saison ? CARTE.aVenir() : CARTE.saison(s), { vide: mouvement() });
+      pousser(fig, { reseau: false, vite: true });
+    };
+    $$('a', ruban).forEach(a => { a.addEventListener('mouseenter', () => voir(a.dataset.saison)); a.addEventListener('focus', () => voir(a.dataset.saison)); });
+    ruban.addEventListener('mouseleave', () => voir(SAISON.saison));
+    ruban.addEventListener('focusout', e => { if (!ruban.contains(e.relatedTarget)) voir(SAISON.saison); });
+    $$('.prochaines li', main).forEach(li => {
+      li.addEventListener('mouseenter', () => { li.classList.add('actif'); survoler(fig, +li.dataset.l); });
+      li.addEventListener('mouseleave', () => { li.classList.remove('actif'); survoler(fig, null); });
+    });
+    REG.get(fig.id).onSurvol = l => $$('.prochaines li', main).forEach(li => li.classList.toggle('actif', l != null && +li.dataset.l === l));
+    // pendant l'ouverture, les bras attendent : ils pousseront quand le logo aura révélé l'accueil
+    if (!INTRO.ouverte()) pousser(fig);
+    return S.accueil;
   }
 
   /* ---------- les spectacles ---------- */
   function spectacles() {
     main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">Les spectacles</h1>${trait()}<p>Le répertoire compte ${SPECTACLES.length} spectacles, tous mis en scène par ${esc(C.miseEnScene)}, et des actions culturelles menées avec les établissements. Sur la page de chaque spectacle, sa carte montre où il a joué et où le voir cette saison.</p></div>
-      <section class="bloc premier" aria-label="Le répertoire"><div class="wrap">
-        <ul class="cartes">${D.shows.map(s => `<li><a href="#/spectacle/${s.slug}" style="--ct:${s.couleurTexteClair}">
-          <figure><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%" loading="lazy"></figure>
-          <h3>${titre(s.titre)}</h3>${trait(s.couleurTexteClair)}<span class="st">${esc(s.sousTitre)}</span><span class="quand">${esc(prochaine(s))}</span></a></li>`).join('')}</ul>
-      </div></section>`;
-    return 'Les spectacles · Compagnie Crescite';
+      <div class="wrap page-titre"><h1 tabindex="-1">${esc(onglet('spectacles'))}</h1>${trait()}</div>
+      <div class="wrap"><ul class="cartes-sp">${D.shows.map(s => `<li><a href="#/spectacle/${s.slug}" style="--ct:${s.couleurTexteClair}">
+        <figure><img src="${D.photos[s.slug]}" alt="" loading="lazy" style="object-position:${s.focale}% 50%">${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</figure>
+        <h2>${esc(s.titre)}</h2>${trait(s.couleurTexteClair)}<p class="st">${s.sousTitre}</p><p class="cr">${esc(s.creation)}</p></a></li>`).join('')}</ul></div>`;
+    return onglet('spectacles');
   }
 
-  /* ---------- l'agenda : toute la saison par mois, et sa carte ---------- */
+  /* ---------- l'agenda : la saison, sa carte reliée à la liste, puis les saisons passées et leurs cartes ---------- */
   function agenda() {
-    const mois = new Map();
-    D.dates.forEach(d => { const k = d.iso.slice(0, 7); if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
+    const groupes = [];
+    D.dates.forEach(d => { const m = coupe(d.ligneDate)[1], g = groupes[groupes.length - 1]; if (g && g.m === m) g.ds.push(d); else groupes.push({ m, ds: [d] }); });
     main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">L’agenda</h1>${trait()}<p>Saison ${esc(D.saison)} : ${D.dates.length} dates dans ${COMMUNES} communes, dans les théâtres, les collèges et les lycées. Les dates tout public se réservent auprès du lieu qui accueille le spectacle.</p></div>
-      <section class="bloc premier" aria-label="Les dates de la saison"><div class="wrap agenda">
-        <div class="agenda-liste">${[...mois.values()].map(ds => `<h2 class="mois">${cap(ds[0].moisLong)} ${ds[0].annee}<small>${pluriel(ds.length, 'date', 'dates')}</small></h2>
-          <ul class="dates">${ds.map(d => ligneDate(d)).join('')}</ul>`).join('')}</div>
-        <div class="agenda-carte">${carte([], D.dates, '#bc3e80', [`La saison ${D.saison} : un bras par commune`])}</div>
-      </div></section>`;
-    return 'L’agenda · Compagnie Crescite';
+      <div class="wrap page-titre"><h1 tabindex="-1">${esc(SAISON.titre)}</h1>${trait()}</div>
+      <div class="wrap agenda">
+        <div class="liste">${filtreHTML()}${groupes.map(g => `<section class="groupe"><h2 class="mois">${esc(g.m)}</h2><ul class="dates">${g.ds.map(d => ligneDate(d)).join('')}</ul></section>`).join('')}</div>
+        <div class="agenda-carte">${carte({ lieux: CARTE.aVenir(), titre: SAISON.titre, classe: 'carte-agenda', bulle: true })}</div>
+      </div>
+      <section class="wrap passees" aria-label="${esc(L.saison)}"><ul class="minis">${S.saisons.slice(1).map(mini).join('')}</ul></section>`;
+    const fig = $('.carte-agenda', main);
+    activer(fig); relier(fig, $('.liste', main)); pousser(fig);
+    return onglet('agenda');
+  }
+  // une saison, comme sa page d'origine : par spectacle, son titre, son sous-titre, sa création et ses dates ; et sa carte
+  function saison(id) {
+    const data = D.saisons[id], courante = id === SAISON.saison;
+    main.innerHTML = `
+      <div class="wrap page-titre"><p class="fil"><a href="#/agenda">${esc(onglet('agenda'))}</a></p><h1 tabindex="-1">${esc(data.titre)}</h1>${trait()}
+        <div class="ruban">${S.saisons.map(x => `<a href="${x.href}" aria-label="${esc(x.titre)}"${x.saison === id ? ' class="courante" aria-current="page"' : ''}>${esc(x.saison)}</a>`).join('')}</div></div>
+      <div class="wrap agenda">
+        <div class="liste">${filtreHTML()}${data.spectacles.map(g => `<section class="groupe sp-saison"${g.slug && bySlug[g.slug] ? ` style="--c:${bySlug[g.slug].couleurTexteClair}"` : ''}>
+          <h2>${g.slug && bySlug[g.slug] ? `<a href="#/spectacle/${g.slug}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
+          ${g.sousTitre ? `<p class="st">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="cr">${esc(g.creation)}</p>` : ''}
+          <ul class="lignes">${g.dates.map(ligneSaison).join('')}</ul></section>`).join('')}</div>
+        <div class="agenda-carte">${carte({ lieux: CARTE.saison(id), couleur: courante ? 'var(--magenta)' : 'var(--encre)', titre: data.titre, classe: 'carte-saison', bulle: true })}</div>
+      </div>`;
+    const fig = $('.carte-saison', main);
+    activer(fig); relier(fig, $('.liste', main)); pousser(fig);
+    return data.titre;
   }
 
-  /* ---------- la compagnie ---------- */
-  function compagnie() {
-    const artistes = new Map();
-    SPECTACLES.forEach(s => s.distribution.flatMap(n => n.split(/\s+ou\s+/)).forEach(n => {
-      if (!artistes.has(n)) artistes.set(n, []);
-      if (!artistes.get(n).includes(s)) artistes.get(n).push(s);
-    }));
-    const noms = [...artistes].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
-    main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">La compagnie</h1>${trait()}</div>
-      <section class="bloc premier" aria-label="Présentation"><div class="wrap compagnie">
-        <div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
-        <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-to"><div class="wrap tournees">
-        <div><div class="entete"><h2 id="h-to">La carte des tournées</h2></div>
-          <p>Chaque bras part de Rouen vers l’une des ${K.lieux.length} communes des dates publiées sur le site depuis 2016. Plus il est épais, plus la compagnie y a joué.</p>
-          <a class="bouton second" href="#/agenda">L’agenda de la saison</a></div>
-        ${carte(K.lieux.map((l, i) => [i, l.n]), [], '#bc3e80', ['', 'Les dates publiées sur le site depuis 2016'])}
-      </div></section>
-      <section class="bloc" aria-labelledby="h-ar"><div class="wrap">
-        <div class="entete"><h2 id="h-ar">Au plateau</h2></div>
-        <ul class="artistes">${noms.map(([n, ss]) => `<li><b>${esc(n)}</b><span>${ss.map(s => `<a href="#/spectacle/${s.slug}">${titre(s.titre)}</a>`).join(', ')}</span></li>`).join('')}</ul>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-pa"><div class="wrap">
-        <div class="entete"><h2 id="h-pa">Partenaires</h2></div>
-        <ul class="partenaires">${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
-      </div></section>`;
-    return 'La compagnie · Compagnie Crescite';
-  }
-
-  /* ---------- contact ---------- */
-  function contact() {
-    const [rue, ville] = C.adresse.split(', ');
-    main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">Contact</h1>${trait()}<p>Une date, une programmation, un projet dans votre établissement : écrivez à la compagnie.</p></div>
-      <section class="bloc premier" aria-label="Coordonnées"><div class="wrap coordonnees">
-        <div><h2>Adresse</h2><p>${esc(C.nom)}<br>${esc(rue)}<br>${esc(ville)}</p></div>
-        <div><h2>E-mail</h2><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
-        <div><h2>Lettre d’information</h2><p>Inscription <span class="afournir">à fournir</span></p></div>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-de"><div class="wrap">
-        <div class="entete"><h2 id="h-de">Selon votre demande</h2></div>
-        <div class="portes">${D.doors.map(p => porte(p, `<dl class="faits"><dt>Contact</dt><dd><span class="afournir">à fournir</span></dd><dt>E-mail</dt><dd><a href="mailto:${C.email}?subject=${encodeURIComponent(p.titre)}">${esc(C.email)}</a></dd></dl>`)).join('')}</div>
-      </div></section>`;
-    return 'Contact · Compagnie Crescite';
-  }
-
-  /* ---------- page d'un spectacle ---------- */
-  const MODE = { etablissement: 'Peut venir dans votre établissement', salle: 'Se joue en salle : venez avec vos classes', a_confirmer: 'Accueil dans l’établissement à confirmer' };
-  const docs = l => `<ul class="docs">${l.map(x => `<li><span>${esc(x)}</span><span class="afournir">à fournir</span></li>`).join('')}</ul>`;
-  function spectacle(slug, choixPorte) {
-    const s = bySlug[slug]; if (!s) return accueil();
-    const i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
-    const dates = D.dates.filter(d => d.slug === slug), n = s.distribution.length;
-    const passe = K.parSpectacle[slug] || [];
-    const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null, s.representations ? ['Représentations', `${s.representations.n}, ${s.representations.quand}`] : null].filter(Boolean);
-    const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
-    const choix = ['voir', 'programmer', 'etablissement'].includes(choixPorte) ? choixPorte : 'voir';
-    main.innerHTML = `
-      <section class="tete" aria-labelledby="titre-sp"><div class="wrap">
-        <div><p class="fil"><a href="#/">Accueil</a> / <a href="#/spectacles">Spectacles</a></p>
-          <h1 id="titre-sp" tabindex="-1">${titre(s.titre)}</h1>${trait(s.couleurTexteClair)}
-          <p class="st">${esc(s.sousTitre)}</p>
-          <p class="prochaine">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})` : 'Aucune date annoncée pour l’instant.'}</p></div>
-        <figure><img src="${D.photos[slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
-      </div></section>
-      <section class="bloc"><div class="wrap corps">
-        <div><h2 class="sr">Le spectacle</h2><p class="accroche">${esc(s.accroche)}</p><p>${esc(s.texte)}</p>${s.video ? `<p><a class="bouton second" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div>
-        <dl class="faits">${[...fiche, ...s.equipe.slice(0, 6)].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-ou"><div class="wrap">
-        <div class="entete"><h2 id="h-ou">Où le voir</h2></div>
-        <div class="ou-voir">
-          ${passe.length || dates.length ? carte(passe, dates, s.couleurTexteClair, ['Les dates à venir', 'Les dates passées publiées sur le site']) : `<p class="resume">${esc(e.texte || 'Les actions culturelles se construisent avec chaque établissement.')}</p>`}
-          <div>${s.representations ? `<p class="resume"><b>${s.representations.n} représentations</b> ${esc(s.representations.quand)}.${passe.length ? ` La carte en montre ${pluriel(passe.length, 'commune', 'communes')}, celles des dates publiées sur le site.` : ''}</p>` : ''}
-            ${dates.length ? `<ul class="dates">${dates.map(d => ligneDate(d, true)).join('')}</ul>` : (passe.length ? '<p>Aucune date annoncée pour l’instant.</p>' : `<p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Actions culturelles')}">Construire un projet avec la compagnie</a></p>`)}</div>
-        </div>
-      </div></section>
-      <section class="bloc" id="portes-sp" aria-labelledby="h-vous"><div class="wrap">
-        <div class="entete"><h2 id="h-vous">Vous êtes…</h2></div>
-        <div class="onglets" role="tablist" aria-label="Vous êtes">${D.doors.map(p => `<button role="tab" id="o-${p.key}" aria-controls="p-${p.key}" aria-selected="${p.key === choix}" tabindex="${p.key === choix ? 0 : -1}" style="--dc:${p.couleur}">${esc(p.titre)}</button>`).join('')}</div>
-        <div class="panneau" role="tabpanel" id="p-voir" aria-labelledby="o-voir" tabindex="0"${choix === 'voir' ? '' : ' hidden'}>
-          <div><h3>En pratique</h3><dl class="faits">${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}<dt>Âge conseillé</dt><dd><span class="afournir">à fournir</span></dd><dt>Réserver</dt><dd>auprès du lieu de chaque date</dd></dl></div>
-          <div><h3>Les dates</h3><p>${dates.length ? `${pluriel(dates.length, 'date', 'dates')} cette saison, sur la carte ci-dessus.` : 'Aucune date annoncée pour l’instant.'}</p>
-            <p><a href="mailto:${C.email}?subject=${encodeURIComponent('Être prévenu des dates de ' + s.titre)}">Être prévenu des prochaines dates</a></p></div></div>
-        <div class="panneau" role="tabpanel" id="p-programmer" aria-labelledby="o-programmer" tabindex="0"${choix === 'programmer' ? '' : ' hidden'}>
-          <div><h3>La fiche</h3><dl class="faits">${[...fiche, ...s.equipe].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-            ${s.coproduction ? `<h3>Coproduction</h3><p>${esc(s.coproduction)}</p>` : ''}</div>
-          <div><h3>Documents</h3>${docs(['Dossier de diffusion', 'Fiche technique', 'Conditions financières', 'Photos haute définition'])}
-            <h3>Contact diffusion</h3><p>Nom et téléphone <span class="afournir">à fournir</span> · <a href="mailto:${C.email}?subject=${encodeURIComponent('Programmation : ' + s.titre)}">${esc(C.email)}</a></p></div></div>
-        <div class="panneau" role="tabpanel" id="p-etablissement" aria-labelledby="o-etablissement" tabindex="0"${choix === 'etablissement' ? '' : ' hidden'}>
-          <div><h3>${esc(MODE[e.mode] || MODE.a_confirmer)}</h3><p>${esc(e.texte)}</p>${s.noteScolaire ? `<p>${esc(s.noteScolaire)}</p>` : ''}
-            <dl class="faits"><dt>Pass Culture</dt><dd>${s.passCulture ? 'offre collective, sur ADAGE' : 'non référencé'}</dd><dt>Guide du CRED76</dt><dd>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">fiche du spectacle</a>` : 'non référencé'}</dd></dl></div>
-          <div><h3>Ressources</h3>${docs(['Dossier pédagogique', 'Pistes d’ateliers', 'Besoins techniques en établissement'])}
-            <p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Faire venir ' + s.titre + ' dans mon établissement')}">Construire un projet avec la compagnie</a></p></div></div>
-      </div></section>
-      <a class="suivant" href="#/spectacle/${nx.slug}" style="--ct:${nx.couleurTexteClair}"><span class="wrap"><small>Spectacle suivant</small><b>${titre(nx.titre)}</b>${trait(nx.couleurTexteClair)}</span></a>`;
-    const tabs = $$('[role="tab"]', main);
-    const sel = t => tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; });
-    tabs.forEach((t, k) => {
-      t.addEventListener('click', () => sel(t));
-      t.addEventListener('keydown', ev => { const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (d) { const n2 = tabs[(k + d + tabs.length) % tabs.length]; n2.focus(); sel(n2); } });
+  /* ---------- la compagnie : sa présentation, et ses dates sur un bras qui s'enroule ---------- */
+  function frise(dates) {
+    const n = dates.length, W = 1200, X1 = W - 66, y = x => 44 + 12 * Math.sin(x / W * Math.PI * 2.4 + .6), pts = [];
+    for (let i = 0; i <= 60; i++) { const x = 4 + i / 60 * (X1 - 4); pts.push([x, y(x)]); }
+    const [ex, ey] = pts[60], [qx, qy] = pts[59], a0 = Math.atan2(ey - qy, ex - qx), r = 19;
+    const cx = ex + Math.cos(a0 - Math.PI / 2) * r, cy = ey + Math.sin(a0 - Math.PI / 2) * r;
+    for (let j = 1; j <= 28; j++) { const t = j / 28, a = a0 + Math.PI / 2 - t * 1.75 * Math.PI, rr = r * (1 - .6 * t); pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); }
+    const N = pts.length - 1, G = [], Dr = [];
+    pts.forEach((p, i) => {
+      const a = pts[Math.max(0, i - 1)], b = pts[Math.min(N, i + 1)];
+      let tx = b[0] - a[0], ty = b[1] - a[1];
+      const tl = Math.hypot(tx, ty) || 1, w = (12 * (1 - i / N) + 1.2 * (i / N)) / 2;
+      tx /= tl; ty /= tl;
+      G.push(`${(p[0] - ty * w).toFixed(1)} ${(p[1] + tx * w).toFixed(1)}`); Dr.push(`${(p[0] + ty * w).toFixed(1)} ${(p[1] - tx * w).toFixed(1)}`);
     });
-    return `${s.titre} · Compagnie Crescite`;
+    return `<div class="frise" style="--n:${n}"><svg class="frise-bras" viewBox="0 0 ${W} 84" aria-hidden="true"><path class="b" d="M${G.join('L')}L${Dr.reverse().join('L')}Z"/>
+      ${dates.map((d, i) => { const x = (i + .5) / n * W; return `<circle cx="${x.toFixed(1)}" cy="${y(x).toFixed(1)}" r="7"/>`; }).join('')}</svg>
+      <ol class="frise-l">${dates.map(d => `<li><span class="an">${esc(d.annee)}</span><span class="ti">${esc(d.titre)}</span></li>`).join('')}</ol></div>`;
+  }
+  function compagnie() {
+    const P = S.compagnie;
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">${esc(P.titre)}</h1>${trait()}</div>
+      <section class="wrap compagnie"><div class="texte">${P.paragraphes.map((p, i) => `<p${i ? '' : ' class="grand"'}>${p}</p>`).join('')}</div></section>
+      <section class="wrap frise-s"><h2>${esc(P.datesTitre)}</h2>${frise(P.dates)}</section>`;
+    return onglet('compagnie');
   }
 
-  /* ---------- navigation : une page par onglet ---------- */
-  const PAGES = new Map([['', accueil], ['spectacles', spectacles], ['agenda', agenda], ['compagnie', compagnie], ['contact', contact]]);
-  const fermer = () => { $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
+  /* ---------- actions culturelles, espace pro, contact, pages légales ---------- */
+  function actions() {
+    const A = S.actions;
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">${esc(A.titre)}</h1>${trait()}</div>
+      <section class="wrap actions"><div class="texte">${A.blocs.map(bloc).join('')}</div>
+        <figure class="photo-cote"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure></section>`;
+    return onglet('actions');
+  }
+  function pro() {
+    const P = S.pro;
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">${esc(P.titre)}</h1>${trait()}</div>
+      <section class="wrap"><form class="formulaire pro-f" novalidate><p>${esc(P.texte)}</p>
+        <label class="champ"><span>${esc(P.champ)}</span><input type="password" name="mdp" autocomplete="current-password"></label>
+        <button class="bouton" type="submit">${esc(P.bouton)}</button></form></section>`;
+    $('form', main).addEventListener('submit', e => e.preventDefault());
+    return P.titrePage;
+  }
+  function contact() {
+    const F = S.contact, types = ['text', 'email', 'tel', 'text'], auto = ['name', 'email', 'tel', 'address-level2'];
+    const k = F.consentement.toLowerCase().indexOf('politique de confidentialité');
+    const accord = k < 0 ? esc(F.consentement) : `${esc(F.consentement.slice(0, k))}<a href="#/politique-de-confidentialite">${esc(F.consentement.slice(k))}</a>`;
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">${esc(F.titre)}</h1>${trait()}</div>
+      <section class="wrap contact"><form class="formulaire" novalidate>
+        ${F.champs.map((c, i) => i < 4 ? `<label class="champ"><span>${esc(c)}</span><input type="${types[i]}" name="c${i}" autocomplete="${auto[i]}"></label>`
+          : `<label class="champ large"><span>${esc(c)}</span><textarea name="c${i}" rows="6"></textarea></label>`).join('')}
+        <label class="accord"><input type="checkbox" name="accord"><span>${accord}</span></label>
+        <label class="calcul"><span>${esc(F.calcul)}</span><input type="text" inputmode="numeric" name="calcul"></label>
+        <button class="bouton" type="submit">${esc(F.bouton)}</button></form>
+        <aside class="coord"><p class="nm">${esc(C.nom)}</p><p>${C.adresse.map(esc).join('<br>')}</p></aside></section>`;
+    $('form', main).addEventListener('submit', e => e.preventDefault());
+    return onglet('contact');
+  }
+  function legal(cle) {
+    const G = S.legal[cle];
+    main.innerHTML = `
+      <div class="wrap page-titre"><h1 tabindex="-1">${esc(G.titre)}</h1>${trait()}</div>
+      <section class="wrap legal texte">${G.blocs.filter(b => !/envoilauneidee/i.test(b)).map(bloc).join('')}</section>`;
+    return G.titre;
+  }
+
+  /* ---------- page d'un spectacle : sa fiche, puis ses bras ---------- */
+  const icVideo = '<svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 8.5v9l7.5-4.5z" fill="currentColor"/></svg>';
+  const icAudio = '<svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 11h3l4-3.5v11L11 15H8z" fill="currentColor"/></svg>';
+  function spectacle(slug) {
+    const s = bySlug[slug], nx = D.shows[(D.shows.indexOf(s) + 1) % D.shows.length];
+    const T = CARTE.spectacle(slug), avenir = D.dates.filter(d => d.slug === slug);
+    const groupes = [];
+    s.medias.forEach(m => { const g = groupes[groupes.length - 1]; if (g && g.nom === m.groupe) g.items.push(m); else groupes.push({ nom: m.groupe, items: [m] }); });
+    const medias = s.medias.length ? `<div class="medias">${groupes.map(g => `${g.nom ? `<h3>${esc(g.nom)}</h3>` : ''}<ul>${g.items.map(m => `<li><a href="${esc(m.url)}" target="_blank" rel="noopener">${m.type === 'audio' ? icAudio : icVideo}<span>${esc(m.titre || m.url)}</span></a>${m.par ? `<small>${esc(m.par)}</small>` : ''}</li>`).join('')}</ul>`).join('')}</div>` : '';
+    const extraits = s.extraits ? `<div class="extraits">${s.extraits.map(e => `<blockquote><p>${esc(e.citation)}</p><footer>${esc(e.source)}</footer></blockquote>`).join('')}</div>` : '';
+    const fiche = [
+      ...s.fiche.map(f => `<p class="f">${f.libelle ? `<span class="lib">${esc(f.libelle)}</span> ` : ''}<span>${f.valeur}</span></p>`),
+      s.avec ? `<p class="f"><span class="lib">${esc(s.avec.libelle)}</span> <span>${s.avec.valeur}</span></p>` : '',
+      s.duree ? `<p class="duree">${esc(s.duree)}</p>` : '',
+      ...s.mentions.map(m => `<p class="mention">${m}</p>`),
+      ...s.production.map(p => `<p class="prod">${p}</p>`)].join('');
+    let tournee = '';
+    if (s.statut) tournee = `<section class="tournee"><div class="wrap tournee-g"><div><h2>${esc(s.tournee.titre)}</h2><p>${esc(s.tournee.texte)}</p></div>
+      ${carte({ couleur: s.couleurTexteClair, titre: s.tournee.titre, classe: 'carte-sp attend' })}</div></section>`;
+    else if (avenir.length) tournee = `<section class="tournee"><div class="wrap tournee-g"><div class="liste"><h2>${esc(s.tournee.titre)}</h2>${filtreHTML()}<ul class="dates">${avenir.map(d => ligneDate(d, true)).join('')}</ul></div>
+      ${carte({ lieux: T.aVenir, passe: T.passe, couleur: s.couleurTexteClair, titre: s.tournee.titre, classe: 'carte-sp', bulle: true })}</div></section>`;
+    else if (T.passe.length) tournee = `<section class="tournee"><div class="wrap">${carte({ lieux: T.passe, couleur: 'var(--encre)', titre: s.titre, classe: 'carte-sp seule', bulle: true })}</div></section>`;
+    main.innerHTML = `
+      <section class="tete" style="--ct:${s.couleurTexteClair}"><div class="wrap">
+        <div><p class="fil"><a href="#/">${esc(S.accueil)}</a><span aria-hidden="true">/</span><a href="#/spectacles">${esc(onglet('spectacles'))}</a></p>
+          ${s.statut ? `<p class="statut">${esc(s.statut)}</p>` : ''}
+          <h1 tabindex="-1">${s.titreLignes.map(l => `<span>${esc(l)}</span>`).join('')}</h1>${trait(s.couleurTexteClair)}
+          <p class="cr">${esc(s.creation)}</p><p class="st">${s.sousTitre}</p>${s.cadre ? `<p class="cadre">${esc(s.cadre)}</p>` : ''}</div>
+        <figure class="tete-photo"><img src="${D.photos[slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
+      </div></section>
+      <section class="corps" style="--ct:${s.couleurTexteClair}"><div class="wrap">
+        <div class="texte">${s.texte.map(p => `<p>${p}</p>`).join('')}${extraits}${medias}</div>
+        <div class="fiche">${fiche}</div>
+      </div></section>
+      ${tournee}
+      <a class="suivant" href="#/spectacle/${nx.slug}" style="--ct:${nx.couleurTexteClair}"><span class="wrap"><b>${esc(nx.titre)}</b>${fleche}</span></a>`;
+    const fig = $('.carte-sp', main);
+    if (fig) { activer(fig); const liste = $('.tournee .liste', main); if (liste) relier(fig, liste); pousser(fig); }
+    return s.titre;
+  }
+
+  /* ---------- navigation : une vue par onglet ---------- */
+  const VUES = { '': accueil, spectacles, agenda, compagnie, 'actions-culturelles': actions, 'espace-pro': pro, contact,
+    'mentions-legales': () => legal('mentions-legales'), 'politique-de-confidentialite': () => legal('politique-de-confidentialite') };
+  const haut = $('.top'), btn = $('.menu');
+  const fermer = () => { haut.classList.remove('ouvert'); btn.setAttribute('aria-expanded', 'false'); };
   function route() {
-    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0];
-    const m = chemin.match(/^spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?$/), sp = !!(m && bySlug[m[1]]);
-    document.title = sp ? spectacle(m[1], m[2]) : (PAGES.get(chemin) || accueil)();
-    const actif = sp ? '#/spectacles' : `#/${chemin}`;
-    $$('.nav a').forEach(a => { if (a.getAttribute('href') === actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, '');
+    ANIM.forEach(f => cancelAnimationFrame(f._raf)); ANIM.clear(); REG.clear();
+    if (RO) RO.disconnect();
+    const sp = chemin.match(/^spectacle\/([\w-]+)$/), sa = chemin.match(/^agenda\/([\d-]+)$/);
+    let titre, actif;
+    if (sp && bySlug[sp[1]]) { titre = spectacle(sp[1]); actif = '#/spectacles'; }
+    else if (sa && D.saisons[sa[1]]) { titre = saison(sa[1]); actif = '#/agenda'; }
+    else if (Object.prototype.hasOwnProperty.call(VUES, chemin)) { titre = VUES[chemin](); actif = `#/${chemin}`; }
+    else { titre = accueil(); actif = '#/'; }
+    document.title = `${titre} - ${S.titreSuffixe}`;
+    $$('a', nav).forEach(a => { if (a.getAttribute('href') === actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     fermer();
     scrollTo(0, 0);
-    if (sp && m[2]) $('#portes-sp').scrollIntoView();
-    $('h1', main).focus({ preventScroll: true });
+    const h1 = $('h1', main);
+    if (h1) h1.focus({ preventScroll: true });
   }
-  $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
-  $('.top').addEventListener('click', e => { if (e.target.closest('a')) fermer(); });
-  addEventListener('hashchange', route);
+  btn.addEventListener('click', () => { const o = haut.classList.toggle('ouvert'); btn.setAttribute('aria-expanded', String(o)); });
+  nav.addEventListener('click', e => { if (e.target.closest('a')) fermer(); });
+  document.addEventListener('click', e => { if (!e.target.closest('.carte-lieu, .bulle')) depingler(); if (!e.target.closest('.top')) fermer(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape') { fermer(); depingler(); } });
+
+  // l'ouverture : la pieuvre magenta sur l'encre ; quand elle a révélé l'accueil, les bras de la carte poussent depuis Rouen
+  INTRO.ouvrir({ degrade: [[0, '#3a1c2c'], [.55, '#1d1418'], [1, '#0f090c']], encre: '#cf4a8e', classe: 'ouverture-06',
+    apres: () => { const f = $('.une-carte', main); if (f && !f.dataset.poussee) pousser(f); } });
   route();
+  addEventListener('hashchange', route);
 })();
 </script>
 </body>

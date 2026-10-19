@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compagnie Crescite · saison 2026-2027</title>
-<meta name="description" content="Compagnie Crescite, théâtre, Rouen : l’agenda de la saison, les spectacles en tournée et le répertoire.">
+<title>Accueil - crescite</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400..700;1,400&family=Space+Grotesk:wght@400..700&display=swap">
 <style>
 :root {
@@ -29,9 +28,9 @@ body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.125re
 img { display: block; max-width: 100%; }
 a { color: inherit; text-underline-offset: .18em; text-decoration-thickness: 1px; }
 h1, h2, h3 { font-family: var(--sg); font-weight: 500; margin: 0; line-height: 1.1; letter-spacing: -.02em; }
-p, figure, dl, dd { margin: 0; }
+p, figure, dl, dd, blockquote { margin: 0; }
 ul, ol { list-style: none; margin: 0; padding: 0; }
-button, input { font: inherit; color: inherit; }
+button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 svg { flex: none; }
 :focus-visible { outline: 3px solid var(--mag); outline-offset: 2px; }
@@ -44,153 +43,280 @@ svg { flex: none; }
 .wrap { width: 100%; max-width: calc(1320px + 2 * var(--gut)); margin-inline: auto; padding-inline: var(--gut); }
 .g12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); }
 .dot { display: inline-block; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--ink-2)); }
-.lab { font-size: .9375rem; line-height: 1.35; color: var(--ink-2); }
-.tbc { color: var(--ink-2); font-style: italic; }
+.statut { display: inline-block; padding: 3px 11px 4px; border: 1px solid var(--ink); border-radius: 999px; background: var(--paper); font: 700 .875rem/1.3 var(--at); }
 
-/* En-tête */
+/* En-tête : six onglets sur une ligne dès 1280 px */
 .site-head { position: sticky; top: 0; z-index: 30; background: var(--paper); border-bottom: 1px solid var(--rule); }
-.head-in { height: var(--head); align-items: center; }
-.head-l { grid-column: 1 / 9; display: flex; align-items: center; gap: 56px; min-width: 0; }
-.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 600 1.5rem/1 var(--sg); letter-spacing: -.03em; }
+.head-in { display: flex; align-items: center; gap: 32px; height: var(--head); }
+.brand { display: inline-flex; align-items: center; gap: 10px; flex: none; text-decoration: none; font: 600 1.5rem/1 var(--sg); letter-spacing: -.03em; }
 .brand-mark { width: 34px; height: 34px; }
-.brand-mark svg { display: block; width: 100%; height: auto; }
-.nav ul { display: flex; gap: 32px; }
-.nav a { display: block; padding: 8px 0; text-decoration: none; font-weight: 600; font-size: 1rem; color: var(--ink-2); border-bottom: 3px solid transparent; }
+.brand-mark svg { display: block; width: 100%; height: 100%; }
+.nav { margin-left: auto; }
+.nav ul { display: flex; gap: 26px; }
+.nav a { display: block; padding: 8px 0; text-decoration: none; white-space: nowrap; font-weight: 600; font-size: 1rem; color: var(--ink-2); border-bottom: 3px solid transparent; }
 .nav a:hover { color: var(--ink); border-bottom-color: var(--rule-2); }
 .nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--mag); }
-.menu-btn { display: none; align-items: center; gap: 8px; margin-left: auto; height: 40px; padding: 0 14px; border: 1px solid var(--ink); border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
-.field { position: relative; }
+.menu-btn { display: none; align-items: center; gap: 9px; margin-left: auto; height: 40px; padding: 0 16px 0 13px; border: 1px solid var(--ink); border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
+
+/* Tête de page */
+.hero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); row-gap: 24px; align-items: end; padding-top: 52px; padding-bottom: 30px; }
+.hero > * { grid-column: 1 / -1; }
+.hero > .hero-main { grid-column: 1 / 9; }
+.saison { font-size: 4rem; line-height: .95; letter-spacing: -.045em; }
+.hero > .portes { grid-column: 9 / 13; }
+.portes li { border-top: 1px solid var(--rule); }
+.portes li:last-child { border-bottom: 1px solid var(--rule); }
+.portes a { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 9px 0; text-decoration: none; font-weight: 600; font-size: 1.0625rem; line-height: 1.3; }
+.portes a svg { color: var(--p); transition: transform .2s; }
+.portes a:hover span { text-decoration: underline; }
+.portes a:hover svg { transform: translateX(4px); }
+
+/* L'agenda : filtres, recherche, carte et liste reliées */
+.ag-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 14px 0; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--rule); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.chip, .lieu-chip { display: inline-flex; align-items: center; gap: 9px; min-height: 40px; padding: 0 15px 0 12px; border: 1px solid var(--rule-2); border-radius: 999px; background: var(--field); font-weight: 600; font-size: .9375rem; line-height: 1.2; text-align: left; }
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed="true"], .lieu-chip { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.chip[aria-pressed="true"] .dot { box-shadow: 0 0 0 2px var(--paper); }
+.lieu-chip svg { margin-left: 2px; }
+.lieu-pin { width: 10px; height: 10px; border: 2px solid var(--paper); border-radius: 50%; }
+.ag-tools { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.field { position: relative; width: 260px; }
 .field svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--ink-2); pointer-events: none; }
-.field input { width: 100%; height: 44px; padding: 0 14px 0 42px; border: 1px solid var(--rule-2); border-radius: 999px; background: var(--field); font-size: 1rem; }
+.field input { width: 100%; height: 42px; padding: 0 14px 0 42px; border: 1px solid var(--rule-2); border-radius: 999px; background: var(--field); font-size: 1rem; }
 .field input::placeholder { color: var(--ink-2); opacity: 1; }
 .field input:focus-visible { outline-offset: 0; border-color: var(--ink); }
-.field input::-webkit-search-cancel-button { cursor: pointer; }
-.search { grid-column: 9 / 13; }
-
-/* Ouverture */
-.hero { padding-top: 52px; padding-bottom: 40px; row-gap: 32px; align-items: end; }
-.hero-main { grid-column: 1 / 9; }
-.saison { font-size: 4rem; line-height: .95; letter-spacing: -.045em; }
-.hero-sum { margin-top: 18px; font: 400 1.375rem/1.3 var(--sg); letter-spacing: -.01em; color: var(--ink-2); }
-.hero-sum b { font-weight: 600; color: var(--ink); }
-.seg { display: inline-flex; margin-top: 28px; padding: 3px; border: 1px solid var(--ink); border-radius: 999px; }
-.seg button { height: 38px; padding: 0 18px; border: 0; border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
-.seg button:hover { background: var(--paper-2); }
-.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.doors { grid-column: 9 / 13; }
-.doors .lab { margin-bottom: 8px; }
-.doors li { border-top: 1px solid var(--rule); }
-.doors li:last-child { border-bottom: 1px solid var(--rule); }
-.doors a { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 46px; padding: 8px 0; text-decoration: none; font-weight: 600; font-size: 1.0625rem; line-height: 1.3; }
-.doors a svg { color: var(--mag); }
-.doors a:hover span { text-decoration: underline; }
-
-/* Agenda */
-.body { align-items: start; background: linear-gradient(var(--ink), var(--ink)) no-repeat; background-size: 100% 1px; background-origin: content-box; background-clip: content-box; }
-.msearch { display: none; }
-.agenda { grid-column: 1 / 9; grid-row: 1; min-width: 0; }
-.status { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; min-height: 60px; padding: 10px 0; border-bottom: 1px solid var(--rule); }
-.count { font-size: 1rem; color: var(--ink-2); }
-.count b { font: 600 1.375rem/1 var(--sg); color: var(--ink); }
-.status-act { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 20px; }
-.linkbtn { padding: 0; border: 0; background: none; font-weight: 600; font-size: 1rem; text-decoration: underline; text-underline-offset: .18em; text-decoration-thickness: 1px; }
-.status-act a { font-weight: 600; font-size: 1rem; }
-.month { margin-top: 44px; }
-.month-h { display: flex; align-items: baseline; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--ink); font-size: 2rem; }
-.month-h .yr { color: var(--ink-2); font-weight: 400; }
-.month-h .mc { margin-left: auto; font: 400 .9375rem var(--at); letter-spacing: 0; color: var(--ink-2); }
-.row { display: grid; grid-template-columns: 148px minmax(0, 1fr) 116px 72px; column-gap: var(--gap); align-items: start; padding: 19px 0 18px; border-bottom: 1px solid var(--rule); }
-.when { font-family: var(--sg); }
-.day { font-size: 3rem; font-weight: 500; line-height: .82; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.day sup { font-size: .4em; letter-spacing: 0; vertical-align: .95em; margin-left: 2px; }
-.rest.c { margin-left: 0; }
-.rest { margin-left: 6px; font-size: 1.125rem; font-weight: 500; letter-spacing: -.01em; }
-.wd { display: block; margin-top: 8px; font-family: var(--at); }
-.when-tbc { display: block; padding-top: 2px; font: italic 400 .9375rem/1.35 var(--at); color: var(--ink-2); max-width: 8em; }
+.ag-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); align-items: start; }
+.ag-carte { position: sticky; top: calc(var(--head) + 8px); padding-top: 18px; }
+.ag-carte svg { max-height: calc(100vh - var(--head) - 36px); }
+.ag-accueil .ag-carte { grid-column: 1 / 8; grid-row: 1; }
+.ag-accueil .ag-liste { grid-column: 8 / 13; grid-row: 1; }
+.ag-agenda .ag-liste { grid-column: 1 / 9; grid-row: 1; }
+.ag-agenda .ag-carte { grid-column: 9 / 13; grid-row: 1; }
+.ag-liste { min-width: 0; }
+.mois { margin-top: 30px; }
+.mois-h { display: flex; align-items: baseline; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--ink); font-size: 1.875rem; }
+.mois-h .mo { text-transform: capitalize; }
+.mois-h .yr { color: var(--ink-2); font-weight: 400; }
+.row { display: grid; grid-template-columns: 150px minmax(0, 1fr); column-gap: var(--gap); padding: 17px 0 18px; border-bottom: 1px solid var(--rule); }
+.dt { position: relative; transition: background-color .2s; }
+.dt::before { content: ""; position: absolute; left: -14px; top: 12px; bottom: 12px; width: 4px; border-radius: 2px; background: var(--c, var(--ink)); opacity: 0; transition: opacity .2s; }
+.dt.on::before, .dt:hover::before, .dt:focus-within::before { opacity: 1; }
+.dt.on { background: color-mix(in srgb, var(--c, var(--ink)) 9%, transparent); }
+.when { font-family: var(--sg); line-height: 1; }
+.j-big { font-size: 3rem; font-weight: 500; line-height: .82; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.j-big sup { font-size: .4em; letter-spacing: 0; vertical-align: .95em; margin-left: 1px; }
+.j-pre, .j-rest { font-size: 1.125rem; font-weight: 500; letter-spacing: -.01em; }
+.j-pre { margin-right: .3em; }
+.j-rest { margin-left: .3em; }
+.j-rest.c { margin-left: 0; }
+.j-mo { font-size: 1.75rem; font-weight: 500; letter-spacing: -.03em; }
+.j-sous { display: block; margin-top: 9px; font: 400 .9375rem/1.3 var(--at); color: var(--ink-2); }
+.what { min-width: 0; overflow-wrap: anywhere; }
 .t-link { display: inline-flex; align-items: baseline; gap: 10px; font: 500 1.375rem/1.2 var(--sg); letter-spacing: -.015em; text-decoration: none; }
+.t-link .dot { position: relative; top: -.06em; }
 .t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
-.where { margin-top: 6px; line-height: 1.4; }
-.where b { font-weight: 700; }
-.sep { color: var(--rule-2); margin: 0 .45em; }
-.aud { padding-top: 2px; }
-.more { padding-top: 5px; text-align: right; }
-.badge { display: inline-block; padding: 4px 10px 5px; border: 1px solid var(--rule-2); border-radius: 999px; font-size: .9375rem; font-weight: 600; line-height: 1.2; white-space: nowrap; }
-.badge.sc { background: var(--paper-2); border-color: var(--paper-2); }
-.infos { display: inline-flex; align-items: center; gap: 5px; color: var(--mag-ink); font-weight: 700; font-size: 1rem; text-decoration: underline; }
-.empty { padding: 36px 0; border-bottom: 1px solid var(--rule); }
-.empty-t { font: 500 1.375rem/1.3 var(--sg); margin-bottom: 8px; }
+.where { margin-top: 5px; padding-left: 22px; font-weight: 600; }
+.det { margin-top: 6px; padding-left: 22px; color: var(--ink-2); font-size: 1rem; line-height: 1.45; }
+.det li + li { margin-top: 4px; }
+.det a { color: var(--mag-ink); font-weight: 600; }
+.det a svg { display: inline; margin-left: 4px; vertical-align: -1px; }
+.ag-accueil .mois { margin-top: 22px; }
+.ag-accueil .mois-h { font-size: 1.5rem; padding-bottom: 8px; }
+.ag-accueil .row { grid-template-columns: 112px minmax(0, 1fr); column-gap: 18px; padding: 13px 0 14px; }
+.ag-accueil .j-big { font-size: 2.375rem; }
+.ag-accueil .j-mo { font-size: 1.5rem; }
+.ag-accueil .t-link { font-size: 1.1875rem; }
+.ag-accueil .where { margin-top: 3px; font-size: 1rem; }
 
-/* Les spectacles en tournée */
-.tour { grid-column: 9 / 13; grid-row: 1; position: sticky; top: calc(var(--head) + 24px); min-width: 0; }
-.tour-h { display: flex; align-items: center; min-height: 60px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 1.375rem; }
-.tour-list { position: relative; }
-.tour-item { display: flex; align-items: stretch; border-bottom: 1px solid var(--rule); }
-.tour-btn { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 50px; padding: 0 12px 0 10px; border: 0; background: none; text-align: left; font-weight: 600; font-size: 1rem; line-height: 1.25; }
-.tour-btn:hover { background: var(--paper-2); }
-.tour-name { flex: 1; min-width: 0; }
-.tour-n { font: 500 1.125rem/1 var(--sg); font-variant-numeric: tabular-nums; }
-.tour-n.zero { color: var(--ink-2); font-weight: 400; }
-.tour-go { display: grid; place-items: center; width: 48px; flex: none; border-left: 1px solid var(--rule); color: var(--ink); }
-.tour-go:hover { background: var(--paper-2); color: var(--mag-ink); }
-.tour-item.on .tour-btn { background: var(--ink); color: var(--paper); }
-.tour-item.on .tour-n { color: var(--paper); }
-.tour-item.on .dot { box-shadow: 0 0 0 2px var(--paper); }
-.tour-hint { margin-top: 14px; }
-.tour-cols { display: flex; justify-content: space-between; padding: 12px 60px 6px 10px; }
+/* La carte des tournées : des bras à la couleur des spectacles, une pastille au bout */
+.carte-m03 { display: block; width: 100%; height: auto; font-family: var(--sg); }
+.carte-m03 .pays { fill: var(--field); stroke: var(--rule-2); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.carte-m03 .voisin { fill: none; stroke: var(--rule-2); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-dasharray: 2 3; }
+.carte-m03 mask path { fill: none; stroke: #fff; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.carte-m03.pousse mask path { stroke-dashoffset: 0; transition: stroke-dashoffset 1s cubic-bezier(.55, 0, .2, 1) var(--d, 0s); }
+.carte-m03 .bras { opacity: .92; transition: opacity .3s; }
+.carte-m03.focus .bras { opacity: .12; }
+.carte-m03.focus .bras.on { opacity: 1; }
+.carte-m03 .bras.hors { opacity: .06; }
+.carte-m03 .bras-passe { fill: var(--c, var(--ink-2)); opacity: .3; }
+.carte-m03 .pt-passe { fill: var(--c, var(--ink-2)); opacity: .6; }
+.carte-m03 .hub-o { fill: var(--paper); stroke: var(--ink); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+.carte-m03 .hub-i { fill: var(--ink); }
+.carte-m03 .pt-bord { fill: none; stroke: var(--paper); }
+.carte-lieu { cursor: pointer; transition: opacity .3s; }
+.carte-lieu:focus { outline: none; }
+.carte-lieu .pt { transform: scale(0); transform-box: fill-box; transform-origin: center; transition: transform .45s cubic-bezier(.34, 1.56, .64, 1) calc(var(--d, 0s) + .75s); }
+.carte-m03.pousse .carte-lieu .pt, .carte-lieu.hub .pt { transform: none; }
+.carte-lieu .pt-in { transform-box: fill-box; transform-origin: center; transition: transform .25s; }
+.carte-lieu.on .pt-in, .carte-lieu.sel .pt-in { transform: scale(1.6); }
+.carte-lieu.hub.on .pt-in, .carte-lieu.hub.sel .pt-in { transform: scale(1.3); }
+.carte-lieu .aura { fill: transparent; stroke: none; transition: fill .2s; }
+.carte-lieu.on .aura { fill: color-mix(in srgb, var(--c) 24%, transparent); }
+.carte-lieu.sel .aura { stroke: var(--ink); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+.carte-lieu:focus-visible .aura { stroke: var(--mag); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.carte-m03.focus .carte-lieu:not(.on) { opacity: .45; }
+.carte-lieu.hors { opacity: .16 !important; pointer-events: none; }
+.carte-m03 .noms, .carte-m03 .rouen-nom { pointer-events: none; }
+.carte-m03.pousse .noms { animation: apparait .5s 1.2s both; }
+.carte-m03 .nom, .carte-m03 .rouen-nom { font-size: calc(12.5px * var(--k, 1)); font-weight: 500; fill: var(--ink); paint-order: stroke; stroke: var(--paper); stroke-width: calc(3.5px * var(--k, 1)); stroke-linejoin: round; }
+.carte-m03 .rouen-nom { font-weight: 700; }
+.carte-m03 .nom { transition: opacity .25s; }
+.carte-m03 .nom .dep, .carte-m03 .nom-passe { fill: var(--ink-2); font-weight: 400; }
+.carte-m03 .nom.cache, .carte-m03 .nom.hors { opacity: 0; }
+.carte-m03.focus .nom:not(.on):not(.cache):not(.hors) { opacity: .3; }
+.carte-m03 .nom.on { opacity: 1; }
+@keyframes apparait { from { opacity: 0; } }
 
-/* Répertoire, compagnie */
-.sec { margin-top: 112px; }
-.sec-head { align-items: end; padding-bottom: 14px; border-bottom: 1px solid var(--ink); }
-.sec-head h2 { grid-column: 1 / 9; font-size: 2rem; }
-.sec-head p { grid-column: 9 / 13; }
-.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 44px var(--gap); margin-top: 32px; }
+/* Le bandeau d'origine, les dons */
+.diapo-sec { margin-top: 96px; }
+.diapo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--gap); padding-top: 22px; border-top: 1px solid var(--ink); }
+.dia { min-width: 0; }
+.dia-img { display: block; overflow: hidden; background: var(--paper-2); }
+.dia-img img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; transition: transform .5s; }
+.dia:hover .dia-img img { transform: scale(1.03); }
+.dia-sur { margin-top: 14px; font-size: .8125rem; font-weight: 700; letter-spacing: .08em; color: var(--ink-2); }
+.dia-t { display: flex; align-items: baseline; gap: 10px; margin-top: 6px; font-size: 1.375rem; line-height: 1.15; }
+.dia-t .dot { position: relative; top: -.06em; }
+.dia-go { display: inline-flex; align-items: center; gap: 8px; margin: 10px 0 0 22px; font-weight: 700; color: var(--mag-ink); text-decoration: none; }
+.dia-go:hover { text-decoration: underline; }
+.dia-cr { margin: 8px 0 0 22px; font-size: .8125rem; color: var(--ink-2); }
+.dons { margin-top: 88px; }
+.dons p { padding-top: 16px; border-top: 1px solid var(--rule); max-width: 88ch; font-size: .9375rem; line-height: 1.6; color: var(--ink-2); }
+
+/* Les saisons */
+.saisons { margin-top: 72px; }
+.sa-list { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 18px; border-top: 1px solid var(--ink); }
+.sa-list a { display: inline-flex; align-items: center; min-height: 40px; padding: 0 15px; border: 1px solid var(--rule-2); border-radius: 999px; background: var(--field); text-decoration: none; font-weight: 600; font-size: .9375rem; }
+.sa-list a:hover { border-color: var(--ink); }
+.sa-list a[aria-current] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.sa-body { align-items: start; }
+.sa-main { grid-column: 1 / 9; min-width: 0; }
+.sa-carte { grid-column: 9 / 13; position: sticky; top: calc(var(--head) + 16px); }
+.sa-sp { padding-top: 18px; border-top: 1px solid var(--ink); }
+.sa-sp + .sa-sp { margin-top: 52px; }
+.sa-t { display: flex; align-items: baseline; gap: 12px; font-size: 1.75rem; }
+.sa-t .dot { position: relative; top: -.08em; }
+.sa-t a { text-decoration: none; }
+.sa-t a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+.sa-s { margin-top: 6px; padding-left: 24px; font: 400 1.125rem/1.35 var(--sg); color: var(--ink-2); }
+.sa-c { margin-top: 2px; padding-left: 24px; font-size: .9375rem; font-weight: 600; }
+.sa-rows { margin-top: 14px; }
+.sa-rows li { padding: 12px 0 13px 24px; border-bottom: 1px solid var(--rule); overflow-wrap: anywhere; }
+.sa-rows .det { padding-left: 0; }
+.sa-ligne { font-weight: 600; }
+.etat { display: inline-block; margin-left: 8px; padding: 1px 9px 2px; border-radius: 999px; background: var(--ink); color: var(--paper); font-size: .8125rem; font-weight: 700; vertical-align: 1px; }
+
+/* Spectacles */
+.cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 44px var(--gap); padding-top: 26px; border-top: 1px solid var(--ink); }
 .card { display: block; text-decoration: none; }
-.card-img { display: block; aspect-ratio: 3 / 2; overflow: hidden; background: var(--paper-2); }
-.card-img img { width: 100%; height: 100%; object-fit: cover; }
+.card-img { position: relative; display: block; aspect-ratio: 3 / 2; overflow: hidden; background: var(--paper-2); }
+.card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+.card:hover .card-img img { transform: scale(1.03); }
+.card-img .statut { position: absolute; left: 10px; top: 10px; }
 .card-t { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; font: 500 1.375rem/1.2 var(--sg); letter-spacing: -.015em; }
-.card:hover .card-t span:last-child { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
-.card-s { display: block; margin-top: 4px; padding-left: 22px; }
-.card-x { display: block; margin-top: 8px; padding-left: 22px; font-size: .9375rem; font-weight: 600; }
-.co-body { margin-top: 36px; }
-.co-text { grid-column: 1 / 8; }
-.co-lead { font: 400 1.75rem/1.3 var(--sg); letter-spacing: -.02em; }
-.co-text p + p { margin-top: 18px; max-width: 62ch; }
-.stats { grid-column: 9 / 13; }
-.stats li { display: flex; align-items: baseline; gap: 16px; padding: 12px 0 14px; border-bottom: 1px solid var(--rule); }
-.stats li:first-child { padding-top: 0; }
-.stats b { min-width: 3.4em; font: 500 3rem/1 var(--sg); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.stats-note { margin-top: 12px; }
+.card-t .dot { position: relative; top: -.06em; }
+.card:hover .card-tt { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
+.card-s { display: block; margin-top: 4px; padding-left: 22px; font-size: 1rem; color: var(--ink-2); }
+.card-c { display: block; margin-top: 2px; padding-left: 22px; font-size: .9375rem; font-weight: 600; }
+.card-n { display: block; margin: 10px 0 0 22px; padding-top: 8px; border-top: 2px solid var(--c); font-size: .9375rem; font-weight: 600; }
 
-/* Pages : spectacles, compagnie, contact */
-.hero-wide { grid-column: 1 / -1; }
-.page-in { border-top: 1px solid var(--ink); }
-.rep-note { font-size: 1rem; color: var(--ink-2); }
-.rep-note b { font-weight: 700; color: var(--ink); }
-.card-x.none { font-weight: 400; color: var(--ink-2); }
-.go { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1rem; text-decoration: none; }
-.go svg { color: var(--mag); }
-.go:hover span { text-decoration: underline; }
-.tour-more { margin-top: 16px; }
-.artists { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--gap); margin-top: 8px; }
-.artists li, .partners li { padding: 14px 0 15px; border-bottom: 1px solid var(--rule); }
-.artists b { display: block; font-weight: 600; }
-.artists .lab { display: block; margin-top: 2px; }
-.partners { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); column-gap: var(--gap); margin-top: 8px; font-weight: 600; }
-.hero-mail { margin-top: 20px; }
-.hero-mail a { font: 500 2.25rem/1.1 var(--sg); letter-spacing: -.03em; color: var(--mag-ink); text-decoration-thickness: 2px; text-underline-offset: .16em; }
-address.hero-sum { font-style: normal; }
-.st-h { font-size: 1.375rem; }
-.ct-grid { row-gap: 48px; padding-top: 28px; }
-.ct { grid-column: span 4; display: flex; flex-direction: column; align-items: flex-start; }
-.ct h3 { font-size: 1.5rem; }
-.ct > p { margin-top: 10px; }
-.ct dl { align-self: stretch; margin: 20px 0 22px; border-top: 1px solid var(--rule); }
-.ct dl > div { padding: 10px 0 11px; border-bottom: 1px solid var(--rule); }
-.ct dt { font-size: .9375rem; color: var(--ink-2); }
-.ct dd { margin-top: 2px; font-weight: 600; }
-.ct dd a { color: var(--mag-ink); }
-.ct .go { margin-top: auto; }
-.letter { margin-top: 24px; }
+/* Page spectacle */
+.show { padding-top: 26px; }
+.back a { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1rem; text-decoration: none; }
+.back a:hover span { text-decoration: underline; }
+.back svg { transform: scaleX(-1); }
+.show-head { margin-top: 26px; }
+.show-head .statut { margin-bottom: 16px; }
+.show-t { display: flex; align-items: baseline; gap: 20px; font-size: 4rem; line-height: 1; letter-spacing: -.045em; }
+.show-t .dot { position: relative; top: -.08em; width: 22px; height: 22px; }
+.show-sub { margin-top: 14px; padding-left: 42px; font: 400 1.375rem/1.3 var(--sg); letter-spacing: -.01em; color: var(--ink-2); }
+.show-cr { margin-top: 4px; padding-left: 42px; font-weight: 600; }
+.show-grid { margin-top: 36px; padding-top: 28px; row-gap: 40px; border-top: 1px solid var(--ink); align-items: start; }
+.show-photo { grid-column: 1 / 9; }
+.show-photo img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--paper-2); }
+figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
+.facts { grid-column: 9 / 13; }
+.fiche > div { padding: 10px 0 11px; border-bottom: 1px solid var(--rule); }
+.fiche > div:first-child { border-top: 1px solid var(--ink); }
+.fiche dt { font-size: .9375rem; color: var(--ink-2); }
+.fiche dd { margin-top: 2px; font-weight: 600; }
+.duree { margin-top: 14px; font-weight: 700; }
+.mention { margin-top: 10px; font-size: .9375rem; color: var(--ink-2); }
+.mention a { color: var(--mag-ink); }
+.show-text { grid-column: 1 / 9; }
+.show-text > p { max-width: 64ch; }
+.show-text > p + p { margin-top: 18px; }
+.show-side { grid-column: 9 / 13; }
+.prod p { font-size: .9375rem; line-height: 1.5; color: var(--ink-2); }
+.prod p + p { margin-top: 8px; }
+.prod strong { color: var(--ink); }
+.medias { margin-top: 24px; border-top: 1px solid var(--ink); }
+.medias li { border-bottom: 1px solid var(--rule); }
+.medias .m-g { padding: 14px 0 4px; border: 0; font-size: .8125rem; font-weight: 700; letter-spacing: .06em; color: var(--ink-2); }
+.medias a { display: flex; align-items: center; gap: 10px; padding: 11px 0; font-weight: 600; font-size: 1rem; line-height: 1.3; text-decoration: none; }
+.medias a svg { color: var(--c); }
+.medias a:hover span { text-decoration: underline; }
+.m-par { display: block; margin: -6px 0 0 30px; padding-bottom: 10px; font-size: .875rem; color: var(--ink-2); }
+.cadre { margin-top: 30px; padding: 14px 0; border-block: 1px solid var(--ink); font: 500 1.25rem/1.35 var(--sg); letter-spacing: -.01em; }
+.extraits { margin-top: 30px; }
+.extraits li + li { margin-top: 24px; }
+.extraits blockquote { padding-left: 18px; border-left: 4px solid var(--c); font: 400 1.375rem/1.35 var(--sg); letter-spacing: -.015em; }
+.extraits cite { display: block; margin-top: 6px; padding-left: 22px; font: normal 400 .9375rem/1.4 var(--at); color: var(--ink-2); }
+.tournee { margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--ink); }
+.tournee h2 { font-size: 2rem; }
+.t-texte { margin-top: 10px; }
+.t-grid { margin-top: 22px; align-items: start; row-gap: 28px; }
+.dcards { grid-column: 1 / 8; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; align-content: start; }
+.dcard { padding: 16px 18px 18px; background: var(--field); border: 1px solid var(--rule); border-top: 4px solid var(--c); overflow-wrap: anywhere; }
+.dcard::before { display: none; }
+.dcard.on { box-shadow: 0 0 0 2px var(--c); }
+.dcard .where, .dcard .det { padding-left: 0; }
+.dcard .where { margin-top: 14px; }
+.t-carte { grid-column: 8 / 13; position: sticky; top: calc(var(--head) + 16px); }
+.t-carte.seule { grid-column: 1 / 9; position: static; }
+.t-cr { grid-column: 1 / 6; }
+
+/* La compagnie, Actions culturelles, mentions */
+.co, .act, .ct { align-items: start; row-gap: 48px; }
+.co-text { grid-column: 1 / 8; }
+.co-text p, .prose p, .prose li { max-width: 66ch; }
+.co-text p + p { margin-top: 18px; }
+.co-dates { grid-column: 9 / 13; }
+.co-h { padding-bottom: 12px; border-bottom: 1px solid var(--ink); font-size: 1.375rem; }
+.annees li { display: grid; grid-template-columns: 4.4rem minmax(0, 1fr); gap: 14px; align-items: baseline; padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
+.an { font: 500 1.75rem/1 var(--sg); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.an-t { font-weight: 600; }
+.act-text { grid-column: 1 / 8; }
+.act-fig { grid-column: 9 / 13; position: sticky; top: calc(var(--head) + 24px); }
+.act-fig img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; background: var(--paper-2); }
+.prose h2 { margin: 40px 0 12px; font-size: 1.625rem; }
+.prose > h2:first-child { margin-top: 0; }
+.prose p + p, .prose ul + p { margin-top: 14px; }
+.prose ul { margin-top: 12px; border-top: 1px solid var(--rule); }
+.prose li { padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
+.prose a { color: var(--mag-ink); overflow-wrap: anywhere; }
+.legal { max-width: 860px; }
+
+/* Formulaires */
+.form { max-width: 760px; }
+.fld { display: flex; flex-direction: column; gap: 6px; margin-top: 18px; }
+.fld label, .calc label { font-weight: 600; font-size: 1rem; }
+.fld input, .fld textarea, .calc input { width: 100%; padding: 11px 14px; border: 1px solid var(--rule-2); border-radius: 6px; background: var(--field); font-size: 1rem; }
+.fld input:focus-visible, .fld textarea:focus-visible, .calc input:focus-visible { outline-offset: 0; border-color: var(--ink); }
+.fld textarea { min-height: 170px; resize: vertical; }
+.fld-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
+.chk { display: flex; align-items: flex-start; gap: 10px; margin-top: 22px; font-size: 1rem; }
+.chk input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ink); }
+.chk a { color: var(--mag-ink); font-weight: 600; }
+.calc { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.calc input { width: 72px; }
+.btn { margin-top: 26px; height: 48px; padding: 0 30px; border: 0; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 700; font-size: 1rem; }
+.btn:hover { background: var(--mag-ink); }
+.pro-t { max-width: 60ch; }
+.ct-form { grid-column: 1 / 8; }
+.ct-form .fld:first-child { margin-top: 0; }
+.ct-co { grid-column: 9 / 13; padding-top: 14px; border-top: 1px solid var(--ink); font-style: normal; line-height: 1.6; }
 
 /* Pied de page */
 .site-foot { margin-top: 128px; padding: 56px 0 28px; background: var(--ink); color: #efebe3; }
@@ -198,183 +324,68 @@ address.hero-sum { font-style: normal; }
 .site-foot :focus-visible { outline-color: #f07ab6; }
 .foot { row-gap: 32px; }
 .f-brand { grid-column: 1 / 5; }
-.f-brand p { margin-top: 14px; color: #c9c3b8; max-width: 26ch; }
-.f-col { grid-column: span 4; }
-.f-col h2 { font-size: 1.375rem; margin-bottom: 12px; }
-.f-col address { font-style: normal; }
-.f-col li + li { margin-top: 2px; }
-.f-legal { margin-top: 48px; padding-top: 18px; border-top: 1px solid #3a3733; color: #c9c3b8; font-size: .9375rem; }
+.f-brand .brand { color: #fff; }
+.f-brand address { margin-top: 18px; font-style: normal; color: #c9c3b8; }
+.f-links { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 14px; font-weight: 600; }
+.f-part { grid-column: 6 / 13; color: #c9c3b8; font-size: 1rem; line-height: 1.6; }
+.f-legal { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 16px; padding-top: 18px; border-top: 1px solid #3a3733; color: #c9c3b8; font-size: .9375rem; }
+.f-ll { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-left: auto; }
 
-/* Page spectacle */
-.show { padding-top: 28px; }
-.back a { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 1rem; text-decoration: none; }
-.back a:hover span { text-decoration: underline; }
-.back svg { transform: scaleX(-1); }
-.show-head { margin-top: 28px; }
-.show-t { display: flex; align-items: baseline; gap: 20px; font-size: 4rem; line-height: 1; letter-spacing: -.045em; }
-.show-t .dot { position: relative; top: -.08em; width: 22px; height: 22px; }
-.show-sub { margin-top: 14px; padding-left: 42px; font: 400 1.375rem/1.3 var(--sg); letter-spacing: -.01em; color: var(--ink-2); }
-.band-sec { margin-top: 44px; border-top: 1px solid var(--ink); }
-.band-head { display: flex; align-items: center; gap: 8px 20px; flex-wrap: wrap; min-height: 64px; padding: 10px 0; }
-.band-head h2 { font-size: 1.375rem; }
-.band-nav { display: flex; gap: 8px; margin-left: auto; }
-.band-nav button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--ink); border-radius: 50%; background: none; }
-.band-nav button:disabled { border-color: var(--rule); color: var(--rule-2); cursor: default; }
-.band-nav button:first-child svg { transform: scaleX(-1); }
-.band { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 244px; gap: 12px; overflow-x: auto; padding-bottom: 14px; scrollbar-width: thin; scrollbar-color: var(--rule-2) transparent; }
-.dcard { display: flex; flex-direction: column; min-height: 100%; padding: 18px 18px 16px; background: var(--field); border: 1px solid var(--rule); }
-.dcard .day { font-size: 3rem; }
-.dcard .wd { margin-top: 10px; }
-.dcard .where { margin-top: 14px; }
-.dc-lieu { margin-top: 2px; font-size: 1rem; line-height: 1.35; color: var(--ink-2); }
-.dc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 16px; }
-.none-box { padding: 22px 24px; background: var(--paper-2); }
-.none-box p:first-child { font: 500 1.375rem/1.3 var(--sg); }
-.none-box p + p { margin-top: 6px; }
-.show-grid { margin-top: 56px; row-gap: 40px; }
-.show-photo { grid-column: 1 / 9; }
-.show-photo img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--paper-2); }
-.show-photo figcaption { margin-top: 8px; }
-.facts { grid-column: 9 / 13; grid-row: 1 / span 2; }
-.facts h2 { font-size: 1.375rem; padding-bottom: 12px; border-bottom: 1px solid var(--ink); }
-.facts dl > div { padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
-.facts dt { font-size: .9375rem; color: var(--ink-2); }
-.facts dd { margin-top: 2px; font-weight: 600; }
-.team li { display: flex; flex-direction: column; font-weight: 400; }
-.team li + li { margin-top: 8px; }
-.team span { font-size: .9375rem; color: var(--ink-2); }
-.team b { font-weight: 600; }
-.show-text { grid-column: 1 / 9; }
-.accroche { font: 400 2rem/1.25 var(--sg); letter-spacing: -.025em; max-width: 26em; }
-.show-text p + p { margin-top: 20px; max-width: 64ch; }
-.tabs-sec { margin-top: 88px; }
-.tabs-h { font-size: 2rem; margin-bottom: 18px; }
-.tablist { display: flex; border-bottom: 1px solid var(--ink); }
-.tab { position: relative; padding: 14px 22px 15px; border: 0; background: none; font-weight: 700; font-size: 1.0625rem; color: var(--ink-2); }
-.tab:first-child { padding-left: 0; }
-.tab:hover { color: var(--ink); }
-.tab[aria-selected="true"] { color: var(--ink); }
-.tab[aria-selected="true"]::after { content: ""; position: absolute; left: 22px; right: 22px; bottom: -1px; height: 4px; background: var(--mag); }
-.tab:first-child[aria-selected="true"]::after { left: 0; }
-.panel { padding-top: 36px; }
-.panel-grid { row-gap: 32px; }
-.p-main { grid-column: 1 / 8; }
-.p-side { grid-column: 9 / 13; }
-.p-lead { font: 400 1.375rem/1.4 var(--sg); letter-spacing: -.01em; }
-.p-main > * + * { margin-top: 18px; }
-.p-h { font-size: 1.375rem; margin-bottom: 10px; }
-.kv > div { display: grid; grid-template-columns: 11em minmax(0, 1fr); gap: 4px 20px; padding: 11px 0 12px; border-bottom: 1px solid var(--rule); }
-.kv > div:first-child { border-top: 1px solid var(--rule); }
-.kv dt { color: var(--ink-2); font-size: .9375rem; padding-top: 2px; }
-.kv dd { font-weight: 600; }
-.kv dd .tbc { font-weight: 400; }
-.mini li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: baseline; padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
-.mini li:first-child { border-top: 1px solid var(--rule); }
-.mini b { font-weight: 700; }
-.contact-box { padding: 20px 22px; border: 1px solid var(--ink); }
-.contact-box p + p { margin-top: 6px; }
-.contact-box a { font-weight: 700; color: var(--mag-ink); }
-.next { margin-top: 96px; border-top: 1px solid var(--ink); }
-.next a { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 0 0; text-decoration: none; }
-.next .lab { display: block; margin-bottom: 8px; }
-.next-t { display: flex; align-items: baseline; gap: 14px; font: 500 2rem/1.1 var(--sg); letter-spacing: -.025em; }
-.next-t .dot { width: 16px; height: 16px; }
-.next a:hover .next-txt { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .12em; }
-.next-arrow { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid var(--ink); border-radius: 50%; }
+/* L'ouverture, sur le papier de l'agenda */
+.intro.intro-m03::after { content: ""; position: absolute; inset: 0; pointer-events: none; transition: opacity .25s;
+  background: linear-gradient(to right, transparent calc(var(--gut) + 96px), rgba(188, 62, 128, .38) calc(var(--gut) + 96px) calc(var(--gut) + 97px), transparent calc(var(--gut) + 97px)),
+    repeating-linear-gradient(to bottom, transparent 0 55px, rgba(20, 20, 20, .075) 55px 56px); }
+.intro.intro-m03.part::after { opacity: 0; }
+.intro.intro-m03 .intro-indice { color: var(--mag); }
 
-@media (max-width: 1180px) {
-  .head-l { gap: 32px; }
-  .nav ul { gap: 22px; }
-  .row { grid-template-columns: 132px minmax(0, 1fr) 112px; grid-template-areas: "when what aud" "when what more"; }
-  .row .when { grid-area: when; } .row .what { grid-area: what; } .row .aud { grid-area: aud; } .row .more { grid-area: more; text-align: left; padding-top: 8px; }
-  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .artists, .partners { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (max-width: 900px) {
-  :root { --head: 64px; --gap: 16px; }
-  .head-in { display: flex; }
-  .head-l { flex: 1; }
+@media (max-width: 1279px) {
   .menu-btn { display: inline-flex; }
-  .search { display: none; }
   .nav { display: none; position: absolute; top: var(--head); left: 0; right: 0; padding: 4px var(--gut) 20px; background: var(--field); border-bottom: 1px solid var(--ink); box-shadow: 0 18px 32px rgba(20, 20, 20, .16); }
   .nav.open { display: block; }
   .nav ul { flex-direction: column; gap: 0; }
   .nav a { padding: 14px 0; border-bottom: 1px solid var(--rule); font-size: 1.0625rem; }
   .nav li:last-child a { border-bottom: 0; }
   .nav a[aria-current="page"] { border-bottom-color: var(--rule); box-shadow: inset 4px 0 0 var(--mag); padding-left: 14px; }
-  .hero { padding-top: 26px; padding-bottom: 26px; row-gap: 24px; }
-  .hero-main, .doors { grid-column: 1 / -1; }
+}
+@media (max-width: 1100px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .diapo { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(220px, 34%); overflow-x: auto; margin-inline: calc(-1 * var(--gut)); padding: 22px var(--gut) 10px; scroll-padding-inline: var(--gut); }
+}
+@media (max-width: 900px) {
+  :root { --head: 64px; --gap: 16px; }
+  .hero { padding-top: 28px; padding-bottom: 22px; }
+  .hero > .hero-main, .hero > .portes { grid-column: 1 / -1; }
   .saison { font-size: clamp(2.375rem, 11vw, 4rem); }
-  .hero-sum { font-size: 1.1875rem; margin-top: 12px; }
-  .seg { display: flex; width: 100%; margin-top: 22px; }
-  .seg button { flex: 1 1 auto; padding: 0 8px; }
-  .body { background: none; }
-  .msearch { display: block; grid-column: 1 / -1; padding-top: 0; }
-  .tour, .agenda { grid-column: 1 / -1; grid-row: auto; position: static; }
-  .tour { margin-top: 14px; }
-  .tour-h { min-height: 0; padding: 0 0 10px; border: 0; font-size: 1.125rem; }
-  .tour-cols, .tour-hint, .tour-go { display: none; }
-  .tour-list { display: flex; gap: 8px; overflow-x: auto; margin-inline: calc(-1 * var(--gut)); padding: 0 var(--gut) 10px; scrollbar-width: none; }
-  .tour-list::-webkit-scrollbar { display: none; }
-  .tour-item { border: 0; flex: none; }
-  .tour-btn { min-height: 42px; padding: 0 14px 0 12px; gap: 9px; border: 1px solid var(--rule-2); border-radius: 999px; white-space: nowrap; background: var(--field); }
-  .tour-item.on .tour-btn { border-color: var(--ink); }
-  .agenda { margin-top: 8px; border-top: 1px solid var(--ink); }
-  .month { margin-top: 32px; }
-  .month-h { font-size: 1.625rem; }
-  .row { grid-template-columns: 80px minmax(0, 1fr); grid-template-areas: "when what" "when meta"; column-gap: 14px; padding: 16px 0 17px; }
-  .row .aud, .row .more { grid-area: meta; padding-top: 12px; }
-  .row .aud { justify-self: start; }
-  .row .more { justify-self: start; margin-left: 124px; padding-top: 16px; }
-  .day, .dcard .day { font-size: 2.5rem; }
-  .rest, .rest.c { display: block; margin: 6px 0 0; font-size: 1rem; }
-  .rest .cm { display: none; }
-  .wd { margin-top: 6px; }
-  .t-link { font-size: 1.25rem; gap: 9px; }
-  .sec { margin-top: 80px; }
-  .sec-head h2, .sec-head p { grid-column: 1 / -1; }
-  .sec-head p { margin-top: 8px; }
-  .cards { gap: 32px var(--gap); }
-  .card-t { font-size: 1.125rem; gap: 8px; }
-  .card-t .dot { width: 10px; height: 10px; }
-  .card-s, .card-x { padding-left: 0; font-size: .9375rem; }
-  .co-text, .stats { grid-column: 1 / -1; }
-  .co-lead { font-size: 1.375rem; }
-  .stats { margin-top: 32px; }
-  .stats b { font-size: 2.5rem; }
-  .f-brand, .f-col { grid-column: 1 / -1; }
+  .ag-bar { flex-direction: column; align-items: stretch; }
+  .chips { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gut)); padding: 0 var(--gut) 4px; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; white-space: nowrap; }
+  .ag-tools { flex-wrap: wrap; margin-left: 0; }
+  .field { width: 100%; }
+  .ag-grid > .ag-carte, .ag-grid > .ag-liste { grid-column: 1 / -1; grid-row: auto; position: static; }
+  .ag-carte svg { max-height: none; }
+  .row, .ag-accueil .row { grid-template-columns: 86px minmax(0, 1fr); column-gap: 14px; padding: 14px 0 15px; }
+  .j-big, .ag-accueil .j-big { font-size: 2.25rem; }
+  .j-mo, .ag-accueil .j-mo { font-size: 1.375rem; }
+  .j-pre, .j-rest { font-size: 1rem; }
+  .t-link, .ag-accueil .t-link { font-size: 1.125rem; gap: 9px; }
+  .mois-h { font-size: 1.5rem; }
+  .diapo { grid-auto-columns: minmax(220px, 62%); }
+  .diapo-sec { margin-top: 72px; }
   .show-t { font-size: clamp(2.25rem, 10vw, 4rem); gap: 14px; }
   .show-t .dot { width: 16px; height: 16px; }
-  .show-sub { padding-left: 30px; font-size: 1.1875rem; }
-  .band-nav { display: none; }
-  .band { grid-auto-columns: 232px; margin-inline: calc(-1 * var(--gut)); padding-inline: var(--gut); scroll-padding-inline: var(--gut); }
-  .show-photo, .facts, .show-text, .p-main, .p-side { grid-column: 1 / -1; grid-row: auto; }
-  .accroche { font-size: 1.5rem; }
-  .tabs-h { font-size: 1.625rem; }
-  .tablist { flex-direction: column; border-bottom: 0; border-top: 1px solid var(--ink); }
-  .tab { padding: 14px 0 15px 18px; text-align: left; border-bottom: 1px solid var(--rule); }
-  .tab:first-child { padding-left: 18px; }
-  .tab[aria-selected="true"]::after, .tab:first-child[aria-selected="true"]::after { left: 0; right: auto; top: 0; bottom: 0; width: 4px; height: auto; }
-  .panel { padding-top: 28px; }
-  .kv > div { grid-template-columns: 1fr; }
-  .next-t { font-size: 1.5rem; }
-  .next-arrow { width: 48px; height: 48px; }
-  .tour-more { display: none; }
-  .artists, .partners { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .hero-mail a { font-size: 1.625rem; }
-  .ct { grid-column: 1 / -1; }
-  .ct-grid { row-gap: 40px; padding-top: 24px; }
-}
-@media (max-width: 720px) {
-  .seg-v { flex-direction: column; border-radius: 22px; }
-  .seg-v button { height: auto; min-height: 40px; padding: 9px 16px; line-height: 1.25; text-align: left; }
+  .show-sub, .show-cr { padding-left: 30px; }
+  .show-sub { font-size: 1.1875rem; }
+  .show-photo, .facts, .show-text, .show-side, .dcards, .t-carte, .t-carte.seule, .t-cr, .sa-main, .sa-carte, .co-text, .co-dates, .act-text, .act-fig, .ct-form, .ct-co, .f-brand, .f-part { grid-column: 1 / -1; position: static; }
+  .sa-carte { grid-row: 1; }
+  .extraits blockquote { font-size: 1.1875rem; }
+  .tournee { margin-top: 64px; }
+  .tournee h2 { font-size: 1.625rem; }
+  .fld-2 { grid-template-columns: minmax(0, 1fr); }
+  .f-ll { margin-left: 0; }
 }
 @media (max-width: 560px) {
-  .artists { grid-template-columns: minmax(0, 1fr); }
-}
-@media (max-width: 420px) {
-  .row .more { margin-left: 0; padding-top: 12px; }
-  .row .aud + .more { margin-left: 120px; }
+  .cards { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -384,24 +395,10 @@ address.hero-sum { font-style: normal; }
 <body>
 <a class="skip" href="#main">Aller au contenu</a>
 <header class="site-head">
-  <div class="wrap g12 head-in">
-    <div class="head-l">
-      <a class="brand" href="#/" aria-label="Crescite, accueil"><span class="brand-mark" id="brand-mark" aria-hidden="true"></span><span>crescite</span></a>
-      <nav class="nav" id="nav" aria-label="Navigation principale">
-        <ul>
-          <li><a href="#/agenda" data-nav="agenda">Agenda</a></li>
-          <li><a href="#/spectacles" data-nav="spectacles">Spectacles</a></li>
-          <li><a href="#/compagnie" data-nav="compagnie">La compagnie</a></li>
-          <li><a href="#/contact" data-nav="contact">Contact</a></li>
-        </ul>
-      </nav>
-      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-    </div>
-    <form class="search field" role="search" action="#" onsubmit="return false">
-      <label class="sr" for="q">Rechercher une ville ou un spectacle</label>
-      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.75" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      <input id="q" type="search" placeholder="Ville ou spectacle" autocomplete="off" spellcheck="false">
-    </form>
+  <div class="wrap head-in">
+    <a class="brand" href="#/" id="brand"><span class="brand-mark" aria-hidden="true"></span><span id="brand-t"></span></a>
+    <nav class="nav" id="nav" aria-label="Navigation principale"><ul></ul></nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav"></button>
   </div>
 </header>
 <main id="main" tabindex="-1"></main>
@@ -410,638 +407,439 @@ address.hero-sum { font-style: normal; }
 <script>
 (() => {
   'use strict';
-  const SH = D.shows;
+  const SITE = D.site, LIB = SITE.libelles, SH = D.shows;
+  const own = (o, k) => k != null && Object.prototype.hasOwnProperty.call(o, k);
   const BY = Object.fromEntries(SH.map(s => [s.slug, s]));
-  const MOISL = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  const MOISC = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
-  const JC = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-  const DOOR_HREF = { voir: '#/agenda?public=tout', programmer: '#/spectacles?voir=programmer', etablissement: '#/spectacles?voir=etablissement' };
-  const DOOR_GO = { voir: 'Les dates tout public', programmer: 'Le répertoire pour programmer', etablissement: 'Le répertoire pour les établissements' };
-  const DOOR_NOTE = { voir: 'sous chaque titre, le nombre de dates de la saison.', programmer: 'sous chaque titre, création, durée et nombre de comédiens.', etablissement: 'sous chaque titre, où il se joue et s’il est au Pass Culture.' };
-  const PUBQ = { tout: 'Tout public', scolaire: 'Scolaire' };
-  const QPUB = { 'Tout public': 'tout', Scolaire: 'scolaire' };
-  const TITLES = { '': `Compagnie Crescite · saison ${D.saison}`, agenda: 'L’agenda · Compagnie Crescite', spectacles: 'Les spectacles · Compagnie Crescite', compagnie: 'La compagnie · Compagnie Crescite', contact: 'Contact · Compagnie Crescite' };
-  const has = (o, k) => k != null && Object.prototype.hasOwnProperty.call(o, k);
-  const DOOR = Object.fromEntries(D.doors.map(d => [d.key, d]));
+  const MENU = Object.fromEntries(SITE.menu.map(m => [m.id, m]));
+  const SUF = ' - ' + SITE.titreSuffixe;
+  const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const RXM = new RegExp(`^(.*?)\\s*(${MOIS.join('|')})\\s+(\\d{4})$`);
+  const GRIS = '#8a847a';
   const ARROW = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const EXT = '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" focusable="false"><path d="M5.5 3.5h7v7M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const EXT = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><path d="M5.5 3.5h7v7M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const LOUPE = '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.75" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const CROIX = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  const LIRE = '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="8.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 6.6v6.8l5.4-3.4z" fill="currentColor"/></svg>';
+  const BARRES = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
 
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[’'`\-–—.,;:()«»"]/g, ' ').replace(/\s+/g, ' ').trim();
-  const cap = v => v ? v.charAt(0).toUpperCase() + v.slice(1) : v;
-  const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
-  const joinFr = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1];
-  const wdOf = (y, m, d) => new Date(Date.UTC(y, m - 1, d)).getUTCDay();
-  const isShow = s => !!(s.annee || s.distribution.length);
-
-  function placeOf(l) {
-    const v = (l || '').trim();
-    if (!v) return { venue: null, note: null };
-    if (/^\d{1,2}\s*h\s*\d{0,2}$/i.test(v)) return { venue: null, note: v.replace(/\s+/g, '') };
-    if (/^diptyque$/i.test(v)) return { venue: null, note: 'en diptyque' };
-    return { venue: v, note: null };
-  }
-
-  function whenOf(d, y, m) {
-    if (d.precision === 'month') return { big: '', er: false, rest: '', sub: 'jour à préciser', sr: `${d.moisLong} ${y}, jour à préciser`, tbc: true };
-    if (d.precision === 'range' && d.fin > d.iso) {
-      const [fy, fm, fd] = d.fin.split('-').map(Number);
-      return { big: String(d.jour), er: false, rest: `au ${fd}${fm !== m ? ' ' + MOISC[fm - 1] : ''}`, sub: `du ${JC[wdOf(y, m, d.jour)]} au ${JC[wdOf(fy, fm, fd)]}`, sr: d.label };
-    }
-    const head = d.label.split(' ' + d.moisLong)[0];
-    const nums = /^[\d\s,eter]+$/.test(head) ? (head.match(/\d+/g) || []).map(Number) : [];
-    if (nums.length > 1) {
-      return { big: String(nums[0]), er: nums[0] === 1, rest: head.replace(/^\d+(er)?/, '').trim(), sub: joinFr(nums.map(n => JC[wdOf(y, m, n)])), sr: d.label };
-    }
-    return { big: String(d.jour), er: d.jour === 1, rest: '', sub: d.joursemLong, sr: `${d.joursemLong} ${d.label}` };
-  }
-
-  const DATES = D.dates.map((d, i) => {
-    const [y, m] = d.iso.split('-').map(Number);
-    const s = BY[d.slug];
-    const place = placeOf(d.lieu);
-    return Object.assign({}, d, {
-      i, y, m, ym: d.iso.slice(0, 7), place,
-      color: s ? s.couleurTexteClair : '#57524a',
-      when: whenOf(d, y, m),
-      hay: ' ' + norm([d.titre, s && s.sousTitre, d.commune, d.dep, place.venue, place.note, d.public, d.moisLong].join(' ')),
-    });
-  }).sort((a, b) => a.ym.localeCompare(b.ym) || (a.precision === 'month') - (b.precision === 'month') || a.iso.localeCompare(b.iso) || a.i - b.i);
-  const COUNT = Object.fromEntries(SH.map(s => [s.slug, DATES.filter(d => d.slug === s.slug).length]));
-  const NCOMMUNES = new Set(DATES.map(d => d.commune + '|' + d.dep)).size;
-
-  const S = { view: null, base: '', pub: 'all', q: '', show: null, door: 'voir' };
-  const PUBS = [['all', 'Toutes'], ['Tout public', 'Tout public'], ['Scolaire', 'Scolaires']];
+  const col = slug => (slug && own(BY, slug) ? BY[slug].couleurTexteClair : GRIS);
+  const bloc = b => /^\s*<(h\d|ul|ol|p|table|div|blockquote)\b/i.test(b) ? b : `<p>${b}</p>`;
   const main = document.getElementById('main');
-  const qInputs = () => [...document.querySelectorAll('#q, #q2')];
 
-  function matches(d) {
-    if (S.pub !== 'all' && d.public !== S.pub) return false;
-    if (S.show && d.slug !== S.show) return false;
-    const toks = norm(S.q).split(' ').filter(Boolean);
-    return toks.every(t => d.hay.includes(t));
+  /* Une ligne de date, découpée sans rien réécrire : « 19 » en grand, « et 20 » à côté, « novembre 2026 » dessous */
+  function decoupe(ligneDate) {
+    const m = RXM.exec(ligneDate || '');
+    if (!m) return { grand: `<span class="j-mo">${esc(ligneDate)}</span>`, sous: '' };
+    if (!m[1]) return { grand: `<span class="j-mo">${esc(m[2])}</span>`, sous: m[3] };
+    const p = /^(du)?\s*(\d+)(er)?(.*)$/.exec(m[1]);
+    if (!p) return { grand: `<span class="j-rest c">${esc(m[1])}</span>`, sous: `${m[2]} ${m[3]}` };
+    const reste = p[4].trim();
+    return {
+      grand: `${p[1] ? `<span class="j-pre">${p[1]}</span>` : ''}<span class="j-big">${p[2]}${p[3] ? '<sup>er</sup>' : ''}</span>${reste ? `<span class="j-rest${reste[0] === ',' ? ' c' : ''}">${esc(reste)}</span>` : ''}`,
+      sous: `${m[2]} ${m[3]}`,
+    };
   }
 
-  function whereHtml(d, card) {
-    const sep = '<span class="sep" aria-hidden="true">·</span><span class="sr">, </span>';
-    const head = `<b>${esc(d.commune)}</b> (${esc(d.dep)})`;
-    const venue = d.place.venue ? esc(card ? cap(d.place.venue) : d.place.venue) : '<span class="tbc">lieu à préciser</span>';
-    const note = d.place.note ? esc(d.place.note) : '';
-    if (card) return `<p class="where">${head}</p><p class="dc-lieu">${venue}${note ? sep + note : ''}</p>`;
-    return `<p class="where">${head}${sep}${venue}${note ? sep + note : ''}</p>`;
+  const DATES = D.dates.map(d => ({ ...d, hay: ' ' + norm([d.titre, own(BY, d.slug) && BY[d.slug].titre, d.ligne, d.commune, d.dep, ...(d.details || []).map(t => t.texte)].join(' ')) }));
+  const EN_TOURNEE = SH.filter(s => DATES.some(d => d.slug === s.slug));
+  const S = { vue: null, slug: null, l: null, q: '' };
+  const correspond = d => (!S.slug || d.slug === S.slug) && (S.l == null || d.l === S.l) && norm(S.q).split(' ').filter(Boolean).every(t => d.hay.includes(t));
+
+  /* ---------- La carte : un bras par commune et par spectacle, de sa couleur, une pastille au bout ---------- */
+  let nCarte = 0;
+  function pastille([x, y], r, cols) {
+    const bord = `<circle class="pt-bord" cx="${x}" cy="${y}" r="${r}" stroke-width="${(r * .34).toFixed(2)}"/>`;
+    if (cols.length < 2) return `<circle cx="${x}" cy="${y}" r="${r}" fill="${cols[0] || '#141414'}"/>${bord}`;
+    const a = 2 * Math.PI / cols.length, P = t => `${(x + r * Math.cos(t)).toFixed(2)} ${(y + r * Math.sin(t)).toFixed(2)}`;
+    return cols.map((c, i) => { const a0 = -Math.PI / 2 + i * a; return `<path d="M${x} ${y}L${P(a0)}A${r} ${r} 0 0 1 ${P(a0 + a)}Z" fill="${c}"/>`; }).join('') + bord;
   }
-
-  const badge = d => `<span class="badge ${d.public === 'Scolaire' ? 'sc' : 'tp'}">${esc(d.public)}</span>`;
-  const infos = d => d.lien ? `<a class="infos" href="${esc(d.lien)}" target="_blank" rel="noopener" aria-label="Infos : ${esc(d.titre)}, ${esc(d.commune)}, ${esc(d.label)} (nouvel onglet)">Infos${EXT}</a>` : '';
-
-  function bigDay(w) {
-    return `<span class="day">${esc(w.big)}${w.er ? '<sup>er</sup>' : ''}</span>${w.rest ? (w.rest.charAt(0) === ',' ? `<span class="rest c"><span class="cm">, </span>${esc(w.rest.slice(1).trim())}</span>` : `<span class="rest">${esc(w.rest)}</span>`) : ''}`;
-  }
-
-  function rowHtml(d) {
-    const w = d.when;
-    const when = w.tbc
-      ? `<span class="when-tbc" aria-hidden="true">Jour à préciser</span>`
-      : `<span aria-hidden="true">${bigDay(w)}<span class="wd lab">${esc(w.sub)}</span></span>`;
-    return `<li class="row">
-      <div class="when">${when}<span class="sr">${esc(w.sr)}</span></div>
-      <div class="what">
-        <a class="t-link" href="#/spectacle/${d.slug}"><span class="dot" style="--c:${d.color}" aria-hidden="true"></span><span class="t-txt">${esc(d.titre)}</span></a>
-        ${whereHtml(d)}
-      </div>
-      <div class="aud">${badge(d)}</div>
-      <div class="more">${infos(d)}</div>
-    </li>`;
-  }
-
-  function listHtml(res) {
-    if (!res.length) return emptyHtml();
-    const groups = [];
-    for (const d of res) {
-      let g = groups[groups.length - 1];
-      if (!g || g.ym !== d.ym) groups.push(g = { ym: d.ym, y: d.y, m: d.m, items: [] });
-      g.items.push(d);
-    }
-    return groups.map(g => `<section class="month" aria-labelledby="m-${g.ym}">
-      <h3 class="month-h" id="m-${g.ym}"><span>${cap(MOISL[g.m - 1])}</span><span class="yr">${g.y}</span><span class="mc">${plural(g.items.length, 'date', 'dates')}</span></h3>
-      <ol>${g.items.map(rowHtml).join('')}</ol>
-    </section>`).join('');
-  }
-
-  function emptyHtml() {
-    const s = S.show && BY[S.show];
-    if (s && !COUNT[s.slug]) {
-      return `<div class="empty"><p class="empty-t">Aucune date annoncée pour l’instant pour ${esc(s.titre)}.</p>
-        <p><a href="#/spectacle/${s.slug}">Voir la page du spectacle</a> ou <button type="button" class="linkbtn" data-clear>afficher toutes les dates</button>.</p></div>`;
-    }
-    return `<div class="empty"><p class="empty-t">Aucune date ne correspond${S.q.trim() ? ` à « ${esc(S.q.trim())} »` : ' à ces filtres'}.</p>
-      <p>Essayez une autre ville ou un autre spectacle, ou <button type="button" class="linkbtn" data-clear>effacez les filtres</button>.</p></div>`;
-  }
-
-  function filtersLabel() {
-    const parts = [];
-    if (S.show) parts.push(BY[S.show].titre);
-    if (S.pub !== 'all') parts.push(S.pub === 'Scolaire' ? 'scolaires' : 'tout public');
-    if (S.q.trim()) parts.push(`« ${S.q.trim()} »`);
-    return parts.join(', ');
-  }
-
-  function updateAgenda() {
-    if (S.view !== 'agenda') return;
-    const res = DATES.filter(matches);
-    const filtered = S.pub !== 'all' || S.show || S.q.trim();
-    document.getElementById('list').innerHTML = listHtml(res);
-    const count = document.getElementById('count');
-    const txt = filtered
-      ? `<b>${res.length}</b> ${res.length > 1 ? 'dates' : 'date'} sur ${DATES.length}<span class="sr"> : ${esc(filtersLabel())}</span>`
-      : `<b>${res.length}</b> dates à venir`;
-    if (count.innerHTML !== txt) count.innerHTML = txt;
-    const s = S.show && BY[S.show];
-    document.getElementById('status-act').innerHTML =
-      (s ? `<a href="#/spectacle/${s.slug}">Voir la page de ${esc(s.titre)}</a>` : '') +
-      (filtered ? '<button type="button" class="linkbtn" data-clear>Effacer les filtres</button>' : '');
-    document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pub === S.pub)));
-    document.querySelectorAll('.tour-item').forEach(li => {
-      const on = li.dataset.show === S.show;
-      li.classList.toggle('on', on);
-      li.querySelector('.tour-btn').setAttribute('aria-pressed', String(on));
+  function carteSvg({ lieux = [], passe = [], titre = '', attente = false }) {
+    const id = 'k' + (++nCarte), R = CARTE.rouen;
+    const loin = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6;
+    const slugsDe = x => [...new Set(x.dates.map(d => d.slug || ''))];
+    const paires = [];
+    lieux.filter(loin).forEach(x => {
+      const ss = slugsDe(x);
+      ss.forEach((slug, j) => paires.push({ x, slug, courbe: .24 + (j - (ss.length - 1) / 2) * .18, n: x.dates.filter(d => (d.slug || '') === slug).length }));
     });
-    setHash(agendaHash());
+    const pas = Math.min(.06, 1 / Math.max(1, paires.length)), delai = new Map(), masques = [], bras = [];
+    paires.forEach((p, i) => {
+      const w0 = Math.min(8, 2.8 + Math.sqrt(p.n) * 1.4), d = (i * pas).toFixed(3);
+      if (!delai.has(p.x.l)) delai.set(p.x.l, d);
+      masques.push(`<mask id="${id}-${i}"><path d="${CARTE.trait(p.x.xy, { courbe: p.courbe })}" pathLength="1" stroke-width="${(w0 + 8).toFixed(1)}" style="--d:${d}s"/></mask>`);
+      bras.push(`<path class="bras" data-l="${p.x.l}" data-slug="${p.slug}" fill="${col(p.slug)}" mask="url(#${id}-${i})" d="${CARTE.bras(p.x.xy, { w0, w1: .8, courbe: p.courbe })}"/>`);
+    });
+    const ici = new Set(lieux.map(x => x.l)), autres = passe.filter(x => loin(x) && !ici.has(x.l));
+    const etiquette = x => `${CARTE.nom(x)} : ${x.dates.map(d => d.ligne).join(' ; ')}`;
+    const passeHtml = autres.map(x => `<path class="bras-passe" d="${CARTE.bras(x.xy, { w0: 1.6, w1: .5 })}"/>`).join('')
+      + autres.map(x => `<circle class="pt-passe" cx="${x.xy[0]}" cy="${x.xy[1]}" r="2.3"><title>${esc(etiquette(x))}</title></circle>`).join('');
+    const lieuxHtml = lieux.map(x => {
+      const hub = !loin(x), cols = slugsDe(x).map(col), r = hub ? 6.2 : 4.8;
+      return `<g class="carte-lieu${hub ? ' hub' : ''}" data-l="${x.l}" role="button" tabindex="0" aria-label="${esc(etiquette(x))}" style="--c:${cols[0]};--d:${delai.get(x.l) || 0}s">
+        <circle class="aura" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(r * 2.5).toFixed(1)}"/><g class="pt"><g class="pt-in">${pastille(x.xy, r, cols)}</g></g><title>${esc(etiquette(x))}</title></g>`;
+    }).join('');
+    const nomme = [...lieux.filter(loin).sort((a, b) => b.dates.length - a.dates.length), ...autres];
+    const noms = nomme.map((x, j) => `<text class="nom${j >= nomme.length - autres.length ? ' nom-passe' : ''}" data-l="${x.l}" data-x="${x.xy[0]}" data-y="${x.xy[1]}" x="${x.xy[0] + 8}" y="${x.xy[1] + 4}">${esc(x.c)}<tspan class="dep"> (${esc(x.dep)})</tspan></text>`).join('');
+    return `<svg class="carte-m03" viewBox="${CARTE.viewBox}" role="group" aria-label="${esc(titre)}"${attente ? ' data-attente="1"' : ''}>
+      <defs>${masques.join('')}</defs>
+      <path class="voisin" d="${CARTE.fond.belgique}"/><path class="voisin" d="${CARTE.fond.luxembourg}"/><path class="pays" d="${CARTE.fond.pays}"/>
+      <g class="passe">${passeHtml}</g><g>${bras.join('')}</g>
+      <circle class="hub-o" cx="${R[0]}" cy="${R[1]}" r="10"/>${lieux.some(x => !loin(x)) ? '' : `<circle class="hub-i" cx="${R[0]}" cy="${R[1]}" r="4.6"/>`}
+      ${lieuxHtml}
+      <g class="noms" aria-hidden="true">${noms}</g><text class="rouen-nom" aria-hidden="true" x="${R[0] + 12}" y="${R[1] - 12}">Rouen</text>
+    </svg>`;
+  }
+  // les noms des communes, à taille constante à l'écran, sans se chevaucher (les autres paraissent au survol)
+  function etiqueter(svg) {
+    const vb = svg.viewBox.baseVal, rc = svg.getBoundingClientRect();
+    if (!rc.width || !rc.height) return;
+    const k = Math.max(vb.width / rc.width, vb.height / rc.height), fs = 12.5 * k, pad = 3 * k, R = CARTE.rouen;
+    svg.style.setProperty('--k', k.toFixed(4));
+    const boites = [[R[0] - 11 * k, R[1] - 11 * k, R[0] + 11 * k, R[1] + 11 * k]];
+    const rn = svg.querySelector('.rouen-nom');
+    rn.setAttribute('x', (R[0] + 12 * k).toFixed(1)); rn.setAttribute('y', (R[1] - 12 * k).toFixed(1));
+    boites.push([R[0] + 12 * k - pad, R[1] - 12 * k - fs * .8 - pad, R[0] + 12 * k + rn.getComputedTextLength() + pad, R[1] - 12 * k + fs * .25 + pad]);
+    svg.querySelectorAll('.carte-lieu:not(.hub) .aura').forEach(c => { const x = +c.getAttribute('cx'), y = +c.getAttribute('cy'); boites.push([x - 5 * k, y - 5 * k, x + 5 * k, y + 5 * k]); });
+    const dedans = b => b[0] >= vb.x && b[2] <= vb.x + vb.width && b[1] >= vb.y && b[3] <= vb.y + vb.height;
+    const libre = b => boites.every(o => b[0] >= o[2] || b[2] <= o[0] || b[1] >= o[3] || b[3] <= o[1]);
+    svg.querySelectorAll('.nom').forEach(t => {
+      const x = +t.dataset.x, y = +t.dataset.y, L = t.getComputedTextLength();
+      const essais = [[x + 8 * k, y + fs * .35, 'start'], [x - 8 * k, y + fs * .35, 'end'], [x - L / 2, y - 8 * k, 'start'], [x - L / 2, y + 8 * k + fs * .75, 'start']];
+      let choisi = null, repli = null;
+      for (const [tx, ty, an] of essais) {
+        const x0 = an === 'end' ? tx - L : tx, b = [x0 - pad, ty - fs * .8 - pad, x0 + L + pad, ty + fs * .25 + pad];
+        if (!dedans(b)) continue;
+        repli = repli || [tx, ty, an];
+        if (libre(b)) { choisi = [tx, ty, an]; boites.push(b); break; }
+      }
+      const [tx, ty, an] = choisi || repli || essais[0];
+      t.setAttribute('x', tx.toFixed(1)); t.setAttribute('y', ty.toFixed(1)); t.setAttribute('text-anchor', an);
+      t.classList.toggle('cache', !choisi);
+    });
+  }
+  const ro = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(e => etiqueter(e.target))) : null;
+  const pousser = svg => requestAnimationFrame(() => requestAnimationFrame(() => svg.classList.add('pousse')));
+  // allume un bras (une date : commune et spectacle) ou une commune entière
+  function allumer(svg, sel) {
+    if (!svg) return;
+    svg.classList.toggle('focus', !!sel);
+    svg.querySelectorAll('.on').forEach(n => n.classList.remove('on'));
+    if (!sel) return;
+    const q = sel.slug != null ? `[data-l="${sel.l}"][data-slug="${sel.slug}"]` : `[data-l="${sel.l}"]`;
+    svg.querySelectorAll(`.bras${q}, .carte-lieu[data-l="${sel.l}"], .nom[data-l="${sel.l}"]`).forEach(n => n.classList.add('on'));
+  }
+  function survolLieu(svg, l) {
+    allumer(svg, l == null ? null : { l });
+    main.querySelectorAll('.dt').forEach(r => r.classList.toggle('on', l != null && r.dataset.l !== '' && +r.dataset.l === l));
+  }
+  function choisirLieu(l) {
+    const ag = document.getElementById('ag');
+    if (ag) { S.l = S.l === l ? null : l; majAgenda(true); return; }
+    const r = main.querySelector(`.dt[data-l="${l}"]`);
+    if (r) r.scrollIntoView({ block: 'center', behavior: CARTE.mouvement() ? 'smooth' : 'auto' });
   }
 
-  function setHash(h) { if ((location.hash || '#/') !== h) history.replaceState(null, '', h); }
-  function agendaHash() {
-    const p = [];
-    if (S.pub !== 'all') p.push('public=' + QPUB[S.pub]);
-    if (S.show) p.push('spectacle=' + S.show);
-    return `#/${S.base}${p.length ? '?' + p.join('&') : ''}`;
-  }
-
-  function clearFilters() {
-    S.pub = 'all'; S.show = null; S.q = '';
-    qInputs().forEach(i => { i.value = ''; });
-    updateAgenda();
-  }
-
-  function tourHtml() {
-    return SH.map(s => `<li class="tour-item" data-show="${s.slug}">
-      <button type="button" class="tour-btn" data-show="${s.slug}" aria-pressed="false">
-        <span class="dot" style="--c:${s.couleurTexteClair}" aria-hidden="true"></span>
-        <span class="tour-name">${esc(s.titre)}</span>
-        <span class="tour-n${COUNT[s.slug] ? '' : ' zero'}">${COUNT[s.slug]}<span class="sr"> ${COUNT[s.slug] > 1 ? 'dates' : 'date'}</span></span>
-      </button>
-      <a class="tour-go" href="#/spectacle/${s.slug}" aria-label="Page du spectacle ${esc(s.titre)}" title="Page du spectacle">${ARROW}</a>
-    </li>`).join('');
-  }
-
-  function progLine(s) {
-    if (!isShow(s)) return '';
-    return [s.annee && `Création ${s.annee}`, s.duree, s.distribution.length && plural(s.distribution.length, 'comédien', 'comédiens')].filter(Boolean).join(' · ');
-  }
-  function etabLine(s) {
-    const e = s.etablissement || {};
-    const mode = { etablissement: 'Vient dans l’établissement', salle: 'Se joue en salle', a_confirmer: 'Accueil à confirmer' }[e.mode] || '';
-    return [mode, s.passCulture && 'Pass Culture'].filter(Boolean).join(' · ');
-  }
-
-  function cardHtml(s) {
-    let extra = '', none = false;
-    if (S.door === 'programmer') extra = progLine(s);
-    else if (S.door === 'etablissement') extra = etabLine(s);
-    else if (isShow(s)) { none = !COUNT[s.slug]; extra = none ? 'Aucune date annoncée pour l’instant' : `${plural(COUNT[s.slug], 'date', 'dates')} cette saison`; }
-    return `<li><a class="card" href="#/spectacle/${s.slug}${S.door === 'voir' ? '' : '/' + S.door}">
-      <span class="card-img"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></span>
-      <span class="card-t"><span class="dot" style="--c:${s.couleurTexteClair}" aria-hidden="true"></span><span>${esc(s.titre)}</span></span>
-      <span class="card-s lab">${esc(s.sousTitre)}</span>
-      ${extra ? `<span class="card-x${none ? ' none' : ''}">${esc(extra)}</span>` : ''}
-    </a></li>`;
-  }
-
-  const repNote = () => `<b>${esc(DOOR[S.door].titre)}</b> : ${DOOR_NOTE[S.door]} Chaque page s’ouvre sur l’onglet qui vous concerne.`;
-  const repHash = () => '#/spectacles' + (S.door === 'voir' ? '' : '?voir=' + S.door);
-
-  function spectaclesHtml() {
-    const shows = SH.filter(isShow);
-    const yrs = shows.map(s => Number(s.annee)).filter(Boolean);
-    const span = yrs.length ? `, créés de ${Math.min(...yrs)} à ${Math.max(...yrs)}` : '';
-    return `<section class="wrap g12 hero" aria-labelledby="h1">
-        <div class="hero-main hero-wide">
-          <h1 class="saison" id="h1" tabindex="-1">Les spectacles</h1>
-          <p class="hero-sum"><b>${plural(shows.length, 'spectacle', 'spectacles')}</b>${span}${shows.length < SH.length ? ', et <b>les actions culturelles</b> de la compagnie' : ''}</p>
-          <div class="seg seg-v" role="group" aria-label="Adapter les fiches à votre projet">
-            ${D.doors.map(d => `<button type="button" data-door="${d.key}" aria-pressed="${S.door === d.key}">${esc(d.titre)}</button>`).join('')}
-          </div>
-        </div>
-      </section>
-      <div class="wrap"><section class="page-in" aria-labelledby="h-rep">
-        <h2 class="sr" id="h-rep">Le répertoire</h2>
-        <div class="status"><p class="rep-note" id="rep-note" role="status" aria-live="polite">${repNote()}</p></div>
-        <ul class="cards" id="cards">${SH.map(cardHtml).join('')}</ul>
-      </section></div>`;
-  }
-
-  function updateRep() {
-    if (S.view !== 'spectacles') return;
-    document.getElementById('cards').innerHTML = SH.map(cardHtml).join('');
-    document.getElementById('rep-note').innerHTML = repNote();
-    main.querySelectorAll('[data-door]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.door === S.door)));
-    setHash(repHash());
-  }
-
-  function agendaHtml() {
-    const first = DATES[0], last = DATES[DATES.length - 1];
-    const span = first && last ? `, de ${MOISL[first.m - 1]} ${first.y} à ${MOISL[last.m - 1]} ${last.y}` : '';
-    return `<section class="wrap g12 hero" aria-labelledby="h1">
-        <div class="hero-main">
-          <h1 class="saison" id="h1" tabindex="-1">Saison ${esc(D.saison)}</h1>
-          <p class="hero-sum"><b>${plural(DATES.length, 'date', 'dates')}</b> dans <b>${plural(NCOMMUNES, 'commune', 'communes')}</b>${span}</p>
-          <div class="seg" role="group" aria-label="Filtrer les dates par public">
-            ${PUBS.map(([k, l]) => `<button type="button" data-pub="${k}" aria-pressed="${S.pub === k}">${l}</button>`).join('')}
-          </div>
-        </div>
-        <nav class="doors" aria-label="Accès directs">
-          <p class="lab">Accès directs</p>
-          <ul>${D.doors.map(d => `<li><a href="${DOOR_HREF[d.key]}"><span>${esc(d.titre)}</span>${ARROW}</a></li>`).join('')}</ul>
-        </nav>
-      </section>
-      <div class="wrap g12 body">
-        <div class="msearch field">
-          <label class="sr" for="q2">Rechercher une ville ou un spectacle</label>
-          ${LOUPE}<input id="q2" type="search" placeholder="Ville ou spectacle" autocomplete="off" spellcheck="false">
-        </div>
-        <aside class="tour" aria-labelledby="h-tour">
-          <h2 class="tour-h" id="h-tour">Les spectacles en tournée</h2>
-          <div class="tour-cols lab" aria-hidden="true"><span>Spectacle</span><span>Dates</span></div>
-          <ul class="tour-list">${tourHtml()}</ul>
-          <p class="tour-hint lab">Choisissez un spectacle pour n’afficher que ses dates ; un second clic retire le filtre. La flèche ouvre sa page.</p>
-          <p class="tour-more"><a class="go" href="#/spectacles"><span>Tout le répertoire</span>${ARROW}</a></p>
-        </aside>
-        <section class="agenda" aria-labelledby="h-agenda">
-          <h2 class="sr" id="h-agenda" tabindex="-1">Les dates de la saison</h2>
-          <div class="status">
-            <p class="count" id="count" role="status" aria-live="polite" aria-atomic="true"></p>
-            <div class="status-act" id="status-act"></div>
-          </div>
-          <div id="list"></div>
-        </section>
-      </div>`;
-  }
-
-  function artistsList() {
-    const A = new Map();
-    SH.forEach(s => s.distribution.forEach(e => e.split(/\s+ou\s+/).forEach(n => {
-      const k = n.trim();
-      if (!k) return;
-      if (!A.has(k)) A.set(k, []);
-      A.get(k).push(s.titre + (/\sou\s/.test(e) ? ' (en alternance)' : ''));
-    })));
-    return [...A.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
-  }
-
-  function compagnieHtml() {
-    const c = D.company, st = D.stats, art = artistsList();
-    return `<section class="wrap g12 hero" aria-labelledby="h1">
-        <div class="hero-main">
-          <h1 class="saison" id="h1" tabindex="-1">La compagnie</h1>
-          <p class="hero-sum">Théâtre, <b>${esc(c.ville)}</b>, depuis <b>${esc(c.depuis)}</b></p>
-        </div>
-      </section>
-      <div class="wrap"><div class="page-in">
-        <section class="g12 co-body" aria-labelledby="h-pres">
-          <h2 class="sr" id="h-pres">Présentation</h2>
-          <div class="co-text">
-            <p class="co-lead">${esc(c.intention)}</p>
-            <p>${esc(c.presentation)}</p>
-            <p>Mise en scène des spectacles : ${esc(c.miseEnScene)}.</p>
-          </div>
-          <div class="stats">
-            <ul>
-              <li><b>${esc(st.representationsCourt)}</b><span>représentations depuis ${esc(st.depuis)}</span></li>
-              <li><b>${esc(st.parAnMin)}</b><span>par an au moins, depuis ${esc(st.parAnDepuis)}</span></li>
-              <li><b>${esc(st.pays)}</b><span>pays : ${esc(st.paysListe.join(', '))}</span></li>
-            </ul>
-            <p class="stats-note lab">Chiffres du ${esc(st.source)}. Le site ne publie qu’une partie des dates.</p>
-          </div>
-        </section>
-        <section class="sec" aria-labelledby="h-art">
-          <div class="g12 sec-head"><h2 id="h-art">Au plateau</h2><p class="lab">${art.length} artistes dans les distributions du répertoire.</p></div>
-          <ul class="artists">${art.map(([n, t]) => `<li><b>${esc(n)}</b><span class="lab">${t.map(esc).join(', ')}</span></li>`).join('')}</ul>
-        </section>
-        <section class="sec" aria-labelledby="h-part">
-          <div class="g12 sec-head"><h2 id="h-part">Partenaires</h2></div>
-          <ul class="partners">${c.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
-        </section>
-      </div></div>`;
-  }
-
-  function contactHtml() {
-    const c = D.company;
-    return `<section class="wrap g12 hero" aria-labelledby="h1">
-        <div class="hero-main">
-          <h1 class="saison" id="h1" tabindex="-1">Contact</h1>
-          <p class="hero-mail"><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>
-          <address class="hero-sum"><b>${esc(c.nom)}</b><br>${esc(c.adresse)}</address>
-        </div>
-      </section>
-      <div class="wrap"><div class="page-in">
-        <section aria-labelledby="h-portes">
-          <div class="status"><h2 class="st-h" id="h-portes">Selon votre projet</h2></div>
-          <ul class="g12 ct-grid">${D.doors.map(d => `<li class="ct">
-            <h3>${esc(d.titre)}</h3>
-            <p>${esc(d.texte)}</p>
-            <dl>
-              <div><dt>Contact</dt><dd><span class="tbc">à fournir</span></dd></div>
-              <div><dt>E-mail</dt><dd><a href="${esc(`mailto:${c.email}?subject=${encodeURIComponent(d.titre)}`)}">${esc(c.email)}</a></dd></div>
-            </dl>
-            <a class="go" href="${DOOR_HREF[d.key]}"><span>${esc(DOOR_GO[d.key])}</span>${ARROW}</a>
-          </li>`).join('')}</ul>
-        </section>
-        <section class="sec" aria-labelledby="h-lettre">
-          <div class="g12 sec-head"><h2 id="h-lettre">Lettre d’information</h2></div>
-          <p class="letter">Inscription : <span class="tbc">à fournir</span>.</p>
-        </section>
-      </div></div>`;
-  }
-
-  function dcardHtml(d) {
-    const w = d.when;
-    const top = w.tbc
-      ? `<span class="day">${esc(cap(d.moisLong))}</span><span class="wd lab">${d.y}, jour à préciser</span>`
-      : `${bigDay(w)}<span class="wd lab">${esc(w.sub)} · ${esc(d.mois)} ${d.y}</span>`;
-    return `<li class="dcard">
-      <p class="when" aria-hidden="true">${top}</p><p class="sr">${esc(w.sr)}</p>
-      ${whereHtml(d, true)}
-      <div class="dc-foot">${badge(d)}${infos(d)}</div>
+  /* ---------- L'agenda : filtres par spectacle, recherche, liste et carte synchronisées ---------- */
+  const detailsHtml = det => det && det.length ? `<ul class="det">${det.map(t => `<li>${t.lien ? `<a href="${esc(t.lien)}" target="_blank" rel="noopener">${esc(t.texte)}${EXT}</a>` : esc(t.texte)}</li>`).join('')}</ul>` : '';
+  function rowHtml(d, compact) {
+    const j = decoupe(d.ligneDate);
+    return `<li class="row dt" data-l="${d.l}" data-slug="${d.slug}" style="--c:${col(d.slug)}">
+      <p class="when"><span aria-hidden="true">${j.grand}</span><span class="sr">${esc(d.ligneDate)}</span></p>
+      <div class="what">
+        <a class="t-link" href="#/spectacle/${d.slug}"><span class="dot" aria-hidden="true"></span><span class="t-txt">${esc(d.titre)}</span></a>
+        <p class="where">${esc(d.ligneLieu)}</p>
+        ${compact ? '' : detailsHtml(d.details)}
+      </div>
     </li>`;
   }
-
-  function factsHtml(s) {
-    const tbc = '<span class="tbc">à fournir</span>';
-    const rows = isShow(s) ? [
-      ['Création', s.annee ? esc(s.annee) : tbc],
-      ['Durée', s.duree ? esc(s.duree) : tbc],
-      ['Au plateau', s.distribution.length ? plural(s.distribution.length, 'comédien', 'comédiens') : tbc],
-      ['Équipe', s.equipe.length ? `<ul class="team">${s.equipe.map(([r, n]) => `<li><span>${esc(r)}</span><b>${esc(n)}</b></li>`).join('')}</ul>` : tbc],
-    ] : [
-      ['Format', esc(cap(s.sousTitre))],
-      ['Pour qui', 'Collèges, lycées et théâtres'],
-      ['Soutiens', s.soutiens ? esc(s.soutiens) : tbc],
-    ];
-    return `<aside class="facts" aria-labelledby="h-facts"><h2 id="h-facts">En bref</h2><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl></aside>`;
+  function listeHtml(dates, compact) {
+    let html = '', cur = '';
+    dates.forEach(d => {
+      const ym = d.iso.slice(0, 7);
+      if (ym !== cur) {
+        if (cur) html += '</ol></section>';
+        cur = ym;
+        const [y, m] = ym.split('-').map(Number);
+        html += `<section class="mois"><h2 class="mois-h"><span class="mo">${MOIS[m - 1]}</span> <span class="yr">${y}</span></h2><ol>`;
+      }
+      html += rowHtml(d, compact);
+    });
+    return cur ? html + '</ol></section>' : '';
   }
-
-  function contactBox(s, sujet) {
-    const mail = `mailto:${D.company.email}?subject=${encodeURIComponent(sujet + ' : ' + s.titre)}`;
-    return `<div class="contact-box"><p class="lab">Contact</p><p><a href="${esc(mail)}">${esc(D.company.email)}</a></p><p class="lab">${esc(D.company.adresse)}</p></div>`;
-  }
-
-  function panelVoir(s, dates) {
-    const tp = dates.filter(d => d.public === 'Tout public');
-    const list = tp.length ? `<ul class="mini">${tp.map(d => `<li><span><b>${esc(d.when.tbc ? cap(d.label) : (d.when.rest ? cap(d.label) : `${cap(d.joursemLong)} ${d.label}`))}</b><br>${esc(d.commune)} (${esc(d.dep)})${d.place.venue ? ', ' + esc(d.place.venue) : ''}${d.place.note ? ', ' + esc(d.place.note) : ''}</span>${infos(d)}</li>`).join('')}</ul>`
-      : `<div class="none-box"><p>Aucune représentation tout public annoncée pour l’instant.</p><p>Les prochaines dates paraîtront ici et dans l’agenda de la saison.</p></div>`;
-    return `<div class="g12 panel-grid">
-      <div class="p-main">
-        <h3 class="p-h">${tp.length ? `${plural(tp.length, 'représentation', 'représentations')} tout public` : 'Représentations tout public'}</h3>
-        ${list}
-        ${tp.length ? '<p class="lab">La réservation se fait auprès de chaque lieu : suivez le lien « Infos » de la date.</p>' : ''}
-      </div>
-      <div class="p-side">${contactBox(s, 'Venir voir')}</div>
-    </div>`;
-  }
-
-  function panelProg(s) {
-    const tbc = '<span class="tbc">à fournir</span>';
-    const fiche = isShow(s) ? [
-      ['Création', s.annee ? esc(s.annee) : tbc],
-      ['Durée', s.duree ? esc(s.duree) : tbc],
-      ['Au plateau', s.distribution.length ? plural(s.distribution.length, 'comédien', 'comédiens') : tbc],
-      ['Distribution', s.distribution.length ? s.distribution.map(esc).join('<br>') : tbc],
-      ['Coproduction', s.coproduction ? esc(s.coproduction) : tbc],
-      ['Soutiens', s.soutiens ? esc(s.soutiens) : tbc],
-    ] : [
-      ['Format', esc(cap(s.sousTitre))],
-      ['Soutiens', s.soutiens ? esc(s.soutiens) : tbc],
-    ];
-    const docs = [
-      ['Fiche technique', tbc],
-      ['Dossier de diffusion', tbc],
-      ['Conditions financières', tbc],
-      ['Vidéo', s.video ? `<a class="infos" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo${EXT}</a>` : tbc],
-    ];
-    return `<div class="g12 panel-grid">
-      <div class="p-main">
-        <h3 class="p-h">Fiche du spectacle</h3>
-        <dl class="kv">${fiche.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-      </div>
-      <div class="p-side">
-        <h3 class="p-h">Documents</h3>
-        <dl class="kv">${docs.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-        <div style="margin-top:24px">${contactBox(s, 'Programmation')}</div>
-      </div>
-    </div>`;
-  }
-
-  function panelEtab(s) {
-    const e = s.etablissement || {};
-    const mode = { etablissement: 'Dans l’établissement', salle: 'En salle de spectacle', a_confirmer: 'À confirmer avec la compagnie' }[e.mode];
-    const rows = [
-      ['Où il se joue', mode ? esc(mode) : '<span class="tbc">à fournir</span>'],
-      ['Pass Culture', s.passCulture ? 'Offre collective disponible' : '<span class="tbc">pas d’offre référencée</span>'],
-      ['Guide du CRED76', s.cred76 ? `<a class="infos" href="${esc(s.cred76)}" target="_blank" rel="noopener">Voir la fiche du guide${EXT}</a>` : '<span class="tbc">pas de fiche référencée</span>'],
-    ];
-    return `<div class="g12 panel-grid">
-      <div class="p-main">
-        <p class="p-lead">${e.texte ? esc(e.texte) : '<span class="tbc">à fournir</span>'}</p>
-        ${s.noteScolaire ? `<p>${esc(s.noteScolaire)}</p>` : ''}
-        <dl class="kv">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
-      </div>
-      <div class="p-side">${contactBox(s, 'Établissement')}</div>
-    </div>`;
-  }
-
-  const TABS = [['voir', panelVoir], ['programmer', panelProg], ['etablissement', panelEtab]];
-
-  function showHtml(s, tab) {
-    const i = SH.indexOf(s), nx = SH[(i + 1) % SH.length];
-    const dates = DATES.filter(d => d.slug === s.slug);
-    const band = dates.length
-      ? `<div class="band-head"><h2 id="h-dates">Les dates</h2><p class="lab">${plural(dates.length, 'date', 'dates')} cette saison<span class="sep" aria-hidden="true">·</span><a href="#/agenda?spectacle=${s.slug}">voir dans l’agenda</a></p>
-          <div class="band-nav" hidden><button type="button" data-band="-1" aria-label="Dates précédentes">${ARROW}</button><button type="button" data-band="1" aria-label="Dates suivantes">${ARROW}</button></div></div>
-         <ol class="band" tabindex="0" aria-labelledby="h-dates">${dates.map(dcardHtml).join('')}</ol>`
-      : `<div class="band-head"><h2 id="h-dates">Les dates</h2></div>
-         <div class="none-box"><p>Aucune date annoncée pour l’instant.</p><p>Pour accueillir ${esc(s.titre)}, écrivez à <a href="mailto:${esc(D.company.email)}">${esc(D.company.email)}</a>.</p></div>`;
-    return `<article class="wrap show" style="--c:${s.couleurTexteClair}">
-      <p class="back"><a href="#/spectacles">${ARROW}<span>Tous les spectacles</span></a></p>
-      <header class="show-head">
-        <h1 class="show-t" id="h1" tabindex="-1"><span class="dot" aria-hidden="true"></span><span>${esc(s.titre)}</span></h1>
-        <p class="show-sub">${esc(s.sousTitre)}</p>
-      </header>
-      <section class="band-sec" aria-labelledby="h-dates">${band}</section>
-      <div class="g12 show-grid">
-        <figure class="show-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption class="lab">${esc(s.credit)}</figcaption>` : ''}</figure>
-        ${factsHtml(s)}
-        <div class="show-text"><p class="accroche">${esc(s.accroche)}</p><p>${esc(s.texte)}</p></div>
-      </div>
-      <section class="tabs-sec" aria-labelledby="h-tabs">
-        <h2 class="tabs-h" id="h-tabs">Selon votre projet</h2>
-        <div class="tablist" role="tablist" aria-labelledby="h-tabs">
-          ${TABS.map(([k]) => `<button type="button" class="tab" role="tab" id="tab-${k}" data-tab="${k}" aria-controls="panel-${k}" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}">${esc(DOOR[k].titre)}</button>`).join('')}
+  function agendaModule(mode) {
+    return `<div class="ag ag-${mode}" id="ag">
+      <div class="ag-bar">
+        <div class="chips" role="group" aria-label="${esc(LIB.spectacles)}">${EN_TOURNEE.map(s => `<button type="button" class="chip" data-slug="${s.slug}" aria-pressed="false" style="--c:${s.couleurTexteClair}"><span class="dot" aria-hidden="true"></span>${esc(s.titre)}</button>`).join('')}</div>
+        <div class="ag-tools">
+          <span id="lieu-sel"></span>
+          <div class="field" role="search"><label class="sr" for="q">${esc(LIB.rechercher)}</label>${LOUPE}<input id="q" type="search" placeholder="${esc(LIB.rechercher)}" value="${esc(S.q)}" autocomplete="off" spellcheck="false"></div>
         </div>
-        ${TABS.map(([k, fn]) => `<div class="panel" role="tabpanel" id="panel-${k}" aria-labelledby="tab-${k}" tabindex="0"${k === tab ? '' : ' hidden'}>${fn(s, dates)}</div>`).join('')}
-      </section>
-      <nav class="next" aria-label="Spectacle suivant">
-        <a href="#/spectacle/${nx.slug}">
-          <span><span class="lab">Spectacle suivant</span><span class="next-t"><span class="dot" style="--c:${nx.couleurTexteClair}" aria-hidden="true"></span><span class="next-txt">${esc(nx.titre)}</span></span></span>
-          <span class="next-arrow" aria-hidden="true">${ARROW}</span>
-        </a>
-      </nav>
+      </div>
+      <div class="ag-grid">
+        <div class="ag-carte">${carteSvg({ lieux: CARTE.aVenir(), titre: SITE.saisons[0].titre, attente: mode === 'accueil' })}</div>
+        <div class="ag-liste" id="liste"></div>
+      </div>
+    </div>`;
+  }
+  function majAgenda(remonter) {
+    const ag = document.getElementById('ag');
+    if (!ag) return;
+    const res = DATES.filter(correspond);
+    ag.querySelector('#liste').innerHTML = listeHtml(res, ag.classList.contains('ag-accueil'));
+    const paires = new Set(res.map(d => d.l + '|' + d.slug)), lieux = new Set(res.map(d => d.l));
+    const svg = ag.querySelector('svg.carte-m03');
+    allumer(svg, null);
+    svg.querySelectorAll('.bras').forEach(b => b.classList.toggle('hors', !paires.has(b.dataset.l + '|' + b.dataset.slug)));
+    svg.querySelectorAll('.carte-lieu').forEach(g => {
+      const l = +g.dataset.l, hors = !lieux.has(l);
+      g.classList.toggle('hors', hors); g.classList.toggle('sel', l === S.l);
+      g.setAttribute('aria-pressed', String(l === S.l)); g.tabIndex = hors ? -1 : 0;
+    });
+    svg.querySelectorAll('.nom').forEach(t => t.classList.toggle('hors', !lieux.has(+t.dataset.l)));
+    ag.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.slug === S.slug)));
+    const x = S.l != null && CARTE.lieux[S.l];
+    ag.querySelector('#lieu-sel').innerHTML = x ? `<button type="button" class="lieu-chip" aria-pressed="true"><span class="lieu-pin" aria-hidden="true"></span>${esc(CARTE.nom(x))}${CROIX}</button>` : '';
+    if (remonter && ag.getBoundingClientRect().top < 0) ag.scrollIntoView({ block: 'start' });
+  }
+
+  /* ---------- Les vues ---------- */
+  const tete = (titre, plus = '') => `<section class="wrap hero"><div class="hero-main"><h1 class="saison" id="h1" tabindex="-1">${esc(titre)}</h1></div>${plus}</section>`;
+  const saisonsNav = cur => `<nav class="wrap saisons" aria-label="${esc(LIB.saison)}"><ul class="sa-list">${SITE.saisons.map(x => `<li><a href="${x.href}"${x.saison === cur ? ' aria-current="true"' : ''}>${esc(x.titre)}</a></li>`).join('')}</ul></nav>`;
+
+  function accueilHtml() {
+    const portes = `<ul class="portes">${SITE.portes.map(p => `<li><a href="${p.href}" style="--p:${p.couleur}"><span>${esc(p.texte)}</span>${ARROW}</a></li>`).join('')}</ul>`;
+    const diapo = SITE.diaporama.map(x => {
+      const s = BY[x.slug] || {};
+      return `<li class="dia" style="--c:${col(x.slug)}">
+        <a class="dia-img" href="${x.href}" tabindex="-1" aria-hidden="true"><img src="${D.photos[x.slug]}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 50%"></a>
+        <p class="dia-sur">${esc(x.surtitre)}</p>
+        <h2 class="dia-t"><span class="dot" aria-hidden="true"></span><span>${x.titre.map(esc).join('<br>')}</span></h2>
+        <a class="dia-go" href="${x.href}" aria-label="${esc(x.bouton)} : ${esc(x.titre.join(' '))}">${esc(x.bouton)}${ARROW}</a>
+        ${x.credit ? `<p class="dia-cr">${esc(x.credit)}</p>` : ''}
+      </li>`;
+    }).join('');
+    return `${tete(SITE.saisons[0].titre, portes)}
+      <div class="wrap">${agendaModule('accueil')}</div>
+      <section class="wrap diapo-sec" aria-label="${esc(LIB.enTournee)}"><ul class="diapo">${diapo}</ul></section>
+      <div class="wrap dons"><p>${SITE.donateurs}</p></div>`;
+  }
+
+  const agendaHtml = () => `${tete(SITE.saisons[0].titre)}<div class="wrap">${agendaModule('agenda')}</div>${saisonsNav(SITE.saisons[0].saison)}`;
+
+  function saisonHtml(key) {
+    const sa = D.saisons[key];
+    const ligne = (d, g) => `<li class="dt" data-l="${d.l == null ? '' : d.l}" data-slug="${g.slug || ''}"><p class="sa-ligne">${esc(d.ligne)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${detailsHtml(d.details)}</li>`;
+    return `${tete(sa.titre)}
+      <div class="wrap g12 sa-body">
+        <div class="sa-main">${sa.spectacles.map(g => `<section class="sa-sp" style="--c:${col(g.slug)}">
+          <h2 class="sa-t"><span class="dot" aria-hidden="true"></span>${g.slug && own(BY, g.slug) ? `<a href="#/spectacle/${g.slug}">${esc(g.titre)}</a>` : `<span>${esc(g.titre)}</span>`}</h2>
+          ${g.sousTitre ? `<p class="sa-s">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="sa-c">${esc(g.creation)}</p>` : ''}
+          <ol class="sa-rows">${g.dates.map(d => ligne(d, g)).join('')}</ol>
+        </section>`).join('')}</div>
+        <div class="sa-carte">${carteSvg({ lieux: CARTE.saison(key), titre: sa.titre })}</div>
+      </div>
+      ${saisonsNav(key)}`;
+  }
+
+  const spectaclesHtml = () => `${tete(MENU.spectacles.texte)}
+    <div class="wrap"><ul class="cards">${SH.map(s => `<li><a class="card" href="#/spectacle/${s.slug}" style="--c:${s.couleurTexteClair}">
+      <span class="card-img"><img src="${D.photos[s.slug]}" alt="" loading="lazy" style="object-position:${s.focale}% 50%">${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</span>
+      <span class="card-t"><span class="dot" aria-hidden="true"></span><span class="card-tt">${esc(s.titre)}</span></span>
+      ${s.sousTitre ? `<span class="card-s">${s.sousTitre}</span>` : ''}${s.creation ? `<span class="card-c">${esc(s.creation)}</span>` : ''}
+      ${s.prochaine ? `<span class="card-n">${esc(s.prochaine.ligne)}</span>` : ''}
+    </a></li>`).join('')}</ul></div>`;
+
+  function mediasHtml(s) {
+    if (!s.medias || !s.medias.length) return '';
+    let g = null;
+    return `<ul class="medias">${s.medias.map(m => {
+      const t = (m.groupe && m.groupe !== g ? `<li class="m-g">${esc(m.groupe)}</li>` : '') + `<li><a href="${esc(m.url)}" target="_blank" rel="noopener">${LIRE}<span>${esc(m.titre || m.url)}</span></a>${m.par ? `<span class="m-par">${esc(m.par)}</span>` : ''}</li>`;
+      g = m.groupe; return t;
+    }).join('')}</ul>`;
+  }
+  function tourneeHtml(s) {
+    const dates = DATES.filter(d => d.slug === s.slug), K = CARTE.spectacle(s.slug);
+    const carte = (lieux, cls = '') => `<div class="t-carte${cls}">${carteSvg({ lieux, passe: K.passe, titre: s.titre })}</div>`;
+    if (dates.length) {
+      const cartes = dates.map(d => { const j = decoupe(d.ligneDate); return `<li class="dcard dt" data-l="${d.l}" data-slug="${d.slug}">
+        <p class="when"><span aria-hidden="true">${j.grand}${j.sous ? `<span class="j-sous">${esc(j.sous)}</span>` : ''}</span><span class="sr">${esc(d.ligneDate)}</span></p>
+        <p class="where">${esc(d.ligneLieu)}</p>${detailsHtml(d.details)}</li>`; }).join('');
+      return `<section class="tournee" aria-labelledby="h-tournee"><h2 id="h-tournee">${esc((s.tournee && s.tournee.titre) || LIB.actuellementEnTournee)}</h2>
+        ${s.tournee && s.tournee.texte ? `<p class="t-texte">${esc(s.tournee.texte)}</p>` : ''}
+        <div class="g12 t-grid"><ol class="dcards">${cartes}</ol>${carte(K.aVenir)}</div></section>`;
+    }
+    if (K.passe.length) return `<section class="tournee" aria-label="${esc(s.titre)}"><div class="g12 t-grid">${carte([], ' seule')}</div></section>`;
+    if (s.tournee) return `<section class="tournee" aria-labelledby="h-tournee"><div class="g12 t-grid"><div class="t-cr"><h2 id="h-tournee">${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p class="t-texte">${esc(s.tournee.texte)}</p>` : ''}</div>${carte([])}</div></section>`;
+    return '';
+  }
+  function spectacleHtml(s) {
+    const fiche = [...(s.fiche || []).map(f => [f.libelle, f.valeur]), ...(s.avec ? [[s.avec.libelle, s.avec.valeur]] : [])];
+    return `<article class="wrap show" style="--c:${s.couleurTexteClair}">
+      <p class="back"><a href="#/spectacles">${ARROW}<span>${esc(MENU.spectacles.texte)}</span></a></p>
+      <header class="show-head">
+        ${s.statut ? `<p class="statut">${esc(s.statut)}</p>` : ''}
+        <h1 class="show-t" id="h1" tabindex="-1"><span class="dot" aria-hidden="true"></span><span>${s.titreLignes.map(esc).join('<br>')}</span></h1>
+        ${s.sousTitre ? `<p class="show-sub">${s.sousTitre}</p>` : ''}${s.genre && s.genre !== s.sousTitre ? `<p class="show-sub">${esc(s.genre)}</p>` : ''}
+        ${s.creation ? `<p class="show-cr">${esc(s.creation)}</p>` : ''}
+      </header>
+      <div class="g12 show-grid">
+        <figure class="show-photo"><img src="${D.photos[s.slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
+        <div class="facts">
+          ${fiche.length ? `<dl class="fiche">${fiche.map(([l, v]) => `<div>${l ? `<dt>${esc(l)}</dt>` : ''}<dd>${v}</dd></div>`).join('')}</dl>` : ''}
+          ${s.duree ? `<p class="duree">${esc(s.duree)}</p>` : ''}
+          ${(s.mentions || []).map(m => `<p class="mention">${m}</p>`).join('')}
+        </div>
+        <div class="show-text">${(s.texte || []).map(p => `<p>${p}</p>`).join('')}
+          ${s.cadre ? `<p class="cadre">${esc(s.cadre)}</p>` : ''}
+          ${s.extraits && s.extraits.length ? `<ul class="extraits">${s.extraits.map(x => `<li><blockquote>${esc(x.citation)}</blockquote><cite>${esc(x.source)}</cite></li>`).join('')}</ul>` : ''}
+        </div>
+        <div class="show-side">${(s.production || []).length ? `<div class="prod">${s.production.map(p => `<p>${p}</p>`).join('')}</div>` : ''}${mediasHtml(s)}</div>
+      </div>
+      ${tourneeHtml(s)}
     </article>`;
   }
 
-  function footHtml() {
-    const c = D.company;
-    const adr = c.adresse.split(', ');
+  function compagnieHtml() {
+    const c = SITE.compagnie;
+    return `${tete(c.titre)}
+      <div class="wrap g12 co">
+        <div class="co-text">${c.paragraphes.map(bloc).join('')}</div>
+        <section class="co-dates" aria-labelledby="h-dates"><h2 class="co-h" id="h-dates">${esc(c.datesTitre)}</h2>
+          <ol class="annees">${c.dates.map(x => `<li><span class="an">${esc(x.annee)}</span><span class="an-t">${esc(x.titre)}</span></li>`).join('')}</ol></section>
+      </div>`;
+  }
+  function actionsHtml() {
+    const a = SITE.actions;
+    return `${tete(a.titre)}
+      <div class="wrap g12 act">
+        <div class="act-text prose">${a.blocs.map(bloc).join('')}</div>
+        <figure class="act-fig"><img src="${D.photos['actions-culturelles']}" alt="${esc(a.titre)}" loading="lazy">${a.credit ? `<figcaption>${esc(a.credit)}</figcaption>` : ''}</figure>
+      </div>`;
+  }
+  function proHtml() {
+    const p = SITE.pro;
+    return `${tete(p.titre)}
+      <div class="wrap"><form class="form" novalidate>
+        <p class="pro-t">${esc(p.texte)}</p>
+        <p class="fld"><label for="pw">${esc(p.champ)}</label><input id="pw" type="password" autocomplete="current-password"></p>
+        <button class="btn" type="submit">${esc(p.bouton)}</button>
+      </form></div>`;
+  }
+  function contactHtml() {
+    const c = SITE.contact, co = SITE.coordonnees, ch = c.champs;
+    const i = c.consentement.toLowerCase().indexOf('politique de confidentialité');
+    const consent = i > 0 ? `${esc(c.consentement.slice(0, i))}<a href="#/politique-de-confidentialite">${esc(c.consentement.slice(i))}</a>` : esc(c.consentement);
+    const types = [['text', 'name'], ['email', 'email'], ['tel', 'tel'], ['text', 'address-level2']];
+    return `${tete(c.titre)}
+      <div class="wrap g12 ct">
+        <form class="form ct-form" novalidate>
+          <div class="fld-2">${ch.slice(0, 4).map((f, k) => `<p class="fld"><label for="f${k}">${esc(f)}</label><input id="f${k}" type="${types[k][0]}" autocomplete="${types[k][1]}"></p>`).join('')}</div>
+          <p class="fld"><label for="f4">${esc(ch[4])}</label><textarea id="f4" rows="7"></textarea></p>
+          <p class="chk"><input id="f5" type="checkbox"><label for="f5">${consent}</label></p>
+          <p class="calc"><label for="f6">${esc(c.calcul)}</label><input id="f6" inputmode="numeric" autocomplete="off"></p>
+          <button class="btn" type="submit">${esc(c.bouton)}</button>
+        </form>
+        <address class="ct-co"><b>${esc(co.nom)}</b><br>${co.adresse.map(esc).join('<br>')}</address>
+      </div>`;
+  }
+  // les mentions d'origine, sans le crédit de l'agence web d'origine
+  const legalHtml = key => `${tete(SITE.legal[key].titre)}<div class="wrap"><div class="prose legal">${SITE.legal[key].blocs.filter(b => !/réalisation multimédia|envoilauneidee/i.test(b)).map(bloc).join('')}</div></div>`;
+
+  function piedHtml() {
+    const co = SITE.coordonnees;
     return `<div class="wrap g12 foot">
       <div class="f-brand">
-        <a class="brand" href="#/" aria-label="Crescite, accueil"><span class="brand-mark" aria-hidden="true">${D.logo.mark}</span><span>crescite</span></a>
-        <p>${esc(c.nom)}, théâtre, ${esc(c.ville)}, depuis ${esc(c.depuis)}.</p>
+        <a class="brand" href="#/" aria-label="${esc(SITE.nom)} - ${esc(SITE.accueil)}"><span class="brand-mark" aria-hidden="true">${D.logo.mark}</span><span>${esc(SITE.titreSuffixe)}</span></a>
+        <address><b>${esc(co.nom)}</b><br>${co.adresse.map(esc).join('<br>')}</address>
+        <p class="f-links"><a href="${SITE.ecrire.href}">${esc(SITE.ecrire.texte)}</a>${SITE.facebook.href ? `<a href="${esc(SITE.facebook.href)}">${esc(SITE.facebook.texte)}</a>` : `<span>${esc(SITE.facebook.texte)}</span>`}</p>
       </div>
-      <div class="f-col">
-        <h2>Contact</h2>
-        <address>${adr.map(esc).join('<br>')}</address>
-        <p style="margin-top:8px"><a href="mailto:${esc(c.email)}">${esc(c.email)}</a></p>
-      </div>
-      <div class="f-col">
-        <h2>Partenaires</h2>
-        <ul>${c.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
-      </div>
-    </div>
-    <div class="wrap"><p class="f-legal">SIRET ${esc(c.siret)} · Licence ${esc(c.licence)}</p></div>`;
+      <div class="f-part"><p>${SITE.partenaires}</p></div>
+      <div class="f-legal">${co.legal.map(x => `<span>${esc(x)}</span>`).join('')}<span class="f-ll">${SITE.liensLegaux.map(l => `<a href="${l.href}">${esc(l.texte)}</a>`).join('')}</span></div>
+    </div>`;
   }
 
-  function setNav(key) {
-    document.querySelectorAll('.nav a').forEach(a => {
-      if (a.dataset.nav === key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-    });
-  }
-
-  function syncBand() {
-    const band = main.querySelector('.band');
-    const nav = main.querySelector('.band-nav');
-    if (!band || !nav) return;
-    const over = band.scrollWidth > band.clientWidth + 2;
-    nav.hidden = !over;
-    const [prev, next] = nav.querySelectorAll('button');
-    prev.disabled = band.scrollLeft < 4;
-    next.disabled = band.scrollLeft + band.clientWidth > band.scrollWidth - 4;
-  }
-
-  function selectTab(btn, focus) {
-    const tabs = [...main.querySelectorAll('[role="tab"]')];
-    tabs.forEach(t => {
-      const on = t === btn;
-      t.setAttribute('aria-selected', String(on));
-      t.tabIndex = on ? 0 : -1;
-      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
-    });
-    if (focus) btn.focus();
-    const slug = location.hash.split('/')[2];
-    if (slug) history.replaceState(null, '', `#/spectacle/${slug}${btn.dataset.tab === 'voir' ? '' : '/' + btn.dataset.tab}`);
-  }
-
-  let firstRoute = true, keepFocus = false;
-  function enter(title, navKey) {
-    document.title = title;
-    setNav(navKey);
+  /* ---------- Le routeur ---------- */
+  function route(force) {
+    const p = location.hash.replace(/^#\/?/, '').split('?')[0].split('/').filter(Boolean);
+    fermerMenu();
+    let v;
+    if (!p.length) v = ['accueil', SITE.accueil, null, accueilHtml];
+    else if (p.length === 1 && p[0] === 'spectacles') v = ['spectacles', MENU.spectacles.texte, 'spectacles', spectaclesHtml];
+    else if (p.length === 1 && p[0] === 'agenda') v = ['agenda', MENU.agenda.texte, 'agenda', agendaHtml];
+    else if (p.length === 2 && p[0] === 'agenda' && own(D.saisons, p[1])) v = ['saison/' + p[1], D.saisons[p[1]].titre, 'agenda', () => saisonHtml(p[1])];
+    else if (p.length === 1 && p[0] === 'compagnie') v = ['compagnie', MENU.compagnie.texte, 'compagnie', compagnieHtml];
+    else if (p.length === 1 && p[0] === 'actions-culturelles') v = ['actions', MENU.actions.texte, 'actions', actionsHtml];
+    else if (p.length === 1 && p[0] === 'espace-pro') v = ['pro', SITE.pro.titrePage, 'pro', proHtml];
+    else if (p.length === 1 && p[0] === 'contact') v = ['contact', MENU.contact.texte, 'contact', contactHtml];
+    else if (p.length === 2 && p[0] === 'spectacle' && own(BY, p[1])) v = ['spectacle/' + p[1], BY[p[1]].titre, 'spectacles', () => spectacleHtml(BY[p[1]])];
+    else if (p.length === 1 && own(SITE.legal, p[0])) v = ['legal/' + p[0], SITE.legal[p[0]].titre, null, () => legalHtml(p[0])];
+    else { history.replaceState(null, '', '#/'); v = ['accueil', SITE.accueil, null, accueilHtml]; }
+    const [vue, titre, onglet, rendu] = v;
+    if (force || vue !== S.vue) {
+      S.vue = vue;
+      main.innerHTML = rendu();
+      if (ro) ro.disconnect();
+      main.querySelectorAll('svg.carte-m03').forEach(svg => {
+        if (ro) ro.observe(svg); else etiqueter(svg);
+        CARTE.lier(svg, { survol: l => survolLieu(svg, l), choix: choisirLieu });
+        if (!(svg.dataset.attente && INTRO.ouverte())) pousser(svg);
+      });
+      majAgenda();
+    }
+    document.title = titre + SUF;
+    document.querySelectorAll('#nav a').forEach(a => { if (a.dataset.nav === onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     window.scrollTo(0, 0);
-    if (!firstRoute && !keepFocus) document.getElementById('h1').focus({ preventScroll: true });
-    firstRoute = keepFocus = false;
+    const h1 = document.getElementById('h1');
+    if (h1 && !INTRO.ouverte()) h1.focus({ preventScroll: true });
   }
 
-  function route() {
-    const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
-    const parts = path.split('/').filter(Boolean);
-    const q = new URLSearchParams(qs || '');
-    closeMenu();
-    if (parts[0] === 'spectacle' && has(BY, parts[1])) {
-      const s = BY[parts[1]];
-      const tab = TABS.some(([k]) => k === parts[2]) ? parts[2] : 'voir';
-      S.view = 'show';
-      main.innerHTML = showHtml(s, tab);
-      enter(`${s.titre} · Compagnie Crescite`, 'spectacles');
-      requestAnimationFrame(syncBand);
-      return;
-    }
-    const key = parts.length === 1 && has(TITLES, parts[0]) ? parts[0] : '';
-    if (key === '' || key === 'agenda') {
-      S.base = key;
-      S.pub = has(PUBQ, q.get('public')) ? PUBQ[q.get('public')] : 'all';
-      S.show = has(BY, q.get('spectacle')) ? q.get('spectacle') : null;
-      if (S.view !== 'agenda') {
-        S.view = 'agenda';
-        main.innerHTML = agendaHtml();
-        qInputs().forEach(i => { i.value = S.q; });
-      }
-      updateAgenda();
-    } else {
-      S.view = key;
-      if (key === 'spectacles') S.door = has(DOOR, q.get('voir')) ? q.get('voir') : 'voir';
-      main.innerHTML = { spectacles: spectaclesHtml, compagnie: compagnieHtml, contact: contactHtml }[key]();
-      if (key === 'spectacles') setHash(repHash());
-    }
-    enter(TITLES[key], key || 'agenda');
+  /* ---------- En-tête, pied, évènements ---------- */
+  const nav = document.getElementById('nav'), menuBtn = document.querySelector('.menu-btn');
+  function fermerMenu() { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
+  document.querySelector('#brand .brand-mark').innerHTML = D.logo.mark;
+  document.getElementById('brand-t').textContent = SITE.titreSuffixe;
+  document.getElementById('brand').setAttribute('aria-label', `${SITE.nom} - ${SITE.accueil}`);
+  nav.querySelector('ul').innerHTML = SITE.menu.map(m => `<li><a href="${m.href}" data-nav="${m.id}">${esc(m.texte)}</a></li>`).join('');
+  menuBtn.innerHTML = `${BARRES}<span>${esc(LIB.menu)}</span>`;
+  menuBtn.addEventListener('click', () => { const o = !nav.classList.contains('open'); nav.classList.toggle('open', o); menuBtn.setAttribute('aria-expanded', String(o)); });
+  document.querySelector('.site-foot').innerHTML = piedHtml();
+
+  let rangOn = null;
+  function surRang(r) {
+    if (r === rangOn) return;
+    rangOn = r;
+    const svg = main.querySelector('svg.carte-m03');
+    allumer(svg, r && r.dataset.l !== '' ? { l: +r.dataset.l, slug: r.dataset.slug } : null);
   }
-
-  const menuBtn = document.querySelector('.menu-btn');
-  const nav = document.getElementById('nav');
-  function closeMenu() { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); }
-  menuBtn.addEventListener('click', () => {
-    const open = !nav.classList.contains('open');
-    nav.classList.toggle('open', open);
-    menuBtn.setAttribute('aria-expanded', String(open));
-  });
-
-  function onSearch(v) {
-    S.q = v;
-    qInputs().forEach(i => { if (i.value !== v) i.value = v; });
-    if (S.view === 'agenda') updateAgenda();
-    else if (v.trim()) { keepFocus = true; location.hash = '#/agenda'; }
-  }
-
-  document.addEventListener('input', e => {
-    if (e.target.id === 'q' || e.target.id === 'q2') onSearch(e.target.value);
-  });
-  document.addEventListener('keydown', e => {
-    if ((e.target.id === 'q' || e.target.id === 'q2') && e.key === 'Escape') { onSearch(''); }
-    if (e.key === 'Escape' && nav.classList.contains('open')) { closeMenu(); menuBtn.focus(); }
-    const t = e.target.closest && e.target.closest('[role="tab"]');
-    if (t) {
-      const tabs = [...main.querySelectorAll('[role="tab"]')];
-      const i = tabs.indexOf(t);
-      const j = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
-      if (j !== undefined) { e.preventDefault(); selectTab(tabs[(j + tabs.length) % tabs.length], true); }
-    }
-  });
+  main.addEventListener('mouseover', e => surRang(e.target.closest('.dt')));
+  main.addEventListener('mouseleave', () => surRang(null));
+  main.addEventListener('focusin', e => surRang(e.target.closest('.dt')));
   document.addEventListener('click', e => {
     const el = e.target.closest('button, a');
     if (!el) return;
     if (el.matches('.skip')) { e.preventDefault(); main.focus(); return; }
-    if (el.matches('a[href^="#/"]') && el.getAttribute('href') === location.hash) { e.preventDefault(); route(); return; }
-    if (el.matches('.nav a')) closeMenu();
-    if (el.dataset.pub) { S.pub = el.dataset.pub; updateAgenda(); }
-    else if (el.dataset.door) { S.door = el.dataset.door; updateRep(); }
-    else if (el.matches('.tour-btn')) { S.show = S.show === el.dataset.show ? null : el.dataset.show; updateAgenda(); }
-    else if (el.hasAttribute('data-clear')) { clearFilters(); document.getElementById('h-agenda').focus({ preventScroll: true }); }
-    else if (el.dataset.band) { const b = main.querySelector('.band'); b.scrollBy({ left: Number(el.dataset.band) * (b.clientWidth - 60), behavior: 'auto' }); }
-    else if (el.matches('[role="tab"]')) selectTab(el, false);
+    if (el.closest('#nav')) fermerMenu();
+    if (el.matches('a[href^="#/"]') && el.getAttribute('href') === location.hash) { e.preventDefault(); route(true); return; }
+    if (el.matches('.chip')) {
+      S.slug = S.slug === el.dataset.slug ? null : el.dataset.slug;
+      if (S.l != null && !DATES.some(d => d.l === S.l && (!S.slug || d.slug === S.slug))) S.l = null;
+      majAgenda(true);
+    } else if (el.matches('.lieu-chip')) { S.l = null; majAgenda(); }
   });
-  main.addEventListener('scroll', e => { if (e.target.classList && e.target.classList.contains('band')) syncBand(); }, true);
-  window.addEventListener('resize', syncBand);
-  window.addEventListener('hashchange', route);
+  document.addEventListener('submit', e => e.preventDefault());
+  document.addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; majAgenda(); } });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (e.target.id === 'q' && e.target.value) { e.target.value = ''; S.q = ''; majAgenda(); }
+    else if (nav.classList.contains('open')) { fermerMenu(); menuBtn.focus(); }
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => main.querySelectorAll('svg.carte-m03').forEach(etiqueter));
 
-  document.getElementById('brand-mark').innerHTML = D.logo.mark;
-  document.querySelector('.site-foot').innerHTML = footHtml();
+  // l'ouverture : le papier réglé de l'agenda, le logo à l'encre ; à la révélation, les bras de la carte poussent depuis Rouen
+  INTRO.ouvrir({ fond: '#f4f1ea', encre: '#141414', classe: 'intro-m03', apres: () => main.querySelectorAll('svg.carte-m03:not(.pousse)').forEach(pousser) });
+  window.addEventListener('hashchange', () => route());
   route();
 })();
 </script>
