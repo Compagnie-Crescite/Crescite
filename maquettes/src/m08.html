@@ -3,301 +3,416 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compagnie Crescite, théâtre à Rouen</title>
-<meta name="description" content="Compagnie Crescite, théâtre à Rouen : sept spectacles, des actions culturelles, les prochaines dates.">
+<title>Accueil - crescite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..600;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap">
 <style>
+/* 08 — Le sommaire : papier ivoire, encre, filets fins. La liste des spectacles à gauche, l'aperçu teinté à droite. */
 :root{
-  --ivory:#f5f1ea;--ink:#191414;--gray:#6f6560;--gray-t:#615853;
-  --rule:rgba(25,20,20,.14);--rule-s:rgba(25,20,20,.3);
+  --ivory:#f5f1ea;--ink:#191414;--gray:#6f6560;--gray-t:#5d5450;
+  --rule:rgba(25,20,20,.14);--rule-s:rgba(25,20,20,.32);
   --serif:"DM Serif Display",Georgia,"Times New Roman",serif;
   --sans:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  --t1:clamp(2.75rem,5vw,4.5rem);--t2:clamp(2.25rem,3.4vw,3rem);--t3:1.75rem;--t4:1.25rem;--t5:1.0625rem;--t6:.875rem;
-  --hh:72px;--gx:clamp(20px,3.9vw,56px);--fade:350ms;
+  --t1:clamp(2.75rem,5vw,4.5rem);--t2:clamp(1.875rem,2.9vw,2.75rem);--t3:clamp(1.3rem,1.75vw,1.7rem);--t4:1.25rem;--t5:1.0625rem;--t6:.875rem;
+  --hh:72px;--gx:clamp(16px,3.9vw,56px);--fade:350ms;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--ivory);color:var(--ink);font:400 var(--t5)/1.6 var(--sans);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 img{display:block;max-width:100%}
 h1,h2,h3{margin:0;font-weight:400}
-p,ul,ol,dl,dd,figure{margin:0;padding:0}
+p,ul,ol,figure,blockquote{margin:0;padding:0}
 ul,ol{list-style:none}
 a{color:inherit;text-decoration-thickness:1px;text-underline-offset:.22em}
-button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button,input,textarea{font:inherit;color:inherit}
+button{background:none;border:0;padding:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:1px}
 [tabindex="-1"]:focus{outline:none}
 [hidden]{display:none!important}
-.nw{white-space:nowrap}
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .skip{position:absolute;left:var(--gx);top:-60px;z-index:50;background:var(--ink);color:var(--ivory);padding:10px 16px;text-decoration:none}
 .skip:focus{top:12px}
-.eyebrow{display:block;font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
+.kicker{display:block;font:600 .75rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gray-t)}
+.ext{margin-left:.3em;font-size:.85em;text-decoration:none;display:inline-block}
 
-/* En-tête */
-.site-head{position:sticky;top:0;z-index:30;height:var(--hh);display:grid;grid-template-columns:45fr 55fr;align-items:center;background:var(--ivory);border-bottom:1px solid var(--rule)}
-.brand{justify-self:start;display:inline-flex;align-items:center;gap:12px;margin-left:var(--gx);text-decoration:none}
+/* En-tête : la marque, les six onglets */
+.site-head{position:sticky;top:0;z-index:30;height:var(--hh);display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 var(--gx);background:var(--ivory);border-bottom:1px solid var(--rule)}
+.brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none;flex:none}
 .brand-mark{width:34px;height:34px;flex:none}
 .brand-mark svg,.foot-logo svg{display:block;width:100%;height:auto}
-.brand-name{font:400 1.625rem/1 var(--serif);letter-spacing:-.005em;padding-bottom:3px}
-.site-nav{padding:0 var(--gx)}
-.site-nav ul{display:flex;gap:36px}
-.site-nav a{position:relative;display:block;font-weight:500;text-decoration:none;padding:6px 0}
+.brand-name{font:400 1.625rem/1 var(--serif);padding-bottom:3px}
+.site-nav ul{display:flex;gap:clamp(18px,2.1vw,34px)}
+.site-nav a{position:relative;display:block;font-weight:500;text-decoration:none;padding:6px 0;white-space:nowrap}
 .site-nav a::after{content:"";position:absolute;left:0;right:0;bottom:calc(50% - (var(--hh) + 1px) / 2);height:3px;background:transparent}
 .site-nav a:hover::after{background:var(--rule-s)}
 .site-nav a[aria-current="page"]::after{background:var(--ink)}
-.menu-btn{display:none;font-weight:500;padding:10px 0 10px 16px;margin-right:var(--gx)}
+.menu-btn{display:none;align-items:center;gap:10px;font-weight:500;padding:10px 0 10px 12px}
+.menu-ico{position:relative;width:18px;height:10px}
+.menu-ico::before,.menu-ico::after{content:"";position:absolute;left:0;right:0;height:1.5px;background:currentColor;transition:transform .2s}
+.menu-ico::before{top:0}.menu-ico::after{bottom:0}
+.menu-open .menu-ico::before{transform:translateY(4.25px) rotate(45deg)}
+.menu-open .menu-ico::after{transform:translateY(-4.25px) rotate(-45deg)}
 
-/* Sommaire et aperçu */
-.som{display:grid;grid-template-columns:45fr 55fr;min-height:calc(100svh - var(--hh))}
-.toc{display:flex;flex-direction:column;padding:56px var(--gx) 44px}
-.toc-kicker{font:500 var(--t5)/1.5 var(--sans);margin-bottom:24px}
-.toc-list li+li{margin-top:2px}
-.toc-list li.toc-sep{margin-top:22px}
-.toc-link{display:block;padding:7px 0;text-decoration:none}
-.toc-row{display:flex;align-items:last baseline;gap:16px}
-.toc-title{font:400 var(--t2)/1.06 var(--serif);letter-spacing:-.012em;text-wrap:balance;text-decoration:underline;text-decoration-color:transparent;text-decoration-thickness:4px;text-underline-offset:.15em;text-decoration-skip-ink:none}
-.toc-lead{flex:1 1 auto;min-width:20px;height:1px;background:var(--rule);transform:translateY(-.32rem)}
-.toc-year{flex:none;font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray)}
+/* Le sommaire */
+.som{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);min-height:calc(100svh - var(--hh))}
+.toc{display:flex;flex-direction:column;padding:34px var(--gx) 48px;min-width:0}
+.toc-h1{margin-bottom:24px}
+.mast{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px;padding:15px 0 11px;margin-bottom:10px;border-bottom:1px solid var(--rule-s);background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 3px no-repeat,linear-gradient(var(--ink),var(--ink)) 0 6px/100% 1px no-repeat}
+.mast-g,.mast-d{font:600 .8125rem/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase}
+.mast-d{color:var(--gray-t);text-decoration:none}
+.mast-d:hover{color:var(--ink);text-decoration:underline}
+.toc-link{display:block;padding:9px 0 10px;text-decoration:none}
+.toc-row{display:flex;align-items:last baseline;gap:14px}
+.toc-title{font:400 var(--t2)/1.04 var(--serif);letter-spacing:-.012em;text-wrap:balance;text-decoration:underline;text-decoration-color:transparent;text-decoration-thickness:3px;text-underline-offset:.13em;text-decoration-skip-ink:none;transition:color .2s ease,text-decoration-color .2s ease}
+.toc-lead{flex:1 1 auto;min-width:24px;height:1px;background:var(--rule-s);transform:translateY(-.42rem) scaleX(1);transform-origin:left}
+.toc-year{flex:none;font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray-t)}
+.toc-dek{display:flex;justify-content:space-between;align-items:baseline;gap:6px 18px;margin-top:5px;font-size:var(--t6);line-height:1.45;color:var(--gray-t)}
+.toc-tag{flex:none;font:600 .6875rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct)}
 .toc-link.is-active .toc-title{color:var(--ct);text-decoration-color:var(--c)}
 .toc-extra{display:none}
-.toc-foot{margin-top:auto;padding-top:32px;align-self:flex-start;font-weight:500;text-decoration:none;color:var(--gray-t)}
-.toc-foot:hover{color:var(--ink);text-decoration:underline}
+.som.attend .toc-lead{transform:translateY(-.42rem) scaleX(0)}
+.som.revele .toc-lead{transition:transform .75s cubic-bezier(.2,.7,.2,1) calc(var(--k) * 55ms + 120ms)}
 
-.pv{background-color:var(--tint,var(--ivory));transition:background-color var(--fade) ease}
-.pv-in{position:sticky;top:var(--hh);height:calc(100svh - var(--hh));min-height:520px;padding:56px var(--gx) 44px;display:grid}
-.pv-layer{grid-area:1/1;display:flex;flex-direction:column;min-height:0;width:min(100%,calc((100svh - var(--hh) - 352px) * 1.25));opacity:0;visibility:hidden;transition:opacity var(--fade) ease,visibility 0s linear var(--fade)}
+/* L'aperçu, teinté de la couleur du spectacle survolé */
+.pv{background-color:var(--tint,var(--ivory));transition:background-color var(--fade) ease;min-width:0}
+.pv-in{position:sticky;top:var(--hh);height:calc(100svh - var(--hh));min-height:560px;padding:34px var(--gx) 32px;display:grid}
+.pv-layer{grid-area:1/1;display:flex;flex-direction:column;gap:18px;min-height:0;min-width:0;opacity:0;visibility:hidden;transition:opacity var(--fade) ease,visibility 0s linear var(--fade)}
 .pv-layer.is-on{opacity:1;visibility:visible;z-index:1;transition:opacity var(--fade) ease,visibility 0s}
-.pv-fig img{width:100%;aspect-ratio:5/4;object-fit:cover;background:rgba(25,20,20,.08)}
-.pv-cap{margin-top:8px;text-align:right;font-size:var(--t6);color:var(--gray-t)}
-.pv-acc{margin:18px 0 24px;font:italic 400 var(--t3)/1.25 var(--serif);text-wrap:pretty}
-.pv-foot{margin-top:auto;padding-top:18px;border-top:1px solid var(--rule-s);display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 32px}
-.pv-date{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
-.pv-date .eyebrow{color:var(--gray-t)}
+.pv-media{flex:1 1 0;min-height:200px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:22px}
+.pv-media.solo{grid-template-columns:minmax(0,1fr)}
+.pv-fig,.pv-map{position:relative;min-height:0}
+.pv-fig img{position:absolute;left:0;top:0;width:100%;height:calc(100% - 24px);object-fit:cover;background:rgba(25,20,20,.08)}
+.pv-cap{position:absolute;right:0;bottom:0;font-size:.8125rem;line-height:20px;color:var(--gray-t);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pv-map{border-top:1px solid var(--ink);border-bottom:1px solid var(--rule-s);margin-bottom:24px}
+.pv-map .cm{position:absolute;inset:8px 0}
+.pv-map .cm-vue,.pv-map .cm-svg{width:100%;height:100%}
+.som.attend .pv-layer.is-on .pv-fig img{clip-path:inset(0 0 100% 0)}
+.som.revele .pv-fig img{transition:clip-path 1s cubic-bezier(.6,0,.2,1) .1s}
+.pv-lead{font:italic 400 var(--t3)/1.32 var(--serif);text-wrap:pretty;max-width:38ch}
+.pv-lead em{font-style:normal}
+.pv-crea{display:flex;flex-wrap:wrap;gap:4px 18px;font:600 .75rem/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct)}
+.pv-cadre{font-weight:500;letter-spacing:.06em;text-transform:none;color:var(--gray-t);font-size:.8125rem}
+.pv-foot{padding-top:14px;border-top:1px solid var(--rule-s);display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 28px}
+.pv-date{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;min-width:0}
+.pv-ligne{font-weight:500}
 .pv-link{font-weight:600;text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:2px;text-underline-offset:.3em}
 .pv-link:hover{text-decoration-color:currentColor}
 
-/* Bandeaux de l'accueil */
-.band{display:grid;grid-template-columns:45fr 55fr;border-top:1px solid var(--rule);scroll-margin-top:var(--hh)}
-.band-head{padding:88px var(--gx) 0}
-.band-body{padding:88px var(--gx) 96px;min-width:0}
+/* Les trois portes */
+.portes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--ink)}
+.porte{position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:40px;min-height:clamp(180px,19vw,250px);padding:34px var(--gx) 28px;text-decoration:none;transition:background-color .3s ease}
+.porte+.porte{border-left:1px solid var(--rule)}
+.porte::before{content:"";position:absolute;left:var(--gx);top:-1px;width:44px;height:5px;background:var(--pc)}
+.porte-t{font:400 var(--t2)/1.05 var(--serif);letter-spacing:-.01em;text-wrap:balance;max-width:15ch}
+.porte-a{align-self:flex-end;font-size:1.6rem;line-height:1;transition:transform .3s ease}
+.porte:hover{background:color-mix(in srgb,var(--pc) 9%,var(--ivory))}
+.porte:hover .porte-a{transform:translateX(6px)}
+
+/* La carte de l'accueil : la version forte */
+.cb{padding:76px var(--gx) 84px;border-top:1px solid var(--rule)}
+.cb-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 32px;padding-bottom:18px;margin-bottom:26px;border-bottom:1px solid var(--ink)}
+.cb-head .kicker{margin-bottom:10px}
 .band-title{font:400 var(--t2)/1.05 var(--serif);letter-spacing:-.012em}
-.band-sub{margin-top:14px;color:var(--gray);max-width:30ch}
-.band-page{border-top:0}
-.band-page>.band-head,.band-page>.band-body{padding-top:56px}
+.lien-fort{font-weight:600;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.3em;padding:4px 0}
+.merci{padding:40px var(--gx) 60px;border-top:1px solid var(--rule)}
+.merci p{columns:2 26rem;column-gap:56px;font-size:.875rem;line-height:1.7;color:var(--gray-t)}
+
+/* La carte : filets d'encre, communes composées */
+.cm{position:relative;margin:0;--arm:var(--ink)}
+.cm-vue{position:relative;overflow:hidden}
+.cm-svg{display:block;width:100%;height:auto}
+.cm-terre{fill:rgba(25,20,20,.045);stroke:rgba(25,20,20,.5);stroke-width:.8px}
+.cm-voisin{fill:none;stroke:rgba(25,20,20,.24);stroke-width:.8px}
+.cm-encart{fill:none;stroke:rgba(25,20,20,.45);stroke-width:.8px;vector-effect:non-scaling-stroke}
+.cm-passe{fill:none;stroke:var(--ink);stroke-opacity:.26;stroke-width:var(--wp);stroke-dasharray:calc(var(--wp) * 2) calc(var(--wp) * 3)}
+.cm-ppt{fill:var(--ink);fill-opacity:.32}
+.cm-teinte{--arm:var(--ct)}
+.cm-passees{--arm:var(--ink)}
+.cm-bras{fill:none;stroke:var(--arm);stroke-width:var(--wb);stroke-linecap:round;stroke-dasharray:1 2;transition:stroke-width .2s ease,stroke-opacity .2s ease}
+.cm-bout{fill:none;stroke:var(--arm);stroke-width:calc(var(--wb) * .8);stroke-linecap:round;stroke-dasharray:1 2;transition:stroke-opacity .2s ease}
+.cm-pt{fill:var(--arm);r:var(--rp);transition:r .2s ease}
+.cm-halo{fill:transparent}
+.cm-lieu.carte-lieu,.cm-etiq.carte-lieu,.cm-rouen.carte-lieu{cursor:pointer}
+.cm-fil{fill:none;stroke:var(--ink);stroke-opacity:.36;stroke-width:.7px;vector-effect:non-scaling-stroke;transition:stroke-opacity .2s ease}
+.cm-nom{font-family:var(--serif);font-size:var(--fs);fill:var(--ink);transition:fill .2s ease}
+.cm-dep{font-family:var(--sans);font-weight:500;font-size:calc(var(--fs) * .6);fill:var(--gray-t);letter-spacing:.06em}
+.cm-etiq{transition:opacity .2s ease}
+.cm-etiq:focus{outline:none}
+.cm-etiq:focus-visible .cm-nom{text-decoration:underline}
+.cm-r{fill:var(--ivory);stroke:var(--ink);stroke-width:calc(var(--wb) * 1.3)}
+.cm-r-nom{font-family:var(--sans);font-weight:600;font-size:calc(var(--fs) * .7);letter-spacing:.18em;text-transform:uppercase;fill:var(--ink);paint-order:stroke;stroke:var(--ivory);stroke-width:calc(var(--fs) * .22);stroke-linejoin:round}
+.cm-rouen:focus{outline:none}
+.cm-rouen:focus-visible .cm-r-nom,.cm-rouen.is-on .cm-r-nom{text-decoration:underline}
+.cm.a-actif .cm-bras:not(.is-on),.cm.a-actif .cm-bout:not(.is-on){stroke-opacity:.2}
+.cm.a-actif .cm-etiq:not(.is-on){opacity:.4}
+.cm .cm-bras.is-on{stroke:var(--ct);stroke-width:calc(var(--wb) * 2.2)}
+.cm .cm-bout.is-on{stroke:var(--ct);stroke-width:calc(var(--wb) * 1.5)}
+.cm .cm-lieu.is-on .cm-pt{fill:var(--ct);r:calc(var(--rp) * 1.7)}
+.cm .cm-etiq.is-on .cm-nom{fill:var(--ct)}
+.cm .cm-etiq.is-on .cm-fil{stroke:var(--ct);stroke-opacity:1}
+.cm .cm-rouen.is-on .cm-r{fill:var(--ct)}
+.cm-flot{opacity:0;transition:opacity .15s ease;pointer-events:none}
+.cm-flot.is-on{opacity:1}
+.cm-flot .cm-nom{fill:var(--ink);paint-order:stroke;stroke:var(--halo,var(--ivory));stroke-width:calc(var(--fs) * .28);stroke-linejoin:round}
+.cm-flot .cm-dep{paint-order:stroke;stroke:var(--halo,var(--ivory));stroke-width:calc(var(--fs) * .2);stroke-linejoin:round}
+.cm-flot .cm-fil{stroke:var(--ct);stroke-opacity:1}
+.cm.attend .cm-bras,.cm.attend .cm-bout{stroke-dashoffset:1}
+.cm.attend .cm-lieu,.cm.attend .cm-etiq,.cm.attend .cm-anciens{opacity:0}
+.cm.anime .cm-bras{animation:cm-trace .7s cubic-bezier(.45,0,.2,1) var(--d,0ms) both}
+.cm.anime .cm-bout{animation:cm-trace .45s ease-out calc(var(--d,0ms) + .55s) both}
+.cm.anime .cm-lieu,.cm.anime .cm-etiq{animation:cm-fondu .45s ease calc(var(--d,0ms) + .4s) both}
+.cm.anime .cm-anciens{animation:cm-fondu .8s ease .15s both}
+.pv-layer.is-on .cm-bras{animation:cm-trace .65s cubic-bezier(.45,0,.2,1) calc(var(--d,0ms) * .6 + 80ms) both}
+.pv-layer.is-on .cm-bout{animation:cm-trace .4s ease-out calc(var(--d,0ms) * .6 + .6s) both}
+.pv-layer.is-on .cm-anciens{animation:cm-fondu .6s ease both}
+@keyframes cm-trace{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes cm-fondu{from{opacity:0}to{opacity:1}}
+.cm-cap{position:absolute;left:0;bottom:0;width:min(27%,330px);padding-top:12px;border-top:1px solid var(--ink);font-size:.9375rem;line-height:1.45}
+.cm-cap.dessous{position:static;width:auto;max-width:42rem;margin-top:22px}
+.cm-cap:empty{display:none}
+.cap-nom{font:400 var(--t3)/1.15 var(--serif);margin-bottom:6px}
+.cap-dep{font:500 .8125rem var(--sans);letter-spacing:.06em;color:var(--gray-t)}
+.cap-l li{display:flex;flex-direction:column;padding:7px 0 8px;border-bottom:1px solid var(--rule)}
+.cap-d{font-weight:600}
+.cap-l a{font:400 1.0625rem/1.3 var(--serif);text-decoration:none;align-self:flex-start}
+.cap-l a:hover{text-decoration:underline}
+.cm-index{display:none}
+
+/* Pages : titre à gauche, texte à droite */
+.page{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr)}
+.page+.page{border-top:1px solid var(--rule)}
+.pg-head{padding:56px var(--gx) 40px}
+.pg-head-in{position:sticky;top:calc(var(--hh) + 40px)}
+.pg-head .kicker{margin-bottom:14px}
+.pg-body{padding:62px var(--gx) 96px;min-width:0;max-width:calc(64ch + 2 * var(--gx))}
 .page-title{font:400 var(--t1)/1 var(--serif);letter-spacing:-.018em;text-wrap:balance}
-.page-sub{margin-top:18px;color:var(--gray-t);max-width:34ch;text-wrap:pretty}
-.toc .page-sub{margin-bottom:36px}
+.pg-fig{margin-top:40px}
+.pg-fig img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.pg-fig figcaption,.show-fig figcaption{margin-top:8px;text-align:right;font-size:var(--t6);color:var(--gray-t)}
+.prose p+p,.prose p+ul,.prose ul+p,.prose ul+h2{margin-top:1em}
+.prose h2{margin:2.1em 0 .7em;font:400 var(--t3)/1.2 var(--serif)}
+.prose h2:first-child{margin-top:0}
+.prose ul{margin-top:1em}
+.prose li{position:relative;padding-left:24px}
+.prose li+li{margin-top:.7em}
+.prose li::before{content:"";position:absolute;left:0;top:.82em;width:12px;height:1px;background:var(--ink)}
+.prose a{text-decoration-color:var(--rule-s)}
+.prose a:hover{text-decoration-color:currentColor}
+.prose-lede>p:first-child{font:400 var(--t3)/1.4 var(--serif)}
+.prose-legal{font-size:.9375rem;overflow-wrap:anywhere}
+.chrono a,.chrono .ch-r{display:flex;align-items:last baseline;gap:14px;padding:11px 0 12px;text-decoration:none;border-bottom:1px solid var(--rule)}
+.chrono li:first-child>*{border-top:1px solid var(--ink)}
+.ch-t{font:400 var(--t3)/1.2 var(--serif);text-decoration:underline;text-decoration-color:transparent;text-decoration-thickness:2px;text-underline-offset:.15em;transition:color .2s,text-decoration-color .2s}
+.chrono a:hover .ch-t{color:var(--ct);text-decoration-color:var(--c)}
+.ch-lead,.ss-lead{flex:1 1 auto;min-width:20px;height:1px;background:var(--rule-s);transform:translateY(-.35rem)}
+.ch-a{flex:none;font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray-t)}
 
-.doors li{display:grid;grid-template-columns:56px 1fr;padding:26px 0 28px;border-top:1px solid var(--rule)}
-.doors li:last-child{border-bottom:1px solid var(--rule)}
-.door-num{font:500 var(--t6)/2.6 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray)}
-.door-title{font:400 var(--t3)/1.2 var(--serif)}
-.door-text{margin-top:6px;color:var(--gray)}
-.door-links{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px}
-.door-links a{font-weight:500;text-decoration-color:var(--rule-s)}
-.door-links a:hover{text-decoration-color:currentColor}
+/* Formulaires d'origine */
+.form{display:grid;gap:24px;max-width:40rem}
+.form-intro{font-size:var(--t4);line-height:1.5}
+.champs-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+.champ label{display:block;font-weight:500;margin-bottom:4px}
+.champ input,.champ textarea{display:block;width:100%;padding:9px 0 8px;border:0;border-bottom:1px solid var(--ink);background:transparent;border-radius:0}
+.champ textarea{min-height:9rem;padding:10px 12px;border:1px solid var(--ink);resize:vertical}
+.champ input:focus-visible,.champ textarea:focus-visible,.calcul input:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.coche{display:flex;gap:12px;align-items:flex-start}
+.coche input{flex:none;width:18px;height:18px;margin:4px 0 0;accent-color:var(--ink)}
+.coche a{text-decoration-color:var(--rule-s)}
+.calcul{display:flex;align-items:center;gap:14px;font-weight:500}
+.calcul input{width:3.4em;padding:7px 8px;border:1px solid var(--ink);background:transparent;text-align:center;border-radius:0}
+.btn{justify-self:start;padding:13px 28px;background:var(--ink);color:var(--ivory);font-weight:600;letter-spacing:.02em}
+.btn:hover{background:#3a3131}
+.coord{margin-top:40px;font-style:normal;padding-top:16px;border-top:1px solid var(--ink);line-height:1.55}
+.coord .co-nom{font:400 var(--t4)/1.3 var(--serif);margin-bottom:6px}
+.coord .co-l{margin-top:14px;color:var(--gray-t);font-size:var(--t6)}
 
-.ag-list>li{display:grid;grid-template-columns:minmax(150px,13.5rem) 1fr auto;gap:4px 28px;align-items:baseline;padding:18px 0 19px;border-top:1px solid var(--rule)}
-.ag-list>li:last-child{border-bottom:1px solid var(--rule)}
-.ag-date{font-weight:600;font-variant-numeric:tabular-nums}
-.ag-show{font:400 var(--t4)/1.3 var(--serif);text-decoration:none}
-.ag-show:hover{text-decoration:underline}
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:10px;vertical-align:.12em}
-.ag-place{color:var(--gray);margin-top:2px}
-.ag-meta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.ag-meta .eyebrow{letter-spacing:.06em}
-.ag-meta a{font-weight:500;white-space:nowrap}
-.more{display:inline-block;margin-top:24px;font-weight:600;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.22em;text-decoration-color:var(--rule-s);padding:6px 0}
-.more:hover{text-decoration-color:currentColor}
-
-.quote{font:italic 400 var(--t3)/1.3 var(--serif);max-width:32ch;text-wrap:pretty}
-.cie-text{margin-top:28px;font-size:var(--t4);line-height:1.55;max-width:38ch}
-.cie-facts{margin-top:20px;color:var(--gray)}
-.stats{margin-top:48px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;border-top:1px solid var(--rule);padding-top:26px}
-.stat-n{display:block;font:400 var(--t3)/1 var(--serif)}
-.stat-l{display:block;margin-top:10px;font-size:var(--t6);line-height:1.45;color:var(--gray)}
-
-/* Onglet Agenda */
-.ag-group{scroll-margin-top:calc(var(--hh) + 24px)}
-.ag-group+.ag-group{margin-top:72px}
-.ag-group .ag-list>li:first-child{border-top:0}
-.ag-index{margin-top:44px;max-width:26rem}
-.ag-index .eyebrow{margin-bottom:8px}
-.ag-index a{display:flex;align-items:baseline;gap:14px;padding:5px 0;text-decoration:none}
-.ag-index a:hover .ai-m{text-decoration:underline}
-.ai-lead{flex:1 1 auto;min-width:20px;height:1px;background:var(--rule);transform:translateY(-.3rem)}
-.ai-n{flex:none;font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray-t)}
-@media (min-width:860px) and (min-height:720px){.band-stick{position:sticky;top:calc(var(--hh) + 40px)}}
-
-/* Onglets La compagnie et Contact */
-.people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:32px;border-bottom:1px solid var(--rule)}
-.people li{padding:16px 0 17px;border-top:1px solid var(--rule)}
-.p-name{display:block;font:400 var(--t4)/1.3 var(--serif)}
-.p-shows{display:block;margin-top:4px;color:var(--gray)}
-.coord>div{display:grid;grid-template-columns:minmax(140px,12rem) 1fr;gap:4px 24px;align-items:baseline;padding:18px 0 19px;border-top:1px solid var(--rule)}
-.coord>div:last-child{border-bottom:1px solid var(--rule)}
-.coord dt{font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray-t)}
-.coord dd{font-size:var(--t4);line-height:1.45}
-.coord a{font-weight:600;text-decoration-color:var(--rule-s)}
-.coord a:hover{text-decoration-color:currentColor}
-.door-meta{margin-top:12px;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+/* Agenda et saisons : la carte à gauche, la liste à droite */
+.ag{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr)}
+.ag-side{padding:44px var(--gx) 48px;border-right:1px solid var(--rule)}
+.ag-side-in{position:sticky;top:calc(var(--hh) + 26px)}
+.ag-side .kicker{margin-bottom:12px}
+.ag-side .kicker a{text-decoration:none}
+.ag-side .kicker a:hover{text-decoration:underline}
+.ag-side .cm{margin-top:26px;padding-top:10px;border-top:1px solid var(--ink)}
+.filtre{margin-top:14px;display:inline-flex;align-items:center;gap:12px;padding:8px 16px;border:1px solid var(--ink);border-radius:999px;font-weight:600}
+.filtre:hover{background:var(--ink);color:var(--ivory)}
+.filtre-x{font-size:1.15rem;line-height:1}
+.ag-main{padding:44px var(--gx) 96px;min-width:0}
+.ag-g+.ag-g{margin-top:52px}
+.ag-mois{padding-bottom:10px;border-bottom:1px solid var(--ink);font:600 .8125rem/1.4 var(--sans);letter-spacing:.16em;text-transform:uppercase}
+.ag-it{display:grid;grid-template-columns:minmax(118px,10rem) minmax(0,1fr);gap:4px 26px;padding:17px 0 18px;border-bottom:1px solid var(--rule);transition:background-color .2s ease}
+.ag-it.is-on{background:linear-gradient(90deg,color-mix(in srgb,var(--c,#191414) 18%,transparent),transparent 75%)}
+.ag-j{display:block;font:400 var(--t3)/1.1 var(--serif);text-wrap:balance}
+.ag-m{display:block;margin-top:3px;font-size:var(--t6);color:var(--gray-t)}
+.ag-d.sans-j .ag-m{margin-top:0;font:400 var(--t4)/1.2 var(--serif);color:var(--ink)}
+.ag-b{min-width:0;overflow-wrap:anywhere}
+.ag-lieu{font-weight:600}
+.ag-sp a{font:400 var(--t4)/1.3 var(--serif);text-decoration:none}
+.ag-sp a:hover{text-decoration:underline}
+.pastille{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:9px;vertical-align:.12em}
+.ag-det{margin-top:4px;color:var(--gray-t);font-size:.9375rem;line-height:1.5}
+.ag-det li+li{margin-top:2px}
+.ag-det a{color:var(--ink);text-decoration-color:var(--rule-s)}
+.saisons{margin-top:76px;padding-top:12px;background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 3px no-repeat,linear-gradient(var(--ink),var(--ink)) 0 6px/100% 1px no-repeat}
+.saisons a{display:flex;align-items:last baseline;gap:14px;padding:8px 0;text-decoration:none;font:400 var(--t4)/1.3 var(--serif)}
+.saisons a:hover .ss-t{text-decoration:underline}
+.sa-g+.sa-g{margin-top:56px}
+.sa-t{font:400 var(--t2)/1.06 var(--serif);letter-spacing:-.01em;text-wrap:balance}
+.sa-t a{text-decoration:underline;text-decoration-color:transparent;text-decoration-thickness:3px;text-underline-offset:.13em}
+.sa-t a:hover{color:var(--ct);text-decoration-color:var(--c)}
+.sa-sub{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;margin-top:8px;color:var(--gray-t)}
+.sa-crea{font:600 .75rem/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct,var(--gray-t))}
+.sa-list{margin-top:16px;border-top:1px solid var(--ink)}
+.sa-it{padding:11px 0 12px;border-bottom:1px solid var(--rule);overflow-wrap:anywhere;transition:background-color .2s ease}
+.sa-it.is-on{background:linear-gradient(90deg,color-mix(in srgb,var(--c,#191414) 18%,transparent),transparent 75%)}
+.sa-d{font-weight:600}
+.sa-l a{text-decoration-color:var(--rule-s)}
+.sa-it.a-etat .sa-l{color:var(--gray);text-decoration:line-through;text-decoration-color:var(--gray)}
+.sa-etat{font:600 .6875rem/1.6 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:#a3202a}
 
 /* Page spectacle */
-.show{display:grid;grid-template-columns:45fr 55fr}
+.show{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr)}
 .show-side{background-color:var(--tint)}
-.show-side-in{position:sticky;top:var(--hh);max-height:calc(100svh - var(--hh));overflow-y:auto;padding:36px var(--gx) 40px}
-.show-head{display:block}
+.show-side-in{position:sticky;top:var(--hh);max-height:calc(100svh - var(--hh));overflow-y:auto;scrollbar-width:thin;padding:30px var(--gx) 40px}
 .show-top{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
 .back{font-weight:500;text-decoration:none}
 .back:hover{text-decoration:underline}
-.folio{font:500 var(--t6)/1 var(--sans);font-variant-numeric:tabular-nums;color:var(--gray-t)}
-.show-title{margin-top:36px;font:400 var(--t1)/1 var(--serif);letter-spacing:-.018em;text-wrap:balance}
-.show-title.is-long{font-size:clamp(2.5rem,3.9vw,3.5rem);line-height:1.04}
+.show-crea{font:600 .75rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct)}
+.show-title{margin-top:30px;font:400 var(--t1)/1 var(--serif);letter-spacing:-.018em}
+.show-title span{display:block}
+.show-title.is-long{font-size:clamp(2.4rem,3.7vw,3.3rem);line-height:1.03}
 .show-sub{margin-top:14px;font-size:var(--t4);line-height:1.4;color:var(--gray-t)}
-.facts{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
-.facts>div:only-child{grid-column:1/-1}
-.facts dt{font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray-t)}
-.facts dd{margin-top:3px}
-.portes-nav{margin-top:32px}
-.portes-nav li{border-top:1px solid var(--rule-s)}
-.portes-nav li:last-child{border-bottom:1px solid var(--rule-s)}
-.portes-nav a{display:grid;grid-template-columns:1fr auto;gap:0 16px;padding:12px 0 13px;text-decoration:none}
-.portes-nav a:hover .pn-t{text-decoration:underline}
-.pn-t{font-weight:600}
-.pn-s{grid-column:1;color:var(--gray-t);font-size:var(--t6)}
-.pn-a{grid-column:2;grid-row:1/3;align-self:center}
-
+.show-genre{margin-top:6px;color:var(--gray-t)}
+.show-statut{display:inline-block;margin-top:16px;padding:4px 12px;border:1px solid var(--ct);border-radius:999px;color:var(--ct);font:600 .6875rem/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase}
+.show-cadre{margin-top:12px;font-size:var(--t6);letter-spacing:.04em;color:var(--gray-t)}
+.show-duree{margin-top:20px;font-weight:600}
+.fiche{margin-top:18px;border-top:1px solid var(--rule-s)}
+.fiche li{display:grid;grid-template-columns:minmax(0,10.5rem) minmax(0,1fr);gap:2px 18px;padding:8px 0 9px;border-bottom:1px solid var(--rule);line-height:1.45}
+.fiche li.solo{grid-template-columns:minmax(0,1fr)}
+.fi-l{font-size:.8125rem;line-height:1.55;color:var(--gray-t);padding-top:1px}
+.avec{margin-top:18px;line-height:1.5}
+.avec .fi-l{display:block;margin-bottom:2px}
 .show-main{min-width:0}
 .show-fig img{width:100%;aspect-ratio:3/2;object-fit:cover}
-.show-cap{padding:10px var(--gx) 0;text-align:right;font-size:var(--t6);color:var(--gray)}
-.show-body{padding:36px var(--gx) 96px}
-.show-acc{font:italic 400 var(--t3)/1.3 var(--serif);max-width:34ch;text-wrap:pretty}
-.show-text{margin-top:22px;max-width:62ch}
-.sec{margin-top:72px;scroll-margin-top:calc(var(--hh) + 24px)}
-.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-bottom:14px;border-bottom:1px solid var(--ink)}
-.sec-title{font:400 var(--t3)/1.2 var(--serif)}
-.dl-list>li{display:grid;grid-template-columns:minmax(140px,12.5rem) 1fr auto;gap:2px 24px;align-items:baseline;padding:14px 0 15px;border-bottom:1px solid var(--rule)}
-.dl-date{font-weight:600}
-.dl-place{color:var(--ink)}
-.dl-meta{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-.dl-meta a{font-weight:500;white-space:nowrap}
-.none{color:var(--gray);padding:16px 0}
-
-.tablist{display:flex;gap:32px;border-bottom:1px solid var(--rule)}
-.tab{position:relative;padding:14px 0 15px;font-weight:600;color:var(--gray);text-align:left}
-.tab:hover{color:var(--ink)}
-.tab[aria-selected="true"]{color:var(--ink)}
-.tab[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--ink)}
-.panel{padding-top:28px}
-.panel:focus-visible{outline-offset:6px}
-.panel p+p{margin-top:12px}
-.panel-lead{font:400 var(--t4)/1.45 var(--sans);max-width:46ch}
-.big-date{margin-top:6px;font:400 var(--t3)/1.2 var(--serif)}
-.btn{display:inline-block;margin-top:18px;padding:12px 20px;background:var(--ink);color:var(--ivory);font-weight:600;text-decoration:none}
-.btn:hover{background:#3a3131}
-.muted{color:var(--gray)}
-.fiche{display:grid;grid-template-columns:minmax(120px,11rem) 1fr;gap:12px 24px;margin-top:4px}
-.fiche dt{font:500 var(--t6)/1.6 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
-.fiche dd li+li{margin-top:2px}
-.sub-title,.panel .sub-title{margin-top:32px;margin-bottom:10px;font:500 var(--t6)/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
-.docs li{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid var(--rule)}
-.docs li:last-child{border-bottom:1px solid var(--rule)}
-.status{position:relative;padding-left:20px;font-weight:600}
-.status::before{content:"";position:absolute;left:0;top:.52em;width:9px;height:9px;border-radius:50%;background:var(--c)}
-
-.next{margin-top:88px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:24px;padding:32px;background-color:var(--tint);text-decoration:none}
-.next-title{display:block;margin-top:10px;font:400 var(--t2)/1.05 var(--serif);letter-spacing:-.012em}
+.show-fig figcaption{padding:0 var(--gx)}
+.show-body{padding:36px var(--gx) 88px;max-width:calc(64ch + 2 * var(--gx))}
+.show-texte>p:first-child{font:400 var(--t3)/1.4 var(--serif)}
+.extraits{margin-top:44px;border-top:3px solid var(--ct)}
+.extrait{padding:20px 0 22px;border-bottom:1px solid var(--rule)}
+.extrait p{font:italic 400 var(--t3)/1.32 var(--serif);text-wrap:pretty}
+.extrait cite{display:block;margin-top:10px;font:normal 500 var(--t6)/1.4 var(--sans);color:var(--gray-t)}
+.bloc{margin-top:40px;padding-top:14px;border-top:1px solid var(--rule-s);font-size:.9375rem;line-height:1.6}
+.bloc p+p{margin-top:.6em}
+.bloc a{text-decoration-color:var(--rule-s)}
+.bloc-t{margin:18px 0 4px;font:600 .75rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gray-t)}
+.medias li{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px;padding:10px 0 11px;border-bottom:1px solid var(--rule)}
+.medias li::before{content:"";flex:none;width:0;height:0;border-left:8px solid var(--ct);border-top:5px solid transparent;border-bottom:5px solid transparent;align-self:center}
+.medias .media-audio::before{width:8px;height:8px;border:0;border-radius:50%;background:var(--ct)}
+.medias a{font-weight:500}
+.media-par{color:var(--gray-t);font-size:var(--t6)}
+.tour{padding:68px var(--gx) 76px;background:var(--tint);border-top:1px solid var(--rule)}
+.tour-head{padding-bottom:16px;border-bottom:1px solid var(--ink)}
+.tour-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));column-gap:36px}
+.tour-list .ag-it{grid-template-columns:minmax(0,1fr)}
+.tour .cm{margin-top:44px;--halo:var(--tint)}
+.tour .cm-r{fill:var(--tint)}
+.tour-vide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:32px;align-items:center;margin-top:28px}
+.tour-texte{font:400 var(--t3)/1.35 var(--serif);max-width:24ch}
+.tour-vide .cm{margin-top:0}
+.next{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:24px;padding:36px var(--gx);background-color:var(--tint);text-decoration:none;border-top:1px solid var(--rule)}
+.next-t{display:block;font:400 var(--t2)/1.05 var(--serif);letter-spacing:-.012em;text-wrap:balance}
 .next-go{display:inline-block;margin-top:14px;font-weight:600;text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:2px;text-underline-offset:.3em}
 .next:hover .next-go{text-decoration-color:currentColor}
-.next img{width:176px;aspect-ratio:5/4;object-fit:cover}
+.next img{width:200px;aspect-ratio:5/4;object-fit:cover}
 
 /* Pied de page */
-.site-foot{display:grid;grid-template-columns:45fr 55fr;background:var(--ink);color:var(--ivory);scroll-margin-top:var(--hh)}
-.site-foot .eyebrow{color:#b9afa6;margin-bottom:12px}
-.foot-brand{padding:72px var(--gx)}
-.foot-logo{width:112px}
-.foot-line{margin-top:20px;color:#b9afa6;max-width:30ch}
-.foot-cols{padding:72px var(--gx);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
-.foot-cols li+li{margin-top:4px}
-.foot-cols p+p{margin-top:4px}
-.site-foot a{text-decoration-color:rgba(245,241,234,.4)}
+.site-foot{background:var(--ink);color:var(--ivory)}
+.foot-in{display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr)}
+.foot-brand{padding:64px var(--gx)}
+.foot-logo{display:block;width:150px;color:var(--ivory)}
+.foot-cols{padding:64px var(--gx);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;font-size:.9375rem;line-height:1.6}
+.foot-c p+p{margin-top:10px}
+.foot-nom{font:400 var(--t4)/1.3 var(--serif)}
+.site-foot a{text-decoration-color:rgba(245,241,234,.45)}
 .site-foot a:hover{text-decoration-color:currentColor}
 .site-foot :focus-visible{outline-color:var(--ivory)}
-.muted-d{color:#b9afa6}
+.foot-d{color:#b9afa6}
+.foot-leg{display:flex;flex-direction:column;gap:4px;margin-top:16px!important}
 
-@media (max-width:1100px){
-  .site-nav ul{gap:24px}
-  .ag-list>li,.dl-list>li{grid-template-columns:1fr auto;}
-  .ag-date,.dl-date{grid-column:1/-1}
-  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .foot-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media (max-width:859px){
-  :root{--hh:60px}
-  .som,.band,.show,.site-foot{display:block}
-  .pv{display:none}
-  .toc{padding:28px var(--gx) 48px}
-  .toc-kicker{margin-bottom:12px}
-  .toc-title{font-size:2rem;line-height:1.1}
-  .toc-link{padding:16px 0 18px}
-  .toc-list li+li{margin-top:0;border-top:1px solid var(--rule)}
-  .toc-list li.toc-sep{margin-top:0}
-  .toc-lead{display:none}
-  .toc-row{justify-content:space-between}
-  .toc-extra{display:grid;grid-template-columns:112px 1fr;gap:16px;align-items:center;margin-top:12px}
-  .toc-extra img{width:112px;aspect-ratio:5/4;object-fit:cover}
-  .toc-next{display:block;font-size:1rem;line-height:1.45}
-  .toc-next .eyebrow{font-size:.8125rem;margin-bottom:2px}
-  .toc-link.is-active .toc-title{color:inherit;text-decoration-color:transparent}
-  .toc-foot{padding-top:24px}
-  .band-head{padding:56px var(--gx) 0}
-  .band-body{padding:28px var(--gx) 64px}
-  .band-page>.band-head{padding-top:32px}
-  .band-page>.band-body{padding-top:24px}
-  .page-title{font-size:2.75rem;line-height:1.02}
-  .page-sub{margin-top:12px}
-  .toc .page-sub{margin-bottom:16px}
-  .ag-index{display:none}
-  .ag-group+.ag-group{margin-top:48px}
-  .doors li{grid-template-columns:40px 1fr}
-  .quote{font-size:1.5rem}
-  .cie-text{font-size:var(--t5)}
-  .foot-brand{padding:56px var(--gx) 0}
-  .foot-cols{padding:40px var(--gx) 56px;grid-template-columns:1fr}
-  .show{display:grid;grid-template-columns:minmax(0,1fr)}
-  .show-side,.show-side-in,.show-main{display:contents}
-  .show-head{order:1;background-color:var(--tint);padding:20px var(--gx) 28px}
-  .show-fig{order:2}
-  .show-meta{order:3;padding:0 var(--gx)}
-  .show-body{order:4;padding:36px var(--gx) 64px}
-  .show-title,.show-title.is-long{margin-top:28px;font-size:2.75rem;line-height:1.02}
-  .facts{margin-top:28px}
-  .show-fig img{aspect-ratio:4/3}
-  .sec{margin-top:56px}
-  .next{margin-top:64px;padding:24px;grid-template-columns:1fr}
-  .next img{display:none}
-  .next-title{font-size:2.25rem}
-}
-@media (max-width:719px){
-  .site-head{display:flex;justify-content:space-between}
-  .menu-btn{display:block}
-  .site-nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--ivory);border-bottom:1px solid var(--rule);padding:8px var(--gx) 20px}
+/* L'ouverture : papier et encre, un double filet en tête et en pied */
+.intro.m08-intro::before,.intro.m08-intro::after{content:"";position:absolute;left:clamp(16px,3.9vw,56px);right:clamp(16px,3.9vw,56px);height:7px;z-index:1;pointer-events:none;transition:opacity .35s ease;background:linear-gradient(currentColor,currentColor) 0 0/100% 3px no-repeat,linear-gradient(currentColor,currentColor) 0 6px/100% 1px no-repeat}
+.intro.m08-intro::before{top:clamp(16px,3vw,34px)}
+.intro.m08-intro::after{bottom:clamp(16px,3vw,34px);transform:scaleY(-1)}
+.intro.m08-intro.part::before,.intro.m08-intro.part::after{opacity:0}
+.intro.m08-intro .intro-indice{bottom:max(52px,env(safe-area-inset-bottom))}
+
+@media (max-width:1279px){
+  .menu-btn{display:inline-flex}
+  .site-nav{display:none;position:absolute;top:100%;left:0;right:0;background:var(--ivory);border-bottom:1px solid var(--rule);padding:8px var(--gx) 20px;max-height:calc(100svh - var(--hh));overflow-y:auto}
   .menu-open .site-nav{display:block}
   .site-nav ul{flex-direction:column;gap:0}
   .site-nav li+li{border-top:1px solid var(--rule)}
-  .site-nav a{display:block;padding:14px 0;font:400 1.5rem/1.2 var(--serif)}
-  .site-nav a::after{left:0;right:auto;top:16px;bottom:16px;width:3px;height:auto}
+  .site-nav a{padding:13px 0;font:400 1.5rem/1.2 var(--serif)}
+  .site-nav a::after{left:0;right:auto;top:15px;bottom:15px;width:3px;height:auto}
   .site-nav a[aria-current="page"]{padding-left:18px}
-  .people,.coord>div{grid-template-columns:1fr}
-  .ag-list>li,.dl-list>li{grid-template-columns:1fr}
-  .ag-meta,.dl-meta{text-align:left;align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:4px 16px;margin-top:4px}
-  .tablist{flex-direction:column;gap:0;border-bottom:0}
-  .tab{padding:13px 0 13px 18px;border-top:1px solid var(--rule)}
-  .tab:last-child{border-bottom:1px solid var(--rule)}
-  .tab[aria-selected="true"]::after{left:0;right:auto;top:10px;bottom:10px;width:3px;height:auto}
-  .fiche{grid-template-columns:1fr;gap:2px}
-  .fiche dd{margin-bottom:12px}
-  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:1100px){
+  .foot-cols{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tour-vide{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:859px){
+  :root{--hh:60px}
+  .som,.page,.ag,.show,.foot-in{display:block}
+  .pv{display:none}
+  .toc{padding:22px var(--gx) 36px}
+  .toc-title{font-size:2rem;line-height:1.08}
+  .toc-link{padding:16px 0 18px;border-bottom:1px solid var(--rule)}
+  .toc-lead{display:none}
+  .toc-row{justify-content:space-between}
+  .toc-extra{display:grid;grid-template-columns:104px minmax(0,1fr);gap:14px;align-items:start;margin-top:12px}
+  .toc-extra img{width:104px;aspect-ratio:4/5;object-fit:cover}
+  .toc-x{display:flex;flex-direction:column;gap:6px;font-size:.9375rem;line-height:1.45;min-width:0}
+  .toc-crea{font:600 .6875rem/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ct)}
+  .toc-next .kicker{margin-bottom:2px}
+  .toc-link.is-active .toc-title{color:inherit;text-decoration-color:transparent}
+  .portes{grid-template-columns:minmax(0,1fr)}
+  .porte{min-height:0;flex-direction:row;align-items:center;gap:16px;padding:26px var(--gx)}
+  .porte+.porte{border-left:0;border-top:1px solid var(--rule)}
+  .porte-t{font-size:1.75rem}
+  .cb{padding:52px var(--gx) 56px}
+  .cm-marges .cm-svg{width:calc(var(--ext,1) * 100%);margin-left:calc(var(--off,0) * -100%);max-width:none}
+  .cm-marges .cm-etiqs{display:none}
+  .cm-marges .cm-bras{stroke-width:calc(var(--wb) * 1.7)}
+  .cm-marges .cm-pt{r:calc(var(--rp) * 1.6)}
+  .cm-cap{position:static;width:auto;margin-top:16px}
+  .cm-index{display:flex;flex-wrap:wrap;margin-top:18px;padding-top:10px;border-top:1px solid var(--ink)}
+  .cm-ix{padding:6px 12px 6px 0;margin-right:12px;border-right:1px solid var(--rule);font:400 1.0625rem/1.3 var(--serif);text-align:left}
+  .cm-ix-d{font:500 .75rem var(--sans);color:var(--gray-t)}
+  .cm-ix.is-on{color:var(--ct);text-decoration:underline}
+  .merci{padding:32px var(--gx) 44px}
+  .pg-head{padding:34px var(--gx) 0}
+  .pg-head-in{position:static}
+  .pg-body{padding:30px var(--gx) 64px}
+  .page-title{font-size:2.6rem;line-height:1.03}
+  .ag-side{border-right:0;padding:30px var(--gx) 24px;border-bottom:1px solid var(--rule)}
+  .ag-side-in{position:static}
+  .ag-main{padding:28px var(--gx) 64px}
+  .show-side-in{position:static;max-height:none;overflow:visible;padding:22px var(--gx) 30px}
+  .show-title,.show-title.is-long{margin-top:24px;font-size:2.6rem;line-height:1.03}
+  .show-fig img{aspect-ratio:4/3}
+  .show-body{padding:30px var(--gx) 56px}
+  .tour{padding:48px var(--gx) 52px}
+  .next{grid-template-columns:minmax(0,1fr);padding:28px var(--gx)}
+  .next img{display:none}
+  .foot-brand{padding:48px var(--gx) 0}
+  .foot-cols{padding:32px var(--gx) 52px;grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:599px){
+  .champs-2{grid-template-columns:minmax(0,1fr)}
+  .ag-it{grid-template-columns:minmax(0,1fr)}
+  .fiche li{grid-template-columns:minmax(0,1fr)}
+  .toc-dek{flex-direction:column;gap:2px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
@@ -306,17 +421,10 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 </head>
 <body>
 <a class="skip" href="#main">Aller au contenu</a>
-<header class="site-head" id="top">
-  <a class="brand" href="#/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">crescite</span><span class="sr-only">, retour à l’accueil</span></a>
-  <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-  <nav class="site-nav" id="nav" aria-label="Navigation principale">
-    <ul>
-      <li><a href="#/spectacles">Spectacles</a></li>
-      <li><a href="#/agenda">Agenda</a></li>
-      <li><a href="#/compagnie">La compagnie</a></li>
-      <li><a href="#/contact">Contact</a></li>
-    </ul>
-  </nav>
+<header class="site-head">
+  <a class="brand" href="#/"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name"></span></a>
+  <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><span class="menu-ico" aria-hidden="true"></span><span class="menu-t"></span></button>
+  <nav class="site-nav" id="nav"><ul></ul></nav>
 </header>
 <main id="main" tabindex="-1"></main>
 <footer class="site-foot"></footer>
@@ -324,530 +432,553 @@ button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:poin
 <script>
 (() => {
   'use strict';
-  const S = D.shows;
-  const C = D.company;
-  const idx = new Map(S.map((s, i) => [s.slug, i]));
+  const SITE = D.site, LIB = SITE.libelles, S = D.shows;
+  const parSlug = new Map(S.map(s => [s.slug, s]));
   const main = document.getElementById('main');
   const head = document.querySelector('.site-head');
   const menuBtn = document.querySelector('.menu-btn');
-  const DOORS = Object.fromEntries(D.doors.map(d => [d.key, d]));
-  const MOIS = { janvier: 'janv.', février: 'févr.', mars: 'mars', avril: 'avr.', mai: 'mai', juin: 'juin', juillet: 'juil.', août: 'août', septembre: 'sept.', octobre: 'oct.', novembre: 'nov.', décembre: 'déc.' };
+  const navUl = document.querySelector('.site-nav ul');
 
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const fr = v => esc(v).replace(/ ([:;!?»])/g, ' $1').replace(/« /g, '« ').replace(/(\d) (h|heures|dates|comédiens?)\b/g, '$1 $2');
-  const tint = c => `color-mix(in srgb, ${c} 12%, #f5f1ea)`;
-  const isShow = s => !!(s.annee || s.distribution.length);
-  const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
-  const ext = (href, label) => `<a href="${esc(href)}" target="_blank" rel="noopener">${label}<span class="sr-only"> (nouvel onglet)</span>&nbsp;<span aria-hidden="true">↗</span></a>`;
-  const mail = `<a href="mailto:${esc(C.email)}">${esc(C.email)}</a>`;
+  const brut = h => String(h ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const teinte = (c, p = 12) => `color-mix(in srgb, ${c} ${p}%, #f5f1ea)`;
+  const onglet = id => (SITE.menu.find(m => m.id === id) || {}).texte || '';
+  const ext = (href, html) => `<a href="${esc(href)}" target="_blank" rel="noopener">${html}<span class="ext" aria-hidden="true">↗</span></a>`;
+  const ouvrirLiens = h => String(h ?? '').replace(/<a href="(https?:[^"]*)"/g, '<a href="$1" target="_blank" rel="noopener"');
+  const blocs = arr => (arr || []).map(b => /^\s*<(h\d|ul|ol|p|blockquote|div|table)\b/i.test(b) ? ouvrirLiens(b) : `<p>${ouvrirLiens(b)}</p>`).join('');
+  const image = (slug, alt = '') => D.photos[slug] ? `<img src="${D.photos[slug]}" alt="${esc(alt)}" decoding="async" style="object-position:${parSlug.get(slug)?.focale ?? 50}% 50%">` : '';
+  const MOIS = /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\s+\d{4}/;
+  // « 18 décembre 2026 » → « 18 » en grand, « décembre 2026 » dessous (les mots de la ligne, rien d'autre)
+  const decoupe = t => { const s = String(t || ''), m = s.match(MOIS); return m ? { j: s.slice(0, m.index).trim(), m: s.slice(m.index) } : { j: '', m: s }; };
 
-  const timeOf = d => /^\d{1,2}h\d{0,2}$/.test(d.lieu || '') ? d.lieu : null;
-  const venue = d => d.lieu && !timeOf(d) && d.lieu !== 'diptyque' ? d.lieu : null;
-  const town = d => `${d.commune}\u00a0(${d.dep === 'BE' ? 'Belgique' : d.dep})`;
-  const nw = v => esc(v).replace(/(\S*-\S*)/g, '<span class="nw">$1</span>');
-  const place = d => [venue(d), town(d)].filter(Boolean).join(', ') + (d.lieu === 'diptyque' ? ', en diptyque' : '');
-  const shortLabel = d => d.label.replace(/janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre/g, m => MOIS[m]);
-  const dateTxt = d => (d.precision === 'day' && d.iso === d.fin ? d.joursem + ' ' : '') + shortLabel(d) + (timeOf(d) ? ', ' + timeOf(d) : '');
-  const datesOf = s => D.dates.filter(d => d.slug === s.slug);
-  const photo = (s, cls = '') => `<img${cls ? ` class="${cls}"` : ''} src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale ?? 50}% 50%" decoding="async">`;
-  const MODE = { etablissement: 'Se déplace dans les établissements', salle: 'Se joue en salle de spectacle', a_confirmer: 'Accueil dans l’établissement à confirmer' };
-
-  function setLogo(el, svg) {
-    el.innerHTML = svg;
-    const g = el.querySelector('svg');
-    if (g) { g.setAttribute('aria-hidden', 'true'); g.setAttribute('focusable', 'false'); g.removeAttribute('role'); g.removeAttribute('aria-label'); }
+  // la première phrase entière d'un paragraphe d'origine (HTML), balises refermées
+  function premiere(html) {
+    const re = /[.!?…](?=[\s  ]|<br|$)/g;
+    let m;
+    while ((m = re.exec(html))) {
+      let fin = m.index + 1;
+      const q = html.slice(fin).match(/^[\s  ]*[»”]/);
+      if (q) fin += q[0].length;
+      const h = html.slice(0, fin);
+      if ((h.match(/</g) || []).length !== (h.match(/>/g) || []).length || brut(h).length < 24) continue;
+      const pile = [];
+      h.replace(/<(\/?)([a-z0-9]+)[^>]*>/gi, (t, f, n) => { if (/^(br|img|hr)$/i.test(n) || /\/>$/.test(t)) return t; if (f) pile.pop(); else pile.push(n); return t; });
+      return h + pile.reverse().map(n => `</${n}>`).join('');
+    }
+    return html;
   }
 
-  /* Sommaire : l'accueil et l'onglet Spectacles */
+  /* ——— La carte : des filets d'encre depuis Rouen ; les communes composées en marge, comme dans un magazine ——— */
+  const R = CARTE.rouen, EN = CARTE.ENCART;
+  const loin = xy => Math.hypot(xy[0] - R[0], xy[1] - R[1]);
+  const estRouen = x => loin(x.xy) < 3;
+  const VB_FR = '6 30 788 752';
+  const CARTES = new Map();
+  let nCarte = 0;
+  {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('aria-hidden', 'true'); s.setAttribute('focusable', 'false');
+    s.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden');
+    s.innerHTML = `<defs><path id="cm-fr" d="${CARTE.fond.pays}" vector-effect="non-scaling-stroke"/><path id="cm-be" d="${CARTE.fond.belgique}" vector-effect="non-scaling-stroke"/><path id="cm-lu" d="${CARTE.fond.luxembourg}" vector-effect="non-scaling-stroke"/></defs>`;
+    document.body.appendChild(s);
+  }
+  const couleursDe = (x, sp) => { const s = sp || parSlug.get((x.dates || []).find(d => d.slug)?.slug); return s ? `--c:${s.couleur};--ct:${s.couleurTexteClair}` : '--c:#191414;--ct:#191414'; };
+  const aria = x => `${CARTE.nom(x)}${x.dates?.length ? ' : ' + x.dates.map(d => d.ligne).join(' ; ') : ''}`;
+
+  // les étiquettes d'une colonne, triées par hauteur : écartées d'un pas, centrées sur leurs communes
+  function etaler(items, pas, haut, bas) {
+    const blocs = [];
+    items.forEach(it => {
+      blocs.push({ its: [it], c: it.c });
+      while (blocs.length > 1) {
+        const b = blocs[blocs.length - 1], a = blocs[blocs.length - 2];
+        if ((b.c - (b.its.length - 1) * pas / 2) - (a.c + (a.its.length - 1) * pas / 2) >= pas) break;
+        const its = a.its.concat(b.its);
+        blocs.splice(-2, 2, { its, c: its.reduce((s, i) => s + i.c, 0) / its.length });
+      }
+    });
+    let y = -Infinity;
+    blocs.forEach(b => b.its.forEach((it, k) => { it.y = Math.max(b.c - (b.its.length - 1) * pas / 2 + k * pas, haut, y + pas); y = it.y; }));
+    let suiv = Infinity;
+    for (let k = items.length - 1; k >= 0; k--) { items[k].y = Math.min(items[k].y, bas, suiv - pas); suiv = items[k].y; }
+  }
+
+  /* mode : 'marges' (les noms en colonnes, reliés par des filets), 'actif' (le nom de la commune survolée), 'nu' */
+  function carte({ lieux = [], passe = [], mode = 'nu', k = 1, titre = '', classe = '', spectacle = null, passees = false, legende = null, index = false, interactif = true, pousse = true } = {}) {
+    const id = 'cm' + (++nCarte);
+    const vus = new Set(lieux.map(x => x.l));
+    const anciens = passe.filter(x => !vus.has(x.l) && !estRouen(x));
+    const hub = lieux.find(estRouen) || null;
+    const bras = lieux.filter(x => !estRouen(x));
+    const maxD = Math.max(1, ...bras.map(x => loin(x.xy)));
+    const delai = x => Math.round(loin(x.xy) / maxD * 320);
+    const fs = 16.5 * k, st = x => couleursDe(x, spectacle), lien = interactif ? ' carte-lieu' : '';
+    let vb = VB_FR, etiqs = '', ext = null, dessous = false;
+    if (mode === 'marges' && bras.length) {
+      const items = bras.map(x => ({ x, c: x.xy[1] + fs * .34 }));
+      const G = items.filter(i => i.x.xy[0] < 420).sort((a, b) => a.c - b.c);
+      const Dr = items.filter(i => i.x.xy[0] >= 420).sort((a, b) => a.c - b.c);
+      const haut = 36 + fs, bas = 776;
+      [G, Dr].forEach(col => etaler(col, Math.min(fs * 1.45, (bas - haut) / Math.max(1, col.length - 1)), haut, bas));
+      const larg = x => x.c.length * fs * .5 + (String(x.dep).length + 2) * fs * .36 + 8;
+      const XG = 0, XD = 770;
+      const x0 = Math.floor(G.length ? XG - Math.max(...G.map(i => larg(i.x))) - 8 : 6);
+      const x1 = Math.ceil(Dr.length ? XD + Math.max(...Dr.map(i => larg(i.x))) + 8 : 794);
+      vb = `${x0} 30 ${x1 - x0} 752`;
+      ext = { e: ((x1 - x0) / 788).toFixed(4), o: ((6 - x0) / 788).toFixed(4) };
+      dessous = G.some(i => i.y > 500);
+      const etiq = (i, g) => {
+        const { x, y } = i, xa = g ? XG : XD, ym = (y - fs * .34).toFixed(1), [px, py] = x.xy;
+        const d = `M${g ? xa + 5 : xa - 5} ${ym}H${g ? xa + 16 : xa - 16}L${px} ${py}`;
+        return `<g class="cm-etiq${lien}" data-l="${x.l}" style="${st(x)};--d:${delai(x)}ms"${interactif ? ` tabindex="0" role="button" aria-label="${esc(aria(x))}"` : ''}><path class="cm-fil" d="${d}"/><text x="${xa}" y="${y.toFixed(1)}" text-anchor="${g ? 'end' : 'start'}"><tspan class="cm-nom">${esc(x.c)}</tspan><tspan class="cm-dep" dx="${(fs * .28).toFixed(1)}">(${esc(x.dep)})</tspan></text></g>`;
+      };
+      etiqs = G.map(i => etiq(i, true)).join('') + Dr.map(i => etiq(i, false)).join('');
+    }
+    const armes = bras.map(x => `<path class="cm-bras" data-l="${x.l}" style="${st(x)};--d:${delai(x)}ms" d="${CARTE.trait(x.xy)}" pathLength="1"/><path class="cm-bout" data-l="${x.l}" style="${st(x)};--d:${delai(x)}ms" d="${CARTE.bout(x.xy, { r: 4.6 * k })}" pathLength="1"/>`).join('');
+    const vieux = anciens.map(x => `<path class="cm-passe" d="${CARTE.trait(x.xy)}"/>`).join('')
+      + anciens.map(x => `<circle class="cm-ppt" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(1.7 * k).toFixed(2)}"><title>${esc(aria(x))}</title></circle>`).join('');
+    const points = bras.map(x => `<g class="cm-lieu${lien}" data-l="${x.l}" style="${st(x)};--d:${delai(x)}ms"><circle class="cm-halo" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(11 * k).toFixed(1)}"/><circle class="cm-pt" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(3 * k).toFixed(2)}"/><title>${esc(aria(x))}</title></g>`).join('');
+    const rouen = `<g class="cm-rouen${hub ? lien : ''}"${hub ? ` data-l="${hub.l}" style="${st(hub)}"` : ''}${hub && interactif ? ` tabindex="0" role="button" aria-label="${esc(aria(hub))}"` : ''}><circle class="cm-r" cx="${R[0]}" cy="${R[1]}" r="${(4.4 * k).toFixed(2)}"/><text class="cm-r-nom" x="${(R[0] + 9 * k).toFixed(1)}" y="${(R[1] - 9 * k).toFixed(1)}">Rouen</text>${hub ? `<title>${esc(aria(hub))}</title>` : ''}</g>`;
+    const encart = [...bras, ...anciens].some(x => x.encart) ? `<rect class="cm-encart" x="${EN[0] - 30}" y="${EN[1] - 30}" width="60" height="60"/>` : '';
+    const flot = mode === 'actif' ? '<g class="cm-flot" aria-hidden="true"><path class="cm-fil"/><text><tspan class="cm-nom"></tspan><tspan class="cm-dep"></tspan></text></g>' : '';
+    CARTES.set(id, { bras, hub, k, legende, spectacle });
+    const cls = ['cm', `cm-${mode}`, spectacle ? 'cm-teinte' : '', passees ? 'cm-passees' : '', classe, pousse && CARTE.mouvement() ? 'attend' : ''].filter(Boolean).join(' ');
+    return `<figure class="${cls}" id="${id}" style="--fs:${fs.toFixed(1)}px;--wb:${(1.35 * k).toFixed(2)}px;--wp:${(.9 * k).toFixed(2)}px;--rp:${(3 * k).toFixed(2)}px${spectacle ? `;--c:${spectacle.couleur};--ct:${spectacle.couleurTexteClair}` : ''}">
+      <div class="cm-vue"><svg class="cm-svg" viewBox="${vb}" preserveAspectRatio="xMidYMid meet" ${interactif ? 'role="group"' : 'role="img"'} aria-label="${esc(titre)}"${ext ? ` style="--ext:${ext.e};--off:${ext.o}"` : ''}>
+        <g class="cm-fond"><use href="#cm-be" class="cm-voisin"/><use href="#cm-lu" class="cm-voisin"/><use href="#cm-fr" class="cm-terre"/>${encart}</g>
+        <g class="cm-anciens">${vieux}</g><g class="cm-armes">${armes}</g><g class="cm-etiqs">${etiqs}</g><g class="cm-points">${points}</g>${rouen}${flot}
+      </svg></div>
+      ${legende ? `<figcaption class="cm-cap${dessous ? ' dessous' : ''}" aria-live="polite"></figcaption>` : ''}
+      ${index && bras.length ? `<ul class="cm-index">${bras.map(x => `<li><button type="button" class="cm-ix" data-l="${x.l}" style="${st(x)}">${esc(x.c)} <span class="cm-ix-d">(${esc(x.dep)})</span></button></li>`).join('')}</ul>` : ''}
+    </figure>`;
+  }
+
+  function activer(fig, l) {
+    const on = l != null;
+    fig.classList.toggle('a-actif', on);
+    fig.querySelectorAll('[data-l]').forEach(e => e.classList.toggle('is-on', on && e.dataset.l === String(l)));
+    const g = fig.querySelector('.cm-flot');
+    if (!g) return;
+    const info = CARTES.get(fig.id), x = on ? info.bras.find(b => b.l === l) : null;
+    if (!x) { g.classList.remove('is-on'); return; }
+    const [px, py] = x.xy, k = info.k, droite = px < 560, s = droite ? 1 : -1, tx = px + s * 13 * k, ty = py - 11 * k;
+    const t = g.querySelector('text'), dep = g.querySelector('.cm-dep');
+    t.setAttribute('x', tx.toFixed(1)); t.setAttribute('y', ty.toFixed(1)); t.setAttribute('text-anchor', droite ? 'start' : 'end');
+    g.querySelector('.cm-nom').textContent = x.c;
+    dep.textContent = `(${x.dep})`; dep.setAttribute('dx', (4.5 * k).toFixed(1));
+    g.querySelector('path').setAttribute('d', `M${px} ${py}L${(tx - s * 3 * k).toFixed(1)} ${(ty + 3 * k).toFixed(1)}`);
+    g.setAttribute('style', couleursDe(x, info.spectacle));
+    g.classList.add('is-on');
+  }
+  // relie une carte : survol et focus montrent la commune, le clic l'épingle (ou choix)
+  function monter(fig, { survol = null, choix = null } = {}) {
+    const info = CARTES.get(fig.id), cap = fig.querySelector('.cm-cap'), etat = { epingle: null };
+    const montrer = l => { const v = l ?? etat.epingle; activer(fig, v); if (cap && info.legende) cap.innerHTML = info.legende(v); if (survol) survol(v); };
+    const basculer = l => { etat.epingle = etat.epingle === l ? null : l; montrer(etat.epingle); };
+    CARTE.lier(fig, { survol: montrer, choix: l => (choix ? choix(l, basculer) : basculer(l)) });
+    fig.querySelectorAll('.cm-ix').forEach(b => b.addEventListener('click', () => basculer(+b.dataset.l)));
+    montrer(null);
+    return { montrer, basculer, etat };
+  }
+  // les bras poussent depuis Rouen quand la carte paraît
+  let io = null;
+  function pousser() {
+    if (io) io.disconnect();
+    const cartes = main.querySelectorAll('.cm.attend');
+    if (!cartes.length) return;
+    if (!('IntersectionObserver' in window)) { cartes.forEach(c => c.classList.remove('attend')); return; }
+    io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.replace('attend', 'anime'); io.unobserve(e.target); } }), { threshold: .15 });
+    cartes.forEach(c => io.observe(c));
+  }
+
+  /* ——— Le sommaire : l'accueil et l'onglet Spectacles ——— */
+  function jeu(s) {
+    const sp = CARTE.spectacle(s.slug);
+    return sp.aVenir.some(x => !estRouen(x)) ? { prim: sp.aVenir, reste: sp.passe, passees: false } : { prim: sp.passe, reste: [], passees: true };
+  }
+  const tourneeCourte = s => s.prochaine
+    ? `<p class="pv-date"><span class="kicker">${esc(s.tournee.titre)}</span><span class="pv-ligne">${esc(s.prochaine.ligne)}</span></p>`
+    : s.statut && s.tournee ? `<p class="pv-date"><span class="kicker">${esc(s.tournee.titre)}</span><span class="pv-ligne">${esc(s.tournee.texte)}</span></p>` : '';
+
   function somHTML(page) {
-    const toc = S.map((s, i) => `
-      <li${isShow(s) ? '' : ' class="toc-sep"'}>
-        <a class="toc-link${i === 0 ? ' is-active' : ''}" href="#/spectacle/${s.slug}" data-i="${i}" style="--c:${s.couleur};--ct:${s.couleurTexteClair}">
-          <span class="toc-row"><span class="toc-title">${fr(s.titre)}</span>${s.annee ? `<span class="toc-lead" aria-hidden="true"></span><span class="toc-year">${s.annee}</span>` : ''}</span>
-          <span class="toc-extra">${photo(s)}<span class="toc-next"><span class="eyebrow">Prochaine date</span>${s.prochaine ? `${esc(dateTxt(s.prochaine))}<br>${esc(town(s.prochaine))}` : 'Aucune date annoncée pour l’instant'}</span></span>
-        </a>
-      </li>`).join('');
-
-    const layers = S.map((s, i) => `
-      <div class="pv-layer${i === 0 ? ' is-on' : ''}" data-i="${i}" style="--c:${s.couleur}">
-        <figure class="pv-fig">${photo(s)}${s.credit ? `<figcaption class="pv-cap">${esc(s.credit)}</figcaption>` : ''}</figure>
-        <p class="pv-acc">${fr(s.accroche)}</p>
-        <div class="pv-foot">
-          <p class="pv-date"><span class="eyebrow">Prochaine date</span><span>${s.prochaine ? esc(`${dateTxt(s.prochaine)} · ${town(s.prochaine)}`) : 'Aucune date annoncée pour l’instant'}</span></p>
-          <a class="pv-link" href="#/spectacle/${s.slug}">${isShow(s) ? 'Voir le spectacle' : 'Voir les actions culturelles'}<span class="sr-only"> ${esc(s.titre)}</span>&nbsp;<span aria-hidden="true">→</span></a>
+    const sais = SITE.saisons[0];
+    const items = S.map((s, i) => {
+      const tag = s.statut || (s.enTournee ? LIB.enTournee : '');
+      return `<li style="--k:${i}"><a class="toc-link${i === 0 ? ' is-active' : ''}" href="#/spectacle/${s.slug}" data-i="${i}" style="--c:${s.couleur};--ct:${s.couleurTexteClair}">
+        <span class="toc-row"><span class="toc-title">${esc(s.titre)}</span><span class="toc-lead" aria-hidden="true"></span><span class="toc-year">${esc(s.annee)}</span></span>
+        <span class="toc-dek"><span class="toc-sub">${s.sousTitre || ''}</span>${tag ? `<span class="toc-tag">${esc(tag)}</span>` : ''}</span>
+        <span class="toc-extra">${image(s.slug)}<span class="toc-x"><span class="toc-crea">${esc(s.creation)}</span>${s.prochaine ? `<span class="toc-next"><span class="kicker">${esc(s.tournee.titre)}</span>${esc(s.prochaine.ligne)}</span>` : ''}</span></span>
+      </a></li>`;
+    }).join('');
+    const calques = S.map((s, i) => {
+      const { prim, reste, passees } = jeu(s), aCarte = prim.length + reste.length > 0, lead = (s.texte || [])[0] ? premiere(s.texte[0]) : '';
+      const mini = aCarte ? carte({ lieux: prim, passe: reste, mode: 'nu', k: 2.3, interactif: false, pousse: false, spectacle: s, passees, titre: s.titre }) : '';
+      return `<div class="pv-layer${i === 0 ? ' is-on' : ''}" data-i="${i}" style="--c:${s.couleur};--ct:${s.couleurTexteClair}">
+        <div class="pv-media${aCarte ? '' : ' solo'}">
+          <figure class="pv-fig">${image(s.slug, s.titre)}${s.credit ? `<figcaption class="pv-cap">${esc(s.credit)}</figcaption>` : ''}</figure>
+          ${aCarte ? `<div class="pv-map">${mini}</div>` : ''}
         </div>
-      </div>`).join('');
-
-    const years = S.filter(s => s.annee).map(s => s.annee);
-    const head = page
-      ? `<h1 class="page-title" id="som-h" tabindex="-1">Les spectacles</h1>
-        <p class="page-sub">Sept spectacles, créés entre ${Math.min(...years)} et ${Math.max(...years)}, et des actions culturelles.</p>`
-      : `<h1 class="toc-kicker" id="som-h" tabindex="-1">Sept spectacles et des actions culturelles.</h1>`;
-
-    return `
-    <section class="som" aria-labelledby="som-h">
-      <div class="toc">
-        ${head}
-        <ul class="toc-list">${toc}</ul>
-        <a class="toc-foot" href="#/agenda">Saison ${esc(D.saison)} · ${plural(D.dates.length, 'date', 'dates')} à l’agenda <span aria-hidden="true">→</span></a>
-      </div>
-      <div class="pv" role="region" aria-label="Aperçu du spectacle" style="--tint:${tint(S[0].couleur)}">
-        <div class="pv-in">${layers}</div>
-      </div>
+        ${lead ? `<p class="pv-lead">${lead}</p>` : ''}
+        <p class="pv-crea"><span>${esc(s.creation)}</span>${s.cadre ? `<span class="pv-cadre">${esc(s.cadre)}</span>` : ''}</p>
+        <div class="pv-foot">${tourneeCourte(s)}<a class="pv-link" href="#/spectacle/${s.slug}">${esc(LIB.decouvrir)}<span class="sr-only"> ${esc(s.titre)}</span>&nbsp;<span aria-hidden="true">→</span></a></div>
+      </div>`;
+    }).join('');
+    const mast = h1 => `<div class="mast">${h1 ? `<h1 class="mast-g" id="som-h" tabindex="-1">${esc(SITE.nom)}</h1>` : `<span class="mast-g">${esc(SITE.nom)}</span>`}<a class="mast-d" href="${sais.href}">${esc(sais.titre)}</a></div>`;
+    return `<section class="som${INTRO.ouverte() ? ' attend' : ''}" aria-labelledby="som-h">
+      <div class="toc">${page ? `<h1 class="page-title toc-h1" id="som-h" tabindex="-1">${esc(onglet('spectacles'))}</h1>${mast(false)}` : mast(true)}<ol class="toc-list">${items}</ol></div>
+      <div class="pv" style="--tint:${teinte(S[0].couleur)}"><div class="pv-in">${calques}</div></div>
     </section>`;
   }
-
   function bindSom() {
-    const links = [...main.querySelectorAll('.toc-link')];
-    const layers = [...main.querySelectorAll('.pv-layer')];
-    const pv = main.querySelector('.pv');
+    const som = main.querySelector('.som');
+    if (!som) return;
+    const liens = [...som.querySelectorAll('.toc-link')], calques = [...som.querySelectorAll('.pv-layer')], pv = som.querySelector('.pv'), liste = som.querySelector('.toc-list');
     let cur = 0;
-    const activate = i => {
+    const choisir = i => {
       if (i === cur || Number.isNaN(i)) return;
       cur = i;
-      pv.style.setProperty('--tint', tint(S[i].couleur));
-      layers.forEach((l, k) => l.classList.toggle('is-on', k === i));
-      links.forEach((a, k) => a.classList.toggle('is-active', k === i));
+      pv.style.setProperty('--tint', teinte(S[i].couleur));
+      calques.forEach((c, k) => c.classList.toggle('is-on', k === i));
+      liens.forEach((a, k) => a.classList.toggle('is-active', k === i));
     };
-    const list = main.querySelector('.toc-list');
-    const pick = e => { const a = e.target.closest('.toc-link'); if (a) activate(+a.dataset.i); };
-    list.addEventListener('mouseover', pick);
-    list.addEventListener('focusin', pick);
+    const pick = e => { const a = e.target.closest('.toc-link'); if (a) choisir(+a.dataset.i); };
+    liste.addEventListener('mouseover', pick);
+    liste.addEventListener('focusin', pick);
   }
+  const revele = () => { const s = main.querySelector('.som.attend'); if (s) s.classList.replace('attend', 'revele'); };
 
-  const agRow = d => {
-    const s = S[idx.get(d.slug)];
-    return `<li>
-        <p class="ag-date">${esc(dateTxt(d))}</p>
-        <div><a class="ag-show" href="#/spectacle/${d.slug}"><span class="dot" style="--c:${s ? s.couleur : 'currentColor'}" aria-hidden="true"></span>${fr(d.titre)}</a><p class="ag-place">${nw(place(d))}</p></div>
-        <div class="ag-meta"><span class="eyebrow">${esc(d.public)}</span>${d.lien ? ext(d.lien, 'Réserver') : ''}</div>
-      </li>`;
-  };
-  const nb = (k, one, many) => `${k}&nbsp;${k > 1 ? many : one}`;
-
-  /* Accueil : le sommaire, les trois portes, les trois prochaines dates */
-  function homeHTML() {
-    const travels = S.filter(s => s.etablissement && (s.etablissement.mode === 'etablissement' || s.passCulture || s.cred76));
-    const doorLinks = {
-      voir: `<a href="#/agenda">L’agenda de la saison</a>`,
-      programmer: S.filter(isShow).map(s => `<a href="#/spectacle/${s.slug}/programmer">${fr(s.titre)}</a>`).join(''),
-      etablissement: travels.map(s => `<a href="#/spectacle/${s.slug}/etablissement">${fr(s.titre)}</a>`).join('')
+  /* ——— Accueil : le sommaire, les trois portes, la carte, les donateurs ——— */
+  function accueilHTML() {
+    const sais = SITE.saisons[0], lieux = CARTE.aVenir();
+    const legende = l => {
+      if (l == null) return `<ul class="cap-l">${D.dates.slice(0, 3).map(d => `<li><span class="cap-d">${esc(d.ligne)}</span><a href="#/spectacle/${d.slug}">${esc(d.titre)}</a></li>`).join('')}</ul>`;
+      const x = lieux.find(y => y.l === l);
+      return x ? `<p class="cap-nom">${esc(x.c)} <span class="cap-dep">(${esc(x.dep)})</span></p><ul class="cap-l">${x.dates.map(d => `<li><span class="cap-d">${esc(d.ligneDate)}</span><a href="#/spectacle/${d.slug}">${esc(d.titre)}</a></li>`).join('')}</ul>` : '';
     };
-    const doors = D.doors.map((d, i) => `
-      <li>
-        <span class="door-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
-        <div>
-          <h3 class="door-title">${esc(d.titre)}</h3>
-          <p class="door-text">${fr(d.texte)}</p>
-          <p class="door-links">${doorLinks[d.key] || ''}</p>
-        </div>
-      </li>`).join('');
-    const next = D.dates.slice(0, 3);
-
     return somHTML(false) + `
-    <section class="band" aria-labelledby="portes-h">
-      <div class="band-head">
-        <h2 class="band-title" id="portes-h">Par où commencer&nbsp;?</h2>
-        <p class="band-sub">Trois portes, selon ce que vous cherchez.</p>
-      </div>
-      <div class="band-body"><ol class="doors">${doors}</ol></div>
+    <div class="portes">${SITE.portes.map(p => `<a class="porte" href="${p.href}" style="--pc:${p.couleur}"><span class="porte-t">${esc(p.texte)}</span><span class="porte-a" aria-hidden="true">→</span></a>`).join('')}</div>
+    <section class="cb" aria-labelledby="cb-h">
+      <div class="cb-head"><div><p class="kicker">${esc(LIB.actuellementEnTournee)}</p><h2 class="band-title" id="cb-h">${esc(sais.titre)}</h2></div><a class="lien-fort" href="${sais.href}">${esc(onglet('agenda'))} <span aria-hidden="true">→</span></a></div>
+      ${carte({ lieux, mode: 'marges', k: 1.02, legende, index: true, titre: `${LIB.actuellementEnTournee}, ${sais.titre}` })}
     </section>
-
-    <section class="band" aria-labelledby="agenda-h">
-      <div class="band-head">
-        <h2 class="band-title" id="agenda-h">Prochaines dates</h2>
-        <p class="band-sub">Saison ${esc(D.saison)}, en salle et dans les établissements scolaires.</p>
-      </div>
-      <div class="band-body">
-        ${next.length ? `<ul class="ag-list">${next.map(agRow).join('')}</ul>` : '<p class="none">Aucune date annoncée pour l’instant.</p>'}
-        <a class="more" href="#/agenda">Tout l’agenda <span aria-hidden="true">→</span></a>
-      </div>
-    </section>`;
+    <div class="merci"><p>${SITE.donateurs}</p></div>`;
+  }
+  function bindAccueil() {
+    bindSom();
+    const fig = main.querySelector('.cb .cm');
+    if (fig) monter(fig, { choix: l => { location.hash = `#/agenda?l=${l}`; } });
   }
 
-  /* Onglet Agenda : toutes les dates de la saison, groupées par mois */
+  /* ——— Agenda et saisons passées ——— */
+  function dateHTML(d, avecTitre) {
+    const s = parSlug.get(d.slug), { j, m } = decoupe(d.ligneDate);
+    return `<li class="ag-it"${d.l != null ? ` data-l="${d.l}"` : ''}${s ? ` style="--c:${s.couleur};--ct:${s.couleurTexteClair}"` : ''}>
+      <p class="ag-d${j ? '' : ' sans-j'}">${j ? `<span class="ag-j">${esc(j)}</span>` : ''}<span class="ag-m">${esc(m)}</span></p>
+      <div class="ag-b">
+        <p class="ag-lieu">${esc(d.ligneLieu)}</p>
+        ${avecTitre ? `<p class="ag-sp">${s ? `<a href="#/spectacle/${s.slug}"><span class="pastille" aria-hidden="true"></span>${esc(d.titre)}</a>` : esc(d.titre)}</p>` : ''}
+        ${(d.details || []).length ? `<ul class="ag-det">${d.details.map(x => `<li>${x.lien ? ext(x.lien, esc(x.texte)) : esc(x.texte)}</li>`).join('')}</ul>` : ''}
+      </div>
+    </li>`;
+  }
+  const saisonsNav = exclue => `<nav class="saisons" aria-label="${esc(LIB.saison)}"><ol>${SITE.saisons.filter(x => x.saison !== exclue).map(x => `<li><a href="${x.href}"><span class="ss-t">${esc(x.titre)}</span><span class="ss-lead" aria-hidden="true"></span><span aria-hidden="true">→</span></a></li>`).join('')}</ol></nav>`;
+  const filtreHTML = '<button class="filtre" type="button" hidden><span class="filtre-n"></span><span class="filtre-x" aria-hidden="true">×</span></button>';
+
   function agendaHTML() {
-    const groups = [];
+    const sais = SITE.saisons[0], groupes = [];
     D.dates.forEach(d => {
-      const k = d.iso.slice(0, 7);
-      let g = groups[groups.length - 1];
-      if (!g || g.k !== k) groups.push(g = { k, label: `${d.moisLong.charAt(0).toUpperCase()}${d.moisLong.slice(1)} ${d.annee}`, dates: [] });
+      const cle = String(d.iso || '').slice(0, 7);
+      let g = groupes[groupes.length - 1];
+      if (!g || g.cle !== cle) groupes.push(g = { cle, t: (String(d.ligneDate).match(MOIS) || [d.ligneDate])[0], dates: [] });
       g.dates.push(d);
     });
-    const tp = D.dates.filter(d => d.public === 'Tout public').length;
-    const sc = D.dates.length - tp;
-    return `
-    <section class="band band-page" aria-labelledby="ag-h">
-      <div class="band-head">
-        <div class="band-stick">
-          <h1 class="page-title" id="ag-h" tabindex="-1">L’agenda</h1>
-          <p class="page-sub">${D.dates.length ? `La saison ${esc(D.saison)} en ${nb(D.dates.length, 'date', 'dates')}&nbsp;: ${tp}&nbsp;tout public, ${nb(sc, 'scolaire', 'scolaires')}. Les réservations se font auprès de chaque lieu.` : `Saison ${esc(D.saison)}.`}</p>
-          ${groups.length > 1 ? `<nav class="ag-index" aria-label="Mois de la saison">
-            <p class="eyebrow" aria-hidden="true">Par mois</p>
-            <ol>${groups.map(g => `<li><a href="#/agenda?mois=${g.k}"><span class="ai-m">${g.label}</span><span class="ai-lead" aria-hidden="true"></span><span class="ai-n">${g.dates.length}<span class="sr-only"> ${g.dates.length > 1 ? 'dates' : 'date'}</span></span></a></li>`).join('')}</ol>
-          </nav>` : ''}
-        </div>
-      </div>
-      <div class="band-body">${groups.length ? groups.map(g => `
-        <section class="ag-group" id="mois-${g.k}" aria-labelledby="mois-${g.k}-h">
-          <div class="sec-head"><h2 class="sec-title" id="mois-${g.k}-h" tabindex="-1">${g.label}</h2><span class="eyebrow">${nb(g.dates.length, 'date', 'dates')}</span></div>
-          <ul class="ag-list">${g.dates.map(agRow).join('')}</ul>
-        </section>`).join('') : '<p class="none">Aucune date annoncée pour l’instant.</p>'}
+    return `<section class="ag" aria-labelledby="ag-h">
+      <div class="ag-side"><div class="ag-side-in">
+        <p class="kicker">${esc(onglet('agenda'))}</p>
+        <h1 class="page-title" id="ag-h" tabindex="-1">${esc(sais.titre)}</h1>
+        ${carte({ lieux: CARTE.aVenir(), mode: 'actif', k: 1.4, titre: sais.titre })}
+        ${filtreHTML}
+      </div></div>
+      <div class="ag-main">
+        ${groupes.map(g => `<section class="ag-g"><h2 class="ag-mois">${esc(g.t)}</h2><ol class="ag-list">${g.dates.map(d => dateHTML(d, true)).join('')}</ol></section>`).join('')}
+        ${saisonsNav(sais.saison)}
       </div>
     </section>`;
   }
+  function saisonHTML(cle) {
+    const T = D.saisons[cle];
+    const ligne = d => {
+      const i = d.ligne.indexOf(' — '), a = i > 0 ? d.ligne.slice(0, i) : d.ligne, b = i > 0 ? d.ligne.slice(i + 3) : '';
+      const corps = `<span class="sa-d">${esc(a)}</span>${b ? `<span aria-hidden="true"> — </span><span class="sa-p">${esc(b)}</span>` : ''}`;
+      return `<li class="sa-it${d.etat ? ' a-etat' : ''}"${d.l != null ? ` data-l="${d.l}"` : ''}>
+        <p class="sa-l">${d.lien ? ext(d.lien, corps) : corps}</p>
+        ${d.etat ? `<p class="sa-etat">${esc(d.etat)}</p>` : ''}
+        ${(d.details || []).length ? `<ul class="ag-det">${d.details.map(x => `<li>${x.lien ? ext(x.lien, esc(x.texte)) : esc(x.texte)}</li>`).join('')}</ul>` : ''}
+      </li>`;
+    };
+    return `<section class="ag ag-saison" aria-labelledby="sa-h">
+      <div class="ag-side"><div class="ag-side-in">
+        <p class="kicker"><a href="${SITE.saisons[0].href}">${esc(onglet('agenda'))}</a></p>
+        <h1 class="page-title" id="sa-h" tabindex="-1">${esc(T.titre)}</h1>
+        ${carte({ lieux: CARTE.saison(cle), mode: 'actif', k: 1.4, titre: T.titre })}
+        ${filtreHTML}
+      </div></div>
+      <div class="ag-main">
+        ${T.spectacles.map(g => {
+          const s = g.slug && parSlug.get(g.slug);
+          return `<section class="sa-g"${s ? ` style="--c:${s.couleur};--ct:${s.couleurTexteClair}"` : ''}>
+          <h2 class="sa-t">${s ? `<a href="#/spectacle/${s.slug}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
+          ${g.sousTitre || g.creation ? `<p class="sa-sub">${g.sousTitre ? `<span>${g.sousTitre}</span>` : ''}${g.creation ? `<span class="sa-crea">${esc(g.creation)}</span>` : ''}</p>` : ''}
+          <ol class="sa-list">${g.dates.map(ligne).join('')}</ol>
+        </section>`;
+        }).join('')}
+        ${saisonsNav(cle)}
+      </div>
+    </section>`;
+  }
+  // la carte et la liste : survoler une commune met ses dates en avant, la choisir filtre la liste
+  function bindListe(r) {
+    const fig = main.querySelector('.ag-side .cm'), liste = main.querySelector('.ag-main'), chip = main.querySelector('.filtre');
+    if (!fig || !liste) return;
+    const info = CARTES.get(fig.id);
+    const items = [...liste.querySelectorAll('.ag-it, .sa-it')], groupes = [...liste.querySelectorAll('.ag-g, .sa-g')];
+    const surligner = l => items.forEach(it => it.classList.toggle('is-on', l != null && it.dataset.l === String(l)));
+    const filtrer = l => {
+      items.forEach(it => { it.hidden = l != null && it.dataset.l !== String(l); });
+      groupes.forEach(g => { g.hidden = l != null && !g.querySelector('.ag-it:not([hidden]), .sa-it:not([hidden])'); });
+      const x = l != null ? [...info.bras, info.hub].find(y => y && y.l === l) : null;
+      chip.hidden = !x;
+      if (x) chip.querySelector('.filtre-n').textContent = CARTE.nom(x);
+    };
+    const api = monter(fig, { survol: surligner, choix: (l, basculer) => { basculer(l); filtrer(api.etat.epingle); } });
+    chip.addEventListener('click', () => { api.basculer(api.etat.epingle); filtrer(null); });
+    const versCarte = e => { const it = e.target.closest('[data-l]'); api.montrer(it ? +it.dataset.l : null); };
+    liste.addEventListener('mouseover', versCarte);
+    liste.addEventListener('focusin', versCarte);
+    liste.addEventListener('mouseleave', () => api.montrer(null));
+    const l0 = r && r.q && r.q.has('l') ? +r.q.get('l') : NaN;
+    if (!Number.isNaN(l0) && items.some(it => it.dataset.l === String(l0))) { api.basculer(l0); filtrer(l0); }
+  }
 
-  /* Onglet La compagnie */
+  /* ——— La compagnie, Actions culturelles, Espace Pro, Contact, pages légales ——— */
   function compagnieHTML() {
-    const st = D.stats;
-    const cast = new Map();
-    S.forEach(s => s.distribution.forEach(e => e.split(/\s+ou\s+/).forEach(p => {
-      const nom = p.trim();
-      if (!cast.has(nom)) cast.set(nom, []);
-      if (!cast.get(nom).includes(s)) cast.get(nom).push(s);
-    })));
-    const fam = nom => nom.split(' ').slice(1).join(' ') || nom;
-    const people = [...cast].sort((a, b) => fam(a[0]).localeCompare(fam(b[0]), 'fr') || a[0].localeCompare(b[0], 'fr'));
-    return `
-    <section class="band band-page" aria-labelledby="cie-h">
-      <div class="band-head">
-        <h1 class="page-title" id="cie-h" tabindex="-1">La compagnie</h1>
-        <p class="page-sub">Théâtre, ${esc(C.ville)}, depuis ${esc(C.depuis)}.</p>
-      </div>
-      <div class="band-body">
-        <p class="quote">${fr(C.intention)}</p>
-        <p class="cie-text">${fr(C.presentation)}</p>
-        <p class="cie-facts">Mise en scène&nbsp;: ${esc(C.miseEnScene)}</p>
-        <ul class="stats">
-          <li><span class="stat-n">${esc(st.representationsCourt)}</span><span class="stat-l">représentations depuis ${st.depuis}</span></li>
-          <li><span class="stat-n">${st.parAnMin}</span><span class="stat-l">par an au moins, depuis ${st.parAnDepuis}</span></li>
-          <li><span class="stat-n">${st.pays}</span><span class="stat-l">pays&nbsp;: ${esc(st.paysListe.join(', '))}</span></li>
-          <li><span class="stat-n">${st.heuresEAC}&nbsp;h</span><span class="stat-l">d’éducation artistique en 2023-2024</span></li>
-        </ul>
-      </div>
+    const C = SITE.compagnie;
+    return `<section class="page" aria-labelledby="cie-h">
+      <div class="pg-head"><div class="pg-head-in"><h1 class="page-title" id="cie-h" tabindex="-1">${esc(C.titre)}</h1></div></div>
+      <div class="pg-body prose prose-lede">${C.paragraphes.map(p => `<p>${p}</p>`).join('')}</div>
     </section>
-
-    <section class="band" aria-labelledby="plateau-h">
-      <div class="band-head">
-        <h2 class="band-title" id="plateau-h">Au plateau</h2>
-        <p class="band-sub">Les interprètes des spectacles du répertoire, par ordre alphabétique.</p>
-      </div>
-      <div class="band-body">
-        <ul class="people">${people.map(([nom, shows]) => `<li><span class="p-name">${esc(nom)}</span><span class="p-shows">${shows.map(s => fr(s.titre)).join(', ')}</span></li>`).join('')}</ul>
-      </div>
-    </section>
-
-    <section class="band" aria-labelledby="part-h">
-      <div class="band-head">
-        <h2 class="band-title" id="part-h">Partenaires</h2>
-      </div>
-      <div class="band-body">
-        <ul class="people">${C.partenaires.map(p => `<li><span class="p-name">${nw(p)}</span></li>`).join('')}</ul>
-      </div>
+    <section class="page" aria-labelledby="dates-h">
+      <div class="pg-head"><h2 class="band-title" id="dates-h">${esc(C.datesTitre)}</h2></div>
+      <div class="pg-body"><ol class="chrono">${C.dates.map(d => {
+        const s = S.find(x => String(x.annee) === String(d.annee));
+        const corps = `<span class="ch-t">${esc(d.titre)}</span><span class="ch-lead" aria-hidden="true"></span><span class="ch-a">${esc(d.annee)}</span>`;
+        return `<li>${s ? `<a href="#/spectacle/${s.slug}" style="--c:${s.couleur};--ct:${s.couleurTexteClair}">${corps}</a>` : `<span class="ch-r">${corps}</span>`}</li>`;
+      }).join('')}</ol></div>
     </section>`;
   }
-
-  /* Onglet Contact */
+  function actionsHTML() {
+    const A = SITE.actions, ph = D.photos['actions-culturelles'];
+    return `<section class="page" aria-labelledby="ac-h">
+      <div class="pg-head"><div class="pg-head-in"><h1 class="page-title" id="ac-h" tabindex="-1">${esc(A.titre)}</h1>
+        ${ph ? `<figure class="pg-fig"><img src="${ph}" alt="${esc(A.titre)}" decoding="async">${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure>` : ''}</div></div>
+      <div class="pg-body prose">${blocs(A.blocs)}</div>
+    </section>`;
+  }
+  function proHTML() {
+    const P = SITE.pro;
+    return `<section class="page" aria-labelledby="pro-h">
+      <div class="pg-head"><p class="kicker">${esc(P.titrePage)}</p><h1 class="page-title" id="pro-h" tabindex="-1">${esc(P.titre)}</h1></div>
+      <div class="pg-body"><form class="form" action="#" novalidate>
+        <p class="form-intro">${esc(P.texte)}</p>
+        <div class="champ"><label for="pro-mdp">${esc(P.champ)}</label><input id="pro-mdp" name="mdp" type="password" autocomplete="current-password"></div>
+        <button class="btn" type="submit">${esc(P.bouton)}</button>
+      </form></div>
+    </section>`;
+  }
   function contactHTML() {
-    const ac = S.find(s => !isShow(s));
-    const go = {
-      voir: ['#/agenda', 'L’agenda de la saison'],
-      programmer: ['#/spectacles', 'Les spectacles'],
-      etablissement: ac ? [`#/spectacle/${ac.slug}`, fr(ac.titre)] : ['#/spectacles', 'Les spectacles']
-    };
-    const doors = D.doors.map((d, i) => `
-      <li>
-        <span class="door-num" aria-hidden="true">${String(i + 1).padStart(2, '0')}</span>
-        <div>
-          <h3 class="door-title">${esc(d.titre)}</h3>
-          <p class="door-text">${fr(d.texte)}</p>
-          <p class="door-meta"><span class="eyebrow">Contact dédié</span><span class="muted">à fournir</span></p>
-          ${go[d.key] ? `<p class="door-links"><a href="${go[d.key][0]}">${go[d.key][1]}</a></p>` : ''}
-        </div>
-      </li>`).join('');
-    return `
-    <section class="band band-page" aria-labelledby="ct-h">
-      <div class="band-head">
-        <h1 class="page-title" id="ct-h" tabindex="-1">Contact</h1>
-        <p class="page-sub">Une question, une date, un projet d’accueil&nbsp;: écrivez à la compagnie.</p>
-      </div>
-      <div class="band-body">
-        <dl class="coord">
-          <div><dt>Nom</dt><dd>${esc(C.nom)}</dd></div>
-          <div><dt>Adresse</dt><dd>${esc(C.adresse)}</dd></div>
-          <div><dt>E-mail</dt><dd>${mail}</dd></div>
-          <div><dt>Lettre d’information</dt><dd class="muted">Inscription&nbsp;: à fournir</dd></div>
-        </dl>
-      </div>
-    </section>
-
-    <section class="band" aria-labelledby="qui-h">
-      <div class="band-head">
-        <h2 class="band-title" id="qui-h">Qui contacter&nbsp;?</h2>
-        <p class="band-sub">Un contact par porte, selon ce que vous cherchez.</p>
-      </div>
-      <div class="band-body"><ol class="doors">${doors}</ol></div>
+    const C = SITE.contact, K = SITE.coordonnees, [nom, mail, tel, ville, msg] = C.champs;
+    const champ = (id, label, type, ac) => `<div class="champ"><label for="${id}">${esc(label)}</label><input id="${id}" name="${id}" type="${type}" autocomplete="${ac}"></div>`;
+    const cle = 'politique de confidentialité', i = C.consentement.indexOf(cle);
+    const consent = i >= 0 ? `${esc(C.consentement.slice(0, i))}<a href="#/politique-de-confidentialite">${esc(C.consentement.slice(i, i + cle.length))}</a>${esc(C.consentement.slice(i + cle.length))}` : esc(C.consentement);
+    return `<section class="page" aria-labelledby="ct-h">
+      <div class="pg-head"><div class="pg-head-in"><h1 class="page-title" id="ct-h" tabindex="-1">${esc(C.titre)}</h1>
+        <address class="coord"><p class="co-nom">${esc(K.nom)}</p><p>${K.adresse.map(esc).join('<br>')}</p><p class="co-l">${K.legal.map(esc).join('<br>')}</p></address></div></div>
+      <div class="pg-body"><form class="form" action="#" novalidate>
+        <div class="champs-2">${champ('c-nom', nom, 'text', 'name')}${champ('c-mail', mail, 'email', 'email')}</div>
+        <div class="champs-2">${champ('c-tel', tel, 'tel', 'tel')}${champ('c-ville', ville, 'text', 'address-level2')}</div>
+        <div class="champ"><label for="c-msg">${esc(msg)}</label><textarea id="c-msg" name="message" rows="6"></textarea></div>
+        <div class="coche"><input type="checkbox" id="c-ok" name="consentement"><label for="c-ok">${consent}</label></div>
+        <div class="calcul"><label for="c-calc">${esc(C.calcul)}</label><input id="c-calc" name="calcul" inputmode="numeric" maxlength="2" autocomplete="off"></div>
+        <button class="btn" type="submit">${esc(C.bouton)}</button>
+      </form></div>
+    </section>`;
+  }
+  function legalHTML(cle) {
+    const L = SITE.legal[cle];
+    return `<section class="page" aria-labelledby="lg-h">
+      <div class="pg-head"><div class="pg-head-in"><h1 class="page-title" id="lg-h" tabindex="-1">${esc(L.titre)}</h1></div></div>
+      <div class="pg-body prose prose-legal">${blocs(L.blocs)}</div>
     </section>`;
   }
 
-  /* Page spectacle */
-  function facts(s) {
-    if (!isShow(s)) return s.soutiens ? [['Avec le soutien de', s.soutiens]] : [];
-    const n = s.distribution.length;
-    const lead = s.equipe[0];
-    return [
-      ['Création', s.annee ?? 'à fournir'],
-      ['Durée', s.duree ?? 'à fournir'],
-      ['Au plateau', n ? plural(n, 'comédien', 'comédiens') : 'à fournir'],
-      lead ? [lead[0], lead[1]] : ['Équipe', 'à fournir']
-    ];
-  }
-
-  function showHTML(s) {
-    const i = idx.get(s.slug);
-    const next = S[(i + 1) % S.length];
-    const dates = datesOf(s);
-    const pub = dates.filter(d => d.public === 'Tout public');
-    const firstPub = pub[0];
-    const n = s.distribution.length;
-    const info = {
-      voir: pub.length ? `${plural(pub.length, 'date', 'dates')} tout public` : dates.length ? 'Pas de date tout public annoncée' : 'Aucune date annoncée',
-      programmer: isShow(s) ? 'Fiche, équipe, documents' : 'Fiche et documents',
-      etablissement: MODE[s.etablissement?.mode] || 'À fournir'
+  /* ——— La page d'un spectacle ——— */
+  function tourneeHTML(s) {
+    const st = `--tint:${teinte(s.couleur, 9)};--c:${s.couleur};--ct:${s.couleurTexteClair}`;
+    if (s.statut) return `<section class="tour" style="${st}" aria-labelledby="tour-h">
+      <div class="tour-head"><h2 class="band-title" id="tour-h">${esc(s.tournee.titre)}</h2></div>
+      <div class="tour-vide"><p class="tour-texte">${esc(s.tournee.texte)}</p>${carte({ mode: 'nu', k: 1.5, interactif: false, pousse: false, spectacle: s, titre: s.tournee.titre })}</div>
+    </section>`;
+    const dates = D.dates.filter(d => d.slug === s.slug), { prim, reste, passees } = jeu(s);
+    if (!dates.length && !prim.length) return '';
+    const tout = [...prim, ...reste];
+    const legende = l => {
+      const x = l == null ? null : tout.find(y => y.l === l);
+      return x ? `<p class="cap-nom">${esc(x.c)} <span class="cap-dep">(${esc(x.dep)})</span></p><ul class="cap-l">${x.dates.map(d => `<li><span class="cap-d">${esc(d.ligneDate || d.ligne)}</span></li>`).join('')}</ul>` : '';
     };
-    const dl = (d, hide) => `<li${hide ? ' hidden data-more' : ''}>
-      <p class="dl-date">${esc(dateTxt(d))}</p>
-      <p class="dl-place">${nw(place(d))}</p>
-      <div class="dl-meta"><span class="eyebrow">${esc(d.public)}</span>${d.lien ? ext(d.lien, 'Réserver') : ''}</div>
-    </li>`;
-    const LIMIT = 8;
-
-    const voir = pub.length ? `
-      <p class="panel-lead">Prochaine représentation tout public&nbsp;:</p>
-      <p class="big-date">${esc(dateTxt(firstPub))}</p>
-      <p>${nw(place(firstPub))}</p>
-      ${firstPub.lien ? `<a class="btn" href="${esc(firstPub.lien)}" target="_blank" rel="noopener">Réserver auprès du lieu<span class="sr-only"> (nouvel onglet)</span> <span aria-hidden="true">↗</span></a>` : `<p class="muted">Lien de réservation&nbsp;: à fournir.</p>`}
-      <p class="sub-title">Bon à savoir</p>
-      <p>${pub.length > 1 ? `Les ${pub.length} dates tout public sont dans la liste ci-dessus, avec leur lien de réservation quand il existe.` : 'C’est la seule date tout public annoncée pour l’instant.'}${dates.length > pub.length ? ' Les dates marquées « Scolaire » sont des représentations pour les classes.' : ''}</p>
-      <p>Une question, un groupe&nbsp;? ${mail}</p>` : `
-      <p class="panel-lead">${dates.length ? 'Pas de représentation tout public annoncée pour l’instant&nbsp;: les dates de la saison sont des représentations scolaires.' : 'Aucune date annoncée pour l’instant.'}</p>
-      <p style="margin-top:14px">Pour être prévenu des prochaines dates&nbsp;: ${mail}</p>`;
-
-    const fiche = [];
-    if (isShow(s)) {
-      fiche.push(['Création', esc(s.annee ?? 'à fournir')], ['Durée', esc(s.duree ?? 'à fournir')]);
-      fiche.push(['Au plateau', n ? `${plural(n, 'comédien', 'comédiens')}&nbsp;: ${s.distribution.map(esc).join(', ')}` : 'à fournir']);
-      fiche.push(['Équipe', s.equipe.length ? `<ul>${s.equipe.map(([r, p]) => `<li>${esc(r)}&nbsp;: ${esc(p)}</li>`).join('')}</ul>` : 'à fournir']);
-    }
-    if (s.coproduction) fiche.push(['Coproduction', fr(s.coproduction)]);
-    if (s.soutiens) fiche.push(['Soutiens', fr(s.soutiens)]);
-    fiche.push(['Captation', s.video ? ext(s.video, 'Voir la vidéo') : 'à fournir']);
-    const programmer = `
-      <dl class="fiche">${fiche.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>
-      <p class="sub-title">Documents</p>
-      <ul class="docs">
-        <li><span>Dossier de diffusion</span><span class="muted">à fournir</span></li>
-        <li><span>Fiche technique</span><span class="muted">à fournir</span></li>
-        <li><span>Conditions financières</span><span class="muted">à fournir</span></li>
-      </ul>
-      <p style="margin-top:20px">Programmer ce spectacle&nbsp;: ${mail}</p>`;
-
-    const et = s.etablissement || {};
-    const etablissement = `
-      <p class="status" style="--c:${s.couleur}">${esc(MODE[et.mode] || 'à fournir')}</p>
-      <p class="panel-lead" style="margin-top:14px">${fr(et.texte || 'à fournir')}</p>
-      <dl class="fiche" style="margin-top:24px">
-        <dt>Pass Culture</dt><dd>${s.passCulture ? 'Proposé en offre collective' : 'Non référencé'}</dd>
-        <dt>Guide CRED76</dt><dd>${s.cred76 ? ext(s.cred76, 'Voir la fiche du guide') : 'Non référencé'}</dd>
-      </dl>
-      <p style="margin-top:20px">Organiser une venue&nbsp;: ${mail}</p>`;
-
-    const panels = { voir, programmer, etablissement };
-    const keys = ['voir', 'programmer', 'etablissement'];
-
-    return `
-    <article class="show" style="--tint:${tint(s.couleur)};--c:${s.couleur}">
-      <div class="show-side">
-        <div class="show-side-in">
-          <header class="show-head">
-            <div class="show-top"><a class="back" href="#/spectacles"><span aria-hidden="true">←</span> Les spectacles</a><span class="folio"><span aria-hidden="true">${String(i + 1).padStart(2, '0')} / ${String(S.length).padStart(2, '0')}</span><span class="sr-only">Entrée ${i + 1} sur ${S.length} du sommaire</span></span></div>
-            <h1 class="show-title${s.titre.length > 18 ? ' is-long' : ''}" tabindex="-1">${fr(s.titre)}</h1>
-            <p class="show-sub">${fr(s.sousTitre)}</p>
-          </header>
-          <div class="show-meta">
-            ${facts(s).length ? `<dl class="facts">${facts(s).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${fr(v)}</dd></div>`).join('')}</dl>` : ''}
-            <nav class="portes-nav" aria-label="Trois portes">
-              <ul>${keys.map(k => `<li><a href="#/spectacle/${s.slug}/${k}"><span class="pn-t">${esc(DOORS[k].titre)}</span><span class="pn-s">${esc(info[k])}</span><span class="pn-a" aria-hidden="true">↓</span></a></li>`).join('')}</ul>
-            </nav>
-          </div>
-        </div>
-      </div>
+    const fig = prim.length || reste.length ? carte({ lieux: prim, passe: reste, mode: 'marges', k: 1.02, spectacle: s, passees, legende, index: true, titre: dates.length ? `${s.tournee.titre}, ${s.titre}` : s.titre }) : '';
+    return `<section class="tour" style="${st}"${dates.length ? ' aria-labelledby="tour-h"' : ` aria-label="${esc(s.titre)}"`}>
+      ${dates.length ? `<div class="tour-head"><h2 class="band-title" id="tour-h">${esc(s.tournee.titre)}</h2></div><ol class="tour-list">${dates.map(d => dateHTML(d, false)).join('')}</ol>` : ''}
+      ${fig}
+    </section>`;
+  }
+  function showHTML(s) {
+    const i = S.indexOf(s), suivant = S[(i + 1) % S.length];
+    const long = s.titreLignes.length > 2 || s.titreLignes.some(l => l.length > 14);
+    const fiche = (s.fiche || []).map(f => f.libelle ? `<li><span class="fi-l">${esc(f.libelle)}</span><span class="fi-v">${f.valeur}</span></li>` : `<li class="solo"><span class="fi-v">${f.valeur}</span></li>`).join('');
+    const groupes = [];
+    (s.medias || []).forEach(m => { let g = groupes.find(x => x.g === (m.groupe || null)); if (!g) groupes.push(g = { g: m.groupe || null, m: [] }); g.m.push(m); });
+    const medias = groupes.length ? `<div class="bloc medias">${groupes.map(g => `${g.g ? `<p class="bloc-t">${esc(g.g)}</p>` : ''}<ul>${g.m.map(m => `<li class="media-${m.type === 'audio' ? 'audio' : 'video'}">${ext(m.url, esc(m.titre || s.titre))}${m.par ? `<span class="media-par">${esc(m.par)}</span>` : ''}</li>`).join('')}</ul>`).join('')}</div>` : '';
+    const genre = s.genre && brut(s.genre) !== brut(s.sousTitre) ? `<p class="show-genre">${esc(s.genre)}</p>` : '';
+    return `<article class="show" style="--tint:${teinte(s.couleur)};--c:${s.couleur};--ct:${s.couleurTexteClair}">
+      <div class="show-side"><div class="show-side-in">
+        <div class="show-top"><a class="back" href="#/spectacles"><span aria-hidden="true">←</span> ${esc(onglet('spectacles'))}</a><span class="show-crea">${esc(s.creation)}</span></div>
+        <h1 class="show-title${long ? ' is-long' : ''}" tabindex="-1">${s.titreLignes.map(l => `<span>${esc(l)}</span>`).join(' ')}</h1>
+        ${s.sousTitre ? `<p class="show-sub">${s.sousTitre}</p>` : ''}${genre}
+        ${s.statut ? `<p class="show-statut">${esc(s.statut)}</p>` : ''}
+        ${s.cadre ? `<p class="show-cadre">${esc(s.cadre)}</p>` : ''}
+        ${s.duree ? `<p class="show-duree">${esc(s.duree)}</p>` : ''}
+        ${fiche ? `<ul class="fiche">${fiche}</ul>` : ''}
+        ${s.avec ? `<p class="avec"><span class="fi-l">${esc(s.avec.libelle)}</span> <span class="fi-v">${s.avec.valeur}</span></p>` : ''}
+      </div></div>
       <div class="show-main">
-        <figure class="show-fig">${photo(s)}${s.credit ? `<figcaption class="show-cap">${esc(s.credit)}</figcaption>` : ''}</figure>
+        <figure class="show-fig">${image(s.slug, s.titre)}${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
         <div class="show-body">
-          <p class="show-acc">${fr(s.accroche)}</p>
-          <p class="show-text">${fr(s.texte)}</p>
-
-          <section class="sec" id="dates" aria-labelledby="dates-h">
-            <div class="sec-head"><h2 class="sec-title" id="dates-h">Dates</h2><span class="eyebrow">Saison ${esc(D.saison)}</span></div>
-            ${dates.length ? `<ul class="dl-list" id="dl-list">${dates.map((d, k) => dl(d, k >= LIMIT)).join('')}</ul>
-            ${dates.length > LIMIT ? `<button class="more" type="button" aria-expanded="false" aria-controls="dl-list">Voir les ${dates.length} dates</button>` : ''}` : `<p class="none">Aucune date annoncée pour l’instant.</p>`}
-          </section>
-
-          <section class="sec" id="portes" aria-labelledby="portes-h">
-            <h2 class="sr-only" id="portes-h">Trois portes</h2>
-            <div class="tablist" role="tablist" aria-label="Trois portes">
-              ${keys.map((k, j) => `<button class="tab" type="button" role="tab" id="tab-${k}" data-k="${k}" aria-controls="panel-${k}" aria-selected="${j === 0}" tabindex="${j === 0 ? 0 : -1}">${esc(DOORS[k].titre)}</button>`).join('')}
-            </div>
-            ${keys.map((k, j) => `<div class="panel" role="tabpanel" id="panel-${k}" data-k="${k}" aria-labelledby="tab-${k}" tabindex="0"${j === 0 ? '' : ' hidden'}>${panels[k]}</div>`).join('')}
-          </section>
-
-          <a class="next" href="#/spectacle/${next.slug}" style="--tint:${tint(next.couleur)};--c:${next.couleur}">
-            <span><span class="eyebrow">Suivant dans le sommaire</span><span class="next-title">${fr(next.titre)}</span><span class="next-go">${isShow(next) ? 'Voir le spectacle' : 'Voir les actions culturelles'} <span aria-hidden="true">→</span></span></span>
-            ${photo(next)}
-          </a>
+          ${(s.texte || []).length ? `<div class="prose show-texte">${s.texte.map(p => `<p>${ouvrirLiens(p)}</p>`).join('')}</div>` : ''}
+          ${(s.extraits || []).length ? `<div class="extraits">${s.extraits.map(e => `<blockquote class="extrait"><p>${esc(e.citation)}</p><cite>${esc(e.source)}</cite></blockquote>`).join('')}</div>` : ''}
+          ${(s.mentions || []).length ? `<div class="bloc">${s.mentions.map(p => `<p>${ouvrirLiens(p)}</p>`).join('')}</div>` : ''}
+          ${(s.production || []).length ? `<div class="bloc">${s.production.map(p => `<p>${ouvrirLiens(p)}</p>`).join('')}</div>` : ''}
+          ${medias}
         </div>
       </div>
-    </article>`;
+    </article>
+    ${tourneeHTML(s)}
+    <a class="next" href="#/spectacle/${suivant.slug}" style="--tint:${teinte(suivant.couleur)};--c:${suivant.couleur}">
+      <span><span class="next-t">${esc(suivant.titre)}</span><span class="next-go">${esc(LIB.decouvrir)} <span aria-hidden="true">→</span></span></span>
+      ${image(suivant.slug)}
+    </a>`;
+  }
+  function bindShow() {
+    const fig = main.querySelector('.tour .cm-marges');
+    if (!fig) return;
+    const liste = main.querySelector('.tour-list'), items = liste ? [...liste.querySelectorAll('[data-l]')] : [];
+    const api = monter(fig, { survol: l => items.forEach(it => it.classList.toggle('is-on', l != null && it.dataset.l === String(l))) });
+    if (!liste) return;
+    liste.addEventListener('mouseover', e => { const it = e.target.closest('[data-l]'); api.montrer(it ? +it.dataset.l : null); });
+    liste.addEventListener('mouseleave', () => api.montrer(null));
   }
 
-  function selectTab(key, focus) {
-    const root = document.getElementById('portes');
-    if (!root) return;
-    root.querySelectorAll('[role="tab"]').forEach(t => {
-      const on = t.dataset.k === key;
-      t.setAttribute('aria-selected', String(on));
-      t.tabIndex = on ? 0 : -1;
-      if (on && focus) t.focus({ preventScroll: true });
-    });
-    root.querySelectorAll('[role="tabpanel"]').forEach(p => { p.hidden = p.dataset.k !== key; });
-  }
-
-  function bindShow(s) {
-    const tabs = [...main.querySelectorAll('[role="tab"]')];
-    const go = (t, focus) => { selectTab(t.dataset.k, focus); history.replaceState(null, '', `#/spectacle/${s.slug}/${t.dataset.k}`); };
-    tabs.forEach((t, k) => {
-      t.addEventListener('click', () => go(t, false));
-      t.addEventListener('keydown', e => {
-        const n = tabs.length;
-        const to = { ArrowRight: k + 1, ArrowDown: k + 1, ArrowLeft: k - 1 + n, ArrowUp: k - 1 + n, Home: 0, End: n - 1 }[e.key];
-        if (to === undefined) return;
-        e.preventDefault();
-        go(tabs[to % n], true);
-      });
-    });
-    const more = main.querySelector('.more');
-    if (more) more.addEventListener('click', () => {
-      const open = more.getAttribute('aria-expanded') !== 'true';
-      main.querySelectorAll('[data-more]').forEach(li => { li.hidden = !open; });
-      more.setAttribute('aria-expanded', String(open));
-      more.textContent = open ? 'Afficher moins de dates' : `Voir les ${main.querySelectorAll('.dl-list > li').length} dates`;
-    });
-  }
-
-  /* Pied de page */
-  function footerHTML() {
-    return `
-      <div class="foot-brand">
-        <div class="foot-logo"></div>
-        <p class="foot-line">${esc(C.nom)}, théâtre à ${esc(C.ville)} depuis ${esc(C.depuis)}.</p>
-      </div>
+  /* ——— Pied de page ——— */
+  function piedHTML() {
+    const K = SITE.coordonnees, F = SITE.facebook;
+    return `<div class="foot-in">
+      <div class="foot-brand"><a class="foot-logo" href="#/" aria-label="${esc(SITE.accueil)}"></a></div>
       <div class="foot-cols">
-        <section aria-labelledby="f-contact"><h2 class="eyebrow" id="f-contact">Contact</h2><p>${esc(C.adresse)}</p><p>${mail}</p></section>
-        <section aria-labelledby="f-part"><h2 class="eyebrow" id="f-part">Partenaires</h2><ul>${C.partenaires.map(p => `<li>${nw(p)}</li>`).join('')}</ul></section>
-        <section aria-labelledby="f-mentions"><h2 class="eyebrow" id="f-mentions">Mentions</h2><p class="muted-d">SIRET ${esc(C.siret)}</p><p class="muted-d">Licence ${esc(C.licence)}</p></section>
-      </div>`;
+        <div class="foot-c"><p class="foot-nom">${esc(K.nom)}</p><p>${K.adresse.map(esc).join('<br>')}</p><p><a href="${SITE.ecrire.href}">${esc(SITE.ecrire.texte)}</a></p><p>${F.href ? `<a href="${esc(F.href)}" target="_blank" rel="noopener">${esc(F.texte)}</a>` : `<span>${esc(F.texte)}</span>`}</p></div>
+        <div class="foot-c foot-d"><p>${SITE.partenaires}</p></div>
+        <div class="foot-c">${K.legal.map(x => `<p class="foot-d">${esc(x)}</p>`).join('')}<p class="foot-leg">${SITE.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}</p></div>
+      </div>
+    </div>`;
   }
 
-  /* Routeur : l'accueil, quatre onglets, les pages spectacle */
-  const TABS = {
-    spectacles: { titre: 'Les spectacles', html: () => somHTML(true), bind: bindSom },
-    agenda: { titre: 'L’agenda', html: agendaHTML },
-    compagnie: { titre: 'La compagnie', html: compagnieHTML },
-    contact: { titre: 'Contact', html: contactHTML }
+  /* ——— Le routeur ——— */
+  const VUES = {
+    accueil: { html: accueilHTML, bind: bindAccueil, titre: () => SITE.accueil },
+    spectacles: { html: () => somHTML(true), bind: bindSom, titre: () => onglet('spectacles'), onglet: 'spectacles' },
+    agenda: { html: agendaHTML, bind: bindListe, titre: () => onglet('agenda'), onglet: 'agenda' },
+    saison: { html: r => saisonHTML(r.cle), bind: bindListe, titre: r => D.saisons[r.cle].titre, onglet: 'agenda' },
+    compagnie: { html: compagnieHTML, titre: () => onglet('compagnie'), onglet: 'compagnie' },
+    actions: { html: actionsHTML, titre: () => onglet('actions'), onglet: 'actions' },
+    pro: { html: proHTML, titre: () => SITE.pro.titrePage, onglet: 'pro' },
+    contact: { html: contactHTML, titre: () => onglet('contact'), onglet: 'contact' },
+    legal: { html: r => legalHTML(r.cle), titre: r => SITE.legal[r.cle].titre },
+    spectacle: { html: r => showHTML(parSlug.get(r.cle)), bind: bindShow, titre: r => parSlug.get(r.cle).titre, onglet: 'spectacles' },
   };
-  const navLinks = [...document.querySelectorAll('.site-nav a')];
-  let view = null;
-  const parse = () => {
-    const [path, qs] = location.hash.slice(1).split('?');
-    const q = new URLSearchParams(qs || '');
-    const m = path.match(/^\/spectacle\/([a-z0-9-]+)(?:\/(voir|programmer|etablissement))?\/?$/);
-    if (m && idx.has(m[1])) return { kind: 'show', slug: m[1], porte: m[2] || null, q };
-    const t = (path.match(/^\/([a-z]+)\/?$/) || [])[1];
-    return { kind: t && Object.hasOwn(TABS, t) ? t : 'home', q };
-  };
-
-  function route(first) {
-    const r = parse();
-    const key = r.kind === 'show' ? 'show:' + r.slug : r.kind;
-    const changed = key !== view;
-    closeMenu();
-    if (changed) {
-      view = key;
-      if (r.kind === 'show') {
-        const s = S[idx.get(r.slug)];
-        main.innerHTML = showHTML(s);
-        bindShow(s);
-        document.title = `${s.titre} · ${C.nom}`;
-      } else if (r.kind === 'home') {
-        main.innerHTML = homeHTML();
-        bindSom();
-        document.title = `${C.nom}, théâtre à ${C.ville}`;
-      } else {
-        const t = TABS[r.kind];
-        main.innerHTML = t.html();
-        if (t.bind) t.bind();
-        document.title = `${t.titre} · ${C.nom}`;
-      }
-      const tab = r.kind === 'show' ? 'spectacles' : r.kind;
-      navLinks.forEach(a => { if (a.getAttribute('href') === '#/' + tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-      window.scrollTo(0, 0);
-      if (!first) { const h1 = main.querySelector('h1'); if (h1) h1.focus({ preventScroll: true }); }
+  const SIMPLES = { spectacles: 'spectacles', agenda: 'agenda', compagnie: 'compagnie', 'actions-culturelles': 'actions', 'espace-pro': 'pro', contact: 'contact' };
+  function lire() {
+    const [chemin, qs] = location.hash.replace(/^#/, '').split('?');
+    const q = new URLSearchParams(qs || ''), p = String(chemin || '').replace(/^\/+|\/+$/g, '');
+    let m;
+    if ((m = p.match(/^spectacle\/([a-z0-9-]+)$/)) && parSlug.has(m[1])) return { v: 'spectacle', cle: m[1], q };
+    if ((m = p.match(/^agenda\/(\d{4}-\d{4})$/)) && D.saisons[m[1]]) return m[1] === D.saison ? { v: 'agenda', q } : { v: 'saison', cle: m[1], q };
+    if (SIMPLES[p]) return { v: SIMPLES[p], q };
+    if (SITE.legal[p]) return { v: 'legal', cle: p, q };
+    return { v: 'accueil', q };
+  }
+  let vue = null;
+  function route() {
+    const r = lire(), V = VUES[r.v], cle = `${r.v}|${r.cle || ''}|${r.q}`;
+    fermerMenu();
+    if (cle !== vue) {
+      vue = cle;
+      main.innerHTML = V.html(r);
+      if (V.bind) V.bind(r);
+      pousser();
+      document.title = `${V.titre(r)} - ${SITE.titreSuffixe}`;
+      liensNav.forEach(a => { if (a.dataset.id === V.onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     }
-    const mois = r.kind === 'agenda' ? document.getElementById('mois-' + r.q.get('mois')) : null;
-    if (r.kind === 'show' && r.porte) {
-      selectTab(r.porte, !first);
-      const el = document.getElementById('portes');
-      if (el) el.scrollIntoView({ block: 'start' });
-    } else if (mois) {
-      mois.scrollIntoView({ block: 'start' });
-      if (!first) mois.querySelector('h2').focus({ preventScroll: true });
-    } else if (!changed) {
-      window.scrollTo(0, 0);
-    }
+    window.scrollTo(0, 0);
+    if (!INTRO.ouverte()) { const h1 = main.querySelector('h1'); if (h1) h1.focus({ preventScroll: true }); }
   }
 
-  function closeMenu() {
-    if (menuBtn.getAttribute('aria-expanded') === 'true') {
-      menuBtn.setAttribute('aria-expanded', 'false');
-      menuBtn.textContent = 'Menu';
-      head.classList.remove('menu-open');
-    }
+  /* ——— Le menu replié, les liens, la mise en place ——— */
+  function fermerMenu() {
+    if (menuBtn.getAttribute('aria-expanded') === 'true') { menuBtn.setAttribute('aria-expanded', 'false'); head.classList.remove('menu-open'); }
   }
   menuBtn.addEventListener('click', () => {
-    const open = menuBtn.getAttribute('aria-expanded') !== 'true';
-    menuBtn.setAttribute('aria-expanded', String(open));
-    menuBtn.textContent = open ? 'Fermer' : 'Menu';
-    head.classList.toggle('menu-open', open);
+    const ouvert = menuBtn.getAttribute('aria-expanded') !== 'true';
+    menuBtn.setAttribute('aria-expanded', String(ouvert));
+    head.classList.toggle('menu-open', ouvert);
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
-
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') fermerMenu(); });
   document.addEventListener('click', e => {
+    if (!head.contains(e.target)) fermerMenu();
     const a = e.target.closest('a[href^="#"]');
     if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    closeMenu();
+    fermerMenu();
     const href = a.getAttribute('href');
     if (href === '#main') { e.preventDefault(); main.focus(); return; }
-    if (href === location.hash || (href === '#/' && !location.hash)) { e.preventDefault(); route(false); }
+    if (href === location.hash || (href === '#/' && (location.hash === '' || location.hash === '#'))) { e.preventDefault(); route(); }
   });
+  main.addEventListener('submit', e => e.preventDefault());
 
-  setLogo(document.querySelector('.brand-mark'), D.logo.mark);
-  const foot = document.querySelector('.site-foot');
-  foot.innerHTML = footerHTML();
-  setLogo(foot.querySelector('.foot-logo'), D.logo.full);
+  navUl.innerHTML = SITE.menu.map(m => `<li><a href="${m.href}" data-id="${m.id}">${esc(m.texte)}</a></li>`).join('');
+  const liensNav = [...navUl.querySelectorAll('a')];
+  document.querySelector('.site-nav').setAttribute('aria-label', LIB.menu);
+  document.querySelector('.menu-t').textContent = LIB.menu;
+  document.querySelector('.brand-name').textContent = SITE.titreSuffixe;
+  document.querySelector('.brand').setAttribute('aria-label', `${SITE.titreSuffixe}, ${SITE.accueil}`);
+  const logo = (el, svg) => { el.innerHTML = svg; const g = el.querySelector('svg'); if (g) { g.setAttribute('aria-hidden', 'true'); g.setAttribute('focusable', 'false'); g.removeAttribute('role'); g.removeAttribute('aria-label'); } };
+  logo(document.querySelector('.brand-mark'), D.logo.mark);
+  const pied = document.querySelector('.site-foot');
+  pied.innerHTML = piedHTML();
+  logo(pied.querySelector('.foot-logo'), D.logo.octopusWord);
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  window.addEventListener('hashchange', () => route(false));
-  route(true);
+
+  // l'ouverture : l'encre sur le papier ; après la révélation, les filets du sommaire se tirent et la photo se découvre
+  const PAPIER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000"><defs><filter id="g" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="8" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .1 0 0 0 0 .08 0 0 0 0 .07 .13 0 0 0 0"/></filter><radialGradient id="v" cx="50%" cy="46%" r="78%"><stop offset=".5" stop-color="#191414" stop-opacity="0"/><stop offset="1" stop-color="#191414" stop-opacity=".1"/></radialGradient></defs><rect width="1600" height="1000" fill="#f5f1ea"/><rect width="1600" height="1000" filter="url(#g)"/><rect width="1600" height="1000" fill="url(#v)"/></svg>');
+  INTRO.ouvrir({ fond: '#f5f1ea', encre: '#191414', image: PAPIER, classe: 'm08-intro', apres: revele });
+  window.addEventListener('hashchange', route);
+  route();
 })();
 </script>
 </body>

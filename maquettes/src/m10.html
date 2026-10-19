@@ -3,154 +3,242 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compagnie Crescite</title>
+<title>Accueil - crescite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500;1,6..96,600&family=Instrument+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap">
 <style>
 /* Maquette 10 · « La pieuvre vivante, rangée ».
-   Le prototype animé, remis en ordre : les huit bras du logo se prolongent jusqu'aux titres, on les tire
-   pour entrer dans un spectacle. Au repos, rien ne bouge. Chaque spectacle garde sa couleur, sa photo et
-   un seul effet au défilement ; tout le reste (textes, dates, portes) suit la même mise en page claire.
-   Chaque entrée du menu ouvre sa page ; un bras venu du bord de l'écran y souligne le titre. */
+   La pieuvre du logo, vivante, au milieu de la nuit : ses huit bras ondulent au repos. Les titres des spectacles sont
+   posés librement autour d'elle, autant qu'il y en a ; au survol (ou au clavier) c'est le bras le plus proche qui se
+   tend vers le titre, le souligne et s'y enroule ; on le tire (ou on clique) et la pieuvre l'avale : l'encre de son
+   univers recouvre l'écran. Aucun bras n'appartient à un spectacle. La carte des tournées : des tentacules d'encre,
+   ponctuées de ventouses, qui partent de la pieuvre posée sur Rouen, et une goutte d'encre qui s'étale à chaque commune. */
 :root {
-  --nuit: #150a11; --lait: #f6f1ea; --lait-2: #e9e1d6; --encre: #1b1216; --gris: #675b61;
+  --nuit: #150a11; --nuit-2: #2a1220; --lait: #f6f1ea; --lait-2: #e9e1d6; --lait-3: #efe7dc; --encre: #1b1216; --gris: #675b61;
   --blanc: #f7ecf1; --blanc-2: #c9b7c1; --magenta: #bc3e80; --magenta-texte: #a8306f;
   --serif: "Bodoni Moda", "Bodoni 72", Didot, serif; --sans: "Instrument Sans", system-ui, sans-serif;
-  --gout: clamp(18px, 4vw, 56px); --haut: 64px;
+  --gout: clamp(16px, 4vw, 56px); --haut: 64px;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--lait); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
+body { margin: 0; background: var(--lait); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); overflow-x: hidden; }
 a { color: inherit; }
 img { display: block; max-width: 100%; }
 :focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
 [tabindex="-1"]:focus { outline: none; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 80; background: #fff; color: #000; padding: 8px 14px; border-radius: 6px; }
 .evitement:focus { top: 8px; }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 var(--gout); }
 [hidden] { display: none !important; }
+.h2 { margin: 0 0 26px; font: italic 500 clamp(1.9rem, 1.4rem + 1.6vw, 2.8rem)/1.05 var(--serif); text-wrap: balance; }
+.tag { display: inline-block; padding: 3px 12px; border-radius: 999px; border: 1.5px solid currentColor; font: 700 .72rem/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+svg.fl { width: 1.2em; height: 1.2em; vertical-align: -.22em; }
 
-/* en-tête : un seul étage, le même partout */
+/* en-tête : un seul étage ; les six onglets tiennent sur une ligne dès 1280 px, sinon « Menu » */
 .top { position: sticky; top: 0; z-index: 40; height: var(--haut); background: var(--nuit); color: var(--blanc); border-bottom: 1px solid rgba(255, 255, 255, .08); }
 .top .wrap { max-width: none; height: 100%; display: flex; align-items: center; gap: 24px; }
 .marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 1.1rem; }
-.marque span.l { width: 46px; color: var(--blanc); }
+.marque .l { width: 46px; color: var(--blanc); }
 .marque svg { width: 100%; height: auto; display: block; }
-.nav { margin-left: auto; display: flex; gap: 6px; }
-.nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; color: var(--blanc-2); font-weight: 600; font-size: .95rem; }
+.nav { margin-left: auto; display: flex; gap: 2px; }
+.nav a { text-decoration: none; padding: 8px 11px; border-radius: 6px; color: var(--blanc-2); font-weight: 600; font-size: .95rem; white-space: nowrap; }
 .nav a:hover { color: var(--blanc); }
 .nav a[aria-current="page"] { color: var(--blanc); text-decoration: underline 2px var(--magenta); text-underline-offset: 9px; }
-.menu { display: none; margin-left: auto; background: none; border: 1px solid rgba(255, 255, 255, .25); color: var(--blanc); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); }
+.menu { display: none; margin-left: auto; background: none; border: 1px solid rgba(255, 255, 255, .25); color: var(--blanc); border-radius: 6px; padding: 6px 14px; font: 600 .95rem var(--sans); cursor: pointer; }
+@media (max-width: 1279px) {
+  .nav { display: none; position: absolute; left: 0; right: 0; top: var(--haut); background: var(--nuit); flex-direction: column; align-items: flex-start; padding: 8px var(--gout) 18px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
+  .top.ouvert .nav { display: flex; }
+  .menu { display: inline-block; }
+  .nav a { font-size: 1.05rem; padding: 10px 0; }
+  .nav a[aria-current="page"] { text-underline-offset: 6px; }
+}
 
-/* ---------- la scène : la pieuvre et ses huit bras ---------- */
-.stage { position: relative; height: clamp(620px, calc(100svh - var(--haut)), 900px); background: radial-gradient(52% 56% at 50% var(--gy, 45%), #2a1220 0%, var(--nuit) 72%); color: var(--blanc); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+/* ---------- la scène : la pieuvre vivante et les titres, en nombre libre ---------- */
+.stage { position: relative; height: 760px; color: var(--blanc); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y;
+  background: radial-gradient(40% 46% at 50% var(--gy, 32%), #331629 0%, rgba(21, 10, 17, 0) 72%), radial-gradient(130% 90% at 50% 0%, #1e0e18 0%, var(--nuit) 62%); }
+.stage::before, .intro.nuit-pieuvre::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .38;
+  background-image: radial-gradient(1.3px 1.3px at 18% 24%, #f7ecf1 45%, transparent 60%), radial-gradient(1px 1px at 63% 71%, #f7ecf1 45%, transparent 60%),
+    radial-gradient(1.6px 1.6px at 82% 12%, #c9b7c1 45%, transparent 60%), radial-gradient(1px 1px at 37% 88%, #c9b7c1 45%, transparent 60%);
+  background-size: 290px 230px, 210px 260px, 380px 310px, 170px 190px; }
+.intro.nuit-pieuvre::after { opacity: .5; transition: opacity .3s; }
+.intro.nuit-pieuvre.part::after { opacity: 0; }
+.intro.nuit-pieuvre .intro-indice { color: #c9b7c1; }
 .stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.stage-copy { position: relative; z-index: 2; text-align: center; padding: clamp(24px, 4.6vh, 50px) var(--gout) 0; pointer-events: none; }
-.stage-copy h1 { margin: 0; font: italic 500 clamp(1.6rem, 1.1rem + 1.4vw, 2.4rem)/1.1 var(--serif); text-wrap: balance; }
-.stage-foot { position: absolute; left: 0; right: 0; bottom: 26px; margin: 0; padding: 0 var(--gout); text-align: center; color: var(--blanc-2); font-size: .95rem; pointer-events: none; }
+.stage-h { position: relative; z-index: 2; margin: 0; padding: 26px var(--gout) 0; text-align: center; font: 600 .78rem/1.3 var(--sans); letter-spacing: .32em; text-transform: uppercase; color: var(--blanc-2); }
 .t-labels { list-style: none; margin: 0; padding: 0; }
-.t-label { position: absolute; left: 0; top: 0; z-index: 3; display: block; color: var(--blanc); text-decoration: none; cursor: grab; touch-action: none; -webkit-user-drag: none; -webkit-touch-callout: none; transition: opacity .25s, color .2s; }
-.t-label.right { text-align: right; }
-.t-title { display: block; font: italic 500 clamp(1.2rem, .95rem + .7vw, 1.6rem)/1.15 var(--serif); text-wrap: balance; }
-.t-when { position: absolute; top: calc(100% + 8px); left: 0; right: 0; font-size: .82rem; line-height: 1.2; color: var(--blanc-2); white-space: nowrap; opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
-.t-label.right .t-when { text-align: right; }
+.t-label { position: absolute; left: 0; top: 0; z-index: 3; display: block; color: var(--blanc); text-decoration: none; cursor: grab; touch-action: none; opacity: 0;
+  -webkit-user-drag: none; -webkit-touch-callout: none; transition: color .2s; will-change: transform, opacity; }
+.t-label.droite { text-align: right; }
+.t-title { display: block; font: italic 500 clamp(1.15rem, .9rem + .62vw, 1.55rem)/1.15 var(--serif); text-wrap: balance; }
+.t-when { position: absolute; top: calc(100% + 12px); left: 0; width: max-content; max-width: 260px; font: 400 .8rem/1.3 var(--sans); color: var(--blanc-2); opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+.t-label.droite .t-when { left: auto; right: 0; text-align: right; }
 .t-label.is-active { color: var(--c); }
 .t-label.is-active .t-when { opacity: 1; transform: none; }
-.stage.has-active .t-label:not(.is-active) { opacity: .45; }
-.stage.over-tentacle { cursor: grab; }
+.stage.has-active .t-label:not(.is-active) { color: rgba(247, 236, 241, .5); }
 .stage.is-grabbing, .stage.is-grabbing .t-label { cursor: grabbing; }
-.stage.is-mobile .t-when { opacity: 1; transform: none; top: calc(100% + 6px); }
-.stage.is-mobile .t-title { font-size: 1.2rem; }
+.stage.is-mobile .t-label { touch-action: pan-y; cursor: pointer; }
+.stage.is-mobile .t-title { font-size: 1.25rem; }
+.stage.is-mobile .t-when { opacity: 1; transform: none; max-width: calc(100vw - 92px); top: calc(100% + 10px); }
 
-/* ---------- l'accueil, sous la scène : clair et ordinaire ---------- */
-section.bloc { padding: clamp(56px, 8vw, 104px) 0; }
+/* ---------- l'accueil, sous la scène ---------- */
+section.bloc { padding: clamp(52px, 8vw, 100px) 0; }
 section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
-.entete { display: flex; justify-content: space-between; align-items: baseline; gap: 16px 32px; flex-wrap: wrap; margin-bottom: 28px; }
-.entete h2 { margin: 0; font: italic 500 clamp(2rem, 1.4rem + 2vw, 3rem)/1 var(--serif); }
-.entete a { font: 600 1rem var(--sans); color: var(--magenta-texte); text-decoration: none; }
-.entete a:hover { text-decoration: underline; }
-.dates { list-style: none; margin: 0; padding: 0; }
-.dates li { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr) 110px; gap: 20px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--lait-2); }
-.dates time { font-weight: 700; font-variant-numeric: tabular-nums; }
-.dates time small { display: block; font-weight: 400; color: var(--gris); font-size: .85rem; }
-.dates a { font: italic 500 1.3rem/1.2 var(--serif); text-decoration: none; }
-.dates a:hover { color: var(--magenta-texte); }
-.dates a::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; margin-right: 10px; }
-.dates .ou { color: var(--gris); }
-.dates .pub { font-size: .82rem; font-weight: 600; text-align: right; }
-.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 0 clamp(20px, 3vw, 40px); }
-.porte { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 10px; align-content: start; padding-top: 22px; border-top: 4px solid var(--dc); }
-.porte h3 { margin: 0; font: italic 500 1.75rem/1.1 var(--serif); }
-.porte > p { margin: 0; color: var(--gris); }
-.porte ul { list-style: none; margin: 6px 0 14px; padding: 0; border-top: 1px solid var(--lait-2); }
-.porte li a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
-.porte li a:hover { color: var(--dct); }
-.porte li small { color: var(--gris); white-space: nowrap; }
-.porte li.ligne { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); }
-.porte .bas > p { margin: 0; color: var(--gris); }
-.porte .suite { font-weight: 700; color: var(--dct); text-decoration: none; }
-.porte .suite:hover { text-decoration: underline; }
-.compagnie { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
-.compagnie p.grand { margin: 0 0 18px; font: 500 clamp(1.4rem, 1.1rem + 1vw, 2rem)/1.3 var(--serif); }
-.chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; align-self: start; }
-.chiffres dt { font: 500 2.6rem/1 var(--serif); }
-.chiffres dd { margin: 4px 0 0; color: var(--gris); font-size: .9rem; }
-footer { background: var(--nuit); color: var(--blanc-2); padding: 44px 0; font-size: .92rem; }
-footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-footer strong { color: var(--blanc); }
-footer p { margin: 0 0 6px; }
+.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(18px, 3vw, 44px); }
+.porte { position: relative; display: block; padding: 8px 40px 34px 0; text-decoration: none; color: var(--encre); font: italic 500 clamp(1.45rem, 1.05rem + 1.1vw, 2.15rem)/1.12 var(--serif); text-wrap: balance; transition: color .2s; }
+.porte::before { content: ""; position: absolute; left: 0; right: 29px; bottom: 12px; height: 3px; border-radius: 2px; background: var(--dc); transform-origin: left; transition: transform .35s; }
+.porte::after { content: ""; position: absolute; right: 0; bottom: 10px; width: 32px; height: 32px; background: var(--dc); transform-origin: 0 90%; transition: transform .45s cubic-bezier(.2, .9, .3, 1.3);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+.porte:hover { color: var(--dct); }
+.porte:hover::after { transform: rotate(-24deg) scale(1.12); }
+.k-grille { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
+.k-qui { margin: 0 0 4px; font: italic 500 1.5rem/1.2 var(--serif); color: var(--magenta-texte); }
+.suite { margin: 22px 0 0; }
+.suite a { font-weight: 700; text-decoration: none; color: var(--magenta-texte); }
+.suite a:hover { text-decoration: underline; }
+.donateurs p { margin: 0; max-width: 92ch; font-size: .86rem; line-height: 1.7; color: var(--gris); }
 
-/* ---------- les onglets : une page chacun ---------- */
+/* ---------- les lignes de date ---------- */
+.dl { list-style: none; margin: 0 0 30px; padding: 0; }
+.dl > li { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 4px 22px; padding: 16px 0; border-bottom: 1px solid var(--lait-2); transition: opacity .2s, background-color .2s; }
+.dl .q { margin: 0; }
+.dl .q b { display: block; font: 500 1.4rem/1.1 var(--serif); }
+.dl .q span { display: block; margin-top: 3px; font-size: .85rem; color: var(--gris); }
+.dl .t { min-width: 0; }
+.dl .ti { font: italic 500 1.2rem/1.25 var(--serif); text-decoration: none; }
+.dl .ti::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; margin-right: 10px; }
+.dl .ti:hover { color: var(--magenta-texte); }
+.dl .lieu { margin: 2px 0 0; font-weight: 600; }
+.dl .det { list-style: none; margin: 4px 0 0; padding: 0; color: var(--gris); font-size: .93rem; }
+.dl .det a { color: var(--magenta-texte); }
+.dl.atenue > li:not(.on) { opacity: .32; }
+.dl > li.on { background: linear-gradient(90deg, rgba(188, 62, 128, .1), rgba(188, 62, 128, 0) 75%); }
+.dl.petit > li { grid-template-columns: 104px minmax(0, 1fr); padding: 12px 0; }
+.dl.petit .q b { font-size: 1.2rem; }
+.etat { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; border: 1px solid currentColor; font-size: .72rem; font-weight: 700; color: var(--magenta-texte); vertical-align: 2px; }
+
+/* ---------- la carte : des tentacules d'encre, des ventouses, une goutte à chaque commune ---------- */
+.carte.encre { display: block; width: 100%; height: auto; overflow: visible; --k-encre: #2a1220; --k-papier: var(--lait); --k-vif: var(--magenta); --k-pays: var(--lait-3); --k-trait: #d4c7b8; }
+.show .carte.encre { --k-encre: var(--act); --k-vif: var(--encre); }
+.carte.encre .carte-pays { fill: var(--k-pays); stroke: var(--k-trait); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.carte.encre .carte-voisin { fill: none; stroke: var(--k-trait); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-dasharray: 2 3; }
+.carte.encre .k-encart { fill: none; stroke: var(--k-trait); stroke-width: 1.2px; vector-effect: non-scaling-stroke; stroke-dasharray: 3 4; }
+.k-trace { fill: none; stroke: #fff; stroke-linecap: butt; stroke-dasharray: 1 2; stroke-dashoffset: 1; }
+.carte.encre.pousse .k-trace { animation: k-pousse var(--t) cubic-bezier(.33, .1, .25, 1) var(--d) both; }
+.carte.encre.fixe .k-trace { stroke-dashoffset: 0; }
+@keyframes k-pousse { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.tent { transition: opacity .25s; }
+.tent-corps { fill: var(--k-encre); transition: fill .25s; }
+.tent-v circle { fill: var(--k-papier); stroke: var(--k-encre); transition: stroke .25s; }
+.k-passe { opacity: 0; transition: opacity 1.2s .2s; }
+.carte.encre.pousse .k-passe, .carte.encre.fixe .k-passe { opacity: 1; }
+.k-passe path { fill: var(--k-encre); opacity: .2; }
+.k-passe circle { fill: var(--k-encre); opacity: .32; }
+.k-pieuvre path, .k-flaque { fill: var(--k-encre); }
+.carte-rouen-nom, .carte-nom { font-family: var(--serif); font-style: italic; font-weight: 600; fill: var(--k-encre); stroke: var(--k-papier); paint-order: stroke; stroke-linejoin: round; pointer-events: none; }
+.carte-nom { font-family: var(--sans); font-style: normal; fill: var(--encre); opacity: 0; transition: opacity .2s; }
+.carte-nom.on, .carte-nom.toujours { opacity: 1; }
+.carte-lieu { cursor: pointer; outline: none; }
+.carte-lieu .hit { fill: transparent; stroke: none; }
+.carte-lieu:focus-visible .hit { stroke: var(--k-vif); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+.carte-lieu .g-h { transform-box: fill-box; transform-origin: center; transition: transform .35s cubic-bezier(.2, .9, .3, 1.4); }
+.carte-lieu .goutte { fill: var(--k-encre); transform: scale(0); transform-box: fill-box; transform-origin: center; transition: fill .25s, opacity .25s; }
+.carte.encre.pousse .goutte { animation: k-goutte .8s cubic-bezier(.2, .85, .3, 1.25) var(--d) both; }
+.carte.encre.fixe .goutte { transform: none; }
+@keyframes k-goutte { from { transform: scale(0); } 55% { transform: scale(1.22); } to { transform: scale(1); } }
+.carte-lieu .onde { fill: none; stroke: var(--k-encre); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.carte.encre.pousse .onde { animation: k-onde 1.3s ease-out var(--d) both; }
+.carte.encre.pousse .carte-lieu.on .onde { stroke: var(--k-vif); animation: k-onde 1.5s ease-out infinite; }
+@keyframes k-onde { from { opacity: .55; transform: scale(.3); } to { opacity: 0; transform: scale(1.5); } }
+.carte-lieu.on .g-h, .carte-lieu:focus-visible .g-h { transform: scale(1.5); }
+.carte-lieu.on .goutte { fill: var(--k-vif); }
+.carte.encre.survol .tent:not(.on) { opacity: .25; }
+.carte.encre.survol .carte-lieu:not(.on) .goutte { opacity: .45; }
+.tent.on .tent-corps { fill: var(--k-vif); }
+.tent.on .tent-v circle { stroke: var(--k-vif); }
+
+/* ---------- les pages ---------- */
 main { min-height: calc(100vh - var(--haut)); }
 .page-tete { overflow: hidden; background: radial-gradient(80% 160% at 12% 100%, #2a1220 0%, var(--nuit) 70%); color: var(--blanc); padding: clamp(48px, 7vw, 96px) 0 clamp(44px, 6vw, 80px); }
-.page-tete h1 { margin: 0; font: italic 500 clamp(2.8rem, 1.8rem + 3.6vw, 5.2rem)/1 var(--serif); }
+.page-tete h1 { margin: 0; font: italic 500 clamp(2.4rem, 1.6rem + 3.4vw, 5rem)/1.02 var(--serif); text-wrap: balance; }
 .page-tete h1 span { position: relative; display: inline-block; padding-bottom: 22px; }
 /* le bras arrive du bord de l'écran, souligne le titre et s'enroule */
 .page-tete h1 span::after { content: ""; position: absolute; left: -100vw; right: -32px; bottom: 0; height: 32px; background: linear-gradient(var(--magenta), var(--magenta)) 0 27px / calc(100% - 31px) 3px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23bc3e80' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") right top / 32px 32px no-repeat; }
-.page-tete p { margin: 26px 0 0; max-width: 60ch; font-size: 1.15rem; color: var(--blanc-2); }
 .page-tete + section.bloc { padding-top: clamp(40px, 6vw, 72px); }
-.chapo { margin: -8px 0 26px; max-width: 62ch; color: var(--gris); }
-.etiquette { margin: 0 0 10px; font: 700 .8rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
-/* les spectacles : la pieuvre de l'accueil, en liste */
+/* les spectacles */
 .repertoire { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--lait-2); }
-.repertoire a { display: grid; grid-template-columns: clamp(180px, 20vw, 250px) minmax(0, 1fr) minmax(190px, 250px); gap: clamp(20px, 3vw, 44px); align-items: center; padding: 24px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
+.repertoire a { display: grid; grid-template-columns: clamp(170px, 20vw, 250px) minmax(0, 1fr) minmax(170px, 250px); gap: clamp(18px, 3vw, 44px); align-items: center; padding: 24px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
 .rp-photo { aspect-ratio: 3 / 2; overflow: hidden; background: var(--lait-2); }
-.rp-photo img { width: 100%; height: 100%; object-fit: cover; }
-.repertoire h2 { margin: 0; font: italic 500 clamp(1.7rem, 1.2rem + 1.2vw, 2.4rem)/1.08 var(--serif); text-wrap: balance; }
+.rp-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+.repertoire a:hover .rp-photo img { transform: scale(1.04); }
+.repertoire h2 { margin: 0; font: italic 500 clamp(1.6rem, 1.2rem + 1.2vw, 2.4rem)/1.08 var(--serif); text-wrap: balance; }
 .repertoire h2::after { content: ""; display: block; width: 56px; height: 3px; margin-top: 14px; border-radius: 2px; background: var(--c); transition: width .3s; }
 .repertoire a:hover h2::after { width: 120px; }
-.rp-texte p { margin: 12px 0 0; color: var(--gris); }
-.rp-quand { margin: 0; }
-.rp-quand > * { display: block; }
-.rp-quand small { margin-bottom: 4px; font: 700 .8rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
-.rp-quand .n { margin-top: 4px; color: var(--gris); }
-/* l'agenda : mois par mois */
-.mois-groupe { display: grid; grid-template-columns: minmax(140px, 200px) minmax(0, 1fr); gap: 0 clamp(24px, 4vw, 56px); border-top: 2px solid var(--encre); margin-bottom: clamp(32px, 4vw, 48px); }
-.mois-groupe h2 { position: sticky; top: calc(var(--haut) + 16px); align-self: start; margin: 0; padding-top: 14px; font: italic 500 clamp(1.7rem, 1.3rem + 1vw, 2.2rem)/1.1 var(--serif); }
-.mois-groupe h2 small { display: block; margin-top: 6px; font: 400 .95rem/1.3 var(--sans); color: var(--gris); }
-.mois-groupe .dates li:last-child { border-bottom: 0; }
-/* la compagnie */
-.artistes { list-style: none; margin: 0; padding: 0; columns: 3 240px; column-gap: clamp(24px, 4vw, 56px); }
-.artistes li { break-inside: avoid; padding: 12px 0 13px; border-top: 1px solid var(--lait-2); }
-.artistes b { display: block; font-weight: 600; }
-.artistes span { display: block; font: italic 500 1.05rem/1.35 var(--serif); color: var(--gris); }
-.partenaires { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0 clamp(20px, 3vw, 40px); }
-.partenaires li { padding: 14px 0; border-top: 1px solid var(--lait-2); font-weight: 600; }
-/* contact */
-.coord { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
-.coord .mail { font: italic 500 clamp(1.9rem, 1.3rem + 2vw, 3.2rem)/1.1 var(--serif); color: var(--magenta-texte); text-decoration: none; overflow-wrap: anywhere; }
-.coord .mail:hover { text-decoration: underline; }
-.coord address { font-style: normal; font-size: 1.15rem; }
+.rp-sous { margin: 12px 0 0; }
+.rp-crea { margin: 4px 0 0; color: var(--gris); font-size: .92rem; }
+.rp-etat { margin: 0; display: grid; gap: 8px; justify-items: start; color: var(--c); }
+.rp-ligne { font-size: .9rem; color: var(--encre); }
+/* l'agenda et les saisons : la carte à côté de la liste */
+.ag-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(24px, 5vw, 72px); align-items: start; }
+.ag-carte { position: sticky; top: calc(var(--haut) + 20px); }
+.mois h2 { margin: 0; padding-top: 12px; border-top: 2px solid var(--encre); font: italic 500 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.15 var(--serif); }
+.saisons { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 28px; }
+.saisons a { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; font: italic 500 1.2rem var(--serif); }
+.saisons a:hover { color: var(--magenta-texte); }
+.sa-sp { padding-top: 14px; border-top: 2px solid var(--encre); margin-bottom: 22px; }
+.sa-sp h2 { margin: 0; font: italic 500 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.15 var(--serif); }
+.sa-sp h2 a { text-decoration: none; }
+.sa-sp h2 a:hover { color: var(--magenta-texte); }
+.sa-sous { margin: 4px 0 0; }
+.sa-crea { margin: 2px 0 6px; color: var(--gris); font-size: .9rem; }
+/* la compagnie : « En quelques dates » le long d'un bras, une ventouse par année */
+.co-grille, .ac-grille, .ct-grille { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
+.co-texte p { margin: 0 0 18px; max-width: 66ch; }
+.co-texte p:first-child { font: 500 clamp(1.2rem, 1.02rem + .55vw, 1.5rem)/1.45 var(--serif); }
+.chrono ol { position: relative; list-style: none; margin: 0; padding: 0 0 0 38px; }
+.chrono ol::before { content: ""; position: absolute; left: 9px; top: 4px; bottom: 6px; width: 7px; background: var(--nuit-2); clip-path: polygon(0 0, 100% 0, 62% 100%, 38% 100%); }
+.chrono li { position: relative; padding: 8px 0 14px; }
+.chrono li::before { content: ""; position: absolute; left: calc(-38px + 12.5px - (15px - var(--i) * 1.2px) / 2 + 3px); top: 16px; width: calc(15px - var(--i) * 1.2px); aspect-ratio: 1; border-radius: 50%; background: var(--lait); border: 2.5px solid var(--nuit-2); }
+.chrono b { display: block; font: 500 1.7rem/1 var(--serif); }
+.chrono a, .chrono span { font: italic 500 1.1rem/1.3 var(--serif); color: var(--gris); text-decoration: none; }
+.chrono a:hover { color: var(--magenta-texte); }
+/* actions culturelles */
+.blocs h2 { margin: 30px 0 10px; font: italic 500 1.75rem/1.15 var(--serif); }
+.blocs h2:first-child { margin-top: 0; }
+.blocs p { margin: 0 0 14px; max-width: 66ch; }
+.blocs ul { margin: 0 0 14px; padding-left: 1.1em; max-width: 66ch; }
+.blocs li { margin: 0 0 10px; }
+.ac-photo { position: sticky; top: calc(var(--haut) + 20px); margin: 0; }
+.ac-photo img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.ac-photo figcaption, .credit { margin-top: 8px; font-size: .8rem; color: var(--gris); }
+/* formulaires */
+.form { display: grid; gap: 18px; max-width: 640px; }
+.form > p { margin: 0; }
+.champ label { display: block; margin-bottom: 6px; font-weight: 600; }
+.champ input, .champ textarea, .calcul input { width: 100%; padding: 11px 14px; border: 1.5px solid #cfc3b6; border-radius: 8px; background: #fffdf9; color: var(--encre); font: inherit; }
+.champ textarea { min-height: 170px; resize: vertical; }
+.champ input:focus, .champ textarea:focus, .calcul input:focus { outline: 2px solid var(--magenta); outline-offset: 1px; border-color: transparent; }
+.consent { display: flex; gap: 10px; align-items: flex-start; }
+.consent input { width: 18px; height: 18px; margin-top: 4px; accent-color: var(--magenta); flex: none; }
+.consent a { color: var(--magenta-texte); }
+.calcul { display: flex; gap: 12px; align-items: center; }
+.calcul label { font-weight: 600; white-space: nowrap; }
+.calcul input { width: 4.2em; text-align: center; }
+.bouton { justify-self: start; padding: 12px 28px; border: 0; border-radius: 999px; background: var(--nuit-2); color: var(--blanc); font: 700 1rem var(--sans); cursor: pointer; }
+.bouton:hover { background: var(--magenta-texte); }
+.coord p { margin: 0 0 16px; }
+.coord strong { font: italic 500 1.5rem/1.2 var(--serif); }
+.legal { max-width: 780px; }
+.legal h2 { margin: 30px 0 10px; font: italic 500 1.6rem/1.2 var(--serif); }
+.legal p { margin: 0 0 14px; }
+.legal a, .sp-texte a, .sp-mentions a, .co-texte a { color: var(--magenta-texte); }
 
 /* ---------- la page d'un spectacle ---------- */
-/* l'univers (couleurs, photo, un effet) ne vit que dans l'ouverture et l'effet signature ;
-   le reste de la page a la même forme pour tous les spectacles */
-.show { --bg: var(--nuit); --bg2: #1f0f19; --fg: var(--blanc); --fg2: var(--blanc-2); --ac: var(--magenta); --ac2: #e9d7b0; --sc: var(--magenta); --act: var(--magenta-texte); }
+.show { --bg: var(--nuit); --sc: var(--magenta); --act: var(--magenta-texte); }
 .sx { position: relative; }
 .sx-pin { position: sticky; top: var(--haut); height: calc(100vh - var(--haut)); height: calc(100svh - var(--haut)); overflow: hidden; }
-.sx-hero { height: 170vh; background: var(--bg); color: #fff; }
+.sx-hero { height: 150vh; background: var(--bg); color: #fff; }
 .hero-photo { position: absolute; inset: 0; overflow: hidden; background: var(--bg); }
 .hero-photo img { width: 100%; height: 100%; object-fit: cover; transform: scale(calc(1.08 - var(--p, 0) * .08)); filter: brightness(calc(.92 - var(--p, 0) * .45)); }
 .hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--bg) 88%, transparent) 0%, color-mix(in srgb, var(--bg) 50%, transparent) 42%, transparent 72%), linear-gradient(0deg, color-mix(in srgb, var(--bg) 85%, transparent) 0%, transparent 42%); }
@@ -158,204 +246,105 @@ main { min-height: calc(100vh - var(--haut)); }
 .fil-ariane { margin: 0 0 16px; font-size: .9rem; color: rgba(255, 255, 255, .8); }
 .fil-ariane a { text-decoration: none; }
 .fil-ariane a:hover { text-decoration: underline; }
-.hero-text h1 { margin: 0; max-width: 12ch; font: italic 500 clamp(3rem, 1.6rem + 5.4vw, 7.2rem)/.95 var(--serif); text-wrap: balance; }
+.hero-tag { margin: 0 0 14px; color: var(--sc); }
+.hero-text h1 { margin: 0; max-width: 13ch; font: italic 500 clamp(2.8rem, 1.6rem + 5.2vw, 7rem)/.95 var(--serif); text-wrap: balance; }
+.hero-text h1 span { display: block; }
 /* le bras qui vous a amené : il souligne le titre et s'allonge au défilement */
 .hero-text h1::after { content: ""; display: block; width: calc(90px + var(--p, 0) * min(320px, 40vw)); height: 4px; margin-top: 22px; border-radius: 2px; background: var(--sc); }
-.hero-sub { margin: 18px 0 0; font-size: 1.15rem; color: rgba(255, 255, 255, .88); max-width: 46ch; }
-.hero-next { margin: 10px 0 0; font-weight: 600; }
+.hero-sub { margin: 18px 0 0; font-size: 1.15rem; color: rgba(255, 255, 255, .9); max-width: 46ch; }
+.hero-crea { margin: 6px 0 0; font-weight: 600; color: rgba(255, 255, 255, .8); }
 .hero-credit { position: absolute; right: var(--gout); bottom: 14px; margin: 0; font-size: .75rem; color: rgba(255, 255, 255, .65); }
-.cue { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); margin: 0; font-size: .8rem; color: rgba(255, 255, 255, .7); opacity: calc(1 - var(--p, 0) * 5); }
-
-.sx-sig { height: 300vh; background: var(--bg2); color: var(--fg); }
-.sig { position: relative; height: 100%; overflow: hidden; }
-.sig blockquote { margin: 0; }
-.sig cite { display: block; margin-top: 14px; font: 600 .76rem/1.4 var(--sans); font-style: normal; letter-spacing: .07em; text-transform: uppercase; color: var(--fg2); }
-.sig-vers > p:first-child { margin: 0; font: italic 500 clamp(1.5rem, 1rem + 2vw, 2.8rem)/1.12 var(--serif); text-wrap: balance; }
-/* Cléophène : les jumeaux */
-.sig-jumeaux .twin { position: absolute; top: 14%; height: 54%; width: min(26vw, 400px); overflow: hidden; border: 1px solid var(--ac); }
-.sig-jumeaux .twin.l { left: calc(50% - min(13vw, 200px) - clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
-.sig-jumeaux .twin.r { left: calc(50% - min(13vw, 200px) + clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
-.sig-jumeaux .twin img { width: 100%; height: 100%; object-fit: cover; }
-.sig-jumeaux .twin.r img { transform: scaleX(-1); }
-.sig-jumeaux .crown { position: absolute; left: 50%; top: 3%; width: 92px; transform: translateX(-50%); fill: none; stroke: var(--ac); stroke-width: 2.5; stroke-linejoin: round; }
-.sig-jumeaux .crown path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, var(--p) * 2.2, 1)); }
-.sig-q { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); width: min(15vw, 230px); margin: 0; text-align: center; font: italic 600 clamp(1.2rem, 1rem + 1vw, 1.8rem)/1.15 var(--serif); color: var(--ac); opacity: clamp(0, (var(--p) - .5) * 5, 1); }
-.sig-jumeaux .sig-vers { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); width: min(900px, 90%); text-align: center; opacity: clamp(0, (var(--p) - .62) * 5, 1); }
-/* Cyrano : la tirade du nez */
-.sig-nez { display: grid; place-items: center; padding: 0 var(--gout); }
-.sig-nez .moon { position: absolute; right: 9vw; top: 8%; width: clamp(70px, 11vw, 150px); fill: var(--ac); transform: translateY(calc((1 - var(--p)) * 30vh)); }
-.nez-lines p { margin: 0; text-align: center; font-family: var(--serif); font-style: italic; font-weight: 600; line-height: 1.04; }
-.nez-lines span { display: block; font-size: calc(1.3rem + var(--i) * 1.2vw); opacity: clamp(0, (var(--p) * 6.2 - var(--i) - .2) * 2, 1); transform: translateY(calc((1 - clamp(0, var(--p) * 6.2 - var(--i) - .2, 1)) * 40px)); }
-.nez-lines span:last-child { color: var(--ac); font-size: clamp(2.4rem, 1rem + 6vw, 7rem); }
-.nez-lines cite { text-align: center; opacity: clamp(0, (var(--p) - .85) * 8, 1); }
-/* Bérénice : le cercle */
-.sig-cercle { display: grid; place-items: center; }
-.ring-photo { position: absolute; left: 50%; top: 40%; width: min(40vh, 60vw); aspect-ratio: 1; transform: translate(-50%, -50%) scale(calc(.62 + var(--p) * .38)); clip-path: circle(50%); }
-.ring-photo img { width: 100%; height: 100%; object-fit: cover; }
-.ring { position: absolute; left: 50%; top: 40%; width: min(64vh, 90vw); transform: translate(-50%, -50%); overflow: visible; }
-.ring text { font-family: var(--serif); font-style: italic; font-size: 14px; letter-spacing: .8px; fill: var(--fg); }
-.ring text.latin { font-family: var(--sans); font-style: normal; font-weight: 600; font-size: 10.5px; letter-spacing: 5px; fill: var(--ac); }
-.ring-line { fill: none; stroke: var(--ac); stroke-width: 1.2; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
-.ring-rot { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * 150deg)); }
-.ring-rot2 { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * -110deg)); }
-.sig-cercle .sig-vers { position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%); width: min(860px, 92%); text-align: center; opacity: clamp(0, (var(--p) - .62) * 5, 1); }
-.sig-cercle .sig-vers > p:first-child { font-size: clamp(1.1rem, .8rem + 1.2vw, 1.9rem); }
-.sig-latin { margin: 8px 0 0; font-size: .9rem; color: var(--fg2); }
-/* Mon Royaume pour un cheval : le paperboard */
-.sig-board { display: grid; place-items: center; }
-.sheets { list-style: none; margin: 0; padding: 0; position: absolute; left: 50%; top: 9%; width: min(600px, 80vw); height: 64%; transform: translateX(-50%); perspective: 1600px; }
-.sheet { position: absolute; inset: 0; z-index: var(--z); display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 7%; background: #fffdf8 linear-gradient(transparent 96%, #d7e3f4 96%) 0 0 / 100% 2.2em; border: 1px solid #d9d0bf; box-shadow: 0 18px 40px rgba(20, 20, 50, .16); transform-origin: 50% 0; backface-visibility: hidden; transform: rotateX(calc(clamp(0, var(--p) * 4.6 - var(--i) - .35, 1) * -168deg)); }
-.sheet:last-child { transform: none; }
-.sheet .l1 { font: italic 500 clamp(1.7rem, 1rem + 2.6vw, 3.1rem)/1.02 var(--serif); color: var(--ac2); }
-.sheet .l2 { font: italic 500 clamp(1.4rem, .9rem + 2vw, 2.5rem)/1.06 var(--serif); color: var(--ac); }
-.sheet .src { font: 600 .76rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: #5a5f78; margin-top: 8px; }
-.sig-board .sig-note { position: absolute; left: 0; right: 0; bottom: 6%; margin: 0; padding: 0 var(--gout); text-align: center; font: italic 500 1.25rem var(--serif); color: var(--fg); }
-/* L'imaginaire forcé : les annotations */
-.sig-ann { display: grid; place-items: center; padding: 0 var(--gout); }
-.ann-text { max-width: 34ch; }
-.ann-text p { margin: 0; font: italic 500 clamp(1.25rem, .8rem + 1.5vw, 2.2rem)/1.7 var(--serif); }
-.ann { position: relative; white-space: nowrap; --k: clamp(0, var(--p) * 3.6 - var(--i) * .9 - .25, 1); }
-.ann::before { content: ""; position: absolute; inset: -.06em -.3em -.02em; border: 2.5px solid var(--ac); border-radius: 50%; transform: rotate(-3deg); clip-path: inset(0 calc((1 - var(--k)) * 100%) 0 0); }
-.ann-note { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -.1em); font: 600 .5em/1 var(--sans); font-style: normal; letter-spacing: .02em; color: var(--ac); white-space: nowrap; opacity: var(--k); }
-.ann-text cite { text-align: right; }
-.ann-marge { position: absolute; right: max(4vw, 16px); bottom: 9%; width: min(270px, 40vw); margin: 0; font: italic 500 1.15rem/1.35 var(--serif); color: var(--ac2); opacity: clamp(0, (var(--p) - .78) * 6, 1); }
-/* La Folle Idée : l'horloge */
-.sig-clock { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 4vw; padding: 0 max(var(--gout), 5vw); }
-.clock { width: min(44vh, 36vw); justify-self: center; overflow: visible; }
-.clock > circle { fill: none; stroke: var(--fg); stroke-width: 3; }
-.clock .ticks line { stroke: var(--fg); stroke-width: 1.5; stroke-linecap: round; }
-.clock .nums text { font: 600 14px var(--sans); fill: var(--fg); text-anchor: middle; }
-.clock .hand-h { stroke: var(--fg); stroke-width: 6; stroke-linecap: round; }
-.clock .hand-m { stroke: var(--ac); stroke-width: 3.5; stroke-linecap: round; }
-.clock .pin { fill: var(--ac2); }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; font: italic 500 clamp(1.3rem, 1rem + 1.2vw, 2.1rem)/1.15 var(--serif); }
-.steps li { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); align-items: baseline; opacity: .2; transition: opacity .4s, transform .4s; transform: translateX(-10px); }
-.steps li.on { opacity: 1; transform: none; }
-.steps b { font: 700 .6em var(--sans); font-style: normal; color: var(--ac); letter-spacing: .04em; }
-.stamp { position: absolute; left: 50%; top: 6%; margin: 0; font: 700 clamp(1.6rem, 1.1rem + 2vw, 3rem) var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ac); border: 4px solid var(--ac); padding: 0 .4em; transform: translateX(-50%) rotate(-6deg) scale(calc(1.5 - clamp(0, var(--p) * 8, 1) * .5)); opacity: clamp(0, var(--p) * 8, 1); }
-/* Macbeth – Fatum : le fil rouge */
-.sig-fil { display: grid; place-items: center; padding: 0 var(--gout); }
-.thread { position: absolute; inset: 0; width: 100%; height: 100%; }
-.thread path { fill: none; stroke: var(--ac); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
-.fil-vers { position: relative; text-align: center; }
-.fil-vers p { margin: 0; font: italic 600 clamp(2.4rem, 1rem + 5.4vw, 6.6rem)/1 var(--serif); text-wrap: balance; color: color-mix(in srgb, var(--fg) calc((1 - clamp(0, (var(--p) - .4) * 3, 1)) * 100%), var(--ac)); }
-.fil-num { position: absolute; left: 0; right: 0; bottom: 7%; margin: 0; display: flex; justify-content: center; gap: clamp(20px, 6vw, 90px); }
-.fil-num div { text-align: center; opacity: clamp(0, var(--p) * 5 - 2.6 - var(--i) * .5, 1); }
-.fil-num dt { font: 600 clamp(2rem, 1.2rem + 2.4vw, 3.4rem)/1 var(--serif); color: var(--ac); }
-.fil-num dd { margin: 4px 0 0; font-size: .85rem; color: var(--fg2); }
-/* Actions culturelles : les heures */
-.sig-heures { display: grid; place-items: center; }
-.gauge { position: absolute; left: 50%; top: 45%; width: min(60vh, 80vw); transform: translate(-50%, -50%) rotate(-90deg); }
-.gauge circle { fill: none; stroke-width: 8; }
-.gauge .g0 { stroke: color-mix(in srgb, var(--ac) 16%, transparent); }
-.gauge .g1 { stroke: var(--ac); stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
-.sig-heures .big { position: relative; margin: -6vh 0 0; display: grid; justify-items: center; text-align: center; }
-.sig-heures .count { font: 500 clamp(4rem, 2rem + 8vw, 10rem)/.9 var(--serif); color: var(--ac); font-variant-numeric: tabular-nums; }
-.sig-heures .unit { font: italic 500 clamp(1.2rem, 1rem + .8vw, 1.8rem) var(--serif); }
-.sig-heures .per { font-size: .85rem; color: var(--fg2); margin-top: 6px; }
-.mots { position: absolute; left: 0; right: 0; bottom: 6%; list-style: none; margin: 0; padding: 0 var(--gout); display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.mots li { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--ac); font-weight: 600; color: var(--ac); opacity: clamp(0, var(--p) * 7 - var(--i) - 1.5, 1); }
-
-/* la suite de la page : la même pour tous */
-.corps { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
-.accroche { margin: 0 0 22px; font: italic 500 clamp(1.5rem, 1.1rem + 1.2vw, 2.2rem)/1.2 var(--serif); text-wrap: balance; }
-.corps p { max-width: 64ch; }
-.faits { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 18px; font-size: .97rem; align-content: start; }
-.faits dt { color: var(--gris); }
-.faits dd { margin: 0; font-weight: 600; }
-.bouton { display: inline-block; padding: 10px 18px; border-radius: 999px; border: 1.5px solid currentColor; font-weight: 700; text-decoration: none; }
-.bouton:hover { background: var(--encre); color: var(--lait); border-color: var(--encre); }
-.onglets { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--lait-2); margin-bottom: 26px; }
-.onglets button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 0; margin: 0 26px -1px 0; font: italic 500 1.3rem var(--serif); color: var(--gris); cursor: pointer; }
-.onglets button:hover { color: var(--encre); }
-.onglets button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--dc); }
-.panneau { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); }
-.panneau h3 { margin: 0 0 10px; font: 700 .8rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
-.panneau p { margin: 0 0 14px; }
-.panneau .faits { margin-bottom: 18px; }
-.docs { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--lait-2); }
-.docs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--lait-2); }
-.afournir { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); border: 1px dashed var(--gris); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
-.badge { display: inline-block; margin: 0 0 12px; padding: 4px 12px; border-radius: 999px; background: var(--dc); color: #fff; font-weight: 700; font-size: .85rem; }
+.cue { position: absolute; left: 50%; bottom: 16px; width: 30px; height: 30px; margin-left: -15px; color: rgba(255, 255, 255, .7); opacity: calc(1 - var(--p, 0) * 5); }
+.cue svg { width: 100%; height: 100%; display: block; }
+.cass { background: var(--bg); color: #e8edf3; padding: clamp(56px, 8vw, 104px) 0; }
+.cass-cadre { margin: 0 0 clamp(28px, 4vw, 48px); font: 700 .8rem/1.6 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--sc); }
+.cass blockquote { margin: 0 0 clamp(26px, 3.4vw, 40px); max-width: 30em; }
+.cass blockquote:nth-of-type(even) { margin-left: auto; text-align: right; }
+.cass blockquote p { margin: 0; font: italic 500 clamp(1.35rem, 1rem + 1.4vw, 2.2rem)/1.22 var(--serif); text-wrap: balance; }
+.cass cite { display: block; margin-top: 10px; font: 400 .85rem var(--sans); color: #9fb0c3; }
+.sp-corps { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
+.sp-texte p { margin: 0 0 16px; max-width: 66ch; }
+.sp-texte > p:first-child { font: 500 clamp(1.18rem, 1rem + .55vw, 1.45rem)/1.45 var(--serif); }
+.sp-mentions p { margin: 18px 0 0; padding-left: 14px; border-left: 3px solid var(--sc); font-size: .95rem; }
+.fiche p { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--lait-2); font-weight: 600; }
+.fiche p span, .sp-avec span { display: block; font-weight: 400; font-size: .85rem; color: var(--gris); }
+.sp-avec { margin: 18px 0 0; font-weight: 600; }
+.sp-duree { margin: 14px 0 0; font-weight: 700; color: var(--act); }
+.sp-prod { margin-top: 24px; font-size: .86rem; color: var(--gris); }
+.sp-prod p { margin: 0 0 8px; }
+.h3 { margin: 22px 0 10px; font: 700 .8rem var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.h3:first-child { margin-top: 0; }
+.medias { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.medias a { display: flex; gap: 14px; align-items: center; height: 100%; padding: 14px 16px; border: 1.5px solid var(--lait-2); border-radius: 10px; text-decoration: none; transition: border-color .2s; }
+.medias a:hover { border-color: var(--act); }
+.medias svg { flex: none; width: 30px; height: 30px; color: var(--act); }
+.medias b { display: block; font-weight: 600; line-height: 1.35; }
+.medias small { display: block; color: var(--gris); }
+.tour-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
+.tour-seule { max-width: 760px; margin: 0 auto; }
 .suivant { display: block; background: var(--n-bg); color: #fff; text-decoration: none; padding: clamp(44px, 7vw, 80px) 0; }
-.suivant .wrap { display: block; }
-.suivant small { display: block; color: rgba(255, 255, 255, .75); margin-bottom: 8px; font-size: .95rem; }
-.suivant b { font: italic 500 clamp(2rem, 1.4rem + 2.4vw, 3.6rem)/1 var(--serif); }
-.suivant b::after { content: ""; display: block; width: 90px; height: 4px; margin-top: 18px; border-radius: 2px; background: var(--n-sc); transition: width .3s; }
-.suivant:hover b::after { width: 200px; }
+.suivant b { font: italic 500 clamp(2rem, 1.4rem + 2.4vw, 3.6rem)/1.05 var(--serif); }
+.suivant svg.fl { width: .9em; height: .9em; margin-left: .3em; color: var(--n-sc); transition: transform .3s; vertical-align: -.05em; }
+.suivant:hover svg.fl { transform: translateX(8px); }
 
-/* immobile : réduire les animations */
-.still .sx { height: auto !important; }
-.still .sx-pin { position: relative; top: 0; height: auto; min-height: 78vh; overflow: hidden; }
-.still .sx-sig .sig { min-height: 86vh; }
-.still .steps li { opacity: 1; transform: none; }
+footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44px; font-size: .92rem; }
+.pied .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; }
+.pied p { margin: 0 0 10px; }
+.pied strong { color: var(--blanc); }
+.pied a { color: var(--blanc); }
+.pied .l { display: block; width: 58px; margin-bottom: 14px; color: var(--blanc); }
+.pied .l svg { width: 100%; height: auto; display: block; }
+.pied .liens { display: flex; gap: 18px; flex-wrap: wrap; }
 
 #ink { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; transition: opacity .32s; }
 #ink.fade { opacity: 0; }
 
+/* immobile : moins d'animations */
+.still .sx { height: auto !important; }
+.still .sx-pin { position: relative; top: 0; height: 78vh; }
+
 @media (max-width: 900px) {
-  .compagnie, .corps, .panneau, .coord, .mois-groupe { grid-template-columns: minmax(0, 1fr); }
-  .mois-groupe h2 { position: static; padding-bottom: 4px; }
-  .portes { grid-template-columns: minmax(0, 1fr); gap: 34px; }
-  footer .wrap { grid-template-columns: minmax(0, 1fr); }
-  .sig-clock { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 28px; }
-  .clock { width: min(32vh, 60vw); }
+  .k-grille, .ag-grille, .co-grille, .ac-grille, .ct-grille, .sp-corps, .tour-grille { grid-template-columns: minmax(0, 1fr); }
+  .ag-carte, .ac-photo { position: static; }
+  .portes { grid-template-columns: minmax(0, 1fr); }
+  .pied .wrap { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 760px) {
-  .nav { display: none; position: absolute; left: 0; right: 0; top: var(--haut); background: var(--nuit); flex-direction: column; padding: 8px var(--gout) 18px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
-  .top.ouvert .nav { display: flex; }
-  .menu { display: inline-block; }
-  .stage { height: auto; min-height: 980px; }
-  .stage-foot { bottom: 22px; }
-  .dates li { grid-template-columns: 1fr; gap: 2px; }
-  .dates .pub { text-align: left; }
-  .nav a[aria-current="page"] { text-underline-offset: 6px; }
+  .dl > li, .dl.petit > li { grid-template-columns: 92px minmax(0, 1fr); gap: 2px 14px; }
+  .dl .q b { font-size: 1.15rem; }
   .repertoire a { grid-template-columns: 104px minmax(0, 1fr); gap: 10px 16px; align-items: start; padding: 18px 0; }
   .rp-photo { grid-row: span 2; aspect-ratio: 4 / 5; }
-  .rp-quand { grid-column: 2; font-size: .95rem; }
+  .rp-etat { grid-column: 2; }
   .repertoire h2::after { margin-top: 10px; }
-  .rp-texte p { margin-top: 8px; }
-  .sig-jumeaux .twin { width: 40vw; height: 34%; top: 16%; }
-  .sig-jumeaux .twin.l { left: calc(50% - 20vw - clamp(0, var(--p) * 1.6, 1) * 23vw); }
-  .sig-jumeaux .twin.r { left: calc(50% - 20vw + clamp(0, var(--p) * 1.6, 1) * 23vw); }
-  .sig-q { top: 60%; width: 84vw; }
-  .sig-jumeaux .sig-vers > p:first-child { font-size: 1.3rem; }
-  .ann-marge { position: static; margin-top: 24px; width: auto; }
-  .sig-ann { align-content: center; }
-  .hero-text h1 { font-size: clamp(2.6rem, 11vw, 3.6rem); }
+  .hero-text h1 { font-size: clamp(2.5rem, 11vw, 3.6rem); }
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  .carte.encre .k-trace { stroke-dashoffset: 0; }
+  .carte.encre .goutte { transform: none; }
+  .carte.encre .k-passe { opacity: 1; }
+}
 </style>
 </head>
 <body>
 <a class="evitement" href="#main">Aller au contenu</a>
 <header class="top"><div class="wrap">
-  <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
-  <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-  <nav class="nav" id="nav" aria-label="Navigation principale">
-    <a href="#/spectacles">Spectacles</a><a href="#/agenda">Agenda</a><a href="#/compagnie">La compagnie</a><a href="#/contact">Contact</a>
-  </nav>
+  <a class="marque" href="#/"><span class="l" id="marque"></span><span id="marque-mot"></span></a>
+  <button class="menu" type="button" aria-expanded="false" aria-controls="nav"></button>
+  <nav class="nav" id="nav"></nav>
 </div></header>
 <main id="main" tabindex="-1">
-  <div id="v-accueil">
-    <section class="stage" aria-labelledby="stage-h">
-      <div class="stage-copy"><h1 id="stage-h" tabindex="-1">Tirez un bras pour entrer dans un spectacle.</h1></div>
+  <div id="v-accueil" hidden>
+    <section class="stage" id="scene" aria-labelledby="stage-h">
+      <h1 class="stage-h" id="stage-h" tabindex="-1"></h1>
       <canvas class="stage-canvas" aria-hidden="true"></canvas>
-      <ul class="t-labels" aria-label="Les spectacles"></ul>
-      <p class="stage-foot">Compagnie de théâtre · Rouen · depuis 2012</p>
+      <ul class="t-labels"></ul>
     </section>
-    <section class="bloc" id="portes" aria-labelledby="h-po"><div class="wrap">
-      <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
-      <div class="portes" id="portes-liste"></div>
-    </div></section>
+    <div id="accueil-suite"></div>
   </div>
-  <div id="v-spectacles" hidden></div>
-  <div id="v-agenda" hidden></div>
-  <div id="v-compagnie" hidden></div>
-  <div id="v-contact" hidden></div>
-  <div id="v-spectacle" hidden></div>
+  <div id="v-page" hidden></div>
 </main>
-<footer><div class="wrap" id="pied"></div></footer>
+<footer class="pied"><div class="wrap" id="pied"></div></footer>
 <canvas id="ink" hidden aria-hidden="true"></canvas>
 <script>const D = /*__DATA__*/null;</script>
 <script>
@@ -369,17 +358,50 @@ main { min-height: calc(100vh - var(--haut)); }
   const easeInOut = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const easeOut = t => 1 - Math.pow(1 - t, 3);
   // échappe le texte, et pose les espaces insécables de la ponctuation française
-  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
-  const titre = t => esc(t).replace(/ – /g, ' – ');
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»–])/g, ' $1').replace(/« /g, '« ');
   const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
   const motionOK = () => !reduceMQ.matches;
   const syncMotion = () => document.documentElement.classList.toggle('still', !motionOK());
   syncMotion(); reduceMQ.addEventListener('change', syncMotion);
+  const S = D.site, MENU = Object.fromEntries(S.menu.map(m => [m.id, m]));
   const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
-  const C = D.company;
-  const prochaine = s => s.prochaine ? `${s.prochaine.jour} ${s.prochaine.mois}, ${s.prochaine.commune}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements');
+  const FLECHE = '<svg class="fl" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const ICONE = {
+    video: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 8.3v7.4l6-3.7z" fill="currentColor"/></svg>',
+    audio: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.4 15.6V8.1l5-1.3v7.4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.9" cy="15.6" r="1.6" fill="currentColor"/><circle cx="13.9" cy="14.2" r="1.6" fill="currentColor"/></svg>',
+  };
+  // un paragraphe HTML de D : tel quel s'il est déjà un bloc, dans un <p> sinon
+  const bloc = h => /^\s*<(h\d|ul|ol|p|div|blockquote|figure)/i.test(h) ? h : `<p>${h}</p>`;
 
-  /* ---------- encre : la transition, aux couleurs du spectacle ---------- */
+  /* ---------- les lignes de date : « 18 » en grand, « décembre 2026 » dessous ---------- */
+  const MOIS = 'janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre';
+  function coupe(txt) {
+    const re = new RegExp(`(${MOIS}) (\\d{4})`, 'g'); let m, der = null;
+    while ((m = re.exec(txt))) der = m;
+    if (!der) return { jours: txt, suite: '', mois: '', nom: '' };
+    return { jours: txt.slice(0, der.index).trim(), suite: txt.slice(der.index).trim(), mois: der[0], nom: der[1] };
+  }
+  function quand(txt) {
+    const c = coupe(txt), grand = c.jours || c.nom, petit = c.jours ? c.suite : c.suite.slice(c.nom.length).trim();
+    return `<p class="q"><b>${esc(grand)}</b>${petit ? `<span>${esc(petit)}</span>` : ''}</p>`;
+  }
+  const lienExt = (href, txt) => `<a href="${esc(href)}" target="_blank" rel="noopener">${txt}</a>`;
+  const details = ds => ds && ds.length ? `<ul class="det">${ds.map(x => `<li>${x.lien ? lienExt(x.lien, esc(x.texte)) : esc(x.texte)}</li>`).join('')}</ul>` : '';
+  // une date à venir (D.dates)
+  function ligneDate(d, { titre = true } = {}) {
+    const s = bySlug[d.slug], lienLieu = d.lien && !d.details.some(x => x.lien);
+    return `<li data-l="${d.l}" style="--c:${s ? s.couleurTexteClair : 'var(--magenta)'}">${quand(d.ligneDate)}<div class="t">
+      ${titre ? `<a class="ti" href="#/spectacle/${d.slug}">${esc(d.titre)}</a>` : ''}
+      <p class="lieu">${lienLieu ? lienExt(d.lien, esc(d.ligneLieu)) : esc(d.ligneLieu)}</p>${details(d.details)}</div></li>`;
+  }
+  // une date d'une saison (D.saisons), telle que sa page d'origine
+  function ligneSaison(d) {
+    const i = d.ligne.indexOf(' — '), q = i > 0 ? d.ligne.slice(0, i) : '', ou = i > 0 ? d.ligne.slice(i + 3) : d.ligne;
+    return `<li${d.l != null ? ` data-l="${d.l}"` : ''}>${q ? quand(q) : '<p class="q"></p>'}<div class="t">
+      <p class="lieu">${d.lien ? lienExt(d.lien, esc(ou)) : esc(ou)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
+  }
+
+  /* ---------- l'encre : la transition, aux couleurs du spectacle ---------- */
   const Ink = (() => {
     const cv = $('#ink'), ctx = cv.getContext('2d');
     let W = 0, H = 0, raf = 0, cols = ['#bc3e80', '#150a11'], on = false;
@@ -406,611 +428,714 @@ main { min-height: calc(100vh - var(--haut)); }
       raf = requestAnimationFrame(frame);
     }
     return {
-      cover: (x, y, done, c) => run(x, y, true, 540, done, c),
-      uncover: (x, y, done, c) => run(x, y, false, 600, done, c),
+      cover: (x, y, done, c) => run(x, y, true, 560, done, c),
+      uncover: (x, y, done, c) => run(x, y, false, 620, done, c),
       fill: col => { size(); cv.hidden = false; cv.classList.remove('fade'); on = true; ctx.fillStyle = col; ctx.fillRect(0, 0, W, H); },
       fadeOut: () => { if (!on) return; cv.classList.add('fade'); setTimeout(() => { cv.hidden = true; cv.classList.remove('fade'); on = false; }, 330); },
       active: () => on,
     };
   })();
 
-  /* ---------- la scène : le logo et ses huit bras prolongés ---------- */
-  /* Chaque spectacle prolonge l'un des huit bras du logo : même départ, même direction, même épaisseur.
-     Le prolongement glisse sous les autres traits (liseré net), rejoint son titre, le souligne et s'enroule.
-     Rien ne bouge au repos : seuls l'ouverture, le survol et la traction animent les bras. */
+  /* ---------- la scène : la pieuvre vivante ---------- */
+  /* Les huit bras du logo ondulent au repos ; ils ne sont à personne. Les titres, autant qu'il y a de spectacles, sont
+     posés librement autour de la pieuvre ; au survol, au focus ou au toucher, le bras le plus proche se tend vers le
+     titre, le souligne et s'enroule ; on le tire (ou on clique) : la pieuvre l'avale et l'encre recouvre l'écran. */
   const Stage = (() => {
-    const el = $('.stage'), cv = $('.stage-canvas', el), ctx = cv.getContext('2d');
-    const ul = $('.t-labels', el), copy = $('.stage-copy', el), foot = $('.stage-foot', el);
-    const lay = document.createElement('canvas'), lctx = lay.getContext('2d');
-    const msk = document.createElement('canvas'), mctx = msk.getContext('2d');
+    const el = $('#scene'), cv = $('.stage-canvas', el), ctx = cv.getContext('2d');
+    const ul = $('.t-labels', el), tete = $('#stage-h');
+    const toile = () => { const c = document.createElement('canvas'); return [c, c.getContext('2d')]; };
+    const [lay, lctx] = toile(), [msk, mctx] = toile(), [lg, gctx] = toile();
     const AR = D.arms, BOX = AR.box, W0 = AR.width, GAPL = AR.gap;
     const paths = D.logo.octopusPaths.map(d => new Path2D(d));
-    const INK = [247, 236, 241];
-    const ROWS_D = { A1outer: 0, A1inner: 1, A2: 2, C1: 3 }, LANE = ROWS_D;
-    const ROWS_M = ['C1L', 'C1R', 'A2L', 'A2R', 'A1innerL', 'A1innerR', 'A1outerL', 'A1outerR'];
-    const INTRO = ['A1outerL', 'A1outerR', 'A1innerL', 'A1innerR', 'A2L', 'A2R', 'C1L', 'C1R'];
-    let W = 0, H = 0, dpr = 1, s = 0.5, ox = 0, oy = 0, mobile = false, gut = 24, pmax = 110;
-    let raf = 0, visible = true, logoAlpha = 1, introT0 = 0, introOn = false, hovered = null, order = [], grab = null, lastPointerAct = 0;
-    const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-    const T = D.shows.map((show, i) => {
-      const arm = AR.armOf[show.slug];
-      return { i, show, slug: show.slug, arm, side: arm.slice(-1), key: arm.slice(0, -1), A: AR.arms[arm], col: hexRgb(show.couleur),
-        P: [], cum: [], L: 1, sOwn: 0, sExit: 0, sUnder: 0, sCurl: 0, U: 60, ulead: 0, th: 30, lw: 120, lh: 30,
-        grow: 1, hover: 0, focus: false, curl: 1, pull: { x: 0, y: 0 }, pull0: { x: 0, y: 0 }, tension: 0, mode: 'idle', t0: 0, fired: false,
-        target: { x: 0, y: 0 }, tdir: { x: -1, y: 0 }, lane: 0, maxW: 200, label: null };
-    });
-    T.forEach(t => {
-      const li = document.createElement('li');
-      li.innerHTML = `<a class="t-label" href="#/spectacle/${t.slug}" draggable="false" style="--c:${t.show.couleur}"><span class="t-title"><span class="t-tt">${titre(t.show.titre)}</span></span><span class="t-when">${t.show.prochaine ? '<span class="sr">, prochaine date : </span>' : '<span class="sr">, </span>'}${esc(prochaine(t.show))}</span></a>`;
-      ul.appendChild(li);
-      t.label = li.firstElementChild; t.tt = $('.t-tt', t.label); t.ttl = $('.t-title', t.label);
-    });
+    const INK = [247, 236, 241], COEUR = [771, 640], NB = 40, NM = 20, NC = 30;
+    let W = 0, H = 0, dpr = 1, s = .38, ox = 0, oy = 0, mobile = false, gut = 24, pmax = 100;
+    let raf = 0, visible = true, affiche = false, eveil = null, tPrec = 0, sraf = 0;
+    let survol = null, prise = null, verrou = false, dernier = 0, pointeur = null;
+    const bob = { x: 0, y: 0 };
+    const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
-    function bez(out, p0, p1, p2, p3, n) {
-      for (let k = 1; k <= n; k++) { const u = k / n, a = (1 - u) ** 3, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u * u, d = u ** 3; out.push([a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]); }
-    }
-    function buildPath(t) {
-      const P = t.A.pts.map(([x, y]) => [ox + x * s, oy + y * s]);
-      const iExit = P.length - 1, E = P[iExit], ed = t.A.exitdir, td = t.tdir;
-      const tx = t.target.x + t.pull.x, ty = t.target.y + t.pull.y;
-      let F = E, fd = ed;
-      if (mobile) {
-        // un crochet jusqu'à son couloir, puis une descente droite : des parallèles, comme une portée
-        const lane = t.lane, drop = clamp(Math.abs(E[0] - lane) * 0.75, 24, 74), yq = E[1] + drop, h = drop * 0.6;
-        bez(P, E, [E[0] + ed[0] * h, E[1] + ed[1] * h], [lane, yq - h], [lane, yq], 18);
-        const yf = Math.max(yq + 1, t.target.y - 24);
-        P.push([lane, yf]); F = [lane, yf]; fd = [0, 1];
+    // les bras : ceux du logo, au service de tous les titres
+    const BRAS = Object.entries(AR.arms).map(([cle, A], i) => ({ cle, A, i, cote: cle.slice(-1),
+      long: /^A1outer/.test(cle) ? 46 : /^A1inner/.test(cle) ? 60 : /^A2/.test(cle) ? 76 : 90,
+      phase: i * 2.399, but: null, depuis: null, q: 1, teinte: 0, penche: 0, em: 0, rel: [], col: INK, P: [], cum: [], nPre: 0, sOwn: 0, sMax: 0 }));
+    // les titres : un par spectacle, en nombre libre
+    const meta = sh => sh.prochaine ? sh.prochaine.ligne : (sh.statut || sh.creation);
+    const TIT = D.shows.map((show, i) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a class="t-label" href="#/spectacle/${show.slug}" draggable="false" style="--c:${show.couleur}"><span class="t-title"><span class="t-tt">${esc(show.titre)}</span></span><span class="t-when">${esc(meta(show))}</span></a>`;
+      ul.appendChild(li);
+      const a = li.firstElementChild;
+      return { i, show, el: a, tt: $('.t-tt', a), ttl: $('.t-title', a), col: rgb(show.couleur), bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false,
+        ancre: { x: 0, y: 0 }, bras: null, tire: { x: 0, y: 0 }, tire0: { x: 0, y: 0 }, tension: 0, mode: 'repos', t0: 0, parti: false, avale: 0, focus: false };
+    });
+    ul.setAttribute('aria-label', S.libelles.spectacles);
+
+    const sortie = a => a.A.pts[a.A.pts.length - 1];
+    const ecran = p => [ox + bob.x + p[0] * s, oy + bob.y + p[1] * s];
+    const coeur = () => ({ x: ox + bob.x + COEUR[0] * s, y: oy + bob.y + COEUR[1] * s });
+    // le bras le plus proche du titre, et tourné vers lui
+    function choisir(T) {
+      let best = null, bc = Infinity;
+      for (const a of BRAS) {
+        const p = sortie(a), dx = T.ancre.x - (ox + p[0] * s), dy = T.ancre.y - (oy + p[1] * s), d = Math.hypot(dx, dy) || 1;
+        const c = d * (1.45 - .45 * (dx * a.A.exitdir[0] + dy * a.A.exitdir[1]) / d);
+        if (c < bc) { bc = c; best = a; }
       }
-      const d = Math.hypot(tx - F[0], ty - F[1]), k = d * (mobile ? 0.5 : 0.42);
-      bez(P, F, [F[0] + fd[0] * k, F[1] + fd[1] * k], [tx - td.x * k, ty - td.y * k], [tx, ty], mobile ? 12 : 36);
-      const iUnder = P.length - 1, ulen = t.U + t.ulead + 10, nU = Math.max(2, Math.round(ulen / 6));
-      for (let j = 1; j <= nU; j++) P.push([tx + td.x * ulen * j / nU, ty + td.y * ulen * j / nU]);
-      const iCurl = P.length - 1;
-      // la pointe s'enroule vers le haut ; tirer la déroule
-      const Lc = mobile ? 40 : 56, n = 24, du = Lc / n, sign = td.x < 0 ? 1 : -1;
-      const kap0 = 1.5 * Math.PI * 2.3 / Lc * t.curl * (1 - 0.92 * t.tension);
-      let ang = Math.atan2(td.y, td.x), x = P[iCurl][0], y = P[iCurl][1];
-      for (let j = 1; j <= n; j++) { const kap = kap0 * Math.pow((j - 0.5) / n, 1.3); ang += sign * kap * du * 0.5; x += Math.cos(ang) * du; y += Math.sin(ang) * du; ang += sign * kap * du * 0.5; P.push([x, y]); }
-      const cum = [0];
-      for (let j = 1; j < P.length; j++) cum.push(cum[j - 1] + Math.hypot(P[j][0] - P[j - 1][0], P[j][1] - P[j - 1][1]));
-      t.P = P; t.cum = cum; t.L = cum[cum.length - 1];
-      t.sOwn = cum[t.A.own]; t.sExit = cum[iExit]; t.sUnder = cum[iUnder]; t.sCurl = cum[iCurl];
+      return best;
     }
-    const wRoot = () => Math.max(W0 * s, 1.6);
-    function widthAt(t, u) {
-      const w0 = wRoot(), w1 = Math.max(w0 * 0.7, 1.4);
-      let w;
-      if (u <= t.sExit) w = w0;
-      else if (u <= t.sUnder) w = lerp(w0, w1, smooth(t.sExit, t.sUnder, u));
-      else if (u <= t.sCurl) w = w1;
-      else w = lerp(w1, 0.45, Math.pow((u - t.sCurl) / Math.max(1, t.L - t.sCurl), 0.85));
-      if (u > t.sExit) w *= 1 + 0.45 * t.hover * smooth(t.sExit, t.sExit + 28, u);
-      return w;
+    // écarte les titres qui se chevauchent, et les tient hors de la pieuvre
+    function relacher(obst, minY) {
+      const mx = 30, my = 16;
+      for (let it = 0; it < 120; it++) {
+        let bouge = false;
+        const pousse = (a, b, fixe) => {
+          const ox_ = Math.min(a.bx + a.w, b.bx + b.w) - Math.max(a.bx, b.bx) + mx, oy_ = Math.min(a.by + a.bh, b.by + b.bh) - Math.max(a.by, b.by) + my;
+          if (ox_ <= 0 || oy_ <= 0) return;
+          bouge = true;
+          const k = fixe ? 1 : .5;
+          if (ox_ < oy_) { const sg = a.bx + a.w / 2 < b.bx + b.w / 2 ? -1 : 1; a.bx += sg * ox_ * k; if (!fixe) b.bx -= sg * ox_ * k; }
+          else { const sg = a.by + a.bh / 2 < b.by + b.bh / 2 ? -1 : 1; a.by += sg * oy_ * k; if (!fixe) b.by -= sg * oy_ * k; }
+        };
+        for (let i = 0; i < TIT.length; i++) for (let j = i + 1; j < TIT.length; j++) pousse(TIT[i], TIT[j], false);
+        for (const T of TIT) for (const o of obst) pousse(T, { bx: o.x, by: o.y, w: o.w, bh: o.h }, true);
+        for (const T of TIT) { T.bx = clamp(T.bx, gut, W - gut - T.w); T.by = Math.max(T.by, minY); }
+        if (!bouge) break;
+      }
     }
-    /* masque : le logo épaissi d'un liseré, sauf autour de la racine de chaque bras prolongé */
-    function buildMask() {
+    function mise() {
+      const r = el.getBoundingClientRect();
+      if (r.width < 10) return;
+      W = r.width; mobile = W < 760; gut = mobile ? 16 : clamp(W * .035, 24, 56);
+      el.classList.toggle('is-mobile', mobile);
+      const [x0, y0, x1, y1] = BOX, bw = x1 - x0, bh = y1 - y0, haut = tete.offsetTop + tete.offsetHeight;
+      const mw = mobile ? W - 2 * gut - 76 : clamp(W * .22, 210, 330);
+      TIT.forEach(T => { T.el.style.transform = 'none'; T.el.style.maxWidth = mw + 'px'; });
+      TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
+      if (!mobile) {
+        H = clamp(innerHeight - 64, 640, 940);
+        s = clamp(W * .27 / bw, .22, .4);
+        const ow = bw * s, oh = bh * s, oTop = Math.max(haut + 26, H * .15);
+        ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
+        // une couronne libre : des angles réguliers sur un arc, des rayons inégaux ; marche pour 6 comme pour 10 titres
+        const ex = W / 2, ey = oTop + oh * .6, rx = W / 2 - gut - 10, ryB = H - 78 - ey, ryH = ey - haut - 34;
+        const n = TIT.length, A0 = 214, A1 = -20, K = [1, .8, .94, .84, .99, .78, .9, .86];
+        TIT.forEach((T, i) => {
+          const th = (A0 + (A1 - A0) * (n > 1 ? i / (n - 1) : .5)) * Math.PI / 180, k = K[i % K.length];
+          const c = Math.cos(th), sn = Math.sin(th), px = ex + rx * c * k, py = ey + (sn < 0 ? ryH : ryB) * sn * k;
+          T.bx = c < -.3 ? px - T.w : c > .3 ? px : px - T.w / 2; T.by = py - T.th;
+        });
+        relacher([{ x: W / 2 - ow / 2 - 24, y: oTop - 14, w: ow + 48, h: oh + 36 }], haut + 14);
+        H = Math.max(H, Math.max(...TIT.map(T => T.by + T.bh)) + 46);
+        TIT.forEach(T => { T.droite = T.bx + T.w / 2 < W / 2; T.dirU = T.droite ? -1 : 1; });
+      } else {
+        s = clamp((W - 2 * gut) * .6 / bw, .19, .3);
+        const oh = bh * s, oTop = haut + 22, IND = [0, 26, 10, 34, 4, 20, 30, 14];
+        ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
+        let y = oTop + oh + 76;
+        TIT.forEach((T, i) => {
+          const g = i % 2 === 0, ind = IND[i % IND.length];
+          T.droite = !g; T.dirU = g ? 1 : -1;
+          T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y; y += T.bh + 30;
+        });
+        H = y + 26;
+      }
+      el.style.height = H + 'px';
+      TIT.forEach(T => {
+        T.el.classList.toggle('droite', T.droite);
+        T.ancre = { x: T.dirU < 0 ? T.bx + T.w + 6 : T.bx - 6, y: T.by + T.th + 5 };
+        T.bras = choisir(T);
+      });
+      pmax = clamp(Math.min(W, H) * .12, 70, 120);
+      dpr = Math.min(2, devicePixelRatio || 1);
+      for (const c of [cv, lay, msk, lg]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+      masque(); logo();
+      el.style.setProperty('--gy', (oy + (y0 + y1) / 2 * s).toFixed(0) + 'px');
+      if (mobile) suivre();
+      tPrec = 0; image(performance.now(), true);
+    }
+    // le logo épaissi d'un liseré, sauf autour de la racine des bras : les bras passent dessous
+    function masque() {
       const g = mctx, gap = Math.max(GAPL, 1.1 / s);
       g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, msk.width, msk.height);
       g.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
       g.fillStyle = g.strokeStyle = '#000'; g.lineWidth = 2 * gap; g.lineJoin = 'round';
       for (const p of paths) { g.fill(p); g.stroke(p); }
       g.globalCompositeOperation = 'destination-out'; g.lineCap = 'butt'; g.lineWidth = W0 + 2 * gap + 3;
-      for (const t of T) {
-        if (t.A.under) continue;
-        const pts = t.A.pts, end = Math.min(pts.length - 1, t.A.own + 2);
+      for (const a of BRAS) {
+        if (a.A.under) continue;
+        const pts = a.A.pts, fin = Math.min(pts.length - 1, a.A.own + 2);
         g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
-        for (let j = 1; j <= end; j++) g.lineTo(pts[j][0], pts[j][1]);
+        for (let j = 1; j <= fin; j++) g.lineTo(pts[j][0], pts[j][1]);
         g.stroke();
       }
       g.globalCompositeOperation = 'source-over';
     }
-    function layout() {
-      const r = el.getBoundingClientRect();
-      if (r.width < 10 || r.height < 10) return;
-      W = r.width; mobile = W < 760; gut = mobile ? 16 : clamp(W * 0.033, 24, 48);
-      el.classList.toggle('is-mobile', mobile);
-      T.forEach(t => t.label.classList.toggle('right', mobile ? t.side === 'R' : t.side === 'L'));
-      const [bx0, by0, bx1, by1] = BOX, bw = bx1 - bx0, bh = by1 - by0, bcx = (bx0 + bx1) / 2;
-      const top = copy.offsetTop + copy.offsetHeight;
-      if (!mobile) {
-        H = r.height;
-        const colW = clamp(W * 0.2, 190, 300), gapX = clamp(W * 0.04, 36, 70);
-        s = clamp(Math.min((W - 2 * gut - 2 * colW - 2 * gapX) / bw, (H - top - 250) / bh), 0.28, 0.58);
-        ox = W / 2 - bcx * s; oy = top + 20 - by0 * s;
-        const xL = W / 2 - bw / 2 * s - gapX, xR = W / 2 + bw / 2 * s + gapX;
-        const y1 = oy + 570 * s, y4 = Math.max(y1 + 210, H - 130);
-        T.forEach(t => {
-          const L_ = t.side === 'L';
-          t.target = { x: L_ ? xL : xR, y: lerp(y1, y4, ROWS_D[t.key] / 3) };
-          t.tdir = { x: L_ ? -1 : 1, y: 0 }; t.ulead = 0;
-          t.maxW = Math.max(150, L_ ? xL - gut : W - gut - xR);
-        });
-        pmax = clamp(Math.min(W, H) * 0.14, 90, 130);
-        order = [...T].sort((a, b) => (a.side === b.side ? 0 : a.side === 'L' ? -1 : 1) || ROWS_D[a.key] - ROWS_D[b.key]);
-      } else {
-        s = clamp((W - 60) / bw, 0.24, 0.42);
-        ox = W / 2 - bcx * s; oy = top + 10 - by0 * s;
-        const lanes = [14, 23, 32, 41], rr = 10, textX = 54, y0 = oy + by1 * s + 92, rowH = 70;
-        T.forEach(t => {
-          const L_ = t.side === 'L', lane = L_ ? lanes[LANE[t.key]] : W - lanes[LANE[t.key]];
-          t.lane = lane; t.target = { x: lane + (L_ ? rr : -rr), y: y0 + ROWS_M.indexOf(t.arm) * rowH };
-          t.tdir = { x: L_ ? 1 : -1, y: 0 };
-          t.ulead = L_ ? textX - t.target.x : t.target.x - (W - textX);
-          t.maxW = W - 2 * textX;
-        });
-        H = y0 + 7 * rowH + 110;
-        el.style.minHeight = H + 'px';
-        pmax = 80;
-        order = [...T].sort((a, b) => ROWS_M.indexOf(a.arm) - ROWS_M.indexOf(b.arm));
-      }
-      if (!mobile) el.style.minHeight = '';
-      dpr = Math.min(2, devicePixelRatio || 1);
-      for (const c of [cv, lay, msk]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
-      T.forEach(t => { t.label.style.maxWidth = t.maxW + 'px'; });
-      T.forEach(t => { t.U = Math.min(t.maxW, t.tt.getBoundingClientRect().width); t.th = t.ttl.offsetHeight; t.lw = t.label.offsetWidth; t.lh = t.label.offsetHeight; });
-      if (!mobile) for (const side of ['L', 'R']) {
-        // rangées régulières ; un titre sur deux lignes repousse les suivants
-        let bottom = -Infinity;
-        T.filter(t => t.side === side).sort((a, b) => ROWS_D[a.key] - ROWS_D[b.key]).forEach(t => {
-          t.target.y = Math.max(t.target.y, bottom + 34 + t.th + 3);
-          bottom = t.target.y + 3 + t.lh - t.th;
-        });
-      }
-      T.forEach(buildPath);
-      buildMask();
-      el.style.setProperty('--gy', (oy + (by0 + by1) / 2 * s).toFixed(0) + 'px');
-      render();
+    function logo() {
+      gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.clearRect(0, 0, lg.width, lg.height);
+      gctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy); gctx.fillStyle = 'rgb(247,236,241)';
+      for (const p of paths) gctx.fill(p);
     }
-    function drawT(g, t, alpha) {
-      const P = t.P, cum = t.cum, n = P.length, sMax = t.sOwn + t.grow * (t.L - t.sOwn);
-      if (sMax <= t.sOwn + 0.5 && t.grow <= 0) return;
-      const front = t.grow < 1 ? 12 : 0, Lp = [], Rp = [];
+    // au repos : le bras pend, ondule et s'enroule (points relatifs à sa sortie du logo)
+    function souche(a, t, anime) {
+      const ed = a.A.exitdir, a0 = Math.atan2(ed[1], ed[0]), L = a.long * (mobile ? .75 : clamp(W / 1440, .8, 1.1));
+      let dd = Math.PI / 2 - a0; dd = Math.atan2(Math.sin(dd), Math.cos(dd));
+      const sens = a.cote === 'L' ? 1 : -1, P = [[0, 0]];
+      let x = 0, y = 0, v0 = 0;
+      for (const [n, part] of [[NB, .56], [NM, .2], [NC, .24]]) {
+        const du = L * part / n;
+        for (let j = 1; j <= n; j++) {
+          const v = v0 + part * (j - .5) / n;
+          const onde = anime ? .42 * Math.sin(t * 1.3 + a.phase - v * 3.4) + .16 * Math.sin(t * .55 + a.phase * 1.7) : .2;
+          const g = v > .58 ? ((v - .58) / .42) ** 2 : 0;
+          const ang = a0 + dd * .38 * v + onde * v + a.penche * v + sens * 6.4 * g;
+          x += Math.cos(ang) * du; y += Math.sin(ang) * du; P.push([x, y]);
+        }
+        v0 += part;
+      }
+      return P;
+    }
+    // tendu vers un titre : jusqu'à son extrémité, puis dessous, puis la pointe s'enroule (tirer la déroule)
+    function portee(a, T) {
+      const E = ecran(sortie(a)), ed = a.A.exitdir, du = T.dirU;
+      const Ax = T.ancre.x + T.tire.x - E[0], Ay = T.ancre.y + T.tire.y - E[1], d = Math.hypot(Ax, Ay), k = d * (mobile ? .5 : .42);
+      const c1 = [ed[0] * k, ed[1] * k], c2 = [Ax - du * k * .85, Ay], P = [[0, 0]];
+      for (let j = 1; j <= NB; j++) { const u = j / NB, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u * u, e = u ** 3; P.push([b * c1[0] + c * c2[0] + e * Ax, b * c1[1] + c * c2[1] + e * Ay]); }
+      const U = T.U + 8;
+      for (let j = 1; j <= NM; j++) P.push([Ax + du * U * j / NM, Ay]);
+      const Lc = mobile ? 40 : 52, dl = Lc / NC, sens = du < 0 ? 1 : -1, k0 = 1.5 * Math.PI * 2.3 / Lc * (1 - .92 * T.tension);
+      let ang = du < 0 ? Math.PI : 0, x = Ax + du * U, y = Ay;
+      for (let j = 1; j <= NC; j++) { const kap = k0 * Math.pow((j - .5) / NC, 1.3); ang += sens * kap * dl * .5; x += Math.cos(ang) * dl; y += Math.sin(ang) * dl; ang += sens * kap * dl * .5; P.push([x, y]); }
+      return P;
+    }
+    function construire(a, t, anime) {
+      const but = a.but ? portee(a, a.but) : souche(a, t, anime);
+      let rel = but;
+      if (a.depuis && a.q < 1) { const e = easeInOut(a.q); rel = but.map((p, k) => [lerp(a.depuis[k][0], p[0], e), lerp(a.depuis[k][1], p[1], e)]); }
+      a.rel = rel;
+      const pre = a.A.pts.map(ecran), E = pre[pre.length - 1];
+      const P = pre.concat(rel.slice(1).map(p => [E[0] + p[0], E[1] + p[1]])), cum = [0];
+      for (let k = 1; k < P.length; k++) cum.push(cum[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+      a.P = P; a.cum = cum; a.nPre = pre.length; a.sOwn = cum[a.A.own];
+      a.sMax = a.sOwn + a.em * (cum[cum.length - 1] - a.sOwn);
+    }
+    function largeur(a, k) {
+      const w0 = Math.max(W0 * s, 1.7), j = k - (a.nPre - 1);
+      if (j <= 0) return w0;
+      const w = j <= NB ? lerp(w0, w0 * .78, j / NB) : j <= NB + NM ? lerp(w0 * .78, w0 * .68, (j - NB) / NM) : lerp(w0 * .68, .5, Math.pow((j - NB - NM) / NC, .85));
+      return w * (1 + .4 * a.teinte * Math.min(1, j / 6));
+    }
+    function tracer(g, a, alpha) {
+      const P = a.P, cum = a.cum, n = P.length, sMax = a.sMax;
+      if (sMax <= a.sOwn + .5) return;
+      const front = a.em < 1 ? 14 : 0, G = [], Dr = [];
       for (let k = 0; k < n; k++) {
         let u = cum[k], x = P[k][0], y = P[k][1];
-        if (u > sMax) { const q = (sMax - cum[k - 1]) / Math.max(1e-6, u - cum[k - 1]); x = lerp(P[k - 1][0], x, q); y = lerp(P[k - 1][1], y, q); u = sMax; }
-        const a = P[Math.max(0, k - 1)], b = P[Math.min(n - 1, k + 1)];
-        let tx = b[0] - a[0], ty = b[1] - a[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-        let w = widthAt(t, u) / 2;
-        if (front) w *= Math.pow(clamp((sMax - u) / front, 0, 1), 0.6);
-        Lp.push([x - ty * w, y + tx * w]); Rp.push([x + ty * w, y - tx * w]);
+        if (u > sMax) { const f = (sMax - cum[k - 1]) / Math.max(1e-6, u - cum[k - 1]); x = lerp(P[k - 1][0], x, f); y = lerp(P[k - 1][1], y, f); u = sMax; }
+        const p0 = P[Math.max(0, k - 1)], p1 = P[Math.min(n - 1, k + 1)];
+        let tx = p1[0] - p0[0], ty = p1[1] - p0[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+        let w = largeur(a, k) / 2;
+        if (front) w *= Math.pow(clamp((sMax - u) / front, 0, 1), .6);
+        G.push([x - ty * w, y + tx * w]); Dr.push([x + ty * w, y - tx * w]);
         if (u >= sMax) break;
       }
-      g.beginPath(); g.moveTo(Lp[0][0], Lp[0][1]);
-      for (let k = 1; k < Lp.length; k++) g.lineTo(Lp[k][0], Lp[k][1]);
-      for (let k = Rp.length - 1; k >= 0; k--) g.lineTo(Rp[k][0], Rp[k][1]);
+      g.beginPath(); g.moveTo(G[0][0], G[0][1]);
+      for (let k = 1; k < G.length; k++) g.lineTo(G[k][0], G[k][1]);
+      for (let k = Dr.length - 1; k >= 0; k--) g.lineTo(Dr[k][0], Dr[k][1]);
       g.closePath();
-      const c = t.col, h = t.hover;
+      const c = a.col, h = a.teinte;
       g.fillStyle = `rgba(${Math.round(lerp(INK[0], c[0], h))},${Math.round(lerp(INK[1], c[1], h))},${Math.round(lerp(INK[2], c[2], h))},${alpha})`;
       g.fill();
     }
-    const activeT = () => (grab ? grab.t : T.find(t => t.mode === 'suck' || t.mode === 'auto') || hovered || T.find(t => t.focus) || null);
-    function render() {
-      const act = activeT();
+    const actif = () => prise ? prise.T : (TIT.find(T => T.mode === 'auto' || T.mode === 'aspire') || (survol && survol.mode !== 'cache' ? survol : null) || TIT.find(T => T.focus && T.mode !== 'cache') || null);
+    function pasTitre(T, now) {
+      if (T.mode === 'repos' || T.mode === 'cache') return false;
+      const q = clamp((now - T.t0) / ({ auto: 420, ressort: 560, aspire: 680 }[T.mode]), 0, 1);
+      if (T.mode === 'auto') {
+        const e = easeOut(q); T.tire = { x: T.tire0.x * e, y: T.tire0.y * e }; T.tension = clamp(Math.hypot(T.tire.x, T.tire.y) / pmax, 0, 1);
+        if (q >= 1) aspirer(T, now);
+      } else if (T.mode === 'ressort') {
+        const c1 = 1.70158, c3 = c1 + 1, e = 1 + c3 * Math.pow(q - 1, 3) + c1 * Math.pow(q - 1, 2);
+        T.tire = { x: T.tire0.x * (1 - e), y: T.tire0.y * (1 - e) }; T.tension = clamp(Math.hypot(T.tire.x, T.tire.y) / pmax, 0, 1);
+        if (q >= 1) { T.mode = 'repos'; T.tire = { x: 0, y: 0 }; T.tension = 0; }
+      } else {
+        const e = easeInOut(q), c = coeur();
+        T.avale = e; T.tension = 1;
+        T.tire = { x: lerp(T.tire0.x, c.x - T.ancre.x, e), y: lerp(T.tire0.y, c.y - T.ancre.y, e) };
+        if (q >= .45 && !T.parti) { T.parti = true; entrer(T); }
+        if (q >= 1) T.mode = 'cache';
+      }
+      return true;
+    }
+    function placer(T, act, now, anime) {
+      const em = eveil === null ? 0 : anime ? smooth(0, 1, (now - eveil - 380 - T.i * 75) / 650) : 1;
+      let op = em, sc = 1;
+      if (T.mode === 'cache') op = 0;
+      else if (T.mode === 'aspire') { op *= 1 - smooth(.3, .85, T.avale); sc = 1 - .55 * T.avale; }
+      T.el.style.transform = `translate(${(T.bx + T.tire.x).toFixed(1)}px, ${(T.by + T.tire.y + (1 - em) * 12).toFixed(1)}px)${sc < 1 ? ` scale(${sc.toFixed(3)})` : ''}`;
+      T.el.style.opacity = op.toFixed(3);
+      T.el.classList.toggle('is-active', T === act);
+    }
+    function image(now, une) {
+      if (!une) raf = 0;
+      if (!affiche || (!une && (!visible || document.hidden))) return;
+      const dt = Math.min(50, tPrec ? now - tPrec : 16); tPrec = now;
+      const t = now / 1000, anime = motionOK();
+      let occupe = anime;   // vivante : elle bouge tant qu'on la voit
+      if (anime) { bob.x = Math.sin(t * .41) * 3; bob.y = Math.sin(t * .9) * 5; } else { bob.x = 0; bob.y = 0; }
+      for (const T of TIT) occupe = pasTitre(T, now) || occupe;
+      const act = actif();
       el.classList.toggle('has-active', !!act);
+      for (const a of BRAS) {
+        a.em = eveil === null ? 0 : anime ? easeOut(clamp((now - eveil - a.i * 90) / 1000, 0, 1)) : 1;
+        const voulu = act && act.bras === a ? act : null;
+        if (a.but !== voulu) { a.depuis = a.rel.length ? a.rel.map(p => p.slice()) : null; a.but = voulu; a.q = a.depuis ? 0 : 1; if (voulu) a.col = voulu.col; }
+        if (a.q < 1) { a.q = anime ? Math.min(1, a.q + dt / (a.but ? 440 : 380)) : 1; occupe = true; }
+        const tv = a.but ? 1 : 0;
+        if (Math.abs(a.teinte - tv) > .005) { a.teinte += (tv - a.teinte) * (anime ? .18 : 1); occupe = true; } else a.teinte = tv;
+        // curieuse : au repos, les bras se penchent vers le pointeur
+        let pv = 0;
+        if (pointeur && !a.but && anime) {
+          const p = sortie(a), dx = pointeur.x - (ox + p[0] * s), dy = pointeur.y - (oy + p[1] * s), d = Math.hypot(dx, dy);
+          if (d < 260) { let df = Math.atan2(dy, dx) - Math.atan2(a.A.exitdir[1], a.A.exitdir[0]); df = Math.atan2(Math.sin(df), Math.cos(df)); pv = clamp(df, -1.2, 1.2) * .7 * (1 - d / 260); }
+        }
+        a.penche += (pv - a.penche) * .08;
+        construire(a, t, anime);
+      }
+      // les bras, glissés sous le logo, puis le logo
       lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, lay.width, lay.height);
       lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      for (const t of T) if (t.mode !== 'hidden' && t !== act) drawT(lctx, t, act ? 0.32 : 1);
-      if (act && act.mode !== 'hidden') drawT(lctx, act, 1);
+      const ab = act && act.bras;
+      for (const a of BRAS) if (a !== ab) tracer(lctx, a, act ? .5 : 1);
+      if (ab) tracer(lctx, ab, 1);
       lctx.setTransform(1, 0, 0, 1, 0, 0);
-      lctx.globalCompositeOperation = 'destination-out'; lctx.drawImage(msk, 0, 0); lctx.globalCompositeOperation = 'source-over';
+      lctx.globalCompositeOperation = 'destination-out'; lctx.drawImage(msk, bob.x * dpr, bob.y * dpr); lctx.globalCompositeOperation = 'source-over';
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-      ctx.drawImage(lay, 0, 0);
-      ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
-      ctx.globalAlpha = logoAlpha; ctx.fillStyle = 'rgb(247,236,241)';
-      for (const p of paths) ctx.fill(p);
-      ctx.globalAlpha = 1;
-      for (const t of T) placeLabel(t, act);
+      ctx.drawImage(lay, 0, 0); ctx.drawImage(lg, bob.x * dpr, bob.y * dpr);
+      for (const T of TIT) placer(T, act, now, anime);
+      if (eveil !== null && now - eveil < 2400) occupe = true;
+      if (!une && (occupe || prise)) raf = requestAnimationFrame(image);
+      else if (une && (occupe || prise)) reveil();
     }
-    function placeLabel(t, act) {
-      const al = t.label.classList.contains('right');
-      const tx = t.target.x + t.pull.x + t.tdir.x * t.ulead, ty = t.target.y + t.pull.y;
-      const lx = clamp(al ? tx - t.lw : tx, 8, Math.max(8, W - t.lw - 8)), ly = clamp(ty - t.th - 3, 8, Math.max(8, H - t.lh - 8));
-      t.label.style.transform = `translate(${lx.toFixed(1)}px, ${ly.toFixed(1)}px)`;
-      t.label.style.opacity = (t.mode === 'hidden' || t.mode === 'suck' ? 0 : smooth(0.7, 1, t.grow)).toFixed(3);
-      t.label.classList.toggle('is-active', t === act);
-    }
-    function step(t, now) {
-      let busy = false;
-      const want = (t === hovered || t.focus || (grab && grab.t === t) || t.mode === 'auto' || t.mode === 'suck') ? 1 : 0;
-      if (Math.abs(t.hover - want) > 0.004) { t.hover += (want - t.hover) * (motionOK() ? 0.22 : 1); busy = true; } else t.hover = want;
-      const curlTo = 1 + 0.12 * t.hover;
-      if (Math.abs(t.curl - curlTo) > 0.002) { t.curl += (curlTo - t.curl) * 0.22; busy = true; } else t.curl = curlTo;
-      const q = clamp((now - t.t0) / (t.mode === 'auto' ? 420 : t.mode === 'spring' ? 560 : t.mode === 'suck' ? 520 : 820), 0, 1);
-      if (t.mode === 'auto') {
-        const e = easeOut(q); t.pull = { x: t.pull0.x * e, y: t.pull0.y * e }; t.tension = clamp(Math.hypot(t.pull.x, t.pull.y) / pmax, 0, 1);
-        if (q >= 1) suck(t, now); busy = true;
-      } else if (t.mode === 'spring') {
-        const c1 = 1.70158, c3 = c1 + 1, e = 1 + c3 * Math.pow(q - 1, 3) + c1 * Math.pow(q - 1, 2);
-        t.pull = { x: t.pull0.x * (1 - e), y: t.pull0.y * (1 - e) }; t.tension = clamp(Math.hypot(t.pull.x, t.pull.y) / pmax, 0, 1);
-        if (q >= 1) { t.mode = 'idle'; t.pull = { x: 0, y: 0 }; t.tension = 0; } busy = true;
-      } else if (t.mode === 'suck') {
-        t.tension = 1; t.grow = 1 - easeInOut(q);
-        if (q >= 0.5 && !t.fired) { t.fired = true; enter(t); }
-        if (q >= 1) { t.mode = 'hidden'; t.pull = { x: 0, y: 0 }; } busy = true;
-      } else if (t.mode === 'grow') {
-        t.grow = easeOut(q); t.tension = 1 - q;
-        if (q >= 1) { t.mode = 'idle'; t.grow = 1; t.tension = 0; } busy = true;
-      }
-      return busy;
-    }
-    function frame(now) {
-      raf = 0;
-      if (!visible) return;
-      let busy = false;
-      if (introOn) {
-        const e = now - introT0;
-        logoAlpha = smooth(0, 500, e);
-        T.forEach(t => { t.grow = easeInOut(clamp((e - 420 - INTRO.indexOf(t.arm) * 70) / 1000, 0, 1)); });
-        if (e > 420 + 7 * 70 + 1000) { introOn = false; logoAlpha = 1; T.forEach(t => { t.grow = 1; }); }
-        busy = true;
-      }
-      for (const t of T) busy = step(t, now) || busy;
-      T.forEach(buildPath);
-      render();
-      if (busy || grab) raf = requestAnimationFrame(frame);
-    }
-    const wake = () => { if (!raf && visible) raf = requestAnimationFrame(frame); };
+    const reveil = () => { if (!raf && visible && affiche && !document.hidden) raf = requestAnimationFrame(image); };
 
-    /* ---------- tirer un bras ---------- */
+    /* ---------- tirer un titre ---------- */
     const local = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-    function hit(x, y) {
-      let best = null, bd = 18 * 18;
-      for (const t of T) {
-        if (t.mode !== 'idle') continue;
-        for (let k = 0; k < t.P.length; k++) { if (t.cum[k] < t.sExit) continue; const d = (t.P[k][0] - x) ** 2 + (t.P[k][1] - y) ** 2; if (d < bd) { bd = d; best = t; } }
-      }
-      return best;
+    function aspirer(T, now) { T.mode = 'aspire'; T.t0 = now; T.tire0 = { ...T.tire }; T.parti = false; verrou = true; }
+    function entrer(T) { const r = el.getBoundingClientRect(), c = coeur(); Ink.cover(r.left + c.x, r.top + c.y, () => { location.hash = '#/spectacle/' + T.show.slug; }, [T.show.couleur, T.show.fondSombre]); }
+    function activer(T) {
+      if (verrou || T.mode !== 'repos') return;
+      if (!motionOK()) { location.hash = '#/spectacle/' + T.show.slug; return; }
+      // un clic tire le titre pour vous : il s'éloigne, puis la pieuvre l'avale
+      verrou = true; survol = T;
+      const c = coeur(), dx = T.ancre.x - c.x, dy = T.ancre.y - c.y, dl = Math.hypot(dx, dy) || 1;
+      T.mode = 'auto'; T.t0 = performance.now(); T.tire0 = { x: dx / dl * pmax, y: dy / dl * pmax * .55 };
+      reveil();
     }
-    function startGrab(t, e, target) {
-      if (!t || t.mode !== 'idle' || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    function saisir(T, e) {
+      if (verrou || T.mode !== 'repos' || e.button > 0 || e.pointerType === 'touch' || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
       const p = local(e);
-      grab = { t, id: e.pointerId, x0: p.x, y0: p.y, moved: 0 };
-      try { target.setPointerCapture(e.pointerId); } catch (err) { /* capture indisponible */ }
-      el.classList.add('is-grabbing'); lastPointerAct = performance.now(); wake();
+      prise = { T, id: e.pointerId, x0: p.x, y0: p.y, bouge: 0 };
+      try { T.el.setPointerCapture(e.pointerId); } catch (err) { /* capture indisponible */ }
+      el.classList.add('is-grabbing'); dernier = performance.now(); reveil();
     }
-    function moveGrab(e) {
+    function bouger(e) {
       const p = local(e);
-      if (grab && e.pointerId === grab.id) {
-        const t = grab.t, vx = p.x - grab.x0, vy = p.y - grab.y0, len = Math.hypot(vx, vy);
-        grab.moved = Math.max(grab.moved, len);
-        const R = pmax * 1.3, lr = R * (1 - Math.exp(-len / R)), f = len ? lr / len : 0;
-        t.pull = { x: vx * f, y: vy * f }; t.tension = clamp(lr / pmax, 0, 1);
-        wake(); return;
+      if (prise && e.pointerId === prise.id) {
+        const T = prise.T, vx = p.x - prise.x0, vy = p.y - prise.y0, len = Math.hypot(vx, vy);
+        prise.bouge = Math.max(prise.bouge, len);
+        const Rr = pmax * 1.3, lr = Rr * (1 - Math.exp(-len / Rr)), f = len ? lr / len : 0;
+        T.tire = { x: vx * f, y: vy * f }; T.tension = clamp(lr / pmax, 0, 1);
+        reveil(); return;
       }
-      if (e.pointerType === 'mouse') {
-        const h = hit(p.x, p.y);
-        if (h !== hovered && !(hovered && hovered.labelHover)) { hovered = h; el.classList.toggle('over-tentacle', !!h); wake(); }
-      }
+      if (e.pointerType === 'mouse') { pointeur = p; reveil(); }
     }
-    function endGrab(e) {
-      if (!grab || e.pointerId !== grab.id) return;
-      const t = grab.t, moved = grab.moved;
-      grab = null; el.classList.remove('is-grabbing'); lastPointerAct = performance.now();
-      if (moved < 6) activate(t);
-      else if (t.tension >= 0.85) suck(t, performance.now());
-      else { t.mode = 'spring'; t.t0 = performance.now(); t.pull0 = { ...t.pull }; }
-      wake();
+    function lacher(e) {
+      if (!prise || e.pointerId !== prise.id) return;
+      const T = prise.T, b = prise.bouge;
+      prise = null; el.classList.remove('is-grabbing'); dernier = performance.now();
+      if (b < 6) activer(T);
+      else if (T.tension >= .85) aspirer(T, performance.now());
+      else { T.mode = 'ressort'; T.t0 = performance.now(); T.tire0 = { ...T.tire }; }
+      reveil();
     }
-    function activate(t) {
-      if (!t || t.mode !== 'idle') return;
-      if (!motionOK()) { location.hash = '#/spectacle/' + t.slug; return; }
-      // un clic tire le bras pour vous : le titre s'éloigne, puis la pieuvre l'avale
-      const cx = ox + (BOX[0] + BOX[2]) / 2 * s, cy = oy + (BOX[1] + BOX[3]) / 2 * s;
-      const lx = t.target.x + t.tdir.x * (t.U / 2 + t.ulead), ly = t.target.y;
-      const dx = lx - cx, dy = ly - cy, dl = Math.hypot(dx, dy) || 1;
-      t.mode = 'auto'; t.t0 = performance.now(); t.pull0 = { x: dx / dl * pmax * 1.05, y: dy / dl * pmax * 1.05 };
-      wake();
-    }
-    function suck(t, now) { t.mode = 'suck'; t.t0 = now; t.fired = false; wake(); }
-    function center() { const r = el.getBoundingClientRect(); return { x: r.left + ox + (BOX[0] + BOX[2]) / 2 * s, y: r.top + oy + (BOX[1] + BOX[3]) / 2 * s }; }
-    function enter(t) { const c = center(); Ink.cover(c.x, c.y, () => { location.hash = '#/spectacle/' + t.slug; }, [t.show.couleur, t.show.fondSombre]); }
-    function returnAll(instant) {
-      const now = performance.now();
-      T.forEach(t => {
-        if (t.mode !== 'idle') { t.mode = instant ? 'idle' : 'grow'; t.t0 = now; t.grow = instant ? 1 : 0; t.fired = false; t.pull = { x: 0, y: 0 }; t.tension = 0; }
-        t.focus = false; t.labelHover = false;
-      });
-      hovered = null; grab = null; el.classList.remove('is-grabbing', 'over-tentacle');
-      layout(); wake();
-    }
-
-    cv.addEventListener('pointerdown', e => { const p = local(e); startGrab(hit(p.x, p.y), e, cv); });
-    el.addEventListener('pointermove', moveGrab);
-    el.addEventListener('pointerleave', () => { if (hovered && !hovered.labelHover) { hovered = null; el.classList.remove('over-tentacle'); wake(); } });
-    addEventListener('pointerup', endGrab);
-    addEventListener('pointercancel', e => { if (grab && e.pointerId === grab.id) { const t = grab.t; grab = null; el.classList.remove('is-grabbing'); t.mode = 'spring'; t.t0 = performance.now(); t.pull0 = { ...t.pull }; wake(); } });
-    T.forEach(t => {
-      const b = t.label;
-      b.addEventListener('pointerdown', e => startGrab(t, e, b));
-      b.addEventListener('click', e => {
-        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-        e.preventDefault();
-        if (performance.now() - lastPointerAct > 450) activate(t);
-      });
-      b.addEventListener('mouseenter', () => { t.labelHover = true; hovered = t; wake(); });
-      b.addEventListener('mouseleave', () => { t.labelHover = false; if (hovered === t) hovered = null; wake(); });
-      b.addEventListener('focus', () => { t.focus = true; wake(); });
-      b.addEventListener('blur', () => { t.focus = false; wake(); });
+    el.addEventListener('pointermove', bouger);
+    el.addEventListener('pointerleave', () => { pointeur = null; });
+    addEventListener('pointerup', lacher);
+    addEventListener('pointercancel', e => { if (prise && e.pointerId === prise.id) { const T = prise.T; prise = null; el.classList.remove('is-grabbing'); T.mode = 'ressort'; T.t0 = performance.now(); T.tire0 = { ...T.tire }; reveil(); } });
+    TIT.forEach((T, i) => {
+      const b = T.el;
+      b.addEventListener('pointerdown', e => saisir(T, e));
+      b.addEventListener('click', e => { if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return; e.preventDefault(); if (performance.now() - dernier > 450) activer(T); });
+      b.addEventListener('mouseenter', () => { if (!verrou) { survol = T; reveil(); } });
+      b.addEventListener('mouseleave', () => { if (survol === T && !verrou) { survol = null; reveil(); } });
+      b.addEventListener('focus', () => { T.focus = true; reveil(); });
+      b.addEventListener('blur', () => { T.focus = false; reveil(); });
       b.addEventListener('keydown', e => {
-        const k = e.key, dir = k === 'ArrowRight' || k === 'ArrowDown' ? 1 : k === 'ArrowLeft' || k === 'ArrowUp' ? -1 : 0;
-        if (dir) { e.preventDefault(); const j = order.indexOf(t); order[(j + dir + order.length) % order.length].label.focus(); }
+        const k = e.key, d = k === 'ArrowRight' || k === 'ArrowDown' ? 1 : k === 'ArrowLeft' || k === 'ArrowUp' ? -1 : 0;
+        if (d) { e.preventDefault(); TIT[(i + d + TIT.length) % TIT.length].el.focus(); }
       });
     });
-    new ResizeObserver(() => layout()).observe(el);
-    new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) wake(); }, { threshold: 0.01 }).observe(el);
-    document.addEventListener('visibilitychange', () => { visible = !document.hidden; if (visible) wake(); });
-    function start() {
-      layout();
-      if (motionOK() && scrollY < 40) { introOn = true; introT0 = performance.now(); logoAlpha = 0; T.forEach(t => { t.grow = 0; }); render(); wake(); }
-    }
-    if (document.fonts) document.fonts.ready.then(() => layout());
-    return { start, layout, returnAll, center };
-  })();
-
-  /* ---------- les dates : un jour, plusieurs jours ou un mois seul ---------- */
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const pluriel = (n, un, plus) => `${n} ${n > 1 ? plus : un}`;
-  const quand = d => d.precision === 'month' ? cap(d.moisLong) : (d.fin !== d.iso ? d.label.replace(/\s\d{4}$/, '').replace(d.moisLong, d.mois) : `${d.joursem} ${d.jour === 1 ? '1er' : d.jour} ${d.mois}`);
-  // un « lieu » qui est une heure ou une note n'est pas un lieu
-  const lieu = d => {
-    const v = (d.lieu || '').trim(), ou = `${esc(d.commune)} (${esc(d.dep)})`;
-    if (/^\d{1,2}\s*h\s*\d{0,2}$/i.test(v)) return `${ou}, à ${esc(v.replace(/\s+/g, ''))}`;
-    if (/^diptyque$/i.test(v)) return `${ou}, en diptyque`;
-    return `${v ? esc(v) + ', ' : ''}${ou}`;
-  };
-  const ligneDate = d => `<li style="--c:${bySlug[d.slug].couleurTexteClair}"><time datetime="${d.precision === 'month' ? d.iso.slice(0, 7) : d.iso}">${esc(quand(d))}<small>${d.precision === 'month' ? `${d.annee}, jour à préciser` : d.annee}</small></time>
-    <a href="#/spectacle/${d.slug}">${titre(d.titre)}</a><span class="ou">${lieu(d)}</span><span class="pub">${esc(d.public)}</span></li>`;
-
-  /* ---------- l'accueil, sous la scène : les trois portes ---------- */
-  function accueil() {
-    const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
-    const porte = (p, corps) => `<div class="porte" style="--dc:${p.couleurVive};--dct:${p.couleur}"><h3>${esc(p.titre)}</h3><p>${esc(p.texte)}</p><div class="bas">${corps}</div></div>`;
-    $('#portes-liste').innerHTML =
-      porte(voir, `<ul>${D.dates.slice(0, 3).map(d => `<li><a href="#/spectacle/${d.slug}/voir"><span>${titre(d.titre)}</span><small>${esc(d.jour + ' ' + d.mois)}, ${esc(d.commune)}</small></a></li>`).join('')}</ul><a class="suite" href="#/agenda">Tout l’agenda (${D.dates.length} dates) →</a>`) +
-      porte(prog, `<ul><li><a href="#/spectacles"><span>Le répertoire</span><small>${D.shows.length - 1} spectacles</small></a></li>
-        <li><a href="#/spectacle/${D.shows[0].slug}/programmer"><span>Fiches techniques</span><small>par spectacle</small></a></li>
-        <li><a href="mailto:${C.email}?subject=Programmation"><span>Écrire à la diffusion</span><small>${esc(C.email)}</small></a></li></ul>`) +
-      porte(etab, `<ul>${chez.map(s => `<li><a href="#/spectacle/${s.slug}/etablissement"><span>${titre(s.titre)}</span><small>${s.passCulture ? 'Pass Culture' : 'sur mesure'}</small></a></li>`).join('')}</ul>
-        <p>${D.shows.filter(s => s.passCulture).length} spectacles sont proposés sur le Pass Culture (offre collective).</p>`);
-    $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
-      <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
-  }
-
-  /* ---------- les onglets : une page chacun ---------- */
-  const tete = (h, intro) => `<div class="page-tete"><div class="wrap"><h1 tabindex="-1"><span>${h}</span></h1><p>${intro}</p></div></div>`;
-  function pages() {
-    const nSp = D.shows.filter(s => s.annee).length, ac = D.shows.find(s => !s.annee);
-    // les spectacles : la pieuvre de l'accueil, en liste
-    $('#v-spectacles').innerHTML = tete('Les spectacles', `${nSp} spectacles mis en scène par ${esc(C.miseEnScene)}, et des actions culturelles. Ils se jouent en salle et, pour plusieurs, dans les collèges et les lycées.`) +
-      `<section class="bloc" aria-label="Le répertoire"><div class="wrap"><ul class="repertoire">${D.shows.map(s => {
-        const p = s.prochaine;
-        const q = p ? `<small>Prochaine date</small><b>${esc(p.label)}</b><span>${esc(p.commune)} (${esc(p.dep)})${p.public === 'Scolaire' ? ', scolaire' : ''}</span><span class="n">${pluriel(s.nbDates, 'date', 'dates')} cette saison</span>`
-          : s.annee ? '<small>Prochaine date</small><span>Aucune date annoncée pour l’instant</span>' : '<small>Calendrier</small><span>Sur projet, avec chaque établissement</span>';
-        return `<li><a href="#/spectacle/${s.slug}" style="--c:${s.couleurTexteClair}"><div class="rp-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></div>
-          <div class="rp-texte"><h2>${titre(s.titre)}</h2><p>${esc(s.sousTitre)}</p></div><p class="rp-quand">${q}</p></a></li>`;
-      }).join('')}</ul></div></section>`;
-    // l'agenda : toute la saison, mois par mois
-    const mois = new Map();
-    D.dates.forEach(d => { const k = d.iso.slice(0, 7); if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
-    const nSco = D.dates.filter(d => d.public === 'Scolaire').length, nCom = new Set(D.dates.map(d => d.commune + d.dep)).size;
-    $('#v-agenda').innerHTML = tete('L’agenda', `Saison ${esc(D.saison)} : ${D.dates.length} dates dans ${nCom} communes, dont ${nSco} scolaires. Pour réserver, adressez-vous au lieu qui accueille le spectacle.`) +
-      `<section class="bloc" aria-label="Les dates, mois par mois"><div class="wrap">${[...mois.values()].map(ds => `<div class="mois-groupe"><h2>${cap(ds[0].moisLong)} <small>${ds[0].annee} · ${pluriel(ds.length, 'date', 'dates')}</small></h2><ul class="dates">${ds.map(ligneDate).join('')}</ul></div>`).join('')}</div></section>`;
-    // la compagnie : présentation, chiffres, artistes au plateau, partenaires
-    const troupe = new Map();
-    D.shows.forEach(s => s.distribution.forEach(x => x.split(/\s+ou\s+/).forEach(n => { n = n.trim(); if (!troupe.has(n)) troupe.set(n, []); if (!troupe.get(n).includes(s)) troupe.get(n).push(s); })));
-    const nom = n => n.split(' ').slice(1).join(' ') || n;
-    $('#v-compagnie').innerHTML = tete('La compagnie', esc(C.intention)) + `
-      <section class="bloc" aria-labelledby="h-co"><div class="wrap"><h2 id="h-co" class="sr">Présentation</h2>
-        <div class="compagnie"><div><p class="grand">${esc(C.presentation)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
-          <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl></div>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-ar"><div class="wrap">
-        <div class="entete"><h2 id="h-ar">Au plateau</h2><a href="#/spectacles">Les spectacles →</a></div>
-        <p class="chapo">Les comédiennes et les comédiens du répertoire, avec leurs spectacles.</p>
-        <ul class="artistes">${[...troupe.entries()].sort((a, b) => nom(a[0]).localeCompare(nom(b[0]), 'fr') || a[0].localeCompare(b[0], 'fr')).map(([n, ss]) => `<li><b>${esc(n)}</b><span>${ss.map(s => titre(s.titre)).join(', ')}</span></li>`).join('')}</ul>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-pa"><div class="wrap">
-        <div class="entete"><h2 id="h-pa">Partenaires</h2></div>
-        <ul class="partenaires">${C.partenaires.map(p => `<li>${esc(p)}</li>`).join('')}</ul>
-      </div></section>`;
-    // contact : la compagnie, puis un interlocuteur par porte
-    const vers = { voir: ['#/agenda', 'L’agenda de la saison'], programmer: ['#/spectacles', 'Le répertoire'], etablissement: [`#/spectacle/${ac.slug}`, 'Les actions culturelles'] };
-    $('#v-contact').innerHTML = tete('Contact', 'Une date, une programmation, un projet avec votre établissement : écrivez-nous.') + `
-      <section class="bloc" aria-labelledby="h-ad"><div class="wrap coord"><h2 id="h-ad" class="sr">Coordonnées</h2>
-        <div><p class="etiquette">Écrire</p><a class="mail" href="mailto:${C.email}">${esc(C.email)}</a></div>
-        <div><p class="etiquette">Adresse</p><address><strong>${esc(C.nom)}</strong><br>${esc(C.adresse)}</address></div>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-de"><div class="wrap">
-        <div class="entete"><h2 id="h-de">Selon votre demande</h2></div>
-        <div class="portes">${D.doors.map(p => `<div class="porte" style="--dc:${p.couleurVive};--dct:${p.couleur}"><h3>${esc(p.titre)}</h3><p>${esc(p.texte)}</p><div class="bas"><ul>
-          <li class="ligne"><span>Interlocuteur</span><span class="afournir">à fournir</span></li><li class="ligne"><span>Téléphone</span><span class="afournir">à fournir</span></li>
-          <li><a href="mailto:${C.email}?subject=${encodeURIComponent(p.titre)}"><span>Écrire</span><small>${esc(C.email)}</small></a></li></ul>
-          ${vers[p.key] ? `<a class="suite" href="${vers[p.key][0]}">${vers[p.key][1]} →</a>` : ''}</div></div>`).join('')}</div>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-le"><div class="wrap">
-        <div class="entete"><h2 id="h-le">La lettre de la compagnie</h2></div>
-        <p>Pour recevoir les nouvelles dates : inscription <span class="afournir">à fournir</span>.</p>
-      </div></section>`;
-  }
-
-  /* ---------- la page d'un spectacle ---------- */
-  const Show = (() => {
-    const view = $('#v-spectacle');
-    let current = null, secs = [], sraf = 0;
-    const SIG = {
-      jumeaux: (s, g) => `<div class="sig sig-jumeaux"><div class="twin l"><img src="${D.photos[s.slug]}" alt=""></div><div class="twin r"><img src="${D.photos[s.slug]}" alt=""></div>
-        <svg class="crown" viewBox="0 0 120 70" aria-hidden="true"><path pathLength="1" d="M8 62 L14 18 L38 42 L60 8 L82 42 L106 18 L112 62 Z M8 62 H112"/></svg>
-        <p class="sig-q">${esc(g.question)}</p><blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite></blockquote></div>`,
-      nez: (s, g) => `<div class="sig sig-nez"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>
-        <blockquote class="nez-lines"><p>${g.vers.map((v, i) => `<span style="--i:${i}">${esc(v)}</span>`).join(' ')}</p><cite>${esc(g.source)}</cite></blockquote></div>`,
-      cercle: (s, g) => `<div class="sig sig-cercle"><div class="ring-photo"><img src="${D.photos[s.slug]}" alt=""></div>
-        <svg class="ring" viewBox="0 0 400 400" aria-hidden="true"><defs><path id="ring-a" d="M200 200m-178 0a178 178 0 1 1 356 0a178 178 0 1 1-356 0"/><path id="ring-b" d="M200 200m-146 0a146 146 0 1 1 292 0a146 146 0 1 1-292 0"/></defs>
-          <circle class="ring-line" cx="200" cy="200" r="194" pathLength="1"/><g class="ring-rot"><text><textPath href="#ring-a">${esc(g.vers)} · </textPath></text></g>
-          <g class="ring-rot2"><text class="latin"><textPath href="#ring-b">${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · </textPath></text></g></svg>
-        <blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite><p class="sig-latin"><i lang="la">${esc(g.latin)}</i> : ${esc(g.latin_sens)}</p></blockquote></div>`,
-      paperboard: (s, g) => `<div class="sig sig-board"><ol class="sheets">${g.feuilles.map((f, i) => `<li class="sheet" style="--i:${i};--z:${g.feuilles.length - i}"${i ? ' aria-hidden="true"' : ''}>
-        <span class="l1" lang="${i === 1 ? 'fr' : 'en'}">${esc(f[0])}</span><span class="l2" lang="${i === 1 ? 'fr' : 'en'}">${esc(f[1])}</span><span class="src">${esc(f[2])}</span></li>`).join('')}</ol>
-        <p class="sig-note">Shakespeare condensé, commenté, et parfois traduit au feutre.</p></div>`,
-      annotations: (s, g) => { let n = 0; const html = esc(g.texte).replace(/\[([^\]]+)\]/g, (m, w) => { const i = n++; return `<span class="ann" style="--i:${i}">${w}<span class="ann-note" aria-hidden="true">${esc(g.notes[i])}</span></span>`; });
-        return `<div class="sig sig-ann"><blockquote class="ann-text"><p>${html}</p><cite>${esc(g.source)}</cite></blockquote><p class="ann-marge">${esc(g.marge)}</p>
-          <p class="sr">Notes : ${(g.texte.match(/\[([^\]]+)\]/g) || []).map((w, i) => `${esc(w.slice(1, -1))} veut dire ${esc(g.notes[i])}`).join(' ; ')}.</p></div>`; },
-      horloge: (s, g) => {
-        const ticks = Array.from({ length: 60 }, (_, i) => `<line x1="100" y1="${i % 5 ? 12 : 8}" x2="100" y2="${i % 5 ? 16 : 22}" transform="rotate(${i * 6} 100 100)"/>`).join('');
-        const nums = Array.from({ length: 12 }, (_, i) => { const a = (i + 1) * Math.PI / 6; return `<text x="${(100 + Math.sin(a) * 66).toFixed(1)}" y="${(100 - Math.cos(a) * 66 + 5).toFixed(1)}">${i + 1}</text>`; }).join('');
-        return `<div class="sig sig-clock"><p class="stamp" aria-hidden="true">Grève</p><svg class="clock" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><g class="ticks">${ticks}</g><g class="nums">${nums}</g>
-          <line class="hand-h" x1="100" y1="100" x2="100" y2="54"/><line class="hand-m" x1="100" y1="100" x2="100" y2="30"/><circle class="pin" cx="100" cy="100" r="4"/></svg>
-          <ol class="steps">${g.etapes.map((e, i) => `<li><b>${esc(g.heures[i])}</b><span>${esc(e)}</span></li>`).join('')}</ol></div>`;
-      },
-      fil: (s, g) => `<div class="sig sig-fil"><svg class="thread" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M-20 120 C 260 40, 420 260, 300 420 S 120 760, 420 780 S 860 560, 760 340 S 520 120, 700 60 S 1000 200, 1040 520"/></svg>
-        <blockquote class="fil-vers"><p lang="en">${esc(g.vers)}</p><cite>${esc(g.source)}</cite></blockquote>
-        <dl class="fil-num">${g.chiffres.map(([a, b], i) => `<div style="--i:${i}"><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl></div>`,
-      heures: (s, g) => `<div class="sig sig-heures"><svg class="gauge" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="88" class="g0"/><circle cx="100" cy="100" r="88" class="g1" pathLength="1"/></svg>
-        <p class="big"><span class="count" data-n="${g.nombre}">${g.nombre}</span><span class="unit">${esc(g.unite)}</span><span class="per">${esc(g.periode)}</span></p>
-        <ul class="mots">${g.mots.map((m, i) => `<li style="--i:${i}">${esc(m)}</li>`).join('')}</ul></div>`,
-    };
-    const FX = {
-      horloge(sec, p) {
-        const h = $('.hand-h', sec), m = $('.hand-m', sec);
-        if (h) { h.setAttribute('transform', `rotate(${240 + p * 300} 100 100)`); m.setAttribute('transform', `rotate(${p * 3600} 100 100)`); }
-        const k = Math.min(4, Math.floor(p * 5.2));
-        $$('.steps li', sec).forEach((li, i) => li.classList.toggle('on', !motionOK() || (i <= k && p > 0.02)));
-      },
-      heures(sec, p) { const c = $('.count', sec); if (c) c.textContent = Math.round(Number(c.dataset.n) * easeOut(clamp(p * 1.25, 0, 1))); },
-    };
-    const docs = labels => `<ul class="docs">${labels.map(l => `<li><span>${esc(l)}</span><span class="afournir">à fournir</span></li>`).join('')}</ul>`;
-    const MODE = { etablissement: 'Peut venir dans votre établissement', salle: 'Se joue en salle : venez avec vos classes', a_confirmer: 'Accueil dans l’établissement à confirmer' };
-    function render(s, porte) {
-      current = s.slug;
-      const pal = s.palette, i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
-      const dates = D.dates.filter(d => d.slug === s.slug), n = s.distribution.length;
-      const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null, s.representations ? ['Représentations', `${s.representations.n}, ${s.representations.quand}`] : null].filter(Boolean);
-      const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
-      const [voir, prog, etab] = D.doors;
-      const choix = ['voir', 'programmer', 'etablissement'].includes(porte) ? porte : 'voir';
-      document.title = `${s.titre} · Compagnie Crescite`;
-      view.innerHTML = `<article class="show" aria-labelledby="titre-sp" style="--bg:${s.fondSombre};--bg2:${pal.fond2};--fg:${pal.texte};--fg2:${pal.texte2};--ac:${pal.accent};--ac2:${pal.accent2};--sc:${s.couleur};--act:${s.couleurTexteClair}">
-        <section class="sx sx-hero" data-scrolly><div class="sx-pin">
-          <div class="hero-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%"></div>
-          <div class="hero-text"><p class="fil-ariane"><a href="#/">Accueil</a> / <a href="#/spectacles">Spectacles</a></p>
-            <h1 id="titre-sp" tabindex="-1">${titre(s.titre)}</h1><p class="hero-sub">${esc(s.sousTitre)}</p>
-            <p class="hero-next">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})` : 'Aucune date annoncée pour l’instant.'}</p></div>
-          ${s.credit ? `<p class="hero-credit">${esc(s.credit)}</p>` : ''}<p class="cue" aria-hidden="true">Faites défiler</p></div></section>
-        <section class="sx sx-sig" data-scrolly data-fx="${s.motif}" aria-label="Extrait"><div class="sx-pin">${SIG[s.motif](s, s.signature)}</div></section>
-        <section class="bloc"><div class="wrap corps">
-          <div><h2 class="sr">Le spectacle</h2><p class="accroche">${esc(s.accroche)}</p><p>${esc(s.texte)}</p>${s.video ? `<p><a class="bouton" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div>
-          <dl class="faits">${[...fiche, ...s.equipe.slice(0, 6)].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-        </div></section>
-        <section class="bloc" aria-labelledby="h-dates"><div class="wrap">
-          <div class="entete"><h2 id="h-dates">${dates.length ? `${dates.length} date${dates.length > 1 ? 's' : ''} à venir` : 'Les dates'}</h2></div>
-          ${dates.length ? `<ul class="dates">${dates.map(ligneDate).join('')}</ul>` : '<p>Aucune date annoncée pour l’instant.</p>'}
-        </div></section>
-        <section class="bloc" id="portes-sp" aria-labelledby="h-vous"><div class="wrap">
-          <div class="entete"><h2 id="h-vous">Vous êtes…</h2></div>
-          <div class="onglets" role="tablist" aria-label="Vous êtes">${D.doors.map(p => `<button role="tab" id="o-${p.key}" aria-controls="p-${p.key}" aria-selected="${p.key === choix}" tabindex="${p.key === choix ? 0 : -1}" style="--dc:${p.couleur}">${esc(p.titre)}</button>`).join('')}</div>
-          <div class="panneau" role="tabpanel" id="p-voir" aria-labelledby="o-voir" tabindex="0"${choix === 'voir' ? '' : ' hidden'}>
-            <div><h3>En pratique</h3><dl class="faits">${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}<dt>Âge conseillé</dt><dd><span class="afournir">à fournir</span></dd><dt>Réserver</dt><dd>auprès du lieu de chaque date</dd></dl></div>
-            <div><h3>Les dates</h3><p>${dates.length ? `${dates.length} date${dates.length > 1 ? 's' : ''} cette saison, listée${dates.length > 1 ? 's' : ''} plus haut. La prochaine : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)}.` : 'Aucune date annoncée pour l’instant.'}</p>
-              <p><a href="mailto:${C.email}?subject=${encodeURIComponent('Être prévenu des dates de ' + s.titre)}">Être prévenu des prochaines dates</a></p></div></div>
-          <div class="panneau" role="tabpanel" id="p-programmer" aria-labelledby="o-programmer" tabindex="0"${choix === 'programmer' ? '' : ' hidden'}>
-            <div><h3>La fiche</h3><dl class="faits">${[...fiche, ...s.equipe].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-              ${s.coproduction ? `<h3>Coproduction</h3><p>${esc(s.coproduction)}</p>` : ''}${s.soutiens ? `<h3>Soutiens</h3><p>${esc(s.soutiens)}</p>` : ''}</div>
-            <div><h3>Documents</h3>${docs(['Dossier de diffusion', 'Fiche technique', 'Conditions financières', 'Photos haute définition'])}
-              <h3>Contact diffusion</h3><p>Nom et téléphone <span class="afournir">à fournir</span> · <a href="mailto:${C.email}?subject=${encodeURIComponent('Programmation : ' + s.titre)}">${esc(C.email)}</a></p></div></div>
-          <div class="panneau" role="tabpanel" id="p-etablissement" aria-labelledby="o-etablissement" tabindex="0"${choix === 'etablissement' ? '' : ' hidden'}>
-            <div><p class="badge" style="--dc:${etab.couleur}">${esc(MODE[e.mode] || MODE.a_confirmer)}</p><p>${esc(e.texte)}</p>${s.noteScolaire ? `<p>${esc(s.noteScolaire)}</p>` : ''}
-              <dl class="faits"><dt>Pass Culture</dt><dd>${s.passCulture ? 'offre collective, sur ADAGE' : 'non référencé'}</dd><dt>Guide du CRED76</dt><dd>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">fiche du spectacle</a>` : 'non référencé'}</dd></dl></div>
-            <div><h3>Ressources</h3>${docs(['Dossier pédagogique', 'Pistes d’ateliers', 'Besoins techniques en établissement'])}
-              <p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Faire venir ' + s.titre + ' dans mon établissement')}">Construire un projet avec la compagnie</a></p></div></div>
-        </div></section>
-        <a class="suivant" href="#/spectacle/${nx.slug}" style="--n-bg:${nx.fondSombre};--n-sc:${nx.couleur}"><span class="wrap"><small>Spectacle suivant</small><b>${titre(nx.titre)}</b></span></a>
-      </article>`;
-      const tabs = $$('[role="tab"]', view);
-      const sel = t => tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; });
-      tabs.forEach((t, k) => {
-        t.addEventListener('click', () => sel(t));
-        t.addEventListener('keydown', ev => { const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (d) { const n2 = tabs[(k + d + tabs.length) % tabs.length]; n2.focus(); sel(n2); } });
-      });
-      secs = $$('[data-scrolly]', view);
-      update();
-    }
-    function update() {
+    // au téléphone, le titre qui passe au milieu de l'écran attire le bras le plus proche
+    function suivre() {
       sraf = 0;
-      const vh = innerHeight;
-      for (const sec of secs) {
-        const r = sec.getBoundingClientRect(), span = r.height - vh;
-        const p = !motionOK() ? 1 : span > 40 ? clamp((-r.top + 64) / span, 0, 1) : 1;
-        sec.style.setProperty('--p', p.toFixed(4));
-        const fx = sec.dataset.fx; if (fx && FX[fx]) FX[fx](sec, p);
-      }
+      if (!mobile || !affiche || verrou) return;
+      const r = el.getBoundingClientRect(), mid = innerHeight * .52;
+      let best = null, bd = 110;
+      for (const T of TIT) { const d = Math.abs(r.top + T.by + T.th / 2 - mid); if (d < bd) { bd = d; best = T; } }
+      if (best !== survol) { survol = best; reveil(); }
     }
-    addEventListener('scroll', () => { if (!view.hidden && !sraf) sraf = requestAnimationFrame(update); }, { passive: true });
-    addEventListener('resize', () => { if (!view.hidden) update(); });
-    return { render, current: () => current };
+    addEventListener('scroll', () => { if (mobile && affiche && !sraf) sraf = requestAnimationFrame(suivre); }, { passive: true });
+    new ResizeObserver(() => { if (affiche) mise(); }).observe(el);
+    new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; if (visible) { tPrec = 0; reveil(); } }, { threshold: .01 }).observe(el);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { tPrec = 0; reveil(); } });
+    if (document.fonts) document.fonts.ready.then(() => { if (affiche) mise(); });
+
+    function eveiller() { if (eveil === null) { eveil = performance.now(); tPrec = 0; reveil(); } }
+    function montrer(oui) {
+      affiche = oui;
+      if (!oui) { cancelAnimationFrame(raf); raf = 0; return; }
+      // de retour sur l'accueil : chaque titre reprend sa place, chaque bras sa souche
+      TIT.forEach(T => { T.mode = 'repos'; T.tire = { x: 0, y: 0 }; T.tension = 0; T.parti = false; T.avale = 0; T.focus = false; });
+      BRAS.forEach(a => { a.but = null; a.depuis = null; a.q = 1; a.teinte = 0; });
+      survol = null; prise = null; verrou = false; el.classList.remove('is-grabbing', 'has-active');
+      if (eveil === null && !(typeof INTRO !== 'undefined' && INTRO.ouverte())) eveil = performance.now() - (motionOK() ? 0 : 5000);
+      mise(); reveil();
+    }
+    return { montrer, eveiller, coeurEcran: () => { const r = el.getBoundingClientRect(), c = coeur(); return { x: r.left + c.x, y: r.top + c.y }; } };
   })();
 
-  /* ---------- navigation : une page par onglet ---------- */
-  const VUES = {
-    '': { el: $('#v-accueil'), titre: 'Compagnie Crescite · théâtre, Rouen' },
-    spectacles: { el: $('#v-spectacles'), titre: 'Les spectacles · Compagnie Crescite' },
-    agenda: { el: $('#v-agenda'), titre: 'L’agenda · Compagnie Crescite' },
-    compagnie: { el: $('#v-compagnie'), titre: 'La compagnie · Compagnie Crescite' },
-    contact: { el: $('#v-contact'), titre: 'Contact · Compagnie Crescite' },
-  };
-  const spectacleV = $('#v-spectacle');
-  let vue = null, scene = false;
-  const fermeMenu = () => { $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
-  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  function route() {
-    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/$/, '');
-    const m = chemin.match(/^spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?$/);
-    const s = m && bySlug[m[1]];
-    const cle = s ? 'spectacle' : (Object.hasOwn(VUES, chemin) ? chemin : '');
-    const venait = vue === 'spectacle' ? bySlug[Show.current()] : null;
-    const actif = s ? '#/spectacles' : cle && '#/' + cle;
-    $$('.nav a').forEach(a => { if (a.getAttribute('href') === actif) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    fermeMenu();
-    if (s) {
-      Object.values(VUES).forEach(v => { v.el.hidden = true; });
-      spectacleV.hidden = false; vue = 'spectacle';
-      Show.render(s, m[2]);
-      scrollTo(0, 0);
-      if (m[2]) $('#portes-sp').scrollIntoView();
-      $('#titre-sp').focus({ preventScroll: true });
-      Ink.fadeOut();
-      return;
+  /* ---------- la carte des tournées : des tentacules d'encre ---------- */
+  /* De la pieuvre posée sur Rouen, un bras d'encre par commune, ponctué de ventouses sur sa face intérieure ;
+     au bout, une goutte d'encre s'étale quand le bras l'atteint. */
+  const Encre = (() => {
+    let n = 0;
+    const R = CARTE.rouen, LX = (D.arms.box[0] + D.arms.box[2]) / 2, LB = D.arms.box[3];
+    const alea = graine => { let x = (graine * 9301 + 49297) % 233280 || 7; return () => (x = (x * 9301 + 49297) % 233280) / 233280; };
+    const courbe = x => (x.l % 2 ? 1 : -1) * (.13 + ((x.l * 7) % 9) / 50);
+    function ventouses(xy, c, w0, w1, e, pas) {
+      const dx = xy[0] - R[0], dy = xy[1] - R[1], q = [(R[0] + xy[0]) / 2 - dy * c, (R[1] + xy[1]) / 2 + dx * c], N = 64, P = [], cum = [0];
+      for (let k = 0; k <= N; k++) {
+        const t = k / N, a = (1 - t) ** 2, b = 2 * (1 - t) * t, d = t * t;
+        P.push([a * R[0] + b * q[0] + d * xy[0], a * R[1] + b * q[1] + d * xy[1]]);
+        if (k) cum.push(cum[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+      }
+      const L = cum[N]; let out = '', u = L * .09, z = 0;
+      while (u < L * .93) {
+        let k = 1; while (k < N && cum[k] < u) k++;
+        const f = (u - cum[k - 1]) / ((cum[k] - cum[k - 1]) || 1), t = (k - 1 + f) / N;
+        const x = lerp(P[k - 1][0], P[k][0], f), y = lerp(P[k - 1][1], P[k][1], f);
+        let tx = 2 * (1 - t) * (q[0] - R[0]) + 2 * t * (xy[0] - q[0]), ty = 2 * (1 - t) * (q[1] - R[1]) + 2 * t * (xy[1] - q[1]);
+        const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+        const hw = (w0 * (1 - t) + w1 * t) / 2, r = Math.max(hw * .56, .45 * e), off = hw * (z++ % 2 ? .55 : .92) * Math.sign(c);
+        out += `<circle cx="${(x + ty * off).toFixed(1)}" cy="${(y - tx * off).toFixed(1)}" r="${r.toFixed(2)}" stroke-width="${(r * .45).toFixed(2)}"/>`;
+        u += Math.max(r * 2.6, pas * e);
+      }
+      return out;
     }
-    // en quittant un spectacle, l'encre se retire : vers la pieuvre sur l'accueil, vers le centre ailleurs
-    if (venait && motionOK() && !Ink.active()) Ink.fill(venait.fondSombre);
-    const v = VUES[cle];
-    spectacleV.hidden = true; spectacleV.innerHTML = '';
-    Object.values(VUES).forEach(x => { x.el.hidden = x !== v; });
-    vue = cle || 'accueil';
-    document.title = v.titre;
-    scrollTo(0, 0);
-    // la scène n'est mesurée que visible : la première fois elle s'ouvre, ensuite ses bras sont remis en place
-    if (cle === '') { if (scene) Stage.returnAll(!motionOK()); else { scene = true; Stage.start(); } }
-    if (venait && motionOK()) {
-      const c = cle === '' ? Stage.center() : { x: innerWidth / 2, y: innerHeight / 2 };
-      Ink.uncover(c.x, clamp(c.y, 60, innerHeight - 60), null, [venait.couleur, venait.fondSombre]);
-    } else Ink.fadeOut();
-    $('h1', v.el).focus({ preventScroll: true });
-  }
-  // un lien vers un spectacle, ailleurs que sur la scène : l'encre de son univers part du clic
-  document.addEventListener('click', e => {
-    const a = e.target.closest('a[href^="#/spectacle/"]');
-    if (!a || a.classList.contains('t-label') || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !motionOK()) return;
-    const s = bySlug[a.getAttribute('href').split('/')[2]]; if (!s) return;
-    e.preventDefault();
-    Ink.cover(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, () => { location.hash = a.getAttribute('href'); }, [s.couleur, s.fondSombre]);
-  });
+    function goutte(xy, r, graine) {
+      const rnd = alea(graine + 11), N = 10, pts = [], f = p => `${p[0].toFixed(1)} ${p[1].toFixed(1)}`, m = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+      for (let k = 0; k < N; k++) { const a = (k + rnd() * .35) / N * 2 * Math.PI, rr = r * (.8 + rnd() * .4); pts.push([xy[0] + Math.cos(a) * rr, xy[1] + Math.sin(a) * rr]); }
+      let d = `M${f(m(pts[N - 1], pts[0]))}`;
+      for (let k = 0; k < N; k++) d += `Q${f(pts[k])} ${f(m(pts[k], pts[(k + 1) % N]))}`;
+      let sat = '';
+      for (let k = 0, ns = 1 + Math.floor(rnd() * 3); k < ns; k++) {
+        const a = rnd() * 2 * Math.PI, dd = r * (1.5 + rnd() * .8), rs = r * (.12 + rnd() * .16);
+        sat += `<circle cx="${(xy[0] + Math.cos(a) * dd).toFixed(1)}" cy="${(xy[1] + Math.sin(a) * dd).toFixed(1)}" r="${rs.toFixed(2)}"/>`;
+      }
+      return `<path d="${d}Z"/>${sat}`;
+    }
+    const etiquette = x => `${CARTE.nom(x)}${x.dates?.length ? ' : ' + x.dates.map(d => d.ligne).join(' ; ') : ''}`;
+    // lieux : les communes en avant (encre pleine, ventouses, gouttes) ; passe : les tournées passées, en retrait
+    function svg({ lieux = [], passe = [], cadre = 'france', titre = '', fort = false, noms = false } = {}) {
+      const id = 'k' + (++n), tous = [...lieux, ...passe];
+      const box = cadre === 'france' || !tous.length ? CARTE.viewBox : CARTE.cadre(tous, { marge: 44, min: 220 });
+      const [bx, by, bw, bh] = box.split(/\s+/).map(Number), e = Math.max(bw, bh) / 800;
+      const longueurs = lieux.map(x => CARTE.longueur(x.xy, { courbe: courbe(x) })), Lmax = Math.max(1, ...longueurs), pas = lieux.length > 30 ? 6 : 4;
+      let masques = '', bras = '', gouttes = '', noms_ = '';
+      lieux.forEach((x, i) => {
+        const c = courbe(x), w0 = ((fort ? 6.5 : 5) + Math.sqrt(x.n) * 1.6) * e, w1 = .9 * e, r = ((fort ? 4.2 : 3.4) + Math.sqrt(x.n) * 1.3) * e;
+        const d0 = i * .035, du = .4 + 1.2 * longueurs[i] / Lmax, dg = d0 + du * .88;
+        masques += `<mask id="${id}-${x.l}" maskUnits="userSpaceOnUse" x="${bx - 60 * e}" y="${by - 60 * e}" width="${bw + 120 * e}" height="${bh + 120 * e}"><path class="k-trace" d="${CARTE.trait(x.xy, { courbe: c })}" pathLength="1" stroke-width="${(w0 * 2.8).toFixed(1)}" style="--d:${d0.toFixed(3)}s;--t:${du.toFixed(2)}s"/></mask>`;
+        bras += `<g class="tent" data-l="${x.l}" mask="url(#${id}-${x.l})"><path class="tent-corps" d="${CARTE.bras(x.xy, { w0, w1, courbe: c })}"/><g class="tent-v">${ventouses(x.xy, c, w0, w1, e, pas)}</g></g>`;
+        gouttes += `<g class="carte-lieu" data-l="${x.l}" role="button" tabindex="0" aria-label="${esc(etiquette(x))}" style="--d:${dg.toFixed(2)}s"><circle class="onde" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(r * 2.4).toFixed(1)}" stroke-width="${(.9 * e).toFixed(2)}"/><g class="g-h"><g class="goutte">${goutte(x.xy, r, x.l)}</g></g><circle class="hit" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${Math.max(r * 1.7, 11 * e).toFixed(1)}"/><title>${esc(etiquette(x))}</title></g>`;
+        const droite = x.xy[0] > bx + bw * .7;
+        noms_ += `<text class="carte-nom${noms ? ' toujours' : ''}" data-l="${x.l}" x="${(x.xy[0] + (droite ? -1 : 1) * (r * 1.4 + 5 * e)).toFixed(1)}" y="${(x.xy[1] + 4.5 * e).toFixed(1)}" text-anchor="${droite ? 'end' : 'start'}" font-size="${(14 * e).toFixed(1)}" stroke-width="${(3.4 * e).toFixed(1)}">${esc(CARTE.nom(x))}</text>`;
+      });
+      const kk = (fort ? 46 : 38) * e / 1016;
+      return `<svg class="carte encre${fort ? ' fort' : ''}" viewBox="${box}" role="group" aria-label="${esc(titre)}">
+        <defs>${masques}</defs>
+        <path class="carte-voisin" d="${CARTE.fond.belgique}"/><path class="carte-voisin" d="${CARTE.fond.luxembourg}"/><path class="carte-pays" d="${CARTE.fond.pays}"/>
+        ${tous.some(x => x.encart) ? `<circle class="k-encart" cx="${CARTE.ENCART[0]}" cy="${CARTE.ENCART[1]}" r="${(24 * e).toFixed(1)}"/>` : ''}
+        <g class="k-passe">${passe.map(x => `<path d="${CARTE.bras(x.xy, { w0: 2.2 * e, w1: .5 * e, courbe: courbe(x) })}"/><circle cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(1.9 * e).toFixed(2)}"/>`).join('')}</g>
+        <g class="k-bras">${bras}</g>
+        <g class="k-rouen"><g class="k-pieuvre" transform="translate(${(R[0] - LX * kk).toFixed(1)} ${(R[1] - LB * kk + 3 * e).toFixed(1)}) scale(${kk.toFixed(5)})">${D.logo.octopusPaths.map(d => `<path d="${d}"/>`).join('')}</g>
+          <circle class="k-flaque" cx="${R[0]}" cy="${R[1]}" r="${(3.4 * e).toFixed(1)}"/>
+          <text class="carte-rouen-nom" x="${(R[0] + (fort ? 28 : 24) * e).toFixed(1)}" y="${(R[1] - 12 * e).toFixed(1)}" font-size="${(16 * e).toFixed(1)}" stroke-width="${(3.4 * e).toFixed(1)}">Rouen</text></g>
+        <g class="k-gouttes">${gouttes}</g>
+        <g class="k-noms">${noms_}</g>
+      </svg>`;
+    }
+    // l'encre pousse quand la carte entre à l'écran
+    function activer(svgEl) {
+      if (!svgEl) return;
+      if (!motionOK()) { svgEl.classList.add('fixe'); return; }
+      const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { svgEl.classList.add('pousse'); io.disconnect(); } }, { threshold: .15 });
+      io.observe(svgEl);
+    }
+    function marquer(svgEl, l) {
+      svgEl.classList.toggle('survol', l != null);
+      $$('.on', svgEl).forEach(x => x.classList.remove('on'));
+      if (l != null) $$(`[data-l="${l}"]`, svgEl).forEach(x => x.classList.add('on'));
+    }
+    // relie une carte et une liste (li[data-l]) : survoler l'une met l'autre en avant ; choisir une commune la retient
+    function relier(svgEl, liste) {
+      activer(svgEl);
+      let pin = null;
+      const allumer = l => {
+        marquer(svgEl, l);
+        if (!liste) return;
+        liste.forEach(ul => { ul.classList.toggle('atenue', l != null); $$('li[data-l]', ul).forEach(li => li.classList.toggle('on', l != null && +li.dataset.l === l)); });
+      };
+      CARTE.lier(svgEl, {
+        survol: l => allumer(l ?? pin),
+        choix: l => {
+          pin = pin === l ? null : l; allumer(pin);
+          const li = pin != null && liste && liste.map(ul => $(`li[data-l="${pin}"]`, ul)).find(Boolean);
+          if (li) { const r = li.getBoundingClientRect(); if (r.top < 70 || r.bottom > innerHeight) li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' }); }
+        },
+      });
+      (liste || []).forEach(ul => $$('li[data-l]', ul).forEach(li => {
+        li.addEventListener('mouseenter', () => allumer(+li.dataset.l));
+        li.addEventListener('mouseleave', () => allumer(pin));
+      }));
+      return { allumer };
+    }
+    return { svg, activer, marquer, relier };
+  })();
+
+  /* ---------- l'en-tête et le pied de page ---------- */
+  $('#marque').innerHTML = D.logo.octopus;
+  $('#marque-mot').textContent = S.titreSuffixe;
+  $('#nav').setAttribute('aria-label', S.libelles.menu);
+  $('#nav').innerHTML = S.menu.map(m => `<a href="${m.href}" data-id="${m.id}">${esc(m.texte)}</a>`).join('');
+  $('.menu').textContent = S.libelles.menu;
+  const K0 = S.coordonnees;
+  $('#pied').innerHTML = `<div><span class="l">${D.logo.octopus}</span><p><strong>${esc(K0.nom)}</strong><br>${K0.adresse.map(esc).join('<br>')}</p>
+      <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a><span>${esc(S.facebook.texte)}</span></p></div>
+    <div><p>${S.partenaires}</p></div>
+    <div><p>${K0.legal.map(esc).join('<br>')}</p><p class="liens">${S.liensLegaux.map(l => `<a href="${l.href}">${esc(l.texte)}</a>`).join('')}</p></div>`;
+  const fermeMenu = () => { $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
   $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
   $('#nav').addEventListener('click', e => { if (e.target.closest('a')) fermeMenu(); });
   // l'évitement ne change pas d'adresse : il mène au contenu de la page courante
   $('.evitement').addEventListener('click', e => { e.preventDefault(); $('#main').focus(); });
-  $('#marque').innerHTML = D.logo.octopus;
-  accueil();
-  pages();
+
+  /* ---------- l'accueil, sous la scène ---------- */
+  $('#stage-h').textContent = S.nom;
+  const A_VENIR = CARTE.aVenir();
+  $('#accueil-suite').innerHTML = `
+    <section class="bloc"><div class="wrap"><div class="portes">${S.portes.map(p => `<a class="porte" href="${p.href}" style="--dc:${p.couleurVive};--dct:${p.couleur}">${esc(p.texte)}</a>`).join('')}</div></div></section>
+    <section class="bloc" aria-labelledby="h-tour"><div class="wrap">
+      <h2 class="h2" id="h-tour">${esc(S.libelles.actuellementEnTournee)}</h2>
+      <div class="k-grille"><div class="k-carte">${Encre.svg({ lieux: A_VENIR, fort: true, titre: S.libelles.actuellementEnTournee })}</div>
+        <div><p class="k-qui" id="acc-qui" hidden></p><ul class="dl petit" id="acc-dates"></ul><p class="suite"><a href="${MENU.agenda.href}">${esc(MENU.agenda.texte)} ${FLECHE}</a></p></div></div>
+    </div></section>
+    <section class="bloc donateurs"><div class="wrap"><p>${S.donateurs}</p></div></section>`;
+  (() => {
+    const svgEl = $('#accueil-suite svg.carte'), ul = $('#acc-dates'), qui = $('#acc-qui');
+    const montrer = l => {
+      const x = l != null && A_VENIR.find(y => y.l === l);
+      qui.hidden = !x; qui.textContent = x ? CARTE.nom(x) : '';
+      ul.innerHTML = (x ? x.dates : D.dates.slice(0, 6)).map(d => ligneDate(d)).join('');
+    };
+    montrer(null);
+    Encre.activer(svgEl);
+    let pin = null;
+    const allumer = l => { Encre.marquer(svgEl, l); montrer(l); };
+    CARTE.lier(svgEl, { survol: l => allumer(l ?? pin), choix: l => { pin = pin === l ? null : l; allumer(pin); } });
+  })();
+
+  /* ---------- les pages ---------- */
+  const tete = h => `<div class="page-tete"><div class="wrap"><h1 tabindex="-1"><span>${esc(h)}</span></h1></div></div>`;
+  function pageSpectacles() {
+    return tete(MENU.spectacles.texte) + `<section class="bloc"><div class="wrap"><ul class="repertoire">${D.shows.map(s => `
+      <li><a href="#/spectacle/${s.slug}" style="--c:${s.couleurTexteClair}">
+        <div class="rp-photo"><img src="${D.photos[s.slug]}" alt="${esc(s.titre)}" loading="lazy" style="object-position:${s.focale}% 50%"></div>
+        <div class="rp-texte"><h2>${esc(s.titre)}</h2>${s.sousTitre ? `<p class="rp-sous">${s.sousTitre}</p>` : ''}<p class="rp-crea">${esc(s.creation)}</p></div>
+        <p class="rp-etat">${s.statut ? `<span class="tag">${esc(s.statut)}</span>` : s.enTournee ? `<span class="tag">${esc(S.libelles.enTournee)}</span>${s.prochaine ? `<span class="rp-ligne">${esc(s.prochaine.ligne)}</span>` : ''}` : ''}</p>
+      </a></li>`).join('')}</ul></div></section>`;
+  }
+  function saisonsLiens(sauf) {
+    return `<section class="bloc"><div class="wrap"><ul class="saisons">${S.saisons.filter(x => x.saison !== sauf).map(x => `<li><a href="${x.href}">${esc(x.titre)} ${FLECHE}</a></li>`).join('')}</ul></div></section>`;
+  }
+  function pageAgenda() {
+    const sa = S.saisons[0], mois = new Map();
+    D.dates.forEach(d => { const k = coupe(d.ligneDate).mois || d.ligneDate; if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
+    return tete(sa.titre) + `<section class="bloc"><div class="wrap ag-grille">
+      <div class="ag-carte">${Encre.svg({ lieux: A_VENIR, titre: sa.titre })}</div>
+      <div class="ag-liste">${[...mois].map(([m, ds]) => `<div class="mois"><h2>${esc(m)}</h2><ul class="dl">${ds.map(d => ligneDate(d)).join('')}</ul></div>`).join('')}</div>
+    </div></section>${saisonsLiens(sa.saison)}`;
+  }
+  function pageSaison(k) {
+    const sa = D.saisons[k];
+    return tete(sa.titre) + `<section class="bloc"><div class="wrap ag-grille">
+      <div class="ag-carte">${Encre.svg({ lieux: CARTE.saison(k), titre: sa.titre })}</div>
+      <div class="ag-liste">${sa.spectacles.map(g => `<section class="sa-sp"><h2>${g.slug && bySlug[g.slug] ? `<a href="#/spectacle/${g.slug}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
+        ${g.sousTitre ? `<p class="sa-sous">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="sa-crea">${esc(g.creation)}</p>` : ''}
+        <ul class="dl">${g.dates.map(ligneSaison).join('')}</ul></section>`).join('')}</div>
+    </div></section>${saisonsLiens(k)}`;
+  }
+  function pageCompagnie() {
+    const C = S.compagnie;
+    return tete(C.titre) + `<section class="bloc"><div class="wrap co-grille">
+      <div class="co-texte">${C.paragraphes.map(bloc).join('')}</div>
+      <aside class="chrono" aria-labelledby="h-dates"><h2 class="h2" id="h-dates">${esc(C.datesTitre)}</h2>
+        <ol>${C.dates.map((d, i) => { const s = D.shows.find(x => String(x.annee) === String(d.annee)); return `<li style="--i:${i}"><b>${esc(d.annee)}</b>${s ? `<a href="#/spectacle/${s.slug}">${esc(d.titre)}</a>` : `<span>${esc(d.titre)}</span>`}</li>`; }).join('')}</ol>
+      </aside></div></section>`;
+  }
+  function pageActions() {
+    const A = S.actions;
+    return tete(A.titre) + `<section class="bloc"><div class="wrap ac-grille"><div class="blocs">${A.blocs.map(bloc).join('')}</div>
+      <figure class="ac-photo"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure></div></section>`;
+  }
+  function pagePro() {
+    const P = S.pro;
+    return tete(P.titre) + `<section class="bloc"><div class="wrap"><form class="form" novalidate><p>${esc(P.texte)}</p>
+      <div class="champ"><label for="pro-mdp">${esc(P.champ)}</label><input id="pro-mdp" type="password" autocomplete="current-password"></div>
+      <button class="bouton" type="submit">${esc(P.bouton)}</button></form></div></section>`;
+  }
+  function pageContact() {
+    const C = S.contact, K = S.coordonnees;
+    const champ = (c, i) => {
+      const id = 'ct-' + i, type = /mail/i.test(c) ? 'email' : /phone/i.test(c) ? 'tel' : 'text';
+      return `<div class="champ"><label for="${id}">${esc(c)}</label>${i === C.champs.length - 1 ? `<textarea id="${id}" rows="6"></textarea>` : `<input id="${id}" type="${type}">`}</div>`;
+    };
+    const accord = esc(C.consentement).replace(/politique de confidentialité/i, m => `<a href="#/politique-de-confidentialite">${m}</a>`);
+    return tete(C.titre) + `<section class="bloc"><div class="wrap ct-grille">
+      <form class="form" novalidate>${C.champs.map(champ).join('')}
+        <div class="consent"><input type="checkbox" id="ct-ok"><label for="ct-ok">${accord}</label></div>
+        <div class="calcul"><label for="ct-calc">${esc(C.calcul)}</label><input id="ct-calc" inputmode="numeric"></div>
+        <button class="bouton" type="submit">${esc(C.bouton)}</button></form>
+      <aside class="coord"><p><strong>${esc(K.nom)}</strong><br>${K.adresse.map(esc).join('<br>')}</p><p>${K.legal.map(esc).join('<br>')}</p></aside>
+    </div></section>`;
+  }
+  const pageLegal = cle => { const L = S.legal[cle]; return tete(L.titre) + `<section class="bloc"><div class="wrap legal">${L.blocs.map(bloc).join('')}</div></section>`; };
+
+  /* ---------- la page d'un spectacle ---------- */
+  function pageSpectacle(s) {
+    const i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
+    const aVenir = D.dates.filter(d => d.slug === s.slug), K = CARTE.spectacle(s.slug);
+    const hero = `<section class="sx sx-hero" data-scrolly><div class="sx-pin">
+        <div class="hero-photo"><img src="${D.photos[s.slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%"></div>
+        <div class="hero-text"><p class="fil-ariane"><a href="#/">${esc(S.accueil)}</a> / <a href="${MENU.spectacles.href}">${esc(MENU.spectacles.texte)}</a></p>
+          ${s.statut ? `<p class="tag hero-tag">${esc(s.statut)}</p>` : ''}
+          <h1 id="titre-sp" tabindex="-1">${s.titreLignes.map(l => `<span>${esc(l)}</span>`).join(' ')}</h1>
+          ${s.genre ? `<p class="hero-sub">${esc(s.genre)}</p>` : s.sousTitre ? `<p class="hero-sub">${s.sousTitre}</p>` : ''}
+          ${s.creation ? `<p class="hero-crea">${esc(s.creation)}</p>` : ''}</div>
+        ${s.credit ? `<p class="hero-credit">${esc(s.credit)}</p>` : ''}
+        <span class="cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div></section>`;
+    const cass = s.extraits && s.extraits.length ? `<section class="cass" aria-label="${esc(s.titre)}"><div class="wrap">${s.cadre ? `<p class="cass-cadre">${esc(s.cadre)}</p>` : ''}
+      ${s.extraits.map(x => `<blockquote><p>${esc(x.citation)}</p>${x.source ? `<cite>${esc(x.source)}</cite>` : ''}</blockquote>`).join('')}</div></section>` : '';
+    const fiche = s.fiche.length ? `<div class="fiche">${s.fiche.map(f => `<p>${f.libelle ? `<span>${esc(f.libelle)}</span>` : ''}${f.valeur}</p>`).join('')}</div>` : '';
+    const corps = `<section class="bloc"><div class="wrap sp-corps">
+        <div><div class="sp-texte">${s.texte.map(bloc).join('')}</div>${s.mentions.length ? `<div class="sp-mentions">${s.mentions.map(bloc).join('')}</div>` : ''}</div>
+        <aside>${fiche}${s.avec ? `<p class="sp-avec"><span>${esc(s.avec.libelle)}</span>${s.avec.valeur}</p>` : ''}${s.duree ? `<p class="sp-duree">${esc(s.duree)}</p>` : ''}
+          ${s.production.length ? `<div class="sp-prod">${s.production.map(bloc).join('')}</div>` : ''}</aside>
+      </div></section>`;
+    let medias = '';
+    if (s.medias.length) {
+      const groupes = [];
+      s.medias.forEach(m => { const g = m.groupe || ''; let G = groupes.find(x => x.g === g); if (!G) groupes.push(G = { g, l: [] }); G.l.push(m); });
+      medias = `<section class="bloc"><div class="wrap">${groupes.map(G => `${G.g ? `<h3 class="h3">${esc(G.g)}</h3>` : ''}<ul class="medias">${G.l.map(m => `<li>${lienExt(m.url, `${ICONE[m.type] || ICONE.video}<span><b>${esc(m.titre || m.url)}</b>${m.par ? `<small>${esc(m.par)}</small>` : ''}</span>`)}</li>`).join('')}</ul>`).join('')}</div></section>`;
+    }
+    let tour;
+    if (s.statut && s.tournee) tour = `<section class="bloc" aria-labelledby="h-tour-sp"><div class="wrap tour-grille"><div><h2 class="h2" id="h-tour-sp">${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p>${esc(s.tournee.texte)}</p>` : ''}</div>
+      <div>${Encre.svg({ titre: s.tournee.titre })}</div></div></section>`;
+    else if (aVenir.length) tour = `<section class="bloc" aria-labelledby="h-tour-sp"><div class="wrap"><h2 class="h2" id="h-tour-sp">${esc(s.tournee ? s.tournee.titre : S.libelles.actuellementEnTournee)}</h2>
+      <div class="tour-grille"><ul class="dl">${aVenir.map(d => ligneDate(d, { titre: false })).join('')}</ul><div>${Encre.svg({ lieux: K.aVenir, passe: K.passe, cadre: 'serre', titre: s.titre })}</div></div></div></section>`;
+    else tour = K.passe.length ? `<section class="bloc"><div class="wrap tour-seule">${Encre.svg({ lieux: K.passe, cadre: 'serre', titre: s.titre })}</div></section>` : '';
+    const suivant = `<a class="suivant" href="#/spectacle/${nx.slug}" style="--n-bg:${nx.fondSombre};--n-sc:${nx.couleur}"><span class="wrap"><b>${esc(nx.titre)}</b>${FLECHE}</span></a>`;
+    return `<article class="show" style="--bg:${s.fondSombre};--sc:${s.couleur};--act:${s.couleurTexteClair}">${hero}${cass}${corps}${medias}${tour}${suivant}</article>`;
+  }
+  // l'effet du défilement sur la photo
+  let secs = [], sraf = 0;
+  function defile() {
+    sraf = 0;
+    for (const sec of secs) {
+      const r = sec.getBoundingClientRect(), span = r.height - innerHeight;
+      sec.style.setProperty('--p', (!motionOK() ? 1 : span > 40 ? clamp((-r.top + 64) / span, 0, 1) : 1).toFixed(4));
+    }
+  }
+  addEventListener('scroll', () => { if (secs.length && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
+  addEventListener('resize', () => { if (secs.length) defile(); });
+
+  /* ---------- navigation : une page par onglet ---------- */
+  const PAGES = {
+    spectacles: { titre: MENU.spectacles.texte, onglet: 'spectacles', rendu: pageSpectacles },
+    agenda: { titre: MENU.agenda.texte, onglet: 'agenda', rendu: pageAgenda },
+    compagnie: { titre: MENU.compagnie.texte, onglet: 'compagnie', rendu: pageCompagnie },
+    'actions-culturelles': { titre: MENU.actions.texte, onglet: 'actions', rendu: pageActions },
+    'espace-pro': { titre: S.pro.titrePage, onglet: 'pro', rendu: pagePro },
+    contact: { titre: MENU.contact.texte, onglet: 'contact', rendu: pageContact },
+    'mentions-legales': { titre: S.legal['mentions-legales'].titre, rendu: () => pageLegal('mentions-legales') },
+    'politique-de-confidentialite': { titre: S.legal['politique-de-confidentialite'].titre, rendu: () => pageLegal('politique-de-confidentialite') },
+  };
+  const vAccueil = $('#v-accueil'), vPage = $('#v-page');
+  let venait = null;
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  function route() {
+    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/$/, '');
+    const ms = chemin.match(/^spectacle\/([\w-]+)$/), ma = chemin.match(/^agenda\/([\w-]+)$/);
+    let v;
+    if (chemin === '') v = { cle: 'accueil', titre: S.accueil };
+    else if (ms && bySlug[ms[1]]) v = { cle: 'spectacle', s: bySlug[ms[1]], titre: bySlug[ms[1]].titre, onglet: 'spectacles' };
+    else if (ma && D.saisons[ma[1]]) v = { cle: 'saison', saison: ma[1], titre: D.saisons[ma[1]].titre, onglet: 'agenda' };
+    else if (PAGES[chemin]) v = { cle: chemin, ...PAGES[chemin] };
+    else { history.replaceState(null, '', '#/'); return route(); }   // une adresse inconnue mène à l'accueil
+    document.title = `${v.titre} - ${S.titreSuffixe}`;
+    $$('#nav a').forEach(a => { if (a.dataset.id === v.onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    fermeMenu();
+    const quitte = venait;
+    venait = v.cle === 'spectacle' ? v.s : null;
+    secs = [];
+    if (v.cle === 'accueil') {
+      // en quittant un spectacle, l'encre se retire vers la pieuvre
+      if (quitte && motionOK() && !Ink.active()) Ink.fill(quitte.fondSombre);
+      vPage.hidden = true; vPage.innerHTML = ''; vAccueil.hidden = false;
+      scrollTo(0, 0);
+      Stage.montrer(true);
+      if (quitte && motionOK()) { const c = Stage.coeurEcran(); Ink.uncover(c.x, clamp(c.y, 60, innerHeight - 60), null, [quitte.couleur, quitte.fondSombre]); } else Ink.fadeOut();
+      $('#stage-h').focus({ preventScroll: true });
+      return;
+    }
+    Stage.montrer(false);
+    if (quitte && motionOK() && !Ink.active() && v.cle !== 'spectacle') Ink.fill(quitte.fondSombre);
+    vAccueil.hidden = true; vPage.hidden = false;
+    vPage.innerHTML = v.cle === 'spectacle' ? pageSpectacle(v.s) : v.cle === 'saison' ? pageSaison(v.saison) : v.rendu();
+    $$('a[href^="http"]', vPage).forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+    $$('form', vPage).forEach(f => f.addEventListener('submit', e => e.preventDefault()));
+    scrollTo(0, 0);
+    // les cartes : reliées à leur liste de dates quand il y en a une
+    $$('svg.carte.encre', vPage).forEach(svgEl => {
+      const zone = svgEl.closest('.ag-grille, .tour-grille, .wrap');
+      Encre.relier(svgEl, zone ? $$('ul.dl', zone) : []);
+    });
+    if (v.cle === 'spectacle') { secs = $$('[data-scrolly]', vPage); defile(); }
+    if (quitte && v.cle !== 'spectacle' && motionOK()) Ink.uncover(innerWidth / 2, innerHeight / 2, null, [quitte.couleur, quitte.fondSombre]); else Ink.fadeOut();
+    $('h1', vPage).focus({ preventScroll: true });
+  }
+  // un lien vers un spectacle, ailleurs que sur la scène : l'encre de son univers part du clic
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#/spectacle/"]');
+    if (!a || a.classList.contains('t-label') || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !motionOK()) return;
+    const s = bySlug[a.getAttribute('href').split('/')[2]]; if (!s) return;
+    e.preventDefault();
+    Ink.cover(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, () => { location.hash = a.getAttribute('href'); }, [s.couleur, s.fondSombre]);
+  });
+  // l'ouverture : le logo sur la nuit ; à la révélation, la pieuvre de la scène s'éveille et tend ses bras
+  INTRO.ouvrir({ degrade: [[0, '#331629'], [.55, '#1b0c16'], [1, '#0b0509']], encre: '#f7ecf1', classe: 'nuit-pieuvre', apres: () => Stage.eveiller() });
   addEventListener('hashchange', route);
   route();
 })();

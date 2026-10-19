@@ -3,8 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compagnie Crescite · Théâtre à Rouen</title>
-<meta name="description" content="Compagnie Crescite, théâtre à Rouen depuis 2012 : un spectacle par écran, les prochaines dates et trois portes d’entrée.">
+<title>Accueil - crescite</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Inter:wght@400;500;600&display=swap">
 <style>
 :root{
@@ -24,8 +23,8 @@
   --ease:cubic-bezier(.22,.7,.12,1);
   --t-ouverture:clamp(3rem,min(8.4vw,13.5vh),7.5rem);
   --t-titre:clamp(2.5rem,min(5.6vw,9.4vh),5rem);
-  --t-page:clamp(2.5rem,5.2vw,4.75rem);
-  --t-grand:clamp(2.125rem,3.6vw,3.25rem);
+  --t-page:clamp(2.125rem,5.2vw,4.75rem);
+  --t-grand:clamp(2rem,3.6vw,3.25rem);
   --t-moyen:clamp(1.375rem,2vw,1.75rem);
   --t-corps:1.0625rem;
   --t-petit:.875rem;
@@ -33,17 +32,21 @@
 *,*::before,*::after{box-sizing:border-box}
 html{background:var(--nuit);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html.aimante{scroll-snap-type:y mandatory}
-body{margin:0;background:var(--nuit);color:var(--creme);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:var(--t-corps);line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{margin:0;overflow-x:clip;background:var(--nuit);color:var(--creme);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:var(--t-corps);line-height:1.6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 img,svg{display:block;max-width:100%}
 a{color:inherit;text-underline-offset:.22em;text-decoration-thickness:1px}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:inherit}
-h1,h2,h3,p,ul,ol,dl,dd,figure{margin:0}
+input,textarea{font:inherit;color:inherit}
+h1,h2,h3,p,ul,ol,dl,dd,figure,blockquote{margin:0}
 ul,ol{padding:0;list-style:none}
 [hidden]{display:none!important}
 .sr{position:absolute!important;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
 :focus-visible{outline:2px solid currentColor;outline-offset:4px;border-radius:2px}
 [tabindex="-1"]:focus{outline:none}
-.serif{font-family:Gloock,Georgia,serif;font-weight:400}
+
+/* l'ouverture commune, dans le dégradé prune de la 09 : le dégradé suit l'écran, pas le grand rectangle */
+.intro.m09-intro .intro-fond{x:0;y:0;width:100%;height:100%}
+.intro.m09-intro .intro-indice{color:var(--creme)}
 
 /* lien d'évitement */
 .evitement{position:fixed;left:var(--marge);top:12px;z-index:100;padding:10px 18px;border-radius:999px;background:var(--creme);color:var(--encre);font-weight:600;text-decoration:none;transform:translateY(-160%);transition:transform .2s}
@@ -53,13 +56,13 @@ ul,ol{padding:0;list-style:none}
 .tete{position:fixed;top:0;left:0;right:0;z-index:50;height:var(--tete-h);display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 var(--marge);color:var(--creme);background:rgba(20,12,18,.86);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:background-color .45s var(--ease),color .45s var(--ease),box-shadow .45s var(--ease)}
 .tete[data-ton="clair"]{background:rgba(243,238,233,.94);color:var(--encre);box-shadow:0 1px 0 var(--trait)}
 .tete[data-ton="sombre"]{background:rgba(20,12,18,.92);box-shadow:0 1px 0 rgba(243,238,233,.08)}
-.marque{display:inline-flex;align-items:center;gap:12px;text-decoration:none;border-radius:4px}
+.marque{display:inline-flex;align-items:center;gap:12px;flex:none;text-decoration:none;border-radius:4px}
 .marque-pieuvre{width:62px;flex:none;color:#fff;transition:color .45s var(--ease)}
 .tete[data-ton="clair"] .marque-pieuvre{color:var(--magenta)}
 .marque-pieuvre svg{width:100%;height:auto}
 .marque-mot{font-size:1.375rem;font-weight:600;line-height:1;letter-spacing:-.02em;margin-top:-3px}
-.nav ul{display:flex;align-items:center;gap:clamp(22px,2.8vw,44px)}
-.nav a{position:relative;display:block;padding:10px 0;font-size:1rem;font-weight:500;letter-spacing:.01em;text-decoration:none}
+.nav ul{display:flex;align-items:center;gap:clamp(18px,2.2vw,40px)}
+.nav a{position:relative;display:block;padding:10px 0;font-size:1rem;font-weight:500;letter-spacing:.01em;text-decoration:none;white-space:nowrap}
 .nav a::before{content:attr(data-texte);display:block;height:0;overflow:hidden;visibility:hidden;font-weight:600}
 .nav a::after{content:"";position:absolute;left:0;right:0;bottom:5px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:right;transition:transform .45s var(--ease)}
 .nav a:hover::after,.nav a[aria-current="page"]::after{transform:scaleX(1);transform-origin:left}
@@ -68,7 +71,7 @@ ul,ol{padding:0;list-style:none}
 .tete[data-ton="clair"] .nav a[aria-current="page"]::after{background:var(--magenta)}
 .menu-bouton{display:none}
 
-/* sommaire */
+/* sommaire des chapitres (bureau) */
 .sommaire{display:none}
 
 /* chapitres : base téléphone, photo au-dessus du texte */
@@ -76,149 +79,210 @@ ul,ol{padding:0;list-style:none}
 .chap::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(110% 60% at 50% 100%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 72%)}
 .chap-photo{position:relative;overflow:hidden;aspect-ratio:4/3;background:color-mix(in srgb,var(--accent) 8%,var(--fond,#000))}
 .chap-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focale,50%) 50%}
-.chap-texte{display:flex;flex-direction:column;align-items:flex-start;padding:36px var(--marge) 76px}
-.chap-num{font-size:var(--t-petit);font-weight:500;letter-spacing:.2em;color:var(--creme-2);font-variant-numeric:tabular-nums;margin-bottom:16px}
-.chap-num b{font-weight:600;color:var(--accent)}
+.chap-credit{position:absolute;right:14px;bottom:10px;z-index:1;max-width:80%;font-size:.75rem;line-height:1.4;text-align:right;color:rgba(243,238,233,.8);text-shadow:0 1px 8px rgba(0,0,0,.75)}
+.chap-texte{display:flex;flex-direction:column;align-items:flex-start;padding:34px var(--marge) 76px}
+.chap-sur{margin-bottom:16px;font-size:var(--t-petit);font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
 .chap-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-titre);line-height:1;letter-spacing:-.012em;max-width:10.5em;text-wrap:balance}
-.chap-sous{margin-top:14px;color:var(--creme-2)}
-.chap-accroche{margin-top:28px;font-family:Gloock,Georgia,serif;font-size:var(--t-moyen);line-height:1.32;max-width:21em;text-wrap:pretty}
-.chap-date{margin-top:32px;max-width:21rem}
-.chap-date .surtitre::before{content:"";width:28px;height:2px;background:var(--accent)}
+.chap-sous{margin-top:14px;font-size:1.125rem;color:var(--creme-2)}
+.chap-accroche{margin-top:26px;font-family:Gloock,Georgia,serif;font-size:var(--t-moyen);line-height:1.32;max-width:21em;text-wrap:pretty}
+.chap-tournee{margin-top:30px;max-width:24rem}
+.chap-tournee .surtitre::before{content:"";width:28px;height:2px;background:var(--accent)}
 .surtitre{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:var(--t-petit);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muet)}
-.pastille{display:inline-block;padding:2px 10px 1px;border:1px solid currentColor;border-radius:999px;font-size:.8125rem;font-weight:500;letter-spacing:.04em;text-transform:none;line-height:1.5;white-space:nowrap}
-.chap-date-quand{margin-top:10px;font-weight:500;color:var(--creme)}
-.chap-date-quand.est-vide{font-weight:400;color:var(--creme-2)}
+.chap-date-quand{margin-top:10px;font-weight:600;color:var(--creme)}
 .chap-date-ou{color:var(--creme-2)}
-.chap-date-ou span{display:block}
+.chap-note{margin-top:10px;color:var(--creme-2)}
 .bouton{display:inline-flex;align-items:center;gap:14px;margin-top:34px;padding:15px 22px 15px 26px;border-radius:999px;background:var(--accent);color:var(--fond,var(--nuit));font-weight:600;font-size:1rem;line-height:1.2;text-decoration:none;transition:box-shadow .45s var(--ease)}
 .bouton .fleche{display:inline-block;transition:transform .45s var(--ease)}
 .bouton:hover{box-shadow:0 14px 34px -14px color-mix(in srgb,var(--accent) 80%,transparent)}
 .bouton:hover .fleche{transform:translateX(5px)}
 .bouton:focus-visible{outline-color:var(--creme)}
+.pastille{display:inline-block;padding:2px 10px 1px;border:1px solid currentColor;border-radius:999px;font-size:.8125rem;font-weight:500;letter-spacing:.06em;line-height:1.5;white-space:nowrap}
 
-/* chapitre 0 : la compagnie */
-.chap-0{--fond:var(--nuit);--accent:var(--magenta-vif);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100svh;padding:calc(var(--tete-h) + 24px) var(--marge) 132px;text-align:center}
-.chap-0::before{background:radial-gradient(36% 42% at 50% 41%,rgba(188,62,128,.46),rgba(188,62,128,0) 100%),radial-gradient(80% 50% at 50% 100%,rgba(188,62,128,.14),transparent 70%)}
-.chap0-logo{width:min(78vw,50vh);color:#fff}
-.chap0-svg svg{width:100%;height:auto}
-.chap0-intention{margin-top:clamp(28px,5vh,52px);font-family:Gloock,Georgia,serif;font-size:clamp(1.375rem,min(2.3vw,3.6vh),2rem);line-height:1.3;max-width:26em;text-wrap:balance}
-.chap0-indice{position:absolute;left:0;right:0;bottom:clamp(24px,5vh,48px);display:flex;flex-direction:column;align-items:center;gap:14px;width:max-content;margin:0 auto;font-size:var(--t-petit);font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--creme-2);text-decoration:none;border-radius:4px}
-.chap0-indice:hover{color:var(--creme)}
-.indice-trait{position:relative;display:block;width:1px;height:36px;overflow:hidden;background:rgba(243,238,233,.22)}
-.indice-trait::after{content:"";position:absolute;left:0;top:0;width:1px;height:100%;background:var(--creme);transform:scaleY(.35);transform-origin:top}
+/* le chapitre de la carte : la saison, mois par mois, les bras poussent au fil du défilement */
+.chap-carte{position:relative;height:calc(100vh + var(--pas,8) * 42vh + 50vh);height:calc(100svh + var(--pas,8) * 42svh + 50svh);background:var(--nuit);color:var(--creme);--accent:var(--magenta-vif);--fond:var(--nuit)}
+.cc-scene{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:grid;grid-template-rows:minmax(0,50fr) minmax(0,50fr)}
+.cc-scene::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(90% 60% at 50% 105%,rgba(188,62,128,.14),transparent 70%)}
+.cc-carte{position:relative;min-height:0;margin-top:var(--tete-h);-webkit-mask-image:linear-gradient(180deg,#000 80%,transparent);mask-image:linear-gradient(180deg,#000 80%,transparent)}
+.cc-svg{position:absolute;inset:0;width:100%;height:100%;max-width:none;overflow:hidden}
+.cc-pays{fill:rgba(243,238,233,.035);stroke:rgba(243,238,233,.32);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.cc-voisin{fill:none;stroke:rgba(243,238,233,.15);stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:2 4}
+.cc-traces{fill:none;stroke:rgba(243,238,233,.24);stroke-width:2.5;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.cc-b{opacity:.95;transition:opacity .5s var(--ease)}
+.cc-b.est-passe{opacity:.4}
+.cc-s{fill:none;stroke:var(--magenta-vif);stroke-linecap:round;stroke-dasharray:1 1;stroke-dashoffset:1}
+.cc-p{fill:none;stroke:#fff;stroke-width:0;stroke-linecap:round;vector-effect:non-scaling-stroke;transition:stroke-width .4s var(--ease),stroke .4s}
+.cc-p.est-pousse{stroke-width:5;stroke:rgba(243,238,233,.72)}
+.cc-p.est-actif{stroke-width:10;stroke:#fff}
+.cc-rouen{fill:none;stroke:#fff;stroke-width:11;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.cc-onde{fill:none;stroke:var(--magenta-vif);stroke-width:11;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:0}
+.cc-noms{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.cc-nom{position:absolute;left:0;top:0;opacity:0;transition:opacity .45s var(--ease)}
+.cc-nom > span{position:absolute;left:12px;top:0;transform:translateY(-52%);white-space:nowrap;font-family:Gloock,Georgia,serif;font-size:1.25rem;line-height:1;color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.7),0 0 2px rgba(0,0,0,.6)}
+.cc-nom.a-gauche > span{left:auto;right:12px}
+.cc-nom.est-visible,.cc-nom-rouen{opacity:1}
+.cc-nom-rouen > span{left:12px;top:-14px;font-family:Inter,system-ui,sans-serif;font-size:.75rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--magenta-vif)}
+.cc-texte{position:relative;display:flex;flex-direction:column;min-height:0;padding:4px var(--marge) 22px}
+.cc-sur::before{content:"";width:28px;height:2px;background:var(--magenta-vif)}
+.cc-titre{margin-top:8px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:clamp(1.875rem,4.2vw,3.5rem);line-height:1;letter-spacing:-.012em}
+.cc-rail{position:relative;flex:1;min-height:0;margin-top:14px;overflow:hidden;-webkit-mask-image:linear-gradient(180deg,#000 0,#000 70%,transparent);mask-image:linear-gradient(180deg,#000 0,#000 70%,transparent)}
+.cc-liste{position:absolute;left:0;right:0;top:0;will-change:transform}
+.cc-m{padding-bottom:30px;opacity:.2;transition:opacity .5s var(--ease)}
+.cc-m.est-actif{opacity:1}
+.cc-m-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:clamp(1.5rem,2.4vw,2.25rem);line-height:1.05;color:var(--magenta-vif)}
+.cc-lignes{margin-top:10px;max-width:30rem}
+.cc-ligne{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:12px;padding:8px 0;border-top:1px solid rgba(243,238,233,.12)}
+.cc-quand{font-weight:600}
+.cc-ou{color:var(--creme-2)}
+.cc-quoi{display:flex;align-items:center;gap:8px;width:100%;font-size:var(--t-petit);color:var(--creme-2)}
+.cc-quoi::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--c,currentColor)}
+.cc-bouton{align-self:flex-start;margin-top:14px}
+.chap-carte.est-statique{height:auto}
+.chap-carte.est-statique .cc-scene{position:relative;height:auto;overflow:visible;display:block}
+.chap-carte.est-statique .cc-carte{height:min(64vh,540px);-webkit-mask-image:none;mask-image:none}
+.chap-carte.est-statique .cc-texte{padding-bottom:72px}
+.chap-carte.est-statique .cc-rail{overflow:visible;-webkit-mask-image:none;mask-image:none}
+.chap-carte.est-statique .cc-liste{position:static;transform:none!important}
+.chap-carte.est-statique .cc-m{opacity:1}
 
-/* zone libre, sur papier */
+/* la fin de l'accueil : les trois portes, puis les donateurs */
+.fin{background:var(--papier);color:var(--encre);--muet:var(--encre-2);padding:calc(var(--tete-h) + 48px) var(--marge) clamp(64px,10vh,104px)}
+.fin-int{max-width:1320px;margin:0 auto}
+.portes{display:grid;gap:14px}
+.porte{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;min-height:9rem;padding:22px 22px 24px;border-top:3px solid var(--porte);background:color-mix(in srgb,var(--porte) 7%,transparent);color:var(--encre);text-decoration:none;transition:color .5s var(--ease)}
+.porte::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--porte);transform:scaleY(0);transform-origin:bottom;transition:transform .6s var(--ease)}
+.porte:hover,.porte:focus-visible{color:#fff}
+.porte:hover::before,.porte:focus-visible::before{transform:none}
+.porte:focus-visible{outline:2px solid var(--encre);outline-offset:4px}
+.porte-titre{font-family:Gloock,Georgia,serif;font-size:var(--t-moyen);line-height:1.12;max-width:12em;text-wrap:balance}
+.porte-fleche{flex:none;display:grid;place-items:center;width:52px;height:52px;border:1px solid currentColor;border-radius:50%;color:var(--porte);transition:color .5s var(--ease),transform .5s var(--ease)}
+.porte-fleche svg{width:20px;height:20px}
+.porte:hover .porte-fleche,.porte:focus-visible .porte-fleche{color:#fff;transform:translateX(4px)}
+.donateurs{margin-top:clamp(48px,8vh,80px);max-width:64em;font-size:var(--t-petit);line-height:1.75;color:var(--muet)}
+
+/* les pages des onglets, sur papier */
 .libre{background:var(--papier);color:var(--encre);--muet:var(--encre-2)}
-.bloc{padding:clamp(88px,14vh,150px) var(--marge)}
+.bloc{padding:clamp(72px,12vh,128px) var(--marge)}
 .bloc + .bloc{padding-top:0}
-.bloc + .bloc > .grille{border-top:1px solid var(--trait);padding-top:clamp(64px,10vh,112px)}
 .grille{display:grid;grid-template-columns:minmax(0,1fr);column-gap:clamp(16px,2.2vw,32px);max-width:1320px;margin:0 auto}
-.bloc-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-grand);line-height:1.04;letter-spacing:-.01em;margin-top:14px;text-wrap:balance}
-.bloc-intro{margin-top:18px;color:var(--muet);max-width:24em}
-.agenda-corps{margin-top:clamp(36px,6vh,56px)}
-.bouton-texte{display:inline-flex;align-items:center;gap:10px;margin-top:28px;padding:13px 22px;border:1px solid currentColor;border-radius:999px;font-weight:600;font-size:1rem;line-height:1.2;transition:background-color .3s,color .3s}
-.bouton-texte:hover{background:var(--encre);color:var(--papier)}
+.page > .bloc:first-child{padding-top:calc(var(--tete-h) + clamp(44px,8vh,96px))}
+.page-tete{margin-bottom:clamp(36px,6vh,64px)}
+.page-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-page);line-height:1;letter-spacing:-.012em;text-wrap:balance;overflow-wrap:break-word}
+.surtitre + .page-titre{margin-top:16px}
+.surtitre a{text-decoration:none}
+.surtitre a:hover{text-decoration:underline}
+.bloc-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-grand);line-height:1.04;letter-spacing:-.01em;text-wrap:balance}
+.prose{max-width:38em;font-size:1.0625rem;line-height:1.72;overflow-wrap:break-word}
+.prose > * + *{margin-top:1em}
+.prose h2{margin-top:1.8em;font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-moyen);line-height:1.2}
+.prose > h2:first-child{margin-top:0}
+.prose ul{padding-left:1.2em;list-style:disc}
+.prose li + li{margin-top:.55em}
+.prose a{color:var(--magenta)}
 
-/* listes de dates */
-.dates-mois{display:flex;align-items:center;gap:14px;margin-top:44px;padding-bottom:12px;border-bottom:1px solid var(--encre);font-size:var(--t-petit);font-weight:600;letter-spacing:.14em;text-transform:uppercase}
-.dates > .dates-mois:first-child{margin-top:0}
-.date{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:4px 18px;padding:18px 0 20px;border-bottom:1px solid var(--trait)}
-.date > p{min-width:0}
-.date-quand{grid-row:span 4}
-.date-num{display:block;font-family:Gloock,Georgia,serif;font-size:1.625rem;line-height:1.08}
-.date-js{display:block;margin-top:6px;font-size:var(--t-petit);color:var(--muet)}
+/* spectacles */
+.vignettes{display:grid;grid-template-columns:minmax(0,1fr);gap:44px}
+.vignette{position:relative;display:flex;flex-direction:column}
+.vignette-photo{position:relative;overflow:hidden;aspect-ratio:4/3;margin-bottom:18px;background:var(--fond)}
+.vignette-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focale,50%) 50%;transition:transform 1.2s var(--ease)}
+.vignette:hover .vignette-photo img{transform:scale(1.04)}
+.vignette-sur{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:var(--t-petit);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.vignette-titre{margin-top:8px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:1.625rem;line-height:1.1;text-wrap:balance}
+.vignette-titre a{text-decoration:none}
+.vignette-titre a::after{content:"";position:absolute;inset:0}
+.vignette-titre a:focus-visible{outline:none}
+.vignette:has(a:focus-visible){outline:2px solid var(--encre);outline-offset:6px}
+.vignette:hover .vignette-titre a{text-decoration:underline}
+.vignette-sous{margin-top:6px;color:var(--muet)}
+
+/* agenda, saisons : la carte dans un écran sombre, reliée à la liste */
+.ecran{position:relative;margin-bottom:40px;padding:clamp(12px,2vw,24px);border-radius:6px;background:radial-gradient(70% 55% at 40% 20%,rgba(188,62,128,.3),rgba(188,62,128,0) 72%),var(--nuit);color:var(--creme)}
+.ecran .carte{width:100%;height:auto;max-height:calc(100vh - var(--tete-h) - 150px);margin:0 auto}
+.carte-filtre{display:flex;align-items:center;min-height:40px;margin-top:6px}
+.filtre-puce{display:inline-flex;align-items:center;gap:10px;padding:6px 14px;border-radius:999px;background:var(--magenta-vif);color:var(--nuit);font-weight:600;font-size:var(--t-petit)}
+.dates-groupe + .dates-groupe{margin-top:44px}
+.dates-mois{padding-bottom:12px;border-bottom:1px solid currentColor;font-size:var(--t-petit);font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+.date{display:grid;grid-template-columns:6.5rem minmax(0,1fr);gap:4px 20px;padding:18px 10px 20px 12px;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent);transition:background-color .3s,box-shadow .3s}
+.date.est-survol{background:color-mix(in srgb,var(--point) 12%,transparent);box-shadow:inset 3px 0 0 var(--point)}
+.date-quand{min-width:0}
+.date-jour{display:block;font-family:Gloock,Georgia,serif;font-size:1.5rem;line-height:1.1;overflow-wrap:break-word}
+.date-moisan{display:block;margin-top:4px;font-size:var(--t-petit);color:var(--muet)}
+.date-corps{min-width:0}
 .date-quoi a{display:inline-flex;align-items:baseline;gap:10px;font-weight:600;text-decoration:none}
 .date-quoi a:hover{text-decoration:underline}
 .date-point{flex:none;width:9px;height:9px;border-radius:50%;background:var(--point);transform:translateY(-1px)}
-.date-ville{display:block;font-weight:500}
-.date-quoi + .date-ou .date-ville{font-weight:400}
-.date-lieu{display:block;color:var(--muet)}
-.date-public .pastille{color:var(--muet)}
-.date-action a{font-weight:600;white-space:nowrap}
-.date-action:empty{display:none}
+.date-ou{font-weight:500}
+.date-quoi + .date-ou{font-weight:400}
+.date-details{margin-top:4px;color:var(--muet)}
+.date-details li + li{margin-top:4px}
+.saisons-liste{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,15rem),1fr));column-gap:clamp(16px,2.2vw,32px);border-top:1px solid var(--encre)}
+.saisons-liste a{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:18px 0;border-bottom:1px solid var(--trait);font-family:Gloock,Georgia,serif;font-size:1.375rem;line-height:1.2;text-decoration:none}
+.saisons-liste a::after{content:"→";font-family:Inter,system-ui,sans-serif;font-size:1rem;color:var(--magenta);transition:transform .4s var(--ease)}
+.saisons-liste a:hover::after{transform:translateX(4px)}
+.saison-sp + .saison-sp{margin-top:56px}
+.saison-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-moyen);line-height:1.12}
+.saison-titre a{text-decoration:none}
+.saison-titre a:hover{text-decoration:underline}
+.saison-sous{margin-top:6px;color:var(--muet)}
+.saison-creation{margin-top:2px;font-size:var(--t-petit);color:var(--muet)}
+.saison-dates{margin-top:18px;border-top:1px solid var(--encre)}
+.ds{padding:14px 10px 14px 12px;border-bottom:1px solid var(--trait);transition:background-color .3s,box-shadow .3s}
+.ds.est-survol{background:rgba(188,62,128,.08);box-shadow:inset 3px 0 0 var(--magenta)}
+.ds-ligne{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 14px}
+.ds-ligne a{display:contents;color:inherit}
+.ds-quand{font-weight:600}
+.ds-ou{color:var(--muet)}
+.ds-ligne a:hover .ds-ou{text-decoration:underline}
+.ds .pastille{margin-top:6px;color:var(--magenta)}
+.ds.est-annule .ds-quand,.ds.est-annule .ds-ou{text-decoration:line-through}
 
-/* trois portes */
-.portes .bloc-tete{margin-bottom:40px}
-.portes-liste{display:grid;gap:56px}
-.porte{display:flex;flex-direction:column;align-items:flex-start;border-top:3px solid var(--porte);padding-top:26px}
-.porte-num{font-size:var(--t-petit);font-weight:600;letter-spacing:.2em;color:var(--porte)}
-.porte-titre{margin-top:14px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-moyen);line-height:1.12;text-wrap:balance}
-.porte-texte{margin-top:14px;max-width:24em}
-.porte-detail{margin-top:10px;color:var(--muet);max-width:24em}
-.porte-lien{display:inline-flex;align-items:center;gap:10px;margin-top:22px;padding-bottom:3px;border-bottom:1px solid currentColor;font-weight:600;text-decoration:none}
-.porte-lien span{color:var(--porte);transition:transform .45s var(--ease)}
-.porte-lien:hover span{transform:translateX(4px)}
+/* la compagnie, les actions culturelles, les mentions */
+.frise{margin-top:24px;border-top:1px solid var(--encre)}
+.frise li{display:grid;grid-template-columns:4.5rem minmax(0,1fr);gap:16px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--trait)}
+.frise-annee{font-family:Gloock,Georgia,serif;font-size:1.5rem;line-height:1;color:var(--magenta)}
+.cie-dates{margin-top:64px}
+.actions-photo{margin-bottom:clamp(36px,6vh,64px)}
+.actions-photo img{width:100%;aspect-ratio:3/2;object-fit:cover}
+.actions-photo figcaption{margin-top:8px;font-size:.75rem;color:var(--muet)}
 
-/* la compagnie */
-.compagnie-lead{margin-top:26px;font-family:Gloock,Georgia,serif;font-size:var(--t-moyen);line-height:1.34;max-width:24em;text-wrap:pretty}
-.compagnie-ms{margin-top:22px;color:var(--muet)}
-.chiffres{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:36px 28px;margin-top:56px;align-content:start}
-.chiffres > div{display:flex;flex-direction:column-reverse;justify-content:flex-end;border-top:1px solid var(--trait);padding-top:18px}
-.chiffres dd{font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1;font-variant-numeric:lining-nums}
-.chiffres dt{margin-top:10px;color:var(--muet);max-width:14em}
-.chiffres-source{margin-top:28px;font-size:var(--t-petit);color:var(--muet)}
-
-/* les onglets : une page par entrée du menu, sur papier */
-.page > .bloc:first-child{padding-top:calc(var(--tete-h) + clamp(48px,9vh,104px))}
-.page-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-page);line-height:1;letter-spacing:-.012em;margin-top:16px;text-wrap:balance}
-.page-intro{margin-top:22px;color:var(--muet);max-width:30em}
-.section-tete .bloc-titre{margin-top:0}
-.section-corps{margin-top:32px}
-
-/* répertoire */
-.repertoire{display:grid;grid-template-columns:minmax(0,1fr);margin-top:clamp(40px,7vh,72px);border-top:1px solid var(--encre)}
-.carte{position:relative;display:grid;grid-template-columns:104px minmax(0,1fr);gap:0 18px;align-items:start;padding:20px 0;border-bottom:1px solid var(--trait)}
-.carte-photo{position:relative;overflow:hidden;aspect-ratio:4/5;background:var(--fond)}
-.carte-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focale,50%) 50%;transition:transform 1.2s var(--ease)}
-.carte:hover .carte-photo img{transform:scale(1.04)}
-.carte-num{font-size:var(--t-petit);font-weight:600;letter-spacing:.2em;color:var(--ink);font-variant-numeric:tabular-nums}
-.carte-titre{margin-top:6px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:1.5rem;line-height:1.1;text-wrap:balance}
-.carte-titre a{text-decoration:none}
-.carte-titre a::after{content:"";position:absolute;inset:0}
-.carte-titre a:focus-visible{outline:none}
-.carte:has(a:focus-visible){outline:2px solid var(--encre);outline-offset:6px}
-.carte:hover .carte-titre a{text-decoration:underline}
-.carte-sous{margin-top:6px;color:var(--muet)}
-.carte-date{margin-top:14px;font-weight:500}
-.carte-date.est-vide{font-weight:400;color:var(--muet)}
-.carte-date .surtitre{margin-bottom:4px}
-
-/* la compagnie : intention, plateau, partenaires */
-.intention-pieuvre{display:block;width:84px;margin-bottom:24px;color:var(--magenta)}
-.intention-pieuvre svg{width:100%;height:auto}
-.intention-texte{font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1.14;letter-spacing:-.008em;max-width:20em;text-wrap:balance}
-.artistes,.partenaires-liste{display:grid;grid-template-columns:minmax(0,1fr);column-gap:clamp(20px,2.6vw,40px);border-top:1px solid var(--encre)}
-.artistes li,.partenaires-liste li{display:flex;flex-direction:column;padding:14px 0 15px;border-bottom:1px solid var(--trait)}
-.artiste-nom{font-weight:600}
-.artiste-pieces{color:var(--muet)}
-
-/* contact */
-.contact-adresse{margin-top:18px;font-style:normal;color:var(--muet)}
-.lettre{margin-top:56px;padding-top:18px;border-top:1px solid var(--encre);max-width:26em}
-.lettre p + p{margin-top:8px}
-.porte-ligne{display:block}
-.porte-ligne + .porte-ligne{margin-top:4px}
+/* formulaires d'origine */
+.formulaire{display:grid;gap:22px;max-width:42rem}
+.form-texte{max-width:34em}
+.champ{display:flex;flex-direction:column;gap:6px}
+.champ label{font-weight:500}
+.champ input,.champ textarea{width:100%;padding:10px 0;border:0;border-bottom:1px solid var(--encre);border-radius:0;background:transparent}
+.champ textarea{padding:12px;border:1px solid var(--encre);resize:vertical}
+.champ input:focus-visible,.champ textarea:focus-visible{outline:2px solid var(--magenta);outline-offset:3px}
+.case{display:flex;align-items:flex-start;gap:12px}
+.case input{flex:none;width:20px;height:20px;margin:3px 0 0;accent-color:var(--magenta)}
+.case a{color:var(--magenta)}
+.champ-calcul{flex-direction:row;align-items:center;gap:14px}
+.champ-calcul input{width:4.5rem;text-align:center;border:1px solid var(--encre);padding:8px}
+.bouton-plein{display:inline-flex;align-items:center;gap:14px;padding:15px 30px;border-radius:999px;background:var(--encre);color:var(--papier);font-weight:600;line-height:1.2;transition:background-color .3s}
+.bouton-plein:hover{background:var(--magenta)}
+.coordonnees{margin-top:48px;font-style:normal;color:var(--muet)}
+.coordonnees strong{display:block;margin-bottom:6px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-moyen);line-height:1.2;color:var(--encre)}
 
 /* pied de page */
 .pied{background:var(--nuit);color:var(--creme);padding:clamp(80px,13vh,136px) var(--marge) 36px;--muet:var(--creme-2)}
-.pied .grille{row-gap:48px}
-.pied-courriel,.contact-courriel{display:inline-block;margin-top:16px;font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1.08;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .5s var(--ease);word-break:break-word}
-.pied-courriel:hover,.contact-courriel:hover{background-size:100% 1px}
-.contact-courriel{margin-top:32px}
+.pied .grille{row-gap:40px}
+.pied-ecrire{display:inline-block;font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1.04;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 1px no-repeat;transition:background-size .5s var(--ease)}
+.pied-ecrire:hover{background-size:100% 1px}
 .pied-adresse{margin-top:20px;color:var(--creme-2);font-style:normal}
-.pied-titre{font-size:var(--t-petit);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--creme-2);margin-bottom:14px}
-.pied-liste li + li{margin-top:6px}
-.pied-bas{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 32px;margin-top:clamp(64px,10vh,104px);padding-top:26px;border-top:1px solid rgba(243,238,233,.14);color:var(--creme-2);font-size:var(--t-petit)}
-.pied-marque{display:flex;align-items:center;gap:14px}
+.pied-facebook{margin-top:10px;color:var(--creme-2)}
+.pied-partenaires{max-width:34em;font-size:var(--t-petit);line-height:1.7;color:var(--creme-2)}
+.pied-legal{font-size:var(--t-petit);color:var(--creme-2)}
+.pied-legal li + li{margin-top:4px}
+.pied-bas{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px 32px;margin-top:clamp(40px,7vh,80px);padding-top:26px;border-top:1px solid rgba(243,238,233,.14);color:var(--creme-2);font-size:var(--t-petit)}
+.pied-marque{display:flex;align-items:center;gap:14px;text-decoration:none}
 .pied-pieuvre{width:44px;color:var(--creme)}
 .pied-pieuvre svg{width:100%;height:auto}
-.pied-nav ul{display:flex;flex-wrap:wrap;gap:8px 26px}
+.pied-nav{display:flex;flex-wrap:wrap;gap:8px 22px}
 .pied-nav a{text-decoration:none}
 .pied-nav a:hover{text-decoration:underline}
 
 /* page spectacle : l'ouverture */
 .ouverture{position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;min-height:100vh;min-height:100svh;background:var(--fond);color:var(--creme)}
-.ouv-photo{position:relative;flex:none;height:60vh;height:60svh;overflow:hidden}
+.ouv-photo{position:relative;flex:none;height:58vh;height:58svh;overflow:hidden}
 .ouv-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focale,50%) 50%}
 .ouv-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,var(--fond) 0%,var(--fond) 4%,color-mix(in srgb,var(--fond) 0%,transparent) 46%),linear-gradient(180deg,rgba(0,0,0,.45),rgba(0,0,0,0) 26%)}
 .ouv-contenu{position:relative;flex:1;display:flex;flex-direction:column;justify-content:flex-end;padding:0 var(--marge) 44px}
@@ -226,52 +290,65 @@ ul,ol{padding:0;list-style:none}
 .retour span{transition:transform .45s var(--ease)}
 .retour:hover span{transform:translateX(-4px)}
 .ouv-haut{position:absolute;top:calc(var(--tete-h) + 18px);left:var(--marge);right:var(--marge);z-index:2;display:flex;justify-content:space-between;gap:20px;text-shadow:0 1px 12px rgba(0,0,0,.45)}
+.ouv-sur{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:18px;font-size:var(--t-petit);font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
 .ouv-titre{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-ouverture);line-height:.96;letter-spacing:-.015em;max-width:11em;text-wrap:balance}
 .ouv-sous{margin-top:18px;font-size:1.125rem;color:var(--creme-2)}
-.ouv-credit{position:absolute;right:var(--marge);bottom:14px;z-index:2;font-size:.75rem;color:rgba(243,238,233,.7);text-shadow:0 1px 8px rgba(0,0,0,.6)}
+.ouv-credit{position:absolute;right:var(--marge);bottom:14px;z-index:2;max-width:70%;text-align:right;font-size:.75rem;color:rgba(243,238,233,.72);text-shadow:0 1px 8px rgba(0,0,0,.6)}
 
-/* page spectacle : le contenu calme */
+/* page spectacle : le texte, la fiche */
 .papier{background:var(--papier);color:var(--encre);--muet:var(--encre-2)}
-.fiche-intro{padding:clamp(72px,12vh,128px) var(--marge) clamp(56px,9vh,96px)}
-.fiche-accroche{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-grand);line-height:1.12;letter-spacing:-.008em;text-wrap:balance;max-width:19em}
-.fiche-accroche::before{content:"";display:block;width:44px;height:3px;background:var(--ink);margin-bottom:32px}
-.fiche-texte{margin-top:44px;font-size:1.125rem;line-height:1.7;max-width:36em}
-.fiche-texte p + p{margin-top:18px}
-.lien-fleche{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--ink)}
-.faits{margin-top:48px;border-top:1px solid var(--encre)}
-.faits > div{display:grid;grid-template-columns:8.5rem minmax(0,1fr);gap:12px;padding:14px 0;border-bottom:1px solid var(--trait)}
-@media (min-width:960px){.faits > div{grid-template-columns:10.5rem minmax(0,1fr)}}
-.faits dt{color:var(--muet)}
-.faits dd{font-weight:500}
-.faits .equipe li{font-weight:400}
-.faits .equipe li + li{margin-top:4px}
-.equipe-role{color:var(--muet)}
-.a-fournir{color:var(--muet);font-weight:400;font-style:normal;border-bottom:1px dashed currentColor}
+.fiche-corps{padding:clamp(72px,12vh,128px) var(--marge)}
+.fiche-texte{font-size:1.125rem;line-height:1.72;max-width:36em}
+.fiche-texte p + p{margin-top:1.1em}
+.fiche-infos{margin-top:48px;padding-top:12px;border-top:1px solid var(--encre)}
+.fiche-ligne{padding:9px 0;border-bottom:1px solid var(--trait)}
+.fiche-libelle{color:var(--muet)}
+.fiche-duree{margin-top:16px;font-weight:600}
+.fiche-mention{margin-top:14px;padding:12px 14px;border-left:3px solid var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.fiche-mention a{color:var(--ink)}
+.fiche-prod{margin-top:22px;font-size:var(--t-petit);line-height:1.65;color:var(--muet)}
+.fiche-prod p + p{margin-top:6px}
+.fiche-prod strong{color:var(--encre);font-weight:600}
+.medias{margin-top:30px}
+.medias-groupe{margin-top:18px;font-size:var(--t-petit);font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muet)}
+.media a{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--trait);font-weight:600;line-height:1.35;text-decoration:none;color:var(--ink)}
+.media a:hover .media-titre{text-decoration:underline}
+.media-ico{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--ink);color:var(--papier)}
+.media-ico svg{width:12px;height:12px}
+.media-par{display:block;margin-top:2px;font-size:var(--t-petit);font-weight:400;color:var(--muet)}
+.cas-cadre{margin-bottom:clamp(40px,7vh,72px);font-family:Gloock,Georgia,serif;font-size:var(--t-grand);line-height:1.1;max-width:18em;text-wrap:balance}
+.extraits{display:grid;gap:30px;margin-top:clamp(56px,9vh,96px);padding-top:clamp(40px,6vh,64px);border-top:1px solid var(--trait)}
+.extrait blockquote p{font-family:Gloock,Georgia,serif;font-size:var(--t-moyen);line-height:1.3;text-wrap:pretty}
+.extrait-source{margin-top:10px;font-size:var(--t-petit);color:var(--muet)}
 
-.fiche-portes{padding:0 var(--marge) clamp(88px,14vh,140px)}
-.fiche-portes > .grille{border-top:1px solid var(--trait);padding-top:clamp(64px,10vh,104px)}
-.onglets{display:grid;grid-template-columns:minmax(0,1fr);margin-top:36px;border-bottom:1px solid var(--trait)}
-.onglet{position:relative;display:flex;align-items:baseline;gap:14px;padding:16px 0 18px;color:var(--muet);transition:color .3s}
-.onglet::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform .55s var(--ease)}
-.onglet:hover{color:var(--encre)}
-.onglet[aria-selected="true"]{color:var(--encre)}
-.onglet[aria-selected="true"]::after{transform:none}
-.onglet-num{flex:none;font-size:var(--t-petit);font-weight:600;letter-spacing:.2em}
-.onglet-titre{font-family:Gloock,Georgia,serif;font-size:var(--t-moyen);line-height:1.15}
-.onglet:focus-visible{outline-offset:2px}
-.panneau{padding-top:clamp(36px,6vh,56px)}
-.panneau:focus-visible{outline-offset:8px}
-.panneau-grille{display:grid;gap:44px}
-.panneau-lead{font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-moyen);line-height:1.32;max-width:24em;text-wrap:pretty}
-h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
-.panneau-dates{max-width:58rem}
-.panneau-titre{font-size:var(--t-petit);font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px}
-.panneau-bloc + .panneau-bloc{margin-top:32px}
-.panneau p + p{margin-top:12px}
-.note{margin-top:22px;color:var(--muet)}
-.docs li{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 0;border-bottom:1px solid var(--trait)}
-.docs li:first-child{border-top:1px solid var(--trait)}
-.docs a{font-weight:600;color:var(--ink)}
+/* page spectacle : la tournée, un chapitre sombre avec sa carte */
+.tournee{position:relative;isolation:isolate;padding:clamp(72px,12vh,128px) var(--marge);background:var(--fond);color:var(--creme);--muet:var(--creme-2)}
+.tournee::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(60% 50% at 72% 40%,color-mix(in srgb,var(--accent) 16%,transparent),transparent 72%)}
+.tournee-int{display:grid;gap:40px;max-width:1320px;margin:0 auto}
+.tournee-titre{margin-bottom:28px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-grand);line-height:1.04;letter-spacing:-.01em}
+.tournee-note{font-family:Gloock,Georgia,serif;font-size:var(--t-moyen);line-height:1.3;max-width:20em;color:var(--creme-2)}
+.tournee .dates-mois{border-color:color-mix(in srgb,currentColor 45%,transparent)}
+.tournee .date-quoi a,.tournee .date-details a{color:var(--creme)}
+.tournee-carte .carte{width:100%;height:auto;max-height:calc(100vh - var(--tete-h) - 110px);margin:0 auto}
+.tournee--seule .tournee-int{max-width:900px}
+
+/* la carte des tournées, dans l'univers de la 09 (CARTE.svg) */
+.carte-m09{color:var(--creme);--bras:var(--accent,#ef84b8)}
+.carte-m09 .carte-pays{fill:rgba(243,238,233,.04);stroke:rgba(243,238,233,.32);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.carte-m09 .carte-voisin{fill:none;stroke:rgba(243,238,233,.16);stroke-width:1;vector-effect:non-scaling-stroke;stroke-dasharray:2 4}
+.carte-m09 .carte-bras{fill:var(--bras);transition:opacity .3s}
+.carte-m09 .carte-bras-passe{fill:rgba(243,238,233,.2)}
+.carte-m09 .carte-bout-passe{fill:rgba(243,238,233,.42)}
+.carte-m09 .carte-spirale{fill:none;stroke:var(--bras);stroke-width:1.3;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.carte-m09 .carte-lieu{cursor:pointer;outline:none}
+.carte-m09 .carte-point{fill:var(--fond,var(--nuit));stroke:var(--bras);stroke-width:2;vector-effect:non-scaling-stroke;transform-box:fill-box;transform-origin:center;transition:transform .3s var(--ease),fill .3s}
+.carte-m09 .carte-lieu:hover .carte-point,.carte-m09 .carte-lieu.est-survol .carte-point,.carte-m09 .carte-lieu.est-choisi .carte-point{fill:#fff;transform:scale(1.7)}
+.carte-m09 .carte-lieu:focus-visible .carte-point{fill:#fff;stroke:#fff;stroke-width:3;transform:scale(1.9)}
+.carte-m09 .carte-nom{font:500 20px Inter,system-ui,sans-serif;fill:#fff;paint-order:stroke;stroke:rgba(12,7,10,.85);stroke-width:5px;stroke-linejoin:round;opacity:0;pointer-events:none;transition:opacity .25s}
+.carte-m09.noms-visibles .carte-nom,.carte-m09 .carte-nom.est-survol,.carte-m09 .carte-nom.est-choisi{opacity:1}
+.carte-m09.a-survol .carte-bras:not(.est-survol),.carte-m09.a-choix .carte-bras:not(.est-choisi){opacity:.28}
+.carte-m09 .carte-rouen{fill:#fff}
+.carte-m09 .carte-rouen-nom{font:22px Gloock,Georgia,serif;fill:#fff;paint-order:stroke;stroke:rgba(12,7,10,.8);stroke-width:5px}
 
 /* spectacle suivant */
 .suivant{background:var(--fond);color:var(--creme)}
@@ -280,17 +357,15 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
 .suivant-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--focale,50%) 50%;transition:transform 1.4s var(--ease)}
 .suivant-lien:hover .suivant-photo img{transform:scale(1.04)}
 .suivant-texte{display:flex;flex-direction:column;align-items:flex-start;padding:36px var(--marge) 72px}
-.suivant-titre{margin-top:18px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-titre);line-height:1;letter-spacing:-.012em;text-wrap:balance}
+.suivant-sur{font-size:var(--t-petit);font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.suivant-titre{margin-top:16px;font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-titre);line-height:1;letter-spacing:-.012em;text-wrap:balance}
 .suivant-sous{margin-top:14px;color:var(--creme-2)}
 .suivant-fleche{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;margin-top:34px;border-radius:50%;background:var(--accent);color:var(--fond);font-size:1.5rem;transition:transform .5s var(--ease)}
 .suivant-lien:hover .suivant-fleche{transform:translateX(8px)}
 .suivant-lien:focus-visible{outline-color:var(--creme);outline-offset:-6px}
 
-/* téléphone : menu repliable */
-@media (max-width:719px){
-  :root{--tete-h:64px}
-  .marque-pieuvre{width:52px}
-  .marque-mot{font-size:1.25rem}
+/* en dessous de 1280 px : le menu replié */
+@media (max-width:1279px){
   .menu-bouton{display:inline-flex;align-items:center;gap:12px;padding:10px 2px;font-size:1rem;font-weight:500}
   .menu-icone{position:relative;display:block;width:22px;height:10px}
   .menu-icone::before,.menu-icone::after{content:"";position:absolute;left:0;right:0;height:1.5px;background:currentColor;transition:transform .35s var(--ease),top .35s var(--ease)}
@@ -302,76 +377,60 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .tete.menu-ouvert{background:var(--nuit);color:var(--creme);box-shadow:0 1px 0 rgba(243,238,233,.1);-webkit-backdrop-filter:none;backdrop-filter:none}
   .tete.menu-ouvert .marque-pieuvre{color:#fff}
   .tete.menu-ouvert .nav{display:block}
-  .nav ul{flex-direction:column;align-items:stretch;gap:0}
+  .nav ul{flex-direction:column;align-items:stretch;gap:0;max-width:760px}
   .nav li{border-bottom:1px solid rgba(243,238,233,.12)}
-  .nav a{padding:16px 0;font-family:Gloock,Georgia,serif;font-weight:400;font-size:2rem;line-height:1.2}
+  .nav a{padding:16px 0;font-family:Gloock,Georgia,serif;font-weight:400;font-size:clamp(1.75rem,4vw,2.5rem);line-height:1.2;white-space:normal}
+  .nav a::before{display:none}
   .nav a::after{display:none}
   .nav a[aria-current="page"]{font-weight:400;color:var(--magenta-vif)}
-  .nav a[aria-current="page"]::after{display:block;left:auto;right:2px;top:50%;bottom:auto;width:10px;height:10px;border-radius:50%;transform:translateY(-50%);background:var(--magenta-vif)}
-  .tete[data-ton="clair"] .nav a[aria-current="page"]::after{background:var(--magenta-vif)}
-  .chap-0{padding-bottom:120px}
-  .date{grid-template-columns:6.5rem minmax(0,1fr)}
-  .date-num{font-size:1.375rem}
-  .faits > .faits-long{grid-template-columns:minmax(0,1fr);gap:8px}
+  .nav a[aria-current="page"]::after,.tete[data-ton="clair"] .nav a[aria-current="page"]::after{display:block;left:auto;right:2px;top:50%;bottom:auto;width:10px;height:10px;border-radius:50%;transform:translateY(-50%);background:var(--magenta-vif)}
+}
+@media (max-width:719px){
+  :root{--tete-h:64px}
+  .marque-pieuvre{width:52px}
+  .marque-mot{font-size:1.25rem}
+  .date{grid-template-columns:6rem minmax(0,1fr);gap:4px 16px}
+  .date-jour{font-size:1.3125rem}
 }
 
 /* tablette et plus */
 @media (min-width:720px){
-  .date{grid-template-columns:8.5rem minmax(0,1fr) minmax(0,1.2fr) 7.5rem;align-items:start;gap:0 24px}
-  .date-quand{grid-row:1/span 2}
-  .date-quoi{grid-column:2;grid-row:1/span 2}
-  .date-ou{grid-column:3;grid-row:1/span 2}
-  .date-public{grid-column:4;grid-row:1;text-align:right}
-  .date-action{grid-column:4;grid-row:2;text-align:right;margin-top:10px}
-  .dates-liste--seule .date{grid-template-columns:8.5rem minmax(0,1fr) 7.5rem}
-  .dates-liste--seule .date-ou{grid-column:2}
-  .dates-liste--seule .date-public,.dates-liste--seule .date-action{grid-column:3}
-  .portes-liste{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(5,auto);gap:0 clamp(20px,2.6vw,40px)}
-  .porte{display:grid;grid-row:span 5;grid-template-rows:subgrid;align-content:start;justify-items:start}
-  .repertoire{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:clamp(20px,3vw,40px)}
-  .carte{grid-template-columns:128px minmax(0,1fr);gap:0 22px}
-  .artistes,.partenaires-liste{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .onglets{grid-template-columns:repeat(3,minmax(0,1fr));column-gap:clamp(20px,2.6vw,40px)}
-  .onglet{flex-direction:column;align-items:flex-start;gap:10px;padding:0 0 22px}
-  .panneau-grille{grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(32px,6vw,96px)}
+  .date{grid-template-columns:9rem minmax(0,1fr)}
+  .portes{grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,2vw,28px)}
+  .porte{flex-direction:column;align-items:flex-start;justify-content:space-between;min-height:clamp(220px,40vh,400px);padding:26px 26px 30px}
+  .porte-fleche{order:-1;align-self:flex-end}
+  .porte-titre{font-size:clamp(1.75rem,2.7vw,2.5rem)}
+  .vignettes{grid-template-columns:repeat(2,minmax(0,1fr));gap:56px clamp(20px,3vw,40px)}
+  .extraits{grid-template-columns:repeat(2,minmax(0,1fr));gap:40px clamp(24px,4vw,64px)}
   .suivant-lien{display:grid;grid-template-columns:1fr 1fr;min-height:min(80vh,780px)}
   .suivant-photo{aspect-ratio:auto}
   .suivant-texte{justify-content:center;padding:96px var(--marge) 96px var(--interieur)}
-  .suivant[data-photo="droite"] .suivant-photo{order:2}
-  .suivant[data-photo="droite"] .suivant-texte{padding-left:var(--marge);padding-right:var(--interieur)}
 }
 
 /* bureau : la grille à douze colonnes */
 @media (min-width:960px){
   .grille{grid-template-columns:repeat(12,minmax(0,1fr))}
-  .agenda .bloc-tete{grid-column:1/span 4;align-self:start;position:sticky;top:calc(var(--tete-h) + 48px)}
-  .agenda-corps{grid-column:5/-1;margin-top:0}
-  .portes .bloc-tete{grid-column:1/span 8;margin-bottom:clamp(44px,7vh,72px)}
-  .portes-liste{grid-column:1/-1}
-  .compagnie-texte{grid-column:1/span 6}
-  .chiffres{grid-column:8/-1;margin-top:8px}
-  .chiffres-col{grid-column:8/-1;align-self:start}
-  .chiffres-col .chiffres{margin-top:8px}
-  .page-spectacles .page-tete{grid-column:1/span 8}
-  .repertoire{grid-column:1/-1}
-  .section-tete{grid-column:1/span 4}
-  .section-corps{grid-column:5/-1;margin-top:0}
-  .contact-principal{grid-column:1/span 7}
-  .lettre{grid-column:9/-1;align-self:end;margin-top:0}
-  .pied-contact{grid-column:1/span 6}
-  .pied-partenaires{grid-column:7/span 3}
-  .pied-mentions{grid-column:10/-1}
-  .pied-bas{grid-column:1/-1}
-  .fiche-accroche{grid-column:1/span 10}
-  .fiche-texte{grid-column:1/span 6}
-  .faits{grid-column:8/-1;align-self:start}
-  .fiche-portes .bloc-tete{grid-column:1/span 8}
-  .onglets,.panneau{grid-column:1/-1}
+  .grille > *{grid-column:1/-1}
+  .agenda-grille > .ecran{grid-column:1/span 5;position:sticky;top:calc(var(--tete-h) + 24px);align-self:start;margin-bottom:0}
+  .agenda-grille > .agenda-liste{grid-column:7/-1}
+  .cie-grille > .cie-texte{grid-column:1/span 7}
+  .cie-grille > .cie-dates{grid-column:9/-1;margin-top:0;position:sticky;top:calc(var(--tete-h) + 40px);align-self:start}
+  .actions-grille > .actions-photo{grid-column:1/span 6;position:sticky;top:calc(var(--tete-h) + 32px);align-self:start;margin-bottom:0}
+  .actions-grille > .actions-prose{grid-column:8/-1}
+  .form-grille > .formulaire-col{grid-column:1/span 7}
+  .form-grille > .coordonnees{grid-column:9/-1;margin-top:0;align-self:end}
+  .legal-grille > .prose{grid-column:1/span 8}
+  .fiche-grille > .fiche-texte{grid-column:1/span 7}
+  .fiche-grille > .fiche-infos{grid-column:9/-1;margin-top:0;align-self:start}
+  .tournee-int{grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(32px,5vw,80px);align-items:start}
+  .tournee-carte{position:sticky;top:calc(var(--tete-h) + 24px)}
+  .tournee--seule .tournee-int{grid-template-columns:minmax(0,1fr)}
+  .pied .grille > .pied-contact{grid-column:1/span 5}
+  .pied .grille > .pied-partenaires{grid-column:7/span 3}
+  .pied .grille > .pied-legal{grid-column:10/-1}
 }
 @media (min-width:1100px){
-  .repertoire{grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(48px,7vh,72px) clamp(20px,2.6vw,40px);border-top:0}
-  .carte{grid-template-columns:minmax(0,1fr);padding:0;border-bottom:0}
-  .carte-photo{aspect-ratio:4/3;margin-bottom:20px}
+  .vignettes{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 
 /* bureau : un chapitre par écran */
@@ -379,23 +438,30 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .tete[data-ton="chapitre"]{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;text-shadow:0 1px 14px rgba(0,0,0,.35)}
   .tete[data-ton="chapitre"] .marque-pieuvre{filter:drop-shadow(0 1px 8px rgba(0,0,0,.35))}
   .chap{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;scroll-snap-align:start;scroll-snap-stop:always}
-  .chap:not(.chap-0)::before{background:radial-gradient(60% 70% at var(--lueur,72%) 58%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 72%)}
+  .chap::before{background:radial-gradient(60% 70% at var(--lueur,72%) 58%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 72%)}
   .chap[data-photo="droite"]{--lueur:28%}
   .chap[data-photo="droite"] .chap-photo{order:2}
   .chap-photo{aspect-ratio:auto;min-height:100%}
-  .chap-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,0) 22%),linear-gradient(0deg,rgba(0,0,0,.32),rgba(0,0,0,0) 26%)}
-  .chap[data-photo="droite"] .chap-photo::after{background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,0) 22%),radial-gradient(75% 55% at 100% 100%,rgba(0,0,0,.66),rgba(0,0,0,0) 72%)}
+  .chap-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.42),rgba(0,0,0,0) 22%),linear-gradient(0deg,rgba(0,0,0,.36),rgba(0,0,0,0) 26%)}
   .chap-texte{justify-content:center;padding:calc(var(--tete-h) + 3vh) var(--marge) 7vh var(--interieur)}
   .chap[data-photo="droite"] .chap-texte{padding-left:var(--marge);padding-right:var(--interieur)}
-  .chap-num{margin-bottom:clamp(16px,3.2vh,30px)}
+  .chap-sur{margin-bottom:clamp(16px,3vh,28px)}
   .chap-sous{margin-top:clamp(10px,1.8vh,18px)}
-  .chap-accroche{margin-top:clamp(20px,4.2vh,40px);font-size:min(var(--t-moyen),3.3vh)}
-  .chap-date{margin-top:clamp(22px,4.4vh,42px)}
+  .chap-accroche{margin-top:clamp(18px,3.8vh,36px);font-size:min(var(--t-moyen),3.3vh)}
+  .chap-tournee{margin-top:clamp(20px,4vh,40px)}
   .bouton{margin-top:clamp(22px,4vh,38px)}
-  .chap-0{display:flex;min-height:100vh}
-  .chap0-logo{width:min(40vw,60vh)}
-  .fin{display:flex;flex-direction:column;justify-content:center;min-height:100vh;padding-top:calc(var(--tete-h) + 40px);padding-bottom:72px;scroll-snap-align:start;scroll-margin-bottom:400vh}
-  .fin > .grille{width:100%}
+  .chap-carte{scroll-snap-align:start;height:calc(100vh + var(--pas,8) * 42vh + 50vh)}
+  .cc-scene{grid-template-columns:minmax(0,40fr) minmax(0,60fr);grid-template-rows:minmax(0,1fr)}
+  .cc-carte{order:2;margin-top:0;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12%);mask-image:linear-gradient(90deg,transparent 0,#000 12%)}
+  .cc-texte{padding:calc(var(--tete-h) + 5vh) var(--marge) 7vh var(--interieur)}
+  .cc-rail{margin-top:clamp(18px,4vh,40px)}
+  .cc-m{padding-bottom:6vh}
+  .chap-carte.est-statique .cc-scene{display:grid}
+  .chap-carte.est-statique .cc-carte{position:sticky;top:0;height:100vh;align-self:start}
+  .chap-carte.est-statique .cc-texte{padding-bottom:12vh}
+  .fin{display:flex;flex-direction:column;justify-content:center;min-height:100vh;scroll-snap-align:start}
+  .fin-int{width:100%}
+  html.aimante .pied{scroll-snap-align:end}
 
   .sommaire{display:block;position:fixed;right:var(--marge);bottom:clamp(28px,5.5vh,52px);z-index:40;transition:opacity .45s var(--ease),visibility .45s}
   .sommaire.est-cache{opacity:0;visibility:hidden}
@@ -414,25 +480,28 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .ouv-contenu{position:absolute;inset:auto 0 0 0;padding:0 var(--marge) clamp(56px,10vh,104px)}
   .ouv-credit{bottom:22px}
 }
-
 @media (min-width:1024px) and (min-height:600px) and (max-height:820px){
   .chap-texte{padding-top:calc(var(--tete-h) + 6px);padding-bottom:28px}
-  .chap-titre{font-size:clamp(2.5rem,min(5.6vw,8.8vh),5rem)}
-  .chap-num{margin-bottom:14px}
+  .chap-titre{font-size:clamp(2.5rem,min(5.6vw,8.6vh),5rem)}
+  .chap-sur{margin-bottom:12px}
   .chap-sous{margin-top:8px}
-  .chap-accroche{margin-top:18px;font-size:min(var(--t-moyen),3.1vh)}
-  .chap-date{margin-top:22px}
-  .bouton{margin-top:22px;padding-top:13px;padding-bottom:13px}
-  .chap-0{padding-bottom:104px}
-  .chap0-logo{width:min(40vw,54vh)}
+  .chap-accroche{margin-top:16px;font-size:min(var(--t-moyen),3vh)}
+  .chap-tournee{margin-top:20px}
+  .bouton{margin-top:20px;padding-top:13px;padding-bottom:13px}
+  .cc-texte{padding-top:calc(var(--tete-h) + 2vh);padding-bottom:4vh}
 }
 
 /* animations */
 @media (prefers-reduced-motion:no-preference){
-  .chap0-svg{animation:entree 1.5s var(--ease) both .1s}
-  .chap0-intention{animation:entree 1.3s var(--ease) both .5s}
-  .chap0-indice{animation:fondu 1.2s var(--ease) both 1.1s}
-  .indice-trait::after{animation:coule 2.6s cubic-bezier(.65,0,.35,1) infinite 1.8s}
+  .chap.attend .chap-texte > *{opacity:0;transform:translateY(24px)}
+  .chap.attend .chap-photo img{transform:scale(1.08)}
+  .chap.entre .chap-texte > *{transition:opacity .7s var(--ease),transform .9s var(--ease)}
+  .chap.entre .chap-photo img{transition:transform 2.2s var(--ease)}
+  .chap.entre .chap-texte > :nth-child(2){transition-delay:.05s}
+  .chap.entre .chap-texte > :nth-child(3){transition-delay:.1s}
+  .chap.entre .chap-texte > :nth-child(4){transition-delay:.15s}
+  .chap.entre .chap-texte > :nth-child(5){transition-delay:.2s}
+  .chap.entre .chap-texte > :nth-child(6){transition-delay:.25s}
   .chap.arme .chap-photo{clip-path:inset(0 100% 0 0)}
   .chap.arme .chap-photo img{transform:scale(1.08)}
   .chap.arme .chap-texte > *{opacity:0;transform:translateY(26px)}
@@ -445,15 +514,16 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   .chap.arme.vu .chap-texte > :nth-child(4){transition-delay:.48s}
   .chap.arme.vu .chap-texte > :nth-child(5){transition-delay:.56s}
   .chap.arme.vu .chap-texte > :nth-child(6){transition-delay:.64s}
+  .cc-onde{animation:onde 2.6s cubic-bezier(.2,.6,.3,1) infinite}
+  .cc-rouen.est-actif + .cc-onde,.cc-onde.est-actif{animation-duration:1.4s}
   .ouv-photo{animation:devoile 900ms cubic-bezier(.77,0,.18,1) both .05s}
   .ouv-photo img{animation:recule 1.6s var(--ease) both .05s}
   .ouv-haut,.ouv-contenu > *{animation:entree 1s var(--ease) both .45s}
   .ouv-contenu > :nth-child(2){animation-delay:.53s}
   .ouv-contenu > :nth-child(3){animation-delay:.61s}
 }
+@keyframes onde{from{stroke-width:11;opacity:.6}to{stroke-width:54;opacity:0}}
 @keyframes entree{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-@keyframes fondu{from{opacity:0}to{opacity:1}}
-@keyframes coule{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 @keyframes devoile{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0)}}
 @keyframes recule{from{transform:scale(1.08)}to{transform:none}}
 @media (prefers-reduced-motion:reduce){
@@ -464,18 +534,11 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
 <header class="tete" id="tete" data-ton="chapitre">
-  <a class="marque" href="#/" aria-label="Compagnie Crescite, accueil"><span class="marque-pieuvre" id="marque-pieuvre" aria-hidden="true"></span><span class="marque-mot" aria-hidden="true">crescite</span></a>
-  <button class="menu-bouton" id="menu-bouton" type="button" aria-expanded="false" aria-controls="nav-principale"><span class="menu-icone" aria-hidden="true"></span><span class="menu-texte">Menu</span></button>
-  <nav class="nav" id="nav-principale" aria-label="Navigation principale">
-    <ul>
-      <li><a href="#/spectacles" data-onglet="spectacles" data-texte="Spectacles">Spectacles</a></li>
-      <li><a href="#/agenda" data-onglet="agenda" data-texte="Agenda">Agenda</a></li>
-      <li><a href="#/compagnie" data-onglet="compagnie" data-texte="La compagnie">La compagnie</a></li>
-      <li><a href="#/contact" data-onglet="contact" data-texte="Contact">Contact</a></li>
-    </ul>
-  </nav>
+  <a class="marque" id="marque" href="#/"><span class="marque-pieuvre" id="marque-pieuvre" aria-hidden="true"></span><span class="marque-mot" id="marque-mot" aria-hidden="true"></span></a>
+  <button class="menu-bouton" id="menu-bouton" type="button" aria-expanded="false" aria-controls="nav-principale"><span class="menu-icone" aria-hidden="true"></span><span class="menu-texte"></span></button>
+  <nav class="nav" id="nav-principale"><ul></ul></nav>
 </header>
-<nav class="sommaire est-cache" id="sommaire" aria-label="Sommaire des chapitres"><ol></ol></nav>
+<nav class="sommaire est-cache" id="sommaire"><ol></ol></nav>
 <main id="contenu" tabindex="-1">
   <div id="vue-accueil" hidden></div>
   <div id="vue-page" hidden></div>
@@ -489,26 +552,28 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
-  const deux = (n) => String(n).padStart(2, '0');
-  const t = (s) => esc(s).replace(/ ([:;!?»–])/g, '\u00a0$1').replace(/« /g, '«\u00a0');
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const doux = (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 
+  const S = D.site;
+  const L = S.libelles;
   const SHOWS = D.shows;
   const DATES = D.dates;
-  const TOTAL = deux(SHOWS.length);
-  const LIMITE = 6;
+  const SAISON = S.saisons[0];
   const PAR_SLUG = Object.fromEntries(SHOWS.map((s) => [s.slug, s]));
-  const C = D.company;
+  const MENU = Object.fromEntries(S.menu.map((m) => [m.id, m]));
+  const PAR_ROUTE = Object.fromEntries(S.menu.map((m) => [m.href.replace(/^#\/?/, ''), m]));
+  const titreOnglet = (x) => `${x} - ${S.titreSuffixe}`;
   const MQ_LARGE = matchMedia('(min-width: 1024px) and (min-height: 600px)');
   const MQ_REDUIT = matchMedia('(prefers-reduced-motion: reduce)');
   const doc = document.documentElement;
   const tete = $('#tete');
   const sommaire = $('#sommaire');
   const vueAccueil = $('#vue-accueil');
-  const vueSpectacle = $('#vue-spectacle');
   const vuePage = $('#vue-page');
+  const vueSpectacle = $('#vue-spectacle');
   const pied = $('#pied');
-  const courriel = `<a href="mailto:${esc(C.email)}">${esc(C.email)}</a>`;
+  const FLECHE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';
 
   /* une couleur de spectacle, assombrie pour se lire sur le papier */
   const canal = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
@@ -516,6 +581,7 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
   const lum = (h) => { const [r, g, b] = rvb(h).map(canal); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
   const encre = (h, fond = '#f3eee9', cible = 4.8) => {
+    if (!/^#[0-9a-f]{6}$/i.test(h || '')) return '#1a1016';
     let [r, g, b] = rvb(h); let c = h;
     while (contraste(c, fond) < cible && r + g + b > 0) {
       r = Math.floor(r * 0.92); g = Math.floor(g * 0.92); b = Math.floor(b * 0.92);
@@ -524,403 +590,623 @@ h3.panneau-lead,.panneau-lead--marge{margin-bottom:28px}
     return c;
   };
 
-  /* dates */
-  const datesDe = (slug) => DATES.filter((d) => d.slug === slug);
-  const dateLongue = (d) => (d.precision === 'day' && d.iso === d.fin ? `${cap(d.joursemLong)} ${d.label}` : cap(d.label));
-  const partieJour = (d) => {
-    if (d.precision === 'month') return d.moisLong;
-    const j = d.label.replace(` ${d.moisLong} ${d.annee}`, '');
-    return d.precision === 'range' ? j.replace(/^du (\S+) au (\S+)$/, '$1 – $2') : j;
-  };
-  const sousJour = (d) => (d.precision === 'month' ? 'jour à préciser' : d.iso === d.fin ? d.joursemLong : '');
+  /* les textes de D, tels quels */
+  const lignesTitre = (s) => (s.titreLignes && s.titreLignes.length ? s.titreLignes : [s.titre]).map(esc).join('<br>');
+  const moisDe = (ligne) => (String(ligne || '').match(/(\S+\s\d{4})$/) || [null, ''])[1];
+  const decoupe = (ligne) => { const m = String(ligne || '').match(/^(.*\S)\s+(\S+\s\d{4})$/); return m ? [m[1], m[2]] : [String(ligne || ''), '']; };
+  const bloc = (h) => (/^\s*<(h\d|ul|ol|p|blockquote|div|figure|table)\b/i.test(h) ? h : `<p>${h}</p>`);
+  // la première phrase entière d'un paragraphe (balises équilibrées), si elle est courte
+  function premierePhrase(html, max = 200) {
+    if (!html) return '';
+    const re = /[.!?…](?=\s|<br\s*\/?>|$)/g;
+    let m;
+    while ((m = re.exec(html))) {
+      const morceau = html.slice(0, m.index + 1);
+      const texte = morceau.replace(/<[^>]+>/g, '');
+      if (texte.length < 12) continue;
+      const ouvre = (morceau.match(/<(em|strong|i|b|sup|sub|span|a)\b[^>]*>/gi) || []).length;
+      const ferme = (morceau.match(/<\/(em|strong|i|b|sup|sub|span|a)>/gi) || []).length;
+      if (ouvre !== ferme || /<br/i.test(morceau)) return '';
+      return texte.length <= max ? morceau : '';
+    }
+    return '';
+  }
+  const details = (ds) => (ds && ds.length ? `<ul class="date-details">${ds.map((x) => `<li>${x.lien ? `<a href="${esc(x.lien)}" target="_blank" rel="noopener">${esc(x.texte)}<span aria-hidden="true"> ↗</span></a>` : esc(x.texte)}</li>`).join('')}</ul>` : '');
 
+  /* les dates à venir, groupées par mois (« décembre 2026 », pris dans la ligne) */
+  function ligneDate(d, avecTitre) {
+    const s = PAR_SLUG[d.slug];
+    const [jour, mois] = decoupe(d.ligneDate);
+    return `<li class="date"${d.l != null ? ` data-l="${d.l}"` : ''} style="--point:${s ? s.couleur : 'currentColor'}">
+      <p class="date-quand"><span class="date-jour">${esc(jour)}</span>${mois ? `<span class="date-moisan">${esc(mois)}</span>` : ''}</p>
+      <div class="date-corps">
+        ${avecTitre ? `<p class="date-quoi"><a href="#/spectacle/${esc(d.slug)}"><span class="date-point" aria-hidden="true"></span>${esc(d.titre)}</a></p>` : ''}
+        <p class="date-ou">${esc(d.ligneLieu)}</p>
+        ${details(d.details)}
+      </div>
+    </li>`;
+  }
   function listeDates(liste, avecTitre, niveau = 'h3') {
     const groupes = [];
     for (const d of liste) {
-      const cle = `${d.moisLong} ${d.annee}`;
+      const cle = moisDe(d.ligneDate);
       const g = groupes[groupes.length - 1];
       if (g && g.cle === cle) g.items.push(d); else groupes.push({ cle, items: [d] });
     }
     return `<div class="dates">${groupes.map((g) => `
-      <${niveau} class="dates-mois">${esc(cap(g.cle))}</${niveau}>
-      <ul class="dates-liste${avecTitre ? '' : ' dates-liste--seule'}">${g.items.map((d) => ligneDate(d, avecTitre)).join('')}</ul>`).join('')}</div>`;
-  }
-  function ligneDate(d, avecTitre) {
-    const s = PAR_SLUG[d.slug];
-    const sous = sousJour(d);
-    const reserver = d.lien
-      ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">Réserver<span class="sr"> : ${esc(d.titre)}, ${esc(dateLongue(d))}, ${esc(d.commune)} (nouvel onglet)</span><span aria-hidden="true"> ↗</span></a>`
-      : '';
-    return `<li class="date" style="--point:${s ? encre(s.couleur) : 'currentColor'}">
-      <p class="date-quand"><span class="sr">${esc(dateLongue(d))}</span><span class="date-num" aria-hidden="true">${esc(partieJour(d))}</span>${sous ? `<span class="date-js" aria-hidden="true">${esc(sous)}</span>` : ''}</p>
-      ${avecTitre ? `<p class="date-quoi"><a href="#/spectacle/${esc(d.slug)}"><span class="date-point" aria-hidden="true"></span>${esc(d.titre)}</a></p>` : ''}
-      <p class="date-ou"><span class="date-ville">${esc(d.commune)} (${esc(d.dep)})</span>${d.lieu ? `<span class="date-lieu">${esc(d.lieu)}</span>` : ''}</p>
-      <p class="date-public"><span class="pastille">${esc(d.public)}</span></p>
-      <p class="date-action">${reserver}</p>
-    </li>`;
+      <div class="dates-groupe">
+        ${g.cle ? `<${niveau} class="dates-mois">${esc(g.cle)}</${niveau}>` : ''}
+        <ul class="dates-liste">${g.items.map((d) => ligneDate(d, avecTitre)).join('')}</ul>
+      </div>`).join('')}</div>`;
   }
 
-  /* l'accueil : neuf chapitres, puis le défilement libre */
+  /* l'accueil : un spectacle par écran */
   function chapitre(s, i) {
     const n = i + 1;
     const p = s.prochaine;
+    const phrase = premierePhrase(s.texte && s.texte[0]);
+    const accroche = phrase ? `<p class="chap-accroche">${phrase}</p>` : s.cadre ? `<p class="chap-accroche">${esc(s.cadre)}</p>` : '';
+    let tournee = '';
+    if (p) tournee = `<div class="chap-tournee"><p class="surtitre">${esc(L.actuellementEnTournee)}</p><p class="chap-date-quand">${esc(p.ligneDate)}</p><p class="chap-date-ou">${esc(p.ligneLieu)}</p></div>`;
+    else if (s.statut && s.tournee) tournee = `<div class="chap-tournee"><p class="surtitre">${esc(s.tournee.titre)}</p>${s.tournee.texte ? `<p class="chap-note">${esc(s.tournee.texte)}</p>` : ''}</div>`;
     return `
-<section class="chap" id="chap-${n}" data-chap="${n}" data-photo="${n % 2 ? 'gauche' : 'droite'}" data-ton="chapitre" aria-labelledby="t-chap-${n}" style="--fond:${s.fondSombre};--accent:${s.couleur};--focale:${s.focale ?? 50}%">
-  <div class="chap-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}"></div>
+<section class="chap" id="chap-${n}" data-chap data-titre="${esc(s.titre)}" data-accent="${esc(s.couleur)}" data-photo="${n % 2 ? 'gauche' : 'droite'}" data-ton="chapitre" aria-labelledby="t-chap-${n}" style="--fond:${s.fondSombre};--accent:${s.couleur};--focale:${s.focale ?? 50}%">
+  <div class="chap-photo"><img src="${D.photos[s.slug]}" alt="${esc(s.titre)}">${s.credit ? `<p class="chap-credit">${esc(s.credit)}</p>` : ''}</div>
   <div class="chap-texte">
-    <p class="chap-num"><span class="sr">Spectacle </span><b>${deux(n)}</b> / ${TOTAL}</p>
-    <h2 class="chap-titre" id="t-chap-${n}">${t(s.titre)}</h2>
-    <p class="chap-sous">${esc(s.sousTitre)}</p>
-    <p class="chap-accroche">${t(s.accroche)}</p>
-    <div class="chap-date">
-      <p class="surtitre">Prochaine date${p ? `<span class="pastille">${esc(p.public)}</span>` : ''}</p>
-      ${p ? `<p class="chap-date-quand">${esc(dateLongue(p))}</p><p class="chap-date-ou"><span>${esc(p.commune)} (${esc(p.dep)})</span>${p.lieu ? `<span>${esc(p.lieu)}</span>` : ''}</p>` : '<p class="chap-date-quand est-vide">Aucune date annoncée pour l’instant</p>'}
+    <p class="chap-sur">${esc(s.creation)}</p>
+    <h2 class="chap-titre" id="t-chap-${n}">${lignesTitre(s)}</h2>
+    <p class="chap-sous">${s.sousTitre || ''}</p>
+    ${accroche}
+    ${tournee}
+    <a class="bouton" href="#/spectacle/${esc(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span><span class="fleche" aria-hidden="true">→</span></a>
+  </div>
+</section>`;
+  }
+
+  /* la carte de l'accueil : les mois de la saison, les bras qui poussent de Rouen, la caméra qui recule */
+  const R = CARTE.rouen;
+  const MOIS = [];
+  for (const d of DATES) {
+    const titre = moisDe(d.ligneDate);
+    let g = MOIS[MOIS.length - 1];
+    if (!g || g.titre !== titre) MOIS.push((g = { titre, dates: [], ls: [] }));
+    g.dates.push(d);
+    if (d.l != null && !g.ls.includes(d.l)) g.ls.push(d.l);
+  }
+  const LIEUX = CARTE.aVenir();
+  const loin = (x) => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6;
+  const L_ROUEN = new Set(LIEUX.filter((x) => !loin(x)).map((x) => x.l));
+  const BRAS = [];
+  MOIS.forEach((g, m) => {
+    const nouveaux = g.ls.map((l) => LIEUX.find((x) => x.l === l)).filter((x) => x && loin(x) && !BRAS.some((b) => b.l === x.l));
+    nouveaux.forEach((x, k) => {
+      const courbe = x.xy[0] >= R[0] ? 0.2 : -0.2;
+      const q = (CARTE.trait(x.xy, { courbe }).match(/Q\s*(-?[\d.]+)[\s,]+(-?[\d.]+)/) || []).slice(1).map(Number);
+      BRAS.push({ l: x.l, c: x.c, xy: x.xy, n: x.n, mois: m, rang: k, nb: nouveaux.length, courbe, q: q.length === 2 ? q : [(R[0] + x.xy[0]) / 2, (R[1] + x.xy[1]) / 2], w: 4.2 + 1.5 * Math.sqrt(x.n || 1), g: -1, s: -1 });
+    });
+  });
+  const boite = (v) => v.split(/\s+/).map(Number);
+  const CAM0 = boite(CARTE.cadre([], { marge: 70, min: 180 }));
+  const CAMS = [];
+  MOIS.forEach((g, m) => { CAMS.push(boite(CARTE.cadre(BRAS.filter((b) => b.mois <= m), { marge: 60, min: 180 }))); });
+  const CAM_FIN = boite(CARTE.cadre(BRAS, { marge: 90, min: 180 }));
+  function cadrage(a, b, k) {
+    const w = Math.exp(Math.log(a[2]) + (Math.log(b[2]) - Math.log(a[2])) * k);
+    const h = Math.exp(Math.log(a[3]) + (Math.log(b[3]) - Math.log(a[3])) * k);
+    const cx = a[0] + a[2] / 2 + (b[0] + b[2] / 2 - a[0] - a[2] / 2) * k;
+    const cy = a[1] + a[3] / 2 + (b[1] + b[3] / 2 - a[1] - a[3] / 2) * k;
+    return [cx - w / 2, cy - h / 2, w, h];
+  }
+  // un bras qui pousse : la courbe de CARTE.trait, effilée sur la longueur déjà poussée
+  function brasPartiel(b, g, w0, w1) {
+    if (g <= 0.002) return '';
+    const [rx, ry] = R, [qx, qy] = b.q, [x, y] = b.xy, N = 22, G = [], Dr = [];
+    for (let k = 0; k <= N; k++) {
+      const f = k / N, t = g * f, a = (1 - t) ** 2, c2 = 2 * (1 - t) * t, c = t * t;
+      const px = a * rx + c2 * qx + c * x, py = a * ry + c2 * qy + c * y;
+      let tx = 2 * (1 - t) * (qx - rx) + 2 * t * (x - qx), ty = 2 * (1 - t) * (qy - ry) + 2 * t * (y - qy);
+      const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+      const w = (w0 * (1 - f) + w1 * f) / 2;
+      G.push(`${(px - ty * w).toFixed(2)} ${(py + tx * w).toFixed(2)}`);
+      Dr.push(`${(px + ty * w).toFixed(2)} ${(py - tx * w).toFixed(2)}`);
+    }
+    return `M${G.join('L')}L${Dr.reverse().join('L')}Z`;
+  }
+  function chapitreCarte() {
+    const [vx, vy, vw, vh] = boite(CARTE.viewBox);
+    const traces = CARTE.lieux.filter((x) => x.xy[0] >= vx && x.xy[0] <= vx + vw && x.xy[1] >= vy && x.xy[1] <= vy + vh)
+      .map((x) => `M${x.xy[0]} ${x.xy[1]}h.01`).join('');
+    return `
+<section class="chap-carte" id="chap-carte" data-chap data-titre="${esc(SAISON.titre)}" data-accent="#ef84b8" data-ton="chapitre" aria-labelledby="t-carte" style="--pas:${MOIS.length}">
+  <div class="cc-scene">
+    <div class="cc-texte">
+      <p class="surtitre cc-sur">${esc(L.actuellementEnTournee)}</p>
+      <h2 class="cc-titre" id="t-carte">${esc(SAISON.titre)}</h2>
+      <div class="cc-rail"><ol class="cc-liste">${MOIS.map((g, m) => `
+        <li class="cc-m${m ? '' : ' est-actif'}">
+          <h3 class="cc-m-titre">${esc(g.titre)}</h3>
+          <ul class="cc-lignes">${g.dates.map((d) => `<li class="cc-ligne"><span class="cc-quand">${esc(d.ligneDate)}</span><span class="cc-ou">${esc(d.ligneLieu)}</span><span class="cc-quoi" style="--c:${PAR_SLUG[d.slug] ? PAR_SLUG[d.slug].couleur : 'currentColor'}">${esc(d.titre)}</span></li>`).join('')}</ul>
+        </li>`).join('')}</ol></div>
+      <a class="bouton cc-bouton" href="${esc(MENU.agenda.href)}">${esc(MENU.agenda.texte)}<span class="fleche" aria-hidden="true">→</span></a>
     </div>
-    <a class="bouton" href="#/spectacle/${esc(s.slug)}">Voir le spectacle<span class="sr"> ${esc(s.titre)}</span><span class="fleche" aria-hidden="true">→</span></a>
+    <div class="cc-carte">
+      <svg class="cc-svg" viewBox="${CAM0.join(' ')}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(SAISON.titre)}">
+        <defs>
+          <radialGradient id="cc-halo"><stop offset="0" stop-color="#bc3e80" stop-opacity=".46"/><stop offset=".45" stop-color="#bc3e80" stop-opacity=".16"/><stop offset="1" stop-color="#bc3e80" stop-opacity="0"/></radialGradient>
+          ${BRAS.map((b) => `<linearGradient id="cc-g${b.l}" gradientUnits="userSpaceOnUse" x1="${R[0]}" y1="${R[1]}" x2="${b.xy[0]}" y2="${b.xy[1]}"><stop offset="0" stop-color="#bc3e80"/><stop offset="1" stop-color="#f4a6cb"/></linearGradient>`).join('')}
+        </defs>
+        <circle class="cc-halo" cx="${R[0]}" cy="${R[1]}" r="200" fill="url(#cc-halo)"/>
+        <path class="cc-voisin" d="${CARTE.fond.belgique}"/><path class="cc-voisin" d="${CARTE.fond.luxembourg}"/><path class="cc-pays" d="${CARTE.fond.pays}"/>
+        <path class="cc-traces" d="${traces}"/>
+        <g>${BRAS.map((b) => `<path class="cc-b" data-l="${b.l}" fill="url(#cc-g${b.l})" d=""/>`).join('')}</g>
+        <g>${BRAS.map((b) => `<path class="cc-s" data-l="${b.l}" pathLength="1" d=""/>`).join('')}</g>
+        <g>${BRAS.map((b) => `<path class="cc-p" data-l="${b.l}" d="M${b.xy[0]} ${b.xy[1]}h.01"/>`).join('')}</g>
+        <path class="cc-rouen" d="M${R[0]} ${R[1]}h.01"/><path class="cc-onde" d="M${R[0]} ${R[1]}h.01"/>
+      </svg>
+      <div class="cc-noms" aria-hidden="true">${BRAS.map((b) => `<span class="cc-nom${b.xy[0] < R[0] ? ' a-gauche' : ''}" data-l="${b.l}"><span>${esc(b.c)}</span></span>`).join('')}<span class="cc-nom cc-nom-rouen"><span>Rouen</span></span></div>
+    </div>
   </div>
 </section>`;
   }
 
-  /* les trois portes : à la fin de l'accueil et sur la page contact */
-  const NB_SPECTACLES = SHOWS.filter((s) => s.slug !== 'actions-culturelles').length;
-  const LIENS_PORTES = [['#/agenda', 'Tout l’agenda'], ['#/spectacles', 'Tous les spectacles'], ['#/spectacle/actions-culturelles', 'Les actions culturelles']];
-  const porte = (d, i, detail) => `
-      <article class="porte" style="--porte:${d.couleur}">
-        <p class="porte-num" aria-hidden="true">${deux(i + 1)}</p>
-        <h3 class="porte-titre">${esc(d.titre)}</h3>
-        <p class="porte-texte">${t(d.texte)}</p>
-        <p class="porte-detail">${detail}</p>
-        <a class="porte-lien" href="${LIENS_PORTES[i][0]}">${LIENS_PORTES[i][1]}<span aria-hidden="true">→</span></a>
-      </article>`;
+  /* la fin de l'accueil : les trois portes (libellés seuls), puis les donateurs */
+  const finHTML = () => `
+<section class="fin" id="fin" data-ton="clair">
+  <div class="fin-int">
+    <ul class="portes">${S.portes.map((p) => `<li><a class="porte" href="${esc(p.href)}" style="--porte:${p.couleur}"><span class="porte-titre">${esc(p.texte)}</span><span class="porte-fleche">${FLECHE}</span></a></li>`).join('')}</ul>
+    <p class="donateurs">${S.donateurs}</p>
+  </div>
+</section>`;
 
-  function accueilHTML() {
-    const pTP = DATES.find((d) => d.public === 'Tout public') || DATES[0];
-    const nbPass = SHOWS.filter((s) => s.passCulture).length;
-    const details = [
-      pTP ? `Prochaine date tout public : ${esc(dateLongue(pTP).toLowerCase())}, ${esc(pTP.commune)} (${esc(pTP.dep)}).` : 'Aucune date annoncée pour l’instant.',
-      `${NB_SPECTACLES} spectacles au répertoire, et des actions culturelles.`,
-      `${nbPass} spectacles en offre collective Pass Culture.`,
-    ];
-    return `
-<section class="chap chap-0" id="chap-0" data-chap="0" data-ton="chapitre" aria-labelledby="t-chap-0">
-  <h1 class="chap0-logo" id="t-chap-0" tabindex="-1"><span class="sr">Compagnie Crescite, théâtre à Rouen</span><span class="chap0-svg" aria-hidden="true">${D.logo.octopusWord}</span></h1>
-  <p class="chap0-intention">${t(C.intention)}</p>
-  <a class="chap0-indice" href="#chap-1"><span>${SHOWS.length} spectacles · faites défiler</span><span class="indice-trait" aria-hidden="true"></span></a>
-</section>
+  const accueilHTML = () => `
+<h1 class="sr" id="t-accueil" tabindex="-1">${esc(S.nom)}</h1>
 ${SHOWS.map(chapitre).join('')}
-<section class="libre bloc portes fin" id="portes" data-ton="clair" aria-labelledby="t-portes">
-  <div class="grille">
-    <header class="bloc-tete">
-      <p class="surtitre">Trois portes</p>
-      <h2 class="bloc-titre" id="t-portes">Par où entrer ?</h2>
-    </header>
-    <div class="portes-liste">${D.doors.map((d, i) => porte(d, i, details[i])).join('')}</div>
-  </div>
-</section>`;
-  }
+${chapitreCarte()}
+${finHTML()}`;
 
-  /* les pages des onglets, sur papier */
-  const entetePage = (surtitre, titre, intro, classe = '') => `
-      <header class="page-tete${classe}">
-        <p class="surtitre">${surtitre}</p>
+  /* les pages des onglets */
+  const entete = (titre, surtitre = '') => `
+      <header class="page-tete">
+        ${surtitre ? `<p class="surtitre">${surtitre}</p>` : ''}
         <h1 class="page-titre" id="t-page" tabindex="-1">${titre}</h1>
-        ${intro ? `<p class="page-intro">${intro}</p>` : ''}
       </header>`;
+  const page = (corps) => `<div class="page libre" data-ton="clair">${corps}</div>`;
 
-  function carte(s, i) {
-    const p = s.prochaine;
-    const date = s.slug === 'actions-culturelles'
-      ? `<p class="carte-date est-vide">${esc(s.noteScolaire || '')}</p>`
-      : p
-        ? `<p class="carte-date"><span class="surtitre">Prochaine date</span>${esc(cap(p.label))} · ${esc(p.commune)} (${esc(p.dep)})</p>`
-        : '<p class="carte-date est-vide">Aucune date annoncée pour l’instant</p>';
-    return `
-      <li class="carte" style="--ink:${encre(s.couleur)};--fond:${s.fondSombre};--focale:${s.focale ?? 50}%">
-        <div class="carte-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}"></div>
-        <div class="carte-texte">
-          <p class="carte-num" aria-hidden="true">${deux(i + 1)}</p>
-          <h2 class="carte-titre"><a href="#/spectacle/${esc(s.slug)}">${t(s.titre)}</a></h2>
-          <p class="carte-sous">${esc(s.sousTitre)}</p>
-          ${date}
-        </div>
-      </li>`;
-  }
-
-  function pageSpectacles() {
-    return `
-<div class="page libre" data-ton="clair">
-  <section class="bloc page-spectacles" aria-labelledby="t-page">
+  const vignette = (s) => `
+        <li class="vignette" style="--ink:${encre(s.couleurTexteClair || s.couleur)};--fond:${s.fondSombre};--focale:${s.focale ?? 50}%">
+          <div class="vignette-photo"><img src="${D.photos[s.slug]}" alt=""></div>
+          <p class="vignette-sur"><span>${esc(s.creation)}</span>${s.statut ? `<span class="pastille">${esc(s.statut)}</span>` : s.enTournee ? `<span class="pastille">${esc(L.enTournee)}</span>` : ''}</p>
+          <h2 class="vignette-titre"><a href="#/spectacle/${esc(s.slug)}">${esc(s.titre)}</a></h2>
+          <p class="vignette-sous">${s.sousTitre || ''}</p>
+        </li>`;
+  const pageSpectacles = () => page(`
+  <section class="bloc" aria-labelledby="t-page">
     <div class="grille">
-      ${entetePage('Répertoire', 'Les spectacles', `${NB_SPECTACLES} spectacles au répertoire, et des actions culturelles menées avec les établissements. Chacun a sa page : ses dates, de quoi le programmer, de quoi l’accueillir.`)}
-      <ul class="repertoire">${SHOWS.map(carte).join('')}</ul>
+      ${entete(esc(MENU.spectacles.texte))}
+      <ul class="vignettes">${SHOWS.map(vignette).join('')}</ul>
+    </div>
+  </section>`);
+
+  const saisonsListe = (sauf) => `
+  <section class="bloc" aria-label="${esc(L.saison)}">
+    <div class="grille"><ul class="saisons-liste">${S.saisons.filter((x) => x.saison !== sauf).map((x) => `<li><a href="${esc(x.href)}">${esc(x.titre)}</a></li>`).join('')}</ul></div>
+  </section>`;
+
+  const pageAgenda = () => page(`
+  <section class="bloc agenda" aria-labelledby="t-page">
+    <div class="grille agenda-grille">
+      ${entete(esc(SAISON.titre), esc(MENU.agenda.texte))}
+      <div class="ecran">
+        ${CARTE.svg({ lieux: CARTE.aVenir(), interactif: true, noms: true, spirale: true, titre: SAISON.titre, classe: 'carte-m09' })}
+        <p class="carte-filtre" aria-live="polite"></p>
+      </div>
+      <div class="agenda-liste" data-liste>${listeDates(DATES, true, 'h2')}</div>
     </div>
   </section>
-</div>`;
-  }
+  ${saisonsListe(SAISON.saison)}`);
 
-  function pageAgenda() {
-    const nb = (p) => DATES.filter((d) => d.public === p).length;
-    const sansLien = DATES.some((d) => !d.lien && d.public === 'Tout public');
-    return `
-<div class="page libre" data-ton="clair">
+  function ligneSaison(d) {
+    const i = String(d.ligne || '').indexOf(' — ');
+    const quand = i > 0 ? d.ligne.slice(0, i) : d.ligne;
+    const ou = i > 0 ? d.ligne.slice(i + 3) : '';
+    const corps = `<span class="ds-quand">${esc(quand)}</span>${ou ? `<span class="ds-ou">${esc(ou)}</span>` : ''}`;
+    return `<li class="ds${d.etat && /annul/i.test(d.etat) ? ' est-annule' : ''}"${d.l != null ? ` data-l="${d.l}"` : ''}>
+      <p class="ds-ligne">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${corps}</a>` : corps}</p>
+      ${d.etat ? `<span class="pastille">${esc(d.etat)}</span>` : ''}
+      ${details(d.details)}
+    </li>`;
+  }
+  function pageSaison(cle) {
+    const Sx = D.saisons[cle];
+    return page(`
   <section class="bloc agenda" aria-labelledby="t-page">
-    <div class="grille">
-      ${entetePage(`Agenda · saison ${esc(D.saison)}`, 'L’agenda', `${DATES.length} dates cette saison : ${nb('Tout public')} tout public et ${nb('Scolaire')} scolaires, en salle et dans les établissements. Chaque titre mène à la page du spectacle.`, ' bloc-tete')}
-      <div class="agenda-corps">
-        ${listeDates(DATES, true, 'h2')}
-        ${sansLien ? '<p class="note">Lien de réservation : <span class="a-fournir">à fournir</span> pour les dates qui n’en ont pas encore.</p>' : ''}
+    <div class="grille agenda-grille">
+      ${entete(esc(Sx.titre), `<a href="${esc(MENU.agenda.href)}">${esc(MENU.agenda.texte)}</a>`)}
+      <div class="ecran">
+        ${CARTE.svg({ lieux: CARTE.saison(cle), interactif: true, noms: true, titre: Sx.titre, classe: 'carte-m09' })}
+        <p class="carte-filtre" aria-live="polite"></p>
+      </div>
+      <div class="agenda-liste" data-liste>${Sx.spectacles.map((g) => `
+        <article class="saison-sp dates-groupe">
+          <h2 class="saison-titre">${g.slug && PAR_SLUG[g.slug] ? `<a href="#/spectacle/${esc(g.slug)}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
+          ${g.sousTitre ? `<p class="saison-sous">${g.sousTitre}</p>` : ''}
+          ${g.creation ? `<p class="saison-creation">${esc(g.creation)}</p>` : ''}
+          <ul class="saison-dates">${g.dates.map(ligneSaison).join('')}</ul>
+        </article>`).join('')}
       </div>
     </div>
   </section>
-</div>`;
+  ${saisonsListe(cle)}`);
   }
 
   function pageCompagnie() {
-    const artistes = new Map();
-    for (const s of SHOWS) for (const e of s.distribution) for (const nom of e.split(/\s+ou\s+/)) {
-      if (!artistes.has(nom)) artistes.set(nom, []);
-      artistes.get(nom).push(s.titre);
-    }
-    const liste = [...artistes].sort(([a], [b]) => a.localeCompare(b, 'fr'));
-    const S = D.stats;
-    return `
-<div class="page libre" data-ton="clair">
-  <section class="bloc compagnie" aria-labelledby="t-page">
-    <div class="grille">
-      <div class="compagnie-texte">
-        ${entetePage(`${esc(C.ville)}, depuis ${C.depuis}`, 'La compagnie', '')}
-        <p class="compagnie-lead">${t(C.presentation)}</p>
-        <p class="compagnie-ms">Mise en scène : ${esc(C.miseEnScene)}</p>
+    const C = S.compagnie;
+    return page(`
+  <section class="bloc" aria-labelledby="t-page">
+    <div class="grille cie-grille">
+      <div class="cie-texte">
+        ${entete(esc(C.titre))}
+        <div class="prose">${C.paragraphes.map(bloc).join('')}</div>
       </div>
-      <div class="chiffres-col">
-        <dl class="chiffres">
-          <div><dt>représentations depuis ${S.depuis}</dt><dd>${esc(S.representationsCourt)}</dd></div>
-          <div><dt>représentations par an au moins, depuis ${S.parAnDepuis}</dt><dd>${S.parAnMin}</dd></div>
-          <div><dt>pays : ${esc(S.paysListe.join(', '))}</dt><dd>${S.pays}</dd></div>
-          <div><dt>heures d’éducation artistique en 2023-2024</dt><dd>${S.heuresEAC}</dd></div>
-        </dl>
-        <p class="chiffres-source">Source : ${esc(S.source)}.</p>
-      </div>
+      <section class="cie-dates" aria-labelledby="t-dates">
+        <h2 class="bloc-titre" id="t-dates">${esc(C.datesTitre)}</h2>
+        <ol class="frise">${C.dates.map((x) => `<li><span class="frise-annee">${esc(x.annee)}</span><span>${esc(x.titre)}</span></li>`).join('')}</ol>
+      </section>
     </div>
-  </section>
-  <section class="bloc" aria-labelledby="t-intention">
-    <div class="grille">
-      <div class="section-tete"><span class="intention-pieuvre" aria-hidden="true">${D.logo.octopus}</span><h2 class="bloc-titre" id="t-intention">L’intention</h2></div>
-      <p class="intention-texte section-corps">${t(C.intention)}</p>
-    </div>
-  </section>
-  <section class="bloc" aria-labelledby="t-plateau">
-    <div class="grille">
-      <div class="section-tete"><h2 class="bloc-titre" id="t-plateau">Au plateau</h2><p class="bloc-intro">${liste.length} interprètes dans les distributions du répertoire.</p></div>
-      <ul class="artistes section-corps">${liste.map(([nom, pieces]) => `<li><span class="artiste-nom">${esc(nom)}</span><span class="artiste-pieces">${pieces.map((x) => t(x)).join(', ')}</span></li>`).join('')}</ul>
-    </div>
-  </section>
-  <section class="bloc" aria-labelledby="t-partenaires">
-    <div class="grille">
-      <div class="section-tete"><h2 class="bloc-titre" id="t-partenaires">Partenaires</h2></div>
-      <ul class="partenaires-liste section-corps">${C.partenaires.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
-    </div>
-  </section>
-</div>`;
+  </section>`);
   }
 
-  function pageContact() {
-    const contactPorte = `<span class="porte-ligne">Contact dédié : <span class="a-fournir">à fournir</span></span><span class="porte-ligne">En attendant : ${courriel}</span>`;
-    return `
-<div class="page libre" data-ton="clair">
+  function pageActions() {
+    const A = S.actions;
+    return page(`
   <section class="bloc" aria-labelledby="t-page">
-    <div class="grille">
-      <div class="contact-principal">
-        ${entetePage(esc(C.nom), 'Contact', '')}
-        <a class="contact-courriel" href="mailto:${esc(C.email)}">${esc(C.email)}</a>
-        <address class="contact-adresse">${esc(C.nom)}<br>${esc(C.adresse)}</address>
-      </div>
-      <div class="lettre">
-        <h2 class="panneau-titre">Lettre d’information</h2>
-        <p>Pour recevoir les prochaines dates de la compagnie.</p>
-        <p>Inscription : <span class="a-fournir">à fournir</span></p>
+    <div class="grille actions-grille">
+      ${entete(esc(A.titre))}
+      <figure class="actions-photo"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure>
+      <div class="prose actions-prose">${A.blocs.map(bloc).join('')}</div>
+    </div>
+  </section>`);
+  }
+
+  function pagePro() {
+    const P = S.pro;
+    return page(`
+  <section class="bloc" aria-labelledby="t-page">
+    <div class="grille form-grille">
+      <div class="formulaire-col">
+        ${entete(esc(P.titre), esc(P.titrePage))}
+        <form class="formulaire" data-inerte>
+          <p class="form-texte">${esc(P.texte)}</p>
+          <p class="champ"><label for="pro-mdp">${esc(P.champ)}</label><input id="pro-mdp" name="mdp" type="password" autocomplete="current-password"></p>
+          <p><button class="bouton-plein" type="submit">${esc(P.bouton)}</button></p>
+        </form>
       </div>
     </div>
-  </section>
-  <section class="bloc portes" aria-labelledby="t-portes-contact">
-    <div class="grille">
-      <header class="bloc-tete">
-        <p class="surtitre">Trois portes</p>
-        <h2 class="bloc-titre" id="t-portes-contact">Un contact par porte</h2>
-      </header>
-      <div class="portes-liste">${D.doors.map((d, i) => porte(d, i, contactPorte)).join('')}</div>
+  </section>`);
+  }
+
+  function consentement(texte) {
+    const cible = S.liensLegaux.find((x) => /confidentialit/i.test(x.href)) || S.liensLegaux[S.liensLegaux.length - 1];
+    const i = texte.toLowerCase().indexOf(String(cible.texte).toLowerCase());
+    if (i < 0) return esc(texte);
+    const n = cible.texte.length;
+    return `${esc(texte.slice(0, i))}<a href="${esc(cible.href)}">${esc(texte.slice(i, i + n))}</a>${esc(texte.slice(i + n))}`;
+  }
+  function pageContact() {
+    const K = S.contact;
+    const co = S.coordonnees;
+    const types = ['text', 'email', 'tel', 'text'];
+    const auto = ['name', 'email', 'tel', 'address-level2'];
+    const champs = K.champs.map((lab, i) => (i < 4
+      ? `<p class="champ"><label for="c-${i}">${esc(lab)}</label><input id="c-${i}" type="${types[i] || 'text'}" autocomplete="${auto[i] || 'off'}"></p>`
+      : `<p class="champ"><label for="c-${i}">${esc(lab)}</label><textarea id="c-${i}" rows="6"></textarea></p>`)).join('');
+    return page(`
+  <section class="bloc" aria-labelledby="t-page">
+    <div class="grille form-grille">
+      <div class="formulaire-col">
+        ${entete(esc(K.titre), esc(MENU.contact.texte))}
+        <form class="formulaire" data-inerte>
+          ${champs}
+          <p class="case"><input id="c-ok" type="checkbox"><label for="c-ok">${consentement(K.consentement)}</label></p>
+          <p class="champ champ-calcul"><label for="c-calc">${esc(K.calcul)}</label><input id="c-calc" inputmode="numeric" autocomplete="off"></p>
+          <p><button class="bouton-plein" type="submit">${esc(K.bouton)}</button></p>
+        </form>
+      </div>
+      <address class="coordonnees"><strong>${esc(co.nom)}</strong>${co.adresse.map(esc).join('<br>')}</address>
     </div>
-  </section>
-</div>`;
+  </section>`);
+  }
+
+  function pageLegal(cle) {
+    const G = S.legal[cle];
+    return page(`
+  <section class="bloc" aria-labelledby="t-page">
+    <div class="grille legal-grille">
+      ${entete(esc(G.titre))}
+      <div class="prose">${G.blocs.map(bloc).join('')}</div>
+    </div>
+  </section>`);
   }
 
   function piedHTML() {
+    const co = S.coordonnees;
     return `
 <div class="grille">
   <div class="pied-contact">
-    <h2 class="pied-titre">Contact</h2>
-    <a class="pied-courriel" href="mailto:${esc(C.email)}">${esc(C.email)}</a>
-    <address class="pied-adresse">${esc(C.nom)}<br>${esc(C.adresse)}</address>
+    <a class="pied-ecrire" href="${esc(S.ecrire.href)}">${esc(S.ecrire.texte)}</a>
+    <address class="pied-adresse">${esc(co.nom)}<br>${co.adresse.map(esc).join('<br>')}</address>
+    <p class="pied-facebook">${S.facebook.href ? `<a href="${esc(S.facebook.href)}" target="_blank" rel="noopener">${esc(S.facebook.texte)}</a>` : esc(S.facebook.texte)}</p>
   </div>
-  <div class="pied-partenaires">
-    <h2 class="pied-titre">Partenaires</h2>
-    <ul class="pied-liste">${C.partenaires.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>
-  </div>
-  <div class="pied-mentions">
-    <h2 class="pied-titre">Mentions</h2>
-    <ul class="pied-liste"><li>SIRET ${esc(C.siret)}</li><li>Licence ${esc(C.licence)}</li></ul>
-  </div>
+  <p class="pied-partenaires">${S.partenaires}</p>
+  <ul class="pied-legal">${co.legal.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
   <div class="pied-bas">
-    <p class="pied-marque"><span class="pied-pieuvre" aria-hidden="true">${D.logo.octopus}</span><span>© ${new Date().getFullYear()} ${esc(C.nom)} · ${esc(C.ville)}, depuis ${C.depuis}</span></p>
-    <nav class="pied-nav" aria-label="Navigation du pied de page"><ul>
-      <li><a href="#/spectacles">Spectacles</a></li><li><a href="#/agenda">Agenda</a></li><li><a href="#/compagnie">La compagnie</a></li><li><a href="#/contact">Contact</a></li>
-    </ul></nav>
+    <a class="pied-marque" href="#/"><span class="pied-pieuvre" aria-hidden="true">${D.logo.octopus}</span><span>${esc(S.nom)}</span></a>
+    <ul class="pied-nav">${[...S.menu, ...S.liensLegaux].map((x) => `<li><a href="${esc(x.href)}">${esc(x.texte)}</a></li>`).join('')}</ul>
   </div>
 </div>`;
   }
 
   /* la page d'un spectacle */
-  const fourni = (v) => (v == null || v === '' ? '<span class="a-fournir">à fournir</span>' : esc(v));
+  function medias(liste) {
+    if (!liste || !liste.length) return '';
+    const ico = (m) => (m.type === 'audio'
+      ? '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5h2.2L7 2v8L4.2 7.5H2z" fill="currentColor"/></svg>'
+      : '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8 10 6l-7 4.2z" fill="currentColor"/></svg>');
+    const item = (m) => `<li class="media"><a href="${esc(m.url)}" target="_blank" rel="noopener"><span class="media-ico">${ico(m)}</span><span><span class="media-titre">${esc(m.titre || '')}</span>${m.par ? `<span class="media-par">${esc(m.par)}</span>` : ''}</span></a></li>`;
+    const groupes = [];
+    for (const m of liste) {
+      const g = groupes.find((x) => x.nom === (m.groupe || null));
+      if (g) g.items.push(m); else groupes.push({ nom: m.groupe || null, items: [m] });
+    }
+    return `<div class="medias">${groupes.map((g) => `${g.nom ? `<p class="medias-groupe">${esc(g.nom)}</p>` : ''}<ul>${g.items.map(item).join('')}</ul>`).join('')}</div>`;
+  }
   function spectacleHTML(s) {
     const i = SHOWS.indexOf(s);
-    const n = i + 1;
     const suiv = SHOWS[(i + 1) % SHOWS.length];
-    const nSuiv = ((i + 1) % SHOWS.length) + 1;
-    const dates = datesDe(s.slug);
-    const action = s.slug === 'actions-culturelles';
-    const nb = s.distribution.length;
-    const equipe = s.equipe.length
-      ? `<ul class="equipe">${s.equipe.map(([r, nom]) => `<li><span class="equipe-role">${esc(r)} :</span> ${esc(nom)}</li>`).join('')}</ul>`
-      : fourni(null);
-    const faits = action
-      ? [['Format', esc(cap(s.sousTitre))], ['Éducation artistique', `${D.stats.heuresEAC} heures en 2023-2024`], ['Soutiens', fourni(s.soutiens)]]
-      : [['Création', fourni(s.annee)], ['Durée', fourni(s.duree)], ['Au plateau', nb ? `${nb} comédien${nb > 1 ? 's' : ''}` : fourni(null)], ['Équipe', equipe]];
-    const sansLien = dates.some((d) => !d.lien && d.public === 'Tout public');
-    const voir = dates.length
-      ? `<h3 class="panneau-lead">${dates.length} date${dates.length > 1 ? 's' : ''} cette saison.</h3>
-        <div class="panneau-dates">
-          <div id="fiche-dates">${listeDates(dates.slice(0, LIMITE), false)}</div>
-          ${dates.length > LIMITE ? `<button class="bouton-texte" type="button" id="fiche-dates-tout" aria-expanded="false" aria-controls="fiche-dates">Afficher les ${dates.length} dates</button>` : ''}
-          ${sansLien ? '<p class="note">Lien de réservation : <span class="a-fournir">à fournir</span> pour les dates qui n’en ont pas encore.</p>' : ''}
-        </div>`
-      : `<p class="panneau-lead">Aucune date annoncée pour l’instant.</p><p class="note">Pour être prévenu de la prochaine date : ${courriel}</p>`;
-    const programme = `<p class="panneau-lead panneau-lead--marge">Documents et contacts pour accueillir ${t(s.titre)}.</p><div class="panneau-grille">
-        <div>
-          <div class="panneau-bloc"><h3 class="panneau-titre">Documents</h3>
-            <ul class="docs">
-              <li><span>Fiche technique</span><span class="a-fournir">à fournir</span></li>
-              <li><span>Dossier de diffusion</span><span class="a-fournir">à fournir</span></li>
-              <li><span>Vidéo</span>${s.video ? `<a href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo<span class="sr"> de ${esc(s.titre)} (nouvel onglet)</span><span aria-hidden="true"> ↗</span></a>` : '<span class="a-fournir">à fournir</span>'}</li>
-            </ul>
-          </div>
-          <div class="panneau-bloc"><h3 class="panneau-titre">Contact diffusion</h3><p>${courriel}</p></div>
-        </div>
-        <div>
-          <div class="panneau-bloc"><h3 class="panneau-titre">Distribution</h3><p>${nb ? s.distribution.map(esc).join(', ') : fourni(null)}</p></div>
-          ${s.coproduction ? `<div class="panneau-bloc"><h3 class="panneau-titre">Coproduction</h3><p>${esc(s.coproduction)}</p></div>` : ''}
-          ${s.soutiens ? `<div class="panneau-bloc"><h3 class="panneau-titre">Soutiens</h3><p>${esc(s.soutiens)}</p></div>` : ''}
-        </div>
-      </div>`;
-    const etab = s.etablissement || {};
-    const etablissement = `<div class="panneau-grille">
-        <div>
-          <p class="panneau-lead">${etab.texte ? t(etab.texte) : fourni(null)}</p>
-          ${s.noteScolaire ? `<p class="note">${esc(s.noteScolaire)}</p>` : ''}
-        </div>
-        <div>
-          <ul class="docs">
-            <li><span>Pass Culture</span><span>${s.passCulture ? 'Offre collective' : '<span class="equipe-role">Pas d’offre indiquée</span>'}</span></li>
-            <li><span>Guide du CRED76</span>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">Voir la fiche<span class="sr"> du guide du CRED76 (nouvel onglet)</span><span aria-hidden="true"> ↗</span></a>` : '<span class="equipe-role">Pas de fiche indiquée</span>'}</li>
-            <li><span>Nous écrire</span>${courriel}</li>
-          </ul>
-        </div>
-      </div>`;
-    const onglets = [[D.doors[0], voir], [D.doors[1], programme], [D.doors[2], etablissement]];
+    const dates = DATES.filter((d) => d.slug === s.slug);
+    const passe = CARTE.spectacle(s.slug).passe;
+    const ligne = (lib, val) => `<p class="fiche-ligne">${lib ? `<span class="fiche-libelle">${esc(lib)}</span> ` : ''}<span>${val}</span></p>`;
+    const infos = [
+      ...(s.fiche || []).map((f) => ligne(f.libelle, f.valeur)),
+      s.avec ? ligne(s.avec.libelle, s.avec.valeur) : '',
+      s.duree ? `<p class="fiche-duree">${esc(s.duree)}</p>` : '',
+      ...(s.mentions || []).map((x) => `<p class="fiche-mention">${x}</p>`),
+      s.production && s.production.length ? `<div class="fiche-prod">${s.production.map((x) => `<p>${x}</p>`).join('')}</div>` : '',
+      medias(s.medias),
+    ].join('');
+    let tournee = '';
+    if (dates.length) {
+      tournee = `
+  <section class="tournee" data-ton="chapitre" aria-labelledby="t-tournee">
+    <div class="tournee-int">
+      <div class="tournee-texte">
+        <h2 class="tournee-titre" id="t-tournee">${esc((s.tournee && s.tournee.titre) || L.actuellementEnTournee)}</h2>
+        <div data-liste>${listeDates(dates, false, 'h3')}</div>
+      </div>
+      <div class="tournee-carte ecran-nu" data-carte="${esc(s.slug)}"><p class="carte-filtre" aria-live="polite"></p></div>
+    </div>
+  </section>`;
+    } else if (s.statut && s.tournee) {
+      tournee = `
+  <section class="tournee" data-ton="chapitre" aria-labelledby="t-tournee">
+    <div class="tournee-int">
+      <div class="tournee-texte">
+        <h2 class="tournee-titre" id="t-tournee">${esc(s.tournee.titre)}</h2>
+        ${s.tournee.texte ? `<p class="tournee-note">${esc(s.tournee.texte)}</p>` : ''}
+      </div>
+      <div class="tournee-carte" data-carte="${esc(s.slug)}"></div>
+    </div>
+  </section>`;
+    } else if (passe.length) {
+      tournee = `
+  <div class="tournee tournee--seule" data-ton="chapitre">
+    <div class="tournee-int"><div class="tournee-carte" data-carte="${esc(s.slug)}"><p class="carte-filtre" aria-live="polite"></p></div></div>
+  </div>`;
+    }
+    const cassandre = s.extraits && s.extraits.length ? `
+        <ul class="extraits">${s.extraits.map((x) => `<li class="extrait"><blockquote><p>${esc(x.citation)}</p></blockquote><p class="extrait-source">${esc(x.source)}</p></li>`).join('')}</ul>` : '';
     return `
-<article class="fiche" style="--fond:${s.fondSombre};--accent:${s.couleur};--ink:${encre(s.couleur)};--focale:${s.focale ?? 50}%">
+<article class="fiche" style="--fond:${s.fondSombre};--accent:${s.couleur};--ink:${encre(s.couleurTexteClair || s.couleur)};--focale:${s.focale ?? 50}%">
   <section class="ouverture" data-ton="chapitre" aria-labelledby="t-fiche">
-    <div class="ouv-photo"><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}">${s.credit ? `<p class="ouv-credit">Photo ${esc(s.credit)}</p>` : ''}</div>
-    <div class="ouv-haut"><a class="retour" href="#/spectacles"><span aria-hidden="true">←</span> Tous les spectacles</a></div>
+    <div class="ouv-photo"><img src="${D.photos[s.slug]}" alt="${esc(s.titre)}">${s.credit ? `<p class="ouv-credit">${esc(s.credit)}</p>` : ''}</div>
+    <div class="ouv-haut"><a class="retour" href="${esc(MENU.spectacles.href)}"><span aria-hidden="true">←</span> ${esc(MENU.spectacles.texte)}</a></div>
     <div class="ouv-contenu">
-      <p class="chap-num"><span class="sr">Spectacle </span><b>${deux(n)}</b> / ${TOTAL}</p>
-      <h1 class="ouv-titre" id="t-fiche" tabindex="-1">${t(s.titre)}</h1>
-      <p class="ouv-sous">${esc(s.sousTitre)}</p>
+      <p class="ouv-sur"><span>${esc(s.creation)}</span>${s.statut ? `<span class="pastille">${esc(s.statut)}</span>` : ''}</p>
+      <h1 class="ouv-titre" id="t-fiche" tabindex="-1">${lignesTitre(s)}</h1>
+      <p class="ouv-sous">${s.sousTitre || ''}</p>
+      ${s.genre && s.genre !== s.sousTitre ? `<p class="ouv-sous">${esc(s.genre)}</p>` : ''}
     </div>
   </section>
   <div class="papier" data-ton="clair">
-    <section class="fiche-intro" aria-labelledby="t-intro">
-      <div class="grille">
-        <h2 class="sr" id="t-intro">Le spectacle</h2>
-        <p class="fiche-accroche">${t(s.accroche)}</p>
-        <div class="fiche-texte">
-          <p>${t(s.texte)}</p>
-          ${s.video ? `<p><a class="lien-fleche" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo<span class="sr"> de ${esc(s.titre)} (nouvel onglet)</span><span aria-hidden="true">↗</span></a></p>` : ''}
-        </div>
-        <dl class="faits">${faits.map(([k, v]) => `<div${k === 'Équipe' ? ' class="faits-long"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>
+    <div class="fiche-corps">
+      <div class="grille fiche-grille">
+        ${s.cadre ? `<p class="cas-cadre">${esc(s.cadre)}</p>` : ''}
+        <div class="fiche-texte">${(s.texte || []).map((p) => `<p>${p}</p>`).join('')}</div>
+        ${infos ? `<div class="fiche-infos">${infos}</div>` : ''}
+        ${cassandre}
       </div>
-    </section>
-    <section class="fiche-portes" aria-labelledby="t-portes-fiche">
-      <div class="grille">
-        <header class="bloc-tete">
-          <p class="surtitre">Trois portes</p>
-          <h2 class="bloc-titre" id="t-portes-fiche">Venir, programmer, accueillir</h2>
-        </header>
-        <div class="onglets" role="tablist" aria-label="Trois portes pour ${esc(s.titre)}">
-          ${onglets.map(([d], k) => `<button class="onglet" type="button" role="tab" id="onglet-${d.key}" aria-controls="panneau-${d.key}" aria-selected="${k === 0}" tabindex="${k === 0 ? 0 : -1}"><span class="onglet-num" aria-hidden="true">${deux(k + 1)}</span><span class="onglet-titre">${esc(d.titre)}</span></button>`).join('')}
-        </div>
-        ${onglets.map(([d, html], k) => `<div class="panneau" role="tabpanel" id="panneau-${d.key}" aria-labelledby="onglet-${d.key}" tabindex="0"${k ? ' hidden' : ''}>${html}</div>`).join('')}
-      </div>
-    </section>
+    </div>
   </div>
-  <section class="suivant" data-ton="chapitre" data-photo="${nSuiv % 2 ? 'gauche' : 'droite'}" aria-labelledby="t-suivant" style="--fond:${suiv.fondSombre};--accent:${suiv.couleur};--focale:${suiv.focale ?? 50}%">
+  ${tournee}
+  <section class="suivant" data-ton="chapitre" aria-labelledby="t-suivant" style="--fond:${suiv.fondSombre};--accent:${suiv.couleur};--focale:${suiv.focale ?? 50}%">
     <a class="suivant-lien" href="#/spectacle/${esc(suiv.slug)}">
-      <span class="suivant-photo"><img src="${D.photos[suiv.slug]}" alt="Photo de ${esc(suiv.titre)}"></span>
+      <span class="suivant-photo"><img src="${D.photos[suiv.slug]}" alt=""></span>
       <span class="suivant-texte">
-        <span class="surtitre">Spectacle suivant · ${deux(nSuiv)} / ${TOTAL}</span>
-        <h2 class="suivant-titre" id="t-suivant">${t(suiv.titre)}</h2>
-        <span class="suivant-sous">${esc(suiv.sousTitre)}</span>
+        <span class="suivant-sur">${esc(suiv.creation)}</span>
+        <h2 class="suivant-titre" id="t-suivant">${lignesTitre(suiv)}</h2>
+        <span class="suivant-sous">${suiv.sousTitre || ''}</span>
         <span class="suivant-fleche" aria-hidden="true">→</span>
       </span>
     </a>
   </section>
 </article>`;
   }
+  function carteSpectacle(s) {
+    const sp = CARTE.spectacle(s.slug);
+    const avenir = sp.aVenir.length > 0;
+    const lieux = avenir ? sp.aVenir : sp.passe;
+    const titre = avenir ? ((s.tournee && s.tournee.titre) || L.actuellementEnTournee) : (s.tournee && !sp.passe.length ? s.tournee.titre : s.titre);
+    return CARTE.svg({ lieux, passe: avenir ? sp.passe : [], interactif: lieux.length > 0, noms: true, spirale: avenir, titre, classe: 'carte-m09' + (lieux.length <= 6 ? ' noms-visibles' : '') });
+  }
 
-  /* onglets accessibles */
-  function brancherOnglets(racine) {
-    const tabs = $$('[role="tab"]', racine);
-    const choisir = (t, focus) => {
-      for (const x of tabs) {
-        const on = x === t;
-        x.setAttribute('aria-selected', String(on));
-        x.tabIndex = on ? 0 : -1;
-        document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
-      }
-      if (focus) t.focus();
+  /* une carte reliée à sa liste : survoler met en avant, choisir une commune filtre la liste */
+  function brancherCarte(racine) {
+    const svg = racine && $('svg.carte', racine);
+    if (!svg) return;
+    const liste = $('[data-liste]', racine);
+    const filtre = $('.carte-filtre', racine);
+    let choisi = null;
+    const marquer = (l) => {
+      $$('.est-survol', racine).forEach((e) => e.classList.remove('est-survol'));
+      svg.classList.toggle('a-survol', l != null);
+      if (l != null) $$(`[data-l="${l}"]`, racine).forEach((e) => e.classList.add('est-survol'));
     };
-    tabs.forEach((t, k) => {
-      t.addEventListener('click', () => choisir(t, false));
-      t.addEventListener('keydown', (e) => {
-        const pas = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
-        let j = null;
-        if (pas) j = (k + pas + tabs.length) % tabs.length;
-        else if (e.key === 'Home') j = 0;
-        else if (e.key === 'End') j = tabs.length - 1;
-        if (j !== null) { e.preventDefault(); choisir(tabs[j], true); }
-      });
+    const choisir = (l) => {
+      choisi = l === choisi ? null : l;
+      $$('.est-choisi', racine).forEach((e) => e.classList.remove('est-choisi'));
+      svg.classList.toggle('a-choix', choisi != null);
+      if (choisi != null) $$(`[data-l="${choisi}"]`, svg).forEach((e) => e.classList.add('est-choisi'));
+      if (liste) {
+        $$('[data-l]', liste).forEach((li) => { li.hidden = choisi != null && +li.dataset.l !== choisi; });
+        $$('.dates-groupe', liste).forEach((g) => { g.hidden = choisi != null && !$$('[data-l]:not([hidden])', g).length; });
+      }
+      if (filtre) {
+        filtre.innerHTML = choisi != null && CARTE.lieux[choisi]
+          ? `<button class="filtre-puce" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[choisi]))}<span aria-hidden="true">×</span></button>` : '';
+        const b = $('button', filtre);
+        if (b) b.addEventListener('click', () => choisir(choisi));
+      }
+      planifier();
+    };
+    CARTE.lier(svg, { survol: marquer, choix: choisir });
+    if (liste) $$('[data-l]', liste).forEach((li) => {
+      li.addEventListener('mouseenter', () => marquer(+li.dataset.l));
+      li.addEventListener('mouseleave', () => marquer(null));
     });
+  }
+  // les cartes des pages spectacle poussent quand on les atteint
+  let obsCartes = null;
+  function cartesDifferees(racine) {
+    if (obsCartes) obsCartes.disconnect();
+    const boites = $$('[data-carte]', racine);
+    const remplir = (b) => {
+      if (b.dataset.rempli) return;
+      b.dataset.rempli = '1';
+      b.insertAdjacentHTML('afterbegin', carteSpectacle(PAR_SLUG[b.dataset.carte]));
+      brancherCarte(b.closest('.tournee'));
+    };
+    if (!('IntersectionObserver' in window)) { boites.forEach(remplir); return; }
+    obsCartes = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { obsCartes.unobserve(e.target); remplir(e.target); } }), { rootMargin: '0px 0px -12% 0px' });
+    boites.forEach((b) => obsCartes.observe(b));
   }
 
   /* montage */
   $('#marque-pieuvre').innerHTML = D.logo.octopus;
+  $('#marque-mot').textContent = S.titreSuffixe;
+  $('#marque').setAttribute('aria-label', `${S.nom}, ${S.accueil}`);
+  $('#nav-principale').setAttribute('aria-label', L.menu);
+  $('.menu-texte', tete).textContent = L.menu;
+  $('.nav ul', tete).innerHTML = S.menu.map((m) => `<li><a href="${esc(m.href)}" data-onglet="${esc(m.id)}" data-texte="${esc(m.texte)}">${esc(m.texte)}</a></li>`).join('');
   pied.innerHTML = piedHTML();
   vueAccueil.innerHTML = accueilHTML();
-  $('ol', sommaire).innerHTML = [{ titre: 'Crescite' }, ...SHOWS].map((s, k) =>
-    `<li><button type="button" data-cible="${k}"><span class="som-titre">${esc(s.titre)}</span><span class="som-trait" aria-hidden="true"></span></button></li>`).join('');
-  const chapitres = $$('.chap', vueAccueil);
+  const chapitres = $$('[data-chap]', vueAccueil);
+  sommaire.setAttribute('aria-label', L.spectacles);
+  $('ol', sommaire).innerHTML = chapitres.map((c, k) => `<li><button type="button" data-cible="${k}"><span class="som-titre">${esc(c.dataset.titre)}</span><span class="som-trait" aria-hidden="true"></span></button></li>`).join('');
   const boutonsSommaire = $$('button', sommaire);
 
-  /* état au défilement : ton de l'en-tête, repère actif du sommaire */
+  /* la carte de l'accueil, rendue au défilement */
+  const cc = { el: $('#chap-carte', vueAccueil) };
+  cc.svg = $('.cc-svg', cc.el);
+  cc.boite = $('.cc-carte', cc.el);
+  cc.liste = $('.cc-liste', cc.el);
+  cc.mois = $$('.cc-m', cc.el);
+  cc.halo = $('.cc-halo', cc.el);
+  cc.rouen = $('.cc-rouen', cc.el);
+  cc.onde = $('.cc-onde', cc.el);
+  cc.nomRouen = $('.cc-nom-rouen', cc.el);
+  BRAS.forEach((b) => {
+    b.el = $(`.cc-b[data-l="${b.l}"]`, cc.el);
+    b.sp = $(`.cc-s[data-l="${b.l}"]`, cc.el);
+    b.pt = $(`.cc-p[data-l="${b.l}"]`, cc.el);
+    b.nom = $(`.cc-nom[data-l="${b.l}"]`, cc.el);
+  });
+  const P0 = 0.05, P1 = 0.86;
+  function mesurerCarte() {
+    if (vue !== 'accueil') return;
+    cc.statique = MQ_REDUIT.matches;
+    cc.el.classList.toggle('est-statique', cc.statique);
+    cc.W = cc.boite.clientWidth || 1;
+    cc.H = cc.boite.clientHeight || 1;
+    cc.tops = cc.mois.map((m) => m.offsetTop);
+    BRAS.forEach((b) => { b.s = -1; });
+    cc.p = -1;
+    majCarte();
+  }
+  function majCarte() {
+    if (vue !== 'accueil') return;
+    const r = cc.el.getBoundingClientRect();
+    const total = cc.el.offsetHeight - innerHeight;
+    const p = cc.statique ? 1 : clamp(-r.top / Math.max(1, total));
+    if (p === cc.p) return;
+    cc.p = p;
+    rendreCarte(p);
+  }
+  function rendreCarte(p) {
+    const M = MOIS.length;
+    const f = clamp((p - P0) / (P1 - P0)) * M;
+    const m = Math.min(M - 1, Math.floor(f));
+    const u = f >= M ? 1 : f - m;
+    const fin = cc.statique ? 1 : clamp((p - P1) / (1 - P1));
+    const cam = fin > 0 ? cadrage(CAMS[M - 1], CAM_FIN, doux(fin)) : cadrage(m ? CAMS[m - 1] : CAM0, CAMS[m], doux(clamp(u / 0.5)));
+    cc.svg.setAttribute('viewBox', cam.map((v) => v.toFixed(2)).join(' '));
+    const W = cc.W, H = cc.H, s = Math.min(W / cam[2], H / cam[3]);
+    const ox = (W - cam[2] * s) / 2 - cam[0] * s, oy = (H - cam[3] * s) / 2 - cam[1] * s;
+    const ici = new Set(fin > 0 ? [] : MOIS[m].ls);
+    cc.halo.setAttribute('r', (0.5 * Math.max(W, H) / s).toFixed(1));
+    for (const b of BRAS) {
+      let g, h;
+      if (fin > 0 || f >= M || b.mois < m) { g = 1; h = 1; }
+      else if (b.mois > m) { g = 0; h = 0; }
+      else {
+        const d0 = 0.14 + 0.3 * (b.rang / Math.max(1, b.nb));
+        g = doux(clamp((u - d0) / 0.4));
+        h = clamp((u - d0 - 0.36) / 0.16);
+      }
+      if (Math.abs(g - b.g) > 1e-4 || Math.abs(s - b.s) > 1e-4) {
+        const w0 = b.w / s, w1 = 0.7 / s;
+        b.el.setAttribute('d', g >= 1 ? CARTE.bras(b.xy, { w0, w1, courbe: b.courbe }) : brasPartiel(b, g, w0, w1));
+        if (Math.abs(s - b.s) > 1e-4) {
+          b.sp.setAttribute('d', CARTE.bout(b.xy, { r: 7 / s, courbe: b.courbe }));
+          b.sp.style.strokeWidth = (1.6 / s).toFixed(3);
+        }
+        b.g = g; b.s = s;
+      }
+      b.sp.style.strokeDashoffset = String(1 - h);
+      const actif = ici.has(b.l), pousse = g > 0.97;
+      b.el.classList.toggle('est-passe', pousse && !actif && fin === 0);
+      b.pt.classList.toggle('est-pousse', pousse);
+      b.pt.classList.toggle('est-actif', pousse && actif);
+      const voir = pousse && actif && g >= 0.99;
+      b.nom.classList.toggle('est-visible', voir);
+      if (voir || b.nom.style.transform === '') b.nom.style.transform = `translate(${(b.xy[0] * s + ox).toFixed(1)}px,${(b.xy[1] * s + oy).toFixed(1)}px)`;
+    }
+    cc.nomRouen.style.transform = `translate(${(R[0] * s + ox).toFixed(1)}px,${(R[1] * s + oy).toFixed(1)}px)`;
+    const rouenIci = [...L_ROUEN].some((l) => ici.has(l));
+    cc.onde.classList.toggle('est-actif', rouenIci);
+    if (!cc.statique) {
+      const fr = fin > 0 ? M - 1 : m === 0 ? 0 : m - 1 + doux(clamp(u / 0.2));
+      const i0 = Math.floor(fr), i1 = Math.min(M - 1, i0 + 1), k = fr - i0;
+      const y = cc.tops[i0] + (cc.tops[i1] - cc.tops[i0]) * k;
+      cc.liste.style.transform = `translate3d(0,${(-y).toFixed(1)}px,0)`;
+      const actifM = Math.round(fr);
+      cc.mois.forEach((el, j) => el.classList.toggle('est-actif', j === actifM));
+    } else {
+      cc.liste.style.transform = '';
+      cc.mois.forEach((el) => el.classList.add('est-actif'));
+    }
+  }
+
+  /* état au défilement : ton de l'en-tête, repère du sommaire, carte de l'accueil */
   let vue = null;
   let zones = [];
   let actif = null;
@@ -929,7 +1215,7 @@ ${SHOWS.map(chapitre).join('')}
     actif = k;
     sommaire.classList.toggle('est-cache', k < 0);
     boutonsSommaire.forEach((b, j) => { if (j === k) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
-    if (k >= 0) sommaire.style.setProperty('--som-accent', k ? SHOWS[k - 1].couleur : getComputedStyle(doc).getPropertyValue('--magenta-vif'));
+    if (k >= 0) sommaire.style.setProperty('--som-accent', chapitres[k].dataset.accent || '#ef84b8');
   }
   function majEtat() {
     const y = tete.offsetHeight / 2;
@@ -942,21 +1228,19 @@ ${SHOWS.map(chapitre).join('')}
     if (vue !== 'accueil') { majSommaire(-1); return; }
     const milieu = innerHeight / 2;
     let k = -1;
-    for (const c of chapitres) {
-      const r = c.getBoundingClientRect();
-      if (r.top <= milieu && r.bottom > milieu) { k = +c.dataset.chap; break; }
-    }
+    chapitres.forEach((c, j) => { const r = c.getBoundingClientRect(); if (r.top <= milieu && r.bottom > milieu) k = j; });
     majSommaire(k);
+    majCarte();
   }
   let rafEtat = 0;
-  const planifier = () => { if (!rafEtat) rafEtat = requestAnimationFrame(() => { rafEtat = 0; majEtat(); }); };
+  function planifier() { if (!rafEtat) rafEtat = requestAnimationFrame(() => { rafEtat = 0; majEtat(); }); }
   addEventListener('scroll', planifier, { passive: true });
-  addEventListener('resize', planifier);
+  addEventListener('resize', () => { mesurerCarte(); planifier(); });
 
   /* magnétisme : seulement sur l'accueil, en grand écran, sans réduction des animations */
   const majAimant = () => doc.classList.toggle('aimante', vue === 'accueil' && MQ_LARGE.matches && !MQ_REDUIT.matches);
-  MQ_LARGE.addEventListener('change', () => { majAimant(); planifier(); });
-  MQ_REDUIT.addEventListener('change', majAimant);
+  MQ_LARGE.addEventListener('change', () => { majAimant(); mesurerCarte(); planifier(); });
+  MQ_REDUIT.addEventListener('change', () => { majAimant(); mesurerCarte(); });
 
   /* dévoilement : armé au premier geste, pour que rien ne reste caché sans défilement */
   const revele = new IntersectionObserver((entrees) => {
@@ -964,99 +1248,87 @@ ${SHOWS.map(chapitre).join('')}
   }, { threshold: 0.3 });
   const gestes = ['wheel', 'touchstart', 'keydown', 'pointerdown', 'scroll'];
   function armer() {
-    gestes.forEach((t) => removeEventListener(t, armer, true));
-    if (MQ_REDUIT.matches) return;
-    for (const c of chapitres.slice(1)) {
+    gestes.forEach((g) => removeEventListener(g, armer, true));
+    if (MQ_REDUIT.matches || vue !== 'accueil') return;
+    for (const c of $$('.chap', vueAccueil)) {
       const r = c.getBoundingClientRect();
       if (r.bottom <= 0 || r.top >= innerHeight) { c.classList.add('arme'); revele.observe(c); }
     }
   }
-  gestes.forEach((t) => addEventListener(t, armer, { capture: true, passive: true }));
+  gestes.forEach((g) => addEventListener(g, armer, { capture: true, passive: true }));
 
-  const allerA = (el, doux) => {
+  const allerA = (el) => {
     if (!el) return;
-    scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: doux && !MQ_REDUIT.matches ? 'smooth' : 'auto' });
+    scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: MQ_REDUIT.matches ? 'auto' : 'smooth' });
   };
-  boutonsSommaire.forEach((b) => b.addEventListener('click', () => allerA($(`#chap-${b.dataset.cible}`), true)));
+  boutonsSommaire.forEach((b) => b.addEventListener('click', () => allerA(chapitres[+b.dataset.cible])));
 
-  /* listes de dates : afficher toutes les dates, ou moins */
-  function brancherDepli(bouton, boite, liste, avecTitre, limite) {
-    if (!bouton) return;
-    bouton.addEventListener('click', () => {
-      const ouvert = bouton.getAttribute('aria-expanded') === 'true';
-      boite.innerHTML = listeDates(ouvert ? liste.slice(0, limite) : liste, avecTitre);
-      bouton.setAttribute('aria-expanded', String(!ouvert));
-      bouton.textContent = ouvert ? `Afficher les ${liste.length} dates` : 'Afficher moins de dates';
-      if (ouvert) bouton.scrollIntoView({ block: 'nearest' });
-      planifier();
-    });
+  /* l'entrée du premier chapitre, juste après la révélation à travers le logo */
+  function entrer(c) {
+    if (!c || !c.classList.contains('attend')) return;
+    c.classList.add('entre');
+    requestAnimationFrame(() => requestAnimationFrame(() => c.classList.remove('attend')));
+    setTimeout(() => c.classList.remove('entre'), 2600);
   }
 
-  /* menu du téléphone */
+  /* menu replié (en dessous de 1280 px) */
   const bMenu = $('#menu-bouton');
   const menu = (ouvrir) => {
     tete.classList.toggle('menu-ouvert', ouvrir);
     bMenu.setAttribute('aria-expanded', String(ouvrir));
-    $('.menu-texte', bMenu).textContent = ouvrir ? 'Fermer' : 'Menu';
   };
   bMenu.addEventListener('click', () => menu(bMenu.getAttribute('aria-expanded') !== 'true'));
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && tete.classList.contains('menu-ouvert')) { menu(false); bMenu.focus(); } });
 
-  /* l'indice du premier écran fait défiler jusqu'au premier spectacle */
-  $('.chap0-indice', vueAccueil).addEventListener('click', (e) => {
-    e.preventDefault();
-    allerA($('#chap-1'), true);
-    const h = $('#t-chap-1');
-    h.tabIndex = -1;
-    h.focus({ preventScroll: true });
-  });
+  /* les formulaires d'origine : l'envoi ne fait rien */
+  document.addEventListener('submit', (e) => { if (e.target.matches('form[data-inerte]')) e.preventDefault(); });
 
-  /* routeur : une vue par onglet ; l'aimant et le sommaire n'existent que sur l'accueil */
-  const PAGES = {
-    spectacles: ['Les spectacles', pageSpectacles],
-    agenda: ['L’agenda', pageAgenda],
-    compagnie: ['La compagnie', pageCompagnie],
-    contact: ['Contact', pageContact],
-  };
-  const liensNav = $$('[data-onglet]', tete);
+  /* routeur : une vue par onglet */
+  function resoudre(chemin) {
+    let m;
+    if (!chemin) return { vue: 'accueil', titre: S.accueil };
+    if ((m = chemin.match(/^spectacle\/([\w-]+)$/)) && PAR_SLUG[m[1]]) return { vue: 'spectacle', s: PAR_SLUG[m[1]], onglet: 'spectacles', titre: PAR_SLUG[m[1]].titre };
+    if ((m = chemin.match(/^agenda\/([\w-]+)$/)) && D.saisons[m[1]]) {
+      if (m[1] === SAISON.saison) return { vue: 'page', html: pageAgenda, onglet: 'agenda', titre: MENU.agenda.texte };
+      const cle = m[1];
+      return { vue: 'page', html: () => pageSaison(cle), onglet: 'agenda', titre: D.saisons[cle].titre };
+    }
+    const item = PAR_ROUTE[chemin];
+    if (item) {
+      const html = { spectacles: pageSpectacles, agenda: pageAgenda, compagnie: pageCompagnie, actions: pageActions, pro: pagePro, contact: pageContact }[item.id];
+      if (html) return { vue: 'page', html, onglet: item.id, titre: item.id === 'pro' ? S.pro.titrePage : item.texte };
+    }
+    if (S.legal[chemin]) return { vue: 'page', html: () => pageLegal(chemin), titre: S.legal[chemin].titre };
+    return null;
+  }
   function router(initial) {
     const h = location.hash || '#/';
     if (!h.startsWith('#/') && vue) return;
     menu(false);
-    const chemin = h.replace(/^#\/?/, '').split('?')[0];
-    const m = chemin.match(/^spectacle\/([\w-]+)$/);
-    const s = m && PAR_SLUG[m[1]];
-    const page = !s && Object.hasOwn(PAGES, chemin) ? PAGES[chemin] : null;
-    vue = s ? 'spectacle' : page ? chemin : 'accueil';
+    const chemin = h.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, '');
+    let r = resoudre(chemin);
+    if (!r) { r = resoudre(''); history.replaceState(null, '', '#/'); }
+    vue = r.vue;
     doc.classList.remove('aimante');
     vueAccueil.hidden = vue !== 'accueil';
-    vuePage.hidden = !page;
-    vueSpectacle.hidden = !s;
-    vuePage.innerHTML = page ? page[1]() : '';
-    vueSpectacle.innerHTML = s ? spectacleHTML(s) : '';
-    let titre;
-    if (s) {
-      brancherOnglets(vueSpectacle);
-      brancherDepli($('#fiche-dates-tout'), $('#fiche-dates'), datesDe(s.slug), false, LIMITE);
-      document.title = `${s.titre} · Compagnie Crescite`;
-      titre = $('#t-fiche');
-    } else if (page) {
-      document.title = `${page[0]} · Compagnie Crescite`;
-      titre = $('#t-page');
-    } else {
-      document.title = 'Compagnie Crescite · Théâtre à Rouen';
-      titre = $('#t-chap-0');
-    }
-    const onglet = s ? 'spectacles' : page ? chemin : '';
-    for (const a of liensNav) {
-      if (a.dataset.onglet === onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    vuePage.hidden = vue !== 'page';
+    vueSpectacle.hidden = vue !== 'spectacle';
+    vuePage.innerHTML = vue === 'page' ? r.html() : '';
+    vueSpectacle.innerHTML = vue === 'spectacle' ? spectacleHTML(r.s) : '';
+    if (vue === 'page') brancherCarte($('.agenda', vuePage));
+    if (vue === 'spectacle') cartesDifferees(vueSpectacle);
+    document.title = titreOnglet(r.titre);
+    for (const a of $$('[data-onglet]', tete)) {
+      if (a.dataset.onglet === r.onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     }
     sommaire.hidden = vue !== 'accueil';
-    zones = [...$$('[data-ton]', s ? vueSpectacle : page ? vuePage : vueAccueil), pied];
+    zones = [...$$('[data-ton]', vue === 'spectacle' ? vueSpectacle : vue === 'page' ? vuePage : vueAccueil), pied];
     scrollTo(0, 0);
     majAimant();
     actif = null;
+    mesurerCarte();
     majEtat();
+    const titre = $(vue === 'spectacle' ? '#t-fiche' : vue === 'page' ? '#t-page' : '#t-accueil');
     if (!initial && titre) titre.focus({ preventScroll: true });
   }
   document.addEventListener('click', (e) => {
@@ -1067,6 +1339,16 @@ ${SHOWS.map(chapitre).join('')}
   addEventListener('hashchange', () => router(false));
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   router(true);
+
+  /* l'ouverture commune : le grand logo, dans le dégradé prune de la 09 ; la révélation tombe sur le premier spectacle */
+  const premier = $('.chap', vueAccueil);
+  INTRO.ouvrir({
+    degrade: [[0, '#5f2244'], [0.26, '#3c1630'], [0.55, '#1a0d17'], [1, '#110a0f']],
+    encre: '#ffffff',
+    classe: 'm09-intro',
+    apres: () => entrer(premier),
+  });
+  if (INTRO.ouverte() && premier && !MQ_REDUIT.matches) premier.classList.add('attend');
 })();
 </script>
 </body>

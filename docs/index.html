@@ -92,55 +92,51 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   /* les dix, de la plus sobre à la plus évoluée, puis la synthèse */
   const M = [
-    { n: 'm01', court: 'Programme', nom: 'Le programme de salle', niveau: 'La plus sobre', voit: 'Une phrase, puis les prochaines dates et les portes', mvt: 0, pieuvre: 0, effort: 1,
-      principe: 'Le site comme un programme de théâtre imprimé : du papier, de l’encre et des filets, une seule police, aucune animation. Chaque page se lit de haut en bas en sections numérotées : l’accueil donne les prochaines dates et les trois portes, le répertoire, l’agenda mois par mois, la compagnie et le contact ont chacun la leur.',
-      plus: ['Lecture immédiate, chargement instantané', 'Un soin typographique de livre : rien ne vieillit', 'La plus simple à tenir à jour'],
-      moins: ['Peu d’images : l’émotion des spectacles attend les pages intérieures', 'La pieuvre n’est qu’un petit signe dans l’en-tête', 'Peut sembler austère au jeune public'] },
-    { n: 'm02', court: 'Maison', nom: 'La maison', niveau: 'Sobre', voit: 'Le spectacle à l’affiche, puis les trois portes', mvt: 0, pieuvre: 0, effort: 1,
-      principe: 'La clarté d’un théâtre public : un spectacle à l’affiche en grand, les trois portes juste dessous, puis les prochaines dates. Le répertoire en grille de cartes, l’agenda, la compagnie et le contact ont chacun leur page, avec les mêmes repères d’une page à l’autre.',
+    { n: 'm01', court: 'Programme', nom: 'Le programme de salle', niveau: 'La plus sobre', voit: 'Le bandeau « EN TOURNÉE », les portes, la carte gravée', mvt: 0, pieuvre: 1, effort: 1,
+      principe: 'Le site comme un programme de théâtre imprimé : du papier, de l’encre et des filets, une seule police. On entre par la couverture (le logo dans un double filet). L’accueil présente le bandeau « EN TOURNÉE » comme une affiche, les trois portes, puis la carte des tournées gravée à l’encre : chaque commune porte un numéro de note qui renvoie à ses dates.',
+      plus: ['Lecture immédiate, chargement instantané', 'La carte gravée : sobre et exacte, chaque commune renvoie à sa date', 'La plus simple à tenir à jour'],
+      moins: ['Peu d’images : l’émotion des spectacles attend les pages intérieures', 'Peut sembler austère au jeune public'] },
+    { n: 'm02', court: 'Maison', nom: 'La maison', niveau: 'Sobre', voit: 'Le spectacle à l’affiche, puis les trois portes', mvt: 1, pieuvre: 1, effort: 1,
+      principe: 'La clarté d’un théâtre public : le logo sur sa tache magenta s’ouvre sur le spectacle à l’affiche (le bandeau d’origine, « EN TOURNÉE » et « découvrir »), les trois portes juste dessous, puis une large bande de carte aux bras magenta. Chaque onglet a sa page, avec les mêmes repères d’une page à l’autre.',
       plus: ['Des conventions que tout le monde connaît : on trouve sans chercher', 'Les photos portent l’émotion', 'Les trois portes visibles dès le premier écran'],
       moins: ['Ressemble à beaucoup de sites culturels', 'L’identité de la pieuvre passe au second plan'] },
-    { n: 'm03', court: 'Saison', nom: 'La saison', niveau: 'L’agenda d’abord', voit: 'Les dates de la saison, filtrables par ville', mvt: 0, pieuvre: 0, effort: 2,
-      principe: 'Pour une compagnie qui tourne, la première question est « quand et où ? ». L’accueil est l’agenda : les dates groupées par mois, un filtre tout public ou scolaire, une recherche par ville ou par spectacle, et à côté la liste des spectacles en tournée avec leur nombre de dates. Les spectacles ne se distinguent que par une pastille de couleur.',
-      plus: ['Répond tout de suite à la question des spectateurs et des programmateurs', 'Montre la vitalité de la tournée : 31 dates, 25 communes', 'Recherche et filtres immédiats, sans changer de page'],
+    { n: 'm03', court: 'Saison', nom: 'La saison', niveau: 'L’agenda d’abord', voit: 'Les dates de la saison et leur carte', mvt: 1, pieuvre: 2, effort: 2,
+      principe: 'Pour une compagnie qui tourne, la première question est « quand et où ? ». L’accueil est l’agenda : les dates groupées par mois, un filtre par spectacle, la recherche, et une grande carte où chaque bras prend la couleur de son spectacle. Survoler une date allume son bras ; choisir une commune filtre la liste.',
+      plus: ['Répond tout de suite à la question des spectateurs et des programmateurs', 'La carte et la liste ne font qu’un : la tournée se lit d’un coup d’œil', 'Recherche et filtres immédiats, sans changer de page'],
       moins: ['Moins de place pour l’univers des spectacles', 'Exige un agenda toujours à jour'] },
-    { n: 'm04', court: 'Trois portes', nom: 'Trois portes', niveau: 'Le public d’abord', voit: '« Par où entrez-vous ? » et trois grandes portes', mvt: 1, pieuvre: 0, effort: 2,
-      principe: 'Le premier écran demande « par où entrez-vous ? ». Trois grandes portes, chacune dans sa couleur et avec ses liens directs : chaque public a son chemin. Le site retient la porte choisie : la page d’un spectacle s’ouvre sur l’onglet de cette porte.',
-      plus: ['Chaque public trouve son chemin en un clic', 'Met en valeur le travail avec les établissements', 'Très lisible au téléphone'],
-      moins: ['L’accueil ne montre aucun spectacle : on passe par une porte ou par l’onglet Spectacles', 'Demande à chacun de se ranger dans une case'] },
-    { n: 'm05', court: 'Magenta', nom: 'Magenta', niveau: 'La marque en grand', voit: 'La tache magenta et la pieuvre blanche', mvt: 1, pieuvre: 1, effort: 2,
-      principe: 'Le logo 2.0 donne toute l’identité : le magenta en aplat, la pieuvre blanche, une seule famille de caractères, forte et large, en capitales, et des photos en bichromie. Une fine ligne-tentacule sert de séparateur. Chaque page spectacle devient une affiche dans sa couleur.',
+    { n: 'm04', court: 'Trois portes', nom: 'Trois portes', niveau: 'Le public d’abord', voit: 'Trois grandes portes en arche', mvt: 2, pieuvre: 2, effort: 2,
+      principe: 'Trois grandes portes, chacune dans sa couleur, dont le battant s’entrouvre au survol : « Je viens voir » mène à l’agenda, « Je programme » à l’Espace Pro, « Je fais venir dans mon établissement » aux Actions culturelles. Dessous, la carte de la saison aux bras lumineux sur le prune, puis le bandeau « EN TOURNÉE ».',
+      plus: ['Chaque public trouve son chemin en un clic', 'Une identité nocturne et chaleureuse, très lisible au téléphone', 'La carte lumineuse donne envie de suivre la tournée'],
+      moins: ['L’accueil montre peu les spectacles : il faut descendre ou passer par un onglet', 'Demande à chacun de se ranger dans une case'] },
+    { n: 'm05', court: 'Magenta', nom: 'Magenta', niveau: 'La marque en grand', voit: 'La tache magenta et la pieuvre blanche', mvt: 2, pieuvre: 2, effort: 2,
+      principe: 'Le logo 2.0 donne toute l’identité : le magenta en aplat, la pieuvre blanche, une famille de caractères large en capitales, des photos en bichromie. Après l’ouverture, l’accueil commence par le bandeau « EN TOURNÉE » en bichromie ; la carte est une affiche aux bras blancs enroulés sur le magenta. Chaque page spectacle devient une affiche dans sa couleur.',
       plus: ['Identité reconnaissable au premier coup d’œil', 'Une affiche moderne et assumée', 'Se décline facilement : réseaux, affiches, dossiers'],
       moins: ['Le magenta partout peut écraser les couleurs des spectacles', 'Les capitales larges supportent mal les titres longs'] },
-    { n: 'm06', court: 'Tournée', nom: 'Les bras de la tournée', niveau: 'La tentacule comme thème', voit: 'La carte : les tournées partent de Rouen comme des tentacules', mvt: 1, pieuvre: 2, effort: 2,
-      principe: 'La tentacule devient un thème plutôt qu’un dessin : sur la carte de l’accueil, un bras part de Rouen vers chaque commune dont une date est publiée sur le site, la saison en cours en magenta. Chaque page spectacle a sa propre carte, « Où le voir ». Une onde qui s’enroule souligne les titres. Pour le reste, un site clair et classique.',
-      plus: ['Le thème dit quelque chose de vrai : la compagnie va chercher son public, jusque dans les classes', 'Une image forte faite de vraies données : les dates de tournée publiées depuis 2016', 'La carte sert aussi les programmateurs et les établissements'],
+    { n: 'm06', court: 'Tournée', nom: 'Les bras de la tournée', niveau: 'La tentacule comme thème', voit: 'La carte : les tournées partent de Rouen comme des tentacules', mvt: 2, pieuvre: 3, effort: 2,
+      principe: 'La tentacule devient un thème : quand le logo s’ouvre, ses tentacules deviennent les bras de la tournée, qui poussent de Rouen vers chaque commune de la saison, sur le réseau gris des tournées passées. Une frise des saisons redessine chaque saison sur la carte ; chaque page spectacle a la sienne, sous « Actuellement en tournée ». Pour le reste, un site clair et classique.',
+      plus: ['Le thème dit quelque chose de vrai : la compagnie part de Rouen et va chercher son public, jusque dans les classes', 'Une image forte faite de vraies données : toutes les dates publiées depuis 2016', 'La carte sert aussi les programmateurs et les établissements'],
       moins: ['Exige une base de dates tenue à jour, avec des lieux bien localisés', 'Moins de place pour les photos sur le premier écran'] },
-    { n: 'm07', court: 'Noir', nom: 'Le noir et la lumière', niveau: 'Théâtral', voit: 'Une photo de spectacle en plein écran', mvt: 2, pieuvre: 0, effort: 2,
-      principe: 'La scène dans le noir : une photo à la fois, en plein écran ; les huit titres en bas de l’écran, comme un programme, changent la photo en fondu.',
-      plus: ['Spectaculaire, met les photos en valeur', 'Navigation évidente : un titre, une photo'],
-      moins: ['Dépend de photos en haute définition (celles du site actuel sont petites)', 'La photo change seule toutes les 7 secondes (avec un bouton pause) : à couper pour un site plus calme', 'Plus lent à parcourir qu’une liste'] },
-    { n: 'm08', court: 'Sommaire', nom: 'Le sommaire', niveau: 'Éditorial', voit: 'La liste des spectacles et l’aperçu de celui qu’on survole', mvt: 2, pieuvre: 0, effort: 2,
-      principe: 'Un sommaire et un aperçu : la liste des spectacles en grand à gauche, l’aperçu du spectacle survolé à droite (photo, accroche, prochaine date), qui prend une teinte de sa couleur. La page d’un spectacle reprend le principe : une colonne fixe (titre, faits, portes) et une colonne qui défile.',
+    { n: 'm07', court: 'Noir', nom: 'Le noir et la lumière', niveau: 'Théâtral', voit: 'Une photo de spectacle en plein écran', mvt: 3, pieuvre: 1, effort: 2,
+      principe: 'La scène dans le noir : le logo s’ouvre sur une photo de spectacle en plein écran ; les titres en bas de l’écran, comme un programme, changent la photo en fondu. La carte est faite de lumière : des faisceaux partent de Rouen et les communes s’allument comme des projecteurs.',
+      plus: ['Spectaculaire, met les photos en valeur', 'Navigation évidente : un titre, une photo', 'La carte lumineuse prolonge la scène'],
+      moins: ['Dépend de photos en haute définition (celles du site actuel sont petites)', 'La photo change seule toutes les 7 secondes (avec un bouton pause) : à couper pour un site plus calme', 'Le Bodoni italique rend certains signes très fins, comme les traits d’union'] },
+    { n: 'm08', court: 'Sommaire', nom: 'Le sommaire', niveau: 'Éditorial', voit: 'La liste des spectacles et l’aperçu de celui qu’on survole', mvt: 2, pieuvre: 1, effort: 2,
+      principe: 'Un sommaire et un aperçu : la liste des spectacles en grand à gauche, l’aperçu du spectacle survolé à droite (photo, texte d’origine, prochaine date), qui prend une teinte de sa couleur. La carte est tracée en filets éditoriaux, avec les noms des communes composés comme dans un magazine.',
       plus: ['Élégant comme un magazine, limpide comme une table des matières', 'Tout le répertoire visible d’un coup', 'La même grille partout : on ne se perd jamais'],
       moins: ['Le survol n’existe pas au téléphone : il faut une autre lecture', 'L’aperçu change dès que la souris passe'] },
-    { n: 'm09', court: 'Chapitres', nom: 'Un spectacle par écran', niveau: 'Chapitres', voit: 'La compagnie, puis un écran par spectacle', mvt: 3, pieuvre: 1, effort: 3,
-      principe: 'L’accueil se lit comme une suite de chapitres : la compagnie d’abord (le logo et son intention), puis un écran par spectacle, avec son fond, sa couleur et sa photo ; un sommaire en traits fins indique où l’on est. Après les chapitres, un dernier écran clair donne les trois portes ; l’agenda, le répertoire, la compagnie et le contact ont chacun leur page, claire elle aussi.',
-      plus: ['Immersif : chaque spectacle a son moment', 'Une seule chose à la fois, un geste par chapitre', 'Le logo en grand dès l’ouverture'],
-      moins: ['Neuf écrans à parcourir avant d’arriver aux trois portes (l’agenda reste à un clic, dans le menu)', 'Le défilement aimanté peut gêner certains visiteurs', 'La pieuvre n’est qu’un logo, pas une navigation'] },
-    { n: 'm10', court: 'Pieuvre', nom: 'La pieuvre vivante, rangée', niveau: 'La plus évoluée', voit: 'La pieuvre : on tire un bras pour entrer', mvt: 3, pieuvre: 3, effort: 3,
-      principe: 'Le prototype remis en ordre : les bras du logo mènent aux titres et on les tire pour entrer dans un spectacle (l’encre de son univers recouvre l’écran). Rien ne bouge au repos. Chaque page spectacle garde sa couleur, sa photo et un seul effet au défilement ; tout le reste est commun.',
-      plus: ['L’idée la plus singulière, et un geste qu’on retient', 'L’univers de chaque spectacle vit dans sa page', 'Même typographie partout : le site reste un'],
-      moins: ['La plus longue à réaliser et à entretenir', 'Au téléphone, les bras deviennent des couloirs plus chargés', 'Le geste « tirer » doit se découvrir (un clic suffit aussi)'],
-      extras: [
-        { titre: 'Un effet par spectacle, au défilement', items: [['m10-extra1', 'Bérénice : le cercle et le vers qui tourne'], ['m10-extra2', 'Ci-gisait Cyrano : la tirade du nez'], ['m10-extra3', 'Macbeth – Fatum : le fil rouge'], ['m10-extra4', 'La Folle Idée : l’horloge de la grève']] },
-        { titre: 'Variante : la même pieuvre, immobile', items: [['m10-v1', 'Les bras deviennent des traits fixes ; au survol, le bras et le titre prennent la couleur du spectacle'], ['m10-v2', 'Au téléphone : la pieuvre, puis la liste']] } ] },
+    { n: 'm09', court: 'Chapitres', nom: 'Un spectacle par écran', niveau: 'Chapitres', voit: 'Un écran par spectacle, puis la saison en carte', mvt: 3, pieuvre: 2, effort: 3,
+      principe: 'L’accueil se lit comme une suite de chapitres : après l’ouverture sur le logo, un écran par spectacle, avec son fond, sa couleur et sa photo, et un sommaire en traits fins qui indique où l’on est. Le dernier chapitre raconte la saison en carte : au fil du défilement, les mois passent et les bras poussent de Rouen vers chaque commune.',
+      plus: ['Immersif : chaque spectacle a son moment', 'La saison racontée au défilement : la tournée se déroule sous les yeux', 'Le logo en grand dès l’ouverture'],
+      moins: ['Neuf écrans à parcourir avant d’arriver aux trois portes (l’agenda reste à un clic, dans le menu)', 'Le défilement aimanté peut gêner certains visiteurs'] },
+    { n: 'm10', court: 'Pieuvre', nom: 'La pieuvre vivante, rangée', niveau: 'La plus évoluée', voit: 'La pieuvre : un bras se tend vers le titre survolé', mvt: 3, pieuvre: 3, effort: 3,
+      principe: 'Les titres sont posés librement autour de la pieuvre ; c’est le bras le plus proche qui se tend vers le titre survolé, puis l’attire, et l’encre de son univers recouvre l’écran. Aucun bras n’appartient à un spectacle : leur nombre peut changer sans toucher à la pieuvre. La carte est faite de tentacules d’encre ponctuées de ventouses.',
+      plus: ['L’idée la plus singulière, et un geste qu’on retient', 'L’univers de chaque spectacle vit dans sa page', 'Le répertoire peut grandir sans redessiner la pieuvre'],
+      moins: ['La plus longue à réaliser et à entretenir', 'Le geste « tirer » doit se découvrir (un clic suffit aussi)'] },
   ];
   const SYN = { n: 'synthese', num: 'S', court: 'Synthèse', nom: 'La synthèse : la 06, enrichie', niveau: 'La proposition retenue, en site complet',
-    principe: 'Ce que je recommande, assemblé en un site de cinq pages (Accueil, Spectacles, Agenda, La compagnie, Contact) : l’accueil et les cartes de la 06 ; l’agenda de la 03 relié à la carte (choisir une commune filtre la liste, survoler une date allume son bras) ; les portes de la 04 avec leurs liens directs, et le site qui retient la porte choisie pour ouvrir chaque fiche sur le bon onglet ; pour chaque spectacle, une seule bande à ses couleurs avec l’effet de la 10. Tout le reste est commun.',
-    plus: ['Le thème tentaculaire porte une information utile à chaque public', 'Chaque spectacle garde son univers dans une seule bande ; le reste du site ne change pas', 'Une base prête à développer : chaque page et chaque spectacle a son adresse'],
-    moins: ['La bande épinglée des spectacles est la partie la plus coûteuse : elle peut venir dans un second temps', 'Contacts par porte, documents, âges conseillés : à fournir par la compagnie'],
-    extras: [{ titre: 'Les autres pages', items: [['synthese-extra1', 'L’agenda : filtres, recherche, liste par mois et carte reliée'], ['synthese-extra2', 'Une commune choisie sur la carte : la liste ne garde que ses dates'], ['synthese-extra3', 'La Folle Idée : « Où le voir », les tournées passées'], ['synthese-extra4', 'Les spectacles, filtrés « Dans votre établissement »']] }] };
+    principe: 'Ce que je recommande, assemblé en un site complet : l’ouverture sur le logo, l’accueil et les cartes de la 06 ; l’agenda de la 03 relié à la carte (choisir une commune filtre la liste, survoler une date allume son bras) ; les portes de la 04 ; pour chaque spectacle, une bande à ses couleurs avec l’effet de la 10. Tout le reste est commun.',
+    plus: ['Le thème tentaculaire porte une information utile à chaque public', 'Chaque spectacle garde son univers dans une seule bande ; le reste du site ne change pas', 'Une base prête à développer : chaque page, chaque spectacle et chaque saison a son adresse'],
+    moins: ['La bande des spectacles est la partie la plus coûteuse : elle peut venir dans un second temps'] };
   const TOUTES = [...M, SYN];
   const num = m => m.num || m.n.slice(1);
   // la planche en fichier embarque chaque maquette ; la planche en ligne (P.web) charge les pages publiées à côté d'elle
@@ -197,7 +193,8 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <div class="moins"><h4>Ce qui coince</h4><ul>${m.moins.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>
       <div class="demarche">
         <h3>La démarche</h3>
-        <p>Les dix partent des mêmes contenus (les huit spectacles, les 31 dates de la saison, les trois portes, la compagnie) et respectent les mêmes règles de clarté. Elles ne diffèrent que par la manière de les montrer : de la page imprimée à la pieuvre qu’on tire. La tentacule y est tantôt un thème (la 06 : les tournées qui partent de Rouen), tantôt un dessin (la 10). Chacune est un petit site à onglets : Accueil, Spectacles, Agenda, La compagnie, Contact, et une page par spectacle.</p>
+        <p>Les dix partent du même contenu : le texte exact de crescite.fr, page par page (les spectacles, les onze saisons et leurs dates, la présentation de la compagnie, les actions culturelles, l’espace pro, le contact), plus Cassandres, création 2027. Rien n’y est réécrit ; seule la carte des tournées s’ajoute, dessinée dans l’univers de chaque maquette. Elles ne diffèrent que par la manière de montrer ce contenu : de la page imprimée à la pieuvre qu’on tire.</p>
+        <p>Chacune s’ouvre sur le logo en grand : au clic, à la molette ou en glissant vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. Chacune est ensuite un petit site à onglets (Spectacles, Agenda, La compagnie, Actions culturelles, Espace Pro, Contact), avec une page par spectacle et par saison.</p>
         <div>
       <div><h4 style="margin:18px 0 6px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase">Pourquoi le prototype semblait « bordélique »</h4><ol>
         <li><b>Trop de choses se disputaient l’attention</b> sur le premier écran : huit étiquettes avec chacune trois lignes (titre, année et durée, prochaine date), une bulle d’aide, un bouton, des bras qui bougeaient seuls.</li>
@@ -205,12 +202,14 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <li><b>Huit typographies</b>, une par spectacle. Chaque page avait du caractère, mais l’ensemble ne ressemblait plus à un seul site.</li>
       </ol></div>
       <div><h4 style="margin:18px 0 6px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase">Les règles communes aux dix</h4><ul>
-        <li>Un seul étage d’en-tête et quatre entrées au plus : Spectacles, Agenda, La compagnie, Contact.</li>
+        <li>Un seul étage d’en-tête et six onglets : Spectacles, Agenda, La compagnie, Actions culturelles, Espace Pro, Contact.</li>
+        <li>Le texte du site d’origine, mot pour mot. Seule la carte des tournées s’ajoute.</li>
         <li>Deux familles de polices au plus. Un spectacle se distingue par sa couleur et sa photo, jamais par sa typographie.</li>
         <li>Un seul message par écran, des alignements stricts, du texte courant d’au moins 16 px et des contrastes suffisants.</li>
-        <li>Les trois portes avec leurs mots exacts : « Je viens voir », « Je programme », « Je fais venir dans mon établissement ».</li>
+        <li>Les trois portes, réduites à leurs libellés : « Je viens voir » mène à l’agenda, « Je programme » à l’Espace Pro, « Je fais venir dans mon établissement » aux Actions culturelles.</li>
+        <li>La pieuvre ne compte pas les spectacles : aucun bras n’est attribué à un titre.</li>
         <li>Les prochaines dates à un clic au plus de l’accueil.</li>
-        <li>Uniquement la partie publique : ni espace troupe, ni administration. Ce qui manque est marqué « à fournir ».</li>
+        <li>Uniquement la partie publique : ni espace troupe, ni administration.</li>
       </ul></div>
     </div>
         <h3>L’échelle</h3>
@@ -220,14 +219,14 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <h3>Ce que je recommande</h3>
         <p><b>La 06 comme base.</b> C’est la synthèse : un site aussi clair que la 02, où le thème tentaculaire dit quelque chose de vrai sur la compagnie, qui part de Rouen et va chercher son public jusque dans les classes, au lieu d’être un décor. Les cartes servent aussi les programmateurs et les établissements.</p>
     <ol>
-      <li><b>L’accueil de la <a href="#m06" data-aller="m06">06</a></b> : la phrase, les chiffres, la carte des tournées, puis les spectacles.</li>
-      <li><b>L’agenda de la <a href="#m03" data-aller="m03">03</a></b>, sur la page Agenda : filtres tout public ou scolaires, recherche par ville ou par spectacle.</li>
-      <li><b>Les portes à liens directs</b>, comme dans la 06 et la <a href="#m04" data-aller="m04">04</a> : chaque porte donne ses réponses sans page intermédiaire.</li>
-      <li><b>Les pages spectacle</b> : la carte « Où le voir » de la 06 ; plus tard, si le budget le permet, un effet au défilement par spectacle, comme dans la <a href="#m10" data-aller="m10">10</a>.</li>
+      <li><b>L’accueil de la <a href="#m06" data-aller="m06">06</a></b> : la carte des tournées, qui pousse depuis Rouen quand le logo s’ouvre, puis les spectacles.</li>
+      <li><b>L’agenda de la <a href="#m03" data-aller="m03">03</a></b>, sur la page Agenda : filtres par spectacle, recherche par ville, et la carte reliée à la liste.</li>
+      <li><b>Les trois portes</b> de la <a href="#m04" data-aller="m04">04</a>, réduites à leurs libellés : elles mènent à l’agenda, à l’Espace Pro et aux Actions culturelles.</li>
+      <li><b>Les pages spectacle</b> : la carte des tournées de la 06, sous « Actuellement en tournée » ; plus tard, si le budget le permet, un effet au défilement par spectacle, comme dans la <a href="#m10" data-aller="m10">10</a>.</li>
     </ol>
     <p>La pieuvre de la 10 n’est pas perdue : elle peut vivre ailleurs (une page de saison, une affiche animée, une bande-annonce pour les réseaux) sans porter la navigation du site.</p>
     <p>Si vous voulez la solution la plus sûre et la plus rapide à mettre en ligne : la <a href="#m02" data-aller="m02">02</a>, « La maison ».</p>
-    <p><b>Les chiffres de diffusion</b> viennent du dossier artistique 2027-2028 (au 31 juillet 2026) : plus de 1 500 représentations depuis 2011, au moins 86 par an depuis 2014. Le site n’en publie qu’une partie, environ un tiers : ses dates servent aux cartes et à l’agenda, pas aux totaux.</p>
+    <p><b>Le texte d’origine, tel quel</b>, avec ses incohérences et ses fautes, pour qu’on les voie et qu’on les corrige dans le futur site. Par exemple : L’imaginaire forcé est « création 2012 » sur sa page et « création 2011 » sur les pages de saison ; « conventionnée la Ville de Rouen » (il manque « par ») ; « l’un des plus beau poème » ; les pages spectacle annoncent encore « Actuellement en tournée » des dates de 2025-2026 (les maquettes y mettent les dates à venir des pages de saison). Les chiffres de diffusion du dossier artistique (plus de 1 500 représentations depuis 2011) n’y figurent pas.</p>
     <p><b>À vérifier dans la base des dates.</b> Trois lieux ne sont pas des lieux : « diptyque » à Ostwald et à Briançon, « 20h30 » à Saint-Genest-Lerpt. Les maquettes les affichent proprement, mais il faut corriger la source.</p>
         ${dispo('synthese') ? '<p><button class="outil" type="button" data-aller="synthese" style="color:#a8306f;padding:0;font-size:1rem">Voir la synthèse assemblée →</button></p>' : ''}
       </div>`;

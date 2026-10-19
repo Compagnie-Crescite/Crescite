@@ -8,359 +8,438 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Work+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* La synthèse : la maquette 06 enrichie de ce que les autres font de mieux.
-   - la carte des tournées (06) : la tentacule comme thème, sur l'accueil, l'agenda et chaque spectacle ;
-   - l'agenda filtrable (03) : tout public ou scolaires, recherche, spectacle, commune, en lien avec la carte ;
-   - les portes à liens directs (04) : le site retient la porte choisie et ouvre les fiches sur le bon onglet ;
-   - un effet par spectacle au défilement (10), dans une bande à ses couleurs ; le reste est commun à tous. */
+/* La synthèse : l'accueil et les cartes de la 06 (la tentacule comme thème), l'agenda de la 03 relié à la carte,
+   les trois portes de la 04, et pour chaque spectacle une bande à ses couleurs qui s'anime au défilement.
+   Tout le texte visible vient de D, tel quel. */
 :root {
   --papier: #f6f2eb; --papier-2: #ece5da; --carte: #e4dccf; --encre: #1d1418; --gris: #5f565a; --filet: #dcd3c6;
-  --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418;
+  --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418; --blanc: #fffdf9;
   --serif: "Spectral", Georgia, serif; --sans: "Work Sans", system-ui, sans-serif;
-  --gout: clamp(18px, 4vw, 56px); --haut: 64px;
+  --gout: clamp(16px, 4vw, 56px); --haut: 64px;
 }
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: 80px; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 84px; }
 body { margin: 0; background: var(--papier); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
 a { color: inherit; }
 img { display: block; max-width: 100%; }
 :focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
 [tabindex="-1"]:focus { outline: none; }
-.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 80; background: #fff; padding: 8px 14px; border-radius: 6px; }
 .evitement:focus { top: 8px; }
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .wrap { max-width: 1240px; margin: 0 auto; padding: 0 var(--gout); }
 [hidden] { display: none !important; }
 
-/* le motif : une onde qui s'enroule au bout, sous les titres */
+/* le motif : une onde qui s'enroule au bout, sous les titres ; elle se dessine à l'arrivée */
 .trait { display: block; width: 92px; height: 16px; margin-top: 10px; overflow: visible; }
-.trait path { fill: none; stroke: var(--c, var(--magenta)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.trait path { fill: none; stroke: var(--c, var(--magenta)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; }
+.page-titre .trait path, .une .trait path, .tete .trait path { animation: dessine 1.1s .15s cubic-bezier(.45, 0, .2, 1) both; }
+.porte:hover .trait path, .fiche-sp:hover .trait path { animation: dessine .8s cubic-bezier(.45, 0, .2, 1) both; }
+@keyframes dessine { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
-/* en-tête : un étage, quatre entrées */
+/* en-tête : la marque et les six onglets */
 .top { position: sticky; top: 0; z-index: 30; height: var(--haut); background: color-mix(in srgb, var(--papier) 94%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--filet); }
 .top .wrap { display: flex; align-items: center; gap: 24px; height: 100%; max-width: none; }
 .marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 1.1rem; letter-spacing: .01em; }
-.marque span.l { width: 34px; }
+.marque .l { display: block; width: 34px; }
 .marque svg { width: 100%; height: auto; display: block; }
-.nav { margin-left: auto; display: flex; gap: 4px; }
-.nav a { text-decoration: none; padding: 8px 12px; border-radius: 6px; font-weight: 500; font-size: .97rem; color: var(--gris); }
+.nav { margin-left: auto; display: flex; gap: 2px; }
+.nav a { text-decoration: none; padding: 8px 11px; border-radius: 6px; font-weight: 500; font-size: .95rem; color: var(--gris); white-space: nowrap; }
 .nav a:hover { color: var(--encre); background: var(--papier-2); }
 .nav a[aria-current="page"] { color: var(--encre); box-shadow: inset 0 -2px 0 var(--magenta); border-radius: 0; }
-.menu { display: none; margin-left: auto; background: none; border: 1px solid var(--filet); border-radius: 6px; padding: 6px 12px; font: 600 .95rem var(--sans); color: var(--encre); }
-.vous { display: none; font-size: .85rem; color: var(--gris); white-space: nowrap; }
-.vous b { color: var(--encre); font-weight: 600; }
-.vous button { background: none; border: 0; padding: 0; margin-left: 6px; color: var(--magenta-texte); font: inherit; text-decoration: underline; cursor: pointer; }
+.menu { display: none; margin-left: auto; align-items: center; gap: 8px; background: none; border: 1px solid var(--filet); border-radius: 999px; padding: 6px 14px; font: 600 .95rem var(--sans); color: var(--encre); cursor: pointer; }
+.menu svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
 
 /* blocs communs */
-section.bloc { padding: clamp(52px, 7vw, 96px) 0; border-top: 1px solid var(--filet); }
-.entete { display: flex; justify-content: space-between; align-items: end; gap: 12px 32px; flex-wrap: wrap; margin-bottom: 30px; }
-.entete h2, .page-titre h1 { margin: 0; font: italic 400 clamp(2rem, 1.4rem + 1.8vw, 2.8rem)/1.05 var(--serif); }
-.entete a, .lien { font: 600 1rem var(--sans); color: var(--magenta-texte); text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; }
-.entete a:hover, .lien:hover { text-decoration: underline; }
-.page-titre { padding-top: clamp(36px, 5vw, 64px); padding-bottom: clamp(20px, 3vw, 36px); }
-.page-titre h1 { font-size: clamp(2.4rem, 1.6rem + 2.6vw, 3.6rem); }
-.page-titre p { margin: 16px 0 0; max-width: 62ch; color: var(--gris); font-size: 1.1rem; }
-.bouton { display: inline-block; padding: 11px 18px; border-radius: 999px; background: var(--encre); color: var(--papier); border: 1.5px solid var(--encre); text-decoration: none; font-weight: 600; font-size: .97rem; cursor: pointer; font-family: var(--sans); }
+section.bloc { padding: clamp(48px, 7vw, 96px) 0; border-top: 1px solid var(--filet); }
+section.bloc.sans-filet { border-top: 0; padding-top: 0; }
+.page-titre { padding-top: clamp(36px, 5vw, 64px); padding-bottom: clamp(24px, 3vw, 40px); }
+.page-titre h1 { margin: 0; font: italic 400 clamp(2.4rem, 1.6rem + 2.6vw, 3.6rem)/1.05 var(--serif); text-wrap: balance; }
+.page-titre .trait { width: 120px; height: 20px; margin-top: 14px; }
+.surtitre { margin: 0 0 14px; font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.surtitre a { text-decoration: none; }
+.surtitre a:hover { color: var(--magenta-texte); }
+.titre-bloc { margin: 0 0 30px; font: italic 400 clamp(2rem, 1.4rem + 1.8vw, 2.8rem)/1.05 var(--serif); }
+.bouton { display: inline-block; padding: 11px 20px; border-radius: 999px; background: var(--encre); color: var(--papier); border: 1.5px solid var(--encre); text-decoration: none; font: 600 .97rem var(--sans); cursor: pointer; }
 .bouton.second { background: transparent; color: var(--encre); }
 .bouton:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
-.afournir { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; color: var(--gris); border: 1px dashed var(--gris); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+.boutons { display: flex; gap: 10px; flex-wrap: wrap; margin: 0; }
+.fleche { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ouverture de l'accueil */
-.ouverture { padding: clamp(28px, 4vw, 56px) 0 clamp(40px, 5vw, 72px); }
-.ouverture .wrap { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
-.surtitre { margin: 0 0 16px; font-size: .8rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
-.ouverture h1 { margin: 0; font: italic 400 clamp(2.2rem, 1.4rem + 2.6vw, 3.6rem)/1.08 var(--serif); text-wrap: balance; }
-.ouverture .trait { width: 120px; height: 20px; margin-top: 18px; }
-.chiffre { margin: 22px 0 0; font-size: 1.12rem; max-width: 34ch; }
-.chiffre b { font-weight: 600; }
-.saison { margin: 26px 0 0; padding: 16px 0 0; border-top: 1px solid var(--filet); }
-.saison p { margin: 0 0 14px; }
-.saison b { color: var(--magenta-texte); }
-.boutons { display: flex; gap: 10px; flex-wrap: wrap; }
-
-/* la carte des tournées */
-figure.carte { margin: 0; }
-.carte svg { display: block; width: 100%; height: auto; max-height: calc(100svh - 150px); }
+/* la carte des tournées : des bras effilés qui poussent depuis Rouen, une spirale au bout */
+.carte { display: block; width: 100%; height: auto; overflow: visible; }
 .carte .pays { fill: var(--carte); }
 .carte .voisin { fill: var(--papier-2); }
-.carte .bras-passe { fill: color-mix(in srgb, var(--encre) 24%, transparent); }
-.carte .bras-saison { fill: var(--c, var(--magenta)); transition: opacity .2s; }
-.carte .bout-passe { fill: color-mix(in srgb, var(--encre) 40%, transparent); }
-.carte .bout-saison { fill: var(--c, var(--magenta)); stroke: var(--papier); stroke-width: 1.5; }
-.carte .lieu { cursor: pointer; }
-.carte .lieu:focus { outline: none; }
-.carte .lieu:focus-visible .bout-saison, .carte .lieu:hover .bout-saison { stroke: var(--encre); stroke-width: 2.5; }
-.carte.surligne .bras-saison:not(.on) { opacity: .22; }
-.carte .bras-saison.on { opacity: 1; }
+.carte .encart { fill: none; stroke: var(--gris); stroke-opacity: .5; stroke-dasharray: 3 4; }
+.carte .passe path { fill: color-mix(in srgb, var(--encre) 20%, transparent); }
+.carte .m { fill: none; stroke: #fff; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.3s cubic-bezier(.45, 0, .2, 1) var(--d, 0s); }
+.carte.pousse .m { stroke-dashoffset: 0; }
+.carte .bras { fill: var(--kc, var(--magenta)); }
+.carte .bout { fill: none; stroke: var(--kc, var(--magenta)); stroke-width: 1.7; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .7s ease-out calc(var(--d, 0s) + 1.05s); }
+.carte.pousse .bout { stroke-dashoffset: 0; }
+.carte .point { fill: var(--kc, var(--magenta)); stroke: var(--papier); stroke-width: 1.2; opacity: 0; transition: opacity .4s calc(var(--d, 0s) + .9s); }
+.carte.pousse .point { opacity: 1; }
+.carte .cible { fill: transparent; }
+.carte .carte-lieu { cursor: pointer; outline: none; transition: opacity .25s; }
+.carte .carte-lieu:focus-visible .point { stroke: var(--encre); stroke-width: 2.6; }
+.carte .carte-lieu.eteint { opacity: .12; }
+.carte.surligne .carte-lieu:not(.on) { opacity: .18; }
 .carte .rouen { fill: var(--encre); }
-.carte .rouen-nom { font: italic 500 17px var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--carte); stroke-width: 4px; }
-.carte figcaption { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 10px; font-size: .88rem; color: var(--gris); }
-.legende i { display: inline-block; width: 22px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 8px; background: var(--c, var(--magenta)); }
-.legende i.passe { background: color-mix(in srgb, var(--encre) 30%, transparent); }
+.carte .rouen-nom, .carte .nom { font: italic 500 calc(16px * var(--k, 1)) var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--papier); stroke-width: calc(4px * var(--k, 1)); stroke-linejoin: round; }
+.carte .nom { display: none; font: 600 calc(13px * var(--k, 1)) var(--sans); }
+.carte .nom.on { display: inline; }
+.carte.attente .rouen { transform-box: fill-box; transform-origin: center; animation: battement 2.2s ease-in-out infinite; }
+@keyframes battement { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.9); } }
 
-/* spectacles en cartes */
-.filtres { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; }
+/* accueil : le nom, la saison qui part de Rouen, la carte la plus grande */
+.une { padding: clamp(12px, 3vw, 40px) 0 clamp(36px, 5vw, 64px); }
+.une-grille { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-areas: "tete carte" "liste carte"; grid-template-rows: auto 1fr; column-gap: clamp(24px, 4vw, 64px); }
+.une-tete { grid-area: tete; align-self: end; padding-top: clamp(16px, 4vh, 48px); }
+.une-liste { grid-area: liste; }
+.une h1 { margin: 0; font: italic 400 clamp(2.8rem, 1.5rem + 4.2vw, 5.4rem)/.98 var(--serif); letter-spacing: -.01em; text-wrap: balance; }
+.une .trait { width: 140px; height: 22px; margin-top: 16px; }
+.rubrique { margin: 28px 0 8px; font: 600 .78rem/1.3 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--magenta-texte); }
+.prochaines { list-style: none; margin: 0 0 24px; padding: 0; border-top: 1px solid var(--encre); }
+.prochaines a { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr); gap: 0 14px; align-items: baseline; padding: 10px 8px; border-bottom: 1px solid var(--filet); text-decoration: none; transition: background .2s; }
+.prochaines time { grid-row: span 2; }
+.prochaines time b { display: block; font: 600 1rem/1.25 var(--sans); font-variant-numeric: tabular-nums; }
+.prochaines time small { display: block; font-size: .8rem; color: var(--gris); }
+.prochaines .t { font: italic 500 1.15rem/1.2 var(--serif); }
+.prochaines .t::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 8px; vertical-align: .15em; }
+.prochaines .ou { font-size: .9rem; color: var(--gris); }
+.prochaines li.on a, .prochaines a:hover { background: color-mix(in srgb, var(--magenta) 8%, transparent); }
+.une-carte { grid-area: carte; align-self: center; position: relative; margin: 0; }
+.une-carte .carte { max-height: calc(100svh - 110px); }
+.bulle { position: absolute; left: 0; bottom: 3%; max-width: min(330px, 48%); margin: 0; padding: 10px 14px; background: color-mix(in srgb, var(--blanc) 94%, transparent); border: 1px solid var(--filet); border-left: 3px solid var(--magenta); font-size: .88rem; line-height: 1.4; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; pointer-events: none; }
+.bulle.on { opacity: 1; transform: none; }
+.bulle b { display: block; font: italic 500 1.15rem var(--serif); }
+.bulle ul { list-style: none; margin: 4px 0 0; padding: 0; }
+.bulle li { display: flex; flex-wrap: wrap; gap: 0 8px; }
+.bulle .t { font-weight: 600; }
+
+/* les trois portes : leurs libellés seuls */
+.portes { border-top: 1px solid var(--encre); border-bottom: 1px solid var(--filet); }
+.portes-grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 1240px; margin: 0 auto; }
+.porte { position: relative; display: flex; flex-direction: column; min-height: clamp(150px, 15vw, 200px); padding: clamp(22px, 3vw, 34px) clamp(18px, 2.4vw, 32px) 72px; text-decoration: none; border-left: 1px solid var(--filet); transition: background .3s; }
+.porte:first-child { border-left: 0; }
+.porte-t { font: italic 400 clamp(1.6rem, 1.1rem + 1.5vw, 2.5rem)/1.08 var(--serif); text-wrap: balance; transition: color .3s; }
+.porte .trait { width: 110px; height: 18px; margin-top: 12px; }
+.porte-f { position: absolute; right: clamp(18px, 2.4vw, 32px); bottom: 22px; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--pc); color: var(--pc); transition: transform .3s, background .3s, color .3s; }
+.porte:hover { background: color-mix(in srgb, var(--pv) 16%, var(--papier)); }
+.porte:hover .porte-t { color: var(--pc); }
+.porte:hover .porte-f { background: var(--pc); color: #fff; transform: translateX(6px); }
+
+/* les spectacles en cartes */
+.cartes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px 22px; list-style: none; margin: 0; padding: 0; }
+.fiche-sp { display: block; text-decoration: none; }
+.fiche-sp figure { position: relative; margin: 0 0 14px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; background: var(--papier-2); }
+.fiche-sp img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
+.fiche-sp:hover img { transform: scale(1.04); }
+.badge { position: absolute; left: 10px; top: 10px; padding: 3px 10px; border-radius: 999px; background: var(--papier); color: var(--encre); font: 600 .7rem/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.badge.creation { background: var(--cc); }
+.fiche-sp h3 { margin: 0; font: italic 500 1.45rem/1.15 var(--serif); transition: color .2s; }
+.fiche-sp:hover h3 { color: var(--ct); }
+.fiche-sp .st, .fiche-sp .cr { display: block; font-size: .9rem; color: var(--gris); }
+.fiche-sp .st { margin-top: 4px; }
+.fiche-sp .quand { display: block; margin-top: 8px; font-size: .88rem; font-weight: 600; }
+.merci { padding: 34px 0 56px; border-top: 1px solid var(--filet); }
+.merci p { margin: 12px 0 0; max-width: 112ch; font-size: .82rem; line-height: 1.65; color: var(--gris); }
+
+/* l'agenda : la recherche, les spectacles, la liste par mois, la carte qui suit */
+.ag-outils { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; margin-bottom: 26px; }
+.recherche { position: relative; flex: 1 1 260px; max-width: 360px; }
+.recherche input { width: 100%; padding: 11px 14px 11px 40px; border: 1.5px solid var(--filet); border-radius: 999px; background: var(--blanc); font: 400 1rem var(--sans); color: var(--encre); }
+.recherche input:focus { border-color: var(--encre); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--magenta) 25%, transparent); }
+.recherche svg { position: absolute; left: 14px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: var(--gris); stroke-width: 2; }
+.filtres { display: flex; flex-wrap: wrap; gap: 8px; }
 .puce { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; border: 1.5px solid var(--filet); background: transparent; font: 500 .93rem var(--sans); color: var(--encre); cursor: pointer; }
 .puce:hover { border-color: var(--encre); }
 .puce[aria-pressed="true"] { background: var(--encre); border-color: var(--encre); color: var(--papier); }
 .puce i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
-.puce small { color: inherit; opacity: .7; font-variant-numeric: tabular-nums; }
-.cartes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 30px 22px; list-style: none; margin: 0; padding: 0; }
-.cartes a { display: block; text-decoration: none; }
-.cartes figure { margin: 0 0 14px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; background: var(--papier-2); }
-.cartes img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
-.cartes a:hover img { transform: scale(1.03); }
-.cartes h3 { margin: 0; font: italic 500 1.45rem/1.15 var(--serif); }
-.cartes a:hover h3 { color: var(--ct); }
-.cartes .st { display: block; margin-top: 4px; font-size: .9rem; color: var(--gris); }
-.cartes .quand { display: block; margin-top: 8px; font-size: .9rem; font-weight: 600; }
-.vide { margin: 0; padding: 24px 0; color: var(--gris); }
-
-/* les dates */
+.puce .croix { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.puce.choisi { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.ag-corps, .sa-corps { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
+.ag-carte, .sa-carte { position: sticky; top: calc(var(--haut) + 16px); }
+.ag-carte .carte, .sa-carte .carte { max-height: calc(100svh - var(--haut) - 40px); }
+.mois { margin: 30px 0 8px; font: italic 500 1.55rem/1.2 var(--serif); }
+.mois::first-letter { text-transform: uppercase; }
+.ag-liste .mois:first-child { margin-top: 0; }
 .dates { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--encre); }
-.dates li { display: grid; grid-template-columns: 150px minmax(0, 1.1fr) minmax(0, 1fr) 96px; gap: 18px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--filet); }
-.dates time { font-weight: 600; font-variant-numeric: tabular-nums; }
-.dates time small { display: block; font-weight: 400; color: var(--gris); font-size: .85rem; }
-.dates a { font: italic 500 1.25rem/1.2 var(--serif); text-decoration: none; }
-.dates a::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: .15em; }
-.dates a:hover { color: var(--magenta-texte); }
-.dates .ou { color: var(--gris); }
-.dates .ou em { font-style: normal; }
-.dates .pub { font-size: .82rem; font-weight: 600; text-align: right; }
-.dates.court li { grid-template-columns: 150px minmax(0, 1fr) 96px; }
+.dates > li { display: grid; grid-template-columns: 8.2rem minmax(0, 1fr); gap: 4px 18px; padding: 14px 8px; border-bottom: 1px solid var(--filet); transition: background .2s; }
+.dates time b { display: block; font: 600 1.05rem/1.25 var(--sans); font-variant-numeric: tabular-nums; }
+.dates time small { display: block; font-size: .85rem; color: var(--gris); }
+.dates .t { font: italic 500 1.25rem/1.2 var(--serif); text-decoration: none; }
+.dates .t::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 10px; vertical-align: .15em; }
+.dates .t:hover { color: var(--magenta-texte); }
+.dates .ou { display: block; font-weight: 500; }
+.dates > li.on, .sa-dates > li.on { background: color-mix(in srgb, var(--magenta) 8%, transparent); }
+.det { list-style: none; margin: 4px 0 0; padding: 0; font-size: .9rem; color: var(--gris); overflow-wrap: anywhere; }
+.det a { color: var(--magenta-texte); }
+.saisons { padding: clamp(40px, 6vw, 80px) 0; border-top: 1px solid var(--filet); }
+.saisons-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 22px 18px; }
+.saisons-liste a { display: block; text-decoration: none; }
+.vignette { display: block; width: 100%; height: auto; }
+.vignette use { fill: var(--carte); }
+.vignette path { fill: none; stroke: var(--magenta); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 1 1; }
+.saisons-liste a:hover .vignette path { animation: dessine 1s ease-out both; }
+.vignette circle { fill: var(--encre); }
+.saisons-liste span { display: block; margin-top: 6px; font: italic 500 1.05rem/1.25 var(--serif); }
+.saisons-liste a:hover span { color: var(--magenta-texte); }
 
-/* l'agenda : les filtres, la liste par mois, la carte qui suit */
-.agenda-outils { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px 24px; align-items: center; margin-bottom: 18px; }
-.bascule { display: inline-flex; border: 1.5px solid var(--encre); border-radius: 999px; padding: 3px; }
-.bascule button { border: 0; background: none; border-radius: 999px; padding: 7px 16px; font: 500 .95rem var(--sans); color: var(--encre); cursor: pointer; }
-.bascule button[aria-pressed="true"] { background: var(--encre); color: var(--papier); }
-.recherche { position: relative; max-width: 420px; justify-self: end; width: 100%; }
-.recherche input { width: 100%; padding: 11px 14px 11px 40px; border: 1.5px solid var(--filet); border-radius: 999px; background: #fffdf9; font: 400 1rem var(--sans); color: var(--encre); }
-.recherche input:focus { border-color: var(--encre); outline: none; }
-.recherche svg { position: absolute; left: 14px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); fill: none; stroke: var(--gris); stroke-width: 2; }
-.agenda-corps { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
-.agenda-carte { position: sticky; top: calc(var(--haut) + 20px); }
-.agenda-carte .carte svg { max-height: calc(100svh - 190px); }
-.compte { margin: 0 0 6px; font-weight: 600; }
-.compte .lien { margin-left: 10px; font-size: .92rem; }
-.mois { margin: 34px 0 10px; font: italic 500 1.6rem var(--serif); display: flex; justify-content: space-between; align-items: baseline; }
-.mois small { font: 400 .9rem var(--sans); color: var(--gris); }
-.agenda-liste .dates li { grid-template-columns: 140px minmax(0, 1fr) 90px; }
-.agenda-liste .dates .ou { grid-column: 2; }
-.agenda-liste .dates li > a { grid-column: 2; grid-row: 1; }
-.agenda-liste .dates time { grid-row: 1 / span 2; }
-.agenda-liste .dates .pub { grid-column: 3; grid-row: 1; }
-.agenda-liste .dates li.on { background: color-mix(in srgb, var(--magenta) 7%, transparent); }
-
-/* les trois portes */
-.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: auto auto 1fr; gap: 0 clamp(20px, 3vw, 40px); }
-.porte { display: grid; grid-row: span 3; grid-template-rows: subgrid; gap: 10px; align-content: start; }
-.porte h3 { margin: 0; font: italic 500 1.65rem/1.15 var(--serif); }
-.porte > p { margin: 0; color: var(--gris); }
-.porte ul { list-style: none; margin: 6px 0 14px; padding: 0; border-top: 1px solid var(--filet); }
-.porte li a { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--filet); text-decoration: none; }
-.porte li a:hover { color: var(--magenta-texte); }
-.porte li small { color: var(--gris); white-space: nowrap; }
-.porte .bas > p { margin: 0; color: var(--gris); }
+/* une saison passée, comme sa page d'origine */
+.sa-sp { padding: 0 0 26px; }
+.sa-sp + .sa-sp { padding-top: 26px; border-top: 1px solid var(--filet); }
+.sa-sp h2 { margin: 0; font: italic 500 1.7rem/1.15 var(--serif); }
+.sa-sp h2::before { content: ""; display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: var(--c); margin-right: 12px; vertical-align: .2em; }
+.sa-sp h2 a { text-decoration: none; }
+.sa-sp h2 a:hover { color: var(--magenta-texte); }
+.sa-sp .st { display: flex; flex-wrap: wrap; gap: 0 14px; margin: 4px 0 12px; color: var(--gris); font-size: .95rem; }
+.sa-dates { list-style: none; margin: 0; padding: 0; }
+.sa-dates > li { padding: 8px; border-bottom: 1px solid var(--filet); font-size: .97rem; transition: background .2s; }
+.sa-dates > li > a { text-decoration-color: color-mix(in srgb, var(--encre) 30%, transparent); }
+.etat { margin-left: 6px; font: normal 600 .74rem var(--sans); letter-spacing: .05em; text-transform: uppercase; color: var(--magenta-texte); }
 
 /* la compagnie */
-.compagnie { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
-.compagnie p.grand { margin: 0 0 18px; font: 400 clamp(1.35rem, 1.1rem + .9vw, 1.9rem)/1.35 var(--serif); }
-.chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: 0; align-self: start; }
-.chiffres dt { font: 400 2.6rem/1 var(--serif); }
-.chiffres dd { margin: 6px 0 0; color: var(--gris); font-size: .9rem; }
-.artistes { list-style: none; margin: 0; padding: 0; columns: 3 220px; column-gap: 32px; }
-.artistes li { break-inside: avoid; padding: 9px 0; border-bottom: 1px solid var(--filet); }
-.artistes b { display: block; font-weight: 600; }
-.artistes span { font-size: .9rem; color: var(--gris); }
-.contacts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 40px); }
-.contacts h2 { margin: 0 0 10px; font: italic 500 1.5rem var(--serif); }
-.contacts p { margin: 0 0 8px; }
-footer { background: var(--nuit); color: #d8cdd1; padding: 44px 0; font-size: .92rem; }
-footer .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.compagnie, .actions, .corps { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 88px); align-items: start; }
+.paragraphes p, .blocs p, .blocs li, .texte p { max-width: 68ch; }
+.paragraphes p { margin: 0 0 1.1em; }
+.paragraphes > p:first-child, .chapo { font: 400 clamp(1.2rem, 1rem + .7vw, 1.5rem)/1.5 var(--serif); }
+.reperes { position: sticky; top: calc(var(--haut) + 24px); }
+.reperes h2 { margin: 0 0 16px; font: italic 400 clamp(1.7rem, 1.3rem + 1.2vw, 2.3rem)/1.1 var(--serif); }
+.frise { list-style: none; margin: 0; padding: 0 0 0 30px; position: relative; }
+.frise::before { content: ""; position: absolute; left: 0; top: 6px; bottom: 6px; width: 16px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='40'%3E%3Cpath d='M8 0C14 10 14 10 8 20S2 30 8 40' fill='none' stroke='%23bc3e80' stroke-width='2'/%3E%3C/svg%3E") repeat-y; }
+.frise li { position: relative; display: grid; grid-template-columns: 3.6rem minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 9px 0; }
+.frise li::before { content: ""; position: absolute; left: -27px; top: 17px; width: 11px; height: 11px; border-radius: 50%; background: var(--papier); border: 2px solid var(--c, var(--magenta)); }
+.frise .an { font: 500 1.3rem var(--serif); }
+.frise a, .frise .ti { font: italic 500 1.15rem/1.25 var(--serif); text-decoration: none; }
+.frise a:hover { color: var(--c); }
+
+/* actions culturelles */
+.blocs h2 { margin: 1.4em 0 .5em; font: italic 500 1.7rem/1.15 var(--serif); }
+.blocs h2:first-child { margin-top: 0; }
+.blocs ul { padding-left: 1.1em; }
+.blocs li { margin-bottom: .7em; }
+.blocs li::marker { color: var(--magenta); }
+.photo { position: sticky; top: calc(var(--haut) + 24px); margin: 0; }
+.photo img { width: 100%; border-radius: 4px; }
+figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
+
+/* formulaires : l'espace pro et le contact */
+.pro-form { max-width: 540px; padding: clamp(22px, 4vw, 40px); background: var(--blanc); border: 1px solid var(--filet); border-top: 3px solid var(--magenta); border-radius: 6px; }
+.pro-form > p:first-child { margin-top: 0; }
+.champ { margin: 0 0 16px; }
+.champ label { display: block; margin-bottom: 6px; font-weight: 600; font-size: .92rem; }
+.champ input, .champ textarea, .calcul input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 1rem var(--sans); color: var(--encre); }
+.champ input:focus, .champ textarea:focus, .calcul input:focus { border-color: var(--encre); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--magenta) 25%, transparent); }
+.contact { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 88px); align-items: start; }
+.formulaire { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 20px; }
+.formulaire .large, .formulaire .case, .formulaire .calcul, .formulaire .envoi { grid-column: 1 / -1; }
+.case { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 16px; }
+.case input { flex: none; width: 18px; height: 18px; margin: 4px 0 0; accent-color: var(--magenta); }
+.case a { color: var(--magenta-texte); }
+.calcul { display: flex; align-items: center; gap: 10px; margin: 0 0 20px; }
+.calcul label { font-weight: 600; white-space: nowrap; }
+.calcul input { width: 4.5em; padding: 8px 10px; }
+.envoi { margin: 0; }
+.coord { font-style: normal; line-height: 1.7; padding: 22px 24px; border-left: 3px solid var(--magenta); background: var(--papier-2); }
+.legal { max-width: 78ch; overflow-wrap: anywhere; }
+.legal h2 { margin: 1.6em 0 .5em; font: italic 500 1.6rem/1.2 var(--serif); }
+.legal h2:first-child { margin-top: 0; }
+.legal a { color: var(--magenta-texte); }
+
+/* pied de page */
+footer { background: var(--nuit); color: #d8cdd1; padding: 48px 0 44px; font-size: .92rem; }
+.pied { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 28px; }
 footer strong { color: #fff; }
-footer p { margin: 0 0 6px; }
+footer p { margin: 0 0 10px; }
+footer a { color: #fff; text-decoration-color: rgba(255, 255, 255, .4); }
+footer a:hover { color: #f3a6cb; }
+footer :focus-visible { outline-color: #f07ab6; }
+.liens { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.petit { font-size: .82rem; color: #b9adb2; }
 
 /* la page d'un spectacle */
 .tete .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(24px, 5vw, 72px); align-items: center; padding-top: clamp(28px, 4vw, 56px); padding-bottom: clamp(40px, 5vw, 72px); }
 .fil { margin: 0 0 18px; font-size: .9rem; color: var(--gris); }
 .fil a { text-decoration: none; }
 .fil a:hover { text-decoration: underline; }
+.etiquette { display: inline-block; margin: 0 0 14px; padding: 3px 11px; border-radius: 999px; border: 1.5px solid var(--ct); color: var(--ct); font: 600 .72rem/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
 .tete h1 { margin: 0; font: italic 400 clamp(2.8rem, 1.6rem + 4vw, 5.2rem)/1 var(--serif); text-wrap: balance; }
 .tete .trait { width: 130px; height: 22px; margin-top: 16px; }
 .tete .st { margin: 18px 0 0; font-size: 1.15rem; color: var(--gris); }
-.tete .prochaine { margin: 18px 0 0; font-weight: 600; }
-.tete figure { margin: 0; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 4px; }
-.tete figure img { width: 100%; height: 100%; object-fit: cover; }
-.tete figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
-.corps { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); }
-.accroche { margin: 0 0 22px; font: italic 400 clamp(1.45rem, 1.1rem + 1.1vw, 2.1rem)/1.25 var(--serif); text-wrap: balance; }
-.corps p { max-width: 64ch; }
-.faits { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 18px; font-size: .97rem; align-content: start; }
-.faits dt { color: var(--gris); }
-.faits dd { margin: 0; font-weight: 500; }
-.ou-voir { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
-.ou-voir .resume { margin: 0 0 18px; font-size: 1.1rem; }
-.onglets { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--filet); margin-bottom: 26px; }
-.onglets button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 0; margin: 0 26px -1px 0; font: italic 500 1.3rem var(--serif); color: var(--gris); cursor: pointer; }
-.onglets button:hover { color: var(--encre); }
-.onglets button[aria-selected="true"] { color: var(--encre); border-bottom-color: var(--dc); }
-.panneau { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); }
-.panneau h3 { margin: 0 0 10px; font-size: .8rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
-.panneau p { margin: 0 0 14px; }
-.panneau .faits { margin-bottom: 18px; }
-.docs { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--filet); }
-.docs li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--filet); }
+.tete .st + .st { margin-top: 2px; }
+.tete .cr { margin: 4px 0 0; color: var(--gris); }
+.tete .cadre { margin: 18px 0 0; padding-top: 12px; border-top: 1px solid var(--filet); font: 600 .8rem/1.5 var(--sans); letter-spacing: .07em; text-transform: uppercase; color: var(--ct); }
+.tete figure { margin: 0; }
+.tete figure img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; }
+.texte p { margin: 0 0 1em; }
+.medias { list-style: none; margin: 26px 0 0; padding: 0; border-top: 1px solid var(--filet); }
+.groupe + .medias { margin-top: 8px; }
+.medias a { display: flex; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--filet); text-decoration: none; }
+.medias a:hover span { color: var(--ct); }
+.medias svg { flex: none; width: 32px; height: 32px; }
+.medias svg circle { fill: none; stroke: var(--ct); stroke-width: 1.5; }
+.medias svg path { fill: var(--ct); stroke: var(--ct); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.medias span { font-weight: 500; overflow-wrap: anywhere; }
+.medias small { display: block; font-weight: 400; color: var(--gris); }
+.groupe { margin: 24px 0 0; font: 600 .78rem var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.fiche-l { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.fiche-l .k { display: block; font-size: .82rem; color: var(--gris); }
+.fiche-l .v { display: block; font-weight: 500; }
+.duree { margin: 20px 0 0; font-weight: 600; }
+.mention { margin: 14px 0 0; padding: 10px 12px; background: var(--papier-2); border-radius: 4px; font-size: .9rem; }
+.mention a { color: var(--magenta-texte); }
+.prod { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--filet); font-size: .85rem; color: var(--gris); }
+.prod p { margin: 0 0 8px; }
+.tournee { --kc: var(--ct); }
+.tournee-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
+.tournee h2 { margin: 0 0 20px; font: italic 400 clamp(2rem, 1.4rem + 1.8vw, 2.8rem)/1.05 var(--serif); }
+.dates-sp > li { grid-template-columns: 8.2rem minmax(0, 1fr); }
+.dates-sp { --c: var(--ct); }
+.carte-sp { margin: 0; }
+.carte-sp.seule { max-width: 760px; margin: 0 auto; }
+.annonce { margin: 0; font: italic 400 1.35rem/1.4 var(--serif); color: var(--gris); }
 .suivant { display: block; text-decoration: none; padding: clamp(40px, 6vw, 72px) 0; border-top: 1px solid var(--filet); background: var(--papier-2); }
-.suivant .wrap { display: block; }
-.suivant small { display: block; color: var(--gris); margin-bottom: 6px; }
+.suivant .wrap { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .suivant b { font: italic 400 clamp(2rem, 1.4rem + 2.4vw, 3.4rem)/1.05 var(--serif); }
+.suivant .fleche { flex: none; width: 44px; height: 44px; transition: transform .3s; }
 .suivant:hover b { color: var(--ct); }
+.suivant:hover .fleche { transform: translateX(8px); }
 
-/* l'effet signature : une bande aux couleurs du spectacle, épinglée le temps du défilement */
+/* la bande d'un spectacle, à ses couleurs, épinglée le temps du défilement ; seulement le texte du spectacle */
 .show { --bg2: #1f0f19; --fg: #f7ecf1; --fg2: #c9b7c1; --ac: var(--magenta); --ac2: #e9d7b0; }
 .sx { position: relative; }
 .sx-pin { position: sticky; top: var(--haut); height: calc(100vh - var(--haut)); height: calc(100svh - var(--haut)); overflow: hidden; }
 .sx-sig { height: 280vh; background: var(--bg2); color: var(--fg); }
+.sx-chronologie { height: 360vh; }
 .sig { position: relative; height: 100%; overflow: hidden; }
-.sig blockquote { margin: 0; }
-.sig cite { display: block; margin-top: 14px; font: 600 .76rem/1.4 var(--sans); font-style: normal; letter-spacing: .07em; text-transform: uppercase; color: var(--fg2); }
-.sig-vers > p:first-child { margin: 0; font: italic 500 clamp(1.5rem, 1rem + 2vw, 2.8rem)/1.12 var(--serif); text-wrap: balance; }
+.sig-phrase { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); width: min(900px, 90%); margin: 0; text-align: center; font: italic 500 clamp(1.2rem, .85rem + 1.4vw, 2.1rem)/1.22 var(--serif); text-wrap: balance; opacity: clamp(0, (var(--p) - .5) * 5, 1); }
+/* Cassandres : les cartons, la chaleur qui monte, la frise du temps */
+.sig-chrono { display: grid; place-items: center; padding: 0 var(--gout); }
+.chaleur { position: absolute; left: -20%; right: -20%; bottom: -55%; height: 100%; background: radial-gradient(closest-side, color-mix(in srgb, var(--ac) 60%, transparent), transparent); opacity: calc(.12 + var(--p) * .8); transform: translateY(calc((1 - var(--p)) * 25%)); pointer-events: none; }
+.ligne-temps { position: absolute; left: 0; top: 13%; width: 200%; height: 40px; transform: translateX(calc(var(--p) * -50%)); }
+.ligne-temps path { stroke: var(--fg2); stroke-width: 1.5; opacity: .45; }
+.cartons { position: relative; display: grid; width: min(860px, 100%); margin: 0; padding: 0; list-style: none; }
+.cartons li { grid-area: 1 / 1; align-self: center; opacity: 0; transform: translateY(18px); transition: opacity .5s, transform .5s; }
+.cartons li.on { opacity: 1; transform: none; }
+.cartons blockquote { margin: 0; text-align: center; }
+.cartons p { margin: 0; font: italic 500 clamp(1.45rem, 1rem + 2vw, 2.8rem)/1.2 var(--serif); text-wrap: balance; }
+.cartons cite { display: block; margin-top: 18px; font: normal 600 .76rem/1.4 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--ac); }
 /* Cléophène : les jumeaux */
-.sig-jumeaux .twin { position: absolute; top: 14%; height: 54%; width: min(26vw, 400px); overflow: hidden; border: 1px solid var(--ac); }
+.sig-jumeaux .twin { position: absolute; top: 12%; height: 50%; width: min(26vw, 400px); overflow: hidden; border: 1px solid var(--ac); }
 .sig-jumeaux .twin.l { left: calc(50% - min(13vw, 200px) - clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
 .sig-jumeaux .twin.r { left: calc(50% - min(13vw, 200px) + clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
 .sig-jumeaux .twin img { width: 100%; height: 100%; object-fit: cover; }
 .sig-jumeaux .twin.r img { transform: scaleX(-1); }
 .sig-jumeaux .crown { position: absolute; left: 50%; top: 3%; width: 92px; transform: translateX(-50%); fill: none; stroke: var(--ac); stroke-width: 2.5; stroke-linejoin: round; }
 .sig-jumeaux .crown path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, var(--p) * 2.2, 1)); }
-.sig-q { position: absolute; left: 50%; top: 41%; transform: translate(-50%, -50%); width: min(15vw, 230px); margin: 0; text-align: center; font: italic 600 clamp(1.2rem, 1rem + 1vw, 1.8rem)/1.15 var(--serif); color: var(--ac); opacity: clamp(0, (var(--p) - .5) * 5, 1); }
-.sig-jumeaux .sig-vers { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); width: min(900px, 90%); text-align: center; opacity: clamp(0, (var(--p) - .62) * 5, 1); }
-/* Cyrano : la tirade du nez */
+/* Ci-gisait Cyrano : la phrase qui grandit comme un nez */
 .sig-nez { display: grid; place-items: center; padding: 0 var(--gout); }
 .sig-nez .moon { position: absolute; right: 9vw; top: 8%; width: clamp(70px, 11vw, 150px); fill: var(--ac); transform: translateY(calc((1 - var(--p)) * 30vh)); }
-.nez-lines p { margin: 0; text-align: center; font-family: var(--serif); font-style: italic; font-weight: 600; line-height: 1.04; }
-.nez-lines span { display: block; font-size: calc(1.3rem + var(--i) * 1.2vw); opacity: clamp(0, (var(--p) * 6.2 - var(--i) - .2) * 2, 1); transform: translateY(calc((1 - clamp(0, var(--p) * 6.2 - var(--i) - .2, 1)) * 40px)); }
-.nez-lines span:last-child { color: var(--ac); font-size: clamp(2.4rem, 1rem + 6vw, 7rem); }
-.nez-lines cite { text-align: center; opacity: clamp(0, (var(--p) - .85) * 8, 1); }
+.nez-lines { margin: 0; max-width: 1100px; text-align: center; font-family: var(--serif); font-style: italic; font-weight: 600; line-height: 1.05; }
+.nez-lines span { display: block; margin-top: .3em; font-size: calc(1.3rem + var(--i) * 1.5vw); opacity: clamp(0, (var(--p) * 3.4 - var(--i) * 1.05 - .1) * 2.5, 1); transform: translateY(calc((1 - clamp(0, var(--p) * 3.4 - var(--i) * 1.05 - .1, 1)) * 40px)); }
+.nez-lines span:last-child { color: var(--ac); font-size: clamp(2rem, .9rem + 4.4vw, 5.6rem); transform-origin: 0 50%; }
 /* Bérénice : le cercle */
-.sig-cercle { display: grid; place-items: center; }
-.ring-photo { position: absolute; left: 50%; top: 40%; width: min(40vh, 60vw); aspect-ratio: 1; transform: translate(-50%, -50%) scale(calc(.62 + var(--p) * .38)); clip-path: circle(50%); }
+.ring-photo { position: absolute; left: 50%; top: 40%; width: min(40vh, 58vw); aspect-ratio: 1; transform: translate(-50%, -50%) scale(calc(.62 + var(--p) * .38)); clip-path: circle(50%); }
 .ring-photo img { width: 100%; height: 100%; object-fit: cover; }
-.ring { position: absolute; left: 50%; top: 40%; width: min(64vh, 90vw); transform: translate(-50%, -50%); overflow: visible; }
+.ring { position: absolute; left: 50%; top: 40%; width: min(64vh, 92vw); transform: translate(-50%, -50%); overflow: visible; }
 .ring text { font-family: var(--serif); font-style: italic; font-size: 14px; letter-spacing: .8px; fill: var(--fg); }
-.ring text.latin { font-family: var(--sans); font-style: normal; font-weight: 600; font-size: 10.5px; letter-spacing: 5px; fill: var(--ac); }
+.ring text.inner { font-family: var(--sans); font-style: normal; font-weight: 600; font-size: 10.5px; letter-spacing: 4px; text-transform: uppercase; fill: var(--ac); }
 .ring-line { fill: none; stroke: var(--ac); stroke-width: 1.2; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
 .ring-rot { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * 150deg)); }
 .ring-rot2 { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * -110deg)); }
-.sig-cercle .sig-vers { position: absolute; left: 50%; bottom: 4%; transform: translateX(-50%); width: min(860px, 92%); text-align: center; opacity: clamp(0, (var(--p) - .62) * 5, 1); }
-.sig-cercle .sig-vers > p:first-child { font-size: clamp(1.1rem, .8rem + 1.2vw, 1.9rem); }
-.sig-latin { margin: 8px 0 0; font-size: .9rem; color: var(--fg2); }
+.sig-cercle .sig-phrase { bottom: 4%; font-size: clamp(1.05rem, .8rem + 1.1vw, 1.8rem); }
 /* Mon Royaume pour un cheval : le paperboard */
-.sig-board { display: grid; place-items: center; }
-.sheets { list-style: none; margin: 0; padding: 0; position: absolute; left: 50%; top: 9%; width: min(600px, 80vw); height: 64%; transform: translateX(-50%); perspective: 1600px; }
-.sheet { position: absolute; inset: 0; z-index: var(--z); display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 7%; background: #fffdf8 linear-gradient(transparent 96%, #d7e3f4 96%) 0 0 / 100% 2.2em; border: 1px solid #d9d0bf; box-shadow: 0 18px 40px rgba(20, 20, 50, .16); transform-origin: 50% 0; backface-visibility: hidden; transform: rotateX(calc(clamp(0, var(--p) * 4.6 - var(--i) - .35, 1) * -168deg)); }
+.sheets { list-style: none; margin: 0; padding: 0; position: absolute; left: 50%; top: 12%; width: min(620px, 84vw); height: 66%; transform: translateX(-50%); perspective: 1600px; }
+.sheet { position: absolute; inset: 0; z-index: var(--z); display: flex; align-items: center; padding: 8%; background: #fffdf8 linear-gradient(transparent 96%, #d7e3f4 96%) 0 0 / 100% 2.2em; border: 1px solid #d9d0bf; box-shadow: 0 18px 40px rgba(20, 20, 50, .16); transform-origin: 50% 0; backface-visibility: hidden; transform: rotateX(calc(clamp(0, var(--p) * 3.2 - var(--i) - .3, 1) * -168deg)); }
 .sheet:last-child { transform: none; }
-.sheet .l1 { font: italic 500 clamp(1.7rem, 1rem + 2.6vw, 3.1rem)/1.02 var(--serif); color: var(--ac2); }
-.sheet .l2 { font: italic 500 clamp(1.4rem, .9rem + 2vw, 2.5rem)/1.06 var(--serif); color: var(--ac); }
-.sheet .src { font: 600 .76rem var(--sans); letter-spacing: .07em; text-transform: uppercase; color: #5a5f78; margin-top: 8px; }
-.sig-board .sig-note { position: absolute; left: 0; right: 0; bottom: 6%; margin: 0; padding: 0 var(--gout); text-align: center; font: italic 500 1.25rem var(--serif); color: var(--fg); }
-/* L'imaginaire forcé : les annotations */
+.sheet span { font: italic 500 clamp(1.3rem, .9rem + 1.6vw, 2.3rem)/1.2 var(--serif); color: var(--ac2); text-wrap: balance; }
+.sheet:nth-child(2) span { color: var(--ac); }
+/* L'imaginaire forcé : les mots entourés à la main */
 .sig-ann { display: grid; place-items: center; padding: 0 var(--gout); }
-.ann-text { max-width: 34ch; }
-.ann-text p { margin: 0; font: italic 500 clamp(1.25rem, .8rem + 1.5vw, 2.2rem)/1.7 var(--serif); }
-.ann { position: relative; white-space: nowrap; --k: clamp(0, var(--p) * 3.6 - var(--i) * .9 - .25, 1); }
+.ann-text { max-width: 36ch; margin: 0; font: italic 500 clamp(1.25rem, .8rem + 1.6vw, 2.25rem)/1.7 var(--serif); }
+.ann { position: relative; white-space: nowrap; --k: clamp(0, var(--p) * 3.4 - var(--i) * .9 - .2, 1); }
 .ann::before { content: ""; position: absolute; inset: -.06em -.3em -.02em; border: 2.5px solid var(--ac); border-radius: 50%; transform: rotate(-3deg); clip-path: inset(0 calc((1 - var(--k)) * 100%) 0 0); }
-.ann-note { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -.1em); font: 600 .5em/1 var(--sans); font-style: normal; letter-spacing: .02em; color: var(--ac); white-space: nowrap; opacity: var(--k); }
-.ann-text cite { text-align: right; }
-.ann-marge { position: absolute; right: max(4vw, 16px); bottom: 9%; width: min(270px, 40vw); margin: 0; font: italic 500 1.15rem/1.35 var(--serif); color: var(--ac2); opacity: clamp(0, (var(--p) - .78) * 6, 1); }
-/* La Folle Idée : l'horloge */
+/* La Folle Idée : l'horloge d'une journée */
 .sig-clock { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 4vw; padding: 0 max(var(--gout), 5vw); }
 .clock { width: min(44vh, 36vw); justify-self: center; overflow: visible; }
 .clock > circle { fill: none; stroke: var(--fg); stroke-width: 3; }
 .clock .ticks line { stroke: var(--fg); stroke-width: 1.5; stroke-linecap: round; }
-.clock .nums text { font: 600 14px var(--sans); fill: var(--fg); text-anchor: middle; }
 .clock .hand-h { stroke: var(--fg); stroke-width: 6; stroke-linecap: round; }
 .clock .hand-m { stroke: var(--ac); stroke-width: 3.5; stroke-linecap: round; }
 .clock .pin { fill: var(--ac2); }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; font: italic 500 clamp(1.3rem, 1rem + 1.2vw, 2.1rem)/1.15 var(--serif); }
-.steps li { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); align-items: baseline; opacity: .2; transition: opacity .4s, transform .4s; transform: translateX(-10px); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; font: italic 500 clamp(1.15rem, .95rem + .9vw, 1.8rem)/1.25 var(--serif); }
+.steps li { position: relative; padding-left: 24px; opacity: .18; transform: translateX(-10px); transition: opacity .45s, transform .45s; }
+.steps li::before { content: ""; position: absolute; left: 0; top: .5em; width: 10px; height: 10px; border-radius: 50%; background: var(--ac); }
 .steps li.on { opacity: 1; transform: none; }
-.steps b { font: 700 .6em var(--sans); font-style: normal; color: var(--ac); letter-spacing: .04em; }
-.stamp { position: absolute; left: 50%; top: 6%; margin: 0; font: 700 clamp(1.6rem, 1.1rem + 2vw, 3rem) var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--ac); border: 4px solid var(--ac); padding: 0 .4em; transform: translateX(-50%) rotate(-6deg) scale(calc(1.5 - clamp(0, var(--p) * 8, 1) * .5)); opacity: clamp(0, var(--p) * 8, 1); }
 /* Macbeth – Fatum : le fil rouge */
 .sig-fil { display: grid; place-items: center; padding: 0 var(--gout); }
 .thread { position: absolute; inset: 0; width: 100%; height: 100%; }
 .thread path { fill: none; stroke: var(--ac); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
-.fil-vers { position: relative; text-align: center; }
-.fil-vers p { margin: 0; font: italic 600 clamp(2.4rem, 1rem + 5.4vw, 6.6rem)/1 var(--serif); text-wrap: balance; color: color-mix(in srgb, var(--fg) calc((1 - clamp(0, (var(--p) - .4) * 3, 1)) * 100%), var(--ac)); }
-.fil-num { position: absolute; left: 0; right: 0; bottom: 7%; margin: 0; display: flex; justify-content: center; gap: clamp(20px, 6vw, 90px); }
-.fil-num div { text-align: center; opacity: clamp(0, var(--p) * 5 - 2.6 - var(--i) * .5, 1); }
-.fil-num dt { font: 600 clamp(2rem, 1.2rem + 2.4vw, 3.4rem)/1 var(--serif); color: var(--ac); }
-.fil-num dd { margin: 4px 0 0; font-size: .85rem; color: var(--fg2); }
-/* Actions culturelles : les heures */
-.sig-heures { display: grid; place-items: center; }
-.gauge { position: absolute; left: 50%; top: 45%; width: min(60vh, 80vw); transform: translate(-50%, -50%) rotate(-90deg); }
-.gauge circle { fill: none; stroke-width: 8; }
-.gauge .g0 { stroke: color-mix(in srgb, var(--ac) 16%, transparent); }
-.gauge .g1 { stroke: var(--ac); stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
-.sig-heures .big { position: relative; margin: -6vh 0 0; display: grid; justify-items: center; text-align: center; }
-.sig-heures .count { font: 500 clamp(4rem, 2rem + 8vw, 10rem)/.9 var(--serif); color: var(--ac); font-variant-numeric: tabular-nums; }
-.sig-heures .unit { font: italic 500 clamp(1.2rem, 1rem + .8vw, 1.8rem) var(--serif); }
-.sig-heures .per { font-size: .85rem; color: var(--fg2); margin-top: 6px; }
-.mots { position: absolute; left: 0; right: 0; bottom: 6%; list-style: none; margin: 0; padding: 0 var(--gout); display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.mots li { padding: 6px 14px; border-radius: 999px; border: 1.5px solid var(--ac); font-weight: 600; color: var(--ac); opacity: clamp(0, var(--p) * 7 - var(--i) - 1.5, 1); }
-.still .sx { height: auto !important; }
-.still .sx-pin { position: relative; top: 0; height: auto; min-height: 80vh; overflow: hidden; }
-.still .sx-sig .sig { min-height: 86vh; }
-.still .steps li { opacity: 1; transform: none; }
+.fil-vers { position: relative; margin: 0; max-width: 16ch; text-align: center; font: italic 600 clamp(2.4rem, 1rem + 5.2vw, 6.4rem)/1 var(--serif); text-wrap: balance; color: color-mix(in srgb, var(--fg) calc((1 - clamp(0, (var(--p) - .4) * 3, 1)) * 100%), var(--ac)); }
 
-@media (max-width: 1000px) {
-  .ouverture .wrap, .compagnie, .corps, .tete .wrap, .ou-voir, .panneau, .agenda-corps, .contacts { grid-template-columns: minmax(0, 1fr); }
-  .cartes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .portes { grid-template-columns: minmax(0, 1fr); gap: 34px; }
-  footer .wrap { grid-template-columns: minmax(0, 1fr); }
-  .carte svg, .agenda-carte .carte svg { max-height: none; }
-  .agenda-carte { position: static; order: -1; }
-  .agenda-outils { grid-template-columns: minmax(0, 1fr); }
-  .recherche { justify-self: stretch; max-width: none; }
-  .sig-clock { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 28px; }
-  .clock { width: min(32vh, 60vw); }
-}
-@media (max-width: 760px) {
-  .nav { display: none; position: absolute; left: 0; right: 0; top: var(--haut); background: var(--papier); flex-direction: column; padding: 8px var(--gout) 18px; border-bottom: 1px solid var(--filet); }
+/* moins d'animations : tout est posé, rien n'est épinglé */
+.still .sx { height: auto !important; }
+.still .sx-pin { position: relative; top: 0; height: auto; min-height: 86vh; }
+.still .sig { min-height: 86vh; }
+.still .cartons { padding: 12vh 0; }
+.still .cartons li { grid-area: auto; opacity: 1; transform: none; margin: 0 0 48px; }
+.still .steps li { opacity: 1; transform: none; }
+.still .carte .m, .still .carte .bout { stroke-dashoffset: 0; transition: none; }
+.still .carte .point { opacity: 1; transition: none; }
+
+@media (max-width: 1279px) {
+  .menu { display: inline-flex; }
+  .nav { display: none; position: absolute; left: 0; right: 0; top: var(--haut); flex-direction: column; padding: 6px var(--gout) 16px; background: var(--papier); border-bottom: 1px solid var(--filet); box-shadow: 0 14px 24px rgba(29, 20, 24, .08); }
   .top.ouvert .nav { display: flex; }
-  .nav a[aria-current="page"] { box-shadow: none; text-decoration: underline; }
-  .menu { display: inline-block; }
+  .nav a { padding: 12px 4px; font-size: 1.05rem; border-bottom: 1px solid var(--filet); border-radius: 0; }
+  .nav a:last-child { border-bottom: 0; }
+  .nav a[aria-current="page"] { box-shadow: inset 3px 0 0 var(--magenta); padding-left: 14px; }
+}
+@media (max-width: 1000px) {
+  .une-grille { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tete" "carte" "liste"; }
+  .une-carte { margin: 18px 0 8px; }
+  .bulle { position: static; max-width: none; margin-top: 8px; }
+  .bulle:empty { display: none; }
+  .compagnie, .actions, .corps, .contact, .tete .wrap, .tournee-grille, .ag-corps, .sa-corps { grid-template-columns: minmax(0, 1fr); }
+  .cartes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portes-grille { grid-template-columns: minmax(0, 1fr); }
+  .porte { border-left: 0; border-top: 1px solid var(--filet); min-height: 0; padding: 22px var(--gout) 26px; padding-right: 88px; }
+  .porte:first-child { border-top: 0; }
+  .porte-f { top: 50%; bottom: auto; right: var(--gout); margin-top: -23px; }
+  .pied { grid-template-columns: minmax(0, 1fr); }
+  .une-carte .carte, .ag-carte .carte, .sa-carte .carte { max-height: none; }
+  .ag-carte, .sa-carte { position: static; order: -1; }
+  .reperes, .photo { position: static; }
+  .sig-clock { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 28px; }
+  .clock { width: min(30vh, 56vw); }
+}
+@media (max-width: 640px) {
   .cartes { grid-template-columns: minmax(0, 1fr); }
-  .dates li, .dates.court li, .agenda-liste .dates li { grid-template-columns: 1fr; gap: 2px; }
-  .agenda-liste .dates li > *, .agenda-liste .dates time { grid-column: 1 !important; grid-row: auto !important; }
-  .dates .pub { text-align: left; }
-  .bascule button { padding: 7px 12px; }
-  .sig-jumeaux .twin { width: 40vw; height: 34%; top: 16%; }
+  .formulaire { grid-template-columns: minmax(0, 1fr); }
+  .dates > li, .dates-sp > li { grid-template-columns: 6.6rem minmax(0, 1fr); gap: 2px 12px; }
+  .prochaines a { grid-template-columns: 6.2rem minmax(0, 1fr); }
+  .sig-jumeaux .twin { width: 40vw; height: 34%; top: 14%; }
   .sig-jumeaux .twin.l { left: calc(50% - 20vw - clamp(0, var(--p) * 1.6, 1) * 23vw); }
   .sig-jumeaux .twin.r { left: calc(50% - 20vw + clamp(0, var(--p) * 1.6, 1) * 23vw); }
-  .sig-q { top: 60%; width: 84vw; }
-  .sig-jumeaux .sig-vers > p:first-child { font-size: 1.3rem; }
-  .ann-marge { position: static; margin-top: 24px; width: auto; }
-  .sig-ann { align-content: center; }
+  .sig-jumeaux .sig-phrase { bottom: 10%; }
+  .sig-cercle .sig-phrase { bottom: 3%; }
+  .ring-photo, .ring { top: 36%; }
 }
-@media (min-width: 1001px) { .vous { display: inline; } }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+/* l'ouverture, habillée : le papier, la pieuvre magenta, et derrière elle, à peine, la carte des tournées */
+.intro.intro-synthese .intro-indice { color: var(--encre); opacity: .55; }
 </style>
 </head>
 <body>
 <a class="evitement" href="#main">Aller au contenu</a>
 <header class="top"><div class="wrap">
-  <a class="marque" href="#/"><span class="l" id="marque"></span>crescite</a>
-  <span class="vous" id="vous" hidden></span>
-  <button class="menu" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
-  <nav class="nav" id="nav" aria-label="Navigation principale">
-    <a href="#/spectacles">Spectacles</a><a href="#/agenda">Agenda</a><a href="#/compagnie">La compagnie</a><a href="#/contact">Contact</a>
-  </nav>
+  <a class="marque" href="#/"><span class="l" id="marque" aria-hidden="true"></span><span>crescite</span></a>
+  <button class="menu" type="button" aria-expanded="false" aria-controls="nav"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14"/></svg><span id="menu-t">Menu</span></button>
+  <nav class="nav" id="nav"></nav>
 </div></header>
 <main id="main" tabindex="-1"></main>
-<footer><div class="wrap" id="pied"></div></footer>
+<footer><div class="wrap pied" id="pied"></div></footer>
 <script>const D = /*__DATA__*/null;</script>
 <script>
 (() => {
@@ -368,360 +447,362 @@ footer p { margin: 0 0 6px; }
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const easeOut = t => 1 - Math.pow(1 - t, 3);
-  // échappe le texte, et pose les espaces insécables de la ponctuation française
-  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»])/g, ' $1').replace(/« /g, '« ');
-  const titre = t => esc(t).replace(/ – /g, ' – ');
-  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const norm = s => String(s || '').replace(/<[^>]+>/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'").toLowerCase();
   const reduit = matchMedia('(prefers-reduced-motion: reduce)');
   const motionOK = () => !reduit.matches;
   const syncMotion = () => document.documentElement.classList.toggle('still', !motionOK());
   syncMotion(); reduit.addEventListener('change', syncMotion);
+  const bientot = f => requestAnimationFrame(() => requestAnimationFrame(f));
+
+  const S = D.site, R = CARTE.rouen, main = $('#main');
   const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
-  const SPECTACLES = D.shows.filter(s => s.annee);
-  const C = D.company, K = D.carte, main = $('#main');
-  const pluriel = (n, un, plus) => `${n} ${n > 1 ? plus : un}`;
+  const ONGLET = Object.fromEntries(S.menu.map(m => [m.id, m]));
+  const couleurDe = slug => (bySlug[slug] && bySlug[slug].couleurTexteClair) || 'var(--magenta)';
+  // un bloc HTML de D tel quel ; un texte nu devient un paragraphe
+  const bloc = h => /^\s*<(h[1-6]|ul|ol|p|div|table|blockquote|figure)\b/i.test(h) ? h : `<p>${h}</p>`;
+  const trait = c => `<svg class="trait" viewBox="0 0 120 20" aria-hidden="true"${c ? ` style="--c:${c}"` : ''}><path pathLength="1" d="M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13"/></svg>`;
+  const FLECHE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';
+  const CROIX = '<svg class="croix" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
+  const VIDEO = '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15"/><path d="M13 10.5l9 5.5-9 5.5z"/></svg>';
+  const AUDIO = '<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15"/><path d="M10 13v6M14 10v12M18 12v8M22 14v4"/></svg>';
+  let vue = '';
 
-  // les dates : jour, plusieurs jours ou mois seul ; un « lieu » qui est une heure ou une note n'est pas un lieu
-  const quand = d => d.precision === 'month' ? `${cap(d.moisLong)}` : (d.fin !== d.iso ? d.label.replace(/\s\d{4}$/, '') : `${d.joursem} ${d.jour} ${d.mois}`);
-  const precis = d => d.precision === 'month' ? 'jour à préciser' : d.annee;
-  const lieu = d => {
-    const v = (d.lieu || '').trim();
-    if (/^\d{1,2}\s*h\s*\d{0,2}$/i.test(v)) return `${esc(d.commune)} (${esc(d.dep)}) <em>· à ${esc(v.replace(/\s+/g, ''))}</em>`;
-    if (/^diptyque$/i.test(v)) return `${esc(d.commune)} (${esc(d.dep)}) <em>· en diptyque</em>`;
-    return `${v ? esc(v) + ', ' : ''}${esc(d.commune)} (${esc(d.dep)})`;
-  };
-  const ligneDate = (d, sansTitre) => `<li style="--c:${bySlug[d.slug].couleurTexteClair}" data-k="${d.commune}|${d.dep}"><time datetime="${d.iso}">${esc(quand(d))}<small>${precis(d)}</small></time>
-    ${sansTitre ? '' : `<a href="#/spectacle/${d.slug}">${titre(d.titre)}</a>`}<span class="ou">${lieu(d)}</span><span class="pub">${esc(d.public)}</span></li>`;
-  const prochaine = s => s.prochaine ? `${s.prochaine.jour} ${s.prochaine.mois}, ${s.prochaine.commune}` : (s.annee ? 'Pas de date annoncée' : 'Avec les établissements');
-  const trait = c => `<svg class="trait" viewBox="0 0 120 20" aria-hidden="true"${c ? ` style="--c:${c}"` : ''}><path d="M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13"/></svg>`;
-
-  /* ---------- la porte choisie : le site s'en souvient (onglet ouvert sur les fiches) ---------- */
-  const PORTES = Object.fromEntries(D.doors.map(p => [p.key, p]));
-  let porte = null;
-  try { porte = sessionStorage.getItem('crescite-porte'); } catch (e) { /* stockage indisponible */ }
-  function choisirPorte(k) {
-    porte = PORTES[k] ? k : null;
-    try { if (porte) sessionStorage.setItem('crescite-porte', porte); else sessionStorage.removeItem('crescite-porte'); } catch (e) { /* stockage indisponible */ }
-    const v = $('#vous');
-    v.hidden = !porte;
-    v.innerHTML = porte ? `Vous : <b>${esc(PORTES[porte].titre)}</b><button type="button" id="oublier">changer</button>` : '';
-    if (porte) $('#oublier').addEventListener('click', () => { choisirPorte(null); location.hash = '#/'; setTimeout(() => document.getElementById('portes')?.scrollIntoView(), 30); });
-  }
-  document.addEventListener('click', e => { const a = e.target.closest('[data-porte]'); if (a) choisirPorte(a.dataset.porte); });
+  /* ---------- les lignes de date : découpées, jamais réécrites ---------- */
+  const MOIS = 'janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre';
+  const RE_MOIS = new RegExp(`^(.*?)\\s*((?:${MOIS})\\s+\\d{4})$`);
+  // « 18 décembre 2026 » → ["18", "décembre 2026"] ; « mars 2027 » → ["mars", "2027"]
+  const coupe = ligne => { const m = String(ligne || '').match(RE_MOIS); return !m ? [ligne || '', ''] : m[1] ? [m[1], m[2]] : m[2].split(/\s+/); };
+  const moisDe = ligne => (String(ligne || '').match(RE_MOIS) || [])[2] || '';
+  const quand = (ligneDate, iso) => { const [j, m] = coupe(ligneDate); return `<time${iso ? ` datetime="${iso}"` : ''}><b>${esc(j)}</b>${m ? `<small>${esc(m)}</small>` : ''}</time>`; };
+  const details = L => L && L.length ? `<ul class="det">${L.map(x => { const t = typeof x === 'string' ? x : x.texte, h = typeof x === 'string' ? null : x.lien;
+    return `<li>${h ? `<a href="${esc(h)}" target="_blank" rel="noopener">${esc(t)}</a>` : esc(t)}</li>`; }).join('')}</ul>` : '';
 
   /* ---------- la carte : un bras par commune, de Rouen jusqu'à elle ---------- */
-  function bras([x, y], n, echelle) {
-    const [rx, ry] = K.rouen, dx = x - rx, dy = y - ry, d = Math.hypot(dx, dy);
-    if (d < 7) return '';
-    const qx = (rx + x) / 2 - dy * 0.24, qy = (ry + y) / 2 + dx * 0.24, N = 26, G = [], Dr = [];
-    const w0 = Math.min(6, 1.3 + Math.sqrt(n) * 0.8) * echelle, w1 = 0.5 * echelle;
-    for (let k = 0; k <= N; k++) {
-      const t = k / N, a = (1 - t) ** 2, b = 2 * (1 - t) * t, c = t * t;
-      const px = a * rx + b * qx + c * x, py = a * ry + b * qy + c * y;
-      let tx = 2 * (1 - t) * (qx - rx) + 2 * t * (x - qx), ty = 2 * (1 - t) * (qy - ry) + 2 * t * (y - qy);
-      const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-      const w = (w0 * (1 - t) + w1 * t) / 2;
-      G.push(`${(px - ty * w).toFixed(1)} ${(py + tx * w).toFixed(1)}`); Dr.push(`${(px + ty * w).toFixed(1)} ${(py - tx * w).toFixed(1)}`);
-    }
-    return `M${G.join('L')}L${Dr.reverse().join('L')}Z`;
+  const VB = CARTE.viewBox.split(/\s+/).map(Number);
+  const dansCadre = ([x, y]) => x >= VB[0] && x <= VB[0] + VB[2] && y >= VB[1] && y <= VB[1] + VB[3];
+  const tous = () => CARTE.lieux.map((p, l) => ({ l, ...p, xy: dansCadre(p.xy) ? p.xy : CARTE.ENCART, encart: !dansCadre(p.xy) }));
+  const etiquette = x => `${CARTE.nom(x)}${x.dates && x.dates.length ? ' : ' + x.dates.map(d => d.ligne).join(' ; ') : ''}`;
+  let nC = 0;
+  function carte({ lieux = [], passe = [], titre = '', classe = '', couleurs = false, interactif = true } = {}) {
+    const id = 'k' + (++nC), e = Math.max(VB[2], VB[3]) / 800, anime = motionOK(), rayon = Math.round(Math.hypot(VB[2], VB[3]) * 1.2);
+    const dist = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]), dmax = Math.max(80, ...lieux.map(dist));
+    const larg = x => Math.min(7.5, 2.2 + Math.sqrt((x.dates && x.dates.length) || x.n || 1) * 1.15) * e;
+    const delai = x => (dist(x) / dmax * .9).toFixed(2);
+    const coul = x => couleurs && x.dates && x.dates[0] ? `;--kc:${couleurDe(x.dates[0].slug)}` : '';
+    const encart = [...lieux, ...passe].some(x => x.encart);
+    return `<svg class="carte${classe ? ' ' + classe : ''}" viewBox="${CARTE.viewBox}" ${lieux.length && interactif ? '' : 'role="img" '}aria-label="${esc(titre)}">
+      <defs><clipPath id="${id}p"><circle cx="${R[0]}" cy="${R[1]}" r="${anime ? 0 : rayon}">${anime ? `<animate attributeName="r" from="0" to="${rayon}" dur="2.4s" begin="indefinite" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".4 0 .2 1"/>` : ''}</circle></clipPath>
+        ${lieux.map((x, i) => `<mask id="${id}m${i}"><path class="m" pathLength="1" style="--d:${delai(x)}s;stroke-width:${(18 * e).toFixed(1)}" d="${CARTE.trait(x.xy)}"/></mask>`).join('')}</defs>
+      <path class="voisin" d="${CARTE.fond.belgique}"/><path class="voisin" d="${CARTE.fond.luxembourg}"/><path class="pays" d="${CARTE.fond.pays}"/>
+      ${encart ? `<circle class="encart" cx="${CARTE.ENCART[0]}" cy="${CARTE.ENCART[1]}" r="${24 * e}"/>` : ''}
+      <g class="passe" clip-path="url(#${id}p)">${passe.map(x => CARTE.bras(x.xy, { w0: 2 * e, w1: .5 * e })).filter(Boolean).map(d => `<path d="${d}"/>`).join('')}</g>
+      <g class="lieux">${lieux.map((x, i) => { const b = CARTE.bras(x.xy, { w0: larg(x), w1: .7 * e }), [px, py] = x.xy;
+        return `<g class="carte-lieu" data-l="${x.l}" style="--d:${delai(x)}s${coul(x)}"${interactif ? ` role="button" tabindex="0" aria-label="${esc(etiquette(x))}"` : ''}>${b ? `<path class="bras" mask="url(#${id}m${i})" d="${b}"/><path class="bout" pathLength="1" d="${CARTE.bout(x.xy, { r: 4.6 * e })}"/>` : ''}<circle class="point" cx="${px}" cy="${py}" r="${(3.6 * e).toFixed(1)}"/>${interactif ? `<circle class="cible" cx="${px}" cy="${py}" r="${(13 * e).toFixed(1)}"/>` : ''}</g>`; }).join('')}</g>
+      <circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="${(5.5 * e).toFixed(1)}"/><text class="rouen-nom" x="${R[0] + 9 * e}" y="${R[1] - 9 * e}">Rouen</text>
+      <g class="noms">${lieux.map(x => { const g = x.xy[0] > VB[0] + VB[2] * .7; return `<text class="nom" data-l="${x.l}" x="${(x.xy[0] + (g ? -10 : 10) * e).toFixed(1)}" y="${(x.xy[1] + 4 * e).toFixed(1)}"${g ? ' text-anchor="end"' : ''}>${esc(CARTE.nom(x))}</text>`; }).join('')}</g>
+    </svg>`;
   }
-  let nCarte = 0;
-  // passe : [[indice de commune, nombre de dates]] ; saison : des dates, en couleur ; cliquable : chaque commune filtre l'agenda
-  function carte({ passe = [], saison = [], couleur = '#bc3e80', legende = [], pousse = true, cliquable = false }) {
-    const id = 'pousse' + (++nCarte), [rx, ry] = K.rouen, anime = pousse && motionOK();
-    const parLieu = new Map();
-    saison.forEach(d => { if (!d.xy) return; const k = `${d.commune}|${d.dep}`; const e = parLieu.get(k) || { k, xy: d.xy, dates: [] }; e.dates.push(d); parLieu.set(k, e); });
-    const lieux = [...parLieu.values()];
-    const nom = e => `${e.dates[0].commune} (${e.dates[0].dep}), ${pluriel(e.dates.length, 'date', 'dates')}`;
-    return `<figure class="carte" style="--c:${couleur}">
-      <svg viewBox="${K.viewBox}"${cliquable ? ' aria-label="Carte des dates : choisissez une commune pour filtrer la liste"' : ` role="img" aria-label="${esc(legende.join(', '))}"`}>
-        <defs><clipPath id="${id}"><circle cx="${rx}" cy="${ry}" r="${anime ? 0 : 820}">${anime ? '<animate attributeName="r" from="0" to="820" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>' : ''}</circle></clipPath></defs>
-        <path class="voisin" d="${K.belgique}"/><path class="voisin" d="${K.luxembourg}"/><path class="pays" d="${K.contour}"/>
-        <g clip-path="url(#${id})">
-          ${passe.map(([i, n]) => `<path class="bras-passe" d="${bras(K.lieux[i].xy, n, 1)}"/>`).join('')}
-          ${passe.map(([i]) => `<circle class="bout-passe" cx="${K.lieux[i].xy[0]}" cy="${K.lieux[i].xy[1]}" r="2.2"/>`).join('')}
-          ${lieux.map(e => `<path class="bras-saison" data-k="${esc(e.k)}" d="${bras(e.xy, e.dates.length * 2, 1.2)}"/>`).join('')}
-          ${lieux.map(e => cliquable
-            ? `<g class="lieu" data-k="${esc(e.k)}" role="button" tabindex="0" aria-label="${esc(nom(e))}"><circle class="bout-saison" cx="${e.xy[0]}" cy="${e.xy[1]}" r="5"/><circle cx="${e.xy[0]}" cy="${e.xy[1]}" r="12" fill="transparent"/><title>${esc(nom(e))}</title></g>`
-            : `<circle class="bout-saison" cx="${e.xy[0]}" cy="${e.xy[1]}" r="4.2"><title>${esc(nom(e))}</title></circle>`).join('')}
-        </g>
-        <circle class="rouen" cx="${rx}" cy="${ry}" r="5.5"/><text class="rouen-nom" x="${rx + 10}" y="${ry - 9}">Rouen</text>
-      </svg>
-      <figcaption class="legende">${saison.length && legende[0] ? `<span><i></i>${esc(legende[0])}</span>` : ''}${passe.length && legende[1] ? `<span><i class="passe"></i>${esc(legende[1])}</span>` : ''}</figcaption>
-    </figure>`;
+  // les bras poussent depuis Rouen (une fois) : les masques se déroulent, les tournées passées s'ouvrent en cercle
+  function pousser(svg) {
+    if (!svg || svg.classList.contains('pousse')) return;
+    svg.classList.add('pousse');
+    const a = svg.querySelector('clipPath animate');
+    if (a && a.beginElement) a.beginElement(); else svg.querySelector('clipPath circle')?.setAttribute('r', '99999');
+  }
+  function marquer(svg, l) {
+    if (!svg) return;
+    svg.classList.toggle('surligne', l != null);
+    $$('.carte-lieu', svg).forEach(g => g.classList.toggle('on', l != null && +g.dataset.l === l));
+    $$('.nom', svg).forEach(t => t.classList.toggle('on', l != null && +t.dataset.l === l));
+  }
+  // les noms gardent la même taille à l'écran, quelle que soit la largeur de la carte
+  function echelle() { $$('svg.carte').forEach(svg => { const w = svg.getBoundingClientRect().width; if (w) svg.style.setProperty('--k', (VB[2] / w).toFixed(3)); }); }
+  addEventListener('resize', () => requestAnimationFrame(echelle));
+  // relie une liste (li[data-l]) et une carte, dans les deux sens
+  function relier(svg, liste, choix = () => {}) {
+    const allume = l => $$('li[data-l]', liste).forEach(li => li.classList.toggle('on', l != null && +li.dataset.l === l));
+    CARTE.lier(svg, { survol: l => { marquer(svg, l); allume(l); }, choix });
+    liste.addEventListener('mouseover', e => { const li = e.target.closest('li[data-l]'); marquer(svg, li ? +li.dataset.l : null); });
+    liste.addEventListener('mouseleave', () => marquer(svg, null));
+    liste.addEventListener('focusin', e => { const li = e.target.closest('li[data-l]'); if (li) marquer(svg, +li.dataset.l); });
+    return allume;
   }
 
   /* ---------- les morceaux communs ---------- */
-  const carteSpectacle = s => `<li><a href="#/spectacle/${s.slug}" style="--ct:${s.couleurTexteClair}">
-    <figure><img src="${D.photos[s.slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%" loading="lazy"></figure>
-    <h3>${titre(s.titre)}</h3>${trait(s.couleurTexteClair)}<span class="st">${esc(s.sousTitre)}</span><span class="quand">${esc(prochaine(s))}</span></a></li>`;
-  function portes() {
-    const [voir, prog, etab] = D.doors, chez = D.shows.filter(s => s.etablissement && s.etablissement.mode === 'etablissement');
-    const nTP = D.dates.filter(d => d.public !== 'Scolaire').length, nSco = D.dates.length - nTP;
-    const p = (d, liens, pied = '') => `<div class="porte"><h3>${esc(d.titre)}${trait(d.couleur)}</h3><p>${esc(d.texte)}</p><div class="bas"><ul>${liens.map(([h, t, s]) => `<li><a href="${h}" data-porte="${d.key}"><span>${t}</span><small>${esc(s)}</small></a></li>`).join('')}</ul>${pied}</div></div>`;
-    return p(voir, [['#/agenda?public=tout', 'Les dates tout public', pluriel(nTP, 'date', 'dates')], ['#/agenda?focus=recherche', 'Près de chez moi', 'par ville'], ['#/spectacles', 'Les spectacles', `${SPECTACLES.length} titres`]]) +
-      p(prog, [['#/spectacles', 'Le répertoire en tournée', `${SPECTACLES.length} spectacles`], ['#/agenda', 'Le calendrier de tournée', pluriel(D.dates.length, 'date', 'dates')], [`#/spectacle/${D.shows[0].slug}/programmer`, 'Fiches techniques et dossiers', 'par spectacle']]) +
-      p(etab, [...chez.map(s => [`#/spectacle/${s.slug}/etablissement`, titre(s.titre), s.passCulture ? 'Pass Culture' : 'sur mesure']), ['#/agenda?public=scolaire', 'Les dates scolaires', pluriel(nSco, 'date', 'dates')]]);
-  }
+  const carteSp = s => `<li><a class="fiche-sp" href="#/spectacle/${s.slug}" style="--ct:${s.couleurTexteClair};--cc:${s.couleur}">
+    <figure><img src="${D.photos[s.slug]}" alt="" loading="lazy" style="object-position:${s.focale}% 50%">${s.statut ? `<span class="badge creation">${esc(s.statut)}</span>` : s.enTournee ? `<span class="badge">${esc(S.libelles.enTournee)}</span>` : ''}</figure>
+    <h3>${esc(s.titre)}</h3>${trait(s.couleurTexteClair)}${s.sousTitre ? `<span class="st">${s.sousTitre}</span>` : ''}${s.creation ? `<span class="cr">${esc(s.creation)}</span>` : ''}${s.prochaine ? `<span class="quand">${esc(s.prochaine.ligne)}</span>` : ''}</a></li>`;
+  const portes = () => `<div class="portes"><div class="portes-grille">${S.portes.map(p => `<a class="porte" href="${p.href}" style="--pc:${p.couleur};--pv:${p.couleurVive}"><span class="porte-t">${esc(p.texte)}</span>${trait(p.couleur)}<span class="porte-f">${FLECHE}</span></a>`).join('')}</div></div>`;
+  const saisonsBande = actuelle => `<nav class="saisons" aria-label="${esc(ONGLET.agenda.texte)}"><div class="wrap"><ul class="saisons-liste">${S.saisons.filter(x => x.saison !== actuelle).map(x => `<li><a href="${x.href}">
+      <svg class="vignette" viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr"/>${CARTE.saison(x.saison).map(y => `<path pathLength="1" d="${CARTE.trait(y.xy)}"/>`).join('')}<circle cx="${R[0]}" cy="${R[1]}" r="11"/></svg><span>${esc(x.titre)}</span></a></li>`).join('')}</ul></div></nav>`;
 
   /* ---------- accueil ---------- */
   function accueil() {
-    const communes = new Set(D.dates.map(d => d.commune + d.dep)).size;
+    vue = 'accueil';
+    const lieux = CARTE.aVenir(), vus = new Set(lieux.map(x => x.l)), passe = tous().filter(x => !vus.has(x.l));
     main.innerHTML = `
-      <section class="ouverture" aria-labelledby="h1"><div class="wrap">
-        <div><p class="surtitre">Compagnie de théâtre · Rouen · depuis ${C.depuis}</p>
-          <h1 id="h1" tabindex="-1">Des spectacles qui partent de Rouen et vont chercher leur public.</h1>${trait()}
-          <p class="chiffre"><b>${D.stats.representationsTexte} représentations</b> depuis ${D.stats.depuis}, des théâtres aux collèges et aux lycées, en France, en Belgique, en Suisse et en Tunisie.</p>
-          <div class="saison"><p>Saison ${esc(D.saison)} : <b>${D.dates.length} dates dans ${communes} communes</b>.</p>
-            <div class="boutons"><a class="bouton" href="#/agenda">L’agenda de la saison</a><a class="bouton second" href="#/spectacles">Les spectacles</a></div></div></div>
-        ${carte({ passe: K.lieux.map((l, i) => [i, l.n]), saison: D.dates, legende: [`La saison ${D.saison}`, 'Les dates publiées sur le site depuis 2016'] })}
+      <section class="une"><div class="wrap une-grille">
+        <div class="une-tete"><p class="surtitre">${esc(S.saisons[0].titre)}</p><h1 tabindex="-1">${esc(S.nom)}</h1>${trait()}</div>
+        <figure class="une-carte">${carte({ lieux, passe, titre: S.saisons[0].titre, classe: 'grande' })}<figcaption class="bulle" id="bulle"></figcaption></figure>
+        <div class="une-liste"><h2 class="rubrique">${esc(S.libelles.actuellementEnTournee)}</h2>
+          <ol class="prochaines">${D.dates.slice(0, 5).map(d => `<li data-l="${d.l}" style="--c:${couleurDe(d.slug)}"><a href="#/spectacle/${d.slug}">${quand(d.ligneDate, d.iso)}<span class="t">${esc(d.titre)}</span><span class="ou">${esc(d.ligneLieu)}</span></a></li>`).join('')}</ol>
+          <p class="boutons"><a class="bouton" href="${ONGLET.agenda.href}">${esc(ONGLET.agenda.texte)}</a><a class="bouton second" href="${ONGLET.spectacles.href}">${esc(ONGLET.spectacles.texte)}</a></p></div>
       </div></section>
-      <section class="bloc" aria-labelledby="h-ag"><div class="wrap">
-        <div class="entete"><h2 id="h-ag">Prochaines dates</h2><a href="#/agenda">Tout l’agenda (${D.dates.length} dates) →</a></div>
-        <ul class="dates">${D.dates.slice(0, 5).map(d => ligneDate(d)).join('')}</ul>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-sp"><div class="wrap">
-        <div class="entete"><h2 id="h-sp">Les spectacles</h2><a href="#/spectacles">Le répertoire →</a></div>
-        <ul class="cartes">${D.shows.map(carteSpectacle).join('')}</ul>
-      </div></section>
-      <section class="bloc" id="portes" aria-labelledby="h-po"><div class="wrap">
-        <div class="entete"><h2 id="h-po">Vous êtes…</h2></div>
-        <div class="portes">${portes()}</div>
-      </div></section>`;
-    return 'Compagnie Crescite · théâtre, Rouen';
+      ${portes()}
+      <section class="bloc" aria-labelledby="h-sp"><div class="wrap"><h2 class="titre-bloc" id="h-sp">${esc(S.libelles.spectacles)}</h2><ul class="cartes">${D.shows.map(carteSp).join('')}</ul></div></section>
+      <section class="merci"><div class="wrap">${trait()}<p>${S.donateurs}</p></div></section>`;
+    const svg = $('.une-carte svg'), bulle = $('#bulle'), ol = $('.prochaines');
+    const montre = l => {
+      marquer(svg, l);
+      $$('li[data-l]', ol).forEach(li => li.classList.toggle('on', l != null && +li.dataset.l === l));
+      const x = l == null ? null : lieux.find(y => y.l === l);
+      bulle.innerHTML = x ? `<b>${esc(CARTE.nom(x))}</b><ul>${x.dates.map(d => `<li><span class="t">${esc(d.titre)}</span><span>${esc(d.ligneDate)}</span></li>`).join('')}</ul>` : '';
+      bulle.classList.toggle('on', !!x);
+    };
+    CARTE.lier(svg, { survol: montre, choix: l => { location.hash = `#/agenda?l=${l}`; } });
+    ol.addEventListener('mouseover', e => { const li = e.target.closest('li[data-l]'); if (li) montre(+li.dataset.l); });
+    ol.addEventListener('mouseleave', () => montre(null));
+    ol.addEventListener('focusin', e => { const li = e.target.closest('li[data-l]'); if (li) montre(+li.dataset.l); });
+    ol.addEventListener('focusout', () => montre(null));
+    if (!INTRO.ouverte()) bientot(() => pousser(svg));   // sinon, l'ouverture les fera pousser (apres)
+    return { titre: S.accueil, onglet: null };
   }
 
   /* ---------- les spectacles ---------- */
-  const FILTRES_SP = [
-    ['tous', 'Tous', () => true],
-    ['salle', 'En salle', s => !!s.annee],
-    ['etablissement', 'Dans votre établissement', s => s.etablissement && s.etablissement.mode === 'etablissement'],
-    ['pass', 'Pass Culture', s => s.passCulture],
-    ['dates', 'Avec des dates cette saison', s => s.nbDates > 0],
-  ];
-  function spectacles(q) {
-    const f = FILTRES_SP.find(x => x[0] === q.get('voir')) || FILTRES_SP[0];
-    main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">Les spectacles</h1>${trait()}<p>Sept créations et des actions culturelles, mises en scène par ${esc(C.miseEnScene)}. Elles se jouent en salle et, pour la plupart, dans les collèges et les lycées.</p></div>
-      <section class="bloc" style="border-top:0;padding-top:0" aria-label="Le répertoire"><div class="wrap">
-        <div class="filtres" role="group" aria-label="Filtrer les spectacles">${FILTRES_SP.map(([k, l, t]) => `<button class="puce" type="button" data-f="${k}" aria-pressed="${k === f[0]}">${esc(l)} <small>${D.shows.filter(t).length}</small></button>`).join('')}</div>
-        <ul class="cartes" id="liste-sp">${D.shows.filter(f[2]).map(carteSpectacle).join('')}</ul>
-      </div></section>`;
-    $$('[data-f]', main).forEach(b => b.addEventListener('click', () => {
-      const g = FILTRES_SP.find(x => x[0] === b.dataset.f);
-      $$('[data-f]', main).forEach(x => x.setAttribute('aria-pressed', x === b));
-      $('#liste-sp').innerHTML = D.shows.filter(g[2]).map(carteSpectacle).join('');
-      history.replaceState(null, '', g[0] === 'tous' ? '#/spectacles' : `#/spectacles?voir=${g[0]}`);
-    }));
-    return 'Les spectacles · Compagnie Crescite';
+  function spectacles() {
+    vue = 'spectacles';
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1">${esc(ONGLET.spectacles.texte)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap"><ul class="cartes">${D.shows.map(carteSp).join('')}</ul></div></section>`;
+    return { titre: ONGLET.spectacles.texte, onglet: 'spectacles' };
   }
 
-  /* ---------- l'agenda : filtres, liste par mois, carte reliée ---------- */
+  /* ---------- l'agenda : recherche, spectacles, liste par mois, carte reliée ---------- */
   function agenda(q) {
-    const F = { public: ['tout', 'scolaire'].includes(q.get('public')) ? q.get('public') : 'toutes', q: '', spectacle: bySlug[q.get('spectacle')] ? q.get('spectacle') : null, commune: null };
-    const parSlug = Object.fromEntries(D.shows.map(s => [s.slug, D.dates.filter(d => d.slug === s.slug).length]));
+    vue = 'agenda';
+    const lieux = CARTE.aVenir(), avec = D.shows.filter(s => D.dates.some(d => d.slug === s.slug));
+    const l0 = q.get('l'), F = { q: '', slug: null, l: l0 !== null && lieux.some(x => x.l === +l0) ? +l0 : null };
     main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">L’agenda</h1>${trait()}<p>Saison ${esc(D.saison)} : ${D.dates.length} dates, en salle et dans les établissements. Chaque date se réserve auprès du lieu qui accueille le spectacle.</p></div>
-      <section class="bloc" style="border-top:0;padding-top:0" aria-label="Les dates"><div class="wrap">
-        <div class="agenda-outils">
-          <div class="bascule" role="group" aria-label="Public">${[['toutes', 'Toutes'], ['tout', 'Tout public'], ['scolaire', 'Scolaires']].map(([k, l]) => `<button type="button" data-p="${k}" aria-pressed="${k === F.public}">${l}</button>`).join('')}</div>
-          <label class="recherche"><span class="sr">Rechercher une ville, un lieu ou un spectacle</span><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="Ville, lieu ou spectacle" autocomplete="off"></label>
+      <div class="wrap page-titre"><p class="surtitre">${esc(ONGLET.agenda.texte)}</p><h1 tabindex="-1">${esc(S.saisons[0].titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap">
+        <div class="ag-outils">
+          <label class="recherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(S.libelles.rechercher)}" aria-label="${esc(S.libelles.rechercher)}" autocomplete="off"></label>
+          <div class="filtres" role="group" aria-label="${esc(S.libelles.spectacles)}">${avec.map(s => `<button class="puce" type="button" data-s="${s.slug}" aria-pressed="false" style="--c:${s.couleurTexteClair}"><i></i>${esc(s.titre)}</button>`).join('')}<span id="choix-lieu"></span></div>
         </div>
-        <div class="filtres" role="group" aria-label="Spectacle">${SPECTACLES.filter(s => parSlug[s.slug]).map(s => `<button class="puce" type="button" data-s="${s.slug}" aria-pressed="${s.slug === F.spectacle}" style="--c:${s.couleurTexteClair}"><i></i>${titre(s.titre)} <small>${parSlug[s.slug]}</small></button>`).join('')}</div>
-        <div class="agenda-corps">
-          <div class="agenda-liste"><p class="compte" id="compte" aria-live="polite"></p><div id="par-mois"></div></div>
-          <div class="agenda-carte" id="agenda-carte"></div>
-        </div>
-      </div></section>`;
-    const liste = $('#par-mois'), boite = $('#agenda-carte'), compte = $('#compte');
-    let premier = true;
-    function filtrees() {
-      const t = norm(F.q).trim();
-      return D.dates.filter(d => (F.public === 'toutes' || (F.public === 'scolaire') === (d.public === 'Scolaire'))
-        && (!F.spectacle || d.slug === F.spectacle) && (!F.commune || `${d.commune}|${d.dep}` === F.commune)
-        && (!t || norm(`${d.titre} ${d.commune} ${d.dep} ${d.lieu || ''} ${d.moisLong}`).includes(t)));
-    }
+        <div class="ag-corps"><div class="ag-liste" id="ag-liste"></div><div class="ag-carte">${carte({ lieux, titre: S.saisons[0].titre, couleurs: true })}</div></div>
+      </div></section>
+      ${saisonsBande(D.saison)}`;
+    const svg = $('.ag-carte svg'), liste = $('#ag-liste');
+    const filtrees = () => { const t = norm(F.q).trim(); return D.dates.filter(d => (!F.slug || d.slug === F.slug) && (F.l === null || d.l === F.l)
+      && (!t || norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')}`).includes(t))); };
     function dessine() {
-      const L = filtrees(), mois = new Map();
-      L.forEach(d => { const k = d.iso.slice(0, 7); if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
-      const filtre = F.public !== 'toutes' || F.q || F.spectacle || F.commune;
-      const c = F.commune ? L[0] || D.dates.find(d => `${d.commune}|${d.dep}` === F.commune) : null;
-      compte.innerHTML = `${pluriel(L.length, 'date', 'dates')}${c ? ` à ${esc(c.commune)} (${esc(c.dep)})` : ''}${filtre ? '<button class="lien" type="button" id="raz">Tout afficher</button>' : ''}`;
-      liste.innerHTML = L.length ? [...mois.entries()].map(([k, ds]) => `<h2 class="mois">${cap(ds[0].moisLong)} ${ds[0].annee}<small>${pluriel(ds.length, 'date', 'dates')}</small></h2><ul class="dates">${ds.map(d => ligneDate(d)).join('')}</ul>`).join('')
-        : '<p class="vide">Aucune date ne correspond. Essayez une autre ville, ou « Tout afficher ».</p>';
-      const coul = F.spectacle ? bySlug[F.spectacle].couleurTexteClair : '#bc3e80';
-      boite.innerHTML = carte({ saison: L, couleur: coul, legende: [F.commune ? 'La commune choisie' : 'Les dates affichées'], pousse: premier, cliquable: true });
-      premier = false;
-      if (F.commune) { $('.carte', boite).classList.add('surligne'); $$(`.bras-saison[data-k="${CSS.escape(F.commune)}"]`, boite).forEach(p => p.classList.add('on')); }
-      $('#raz')?.addEventListener('click', () => { Object.assign(F, { public: 'toutes', q: '', spectacle: null, commune: null }); $('#cherche').value = ''; synchro(); dessine(); });
-      $$('.lieu', boite).forEach(g => {
-        const go = () => { F.commune = F.commune === g.dataset.k ? null : g.dataset.k; dessine(); $(`.lieu[data-k="${CSS.escape(g.dataset.k)}"]`, boite)?.focus(); };
-        g.addEventListener('click', go);
-        g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
-      });
+      const L = filtrees(), groupes = [];
+      L.forEach(d => { const m = moisDe(d.ligneDate) || d.ligneDate, g = groupes[groupes.length - 1]; if (g && g.m === m) g.ds.push(d); else groupes.push({ m, ds: [d] }); });
+      liste.innerHTML = groupes.map(g => `<h2 class="mois">${esc(g.m)}</h2><ul class="dates">${g.ds.map(d => `<li data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${quand(d.ligneDate, d.iso)}<div class="qui"><a class="t" href="#/spectacle/${d.slug}">${esc(d.titre)}</a><span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul>`).join('');
+      const ls = new Set(L.map(d => d.l));
+      $$('.carte-lieu', svg).forEach(g => g.classList.toggle('eteint', !ls.has(+g.dataset.l)));
+      marquer(svg, F.l);
+      $('#choix-lieu').innerHTML = F.l !== null ? `<button class="puce choisi" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}${CROIX}</button>` : '';
+      $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
     }
-    // survoler une date allume son bras sur la carte
-    liste.addEventListener('mouseover', e => {
-      const li = e.target.closest('li[data-k]'); const fig = $('.carte', boite); if (!fig || F.commune) return;
-      fig.classList.toggle('surligne', !!li);
-      $$('.bras-saison', boite).forEach(p => p.classList.toggle('on', !!li && p.dataset.k === li.dataset.k));
-    });
-    liste.addEventListener('mouseleave', () => { if (F.commune) return; const fig = $('.carte', boite); fig?.classList.remove('surligne'); $$('.bras-saison.on', boite).forEach(p => p.classList.remove('on')); });
-    function synchro() {
-      $$('[data-p]', main).forEach(b => b.setAttribute('aria-pressed', b.dataset.p === F.public));
-      $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', b.dataset.s === F.spectacle));
-    }
-    $$('[data-p]', main).forEach(b => b.addEventListener('click', () => { F.public = b.dataset.p; synchro(); dessine(); }));
-    $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { F.spectacle = F.spectacle === b.dataset.s ? null : b.dataset.s; synchro(); dessine(); }));
-    $('#cherche').addEventListener('input', e => { F.q = e.target.value; F.commune = null; dessine(); });
+    $('#choix-lieu').addEventListener('click', e => { if (e.target.closest('button')) { F.l = null; dessine(); $('#cherche').focus(); } });
+    $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; dessine(); }));
+    $('#cherche').addEventListener('input', e => { F.q = e.target.value; dessine(); });
+    // choisir une commune sur la carte filtre la liste ; survoler l'une allume l'autre
+    relier(svg, liste, l => { F.l = F.l === l ? null : l; dessine(); });
+    liste.addEventListener('mouseleave', () => marquer(svg, F.l));
     dessine();
-    if (q.get('focus') === 'recherche') setTimeout(() => $('#cherche').focus(), 50);
-    return 'L’agenda · Compagnie Crescite';
+    bientot(() => pousser(svg));
+    return { titre: ONGLET.agenda.texte, onglet: 'agenda' };
   }
 
-  /* ---------- la compagnie ---------- */
+  /* ---------- une saison passée, et sa carte ---------- */
+  function saison(cle) {
+    vue = 'saison';
+    const SA = D.saisons[cle];
+    main.innerHTML = `
+      <div class="wrap page-titre"><p class="surtitre"><a href="${ONGLET.agenda.href}">${esc(ONGLET.agenda.texte)}</a></p><h1 tabindex="-1">${esc(SA.titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap sa-corps">
+        <div class="sa-liste">${SA.spectacles.map(g => { const s = g.slug && bySlug[g.slug]; return `<article class="sa-sp" style="--c:${s ? s.couleurTexteClair : 'var(--gris)'}">
+          <h2>${s ? `<a href="#/spectacle/${s.slug}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
+          ${g.sousTitre || g.creation ? `<p class="st">${g.sousTitre ? `<span>${g.sousTitre}</span>` : ''}${g.creation ? `<span>${esc(g.creation)}</span>` : ''}</p>` : ''}
+          <ul class="sa-dates">${g.dates.map(d => `<li${d.l != null ? ` data-l="${d.l}"` : ''}>${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(d.ligne)}</a>` : `<span>${esc(d.ligne)}</span>`}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${details(d.details)}</li>`).join('')}</ul></article>`; }).join('')}</div>
+        <div class="sa-carte">${carte({ lieux: CARTE.saison(cle), titre: SA.titre, couleurs: true })}</div>
+      </div></section>
+      ${saisonsBande(cle)}`;
+    const svg = $('.sa-carte svg'), liste = $('.sa-liste', main);
+    relier(svg, liste, l => { const li = $(`li[data-l="${l}"]`, liste); if (li) li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' }); });
+    bientot(() => pousser(svg));
+    return { titre: SA.titre, onglet: 'agenda' };
+  }
+
+  /* ---------- la compagnie, les actions culturelles, l'espace pro, le contact, les pages légales ---------- */
   function compagnie() {
-    const artistes = new Map();
-    SPECTACLES.forEach(s => s.distribution.forEach(n => { if (!artistes.has(n)) artistes.set(n, []); artistes.get(n).push(s.titre); }));
-    const noms = [...artistes.entries()].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'fr'));
-    main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">La compagnie</h1>${trait()}</div>
-      <section class="bloc" style="border-top:0;padding-top:0" aria-label="Présentation"><div class="wrap compagnie">
-        <div><p class="grand">${esc(C.presentation)}</p><p>${esc(C.intention)}</p><p>Mise en scène du répertoire : ${esc(C.miseEnScene)}.</p></div>
-        <dl class="chiffres"><div><dt>${D.stats.representationsCourt}</dt><dd>représentations depuis ${D.stats.depuis}</dd></div><div><dt>${D.stats.parAnMin}</dt><dd>par an au moins, depuis ${D.stats.parAnDepuis}</dd></div><div><dt>${D.stats.pays}</dt><dd>pays : ${D.stats.paysListe.join(', ')}</dd></div></dl>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-tr"><div class="wrap ou-voir">
-        <div><div class="entete"><h2 id="h-tr">Quinze ans de tournées</h2></div><p class="resume">${esc(D.stats.representationsTexte)} représentations depuis ${D.stats.depuis}, au moins ${D.stats.parAnMin} par an depuis ${D.stats.parAnDepuis}. Chaque bras part de Rouen vers une commune dont une date est publiée sur le site depuis 2016 : des scènes nationales, des théâtres de ville, des collèges, des lycées.</p><p><a class="bouton second" href="#/agenda">L’agenda de la saison</a></p></div>
-        ${carte({ passe: K.lieux.map((l, i) => [i, l.n]), legende: ['', 'Les dates publiées sur le site depuis 2016'] })}
-      </div></section>
-      <section class="bloc" aria-labelledby="h-ar"><div class="wrap">
-        <div class="entete"><h2 id="h-ar">Au plateau</h2></div>
-        <ul class="artistes">${noms.map(([n, t]) => `<li><b>${esc(n)}</b><span>${t.map(titre).join(', ')}</span></li>`).join('')}</ul>
-      </div></section>
-      <section class="bloc" aria-labelledby="h-pa"><div class="wrap">
-        <div class="entete"><h2 id="h-pa">Partenaires</h2></div><p>${esc(C.partenaires.join(' · '))}</p>
+    vue = 'compagnie';
+    const C = S.compagnie;
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1">${esc(C.titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap compagnie">
+        <div class="paragraphes">${C.paragraphes.map(bloc).join('')}</div>
+        <aside class="reperes"><h2>${esc(C.datesTitre)}</h2><ol class="frise">${C.dates.map(d => { const s = D.shows.find(x => String(x.annee) === String(d.annee) && !x.statut);
+          return `<li${s ? ` style="--c:${s.couleurTexteClair}"` : ''}><span class="an">${esc(d.annee)}</span>${s ? `<a href="#/spectacle/${s.slug}">${esc(d.titre)}</a>` : `<span class="ti">${esc(d.titre)}</span>`}</li>`; }).join('')}</ol></aside>
       </div></section>`;
-    return 'La compagnie · Compagnie Crescite';
+    return { titre: ONGLET.compagnie.texte, onglet: 'compagnie' };
   }
-
-  /* ---------- contact ---------- */
+  function actions() {
+    vue = 'actions';
+    const A = S.actions;
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1">${esc(A.titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap actions">
+        <div class="blocs">${A.blocs.map(bloc).join('')}</div>
+        <figure class="photo"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure>
+      </div></section>`;
+    return { titre: A.titre, onglet: 'actions' };
+  }
+  function pro() {
+    vue = 'pro';
+    const P = S.pro;
+    main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(P.titrePage)}</p><h1 tabindex="-1">${esc(P.titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap"><form class="pro-form" novalidate><p>${esc(P.texte)}</p>
+        <p class="champ"><label for="mdp">${esc(P.champ)}</label><input id="mdp" name="mdp" type="password" autocomplete="current-password"></p>
+        <p class="envoi"><button class="bouton" type="submit">${esc(P.bouton)}</button></p></form></div></section>`;
+    $('form', main).addEventListener('submit', e => e.preventDefault());
+    return { titre: P.titrePage, onglet: 'pro' };
+  }
   function contact() {
-    main.innerHTML = `
-      <div class="wrap page-titre"><h1 tabindex="-1">Contact</h1>${trait()}<p>${esc(C.nom)}, ${esc(C.adresse)}. Écrivez-nous : <a href="mailto:${C.email}">${esc(C.email)}</a>.</p></div>
-      <section class="bloc" style="border-top:0;padding-top:0" aria-label="Selon votre demande"><div class="wrap contacts">
-        ${D.doors.map(p => `<div><h2>${esc(p.titre)}</h2>${trait(p.couleur)}<p>${esc(p.texte)}</p><p>Contact : <span class="afournir">à fournir</span></p><p><a href="mailto:${C.email}?subject=${encodeURIComponent(p.titre)}">${esc(C.email)}</a></p></div>`).join('')}
-      </div></section>
-      <section class="bloc" aria-labelledby="h-le"><div class="wrap">
-        <div class="entete"><h2 id="h-le">La lettre de la compagnie</h2></div><p>Les nouvelles dates, une fois par saison. Inscription <span class="afournir">à fournir</span></p>
+    vue = 'contact';
+    const C = S.contact, co = S.coordonnees, mot = 'politique de confidentialité', k = C.consentement.indexOf(mot);
+    const politique = (S.liensLegaux.find(x => /confidentialit/.test(x.href)) || {}).href || '#/politique-de-confidentialite';
+    const types = { 'Nom': ['text', 'name'], 'Adresse e-mail': ['email', 'email'], 'Téléphone': ['tel', 'tel'], 'Ville': ['text', 'address-level2'] };
+    main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(ONGLET.contact.texte)}</p><h1 tabindex="-1">${esc(C.titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap contact">
+        <form class="formulaire" novalidate>
+          ${C.champs.map((c, i) => i === C.champs.length - 1 ? `<p class="champ large"><label for="f${i}">${esc(c)}</label><textarea id="f${i}" rows="6"></textarea></p>`
+            : `<p class="champ"><label for="f${i}">${esc(c)}</label><input id="f${i}" type="${(types[c] || ['text'])[0]}"${types[c] ? ` autocomplete="${types[c][1]}"` : ''}></p>`).join('')}
+          <p class="case"><input id="f-ok" type="checkbox"><label for="f-ok">${k >= 0 ? `${esc(C.consentement.slice(0, k))}<a href="${politique}">${esc(mot)}</a>${esc(C.consentement.slice(k + mot.length))}` : esc(C.consentement)}</label></p>
+          <p class="calcul"><label for="f-calc">${esc(C.calcul)}</label><input id="f-calc" inputmode="numeric" maxlength="2"></p>
+          <p class="envoi"><button class="bouton" type="submit">${esc(C.bouton)}</button></p>
+        </form>
+        <address class="coord"><strong>${esc(co.nom)}</strong><br>${co.adresse.map(esc).join('<br>')}</address>
       </div></section>`;
-    return 'Contact · Compagnie Crescite';
+    $('form', main).addEventListener('submit', e => e.preventDefault());
+    return { titre: ONGLET.contact.texte, onglet: 'contact' };
+  }
+  function legal(q, chemin) {
+    vue = 'legal';
+    const L = S.legal[chemin];
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1">${esc(L.titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap legal">${L.blocs.map(bloc).join('')}</div></section>`;
+    return { titre: L.titre, onglet: null };
   }
 
-  /* ---------- la page d'un spectacle ---------- */
+  /* ---------- la bande d'un spectacle : seulement des phrases entières de son texte (ou les extraits de Cassandres) ---------- */
+  // la phrase qui commence par « debut » et finit par « fin » (ponctuation comprise), prise telle quelle ; sinon rien
+  function phrase(s, debut, fin) {
+    for (const p of s.texte || []) {
+      const t = p.replace(/'/g, '’'), i = t.indexOf(debut);
+      if (i < 0) continue;
+      const j = t.indexOf(fin, i);
+      if (j < 0) return '';
+      let k = j + fin.length;
+      const m = t.slice(k).match(/^[\s  ]*[!?.…]+/);
+      if (m) k += m[0].length;
+      return p.slice(i, k);
+    }
+    return '';
+  }
+  const phrases = (s, L) => L.map(([a, b]) => phrase(s, a, b)).filter(Boolean);
   const SIG = {
-    jumeaux: (s, g) => `<div class="sig sig-jumeaux"><div class="twin l"><img src="${D.photos[s.slug]}" alt=""></div><div class="twin r"><img src="${D.photos[s.slug]}" alt=""></div>
-      <svg class="crown" viewBox="0 0 120 70" aria-hidden="true"><path pathLength="1" d="M8 62 L14 18 L38 42 L60 8 L82 42 L106 18 L112 62 Z M8 62 H112"/></svg>
-      <p class="sig-q">${esc(g.question)}</p><blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite></blockquote></div>`,
-    nez: (s, g) => `<div class="sig sig-nez"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>
-      <blockquote class="nez-lines"><p>${g.vers.map((v, i) => `<span style="--i:${i}">${esc(v)}</span>`).join(' ')}</p><cite>${esc(g.source)}</cite></blockquote></div>`,
-    cercle: (s, g) => `<div class="sig sig-cercle"><div class="ring-photo"><img src="${D.photos[s.slug]}" alt=""></div>
-      <svg class="ring" viewBox="0 0 400 400" aria-hidden="true"><defs><path id="ring-a" d="M200 200m-178 0a178 178 0 1 1 356 0a178 178 0 1 1-356 0"/><path id="ring-b" d="M200 200m-146 0a146 146 0 1 1 292 0a146 146 0 1 1-292 0"/></defs>
-        <circle class="ring-line" cx="200" cy="200" r="194" pathLength="1"/><g class="ring-rot"><text><textPath href="#ring-a">${esc(g.vers)} · </textPath></text></g>
-        <g class="ring-rot2"><text class="latin"><textPath href="#ring-b">${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · ${esc(g.latin.toUpperCase())} · </textPath></text></g></svg>
-      <blockquote class="sig-vers"><p>« ${esc(g.vers)} »</p><cite>${esc(g.source)}</cite><p class="sig-latin"><i lang="la">${esc(g.latin)}</i> : ${esc(g.latin_sens)}</p></blockquote></div>`,
-    paperboard: (s, g) => `<div class="sig sig-board"><ol class="sheets">${g.feuilles.map((f, i) => `<li class="sheet" style="--i:${i};--z:${g.feuilles.length - i}"${i ? ' aria-hidden="true"' : ''}>
-      <span class="l1" lang="${i === 1 ? 'fr' : 'en'}">${esc(f[0])}</span><span class="l2" lang="${i === 1 ? 'fr' : 'en'}">${esc(f[1])}</span><span class="src">${esc(f[2])}</span></li>`).join('')}</ol>
-      <p class="sig-note">Shakespeare condensé, commenté, et parfois traduit au feutre.</p></div>`,
-    annotations: (s, g) => { let n = 0; const html = esc(g.texte).replace(/\[([^\]]+)\]/g, (m, w) => { const i = n++; return `<span class="ann" style="--i:${i}">${w}<span class="ann-note" aria-hidden="true">${esc(g.notes[i])}</span></span>`; });
-      return `<div class="sig sig-ann"><blockquote class="ann-text"><p>${html}</p><cite>${esc(g.source)}</cite></blockquote><p class="ann-marge">${esc(g.marge)}</p>
-        <p class="sr">Notes : ${(g.texte.match(/\[([^\]]+)\]/g) || []).map((w, i) => `${esc(w.slice(1, -1))} veut dire ${esc(g.notes[i])}`).join(' ; ')}.</p></div>`; },
-    horloge: (s, g) => {
-      const ticks = Array.from({ length: 60 }, (_, i) => `<line x1="100" y1="${i % 5 ? 12 : 8}" x2="100" y2="${i % 5 ? 16 : 22}" transform="rotate(${i * 6} 100 100)"/>`).join('');
-      const nums = Array.from({ length: 12 }, (_, i) => { const a = (i + 1) * Math.PI / 6; return `<text x="${(100 + Math.sin(a) * 66).toFixed(1)}" y="${(100 - Math.cos(a) * 66 + 5).toFixed(1)}">${i + 1}</text>`; }).join('');
-      return `<div class="sig sig-clock"><p class="stamp" aria-hidden="true">Grève</p><svg class="clock" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><g class="ticks">${ticks}</g><g class="nums">${nums}</g>
-        <line class="hand-h" x1="100" y1="100" x2="100" y2="54"/><line class="hand-m" x1="100" y1="100" x2="100" y2="30"/><circle class="pin" cx="100" cy="100" r="4"/></svg>
-        <ol class="steps">${g.etapes.map((e, i) => `<li><b>${esc(g.heures[i])}</b><span>${esc(e)}</span></li>`).join('')}</ol></div>`;
-    },
-    fil: (s, g) => `<div class="sig sig-fil"><svg class="thread" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M-20 120 C 260 40, 420 260, 300 420 S 120 760, 420 780 S 860 560, 760 340 S 520 120, 700 60 S 1000 200, 1040 520"/></svg>
-      <blockquote class="fil-vers"><p lang="en">${esc(g.vers)}</p><cite>${esc(g.source)}</cite></blockquote>
-      <dl class="fil-num">${g.chiffres.map(([a, b], i) => `<div style="--i:${i}"><dt>${esc(a)}</dt><dd>${esc(b)}</dd></div>`).join('')}</dl></div>`,
-    heures: (s, g) => `<div class="sig sig-heures"><svg class="gauge" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="88" class="g0"/><circle cx="100" cy="100" r="88" class="g1" pathLength="1"/></svg>
-      <p class="big"><span class="count" data-n="${g.nombre}">${g.nombre}</span><span class="unit">${esc(g.unite)}</span><span class="per">${esc(g.periode)}</span></p>
-      <ul class="mots">${g.mots.map((m, i) => `<li style="--i:${i}">${esc(m)}</li>`).join('')}</ul></div>`,
+    chronologie: s => `<div class="sig sig-chrono"><div class="chaleur" aria-hidden="true"></div>
+      <svg class="ligne-temps" viewBox="0 0 2000 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20H2000"/>${Array.from({ length: 81 }, (_, i) => `<path d="M${i * 25} ${i % 4 ? 14 : 6}V${i % 4 ? 26 : 34}"/>`).join('')}</svg>
+      <ol class="cartons">${(s.extraits || []).map((x, i) => `<li${i ? '' : ' class="on"'}><blockquote><p>${esc(x.citation)}</p><cite>${esc(x.source)}</cite></blockquote></li>`).join('')}</ol></div>`,
+    jumeaux: s => { const t = phrase(s, 'Lorsqu’un roi meurt', 'sa place');
+      return `<div class="sig sig-jumeaux"><div class="twin l"><img src="${D.photos[s.slug]}" alt=""></div><div class="twin r"><img src="${D.photos[s.slug]}" alt=""></div>
+        <svg class="crown" viewBox="0 0 120 70" aria-hidden="true"><path pathLength="1" d="M8 62 L14 18 L38 42 L60 8 L82 42 L106 18 L112 62 Z M8 62 H112"/></svg>${t ? `<p class="sig-phrase">${t}</p>` : ''}</div>`; },
+    nez: s => { const t = phrase(s, 'Je m’y engage', 'le nez en l’air'), L = t ? t.split(/(?<=[:…])\s+/) : [];
+      return `<div class="sig sig-nez"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>${L.length ? `<p class="nez-lines">${L.map((v, i) => `<span style="--i:${i}">${v}</span>`).join(' ')}</p>` : ''}</div>`; },
+    cercle: s => { const a = phrase(s, 'Titus aime Bérénice', 'le savoir'), b = phrase(s, 'C’est ainsi', 'comme ça'), c = phrase(s, 'Ici-bas', 'sublime');
+      return `<div class="sig sig-cercle"><div class="ring-photo"><img src="${D.photos[s.slug]}" alt="" style="object-position:${s.focale}% 50%"></div>
+        <svg class="ring" viewBox="0 0 400 400" aria-hidden="true"><defs><path id="ring-a" d="M200 200m-178 0a178 178 0 1 1 356 0a178 178 0 1 1-356 0"/><path id="ring-b" d="M200 200m-146 0a146 146 0 1 1 292 0a146 146 0 1 1-292 0"/></defs>
+          <circle class="ring-line" cx="200" cy="200" r="194" pathLength="1"/>${a ? `<g class="ring-rot"><text><textPath href="#ring-a">${a}</textPath></text></g>` : ''}
+          ${b ? `<g class="ring-rot2"><text class="inner"><textPath href="#ring-b"><tspan>${b}</tspan><tspan> · </tspan><tspan>${b}</tspan><tspan> · </tspan></textPath></text></g>` : ''}</svg>
+        ${c ? `<p class="sig-phrase">${c}</p>` : ''}</div>`; },
+    paperboard: s => { const L = phrases(s, [['Si Shakespeare vous effraie', 'pour vous'], ['Cette pièce, à la forme atypique', 'son époque'], ['Vous plongerez', 'en revenir']]);
+      return `<div class="sig sig-board"><ol class="sheets">${L.map((t, i) => `<li class="sheet" style="--i:${i};--z:${L.length - i}"><span>${t}</span></li>`).join('')}</ol></div>`; },
+    annotations: s => { let t = phrase(s, 'La brièveté de cette pièce', 'son époque'), n = 0;
+      if (!t) return '';
+      ['lazzi', 'arrêts de jeu', 'parenthèses'].forEach(w => { t = t.replace(w, m => `<span class="ann" style="--i:${n++}">${m}</span>`); });
+      return `<div class="sig sig-ann"><p class="ann-text">${t}</p></div>`; },
+    horloge: s => { const L = phrases(s, [['Un huis-clos', 'professeurs'], ['Alors l’idée leur vient', 'leur vient'], ['Puisque la contestation', 'l’insurrection'], ['Et cette journée', 'macabre']]);
+      const ticks = Array.from({ length: 60 }, (_, i) => `<line x1="100" y1="${i % 5 ? 11 : 7}" x2="100" y2="${i % 5 ? 15 : 21}" transform="rotate(${i * 6} 100 100)"/>`).join('');
+      return `<div class="sig sig-clock"><svg class="clock" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><g class="ticks">${ticks}</g>
+        <line class="hand-h" x1="100" y1="100" x2="100" y2="54"/><line class="hand-m" x1="100" y1="100" x2="100" y2="28"/><circle class="pin" cx="100" cy="100" r="4"/></svg>
+        <ol class="steps">${L.map(t => `<li>${t}</li>`).join('')}</ol></div>`; },
+    fil: s => { const t = phrase(s, 'Le couple est prêt', 'triompher');
+      return `<div class="sig sig-fil"><svg class="thread" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M-20 120 C 260 40, 420 260, 300 420 S 120 760, 420 780 S 860 560, 760 340 S 520 120, 700 60 S 1000 200, 1040 520"/></svg>${t ? `<p class="fil-vers">${t}</p>` : ''}</div>`; },
   };
   const FX = {
     horloge(sec, p) {
       const h = $('.hand-h', sec), m = $('.hand-m', sec);
       if (h) { h.setAttribute('transform', `rotate(${240 + p * 300} 100 100)`); m.setAttribute('transform', `rotate(${p * 3600} 100 100)`); }
-      const k = Math.min(4, Math.floor(p * 5.2));
-      $$('.steps li', sec).forEach((li, i) => li.classList.toggle('on', !motionOK() || (i <= k && p > 0.02)));
+      const L = $$('.steps li', sec), k = Math.min(L.length - 1, Math.floor(p * (L.length + .3)));
+      L.forEach((li, i) => li.classList.toggle('on', !motionOK() || (i <= k && p > .03)));
     },
-    heures(sec, p) { const c = $('.count', sec); if (c) c.textContent = Math.round(Number(c.dataset.n) * easeOut(clamp(p * 1.25, 0, 1))); },
+    chronologie(sec, p) { const L = $$('.cartons li', sec), k = Math.min(L.length - 1, Math.floor(p * L.length)); L.forEach((li, i) => li.classList.toggle('on', i === k)); },
   };
-  const MODE = { etablissement: 'Peut venir dans votre établissement', salle: 'Se joue en salle : venez avec vos classes', a_confirmer: 'Accueil dans l’établissement à confirmer' };
-  const docs = l => `<ul class="docs">${l.map(x => `<li><span>${esc(x)}</span><span class="afournir">à fournir</span></li>`).join('')}</ul>`;
+
+  /* ---------- la page d'un spectacle ---------- */
   let secs = [], sraf = 0;
-  function spectacle(slug, onglet) {
-    const s = bySlug[slug], pal = s.palette, i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
-    const dates = D.dates.filter(d => d.slug === slug), n = s.distribution.length;
-    const passe = K.parSpectacle[slug] || [];
-    const fiche = [s.annee ? ['Création', s.annee] : null, s.duree ? ['Durée', s.duree] : null, n ? ['Au plateau', `${n} comédien${n > 1 ? 's' : ''}`] : null, s.representations ? ['Représentations', `${s.representations.n}, ${s.representations.quand}`] : null].filter(Boolean);
-    const e = s.etablissement || { mode: 'a_confirmer', texte: '' };
-    const choix = PORTES[onglet] ? onglet : (porte || 'voir');
-    main.innerHTML = `<article class="show" aria-labelledby="titre-sp" style="--bg2:${pal.fond2};--fg:${pal.texte};--fg2:${pal.texte2};--ac:${pal.accent};--ac2:${pal.accent2}">
+  function spectacle(slug) {
+    vue = 'spectacle';
+    const s = bySlug[slug], pal = s.palette || {}, i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
+    const dates = D.dates.filter(d => d.slug === slug), sp = CARTE.spectacle(slug), vus = new Set(sp.aVenir.map(x => x.l));
+    const fiche = [...(s.fiche || []).map(f => [f.libelle, f.valeur]), ...(s.avec ? [[s.avec.libelle, s.avec.valeur]] : [])];
+    const sig = SIG[s.motif] ? SIG[s.motif](s) : '';
+    const medias = s.medias || [], groupes = [...new Set(medias.map(m => m.groupe || ''))];
+    const media = m => `<li><a href="${esc(m.url)}" target="_blank" rel="noopener">${m.type === 'audio' ? AUDIO : VIDEO}<span>${esc(m.titre || m.url)}${m.par ? `<small>${esc(m.par)}</small>` : ''}</span></a></li>`;
+    let tournee = '';
+    if (s.statut) tournee = `<section class="bloc tournee"><div class="wrap tournee-grille">
+        <div><h2>${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p class="annonce">${esc(s.tournee.texte)}</p>` : ''}</div>
+        <figure class="carte-sp">${carte({ titre: s.titre, classe: 'attente', interactif: false })}</figure></div></section>`;
+    else if (dates.length) tournee = `<section class="bloc tournee"><div class="wrap tournee-grille">
+        <div><h2>${esc((s.tournee && s.tournee.titre) || S.libelles.actuellementEnTournee)}</h2>
+          <ul class="dates dates-sp">${dates.map(d => `<li data-l="${d.l}">${quand(d.ligneDate, d.iso)}<div class="qui"><span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul></div>
+        <figure class="carte-sp">${carte({ lieux: sp.aVenir, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div></section>`;
+    else if (sp.passe.length) tournee = `<section class="bloc tournee"><div class="wrap"><figure class="carte-sp seule">${carte({ lieux: sp.passe, titre: s.titre })}</figure></div></section>`;
+    main.innerHTML = `<article class="show" style="--bg2:${pal.fond2};--fg:${pal.texte};--fg2:${pal.texte2};--ac:${pal.accent};--ac2:${pal.accent2};--ct:${s.couleurTexteClair}">
       <section class="tete"><div class="wrap">
-        <div><p class="fil"><a href="#/">Accueil</a> / <a href="#/spectacles">Spectacles</a></p>
-          <h1 id="titre-sp" tabindex="-1">${titre(s.titre)}</h1>${trait(s.couleurTexteClair)}
-          <p class="st">${esc(s.sousTitre)}</p>
-          <p class="prochaine">${s.prochaine ? `Prochaine date : ${esc(s.prochaine.label)}, ${esc(s.prochaine.commune)} (${esc(s.prochaine.dep)})` : 'Aucune date annoncée pour l’instant.'}</p></div>
-        <figure><img src="${D.photos[slug]}" alt="Photo de ${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
+        <div><p class="fil"><a href="#/">${esc(S.accueil)}</a> / <a href="${ONGLET.spectacles.href}">${esc(ONGLET.spectacles.texte)}</a></p>
+          ${s.statut ? `<p class="etiquette">${esc(s.statut)}</p>` : s.enTournee ? `<p class="etiquette">${esc(S.libelles.enTournee)}</p>` : ''}
+          <h1 tabindex="-1">${(s.titreLignes || [s.titre]).map(esc).join('<br>')}</h1>${trait(s.couleurTexteClair)}
+          ${s.sousTitre ? `<p class="st">${s.sousTitre}</p>` : ''}${s.genre && s.genre !== s.sousTitre ? `<p class="st">${esc(s.genre)}</p>` : ''}
+          ${s.creation ? `<p class="cr">${esc(s.creation)}</p>` : ''}${s.cadre ? `<p class="cadre">${esc(s.cadre)}</p>` : ''}</div>
+        <figure><img src="${D.photos[slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
       </div></section>
-      <section class="sx sx-sig" data-scrolly data-fx="${s.motif}" aria-label="Extrait"><div class="sx-pin">${SIG[s.motif](s, s.signature)}</div></section>
+      ${sig ? `<div class="sx sx-sig sx-${s.motif}" data-scrolly data-fx="${s.motif}"${s.motif === 'chronologie' ? '' : ' aria-hidden="true"'}><div class="sx-pin">${sig}</div></div>` : ''}
       <section class="bloc"><div class="wrap corps">
-        <div><h2 class="sr">Le spectacle</h2><p class="accroche">${esc(s.accroche)}</p><p>${esc(s.texte)}</p>${s.video ? `<p><a class="bouton second" href="${esc(s.video)}" target="_blank" rel="noopener">Voir la vidéo</a></p>` : ''}</div>
-        <dl class="faits">${[...fiche, ...s.equipe.slice(0, 6)].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
+        <div class="texte">${(s.texte || []).map((p, k) => k === 0 && p.length < 320 && !/^\s*</.test(p) ? `<p class="chapo">${p}</p>` : bloc(p)).join('')}
+          ${groupes.map(g => `${g ? `<p class="groupe">${esc(g)}</p>` : ''}<ul class="medias">${medias.filter(m => (m.groupe || '') === g).map(media).join('')}</ul>`).join('')}</div>
+        <aside class="fiche">
+          ${fiche.length ? `<ul class="fiche-l">${fiche.map(([k, v]) => `<li>${k ? `<span class="k">${esc(k)}</span>` : ''}<span class="v">${v}</span></li>`).join('')}</ul>` : ''}
+          ${s.duree ? `<p class="duree">${esc(s.duree)}</p>` : ''}${(s.mentions || []).map(m => `<p class="mention">${m}</p>`).join('')}
+          ${(s.production || []).length ? `<div class="prod">${s.production.map(bloc).join('')}</div>` : ''}
+        </aside>
       </div></section>
-      <section class="bloc" aria-labelledby="h-ou"><div class="wrap">
-        <div class="entete"><h2 id="h-ou">Où le voir</h2>${dates.length ? `<a href="#/agenda?spectacle=${slug}">Dans l’agenda →</a>` : ''}</div>
-        <div class="ou-voir">
-          ${passe.length || dates.length ? carte({ passe, saison: dates, couleur: s.couleurTexteClair, legende: ['Les dates à venir', 'Les dates passées publiées sur le site'] }) : `<p class="resume">${esc(e.texte || 'Les actions culturelles se construisent avec chaque établissement.')}</p>`}
-          <div>${s.representations ? `<p class="resume"><b>${pluriel(s.representations.n, 'représentation', 'représentations')}</b> ${esc(s.representations.quand)}.${passe.length ? ` La carte en montre ${pluriel(passe.length, 'commune', 'communes')}, celles des dates publiées sur le site.` : ''}</p>` : ''}
-            ${dates.length ? `<ul class="dates court">${dates.map(d => ligneDate(d, true)).join('')}</ul>` : (passe.length ? '<p>Aucune date annoncée pour l’instant.</p>' : `<p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Actions culturelles')}">Construire un projet avec la compagnie</a></p>`)}</div>
-        </div>
-      </div></section>
-      <section class="bloc" id="portes-sp" aria-labelledby="h-vous"><div class="wrap">
-        <div class="entete"><h2 id="h-vous">Vous êtes…</h2></div>
-        <div class="onglets" role="tablist" aria-label="Vous êtes">${D.doors.map(p => `<button role="tab" id="o-${p.key}" aria-controls="p-${p.key}" aria-selected="${p.key === choix}" tabindex="${p.key === choix ? 0 : -1}" style="--dc:${p.couleur}">${esc(p.titre)}</button>`).join('')}</div>
-        <div class="panneau" role="tabpanel" id="p-voir" aria-labelledby="o-voir" tabindex="0"${choix === 'voir' ? '' : ' hidden'}>
-          <div><h3>En pratique</h3><dl class="faits">${s.duree ? `<dt>Durée</dt><dd>${esc(s.duree)}</dd>` : ''}<dt>Âge conseillé</dt><dd><span class="afournir">à fournir</span></dd><dt>Réserver</dt><dd>auprès du lieu de chaque date</dd></dl></div>
-          <div><h3>Les dates</h3><p>${dates.length ? `${pluriel(dates.length, 'date', 'dates')} cette saison, sur la carte ci-dessus.` : 'Aucune date annoncée pour l’instant.'}</p>
-            <p><a href="mailto:${C.email}?subject=${encodeURIComponent('Être prévenu des dates de ' + s.titre)}">Être prévenu des prochaines dates</a></p></div></div>
-        <div class="panneau" role="tabpanel" id="p-programmer" aria-labelledby="o-programmer" tabindex="0"${choix === 'programmer' ? '' : ' hidden'}>
-          <div><h3>La fiche</h3><dl class="faits">${[...fiche, ...s.equipe].map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>
-            ${s.coproduction ? `<h3>Coproduction</h3><p>${esc(s.coproduction)}</p>` : ''}${s.soutiens ? `<h3>Soutiens</h3><p>${esc(s.soutiens)}</p>` : ''}</div>
-          <div><h3>Documents</h3>${docs(['Dossier de diffusion', 'Fiche technique', 'Conditions financières', 'Photos haute définition'])}
-            <h3>Contact diffusion</h3><p>Nom et téléphone <span class="afournir">à fournir</span> · <a href="mailto:${C.email}?subject=${encodeURIComponent('Programmation : ' + s.titre)}">${esc(C.email)}</a></p></div></div>
-        <div class="panneau" role="tabpanel" id="p-etablissement" aria-labelledby="o-etablissement" tabindex="0"${choix === 'etablissement' ? '' : ' hidden'}>
-          <div><h3>${esc(MODE[e.mode] || MODE.a_confirmer)}</h3><p>${esc(e.texte)}</p>${s.noteScolaire ? `<p>${esc(s.noteScolaire)}</p>` : ''}
-            <dl class="faits"><dt>Pass Culture</dt><dd>${s.passCulture ? 'offre collective, sur ADAGE' : 'non référencé'}</dd><dt>Guide du CRED76</dt><dd>${s.cred76 ? `<a href="${esc(s.cred76)}" target="_blank" rel="noopener">fiche du spectacle</a>` : 'non référencé'}</dd></dl></div>
-          <div><h3>Ressources</h3>${docs(['Dossier pédagogique', 'Pistes d’ateliers', 'Besoins techniques en établissement'])}
-            <p><a class="bouton" href="mailto:${C.email}?subject=${encodeURIComponent('Faire venir ' + s.titre + ' dans mon établissement')}">Construire un projet avec la compagnie</a></p></div></div>
-      </div></section>
-      <a class="suivant" href="#/spectacle/${nx.slug}" style="--ct:${nx.couleurTexteClair}"><span class="wrap"><small>Spectacle suivant</small><b>${titre(nx.titre)}</b>${trait(nx.couleurTexteClair)}</span></a>
+      ${tournee}
+      <a class="suivant" href="#/spectacle/${nx.slug}" style="--ct:${nx.couleurTexteClair}"><span class="wrap"><b>${esc(nx.titre)}</b>${FLECHE}</span></a>
     </article>`;
-    const tabs = $$('[role="tab"]', main);
-    const sel = t => { tabs.forEach(x => { const on = x === t; x.setAttribute('aria-selected', on); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; }); choisirPorte(t.id.slice(2)); };
-    tabs.forEach((t, k) => {
-      t.addEventListener('click', () => sel(t));
-      t.addEventListener('keydown', ev => { const d = ev.key === 'ArrowRight' ? 1 : ev.key === 'ArrowLeft' ? -1 : 0; if (d) { const n2 = tabs[(k + d + tabs.length) % tabs.length]; n2.focus(); sel(n2); } });
-    });
+    const svg = $('.carte-sp svg', main), ul = $('.dates-sp', main);
+    if (svg) {
+      if (ul) relier(svg, ul); else CARTE.lier(svg, { survol: l => marquer(svg, l) });
+      // les bras poussent quand la carte arrive à l'écran
+      if ('IntersectionObserver' in window && motionOK()) { const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { pousser(svg); io.disconnect(); } }, { threshold: .2 }); io.observe(svg); }
+      else pousser(svg);
+    }
     secs = $$('[data-scrolly]', main);
     defile();
-    return `${s.titre} · Compagnie Crescite`;
+    return { titre: s.titre, onglet: 'spectacles' };
   }
-  // le moteur du défilement : une variable --p par section épinglée
+  // le moteur du défilement : une variable --p (0 → 1) par bande épinglée
   function defile() {
     sraf = 0;
     const vh = innerHeight;
@@ -730,34 +811,64 @@ footer p { margin: 0 0 6px; }
       const r = sec.getBoundingClientRect(), span = r.height - vh;
       const p = !motionOK() ? 1 : span > 40 ? clamp((-r.top + 64) / span, 0, 1) : 1;
       sec.style.setProperty('--p', p.toFixed(4));
-      const fx = sec.dataset.fx; if (fx && FX[fx]) FX[fx](sec, p);
+      const fx = FX[sec.dataset.fx]; if (fx) fx(sec, p);
     }
   }
   addEventListener('scroll', () => { if (secs.length && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
   addEventListener('resize', () => { if (secs.length) defile(); });
 
-  /* ---------- navigation ---------- */
-  const PAGES = { '': accueil, spectacles, agenda, compagnie, contact };
-  function route() {
-    const [chemin, qs] = location.hash.replace(/^#\/?/, '').split('?');
-    const q = new URLSearchParams(qs || ''), m = chemin.match(/^spectacle\/([\w-]+)(?:\/(voir|programmer|etablissement))?$/);
-    secs = [];
-    let t;
-    if (m && bySlug[m[1]]) { if (m[2]) choisirPorte(m[2]); t = spectacle(m[1], m[2]); }
-    else t = (PAGES[chemin] || accueil)(q);
-    document.title = t;
-    $$('.nav a').forEach(a => { const on = !m && a.getAttribute('href') === '#/' + chemin || (m && a.getAttribute('href') === '#/spectacles'); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false');
-    scrollTo(0, 0);
-    if (m && m[2]) $('#portes-sp').scrollIntoView();
-    ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+  /* ---------- l'ouverture : derrière la pieuvre, à peine, la carte des tournées qui part de Rouen ---------- */
+  function fondIntro() {
+    const W = 1120, H = 700;
+    const traits = tous().map(x => `<path d="${CARTE.trait(x.xy)}"/>`).join('');
+    const bras = CARTE.aVenir().map(x => CARTE.bras(x.xy, { w0: 5, w1: .8 })).filter(Boolean).map(d => `<path d="${d}"/>`).join('');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${(R[0] - W / 2).toFixed(1)} ${(R[1] - H / 2).toFixed(1)} ${W} ${H}"><path d="${CARTE.fond.pays}" fill="#1d1418" fill-opacity=".03" stroke="#1d1418" stroke-opacity=".1" stroke-width="1.2"/><g fill="none" stroke="#1d1418" stroke-opacity=".09" stroke-width="1.3" stroke-linecap="round">${traits}</g><g fill="#bc3e80" fill-opacity=".18">${bras}</g></svg>`;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
-  $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
+
+  /* ---------- navigation ---------- */
+  const VUES = { '': accueil, spectacles, agenda, compagnie, 'actions-culturelles': actions, 'espace-pro': pro, contact };
+  function route() {
+    const h = location.hash;
+    if (h && !h.startsWith('#/')) return;   // « #main » : le lien d'évitement
+    const [chemin, qs] = h.replace(/^#\/?/, '').split('?');
+    const q = new URLSearchParams(qs || '');
+    let r, m;
+    secs = [];
+    if ((m = chemin.match(/^spectacle\/([\w-]+)$/)) && bySlug[m[1]]) r = spectacle(m[1]);
+    else if ((m = chemin.match(/^agenda\/([\d-]+)$/)) && D.saisons[m[1]]) r = m[1] === D.saison ? agenda(q) : saison(m[1]);
+    else if (S.legal[chemin]) r = legal(q, chemin);
+    else if (Object.prototype.hasOwnProperty.call(VUES, chemin)) r = VUES[chemin](q);
+    else { history.replaceState(null, '', '#/'); r = accueil(); }   // une adresse inconnue mène à l'accueil
+    document.title = `${r.titre} - ${S.titreSuffixe}`;
+    $$('#nav a').forEach(a => { if (a.dataset.id === r.onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    fermerMenu();
+    scrollTo(0, 0);
+    ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
+    requestAnimationFrame(echelle);
+  }
+  const fermerMenu = () => { $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
+  $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', String(o)); });
+  $('#nav').addEventListener('click', e => { if (e.target.closest('a')) fermerMenu(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && $('.top').classList.contains('ouvert')) { fermerMenu(); $('.menu').focus(); } });
+  $('.evitement').addEventListener('click', e => { e.preventDefault(); main.focus(); });
+
   $('#marque').innerHTML = D.logo.mark;
-  $('#pied').innerHTML = `<div><p><strong>${esc(C.nom)}</strong></p><p>${esc(C.adresse)}</p><p><a href="mailto:${C.email}">${esc(C.email)}</a></p></div>
-    <div><p>${esc(C.partenaires.join(' · '))}</p></div><div><p>SIRET ${esc(C.siret)}</p><p>Licence ${esc(C.licence)}</p></div>`;
-  choisirPorte(porte);
+  $('#menu-t').textContent = S.libelles.menu;
+  $('#nav').setAttribute('aria-label', S.libelles.menu);
+  $('#nav').innerHTML = S.menu.map(x => `<a href="${x.href}" data-id="${x.id}">${esc(x.texte)}</a>`).join('');
+  const co = S.coordonnees;
+  $('#pied').innerHTML = `
+    <div><p><strong>${esc(co.nom)}</strong></p><p>${co.adresse.map(esc).join('<br>')}</p>
+      <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`}</p></div>
+    <div><p>${S.partenaires}</p></div>
+    <div><p class="petit">${co.legal.map(esc).join('<br>')}</p><p class="liens">${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}</p></div>`;
+  document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
   addEventListener('hashchange', route);
+  INTRO.ouvrir({
+    degrade: [[0, '#fbf8f3'], [.62, '#f3ece2'], [1, '#e2d7c6']], encre: '#bc3e80', image: fondIntro(), classe: 'intro-synthese',
+    apres: () => { if (vue === 'accueil') pousser($('.une-carte svg')); },   // révélé : les bras poussent depuis Rouen
+  });
   route();
 })();
 </script>
