@@ -574,10 +574,151 @@ def admin(dest):
 
 
 def equipe(dest):
-    """L'espace de l'équipe (equipe/ : la page personnelle de chaque personne), à côté de l'administration : il charge par
-    ../admin/ le client Supabase, l'outil des lignes d'agenda, la feuille de route et les tentacules, que admin(dest) copie."""
+    """L'espace de l'équipe (equipe/), une application installable, à côté de l'administration : il charge par ../admin/ le
+    client Supabase, l'outil des lignes d'agenda, la feuille de route et les tentacules, que admin(dest) copie.
+    En plus de la copie, trois choses écrites dans dest seulement (jamais dans equipe/) :
+      carte.js   la France, la Belgique, le Luxembourg, Rouen et la projection des maquettes (prototype/src/map.json), pour
+                 la carte de la tournée ;
+      icones/    les icônes de l'application (192, 512, 512 « maskable », 180 pour l'iPhone, et le badge des notifications),
+                 tirées du logo : le logo 2.0 (privé) dans une sortie que git ignore (maquettes/dist), la pieuvre de
+                 substitution ailleurs (docs/, versionné), comme le logo des feuilles de route. SVG → PNG par cairosvg,
+                 rsvg-convert ou Chromium (Playwright : PLAYWRIGHT_MODULE, CHROMIUM), gardées dans le dossier temporaire
+                 tant que le logo ne change pas ; sans aucun d'eux, une pastille unie ;
+      sw.js      sa VERSION : une empreinte de tout ce que le service de l'application garde (une nouvelle version s'annonce
+                 alors dans l'application).
+    Rien de cela n'arrête la construction : en cas d'échec, un avertissement, et l'espace marche sans."""
+    import hashlib
     import shutil
-    shutil.copytree(ROOT / "equipe", dest / "equipe", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
+    import struct
+    import subprocess
+    import tempfile
+    import zlib
+    out = dest / "equipe"
+    shutil.copytree(ROOT / "equipe", out, dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
+
+    def avertir(quoi, e):
+        print(f"equipe : {quoi} ({type(e).__name__} : {e}) ; l'espace de l'équipe marche sans")
+
+    # ———— la carte de la tournée
+    try:
+        mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
+        projection(mp["places"])
+        carte = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"],
+                 "rouen": mp["rouen"], "projection": projection.coefficients}
+        (out / "carte.js").write_text(
+            "/* Écrit par maquettes/build.py (equipe) : la France et Rouen, pour la carte de la tournée de l'espace de l'équipe. */\n"
+            f"self.CRESCITE_CARTE = {json.dumps(carte, ensure_ascii=False, separators=(',', ':'))};\n", encoding="utf-8")
+    except Exception as e:
+        avertir("carte de la tournée non écrite", e)
+
+    # ———— les icônes
+    def png_uni(f, n, rond, couleur=(188, 62, 128)):
+        """Une pastille (ronde) ou un carré, d'une couleur, en PNG : le dernier recours, sans aucun convertisseur."""
+        lignes = []
+        for y in range(n):
+            ligne = bytearray([0])
+            for x in range(n):
+                dedans = not rond or (x - n / 2 + .5) ** 2 + (y - n / 2 + .5) ** 2 <= (n * .46) ** 2
+                ligne += bytes(couleur + (255,)) if dedans else b"\0\0\0\0"
+            lignes.append(bytes(ligne))
+        bloc = lambda t, d: struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d) & 0xffffffff)
+        f.write_bytes(b"\x89PNG\r\n\x1a\n" + bloc(b"IHDR", struct.pack(">IIBBBBB", n, n, 8, 6, 0, 0, 0))
+                      + bloc(b"IDAT", zlib.compress(b"".join(lignes), 9)) + bloc(b"IEND", b""))
+
+    def icones(dossier):
+        try:
+            prive = subprocess.run(["git", "-C", str(ROOT), "check-ignore", "-q", str(dossier / "512.png")]).returncode == 0
+        except OSError:
+            prive = False
+        if prive:
+            v = logo_variants()
+            tache, bras = v["tachePath"], v["octopusPaths"]
+        else:
+            s, _ = proto.fallback_logo_and_arms()
+            traces = {k: re.search(r'd="([^"]*)"', a).group(1) if re.search(r'd="([^"]*)"', a) else "" for k, a in re.findall(r'<path id="([^"]+)"([^>]*)/>', s)}
+            tache, bras = traces.get("blob", ""), [traces.get(k, "") for k in ("tentacles-left", "head-left", "head-right", "tentacles-right")]
+        pieuvre = "".join(f'<path d="{d}"/>' for d in bras if d)
+        carre = lambda cx, cy, c: f"{cx - c / 2:.1f} {cy - c / 2:.1f} {c:.1f} {c:.1f}"
+        svg = lambda vb, corps: f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}" width="{{n}}" height="{{n}}">{corps}</svg>'
+        # la marque (tache magenta, pieuvre blanche) sur fond transparent ; la pieuvre blanche sur un carré magenta plein
+        # (dans la zone sûre des icônes « maskable » : 62 % de la largeur) ; la pieuvre seule, blanche, pour le badge
+        marque = svg(carre(767, 767.5, 1408 * 1.06), f'<path fill="#BC3E80" d="{tache}"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
+        pleine = lambda part: svg(carre(771, 628, 1042 / part), f'<rect x="-2000" y="-2000" width="6000" height="6000" fill="#BC3E80"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
+        badge = svg(carre(771, 628, 1042 / .94), f'<g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
+        travaux = [("192.png", 192, marque, True), ("512.png", 512, marque, True), ("masquable-512.png", 512, pleine(.62), False),
+                   ("180.png", 180, pleine(.66), False), ("badge.png", 96, badge, True)]
+        cle = hashlib.sha256(json.dumps([(f, n, s) for f, n, s, _ in travaux]).encode()).hexdigest()[:16]
+        garde = Path(tempfile.gettempdir()) / "crescite-icones" / cle
+        dossier.mkdir(parents=True, exist_ok=True)
+        if not all((garde / f).exists() for f, *_ in travaux):
+            garde.mkdir(parents=True, exist_ok=True)
+            fait = None
+            try:
+                import cairosvg
+                for f, n, s, _ in travaux:
+                    cairosvg.svg2png(bytestring=s.replace("{n}", str(n)).encode(), write_to=str(garde / f), output_width=n, output_height=n)
+                fait = "cairosvg"
+            except Exception:
+                pass
+            if not fait and shutil.which("rsvg-convert"):
+                try:
+                    for f, n, s, _ in travaux:
+                        source = garde / (f + ".svg")
+                        source.write_text(s.replace("{n}", str(n)), encoding="utf-8")
+                        subprocess.run(["rsvg-convert", "-w", str(n), "-h", str(n), "-o", str(garde / f), str(source)], check=True, timeout=60)
+                        source.unlink()
+                    fait = "rsvg-convert"
+                except Exception:
+                    pass
+            if not fait and shutil.which("node"):
+                with tempfile.TemporaryDirectory() as tmp:
+                    liste = Path(tmp) / "icones.json"
+                    liste.write_text(json.dumps([{"svg": s.replace("{n}", str(n)), "taille": n, "fichier": str(garde / f)} for f, n, s, _ in travaux]), encoding="utf-8")
+                    script = Path(tmp) / "icones.mjs"
+                    script.write_text("""import { readFileSync, existsSync } from 'node:fs';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs');
+const exe = process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const navigateur = await chromium.launch({ args: ['--no-sandbox'], ...(existsSync(exe) ? { executablePath: exe } : {}) });
+const page = await navigateur.newPage({ deviceScaleFactor: 1 });
+for (const t of JSON.parse(readFileSync(process.argv[2], 'utf8'))) {
+  await page.setViewportSize({ width: t.taille, height: t.taille });
+  await page.setContent(`<!doctype html><html><body style="margin:0;background:transparent">${t.svg}</body></html>`);
+  await page.screenshot({ path: t.fichier, omitBackground: true, clip: { x: 0, y: 0, width: t.taille, height: t.taille } });
+}
+await navigateur.close();
+""", encoding="utf-8")
+                    try:
+                        subprocess.run(["node", str(script), str(liste)], check=True, timeout=120, capture_output=True)
+                        fait = "Chromium"
+                    except Exception:
+                        pass
+            if not fait:
+                for f, n, _, rond in travaux:
+                    png_uni(garde / f, n, rond, (255, 255, 255) if f == "badge.png" else (188, 62, 128))
+                fait = "pastilles unies (aucun convertisseur SVG)"
+            print(f"equipe : icônes de l'application faites par {fait}{'' if prive else ', d’après la pieuvre de substitution'}")
+        for f, *_ in travaux:
+            shutil.copyfile(garde / f, dossier / f)
+
+    try:
+        icones(out / "icones")
+    except Exception as e:
+        avertir("icônes de l'application non faites", e)
+
+    # ———— la version du service de l'application : tout ce qu'il garde, l'administration comprise
+    try:
+        sw = out / "sw.js"
+        h = hashlib.sha256()
+        fichiers = sorted(f for f in out.rglob("*") if f.is_file() and f != sw)
+        fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js")]
+        for f in fichiers:
+            if f.is_file():
+                h.update(str(f.relative_to(dest)).encode())
+                h.update(f.read_bytes())
+        h.update(sw.read_bytes())
+        sw.write_text(sw.read_text(encoding="utf-8").replace("__VERSION__", h.hexdigest()[:12]), encoding="utf-8")
+    except Exception as e:
+        avertir("version du service de l'application non posée", e)
 
 
 def pages(D, files, names):

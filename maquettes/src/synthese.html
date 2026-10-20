@@ -279,6 +279,39 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .p-fin { text-align: center; }
 .p-fin .boutons { justify-content: center; }
 .p-partenaires { max-width: 70ch; margin: 0 auto 26px; color: var(--gris); }
+/* le contact diffusion, le dossier PDF et les documents (règle 13) */
+.ct-prg { position: relative; display: grid; gap: 3px; max-width: 540px; margin-top: 26px; padding: 18px 22px 16px; border: 1px solid var(--filet); border-left: 4px solid var(--ec, var(--magenta)); border-radius: 6px; background: var(--blanc); box-shadow: 0 18px 36px -28px rgba(29, 20, 24, .45); }
+.ct-prg p { margin: 0; }
+.ct-k { font: 600 .74rem/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--ec, var(--magenta-texte)); }
+.ct-nom b { display: block; font: italic 500 1.55rem/1.15 var(--serif); }
+.ct-role { display: block; font-size: .95rem; color: var(--gris); }
+.ct-liens { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 10px !important; }
+.ct-tel { font-weight: 600; text-decoration: none; }
+html:not(.ed-actif) .ct-tel.vide { display: none; }
+.ct-cond { margin-top: 8px !important; font-size: .82rem; color: var(--gris); }
+.u .ct-prg { border-color: var(--u-filet); border-left-color: var(--u-vif); background: color-mix(in srgb, var(--u-texte) 6%, transparent); box-shadow: none; color: var(--u-texte); }
+.u .ct-k { color: var(--u-vif); }
+.u .ct-role, .u .ct-cond { color: var(--u-texte2); }
+.u-contact { padding: clamp(18px, 2.6vw, 30px) 0; border-bottom: 1px solid var(--u-filet); background: var(--u-fond2); }
+.ct-prg.compact { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 30px; max-width: none; margin: 0; padding: 14px 20px; }
+.ct-prg.compact .ct-nom b { font-size: 1.3rem; }
+.ct-prg.compact .ct-liens, .ct-prg.compact .ct-cond { margin-top: 0 !important; }
+.ct-prg.compact .ct-cond { margin-left: auto !important; }
+.dos-bt { position: relative; overflow: hidden; }
+.dos-bt .onde { position: absolute; left: 16px; right: 16px; bottom: 2px; width: calc(100% - 32px); height: 8px; opacity: 0; overflow: visible; }
+.dos-bt .onde path { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; vector-effect: non-scaling-stroke; }
+.dos-bt[aria-busy="true"] { cursor: progress; }
+.dos-bt[aria-busy="true"] .onde { opacity: 1; }
+.dos-bt[aria-busy="true"] .onde path { animation: onde-dos 1.15s ease-in-out infinite; }
+@keyframes onde-dos { 0% { stroke-dashoffset: 1; } 55% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+@media (prefers-reduced-motion: reduce) { .dos-bt[aria-busy="true"] .onde path { animation: none; stroke-dashoffset: 0; } }
+.u-faits-liens { display: flex; flex-wrap: wrap; gap: 8px; }
+.u-docs { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
+.u-docs li { display: flex; align-items: center; gap: 10px; }
+.u-docs .fleche { width: 18px; height: 18px; color: var(--u-vif); }
+.u-docs a { color: var(--u-vif); }
+.prog-docs { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--u-filet); }
+.prog-docs .k { margin: 0 0 6px; font: 600 .76rem/1.4 var(--u-etiq); letter-spacing: .13em; text-transform: uppercase; color: var(--u-vif); }
 
 /* ———— je représente un établissement scolaire ———— */
 .e-lead p { margin: 0; max-width: 62ch; font: 400 clamp(1.2rem, 1rem + .7vw, 1.55rem)/1.55 var(--serif); }
@@ -949,7 +982,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   const MEMOIRE = 'crescite-entree';
   const retenue = () => { try { const v = sessionStorage.getItem(MEMOIRE); return v && E[v] ? v : null; } catch (e) { return null; } };
   const retenir = c => { try { sessionStorage.setItem(MEMOIRE, c); } catch (e) { /* stockage indisponible : pas de mémoire */ } };
-  const lienSp = (slug, entree) => `#/spectacle/${slug}/${entree || retenue() || 'voir'}`;
+  const lienSp = (slug, entree) => `#/spectacle/${slug}/${entreeSp(slug, entree || retenue() || 'voir')}`;
   const couleurDe = slug => (bySlug[slug] && bySlug[slug].couleurTexteClair) || 'var(--magenta)';
   // l'édition sur place (EDITION) : chaque texte affiché qui vient de D porte son chemin dans D (data-edit), l'élément
   // contenant exactement la valeur ; les photos des spectacles (data-edit-photo) ; les lignes d'agenda (data-date-id)
@@ -1108,7 +1141,39 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     return `<figure class="u-fig apparait${cls ? ' ' + cls : ''}"${i >= 0 ? edP(s, 'photos', i) : ''}><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy">${p.legende ? `<figcaption${i >= 0 ? edS(s, 'photos', i, 'legende') : ''}>${esc(p.legende)}</figcaption>` : ''}</figure>`; };
   const nombre = t => { const m = String(t || '').match(/^(\d[\d   ]*?)(\s+\D[\s\S]*)$/); return m ? `<b class="gros">${esc(m[1])}</b>${esc(m[2])}` : esc(t); };
   const lienVideo = s => s.video ? `<a class="bu" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LECTURE}${esc(L.bandeAnnonce)}</a>` : '';
-  const titreDate = (d, entree) => bySlug[d.slug] ? `<a class="t" href="#/spectacle/${d.slug}/${entree}">${esc(d.titre)}</a>` : `<span class="t">${esc(d.titre)}</span>`;
+
+  /* ---------- « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu ---------- */
+  const PDF = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
+  const ONDE = '<svg class="onde" viewBox="0 0 120 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M2 6C22 1 38 1 54 5S86 10 100 5C108 2 116 3 118 6"/></svg>';
+  const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
+  const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
+  // le contact diffusion : le nom, le rôle, le courriel (lien mailto:, avec l'objet), le téléphone s'il existe ; sur un spectacle : en bande
+  function contactHTML(s) {
+    const c = contactPrg(); if (!c) return '';
+    const k = 'site.programmation.contact', href = mailPrg(s ? `${L.objetProgrammation} – ${s.titre}` : L.objetProgrammation), tel = String(c.telephone || '').replace(/[^\d+]/g, '');
+    return `<aside class="ct-prg${s ? ' compact' : ''}" aria-label="${esc(L.contactDiffusion)}">
+      <p class="ct-k">${esc(L.contactDiffusion)}</p>
+      <p class="ct-nom"><b${ed(`${k}.nom`)}>${esc(c.nom)}</b> <span class="ct-role"${ed(`${k}.role`)}>${esc(c.role)}</span></p>
+      <p class="ct-liens">${c.email ? `<a class="${s ? 'bu plein' : 'bouton e'}" href="${esc(href)}"><span${ed(`${k}.email`)}>${esc(c.email)}</span></a>` : ''}${c.telephone ? `<a class="ct-tel" href="tel:${esc(tel)}"><span${ed(`${k}.telephone`)}>${esc(c.telephone)}</span></a>` : `<span class="ct-tel vide"${ed(`${k}.telephone`)}></span>`}</p>
+      <p class="ct-cond">${esc(L.conditionsFinancieres)}</p>
+    </aside>`;
+  }
+  // le dossier du spectacle en PDF, composé à la demande (dossier.js) : pendant ce temps le bouton est occupé (aria-busy), puis il redevient actif
+  const OCCUPES = new Set();
+  const dossierBouton = (slug, cls = 'bu') => `<button type="button" class="${cls} dos-bt" data-dossier="${esc(slug)}"${OCCUPES.has(slug) ? ' aria-busy="true" disabled' : ''}>${PDF}<span>${esc(L.dossierPdf)}</span>${ONDE}</button>`;
+  const occuper = (slug, oui) => $$(`[data-dossier="${slug}"]`).forEach(b => { b.disabled = oui; if (oui) b.setAttribute('aria-busy', 'true'); else b.removeAttribute('aria-busy'); });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
+    const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
+    OCCUPES.add(slug); occuper(slug, true);
+    DOSSIER.telecharger(slug).then(() => { const c = $(`[data-dossier="${slug}"]`); if (c && typeof TENTACULES !== 'undefined') TENTACULES.confirmer(c); })
+      .catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
+  });
+  // un spectacle sans action culturelle (Cassandres, pour l'instant) n'a pas d'onglet établissement (règle 14)
+  const entreeSp = (slug, entree) => entree === 'etablissement' && !(bySlug[slug] && bySlug[slug].actionCulturelle) ? 'voir' : entree;
+  const titreDate = (d, entree) => bySlug[d.slug] ? `<a class="t" href="#/spectacle/${d.slug}/${entreeSp(d.slug, entree)}">${esc(d.titre)}</a>` : `<span class="t">${esc(d.titre)}</span>`;
   const listeDates = (Ls, slug) => `<ul class="dates dates-sp" data-agenda="${esc(slug || '')}">${Ls.map(d => `<li${dateId(d)} data-l="${d.l}">${quand(d.ligneDate, d.iso)}<div class="qui"><span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul>`;
   // l'étiquette d'un spectacle : son statut (« En création ») s'il en a un, sinon « En tournée »
   const badgeDe = s => s.statut ? `<span${edS(s, 'statut')}>${esc(s.statut)}</span>` : s.enTournee ? `<span>${esc(L.enTournee)}</span>` : '';
@@ -1135,9 +1200,10 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
         <p class="prog-sur">${petit(mo(s))}<span${edS(s, 'creation')}>${esc(s.creation)}</span>${badge ? `<span class="pt" aria-hidden="true"></span>${badge}` : ''}</p>
         <h3 class="prog-t"><a href="${href}"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>${s.sousTitre ? `<p class="prog-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
         ${faits.length ? `<ul class="prog-faits">${faits.join('')}</ul>` : ''}
-        <p class="prog-liens">${lienVideo(s)}<a class="bu plein" href="${href}">${esc(L.leSpectacle)}${FLECHE}</a></p>
+        <p class="prog-liens">${lienVideo(s)}${dossierBouton(s.slug)}<a class="bu plein" href="${href}">${esc(L.leSpectacle)}${FLECHE}</a></p>
       </div>
       <div class="prog-d"><div class="prog-equipe">${equipe}</div>
+        ${docsDe(s, 'pros').length ? `<div class="prog-docs"><p class="k">${esc(L.aTelecharger)}</p><ul class="u-docs">${docsDe(s, 'pros').map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>` : ''}
         ${P.lieux ? `<details class="prog-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}</div>
     </article>`;
   }
@@ -1160,9 +1226,10 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       </div>
     </article>`;
   }
-  const teteEntree = (e, rac) => `<section class="et" style="--ec:${e.couleur};--ev:${e.couleurVive}"><div class="wrap">
+  const teteEntree = (e, rac, apres = '') => `<section class="et" style="--ec:${e.couleur};--ev:${e.couleurVive}"><div class="wrap">
       <h1 tabindex="-1">${esc(e.texte)}</h1>${trait(e.couleur)}
       ${rac && rac.length ? `<ul class="et-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}
+      ${apres}
     </div></section>`;
   const saisonsBande = (actuelle, id = 's-saisons') => `<nav class="saisons" id="${id}" aria-labelledby="${id}-h"><div class="wrap"><h2 class="titre-bloc" id="${id}-h">${esc(L.saisonsPrecedentes)}</h2><ul class="saisons-liste">${S.saisons.filter(x => x.saison !== actuelle && x.saison !== D.saison && D.saisons[x.saison]).map(x => `<li><a href="#/agenda/${x.saison}">
       <svg class="vignette" viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr"/>${CARTE.saison(x.saison).map(y => `<path pathLength="1" d="${CARTE.trait(y.xy)}"/>`).join('')}<circle cx="${CARTE.rouen[0]}" cy="${CARTE.rouen[1]}" r="11"/></svg><span>${esc(x.titre)}</span></a></li>`).join('')}</ul></div></nav>`;
@@ -1384,7 +1451,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     vue = 'programmer';
     const e = E.programmer, lieux = CARTE.tout();
     retenir('programmer');
-    main.innerHTML = `${teteEntree(e, [['p-spectacles', L.lesSpectacles], ['p-lieux', L.lieuxDiffusion], ['p-ecrire', L.ecrire]])}
+    main.innerHTML = `${teteEntree(e, [['p-spectacles', L.lesSpectacles], ['p-lieux', L.lieuxDiffusion], ['p-ecrire', L.ecrire]], contactHTML(null))}
       <section class="bloc sans-filet" id="p-lieux" aria-labelledby="h-lieux"><div class="wrap p-intro">
         <div class="p-texte"><h2 class="rubrique" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>${S.compagnie && S.compagnie.paragraphes && S.compagnie.paragraphes[1] ? bloc(S.compagnie.paragraphes[1], 'site.compagnie.paragraphes.1') : ''}
           <p class="boutons"><a class="bouton e" href="${S.ecrire.href}" style="--ec:${e.couleur}">${esc(L.ecrire)}${FLECHE}</a></p></div>
@@ -1403,9 +1470,9 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   function etablissement() {
     vue = 'etablissement';
     const e = E.etablissement, A = S.actions && S.actions.blocs ? S.actions : null, sco = D.dates.filter(d => d.scolaire), lieux = CARTE.aVenir('scolaire');
-    const ac = s => s.actionCulturelle || {};
-    const groupes = [['etablissement', L.lieu.etablissement], ['salle', L.lieu.salle]].map(([k, t]) => [t, D.shows.filter(s => ac(s).lieu === k)]).filter(g => g[1].length);
-    const reste = D.shows.filter(s => !ac(s).lieu);
+    const ac = s => s.actionCulturelle || {}, avecAction = D.shows.filter(s => s.actionCulturelle);   // un spectacle sans action culturelle n'est pas ici (règle 14)
+    const groupes = [['etablissement', L.lieu.etablissement], ['salle', L.lieu.salle]].map(([k, t]) => [t, avecAction.filter(s => ac(s).lieu === k)]).filter(g => g[1].length);
+    const reste = avecAction.filter(s => !ac(s).lieu);
     const ordre = Ls => [...Ls.filter(s => s.dossier), ...Ls.filter(s => !s.dossier && !ac(s).statut), ...Ls.filter(s => !s.dossier && ac(s).statut)];
     const ber = D.shows.find(s => s.dossier && D.dossiers && D.dossiers[s.dossier] && D.dossiers[s.dossier].type);
     const B = ber && D.dossiers[ber.dossier];
@@ -1592,7 +1659,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   }
   const onglets = (s, entree) => `<nav class="u-onglets" aria-label="${esc(s.titre)}"><div class="wrap u-onglets-in">
       <span class="ut" aria-hidden="true">${esc(s.titre)}</span>
-      ${S.entrees.map(e => `<a href="#/spectacle/${s.slug}/${e.cle}" style="--ec:${e.couleur}"${e.cle === entree ? ' aria-current="page"' : ''}><span class="pt" aria-hidden="true"></span>${esc(e.court)}</a>`).join('')}
+      ${S.entrees.filter(e => e.cle !== 'etablissement' || s.actionCulturelle).map(e => `<a href="#/spectacle/${s.slug}/${e.cle}" style="--ec:${e.couleur}"${e.cle === entree ? ' aria-current="page"' : ''}><span class="pt" aria-hidden="true"></span>${esc(e.court)}</a>`).join('')}
     </div><span class="u-progres" aria-hidden="true"></span></nav>`;
   const sommaire = (s, entree, chap) => `<nav class="som" aria-label="${esc(`${s.titre} – ${E[entree].court}`)}">
       <ol class="som-l" id="som-l" hidden>${chap.map((c, i) => `<li><button type="button" data-c="${c.id}"><span class="n">${i + 1}</span>${esc(c.nom)}</button></li>`).join('')}</ol>
@@ -1688,14 +1755,22 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
         <div><p class="u-eti">${petit(mo(s))}<span>${esc(L.leSpectacle)}</span></p>
           ${a0 ? `<h2 class="u-affirm ecrit"${edS(s, 'affirmations', 0, 'texte')}>${ecrit(a0.texte)}</h2>` : `<h2 class="u-h2"${edS(s, 'titre')}>${esc(s.titre)}</h2>`}
           <div class="u-texte">${(s.texte || []).map((p, k) => bloc(p, `shows.${s.slug}.texte.${k}`)).join('')}</div></div>
-        <ul class="u-faits">${faits.join('')}${s.video ? `<li>${lienVideo(s)}</li>` : ''}</ul>
+        <ul class="u-faits">${faits.join('')}<li class="u-faits-liens">${s.video ? lienVideo(s) : ''}${dossierBouton(s.slug, 'bu plein')}</li></ul>
       </div>`);
+    h = `<section class="u-contact"><div class="wrap">${contactHTML(s)}</div></section>` + h;
     h += distribution(s, chap);
     h += chapitre(chap, 'lieux', L.lieuxDiffusion, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>
         ${P.representations ? `<p class="u-rep"${pr('representations')}>${nombre(P.representations)}</p>` : ''}${P.lieux ? `<p class="u-lieux"${pr('lieux')}>${esc(P.lieux)}</p>` : ''}
         ${s.statut && s.tournee && s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}</div>
         <figure class="carte-sp">${carteTournee(s, sp.aVenir, sp.passe.filter(x => !vus.has(x.l)))}</figure></div>`);
     if (P.ficheTechnique && s.dossier && (D.dossiers || {})[s.dossier] && D.dossiers[s.dossier].accueil) h += conditions(s, chap, 'technique', L.ficheTechnique);
+    else {   // la fiche technique : un document déposé, sinon sur demande (jamais de rubrique vide)
+      const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
+      h += chapitre(chap, 'technique', L.ficheTechnique, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.ficheTechnique)}</h2>
+        <ul class="u-docs">${fts.length ? fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('') : `<li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li>`}</ul></div>`);
+    }
+    h += chapitre(chap, 'telecharger', L.aTelecharger, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.aTelecharger)}</h2>
+      <ul class="u-docs"><li>${dossierBouton(s.slug, 'bu')}</li>${docsDe(s, 'pros').map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
     return h + appel(s);
   }
   function ongletEtablissement(s, chap) {
@@ -1710,6 +1785,8 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
         ${A.dispositifs && A.dispositifs.length ? `<div class="u-disp"><h3 class="u-eti">${esc(L.dispositifs)}</h3><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
       </div>`, B ? false : undefined);
     if (sco.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap"><h2 class="u-h2">${esc(L.enEtablissement)}</h2>${listeDates(sco, s.slug)}</div>`, B ? false : undefined);
+    const docs = docsDe(s, 'scolaires');
+    if (docs.length) h += chapitre(chap, 'documents', L.documentsScolaires, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.documentsScolaires)}</h2><ul class="u-docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`, B ? false : undefined);
     if (B) h += dossier(s, chap, B);
     else h += distribution(s, chap);
     return h + appel(s);
@@ -1781,7 +1858,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       ${ouverture(s, entree, pub)}
       ${onglets(s, entree)}
       ${corps}
-      <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="#/spectacle/${nx.slug}/${entree}"><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span${edS(nx, 'creation')}>${esc(nx.creation)}</span></span><b${edS(nx, 'titre')}>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
+      <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="#/spectacle/${nx.slug}/${entreeSp(nx.slug, entree)}"><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span${edS(nx, 'creation')}>${esc(nx.creation)}</span></span><b${edS(nx, 'titre')}>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
       ${sommaire(s, entree, chap)}
     </article>`;
     // les cartes : reliées à la liste des dates, elles poussent quand elles arrivent à l'écran
@@ -1907,7 +1984,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     const { chemin, q } = a; let m;
     secs = []; chaps = []; surPlaceRendu = !!surPlace;
     try {
-      if ((m = chemin.match(/^spectacle\/([\w-]+)\/(voir|programmer|etablissement)$/)) && bySlug[m[1]]) return spectacle(m[1], m[2], surPlace);
+      if ((m = chemin.match(/^spectacle\/([\w-]+)\/(voir|programmer|etablissement)$/)) && bySlug[m[1]]) return entreeSp(m[1], m[2]) === m[2] ? spectacle(m[1], m[2], surPlace) : null;
       if ((m = chemin.match(/^agenda\/([\d-]+)$/)) && D.saisons[m[1]] && m[1] !== D.saison) return saison(m[1]);
       if (S.legal && S.legal[chemin]) return legal(chemin);
       const V = { '': accueil, voir, programmer, etablissement, spectacles, compagnie, contact };
@@ -1925,7 +2002,8 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     let m;
     const cible = S.redirections && S.redirections['#/' + a.chemin];
     if (cible) { location.replace(cible + (a.qs ? '?' + a.qs : '')); return; }
-    if ((m = a.chemin.match(/^spectacle\/([\w-]+)$/)) && bySlug[m[1]]) { location.replace(`#/spectacle/${m[1]}/${retenue() || 'voir'}`); return; }
+    if ((m = a.chemin.match(/^spectacle\/([\w-]+)$/)) && bySlug[m[1]]) { location.replace(`#/spectacle/${m[1]}/${entreeSp(m[1], retenue() || 'voir')}`); return; }
+    if ((m = a.chemin.match(/^spectacle\/([\w-]+)\/etablissement$/)) && bySlug[m[1]] && !bySlug[m[1]].actionCulturelle) { location.replace(`#/spectacle/${m[1]}/voir`); return; }
     if ((m = a.chemin.match(/^agenda\/([\d-]+)$/)) && m[1] === D.saison) { location.replace(E.voir.href); return; }
     document.documentElement.classList.remove(vers0);
     cadre(); fermerMenu();

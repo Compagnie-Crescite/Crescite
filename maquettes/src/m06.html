@@ -359,6 +359,37 @@ main:has(> .page-u) { padding-bottom: 0; }
 .fu-fiche { margin-top: 16px; font-size: .9rem; line-height: 1.5; }
 .fu-fiche p { margin: 0 0 4px; }
 .fu-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 18px; }
+/* le contact diffusion, le dossier PDF et les documents (règle 13) */
+.contact-u { position: relative; display: grid; gap: 2px; max-width: 540px; margin: 24px 0 0; padding: 16px 20px 15px; border: 1px solid var(--filet); border-left: 5px solid var(--magenta); border-radius: 16px; background: color-mix(in srgb, #fff 55%, var(--papier)); box-shadow: 0 18px 34px -28px rgba(29, 20, 24, .5); }
+.contact-u p { margin: 0; }
+.cu-k { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--magenta-texte); }
+.cu-nom b { display: block; font: italic 500 1.55rem/1.15 var(--serif); }
+.cu-role { display: block; font-size: .95rem; color: var(--gris); }
+.cu-liens { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin-top: 10px !important; }
+.cu-tel { font-weight: 600; text-decoration: none; }
+html:not(.ed-actif) .cu-tel.vide { display: none; }
+.cu-cond { margin-top: 8px !important; font-size: .8rem; color: var(--gris); }
+.u .contact-u { border-left-color: var(--u-trace); background: color-mix(in srgb, var(--u-texte) 6%, transparent); box-shadow: none; }
+.u .cu-k { color: var(--u-vif); }
+.contact-u.compact { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 28px; max-width: none; margin: 0 0 22px; padding: 14px 20px; }
+.contact-u.compact .cu-nom b { font-size: 1.3rem; }
+.contact-u.compact .cu-liens, .contact-u.compact .cu-cond { margin-top: 0 !important; }
+.contact-u.compact .cu-cond { margin-left: auto !important; }
+.dos-bt { position: relative; overflow: hidden; border: 0; font: inherit; font-weight: 600; font-size: .92rem; cursor: pointer; }
+.ico-pdf { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.dos-bt .bras-occ { display: none; flex: none; width: 34px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.dos-bt .bras-occ path { stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.dos-bt[aria-busy="true"] { cursor: progress; }
+.dos-bt[aria-busy="true"] .bras-occ { display: block; }
+.dos-bt[aria-busy="true"] .bras-occ path { animation: bras-occ 1.2s ease-in-out infinite; }
+@keyframes bras-occ { 0% { stroke-dashoffset: 1; } 60% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+@media (prefers-reduced-motion: reduce) { .dos-bt[aria-busy="true"] .bras-occ path { animation: none; stroke-dashoffset: 0; } }
+.pr-actions { margin: 0 0 8px; }
+.docs-u { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
+.docs-u li { display: flex; align-items: center; gap: 10px; }
+.docs-u a { color: var(--u-vif); font-weight: 600; }
+.fu-docs { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--filet); }
+.fu-docs .cu-k { margin: 0 0 8px; }
 .lien-video { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px 8px 10px; border-radius: 999px; background: var(--u-aplat); color: var(--u-sur); font-weight: 600; font-size: .92rem; text-decoration: none; }
 .lien-video svg { width: 24px; height: 24px; }
 .fu-lien { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--u-vif); }
@@ -746,7 +777,9 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   const brasE = '<svg class="be" viewBox="0 0 44 18" aria-hidden="true"><path d="M2 13 C 11 13, 15 4, 24 5 S 35 15, 40 9 C 42 6, 40 2, 37 4 C 35 5.4, 36 8, 38.5 7.6"/></svg>';
   const porteBras = '<svg class="porte-bras" viewBox="0 0 190 56" aria-hidden="true"><path pathLength="1" d="M4 46 C 30 46, 46 14, 84 16 S 132 46, 160 30 C 174 22, 180 10, 171 6 C 164 3, 158 11, 164 15"/></svg>';
   const icVideo = '<svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 8.5v9l7.5-4.5z" fill="currentColor"/></svg>';
-  const lienSp = (slug, cle) => `#/spectacle/${slug}${cle ? '/' + cle : ''}`;
+  // un spectacle sans action culturelle (Cassandres, pour l'instant) n'a pas d'onglet établissement (règle 14)
+  const entreeSp = (slug, cle) => cle === 'etablissement' && !(bySlug[slug] && bySlug[slug].actionCulturelle) ? 'voir' : cle;
+  const lienSp = (slug, cle) => `#/spectacle/${slug}${cle ? '/' + entreeSp(slug, cle) : ''}`;
   let ctxLiens = null;   // l'entrée de la vue en cours : les liens vers les spectacles y mènent
 
   /* ---------- la mémoire de l'entrée ---------- */
@@ -1377,6 +1410,37 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
       ${P.jauge ? `<li${pr('jauge')}>${esc(P.jauge)}</li>` : ''}${P.equipe ? `<li${pr('equipe')}>${esc(P.equipe)}</li>` : ''}${P.actualite ? `<li${pr('actualite')}>${esc(P.actualite)}</li>` : ''}</ul>`;
   }
   const lienVideo = s => s.video ? `<a class="lien-video" href="${esc(s.video.url)}" target="_blank" rel="noopener">${icVideo}<span>${esc(L.bandeAnnonce)}</span></a>` : '';
+
+  /* ---------- « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu ---------- */
+  const icPdf = '<svg class="ico-pdf" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg>';
+  const brasOcc = '<svg class="bras-occ" viewBox="0 0 44 18" aria-hidden="true" focusable="false"><path pathLength="1" d="M2 13 C 11 13, 15 4, 24 5 S 35 15, 40 9 C 42 6, 40 2, 37 4 C 35 5.4, 36 8, 38.5 7.6"/></svg>';
+  const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
+  const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
+  const listeDocs = docs => `<ul class="docs-u">${docs.map(x => `<li>${icPdf}${lienDoc(x)}</li>`).join('')}</ul>`;
+  // le contact diffusion : le nom, le rôle, le courriel (lien mailto:, avec l'objet), le téléphone s'il existe ; sur un spectacle : compact
+  function contactHTML(s) {
+    const c = contactPrg(); if (!c) return '';
+    const k = 'site.programmation.contact', href = mailPrg(s ? `${L.objetProgrammation} – ${s.titre}` : L.objetProgrammation), tel = String(c.telephone || '').replace(/[^\d+]/g, '');
+    return `<aside class="contact-u${s ? ' compact' : ''}" aria-label="${esc(L.contactDiffusion)}">
+      <p class="cu-k">${esc(L.contactDiffusion)}</p>
+      <p class="cu-nom"><b${ed(`${k}.nom`)}>${esc(c.nom)}</b> <span class="cu-role"${ed(`${k}.role`)}>${esc(c.role)}</span></p>
+      <p class="cu-liens">${c.email ? `<a class="${s ? 'bouton-u' : 'bouton'}" href="${esc(href)}"><span${ed(`${k}.email`)}>${esc(c.email)}</span></a>` : ''}${c.telephone ? `<a class="cu-tel" href="tel:${esc(tel)}"><span${ed(`${k}.telephone`)}>${esc(c.telephone)}</span></a>` : `<span class="cu-tel vide"${ed(`${k}.telephone`)}></span>`}</p>
+      <p class="cu-cond">${esc(L.conditionsFinancieres)}</p>
+    </aside>`;
+  }
+  // le dossier du spectacle en PDF, composé à la demande (dossier.js) : pendant ce temps le bouton est occupé (aria-busy), puis il redevient actif
+  const OCCUPES = new Set();
+  const dossierBouton = slug => `<button type="button" class="bouton-u dos-bt" data-dossier="${esc(slug)}"${OCCUPES.has(slug) ? ' aria-busy="true" disabled' : ''}>${icPdf}<span>${esc(L.dossierPdf)}</span>${brasOcc}</button>`;
+  const occuper = (slug, oui) => $$(`[data-dossier="${slug}"]`).forEach(b => { b.disabled = oui; if (oui) b.setAttribute('aria-busy', 'true'); else b.removeAttribute('aria-busy'); });
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
+    const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
+    OCCUPES.add(slug); occuper(slug, true);
+    DOSSIER.telecharger(slug).then(() => { const c = $(`[data-dossier="${slug}"]`); if (c && typeof TENTACULES !== 'undefined') TENTACULES.confirmer(c); })
+      .catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
+  });
   function fichePro(s) {
     const P = s.programmer;
     return `<article class="fiche-u u" style="${styleU(s)}">${motif(s.univers.motif)}
@@ -1385,7 +1449,8 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
       ${s.sousTitre ? `<p class="fu-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}<p class="cr"${edS(s, 'creation')}>${esc(s.creation)}</p>
       ${chiffres(s)}
       ${P.equipeCreation ? `<ul class="fu-equipe">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : `<div class="fu-fiche">${ficheLignes(s)}</div>`}
-      <p class="fu-actions">${lienVideo(s)}<a class="fu-lien" href="${lienSp(s.slug, 'programmer')}">${esc(L.decouvrir)}${fleche}</a></p>
+      <p class="fu-actions">${lienVideo(s)}${dossierBouton(s.slug)}<a class="fu-lien" href="${lienSp(s.slug, 'programmer')}">${esc(L.decouvrir)}${fleche}</a></p>
+      ${docsDe(s, 'pros').length ? `<div class="fu-docs"><p class="cu-k">${esc(L.aTelecharger)}</p>${listeDocs(docsDe(s, 'pros'))}</div>` : ''}
       ${P.lieux ? `<details class="lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}
     </article>`;
   }
@@ -1393,7 +1458,7 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
     const E = ENT.programmer;
     main.innerHTML = pageEntree(E, `
       <section class="une">
-        <div class="une-titre"><h1 tabindex="-1">${esc(E.texte)}</h1>${trait()}
+        <div class="une-titre"><h1 tabindex="-1">${esc(E.texte)}</h1>${trait()}${contactHTML(null)}
           <ol class="index">${D.shows.map(s => `<li><a href="${lienSp(s.slug, 'programmer')}" style="${styleU(s)}"><span class="ix-p" aria-hidden="true"></span><span class="ix-t"${edS(s, 'titre')}>${esc(s.titre)}</span>${s.programmer.representations ? `<span class="ix-r"${edS(s, 'programmer', 'representations')}>${esc(s.programmer.representations)}</span>` : s.statut ? `<span class="ix-r"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</a></li>`).join('')}</ol>
           ${ecrire()}</div>
         <div class="une-carte-g"><p class="legende-carte" aria-hidden="true"><span class="pastille"></span><span>${esc(L.lieuxDiffusion)}</span></p>
@@ -1426,7 +1491,8 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
     main.innerHTML = pageEntree(E, `
       <section class="wrap ecole-tete"><div><div class="page-titre"><h1 tabindex="-1">${esc(E.texte)}</h1>${trait()}</div><p class="ecole-t"${ed('site.ecole.texte')}>${esc(S.ecole.texte)}</p></div>
         ${D.photos['actions-culturelles'] ? `<figure class="ecole-photo"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption${ed('site.actions.credit')}>${esc(A.credit)}</figcaption>` : ''}</figure>` : ''}</section>
-      ${groupes.map(([lieu, titre]) => { const ss = D.shows.filter(s => (s.actionCulturelle.lieu || null) === lieu); return ss.length ? `<section class="wrap groupe-ac">${titre ? `<h2 class="titre-s">${esc(titre)}</h2>${trait()}` : ''}<div class="actions-u">${ss.map(carteAction).join('')}</div></section>` : ''; }).join('')}
+      ${groupes.map(([lieu, titre]) => { const ss = D.shows.filter(s => s.actionCulturelle && (s.actionCulturelle.lieu || null) === lieu);   // sans action culturelle : pas ici (règle 14)
+         return ss.length ? `<section class="wrap groupe-ac">${titre ? `<h2 class="titre-s">${esc(titre)}</h2>${trait()}` : ''}<div class="actions-u">${ss.map(carteAction).join('')}</div></section>` : ''; }).join('')}
       <section class="wrap ac-section">
         <div class="texte"><h2 class="titre-s"${ed('site.actions.titre')}>${esc(A.titre)}</h2>${trait()}${A.blocs.map((b, i) => bloc(b.replace(/<(\/?)h2>/g, '<$1h3>'), `site.actions.blocs.${i}`)).join('')}</div>
         <div class="liste"><h2 class="titre-s">${esc(L.enEtablissement)}</h2>${filtreHTML()}${parMois(sco, false, true)}</div>
@@ -1576,7 +1642,7 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   // l'onglet « Je souhaite programmer »
   function chProgrammer(s) {
     const ch = [], P = s.programmer, T = CARTE.spectacle(s.slug);
-    ch.push({ id: 'spectacle', lib: L.leSpectacle, html: h2u('spectacle', L.leSpectacle) + chiffres(s)
+    ch.push({ id: 'spectacle', lib: L.leSpectacle, html: h2u('spectacle', L.leSpectacle) + `<p class="fu-actions pr-actions">${lienVideo(s)}${dossierBouton(s.slug)}</p>` + contactHTML(s) + chiffres(s)
       + (P.equipeCreation ? `<ul class="fu-equipe">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : '')
       + `<div class="texte" style="margin-top:22px"><p${edS(s, 'texte', 0)}>${s.texte[0]}</p></div>` });
     if (s.video) ch.push({ id: 'video', lib: L.bandeAnnonce, html: h2u('video', L.bandeAnnonce) + video(s) });
@@ -1588,6 +1654,11 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
         ${A.alerte ? `<p class="alerte"${ea('alerte')}>${A.alerte}</p>` : ''}
         ${impl ? `<figure class="photo-u"${edP(s, 'photos', rangPh(s, impl))}><img src="${D.photos[impl.cle]}" alt="${esc(impl.legende || A.photos)}" loading="lazy"><figcaption${impl.legende ? edS(s, 'photos', rangPh(s, impl), 'legende') : ea('photos')}>${esc(impl.legende || A.photos)}</figcaption></figure><p class="credit"${edS(s, impl.source === 'dossier' ? 'creditDossier' : 'creditPhotos')}>${esc(creditDe(s, impl))}</p>` : ''}` });
     }
+    else {   // la fiche technique : un document déposé, sinon sur demande (jamais de rubrique vide)
+      const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
+      ch.push({ id: 'technique', lib: L.ficheTechnique, html: h2u('technique', L.ficheTechnique) + (fts.length ? listeDocs(fts) : `<ul class="docs-u"><li>${icPdf}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li></ul>`) });
+    }
+    ch.push({ id: 'telecharger', lib: L.aTelecharger, html: h2u('telecharger', L.aTelecharger) + `<ul class="docs-u"><li>${dossierBouton(s.slug)}</li>${docsDe(s, 'pros').map(x => `<li>${icPdf}${lienDoc(x)}</li>`).join('')}</ul>` });
     if (P.lieux || T.passe.length || T.aVenir.length) ch.push({ id: 'lieux', lib: L.lieuxDiffusion, html: h2u('lieux', L.lieuxDiffusion)
       + (P.lieux ? `<p class="lieux-t"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : '')
       + (T.passe.length || T.aVenir.length ? carte({ lieux: T.aVenir, passe: T.passe, titre: s.titre, classe: 'carte-sp', bulle: true }) : '') });
@@ -1607,6 +1678,8 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
       + (A.textes.length ? `<div class="texte" style="margin-top:20px">${A.textes.map((t, i) => `<p${ac('textes', i, 'texte')}>${t.texte}</p>`).join('')}</div>` : '')
       + (A.dispositifs.length ? `<div class="au-disp"><p>${esc(L.dispositifs)}</p><ul>${A.dispositifs.map((d, i) => `<li${ac('dispositifs', i)}>${d}</li>`).join('')}</ul></div>` : '')
       + (phE.length ? `<div style="margin-top:26px">${cartons(s, phE, false)}</div>` : '') });
+    const docsSco = docsDe(s, 'scolaires');
+    if (docsSco.length) ch.push({ id: 'documents', lib: L.documentsScolaires, html: h2u('documents', L.documentsScolaires) + listeDocs(docsSco) });
     if (B) {
       ch.push({ id: 'dossier', lib: L.dossierScolaire, html: `<h2 class="bande-u" id="h-dossier" tabindex="-1">${esc(L.dossierScolaire)}</h2>
         <h3 class="h3u"${edD('pourquoi', 'titre')}>${esc(B.pourquoi.titre)}</h3><div class="pourquoi">${B.pourquoi.sections.map((x, i) => `<h4${edD('pourquoi', 'sections', i, 'titre')}>${esc(x.titre)}</h4><p${edD('pourquoi', 'sections', i, 'texte')}>${x.texte}</p>`).join('')}</div>
@@ -1643,7 +1716,7 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
             ${s.accroche ? `<p class="accroche"${edS(s, 'accroche')}>${motAMot(s.accroche)}</p>` : ''}</div>
           <figure class="tete-photo"${edP(s, 'photo')}><img src="${D.photos[slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
         </div></section>
-        <nav class="onglets-u" aria-label="${esc(s.titre)}"><div class="wrap">${S.entrees.map(e => `<a href="${lienSp(slug, e.cle)}" style="--e:${couleurE(e, s)}"${e.cle === cle ? ' aria-current="page"' : ''}>${brasE}<span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a>`).join('')}</div></nav>
+        <nav class="onglets-u" aria-label="${esc(s.titre)}"><div class="wrap">${S.entrees.filter(e => e.cle !== 'etablissement' || s.actionCulturelle).map(e => `<a href="${lienSp(slug, e.cle)}" style="--e:${couleurE(e, s)}"${e.cle === cle ? ' aria-current="page"' : ''}>${brasE}<span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a>`).join('')}</div></nav>
         <div class="wrap corps-u">
           <aside class="sommaire"><ol>${ch.map(c => `<li><button type="button" data-ch="${c.id}">${esc(c.lib)}</button></li>`).join('')}</ol><a class="bouton-u" href="${S.ecrire.href}">${esc(L.ecrire)}</a></aside>
           <div class="chapitres">${ch.map(c => `<section class="chap" id="ch-${c.id}" aria-labelledby="h-${c.id}">${c.html}</section>`).join('')}
@@ -1699,6 +1772,8 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
     const sp = chemin.match(/^spectacle\/([\w-]+)(?:\/([\w-]+))?$/), sa = chemin.match(/^agenda\/([\d-]+)$/);
     // un spectacle sans entrée : l'entrée retenue, sinon « voir »
     if (sp && bySlug[sp[1]] && !ENT[sp[2]]) { location.replace(lienSp(sp[1], retenue() || 'voir')); return; }
+    // un spectacle sans action culturelle n'a pas d'onglet établissement : son adresse mène à « voir » (règle 14)
+    if (sp && bySlug[sp[1]] && sp[2] === 'etablissement' && !bySlug[sp[1]].actionCulturelle) { location.replace(lienSp(sp[1], 'voir')); return; }
     const connue = (sp && bySlug[sp[1]]) || (sa && D.saisons[sa[1]]) || Object.prototype.hasOwnProperty.call(VUES, chemin);
     if (!connue) { location.replace('#/'); return; }
     const avant = enPlace ? etatVue() : null;

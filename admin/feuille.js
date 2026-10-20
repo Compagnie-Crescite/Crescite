@@ -1,20 +1,34 @@
 /* La feuille de route d'une date de tournée, commune à l'administration (admin/index.html) et à la page de l'équipe
    (equipe/index.html, qui la charge par ../admin/feuille.js). Aucune dépendance : ni la base, ni l'administration.
 
-   FEUILLE.composer(sources)                 → le contenu d'une feuille, avec tout ce que la base sait
-       sources = { date, spectacle, lieu, representations, equipe: [{personne_id, nom, fonction, telephone}],
-                   contacts: [{nom, role, telephone, email}], depart: {commune, latitude, longitude}, suivi,
-                   documents (facultatif : [{id, pour}]) }
-       suivi = {organisateur, contact} (crescite_dates_suivi), et suivi.lieu = {contact, jauge, plateau} (crescite_lieux_suivi)
-   FEUILLE.html(feuille, contexte)           → le HTML de la feuille : une racine .feuille qui porte ses styles
-   FEUILLE.pdf(feuille, contexte)            → Promise<Blob> (pdfmake, chargé à la demande depuis FEUILLE.vendor)
+   CE QUI CHANGE (octobre 2026) : la feuille n'est plus un formulaire en onze rubriques, mais une page A4 qu'on écrit
+   directement, comme dans un traitement de texte, d'après les feuilles de route de la compagnie. Son contenu est une
+   suite de blocs :
+       contenu = { format: 2, blocs: [bloc…], composees: [clé…], pages: [id…], instantane: [séance…], compose_le }
+       bloc    = { id, type, segments: [{texte, gras?, italique?, rouge?, surligne?, amorce?, lien?, doc?}],
+                   petit? (en-tête plus petit), date? ('AAAA-MM-JJ', bloc « jour »), lignes? (tableau : [[segments]]),
+                   cle? (ce que la base a composé), source? ('base' : pas retouché depuis), origine? ({jour, heure, fin, rep}) }
+       types   : entete, rubrique, sous-titre, jour, ligne, puce, alerte, saut (de page), tableau (simple, éditable)
+   Une amorce (amorce: true) est une information qui manque, en gris dans l'éditeur (« heure d'arrivée ? ») : elle
+   n'apparaît jamais ailleurs (PDF, impression, version web, planning). contenu.pages : les blocs qui commencent une
+   page dans l'éditeur ; le PDF coupe aux mêmes endroits. contenu.composees : les clés que la base a composées ; une clé
+   absente des blocs a été retirée à la main, et « Mettre à jour depuis la base » ne la remet pas.
+   Les feuilles de l'ancien format (contenu.representations, planning, lieu, trajet…) restent lisibles : elles sont
+   converties en blocs à la volée (FEUILLE.contenu).
+
+   L'API reste la même pour la page de l'équipe :
+   FEUILLE.html(feuille, contexte)           → le HTML de la feuille (une racine .fdr qui porte ses styles), fluide
+   FEUILLE.pdf(feuille, contexte)            → Promise<Blob> (pdfmake et la police FdR Sans, chargés depuis FEUILLE.vendor)
    FEUILLE.telecharger(feuille, contexte, nom?)   télécharge le PDF
-   FEUILLE.vendor                            le dossier de pdfmake : vendor/ à côté de ce fichier
+   FEUILLE.planning(feuille, contexte)       → [{jour: 'AAAA-MM-JJ', heure: 'HH:MM', fin: 'HH:MM'|null, texte, accent}], trié
+   FEUILLE.vendor                            le dossier de pdfmake et des polices : vendor/ à côté de ce fichier
        feuille = {titre, contenu, version, publiee_le, statut}
-       contexte = {date, spectacle: {titre, slug, univers, duree}, lieu, representations, documents?}
-       (contexte.documents, facultatif : [{id, titre, url}], donne les titres des documents cités par la feuille)
-   Pour l'administration : FEUILLE.SECTIONS (la structure, plus bas), FEUILLE.fusionner (recomposer sans perdre une
-   saisie), FEUILLE.DEROULE (le déroulé type proposé), FEUILLE.joursEtape, FEUILLE.dureeMinutes, FEUILLE.trier.
+       contexte = {date, spectacle: {titre, slug, univers, duree}, lieu, representations, documents?, moi?}
+       (documents : [{id, titre, url}], les liens des documents cités ; moi : {prenom}, mis en valeur dans la version web)
+   FEUILLE.composer(sources) donne maintenant un contenu en blocs (sources : plus bas). Pour l'administration :
+   FEUILLE.contenu (conversion), FEUILLE.actualiser (« Mettre à jour depuis la base »), FEUILLE.MISE et FEUILLE.cssPage
+   (la mise en page, commune à l'éditeur, à l'impression et au PDF), FEUILLE.impression, FEUILLE.logo, FEUILLE.polices.
+   Retirés : FEUILLE.SECTIONS, FEUILLE.fusionner, FEUILLE.vue et FEUILLE.css (l'ancien formulaire).
 
    Le planning pose le déroulé type du spectacle (spectacle.feuille_modele : [{avant_min, quoi, qui, fin?, jours?}])
    autour des représentations. Un jour à plusieurs représentations : les étapes « avant » (minutes avant le lever de
@@ -22,7 +36,8 @@
    seulement les représentations, et un repas si l'écart dépasse trois heures. Plusieurs jours de suite au même lieu :
    une étape a lieu le premier jour, chaque jour ou le dernier (jours : 'premier' | 'tous' | 'dernier'). Sans indication,
    l'arrivée de l'équipe artistique et la préparation ont lieu chaque jour, les autres étapes « avant » (montage,
-   raccords, repas, ouverture des portes) le premier jour, les étapes « après » (démontage) le dernier. */
+   raccords, repas, ouverture des portes) le premier jour, les étapes « après » (démontage) le dernier. Une répétition
+   ou une résidence (date.nature) donne ses séances : « 9h-18h : répétitions ». */
 const FEUILLE = (() => {
   'use strict';
   const ICI = typeof document !== 'undefined' && document.currentScript && document.currentScript.src;
@@ -30,10 +45,12 @@ const FEUILLE = (() => {
 
   // ================================================================================================ outils
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const clone = o => JSON.parse(JSON.stringify(o ?? null));
   const txt = v => String(v ?? '').trim();
   const maj = s => s ? s[0].toUpperCase() + s.slice(1) : '';
+  // « Arrivée de la régie » → « arrivée de la régie », mais « DJ » ou « MJC » restent
+  const minuscule = s => !s || /^[A-ZÀ-Ý]{2}/.test(s) ? s || '' : s[0].toLowerCase() + s.slice(1);
   const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const estJour = j => /^\d{4}-\d{2}-\d{2}$/.test(j || '');
@@ -46,8 +63,10 @@ const FEUILLE = (() => {
   const hhmm = m => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
   // « 14h00 », « 9h30 »
   const heure = h => { const m = minutes(h); return m === null ? '' : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`; };
+  // comme dans les feuilles de la compagnie : « 9h », « 10h20 »
+  const heureCourte = m => m == null ? '' : `${Math.floor(m / 60)}h${m % 60 ? String(m % 60).padStart(2, '0') : ''}`;
   // un instant du planning : le jour et l'heure, les minutes pouvant passer minuit d'un côté ou de l'autre
-  const instant = (jour, m) => { let j = jour, x = m; while (x < 0) { j = jourPlus(j, -1); x += 1440; } while (x >= 1440) { j = jourPlus(j, 1); x -= 1440; } return { jour: j, heure: hhmm(x) }; };
+  const instant = (jour, m) => { let j = jour, x = m; while (x < 0) { j = jourPlus(j, -1); x += 1440; } while (x >= 1440) { j = jourPlus(j, 1); x -= 1440; } return { jour: j, m: x }; };
   // « 50 min », « 1h45 »
   const dureeTexte = m => m == null || m === '' || isNaN(m) ? '' : +m < 60 ? `${Math.round(+m)} min` : `${Math.floor(+m / 60)}h${String(Math.round(+m) % 60).padStart(2, '0')}`;
   // la durée d'un spectacle, d'après sa fiche : « durée : 1h25 », « 55 minutes », « 1 h 30 » → minutes
@@ -58,108 +77,155 @@ const FEUILLE = (() => {
     m = /(\d+)\s*(?:min|mn)/.exec(s);
     return m ? +m[1] : null;
   }
+  // « Manon, Lauren et Adrien »
+  const listeEt = xs => xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}`;
   // un numéro français s'écrit « 06 12 34 56 78 » ; le lien tel: le compose au format international
   const chiffres = t => String(t || '').replace(/[^\d+]/g, '');
-  const telTexte = t => { const c = chiffres(t); return /^0\d{9}$/.test(c) ? c.replace(/(\d{2})(?=\d)/g, '$1 ') : txt(t); };
+  const telTexte = t => { const c = chiffres(t); return /^0\d{9}$/.test(c) ? c.replace(/(\d{2})(?=\d)/g, '$1 ') : /^\+33\d{9}$/.test(c) ? ('0' + c.slice(3)).replace(/(\d{2})(?=\d)/g, '$1 ') : txt(t); };
   const telLien = t => { const c = chiffres(t); if (!c) return ''; return 'tel:' + (/^0\d{9}$/.test(c) ? '+33' + c.slice(1) : c); };
   const lienSur = u => /^(https?:|mailto:|tel:)/i.test(String(u || '').trim()) ? String(u).trim() : '';
 
-  // ------------------------------------------------------------------------------------------------ couleurs
-  const hex = c => /^#[0-9a-f]{6}$/i.test(c || '') ? c.toLowerCase() : null;
-  const rvb = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
-  const versHex = xs => '#' + xs.map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2, '0')).join('');
-  const lum = c => { const f = v => (v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; const [r, g, b] = rvb(c); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
-  const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  const melanger = (a, b, k) => versHex(rvb(a).map((v, i) => v + (rvb(b)[i] - v) * k));
-  // la couleur du spectacle (son univers) : le filet ; une version plus sombre pour du texte sur fond blanc
-  const filetDe = sp => hex(sp?.univers?.couleurs?.scene) || hex(sp?.univers?.couleurs?.accent) || '#a8306f';
-  const fonceDe = c => { let x = c; for (let i = 0; i < 12 && contraste(x, '#ffffff') < 4.6; i++) x = melanger(x, '#000000', 0.12); return x; };
+  // ================================================================================================ la mise en page
+  // Une seule mise en page pour l'éditeur (une page A4 à l'écran), l'impression et le PDF : mêmes marges, même police
+  // (FdR Sans : Carlito, mêmes métriques que Calibri, réduite au latin), mêmes tailles, mêmes espaces. Les longueurs en
+  // mm, les tailles et les espaces en points. Le PDF garde « surete » mm de plus en bas : si une ligne s'y coupe un peu
+  // autrement qu'à l'écran, la page tient quand même, et les pages se coupent aux mêmes blocs.
+  const MISE = {
+    largeur: 210, hauteur: 297, haut: 15, bas: 15, gauche: 20, droite: 20, surete: 6,
+    logo: 30, logoEcart: 8, sousLogo: 6,
+    corps: 11, interligne: 1.2207, petit: 12,
+    types: {
+      entete: { taille: 14 },
+      rubrique: { taille: 14, gras: true, avant: 13, apres: 3 },
+      'sous-titre': { gras: true, avant: 8 },
+      jour: { gras: true, avant: 10 },
+      ligne: {}, alerte: { gras: true, rouge: true },
+      puce: { puce: 12, texte: 24 },
+      tableau: { taille: 10.5, avant: 4, apres: 4 },
+    },
+    rouge: '#e00000', surligne: '#ffff00', encre: '#000000', gris: '#8c8c8c',
+  };
+  const PT_MM = 72 / 25.4;
+  const TYPES = ['entete', 'rubrique', 'sous-titre', 'jour', 'ligne', 'puce', 'alerte', 'saut', 'tableau'];
+  const MARQUES = ['gras', 'italique', 'rouge', 'surligne'];
+  const POLICE = '"FdR Sans", Carlito, Calibri, "Segoe UI", Arial, sans-serif';
+  const vendorDefaut = ICI ? new URL('vendor/', ICI).href : 'vendor/';
+  const dossierVendor = () => String(api.vendor || vendorDefaut).replace(/\/?$/, '/');
+  const FICHIERS_POLICE = { normal: 'fdr-sans-regular.ttf', gras: 'fdr-sans-bold.ttf', italique: 'fdr-sans-italic.ttf', grasItalique: 'fdr-sans-bolditalic.ttf' };
+  // les @font-face de FdR Sans (l'éditeur, l'impression, la version web)
+  const cssPolices = () => {
+    const d = dossierVendor();
+    return [['normal', 400, 'normal'], ['gras', 700, 'normal'], ['italique', 400, 'italic'], ['grasItalique', 700, 'italic']]
+      .map(([k, w, s]) => `@font-face{font-family:"FdR Sans";src:url("${d}${FICHIERS_POLICE[k]}") format("truetype");font-weight:${w};font-style:${s};font-display:swap}`).join('\n');
+  };
+  // les blocs sur la page, sous le sélecteur s (la racine du document : .a4-doc dans l'éditeur, .fdr-imp à l'impression)
+  function cssPage(s) {
+    const T = MISE.types, lh = MISE.interligne;
+    return `${s}{font-family:${POLICE};font-size:${MISE.corps}pt;line-height:${lh};color:${MISE.encre};font-kerning:normal;font-variant-ligatures:none;font-synthesis:none;text-rendering:geometricPrecision;-webkit-font-smoothing:antialiased}
+${s} .b{margin:0;padding:0;min-height:${lh}em;white-space:pre-wrap;overflow-wrap:break-word;text-align:left}
+${s} .b-entete{font-size:${T.entete.taille}pt;padding-left:${MISE.logo + MISE.logoEcart}mm}
+${s} .b-entete.petit{font-size:${MISE.petit}pt}
+${s} .b-rubrique{font-size:${T.rubrique.taille}pt;font-weight:700;padding-top:${T.rubrique.avant}pt;padding-bottom:${T.rubrique.apres}pt}
+${s} .b-sous-titre{font-weight:700;padding-top:${T['sous-titre'].avant}pt}
+${s} .b-jour{font-weight:700;padding-top:${T.jour.avant}pt}
+${s} .b-alerte{font-weight:700;color:${MISE.rouge}}
+${s} .b-puce{position:relative;padding-left:${T.puce.texte}pt}
+${s} .b-puce::before{content:"\\2022";position:absolute;left:${T.puce.puce}pt;top:0;font-weight:400;font-style:normal;color:${MISE.encre};background:none}
+${s} .b-tableau{padding:${T.tableau.avant}pt 0 ${T.tableau.apres}pt;white-space:normal}
+${s} .b-tableau table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:${T.tableau.taille}pt}
+${s} .b-tableau td{border:.5pt solid #7a7a7a;padding:2pt 4pt;vertical-align:top;white-space:pre-wrap;overflow-wrap:break-word}
+${s} .g{font-weight:700}
+${s} .i{font-style:italic}
+${s} .r{color:${MISE.rouge}}
+${s} .s{background:${MISE.surligne}}`;
+  }
 
-  // ================================================================================================ la structure
-  // Une feuille, bloc par bloc, dans l'ordre où l'équipe les lit. Pour l'ajuster au modèle de la compagnie : changer un
-  // titre, l'ordre, une colonne. base : le bloc vient de la base (« Composer » le remplit, « Recomposer » le met à jour) ;
-  // les autres se remplissent à la main et ne changent jamais quand on recompose. forme : fiche (des champs), liste (des
-  // lignes), texte, documents. colonnes / champs : ce que l'administration saisit (t : jour, heure, texte, long, tel,
-  // email, url, nombre, case, choix). vue : ce que la feuille montre, sous une forme commune au HTML et au PDF.
-  const PUBLICS = [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']];
-  const SECTIONS = [
-    { k: 'representations', titre: 'Représentations', forme: 'liste', base: true, entete: true, ajout: 'Représentation',
-      colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'public', l: 'Public', t: 'choix', choix: PUBLICS },
-        { k: 'note', l: 'Précision', t: 'texte', ph: 'complet, audiodécrite…' }, { k: 'annulee', l: 'Annulée', t: 'case' }] },
-    { k: 'planning', titre: 'Planning', forme: 'liste', base: true, souple: true, ajout: 'Ligne',
-      colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'fin', l: 'Fin', t: 'heure' },
-        { k: 'quoi', l: 'Quoi', t: 'texte', large: true }, { k: 'qui', l: 'Qui', t: 'texte' }, { k: 'ou', l: 'Où', t: 'texte' }],
-      vue: (v, ctx) => lignesParJour(trier(v), r => ({ h: heure(r.heure), h2: heure(r.fin), titre: txt(r.quoi), sous: [txt(r.qui), txt(r.ou)].filter(Boolean).join(' · '),
-        accent: r.rep === true || /^repr[ée]sentation/i.test(txt(r.quoi)) }), ctx) },
-    { k: 'lieu', titre: 'Lieu', forme: 'fiche', base: true,
-      champs: [{ k: 'nom', l: 'Nom' }, { k: 'adresse', l: 'Adresse' }, { k: 'commune', l: 'Commune' },
-        { k: 'itineraire', l: 'Itinéraire', t: 'url', aide: 'Composé d’après la position du lieu : à remplacer par un meilleur lien au besoin.' },
-        { k: 'acces', l: 'Accès', t: 'long', ph: 'Entrée des artistes, quai de déchargement…' }, { k: 'parking', l: 'Stationnement', ph: 'Camion devant le quai, voitures sur le parking du personnel' },
-        { k: 'loges', l: 'Loges', ph: 'Deux loges au premier étage, douches' }, { k: 'details', l: 'Précisions', t: 'long' }],
-      vue: v => {
-        const paires = [['Accès', v.acces], ['Stationnement', v.parking], ['Loges', v.loges], ['Précisions', v.details]].filter(p => txt(p[1]));
-        const liens = lienSur(v.itineraire) ? [{ texte: 'Itinéraire', url: lienSur(v.itineraire) }] : [];
-        if (!txt(v.nom) && !txt(v.adresse) && !txt(v.commune) && !paires.length) return null;
-        return { forme: 'fiche', titre: txt(v.nom), lignes: [txt(v.adresse), txt(v.commune)].filter(Boolean), liens, paires };
-      } },
-    { k: 'trajet', titre: 'Trajet', forme: 'fiche', base: true,
-      champs: [{ k: 'depart', l: 'Départ de' }, { k: 'distance_km', l: 'Distance (km)', t: 'nombre' }, { k: 'duree_min', l: 'Durée de route (min)', t: 'nombre' },
-        { k: 'estime', l: 'Estimation à vérifier', t: 'case', aide: 'Distance à vol d’oiseau × 1,3, durée estimée : décochez une fois vérifiées.' }, { k: 'details', l: 'Précisions', t: 'long' }],
-      vue: v => {
-        const km = v.distance_km !== '' && v.distance_km != null && !isNaN(v.distance_km) ? Math.round(+v.distance_km) : null;
-        const route = [km != null ? `${v.estime ? 'environ ' : ''}${km} km` : '', dureeTexte(v.duree_min) ? `${dureeTexte(v.duree_min)} de route` : ''].filter(Boolean).join(', ');
-        const phrase = txt(v.depart) || route ? `${txt(v.depart) ? `Depuis ${txt(v.depart)}` : 'Trajet'}${route ? ` : ${route}` : ''}${route && v.estime ? ' (estimation à vérifier)' : ''}.` : '';
-        const ps = [phrase, ...paragraphes(v.details)].filter(Boolean);
-        return ps.length ? { forme: 'texte', paragraphes: ps } : null;
-      } },
-    { k: 'transport', titre: 'Transport', forme: 'liste', ajout: 'Trajet',
-      colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'mode', l: 'Moyen', t: 'texte', ph: 'Camion, train, voiture…' },
-        { k: 'trajet', l: 'Trajet', t: 'texte', ph: 'Rouen – Pont-Audemer', large: true }, { k: 'qui', l: 'Qui', t: 'texte' }, { k: 'details', l: 'Précisions', t: 'texte' }],
-      vue: (v, ctx) => lignesParJour(v, r => ({ h: heure(r.heure), titre: [txt(r.mode), txt(r.trajet)].filter(Boolean).join(' · '), sous: [txt(r.qui), txt(r.details)].filter(Boolean).join(' · ') }), ctx) },
-    { k: 'hebergement', titre: 'Hébergement', forme: 'liste', ajout: 'Hébergement',
-      colonnes: [{ k: 'nom', l: 'Nom', t: 'texte' }, { k: 'adresse', l: 'Adresse', t: 'texte', large: true }, { k: 'telephone', l: 'Téléphone', t: 'tel' },
-        { k: 'arrivee', l: 'Arrivée', t: 'texte', ph: 'jeu. 17 déc., après 22h' }, { k: 'depart', l: 'Départ', t: 'texte' }, { k: 'details', l: 'Précisions', t: 'texte' }],
-      vue: v => cartes(v, r => ({ titre: txt(r.nom), lignes: [txt(r.adresse), [txt(r.arrivee) && `Arrivée : ${txt(r.arrivee)}`, txt(r.depart) && `Départ : ${txt(r.depart)}`].filter(Boolean).join(' · '), txt(r.details)].filter(Boolean), tel: txt(r.telephone) })) },
-    { k: 'repas', titre: 'Repas', forme: 'liste', ajout: 'Repas',
-      colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'ou', l: 'Où', t: 'texte', large: true }, { k: 'details', l: 'Précisions', t: 'texte', ph: 'Catering en loge, régimes transmis…' }],
-      vue: (v, ctx) => lignesParJour(v, r => ({ h: heure(r.heure), titre: txt(r.ou) || 'Repas', sous: txt(r.details) }), ctx) },
-    { k: 'equipe', titre: 'Équipe', forme: 'liste', base: true, cle: 'personne_id', ajout: 'Personne',
-      colonnes: [{ k: 'nom', l: 'Nom', t: 'texte' }, { k: 'fonction', l: 'Fonction', t: 'texte', large: true }, { k: 'telephone', l: 'Téléphone', t: 'tel' }],
-      vue: v => cartes(v, r => ({ titre: txt(r.nom), sous: txt(r.fonction), tel: txt(r.telephone) }), true) },
-    { k: 'contacts', titre: 'Contacts', forme: 'liste', base: true, ajout: 'Contact',
-      colonnes: [{ k: 'nom', l: 'Nom', t: 'texte', large: true }, { k: 'role', l: 'Rôle', t: 'texte' }, { k: 'telephone', l: 'Téléphone', t: 'tel' }, { k: 'email', l: 'Adresse électronique', t: 'email' }],
-      vue: v => cartes(v, r => ({ titre: txt(r.nom), sous: txt(r.role), tel: txt(r.telephone), email: txt(r.email) })) },
-    { k: 'documents', titre: 'Documents', forme: 'documents', base: true,
-      vue: (v, ctx) => {
-        const docs = Array.isArray(ctx.documents) ? ctx.documents : [];
-        const items = (v || []).map(id => docs.find(d => String(d.id) === String(id))).filter(Boolean).map(d => ({ texte: txt(d.titre), url: lienSur(d.url) }));
-        return items.length ? { forme: 'liste', items } : null;
-      } },
-    { k: 'notes', titre: 'Notes', forme: 'texte',
-      vue: v => { const ps = paragraphes(v); return ps.length ? { forme: 'texte', paragraphes: ps } : null; } },
-  ];
-  const section = k => SECTIONS.find(s => s.k === k);
-  const colonnesDe = s => s.forme === 'fiche' ? s.champs : s.colonnes || [];
-  const videDe = s => s.forme === 'fiche' ? Object.fromEntries(s.champs.map(c => [c.k, c.t === 'case' ? false : c.t === 'nombre' ? null : ''])) : s.forme === 'texte' ? '' : [];
-  const paragraphes = t => String(t || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
-  // les lignes d'une liste par jour, dans l'ordre (les lignes sans jour à la fin)
-  function lignesParJour(v, f, ctx) {
-    // une ligne laissée vide (son jour seul est rempli d'office) n'apparaît pas
-    const xs = (Array.isArray(v) ? v : []).filter(r => Object.entries(r || {}).some(([k, x]) => k !== 'jour' && k !== 'personne_id' && typeof x !== 'boolean' && txt(x)));
-    if (!xs.length) return null;
-    const jours = [...new Set(xs.map(r => estJour(r.jour) ? r.jour : ''))];
-    const seul = jours.length === 1 && (!jours[0] || jours[0] === ctx.jourUnique);
-    const groupes = [];
-    xs.forEach(r => { const j = estJour(r.jour) ? r.jour : ''; let g = groupes.find(x => x.j === j); if (!g) groupes.push(g = { j, lignes: [] }); g.lignes.push(f(r)); });
-    return { forme: 'lignes', groupes: groupes.map(g => ({ jour: seul ? '' : g.j ? maj(jourLong(g.j, false)) : 'Jour à préciser', lignes: g.lignes })) };
+  // ================================================================================================ les blocs
+  let compteur = 0;
+  const nouvelId = () => `b${(Date.now() % 1679616).toString(36)}${(compteur++).toString(36)}${Math.random().toString(36).slice(2, 5)}`;
+  const seg = (texte, m = {}) => ({ texte: String(texte ?? ''), ...m });
+  const amorce = texte => ({ texte, amorce: true });
+  const memeFormat = (a, b) => !a.amorce && !b.amorce && MARQUES.every(k => !!a[k] === !!b[k]) && String(a.doc ?? '') === String(b.doc ?? '') && (a.lien || '') === (b.lien || '');
+  // des segments propres : fusionnés quand ils se ressemblent, sans texte vide, sans retour à la ligne
+  function segments(xs) {
+    const out = [];
+    for (const s0 of Array.isArray(xs) ? xs : []) {
+      if (!s0 || s0.texte == null) continue;
+      const s = { texte: String(s0.texte).replace(/\r\n?|\n|\t/g, ' ') };
+      if (s0.amorce) s.amorce = true;
+      MARQUES.forEach(k => { if (s0[k]) s[k] = true; });
+      if (s0.doc != null && s0.doc !== '') s.doc = s0.doc;
+      if (s0.lien && lienSur(s0.lien)) s.lien = lienSur(s0.lien);
+      if (!s.texte && !s.amorce) continue;
+      const p = out[out.length - 1];
+      if (p && memeFormat(p, s)) p.texte += s.texte; else out.push(s);
+    }
+    return out;
   }
-  function cartes(v, f, compact = false) {
-    const xs = (Array.isArray(v) ? v : []).map(f).filter(c => c.titre || c.tel || c.email || (c.lignes || []).length);
-    return xs.length ? { forme: 'cartes', compact, cartes: xs } : null;
+  const texteSegs = (xs, amorces = false) => (xs || []).filter(s => amorces || !s.amorce).map(s => s.texte).join('');
+  const texteBloc = (b, amorces = false) => b.type === 'tableau' ? (b.lignes || []).map(l => l.map(c => texteSegs(c, amorces)).join(' ')).join(' ') : texteSegs(b.segments, amorces);
+  const aAmorce = b => b.type === 'tableau' ? (b.lignes || []).some(l => l.some(c => c.some(s => s.amorce))) : (b.segments || []).some(s => s.amorce);
+  function bloc(b) {
+    const x = { id: txt(b?.id) || nouvelId(), type: TYPES.includes(b?.type) ? b.type : 'ligne' };
+    if (x.type === 'tableau') {
+      const lignes = Array.isArray(b.lignes) && b.lignes.length ? b.lignes : [[[]]];
+      const n = Math.max(1, ...lignes.map(l => (Array.isArray(l) ? l.length : 0)));
+      x.lignes = lignes.map(l => Array.from({ length: n }, (_, i) => segments(Array.isArray(l) ? l[i] : [])));
+    } else x.segments = x.type === 'saut' ? [] : segments(b?.segments);
+    if (b?.petit && x.type === 'entete') x.petit = true;
+    if (x.type === 'jour' && estJour(b?.date)) x.date = b.date;
+    if (b?.cle) x.cle = String(b.cle);
+    if (b?.source === 'base') x.source = 'base';
+    if (b?.origine && typeof b.origine === 'object') x.origine = { jour: estJour(b.origine.jour) ? b.origine.jour : null, heure: h5(b.origine.heure) || null, fin: h5(b.origine.fin) || null, rep: !!b.origine.rep };
+    return x;
   }
-  // le planning dans l'ordre du temps : par jour, puis par heure (une ligne sans heure finit sa journée)
-  const cleTemps = r => `${estJour(r.jour) ? r.jour : '9999-99-99'} ${minutes(h5(r.heure)) === null ? '99:99' : h5(r.heure).padStart(5, '0')}`;
-  const trier = xs => (Array.isArray(xs) ? xs : []).map((r, i) => [r, i]).sort((a, b) => cleTemps(a[0]) < cleTemps(b[0]) ? -1 : cleTemps(a[0]) > cleTemps(b[0]) ? 1 : a[1] - b[1]).map(x => x[0]);
+  // les blocs tels qu'ils sortent : sans amorce ; un bloc qui n'était qu'amorce disparaît ; « heure ? : représentation »
+  // devient « représentation »
+  function visibles(blocs) {
+    const out = [];
+    for (const b of blocs || []) {
+      if (b.type === 'tableau') { out.push({ ...b, lignes: b.lignes.map(l => l.map(c => segments(c.filter(s => !s.amorce)))) }); continue; }
+      if (b.type === 'saut') { out.push(b); continue; }
+      const avait = aAmorce(b);
+      let xs = (b.segments || []).filter(s => !s.amorce).map(s => ({ ...s }));
+      if (avait && b.segments[0]?.amorce && xs.length) xs[0].texte = xs[0].texte.replace(/^\s*[:–—-]\s*/, '');
+      xs = segments(xs);
+      if (avait && !texteSegs(xs).trim()) continue;
+      out.push({ ...b, segments: xs });
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------------------------------------------------ heures et jours écrits
+  // l'heure au début d'une ligne : « 9h : », « 10h-11h : », « 14h10 : », « à partir de 9h : », « de 9h à 18h : »
+  const TOK = '\\d{1,2}\\s?[hH](?:\\s?\\d{2})?(?![A-Za-zÀ-ÿ])|\\d{1,2}:\\d{2}';
+  const RE_DEBUT = new RegExp(`^\\s*(?:(?:[àaÀA]\\s+partir\\s+de|[dD][èeÈE]s|[vV]ers|[dD]e|[àaÀA])\\s+)?(${TOK})(?:\\s*(?:-|–|—|[àa]|>)\\s*(${TOK}))?`);
+  const minutesDe = t => { const m = /^(\d{1,2})\s?[hH:]\s?(\d{2})?$/.exec(String(t).trim()); if (!m) return null; const h = +m[1], mn = +(m[2] || 0); return h <= 24 && mn <= 59 ? (h % 24) * 60 + mn : null; };
+  function lireHeure(texte) {
+    const s = String(texte || ''), m = RE_DEBUT.exec(s);
+    if (!m) return null;
+    const a = minutesDe(m[1]);
+    if (a === null) return null;
+    const b = m[2] ? minutesDe(m[2]) : null;
+    let reste = s.slice(m[0].length);
+    // « 10h-11h, 11h-12h et 15h-16h : 4 ateliers » : le texte suit les deux-points
+    if (/^\s*[,;/]|^\s+et\s/.test(reste) && reste.includes(':')) reste = reste.slice(reste.indexOf(':') + 1);
+    reste = reste.replace(/^\s*(?::|–|—|-)\s*/, '').trim();
+    return { heure: hhmm(a), fin: b === null ? null : hhmm(b), reste };
+  }
+  // le jour d'un titre écrit à la main : « mardi 16 décembre », « 16/12 » ; l'année, celle qui tombe le plus près de ref
+  const NOMS_MOIS = ['janvier', 'fevrier', 'mars', 'avril', 'mai', 'juin', 'juillet', 'aout', 'septembre', 'octobre', 'novembre', 'decembre'];
+  function dateDuTexte(texte, ref) {
+    const s = norm(texte);
+    let j = null, mo = null, an = null, m = /(\d{1,2})(?:er)?\s+(janvier|fevrier|mars|avril|mai|juin|juillet|aout|septembre|octobre|novembre|decembre)(?:\s+(\d{4}))?/.exec(s);
+    if (m) { j = +m[1]; mo = NOMS_MOIS.indexOf(m[2]) + 1; an = m[3] ? +m[3] : null; }
+    else if ((m = /(?:^|\D)(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?(?!\d)/.exec(s))) { j = +m[1]; mo = +m[2]; an = m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : null; }
+    if (!j || !mo || mo > 12 || j > 31) return null;
+    const iso = y => `${y}-${String(mo).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
+    if (an) return iso(an);
+    const r = estJour(ref) ? ref : new Date().toISOString().slice(0, 10), y = +r.slice(0, 4);
+    return [y - 1, y, y + 1].map(iso).sort((a, b) => Math.abs(date12(a) - date12(r)) - Math.abs(date12(b) - date12(r)))[0];
+  }
 
   // ================================================================================================ composer
   // le déroulé type proposé quand un spectacle n'en a pas (le même que l'import, supabase/equipe.py)
@@ -176,47 +242,63 @@ const FEUILLE = (() => {
   const CHAQUE_JOUR = /arrivee\s+(de\s+)?(l['’]\s*|la\s+|les\s+)?(equipe\s+artistique|artistes?|comedien|interpretes?)|preparation|habillage|maquillage|echauffement|mise\s+en\s+condition/;
   // le jour d'une étape sur plusieurs jours de suite : 'premier', 'tous' ou 'dernier'
   const joursEtape = e => ['premier', 'tous', 'dernier'].includes(e?.jours) ? e.jours : estApres(e || {}) ? 'dernier' : CHAQUE_JOUR.test(norm(e?.quoi)) ? 'tous' : 'premier';
-  const libelleRep = (r, gabarit) => `${txt(gabarit?.quoi) || 'Représentation'}${r.public === 'scolaire' ? ' scolaire' : r.public === 'tout_public' ? ' tout public' : ''}${txt(r.note) ? ` (${txt(r.note)})` : ''}`;
   const plancher15 = m => Math.floor(m / 15) * 15, plafond15 = m => Math.ceil(m / 15) * 15;
+  const cleTemps = r => `${estJour(r.jour) ? r.jour : '9999-99-99'} ${minutes(h5(r.heure)) === null ? '99:99' : h5(r.heure).padStart(5, '0')}`;
+  const trier = xs => (Array.isArray(xs) ? xs : []).map((r, i) => [r, i]).sort((a, b) => cleTemps(a[0]) < cleTemps(b[0]) ? -1 : cleTemps(a[0]) > cleTemps(b[0]) ? 1 : a[1] - b[1]).map(x => x[0]);
+  const PUBLIC_TEXTE = { scolaire: 'scolaire', tout_public: 'tout public' };
+  const NATURES = { repetitions: 'répétitions', residence: 'résidence', autre: 'séance' };
+  const cleMot = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'x';
 
-  function composerPlanning(reps, modele, duree) {
+  // les étapes du planning d'une date : [{jour, m (minutes ou null), quoi, qui, rep, note, cle, seance}]
+  function etapesPlanning(seances, nature, modele, duree) {
+    const vivantes = seances.filter(r => !r.annulee && estJour(r.jour));
+    const jours = [...new Set(vivantes.map(r => r.jour))].sort();
+    const out = [];
+    if (nature && nature !== 'representations') {
+      // répétitions, résidence : les séances elles-mêmes, « 9h-18h : répétitions »
+      vivantes.forEach((r, k) => out.push({ jour: r.jour, m: minutes(r.heure), fin: minutes(r.fin), quoi: txt(r.note) || NATURES[nature] || 'séance', qui: '', seance: true, cle: `pl:${r.jour}:seance:${r.id ?? k}` }));
+      return out;
+    }
     const etapes = (Array.isArray(modele) ? modele : []).filter(e => e && txt(e.quoi));
     // une étape à zéro minute, avant : la représentation elle-même (son nom, ses gens)
     const gabarit = etapes.find(e => !estApres(e) && (+e.avant_min || 0) === 0);
     const avant = etapes.filter(e => e !== gabarit && !estApres(e)).sort((a, b) => (+b.avant_min || 0) - (+a.avant_min || 0));
     const apres = etapes.filter(estApres).sort((a, b) => Math.abs(+a.avant_min || 0) - Math.abs(+b.avant_min || 0));
     const repas = etapes.find(e => /repas|dejeuner|diner|catering/.test(norm(e.quoi)));
-    const vivantes = reps.filter(r => !r.annulee && estJour(r.jour));
-    const jours = [...new Set(vivantes.map(r => r.jour))].sort();
-    const lignes = [];
-    const ligne = (jour, m, e, extra = {}) => lignes.push({ ...(m === null ? { jour, heure: '' } : instant(jour, m)), fin: '', quoi: txt(e.quoi), qui: txt(e.qui), ou: '', ...extra });
+    const vus = new Map();
+    const cleEtape = (j, e) => { const k = `pl:${j}:${cleMot(e.quoi)}`; const n = vus.get(k) || 0; vus.set(k, n + 1); return n ? `${k}-${n + 1}` : k; };
+    const etape = (jour, m, e, extra = {}) => {
+      const x = m === null ? { jour, m: null } : instant(jour, m);
+      out.push({ ...x, fin: null, quoi: txt(e.quoi), qui: txt(e.qui), cle: cleEtape(jour, e), ...extra });
+    };
     jours.forEach((j, i) => {
       const premier = i === 0 || jourPlus(jours[i - 1], 1) !== j;
       const dernier = i === jours.length - 1 || jourPlus(j, 1) !== jours[i + 1];
       const garde = e => { const q = joursEtape(e); return q === 'tous' || (q === 'premier' && premier) || (q === 'dernier' && dernier); };
       const rs = vivantes.filter(r => r.jour === j).sort((a, b) => (minutes(a.heure) ?? 1e9) - (minutes(b.heure) ?? 1e9));
       const t0 = minutes(rs[0].heure);
-      avant.filter(garde).forEach(e => ligne(j, t0 === null ? null : t0 - (+e.avant_min || 0), e));
+      avant.filter(garde).forEach(e => etape(j, t0 === null ? null : t0 - (+e.avant_min || 0), e));
       rs.forEach((r, k) => {
         const t = minutes(r.heure);
-        lignes.push({ jour: j, heure: t === null ? '' : hhmm(t), fin: t !== null && duree ? instant(j, t + duree).heure : '', quoi: libelleRep(r, gabarit), qui: txt(gabarit?.qui), ou: '', rep: true });
+        out.push({ jour: j, m: t, fin: minutes(r.fin), quoi: txt(gabarit?.quoi) || 'Représentation', qui: txt(gabarit?.qui), rep: true, public: r.public, note: txt(r.note), cle: `pl:${j}:rep:${r.id ?? k}` });
         const suivante = rs[k + 1], t2 = suivante ? minutes(suivante.heure) : null;
         // entre deux représentations : un repas si l'écart dépasse trois heures
         if (t !== null && t2 !== null && t2 - (t + (duree || 90)) > 180) {
           const fin = t + (duree || 90);
           let m = t2 - Math.max(30, +repas?.avant_min || 120);
           m = m < fin + 30 ? plafond15(fin + 30) : plancher15(m);
-          ligne(j, m, repas || { quoi: 'Repas', qui: 'Toute l’équipe' });
+          etape(j, m, repas || { quoi: 'Repas', qui: 'Toute l’équipe' }, { cle: `pl:${j}:repas-entre:${k}` });
         }
       });
       const tz = minutes(rs[rs.length - 1].heure);
-      apres.filter(garde).forEach(e => ligne(j, tz === null || !duree ? null : tz + duree + Math.abs(+e.avant_min || 0), e));
+      apres.filter(garde).forEach(e => etape(j, tz === null || !duree ? null : tz + duree + Math.abs(+e.avant_min || 0), e));
     });
-    return trier(lignes);
+    // dans l'ordre du temps ; une ligne sans heure garde sa place parmi les autres
+    return out.map((x, i) => [x, i]).sort((a, b) => a[0].jour < b[0].jour ? -1 : a[0].jour > b[0].jour ? 1 : (a[0].m ?? -1) === -1 || (b[0].m ?? -1) === -1 ? a[1] - b[1] : a[0].m - b[0].m || a[1] - b[1]).map(x => x[0]);
   }
 
   // un contact écrit à la main (« Marie Dupont, 06 12 34 56 78, marie@lieu.fr ») : nom, téléphone, adresse électronique
-  const RE_TEL = /(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}/;
+  const RE_TEL = /(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}(?!\d)/;
   const RE_MEL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/;
   function lireContact(texte, role) {
     let reste = String(texte || '');
@@ -254,335 +336,590 @@ const FEUILLE = (() => {
   const dureeRoute = km => Math.max(5, Math.round(km / (km < 30 ? 45 : km < 100 ? 65 : km < 250 ? 85 : 95) * 60 / 5) * 5);
   const aPosition = x => x && x.latitude != null && x.longitude != null && x.latitude !== '' && !isNaN(x.latitude) && !isNaN(x.longitude);
   const itineraire = l => aPosition(l) ? `https://www.google.com/maps/dir/?api=1&destination=${(+l.latitude).toFixed(5)},${(+l.longitude).toFixed(5)}` : '';
+  const carteAdresse = a => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a)}`;
 
+  // « au Théâtre des Arts », « à l’Espace Rotonde », « à la Maison de la culture », « à Commédiamuse »
+  function aLieu(nom) {
+    const n = txt(nom), k = norm(n);
+    if (/^le\s/i.test(n)) return `au ${n.slice(3)}`;
+    if (/^les\s/i.test(n)) return `aux ${n.slice(4)}`;
+    if (/^la\s/i.test(n)) return `à la ${n.slice(3)}`;
+    if (/^l['’]\s?/i.test(n)) return `à l’${n.replace(/^l['’]\s?/i, '')}`;
+    if (/^(espace|opera|atelier|auditorium|archipel|eclat|etoile|odyssee|agora|alhambra|arsenal|entrepot|hotel|institut|ecole|eglise|abbaye|usine|ile)\b/.test(k)) return `à l’${n}`;
+    if (/^(theatre|centre|lycee|college|chateau|musee|cinema|conservatoire|festival|foyer|pole|studio|hangar|manege|cirque|forum|carre|cube|quai|moulin|prieure|palais|parc|jardin|complexe|domaine|relais|club|cafe|zenith|dome|kiosque|chapiteau|tetris|volcan|rive)\b/.test(k)) return `au ${n}`;
+    if (/^(maison|salle|scene|mediatheque|bibliotheque|chapelle|halle|ferme|grange|comedie|fabrique|friche|gare|mjc|mairie|cour|cite|villa|piscine|caserne|filature|base|grande|petite|nouvelle)\b/.test(k)) return `à la ${n}`;
+    return `à ${n}`;
+  }
+  // « le 18 décembre 2026 », « du 17 au 21 novembre 2026 », « du 30 novembre au 2 décembre 2026 »
+  function quandTexte(debut, fin) {
+    if (!estJour(debut)) return '';
+    const f = estJour(fin) && fin > debut ? fin : debut;
+    const j = x => { const d = date12(x); return d.getDate() === 1 ? '1er' : String(d.getDate()); };
+    const mo = x => MOIS[date12(x).getMonth()], an = x => x.slice(0, 4);
+    if (f === debut) return `le ${j(debut)} ${mo(debut)} ${an(debut)}`;
+    if (an(debut) !== an(f)) return `du ${j(debut)} ${mo(debut)} ${an(debut)} au ${j(f)} ${mo(f)} ${an(f)}`;
+    if (mo(debut) !== mo(f)) return `du ${j(debut)} ${mo(debut)} au ${j(f)} ${mo(f)} ${an(f)}`;
+    return `du ${j(debut)} au ${j(f)} ${mo(f)} ${an(f)}`;
+  }
+  const premierMot = s => txt(s).split(/\s+/)[0] || '';
+  // la catégorie d'une personne d'après sa fonction, quand la distribution ne la donne pas
+  const categorieDe = f => { const s = norm(f); return /regi|techni|lumiere|eclairag|\bson\b|sonor|plateau|machin|construct|video/.test(s) ? 'technique' : /jeu|comedi|interpr|acteur|actrice|danse|musicien|chant|marionnett/.test(s) ? 'jeu' : /mise en scene|creat|scenograph|costum|ecriture|auteur|autrice/.test(s) ? 'creation' : /admin|product|diffusion|charge/.test(s) ? 'production' : ''; };
+
+  // Le contenu d'une feuille neuve, dans la forme des feuilles de la compagnie, avec tout ce que la base sait.
+  //   sources = { date (nature, debut, fin), spectacle (titre, duree, feuille_modele), lieu, representations (jour, heure,
+  //     fin, public, note, annulee, id), equipe: [{personne_id, prenom, nom, fonction, categories, telephone}],
+  //     contacts: [{nom, prenom, role, telephone, email}] (l'administration et la régie générale de la compagnie),
+  //     depart: {commune, latitude, longitude}, suivi: {organisateur, contact, lieu: {contact, jauge, plateau}},
+  //     documents: [{id, titre, pour}], anterieures: [{contenu, debut, lieu_id, spectacle_id, lieu: {nom, commune}}] }
+  // Repas, transports et hébergement viennent de la feuille précédente du même spectacle (l'hébergement et les contacts
+  // écrits à la main, seulement d'une feuille au même lieu) ; sinon une amorce.
   function composer(sources) {
-    const S = sources || {}, sp = S.spectacle || {}, l = S.lieu || null, suivi = S.suivi || {};
-    const representations = (S.representations || []).filter(r => estJour(r.jour))
-      .map(r => ({ jour: r.jour, heure: h5(r.heure), public: r.public || 'tout_public', note: txt(r.note), annulee: !!r.annulee })).sort((a, b) => cleTemps(a) < cleTemps(b) ? -1 : cleTemps(a) > cleTemps(b) ? 1 : 0);
-    const sl = suivi.lieu || {};
-    const precisions = [sl.jauge ? `Jauge : ${sl.jauge} places.` : '', txt(sl.plateau) ? `Plateau : ${txt(sl.plateau)}.` : ''].filter(Boolean).join(' ');
-    const lieu = { ...videDe(section('lieu')), ...(l ? { nom: txt(l.nom), adresse: txt(l.adresse), commune: l.commune ? `${txt(l.commune)}${l.departement ? ` (${txt(l.departement)})` : ''}` : '', itineraire: itineraire(l), details: precisions } : {}) };
-    const trajet = { ...videDe(section('trajet')), depart: txt(S.depart?.commune), estime: true };
-    if (aPosition(S.depart) && aPosition(l)) {
-      const km = distanceKm(S.depart, l) * 1.3;
-      Object.assign(trajet, { distance_km: Math.round(km), duree_min: dureeRoute(km) });
+    const S = sources || {}, d = S.date || {}, sp = S.spectacle || {}, l = S.lieu || null, suivi = S.suivi || {};
+    const nature = NATURES[d.nature] ? d.nature : 'representations';
+    const seances = (S.representations || []).filter(r => estJour(r.jour))
+      .map(r => ({ id: r.id ?? null, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', note: txt(r.note), annulee: !!r.annulee }))
+      .sort((a, b) => cleTemps(a) < cleTemps(b) ? -1 : cleTemps(a) > cleTemps(b) ? 1 : 0);
+    const equipe = (S.equipe || []).map(p => ({ id: p.personne_id ?? p.id ?? null, prenom: txt(p.prenom) || premierMot(p.nom), nom: txt(p.nom), fonction: txt(p.fonction),
+      categories: (Array.isArray(p.categories) && p.categories.length ? p.categories : [categorieDe(p.fonction)]).filter(Boolean), telephone: telTexte(p.telephone) })).filter(p => p.prenom);
+    // un prénom porté par deux personnes : « Adrien D. » et « Adrien M. »
+    const prenomDe = p => equipe.filter(x => norm(x.prenom) === norm(p.prenom)).length > 1 && p.nom ? `${p.prenom} ${(p.nom.split(/\s+/).find(m => norm(m) !== norm(p.prenom)) || '')[0] || ''}.` : p.prenom;
+    const quiDe = qui => {
+      const n = norm(qui).replace(/[’']/g, "'").trim();
+      if (!n) return '';
+      if (/^(toute?s?\s+l'equipe|tout le monde|tous|toutes|l'equipe|equipe|toute l'equipe artistique et technique)$/.test(n)) return 'tout le monde';
+      const cat = /^(la\s+)?(technique|regie|l'equipe technique|equipe technique|techniciens?|regisseu(r|se)s?|regie generale)$/.test(n) ? 'technique'
+        : /^(le\s+)?(jeu|comedien(ne)?s?|artistes?|l'equipe artistique|equipe artistique|interpretes?|acteurs?|actrices?)$/.test(n) ? 'jeu'
+          : /^creation$/.test(n) ? 'creation' : /^production$/.test(n) ? 'production' : null;
+      if (!cat) return txt(qui);
+      const xs = equipe.filter(p => p.categories.includes(cat));
+      return xs.length ? listeEt(xs.map(prenomDe)) : minuscule(txt(qui));
+    };
+    const jours = [...new Set(seances.filter(r => !r.annulee).map(r => r.jour))].sort();
+    const debut = jours[0] || (estJour(d.debut) ? d.debut : ''), fin = jours[jours.length - 1] || (estJour(d.fin) ? d.fin : debut);
+    const blocs = [];
+    const B = (type, segs, extra = {}) => blocs.push({ type, segments: segments(segs), ...extra });
+    const base = (type, segs, cle, extra = {}) => B(type, segs, { cle, source: 'base', ...extra });
+
+    // ---- l'en-tête, à droite du logo
+    base('entete', [seg('FEUILLE DE ROUTE', { gras: true, italique: true })], 'entete:titre');
+    base('entete', [txt(sp.titre) ? seg(txt(sp.titre), { gras: true, italique: true }) : amorce('spectacle ?')], 'entete:spectacle');
+    base('entete', equipe.length ? [seg(`avec ${listeEt(equipe.map(prenomDe))}`)] : [amorce('avec qui ?')], 'entete:avec', { petit: true });
+    const quand = quandTexte(debut, fin);
+    base('entete', quand ? [seg(nature === 'representations' ? quand : `${NATURES[nature]} ${quand}`, { gras: true })] : [amorce('quand ?')], 'entete:quand');
+    const ouTexte = l ? (txt(l.nom) ? `${aLieu(l.nom)}${txt(l.commune) && !norm(l.nom).includes(norm(l.commune)) ? `, ${txt(l.commune)}` : ''}` : `à ${txt(l.commune)}`) : '';
+    base('entete', ouTexte ? [seg(ouTexte, { gras: true })] : [amorce('où ?')], 'entete:ou');
+
+    // ---- le planning, jour par jour
+    B('rubrique', [seg('Planning')], { cle: 'rub:planning' });
+    const duree = dureeMinutes(sp.duree);
+    const etapes = etapesPlanning(seances, nature, sp.feuille_modele, duree);
+    // le départ, d'après la route (estimée) : avant la première étape du premier jour
+    let route = null;
+    if (aPosition(S.depart) && aPosition(l)) { const km = Math.round(distanceKm(S.depart, l) * 1.3); if (km >= 8) route = { km, min: dureeRoute(km) }; }
+    const joursPl = [...new Set(etapes.map(e => e.jour))].sort();
+    if (!joursPl.length) B('ligne', [amorce('aucune séance avec un jour : ajoutez les représentations de la date, puis « Mettre à jour depuis la base »')]);
+    joursPl.forEach((j, i) => {
+      base('jour', [seg(jourLong(j, false))], `jour:${j}`, { date: j });
+      const du = etapes.filter(e => e.jour === j);
+      if (i === 0 && route) {
+        const t = du.find(e => e.m != null)?.m;
+        const m = t == null ? null : plancher15(t - route.min - 15);
+        const connue = m != null && m >= 0;
+        base('ligne', [...(connue ? [seg(`${heureCourte(m)} : `)] : [amorce('heure de départ ?'), seg(' : ')]), seg(`départ de ${txt(S.depart.commune) || 'Rouen'} `),
+          amorce(`environ ${route.km} km et ${dureeTexte(route.min)} de route${connue && m < 6 * 60 ? ', très tôt' : ''} : à vérifier`)], `pl:${j}:depart`, { origine: { jour: j, heure: connue ? hhmm(m) : null, fin: null, rep: false } });
+      }
+      du.forEach(e => {
+        const h = e.m == null ? null : e.m, f = e.fin == null ? null : e.fin;
+        const tete = h == null ? [amorce(e.rep ? 'heure ?' : 'heure ?'), seg(' : ')] : [seg(`${heureCourte(h)}${f != null ? `-${heureCourte(f)}` : ''} : `)];
+        const quoi = e.rep ? `${minuscule(e.quoi)}${PUBLIC_TEXTE[e.public] ? ` ${PUBLIC_TEXTE[e.public]}` : ''}` : minuscule(e.quoi);
+        const qui = quiDe(e.qui);
+        const tot = h != null && h < 6 * 60 && !e.seance ? [amorce(' très tôt : à vérifier')] : [];
+        const segs = e.rep
+          ? [...tete.map(s => s.amorce ? s : { ...s, gras: true }), seg(quoi, { gras: true }), ...(e.note ? [seg(` (${e.note})`)] : []), ...(qui ? [seg(' '), seg(`/ ${qui}`, { surligne: true })] : [])]
+          : [...tete, seg(quoi), ...(qui ? [seg(' '), seg(`/ ${qui}`, { surligne: true })] : []), ...tot];
+        base('ligne', segs, e.cle, { origine: { jour: j, heure: h == null ? null : hhmm(h), fin: f == null ? null : hhmm(f), rep: !!e.rep } });
+      });
+    });
+
+    // ---- repas, transports, hébergement : la feuille précédente, sinon une amorce
+    const ref = debut || d.debut || '';
+    const avant = (S.anterieures || []).filter(x => x && x.contenu).map(x => ({ ...x, contenu: contenu({ contenu: x.contenu }).blocs }))
+      .sort((a, b) => { const pa = (a.debut || '') < ref, pb = (b.debut || '') < ref; return pa !== pb ? (pa ? -1 : 1) : pa ? ((a.debut || '') < (b.debut || '') ? 1 : -1) : ((a.debut || '') < (b.debut || '') ? -1 : 1); });
+    const memeLieu = x => l && x.lieu_id != null && String(x.lieu_id) === String(l.id);
+    const memeSp = x => sp.id != null && x.spectacle_id != null && String(x.spectacle_id) === String(sp.id);
+    const source = (filtre, ordre) => avant.filter(filtre).sort((a, b) => ordre(b) - ordre(a))[0] || null;
+    const origineTexte = x => `repris de la feuille ${x.debut ? `du ${jourLong(x.debut)}` : 'précédente'}${x.lieu?.nom || x.lieu?.commune ? ` (${txt(x.lieu.nom) || txt(x.lieu.commune)})` : ''} : à vérifier`;
+    const rubrique = (k, titre, mots, x, vide, filtre) => {
+      B('rubrique', [seg(titre)], { cle: `rub:${k}` });
+      const repris = x ? extraire(x.contenu, k, mots, filtre) : [];
+      if (repris.length) { B('ligne', [amorce(origineTexte(x))]); repris.forEach(b => blocs.push(b)); }
+      else B('ligne', [amorce(vide)]);
+    };
+    const parSp = source(memeSp, x => memeLieu(x) ? 1 : 0), parLieu = source(memeLieu, x => memeSp(x) ? 1 : 0);
+    rubrique('repas', 'Repas', /^repas|^restauration/, parSp, 'qui prend en charge les repas ? (repas fournis par le lieu, défraiement)');
+    rubrique('transports', 'Transports', /^transports?|^deplacements?|^trajets?/, parSp, 'véhicules, trains, covoiturage, remboursement des frais ?');
+    const uneNuit = debut && fin && debut === fin && route && route.km < 100;
+    if (!uneNuit || parLieu) rubrique('hebergement', 'Hébergement', /^hebergements?|^hotels?|^logements?/, parLieu, 'hôtel : nom, adresse, heure d’arrivée ?');
+
+    // ---- adresses et contacts
+    B('rubrique', [seg('Adresses et contacts')], { cle: 'rub:adresses' });
+    if (l) {
+      const adresse = [txt(l.adresse), txt(l.commune) && !norm(l.adresse).includes(norm(l.commune)) ? txt(l.commune) : ''].filter(Boolean).join(', ');
+      const lien = itineraire(l) || (adresse ? carteAdresse(adresse) : '');
+      base('ligne', [seg(txt(l.nom) || txt(l.commune), { gras: true }), seg(' : '), ...(txt(l.adresse) ? [seg(adresse, lien ? { lien } : {})] : [amorce('adresse du lieu ?')])], 'lieu');
+      const sl = suivi.lieu || {};
+      const precisions = [sl.jauge ? `jauge : ${sl.jauge} places` : '', txt(sl.plateau) ? `plateau : ${txt(sl.plateau)}` : ''].filter(Boolean).join(' ; ');
+      if (precisions) base('ligne', [seg(maj(precisions))], 'lieu:precisions');
+    } else B('ligne', [amorce('le lieu : nom, adresse ?')]);
+    const contacts = composerContacts(suivi, []);
+    contacts.forEach((c, k) => base('ligne', [seg(`${c.nom || c.role}${c.nom && c.role ? `, ${minuscule(c.role)}` : ''} : `), ...(c.telephone ? [seg(c.telephone)] : []), ...(c.telephone && c.email ? [seg(', ')] : []), ...(c.email ? [seg(c.email)] : []), ...(!c.telephone && !c.email ? [amorce('téléphone ?')] : [])], `contact:${k}`));
+    if (!contacts.length) B('ligne', [amorce('contact sur place : nom, téléphone ?')]);
+    if (parLieu) {
+      const repris = extraire(parLieu.contenu, 'adresses', /^adresses?|^contacts?/, b => !(b.cle && /^(lieu|contact:|cie)/.test(b.cle)), true);
+      if (repris.length) { B('ligne', [amorce(origineTexte(parLieu))]); repris.forEach(b => blocs.push(b)); }
     }
+    B('sous-titre', [seg('contacts compagnie')], { cle: 'cie' });
+    const deja = new Set();
+    equipe.forEach(p => { deja.add(norm(p.prenom + ' ' + p.nom)); base('ligne', [seg(`${prenomDe(p)} `), p.telephone ? seg(p.telephone) : amorce('téléphone ?')], `cie:${p.id ?? cleMot(p.prenom + p.nom)}`); });
+    (S.contacts || []).forEach(c => {
+      const nom = txt(c.nom), prenom = txt(c.prenom) || premierMot(nom);
+      if (!prenom || deja.has(norm(nom)) || [...deja].some(x => x.startsWith(norm(nom)))) return;
+      deja.add(norm(nom));
+      base('ligne', [seg(`${prenom} `), c.telephone ? seg(telTexte(c.telephone)) : amorce('téléphone ?'), ...(c.role ? [amorce(` ${minuscule(c.role)}`)] : [])], `cie:${cleMot(nom)}`);
+    });
+
+    // ---- les documents de l'équipe que la feuille cite
+    const docs = (S.documents || []).filter(x => x && x.id != null && (x.pour == null || x.pour === 'equipe'));
+    if (docs.length) {
+      B('rubrique', [seg('Documents')], { cle: 'rub:documents' });
+      docs.forEach(x => base('puce', [seg(txt(x.titre) || 'Document', { doc: x.id })], `doc:${x.id}`));
+    }
+
+    const out = blocs.map(bloc);
     return {
-      representations, lieu, trajet,
-      planning: composerPlanning(representations, sp.feuille_modele, dureeMinutes(sp.duree)),
-      transport: [], hebergement: [], repas: [],
-      equipe: (S.equipe || []).map(p => ({ personne_id: p.personne_id ?? null, nom: txt(p.nom), fonction: txt(p.fonction), telephone: telTexte(p.telephone) })),
-      contacts: composerContacts(suivi, S.contacts),
-      documents: (S.documents || []).filter(d => d && d.pour !== 'administration').map(d => d.id),
-      notes: '',
+      format: 2, blocs: out, composees: out.filter(b => b.cle).map(b => b.cle), pages: [],
+      instantane: seances.map(r => ({ jour: r.jour, heure: r.heure, annulee: r.annulee })), compose_le: new Date().toISOString(),
     };
   }
-
-  // ================================================================================================ recomposer
-  // Recomposer une feuille déjà remplie sans perdre ce qui a été saisi à la main. contenu._base garde la composition
-  // précédente : ce qui n'a pas bougé depuis est remplacé par la nouvelle composition ; une ligne ajoutée ou modifiée à
-  // la main reste, une ligne retirée à la main ne revient pas. Sans _base (feuille plus ancienne), tout ce qui est là
-  // reste. mode 'remplacer' : les blocs de la base sont repris tels que la base les donne. Les blocs remplis à la main
-  // (transport, hébergement, repas, notes) ne changent jamais.
-  const baseDe = c => Object.fromEntries(SECTIONS.filter(s => s.base).map(s => [s.k, clone(c?.[s.k] ?? videDe(s))]));
-  const valeurCle = v => typeof v === 'boolean' ? v : v == null ? '' : String(v).trim();
-  const cleLigne = (s, r) => s.forme === 'documents' ? String(r) : JSON.stringify(colonnesDe(s).map(c => valeurCle(r?.[c.k])));
-  function fusionner(actuel, nouveau, mode = 'garder') {
-    const A = actuel || {}, N = nouveau || {}, B = A._base && typeof A._base === 'object' ? A._base : null;
-    const out = {}, gardes = [];
-    const compter = (s, n) => { if (n) gardes.push({ section: s.titre, n }); };
-    SECTIONS.forEach(s => {
-      const k = s.k, a = A[k], n = N[k] ?? videDe(s);
-      if (!s.base) { out[k] = clone(a ?? n); return; }
-      if (mode === 'remplacer' || a == null) { out[k] = clone(n); return; }
-      if (s.forme === 'fiche') {
-        const b = B?.[k] || null, r = {};
-        let g = 0;
-        colonnesDe(s).forEach(c => {
-          const va = a[c.k], vb = b ? b[c.k] : undefined, vn = n[c.k];
-          const touche = b ? valeurCle(va) !== valeurCle(vb) : valeurCle(va) !== '' && valeurCle(va) !== valeurCle(vn) && va !== false;
-          if (touche) { r[c.k] = va; g++; } else r[c.k] = vn;
-        });
-        // une distance recalculée (le lieu a changé) redevient une estimation
-        if (k === 'trajet' && b && valeurCle(n.distance_km) !== valeurCle(b.distance_km) && valeurCle(r.distance_km) === valeurCle(n.distance_km)) r.estime = n.estime;
-        out[k] = r; compter(s, g); return;
-      }
-      const xa = Array.isArray(a) ? a : [], xn = Array.isArray(n) ? n : [], xb = B && Array.isArray(B[k]) ? B[k] : null;
-      if (s.cle) {
-        // une ligne par personne : modifiée à la main, elle reste ; retirée à la main, elle ne revient pas
-        const id = r => String(r?.[s.cle] ?? ''), res = [];
-        let g = 0;
-        xn.forEach(rn => {
-          const ra = xa.find(x => id(x) === id(rn) && id(rn)), rb = xb?.find(x => id(x) === id(rn) && id(rn));
-          if (ra) { if (rb && cleLigne(s, ra) === cleLigne(s, rb)) res.push(clone(rn)); else if (!rb && cleLigne(s, ra) === cleLigne(s, rn)) res.push(clone(rn)); else { res.push(clone(ra)); g++; } }
-          else if (!rb || !xb) res.push(clone(rn));
-        });
-        xa.forEach(ra => {
-          if (res.some(x => x === ra || (id(ra) && id(x) === id(ra)))) return;
-          const rb = xb?.find(x => id(x) === id(ra) && id(ra));
-          if (rb && cleLigne(s, ra) === cleLigne(s, rb)) return;   // venue de la base, sans retouche, et plus dans la base
-          if (!id(ra) && res.some(x => cleLigne(s, x) === cleLigne(s, ra))) return;
-          res.push(clone(ra)); g++;
-        });
-        out[k] = res; compter(s, g); return;
-      }
-      // une liste sans identifiant : on compare les lignes entières. Les lignes de la composition précédente qui ne sont
-      // plus là ont été retirées ou retouchées à la main : la même ligne, recomposée, ne revient pas. Dans le planning,
-      // une étape retirée ou retouchée ne revient pas non plus quand seule son heure a bougé ; une représentation,
-      // elle, revient toujours avec l'heure de la base.
-      const cleSouple = r => JSON.stringify(colonnesDe(s).filter(c => c.k !== 'heure' && c.k !== 'fin').map(c => valeurCle(r?.[c.k])));
-      const ecartees = [...(xb || [])];
-      const manuelles = [];
-      xa.forEach(r => { const i = ecartees.findIndex(x => cleLigne(s, x) === cleLigne(s, r)); if (i >= 0) ecartees.splice(i, 1); else manuelles.push(r); });
-      const res = [];
-      xn.forEach(r => {
-        let i = xb ? ecartees.findIndex(x => cleLigne(s, x) === cleLigne(s, r)) : -1;
-        if (i < 0 && xb && s.souple && !r.rep) i = ecartees.findIndex(x => !x.rep && cleSouple(x) === cleSouple(r));
-        if (i >= 0) { ecartees.splice(i, 1); return; }
-        res.push(clone(r));
-      });
-      let g = 0;
-      manuelles.forEach(r => { if (!xb && res.some(x => cleLigne(s, x) === cleLigne(s, r))) return; res.push(clone(r)); g++; });
-      out[k] = k === 'planning' ? trier(res) : res; compter(s, g);
-    });
-    Object.keys(A).forEach(k => { if (!(k in out) && k !== '_base') out[k] = clone(A[k]); });
-    out._base = baseDe(N);
-    return { contenu: out, gardes };
-  }
-
-  // ================================================================================================ la vue commune
-  // ce que montrent le HTML et le PDF : l'en-tête, puis chaque bloc qui a quelque chose à dire
-  const cleRep = r => `${r.jour} ${h5(r.heure)} ${r.annulee ? 'annulée' : ''}`;
-  function vue(feuille, contexte) {
-    const f = feuille || {}, c = f.contenu || {}, ctx = contexte || {}, sp = ctx.spectacle || {}, d = ctx.date || {};
-    const vivantes = r => estJour(r?.jour);
-    // les représentations de la feuille (l'instantané de sa composition), sinon celles de la date
-    const instantane = Array.isArray(c.representations) && c.representations.some(vivantes) ? c.representations : null;
-    const reps = (instantane || (ctx.representations || []).map(r => ({ jour: r.jour, heure: h5(r.heure), public: r.public, note: r.note, annulee: !!r.annulee }))).filter(vivantes);
-    const jours = [...new Set(reps.map(r => r.jour))].sort();
-    const debut = jours[0] || d.debut || '', fin = jours[jours.length - 1] || d.fin || debut;
-    const quand = !debut ? '' : debut === fin ? maj(jourLong(debut)) : `Du ${jourLong(debut, debut.slice(0, 4) !== fin.slice(0, 4))} au ${jourLong(fin)}`;
-    const quandCourt = !debut ? '' : debut === fin ? `${+debut.slice(8)} ${MOIS[+debut.slice(5, 7) - 1]} ${debut.slice(0, 4)}` : `${+debut.slice(8)} ${MOIS[+debut.slice(5, 7) - 1]} – ${+fin.slice(8)} ${MOIS[+fin.slice(5, 7) - 1]} ${fin.slice(0, 4)}`;
-    const lieu = c.lieu || {}, l = ctx.lieu || {};
-    const ou = [txt(lieu.nom) || txt(l.nom), txt(lieu.commune) || (l.commune ? `${l.commune}${l.departement ? ` (${l.departement})` : ''}` : '')].filter(Boolean).join(', ');
-    // les représentations, en tête : « 14h00 représentation scolaire », jour par jour s'il y en a plusieurs
-    const publicTexte = p => p === 'scolaire' ? 'scolaire' : p === 'autre' ? '' : 'tout public';
-    const representations = jours.map(j => {
-      const rs = reps.filter(r => r.jour === j).sort((a, b) => cleTemps(a) < cleTemps(b) ? -1 : 1);
-      let seances = rs.map(r => ({ h: heure(r.heure), texte: [publicTexte(r.public), txt(r.note)].filter(Boolean).join(', '), annulee: !!r.annulee }));
-      // sans heures : « 2 représentations tout public, heures à préciser » plutôt qu'une pastille par représentation
-      if (rs.length > 1 && seances.every(x => !x.h && !x.annulee && !txt(rs[0].note))) {
-        const pubs = [...new Set(rs.map(r => publicTexte(r.public)))];
-        seances = [{ h: '', texte: `${rs.length} représentations${pubs.length === 1 && pubs[0] ? ` ${pubs[0]}` : ''}, heures à préciser`, annulee: false }];
-      } else seances.forEach(x => { if (!x.h) x.texte = [x.texte, 'heure à préciser'].filter(Boolean).join(', '); });
-      return { jour: jours.length > 1 ? maj(jourLong(j, false)) : '', seances };
-    });
-    // les horaires ont changé depuis cette version ? (contexte : la base d'aujourd'hui)
-    let alerte = '';
-    if (instantane && Array.isArray(ctx.representations) && ctx.representations.length) {
-      const a = c.representations.filter(vivantes).map(cleRep).sort().join('|'), b = ctx.representations.filter(vivantes).map(r => cleRep({ ...r, annulee: !!r.annulee })).sort().join('|');
-      if (a !== b) alerte = `Les horaires ont changé depuis cette version de la feuille. Horaires à jour : ${ctx.representations.filter(vivantes).sort((x, y) => cleTemps(x) < cleTemps(y) ? -1 : 1)
-        .map(r => `${jours.length > 1 || new Set(ctx.representations.map(x => x.jour)).size > 1 ? jourLong(r.jour, false) + ' ' : ''}${heure(h5(r.heure)) || 'heure à préciser'}${r.annulee ? ' (annulée)' : ''}`).join(', ')}.`;
+  // les blocs d'une rubrique d'une autre feuille (repas, transports…), repris comme écrits à la main
+  function extraire(blocs, k, mots, filtre = () => true, sansCompagnie = false) {
+    const i = blocs.findIndex(b => b.type === 'rubrique' && (b.cle === `rub:${k}` || mots.test(norm(texteBloc(b)).trim())));
+    if (i < 0) return [];
+    const out = [];
+    for (const b of blocs.slice(i + 1)) {
+      if (b.type === 'rubrique') break;
+      if (sansCompagnie && b.type === 'sous-titre' && /compagnie/.test(norm(texteBloc(b)))) break;
+      if (b.type === 'saut' || !filtre(b) || b.source === 'base') continue;
+      const v = visibles([b])[0];
+      if (!v) continue;
+      out.push(bloc({ ...v, id: null, cle: null, source: null, origine: null }));
     }
-    const publiee = f.statut === 'publiee' && f.publiee_le;
-    const quandPub = publiee ? (() => { const x = new Date(f.publiee_le); return isNaN(x) ? '' : `${x.getDate() === 1 ? '1er' : x.getDate()} ${MOIS[x.getMonth()]} ${x.getFullYear()} à ${x.getHours()}h${String(x.getMinutes()).padStart(2, '0')}`; })() : '';
-    const version = publiee ? `Version ${f.version || 1}, publiée le ${quandPub}` : 'Brouillon, pas encore publié pour l’équipe';
-    const ctxVue = { ...ctx, jourUnique: jours.length === 1 ? jours[0] : null };
-    const sections = SECTIONS.filter(s => !s.entete && typeof s.vue === 'function').map(s => {
-      const v = c[s.k];
-      if (v == null || (Array.isArray(v) && !v.length) || v === '') return null;
-      const b = s.vue(v, ctxVue);
-      return b ? { ...b, k: s.k, section: s.titre } : null;
-    }).filter(Boolean);
-    const filet = filetDe(sp);
-    return { compagnie: COMPAGNIE, titre: txt(sp.titre) || 'Feuille de route', sousTitre: txt(f.titre), quand, quandCourt, ou, representations, alerte, version, publiee: !!publiee,
-      sections, filet, fonce: fonceDe(filet), teinte: melanger(filet, '#ffffff', 0.9), slug: txt(sp.slug), debut };
+    while (out.length && !texteBloc(out[out.length - 1]).trim() && out[out.length - 1].type !== 'tableau') out.pop();
+    while (out.length && !texteBloc(out[0]).trim() && out[0].type !== 'tableau') out.shift();
+    return out;
   }
 
-  // ================================================================================================ HTML
-  const CSS = `
-.feuille{--f-encre:#1d1720;--f-gris:#5f5763;--f-trait:#e6e0e5;--f-doux:#f7f4f6;--f-papier:#fff;
-  box-sizing:border-box;max-width:800px;margin:0 auto;padding:30px 34px 24px;background:var(--f-papier);color:var(--f-encre);
-  font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased;
-  border:1px solid var(--f-trait);border-top:6px solid var(--f-filet);border-radius:4px;box-shadow:0 1px 2px rgba(20,10,20,.05),0 8px 28px rgba(20,10,20,.07);text-align:left}
-.feuille *{box-sizing:border-box}
-.feuille a{color:var(--f-fonce);text-underline-offset:2px}
-.feuille .f-sur{margin:0;font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--f-gris)}
-.feuille h1{margin:8px 0 2px;font-size:30px;line-height:1.15;letter-spacing:-.01em;font-weight:800}
-.feuille .f-soustitre{margin:2px 0 0;font-size:16px;color:var(--f-gris)}
-.feuille .f-quand{margin:12px 0 0;font-size:18.5px;font-weight:700}
-.feuille .f-ou{margin:1px 0 0;font-size:16px;color:var(--f-gris)}
-.feuille .f-seances{display:flex;flex-wrap:wrap;gap:6px 8px;margin:14px 0 0;padding:0;list-style:none}
-.feuille .f-seances li{display:inline-flex;align-items:baseline;gap:6px;padding:4px 11px;border-radius:999px;background:var(--f-teinte);font-size:14.5px}
-.feuille .f-seances b{font-variant-numeric:tabular-nums}
-.feuille .f-seances .f-jour{background:none;padding:4px 2px 4px 0;font-weight:700}
-.feuille .f-seances .f-annulee{background:var(--f-doux);color:var(--f-gris);text-decoration:line-through}
-.feuille .f-alerte{margin:16px 0 0;padding:10px 13px;border-radius:8px;background:#fdecea;color:#8c1d16;font-size:14.5px;font-weight:600}
-.feuille .f-s{margin:28px 0 0}
-.feuille .f-s>h2{margin:0 0 4px;padding:0 0 7px;border-bottom:1px solid var(--f-trait);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--f-gris)}
-.feuille .f-jourl{margin:14px 0 2px;font-size:14px;font-weight:800}
-.feuille .f-l{display:grid;grid-template-columns:5.6em 1fr;gap:0 12px;padding:8px 0;border-bottom:1px solid var(--f-trait)}
-.feuille .f-l:last-child{border-bottom:0}
-.feuille .f-h{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
-.feuille .f-h small{display:block;font-weight:500;color:var(--f-gris);font-size:13px}
-.feuille .f-t{font-weight:600}
-.feuille .f-sous{display:block;color:var(--f-gris);font-size:14px;font-weight:400}
-.feuille .f-l.f-accent{background:var(--f-teinte);border-left:3px solid var(--f-filet);margin:0 0 0 -10px;padding:9px 8px 9px 7px;border-bottom-color:transparent;border-radius:0 3px 3px 0}
-.feuille .f-cartes{display:grid;gap:0 22px}
-.feuille .f-cartes.f-compact{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-.feuille .f-c{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 14px;padding:9px 0;border-bottom:1px solid var(--f-trait)}
-.feuille .f-c .f-qui{min-width:0;flex:1 1 200px}
-.feuille .f-c .f-coord{display:flex;flex-wrap:wrap;gap:2px 14px;font-variant-numeric:tabular-nums}
-.feuille .f-c .f-coord a{white-space:nowrap;color:inherit;text-decoration-color:color-mix(in srgb,var(--f-fonce) 40%,transparent);text-decoration-thickness:1px}
-.feuille .f-fiche .f-titre-fiche{margin:8px 0 0;font-weight:700;font-size:17px}
-.feuille .f-fiche p{margin:2px 0 0}
-.feuille .f-liens{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
-.feuille .f-liens a{display:inline-block;padding:5px 12px;border:1px solid currentColor;border-radius:999px;font-weight:600;font-size:14px;text-decoration:none}
-.feuille dl{display:grid;grid-template-columns:8.5em 1fr;gap:6px 14px;margin:12px 0 0}
-.feuille dt{color:var(--f-gris);font-size:14px;padding-top:1px}
-.feuille dd{margin:0;white-space:pre-line}
-.feuille .f-texte p{margin:8px 0 0;white-space:pre-line}
-.feuille ul.f-docs{margin:8px 0 0;padding-left:1.2em}
-.feuille ul.f-docs a{color:inherit;text-decoration-color:color-mix(in srgb,var(--f-fonce) 40%,transparent)}
-.feuille .f-pied{margin:30px 0 0;padding:10px 0 0;border-top:1px solid var(--f-trait);display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:12.5px;color:var(--f-gris)}
+  // ================================================================================================ l'ancien format
+  // une feuille de l'ancien formulaire (representations, planning, lieu, trajet, transport, hebergement, repas, equipe,
+  // contacts, documents, notes), mise en blocs. Ce qui venait de la base porte une clé « ancien: » : « Mettre à jour
+  // depuis la base » le remplace par la composition d'aujourd'hui ; le reste (transport, repas, hébergement, notes) reste.
+  function depuisSections(c, ctx) {
+    const blocs = [], sp = ctx?.spectacle || {};
+    const B = (type, segs, extra = {}) => blocs.push(bloc({ type, segments: segs, ...extra }));
+    const ancien = (type, segs, cle, extra = {}) => B(type, segs, { cle: `ancien:${cle}`, source: 'base', ...extra });
+    const reps = (Array.isArray(c.representations) && c.representations.length ? c.representations : ctx?.representations || []).filter(r => estJour(r?.jour));
+    const jours = [...new Set(reps.filter(r => !r.annulee).map(r => r.jour))].sort();
+    ancien('entete', [seg('FEUILLE DE ROUTE', { gras: true, italique: true })], 'entete:titre');
+    if (txt(sp.titre)) ancien('entete', [seg(txt(sp.titre), { gras: true, italique: true })], 'entete:spectacle');
+    const prenoms = (c.equipe || []).map(p => premierMot(p.nom)).filter(Boolean);
+    if (prenoms.length) ancien('entete', [seg(`avec ${listeEt(prenoms)}`)], 'entete:avec', { petit: true });
+    const q = quandTexte(jours[0] || ctx?.date?.debut, jours[jours.length - 1] || ctx?.date?.fin);
+    if (q) ancien('entete', [seg(q, { gras: true })], 'entete:quand');
+    const lieu = c.lieu || {}, l = ctx?.lieu || {};
+    const nomLieu = txt(lieu.nom) || txt(l.nom), commune = txt(lieu.commune) || txt(l.commune);
+    if (nomLieu || commune) ancien('entete', [seg(nomLieu ? `${aLieu(nomLieu)}${commune ? `, ${commune}` : ''}` : `à ${commune}`, { gras: true })], 'entete:ou');
+    const pl = trier(c.planning || []).filter(r => r && (txt(r.quoi) || txt(r.heure)));
+    if (pl.length) {
+      B('rubrique', [seg('Planning')], { cle: 'rub:planning' });
+      let jour = '';
+      pl.forEach((r, k) => {
+        if (estJour(r.jour) && r.jour !== jour) { jour = r.jour; ancien('jour', [seg(jourLong(r.jour, false))], `jour:${r.jour}`, { date: r.jour }); }
+        const m = minutes(h5(r.heure)), f = minutes(h5(r.fin)), rep = r.rep === true || /^repr[ée]sentation/i.test(txt(r.quoi));
+        const tete = m == null ? [] : [seg(`${heureCourte(m)}${f != null ? `-${heureCourte(f)}` : ''} : `, rep ? { gras: true } : {})];
+        ancien('ligne', [...tete, seg(minuscule(txt(r.quoi)), rep ? { gras: true } : {}), ...(txt(r.qui) ? [seg(' '), seg(`/ ${txt(r.qui)}`, { surligne: true })] : []), ...(txt(r.ou) ? [seg(` (${txt(r.ou)})`)] : [])],
+          `pl:${k}`, { origine: { jour: estJour(r.jour) ? r.jour : null, heure: m == null ? null : hhmm(m), fin: f == null ? null : hhmm(f), rep } });
+      });
+    }
+    const lignesListe = (xs, f) => (Array.isArray(xs) ? xs : []).map(f).filter(s => s && s.trim());
+    const repas = lignesListe(c.repas, r => [estJour(r.jour) ? jourLong(r.jour, false) : '', heure(r.heure), txt(r.ou) || 'repas', txt(r.details)].filter(Boolean).join(' : '));
+    if (repas.length) { B('rubrique', [seg('Repas')], { cle: 'rub:repas' }); repas.forEach(t => B('ligne', [seg(t)])); }
+    const tr = c.trajet || {};
+    const km = tr.distance_km !== '' && tr.distance_km != null && !isNaN(tr.distance_km) ? Math.round(+tr.distance_km) : null;
+    const trajet = txt(tr.depart) || km != null ? `Depuis ${txt(tr.depart) || 'Rouen'}${km != null ? ` : ${tr.estime ? 'environ ' : ''}${km} km` : ''}${dureeTexte(tr.duree_min) ? `, ${dureeTexte(tr.duree_min)} de route` : ''}` : '';
+    const transports = [trajet, txt(tr.details), ...lignesListe(c.transport, r => [estJour(r.jour) ? jourLong(r.jour, false) : '', heure(r.heure), [txt(r.mode), txt(r.trajet)].filter(Boolean).join(' '), txt(r.qui) && `/ ${txt(r.qui)}`, txt(r.details)].filter(Boolean).join(' : '))].filter(Boolean);
+    if (transports.length) { B('rubrique', [seg('Transports')], { cle: 'rub:transports' }); transports.forEach(t => B('ligne', [seg(t)])); }
+    const heb = lignesListe(c.hebergement, r => [txt(r.nom), txt(r.adresse), telTexte(r.telephone), txt(r.arrivee) && `arrivée ${txt(r.arrivee)}`, txt(r.depart) && `départ ${txt(r.depart)}`, txt(r.details)].filter(Boolean).join(' : '));
+    if (heb.length) { B('rubrique', [seg('Hébergement')], { cle: 'rub:hebergement' }); heb.forEach(t => B('ligne', [seg(t)])); }
+    const adresse = [txt(lieu.adresse), txt(lieu.commune)].filter(Boolean).join(', ');
+    const contacts = Array.isArray(c.contacts) ? c.contacts : [], equipe = Array.isArray(c.equipe) ? c.equipe : [];
+    if (nomLieu || adresse || contacts.length || equipe.length) {
+      B('rubrique', [seg('Adresses et contacts')], { cle: 'rub:adresses' });
+      if (nomLieu || adresse) ancien('ligne', [seg(nomLieu || commune, { gras: true }), ...(adresse ? [seg(' : '), seg(adresse, lienSur(lieu.itineraire) ? { lien: lienSur(lieu.itineraire) } : {})] : [])], 'lieu');
+      [['Accès', lieu.acces], ['Stationnement', lieu.parking], ['Loges', lieu.loges], ['Précisions', lieu.details]].filter(p => txt(p[1])).forEach(([t, v]) => B('ligne', [seg(`${t} : ${txt(v)}`)]));
+      contacts.forEach((x, k) => ancien('ligne', [seg(`${txt(x.nom) || txt(x.role)}${txt(x.nom) && txt(x.role) ? `, ${minuscule(txt(x.role))}` : ''} : ${[telTexte(x.telephone), txt(x.email)].filter(Boolean).join(', ')}`)], `contact:${k}`));
+      if (equipe.length) {
+        B('sous-titre', [seg('contacts compagnie')], { cle: 'cie' });
+        equipe.forEach((p, k) => ancien('ligne', [seg(`${premierMot(p.nom)} ${telTexte(p.telephone)}`.trim())], `cie:${k}`));
+      }
+    }
+    const docs = Array.isArray(c.documents) ? c.documents : [];
+    if (docs.length) {
+      B('rubrique', [seg('Documents')], { cle: 'rub:documents' });
+      docs.forEach(id => { const x = (ctx?.documents || []).find(y => String(y.id) === String(id)); ancien('puce', [seg(txt(x?.titre) || 'Document', { doc: id })], `doc:${id}`); });
+    }
+    const notes = String(c.notes || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+    if (notes.length) { B('rubrique', [seg('Notes')], { cle: 'rub:notes' }); notes.forEach(p => p.split('\n').forEach(t => B('ligne', [seg(t)]))); }
+    return { format: 2, blocs, composees: blocs.filter(b => b.cle).map(b => b.cle), pages: [], instantane: reps.map(r => ({ jour: r.jour, heure: h5(r.heure), annulee: !!r.annulee })), ancien: true };
+  }
+  // le contenu d'une feuille, toujours en blocs (une feuille de l'ancien format est convertie à la volée)
+  function contenu(feuille, contexte) {
+    const c = feuille?.contenu;
+    if (c && c.format === 2 && Array.isArray(c.blocs)) {
+      const blocs = c.blocs.map(bloc), vus = new Set();
+      blocs.forEach(b => { if (vus.has(b.id)) b.id = nouvelId(); vus.add(b.id); });
+      return { ...c, blocs, composees: Array.isArray(c.composees) ? c.composees.map(String) : [], pages: Array.isArray(c.pages) ? c.pages.map(String) : [], instantane: Array.isArray(c.instantane) ? c.instantane : [] };
+    }
+    if (c && typeof c === 'object' && ['representations', 'planning', 'lieu', 'trajet', 'transport', 'hebergement', 'repas', 'equipe', 'contacts', 'documents', 'notes'].some(k => k in c)) return depuisSections(c, contexte);
+    return { format: 2, blocs: [], composees: [], pages: [], instantane: [] };
+  }
+
+  // ================================================================================================ mettre à jour depuis la base
+  // Les blocs venus de la base (source 'base', pas retouchés) prennent ce que la base dit aujourd'hui (l'en-tête, les
+  // horaires, les contacts) ; ceux qu'elle ne donne plus partent ; ceux qu'elle donne de nouveau arrivent à leur place.
+  // Rien de ce qui a été écrit ou retouché à la main ne change ; un bloc de la base retiré à la main ne revient pas.
+  const STRUCTURE = new Set(['rubrique', 'jour', 'sous-titre']);
+  const memeBloc = (a, b) => JSON.stringify([a.type, a.segments, a.lignes, a.date, a.petit, a.origine]) === JSON.stringify([b.type, b.segments, b.lignes, b.date, b.petit, b.origine]);
+  function actualiser(actuel, nouveau) {
+    const A = contenu({ contenu: actuel }), N = contenu({ contenu: nouveau });
+    let out = A.blocs.map(b => ({ ...b }));
+    const presentes = new Set(out.filter(b => b.cle).map(b => b.cle));
+    const retirees = new Set((A.composees || []).filter(k => !presentes.has(k)));
+    const clesN = new Set(N.blocs.filter(b => b.cle).map(b => b.cle));
+    let modifies = 0, ajoutes = 0, retires = 0;
+    // un bloc de l'ancien format, venu de la base : remplacé par la composition d'aujourd'hui
+    const perime = b => b.source === 'base' && b.cle && !clesN.has(b.cle);
+    N.blocs.forEach(n => {
+      const a = n.cle && out.find(b => b.cle === n.cle);
+      if (a && a.source === 'base' && !memeBloc(a, n)) { Object.assign(a, { type: n.type, segments: clone(n.segments), lignes: clone(n.lignes), date: n.date, petit: n.petit, origine: clone(n.origine) }); if (!a.lignes) delete a.lignes; modifies++; }
+    });
+    out = out.filter(b => { if (perime(b)) { retires++; return false; } return true; });
+    let ancre = null;
+    N.blocs.forEach((n, k) => {
+      const a = n.cle ? out.find(b => b.cle === n.cle) : null;
+      if (a) { ancre = a.id; return; }
+      if (!n.cle || retirees.has(n.cle)) return;
+      const b = { ...clone(n), id: nouvelId() };
+      let pos;
+      if (STRUCTURE.has(n.type)) {
+        const suivant = N.blocs.slice(k + 1).find(x => x.cle && STRUCTURE.has(x.type) && out.some(y => y.cle === x.cle));
+        pos = suivant ? out.findIndex(y => y.cle === suivant.cle) : out.length;
+      } else pos = ancre ? out.findIndex(y => y.id === ancre) + 1 : out.findIndex(y => y.type !== 'entete');
+      if (pos < 0) pos = out.length;
+      out.splice(pos, 0, b);
+      ancre = b.id; ajoutes++;
+    });
+    const composees = [...new Set([...(A.composees || []).filter(k => !String(k).startsWith('ancien:')), ...clesN])];
+    const c = { ...A, blocs: out, composees, instantane: N.instantane, compose_le: N.compose_le || new Date().toISOString() };
+    delete c.ancien;
+    return { contenu: c, ajoutes, modifies, retires };
+  }
+
+  // ================================================================================================ le planning (frise de l'équipe)
+  const toutGras = b => { const xs = (b.segments || []).filter(s => !s.amorce && s.texte.trim()); return xs.length > 0 && xs.every(s => s.gras); };
+  function planning(feuille, contexte) {
+    const ctx = contexte || {}, c = contenu(feuille, ctx);
+    const reps = (ctx.representations || []).filter(r => estJour(r?.jour)).map(r => r.jour).sort();
+    const ref = reps[0] || ctx.date?.debut || (c.instantane || []).map(r => r.jour).filter(estJour).sort()[0] || '';
+    const tous = [...new Set([...reps, ...(c.instantane || []).map(r => r.jour).filter(estJour)])];
+    const unJour = tous.length === 1 ? tous[0] : (estJour(ctx.date?.debut) && (!ctx.date?.fin || ctx.date.fin === ctx.date.debut) ? ctx.date.debut : null);
+    const out = [];
+    let jour = null, dansPlanning = false;
+    c.blocs.forEach((b, i) => {
+      if (b.type === 'rubrique') { jour = null; dansPlanning = /planning|programme|deroule|horaire|journee/.test(norm(texteBloc(b))); return; }
+      if (b.type === 'jour') { jour = b.date || dateDuTexte(texteBloc(b), ref) || null; return; }
+      if (!['ligne', 'puce', 'alerte'].includes(b.type)) return;
+      const j = jour || (dansPlanning ? unJour : null);
+      if (!j) return;
+      const v = visibles([b])[0];
+      if (!v) return;
+      const lu = lireHeure(texteSegs(v.segments));
+      const base = b.source === 'base' && b.origine;
+      const h = base ? b.origine.heure : lu?.heure, f = base ? b.origine.fin : lu?.fin ?? null;
+      if (!h) return;
+      const texte = (lu ? lu.reste : texteSegs(v.segments).replace(/^\s*[:–—-]\s*/, '')).trim();
+      out.push({ jour: base && b.origine.jour ? b.origine.jour : j, heure: h, fin: f || null, texte, accent: !!(b.origine?.rep) || toutGras(v), _i: i });
+    });
+    return out.sort((a, b) => a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : a.heure < b.heure ? -1 : a.heure > b.heure ? 1 : a._i - b._i).map(({ _i, ...x }) => x);
+  }
+
+  // ================================================================================================ les liens d'un texte
+  // les numéros de téléphone (tel:), les adresses électroniques (mailto:) et les adresses postales avec leur code postal
+  // (itinéraire), dans la version web et dans le PDF
+  const VOIES = '(?:rue|avenue|av\\.|bd|boulevard|place|pl\\.|chemin|all[ée]e|impasse|quai|route|rte|cours|square|esplanade|parvis|rond-point|voie|passage|sentier|hameau|lieu-dit|r[ée]sidence|zone|za|zi|zac|parc|promenade|mail|faubourg|cit[ée]|domaine|lotissement)';
+  const VILLE = "[A-ZÀ-Ýa-zà-ÿ][A-Za-zÀ-ÿ'’-]*(?:[ -](?:(?:sur|sous|en|le|la|les|lès|lez|de|du|des|aux?|d’|l’)[ -])?[A-ZÀ-Ý][A-Za-zÀ-ÿ'’-]*){0,3}";
+  const RE_ADRESSE = new RegExp(`(?:\\b\\d{1,4}(?:\\s?(?:bis|ter))?,?\\s+)?\\b${VOIES}\\s[^,;:()\\n]{1,60}?[\\s,/]+\\d{5}\\s+${VILLE}`, 'gi');
+  function jetons(texte) {
+    const s = String(texte || ''), trouves = [];
+    const chercher = (re, genre, href) => { const r = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g'); let m; while ((m = r.exec(s))) { trouves.push({ i: m.index, j: m.index + m[0].length, genre, href: href(m[0]) }); if (!m[0].length) r.lastIndex++; } };
+    chercher(RE_MEL, 'mel', x => `mailto:${x}`);
+    chercher(RE_TEL, 'tel', telLien);
+    chercher(RE_ADRESSE, 'adr', x => carteAdresse(x));
+    trouves.sort((a, b) => a.i - b.i || b.j - a.j);
+    const out = [];
+    let p = 0;
+    trouves.forEach(t => { if (t.i < p) return; if (t.i > p) out.push({ t: s.slice(p, t.i) }); out.push({ t: s.slice(t.i, t.j), href: t.href, genre: t.genre }); p = t.j; });
+    if (p < s.length) out.push({ t: s.slice(p) });
+    return out;
+  }
+
+  // ================================================================================================ la version web
+  const CSS_WEB = `
+.fdr{--fdr-encre:#151515;--fdr-gris:#5d5d5d;--fdr-trait:#e4e4e4;box-sizing:border-box;max-width:780px;margin:0 auto;padding:30px 36px 34px;background:#fff;color:var(--fdr-encre);
+  font-family:${POLICE};font-size:17px;line-height:1.36;font-kerning:normal;font-variant-ligatures:none;text-align:left;overflow-wrap:break-word;
+  border:1px solid var(--fdr-trait);border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 26px rgba(0,0,0,.06)}
+.fdr *{box-sizing:border-box}
+.fdr p,.fdr h1,.fdr h2,.fdr h3,.fdr h4,.fdr ul{margin:0;font-size:inherit;font-weight:inherit;line-height:inherit}
+.fdr-tete{margin:0 0 6px}
+.fdr-tete .fdr-l{font-size:1.2em;line-height:1.25}
+.fdr-tete .fdr-l.petit{font-size:1.02em;margin:2px 0}
+.fdr-tete h1.fdr-l{font-size:1.5em;line-height:1.15;margin:1px 0 3px}
+.fdr-alerte-h{margin:14px 0 0;padding:10px 13px;border-radius:8px;background:#fdecea;color:#8c1d16;font-size:.88em;font-weight:700}
+.fdr-rub{font-size:1.27em;font-weight:700;margin:1.15em 0 .3em;padding-bottom:.18em;border-bottom:1px solid var(--fdr-trait)}
+.fdr-st{font-weight:700;margin:.8em 0 .1em}
+.fdr-jour{font-weight:700;margin:.95em 0 .1em}
+.fdr-p{margin:0 0 .12em}
+.fdr-al{font-weight:700;color:${MISE.rouge};margin:0 0 .12em}
+.fdr-vide{height:.5em}
+.fdr ul.fdr-puces{list-style:none;padding:0;margin:.1em 0 .3em}
+.fdr ul.fdr-puces li{position:relative;padding-left:1.35em;margin:0 0 .12em}
+.fdr ul.fdr-puces li::before{content:"\\2022";position:absolute;left:.45em}
+.fdr .fdr-tab{overflow-x:auto;margin:.3em 0 .5em}
+.fdr table{border-collapse:collapse;font-size:.92em;min-width:60%}
+.fdr td{border:1px solid #9a9a9a;padding:4px 8px;vertical-align:top}
+.fdr .g{font-weight:700}
+.fdr .i{font-style:italic}
+.fdr .r{color:${MISE.rouge}}
+.fdr .s{background:${MISE.surligne};box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.fdr .moi{font-weight:700;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.fdr a{color:inherit;text-decoration:underline;text-decoration-color:rgba(0,0,0,.35);text-decoration-thickness:1px;text-underline-offset:2px}
+.fdr a:hover{text-decoration-color:currentColor}
+.fdr a.tel,.fdr a.mel{white-space:nowrap}
 @media (max-width:560px){
-  .feuille{padding:20px 16px 18px;border-left:0;border-right:0;border-radius:0;box-shadow:none;font-size:15.5px}
-  .feuille h1{font-size:25px}
-  .feuille .f-quand{font-size:17px}
-  .feuille .f-l{grid-template-columns:4.9em 1fr;gap:0 10px}
-  .feuille dl{grid-template-columns:1fr;gap:0}
-  .feuille dt{margin-top:8px}
+  .fdr{font-size:16px;padding:20px 16px 22px;border-left:0;border-right:0;border-radius:0;box-shadow:none}
+  .fdr-tete h1.fdr-l{font-size:1.38em}
 }
-@media print{
-  @page{size:A4;margin:14mm 15mm 16mm}
-  .feuille{max-width:none;margin:0;padding:0;border:0;border-top:4px solid var(--f-filet);border-radius:0;box-shadow:none;font-size:10.5pt;padding-top:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .feuille h1{font-size:21pt}
-  .feuille a{color:inherit;text-decoration:none}
-  .feuille .f-liens a{border:0;padding:0}
-  .feuille .f-liens a::after{content:" : " attr(href);font-weight:400;font-size:8.5pt;color:var(--f-gris);word-break:break-all}
-  .feuille .f-s>h2,.feuille .f-jourl{break-after:avoid}
-  .feuille .f-l,.feuille .f-c{break-inside:avoid}
-}`;
-  const lien = (url, texte) => { const u = lienSur(url); return u ? `<a href="${esc(u)}"${/^https?:/i.test(u) ? ' target="_blank" rel="noopener"' : ''}>${esc(texte)}</a>` : esc(texte); };
-  const RENDU_HTML = {
-    lignes: b => b.groupes.map(g => `${g.jour ? `<p class="f-jourl">${esc(g.jour)}</p>` : ''}${g.lignes.map(x => `<div class="f-l${x.accent ? ' f-accent' : ''}"><span class="f-h">${esc(x.h || '–')}${x.h2 ? `<small>jusqu’à ${esc(x.h2)}</small>` : ''}</span><span><span class="f-t">${esc(x.titre)}</span>${x.sous ? `<span class="f-sous">${esc(x.sous)}</span>` : ''}</span></div>`).join('')}`).join(''),
-    cartes: b => `<div class="f-cartes${b.compact ? ' f-compact' : ''}">${b.cartes.map(x => `<div class="f-c"><span class="f-qui"><span class="f-t">${esc(x.titre)}</span>${x.sous ? `<span class="f-sous">${esc(x.sous)}</span>` : ''}${(x.lignes || []).map(t => `<span class="f-sous">${esc(t)}</span>`).join('')}</span>${x.tel || x.email ? `<span class="f-coord">${x.tel ? lien(telLien(x.tel), telTexte(x.tel)) : ''}${x.email ? lien('mailto:' + x.email, x.email) : ''}</span>` : ''}</div>`).join('')}</div>`,
-    fiche: b => `<div class="f-fiche">${b.titre ? `<p class="f-titre-fiche">${esc(b.titre)}</p>` : ''}${b.lignes.map(t => `<p>${esc(t)}</p>`).join('')}${b.liens.length ? `<p class="f-liens">${b.liens.map(x => lien(x.url, x.texte)).join('')}</p>` : ''}${b.paires.length ? `<dl>${b.paires.map(([t, v]) => `<dt>${esc(t)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : ''}</div>`,
-    texte: b => `<div class="f-texte">${b.paragraphes.map(p => `<p>${esc(p)}</p>`).join('')}</div>`,
-    liste: b => `<ul class="f-docs">${b.items.map(x => `<li>${x.url ? lien(x.url, x.texte) : esc(x.texte)}</li>`).join('')}</ul>`,
-  };
+@media print{.fdr{border:0;box-shadow:none;max-width:none;padding:0;font-size:11pt}}`;
+  // le prénom de la personne qui lit, mis en valeur (mot entier, sans tenir compte des accents ni des majuscules)
+  function avecMoi(t, moi) {
+    const p = txt(moi?.prenom);
+    if (!p) return esc(t);
+    const s = String(t), n = norm(s), q = norm(p), out = [];
+    let i = 0, k;
+    while ((k = n.indexOf(q, i)) >= 0) {
+      const avant = n[k - 1], apres = n[k + q.length];
+      if ((!avant || !/[a-z0-9]/.test(avant)) && (!apres || !/[a-z0-9]/.test(apres))) { out.push(esc(s.slice(i, k)), `<strong class="moi">${esc(s.slice(k, k + q.length))}</strong>`); i = k + q.length; }
+      else { out.push(esc(s.slice(i, k + 1))); i = k + 1; }
+    }
+    out.push(esc(s.slice(i)));
+    return out.join('');
+  }
+  const urlDoc = (id, ctx) => { const x = (ctx.documents || []).find(y => String(y.id) === String(id)); return x ? lienSur(x.url) : ''; };
+  const cible = u => /^https?:/i.test(u) ? ' target="_blank" rel="noopener"' : '';
+  function htmlSegments(segs, ctx) {
+    return segs.map(s => {
+      const cls = [s.gras && 'g', s.italique && 'i', s.rouge && 'r', s.surligne && 's'].filter(Boolean).join(' ');
+      let dedans;
+      const u = s.doc != null ? urlDoc(s.doc, ctx) : s.lien || '';
+      if (u) dedans = `<a href="${esc(u)}"${cible(u)}>${avecMoi(s.texte, ctx.moi)}</a>`;
+      else dedans = jetons(s.texte).map(j => j.href ? `<a class="${j.genre}" href="${esc(j.href)}"${cible(j.href)}>${esc(j.t)}</a>` : avecMoi(j.t, ctx.moi)).join('');
+      return cls ? `<span class="${cls}">${dedans}</span>` : dedans;
+    }).join('');
+  }
+  // les horaires ont changé depuis cette version ? (contexte : la base d'aujourd'hui)
+  const cleRep = r => `${r.jour} ${h5(r.heure)} ${r.annulee ? 'annulée' : ''}`;
+  function alerteHoraires(c, ctx) {
+    const vivantes = r => estJour(r?.jour);
+    if (!Array.isArray(c.instantane) || !c.instantane.length || !Array.isArray(ctx.representations) || !ctx.representations.length) return '';
+    const a = c.instantane.filter(vivantes).map(cleRep).sort().join('|'), b = ctx.representations.filter(vivantes).map(r => cleRep({ ...r, annulee: !!r.annulee })).sort().join('|');
+    if (a === b) return '';
+    const plusieurs = new Set(ctx.representations.map(x => x.jour)).size > 1;
+    return `Les horaires ont changé depuis cette version de la feuille. Horaires à jour : ${trier(ctx.representations.filter(vivantes))
+      .map(r => `${plusieurs ? jourLong(r.jour, false) + ' ' : ''}${heureCourte(minutes(h5(r.heure))) || 'heure à préciser'}${r.annulee ? ' (annulée)' : ''}`).join(', ')}.`;
+  }
+  const estTitre = (b, ctx) => b.cle === 'entete:spectacle' || (txt(ctx.spectacle?.titre) && norm(texteBloc(b)).trim() === norm(ctx.spectacle.titre).trim());
   function html(feuille, contexte) {
-    const v = vue(feuille, contexte);
-    const seances = v.representations.map(g => `${g.jour ? `<li class="f-jour">${esc(g.jour)}</li>` : ''}${g.seances.map(s => `<li${s.annulee ? ' class="f-annulee"' : ''}>${s.h ? `<b>${esc(s.h)}</b>` : ''}${esc([s.texte, s.annulee ? 'annulée' : ''].filter(Boolean).join(', '))}</li>`).join('')}`).join('');
-    return `<style>${CSS}</style><article class="feuille" lang="fr" style="--f-filet:${v.filet};--f-fonce:${v.fonce};--f-teinte:${v.teinte}">
-<header><p class="f-sur">${esc(v.compagnie)} · Feuille de route</p><h1>${esc(v.titre)}</h1>${v.sousTitre ? `<p class="f-soustitre">${esc(v.sousTitre)}</p>` : ''}
-${v.quand ? `<p class="f-quand">${esc(v.quand)}</p>` : ''}${v.ou ? `<p class="f-ou">${esc(v.ou)}</p>` : ''}${seances ? `<ul class="f-seances" aria-label="Représentations">${seances}</ul>` : ''}
-${v.alerte ? `<p class="f-alerte" role="alert">${esc(v.alerte)}</p>` : ''}</header>
-${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.section)}</h2>${RENDU_HTML[s.forme](s)}</section>`).join('\n')}
-<footer class="f-pied"><span>${esc(v.compagnie)} · ${esc(v.titre)}${v.quandCourt ? ` · ${esc(v.quandCourt)}` : ''}</span><span>${esc(v.version)}</span></footer></article>`;
+    const ctx = contexte || {}, c = contenu(feuille, ctx), blocs = visibles(c.blocs);
+    let i = 0;
+    const tete = [];
+    while (i < blocs.length && blocs[i].type === 'entete') tete.push(blocs[i++]);
+    let h1 = false;
+    const ligneTete = b => {
+      const titre = !h1 && estTitre(b, ctx);
+      if (titre) h1 = true;
+      const tag = titre ? 'h1' : 'p';
+      return `<${tag} class="fdr-l${b.petit ? ' petit' : ''}">${htmlSegments(b.segments, ctx)}</${tag}>`;
+    };
+    const parties = [];
+    if (tete.length) parties.push(`<header class="fdr-tete">${tete.map(ligneTete).join('')}</header>`);
+    const alerte = alerteHoraires(c, ctx);
+    if (alerte) parties.push(`<p class="fdr-alerte-h" role="note">${esc(alerte)}</p>`);
+    let puces = [];
+    const finirPuces = () => { if (puces.length) parties.push(`<ul class="fdr-puces">${puces.join('')}</ul>`); puces = []; };
+    let videAvant = true;
+    for (; i < blocs.length; i++) {
+      const b = blocs[i];
+      if (b.type !== 'puce') finirPuces();
+      const corps = b.type === 'tableau' ? '' : htmlSegments(b.segments, ctx);
+      const vide = b.type !== 'tableau' && b.type !== 'saut' && !texteSegs(b.segments).trim();
+      if (b.type === 'saut') continue;
+      if (vide) { if (!videAvant) parties.push('<p class="fdr-vide" aria-hidden="true"></p>'); videAvant = true; continue; }
+      videAvant = false;
+      if (b.type === 'puce') { puces.push(`<li>${corps}</li>`); continue; }
+      if (b.type === 'tableau') { parties.push(`<div class="fdr-tab"><table><tbody>${b.lignes.map(l => `<tr>${l.map(x => `<td>${htmlSegments(x, ctx)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
+      const tag = { rubrique: 'h2', jour: 'h3', 'sous-titre': 'h4', entete: 'p' }[b.type] || 'p';
+      const cls = { rubrique: 'fdr-rub', jour: 'fdr-jour', 'sous-titre': 'fdr-st', alerte: 'fdr-al', entete: 'fdr-p g' }[b.type] || 'fdr-p';
+      parties.push(`<${tag} class="${cls}">${corps}</${tag}>`);
+    }
+    finirPuces();
+    return `<style>${cssPolices()}${CSS_WEB}</style><article class="fdr" lang="fr">${parties.join('\n')}</article>`;
   }
 
-  // ================================================================================================ PDF
-  const vendorDefaut = ICI ? new URL('vendor/', ICI).href : 'vendor/';
+  // ================================================================================================ PDF et impression
   let chargement = null;
   const script = src => new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => ko(new Error(`impossible de charger ${src}`)); document.head.append(s); });
   function charger() {
     if (typeof pdfMake !== 'undefined' && pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf']) return Promise.resolve();
     if (!chargement) {
-      const dossier = String(api.vendor || vendorDefaut).replace(/\/?$/, '/');
+      const dossier = dossierVendor();
       chargement = (typeof pdfMake !== 'undefined' ? Promise.resolve() : script(dossier + 'pdfmake.min.js'))
         .then(() => pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf'] ? null : script(dossier + 'vfs_fonts.js'))
         .catch(e => { chargement = null; throw e; });
     }
     return chargement;
   }
-  // la police du PDF (Roboto) n'a ni flèches ni espace fine : on les remplace
-  const pt = s => String(s ?? '').replace(/ /g, ' ').replace(/[→⟶]/g, '–').replace(/[←]/g, '–').replace(/[✓✔]/g, '•');
-  const ENCRE = '#1d1720', GRIS = '#5f5763', TRAIT = '#dcd5db';
-  const LARGEUR = 595.28 - 2 * 50;
-  const tableSobre = { hLineWidth: (i, n) => (i === 0 || i === n.table.body.length ? 0 : 0.5), vLineWidth: () => 0, hLineColor: () => TRAIT,
-    paddingLeft: i => (i === 0 ? 0 : 8), paddingRight: () => 0, paddingTop: () => 5, paddingBottom: () => 5 };
-  // les horaires, en retrait de quelques points : la teinte des représentations ne colle pas au texte
-  const tableLignes = { ...tableSobre, paddingLeft: i => (i === 0 ? 6 : 8), paddingRight: i => (i === 1 ? 6 : 0) };
-  const RENDU_PDF = {
-    // un tableau par jour : une journée ne se coupe pas d'une page à l'autre (sauf si elle dépasse une page)
-    lignes: (b, v) => ({ stack: b.groupes.map((g, n) => ({
-      table: { widths: [78, '*'], dontBreakRows: true, body: [
-        ...(g.jour ? [[{ text: pt(g.jour), colSpan: 2, bold: true, fontSize: 10, margin: [-6, n ? 8 : 2, 0, 0] }, {}]] : []),
-        ...g.lignes.map(x => [
-          { text: pt(x.h ? (x.h2 ? `${x.h} – ${x.h2}` : x.h) : '–'), bold: true, noWrap: true, fillColor: x.accent ? v.teinte : null },
-          { stack: [{ text: pt(x.titre), bold: !!x.accent }, ...(x.sous ? [{ text: pt(x.sous), color: GRIS, fontSize: 8.5, margin: [0, 1, 0, 0] }] : [])], fillColor: x.accent ? v.teinte : null }])] },
-      layout: tableLignes, unbreakable: g.lignes.length <= 22 })) }),
-    cartes: b => {
-      const qui = x => ({ stack: [{ text: pt(x.titre), bold: true }, ...(x.sous ? [{ text: pt(x.sous), color: GRIS, fontSize: 8.5 }] : []), ...(x.lignes || []).map(t => ({ text: pt(t), color: GRIS, fontSize: 8.5 }))] });
-      const tel = x => x.tel ? { text: pt(telTexte(x.tel)), link: telLien(x.tel), noWrap: true } : { text: '' };
-      // l'équipe sur deux colonnes : nom et fonction, téléphone ; les contacts sur une, avec l'adresse électronique
-      if (b.compact) {
-        const corps = [];
-        for (let i = 0; i < b.cartes.length; i += 2) { const [x, y] = [b.cartes[i], b.cartes[i + 1]]; corps.push([qui(x), tel(x), { text: '' }, ...(y ? [qui(y), tel(y)] : [{ text: '' }, { text: '' }])]); }
-        return { table: { widths: ['*', 'auto', 14, '*', 'auto'], dontBreakRows: true, body: corps }, layout: tableSobre };
-      }
-      return { table: { widths: ['*', 'auto', 'auto'], dontBreakRows: true, body: b.cartes.map(x => [qui(x), tel(x),
-        x.email ? { text: pt(x.email), link: 'mailto:' + x.email, color: GRIS } : { text: '' }]) }, layout: tableSobre };
-    },
-    fiche: (b, v) => ({ stack: [
-      ...(b.titre ? [{ text: pt(b.titre), bold: true, fontSize: 11, margin: [0, 4, 0, 1] }] : []),
-      ...b.lignes.map(t => ({ text: pt(t) })),
-      ...(b.liens.length ? [{ text: b.liens.flatMap((x, i) => [...(i ? [{ text: '   ' }] : []), { text: pt(x.texte), link: x.url, color: v.fonce, bold: true, decoration: 'underline' }]), margin: [0, 5, 0, 0] }] : []),
-      ...(b.paires.length ? [{ table: { widths: [78, '*'], body: b.paires.map(([t, x]) => [{ text: pt(t), color: GRIS }, { text: pt(x) }]) }, layout: tableSobre, margin: [0, 6, 0, 0] }] : [])] }),
-    texte: b => ({ stack: b.paragraphes.map((p, i) => ({ text: pt(p), margin: [0, i ? 5 : 3, 0, 0] })) }),
-    liste: (b, v) => ({ ul: b.items.map(x => (x.url ? { text: pt(x.texte), link: x.url, color: v.fonce } : { text: pt(x.texte) })), margin: [0, 4, 0, 0] }),
+  // FdR Sans pour pdfmake (vfs) ; sans elle (fichiers absents), le PDF prend Roboto
+  let policesPdf = null;
+  function polices() {
+    if (!policesPdf) {
+      const d = dossierVendor();
+      const base64 = buf => { const o = new Uint8Array(buf); let s = ''; for (let i = 0; i < o.length; i += 0x8000) s += String.fromCharCode.apply(null, o.subarray(i, i + 0x8000)); return btoa(s); };
+      policesPdf = Promise.all(Object.values(FICHIERS_POLICE).map(f => fetch(d + f).then(r => { if (!r.ok) throw new Error(`${f} : ${r.status}`); return r.arrayBuffer(); }).then(b => [f, base64(b)])))
+        .then(xs => Object.fromEntries(xs))
+        .catch(e => { console.warn('Feuille de route : police FdR Sans indisponible, le PDF prend Roboto.', e); return null; });
+    }
+    return policesPdf;
+  }
+  // le logo (noir), écrit à côté de ce fichier par maquettes/build.py ; sans lui, un badge
+  let logoCharge = null;
+  function logo() {
+    if (!logoCharge) {
+      const u = ICI ? new URL('logo-feuille.svg', ICI).href : 'logo-feuille.svg';
+      logoCharge = typeof fetch === 'undefined' ? Promise.resolve(null) : fetch(u).then(r => r.ok ? r.text() : null).then(t => t && /<svg[\s>]/.test(t) ? t : null).catch(() => null);
+    }
+    return logoCharge;
+  }
+  const logoUrl = () => ICI ? new URL('logo-feuille.svg', ICI).href : 'logo-feuille.svg';
+  // ce que FdR Sans (et Roboto, au besoin) n'a pas
+  const COUVERT = /[^ -~ -ſƒȘ-țˆ-˝ -⁯€№™←-↙−∕●◦]/g;
+  const pourPdf = (s, roboto) => {
+    let x = String(s ?? '').replace(/[✓✔]/g, '•').replace(/[⚠]/g, '!').replace(/[☎✆]/g, 'tél.').replace(/[■▪]/g, '•').replace(COUVERT, '');
+    if (roboto) x = x.replace(/ /g, ' ').replace(/[→⟶]/g, '–').replace(/[←]/g, '–');
+    return x;
   };
-  function definition(feuille, contexte) {
-    const v = vue(feuille, contexte);
-    const seances = v.representations.flatMap(g => [
-      ...(g.jour ? [{ text: pt(g.jour) + '  ', bold: true }] : []),
-      ...g.seances.flatMap((s, i) => [...(i ? [{ text: '   ·   ', color: GRIS }] : []), ...(s.h ? [{ text: pt(s.h) + ' ', bold: true, decoration: s.annulee ? 'lineThrough' : undefined }] : []),
-        { text: pt([s.texte, s.annulee ? 'annulée' : ''].filter(Boolean).join(', ')), decoration: s.annulee ? 'lineThrough' : undefined, color: s.annulee ? GRIS : ENCRE }]),
-      { text: '\n' }]);
-    if (seances.length) seances.pop();
-    const entete = [
-      { text: pt(`${v.compagnie} · Feuille de route`).toUpperCase(), fontSize: 8, bold: true, characterSpacing: 1.2, color: GRIS },
-      { text: pt(v.titre), fontSize: 23, bold: true, margin: [0, 6, 0, 0], lineHeight: 1.05 },
-      ...(v.sousTitre ? [{ text: pt(v.sousTitre), fontSize: 11, color: GRIS, margin: [0, 2, 0, 0] }] : []),
-      ...(v.quand ? [{ text: pt(v.quand), fontSize: 13, bold: true, margin: [0, 9, 0, 0] }] : []),
-      ...(v.ou ? [{ text: pt(v.ou), fontSize: 11, color: GRIS, margin: [0, 1, 0, 0] }] : []),
-      ...(seances.length ? [{ text: seances, fontSize: 10, margin: [0, 8, 0, 0], lineHeight: 1.35 }] : []),
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: LARGEUR, h: 3, color: v.filet }], margin: [0, 12, 0, 0] },
-      ...(v.alerte ? [{ table: { widths: ['*'], body: [[{ text: pt(v.alerte), color: '#8c1d16', bold: true, fillColor: '#fdecea', margin: [6, 4, 6, 4] }]] }, layout: 'noBorders', margin: [0, 10, 0, 0] }] : []),
-    ];
-    const titreSection = s => ({ stack: [{ text: pt(s.section).toUpperCase(), fontSize: 8.5, bold: true, characterSpacing: 1.2, color: GRIS },
-      { canvas: [{ type: 'line', x1: 0, y1: 3, x2: LARGEUR, y2: 3, lineWidth: 0.6, lineColor: TRAIT }] }], margin: [0, 18, 0, 4] });
-    // la hauteur d'une section, à peu près : sous une demi-page et demie, elle reste d'un seul tenant
-    const hauteur = s => s.forme === 'lignes' ? s.groupes.reduce((h, g) => h + (g.jour ? 24 : 0) + g.lignes.reduce((x, l) => x + (l.sous ? 30 : 20), 0), 0)
-      : s.forme === 'cartes' ? s.cartes.reduce((h, c) => h + 22 + (c.sous ? 11 : 0) + (c.lignes || []).length * 11, 0) / (s.compact ? 2 : 1)
-      : s.forme === 'fiche' ? 24 + s.lignes.length * 13 + (s.liens.length ? 18 : 0) + s.paires.reduce((h, [, x]) => h + 12 + Math.ceil(String(x).length / 80) * 12, 0)
-      : s.forme === 'texte' ? s.paragraphes.reduce((h, x) => h + 6 + Math.ceil(x.length / 95) * 12, 0) : (s.items || []).length * 13;
-    const corps = v.sections.flatMap(s => hauteur(s) < 430
-      ? [{ stack: [titreSection(s), RENDU_PDF[s.forme](s, v)], unbreakable: true }]
-      : [{ ...titreSection(s), headlineLevel: 1 }, RENDU_PDF[s.forme](s, v)]);
+  function inlinesPdf(segs, ctx, o) {
+    const out = [];
+    segs.forEach(s => {
+      const f = { ...(s.gras ? { bold: true } : {}), ...(s.italique ? { italics: true } : {}), ...(s.rouge ? { color: MISE.rouge } : {}), ...(s.surligne ? { background: MISE.surligne } : {}) };
+      const u = s.doc != null ? urlDoc(s.doc, ctx) : s.lien || '';
+      if (u) { out.push({ text: pourPdf(s.texte, o.roboto), link: u, ...f }); return; }
+      jetons(s.texte).forEach(j => out.push({ text: pourPdf(j.t, o.roboto), ...(j.href ? { link: j.href } : {}), ...f }));
+    });
+    return out.length ? out : [{ text: ' ' }];
+  }
+  // un document pdfmake, page pour page comme l'éditeur
+  function definition(feuille, contexte, o = {}) {
+    const ctx = contexte || {}, c = contenu(feuille, ctx), blocs = visibles(c.blocs);
+    const T = MISE.types, mm = x => x * PT_MM;
+    const roboto = !o.police || o.police === 'Roboto';
+    // Roboto n'a pas les métriques de Calibri : on garde au moins la même hauteur de ligne
+    const lh = roboto ? MISE.interligne / ((1900 + 500) / 2048) : 1;
+    const debuts = new Set((c.pages || []).map(String));
+    const forcer = debuts.size > 0;
+    const vide = b => b.type !== 'tableau' && !texteSegs(b.segments).trim();
+    const noeud = b => {
+      const t = T[b.type] || {};
+      const taille = b.type === 'entete' ? (b.petit ? MISE.petit : T.entete.taille) : t.taille || MISE.corps;
+      const texte = vide(b) ? [{ text: ' ' }] : inlinesPdf(b.segments, ctx, { roboto });
+      const commun = { fontSize: taille, ...(t.gras ? { bold: true } : {}), ...(t.rouge ? { color: MISE.rouge } : {}) };
+      if (b.type === 'tableau') {
+        return { table: { widths: b.lignes[0].map(() => '*'), body: b.lignes.map(l => l.map(x => ({ text: inlinesPdf(x, ctx, { roboto }), fontSize: t.taille }))) },
+          layout: { hLineWidth: () => 0.5, vLineWidth: () => 0.5, hLineColor: () => '#7a7a7a', vLineColor: () => '#7a7a7a', paddingLeft: () => 4, paddingRight: () => 4, paddingTop: () => 2, paddingBottom: () => 2 },
+          margin: [0, t.avant, 0, t.apres] };
+      }
+      if (b.type === 'puce') return { columns: [{ width: t.puce, text: '' }, { width: t.texte - t.puce, text: '•', fontSize: taille }, { width: '*', text: texte, ...commun }], columnGap: 0 };
+      return { text: texte, ...commun, margin: [0, t.avant || 0, 0, t.apres || 0] };
+    };
+    let i = 0;
+    const tete = [];
+    while (i < blocs.length && blocs[i].type === 'entete') tete.push(blocs[i++]);
+    const L = mm(MISE.logo);
+    const marque = o.logo
+      ? { svg: o.logo, width: L, margin: [0, 0, 0, mm(MISE.sousLogo)] }
+      : { stack: [{ canvas: [{ type: 'ellipse', x: L / 2, y: L / 2, r1: L / 2, r2: L / 2, color: '#1d1d1b' }] },
+        { text: 'crescite', color: '#ffffff', bold: true, fontSize: 15, alignment: 'center', relativePosition: { x: 0, y: -L / 2 - 10 } }], width: L, margin: [0, 0, 0, mm(MISE.sousLogo)] };
+    const contenuPdf = [{ columns: [{ width: L, stack: [marque] }, { width: '*', stack: tete.map(noeud), margin: [mm(MISE.logoEcart), 0, 0, 0] }], columnGap: 0 }];
+    let apresSaut = false;
+    for (; i < blocs.length; i++) {
+      const b = blocs[i];
+      if (b.type === 'saut') { apresSaut = true; continue; }
+      const n = noeud(b);
+      if ((forcer && debuts.has(String(b.id))) || apresSaut) n.pageBreak = 'before';
+      else if (!forcer && STRUCTURE.has(b.type)) n.headlineLevel = 1;
+      apresSaut = false;
+      contenuPdf.push(n);
+    }
+    const quand = c.blocs.find(b => b.cle === 'entete:quand');
+    const titre = `Feuille de route · ${txt(ctx.spectacle?.titre) || 'Crescite'}${quand ? ' · ' + texteBloc(quand) : ''}`;
     return {
-      pageSize: 'A4', pageMargins: [50, 54, 50, 50],
-      info: { title: pt(`Feuille de route · ${v.titre}${v.quandCourt ? ' · ' + v.quandCourt : ''}`), author: COMPAGNIE, subject: pt(v.version) },
-      defaultStyle: { font: 'Roboto', fontSize: 9.5, lineHeight: 1.22, color: ENCRE },
-      header: page => page === 1 ? null : { margin: [50, 24, 50, 0], columns: [
-        { text: pt(`${v.compagnie} · Feuille de route`), fontSize: 7.5, color: GRIS },
-        { text: pt(`${v.titre}${v.quandCourt ? ' · ' + v.quandCourt : ''}`), fontSize: 7.5, color: GRIS, alignment: 'right' }] },
-      footer: (page, pages) => ({ margin: [50, 18, 50, 0], columns: [
-        { text: pt(v.version), fontSize: 7.5, color: GRIS },
-        { text: `${page} / ${pages}`, fontSize: 7.5, color: GRIS, alignment: 'right' }] }),
-      content: [...entete, ...corps],
-      pageBreakBefore: (n, suivants) => n.headlineLevel === 1 && suivants.length < 3,
+      pageSize: 'A4', pageMargins: [mm(MISE.gauche), mm(MISE.haut), mm(MISE.droite), mm(MISE.bas - MISE.surete)],
+      info: { title: pourPdf(titre, roboto), author: COMPAGNIE, subject: feuille?.statut === 'publiee' ? `Version ${feuille.version || 1}` : 'Brouillon' },
+      defaultStyle: { font: roboto ? 'Roboto' : 'FdRSans', fontSize: MISE.corps, lineHeight: lh, color: MISE.encre },
+      footer: (p, n) => n > 1 ? { text: `${p} / ${n}`, alignment: 'right', fontSize: 8, color: MISE.gris, margin: [0, 6, mm(MISE.droite), 0] } : null,
+      content: contenuPdf,
+      // sans les pages de l'éditeur : un titre ne reste pas seul en bas de page
+      pageBreakBefore: (n, suivants) => !forcer && n.headlineLevel === 1 && suivants.length === 0,
     };
   }
   async function pdf(feuille, contexte) {
     await charger();
-    const dd = definition(feuille, contexte);
-    return new Promise((ok, ko) => { try { pdfMake.createPdf(dd).getBlob(ok); } catch (e) { ko(e); } });
+    const [vfsFdr, svg] = await Promise.all([polices(), logo()]);
+    const dd = definition(feuille, contexte, { police: vfsFdr ? 'FdRSans' : 'Roboto', logo: svg });
+    const fonts = { ...(pdfMake.fonts || {}), Roboto: { normal: 'Roboto-Regular.ttf', bold: 'Roboto-Medium.ttf', italics: 'Roboto-Italic.ttf', bolditalics: 'Roboto-MediumItalic.ttf' } };
+    if (vfsFdr) fonts.FdRSans = { normal: FICHIERS_POLICE.normal, bold: FICHIERS_POLICE.gras, italics: FICHIERS_POLICE.italique, bolditalics: FICHIERS_POLICE.grasItalique };
+    const vfs = { ...pdfMake.vfs, ...(vfsFdr || {}) };
+    const faire = def => new Promise((ok, ko) => { try { pdfMake.createPdf(def, null, fonts, vfs).getBlob(ok); } catch (e) { ko(e); } });
+    try { return await faire(dd); } catch (e) {
+      // un logo que pdfmake ne sait pas dessiner : le badge à sa place
+      if (!svg) throw e;
+      console.warn('Feuille de route : logo illisible pour le PDF, badge à la place.', e);
+      return faire(definition(feuille, contexte, { police: vfsFdr ? 'FdRSans' : 'Roboto', logo: null }));
+    }
   }
+  const slug = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const nomFichier = (feuille, contexte) => {
-    const v = vue(feuille, contexte);
-    const morceaux = ['feuille-de-route', v.slug, v.debut, feuille?.statut === 'publiee' ? `v${feuille.version || 1}` : 'brouillon'].filter(Boolean);
+    const ctx = contexte || {}, c = contenu(feuille, ctx);
+    const debut = (ctx.representations || []).map(r => r.jour).filter(estJour).sort()[0] || ctx.date?.debut || (c.instantane || []).map(r => r.jour).filter(estJour).sort()[0] || '';
+    const morceaux = ['feuille-de-route', txt(ctx.spectacle?.slug) || slug(ctx.spectacle?.titre), debut, feuille?.statut === 'publiee' ? `v${feuille.version || 1}` : 'brouillon'].filter(Boolean);
     return morceaux.join('-').replace(/[^a-z0-9.-]+/gi, '-') + '.pdf';
   };
   async function telecharger(feuille, contexte, nom) {
@@ -593,8 +930,53 @@ ${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.section)}</h2>$
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     return blob;
   }
+  // le HTML d'une page de la feuille (impression, éditeur) : les segments avec leurs marques, les amorces en option
+  function htmlBloc(b, { amorces = false } = {}) {
+    const segsHtml = xs => xs.map(s => {
+      if (s.amorce) return amorces ? `<span class="amorce" contenteditable="false" data-amorce="${esc(s.texte)}">${esc(s.texte)}</span>` : '';
+      const cls = [s.gras && 'g', s.italique && 'i', s.rouge && 'r', s.surligne && 's'].filter(Boolean);
+      const attrs = `${s.doc != null ? ` data-doc="${esc(s.doc)}"` : ''}${s.lien ? ` data-lien="${esc(s.lien)}"` : ''}`;
+      return cls.length || attrs ? `<span${cls.length ? ` class="${cls.join(' ')}"` : ''}${attrs}>${esc(s.texte)}</span>` : esc(s.texte);
+    }).join('');
+    if (b.type === 'saut') return '';
+    if (b.type === 'tableau') return `<div class="b b-tableau"><table><tbody>${b.lignes.map(l => `<tr>${l.map(x => `<td>${segsHtml(x) || '<br>'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return `<p class="b b-${b.type}${b.petit ? ' petit' : ''}">${segsHtml(b.segments) || '<br>'}</p>`;
+  }
+  // la feuille imprimée : les pages de l'éditeur (contenu.pages), sans amorces, avec le logo et les numéros. Sur la
+  // première page, l'en-tête tient à droite du logo, et ce qui suit commence sous le logo.
+  function impression(feuille, contexte, o = {}) {
+    const ctx = contexte || {}, c = contenu(feuille, ctx), blocs = visibles(c.blocs), debuts = new Set((c.pages || []).map(String));
+    const pages = [[]];
+    blocs.forEach((b, k) => {
+      if ((debuts.has(String(b.id)) || (k && blocs[k - 1].type === 'saut')) && pages[pages.length - 1].length) pages.push([]);
+      if (b.type !== 'saut') pages[pages.length - 1].push(b);
+    });
+    const marque = o.logo ? `<img class="imp-logo" src="${esc(o.logoUrl || logoUrl())}" alt="Crescite">` : '<span class="imp-logo imp-badge">crescite</span>';
+    const n = pages.length;
+    const page = (p, k) => {
+      let tete = '', reste = p;
+      if (k === 0) { let j = 0; while (j < p.length && p[j].type === 'entete') j++; tete = `<div class="imp-tete">${p.slice(0, j).map(b => htmlBloc(b)).join('')}</div>`; reste = p.slice(j); }
+      return `<section class="imp-page">${k === 0 ? marque : ''}<div class="fdr-imp">${tete}${reste.map(b => htmlBloc(b)).join('')}</div>${n > 1 ? `<span class="imp-num">${k + 1} / ${n}</span>` : ''}</section>`;
+    };
+    const titre = `Feuille de route · ${txt(ctx.spectacle?.titre)}`;
+    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(titre)}</title><style>${cssPolices()}
+@page{size:A4;margin:0}
+html,body{margin:0;background:#fff}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.imp-page{position:relative;width:${MISE.largeur}mm;height:${MISE.hauteur}mm;padding:${MISE.haut}mm ${MISE.droite}mm ${MISE.bas}mm ${MISE.gauche}mm;box-sizing:border-box;overflow:hidden;break-after:page;page-break-after:always}
+.imp-page:last-child{break-after:auto;page-break-after:auto}
+.imp-logo{position:absolute;left:${MISE.gauche}mm;top:${MISE.haut}mm;width:${MISE.logo}mm;height:${MISE.logo}mm;object-fit:contain}
+.imp-badge{display:flex;align-items:center;justify-content:center;border-radius:50%;background:#1d1d1b;color:#fff;font:700 15pt ${POLICE}}
+.imp-tete{min-height:${MISE.logo + MISE.sousLogo}mm}
+.imp-num{position:absolute;right:${MISE.droite}mm;top:${MISE.hauteur - MISE.bas + MISE.surete + 2.1}mm;font:8pt/1.2 ${POLICE};color:${MISE.gris}}
+${cssPage('.fdr-imp')}
+</style></head><body>${pages.map(page).join('')}</body></html>`;
+  }
 
-  const api = { composer, html, pdf, telecharger, vendor: vendorDefaut, SECTIONS, DEROULE, fusionner, trier, joursEtape, estApres, dureeMinutes,
-    dureeTexte, heure, jourLong, telTexte, telLien, itineraire, lireContact, nomFichier, definition, vue, css: CSS };
+  const api = {
+    composer, contenu, actualiser, planning, html, pdf, telecharger, impression, definition, nomFichier, vendor: vendorDefaut,
+    MISE, cssPage, cssPolices, logo, logoUrl, polices, htmlBloc, bloc, segments, visibles, texteBloc, lireHeure, dateDuTexte, nouvelId, jetons,
+    DEROULE, trier, joursEtape, estApres, dureeMinutes, dureeTexte, heure, heureCourte, jourLong, quandTexte, telTexte, telLien, itineraire, lireContact,
+  };
   return api;
 })();
