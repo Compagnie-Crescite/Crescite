@@ -433,12 +433,12 @@ D_SAISON = "2026-2027"
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("carte.js", "intro.js")
+OUTILS = ("donnees.js", "carte.js", "intro.js")
 
 
 def avec_outils(name, src):
-    """Ajoute, juste après les données D, les outils communs : la carte des tournées (carte.js) et l'ouverture
-    sur le logo (intro.js)."""
+    """Ajoute, juste après les données D, les outils communs : les données vivantes (donnees.js), la carte des
+    tournées (carte.js) et l'ouverture sur le logo (intro.js)."""
     if DATA_LIGNE not in src:
         raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
     js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS)
