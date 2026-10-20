@@ -25,6 +25,9 @@
   --fs-label:.8125rem;--fs-small:.9375rem;--fs-body:1.0625rem;--fs-h3:1.45rem;
   --fs-h2:clamp(2rem,1.5rem + 1.6vw,2.75rem);--fs-h1:clamp(2.5rem,1.4rem + 3.7vw,4.6rem);
   --ease:cubic-bezier(.3,.7,.2,1);
+  /* l'édition sur place (EDITION) : la barre, la connexion et le panneau des dates prennent l'ivoire, le prune et le rose */
+  --ed-fond:#faf6f3;--ed-encre:#1d1219;--ed-accent:#c2306f;--ed-sur-accent:#ffffff;
+  --ed-police:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;--ed-rayon:14px;--ed-trait:rgba(29,18,25,.2);
 }
 *,*::before,*::after{box-sizing:border-box}
 html{background:var(--aub);-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -785,6 +788,35 @@ table{border-collapse:collapse}
 @media (max-width:480px){.pied-grille{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:819px){.site-footer{padding-bottom:calc(32px + 80px + env(safe-area-inset-bottom))}}
 
+/* « Modifier le site » : discret, avec les liens légaux du pied, derrière sa petite porte */
+.pied-modifier{display:inline-flex;align-items:center;gap:7px;padding:0;border:0;background:none;color:#fff;font:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em;cursor:pointer}
+.pied-modifier .porte-ico{width:11px;height:16px;color:var(--rose-v)}
+.pied-modifier:hover{text-decoration-thickness:2px}
+/* un texte de bloc de D qui porte sa balise (titre, liste) : une enveloppe pour l'édition, sans effet sur la page */
+.prose > .bl:first-child > :first-child{margin-top:0}
+/* l'édition sur place, dans les portes : la barre comme l'en-tête prune, le panneau sous une arche
+   (préfixe html : l'outil ajoute ses styles après ceux-ci) */
+.ed-actif .uc-titre a::after,.ed-actif .uc-btn::after{display:none}
+.ed-boite[hidden],.ed-boite [hidden]{display:none!important}
+html .ed-barre{background:var(--aub);color:#fff;border-color:var(--line-dark);border-radius:30px 30px 12px 12px;box-shadow:inset 0 3px 0 var(--rose-v),0 18px 44px rgba(20,8,16,.45)}
+html .ed-barre .ed-etat{font-family:var(--serif);font-weight:400;font-size:1.15rem;font-variation-settings:"opsz" 30,"SOFT" 100}
+html .ed-barre .ed-etat::before{width:9px;height:13px;border-radius:999px 999px 0 0;background:var(--rose-v);vertical-align:-1px}
+html .ed-barre .ed-nb{color:var(--on-dark-2);opacity:1}
+html .ed-barre .ed-bt{background:transparent;border-color:var(--line-dark);color:#fff}
+html .ed-barre .ed-bt:hover{background:var(--aub-2);border-color:rgba(255,255,255,.4)}
+html .ed-barre .ed-bt.ed-plein{background:var(--rose);border-color:var(--rose);color:#fff}
+html .ed-barre .ed-bt.ed-plein:hover{background:#d4407f}
+html .ed-panneau{border-radius:42px 42px var(--ed-rayon) var(--ed-rayon)}
+.ed-panneau .ed-tete{padding-top:20px;background:var(--aub);color:#fff;border-bottom:0;box-shadow:inset 0 -3px 0 var(--rose-v)}
+.ed-panneau .ed-tete h2{font-family:var(--serif);font-weight:380;font-size:1.65rem;line-height:1.1;font-variation-settings:"opsz" 72,"SOFT" 100}
+.ed-panneau .ed-tete .ed-bt{background:transparent;border-color:var(--line-dark);color:#fff}
+.ed-panneau .ed-champ > span:first-child{font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--rose)}
+html .ed-panneau .ed-pied .ed-bt.ed-plein{background:var(--aub);border-color:var(--aub);color:#fff}
+html .ed-panneau .ed-pied .ed-bt.ed-plein:hover{background:var(--rose);border-color:var(--rose)}
+html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-shadow:inset 0 3px 0 var(--rose-v),0 8px 28px rgba(0,0,0,.35)}
+.ed-bt.ed-plein.ed-ajout{display:flex;width:fit-content;margin:4px 0 14px;padding:10px 20px 9px 16px;border:0;border-radius:24px 24px 4px 4px;background:var(--aub);color:#fff;font-family:var(--serif);font-weight:400;font-size:1rem;box-shadow:inset 0 2px 0 var(--rose-v)}
+.ed-bt.ed-plein.ed-ajout:hover{background:var(--aub-3)}
+
 /* l'ouverture, habillée dans le prune */
 .intro.intro-m04 .intro-indice{color:#f07ab6}
 
@@ -862,8 +894,18 @@ table{border-collapse:collapse}
   const memo = () => { try { const v = sessionStorage.getItem(CLE_MEMO); return v && X.ENTREE[v] ? v : null; } catch (e) { return null; } };
   const retenir = cle => { try { sessionStorage.setItem(CLE_MEMO, cle); } catch (e) { /* stockage indisponible */ } };
 
-  // les blocs HTML d'origine : un fragment sans balise de bloc devient un paragraphe
-  const bloc = h => /^\s*<(h[1-6]|ul|ol|p|div|blockquote|table|figure)\b/i.test(h) ? h : `<p>${h}</p>`;
+  // l'édition sur place (EDITION) : chaque texte affiché qui vient de D porte son chemin dans D (data-edit), l'élément
+  // contenant exactement la valeur ; les photos des spectacles (data-edit-photo) ; les lignes d'agenda (data-date-id)
+  const ed = chemin => typeof chemin === 'string' && chemin ? ` data-edit="${esc(chemin)}"` : '';
+  const edS = (s, ...k) => ed(['shows', s.slug, ...k].join('.'));
+  const edP = (s, ...k) => ` data-edit-photo="${esc(['shows', s.slug, ...k].join('.'))}"`;
+  const rangPh = (s, p) => (s.photos || []).indexOf(p);
+  // des lignes de D, chacune dans son élément (au lieu d'un join('<br>') qui les fondrait en un seul texte)
+  const lignesEd = (ls, base, cls = '') => (ls || []).map((x, i) => `<span${cls ? ` class="${cls}"` : ''}${ed(`${base}.${i}`)}>${esc(x)}</span>`).join('<br>');
+  // les blocs HTML d'origine : un fragment sans balise de bloc devient un paragraphe (chemin : son chemin dans D ; un
+  // bloc qui porte déjà sa balise, titre ou liste, est enveloppé pour que l'élément annoté contienne exactement la valeur)
+  const BLOC = /^\s*<(h[1-6]|ul|ol|p|div|blockquote|table|figure)\b/i;
+  const bloc = (h, chemin) => BLOC.test(h) ? (ed(chemin) ? `<div class="bl"${ed(chemin)}>${h}</div>` : h) : `<p${ed(chemin)}>${h}</p>`;
   const sousTitres = h => String(h).replace(/<(\/?)h2\b/gi, '<$1h3');
   const logo = () => String((D.logo && D.logo.octopusWord) || '').replace(/\srole="img"/, '').replace(/\saria-label="[^"]*"/, ' aria-hidden="true" focusable="false"');
   const porteIco = () => '<svg class="porte-ico" viewBox="0 0 20 30" aria-hidden="true" focusable="false"><path d="M1.5 29V10a8.5 8.5 0 0 1 17 0v19z" fill="none" stroke="currentColor" stroke-width="1.5"/><path class="porte-fond" d="M5 29V10.6a5 5 0 0 1 10 0V29z" fill="currentColor" opacity=".35"/><circle cx="12.4" cy="19" r="1.1" fill="currentColor"/></svg>';
@@ -928,11 +970,11 @@ table{border-collapse:collapse}
       </div>
     </li>`;
   }
-  const groupeMois = (g, entree) => `<section class="groupe"><h3 class="mois">${esc(g.m)}</h3><ol>${g.ds.map(d => ligneDate(d, { entree })).join('')}</ol></section>`;
+  const groupeMois = (g, entree) => `<section class="groupe"><h3 class="mois">${esc(g.m)}</h3><ol data-agenda="">${g.ds.map(d => ligneDate(d, { entree })).join('')}</ol></section>`;
   function ligneSaison(t) {
     const i = t.ligne.indexOf(' — '), quand = i > 0 ? t.ligne.slice(0, i) : t.ligne, ou = i > 0 ? t.ligne.slice(i + 3) : '';
     const corps = `<span class="sl-quand">${esc(quand)}</span>${ou ? `<span aria-hidden="true"> — </span><span class="sl-ou">${esc(ou)}</span>` : ''}`;
-    return `<li class="sl${t.etat ? ' annule' : ''}" data-l="${t.l ?? ''}">
+    return `<li class="sl${t.etat ? ' annule' : ''}" data-date-id="${esc(t.id ?? '')}" data-l="${t.l ?? ''}">
       <p class="sl-ligne">${t.lien ? `<a href="${esc(t.lien)}">${corps}<span class="ext" aria-hidden="true">↗</span></a>` : corps}</p>
       ${t.etat ? `<p class="sl-etat">${esc(t.etat)}</p>` : ''}
       ${details(t.details)}
@@ -1081,37 +1123,39 @@ table{border-collapse:collapse}
   }
 
   /* ---------- les morceaux communs ---------- */
-  function tete({ titre, retour = null }) {
+  function tete({ titre, retour = null, chemin = null }) {
     return `<header class="page-hero">
       <div class="wrap">
         ${retour ? `<a class="back" href="${esc(retour.href)}"><span aria-hidden="true">←</span>${esc(retour.texte)}</a>` : ''}
-        <h1 class="page-title" tabindex="-1">${esc(titre)}</h1>
+        <h1 class="page-title" tabindex="-1"${ed(chemin)}>${esc(titre)}</h1>
       </div>
     </header>`;
   }
   // l'en-tête d'une entrée : son titre, et la porte qu'on vient de passer, ouverte dans sa couleur
-  const heroEntree = (e, lead = '') => `<header class="page-hero entree-hero" style="--v:${esc(e.couleurVive)};--c:${esc(e.couleur)}">
+  const heroEntree = (e, lead = '', chemin = null) => `<header class="page-hero entree-hero" style="--v:${esc(e.couleurVive)};--c:${esc(e.couleur)}">
     <div class="wrap hero-grille">
-      <div><h1 class="page-title" tabindex="-1">${esc(e.texte)}</h1>${lead ? `<p class="hero-lead">${lead}</p>` : ''}</div>
+      <div><h1 class="page-title" tabindex="-1">${esc(e.texte)}</h1>${lead ? `<p class="hero-lead"${ed(chemin)}>${lead}</p>` : ''}</div>
       <span class="arche hero-porte" aria-hidden="true"><span class="arche-lumiere"></span><span class="arche-battant"></span></span>
     </div>
   </header>`;
   const ecrireBande = e => `<section class="ecrire-s" style="--v:${esc(e.couleurVive)};--c:${esc(e.couleur)}"><div class="wrap ecrire-in">${arche()}<a class="btn-ecrire" href="${esc(X.S.ecrire ? X.S.ecrire.href : '#/contact')}">${esc(X.L.ecrire)}<span aria-hidden="true">→</span></a></div></section>`;
   const ecrireLien = () => `<p class="ecrire"><a class="btn-ecrire" href="${esc(X.S.ecrire ? X.S.ecrire.href : '#/contact')}">${esc(X.L.ecrire)}<span aria-hidden="true">→</span></a></p>`;
-  const ficheEquipe = s => `${(s.fiche || []).length ? `<ul class="fiche">${s.fiche.map(f => `<li>${f.libelle ? `<span class="fiche-l">${esc(f.libelle)}</span> ` : ''}<span>${f.valeur}</span></li>`).join('')}</ul>` : ''}${s.avec ? `<p class="avec"><span class="fiche-l">${esc(s.avec.libelle)}</span> ${s.avec.valeur}</p>` : ''}`;
+  const ficheEquipe = s => `${(s.fiche || []).length ? `<ul class="fiche">${s.fiche.map((f, i) => `<li>${f.libelle ? `<span class="fiche-l"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></li>`).join('')}</ul>` : ''}${s.avec ? `<p class="avec"><span class="fiche-l"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''}`;
   const etatDe = s => s.statut || (s.enTournee ? X.L.enTournee : '');
+  // l'état d'un spectacle (son statut, modifiable, ou « En tournée »), dans l'élément donné
+  const etatEd = (s, balise, cls) => { const e = etatDe(s); return e ? `<${balise} class="${cls}"${s.statut ? edS(s, 'statut') : ''}>${esc(e)}</${balise}>` : ''; };
 
   // une carte de spectacle, dans son univers
   function carteUnivers(s, { href, h = 'h2', accroche = false } = {}) {
-    const u = X.U[s.slug], etat = etatDe(s);
+    const u = X.U[s.slug];
     return `<li class="uc univ" ${uAttrs(s)}>
-      <div class="uc-photo">${photo(s.slug, s.titre, cadrage(s))}${etat ? `<span class="uc-etat">${esc(etat)}</span>` : ''}</div>
+      <div class="uc-photo"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}${etatEd(s, 'span', 'uc-etat')}</div>
       <div class="uc-corps">
-        ${s.lieuTemps ? `<p class="uc-kicker">${esc(s.lieuTemps)}</p>` : ''}
-        <${h} class="uc-titre u-titre"><a href="${esc(href)}">${esc(s.titre)}</a></${h}>
-        ${s.sousTitre ? `<p class="uc-sous">${s.sousTitre}</p>` : ''}
-        ${accroche && s.accroche ? `<p class="uc-accroche">${esc(s.accroche)}</p>` : ''}
-        <p class="uc-creation">${esc(s.creation)}</p>
+        ${s.lieuTemps ? `<p class="uc-kicker"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}
+        <${h} class="uc-titre u-titre"><a href="${esc(href)}"${edS(s, 'titre')}>${esc(s.titre)}</a></${h}>
+        ${s.sousTitre ? `<p class="uc-sous"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+        ${accroche && s.accroche ? `<p class="uc-accroche"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
+        <p class="uc-creation"${edS(s, 'creation')}>${esc(s.creation)}</p>
       </div>
       ${motifSvg(u.motif, 'uc-motif')}
     </li>`;
@@ -1137,28 +1181,28 @@ table{border-collapse:collapse}
     const prochaine = d => {
       const { jour, mois } = decoupe(d.ligneDate), k = d.scolaire ? 'etablissement' : 'voir', e = ENTREE[k] || {};
       const page = bySlug[d.slug], balise = page ? 'a' : 'div';
-      return `<li class="pr" data-l="${d.l ?? ''}"><${balise} class="pr-a"${page ? ` href="#/spectacle/${esc(d.slug)}/${k}"` : ''}>
+      return `<li class="pr" data-date-id="${esc(d.id ?? '')}" data-l="${d.l ?? ''}"><${balise} class="pr-a"${page ? ` href="#/spectacle/${esc(d.slug)}/${k}"` : ''}>
         <span class="pr-quand"><span class="pr-jour">${esc(jour)}</span>${mois ? ` <span class="pr-mois">${esc(mois)}</span>` : ''}</span>
         <span class="pr-ou">${esc(d.ligneLieu)}</span><span class="pr-quoi">${esc(d.titre)}</span>
         <span class="pr-tag" style="--t:${esc(e.couleurVive || '#fff')}">${esc(d.scolaire ? L.scolaire : L.toutPublic)}</span></${balise}></li>`;
     };
-    const affiche = d => {
+    const affiche = (d, i) => {
       const s = bySlug[d.slug];
       if (!s) return '';
-      const t = (d.titre || [s.titre]).join(' ');
+      const t = (d.titre || [s.titre]).join(' '), dp = `site.diaporama.${i}`;
       return `<li class="uc univ" ${uAttrs(s)}>
-        <div class="uc-photo">${photo(s.slug, t, cadrage(s))}</div>
+        <div class="uc-photo"${edP(s, 'photo')}>${photo(s.slug, t, cadrage(s))}</div>
         <div class="uc-corps">
-          <p class="uc-kicker">${esc(s.lieuTemps || s.creation)}</p>
-          <h3 class="uc-titre u-titre">${(d.titre || [s.titre]).map(x => `<span>${esc(x)}</span>`).join(' ')}</h3>
-          <div class="uc-bas"><a class="uc-btn" href="${esc(d.href)}" aria-label="${esc(`${d.bouton} ${t}`)}">${esc(d.bouton)}</a><p class="uc-credit">${esc(d.credit)}</p></div>
+          <p class="uc-kicker"${edS(s, s.lieuTemps ? 'lieuTemps' : 'creation')}>${esc(s.lieuTemps || s.creation)}</p>
+          <h3 class="uc-titre u-titre">${(d.titre || [s.titre]).map((x, j) => `<span${d.titre ? ed(`${dp}.titre.${j}`) : edS(s, 'titre')}>${esc(x)}</span>`).join(' ')}</h3>
+          <div class="uc-bas"><a class="uc-btn" href="${esc(d.href)}" aria-label="${esc(`${d.bouton} ${t}`)}">${esc(d.bouton)}</a><p class="uc-credit"${ed(`${dp}.credit`)}>${esc(d.credit)}</p></div>
         </div>
         ${motifSvg(X.U[s.slug].motif, 'uc-motif')}
       </li>`;
     };
     return `<section class="seuil" aria-labelledby="h-accueil">
       <div class="wrap">
-        <h1 class="seuil-nom" id="h-accueil" tabindex="-1">${esc(S.nom)}</h1>
+        <h1 class="seuil-nom" id="h-accueil" tabindex="-1"${ed('site.nom')}>${esc(S.nom)}</h1>
         <ul class="doors">${ENTREES.map(porte).join('')}</ul>
       </div>
     </section>
@@ -1167,7 +1211,7 @@ table{border-collapse:collapse}
         <div class="bande-tete"><h2 class="bande-titre" id="h-saison">${esc(SAISON0.titre)}</h2></div>
         <div class="bande-carte">${carte({ lieux: CARTE.aVenir(), titre: SAISON0.titre, interactif: true, prochain: DATES[0] ? DATES[0].l : null })}</div>
         <div class="bande-liste">
-          <ol class="prochaines" data-liste>${DATES.slice(0, 5).map(prochaine).join('')}</ol>
+          <ol class="prochaines" data-liste data-agenda="">${DATES.slice(0, 5).map(prochaine).join('')}</ol>
           <p class="bande-plus">${['voir', 'etablissement'].filter(k => ENTREE[k]).map(k => `<a class="fleche" href="${esc(ENTREE[k].href)}" style="--t:${esc(ENTREE[k].couleurVive)}">${esc(ENTREE[k].court)}<span aria-hidden="true">→</span></a>`).join('')}</p>
         </div>
       </div>
@@ -1178,7 +1222,7 @@ table{border-collapse:collapse}
         <ul class="ucartes affiches">${(S.diaporama || []).map(affiche).join('')}</ul>
       </div>
     </section>
-    ${S.donateurs ? `<section class="merci"><div class="wrap"><p>${S.donateurs}</p></div></section>` : ''}`;
+    ${S.donateurs ? `<section class="merci"><div class="wrap"><p${ed('site.donateurs')}>${S.donateurs}</p></div></section>` : ''}`;
   }
 
   /* ---------- je viens voir un spectacle : les prochaines dates, puis l'agenda passé, une arche par saison ---------- */
@@ -1404,24 +1448,28 @@ table{border-collapse:collapse}
   }
 
   /* ---------- je souhaite programmer ---------- */
+  // les faits d'un spectacle pour programmer, chacun avec son chemin dans D : [valeur, chemin]
+  const faitsDe = s => { const P = s.programmer || {}, k = c => `shows.${s.slug}.${c}`;
+    return [[P.format, k('programmer.format')], [P.duree || s.duree, k(P.duree ? 'programmer.duree' : 'duree')], [P.jauge, k('programmer.jauge')],
+      [P.equipe, k('programmer.equipe')], [P.actualite, k('programmer.actualite')]].filter(([v]) => v); };
   function fichePro(s) {
     const { L } = X, P = s.programmer || {};
-    const faits = [P.format, P.duree || s.duree, P.jauge, P.equipe, P.actualite].filter(Boolean);
+    const faits = faitsDe(s);
     return `<li class="fp univ" ${uAttrs(s)}>
-      <div class="fp-photo">${photo(s.slug, s.titre, cadrage(s))}</div>
+      <div class="fp-photo"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}</div>
       <div class="fp-main">
-        <p class="fp-kicker"><span>${esc(s.creation)}</span>${s.statut ? `<span class="etat">${esc(s.statut)}</span>` : ''}</p>
-        <h3 class="fp-titre u-titre"><a href="#/spectacle/${esc(s.slug)}/programmer">${esc(s.titre)}</a></h3>
-        ${s.sousTitre ? `<p class="fp-sous">${s.sousTitre}</p>` : ''}
-        ${P.representations ? `<p class="fp-repr">${esc(P.representations)}</p>` : ''}
-        ${faits.length ? `<ul class="faits">${faits.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-        ${(P.equipeCreation || []).length ? `<ul class="fp-equipe-c">${P.equipeCreation.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+        <p class="fp-kicker"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.statut ? `<span class="etat"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</p>
+        <h3 class="fp-titre u-titre"><a href="#/spectacle/${esc(s.slug)}/programmer"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>
+        ${s.sousTitre ? `<p class="fp-sous"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+        ${P.representations ? `<p class="fp-repr"${edS(s, 'programmer', 'representations')}>${esc(P.representations)}</p>` : ''}
+        ${faits.length ? `<ul class="faits">${faits.map(([f, k]) => `<li${ed(k)}>${esc(f)}</li>`).join('')}</ul>` : ''}
+        ${(P.equipeCreation || []).length ? `<ul class="fp-equipe-c">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}
         <p class="fp-actions">
           <a class="u-btn plein" href="#/spectacle/${esc(s.slug)}/programmer" aria-label="${esc(`${L.decouvrir} ${s.titre}`)}">${esc(L.decouvrir)}<span aria-hidden="true">→</span></a>
           ${P.ficheTechnique ? `<a class="u-btn" href="#/spectacle/${esc(s.slug)}/programmer">${esc(L.ficheTechnique)}</a>` : ''}
           ${s.video && s.video.url ? `<a class="u-btn" href="${esc(s.video.url)}"><span aria-hidden="true">▶</span>${esc(L.bandeAnnonce)}<span class="ext" aria-hidden="true">↗</span></a>` : ''}
         </p>
-        ${P.lieux ? `<details class="fp-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p>${esc(P.lieux)}</p></details>` : ''}
+        ${P.lieux ? `<details class="fp-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}
       </div>
       <div class="fp-equipe">${ficheEquipe(s)}</div>
     </li>`;
@@ -1450,25 +1498,25 @@ table{border-collapse:collapse}
         <div class="bande-liste"><div class="tout-detail" data-detail style="--t:${esc(e.couleurVive)}">${detailLieu(tous[0])}</div></div>
       </div>
     </section>
-    ${S.partenaires ? `<section class="partenaires-s"><div class="wrap"><p class="partenaires">${S.partenaires}</p></div></section>` : ''}
+    ${S.partenaires ? `<section class="partenaires-s"><div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p></div></section>` : ''}
     ${ecrireBande(e)}`;
   }
 
   /* ---------- je représente un établissement scolaire ---------- */
   function carteAction(s) {
-    const { L } = X, A = s.actionCulturelle || {}, t = (A.textes || [])[0];
+    const { L } = X, A = s.actionCulturelle || {}, t = (A.textes || [])[0], ac = (...k) => edS(s, 'actionCulturelle', ...k);
     return `<li class="ac univ" ${uAttrs(s)}>
       <div>
-        <h3 class="ac-titre u-titre"><a href="#/spectacle/${esc(s.slug)}/etablissement">${esc(s.titre)}</a></h3>
-        <p class="ac-creation">${esc(s.creation)}</p>
+        <h3 class="ac-titre u-titre"><a href="#/spectacle/${esc(s.slug)}/etablissement"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>
+        <p class="ac-creation"${edS(s, 'creation')}>${esc(s.creation)}</p>
         <p class="etiquette">${esc(L.actionCulturelle)}</p>
-        ${A.type ? `<p class="action-type">${esc(A.type)}</p>` : `<p class="action-type vide">${esc(L.aCompleter)}</p>`}
-        ${A.public || A.statut ? `<ul class="action-meta">${A.public ? `<li><span class="meta-l">${esc(L.public)}</span> ${esc(A.public)}</li>` : ''}${A.statut ? `<li>${esc(A.statut)}</li>` : ''}</ul>` : ''}
+        ${A.type ? `<p class="action-type"${ac('type')}>${esc(A.type)}</p>` : `<p class="action-type vide">${esc(L.aCompleter)}</p>`}
+        ${A.public || A.statut ? `<ul class="action-meta">${A.public ? `<li><span class="meta-l">${esc(L.public)}</span> <span${ac('public')}>${esc(A.public)}</span></li>` : ''}${A.statut ? `<li${ac('statut')}>${esc(A.statut)}</li>` : ''}</ul>` : ''}
       </div>
       <div>
-        ${t ? `<div class="ac-texte">${bloc(t.texte)}</div>` : ''}
-        ${(A.formule || []).length ? `<ul class="formule">${A.formule.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-        ${(A.dispositifs || []).length ? `<div class="dispositifs"><p class="etiquette">${esc(L.dispositifs)}</p><ul>${A.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+        ${t ? `<div class="ac-texte">${bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.0.texte`)}</div>` : ''}
+        ${(A.formule || []).length ? `<ul class="formule">${A.formule.map((f, i) => `<li${ac('formule', i)}>${esc(f)}</li>`).join('')}</ul>` : ''}
+        ${(A.dispositifs || []).length ? `<div class="dispositifs"><p class="etiquette">${esc(L.dispositifs)}</p><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
         <p class="ac-liens">
           ${A.dossier ? `<a class="u-btn plein" href="#/spectacle/${esc(s.slug)}/etablissement">${esc(L.dossierScolaire)}<span aria-hidden="true">→</span></a>` : ''}
           <a class="u-btn${A.dossier ? '' : ' plein'}" href="#/spectacle/${esc(s.slug)}/etablissement" aria-label="${esc(`${L.decouvrir} ${s.titre}`)}">${esc(L.decouvrir)}<span aria-hidden="true">→</span></a>
@@ -1480,14 +1528,15 @@ table{border-collapse:collapse}
     const { L, SHOWS } = X, s = SHOWS.find(x => x.dossier && D.dossiers && D.dossiers[x.dossier]);
     if (!s) return '';
     const DB = D.dossiers[s.dossier], ph = (s.photos || []).find(p => p.etablissement && p.source === 'dossier' && D.photos && D.photos[p.cle]);
+    const edD = (...k) => ed(['dossiers', s.dossier, ...k].join('.'));
     return `<section class="dossier-une univ" ${uAttrs(s)} aria-labelledby="h-dossier"><div class="wrap du-grille">
-      ${ph ? `<div class="du-photo">${photo(ph.cle, ph.legende || s.titre)}</div>` : '<div></div>'}
+      ${ph ? `<div class="du-photo"${edP(s, 'photos', rangPh(s, ph))}>${photo(ph.cle, ph.legende || s.titre)}</div>` : '<div></div>'}
       <div class="du-corps">
         <p class="du-type">${esc(L.dossierScolaire)}</p>
-        <h2 class="du-titre u-titre" id="h-dossier">${esc(DB.titre || s.titre)}</h2>
-        ${DB.auteur ? `<p class="du-auteur">${esc(DB.auteur)}</p>` : ''}
-        <ul class="du-faits">${[DB.public, DB.format, DB.duree].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-        ${DB.cession && (DB.cession.formule || []).length ? `<ul class="formule">${DB.cession.formule.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+        <h2 class="du-titre u-titre" id="h-dossier"${DB.titre ? edD('titre') : edS(s, 'titre')}>${esc(DB.titre || s.titre)}</h2>
+        ${DB.auteur ? `<p class="du-auteur"${edD('auteur')}>${esc(DB.auteur)}</p>` : ''}
+        <ul class="du-faits">${['public', 'format', 'duree'].filter(k => DB[k]).map(k => `<li${edD(k)}>${esc(DB[k])}</li>`).join('')}</ul>
+        ${DB.cession && (DB.cession.formule || []).length ? `<ul class="formule">${DB.cession.formule.map((f, i) => `<li${edD('cession', 'formule', i)}>${esc(f)}</li>`).join('')}</ul>` : ''}
         <a class="u-btn plein" href="#/spectacle/${esc(s.slug)}/etablissement">${esc(L.dossierScolaire)}<span aria-hidden="true">→</span></a>
       </div>
     </div></section>`;
@@ -1498,7 +1547,7 @@ table{border-collapse:collapse}
     const autres = SHOWS.filter(s => !(s.actionCulturelle || {}).lieu);
     const groupe = (lieu, id) => { const ls = de(lieu); return ls.length ? `<section aria-labelledby="${id}"><h2 class="sec-titre ac-groupe-t" id="${id}">${esc((L.lieu || {})[lieu])}</h2><ul class="acs">${ls.map(carteAction).join('')}</ul></section>` : ''; };
     const galerie = [1, 2, 3, 4].map(i => `actions-culturelles/g-${i}`).filter(k => D.photos && D.photos[k]);
-    return `${heroEntree(e, S.ecole ? esc(S.ecole.texte) : '')}
+    return `${heroEntree(e, S.ecole ? esc(S.ecole.texte) : '', 'site.ecole.texte')}
     ${dossierUne()}
     <section class="section"><div class="wrap ac-groupes">
       ${groupe('etablissement', 'g-etablissement')}
@@ -1506,10 +1555,10 @@ table{border-collapse:collapse}
       ${autres.length ? `<ul class="acs">${autres.map(carteAction).join('')}</ul>` : ''}
     </div></section>
     ${(A.blocs || []).length ? `<section class="section" aria-labelledby="h-actions" style="padding-top:0"><div class="wrap actions">
-      <figure class="actions-photo"><div class="arche-img">${photo('actions-culturelles', A.titre)}</div>${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure>
+      <figure class="actions-photo"><div class="arche-img">${photo('actions-culturelles', A.titre)}</div>${A.credit ? `<figcaption${ed('site.actions.credit')}>${esc(A.credit)}</figcaption>` : ''}</figure>
       <div>
-        <h2 class="sec-titre" id="h-actions">${esc(A.titre)}</h2>
-        <div class="prose">${A.blocs.map(b => sousTitres(bloc(b))).join('')}</div>
+        <h2 class="sec-titre" id="h-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2>
+        <div class="prose">${A.blocs.map((b, i) => sousTitres(bloc(b, `site.actions.blocs.${i}`))).join('')}</div>
         ${galerie.length ? `<ul class="galerie-ac">${galerie.map(k => `<li>${photo(k, A.titre)}</li>`).join('')}</ul>` : ''}
       </div>
     </div></section>` : ''}
@@ -1532,41 +1581,49 @@ table{border-collapse:collapse}
   }
 
   /* ---------- un spectacle, dans son univers ---------- */
-  function titreRevele(lignes) {                       // le titre se révèle lettre à lettre
+  function titreRevele(lignes, attrs = []) {             // le titre se révèle lettre à lettre
     let i = 0;
-    return lignes.map(l => `<span class="ligne">${String(l).split(' ').map(m => `<span class="mot">${[...m].map(c => `<span class="lt" style="--i:${Math.min(i++, 30)}">${esc(c)}</span>`).join('')}</span>`).join(' ')}</span>`).join(' ');
+    return lignes.map((l, k) => `<span class="ligne"${attrs[k] || ''}>${String(l).split(' ').map(m => `<span class="mot">${[...m].map(c => `<span class="lt" style="--i:${Math.min(i++, 30)}">${esc(c)}</span>`).join('')}</span>`).join(' ')}</span>`).join(' ');
   }
   const motAMot = t => { let i = 0; return String(t).split(/(\s+)/).map(m => /^\s*$/.test(m) ? m : `<span class="mt" style="--i:${Math.min(i++, 40)}">${esc(m)}</span>`).join(''); };
-  const citations = s => (s.citations || []).length ? `<ul class="citations">${s.citations.map(c => `<li><figure class="citation${c.prose ? ' prose' : ''}"><blockquote>${(c.vers || []).map(v => `<span class="vers">${esc(v)}</span>`).join('')}</blockquote><figcaption>${esc(c.source)}</figcaption></figure></li>`).join('')}</ul>` : '';
+  const citations = s => (s.citations || []).length ? `<ul class="citations">${s.citations.map((c, i) => `<li><figure class="citation${c.prose ? ' prose' : ''}"><blockquote>${(c.vers || []).map((v, j) => `<span class="vers"${edS(s, 'citations', i, 'vers', j)}>${esc(v)}</span>`).join('')}</blockquote><figcaption${edS(s, 'citations', i, 'source')}>${esc(c.source)}</figcaption></figure></li>`).join('')}</ul>` : '';
   const creditDe = (s, p) => p.source === 'dossier' ? s.creditDossier : (s.creditPhotos || s.credit);
+  const cleCredit = (s, p) => p.source === 'dossier' ? 'creditDossier' : s.creditPhotos ? 'creditPhotos' : 'credit';
+  // les crédits de photos, chacun dans son élément (sans doublon), sur une ligne chacun
+  const creditsEd = (s, ps) => { const vus = []; ps.forEach(p => { const v = creditDe(s, p); if (v && !vus.some(x => x[0] === v)) vus.push([v, cleCredit(s, p)]); });
+    return vus.length ? `<p class="credit">${vus.map(([v, k]) => `<span${edS(s, k)}>${esc(v)}</span>`).join('<br>')}</p>` : ''; };
+  // une photo de spectacle en carton : on la remplace d'un clic en mode édition, sa légende s'écrit
+  const carton = (s, p, alt) => { const r = rangPh(s, p);
+    return `<figure class="carton"${r >= 0 ? edP(s, 'photos', r) : ''}><div class="carton-img">${photo(p.cle, p.legende || alt)}</div>${p.legende ? `<figcaption${r >= 0 ? edS(s, 'photos', r, 'legende') : ''}>${esc(p.legende)}</figcaption>` : ''}</figure>`; };
   function galerie(s, ps) {
-    const credits = [...new Set(ps.map(p => creditDe(s, p)).filter(Boolean))];
-    return `<ul class="galerie">${ps.map(p => `<li><figure class="carton"><div class="carton-img">${photo(p.cle, p.legende || s.titre)}</div>${p.legende ? `<figcaption>${esc(p.legende)}</figcaption>` : ''}</figure></li>`).join('')}</ul>${credits.length ? `<p class="credit">${credits.map(esc).join('<br>')}</p>` : ''}`;
+    return `<ul class="galerie">${ps.map(p => `<li>${carton(s, p, s.titre)}</li>`).join('')}</ul>${creditsEd(s, ps)}`;
   }
   function medias(s) {
     const ms = [];
-    if (s.video && s.video.url) ms.push({ type: 'video', url: s.video.url, titre: s.video.titre });
-    (s.medias || []).forEach(m => { if (m.url && !ms.some(x => x.url === m.url)) ms.push(m); });
+    if (s.video && s.video.url) ms.push({ type: 'video', url: s.video.url, titre: s.video.titre, k: 'video' });
+    (s.medias || []).forEach((m, i) => { if (m.url && !ms.some(x => x.url === m.url)) ms.push({ ...m, k: `medias.${i}` }); });
     if (!ms.length) return '';
-    const lien = m => `<a href="${esc(m.url)}"><span class="media-ico" aria-hidden="true">${m.type === 'audio' ? '♪' : '▶'}</span><span>${esc(m.titre || s.titre)}</span><span class="ext" aria-hidden="true">↗</span></a>`;
+    const lien = m => `<a href="${esc(m.url)}"><span class="media-ico" aria-hidden="true">${m.type === 'audio' ? '♪' : '▶'}</span><span${m.titre ? edS(s, ...m.k.split('.'), 'titre') : ''}>${esc(m.titre || s.titre)}</span><span class="ext" aria-hidden="true">↗</span></a>`;
     const groupes = [...new Set(ms.filter(m => m.groupe).map(m => m.groupe))];
-    return `<ul class="medias">${ms.filter(m => !m.groupe).map(m => `<li class="media">${lien(m)}${m.par ? `<p class="media-par">${esc(m.par)}</p>` : ''}</li>`).join('')}${groupes.map(g => `<li class="media-groupe"><p class="media-groupe-t">${esc(g)}</p><ul>${ms.filter(m => m.groupe === g).map(m => `<li><a href="${esc(m.url)}"><span aria-hidden="true">▶</span>${esc(m.titre)}</a></li>`).join('')}</ul></li>`).join('')}</ul>`;
+    return `<ul class="medias">${ms.filter(m => !m.groupe).map(m => `<li class="media">${lien(m)}${m.par ? `<p class="media-par"${edS(s, ...m.k.split('.'), 'par')}>${esc(m.par)}</p>` : ''}</li>`).join('')}${groupes.map(g => `<li class="media-groupe"><p class="media-groupe-t">${esc(g)}</p><ul>${ms.filter(m => m.groupe === g).map(m => `<li><a href="${esc(m.url)}"><span aria-hidden="true">▶</span><span${edS(s, ...m.k.split('.'), 'titre')}>${esc(m.titre)}</span></a></li>`).join('')}</ul></li>`).join('')}</ul>`;
   }
   function distribution(s) {
     const P = s.programmer || {};
     return `<div class="distrib">
-      <div>${ficheEquipe(s)}${(P.equipeCreation || []).length ? `<ul class="fiche">${P.equipeCreation.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${s.duree ? `<p class="duree">${esc(s.duree)}</p>` : ''}</div>
-      <div>${(s.mentions || []).map(m => `<p class="mention">${m}</p>`).join('')}${(s.production || []).length ? `<div class="production">${s.production.map(bloc).join('')}</div>` : ''}</div>
+      <div>${ficheEquipe(s)}${(P.equipeCreation || []).length ? `<ul class="fiche">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}${s.duree ? `<p class="duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}</div>
+      <div>${(s.mentions || []).map((m, i) => `<p class="mention"${edS(s, 'mentions', i)}>${m}</p>`).join('')}${(s.production || []).length ? `<div class="production">${s.production.map((x, i) => bloc(x, `shows.${s.slug}.production.${i}`)).join('')}</div>` : ''}</div>
     </div>`;
   }
-  const datesCarte = ({ lieux = [], passe = [], dates = [], entree, titre }) => `<div class="dc" data-zone="spectacle">
+  const datesCarte = ({ lieux = [], passe = [], dates = [], entree, titre, slug = '' }) => `<div class="dc" data-zone="spectacle">
     <div class="dc-carte">${carte({ lieux, passe, titre, interactif: lieux.length > 0, filtre: true, noms: lieux.length <= 5, theme: 'u' })}</div>
-    <div class="dc-liste"><div class="puce-zone" data-puce aria-live="polite"></div><ol data-liste>${dates.map(d => ligneDate(d, { titre: false, entree })).join('')}</ol></div>
+    <div class="dc-liste"><div class="puce-zone" data-puce aria-live="polite"></div><ol data-liste data-agenda="${esc(slug)}">${dates.map(d => ligneDate(d, { titre: false, entree })).join('')}</ol></div>
   </div>`;
+  // sans date à venir, une liste vide (data-agenda) : en mode édition, on y ajoute la première
+  const sansListe = s => `<div data-agenda="${esc(s.slug)}"></div>`;
   function chapitresVoir(s) {
     const { L, PUBLIC } = X, ch = [], T = s.tournee || {};
-    if ((s.affirmations || []).length) ch.push({ id: 'ch-ouverture', titre: L.ouverture, html: `<ul class="affirmations">${s.affirmations.map(a => `<li>${esc(a.texte)}</li>`).join('')}</ul>` });
-    ch.push({ id: 'ch-spectacle', titre: L.leSpectacle, html: `<div class="prose-u">${(s.texte || []).map(bloc).join('')}</div>${citations(s)}` });
+    if ((s.affirmations || []).length) ch.push({ id: 'ch-ouverture', titre: L.ouverture, html: `<ul class="affirmations">${s.affirmations.map((a, i) => `<li${edS(s, 'affirmations', i, 'texte')}>${esc(a.texte)}</li>`).join('')}</ul>` });
+    ch.push({ id: 'ch-spectacle', titre: L.leSpectacle, html: `<div class="prose-u">${(s.texte || []).map((x, i) => bloc(x, `shows.${s.slug}.texte.${i}`)).join('')}</div>${citations(s)}` });
     const ps = (s.photos || []).filter(p => !p.etablissement && !p.atelier && D.photos && D.photos[p.cle]);
     if (ps.length) ch.push({ id: 'ch-photos', titre: L.photos, html: galerie(s, ps) });
     const ms = medias(s);
@@ -1574,83 +1631,85 @@ table{border-collapse:collapse}
     const pub = PUBLIC.filter(d => d.slug === s.slug), sp = CARTE.spectacle(s.slug);
     if (pub.length) {
       const lieux = sp.aVenir.map(x => ({ ...x, dates: (x.dates || []).filter(d => !d.scolaire) })).filter(x => x.dates.length);
-      ch.push({ id: 'ch-dates', titre: T.titre || L.actuellementEnTournee, html: datesCarte({ lieux, passe: sp.passe, dates: pub, entree: 'voir', titre: T.titre || L.actuellementEnTournee }) });
+      ch.push({ id: 'ch-dates', titre: T.titre || L.actuellementEnTournee, chemin: T.titre ? `shows.${s.slug}.tournee.titre` : null, html: datesCarte({ lieux, passe: sp.passe, dates: pub, entree: 'voir', titre: T.titre || L.actuellementEnTournee, slug: s.slug }) });
     } else if (s.statut || T.texte) {
-      ch.push({ id: 'ch-dates', titre: T.titre || s.statut, html: `<div class="dc"><div class="dc-carte">${carte({ titre: s.titre, theme: 'u' })}</div>${T.texte ? `<div class="dc-liste"><p class="dc-texte">${esc(T.texte)}</p></div>` : ''}</div>` });
+      ch.push({ id: 'ch-dates', titre: T.titre || s.statut, chemin: `shows.${s.slug}.${T.titre ? 'tournee.titre' : 'statut'}`, html: `<div class="dc"><div class="dc-carte">${carte({ titre: s.titre, theme: 'u' })}</div>${T.texte ? `<div class="dc-liste"><p class="dc-texte"${edS(s, 'tournee', 'texte')}>${esc(T.texte)}</p></div>` : ''}</div>${sansListe(s)}` });
     } else if (sp.passe.length) {
-      ch.push({ id: 'ch-dates', titre: L.lieuxDiffusion, html: `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>` });
+      ch.push({ id: 'ch-dates', titre: L.lieuxDiffusion, html: `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>${sansListe(s)}` });
     }
     ch.push({ id: 'ch-distribution', titre: L.distribution, html: distribution(s) });
     return ch;
   }
   function ficheTechnique(s, A) {
-    const p = (s.photos || []).find(x => x.etablissement && x.source === 'dossier' && D.photos && D.photos[x.cle]);
-    return `<h3 class="ft-titre u-titre">${esc(A.titre)}</h3>
-      <div class="ft-blocs">${(A.blocs || []).map(b => `<div class="ft-bloc">${b.titre ? `<h4>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map(l => `<li>${l}</li>`).join('')}</ul></div>`).join('')}</div>
-      ${A.alerte ? `<p class="alerte">${A.alerte}</p>` : ''}
-      ${p ? `<figure class="ft-photo"><div class="carton-img">${photo(p.cle, p.legende || A.photos || s.titre)}</div><figcaption>${esc(p.legende || A.photos)}${s.creditDossier ? `<span class="credit">${esc(s.creditDossier)}</span>` : ''}</figcaption></figure>` : ''}`;
+    const p = (s.photos || []).find(x => x.etablissement && x.source === 'dossier' && D.photos && D.photos[x.cle]), r = p ? rangPh(s, p) : -1;
+    const ea = (...k) => ed(['dossiers', s.dossier, 'accueil', ...k].join('.'));
+    return `<h3 class="ft-titre u-titre"${ea('titre')}>${esc(A.titre)}</h3>
+      <div class="ft-blocs">${(A.blocs || []).map((b, i) => `<div class="ft-bloc">${b.titre ? `<h4${ea('blocs', i, 'titre')}>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${l}</li>`).join('')}</ul></div>`).join('')}</div>
+      ${A.alerte ? `<p class="alerte"${ea('alerte')}>${A.alerte}</p>` : ''}
+      ${p ? `<figure class="ft-photo"${r >= 0 ? edP(s, 'photos', r) : ''}><div class="carton-img">${photo(p.cle, p.legende || A.photos || s.titre)}</div><figcaption><span${p.legende ? edS(s, 'photos', r, 'legende') : ea('photos')}>${esc(p.legende || A.photos)}</span>${s.creditDossier ? `<span class="credit"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</span>` : ''}</figcaption></figure>` : ''}`;
   }
   function chapitresProgrammer(s) {
     const { L } = X, P = s.programmer || {}, ch = [], sp = CARTE.spectacle(s.slug);
-    const faits = [P.format, P.duree || s.duree, P.jauge, P.equipe, P.actualite].filter(Boolean);
+    const faits = faitsDe(s);
     ch.push({ id: 'ch-faits', titre: L.leSpectacle, html: `<div class="faits-bloc">
-        ${P.representations ? `<p class="repr-grand">${esc(P.representations)}</p>` : s.statut ? `<p class="etat">${esc(s.statut)}</p>` : ''}
-        ${faits.length ? `<ul class="faits">${faits.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-      </div>${(s.texte || []).length ? `<div class="prose-u">${bloc(s.texte[0])}</div>` : ''}` });
+        ${P.representations ? `<p class="repr-grand"${edS(s, 'programmer', 'representations')}>${esc(P.representations)}</p>` : s.statut ? `<p class="etat"${edS(s, 'statut')}>${esc(s.statut)}</p>` : ''}
+        ${faits.length ? `<ul class="faits">${faits.map(([f, k]) => `<li${ed(k)}>${esc(f)}</li>`).join('')}</ul>` : ''}
+      </div>${(s.texte || []).length ? `<div class="prose-u">${bloc(s.texte[0], `shows.${s.slug}.texte.0`)}</div>` : ''}` });
     ch.push({ id: 'ch-distribution', titre: L.distribution, html: distribution(s) });
     const ms = medias(s);
     if (ms) ch.push({ id: 'ch-video', titre: L.bandeAnnonce, html: ms });
-    if (P.lieux || sp.passe.length || sp.aVenir.length) ch.push({ id: 'ch-lieux', titre: L.lieuxDiffusion, html: `${P.lieux ? `<p class="lieux-texte">${esc(P.lieux)}</p>` : ''}${sp.passe.length || sp.aVenir.length ? `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ lieux: sp.aVenir, passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>` : ''}` });
+    if (P.lieux || sp.passe.length || sp.aVenir.length) ch.push({ id: 'ch-lieux', titre: L.lieuxDiffusion, html: `${P.lieux ? `<p class="lieux-texte"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sp.passe.length || sp.aVenir.length ? `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ lieux: sp.aVenir, passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>` : ''}` });
     const DB = s.dossier && D.dossiers && D.dossiers[s.dossier];
     if (P.ficheTechnique && DB && DB.accueil) ch.push({ id: 'ch-technique', titre: L.ficheTechnique, html: ficheTechnique(s, DB.accueil) });
     ch.push({ id: 'ch-ecrire', titre: null, html: ecrireLien() });
     return ch;
   }
   function actionComplete(s) {
-    const { L } = X, A = s.actionCulturelle || {};
-    const meta = [A.public ? `<li><span class="meta-l">${esc(L.public)}</span> ${esc(A.public)}</li>` : '', A.lieu && L.lieu && L.lieu[A.lieu] ? `<li>${esc(L.lieu[A.lieu])}</li>` : '', A.statut ? `<li>${esc(A.statut)}</li>` : ''].join('');
+    const { L } = X, A = s.actionCulturelle || {}, ac = (...k) => edS(s, 'actionCulturelle', ...k);
+    const meta = [A.public ? `<li><span class="meta-l">${esc(L.public)}</span> <span${ac('public')}>${esc(A.public)}</span></li>` : '', A.lieu && L.lieu && L.lieu[A.lieu] ? `<li>${esc(L.lieu[A.lieu])}</li>` : '', A.statut ? `<li${ac('statut')}>${esc(A.statut)}</li>` : ''].join('');
     return `<div class="action">
-      ${A.type ? `<p class="action-type">${esc(A.type)}</p>` : `<p class="action-type vide">${esc(L.aCompleter)}</p>`}
+      ${A.type ? `<p class="action-type"${ac('type')}>${esc(A.type)}</p>` : `<p class="action-type vide">${esc(L.aCompleter)}</p>`}
       ${meta ? `<ul class="action-meta">${meta}</ul>` : ''}
-      ${(A.textes || []).length ? `<div class="prose-u">${A.textes.map(t => bloc(t.texte)).join('')}</div>` : ''}
-      ${(A.formule || []).length ? `<ul class="formule">${A.formule.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-      ${(A.dispositifs || []).length ? `<div class="dispositifs"><p class="etiquette">${esc(L.dispositifs)}</p><ul>${A.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+      ${(A.textes || []).length ? `<div class="prose-u">${A.textes.map((t, i) => bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.${i}.texte`)).join('')}</div>` : ''}
+      ${(A.formule || []).length ? `<ul class="formule">${A.formule.map((f, i) => `<li${ac('formule', i)}>${esc(f)}</li>`).join('')}</ul>` : ''}
+      ${(A.dispositifs || []).length ? `<div class="dispositifs"><p class="etiquette">${esc(L.dispositifs)}</p><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
     </div>`;
   }
   function dossier(s, DB) {
     const P = DB.pourquoi, G = DB.programmes, C = DB.consignes, A = DB.ateliers, E = DB.espace;
+    const dk = `dossiers.${s.dossier}`, edD = (...k) => ed([dk, ...k].join('.'));
     const phA = (s.photos || []).filter(p => p.atelier && D.photos && D.photos[p.cle]);
     const phE = (s.photos || []).filter(p => p.etablissement && D.photos && D.photos[p.cle]);
-    const credits = ps => { const c = [...new Set(ps.map(p => creditDe(s, p)).filter(Boolean))]; return c.length ? `<p class="credit">${c.map(esc).join('<br>')}</p>` : ''; };
-    const carton = (p, alt) => `<figure class="carton"><div class="carton-img">${photo(p.cle, p.legende || alt)}</div>${p.legende ? `<figcaption>${esc(p.legende)}</figcaption>` : ''}</figure>`;
     return `<div class="dossier">
       <div class="dossier-couv">
-        ${DB.type ? `<p class="dc-type">${esc(DB.type)}</p>` : ''}
-        <p class="dc-titre">${esc(DB.titre || s.titre)}</p>
-        ${DB.auteur ? `<p class="dc-auteur">${esc(DB.auteur)}</p>` : ''}
-        <ul class="dc-faits">${[DB.creation, DB.duree, DB.format, DB.public].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-        ${DB.cession && (DB.cession.formule || []).length ? `<ul class="dc-formule">${DB.cession.formule.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+        ${DB.type ? `<p class="dc-type"${edD('type')}>${esc(DB.type)}</p>` : ''}
+        <p class="dc-titre"${DB.titre ? edD('titre') : edS(s, 'titre')}>${esc(DB.titre || s.titre)}</p>
+        ${DB.auteur ? `<p class="dc-auteur"${edD('auteur')}>${esc(DB.auteur)}</p>` : ''}
+        <ul class="dc-faits">${['creation', 'duree', 'format', 'public'].filter(k => DB[k]).map(k => `<li${edD(k)}>${esc(DB[k])}</li>`).join('')}</ul>
+        ${DB.cession && (DB.cession.formule || []).length ? `<ul class="dc-formule">${DB.cession.formule.map((f, i) => `<li${edD('cession', 'formule', i)}>${esc(f)}</li>`).join('')}</ul>` : ''}
       </div>
-      ${P ? `<section class="d-sec" aria-labelledby="d-pourquoi"><h3 class="d-titre u-titre" id="d-pourquoi">${esc(P.titre)}</h3>
-        <div class="encadres">${(P.sections || []).map(x => `<div class="encadre"><h4>${esc(x.titre)}</h4><p>${x.texte}</p></div>`).join('')}</div></section>` : ''}
-      ${G ? `<section class="d-sec" aria-labelledby="d-programmes"><h3 class="d-titre u-titre" id="d-programmes">${esc(G.titre)}</h3>
-        <div class="table-defile" tabindex="0" role="region" aria-labelledby="d-programmes"><table class="programmes" aria-labelledby="d-programmes">${(G.niveaux || []).map(n => `<tbody>${(n.lignes || []).map((l, i) => `<tr>${i === 0 ? `<th scope="rowgroup" rowspan="${n.lignes.length}" class="niveau">${esc(n.niveau)}</th>` : ''}<th scope="row">${esc(l.matiere)}</th><td class="intitule">${esc(l.intitule)}</td><td>${esc(l.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div></section>` : ''}
-      ${C ? `<section class="d-sec consignes" aria-labelledby="d-consignes"><h3 class="d-titre u-titre" id="d-consignes">${esc(C.titre)}</h3>
-        ${C.note ? `<p class="note">${esc(C.note)}</p>` : ''}${C.intro ? `<p>${esc(C.intro)}</p>` : ''}
-        ${(C.demandes || []).length ? `<ul class="demandes">${C.demandes.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-        ${C.apres ? `<p>${C.apres}</p>` : ''}
-        ${(C.axes || []).length ? `<ul class="axes">${C.axes.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
-        ${C.atelier ? `<p class="atelier-oblig">${C.atelier}</p>` : ''}</section>` : ''}
-      ${A ? `<section class="d-sec" aria-labelledby="d-ateliers"><h3 class="d-titre u-titre" id="d-ateliers">${esc(A.titre)}</h3>
-        <ol class="ateliers">${(A.liste || []).map(x => `<li class="atelier">
-          <h4 class="atelier-t">${x.titre}</h4>
-          ${(x.paragraphes || []).map(p => `<p>${p}</p>`).join('')}
-          ${(x.etapes || []).length ? `<ol class="etapes">${x.etapes.map(t => `<li><p class="etape-t">${t.titre}</p><p>${t.texte}</p></li>`).join('')}</ol>` : ''}
-          ${(x.points || []).length ? `<ul class="points">${x.points.map(t => `<li>${t}</li>`).join('')}</ul>` : ''}
-        </li>`).join('')}</ol>
-        ${phA.length ? `<div class="ateliers-photos">${phA.map(p => carton(p, A.titre)).join('')}</div>${credits(phA)}` : ''}</section>` : ''}
-      ${E ? `<section class="d-sec" aria-labelledby="d-espace"><h3 class="d-titre u-titre" id="d-espace">${esc(E.titre)}</h3>
-        <div class="espace"><div class="prose-u">${(E.paragraphes || []).map(p => `<p>${p}</p>`).join('')}</div>${phE.length ? `<div class="espace-photos">${phE.map(p => carton(p, E.titre)).join('')}${credits(phE)}</div>` : ''}</div></section>` : ''}
+      ${P ? `<section class="d-sec" aria-labelledby="d-pourquoi"><h3 class="d-titre u-titre" id="d-pourquoi"${edD('pourquoi', 'titre')}>${esc(P.titre)}</h3>
+        <div class="encadres">${(P.sections || []).map((x, i) => `<div class="encadre"><h4${edD('pourquoi', 'sections', i, 'titre')}>${esc(x.titre)}</h4><p${edD('pourquoi', 'sections', i, 'texte')}>${x.texte}</p></div>`).join('')}</div></section>` : ''}
+      ${G ? `<section class="d-sec" aria-labelledby="d-programmes"><h3 class="d-titre u-titre" id="d-programmes"${edD('programmes', 'titre')}>${esc(G.titre)}</h3>
+        <div class="table-defile" tabindex="0" role="region" aria-labelledby="d-programmes"><table class="programmes" aria-labelledby="d-programmes">${(G.niveaux || []).map((n, ni) => `<tbody>${(n.lignes || []).map((l, i) => { const lg = (...k) => edD('programmes', 'niveaux', ni, 'lignes', i, ...k);
+          return `<tr>${i === 0 ? `<th scope="rowgroup" rowspan="${n.lignes.length}" class="niveau"${edD('programmes', 'niveaux', ni, 'niveau')}>${esc(n.niveau)}</th>` : ''}<th scope="row"${lg('matiere')}>${esc(l.matiere)}</th><td class="intitule"${lg('intitule')}>${esc(l.intitule)}</td><td${lg('objectif')}>${esc(l.objectif)}</td></tr>`; }).join('')}</tbody>`).join('')}</table></div></section>` : ''}
+      ${C ? `<section class="d-sec consignes" aria-labelledby="d-consignes"><h3 class="d-titre u-titre" id="d-consignes"${edD('consignes', 'titre')}>${esc(C.titre)}</h3>
+        ${C.note ? `<p class="note"${edD('consignes', 'note')}>${esc(C.note)}</p>` : ''}${C.intro ? `<p${edD('consignes', 'intro')}>${esc(C.intro)}</p>` : ''}
+        ${(C.demandes || []).length ? `<ul class="demandes">${C.demandes.map((x, i) => `<li${edD('consignes', 'demandes', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}
+        ${C.apres ? `<p${edD('consignes', 'apres')}>${C.apres}</p>` : ''}
+        ${(C.axes || []).length ? `<ul class="axes">${C.axes.map((x, i) => `<li${edD('consignes', 'axes', i)}>${x}</li>`).join('')}</ul>` : ''}
+        ${C.atelier ? `<p class="atelier-oblig"${edD('consignes', 'atelier')}>${C.atelier}</p>` : ''}</section>` : ''}
+      ${A ? `<section class="d-sec" aria-labelledby="d-ateliers"><h3 class="d-titre u-titre" id="d-ateliers"${edD('ateliers', 'titre')}>${esc(A.titre)}</h3>
+        <ol class="ateliers">${(A.liste || []).map((x, i) => { const ak = (...k) => edD('ateliers', 'liste', i, ...k);
+          return `<li class="atelier">
+          <h4 class="atelier-t"${ak('titre')}>${x.titre}</h4>
+          ${(x.paragraphes || []).map((p, j) => `<p${ak('paragraphes', j)}>${p}</p>`).join('')}
+          ${(x.etapes || []).length ? `<ol class="etapes">${x.etapes.map((t, j) => `<li><p class="etape-t"${ak('etapes', j, 'titre')}>${t.titre}</p><p${ak('etapes', j, 'texte')}>${t.texte}</p></li>`).join('')}</ol>` : ''}
+          ${(x.points || []).length ? `<ul class="points">${x.points.map((t, j) => `<li${ak('points', j)}>${t}</li>`).join('')}</ul>` : ''}
+        </li>`; }).join('')}</ol>
+        ${phA.length ? `<div class="ateliers-photos">${phA.map(p => carton(s, p, A.titre)).join('')}</div>${creditsEd(s, phA)}` : ''}</section>` : ''}
+      ${E ? `<section class="d-sec" aria-labelledby="d-espace"><h3 class="d-titre u-titre" id="d-espace"${edD('espace', 'titre')}>${esc(E.titre)}</h3>
+        <div class="espace"><div class="prose-u">${(E.paragraphes || []).map((p, j) => `<p${edD('espace', 'paragraphes', j)}>${p}</p>`).join('')}</div>${phE.length ? `<div class="espace-photos">${phE.map(p => carton(s, p, E.titre)).join('')}${creditsEd(s, phE)}</div>` : ''}</div></section>` : ''}
     </div>`;
   }
   function chapitresEtablissement(s) {
@@ -1659,7 +1718,7 @@ table{border-collapse:collapse}
     const scol = SCOLAIRE.filter(d => d.slug === s.slug);
     if (scol.length) {
       const lieux = CARTE.spectacle(s.slug).aVenir.map(x => ({ ...x, dates: (x.dates || []).filter(d => d.scolaire) })).filter(x => x.dates.length);
-      ch.push({ id: 'ch-dates', titre: L.enEtablissement, html: datesCarte({ lieux, dates: scol, entree: 'etablissement', titre: L.enEtablissement }) });
+      ch.push({ id: 'ch-dates', titre: L.enEtablissement, html: datesCarte({ lieux, dates: scol, entree: 'etablissement', titre: L.enEtablissement, slug: s.slug }) });
     }
     const DB = A.dossier && s.dossier && D.dossiers && D.dossiers[s.dossier];
     if (DB) ch.push({ id: 'ch-dossier', titre: L.dossierScolaire, html: dossier(s, DB) });
@@ -1667,31 +1726,31 @@ table{border-collapse:collapse}
     return ch;
   }
   function spectacle(s, cle) {
-    const { S, ENTREES, ENTREE } = X, u = X.U[s.slug], e = ENTREE[cle], etat = etatDe(s);
+    const { S, ENTREES, ENTREE } = X, u = X.U[s.slug], e = ENTREE[cle];
     const chapitres = (cle === 'programmer' ? chapitresProgrammer : cle === 'etablissement' ? chapitresEtablissement : chapitresVoir)(s);
-    const lignes = (s.titreLignes && s.titreLignes.length) ? s.titreLignes : [s.titre];
+    const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null, lignes = tl || [s.titre];
     return `<article class="show univ ${u.clair ? 'clair' : 'sombre'}" ${uAttrs(s)}>
       ${defsUnivers(u)}
       <header class="show-hero">
         ${motifSvg(u.motif, 'show-motif')}
         <div class="wrap show-hero-grille">
           <div>
-            <p class="show-signe">${esc(S.nom)}</p>
-            ${s.lieuTemps ? `<p class="show-lieu">${esc(s.lieuTemps)}</p>` : ''}
-            <h1 class="show-title u-titre" tabindex="-1" aria-label="${esc(lignes.join(' '))}"><span aria-hidden="true">${titreRevele(lignes)}</span></h1>
-            ${s.genre ? `<p class="show-sub">${esc(s.genre)}</p>` : s.sousTitre ? `<p class="show-sub">${s.sousTitre}</p>` : ''}
-            <p class="show-meta"><span class="show-creation">${esc(s.creation)}</span>${etat ? `<span class="etat">${esc(etat)}</span>` : ''}</p>
-            ${s.cadre ? `<p class="show-cadre">${esc(s.cadre)}</p>` : ''}
-            ${s.accroche ? `<p class="show-accroche">${motAMot(s.accroche)}</p>` : ''}
+            <p class="show-signe"${ed('site.nom')}>${esc(S.nom)}</p>
+            ${s.lieuTemps ? `<p class="show-lieu"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}
+            <h1 class="show-title u-titre" tabindex="-1" aria-label="${esc(lignes.join(' '))}"><span aria-hidden="true">${titreRevele(lignes, tl ? tl.map((x, k) => edS(s, 'titreLignes', k)) : [edS(s, 'titre')])}</span></h1>
+            ${s.genre ? `<p class="show-sub"${edS(s, 'genre')}>${esc(s.genre)}</p>` : s.sousTitre ? `<p class="show-sub"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+            <p class="show-meta"><span class="show-creation"${edS(s, 'creation')}>${esc(s.creation)}</span>${etatEd(s, 'span', 'etat')}</p>
+            ${s.cadre ? `<p class="show-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}
+            ${s.accroche ? `<p class="show-accroche"${edS(s, 'accroche')}>${motAMot(s.accroche)}</p>` : ''}
           </div>
-          <figure class="show-photo"><div class="arche-img">${photo(s.slug, s.titre, cadrage(s))}</div>${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
+          <figure class="show-photo"><div class="arche-img"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}</div>${s.credit ? `<figcaption${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
         </div>
       </header>
       <nav class="show-tabs" aria-label="${esc(s.titre)}"><div class="wrap"><ul>${ENTREES.map(x => `<li><a class="show-tab${x.cle === cle ? ' on' : ''}" href="#/spectacle/${esc(s.slug)}/${esc(x.cle)}"${x.cle === cle ? ' aria-current="page"' : ''} style="--c:${esc(x.couleur)};--tc:${esc(u.clair ? x.couleur : x.couleurVive)}">${porteIco()}<span>${esc(x.court)}</span></a></li>`).join('')}</ul></div></nav>
       <div class="show-corps-fond" style="--ec:${esc(e.couleur)};--ecv:${esc(u.clair ? e.couleur : e.couleurVive)}">
         <div class="wrap show-corps">
           <div class="sommaire"><ol>${chapitres.filter(c => c.titre).map(c => `<li><a href="#${c.id}">${esc(c.titre)}</a></li>`).join('')}</ol></div>
-          <div class="chapitres">${chapitres.map(c => `<section class="chap" id="${c.id}" tabindex="-1"${c.titre ? ` aria-labelledby="${c.id}-t"` : ''}>${c.titre ? `<h2 class="chap-titre" id="${c.id}-t">${esc(c.titre)}</h2>` : ''}${c.html}</section>`).join('')}</div>
+          <div class="chapitres">${chapitres.map(c => `<section class="chap" id="${c.id}" tabindex="-1"${c.titre ? ` aria-labelledby="${c.id}-t"` : ''}>${c.titre ? `<h2 class="chap-titre" id="${c.id}-t"><span${ed(c.chemin)}>${esc(c.titre)}</span></h2>` : ''}${c.html}</section>`).join('')}</div>
         </div>
       </div>
     </article>`;
@@ -1711,7 +1770,7 @@ table{border-collapse:collapse}
           <h2 class="sp-titre">${g.slug && bySlug[g.slug] ? `<a href="#/spectacle/${esc(g.slug)}/voir">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
           ${g.sousTitre ? `<p class="sp-sous">${g.sousTitre}</p>` : ''}
           ${g.creation ? `<p class="sp-creation">${esc(g.creation)}</p>` : ''}
-          <ul class="sls">${(g.dates || []).map(ligneSaison).join('')}</ul>
+          <ul class="sls" data-agenda="${esc(g.slug && bySlug[g.slug] ? g.slug : '')}">${(g.dates || []).map(ligneSaison).join('')}</ul>
         </section>`).join('')}</div>
         <nav class="saison-nav" aria-label="${esc(X.L.saison)}">
           ${avant ? `<a class="fleche" href="${esc(avant.href)}"><span aria-hidden="true">←</span>${esc(avant.titre)}</a>` : '<span></span>'}
@@ -1725,18 +1784,18 @@ table{border-collapse:collapse}
   function compagnie() {
     const { S, bySlug, SHOWS } = X, C = S.compagnie || {}, Dr = C.directeur;
     const showDe = d => { const s = SHOWS.filter(x => String(x.annee) === String(d.annee)); return s.length === 1 ? s[0] : null; };
-    const lien = d => { const s = showDe(d); return s ? `<a href="#/spectacle/${esc(s.slug)}">${esc(d.titre)}</a>` : esc(d.titre); };
-    return `${tete({ titre: C.titre })}
-    <section class="section"><div class="wrap"><div class="prose cie">${(C.paragraphes || []).map(bloc).join('')}</div></div></section>
+    const lien = (d, i) => { const s = showDe(d), k = ed(`site.compagnie.dates.${i}.titre`); return s ? `<a href="#/spectacle/${esc(s.slug)}"${k}>${esc(d.titre)}</a>` : `<span${k}>${esc(d.titre)}</span>`; };
+    return `${tete({ titre: C.titre, chemin: 'site.compagnie.titre' })}
+    <section class="section"><div class="wrap"><div class="prose cie">${(C.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div></div></section>
     <section class="frise-s" aria-labelledby="h-dates"><div class="wrap">
-      <h2 class="frise-titre" id="h-dates">${esc(C.datesTitre)}</h2>
-      <ol class="frise">${(C.dates || []).map(d => { const s = showDe(d), u = s && bySlug[s.slug] ? X.U[s.slug] : null; return `<li${u ? ` style="--pt:${esc(u.clair ? u.aplat : u.titre)}"` : ''}><span class="frise-an">${esc(d.annee)}</span><span class="frise-pt" aria-hidden="true"></span><span class="frise-t">${lien(d)}</span></li>`; }).join('')}</ol>
+      <h2 class="frise-titre" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
+      <ol class="frise">${(C.dates || []).map((d, i) => { const s = showDe(d), u = s && bySlug[s.slug] ? X.U[s.slug] : null; return `<li${u ? ` style="--pt:${esc(u.clair ? u.aplat : u.titre)}"` : ''}><span class="frise-an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</span><span class="frise-pt" aria-hidden="true"></span><span class="frise-t">${lien(d, i)}</span></li>`; }).join('')}</ol>
     </div></section>
     ${Dr ? `<section class="section" aria-labelledby="h-directeur"><div class="wrap directeur">
-      <div class="dir-tete">${arche()}<h2 class="sec-titre" id="h-directeur">${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p class="dir-chapeau">${esc(Dr.chapeau)}</p>` : ''}</div>
-      <div class="prose">${(Dr.paragraphes || []).map(bloc).join('')}</div>
+      <div class="dir-tete">${arche()}<h2 class="sec-titre" id="h-directeur"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p class="dir-chapeau"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}</div>
+      <div class="prose">${(Dr.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.directeur.paragraphes.${i}`)).join('')}</div>
     </div></section>` : ''}
-    ${S.partenaires ? `<section class="partenaires-s" style="padding-bottom:clamp(56px,7vw,96px)"><div class="wrap"><p class="partenaires">${S.partenaires}</p></div></section>` : ''}`;
+    ${S.partenaires ? `<section class="partenaires-s" style="padding-bottom:clamp(56px,7vw,96px)"><div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p></div></section>` : ''}`;
   }
   function contact() {
     const { S } = X, C = S.contact || {}, K = S.coordonnees || {}, n = (C.champs || []).length;
@@ -1746,7 +1805,7 @@ table{border-collapse:collapse}
       : `<div class="champ"><label for="c-${i}">${esc(label)}</label><input id="c-${i}" name="c-${i}" type="${types[i] || 'text'}" autocomplete="${auto[i] || 'off'}"></div>`;
     const cons = String(C.consentement || ''), m = cons.match(/politique de confidentialité/i), pol = (S.liensLegaux || []).find(x => /confidentialit/i.test(x.href)) || (S.liensLegaux || [])[1];
     const consent = m && pol ? `${esc(cons.slice(0, m.index))}<a href="${esc(pol.href)}">${esc(m[0])}</a>${esc(cons.slice(m.index + m[0].length))}` : esc(cons);
-    return `${tete({ titre: C.titre })}
+    return `${tete({ titre: C.titre, chemin: 'site.contact.titre' })}
     <section class="section"><div class="wrap contact">
       <form class="form">
         ${(C.champs || []).map(champ).join('')}
@@ -1755,14 +1814,14 @@ table{border-collapse:collapse}
         <p class="envoi"><button class="btn" type="submit">${esc(C.bouton)}</button></p>
       </form>
       <aside class="coord">
-        <p class="coord-nom">${esc(K.nom)}</p>
-        <p class="coord-adr">${(K.adresse || []).map(esc).join('<br>')}</p>
-        <p class="coord-legal">${(K.legal || []).map(esc).join('<br>')}</p>
+        <p class="coord-nom"${ed('site.coordonnees.nom')}>${esc(K.nom)}</p>
+        <p class="coord-adr">${lignesEd(K.adresse, 'site.coordonnees.adresse')}</p>
+        <p class="coord-legal">${lignesEd(K.legal, 'site.coordonnees.legal')}</p>
         <p class="coord-fb">${S.facebook && S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : esc(S.facebook ? S.facebook.texte : '')}</p>
       </aside>
     </div></section>`;
   }
-  const legal = cle => { const G = X.S.legal[cle]; return `${tete({ titre: G.titre })}<section class="section"><div class="wrap"><div class="prose">${(G.blocs || []).map(bloc).join('')}</div></div></section>`; };
+  const legal = cle => { const G = X.S.legal[cle]; return `${tete({ titre: G.titre, chemin: `site.legal.${cle}.titre` })}<section class="section"><div class="wrap"><div class="prose">${(G.blocs || []).map((b, i) => bloc(b, `site.legal.${cle}.blocs.${i}`)).join('')}</div></div></section>`; };
 
   function pied() {
     const { S, ENTREES } = X, K = S.coordonnees || {};
@@ -1770,13 +1829,13 @@ table{border-collapse:collapse}
       <ul class="pied-portes">${ENTREES.map(e => `<li><a href="${esc(e.href)}" style="--v:${esc(e.couleurVive)}">${porteIco()}<span>${esc(e.texte)}</span></a></li>`).join('')}</ul>
       <div class="pied-grille">
         <a class="pied-logo" href="#/" aria-label="${esc(S.accueil)}">${logo()}</a>
-        <div><p class="pied-nom">${esc(K.nom)}</p><p class="pied-adr">${(K.adresse || []).map(esc).join('<br>')}</p></div>
+        <div><p class="pied-nom"${ed('site.coordonnees.nom')}>${esc(K.nom)}</p><p class="pied-adr">${lignesEd(K.adresse, 'site.coordonnees.adresse')}</p></div>
         <div>${S.ecrire ? `<p><a class="pied-ecrire" href="${esc(S.ecrire.href)}">${esc(S.ecrire.texte)}</a></p>` : ''}<p class="pied-fb">${S.facebook && S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : esc(S.facebook ? S.facebook.texte : '')}</p></div>
-        <div class="pied-part"><p>${S.partenaires || ''}</p></div>
+        <div class="pied-part"><p${ed('site.partenaires')}>${S.partenaires || ''}</p></div>
       </div>
       <div class="pied-bas">
-        <ul class="pied-legal">${(K.legal || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-        <ul class="pied-liens">${(S.liensLegaux || []).map(x => `<li><a href="${esc(x.href)}">${esc(x.texte)}</a></li>`).join('')}</ul>
+        <ul class="pied-legal">${(K.legal || []).map((x, i) => `<li${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</li>`).join('')}</ul>
+        <ul class="pied-liens">${(S.liensLegaux || []).map(x => `<li><a href="${esc(x.href)}">${esc(x.texte)}</a></li>`).join('')}${typeof EDITION !== 'undefined' && X.L.modifierSite ? `<li><button type="button" class="pied-modifier" data-modifier>${porteIco()}<span>${esc(X.L.modifierSite)}</span></button></li>` : ''}</ul>
       </div>
     </div>`;
   }
@@ -1954,6 +2013,8 @@ table{border-collapse:collapse}
     menuBtn.setAttribute('aria-expanded', String(open));
   });
   $('#site-nav').addEventListener('click', e => { if (e.target.closest('a')) closeMenu(); });
+  // « Modifier le site » : la connexion puis l'édition sur place (EDITION, commun aux maquettes)
+  $('.site-footer').addEventListener('click', e => { if (e.target.closest('[data-modifier]') && typeof EDITION !== 'undefined') EDITION.ouvrir(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && header.classList.contains('nav-open')) { closeMenu(); menuBtn.focus(); } });
   document.addEventListener('click', e => {
     if (header.classList.contains('nav-open') && !header.contains(e.target)) closeMenu();

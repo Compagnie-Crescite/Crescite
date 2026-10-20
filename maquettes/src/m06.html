@@ -1538,48 +1538,51 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   function chProgrammer(s) {
     const ch = [], P = s.programmer, T = CARTE.spectacle(s.slug);
     ch.push({ id: 'spectacle', lib: L.leSpectacle, html: h2u('spectacle', L.leSpectacle) + chiffres(s)
-      + (P.equipeCreation ? `<ul class="fu-equipe">${P.equipeCreation.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '')
-      + `<div class="texte" style="margin-top:22px"><p>${s.texte[0]}</p></div>` });
+      + (P.equipeCreation ? `<ul class="fu-equipe">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : '')
+      + `<div class="texte" style="margin-top:22px"><p${edS(s, 'texte', 0)}>${s.texte[0]}</p></div>` });
     if (s.video) ch.push({ id: 'video', lib: L.bandeAnnonce, html: h2u('video', L.bandeAnnonce) + video(s) });
     const B = s.dossier && D.dossiers[s.dossier];
     if (P.ficheTechnique && B) {
-      const A = B.accueil, impl = s.photos.find(p => p.id === 'd-implantation-1');
-      ch.push({ id: 'technique', lib: L.ficheTechnique, html: h2u('technique', A.fiche) + `<p class="ft-titre">${esc(A.titre)}</p>
-        <div class="ft-blocs">${A.blocs.map(b => `<div class="ft-bloc">${b.titre ? `<h4>${esc(b.titre)}</h4>` : ''}<ul>${b.lignes.map(l => `<li>${l}</li>`).join('')}</ul></div>`).join('')}</div>
-        ${A.alerte ? `<p class="alerte">${A.alerte}</p>` : ''}
-        ${impl ? `<figure class="photo-u"><img src="${D.photos[impl.cle]}" alt="${esc(impl.legende || A.photos)}" loading="lazy"><figcaption>${esc(impl.legende || A.photos)}</figcaption></figure><p class="credit">${esc(creditDe(s, impl))}</p>` : ''}` });
+      const A = B.accueil, impl = s.photos.find(p => p.id === 'd-implantation-1'), ea = (...k) => ed(['dossiers', s.dossier, 'accueil', ...k].join('.'));
+      ch.push({ id: 'technique', lib: L.ficheTechnique, html: h2u('technique', A.fiche, `dossiers.${s.dossier}.accueil.fiche`) + `<p class="ft-titre"${ea('titre')}>${esc(A.titre)}</p>
+        <div class="ft-blocs">${A.blocs.map((b, i) => `<div class="ft-bloc">${b.titre ? `<h4${ea('blocs', i, 'titre')}>${esc(b.titre)}</h4>` : ''}<ul>${b.lignes.map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${l}</li>`).join('')}</ul></div>`).join('')}</div>
+        ${A.alerte ? `<p class="alerte"${ea('alerte')}>${A.alerte}</p>` : ''}
+        ${impl ? `<figure class="photo-u"${edP(s, 'photos', rangPh(s, impl))}><img src="${D.photos[impl.cle]}" alt="${esc(impl.legende || A.photos)}" loading="lazy"><figcaption${impl.legende ? edS(s, 'photos', rangPh(s, impl), 'legende') : ea('photos')}>${esc(impl.legende || A.photos)}</figcaption></figure><p class="credit"${edS(s, impl.source === 'dossier' ? 'creditDossier' : 'creditPhotos')}>${esc(creditDe(s, impl))}</p>` : ''}` });
     }
     if (P.lieux || T.passe.length || T.aVenir.length) ch.push({ id: 'lieux', lib: L.lieuxDiffusion, html: h2u('lieux', L.lieuxDiffusion)
-      + (P.lieux ? `<p class="lieux-t">${esc(P.lieux)}</p>` : '')
+      + (P.lieux ? `<p class="lieux-t"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : '')
       + (T.passe.length || T.aVenir.length ? carte({ lieux: T.aVenir, passe: T.passe, titre: s.titre, classe: 'carte-sp', bulle: true }) : '') });
     ch.push({ id: 'distribution', lib: L.distribution, html: h2u('distribution', L.distribution) + distribution(s) });
     return ch;
   }
   // l'onglet « Je représente un établissement scolaire »
   function chEtablissement(s) {
-    const ch = [], A = s.actionCulturelle, B = s.dossier && D.dossiers[s.dossier];
-    const tags = [A.public ? `<li><span>${esc(L.public)}</span> <span>${esc(A.public)}</span></li>` : '', A.lieu ? `<li>${esc(L.lieu[A.lieu])}</li>` : '', A.statut ? `<li class="statut">${esc(A.statut)}</li>` : ''].join('');
+    const ch = [], A = s.actionCulturelle, B = s.dossier && D.dossiers[s.dossier], ac = (...k) => edS(s, 'actionCulturelle', ...k);
+    const dk = `dossiers.${s.dossier}`, edD = (...k) => ed([dk, ...k].join('.'));
+    const tags = [A.public ? `<li><span>${esc(L.public)}</span> <span${ac('public')}>${esc(A.public)}</span></li>` : '', A.lieu ? `<li>${esc(L.lieu[A.lieu])}</li>` : '', A.statut ? `<li class="statut"${ac('statut')}>${esc(A.statut)}</li>` : ''].join('');
     const phE = s.photos.filter(p => p.etablissement && p.id !== 'd-implantation-1');
     ch.push({ id: 'action', lib: L.actionCulturelle, html: h2u('action', L.actionCulturelle)
-      + (A.aCompleter || !A.type ? `<p class="a-completer">${esc(L.aCompleter)}</p>` : `<p class="ac-type">${esc(A.type)}</p>`)
+      + (A.aCompleter || !A.type ? `<p class="a-completer">${esc(L.aCompleter)}</p>` : `<p class="ac-type"${ac('type')}>${esc(A.type)}</p>`)
       + (tags ? `<ul class="tags">${tags}</ul>` : '')
-      + (A.formule ? `<ul class="formule">${A.formule.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : '')
-      + (A.textes.length ? `<div class="texte" style="margin-top:20px">${A.textes.map(t => `<p>${t.texte}</p>`).join('')}</div>` : '')
-      + (A.dispositifs.length ? `<div class="au-disp"><p>${esc(L.dispositifs)}</p><ul>${A.dispositifs.map(d => `<li>${d}</li>`).join('')}</ul></div>` : '')
+      + (A.formule ? `<ul class="formule">${A.formule.map((f, i) => `<li${ac('formule', i)}>${esc(f)}</li>`).join('')}</ul>` : '')
+      + (A.textes.length ? `<div class="texte" style="margin-top:20px">${A.textes.map((t, i) => `<p${ac('textes', i, 'texte')}>${t.texte}</p>`).join('')}</div>` : '')
+      + (A.dispositifs.length ? `<div class="au-disp"><p>${esc(L.dispositifs)}</p><ul>${A.dispositifs.map((d, i) => `<li${ac('dispositifs', i)}>${d}</li>`).join('')}</ul></div>` : '')
       + (phE.length ? `<div style="margin-top:26px">${cartons(s, phE, false)}</div>` : '') });
     if (B) {
       ch.push({ id: 'dossier', lib: L.dossierScolaire, html: `<h2 class="bande-u" id="h-dossier" tabindex="-1">${esc(L.dossierScolaire)}</h2>
-        <h3 class="h3u">${esc(B.pourquoi.titre)}</h3><div class="pourquoi">${B.pourquoi.sections.map(x => `<h4>${esc(x.titre)}</h4><p>${x.texte}</p>`).join('')}</div>
-        <h3 class="h3u" id="t-programmes">${esc(B.programmes.titre)}</h3>
-        <div class="table-s"><table class="prog" aria-labelledby="t-programmes">${B.programmes.niveaux.map(n => `<tbody>${n.lignes.map((l, i) => `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${n.lignes.length}">${esc(n.niveau)}</th>`}<th scope="row">${esc(l.matiere)}</th><td class="int">${esc(l.intitule)}</td><td class="obj">${esc(l.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div>` });
-      const K = B.consignes;
-      ch.push({ id: 'consignes', lib: K.titre, html: h2u('consignes', K.titre) + `<div class="consignes"><p class="note">${esc(K.note)}</p><p>${esc(K.intro)}</p>
-        <ul class="demandes">${K.demandes.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p>${K.apres}</p><ul class="axes">${K.axes.map(x => `<li>${x}</li>`).join('')}</ul><p class="fin">${K.atelier}</p></div>` });
+        <h3 class="h3u"${edD('pourquoi', 'titre')}>${esc(B.pourquoi.titre)}</h3><div class="pourquoi">${B.pourquoi.sections.map((x, i) => `<h4${edD('pourquoi', 'sections', i, 'titre')}>${esc(x.titre)}</h4><p${edD('pourquoi', 'sections', i, 'texte')}>${x.texte}</p>`).join('')}</div>
+        <h3 class="h3u" id="t-programmes"${edD('programmes', 'titre')}>${esc(B.programmes.titre)}</h3>
+        <div class="table-s"><table class="prog" aria-labelledby="t-programmes">${B.programmes.niveaux.map((n, ni) => `<tbody>${n.lignes.map((l, i) => { const lg = (...k) => edD('programmes', 'niveaux', ni, 'lignes', i, ...k);
+          return `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${n.lignes.length}"${edD('programmes', 'niveaux', ni, 'niveau')}>${esc(n.niveau)}</th>`}<th scope="row"${lg('matiere')}>${esc(l.matiere)}</th><td class="int"${lg('intitule')}>${esc(l.intitule)}</td><td class="obj"${lg('objectif')}>${esc(l.objectif)}</td></tr>`; }).join('')}</tbody>`).join('')}</table></div>` });
+      const K = B.consignes, ek = (...k) => edD('consignes', ...k);
+      ch.push({ id: 'consignes', lib: K.titre, html: h2u('consignes', K.titre, `${dk}.consignes.titre`) + `<div class="consignes"><p class="note"${ek('note')}>${esc(K.note)}</p><p${ek('intro')}>${esc(K.intro)}</p>
+        <ul class="demandes">${K.demandes.map((x, i) => `<li${ek('demandes', i)}>${esc(x)}</li>`).join('')}</ul><p${ek('apres')}>${K.apres}</p><ul class="axes">${K.axes.map((x, i) => `<li${ek('axes', i)}>${x}</li>`).join('')}</ul><p class="fin"${ek('atelier')}>${K.atelier}</p></div>` });
       const phA = s.photos.filter(p => p.atelier || p.id === 'd-implantation-1');
-      ch.push({ id: 'ateliers', lib: B.ateliers.titre, html: h2u('ateliers', B.ateliers.titre) + `<div class="ateliers">${B.ateliers.liste.map(a => `<article class="atelier"><h3>${a.titre}</h3>
-          ${a.paragraphes.map(p => `<p>${p}</p>`).join('')}
-          ${a.etapes ? `<div class="etapes">${a.etapes.map(e => `<div class="etape"><h4>${e.titre}</h4><p>${e.texte}</p></div>`).join('')}</div>` : ''}
-          ${a.points ? `<ul>${a.points.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}</article>`).join('')}</div>
+      ch.push({ id: 'ateliers', lib: B.ateliers.titre, html: h2u('ateliers', B.ateliers.titre, `${dk}.ateliers.titre`) + `<div class="ateliers">${B.ateliers.liste.map((a, i) => { const ak = (...k) => edD('ateliers', 'liste', i, ...k);
+          return `<article class="atelier"><h3${ak('titre')}>${a.titre}</h3>
+          ${a.paragraphes.map((p, j) => `<p${ak('paragraphes', j)}>${p}</p>`).join('')}
+          ${a.etapes ? `<div class="etapes">${a.etapes.map((e, j) => `<div class="etape"><h4${ak('etapes', j, 'titre')}>${e.titre}</h4><p${ak('etapes', j, 'texte')}>${e.texte}</p></div>`).join('')}</div>` : ''}
+          ${a.points ? `<ul>${a.points.map((p, j) => `<li${ak('points', j)}>${p}</li>`).join('')}</ul>` : ''}</article>`; }).join('')}</div>
         ${phA.length ? `<div class="ateliers-photos">${cartons(s, phA, false)}</div>` : ''}` });
     }
     const sco = d => !!d.scolaire;
@@ -1594,12 +1597,12 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
       <div class="u page-u u-${s.univers.motif}${s.univers.clair ? ' clair' : ''}" style="${styleU(s)}">
         <section class="tete-u">${motif(s.univers.motif)}<div class="wrap tete-g">
           <div class="tete-txt"><p class="fil"><a href="#/">${esc(S.accueil)}</a><span aria-hidden="true">/</span><a href="#/spectacles">${esc(menuTexte('spectacles'))}</a></p>
-            <p class="signe">${esc(S.nom)}</p>${s.statut ? `<p class="statut">${esc(s.statut)}</p>` : ''}
+            <p class="signe"${ed('site.nom')}>${esc(S.nom)}</p>${s.statut ? `<p class="statut"${edS(s, 'statut')}>${esc(s.statut)}</p>` : ''}
             <h1 class="titre-u" tabindex="-1">${lettres(s)}</h1>
-            ${s.sousTitre ? `<p class="st">${s.sousTitre}</p>` : ''}
-            <p class="meta"><span class="cr2">${esc(s.creation)}</span>${s.lieuTemps ? `<span class="lieu-t">${esc(s.lieuTemps)}</span>` : ''}</p>
-            ${s.accroche ? `<p class="accroche">${motAMot(s.accroche)}</p>` : ''}</div>
-          <figure class="tete-photo"><img src="${D.photos[slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>
+            ${s.sousTitre ? `<p class="st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+            <p class="meta"><span class="cr2"${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span class="lieu-t"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>
+            ${s.accroche ? `<p class="accroche"${edS(s, 'accroche')}>${motAMot(s.accroche)}</p>` : ''}</div>
+          <figure class="tete-photo"${edP(s, 'photo')}><img src="${D.photos[slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%">${s.credit ? `<figcaption${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
         </div></section>
         <nav class="onglets-u" aria-label="${esc(s.titre)}"><div class="wrap">${S.entrees.map(e => `<a href="${lienSp(slug, e.cle)}" style="--e:${couleurE(e, s)}"${e.cle === cle ? ' aria-current="page"' : ''}>${brasE}<span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a>`).join('')}</div></nav>
         <div class="wrap corps-u">
@@ -1607,7 +1610,7 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
           <div class="chapitres">${ch.map(c => `<section class="chap" id="ch-${c.id}" aria-labelledby="h-${c.id}">${c.html}</section>`).join('')}
             <div class="appel">${ecrire()}</div></div>
         </div>
-        <a class="suivant u" href="${lienSp(nx.slug, cle)}" style="${styleU(nx)}"><span class="wrap"><b>${nx.titreLignes.map(esc).join('<br>')}</b>${fleche}</span></a>
+        <a class="suivant u" href="${lienSp(nx.slug, cle)}" style="${styleU(nx)}"><span class="wrap"><b>${lignesTitre(nx)}</b>${fleche}</span></a>
       </div>`;
     $$('.carte', main).forEach(f => brancher(f, f.closest('.tournee-g') ? $('.liste', f.closest('.tournee-g')) : null));
     // le petit sommaire suit la lecture
