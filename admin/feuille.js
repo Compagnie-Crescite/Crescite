@@ -45,7 +45,15 @@
    une étape a lieu le premier jour, chaque jour ou le dernier (jours : 'premier' | 'tous' | 'dernier'). Sans indication,
    l'arrivée de l'équipe artistique et la préparation ont lieu chaque jour, les autres étapes « avant » (montage,
    raccords, repas, ouverture des portes) le premier jour, les étapes « après » (démontage) le dernier. Une répétition
-   ou une résidence (date.nature) donne ses séances : « 9h-18h : répétitions ». */
+   ou une résidence (date.nature) donne ses séances : « 9h-18h : répétitions ».
+   Rien ne se fait la nuit, comme dans les feuilles de la compagnie. Le montage et les raccords qui tomberaient avant
+   8h passent la veille, un jour de plus en tête du planning (avec sa date) : à partir de 9h, ou de 14h s'ils tiennent
+   dans l'après-midi. Le jour même commence par l'arrivée de l'équipe (toute l'équipe, quand le montage a eu lieu la
+   veille), vers 8h au plus tôt et au moins une heure avant la première représentation ; rien n'est composé avant 6h.
+   Un repas du déroulé ne s'écrit que dans une plage de repas (11h30-14h, 18h30-21h) ; une représentation le matin et
+   une l'après-midi : « déjeuner : tout le monde » entre les deux. Le départ se compte depuis la première étape sur
+   place du premier jour, jamais avant 6h : plus tôt, l'amorce « arrivée la veille, hébergement à prévoir ». Ce qui est
+   déplacé ou ramené à ces heures garde l'amorce « à vérifier ». */
 const FEUILLE = (() => {
   'use strict';
   const ICI = typeof document !== 'undefined' && document.currentScript && document.currentScript.src;
@@ -274,7 +282,21 @@ ${s} .s{background:${MISE.surligne}}`;
   const NATURES = { repetitions: 'répétitions', residence: 'résidence', autre: 'séance' };
   const cleMot = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'x';
 
-  // les étapes du planning d'une date : [{jour, m (minutes ou null), quoi, qui, rep, note, cle, seance}]
+  // Les heures d'une journée, comme dans les feuilles de la compagnie. Avant 8h, on ne travaille pas : le montage et les
+  // raccords qui tomberaient plus tôt passent la veille (à partir de 9h, ou de 14h s'ils tiennent dans l'après-midi), et
+  // le jour J commence par l'arrivée de l'équipe, vers 8h au plus tôt et au moins une heure avant la représentation.
+  // Jamais rien avant 6h. Un repas du déroulé ne s'écrit que dans une plage de repas (midi : 11h30-14h, soir :
+  // 18h30-21h) ; une représentation le matin et une l'après-midi : le déjeuner entre les deux. Ce qui est déplacé ou
+  // ramené à ces heures reste estimé (estime : « à vérifier »).
+  const H6 = 6 * 60, H8 = 8 * 60, MIDI = [11 * 60 + 30, 14 * 60], SOIR = [18 * 60 + 30, 21 * 60];
+  const dansRepas = m => m != null && ((m >= MIDI[0] && m <= MIDI[1]) || (m >= SOIR[0] && m <= SOIR[1]));
+  // le montage et les raccords (ce qui peut se faire la veille), l'arrivée de l'équipe, les repas
+  const TECHNIQUE = /montage|dechargement|installation|implantation|reglages?\b|raccords?\b|balances?\b|pointage|arrivee\s+de\s+la\s+regie/;
+  const ARRIVEE = /^(arrivee|rdv|rendez-vous)\b/;
+  const REPAS = /repas|dejeuner|diner|catering/;
+
+  // les étapes du planning d'une date : [{jour, m (minutes ou null), quoi, qui, rep, note, cle, seance, veille, estime,
+  // dejeuner}]
   function etapesPlanning(seances, nature, modele, duree) {
     const vivantes = seances.filter(r => !r.annulee && estJour(r.jour));
     const jours = [...new Set(vivantes.map(r => r.jour))].sort();
@@ -282,53 +304,105 @@ ${s} .s{background:${MISE.surligne}}`;
     if (nature && nature !== 'representations') {
       // répétitions, résidence : les séances elles-mêmes, « 9h-18h : répétitions »
       vivantes.forEach((r, k) => out.push({ jour: r.jour, m: minutes(r.heure), fin: minutes(r.fin), quoi: txt(r.note) || NATURES[nature] || 'séance', qui: '', seance: true, cle: `pl:${r.jour}:seance:${r.id ?? k}` }));
-      return out;
+      return ordonner(out);
     }
     const etapes = (Array.isArray(modele) ? modele : []).filter(e => e && txt(e.quoi));
     // une étape à zéro minute, avant : la représentation elle-même (son nom, ses gens)
     const gabarit = etapes.find(e => !estApres(e) && (+e.avant_min || 0) === 0);
     const avant = etapes.filter(e => e !== gabarit && !estApres(e)).sort((a, b) => (+b.avant_min || 0) - (+a.avant_min || 0));
     const apres = etapes.filter(estApres).sort((a, b) => Math.abs(+a.avant_min || 0) - Math.abs(+b.avant_min || 0));
-    const repas = etapes.find(e => /repas|dejeuner|diner|catering/.test(norm(e.quoi)));
+    const repas = etapes.find(e => REPAS.test(norm(e.quoi)));
     const vus = new Map();
     const cleEtape = (j, e) => { const k = `pl:${j}:${cleMot(e.quoi)}`; const n = vus.get(k) || 0; vus.set(k, n + 1); return n ? `${k}-${n + 1}` : k; };
     const etape = (jour, m, e, extra = {}) => {
       const x = m === null ? { jour, m: null } : instant(jour, m);
-      out.push({ ...x, fin: null, quoi: txt(e.quoi), qui: txt(e.qui), cle: cleEtape(jour, e), ...extra });
+      out.push({ ...x, fin: null, quoi: txt(e.quoi), qui: txt(e.qui), cle: cleEtape(x.jour, e), ...extra });
     };
+    // la durée d'une étape « avant » : jusqu'à l'étape suivante du déroulé (une heure, à défaut)
+    const dureeEtape = e => { const sv = avant[avant.indexOf(e) + 1]; return sv ? Math.max(15, (+e.avant_min || 0) - (+sv.avant_min || 0)) : 60; };
     jours.forEach((j, i) => {
       const premier = i === 0 || jourPlus(jours[i - 1], 1) !== j;
       const dernier = i === jours.length - 1 || jourPlus(j, 1) !== jours[i + 1];
       const garde = e => { const q = joursEtape(e); return q === 'tous' || (q === 'premier' && premier) || (q === 'dernier' && dernier); };
       const rs = vivantes.filter(r => r.jour === j).sort((a, b) => (minutes(a.heure) ?? 1e9) - (minutes(b.heure) ?? 1e9));
       const t0 = minutes(rs[0].heure);
-      avant.filter(garde).forEach(e => etape(j, t0 === null ? null : t0 - (+e.avant_min || 0), e));
+      if (t0 === null) avant.filter(garde).forEach(e => etape(j, null, e));
+      else {
+        const veille = [], lignes = [];
+        avant.filter(garde).forEach(e => {
+          const q = norm(e.quoi), m = t0 - (+e.avant_min || 0);
+          if (TECHNIQUE.test(q)) {
+            if (m >= H8) lignes.push({ e, m });
+            else if (premier) veille.push(e);
+            else lignes.push({ e, m: Math.max(H6, Math.min(H8, t0)), estime: true });
+            return;
+          }
+          if (ARRIVEE.test(q)) { const a = Math.max(H6, Math.min(Math.max(m, H8), t0 - 60)); lignes.push({ e, m: a, arrivee: true, estime: a !== m }); return; }
+          if (REPAS.test(q)) { if (dansRepas(m)) lignes.push({ e, m }); return; }
+          lignes.push({ e, m });
+        });
+        // le jour J commence par l'arrivée de l'équipe : rien d'autre avant elle, ni avant 6h (le montage du jour excepté)
+        const debut = lignes.find(x => x.arrivee)?.m ?? null;
+        lignes.forEach(x => {
+          if (x.arrivee || TECHNIQUE.test(norm(x.e.quoi))) return;
+          const plancher = Math.max(H6, debut ?? Math.min(H8, t0));
+          if (x.m < plancher) { x.m = Math.min(plancher, t0); x.estime = true; }
+        });
+        if (veille.length) {
+          // la veille, sur une plage de journée : à partir de 9h, ou de 14h si tout tient dans l'après-midi ; le jour J,
+          // toute l'équipe arrive ensemble
+          const v = jourPlus(j, -1), a = veille[0], z = veille[veille.length - 1];
+          const d = (+a.avant_min || 0) - (+z.avant_min || 0) + dureeEtape(z);
+          const depart = d <= 4 * 60 ? 14 * 60 : 9 * 60;
+          veille.forEach(e => etape(v, depart + (+a.avant_min || 0) - (+e.avant_min || 0), e, { estime: true, veille: true }));
+          lignes.forEach(x => { if (x.arrivee) x.qui = 'tout le monde'; });
+        }
+        lignes.forEach(x => etape(j, x.m, x.e, { estime: !!x.estime, ...(x.qui ? { qui: x.qui } : {}) }));
+      }
       rs.forEach((r, k) => {
         const t = minutes(r.heure);
         out.push({ jour: j, m: t, fin: minutes(r.fin), quoi: txt(gabarit?.quoi) || 'Représentation', qui: txt(gabarit?.qui), rep: true, public: r.public, note: txt(r.note), cle: `pl:${j}:rep:${r.id ?? k}` });
         const suivante = rs[k + 1], t2 = suivante ? minutes(suivante.heure) : null;
-        // entre deux représentations : un repas si l'écart dépasse trois heures
-        if (t !== null && t2 !== null && t2 - (t + (duree || 90)) > 180) {
-          const fin = t + (duree || 90);
+        if (t === null || t2 === null) return;
+        const fin = t + (duree || 90);
+        // une représentation le matin, une l'après-midi : le déjeuner entre les deux
+        if (t < 12 * 60 && t2 >= 12 * 60) { out.push({ jour: j, m: null, ordre: (fin + t2) / 2, fin: null, quoi: 'déjeuner', qui: 'tout le monde', dejeuner: true, cle: `pl:${j}:dejeuner:${k}` }); return; }
+        // un long écart (plus de trois heures) : un repas, dans une plage de repas
+        if (t2 - fin > 180) {
           let m = t2 - Math.max(30, +repas?.avant_min || 120);
           m = m < fin + 30 ? plafond15(fin + 30) : plancher15(m);
-          etape(j, m, repas || { quoi: 'Repas', qui: 'Toute l’équipe' }, { cle: `pl:${j}:repas-entre:${k}` });
+          if (!dansRepas(m)) {
+            const soir = [Math.max(fin + 30, SOIR[0]), Math.min(t2 - 30, SOIR[1])], midi = [Math.max(fin + 30, MIDI[0]), Math.min(t2 - 30, MIDI[1])];
+            m = soir[0] <= soir[1] ? plafond15(soir[0]) : midi[0] <= midi[1] ? plafond15(midi[0]) : null;
+          }
+          if (m !== null) etape(j, m, repas || { quoi: 'Repas', qui: 'Toute l’équipe' }, { cle: `pl:${j}:repas-entre:${k}` });
         }
       });
       const tz = minutes(rs[rs.length - 1].heure);
-      apres.filter(garde).forEach(e => etape(j, tz === null || !duree ? null : tz + duree + Math.abs(+e.avant_min || 0), e));
+      // après la dernière représentation ; passé minuit, à vérifier
+      apres.filter(garde).forEach(e => { const m = tz === null || !duree ? null : tz + duree + Math.abs(+e.avant_min || 0); etape(j, m, e, { estime: m !== null && m >= 24 * 60 }); });
     });
-    // dans l'ordre du temps ; une ligne sans heure garde sa place parmi les autres
-    return out.map((x, i) => [x, i]).sort((a, b) => a[0].jour < b[0].jour ? -1 : a[0].jour > b[0].jour ? 1 : (a[0].m ?? -1) === -1 || (b[0].m ?? -1) === -1 ? a[1] - b[1] : a[0].m - b[0].m || a[1] - b[1]).map(x => x[0]);
+    return ordonner(out);
+  }
+  // dans l'ordre du temps, jour par jour ; une ligne sans heure garde sa place parmi les autres (le déjeuner, sa place
+  // entre deux représentations)
+  function ordonner(xs) {
+    const parJour = new Map();
+    xs.forEach((x, i) => { if (!parJour.has(x.jour)) parJour.set(x.jour, []); parJour.get(x.jour).push({ x, i }); });
+    return [...parJour.keys()].sort().flatMap(j => {
+      let avant = -1;
+      const ys = parJour.get(j).map(y => { const k = y.x.m ?? y.x.ordre; const cle = k == null ? avant + 0.001 : k; avant = cle; return { ...y, cle }; });
+      return ys.sort((a, b) => a.cle - b.cle || a.i - b.i).map(y => { const { ordre, ...x } = y.x; return x; });
+    });
   }
 
   // les étapes du planning d'une date, en lignes simples (l'onglet « Déroulé type » de l'administration en montre un exemple)
-  //   → [{jour, heure: 'HH:MM' | '', fin, quoi, qui, rep}]
+  //   → [{jour, heure: 'HH:MM' | '', fin, quoi, qui, rep, veille, estime}]
   function etapes({ representations = [], spectacle = {}, date = {} } = {}) {
     const seances = representations.filter(r => estJour(r?.jour)).map(r => ({ id: r.id ?? null, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', note: txt(r.note), annulee: !!r.annulee }));
     return etapesPlanning(seances, date.nature, spectacle.feuille_modele, dureeMinutes(spectacle.duree)).map(e => ({
       jour: e.jour, heure: e.m == null ? '' : hhmm(e.m), fin: e.fin == null ? '' : hhmm(e.fin),
-      quoi: e.rep && PUBLIC_TEXTE[e.public] ? `${e.quoi} ${PUBLIC_TEXTE[e.public]}` : e.quoi, qui: e.qui, rep: !!e.rep }));
+      quoi: e.rep && PUBLIC_TEXTE[e.public] ? `${e.quoi} ${PUBLIC_TEXTE[e.public]}` : e.quoi, qui: e.qui, rep: !!e.rep, veille: !!e.veille, estime: !!e.estime }));
   }
 
   // un contact écrit à la main (« Marie Dupont, 06 12 34 56 78, marie@lieu.fr ») : nom, téléphone, adresse électronique
@@ -452,25 +526,36 @@ ${s} .s{background:${MISE.surligne}}`;
     if (aPosition(S.depart) && aPosition(l)) { const km = Math.round(distanceKm(S.depart, l) * 1.3); if (km >= 8) route = { km, min: dureeRoute(km) }; }
     const joursPl = [...new Set(etapes.map(e => e.jour))].sort();
     if (!joursPl.length) B('ligne', [amorce('aucune séance avec un jour : ajoutez les représentations de la date, puis « Mettre à jour depuis la base »')]);
+    let veilleDepart = false;
     joursPl.forEach((j, i) => {
       base('jour', [seg(jourLong(j, false))], `jour:${j}`, { date: j });
       const du = etapes.filter(e => e.jour === j);
+      // le départ, d'après la route (estimée) : avant la première étape sur place du premier jour, jamais avant 6h ;
+      // plus tôt, on arrive la veille (hébergement à prévoir)
       if (i === 0 && route) {
         const t = du.find(e => e.m != null)?.m;
         const m = t == null ? null : plancher15(t - route.min - 15);
-        const connue = m != null && m >= 0;
-        base('ligne', [...(connue ? [seg(`${heureCourte(m)} : `)] : [amorce('heure de départ ?'), seg(' : ')]), seg(`départ de ${txt(S.depart.commune) || 'Rouen'} `),
-          amorce(`environ ${route.km} km et ${dureeTexte(route.min)} de route${connue && m < 6 * 60 ? ', très tôt' : ''} : à vérifier`)], `pl:${j}:depart`, { origine: { jour: j, heure: connue ? hhmm(m) : null, fin: null, rep: false } });
+        const estimation = `environ ${route.km} km et ${dureeTexte(route.min)} de route`;
+        if (m != null && m < H6) {
+          veilleDepart = true;
+          base('ligne', [amorce(`arrivée la veille, hébergement à prévoir : ${estimation}`)], `pl:${j}:depart`, { origine: { jour: j, heure: null, fin: null, rep: false } });
+        } else {
+          base('ligne', [...(m != null ? [seg(`${heureCourte(m)} : `)] : [amorce('heure de départ ?'), seg(' : ')]), seg(`départ de ${txt(S.depart.commune) || 'Rouen'} `),
+            amorce(`${estimation} : à vérifier`)], `pl:${j}:depart`, { origine: { jour: j, heure: m != null ? hhmm(m) : null, fin: null, rep: false } });
+        }
       }
       du.forEach(e => {
         const h = e.m == null ? null : e.m, f = e.fin == null ? null : e.fin;
+        const qui = quiDe(e.qui);
+        // entre une représentation du matin et une de l'après-midi
+        if (e.dejeuner) { base('ligne', [seg('déjeuner : '), seg(qui || 'tout le monde', { surligne: true })], e.cle, { origine: { jour: j, heure: null, fin: null, rep: false } }); return; }
         const tete = h == null ? [amorce('heure ?'), seg(' : ')] : [seg(`${heureCourte(h)}${f != null ? `-${heureCourte(f)}` : ''} : `)];
         const quoi = e.rep ? `${minuscule(e.quoi)}${PUBLIC_TEXTE[e.public] ? ` ${PUBLIC_TEXTE[e.public]}` : ''}` : minuscule(e.quoi);
-        const qui = quiDe(e.qui);
-        const tot = h != null && h < 6 * 60 && !e.seance ? [amorce(' très tôt : à vérifier')] : [];
+        // déplacé à la veille, ramené à des heures de journée, ou passé minuit : estimé
+        const verif = e.estime || (h != null && h < H6 && !e.seance) ? [amorce(' à vérifier')] : [];
         const segs = e.rep
-          ? [...tete.map(s => s.amorce ? s : { ...s, gras: true }), seg(quoi, { gras: true }), ...(e.note ? [seg(` (${e.note})`)] : []), ...(qui ? [seg(' '), seg(`/ ${qui}`, { surligne: true })] : [])]
-          : [...tete, seg(quoi), ...(qui ? [seg(' '), seg(`/ ${qui}`, { surligne: true })] : []), ...tot];
+          ? [...tete.map(x => x.amorce ? x : { ...x, gras: true }), seg(quoi, { gras: true }), ...(e.note ? [seg(` (${e.note})`)] : []), ...(qui ? [seg(' '), seg(`/ ${qui}`, { surligne: true })] : [])]
+          : [...tete, seg(quoi), ...(qui ? [seg(' '), seg(`/ ${qui}`, { surligne: true })] : []), ...verif];
         base('ligne', segs, e.cle, { origine: { jour: j, heure: h == null ? null : hhmm(h), fin: f == null ? null : hhmm(f), rep: !!e.rep } });
       });
     });
@@ -492,7 +577,9 @@ ${s} .s{background:${MISE.surligne}}`;
     const parSp = source(memeSp, x => memeLieu(x) ? 1 : 0), parLieu = source(memeLieu, x => memeSp(x) ? 1 : 0);
     rubrique('repas', 'Repas', /^repas|^restauration/, parSp, 'qui prend en charge les repas ? (repas fournis par le lieu, défraiement)');
     rubrique('transports', 'Transports', /^transports?|^deplacements?|^trajets?/, parSp, 'véhicules, trains, covoiturage, remboursement des frais ?');
-    const uneNuit = debut && fin && debut === fin && route && route.km < 100;
+    // une seule journée, près de Rouen, sans arrivée la veille : pas d'hébergement
+    const proche = route ? route.km < 100 : aPosition(S.depart) && aPosition(l);
+    const uneNuit = joursPl.length <= 1 && proche && !veilleDepart;
     if (!uneNuit || parLieu) rubrique('hebergement', 'Hébergement', /^hebergements?|^hotels?|^logements?/, parLieu, 'hôtel : nom, adresse, heure d’arrivée ?');
 
     // ---- adresses et contacts

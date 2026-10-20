@@ -433,7 +433,7 @@ function ongletDistribution(z, s) {
 // le déroulé type : des étapes « X h Y avant le lever de rideau » ou « après la fin », posées autour des représentations
 function ongletDeroule(z, F) {
   if (!Array.isArray(F.feuille_modele)) F.feuille_modele = [];
-  const exemples = { un: [{ heure: '20:00' }], deux: [{ heure: '14:00', public: 'scolaire' }, { heure: '20:00' }], trois: [0, 1, 2].map(i => ({ jour: i, heure: '20:00' })) };
+  const exemples = { un: [{ heure: '20:00' }], matin: [{ heure: '10:00', public: 'scolaire' }], deux: [{ heure: '10:20', public: 'scolaire' }, { heure: '14:10', public: 'scolaire' }], trois: [0, 1, 2].map(i => ({ jour: i, heure: '20:00' })) };
   let exemple = 'un';
   const rang = e => FEUILLE.estApres(e) ? 1e5 + Math.abs(+e.avant_min || 0) : -(+e.avant_min || 0);
   const trierModele = () => F.feuille_modele.sort((a, b) => rang(a) - rang(b));
@@ -449,20 +449,23 @@ function ongletDeroule(z, F) {
   const dessinerExemple = () => {
     const reps = exemples[exemple].map(r => ({ jour: AGENDA.iso(new Date(Date.now() + 864e5 * (7 + (r.jour || 0)))), heure: r.heure, public: r.public || 'tout_public' }));
     const pl = FEUILLE.etapes({ spectacle: { duree: F.duree, feuille_modele: F.feuille_modele }, representations: reps });
-    const jours = [...new Set(pl.map(r => r.jour))];
-    $('#fm-exemple', z).innerHTML = pl.length ? jours.map((j, n) => `${jours.length > 1 ? `<p class="fm-jour">${['Premier', 'Deuxième', 'Troisième'][n] || ''} jour</p>` : ''}<ul class="liste-simple fm-ex">${pl.filter(r => r.jour === j).map(r => `<li${r.rep ? ' class="fm-rep-ex"' : ''}><b>${esc(FEUILLE.heure(r.heure) || '–')}</b><span>${esc(r.quoi)}${r.fin ? ` <span class="compte">jusqu’à ${esc(FEUILLE.heure(r.fin))}</span>` : ''}</span>${r.qui ? `<span class="compte">${esc(r.qui)}</span>` : ''}</li>`).join('')}</ul>`).join('') : '<p class="aide">Rien à montrer.</p>';
+    const jours = [...new Set(pl.map(r => r.jour))], veilles = new Set(pl.filter(r => r.veille).map(r => r.jour));
+    let n = 0;
+    const libelle = j => veilles.has(j) ? 'La veille' : `${['Premier', 'Deuxième', 'Troisième'][n++] || ''} jour`;
+    $('#fm-exemple', z).innerHTML = pl.length ? jours.map(j => `${jours.length > 1 ? `<p class="fm-jour">${libelle(j)}</p>` : ''}<ul class="liste-simple fm-ex">${pl.filter(r => r.jour === j).map(r => `<li${r.rep ? ' class="fm-rep-ex"' : ''}><b>${esc(FEUILLE.heure(r.heure) || '–')}</b><span>${esc(r.quoi)}${r.fin ? ` <span class="compte">jusqu’à ${esc(FEUILLE.heure(r.fin))}</span>` : ''}${r.estime ? ' <span class="compte">(à vérifier)</span>' : ''}</span>${r.qui ? `<span class="compte">${esc(r.qui)}</span>` : ''}</li>`).join('')}</ul>`).join('') : '<p class="aide">Rien à montrer.</p>';
   };
   const dessiner = () => {
     const xs = F.feuille_modele, duree = FEUILLE.dureeMinutes(F.duree);
     const rangs = xs.map((e, i) => [e, i]).sort((a, b) => rang(a[0]) - rang(b[0]));
     const avant = rangs.filter(([e]) => !FEUILLE.estApres(e)), apres = rangs.filter(([e]) => FEUILLE.estApres(e));
     z.innerHTML = `<div class="bloc"><h3>Déroulé type d’une journée de représentation</h3>
-      <p class="aide">Chaque feuille de route le pose autour des représentations de sa date : les étapes « avant » avant la première représentation du jour, les étapes « après » après la dernière ; entre deux représentations éloignées de plus de trois heures, un repas. Plusieurs jours de suite au même lieu : chaque étape a lieu le premier jour, chaque jour ou le dernier (le montage le premier, le démontage le dernier).</p>
+      <p class="aide">Chaque feuille de route le pose autour des représentations de sa date : les étapes « avant » avant la première représentation du jour, les étapes « après » après la dernière. Plusieurs jours de suite au même lieu : chaque étape a lieu le premier jour, chaque jour ou le dernier (le montage le premier, le démontage le dernier).</p>
+      <p class="aide">Rien ne se fait la nuit : le montage et les raccords qui tomberaient avant 8h passent la veille (à partir de 9h, ou de 14h s’ils tiennent dans l’après-midi), et le jour même commence par l’arrivée de l’équipe, vers 8h au plus tôt et au moins une heure avant la représentation. Un repas ne s’écrit qu’aux heures des repas (11h30-14h, 18h30-21h) ; une représentation le matin et une l’après-midi : le déjeuner entre les deux.</p>
       ${xs.length ? `<div class="fm-lignes"><div class="fm-l fm-entete" aria-hidden="true"><span>Quand</span><span>Quoi</span><span>Qui</span><span>Sur plusieurs jours</span><span></span></div>${avant.map(([e, i]) => ligne(e, i)).join('')}
         <div class="fm-rep"><b>Lever de rideau</b> : la représentation${duree ? `, ${esc(FEUILLE.dureeTexte(duree))} d’après la durée du spectacle` : ' (durée inconnue : indiquez-la dans l’onglet Général)'}</div>
         ${apres.map(([e, i]) => ligne(e, i)).join('')}</div>` : '<p>Aucun déroulé type : la feuille de route de chaque date ne contiendra que les représentations.</p>'}
       <div class="fm-boutons"><button type="button" class="btn petit" data-fm-ajout="avant">＋ Étape avant</button><button type="button" class="btn petit" data-fm-ajout="apres">＋ Étape après la fin</button>${xs.length ? '' : '<button type="button" class="btn petit principal" data-fm-proposer>Proposer un déroulé type</button>'}</div></div>
-      <div class="bloc"><h3>Ce que donne le planning</h3><div class="seg" role="group" aria-label="Exemple">${[['un', 'Une représentation à 20h'], ['deux', 'À 14h et à 20h'], ['trois', 'Trois soirs de suite']].map(([k, l]) => `<button type="button" data-fm-ex="${k}" aria-pressed="${k === exemple}">${l}</button>`).join('')}</div><div id="fm-exemple" style="margin-top:12px"></div></div>`;
+      <div class="bloc"><h3>Ce que donne le planning</h3><div class="seg" role="group" aria-label="Exemple">${[['un', 'Une représentation à 20h'], ['matin', 'À 10h'], ['deux', 'À 10h20 et 14h10'], ['trois', 'Trois soirs de suite']].map(([k, l]) => `<button type="button" data-fm-ex="${k}" aria-pressed="${k === exemple}">${l}</button>`).join('')}</div><div id="fm-exemple" style="margin-top:12px"></div></div>`;
     dessinerExemple();
   };
   const lireLigne = l => {
