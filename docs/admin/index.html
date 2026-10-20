@@ -1,0 +1,1368 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+<title>Crescite · administration</title>
+<style>
+:root {
+  --fond: #f6f3f0; --carte: #ffffff; --encre: #1d1720; --gris: #675e6b; --trait: #e4dde3; --doux: #f1ecf0;
+  --accent: #a8306f; --accent-fonce: #8a2259; --accent-doux: #f7e6ef; --ok: #1d6f47; --ok-doux: #e3f3ea;
+  --alerte: #b3261e; --alerte-doux: #fbe7e5; --option: #7a5a10; --option-doux: #f8efd9; --ombre: 0 1px 2px rgba(30, 20, 30, .06), 0 4px 18px rgba(30, 20, 30, .06);
+  --rayon: 12px; --police: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --fond: #17131a; --carte: #211b24; --encre: #f1ebf2; --gris: #b3a8b7; --trait: #3a3140; --doux: #2a222e;
+    --accent: #e27ab3; --accent-fonce: #f29ac9; --accent-doux: #3a2032; --ok: #6fd3a0; --ok-doux: #1d3329;
+    --alerte: #ff8a80; --alerte-doux: #3a1f1d; --option: #e9c46a; --option-doux: #352b17; --ombre: none; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--fond); color: var(--encre); font: 15px/1.5 var(--police); -webkit-font-smoothing: antialiased; }
+a { color: var(--accent); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* en-tête */
+.barre { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; padding: 10px 20px; background: var(--carte); border-bottom: 1px solid var(--trait); }
+.marque { display: flex; align-items: baseline; gap: 8px; font-weight: 800; letter-spacing: .02em; text-decoration: none; color: var(--encre); white-space: nowrap; }
+.marque small { font-weight: 500; color: var(--gris); letter-spacing: 0; }
+.nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; }
+.nav a { padding: 7px 12px; border-radius: 999px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; }
+.nav a:hover { background: var(--doux); color: var(--encre); }
+.nav a[aria-current="page"] { background: var(--accent); color: #fff; }
+.qui { display: flex; align-items: center; gap: 10px; color: var(--gris); font-size: 13px; white-space: nowrap; }
+.direct { display: inline-flex; align-items: center; gap: 6px; }
+.direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
+.direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
+@media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; } }
+
+/* boutons et champs */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-weight: 600; text-decoration: none; color: var(--encre); white-space: nowrap; }
+.btn:hover { border-color: var(--gris); }
+.btn.principal { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.principal:hover { background: var(--accent-fonce); }
+.btn.danger { color: var(--alerte); }
+.btn.petit { padding: 4px 9px; font-size: 13px; border-radius: 7px; }
+.btn.lien { border: 0; background: none; color: var(--accent); padding: 4px 6px; }
+.btn[disabled] { opacity: .5; cursor: default; }
+.champ { display: grid; gap: 5px; margin: 0 0 14px; }
+.champ > label, .champ > .lib { font-weight: 650; font-size: 13.5px; }
+.champ .aide { color: var(--gris); font-size: 12.5px; }
+input[type=text], input[type=email], input[type=password], input[type=url], input[type=search], input[type=date], input[type=time], input[type=number], select, textarea, .riche {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); min-height: 38px; }
+textarea { min-height: 76px; resize: vertical; }
+.riche { min-height: 60px; line-height: 1.55; }
+.riche:empty::before { content: attr(data-vide); color: var(--gris); }
+input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-doux); }
+.case { display: flex; align-items: center; gap: 9px; font-weight: 600; cursor: pointer; }
+.case input { width: 18px; height: 18px; accent-color: var(--accent); }
+.rangee { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.bloc { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 18px 20px; box-shadow: var(--ombre); }
+.bloc + .bloc { margin-top: 16px; }
+.bloc h3 { margin: 0 0 12px; font-size: 15px; }
+.outils-riche { display: flex; gap: 4px; margin-bottom: 4px; }
+.outils-riche button { border: 1px solid var(--trait); background: var(--carte); border-radius: 6px; padding: 1px 8px; cursor: pointer; font-size: 13px; }
+.item { border: 1px solid var(--trait); border-radius: 10px; padding: 10px 12px 2px; margin-bottom: 8px; background: var(--doux); }
+.item-tete { display: flex; justify-content: flex-end; gap: 4px; margin: -4px -6px 4px 0; }
+.couleur { display: flex; gap: 8px; align-items: center; }
+.couleur input[type=color] { width: 44px; height: 38px; padding: 2px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); }
+.pastille { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--accent)); flex: none; }
+
+/* mise en page */
+main { padding: 20px; max-width: 1500px; margin: 0 auto; }
+.tete { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 4px 0 16px; }
+.tete h1 { margin: 0 auto 0 0; font-size: 22px; }
+.deux { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 18px; align-items: start; }
+.deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
+@media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
+@media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
+.filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
+.seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.puces { display: flex; flex-wrap: wrap; gap: 6px; }
+.puce { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-size: 13px; font-weight: 600; color: var(--gris); }
+.puce[aria-pressed="true"] { border-color: var(--c, var(--accent)); color: var(--encre); background: color-mix(in srgb, var(--c, var(--accent)) 14%, var(--carte)); }
+.mois { margin: 14px 4px 6px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+.ligne { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); border-left: 4px solid var(--c, var(--accent)); }
+.ligne:hover { border-color: var(--gris); border-left-color: var(--c, var(--accent)); }
+.ligne[aria-current="true"] { box-shadow: 0 0 0 3px var(--accent-doux); border-color: var(--accent); }
+.ligne .jj { font-weight: 800; font-size: 13px; line-height: 1.2; text-align: center; color: var(--gris); }
+.ligne .jj b { display: block; font-size: 20px; color: var(--encre); }
+.ligne .corps { min-width: 0; }
+.ligne .t { font-weight: 700; display: block; }
+.ligne .ou { color: var(--gris); font-size: 13.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ligne .reps { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.rep { font-size: 12px; padding: 1px 7px; border-radius: 6px; background: var(--doux); color: var(--gris); font-weight: 600; }
+.rep.sco { background: #e6f0fb; color: #1e4f8a; }
+.rep.ann { text-decoration: line-through; }
+.badges { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.badge { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--doux); color: var(--gris); white-space: nowrap; }
+.badge.option { background: var(--option-doux); color: var(--option); }
+.badge.annulee, .badge.masquee { background: var(--alerte-doux); color: var(--alerte); }
+.badge.sco { background: #e6f0fb; color: #1e4f8a; }
+.badge.ok { background: var(--ok-doux); color: var(--ok); }
+.vide { padding: 30px 16px; text-align: center; color: var(--gris); }
+.compte { color: var(--gris); font-size: 13px; }
+
+/* éditeur */
+.editeur .titre-ed { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 14px; }
+.editeur h2 { margin: 0; font-size: 20px; line-height: 1.25; flex: 1; }
+.pied-ed { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; padding: 12px 14px; background: color-mix(in srgb, var(--carte) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--trait); border-radius: var(--rayon); }
+.pied-ed .etat-ed { margin-right: auto; color: var(--gris); font-size: 13px; }
+.pied-ed .etat-ed.sale { color: var(--option); font-weight: 700; }
+.apercu { padding: 12px 14px; border-radius: 10px; background: var(--doux); border: 1px dashed var(--trait); }
+.apercu .l { font-weight: 700; }
+.apercu .d { color: var(--gris); font-size: 14px; }
+table.reps { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+table.reps th { text-align: left; font-size: 12px; color: var(--gris); font-weight: 700; padding: 0 6px; }
+table.reps td { padding: 0 3px; vertical-align: middle; }
+table.reps td:first-child { padding-left: 0; }
+@media (max-width: 700px) {
+  table.reps thead { display: none; }
+  table.reps tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; border: 1px solid var(--trait); border-radius: 10px; margin-bottom: 8px; }
+  table.reps td { padding: 0; }
+}
+.combo { position: relative; }
+.suggestions { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); background: var(--carte); border: 1px solid var(--trait); border-radius: 10px; box-shadow: var(--ombre); max-height: 300px; overflow: auto; }
+.suggestions button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 8px 12px; cursor: pointer; }
+.suggestions button:hover, .suggestions button.actif { background: var(--accent-doux); }
+.suggestions small { color: var(--gris); }
+.onglets-ed { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+.onglets-ed button { border: 1px solid var(--trait); background: var(--carte); border-radius: 999px; padding: 5px 12px; cursor: pointer; font-weight: 600; color: var(--gris); }
+.onglets-ed button[aria-selected="true"] { background: var(--encre); color: var(--carte); border-color: var(--encre); }
+.cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.carte-sp { display: grid; grid-template-rows: 120px auto; border-radius: var(--rayon); overflow: hidden; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); box-shadow: var(--ombre); }
+.carte-sp .img { background: var(--fondU, #333) center/cover; position: relative; }
+.carte-sp .img::after { content: ""; position: absolute; inset: auto 0 0 0; height: 5px; background: var(--c, var(--accent)); }
+.carte-sp .txt { padding: 10px 12px; display: grid; gap: 6px; }
+.carte-sp .txt b { font-size: 16px; }
+.miniatures { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.mini { border: 1px solid var(--trait); border-radius: 10px; overflow: hidden; background: var(--doux); }
+.mini img { width: 100%; height: 110px; object-fit: cover; display: block; background: #ccc; }
+.contraste { font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+.contraste.bon { background: var(--ok-doux); color: var(--ok); }
+.contraste.faible { background: var(--alerte-doux); color: var(--alerte); }
+.journal-ligne { display: grid; grid-template-columns: 150px 1fr auto; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--trait); align-items: start; }
+.journal-ligne .quand { color: var(--gris); font-size: 13px; }
+.journal-ligne .quoi b { display: block; }
+.journal-ligne .diff { color: var(--gris); font-size: 13px; }
+@media (max-width: 700px) { .journal-ligne { grid-template-columns: 1fr; } }
+table.simple { width: 100%; border-collapse: collapse; background: var(--carte); border-radius: var(--rayon); overflow: hidden; }
+table.simple th, table.simple td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--trait); vertical-align: top; }
+table.simple th { font-size: 12.5px; color: var(--gris); }
+table.simple tr.cliquable { cursor: pointer; }
+table.simple tr.cliquable:hover td { background: var(--doux); }
+
+/* connexion */
+.connexion { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+.connexion form { width: min(400px, 100%); }
+.connexion h1 { font-size: 22px; margin: 0 0 4px; }
+.connexion p { color: var(--gris); margin: 0 0 18px; }
+.chargement { padding: 60px 20px; text-align: center; color: var(--gris); }
+
+/* annonces */
+#annonces { position: fixed; z-index: 50; left: 50%; bottom: 18px; transform: translateX(-50%); display: grid; gap: 8px; width: min(460px, calc(100% - 24px)); }
+.annonce { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 11px; background: #1d1720; color: #fff; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
+.annonce.erreur { background: #8c1d16; }
+.annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .4); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .2s ease-out; } @keyframes monte { from { transform: translateY(8px); opacity: 0; } } }
+</style>
+</head>
+<body>
+<div id="app"><p class="chargement">Chargement…</p></div>
+<div id="annonces" aria-live="polite"></div>
+<script src="vendor/supabase.js"></script>
+<script src="agenda.js"></script>
+<script>
+'use strict';
+/* L'administration du site de la compagnie Crescite : les spectacles, les dates et leurs représentations, les ateliers,
+   les lieux et les textes. Chaque enregistrement va dans la base (Supabase, tables crescite_) et change aussitôt le site
+   en ligne, qui écoute la base en temps réel. Seuls les comptes de crescite_admins peuvent enregistrer. */
+const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
+const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
+const SITE = '../synthese.html';
+const sb = supabase.createClient(BASE, CLE, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'crescite-admin', detectSessionInUrl: true } });
+
+// ===================================================================================================== état
+const E = { session: null, admin: false, pret: false, direct: false, sale: false, hash: location.hash,
+  spectacles: [], lieux: [], dates: [], reps: [], suivis: [], lieuxSuivi: [], ateliers: [], seances: [], textes: [], admins: [], journal: [] };
+const TABLES = {
+  crescite_spectacles: ['spectacles', 'id'], crescite_lieux: ['lieux', 'id'], crescite_dates: ['dates', 'id'],
+  crescite_representations: ['reps', 'id'], crescite_dates_suivi: ['suivis', 'date_id'], crescite_lieux_suivi: ['lieuxSuivi', 'lieu_id'],
+  crescite_ateliers: ['ateliers', 'id'], crescite_seances: ['seances', 'id'], crescite_textes: ['textes', 'cle'],
+};
+const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', crescite_dates: 'Date', crescite_representations: 'Représentation',
+  crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site' };
+
+// ===================================================================================================== outils
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const texteSeul = h => { const d = document.createElement('div'); d.innerHTML = h || ''; return d.textContent; };
+const clone = o => JSON.parse(JSON.stringify(o ?? null));
+const AUJ = AGENDA.iso(new Date());
+const JS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+const MC = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+const jourCourt = j => { if (!j) return ''; const d = new Date(j + 'T12:00:00'); return `${JS[d.getDay()]} ${d.getDate()} ${MC[d.getMonth()]} ${d.getFullYear()}`; };
+const photoUrl = f => f ? `${BASE}/storage/v1/object/public/crescite/${String(f).split('/').map(encodeURIComponent).join('/')}` : '';
+const slugifier = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60);
+const parId = (coll, id) => E[coll].find(x => x.id === id);
+const spectacle = id => parId('spectacles', id);
+const lieu = id => parId('lieux', id);
+const lieuTexte = l => l ? `${l.nom ? l.nom + ' — ' : ''}${l.commune} (${l.departement})` : '';
+const couleurSp = s => s?.univers?.couleurs?.scene || s?.univers?.couleurs?.accent || '#a8306f';
+const repsDe = id => E.reps.filter(r => r.date_id === id).sort((a, b) => a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : String(a.heure || '99').localeCompare(String(b.heure || '99')));
+const h5 = h => h ? String(h).slice(0, 5) : '';
+let session = {};
+try { session = JSON.parse(sessionStorage.getItem('crescite-admin-filtres') || '{}'); } catch { session = {}; }
+const garderFiltres = () => { try { sessionStorage.setItem('crescite-admin-filtres', JSON.stringify(session)); } catch { /* navigation privée */ } };
+
+function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', delai = 5000 } = {}) {
+  const el = document.createElement('div');
+  el.className = 'annonce' + (erreur ? ' erreur' : '');
+  el.setAttribute('role', erreur ? 'alert' : 'status');
+  el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button">${esc(libelle)}</button>` : ''}`;
+  if (action) $('button', el).addEventListener('click', () => { el.remove(); action(); });
+  $('#annonces').append(el);
+  setTimeout(() => el.remove(), erreur ? 9000 : delai);
+}
+const erreur = (e, quoi = 'L’enregistrement a échoué') => { console.error(e); annoncer(`${quoi} : ${e?.message || e}`, { erreur: true }); };
+
+// un HTML propre : gras, italique, liens, retours à la ligne, intertitres et listes ; rien d'autre
+function propre(html) {
+  const t = document.createElement('template');
+  t.innerHTML = html || '';
+  const sortie = n => {
+    if (n.nodeType === 3) return esc(n.textContent).replace(/&#39;/g, '’');
+    if (n.nodeType !== 1) return '';
+    const tag = n.tagName.toLowerCase(), d = [...n.childNodes].map(sortie).join('');
+    if (tag === 'b' || tag === 'strong') return d.trim() ? `<strong>${d}</strong>` : d;
+    if (tag === 'i' || tag === 'em') return d.trim() ? `<em>${d}</em>` : d;
+    if (tag === 'br') return '<br/>';
+    if (['h2', 'h3', 'ul', 'ol', 'li'].includes(tag)) return `<${tag}>${d}</${tag}>`;
+    if (tag === 'a') { const h = n.getAttribute('href') || ''; return /^(https?:|mailto:|#\/)/.test(h) ? `<a href="${esc(h)}">${d}</a>` : d; }
+    if (tag === 'div' || tag === 'p') return d + '<br/>';
+    return d;
+  };
+  return [...t.content.childNodes].map(sortie).join('').replace(/(<br\/>\s*)+$/, '').replace(/&nbsp;/g, ' ').trim();
+}
+
+// des photos plus légères avant l'envoi : 2 000 px au plus, en WebP
+async function optimiser(fichier) {
+  try {
+    const img = await createImageBitmap(fichier);
+    const k = Math.min(1, 2000 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/webp', 0.84));
+    return blob && blob.size < fichier.size ? blob : fichier;
+  } catch { return fichier; }
+}
+async function envoyerPhoto(fichier, dossier) {
+  const blob = await optimiser(fichier);
+  const ext = blob.type === 'image/webp' ? 'webp' : (fichier.name.split('.').pop() || 'jpg').toLowerCase();
+  const chemin = `${dossier}/${Date.now().toString(36)}-${slugifier(fichier.name.replace(/\.[^.]+$/, '')) || 'photo'}.${ext}`;
+  const { error } = await sb.storage.from('crescite').upload(chemin, blob, { contentType: blob.type || fichier.type, upsert: false, cacheControl: '31536000' });
+  if (error) throw error;
+  return chemin;
+}
+
+// ===================================================================================================== connexion
+sb.auth.onAuthStateChange((ev, s) => {
+  E.session = s;
+  if (ev === 'PASSWORD_RECOVERY') return ecranMotDePasse();
+  if (ev === 'INITIAL_SESSION' || ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') setTimeout(demarrer, 0);
+});
+
+function ecranConnexion(message = '') {
+  $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-connexion">
+    <h1>Crescite · administration</h1><p>Les spectacles, les dates, les ateliers et les textes du site de la compagnie.</p>
+    ${message ? `<p role="alert" style="color:var(--alerte)">${esc(message)}</p>` : ''}
+    <div class="champ"><label for="c-mel">Adresse électronique</label><input id="c-mel" type="email" autocomplete="username" required></div>
+    <div class="champ"><label for="c-mdp">Mot de passe</label><input id="c-mdp" type="password" autocomplete="current-password" required></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="btn principal" type="submit">Se connecter</button>
+    <button class="btn lien" type="button" id="c-oubli">Mot de passe oublié ?</button></div></form></div>`;
+  $('#c-mel').focus();
+  $('#f-connexion').addEventListener('submit', async e => {
+    e.preventDefault();
+    const b = $('button[type=submit]', e.target); b.disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email: $('#c-mel').value.trim(), password: $('#c-mdp').value });
+    b.disabled = false;
+    if (error) ecranConnexion(error.message === 'Invalid login credentials' ? 'Adresse ou mot de passe incorrect.' : error.message);
+  });
+  $('#c-oubli').addEventListener('click', async () => {
+    const mel = $('#c-mel').value.trim();
+    if (!mel) { $('#c-mel').focus(); return annoncer('Indiquez d’abord votre adresse électronique.'); }
+    const { error } = await sb.auth.resetPasswordForEmail(mel, { redirectTo: location.href.split('#')[0] });
+    if (error) erreur(error, 'Envoi impossible'); else annoncer('Un lien pour choisir un nouveau mot de passe vient de partir.');
+  });
+}
+function ecranMotDePasse() {
+  $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-mdp"><h1>Nouveau mot de passe</h1>
+    <div class="champ"><label for="n-mdp">Nouveau mot de passe</label><input id="n-mdp" type="password" minlength="8" autocomplete="new-password" required></div>
+    <button class="btn principal" type="submit">Enregistrer</button></form></div>`;
+  $('#f-mdp').addEventListener('submit', async e => {
+    e.preventDefault();
+    const { error } = await sb.auth.updateUser({ password: $('#n-mdp').value });
+    if (error) erreur(error, 'Mot de passe non changé'); else { annoncer('Mot de passe changé.'); demarrer(); }
+  });
+}
+
+let demarre = false;
+async function demarrer() {
+  if (!E.session) { demarre = false; return ecranConnexion(); }
+  if (demarre) return;
+  demarre = true;
+  $('#app').innerHTML = '<p class="chargement">Chargement de la base…</p>';
+  const { data, error } = await sb.from('crescite_admins').select('user_id').eq('user_id', E.session.user.id);
+  if (error) { demarre = false; return ecranConnexion(/crescite_admins/.test(error.message) ? 'La base de la compagnie n’est pas encore installée.' : error.message); }
+  if (!data.length) {
+    demarre = false;
+    $('#app').innerHTML = `<div class="connexion"><div class="bloc"><h1>Accès réservé</h1><p>Le compte ${esc(E.session.user.email)} n’administre pas le site de la compagnie.</p><button class="btn" id="b-sortir">Se déconnecter</button></div></div>`;
+    $('#b-sortir').addEventListener('click', () => sb.auth.signOut());
+    return;
+  }
+  try { await chargerTout(); } catch (e) { demarre = false; return ecranConnexion('Chargement impossible : ' + e.message); }
+  E.pret = true;
+  ecouter();
+  if (!location.hash || location.hash === '#') history.replaceState(null, '', '#/representations');
+  E.hash = location.hash;
+  router();
+}
+
+async function tout(table, ordre) {
+  const out = [];
+  for (let a = 0; ; a += 1000) {
+    let q = sb.from(table).select('*').range(a, a + 999);
+    if (ordre) q = q.order(ordre, { ascending: true });
+    const { data, error } = await q;
+    if (error) throw error;
+    out.push(...data);
+    if (data.length < 1000) return out;
+  }
+}
+async function chargerTout() {
+  const [sp, li, da, re, su, ls, at, se, tx, ad] = await Promise.all([
+    tout('crescite_spectacles', 'ordre'), tout('crescite_lieux', 'id'), tout('crescite_dates', 'debut'), tout('crescite_representations', 'jour'),
+    tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
+    tout('crescite_textes'), tout('crescite_admins')]);
+  Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad });
+}
+async function rechargerJournal() {
+  const { data, error } = await sb.from('crescite_journal').select('*').order('id', { ascending: false }).limit(300);
+  if (!error) E.journal = data;
+}
+
+// le temps réel : chaque enregistrement, d'ici ou d'ailleurs, met l'écran à jour
+let rendrePlusTard = null;
+function ecouter() {
+  const ch = sb.channel('crescite-admin');
+  Object.keys(TABLES).forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
+  ch.subscribe(st => { E.direct = st === 'SUBSCRIBED'; const d = $('.direct'); if (d) { d.classList.toggle('on', E.direct); d.title = E.direct ? 'Connecté en temps réel' : 'Temps réel interrompu'; } });
+}
+function changement(t, p) {
+  const [k, pk] = TABLES[t];
+  const coll = E[k], cle = (p.eventType === 'DELETE' ? p.old : p.new)[pk];
+  const i = coll.findIndex(x => x[pk] === cle);
+  if (p.eventType === 'DELETE') { if (i >= 0) coll.splice(i, 1); } else if (i >= 0) coll[i] = p.new; else coll.push(p.new);
+  clearTimeout(rendrePlusTard);
+  rendrePlusTard = setTimeout(() => { if (!E.sale) rafraichirListes(); }, 200);
+}
+
+// ===================================================================================================== cadre et routes
+const RUBRIQUES = [['representations', 'Représentations'], ['spectacles', 'Spectacles'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+function cadre(rubrique, contenu) {
+  $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations">Crescite <small>administration</small></a>
+    <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+    <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}">direct</span>
+    <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier sur le site ↗</a><span class="moi">${esc(E.session.user.email)}</span>
+    <button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
+  $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
+}
+const ROUTES = [
+  [/^#\/representations(?:\/(nouvelle|\d+))?$/, m => vueDates(m[1])],
+  [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
+  [/^#\/ateliers(?:\/(seances|catalogue))?(?:\/(nouvelle|nouveau|\d+))?$/, m => vueAteliers(m[1] || 'seances', m[2])],
+  [/^#\/lieux(?:\/(nouveau|\d+))?$/, m => vueLieux(m[1])],
+  [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
+  [/^#\/journal$/, () => vueJournal()],
+];
+function router() {
+  if (!E.pret) return;
+  const h = location.hash || '#/representations';
+  for (const [re, f] of ROUTES) { const m = h.match(re); if (m) { E.sale = false; f(m); return; } }
+  location.replace('#/representations');
+}
+window.addEventListener('hashchange', () => {
+  if (E.sale && !confirm('Des modifications ne sont pas enregistrées. Quitter cette fiche quand même ?')) { history.replaceState(null, '', E.hash); return; }
+  E.hash = location.hash;
+  router();
+});
+window.addEventListener('beforeunload', e => { if (E.sale) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]'); if (b) { e.preventDefault(); b.click(); } }
+});
+function rafraichirListes() {
+  const l = $('[data-liste]');
+  if (l && typeof l.rafraichir === 'function') l.rafraichir();
+}
+function marquerSale(oui = true) {
+  E.sale = oui;
+  const el = $('.etat-ed');
+  if (el) { el.textContent = oui ? 'Modifications non enregistrées' : 'Tout est enregistré'; el.classList.toggle('sale', oui); }
+}
+
+// ===================================================================================================== formulaires
+// un champ décrit par {k: chemin, t: type, l: libellé, aide, choix, champs (pour les listes d'objets)}
+const lire = (o, p) => p.split('.').reduce((x, k) => (x == null ? undefined : x[k]), o);
+function ecrire(o, p, v) {
+  const ks = p.split('.');
+  let x = o;
+  ks.slice(0, -1).forEach((k, i) => { if (x[k] == null || typeof x[k] !== 'object') x[k] = /^\d+$/.test(ks[i + 1]) ? [] : {}; x = x[k]; });
+  x[ks[ks.length - 1]] = v;
+}
+let nChamp = 0;
+function champ(c, F, base = '') {
+  const p = base ? `${base}.${c.k}` : c.k, v = lire(F, p), id = `ch${++nChamp}`;
+  const lib = c.l ? `<label for="${id}">${esc(c.l)}</label>` : '';
+  const aide = c.aide ? `<span class="aide">${esc(c.aide)}</span>` : '';
+  const attr = `id="${id}" data-chemin="${esc(p)}" data-type="${c.t}"`;
+  switch (c.t) {
+    case 'texte': case 'url': case 'nombre':
+      return `<div class="champ">${lib}<input ${attr} type="${c.t === 'nombre' ? 'number' : c.t === 'url' ? 'url' : 'text'}" value="${esc(v ?? '')}"${c.ph ? ` placeholder="${esc(c.ph)}"` : ''}>${aide}</div>`;
+    case 'long':
+      return `<div class="champ">${lib}<textarea ${attr} rows="${c.lignes || 3}">${esc(v ?? '')}</textarea>${aide}</div>`;
+    case 'lignes':
+      return `<div class="champ">${lib}<textarea ${attr} rows="${Math.max(2, (v || []).length + 1)}">${esc((v || []).join('\n'))}</textarea>${aide}</div>`;
+    case 'case':
+      return `<div class="champ"><label class="case"><input ${attr} type="checkbox"${v ? ' checked' : ''}> ${esc(c.l)}</label>${aide}</div>`;
+    case 'choix':
+      return `<div class="champ">${lib}<select ${attr}>${c.choix.map(([val, txt]) => `<option value="${esc(val)}"${String(v ?? '') === String(val) ? ' selected' : ''}>${esc(txt)}</option>`).join('')}</select>${aide}</div>`;
+    case 'couleur':
+      return `<div class="champ">${lib}<div class="couleur"><input type="color" data-jumeau="${id}" value="${/^#[0-9a-f]{6}$/i.test(v || '') ? v : '#000000'}"><input ${attr} type="text" value="${esc(v ?? '')}" spellcheck="false"></div>${aide}</div>`;
+    case 'html':
+      return `<div class="champ"><span class="lib">${esc(c.l || '')}</span>${barreRiche()}<div class="riche" contenteditable="true" ${attr} data-vide="${esc(c.ph || '')}">${v || ''}</div>${aide}</div>`;
+    case 'paragraphes': {
+      const xs = v || [];
+      return `<div class="champ" data-bloc="${esc(p)}"><span class="lib">${esc(c.l || '')}</span>${aide}
+        ${xs.map((x, i) => `<div class="item"><div class="item-tete">${outilsItem(p, i, xs.length)}</div>${barreRiche()}<div class="riche" contenteditable="true" data-chemin="${esc(p)}.${i}" data-type="html">${x || ''}</div><div style="height:8px"></div></div>`).join('')}
+        <div><button type="button" class="btn petit" data-action="ajouter" data-cible="${esc(p)}" data-modele='""'>＋ ${esc(c.ajout || 'Paragraphe')}</button></div></div>`;
+    }
+    case 'objets': {
+      const xs = v || [];
+      const modele = JSON.stringify(Object.fromEntries(c.champs.map(s => [s.k, s.t === 'lignes' ? [] : s.t === 'case' ? false : ''])));
+      return `<div class="champ" data-bloc="${esc(p)}"><span class="lib">${esc(c.l || '')}</span>${aide}
+        ${xs.map((x, i) => `<div class="item"><div class="item-tete">${outilsItem(p, i, xs.length)}</div>${c.champs.map(s => champ(s, F, `${p}.${i}`)).join('')}</div>`).join('')}
+        <div><button type="button" class="btn petit" data-action="ajouter" data-cible="${esc(p)}" data-modele='${esc(modele)}'>＋ ${esc(c.ajout || 'Ajouter')}</button></div></div>`;
+    }
+    default: return '';
+  }
+}
+const barreRiche = () => `<div class="outils-riche" aria-label="Mise en forme"><button type="button" data-cmd="bold" title="Gras"><b>G</b></button><button type="button" data-cmd="italic" title="Italique"><i>I</i></button><button type="button" data-cmd="createLink" title="Lien">lien</button><button type="button" data-cmd="unlink" title="Retirer le lien">sans lien</button></div>`;
+const outilsItem = (p, i, n) => `${i > 0 ? `<button type="button" class="btn petit" data-action="monter" data-cible="${esc(p)}" data-i="${i}" title="Monter">↑</button>` : ''}${i < n - 1 ? `<button type="button" class="btn petit" data-action="descendre" data-cible="${esc(p)}" data-i="${i}" title="Descendre">↓</button>` : ''}<button type="button" class="btn petit danger" data-action="retirer" data-cible="${esc(p)}" data-i="${i}" title="Retirer">✕</button>`;
+const valeur = el => {
+  const t = el.dataset.type;
+  if (t === 'case') return el.checked;
+  if (t === 'nombre') return el.value === '' ? null : Number(el.value);
+  if (t === 'lignes') return el.value.split('\n').map(x => x.trim()).filter(Boolean);
+  if (t === 'html') return propre(el.innerHTML);
+  return el.value;
+};
+// relie un formulaire à son objet F : chaque saisie écrit dans F ; ajouter, retirer, déplacer redessinent la liste
+function relier(racine, F, specs, onChange = () => {}) {
+  const trouver = chemin => {
+    const parcours = (cs, base) => { for (const c of cs) { const p = base ? `${base}.${c.k}` : c.k; if (p === chemin) return c; if (c.t === 'objets' && chemin.startsWith(p + '.')) { const rest = chemin.slice(p.length + 1).split('.'); const sub = parcours(c.champs, `${p}.${rest[0]}`); if (sub) return sub; } } return null; };
+    return parcours(specs, '');
+  };
+  const maj = el => { if (!el.dataset.chemin) return; ecrire(F, el.dataset.chemin, valeur(el)); marquerSale(); onChange(el.dataset.chemin); };
+  racine.addEventListener('input', e => {
+    const el = e.target;
+    if (el.dataset.jumeau) { const j = $('#' + el.dataset.jumeau, racine); j.value = el.value; maj(j); return; }
+    if (el.dataset.type === 'couleur') { const pick = $(`[data-jumeau="${el.id}"]`, racine); if (pick && /^#[0-9a-f]{6}$/i.test(el.value)) pick.value = el.value; }
+    if (el.dataset.type !== 'html') maj(el);
+  });
+  racine.addEventListener('change', e => { if (e.target.dataset.type === 'case' || e.target.tagName === 'SELECT') maj(e.target); });
+  racine.addEventListener('focusout', e => { if (e.target.dataset?.type === 'html') maj(e.target); });
+  racine.addEventListener('keyup', e => { if (e.target.dataset?.type === 'html') { ecrire(F, e.target.dataset.chemin, valeur(e.target)); marquerSale(); } });
+  racine.addEventListener('mousedown', e => { if (e.target.closest('[data-cmd]')) e.preventDefault(); });
+  racine.addEventListener('click', e => {
+    const cmd = e.target.closest('[data-cmd]');
+    if (cmd) {
+      const ed = cmd.closest('.champ, .item').querySelector('.riche');
+      ed?.focus();
+      if (cmd.dataset.cmd === 'createLink') { const u = prompt('Adresse du lien (https://…)'); if (u) document.execCommand('createLink', false, u); }
+      else document.execCommand(cmd.dataset.cmd);
+      if (ed) { ecrire(F, ed.dataset.chemin, valeur(ed)); marquerSale(); }
+      return;
+    }
+    const b = e.target.closest('[data-action]');
+    if (!b || !b.dataset.cible) return;
+    $$('.riche', racine).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
+    const p = b.dataset.cible, xs = clone(lire(F, p) || []), i = +b.dataset.i;
+    if (b.dataset.action === 'ajouter') xs.push(JSON.parse(b.dataset.modele));
+    if (b.dataset.action === 'retirer') xs.splice(i, 1);
+    if (b.dataset.action === 'monter') [xs[i - 1], xs[i]] = [xs[i], xs[i - 1]];
+    if (b.dataset.action === 'descendre') [xs[i + 1], xs[i]] = [xs[i], xs[i + 1]];
+    ecrire(F, p, xs);
+    const c = trouver(p), bloc = b.closest(`[data-bloc="${CSS.escape(p)}"]`);
+    if (c && bloc) {
+      const base = p.includes('.') ? p.slice(0, p.lastIndexOf('.')) : '';
+      bloc.outerHTML = champ({ ...c, k: p.slice(base ? base.length + 1 : 0) }, F, base);
+      if (b.dataset.action === 'ajouter') { const n = $(`[data-bloc="${CSS.escape(p)}"] .item:last-of-type [data-chemin]`, racine); n?.focus(); }
+    }
+    marquerSale(); onChange(p);
+  });
+}
+function pied(etatTexte = 'Tout est enregistré', boutons = '') {
+  return `<div class="pied-ed"><span class="etat-ed">${esc(etatTexte)}</span>${boutons}<button type="button" class="btn principal" data-enregistrer>Enregistrer</button></div>`;
+}
+const choixSpectacles = (vide = null) => [...(vide ? [['', vide]] : []), ...E.spectacles.slice().sort((a, b) => (b.page - a.page) || a.ordre - b.ordre).map(s => [String(s.id), s.titre + (s.page ? '' : ' (ancien)')])];
+
+// ===================================================================================================== lieux : choisir ou créer
+// un champ de saisie qui propose les lieux connus, et en crée un nouveau au besoin
+function comboLieu(racine, idChamp, lieuId, onChoix, { etablissement = false } = {}) {
+  const zone = $('#' + idChamp, racine);
+  const l0 = lieu(lieuId);
+  zone.innerHTML = `<div class="combo"><input type="search" placeholder="Nom du lieu ou commune" value="${esc(lieuTexte(l0))}" aria-label="Lieu" autocomplete="off"><div class="suggestions" hidden></div></div>
+    <div class="nouveau-lieu" hidden></div>`;
+  const inp = $('input', zone), sug = $('.suggestions', zone), nv = $('.nouveau-lieu', zone);
+  const montrer = () => {
+    const q = norm(inp.value).trim();
+    const xs = E.lieux.filter(l => !q || norm(`${l.nom || ''} ${l.commune} ${l.departement}`).includes(q))
+      .sort((a, b) => (etablissement ? (b.type === 'etablissement') - (a.type === 'etablissement') : 0) || norm(a.nom || a.commune).localeCompare(norm(b.nom || b.commune))).slice(0, 8);
+    sug.innerHTML = xs.map(l => `<button type="button" data-id="${l.id}">${esc(l.nom || l.commune)} <small>${esc(l.commune)} (${esc(l.departement)})</small></button>`).join('')
+      + `<button type="button" data-nouveau>＋ Nouveau lieu${inp.value.trim() ? ` « ${esc(inp.value.trim())} »` : ''}</button>`;
+    sug.hidden = false;
+  };
+  inp.addEventListener('focus', montrer);
+  inp.addEventListener('input', montrer);
+  inp.addEventListener('keydown', e => { if (e.key === 'Escape') sug.hidden = true; if (e.key === 'ArrowDown') { e.preventDefault(); sug.querySelector('button')?.focus(); } });
+  sug.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); document.activeElement.nextElementSibling?.focus(); } if (e.key === 'ArrowUp') { e.preventDefault(); (document.activeElement.previousElementSibling || inp).focus(); } });
+  document.addEventListener('click', e => { if (!zone.contains(e.target)) sug.hidden = true; });
+  sug.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    sug.hidden = true;
+    if (b.dataset.id) { const l = lieu(+b.dataset.id); inp.value = lieuTexte(l); onChoix(l.id); return; }
+    formNouveauLieu(nv, inp.value.trim(), etablissement, l => { inp.value = lieuTexte(l); nv.hidden = true; onChoix(l.id); });
+  });
+}
+function formNouveauLieu(zone, texte, etablissement, fini) {
+  zone.hidden = false;
+  zone.innerHTML = `<div class="item" style="margin-top:8px"><div class="rangee">
+      <div class="champ"><label>Nom du lieu</label><input type="text" data-n="nom" value="${esc(texte)}" placeholder="Théâtre des Charmes"></div>
+      <div class="champ"><label>Type</label><select data-n="type"><option value="salle">Salle</option><option value="etablissement"${etablissement ? ' selected' : ''}>Établissement scolaire</option><option value="festival">Festival</option><option value="autre">Autre</option></select></div></div>
+    <div class="champ combo"><label>Commune</label><input type="search" data-n="commune" placeholder="Commencez à taper : Eu, Falaise…" autocomplete="off"><div class="suggestions" hidden></div><span class="aide">Le département et la position sur la carte se remplissent tout seuls.</span></div>
+    <div class="rangee"><div class="champ"><label>Département</label><input type="text" data-n="departement" placeholder="76"></div><div class="champ"><label>Pays</label><input type="text" data-n="pays" value="FR"></div></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px"><button type="button" class="btn principal petit" data-n="creer">Créer le lieu</button><button type="button" class="btn petit" data-n="annuler">Annuler</button></div></div>`;
+  const q = n => $(`[data-n="${n}"]`, zone);
+  let geo = null;
+  const sug = $('.suggestions', zone);
+  let t = null;
+  q('commune').addEventListener('input', () => {
+    clearTimeout(t); geo = null;
+    t = setTimeout(async () => {
+      const v = q('commune').value.trim();
+      if (v.length < 2) { sug.hidden = true; return; }
+      try {
+        const r = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(v)}&fields=nom,code,codeDepartement,centre&boost=population&limit=7`);
+        const xs = r.ok ? await r.json() : [];
+        sug.innerHTML = xs.map((c, i) => `<button type="button" data-i="${i}">${esc(c.nom)} <small>(${esc(c.codeDepartement)})</small></button>`).join('') || '<button type="button" disabled>Aucune commune trouvée : remplissez le département</button>';
+        sug.hidden = false;
+        sug.onclick = e => { const b = e.target.closest('[data-i]'); if (!b) return; geo = xs[+b.dataset.i]; q('commune').value = geo.nom; q('departement').value = geo.codeDepartement; sug.hidden = true; };
+      } catch { sug.hidden = true; }
+    }, 250);
+  });
+  q('annuler').addEventListener('click', () => { zone.hidden = true; zone.innerHTML = ''; });
+  q('creer').addEventListener('click', async () => {
+    const ligneLieu = { nom: q('nom').value.trim() || null, type: q('type').value, commune: q('commune').value.trim(), departement: q('departement').value.trim(),
+      pays: q('pays').value.trim() || 'FR', code_insee: geo?.code || null, latitude: geo?.centre?.coordinates?.[1] ?? null, longitude: geo?.centre?.coordinates?.[0] ?? null };
+    if (!ligneLieu.commune || !ligneLieu.departement) return annoncer('Indiquez la commune et le département.', { erreur: true });
+    const { data, error } = await sb.from('crescite_lieux').insert(ligneLieu).select().single();
+    if (error) return erreur(error, 'Lieu non créé');
+    if (!E.lieux.some(l => l.id === data.id)) E.lieux.push(data);
+    annoncer(`Lieu créé : ${lieuTexte(data)}`);
+    fini(data);
+  });
+  q('nom').focus();
+}
+
+// ===================================================================================================== représentations
+function vueDates(param) {
+  const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {});
+  const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
+  cadre('representations', `<div class="tete"><h1>Représentations</h1><a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
+    <div class="deux${param ? ' edition' : ''}"><div class="liste"><div class="filtres">
+      <input type="search" id="f-q" placeholder="Chercher un lieu, une commune, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><select id="f-saison" aria-label="Aller à la saison"><option value="">Aller à une saison…</option>${saisons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}</select>
+      <select id="f-public" aria-label="Public"><option value="">Tous publics</option><option value="tout_public"${f.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${f.public === 'scolaire' ? ' selected' : ''}>Scolaire</option></select>
+      <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${[['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']].map(([k, l]) => `<option value="${k}"${f.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="puces" role="group" aria-label="Spectacle">${E.spectacles.filter(s => s.page).map(s => `<button type="button" class="puce" data-sp="${s.id}" style="--c:${couleurSp(s)}" aria-pressed="${String(f.spectacle) === String(s.id)}"><span class="pastille"></span>${esc(s.titre.split(' – ')[0])}</button>`).join('')}</div>
+      <span class="compte" id="f-compte"></span></div><div data-liste id="l-dates"></div></div>
+      <section class="editeur" id="ed-date">${param ? '' : '<div class="vide bloc">Choisissez une date dans la liste, ou créez-en une.</div>'}</section></div>`);
+  const zone = $('#l-dates');
+  zone.rafraichir = () => listeDates(zone, param);
+  zone.rafraichir();
+  const maj = () => { garderFiltres(); zone.rafraichir(); };
+  $('#f-q').addEventListener('input', e => { f.q = e.target.value; maj(); });
+  $('#f-saison').addEventListener('change', e => {
+    const s = e.target.value; e.target.value = ''; if (!s) return;
+    if (!f.ouvertes.includes(s)) f.ouvertes.push(s);
+    maj();
+    $(`#saison-${s}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('#f-public').addEventListener('change', e => { f.public = e.target.value; maj(); });
+  $('#f-statut').addEventListener('change', e => { f.statut = e.target.value; maj(); });
+  $$('[data-sp]').forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; $$('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(f.spectacle) === x.dataset.sp)); maj(); }));
+  if (param) editeurDate(param === 'nouvelle' ? null : +param);
+}
+function listeDates(zone, actif) {
+  const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut);
+  const xs = E.dates.filter(d => {
+    if (f.spectacle && String(d.spectacle_id) !== String(f.spectacle)) return false;
+    if (f.public && !(d.public === f.public || (d.public === 'mixte'))) return false;
+    if (f.statut === 'masquee' ? d.visible : f.statut && d.statut !== f.statut) return false;
+    if (q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id); if (!norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''}`).includes(q)) return false; }
+    return true;
+  });
+  const avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
+  const passees = xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => a.debut < b.debut ? 1 : a.debut > b.debut ? -1 : b.id - a.id);
+  $('#f-compte').textContent = `${avenir.length} à venir · ${passees.length} passée${passees.length > 1 ? 's' : ''}`;
+  const ligne = d => {
+    const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id);
+    const badges = [d.statut === 'option' && '<span class="badge option">Option</span>', d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>',
+      d.statut === 'reportee' && '<span class="badge option">Reportée</span>', !d.visible && '<span class="badge masquee">Masquée</span>',
+      d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>'].filter(Boolean).join('');
+    const jours = [...new Set(reps.map(r => r.jour))];
+    return `<a class="ligne" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"${String(actif) === String(d.id) ? ' aria-current="true"' : ''}>
+      <span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${(d.fin && d.fin !== d.debut) ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
+      <span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : (d.intitule || '').split(' — ')[1] || 'Lieu à préciser')}</span>
+      ${reps.length ? `<span class="reps">${reps.slice(0, 8).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 8 ? `<span class="rep">+${reps.length - 8}</span>` : ''}</span>` : ''}</span>
+      <span class="badges">${badges}</span></a>`;
+  };
+  const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
+  const saisonEnCours = AGENDA.saisonDe(AUJ);
+  const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse();
+  zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}
+    <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:24px">Dates passées</h2>
+    ${saisons.map(sa => { const ouverte = cherche || sa === saisonEnCours || f.ouvertes.includes(sa) || passees.some(d => String(d.id) === String(actif) && d.saison === sa);
+      return `<details class="saison-ad" id="saison-${sa}" data-saison="${sa}"${ouverte ? ' open' : ''}><summary class="ligne" style="grid-template-columns:1fr auto;cursor:pointer;border-left-color:var(--trait)"><span class="t">Saison ${sa}</span><span class="badge">${passees.filter(d => d.saison === sa).length}</span></summary><div class="contenu-saison"></div></details>`; }).join('') || '<p class="vide">Aucune date passée.</p>'}`;
+  const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = parMois(passees.filter(d => d.saison === det.dataset.saison)); };
+  $$('details.saison-ad', zone).forEach(det => {
+    remplir(det);
+    det.addEventListener('toggle', () => {
+      const sa = det.dataset.saison;
+      f.ouvertes = det.open ? [...new Set([...f.ouvertes, sa])] : f.ouvertes.filter(x => x !== sa);
+      garderFiltres(); remplir(det);
+    });
+  });
+}
+
+function nouvelleDate() {
+  const sp = session.dates?.spectacle ? +session.dates.spectacle : (E.spectacles.find(s => s.page) || {}).id;
+  return { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true,
+    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {} };
+}
+function dateVersForm(d) {
+  const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
+  const su = E.suivis.find(x => x.date_id === d.id) || {};
+  return { ...clone(d), lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' } };
+}
+const zoneNeuve = sel => { const a = $(sel), z = a.cloneNode(false); a.replaceWith(z); return z; };
+function editeurDate(id, depart = null) {
+  const zone = zoneNeuve('#ed-date');
+  const d0 = id ? E.dates.find(d => d.id === id) : null;
+  if (id && !d0) { zone.innerHTML = '<div class="vide bloc">Cette date n’existe plus.</div>'; return; }
+  const F = depart || (d0 ? dateVersForm(d0) : nouvelleDate());
+  const initial = JSON.stringify(F);
+  const libre = !!F.intitule;
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/representations" title="Retour à la liste">←</a><h2 id="ed-titre"></h2></div>
+    <div class="bloc"><div class="rangee">
+      <div class="champ"><label for="d-sp">Spectacle</label><select id="d-sp">${choixSpectacles().map(([v, t]) => `<option value="${v}"${String(F.spectacle_id) === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+      <div class="champ"><span class="lib">Statut</span><div class="seg" role="group" aria-label="Statut">${[['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']].map(([k, l]) => `<button type="button" data-statut="${k}" aria-pressed="${F.statut === k}">${l}</button>`).join('')}</div>
+        <span class="aide">Une option n’apparaît jamais sur le site.</span></div></div>
+      <div class="champ"><span class="lib">Lieu</span><div id="d-lieu"></div></div>
+      <label class="case"><input type="checkbox" id="d-visible"${F.visible ? ' checked' : ''}> Publiée sur le site</label></div>
+
+    <div class="bloc"><h3>Représentations</h3>
+      <table class="reps"><thead><tr><th>Jour</th><th>Heure</th><th>Public</th><th>Précision</th><th>Billetterie</th><th></th></tr></thead><tbody id="d-reps"></tbody></table>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn petit" id="d-meme-jour">＋ Le même jour</button><button type="button" class="btn petit" id="d-lendemain">＋ Le lendemain</button><button type="button" class="btn petit" id="d-vide">＋ Représentation</button></div>
+      <div id="d-sans" style="margin-top:12px"></div></div>
+
+    <div class="bloc"><h3>Sur le site</h3>
+      <div class="apercu" id="d-apercu"></div>
+      <div class="champ" style="margin-top:12px"><label class="case"><input type="checkbox" id="d-libre"${libre ? ' checked' : ''}> Écrire la ligne moi-même</label>
+        <span class="aide">Sinon la ligne se compose toute seule à partir des jours et du lieu.${d0?.source ? ' Les dates reprises de l’ancien site gardent leur ligne d’origine.' : ''}</span></div>
+      <div class="champ" id="d-intitule-zone"${libre ? '' : ' hidden'}><input type="text" id="d-intitule" value="${esc(F.intitule || '')}" aria-label="Ligne affichée"></div>
+      <div id="d-details"></div>
+      <div class="champ"><label for="d-lien">Lien (billetterie ou page du lieu)</label><input type="url" id="d-lien" value="${esc(F.lien)}" placeholder="https://…"></div></div>
+
+    <div class="bloc"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3><div class="rangee">
+      <div class="champ"><label for="s-org">Organisateur</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
+      <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
+      <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
+      <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
+    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? '<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>' : ''}`)}`;
+  const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
+  const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
+  const apercu = () => {
+    const reps = F.representations.filter(r => r.jour);
+    const js = reps.map(r => r.jour).sort();
+    const dd = { ...F, debut: js[0] || F.debut, fin: js[js.length - 1] || F.fin || F.debut, precision: reps.length ? 'jour' : F.precision, intitule: $('#d-libre').checked ? F.intitule : null, details: F.details.filter(x => x.texte.trim()) };
+    const l = lieu(F.lieu_id);
+    if (!dd.debut) { $('#d-apercu').innerHTML = '<span class="d">Indiquez au moins un jour.</span>'; return; }
+    const lg = AGENDA.ligne(dd, reps, l), pr = AGENDA.precisions(dd, reps, l);
+    $('#d-apercu').innerHTML = `<div class="l">${esc(lg)}</div>${pr.map(p => `<div class="d">${p.texte}</div>`).join('')}
+      <div class="d" style="margin-top:6px">Saison ${esc(F.saison && d0 && F.debut === d0.debut ? F.saison : AGENDA.saisonDe(dd.debut))}${etatPublic() === 'scolaire' ? ' · scolaire : n’apparaît pas dans « Je viens voir un spectacle »' : ''}${F.statut === 'option' || !$('#d-visible').checked ? ' · <b>n’apparaît pas sur le site</b>' : ''}</div>`;
+    if (!$('#d-libre').checked) $('#d-intitule').value = AGENDA.ligne({ ...dd, intitule: null }, reps, l);
+  };
+  const dessinerReps = () => {
+    $('#d-reps').innerHTML = F.representations.map((r, i) => `<tr data-i="${i}">
+      <td><input type="date" data-r="jour" value="${esc(r.jour)}" aria-label="Jour"></td>
+      <td><input type="time" data-r="heure" value="${esc(r.heure)}" aria-label="Heure" step="300"></td>
+      <td><select data-r="public" aria-label="Public"><option value="tout_public"${r.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${r.public === 'scolaire' ? ' selected' : ''}>Scolaire</option><option value="autre"${r.public === 'autre' ? ' selected' : ''}>Autre</option></select></td>
+      <td><input type="text" data-r="note" value="${esc(r.note)}" placeholder="complet, audiodécrite…" aria-label="Précision"></td>
+      <td><input type="url" data-r="lien" value="${esc(r.lien)}" placeholder="https://…" aria-label="Billetterie"></td>
+      <td style="white-space:nowrap"><label class="case" title="Annulée" style="font-size:12px"><input type="checkbox" data-r="annulee"${r.annulee ? ' checked' : ''}> annulée</label></td>
+      <td><button type="button" class="btn petit danger" data-retirer="${i}" title="Retirer cette représentation">✕</button></td></tr>`).join('');
+    $('#d-sans').innerHTML = F.representations.length ? '' : `<p class="aide">Sans représentation détaillée, indiquez la période :</p><div class="rangee">
+      <div class="champ"><label for="d-debut">Début</label><input type="date" id="d-debut" value="${esc(F.debut)}"></div>
+      <div class="champ"><label for="d-fin">Fin</label><input type="date" id="d-fin" value="${esc(F.fin || '')}"></div>
+      <div class="champ"><label for="d-prec">Précision</label><select id="d-prec">${[['jour', 'Jour'], ['periode', 'Période'], ['mois', 'Mois']].map(([k, l]) => `<option value="${k}"${F.precision === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="champ"><label for="d-nb">Nombre de représentations</label><input type="number" min="1" id="d-nb" value="${esc(F.nb_representations ?? '')}"></div></div>`;
+  };
+  const dessinerDetails = () => {
+    $('#d-details').innerHTML = `<div class="champ"><span class="lib">Précisions sous la ligne</span>
+      ${F.details.map((x, i) => `<div class="item"><div class="item-tete"><button type="button" class="btn petit danger" data-det-suppr="${i}">✕</button></div>${barreRiche()}<div class="riche" contenteditable="true" data-det="${i}">${x.texte || ''}</div><div class="champ" style="margin-top:6px"><input type="url" data-det-lien="${i}" value="${esc(x.lien || '')}" placeholder="Lien (facultatif)" aria-label="Lien de la précision"></div></div>`).join('')}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn petit" id="d-det-plus">＋ Précision</button><button type="button" class="btn petit" id="d-det-auto">Proposer d’après les représentations</button></div>
+      <span class="aide">Vide : le site écrit lui-même « 14h et 20h : représentations au … ».</span></div>`;
+  };
+  const changer = () => { marquerSale(JSON.stringify(F) !== initial || $('#d-libre').checked !== libre); apercu(); titre(); };
+  dessinerReps(); dessinerDetails(); titre();
+  comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); });
+  apercu();
+
+  zone.addEventListener('input', e => {
+    const t = e.target, tr = t.closest('tr[data-i]');
+    if (tr && t.dataset.r) { const r = F.representations[+tr.dataset.i]; r[t.dataset.r] = t.type === 'checkbox' ? t.checked : t.value; }
+    else if (t.id === 'd-intitule') F.intitule = t.value;
+    else if (t.id === 'd-lien') F.lien = t.value;
+    else if (t.id === 'd-debut') F.debut = t.value;
+    else if (t.id === 'd-fin') F.fin = t.value;
+    else if (t.id === 'd-nb') F.nb_representations = t.value ? +t.value : null;
+    else if (t.dataset.det !== undefined) F.details[+t.dataset.det].texte = propre(t.innerHTML);
+    else if (t.dataset.detLien !== undefined) F.details[+t.dataset.detLien].lien = t.value;
+    else if (t.id === 's-org') F.suivi.organisateur = t.value;
+    else if (t.id === 's-contact') F.suivi.contact = t.value;
+    else if (t.id === 's-notes') F.suivi.notes = t.value;
+    else return;
+    changer();
+  });
+  zone.addEventListener('change', e => {
+    const t = e.target, tr = t.closest('tr[data-i]');
+    if (tr && t.dataset.r) { const r = F.representations[+tr.dataset.i]; r[t.dataset.r] = t.type === 'checkbox' ? t.checked : t.value; }
+    else if (t.id === 'd-sp') F.spectacle_id = +t.value;
+    else if (t.id === 'd-visible') F.visible = t.checked;
+    else if (t.id === 'd-prec') F.precision = t.value;
+    else if (t.id === 's-contrat') F.suivi.contrat = t.value;
+    else if (t.id === 'd-libre') { $('#d-intitule-zone').hidden = !t.checked; if (t.checked) { F.intitule = $('#d-intitule').value; $('#d-intitule').focus(); } else F.intitule = null; }
+    else return;
+    changer();
+  });
+  zone.addEventListener('mousedown', e => { if (e.target.closest('[data-cmd]')) e.preventDefault(); });
+  zone.addEventListener('click', e => {
+    const t = e.target;
+    const cmd = t.closest('[data-cmd]');
+    if (cmd) { const ed = cmd.closest('.item')?.querySelector('.riche'); ed?.focus(); if (cmd.dataset.cmd === 'createLink') { const u = prompt('Adresse du lien (https://…)'); if (u) document.execCommand('createLink', false, u); } else document.execCommand(cmd.dataset.cmd); if (ed) { F.details[+ed.dataset.det].texte = propre(ed.innerHTML); changer(); } return; }
+    const st = t.closest('[data-statut]');
+    if (st) { F.statut = st.dataset.statut; $$('[data-statut]', zone).forEach(b => b.setAttribute('aria-pressed', b === st)); changer(); return; }
+    if (t.dataset.retirer !== undefined) { F.representations.splice(+t.dataset.retirer, 1); dessinerReps(); changer(); return; }
+    const der = F.representations[F.representations.length - 1];
+    if (t.id === 'd-meme-jour' || t.id === 'd-lendemain' || t.id === 'd-vide') {
+      let jour = der?.jour || '', heure = '';
+      if (t.id === 'd-lendemain' && jour) { const x = new Date(jour + 'T12:00:00'); x.setDate(x.getDate() + 1); jour = AGENDA.iso(x); heure = der.heure; }
+      if (t.id === 'd-vide') { jour = ''; heure = '20:00'; }
+      F.representations.push({ jour, heure, public: der?.public || 'tout_public', annulee: false, lien: '', note: '' });
+      dessinerReps(); changer();
+      $(`#d-reps tr:last-child [data-r="${t.id === 'd-vide' ? 'jour' : 'heure'}"]`, zone)?.focus();
+      return;
+    }
+    if (t.id === 'd-det-plus') { F.details.push({ texte: '', lien: null }); dessinerDetails(); changer(); $(`[data-det="${F.details.length - 1}"]`, zone)?.focus(); return; }
+    if (t.dataset.detSuppr !== undefined) { F.details.splice(+t.dataset.detSuppr, 1); dessinerDetails(); changer(); return; }
+    if (t.id === 'd-det-auto') {
+      const reps = F.representations.filter(r => r.jour);
+      F.details = AGENDA.precisions({ ...F, details: [] }, reps, lieu(F.lieu_id)).map(p => ({ texte: p.texte, lien: null }));
+      dessinerDetails(); changer(); return;
+    }
+    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); history.replaceState(null, '', '#/representations/nouvelle'); E.hash = location.hash; editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
+    if (t.id === 'd-suppr') return supprimerDate(d0);
+    if (t.matches('[data-enregistrer]')) return enregistrerDate(F, d0, t);
+  });
+}
+async function enregistrerDate(F, d0, bouton) {
+  const reps = F.representations.filter(r => r.jour);
+  if (!F.spectacle_id) return annoncer('Choisissez le spectacle.', { erreur: true });
+  if (F.representations.some(r => !r.jour)) return annoncer('Chaque représentation a besoin de son jour (ou retirez la ligne vide).', { erreur: true });
+  const js = reps.map(r => r.jour).sort();
+  const debut = js[0] || F.debut;
+  if (!debut) return annoncer('Indiquez au moins un jour.', { erreur: true });
+  const ps = new Set(reps.map(r => r.public));
+  const charge = {
+    id: F.id, spectacle_id: +F.spectacle_id, lieu_id: F.lieu_id, debut, fin: js[js.length - 1] || F.fin || debut, precision: reps.length ? 'jour' : F.precision,
+    saison: d0 && d0.debut === debut ? d0.saison : null, public: ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : (F.public || 'tout_public'),
+    statut: F.statut, visible: F.visible, intitule: $('#d-libre').checked ? (F.intitule || '').trim() || null : null,
+    details: F.details.filter(x => texteSeul(x.texte).trim()).map(x => ({ texte: x.texte, lien: x.lien || null })), lien: (F.lien || '').trim() || null,
+    nb_representations: reps.length ? null : F.nb_representations,
+    representations: reps.map(r => ({ id: r.id, jour: r.jour, heure: r.heure || null, public: r.public, annulee: !!r.annulee, lien: (r.lien || '').trim() || null, note: (r.note || '').trim() || null })),
+    suivi: F.suivi,
+  };
+  bouton.disabled = true;
+  const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: charge });
+  bouton.disabled = false;
+  if (error) return erreur(error);
+  await rechargerDate(id);
+  E.sale = false;
+  annoncer(F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.');
+  if (!F.id) { history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; }
+  vueDates(id);
+}
+async function rechargerDate(id) {
+  const [a, b, c] = await Promise.all([sb.from('crescite_dates').select('*').eq('id', id), sb.from('crescite_representations').select('*').eq('date_id', id), sb.from('crescite_dates_suivi').select('*').eq('date_id', id)]);
+  const remplacer = (k, pk, rows, filtre) => { E[k] = E[k].filter(x => !filtre(x)).concat(rows || []); };
+  remplacer('dates', 'id', a.data, x => x.id === id);
+  remplacer('reps', 'id', b.data, x => x.date_id === id);
+  remplacer('suivis', 'date_id', c.data, x => x.date_id === id);
+}
+async function supprimerDate(d) {
+  const s = spectacle(d.spectacle_id);
+  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} » et ses représentations ?`)) return;
+  const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)) };
+  const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
+  if (error) return erreur(error, 'Suppression impossible');
+  E.dates = E.dates.filter(x => x.id !== d.id); E.reps = E.reps.filter(x => x.date_id !== d.id); E.suivis = E.suivis.filter(x => x.date_id !== d.id);
+  E.sale = false;
+  location.hash = '#/representations';
+  annoncer('Date supprimée.', { action: async () => {
+    const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
+    let r = await sb.from('crescite_dates').insert(sans(copie.date));
+    if (!r.error && copie.reps.length) r = await sb.from('crescite_representations').insert(copie.reps.map(sans));
+    if (!r.error && copie.suivi) r = await sb.from('crescite_dates_suivi').insert(sans(copie.suivi));
+    if (r.error) return erreur(r.error, 'Rétablissement impossible');
+    await rechargerDate(copie.date.id);
+    annoncer('Date rétablie.');
+    location.hash = `#/representations/${copie.date.id}`;
+  }, libelle: 'Annuler', delai: 9000 });
+}
+
+// ===================================================================================================== spectacles
+const MOTIFS = ['arene', 'jumeaux', 'annotations', 'paperboard', 'nez', 'horloge', 'fil', 'chronologie', 'cercle'];
+const SPEC_SPECTACLE = {
+  'Général': [
+    { k: 'titre', t: 'texte', l: 'Titre', aide: 'Le titre court, dans les menus et les listes.' },
+    { k: 'titre_lignes', t: 'lignes', l: 'Titre de sa page', aide: 'Une ligne par ligne du titre.' },
+    { k: 'sous_titre', t: 'html', l: 'Sous-titre', ph: 'd’après Rodogune de Pierre Corneille' },
+    { k: 'creation', t: 'texte', l: 'Création', ph: 'création 2024' },
+    { k: 'statut', t: 'texte', l: 'Statut', ph: 'En création', aide: 'Vide si le spectacle tourne.' },
+    { k: 'genre', t: 'texte', l: 'Genre' },
+    { k: 'duree', t: 'texte', l: 'Durée', ph: 'durée : 1h30' },
+    { k: 'publie', t: 'case', l: 'Publié sur le site' },
+    { k: 'page', t: 'case', l: 'A sa page sur le site', aide: 'Décoché : le spectacle n’apparaît que dans les saisons passées.' },
+    { k: 'en_tournee', t: 'case', l: 'Dans le bandeau « EN TOURNÉE » de l’accueil' },
+  ],
+  'Présentation': [
+    { k: 'lieu_temps', t: 'texte', l: 'Lieu et temps', ph: 'Rome, an 79.' },
+    { k: 'accroche', t: 'long', l: 'Accroche', aide: 'Une phrase, sous le titre.' },
+    { k: 'texte', t: 'paragraphes', l: 'Texte de présentation' },
+    { k: 'affirmations', t: 'objets', l: 'Phrases mises en avant', ajout: 'Phrase', champs: [{ k: 'texte', t: 'long', l: 'Phrase' }, { k: 'source', t: 'texte', l: 'Source' }] },
+    { k: 'citations', t: 'objets', l: 'Citations', ajout: 'Citation', champs: [{ k: 'vers', t: 'lignes', l: 'Texte (un vers par ligne)' }, { k: 'source', t: 'texte', l: 'Qui parle, où' }, { k: 'prose', t: 'case', l: 'Réplique en prose' }] },
+    { k: 'mentions', t: 'paragraphes', l: 'Mentions', ajout: 'Mention', aide: 'Pass Culture, guide du CRED…' },
+    { k: 'tournee.titre', t: 'texte', l: 'Titre de la rubrique des dates', ph: 'Actuellement en tournée' },
+    { k: 'tournee.texte', t: 'texte', l: 'Texte quand il n’y a pas de date', ph: 'Les dates de tournée seront annoncées ici.' },
+    { k: 'cadre', t: 'texte', l: 'Cadre', aide: 'Pour une création : le lieu et le temps du récit.' },
+    { k: 'extraits', t: 'objets', l: 'Extraits', ajout: 'Extrait', champs: [{ k: 'citation', t: 'long', l: 'Extrait' }, { k: 'source', t: 'texte', l: 'Source' }] },
+  ],
+  'Équipe': [
+    { k: 'fiche', t: 'objets', l: 'Fiche artistique', ajout: 'Ligne', champs: [{ k: 'libelle', t: 'texte', l: 'Rôle', ph: 'Mise en scène et adaptation :' }, { k: 'valeur', t: 'html', l: 'Nom(s)' }] },
+    { k: 'avec.libelle', t: 'texte', l: 'Libellé de la distribution', ph: 'avec :' },
+    { k: 'avec.valeur', t: 'html', l: 'Distribution' },
+    { k: 'production', t: 'paragraphes', l: 'Production et soutiens', ajout: 'Ligne' },
+  ],
+  'Univers': [
+    { k: 'univers.nom', t: 'texte', l: 'Nom de l’univers' },
+    { k: 'univers.clair', t: 'case', l: 'Fond clair' },
+    { k: 'univers.motif', t: 'choix', l: 'Motif', choix: [['', '—'], ...MOTIFS.map(m => [m, m])] },
+    { k: 'univers.couleurs.fond', t: 'couleur', l: 'Fond' }, { k: 'univers.couleurs.fond2', t: 'couleur', l: 'Fond secondaire' },
+    { k: 'univers.couleurs.texte', t: 'couleur', l: 'Texte' }, { k: 'univers.couleurs.texte2', t: 'couleur', l: 'Texte secondaire' },
+    { k: 'univers.couleurs.accent', t: 'couleur', l: 'Accent' }, { k: 'univers.couleurs.accent2', t: 'couleur', l: 'Accent pour du texte' },
+    { k: 'univers.couleurs.scene', t: 'couleur', l: 'Couleur de scène (cartes, listes)' }, { k: 'univers.couleurs.lueur', t: 'texte', l: 'Lueur', ph: 'rgba(207,55,35,0.22)' },
+    { k: 'univers.polices.titre', t: 'texte', l: 'Police des titres', aide: 'Une police Google Fonts : Ubuntu, Cormorant Garamond…' },
+    { k: 'univers.polices.titreGraisse', t: 'nombre', l: 'Graisse des titres', ph: '700' },
+    { k: 'univers.polices.texte', t: 'texte', l: 'Police du texte' }, { k: 'univers.polices.etiquette', t: 'texte', l: 'Police des étiquettes' },
+  ],
+  'Photos et vidéos': [
+    { k: 'credit_photos', t: 'texte', l: 'Crédit des photos' }, { k: 'credit_dossier', t: 'texte', l: 'Crédit des photos du dossier' },
+    { k: 'credit', t: 'texte', l: 'Crédit de la photo principale' },
+    { k: 'video.titre', t: 'texte', l: 'Bande-annonce : titre' }, { k: 'video.url', t: 'url', l: 'Bande-annonce : adresse', ph: 'https://www.youtube.com/embed/…' },
+    { k: 'medias', t: 'objets', l: 'Autres médias', ajout: 'Média', champs: [{ k: 'type', t: 'choix', l: 'Type', choix: [['video', 'Vidéo'], ['audio', 'Son']] }, { k: 'titre', t: 'texte', l: 'Titre' }, { k: 'url', t: 'url', l: 'Adresse' }, { k: 'groupe', t: 'texte', l: 'Groupe' }] },
+  ],
+  'Action culturelle': [
+    { k: 'action_culturelle.type', t: 'texte', l: 'Type d’action culturelle', ph: 'Spectacle in situ', aide: 'Affiché en grand dans « Je représente un établissement scolaire ».' },
+    { k: 'action_culturelle.public', t: 'texte', l: 'Public', ph: 'À partir de la seconde' },
+    { k: 'action_culturelle.lieu', t: 'choix', l: 'Où', choix: [['', '—'], ['etablissement', 'Dans l’établissement'], ['salle', 'En salle']] },
+    { k: 'action_culturelle.statut', t: 'texte', l: 'Statut', ph: 'En création' },
+    { k: 'action_culturelle.textes', t: 'objets', l: 'Textes', ajout: 'Texte', champs: [{ k: 'texte', t: 'html', l: 'Texte' }, { k: 'source', t: 'texte', l: 'Source' }] },
+    { k: 'action_culturelle.formule', t: 'lignes', l: 'Formule', aide: 'Une ligne par élément : « 6 classes : 2 représentations ».' },
+    { k: 'action_culturelle.dispositifs', t: 'paragraphes', l: 'Dispositifs', ajout: 'Dispositif' },
+    { k: 'action_culturelle.aCompleter', t: 'case', l: 'À compléter (le site l’affiche)' },
+  ],
+  'Programmer': [
+    { k: 'programmer.representations', t: 'texte', l: 'Nombre de représentations', ph: '779 représentations au 31 juillet 2026' },
+    { k: 'programmer.format', t: 'texte', l: 'Format', ph: 'SPECTACLE IN SITU' },
+    { k: 'programmer.duree', t: 'texte', l: 'Durée' }, { k: 'programmer.jauge', t: 'texte', l: 'Jauge' }, { k: 'programmer.equipe', t: 'texte', l: 'Équipe en tournée' },
+    { k: 'programmer.lieux', t: 'long', l: 'Lieux de diffusion', lignes: 5 },
+    { k: 'programmer.actualite', t: 'texte', l: 'Actualité' },
+    { k: 'programmer.equipeCreation', t: 'lignes', l: 'Équipe de création' },
+    { k: 'programmer.ficheTechnique', t: 'case', l: 'Afficher la fiche technique du dossier' },
+  ],
+};
+function vueSpectacles(slug) {
+  if (slug) return editeurSpectacle(slug);
+  const pages = E.spectacles.filter(s => s.page).sort((a, b) => a.ordre - b.ordre), anciens = E.spectacles.filter(s => !s.page);
+  const avenir = id => E.dates.filter(d => d.spectacle_id === id && (d.fin || d.debut) >= AUJ && d.statut !== 'option').length;
+  const carte = (s, i, n) => { const c = s.univers?.couleurs || {}; return `<div><a class="carte-sp" href="#/spectacles/${s.slug}" style="--c:${couleurSp(s)};--fondU:${c.fond || '#333'}">
+      <span class="img" style="${s.photo ? `background-image:url('${photoUrl(s.photo)}')` : ''}"></span>
+      <span class="txt"><b>${esc(s.titre)}</b><span class="compte">${esc(s.creation || '')}</span>
+      <span class="puces">${s.publie ? '' : '<span class="badge masquee">Non publié</span>'}${s.en_tournee ? '<span class="badge ok">En tournée</span>' : ''}<span class="badge">${avenir(s.id)} date${avenir(s.id) > 1 ? 's' : ''} à venir</span></span></span></a>
+      ${n ? `<div style="display:flex;gap:4px;margin-top:6px">${i > 0 ? `<button class="btn petit" data-ordre="${s.id}" data-sens="-1" title="Avancer">←</button>` : ''}${i < n - 1 ? `<button class="btn petit" data-ordre="${s.id}" data-sens="1" title="Reculer">→</button>` : ''}</div>` : ''}</div>`; };
+  cadre('spectacles', `<div class="tete"><h1>Spectacles</h1><button class="btn principal" id="b-nouveau-sp">＋ Nouveau spectacle</button></div>
+    <div class="cartes" data-liste>${pages.map((s, i) => carte(s, i, pages.length)).join('')}</div>
+    <h2 style="font-size:16px;margin:28px 0 10px">Spectacles des saisons passées</h2><p class="compte">Sans page à eux : on les retrouve dans l’agenda des saisons passées.</p>
+    <div class="cartes">${anciens.map(s => carte(s, 0, 0)).join('')}</div>`);
+  $('[data-liste]').rafraichir = () => vueSpectacles();
+  $$('[data-ordre]').forEach(b => b.addEventListener('click', async () => {
+    const i = pages.findIndex(s => s.id === +b.dataset.ordre), j = i + +b.dataset.sens, a = pages[i], c = pages[j];
+    const [r1, r2] = await Promise.all([sb.from('crescite_spectacles').update({ ordre: c.ordre }).eq('id', a.id), sb.from('crescite_spectacles').update({ ordre: a.ordre }).eq('id', c.id)]);
+    if (r1.error || r2.error) return erreur(r1.error || r2.error);
+    [a.ordre, c.ordre] = [c.ordre, a.ordre];
+    vueSpectacles(); annoncer('Ordre enregistré.');
+  }));
+  $('#b-nouveau-sp').addEventListener('click', async () => {
+    const titre = prompt('Titre du nouveau spectacle'); if (!titre) return;
+    let slug = slugifier(titre) || 'spectacle';
+    while (E.spectacles.some(s => s.slug === slug)) slug += '-2';
+    const ordre = Math.max(0, ...E.spectacles.filter(s => s.page).map(s => s.ordre)) + 10;
+    const { data, error } = await sb.from('crescite_spectacles').insert({ slug, titre, titre_lignes: [titre], ordre, publie: false, page: true,
+      univers: { nom: '', clair: false, motif: '', couleurs: { fond: '#151018', fond2: '#221a26', texte: '#f3eef4', texte2: '#b9adbd', accent: '#a8306f', accent2: '#e27ab3', scene: '#e27ab3', lueur: 'rgba(168,48,111,0.3)' }, polices: {} } }).select().single();
+    if (error) return erreur(error, 'Spectacle non créé');
+    E.spectacles.push(data);
+    location.hash = `#/spectacles/${slug}`;
+    annoncer('Spectacle créé (non publié) : complétez sa fiche, puis cochez « Publié sur le site ».');
+  });
+}
+function editeurSpectacle(slug) {
+  const s0 = E.spectacles.find(s => s.slug === slug);
+  if (!s0) { cadre('spectacles', '<div class="vide bloc">Ce spectacle n’existe pas.</div>'); return; }
+  const F = clone(s0);
+  ['univers', 'action_culturelle', 'programmer'].forEach(k => { F[k] = F[k] || {}; });
+  F.univers.couleurs = F.univers.couleurs || {}; F.univers.polices = F.univers.polices || {};
+  F.tournee = F.tournee || {}; F.avec = F.avec || { libelle: 'avec :', valeur: '' }; F.video = F.video || { titre: '', url: '' };
+  const onglets = [...Object.keys(SPEC_SPECTACLE), 'Photos'];
+  let onglet = sessionStorage.getItem('crescite-onglet-sp') || 'Général';
+  if (!onglets.includes(onglet)) onglet = 'Général';
+  const dossiers = E.textes.filter(t => t.cle.startsWith('dossier:')).map(t => [t.cle, t.cle.slice(8)]);
+  cadre('spectacles', `<div class="tete"><a class="btn petit" href="#/spectacles">←</a><h1>${esc(F.titre)}</h1>
+      <a class="btn" href="${SITE}#/spectacle/${esc(F.slug)}" target="_blank" rel="noopener">Voir sa page ↗</a></div>
+    <div class="onglets-ed" role="tablist">${onglets.map(o => `<button type="button" role="tab" data-onglet="${esc(o)}" aria-selected="${o === onglet}">${esc(o)}</button>`).join('')}</div>
+    <div class="editeur" id="ed-sp"></div>`);
+  const zone = $('#ed-sp');
+  const contrastes = () => {
+    const c = F.univers.couleurs || {};
+    const lum = hex => { if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return null; const f = v => (v /= 255) <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; return 0.2126 * f(parseInt(hex.slice(1, 3), 16)) + 0.7152 * f(parseInt(hex.slice(3, 5), 16)) + 0.0722 * f(parseInt(hex.slice(5, 7), 16)); };
+    const r = (a, b) => { const x = lum(a), y = lum(b); if (x === null || y === null) return null; const [h, l] = [x, y].sort((p, q) => q - p); return (h + 0.05) / (l + 0.05); };
+    const ligne = (n, a, b) => { const v = r(a, b); return v === null ? '' : `<span class="contraste ${v >= 4.5 ? 'bon' : 'faible'}">${n} ${v.toFixed(1)}:1</span>`; };
+    return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 14px">${ligne('texte sur fond', c.texte, c.fond)}${ligne('texte secondaire', c.texte2, c.fond)}${ligne('accent pour du texte', c.accent2, c.fond)}</div>
+      <div style="padding:18px;border-radius:12px;background:${esc(c.fond || '#000')};color:${esc(c.texte || '#fff')};border:1px solid var(--trait)"><div style="font:${esc(F.univers.polices?.titreGraisse || 700)} 28px '${esc(F.univers.polices?.titre || 'serif')}',serif;color:${esc(c.accent2 || c.accent || '#fff')}">${esc(F.titre)}</div><div style="color:${esc(c.texte2 || '#ccc')}">${esc(F.accroche || '')}</div></div>`;
+  };
+  const dessiner = () => {
+    nChamp = 0;
+    if (onglet === 'Photos') { zone.innerHTML = ongletPhotos(F) + pied(); }
+    else {
+      const specs = SPEC_SPECTACLE[onglet].concat(onglet === 'Action culturelle' ? [{ k: 'dossier', t: 'choix', l: 'Dossier scolaire', choix: [['', 'Aucun'], ...dossiers] }] : []);
+      zone.innerHTML = `<div class="bloc">${onglet === 'Univers' ? '<div id="sp-contrastes"></div>' : ''}${specs.map(c => champ(c, F)).join('')}</div>${pied()}`;
+      if (onglet === 'Univers') $('#sp-contrastes').innerHTML = contrastes();
+    }
+  };
+  dessiner();
+  const toutesSpecs = Object.values(SPEC_SPECTACLE).flat().concat([{ k: 'dossier', t: 'choix', choix: [] }]);
+  relier(zone, F, toutesSpecs, p => { if (onglet === 'Univers' && $('#sp-contrastes')) $('#sp-contrastes').innerHTML = contrastes(); });
+  $$('[data-onglet]').forEach(b => b.addEventListener('click', () => {
+    $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
+    onglet = b.dataset.onglet; sessionStorage.setItem('crescite-onglet-sp', onglet);
+    $$('[data-onglet]').forEach(x => x.setAttribute('aria-selected', x === b)); dessiner(); if (E.sale) marquerSale();
+  }));
+  zone.addEventListener('change', async e => {
+    const inp = e.target;
+    if (!inp.matches('input[type=file]')) return;
+    const fichiers = [...inp.files]; if (!fichiers.length) return;
+    annoncer(`Envoi de ${fichiers.length} photo${fichiers.length > 1 ? 's' : ''}…`);
+    try {
+      for (const f of fichiers) {
+        const chemin = await envoyerPhoto(f, F.slug);
+        if (inp.dataset.photo === 'principale') F.photo = chemin;
+        else if (inp.dataset.remplacer !== undefined) F.photos[+inp.dataset.remplacer].fichier = chemin;
+        else F.photos.push({ id: chemin.split('/').pop().replace(/\.[^.]+$/, ''), fichier: chemin, legende: '', source: 'site' });
+      }
+      marquerSale(); dessiner(); annoncer('Photos ajoutées : enregistrez pour les publier.');
+    } catch (err) { erreur(err, 'Envoi impossible'); }
+  });
+  zone.addEventListener('click', async e => {
+    const b = e.target.closest('[data-ph]');
+    if (b) {
+      const i = +b.dataset.i, xs = F.photos;
+      if (b.dataset.ph === 'retirer' && confirm('Retirer cette photo de la fiche ?')) xs.splice(i, 1);
+      if (b.dataset.ph === 'monter' && i > 0) [xs[i - 1], xs[i]] = [xs[i], xs[i - 1]];
+      if (b.dataset.ph === 'descendre' && i < xs.length - 1) [xs[i + 1], xs[i]] = [xs[i], xs[i + 1]];
+      marquerSale(); dessiner(); return;
+    }
+    if (!e.target.matches('[data-enregistrer]')) return;
+    $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
+    $$('[data-legende]', zone).forEach(t => { F.photos[+t.dataset.legende].legende = t.value.trim() || null; });
+    if (F.video && !(F.video.url || '').trim()) F.video = null;
+    if (F.avec && !texteSeul(F.avec.valeur).trim()) F.avec = null;
+    if (F.tournee && !(F.tournee.titre || '').trim() && !(F.tournee.texte || '').trim()) F.tournee = null;
+    const champs = Object.keys(F).filter(k => !['id', 'modifie_le', 'modifie_par'].includes(k) && JSON.stringify(F[k]) !== JSON.stringify(s0[k] ?? null));
+    if (!champs.length) { marquerSale(false); return annoncer('Rien à enregistrer.'); }
+    if (champs.includes('slug') && !/^[a-z0-9-]+$/.test(F.slug)) return annoncer('L’identifiant ne prend que des minuscules, des chiffres et des tirets.', { erreur: true });
+    e.target.disabled = true;
+    const { data, error } = await sb.from('crescite_spectacles').update(Object.fromEntries(champs.map(k => [k, F[k]]))).eq('id', s0.id).select().single();
+    e.target.disabled = false;
+    if (error) return erreur(error);
+    Object.assign(s0, data); Object.assign(F, clone(data));
+    marquerSale(false);
+    annoncer(data.publie ? 'Enregistré : la page du spectacle est à jour.' : 'Enregistré (le spectacle n’est pas publié).');
+  });
+  zone.addEventListener('input', e => { if (e.target.dataset.legende !== undefined) { F.photos[+e.target.dataset.legende].legende = e.target.value; marquerSale(); } });
+}
+function ongletPhotos(F) {
+  F.photos = F.photos || [];
+  return `<div class="bloc"><h3>Photo principale</h3><div class="miniatures"><div class="mini">${F.photo ? `<img src="${photoUrl(F.photo)}" alt="">` : '<div style="height:110px"></div>'}
+      <div style="padding:8px"><label class="btn petit">Remplacer<input type="file" accept="image/*" data-photo="principale" hidden></label></div></div></div></div>
+    <div class="bloc"><h3>Photos de la page</h3><p class="aide">Dans l’ordre d’affichage. Les photos envoyées sont allégées (2 000 px, WebP) avant l’envoi.</p>
+      <div class="miniatures">${F.photos.map((p, i) => `<div class="mini"><img src="${photoUrl(p.fichier)}" alt="" loading="lazy">
+        <div style="padding:8px;display:grid;gap:6px"><textarea data-legende="${i}" rows="2" placeholder="Légende" aria-label="Légende">${esc(p.legende || '')}</textarea>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">${i > 0 ? `<button type="button" class="btn petit" data-ph="monter" data-i="${i}" title="Avancer">←</button>` : ''}${i < F.photos.length - 1 ? `<button type="button" class="btn petit" data-ph="descendre" data-i="${i}" title="Reculer">→</button>` : ''}
+        <label class="btn petit">Remplacer<input type="file" accept="image/*" data-remplacer="${i}" hidden></label><button type="button" class="btn petit danger" data-ph="retirer" data-i="${i}" title="Retirer">✕</button></div></div></div>`).join('')}</div>
+      <p style="margin-top:12px"><label class="btn">＋ Ajouter des photos<input type="file" accept="image/*" multiple hidden></label></p></div>`;
+}
+
+// ===================================================================================================== ateliers
+const SPEC_ATELIER = [
+  { k: 'titre', t: 'texte', l: 'Titre', ph: 'Atelier d’écriture d’alexandrins - 1h' },
+  { k: 'duree', t: 'texte', l: 'Durée', ph: '1h' },
+  { k: 'public', t: 'texte', l: 'Public', ph: 'À partir de la seconde' },
+  { k: 'obligatoire', t: 'case', l: 'Obligatoire avant la représentation' },
+  { k: 'publie', t: 'case', l: 'Publié sur le site' },
+  { k: 'paragraphes', t: 'paragraphes', l: 'Présentation' },
+  { k: 'etapes', t: 'objets', l: 'Étapes', ajout: 'Étape', champs: [{ k: 'titre', t: 'html', l: 'Titre de l’étape' }, { k: 'texte', t: 'html', l: 'Texte' }] },
+  { k: 'points', t: 'paragraphes', l: 'Points', ajout: 'Point' },
+];
+const DISPOSITIFS = ['Parcours Regards (Région Normandie)', 'Pass Culture (offre collective)', 'Guide du CRED de Seine-Maritime', 'Jumelage – résidence d’artistes (DRAC)', 'Résidence', 'Stage', 'Masterclass'];
+const heuresSeance = s => s.heure_debut && s.heure_fin ? (Date.parse(`2000-01-01T${s.heure_fin}`) - Date.parse(`2000-01-01T${s.heure_debut}`)) / 36e5 : 0;
+function vueAteliers(partie, param) {
+  cadre('ateliers', `<div class="tete"><h1>Ateliers</h1>
+    <div class="seg" role="group" aria-label="Partie"><button type="button" onclick="location.hash='#/ateliers/seances'" aria-pressed="${partie === 'seances'}">Séances</button><button type="button" onclick="location.hash='#/ateliers/catalogue'" aria-pressed="${partie === 'catalogue'}">Ateliers proposés</button></div>
+    <a class="btn principal" href="#/ateliers/${partie}/${partie === 'seances' ? 'nouvelle' : 'nouveau'}">＋ ${partie === 'seances' ? 'Nouvelle séance' : 'Nouvel atelier'}</a></div>
+    <div class="deux${param ? ' edition' : ''}"><div class="liste" data-liste id="l-at"></div><section class="editeur" id="ed-at">${param ? '' : `<div class="vide bloc">${partie === 'seances' ? 'Les séances d’atelier menées dans les établissements : qui, où, quand, avec quelle classe. Elles ne sont pas publiées.' : 'Les ateliers que la compagnie propose, tels qu’ils apparaissent sur le site.'}</div>`}</section></div>`);
+  const liste = $('#l-at');
+  liste.rafraichir = () => partie === 'seances' ? listeSeances(liste, param) : listeAteliers(liste, param);
+  liste.rafraichir();
+  if (param) partie === 'seances' ? editeurSeance(param === 'nouvelle' ? null : +param) : editeurAtelier(param === 'nouveau' ? null : +param);
+}
+function listeAteliers(zone, actif) {
+  const groupes = [...E.spectacles.filter(s => E.ateliers.some(a => a.spectacle_id === s.id)), null];
+  zone.innerHTML = groupes.map(s => { const xs = E.ateliers.filter(a => (s ? a.spectacle_id === s.id : !a.spectacle_id)).sort((a, b) => a.ordre - b.ordre); if (!xs.length) return '';
+    return `<div class="mois">${esc(s ? s.titre : 'Sans spectacle')}</div>${xs.map(a => `<a class="ligne" style="--c:${couleurSp(s)};grid-template-columns:1fr auto" href="#/ateliers/catalogue/${a.id}"${String(actif) === String(a.id) ? ' aria-current="true"' : ''}>
+      <span class="corps"><span class="t">${esc(a.titre)}</span><span class="ou">${esc(a.public || '')}</span></span><span class="badges">${a.obligatoire ? '<span class="badge option">Obligatoire</span>' : ''}${a.publie ? '' : '<span class="badge masquee">Non publié</span>'}</span></a>`).join('')}`; }).join('') || '<p class="vide">Aucun atelier.</p>';
+}
+function editeurAtelier(id) {
+  const a0 = id ? E.ateliers.find(a => a.id === id) : null;
+  const F = a0 ? clone(a0) : { titre: '', duree: '', public: '', obligatoire: false, publie: true, paragraphes: [], etapes: [], points: [], ordre: 100, spectacle_id: +(session.dates?.spectacle || 0) || null };
+  const zone = zoneNeuve('#ed-at');
+  nChamp = 0;
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/ateliers/catalogue">←</a><h2>${esc(F.titre || 'Nouvel atelier')}</h2></div><div class="bloc">
+    <div class="champ"><label for="a-sp">Spectacle</label><select id="a-sp">${choixSpectacles('Aucun').map(([v, t]) => `<option value="${v}"${String(F.spectacle_id ?? '') === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+    ${SPEC_ATELIER.map(c => champ(c, F)).join('')}</div>${pied(a0 ? 'Tout est enregistré' : 'Nouvel atelier', a0 ? '<button type="button" class="btn danger" id="a-suppr">Supprimer</button>' : '')}`;
+  relier(zone, F, SPEC_ATELIER);
+  $('#a-sp').addEventListener('change', e => { F.spectacle_id = e.target.value ? +e.target.value : null; marquerSale(); });
+  $('#a-suppr')?.addEventListener('click', async () => {
+    if (!confirm('Supprimer cet atelier ? Les séances déjà notées le garderont sans lien.')) return;
+    const { error } = await sb.from('crescite_ateliers').delete().eq('id', a0.id);
+    if (error) return erreur(error); E.ateliers = E.ateliers.filter(x => x.id !== a0.id); E.sale = false; location.hash = '#/ateliers/catalogue'; annoncer('Atelier supprimé.');
+  });
+  $('[data-enregistrer]', zone).addEventListener('click', async e => {
+    $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
+    if (!F.titre.trim()) return annoncer('Donnez un titre à l’atelier.', { erreur: true });
+    const ligneAt = { spectacle_id: F.spectacle_id, titre: F.titre.trim(), duree: F.duree || null, public: F.public || null, obligatoire: !!F.obligatoire, publie: !!F.publie,
+      paragraphes: F.paragraphes || [], etapes: F.etapes || [], points: F.points || [], ordre: F.ordre ?? 100 };
+    e.target.disabled = true;
+    const r = a0 ? await sb.from('crescite_ateliers').update(ligneAt).eq('id', a0.id).select().single() : await sb.from('crescite_ateliers').insert(ligneAt).select().single();
+    e.target.disabled = false;
+    if (r.error) return erreur(r.error);
+    const i = E.ateliers.findIndex(x => x.id === r.data.id); if (i >= 0) E.ateliers[i] = r.data; else E.ateliers.push(r.data);
+    E.sale = false; annoncer('Atelier enregistré.');
+    if (!a0) location.hash = `#/ateliers/catalogue/${r.data.id}`; else vueAteliers('catalogue', r.data.id);
+  });
+}
+function listeSeances(zone, actif) {
+  const f = session.seances = Object.assign({ periode: 'avenir', saison: '' }, session.seances || {});
+  const saisons = [...new Set(E.seances.map(s => AGENDA.saisonDe(s.jour)))].sort().reverse();
+  const xs = E.seances.filter(s => (f.periode === 'avenir' ? s.jour >= AUJ : f.periode === 'passees' ? s.jour < AUJ : true) && (!f.saison || AGENDA.saisonDe(s.jour) === f.saison))
+    .sort((a, b) => (a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : String(a.heure_debut).localeCompare(String(b.heure_debut))) * (f.periode === 'avenir' ? 1 : -1));
+  const heures = xs.filter(s => s.statut !== 'annulee').reduce((n, s) => n + heuresSeance(s), 0);
+  let mois = '';
+  zone.innerHTML = `<div class="filtres"><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-sp-per="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</div>
+      <select id="se-saison" aria-label="Saison"><option value="">Toutes les saisons</option>${saisons.map(s => `<option${f.saison === s ? ' selected' : ''}>${s}</option>`).join('')}</select></div>
+      <span class="compte">${xs.length} séance${xs.length > 1 ? 's' : ''} · ${Math.round(heures * 10) / 10} h d’éducation artistique</span></div>`
+    + (xs.length ? xs.map(s => {
+      const m = s.jour.slice(0, 7), a = E.ateliers.find(x => x.id === s.atelier_id), sp = spectacle(s.spectacle_id || a?.spectacle_id), l = lieu(s.lieu_id);
+      const t = m !== mois ? `<div class="mois">${AGENDA.MOIS[+m.slice(5) - 1]} ${m.slice(0, 4)}</div>` : ''; mois = m;
+      return `${t}<a class="ligne" href="#/ateliers/seances/${s.id}" style="--c:${couleurSp(sp)}"${String(actif) === String(s.id) ? ' aria-current="true"' : ''}>
+        <span class="jj"><b>${+s.jour.slice(8, 10)}</b>${MC[+s.jour.slice(5, 7) - 1]}</span>
+        <span class="corps"><span class="t">${esc(l?.nom || s.etablissement || 'Établissement à préciser')}${s.classe ? ` · ${esc(s.classe)}` : ''}</span>
+        <span class="ou">${esc(a?.titre || sp?.titre || 'Atelier')}${s.heure_debut ? ` · ${AGENDA.heureTexte(h5(s.heure_debut))}${s.heure_fin ? `–${AGENDA.heureTexte(h5(s.heure_fin))}` : ''}` : ''}${s.intervenants ? ` · ${esc(s.intervenants)}` : ''}</span></span>
+        <span class="badges">${s.statut === 'option' ? '<span class="badge option">Option</span>' : s.statut === 'realisee' ? '<span class="badge ok">Réalisée</span>' : s.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : ''}${s.dispositif ? `<span class="badge">${esc(s.dispositif.split(' (')[0])}</span>` : ''}</span></a>`;
+    }).join('') : '<p class="vide">Aucune séance.</p>');
+  $$('[data-sp-per]', zone).forEach(b => b.addEventListener('click', () => { f.periode = b.dataset.spPer; garderFiltres(); listeSeances(zone, actif); }));
+  $('#se-saison', zone).addEventListener('change', e => { f.saison = e.target.value; garderFiltres(); listeSeances(zone, actif); });
+}
+function editeurSeance(id, depart = null) {
+  const s0 = id ? E.seances.find(s => s.id === id) : null;
+  const F = depart || (s0 ? clone(s0) : { atelier_id: null, spectacle_id: null, date_id: null, lieu_id: null, etablissement: '', jour: AUJ, heure_debut: '09:00', heure_fin: '10:00', classe: '', niveau: '', nb_eleves: null, intervenants: '', dispositif: '', statut: 'prevue', notes: '' });
+  ['heure_debut', 'heure_fin'].forEach(k => { F[k] = h5(F[k]); });
+  const zone = zoneNeuve('#ed-at');
+  const datesProches = () => E.dates.filter(d => (!F.spectacle_id || d.spectacle_id === +F.spectacle_id)).sort((a, b) => Math.abs(Date.parse(a.debut) - Date.parse(F.jour || AUJ)) - Math.abs(Date.parse(b.debut) - Date.parse(F.jour || AUJ))).slice(0, 25);
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/ateliers/seances">←</a><h2>${s0 ? `Séance du ${esc(jourCourt(s0.jour))}` : 'Nouvelle séance'}</h2></div>
+    <div class="bloc"><div class="rangee">
+      <div class="champ"><label for="se-at">Atelier</label><select id="se-at"><option value="">—</option>${E.ateliers.map(a => `<option value="${a.id}"${F.atelier_id === a.id ? ' selected' : ''}>${esc(a.titre)}</option>`).join('')}</select></div>
+      <div class="champ"><label for="se-sp">Spectacle</label><select id="se-sp">${choixSpectacles('—').map(([v, t]) => `<option value="${v}"${String(F.spectacle_id ?? '') === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div></div>
+      <div class="rangee"><div class="champ"><label for="se-jour">Jour</label><input type="date" id="se-jour" value="${esc(F.jour)}"></div>
+      <div class="champ"><label for="se-hd">Début</label><input type="time" id="se-hd" value="${esc(F.heure_debut)}" step="300"></div>
+      <div class="champ"><label for="se-hf">Fin</label><input type="time" id="se-hf" value="${esc(F.heure_fin)}" step="300"></div></div>
+      <div class="champ"><span class="lib">Établissement</span><div id="se-lieu"></div></div>
+      <div class="rangee"><div class="champ"><label for="se-classe">Classe</label><input type="text" id="se-classe" value="${esc(F.classe || '')}" placeholder="2nde 3"></div>
+      <div class="champ"><label for="se-niv">Niveau</label><input type="text" id="se-niv" value="${esc(F.niveau || '')}" placeholder="Seconde"></div>
+      <div class="champ"><label for="se-nb">Élèves</label><input type="number" id="se-nb" min="0" value="${esc(F.nb_eleves ?? '')}"></div></div>
+      <div class="champ"><label for="se-int">Intervenant(s)</label><input type="text" id="se-int" value="${esc(F.intervenants || '')}" placeholder="Lauren Toulin"></div>
+      <div class="rangee"><div class="champ"><label for="se-disp">Dispositif</label><input type="text" id="se-disp" list="l-disp" value="${esc(F.dispositif || '')}"><datalist id="l-disp">${DISPOSITIFS.map(d => `<option value="${esc(d)}">`).join('')}</datalist></div>
+      <div class="champ"><label for="se-st">Statut</label><select id="se-st">${[['option', 'Option'], ['prevue', 'Prévue'], ['realisee', 'Réalisée'], ['annulee', 'Annulée']].map(([k, l]) => `<option value="${k}"${F.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div></div>
+      <div class="champ"><label for="se-date">Représentation liée</label><select id="se-date"><option value="">—</option>${datesProches().map(d => `<option value="${d.id}"${F.date_id === d.id ? ' selected' : ''}>${esc(jourCourt(d.debut))} · ${esc(lieuTexte(lieu(d.lieu_id)) || d.intitule || '')}</option>`).join('')}</select></div>
+      <div class="champ"><label for="se-notes">Notes</label><textarea id="se-notes">${esc(F.notes || '')}</textarea></div></div>
+    ${pied(s0 ? 'Tout est enregistré' : 'Nouvelle séance', s0 ? '<button type="button" class="btn" id="se-dup">Dupliquer</button><button type="button" class="btn danger" id="se-suppr">Supprimer</button>' : '')}`;
+  comboLieu(zone, 'se-lieu', F.lieu_id, idl => { F.lieu_id = idl; marquerSale(); }, { etablissement: true });
+  const lien = { 'se-at': ['atelier_id', v => v ? +v : null], 'se-sp': ['spectacle_id', v => v ? +v : null], 'se-jour': ['jour', v => v], 'se-hd': ['heure_debut', v => v], 'se-hf': ['heure_fin', v => v],
+    'se-classe': ['classe', v => v], 'se-niv': ['niveau', v => v], 'se-nb': ['nb_eleves', v => v === '' ? null : +v], 'se-int': ['intervenants', v => v], 'se-disp': ['dispositif', v => v],
+    'se-st': ['statut', v => v], 'se-date': ['date_id', v => v ? +v : null], 'se-notes': ['notes', v => v] };
+  const maj = e => { const x = lien[e.target.id]; if (!x) return; F[x[0]] = x[1](e.target.value); if (e.target.id === 'se-at' && F.atelier_id) { const a = E.ateliers.find(y => y.id === F.atelier_id); if (a?.spectacle_id && !F.spectacle_id) { F.spectacle_id = a.spectacle_id; $('#se-sp').value = String(a.spectacle_id); } } marquerSale(); };
+  zone.addEventListener('input', maj); zone.addEventListener('change', maj);
+  $('#se-dup')?.addEventListener('click', () => { const G = clone(F); delete G.id; delete G.modifie_le; delete G.modifie_par; G.statut = 'prevue'; history.replaceState(null, '', '#/ateliers/seances/nouvelle'); E.hash = location.hash; editeurSeance(null, G); marquerSale(true); annoncer('Copie prête : changez le jour ou la classe, puis enregistrez.'); });
+  $('#se-suppr')?.addEventListener('click', async () => { if (!confirm('Supprimer cette séance ?')) return; const { error } = await sb.from('crescite_seances').delete().eq('id', s0.id); if (error) return erreur(error); E.seances = E.seances.filter(x => x.id !== s0.id); E.sale = false; location.hash = '#/ateliers/seances'; annoncer('Séance supprimée.'); });
+  $('[data-enregistrer]', zone).addEventListener('click', async e => {
+    if (!F.jour) return annoncer('Indiquez le jour.', { erreur: true });
+    if (F.heure_debut && F.heure_fin && F.heure_fin <= F.heure_debut) return annoncer('L’heure de fin doit suivre l’heure de début.', { erreur: true });
+    const ligneSe = { atelier_id: F.atelier_id, spectacle_id: F.spectacle_id, date_id: F.date_id, lieu_id: F.lieu_id, etablissement: F.etablissement || null, jour: F.jour,
+      heure_debut: F.heure_debut || null, heure_fin: F.heure_fin || null, classe: F.classe || null, niveau: F.niveau || null, nb_eleves: F.nb_eleves, intervenants: F.intervenants || null,
+      dispositif: F.dispositif || null, statut: F.statut, notes: F.notes || null };
+    e.target.disabled = true;
+    const r = s0 ? await sb.from('crescite_seances').update(ligneSe).eq('id', s0.id).select().single() : await sb.from('crescite_seances').insert(ligneSe).select().single();
+    e.target.disabled = false;
+    if (r.error) return erreur(r.error);
+    const i = E.seances.findIndex(x => x.id === r.data.id); if (i >= 0) E.seances[i] = r.data; else E.seances.push(r.data);
+    E.sale = false; annoncer('Séance enregistrée.');
+    if (!s0) location.hash = `#/ateliers/seances/${r.data.id}`; else vueAteliers('seances', r.data.id);
+  });
+}
+
+// ===================================================================================================== lieux
+function vueLieux(param) {
+  const f = session.lieux = Object.assign({ q: '', type: '' }, session.lieux || {});
+  cadre('lieux', `<div class="tete"><h1>Lieux</h1><a class="btn principal" href="#/lieux/nouveau">＋ Nouveau lieu</a></div>
+    <div class="deux${param ? ' edition' : ''}"><div class="liste"><div class="filtres"><input type="search" id="li-q" placeholder="Chercher un lieu ou une commune" value="${esc(f.q)}" aria-label="Chercher">
+      <select id="li-type" aria-label="Type"><option value="">Tous les types</option>${[['salle', 'Salles'], ['etablissement', 'Établissements scolaires'], ['festival', 'Festivals'], ['autre', 'Autres']].map(([k, l]) => `<option value="${k}"${f.type === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <span class="compte" id="li-compte"></span></div><div data-liste id="l-lieux"></div></div><section class="editeur" id="ed-lieu">${param ? '' : '<div class="vide bloc">Les salles, festivals et établissements qui accueillent la compagnie.</div>'}</section></div>`);
+  const zone = $('#l-lieux');
+  zone.rafraichir = () => {
+    const q = norm(f.q).trim();
+    const n = new Map(); E.dates.forEach(d => n.set(d.lieu_id, (n.get(d.lieu_id) || 0) + 1));
+    const xs = E.lieux.filter(l => (!f.type || l.type === f.type) && (!q || norm(`${l.nom || ''} ${l.commune} ${l.departement}`).includes(q))).sort((a, b) => norm(a.commune).localeCompare(norm(b.commune)) || norm(a.nom).localeCompare(norm(b.nom)));
+    $('#li-compte').textContent = `${xs.length} lieu${xs.length > 1 ? 'x' : ''}`;
+    zone.innerHTML = xs.slice(0, 400).map(l => `<a class="ligne" style="grid-template-columns:1fr auto" href="#/lieux/${l.id}"${String(param) === String(l.id) ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(l.nom || l.commune)}</span><span class="ou">${esc(l.commune)} (${esc(l.departement)})${l.latitude == null ? ' · sans position sur la carte' : ''}</span></span><span class="badges"><span class="badge">${n.get(l.id) || 0} date${(n.get(l.id) || 0) > 1 ? 's' : ''}</span>${l.type === 'etablissement' ? '<span class="badge sco">Établissement</span>' : ''}</span></a>`).join('') || '<p class="vide">Aucun lieu.</p>';
+  };
+  zone.rafraichir();
+  $('#li-q').addEventListener('input', e => { f.q = e.target.value; garderFiltres(); zone.rafraichir(); });
+  $('#li-type').addEventListener('change', e => { f.type = e.target.value; garderFiltres(); zone.rafraichir(); });
+  if (param) editeurLieu(param === 'nouveau' ? null : +param);
+}
+const SPEC_LIEU = [
+  { k: 'nom', t: 'texte', l: 'Nom', ph: 'Théâtre des Charmes' },
+  { k: 'type', t: 'choix', l: 'Type', choix: [['salle', 'Salle'], ['etablissement', 'Établissement scolaire'], ['festival', 'Festival'], ['autre', 'Autre']] },
+  { k: 'commune', t: 'texte', l: 'Commune' }, { k: 'departement', t: 'texte', l: 'Département', ph: '76' },
+  { k: 'pays', t: 'texte', l: 'Pays', ph: 'FR' }, { k: 'adresse', t: 'texte', l: 'Adresse' }, { k: 'site_web', t: 'url', l: 'Site web' },
+  { k: 'latitude', t: 'nombre', l: 'Latitude' }, { k: 'longitude', t: 'nombre', l: 'Longitude' },
+];
+const SPEC_LIEU_SUIVI = [{ k: 'contact', t: 'texte', l: 'Contact' }, { k: 'jauge', t: 'nombre', l: 'Jauge' }, { k: 'plateau', t: 'texte', l: 'Plateau' }, { k: 'notes', t: 'long', l: 'Notes' }];
+function editeurLieu(id) {
+  const l0 = id ? lieu(id) : null;
+  const F = l0 ? clone(l0) : { nom: '', type: 'salle', commune: '', departement: '', pays: 'FR', adresse: '', site_web: '', latitude: null, longitude: null };
+  const S0 = l0 ? clone(E.lieuxSuivi.find(x => x.lieu_id === id) || {}) : {};
+  const G = { contact: S0.contact || '', jauge: S0.jauge ?? null, plateau: S0.plateau || '', notes: S0.notes || '' };
+  const zone = $('#ed-lieu');
+  const nb = l0 ? E.dates.filter(d => d.lieu_id === id).length : 0;
+  nChamp = 0;
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
+    <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button></div>
+    <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
+    ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
+    ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '')}`;
+  relier($('#li-f'), F, SPEC_LIEU); relier($('#li-s'), G, SPEC_LIEU_SUIVI);
+  $('#li-geo').addEventListener('click', async () => {
+    const v = (F.commune || '').trim(); if (!v) return annoncer('Écrivez d’abord le nom de la commune.');
+    try {
+      const r = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(v)}&fields=nom,code,codeDepartement,centre&boost=population&limit=1`);
+      const [c] = r.ok ? await r.json() : [];
+      if (!c) return annoncer('Commune introuvable : remplissez département et position à la main.', { erreur: true });
+      Object.assign(F, { commune: c.nom, departement: c.codeDepartement, code_insee: c.code, latitude: c.centre.coordinates[1], longitude: c.centre.coordinates[0] });
+      ['commune', 'departement', 'latitude', 'longitude'].forEach(k => { const el = $(`[data-chemin="${k}"]`, zone); if (el) el.value = F[k]; });
+      marquerSale(); annoncer(`${c.nom} (${c.codeDepartement}) : position trouvée.`);
+    } catch { annoncer('Recherche impossible pour le moment.', { erreur: true }); }
+  });
+  if (l0) comboLieu(zone, 'li-fusion', null, async cible => {
+    if (cible === id) return;
+    const c = lieu(cible);
+    if (!confirm(`Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`)) return;
+    const r1 = await sb.from('crescite_dates').update({ lieu_id: cible }).eq('lieu_id', id);
+    const r2 = r1.error ? r1 : await sb.from('crescite_seances').update({ lieu_id: cible }).eq('lieu_id', id);
+    const r3 = r2.error ? r2 : await sb.from('crescite_lieux').delete().eq('id', id);
+    if (r3.error) return erreur(r3.error, 'Fusion incomplète');
+    E.dates.forEach(d => { if (d.lieu_id === id) d.lieu_id = cible; }); E.seances.forEach(s => { if (s.lieu_id === id) s.lieu_id = cible; }); E.lieux = E.lieux.filter(x => x.id !== id);
+    E.sale = false; location.hash = `#/lieux/${cible}`; annoncer('Lieux fusionnés.');
+  });
+  $('#li-suppr')?.addEventListener('click', async () => { if (!confirm('Supprimer ce lieu ?')) return; const { error } = await sb.from('crescite_lieux').delete().eq('id', id); if (error) return erreur(error); E.lieux = E.lieux.filter(x => x.id !== id); E.sale = false; location.hash = '#/lieux'; annoncer('Lieu supprimé.'); });
+  $('[data-enregistrer]', zone).addEventListener('click', async e => {
+    if (!(F.commune || '').trim() || !(F.departement || '').trim()) return annoncer('La commune et le département sont nécessaires.', { erreur: true });
+    const ligneLi = { nom: (F.nom || '').trim() || null, type: F.type, commune: F.commune.trim(), departement: String(F.departement).trim(), pays: F.pays || 'FR', code_insee: F.code_insee || null,
+      adresse: F.adresse || null, site_web: F.site_web || null, latitude: F.latitude, longitude: F.longitude };
+    e.target.disabled = true;
+    const r = l0 ? await sb.from('crescite_lieux').update(ligneLi).eq('id', id).select().single() : await sb.from('crescite_lieux').insert(ligneLi).select().single();
+    if (r.error) { e.target.disabled = false; return erreur(r.error); }
+    const r2 = await sb.from('crescite_lieux_suivi').upsert({ lieu_id: r.data.id, contact: G.contact || null, jauge: G.jauge, plateau: G.plateau || null, notes: G.notes || null }).select().single();
+    e.target.disabled = false;
+    if (r2.error) return erreur(r2.error, 'Suivi non enregistré');
+    const i = E.lieux.findIndex(x => x.id === r.data.id); if (i >= 0) E.lieux[i] = r.data; else E.lieux.push(r.data);
+    E.lieuxSuivi = E.lieuxSuivi.filter(x => x.lieu_id !== r.data.id).concat([r2.data]);
+    E.sale = false; annoncer('Lieu enregistré.');
+    if (!l0) location.hash = `#/lieux/${r.data.id}`; else vueLieux(id);
+  });
+}
+
+// ===================================================================================================== textes du site
+const TEXTES = {
+  compagnie: ['Présentation de la compagnie', [{ k: 'titre', t: 'texte', l: 'Titre' }, { k: 'paragraphes', t: 'paragraphes', l: 'Paragraphes' }, { k: 'datesTitre', t: 'texte', l: 'Titre de la frise' },
+    { k: 'dates', t: 'objets', l: 'Frise', ajout: 'Année', champs: [{ k: 'annee', t: 'texte', l: 'Année' }, { k: 'titre', t: 'html', l: 'Spectacle(s)' }] },
+    { k: 'directeur.titre', t: 'texte', l: 'Portrait : titre' }, { k: 'directeur.chapeau', t: 'texte', l: 'Portrait : chapeau' }, { k: 'directeur.paragraphes', t: 'paragraphes', l: 'Portrait : texte' }]],
+  actions: ['Actions culturelles', [{ k: 'titre', t: 'texte', l: 'Titre' }, { k: 'blocs', t: 'paragraphes', l: 'Texte', ajout: 'Bloc' }, { k: 'credit', t: 'texte', l: 'Crédit photo' }]],
+  ecole: ['Les publics scolaires', [{ k: 'texte', t: 'html', l: 'La position de la compagnie (en tête de « Je représente un établissement scolaire »)' }]],
+  diaporama: ['Bandeau d’accueil', null],
+  donateurs: ['Remerciements aux donateurs', null],
+  partenaires: ['Partenaires', null],
+  coordonnees: ['Coordonnées', [{ k: 'nom', t: 'texte', l: 'Nom' }, { k: 'adresse', t: 'lignes', l: 'Adresse' }, { k: 'legal', t: 'lignes', l: 'Mentions (Siret, APE, licence)' }]],
+};
+function vueTextes(cle) {
+  const noms = Object.fromEntries(Object.entries(TEXTES).map(([k, v]) => [k, v[0]]));
+  const autres = E.textes.map(t => t.cle).filter(k => !noms[k]).sort();
+  const nom = k => noms[k] || (k.startsWith('dossier:') ? `Dossier scolaire : ${k.slice(8)}` : k);
+  cadre('textes', `<div class="tete"><h1>Textes du site</h1></div><div class="deux${cle ? ' edition' : ''}"><div class="liste">
+      ${[...Object.keys(TEXTES).filter(k => E.textes.some(t => t.cle === k)), ...autres].map(k => `<a class="ligne" style="grid-template-columns:1fr" href="#/textes/${encodeURIComponent(k)}"${k === cle ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(nom(k))}</span></span></a>`).join('')}</div>
+    <section class="editeur" id="ed-txt">${cle ? '' : '<div class="vide bloc">Les textes du site qui ne dépendent d’aucun spectacle.</div>'}</section></div>`);
+  if (!cle) return;
+  const t0 = E.textes.find(t => t.cle === cle);
+  if (!t0) { $('#ed-txt').innerHTML = '<div class="vide bloc">Ce texte n’existe pas.</div>'; return; }
+  const zone = $('#ed-txt'), def = TEXTES[cle];
+  let F = clone(t0.valeur);
+  nChamp = 0;
+  let corps;
+  if (def && def[1]) corps = `<div class="bloc" id="t-f">${def[1].map(c => champ(c, F)).join('')}</div>`;
+  else if (typeof F === 'string') corps = `<div class="bloc" id="t-f">${champ({ k: 'v', t: 'html', l: nom(cle) }, { v: F })}</div>`;
+  else corps = `<div class="bloc"><p class="aide">Texte structuré : modifiez-le avec soin, la forme doit rester du JSON valide.</p><textarea id="t-json" rows="24" spellcheck="false" style="font:13px/1.5 ui-monospace,monospace">${esc(JSON.stringify(F, null, 2))}</textarea></div>`;
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/textes">←</a><h2>${esc(nom(cle))}</h2></div>${corps}${pied()}`;
+  const brut = typeof F === 'string';
+  const W = brut ? { v: F } : F;
+  if ($('#t-f')) relier($('#t-f'), W, def && def[1] ? def[1] : [{ k: 'v', t: 'html' }]);
+  $('#t-json')?.addEventListener('input', () => marquerSale());
+  $('[data-enregistrer]', zone).addEventListener('click', async e => {
+    let v;
+    if ($('#t-json')) { try { v = JSON.parse($('#t-json').value); } catch (err) { return annoncer('Le JSON n’est pas valide : ' + err.message, { erreur: true }); } }
+    else { $$('.riche', zone).forEach(ed => ecrire(W, ed.dataset.chemin, valeur(ed))); v = brut ? W.v : W; }
+    e.target.disabled = true;
+    const { data, error } = await sb.from('crescite_textes').update({ valeur: v }).eq('cle', cle).select().single();
+    e.target.disabled = false;
+    if (error) return erreur(error);
+    t0.valeur = data.valeur; E.sale = false; marquerSale(false); annoncer('Enregistré : le site est à jour.');
+  });
+}
+
+// ===================================================================================================== journal
+function resume(j) {
+  const x = j.apres || j.avant || {};
+  if (j.table_nom === 'crescite_dates') { const s = spectacle(x.spectacle_id); return `${s?.titre || 'Date'} · ${jourCourt(x.debut)}${x.intitule ? ` · ${x.intitule.split(' — ')[1] || ''}` : ''}`; }
+  if (j.table_nom === 'crescite_representations') { const d = E.dates.find(y => y.id === x.date_id); const s = d && spectacle(d.spectacle_id); return `${s?.titre || ''} · ${jourCourt(x.jour)}${x.heure ? ' · ' + AGENDA.heureTexte(h5(x.heure)) : ''}`; }
+  if (j.table_nom === 'crescite_spectacles') return x.titre;
+  if (j.table_nom === 'crescite_lieux') return lieuTexte(x);
+  if (j.table_nom === 'crescite_ateliers') return x.titre;
+  if (j.table_nom === 'crescite_seances') return `${jourCourt(x.jour)} · ${x.classe || ''}`;
+  if (j.table_nom === 'crescite_textes') return x.cle;
+  return j.ligne;
+}
+const champsChanges = j => j.avant && j.apres ? Object.keys(j.apres).filter(k => !['modifie_le', 'modifie_par'].includes(k) && JSON.stringify(j.avant[k]) !== JSON.stringify(j.apres[k])) : [];
+async function vueJournal() {
+  cadre('journal', '<div class="tete"><h1>Journal</h1><span class="compte">Les 300 dernières modifications. « Revenir » remet la ligne telle qu’elle était juste avant.</span></div><div class="bloc" style="padding:0" data-liste id="l-journal"><p class="vide">Chargement…</p></div>');
+  await rechargerJournal();
+  const zone = $('#l-journal');
+  const qui = id => { const a = E.admins.find(x => x.user_id === id); return a?.nom || (id === E.session.user.id ? E.session.user.email : id ? 'un administrateur' : 'import'); };
+  const OPS = { INSERT: 'Ajout', UPDATE: 'Modification', DELETE: 'Suppression' };
+  zone.rafraichir = async () => { await rechargerJournal(); dessiner(); };
+  const dessiner = () => {
+    zone.innerHTML = E.journal.map(j => { const ch = champsChanges(j); if (j.operation === 'UPDATE' && !ch.length) return '';
+      return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
+        <span class="quoi"><b>${OPS[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${esc(resume(j) || '')}${ch.length ? `<span class="diff"> — ${esc(ch.join(', '))}</span>` : ''}</span>
+        <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}">Retirer</button>` : `<button class="btn petit" data-j="${j.id}">Revenir</button>`}</span></div>`; }).join('') || '<p class="vide">Rien encore.</p>';
+  };
+  dessiner();
+  zone.addEventListener('click', async e => {
+    const b = e.target.closest('[data-j]'); if (!b) return;
+    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || [null, 'id'];
+    const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
+    let r;
+    if (j.operation === 'INSERT') { if (!confirm('Retirer cette ligne ajoutée ?')) return; r = await sb.from(j.table_nom).delete().eq(pk, j.apres[pk]); }
+    else if (j.operation === 'UPDATE') { if (!confirm('Remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await sb.from(j.table_nom).update(sans(j.avant)).eq(pk, j.avant[pk]); }
+    else {
+      if (!confirm('Rétablir cette ligne supprimée ?')) return;
+      r = await sb.from(j.table_nom).insert(sans(j.avant));
+      if (!r.error && j.table_nom === 'crescite_dates') {
+        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
+        for (const x of liees) { const r2 = await sb.from(x.table_nom).insert(sans(x.avant)); if (r2.error) { r = r2; break; } }
+      }
+    }
+    if (r.error) return erreur(r.error, 'Retour impossible');
+    await chargerTout(); annoncer('C’est fait.'); zone.rafraichir();
+  });
+}
+</script>
+</body>
+</html>
