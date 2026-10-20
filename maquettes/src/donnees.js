@@ -228,7 +228,7 @@ const DONNEES = (() => {
                                     href: k === saison ? '#/agenda' : `#/agenda/${k}` }));
     // les documents publics : un fichier du stockage public (documents/…), ou un lien
     const documents = Array.isArray(dc) ? dc.map(x => ({ spectacle: slugDe(spId.get(x.spectacle_id)) || null, type: x.type, titre: x.titre,
-      url: x.url || (x.fichier ? `${BASE}/storage/v1/object/public/crescite/${x.fichier.split('/').map(encodeURIComponent).join('/')}` : null), pour: x.pour }))
+      url: (/^https?:\/\//i.test(x.url || '') ? x.url : null) || (x.fichier ? `${BASE}/storage/v1/object/public/crescite/${x.fichier.split('/').map(encodeURIComponent).join('/')}` : null), pour: x.pour }))
       .filter(x => x.url) : (D.documents || []);
     return { saison, aujourdhui, site, shows, dossiers, ateliers, dates, saisons, carte, photos, personnes, documents };
   }

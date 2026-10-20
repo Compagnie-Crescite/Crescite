@@ -72,14 +72,25 @@ logo en grand** (`maquettes/src/intro.js`) : au clic, à la molette ou en glissa
 ondulent, il grossit et le site apparaît à travers lui.
 
 Chacune se lit ensuite par **trois entrées**, la navigation première : « Je viens voir un spectacle » (`#/voir` : les
-dates tout public de la saison et leur carte), « Je souhaite programmer » (`#/programmer` : le catalogue, le nombre
-de représentations, les lieux de diffusion, la fiche technique), « Je représente un établissement scolaire »
-(`#/etablissement` : le type d'action culturelle de chaque spectacle, les actions culturelles du site, le dossier
-scolaire de Bérénice). Spectacles, La compagnie et Contact viennent en second. La page de chaque spectacle prend son
+dates tout public de la saison et leur carte), « Je souhaite programmer » (`#/programmer` : le contact diffusion, le
+catalogue, le dossier et la fiche technique de chaque spectacle, voir plus bas), « Je représente un établissement
+scolaire » (`#/etablissement` : le type d'action culturelle de chaque spectacle, les actions culturelles du site, le
+dossier scolaire de Bérénice). Spectacles, La compagnie et Contact viennent en second. La page de chaque spectacle prend son
 univers (couleurs, police de titre, motif, photos, citations ; Bérénice à la charte de son dossier) et se lit dans
 l'une des trois entrées : `#/spectacle/berenice/voir`, `…/programmer`, `…/etablissement` ; la dernière entrée choisie
 sert de défaut. L'espace pro à mot de passe a disparu : ses anciennes adresses mènent à « Je souhaite programmer »,
 celles de l'agenda et des actions culturelles aux deux autres entrées. La pieuvre ne compte pas les spectacles.
+
+**Pour les programmateurs.** « Je souhaite programmer » donne d'abord à qui parler : le contact diffusion
+(l'administratrice, le courriel de la compagnie, son téléphone s'il est saisi dans la base, « Conditions financières sur
+demande »). Puis, pour chaque spectacle, un dossier PDF composé à la demande à partir des données du site, donc toujours
+à jour (`maquettes/src/dossier.js` : couverture et photos, présentation, distribution, conditions d'accueil et fiche
+technique, représentations et lieux de diffusion, production, contact ; pdfmake chargé au premier clic). Sur la page
+d'un spectacle : la fiche technique (celle du dossier de Bérénice ; un fichier déposé par l'administration ; sinon
+« Fiche technique sur demande », qui écrit à l'administratrice) et « À télécharger » (le dossier, les documents déposés
+pour les pros). Les documents déposés pour les scolaires s'ajoutent à l'onglet établissement. L'action culturelle de
+Cassandres n'est pas encore construite : elle reste dans les données et dans la base, masquée (`masquee`), et le site
+ne la montre pas (ni sur la page des établissements, ni en onglet).
 
 **L'agenda complet.** « Je viens voir un spectacle » donne d'abord les prochaines dates tout public, puis toutes les
 dates publiées depuis 2016, saison par saison, de la plus récente à la plus ancienne. Les saisons terminées sont
@@ -111,8 +122,10 @@ devenues les trois entrées, et les univers de spectacle les plus aboutis.
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
 les trois entrées (à portée dans le premier écran, une seule marquée comme courante), les redirections des anciennes
 adresses, la disparition de l'espace pro, la présence des contenus attendus de chaque vue et l'ordre de l'agenda
-(les prochaines dates d'abord, les saisons terminées fermées). Avec `EDITION=1`, il vérifie aussi le lien « Modifier
-le site » et les annotations de l'édition (`data-edit`, `data-date-id`, `data-agenda`).
+(les prochaines dates d'abord, les saisons terminées fermées). Il vérifie la page des programmateurs (le contact, le
+téléchargement réel du dossier PDF, la fiche technique sur demande) et qu'un spectacle sans action culturelle n'a pas
+d'onglet établissement. Avec `EDITION=1`, il vérifie aussi le lien « Modifier le site » et les annotations de l'édition
+(`data-edit`, `data-date-id`, `data-agenda`).
 `maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
 dessous, et pour chacune son principe, ses forces et ses limites (« À propos »).
 
@@ -164,7 +177,7 @@ aura son propre projet, tout ce qui commence par `crescite_` s'y déplace tel qu
 | `crescite_dates` | Une ligne de l'agenda : un spectacle, un lieu, une période, son statut (option, confirmée, annulée, reportée), sa visibilité, ses précisions et son lien. |
 | `crescite_representations` | Les représentations d'une date : jour, heure, public (tout public ou scolaire), annulation, billetterie. Plusieurs le même jour. |
 | `crescite_ateliers`, `crescite_seances` | Les ateliers proposés (le catalogue publié) et les séances menées dans les établissements (jamais publiées). |
-| `crescite_textes` | Les autres textes du site : présentation de la compagnie, actions culturelles, bandeau d'accueil, dossier scolaire de Bérénice… |
+| `crescite_textes` | Les autres textes du site : présentation de la compagnie, actions culturelles, bandeau d'accueil, dossier scolaire de Bérénice, contact diffusion (`programmation`)… |
 | `crescite_dates_suivi`, `crescite_lieux_suivi` | Le suivi interne (organisateur, contacts, contrat, notes) : jamais lu par le site. |
 | `crescite_journal` | Chaque modification, avec son auteur, l'avant et l'après : l'administration peut revenir en arrière. |
 | `crescite_admins` | Les comptes qui peuvent modifier. Les autres ne lisent que ce qui est publié. |
@@ -221,11 +234,14 @@ script, `supabase/migrations/20261021_crescite_equipe.sql`, s'exécute après le
 | `crescite_equipes` | L'équipe d'une date, quand elle s'écarte de la distribution : remplacements, renforts, absences. |
 | `crescite_documents` | Les documents de l'équipe (le texte, le dossier, la fiche technique) : un fichier du stockage privé `crescite-equipe`, ou un lien. |
 | `crescite_feuilles` | Les feuilles de route, une par date : brouillon puis publiée, avec une version qui augmente à chaque republication. |
+| `crescite_notifications` | Les notifications de chaque personne (troisième script) : écrites par la base, lues et marquées comme lues par la personne. |
+| `crescite_abonnements` | Les téléphones et ordinateurs abonnés aux notifications (Web Push), chacun ne voit que les siens. |
+| `crescite_secrets` | Le jeton qui autorise la base à appeler la fonction d'envoi, et les clés d'envoi : jamais lus par le site ni par l'équipe. |
 
 Une personne connectée ne lit que sa fiche, ses dates (options comprises), les documents de ses spectacles et les
 feuilles de route publiées de ses dates ; un fichier privé ne s'ouvre que par un lien signé, si son document se lit. Le
 public ne lit que les fiches publiées et la distribution des spectacles publiés. Les règles sont vérifiées par 37 essais
-sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs` et `node equipe.mjs`). Le script se termine par
+sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs`, `node equipe.mjs` et `node notifications.mjs`). Le script se termine par
 une vérification : les tables du projet, hors compagnie, qu'un compte connecté pourrait lire. Les comptes de ce projet
 sont aussi ceux du site adrienvada.fr.
 
@@ -252,6 +268,19 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
 saison (la prochaine date en avant, les saisons passées fermées), les horaires des représentations, l'itinéraire, qui
 part, la feuille de route (web et PDF), le texte et le dossier de ses spectacles, sa fiche (téléphone, ville, régime,
 urgence), et un fichier agenda (.ics) de ses représentations. La dernière saison lue reste consultable sans réseau.
+
+**Les notifications.** Le troisième script, `supabase/migrations/20261022_crescite_notifications.sql`, s'exécute
+après les deux autres, de la même façon. La base prévient alors elle-même l'équipe d'une date : feuille de route
+publiée ou republiée, horaires changés (en tournée comme en répétition), date ajoutée, confirmée, annulée, reportée ou
+déplacée, document ajouté pour l'équipe, personne ajoutée ou retirée d'une date, message de l'administration
+(« Prévenir l'équipe »). Plusieurs changements faits d'un coup ne donnent qu'une notification. Elles s'affichent dans
+l'espace de l'équipe ; pour qu'elles arrivent aussi sur les téléphones, déployer la fonction d'envoi
+`supabase/functions/crescite-push/index.ts` (Edge Functions → Deploy a new function → Via Editor, nom `crescite-push`,
+coller le fichier, décocher « Verify JWT », Deploy) : elle crée ses clés d'envoi au premier appel, et sans elle rien
+ne casse. Le même script ajoute la nature d'une date (représentations, répétitions, résidence, autre : seules les
+représentations sont publiques) et l'heure de fin des séances, les documents publics pour les programmateurs et les
+établissements, le contact diffusion de la page « Je souhaite programmer », et masque l'action culturelle de
+Cassandres. Il est vérifié par 35 essais (`node notifications.mjs`).
 
 **Les comptes.** Les inscriptions libres sont fermées sur le projet : un compte se crée dans Supabase (Authentication →
 Users → Add user, avec l'adresse saisie dans la fiche). À la première connexion, il se rattache tout seul à la fiche de
