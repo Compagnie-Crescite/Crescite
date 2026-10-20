@@ -169,7 +169,7 @@ MENU = [
     {"id": "contact", "texte": "Contact", "href": "#/contact"},
 ]
 # Les anciennes adresses, à rediriger : l'agenda vit dans « Je viens voir un spectacle ».
-REDIRECTIONS = {"#/agenda": "#/voir", "#/espace-pro": "#/programmer", "#/actions-culturelles": "#/etablissement"}
+REDIRECTIONS = {"#/agenda": "#/voir", "#/actions-culturelles": "#/etablissement"}
 # Les seuls libellés écrits pour les maquettes : la navigation et les intitulés de rubrique des trois entrées.
 LIBELLES = {
     "enTournee": "EN TOURNÉE", "decouvrir": "découvrir", "actuellementEnTournee": "Actuellement en tournée",
