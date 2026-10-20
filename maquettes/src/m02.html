@@ -389,6 +389,21 @@ button,input,textarea{font:inherit;color:inherit}
 .u-fiche .seul{grid-column:1/-1}
 .u-fiche.compacte li{display:block;padding:6px 0 7px}
 .u-fiche.compacte .lib{margin-right:.35em}
+/* la distribution en portraits (D.personnes, show.equipe) : la photo, ou un monogramme et son petit filet ; ceux qui alternent vont par deux */
+.cast{--g:16px;--pw:150px;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(var(--pw),calc((100% - var(--g)) / 2)),1fr));gap:26px var(--g);margin:0 0 30px;padding:0}
+.cast>li{min-width:0}
+.cast>.cast-paire{grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:var(--g);padding:10px;border:1px solid color-mix(in srgb,var(--u-texte) 22%,transparent);border-radius:8px}
+.cast-pt{margin:0;min-width:0}
+.cast-cadre{position:relative;display:block;aspect-ratio:4/5;overflow:hidden;container-type:inline-size;border-radius:6px;background:color-mix(in srgb,var(--u-vif) 12%,var(--u-fond2))}
+.cast-cadre img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 22%}
+.cast-mono{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:3cqw}
+.cast-mono b{font-family:var(--u-police,var(--serif)),var(--serif);font-weight:var(--u-graisse,400);font-size:2.4rem;font-size:30cqw;line-height:1;text-transform:uppercase;letter-spacing:.01em;color:var(--u-titre)}
+.cast-mono::after{content:"";width:22px;height:3px;border-radius:2px;background:var(--u-vif)}
+.cast-pt figcaption{display:block}
+.cast-cr{display:block;min-height:1.8em;padding-top:5px;font-size:.75rem;line-height:1.3;color:var(--u-texte2)}
+.cast-nom{display:block;margin-top:9px;font:600 .9375rem/1.3 var(--sans);color:var(--u-texte);text-wrap:balance}
+.cast-alt,.cast-role{display:block;margin-top:2px;font-size:.875rem;line-height:1.4;color:var(--u-texte2)}
+.cast-role{font-weight:600;color:var(--u-vif)}
 
 /* Je représente un établissement scolaire */
 .ecole{max-width:42em;font:400 clamp(1.25rem,1rem + .6vw,1.5rem)/1.42 var(--serif);letter-spacing:-.005em}
@@ -1124,12 +1139,32 @@ html .ed-bt{border-radius:6px}
       </div></li>`;
   }
   const sousTitre = (s, classe = 'ucard-sub') => s.sousTitre ? `<p class="${classe}"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : '';
+  /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes ; relus à chaque rendu */
+  const nomDe = p => `${p.prenom} ${p.nom}`;
+  const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
+  const comediens = s => (s.equipe || []).filter(e => e.categorie === 'jeu' && (D.personnes || {})[e.personne]).map(e => ({ e, p: D.personnes[e.personne] }));
+  const portrait = ({ e, p }, credits) => {
+    const nom = nomDe(p), k = `personnes.${e.personne}`;
+    return `<figure class="cast-pt"><span class="cast-cadre" data-edit-photo="${esc(k)}.photo"><span class="cast-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+      <figcaption>${credits ? `<small class="cast-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="cast-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${e.alternance ? `<span class="cast-alt">${esc(e.alternance)}</span>` : ''}${e.role ? `<span class="cast-role">${esc(e.role)}</span>` : ''}</figcaption></figure>`;
+  };
+  function portraits(s) {
+    const L = comediens(s); if (!L.length) return '';
+    const credits = L.some(x => x.p.photo && x.p.credit), pris = new Set(), blocs = [];
+    L.forEach((x, i) => {
+      if (pris.has(i)) return; pris.add(i);
+      const j = x.e.alternance ? L.findIndex((y, k) => !pris.has(k) && x.e.alternance.includes(nomDe(y.p))) : -1;   // « en alternance avec … » : par deux
+      if (j < 0) blocs.push(`<li>${portrait(x, credits)}</li>`);
+      else { pris.add(j); blocs.push(`<li class="cast-paire">${portrait(x, credits)}${portrait(L[j], credits)}</li>`); }
+    });
+    return `<ul class="cast"${L.length >= 7 ? ' style="--pw:108px"' : ''}>${blocs.join('')}</ul>`;   // la colonne est étroite : trois par ligne quand ils sont nombreux
+  }
   // l'équipe : la fiche (libellé et valeur) et la distribution ; sans les noms déjà dits par l'équipe de création
-  function ficheListe(s, compacte = false) {
+  function ficheListe(s, compacte = false, sansAvec = false) {
     const deja = ((s.programmer || {}).equipeCreation || []).join(' ');
     const rows = (s.fiche || []).map((f, i) => compacte && !f.libelle && deja.includes(String(f.valeur).replace(/<[^>]+>/g, '')) ? ''
       : `<li>${f.libelle ? `<span class="lib"${edS(s, `fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span${edS(s, `fiche.${i}.valeur`)}>${f.valeur}</span>` : `<span class="seul"${edS(s, `fiche.${i}.valeur`)}>${f.valeur}</span>`}</li>`).filter(Boolean);
-    if (s.avec) rows.push(`<li><span class="lib"${edS(s, 'avec.libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec.valeur')}>${s.avec.valeur}</span></li>`);
+    if (s.avec && !sansAvec) rows.push(`<li><span class="lib"${edS(s, 'avec.libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec.valeur')}>${s.avec.valeur}</span></li>`);
     return rows.length ? `<ul class="u-fiche${compacte ? ' compacte' : ''}">${rows.join('')}</ul>` : '';
   }
   // « 779 représentations au 31 juillet 2026 » : le nombre en grand, la phrase entière
@@ -1582,11 +1617,11 @@ html .ed-bt{border-radius:6px}
     const tout = (vu ? lien(s.video, LIB().bandeAnnonce, 'video') : '') + G.map(g => `${g.k ? `<h3>${esc(g.k)}</h3>` : ''}${g.list.map(x => lien(x.m, '', `medias.${x.i}`)).join('')}`).join('');
     return tout ? `<div class="u-video">${tout}</div>` : '';
   }
-  function aside(s, { avant = '', plus = '' } = {}) {
-    const l = LIB();
+  function aside(s, { avant = '', plus = '', portraits: avecPortraits = false } = {}) {
+    const l = LIB(), cast = avecPortraits ? portraits(s) : '';   // les portraits remplacent la ligne « avec »
     return `<aside class="u-aside" aria-labelledby="c-distribution">${avant}
       <h2 class="u-chap" id="c-distribution">${esc(l.distribution)}</h2>
-      ${ficheListe(s)}
+      ${cast}${ficheListe(s, false, !!cast)}
       ${s.duree ? `<p class="duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}
       ${(s.mentions || []).length ? `<div class="mentions">${s.mentions.map((m, i) => `<p${edS(s, `mentions.${i}`)}>${m}</p>`).join('')}</div>` : ''}
       ${(s.production || []).length ? `<div class="production">${s.production.map((p, i) => `<p${edS(s, `production.${i}`)}>${p}</p>`).join('')}</div>` : ''}
@@ -1638,7 +1673,7 @@ html .ed-bt{border-radius:6px}
           </section>
           ${medias(s) ? `<section class="u-sec" aria-labelledby="c-video"><h2 class="u-chap" id="c-video">${esc(l.bandeAnnonce)}</h2>${medias(s)}</section>` : ''}
         </div>
-        ${aside(s)}
+        ${aside(s, { portraits: true })}
       </div>
       ${photosVoir(s)}
       ${tourneeVoir(s)}`;
