@@ -46,10 +46,11 @@
    l'arrivée de l'équipe artistique et la préparation ont lieu chaque jour, les autres étapes « avant » (montage,
    raccords, repas, ouverture des portes) le premier jour, les étapes « après » (démontage) le dernier. Une répétition
    ou une résidence (date.nature) donne ses séances : « 9h-18h : répétitions ».
-   Rien ne se fait la nuit, comme dans les feuilles de la compagnie. Le montage et les raccords qui tomberaient avant
-   8h passent la veille, un jour de plus en tête du planning (avec sa date) : à partir de 9h, ou de 14h s'ils tiennent
-   dans l'après-midi. Le jour même commence par l'arrivée de l'équipe (toute l'équipe, quand le montage a eu lieu la
-   veille), vers 8h au plus tôt et au moins une heure avant la première représentation ; rien n'est composé avant 6h.
+   Rien ne se fait la nuit, comme dans les feuilles de la compagnie. Le montage qui tomberait avant 8h passe la veille,
+   un jour de plus en tête du planning (avec sa date) : à partir de 9h, ou de 14h s'il tient dans l'après-midi. Le jour
+   même commence par l'arrivée de l'équipe (toute l'équipe, quand le montage a eu lieu la veille), vers 8h au plus tôt
+   et au moins une heure avant la première représentation ; les raccords qui tomberaient plus tôt suivent l'arrivée
+   (une demi-heure après, si la préparation le permet) ; rien n'est composé avant 6h.
    Un repas du déroulé ne s'écrit que dans une plage de repas (11h30-14h, 18h30-21h) ; une représentation le matin et
    une l'après-midi : « déjeuner : tout le monde » entre les deux. Le départ se compte depuis la première étape sur
    place du premier jour, jamais avant 6h : plus tôt, l'amorce « arrivée la veille, hébergement à prévoir ». Ce qui est
@@ -282,16 +283,18 @@ ${s} .s{background:${MISE.surligne}}`;
   const NATURES = { repetitions: 'répétitions', residence: 'résidence', autre: 'séance' };
   const cleMot = s => norm(s).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'x';
 
-  // Les heures d'une journée, comme dans les feuilles de la compagnie. Avant 8h, on ne travaille pas : le montage et les
-  // raccords qui tomberaient plus tôt passent la veille (à partir de 9h, ou de 14h s'ils tiennent dans l'après-midi), et
-  // le jour J commence par l'arrivée de l'équipe, vers 8h au plus tôt et au moins une heure avant la représentation.
+  // Les heures d'une journée, comme dans les feuilles de la compagnie. Avant 8h, on ne travaille pas : le montage qui
+  // tomberait plus tôt passe la veille (à partir de 9h, ou de 14h s'il tient dans l'après-midi), et le jour J commence
+  // par l'arrivée de l'équipe, vers 8h au plus tôt et au moins une heure avant la représentation ; les raccords suivent
+  // l'arrivée.
   // Jamais rien avant 6h. Un repas du déroulé ne s'écrit que dans une plage de repas (midi : 11h30-14h, soir :
   // 18h30-21h) ; une représentation le matin et une l'après-midi : le déjeuner entre les deux. Ce qui est déplacé ou
   // ramené à ces heures reste estimé (estime : « à vérifier »).
   const H6 = 6 * 60, H8 = 8 * 60, MIDI = [11 * 60 + 30, 14 * 60], SOIR = [18 * 60 + 30, 21 * 60];
   const dansRepas = m => m != null && ((m >= MIDI[0] && m <= MIDI[1]) || (m >= SOIR[0] && m <= SOIR[1]));
-  // le montage et les raccords (ce qui peut se faire la veille), l'arrivée de l'équipe, les repas
-  const TECHNIQUE = /montage|dechargement|installation|implantation|reglages?\b|raccords?\b|balances?\b|pointage|arrivee\s+de\s+la\s+regie/;
+  // le montage (ce qui peut se faire la veille), les raccords (le jour même), l'arrivée de l'équipe, les repas
+  const MONTAGE = /montage|dechargement|installation|implantation|arrivee\s+de\s+la\s+regie/;
+  const RACCORDS = /raccords?\b|reglages?\b|balances?\b|pointage/;
   const ARRIVEE = /^(arrivee|rdv|rendez-vous)\b/;
   const REPAS = /repas|dejeuner|diner|catering/;
 
@@ -318,8 +321,9 @@ ${s} .s{background:${MISE.surligne}}`;
       const x = m === null ? { jour, m: null } : instant(jour, m);
       out.push({ ...x, fin: null, quoi: txt(e.quoi), qui: txt(e.qui), cle: cleEtape(x.jour, e), ...extra });
     };
-    // la durée d'une étape « avant » : jusqu'à l'étape suivante du déroulé (une heure, à défaut)
-    const dureeEtape = e => { const sv = avant[avant.indexOf(e) + 1]; return sv ? Math.max(15, (+e.avant_min || 0) - (+sv.avant_min || 0)) : 60; };
+    // la durée d'une étape « avant » : jusqu'à l'étape suivante du déroulé, sans compter les arrivées, qui se font pendant
+    // (le montage dure jusqu'aux raccords) ; une heure, à défaut
+    const dureeEtape = e => { const sv = avant.slice(avant.indexOf(e) + 1).find(x => !ARRIVEE.test(norm(x.quoi)) || MONTAGE.test(norm(x.quoi))); return sv ? Math.max(15, (+e.avant_min || 0) - (+sv.avant_min || 0)) : 60; };
     jours.forEach((j, i) => {
       const premier = i === 0 || jourPlus(jours[i - 1], 1) !== j;
       const dernier = i === jours.length - 1 || jourPlus(j, 1) !== jours[i + 1];
@@ -331,26 +335,30 @@ ${s} .s{background:${MISE.surligne}}`;
         const veille = [], lignes = [];
         avant.filter(garde).forEach(e => {
           const q = norm(e.quoi), m = t0 - (+e.avant_min || 0);
-          if (TECHNIQUE.test(q)) {
-            if (m >= H8) lignes.push({ e, m });
+          if (MONTAGE.test(q)) {
+            if (m >= H8) lignes.push({ e, m, montage: true });
             else if (premier) veille.push(e);
-            else lignes.push({ e, m: Math.max(H6, Math.min(H8, t0)), estime: true });
+            else lignes.push({ e, m: Math.max(H6, Math.min(H8, t0)), montage: true, estime: true });
             return;
           }
           if (ARRIVEE.test(q)) { const a = Math.max(H6, Math.min(Math.max(m, H8), t0 - 60)); lignes.push({ e, m: a, arrivee: true, estime: a !== m }); return; }
           if (REPAS.test(q)) { if (dansRepas(m)) lignes.push({ e, m }); return; }
-          lignes.push({ e, m });
+          lignes.push({ e, m, raccords: RACCORDS.test(q) });
         });
-        // le jour J commence par l'arrivée de l'équipe : rien d'autre avant elle, ni avant 6h (le montage du jour excepté)
+        // le jour J commence par l'arrivée de l'équipe : rien d'autre avant elle, ni avant 6h (le montage du jour excepté) ;
+        // les raccords qui tomberaient plus tôt la suivent, une demi-heure après si la préparation le permet
         const debut = lignes.find(x => x.arrivee)?.m ?? null;
+        const plancher = Math.max(H6, debut ?? Math.min(H8, t0));
+        lignes.forEach(x => { if (!x.arrivee && !x.montage && !x.raccords && x.m < plancher) { x.m = Math.min(plancher, t0); x.estime = true; } });
         lignes.forEach(x => {
-          if (x.arrivee || TECHNIQUE.test(norm(x.e.quoi))) return;
-          const plancher = Math.max(H6, debut ?? Math.min(H8, t0));
-          if (x.m < plancher) { x.m = Math.min(plancher, t0); x.estime = true; }
+          if (!x.raccords || x.m >= plancher) return;
+          const ensuite = Math.min(t0, ...lignes.filter(y => y !== x && !y.arrivee && !y.raccords && y.m >= plancher).map(y => y.m));
+          x.m = ensuite - plancher >= 30 ? plancher + 30 : plancher;
+          x.estime = true;
         });
         if (veille.length) {
-          // la veille, sur une plage de journée : à partir de 9h, ou de 14h si tout tient dans l'après-midi ; le jour J,
-          // toute l'équipe arrive ensemble
+          // la veille, sur une plage de journée : à partir de 9h, ou de 14h si le montage tient dans l'après-midi ; le
+          // jour J, toute l'équipe arrive ensemble
           const v = jourPlus(j, -1), a = veille[0], z = veille[veille.length - 1];
           const d = (+a.avant_min || 0) - (+z.avant_min || 0) + dureeEtape(z);
           const depart = d <= 4 * 60 ? 14 * 60 : 9 * 60;

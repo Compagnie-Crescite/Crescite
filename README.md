@@ -258,11 +258,25 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
 - **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation et les documents. **Dans
   chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
   remplaçant).
-- **Feuilles de route** : « Composer » remplit tout ce que la base sait (le lieu et son itinéraire, le trajet estimé
-  depuis Rouen, les horaires, le planning posé autour des représentations d'après le déroulé type, l'équipe et ses
-  téléphones, les contacts du lieu et de la compagnie) ; transport, hébergement et repas se complètent à la main ;
-  « Publier pour l'équipe », « Télécharger le PDF », « Imprimer ». Recomposer ne perd jamais une saisie. Le module
-  `admin/feuille.js` fait la version web et le PDF (pdfmake, `admin/vendor/`), pour l'administration comme pour l'équipe.
+- **Feuilles de route** : la feuille d'une date s'écrit directement sur une page A4 à l'écran, dans la forme des
+  feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
+  Calibri, les jours en gras, les personnes surlignées en jaune, les alertes en rouge). La barre d'outils est courte :
+  Rubrique, Jour, Ligne, Puce, Gras, Rouge, Surligner, Surligner les noms, Saut de page, Annuler. Un collage depuis
+  Word ou Writer est ramené à ces formes.
+  - « Composer » écrit la page à partir de la base : l'en-tête, le planning jour par jour (le déroulé type placé autour
+    des représentations : le montage passe la veille plutôt que la nuit, un repas ne tombe qu'aux heures de repas, le
+    départ est calculé d'après la route, et rien n'est posé avant 6h), les répétitions, les adresses et les contacts.
+    Repas et transports sont repris de la feuille précédente du spectacle, l'hébergement d'une feuille au même lieu.
+    Ce qui manque s'écrit en gris cliquable et ne s'imprime jamais.
+  - « Mettre à jour depuis la base » rafraîchit les lignes venues de la base sans toucher à ce qui a été écrit à la main.
+  - Le PDF est identique à la page, avec les mêmes sauts de page. « Publier pour l'équipe » prévient l'équipe.
+  - Le module `admin/feuille.js` fait l'éditeur, le PDF (pdfmake, `admin/vendor/`) et la version web, fluide sur
+    téléphone, que l'espace de l'équipe affiche.
+- **Dans une date** : sa nature (représentations, répétitions, résidence : seules les représentations sont publiées),
+  l'heure de fin des séances, et « Prévenir l'équipe » (un message à toute l'équipe de la date).
+- **Les documents publics d'un spectacle** (pour les programmateurs, pour les établissements) se déposent dans sa
+  fiche et s'affichent sur le site. Un document de l'équipe se partage par un lien de 30 jours. Le contact « Je souhaite
+  programmer » se modifie dans Textes, et une action culturelle pas encore construite se masque d'une case.
 
 **L'espace de l'équipe** (`equipe/index.html`, en ligne dans `docs/equipe/`) : chacun s'y connecte et retrouve sa
 saison (la prochaine date en avant, les saisons passées fermées), les horaires des représentations, l'itinéraire, qui
