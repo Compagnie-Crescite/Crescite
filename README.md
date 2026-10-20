@@ -278,10 +278,21 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   fiche et s'affichent sur le site. Un document de l'équipe se partage par un lien de 30 jours. Le contact « Je souhaite
   programmer » se modifie dans Textes, et une action culturelle pas encore construite se masque d'une case.
 
-**L'espace de l'équipe** (`equipe/index.html`, en ligne dans `docs/equipe/`) : chacun s'y connecte et retrouve sa
-saison (la prochaine date en avant, les saisons passées fermées), les horaires des représentations, l'itinéraire, qui
-part, la feuille de route (web et PDF), le texte et le dossier de ses spectacles, sa fiche (téléphone, ville, régime,
-urgence), et un fichier agenda (.ics) de ses représentations. La dernière saison lue reste consultable sans réseau.
+**L'espace de l'équipe** (`equipe/index.html`, en ligne dans `docs/equipe/`) est une application qu'on installe sur
+son téléphone (« Ajouter à l'écran d'accueil » ; sur iPhone : Partager → Sur l'écran d'accueil). En bas, les onglets
+Saison, Feuilles, Documents, Notifications et Moi ; sur ordinateur, ils se rangent en colonne à gauche. On y trouve :
+- la prochaine date en grand, aux couleurs du spectacle, avec un compte à rebours ;
+- la frise du jour J, tirée de la feuille de route ;
+- qui part, l'itinéraire, la carte de la tournée et les chiffres de la saison ;
+- les répétitions et leurs horaires ;
+- la feuille de route (version web et PDF) ;
+- les documents du spectacle (le texte, les dossiers, et la fiche technique qu'on partage d'un lien de 30 jours) ;
+- sa fiche, et un fichier agenda (.ics).
+
+Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
+fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
+L'application garde la dernière saison lue pour la consulter sans réseau, prévient quand une nouvelle version est
+disponible et suit le mode sombre du téléphone. Ses icônes sont tirées du logo à la construction.
 
 **Les notifications.** Le troisième script, `supabase/migrations/20261022_crescite_notifications.sql`, s'exécute
 après les deux autres, de la même façon. La base prévient alors elle-même l'équipe d'une date : feuille de route
