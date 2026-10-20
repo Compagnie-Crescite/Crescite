@@ -121,6 +121,8 @@ main { display: block; max-width: var(--large); margin: 0 auto; padding: 22px ma
 .bandeau-etat .message { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
 .bandeau-etat .message.horsligne { background: var(--option-doux); border-color: color-mix(in srgb, var(--option) 30%, transparent); color: var(--option); }
 .pied-vue { margin: 34px 0 0; color: var(--gris); font-size: .9rem; text-align: center; }
+.attente { margin: 0; color: var(--gris); font-size: .9rem; }
+@media (prefers-reduced-motion: no-preference) { .attente { animation: paraitre .2s .8s both; } @keyframes paraitre { from { opacity: 0; } } }
 
 /* ———— le billet : une date de tournée ———— */
 .billet { position: relative; background: var(--carte); border: 1px solid var(--filet); border-radius: var(--rayon); box-shadow: var(--ombre); overflow: hidden; }

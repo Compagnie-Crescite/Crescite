@@ -174,6 +174,7 @@
     personne: null, privee: null, dates: [], distributions: [], equipes: [], documents: [], spectacles: new Map(),
     feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0, horsLigne: 0, rafraichit: false,
     vue: '', ficheSale: false, retour: null, feuilleVue: null, deplies: new Set(), sortieVoulue: false, versEspace: false, sansSession: false,
+    provisoire: false,
     messageConnexion: ARRIVEE.erreur ? {
       texte: `Ce lien ne peut plus servir : ${ARRIVEE.code === 'otp_expired' || /expired|invalid/i.test(ARRIVEE.erreur) ? 'il a expiré, ou il a déjà été ouvert une fois' : 'il n’a pas pu être vérifié'}. Demandez-en un nouveau ci-dessous.`,
       genre: 'erreur' } : null,
@@ -199,7 +200,7 @@
   function reinitialiser() {
     Object.assign(E, { uid: null, moi: null, pret: false, ouverture: false, personne: null, privee: null, dates: [], distributions: [],
       equipes: [], documents: [], spectacles: new Map(), feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0,
-      horsLigne: 0, vue: '', ficheSale: false, retour: null, feuilleVue: null, deplies: new Set(), sansSession: false });
+      horsLigne: 0, vue: '', ficheSale: false, retour: null, feuilleVue: null, deplies: new Set(), sansSession: false, provisoire: false });
   }
 
   // une page seule, centrée : connexion, mot de passe, compte sans fiche, panne
@@ -375,26 +376,25 @@
       // sur le quai, sans réseau, la session a expiré : la dernière saison lue reste lisible, et tout se rouvre quand le réseau revient
       const g = !E.sortieVoulue && sessionGardee(), m = g && reprendre(g.user.id);
       if (m) {
-        if (E.sansSession && E.pret) return;
-        reinitialiser(); appliquer(m);
-        Object.assign(E, { uid: g.user.id, horsLigne: m.quand || 1, sansSession: true, pret: true });
-        coquille(); router({ arrivee: true });
-        return;
+        if (!(E.pret && E.uid === g.user.id)) { reinitialiser(); appliquer(m); Object.assign(E, { uid: g.user.id, pret: true }); coquille(); router({ arrivee: true }); }
+        Object.assign(E, { horsLigne: E.horsLigne || m.quand || 1, sansSession: true, provisoire: false });
+        return bandeauEtat();
       }
       reinitialiser(); return ecranConnexion();
     }
-    if (E.sansSession) { E.sansSession = false; E.pret = false; E.uid = null; }
     // supabase-js redit SIGNED_IN à chaque retour sur l'onglet : l'écran du mot de passe garde ce qui est tapé
     if (E.motDePasse) { if (!$('#f-mdp')) ecranMotDePasse(); return; }
     if (E.messageConnexion) { annoncer(E.messageConnexion.texte, { erreur: E.messageConnexion.genre === 'erreur' }); E.messageConnexion = null; }
-    if (E.uid === s.user.id && (E.pret || E.ouverture)) return;
+    if (E.uid === s.user.id && (E.ouverture || (E.pret && !E.provisoire && !E.sansSession))) return;
+    // la saison gardée est déjà à l'écran (ouverture, ou retour du réseau) : elle se relit sans s'effacer
+    const garde = E.pret && E.uid === s.user.id;
     const n = ++tour;
     E.uid = s.user.id; E.ouverture = true;
-    $('#app').innerHTML = '<p class="chargement" role="status">Ouverture de votre espace…</p>';
+    if (!garde) $('#app').innerHTML = '<p class="chargement" role="status">Ouverture de votre espace…</p>';
     try {
       const moi = await rattacher();
       if (n !== tour) return;
-      if (moi == null) { E.ouverture = false; E.uid = null; return ecranSansFiche(); }
+      if (moi == null) { reinitialiser(); return ecranSansFiche(); }
       E.moi = moi;
       await charger();
       if (n !== tour) return;
@@ -403,13 +403,12 @@
     } catch (e) {
       if (n !== tour) return;
       const m = estReseau(e) ? reprendre(s.user.id) : null;
-      if (!m) { E.ouverture = false; E.uid = null; return ecranPanne(e); }
-      appliquer(m);
-      E.horsLigne = m.quand || 1;
+      if (!m) { reinitialiser(); return ecranPanne(e); }
+      if (!garde) appliquer(m);
+      E.horsLigne = E.horsLigne || m.quand || 1;
     }
-    E.ouverture = false; E.pret = true;
-    coquille();
-    router({ arrivee: true });
+    Object.assign(E, { ouverture: false, pret: true, provisoire: false, sansSession: false });
+    if (garde) await redessiner(); else { coquille(); router({ arrivee: true }); }
     if (E.versEspace) { E.versEspace = false; requestAnimationFrame(() => tt('page', '#a3306b')); }
   }
 
@@ -520,7 +519,7 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    el.innerHTML = E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
+    el.innerHTML = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
   }
 
@@ -862,7 +861,8 @@
         <dl class="compte-mel"><dt>Adresse du compte</dt><dd>${esc(mel)}</dd></dl>
         <p class="aide" style="margin-top:8px">Pour changer l’adresse du compte ou votre nom, écrivez à l’administration.</p>
       </section>`;
-    if (horsLigne) html += '<section class="carte"><h2>Mes coordonnées</h2><p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p></section>';
+    if (horsLigne) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
+      : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
     else html += `<form class="carte" id="f-fiche" novalidate aria-labelledby="t-coord"><h2 id="t-coord">Mes coordonnées</h2>
         <p class="intro">Elles servent aux feuilles de route, aux réservations et aux repas.</p>
         <div class="deux-champs">${CHAMPS.slice(0, 2).map(champFiche).join('')}</div>${CHAMPS.slice(2).map(champFiche).join('')}
@@ -1101,17 +1101,20 @@
       bandeauEtat();
       return;
     }
-    const fait = () => { bandeauEtat(); if (!discret) annoncer('Votre espace est à jour.'); };
-    if (E.vue === 'fiche' && E.ficheSale) return fait();
+    await redessiner();
+    if (!discret) annoncer('Votre espace est à jour.');
+  }
+  // la vue ouverte, redessinée avec les données relues, sans perdre sa place : défilement, saisons ouvertes, billets dépliés
+  async function redessiner() {
+    if (E.vue === 'fiche' && E.ficheSale) return bandeauEtat();
     // la feuille de route qu'on lit ne se redessine que si une autre version est publiée entre-temps
     const v = E.feuilleVue, fv = v && E.feuilles.get(v.id);
-    if (E.vue === 'feuille' && fv && fv.version === v.version && fv.publiee_le === v.publiee_le) return fait();
+    if (E.vue === 'feuille' && fv && fv.version === v.version && fv.publiee_le === v.publiee_le) return bandeauEtat();
     const y = window.scrollY, ouvertes = $$('details.saison[open]').map(x => x.dataset.saison);
     if (E.vue === 'saison') E.retour = null;
     await router({ rafraichir: true });
     ouvertes.forEach(s => { const det = $(`details.saison[data-saison="${CSS.escape(s)}"]`); if (det) { det.open = true; remplirSaison(det); } });
     window.scrollTo(0, y);
-    if (!discret) annoncer('Votre espace est à jour.');
   }
   async function reessayer(voulu = false) {
     if (E.sansSession) {
@@ -1159,4 +1162,17 @@
       }
     }
   });
+
+  // à l'ouverture de la page : la dernière saison lue sur cet appareil s'affiche tout de suite, si la session gardée est
+  // la sienne (sans réseau, supabase-js peut chercher à renouveler une session expirée pendant une demi-minute) ; la base
+  // la remplace dès qu'elle répond. Pas en arrivant d'un courriel : un autre compte peut s'ouvrir.
+  (() => {
+    if (E.motDePasse || ARRIVEE.type || ARRIVEE.erreur || /access_token=/.test(location.hash)) return;
+    const g = sessionGardee(), m = g && reprendre(g.user.id);
+    if (!m) return;
+    appliquer(m);
+    Object.assign(E, { uid: g.user.id, pret: true, provisoire: true });
+    coquille();
+    router({ arrivee: true });
+  })();
 })();

@@ -50,7 +50,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 1519px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
-@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg button { padding: 6px 8px; } }
 
 /* boutons et champs */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-weight: 600; text-decoration: none; color: var(--encre); white-space: nowrap; }
@@ -139,6 +138,10 @@ table.reps td:first-child { padding-left: 0; }
   table.reps thead { display: none; }
   table.reps tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; border: 1px solid var(--trait); border-radius: 10px; margin-bottom: 8px; }
   table.reps td { padding: 0; }
+  /* un tableau ne descend pas sous la largeur de ses champs de date : en blocs, les colonnes rétrécissent */
+  table.reps, table.reps tbody { display: block; }
+  table.reps tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  table.reps input, table.reps select { min-width: 0; }
 }
 .combo { position: relative; }
 .suggestions { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); background: var(--carte); border: 1px solid var(--trait); border-radius: 10px; box-shadow: var(--ombre); max-height: 300px; overflow: auto; }
@@ -184,6 +187,9 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .annonce.erreur { background: #8c1d16; }
 .annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .4); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .2s ease-out; } @keyframes monte { from { transform: translateY(8px); opacity: 0; } } }
+
+/* au téléphone (360 px) : des marges plus serrées, des boutons segmentés qui tiennent sur la largeur */
+@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg { max-width: 100%; } .seg button { padding: 6px 7px; font-size: 14px; } }
 </style>
 </head>
 <body>

@@ -833,11 +833,13 @@ function dessinerFeuille(etat) {
   const quand = x => { const t = new Date(x); return isNaN(t) ? '' : `le ${t.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à ${t.getHours()}h${String(t.getMinutes()).padStart(2, '0')}`; };
   const badge = pub ? `<span class="badge ok">Publiée v${F.version}</span><span class="compte">${esc(quand(F.publiee_le))} : l’équipe de la date la voit dans son espace</span>`
     : etat.f0 ? `<span class="badge option">Brouillon</span><span class="compte">l’équipe ne la voit pas encore${etat.f0.publiee_le ? ` (la version ${etat.f0.version} a été retirée)` : ''}</span>` : '<span class="badge option">Pas encore enregistrée</span>';
-  zone.innerHTML = `<div class="bloc fr-etat"><div class="fr-etat-l"><span class="fr-badge">${badge}</span><div class="seg" role="group" aria-label="Affichage"><button type="button" data-fr-mode="edition" aria-pressed="${etat.mode === 'edition'}">Édition</button><button type="button" data-fr-mode="apercu" aria-pressed="${etat.mode === 'apercu'}">Aperçu</button></div></div>${alertesFeuille(d, F)}<div id="fr-recompo"></div></div>
+  zone.innerHTML = `<div class="bloc fr-etat"><div class="fr-etat-l"><span class="fr-badge">${badge}</span><div class="seg" role="group" aria-label="Affichage"><button type="button" data-fr-mode="edition" aria-pressed="${etat.mode === 'edition'}">Édition</button><button type="button" data-fr-mode="apercu" aria-pressed="${etat.mode === 'apercu'}">Aperçu</button></div></div>
+    <div class="fr-actions"><button type="button" class="btn petit" id="fr-recomposer" title="Remettre à jour ce qui vient de la base : horaires, lieu, équipe, contacts">Recomposer</button><button type="button" class="btn petit" id="fr-pdf">Télécharger le PDF</button><button type="button" class="btn petit" id="fr-imprimer">Imprimer</button></div>
+    ${alertesFeuille(d, F)}<div id="fr-recompo"></div></div>
     ${etat.mode === 'apercu' ? `<div class="fr-apercu" aria-label="Aperçu de la feuille de route">${FEUILLE.html(feuilleCourante(etat), contexteFeuille(d))}</div>`
       : `<div class="bloc"><div class="champ" style="margin:0"><label for="fr-titre">Titre <span class="aide" style="font-weight:400">(facultatif : une ligne sous le nom du spectacle)</span></label><input type="text" id="fr-titre" value="${esc(F.titre)}" placeholder="Tournée en Normandie, semaine 51"></div></div>
         ${FEUILLE.SECTIONS.map(sec => blocSection(sec, F.contenu, d)).join('')}`}
-    <div class="pied-ed"><span class="etat-ed"></span><button type="button" class="btn" id="fr-recomposer">Recomposer</button><button type="button" class="btn" id="fr-pdf">Télécharger le PDF</button><button type="button" class="btn" id="fr-imprimer">Imprimer</button>
+    <div class="pied-ed"><span class="etat-ed"></span>
       ${pub ? '<button type="button" class="btn" id="fr-brouillon">Repasser en brouillon</button>' : '<button type="button" class="btn" id="fr-publier">Publier pour l’équipe</button>'}
       <button type="button" class="btn principal" data-enregistrer>${pub ? 'Publier la mise à jour' : 'Enregistrer le brouillon'}</button></div>`;
   const majEtat = () => {
@@ -971,6 +973,8 @@ const RESUMES_EQUIPE = {
 
 // ===================================================================================================== styles
 document.head.insertAdjacentHTML('beforeend', `<style id="styles-equipe">
+input[type=tel] { width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); min-height: 38px; }
+input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-doux); }
 .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--doux) center/cover no-repeat; display: inline-grid; place-items: center; flex: none; font-size: 13px; font-weight: 800; color: var(--gris); border: 1px solid var(--trait); }
 .avatar.petit { width: 30px; height: 30px; font-size: 11px; }
 .ligne.personne { grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; border-left: 1px solid var(--trait); }
@@ -1055,6 +1059,7 @@ document.head.insertAdjacentHTML('beforeend', `<style id="styles-equipe">
 .fr-tete h1 small { display: block; margin-top: 3px; font-size: 14px; font-weight: 500; color: var(--gris); }
 .fr-etat-l { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .fr-badge { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.fr-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .fr-alerte { margin: 10px 0 0; padding: 8px 12px; border-radius: 9px; background: var(--option-doux); color: var(--option); font-size: 13.5px; font-weight: 600; }
 .fr-alerte a, .fr-alerte .btn.lien { color: inherit; text-decoration: underline; padding: 0; font-weight: 700; }
 .fr-choix { margin-top: 12px; padding: 12px 14px 8px; background: var(--accent-doux); border-color: var(--accent); }
@@ -1062,11 +1067,12 @@ document.head.insertAdjacentHTML('beforeend', `<style id="styles-equipe">
 .fr-choix .case { font-weight: 500; margin: 6px 0; align-items: flex-start; }
 .fr-choix .case input { margin-top: 2px; flex: none; }
 .fr-sec h3 .fr-source { font-size: 12px; }
+.fr-fiche { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .fr-fiche .large { grid-column: 1 / -1; }
 .fr-fiche textarea { min-height: 60px; }
 .table-defile { overflow-x: auto; margin-bottom: 8px; }
 table.fr-table { min-width: 640px; }
-table.fr-table td.large { min-width: 200px; }
+table.fr-table td.large { width: 34%; min-width: 200px; }
 table.fr-table input[type=time] { min-width: 96px; }
 table.fr-table input[type=date] { min-width: 138px; }
 table.fr-table input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
@@ -1076,5 +1082,5 @@ table.fr-table tr.inhabituel input[type=time] { border-color: var(--option); bac
 .fr-docs { display: grid; gap: 6px; }
 .fr-docs .case { font-weight: 500; }
 .fr-apercu { margin: 16px 0; }
-@media (max-width: 700px) { table.fr-table { min-width: 0; } table.fr-table td.large { min-width: 0; grid-column: 1 / -1; } table.fr-table .fr-outils { grid-column: 1 / -1; } .table-defile { overflow: visible; } }
+@media (max-width: 700px) { .fr-fiche { grid-template-columns: minmax(0, 1fr); } table.fr-table { min-width: 0; } table.fr-table td.large { min-width: 0; grid-column: 1 / -1; } table.fr-table .fr-outils { grid-column: 1 / -1; } .table-defile { overflow: visible; } }
 </style>`);
