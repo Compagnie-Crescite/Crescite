@@ -240,33 +240,28 @@ const DONNEES = (() => {
   const bientot = (ms = 250) => { clearTimeout(attente); attente = setTimeout(recharger, ms); };
 
   // ------------------------------------------------------------------------------------------- temps réel
-  // le canal de Supabase (protocole Phoenix) : chaque enregistrement dans une table crescite_ publiée relance la lecture
-  let ws = null, battement = null, essais = 0, ref = 0, version = null;
+  // le canal de Supabase, par son client officiel (celui de l'administration, chargé après le premier affichage) :
+  // chaque enregistrement dans une table crescite_ publiée relance la lecture
+  const CLIENT = 'admin/vendor/supabase.js';
+  let connecte = false, version = null;
+  const chargerClient = () => window.supabase?.createClient ? Promise.resolve(window.supabase) : new Promise((ok, ko) => {
+    const s = document.createElement('script');
+    s.src = CLIENT; s.async = true;
+    s.onload = () => (window.supabase?.createClient ? ok(window.supabase) : ko(new Error('client absent')));
+    s.onerror = () => ko(new Error('client introuvable'));
+    document.head.append(s);
+  });
   function ecouter() {
-    try {
-      ws = new WebSocket(`${BASE.replace(/^http/, 'ws')}/realtime/v1/websocket?apikey=${encodeURIComponent(CLE)}&vsn=1.0.0`);
-    } catch { ws = null; return; }
-    const envoyer = m => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
-    ws.onopen = () => {
-      essais = 0;
-      envoyer({ topic: 'realtime:crescite-site', event: 'phx_join', ref: String(++ref), join_ref: '1',
-        payload: { config: { broadcast: { self: false }, presence: { key: '' }, private: false,
-                             postgres_changes: TABLES.map(table => ({ event: '*', schema: 'public', table })) } } });
-      battement = setInterval(() => envoyer({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++ref) }), 25000);
-    };
-    ws.onmessage = e => {
-      let m; try { m = JSON.parse(e.data); } catch { return; }
-      if (m.event === 'postgres_changes') bientot();
-    };
-    ws.onclose = () => {
-      clearInterval(battement); ws = null;
-      setTimeout(ecouter, Math.min(30000, 1000 * 2 ** essais++));
-    };
-    ws.onerror = () => { try { ws.close(); } catch { /* déjà fermé */ } };
+    chargerClient().then(sbjs => {
+      const client = sbjs.createClient(BASE, CLE, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+      const canal = client.channel('crescite-site');
+      TABLES.forEach(table => canal.on('postgres_changes', { event: '*', schema: 'public', table }, () => bientot()));
+      canal.subscribe(st => { connecte = st === 'SUBSCRIBED'; });
+    }).catch(() => { connecte = false; });
   }
   // secours : si le canal est coupé, la version publiée est relue de temps en temps (et au retour sur l'onglet)
   async function verifier() {
-    if (ws && ws.readyState === 1 && document.visibilityState === 'visible') return;
+    if (connecte && document.visibilityState === 'visible') return;
     try {
       const r = await fetch(`${BASE}/rest/v1/rpc/crescite_version`, { method: 'POST', headers: { apikey: CLE, 'Content-Type': 'application/json' }, body: '{}', cache: 'no-store' });
       if (!r.ok) return;
@@ -278,7 +273,7 @@ const DONNEES = (() => {
 
   if (actif) {
     recharger().then(() => { if (moi.etat === 'base') { ecouter(); verifier(); setInterval(verifier, 60000); } });
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { verifier(); if (!ws) bientot(0); } });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { verifier(); if (!connecte) bientot(0); } });
   }
   moi.surChangement = fn => { if (typeof fn === 'function') abonnes.push(fn); };
   moi.suspendre = oui => {

@@ -53,7 +53,15 @@ def api(methode, chemin, corps=None, entetes=None):
         raise ErreurAPI(f"{methode} {chemin} : {e.code} {e.read().decode()[:600]}")
 
 
+# l'API veut les mêmes clés dans chaque ligne d'un envoi groupé : les absentes prennent la valeur par défaut de la table
+DEFAUTS = {"fiche": [], "mentions": [], "production": [], "texte": [], "medias": [], "extraits": [], "affirmations": [],
+           "citations": [], "photos": [], "titre_lignes": [], "details": [], "paragraphes": [], "etapes": [], "points": [],
+           "univers": {}, "action_culturelle": {}, "programmer": {}, "en_tournee": False, "publie": True, "page": True}
+
+
 def inserer(table, lignes, retour=True):
+    cles = sorted({k for x in lignes for k in x})
+    lignes = [{k: x.get(k, DEFAUTS.get(k)) for k in cles} for x in lignes]
     out = []
     for i in range(0, len(lignes), 200):
         r = api("POST", f"/rest/v1/{table}", lignes[i:i + 200], {"Prefer": "return=representation" if retour else "return=minimal"})
