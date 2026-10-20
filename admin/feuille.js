@@ -179,20 +179,37 @@ ${s} .s{background:${MISE.surligne}}`;
     if (b?.origine && typeof b.origine === 'object') x.origine = { jour: estJour(b.origine.jour) ? b.origine.jour : null, heure: h5(b.origine.heure) || null, fin: h5(b.origine.fin) || null, rep: !!b.origine.rep };
     return x;
   }
-  // les blocs tels qu'ils sortent : sans amorce ; un bloc qui n'était qu'amorce disparaît ; « heure ? : représentation »
-  // devient « représentation »
-  function visibles(blocs) {
-    const out = [];
-    for (const b of blocs || []) {
-      if (b.type === 'tableau') { out.push({ ...b, lignes: b.lignes.map(l => l.map(c => segments(c.filter(s => !s.amorce)))) }); continue; }
-      if (b.type === 'saut') { out.push(b); continue; }
+  // les blocs tels qu'ils sortent (PDF, impression, version web, planning) : sans amorce ; un bloc qui n'était qu'amorce
+  // disparaît, de même qu'une rubrique restée vide ; « heure ? : représentation » devient « représentation ». debuts :
+  // les blocs qui commencent une page ; quand l'un d'eux disparaît, le suivant commence la page (debutPage).
+  function visibles(blocs, debuts = null) {
+    const paires = (blocs || []).map(b => {
+      if (b.type === 'tableau') return [b, { ...b, lignes: b.lignes.map(l => l.map(c => segments(c.filter(s => !s.amorce)))) }];
+      if (b.type === 'saut') return [b, b];
       const avait = aAmorce(b);
       let xs = (b.segments || []).filter(s => !s.amorce).map(s => ({ ...s }));
-      if (avait && b.segments[0]?.amorce && xs.length) xs[0].texte = xs[0].texte.replace(/^\s*[:–—-]\s*/, '');
+      if (avait && xs.length) {
+        if (b.segments[0]?.amorce) xs[0].texte = xs[0].texte.replace(/^\s*[:–—-]?\s*/, '');
+        if (b.segments[b.segments.length - 1]?.amorce) xs[xs.length - 1].texte = xs[xs.length - 1].texte.replace(/\s*[:–—-]?\s*$/, '');
+      }
       xs = segments(xs);
-      if (avait && !texteSegs(xs).trim()) continue;
-      out.push({ ...b, segments: xs });
-    }
+      return [b, avait && !texteSegs(xs).trim() ? null : { ...b, segments: xs }];
+    });
+    const plein = v => v && v.type !== 'saut' && (v.type === 'tableau' || !!texteSegs(v.segments).trim());
+    paires.forEach(([b, v], i) => {
+      if (!v || b.type !== 'rubrique') return;
+      let k = i + 1;
+      while (k < paires.length && paires[k][0].type !== 'rubrique' && !plein(paires[k][1])) k++;
+      if (k >= paires.length || paires[k][0].type === 'rubrique') paires[i][1] = null;
+    });
+    const out = [];
+    let report = false;
+    paires.forEach(([b, v]) => {
+      const debut = !!(debuts && debuts.has(String(b.id)));
+      if (!v) { if (debut) report = true; return; }
+      out.push(debut || report ? { ...v, debutPage: true } : v);
+      report = false;
+    });
     return out;
   }
 
@@ -848,12 +865,11 @@ ${s} .s{background:${MISE.surligne}}`;
   }
   // un document pdfmake, page pour page comme l'éditeur
   function definition(feuille, contexte, o = {}) {
-    const ctx = contexte || {}, c = contenu(feuille, ctx), blocs = visibles(c.blocs);
+    const ctx = contexte || {}, c = contenu(feuille, ctx), debuts = new Set((c.pages || []).map(String)), blocs = visibles(c.blocs, debuts);
     const T = MISE.types, mm = x => x * PT_MM;
     const roboto = !o.police || o.police === 'Roboto';
     // Roboto n'a pas les métriques de Calibri : on garde au moins la même hauteur de ligne
     const lh = roboto ? MISE.interligne / ((1900 + 500) / 2048) : 1;
-    const debuts = new Set((c.pages || []).map(String));
     const forcer = debuts.size > 0;
     const vide = b => b.type !== 'tableau' && !texteSegs(b.segments).trim();
     const noeud = b => {
@@ -883,7 +899,7 @@ ${s} .s{background:${MISE.surligne}}`;
       const b = blocs[i];
       if (b.type === 'saut') { apresSaut = true; continue; }
       const n = noeud(b);
-      if ((forcer && debuts.has(String(b.id))) || apresSaut) n.pageBreak = 'before';
+      if ((forcer && b.debutPage) || apresSaut) n.pageBreak = 'before';
       else if (!forcer && STRUCTURE.has(b.type)) n.headlineLevel = 1;
       apresSaut = false;
       contenuPdf.push(n);
@@ -945,10 +961,10 @@ ${s} .s{background:${MISE.surligne}}`;
   // la feuille imprimée : les pages de l'éditeur (contenu.pages), sans amorces, avec le logo et les numéros. Sur la
   // première page, l'en-tête tient à droite du logo, et ce qui suit commence sous le logo.
   function impression(feuille, contexte, o = {}) {
-    const ctx = contexte || {}, c = contenu(feuille, ctx), blocs = visibles(c.blocs), debuts = new Set((c.pages || []).map(String));
+    const ctx = contexte || {}, c = contenu(feuille, ctx), blocs = visibles(c.blocs, new Set((c.pages || []).map(String)));
     const pages = [[]];
     blocs.forEach((b, k) => {
-      if ((debuts.has(String(b.id)) || (k && blocs[k - 1].type === 'saut')) && pages[pages.length - 1].length) pages.push([]);
+      if ((b.debutPage || (k && blocs[k - 1].type === 'saut')) && pages[pages.length - 1].length) pages.push([]);
       if (b.type !== 'saut') pages[pages.length - 1].push(b);
     });
     const marque = o.logo ? `<img class="imp-logo" src="${esc(o.logoUrl || logoUrl())}" alt="Crescite">` : '<span class="imp-logo imp-badge">crescite</span>';
