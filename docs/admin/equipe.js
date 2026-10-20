@@ -25,6 +25,14 @@ const MIMES_DOC = { pdf: 'application/pdf', webp: 'image/webp', jpg: 'image/jpeg
 const ONGLETS_EQUIPE = ['Distribution', 'Déroulé type', 'Documents'];
 
 async function chargerEquipe() {
+  // le troisième script SQL (nature des dates, heure de fin des séances, documents publics, notifications) : passé ou
+  // pas ; sans lui, l'administration ne propose rien de ce qu'il ajoute. Une date suffit à le savoir, sans erreur ; une
+  // base sans aucune date pose la question à la colonne elle-même.
+  const sonde = sb.from('crescite_dates').select('*').limit(1).then(async r => {
+    if (r.error) return false;
+    if (r.data?.length) return 'nature' in r.data[0];
+    return !(await sb.from('crescite_dates').select('nature').limit(1)).error;
+  }, () => false);
   try {
     const [pe, pr, su, di, eq, dc, fe] = await Promise.all([tout('crescite_personnes', 'nom'), tout('crescite_personnes_privees'), tout('crescite_personnes_suivi'),
       tout('crescite_distributions', 'ordre'), tout('crescite_equipes'), tout('crescite_documents', 'ordre'), tout('crescite_feuilles')]);
@@ -33,6 +41,7 @@ async function chargerEquipe() {
     E.equipeInstallee = false;
     E.equipeErreur = /PGRST205|42P01|does not exist|schema cache/i.test(`${e?.code || ''} ${e?.message || ''}`) ? '' : (e?.message || String(e));
   }
+  E.sql3 = await sonde;
 }
 function ecouterEquipe() {
   if (!E.equipeInstallee) return;
@@ -424,7 +433,7 @@ function ongletDistribution(z, s) {
 // le déroulé type : des étapes « X h Y avant le lever de rideau » ou « après la fin », posées autour des représentations
 function ongletDeroule(z, F) {
   if (!Array.isArray(F.feuille_modele)) F.feuille_modele = [];
-  const exemples = { un: [{ heure: '20:00' }], deux: [{ heure: '14:00', public: 'scolaire' }, { heure: '20:00' }], trois: [0, 1, 2].map(i => ({ jour: i, heure: '20:00' })) };
+  const exemples = { un: [{ heure: '20:00' }], matin: [{ heure: '10:00', public: 'scolaire' }], deux: [{ heure: '10:20', public: 'scolaire' }, { heure: '14:10', public: 'scolaire' }], trois: [0, 1, 2].map(i => ({ jour: i, heure: '20:00' })) };
   let exemple = 'un';
   const rang = e => FEUILLE.estApres(e) ? 1e5 + Math.abs(+e.avant_min || 0) : -(+e.avant_min || 0);
   const trierModele = () => F.feuille_modele.sort((a, b) => rang(a) - rang(b));
@@ -439,21 +448,24 @@ function ongletDeroule(z, F) {
   };
   const dessinerExemple = () => {
     const reps = exemples[exemple].map(r => ({ jour: AGENDA.iso(new Date(Date.now() + 864e5 * (7 + (r.jour || 0)))), heure: r.heure, public: r.public || 'tout_public' }));
-    const pl = FEUILLE.composer({ spectacle: { duree: F.duree, feuille_modele: F.feuille_modele }, representations: reps }).planning;
-    const jours = [...new Set(pl.map(r => r.jour))];
-    $('#fm-exemple', z).innerHTML = pl.length ? jours.map((j, n) => `${jours.length > 1 ? `<p class="fm-jour">${['Premier', 'Deuxième', 'Troisième'][n] || ''} jour</p>` : ''}<ul class="liste-simple fm-ex">${pl.filter(r => r.jour === j).map(r => `<li${r.rep ? ' class="fm-rep-ex"' : ''}><b>${esc(FEUILLE.heure(r.heure) || '–')}</b><span>${esc(r.quoi)}${r.fin ? ` <span class="compte">jusqu’à ${esc(FEUILLE.heure(r.fin))}</span>` : ''}</span>${r.qui ? `<span class="compte">${esc(r.qui)}</span>` : ''}</li>`).join('')}</ul>`).join('') : '<p class="aide">Rien à montrer.</p>';
+    const pl = FEUILLE.etapes({ spectacle: { duree: F.duree, feuille_modele: F.feuille_modele }, representations: reps });
+    const jours = [...new Set(pl.map(r => r.jour))], veilles = new Set(pl.filter(r => r.veille).map(r => r.jour));
+    let n = 0;
+    const libelle = j => veilles.has(j) ? 'La veille' : `${['Premier', 'Deuxième', 'Troisième'][n++] || ''} jour`;
+    $('#fm-exemple', z).innerHTML = pl.length ? jours.map(j => `${jours.length > 1 ? `<p class="fm-jour">${libelle(j)}</p>` : ''}<ul class="liste-simple fm-ex">${pl.filter(r => r.jour === j).map(r => `<li${r.rep ? ' class="fm-rep-ex"' : ''}><b>${esc(FEUILLE.heure(r.heure) || '–')}</b><span>${esc(r.quoi)}${r.fin ? ` <span class="compte">jusqu’à ${esc(FEUILLE.heure(r.fin))}</span>` : ''}${r.estime ? ' <span class="compte">(à vérifier)</span>' : ''}</span>${r.qui ? `<span class="compte">${esc(r.qui)}</span>` : ''}</li>`).join('')}</ul>`).join('') : '<p class="aide">Rien à montrer.</p>';
   };
   const dessiner = () => {
     const xs = F.feuille_modele, duree = FEUILLE.dureeMinutes(F.duree);
     const rangs = xs.map((e, i) => [e, i]).sort((a, b) => rang(a[0]) - rang(b[0]));
     const avant = rangs.filter(([e]) => !FEUILLE.estApres(e)), apres = rangs.filter(([e]) => FEUILLE.estApres(e));
     z.innerHTML = `<div class="bloc"><h3>Déroulé type d’une journée de représentation</h3>
-      <p class="aide">Chaque feuille de route le pose autour des représentations de sa date : les étapes « avant » avant la première représentation du jour, les étapes « après » après la dernière ; entre deux représentations éloignées de plus de trois heures, un repas. Plusieurs jours de suite au même lieu : chaque étape a lieu le premier jour, chaque jour ou le dernier (le montage le premier, le démontage le dernier).</p>
+      <p class="aide">Chaque feuille de route le pose autour des représentations de sa date : les étapes « avant » avant la première représentation du jour, les étapes « après » après la dernière. Plusieurs jours de suite au même lieu : chaque étape a lieu le premier jour, chaque jour ou le dernier (le montage le premier, le démontage le dernier).</p>
+      <p class="aide">Rien ne se fait la nuit : le montage qui tomberait avant 8h passe la veille (à partir de 9h, ou de 14h s’il tient dans l’après-midi), et le jour même commence par l’arrivée de l’équipe, vers 8h au plus tôt et au moins une heure avant la représentation ; les raccords suivent l’arrivée. Un repas ne s’écrit qu’aux heures des repas (11h30-14h, 18h30-21h) ; une représentation le matin et une l’après-midi : le déjeuner entre les deux.</p>
       ${xs.length ? `<div class="fm-lignes"><div class="fm-l fm-entete" aria-hidden="true"><span>Quand</span><span>Quoi</span><span>Qui</span><span>Sur plusieurs jours</span><span></span></div>${avant.map(([e, i]) => ligne(e, i)).join('')}
         <div class="fm-rep"><b>Lever de rideau</b> : la représentation${duree ? `, ${esc(FEUILLE.dureeTexte(duree))} d’après la durée du spectacle` : ' (durée inconnue : indiquez-la dans l’onglet Général)'}</div>
         ${apres.map(([e, i]) => ligne(e, i)).join('')}</div>` : '<p>Aucun déroulé type : la feuille de route de chaque date ne contiendra que les représentations.</p>'}
       <div class="fm-boutons"><button type="button" class="btn petit" data-fm-ajout="avant">＋ Étape avant</button><button type="button" class="btn petit" data-fm-ajout="apres">＋ Étape après la fin</button>${xs.length ? '' : '<button type="button" class="btn petit principal" data-fm-proposer>Proposer un déroulé type</button>'}</div></div>
-      <div class="bloc"><h3>Ce que donne le planning</h3><div class="seg" role="group" aria-label="Exemple">${[['un', 'Une représentation à 20h'], ['deux', 'À 14h et à 20h'], ['trois', 'Trois soirs de suite']].map(([k, l]) => `<button type="button" data-fm-ex="${k}" aria-pressed="${k === exemple}">${l}</button>`).join('')}</div><div id="fm-exemple" style="margin-top:12px"></div></div>`;
+      <div class="bloc"><h3>Ce que donne le planning</h3><div class="seg" role="group" aria-label="Exemple">${[['un', 'Une représentation à 20h'], ['matin', 'À 10h'], ['deux', 'À 10h20 et 14h10'], ['trois', 'Trois soirs de suite']].map(([k, l]) => `<button type="button" data-fm-ex="${k}" aria-pressed="${k === exemple}">${l}</button>`).join('')}</div><div id="fm-exemple" style="margin-top:12px"></div></div>`;
     dessinerExemple();
   };
   const lireLigne = l => {
@@ -487,21 +499,36 @@ function ongletDeroule(z, F) {
 }
 
 // les documents d'un spectacle (s) ou de toute la compagnie (s = null) : un fichier du stockage privé, ou un lien
+// Les documents publics (pour les programmateurs, pour les établissements scolaires) sont dans le stockage public
+// « crescite », sous documents/<spectacle>/ : le site les propose en téléchargement (troisième script SQL). Ceux de
+// l'équipe restent privés, dans « crescite-equipe ».
+const POUR_PUBLIC = [['pros', 'Programmateurs'], ['scolaires', 'Établissements scolaires']];
+const estPublic = d => d.pour === 'pros' || d.pour === 'scolaires';
+const urlPublique = chemin => sb.storage.from('crescite').getPublicUrl(chemin).data.publicUrl;
+const PARTAGE_JOURS = 30;
 function documentsEditeur(z, s) {
   const dossier = s ? s.slug : 'compagnie';
-  const docs = () => E.documents.filter(d => (s ? d.spectacle_id === s.id : d.spectacle_id == null)).sort((a, b) => a.ordre - b.ordre || a.id - b.id);
+  const tous = () => E.documents.filter(d => (s ? d.spectacle_id === s.id : d.spectacle_id == null)).sort((a, b) => a.ordre - b.ordre || a.id - b.id);
+  const docs = () => tous().filter(d => !estPublic(d)), publics = () => tous().filter(estPublic);
   const hote = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
   const ligne = (d, i, n) => `<div class="doc-l" data-doc="${d.id}"><select data-dk="type" aria-label="Type">${TYPES_DOC.map(([k, l]) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
     <span class="doc-titre"><input type="text" data-dk="titre" value="${esc(d.titre)}" aria-label="Titre du document"><small>${d.fichier ? `Fichier : ${esc(d.fichier.split('/').pop())}` : `Lien : ${esc(hote(d.url))}`}</small></span>
-    <select data-dk="pour" aria-label="Pour qui"><option value="equipe"${d.pour === 'equipe' ? ' selected' : ''}>Pour l’équipe</option><option value="administration"${d.pour === 'administration' ? ' selected' : ''}>Administration seulement</option></select>
-    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button><button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span></div>`;
+    <select data-dk="pour" aria-label="Pour qui">${(estPublic(d) ? POUR_PUBLIC.map(([k, l]) => [k, `Pour les ${l.toLowerCase()}`]) : [['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']]).map(([k, l]) => `<option value="${k}"${d.pour === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button>${estPublic(d) ? '<button type="button" class="btn petit" data-doc-copier title="Copier l’adresse publique du document">Copier le lien</button>' : d.fichier ? `<button type="button" class="btn petit" data-doc-partager title="Copier une adresse à envoyer, valable ${PARTAGE_JOURS} jours (une fiche technique pour un lieu, par exemple)">Lien ${PARTAGE_JOURS} jours</button>` : ''}<button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span></div>`;
+  const boiteLien = pub => `<div class="item doc-lien" data-public="${pub ? 1 : 0}" hidden><div class="rangee"><div class="champ"><label>Adresse du lien</label><input type="url" data-doc-url placeholder="https://…"></div><div class="champ"><label>Titre</label><input type="text" data-doc-titre placeholder="${pub ? 'Le dossier de diffusion' : 'Le texte sur Wikisource'}"></div></div>
+        <div class="fm-boutons" style="margin:0 0 10px"><button type="button" class="btn principal petit" data-doc-lien-ok>Ajouter le lien</button><button type="button" class="btn petit" data-doc-lien-non>Annuler</button></div></div>`;
   const dessiner = () => {
-    const xs = docs();
-    z.innerHTML = `${xs.length ? `<div class="docs">${xs.map((d, i) => ligne(d, i, xs.length)).join('')}</div>` : '<p class="aide">Aucun document.</p>'}
+    const xs = docs(), ps = publics();
+    z.innerHTML = `${E.sql3 ? '<h4 class="docs-titre">Pour l’équipe</h4>' : ''}${xs.length ? `<div class="docs">${xs.map((d, i) => ligne(d, i, xs.length)).join('')}</div>` : '<p class="aide">Aucun document.</p>'}
       <div class="docs-ajout"><label class="btn">＋ Envoyer un fichier<input type="file" data-doc-fichier accept=".pdf,.odt,.docx,.txt,image/*" hidden></label><button type="button" class="btn" data-doc-lien>＋ Coller un lien</button></div>
-      <div class="item doc-lien" hidden><div class="rangee"><div class="champ"><label>Adresse du lien</label><input type="url" data-doc-url placeholder="https://…"></div><div class="champ"><label>Titre</label><input type="text" data-doc-titre placeholder="Le texte sur Wikisource"></div></div>
-        <div class="fm-boutons" style="margin:0 0 10px"><button type="button" class="btn principal petit" data-doc-lien-ok>Ajouter le lien</button><button type="button" class="btn petit" data-doc-lien-non>Annuler</button></div></div>
-      <p class="aide">Fichiers : PDF, image, texte, ODT ou DOCX, 50 Mo au plus. Ils restent privés : on les ouvre par un lien signé, valable une heure.</p>`;
+      ${boiteLien(false)}
+      <p class="aide">Fichiers : PDF, image, texte, ODT ou DOCX, 50 Mo au plus. Ils restent privés : on les ouvre par un lien signé, valable une heure. « Lien ${PARTAGE_JOURS} jours » copie une adresse à envoyer hors de l’équipe (une fiche technique pour un lieu).</p>
+      ${E.sql3 ? `<h4 class="docs-titre">Pour les programmateurs et les établissements scolaires <span class="badge">publics</span></h4>
+      <p class="aide">Ils se téléchargent sur le site : ceux des programmateurs dans « Je souhaite programmer », ceux des établissements dans « Je représente un établissement scolaire ».</p>
+      ${ps.length ? `<div class="docs">${ps.map((d, i) => ligne(d, i, ps.length)).join('')}</div>` : '<p class="aide">Aucun document public.</p>'}
+      <div class="docs-ajout"><label class="btn">＋ Envoyer un PDF public<input type="file" data-doc-fichier-public accept=".pdf,application/pdf" hidden></label><button type="button" class="btn" data-doc-lien-public>＋ Coller un lien public</button></div>
+      ${boiteLien(true)}
+      <p class="aide">PDF de 25 Mo au plus, rangés dans le stockage public du site.</p>` : ''}`;
   };
   const renumeroter = async xs => {
     const changes = xs.map((x, i) => [x, (i + 1) * 10]).filter(([x, o]) => x.ordre !== o);
@@ -522,6 +549,19 @@ function documentsEditeur(z, s) {
   z.addEventListener('change', async e => {
     e.stopPropagation();   // dans l'éditeur du spectacle, ce fichier n'est pas une photo
     const t = e.target;
+    if (t.matches('[data-doc-fichier-public]')) {
+      const f = t.files[0]; t.value = ''; if (!f) return;
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (ext !== 'pdf' && f.type !== 'application/pdf') return annoncer('Un document public est un PDF.', { erreur: true });
+      if (f.size > 25 * 1024 * 1024) return annoncer('Fichier trop lourd : 25 Mo au plus.', { erreur: true });
+      const base = f.name.replace(/\.[^.]+$/, ''), chemin = `documents/${dossier}/${Date.now().toString(36)}-${slugifier(base) || 'document'}.pdf`;
+      annoncer(`Envoi de « ${f.name} »…`);
+      const { error } = await sb.storage.from('crescite').upload(chemin, f, { contentType: 'application/pdf', upsert: false, cacheControl: '3600' });
+      if (error) return erreur(error, /mime|type/i.test(error.message || '') ? 'Le stockage public n’accepte pas encore les PDF (troisième script SQL)' : 'Envoi impossible');
+      try { await inserer({ spectacle_id: s ? s.id : null, type: typeDe(base), titre: titreDe(base), fichier: chemin, pour: /scolaire|p[ée]dagog/i.test(base) ? 'scolaires' : 'pros', ordre: ordreSuivant() }); annoncer('Document public ajouté : vérifiez son titre et pour qui il est.'); }
+      catch (err) { await sb.storage.from('crescite').remove([chemin]); erreur(err, 'Document non enregistré'); }
+      return;
+    }
     if (t.matches('[data-doc-fichier]')) {
       const f = t.files[0]; t.value = ''; if (!f) return;
       const ext = (f.name.split('.').pop() || '').toLowerCase(), type = MIMES_DOC[ext] || f.type;
@@ -545,13 +585,13 @@ function documentsEditeur(z, s) {
   });
   z.addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b) return;
-    const boite = $('.doc-lien', z);
-    if (b.dataset.docLien !== undefined) { boite.hidden = false; $('[data-doc-url]', boite).focus(); return; }
-    if (b.dataset.docLienNon !== undefined) { boite.hidden = true; return; }
+    if (b.dataset.docLien !== undefined || b.dataset.docLienPublic !== undefined) { const boite = $(`.doc-lien[data-public="${b.dataset.docLienPublic !== undefined ? 1 : 0}"]`, z); boite.hidden = false; $('[data-doc-url]', boite).focus(); return; }
+    if (b.dataset.docLienNon !== undefined) { b.closest('.doc-lien').hidden = true; return; }
     if (b.dataset.docLienOk !== undefined) {
+      const boite = b.closest('.doc-lien'), pub = boite.dataset.public === '1';
       const url = $('[data-doc-url]', boite).value.trim(), titre = $('[data-doc-titre]', boite).value.trim();
       if (!/^https?:\/\//i.test(url)) return annoncer('Collez une adresse qui commence par https://', { erreur: true });
-      try { await inserer({ spectacle_id: s ? s.id : null, type: /wikisource|texte/i.test(url + titre) ? 'texte' : 'autre', titre: titre || hote(url), url, pour: 'equipe', ordre: ordreSuivant() }); annoncer('Lien ajouté.'); }
+      try { await inserer({ spectacle_id: s ? s.id : null, type: /wikisource|texte/i.test(url + titre) ? 'texte' : /fiche.?tech/i.test(url + titre) ? 'fiche_technique' : /dossier/i.test(url + titre) ? 'dossier' : 'autre', titre: titre || hote(url), url, pour: pub ? 'pros' : 'equipe', ordre: ordreSuivant() }); annoncer(pub ? 'Lien public ajouté.' : 'Lien ajouté.'); }
       catch (err) { erreur(err, 'Lien non ajouté'); }
       return;
     }
@@ -559,14 +599,21 @@ function documentsEditeur(z, s) {
     const d = E.documents.find(x => x.id === +l.dataset.doc); if (!d) return;
     if (b.dataset.docOuvrir !== undefined) {
       if (d.url) { window.open(d.url, '_blank', 'noopener'); return; }
+      if (estPublic(d)) { window.open(urlPublique(d.fichier), '_blank', 'noopener'); return; }
       const w = window.open('', '_blank');
       const { data, error } = await sb.storage.from('crescite-equipe').createSignedUrl(d.fichier, 3600);
       if (error) { w?.close(); return erreur(error, 'Ouverture impossible'); }
       if (w) { w.opener = null; w.location.href = data.signedUrl; } else location.href = data.signedUrl;
       return;
     }
+    if (b.dataset.docCopier !== undefined) return copier(d.url || urlPublique(d.fichier), 'Adresse du document');
+    if (b.dataset.docPartager !== undefined) {
+      const { data, error } = await sb.storage.from('crescite-equipe').createSignedUrl(d.fichier, PARTAGE_JOURS * 86400);
+      if (error) return erreur(error, 'Lien impossible');
+      return copier(data.signedUrl, `Adresse de partage (valable ${PARTAGE_JOURS} jours)`);
+    }
     if (b.dataset.docDm) {
-      const xs = docs(), i = xs.indexOf(d), j = i + +b.dataset.docDm; if (j < 0 || j >= xs.length) return;
+      const xs = estPublic(d) ? publics() : docs(), i = xs.indexOf(d), j = i + +b.dataset.docDm; if (j < 0 || j >= xs.length) return;
       [xs[i], xs[j]] = [xs[j], xs[i]];
       try { await renumeroter(xs); } catch (err) { return erreur(err, 'Ordre non enregistré'); }
       dessiner(); return;
@@ -576,7 +623,9 @@ function documentsEditeur(z, s) {
       const { error } = await sb.from('crescite_documents').delete().eq('id', d.id);
       if (error) return erreur(error, 'Suppression impossible');
       E.documents = E.documents.filter(x => x.id !== d.id);
-      if (d.fichier) { const r = await sb.storage.from('crescite-equipe').remove([d.fichier]); if (r.error) erreur(r.error, 'Document retiré, mais le fichier reste dans le stockage'); }
+      // un fichier public peut servir deux documents (programmateurs et scolaires) : il reste tant que l'autre est là
+      const partage = estPublic(d) && E.documents.some(x => x.fichier === d.fichier && estPublic(x));
+      if (d.fichier && !partage) { const r = await sb.storage.from(estPublic(d) ? 'crescite' : 'crescite-equipe').remove([d.fichier]); if (r.error) erreur(r.error, 'Document retiré, mais le fichier reste dans le stockage'); }
       dessiner(); annoncer('Document supprimé.');
     }
   });
@@ -664,6 +713,40 @@ async function retablirEquipeDate(c) {
   return null;
 }
 const avecFeuille = dateId => E.feuilles.some(x => x.date_id === dateId);
+// prévenir l'équipe d'une date : une notification dans l'espace de chacun, et sur son téléphone s'il s'est abonné
+// (crescite_prevenir_equipe, troisième script SQL)
+const boutonPrevenir = dateId => E.sql3 && E.equipeInstallee ? '<button type="button" class="btn" id="d-prevenir" aria-controls="d-prevenir-zone">Prévenir l’équipe</button>' : '';
+function panneauPrevenir(zone, d) {
+  if (!d) return;
+  const ouvert = $('#d-prevenir-zone', zone);
+  if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); return; }
+  const s = spectacle(d.spectacle_id), n = equipeDeLaDate(d).length;
+  const p = document.createElement('div');
+  p.className = 'bloc'; p.id = 'd-prevenir-zone';
+  p.innerHTML = `<h3>Prévenir l’équipe</h3>
+    <p class="aide">Une notification à ${n ? `chacune des ${n} personnes de l’équipe de cette date` : 'l’équipe de cette date (personne pour l’instant)'} : dans son espace, et sur son téléphone si elle s’y est abonnée.</p>
+    <div class="champ"><label for="pv-titre">Titre</label><input type="text" id="pv-titre" maxlength="120" value="${esc(`${s?.titre || 'Date'} · ${jourCourt(d.debut)}`)}"></div>
+    <div class="champ"><label for="pv-texte">Message</label><textarea id="pv-texte" rows="3" maxlength="600" placeholder="La représentation de jeudi commence à 20h30 au lieu de 20h."></textarea><span class="aide">Facultatif : sans message, la notification donne la date et le lieu.</span></div>
+    <div class="fm-boutons"><button type="button" class="btn principal" id="pv-envoyer"${n ? '' : ' disabled'}>Envoyer</button><button type="button" class="btn" id="pv-annuler">Annuler</button></div>`;
+  ($('#d-equipe', zone) || $('.pied-ed', zone)).after(p);
+  $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'true');
+  p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  $('#pv-texte', p).focus();
+  $('#pv-annuler', p).addEventListener('click', () => { p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.focus(); });
+  $('#pv-envoyer', p).addEventListener('click', async e => {
+    const titre = $('#pv-titre', p).value.trim(), texte = $('#pv-texte', p).value.trim();
+    if (!titre) return annoncer('Donnez un titre à la notification.', { erreur: true });
+    e.target.disabled = true;
+    const { data, error } = await sb.rpc('crescite_prevenir_equipe', { d: d.id, titre_: titre, texte_: texte || null });
+    e.target.disabled = false;
+    if (error) {
+      if (/PGRST202|42883|Could not find the function|does not exist/i.test(`${error.code || ''} ${error.message || ''}`)) return annoncer('Les notifications ne sont pas encore installées : il manque le troisième script SQL.', { erreur: true });
+      return erreur(error, 'Notification non envoyée');
+    }
+    p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false');
+    annoncer(+data ? `Notification envoyée à ${+data} personne${+data > 1 ? 's' : ''}.` : 'Personne à prévenir : l’équipe de cette date est vide.');
+  });
+}
 
 // ===================================================================================================== feuilles de route
 const badgeFeuille = dateId => {
@@ -718,52 +801,42 @@ function listeFeuilles(zone) {
 
 // ce que la base sait d'une date, pour composer sa feuille ; et ce que la feuille montre autour de son contenu
 const METIERS_CONTACT = /administrat|r[ée]gie\s+g[ée]n[ée]rale|r[ée]gisseu(?:r|se)\s+g[ée]n[ée]ral/i;
+const REGIE = /r[ée]gi(?:e|sseu(?:r|se))\s+g[ée]n[ée]ral/i;
+// les catégories d'une personne dans la distribution du spectacle (jeu, technique…) ; sans elles, feuille.js les devine
+const categoriesDe = (spId, pid) => [...new Set(E.distributions.filter(x => x.spectacle_id === spId && x.personne_id === pid).map(x => x.categorie).filter(Boolean))];
 function sourcesFeuille(d) {
   const tel = id => priveeDe(id)?.telephone || '', mel = id => priveeDe(id)?.email || '';
-  const equipe = equipeDeLaDate(d).map(x => ({ personne_id: x.personne_id, nom: nomDe(personne(x.personne_id)), fonction: x.fonction, telephone: tel(x.personne_id) }));
+  const equipe = equipeDeLaDate(d).map(x => { const p = personne(x.personne_id); return { personne_id: x.personne_id, prenom: p?.prenom || '', nom: nomDe(p), fonction: x.fonction, categories: categoriesDe(d.spectacle_id, x.personne_id), telephone: tel(x.personne_id) }; });
   // l'administration de la compagnie, et la régie générale : celle de l'équipe de la date, sinon celle de la distribution
   // du spectacle, sinon toute personne dont c'est le métier
-  const REGIE = /r[ée]gi(?:e|sseu(?:r|se))\s+g[ée]n[ée]ral/i;
   const avecMetier = re => E.personnes.filter(p => (p.metiers || []).some(m => re.test(m)));
   const regieDate = equipe.filter(x => REGIE.test(x.fonction || '')).map(x => personne(x.personne_id));
   const regieDist = distributionDe(d.spectacle_id).filter(x => REGIE.test(x.fonction || '')).map(x => personne(x.personne_id));
   const regie = (regieDate.length ? regieDate : regieDist.length ? regieDist : avecMetier(REGIE)).filter(Boolean);
   const compagnie = [...avecMetier(/administrat/i), ...regie].filter((p, i, xs) => xs.indexOf(p) === i);
-  const contacts = compagnie.map(p => ({ nom: nomDe(p), role: (p.metiers || []).find(m => METIERS_CONTACT.test(m)) || 'Régie générale', telephone: tel(p.id), email: mel(p.id) }));
+  const contacts = compagnie.map(p => ({ personne_id: p.id, nom: nomDe(p), prenom: p.prenom || '', role: (p.metiers || []).find(m => METIERS_CONTACT.test(m)) || 'Régie générale', telephone: tel(p.id), email: mel(p.id) }));
+  // les feuilles des autres dates : repas, transports, hébergement s'en recopient
+  const anterieures = E.feuilles.filter(f => f.date_id !== d.id && f.contenu).map(f => {
+    const x = E.dates.find(y => y.id === f.date_id);
+    return x && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null };
+  }).filter(Boolean);
   return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: DEPART,
     suivi: { ...(E.suivis.find(x => x.date_id === d.id) || {}), lieu: E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id) || {} },
-    documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe') };
+    documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe'), anterieures };
 }
 const contexteFeuille = d => {
   const s = spectacle(d.spectacle_id) || {};
   return { date: d, spectacle: { titre: s.titre, slug: s.slug, univers: s.univers, duree: s.duree }, lieu: lieu(d.lieu_id) || null,
-    representations: repsDe(d.id).map(r => ({ jour: r.jour, heure: h5(r.heure), public: r.public, annulee: r.annulee, note: r.note })),
+    representations: repsDe(d.id).map(r => ({ jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public, annulee: r.annulee, note: r.note })),
     documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe').map(x => ({ id: x.id, titre: x.titre, url: x.url || '' })) };
 };
-const composerPour = d => FEUILLE.fusionner(null, FEUILLE.composer(sourcesFeuille(d)), 'remplacer').contenu;
-// une feuille complète : chaque bloc de FEUILLE.SECTIONS a sa place, même vide
-function completerContenu(c) {
-  FEUILLE.SECTIONS.forEach(s => {
-    if (s.forme === 'fiche') { c[s.k] = c[s.k] && typeof c[s.k] === 'object' && !Array.isArray(c[s.k]) ? c[s.k] : {}; s.champs.forEach(ch => { if (!(ch.k in c[s.k])) c[s.k][ch.k] = ch.t === 'case' ? false : ch.t === 'nombre' ? null : ''; }); }
-    else if (s.forme === 'texte') c[s.k] = typeof c[s.k] === 'string' ? c[s.k] : '';
-    else c[s.k] = Array.isArray(c[s.k]) ? c[s.k] : [];
-  });
-  return c;
-}
-const feuilleVersForm = f => ({ titre: f.titre || '', contenu: completerContenu(clone(f.contenu || {})), statut: f.statut, version: f.version, publiee_le: f.publiee_le });
-const contenuRempli = c => FEUILLE.SECTIONS.some(s => { const v = c?.[s.k]; return s.forme === 'fiche' ? Object.entries(v || {}).some(([k, x]) => k !== 'estime' && x !== null && String(x).trim() !== '') : s.forme === 'texte' ? !!String(v || '').trim() : (v || []).length > 0; });
-const horairesChanges = (d, c) => Array.isArray(c?.representations) && c.representations.length > 0
-  && c.representations.map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|') !== repsDe(d.id).map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|');
-const AIDES_FEUILLE = {
-  representations: 'Les horaires viennent de la date : changez-les dans Représentations, puis recomposez.',
-  lieu: 'D’après la fiche du lieu ; jauge et plateau viennent de son suivi.',
-  trajet: 'Depuis Rouen : à vol d’oiseau × 1,3, et une durée estimée. À vérifier.',
-  planning: 'Le déroulé type du spectacle, posé autour des représentations. Une heure inhabituelle (avant 6h) est signalée.',
-  equipe: 'L’équipe de la date (la distribution en tournée, avec remplaçants et renforts), avec les téléphones des fiches.',
-  contacts: 'L’organisateur et le contact de la date, le contact du lieu, puis l’administration et la régie générale de la compagnie.',
-  transport: 'Qui part quand, et comment : camion, train, voitures.',
-  documents: 'Les documents de l’équipe que la feuille cite : ceux du spectacle et ceux de toute la compagnie.',
-};
+const composerPour = d => FEUILLE.composer(sourcesFeuille(d));
+// les prénoms à surligner : l'équipe de la date
+const nomsDeLaDate = d => [...new Set(equipeDeLaDate(d).map(x => personne(x.personne_id)?.prenom).filter(Boolean))];
+const horairesChanges = (d, c) => Array.isArray(c?.instantane) && c.instantane.length > 0
+  && c.instantane.map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|') !== repsDe(d.id).map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|');
+const feuilleVersForm = (f, d) => ({ titre: f.titre || '', contenu: FEUILLE.contenu(f, contexteFeuille(d)), statut: f.statut, version: f.version, publiee_le: f.publiee_le });
+const signatureFeuille = F => F ? JSON.stringify([F.titre, F.contenu.blocs, F.contenu.composees]) : 'null';
 
 function editeurFeuille(dateId) {
   cadre('feuilles', '<div class="tete fr-tete"><a class="btn petit" data-tt="retour" href="#/feuilles" title="Toutes les feuilles de route">←</a><h1>Feuille de route</h1></div><section class="editeur fr-editeur" id="ed-feuille"></section>');
@@ -774,77 +847,59 @@ function editeurFeuille(dateId) {
   $('.fr-tete h1').innerHTML = `Feuille de route · ${esc(s?.titre || '?')}<small>${esc(jourCourt(d.debut))}${d.fin && d.fin !== d.debut ? ` → ${esc(jourCourt(d.fin))}` : ''} · ${esc(lieuTexte(l) || 'lieu à préciser')}</small>`;
   $('.fr-tete').insertAdjacentHTML('beforeend', `<a class="btn" href="#/representations/${d.id}">Ouvrir la date</a>`);
   const f0 = E.feuilles.find(x => x.date_id === dateId) || null;
-  const etat = { d, f0, F: f0 ? feuilleVersForm(f0) : null, mode: 'edition' };
-  etat.initial = JSON.stringify(etat.F);
+  const etat = { d, f0, F: f0 ? feuilleVersForm(f0, d) : null, vue: 'page', editeur: null };
+  etat.initial = signatureFeuille(etat.F);
   dessinerFeuille(etat);
 }
-const feuilleCourante = etat => ({ titre: etat.F.titre, contenu: etat.F.contenu, statut: etat.F.statut, version: etat.F.version, publiee_le: etat.F.publiee_le });
-function entreeFeuille(c, v, attrs) {
-  switch (c.t) {
-    case 'jour': return `<input type="date" ${attrs} value="${esc(v || '')}">`;
-    case 'heure': return `<input type="time" step="300" ${attrs} value="${esc(h5(v))}">`;
-    case 'nombre': return `<input type="number" min="0" ${attrs} value="${esc(v ?? '')}">`;
-    case 'case': return `<input type="checkbox" ${attrs}${v ? ' checked' : ''}>`;
-    case 'choix': return `<select ${attrs}>${c.choix.map(([k, l]) => `<option value="${esc(k)}"${String(v ?? '') === k ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
-    case 'long': return `<textarea ${attrs} rows="2"${c.ph ? ` placeholder="${esc(c.ph)}"` : ''}>${esc(v ?? '')}</textarea>`;
-    case 'tel': case 'email': case 'url': return `<input type="${c.t}" ${attrs} value="${esc(v ?? '')}"${c.t === 'url' ? ' placeholder="https://…"' : ''}>`;
-    default: return `<input type="text" ${attrs} value="${esc(v ?? '')}"${c.ph ? ` placeholder="${esc(c.ph)}"` : ''}>`;
-  }
-}
-const heureInhabituelle = (sec, r) => sec.k === 'planning' && /^0[0-5]:/.test(h5(r.heure));
-function blocSection(sec, c, d) {
-  const v = c[sec.k];
-  let corps = '';
-  if (sec.forme === 'fiche') corps = `<div class="rangee fr-fiche">${sec.champs.map(ch => ch.t === 'case'
-    ? `<div class="champ large"><label class="case"><input type="checkbox" data-fs="${sec.k}" data-fc="${ch.k}"${v[ch.k] ? ' checked' : ''}> ${esc(ch.l)}</label>${ch.aide ? `<span class="aide">${esc(ch.aide)}</span>` : ''}</div>`
-    : `<div class="champ${ch.t === 'long' || ch.t === 'url' ? ' large' : ''}"><label for="fr-${sec.k}-${ch.k}">${esc(ch.l)}</label>${entreeFeuille(ch, v[ch.k], `id="fr-${sec.k}-${ch.k}" data-fs="${sec.k}" data-fc="${ch.k}"`)}${ch.aide ? `<span class="aide">${esc(ch.aide)}</span>` : ''}</div>`).join('')}</div>`;
-  else if (sec.forme === 'liste') corps = `${v.length ? `<div class="table-defile"><table class="reps fr-table" data-section="${sec.k}"><thead><tr>${sec.colonnes.map(ch => `<th>${esc(ch.l)}</th>`).join('')}<th></th></tr></thead><tbody>
-      ${v.map((r, i) => `<tr data-fl="${i}"${heureInhabituelle(sec, r) ? ' class="inhabituel" title="Heure inhabituelle : à vérifier"' : ''}>${sec.colonnes.map(ch => `<td${ch.large ? ' class="large"' : ''}>${entreeFeuille(ch, r[ch.k], `data-fs="${sec.k}" data-fi="${i}" data-fc="${ch.k}" aria-label="${esc(ch.l)}"`)}</td>`).join('')}
-        <td class="fr-outils"><button type="button" class="btn petit" data-fr-l="monter" data-fs="${sec.k}" data-fi="${i}" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-fr-l="descendre" data-fs="${sec.k}" data-fi="${i}" title="Descendre" aria-label="Descendre"${i < v.length - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-fr-l="retirer" data-fs="${sec.k}" data-fi="${i}" title="Retirer la ligne" aria-label="Retirer la ligne">✕</button></td></tr>`).join('')}
-      </tbody></table></div>` : '<p class="aide fr-vide">Rien pour l’instant.</p>'}<button type="button" class="btn petit" data-fr-ajout="${sec.k}">＋ ${esc(sec.ajout || 'Ligne')}</button>${sec.k === 'planning' && v.length > 1 ? ' <button type="button" class="btn petit" data-fr-trier>Remettre dans l’ordre des heures</button>' : ''}`;
-  else if (sec.forme === 'texte') corps = `<textarea data-fs="${sec.k}" rows="5" aria-label="${esc(sec.titre)}" placeholder="Ce qu’il faut savoir d’autre : matériel à apporter, consignes du lieu…">${esc(v)}</textarea>`;
-  else if (sec.forme === 'documents') {
-    const docs = E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe').sort((a, b) => (a.spectacle_id == null) - (b.spectacle_id == null) || a.ordre - b.ordre);
-    corps = docs.length ? `<div class="fr-docs">${docs.map(x => `<label class="case"><input type="checkbox" data-fdoc="${x.id}"${(v || []).includes(x.id) ? ' checked' : ''}> ${esc(x.titre)}${x.spectacle_id == null ? ' <span class="compte">(compagnie)</span>' : ''}</label>`).join('')}</div>`
-      : '<p class="aide">Aucun document pour l’équipe : Spectacles → Documents, ou Équipe → Documents de la compagnie.</p>';
-  }
-  return `<div class="bloc fr-sec" id="fr-${sec.k}"><h3>${esc(sec.titre)}${sec.base ? ' <span class="aide fr-source">· depuis la base</span>' : ''}</h3>${AIDES_FEUILLE[sec.k] ? `<p class="aide">${esc(AIDES_FEUILLE[sec.k])}</p>` : ''}${corps}</div>`;
-}
+const feuilleCourante = etat => {
+  if (etat.editeur) { etat.F.contenu.blocs = etat.editeur.blocs(); etat.F.contenu.pages = etat.editeur.pages(); }
+  return { titre: etat.F.titre, contenu: { ...etat.F.contenu, format: 2 }, statut: etat.F.statut, version: etat.F.version, publiee_le: etat.F.publiee_le };
+};
 function alertesFeuille(d, F) {
   const s = spectacle(d.spectacle_id), out = [];
   if (d.statut === 'annulee') out.push('Cette date est annulée.');
   if (d.statut === 'option') out.push('Cette date est encore une option.');
   if (!repsDe(d.id).length) out.push('Cette date n’a pas de représentation détaillée (jour et heure) : le planning restera vide.');
-  if (s && !FEUILLE.dureeMinutes(s.duree)) out.push(`La durée du spectacle n’est pas indiquée (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Général">Spectacles → Général → Durée</a>) : la fin des représentations et les étapes d’après restent sans heure.`);
-  if (s && !(s.feuille_modele || []).length) out.push(`${esc(s.titre)} n’a pas de déroulé type (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Déroulé type">Spectacles → Déroulé type</a>) : le planning ne contient que les représentations.`);
-  if (F && horairesChanges(d, F.contenu)) out.push('Les horaires de la date ont changé depuis la composition de cette feuille. <button type="button" class="btn lien" data-fr-recomposer>Recomposer</button>');
+  if (s && (d.nature || 'representations') === 'representations' && !FEUILLE.dureeMinutes(s.duree)) out.push(`La durée du spectacle n’est pas indiquée (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Général">Spectacles → Général → Durée</a>) : les étapes d’après le spectacle (démontage) restent sans heure.`);
+  if (s && (d.nature || 'representations') === 'representations' && !(s.feuille_modele || []).length) out.push(`${esc(s.titre)} n’a pas de déroulé type (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Déroulé type">Spectacles → Déroulé type</a>) : le planning ne contient que les représentations.`);
+  if (F && horairesChanges(d, F.contenu)) out.push('Les horaires de la date ont changé depuis la composition de cette feuille. <button type="button" class="btn lien" data-fr-maj>Mettre à jour depuis la base</button>');
   return out.map(x => `<p class="fr-alerte">${x}</p>`).join('');
 }
 function dessinerFeuille(etat) {
+  if (etat.editeur) { etat.editeur.detruire(); etat.editeur = null; }
   const zone = zoneNeuve('#ed-feuille');
   const { d } = etat;
   if (!etat.F) {
-    zone.innerHTML = `<div class="bloc"><h3>Pas encore de feuille de route pour cette date</h3>
-      <p>« Composer » la remplit avec ce que la base sait : le lieu et son itinéraire, le trajet depuis Rouen, les représentations, le planning tiré du déroulé type du spectacle, l’équipe de la date avec ses téléphones, les contacts. Restent à remplir : transport, hébergement, repas, notes.</p>
-      ${alertesFeuille(d, null)}<p class="fm-boutons"><button type="button" class="btn principal" id="fr-composer">Composer la feuille</button><button type="button" class="btn" id="fr-vide">Partir d’une feuille vide</button></p></div>`;
-    $('#fr-composer', zone).addEventListener('click', () => { etat.F = { titre: '', contenu: completerContenu(composerPour(d)), statut: 'brouillon', version: 1, publiee_le: null }; dessinerFeuille(etat); annoncer('Feuille composée : vérifiez, complétez, puis enregistrez.'); });
-    $('#fr-vide', zone).addEventListener('click', () => { etat.F = { titre: '', contenu: completerContenu({}), statut: 'brouillon', version: 1, publiee_le: null }; dessinerFeuille(etat); });
+    zone.innerHTML = `<div class="bloc fr-accueil"><h3>Pas encore de feuille de route pour cette date</h3>
+      <p>« Composer » écrit la feuille sur sa page A4, dans la forme habituelle : l’en-tête (le spectacle, l’équipe, les dates, le lieu), le planning jour par jour, les repas, transports et hébergement repris de la feuille précédente, les adresses et les contacts. Il ne reste qu’à relire et compléter : ce qui manque est écrit en gris, cliquez dessus pour l’écrire.</p>
+      ${alertesFeuille(d, null)}<p class="fm-boutons"><button type="button" class="btn principal" id="fr-composer">Composer la feuille</button><button type="button" class="btn" id="fr-vide">Partir d’une page blanche</button></p></div>`;
+    const commencer = contenu => { etat.F = { titre: '', contenu, statut: 'brouillon', version: 1, publiee_le: null }; dessinerFeuille(etat); };
+    $('#fr-composer', zone).addEventListener('click', () => { commencer(composerPour(d)); annoncer('Feuille composée : relisez, complétez ce qui est en gris, puis enregistrez.'); });
+    $('#fr-vide', zone).addEventListener('click', () => commencer({ format: 2, blocs: [{ type: 'entete', segments: [{ texte: 'FEUILLE DE ROUTE', gras: true, italique: true }] }, { type: 'ligne', segments: [] }], composees: [], pages: [], instantane: [] }));
     return;
   }
   const F = etat.F, pub = F.statut === 'publiee';
-  const sale = () => JSON.stringify(etat.F) !== etat.initial;
+  const sale = () => signatureFeuille(etat.F) !== etat.initial;
   const quand = x => { const t = new Date(x); return isNaN(t) ? '' : `le ${t.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} à ${t.getHours()}h${String(t.getMinutes()).padStart(2, '0')}`; };
   const badge = pub ? `<span class="badge ok">Publiée v${F.version}</span><span class="compte">${esc(quand(F.publiee_le))} : l’équipe de la date la voit dans son espace</span>`
     : etat.f0 ? `<span class="badge option">Brouillon</span><span class="compte">l’équipe ne la voit pas encore${etat.f0.publiee_le ? ` (la version ${etat.f0.version} a été retirée)` : ''}</span>` : '<span class="badge option">Pas encore enregistrée</span>';
-  zone.innerHTML = `<div class="bloc fr-etat"><div class="fr-etat-l"><span class="fr-badge">${badge}</span><div class="seg" role="group" aria-label="Affichage"><button type="button" data-fr-mode="edition" aria-pressed="${etat.mode === 'edition'}">Édition</button><button type="button" data-fr-mode="apercu" aria-pressed="${etat.mode === 'apercu'}">Aperçu</button></div></div>
-    <div class="fr-actions"><button type="button" class="btn petit" id="fr-recomposer" title="Remettre à jour ce qui vient de la base : horaires, lieu, équipe, contacts">Recomposer</button><button type="button" class="btn petit" id="fr-pdf">Télécharger le PDF</button><button type="button" class="btn petit" id="fr-imprimer">Imprimer</button></div>
-    ${alertesFeuille(d, F)}<div id="fr-recompo"></div></div>
-    ${etat.mode === 'apercu' ? `<div class="fr-apercu" aria-label="Aperçu de la feuille de route">${FEUILLE.html(feuilleCourante(etat), contexteFeuille(d))}</div>`
-      : `<div class="bloc"><div class="champ" style="margin:0"><label for="fr-titre">Titre <span class="aide" style="font-weight:400">(facultatif : une ligne sous le nom du spectacle)</span></label><input type="text" id="fr-titre" value="${esc(F.titre)}" placeholder="Tournée en Normandie, semaine 51"></div></div>
-        ${FEUILLE.SECTIONS.map(sec => blocSection(sec, F.contenu, d)).join('')}`}
+  const bouton = (cmd, lib, titre, extra = '') => `<button type="button" class="a4-b" data-a4="${cmd}" title="${esc(titre)}"${extra}>${lib}</button>`;
+  zone.innerHTML = `<div class="bloc fr-etat"><div class="fr-etat-l"><span class="fr-badge">${badge}</span>
+      <span class="fr-actions"><button type="button" class="btn petit" id="fr-maj" title="L’en-tête, les horaires, l’équipe, les contacts : ce qui vient de la base et n’a pas été retouché. Ce que vous avez écrit ne change pas.">Mettre à jour depuis la base</button><button type="button" class="btn petit" id="fr-pdf">Télécharger le PDF</button><button type="button" class="btn petit" id="fr-imprimer">Imprimer</button></span></div>
+      ${alertesFeuille(d, F)}</div>
+    <div class="a4-outils" role="toolbar" aria-label="Mise en forme de la feuille" aria-controls="a4-doc">
+      <span class="a4-groupe" role="group" aria-label="Type de ligne">${bouton('type', 'Rubrique', 'Un titre de rubrique : Planning, Repas, Transports…', ' data-type="rubrique" aria-pressed="false"')}${bouton('type', 'Jour', 'Un jour du planning : « mardi 16 décembre »', ' data-type="jour" aria-pressed="false"')}${bouton('type', 'Ligne', 'Une ligne ordinaire', ' data-type="ligne" aria-pressed="false"')}${bouton('type', '• Puce', 'Une liste à puces', ' data-type="puce" aria-pressed="false"')}</span>
+      <span class="a4-groupe" role="group" aria-label="Mise en valeur">${bouton('gras', '<b>Gras</b>', 'Gras (Ctrl+B)', ' aria-pressed="false"')}${bouton('rouge', '<span class="a4-rouge">Rouge</span>', 'Rouge : ce qu’il ne faut pas oublier', ' aria-pressed="false"')}${bouton('surligne', '<span class="a4-jaune">Surligner</span>', 'Surligner : pour qui c’est', ' aria-pressed="false"')}${bouton('noms', 'Surligner les noms', 'Surligne d’un coup, dans le planning, les prénoms de l’équipe et « tout le monde »')}</span>
+      <span class="a4-groupe" role="group" aria-label="Page">${bouton('saut', 'Saut de page', 'Commencer une nouvelle page ici (Ctrl+Entrée)')}</span>
+      <span class="a4-groupe" role="group" aria-label="Historique">${bouton('annuler', '↶ Annuler', 'Annuler (Ctrl+Z)')}${bouton('retablir', '↷ Rétablir', 'Rétablir (Ctrl+Y)')}</span>
+      <span class="seg a4-vues" role="group" aria-label="Affichage"><button type="button" data-fr-vue="page" aria-pressed="${etat.vue === 'page'}">Page A4</button><button type="button" data-fr-vue="tel" aria-pressed="${etat.vue === 'tel'}">Vue de l’équipe</button></span>
+    </div>
+    <p class="aide a4-aide" id="a4-aide">Écrivez directement sur la page. Les mots en gris manquent encore : cliquez dessus pour les écrire (ils ne sont jamais imprimés). Un trait bleu dans la marge : la ligne vient de la base, « Mettre à jour depuis la base » la tient à jour tant que vous ne la retouchez pas.</p>
+    <div id="fr-vue"></div>
     <div class="pied-ed"><span class="etat-ed"></span>
       ${pub ? '<button type="button" class="btn" id="fr-brouillon">Repasser en brouillon</button>' : '<button type="button" class="btn" id="fr-publier">Publier pour l’équipe</button>'}
       <button type="button" class="btn principal" data-enregistrer>${pub ? 'Publier la mise à jour' : 'Enregistrer le brouillon'}</button></div>`;
+  const outils = $('.a4-outils', zone);
   const majEtat = () => {
     const x = sale(); marquerSale(x);
     const el = $('.etat-ed', zone);
@@ -852,56 +907,66 @@ function dessinerFeuille(etat) {
     else if (pub) el.textContent = `Modifications non publiées : l’équipe voit encore la version ${F.version}`;
     const b = $('[data-enregistrer]', zone); if (b) b.disabled = pub && !x;
   };
+  const majOutils = e => {
+    $$('[data-a4="type"]', outils).forEach(b => b.setAttribute('aria-pressed', String(!!e && e.type === b.dataset.type)));
+    ['gras', 'rouge', 'surligne'].forEach(k => $(`[data-a4="${k}"]`, outils).setAttribute('aria-pressed', String(!!e?.[k])));
+    $('[data-a4="annuler"]', outils).disabled = !e?.annuler;
+    $('[data-a4="retablir"]', outils).disabled = !e?.retablir;
+  };
+  // la barre d'outils colle sous l'en-tête de l'administration
+  const barre = $('.barre');
+  const hauteurBarre = () => document.documentElement.style.setProperty('--haut-barre', `${barre ? barre.offsetHeight : 0}px`);
+  hauteurBarre();
+  const montrer = () => {
+    const z = $('#fr-vue', zone);
+    $$('[data-a4]', outils).forEach(b => { b.disabled = etat.vue !== 'page'; });
+    if (etat.vue === 'tel') {
+      if (etat.editeur) { feuilleCourante(etat); etat.editeur.detruire(); etat.editeur = null; }
+      z.innerHTML = `<div class="a4-tel" aria-label="La feuille telle que l’équipe la lit sur un téléphone">${FEUILLE.html(feuilleCourante(etat), { ...contexteFeuille(d), moi: null })}</div>`;
+      return;
+    }
+    etat.editeur = editeurA4(z, { blocs: F.contenu.blocs, noms: nomsDeLaDate(d), ref: repsDe(d.id)[0]?.jour || d.debut,
+      quandChange: () => { F.contenu.blocs = etat.editeur.blocs(); F.contenu.pages = etat.editeur.pages(); majEtat(); },
+      quandEtat: majOutils,
+      extra: { lire: () => ({ composees: F.contenu.composees || [], instantane: F.contenu.instantane || [], compose_le: F.contenu.compose_le || null }), ecrire: v => Object.assign(F.contenu, v) } });
+    F.contenu.pages = etat.editeur.pages();
+  };
+  montrer();
   majEtat();
-  const sectionDe = k => FEUILLE.SECTIONS.find(x => x.k === k);
-  const redessinerSection = (k, focus) => {
-    const b = $(`#fr-${k}`, zone); if (!b) return;
-    b.outerHTML = blocSection(sectionDe(k), F.contenu, d);
-    if (focus) $(focus, zone)?.focus();
-  };
-  const lireChampFeuille = t => {
-    if (t.id === 'fr-titre') { F.titre = t.value; return majEtat(); }
-    if (t.dataset.fdoc) { const id = +t.dataset.fdoc; F.contenu.documents = t.checked ? [...new Set([...(F.contenu.documents || []), id])] : (F.contenu.documents || []).filter(x => x !== id); return majEtat(); }
-    const k = t.dataset.fs; if (!k || t.dataset.frL) return;
-    const sec = sectionDe(k), c = t.dataset.fc, col = (sec.champs || sec.colonnes || []).find(x => x.k === c);
-    const v = t.type === 'checkbox' ? t.checked : col?.t === 'nombre' ? (t.value === '' ? null : +t.value) : t.value;
-    if (sec.forme === 'texte') F.contenu[k] = v;
-    else if (sec.forme === 'fiche') {
-      F.contenu[k][c] = v;
-      // une distance ou une durée corrigée à la main n'est plus une estimation
-      if (k === 'trajet' && (c === 'distance_km' || c === 'duree_min') && F.contenu.trajet.estime) { F.contenu.trajet.estime = false; const x = $('[data-fs="trajet"][data-fc="estime"]', zone); if (x) x.checked = false; }
-    } else {
-      F.contenu[k][+t.dataset.fi][c] = v;
-      if (c === 'heure') t.closest('tr')?.classList.toggle('inhabituel', heureInhabituelle(sec, F.contenu[k][+t.dataset.fi]));
-    }
-    majEtat();
-  };
-  zone.addEventListener('input', e => lireChampFeuille(e.target));
-  zone.addEventListener('change', e => lireChampFeuille(e.target));
-  zone.addEventListener('click', async e => {
+  window.addEventListener('resize', hauteurBarre);
+  const quitter = () => { if (location.hash !== `#/feuilles/${d.id}`) { etat.nettoyer(); if (etat.editeur) { etat.editeur.detruire(); etat.editeur = null; } } };
+  etat.nettoyer = () => { window.removeEventListener('resize', hauteurBarre); window.removeEventListener('hashchange', quitter); };
+  window.addEventListener('hashchange', quitter);
+  // les boutons de la barre gardent la sélection de la page
+  outils.addEventListener('mousedown', e => { if (e.target.closest('[data-a4]')) e.preventDefault(); });
+  outils.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.frMode) { etat.mode = b.dataset.frMode; dessinerFeuille(etat); return; }
-    if (b.dataset.frAjout) {
-      const k = b.dataset.frAjout, sec = sectionDe(k), premier = repsDe(d.id)[0]?.jour || d.debut;
-      const neuve = Object.fromEntries(sec.colonnes.map(c => [c.k, c.t === 'case' ? false : c.t === 'choix' ? c.choix[0][0] : c.k === 'jour' ? premier : '']));
-      if (sec.cle) neuve[sec.cle] = null;
-      F.contenu[k].push(neuve); majEtat();
-      redessinerSection(k, `#fr-${k} tr[data-fl="${F.contenu[k].length - 1}"] input:not([type=date]), #fr-${k} tr[data-fl="${F.contenu[k].length - 1}"] select`);
-      tt('ajouter', $(`#fr-${k} tr[data-fl="${F.contenu[k].length - 1}"]`, zone));
-      return;
-    }
-    if (b.dataset.frL) {
-      const k = b.dataset.fs, xs = F.contenu[k], i = +b.dataset.fi;
-      if (b.dataset.frL === 'retirer') xs.splice(i, 1);
-      if (b.dataset.frL === 'monter' && i > 0) [xs[i - 1], xs[i]] = [xs[i], xs[i - 1]];
-      if (b.dataset.frL === 'descendre' && i < xs.length - 1) [xs[i + 1], xs[i]] = [xs[i], xs[i + 1]];
-      majEtat();
-      const j = b.dataset.frL === 'monter' ? i - 1 : b.dataset.frL === 'descendre' ? i + 1 : -1;
-      redessinerSection(k, j >= 0 ? `#fr-${k} [data-fr-l="${b.dataset.frL}"][data-fi="${j}"]:not([disabled])` : null);
-      return;
-    }
-    if (b.dataset.frTrier !== undefined) { F.contenu.planning = FEUILLE.trier(F.contenu.planning); majEtat(); redessinerSection('planning'); return; }
-    if (b.id === 'fr-recomposer' || b.dataset.frRecomposer !== undefined) return demanderRecomposition(etat, zone);
+    if (b.dataset.frVue) { if (etat.vue !== b.dataset.frVue) { etat.vue = b.dataset.frVue; $$('[data-fr-vue]', outils).forEach(x => x.setAttribute('aria-pressed', String(x === b))); montrer(); } return; }
+    const ed = etat.editeur; if (!ed || !b.dataset.a4) return;
+    const c = b.dataset.a4;
+    if (c === 'type') ed.type(b.dataset.type);
+    else if (c === 'noms') { const n = ed.surlignerNoms(); annoncer(n ? `${n} nom${n > 1 ? 's' : ''} surligné${n > 1 ? 's' : ''} dans le planning.` : 'Aucun nom de plus à surligner dans le planning.'); }
+    else if (c === 'annuler') ed.annuler();
+    else if (c === 'retablir') ed.retablir();
+    else if (c === 'saut') ed.saut();
+    else ed.basculer(c);
+  });
+  const mettreAJour = () => {
+    if (!etat.editeur) { etat.vue = 'page'; $$('[data-fr-vue]', outils).forEach(x => x.setAttribute('aria-pressed', String(x.dataset.frVue === 'page'))); montrer(); }
+    const r = FEUILLE.actualiser(feuilleCourante(etat).contenu, composerPour(d));
+    etat.editeur.remplacer(r.contenu.blocs);
+    Object.assign(F.contenu, { composees: r.contenu.composees, instantane: r.contenu.instantane, compose_le: r.contenu.compose_le });
+    delete F.contenu.ancien;
+    F.contenu.blocs = etat.editeur.blocs(); F.contenu.pages = etat.editeur.pages();
+    majEtat();
+    $$('.fr-alerte', zone).forEach(x => { if (x.querySelector('[data-fr-maj]')) x.remove(); });
+    const n = r.ajoutes + r.modifies + r.retires;
+    annoncer(n ? `Mise à jour depuis la base : ${[r.modifies && `${r.modifies} ligne${r.modifies > 1 ? 's' : ''} changée${r.modifies > 1 ? 's' : ''}`, r.ajoutes && `${r.ajoutes} ajoutée${r.ajoutes > 1 ? 's' : ''}`, r.retires && `${r.retires} retirée${r.retires > 1 ? 's' : ''}`].filter(Boolean).join(', ')}. Ce que vous avez écrit n’a pas changé.` : 'Rien n’a changé dans la base depuis la composition.',
+      n ? { libelle: 'Annuler', delai: 12000, action: () => etat.editeur && etat.editeur.annuler() } : {});
+  };
+  zone.addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b || outils.contains(b)) return;
+    if (b.id === 'fr-maj' || b.dataset.frMaj !== undefined) return mettreAJour();
     if (b.id === 'fr-pdf') {
       const lib = b.textContent; b.disabled = true; b.textContent = 'Préparation du PDF…';
       try { await FEUILLE.telecharger(feuilleCourante(etat), contexteFeuille(d)); annoncer(sale() ? 'PDF téléchargé (avec les modifications pas encore enregistrées).' : 'PDF téléchargé.'); }
@@ -915,54 +980,900 @@ function dessinerFeuille(etat) {
     if (b.matches('[data-enregistrer]')) return enregistrerFeuille(etat, pub ? 'publiee' : 'brouillon', b);
   });
 }
-// recomposer une feuille déjà remplie : on demande quoi faire de ce qui a été saisi à la main
-function demanderRecomposition(etat, zone) {
-  const appliquer = mode => {
-    const avant = clone(etat.F.contenu);
-    const { contenu, gardes } = FEUILLE.fusionner(etat.F.contenu, FEUILLE.composer(sourcesFeuille(etat.d)), mode);
-    etat.F.contenu = completerContenu(contenu);
-    dessinerFeuille(etat);
-    const n = gardes.reduce((a, g) => a + g.n, 0);
-    annoncer(mode === 'garder' && n ? `Recomposée. Gardé de vos saisies : ${gardes.map(g => `${g.section.toLowerCase()} (${g.n})`).join(', ')}. Enregistrez pour garder.` : 'Recomposée depuis la base. Enregistrez pour garder.',
-      { libelle: 'Annuler', delai: 12000, action: () => { etat.F.contenu = avant; dessinerFeuille(etat); annoncer('Recomposition annulée : la feuille est comme avant.'); } });
-  };
-  if (!contenuRempli(etat.F.contenu)) return appliquer('remplacer');
-  const z = $('#fr-recompo', zone);
-  z.innerHTML = `<div class="item fr-choix" role="group" aria-label="Recomposer la feuille"><p><b>Recomposer depuis la base.</b> Cette feuille a déjà été remplie : que faire de ce qui a été saisi à la main ?</p>
-    <label class="case"><input type="radio" name="fr-mode-recompo" value="garder" checked> Le garder : seul ce qui vient de la base est mis à jour</label>
-    <label class="case"><input type="radio" name="fr-mode-recompo" value="remplacer"> Repartir de la base pour le lieu, le trajet, les représentations, le planning, l’équipe et les contacts</label>
-    <p class="aide">Transport, hébergement, repas et notes ne changent jamais. Rien n’est enregistré avant « ${etat.F.statut === 'publiee' ? 'Publier la mise à jour' : 'Enregistrer le brouillon'} », et « Annuler » revient en arrière.</p>
-    <div class="fm-boutons"><button type="button" class="btn principal petit" id="fr-recompo-ok">Recomposer</button><button type="button" class="btn petit" id="fr-recompo-non">Annuler</button></div></div>`;
-  z.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  $('#fr-recompo-ok', z).focus();
-  $('#fr-recompo-ok', z).addEventListener('click', () => appliquer($('input[name="fr-mode-recompo"]:checked', z).value));
-  $('#fr-recompo-non', z).addEventListener('click', () => { z.innerHTML = ''; });
-}
 async function enregistrerFeuille(etat, statut, bouton) {
-  const { d, F } = etat, avant = etat.f0;
-  const ligne = { titre: (F.titre || '').trim() || null, contenu: F.contenu, statut };
+  const { d } = etat, avant = etat.f0, f = feuilleCourante(etat);
+  const ligne = { titre: (f.titre || '').trim() || null, contenu: f.contenu, statut };
   bouton.disabled = true;
   const r = avant ? await sb.from('crescite_feuilles').update(ligne).eq('id', avant.id).select().single()
     : await sb.from('crescite_feuilles').insert({ ...ligne, date_id: d.id }).select().single();
   bouton.disabled = false;
   if (r.error) return erreur(r.error);
   remplacerLigne(E.feuilles, r.data);
-  etat.f0 = r.data; etat.F = feuilleVersForm(r.data); etat.initial = JSON.stringify(etat.F);
+  etat.f0 = r.data; etat.F = feuilleVersForm(r.data, d); etat.initial = signatureFeuille(etat.F);
   E.sale = false;
+  if (etat.nettoyer) etat.nettoyer();
   dessinerFeuille(etat);
   annoncer(statut === 'publiee' ? (avant?.statut === 'publiee' ? `Mise à jour publiée : l’équipe voit la version ${r.data.version}.` : `Publiée pour l’équipe : version ${r.data.version}.`)
     : avant?.statut === 'publiee' ? 'Repassée en brouillon : l’équipe ne la voit plus.' : 'Brouillon enregistré : l’équipe ne le voit pas encore.');
   bravo();
 }
-// imprimer la feuille seule, telle que l'équipe la voit (dans un cadre caché, sans fenêtre de plus)
-function imprimerFeuille(feuille, contexte) {
-  const titre = `Feuille de route · ${contexte.spectacle?.titre || ''} · ${jourCourt(contexte.date?.debut)}`;
+// imprimer la feuille telle qu'elle est sur ses pages A4 (dans un cadre caché, sans fenêtre de plus)
+async function imprimerFeuille(feuille, contexte) {
+  const logo = await FEUILLE.logo();
   const f = document.createElement('iframe');
   f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1;
   f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
-  f.srcdoc = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(titre)}</title><style>html,body{margin:0;background:#fff}</style></head><body>${FEUILLE.html(feuille, contexte)}</body></html>`;
-  f.addEventListener('load', () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { erreur(e, 'Impression impossible'); } setTimeout(() => f.remove(), 60000); }, { once: true });
+  f.srcdoc = FEUILLE.impression(feuille, contexte, { logo: !!logo });
+  f.addEventListener('load', async () => {
+    try { await f.contentDocument.fonts.ready; f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { erreur(e, 'Impression impossible'); }
+    setTimeout(() => f.remove(), 60000);
+  }, { once: true });
   document.body.append(f);
+}
+
+// ===================================================================================================== l'éditeur A4
+// La feuille s'écrit directement sur ses pages A4 : une colonne éditable (contenteditable) posée sur des feuilles
+// blanches, avec la mise en page du PDF (FEUILLE.MISE, FEUILLE.cssPage). Les blocs (le modèle) font foi : la frappe
+// ordinaire passe par le navigateur, puis le bloc touché est relu et remis au propre ; le reste (Entrée, effacer d'un
+// bloc à l'autre, coller, gras, rouge, surligner, types de ligne, saut de page, annuler) passe par le modèle, puis la page
+// est redessinée. Un bloc qui ne tient plus sur sa page passe à la suivante (un titre part avec ce qui le suit) ; les
+// débuts de page (pages()) vont avec la feuille, et le PDF coupe aux mêmes endroits.
+const PX_MM = 96 / 25.4;
+const TITRES_A4 = new Set(['rubrique', 'jour', 'sous-titre']);
+function stylesA4() {
+  if ($('#styles-a4')) return;
+  const M = FEUILLE.MISE;
+  const s = document.createElement('style');
+  s.id = 'styles-a4';
+  s.textContent = `${FEUILLE.cssPolices()}
+${FEUILLE.cssPage('.a4-doc')}
+.a4-outils { position: sticky; top: var(--haut-barre, 0px); z-index: 6; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 12px 0 0; padding: 8px 10px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.06); }
+.a4-groupe { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.a4-b { border: 1px solid var(--trait); background: var(--carte); color: var(--encre); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; line-height: 1.2; }
+.a4-b:hover:not(:disabled) { border-color: var(--gris); }
+.a4-b[aria-pressed="true"] { background: var(--accent-doux); border-color: var(--accent); color: var(--accent-fonce); }
+.a4-b:disabled { opacity: .45; cursor: default; }
+.a4-b .a4-rouge { color: ${M.rouge}; }
+.a4-b .a4-jaune { background: ${M.surligne}; color: #000; padding: 0 3px; border-radius: 2px; }
+.a4-vues { margin-left: auto; }
+.a4-aide { margin: 8px 2px 0; }
+.a4-bureau { margin: 10px 0 0; padding: 22px 16px 26px; background: #8e8a8f; border-radius: 12px; overflow: hidden; }
+.a4-bureau:focus-within { box-shadow: 0 0 0 3px var(--accent-doux), 0 0 0 4px var(--accent); }
+.a4-echelle { margin: 0 auto; }
+.a4-pile { position: relative; width: ${M.largeur}mm; transform-origin: 0 0; }
+.a4-feuilles { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.a4-feuille { position: absolute; left: 0; width: ${M.largeur}mm; height: ${M.hauteur}mm; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25), 0 8px 22px rgba(0,0,0,.18); }
+.a4-logo { position: absolute; left: ${M.gauche}mm; top: ${M.haut}mm; width: ${M.logo}mm; height: ${M.logo}mm; object-fit: contain; }
+.a4-badge { display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #1d1d1b; color: #fff; font: 700 15pt "FdR Sans", Carlito, Calibri, sans-serif; }
+.a4-num { position: absolute; right: ${M.droite}mm; top: ${M.hauteur - M.bas + M.surete + 2.1}mm; font: 8pt/1.2 "FdR Sans", Carlito, Calibri, sans-serif; color: ${M.gris}; }
+.a4-doc { position: relative; z-index: 1; box-sizing: border-box; width: ${M.largeur}mm; padding: ${M.haut}mm ${M.droite}mm 0 ${M.gauche}mm; outline: none; caret-color: #000; background: transparent; }
+.a4-doc .b.base { position: relative; }
+.a4-doc .b.base::after { content: ""; position: absolute; left: -7mm; top: .25em; bottom: .25em; width: 2px; border-radius: 2px; background: #7eaee0; }
+.a4-doc .b-entete.base::after { display: none; }
+.a4-doc .amorce { color: #7c7c7c; font-style: italic; font-weight: 400; background: #eeeeee; border-radius: 3px; padding: 0 2px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.a4-doc .amorce:hover { background: #e0e0e0; color: #444; }
+.a4-doc .b-saut { display: flex; align-items: center; gap: 8px; min-height: 0; height: 16px; color: #9a9a9a; font: 700 8pt/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; user-select: none; -webkit-user-select: none; white-space: nowrap; }
+.a4-doc .b-saut::before, .a4-doc .b-saut::after { content: ""; flex: 1; border-top: 1px dashed #bdbdbd; }
+.a4-doc .b-tableau td { outline: none; }
+.a4-doc .b-tableau td:focus { box-shadow: inset 0 0 0 1px #7eaee0; }
+.a4-doc ::selection { background: #b6d4f5; }
+.a4-tel { max-width: 400px; margin: 12px auto 0; border: 10px solid #2b282c; border-radius: 30px; background: #fff; overflow: hidden; max-height: 78vh; overflow-y: auto; }
+.a4-tel .fdr { border: 0; border-radius: 0; box-shadow: none; }
+@media (max-width: 700px) { .a4-vues { margin-left: 0; } .a4-bureau { padding: 12px 6px 16px; } .a4-b { padding: 6px 8px; font-size: 13.5px; } }
+`;
+  document.head.append(s);
+}
+// extra : {lire, ecrire}, ce qui va avec les blocs dans l'historique (les clés composées d'une feuille : annuler une mise à
+// jour depuis la base les rend aussi)
+function editeurA4(hote, { blocs = [], noms = [], ref = '', quandChange = () => {}, quandEtat = () => {}, extra = null } = {}) {
+  stylesA4();
+  const M = FEUILLE.MISE;
+  const PAGE = M.hauteur * PX_MM, ECART = 10 * PX_MM, PAS = PAGE + ECART, LARGE = M.largeur * PX_MM;
+  const HAUT = M.haut * PX_MM, BAS = (M.hauteur - M.bas) * PX_MM, UTILE = BAS - HAUT, SOUS_LOGO = (M.haut + M.logo + M.sousLogo) * PX_MM;
+  hote.innerHTML = `<div class="a4-bureau"><div class="a4-echelle"><div class="a4-pile"><div class="a4-feuilles"></div>
+    <div class="a4-doc" id="a4-doc" contenteditable="true" spellcheck="true" lang="fr" role="textbox" aria-multiline="true" aria-label="La feuille de route, sur sa page A4" aria-describedby="a4-aide"></div></div></div></div>`;
+  const bureau = $('.a4-bureau', hote), echelle = $('.a4-echelle', hote), pile = $('.a4-pile', hote), feuilles = $('.a4-feuilles', hote), doc = $('.a4-doc', hote);
+  let B = (blocs.length ? blocs : [{ type: 'ligne', segments: [] }]).map(b => FEUILLE.bloc(b));
+  let debuts = [], logo = null, enAttente = null, attenteOu = '', compose = false, derniere = null, vivant = true, nPages = 0, prevu = 0;
+  const H = { avant: [], apres: [], t: 0, dernier: '' };
+
+  // ---------------------------------------------------------------------------------------------- texte et segments
+  const T = b => FEUILLE.texteBloc(b);
+  const dansCellule = p => p && p.r != null;
+  const segsDe = (b, p) => dansCellule(p) ? (b.lignes[p.r] || [])[p.c] || [] : b.segments || [];
+  const poserSegs = (b, p, xs) => { if (dansCellule(p)) b.lignes[p.r][p.c] = FEUILLE.segments(xs); else b.segments = FEUILLE.segments(xs); };
+  const longueur = (b, p) => segsDe(b, p).filter(s => !s.amorce).reduce((n, s) => n + s.texte.length, 0);
+  // couper des segments à un rang ; une amorce compte pour zéro et reste avec ce qui la précède (sauf au tout début)
+  function couper(xs, o) {
+    const g = [], d = [];
+    let n = 0;
+    for (const s of xs) {
+      if (s.amorce) { (o > 0 && n <= o ? g : d).push({ ...s }); continue; }
+      const L = s.texte.length;
+      if (n + L <= o) g.push({ ...s });
+      else if (n >= o) d.push({ ...s });
+      else { g.push({ ...s, texte: s.texte.slice(0, o - n) }); d.push({ ...s, texte: s.texte.slice(o - n) }); }
+      n += L;
+    }
+    return [g, d];
+  }
+  // la mise en forme à un rang : celle du caractère d'avant (ou d'après, au début)
+  function marquesA(xs, o) {
+    let n = 0, avant = null, apres = null;
+    for (const s of xs) {
+      if (s.amorce) continue;
+      const L = s.texte.length;
+      if (n < o && n + L >= o) avant = s;
+      if (!apres && n <= o && n + L > o) apres = s;
+      n += L;
+    }
+    const s = avant || apres || {};
+    return { gras: !!s.gras, italique: !!s.italique, rouge: !!s.rouge, surligne: !!s.surligne };
+  }
+  function marquer(xs, de, a, k, v) {
+    const [g, reste] = couper(xs, de), [m, d] = couper(reste, a - de);
+    return [...g, ...m.map(s => (s.amorce ? s : { ...s, [k]: v })), ...d];
+  }
+  const aMarque = (xs, de, a, k) => { const [, reste] = couper(xs, de), [m] = couper(reste, a - de); const t = m.filter(s => !s.amorce && s.texte); return t.length > 0 && t.every(s => s[k]); };
+  // le mot autour d'un rang, pour mettre en gras sans sélection
+  function motAutour(xs, o) {
+    const t = xs.filter(s => !s.amorce).map(s => s.texte).join(''), lettre = c => !!c && /[\p{L}\p{N}'’-]/u.test(c);
+    if (!lettre(t[o - 1]) || !lettre(t[o])) return null;
+    let a = o, b = o;
+    while (a > 0 && lettre(t[a - 1])) a--;
+    while (b < t.length && lettre(t[b])) b++;
+    return [a, b];
+  }
+
+  // ---------------------------------------------------------------------------------------------- le DOM
+  function element(b) {
+    const t = document.createElement('template');
+    t.innerHTML = b.type === 'saut' ? '<div class="b b-saut" contenteditable="false">Saut de page</div>' : FEUILLE.htmlBloc(b, { amorces: true });
+    const el = t.content.firstElementChild;
+    el.dataset.id = b.id;
+    if (b.source === 'base') el.classList.add('base');
+    if (b.type === 'tableau') { el.contentEditable = 'false'; el.querySelectorAll('td').forEach(td => { td.contentEditable = 'true'; }); }
+    return el;
+  }
+  function toutRendre() { doc.replaceChildren(...B.map(element)); paginerBientot(); }
+  function rendre(i) { const el = doc.children[i], n = element(B[i]); if (el) el.replaceWith(n); else doc.append(n); }
+  const TYPES_CLASSE = ['entete', 'rubrique', 'sous-titre', 'jour', 'ligne', 'puce', 'alerte'];
+  // les segments écrits dans un élément (les marques viennent de nos classes, ou des balises et styles qu'un navigateur
+  // ajoute parfois en cours de frappe)
+  function lireSegments(racine) {
+    const out = [];
+    const marche = (n, m) => {
+      if (n.nodeType === 3) { if (n.data) out.push({ texte: n.data.replace(/\u200b/g, ''), ...m }); return; }
+      if (n.nodeType !== 1) return;
+      if (n.classList.contains('amorce')) { out.push({ texte: n.dataset.amorce || n.textContent, amorce: true }); return; }
+      if (n.tagName === 'BR') return;
+      const x = marquesElement(n, m);
+      n.childNodes.forEach(c => marche(c, x));
+    };
+    racine.childNodes.forEach(c => marche(c, {}));
+    return FEUILLE.segments(out);
+  }
+  function lireBloc(n, ancien) {
+    if (n.nodeType !== 1) return FEUILLE.bloc({ type: 'ligne', segments: [{ texte: n.textContent || '' }] });
+    if (n.classList.contains('b-saut')) return FEUILLE.bloc({ ...(ancien || {}), type: 'saut' });
+    if (n.classList.contains('b-tableau') || n.querySelector('table')) return FEUILLE.bloc({ ...(ancien || {}), type: 'tableau', lignes: [...n.querySelectorAll('tr')].map(tr => [...tr.children].map(td => lireSegments(td))) });
+    const type = ancien && !['saut', 'tableau'].includes(ancien.type) ? ancien.type : TYPES_CLASSE.find(t => n.classList.contains('b-' + t)) || 'ligne';
+    return FEUILLE.bloc({ ...(ancien || {}), type, segments: lireSegments(n) });
+  }
+  const memeTexte = (a, b) => JSON.stringify([a.type, a.segments, a.lignes]) === JSON.stringify([b.type, b.segments, b.lignes]);
+  const retouche = b => { delete b.source; if (b.type === 'jour') { const j = FEUILLE.dateDuTexte(T(b), ref); if (j) b.date = j; } };
+  // après une frappe : le modèle relu dans la page, et la page remise au propre là où le navigateur a improvisé
+  function synchroniser() {
+    const sel = lireSelection();
+    const parId = new Map(B.map(b => [b.id, b])), vus = new Set();
+    const noeuds = [...doc.childNodes].filter(n => n.nodeType === 1 || (n.nodeType === 3 && n.data.trim()));
+    let structure = noeuds.length !== doc.childNodes.length;
+    let nouveaux = noeuds.map(n => {
+      let id = n.nodeType === 1 ? n.dataset.id : null;
+      const ancien = id && !vus.has(id) ? parId.get(id) : null;
+      if (!ancien) { structure = true; id = FEUILLE.nouvelId(); }
+      vus.add(id);
+      const b = lireBloc(n, ancien);
+      b.id = id;
+      if (!ancien) { delete b.cle; delete b.source; delete b.origine; }
+      else if (!memeTexte(ancien, b)) retouche(b);
+      return b;
+    });
+    if (!nouveaux.length) { nouveaux = [FEUILLE.bloc({ type: 'ligne', segments: [] })]; structure = true; }
+    B = nouveaux;
+    if (structure) { toutRendre(); if (sel) placer(sel); }
+    else {
+      let redessine = false;
+      B.forEach((b, i) => { const el = doc.children[i], c = element(b); if (el.className !== c.className || el.innerHTML !== c.innerHTML) { el.replaceWith(c); redessine = true; } });
+      if (redessine && sel) placer(sel);
+    }
+    change();
+  }
+
+  // ---------------------------------------------------------------------------------------------- la sélection
+  const enfants = () => [...doc.children];
+  function decalage(conteneur, node, offset) {
+    const r = document.createRange();
+    r.setStart(conteneur, 0); r.setEnd(node, offset);
+    const f = r.cloneContents();
+    f.querySelectorAll('.amorce').forEach(x => x.remove());
+    return f.textContent.length;
+  }
+  function pos(node, offset) {
+    if (node === doc) {
+      const xs = enfants();
+      if (!xs.length) return null;
+      if (offset < xs.length) return { i: offset, o: 0 };
+      return { i: xs.length - 1, o: longueur(B[xs.length - 1]) };
+    }
+    let el = node.nodeType === 1 ? node : node.parentNode;
+    while (el && el.parentNode !== doc) el = el.parentNode;
+    if (!el) return null;
+    const i = enfants().indexOf(el);
+    if (i < 0 || !B[i]) return null;
+    if (B[i].type === 'saut') return { i, o: 0 };
+    if (B[i].type === 'tableau') {
+      const td = (node.nodeType === 1 ? node : node.parentNode).closest('td');
+      if (!td || !el.contains(td)) return { i, r: 0, c: 0, o: 0 };
+      const tr = td.parentNode;
+      return { i, r: [...tr.parentNode.children].indexOf(tr), c: [...tr.children].indexOf(td), o: decalage(td, node, offset) };
+    }
+    return { i, o: decalage(el, node, offset) };
+  }
+  function point(p) {
+    const el = doc.children[p.i];
+    if (!el) return null;
+    let conteneur = el;
+    if (B[p.i]?.type === 'tableau') { const td = el.querySelectorAll('tr')[p.r || 0]?.children[p.c || 0]; if (!td) return { node: el, offset: 0 }; conteneur = td; }
+    if (B[p.i]?.type === 'saut') return { node: doc, offset: p.i };
+    let reste = p.o || 0, dernier = null, t;
+    const w = document.createTreeWalker(conteneur, NodeFilter.SHOW_TEXT, { acceptNode: x => (x.parentNode.closest('.amorce') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT) });
+    while ((t = w.nextNode())) { if (reste <= t.data.length) return { node: t, offset: reste }; reste -= t.data.length; dernier = t; }
+    if (dernier) return { node: dernier, offset: dernier.data.length };
+    const br = [...conteneur.childNodes].findIndex(n => n.nodeName === 'BR');
+    return { node: conteneur, offset: br >= 0 ? br : conteneur.childNodes.length };
+  }
+  function lireSelection() {
+    const s = document.getSelection();
+    if (!s || !s.rangeCount) return null;
+    const r = s.getRangeAt(0);
+    if (!doc.contains(r.startContainer) || !doc.contains(r.endContainer)) return null;
+    const a = pos(r.startContainer, r.startOffset), b = r.collapsed ? a : pos(r.endContainer, r.endOffset);
+    return a && b ? { a, b } : null;
+  }
+  function placer(sel) {
+    if (!sel || !vivant) return;
+    const a = point(sel.a), b = sel.b ? point(sel.b) : a;
+    if (!a || !b) return;
+    const hoteFocus = (a.node.nodeType === 1 ? a.node : a.node.parentNode).closest('td[contenteditable="true"]') || doc;
+    if (document.activeElement !== hoteFocus) hoteFocus.focus({ preventScroll: true });
+    try { document.getSelection().setBaseAndExtent(a.node, a.offset, b.node, b.offset); } catch (e) { /* une position qui n'existe plus */ }
+    derniere = { a: sel.a, b: sel.b || sel.a };
+  }
+  const cmp = (x, y) => x.i - y.i || (x.r ?? -1) - (y.r ?? -1) || (x.c ?? -1) - (y.c ?? -1) || x.o - y.o;
+  const ordonner = sel => cmp(sel.a, sel.b) <= 0 ? { a: sel.a, b: sel.b } : { a: sel.b, b: sel.a };
+  const vide = sel => cmp(sel.a, sel.b) === 0;
+  const memeConteneur = (x, y) => x.i === y.i && (x.r ?? -1) === (y.r ?? -1) && (x.c ?? -1) === (y.c ?? -1);
+  const cleOu = p => p ? `${p.i}.${p.r ?? ''}.${p.c ?? ''}.${p.o}` : '';
+
+  // ---------------------------------------------------------------------------------------------- l'historique
+  function noter(fort = false) {
+    const t = Date.now();
+    if (!fort && H.dernier === 'frappe' && t - H.t < 1200) { H.t = t; return; }
+    H.avant.push({ blocs: clone(B), sel: lireSelection() || derniere, extra: extra ? clone(extra.lire()) : null });
+    if (H.avant.length > 300) H.avant.shift();
+    H.apres = [];
+    H.t = t; H.dernier = fort ? 'action' : 'frappe';
+  }
+  function revenir(de, vers) {
+    if (!de.length) return;
+    vers.push({ blocs: clone(B), sel: lireSelection() || derniere, extra: extra ? clone(extra.lire()) : null });
+    const x = de.pop();
+    B = x.blocs.map(b => FEUILLE.bloc(b));
+    if (extra && x.extra) extra.ecrire(x.extra);
+    toutRendre();
+    if (x.sel && B[x.sel.a.i] && B[(x.sel.b || x.sel.a).i]) placer(x.sel);
+    H.dernier = '';
+    change();
+  }
+  const annuler = () => revenir(H.avant, H.apres), retablir = () => revenir(H.apres, H.avant);
+
+  // ---------------------------------------------------------------------------------------------- les opérations
+  function change() { paginerBientot(); quandChange(); signaler(); }
+  // effacer une plage (sur un ou plusieurs blocs) ; renvoie où mettre le curseur
+  function effacerPlage(sel) {
+    let { a, b } = ordonner(sel);
+    if (memeConteneur(a, b)) {
+      const x = B[a.i];
+      if (x.type === 'saut') { B.splice(a.i, 1); if (!B.length) B.push(FEUILLE.bloc({ type: 'ligne' })); return { i: Math.min(a.i, B.length - 1), o: 0 }; }
+      const xs = segsDe(x, a), [g] = couper(xs, a.o), [, d] = couper(xs, b.o);
+      poserSegs(x, a, [...g, ...d]); retouche(x);
+      return a;
+    }
+    if (a.i === b.i && B[a.i].type === 'tableau') {
+      // d'une cellule à l'autre du même tableau : les cellules entre les deux se vident
+      const x = B[a.i], ordre = (r, c) => r * 1000 + c;
+      x.lignes.forEach((l, r) => l.forEach((cel, c) => {
+        const k = ordre(r, c), ka = ordre(a.r, a.c), kb = ordre(b.r, b.c);
+        if (k < ka || k > kb) return;
+        const [g] = couper(cel, k === ka ? a.o : 0), [, d] = couper(cel, k === kb ? b.o : Infinity);
+        x.lignes[r][c] = FEUILLE.segments(k === ka && k === kb ? [...g, ...d] : k === ka ? g : k === kb ? d : []);
+      }));
+      return a;
+    }
+    // d'un bloc à l'autre : le début du premier et la fin du dernier se rejoignent ; un tableau touché part en entier.
+    // Effacé depuis le tout début du premier, c'est le dernier qui reste (son type, sa ligne d'origine)
+    const A = B[a.i], Z = B[b.i], texte = x => !['saut', 'tableau'].includes(x.type);
+    const gauche = texte(A) ? couper(A.segments, a.o)[0] : [];
+    const droite = texte(Z) ? couper(Z.segments, b.o)[1] : [];
+    let garde;
+    if (gauche.some(s => s.texte || s.amorce)) { garde = A; A.segments = FEUILLE.segments([...gauche, ...droite]); retouche(A); }
+    else if (texte(Z)) { garde = Z; if (b.o > 0) { Z.segments = FEUILLE.segments(droite); retouche(Z); } }
+    else garde = FEUILLE.bloc({ type: 'ligne', segments: [] });
+    B.splice(a.i, b.i - a.i + 1, garde);
+    return { i: a.i, o: garde === A ? a.o : 0 };
+  }
+  function insererTexte(p, texte, marques) {
+    const x = B[p.i];
+    if (!x || x.type === 'saut') return p;
+    const xs = segsDe(x, p), [g, d] = couper(xs, p.o), m = marques || marquesA(xs, p.o);
+    const propre = String(texte).replace(/\r\n?|\n|\t/g, ' ');
+    poserSegs(x, p, [...g, { texte: propre, ...m }, ...d]); retouche(x);
+    return { ...p, o: p.o + propre.length };
+  }
+  function remplacerPlage(sel, texte) {
+    noter(true);
+    let p = effacerPlage(sel);
+    if (texte) p = insererTexte(p, texte, enAttente && attenteOu === cleOu(sel.a) ? enAttente : null);
+    enAttente = null;
+    toutRendre(); placer({ a: p, b: p }); change();
+  }
+  // Entrée : le bloc se coupe en deux ; après un titre, une ligne ; une puce vide redevient une ligne
+  function entree(sel) {
+    noter(true);
+    let p = vide(sel) ? sel.a : effacerPlage(sel);
+    const x = B[p.i];
+    if (x.type === 'tableau') {
+      const r = (p.r ?? x.lignes.length - 1) + 1;
+      x.lignes.splice(r, 0, x.lignes[0].map(() => []));
+      toutRendre(); placer({ a: { i: p.i, r, c: 0, o: 0 } }); change(); return;
+    }
+    if (x.type === 'saut') { B.splice(p.i + 1, 0, FEUILLE.bloc({ type: 'ligne' })); toutRendre(); placer({ a: { i: p.i + 1, o: 0 } }); change(); return; }
+    if (x.type === 'puce' && !T(x).trim()) { x.type = 'ligne'; delete x.source; rendre(p.i); placer({ a: { i: p.i, o: 0 } }); change(); return; }
+    const suite = x.type === 'entete' ? (B[p.i + 1]?.type === 'entete' ? 'entete' : 'ligne') : x.type === 'puce' ? 'puce' : 'ligne';
+    if (p.o === 0 && T(x).length) {
+      // au début d'une ligne : une ligne vide se glisse avant, la ligne reste entière
+      B.splice(p.i, 0, FEUILLE.bloc({ type: x.type === 'puce' ? 'puce' : x.type === 'entete' ? 'entete' : 'ligne', petit: x.petit }));
+      toutRendre(); placer({ a: { i: p.i + 1, o: 0 } }); change(); return;
+    }
+    const [g, d] = couper(x.segments, p.o);
+    x.segments = FEUILLE.segments(g);
+    if (d.some(s => !s.amorce && s.texte)) retouche(x);
+    B.splice(p.i + 1, 0, FEUILLE.bloc({ type: suite, segments: d, petit: suite === 'entete' && x.petit }));
+    toutRendre(); placer({ a: { i: p.i + 1, o: 0 } }); change();
+  }
+  // effacer au début d'un bloc : une puce redevient une ligne ; sinon le bloc rejoint le précédent
+  function effacerAvant(i) {
+    const x = B[i], p = B[i - 1];
+    if (x.type === 'puce') { noter(true); x.type = 'ligne'; delete x.source; rendre(i); placer({ a: { i, o: 0 } }); change(); return; }
+    if (!p) return;
+    if (p.type === 'tableau') { placer({ a: { i: i - 1, r: p.lignes.length - 1, c: p.lignes[0].length - 1, o: longueur(p, { r: p.lignes.length - 1, c: p.lignes[0].length - 1 }) } }); return; }
+    noter(true);
+    if (p.type === 'saut' || !FEUILLE.texteBloc(p, true).length) { B.splice(i - 1, 1); toutRendre(); placer({ a: { i: i - 1, o: 0 } }); change(); return; }
+    const o = longueur(p);
+    p.segments = FEUILLE.segments([...p.segments, ...x.segments]);
+    if (FEUILLE.texteBloc(x, true).length) retouche(p);
+    B.splice(i, 1);
+    toutRendre(); placer({ a: { i: i - 1, o } }); change();
+  }
+  // effacer à la fin d'un bloc : le suivant le rejoint (un saut de page s'efface)
+  function effacerApres(i) {
+    const x = B[i], n = B[i + 1];
+    if (!n || n.type === 'tableau') return;
+    noter(true);
+    if (n.type === 'saut') { B.splice(i + 1, 1); toutRendre(); placer({ a: { i, o: longueur(x) } }); change(); return; }
+    if (!FEUILLE.texteBloc(x, true).length) { B.splice(i, 1); toutRendre(); placer({ a: { i, o: 0 } }); change(); return; }
+    const o = longueur(x);
+    x.segments = FEUILLE.segments([...x.segments, ...n.segments]);
+    if (FEUILLE.texteBloc(n, true).length) retouche(x);
+    B.splice(i + 1, 1);
+    toutRendre(); placer({ a: { i, o } }); change();
+  }
+  // coller des blocs au curseur : au bout d'une ligne, ils viennent dessous ; au début, dessus (la ligne reste entière) ;
+  // sur une ligne vide, à sa place ; au milieu, la ligne se coupe et ses deux morceaux encadrent ce qui est collé
+  function insererBlocs(p, xs) {
+    const x = B[p.i];
+    if (dansCellule(p) || x.type === 'tableau') { const q = insererTexte(p, xs.map(T).filter(Boolean).join(' '), null); rendre(p.i); placer({ a: q }); change(); return; }
+    if (x.type === 'saut') { B.splice(p.i + 1, 0, FEUILLE.bloc({ type: 'ligne' })); p = { i: p.i + 1, o: 0 }; }
+    const y = B[p.i];
+    const [g, d] = couper(y.segments, p.o);
+    const rien = segs => !segs.some(s => s.amorce || s.texte), texte = b => !['tableau', 'saut'].includes(b.type);
+    if (xs.length === 1 && texte(xs[0])) {
+      y.segments = FEUILLE.segments([...g, ...xs[0].segments, ...d]);
+      if (rien(g) && rien(d) && xs[0].type !== 'ligne') y.type = xs[0].type;
+      retouche(y);
+      rendre(p.i); placer({ a: { i: p.i, o: p.o + T(xs[0]).length } }); change(); return;
+    }
+    const colles = xs.map(b => FEUILLE.bloc({ ...b, id: null, cle: null, source: null, origine: null }));
+    const fin = b => ({ i: B.indexOf(b), o: texte(b) ? longueur(b) : 0 });
+    // collés en lignes entières : sans espace au bord
+    const ras = () => colles.forEach(b => { if (!texte(b) || !b.segments.length) return; b.segments[0].texte = b.segments[0].texte.replace(/^[\s\u00a0]+/, ''); const z = b.segments[b.segments.length - 1]; z.texte = z.texte.replace(/[\s\u00a0]+$/, ''); b.segments = FEUILLE.segments(b.segments); });
+    let caret;
+    if (rien(g) || rien(d)) ras();
+    if (rien(g) && rien(d)) { B.splice(p.i, 1, ...colles); caret = fin(colles[colles.length - 1]); }
+    else if (rien(g)) { B.splice(p.i, 0, ...colles); caret = { i: p.i + colles.length, o: 0 }; }
+    else if (rien(d)) { B.splice(p.i + 1, 0, ...colles); caret = fin(colles[colles.length - 1]); }
+    else {
+      const typeY = y.type, petitY = !!y.petit;
+      let suite = colles;
+      if (texte(colles[0])) { y.segments = FEUILLE.segments([...g, ...colles[0].segments]); suite = colles.slice(1); } else y.segments = FEUILLE.segments(g);
+      retouche(y);
+      let dernier = suite[suite.length - 1];
+      if (!dernier || !texte(dernier)) { dernier = FEUILLE.bloc({ type: typeY, segments: [] }); suite = [...suite, dernier]; }
+      const o = longueur(dernier);
+      dernier.segments = FEUILLE.segments([...dernier.segments, ...d]);
+      dernier.type = typeY; if (petitY) dernier.petit = true;
+      B.splice(p.i + 1, 0, ...suite);
+      caret = { i: p.i + suite.length, o };
+    }
+    if (caret.i < 0) caret = { i: Math.min(p.i, B.length - 1), o: 0 };
+    toutRendre(); placer({ a: caret }); change();
+  }
+
+  // ---------------------------------------------------------------------------------------------- les commandes
+  function basculer(k) {
+    let sel = lireSelection() || derniere;
+    if (!sel) return;
+    let garder = null;
+    if (vide(sel)) {
+      const x = B[sel.a.i];
+      if (!x || x.type === 'saut') return;
+      const mot = motAutour(segsDe(x, sel.a), sel.a.o);
+      if (!mot) {
+        // rien de sélectionné : ce qu'on va écrire prendra la marque
+        const m = enAttente && attenteOu === cleOu(sel.a) ? enAttente : marquesA(segsDe(x, sel.a), sel.a.o);
+        enAttente = { ...m, [k]: !m[k] }; attenteOu = cleOu(sel.a);
+        placer(sel); signaler(); return;
+      }
+      garder = sel;
+      sel = { a: { ...sel.a, o: mot[0] }, b: { ...sel.a, o: mot[1] } };
+    }
+    const { a, b } = ordonner(sel);
+    const morceaux = [];
+    for (let i = a.i; i <= b.i; i++) {
+      const x = B[i];
+      if (x.type === 'saut') continue;
+      if (x.type === 'tableau') {
+        x.lignes.forEach((l, r) => l.forEach((cel, c) => {
+          const p = { i, r, c }, apresA = i > a.i || (r * 1000 + c) >= ((a.r ?? 0) * 1000 + (a.c ?? 0)), avantB = i < b.i || (r * 1000 + c) <= ((b.r ?? 1e6) * 1000 + (b.c ?? 0));
+          if (apresA && avantB) morceaux.push({ p, de: i === a.i && r === a.r && c === a.c ? a.o : 0, a: i === b.i && r === b.r && c === b.c ? b.o : longueur(x, p) });
+        }));
+        continue;
+      }
+      morceaux.push({ p: { i }, de: i === a.i ? a.o : 0, a: i === b.i ? b.o : longueur(x) });
+    }
+    const utiles = morceaux.filter(m => m.a > m.de);
+    if (!utiles.length) return;
+    noter(true);
+    const deja = utiles.every(m => aMarque(segsDe(B[m.p.i], m.p), m.de, m.a, k));
+    utiles.forEach(m => { const x = B[m.p.i]; poserSegs(x, m.p, marquer(segsDe(x, m.p), m.de, m.a, k, !deja)); retouche(x); });
+    [...new Set(utiles.map(m => m.p.i))].forEach(rendre);
+    placer(garder || sel); change();
+  }
+  function changerType(type) {
+    const sel = lireSelection() || derniere;
+    if (!sel) return;
+    const { a, b } = ordonner(sel), idx = [];
+    for (let i = a.i; i <= b.i; i++) if (!['saut', 'tableau'].includes(B[i].type)) idx.push(i);
+    if (!idx.length) return;
+    noter(true);
+    const cible = type === 'puce' && idx.every(i => B[i].type === 'puce') ? 'ligne' : type;
+    idx.forEach(i => { const x = B[i]; if (x.type === cible) return; x.type = cible; delete x.petit; delete x.date; retouche(x); rendre(i); });
+    placer(sel); change();
+  }
+  function saut() {
+    let sel = lireSelection() || derniere;
+    if (!sel) return;
+    noter(true);
+    let p = vide(sel) ? sel.a : effacerPlage(sel);
+    const x = B[p.i];
+    let k;
+    if (['tableau', 'saut'].includes(x.type)) k = p.i + 1;
+    else if (p.o === 0 && T(x).length) k = p.i;
+    else if (p.o >= longueur(x)) k = p.i + 1;
+    else {
+      const [g, d] = couper(x.segments, p.o);
+      x.segments = FEUILLE.segments(g); retouche(x);
+      B.splice(p.i + 1, 0, FEUILLE.bloc({ type: x.type === 'puce' ? 'puce' : 'ligne', segments: d }));
+      k = p.i + 1;
+    }
+    B.splice(k, 0, FEUILLE.bloc({ type: 'saut' }));
+    if (!B[k + 1]) B.push(FEUILLE.bloc({ type: 'ligne' }));
+    toutRendre(); placer({ a: { i: k + 1, o: 0 } }); change();
+  }
+  // les prénoms de l'équipe et « tout le monde », surlignés d'un coup dans le planning (sinon dans toute la feuille)
+  function surlignerNoms() {
+    const plat = s => s.split('').map(c => (norm(c)[0] || c)).join('').replace(/’/g, "'");
+    const mots = [...new Set([...noms, 'tout le monde', 'toute l’équipe'].map(x => plat(String(x).trim())).filter(Boolean))].sort((x, y) => y.length - x.length);
+    let de = B.findIndex(x => x.type === 'rubrique' && /planning/.test(norm(T(x)))), fin = B.length;
+    if (de >= 0) { const k = B.findIndex((x, i) => i > de && x.type === 'rubrique'); if (k > 0) fin = k; } else de = B.findIndex(x => x.type !== 'entete') - 1;
+    const touches = [];
+    let n = 0, note = false;
+    for (let i = de + 1; i < fin; i++) {
+      const x = B[i];
+      if (!['ligne', 'puce', 'alerte', 'jour'].includes(x.type)) continue;
+      const t = plat(T(x));
+      let xs = x.segments, change_ = false;
+      mots.forEach(m => {
+        let k = 0;
+        while ((k = t.indexOf(m, k)) >= 0) {
+          const av = t[k - 1], ap = t[k + m.length];
+          if ((!av || !/[a-z0-9]/.test(av)) && (!ap || !/[a-z0-9]/.test(ap)) && !aMarque(xs, k, k + m.length, 'surligne')) {
+            if (!note) { noter(true); note = true; }
+            xs = marquer(xs, k, k + m.length, 'surligne', true); change_ = true; n++;
+          }
+          k += m.length;
+        }
+      });
+      if (change_) { x.segments = FEUILLE.segments(xs); retouche(x); touches.push(i); }
+    }
+    if (touches.length) { const sel = lireSelection() || derniere; touches.forEach(rendre); if (sel) placer(sel); change(); }
+    return n;
+  }
+
+  // ---------------------------------------------------------------------------------------------- coller
+  function couleur(c) {
+    c = String(c || '').trim().toLowerCase();
+    if (!c || ['transparent', 'inherit', 'initial', 'auto', 'windowtext', 'none', 'currentcolor'].includes(c)) return null;
+    const noms = { red: [255, 0, 0], darkred: [139, 0, 0], crimson: [220, 20, 60], firebrick: [178, 34, 34], yellow: [255, 255, 0], white: [255, 255, 255], black: [0, 0, 0],
+      lime: [0, 255, 0], green: [0, 128, 0], cyan: [0, 255, 255], aqua: [0, 255, 255], magenta: [255, 0, 255], fuchsia: [255, 0, 255], blue: [0, 0, 255], gray: [128, 128, 128], grey: [128, 128, 128], orange: [255, 165, 0], darkyellow: [128, 128, 0], lightgray: [211, 211, 211] };
+    if (noms[c]) return noms[c];
+    let m = /^#([0-9a-f]{3})$/.exec(c);
+    if (m) return m[1].split('').map(x => parseInt(x + x, 16));
+    m = /^#([0-9a-f]{6})/.exec(c);
+    if (m) return [0, 2, 4].map(k => parseInt(m[1].slice(k, k + 2), 16));
+    m = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:[\s,/]+([\d.]+)(%?))?/.exec(c);
+    if (m) return m[4] != null && parseFloat(m[4]) === 0 ? null : [+m[1], +m[2], +m[3]];
+    return null;
+  }
+  const estRouge = c => { const x = couleur(c); return !!x && x[0] >= 150 && x[1] <= 110 && x[2] <= 110; };
+  const estFond = c => { const x = couleur(c); return !!x && !(x[0] >= 235 && x[1] >= 235 && x[2] >= 235); };
+  // les marques d'un élément : nos classes, les balises (b, i, mark, font) et les styles de Word, Writer ou Google Docs
+  function marquesElement(n, m) {
+    const x = { ...m }, tag = n.tagName.toUpperCase(), cl = n.classList, st = n.style || {}, brut = (n.getAttribute('style') || '').toLowerCase();
+    if (tag === 'B' || tag === 'STRONG' || cl.contains('g')) x.gras = true;
+    if (tag === 'I' || tag === 'EM' || cl.contains('i')) x.italique = true;
+    if (tag === 'MARK' || cl.contains('s')) x.surligne = true;
+    if (cl.contains('r')) x.rouge = true;
+    const fw = st.fontWeight;
+    if (fw) x.gras = fw === 'bold' || fw === 'bolder' || +fw >= 600;
+    const fs = st.fontStyle;
+    if (fs) x.italique = fs === 'italic' || fs === 'oblique';
+    const col = st.color || (tag === 'FONT' ? n.getAttribute('color') : '');
+    if (col) x.rouge = estRouge(col);
+    const fond = st.backgroundColor || (/mso-highlight\s*:\s*([^;]+)/.exec(brut) || [])[1];
+    if (fond) x.surligne = estFond(fond);
+    if (st.fontSize) { const v = parseFloat(st.fontSize); if (!isNaN(v)) x.taille = /px/.test(st.fontSize) ? v * 0.75 : /pt/.test(st.fontSize) ? v : x.taille; }
+    if (n.dataset?.doc) x.doc = /^\d+$/.test(n.dataset.doc) ? +n.dataset.doc : n.dataset.doc;
+    if (n.dataset?.lien) x.lien = n.dataset.lien;
+    return x;
+  }
+  const BLOCS_HTML = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'LI', 'BLOCKQUOTE', 'PRE', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'ADDRESS', 'DT', 'DD', 'UL', 'OL', 'DL', 'CENTER', 'FIGURE', 'TR', 'TBODY', 'THEAD']);
+  const PUCE_TEXTE = /^\s*(?:[•·▪◦‣○●■□➢➤►▸–—-]|\*|o(?=\s))\s+/;
+  // du HTML collé (Word, Writer, Google Docs, une page web, cette page) → des blocs, ramenés aux formes de la feuille
+  function depuisHtml(html) {
+    const d = new DOMParser().parseFromString(html, 'text/html');
+    d.querySelectorAll('style, script, meta, link, title, xml, template, noscript, .amorce').forEach(x => x.remove());
+    [...d.body.getElementsByTagName('*')].forEach(x => { if (/^o:p$/i.test(x.tagName) || /mso-list\s*:\s*ignore/i.test(x.getAttribute('style') || '')) x.remove(); });
+    const sortie = [];
+    let cur = null, attente = 'ligne';
+    const texte = (t, m) => {
+      if (!cur) { if (!t.replace(/[\s\u00a0]/g, '')) return; cur = { type: attente, segments: [], tailles: [] }; sortie.push(cur); }
+      cur.segments.push({ texte: t, gras: m.gras, italique: m.italique, rouge: m.rouge, surligne: m.surligne, doc: m.doc, lien: m.lien });
+      if (m.taille) cur.tailles.push(m.taille);
+    };
+    const typeHtml = (n, tag) => {
+      const t = TYPES_CLASSE.find(k => n.classList.contains('b-' + k));
+      if (t) return t;
+      if (tag === 'LI') return 'puce';
+      if (tag === 'H1' || tag === 'H2') return 'rubrique';
+      if (/^H[3-6]$/.test(tag)) return 'sous-titre';
+      if (/MsoListParagraph/i.test(n.className) || /mso-list\s*:/i.test(n.getAttribute('style') || '')) return 'puce';
+      return 'ligne';
+    };
+    // le texte d'une cellule de tableau, sur une ligne
+    const cellules = (n, m) => {
+      const out = [];
+      const sous = (x, mm) => {
+        if (x.nodeType === 3) { out.push({ texte: x.data.replace(/[ \t\r\n\f\u200b]+/g, ' '), ...mm }); return; }
+        if (x.nodeType !== 1) return;
+        if (x.tagName === 'BR' || BLOCS_HTML.has(x.tagName)) out.push({ texte: ' ' });
+        const m2 = marquesElement(x, mm);
+        delete m2.taille;
+        x.childNodes.forEach(c => sous(c, m2));
+      };
+      n.childNodes.forEach(c => sous(c, m));
+      const xs = FEUILLE.segments(out);
+      if (xs.length) { xs[0].texte = xs[0].texte.replace(/^\s+/, ''); xs[xs.length - 1].texte = xs[xs.length - 1].texte.replace(/\s+$/, ''); }
+      return FEUILLE.segments(xs);
+    };
+    const marche = (n, m, pre, parent = 'ligne') => {
+      if (n.nodeType === 3) { const t = pre ? n.data.replace(/\n/g, ' ') : n.data.replace(/[ \t\r\n\f\u200b]+/g, ' '); if (t) texte(t, m); return; }
+      if (n.nodeType !== 1) return;
+      const tag = n.tagName.toUpperCase();
+      if (tag === 'BR') { if (cur) { cur = null; attente = 'ligne'; } else sortie.push({ type: 'ligne', segments: [] }); return; }
+      if (n.classList.contains('b-saut')) { cur = null; sortie.push({ type: 'saut' }); attente = 'ligne'; return; }
+      if (tag === 'TABLE') {
+        cur = null;
+        const lignes = [...n.rows].slice(0, 60).map(tr => [...tr.cells].slice(0, 8).map(td => cellules(td, {})));
+        const large = Math.max(1, ...lignes.map(l => l.length));
+        if (lignes.length) sortie.push({ type: 'tableau', lignes: lignes.map(l => [...l, ...Array(large - l.length).fill([])]) });
+        attente = 'ligne';
+        return;
+      }
+      const m2 = marquesElement(n, m);
+      if (BLOCS_HTML.has(tag)) {
+        cur = null;
+        if (['UL', 'OL', 'DL', 'TBODY', 'THEAD', 'TR'].includes(tag)) { n.childNodes.forEach(c => marche(c, m2, pre, parent)); cur = null; attente = 'ligne'; return; }
+        const avant = sortie.length, t = typeHtml(n, tag);
+        attente = t === 'ligne' && parent !== 'ligne' ? parent : t;
+        const ici = attente;
+        n.childNodes.forEach(c => marche(c, m2, pre || tag === 'PRE', ici));
+        if (sortie.length === avant && (tag === 'P' || tag === 'DIV') && !n.querySelector('*:not(br)')) sortie.push({ type: 'ligne', segments: [] });
+        cur = null; attente = 'ligne';
+        return;
+      }
+      n.childNodes.forEach(c => marche(c, m2, pre, parent));
+    };
+    d.body.childNodes.forEach(c => marche(c, {}, false));
+    return nettoyerColles(sortie);
+  }
+  function depuisTexte(t) {
+    return nettoyerColles(String(t || '').replace(/\r\n?/g, '\n').split('\n').map(l => ({ type: 'ligne', segments: [{ texte: l.replace(/\t/g, ' ') }] })));
+  }
+  function nettoyerColles(xs) {
+    let out = xs.map((b, k) => {
+      if (b.type === 'saut' || b.type === 'tableau') return FEUILLE.bloc(b);
+      const segs = FEUILLE.segments(b.segments);
+      // les espaces au bord d'un paragraphe s'en vont, sauf au tout début et à la toute fin de ce qui est collé
+      if (segs.length && k > 0) segs[0].texte = segs[0].texte.replace(/^[\s\u00a0]+/, '');
+      if (segs.length && k < xs.length - 1) segs[segs.length - 1].texte = segs[segs.length - 1].texte.replace(/[\s\u00a0]+$/, '');
+      let type = b.type;
+      const x = FEUILLE.segments(segs), t = x.map(s => s.texte).join('');
+      if (type === 'ligne' && x.length && PUCE_TEXTE.test(t)) { type = 'puce'; x[0].texte = x[0].texte.replace(PUCE_TEXTE, ''); }
+      const pleins = x.filter(s => s.texte.trim()), gras = pleins.length > 0 && pleins.every(s => s.gras);
+      if (type === 'ligne' && gras && t.length <= 60) {
+        const grand = Math.max(0, ...(b.tailles || [])) >= 13;
+        if (FEUILLE.dateDuTexte(t, ref) && t.length <= 40 && !FEUILLE.lireHeure(t)) type = 'jour';
+        else if (grand || (t === t.toUpperCase() && /[A-ZÀ-Ý]{3}/.test(t) && t.length <= 40)) type = 'rubrique';
+      }
+      // un titre ne garde pas un gras qui est déjà le sien
+      const y = TITRES_A4.has(type) ? x.map(s => ({ ...s, gras: false })) : x;
+      return FEUILLE.bloc({ type, segments: y, date: type === 'jour' ? FEUILLE.dateDuTexte(t, ref) : undefined });
+    });
+    const vide = b => b.type !== 'saut' && b.type !== 'tableau' && !T(b).trim();
+    out = out.filter((b, i) => !(vide(b) && i > 0 && vide(out[i - 1])));
+    while (out.length && vide(out[0])) out.shift();
+    while (out.length && vide(out[out.length - 1])) out.pop();
+    return out;
+  }
+
+  // ---------------------------------------------------------------------------------------------- les événements
+  const surBeforeInput = e => {
+    if (!vivant) return;
+    const t = e.inputType;
+    if (t === 'historyUndo') { e.preventDefault(); annuler(); return; }
+    if (t === 'historyRedo') { e.preventDefault(); retablir(); return; }
+    if (t === 'formatBold') { e.preventDefault(); basculer('gras'); return; }
+    if (t === 'formatItalic') { e.preventDefault(); basculer('italique'); return; }
+    if (t.startsWith('format') || t === 'insertFromDrop' || t === 'deleteByDrag' || t === 'insertLink' || t === 'insertHorizontalRule' || t === 'insertOrderedList' || t === 'insertUnorderedList') { e.preventDefault(); return; }
+    if (t === 'insertFromPaste' || t === 'insertFromPasteAsQuotation' || t === 'insertFromYank') return;
+    const sel = lireSelection();
+    if (!sel) return;
+    if (t === 'insertParagraph' || t === 'insertLineBreak') { e.preventDefault(); entree(sel); return; }
+    const plusieurs = !memeConteneur(sel.a, sel.b) || B[sel.a.i]?.type === 'saut';
+    if (plusieurs && (t.startsWith('insert') || t.startsWith('delete'))) {
+      e.preventDefault();
+      remplacerPlage(sel, t === 'insertText' || t === 'insertReplacementText' ? (e.data ?? e.dataTransfer?.getData('text/plain') ?? '') : '');
+      return;
+    }
+    if (vide(sel)) {
+      const x = B[sel.a.i], cellule = dansCellule(sel.a);
+      if (/^delete.*Backward$/.test(t) && sel.a.o === 0) { e.preventDefault(); if (!cellule) effacerAvant(sel.a.i); return; }
+      if (/^delete.*Forward$/.test(t) && sel.a.o >= longueur(x, sel.a)) { e.preventDefault(); if (!cellule) effacerApres(sel.a.i); return; }
+      if (t === 'insertText' && enAttente && attenteOu === cleOu(sel.a)) {
+        e.preventDefault(); noter(true);
+        const p = insererTexte(sel.a, e.data || '', enAttente);
+        enAttente = null; rendre(sel.a.i); placer({ a: p }); change(); return;
+      }
+    }
+    noter();
+  };
+  const surInput = e => { if (!vivant || compose || e.isComposing) return; synchroniser(); };
+  const surPaste = e => {
+    if (!vivant) return;
+    e.preventDefault();
+    const dt = e.clipboardData;
+    if (!dt) return;
+    const html = dt.getData('text/html'), texte = dt.getData('text/plain');
+    let xs = html ? depuisHtml(html) : depuisTexte(texte);
+    if (!xs.length && texte) xs = depuisTexte(texte);
+    if (!xs.length) return;
+    let sel = lireSelection() || derniere;
+    if (!sel) return;
+    noter(true);
+    let p = vide(sel) ? sel.a : effacerPlage(sel);
+    // une ligne de texte simple : telle quelle, avec la mise en forme du curseur
+    if (!html && !/[\r\n]/.test(texte.replace(/[\r\n]+$/, ''))) { const q = insererTexte(p, texte.replace(/[\r\n]+$/, ''), null); toutRendre(); placer({ a: q }); change(); return; }
+    insererBlocs(p, xs);
+  };
+  const surKeydown = e => {
+    if (!vivant) return;
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && !e.altKey) {
+      const k = e.key.toLowerCase();
+      if (k === 'z' && !e.shiftKey) { e.preventDefault(); annuler(); return; }
+      if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); retablir(); return; }
+      if (k === 'b') { e.preventDefault(); basculer('gras'); return; }
+      if (k === 'i') { e.preventDefault(); basculer('italique'); return; }
+      if (k === 'u') { e.preventDefault(); return; }
+      if (e.key === 'Enter') { e.preventDefault(); saut(); return; }
+    }
+    if (e.key === 'Tab') {
+      const sel = lireSelection();
+      if (sel && dansCellule(sel.a)) {
+        e.preventDefault();
+        const x = B[sel.a.i], nl = x.lignes.length, nc = x.lignes[0].length;
+        let k = sel.a.r * nc + sel.a.c + (e.shiftKey ? -1 : 1);
+        if (k >= nl * nc) { noter(true); x.lignes.push(x.lignes[0].map(() => [])); rendre(sel.a.i); }
+        k = Math.max(0, k);
+        placer({ a: { i: sel.a.i, r: Math.floor(k / nc), c: k % nc, o: 0 } });
+      }
+    }
+  };
+  const surMousedown = e => {
+    const a = e.target.closest?.('.amorce');
+    if (!a || !doc.contains(a)) return;
+    e.preventDefault();
+    const el = a.closest('[data-id]'), i = enfants().indexOf(el);
+    if (i < 0) return;
+    const td = a.closest('td'), p = td ? { i, r: [...td.parentNode.parentNode.children].indexOf(td.parentNode), c: [...td.parentNode.children].indexOf(td) } : { i };
+    const k = [...(td || el).querySelectorAll('.amorce')].indexOf(a);
+    noter(true);
+    const x = B[i];
+    let n = 0, vu = -1, o = 0;
+    const reste = segsDe(x, p).filter(s => { if (s.amorce) { vu++; if (vu === k) { o = n; return false; } return true; } n += s.texte.length; return true; });
+    // « heure ? : départ » → le curseur au début, prêt pour l'heure
+    poserSegs(x, p, reste);
+    rendre(i); placer({ a: { ...p, o } }); change();
+  };
+  const surSelection = () => {
+    if (!vivant) return;
+    const s = lireSelection();
+    if (!s) return;
+    if (enAttente && attenteOu !== cleOu(s.a)) enAttente = null;
+    derniere = s;
+    signaler();
+  };
+  const empecher = e => e.preventDefault();
+  doc.addEventListener('beforeinput', surBeforeInput);
+  doc.addEventListener('input', surInput);
+  doc.addEventListener('compositionstart', () => { compose = true; });
+  doc.addEventListener('compositionend', () => { compose = false; synchroniser(); });
+  doc.addEventListener('paste', surPaste);
+  doc.addEventListener('keydown', surKeydown);
+  doc.addEventListener('mousedown', surMousedown);
+  doc.addEventListener('dragstart', empecher);
+  doc.addEventListener('drop', empecher);
+  document.addEventListener('selectionchange', surSelection);
+
+  // ---------------------------------------------------------------------------------------------- l'état (barre d'outils)
+  function etat() {
+    const sel = derniere, x = sel ? B[sel.a.i] : null;
+    const e = { type: x?.type || '', annuler: H.avant.length > 0, retablir: H.apres.length > 0 };
+    if (!x || x.type === 'saut') return e;
+    if (vide(sel)) return { ...e, ...(enAttente && attenteOu === cleOu(sel.a) ? enAttente : marquesA(segsDe(x, sel.a), sel.a.o)) };
+    const { a, b } = ordonner(sel);
+    ['gras', 'rouge', 'surligne'].forEach(k => {
+      const xs = [];
+      for (let i = a.i; i <= b.i; i++) if (!['saut', 'tableau'].includes(B[i].type)) xs.push([i, i === a.i ? a.o : 0, i === b.i ? b.o : longueur(B[i])]);
+      const pleins = xs.filter(([, de, fin]) => fin > de);
+      e[k] = pleins.length > 0 && pleins.every(([i, de, fin]) => aMarque(B[i].segments, de, fin, k));
+    });
+    return e;
+  }
+  const signaler = () => quandEtat(etat());
+
+  // ---------------------------------------------------------------------------------------------- les pages
+  function marque() { return logo ? `<img class="a4-logo" src="${esc(FEUILLE.logoUrl())}" alt="">` : '<span class="a4-logo a4-badge">crescite</span>'; }
+  function dessinerFeuilles(n) {
+    if (n !== nPages) {
+      feuilles.innerHTML = Array.from({ length: n }, (_, k) => `<div class="a4-feuille" style="top:${k * PAS}px">${k === 0 ? marque() : ''}${n > 1 ? `<span class="a4-num">${k + 1} / ${n}</span>` : ''}</div>`).join('');
+      nPages = n;
+    }
+    pile.style.height = `${n * PAS - ECART}px`;
+    doc.style.minHeight = `${n * PAS - ECART}px`;
+    ajusterEchelle();
+  }
+  function ajusterEchelle() {
+    const dispo = bureau.clientWidth - 2 * (bureau.clientWidth < 500 ? 6 : 16);
+    const s = Math.min(1, Math.max(0.2, dispo / LARGE));
+    pile.style.transform = s < 1 ? `scale(${s})` : '';
+    echelle.style.width = `${LARGE * s}px`;
+    echelle.style.height = `${pile.offsetHeight * s}px`;
+  }
+  // un bloc qui dépasse le bas de sa page passe en haut de la suivante (un titre part avec ce qui le suit) ; après un
+  // saut de page, le bloc suivant commence une page ; sur la première page, le corps commence sous le logo
+  function paginer() {
+    prevu = 0;
+    if (!vivant) return;
+    const els = enfants();
+    if (!els.length) return;
+    const tops = els.map(el => el.offsetTop), hs = els.map(el => el.offsetHeight), anciens = els.map(el => el._pousse || 0);
+    let cumul = 0;
+    const nat = tops.map((t, i) => { cumul += anciens[i]; return t - cumul; });
+    const pousse = new Array(els.length).fill(0), decalAvant = [];
+    const ds = [];
+    const corps = B.findIndex(x => x.type !== 'entete');
+    let decal = 0, i = 0, forcer = false;
+    while (i < els.length) {
+      decalAvant[i] = decal;
+      const top = nat[i] + decal, h = hs[i], page = Math.max(0, Math.floor(top / PAS)), y = top - page * PAS;
+      let p = 0;
+      if (i === corps && page === 0 && top < SOUS_LOGO) p = SOUS_LOGO - top;
+      else if (forcer) { p = (page + 1) * PAS + HAUT - top; ds.push(i); }
+      else if (B[i]?.type !== 'saut' && y + h > BAS + 0.5 && y > HAUT + 0.5 && h <= UTILE) {
+        // un titre (ou deux) juste avant part avec le bloc
+        let k = i;
+        while (k - 1 >= 0 && TITRES_A4.has(B[k - 1]?.type) && !ds.includes(k - 1) && k - 1 !== corps) {
+          const tk = nat[k - 1] + decalAvant[k - 1];
+          if (Math.floor(tk / PAS) !== page || tk - page * PAS <= HAUT + 0.5) break;
+          k--;
+        }
+        if (k < i) {
+          decal = decalAvant[k];
+          for (let j = k; j < i; j++) pousse[j] = 0;
+          const tk = nat[k] + decal;
+          pousse[k] = (page + 1) * PAS + HAUT - tk; decal += pousse[k]; ds.push(k);
+          i = k + 1; forcer = false;
+          continue;
+        }
+        p = (page + 1) * PAS + HAUT - top; ds.push(i);
+      }
+      pousse[i] = p; decal += p;
+      forcer = B[i]?.type === 'saut';
+      i++;
+    }
+    els.forEach((el, k) => { if ((el._pousse || 0) !== pousse[k]) { el.style.marginTop = pousse[k] ? `${pousse[k]}px` : ''; el._pousse = pousse[k]; } });
+    const fin = nat[els.length - 1] + decal + hs[els.length - 1];
+    dessinerFeuilles(Math.max(1, Math.floor(Math.max(0, fin - 1) / PAS) + 1));
+    debuts = [...new Set(ds)].sort((x, y) => x - y).map(k => B[k]?.id).filter(Boolean);
+  }
+  function paginerBientot() { if (!prevu) prevu = requestAnimationFrame(paginer); }
+  const observateur = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { ajusterEchelle(); }) : null;
+  if (observateur) observateur.observe(bureau);
+  toutRendre();
+  paginer();
+  FEUILLE.logo().then(svg => { logo = svg; nPages = 0; if (vivant) paginer(); });
+  if (document.fonts) {
+    Promise.all(['400 11pt', '700 11pt', 'italic 400 11pt', 'italic 700 11pt'].map(f => document.fonts.load(`${f} "FdR Sans"`))).catch(() => null).then(() => { if (vivant) paginer(); });
+    document.fonts.addEventListener?.('loadingdone', paginerBientot);
+  }
+  signaler();
+
+  return {
+    blocs: () => clone(B), pages: () => [...debuts],
+    remplacer(xs) { noter(true); B = (xs.length ? xs : [{ type: 'ligne' }]).map(b => FEUILLE.bloc(b)); toutRendre(); change(); },
+    type: changerType, basculer, saut, annuler, retablir, surlignerNoms, paginer,
+    focus() { placer(derniere || { a: { i: 0, o: 0 } }); },
+    detruire() {
+      vivant = false;
+      document.removeEventListener('selectionchange', surSelection);
+      document.fonts?.removeEventListener?.('loadingdone', paginerBientot);
+      if (observateur) observateur.disconnect();
+      if (prevu) cancelAnimationFrame(prevu);
+    },
+  };
 }
 
 // ===================================================================================================== journal
@@ -1048,6 +1959,8 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .doc-titre { display: grid; gap: 2px; min-width: 0; }
 .doc-titre small { color: var(--gris); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .docs-ajout { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 10px; }
+.docs-titre { margin: 18px 0 8px; font-size: 14.5px; display: flex; align-items: center; gap: 8px; }
+.docs-titre:first-child { margin-top: 0; }
 .doc-lien { margin-top: 4px; }
 @media (max-width: 900px) { .doc-l { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .doc-titre { grid-column: 1 / -1; grid-row: 1; } .doc-l .dist-outils { grid-column: 1 / -1; justify-content: flex-start; } }
 .eq-date { display: grid; gap: 4px; margin: 0 0 6px; padding: 0; list-style: none; }
@@ -1067,25 +1980,6 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .fr-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .fr-alerte { margin: 10px 0 0; padding: 8px 12px; border-radius: 9px; background: var(--option-doux); color: var(--option); font-size: 13.5px; font-weight: 600; }
 .fr-alerte a, .fr-alerte .btn.lien { color: inherit; text-decoration: underline; padding: 0; font-weight: 700; }
-.fr-choix { margin-top: 12px; padding: 12px 14px 8px; background: var(--accent-doux); border-color: var(--accent); }
-.fr-choix p { margin: 0 0 8px; }
-.fr-choix .case { font-weight: 500; margin: 6px 0; align-items: flex-start; }
-.fr-choix .case input { margin-top: 2px; flex: none; }
-.fr-sec h3 .fr-source { font-size: 12px; }
-.fr-fiche { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.fr-fiche .large { grid-column: 1 / -1; }
-.fr-fiche textarea { min-height: 60px; }
-.table-defile { overflow-x: auto; margin-bottom: 8px; }
-table.fr-table { min-width: 640px; }
-table.fr-table td.large { width: 34%; min-width: 200px; }
-table.fr-table input[type=time] { min-width: 96px; }
-table.fr-table input[type=date] { min-width: 138px; }
-table.fr-table input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
-table.fr-table .fr-outils { white-space: nowrap; width: 1%; }
-table.fr-table tr.inhabituel input[type=time] { border-color: var(--option); background: var(--option-doux); }
-.fr-vide { margin: 0 0 8px; }
-.fr-docs { display: grid; gap: 6px; }
-.fr-docs .case { font-weight: 500; }
-.fr-apercu { margin: 16px 0; }
-@media (max-width: 700px) { .fr-fiche { grid-template-columns: minmax(0, 1fr); } table.fr-table { min-width: 0; } table.fr-table td.large { min-width: 0; grid-column: 1 / -1; } table.fr-table .fr-outils { grid-column: 1 / -1; } .table-defile { overflow: visible; } }
+.fr-accueil p { max-width: 760px; }
+.fr-etat .fr-actions { margin-top: 0; }
 </style>`);
