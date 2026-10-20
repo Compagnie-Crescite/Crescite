@@ -6,7 +6,8 @@
    VERSION est posée par maquettes/build.py (equipe(dest)) : une empreinte de tout ce que ce service garde (la page, ses
    scripts, ceux de l'administration qu'elle charge, la carte, les icônes). Une nouvelle version s'installe à côté et
    attend : la page annonce « Nouvelle version disponible » et, sur un geste, lui demande de prendre la main (skipWaiting).
-   Servi sans build (le dossier equipe/ tel quel), VERSION reste « __VERSION__ » : tout passe alors d'abord par le réseau.
+   Servi sans build (le dossier equipe/ tel quel), VERSION garde son gabarit (deux soulignés devant) : tout passe alors
+   d'abord par le réseau.
 
    Jamais gardés : l'authentification, la fonction d'envoi, les liens signés des documents, et toute écriture. */
 const VERSION = '__VERSION__';
