@@ -928,7 +928,9 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   }
   // les bras en avant : vides s'ils doivent pousser, sinon posés
   function garnir(fig, lieux, { vide = false } = {}) {
-    const reg = REG.get(fig.id), k = echelle(fig), lw = k * .9, a = vide ? '' : ' arrive';
+    const reg = REG.get(fig.id);
+    if (!reg) return;                 // une carte déjà retirée de la page (on vient d'en changer) : rien à garnir
+    const k = echelle(fig), lw = k * .9, a = vide ? '' : ' arrive';
     reg.lieux = lieux;
     reg.par = new Map(reg.passe.map(x => [x.l, x]));
     lieux.forEach(x => reg.par.set(x.l, x));
