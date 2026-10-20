@@ -5,12 +5,15 @@
      de suivi, ses spectacles et ses prochaines dates) et les documents de toute la compagnie ;
    - dans chaque spectacle : la distribution, le déroulé type d'une journée de représentation, les documents ;
    - dans chaque date : son équipe (la distribution « en tournée », moins qui ne part pas, plus remplaçants et renforts) ;
-   - la rubrique Feuilles de route : composer depuis la base, compléter bloc par bloc, publier pour l'équipe, PDF.
+   - la rubrique Feuilles de route : composer depuis la base, compléter bloc par bloc, publier pour l'équipe, PDF ;
+   - la rubrique Espace pro : les invitations des salles (pro/), leur lien, leur journal ; et dans chaque spectacle, les
+     documents réservés aux salles (captations, photos, fichiers non publics).
    Tant que la base n'a pas l'équipe (supabase/migrations/20261021_crescite_equipe.sql), ces écrans le disent et le
-   reste de l'administration marche comme avant. */
+   reste de l'administration marche comme avant. De même sans l'espace pro (20261023_crescite_pro.sql). */
 
 // ===================================================================================================== état et chargement
-Object.assign(E, { personnes: [], privees: [], suiviPersonnes: [], distributions: [], equipes: [], documents: [], feuilles: [], equipeInstallee: null, equipeErreur: '' });
+Object.assign(E, { personnes: [], privees: [], suiviPersonnes: [], distributions: [], equipes: [], documents: [], feuilles: [], equipeInstallee: null, equipeErreur: '',
+  acces: [], sql4: false, sql4Erreur: '' });
 // le temps réel des tables de l'équipe (sur son propre canal : la base peut ne pas encore les avoir)
 const TABLES_EQUIPE = {
   crescite_personnes: ['personnes', 'id'], crescite_distributions: ['distributions', 'id'], crescite_equipes: ['equipes', ['date_id', 'personne_id']],
@@ -33,6 +36,7 @@ async function chargerEquipe() {
     if (r.data?.length) return 'nature' in r.data[0];
     return !(await sb.from('crescite_dates').select('nature').limit(1)).error;
   }, () => false);
+  const pro = chargerAcces(true);
   try {
     const [pe, pr, su, di, eq, dc, fe] = await Promise.all([tout('crescite_personnes', 'nom'), tout('crescite_personnes_privees'), tout('crescite_personnes_suivi'),
       tout('crescite_distributions', 'ordre'), tout('crescite_equipes'), tout('crescite_documents', 'ordre'), tout('crescite_feuilles')]);
@@ -42,6 +46,16 @@ async function chargerEquipe() {
     E.equipeErreur = /PGRST205|42P01|does not exist|schema cache/i.test(`${e?.code || ''} ${e?.message || ''}`) ? '' : (e?.message || String(e));
   }
   E.sql3 = await sonde;
+  await pro;
+}
+// les invitations des salles (quatrième script SQL) : leur table répond, ou pas encore (avant le script, cette seule
+// requête reçoit un 404 ; l'onglet Espace pro le dit et rien d'autre ne change). Rechargées à chaque ouverture de
+// l'onglet : les visites s'y comptent sans passer par le temps réel.
+async function chargerAcces(sonde = false) {
+  const { data, error } = await sb.from('crescite_acces_pro').select('*').order('cree_le', { ascending: false });
+  if (!error) { Object.assign(E, { acces: data, sql4: true, sql4Erreur: '' }); return true; }
+  if (sonde) { E.sql4 = false; E.sql4Erreur = /PGRST205|42P01|does not exist|schema cache/i.test(`${error.code || ''} ${error.message || ''}`) ? '' : (error.message || String(error)); }
+  return false;
 }
 function ecouterEquipe() {
   if (!E.equipeInstallee) return;
@@ -340,7 +354,7 @@ function ongletEquipe(onglet, zone, F, s0) {
   const z = $('#eq-onglet', zone);
   if (onglet === 'Distribution') ongletDistribution(z, s0);
   else if (onglet === 'Déroulé type') ongletDeroule(z, F);
-  else { z.innerHTML = `<div class="bloc"><h3>Documents de l’équipe</h3><p class="aide">Le texte, le dossier, la fiche technique… pour l’équipe du spectacle, dans son espace et ses feuilles de route ; « Administration seulement » les garde ici. Chaque changement est enregistré aussitôt.</p><div id="docs-sp"></div></div>`; documentsEditeur($('#docs-sp', z), s0); }
+  else { z.innerHTML = `<div class="bloc"><h3>${E.sql3 || E.sql4 ? 'Documents' : 'Documents de l’équipe'}</h3><p class="aide">Le texte, le dossier, la fiche technique… pour l’équipe du spectacle, dans son espace et ses feuilles de route ; « Administration seulement » les garde ici. Chaque changement est enregistré aussitôt.</p><div id="docs-sp"></div></div>`; documentsEditeur($('#docs-sp', z), s0); }
 }
 
 function ongletDistribution(z, s) {
@@ -501,34 +515,52 @@ function ongletDeroule(z, F) {
 // les documents d'un spectacle (s) ou de toute la compagnie (s = null) : un fichier du stockage privé, ou un lien
 // Les documents publics (pour les programmateurs, pour les établissements scolaires) sont dans le stockage public
 // « crescite », sous documents/<spectacle>/ : le site les propose en téléchargement (troisième script SQL). Ceux de
-// l'équipe restent privés, dans « crescite-equipe ».
+// l'équipe restent privés, dans « crescite-equipe ». Ceux des salles (quatrième script SQL) aussi, dans « crescite-pro »
+// sous <spectacle>/ : seul l'espace pro (pro/) les ouvre, aux salles invitées, par un lien d'une heure.
 const POUR_PUBLIC = [['pros', 'Programmateurs'], ['scolaires', 'Établissements scolaires']];
 const estPublic = d => d.pour === 'pros' || d.pour === 'scolaires';
+const estSalles = d => d.pour === 'salles';
+const stockageDe = d => estSalles(d) ? 'crescite-pro' : estPublic(d) ? 'crescite' : 'crescite-equipe';
 const urlPublique = chemin => sb.storage.from('crescite').getPublicUrl(chemin).data.publicUrl;
 const PARTAGE_JOURS = 30;
+// ce que « crescite-pro » accepte (le type vient de l'extension : un ZIP n'a pas le même type sous Windows)
+const MIMES_SALLES = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4', zip: 'application/zip' };
+const MO_SALLES = 50;
+let nDocsEditeurs = 0;
 function documentsEditeur(z, s) {
   const dossier = s ? s.slug : 'compagnie';
   const tous = () => E.documents.filter(d => (s ? d.spectacle_id === s.id : d.spectacle_id == null)).sort((a, b) => a.ordre - b.ordre || a.id - b.id);
-  const docs = () => tous().filter(d => !estPublic(d)), publics = () => tous().filter(estPublic);
+  const docs = () => tous().filter(d => !estPublic(d) && !estSalles(d)), publics = () => tous().filter(estPublic), salles = () => tous().filter(estSalles);
+  const groupe = d => estSalles(d) ? salles() : estPublic(d) ? publics() : docs();
+  const avecSalles = !!(s && E.sql4);
   const hote = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
   const ligne = (d, i, n) => `<div class="doc-l" data-doc="${d.id}"><select data-dk="type" aria-label="Type">${TYPES_DOC.map(([k, l]) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
     <span class="doc-titre"><input type="text" data-dk="titre" value="${esc(d.titre)}" aria-label="Titre du document"><small>${d.fichier ? `Fichier : ${esc(d.fichier.split('/').pop())}` : `Lien : ${esc(hote(d.url))}`}</small></span>
-    <select data-dk="pour" aria-label="Pour qui">${(estPublic(d) ? POUR_PUBLIC.map(([k, l]) => [k, `Pour les ${l.toLowerCase()}`]) : [['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']]).map(([k, l]) => `<option value="${k}"${d.pour === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
-    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button>${estPublic(d) ? '<button type="button" class="btn petit" data-doc-copier title="Copier l’adresse publique du document">Copier le lien</button>' : d.fichier ? `<button type="button" class="btn petit" data-doc-partager title="Copier une adresse à envoyer, valable ${PARTAGE_JOURS} jours (une fiche technique pour un lieu, par exemple)">Lien ${PARTAGE_JOURS} jours</button>` : ''}<button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span></div>`;
-  const boiteLien = pub => `<div class="item doc-lien" data-public="${pub ? 1 : 0}" hidden><div class="rangee"><div class="champ"><label>Adresse du lien</label><input type="url" data-doc-url placeholder="https://…"></div><div class="champ"><label>Titre</label><input type="text" data-doc-titre placeholder="${pub ? 'Le dossier de diffusion' : 'Le texte sur Wikisource'}"></div></div>
+    ${estSalles(d) ? '<span class="doc-pour" title="Seules les salles invitées le voient, dans l’espace pro">Salles invitées</span>' : `<select data-dk="pour" aria-label="Pour qui">${(estPublic(d) ? POUR_PUBLIC.map(([k, l]) => [k, `Pour les ${l.toLowerCase()}`]) : [['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']]).map(([k, l]) => `<option value="${k}"${d.pour === k ? ' selected' : ''}>${l}</option>`).join('')}</select>`}
+    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button>${estSalles(d) ? '' : estPublic(d) ? '<button type="button" class="btn petit" data-doc-copier title="Copier l’adresse publique du document">Copier le lien</button>' : d.fichier ? `<button type="button" class="btn petit" data-doc-partager title="Copier une adresse à envoyer, valable ${PARTAGE_JOURS} jours (une fiche technique pour un lieu, par exemple)">Lien ${PARTAGE_JOURS} jours</button>` : ''}<button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span></div>`;
+  // la boîte d'un lien à ajouter, pour l'équipe, pour le public (programmateurs) ou pour les salles invitées
+  const uid = ++nDocsEditeurs;
+  const boiteLien = genre => `<div class="item doc-lien" data-genre="${genre}" hidden><div class="rangee"><div class="champ"><label for="doc-url-${uid}-${genre}">Adresse du lien</label><input type="url" id="doc-url-${uid}-${genre}" data-doc-url placeholder="https://…"></div><div class="champ"><label for="doc-titre-${uid}-${genre}">Titre${genre === 'salles' ? ' (celui que la salle voit)' : ''}</label><input type="text" id="doc-titre-${uid}-${genre}" data-doc-titre placeholder="${{ equipe: 'Le texte sur Wikisource', public: 'Le dossier de diffusion', salles: 'La captation intégrale' }[genre]}"></div></div>
         <div class="fm-boutons" style="margin:0 0 10px"><button type="button" class="btn principal petit" data-doc-lien-ok>Ajouter le lien</button><button type="button" class="btn petit" data-doc-lien-non>Annuler</button></div></div>`;
   const dessiner = () => {
-    const xs = docs(), ps = publics();
-    z.innerHTML = `${E.sql3 ? '<h4 class="docs-titre">Pour l’équipe</h4>' : ''}${xs.length ? `<div class="docs">${xs.map((d, i) => ligne(d, i, xs.length)).join('')}</div>` : '<p class="aide">Aucun document.</p>'}
-      <div class="docs-ajout"><label class="btn">＋ Envoyer un fichier<input type="file" data-doc-fichier accept=".pdf,.odt,.docx,.txt,image/*" hidden></label><button type="button" class="btn" data-doc-lien>＋ Coller un lien</button></div>
-      ${boiteLien(false)}
+    const xs = docs(), ps = publics(), ss = salles();
+    z.innerHTML = `${E.sql3 || avecSalles ? '<h4 class="docs-titre">Pour l’équipe</h4>' : ''}${xs.length ? `<div class="docs">${xs.map((d, i) => ligne(d, i, xs.length)).join('')}</div>` : '<p class="aide">Aucun document.</p>'}
+      <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Envoyer un fichier<input type="file" data-doc-fichier accept=".pdf,.odt,.docx,.txt,image/*" hidden></label><button type="button" class="btn" data-doc-lien>＋ Coller un lien</button></div>
+      ${boiteLien('equipe')}
       <p class="aide">Fichiers : PDF, image, texte, ODT ou DOCX, 50 Mo au plus. Ils restent privés : on les ouvre par un lien signé, valable une heure. « Lien ${PARTAGE_JOURS} jours » copie une adresse à envoyer hors de l’équipe (une fiche technique pour un lieu).</p>
       ${E.sql3 ? `<h4 class="docs-titre">Pour les programmateurs et les établissements scolaires <span class="badge">publics</span></h4>
       <p class="aide">Ils se téléchargent sur le site : ceux des programmateurs dans « Je souhaite programmer », ceux des établissements dans « Je représente un établissement scolaire ».</p>
       ${ps.length ? `<div class="docs">${ps.map((d, i) => ligne(d, i, ps.length)).join('')}</div>` : '<p class="aide">Aucun document public.</p>'}
-      <div class="docs-ajout"><label class="btn">＋ Envoyer un PDF public<input type="file" data-doc-fichier-public accept=".pdf,application/pdf" hidden></label><button type="button" class="btn" data-doc-lien-public>＋ Coller un lien public</button></div>
-      ${boiteLien(true)}
-      <p class="aide">PDF de 25 Mo au plus, rangés dans le stockage public du site.</p>` : ''}`;
+      <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Envoyer un PDF public<input type="file" data-doc-fichier-public accept=".pdf,application/pdf" hidden></label><button type="button" class="btn" data-doc-lien-public>＋ Coller un lien public</button></div>
+      ${boiteLien('public')}
+      <p class="aide">PDF de 25 Mo au plus, rangés dans le stockage public du site.</p>` : ''}
+      ${avecSalles ? `<h4 class="docs-titre">Réservé aux salles (sur invitation) <span class="badge">privés</span></h4>
+      <p class="aide">Captations, photos en haute définition, fiche technique détaillée : seules les salles invitées les voient, dans l’espace pro (rubrique <a href="#/pro">Espace pro</a>), avec les dossiers et fiches techniques des programmateurs.</p>
+      ${ss.length ? `<div class="docs">${ss.map((d, i) => ligne(d, i, ss.length)).join('')}</div>` : '<p class="aide">Aucun document réservé aux salles.</p>'}
+      <div class="docs-ajout"><label class="btn" tabindex="0" role="button">＋ Déposer un fichier<input type="file" data-doc-fichier-salles accept=".pdf,.jpg,.jpeg,.png,.webp,.mp4,.zip,application/pdf,image/jpeg,image/png,image/webp,video/mp4,application/zip" hidden></label><button type="button" class="btn" data-doc-lien-salles>＋ Ajouter un lien (une captation)</button></div>
+      <p class="aide docs-envoi" data-envoi-salles role="status" hidden></p>
+      ${boiteLien('salles')}
+      <p class="aide">PDF, image (JPEG, PNG, WebP), vidéo MP4 ou ZIP, ${MO_SALLES} Mo au plus, dans un stockage privé. Une captation plus lourde se partage en lien : Vimeo, YouTube non répertorié, Drive…</p>` : ''}`;
   };
   const renumeroter = async xs => {
     const changes = xs.map((x, i) => [x, (i + 1) * 10]).filter(([x, o]) => x.ordre !== o);
@@ -536,9 +568,17 @@ function documentsEditeur(z, s) {
     const r = rs.find(x => x.error); if (r) throw r.error;
     changes.forEach(([x, o]) => { x.ordre = o; });
   };
-  const ordreSuivant = () => Math.max(0, ...docs().map(d => d.ordre || 0)) + 10;
+  const ordreSuivant = (xs = docs()) => Math.max(0, ...xs.map(d => d.ordre || 0)) + 10;
   const typeDe = n => /dossier/i.test(n) ? 'dossier' : /fiche.?tech|technique|rider/i.test(n) ? 'fiche_technique' : /\bplans?\b|implantation/i.test(n) ? 'plan' : /texte|script|brochure|pi[eè]ce/i.test(n) ? 'texte' : 'autre';
   const titreDe = n => { const t = n.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim(); return t ? t[0].toUpperCase() + t.slice(1) : 'Document'; };
+  // le titre d'un fichier des salles : l'espace pro choisit son icône sur le titre (une vidéo, des photos), qui le dit donc
+  const titreSalles = (n, ext) => {
+    const t = titreDe(n);
+    if (ext === 'mp4' && !/captation|vid[ée]o|film|teaser|bande.?annonce|extrait/i.test(t)) return `Vidéo : ${t}`;
+    if (/^(jpe?g|png|webp)$/.test(ext) && !/photo|image|visuel/i.test(t)) return `Photo : ${t}`;
+    return t;
+  };
+  const mo = n => (n / 1024 / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
   async function inserer(ligneDoc) {
     const { data, error } = await sb.from('crescite_documents').insert(ligneDoc).select().single();
     if (error) throw error;
@@ -546,6 +586,11 @@ function documentsEditeur(z, s) {
     const l = $(`[data-doc="${data.id}"]`, z); if (l) { tt('ajouter', l); $('[data-dk="titre"]', l)?.focus(); }
     return data;
   }
+  // « Envoyer un fichier » au clavier : l'étiquette prend le focus, Entrée ou Espace ouvre le choix du fichier
+  z.addEventListener('keydown', e => {
+    const l = e.target.closest?.('label.btn[role="button"]');
+    if (l && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); $('input[type=file]', l)?.click(); }
+  });
   z.addEventListener('change', async e => {
     e.stopPropagation();   // dans l'éditeur du spectacle, ce fichier n'est pas une photo
     const t = e.target;
@@ -560,6 +605,24 @@ function documentsEditeur(z, s) {
       if (error) return erreur(error, /mime|type/i.test(error.message || '') ? 'Le stockage public n’accepte pas encore les PDF (troisième script SQL)' : 'Envoi impossible');
       try { await inserer({ spectacle_id: s ? s.id : null, type: typeDe(base), titre: titreDe(base), fichier: chemin, pour: /scolaire|p[ée]dagog/i.test(base) ? 'scolaires' : 'pros', ordre: ordreSuivant() }); annoncer('Document public ajouté : vérifiez son titre et pour qui il est.'); }
       catch (err) { await sb.storage.from('crescite').remove([chemin]); erreur(err, 'Document non enregistré'); }
+      return;
+    }
+    if (t.matches('[data-doc-fichier-salles]')) {
+      const f = t.files[0]; t.value = ''; if (!f) return;
+      const ext = (f.name.split('.').pop() || '').toLowerCase(), type = MIMES_SALLES[ext];
+      if (!type || !f.name.includes('.')) return annoncer('Ce type de fichier n’est pas accepté ici : PDF, image (JPEG, PNG, WebP), vidéo MP4 ou ZIP.', { erreur: true });
+      if (f.size > MO_SALLES * 1024 * 1024) return annoncer(`« ${f.name} » pèse ${mo(f.size)} Mo : ${MO_SALLES} Mo au plus. Pour une captation, ajoutez plutôt un lien (Vimeo, YouTube non répertorié, Drive).`, { erreur: true });
+      const base = f.name.replace(/\.[^.]+$/, ''), chemin = `${dossier}/${Date.now().toString(36)}-${slugifier(base) || 'document'}.${ext}`;
+      const envoi = $('[data-envoi-salles]', z);
+      if (envoi) { envoi.textContent = `Envoi de « ${f.name} » (${mo(f.size)} Mo)…`; envoi.hidden = false; }
+      const { error } = await sb.storage.from('crescite-pro').upload(chemin, f, { contentType: type, upsert: false });
+      if (error) {
+        if (envoi) envoi.hidden = true;
+        const m = `${error.message || ''} ${error.statusCode || ''}`;
+        return erreur(error, /size|large|exceed|413/i.test(m) ? `Fichier refusé par le stockage (${MO_SALLES} Mo au plus)` : /mime|type/i.test(m) ? 'Le stockage des salles n’accepte pas ce type de fichier' : 'Envoi impossible');
+      }
+      try { await inserer({ spectacle_id: s.id, type: typeDe(base), titre: titreSalles(base, ext), fichier: chemin, pour: 'salles', ordre: ordreSuivant(salles()) }); annoncer('Fichier déposé : vérifiez son titre, c’est celui que la salle voit.'); }
+      catch (err) { if (envoi) envoi.hidden = true; await sb.storage.from('crescite-pro').remove([chemin]); erreur(err, 'Document non enregistré'); }
       return;
     }
     if (t.matches('[data-doc-fichier]')) {
@@ -585,13 +648,19 @@ function documentsEditeur(z, s) {
   });
   z.addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.docLien !== undefined || b.dataset.docLienPublic !== undefined) { const boite = $(`.doc-lien[data-public="${b.dataset.docLienPublic !== undefined ? 1 : 0}"]`, z); boite.hidden = false; $('[data-doc-url]', boite).focus(); return; }
+    if (b.dataset.docLien !== undefined || b.dataset.docLienPublic !== undefined || b.dataset.docLienSalles !== undefined) {
+      const genre = b.dataset.docLienPublic !== undefined ? 'public' : b.dataset.docLienSalles !== undefined ? 'salles' : 'equipe';
+      const boite = $(`.doc-lien[data-genre="${genre}"]`, z); boite.hidden = false; $('[data-doc-url]', boite).focus(); return;
+    }
     if (b.dataset.docLienNon !== undefined) { b.closest('.doc-lien').hidden = true; return; }
     if (b.dataset.docLienOk !== undefined) {
-      const boite = b.closest('.doc-lien'), pub = boite.dataset.public === '1';
+      const boite = b.closest('.doc-lien'), genre = boite.dataset.genre;
       const url = $('[data-doc-url]', boite).value.trim(), titre = $('[data-doc-titre]', boite).value.trim();
       if (!/^https?:\/\//i.test(url)) return annoncer('Collez une adresse qui commence par https://', { erreur: true });
-      try { await inserer({ spectacle_id: s ? s.id : null, type: /wikisource|texte/i.test(url + titre) ? 'texte' : /fiche.?tech/i.test(url + titre) ? 'fiche_technique' : /dossier/i.test(url + titre) ? 'dossier' : 'autre', titre: titre || hote(url), url, pour: pub ? 'pros' : 'equipe', ordre: ordreSuivant() }); annoncer(pub ? 'Lien public ajouté.' : 'Lien ajouté.'); }
+      // la salle ne voit que le titre : pour elle, il en faut un
+      if (genre === 'salles' && !titre) { $('[data-doc-titre]', boite).focus(); return annoncer('Donnez un titre au lien : c’est ce que la salle voit (« La captation intégrale »).', { erreur: true }); }
+      const pour = { equipe: 'equipe', public: 'pros', salles: 'salles' }[genre];
+      try { await inserer({ spectacle_id: s ? s.id : null, type: /wikisource|texte/i.test(url + titre) ? 'texte' : /fiche.?tech/i.test(url + titre) ? 'fiche_technique' : /dossier/i.test(url + titre) ? 'dossier' : 'autre', titre: titre || hote(url), url, pour, ordre: ordreSuivant(genre === 'salles' ? salles() : docs()) }); annoncer({ equipe: 'Lien ajouté.', public: 'Lien public ajouté.', salles: 'Lien ajouté : les salles invitées le trouvent dans l’espace pro.' }[genre]); }
       catch (err) { erreur(err, 'Lien non ajouté'); }
       return;
     }
@@ -601,7 +670,7 @@ function documentsEditeur(z, s) {
       if (d.url) { window.open(d.url, '_blank', 'noopener'); return; }
       if (estPublic(d)) { window.open(urlPublique(d.fichier), '_blank', 'noopener'); return; }
       const w = window.open('', '_blank');
-      const { data, error } = await sb.storage.from('crescite-equipe').createSignedUrl(d.fichier, 3600);
+      const { data, error } = await sb.storage.from(stockageDe(d)).createSignedUrl(d.fichier, 3600);
       if (error) { w?.close(); return erreur(error, 'Ouverture impossible'); }
       if (w) { w.opener = null; w.location.href = data.signedUrl; } else location.href = data.signedUrl;
       return;
@@ -613,19 +682,19 @@ function documentsEditeur(z, s) {
       return copier(data.signedUrl, `Adresse de partage (valable ${PARTAGE_JOURS} jours)`);
     }
     if (b.dataset.docDm) {
-      const xs = estPublic(d) ? publics() : docs(), i = xs.indexOf(d), j = i + +b.dataset.docDm; if (j < 0 || j >= xs.length) return;
+      const xs = groupe(d), i = xs.indexOf(d), j = i + +b.dataset.docDm; if (j < 0 || j >= xs.length) return;
       [xs[i], xs[j]] = [xs[j], xs[i]];
       try { await renumeroter(xs); } catch (err) { return erreur(err, 'Ordre non enregistré'); }
       dessiner(); return;
     }
     if (b.dataset.docSuppr !== undefined) {
-      if (!confirm(`Supprimer « ${d.titre} » ?${d.fichier ? ' Le fichier est effacé du stockage.' : ''}`)) return;
+      if (!confirm(`Supprimer « ${d.titre} » ?${d.fichier ? ' Le fichier est effacé du stockage.' : ''}${estSalles(d) ? ' Les salles invitées ne le verront plus.' : ''}`)) return;
       const { error } = await sb.from('crescite_documents').delete().eq('id', d.id);
       if (error) return erreur(error, 'Suppression impossible');
       E.documents = E.documents.filter(x => x.id !== d.id);
       // un fichier public peut servir deux documents (programmateurs et scolaires) : il reste tant que l'autre est là
       const partage = estPublic(d) && E.documents.some(x => x.fichier === d.fichier && estPublic(x));
-      if (d.fichier && !partage) { const r = await sb.storage.from(estPublic(d) ? 'crescite' : 'crescite-equipe').remove([d.fichier]); if (r.error) erreur(r.error, 'Document retiré, mais le fichier reste dans le stockage'); }
+      if (d.fichier && !partage) { const r = await sb.storage.from(stockageDe(d)).remove([d.fichier]); if (r.error) erreur(r.error, 'Document retiré, mais le fichier reste dans le stockage'); }
       dessiner(); annoncer('Document supprimé.');
     }
   });
@@ -1876,6 +1945,218 @@ function editeurA4(hote, { blocs = [], noms = [], ref = '', quandChange = () => 
   };
 }
 
+// ===================================================================================================== l'espace pro
+// Les invitations des salles (quatrième script SQL) : une structure, son contact, les spectacles qu'on lui ouvre et une
+// date de fin. Le lien envoyé, …/pro/#<jeton>, ouvre l'espace des salles (pro/) : la fonction crescite-pro y vérifie le
+// jeton, donne les documents, et note les visites et les ouvertures, que le journal de chaque invitation montre ici.
+// Le jeton ne se choisit pas : la base le tire au hasard (64 caractères).
+const DUREES_PRO = [30, 90, 180];
+const PROLONGER_PRO = 90;
+const MOIS_LONGS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+const jourLong = j => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(j || ''); return m ? `${+m[3] === 1 ? '1er' : +m[3]} ${MOIS_LONGS[+m[2] - 1]} ${m[1]}` : ''; };
+const jourMoyen = j => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(j || ''); return m ? `${+m[3]} ${MC[+m[2] - 1]} ${m[1]}` : ''; };
+const plusJours = (j, n) => { const d = new Date(`${j}T12:00:00`); d.setDate(d.getDate() + n); return AGENDA.iso(d); };
+const quandTexte = q => new Date(q).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+// le lien de l'invitation : l'espace des salles est publié à côté de l'administration
+const lienPro = a => `${new URL('../pro/', location.href).href}#${a.jeton}`;
+const titreCourt = s => String(s?.titre || '').split(' – ')[0];
+const listeEt = xs => xs.length > 1 ? `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}` : xs.join('');
+// les spectacles qu'une invitation ouvre : ceux qu'elle nomme ; sinon, tous ceux qui ont des documents réservés aux salles
+const aDesSalles = id => E.documents.some(d => d.spectacle_id === id && estSalles(d));
+const spectaclesAcces = a => (a.spectacles || []).length ? a.spectacles.map(x => spectacle(+x)).filter(Boolean) : E.spectacles.filter(s => aDesSalles(s.id)).sort((x, y) => x.ordre - y.ordre);
+const etatAcces = a => !a.actif ? { ouverte: false, classe: 'masquee', texte: 'Désactivée' }
+  : a.expire_le < AUJ ? { ouverte: false, classe: 'option', texte: `Échue le ${jourMoyen(a.expire_le)}` }
+  : { ouverte: true, classe: 'ok', texte: `Ouverte jusqu’au ${jourMoyen(a.expire_le)}` };
+const visitesTexte = a => a.visites ? `${a.visites} visite${a.visites > 1 ? 's' : ''}${a.derniere_visite ? `, la dernière le ${new Date(a.derniere_visite).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}` : 'Pas encore ouverte';
+const compteDocsSalles = id => {
+  const ds = E.documents.filter(d => d.spectacle_id === id), n = ds.filter(estSalles).length, p = ds.filter(d => d.pour === 'pros').length;
+  return `${n ? `${n} document${n > 1 ? 's' : ''} réservé${n > 1 ? 's' : ''} aux salles` : 'rien de réservé aux salles'}${p ? `, ${p} pour les programmateurs` : ''}`;
+};
+// « Écrire » : un courriel court, avec le lien et la date de fin, signé de l'administrateur connecté
+function courrielAcces(a) {
+  const sps = spectaclesAcces(a).map(titreCourt), moi = E.admins.find(x => x.user_id === E.session?.user?.id)?.nom;
+  const corps = [`Bonjour${a.contact ? ` ${a.contact}` : ''},`, '',
+    `Voici le lien de votre espace, où vous trouverez les captations et les documents ${sps.length ? `que nous vous ouvrons pour ${listeEt(sps)}` : 'de nos spectacles'} :`, lienPro(a), '',
+    `Il reste ouvert jusqu’au ${jourLong(a.expire_le)}. Ce lien vous est réservé : merci de ne pas le transférer.`, '',
+    'Bien à vous,', ...(moi ? [moi] : []), 'Compagnie Crescite'].join('\r\n');
+  return `mailto:${a.courriel ? encodeURIComponent(a.courriel.trim()).replace(/%40/g, '@') : ''}?subject=${encodeURIComponent('Compagnie Crescite : captations et documents')}&body=${encodeURIComponent(corps)}`;
+}
+const SPEC_ACCES = [
+  { k: 'nom', t: 'texte', l: 'Structure', ph: 'Théâtre de…, Festival…' },
+  { k: 'contact', t: 'texte', l: 'Contact', ph: 'Prénom Nom', aide: 'La personne invitée : l’espace l’accueille par son nom.' },
+  { k: 'courriel', t: 'texte', l: 'Courriel', ph: 'programmation@…' },
+  { k: 'notes', t: 'long', l: 'Notes', lignes: 3, aide: 'Pour l’administration seulement : la salle ne les voit jamais.' },
+];
+
+function vueEspacePro(param) {
+  const tete = `<div class="tete"><h1>Espace pro</h1>${E.sql4 ? '<a class="btn principal" href="#/pro/nouvelle">＋ Nouvelle invitation</a>' : ''}</div>`;
+  if (!E.sql4) {
+    cadre('pro', `${tete}<div class="bloc pro-absent"><p>${E.sql4Erreur ? `L’espace pro n’a pas pu être chargé (${esc(E.sql4Erreur)}) : rechargez la page dans un moment.`
+      : 'L’espace pro n’est pas encore installé : exécutez <code>supabase/migrations/20261023_crescite_pro.sql</code> dans Supabase (SQL Editor) et déployez la fonction <code>crescite-pro</code>, puis rechargez cette page.'}</p></div>`);
+    return;
+  }
+  const f = session.pro = Object.assign({ q: '', etat: '' }, session.pro || {});
+  cadre('pro', `${tete}<div class="deux${param ? ' edition' : ''}"><div class="liste"><div class="filtres">
+      <input type="search" id="pro-q" placeholder="Chercher une structure, un contact, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
+      <select id="pro-etat" aria-label="État">${[['', 'Toutes les invitations'], ['ouvertes', 'Ouvertes'], ['closes', 'Échues ou désactivées']].map(([k, l]) => `<option value="${k}"${f.etat === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <span class="compte" id="pro-compte"></span></div><div data-liste id="l-pro"></div></div>
+    <section class="editeur" id="ed-pro">${param ? '' : accueilPro()}</section></div>`);
+  const zone = $('#l-pro');
+  zone.rafraichir = () => listeAcces(zone, param);
+  zone.rafraichir();
+  $('#pro-q').addEventListener('input', e => { f.q = e.target.value; garderFiltres(); zone.rafraichir(); });
+  $('#pro-etat').addEventListener('change', e => { f.etat = e.target.value; garderFiltres(); zone.rafraichir(); });
+  if (param) editeurAcces(param === 'nouvelle' ? null : +param);
+  // les visites ont pu changer depuis le chargement : la liste et l'état de la fiche ouverte se mettent à jour
+  chargerAcces().then(ok => { if (ok && zone.isConnected) { zone.rafraichir(); $('#pro-actions')?.rafraichir?.(); } });
+}
+function listeAcces(zone, actif) {
+  const f = session.pro, q = norm(f.q).trim();
+  const xs = E.acces.filter(a => {
+    const ouverte = etatAcces(a).ouverte;
+    if ((f.etat === 'ouvertes' && !ouverte) || (f.etat === 'closes' && ouverte)) return false;
+    return !q || norm(`${a.nom} ${a.contact || ''} ${a.courriel || ''} ${spectaclesAcces(a).map(s => s.titre).join(' ')}`).includes(q);
+  }).sort((a, b) => (etatAcces(b).ouverte - etatAcces(a).ouverte) || String(b.cree_le).localeCompare(String(a.cree_le)));
+  $('#pro-compte').textContent = `${xs.length} invitation${xs.length > 1 ? 's' : ''}`;
+  zone.innerHTML = xs.map(a => {
+    const st = etatAcces(a), sps = (a.spectacles || []).length ? spectaclesAcces(a).map(titreCourt).join(', ') : 'Tous les spectacles';
+    return `<a class="ligne acces-l${st.ouverte ? '' : ' close'}" href="#/pro/${a.id}"${String(actif) === String(a.id) ? ' aria-current="true"' : ''}>
+      <span class="corps"><span class="t">${esc(a.nom)}</span><span class="ou">${esc([a.contact, sps].filter(Boolean).join(' · '))}</span><span class="vu">${esc(visitesTexte(a))}</span></span>
+      <span class="badges"><span class="badge ${st.classe}">${esc(st.texte)}</span></span></a>`;
+  }).join('') || `<p class="vide">${E.acces.length ? 'Aucune invitation ne correspond.' : 'Aucune invitation pour l’instant.'}</p>`;
+}
+// sans invitation choisie : ce qu'est l'espace pro, et ce que chaque spectacle y montre
+function accueilPro() {
+  const sps = E.spectacles.filter(s => s.page || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || d.pour === 'pros'))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
+  return `<div class="bloc"><h3>Inviter une salle</h3><p>Une invitation ouvre à une salle ou à un festival l’espace pro : les captations et les documents des spectacles choisis, jusqu’à une date. On lui envoie son lien ; chaque visite et chaque document ouvert s’inscrivent dans son journal.</p>
+      <p class="aide">Le lien mène à pro/, une page du site qui demande les documents à la fonction <code>crescite-pro</code> de Supabase (supabase/functions/crescite-pro) : elle doit y être déployée.</p></div>
+    <div class="bloc"><h3>Ce que les salles y trouvent</h3>${sps.length ? `<ul class="liste-simple pro-docs">${sps.map(s => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><b>${esc(s.titre)}</b><span class="compte">${esc(compteDocsSalles(s.id))}</span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Documents">Documents</a></li>`).join('')}</ul>` : '<p class="aide">Aucun spectacle.</p>'}
+      <p class="aide">Les documents réservés aux salles se déposent dans chaque spectacle, onglet Documents ; les dossiers et fiches techniques des programmateurs s’y ajoutent.</p></div>`;
+}
+function editeurAcces(id) {
+  const zone = $('#ed-pro');
+  const cur = () => (id ? E.acces.find(x => x.id === id) : null) || null;
+  const a0 = cur();
+  if (id && !a0) { zone.innerHTML = '<div class="vide bloc">Cette invitation n’existe plus.</div>'; return; }
+  const F = a0 ? { nom: a0.nom || '', contact: a0.contact || '', courriel: a0.courriel || '', spectacles: (a0.spectacles || []).map(Number), expire_le: a0.expire_le, notes: a0.notes || '' }
+    : { nom: '', contact: '', courriel: '', spectacles: [], expire_le: plusJours(AUJ, 90), notes: '' };
+  const choix = E.spectacles.filter(s => s.page || F.spectacles.includes(s.id) || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || d.pour === 'pros'))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
+  nChamp = 0;
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/pro" aria-label="Retour aux invitations">←</a><h2>${esc(a0 ? a0.nom : 'Nouvelle invitation')}</h2></div>
+    ${a0 ? '<div class="bloc pro-actions" id="pro-actions"></div>' : ''}
+    <div class="bloc" id="pro-f">
+      ${champ(SPEC_ACCES[0], F)}
+      <div class="rangee">${champ(SPEC_ACCES[1], F)}${champ(SPEC_ACCES[2], F)}</div>
+      <fieldset class="champ pro-sps"><legend>Spectacles ouverts</legend>
+        <div class="pro-sps-l">${choix.map(s => `<label class="case"><input type="checkbox" data-sp="${s.id}"${F.spectacles.includes(s.id) ? ' checked' : ''}><span class="pastille" style="--c:${couleurSp(s)}"></span><span>${esc(s.titre)}<small>${esc(compteDocsSalles(s.id))}</small></span></label>`).join('') || '<p class="aide">Aucun spectacle.</p>'}</div>
+        <span class="aide" id="pro-sps-aide"></span></fieldset>
+      <div class="champ"><label for="pro-fin">Accès ouvert jusqu’au</label>
+        <div class="pro-duree"><input type="date" id="pro-fin" value="${esc(F.expire_le)}" min="${AUJ}"><div class="seg" role="group" aria-label="Durée à partir d’aujourd’hui">${DUREES_PRO.map(n => `<button type="button" data-jours="${n}">${n} jours</button>`).join('')}</div></div>
+        <span class="aide">Une durée à partir d’aujourd’hui, ou une date. Ensuite, le lien ne s’ouvre plus.</span></div>
+      ${champ(SPEC_ACCES[3], F)}
+    </div>
+    ${a0 ? '<div class="bloc"><div class="pro-journal-tete"><h3>Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal"><p class="aide">Chargement…</p></div></div>' : ''}
+    ${pied(a0 ? 'Tout est enregistré' : 'Nouvelle invitation', a0 ? '<button type="button" class="btn danger" id="pro-suppr">Supprimer</button>' : '')}`;
+  const courriel = $('[data-chemin="courriel"]', zone);
+  if (courriel) { courriel.type = 'email'; courriel.autocomplete = 'off'; }
+  relier($('#pro-f', zone), F, SPEC_ACCES);
+  const majSps = () => {
+    const tous = E.spectacles.filter(s => aDesSalles(s.id)).sort((x, y) => x.ordre - y.ordre).map(titreCourt);
+    $('#pro-sps-aide', zone).textContent = F.spectacles.length
+      ? 'La salle voit leurs documents réservés aux salles, et leurs dossiers et fiches techniques pour les programmateurs.'
+      : `Aucun coché : tous les spectacles qui ont des documents réservés aux salles (${tous.length ? `aujourd’hui : ${listeEt(tous)}` : 'aucun pour l’instant'}).`;
+  };
+  const majDuree = () => $$('[data-jours]', zone).forEach(b => b.setAttribute('aria-pressed', String(F.expire_le === plusJours(AUJ, +b.dataset.jours))));
+  majSps(); majDuree();
+  $('#pro-f', zone).addEventListener('change', e => {
+    const t = e.target;
+    if (t.dataset.sp) { const v = +t.dataset.sp; F.spectacles = t.checked ? [...new Set([...F.spectacles, v])] : F.spectacles.filter(x => x !== v); majSps(); marquerSale(); }
+    if (t.id === 'pro-fin') { F.expire_le = t.value; majDuree(); marquerSale(); }
+  });
+  $('#pro-f', zone).addEventListener('click', e => {
+    const b = e.target.closest('[data-jours]'); if (!b) return;
+    F.expire_le = plusJours(AUJ, +b.dataset.jours); $('#pro-fin', zone).value = F.expire_le; majDuree(); marquerSale();
+  });
+
+  // le lien et les actions immédiates (copier, écrire, prolonger, désactiver) : ce qui est enregistré
+  const actions = () => {
+    const a = cur(); if (!a) return '';
+    const st = etatAcces(a);
+    return `<div class="pro-etat-l"><span class="badge ${st.classe}">${esc(st.texte)}</span><span class="compte">${esc(visitesTexte(a))}</span></div>
+      <div class="acces"><code id="pro-url">${esc(lienPro(a))}</code></div>
+      <div class="fm-boutons"><button type="button" class="btn principal" data-pro="copier">Copier le lien</button><a class="btn" data-pro="ecrire" href="${esc(courrielAcces(a))}">Écrire${a.courriel ? '' : ' (sans adresse)'}</a><button type="button" class="btn" data-pro="prolonger" title="${PROLONGER_PRO} jours de plus, après la date de fin (ou après aujourd’hui si elle est passée)">Prolonger de ${PROLONGER_PRO} jours</button><button type="button" class="btn" data-pro="actif">${a.actif ? 'Désactiver' : 'Réactiver'}</button></div>
+      <p class="aide">« Écrire » prépare un courriel au contact, avec le lien et la date de fin. ${a.actif ? 'Désactivée, l’invitation garde son lien et son journal, mais le lien ne s’ouvre plus.' : 'Tant qu’elle est désactivée, le lien ne s’ouvre plus.'}</p>`;
+  };
+  const dessinerActions = () => { const el = $('#pro-actions', zone); if (el) el.innerHTML = actions(); };
+  if (a0) { dessinerActions(); $('#pro-actions', zone).rafraichir = dessinerActions; }
+  async function majAcces(champs, message, apres = () => {}) {
+    const { data, error } = await sb.from('crescite_acces_pro').update(champs).eq('id', id).select().single();
+    if (error) return erreur(error);
+    remplacerLigne(E.acces, data); apres();
+    dessinerActions(); $('#l-pro')?.rafraichir?.();
+    annoncer(message);
+  }
+  zone.addEventListener('click', e => {
+    const b = e.target.closest('[data-pro]'); if (!b) return;
+    const a = cur(); if (!a) return;
+    const k = b.dataset.pro;
+    if (k === 'copier') return copier(lienPro(a), 'Adresse de l’invitation');
+    if (k === 'ecrire') {
+      if (E.sale) { e.preventDefault(); return annoncer('Enregistrez d’abord l’invitation : le courriel reprend ce qui est enregistré.', { erreur: true }); }
+      b.href = courrielAcces(a);   // le logiciel de courriel s'ouvre sur ce brouillon
+      return;
+    }
+    if (k === 'prolonger') {
+      const fin = plusJours(a.expire_le > AUJ ? a.expire_le : AUJ, PROLONGER_PRO);
+      return majAcces({ expire_le: fin }, `Accès prolongé jusqu’au ${jourLong(fin)}.${a.actif ? '' : ' L’invitation reste désactivée.'}`, () => { F.expire_le = fin; $('#pro-fin', zone).value = fin; majDuree(); });
+    }
+    if (k === 'actif') return majAcces({ actif: !a.actif }, a.actif ? 'Invitation désactivée : son lien ne s’ouvre plus.' : 'Invitation réactivée.');
+  });
+
+  // le journal : les visites et les documents ouverts, du plus récent au plus ancien
+  const journal = async () => {
+    const el = $('#pro-journal', zone); if (!el) return;
+    const { data, error } = await sb.from('crescite_acces_pro_journal').select('*').eq('acces_id', id).order('quand', { ascending: false }).limit(200);
+    if (!el.isConnected) return;
+    if (error) { el.innerHTML = `<p class="aide">Le journal ne se lit pas pour le moment : ${esc(error.message)}</p>`; return; }
+    const doc = j => E.documents.find(d => d.id === j.document_id);
+    const ouverts = new Set(data.filter(j => j.quoi === 'ouverture').map(j => j.document_id ?? `x${j.id}`));
+    const visites = data.filter(j => j.quoi === 'visite').length;
+    el.innerHTML = data.length ? `<p class="pro-resume">${visites} visite${visites > 1 ? 's' : ''} · ${ouverts.size} document${ouverts.size > 1 ? 's' : ''} ouvert${ouverts.size > 1 ? 's' : ''}</p>
+      <ol class="pro-journal">${data.map(j => { const d = doc(j); return `<li class="${j.quoi === 'visite' ? 'visite' : 'ouverture'}"><time datetime="${esc(j.quand)}">${esc(quandTexte(j.quand))}</time><span>${j.quoi === 'visite' ? 'Visite de l’espace' : d ? `A ouvert « ${esc(d.titre)} »${d.spectacle_id ? ` <small>${esc(titreCourt(spectacle(d.spectacle_id)))}</small>` : ''}` : 'A ouvert un document retiré depuis'}</span></li>`; }).join('')}</ol>
+      ${data.length >= 200 ? '<p class="aide">Les 200 derniers passages.</p>' : ''}` : '<p class="aide">Personne n’a encore ouvert ce lien.</p>';
+  };
+  if (a0) {
+    journal();
+    $('#pro-actualiser', zone).addEventListener('click', async () => { if (await chargerAcces()) { dessinerActions(); $('#l-pro')?.rafraichir?.(); } journal(); });
+    $('#pro-suppr', zone).addEventListener('click', async () => {
+      const a = cur(); if (!a) return;
+      if (!confirm(`Supprimer l’invitation de « ${a.nom} » ? Son lien ne s’ouvrira plus et son journal sera effacé.`)) return;
+      const { error } = await sb.from('crescite_acces_pro').delete().eq('id', id);
+      if (error) return erreur(error, 'Suppression impossible');
+      E.acces = E.acces.filter(x => x.id !== id); E.sale = false; location.hash = '#/pro'; annoncer('Invitation supprimée.');
+    });
+  }
+  $('[data-enregistrer]', zone).addEventListener('click', async e => {
+    const nom = (F.nom || '').trim(), mel = (F.courriel || '').trim();
+    if (!nom) { $('[data-chemin="nom"]', zone)?.focus(); return annoncer('Indiquez la structure invitée.', { erreur: true }); }
+    if (mel && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mel)) { courriel?.focus(); return annoncer('Ce courriel n’a pas l’air complet.', { erreur: true }); }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(F.expire_le || '')) { $('#pro-fin', zone).focus(); return annoncer('Choisissez la date de fin de l’accès.', { erreur: true }); }
+    const ordre = x => E.spectacles.findIndex(s => s.id === x);
+    const ligneA = { nom, contact: (F.contact || '').trim() || null, courriel: mel || null, spectacles: F.spectacles.length ? [...F.spectacles].sort((x, y) => ordre(x) - ordre(y)) : null,
+      expire_le: F.expire_le, notes: (F.notes || '').trim() || null };
+    e.target.disabled = true;
+    const r = a0 ? await sb.from('crescite_acces_pro').update(ligneA).eq('id', id).select().single() : await sb.from('crescite_acces_pro').insert(ligneA).select().single();
+    e.target.disabled = false;
+    if (r.error) return erreur(r.error);
+    remplacerLigne(E.acces, r.data);
+    E.sale = false; marquerSale(false);
+    annoncer(a0 ? 'Invitation enregistrée.' : 'Invitation créée : copiez son lien, ou écrivez au contact.');
+    if (!a0) location.hash = `#/pro/${r.data.id}`; else vueEspacePro(id);
+    bravo();
+  });
+}
+
 // ===================================================================================================== journal
 const RESUMES_EQUIPE = {
   crescite_personnes: x => nomDe(x),
@@ -1982,4 +2263,43 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .fr-alerte a, .fr-alerte .btn.lien { color: inherit; text-decoration: underline; padding: 0; font-weight: 700; }
 .fr-accueil p { max-width: 760px; }
 .fr-etat .fr-actions { margin-top: 0; }
+/* l'espace pro : les invitations des salles, leur lien, leur journal ; les documents réservés aux salles */
+#ed-pro .aide, #l-pro .aide { color: var(--gris); font-size: 13px; }
+#ed-pro .bloc > p + p { margin-top: 8px; }
+.pro-absent p { margin: 0; }
+#pro-f .rangee { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+#pro-f .rangee > .champ { align-content: start; }
+.ligne.acces-l { grid-template-columns: minmax(0, 1fr) auto; }
+.ligne.acces-l.close { border-left-color: var(--trait); }
+.ligne.acces-l.close .t { color: var(--gris); }
+.ligne .vu { display: block; margin-top: 2px; color: var(--gris); font-size: 12.5px; }
+.pro-etat-l { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.pro-actions .acces { margin: 10px 0 0; }
+.pro-actions .acces code { font-size: 12.5px; line-height: 1.45; }
+.pro-actions .fm-boutons { margin-top: 10px; }
+.pro-actions .aide { margin: 10px 0 0; }
+fieldset.champ { border: 0; padding: 0; min-width: 0; }
+fieldset.champ > legend { padding: 0; margin-bottom: 6px; font-weight: 650; font-size: 13.5px; }
+.pro-sps-l { display: grid; gap: 6px; }
+.pro-sps-l .case { align-items: flex-start; gap: 9px; padding: 8px 11px; border: 1px solid var(--trait); border-radius: 9px; background: var(--carte); font-weight: 650; }
+.pro-sps-l .case:has(input:checked) { border-color: var(--accent); background: var(--accent-doux); }
+.pro-sps-l .case input { margin-top: 2px; flex: none; }
+.pro-sps-l .case .pastille { margin-top: 6px; }
+.pro-sps-l .case small { display: block; font-weight: 500; font-size: 12.5px; color: var(--gris); }
+.pro-duree { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.pro-duree input[type=date] { width: auto; flex: 0 1 190px; min-width: 0; }
+.pro-journal-tete { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.pro-journal-tete h3 { margin: 0; }
+.pro-resume { margin: 0 0 8px; font-weight: 650; font-size: 13.5px; }
+.pro-journal { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.pro-journal li { display: grid; grid-template-columns: 158px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 6px 10px; border-radius: 8px; background: var(--doux); font-size: 14px; }
+.pro-journal li.visite span { color: var(--gris); }
+.pro-journal time { color: var(--gris); font-size: 13px; font-variant-numeric: tabular-nums; }
+.pro-journal small { margin-left: 6px; color: var(--gris); font-size: 12.5px; }
+.pro-docs li { align-items: center; }
+.pro-docs li .compte { flex: 1 1 auto; }
+.pro-docs li a { margin-left: auto; font-weight: 600; font-size: 13.5px; }
+.doc-pour { font-size: 13px; font-weight: 650; color: var(--gris); padding: 0 4px; }
+.docs-envoi { margin: 0 0 10px; font-weight: 600; }
+@media (max-width: 520px) { .pro-journal li { grid-template-columns: 1fr; gap: 0; } .pro-duree input[type=date] { flex: 1 1 100%; } }
 </style>`);

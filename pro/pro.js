@@ -26,7 +26,8 @@
   // un sous-titre de la base peut porter de l'italique (« d'après <em>Rodogune</em> ») : seulement ces balises-là
   const riche = s => esc(s).replace(/&lt;(\/?)(em|i|strong|b)&gt;/g, '<$1$2>').replace(/&lt;br\s*\/?&gt;/g, ' ');
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  const dateLongue = j => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(j || ''); return m ? `${+m[3] === 1 ? '1er' : +m[3]} ${MOIS[+m[2] - 1]} ${m[1]}` : ''; };
+  // une date d'un seul tenant (« 29 novembre 2026 » ne se coupe pas en fin de ligne)
+  const dateLongue = j => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(j || ''); return m ? `${+m[3] === 1 ? '1er' : +m[3]}\u00a0${MOIS[+m[2] - 1]}\u00a0${m[1]}` : ''; };
   if (new URLSearchParams(location.search).get('anim') === '0') document.documentElement.classList.add('sans-mouvement');
   const annoncer = m => { const a = $('#annonce'); a.textContent = ''; setTimeout(() => { a.textContent = m; }, 30); };
 
@@ -81,8 +82,8 @@
   // le genre d'un document : son type, et son titre pour ce que les types ne disent pas (une captation, des photos)
   function genre(d) {
     const t = txt(d.titre).toLowerCase();
-    if (/captation|vid[ée]o|film|teaser|bande[- ]annonce|extrait/.test(t)) return { icone: 'video', mot: d.lien ? 'Vidéo en ligne' : 'Vidéo' };
-    if (/photo|image|visuel/.test(t)) return { icone: 'images', mot: d.lien ? 'Photos en ligne' : 'Photos' };
+    if (/captation|vid[ée]o|film|teaser|bande[- ]annonce|extrait/.test(t)) return { icone: 'video', mot: 'Vidéo' };
+    if (/photo|image|visuel/.test(t)) return { icone: 'images', mot: 'Photos' };
     const mots = { dossier: 'Dossier', fiche_technique: 'Fiche technique', plan: 'Plan', texte: 'Texte' };
     return { icone: ICONES[d.type] ? d.type : 'autre', mot: mots[d.type] || 'Document' };
   }
@@ -169,7 +170,7 @@
       const salles = docs.filter(d => d.pour === 'salles'), pros = docs.filter(d => d.pour !== 'salles');
       const liste = (titre, xs) => xs.length ? `<div class="groupe"><h3>${esc(titre)}</h3><ul class="docs">${xs.map(d => {
         const g = genre(d);
-        return `<li><button type="button" class="doc" data-doc="${esc(d.id)}"><span class="pastille">${ICONES[g.icone]}</span><span class="texte"><span class="titre">${esc(d.titre)}</span><span class="genre">${esc(g.mot)}${d.lien ? ' · s’ouvre en ligne' : ' · à télécharger'}</span></span><span class="aller">${d.lien ? ICONES.aller : ICONES.telecharger}</span><span class="sr"> (${esc(s.titre)}, nouvel onglet)</span></button><div class="secours" hidden></div></li>`;
+        return `<li><button type="button" class="doc" data-doc="${esc(d.id)}"><span class="pastille">${ICONES[g.icone]}</span><span class="texte"><span class="titre">${esc(d.titre)}</span><span class="genre">${esc(g.mot)} · ${d.lien ? 'en ligne' : 'à télécharger'}</span></span><span class="aller">${d.lien ? ICONES.aller : ICONES.telecharger}</span><span class="sr"> (${esc(s.titre)}, nouvel onglet)</span></button><div class="secours" hidden></div></li>`;
       }).join('')}</ul></div>` : '';
       return `<article class="spectacle parait" style="--i:${i};${couleurs(s)}" aria-labelledby="sp-${esc(s.id)}">
         <div class="photo">${s.photo ? `<img src="${esc(photo(s.photo))}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async">` : ''}</div>
