@@ -17,6 +17,7 @@ Les fichiers privés (logo 2.0, photos) sont lus dans private/ ; sans eux, des s
 import base64
 import importlib.util
 import json
+import os
 import re
 import sys
 from datetime import date
@@ -441,12 +442,17 @@ DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js")
 
 
+def outils():
+    """Les outils communs, dans l'ordre. tentacules.js (la pieuvre guide et ses tentacules) n'y entre que si TENTACULES=1."""
+    return OUTILS + (("tentacules.js",) if os.environ.get("TENTACULES") == "1" else ())
+
+
 def avec_outils(name, src):
     """Ajoute, juste après les données D, les outils communs : les lignes d'agenda (agenda.js), les données vivantes
     (donnees.js), la carte des tournées (carte.js) et l'ouverture sur le logo (intro.js)."""
     if DATA_LIGNE not in src:
         raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
-    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS)
+    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in outils())
     return src.replace(DATA_LIGNE, DATA_LIGNE + js, 1)
 
 
@@ -494,6 +500,8 @@ def admin(dest):
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
     shutil.copyfile(SRC / "agenda.js", dest / "admin" / "agenda.js")
+    if os.environ.get("TENTACULES") == "1":
+        shutil.copyfile(SRC / "tentacules.js", dest / "admin" / "tentacules.js")
 
 
 def pages(D, files, names):

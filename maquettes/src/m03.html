@@ -41,6 +41,11 @@
   --ed-police: "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --ed-rayon: 8px;
   --ed-trait: #bfb7a8;
+  /* les tentacules (TENTACULES) : la pieuvre de l'en-tête guide, à l'encre du programme sur le papier réglé ; les empreintes de ventouse sont magenta */
+  --tt-encre: #141414;
+  --tt-accent: #a3306c;
+  --tt-neutre: #57524a;
+  --tt-epaisseur: 2.4;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--head) + 16px); scroll-padding-bottom: var(--bas); }
@@ -1736,7 +1741,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   const teteEl = document.getElementById('tete'), piedEl = document.querySelector('.site-foot');
   function enTete() {
     const ouvert = !!teteEl.querySelector('.menu2.open');
-    teteEl.innerHTML = `<div class="tete-1"><div class="wrap"><a class="brand" href="#/" data-k="marque" aria-label="${esc(site().nom)} - ${esc(site().accueil)}"><span class="brand-mark" aria-hidden="true">${D.logo.mark}</span><span>${esc(site().titreSuffixe)}</span></a></div></div>
+    teteEl.innerHTML = `<div class="tete-1"><div class="wrap"><a class="brand" href="#/" data-k="marque" aria-label="${esc(site().nom)} - ${esc(site().accueil)}"><span class="brand-mark" data-pieuvre aria-hidden="true">${D.logo.mark}</span><span>${esc(site().titreSuffixe)}</span></a></div></div>
       <nav class="entrees" id="entrees" aria-label="${esc(entrees().map(e => e.court).join(', '))}"><ul class="wrap">${entrees().map(e => `<li><a href="${esc(e.href)}" data-e="${e.cle}" data-k="e-${e.cle}" style="${eStyle(e)}"><span class="e-pt" aria-hidden="true"></span><span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span><svg class="e-fl" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>`).join('')}</ul></nav>
       <button class="menu-btn" type="button" data-k="menu-btn" aria-expanded="${ouvert}" aria-controls="menu2">${BARRES}<span>${esc(LIB().menu)}</span></button>
       <nav class="menu2${ouvert ? ' open' : ''}" id="menu2" aria-label="${esc(LIB().menu)}"><ul>${(site().menu || []).map(m => `<li><a href="${esc(m.href)}" data-m="${esc(m.id)}" data-k="m-${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')}</ul></nav>`;
@@ -1929,6 +1934,8 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => main.querySelectorAll('svg.carte-m03').forEach(etiqueter));
 
+  // les tentacules : la pieuvre du logo guide ; chaque entrée donne sa couleur à la remontée de sa page (papier clair : la couleur franche)
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'couleur' });
   enTete(); pied(); polices();
   // l'ouverture : le papier réglé de l'agenda, le logo à l'encre ; à la révélation, les bras de la carte poussent depuis Rouen
   INTRO.ouvrir({ fond: '#f4f1ea', encre: '#141414', classe: 'intro-m03', apres: () => main.querySelectorAll('svg.carte-m03:not(.pousse)').forEach(pousser) });
