@@ -12,10 +12,10 @@ for (const n of names) {
   const log = [];
   for (const [view, vp, opts] of [
     ['home', { width: 1440, height: 900 }, {}],
-    ['show', { width: 1440, height: 900 }, { hash: '#/spectacle/berenice' }],
-    ['agenda', { width: 1440, height: 900 }, { hash: '#/agenda' }],
+    ['show', { width: 1440, height: 900 }, { hash: '#/spectacle/berenice/voir' }],
+    ['agenda', { width: 1440, height: 900 }, { hash: '#/voir' }],
     ['mobile', { width: 390, height: 844 }, { mobile: true }],
-    ['mshow', { width: 390, height: 844 }, { mobile: true, hash: '#/spectacle/ci-gisait-cyrano' }],
+    ['mshow', { width: 390, height: 844 }, { mobile: true, hash: '#/spectacle/ci-gisait-cyrano/voir' }],
   ]) {
     const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1, isMobile: !!opts.mobile, hasTouch: !!opts.mobile, colorScheme: 'light', locale: 'fr-FR' });
     const page = await ctx.newPage();

@@ -14,9 +14,9 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | --- | --- |
 | `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
 | `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, et la planche qui les compare. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
-| `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`) et fiche de Cassandres (`cassandres.json`). |
+| `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
 | `supabase/migrations/` | Modèle de données proposé pour la future base de la compagnie : dates, lieux, tournées, troupe, feuilles de route, règles d'accès. **Non exécuté** : à relire avant usage. |
-| `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle. |
+| `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle et celles de leurs univers, `dossiers/` les dossiers de la compagnie (scolaire de Bérénice, artistique 2027-2028). |
 
 ## Prototype
 
@@ -61,25 +61,37 @@ node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 
-Dix façons de montrer le même contenu : **le texte exact de crescite.fr**, page par page (spectacles, onze saisons
-de dates, présentation de la compagnie, actions culturelles, espace pro, contact, mentions légales), plus
-Cassandres, création 2027. Rien n'y est réécrit ; seule la **carte des tournées** s'ajoute, dessinée dans l'univers
-de chaque maquette avec l'outil commun `maquettes/src/carte.js`. Chacune **s'ouvre sur le logo en grand**
-(`maquettes/src/intro.js`) : au clic, à la molette ou en glissant vers le bas, ses tentacules ondulent, il grossit et
-le site apparaît à travers lui. Chacune est ensuite un petit site à onglets : Spectacles, Agenda, La compagnie,
-Actions culturelles, Espace Pro, Contact, une page par spectacle et par saison. Les trois portes (« Je viens voir »,
-« Je programme », « Je fais venir dans mon établissement ») ne gardent que leurs libellés, et la pieuvre ne compte
-pas les spectacles. De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée »,
-le prototype remis en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème.
-`maquettes/src/synthese.html` assemble la proposition retenue : l’accueil et les cartes de la 06, l’agenda de la 03
-relié à la carte, les portes de la 04 et l’effet de chaque spectacle repris de la 10.
-`onglets.mjs` compare chaque texte affiché au texte d'origine et signale tout texte qui n'en vient pas.
+Dix façons de montrer le même contenu : **le texte de crescite.fr**, page par page (spectacles, onze saisons de
+dates, présentation de la compagnie, actions culturelles, contact, mentions légales), plus Cassandres, création 2027,
+**le dossier scolaire de Bérénice** et, pour chaque spectacle, **son univers et son action culturelle**
+(`data/univers-spectacles.json`, repris des pages d'adrienvada.fr et du dossier artistique 2027-2028). Rien n'y est
+inventé ; s'ajoutent seulement la **carte des tournées**, dessinée dans l'univers de chaque maquette avec l'outil
+commun `maquettes/src/carte.js`, et quelques intitulés de rubrique (`D.site.libelles`). Chacune **s'ouvre sur le
+logo en grand** (`maquettes/src/intro.js`) : au clic, à la molette ou en glissant vers le bas, ses tentacules
+ondulent, il grossit et le site apparaît à travers lui.
+
+Chacune se lit ensuite par **trois entrées**, la navigation première : « Je viens voir un spectacle » (`#/voir` : les
+dates tout public de la saison et leur carte), « Je souhaite programmer » (`#/programmer` : le catalogue, le nombre
+de représentations, les lieux de diffusion, la fiche technique), « Je représente un établissement scolaire »
+(`#/etablissement` : le type d'action culturelle de chaque spectacle, les actions culturelles du site, le dossier
+scolaire de Bérénice). Spectacles, La compagnie et Contact viennent en second. La page de chaque spectacle prend son
+univers (couleurs, police de titre, motif, photos, citations ; Bérénice à la charte de son dossier) et se lit dans
+l'une des trois entrées : `#/spectacle/berenice/voir`, `…/programmer`, `…/etablissement` ; la dernière entrée choisie
+sert de défaut. L'espace pro à mot de passe a disparu : ses anciennes adresses mènent à « Je souhaite programmer »,
+celles de l'agenda et des actions culturelles aux deux autres entrées. La pieuvre ne compte pas les spectacles.
+De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
+en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
+la proposition retenue : l’accueil et les cartes de la 06, l’agenda de la 03 relié à la carte, les portes de la 04
+devenues les trois entrées, et les univers de spectacle les plus aboutis.
+`onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
+les trois entrées (à portée dans le premier écran, une seule marquée comme courante), les redirections des anciennes
+adresses, la disparition de l'espace pro et la présence des contenus attendus de chaque vue.
 `maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
 dessous, et pour chacune son principe, ses forces et ses limites (« À propos »).
 
 **En ligne.** `python3 maquettes/build.py --pages` écrit le site GitHub Pages dans `docs/` : la planche en page
 d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.html`…). Ces pages embarquent le logo
-2.0 et les photos : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
+2.0 et les photos (rangées une seule fois dans `docs/photos/`) : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
 chacune demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet,
 noimageindex`), et leur adresse n'est donnée nulle part dans le dépôt (elle figure dans Settings → Pages). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
 
@@ -93,12 +105,24 @@ quand il est indiqué, texte d'origine et page source. Le classement scolaire / 
 Ce relevé ne contient que les dates **publiées** sur le site : une ligne peut couvrir plusieurs représentations,
 et beaucoup de représentations n'y figurent pas. Le dossier artistique 2027-2028 de la compagnie compte plus de
 1 500 représentations depuis 2011 (au moins 86 par an depuis 2014), quand le site en liste 460 lignes depuis 2016,
-soit environ un tiers. Les maquettes n'affichent aucun total : elles reprennent le texte du site, et le relevé
-ne sert qu'à placer les dates sur les cartes.
+soit environ un tiers. Les maquettes ne calculent aucun total à partir du relevé, qui ne sert qu'à placer les dates
+sur les cartes : le nombre de représentations de chaque spectacle, dans « Je souhaite programmer », est celui que
+donne le dossier artistique.
 
 `data/site-crescite.json` : le texte des pages publiques de crescite.fr tel qu'il est publié, fautes comprises
 (inline `em`, `strong`, listes et liens gardés). `data/cassandres.json` : le texte de Cassandres, relevé sur la page
 du projet en attendant sa page sur le site de la compagnie.
+
+`data/berenice-dossier.json` : le dossier scolaire 2026 de Bérénice, section par section (pourquoi l'étudier, le
+tableau des programmes, synopsis, adaptation, espace, alexandrin, consignes de préparation, les quatre ateliers,
+conditions d'accueil et fiche technique, présentation de la compagnie, portrait du directeur artistique). Le prix de
+cession, l'adresse électronique et le téléphone n'y sont pas : le dossier lui-même reste dans `private/dossiers/`.
+
+`data/univers-spectacles.json` : pour chaque spectacle, son univers (couleurs, polices, motif), sa phrase d'accroche,
+ses citations, ses photos légendées, son action culturelle (type, public, lieu, textes, dispositifs) et ce qui sert à
+le programmer (nombre de représentations, lieux de diffusion). Chaque texte porte sa source : le site, le dossier
+scolaire, adrienvada.fr ou le dossier artistique 2027-2028 (seulement ses passages sur les spectacles et les actions
+culturelles : ni budget, ni salaire, ni contact). Rien n'y parle de l'action culturelle de Macbeth – Fatum : à compléter.
 
 ## Base de données
 
