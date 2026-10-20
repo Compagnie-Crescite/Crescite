@@ -300,8 +300,7 @@ details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
 .bande-acc { margin: 16px 0 0; max-width: 46ch; font: 500 1.05rem/1.55 var(--serif); }
 .bande-etat { margin: 16px 0 0; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--u-vif); }
 .bande-date { font-size: .9rem; font-weight: 600; color: var(--u-texte); }
-.bande-motif { position: absolute; z-index: 0; right: 2vw; top: 50%; width: min(300px, 26vw); transform: translateY(-50%); color: var(--u-titre); opacity: .13; pointer-events: none; }
-.bande:nth-child(even) .bande-motif { right: auto; left: 2vw; }
+.bande-embleme { display: block; width: 92px; margin: 0 0 14px; color: var(--u-titre); opacity: .7; }
 /* les saisons */
 .sa-sp { padding-top: 14px; border-top: 2px solid var(--encre); margin-bottom: 22px; }
 .sa-sp h2 { margin: 0; font: italic 500 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.15 var(--serif); }
@@ -310,7 +309,7 @@ details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
 .sa-sous { margin: 4px 0 0; }
 .sa-crea { margin: 2px 0 6px; color: var(--gris); font-size: .9rem; }
 /* la compagnie : « En quelques dates » le long d'un bras, une ventouse par année ; le portrait du directeur */
-.co-grille, .ac-grille, .ct-grille, .dir-grille { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
+.co-grille, .ac-grille, .ct-grille { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
 .co-texte p { margin: 0 0 18px; max-width: 66ch; }
 .co-texte > :first-child { font: 500 clamp(1.2rem, 1.02rem + .55vw, 1.5rem)/1.45 var(--serif); }
 .chrono ol { position: relative; list-style: none; margin: 0; padding: 0 0 0 38px; }
@@ -322,7 +321,9 @@ details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
 .chrono a { color: var(--c); }
 .chrono a:hover { text-decoration: underline; }
 .directeur { background: var(--nuit); color: var(--blanc); }
-.dir-grille .h2 { color: var(--blanc); }
+.directeur .h2 { color: var(--blanc); }
+.dir-texte { columns: 2 340px; column-gap: clamp(28px, 5vw, 64px); }
+.dir-texte .dir-chapeau { column-span: all; }
 .dir-chapeau { margin: 0 0 18px; font: italic 500 1.4rem/1.35 var(--serif); color: var(--magenta-vif); }
 .dir-texte p { margin: 0 0 16px; max-width: 66ch; color: var(--blanc-2); }
 .dir-texte em { color: var(--blanc); }
@@ -498,7 +499,7 @@ details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
 .pq p { margin: 0; font-size: .95rem; }
 .table-defile { max-width: 100%; overflow-x: auto; }
 table.programmes { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .95rem; }
-.programmes th, .programmes td { padding: 11px 12px 11px 0; border-bottom: 1px solid var(--u-trait); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.programmes th, .programmes td { padding: 11px 12px 11px 0; border-bottom: 1px solid var(--u-trait); text-align: left; vertical-align: top; overflow-wrap: break-word; }
 .programmes th[scope="row"] { width: 17%; font-weight: 700; }
 .programmes td:last-child { width: 44%; color: var(--u-texte2); }
 .programmes th[scope="rowgroup"] { padding: 9px 14px; background: var(--u-titre); color: var(--u-sur); font: 700 .8rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; }
@@ -568,7 +569,7 @@ html .ed-ajout { font-family: var(--sans); }
   .catalogue { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 900px) {
-  .k-grille, .ag-grille, .co-grille, .ac-grille, .ct-grille, .dir-grille, .tour-grille, .distribution, .bande-in { grid-template-columns: minmax(0, 1fr); }
+  .k-grille, .ag-grille, .co-grille, .ac-grille, .ct-grille, .tour-grille, .distribution, .bande-in { grid-template-columns: minmax(0, 1fr); }
   .ag-carte, .ac-photos { position: static; }
   .ag-carte { order: 2; }
   .bande:nth-child(even) .bande-ph { order: 0; }
@@ -601,9 +602,10 @@ html .ed-ajout { font-family: var(--sans); }
   .tuile h3 { font-size: 1.2rem; }
   .galerie, .photos-ateliers { grid-template-columns: minmax(0, 1fr); }
   .leg { margin: -18px 10px 0 auto; }
-  .programmes { font-size: .86rem; }
-  .programmes th[scope="row"] { width: 26%; }
-  .programmes td:last-child { width: 38%; }
+  .programmes, .programmes tbody, .programmes tr, .programmes th, .programmes td { display: block; width: auto !important; }
+  .programmes tr { padding: 10px 0; border-bottom: 1px solid var(--u-trait); }
+  .programmes th, .programmes td { padding: 2px 0; border: 0; }
+  .programmes th[scope="rowgroup"] { margin-top: 10px; padding: 8px 12px; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
@@ -1041,7 +1043,7 @@ html .ed-ajout { font-family: var(--sans); }
       return true;
     }
     function placer(T, act, now, anime) {
-      const em = eveil === null ? 0 : anime ? smooth(0, 1, (now - eveil - 380 - T.i * 70) / 650) : 1;
+      const em = eveil === null ? 0 : anime ? smooth(0, 1, (now - eveil - 260 - T.i * 45) / 520) : 1;
       let op = em, sc = 1;
       if (T.mode === 'cache') op = 0;
       else if (T.mode === 'aspire') { op *= 1 - smooth(.3, .85, T.avale); sc = 1 - .55 * T.avale; }
@@ -1338,8 +1340,12 @@ html .ed-ajout { font-family: var(--sans); }
   addEventListener('keydown', e => { if (e.key === 'Escape' && haut.classList.contains('ouvert')) { fermeMenu(); btnMenu.focus(); } });
   // l'évitement ne change pas d'adresse : il mène au contenu de la page courante
   $('.evitement').addEventListener('click', e => { e.preventDefault(); $('#main').focus(); });
+  let sigPied = '';
   function pied() {
     const K = S.coordonnees || { nom: S.nom, adresse: [], legal: [] };
+    const sg = JSON.stringify([K, S.ecrire, S.facebook, S.partenaires, S.liensLegaux, S.libelles.modifierSite]);
+    if (sg === sigPied) return;   // inchangé : on ne le refait pas (le focus reste où il est)
+    sigPied = sg;
     $('#pied').innerHTML = `<div><span class="l">${D.logo.octopus}</span><p><strong>${esc(K.nom)}</strong><br>${(K.adresse || []).map(esc).join('<br>')}</p>
         <p class="liens"><a href="${attr(S.ecrire.href)}">${esc(S.ecrire.texte)}</a>${S.facebook ? `<span>${esc(S.facebook.texte)}</span>` : ''}</p></div>
       <div><p${ed('site.partenaires')}>${S.partenaires || ''}</p></div>
@@ -1464,10 +1470,10 @@ html .ed-ajout { font-family: var(--sans); }
     return tete(e.texte, e) + `
       ${S.ecole ? `<section class="bloc"><div class="wrap"><p class="ecole-texte"${ed('site.ecole.texte')}>${esc(S.ecole.texte)}</p></div></section>` : ''}
       <section class="bloc"><div class="wrap">${groupe(Lb.lieu.etablissement, g.etablissement)}${groupe(Lb.lieu.salle, g.salle)}${groupe('', g.autre)}</div></section>
-      <section class="bloc" aria-labelledby="h-actions"><div class="wrap ac-grille">
-        <div class="blocs"><h2 class="h2" id="h-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2>${(A.blocs || []).map((b, k) => bloc(b, `site.actions.blocs.${k}`)).join('')}</div>
+      <section class="bloc" aria-labelledby="h-actions"><div class="wrap"><h2 class="h2" id="h-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2><div class="ac-grille">
+        <div class="blocs">${(A.blocs || []).map((b, k) => bloc(b, `site.actions.blocs.${k}`)).join('')}</div>
         ${photos.length ? `<div class="ac-photos">${photos.map(k => `<img src="${attr(D.photos[k])}" alt="${attr(A.titre)}" loading="lazy">`).join('')}${A.credit ? `<p class="credit"${ed('site.actions.credit')}>${esc(A.credit)}</p>` : ''}</div>` : ''}
-      </div></section>
+      </div></div></section>
       ${sc.length ? `<section class="bloc" aria-labelledby="h-sc"><div class="wrap"><h2 class="h2" id="h-sc">${esc(Lb.enEtablissement)}</h2>
         <div class="ag-grille"><div class="ag-carte">${Encre.svg({ lieux: CARTE.aVenir('scolaire'), cadre: 'serre', titre: Lb.enEtablissement })}</div>
           <div class="ag-liste" data-agenda="">${parMois(sc).map(([m, ds]) => `<div class="mois"><h3>${esc(m)}</h3><ul class="dl">${ds.map(d => ligneDate(d, { ctx: 'etablissement' })).join('')}</ul></div>`).join('')}</div></div></div></section>` : ''}
@@ -1480,13 +1486,13 @@ html .ed-ajout { font-family: var(--sans); }
       const sl = s.slug, d = prochainePublique(s);
       return `<li class="bande" style="${uStyle(s)}"><div class="bande-in">
         <div class="bande-ph"><img src="${attr(D.photos[sl] || '')}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}"></div>
-        <div class="bande-tx">${s.lieuTemps ? `<p class="bande-lt"${ed(`shows.${sl}.lieuTemps`)}>${esc(s.lieuTemps)}</p>` : ''}
+        <div class="bande-tx"><span class="bande-embleme">${motif(univers(s).motif)}</span>${s.lieuTemps ? `<p class="bande-lt"${ed(`shows.${sl}.lieuTemps`)}>${esc(s.lieuTemps)}</p>` : ''}
           <h2><a class="etire" href="#/spectacle/${attr(sl)}">${esc(s.titre)}</a></h2>
           ${s.sousTitre ? `<p class="bande-sous"${ed(`shows.${sl}.sousTitre`)}>${s.sousTitre}</p>` : ''}
           <p class="bande-crea"${ed(`shows.${sl}.creation`)}>${esc(s.creation)}</p>
           ${s.accroche ? `<p class="bande-acc"${ed(`shows.${sl}.accroche`)}>${esc(s.accroche)}</p>` : ''}
           ${s.statut || s.enTournee || d ? `<p class="bande-etat">${s.statut ? `<span class="tag">${esc(s.statut)}</span>` : s.enTournee ? `<span class="tag">${esc(S.libelles.enTournee)}</span>` : ''}${d ? `<span class="bande-date">${esc(d.ligne)}</span>` : ''}</p>` : ''}
-        </div></div><span class="bande-motif">${motif(univers(s).motif)}</span></li>`;
+        </div></div></li>`;
     }).join('');
     return tete(menu('spectacles').texte) + `<ul class="bandes">${bandes}</ul>`;
   }
@@ -1512,7 +1518,7 @@ html .ed-ajout { font-family: var(--sans); }
           <ol>${(C.dates || []).map((d, i) => { const s = D.shows.find(x => String(x.annee) === String(d.annee)); const t = `<span${ed(`site.compagnie.dates.${i}.titre`)}>${esc(d.titre)}</span>`;
             return `<li style="--i:${i}"><b${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</b>${s ? `<a href="#/spectacle/${attr(s.slug)}" style="--c:${univers(s).lait}">${t}</a>` : `<span class="t-date">${t}</span>`}</li>`; }).join('')}</ol>
         </aside></div></section>
-      ${Dir ? `<section class="bloc directeur" aria-labelledby="h-dir"><div class="wrap dir-grille"><h2 class="h2" id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dir.titre)}</h2>
+      ${Dir ? `<section class="bloc directeur" aria-labelledby="h-dir"><div class="wrap"><h2 class="h2" id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dir.titre)}</h2>
         <div class="dir-texte">${Dir.chapeau ? `<p class="dir-chapeau"${ed('site.compagnie.directeur.chapeau')}>${esc(Dir.chapeau)}</p>` : ''}${(Dir.paragraphes || []).map((p, k) => bloc(p, `site.compagnie.directeur.paragraphes.${k}`)).join('')}</div></div></section>` : ''}
       ${S.partenaires ? `<section class="bloc"><div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p></div></section>` : ''}`;
   }
@@ -1610,7 +1616,7 @@ html .ed-ajout { font-family: var(--sans); }
     const p = c => `dossiers.${k}.${c}`;
     const couv = `<div class="couv">${['titre', 'auteur', 'creation', 'type', 'duree', 'format', 'public'].filter(c => X[c]).map(c => `<p class="couv-${c}"${ed(p(c))}>${esc(X[c])}</p>`).join('')}</div>`;
     const pq = X.pourquoi ? `<h3 class="dh"${ed(p('pourquoi.titre'))}>${esc(X.pourquoi.titre)}</h3><div class="pourquoi">${(X.pourquoi.sections || []).map((x, i) => `<article class="pq"><h4${ed(p(`pourquoi.sections.${i}.titre`))}>${esc(x.titre)}</h4><p${ed(p(`pourquoi.sections.${i}.texte`))}>${x.texte}</p></article>`).join('')}</div>` : '';
-    const prog = X.programmes ? `<h3 class="dh" id="h-programmes"${ed(p('programmes.titre'))}>${esc(X.programmes.titre)}</h3><div class="table-defile"><table class="programmes" aria-labelledby="h-programmes">${(X.programmes.niveaux || []).map((n, i) => `<tbody><tr><th scope="rowgroup" colspan="3"${ed(p(`programmes.niveaux.${i}.niveau`))}>${esc(n.niveau)}</th></tr>${(n.lignes || []).map((l, j) => `<tr><th scope="row"${ed(p(`programmes.niveaux.${i}.lignes.${j}.matiere`))}>${esc(l.matiere)}</th><td${ed(p(`programmes.niveaux.${i}.lignes.${j}.intitule`))}>${esc(l.intitule)}</td><td${ed(p(`programmes.niveaux.${i}.lignes.${j}.objectif`))}>${esc(l.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div>` : '';
+    const prog = X.programmes ? `<h3 class="dh" id="h-programmes"${ed(p('programmes.titre'))}>${esc(X.programmes.titre)}</h3><div class="table-defile"><table class="programmes" role="table" aria-labelledby="h-programmes">${(X.programmes.niveaux || []).map((n, i) => `<tbody role="rowgroup"><tr role="row"><th scope="rowgroup" role="rowheader" colspan="3"${ed(p(`programmes.niveaux.${i}.niveau`))}>${esc(n.niveau)}</th></tr>${(n.lignes || []).map((l, j) => `<tr role="row"><th scope="row" role="rowheader"${ed(p(`programmes.niveaux.${i}.lignes.${j}.matiere`))}>${esc(l.matiere)}</th><td role="cell"${ed(p(`programmes.niveaux.${i}.lignes.${j}.intitule`))}>${esc(l.intitule)}</td><td role="cell"${ed(p(`programmes.niveaux.${i}.lignes.${j}.objectif`))}>${esc(l.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div>` : '';
     const C = X.consignes;
     const cons = C ? `<div class="consignes"><h3 class="dh"${ed(p('consignes.titre'))}>${esc(C.titre)}</h3>${C.note ? `<p class="note"${ed(p('consignes.note'))}>${esc(C.note)}</p>` : ''}${C.intro ? `<p${ed(p('consignes.intro'))}>${C.intro}</p>` : ''}
       ${(C.demandes || []).length ? `<ul class="demandes">${C.demandes.map((d, i) => `<li${ed(p(`consignes.demandes.${i}`))}>${esc(d)}</li>`).join('')}</ul>` : ''}${C.apres ? `<p${ed(p('consignes.apres'))}>${C.apres}</p>` : ''}
@@ -1798,7 +1804,7 @@ html .ed-ajout { font-family: var(--sans); }
     }
     Stage.montrer(false);
     if (qs && !memeSp && motionOK() && !Ink.active() && v.cle !== 'spectacle') Ink.fill(univers(qs).fond);
-    vAccueil.hidden = true; vPage.hidden = false;
+    vAccueil.hidden = true; vPage.hidden = false; $('#accueil-suite').innerHTML = '';
     vPage.innerHTML = v.cle === 'spectacle' ? pageSpectacle(v.slug, v.entree) : v.cle === 'saison' ? pageSaison(v.saison) : v.rendu();
     scrollTo(0, 0);
     apres();
