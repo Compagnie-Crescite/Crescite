@@ -6,19 +6,24 @@
 <title>Accueil - crescite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;1,6..96,500;1,6..96,600&family=Instrument+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500;1,6..96,600&family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Grenze+Gotisch:wght@600&family=IM+Fell+English&family=IM+Fell+French+Canon&family=Instrument+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@600&family=Ubuntu:wght@700&display=swap">
 <style>
 /* Maquette 10 · « La pieuvre vivante, rangée ».
-   La pieuvre du logo, vivante, au milieu de la nuit : ses huit bras ondulent au repos. Les titres des spectacles sont
-   posés librement autour d'elle, autant qu'il y en a ; au survol (ou au clavier) c'est le bras le plus proche qui se
-   tend vers le titre, le souligne et s'y enroule ; on le tire (ou on clique) et la pieuvre l'avale : l'encre de son
-   univers recouvre l'écran. Aucun bras n'appartient à un spectacle. La carte des tournées : des tentacules d'encre,
-   ponctuées de ventouses, qui partent de la pieuvre posée sur Rouen, et une goutte d'encre qui s'étale à chaque commune. */
+   La pieuvre du logo, vivante, au milieu de la nuit : ses huit bras ondulent au repos et ne sont à personne. Autour
+   d'elle, posés librement, les titres des spectacles (autant qu'il y en a) et, dessous, le choix des trois entrées ;
+   au survol (ou au clavier) le bras le plus proche se tend vers le titre, le souligne et s'y enroule. On tire un titre
+   (ou on clique) : la pieuvre l'avale et l'encre de son univers recouvre l'écran. Chaque spectacle a son univers
+   (couleurs, police de titre, motif qui réagit au défilement) et se lit par les trois entrées. La carte des tournées :
+   des tentacules d'encre ponctuées de ventouses, qui partent de la pieuvre posée sur Rouen. */
+@property --p { syntax: '<number>'; inherits: true; initial-value: 0; }
 :root {
   --nuit: #150a11; --nuit-2: #2a1220; --lait: #f6f1ea; --lait-2: #e9e1d6; --lait-3: #efe7dc; --encre: #1b1216; --gris: #675b61;
-  --blanc: #f7ecf1; --blanc-2: #c9b7c1; --magenta: #bc3e80; --magenta-texte: #a8306f;
+  --blanc: #f7ecf1; --blanc-2: #c9b7c1; --magenta: #bc3e80; --magenta-texte: #a8306f; --magenta-vif: #f07ab6;
   --serif: "Bodoni Moda", "Bodoni 72", Didot, serif; --sans: "Instrument Sans", system-ui, sans-serif;
-  --gout: clamp(16px, 4vw, 56px); --haut: 64px;
+  --gout: clamp(16px, 4vw, 56px); --haut: 68px; --barre: 0px; --og-h: 58px;
+  /* l'édition sur place (edition.js), dans le style de la maquette */
+  --ed-fond: #f6f1ea; --ed-encre: #1b1216; --ed-accent: #a8306f; --ed-sur-accent: #ffffff;
+  --ed-police: "Instrument Sans", system-ui, sans-serif; --ed-rayon: 14px; --ed-trait: rgba(27, 18, 22, .2);
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -34,27 +39,52 @@ img { display: block; max-width: 100%; }
 .h2 { margin: 0 0 26px; font: italic 500 clamp(1.9rem, 1.4rem + 1.6vw, 2.8rem)/1.05 var(--serif); text-wrap: balance; }
 .tag { display: inline-block; padding: 3px 12px; border-radius: 999px; border: 1.5px solid currentColor; font: 700 .72rem/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
 svg.fl { width: 1.2em; height: 1.2em; vertical-align: -.22em; }
+svg.be { width: 26px; height: 16px; flex: none; overflow: visible; }
 
-/* en-tête : un seul étage ; les six onglets tiennent sur une ligne dès 1280 px, sinon « Menu » */
+/* ---------- l'en-tête : les trois entrées d'abord, le menu second à part, plus petit ---------- */
 .top { position: sticky; top: 0; z-index: 40; height: var(--haut); background: var(--nuit); color: var(--blanc); border-bottom: 1px solid rgba(255, 255, 255, .08); }
-.top .wrap { max-width: none; height: 100%; display: flex; align-items: center; gap: 24px; }
-.marque { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 1.1rem; }
+.top-in { height: 100%; display: flex; align-items: center; gap: clamp(10px, 1.5vw, 22px); padding: 0 var(--gout); }
+.marque { flex: none; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 700; letter-spacing: .02em; font-size: 1.1rem; }
 .marque .l { width: 46px; color: var(--blanc); }
 .marque svg { width: 100%; height: auto; display: block; }
-.nav { margin-left: auto; display: flex; gap: 2px; }
-.nav a { text-decoration: none; padding: 8px 11px; border-radius: 6px; color: var(--blanc-2); font-weight: 600; font-size: .95rem; white-space: nowrap; }
-.nav a:hover { color: var(--blanc); }
-.nav a[aria-current="page"] { color: var(--blanc); text-decoration: underline 2px var(--magenta); text-underline-offset: 9px; }
-.menu { display: none; margin-left: auto; background: none; border: 1px solid rgba(255, 255, 255, .25); color: var(--blanc); border-radius: 6px; padding: 6px 14px; font: 600 .95rem var(--sans); cursor: pointer; }
-@media (max-width: 1279px) {
-  .nav { display: none; position: absolute; left: 0; right: 0; top: var(--haut); background: var(--nuit); flex-direction: column; align-items: flex-start; padding: 8px var(--gout) 18px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
-  .top.ouvert .nav { display: flex; }
-  .menu { display: inline-block; }
-  .nav a { font-size: 1.05rem; padding: 10px 0; }
-  .nav a[aria-current="page"] { text-underline-offset: 6px; }
+.entrees { display: flex; gap: 4px; margin-left: clamp(0px, 1.2vw, 22px); }
+.entree { display: inline-flex; align-items: center; gap: 8px; padding: 8px 15px 8px 10px; border-radius: 999px; border: 1.5px solid transparent; text-decoration: none; color: var(--blanc); font: 600 .94rem/1.2 var(--sans); white-space: nowrap; transition: background-color .2s, color .2s, border-color .2s; }
+.entree .be { color: var(--ev); transition: transform .35s cubic-bezier(.2, .9, .3, 1.3); }
+.entree:hover { background: rgba(255, 255, 255, .07); }
+.entree:hover .be { transform: rotate(-14deg) scale(1.1); }
+.entree[aria-current="page"] { background: var(--ev); color: var(--nuit); }
+.entree[aria-current="page"] .be { color: var(--nuit); }
+.entree[aria-current="true"] { border-color: var(--ev); background: rgba(255, 255, 255, .05); }
+.entree .court { display: none; }
+.second { margin-left: auto; display: flex; align-items: center; gap: 0; padding-left: clamp(8px, 1.2vw, 18px); border-left: 1px solid rgba(255, 255, 255, .16); }
+.second a { padding: 6px 9px; border-radius: 6px; text-decoration: none; color: var(--blanc-2); font: 500 .85rem/1.2 var(--sans); white-space: nowrap; }
+.second a:hover { color: var(--blanc); }
+.second a[aria-current="page"] { color: var(--blanc); text-decoration: underline 2px var(--magenta-vif); text-underline-offset: 7px; }
+.menu { display: none; align-items: center; gap: 9px; margin-left: auto; background: none; border: 1px solid rgba(255, 255, 255, .28); color: var(--blanc); border-radius: 8px; padding: 7px 13px; font: 600 .92rem var(--sans); cursor: pointer; }
+.menu svg { width: 18px; height: 14px; }
+@media (max-width: 1399px) { .entree .long { display: none; } .entree .court { display: inline; } }
+@media (max-width: 1079px) {
+  .menu { display: inline-flex; }
+  .second { display: none; position: absolute; right: var(--gout); top: calc(var(--haut) - 4px); min-width: 220px; flex-direction: column; align-items: stretch; padding: 10px; border: 1px solid rgba(255, 255, 255, .14); border-radius: 12px; background: var(--nuit); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); }
+  .top.ouvert .second { display: flex; }
+  .second a { padding: 11px 12px; font-size: 1rem; }
+  .marque #marque-mot { display: none; }
+}
+/* au téléphone : les trois entrées dans une barre fixe en bas d'écran */
+@media (max-width: 859px) {
+  :root { --haut: 60px; --barre: calc(62px + env(safe-area-inset-bottom)); --og-h: 54px; }
+  .marque #marque-mot { display: inline; }
+  .entrees { position: fixed; left: 0; right: 0; bottom: 0; z-index: 45; margin: 0; gap: 0; height: var(--barre); padding: 0 4px env(safe-area-inset-bottom); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--nuit); border-top: 1px solid rgba(255, 255, 255, .14); }
+  .entree { flex-direction: column; justify-content: center; gap: 2px; padding: 6px 4px 5px; border: 0; border-top: 3px solid transparent; border-radius: 0; font-size: .74rem; line-height: 1.15; white-space: normal; text-align: center; }
+  .entree:hover { background: none; }
+  .entree[aria-current="page"] { background: rgba(255, 255, 255, .07); color: var(--blanc); border-top-color: var(--ev); }
+  .entree[aria-current="page"] .be { color: var(--ev); }
+  .entree[aria-current="true"] { border-top-color: var(--ev); background: none; }
+  body { padding-bottom: var(--barre); }
+  html .ed-barre { bottom: calc(var(--barre) + 10px); }
 }
 
-/* ---------- la scène : la pieuvre vivante et les titres, en nombre libre ---------- */
+/* ---------- la scène : la pieuvre vivante, les titres en nombre libre et les trois entrées ---------- */
 .stage { position: relative; height: 760px; color: var(--blanc); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y;
   background: radial-gradient(40% 46% at 50% var(--gy, 32%), #331629 0%, rgba(21, 10, 17, 0) 72%), radial-gradient(130% 90% at 50% 0%, #1e0e18 0%, var(--nuit) 62%); }
 .stage::before, .intro.nuit-pieuvre::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .38;
@@ -65,7 +95,7 @@ svg.fl { width: 1.2em; height: 1.2em; vertical-align: -.22em; }
 .intro.nuit-pieuvre.part::after { opacity: 0; }
 .intro.nuit-pieuvre .intro-indice { color: #c9b7c1; }
 .stage-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-.stage-h { position: relative; z-index: 2; margin: 0; padding: 26px var(--gout) 0; text-align: center; font: 600 .78rem/1.3 var(--sans); letter-spacing: .32em; text-transform: uppercase; color: var(--blanc-2); }
+.stage-h { position: relative; z-index: 2; margin: 0; padding: 24px var(--gout) 0; text-align: center; font: 600 .78rem/1.3 var(--sans); letter-spacing: .32em; text-transform: uppercase; color: var(--blanc-2); }
 .t-labels { list-style: none; margin: 0; padding: 0; }
 .t-label { position: absolute; left: 0; top: 0; z-index: 3; display: block; color: var(--blanc); text-decoration: none; cursor: grab; touch-action: none; opacity: 0;
   -webkit-user-drag: none; -webkit-touch-callout: none; transition: color .2s; will-change: transform, opacity; }
@@ -73,31 +103,43 @@ svg.fl { width: 1.2em; height: 1.2em; vertical-align: -.22em; }
 .t-title { display: block; font: italic 500 clamp(1.15rem, .9rem + .62vw, 1.55rem)/1.15 var(--serif); text-wrap: balance; }
 .t-when { position: absolute; top: calc(100% + 12px); left: 0; width: max-content; max-width: 260px; font: 400 .8rem/1.3 var(--sans); color: var(--blanc-2); opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
 .t-label.droite .t-when { left: auto; right: 0; text-align: right; }
+/* les entrées : plus grandes, un fil de leur couleur sous le libellé ; on ne les tire pas, on les choisit */
+.t-entree { cursor: pointer; }
+.t-entree .t-title { font: italic 500 clamp(1.45rem, .95rem + 1.15vw, 2.25rem)/1.12 var(--serif); }
+.t-entree .t-tt { padding-bottom: 5px; background: linear-gradient(var(--e), var(--e)) 0 100% / 100% 1.5px no-repeat; }
 .t-label.is-active { color: var(--c); }
 .t-label.is-active .t-when { opacity: 1; transform: none; }
-.stage.has-active .t-label:not(.is-active) { color: rgba(247, 236, 241, .5); }
+.stage.has-active .t-label:not(.is-active) { color: rgba(247, 236, 241, .62); }
 .stage.is-grabbing, .stage.is-grabbing .t-label { cursor: grabbing; }
 .stage.is-mobile .t-label { touch-action: pan-y; cursor: pointer; }
 .stage.is-mobile .t-title { font-size: 1.25rem; }
+.stage.is-mobile .t-entree .t-title { font-size: 1.6rem; }
 .stage.is-mobile .t-when { opacity: 1; transform: none; max-width: calc(100vw - 92px); top: calc(100% + 10px); }
 
 /* ---------- l'accueil, sous la scène ---------- */
 section.bloc { padding: clamp(52px, 8vw, 100px) 0; }
 section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
-.portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 clamp(18px, 3vw, 44px); }
-.porte { position: relative; display: block; padding: 8px 40px 34px 0; text-decoration: none; color: var(--encre); font: italic 500 clamp(1.45rem, 1.05rem + 1.1vw, 2.15rem)/1.12 var(--serif); text-wrap: balance; transition: color .2s; }
-.porte::before { content: ""; position: absolute; left: 0; right: 29px; bottom: 12px; height: 3px; border-radius: 2px; background: var(--dc); transform-origin: left; transition: transform .35s; }
-.porte::after { content: ""; position: absolute; right: 0; bottom: 10px; width: 32px; height: 32px; background: var(--dc); transform-origin: 0 90%; transition: transform .45s cubic-bezier(.2, .9, .3, 1.3);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
-          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
-.porte:hover { color: var(--dct); }
-.porte:hover::after { transform: rotate(-24deg) scale(1.12); }
 .k-grille { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
 .k-qui { margin: 0 0 4px; font: italic 500 1.5rem/1.2 var(--serif); color: var(--magenta-texte); }
 .suite { margin: 22px 0 0; }
 .suite a { font-weight: 700; text-decoration: none; color: var(--magenta-texte); }
 .suite a:hover { text-decoration: underline; }
 .donateurs p { margin: 0; max-width: 92ch; font-size: .86rem; line-height: 1.7; color: var(--gris); }
+/* les spectacles dans leurs univers : une tuile par spectacle, à ses couleurs et dans sa police de titre */
+.tuiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.tuile { position: relative; display: flex; flex-direction: column; background: var(--u-fond); color: var(--u-texte); border-radius: 4px; overflow: hidden; transition: --p .9s ease, transform .3s; }
+.tuile:hover, .tuile:focus-within { --p: 1; transform: translateY(-3px); }
+.tu-ph { aspect-ratio: 4 / 3; overflow: hidden; background: var(--u-fond2); }
+.tu-ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
+.tuile:hover .tu-ph img { transform: scale(1.05); }
+.tu-tx { position: relative; z-index: 1; padding: 14px 16px 18px; flex: 1; }
+.tu-lt { margin: 0 0 6px; font: 700 .68rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.tuile h3 { margin: 0; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(1.35rem, 1rem + .75vw, 1.8rem); line-height: 1.04; text-wrap: balance; }
+.tu-cr { margin: 8px 0 0; font-size: .82rem; color: var(--u-texte2); }
+.tu-motif { position: absolute; right: -18px; bottom: -22px; width: 112px; color: var(--u-titre); opacity: .2; pointer-events: none; }
+a.etire { text-decoration: none; }
+a.etire::after { content: ""; position: absolute; inset: 0; z-index: 2; }
+.ed-actif a.etire::after { content: none; }
 
 /* ---------- les lignes de date ---------- */
 .dl { list-style: none; margin: 0 0 30px; padding: 0; }
@@ -108,7 +150,7 @@ section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
 .dl .t { min-width: 0; }
 .dl .ti { font: italic 500 1.2rem/1.25 var(--serif); text-decoration: none; }
 .dl .ti::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; background: var(--c); vertical-align: middle; margin-right: 10px; }
-.dl .ti:hover { color: var(--magenta-texte); }
+.dl a.ti:hover { color: var(--magenta-texte); }
 .dl .lieu { margin: 2px 0 0; font-weight: 600; }
 .dl .det { list-style: none; margin: 4px 0 0; padding: 0; color: var(--gris); font-size: .93rem; }
 .dl .det a { color: var(--magenta-texte); }
@@ -120,7 +162,8 @@ section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
 
 /* ---------- la carte : des tentacules d'encre, des ventouses, une goutte à chaque commune ---------- */
 .carte.encre { display: block; width: 100%; height: auto; overflow: visible; --k-encre: #2a1220; --k-papier: var(--lait); --k-vif: var(--magenta); --k-pays: var(--lait-3); --k-trait: #d4c7b8; }
-.show .carte.encre { --k-encre: var(--act); --k-vif: var(--encre); }
+.show .carte.encre { --k-encre: var(--u-titre); --k-vif: var(--u-texte); --k-papier: var(--u-fond); --k-pays: var(--u-fond2); --k-trait: color-mix(in srgb, var(--u-texte) 26%, transparent); }
+.show .carte-nom { fill: var(--u-texte); }
 .carte.encre .carte-pays { fill: var(--k-pays); stroke: var(--k-trait); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .carte.encre .carte-voisin { fill: none; stroke: var(--k-trait); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-dasharray: 2 3; }
 .carte.encre .k-encart { fill: none; stroke: var(--k-trait); stroke-width: 1.2px; vector-effect: non-scaling-stroke; stroke-dasharray: 3 4; }
@@ -131,15 +174,18 @@ section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
 .tent { transition: opacity .25s; }
 .tent-corps { fill: var(--k-encre); transition: fill .25s; }
 .tent-v circle { fill: var(--k-papier); stroke: var(--k-encre); transition: stroke .25s; }
-.k-passe { opacity: 0; transition: opacity 1.2s .2s; }
-.carte.encre.pousse .k-passe, .carte.encre.fixe .k-passe { opacity: 1; }
+.k-passe, .k-fins { opacity: 0; transition: opacity 1.2s .2s; }
+.carte.encre.pousse .k-passe, .carte.encre.fixe .k-passe, .carte.encre.pousse .k-fins, .carte.encre.fixe .k-fins { opacity: 1; }
 .k-passe path { fill: var(--k-encre); opacity: .2; }
 .k-passe circle { fill: var(--k-encre); opacity: .32; }
+.k-fins path { fill: var(--k-encre); opacity: .5; transition: opacity .2s, fill .2s; }
+.k-fins path.on { opacity: 1; fill: var(--k-vif); }
 .k-pieuvre path, .k-flaque { fill: var(--k-encre); }
 .carte-rouen-nom, .carte-nom { font-family: var(--serif); font-style: italic; font-weight: 600; fill: var(--k-encre); stroke: var(--k-papier); paint-order: stroke; stroke-linejoin: round; pointer-events: none; }
 .carte-nom { font-family: var(--sans); font-style: normal; fill: var(--encre); opacity: 0; transition: opacity .2s; }
 .carte-nom.on, .carte-nom.toujours { opacity: 1; }
 .carte-lieu { cursor: pointer; outline: none; }
+.carte-lieu.fin { cursor: default; }
 .carte-lieu .hit { fill: transparent; stroke: none; }
 .carte-lieu:focus-visible .hit { stroke: var(--k-vif); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
 .carte-lieu .g-h { transform-box: fill-box; transform-origin: center; transition: transform .35s cubic-bezier(.2, .9, .3, 1.4); }
@@ -160,58 +206,135 @@ section.bloc + section.bloc { border-top: 1px solid var(--lait-2); }
 
 /* ---------- les pages ---------- */
 main { min-height: calc(100vh - var(--haut)); }
-.page-tete { overflow: hidden; background: radial-gradient(80% 160% at 12% 100%, #2a1220 0%, var(--nuit) 70%); color: var(--blanc); padding: clamp(48px, 7vw, 96px) 0 clamp(44px, 6vw, 80px); }
-.page-tete h1 { margin: 0; font: italic 500 clamp(2.4rem, 1.6rem + 3.4vw, 5rem)/1.02 var(--serif); text-wrap: balance; }
-.page-tete h1 span { position: relative; display: inline-block; padding-bottom: 22px; }
-/* le bras arrive du bord de l'écran, souligne le titre et s'enroule */
-.page-tete h1 span::after { content: ""; position: absolute; left: -100vw; right: -32px; bottom: 0; height: 32px; background: linear-gradient(var(--magenta), var(--magenta)) 0 27px / calc(100% - 31px) 3px no-repeat, url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23bc3e80' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") right top / 32px 32px no-repeat; }
+.page-tete { overflow: hidden; background: radial-gradient(80% 160% at 12% 100%, color-mix(in srgb, var(--ev, #bc3e80) 20%, #2a1220) 0%, var(--nuit) 70%); color: var(--blanc); padding: clamp(48px, 7vw, 96px) 0 clamp(44px, 6vw, 80px); }
+.page-tete h1 { margin: 0; font: italic 500 clamp(2.3rem, 1.5rem + 3.4vw, 5rem)/1.04 var(--serif); text-wrap: balance; }
+/* le bras arrive du bord de l'écran, souligne le titre et s'enroule, à la couleur de l'entrée */
+.page-tete h1 > span { position: relative; display: inline-block; padding-bottom: 24px; --trait: var(--ev, var(--magenta)); }
+.page-tete h1 > span::after { content: ""; position: absolute; left: -100vw; right: 31px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
+.page-tete h1 > span::before { content: ""; position: absolute; right: 0; bottom: -1px; width: 32px; height: 32px; background: var(--trait);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M0 28.5H11C17.08 28.5 22 23.58 22 17.5C22 12.81 18.19 9 13.5 9C10.19 9 7.5 11.69 7.5 15C7.5 17.21 9.29 19 11.5 19' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
 .page-tete + section.bloc { padding-top: clamp(40px, 6vw, 72px); }
-/* les spectacles */
-.repertoire { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--lait-2); }
-.repertoire a { display: grid; grid-template-columns: clamp(170px, 20vw, 250px) minmax(0, 1fr) minmax(170px, 250px); gap: clamp(18px, 3vw, 44px); align-items: center; padding: 24px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; }
-.rp-photo { aspect-ratio: 3 / 2; overflow: hidden; background: var(--lait-2); }
-.rp-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
-.repertoire a:hover .rp-photo img { transform: scale(1.04); }
-.repertoire h2 { margin: 0; font: italic 500 clamp(1.6rem, 1.2rem + 1.2vw, 2.4rem)/1.08 var(--serif); text-wrap: balance; }
-.repertoire h2::after { content: ""; display: block; width: 56px; height: 3px; margin-top: 14px; border-radius: 2px; background: var(--c); transition: width .3s; }
-.repertoire a:hover h2::after { width: 120px; }
-.rp-sous { margin: 12px 0 0; }
-.rp-crea { margin: 4px 0 0; color: var(--gris); font-size: .92rem; }
-.rp-etat { margin: 0; display: grid; gap: 8px; justify-items: start; color: var(--c); }
-.rp-ligne { font-size: .9rem; color: var(--encre); }
-/* l'agenda et les saisons : la carte à côté de la liste */
+.cta { display: inline-flex; align-items: center; gap: 10px; padding: 14px 26px; border-radius: 999px; background: var(--nuit-2); color: var(--blanc); font: 700 1rem/1.2 var(--sans); text-decoration: none; transition: background-color .2s; }
+.cta:hover { background: var(--magenta-texte); }
+.cta svg.fl { width: 1.1em; height: 1.1em; }
+.partenaires { margin: 0 0 28px; max-width: 70ch; color: var(--gris); }
+/* « Je viens voir un spectacle » : la saison, la carte à côté de la liste */
 .ag-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(24px, 5vw, 72px); align-items: start; }
 .ag-carte { position: sticky; top: calc(var(--haut) + 20px); }
-.mois h2 { margin: 0; padding-top: 12px; border-top: 2px solid var(--encre); font: italic 500 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.15 var(--serif); }
+.mois h3 { margin: 0; padding-top: 12px; border-top: 2px solid var(--encre); font: italic 500 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.15 var(--serif); }
 .saisons { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0 28px; }
 .saisons a { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 0; border-bottom: 1px solid var(--lait-2); text-decoration: none; font: italic 500 1.2rem var(--serif); }
 .saisons a:hover { color: var(--magenta-texte); }
+/* les spectacles en tournée, dans leur univers */
+.en-tournee { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 18px; }
+.cv { position: relative; display: flex; flex-direction: column; background: var(--u-fond); color: var(--u-texte); border-radius: 4px; overflow: hidden; transition: --p .9s ease; }
+.cv:hover, .cv:focus-within { --p: 1; }
+.cv-ph { aspect-ratio: 16 / 10; overflow: hidden; background: var(--u-fond2); }
+.cv-ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
+.cv:hover .cv-ph img { transform: scale(1.04); }
+.cv-tx { position: relative; padding: 18px 20px 22px; }
+.cv-lt { margin: 0 0 6px; font: 700 .7rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.cv h3 { margin: 0; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(1.6rem, 1.2rem + 1vw, 2.2rem); line-height: 1.02; text-wrap: balance; }
+.cv-acc { margin: 12px 0 0; font: 500 1.02rem/1.5 var(--serif); }
+.cv-date { margin: 12px 0 0; font-weight: 700; font-size: .9rem; color: var(--u-vif); }
+.cv .tu-motif { width: 130px; }
+/* « Je souhaite programmer » : le catalogue, une fiche par spectacle */
+.catalogue { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.fp { position: relative; display: flex; flex-direction: column; gap: 16px; background: var(--u-fond); color: var(--u-texte); padding: clamp(22px, 2.6vw, 34px); border-radius: 4px; overflow: hidden; transition: --p .9s ease; }
+.fp:hover, .fp:focus-within { --p: 1; }
+.fp h3 { margin: 0; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(1.7rem, 1.2rem + 1.3vw, 2.5rem); line-height: 1.02; text-wrap: balance; position: relative; }
+.fp-sous { margin: 8px 0 0; font: italic 500 1.05rem/1.4 var(--serif); }
+.fp-crea { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: .86rem; color: var(--u-texte2); }
+.fp-crea .tag { color: var(--u-vif); }
+.fp .fiche { columns: 2 220px; column-gap: 24px; font-size: .9rem; }
+.fp .fiche p { break-inside: avoid; }
+.fp-pied { position: relative; z-index: 3; display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: flex-start; margin-top: auto; }
+.lien-video { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; color: var(--u-vif); text-decoration: none; }
+.lien-video svg { width: 26px; height: 26px; }
+.lien-video:hover { text-decoration: underline; }
+details.lieux { flex: 1 1 260px; }
+details.lieux summary { cursor: pointer; font-weight: 700; color: var(--u-vif, var(--magenta-texte)); }
+details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
+.eq { margin: 0; font-weight: 600; }
+/* « Je représente un établissement scolaire » */
+.ecole-texte { margin: 0; max-width: 62ch; font: 500 clamp(1.2rem, 1rem + .7vw, 1.55rem)/1.55 var(--serif); }
+.groupe-e { margin-top: clamp(36px, 5vw, 64px); }
+.groupe-e:first-child { margin-top: 0; }
+.cartes-e { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 18px; }
+.fe { position: relative; display: flex; flex-direction: column; gap: 10px; background: var(--u-fond); color: var(--u-texte); padding: clamp(22px, 2.4vw, 30px); border-radius: 4px; overflow: hidden; transition: --p .9s ease; }
+.fe:hover, .fe:focus-within { --p: 1; }
+.fe h3 { margin: 0; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-texte); font-size: clamp(1.25rem, 1.05rem + .5vw, 1.55rem); line-height: 1.1; position: relative; }
+.lab { margin: 0; font: 700 .7rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2, var(--gris)); }
+.fe-type { margin: 0; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(1.7rem, 1.25rem + 1.3vw, 2.5rem); line-height: 1.02; text-wrap: balance; }
+.fe-type.a-completer, .a-completer { font: italic 500 1.35rem/1.25 var(--serif); color: var(--u-texte2); }
+.puces { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.puces li { padding: 4px 12px; border-radius: 999px; border: 1.5px solid color-mix(in srgb, var(--u-titre) 70%, transparent); font-size: .86rem; font-weight: 600; }
+.puces .lib { font-weight: 400; color: var(--u-texte2); }
+.fe p { margin: 0; }
+.fe .bl p, .fe > p { font-size: .95rem; }
+.formule { display: grid; gap: 2px; padding: 12px 16px; border-left: 4px solid var(--u-titre); background: var(--u-fond2); font-weight: 700; }
+.formule span { display: block; }
+.fe-disp { position: relative; z-index: 3; font-size: .88rem; }
+.fe-disp ul { margin: 4px 0 0; padding-left: 1.1em; }
+.fe-disp a, .fe a:not(.etire) { color: var(--u-vif); }
+.fe-dossier { position: relative; z-index: 3; margin-top: auto !important; }
+.fe-dossier a { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; text-decoration: none; color: var(--u-vif); }
+.fe-dossier a:hover { text-decoration: underline; }
+.tu-motif.coin { right: -30px; top: -30px; bottom: auto; width: 150px; opacity: .14; }
+/* les spectacles : une bande par univers */
+.bandes { list-style: none; margin: 0; padding: 0; }
+.bande { position: relative; overflow: hidden; background: var(--u-fond); color: var(--u-texte); transition: --p 1.1s ease; }
+.bande:hover, .bande:focus-within { --p: 1; }
+.bande-in { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(22px, 4vw, 64px); align-items: center; max-width: 1180px; margin: 0 auto; padding: clamp(30px, 4.4vw, 60px) var(--gout); }
+.bande:nth-child(even) .bande-ph { order: 2; }
+.bande-ph { aspect-ratio: 3 / 2; overflow: hidden; border-radius: 3px; background: var(--u-fond2); }
+.bande-ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .7s; }
+.bande:hover .bande-ph img { transform: scale(1.04); }
+.bande-lt { margin: 0 0 10px; font: 700 .74rem/1.3 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
+.bande h2 { margin: 0; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(2.1rem, 1.3rem + 2.8vw, 4rem); line-height: 1; text-wrap: balance; text-shadow: 0 0 46px var(--u-lueur); }
+.bande-sous { margin: 12px 0 0; font: italic 500 1.12rem/1.4 var(--serif); }
+.bande-crea { margin: 6px 0 0; font-size: .9rem; color: var(--u-texte2); }
+.bande-acc { margin: 16px 0 0; max-width: 46ch; font: 500 1.05rem/1.55 var(--serif); }
+.bande-etat { margin: 16px 0 0; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; color: var(--u-vif); }
+.bande-date { font-size: .9rem; font-weight: 600; color: var(--u-texte); }
+.bande-motif { position: absolute; z-index: 0; right: -60px; top: 50%; width: min(440px, 46vw); transform: translateY(-50%); color: var(--u-titre); opacity: .12; pointer-events: none; }
+.bande:nth-child(even) .bande-motif { right: auto; left: -60px; }
+/* les saisons */
 .sa-sp { padding-top: 14px; border-top: 2px solid var(--encre); margin-bottom: 22px; }
 .sa-sp h2 { margin: 0; font: italic 500 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.15 var(--serif); }
 .sa-sp h2 a { text-decoration: none; }
 .sa-sp h2 a:hover { color: var(--magenta-texte); }
 .sa-sous { margin: 4px 0 0; }
 .sa-crea { margin: 2px 0 6px; color: var(--gris); font-size: .9rem; }
-/* la compagnie : « En quelques dates » le long d'un bras, une ventouse par année */
-.co-grille, .ac-grille, .ct-grille { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
+/* la compagnie : « En quelques dates » le long d'un bras, une ventouse par année ; le portrait du directeur */
+.co-grille, .ac-grille, .ct-grille, .dir-grille { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
 .co-texte p { margin: 0 0 18px; max-width: 66ch; }
-.co-texte p:first-child { font: 500 clamp(1.2rem, 1.02rem + .55vw, 1.5rem)/1.45 var(--serif); }
+.co-texte > :first-child { font: 500 clamp(1.2rem, 1.02rem + .55vw, 1.5rem)/1.45 var(--serif); }
 .chrono ol { position: relative; list-style: none; margin: 0; padding: 0 0 0 38px; }
 .chrono ol::before { content: ""; position: absolute; left: 9px; top: 4px; bottom: 6px; width: 7px; background: var(--nuit-2); clip-path: polygon(0 0, 100% 0, 62% 100%, 38% 100%); }
 .chrono li { position: relative; padding: 8px 0 14px; }
-.chrono li::before { content: ""; position: absolute; left: calc(-38px + 12.5px - (15px - var(--i) * 1.2px) / 2 + 3px); top: 16px; width: calc(15px - var(--i) * 1.2px); aspect-ratio: 1; border-radius: 50%; background: var(--lait); border: 2.5px solid var(--nuit-2); }
+.chrono li::before { content: ""; position: absolute; left: calc(-38px + 12.5px - (15px - var(--i) * 1.1px) / 2 + 3px); top: 16px; width: calc(15px - var(--i) * 1.1px); aspect-ratio: 1; border-radius: 50%; background: var(--lait); border: 2.5px solid var(--nuit-2); }
 .chrono b { display: block; font: 500 1.7rem/1 var(--serif); }
-.chrono a, .chrono span { font: italic 500 1.1rem/1.3 var(--serif); color: var(--gris); text-decoration: none; }
-.chrono a:hover { color: var(--magenta-texte); }
-/* actions culturelles */
+.chrono a, .chrono .t-date { font: italic 500 1.1rem/1.3 var(--serif); color: var(--gris); text-decoration: none; }
+.chrono a { color: var(--c); }
+.chrono a:hover { text-decoration: underline; }
+.directeur { background: var(--nuit); color: var(--blanc); }
+.dir-grille .h2 { color: var(--blanc); }
+.dir-chapeau { margin: 0 0 18px; font: italic 500 1.4rem/1.35 var(--serif); color: var(--magenta-vif); }
+.dir-texte p { margin: 0 0 16px; max-width: 66ch; color: var(--blanc-2); }
+.dir-texte em { color: var(--blanc); }
+/* les actions culturelles */
 .blocs h2 { margin: 30px 0 10px; font: italic 500 1.75rem/1.15 var(--serif); }
-.blocs h2:first-child { margin-top: 0; }
+.blocs h2:first-child, .blocs .bl:first-child h2 { margin-top: 0; }
 .blocs p { margin: 0 0 14px; max-width: 66ch; }
 .blocs ul { margin: 0 0 14px; padding-left: 1.1em; max-width: 66ch; }
 .blocs li { margin: 0 0 10px; }
-.ac-photo { position: sticky; top: calc(var(--haut) + 20px); margin: 0; }
-.ac-photo img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
-.ac-photo figcaption, .credit { margin-top: 8px; font-size: .8rem; color: var(--gris); }
+.ac-photos { position: sticky; top: calc(var(--haut) + 20px); display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ac-photos img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 3px; }
+.ac-photos img:first-child { grid-column: 1 / -1; aspect-ratio: 4 / 3; }
+.ac-photos .credit { grid-column: 1 / -1; margin: 0; }
+.credit { margin-top: 8px; font-size: .8rem; color: var(--gris); }
 /* formulaires */
 .form { display: grid; gap: 18px; max-width: 640px; }
 .form > p { margin: 0; }
@@ -232,60 +355,184 @@ main { min-height: calc(100vh - var(--haut)); }
 .legal { max-width: 780px; }
 .legal h2 { margin: 30px 0 10px; font: italic 500 1.6rem/1.2 var(--serif); }
 .legal p { margin: 0 0 14px; }
-.legal a, .sp-texte a, .sp-mentions a, .co-texte a { color: var(--magenta-texte); }
+.legal a, .co-texte a, .blocs a { color: var(--magenta-texte); }
 
-/* ---------- la page d'un spectacle ---------- */
-.show { --bg: var(--nuit); --sc: var(--magenta); --act: var(--magenta-texte); }
-.sx { position: relative; }
-.sx-pin { position: sticky; top: var(--haut); height: calc(100vh - var(--haut)); height: calc(100svh - var(--haut)); overflow: hidden; }
-.sx-hero { height: 150vh; background: var(--bg); color: #fff; }
-.hero-photo { position: absolute; inset: 0; overflow: hidden; background: var(--bg); }
-.hero-photo img { width: 100%; height: 100%; object-fit: cover; transform: scale(calc(1.08 - var(--p, 0) * .08)); filter: brightness(calc(.92 - var(--p, 0) * .45)); }
-.hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--bg) 88%, transparent) 0%, color-mix(in srgb, var(--bg) 50%, transparent) 42%, transparent 72%), linear-gradient(0deg, color-mix(in srgb, var(--bg) 85%, transparent) 0%, transparent 42%); }
-.hero-text { position: absolute; left: 0; right: 0; bottom: clamp(40px, 10vh, 110px); max-width: 1180px; margin: 0 auto; padding: 0 var(--gout); transform: translateY(calc(var(--p, 0) * -10vh)); }
-.fil-ariane { margin: 0 0 16px; font-size: .9rem; color: rgba(255, 255, 255, .8); }
+/* ---------- la page d'un spectacle, dans son univers ---------- */
+.show { --u-trait: color-mix(in srgb, var(--u-texte) 20%, transparent); background: var(--u-fond); color: var(--u-texte); }
+.show :focus-visible { outline-color: var(--u-titre); }
+.sx-hero { position: relative; height: calc(100vh - var(--haut) - var(--og-h)); height: calc(100svh - var(--haut) - var(--og-h)); min-height: 540px; overflow: hidden; background: var(--u-fond); }
+.hero-photo { position: absolute; inset: 0; overflow: hidden; background: var(--u-fond2); }
+.hero-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 40%; transform: translateY(calc(var(--p) * 12%)) scale(calc(1.04 + var(--p) * .07)); }
+.hero-photo::before { content: ""; position: absolute; inset: 0; z-index: 1; background: var(--u-fond); opacity: calc(var(--p) * .6); }
+.hero-photo::after { content: ""; position: absolute; inset: 0; z-index: 1; background:
+  linear-gradient(90deg, var(--u-fond) 0%, var(--u-fond) 30%, color-mix(in srgb, var(--u-fond) 84%, transparent) 46%, color-mix(in srgb, var(--u-fond) 28%, transparent) 66%, transparent 84%),
+  linear-gradient(0deg, color-mix(in srgb, var(--u-fond) 82%, transparent) 0%, transparent 34%); }
+.hero-lueur { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(48% 70% at 18% 68%, var(--u-lueur), transparent 72%); }
+.hero-motif { position: absolute; z-index: 1; left: clamp(-90px, -5vw, -24px); top: 50%; width: min(74vh, 46vw); transform: translateY(-50%); color: var(--u-titre); opacity: .24; pointer-events: none; }
+.hero-text { position: absolute; z-index: 2; left: 0; bottom: clamp(26px, 6vh, 70px); width: min(100%, 860px); padding: 0 var(--gout); transform: translateY(calc(var(--p) * -11vh)); }
+.fil-ariane { margin: 0 0 14px; font-size: .88rem; color: var(--u-texte2); }
 .fil-ariane a { text-decoration: none; }
 .fil-ariane a:hover { text-decoration: underline; }
-.hero-tag { margin: 0 0 14px; color: var(--sc); }
-.hero-text h1 { margin: 0; max-width: 13ch; font: italic 500 clamp(2.8rem, 1.6rem + 5.2vw, 7rem)/.95 var(--serif); text-wrap: balance; }
-.hero-text h1 span { display: block; }
-/* le bras qui vous a amené : il souligne le titre et s'allonge au défilement */
-.hero-text h1::after { content: ""; display: block; width: calc(90px + var(--p, 0) * min(320px, 40vw)); height: 4px; margin-top: 22px; border-radius: 2px; background: var(--sc); }
-.hero-sub { margin: 18px 0 0; font-size: 1.15rem; color: rgba(255, 255, 255, .9); max-width: 46ch; }
-.hero-crea { margin: 6px 0 0; font-weight: 600; color: rgba(255, 255, 255, .8); }
-.hero-credit { position: absolute; right: var(--gout); bottom: 14px; margin: 0; font-size: .75rem; color: rgba(255, 255, 255, .65); }
-.cue { position: absolute; left: 50%; bottom: 16px; width: 30px; height: 30px; margin-left: -15px; color: rgba(255, 255, 255, .7); opacity: calc(1 - var(--p, 0) * 5); }
-.cue svg { width: 100%; height: 100%; display: block; }
-.cass { background: var(--bg); color: #e8edf3; padding: clamp(56px, 8vw, 104px) 0; }
-.cass-cadre { margin: 0 0 clamp(28px, 4vw, 48px); font: 700 .8rem/1.6 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--sc); }
-.cass blockquote { margin: 0 0 clamp(26px, 3.4vw, 40px); max-width: 30em; }
-.cass blockquote:nth-of-type(even) { margin-left: auto; text-align: right; }
-.cass blockquote p { margin: 0; font: italic 500 clamp(1.35rem, 1rem + 1.4vw, 2.2rem)/1.22 var(--serif); text-wrap: balance; }
-.cass cite { display: block; margin-top: 10px; font: 400 .85rem var(--sans); color: #9fb0c3; }
-.sp-corps { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: clamp(28px, 6vw, 80px); align-items: start; }
-.sp-texte p { margin: 0 0 16px; max-width: 66ch; }
-.sp-texte > p:first-child { font: 500 clamp(1.18rem, 1rem + .55vw, 1.45rem)/1.45 var(--serif); }
-.sp-mentions p { margin: 18px 0 0; padding-left: 14px; border-left: 3px solid var(--sc); font-size: .95rem; }
-.fiche p { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--lait-2); font-weight: 600; }
-.fiche p span, .sp-avec span { display: block; font-weight: 400; font-size: .85rem; color: var(--gris); }
-.sp-avec { margin: 18px 0 0; font-weight: 600; }
-.sp-duree { margin: 14px 0 0; font-weight: 700; color: var(--act); }
-.sp-prod { margin-top: 24px; font-size: .86rem; color: var(--gris); }
-.sp-prod p { margin: 0 0 8px; }
-.h3 { margin: 22px 0 10px; font: 700 .8rem var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
-.h3:first-child { margin-top: 0; }
+.hero-nom { margin: 0 0 12px; font: 700 .74rem/1.3 var(--sans); letter-spacing: .24em; text-transform: uppercase; color: var(--u-vif); }
+.hero-text h1 { margin: 0; max-width: 13ch; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(2.7rem, 1.4rem + 5.4vw, 6.8rem); line-height: .96; text-wrap: balance; text-shadow: 0 0 60px var(--u-lueur); }
+.hero-text h1 .ligne { display: block; width: fit-content; }
+/* le titre se révèle lettre à lettre ; le bras qui vous a amené le souligne et s'allonge au défilement */
+.revele { clip-path: inset(-.25em -.5em -.35em -.25em); animation: revele calc(var(--n) * 48ms + 240ms) steps(var(--n), end) calc(var(--k) * 240ms + 140ms) both; }
+@keyframes revele { from { clip-path: inset(-.25em 100% -.35em -.25em); } to { clip-path: inset(-.25em -.5em -.35em -.25em); } }
+.hero-text h1::after { content: ""; display: block; width: calc(90px + var(--p) * min(320px, 34vw)); height: 4px; margin-top: 20px; border-radius: 2px; background: var(--u-titre); }
+.hero-sous { margin: 16px 0 0; max-width: 40ch; font: italic 500 1.22rem/1.35 var(--serif); }
+.hero-meta { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font: 700 .76rem/1.4 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--u-texte2); }
+.hero-meta .tag { color: var(--u-vif); letter-spacing: .1em; }
+.hero-acc { margin: 16px 0 0; max-width: 38ch; font: 500 clamp(1.08rem, .95rem + .45vw, 1.35rem)/1.48 var(--serif); }
+.mot { display: inline-block; animation: mot .42s ease both; animation-delay: calc(260ms + var(--t) * 520ms); }
+@keyframes mot { from { opacity: 0; transform: translateY(.35em); } }
+.hero-credit { position: absolute; z-index: 2; right: var(--gout); bottom: 12px; margin: 0; padding: 2px 9px; border-radius: 3px; font-size: .74rem; background: color-mix(in srgb, var(--u-fond) 72%, transparent); color: var(--u-texte); }
+/* les motifs : une signature discrète, qui réagit au défilement (et au survol des fiches) */
+.motif { display: block; width: 100%; height: auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.motif text { fill: currentColor; stroke: none; font: 600 17px var(--sans); letter-spacing: .04em; }
+.motif * { transform-box: view-box; }
+.m-tourne { transform-origin: 120px 120px; transform: rotate(calc(var(--p) * 120deg)); }
+.m-g { transform: translateX(calc(var(--p) * 13px)); }
+.m-d { transform: translateX(calc(var(--p) * -13px)); }
+.m-ecrit { stroke-dasharray: 1; stroke-dashoffset: calc(.55 - var(--p) * .55); }
+.m-nez { transform-origin: 114px 86px; transform: scale(calc(1 + var(--p) * .45), 1); }
+.m-heure { transform-origin: 120px 120px; transform: rotate(calc(-40deg + var(--p) * 60deg)); }
+.m-minute { transform-origin: 120px 120px; transform: rotate(calc(var(--p) * 540deg)); }
+.m-curseur { transform: translateX(calc(var(--p) * 200px)); }
+/* la barre des trois entrées du spectacle */
+.onglets { position: sticky; top: var(--haut); z-index: 30; height: var(--og-h); background: var(--u-fond2); border-top: 1px solid var(--u-trait); border-bottom: 1px solid var(--u-trait); }
+.og-in { height: 100%; max-width: 1180px; margin: 0 auto; padding: 0 var(--gout); display: flex; gap: clamp(2px, .8vw, 10px); }
+.onglets a { position: relative; display: inline-flex; align-items: center; gap: 9px; padding: 0 12px; text-decoration: none; color: var(--u-texte2); font: 600 .95rem/1.2 var(--sans); white-space: nowrap; }
+.onglets a .be { color: var(--e); }
+.onglets a:hover { color: var(--u-texte); }
+.onglets a[aria-current="page"] { color: var(--u-texte); }
+.onglets a[aria-current="page"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 3px; border-radius: 2px; background: var(--u-titre); }
+.onglets .court { display: none; }
+@media (max-width: 1099px) { .onglets .long { display: none; } .onglets .court { display: inline; } }
+/* les chapitres, et le petit sommaire qui suit la lecture : un bras, une ventouse par chapitre */
+.sp-tab { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: clamp(28px, 4vw, 72px); max-width: 1180px; margin: 0 auto; padding: clamp(44px, 6vw, 84px) var(--gout) clamp(36px, 5vw, 64px); }
+.sommaire { position: sticky; top: calc(var(--haut) + var(--og-h) + 28px); align-self: start; }
+.sommaire ol { position: relative; list-style: none; margin: 0; padding: 2px 0 2px 32px; }
+.sommaire ol::before { content: ""; position: absolute; left: 9px; top: 0; bottom: 0; width: 6px; background: color-mix(in srgb, var(--u-titre) 50%, transparent); clip-path: polygon(0 0, 100% 0, 66% 100%, 34% 100%); }
+.sommaire li { position: relative; }
+.sommaire li::before { content: ""; position: absolute; left: calc(-32px + 12px - (14px - var(--i) * 1px) / 2); top: 50%; width: calc(14px - var(--i) * 1px); aspect-ratio: 1; transform: translateY(-50%); border-radius: 50%; background: var(--u-fond); border: 2px solid color-mix(in srgb, var(--u-titre) 75%, transparent); transition: background-color .25s, transform .25s; }
+.sommaire li.on::before { background: var(--u-titre); transform: translateY(-50%) scale(1.25); }
+.sommaire button { display: block; width: 100%; padding: 7px 0; background: none; border: 0; cursor: pointer; text-align: left; font: 500 .92rem/1.3 var(--sans); color: var(--u-texte2); }
+.sommaire button:hover, .sommaire li.on button { color: var(--u-texte); }
+.sommaire li.on button { font-weight: 700; }
+.sp-chaps { min-width: 0; }
+.chap { scroll-margin-top: calc(var(--haut) + var(--og-h) + 20px); padding-bottom: clamp(40px, 5vw, 72px); }
+.chap + .chap { border-top: 1px solid var(--u-trait); padding-top: clamp(34px, 4vw, 56px); }
+.chap > h2 { margin: 0 0 24px; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(1.9rem, 1.35rem + 1.7vw, 3rem); line-height: 1.04; text-wrap: balance; }
+.chap h3 { margin: 30px 0 12px; font: 700 .76rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.chap p, .chap li { max-width: 70ch; }
+.chap a:not(.cta):not(.etire) { color: var(--u-vif); }
+.cadre { margin: 0 0 22px; font: 700 .82rem/1.6 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.affirm { margin: 0 0 24px; max-width: 30em; padding-left: 22px; border-left: 3px solid var(--u-titre); font: italic 500 clamp(1.4rem, 1.05rem + 1.4vw, 2.25rem)/1.22 var(--serif); text-wrap: balance; }
+.sp-texte p { margin: 0 0 16px; }
+.sp-texte > p:first-child { font: 500 clamp(1.16rem, 1rem + .5vw, 1.42rem)/1.52 var(--serif); }
+.vers { position: relative; margin: 34px 0; max-width: 42em; padding: 26px 30px 24px 34px; background: var(--u-fond2); border-radius: 3px; }
+.vers::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 4px; border-radius: 2px; background: var(--u-titre); }
+.vers p { margin: 0; font: italic 500 clamp(1.18rem, 1rem + .8vw, 1.6rem)/1.45 var(--serif); }
+.vers .v { display: block; }
+.vers.prose .v { display: inline; }
+.vers.prose p::before { content: "«\202f"; }
+.vers.prose p::after { content: "\202f»"; }
+.vers cite { display: block; margin-top: 12px; font: 700 .72rem/1.4 var(--sans); font-style: normal; letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.galerie { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.galerie .ph:first-child { grid-column: 1 / -1; }
+.ph { position: relative; margin: 0; }
+.ph img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 3px; background: var(--u-fond2); }
+.galerie .ph:first-child img { aspect-ratio: 16 / 9; }
+.ph.seule img { aspect-ratio: auto; }
+.leg { position: relative; width: fit-content; max-width: min(92%, 36em); margin: -24px 16px 0 auto; padding: 10px 14px; background: var(--u-fond2); color: var(--u-texte); border-left: 3px solid var(--u-titre); box-shadow: 0 8px 24px rgba(0, 0, 0, .2); font: italic 500 .98rem/1.4 var(--serif); }
+.leg:empty { display: none; }
+.ed-actif .leg:empty { display: block; min-width: 8em; min-height: 1.8em; }
+.show .credit { margin-top: 14px; color: var(--u-texte2); }
+.credit span + span::before { content: " · "; }
 .medias { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-.medias a { display: flex; gap: 14px; align-items: center; height: 100%; padding: 14px 16px; border: 1.5px solid var(--lait-2); border-radius: 10px; text-decoration: none; transition: border-color .2s; }
-.medias a:hover { border-color: var(--act); }
-.medias svg { flex: none; width: 30px; height: 30px; color: var(--act); }
+.medias a { display: flex; gap: 14px; align-items: center; height: 100%; padding: 16px 18px; border: 1.5px solid var(--u-trait); border-radius: 10px; text-decoration: none; color: var(--u-texte) !important; transition: border-color .2s, background-color .2s; }
+.medias a:hover { border-color: var(--u-titre); background: var(--u-fond2); }
+.medias svg { flex: none; width: 34px; height: 34px; color: var(--u-titre); }
 .medias b { display: block; font-weight: 600; line-height: 1.35; }
-.medias small { display: block; color: var(--gris); }
-.tour-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(24px, 5vw, 64px); align-items: start; }
-.tour-seule { max-width: 760px; margin: 0 auto; }
-.suivant { display: block; background: var(--n-bg); color: #fff; text-decoration: none; padding: clamp(44px, 7vw, 80px) 0; }
-.suivant b { font: italic 500 clamp(2rem, 1.4rem + 2.4vw, 3.6rem)/1.05 var(--serif); }
-.suivant svg.fl { width: .9em; height: .9em; margin-left: .3em; color: var(--n-sc); transition: transform .3s; vertical-align: -.05em; }
+.medias small { display: block; color: var(--u-texte2); }
+.show .dl > li { border-bottom-color: var(--u-trait); }
+.show .dl .q span, .show .dl .det { color: var(--u-texte2); }
+.show .dl > li.on { background: linear-gradient(90deg, color-mix(in srgb, var(--u-titre) 16%, transparent), transparent 75%); }
+.show .etat { color: var(--u-vif); }
+.tour-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(22px, 4vw, 48px); align-items: start; }
+.tout-dates { margin: 6px 0 0; }
+.tout-dates a { font-weight: 700; text-decoration: none; }
+.fiche p { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--u-trait, var(--lait-2)); font-weight: 600; }
+.fiche .lib { display: block; font-weight: 400; font-size: .84rem; color: var(--u-texte2, var(--gris)); }
+.sp-duree { margin: 16px 0 0; font-weight: 700; color: var(--u-vif); }
+.sp-prod { margin-top: 22px; font-size: .88rem; color: var(--u-texte2); }
+.sp-prod p { margin: 0 0 8px; }
+.sp-mentions p { margin: 14px 0 0; padding-left: 14px; border-left: 3px solid var(--u-titre); font-size: .95rem; }
+.distribution { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 56px); align-items: start; }
+.faits { list-style: none; margin: 0 0 6px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 0 24px; }
+.faits li { padding: 12px 0; border-top: 1px solid var(--u-trait); font-weight: 600; }
+.faits .lib { display: block; font: 700 .7rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); margin-bottom: 3px; }
+.faits .grand { grid-column: 1 / -1; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(1.35rem, 1.1rem + .8vw, 1.9rem); line-height: 1.15; }
+.faits .vif { grid-column: 1 / -1; color: var(--u-vif); }
+.show .cta { background: var(--u-titre); color: var(--u-sur); }
+.show .cta:hover { background: var(--u-texte); color: var(--u-fond); }
+.appel { margin-top: clamp(10px, 2vw, 24px); display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+/* l'action culturelle, le dossier scolaire, la fiche technique */
+.ac-type { margin: 0 0 18px; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.9rem); line-height: 1; text-wrap: balance; }
+.show .puces { margin: 0 0 20px; }
+.show .formule { margin: 22px 0; max-width: 32em; font-size: 1.05rem; }
+.show .bl { max-width: 70ch; }
+.couv { display: grid; gap: 4px; margin: 0 0 30px; padding: clamp(22px, 3vw, 36px); background: var(--u-titre); color: var(--u-sur); border-radius: 3px; }
+.couv p { margin: 0; font: 700 .78rem/1.5 var(--sans); letter-spacing: .18em; }
+.couv .couv-titre { font-family: var(--u-police); font-weight: var(--u-graisse); font-size: clamp(2.2rem, 1.6rem + 2vw, 3.4rem); letter-spacing: .04em; line-height: 1; }
+.couv .couv-auteur { font: italic 500 1.25rem/1.3 var(--serif); letter-spacing: 0; margin-bottom: 10px; }
+.dh { font-family: var(--u-police) !important; font-weight: var(--u-graisse) !important; font-size: clamp(1.35rem, 1.1rem + .8vw, 1.85rem) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--u-titre) !important; line-height: 1.15 !important; margin: 40px 0 16px !important; }
+.pourquoi { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 16px; }
+.pq { padding: 20px 22px; background: var(--u-fond2); border-top: 4px solid var(--u-titre); }
+.pq h4 { margin: 0 0 10px; font: 700 1.02rem/1.3 var(--sans); color: var(--u-texte); }
+.pq p { margin: 0; font-size: .95rem; }
+.table-defile { max-width: 100%; overflow-x: auto; }
+table.programmes { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .95rem; }
+.programmes th, .programmes td { padding: 11px 12px 11px 0; border-bottom: 1px solid var(--u-trait); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.programmes th[scope="row"] { width: 22%; font-weight: 700; }
+.programmes td:last-child { width: 42%; color: var(--u-texte2); }
+.programmes th[scope="rowgroup"] { padding: 9px 14px; background: var(--u-titre); color: var(--u-sur); font: 700 .8rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; }
+.consignes { margin-top: 30px; padding: clamp(20px, 3vw, 32px); border: 2px solid var(--u-titre); border-radius: 3px; }
+.consignes .dh { margin-top: 0 !important; }
+.note { display: inline-block; margin: 0 0 12px; padding: 4px 11px; background: var(--u-titre); color: var(--u-sur); font: 700 .74rem/1.3 var(--sans); letter-spacing: .14em; }
+.consignes p { margin: 0 0 12px; }
+.demandes { margin: 0 0 16px; padding: 0; list-style: none; display: grid; gap: 6px; }
+.demandes li { padding: 8px 12px; background: var(--u-fond2); font: 700 .86rem/1.4 var(--sans); letter-spacing: .06em; }
+.axes { margin: 0 0 16px; padding-left: 1.2em; }
+.axes li { margin-bottom: 6px; }
+.oblig { padding: 12px 16px; border-left: 4px solid var(--u-titre); background: var(--u-fond2); }
+details.dd { margin-top: 12px; border-top: 1px solid var(--u-trait); padding-top: 10px; }
+details.dd summary { cursor: pointer; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: 1.25rem; }
+details.dd p { margin: 10px 0 0; }
+.dd-chapeau { font: italic 500 1.12rem/1.45 var(--serif); }
+.ateliers { display: grid; gap: 18px; }
+.atelier { padding: clamp(20px, 2.6vw, 30px); background: var(--u-fond2); border-left: 4px solid var(--u-titre); border-radius: 3px; }
+.atelier h3 { margin: 0 0 12px !important; font-family: var(--u-police) !important; font-weight: var(--u-graisse) !important; font-size: clamp(1.25rem, 1.05rem + .6vw, 1.6rem) !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--u-titre) !important; line-height: 1.15 !important; }
+.atelier p { margin: 0 0 10px; }
+.etapes { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 12px; }
+.etapes h4 { margin: 0 0 4px; font: 500 1rem/1.4 var(--sans); }
+.etapes p { margin: 0; }
+.points { margin: 10px 0 0; padding-left: 1.2em; }
+.points li { margin-bottom: 6px; }
+.photos-ateliers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.tech { margin: 0 0 18px; }
+.tech h4 { margin: 0 0 6px; font: 700 .78rem/1.3 var(--sans); letter-spacing: .12em; color: var(--u-titre); }
+.tech ul { margin: 0; padding-left: 1.1em; }
+.tech li { margin-bottom: 4px; }
+.alerte { margin: 20px 0; padding: 14px 18px; border: 2px solid var(--u-titre); border-radius: 3px; font-weight: 600; }
+.suivant { position: relative; display: block; overflow: hidden; background: var(--u-fond); color: var(--u-texte); text-decoration: none; padding: clamp(44px, 7vw, 84px) 0; transition: --p 1s ease; }
+.suivant:hover, .suivant:focus-visible { --p: 1; }
+.suivant .wrap { position: relative; z-index: 1; }
+.suivant b { font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(2rem, 1.4rem + 2.4vw, 3.6rem); line-height: 1.05; }
+.suivant svg.fl { width: .9em; height: .9em; margin-left: .3em; color: var(--u-titre); transition: transform .3s; vertical-align: -.05em; }
 .suivant:hover svg.fl { transform: translateX(8px); }
+.suivant .tu-motif { right: 4vw; top: 50%; bottom: auto; width: 200px; transform: translateY(-50%); opacity: .2; }
 
 footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44px; font-size: .92rem; }
 .pied .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; }
@@ -295,50 +542,88 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
 .pied .l { display: block; width: 58px; margin-bottom: 14px; color: var(--blanc); }
 .pied .l svg { width: 100%; height: auto; display: block; }
 .pied .liens { display: flex; gap: 18px; flex-wrap: wrap; }
+.modifier { display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 6px 14px 6px 10px; border: 1px solid rgba(255, 255, 255, .24); border-radius: 999px; background: none; color: var(--blanc-2); font: 600 .84rem/1.2 var(--sans); cursor: pointer; }
+.modifier .be { color: var(--magenta-vif); }
+.modifier:hover { color: var(--blanc); border-color: var(--blanc-2); }
+
+/* l'édition sur place : la barre de nuit, les panneaux couleur de lait */
+html .ed-barre { background: var(--nuit); color: var(--blanc); border-color: rgba(255, 255, 255, .16); }
+html .ed-barre .ed-bt { background: transparent; color: var(--blanc); border-color: rgba(255, 255, 255, .3); }
+html .ed-barre .ed-bt:hover { border-color: var(--blanc); }
+html .ed-barre .ed-bt.ed-plein { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+html .ed-barre .ed-etat::before { background: var(--magenta-vif); }
+html .ed-tete h2 { font: italic 500 1.4rem/1.2 var(--serif); }
+html .ed-voile { background: rgba(21, 10, 17, .62); }
+html .ed-ajout { font-family: var(--sans); }
 
 #ink { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; transition: opacity .32s; }
 #ink.fade { opacity: 0; }
 
-/* immobile : moins d'animations */
-.still .sx { height: auto !important; }
-.still .sx-pin { position: relative; top: 0; height: 78vh; }
-
+@media (max-width: 1100px) {
+  .tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .catalogue { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 900px) {
-  .k-grille, .ag-grille, .co-grille, .ac-grille, .ct-grille, .sp-corps, .tour-grille { grid-template-columns: minmax(0, 1fr); }
-  .ag-carte, .ac-photo { position: static; }
-  .portes { grid-template-columns: minmax(0, 1fr); }
+  .k-grille, .ag-grille, .co-grille, .ac-grille, .ct-grille, .dir-grille, .tour-grille, .distribution, .bande-in { grid-template-columns: minmax(0, 1fr); }
+  .ag-carte, .ac-photos { position: static; }
+  .ag-carte { order: 2; }
+  .bande:nth-child(even) .bande-ph { order: 0; }
   .pied .wrap { grid-template-columns: minmax(0, 1fr); }
+  .sp-tab { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  .sommaire { position: static; }
+  .sommaire ol { display: flex; flex-wrap: wrap; gap: 4px 8px; padding: 0; }
+  .sommaire ol::before, .sommaire li::before { display: none; }
+  .sommaire button { padding: 5px 12px; border: 1.5px solid var(--u-trait); border-radius: 999px; font-size: .85rem; }
+  .sommaire li.on button { border-color: var(--u-titre); }
+}
+@media (max-width: 859px) {
+  .sx-hero { height: auto; min-height: 0; }
+  .hero-photo { position: relative; height: min(62vw, 420px); }
+  .hero-photo::after { background: linear-gradient(0deg, var(--u-fond) 0%, color-mix(in srgb, var(--u-fond) 40%, transparent) 26%, transparent 52%); }
+  .hero-lueur { display: none; }
+  .hero-motif { left: auto; right: -40px; top: 18px; width: 200px; transform: none; }
+  .hero-text { position: relative; bottom: auto; width: 100%; margin-top: -56px; padding-bottom: 30px; transform: none; }
+  .hero-text h1 { font-size: clamp(2.4rem, 10vw, 3.6rem); }
+  .hero-credit { position: static; display: block; width: fit-content; margin: 0 var(--gout) 16px auto; }
+  .og-in { padding: 0 6px; gap: 0; }
+  .onglets a { flex: 1 1 0; justify-content: center; padding: 0 6px; font-size: .8rem; white-space: normal; text-align: center; line-height: 1.15; }
+  .onglets a .be { display: none; }
 }
 @media (max-width: 760px) {
   .dl > li, .dl.petit > li { grid-template-columns: 92px minmax(0, 1fr); gap: 2px 14px; }
   .dl .q b { font-size: 1.15rem; }
-  .repertoire a { grid-template-columns: 104px minmax(0, 1fr); gap: 10px 16px; align-items: start; padding: 18px 0; }
-  .rp-photo { grid-row: span 2; aspect-ratio: 4 / 5; }
-  .rp-etat { grid-column: 2; }
-  .repertoire h2::after { margin-top: 10px; }
-  .hero-text h1 { font-size: clamp(2.5rem, 11vw, 3.6rem); }
+  .tuiles { gap: 10px; }
+  .tu-tx { padding: 12px 12px 14px; }
+  .tuile h3 { font-size: 1.2rem; }
+  .galerie, .photos-ateliers { grid-template-columns: minmax(0, 1fr); }
+  .leg { margin: -18px 10px 0 auto; }
+  .programmes { font-size: .86rem; }
+  .programmes th[scope="row"] { width: 26%; }
+  .programmes td:last-child { width: 38%; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
   .carte.encre .k-trace { stroke-dashoffset: 0; }
   .carte.encre .goutte { transform: none; }
-  .carte.encre .k-passe { opacity: 1; }
+  .carte.encre .k-passe, .carte.encre .k-fins { opacity: 1; }
 }
 </style>
 </head>
 <body>
 <a class="evitement" href="#main">Aller au contenu</a>
-<header class="top"><div class="wrap">
+<header class="top"><div class="top-in">
   <a class="marque" href="#/"><span class="l" id="marque"></span><span id="marque-mot"></span></a>
-  <button class="menu" type="button" aria-expanded="false" aria-controls="nav"></button>
-  <nav class="nav" id="nav"></nav>
+  <nav class="entrees" id="entrees"></nav>
+  <button class="menu" type="button" aria-expanded="false" aria-controls="second"></button>
+  <nav class="second" id="second"></nav>
 </div></header>
 <main id="main" tabindex="-1">
   <div id="v-accueil" hidden>
     <section class="stage" id="scene" aria-labelledby="stage-h">
       <h1 class="stage-h" id="stage-h" tabindex="-1"></h1>
       <canvas class="stage-canvas" aria-hidden="true"></canvas>
-      <ul class="t-labels"></ul>
+      <ul class="t-labels t-entrees"></ul>
+      <ul class="t-labels t-spectacles"></ul>
     </section>
     <div id="accueil-suite"></div>
   </div>
@@ -357,21 +642,79 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   const easeInOut = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const easeOut = t => 1 - Math.pow(1 - t, 3);
-  // échappe le texte, et pose les espaces insécables de la ponctuation française
-  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»–])/g, ' $1').replace(/« /g, '« ');
+  // échappe le texte, et pose les espaces fines insécables de la ponctuation française (l'édition remet la valeur brute)
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/ ([!?;:»–])/g, ' $1').replace(/« /g, '« ');
+  const attr = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // les annotations de l'édition sur place (edition.js) : un chemin dans D
+  const ed = p => ` data-edit="${attr(p)}"`;
+  const edp = p => ` data-edit-photo="${attr(p)}"`;
   const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
   const motionOK = () => !reduceMQ.matches;
   const syncMotion = () => document.documentElement.classList.toggle('still', !motionOK());
   syncMotion(); reduceMQ.addEventListener('change', syncMotion);
-  const S = D.site, MENU = Object.fromEntries(S.menu.map(m => [m.id, m]));
-  const bySlug = Object.fromEntries(D.shows.map(s => [s.slug, s]));
-  const FLECHE = '<svg class="fl" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // D change en place (donnees.js) : on relit toujours D, jamais de copie gardée
+  const S = D.site;
+  const show = slug => D.shows.find(s => s.slug === slug);
+  const entree = c => (S.entrees || []).find(e => e.cle === c);
+  const menu = id => (S.menu || []).find(m => m.id === id) || { texte: '', href: '#/' };
+  const FLECHE = '<svg class="fl" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // un petit bras qui s'enroule : l'icône des entrées
+  const BE = '<svg class="be" viewBox="0 0 26 16" aria-hidden="true" focusable="false"><path d="M1.5 12.5C6.5 12.5 9 4 15 4c3.3 0 5.6 2.3 5.6 5 0 2.2-1.7 3.8-3.7 3.8-1.6 0-2.8-1.2-2.8-2.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const ICONE = {
-    video: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 8.3v7.4l6-3.7z" fill="currentColor"/></svg>',
-    audio: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.4 15.6V8.1l5-1.3v7.4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.9" cy="15.6" r="1.6" fill="currentColor"/><circle cx="13.9" cy="14.2" r="1.6" fill="currentColor"/></svg>',
+    video: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10 8.3v7.4l6-3.7z" fill="currentColor"/></svg>',
+    audio: '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.4 15.6V8.1l5-1.3v7.4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8.9" cy="15.6" r="1.6" fill="currentColor"/><circle cx="13.9" cy="14.2" r="1.6" fill="currentColor"/></svg>',
   };
-  // un paragraphe HTML de D : tel quel s'il est déjà un bloc, dans un <p> sinon
-  const bloc = h => /^\s*<(h\d|ul|ol|p|div|blockquote|figure)/i.test(h) ? h : `<p>${h}</p>`;
+  // un paragraphe HTML de D, annoté : tel quel s'il est déjà un bloc, dans un <p> sinon
+  const bloc = (h, chemin) => /^\s*<(h\d|ul|ol|p|div|blockquote|figure|table)/i.test(h || '') ? `<div class="bl"${chemin ? ed(chemin) : ''}>${h}</div>` : `<p${chemin ? ed(chemin) : ''}>${h ?? ''}</p>`;
+  let ANIMER = true;   // faux pendant une mise à jour en place : ni révélation, ni pousse de carte
+
+  /* ---------- les couleurs : chaque univers, lisible (AA) sur ses propres fonds et sur la nuit de la maquette ---------- */
+  const HEX = /^#[0-9a-f]{6}$/i, NUIT = '#150a11', LAIT = '#f6f1ea';
+  const lum = h => { const f = c => (c /= 255) <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; return .2126 * f(parseInt(h.slice(1, 3), 16)) + .7152 * f(parseInt(h.slice(3, 5), 16)) + .0722 * f(parseInt(h.slice(5, 7), 16)); };
+  const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  function assombrir(h, fond, cible = 4.6) {
+    if (!HEX.test(h || '')) return '#a8306f';
+    let [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), c = h;
+    while (contraste(c, fond) < cible && r + g + b > 0) { r = Math.floor(r * .92); g = Math.floor(g * .92); b = Math.floor(b * .92); c = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join(''); }
+    return c;
+  }
+  const couleur = (h, d) => HEX.test(h || '') ? h : d;
+  function univers(s) {
+    const u = (s && s.univers) || {}, c = Object.assign({}, s && s.palette, u.couleurs), p = u.polices || {};
+    const fond = couleur(c.fond, NUIT), fond2 = couleur(c.fond2, fond), clair = lum(fond) > .4;
+    const texte = couleur(c.texte, clair ? '#1b1216' : '#f7ecf1');
+    const m = x => Math.min(contraste(x, fond), contraste(x, fond2));
+    const texte2 = HEX.test(c.texte2 || '') && m(c.texte2) >= 4.5 ? c.texte2 : texte;
+    const vives = [c.scene, c.accent, c.accent2].filter(x => HEX.test(x || ''));
+    const titre = vives.find(x => m(x) >= 3) || texte;           // grands titres et aplats (3:1 au moins)
+    const vif = [...vives, texte].find(x => m(x) >= 4.5) || texte;  // texte vif courant (4,5:1)
+    const sur = contraste('#ffffff', titre) >= 4.5 ? '#ffffff' : contraste(fond, titre) >= contraste('#000000', titre) ? fond : '#000000';
+    const nuit = [...vives, texte].find(x => contraste(x, NUIT) >= 4.5) || '#f7ecf1';
+    const scene = couleur(c.scene, titre);
+    const nom = /^[\w\s-]+$/.test(p.titre || '') ? p.titre : null;
+    return { fond, fond2, texte, texte2, titre, vif, sur, nuit, scene, clair, lait: assombrir(scene, LAIT),
+      police: nom ? `'${nom}', ${/ubuntu|grotesk|anton|sans|inter/i.test(nom) ? 'sans-serif' : 'serif'}` : 'var(--serif)',
+      graisse: /^\d{3}$/.test(String(p.titreGraisse)) ? p.titreGraisse : 600,
+      lueur: /^rgba?\([\d.,\s%]+\)$/.test(c.lueur || '') ? c.lueur : 'transparent', motif: u.motif || (s && s.motif) };
+  }
+  const uStyle = s => { const u = univers(s); return `--u-fond:${u.fond};--u-fond2:${u.fond2};--u-texte:${u.texte};--u-texte2:${u.texte2};--u-titre:${u.titre};--u-vif:${u.vif};--u-sur:${u.sur};--u-lueur:${u.lueur};--u-police:${u.police};--u-graisse:${u.graisse}`; };
+  const encreDe = s => { const u = univers(s); return [u.scene, u.fond]; };
+
+  /* ---------- les motifs des univers : une signature discrète, qui réagit au défilement ---------- */
+  function motif(m) {
+    const svg = inner => `<svg class="motif m-${attr(m)}" viewBox="0 0 240 240" aria-hidden="true" focusable="false">${inner}</svg>`;
+    switch (m) {
+      case 'arene': return svg('<g class="m-tourne"><circle cx="120" cy="120" r="106" stroke-width="5" stroke-dasharray=".1 12.3"/><circle cx="120" cy="120" r="94"/></g><circle cx="120" cy="120" r="66" stroke-width="1.4"/><path d="M120 103l15 8.5v17L120 137l-15-8.5v-17z"/>');
+      case 'jumeaux': return svg('<g class="m-g"><circle cx="94" cy="134" r="48"/><path d="M64 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g><g class="m-d"><circle cx="146" cy="134" r="48"/><path d="M116 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g>');
+      case 'annotations': return svg('<path class="m-ecrit" pathLength="1" d="M26 58c8-7 15 7 23 0s15 7 23 0 15 7 23 0 15 7 23 0"/><path class="m-ecrit" pathLength="1" d="M26 86c8-6 15 6 23 0s15 6 23 0 15 6 21 0"/><path class="m-ecrit" pathLength="1" d="M26 114c8-6 15 6 23 0s15 6 23 0"/><path class="m-ecrit" pathLength="1" d="M24 136c46 7 98 5 150-5"/><ellipse class="m-ecrit" pathLength="1" cx="176" cy="76" rx="36" ry="22" transform="rotate(-8 176 76)"/><path class="m-ecrit" pathLength="1" d="M120 196c22-26 46-38 76-44m-15-10 15 10-12 13"/>');
+      case 'paperboard': return svg('<path d="M120 172v56M84 172l-26 58M156 172l26 58"/><rect x="52" y="34" width="136" height="138" rx="2"/><path d="M46 34h148" stroke-width="5"/><path class="m-ecrit" pathLength="1" d="M120 146c-34-20-36-50-13-53 7-1 13 4 13 11 0-7 6-12 13-11 23 3 21 33-13 53z"/><path class="m-ecrit" pathLength="1" d="M68 58h40M68 72h26"/><path class="m-ecrit" pathLength="1" d="M150 52l20 22m0-22-20 22"/>');
+      case 'nez': return svg('<path d="M156 30c-24 4-40 22-42 54"/><g class="m-nez"><path d="M114 84c-12 16-40 32-70 44 18 8 46 10 66 12"/></g><path d="M110 140c-4 7 5 11-3 17 8 4 2 10 4 15 2 15 11 23 24 25 4 13 2 23-1 31"/><path d="M134 108c6-3 12-3 16 0" stroke-width="2.4"/>');
+      case 'horloge': return svg('<circle cx="120" cy="120" r="98"/><circle cx="120" cy="120" r="86" stroke-width="9" stroke-dasharray="1.6 43.43"/><g class="m-heure"><path d="M120 120V74" stroke-width="5"/></g><g class="m-minute"><path d="M120 120V46" stroke-width="2.6"/></g><circle cx="120" cy="120" r="5" fill="currentColor" stroke="none"/>');
+      case 'fil': return svg('<path class="m-ecrit" pathLength="1" d="M4 168C44 120 70 196 108 150c18-22 30-56 8-62s-30 32 2 42c30 10 44-30 70-26 22 3 30 30 48 18"/>');
+      case 'chronologie': return svg('<path d="M20 140h200"/><path d="M20 126v28M60 132v16M100 132v16M140 132v16M180 132v16M220 126v28"/><text x="20" y="112">1850</text><text x="220" y="112" text-anchor="end">2077</text><circle class="m-curseur" cx="20" cy="140" r="8" fill="currentColor" stroke="none"/>');
+    }
+    return '';
+  }
 
   /* ---------- les lignes de date : « 18 » en grand, « décembre 2026 » dessous ---------- */
   const MOIS = 'janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre';
@@ -382,26 +725,27 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     return { jours: txt.slice(0, der.index).trim(), suite: txt.slice(der.index).trim(), mois: der[0], nom: der[1] };
   }
   function quand(txt) {
-    const c = coupe(txt), grand = c.jours || c.nom, petit = c.jours ? c.suite : c.suite.slice(c.nom.length).trim();
+    const c = coupe(txt || ''), grand = c.jours || c.nom, petit = c.jours ? c.suite : c.suite.slice(c.nom.length).trim();
     return `<p class="q"><b>${esc(grand)}</b>${petit ? `<span>${esc(petit)}</span>` : ''}</p>`;
   }
-  const lienExt = (href, txt) => `<a href="${esc(href)}" target="_blank" rel="noopener">${txt}</a>`;
+  const parMois = ds => { const m = new Map(); ds.forEach(d => { const k = coupe(d.ligneDate || d.ligne || '').mois || d.ligneDate || ''; if (!m.has(k)) m.set(k, []); m.get(k).push(d); }); return [...m]; };
+  const lienExt = (href, txt) => `<a href="${attr(href)}" target="_blank" rel="noopener">${txt}</a>`;
   const details = ds => ds && ds.length ? `<ul class="det">${ds.map(x => `<li>${x.lien ? lienExt(x.lien, esc(x.texte)) : esc(x.texte)}</li>`).join('')}</ul>` : '';
-  // une date à venir (D.dates)
-  function ligneDate(d, { titre = true } = {}) {
-    const s = bySlug[d.slug], lienLieu = d.lien && !d.details.some(x => x.lien);
-    return `<li data-l="${d.l}" style="--c:${s ? s.couleurTexteClair : 'var(--magenta)'}">${quand(d.ligneDate)}<div class="t">
-      ${titre ? `<a class="ti" href="#/spectacle/${d.slug}">${esc(d.titre)}</a>` : ''}
-      <p class="lieu">${lienLieu ? lienExt(d.lien, esc(d.ligneLieu)) : esc(d.ligneLieu)}</p>${details(d.details)}</div></li>`;
+  // une date à venir (D.dates) ; ctx : l'entrée dans laquelle on lit, pour le lien vers le spectacle
+  function ligneDate(d, { titre = true, ctx = 'voir' } = {}) {
+    const s = show(d.slug), lienLieu = d.lien && !(d.details || []).some(x => x.lien);
+    return `<li data-date-id="${attr(d.id ?? '')}"${d.l != null ? ` data-l="${d.l}"` : ''} style="--c:${s ? univers(s).lait : 'var(--magenta)'}">${quand(d.ligneDate || d.ligne)}<div class="t">
+      ${titre ? (s ? `<a class="ti" href="#/spectacle/${attr(d.slug)}/${ctx}">${esc(d.titre)}</a>` : `<span class="ti">${esc(d.titre)}</span>`) : ''}
+      <p class="lieu">${lienLieu ? lienExt(d.lien, esc(d.ligneLieu)) : esc(d.ligneLieu)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
   }
   // une date d'une saison (D.saisons), telle que sa page d'origine
   function ligneSaison(d) {
     const i = d.ligne.indexOf(' — '), q = i > 0 ? d.ligne.slice(0, i) : '', ou = i > 0 ? d.ligne.slice(i + 3) : d.ligne;
-    return `<li${d.l != null ? ` data-l="${d.l}"` : ''}>${q ? quand(q) : '<p class="q"></p>'}<div class="t">
-      <p class="lieu">${d.lien ? lienExt(d.lien, esc(ou)) : esc(ou)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
+    return `<li data-date-id="${attr(d.id ?? '')}"${d.l != null ? ` data-l="${d.l}"` : ''}>${q ? quand(q) : '<p class="q"></p>'}<div class="t">
+      <p class="lieu">${d.lien ? lienExt(d.lien, esc(ou)) : esc(ou)}${d.scolaire ? ` <span class="etat">${esc(S.libelles.scolaire)}</span>` : ''}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
   }
 
-  /* ---------- l'encre : la transition, aux couleurs du spectacle ---------- */
+  /* ---------- l'encre : la transition, aux couleurs de l'univers ---------- */
   const Ink = (() => {
     const cv = $('#ink'), ctx = cv.getContext('2d');
     let W = 0, H = 0, raf = 0, cols = ['#bc3e80', '#150a11'], on = false;
@@ -438,11 +782,12 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
 
   /* ---------- la scène : la pieuvre vivante ---------- */
   /* Les huit bras du logo ondulent au repos ; ils ne sont à personne. Les titres, autant qu'il y a de spectacles, sont
-     posés librement autour de la pieuvre ; au survol, au focus ou au toucher, le bras le plus proche se tend vers le
-     titre, le souligne et s'enroule ; on le tire (ou on clique) : la pieuvre l'avale et l'encre recouvre l'écran. */
+     posés librement de part et d'autre de la pieuvre, et les trois entrées dessous ; au survol, au focus ou au toucher,
+     le bras le plus proche se tend vers le libellé, le souligne et s'enroule. On tire un titre (ou on clique) : la
+     pieuvre l'avale et l'encre de son univers recouvre l'écran ; une entrée, on la choisit. */
   const Stage = (() => {
     const el = $('#scene'), cv = $('.stage-canvas', el), ctx = cv.getContext('2d');
-    const ul = $('.t-labels', el), tete = $('#stage-h');
+    const ulE = $('.t-entrees', el), ulS = $('.t-spectacles', el), tete = $('#stage-h');
     const toile = () => { const c = document.createElement('canvas'); return [c, c.getContext('2d')]; };
     const [lay, lctx] = toile(), [msk, mctx] = toile(), [lg, gctx] = toile();
     const AR = D.arms, BOX = AR.box, W0 = AR.width, GAPL = AR.gap;
@@ -452,28 +797,43 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     let raf = 0, visible = true, affiche = false, eveil = null, tPrec = 0, sraf = 0;
     let survol = null, prise = null, verrou = false, dernier = 0, pointeur = null;
     const bob = { x: 0, y: 0 };
-    const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const rgb = h => HEX.test(h || '') ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : INK;
 
-    // les bras : ceux du logo, au service de tous les titres
+    // les bras : ceux du logo, au service de tous les libellés
     const BRAS = Object.entries(AR.arms).map(([cle, A], i) => ({ cle, A, i, cote: cle.slice(-1),
       long: /^A1outer/.test(cle) ? 46 : /^A1inner/.test(cle) ? 60 : /^A2/.test(cle) ? 76 : 90,
       phase: i * 2.399, but: null, depuis: null, q: 1, teinte: 0, penche: 0, em: 0, rel: [], col: INK, P: [], cum: [], nPre: 0, sOwn: 0, sMax: 0 }));
-    // les titres : un par spectacle, en nombre libre
-    const meta = sh => sh.prochaine ? sh.prochaine.ligne : (sh.statut || sh.creation);
-    const TIT = D.shows.map((show, i) => {
-      const li = document.createElement('li');
-      li.innerHTML = `<a class="t-label" href="#/spectacle/${show.slug}" draggable="false" style="--c:${show.couleur}"><span class="t-title"><span class="t-tt">${esc(show.titre)}</span></span><span class="t-when">${esc(meta(show))}</span></a>`;
-      ul.appendChild(li);
-      const a = li.firstElementChild;
-      return { i, show, el: a, tt: $('.t-tt', a), ttl: $('.t-title', a), col: rgb(show.couleur), bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false,
-        ancre: { x: 0, y: 0 }, bras: null, tire: { x: 0, y: 0 }, tire0: { x: 0, y: 0 }, tension: 0, mode: 'repos', t0: 0, parti: false, avale: 0, focus: false };
-    });
-    ul.setAttribute('aria-label', S.libelles.spectacles);
+    // les libellés : les trois entrées, puis un titre par spectacle, en nombre libre ; refaits quand D change
+    let TIT = [], sig = '';
+    const meta = sh => { const d = D.dates.find(x => x.slug === sh.slug && !x.scolaire); return d ? d.ligne : (sh.statut || sh.creation || ''); };
+    const signature = () => JSON.stringify([(S.entrees || []).map(e => [e.cle, e.texte, e.href, e.couleurVive]), D.shows.map(x => [x.slug, x.titre, meta(x), univers(x).nuit, univers(x).scene, univers(x).fond])]);
+    const nouveau = (a, o) => Object.assign({ el: a, tt: $('.t-tt', a), ttl: $('.t-title', a), bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false,
+      ancre: { x: 0, y: 0 }, bras: null, tire: { x: 0, y: 0 }, tire0: { x: 0, y: 0 }, tension: 0, mode: 'repos', t0: 0, parti: false, avale: 0, focus: false }, o);
+    function libelle(ul, html) { const li = document.createElement('li'); li.innerHTML = html; ul.appendChild(li); return li.firstElementChild; }
+    function bati() {
+      sig = signature();
+      ulE.innerHTML = ''; ulS.innerHTML = '';
+      const ent = (S.entrees || []).map(e => {
+        const vive = couleur(e.couleurVive, '#f07ab6');
+        const a = libelle(ulE, `<a class="t-label t-entree" href="${attr(e.href)}" draggable="false" style="--c:${vive};--e:${vive}"><span class="t-title"><span class="t-tt">${esc(e.texte)}</span></span></a>`);
+        return nouveau(a, { type: 'entree', href: e.href, col: rgb(vive), encre: [vive, NUIT] });
+      });
+      const sp = D.shows.map(sh => {
+        const u = univers(sh);
+        const a = libelle(ulS, `<a class="t-label" href="#/spectacle/${attr(sh.slug)}" draggable="false" style="--c:${u.nuit}"><span class="t-title"><span class="t-tt">${esc(sh.titre)}</span></span><span class="t-when">${esc(meta(sh))}</span></a>`);
+        return nouveau(a, { type: 'spectacle', slug: sh.slug, href: `#/spectacle/${sh.slug}`, col: rgb(u.scene), encre: [u.scene, u.fond] });
+      });
+      TIT = [...ent, ...sp];
+      TIT.forEach((T, i) => { T.i = i; ecouter(T); });
+      ulS.setAttribute('aria-label', S.libelles.spectacles);
+      BRAS.forEach(a => { a.but = null; a.depuis = null; a.q = 1; a.teinte = 0; a.rel = []; });
+      survol = null; prise = null;
+    }
 
     const sortie = a => a.A.pts[a.A.pts.length - 1];
     const ecran = p => [ox + bob.x + p[0] * s, oy + bob.y + p[1] * s];
     const coeur = () => ({ x: ox + bob.x + COEUR[0] * s, y: oy + bob.y + COEUR[1] * s });
-    // le bras le plus proche du titre, et tourné vers lui
+    // le bras le plus proche du libellé, et tourné vers lui
     function choisir(T) {
       let best = null, bc = Infinity;
       for (const a of BRAS) {
@@ -483,8 +843,8 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
       }
       return best;
     }
-    // écarte les titres qui se chevauchent, et les tient hors de la pieuvre
-    function relacher(obst, minY) {
+    // écarte les titres qui se chevauchent, et les tient hors de la pieuvre et des entrées
+    function relacher(mobiles, obst, minY) {
       const mx = 30, my = 16;
       for (let it = 0; it < 120; it++) {
         let bouge = false;
@@ -496,9 +856,9 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
           if (ox_ < oy_) { const sg = a.bx + a.w / 2 < b.bx + b.w / 2 ? -1 : 1; a.bx += sg * ox_ * k; if (!fixe) b.bx -= sg * ox_ * k; }
           else { const sg = a.by + a.bh / 2 < b.by + b.bh / 2 ? -1 : 1; a.by += sg * oy_ * k; if (!fixe) b.by -= sg * oy_ * k; }
         };
-        for (let i = 0; i < TIT.length; i++) for (let j = i + 1; j < TIT.length; j++) pousse(TIT[i], TIT[j], false);
-        for (const T of TIT) for (const o of obst) pousse(T, { bx: o.x, by: o.y, w: o.w, bh: o.h }, true);
-        for (const T of TIT) { T.bx = clamp(T.bx, gut, W - gut - T.w); T.by = Math.max(T.by, minY); }
+        for (let i = 0; i < mobiles.length; i++) for (let j = i + 1; j < mobiles.length; j++) pousse(mobiles[i], mobiles[j], false);
+        for (const T of mobiles) for (const o of obst) pousse(T, { bx: o.x, by: o.y, w: o.w, bh: o.h }, true);
+        for (const T of mobiles) { T.bx = clamp(T.bx, gut, W - gut - T.w); T.by = Math.max(T.by, minY); }
         if (!bouge) break;
       }
     }
@@ -508,25 +868,34 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
       W = r.width; mobile = W < 760; gut = mobile ? 16 : clamp(W * .035, 24, 56);
       el.classList.toggle('is-mobile', mobile);
       const [x0, y0, x1, y1] = BOX, bw = x1 - x0, bh = y1 - y0, haut = tete.offsetTop + tete.offsetHeight;
-      const mw = mobile ? W - 2 * gut - 76 : clamp(W * .22, 210, 330);
-      TIT.forEach(T => { T.el.style.transform = 'none'; T.el.style.maxWidth = mw + 'px'; });
-      TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
+      const EN = TIT.filter(T => T.type === 'entree'), SP = TIT.filter(T => T.type === 'spectacle');
+      const mw = mobile ? W - 2 * gut - 76 : clamp(W * .22, 210, 330), mwE = mobile ? W - 2 * gut - 40 : clamp((W - 2 * gut) / 3 - 40, 220, 430);
+      TIT.forEach(T => { T.el.style.transform = 'none'; T.el.style.maxWidth = (T.type === 'entree' ? mwE : mw) + 'px'; });
+      TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (T.type === 'entree' ? 18 : mobile ? 30 : 36); });
       if (!mobile) {
-        H = clamp(innerHeight - 64, 640, 940);
-        s = clamp(W * .27 / bw, .22, .4);
-        const ow = bw * s, oh = bh * s, oTop = Math.max(haut + 26, H * .15);
+        s = clamp(W * .25 / bw, .22, .38);
+        const ow = bw * s, oh = bh * s, oTop = haut + 24;
         ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
-        // une couronne libre : des angles réguliers sur un arc, des rayons inégaux ; marche pour 6 comme pour 10 titres
-        const ex = W / 2, ey = oTop + oh * .6, rx = W / 2 - gut - 10, ryB = H - 78 - ey, ryH = ey - haut - 34;
-        const n = TIT.length, A0 = 214, A1 = -20, K = [1, .8, .94, .84, .99, .78, .9, .86];
-        TIT.forEach((T, i) => {
-          const th = (A0 + (A1 - A0) * (n > 1 ? i / (n - 1) : .5)) * Math.PI / 180, k = K[i % K.length];
-          const c = Math.cos(th), sn = Math.sin(th), px = ex + rx * c * k, py = ey + (sn < 0 ? ryH : ryB) * sn * k;
-          T.bx = c < -.3 ? px - T.w : c > .3 ? px : px - T.w / 2; T.by = py - T.th;
+        // de part et d'autre de la pieuvre, sur deux arcs : des angles réguliers, des écarts inégaux ; marche pour 6 comme pour 10 titres
+        const cx = W / 2, ey = oTop + oh * .5, rx = ow / 2 + clamp(W * .1, 90, 170), ry = oh * .5 + 104, K = [1, .84, .95, .8, .9, .86];
+        const nG = Math.ceil(SP.length / 2), cotes = [SP.slice(0, nG), SP.slice(nG)];
+        cotes.forEach((col, c) => col.forEach((T, k) => {
+          const m = col.length, t = m > 1 ? k / (m - 1) : .5, th = (-36 + 90 * t) * Math.PI / 180;
+          const px = cx + (c ? 1 : -1) * rx * Math.cos(th) * K[k % K.length], py = ey + ry * Math.sin(th);
+          T.droite = !c; T.dirU = c ? 1 : -1;
+          T.bx = c ? px : px - T.w; T.by = py - T.th;
+        }));
+        // les trois entrées, sur une ligne sous la pieuvre : le choix
+        const yE = Math.max(oTop + oh + 150, ...SP.map(T => T.by + T.bh)) + 30, thE = Math.max(0, ...EN.map(T => T.th)), cw = (W - 2 * gut) / Math.max(1, EN.length);
+        EN.forEach((T, k) => {
+          const gauche = k === 0 && EN.length > 2, milieu = EN.length > 2 && k === Math.floor(EN.length / 2);
+          T.droite = gauche; T.dirU = gauche ? -1 : 1;
+          T.bx = gauche ? gut + cw * (k + 1) - 20 - T.w : milieu ? gut + cw * k + (cw - T.w) / 2 : gut + cw * k + 20;
+          T.by = yE + (thE - T.th);
         });
-        relacher([{ x: W / 2 - ow / 2 - 24, y: oTop - 14, w: ow + 48, h: oh + 36 }], haut + 14);
-        H = Math.max(H, Math.max(...TIT.map(T => T.by + T.bh)) + 46);
-        TIT.forEach(T => { T.droite = T.bx + T.w / 2 < W / 2; T.dirU = T.droite ? -1 : 1; });
+        const obst = [{ x: W / 2 - ow / 2 - 24, y: oTop - 14, w: ow + 48, h: oh + 36 }, ...EN.map(T => ({ x: T.bx - 10, y: T.by - 10, w: T.w + 20, h: T.bh + 20 }))];
+        relacher(SP, obst, haut + 14);
+        H = Math.max(560, ...TIT.map(T => T.by + T.bh)) + 46;
       } else {
         s = clamp((W - 2 * gut) * .6 / bw, .19, .3);
         const oh = bh * s, oTop = haut + 22, IND = [0, 26, 10, 34, 4, 20, 30, 14];
@@ -535,7 +904,8 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
         TIT.forEach((T, i) => {
           const g = i % 2 === 0, ind = IND[i % IND.length];
           T.droite = !g; T.dirU = g ? 1 : -1;
-          T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y; y += T.bh + 30;
+          T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
+          y += T.bh + (T.type === 'entree' && TIT[i + 1] && TIT[i + 1].type !== 'entree' ? 64 : 30);
         });
         H = y + 26;
       }
@@ -577,7 +947,7 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     }
     // au repos : le bras pend, ondule et s'enroule (points relatifs à sa sortie du logo)
     function souche(a, t, anime) {
-      const ed = a.A.exitdir, a0 = Math.atan2(ed[1], ed[0]), L = a.long * (mobile ? .75 : clamp(W / 1440, .8, 1.1));
+      const edir = a.A.exitdir, a0 = Math.atan2(edir[1], edir[0]), L = a.long * (mobile ? .75 : clamp(W / 1440, .8, 1.1));
       let dd = Math.PI / 2 - a0; dd = Math.atan2(Math.sin(dd), Math.cos(dd));
       const sens = a.cote === 'L' ? 1 : -1, P = [[0, 0]];
       let x = 0, y = 0, v0 = 0;
@@ -594,11 +964,11 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
       }
       return P;
     }
-    // tendu vers un titre : jusqu'à son extrémité, puis dessous, puis la pointe s'enroule (tirer la déroule)
+    // tendu vers un libellé : jusqu'à son extrémité, puis dessous, puis la pointe s'enroule (tirer la déroule)
     function portee(a, T) {
-      const E = ecran(sortie(a)), ed = a.A.exitdir, du = T.dirU;
+      const E = ecran(sortie(a)), edir = a.A.exitdir, du = T.dirU;
       const Ax = T.ancre.x + T.tire.x - E[0], Ay = T.ancre.y + T.tire.y - E[1], d = Math.hypot(Ax, Ay), k = d * (mobile ? .5 : .42);
-      const c1 = [ed[0] * k, ed[1] * k], c2 = [Ax - du * k * .85, Ay], P = [[0, 0]];
+      const c1 = [edir[0] * k, edir[1] * k], c2 = [Ax - du * k * .85, Ay], P = [[0, 0]];
       for (let j = 1; j <= NB; j++) { const u = j / NB, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u * u, e = u ** 3; P.push([b * c1[0] + c * c2[0] + e * Ax, b * c1[1] + c * c2[1] + e * Ay]); }
       const U = T.U + 8;
       for (let j = 1; j <= NM; j++) P.push([Ax + du * U * j / NM, Ay]);
@@ -667,7 +1037,7 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
       return true;
     }
     function placer(T, act, now, anime) {
-      const em = eveil === null ? 0 : anime ? smooth(0, 1, (now - eveil - 380 - T.i * 75) / 650) : 1;
+      const em = eveil === null ? 0 : anime ? smooth(0, 1, (now - eveil - 380 - T.i * 70) / 650) : 1;
       let op = em, sc = 1;
       if (T.mode === 'cache') op = 0;
       else if (T.mode === 'aspire') { op *= 1 - smooth(.3, .85, T.avale); sc = 1 - .55 * T.avale; }
@@ -718,13 +1088,20 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     }
     const reveil = () => { if (!raf && visible && affiche && !document.hidden) raf = requestAnimationFrame(image); };
 
-    /* ---------- tirer un titre ---------- */
+    /* ---------- tirer un titre, choisir une entrée ---------- */
     const local = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     function aspirer(T, now) { T.mode = 'aspire'; T.t0 = now; T.tire0 = { ...T.tire }; T.parti = false; verrou = true; }
-    function entrer(T) { const r = el.getBoundingClientRect(), c = coeur(); Ink.cover(r.left + c.x, r.top + c.y, () => { location.hash = '#/spectacle/' + T.show.slug; }, [T.show.couleur, T.show.fondSombre]); }
+    function entrer(T) { const r = el.getBoundingClientRect(), c = coeur(), sh = show(T.slug); Ink.cover(r.left + c.x, r.top + c.y, () => { location.hash = T.href; }, sh ? encreDe(sh) : T.encre); }
     function activer(T) {
       if (verrou || T.mode !== 'repos') return;
-      if (!motionOK()) { location.hash = '#/spectacle/' + T.show.slug; return; }
+      if (!motionOK()) { location.hash = T.href; return; }
+      if (T.type === 'entree') {
+        // une entrée : le bras l'a soulignée, l'encre de sa couleur part du libellé
+        verrou = true; survol = T; reveil();
+        const r = T.el.getBoundingClientRect();
+        Ink.cover(r.left + r.width / 2, r.top + r.height / 2, () => { location.hash = T.href; }, T.encre);
+        return;
+      }
       // un clic tire le titre pour vous : il s'éloigne, puis la pieuvre l'avale
       verrou = true; survol = T;
       const c = coeur(), dx = T.ancre.x - c.x, dy = T.ancre.y - c.y, dl = Math.hypot(dx, dy) || 1;
@@ -732,7 +1109,7 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
       reveil();
     }
     function saisir(T, e) {
-      if (verrou || T.mode !== 'repos' || e.button > 0 || e.pointerType === 'touch' || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      if (T.type === 'entree' || verrou || T.mode !== 'repos' || e.button > 0 || e.pointerType === 'touch' || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
       e.preventDefault();
       const p = local(e);
       prise = { T, id: e.pointerId, x0: p.x, y0: p.y, bouge: 0 };
@@ -763,7 +1140,7 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     el.addEventListener('pointerleave', () => { pointeur = null; });
     addEventListener('pointerup', lacher);
     addEventListener('pointercancel', e => { if (prise && e.pointerId === prise.id) { const T = prise.T; prise = null; el.classList.remove('is-grabbing'); T.mode = 'ressort'; T.t0 = performance.now(); T.tire0 = { ...T.tire }; reveil(); } });
-    TIT.forEach((T, i) => {
+    function ecouter(T) {
       const b = T.el;
       b.addEventListener('pointerdown', e => saisir(T, e));
       b.addEventListener('click', e => { if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return; e.preventDefault(); if (performance.now() - dernier > 450) activer(T); });
@@ -773,10 +1150,10 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
       b.addEventListener('blur', () => { T.focus = false; reveil(); });
       b.addEventListener('keydown', e => {
         const k = e.key, d = k === 'ArrowRight' || k === 'ArrowDown' ? 1 : k === 'ArrowLeft' || k === 'ArrowUp' ? -1 : 0;
-        if (d) { e.preventDefault(); TIT[(i + d + TIT.length) % TIT.length].el.focus(); }
+        if (d) { e.preventDefault(); const i = TIT.indexOf(T); TIT[(i + d + TIT.length) % TIT.length].el.focus(); }
       });
-    });
-    // au téléphone, le titre qui passe au milieu de l'écran attire le bras le plus proche
+    }
+    // au téléphone, le libellé qui passe au milieu de l'écran attire le bras le plus proche
     function suivre() {
       sraf = 0;
       if (!mobile || !affiche || verrou) return;
@@ -795,19 +1172,24 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     function montrer(oui) {
       affiche = oui;
       if (!oui) { cancelAnimationFrame(raf); raf = 0; return; }
-      // de retour sur l'accueil : chaque titre reprend sa place, chaque bras sa souche
+      if (signature() !== sig) bati();
+      // de retour sur l'accueil : chaque libellé reprend sa place, chaque bras sa souche
       TIT.forEach(T => { T.mode = 'repos'; T.tire = { x: 0, y: 0 }; T.tension = 0; T.parti = false; T.avale = 0; T.focus = false; });
       BRAS.forEach(a => { a.but = null; a.depuis = null; a.q = 1; a.teinte = 0; });
       survol = null; prise = null; verrou = false; el.classList.remove('is-grabbing', 'has-active');
       if (eveil === null && !(typeof INTRO !== 'undefined' && INTRO.ouverte())) eveil = performance.now() - (motionOK() ? 0 : 5000);
       mise(); reveil();
     }
-    return { montrer, eveiller, coeurEcran: () => { const r = el.getBoundingClientRect(), c = coeur(); return { x: r.left + c.x, y: r.top + c.y }; } };
+    // D a changé (base de la compagnie) : les libellés sont refaits en place, sans rejouer l'éveil
+    function maj() { tete.textContent = S.nom; if (signature() !== sig) { bati(); if (affiche) mise(); } }
+    tete.textContent = S.nom;
+    bati();
+    return { montrer, eveiller, maj, coeurEcran: () => { const r = el.getBoundingClientRect(), c = coeur(); return { x: r.left + c.x, y: r.top + c.y }; } };
   })();
 
   /* ---------- la carte des tournées : des tentacules d'encre ---------- */
   /* De la pieuvre posée sur Rouen, un bras d'encre par commune, ponctué de ventouses sur sa face intérieure ;
-     au bout, une goutte d'encre s'étale quand le bras l'atteint. */
+     au bout, une goutte d'encre s'étale quand le bras l'atteint. « leger » : beaucoup de communes, des bras fins. */
   const Encre = (() => {
     let n = 0;
     const R = CARTE.rouen, LX = (D.arms.box[0] + D.arms.box[2]) / 2, LB = D.arms.box[3];
@@ -847,27 +1229,36 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     }
     const etiquette = x => `${CARTE.nom(x)}${x.dates?.length ? ' : ' + x.dates.map(d => d.ligne).join(' ; ') : ''}`;
     // lieux : les communes en avant (encre pleine, ventouses, gouttes) ; passe : les tournées passées, en retrait
-    function svg({ lieux = [], passe = [], cadre = 'france', titre = '', fort = false, noms = false } = {}) {
+    function svg({ lieux = [], passe = [], cadre = 'france', titre = '', fort = false, noms = false, leger = false } = {}) {
       const id = 'k' + (++n), tous = [...lieux, ...passe];
       const box = cadre === 'france' || !tous.length ? CARTE.viewBox : CARTE.cadre(tous, { marge: 44, min: 220 });
       const [bx, by, bw, bh] = box.split(/\s+/).map(Number), e = Math.max(bw, bh) / 800;
       const longueurs = lieux.map(x => CARTE.longueur(x.xy, { courbe: courbe(x) })), Lmax = Math.max(1, ...longueurs), pas = lieux.length > 30 ? 6 : 4;
-      let masques = '', bras = '', gouttes = '', noms_ = '';
+      let masques = '', bras = '', fins = '', gouttes = '', noms_ = '';
       lieux.forEach((x, i) => {
-        const c = courbe(x), w0 = ((fort ? 6.5 : 5) + Math.sqrt(x.n) * 1.6) * e, w1 = .9 * e, r = ((fort ? 4.2 : 3.4) + Math.sqrt(x.n) * 1.3) * e;
-        const d0 = i * .035, du = .4 + 1.2 * longueurs[i] / Lmax, dg = d0 + du * .88;
-        masques += `<mask id="${id}-${x.l}" maskUnits="userSpaceOnUse" x="${bx - 60 * e}" y="${by - 60 * e}" width="${bw + 120 * e}" height="${bh + 120 * e}"><path class="k-trace" d="${CARTE.trait(x.xy, { courbe: c })}" pathLength="1" stroke-width="${(w0 * 2.8).toFixed(1)}" style="--d:${d0.toFixed(3)}s;--t:${du.toFixed(2)}s"/></mask>`;
-        bras += `<g class="tent" data-l="${x.l}" mask="url(#${id}-${x.l})"><path class="tent-corps" d="${CARTE.bras(x.xy, { w0, w1, courbe: c })}"/><g class="tent-v">${ventouses(x.xy, c, w0, w1, e, pas)}</g></g>`;
-        gouttes += `<g class="carte-lieu" data-l="${x.l}" role="button" tabindex="0" aria-label="${esc(etiquette(x))}" style="--d:${dg.toFixed(2)}s"><circle class="onde" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(r * 2.4).toFixed(1)}" stroke-width="${(.9 * e).toFixed(2)}"/><g class="g-h"><g class="goutte">${goutte(x.xy, r, x.l)}</g></g><circle class="hit" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${Math.max(r * 1.7, 11 * e).toFixed(1)}"/><title>${esc(etiquette(x))}</title></g>`;
-        const droite = x.xy[0] > bx + bw * .7;
-        noms_ += `<text class="carte-nom${noms ? ' toujours' : ''}" data-l="${x.l}" x="${(x.xy[0] + (droite ? -1 : 1) * (r * 1.4 + 5 * e)).toFixed(1)}" y="${(x.xy[1] + 4.5 * e).toFixed(1)}" text-anchor="${droite ? 'end' : 'start'}" font-size="${(14 * e).toFixed(1)}" stroke-width="${(3.4 * e).toFixed(1)}">${esc(CARTE.nom(x))}</text>`;
+        const c = courbe(x), droite = x.xy[0] > bx + bw * .7;
+        if (leger) {
+          // beaucoup de communes : un bras fin chacune, et une goutte qu'on survole
+          const r = (1.5 + Math.sqrt(x.n) * .55) * e;
+          fins += `<path data-l="${x.l}" d="${CARTE.bras(x.xy, { w0: (1.3 + Math.sqrt(x.n) * .5) * e, w1: .35 * e, courbe: c })}"/>`;
+          gouttes += `<g class="carte-lieu fin" data-l="${x.l}"><g class="g-h"><g class="goutte">${goutte(x.xy, r, x.l)}</g></g><circle class="hit" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${Math.max(r * 1.8, 6 * e).toFixed(1)}"/><title>${esc(CARTE.nom(x))}</title></g>`;
+        } else {
+          const w0 = ((fort ? 6.5 : 5) + Math.sqrt(x.n) * 1.6) * e, w1 = .9 * e, r = ((fort ? 4.2 : 3.4) + Math.sqrt(x.n) * 1.3) * e;
+          const d0 = i * .035, du = .4 + 1.2 * longueurs[i] / Lmax, dg = d0 + du * .88;
+          masques += `<mask id="${id}-${x.l}" maskUnits="userSpaceOnUse" x="${bx - 60 * e}" y="${by - 60 * e}" width="${bw + 120 * e}" height="${bh + 120 * e}"><path class="k-trace" d="${CARTE.trait(x.xy, { courbe: c })}" pathLength="1" stroke-width="${(w0 * 2.8).toFixed(1)}" style="--d:${d0.toFixed(3)}s;--t:${du.toFixed(2)}s"/></mask>`;
+          bras += `<g class="tent" data-l="${x.l}" mask="url(#${id}-${x.l})"><path class="tent-corps" d="${CARTE.bras(x.xy, { w0, w1, courbe: c })}"/><g class="tent-v">${ventouses(x.xy, c, w0, w1, e, pas)}</g></g>`;
+          gouttes += `<g class="carte-lieu" data-l="${x.l}" role="button" tabindex="0" aria-label="${attr(etiquette(x))}" style="--d:${dg.toFixed(2)}s"><circle class="onde" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(r * 2.4).toFixed(1)}" stroke-width="${(.9 * e).toFixed(2)}"/><g class="g-h"><g class="goutte">${goutte(x.xy, r, x.l)}</g></g><circle class="hit" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${Math.max(r * 1.7, 11 * e).toFixed(1)}"/><title>${esc(etiquette(x))}</title></g>`;
+        }
+        const rr = leger ? 3 * e : ((fort ? 4.2 : 3.4) + Math.sqrt(x.n) * 1.3) * e;
+        noms_ += `<text class="carte-nom${noms ? ' toujours' : ''}" data-l="${x.l}" x="${(x.xy[0] + (droite ? -1 : 1) * (rr * 1.4 + 5 * e)).toFixed(1)}" y="${(x.xy[1] + 4.5 * e).toFixed(1)}" text-anchor="${droite ? 'end' : 'start'}" font-size="${(14 * e).toFixed(1)}" stroke-width="${(3.4 * e).toFixed(1)}">${esc(CARTE.nom(x))}</text>`;
       });
       const kk = (fort ? 46 : 38) * e / 1016;
-      return `<svg class="carte encre${fort ? ' fort' : ''}" viewBox="${box}" role="group" aria-label="${esc(titre)}">
+      return `<svg class="carte encre${fort ? ' fort' : ''}" viewBox="${box}" role="group" aria-label="${attr(titre)}">
         <defs>${masques}</defs>
         <path class="carte-voisin" d="${CARTE.fond.belgique}"/><path class="carte-voisin" d="${CARTE.fond.luxembourg}"/><path class="carte-pays" d="${CARTE.fond.pays}"/>
         ${tous.some(x => x.encart) ? `<circle class="k-encart" cx="${CARTE.ENCART[0]}" cy="${CARTE.ENCART[1]}" r="${(24 * e).toFixed(1)}"/>` : ''}
         <g class="k-passe">${passe.map(x => `<path d="${CARTE.bras(x.xy, { w0: 2.2 * e, w1: .5 * e, courbe: courbe(x) })}"/><circle cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(1.9 * e).toFixed(2)}"/>`).join('')}</g>
+        ${fins ? `<g class="k-fins">${fins}</g>` : ''}
         <g class="k-bras">${bras}</g>
         <g class="k-rouen"><g class="k-pieuvre" transform="translate(${(R[0] - LX * kk).toFixed(1)} ${(R[1] - LB * kk + 3 * e).toFixed(1)}) scale(${kk.toFixed(5)})">${D.logo.octopusPaths.map(d => `<path d="${d}"/>`).join('')}</g>
           <circle class="k-flaque" cx="${R[0]}" cy="${R[1]}" r="${(3.4 * e).toFixed(1)}"/>
@@ -876,10 +1267,10 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
         <g class="k-noms">${noms_}</g>
       </svg>`;
     }
-    // l'encre pousse quand la carte entre à l'écran
+    // l'encre pousse quand la carte entre à l'écran (pas lors d'une mise à jour en place)
     function activer(svgEl) {
       if (!svgEl) return;
-      if (!motionOK()) { svgEl.classList.add('fixe'); return; }
+      if (!motionOK() || !ANIMER) { svgEl.classList.add('fixe'); return; }
       const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { svgEl.classList.add('pousse'); io.disconnect(); } }, { threshold: .15 });
       io.observe(svgEl);
     }
@@ -914,96 +1305,212 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
     return { svg, activer, marquer, relier };
   })();
 
-  /* ---------- l'en-tête et le pied de page ---------- */
-  $('#marque').innerHTML = D.logo.octopus;
-  $('#marque-mot').textContent = S.titreSuffixe;
-  $('#nav').setAttribute('aria-label', S.libelles.menu);
-  $('#nav').innerHTML = S.menu.map(m => `<a href="${m.href}" data-id="${m.id}">${esc(m.texte)}</a>`).join('');
-  $('.menu').textContent = S.libelles.menu;
-  const K0 = S.coordonnees;
-  $('#pied').innerHTML = `<div><span class="l">${D.logo.octopus}</span><p><strong>${esc(K0.nom)}</strong><br>${K0.adresse.map(esc).join('<br>')}</p>
-      <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a><span>${esc(S.facebook.texte)}</span></p></div>
-    <div><p>${S.partenaires}</p></div>
-    <div><p>${K0.legal.map(esc).join('<br>')}</p><p class="liens">${S.liensLegaux.map(l => `<a href="${l.href}">${esc(l.texte)}</a>`).join('')}</p></div>`;
-  const fermeMenu = () => { $('.top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
-  $('.menu').addEventListener('click', e => { const o = $('.top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', o); });
-  $('#nav').addEventListener('click', e => { if (e.target.closest('a')) fermeMenu(); });
+  /* ---------- l'en-tête, la barre des entrées et le pied de page ---------- */
+  const navE = $('#entrees'), navS = $('#second'), btnMenu = $('.menu'), haut = $('.top');
+  let sigChrome = '';
+  function chrome() {
+    const sg = JSON.stringify([S.entrees, S.menu, S.libelles.menu, S.titreSuffixe]);
+    if (sg === sigChrome) return;
+    sigChrome = sg;
+    $('#marque').innerHTML = D.logo.octopus;
+    $('#marque-mot').textContent = S.titreSuffixe;
+    $('.marque').setAttribute('aria-label', S.accueil);
+    navE.innerHTML = (S.entrees || []).map(e => `<a class="entree" href="${attr(e.href)}" data-cle="${attr(e.cle)}" style="--ev:${couleur(e.couleurVive, '#f07ab6')}">${BE}<span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a>`).join('');
+    navS.setAttribute('aria-label', S.libelles.menu);
+    navS.innerHTML = (S.menu || []).map(m => `<a href="${attr(m.href)}" data-id="${attr(m.id)}">${esc(m.texte)}</a>`).join('');
+    btnMenu.innerHTML = `<svg viewBox="0 0 20 14" aria-hidden="true" focusable="false"><path d="M1 1h18M1 7h18M1 13h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>${esc(S.libelles.menu)}`;
+  }
+  function marquerNav(v) {
+    $$('a', navE).forEach(a => {
+      const c = a.dataset.cle, val = v.cle === c ? 'page' : (v.cle === 'spectacle' && v.entree === c) || (v.cle === 'saison' && c === 'voir') ? 'true' : null;
+      if (val) a.setAttribute('aria-current', val); else a.removeAttribute('aria-current');
+    });
+    $$('a', navS).forEach(a => { if (a.dataset.id === v.cle) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  }
+  const fermeMenu = () => { haut.classList.remove('ouvert'); btnMenu.setAttribute('aria-expanded', 'false'); };
+  btnMenu.addEventListener('click', e => { e.stopPropagation(); const o = haut.classList.toggle('ouvert'); btnMenu.setAttribute('aria-expanded', String(o)); });
+  navS.addEventListener('click', e => { if (e.target.closest('a')) fermeMenu(); });
+  document.addEventListener('click', e => { if (!e.target.closest('.top')) fermeMenu(); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && haut.classList.contains('ouvert')) { fermeMenu(); btnMenu.focus(); } });
   // l'évitement ne change pas d'adresse : il mène au contenu de la page courante
   $('.evitement').addEventListener('click', e => { e.preventDefault(); $('#main').focus(); });
+  function pied() {
+    const K = S.coordonnees || { nom: S.nom, adresse: [], legal: [] };
+    $('#pied').innerHTML = `<div><span class="l">${D.logo.octopus}</span><p><strong>${esc(K.nom)}</strong><br>${(K.adresse || []).map(esc).join('<br>')}</p>
+        <p class="liens"><a href="${attr(S.ecrire.href)}">${esc(S.ecrire.texte)}</a>${S.facebook ? `<span>${esc(S.facebook.texte)}</span>` : ''}</p></div>
+      <div><p${ed('site.partenaires')}>${S.partenaires || ''}</p></div>
+      <div><p>${(K.legal || []).map(esc).join('<br>')}</p><p class="liens">${(S.liensLegaux || []).map(l => `<a href="${attr(l.href)}">${esc(l.texte)}</a>`).join('')}</p>
+        <p><button type="button" class="modifier">${BE}${esc(S.libelles.modifierSite)}</button></p></div>`;
+  }
+  // « Modifier le site » : l'édition sur place (edition.js) fait le reste
+  $('#pied').addEventListener('click', e => { if (e.target.closest('.modifier') && typeof EDITION !== 'undefined') EDITION.ouvrir(); });
 
   /* ---------- l'accueil, sous la scène ---------- */
-  $('#stage-h').textContent = S.nom;
-  const A_VENIR = CARTE.aVenir();
-  $('#accueil-suite').innerHTML = `
-    <section class="bloc"><div class="wrap"><div class="portes">${S.portes.map(p => `<a class="porte" href="${p.href}" style="--dc:${p.couleurVive};--dct:${p.couleur}">${esc(p.texte)}</a>`).join('')}</div></div></section>
-    <section class="bloc" aria-labelledby="h-tour"><div class="wrap">
-      <h2 class="h2" id="h-tour">${esc(S.libelles.actuellementEnTournee)}</h2>
-      <div class="k-grille"><div class="k-carte">${Encre.svg({ lieux: A_VENIR, fort: true, titre: S.libelles.actuellementEnTournee })}</div>
-        <div><p class="k-qui" id="acc-qui" hidden></p><ul class="dl petit" id="acc-dates"></ul><p class="suite"><a href="${MENU.agenda.href}">${esc(MENU.agenda.texte)} ${FLECHE}</a></p></div></div>
-    </div></section>
-    <section class="bloc donateurs"><div class="wrap"><p>${S.donateurs}</p></div></section>`;
-  (() => {
+  const tuile = s => `<li class="tuile" style="${uStyle(s)}"><div class="tu-ph"><img src="${attr(D.photos[s.slug] || '')}" alt="" loading="lazy"></div>
+    <div class="tu-tx">${s.lieuTemps ? `<p class="tu-lt">${esc(s.lieuTemps)}</p>` : ''}<h3><a class="etire" href="#/spectacle/${attr(s.slug)}">${esc(s.titre)}</a></h3><p class="tu-cr">${esc(s.creation)}</p></div>
+    <span class="tu-motif">${motif(univers(s).motif)}</span></li>`;
+  function accueilSuite() {
+    const Lb = S.libelles, lieux = CARTE.aVenir('public'), pub = D.dates.filter(d => !d.scolaire), voir = entree('voir');
+    $('#accueil-suite').innerHTML = `
+      <section class="bloc" aria-labelledby="h-sp"><div class="wrap"><h2 class="h2" id="h-sp">${esc(Lb.lesSpectacles)}</h2><ul class="tuiles">${D.shows.map(tuile).join('')}</ul></div></section>
+      <section class="bloc" aria-labelledby="h-tour"><div class="wrap">
+        <h2 class="h2" id="h-tour">${esc(Lb.actuellementEnTournee)}</h2>
+        <div class="k-grille"><div class="k-carte">${Encre.svg({ lieux, fort: true, titre: Lb.actuellementEnTournee })}</div>
+          <div><p class="k-qui" id="acc-qui" hidden></p><div data-agenda=""><ul class="dl petit" id="acc-dates"></ul></div>
+          ${voir ? `<p class="suite"><a href="${attr(voir.href)}">${esc(voir.texte)} ${FLECHE}</a></p>` : ''}</div></div>
+      </div></section>
+      ${S.donateurs ? `<section class="bloc donateurs"><div class="wrap"><p${ed('site.donateurs')}>${esc(S.donateurs)}</p></div></section>` : ''}`;
     const svgEl = $('#accueil-suite svg.carte'), ul = $('#acc-dates'), qui = $('#acc-qui');
     const montrer = l => {
-      const x = l != null && A_VENIR.find(y => y.l === l);
+      const x = l != null && lieux.find(y => y.l === l);
       qui.hidden = !x; qui.textContent = x ? CARTE.nom(x) : '';
-      ul.innerHTML = (x ? x.dates : D.dates.slice(0, 6)).map(d => ligneDate(d)).join('');
+      ul.innerHTML = (x ? x.dates : pub.slice(0, 6)).map(d => ligneDate(d)).join('');
     };
     montrer(null);
     Encre.activer(svgEl);
     let pin = null;
     const allumer = l => { Encre.marquer(svgEl, l); montrer(l); };
     CARTE.lier(svgEl, { survol: l => allumer(l ?? pin), choix: l => { pin = pin === l ? null : l; allumer(pin); } });
-  })();
+  }
 
   /* ---------- les pages ---------- */
-  const tete = h => `<div class="page-tete"><div class="wrap"><h1 tabindex="-1"><span>${esc(h)}</span></h1></div></div>`;
+  const tete = (h, e = null, chemin = null) => `<div class="page-tete"${e ? ` style="--ev:${couleur(e.couleurVive, '#f07ab6')}"` : ''}><div class="wrap"><h1 tabindex="-1"><span${chemin ? ed(chemin) : ''}>${esc(h)}</span></h1></div></div>`;
+  const ecrire = () => `<a class="cta" href="${attr(S.ecrire.href)}">${esc(S.libelles.ecrire)} ${FLECHE}</a>`;
+  const motifCoin = (s, classe = '') => `<span class="tu-motif ${classe}">${motif(univers(s).motif)}</span>`;
+  const prochainePublique = s => D.dates.find(d => d.slug === s.slug && !d.scolaire);
+
+  // « Je viens voir un spectacle » : la saison et ses dates tout public, la carte, les spectacles en tournée
+  function pageVoir() {
+    const e = entree('voir'), Lb = S.libelles, sa = (S.saisons || [])[0], pub = D.dates.filter(d => !d.scolaire), lieux = CARTE.aVenir('public');
+    const cartes = D.shows.filter(s => s.enTournee).map(s => {
+      const d = prochainePublique(s);
+      return `<li class="cv" style="${uStyle(s)}"><div class="cv-ph"><img src="${attr(D.photos[s.slug] || '')}" alt="" loading="lazy"></div><div class="cv-tx">
+        ${s.lieuTemps ? `<p class="cv-lt"${ed(`shows.${s.slug}.lieuTemps`)}>${esc(s.lieuTemps)}</p>` : ''}
+        <h3><a class="etire" href="#/spectacle/${attr(s.slug)}/voir">${esc(s.titre)}</a></h3>
+        ${s.accroche ? `<p class="cv-acc"${ed(`shows.${s.slug}.accroche`)}>${esc(s.accroche)}</p>` : ''}
+        ${d ? `<p class="cv-date">${esc(d.ligne)}</p>` : ''}</div>${motifCoin(s, 'coin')}</li>`;
+    }).join('');
+    return tete(e.texte, e) + `
+      <section class="bloc" aria-labelledby="h-saison"><div class="wrap">
+        ${sa ? `<h2 class="h2" id="h-saison">${esc(sa.titre)}</h2>` : ''}
+        <div class="ag-grille"><div class="ag-carte">${Encre.svg({ lieux, titre: sa ? sa.titre : e.texte })}</div>
+          <div class="ag-liste" data-agenda="">${parMois(pub).map(([m, ds]) => `<div class="mois"><h3>${esc(m)}</h3><ul class="dl">${ds.map(d => ligneDate(d, { ctx: 'voir' })).join('')}</ul></div>`).join('')}</div></div>
+      </div></section>
+      ${cartes ? `<section class="bloc" aria-labelledby="h-en-tournee"><div class="wrap"><h2 class="h2" id="h-en-tournee">${esc(Lb.actuellementEnTournee)}</h2><ul class="en-tournee">${cartes}</ul></div></section>` : ''}
+      <section class="bloc" aria-labelledby="h-prec"><div class="wrap"><h2 class="h2" id="h-prec">${esc(Lb.saisonsPrecedentes)}</h2>
+        <ul class="saisons">${(S.saisons || []).slice(1).map(x => `<li><a href="${attr(x.href)}">${esc(x.titre)} ${FLECHE}</a></li>`).join('')}</ul></div></section>`;
+  }
+
+  // ce que lit une programmatrice : représentations, format, durée, jauge, équipe, actualité
+  function faitsProg(s) {
+    const P = s.programmer || {}, Lb = S.libelles, sl = s.slug, f = [];
+    if (P.representations) f.push(`<li class="grand"><span${ed(`shows.${sl}.programmer.representations`)}>${esc(P.representations)}</span></li>`);
+    if (P.actualite) f.push(`<li class="vif"><span${ed(`shows.${sl}.programmer.actualite`)}>${esc(P.actualite)}</span></li>`);
+    if (P.format) f.push(`<li><span class="lib">${esc(Lb.format)}</span><span${ed(`shows.${sl}.programmer.format`)}>${esc(P.format)}</span></li>`);
+    if (s.duree) f.push(`<li><span${ed(`shows.${sl}.duree`)}>${esc(s.duree)}</span></li>`);
+    else if (P.duree) f.push(`<li><span${ed(`shows.${sl}.programmer.duree`)}>${esc(P.duree)}</span></li>`);
+    if (P.jauge) f.push(`<li><span${ed(`shows.${sl}.programmer.jauge`)}>${esc(P.jauge)}</span></li>`);
+    if (P.equipe) f.push(`<li><span${ed(`shows.${sl}.programmer.equipe`)}>${esc(P.equipe)}</span></li>`);
+    return f.length ? `<ul class="faits">${f.join('')}</ul>` : '';
+  }
+  const equipe = s => ((s.programmer || {}).equipeCreation || []).map((l, k) => `<p class="eq"${ed(`shows.${s.slug}.programmer.equipeCreation.${k}`)}>${esc(l)}</p>`).join('');
+  function ficheHTML(s) {
+    const sl = s.slug;
+    const lignes = (s.fiche || []).map((f, k) => `<p>${f.libelle ? `<span class="lib"${ed(`shows.${sl}.fiche.${k}.libelle`)}>${esc(f.libelle)}</span>` : ''}<span${ed(`shows.${sl}.fiche.${k}.valeur`)}>${f.valeur ?? ''}</span></p>`).join('');
+    const avec = s.avec ? `<p>${s.avec.libelle ? `<span class="lib"${ed(`shows.${sl}.avec.libelle`)}>${esc(s.avec.libelle)}</span>` : ''}<span${ed(`shows.${sl}.avec.valeur`)}>${s.avec.valeur ?? ''}</span></p>` : '';
+    return lignes || avec ? `<div class="fiche">${lignes}${avec}</div>` : '';
+  }
+  const lienVideo = s => s.video && s.video.url ? `<a class="lien-video" href="${attr(s.video.url)}" target="_blank" rel="noopener">${ICONE.video}${esc(S.libelles.bandeAnnonce)}</a>` : '';
+  const lieuxDetails = (s, ouvert = false) => (s.programmer || {}).lieux ? `<details class="lieux"${ouvert ? ' open' : ''}><summary>${esc(S.libelles.lieuxDiffusion)}</summary><p${ed(`shows.${s.slug}.programmer.lieux`)}>${esc(s.programmer.lieux)}</p></details>` : '';
+
+  // « Je souhaite programmer » : le catalogue, la carte de tous les lieux, les partenaires
+  function pageProgrammer() {
+    const e = entree('programmer'), Lb = S.libelles;
+    const fiches = D.shows.map(s => `<li class="fp" style="${uStyle(s)}">${motifCoin(s, 'coin')}
+      <div><h3><a class="etire" href="#/spectacle/${attr(s.slug)}/programmer">${esc(s.titre)}</a></h3>
+        ${s.sousTitre ? `<p class="fp-sous"${ed(`shows.${s.slug}.sousTitre`)}>${s.sousTitre}</p>` : ''}
+        <p class="fp-crea">${s.statut ? `<span class="tag"${ed(`shows.${s.slug}.statut`)}>${esc(s.statut)}</span>` : ''}<span${ed(`shows.${s.slug}.creation`)}>${esc(s.creation)}</span></p></div>
+      ${faitsProg(s)}${equipe(s)}${ficheHTML(s)}
+      <div class="fp-pied">${lienVideo(s)}${lieuxDetails(s)}</div></li>`).join('');
+    return tete(e.texte, e) + `
+      <section class="bloc" aria-labelledby="h-cat"><div class="wrap"><h2 class="h2" id="h-cat">${esc(Lb.lesSpectacles)}</h2><ul class="catalogue">${fiches}</ul></div></section>
+      <section class="bloc" aria-labelledby="h-lieux"><div class="wrap"><h2 class="h2" id="h-lieux">${esc(Lb.lieuxDiffusion)}</h2>${Encre.svg({ lieux: CARTE.tout(), leger: true, titre: Lb.lieuxDiffusion })}</div></section>
+      <section class="bloc"><div class="wrap">${S.partenaires ? `<p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p>` : ''}${ecrire()}</div></section>`;
+  }
+
+  // « Je représente un établissement scolaire » : la position de la compagnie, l'action culturelle de chaque spectacle
+  function ficheEtab(s) {
+    const A = s.actionCulturelle || {}, sl = s.slug, Lb = S.libelles, txt = (A.textes || [])[0];
+    return `<li class="fe" style="${uStyle(s)}">${motifCoin(s, 'coin')}
+      <h3><a class="etire" href="#/spectacle/${attr(sl)}/etablissement">${esc(s.titre)}</a></h3>
+      <p class="lab">${esc(Lb.actionCulturelle)}</p>
+      ${A.aCompleter || !A.type ? `<p class="fe-type a-completer">${esc(Lb.aCompleter)}</p>` : `<p class="fe-type"${ed(`shows.${sl}.actionCulturelle.type`)}>${esc(A.type)}</p>`}
+      ${A.public || A.statut ? `<ul class="puces">${A.public ? `<li><span class="lib">${esc(Lb.public)}</span> <span${ed(`shows.${sl}.actionCulturelle.public`)}>${esc(A.public)}</span></li>` : ''}${A.statut ? `<li${ed(`shows.${sl}.actionCulturelle.statut`)}>${esc(A.statut)}</li>` : ''}</ul>` : ''}
+      ${txt ? bloc(txt.texte, `shows.${sl}.actionCulturelle.textes.0.texte`) : ''}
+      ${(A.formule || []).length ? `<p class="formule">${A.formule.map((l, k) => `<span${ed(`shows.${sl}.actionCulturelle.formule.${k}`)}>${esc(l)}</span>`).join('')}</p>` : ''}
+      ${(A.dispositifs || []).length ? `<div class="fe-disp"><p class="lab">${esc(Lb.dispositifs)}</p><ul>${A.dispositifs.map((h, k) => `<li${ed(`shows.${sl}.actionCulturelle.dispositifs.${k}`)}>${h}</li>`).join('')}</ul></div>` : ''}
+      ${s.dossier && D.dossiers && D.dossiers[s.dossier] ? `<p class="fe-dossier"><a href="#/spectacle/${attr(sl)}/etablissement">${esc(Lb.dossierScolaire)} ${FLECHE}</a></p>` : ''}</li>`;
+  }
+  function pageEtablissement() {
+    const e = entree('etablissement'), Lb = S.libelles, A = S.actions || { blocs: [] }, sc = D.dates.filter(d => d.scolaire);
+    const g = { etablissement: [], salle: [], autre: [] };
+    D.shows.forEach(s => { const l = (s.actionCulturelle || {}).lieu; (g[l] || g.autre).push(s); });
+    const groupe = (titre, liste) => liste.length ? `<div class="groupe-e">${titre ? `<h2 class="h2">${esc(titre)}</h2>` : ''}<ul class="cartes-e">${liste.map(ficheEtab).join('')}</ul></div>` : '';
+    const photos = ['actions-culturelles', 'actions-culturelles/g-1', 'actions-culturelles/g-2', 'actions-culturelles/g-3', 'actions-culturelles/g-4'].filter(k => D.photos[k]);
+    return tete(e.texte, e) + `
+      ${S.ecole ? `<section class="bloc"><div class="wrap"><p class="ecole-texte"${ed('site.ecole.texte')}>${esc(S.ecole.texte)}</p></div></section>` : ''}
+      <section class="bloc"><div class="wrap">${groupe(Lb.lieu.etablissement, g.etablissement)}${groupe(Lb.lieu.salle, g.salle)}${groupe('', g.autre)}</div></section>
+      <section class="bloc" aria-labelledby="h-actions"><div class="wrap ac-grille">
+        <div class="blocs"><h2 class="h2" id="h-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2>${(A.blocs || []).map((b, k) => bloc(b, `site.actions.blocs.${k}`)).join('')}</div>
+        ${photos.length ? `<div class="ac-photos">${photos.map(k => `<img src="${attr(D.photos[k])}" alt="${attr(A.titre)}" loading="lazy">`).join('')}${A.credit ? `<p class="credit"${ed('site.actions.credit')}>${esc(A.credit)}</p>` : ''}</div>` : ''}
+      </div></section>
+      ${sc.length ? `<section class="bloc" aria-labelledby="h-sc"><div class="wrap"><h2 class="h2" id="h-sc">${esc(Lb.enEtablissement)}</h2>
+        <div class="ag-grille"><div class="ag-carte">${Encre.svg({ lieux: CARTE.aVenir('scolaire'), titre: Lb.enEtablissement })}</div>
+          <div class="ag-liste" data-agenda="">${parMois(sc).map(([m, ds]) => `<div class="mois"><h3>${esc(m)}</h3><ul class="dl">${ds.map(d => ligneDate(d, { ctx: 'etablissement' })).join('')}</ul></div>`).join('')}</div></div></div></section>` : ''}
+      <section class="bloc"><div class="wrap">${ecrire()}</div></section>`;
+  }
+
+  // les spectacles : une bande par univers
   function pageSpectacles() {
-    return tete(MENU.spectacles.texte) + `<section class="bloc"><div class="wrap"><ul class="repertoire">${D.shows.map(s => `
-      <li><a href="#/spectacle/${s.slug}" style="--c:${s.couleurTexteClair}">
-        <div class="rp-photo"><img src="${D.photos[s.slug]}" alt="${esc(s.titre)}" loading="lazy" style="object-position:${s.focale}% 50%"></div>
-        <div class="rp-texte"><h2>${esc(s.titre)}</h2>${s.sousTitre ? `<p class="rp-sous">${s.sousTitre}</p>` : ''}<p class="rp-crea">${esc(s.creation)}</p></div>
-        <p class="rp-etat">${s.statut ? `<span class="tag">${esc(s.statut)}</span>` : s.enTournee ? `<span class="tag">${esc(S.libelles.enTournee)}</span>${s.prochaine ? `<span class="rp-ligne">${esc(s.prochaine.ligne)}</span>` : ''}` : ''}</p>
-      </a></li>`).join('')}</ul></div></section>`;
+    const bandes = D.shows.map((s, i) => {
+      const sl = s.slug, d = prochainePublique(s);
+      return `<li class="bande" style="${uStyle(s)}"><div class="bande-in">
+        <div class="bande-ph"><img src="${attr(D.photos[sl] || '')}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}"></div>
+        <div class="bande-tx">${s.lieuTemps ? `<p class="bande-lt"${ed(`shows.${sl}.lieuTemps`)}>${esc(s.lieuTemps)}</p>` : ''}
+          <h2><a class="etire" href="#/spectacle/${attr(sl)}">${esc(s.titre)}</a></h2>
+          ${s.sousTitre ? `<p class="bande-sous"${ed(`shows.${sl}.sousTitre`)}>${s.sousTitre}</p>` : ''}
+          <p class="bande-crea"${ed(`shows.${sl}.creation`)}>${esc(s.creation)}</p>
+          ${s.accroche ? `<p class="bande-acc"${ed(`shows.${sl}.accroche`)}>${esc(s.accroche)}</p>` : ''}
+          ${s.statut || s.enTournee || d ? `<p class="bande-etat">${s.statut ? `<span class="tag">${esc(s.statut)}</span>` : s.enTournee ? `<span class="tag">${esc(S.libelles.enTournee)}</span>` : ''}${d ? `<span class="bande-date">${esc(d.ligne)}</span>` : ''}</p>` : ''}
+        </div></div><span class="bande-motif">${motif(univers(s).motif)}</span></li>`;
+    }).join('');
+    return tete(menu('spectacles').texte) + `<ul class="bandes">${bandes}</ul>`;
   }
-  function saisonsLiens(sauf) {
-    return `<section class="bloc"><div class="wrap"><ul class="saisons">${S.saisons.filter(x => x.saison !== sauf).map(x => `<li><a href="${x.href}">${esc(x.titre)} ${FLECHE}</a></li>`).join('')}</ul></div></section>`;
-  }
-  function pageAgenda() {
-    const sa = S.saisons[0], mois = new Map();
-    D.dates.forEach(d => { const k = coupe(d.ligneDate).mois || d.ligneDate; if (!mois.has(k)) mois.set(k, []); mois.get(k).push(d); });
-    return tete(sa.titre) + `<section class="bloc"><div class="wrap ag-grille">
-      <div class="ag-carte">${Encre.svg({ lieux: A_VENIR, titre: sa.titre })}</div>
-      <div class="ag-liste">${[...mois].map(([m, ds]) => `<div class="mois"><h2>${esc(m)}</h2><ul class="dl">${ds.map(d => ligneDate(d)).join('')}</ul></div>`).join('')}</div>
-    </div></section>${saisonsLiens(sa.saison)}`;
-  }
+
+  // une saison passée : la saison par spectacle, et sa carte
   function pageSaison(k) {
     const sa = D.saisons[k];
-    return tete(sa.titre) + `<section class="bloc"><div class="wrap ag-grille">
+    const liens = `<section class="bloc"><div class="wrap"><ul class="saisons">${(S.saisons || []).filter(x => x.saison !== k).map(x => `<li><a href="${attr(x.saison === (S.saisons[0] || {}).saison ? (entree('voir') || {}).href || x.href : x.href)}">${esc(x.titre)} ${FLECHE}</a></li>`).join('')}</ul></div></section>`;
+    return tete(sa.titre, entree('voir')) + `<section class="bloc"><div class="wrap ag-grille">
       <div class="ag-carte">${Encre.svg({ lieux: CARTE.saison(k), titre: sa.titre })}</div>
-      <div class="ag-liste">${sa.spectacles.map(g => `<section class="sa-sp"><h2>${g.slug && bySlug[g.slug] ? `<a href="#/spectacle/${g.slug}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
+      <div class="ag-liste">${sa.spectacles.map(g => { const s = g.slug && show(g.slug); return `<section class="sa-sp"><h2>${s ? `<a href="#/spectacle/${attr(g.slug)}/voir" style="color:${univers(s).lait}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
         ${g.sousTitre ? `<p class="sa-sous">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="sa-crea">${esc(g.creation)}</p>` : ''}
-        <ul class="dl">${g.dates.map(ligneSaison).join('')}</ul></section>`).join('')}</div>
-    </div></section>${saisonsLiens(k)}`;
+        <div data-agenda="${attr(g.slug || '')}"><ul class="dl">${g.dates.map(ligneSaison).join('')}</ul></div></section>`; }).join('')}</div>
+    </div></section>${liens}`;
   }
+
+  // la compagnie : sa présentation, ses dates, le portrait de son directeur artistique, ses partenaires
   function pageCompagnie() {
-    const C = S.compagnie;
-    return tete(C.titre) + `<section class="bloc"><div class="wrap co-grille">
-      <div class="co-texte">${C.paragraphes.map(bloc).join('')}</div>
-      <aside class="chrono" aria-labelledby="h-dates"><h2 class="h2" id="h-dates">${esc(C.datesTitre)}</h2>
-        <ol>${C.dates.map((d, i) => { const s = D.shows.find(x => String(x.annee) === String(d.annee)); return `<li style="--i:${i}"><b>${esc(d.annee)}</b>${s ? `<a href="#/spectacle/${s.slug}">${esc(d.titre)}</a>` : `<span>${esc(d.titre)}</span>`}</li>`; }).join('')}</ol>
-      </aside></div></section>`;
-  }
-  function pageActions() {
-    const A = S.actions;
-    return tete(A.titre) + `<section class="bloc"><div class="wrap ac-grille"><div class="blocs">${A.blocs.map(bloc).join('')}</div>
-      <figure class="ac-photo"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure></div></section>`;
-  }
-  function pagePro() {
-    const P = S.pro;
-    return tete(P.titre) + `<section class="bloc"><div class="wrap"><form class="form" novalidate><p>${esc(P.texte)}</p>
-      <div class="champ"><label for="pro-mdp">${esc(P.champ)}</label><input id="pro-mdp" type="password" autocomplete="current-password"></div>
-      <button class="bouton" type="submit">${esc(P.bouton)}</button></form></div></section>`;
+    const C = S.compagnie, Dir = C.directeur;
+    return tete(C.titre, null, 'site.compagnie.titre') + `<section class="bloc"><div class="wrap co-grille">
+        <div class="co-texte">${(C.paragraphes || []).map((p, k) => bloc(p, `site.compagnie.paragraphes.${k}`)).join('')}</div>
+        <aside class="chrono" aria-labelledby="h-dates"><h2 class="h2" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
+          <ol>${(C.dates || []).map((d, i) => { const s = D.shows.find(x => String(x.annee) === String(d.annee)); const t = `<span${ed(`site.compagnie.dates.${i}.titre`)}>${esc(d.titre)}</span>`;
+            return `<li style="--i:${i}"><b${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</b>${s ? `<a href="#/spectacle/${attr(s.slug)}" style="--c:${univers(s).lait}">${t}</a>` : `<span class="t-date">${t}</span>`}</li>`; }).join('')}</ol>
+        </aside></div></section>
+      ${Dir ? `<section class="bloc directeur" aria-labelledby="h-dir"><div class="wrap dir-grille"><h2 class="h2" id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dir.titre)}</h2>
+        <div class="dir-texte">${Dir.chapeau ? `<p class="dir-chapeau"${ed('site.compagnie.directeur.chapeau')}>${esc(Dir.chapeau)}</p>` : ''}${(Dir.paragraphes || []).map((p, k) => bloc(p, `site.compagnie.directeur.paragraphes.${k}`)).join('')}</div></div></section>` : ''}
+      ${S.partenaires ? `<section class="bloc"><div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p></div></section>` : ''}`;
   }
   function pageContact() {
     const C = S.contact, K = S.coordonnees;
@@ -1022,122 +1529,295 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
   }
   const pageLegal = cle => { const L = S.legal[cle]; return tete(L.titre) + `<section class="bloc"><div class="wrap legal">${L.blocs.map(bloc).join('')}</div></section>`; };
 
-  /* ---------- la page d'un spectacle ---------- */
-  function pageSpectacle(s) {
+  /* ---------- la page d'un spectacle : son univers, ses trois entrées ---------- */
+  // l'accroche s'écrit mot à mot (l'édition remet la phrase entière)
+  function mots(txt) {
+    if (!ANIMER || !motionOK() || /<[a-z]/i.test(txt)) return esc(txt);
+    const ms = String(txt).split(/(\s+)/), n = Math.max(1, ms.filter(m => m.trim()).length);
+    let i = 0;
+    return ms.map(m => m.trim() ? `<span class="mot" style="--t:${(i++ / n).toFixed(3)}">${esc(m)}</span>` : m).join('');
+  }
+  const figure = (s, p, k, classe = '') => `<figure class="ph ${classe}"${edp(`shows.${s.slug}.photos.${k}`)}><img src="${attr(D.photos[p.cle] || '')}" alt="${attr(s.titre)}" loading="lazy"><figcaption class="leg"${ed(`shows.${s.slug}.photos.${k}.legende`)}>${p.legende ? esc(p.legende) : ''}</figcaption></figure>`;
+  const credits = (s, liste) => {
+    const out = [];
+    if (liste.some(x => x.p.source !== 'dossier') && s.creditPhotos) out.push(`<span${ed(`shows.${s.slug}.creditPhotos`)}>${esc(s.creditPhotos)}</span>`);
+    if (liste.some(x => x.p.source === 'dossier') && s.creditDossier) out.push(`<span${ed(`shows.${s.slug}.creditDossier`)}>${esc(s.creditDossier)}</span>`);
+    return out.length ? `<p class="credit">${out.join('')}</p>` : '';
+  };
+  const photosDe = (s, garde) => (s.photos || []).map((p, k) => ({ p, k })).filter(({ p }) => garde(p));
+  function citations(s) {
+    return (s.citations || []).map((c, k) => `<blockquote class="vers${c.prose ? ' prose' : ''}"><p>${(c.vers || []).map((v, j) => `<span class="v"${ed(`shows.${s.slug}.citations.${k}.vers.${j}`)}>${esc(v)}</span>`).join(c.prose ? ' ' : '')}</p>${c.source ? `<cite${ed(`shows.${s.slug}.citations.${k}.source`)}>${esc(c.source)}</cite>` : ''}</blockquote>`).join('');
+  }
+  function medias(s) {
+    const l = [...(s.video && s.video.url ? [{ type: 'video', titre: s.video.titre, url: s.video.url, groupe: null }] : []), ...(s.medias || []).filter(m => m.url && (!s.video || m.url !== s.video.url))];
+    if (!l.length) return '';
+    const groupes = [];
+    l.forEach(m => { const g = m.groupe || ''; let G = groupes.find(x => x.g === g); if (!G) groupes.push(G = { g, l: [] }); G.l.push(m); });
+    return groupes.map(G => `${G.g ? `<h3>${esc(G.g)}</h3>` : ''}<ul class="medias">${G.l.map(m => `<li>${lienExt(m.url, `${ICONE[m.type] || ICONE.video}<span><b>${esc(m.titre || m.url)}</b>${m.par ? `<small>${esc(m.par)}</small>` : ''}</span>`)}</li>`).join('')}</ul>`).join('');
+  }
+  function distribution(s) {
+    const sl = s.slug;
+    const prod = (s.production || []).length ? `<div class="sp-prod">${s.production.map((h, k) => bloc(h, `shows.${sl}.production.${k}`)).join('')}</div>` : '';
+    const ment = (s.mentions || []).length ? `<div class="sp-mentions">${s.mentions.map((h, k) => bloc(h, `shows.${sl}.mentions.${k}`)).join('')}</div>` : '';
+    const eq = equipe(s);
+    return `<div class="distribution"><div>${eq || ficheHTML(s)}${s.duree ? `<p class="sp-duree"${ed(`shows.${sl}.duree`)}>${esc(s.duree)}</p>` : ''}</div><div>${prod}${ment}</div></div>`;
+  }
+  // les chapitres de chaque entrée : [{id, label (sommaire), html (avec son h2)}]
+  function chapitresVoir(s) {
+    const sl = s.slug, Lb = S.libelles, K = CARTE.spectacle(sl), ch = [];
+    const h2 = (id, t, chemin) => `<h2 id="h-${id}"${chemin ? ed(chemin) : ''}>${esc(t)}</h2>`;
+    const aff = (s.affirmations || []).map((a, k) => `<p class="affirm"${ed(`shows.${sl}.affirmations.${k}.texte`)}>${esc(a.texte)}</p>`).join('');
+    if (s.cadre || aff) ch.push({ id: 'ouverture', label: Lb.ouverture, html: h2('ouverture', Lb.ouverture) + (s.cadre ? `<p class="cadre"${ed(`shows.${sl}.cadre`)}>${esc(s.cadre)}</p>` : '') + aff });
+    const texte = (s.texte || []).map((t, k) => bloc(t, `shows.${sl}.texte.${k}`)).join('');
+    if (texte || (s.citations || []).length) ch.push({ id: 'spectacle', label: Lb.leSpectacle, html: h2('spectacle', Lb.leSpectacle) + `<div class="sp-texte">${texte}</div>${citations(s)}` });
+    const ph = photosDe(s, p => !p.etablissement && !p.atelier);
+    if (ph.length) ch.push({ id: 'photos', label: Lb.photos, html: h2('photos', Lb.photos) + `<div class="galerie">${ph.map(({ p, k }) => figure(s, p, k)).join('')}</div>${credits(s, ph)}` });
+    const md = medias(s);
+    if (md) ch.push({ id: 'video', label: Lb.bandeAnnonce, html: h2('video', Lb.bandeAnnonce) + md });
+    // les dates tout public à venir, et la carte ; sinon la carte des tournées passées
+    const pub = D.dates.filter(d => d.slug === sl && !d.scolaire), voir = entree('voir');
+    const lieuxPub = K.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length).map(x => ({ ...x, n: x.dates.length }));
+    if (pub.length) ch.push({ id: 'dates', label: Lb.dates, html: h2('dates', (s.tournee && s.tournee.titre) || Lb.actuellementEnTournee) + `<div class="tour-grille"><div><div data-agenda="${attr(sl)}"><ul class="dl">${pub.map(d => ligneDate(d, { titre: false })).join('')}</ul></div>
+      ${voir ? `<p class="tout-dates"><a href="${attr(voir.href)}">${esc(voir.texte)} ${FLECHE}</a></p>` : ''}</div><div>${Encre.svg({ lieux: lieuxPub, passe: K.passe, cadre: 'serre', titre: s.titre })}</div></div>` });
+    else if (s.statut && s.tournee) ch.push({ id: 'dates', label: Lb.dates, html: h2('dates', s.tournee.titre, `shows.${sl}.tournee.titre`) + `<div class="tour-grille"><div>${s.tournee.texte ? `<p${ed(`shows.${sl}.tournee.texte`)}>${esc(s.tournee.texte)}</p>` : ''}<div data-agenda="${attr(sl)}"></div></div><div>${Encre.svg({ titre: s.tournee.titre })}</div></div>` });
+    else if (K.passe.length) ch.push({ id: 'dates', label: Lb.dates, html: h2('dates', Lb.lieuxDiffusion) + `<div data-agenda="${attr(sl)}"></div>${Encre.svg({ lieux: K.passe, cadre: 'serre', titre: s.titre })}` });
+    ch.push({ id: 'distribution', label: Lb.distribution, html: h2('distribution', Lb.distribution) + distribution(s) });
+    return ch;
+  }
+  function chapitresProgrammer(s) {
+    const sl = s.slug, Lb = S.libelles, K = CARTE.spectacle(sl), ch = [], X = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null;
+    const h2 = (id, t, chemin) => `<h2 id="h-${id}"${chemin ? ed(chemin) : ''}>${esc(t)}</h2>`;
+    ch.push({ id: 'spectacle', label: Lb.leSpectacle, html: h2('spectacle', Lb.leSpectacle) + faitsProg(s) + equipe(s) + (s.texte && s.texte[0] ? `<div class="sp-texte">${bloc(s.texte[0], `shows.${sl}.texte.0`)}</div>` : '') });
+    const md = medias(s);
+    if (md) ch.push({ id: 'video', label: Lb.bandeAnnonce, html: h2('video', Lb.bandeAnnonce) + md });
+    if (!equipe(s)) ch.push({ id: 'distribution', label: Lb.distribution, html: h2('distribution', Lb.distribution) + distribution(s) });
+    if ((s.programmer || {}).lieux || K.passe.length || K.aVenir.length) ch.push({ id: 'lieux', label: Lb.lieuxDiffusion, html: h2('lieux', Lb.lieuxDiffusion) + lieuxDetails(s, true) + (K.passe.length || K.aVenir.length ? `<div class="tour-grille" style="margin-top:22px"><div data-agenda="${attr(sl)}"><ul class="dl">${D.dates.filter(d => d.slug === sl).map(d => ligneDate(d, { titre: false })).join('')}</ul></div><div>${Encre.svg({ lieux: K.aVenir, passe: K.passe, cadre: 'serre', titre: s.titre })}</div></div>` : '') });
+    if (X && X.accueil && (s.programmer || {}).ficheTechnique) {
+      const Ac = X.accueil, p = c => `dossiers.${s.dossier}.accueil.${c}`, impl = photosDe(s, x => /implantation/.test(x.id));
+      ch.push({ id: 'technique', label: Lb.ficheTechnique, html: h2('technique', Ac.fiche || Lb.ficheTechnique, Ac.fiche ? p('fiche') : null) +
+        `<h3 class="dh"${ed(p('titre'))}>${esc(Ac.titre)}</h3>${(Ac.blocs || []).map((b, i) => `<div class="tech">${b.titre ? `<h4${ed(p(`blocs.${i}.titre`))}>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map((l, j) => `<li${ed(p(`blocs.${i}.lignes.${j}`))}>${l}</li>`).join('')}</ul></div>`).join('')}
+        ${Ac.alerte ? `<p class="alerte"${ed(p('alerte'))}>${Ac.alerte}</p>` : ''}${impl.map(({ p: ph, k }) => figure(s, ph, k, 'seule')).join('')}${credits(s, impl)}` });
+    }
+    return ch;
+  }
+  function dossierHTML(s) {
+    const k = s.dossier, X = D.dossiers && D.dossiers[k];
+    if (!X) return null;
+    const p = c => `dossiers.${k}.${c}`;
+    const couv = `<div class="couv">${['titre', 'auteur', 'creation', 'type', 'duree', 'format', 'public'].filter(c => X[c]).map(c => `<p class="couv-${c}"${ed(p(c))}>${esc(X[c])}</p>`).join('')}</div>`;
+    const pq = X.pourquoi ? `<h3 class="dh"${ed(p('pourquoi.titre'))}>${esc(X.pourquoi.titre)}</h3><div class="pourquoi">${(X.pourquoi.sections || []).map((x, i) => `<article class="pq"><h4${ed(p(`pourquoi.sections.${i}.titre`))}>${esc(x.titre)}</h4><p${ed(p(`pourquoi.sections.${i}.texte`))}>${x.texte}</p></article>`).join('')}</div>` : '';
+    const prog = X.programmes ? `<h3 class="dh" id="h-programmes"${ed(p('programmes.titre'))}>${esc(X.programmes.titre)}</h3><div class="table-defile"><table class="programmes" aria-labelledby="h-programmes">${(X.programmes.niveaux || []).map((n, i) => `<tbody><tr><th scope="rowgroup" colspan="3"${ed(p(`programmes.niveaux.${i}.niveau`))}>${esc(n.niveau)}</th></tr>${(n.lignes || []).map((l, j) => `<tr><th scope="row"${ed(p(`programmes.niveaux.${i}.lignes.${j}.matiere`))}>${esc(l.matiere)}</th><td${ed(p(`programmes.niveaux.${i}.lignes.${j}.intitule`))}>${esc(l.intitule)}</td><td${ed(p(`programmes.niveaux.${i}.lignes.${j}.objectif`))}>${esc(l.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div>` : '';
+    const C = X.consignes;
+    const cons = C ? `<div class="consignes"><h3 class="dh"${ed(p('consignes.titre'))}>${esc(C.titre)}</h3>${C.note ? `<p class="note"${ed(p('consignes.note'))}>${esc(C.note)}</p>` : ''}${C.intro ? `<p${ed(p('consignes.intro'))}>${C.intro}</p>` : ''}
+      ${(C.demandes || []).length ? `<ul class="demandes">${C.demandes.map((d, i) => `<li${ed(p(`consignes.demandes.${i}`))}>${esc(d)}</li>`).join('')}</ul>` : ''}${C.apres ? `<p${ed(p('consignes.apres'))}>${C.apres}</p>` : ''}
+      ${(C.axes || []).length ? `<ul class="axes">${C.axes.map((a, i) => `<li${ed(p(`consignes.axes.${i}`))}>${a}</li>`).join('')}</ul>` : ''}${C.atelier ? `<p class="oblig"${ed(p('consignes.atelier'))}>${C.atelier}</p>` : ''}</div>` : '';
+    const plus = ['synopsis', 'adaptation', 'espace', 'alexandrin'].filter(c => X[c]).map(c => `<details class="dd"><summary><span${ed(p(`${c}.titre`))}>${esc(X[c].titre)}</span></summary>${X[c].chapeau ? `<p class="dd-chapeau"${ed(p(`${c}.chapeau`))}>${esc(X[c].chapeau)}</p>` : ''}${(X[c].paragraphes || []).map((t, j) => `<p${ed(p(`${c}.paragraphes.${j}`))}>${t}</p>`).join('')}</details>`).join('');
+    const A = X.ateliers;
+    const ateliers = A ? `<div class="ateliers">${(A.liste || []).map((a, i) => `<article class="atelier"><h3${ed(p(`ateliers.liste.${i}.titre`))}>${a.titre}</h3>${(a.paragraphes || []).map((t, j) => `<p${ed(p(`ateliers.liste.${i}.paragraphes.${j}`))}>${t}</p>`).join('')}
+      ${(a.etapes || []).length ? `<ol class="etapes">${a.etapes.map((e, j) => `<li><h4${ed(p(`ateliers.liste.${i}.etapes.${j}.titre`))}>${e.titre}</h4><p${ed(p(`ateliers.liste.${i}.etapes.${j}.texte`))}>${e.texte}</p></li>`).join('')}</ol>` : ''}
+      ${(a.points || []).length ? `<ul class="points">${a.points.map((t, j) => `<li${ed(p(`ateliers.liste.${i}.points.${j}`))}>${t}</li>`).join('')}</ul>` : ''}</article>`).join('')}</div>` : '';
+    return { couv, pq, prog, cons, plus, ateliers, titreAteliers: A && A.titre, cheminAteliers: p('ateliers.titre') };
+  }
+  function chapitresEtablissement(s) {
+    const sl = s.slug, Lb = S.libelles, A = s.actionCulturelle || {}, ch = [];
+    const h2 = (id, t, chemin) => `<h2 id="h-${id}"${chemin ? ed(chemin) : ''}>${esc(t)}</h2>`;
+    let action;
+    if (A.aCompleter || !A.type) action = `<p class="a-completer">${esc(Lb.aCompleter)}</p>`;
+    else action = `<p class="ac-type"${ed(`shows.${sl}.actionCulturelle.type`)}>${esc(A.type)}</p>
+      <ul class="puces">${A.public ? `<li><span class="lib">${esc(Lb.public)}</span> <span${ed(`shows.${sl}.actionCulturelle.public`)}>${esc(A.public)}</span></li>` : ''}${A.lieu && Lb.lieu[A.lieu] ? `<li>${esc(Lb.lieu[A.lieu])}</li>` : ''}${A.statut ? `<li${ed(`shows.${sl}.actionCulturelle.statut`)}>${esc(A.statut)}</li>` : ''}</ul>
+      ${(A.textes || []).map((t, k) => bloc(t.texte, `shows.${sl}.actionCulturelle.textes.${k}.texte`)).join('')}
+      ${(A.formule || []).length ? `<p class="formule">${A.formule.map((l, k) => `<span${ed(`shows.${sl}.actionCulturelle.formule.${k}`)}>${esc(l)}</span>`).join('')}</p>` : ''}
+      ${(A.dispositifs || []).length ? `<h3>${esc(Lb.dispositifs)}</h3><ul>${A.dispositifs.map((h, k) => `<li${ed(`shows.${sl}.actionCulturelle.dispositifs.${k}`)}>${h}</li>`).join('')}</ul>` : ''}`;
+    ch.push({ id: 'action', label: Lb.actionCulturelle, html: h2('action', Lb.actionCulturelle) + action });
+    const sc = D.dates.filter(d => d.slug === sl && d.scolaire);
+    if (sc.length) ch.push({ id: 'dates', label: Lb.dates, html: h2('dates', Lb.enEtablissement) + `<div data-agenda="${attr(sl)}"><ul class="dl">${sc.map(d => ligneDate(d, { titre: false })).join('')}</ul></div>` });
+    const X = dossierHTML(s);
+    if (X) {
+      ch.push({ id: 'dossier', label: Lb.dossierScolaire, html: h2('dossier', Lb.dossierScolaire) + X.couv + X.pq + X.prog + X.cons + X.plus });
+      const at = photosDe(s, p => p.atelier);
+      ch.push({ id: 'ateliers', label: Lb.ateliers, html: h2('ateliers', X.titreAteliers || Lb.ateliers, X.titreAteliers ? X.cheminAteliers : null) + X.ateliers + (at.length ? `<div class="photos-ateliers">${at.map(({ p, k }) => figure(s, p, k)).join('')}</div>${credits(s, at)}` : '') });
+    }
+    const ph = photosDe(s, p => p.etablissement);
+    if (ph.length) ch.push({ id: 'photos', label: Lb.photos, html: h2('photos', Lb.photos) + `<div class="galerie">${ph.map(({ p, k }) => figure(s, p, k)).join('')}</div>${credits(s, ph)}` });
+    return ch;
+  }
+  function pageSpectacle(slug, cle) {
+    const s = show(slug), u = univers(s), Lb = S.libelles, ENT = S.entrees || [];
     const i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
-    const aVenir = D.dates.filter(d => d.slug === s.slug), K = CARTE.spectacle(s.slug);
-    const hero = `<section class="sx sx-hero" data-scrolly><div class="sx-pin">
-        <div class="hero-photo"><img src="${D.photos[s.slug]}" alt="${esc(s.titre)}" style="object-position:${s.focale}% 50%"></div>
-        <div class="hero-text"><p class="fil-ariane"><a href="#/">${esc(S.accueil)}</a> / <a href="${MENU.spectacles.href}">${esc(MENU.spectacles.texte)}</a></p>
-          ${s.statut ? `<p class="tag hero-tag">${esc(s.statut)}</p>` : ''}
-          <h1 id="titre-sp" tabindex="-1">${s.titreLignes.map(l => `<span>${esc(l)}</span>`).join(' ')}</h1>
-          ${s.genre ? `<p class="hero-sub">${esc(s.genre)}</p>` : s.sousTitre ? `<p class="hero-sub">${s.sousTitre}</p>` : ''}
-          ${s.creation ? `<p class="hero-crea">${esc(s.creation)}</p>` : ''}</div>
-        ${s.credit ? `<p class="hero-credit">${esc(s.credit)}</p>` : ''}
-        <span class="cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      </div></section>`;
-    const cass = s.extraits && s.extraits.length ? `<section class="cass" aria-label="${esc(s.titre)}"><div class="wrap">${s.cadre ? `<p class="cass-cadre">${esc(s.cadre)}</p>` : ''}
-      ${s.extraits.map(x => `<blockquote><p>${esc(x.citation)}</p>${x.source ? `<cite>${esc(x.source)}</cite>` : ''}</blockquote>`).join('')}</div></section>` : '';
-    const fiche = s.fiche.length ? `<div class="fiche">${s.fiche.map(f => `<p>${f.libelle ? `<span>${esc(f.libelle)}</span>` : ''}${f.valeur}</p>`).join('')}</div>` : '';
-    const corps = `<section class="bloc"><div class="wrap sp-corps">
-        <div><div class="sp-texte">${s.texte.map(bloc).join('')}</div>${s.mentions.length ? `<div class="sp-mentions">${s.mentions.map(bloc).join('')}</div>` : ''}</div>
-        <aside>${fiche}${s.avec ? `<p class="sp-avec"><span>${esc(s.avec.libelle)}</span>${s.avec.valeur}</p>` : ''}${s.duree ? `<p class="sp-duree">${esc(s.duree)}</p>` : ''}
-          ${s.production.length ? `<div class="sp-prod">${s.production.map(bloc).join('')}</div>` : ''}</aside>
-      </div></section>`;
-    let medias = '';
-    if (s.medias.length) {
-      const groupes = [];
-      s.medias.forEach(m => { const g = m.groupe || ''; let G = groupes.find(x => x.g === g); if (!G) groupes.push(G = { g, l: [] }); G.l.push(m); });
-      medias = `<section class="bloc"><div class="wrap">${groupes.map(G => `${G.g ? `<h3 class="h3">${esc(G.g)}</h3>` : ''}<ul class="medias">${G.l.map(m => `<li>${lienExt(m.url, `${ICONE[m.type] || ICONE.video}<span><b>${esc(m.titre || m.url)}</b>${m.par ? `<small>${esc(m.par)}</small>` : ''}</span>`)}</li>`).join('')}</ul>`).join('')}</div></section>`;
-    }
-    let tour;
-    if (s.statut && s.tournee) tour = `<section class="bloc" aria-labelledby="h-tour-sp"><div class="wrap tour-grille"><div><h2 class="h2" id="h-tour-sp">${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p>${esc(s.tournee.texte)}</p>` : ''}</div>
-      <div>${Encre.svg({ titre: s.tournee.titre })}</div></div></section>`;
-    else if (aVenir.length) tour = `<section class="bloc" aria-labelledby="h-tour-sp"><div class="wrap"><h2 class="h2" id="h-tour-sp">${esc(s.tournee ? s.tournee.titre : S.libelles.actuellementEnTournee)}</h2>
-      <div class="tour-grille"><ul class="dl">${aVenir.map(d => ligneDate(d, { titre: false })).join('')}</ul><div>${Encre.svg({ lieux: K.aVenir, passe: K.passe, cadre: 'serre', titre: s.titre })}</div></div></div></section>`;
-    else tour = K.passe.length ? `<section class="bloc"><div class="wrap tour-seule">${Encre.svg({ lieux: K.passe, cadre: 'serre', titre: s.titre })}</div></section>` : '';
-    const suivant = `<a class="suivant" href="#/spectacle/${nx.slug}" style="--n-bg:${nx.fondSombre};--n-sc:${nx.couleur}"><span class="wrap"><b>${esc(nx.titre)}</b>${FLECHE}</span></a>`;
-    return `<article class="show" style="--bg:${s.fondSombre};--sc:${s.couleur};--act:${s.couleurTexteClair}">${hero}${cass}${corps}${medias}${tour}${suivant}</article>`;
+    const lignes = s.titreLignes && s.titreLignes.length ? s.titreLignes : [s.titre];
+    const h1 = lignes.map((l, k) => `<span class="ligne${ANIMER && motionOK() ? ' revele' : ''}" style="--n:${Math.max(4, [...String(l)].length)};--k:${k}"${ed(`shows.${slug}.titreLignes.${k}`)}>${esc(l)}</span>`).join(' ');
+    const credit = s.creditPhotos || s.credit;
+    const hero = `<div class="sx-hero" data-scrolly>
+        <div class="hero-photo"${edp(`shows.${slug}.photo`)}><img src="${attr(D.photos[slug] || '')}" alt="${attr(s.titre)}"></div>
+        <div class="hero-lueur"></div><div class="hero-motif">${motif(u.motif)}</div>
+        <div class="hero-text">
+          <p class="fil-ariane"><a href="#/">${esc(S.accueil)}</a> / <a href="${attr(menu('spectacles').href)}">${esc(menu('spectacles').texte)}</a></p>
+          <p class="hero-nom">${esc(S.nom)}</p>
+          <h1 tabindex="-1">${h1}</h1>
+          ${s.sousTitre ? `<p class="hero-sous"${ed(`shows.${slug}.sousTitre`)}>${s.sousTitre}</p>` : ''}
+          <p class="hero-meta">${s.statut ? `<span class="tag"${ed(`shows.${slug}.statut`)}>${esc(s.statut)}</span>` : ''}${s.creation ? `<span${ed(`shows.${slug}.creation`)}>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span${ed(`shows.${slug}.lieuTemps`)}>${esc(s.lieuTemps)}</span>` : ''}</p>
+          ${s.accroche ? `<p class="hero-acc"${ed(`shows.${slug}.accroche`)}>${mots(s.accroche)}</p>` : ''}
+        </div>
+        ${credit ? `<p class="hero-credit"${s.creditPhotos ? ed(`shows.${slug}.creditPhotos`) : ''}>${esc(credit)}</p>` : ''}
+      </div>`;
+    const onglets = `<nav class="onglets" aria-label="${attr(s.titre)}"><div class="og-in">${ENT.map(e => `<a href="#/spectacle/${attr(slug)}/${attr(e.cle)}" style="--e:${couleur(u.clair ? e.couleur : e.couleurVive, 'currentColor')}"${e.cle === cle ? ' aria-current="page"' : ''}>${BE}<span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a>`).join('')}</div></nav>`;
+    const ch = cle === 'programmer' ? chapitresProgrammer(s) : cle === 'etablissement' ? chapitresEtablissement(s) : chapitresVoir(s);
+    const ent = entree(cle) || {};
+    const appel = cle === 'voir' ? '' : `<div class="appel">${ecrire()}</div>`;
+    const corps = `<div class="sp-tab">
+        <nav class="sommaire" aria-label="${attr(ent.court || s.titre)}"><ol>${ch.map((c, k) => `<li style="--i:${k}"><button type="button" data-chap="ch-${c.id}">${esc(c.label)}</button></li>`).join('')}</ol></nav>
+        <div class="sp-chaps">${ch.map(c => `<section class="chap" id="ch-${c.id}" aria-labelledby="h-${c.id}">${c.html}</section>`).join('')}${appel}</div>
+      </div>`;
+    const suivant = nx && nx !== s ? `<a class="suivant" href="#/spectacle/${attr(nx.slug)}/${attr(cle)}" style="${uStyle(nx)}"><span class="wrap"><b>${esc(nx.titre)}</b>${FLECHE}</span>${motifCoin(nx)}</a>` : '';
+    return `<article class="show" style="${uStyle(s)}">${hero}${onglets}${corps}${suivant}</article>`;
   }
-  // l'effet du défilement sur la photo
-  let secs = [], sraf = 0;
+
+  /* ---------- le défilement : l'effet de chaque spectacle, et le sommaire qui suit la lecture ---------- */
+  let secs = [], chapitres = [], sraf = 0;
+  const hautPx = () => haut.offsetHeight;
   function defile() {
-    sraf = 0;
     for (const sec of secs) {
-      const r = sec.getBoundingClientRect(), span = r.height - innerHeight;
-      sec.style.setProperty('--p', (!motionOK() ? 1 : span > 40 ? clamp((-r.top + 64) / span, 0, 1) : 1).toFixed(4));
+      const r = sec.getBoundingClientRect(), h = r.height || 1;
+      sec.style.setProperty('--p', (motionOK() ? clamp((hautPx() - r.top) / (h * .85), 0, 1) : 0).toFixed(4));
     }
   }
-  addEventListener('scroll', () => { if (secs.length && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
+  function suivreChapitre() {
+    if (!chapitres.length) return;
+    const lim = innerHeight * .42; let k = 0;
+    chapitres.forEach((x, i) => { if (x.sec.getBoundingClientRect().top < lim) k = i; });
+    chapitres.forEach((x, i) => { x.li.classList.toggle('on', i === k); if (i === k) x.b.setAttribute('aria-current', 'true'); else x.b.removeAttribute('aria-current'); });
+  }
+  function sommaire() {
+    chapitres = [];
+    const nav = $('.sommaire', vPage);
+    if (!nav) return;
+    chapitres = $$('button[data-chap]', nav).map(b => ({ b, li: b.parentElement, sec: document.getElementById(b.dataset.chap) })).filter(x => x.sec);
+    chapitres.forEach(x => x.b.addEventListener('click', () => {
+      x.sec.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' });
+      const h = $('h2', x.sec); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+    }));
+    suivreChapitre();
+  }
+  addEventListener('scroll', () => { if ((secs.length || chapitres.length) && !sraf) sraf = requestAnimationFrame(() => { sraf = 0; defile(); suivreChapitre(); }); }, { passive: true });
   addEventListener('resize', () => { if (secs.length) defile(); });
 
-  /* ---------- navigation : une page par onglet ---------- */
+  /* ---------- navigation : les trois entrées, la mémoire de l'entrée, les vues ---------- */
   const PAGES = {
-    spectacles: { titre: MENU.spectacles.texte, onglet: 'spectacles', rendu: pageSpectacles },
-    agenda: { titre: MENU.agenda.texte, onglet: 'agenda', rendu: pageAgenda },
-    compagnie: { titre: MENU.compagnie.texte, onglet: 'compagnie', rendu: pageCompagnie },
-    'actions-culturelles': { titre: MENU.actions.texte, onglet: 'actions', rendu: pageActions },
-    'espace-pro': { titre: S.pro.titrePage, onglet: 'pro', rendu: pagePro },
-    contact: { titre: MENU.contact.texte, onglet: 'contact', rendu: pageContact },
-    'mentions-legales': { titre: S.legal['mentions-legales'].titre, rendu: () => pageLegal('mentions-legales') },
-    'politique-de-confidentialite': { titre: S.legal['politique-de-confidentialite'].titre, rendu: () => pageLegal('politique-de-confidentialite') },
+    voir: () => ({ titre: entree('voir').texte, rendu: pageVoir }),
+    programmer: () => ({ titre: entree('programmer').texte, rendu: pageProgrammer }),
+    etablissement: () => ({ titre: entree('etablissement').texte, rendu: pageEtablissement }),
+    spectacles: () => ({ titre: menu('spectacles').texte, rendu: pageSpectacles }),
+    compagnie: () => ({ titre: menu('compagnie').texte, rendu: pageCompagnie }),
+    contact: () => ({ titre: menu('contact').texte, rendu: pageContact }),
+    'mentions-legales': () => ({ titre: S.legal['mentions-legales'].titre, rendu: () => pageLegal('mentions-legales') }),
+    'politique-de-confidentialite': () => ({ titre: S.legal['politique-de-confidentialite'].titre, rendu: () => pageLegal('politique-de-confidentialite') }),
   };
+  const MEMO = 'crescite-m10-entree';
+  const retenir = c => { try { sessionStorage.setItem(MEMO, c); } catch (e) { /* stockage indisponible */ } };
+  const retenue = () => { try { const v = sessionStorage.getItem(MEMO); return entree(v) ? v : null; } catch (e) { return null; } };
   const vAccueil = $('#v-accueil'), vPage = $('#v-page');
-  let venait = null;
+  let courant = null, venait = null;
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  function route() {
-    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/$/, '');
-    const ms = chemin.match(/^spectacle\/([\w-]+)$/), ma = chemin.match(/^agenda\/([\w-]+)$/);
+
+  // ce qu'on garde d'une vue refaite en place : la position, les volets ouverts, les champs, le focus
+  const signe = el => !el || el === document.body ? null : el.dataset && el.dataset.edit ? `e:${el.dataset.edit}` : el.id ? `#${el.id}` : el.dataset && el.dataset.chap ? `c:${el.dataset.chap}` : el.getAttribute && el.getAttribute('href') ? `h:${el.getAttribute('href')}:${el.textContent.trim().slice(0, 40)}` : null;
+  function etatVue() {
+    const a = document.activeElement;
+    return { y: scrollY, ouverts: $$('details', vPage).map(d => d.open), champs: $$('input, textarea', vPage).map(c => [c.id, c.type === 'checkbox' ? c.checked : c.value]),
+      focus: a && vPage.contains(a) ? signe(a) : null };
+  }
+  function restaurer(v) {
+    const ds = $$('details', vPage);
+    if (v.ouverts && ds.length === v.ouverts.length) ds.forEach((d, i) => { d.open = v.ouverts[i]; });
+    (v.champs || []).forEach(([id, x]) => { const c = id && document.getElementById(id); if (c) { if (c.type === 'checkbox') c.checked = x; else c.value = x; } });
+    if (Math.abs(scrollY - v.y) > 1) scrollTo(0, v.y);
+    if (v.focus) { const el = $$('a, button, summary, input, textarea, [tabindex], [data-edit]', vPage).find(x => signe(x) === v.focus); if (el) el.focus({ preventScroll: true }); }
+    defile(); suivreChapitre();
+  }
+  function apres() {
+    $$('a[href^="http"]', vPage).forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+    $$('form', vPage).forEach(f => f.addEventListener('submit', e => e.preventDefault()));
+    $$('svg.carte.encre', vPage).forEach(svgEl => { const zone = svgEl.closest('.ag-grille, .tour-grille'); Encre.relier(svgEl, zone ? $$('ul.dl', zone) : []); });
+    secs = $$('[data-scrolly]', vPage); defile();
+    sommaire();
+  }
+
+  // enPlace : D vient de changer (DONNEES) ; la vue courante est refaite sans remonter, sans voler le focus, sans animation
+  function route(enPlace = false) {
+    chrome(); pied();
+    const chemin = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, '');
+    const red = (S.redirections || {})['#/' + chemin];
+    if (red) { location.replace(red); return; }
+    const ms = chemin.match(/^spectacle\/([\w-]+)(?:\/([\w-]+))?$/), ma = chemin.match(/^agenda\/([\w-]+)$/);
+    // un spectacle sans entrée : l'entrée retenue, sinon « voir »
+    if (ms && show(ms[1]) && !entree(ms[2])) { location.replace(`#/spectacle/${ms[1]}/${retenue() || 'voir'}`); return; }
     let v;
     if (chemin === '') v = { cle: 'accueil', titre: S.accueil };
-    else if (ms && bySlug[ms[1]]) v = { cle: 'spectacle', s: bySlug[ms[1]], titre: bySlug[ms[1]].titre, onglet: 'spectacles' };
-    else if (ma && D.saisons[ma[1]]) v = { cle: 'saison', saison: ma[1], titre: D.saisons[ma[1]].titre, onglet: 'agenda' };
-    else if (PAGES[chemin]) v = { cle: chemin, ...PAGES[chemin] };
-    else { history.replaceState(null, '', '#/'); return route(); }   // une adresse inconnue mène à l'accueil
+    else if (ms && show(ms[1])) { const s = show(ms[1]); v = { cle: 'spectacle', slug: ms[1], entree: ms[2], titre: ms[2] === 'voir' ? s.titre : `${s.titre} - ${entree(ms[2]).court}` }; }
+    else if (ma && D.saisons[ma[1]]) v = { cle: 'saison', saison: ma[1], titre: D.saisons[ma[1]].titre };
+    else if (Object.prototype.hasOwnProperty.call(PAGES, chemin)) v = { cle: chemin, ...PAGES[chemin]() };
+    else { location.replace('#/'); return; }
+    v.id = v.cle === 'spectacle' ? `spectacle/${v.slug}/${v.entree}` : v.cle === 'saison' ? `saison/${v.saison}` : v.cle;
     document.title = `${v.titre} - ${S.titreSuffixe}`;
-    $$('#nav a').forEach(a => { if (a.dataset.id === v.onglet) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    marquerNav(v);
+    if (entree(v.cle)) retenir(v.cle);
+    if (v.cle === 'spectacle') retenir(v.entree);
+
+    // la même vue, refaite en place
+    if (enPlace && courant && courant.id === v.id) {
+      const etat = v.cle === 'accueil' ? { y: scrollY } : etatVue();
+      ANIMER = false;
+      try {
+        if (v.cle === 'accueil') { accueilSuite(); Stage.maj(); }
+        else { vPage.innerHTML = v.cle === 'spectacle' ? pageSpectacle(v.slug, v.entree) : v.cle === 'saison' ? pageSaison(v.saison) : v.rendu(); apres(); }
+      } finally { ANIMER = true; }
+      restaurer(etat);
+      return;
+    }
+
     fermeMenu();
-    const quitte = venait;
-    venait = v.cle === 'spectacle' ? v.s : null;
-    secs = [];
+    const quitte = venait, memeSp = quitte && v.cle === 'spectacle' && quitte === v.slug;
+    venait = v.cle === 'spectacle' ? v.slug : null;
+    courant = v;
+    secs = []; chapitres = [];
+    const qs = quitte && show(quitte);
     if (v.cle === 'accueil') {
       // en quittant un spectacle, l'encre se retire vers la pieuvre
-      if (quitte && motionOK() && !Ink.active()) Ink.fill(quitte.fondSombre);
+      if (qs && motionOK() && !Ink.active()) Ink.fill(univers(qs).fond);
       vPage.hidden = true; vPage.innerHTML = ''; vAccueil.hidden = false;
+      accueilSuite();
       scrollTo(0, 0);
       Stage.montrer(true);
-      if (quitte && motionOK()) { const c = Stage.coeurEcran(); Ink.uncover(c.x, clamp(c.y, 60, innerHeight - 60), null, [quitte.couleur, quitte.fondSombre]); } else Ink.fadeOut();
-      $('#stage-h').focus({ preventScroll: true });
+      if (qs && motionOK()) { const c = Stage.coeurEcran(); Ink.uncover(c.x, clamp(c.y, 60, innerHeight - 60), null, encreDe(qs)); } else Ink.fadeOut();
+      if (!(typeof INTRO !== 'undefined' && INTRO.ouverte())) $('#stage-h').focus({ preventScroll: true });
       return;
     }
     Stage.montrer(false);
-    if (quitte && motionOK() && !Ink.active() && v.cle !== 'spectacle') Ink.fill(quitte.fondSombre);
+    if (qs && !memeSp && motionOK() && !Ink.active() && v.cle !== 'spectacle') Ink.fill(univers(qs).fond);
     vAccueil.hidden = true; vPage.hidden = false;
-    vPage.innerHTML = v.cle === 'spectacle' ? pageSpectacle(v.s) : v.cle === 'saison' ? pageSaison(v.saison) : v.rendu();
-    $$('a[href^="http"]', vPage).forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
-    $$('form', vPage).forEach(f => f.addEventListener('submit', e => e.preventDefault()));
+    vPage.innerHTML = v.cle === 'spectacle' ? pageSpectacle(v.slug, v.entree) : v.cle === 'saison' ? pageSaison(v.saison) : v.rendu();
     scrollTo(0, 0);
-    // les cartes : reliées à leur liste de dates quand il y en a une
-    $$('svg.carte.encre', vPage).forEach(svgEl => {
-      const zone = svgEl.closest('.ag-grille, .tour-grille, .wrap');
-      Encre.relier(svgEl, zone ? $$('ul.dl', zone) : []);
-    });
-    if (v.cle === 'spectacle') { secs = $$('[data-scrolly]', vPage); defile(); }
-    if (quitte && v.cle !== 'spectacle' && motionOK()) Ink.uncover(innerWidth / 2, innerHeight / 2, null, [quitte.couleur, quitte.fondSombre]); else Ink.fadeOut();
-    $('h1', vPage).focus({ preventScroll: true });
+    apres();
+    if (qs && !memeSp && v.cle !== 'spectacle' && motionOK()) Ink.uncover(innerWidth / 2, innerHeight / 2, null, encreDe(qs)); else Ink.fadeOut();
+    const h1 = $('h1', vPage);
+    if (h1) h1.focus({ preventScroll: true });
   }
-  // un lien vers un spectacle, ailleurs que sur la scène : l'encre de son univers part du clic
+  // un lien vers un spectacle, ailleurs que sur la scène : l'encre de son univers part du clic (pas d'un onglet à l'autre)
   document.addEventListener('click', e => {
     const a = e.target.closest('a[href^="#/spectacle/"]');
     if (!a || a.classList.contains('t-label') || e.button > 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || !motionOK()) return;
-    const s = bySlug[a.getAttribute('href').split('/')[2]]; if (!s) return;
+    if (typeof EDITION !== 'undefined' && EDITION.actif) return;
+    const slug = a.getAttribute('href').split('/')[2], s = show(slug);
+    if (!s || (courant && courant.cle === 'spectacle' && courant.slug === slug)) return;
     e.preventDefault();
-    Ink.cover(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, () => { location.hash = a.getAttribute('href'); }, [s.couleur, s.fondSombre]);
+    Ink.cover(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, () => { location.hash = a.getAttribute('href'); }, encreDe(s));
   });
   // l'ouverture : le logo sur la nuit ; à la révélation, la pieuvre de la scène s'éveille et tend ses bras
   INTRO.ouvrir({ degrade: [[0, '#331629'], [.55, '#1b0c16'], [1, '#0b0509']], encre: '#f7ecf1', classe: 'nuit-pieuvre', apres: () => Stage.eveiller() });
-  addEventListener('hashchange', route);
+  addEventListener('hashchange', () => route());
   route();
+  // la base de la compagnie : à chaque enregistrement, D change en place et la vue courante est refaite en place
+  if (typeof DONNEES !== 'undefined') DONNEES.surChangement(() => route(true));
 })();
 </script>
 </body>

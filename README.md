@@ -13,7 +13,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | Dossier | Contenu |
 | --- | --- |
 | `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
-| `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, et la planche qui les compare. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
+| `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, la synthèse et la planche qui les compare. Chacune lit la base en direct et se modifie sur place. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
 | `supabase/` | La base de la compagnie : le script qui la crée (`migrations/20261020_crescite_base.sql`) et celui qui la remplit (`importer.py`). |
 | `admin/` | L'administration du site : spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
@@ -80,13 +80,30 @@ univers (couleurs, police de titre, motif, photos, citations ; Bérénice à la 
 l'une des trois entrées : `#/spectacle/berenice/voir`, `…/programmer`, `…/etablissement` ; la dernière entrée choisie
 sert de défaut. L'espace pro à mot de passe a disparu : ses anciennes adresses mènent à « Je souhaite programmer »,
 celles de l'agenda et des actions culturelles aux deux autres entrées. La pieuvre ne compte pas les spectacles.
+
+**L'agenda complet.** « Je viens voir un spectacle » donne d'abord les prochaines dates tout public, puis toutes les
+dates publiées depuis 2016, saison par saison, de la plus récente à la plus ancienne. Les saisons terminées sont
+fermées au départ, chacune avec sa petite carte ; un index des saisons permet de sauter de l'une à l'autre, et le
+filtre par spectacle comme la recherche par commune portent sur tout l'agenda, en ouvrant les saisons où ils trouvent
+quelque chose. `#/agenda/2019-2020` reste la page d'une saison.
+
+**Modifier sur place.** « Modifier le site », au pied de chaque page, ouvre l'édition (`maquettes/src/edition.js`,
+commun aux onze) : après connexion avec un compte administrateur, chaque texte venu de la base se clique et s'écrit
+dans la page même (gras, italique, lien, paragraphe ajouté ou retiré) ; une photo de spectacle se remplace d'un clic ;
+une date de l'agenda, à venir ou passée, s'ouvre dans un panneau (lieu, représentations et leurs heures, statut,
+visibilité, précisions, lien) et « Ajouter une date » se place en tête de chaque agenda. « Enregistrer » écrit dans
+la base : les pages ouvertes ailleurs se mettent à jour. Chaque maquette habille la barre et les panneaux à son style
+(variables `--ed-*`). `?edition` à la fin de l'adresse ouvre directement l'édition.
+
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
 la proposition retenue : l’accueil et les cartes de la 06, l’agenda de la 03 relié à la carte, les portes de la 04
 devenues les trois entrées, et les univers de spectacle les plus aboutis.
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
 les trois entrées (à portée dans le premier écran, une seule marquée comme courante), les redirections des anciennes
-adresses, la disparition de l'espace pro et la présence des contenus attendus de chaque vue.
+adresses, la disparition de l'espace pro, la présence des contenus attendus de chaque vue et l'ordre de l'agenda
+(les prochaines dates d'abord, les saisons terminées fermées). Avec `EDITION=1`, il vérifie aussi le lien « Modifier
+le site » et les annotations de l'édition (`data-edit`, `data-date-id`, `data-agenda`).
 `maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
 dessous, et pour chacune son principe, ses forces et ses limites (« À propos »).
 
@@ -152,7 +169,9 @@ d'administration à un compte du projet. L'import refuse une base déjà remplie
 
 **Le site lit la base en direct.** Chaque maquette s'affiche d'abord avec l'instantané du dépôt, puis
 `maquettes/src/donnees.js` lit la base, recompose ses données et s'abonne au temps réel : chaque enregistrement fait
-dans l'administration change les pages ouvertes dans la seconde, sans recharger. Une ligne d'agenda écrite à la main
+dans l'administration change les pages ouvertes dans la seconde, sans recharger. Le temps réel passe par le client
+officiel de Supabase (`admin/vendor/supabase.js`, supabase-js 2.118.0, licence MIT), chargé à la demande ; s'il
+manque, la page demande à la base toutes les minutes, et à chaque retour sur l'onglet, si quelque chose a changé. Une ligne d'agenda écrite à la main
 (celles reprises de l'ancien site gardent leur texte d'origine) s'affiche telle quelle ; sinon elle se compose à
 partir des jours, des heures et du lieu (`maquettes/src/agenda.js`, commun au site et à l'administration).
 Ajouter `?base=0` à l'adresse d'une maquette la garde sur l'instantané.
@@ -160,13 +179,16 @@ Ajouter `?base=0` à l'adresse d'une maquette la garde sur l'instantané.
 **L'administration** (`admin/index.html`, en ligne dans `docs/admin/`) : connexion par adresse et mot de passe d'un
 compte du projet inscrit dans `crescite_admins`.
 
-- **Représentations** : les dates à venir ou passées, filtrées par saison, spectacle, public ou statut. Une date
-  porte autant de représentations qu'il en faut, le même jour ou non, chacune avec son heure, son public et sa
-  billetterie. L'aperçu montre la ligne telle que le site l'affichera.
+- **Représentations**, présentée comme l'agenda du site : les prochaines dates en haut, puis les saisons passées,
+  fermées sauf la saison en cours (« Aller à une saison… »), avec les filtres par spectacle, public et statut. On y
+  ajoute une date, on y modifie une date passée. Une date porte autant de représentations qu'il en faut, le même
+  jour ou non, chacune avec son heure, son public et sa billetterie. L'aperçu montre la ligne telle que le site
+  l'affichera.
 - **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
 - **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
 - **Lieux** : avec la recherche de commune (geo.api.gouv.fr) et la fusion des doublons.
 - **Textes du site** et **Journal**, d'où l'on peut revenir sur une modification.
+- **Modifier sur le site ↗** ouvre la synthèse en mode édition : les mêmes droits, dans la page publique.
 
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
 suivi, ni les séances), seuls les administrateurs écrivent. Le script a été vérifié sur un PostgreSQL local avec les

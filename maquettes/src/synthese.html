@@ -16,6 +16,9 @@
   --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418; --blanc: #fffdf9;
   --serif: "Spectral", Georgia, serif; --sans: "Work Sans", system-ui, sans-serif;
   --gout: clamp(16px, 4vw, 56px); --haut: 64px; --onglets: 0px;
+  /* l'édition sur place (EDITION) : la barre, la connexion et le panneau des dates sur le papier de la synthèse */
+  --ed-fond: #fffdf9; --ed-encre: #1d1418; --ed-accent: #bc3e80; --ed-sur-accent: #ffffff;
+  --ed-police: "Work Sans", system-ui, sans-serif; --ed-rayon: 10px; --ed-trait: #dcd3c6;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--haut) + 16px); }
@@ -338,6 +341,25 @@ footer a:hover { color: #f3a6cb; }
 footer :focus-visible { outline-color: #f07ab6; }
 .liens { display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .petit { font-size: .82rem; color: #b9adb2; }
+/* « Modifier le site » : discret, au pied de chaque vue */
+.modifier { display: inline-flex; align-items: center; gap: 7px; margin: 0; padding: 0; border: 0; background: none; color: #fff; font: inherit; text-decoration: underline; text-decoration-color: rgba(255, 255, 255, .4); text-underline-offset: 3px; cursor: pointer; }
+.modifier svg { width: 15px; height: 15px; fill: none; stroke: #f07ab6; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.modifier:hover { color: #f3a6cb; }
+/* les textes de bloc de D qui portent leur balise (titre, liste) : une enveloppe pour l'édition, sans effet sur la page */
+.legal .bl > h2:first-child { margin-top: 1.6em; }
+.legal > .bl:first-child > h2 { margin-top: 0; }
+/* l'édition sur place, à la manière de la synthèse : le papier, l'encre, la tentacule magenta sous les titres */
+.ed-barre { background: color-mix(in srgb, var(--papier) 94%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 18px 40px -18px rgba(29, 20, 24, .45); }
+.ed-barre .ed-etat { font: italic 500 1.15rem/1 var(--serif); }
+.ed-panneau { background: var(--papier); }
+.ed-panneau .ed-tete, .ed-panneau .ed-pied { background: var(--papier); }
+.ed-panneau .ed-tete h2 { font: italic 400 1.55rem/1.1 var(--serif); }
+.ed-panneau .ed-tete h2::after { content: ""; display: block; width: 66px; height: 12px; margin-top: 6px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20'%3E%3Cpath d='M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13' fill='none' stroke='%23bc3e80' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat left center / contain; }
+.ed-panneau .ed-champ > span:first-child { font: 600 .74rem/1.3 var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--magenta-texte); }
+.ed-bt.ed-plein { background: var(--encre); border-color: var(--encre); color: var(--papier); }
+.ed-bt.ed-plein:hover { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.ed-bt.ed-plein.ed-ajout { display: flex; width: fit-content; margin: 10px 0 12px; background: transparent; border: 1.5px dashed var(--magenta); color: var(--magenta-texte); }
+.ed-bt.ed-plein.ed-ajout:hover { background: color-mix(in srgb, var(--magenta) 10%, transparent); color: var(--encre); }
 
 /* ———————————— les univers des spectacles ————————————
    Chaque univers pose ses couleurs (fond, texte, accent, lueur), sa police de titre et son motif ; --u-vif est la
@@ -910,8 +932,17 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   const retenir = c => { try { sessionStorage.setItem(MEMOIRE, c); } catch (e) { /* stockage indisponible : pas de mémoire */ } };
   const lienSp = (slug, entree) => `#/spectacle/${slug}/${entree || retenue() || 'voir'}`;
   const couleurDe = slug => (bySlug[slug] && bySlug[slug].couleurTexteClair) || 'var(--magenta)';
-  // un bloc HTML de D tel quel ; un texte nu devient un paragraphe
-  const bloc = h => /^\s*<(h[1-6]|ul|ol|p|div|table|blockquote|figure)\b/i.test(h) ? h : `<p>${h}</p>`;
+  // l'édition sur place (EDITION) : chaque texte affiché qui vient de D porte son chemin dans D (data-edit), l'élément
+  // contenant exactement la valeur ; les photos des spectacles (data-edit-photo) ; les lignes d'agenda (data-date-id)
+  const ed = chemin => typeof chemin === 'string' && chemin ? ` data-edit="${esc(chemin)}"` : '';
+  const edS = (s, ...k) => ed(['shows', s.slug, ...k].join('.'));
+  const edP = (s, ...k) => ` data-edit-photo="${esc(['shows', s.slug, ...k].join('.'))}"`;
+  const dateId = d => ` data-date-id="${esc(d && d.id != null ? d.id : '')}"`;
+  const rangPh = (s, p) => (s.photos || []).indexOf(p);
+  // un bloc HTML de D tel quel ; un texte nu devient un paragraphe (chemin : son chemin dans D ; un bloc qui porte déjà
+  // sa balise, titre ou liste, est enveloppé pour que l'élément annoté contienne exactement la valeur)
+  const BLOC = /^\s*<(h[1-6]|ul|ol|p|div|table|blockquote|figure)\b/i;
+  const bloc = (h, chemin) => BLOC.test(h) ? (ed(chemin) ? `<div class="bl"${ed(chemin)}>${h}</div>` : h) : `<p${ed(chemin)}>${h}</p>`;
   const trait = c => `<svg class="trait" viewBox="0 0 120 20" aria-hidden="true"${c ? ` style="--c:${c}"` : ''}><path pathLength="1" d="M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13"/></svg>`;
   const FLECHE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';
   const BAS = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 4v15M6 13l6 6 6-6"/></svg>';
@@ -919,6 +950,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   const LECTURE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="plein-ico" d="M8 5.5v13l10.5-6.5z"/></svg>';
   const CROIX = '<svg class="croix" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
   const ALERTE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>';
+  const CRAYON = '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 16l1-4L13.5 3.5a1.8 1.8 0 0 1 2.5 0l.5.5a1.8 1.8 0 0 1 0 2.5L8 15z"/><path d="M11.5 5.5l3 3"/></svg>';
 
   /* ---------- les lignes de date : découpées, jamais réécrites ---------- */
   const MOIS = 'janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre';
@@ -1042,64 +1074,69 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     : m === 'annotations' ? '<svg class="mo mo-g mo-entoure" viewBox="0 0 300 300" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M40 60C110 10 250 20 280 110S240 280 140 284 6 220 18 140 70 50 150 36"/></svg>' : '';
 
   // le titre se révèle lettre à lettre, les phrases s'écrivent mot à mot
-  function lettres(lignes) {
+  function lettres(lignes, attrs = []) {
     const n = lignes.join('').replace(/\s/g, '').length, pas = Math.round(Math.min(34, 700 / Math.max(1, n)));
     let i = 0;
-    const html = lignes.map(l => `<span class="ligne">${l.split(/\s+/).filter(Boolean).map(w => `<span class="mt">${[...w].map(ch => `<span class="ch" style="--i:${i++}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</span>`).join(' ');
+    const html = lignes.map((l, k) => `<span class="ligne"${attrs[k] || ''}>${l.split(/\s+/).filter(Boolean).map(w => `<span class="mt">${[...w].map(ch => `<span class="ch" style="--i:${i++}">${esc(ch)}</span>`).join('')}</span>`).join(' ')}</span>`).join(' ');
     return { html, pas, fin: Math.min(.5, .05 + i * pas / 1000), n };
   }
   const mots = t => String(t || '').split(/[ \n\t]+/).filter(Boolean);
   const ecrit = (t, i0 = 0) => mots(t).map((w, i) => `<span class="w" style="--w:${i0 + i}">${esc(w)}</span>`).join(' ');
-  const citation = c => { let k = 0; return `<blockquote class="u-cit"><p class="ecrit">${(c.vers || []).map(v => { const h = `<span class="vers">${ecrit(v, k)}</span>`; k += mots(v).length; return h; }).join('')}</p><cite>${esc(c.source)}</cite></blockquote>`; };
+  const citation = (s, c, ic) => { let k = 0; return `<blockquote class="u-cit"><p class="ecrit">${(c.vers || []).map((v, j) => { const h = `<span class="vers"${edS(s, 'citations', ic, 'vers', j)}>${ecrit(v, k)}</span>`; k += mots(v).length; return h; }).join('')}</p><cite${edS(s, 'citations', ic, 'source')}>${esc(c.source)}</cite></blockquote>`; };
   const creditDe = (s, p) => p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
-  const fig = (s, p, cls = '') => p ? `<figure class="u-fig apparait${cls ? ' ' + cls : ''}"><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy">${p.legende ? `<figcaption>${esc(p.legende)}</figcaption>` : ''}</figure>` : '';
+  const cleCredit = p => p && p.source === 'dossier' ? 'creditDossier' : 'creditPhotos';
+  const fig = (s, p, cls = '') => { if (!p) return ''; const i = rangPh(s, p);
+    return `<figure class="u-fig apparait${cls ? ' ' + cls : ''}"${i >= 0 ? edP(s, 'photos', i) : ''}><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy">${p.legende ? `<figcaption${i >= 0 ? edS(s, 'photos', i, 'legende') : ''}>${esc(p.legende)}</figcaption>` : ''}</figure>`; };
   const nombre = t => { const m = String(t || '').match(/^(\d[\d   ]*?)(\s+\D[\s\S]*)$/); return m ? `<b class="gros">${esc(m[1])}</b>${esc(m[2])}` : esc(t); };
   const lienVideo = s => s.video ? `<a class="bu" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LECTURE}${esc(L.bandeAnnonce)}</a>` : '';
   const titreDate = (d, entree) => bySlug[d.slug] ? `<a class="t" href="#/spectacle/${d.slug}/${entree}">${esc(d.titre)}</a>` : `<span class="t">${esc(d.titre)}</span>`;
-  const listeDates = Ls => `<ul class="dates dates-sp">${Ls.map(d => `<li data-l="${d.l}">${quand(d.ligneDate, d.iso)}<div class="qui"><span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul>`;
+  const listeDates = (Ls, slug) => `<ul class="dates dates-sp" data-agenda="${esc(slug || '')}">${Ls.map(d => `<li${dateId(d)} data-l="${d.l}">${quand(d.ligneDate, d.iso)}<div class="qui"><span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul>`;
+  // l'étiquette d'un spectacle : son statut (« En création ») s'il en a un, sinon « En tournée »
+  const badgeDe = s => s.statut ? `<span${edS(s, 'statut')}>${esc(s.statut)}</span>` : s.enTournee ? `<span>${esc(L.enTournee)}</span>` : '';
 
   /* ---------- les fiches des spectacles, ailleurs que sur leur page ---------- */
   function ficheU(s, o = {}) {
-    const badge = s.statut || (s.enTournee ? L.enTournee : '');
+    const badge = s.statut ? `<span class="fu-badge"${edS(s, 'statut')}>${esc(s.statut)}</span>` : s.enTournee ? `<span class="fu-badge">${esc(L.enTournee)}</span>` : '';
     return `<li class="fu ${uClasse(s)}" style="${uVars(s)}"><a class="fu-a" href="${o.href}">
-      <span class="fu-ph"><img src="${D.photos[s.slug]}" alt="" loading="lazy">${badge ? `<span class="fu-badge">${esc(badge)}</span>` : ''}</span>
-      <span class="fu-c">${petit(mo(s))}<h3 class="fu-t">${esc(s.titre)}</h3>
-        ${s.sousTitre ? `<span class="fu-st">${s.sousTitre}</span>` : ''}${s.creation ? `<span class="fu-cr">${esc(s.creation)}</span>` : ''}
-        ${o.large && s.lieuTemps ? `<span class="fu-lt">${esc(s.lieuTemps)}</span>` : ''}${o.large && s.accroche ? `<span class="fu-acc">${esc(s.accroche)}</span>` : ''}
+      <span class="fu-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" loading="lazy">${badge}</span>
+      <span class="fu-c">${petit(mo(s))}<h3 class="fu-t"${edS(s, 'titre')}>${esc(s.titre)}</h3>
+        ${s.sousTitre ? `<span class="fu-st"${edS(s, 'sousTitre')}>${s.sousTitre}</span>` : ''}${s.creation ? `<span class="fu-cr"${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}
+        ${o.large && s.lieuTemps ? `<span class="fu-lt"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${o.large && s.accroche ? `<span class="fu-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</span>` : ''}
         ${o.date ? `<span class="fu-date">${esc(o.date.ligne)}</span>` : ''}</span></a></li>`;
   }
   function ficheProg(s) {
-    const P = s.programmer || {}, href = `#/spectacle/${s.slug}/programmer`, badge = s.statut || (s.enTournee ? L.enTournee : '');
-    const faits = [P.representations && `<li>${nombre(P.representations)}</li>`, s.duree && `<li>${esc(s.duree)}</li>`, P.format && `<li>${esc(P.format)}</li>`,
-      P.jauge && `<li>${esc(P.jauge)}</li>`, P.equipe && `<li>${esc(P.equipe)}</li>`, P.actualite && `<li>${esc(P.actualite)}</li>`].filter(Boolean);
-    const equipe = P.equipeCreation && P.equipeCreation.length ? P.equipeCreation.map(l => `<p>${esc(l)}</p>`).join('')
-      : [...(s.fiche || []).map(f => `<p>${f.libelle ? `<span class="k">${esc(f.libelle)}</span> ` : ''}${f.valeur}</p>`), s.avec ? `<p><span class="k">${esc(s.avec.libelle)}</span> ${s.avec.valeur}</p>` : ''].join('');
+    const P = s.programmer || {}, href = `#/spectacle/${s.slug}/programmer`, badge = badgeDe(s);
+    const faits = [P.representations && `<li${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</li>`, s.duree && `<li${edS(s, 'duree')}>${esc(s.duree)}</li>`, P.format && `<li${edS(s, 'programmer', 'format')}>${esc(P.format)}</li>`,
+      P.jauge && `<li${edS(s, 'programmer', 'jauge')}>${esc(P.jauge)}</li>`, P.equipe && `<li${edS(s, 'programmer', 'equipe')}>${esc(P.equipe)}</li>`, P.actualite && `<li${edS(s, 'programmer', 'actualite')}>${esc(P.actualite)}</li>`].filter(Boolean);
+    const equipe = P.equipeCreation && P.equipeCreation.length ? P.equipeCreation.map((l, i) => `<p${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</p>`).join('')
+      : [...(s.fiche || []).map((f, i) => `<p>${f.libelle ? `<span class="k"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></p>`), s.avec ? `<p><span class="k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''].join('');
     return `<article class="prog ${uClasse(s)}" style="${uVars(s)}">
-      <a class="prog-ph" href="${href}" tabindex="-1" aria-hidden="true"><img src="${D.photos[s.slug]}" alt="" loading="lazy"></a>
+      <a class="prog-ph" href="${href}" tabindex="-1" aria-hidden="true"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" loading="lazy"></a>
       <div class="prog-c">
-        <p class="prog-sur">${petit(mo(s))}<span>${esc(s.creation)}</span>${badge ? `<span class="pt" aria-hidden="true"></span><span>${esc(badge)}</span>` : ''}</p>
-        <h3 class="prog-t"><a href="${href}">${esc(s.titre)}</a></h3>${s.sousTitre ? `<p class="prog-st">${s.sousTitre}</p>` : ''}
+        <p class="prog-sur">${petit(mo(s))}<span${edS(s, 'creation')}>${esc(s.creation)}</span>${badge ? `<span class="pt" aria-hidden="true"></span>${badge}` : ''}</p>
+        <h3 class="prog-t"><a href="${href}"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>${s.sousTitre ? `<p class="prog-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
         ${faits.length ? `<ul class="prog-faits">${faits.join('')}</ul>` : ''}
         <p class="prog-liens">${lienVideo(s)}<a class="bu plein" href="${href}">${esc(L.leSpectacle)}${FLECHE}</a></p>
       </div>
       <div class="prog-d"><div class="prog-equipe">${equipe}</div>
-        ${P.lieux ? `<details class="prog-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p>${esc(P.lieux)}</p></details>` : ''}</div>
+        ${P.lieux ? `<details class="prog-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}</div>
     </article>`;
   }
   function ficheEtab(s) {
     const A = s.actionCulturelle || {}, t = (A.textes || [])[0], href = `#/spectacle/${s.slug}/etablissement`;
     const ph = (s.photos || []).find(p => p.etablissement), img = ph ? D.photos[ph.cle] : D.photos[s.slug];
+    const ac = (...k) => edS(s, 'actionCulturelle', ...k), aType = !(A.aCompleter || !A.type);
     return `<article class="fe ${uClasse(s)}" style="${uVars(s)}">
-      <a class="fe-ph" href="${href}" tabindex="-1" aria-hidden="true"><img src="${img}" alt="" loading="lazy"></a>
+      <a class="fe-ph" href="${href}" tabindex="-1" aria-hidden="true"${ph ? edP(s, 'photos', rangPh(s, ph)) : edP(s, 'photo')}><img src="${img}" alt="" loading="lazy"></a>
       <div class="fe-c">
-        <p class="fe-tete">${petit(mo(s))}<span>${esc(s.creation)}</span></p>
-        <h3 class="fe-t"><a href="${href}">${esc(s.titre)}</a></h3>
+        <p class="fe-tete">${petit(mo(s))}<span${edS(s, 'creation')}>${esc(s.creation)}</span></p>
+        <h3 class="fe-t"><a href="${href}"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>
         <p class="fe-eti">${esc(L.actionCulturelle)}</p>
-        <p class="fe-type">${esc(A.aCompleter || !A.type ? L.aCompleter : A.type)}</p>
-        ${A.public || A.statut ? `<ul class="fe-puces">${A.public ? `<li><span class="k">${esc(L.public)}</span> ${esc(A.public)}</li>` : ''}${A.statut ? `<li>${esc(A.statut)}</li>` : ''}</ul>` : ''}
-        ${t ? `<div class="fe-txt">${bloc(t.texte)}</div>` : ''}
-        ${A.formule && A.formule.length ? `<p class="fe-formule">${A.formule.map(esc).join('<br>')}</p>` : ''}
-        ${A.dispositifs && A.dispositifs.length ? `<div class="fe-disp"><p class="k">${esc(L.dispositifs)}</p><ul>${A.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+        <p class="fe-type"${aType ? ac('type') : ''}>${esc(aType ? A.type : L.aCompleter)}</p>
+        ${A.public || A.statut ? `<ul class="fe-puces">${A.public ? `<li><span class="k">${esc(L.public)}</span> <span${ac('public')}>${esc(A.public)}</span></li>` : ''}${A.statut ? `<li${ac('statut')}>${esc(A.statut)}</li>` : ''}</ul>` : ''}
+        ${t ? `<div class="fe-txt">${bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.0.texte`)}</div>` : ''}
+        ${A.formule && A.formule.length ? `<p class="fe-formule">${A.formule.map((l, i) => `<span${ac('formule', i)}>${esc(l)}</span>`).join('<br>')}</p>` : ''}
+        ${A.dispositifs && A.dispositifs.length ? `<div class="fe-disp"><p class="k">${esc(L.dispositifs)}</p><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
         <p class="fe-liens">${s.dossier ? `<a class="bu plein" href="${href}">${esc(L.dossierScolaire)}${FLECHE}</a>` : `<a class="bu" href="${href}" aria-label="${esc(`${L.actionCulturelle} – ${s.titre}`)}">${esc(L.actionCulturelle)}${FLECHE}</a>`}</p>
       </div>
     </article>`;
@@ -1120,14 +1157,14 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     const image = { voir: pub && D.photos[pub.slug], programmer: plus && D.photos[plus.slug], etablissement: D.photos['actions-culturelles'] };
     main.innerHTML = `
       <section class="une"><div class="wrap une-grille">
-        <div class="une-tete"><p class="surtitre">${esc(S.saisons[0].titre)}</p><h1 tabindex="-1">${esc(S.nom)}</h1>${trait()}
+        <div class="une-tete"><p class="surtitre">${esc(S.saisons[0].titre)}</p><h1 tabindex="-1"${ed('site.nom')}>${esc(S.nom)}</h1>${trait()}
           <ul class="portes">${S.entrees.map(e => `<li><a class="porte" href="${e.href}" style="--ec:${e.couleur};--ev:${e.couleurVive}">${image[e.cle] ? `<span class="porte-ph" aria-hidden="true"><img src="${image[e.cle]}" alt=""></span>` : ''}<span class="porte-t">${esc(e.texte)}</span><span class="porte-f">${FLECHE}</span></a></li>`).join('')}</ul></div>
         <figure class="une-carte">${carte({ lieux, passe, titre: S.saisons[0].titre, classe: 'grande' })}<figcaption class="bulle" id="bulle"></figcaption></figure>
         <div class="une-liste"><h2 class="rubrique">${esc(L.actuellementEnTournee)}</h2>
-          <ol class="prochaines">${D.dates.slice(0, 5).map(d => `<li data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${bySlug[d.slug] ? `<a href="${lienSp(d.slug, d.scolaire ? 'etablissement' : 'voir')}">` : '<div class="pl">'}${quand(d.ligneDate, d.iso)}<span class="t">${esc(d.titre)}</span><span class="ou">${esc(d.ligneLieu)}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</span>${bySlug[d.slug] ? '</a>' : '</div>'}</li>`).join('')}</ol></div>
+          <ol class="prochaines" data-agenda="">${D.dates.slice(0, 5).map(d => `<li${dateId(d)} data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${bySlug[d.slug] ? `<a href="${lienSp(d.slug, d.scolaire ? 'etablissement' : 'voir')}">` : '<div class="pl">'}${quand(d.ligneDate, d.iso)}<span class="t">${esc(d.titre)}</span><span class="ou">${esc(d.ligneLieu)}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</span>${bySlug[d.slug] ? '</a>' : '</div>'}</li>`).join('')}</ol></div>
       </div></section>
       <section class="bloc" aria-labelledby="h-sp"><div class="wrap"><h2 class="titre-bloc" id="h-sp">${esc(L.lesSpectacles)}</h2><ul class="fus compact">${D.shows.map(s => ficheU(s, { href: lienSp(s.slug) })).join('')}</ul></div></section>
-      <section class="merci"><div class="wrap">${trait()}<p>${S.donateurs || ''}</p></div></section>`;
+      <section class="merci"><div class="wrap">${trait()}<p${ed('site.donateurs')}>${S.donateurs || ''}</p></div></section>`;
     const svg = $('.une-carte svg'), ol = $('.prochaines');
     const montre = bulleSur(svg, $('#bulle'), l => { const x = lieux.find(y => y.l === l);
       return x ? `<b>${esc(CARTE.nom(x))}</b><ul>${x.dates.map(d => `<li><span class="t">${esc(d.titre)}</span><span>${esc(d.ligneDate)}</span>${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</li>`).join('')}</ul>` : ''; },
@@ -1330,12 +1367,12 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     retenir('programmer');
     main.innerHTML = `${teteEntree(e, [['p-spectacles', L.lesSpectacles], ['p-lieux', L.lieuxDiffusion], ['p-ecrire', L.ecrire]])}
       <section class="bloc sans-filet" id="p-lieux" aria-labelledby="h-lieux"><div class="wrap p-intro">
-        <div class="p-texte"><h2 class="rubrique" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>${S.compagnie && S.compagnie.paragraphes && S.compagnie.paragraphes[1] ? bloc(S.compagnie.paragraphes[1]) : ''}
+        <div class="p-texte"><h2 class="rubrique" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>${S.compagnie && S.compagnie.paragraphes && S.compagnie.paragraphes[1] ? bloc(S.compagnie.paragraphes[1], 'site.compagnie.paragraphes.1') : ''}
           <p class="boutons"><a class="bouton e" href="${S.ecrire.href}" style="--ec:${e.couleur}">${esc(L.ecrire)}${FLECHE}</a></p></div>
         <figure class="p-carte">${carte({ lieux, titre: L.lieuxDiffusion, classe: 'tout', simple: true, fin: .5 })}<figcaption class="bulle" id="bulle"></figcaption></figure>
       </div></section>
       <section class="bloc" id="p-spectacles" aria-labelledby="h-progs"><div class="wrap"><h2 class="titre-bloc" id="h-progs">${esc(L.lesSpectacles)}</h2><div class="progs">${D.shows.map(ficheProg).join('')}</div></div></section>
-      <section class="bloc p-fin" id="p-ecrire"><div class="wrap"><p class="p-partenaires">${S.partenaires}</p><p class="boutons"><a class="bouton e grand" href="${S.ecrire.href}" style="--ec:${e.couleur}">${esc(L.ecrire)}${FLECHE}</a></p></div></section>`;
+      <section class="bloc p-fin" id="p-ecrire"><div class="wrap"><p class="p-partenaires"${ed('site.partenaires')}>${S.partenaires}</p><p class="boutons"><a class="bouton e grand" href="${S.ecrire.href}" style="--ec:${e.couleur}">${esc(L.ecrire)}${FLECHE}</a></p></div></section>`;
     const svg = $('.p-carte svg');
     bulleSur(svg, $('#bulle'), l => { const x = lieux.find(y => y.l === l);
       return x ? `<b>${esc(CARTE.nom(x))}</b><ul>${[...new Set(x.dates.map(d => d.spectacle))].map(t => `<li><span class="t">${esc(t)}</span></li>`).join('')}</ul>` : ''; });
@@ -1356,19 +1393,19 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     const g = i => `e-g${i}`;
     retenir('etablissement');
     main.innerHTML = `${teteEntree(e, [...groupes.map((x, i) => [g(i), x[0]]), ...(ber ? [['e-dossier', L.dossierScolaire]] : []), ...(A ? [['e-actions', A.titre]] : []), ['e-dates', L.enEtablissement], ['e-ecrire', L.ecrire]])}
-      <section class="bloc sans-filet"><div class="wrap e-lead"><p>${S.ecole ? S.ecole.texte : ''}</p></div></section>
+      <section class="bloc sans-filet"><div class="wrap e-lead"><p${S.ecole ? ed('site.ecole.texte') : ''}>${S.ecole ? S.ecole.texte : ''}</p></div></section>
       ${groupes.map((x, i) => `<section class="bloc" id="${g(i)}" aria-labelledby="${g(i)}-h"><div class="wrap"><h2 class="titre-bloc" id="${g(i)}-h">${esc(x[0])}</h2><div class="fes">${ordre(x[1]).map(ficheEtab).join('')}</div></div></section>`).join('')}
       ${reste.length ? `<section class="bloc"><div class="wrap"><div class="fes">${reste.map(ficheEtab).join('')}</div></div></section>` : ''}
       ${ber ? `<section class="bloc" id="e-dossier" aria-labelledby="e-dossier-h"><div class="wrap"><a class="dos-appel ${uClasse(ber)}" style="${uVars(ber)}" href="#/spectacle/${ber.slug}/etablissement">
-          <span class="dos-appel-ph" aria-hidden="true"><img src="${D.photos[ber.slug]}" alt=""></span>
-          <span class="dos-appel-c"><span class="dos-type">${esc(B.type)}</span><h2 class="dos-titre" id="e-dossier-h">${esc(B.titre)}</h2><span class="dos-auteur">${esc(B.auteur)}</span><span class="dos-public">${esc(B.public)}</span><span class="bu plein">${esc(L.dossierScolaire)}${FLECHE}</span></span></a></div></section>` : ''}
+          <span class="dos-appel-ph" aria-hidden="true"${edP(ber, 'photo')}><img src="${D.photos[ber.slug]}" alt=""></span>
+          <span class="dos-appel-c"><span class="dos-type"${ed(`dossiers.${ber.dossier}.type`)}>${esc(B.type)}</span><h2 class="dos-titre" id="e-dossier-h"${ed(`dossiers.${ber.dossier}.titre`)}>${esc(B.titre)}</h2><span class="dos-auteur"${ed(`dossiers.${ber.dossier}.auteur`)}>${esc(B.auteur)}</span><span class="dos-public"${ed(`dossiers.${ber.dossier}.public`)}>${esc(B.public)}</span><span class="bu plein">${esc(L.dossierScolaire)}${FLECHE}</span></span></a></div></section>` : ''}
       ${A ? `<section class="bloc" id="e-actions" aria-labelledby="e-actions-h"><div class="wrap actions">
-        <div class="blocs"><h2 class="titre-bloc" id="e-actions-h">${esc(A.titre)}</h2>${A.blocs.map(h => bloc(h.replace(/<(\/?)h2\b/g, '<$1h3'))).join('')}</div>
-        <div class="photos-ac"><figure class="photo"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption>${esc(A.credit)}</figcaption>` : ''}</figure>
+        <div class="blocs"><h2 class="titre-bloc" id="e-actions-h"${ed('site.actions.titre')}>${esc(A.titre)}</h2>${A.blocs.map((h, i) => bloc(h.replace(/<(\/?)h2\b/g, '<$1h3'), `site.actions.blocs.${i}`)).join('')}</div>
+        <div class="photos-ac"><figure class="photo"><img src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}">${A.credit ? `<figcaption${ed('site.actions.credit')}>${esc(A.credit)}</figcaption>` : ''}</figure>
           <ul class="galerie">${[1, 2, 3, 4].filter(i => D.photos['actions-culturelles/g-' + i]).map(i => `<li><img src="${D.photos['actions-culturelles/g-' + i]}" alt="${esc(A.titre)}" loading="lazy"></li>`).join('')}</ul></div>
       </div></section>` : ''}
       <section class="bloc" id="e-dates" aria-labelledby="e-dates-h"><div class="wrap e-dates">
-        <div><h2 class="titre-bloc" id="e-dates-h">${esc(L.enEtablissement)}</h2><ul class="dates" id="e-liste">${sco.map(d => `<li data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, 'etablissement')}<span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul></div>
+        <div><h2 class="titre-bloc" id="e-dates-h">${esc(L.enEtablissement)}</h2><ul class="dates" id="e-liste" data-agenda="">${sco.map(d => `<li${dateId(d)} data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, 'etablissement')}<span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul></div>
         <figure class="e-carte">${carte({ lieux, titre: L.enEtablissement, couleurs: true, serre: true })}</figure>
       </div></section>
       <section class="bloc p-fin" id="e-ecrire"><div class="wrap"><p class="boutons"><a class="bouton e grand" href="${S.ecrire.href}" style="--ec:${e.couleur}">${esc(L.ecrire)}${FLECHE}</a></p></div></section>`;
@@ -1396,7 +1433,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
         <div class="sa-liste">${SA.spectacles.map(g => { const s = g.slug && bySlug[g.slug]; return `<article class="sa-sp" style="--c:${s ? s.couleurTexteClair : 'var(--gris)'}">
           <h2>${s ? `<a href="${lienSp(s.slug, 'voir')}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
           ${g.sousTitre || g.creation ? `<p class="st">${g.sousTitre ? `<span>${g.sousTitre}</span>` : ''}${g.creation ? `<span>${esc(g.creation)}</span>` : ''}</p>` : ''}
-          <ul class="sa-dates">${g.dates.map(d => `<li${d.l != null ? ` data-l="${d.l}"` : ''}>${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(d.ligne)}</a>` : `<span>${esc(d.ligne)}</span>`}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${details(d.details)}</li>`).join('')}</ul></article>`; }).join('')}</div>
+          <ul class="sa-dates" data-agenda="${esc(s ? s.slug : '')}">${g.dates.map(d => `<li${dateId(d)}${d.l != null ? ` data-l="${d.l}"` : ''}>${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(d.ligne)}</a>` : `<span>${esc(d.ligne)}</span>`}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${details(d.details)}</li>`).join('')}</ul></article>`; }).join('')}</div>
         <div class="sa-carte">${carte({ lieux: CARTE.saison(cle), titre: SA.titre, couleurs: true })}</div>
       </div></section>
       ${saisonsBande(cle)}`;
@@ -1410,14 +1447,14 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   function compagnie() {
     vue = 'compagnie';
     const C = S.compagnie, Dr = C.directeur;
-    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1">${esc(C.titre)}</h1>${trait()}</div>
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"${ed('site.compagnie.titre')}>${esc(C.titre)}</h1>${trait()}</div>
       <section class="bloc sans-filet"><div class="wrap compagnie">
-        <div class="paragraphes">${C.paragraphes.map(bloc).join('')}</div>
-        <aside class="reperes"><h2>${esc(C.datesTitre)}</h2><ol class="frise">${C.dates.map(d => { const s = D.shows.find(x => String(x.annee) === String(d.annee));
-          return `<li${s ? ` style="--c:${s.couleurTexteClair}"` : ''}><span class="an">${esc(d.annee)}</span>${s ? `<a href="${lienSp(s.slug)}">${esc(d.titre)}</a>` : `<span class="ti">${esc(d.titre)}</span>`}</li>`; }).join('')}</ol></aside>
+        <div class="paragraphes">${C.paragraphes.map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
+        <aside class="reperes"><h2${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2><ol class="frise">${C.dates.map((d, i) => { const s = D.shows.find(x => String(x.annee) === String(d.annee)), k = `site.compagnie.dates.${i}`;
+          return `<li${s ? ` style="--c:${s.couleurTexteClair}"` : ''}><span class="an"${ed(`${k}.annee`)}>${esc(d.annee)}</span>${s ? `<a href="${lienSp(s.slug)}"${ed(`${k}.titre`)}>${esc(d.titre)}</a>` : `<span class="ti"${ed(`${k}.titre`)}>${esc(d.titre)}</span>`}</li>`; }).join('')}</ol></aside>
       </div></section>
-      ${Dr ? `<section class="bloc" aria-labelledby="h-dir"><div class="wrap directeur"><div><h2 class="titre-bloc" id="h-dir">${esc(Dr.titre)}</h2>${trait()}<p class="chapo">${esc(Dr.chapeau)}</p></div><div class="paragraphes">${Dr.paragraphes.map(bloc).join('')}</div></div></section>` : ''}
-      <section class="bloc"><div class="wrap"><p class="partenaires">${S.partenaires}</p></div></section>`;
+      ${Dr ? `<section class="bloc" aria-labelledby="h-dir"><div class="wrap directeur"><div><h2 class="titre-bloc" id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${trait()}<p class="chapo"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p></div><div class="paragraphes">${Dr.paragraphes.map((p, i) => bloc(p, `site.compagnie.directeur.paragraphes.${i}`)).join('')}</div></div></section>` : ''}
+      <section class="bloc"><div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p></div></section>`;
     return { titre: C.titre, menu: 'compagnie' };
   }
   function contact() {
@@ -1425,7 +1462,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     const C = S.contact, co = S.coordonnees, mot = 'politique de confidentialité', k = C.consentement.indexOf(mot);
     const politique = (S.liensLegaux.find(x => /confidentialit/.test(x.href)) || {}).href || '#/politique-de-confidentialite';
     const types = { 'Nom': ['text', 'name'], 'Adresse e-mail': ['email', 'email'], 'Téléphone': ['tel', 'tel'], 'Ville': ['text', 'address-level2'] };
-    main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(MENU.contact.texte)}</p><h1 tabindex="-1">${esc(C.titre)}</h1>${trait()}</div>
+    main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(MENU.contact.texte)}</p><h1 tabindex="-1"${ed('site.contact.titre')}>${esc(C.titre)}</h1>${trait()}</div>
       <section class="bloc sans-filet"><div class="wrap contact">
         <form class="formulaire" novalidate>
           ${C.champs.map((c, i) => i === C.champs.length - 1 ? `<p class="champ large"><label for="f${i}">${esc(c)}</label><textarea id="f${i}" rows="6"></textarea></p>`
@@ -1434,7 +1471,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
           <p class="calcul"><label for="f-calc">${esc(C.calcul)}</label><input id="f-calc" inputmode="numeric" maxlength="2"></p>
           <p class="envoi"><button class="bouton" type="submit">${esc(C.bouton)}</button></p>
         </form>
-        <address class="coord"><strong>${esc(co.nom)}</strong><br>${co.adresse.map(esc).join('<br>')}</address>
+        <address class="coord"><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong><br>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</address>
       </div></section>`;
     $('form', main).addEventListener('submit', e => e.preventDefault());
     return { titre: MENU.contact.texte, menu: 'contact' };
@@ -1442,8 +1479,8 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   function legal(chemin) {
     vue = 'legal';
     const Lg = S.legal[chemin];
-    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1">${esc(Lg.titre)}</h1>${trait()}</div>
-      <section class="bloc sans-filet"><div class="wrap legal">${Lg.blocs.map(bloc).join('')}</div></section>`;
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"${ed(`site.legal.${chemin}.titre`)}>${esc(Lg.titre)}</h1>${trait()}</div>
+      <section class="bloc sans-filet"><div class="wrap legal">${Lg.blocs.map((b, i) => bloc(b, `site.legal.${chemin}.blocs.${i}`)).join('')}</div></section>`;
     return { titre: Lg.titre };
   }
 
@@ -1466,7 +1503,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   const SIG = {
     chronologie: s => `<div class="sig sig-chrono"><div class="chaleur" aria-hidden="true"></div>
       <svg class="ligne-temps" viewBox="0 0 2000 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20H2000"/>${Array.from({ length: 81 }, (_, i) => `<path d="M${i * 25} ${i % 4 ? 14 : 6}V${i % 4 ? 26 : 34}"/>`).join('')}</svg>
-      <ol class="cartons">${(s.extraits || []).map((x, i) => `<li${i ? '' : ' class="on"'}><blockquote><p>${esc(x.citation)}</p><cite>${esc(x.source)}</cite></blockquote></li>`).join('')}</ol></div>`,
+      <ol class="cartons">${(s.extraits || []).map((x, i) => `<li${i ? '' : ' class="on"'}><blockquote><p${edS(s, 'extraits', i, 'citation')}>${esc(x.citation)}</p><cite${edS(s, 'extraits', i, 'source')}>${esc(x.source)}</cite></blockquote></li>`).join('')}</ol></div>`,
     jumeaux: s => { const t = phrase(s, 'Lorsqu’un roi meurt', 'sa place');
       return `<div class="sig sig-jumeaux"><div class="twin l"><img src="${D.photos[s.slug]}" alt=""></div><div class="twin r"><img src="${D.photos[s.slug]}" alt=""></div>
         <svg class="crown" viewBox="0 0 120 70" aria-hidden="true"><path pathLength="1" d="M8 62 L14 18 L38 42 L60 8 L82 42 L106 18 L112 62 Z M8 62 H112"/></svg>${t ? `<p class="sig-phrase">${t}</p>` : ''}</div>`; },
@@ -1508,7 +1545,8 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   const chapitre = (chap, id, nom, html, alt) => { chap.push({ id, nom }); const a = alt === undefined ? nAlt++ % 2 === 1 : alt; return `<section class="chap${a ? ' alt' : ''}" id="c-${id}" data-chap="${esc(nom)}">${html}</section>`; };
   function ouverture(s, entree, pub) {
     const m = mo(s), carton = (s.photos || []).find(p => !p.etablissement && !p.atelier);
-    const badge = s.statut || (s.enTournee ? L.enTournee : ''), T = lettres(s.titreLignes && s.titreLignes.length ? s.titreLignes : [s.titre]);
+    const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null;
+    const badge = badgeDe(s), T = lettres(tl || [s.titre], tl ? tl.map((x, k) => edS(s, 'titreLignes', k)) : [edS(s, 'titre')]);
     const d1 = T.fin.toFixed(2), d2 = (T.fin + (s.lieuTemps ? .1 + mots(s.lieuTemps).length * .02 : 0)).toFixed(2);
     const sansDates = !s.statut && !pub.length;
     const cta = entree === 'voir' ? `<button type="button" class="bu plein" data-va="c-dates">${esc(sansDates ? L.lieuxDiffusion : L.dates)}${BAS}</button>${lienVideo(s)}`
@@ -1520,16 +1558,16 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       ${motifGrand(m)}
       <div class="wrap u-ouv-grille">
         <div class="u-ouv-texte">
-          <p class="u-sur"><span>${esc(s.creation)}</span>${badge ? `<span class="pt" aria-hidden="true"></span><span>${esc(badge)}</span>` : ''}</p>
+          <p class="u-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${badge ? `<span class="pt" aria-hidden="true"></span>${badge}` : ''}</p>
           <h1 class="u-titre${T.n > 22 ? ' long' : ''}" tabindex="-1" aria-label="${esc(s.titre)}" style="--pas:${T.pas}ms"><span aria-hidden="true">${T.html}</span></h1>
           ${sousTitre(m)}
-          ${s.sousTitre ? `<p class="u-st">${s.sousTitre}</p>` : ''}
-          ${s.lieuTemps ? `<p class="u-lt ecrit" style="--d0:${d1}s">${ecrit(s.lieuTemps)}</p>` : ''}${s.cadre ? `<p class="u-cadre">${esc(s.cadre)}</p>` : ''}
-          ${s.accroche ? `<p class="u-accroche ecrit" style="--d0:${d2}s">${ecrit(s.accroche)}</p>` : ''}
-          <p class="u-signe">${esc(S.nom)}</p>
+          ${s.sousTitre ? `<p class="u-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+          ${s.lieuTemps ? `<p class="u-lt ecrit" style="--d0:${d1}s"${edS(s, 'lieuTemps')}>${ecrit(s.lieuTemps)}</p>` : ''}${s.cadre ? `<p class="u-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}
+          ${s.accroche ? `<p class="u-accroche ecrit" style="--d0:${d2}s"${edS(s, 'accroche')}>${ecrit(s.accroche)}</p>` : ''}
+          <p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p>
           <p class="u-cta">${cta}</p>
         </div>
-        ${carton ? `<figure class="u-carton"><span class="ph-cadre">${autourPhoto(m)}<span class="ph"><img src="${D.photos[carton.cle]}" alt="${esc(legende || s.titre)}"></span></span>${legende || credit ? `<figcaption>${legende ? esc(legende) : ''}${credit ? `<span class="cr">${esc(credit)}</span>` : ''}</figcaption>` : ''}</figure>` : ''}
+        ${carton ? `<figure class="u-carton"><span class="ph-cadre">${autourPhoto(m)}<span class="ph"${edP(s, 'photos', rangPh(s, carton))}><img src="${D.photos[carton.cle]}" alt="${esc(legende || s.titre)}"></span></span>${legende || credit ? `<figcaption>${legende ? `<span${edS(s, 'photos', rangPh(s, carton), 'legende')}>${esc(legende)}</span>` : ''}${credit ? `<span class="cr"${edS(s, cleCredit(carton))}>${esc(credit)}</span>` : ''}</figcaption>` : ''}</figure>` : ''}
       </div>
     </section>`;
   }
@@ -1542,29 +1580,29 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       <button type="button" class="som-b" aria-expanded="false" aria-controls="som-l"><span class="n" id="som-n">1/${chap.length}</span><span id="som-nom">${esc(chap[0].nom)}</span>${HAUT}</button>
     </nav>`;
   function distribution(s, chap) {
-    const P = s.programmer || {}, eq = P.equipeCreation || [], fiche = eq.length ? [] : (s.fiche || []);
-    const tete = fiche.filter(f => !f.libelle), roles = fiche.filter(f => f.libelle);
+    const P = s.programmer || {}, eq = P.equipeCreation || [], fiche = eq.length ? [] : (s.fiche || []).map((f, i) => ({ f, i }));
+    const tete = fiche.filter(x => !x.f.libelle), roles = fiche.filter(x => x.f.libelle);
     return chapitre(chap, 'distribution', L.distribution, `<div class="wrap u-distrib">
       <h2 class="u-eti">${petit(mo(s))}${esc(L.distribution)}</h2>
-      ${tete.map(f => `<p class="u-d-tete">${f.valeur}</p>`).join('')}
-      ${s.avec ? `<p class="u-avec"><span class="k">${esc(s.avec.libelle)}</span>${s.avec.valeur}</p>` : ''}
-      ${eq.map(l => `<p class="u-avec">${esc(l)}</p>`).join('')}
-      ${roles.length ? `<dl class="u-fiche">${roles.map(f => `<div><dt>${esc(f.libelle)}</dt><dd>${f.valeur}</dd></div>`).join('')}</dl>` : ''}
-      ${(s.production || []).length ? `<div class="u-prod">${s.production.map(bloc).join('')}</div>` : ''}
-      ${(s.mentions || []).map(x => `<p class="u-mention">${x}</p>`).join('')}
-      <p class="u-signe">${esc(S.nom)}</p>
-      ${s.creditPhotos ? `<p class="u-credit">${esc(s.creditPhotos)}</p>` : ''}
+      ${tete.map(({ f, i }) => `<p class="u-d-tete"${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</p>`).join('')}
+      ${s.avec ? `<p class="u-avec"><span class="k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''}
+      ${eq.map((l, i) => `<p class="u-avec"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</p>`).join('')}
+      ${roles.length ? `<dl class="u-fiche">${roles.map(({ f, i }) => `<div><dt${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</dt><dd${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</dd></div>`).join('')}</dl>` : ''}
+      ${(s.production || []).length ? `<div class="u-prod">${s.production.map((p, i) => bloc(p, `shows.${s.slug}.production.${i}`)).join('')}</div>` : ''}
+      ${(s.mentions || []).map((x, i) => `<p class="u-mention"${edS(s, 'mentions', i)}>${x}</p>`).join('')}
+      <p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p>
+      ${s.creditPhotos ? `<p class="u-credit"${edS(s, 'creditPhotos')}>${esc(s.creditPhotos)}</p>` : ''}
     </div>`);
   }
-  const appel = s => `<section class="u-appel"><div class="wrap"><p class="u-signe">${esc(S.nom)}</p><a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
+  const appel = s => `<section class="u-appel"><div class="wrap"><p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p><a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
   const carteTournee = (s, lieux, passe) => lieux.length || passe.length ? carte({ lieux, passe, titre: s.titre }) : carte({ titre: s.titre, classe: 'attente', interactif: false });
 
   function ongletVoir(s, chap, pub) {
     const [a0, ...autres] = s.affirmations || [], sig = SIG[mo(s)] ? SIG[mo(s)](s) : '';
     let h = chapitre(chap, 'spectacle', L.leSpectacle, `<div class="wrap">
-        <p class="u-eti">${petit(mo(s))}<span>${esc(L.leSpectacle)}</span>${s.duree ? `<span class="u-duree">${esc(s.duree)}</span>` : ''}</p>
-        ${a0 ? `<h2 class="u-affirm ecrit">${ecrit(a0.texte)}</h2>` : `<h2 class="u-h2">${esc(s.titre)}</h2>`}
-        <div class="u-texte">${(s.texte || []).map((p, k) => k === 0 && p.length < 340 && !/^\s*</.test(p) ? `<p class="chapo">${p}</p>` : bloc(p)).join('')}</div>
+        <p class="u-eti">${petit(mo(s))}<span>${esc(L.leSpectacle)}</span>${s.duree ? `<span class="u-duree"${edS(s, 'duree')}>${esc(s.duree)}</span>` : ''}</p>
+        ${a0 ? `<h2 class="u-affirm ecrit"${edS(s, 'affirmations', 0, 'texte')}>${ecrit(a0.texte)}</h2>` : `<h2 class="u-h2"${edS(s, 'titre')}>${esc(s.titre)}</h2>`}
+        <div class="u-texte">${(s.texte || []).map((p, k) => k === 0 && p.length < 340 && !/^\s*</.test(p) ? `<p class="chapo"${edS(s, 'texte', k)}>${p}</p>` : bloc(p, `shows.${s.slug}.texte.${k}`)).join('')}</div>
       </div>`);
     if (sig) h += `<div class="sx sx-sig sx-${mo(s)}" data-scrolly data-fx="${mo(s)}"${mo(s) === 'chronologie' ? '' : ' aria-hidden="true"'}><div class="sx-pin">${sig}</div></div>`;
     // les photos en cartons, entre elles les vers ; le premier carton est dans l'ouverture
@@ -1574,96 +1612,105 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       while (pi < galerie.length) {
         if (pi === 0 || galerie.length - pi === 1) { items.push(fig(s, galerie[pi], 'plein')); pi += 1; }
         else { items.push(`<div class="u-duo">${fig(s, galerie[pi])}${fig(s, galerie[pi + 1])}</div>`); pi += 2; }
-        if (ci < cits.length) items.push(citation(cits[ci++]));
+        if (ci < cits.length) { items.push(citation(s, cits[ci], ci)); ci += 1; }
       }
-      while (ci < cits.length) items.push(citation(cits[ci++]));
-      autres.forEach(a => items.push(`<p class="u-aside ecrit">${ecrit(a.texte)}</p>`));
-      const credits = [...new Set(galerie.map(p => creditDe(s, p)).filter(Boolean))];
-      h += chapitre(chap, 'photos', L.photos, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.photos)}</h2><div class="u-photos">${items.join('')}${credits.map(c => `<p class="u-credit">${esc(c)}</p>`).join('')}</div></div>`);
+      while (ci < cits.length) { items.push(citation(s, cits[ci], ci)); ci += 1; }
+      autres.forEach((a, i) => items.push(`<p class="u-aside ecrit"${edS(s, 'affirmations', i + 1, 'texte')}>${ecrit(a.texte)}</p>`));
+      const credits = [];
+      galerie.forEach(p => { const k = cleCredit(p); if (s[k] && !credits.some(c => s[c] === s[k])) credits.push(k); });
+      h += chapitre(chap, 'photos', L.photos, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.photos)}</h2><div class="u-photos">${items.join('')}${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div></div>`);
     }
     if (s.video) h += chapitre(chap, 'video', L.bandeAnnonce, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.bandeAnnonce)}</h2>
-        <a class="u-video" href="${esc(s.video.url)}" target="_blank" rel="noopener"><img src="${D.photos[s.slug]}" alt="" loading="lazy"><span class="u-play">${LECTURE}</span><span class="u-video-t">${esc(s.video.titre)}</span></a></div>`);
+        <a class="u-video" href="${esc(s.video.url)}" target="_blank" rel="noopener"><img src="${D.photos[s.slug]}" alt="" loading="lazy"><span class="u-play">${LECTURE}</span><span class="u-video-t"${edS(s, 'video', 'titre')}>${esc(s.video.titre)}</span></a></div>`);
     // les dates tout public et la carte ; sans date, les lieux de diffusion et les tournées passées
     const sp = CARTE.spectacle(s.slug);
     const av = sp.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length), vus = new Set(av.map(x => x.l));
     const P = s.programmer || {};
-    if (s.statut) h += chapitre(chap, 'dates', L.dates, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p class="u-annonce">${esc(s.tournee.texte)}</p>` : ''}</div>
+    // sans date à venir, une liste vide (data-agenda) : en mode édition, on y ajoute la première
+    const sansListe = `<div data-agenda="${esc(s.slug)}"></div>`;
+    if (s.statut) h += chapitre(chap, 'dates', L.dates, `<div class="wrap u-tournee"><div><h2 class="u-h2"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}${sansListe}</div>
         <figure class="carte-sp">${carte({ titre: s.titre, classe: 'attente', interactif: false })}</figure></div>`);
-    else if (pub.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc((s.tournee && s.tournee.titre) || L.actuellementEnTournee)}</h2>${listeDates(pub)}
+    else if (pub.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap u-tournee"><div>${s.tournee && s.tournee.titre ? `<h2 class="u-h2"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</h2>` : `<h2 class="u-h2">${esc(L.actuellementEnTournee)}</h2>`}${listeDates(pub, s.slug)}
         <p class="u-cta"><a class="bu" href="${E.voir.href}">${esc(E.voir.texte)}${FLECHE}</a></p></div>
         <figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div>`);
-    else h += chapitre(chap, 'dates', L.lieuxDiffusion, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>${P.lieux ? `<p class="u-lieux">${esc(P.lieux)}</p>` : ''}</div>
+    else h += chapitre(chap, 'dates', L.lieuxDiffusion, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>${P.lieux ? `<p class="u-lieux"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sansListe}</div>
         <figure class="carte-sp">${carteTournee(s, sp.passe, [])}</figure></div>`);
     h += distribution(s, chap);
     return h;
   }
   function ongletProgrammer(s, chap) {
     const P = s.programmer || {}, sp = CARTE.spectacle(s.slug), vus = new Set(sp.aVenir.map(x => x.l));
-    const faits = [P.representations && `<li>${nombre(P.representations)}</li>`, s.statut && `<li>${esc(s.statut)}</li>`, s.duree && `<li>${esc(s.duree)}</li>`, P.format && `<li>${esc(P.format)}</li>`,
-      P.jauge && `<li>${esc(P.jauge)}</li>`, P.equipe && `<li>${esc(P.equipe)}</li>`, P.actualite && `<li>${esc(P.actualite)}</li>`].filter(Boolean);
+    const pr = (...k) => edS(s, 'programmer', ...k);
+    const faits = [P.representations && `<li${pr('representations')}>${nombre(P.representations)}</li>`, s.statut && `<li${edS(s, 'statut')}>${esc(s.statut)}</li>`, s.duree && `<li${edS(s, 'duree')}>${esc(s.duree)}</li>`, P.format && `<li${pr('format')}>${esc(P.format)}</li>`,
+      P.jauge && `<li${pr('jauge')}>${esc(P.jauge)}</li>`, P.equipe && `<li${pr('equipe')}>${esc(P.equipe)}</li>`, P.actualite && `<li${pr('actualite')}>${esc(P.actualite)}</li>`].filter(Boolean);
     const [a0] = s.affirmations || [];
     let h = chapitre(chap, 'spectacle', L.leSpectacle, `<div class="wrap u-prog">
         <div><p class="u-eti">${petit(mo(s))}<span>${esc(L.leSpectacle)}</span></p>
-          ${a0 ? `<h2 class="u-affirm ecrit">${ecrit(a0.texte)}</h2>` : `<h2 class="u-h2">${esc(s.titre)}</h2>`}
-          <div class="u-texte">${(s.texte || []).map(bloc).join('')}</div></div>
+          ${a0 ? `<h2 class="u-affirm ecrit"${edS(s, 'affirmations', 0, 'texte')}>${ecrit(a0.texte)}</h2>` : `<h2 class="u-h2"${edS(s, 'titre')}>${esc(s.titre)}</h2>`}
+          <div class="u-texte">${(s.texte || []).map((p, k) => bloc(p, `shows.${s.slug}.texte.${k}`)).join('')}</div></div>
         <ul class="u-faits">${faits.join('')}${s.video ? `<li>${lienVideo(s)}</li>` : ''}</ul>
       </div>`);
     h += distribution(s, chap);
     h += chapitre(chap, 'lieux', L.lieuxDiffusion, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>
-        ${P.representations ? `<p class="u-rep">${nombre(P.representations)}</p>` : ''}${P.lieux ? `<p class="u-lieux">${esc(P.lieux)}</p>` : ''}
-        ${s.statut && s.tournee && s.tournee.texte ? `<p class="u-annonce">${esc(s.tournee.texte)}</p>` : ''}</div>
+        ${P.representations ? `<p class="u-rep"${pr('representations')}>${nombre(P.representations)}</p>` : ''}${P.lieux ? `<p class="u-lieux"${pr('lieux')}>${esc(P.lieux)}</p>` : ''}
+        ${s.statut && s.tournee && s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}</div>
         <figure class="carte-sp">${carteTournee(s, sp.aVenir, sp.passe.filter(x => !vus.has(x.l)))}</figure></div>`);
     if (P.ficheTechnique && s.dossier && (D.dossiers || {})[s.dossier] && D.dossiers[s.dossier].accueil) h += conditions(s, chap, 'technique', L.ficheTechnique);
     return h + appel(s);
   }
   function ongletEtablissement(s, chap) {
     const A = s.actionCulturelle || {}, sco = D.dates.filter(d => d.slug === s.slug && d.scolaire), B = s.dossier && (D.dossiers || {})[s.dossier];
+    const ac = (...k) => edS(s, 'actionCulturelle', ...k), aType = !(A.aCompleter || !A.type);
     let h = chapitre(chap, 'action', L.actionCulturelle, `<div class="wrap">
         <p class="u-eti">${petit(mo(s))}<span>${esc(L.actionCulturelle)}</span></p>
-        <h2 class="u-ac-type">${esc(A.aCompleter || !A.type ? L.aCompleter : A.type)}</h2>
-        ${A.public || A.lieu || A.statut ? `<ul class="u-ac-puces">${A.public ? `<li><span class="k">${esc(L.public)}</span>${esc(A.public)}</li>` : ''}${A.lieu && L.lieu[A.lieu] ? `<li>${esc(L.lieu[A.lieu])}</li>` : ''}${A.statut ? `<li>${esc(A.statut)}</li>` : ''}</ul>` : ''}
-        ${(A.textes || []).length ? `<div class="u-texte">${A.textes.map(t => bloc(t.texte)).join('')}</div>` : ''}
-        ${A.formule && A.formule.length ? `<div class="u-formule">${A.formule.map(l => `<p>${esc(l)}</p>`).join('')}</div>` : ''}
-        ${A.dispositifs && A.dispositifs.length ? `<div class="u-disp"><h3 class="u-eti">${esc(L.dispositifs)}</h3><ul>${A.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+        <h2 class="u-ac-type"${aType ? ac('type') : ''}>${esc(aType ? A.type : L.aCompleter)}</h2>
+        ${A.public || A.lieu || A.statut ? `<ul class="u-ac-puces">${A.public ? `<li><span class="k">${esc(L.public)}</span><span${ac('public')}>${esc(A.public)}</span></li>` : ''}${A.lieu && L.lieu[A.lieu] ? `<li>${esc(L.lieu[A.lieu])}</li>` : ''}${A.statut ? `<li${ac('statut')}>${esc(A.statut)}</li>` : ''}</ul>` : ''}
+        ${(A.textes || []).length ? `<div class="u-texte">${A.textes.map((t, i) => bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.${i}.texte`)).join('')}</div>` : ''}
+        ${A.formule && A.formule.length ? `<div class="u-formule">${A.formule.map((l, i) => `<p${ac('formule', i)}>${esc(l)}</p>`).join('')}</div>` : ''}
+        ${A.dispositifs && A.dispositifs.length ? `<div class="u-disp"><h3 class="u-eti">${esc(L.dispositifs)}</h3><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
       </div>`, B ? false : undefined);
-    if (sco.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap"><h2 class="u-h2">${esc(L.enEtablissement)}</h2>${listeDates(sco)}</div>`, B ? false : undefined);
+    if (sco.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap"><h2 class="u-h2">${esc(L.enEtablissement)}</h2>${listeDates(sco, s.slug)}</div>`, B ? false : undefined);
     if (B) h += dossier(s, chap, B);
     else h += distribution(s, chap);
     return h + appel(s);
   }
   // le dossier scolaire, à la charte de la compagnie : pourquoi, programmes, présentation, consignes, ateliers, accueil
   function dossier(s, chap, B) {
-    const photo = id => (s.photos || []).find(p => p.id === id), paras = Ls => (Ls || []).map(bloc).join('');
+    const dk = `dossiers.${s.dossier}`, edD = (...k) => ed([dk, ...k].join('.'));
+    const photo = id => (s.photos || []).find(p => p.id === id), paras = (Ls, k) => (Ls || []).map((p, j) => bloc(p, `${k}.${j}`)).join('');
     const [dureeMot, ...dureeReste] = String(B.duree || '').split(' ');
     const musique = photo('d-musique'), ateliersPh = (s.photos || []).filter(p => p.atelier);
-    const pres = [B.synopsis, B.adaptation, B.espace, B.alexandrin].filter(Boolean);
+    const pres = ['synopsis', 'adaptation', 'espace', 'alexandrin'].filter(k => B[k]);
     let h = chapitre(chap, 'dossier', L.dossierScolaire, `<div class="wrap">
         <h2 class="u-eti">${petit(mo(s))}${esc(L.dossierScolaire)}</h2>
         <div class="dos-couv"><div class="dos-couv-fond" aria-hidden="true"><img src="${D.photos[s.slug]}" alt=""></div>
-          <p class="dos-type">${esc(B.type)}</p><p class="dos-titre">${esc(B.titre)}</p><p class="dos-auteur">${esc(B.auteur)}</p><p class="dos-creation">${esc(B.creation)}</p>
-          <p class="dos-duree"><span>${esc(dureeMot)}</span> <span>${esc(dureeReste.join(' '))}</span></p><p class="dos-format">${esc(B.format)}</p><p class="dos-public">${esc(B.public)}</p></div>
+          <p class="dos-type"${edD('type')}>${esc(B.type)}</p><p class="dos-titre"${edD('titre')}>${esc(B.titre)}</p><p class="dos-auteur"${edD('auteur')}>${esc(B.auteur)}</p><p class="dos-creation"${edD('creation')}>${esc(B.creation)}</p>
+          <p class="dos-duree"${edD('duree')}><span>${esc(dureeMot)}</span> <span>${esc(dureeReste.join(' '))}</span></p><p class="dos-format"${edD('format')}>${esc(B.format)}</p><p class="dos-public"${edD('public')}>${esc(B.public)}</p></div>
         <div class="dos-grille">
-          <div class="boite"><dl class="dos-fiche">${(B.fiche || []).map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>
-          <div class="boite dos-prod">${(B.production || []).map(l => `<p>${esc(l)}</p>`).join('')}${B.partenaires ? `<p>${esc(B.partenaires)}</p>` : ''}</div>
+          <div class="boite"><dl class="dos-fiche">${(B.fiche || []).map(([k, v], i) => `<div><dt${edD('fiche', i, 0)}>${esc(k)}</dt><dd${edD('fiche', i, 1)}>${esc(v)}</dd></div>`).join('')}</dl></div>
+          <div class="boite dos-prod">${(B.production || []).map((l, i) => `<p${edD('production', i)}>${esc(l)}</p>`).join('')}${B.partenaires ? `<p${edD('partenaires')}>${esc(B.partenaires)}</p>` : ''}</div>
         </div>
-        ${B.pourquoi ? `<section class="dos-s" aria-labelledby="dos-pq"><h3 class="dos-h3" id="dos-pq">${esc(B.pourquoi.titre)}</h3><div class="boite">${B.pourquoi.sections.map(x => `<h4 class="dos-h4">${esc(x.titre)}</h4><p>${x.texte}</p>`).join('')}</div></section>` : ''}
-        ${B.programmes ? `<section class="dos-s" aria-labelledby="dos-pg"><h3 class="dos-h3" id="dos-pg">${esc(B.programmes.titre)}</h3><div class="table-wrap"><table class="dos-table" aria-labelledby="dos-pg">
-          ${B.programmes.niveaux.map(n => `<tbody>${n.lignes.map((l, i) => `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${n.lignes.length}">${esc(n.niveau)}</th>`}<th scope="row">${esc(l.matiere)}</th><td>${esc(l.intitule)}</td><td>${esc(l.objectif)}</td></tr>`).join('')}</tbody>`).join('')}
+        ${B.pourquoi ? `<section class="dos-s" aria-labelledby="dos-pq"><h3 class="dos-h3" id="dos-pq"${edD('pourquoi', 'titre')}>${esc(B.pourquoi.titre)}</h3><div class="boite">${B.pourquoi.sections.map((x, i) => `<h4 class="dos-h4"${edD('pourquoi', 'sections', i, 'titre')}>${esc(x.titre)}</h4><p${edD('pourquoi', 'sections', i, 'texte')}>${x.texte}</p>`).join('')}</div></section>` : ''}
+        ${B.programmes ? `<section class="dos-s" aria-labelledby="dos-pg"><h3 class="dos-h3" id="dos-pg"${edD('programmes', 'titre')}>${esc(B.programmes.titre)}</h3><div class="table-wrap"><table class="dos-table" aria-labelledby="dos-pg">
+          ${B.programmes.niveaux.map((n, ni) => `<tbody>${n.lignes.map((l, i) => { const lg = (...k) => edD('programmes', 'niveaux', ni, 'lignes', i, ...k);
+            return `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${n.lignes.length}"${edD('programmes', 'niveaux', ni, 'niveau')}>${esc(n.niveau)}</th>`}<th scope="row"${lg('matiere')}>${esc(l.matiere)}</th><td${lg('intitule')}>${esc(l.intitule)}</td><td${lg('objectif')}>${esc(l.objectif)}</td></tr>`; }).join('')}</tbody>`).join('')}
           </table></div></section>` : ''}
-        ${pres.length ? `<section class="dos-s dos-pres">${pres.map(x => `<div class="boite"><h3 class="dos-h4">${esc(x.titre)}</h3>${x.chapeau ? `<p class="dos-chapeau">${esc(x.chapeau)}</p>` : ''}${paras(x.paragraphes)}${x === B.espace && musique ? fig(s, musique) : ''}</div>`).join('')}</section>` : ''}
-        ${musique ? `<p class="u-credit">${esc(s.creditDossier || '')}</p>` : ''}
+        ${pres.length ? `<section class="dos-s dos-pres">${pres.map(k => { const x = B[k];
+          return `<div class="boite"><h3 class="dos-h4"${edD(k, 'titre')}>${esc(x.titre)}</h3>${x.chapeau ? `<p class="dos-chapeau"${edD(k, 'chapeau')}>${esc(x.chapeau)}</p>` : ''}${paras(x.paragraphes, `${dk}.${k}.paragraphes`)}${k === 'espace' && musique ? fig(s, musique) : ''}</div>`; }).join('')}</section>` : ''}
+        ${musique ? `<p class="u-credit"${s.creditDossier ? edS(s, 'creditDossier') : ''}>${esc(s.creditDossier || '')}</p>` : ''}
       </div>`, false);
     const C = B.consignes, At = B.ateliers;
     if (C || At) h += chapitre(chap, 'ateliers', L.ateliers, `<div class="wrap">
-        <h2 class="u-eti">${petit(mo(s))}${esc(At ? At.titre : L.ateliers)}</h2>
-        ${C ? `<section class="dos-s" style="margin-top:0" aria-labelledby="dos-cs"><h3 class="dos-h3" id="dos-cs">${esc(C.titre)}</h3><div class="boite">
-          <p class="dos-note">${esc(C.note)}</p><p>${C.intro}</p>
-          <ul class="dos-demandes">${(C.demandes || []).map(d => `<li>${esc(d)}</li>`).join('')}</ul>
-          <p>${C.apres}</p><ul class="dos-axes">${(C.axes || []).map(a => `<li>${a}</li>`).join('')}</ul><p>${C.atelier}</p></div></section>` : ''}
-        ${At ? `<div class="dos-ateliers">${At.liste.map((a, i) => `<article class="atelier"><span class="atelier-n" aria-hidden="true">${i + 1}</span><h3 class="dos-h4">${a.titre}</h3>${paras(a.paragraphes)}
-            ${(a.etapes || []).map(e => `<div class="etape"><h4>${e.titre}</h4><p>${esc(e.texte)}</p></div>`).join('')}
-            ${a.points ? `<ul>${a.points.map(p => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}</article>${ateliersPh[i] ? fig(s, ateliersPh[i], 'atelier-ph') : ''}`).join('')}</div>` : ''}
-        ${ateliersPh.length && s.creditDossier ? `<p class="u-credit" style="margin-top:18px">${esc(s.creditDossier)}</p>` : ''}
+        <h2 class="u-eti">${petit(mo(s))}${At ? `<span${edD('ateliers', 'titre')}>${esc(At.titre)}</span>` : esc(L.ateliers)}</h2>
+        ${C ? `<section class="dos-s" style="margin-top:0" aria-labelledby="dos-cs"><h3 class="dos-h3" id="dos-cs"${edD('consignes', 'titre')}>${esc(C.titre)}</h3><div class="boite">
+          <p class="dos-note"${edD('consignes', 'note')}>${esc(C.note)}</p><p${edD('consignes', 'intro')}>${C.intro}</p>
+          <ul class="dos-demandes">${(C.demandes || []).map((d, i) => `<li${edD('consignes', 'demandes', i)}>${esc(d)}</li>`).join('')}</ul>
+          <p${edD('consignes', 'apres')}>${C.apres}</p><ul class="dos-axes">${(C.axes || []).map((a, i) => `<li${edD('consignes', 'axes', i)}>${a}</li>`).join('')}</ul><p${edD('consignes', 'atelier')}>${C.atelier}</p></div></section>` : ''}
+        ${At ? `<div class="dos-ateliers">${At.liste.map((a, i) => { const ak = (...k) => edD('ateliers', 'liste', i, ...k);
+          return `<article class="atelier"><span class="atelier-n" aria-hidden="true">${i + 1}</span><h3 class="dos-h4"${ak('titre')}>${a.titre}</h3>${paras(a.paragraphes, `${dk}.ateliers.liste.${i}.paragraphes`)}
+            ${(a.etapes || []).map((e, j) => `<div class="etape"><h4${ak('etapes', j, 'titre')}>${e.titre}</h4><p${ak('etapes', j, 'texte')}>${esc(e.texte)}</p></div>`).join('')}
+            ${a.points ? `<ul>${a.points.map((p, j) => `<li${ak('points', j)}>${esc(p)}</li>`).join('')}</ul>` : ''}</article>${ateliersPh[i] ? fig(s, ateliersPh[i], 'atelier-ph') : ''}`; }).join('')}</div>` : ''}
+        ${ateliersPh.length && s.creditDossier ? `<p class="u-credit" style="margin-top:18px"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}
       </div>`, false);
     if (B.accueil) h += conditions(s, chap, 'conditions', L.conditionsAccueil);
     return h;
@@ -1671,11 +1718,12 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   // les conditions d'accueil, la fiche technique du dossier et la photo de l'implantation
   function conditions(s, chap, id, nom) {
     const AC = D.dossiers[s.dossier].accueil, imp = (s.photos || []).find(p => p.id === 'd-implantation-1');
+    const ea = (...k) => ed(['dossiers', s.dossier, 'accueil', ...k].join('.'));
     return chapitre(chap, id, nom, `<div class="wrap">
-        <h2 class="u-eti">${petit(mo(s))}${esc(AC.titre)}</h2>
+        <h2 class="u-eti">${petit(mo(s))}<span${ea('titre')}>${esc(AC.titre)}</span></h2>
         <div class="dos-accueil">
-          <div class="boite"><p class="dos-fiche-t">${esc(AC.fiche)}</p>${AC.blocs.map(b => `${b.titre ? `<h3 class="dos-h4">${esc(b.titre)}</h3>` : ''}<ul>${b.lignes.map(l => `<li>${l}</li>`).join('')}</ul>`).join('')}</div>
-          <div>${AC.alerte ? `<p class="dos-alerte">${ALERTE}<span>${AC.alerte}</span></p>` : ''}${fig(s, imp)}${imp && s.creditDossier ? `<p class="u-credit" style="margin-top:10px">${esc(s.creditDossier)}</p>` : ''}</div>
+          <div class="boite"><p class="dos-fiche-t"${ea('fiche')}>${esc(AC.fiche)}</p>${AC.blocs.map((b, i) => `${b.titre ? `<h3 class="dos-h4"${ea('blocs', i, 'titre')}>${esc(b.titre)}</h3>` : ''}<ul>${b.lignes.map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${l}</li>`).join('')}</ul>`).join('')}</div>
+          <div>${AC.alerte ? `<p class="dos-alerte">${ALERTE}<span${ea('alerte')}>${AC.alerte}</span></p>` : ''}${fig(s, imp)}${imp && s.creditDossier ? `<p class="u-credit" style="margin-top:10px"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}</div>
         </div>
       </div>`, false);
   }
@@ -1693,7 +1741,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       ${ouverture(s, entree, pub)}
       ${onglets(s, entree)}
       ${corps}
-      <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="#/spectacle/${nx.slug}/${entree}"><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span>${esc(nx.creation)}</span></span><b>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
+      <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="#/spectacle/${nx.slug}/${entree}"><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span${edS(nx, 'creation')}>${esc(nx.creation)}</span></span><b${edS(nx, 'titre')}>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
       ${sommaire(s, entree, chap)}
     </article>`;
     // les cartes : reliées à la liste des dates, elles poussent quand elles arrivent à l'écran
@@ -1775,10 +1823,10 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       entrees: S.entrees.map(e => lien(e, true)).join(''),
       barre: S.entrees.map(e => lien(e, false)).join(''),
       second: S.menu.map(x => `<a href="${x.href}" data-id="${x.id}">${esc(x.texte)}</a>`).join(''),
-      pied: `<div><p><strong>${esc(co.nom)}</strong></p><p>${co.adresse.map(esc).join('<br>')}</p>
+      pied: `<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
         <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
-        <div><p>${S.partenaires}</p></div>
-        <div><p class="petit">${co.legal.map(esc).join('<br>')}</p><p class="liens">${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}</p></div>`,
+        <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
+        <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
     };
     const tout = JSON.stringify(parts) + S.titreSuffixe + L.menu;
     if (tout === cadreFait) return;
@@ -1877,6 +1925,8 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   const fermerMenu = () => { $('#top').classList.remove('ouvert'); $('.menu').setAttribute('aria-expanded', 'false'); };
   $('.menu').addEventListener('click', e => { const o = $('#top').classList.toggle('ouvert'); e.currentTarget.setAttribute('aria-expanded', String(o)); });
   $('#second').addEventListener('click', e => { if (e.target.closest('a')) fermerMenu(); });
+  // « Modifier le site » : la connexion puis l'édition sur place (EDITION, commun aux maquettes)
+  $('#pied').addEventListener('click', e => { if (e.target.closest('[data-modifier]') && typeof EDITION !== 'undefined') EDITION.ouvrir(); });
   addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if ($('#top').classList.contains('ouvert')) { fermerMenu(); $('.menu').focus(); }

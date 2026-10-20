@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Accueil - crescite</title>
 <meta name="theme-color" content="#0b0809">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,600&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="polices" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,700;1,6..96,600&family=Figtree:wght@400;500;600;700&family=Ubuntu:wght@700&family=Cormorant+Garamond:wght@600&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English&family=IM+Fell+French+Canon&family=Space+Grotesk:wght@600&display=swap">
 <style>
+/* Maquette 07 — Le noir et la lumière. Le noir de la salle, une photo de spectacle en plein écran, la lumière qui révèle.
+   Chaque spectacle apporte sa lumière : ses couleurs, sa police de titre, son motif projeté comme un gobo sur la scène. */
 :root{
-  --noir:#0b0809;--blanc:#f4eee9;--gris:#a59a96;
+  --noir:#0b0809;--noir2:#141011;--blanc:#f4eee9;--gris:#a59a96;
   --blanc-doux:rgba(244,238,233,.84);
   --trait:rgba(244,238,233,.15);--trait-fort:rgba(244,238,233,.34);
   --lumiere:#ffd9a8;--c:#ffd9a8;
@@ -17,12 +21,14 @@
   --pad:clamp(1rem,4.2vw,4rem);
   --max:86rem;
   --tete:5.25rem;
+  --barre:0px;
   --ease:cubic-bezier(.22,.61,.36,1);
   --fs-scene:clamp(2.75rem,6.6vw,6.25rem);
-  --fs-h1:clamp(3rem,8.2vw,7.75rem);
   --fs-h2:clamp(2.25rem,4.6vw,4.25rem);
   --fs-h3:clamp(1.5rem,2.4vw,2.25rem);
   --fs-page:clamp(2.75rem,6.6vw,6rem);
+  /* l'édition sur place (EDITION) prend le noir et la lumière de la maquette */
+  --ed-fond:#171213;--ed-encre:#f4eee9;--ed-accent:#ffd9a8;--ed-sur-accent:#0b0809;--ed-police:'Figtree',system-ui,sans-serif;--ed-rayon:2px;--ed-trait:rgba(244,238,233,.26);
 }
 *,*::before,*::after{box-sizing:border-box}
 html{background:var(--noir);-webkit-text-size-adjust:100%;overflow-x:clip}
@@ -31,7 +37,8 @@ body{margin:0;background:var(--noir);color:var(--blanc);font-family:var(--sans);
 img,svg{display:block;max-width:100%}
 a{color:inherit}
 button,input,textarea{font:inherit;color:inherit}
-p,h1,h2,h3,dl,dd,ul,ol,figure,blockquote{margin:0}
+p,h1,h2,h3,h4,h5,dl,dd,ul,ol,figure,blockquote{margin:0}
+h1,h2,h3,h4,h5{font-weight:inherit}
 ul,ol{padding:0;list-style:none}
 [hidden]{display:none!important}
 :focus{outline:none}
@@ -45,37 +52,55 @@ ul,ol{padding:0;list-style:none}
 .sur{font-size:.875rem;font-weight:600;line-height:1.3;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
 .sur a{text-decoration:none}
 .sur a:hover{color:var(--blanc)}
+.etiq{display:block;font-size:.75rem;font-weight:600;line-height:1.35;letter-spacing:.16em;text-transform:uppercase;color:var(--u-vif,var(--gris))}
 .lien{color:var(--blanc);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.28em;text-decoration-color:var(--trait-fort);transition:text-decoration-color .25s}
 .lien:hover{text-decoration-color:var(--c)}
 .fl{display:inline-block;transition:transform .3s var(--ease)}
 .prose{overflow-wrap:break-word}
 .prose a{color:var(--blanc);text-decoration:underline;text-decoration-color:var(--trait-fort);text-underline-offset:.22em}
 .prose a:hover{text-decoration-color:var(--c)}
-.prose strong{font-weight:600;color:var(--blanc)}
+.prose strong{font-weight:700;color:var(--blanc)}
+.prose p+p,.prose p+div,.prose div+p{margin-top:1.1rem}
+.prose ul{margin-top:.6rem}
 
-/* En-tête */
+/* En-tête : la marque, les trois entrées (la navigation première), le menu second */
 .tete{position:fixed;inset:0 0 auto;z-index:50;border-bottom:1px solid transparent;transition:background-color .4s var(--ease),border-color .4s var(--ease)}
-.tete.plein{background:rgba(11,8,9,.94);border-bottom-color:var(--trait)}
-.tete-in{display:flex;align-items:center;justify-content:space-between;gap:2rem;height:var(--tete)}
-.marque{position:relative;z-index:2;display:flex;align-items:center;gap:.8rem;flex:none;color:var(--blanc);text-decoration:none}
-.marque-pieuvre{width:4.5rem}
-.marque-mot{width:5.6rem;margin-top:.2rem}
-.marque-mot.texte{width:auto;font-weight:600;font-size:1.3rem;line-height:1}
+.tete::before{content:"";position:absolute;inset:0 0 -2rem;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(11,8,9,.7),rgba(11,8,9,0));transition:opacity .4s}
+.tete.plein{background:rgba(11,8,9,.95);border-bottom-color:var(--trait)}
+.tete.plein::before{opacity:0}
+.tete-in{display:flex;align-items:center;gap:clamp(1rem,2vw,2rem);height:var(--tete)}
+.marque{position:relative;z-index:4;display:flex;align-items:center;gap:.7rem;flex:none;color:var(--blanc);text-decoration:none}
+.marque-pieuvre{width:3.9rem}
+.marque-mot{width:4.9rem;margin-top:.2rem}
+.marque-mot.texte{width:auto;font-weight:600;font-size:1.25rem;line-height:1}
 .marque svg{width:100%;height:auto}
-.nav ul{display:flex;gap:clamp(1.25rem,2.1vw,2.25rem)}
-.nav a{position:relative;display:block;padding:.4rem 0;font-weight:600;font-size:1rem;letter-spacing:.02em;white-space:nowrap;text-decoration:none;color:var(--blanc)}
-.nav a::after{content:"";position:absolute;left:0;right:0;bottom:.1rem;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
-.nav a:hover::after{transform:scaleX(1)}
-.nav a[aria-current="page"]{color:#fff}
-.nav a[aria-current="page"]::after{transform:scaleX(1);height:2px;bottom:0;background:var(--lumiere);box-shadow:0 0 12px 1px rgba(255,217,168,.7)}
+.entrees{flex:1 1 0;min-width:0;display:flex;justify-content:flex-end;overflow:hidden;padding-block:.9rem}
+.entrees ul{display:flex;flex:none;gap:clamp(1rem,1.7vw,2rem)}
+.entree,.onglet{position:relative;display:flex;align-items:center;gap:.6rem;padding:.6rem 0;white-space:nowrap;text-decoration:none;color:var(--blanc-doux);font-weight:600;font-size:.9375rem;letter-spacing:.01em;transition:color .3s var(--ease)}
+.lampe{flex:none;width:.55rem;height:.55rem;border-radius:50%;background:var(--e);opacity:.5;transition:opacity .3s,box-shadow .3s}
+.entree::after,.onglet::after{content:"";position:absolute;left:1.15rem;right:0;bottom:.2rem;height:2px;background:var(--e);box-shadow:0 0 12px 1px var(--e);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+.entree:hover,.onglet:hover{color:#fff}
+.entree:hover .lampe,.onglet:hover .lampe{opacity:1;box-shadow:0 0 12px 2px var(--e)}
+.entree[aria-current],.onglet[aria-current]{color:#fff}
+.entree[aria-current] .lampe,.onglet[aria-current] .lampe{opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--e) 28%,transparent),0 0 18px 4px var(--e)}
+.entree[aria-current]::after,.onglet[aria-current]::after{transform:scaleX(1)}
+.entree[aria-current="true"]::after{opacity:.55}
+.court{display:none}
+.tete--court .entree .long{display:none}
+.tete--court .entree .court{display:inline}
+.second{flex:none;padding-left:clamp(1rem,1.6vw,1.75rem);border-left:1px solid var(--trait)}
+.second ul{display:flex;gap:1.1rem}
+.second a{position:relative;display:block;padding:.4rem 0;font-weight:500;font-size:.8125rem;letter-spacing:.06em;color:var(--gris);text-decoration:none;white-space:nowrap;transition:color .3s}
+.second a:hover,.second a[aria-current]{color:var(--blanc)}
+.second a[aria-current]::after{content:"";position:absolute;left:0;right:0;bottom:.1rem;height:1px;background:var(--lumiere);box-shadow:0 0 8px rgba(255,217,168,.7)}
 .menu-btn{display:none}
 
-/* La scène : une photo à la fois, plein écran */
-.scene{position:relative;display:grid;grid-template-rows:1fr auto;height:100vh;height:100svh;min-height:36rem;overflow:hidden;background:var(--noir);isolation:isolate}
+/* La scène : une photo à la fois, plein écran, le halo qui suit la main */
+.scene{position:relative;display:grid;grid-template-rows:1fr auto;height:100vh;height:100svh;min-height:36rem;overflow:hidden;background:var(--noir);isolation:isolate;--spot:#ffefdc}
 .scene-visuel{position:absolute;inset:0;z-index:0}
 .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s var(--ease)}
 .ph.on{opacity:1}
-.spot{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;opacity:.45;transition:opacity 1s var(--ease);background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),rgba(255,239,220,.95) 0,rgba(255,239,220,.42) 11vmax,rgba(255,239,220,0) 27vmax)}
+.spot{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;opacity:.45;transition:opacity 1s var(--ease);background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),color-mix(in srgb,var(--spot) 95%,transparent) 0,color-mix(in srgb,var(--spot) 42%,transparent) 11vmax,transparent 27vmax)}
 .scene.lumiere .spot{opacity:1}
 .scene.allumage .spot{animation:allumage 2.6s var(--ease) both}
 @keyframes allumage{0%{opacity:0}28%{opacity:1}100%{opacity:.45}}
@@ -84,27 +109,29 @@ ul,ol{padding:0;list-style:none}
   linear-gradient(0deg,rgba(11,8,9,.97) 0,rgba(11,8,9,.86) 13%,rgba(11,8,9,.42) 40%,rgba(11,8,9,0) 64%),
   linear-gradient(90deg,rgba(11,8,9,.8) 0,rgba(11,8,9,.4) 36%,rgba(11,8,9,0) 62%)}
 .grain{position:absolute;inset:0;pointer-events:none;opacity:.11;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-.credit{position:absolute;right:max(.85rem,calc(var(--pad) / 2.6));bottom:2rem;z-index:2;writing-mode:vertical-rl;transform:rotate(180deg);font-size:.75rem;letter-spacing:.08em;color:rgba(244,238,233,.66);text-shadow:0 0 6px rgba(0,0,0,.85)}
-.scene--accueil .credit{bottom:6.25rem}
-.scene-corps{position:relative;z-index:2;align-self:end;padding-bottom:clamp(2rem,4.5vh,3.25rem)}
-.scene-txt{max-width:50rem;transition:opacity .32s var(--ease),transform .32s var(--ease)}
+.credit{position:absolute;right:max(.85rem,calc(var(--pad) / 2.6));bottom:2rem;z-index:2;writing-mode:vertical-rl;transform:rotate(180deg);font-size:.75rem;letter-spacing:.08em;color:rgba(244,238,233,.7);text-shadow:0 0 6px rgba(0,0,0,.85)}
+.scene--accueil .credit,.scene--spectacle .credit{bottom:6.25rem}
+.scene-corps{position:relative;z-index:2;align-self:end;padding-top:calc(var(--tete) + 1.5rem);padding-bottom:clamp(2rem,4.5vh,3.25rem)}
+.scene-txt{max-width:52rem;transition:opacity .32s var(--ease),transform .32s var(--ease)}
 .scene-txt.sort{opacity:0;transform:translateY(.5rem)}
-.scene-sur{display:flex;align-items:center;gap:.9rem;font-weight:600;font-size:.875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--blanc-doux)}
+.scene-sur{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .9rem;font-weight:600;font-size:.875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--blanc-doux)}
 .scene-sur::before{content:"";flex:none;width:2.5rem;height:1px;background:var(--c);box-shadow:0 0 8px var(--c);transition:background-color .6s}
-.scene-titre{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-scene);line-height:.98;letter-spacing:-.012em;margin-top:1rem;text-wrap:balance;overflow-wrap:break-word}
+.scene-titre{font-family:var(--u-police,var(--serif));font-style:var(--u-style,italic);font-weight:var(--u-graisse,600);font-size:var(--fs-scene);line-height:1;letter-spacing:-.012em;margin-top:1rem;text-wrap:balance;overflow-wrap:break-word;color:var(--u-hero,var(--blanc))}
 .scene-titre .ligne{display:block}
-.scene-sous{font-size:1.25rem;line-height:1.45;color:var(--blanc-doux);margin-top:1rem;max-width:38rem}
+.scene-sous{font-size:1.25rem;line-height:1.45;color:var(--blanc-doux);margin-top:1rem;max-width:40rem}
+.scene-accroche{max-width:40rem;margin-top:1rem;font-size:1.125rem;line-height:1.55;color:var(--blanc-doux)}
 .scene-date{margin-top:1.1rem;font-size:1.0625rem;color:var(--blanc)}
-.scene-statut{display:inline-flex;align-items:center;gap:.7rem;margin-top:1.25rem;font-weight:600;font-size:.875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
+.scene-statut{display:inline-flex;align-items:center;gap:.7rem;margin-top:1.1rem;font-weight:600;font-size:.875rem;letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
 .scene-statut::before{content:"";width:.55rem;height:.55rem;border-radius:50%;background:var(--c);box-shadow:0 0 14px 3px var(--c);animation:veille 2.4s ease-in-out infinite}
 @keyframes veille{0%,100%{opacity:1}50%{opacity:.4}}
-.btn{display:inline-flex;align-items:center;gap:.85rem;margin-top:1.75rem;padding:1rem 1.5rem;border:1px solid rgba(244,238,233,.72);background:rgba(11,8,9,.2);color:var(--blanc);font-weight:600;font-size:1rem;line-height:1;letter-spacing:.02em;text-decoration:none;cursor:pointer;transition:background-color .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease),box-shadow .3s var(--ease)}
+.btn{display:inline-flex;align-items:center;gap:.85rem;margin-top:1.6rem;padding:1rem 1.5rem;border:1px solid rgba(244,238,233,.72);background:rgba(11,8,9,.2);color:var(--blanc);font-weight:600;font-size:1rem;line-height:1;letter-spacing:.02em;text-decoration:none;cursor:pointer;transition:background-color .3s var(--ease),border-color .3s var(--ease),color .3s var(--ease),box-shadow .3s var(--ease)}
+.btn::first-letter{text-transform:uppercase}
 .btn:hover{background:var(--c);border-color:var(--c);color:var(--noir);box-shadow:0 0 28px color-mix(in srgb,var(--c) 45%,transparent)}
 .btn:hover .fl{transform:translateX(.25rem)}
 .programme{position:relative;z-index:2;border-top:1px solid var(--trait)}
 .programme-in{display:flex;align-items:center;gap:1.25rem;padding-block:.9rem 1.15rem}
 .titres{display:flex;flex-wrap:wrap;gap:.2rem clamp(1rem,1.6vw,1.75rem);flex:1;min-width:0}
-.titre{position:relative;appearance:none;background:none;border:0;margin:0;padding:.45rem 0 .55rem;cursor:pointer;white-space:nowrap;color:rgba(244,238,233,.62);font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1rem,1.15vw,1.0625rem);line-height:1.2;transition:color .3s var(--ease)}
+.titre{position:relative;appearance:none;background:none;border:0;margin:0;padding:.45rem 0 .55rem;cursor:pointer;white-space:nowrap;color:rgba(244,238,233,.66);font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1rem,1.15vw,1.0625rem);line-height:1.2;transition:color .3s var(--ease)}
 .titre::after,.titre .fil{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--c);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease),opacity .4s}
 .titre:hover,.titre[aria-selected="true"]{color:var(--blanc)}
 .titre:hover::after,.titre[aria-selected="true"]::after{transform:scaleX(1)}
@@ -115,57 +142,87 @@ ul,ol{padding:0;list-style:none}
 .pause{flex:none;display:grid;place-items:center;width:2.5rem;height:2.5rem;border:1px solid var(--trait-fort);border-radius:50%;background:none;cursor:pointer;transition:border-color .3s}
 .pause:hover{border-color:var(--blanc)}
 .pause svg{width:.75rem;height:.75rem;fill:currentColor}
+/* le titre d'un spectacle se révèle comme sous un projecteur qui le balaie */
+@keyframes devoile{from{-webkit-mask-position:100% 0;mask-position:100% 0}to{-webkit-mask-position:0 0;mask-position:0 0}}
+@keyframes monte{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
+.revele .ligne{-webkit-mask-image:linear-gradient(90deg,#000 45%,transparent 55%);mask-image:linear-gradient(90deg,#000 45%,transparent 55%);-webkit-mask-size:240% 100%;mask-size:240% 100%;-webkit-mask-position:0 0;mask-position:0 0;animation:devoile .95s cubic-bezier(.5,0,.25,1) both;animation-delay:calc(.08s + var(--i,0) * .2s)}
+.scene-accroche.revele{animation:monte .8s var(--ease) .25s both}
 
-/* Les trois portes : trois lumières */
-.portes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--trait)}
-.portes li{min-width:0}
-.portes li + li{border-left:1px solid var(--trait)}
-.porte{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:1rem;height:100%;min-height:clamp(10rem,16vw,14rem);padding:3.5rem clamp(1.25rem,3vw,3rem) 2rem;text-decoration:none;color:rgba(244,238,233,.74);isolation:isolate;overflow:hidden;transition:color .4s var(--ease)}
-.porte::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(70% 110% at clamp(1.5rem,3.2vw,3.3rem) 0,color-mix(in srgb,var(--pv) 30%,transparent),transparent 72%);opacity:0;transition:opacity .6s var(--ease)}
-.porte::after{content:"";position:absolute;top:1.7rem;left:clamp(1.25rem,3vw,3rem);width:.55rem;height:.55rem;border-radius:50%;background:var(--pv);opacity:.55;transition:opacity .4s,box-shadow .4s}
+/* Les trois entrées de l'accueil : trois portes, trois lumières */
+.choix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--trait)}
+.choix li{min-width:0}
+.choix li+li .porte{border-left:1px solid var(--trait)}
+.porte{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:1.1rem;height:100%;min-height:clamp(20rem,60vh,36rem);padding:clamp(2rem,4vw,3.5rem) clamp(1.25rem,3vw,3rem);overflow:hidden;isolation:isolate;text-decoration:none;color:rgba(244,238,233,.82);transition:color .5s var(--ease)}
+.porte-ph{position:absolute;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;filter:brightness(.27) saturate(.35);transform:scale(1.05);transition:filter 1s var(--ease),transform 1.6s var(--ease)}
+.porte::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(0deg,rgba(11,8,9,.95) 0,rgba(11,8,9,.6) 36%,rgba(11,8,9,.05) 78%)}
+.porte::after{content:"";position:absolute;left:-20%;right:-20%;top:-12%;height:95%;z-index:-1;background:radial-gradient(48% 62% at 50% 0,color-mix(in srgb,var(--e) 42%,transparent),transparent 72%);mix-blend-mode:screen;opacity:.3;transition:opacity .8s var(--ease)}
 .porte:hover,.porte:focus-visible{color:#fff}
-.porte:hover::before,.porte:focus-visible::before{opacity:1}
-.porte:hover::after,.porte:focus-visible::after{opacity:1;box-shadow:0 0 0 4px color-mix(in srgb,var(--pv) 22%,transparent),0 0 24px 7px color-mix(in srgb,var(--pv) 60%,transparent)}
+.porte:hover .porte-ph,.porte:focus-visible .porte-ph{filter:brightness(.7) saturate(1);transform:scale(1)}
+.porte:hover::after,.porte:focus-visible::after{opacity:1}
 .porte:focus-visible{outline-offset:-6px}
-.porte-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.625rem,2.5vw,2.375rem);line-height:1.1;text-wrap:balance}
-.porte .fl{font-size:1.25rem;color:var(--pv)}
+.porte .lampe{width:.75rem;height:.75rem;opacity:1;box-shadow:0 0 0 4px color-mix(in srgb,var(--e) 22%,transparent),0 0 24px 6px color-mix(in srgb,var(--e) 55%,transparent)}
+.porte-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.875rem,3vw,3rem);line-height:1.04;text-wrap:balance}
+.porte .fl{font-size:1.5rem;color:var(--e)}
 .porte:hover .fl,.porte:focus-visible .fl{transform:translateX(.4rem)}
 
 /* Sections */
 .bloc{padding-block:clamp(4.5rem,8vw,8rem)}
 .bloc-titre{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h2);line-height:1;letter-spacing:-.01em;margin-top:.9rem;text-wrap:balance}
+.bloc-titre:first-child{margin-top:0}
 .plus{display:inline-flex;align-items:center;gap:.7rem;margin-top:2rem;padding:.9rem 1.35rem;border:1px solid var(--trait-fort);font-weight:600;font-size:1rem;line-height:1;text-decoration:none;color:var(--blanc);transition:border-color .3s,box-shadow .3s}
-.plus:hover{border-color:var(--lumiere);box-shadow:0 0 22px rgba(255,217,168,.18)}
+.plus::first-letter{text-transform:uppercase}
+.plus:hover{border-color:var(--c);box-shadow:0 0 22px color-mix(in srgb,var(--c) 22%,transparent)}
 .plus:hover .fl{transform:translateX(.25rem)}
+.appel{display:inline-flex;align-items:center;gap:.9rem;padding:1.15rem 1.6rem;background:var(--u-aplat,var(--blanc));color:var(--u-sur,var(--noir));font-weight:700;font-size:1.0625rem;line-height:1;text-decoration:none;transition:box-shadow .35s var(--ease),transform .35s var(--ease)}
+.appel:hover{box-shadow:0 0 0 4px color-mix(in srgb,var(--u-aplat,var(--blanc)) 22%,transparent),0 14px 40px -8px var(--u-lueur,rgba(255,217,168,.4))}
+.appel:hover .fl{transform:translateX(.3rem)}
+.appel-l{margin-top:clamp(3rem,6vw,5rem)}
 .donateurs{border-top:1px solid var(--trait);padding-block:clamp(3rem,6vw,5rem)}
 .donateurs p{max-width:62rem;margin-inline:auto;text-align:center;font-size:.9375rem;line-height:1.8;color:var(--gris)}
+
+/* Les affiches : chaque spectacle dans sa lumière (fond, couleurs et police de son univers) */
+.affiches{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,16rem),1fr));gap:clamp(1rem,2vw,1.75rem);margin-top:clamp(2rem,4vw,3.25rem)}
+.affiches li{min-width:0}
+.affiche{position:relative;display:flex;flex-direction:column;height:100%;background:var(--u-fond);color:var(--u-texte);text-decoration:none;overflow:hidden;isolation:isolate;transition:box-shadow .5s var(--ease)}
+.affiche-ph{position:relative;display:block;aspect-ratio:4/3.3;overflow:hidden;background:#000}
+.affiche-ph img{width:100%;height:100%;object-fit:cover;filter:brightness(.6) saturate(.8);transition:filter .8s var(--ease),transform 1.2s var(--ease)}
+.affiche-ph::after{content:"";position:absolute;inset:auto 0 0;height:48%;background:linear-gradient(0deg,var(--u-fond),transparent)}
+.affiche-ph .motif{position:absolute;right:.9rem;top:.9rem;z-index:1;width:3.4rem;color:var(--u-lum);opacity:.75;--motif-trait:1.25px;filter:drop-shadow(0 0 4px var(--u-lum))}
+.affiche-corps{position:relative;z-index:1;display:flex;flex-direction:column;gap:.5rem;flex:1;padding:0 1.35rem 1.5rem;margin-top:-2.6rem}
+.affiche-sur{display:flex;flex-wrap:wrap;gap:.3rem .8rem;font-size:.75rem;font-weight:600;line-height:1.3;letter-spacing:.16em;text-transform:uppercase;color:var(--u-vif)}
+.affiche-t{font-family:var(--u-police);font-weight:var(--u-graisse);font-size:clamp(1.6rem,2.1vw,2rem);line-height:1.04;color:var(--u-titre);text-wrap:balance;overflow-wrap:break-word}
+.affiche-lt{font-size:.9375rem;font-style:italic;color:var(--u-texte2)}
+.affiche-acc{font-size:.9375rem;line-height:1.55;color:var(--u-texte)}
+.affiche:hover,.affiche:focus-visible{box-shadow:0 0 0 1px color-mix(in srgb,var(--u-trace) 50%,transparent),0 20px 60px -12px var(--u-lueur)}
+.affiche:hover .affiche-ph img,.affiche:focus-visible .affiche-ph img{filter:brightness(.95) saturate(1);transform:scale(1.03)}
+.u--clair :focus-visible{outline-color:var(--u-texte)}
 
 /* La carte : de la lumière sur le noir */
 .tournee-grille{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:2.5rem clamp(2rem,4.5vw,5rem);align-items:start;margin-top:clamp(2rem,4vw,3.5rem)}
 .carte-boite{position:relative;margin:0;min-width:0}
 .carte-boite--seule{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1.5rem clamp(2rem,4vw,4rem);align-items:end}
-.cl{width:100%;height:auto;--lum:#ffd59e;--e:1}
+.cl{width:100%;height:auto;--lum:#ffd59e;--e:1;--pays:#151011;--pays-t:rgba(244,238,233,.17);--voisin:#0f0b0c;--voisin-t:rgba(244,238,233,.07);--fx:#fff1dc;--lampe-c:#fffaf2;--coeur:#fff;--nom:var(--blanc);--nom-t:var(--noir);--anneau:#fff;--pulse-c:#fff}
 .cl--teinte{--lum:var(--c)}
-.cl-pays{fill:#151011;stroke:rgba(244,238,233,.17);stroke-width:calc(var(--e) * .9);stroke-linejoin:round}
-.cl-voisin{fill:#0f0b0c;stroke:rgba(244,238,233,.07);stroke-width:calc(var(--e) * .7)}
-.cl-poussiere circle{fill:#f4eee9;opacity:.2}
-.cl-passe{fill:none;stroke:var(--lum);stroke-opacity:.17;stroke-width:calc(var(--e) * .7)}
-.cl-passe-pt{fill:var(--lum);fill-opacity:.45}
+.cl-pays{fill:var(--pays);stroke:var(--pays-t);stroke-width:calc(var(--e) * .9);stroke-linejoin:round}
+.cl-voisin{fill:var(--voisin);stroke:var(--voisin-t);stroke-width:calc(var(--e) * .7)}
+.cl-poussiere circle{fill:var(--nom);opacity:.2}
+.cl-passe{fill:none;stroke:var(--lum);stroke-opacity:.2;stroke-width:calc(var(--e) * .7)}
+.cl-passe-pt{fill:var(--lum);fill-opacity:.5}
 .cl-s1{stop-color:var(--lum);stop-opacity:.82}
 .cl-s2{stop-color:var(--lum);stop-opacity:.2}
 .cl-s3{stop-color:var(--lum);stop-opacity:0}
 .cl-trace{stroke-dasharray:var(--L) var(--L)}
 .cl-halo{fill:none;stroke:var(--lum);stroke-opacity:.55;stroke-width:calc(var(--e) * 5);stroke-linecap:round;transition:opacity .35s,stroke-opacity .35s}
-.cl-faisceau{fill:none;stroke:#fff1dc;stroke-width:calc(var(--e) * 1.1);stroke-linecap:round;transition:opacity .35s,stroke .35s}
-.cl-pulse{fill:none;stroke:#fff;stroke-width:calc(var(--e) * 2.4);stroke-linecap:round;stroke-dasharray:var(--p) var(--L);stroke-dashoffset:var(--p);opacity:0}
+.cl-faisceau{fill:none;stroke:var(--fx);stroke-width:calc(var(--e) * 1.1);stroke-linecap:round;transition:opacity .35s,stroke .35s}
+.cl-pulse{fill:none;stroke:var(--pulse-c);stroke-width:calc(var(--e) * 2.4);stroke-linecap:round;stroke-dasharray:var(--p) var(--L);stroke-dashoffset:var(--p);opacity:0}
 .cl-lieu{cursor:pointer;transition:opacity .35s}
 .cl-lieu:focus{outline:none}
 .cl-aura{transform-box:fill-box;transform-origin:center;transition:transform .45s var(--ease)}
-.cl-lampe{fill:#fffaf2}
-.cl-anneau{fill:none;stroke:#fff;stroke-width:calc(var(--e) * 1.2);opacity:0}
+.cl-lampe{fill:var(--lampe-c)}
+.cl-anneau{fill:none;stroke:var(--anneau);stroke-width:calc(var(--e) * 1.2);opacity:0}
 .cl-lieu:focus-visible .cl-anneau{opacity:1}
 .cl-lieu.on .cl-aura{transform:scale(1.8)}
-.cl-faisceau.on{stroke:#fff;opacity:1}
+.cl-faisceau.on{stroke:var(--pulse-c);opacity:1}
 .cl-halo.on{stroke-opacity:.95}
 .cl-pulse.on{opacity:1;animation:pulse 1.6s linear infinite}
 @keyframes pulse{from{stroke-dashoffset:var(--p)}to{stroke-dashoffset:calc(var(--L) * -1)}}
@@ -175,8 +232,8 @@ ul,ol{padding:0;list-style:none}
 .cl--souvenir .cl-faisceau{opacity:.55}
 .cl--souvenir .cl-halo{stroke-opacity:.3}
 .cl-rouen-aura{transform-box:fill-box;transform-origin:center}
-.cl-rouen-coeur{fill:#fff}
-.cl-rouen-nom{font-family:var(--serif);font-style:italic;font-weight:600;fill:var(--blanc);paint-order:stroke;stroke:var(--noir);stroke-width:calc(var(--e) * 3.2);stroke-linejoin:round}
+.cl-rouen-coeur{fill:var(--coeur)}
+.cl-rouen-nom{font-family:var(--serif);font-style:italic;font-weight:600;fill:var(--nom);paint-order:stroke;stroke:var(--nom-t);stroke-width:calc(var(--e) * 3.2);stroke-linejoin:round}
 .cl.attend .cl-trace{stroke-dashoffset:var(--L)}
 .cl.attend .cl-lieu{opacity:0}
 .cl.joue .cl-trace{animation:trace var(--t) cubic-bezier(.6,0,.3,1) var(--d) backwards}
@@ -191,21 +248,22 @@ ul,ol{padding:0;list-style:none}
 @keyframes battement{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 .cl-legende{min-height:5.25rem;margin-top:1rem;padding-left:1rem;border-left:1px solid var(--trait-fort)}
 .carte-boite--seule .cl-legende{margin-top:0;margin-bottom:2rem}
-.cl-legende-nom{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.375rem,2vw,1.75rem);line-height:1.15;color:#fff;text-shadow:0 0 22px rgba(255,217,168,.35)}
+.cl-legende-nom{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.375rem,2vw,1.75rem);line-height:1.15;color:var(--blanc);text-shadow:0 0 22px color-mix(in srgb,var(--lum,#ffd9a8) 35%,transparent)}
 .cl-ll{display:flex;flex-wrap:wrap;gap:0 .75rem;margin-top:.3rem;font-size:.9375rem;line-height:1.45;color:var(--blanc-doux)}
 .cl-t{color:var(--gris)}
 
 /* Les dates */
 .dates{border-top:1px solid var(--trait)}
 .date{position:relative;display:grid;grid-template-columns:minmax(0,12.5rem) minmax(0,1fr);gap:.3rem 2rem;padding:1.25rem 0 1.3rem 1.6rem;border-bottom:1px solid var(--trait);transition:opacity .35s var(--ease),background-color .35s var(--ease)}
-.date::before{content:"";position:absolute;left:.15rem;top:1.75rem;width:.5rem;height:.5rem;border-radius:50%;background:var(--c);opacity:.55;transition:opacity .3s,box-shadow .3s}
+.date::before{content:"";position:absolute;left:.15rem;top:1.75rem;width:.5rem;height:.5rem;border-radius:50%;background:var(--c);opacity:.6;transition:opacity .3s,box-shadow .3s}
 .date:hover::before,.date.on::before{opacity:1;box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 25%,transparent),0 0 16px 4px color-mix(in srgb,var(--c) 55%,transparent)}
 .date.on{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 11%,transparent),transparent 75%)}
 .choisi .date:not(.on){opacity:.32}
 .date-a,.date-b{min-width:0}
 .date-quand{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.375rem;line-height:1.15}
 .date-ou{margin-top:.25rem;font-weight:600;font-size:.9375rem;color:var(--blanc-doux)}
-.date-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.375rem;line-height:1.2}
+.date-tag{display:inline-block;margin-top:.45rem;padding:.12rem .5rem;border:1px solid var(--trait-fort);font-size:.6875rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gris)}
+.date-t{font-family:var(--u-police,var(--serif));font-style:var(--u-style,italic);font-weight:var(--u-graisse,600);font-size:1.375rem;line-height:1.2}
 .date-t a{text-decoration:none;background:linear-gradient(var(--c),var(--c)) 0 100%/0 1px no-repeat;transition:background-size .4s var(--ease)}
 .date-t a:hover{background-size:100% 1px}
 .date-d{margin-top:.25rem;font-size:.9375rem;color:var(--gris);overflow-wrap:break-word}
@@ -217,19 +275,23 @@ ul,ol{padding:0;list-style:none}
 .mois-t{padding-bottom:.8rem;font-size:.875rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
 
 /* Les pages */
-.page{padding-top:var(--tete);background:radial-gradient(min(62rem,150vw) min(34rem,100vw) at 14% var(--tete),rgba(255,217,168,.09),rgba(255,217,168,0) 72%) no-repeat}
+.page{padding-top:var(--tete);background:radial-gradient(min(62rem,150vw) min(34rem,100vw) at 14% var(--tete),color-mix(in srgb,var(--e,#ffd9a8) 11%,transparent),transparent 72%) no-repeat}
 .page-tete{padding-block:clamp(3.5rem,7vw,6rem) clamp(2.25rem,4vw,3.5rem)}
+.page-tete .sur{display:flex;align-items:center;gap:.8rem}
+.page--entree .page-tete .sur::before{content:"";flex:none;width:.6rem;height:.6rem;border-radius:50%;background:var(--e);box-shadow:0 0 0 4px color-mix(in srgb,var(--e) 22%,transparent),0 0 20px 5px color-mix(in srgb,var(--e) 55%,transparent)}
 .page-titre{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-page);line-height:.98;letter-spacing:-.012em;margin-top:.9rem;text-wrap:balance;overflow-wrap:break-word;hyphens:auto}
+.page-chapeau{max-width:52rem;margin-top:clamp(1.75rem,3vw,2.5rem);font-size:clamp(1.125rem,1.5vw,1.3125rem);line-height:1.7;color:var(--blanc-doux)}
 .agenda-grille{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:3rem clamp(2rem,5vw,5rem);align-items:start;padding-bottom:clamp(4rem,7vw,6rem)}
 .agenda-carte{position:sticky;top:calc(var(--tete) + 1.25rem)}
 .saisons-sec{border-top:1px solid var(--trait);padding-block:clamp(3rem,6vw,5rem)}
+.saisons-sec .sur{margin-bottom:1.25rem}
 .saisons{display:grid;grid-template-columns:repeat(auto-fill,minmax(13rem,1fr));gap:0 2rem}
 .saisons a{display:flex;align-items:center;gap:.8rem;padding:.9rem 0;border-bottom:1px solid var(--trait);font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.25rem;line-height:1.2;text-decoration:none;color:var(--blanc-doux);transition:color .3s}
 .saisons a::before{content:"";flex:none;width:.4rem;height:.4rem;border-radius:50%;background:var(--gris);transition:background-color .3s,box-shadow .3s}
 .saisons a:hover,.saisons a[aria-current]{color:#fff}
 .saisons a:hover::before,.saisons a[aria-current]::before{background:var(--lumiere);box-shadow:0 0 12px 3px rgba(255,217,168,.6)}
 .saison-sp + .saison-sp{margin-top:clamp(2.5rem,5vw,3.5rem)}
-.saison-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h3);line-height:1.1}
+.saison-t{font-family:var(--u-police,var(--serif));font-style:var(--u-style,italic);font-weight:var(--u-graisse,600);font-size:var(--fs-h3);line-height:1.1}
 .saison-t a{text-decoration:none;background:linear-gradient(var(--c),var(--c)) 0 100%/0 1px no-repeat;transition:background-size .4s var(--ease)}
 .saison-t a:hover{background-size:100% 1px}
 .saison-s{margin-top:.4rem;color:var(--blanc-doux)}
@@ -241,93 +303,280 @@ ul,ol{padding:0;list-style:none}
 .date-etat{font-size:.8125rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#ff9a88}
 .date--etat .date-ligne{color:var(--gris);text-decoration:line-through;text-decoration-color:rgba(244,238,233,.45)}
 
-/* Spectacles */
+/* Spectacles : un titre éclaire sa photo, en grand derrière la liste, teintée de la lumière de son univers */
 .page--rep{position:relative;isolation:isolate;min-height:100vh;background:none}
 .rep-fond{position:fixed;inset:0;z-index:0;pointer-events:none}
 .rep-fond .ph{filter:brightness(.55) saturate(.9);transition:opacity .9s var(--ease)}
+.rep-teinte{position:absolute;inset:0;background:var(--teinte,transparent);mix-blend-mode:color;opacity:.55;transition:background-color .9s var(--ease)}
 .rep-ombre{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,8,9,.95) 0,rgba(11,8,9,.74) 40%,rgba(11,8,9,.2) 78%,rgba(11,8,9,.35) 100%),linear-gradient(0deg,rgba(11,8,9,.85),rgba(11,8,9,0) 45%),linear-gradient(180deg,rgba(11,8,9,.85),rgba(11,8,9,0) 12rem)}
 .rep-corps{position:relative;z-index:1;padding-bottom:clamp(4rem,8vw,7rem)}
-.rep{max-width:62rem;border-top:1px solid var(--trait)}
-.rep a{position:relative;display:grid;grid-template-columns:9rem minmax(0,1fr);gap:.2rem 2rem;align-items:baseline;padding:1.3rem 0 1.4rem;border-bottom:1px solid var(--trait);text-decoration:none;color:var(--blanc);transition:opacity .35s var(--ease)}
-.rep a::before{content:"";position:absolute;left:-1.4rem;top:2.15rem;width:.5rem;height:.5rem;border-radius:50%;background:var(--c);opacity:0;transition:opacity .3s,box-shadow .3s}
+.rep{max-width:64rem;border-top:1px solid var(--trait)}
+.rep a{position:relative;display:grid;grid-template-columns:9rem minmax(0,1fr);gap:.25rem 2rem;align-items:baseline;padding:1.3rem 0 1.4rem;border-bottom:1px solid var(--trait);text-decoration:none;color:var(--blanc);transition:opacity .35s var(--ease)}
+.rep a::before{content:"";position:absolute;left:-1.4rem;top:2.2rem;width:.5rem;height:.5rem;border-radius:50%;background:var(--c);opacity:.45;transition:opacity .3s,box-shadow .3s}
 .rep a:hover::before,.rep a:focus-visible::before,.rep a.on::before{opacity:1;box-shadow:0 0 16px 4px color-mix(in srgb,var(--c) 60%,transparent)}
 .rep-img{display:none}
 .rep-c{grid-row:1/span 2;font-size:.8125rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gris)}
-.rep-t{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.75rem,3.3vw,3.125rem);line-height:1.05;letter-spacing:-.01em;transition:color .35s,text-shadow .35s}
+.rep-t{font-family:var(--u-police,var(--serif));font-style:var(--u-style,italic);font-weight:var(--u-graisse,600);font-size:clamp(1.75rem,3.3vw,3.125rem);line-height:1.05;letter-spacing:-.005em;color:var(--blanc);transition:color .35s,text-shadow .35s}
 .rep-s{grid-column:2;display:flex;flex-wrap:wrap;align-items:baseline;gap:.25rem 1rem;color:var(--blanc-doux)}
+.rep-lt{font-style:italic;color:var(--c)}
 .rep-statut{display:inline-flex;align-items:center;gap:.5rem;font-size:.8125rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--c)}
 .rep-statut::before{content:"";width:.45rem;height:.45rem;border-radius:50%;background:var(--c);box-shadow:0 0 10px 2px var(--c)}
 .rep.survol a:not(.on){opacity:.38}
-.rep a:hover .rep-t,.rep a:focus-visible .rep-t,.rep a.on .rep-t{color:#fff;text-shadow:0 0 30px color-mix(in srgb,var(--c) 55%,transparent)}
+.rep a:hover .rep-t,.rep a:focus-visible .rep-t,.rep a.on .rep-t{color:var(--c);text-shadow:0 0 30px color-mix(in srgb,var(--c) 55%,transparent)}
 
-/* Page spectacle */
-.scene--spectacle .scene-titre,.scene--page .scene-titre{font-size:var(--fs-h1);line-height:.94;margin-top:1rem}
-.scene--spectacle .scene-txt{max-width:64rem}
-.scene--spectacle .scene-corps,.scene--page .scene-corps{padding-bottom:clamp(2.75rem,8vh,5rem)}
-.scene--page{height:80vh;height:80svh;min-height:30rem}
-.sp-grille{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:3rem clamp(2.5rem,6vw,6rem);align-items:start}
-.sp-texte{font-size:1.125rem;line-height:1.75;color:var(--blanc-doux)}
-.sp-texte p + p{margin-top:1.1rem}
-.sp-texte p:first-child{font-size:1.375rem;line-height:1.6;color:var(--blanc)}
-.sp-fiche{position:sticky;top:calc(var(--tete) + 1.5rem);padding-left:1.5rem;border-left:1px solid var(--trait)}
-.fiche-l{font-size:.9375rem;line-height:1.5;color:var(--blanc-doux)}
-.fiche-l + .fiche-l{margin-top:.6rem}
-.fiche-k{display:block;font-size:.75rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gris)}
-.fiche-avec{margin-top:1.1rem!important;padding-top:1rem;border-top:1px solid var(--trait)}
-.sp-duree{margin-top:1.1rem;font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.25rem;color:var(--c)}
-.sp-mention{margin-top:.9rem;font-size:.875rem;color:var(--gris)}
-.sp-pied{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:2rem clamp(2.5rem,6vw,6rem);margin-top:clamp(3rem,5vw,4.5rem);padding-top:2rem;border-top:1px solid var(--trait)}
-.sp-prod{font-size:.9375rem;color:var(--gris)}
-.sp-prod p + p{margin-top:.6rem}
-.medias li + li{margin-top:.6rem}
-.media{display:inline-flex;align-items:flex-start;gap:.75rem;text-decoration:none;color:var(--blanc)}
-.media-ico{display:inline-grid;place-items:center;flex:none;width:1.9rem;height:1.9rem;border:1px solid var(--trait-fort);border-radius:50%;font-size:.7rem;color:var(--c);transition:border-color .3s,box-shadow .3s}
-.media-t{display:block;padding-top:.2rem;text-decoration:underline;text-decoration-color:var(--trait-fort);text-underline-offset:.25em;overflow-wrap:anywhere}
-.media:hover .media-ico{border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 55%,transparent)}
-.media-par{display:block;font-size:.875rem;color:var(--gris)}
-.media-g{margin-top:1.1rem!important;font-size:.75rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gris)}
-.sp-tournee{border-top:1px solid var(--trait)}
-.sp-tournee-txt{margin-top:1.1rem;font-size:1.25rem;color:var(--blanc-doux)}
-.cass{padding-bottom:0}
-.cass-genre{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h3);line-height:1.15;color:var(--c)}
-.cass-cadre{margin-top:.7rem;font-weight:600;letter-spacing:.05em;color:var(--blanc-doux)}
-.extraits{display:grid;gap:2.5rem;max-width:60rem;margin-top:clamp(2.5rem,5vw,4rem)}
-.extrait blockquote p{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.5rem,2.6vw,2.25rem);line-height:1.25;text-wrap:pretty}
-.extrait-s{margin-top:.6rem;font-size:.875rem;letter-spacing:.05em;color:var(--gris)}
-.extrait:nth-child(even){justify-self:end;text-align:right;max-width:46rem}
-.suivant{position:relative;display:grid;align-items:end;height:min(68vh,40rem);min-height:20rem;overflow:hidden;text-decoration:none;color:var(--blanc);isolation:isolate;border-top:1px solid var(--trait)}
+/* La page d'un spectacle : sa lumière éclaire le noir */
+.u{--u-style:normal}
+.sp{position:relative;background:var(--u-fond);color:var(--u-texte)}
+.scene--spectacle{height:auto;min-height:max(86vh,38rem);min-height:max(86svh,38rem);--spot:color-mix(in srgb,var(--u-lum) 55%,#fff3e6)}
+.scene--spectacle .scene-titre{font-size:clamp(3rem,7.6vw,7.25rem);line-height:.96;text-shadow:0 0 46px var(--u-lueur)}
+.scene--spectacle .scene-titre.n2{font-size:clamp(2.75rem,6.2vw,5.75rem)}
+.scene--spectacle .scene-titre.n3{font-size:clamp(2.5rem,5vw,4.5rem)}
+.scene--spectacle .scene-txt{max-width:60rem}
+.scene--spectacle .scene-sur::before{background:var(--u-lum);box-shadow:0 0 10px var(--u-lum)}
+.scene--spectacle .btn:hover{background:var(--u-lum);border-color:var(--u-lum)}
+.gobo{position:absolute;z-index:1;right:max(var(--pad),5vw);top:calc(var(--tete) + 3vh);width:min(42vmin,30rem);color:var(--u-lum);opacity:.3;mix-blend-mode:screen;filter:drop-shadow(0 0 7px var(--u-lum)) blur(.3px);pointer-events:none;--motif-trait:1.7px}
+.motif{width:100%;height:auto;overflow:visible}
+.motif *{vector-effect:non-scaling-stroke;stroke-width:var(--motif-trait,1.4px)}
+.motif text{font:600 15px/1 ui-monospace,'SFMono-Regular',Menlo,monospace;stroke:none}
+.onglets{position:relative;z-index:2;border-top:1px solid var(--trait);background:linear-gradient(0deg,rgba(11,8,9,.92),rgba(11,8,9,.5))}
+.onglets ul{display:flex;flex-wrap:wrap;gap:0 clamp(1.25rem,3vw,3rem)}
+.onglet{padding-block:1.05rem 1.15rem;font-size:1rem}
+.sp-corps{position:relative;overflow:hidden;padding-block:clamp(3.5rem,7vw,6.5rem) clamp(4rem,8vw,7rem)}
+.filigrane{position:absolute;top:clamp(1.5rem,4vw,3.5rem);right:-5rem;width:min(34rem,72vw);color:var(--u-trace);opacity:.08;pointer-events:none;--motif-trait:1.2px}
+.u-corps{--blanc:var(--u-texte);--blanc-doux:var(--u-texte);--gris:var(--u-texte2);--trait:color-mix(in srgb,var(--u-texte) 15%,transparent);--trait-fort:color-mix(in srgb,var(--u-texte) 32%,transparent);--lumiere:var(--u-trace);--c:var(--u-trace);color:var(--u-texte)}
+.u-corps :focus-visible{outline-color:var(--u-texte)}
+.u-corps ::selection{background:var(--u-trace);color:var(--u-fond)}
+.u-corps .cl{--lum:var(--u-vif);--pays:color-mix(in srgb,var(--u-texte) 7%,var(--u-fond));--pays-t:color-mix(in srgb,var(--u-texte) 24%,transparent);--voisin:color-mix(in srgb,var(--u-texte) 3%,var(--u-fond));--voisin-t:color-mix(in srgb,var(--u-texte) 10%,transparent);--fx:color-mix(in srgb,var(--u-vif) 55%,#fff);--nom:var(--u-texte);--nom-t:var(--u-fond)}
+.u--clair .u-corps .cl,.u--clair.u-corps .cl{--lum:var(--u-trace);--fx:var(--u-trace);--lampe-c:var(--u-trace);--coeur:var(--u-texte);--anneau:var(--u-texte);--pulse-c:var(--u-texte)}
+.u--clair{--ed-accent-d:var(--u-trace)}
+.chap-t{font-family:var(--u-police,var(--serif));font-style:var(--u-style,italic);font-weight:var(--u-graisse,600);font-size:var(--fs-h2);line-height:1.02;letter-spacing:-.005em;color:var(--u-titre,var(--blanc));text-wrap:balance;overflow-wrap:break-word}
+.chap-t:focus{outline:none}
+.chap{scroll-margin-top:calc(var(--tete) + 1.5rem)}
+.chap + .chap{margin-top:clamp(4rem,8vw,7rem)}
+.chap > .etiq{margin-bottom:.8rem}
+.chap-corps{margin-top:clamp(1.75rem,3vw,2.5rem)}
+.sp-voir{display:grid;grid-template-columns:10.5rem minmax(0,1fr);gap:clamp(2rem,5vw,5rem);align-items:start}
+.sommaire{position:sticky;top:calc(var(--tete) + 2rem)}
+.sommaire ul{display:grid;gap:.15rem}
+.sommaire button{display:flex;align-items:center;gap:.7rem;width:100%;padding:.45rem 0;background:none;border:0;cursor:pointer;text-align:left;color:var(--u-texte2);font-size:.75rem;font-weight:600;line-height:1.3;letter-spacing:.14em;text-transform:uppercase;transition:color .3s}
+.sommaire button::before{content:"";flex:none;width:1.25rem;height:1px;background:currentColor;transition:width .35s var(--ease),background-color .35s}
+.sommaire button:hover,.sommaire button[aria-current]{color:var(--u-texte)}
+.sommaire button[aria-current]::before{width:2.5rem;height:2px;background:var(--u-trace);box-shadow:0 0 10px var(--u-lueur)}
+.sommaire-signe{width:4.5rem;margin-top:1.75rem;color:var(--u-trace);opacity:.6;--motif-trait:1.2px}
+.genre{font-family:var(--u-police);font-weight:var(--u-graisse);font-size:var(--fs-h3);line-height:1.15;color:var(--u-titre)}
+.cadre{margin-top:.6rem;font-weight:600;letter-spacing:.04em;color:var(--u-texte2)}
+.affirm{max-width:54rem;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.6rem,3vw,2.6rem);line-height:1.2;color:var(--u-texte);text-wrap:pretty}
+.affirm + .affirm,.cadre + .affirm,.genre + .affirm{margin-top:1.5rem}
+.affirm + .affirm{font-size:clamp(1.25rem,2vw,1.6rem);line-height:1.35;color:var(--u-texte2)}
+.texte-u{max-width:46rem;font-size:1.125rem;line-height:1.78}
+.texte-u > :first-child{font-size:1.25rem;line-height:1.7}
+.citations{display:grid;gap:2.25rem;max-width:52rem;margin-top:clamp(2.75rem,5vw,4rem)}
+.citation blockquote{padding-left:1.6rem;border-left:2px solid var(--u-trace)}
+.citation .vers{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.3rem,2.3vw,1.9rem);line-height:1.32}
+.citation--prose .vers{display:inline}
+.citation--prose blockquote p::before{content:"« "}
+.citation--prose blockquote p::after{content:" »"}
+.citation figcaption{margin-top:.6rem;padding-left:1.6rem;font-size:.875rem;letter-spacing:.04em;color:var(--u-texte2)}
+.cartons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2.25rem 1.5rem}
+.carton{min-width:0}
+.carton:first-child:not(:last-child),.carton--seul{grid-column:1/-1}
+.carton img{width:100%;aspect-ratio:3/2;object-fit:cover;background:#000}
+.carton:first-child:not(:last-child) img,.carton--seul img{aspect-ratio:16/8}
+.carton figcaption{position:relative;margin:-1.75rem 1rem 0 1.25rem;padding:.85rem 1.1rem;background:var(--u-fond2);color:var(--u-texte);border-left:3px solid var(--u-trace);font-size:.9375rem;line-height:1.5;box-shadow:0 18px 40px -24px rgba(0,0,0,.75)}
+.credit-u{margin-top:1rem;font-size:.8125rem;color:var(--u-texte2)}
+.video{display:inline-flex;align-items:center;gap:1.1rem;text-decoration:none;color:var(--u-texte,var(--blanc))}
+.video-ico{display:grid;place-items:center;flex:none;width:4.25rem;height:4.25rem;border-radius:50%;background:var(--u-aplat,var(--blanc));color:var(--u-sur,var(--noir));box-shadow:0 0 0 6px color-mix(in srgb,var(--u-aplat,#fff) 18%,transparent),0 0 40px var(--u-lueur,rgba(255,217,168,.3));transition:transform .35s var(--ease)}
+.video-ico svg{width:1.3rem;height:1.3rem;fill:currentColor;margin-left:.2rem}
+.video-t{display:flex;flex-direction:column;gap:.2rem}
+.video-l{font-weight:700;font-size:1.0625rem}
+.video-titre{font-size:.9375rem;color:var(--u-texte2,var(--gris))}
+.video:hover .video-ico{transform:scale(1.06)}
+.video--petit .video-ico{width:2.6rem;height:2.6rem;box-shadow:none}
+.video--petit .video-ico svg{width:.9rem;height:.9rem}
+.tournee-txt{margin-top:1.1rem;font-size:1.25rem;color:var(--u-texte2)}
+.distrib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2rem clamp(2rem,5vw,5rem)}
+.fiche{display:grid;gap:.7rem;font-size:.9688rem;line-height:1.5}
+.fiche-k{display:block;font-size:.75rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--u-vif,var(--gris))}
+.fiche-avec{margin-top:.5rem;padding-top:1rem;border-top:1px solid var(--trait)}
+.duree{font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:1.5rem;color:var(--u-titre,var(--blanc))}
+.prod{margin-top:1rem;font-size:.9375rem;color:var(--u-texte2,var(--gris))}
+.prod strong{color:var(--u-texte,var(--blanc))}
+.mention{margin-top:.9rem;font-size:.9375rem;color:var(--u-texte2)}
+.signe{display:flex;align-items:center;gap:.9rem;margin-top:2rem;padding-top:1.25rem;border-top:1px solid var(--trait);font-weight:600;letter-spacing:.04em}
+.signe-logo{width:3.4rem;color:var(--u-trace)}
+.signe-logo svg{width:100%;height:auto}
+.encadre{padding:1.35rem 1.5rem;background:var(--u-fond2);border:1px solid var(--trait);border-left:4px solid var(--u-trace)}
+.faits{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:1rem 1.75rem}
+.fait{padding-top:.8rem;border-top:1px solid var(--trait-fort);font-size:1rem;line-height:1.45}
+.fait .etiq{margin-bottom:.3rem}
+.fait--fort .fait-v{font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:1.375rem;line-height:1.2;color:var(--u-titre)}
+.sp-prog > .chap .faits{margin-top:clamp(1.75rem,3vw,2.5rem)}
+.prog-video{margin-top:2rem}
+details.lieux{margin-top:1.5rem;border-top:1px solid var(--trait-fort);border-bottom:1px solid var(--trait-fort)}
+details.lieux summary{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.95rem 0;cursor:pointer;list-style:none;font-weight:700;letter-spacing:.02em}
+details.lieux summary::-webkit-details-marker{display:none}
+details.lieux summary::after{content:"";flex:none;width:.6rem;height:.6rem;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-.15rem);transition:transform .3s var(--ease)}
+details.lieux[open] summary::after{transform:rotate(-135deg)}
+details.lieux p{padding-bottom:1.2rem;font-size:.9375rem;line-height:1.7;color:var(--u-texte2,var(--blanc-doux))}
+.ft-grille{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:1.25rem;margin-top:clamp(1.75rem,3vw,2.5rem)}
+.ft-bloc--tete{grid-column:1/-1}
+.ft-bloc--tete ul{display:flex;flex-wrap:wrap;gap:.5rem 2.5rem}
+.ft-bloc--tete li{font-size:1.0625rem}
+.ft-bloc--tete li+li{margin-top:0}
+.ft-bloc{padding:1.25rem 1.35rem;background:var(--u-fond2);border-top:4px solid var(--u-trace)}
+.ft-t{margin-bottom:.7rem;font-size:.75rem;font-weight:700;letter-spacing:.14em;color:var(--u-titre)}
+.ft-bloc li{position:relative;padding-left:1rem;font-size:.9375rem;line-height:1.5}
+.ft-bloc li+li{margin-top:.45rem}
+.ft-bloc li::before{content:"";position:absolute;left:0;top:.6em;width:.35rem;height:.35rem;background:var(--u-trace)}
+.alerte{margin-top:1.5rem;padding:1.1rem 1.35rem;background:var(--u-aplat);color:var(--u-sur);font-size:1.0625rem}
+.alerte strong{color:inherit}
+.fiche-tech .carton{margin-top:2rem}
+/* l'action culturelle : son type, en grand, sur un aplat */
+.ac-type{display:inline-block;margin-top:.7rem;padding:.55rem 1.05rem .65rem;background:var(--u-aplat);color:var(--u-sur);font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:clamp(1.9rem,4vw,3.4rem);line-height:1.04;text-wrap:balance}
+.ac-meta{display:flex;flex-wrap:wrap;gap:.6rem 1.25rem;margin-top:1.25rem;align-items:baseline}
+.ac-meta li{display:flex;flex-wrap:wrap;align-items:baseline;gap:.45rem;font-weight:600}
+.ac-pill{display:inline-block;padding:.25rem .7rem;border:1px solid var(--trait-fort);font-size:.8125rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.ac-grille{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:2rem clamp(2rem,5vw,4.5rem);margin-top:clamp(2rem,4vw,3rem);align-items:start}
+.formule li{font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:1.25rem;line-height:1.3;color:var(--u-titre)}
+.formule li+li{margin-top:.35rem}
+.dispositifs{margin-top:1.5rem}
+.dispositifs li{position:relative;padding-left:1rem;margin-top:.5rem;font-size:.9375rem;line-height:1.55}
+.dispositifs li::before{content:"";position:absolute;left:0;top:.62em;width:.35rem;height:.35rem;border-radius:50%;background:var(--u-trace)}
+.dispositifs a{color:inherit;text-underline-offset:.2em}
+.a-completer{margin-top:.7rem;padding:1.25rem 1.5rem;border:1px dashed var(--trait-fort);font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:clamp(1.4rem,2.6vw,2rem);line-height:1.15;color:var(--u-texte2,var(--gris))}
+/* le dossier scolaire : la charte de la compagnie (aplats, encadrés, tableau net) */
+.dossier{margin-top:clamp(4.5rem,9vw,8rem)}
+.dossier-couv{position:relative;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:1.5rem 3rem;align-items:end;padding:clamp(1.75rem,4vw,3.25rem);background:var(--u-aplat);color:var(--u-sur);overflow:hidden}
+.dossier-couv .motif{position:absolute;right:-3rem;top:-3rem;width:18rem;opacity:.22;--motif-trait:1.4px}
+.dossier-couv .chap-t{color:inherit;font-size:clamp(1rem,1.4vw,1.125rem);font-family:var(--sans);font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.dossier-titre{margin-top:.6rem;font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,700);font-size:clamp(3rem,8vw,6.5rem);line-height:.95;letter-spacing:.02em}
+.dossier-auteur{margin-top:.5rem;font-size:1.25rem;font-style:italic}
+.dossier-faits{display:flex;flex-wrap:wrap;gap:.5rem;position:relative}
+.dossier-faits li{padding:.35rem .75rem;border:1px solid currentColor;font-size:.75rem;font-weight:700;letter-spacing:.14em}
+.dossier-formule{margin-top:.9rem;font-weight:700;position:relative}
+.dos-sec{margin-top:clamp(3rem,6vw,5rem)}
+.dos-t{font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:var(--fs-h3);line-height:1.12;color:var(--u-titre);text-wrap:balance}
+.pourquoi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.5rem;margin-top:1.75rem}
+.pourquoi > div{padding:1.4rem 1.5rem 1.6rem;background:var(--u-fond2);border-top:4px solid var(--u-trace)}
+.pourquoi h4{font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:1.25rem;line-height:1.25;color:var(--u-titre)}
+.pourquoi .prose{margin-top:.8rem;font-size:.9688rem;line-height:1.65}
+.table-s{margin-top:1.75rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.prog{width:100%;min-width:40rem;border-collapse:collapse;font-size:.9375rem;line-height:1.5;background:var(--u-fond2)}
+.prog th,.prog td{padding:.8rem 1rem;border:1px solid var(--trait-fort);vertical-align:top;text-align:left}
+.prog th[scope="rowgroup"]{width:5.5rem;background:var(--u-aplat);color:var(--u-sur);font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:1.25rem;text-align:center;vertical-align:middle}
+.prog th[scope="row"]{width:8.5rem;font-weight:700;color:var(--u-titre)}
+.prog td:last-child{color:var(--u-texte2)}
+.consignes{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:1.5rem 3rem;margin-top:1.75rem;align-items:start}
+.note{display:inline-block;padding:.3rem .7rem;background:var(--u-aplat);color:var(--u-sur);font-size:.75rem;font-weight:700;letter-spacing:.16em}
+.demandes{margin-top:1rem;display:grid;gap:.5rem}
+.demandes li{padding:.7rem 1rem;border:2px solid var(--u-trace);font-weight:700;font-size:.9375rem;letter-spacing:.04em;color:var(--u-titre)}
+.axes{margin-top:.8rem;display:grid;gap:.6rem}
+.axes li{position:relative;padding-left:1.1rem;font-size:.9688rem}
+.axes li::before{content:"";position:absolute;left:0;top:.65em;width:.4rem;height:.4rem;border-radius:50%;background:var(--u-trace)}
+.ateliers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem;margin-top:1.75rem}
+.atelier{padding:1.5rem 1.6rem 1.7rem;background:var(--u-fond2);border-top:4px solid var(--u-trace)}
+.atelier h4{font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:1.375rem;line-height:1.2;color:var(--u-titre)}
+.atelier h4 strong{font-weight:inherit}
+.atelier .prose{margin-top:.8rem;font-size:.9688rem;line-height:1.65}
+.etapes{display:grid;gap:.9rem;margin-top:1rem}
+.etapes h5{font-size:.9375rem;color:var(--u-titre)}
+.etapes h5 strong{font-weight:700}
+.etapes p{margin-top:.25rem;font-size:.9375rem;line-height:1.6;color:var(--u-texte2)}
+.points{display:grid;gap:.5rem;margin-top:1rem}
+.points li{position:relative;padding-left:1.1rem;font-size:.9375rem;line-height:1.6}
+.points li::before{content:"";position:absolute;left:0;top:.62em;width:.4rem;height:.4rem;background:var(--u-trace)}
+.ateliers-ph{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem;margin-top:1.5rem}
+.ateliers-ph img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.plus-loin{margin-top:1.75rem}
+.plus-loin details{border-top:1px solid var(--trait-fort)}
+.plus-loin details:last-child{border-bottom:1px solid var(--trait-fort)}
+.plus-loin summary{padding:1rem 0;cursor:pointer;font-family:var(--u-police,var(--serif));font-weight:var(--u-graisse,600);font-size:1.25rem;color:var(--u-titre)}
+.plus-loin .prose{padding-bottom:1.25rem;max-width:48rem;font-size:.9688rem;line-height:1.7}
+.suivant{position:relative;display:grid;align-items:end;height:min(68vh,40rem);min-height:20rem;overflow:hidden;text-decoration:none;color:var(--blanc);isolation:isolate;background:var(--noir)}
 .suivant img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;filter:brightness(.38);transition:filter .9s var(--ease),transform 1.2s var(--ease)}
 .suivant::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(11,8,9,.92) 0,rgba(11,8,9,.3) 50%,rgba(11,8,9,.55) 100%)}
 .suivant:hover img,.suivant:focus-visible img{filter:brightness(.82);transform:scale(1.02)}
 .suivant-in{display:block;padding-bottom:clamp(2.5rem,6vh,4rem)}
-.suivant-t{display:block;max-width:22ch;font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-scene);line-height:1;text-wrap:balance}
+.suivant-t{display:block;max-width:22ch;font-family:var(--u-police,var(--serif));font-style:var(--u-style,italic);font-weight:var(--u-graisse,600);font-size:var(--fs-scene);line-height:1;text-wrap:balance}
 .suivant-t .fl{margin-left:.35em;font-family:var(--sans);font-style:normal;font-weight:400;font-size:.5em;color:var(--c)}
 .suivant:hover .suivant-t .fl{transform:translateX(.5rem)}
 
-/* La compagnie */
+/* Je souhaite programmer : le catalogue, une fiche par spectacle dans sa lumière */
+.catalogue{display:grid;gap:clamp(1.25rem,2.5vw,2rem)}
+.fiche-u{position:relative;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);background:var(--u-fond);color:var(--u-texte);overflow:hidden;isolation:isolate}
+.fiche-u:nth-child(even){grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+.fiche-u:nth-child(even) .fu-ph{order:2}
+.fu-ph{position:relative;min-height:24rem;background:#000;overflow:hidden}
+.fu-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:brightness(.68) saturate(.9);transition:filter .9s var(--ease)}
+.fiche-u:hover .fu-ph img{filter:brightness(.92) saturate(1)}
+.fu-ph .motif{position:absolute;left:1.25rem;bottom:1.25rem;width:4.5rem;color:var(--u-lum);opacity:.8;--motif-trait:1.3px;filter:drop-shadow(0 0 5px var(--u-lum))}
+.fu-corps{padding:clamp(1.75rem,3.5vw,3rem)}
+.fu-sur{display:flex;flex-wrap:wrap;gap:.3rem 1rem;font-size:.75rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--u-vif)}
+.fu-t{margin-top:.7rem;font-family:var(--u-police);font-weight:var(--u-graisse);font-size:clamp(2rem,3.4vw,3.25rem);line-height:1.02;color:var(--u-titre);text-wrap:balance}
+.fu-t a{text-decoration:none}
+.fu-t a:hover{text-shadow:0 0 30px var(--u-lueur)}
+.fu-sous{margin-top:.5rem;color:var(--u-texte2)}
+.fu-corps .faits{margin-top:1.5rem}
+.fu-corps .fiche{grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem 1.5rem;margin-top:1.5rem;font-size:.875rem}
+.fu-corps .fiche-avec{grid-column:1/-1}
+.fu-actions{display:flex;flex-wrap:wrap;align-items:center;gap:1rem 1.75rem;margin-top:1.75rem}
+.fu-actions .plus{margin-top:0}
+.prog-carte{margin-top:clamp(2rem,4vw,3rem)}
+.partenaires{max-width:52rem;font-size:1.0625rem;line-height:1.75;color:var(--blanc-doux)}
+
+/* Je représente un établissement scolaire */
+.ecole{max-width:54rem;margin-top:clamp(1.75rem,3vw,2.5rem);padding-left:1.5rem;border-left:2px solid var(--e);font-size:clamp(1.125rem,1.45vw,1.3125rem);line-height:1.72;color:var(--blanc-doux)}
+.groupe{padding-top:clamp(2.5rem,5vw,4rem)}
+.groupe-t{display:flex;align-items:center;gap:.9rem;font-size:.875rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gris)}
+.groupe-t::after{content:"";flex:1;height:1px;background:var(--trait)}
+.cartes-ac{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,24rem),1fr));gap:clamp(1rem,2vw,1.5rem);margin-top:1.5rem}
+.carte-ac{display:flex;flex-direction:column;background:var(--u-fond);color:var(--u-texte);overflow:hidden}
+.cac-ph{position:relative;aspect-ratio:16/6.5;background:#000;overflow:hidden}
+.cac-ph img{width:100%;height:100%;object-fit:cover;filter:brightness(.62) saturate(.85);transition:filter .8s var(--ease)}
+.carte-ac:hover .cac-ph img{filter:brightness(.9) saturate(1)}
+.cac-ph .motif{position:absolute;right:1rem;top:1rem;width:3.4rem;color:var(--u-lum);opacity:.85;--motif-trait:1.25px;filter:drop-shadow(0 0 4px var(--u-lum))}
+.cac-t{margin-bottom:1rem;font-family:var(--u-police);font-weight:var(--u-graisse);font-size:clamp(1.75rem,2.6vw,2.4rem);line-height:1.04;color:var(--u-titre);text-wrap:balance}
+.cac-t a{text-decoration:none}
+.cac-t a:hover{text-shadow:0 0 28px var(--u-lueur)}
+.cac-corps{display:flex;flex-direction:column;flex:1;padding:1.4rem 1.5rem 1.6rem}
+.cac-corps .ac-type{font-size:clamp(1.4rem,2.2vw,1.9rem)}
+.cac-corps > p:not(.etiq):not(.ac-type):not(.cac-liens),.cac-corps > div:not(.dispositifs){margin-top:1rem;font-size:.9688rem;line-height:1.65}
+.cac-corps .formule{margin-top:1rem}
+.cac-corps .formule li{font-size:1.0625rem}
+.cac-liens{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:auto;padding-top:1.5rem}
+.cac-liens .plus{margin-top:0}
+.plus--plein{background:var(--u-aplat);border-color:var(--u-aplat);color:var(--u-sur)}
+.actions-grille{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:2.5rem clamp(2rem,5vw,5rem);align-items:start}
+.actions{max-width:48rem;margin-top:2rem;font-size:1.0625rem;line-height:1.75;color:var(--blanc-doux)}
+.actions h2,.legal-txt h2{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h3);line-height:1.15;color:var(--blanc);margin:2.75rem 0 1.1rem}
+.actions > :first-child h2,.legal-txt > :first-child h2{margin-top:0}
+.actions li{position:relative;padding-left:1.5rem}
+.actions li + li{margin-top:.9rem}
+.actions li::before{content:"";position:absolute;left:0;top:.72em;width:.45rem;height:.45rem;border-radius:50%;background:var(--lumiere);box-shadow:0 0 10px 2px rgba(255,217,168,.5)}
+.actions-ph{position:sticky;top:calc(var(--tete) + 1.5rem)}
+.actions-ph .grande{width:100%;aspect-ratio:4/3;object-fit:cover}
+.actions-ph .mini{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem;margin-top:.5rem}
+.actions-ph .mini img{width:100%;aspect-ratio:1;object-fit:cover;filter:grayscale(.2)}
+.actions-ph .credit-u{color:var(--gris)}
+
+/* La compagnie : le texte, la rampe des années, le directeur */
 .cie{padding-bottom:clamp(2rem,4vw,3rem)}
 .cie-txt{max-width:46rem;font-size:1.125rem;line-height:1.75;color:var(--blanc-doux)}
-.cie-txt p + p{margin-top:1.15rem}
-.cie-txt p:first-child{font-size:1.3125rem;line-height:1.65;color:var(--blanc)}
+.cie-txt > :first-child{font-size:1.3125rem;line-height:1.65;color:var(--blanc)}
 .rampe{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));margin-top:clamp(2.5rem,4.5vw,3.5rem);border-top:1px solid var(--trait-fort)}
 .rampe li{min-width:0}
 .rampe a,.rampe .rampe-in{position:relative;display:block;height:100%;padding:2rem 1.25rem 1.5rem 0;text-decoration:none;color:var(--blanc)}
 .rampe-lampe{position:absolute;top:-.32rem;left:0;width:.6rem;height:.6rem;border-radius:50%;background:var(--c);box-shadow:0 0 12px 2px color-mix(in srgb,var(--c) 45%,transparent);transition:box-shadow .4s}
 .rampe-annee{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2rem,3.2vw,2.75rem);line-height:1}
-.rampe-t{display:block;margin-top:.6rem;font-size:.9375rem;line-height:1.4;color:var(--blanc-doux);transition:color .3s}
+.rampe-t{display:block;margin-top:.6rem;font-family:var(--u-police,var(--sans));font-weight:var(--u-graisse,500);font-size:1.0625rem;line-height:1.3;color:var(--c);transition:color .3s}
 .rampe a:hover .rampe-lampe,.rampe a:focus-visible .rampe-lampe{box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 25%,transparent),0 0 26px 8px color-mix(in srgb,var(--c) 65%,transparent)}
 .rampe a:hover .rampe-t,.rampe a:focus-visible .rampe-t{color:#fff}
-
-/* Actions culturelles, mentions */
-.actions{max-width:48rem;font-size:1.125rem;line-height:1.75;color:var(--blanc-doux)}
-.actions h2,.legal-txt h2{font-family:var(--serif);font-style:italic;font-weight:600;font-size:var(--fs-h3);line-height:1.15;color:var(--blanc);margin:3rem 0 1.25rem}
-.actions h2:first-child,.legal-txt h2:first-child{margin-top:0}
-.actions li{position:relative;padding-left:1.5rem}
-.actions li + li{margin-top:.9rem}
-.actions li::before{content:"";position:absolute;left:0;top:.72em;width:.45rem;height:.45rem;border-radius:50%;background:var(--lumiere);box-shadow:0 0 10px 2px rgba(255,217,168,.5)}
+.dir-grille{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:2rem clamp(2.5rem,6vw,6rem);align-items:start}
+.dir-chapeau{margin-top:1.25rem;font-size:1.25rem;color:var(--lumiere)}
+.cie-part{padding-bottom:clamp(4rem,8vw,7rem)}
 .legal{max-width:52rem;padding-block:clamp(3.5rem,7vw,6rem)}
 .legal-txt{margin-top:2.5rem;font-size:1rem;line-height:1.7;color:var(--blanc-doux)}
-.legal-txt p + p,.legal-txt p + h2 + p{margin-top:1rem}
+.legal-txt > * + *{margin-top:1rem}
 
 /* Formulaires */
 .form label{display:block;margin-bottom:.45rem;font-size:.875rem;font-weight:600;letter-spacing:.04em;color:var(--blanc-doux)}
@@ -348,14 +597,6 @@ ul,ol{padding:0;list-style:none}
 .calcul{display:flex;align-items:center;gap:.9rem;margin-top:1.25rem}
 .calcul label{margin:0;font-size:1rem}
 .form .calcul input{width:4.5rem}
-.page--pro{min-height:82vh;background:radial-gradient(min(44rem,140vw) min(32rem,100vw) at 50% 36%,rgba(255,217,168,.13),rgba(255,217,168,0) 70%) no-repeat}
-.pro{max-width:46rem;padding-block:clamp(4.5rem,10vw,9rem);text-align:center}
-.pro .page-titre{margin-top:.9rem}
-.pro-txt{margin-top:1.75rem;font-size:1.125rem;color:var(--blanc-doux)}
-.champ-ligne{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.75rem 1rem;margin-top:2rem}
-.champ-ligne label{margin:0}
-.form .champ-ligne input{width:min(100%,17rem)}
-.champ-ligne .btn{margin-top:0}
 
 /* Pied de page */
 .pied{position:relative;z-index:1;background:var(--noir);border-top:1px solid var(--trait);padding-block:clamp(3.5rem,6vw,5.5rem) 2.25rem}
@@ -367,12 +608,20 @@ ul,ol{padding:0;list-style:none}
 .pied-liens li + li{margin-top:.35rem}
 .pied-fb{color:var(--blanc-doux)}
 .pied-part{font-size:.9375rem;line-height:1.65;color:var(--gris)}
-.pied-bas{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.75rem 2rem;margin-top:clamp(2.5rem,5vw,4rem);padding-top:1.5rem;border-top:1px solid var(--trait);font-size:.875rem;color:var(--gris)}
+.pied-bas{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem 2rem;margin-top:clamp(2.5rem,5vw,4rem);padding-top:1.5rem;border-top:1px solid var(--trait);font-size:.875rem;color:var(--gris)}
 .pied-legal span{white-space:nowrap}
 .pied-legal span + span::before{content:"·";margin-inline:.6rem}
-.pied-legaux{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem}
+.pied-legaux{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1.5rem}
 .pied-legaux .lien{color:var(--gris)}
 .pied-legaux .lien:hover{color:var(--blanc)}
+.modifier{display:inline-flex;align-items:center;gap:.5rem;padding:.35rem .8rem;background:none;border:1px solid var(--trait-fort);color:var(--gris);font-size:.8125rem;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:color .3s,border-color .3s,box-shadow .3s}
+.modifier::before{content:"";width:.45rem;height:.45rem;border-radius:50%;background:var(--lumiere);opacity:.6}
+.modifier:hover{color:var(--blanc);border-color:var(--lumiere);box-shadow:0 0 18px rgba(255,217,168,.2)}
+
+/* L'édition sur place, dans le noir et la lumière */
+.ed-barre{border-radius:2px!important;box-shadow:0 0 0 1px rgba(255,217,168,.16),0 18px 50px rgba(0,0,0,.6),0 0 40px rgba(255,217,168,.1)!important}
+.ed-bt{border-radius:2px!important}
+.ed-actif .revele .ligne,.ed-actif .scene-accroche.revele{animation:none;-webkit-mask-image:none;mask-image:none}
 
 /* L'ouverture, habillée : le noir, une photo à peine éclairée, le logo blanc */
 .intro.m07-intro .intro-image{opacity:.42}
@@ -380,53 +629,76 @@ ul,ol{padding:0;list-style:none}
 .intro.m07-intro .intro-indice,.intro.m07-intro .intro-logo{z-index:1}
 .intro.m07-intro .intro-indice{color:var(--lumiere)}
 
-@media (max-width:1279px){
-  .menu-btn{position:relative;z-index:2;display:inline-flex;align-items:center;gap:.7rem;padding:.6rem 0;background:none;border:0;cursor:pointer;font-weight:600;font-size:1rem;letter-spacing:.02em}
+@media (max-width:1099px){
+  :root{--tete:4.5rem;--barre:4.4rem}
+  body{padding-bottom:calc(var(--barre) + env(safe-area-inset-bottom))}
+  .marque-pieuvre{width:3.6rem}
+  .marque-mot{width:4.6rem}
+  .tete-in{justify-content:space-between}
+  /* les trois entrées restent à portée : une barre fixe en bas de l'écran */
+  .entrees{position:fixed;left:0;right:0;bottom:0;z-index:5;display:block;overflow:visible;background:rgba(11,8,9,.97);border-top:1px solid var(--trait);padding-block:0 env(safe-area-inset-bottom)}
+  .entrees ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0}
+  .entree{flex-direction:column;justify-content:center;gap:.45rem;height:var(--barre);padding:.5rem .35rem;white-space:normal;text-align:center;font-size:.8125rem;line-height:1.2}
+  .entree .long{display:none}
+  .entree .court{display:inline}
+  .entree::after{left:24%;right:24%;top:0;bottom:auto}
+  .menu-btn{position:relative;z-index:4;display:inline-flex;align-items:center;gap:.7rem;padding:.6rem 0;background:none;border:0;cursor:pointer;font-weight:600;font-size:1rem;letter-spacing:.02em}
   .menu-ico{position:relative;width:1.5rem;height:.6rem}
   .menu-ico::before,.menu-ico::after{content:"";position:absolute;left:0;right:0;height:1.5px;background:currentColor;transition:transform .35s var(--ease),top .35s var(--ease)}
   .menu-ico::before{top:0}
   .menu-ico::after{top:calc(100% - 1.5px)}
   .tete.ouvert .menu-ico::before{top:calc(50% - .75px);transform:rotate(45deg)}
   .tete.ouvert .menu-ico::after{top:calc(50% - .75px);transform:rotate(-45deg)}
-  .nav{position:fixed;inset:0;z-index:1;display:flex;flex-direction:column;justify-content:center;padding:6rem var(--pad) 3rem;overflow-y:auto;background:radial-gradient(60rem 40rem at 20% 30%,rgba(255,217,168,.08),transparent 70%),var(--noir);visibility:hidden;opacity:0;transition:opacity .35s var(--ease),visibility 0s .35s}
-  .tete.ouvert .nav{visibility:visible;opacity:1;transition:opacity .35s var(--ease)}
-  .nav ul{flex-direction:column;gap:.15rem}
-  .nav a{display:inline-block;padding:.3rem 0;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2rem,7.5vw,3.25rem);line-height:1.2;letter-spacing:0;white-space:normal}
-  .nav a::after{bottom:.25rem;height:2px}
+  .second{position:fixed;inset:0;z-index:3;display:flex;flex-direction:column;justify-content:center;padding:6rem var(--pad) calc(var(--barre) + 3rem);overflow-y:auto;border:0;background:radial-gradient(60rem 40rem at 20% 30%,rgba(255,217,168,.08),transparent 70%),var(--noir);visibility:hidden;opacity:0;transition:opacity .35s var(--ease),visibility 0s .35s}
+  .tete.ouvert .second{visibility:visible;opacity:1;transition:opacity .35s var(--ease)}
+  .second ul{flex-direction:column;gap:.15rem}
+  .second a{display:inline-block;padding:.3rem 0;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(2rem,7.5vw,3.25rem);line-height:1.2;letter-spacing:0;color:var(--blanc);white-space:normal}
+  .second a[aria-current]::after{bottom:.25rem;height:2px}
   .tete.ouvert{background:var(--noir)}
-}
-@media (max-width:1100px){
   .pied-grille{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .sp-grille,.sp-pied{grid-template-columns:minmax(0,1fr)}
-  .sp-fiche{position:static}
+  .distrib,.ac-grille,.consignes,.dir-grille,.actions-grille,.dossier-couv{grid-template-columns:minmax(0,1fr)}
+  .actions-ph{position:static}
+  .pourquoi{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:900px){
   .tournee-grille,.agenda-grille,.contact,.carte-boite--seule{grid-template-columns:minmax(0,1fr)}
   .agenda-carte{position:static;order:-1}
   .carte-boite--seule .cl-legende{margin-bottom:0}
-  .portes{grid-template-columns:1fr}
-  .portes li + li{border-left:0;border-top:1px solid var(--trait)}
-  .porte{min-height:0;padding-top:3.25rem;padding-bottom:1.75rem}
+  .choix{grid-template-columns:1fr}
+  .choix li+li .porte{border-left:0;border-top:1px solid var(--trait)}
+  .porte{min-height:clamp(15rem,40vh,20rem)}
+  .sp-voir{grid-template-columns:minmax(0,1fr)}
+  .sommaire{display:none}
+  .fiche-u,.fiche-u:nth-child(even){grid-template-columns:minmax(0,1fr)}
+  .fiche-u:nth-child(even) .fu-ph{order:0}
+  .fu-ph{min-height:0;aspect-ratio:16/9}
+  .ateliers{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:760px){
-  :root{--tete:4.25rem}
-  .marque-pieuvre{width:3.6rem}
-  .marque-mot{width:4.6rem}
   .scene{display:block;height:auto;min-height:0}
-  .scene-visuel{position:relative;height:66vh;height:66svh;min-height:22rem}
+  .scene-visuel{position:relative;height:62vh;height:62svh;min-height:20rem}
   .spot{display:none}
   .ombre{background:linear-gradient(180deg,rgba(11,8,9,.7) 0,rgba(11,8,9,0) 7rem),linear-gradient(0deg,var(--noir) 0,rgba(11,8,9,.8) 20%,rgba(11,8,9,.2) 50%,rgba(11,8,9,0) 62%)}
-  .credit,.scene--accueil .credit{top:calc(var(--tete) + .75rem);bottom:auto}
-  .scene-corps{margin-top:-8.5rem;padding-bottom:1.75rem}
-  .scene--spectacle .scene-corps,.scene--page .scene-corps{margin-top:-10rem;padding-bottom:2.5rem}
-  .scene--spectacle .scene-titre,.scene--page .scene-titre{font-size:clamp(2.5rem,12vw,3.5rem)}
-  .scene--page{height:auto}
+  .credit,.scene--accueil .credit,.scene--spectacle .credit{top:calc(var(--tete) + .75rem);bottom:auto}
+  .scene-corps{margin-top:-8.5rem;padding-top:0;padding-bottom:1.75rem}
+  .scene--spectacle{min-height:0}
+  .scene--spectacle .scene-corps{margin-top:-9rem;padding-bottom:2rem}
+  .scene--spectacle .scene-titre,.scene--spectacle .scene-titre.n2,.scene--spectacle .scene-titre.n3{font-size:clamp(2.4rem,11vw,3.4rem)}
+  .gobo{top:calc(var(--tete) + 1rem);right:1rem;width:9.5rem}
   .scene-sous{font-size:1.125rem}
-  .btn{margin-top:1.4rem}
+  .btn{margin-top:1.3rem}
   .programme-in{gap:.75rem;padding-block:.35rem .5rem;padding-right:var(--pad);padding-left:0}
   .titres{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:none;padding-inline:var(--pad);gap:1.4rem;-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
   .titres::-webkit-scrollbar{display:none}
   .titre{scroll-snap-align:start;scroll-margin-left:var(--pad);font-size:1.0625rem;padding-block:.75rem}
+  .onglets{border-top:0;background:none;padding-bottom:2rem}
+  .onglets ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid var(--trait-fort)}
+  .onglets li+li{border-left:1px solid var(--trait-fort)}
+  .onglet{flex-direction:column;justify-content:center;gap:.4rem;height:100%;min-height:3.9rem;padding:.6rem .3rem;white-space:normal;text-align:center;font-size:.8125rem;line-height:1.2}
+  .onglet[aria-current]{background:color-mix(in srgb,var(--e) 18%,transparent)}
+  .onglet .long{display:none}
+  .onglet .court{display:inline}
+  .onglet::after{display:none}
   .bloc{padding-block:4rem}
   .date{grid-template-columns:minmax(0,1fr);padding-left:1.4rem}
   .rep-fond{display:none}
@@ -440,9 +712,15 @@ ul,ol{padding:0;list-style:none}
   .champs{grid-template-columns:minmax(0,1fr)}
   .pied-grille{grid-template-columns:minmax(0,1fr)}
   .pied-legal span{white-space:normal}
-  .extrait:nth-child(even){justify-self:start;text-align:left}
   .suivant{height:52vh;min-height:18rem}
   .suivant-t{font-size:clamp(2.25rem,11vw,3rem)}
+  .cartons{grid-template-columns:minmax(0,1fr)}
+  .agenda-carte .cl{max-height:36vh;margin-inline:auto}
+  .agenda-carte .cl-legende{min-height:0;margin-bottom:1.5rem}
+  .carton figcaption{margin:-1.25rem .6rem 0 .8rem}
+  .fu-corps .fiche{grid-template-columns:minmax(0,1fr)}
+  .ateliers-ph{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .actions-ph .mini{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
@@ -452,13 +730,14 @@ ul,ol{padding:0;list-style:none}
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
 <header class="tete" id="tete">
-  <div class="tete-in wrap">
+  <div class="tete-in wrap" id="tete-in">
     <a class="marque" id="marque" href="#/">
       <span class="marque-pieuvre" id="marque-pieuvre" aria-hidden="true"></span>
       <span class="marque-mot" id="marque-mot" aria-hidden="true"></span>
     </a>
-    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><span class="menu-ico" aria-hidden="true"></span><span id="menu-txt"></span></button>
-    <nav class="nav" id="nav"><ul id="nav-liste"></ul></nav>
+    <nav class="entrees" id="entrees"></nav>
+    <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="second"><span class="menu-ico" aria-hidden="true"></span><span id="menu-txt"></span></button>
+    <nav class="second" id="second"></nav>
   </div>
 </header>
 <main id="contenu" tabindex="-1"></main>
@@ -475,25 +754,92 @@ ul,ol{padding:0;list-style:none}
   const reduit = matchMedia('(prefers-reduced-motion: reduce)');
   const souris = matchMedia('(hover: hover) and (pointer: fine)');
   const mobile = matchMedia('(max-width: 760px)');
-  const replie = matchMedia('(max-width: 1279px)');
+  const replie = matchMedia('(max-width: 1099px)');
   const doux = () => !reduit.matches;
-
-  // Tout le texte vient de D (le site d'origine)
-  const S = D.site, LIB = S.libelles, SHOWS = D.shows;
-  const PAR_SLUG = Object.assign(Object.create(null), Object.fromEntries(SHOWS.map(s => [s.slug, s])));
-  const MENU = Object.fromEntries(S.menu.map(m => [m.id, m]));
-  const SAISON = S.saisons[0];
-  const SLIDES = S.diaporama.filter(x => D.photos[x.slug]);
-  const LUM = '#ffd9a8';
+  const NOIR = '#0b0809', LUM = '#ffd9a8';
   const FL = '<span class="fl" aria-hidden="true">→</span>';
-  const photo = slug => D.photos[slug] || '';
-  const cadrage = s => `${s && s.focale != null ? s.focale : 50}% 35%`;
-  const couleur = slug => (PAR_SLUG[slug] && PAR_SLUG[slug].couleur) || LUM;
-  const bloc = h => /^\s*<(h\d|ul|ol|p|div|blockquote)\b/i.test(h) ? h : `<p>${h}</p>`;
-  const ext = url => `href="${esc(url)}" rel="noopener"`;
 
-  /* En-tête : la pieuvre, le mot, les six onglets */
-  $('#marque').setAttribute('aria-label', S.nom);
+  /* ---------- D se relit à chaque rendu : la base de la compagnie (DONNEES) peut le remplacer à tout moment ---------- */
+  // ANIMER est faux pendant un rendu « en place » (après un changement de D) : ni titre révélé, ni faisceaux qui poussent
+  let S, LIB, PAR_SLUG, MENU, ENT, SAISON, TEINTES = Object.create(null), ANIMER = true;
+  function relire() {
+    S = D.site; LIB = S.libelles || {};
+    PAR_SLUG = Object.create(null);
+    D.shows.forEach(s => { PAR_SLUG[s.slug] = s; });
+    MENU = Object.fromEntries((S.menu || []).map(m => [m.id, m]));
+    ENT = Object.fromEntries((S.entrees || []).map(e => [e.cle, e]));
+    SAISON = (S.saisons || [])[0] || { saison: D.saison, titre: '' };
+    TEINTES = Object.create(null);
+    polices();
+  }
+  const photo = cle => (cle && D.photos[cle]) || '';
+  const cadrage = s => `${s && s.focale != null ? s.focale : 50}% 35%`;
+  const ed = chemin => chemin ? ` data-edit="${esc(chemin)}"` : '';
+  // un texte de D tel quel : un paragraphe, ou un bloc s'il en est déjà un ; data-edit porte son chemin dans D
+  const bloc = (h, chemin) => /^\s*<(h\d|ul|ol|p|div|blockquote)\b/i.test(h) ? `<div${ed(chemin)}>${h}</div>` : `<p${ed(chemin)}>${h}</p>`;
+  const ext = url => `href="${esc(url)}" target="_blank" rel="noopener"`;
+  const lienSp = (slug, cle) => `#/spectacle/${slug}${cle ? '/' + cle : ''}`;
+
+  /* ---------- Les univers : la lumière de chaque spectacle ---------- */
+  const lumi = h => { const f = c => (c /= 255) <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4; return .2126 * f(parseInt(h.slice(1, 3), 16)) + .7152 * f(parseInt(h.slice(3, 5), 16)) + .0722 * f(parseInt(h.slice(5, 7), 16)); };
+  const hex = c => /^#[0-9a-f]{6}$/i.test(c || '');
+  const contraste = (a, b) => { if (!hex(a) || !hex(b)) return 21; const x = lumi(a), y = lumi(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  const REPLI = { 'Anton': 'Impact,"Arial Narrow",sans-serif', 'Space Grotesk': 'system-ui,sans-serif', 'Ubuntu': 'system-ui,sans-serif', 'Grenze Gotisch': 'Georgia,serif', 'Bodoni Moda': 'Didot,"Bodoni 72",serif' };
+  // pour chaque univers : le texte vif (4,5:1), le tracé des titres et des lignes (3:1), l'aplat et son texte,
+  // et sa « lumière » : la couleur qui éclaire le noir de la maquette (4,5:1 sur #0b0809)
+  function teinte(s) {
+    if (TEINTES[s.slug]) return TEINTES[s.slug];
+    const u = s.univers || {}, k = Object.assign({ fond: NOIR, fond2: '#151011', texte: '#f4eee9', texte2: '#a59a96', accent: LUM, accent2: LUM, scene: LUM, lueur: 'rgba(255,217,168,.3)' }, s.palette || {}, u.couleurs || {});
+    const passe = (c, fonds, min) => fonds.every(f => contraste(c, f) >= min);
+    const vif = [k.accent2, k.scene, k.accent].filter(hex).find(c => passe(c, [k.fond, k.fond2], 4.5)) || k.texte;
+    const trace = [k.accent, k.scene, k.accent2].filter(hex).find(c => passe(c, [k.fond], 3)) || k.texte;
+    const lumiere = [k.scene, k.accent2, k.accent].filter(hex).find(c => contraste(c, NOIR) >= 4.5) || (u.clair ? k.fond : k.texte);
+    let aplat = trace, sur = k.fond;
+    for (const a of [k.accent, k.scene, k.accent2].filter(hex)) { const t = [k.fond, k.texte, '#ffffff', NOIR].find(x => contraste(x, a) >= 4.5); if (t) { aplat = a; sur = t; break; } }
+    const p = u.polices || {};
+    return (TEINTES[s.slug] = { k, clair: !!u.clair, vif, trace, lumiere, aplat, sur, titre: u.clair ? trace : k.texte, hero: u.clair ? k.fond : k.texte,
+      police: p.titre ? `'${p.titre}',${REPLI[p.titre] || 'Georgia,serif'}` : null, graisse: p.titreGraisse || 600, motif: u.motif || s.motif || null });
+  }
+  const policeU = t => t.police ? `--u-police:${t.police};--u-graisse:${t.graisse};--u-style:normal` : '';
+  const styleU = s => { const t = teinte(s), k = t.k; return `--u-fond:${k.fond};--u-fond2:${k.fond2};--u-texte:${k.texte};--u-texte2:${k.texte2};--u-trace:${t.trace};--u-vif:${t.vif};--u-aplat:${t.aplat};--u-sur:${t.sur};--u-titre:${t.titre};--u-hero:${t.hero};--u-lueur:${k.lueur};--u-lum:${t.lumiere};--c:${t.lumiere};${policeU(t)}`; };
+  const styleMini = s => { const t = teinte(s); return `--c:${t.lumiere};${policeU(t)}`; };
+  const classeU = s => `u${teinte(s).clair ? ' u--clair' : ''}`;
+  // une seule feuille Google Fonts : si la base apporte une police de titre nouvelle, elle s'y ajoute
+  function polices() {
+    const lien = $('#polices'); if (!lien) return;
+    const href = lien.getAttribute('href');
+    const manque = [...new Set(D.shows.map(s => s.univers && s.univers.polices && s.univers.polices.titre).filter(Boolean))]
+      .filter(f => !new RegExp(`family=${f.replace(/ /g, '\\+')}(:|&)`).test(href));
+    if (!manque.length) return;
+    const g = f => { const s = D.shows.find(x => x.univers && x.univers.polices && x.univers.polices.titre === f); return (s && s.univers.polices.titreGraisse) || 400; };
+    lien.setAttribute('href', href.replace('&display=swap', `${manque.map(f => `&family=${f.replace(/ /g, '+')}:wght@${g(f)}`).join('')}&display=swap`));
+  }
+
+  /* ---------- Les motifs : la signature de chaque univers, projetée comme un gobo ---------- */
+  const pt = (r, deg) => { const a = (deg - 90) * Math.PI / 180; return [+(100 + r * Math.cos(a)).toFixed(1), +(100 + r * Math.sin(a)).toFixed(1)]; };
+  const arc = (r, a0, a1) => { const [x0, y0] = pt(r, a0), [x1, y1] = pt(r, a1); return `M${x0} ${y0}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
+  const MOTIFS = {
+    // l'arène : le cercle des spectateurs, trois gradins, le tapis, le polygone au centre
+    arene: () => `<circle cx="100" cy="100" r="93" stroke-dasharray="0.1 7"/>${[0, 120, 240].map(a => `<path d="${arc(78, a + 14, a + 106)}"/><path d="${arc(68, a + 14, a + 106)}"/>`).join('')}<circle cx="100" cy="100" r="47"/><path d="${[0, 60, 120, 180, 240, 300].map((a, i) => (i ? 'L' : 'M') + pt(10, a).join(' ')).join('')}Z"/>`,
+    // les jumeaux : deux couronnes jumelles
+    jumeaux: () => [62, 138].map(cx => `<path d="M${cx - 34} 132V88l15 18 19-34 19 34 15-18v44Z"/><path d="M${cx - 34} 120h68"/><circle cx="${cx - 34}" cy="83" r="3.5"/><circle cx="${cx}" cy="66" r="3.5"/><circle cx="${cx + 34}" cy="83" r="3.5"/>`).join(''),
+    // les annotations : des notes manuscrites dans la marge
+    annotations: () => `<path d="M40 12V190"/><path d="M54 42c10-7 16 6 25 0s15 6 24 0 15 6 24 0 14 5 22 0"/><path d="M54 64c10-6 15 6 24 0s16 5 25 0 14 6 23 0"/><path d="M54 86c9-6 16 6 25 0s15 6 24 0"/><path d="M62 126c22-14 78-16 100-2 10 7-4 18-40 19-42 1-70-6-62-16 6-7 30-12 56-12"/><path d="M14 164Q18 144 38 136M38 136l-10 1M38 136l-4 9"/><path d="M22 46v16M14 54h16M16 48l12 12M28 48 16 60"/><path d="M62 170c20 3 60 3 90-2"/>`,
+    // le paperboard : la feuille sur son chevalet, le cœur au feutre, le feutre
+    paperboard: () => `<path d="M46 30h108"/><rect x="52" y="34" width="96" height="92" rx="2"/><path d="M76 126 62 188M124 126l14 62M100 126v54"/><path d="M100 106c-20-12-30-26-22-36 6-7 16-5 22 4 6-9 16-11 22-4 8 10-2 24-22 36Z"/><path d="M66 50h36M66 60h22"/><path d="M158 152l26-26 6 6-26 26-9 3Z"/>`,
+    // le nez : le profil
+    nez: () => `<path d="M122 12c-8 22-6 40-10 52-3 9-20 22-50 38-7 4-5 11 4 12 16 2 30 2 40 4-3 6 0 11 5 13-6 4-4 11 2 13-3 11 2 19 12 23 9 4 11 16 7 34"/><path d="M136 44c9 5 17 4 24-3"/>`,
+    // l'horloge : le temps du huis clos
+    horloge: () => `<circle cx="100" cy="100" r="84"/><circle cx="100" cy="100" r="75" stroke-dasharray="0.1 8"/>${Array.from({ length: 12 }, (_, i) => { const [x0, y0] = pt(67, i * 30), [x1, y1] = pt(i % 3 ? 60 : 53, i * 30); return `<path d="M${x0} ${y0}L${x1} ${y1}"/>`; }).join('')}<path d="M100 100L${pt(36, 300).join(' ')}"/><path d="M100 100L${pt(56, 354).join(' ')}"/><circle cx="100" cy="100" r="3"/>`,
+    // le fil rouge
+    fil: () => `<path d="M6 162C40 152 52 120 82 126s34 40 62 30c24-9 10-44-12-36-20 8-6 40 22 30 22-8 26-40 40-60"/>`,
+    // la chronologie : la frise 1850 → 2077
+    chronologie: () => `<path d="M12 100H188"/><path d="M181 94l8 6-8 6"/>${Array.from({ length: 12 }, (_, i) => `<path d="M${20 + i * 14} ${i % 4 ? 95 : 89}V${i % 4 ? 105 : 111}"/>`).join('')}<text x="12" y="132" fill="currentColor">1850</text><text x="188" y="132" fill="currentColor" text-anchor="end">2077</text>`,
+  };
+  const motif = nom => MOTIFS[nom] ? `<svg class="motif motif--${nom}" viewBox="0 0 200 200" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">${MOTIFS[nom]()}</svg>` : '';
+
+  /* ---------- En-tête : la pieuvre, le mot ; les trois entrées ; le menu second ---------- */
+  const tete = $('#tete'), teteIn = $('#tete-in'), navE = $('#entrees'), navS = $('#second'), menuBtn = $('#menu-btn'), main = $('#contenu'), pied = $('#pied');
   $('#marque-pieuvre').innerHTML = D.logo.octopus;
   (function mot() {
     const cible = $('#marque-mot'), NS = 'http://www.w3.org/2000/svg';
@@ -510,41 +856,57 @@ ul,ol{padding:0;list-style:none}
     } catch (e) { svg = ''; }
     tmp.remove();
     if (svg) cible.innerHTML = svg;
-    else { cible.textContent = S.titreSuffixe; cible.classList.add('texte'); }
+    else { cible.textContent = D.site.titreSuffixe; cible.classList.add('texte'); }
   })();
   const icone = doc.createElement('link');
   icone.rel = 'icon';
   icone.href = 'data:image/svg+xml,' + encodeURIComponent(D.logo.mark);
   doc.head.appendChild(icone);
-  $('#nav').setAttribute('aria-label', LIB.menu);
-  $('#nav-liste').innerHTML = S.menu.map(m => `<li><a href="${esc(m.href)}" data-nav="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('');
-  $('#menu-txt').textContent = LIB.menu;
+  let dejaE = '', dejaS = '', dejaP = '';
+  function chrome() {
+    $('#marque').setAttribute('aria-label', S.nom);
+    const hE = `<ul>${(S.entrees || []).map(e => `<li><a class="entree" href="${esc(e.href)}" data-cle="${esc(e.cle)}" style="--e:${esc(e.couleurVive || e.couleur)}"><span class="lampe" aria-hidden="true"></span><span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a></li>`).join('')}</ul>`;
+    if (hE !== dejaE) { navE.innerHTML = hE; dejaE = hE; }
+    const hS = `<ul>${(S.menu || []).map(m => `<li><a href="${esc(m.href)}" data-nav="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')}</ul>`;
+    if (hS !== dejaS) { navS.innerHTML = hS; dejaS = hS; }
+    navS.setAttribute('aria-label', LIB.menu || '');
+    $('#menu-txt').textContent = LIB.menu || '';
+    const hP = piedHtml();
+    if (hP !== dejaP) { pied.innerHTML = hP; dejaP = hP; }
+  }
+  // sur ordinateur : le libellé entier des entrées si la place le permet, sinon le court
+  function ajusterTete() {
+    tete.classList.remove('tete--court');
+    if (replie.matches) return;
+    const ul = $('ul', navE);
+    if (ul && ul.scrollWidth > navE.clientWidth + 1) tete.classList.add('tete--court');
+  }
+  function piedHtml() {
+    const CO = S.coordonnees || {};
+    return `<div class="wrap">
+      <div class="pied-grille">
+        <a class="pied-logo" href="#/" aria-label="${esc(S.nom)}"><span aria-hidden="true">${D.logo.octopusWord}</span></a>
+        <address class="pied-coord"><span class="pied-nom">${esc(CO.nom)}</span>${(CO.adresse || []).map(l => `<span>${esc(l)}</span>`).join('')}</address>
+        <ul class="pied-liens">
+          ${S.ecrire ? `<li><a class="lien" href="${esc(S.ecrire.href)}">${esc(S.ecrire.texte)}</a></li>` : ''}
+          ${S.facebook ? `<li>${S.facebook.href ? `<a class="lien" ${ext(S.facebook.href)}>${esc(S.facebook.texte)}</a>` : `<span class="pied-fb">${esc(S.facebook.texte)}</span>`}</li>` : ''}
+        </ul>
+        <p class="pied-part">${S.partenaires || ''}</p>
+      </div>
+      <div class="pied-bas">
+        <p class="pied-legal">${(CO.legal || []).map(l => `<span>${esc(l)}</span>`).join('')}</p>
+        <ul class="pied-legaux">${(S.liensLegaux || []).map(l => `<li><a class="lien" href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join('')}${LIB.modifierSite ? `<li><button type="button" class="modifier" data-modifier>${esc(LIB.modifierSite)}</button></li>` : ''}</ul>
+      </div>
+    </div>`;
+  }
 
-  /* Pied de page */
-  const CO = S.coordonnees;
-  $('#pied').innerHTML = `<div class="wrap">
-    <div class="pied-grille">
-      <a class="pied-logo" href="#/" aria-label="${esc(S.nom)}"><span aria-hidden="true">${D.logo.octopusWord}</span></a>
-      <address class="pied-coord"><span class="pied-nom">${esc(CO.nom)}</span>${CO.adresse.map(l => `<span>${esc(l)}</span>`).join('')}</address>
-      <ul class="pied-liens">
-        <li><a class="lien" href="${esc(S.ecrire.href)}">${esc(S.ecrire.texte)}</a></li>
-        <li>${S.facebook.href ? `<a class="lien" ${ext(S.facebook.href)}>${esc(S.facebook.texte)}</a>` : `<span class="pied-fb">${esc(S.facebook.texte)}</span>`}</li>
-      </ul>
-      <p class="pied-part">${S.partenaires}</p>
-    </div>
-    <div class="pied-bas">
-      <p class="pied-legal">${CO.legal.map(l => `<span>${esc(l)}</span>`).join('')}</p>
-      <ul class="pied-legaux">${S.liensLegaux.map(l => `<li><a class="lien" href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join('')}</ul>
-    </div>
-  </div>`;
-
-  /* La carte des tournées : des faisceaux de lumière de Rouen vers chaque commune, les communes comme des lampes de scène */
+  /* ---------- La carte des tournées : des faisceaux de lumière de Rouen vers chaque commune, les communes comme des lampes ---------- */
   const R = CARTE.rouen;
   const loin = xy => Math.hypot(xy[0] - R[0], xy[1] - R[1]) >= 6;
-  let nSvg = 0, nBoite = 0;
+  let nSvg = 0, nBoite = 0, nettoyer = [];
   const aBrancher = [];
-  function carteSvg({ lieux = [], passe = [], poussiere = false, titre = '', teinte = false, souvenir = false }) {
-    const id = 'cl' + (++nSvg), anime = CARTE.mouvement() && lieux.length > 0;
+  function carteSvg({ lieux = [], passe = [], poussiere = false, titre = '', teinte: teinteC = false, souvenir = false }) {
+    const id = 'cl' + (++nSvg), anime = ANIMER && CARTE.mouvement() && lieux.length > 0;
     const vb = CARTE.cadre([...lieux, ...passe], { marge: 44, min: 220 });
     const [bx, by, bw, bh] = vb.split(/\s+/).map(Number);
     const e = Math.max(bw, bh) / 800, k = n => +(n * e).toFixed(2);
@@ -569,7 +931,7 @@ ul,ol{padding:0;list-style:none}
     const pris = new Set([...lieux, ...passe].map(x => x.l));
     const pous = poussiere ? `<g class="cl-poussiere" aria-hidden="true">${CARTE.lieux.map((x, l) => pris.has(l) ? '' : `<circle cx="${x.xy[0]}" cy="${x.xy[1]}" r="${k(1.25)}"/>`).join('')}</g>` : '';
     const passes = passe.length ? `<g aria-hidden="true">${passe.filter(x => loin(x.xy)).map(x => `<path class="cl-passe" d="${CARTE.trait(x.xy)}"/>`).join('')}${passe.map(x => `<circle class="cl-passe-pt" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${k(1.6)}"/>`).join('')}</g>` : '';
-    return `<svg class="cl${teinte ? ' cl--teinte' : ''}${souvenir ? ' cl--souvenir' : ''}${anime ? ' attend' : ''}" viewBox="${vb}" style="--e:${e.toFixed(3)}" role="group" aria-label="${esc(titre)}">
+    return `<svg class="cl${teinteC ? ' cl--teinte' : ''}${souvenir ? ' cl--souvenir' : ''}${anime ? ' attend' : ''}" viewBox="${vb}" style="--e:${e.toFixed(3)}" role="group" aria-label="${esc(titre)}">
       <defs>
         <radialGradient id="${id}-a"><stop offset="0" stop-color="#fffaf0"/><stop offset=".16" class="cl-s1"/><stop offset=".45" class="cl-s2"/><stop offset="1" class="cl-s3"/></radialGradient>
         <filter id="${id}-f" filterUnits="userSpaceOnUse" x="${bx - 60}" y="${by - 60}" width="${bw + 120}" height="${bh + 120}"><feGaussianBlur stdDeviation="${k(2.8)}"/></filter>
@@ -640,25 +1002,28 @@ ul,ol{padding:0;list-style:none}
     }
   }
 
-  /* Les lignes de date, telles quelles */
+  /* ---------- Les lignes de date, telles quelles ---------- */
   const MOIS = /(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)\s+\d{4}/gi;
   const moisDe = d => ((d.ligneDate || '').match(MOIS) || [d.ligneDate || '']).pop();
   const detail = x => `<p class="date-d">${x.lien ? `<a class="lien" ${ext(x.lien)}>${esc(x.texte)}</a>` : esc(x.texte)}</p>`;
-  function uneDate(d, { titre = true, hn = 3 } = {}) {
-    return `<li class="date"${d.l != null ? ` data-l="${d.l}"` : ''} style="--c:${esc(couleur(d.slug))}">
-      <div class="date-a"><p class="date-quand">${esc(d.ligneDate)}</p><p class="date-ou">${esc(d.ligneLieu)}</p></div>
-      <div class="date-b">${titre ? `<h${hn} class="date-t"><a href="#/spectacle/${esc(d.slug)}">${esc(d.titre)}</a></h${hn}>` : ''}${(d.details || []).map(detail).join('')}</div>
+  // titre : le titre du spectacle (dans sa police) mène à sa page, dans l'entrée où l'on lit ; tag : « Scolaire »
+  function uneDate(d, { titre = true, hn = 3, entree = null, tag = false } = {}) {
+    const s = PAR_SLUG[d.slug];
+    const st = titre ? (s ? styleMini(s) : `--c:${LUM}`) : '';
+    return `<li class="date"${d.l != null ? ` data-l="${d.l}"` : ''} data-date-id="${esc(d.id ?? '')}"${st ? ` style="${esc(st)}"` : ''}>
+      <div class="date-a"><p class="date-quand">${esc(d.ligneDate)}</p><p class="date-ou">${esc(d.ligneLieu)}</p>${tag && d.scolaire ? `<p class="date-tag">${esc(LIB.scolaire)}</p>` : ''}</div>
+      <div class="date-b">${titre ? `<h${hn} class="date-t">${s ? `<a href="${lienSp(d.slug, entree)}">${esc(d.titre)}</a>` : esc(d.titre)}</h${hn}>` : ''}${(d.details || []).map(detail).join('')}</div>
     </li>`;
   }
-  function parMois(liste) {
+  function parMois(liste, o = {}) {
     const g = [];
     liste.forEach(d => { const m = moisDe(d); if (!g.length || g[g.length - 1].m !== m) g.push({ m, l: [] }); g[g.length - 1].l.push(d); });
-    return g.map(x => `<div class="mois"><h2 class="mois-t">${esc(x.m)}</h2><ol class="dates">${x.l.map(d => uneDate(d)).join('')}</ol></div>`).join('');
+    return g.map(x => `<div class="mois"><h2 class="mois-t">${esc(x.m)}</h2><ol class="dates">${x.l.map(d => uneDate(d, o)).join('')}</ol></div>`).join('');
   }
 
-  /* La scène : la photo plein écran, le halo qui suit la souris */
-  function visuel(src, focale, credit, double) {
-    const img = on => `<img class="ph${on ? ' on' : ''}"${on ? ` src="${src}"` : ''} alt="" aria-hidden="true" style="object-position:${focale}% 35%" decoding="async">`;
+  /* ---------- La scène : la photo plein écran, le halo qui suit la main ---------- */
+  function visuel(src, focale, credit, double, edPhoto) {
+    const img = on => `<img class="ph${on ? ' on' : ''}"${on ? ` src="${src}"` : ''} alt="" style="object-position:${focale}% 35%" decoding="async"${on && edPhoto ? ` data-edit-photo="${esc(edPhoto)}"` : ''}>`;
     return `<div class="scene-visuel">${img(true)}${double ? img(false) : ''}<div class="spot" aria-hidden="true"></div><div class="ombre" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>${credit ? `<p class="credit">${esc(credit)}</p>` : ''}</div>`;
   }
   function halo(sc) {
@@ -679,34 +1044,38 @@ ul,ol{padding:0;list-style:none}
       if (!raf) raf = requestAnimationFrame(boucle);
     });
     sc.addEventListener('pointerleave', () => sc.classList.remove('lumiere'));
+    nettoyer.push(() => cancelAnimationFrame(raf));
     return { repos: () => { if (!sc.classList.contains('lumiere')) { cancelAnimationFrame(raf); raf = 0; repos(); } } };
   }
 
-  /* Accueil : le bandeau d'origine, une photo à la fois */
-  let actif = 0, pauseVoulue = false, nettoyer = [];
+  /* ---------- Accueil : le bandeau d'origine, une photo à la fois, chaque titre dans la police de son spectacle ---------- */
+  let actif = 0, pauseVoulue = false;
   const ICO_PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1" width="2.6" height="10"/><rect x="7.4" y="1" width="2.6" height="10"/></svg>';
   const ICO_LIRE = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.2v9.6L10.6 6z"/></svg>';
+  const diapos = () => (S.diaporama || []).filter(x => D.photos[x.slug]);
+  const prochainePublique = slug => D.dates.find(d => d.slug === slug && !d.scolaire) || null;
   function texteScene(x) {
-    const s = PAR_SLUG[x.slug];
+    const s = PAR_SLUG[x.slug], p = s ? (prochainePublique(s.slug) || s.prochaine) : null;
     return `<p class="scene-sur">${esc(x.surtitre)}</p>
       <h2 class="scene-titre">${x.titre.map(l => `<span class="ligne">${esc(l)}</span>`).join('')}</h2>
-      ${s && s.prochaine ? `<p class="scene-date">${esc(s.prochaine.ligne)}</p>` : ''}
+      ${p ? `<p class="scene-date">${esc(p.ligne)}</p>` : ''}
       <a class="btn" href="${esc(x.href)}">${esc(x.bouton)} ${FL}</a>`;
   }
-  function sceneAccueil() {
-    const x = SLIDES[actif], s = PAR_SLUG[x.slug];
-    return `<section class="scene scene--accueil" id="scene" aria-label="${esc(x.surtitre)}" data-focale="${s ? s.focale ?? 50 : 50}" style="--c:${esc(couleur(x.slug))}">
+  const styleDiapo = x => PAR_SLUG[x.slug] ? styleMini(PAR_SLUG[x.slug]) : `--c:${LUM}`;
+  function sceneAccueil(slides) {
+    const x = slides[actif], s = PAR_SLUG[x.slug];
+    return `<section class="scene scene--accueil" id="scene" aria-label="${esc(x.surtitre)}" data-focale="${s ? s.focale ?? 50 : 50}" style="${esc(styleDiapo(x))}">
       ${visuel(photo(x.slug), s ? s.focale ?? 50 : 50, x.credit, true)}
       <div class="scene-corps wrap"><div class="scene-txt" id="scene-panneau" role="tabpanel" aria-labelledby="titre-${actif}">${texteScene(x)}</div></div>
       <div class="programme"><div class="programme-in wrap">
         <div class="titres" role="tablist" aria-label="${esc(LIB.spectacles)}">
-          ${SLIDES.map((y, i) => `<button class="titre" type="button" role="tab" id="titre-${i}" aria-controls="scene-panneau" aria-selected="${i === actif}" tabindex="${i === actif ? 0 : -1}" style="--c:${esc(couleur(y.slug))}">${esc(PAR_SLUG[y.slug] ? PAR_SLUG[y.slug].titre : y.titre[0])}<span class="fil" aria-hidden="true"></span></button>`).join('')}
+          ${slides.map((y, i) => `<button class="titre" type="button" role="tab" id="titre-${i}" aria-controls="scene-panneau" aria-selected="${i === actif}" tabindex="${i === actif ? 0 : -1}" style="${esc(styleDiapo(y))}">${esc(PAR_SLUG[y.slug] ? PAR_SLUG[y.slug].titre : y.titre[0])}<span class="fil" aria-hidden="true"></span></button>`).join('')}
         </div>
         <button class="pause" type="button" id="pause" aria-pressed="${pauseVoulue}" aria-label="Pause">${pauseVoulue ? ICO_LIRE : ICO_PAUSE}</button>
       </div></div>
     </section>`;
   }
-  function brancherCarrousel(sc) {
+  function brancherCarrousel(sc, slides) {
     const onglets = $$('.titre', sc), panneau = $('#scene-panneau', sc), calques = $$('.ph', sc);
     const rangee = $('.titres', sc), btnPause = $('#pause', sc), credit = $('.credit', sc);
     const lumiere = halo(sc);
@@ -724,13 +1093,13 @@ ul,ol{padding:0;list-style:none}
     };
     const peindre = i => {
       montre = i;
-      const x = SLIDES[i], s = PAR_SLUG[x.slug];
+      const x = slides[i], s = PAR_SLUG[x.slug];
       const vu = calques.find(c => c.classList.contains('on')) || calques[0], neuf = calques.find(c => c !== vu);
       neuf.src = photo(x.slug);
       neuf.style.objectPosition = cadrage(s);
       const montrer = () => { neuf.classList.add('on'); vu.classList.remove('on'); };
       (neuf.decode ? neuf.decode() : Promise.resolve()).then(montrer, montrer);
-      sc.style.setProperty('--c', couleur(x.slug));
+      sc.setAttribute('style', styleDiapo(x));
       sc.dataset.focale = s && s.focale != null ? s.focale : 50;
       lumiere.repos();
       const ecrire = () => {
@@ -767,7 +1136,7 @@ ul,ol{padding:0;list-style:none}
         if (k !== undefined) { e.preventDefault(); choisir(k, true); }
       });
     });
-    sc.addEventListener('animationend', e => { if (!arret && e.animationName === 'fil' && sc.classList.contains('joue')) choisir((actif + 1) % SLIDES.length); });
+    sc.addEventListener('animationend', e => { if (!arret && e.animationName === 'fil' && sc.classList.contains('joue')) choisir((actif + 1) % slides.length); });
     sc.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { pauses.survol = true; etat(); } });
     sc.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') { pauses.survol = false; etat(); } });
     sc.addEventListener('focusin', () => { pauses.focus = true; etat(); });
@@ -789,184 +1158,473 @@ ul,ol{padding:0;list-style:none}
     versOnglet(actif);
     nettoyer.push(() => { arret = true; etat(); if (io) io.disconnect(); doc.removeEventListener('visibilitychange', visible); removeEventListener('intro:fin', finIntro); reduit.removeEventListener('change', etat); clearTimeout(survolT); });
   }
+  // les trois portes : chacune s'éclaire de la couleur de son entrée, sur une photo de la compagnie
+  function portes() {
+    const pub = D.dates.find(d => !d.scolaire);
+    const nb = s => parseInt(String((s.programmer || {}).representations || '').replace(/\D+/g, ' ').trim().split(' ')[0], 10) || 0;
+    const tournee = D.shows.slice().sort((a, b) => nb(b) - nb(a))[0];
+    const ecole = D.photos['actions-culturelles'] ? 'actions-culturelles' : null;
+    // voir : le public autour de l'arène ; programmer : le spectacle le plus joué ; établissement : un atelier
+    const prem = (...cles) => cles.find(k => k && D.photos[k]) || null;
+    const img = { voir: prem('berenice/av-2', pub && photoCarte(PAR_SLUG[pub.slug])), programmer: prem(tournee && tournee.slug), etablissement: ecole };
+    return (S.entrees || []).map(e => `<li><a class="porte" href="${esc(e.href)}" style="--e:${esc(e.couleurVive || e.couleur)}">${img[e.cle] ? `<img class="porte-ph" src="${photo(img[e.cle])}" alt="" loading="lazy" decoding="async">` : ''}<span class="lampe" aria-hidden="true"></span><span class="porte-t">${esc(e.texte)}</span>${FL}</a></li>`).join('');
+  }
+  // la photo d'une carte : la première photo de scène de la galerie ; en création, l'image principale
+  const photoCarte = s => { if (!s) return null; const g = !s.statut && (s.photos || []).find(p => !p.etablissement && !p.atelier && D.photos[p.cle]); return g ? g.cle : (D.photos[s.slug] ? s.slug : null); };
+  // une affiche : le spectacle dans son univers (fond, couleurs, police de titre, motif)
+  function affiche(s, { lien = null, accroche = false } = {}) {
+    const t = teinte(s), slug = s.slug;
+    return `<li><a class="affiche ${classeU(s)}" href="${esc(lien || lienSp(slug))}" style="${esc(styleU(s))}">
+      <span class="affiche-ph">${photoCarte(s) ? `<img src="${photo(photoCarte(s))}" alt="" loading="lazy" decoding="async">` : ''}${t.motif ? motif(t.motif) : ''}</span>
+      <span class="affiche-corps">
+        <span class="affiche-sur"><span${ed(`shows.${slug}.creation`)}>${esc(s.creation)}</span>${s.statut ? `<span${ed(`shows.${slug}.statut`)}>${esc(s.statut)}</span>` : ''}</span>
+        <span class="affiche-t">${esc(s.titre)}</span>
+        ${s.lieuTemps ? `<span class="affiche-lt"${ed(`shows.${slug}.lieuTemps`)}>${esc(s.lieuTemps)}</span>` : ''}
+        ${accroche && s.accroche ? `<span class="affiche-acc"${ed(`shows.${slug}.accroche`)}>${esc(s.accroche)}</span>` : ''}
+      </span>
+    </a></li>`;
+  }
   function accueil() {
+    const slides = diapos();
+    if (actif >= slides.length) actif = 0;
     const lieux = CARTE.aVenir();
     return `<h1 class="sr" tabindex="-1">${esc(S.nom)}</h1>
-    ${SLIDES.length ? sceneAccueil() : ''}
-    <ul class="portes">${S.portes.map(p => `<li><a class="porte" href="${esc(p.href)}" style="--pv:${esc(p.couleurVive)}"><span class="porte-t">${esc(p.texte)}</span>${FL}</a></li>`).join('')}</ul>
+    ${slides.length ? sceneAccueil(slides) : ''}
+    <ul class="choix">${portes()}</ul>
+    <section class="bloc" aria-labelledby="t-spectacles"><div class="wrap">
+      <h2 class="bloc-titre" id="t-spectacles">${esc(LIB.lesSpectacles)}</h2>
+      <ul class="affiches">${D.shows.map(s => affiche(s)).join('')}</ul>
+    </div></section>
     <section class="bloc tournee" aria-labelledby="t-tournee"><div class="wrap">
       <p class="sur">${esc(SAISON.titre)}</p>
       <h2 class="bloc-titre" id="t-tournee">${esc(LIB.actuellementEnTournee)}</h2>
       <div class="tournee-grille">
         ${boiteCarte({ lieux, poussiere: true, titre: LIB.actuellementEnTournee, liste: 'liste-accueil', defaut: D.dates[0] ? D.dates[0].l : null })}
-        <div class="tournee-liste">
-          <ol class="dates dates--courtes" id="liste-accueil">${D.dates.slice(0, 5).map(d => uneDate(d)).join('')}</ol>
-          <a class="plus" href="${esc(MENU.agenda.href)}">${esc(MENU.agenda.texte)} ${FL}</a>
+        <div class="tournee-liste" data-agenda>
+          <ol class="dates dates--courtes" id="liste-accueil">${D.dates.slice(0, 5).map(d => uneDate(d, { tag: true })).join('')}</ol>
+          ${ENT.voir ? `<a class="plus" href="${esc(ENT.voir.href)}">${esc(ENT.voir.texte)} ${FL}</a>` : ''}
         </div>
       </div>
     </div></section>
-    <div class="donateurs"><div class="wrap"><p>${S.donateurs}</p></div></div>`;
+    ${S.donateurs ? `<div class="donateurs"><div class="wrap"><p${ed('site.donateurs')}>${S.donateurs}</p></div></div>` : ''}`;
   }
 
-  /* Spectacles : un titre éclaire sa photo, en grand derrière la liste */
+  /* ---------- Je viens voir un spectacle : la saison tout public, sa carte, les spectacles en tournée ---------- */
+  function saisonsPrecedentes() {
+    const liste = (S.saisons || []).slice(1);
+    return liste.length ? `<section class="saisons-sec" aria-labelledby="t-saisons"><div class="wrap">
+      <h2 class="sur" id="t-saisons">${esc(LIB.saisonsPrecedentes)}</h2>
+      <ul class="saisons">${liste.map(x => `<li><a href="${esc(x.href)}">${esc(x.titre)}</a></li>`).join('')}</ul>
+    </div></section>` : '';
+  }
+  function pageVoir() {
+    const E = ENT.voir, pub = D.dates.filter(d => !d.scolaire), lieux = CARTE.aVenir('public');
+    const slugs = [...new Set(pub.map(d => d.slug))].filter(x => PAR_SLUG[x]);
+    return `<div class="page page--entree" style="--e:${esc(E.couleurVive || E.couleur)}">
+      <header class="page-tete wrap"><p class="sur">${esc(SAISON.titre)}</p><h1 class="page-titre" tabindex="-1">${esc(E.texte)}</h1></header>
+      <div class="wrap agenda-grille">
+        <div class="agenda-liste" id="liste-agenda" data-agenda>${parMois(pub, { entree: 'voir' })}</div>
+        <div class="agenda-carte">${boiteCarte({ lieux, titre: SAISON.titre, liste: 'liste-agenda', defaut: pub[0] ? pub[0].l : null })}</div>
+      </div>
+      ${slugs.length ? `<section class="bloc" aria-labelledby="t-en-tournee"><div class="wrap">
+        <h2 class="bloc-titre" id="t-en-tournee">${esc(LIB.actuellementEnTournee)}</h2>
+        <ul class="affiches">${slugs.map(x => affiche(PAR_SLUG[x], { lien: lienSp(x, 'voir'), accroche: true })).join('')}</ul>
+      </div></section>` : ''}
+      ${saisonsPrecedentes()}
+    </div>`;
+  }
+
+  /* ---------- Je souhaite programmer : le catalogue, chaque fiche dans sa lumière ---------- */
+  const fait = (libelle, html, fort) => `<li class="fait${fort ? ' fait--fort' : ''}">${libelle ? `<span class="etiq">${esc(libelle)}</span>` : ''}<span class="fait-v">${html}</span></li>`;
+  function faitsProg(s) {
+    const slug = s.slug, P = s.programmer || {}, p = `shows.${slug}.programmer`;
+    return [
+      s.statut ? fait(null, `<span${ed(`shows.${slug}.statut`)}>${esc(s.statut)}</span>`, true) : '',
+      P.representations ? fait(null, `<span${ed(`${p}.representations`)}>${esc(P.representations)}</span>`, true) : '',
+      P.format ? fait(LIB.format, `<span${ed(`${p}.format`)}>${esc(P.format)}</span>`) : '',
+      s.duree ? fait(null, `<span${ed(`shows.${slug}.duree`)}>${esc(s.duree)}</span>`) : '',
+      P.jauge ? fait(null, `<span${ed(`${p}.jauge`)}>${esc(P.jauge)}</span>`) : '',
+      P.equipe ? fait(null, `<span${ed(`${p}.equipe`)}>${esc(P.equipe)}</span>`) : '',
+      P.actualite ? fait(null, `<span${ed(`${p}.actualite`)}>${esc(P.actualite)}</span>`) : '',
+      ...(P.equipeCreation || []).map((l, i) => fait(null, `<span${ed(`${p}.equipeCreation.${i}`)}>${esc(l)}</span>`)),
+    ].join('');
+  }
+  function ficheLignes(s) {
+    const slug = s.slug;
+    return (s.fiche || []).map((f, i) => `<li class="fiche-l">${f.libelle ? `<span class="fiche-k">${esc(f.libelle)}</span>` : ''}<span${ed(`shows.${slug}.fiche.${i}.valeur`)}>${f.valeur}</span></li>`).join('')
+      + (s.avec ? `<li class="fiche-l fiche-avec"><span class="fiche-k">${esc(s.avec.libelle)}</span><span${ed(`shows.${slug}.avec.valeur`)}>${s.avec.valeur}</span></li>` : '');
+  }
+  const ICO_VIDEO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l12.5-7.5z"/></svg>';
+  const lienVideo = (s, petit) => s.video && s.video.url ? `<a class="video${petit ? ' video--petit' : ''}" ${ext(s.video.url)}><span class="video-ico" aria-hidden="true">${ICO_VIDEO}</span><span class="video-t"><span class="video-l">${esc(LIB.bandeAnnonce)}</span>${petit ? '' : `<span class="video-titre"${ed(`shows.${s.slug}.video.titre`)}>${esc(s.video.titre)}</span>`}</span></a>` : '';
+  const lieuxDiffusion = s => (s.programmer || {}).lieux ? `<details class="lieux"><summary>${esc(LIB.lieuxDiffusion)}</summary><p${ed(`shows.${s.slug}.programmer.lieux`)}>${esc(s.programmer.lieux)}</p></details>` : '';
+  function ficheProg(s) {
+    const t = teinte(s), slug = s.slug, lien = lienSp(slug, 'programmer');
+    return `<li class="fiche-u ${classeU(s)}" style="${esc(styleU(s))}">
+      <div class="fu-ph">${photoCarte(s) ? `<img src="${photo(photoCarte(s))}" alt="" loading="lazy" decoding="async">` : ''}${t.motif ? motif(t.motif) : ''}</div>
+      <div class="fu-corps u-corps">
+        <p class="fu-sur"><span${ed(`shows.${slug}.creation`)}>${esc(s.creation)}</span></p>
+        <h2 class="fu-t"><a href="${lien}">${esc(s.titre)}</a></h2>
+        ${s.sousTitre ? `<p class="fu-sous"${ed(`shows.${slug}.sousTitre`)}>${s.sousTitre}</p>` : ''}
+        <ul class="faits">${faitsProg(s)}</ul>
+        <ul class="fiche">${ficheLignes(s)}</ul>
+        <div class="fu-actions">${lienVideo(s, true)}<a class="plus" href="${lien}">${esc(LIB.decouvrir)} ${FL}</a></div>
+        ${lieuxDiffusion(s)}
+      </div>
+    </li>`;
+  }
+  function pageProgrammer() {
+    const E = ENT.programmer, lieux = CARTE.tout();
+    return `<div class="page page--entree" style="--e:${esc(E.couleurVive || E.couleur)}">
+      <header class="page-tete wrap"><p class="sur">${esc(LIB.lesSpectacles)}</p><h1 class="page-titre" tabindex="-1">${esc(E.texte)}</h1></header>
+      <div class="wrap"><ol class="catalogue">${D.shows.map(ficheProg).join('')}</ol></div>
+      <section class="bloc" aria-labelledby="t-lieux"><div class="wrap">
+        <h2 class="bloc-titre" id="t-lieux">${esc(LIB.lieuxDiffusion)}</h2>
+        <div class="prog-carte">${boiteCarte({ lieux, seule: true, titre: LIB.lieuxDiffusion, defaut: lieux[0] ? lieux[0].l : null })}</div>
+      </div></section>
+      <section class="bloc" style="padding-top:0"><div class="wrap">
+        <p class="partenaires"${ed('site.partenaires')}>${S.partenaires || ''}</p>
+        ${S.ecrire ? `<p class="appel-l"><a class="appel" href="${esc(S.ecrire.href)}">${esc(LIB.ecrire)} ${FL}</a></p>` : ''}
+      </div></section>
+    </div>`;
+  }
+
+  /* ---------- Je représente un établissement scolaire : l'action culturelle de chaque spectacle ---------- */
+  function actionCourte(s) {
+    const A = s.actionCulturelle || {}, P = `shows.${s.slug}.actionCulturelle`;
+    if (A.aCompleter || !A.type) return `<p class="etiq">${esc(LIB.actionCulturelle)}</p><p class="a-completer">${esc(LIB.aCompleter)}</p>`;
+    return `<p class="etiq">${esc(LIB.actionCulturelle)}</p>
+      <p class="ac-type"${ed(`${P}.type`)}>${esc(A.type)}</p>
+      ${A.public || A.statut ? `<ul class="ac-meta">${A.public ? `<li><span class="etiq">${esc(LIB.public)}</span><span${ed(`${P}.public`)}>${esc(A.public)}</span></li>` : ''}${A.statut ? `<li><span class="ac-pill"${ed(`${P}.statut`)}>${esc(A.statut)}</span></li>` : ''}</ul>` : ''}
+      ${A.textes && A.textes[0] ? `<div class="prose">${bloc(A.textes[0].texte, `${P}.textes.0.texte`)}</div>` : ''}
+      ${(A.formule || []).length ? `<ul class="formule">${A.formule.map((l, i) => `<li${ed(`${P}.formule.${i}`)}>${esc(l)}</li>`).join('')}</ul>` : ''}
+      ${(A.dispositifs || []).length ? `<div class="dispositifs"><p class="etiq">${esc(LIB.dispositifs)}</p><ul>${A.dispositifs.map((x, i) => `<li${ed(`${P}.dispositifs.${i}`)}>${x}</li>`).join('')}</ul></div>` : ''}`;
+  }
+  function carteAC(s) {
+    const t = teinte(s), slug = s.slug, A = s.actionCulturelle || {}, lien = lienSp(slug, 'etablissement');
+    return `<li class="carte-ac ${classeU(s)}" style="${esc(styleU(s))}">
+      <div class="cac-ph">${photoCarte(s) ? `<img src="${photo(photoCarte(s))}" alt="" loading="lazy" decoding="async">` : ''}${t.motif ? motif(t.motif) : ''}</div>
+      <div class="cac-corps u-corps"><h3 class="cac-t"><a href="${lien}">${esc(s.titre)}</a></h3>${actionCourte(s)}
+        <p class="cac-liens"><a class="plus" href="${lien}">${esc(LIB.decouvrir)} ${FL}</a>${A.dossier ? `<a class="plus plus--plein" href="${lien}" data-vers="ch-dossier">${esc(LIB.dossierScolaire)} ${FL}</a>` : ''}</p>
+      </div>
+    </li>`;
+  }
+  function actionsCulturelles() {
+    const A = S.actions;
+    if (!A) return '';
+    const g = [1, 2, 3, 4].map(i => `actions-culturelles/g-${i}`).filter(k => D.photos[k]);
+    return `<section class="bloc" aria-labelledby="t-actions"><div class="wrap actions-grille">
+      <div><h2 class="bloc-titre" id="t-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2>
+        <div class="actions prose">${(A.blocs || []).map((b, i) => bloc(b, `site.actions.blocs.${i}`)).join('')}</div></div>
+      <div class="actions-ph">${D.photos['actions-culturelles'] ? `<img class="grande" src="${D.photos['actions-culturelles']}" alt="${esc(A.titre)}" loading="lazy" decoding="async">` : ''}
+        ${g.length ? `<div class="mini">${g.map(k => `<img src="${D.photos[k]}" alt="" loading="lazy" decoding="async">`).join('')}</div>` : ''}
+        ${A.credit ? `<p class="credit-u"${ed('site.actions.credit')}>${esc(A.credit)}</p>` : ''}</div>
+    </div></section>`;
+  }
+  function pageEtablissement() {
+    const E = ENT.etablissement, sco = D.dates.filter(d => d.scolaire);
+    const AC = s => s.actionCulturelle || {};
+    const groupe = l => D.shows.filter(s => !AC(s).aCompleter && AC(s).type && AC(s).lieu === l);
+    const reste = D.shows.filter(s => AC(s).aCompleter || !AC(s).type || !(LIB.lieu || {})[AC(s).lieu]);
+    const groupes = Object.keys(LIB.lieu || {}).map(l => [l, groupe(l)]).filter(([, l]) => l.length);
+    return `<div class="page page--entree" style="--e:${esc(E.couleurVive || E.couleur)}">
+      <header class="page-tete wrap"><p class="sur">${esc(LIB.actionCulturelle)}</p><h1 class="page-titre" tabindex="-1">${esc(E.texte)}</h1>
+        ${S.ecole && S.ecole.texte ? `<p class="ecole"${ed('site.ecole.texte')}>${S.ecole.texte}</p>` : ''}</header>
+      ${groupes.map(([cle, l]) => `<section class="groupe" aria-labelledby="g-${cle}"><div class="wrap"><h2 class="groupe-t" id="g-${cle}">${esc(LIB.lieu[cle])}</h2><ul class="cartes-ac">${l.map(carteAC).join('')}</ul></div></section>`).join('')}
+      ${reste.length ? `<section class="groupe"><div class="wrap"><ul class="cartes-ac">${reste.map(carteAC).join('')}</ul></div></section>` : ''}
+      ${actionsCulturelles()}
+      ${sco.length ? `<section class="bloc" aria-labelledby="t-sco" style="padding-top:0"><div class="wrap">
+        <p class="sur">${esc(SAISON.titre)}</p>
+        <h2 class="bloc-titre" id="t-sco">${esc(LIB.enEtablissement)}</h2>
+        <div class="tournee-grille">
+          ${boiteCarte({ lieux: CARTE.aVenir('scolaire'), titre: LIB.enEtablissement, liste: 'liste-sco', defaut: sco[0].l })}
+          <div data-agenda><ol class="dates dates--courtes" id="liste-sco">${sco.map(d => uneDate(d, { entree: 'etablissement' })).join('')}</ol></div>
+        </div>
+        ${S.ecrire ? `<p class="appel-l"><a class="appel" href="${esc(S.ecrire.href)}">${esc(LIB.ecrire)} ${FL}</a></p>` : ''}
+      </div></section>` : ''}
+    </div>`;
+  }
+
+  /* ---------- Spectacles : un titre éclaire sa photo, en grand derrière la liste ---------- */
   function pageSpectacles() {
     return `<div class="page page--rep">
-      <div class="rep-fond" aria-hidden="true">${SHOWS.map((s, i) => `<img class="ph${i ? '' : ' on'}" src="${photo(s.slug)}" alt="" data-i="${i}" style="object-position:${cadrage(s)}" decoding="async">`).join('')}<div class="rep-ombre"></div><div class="grain"></div></div>
+      <div class="rep-fond" aria-hidden="true">${D.shows.map((s, i) => `<img class="ph${i ? '' : ' on'}" src="${photo(s.slug)}" alt="" data-i="${i}" style="object-position:${cadrage(s)}" decoding="async">`).join('')}<div class="rep-teinte"></div><div class="rep-ombre"></div><div class="grain"></div></div>
       <div class="rep-corps">
-        <div class="page-tete wrap"><h1 class="page-titre" tabindex="-1">${esc(MENU.spectacles.texte)}</h1></div>
-        <div class="wrap"><ol class="rep" id="rep">${SHOWS.map((s, i) => `<li><a href="#/spectacle/${esc(s.slug)}" data-i="${i}" style="--c:${esc(s.couleur)}">
+        <div class="page-tete wrap"><h1 class="page-titre" tabindex="-1">${esc((MENU.spectacles || {}).texte || LIB.spectacles)}</h1></div>
+        <div class="wrap"><ol class="rep" id="rep">${D.shows.map((s, i) => `<li><a href="${lienSp(s.slug)}" data-i="${i}" data-teinte="${esc(teinte(s).k.lueur)}" style="${esc(styleMini(s))}">
           <img class="rep-img" src="${photo(s.slug)}" alt="" style="object-position:${cadrage(s)}" loading="lazy" decoding="async">
-          <span class="rep-c">${esc(s.creation)}</span>
+          <span class="rep-c"${ed(`shows.${s.slug}.creation`)}>${esc(s.creation)}</span>
           <span class="rep-t">${esc(s.titre)}</span>
-          <span class="rep-s">${s.statut ? `<span class="rep-statut">${esc(s.statut)}</span>` : ''}${s.sousTitre ? `<span>${s.sousTitre}</span>` : ''}</span>
+          <span class="rep-s">${s.statut ? `<span class="rep-statut">${esc(s.statut)}</span>` : ''}${s.lieuTemps ? `<span class="rep-lt">${esc(s.lieuTemps)}</span>` : ''}${s.sousTitre ? `<span>${s.sousTitre}</span>` : ''}</span>
         </a></li>`).join('')}</ol></div>
       </div>
     </div>`;
   }
   function brancherRep() {
-    const rep = $('#rep', main), calques = $$('.rep-fond .ph', main);
+    const rep = $('#rep', main), calques = $$('.rep-fond .ph', main), teinteF = $('.rep-teinte', main);
     if (!rep) return;
-    const voir = i => calques.forEach(c => c.classList.toggle('on', +c.dataset.i === i));
+    const voir = (i, a) => { calques.forEach(c => c.classList.toggle('on', +c.dataset.i === i)); if (teinteF) teinteF.style.backgroundColor = a.dataset.teinte || 'transparent'; };
     $$('a[data-i]', rep).forEach(a => {
       const i = +a.dataset.i;
-      a.addEventListener('mouseenter', () => { voir(i); rep.classList.add('survol'); a.classList.add('on'); });
+      a.addEventListener('mouseenter', () => { voir(i, a); rep.classList.add('survol'); a.classList.add('on'); });
       a.addEventListener('mouseleave', () => { rep.classList.remove('survol'); a.classList.remove('on'); });
-      a.addEventListener('focus', () => voir(i));
+      a.addEventListener('focus', () => voir(i, a));
     });
   }
 
-  /* Agenda : la saison, sa carte reliée à la liste, les saisons passées */
-  function listeSaisons(courante, toutes) {
-    return `<div class="saisons-sec"><div class="wrap"><ul class="saisons" aria-label="${esc(LIB.saison)}">${S.saisons.slice(toutes ? 0 : 1).map(x => `<li><a href="${esc(x.href)}"${x.saison === courante ? ' aria-current="page"' : ''}>${esc(x.titre)}</a></li>`).join('')}</ul></div></div>`;
+  /* ---------- La page d'un spectacle : sa lumière éclaire le noir ; trois onglets, un par entrée ---------- */
+  const credits = (s, phs) => {
+    const dossier = phs.some(p => p.source === 'dossier'), autres = phs.some(p => p.source !== 'dossier');
+    const c = [autres && s.creditPhotos ? `<span${ed(`shows.${s.slug}.creditPhotos`)}>${esc(s.creditPhotos)}</span>` : '', dossier && s.creditDossier ? `<span${ed(`shows.${s.slug}.creditDossier`)}>${esc(s.creditDossier)}</span>` : ''].filter(Boolean);
+    return c.length ? `<p class="credit-u">${c.join('<span aria-hidden="true"> · </span>')}</p>` : '';
+  };
+  const photosDe = (s, garde) => (s.photos || []).map((p, i) => ({ ...p, i })).filter(p => D.photos[p.cle] && garde(p));
+  function cartons(s, phs, seul) {
+    return `<div class="cartons">${phs.map(p => `<figure class="carton${seul ? ' carton--seul' : ''}"><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy" decoding="async" data-edit-photo="shows.${esc(s.slug)}.photos.${p.i}">${p.legende ? `<figcaption${ed(`shows.${s.slug}.photos.${p.i}.legende`)}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>${credits(s, phs)}`;
   }
-  function pageAgenda() {
-    return `<div class="page">
-      <div class="page-tete wrap"><p class="sur">${esc(MENU.agenda.texte)}</p><h1 class="page-titre" tabindex="-1">${esc(SAISON.titre)}</h1></div>
-      <div class="wrap agenda-grille">
-        <div class="agenda-liste" id="liste-agenda">${parMois(D.dates)}</div>
-        <div class="agenda-carte">${boiteCarte({ lieux: CARTE.aVenir(), titre: SAISON.titre, liste: 'liste-agenda', defaut: D.dates[0] ? D.dates[0].l : null })}</div>
+  function distribution(s, sansDuree) {
+    const slug = s.slug, P = s.programmer || {};
+    const equipe = (P.equipeCreation || []).map((l, i) => `<li class="fiche-l"${ed(`shows.${slug}.programmer.equipeCreation.${i}`)}>${esc(l)}</li>`).join('');
+    return `<div class="distrib">
+      <ul class="fiche">${ficheLignes(s)}${equipe}</ul>
+      <div>
+        ${s.duree && !sansDuree ? `<p class="duree"${ed(`shows.${slug}.duree`)}>${esc(s.duree)}</p>` : ''}
+        <div class="prod prose">${(s.production || []).map((p, i) => bloc(p, `shows.${slug}.production.${i}`)).join('')}</div>
+        ${(s.mentions || []).map((m, i) => `<p class="mention"${ed(`shows.${slug}.mentions.${i}`)}>${m}</p>`).join('')}
+        <p class="signe"><span class="signe-logo" aria-hidden="true">${D.logo.octopus}</span><span>${esc(S.nom)}</span></p>
       </div>
-      ${listeSaisons(null, false)}
     </div>`;
+  }
+  // la carte et les dates tout public ; sans date à venir, les tournées passées ; en création, l'annonce
+  function chapitreDates(s, pub) {
+    const C = CARTE.spectacle(s.slug), slug = s.slug;
+    if (pub.length) {
+      const lieux = C.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length);
+      return { titre: esc(LIB.actuellementEnTournee), html: `<div class="tournee-grille">
+        ${boiteCarte({ lieux, passe: C.passe, teinte: true, titre: LIB.actuellementEnTournee, liste: 'liste-sp', defaut: pub[0].l })}
+        <div data-agenda="${esc(slug)}"><ol class="dates dates--courtes" id="liste-sp">${pub.map(d => uneDate(d, { titre: false })).join('')}</ol></div>
+      </div>` };
+    }
+    const vide = `<div data-agenda="${esc(slug)}"></div>`;
+    if (s.statut && s.tournee) return { titre: `<span${ed(`shows.${slug}.tournee.titre`)}>${esc(s.tournee.titre)}</span>`, html: `${s.tournee.texte ? `<p class="tournee-txt"${ed(`shows.${slug}.tournee.texte`)}>${esc(s.tournee.texte)}</p>` : ''}${vide}` };
+    if (C.passe.length) return { titre: esc(LIB.lieuxDiffusion), html: `${boiteCarte({ lieux: C.passe, teinte: true, souvenir: true, seule: true, titre: s.titre, defaut: C.passe[0].l })}${vide}` };
+    return { titre: esc(LIB.dates), html: vide };
+  }
+  function ongletVoir(s, pub) {
+    const slug = s.slug, t = teinte(s), ch = [];
+    const ouv = [
+      s.genre ? `<p class="genre"${ed(`shows.${slug}.genre`)}>${esc(s.genre)}</p>` : '',
+      s.cadre ? `<p class="cadre"${ed(`shows.${slug}.cadre`)}>${esc(s.cadre)}</p>` : '',
+      ...(s.affirmations || []).map((a, i) => `<p class="affirm"${ed(`shows.${slug}.affirmations.${i}.texte`)}>${esc(a.texte)}</p>`),
+    ].join('');
+    if (ouv) ch.push(['ouverture', LIB.ouverture, esc(LIB.ouverture), ouv]);
+    const txt = (s.texte || []).map((p, i) => bloc(p, `shows.${slug}.texte.${i}`)).join('');
+    const cit = (s.citations || []).length ? `<div class="citations">${s.citations.map((c, i) => `<figure class="citation${c.prose ? ' citation--prose' : ''}"><blockquote><p>${(c.vers || []).map((v, j) => `<span class="vers"${ed(`shows.${slug}.citations.${i}.vers.${j}`)}>${esc(v)}</span>`).join(c.prose ? ' ' : '')}</p></blockquote>${c.source ? `<figcaption${ed(`shows.${slug}.citations.${i}.source`)}>${esc(c.source)}</figcaption>` : ''}</figure>`).join('')}</div>` : '';
+    if (txt || cit) ch.push(['spectacle', LIB.leSpectacle, esc(LIB.leSpectacle), `<div class="texte-u prose">${txt}</div>${cit}`]);
+    const phs = photosDe(s, p => !p.etablissement && !p.atelier);
+    if (phs.length) ch.push(['photos', LIB.photos, esc(LIB.photos), cartons(s, phs)]);
+    if (s.video && s.video.url) ch.push(['video', LIB.bandeAnnonce, esc(LIB.bandeAnnonce), lienVideo(s)]);
+    const dt = chapitreDates(s, pub);
+    ch.push(['dates', LIB.dates, dt.titre, dt.html]);
+    ch.push(['distribution', LIB.distribution, esc(LIB.distribution), distribution(s)]);
+    return `<div class="wrap sp-voir">
+      <nav class="sommaire" aria-label="${esc(LIB.leSpectacle)}"><ul>${ch.map(([id, lib]) => `<li><button type="button" data-ch="${id}">${esc(lib)}</button></li>`).join('')}</ul>${t.motif ? `<div class="sommaire-signe">${motif(t.motif)}</div>` : ''}</nav>
+      <div class="chapitres">${ch.map(([id, , titre, html]) => `<section class="chap" id="ch-${id}" aria-labelledby="t-${id}"><h2 class="chap-t" id="t-${id}" tabindex="-1">${titre}</h2><div class="chap-corps">${html}</div></section>`).join('')}</div>
+    </div>`;
+  }
+  function ficheTechnique(s, B) {
+    const A = B && B.accueil;
+    if (!A) return '';
+    const P = `dossiers.${s.dossier}.accueil`, imp = photosDe(s, p => p.id === 'd-implantation-1')[0];
+    return `<section class="chap fiche-tech" id="ch-fiche" aria-labelledby="t-fiche">
+      <p class="etiq"${ed(`${P}.titre`)}>${esc(A.titre)}</p>
+      <h2 class="chap-t" id="t-fiche"${ed(`${P}.fiche`)}>${esc(A.fiche || LIB.ficheTechnique)}</h2>
+      <div class="ft-grille">${(A.blocs || []).map((b, i) => `<div class="ft-bloc${b.titre ? '' : ' ft-bloc--tete'}">${b.titre ? `<h3 class="ft-t"${ed(`${P}.blocs.${i}.titre`)}>${esc(b.titre)}</h3>` : ''}<ul>${(b.lignes || []).map((l, j) => `<li${ed(`${P}.blocs.${i}.lignes.${j}`)}>${l}</li>`).join('')}</ul></div>`).join('')}</div>
+      ${A.alerte ? `<p class="alerte"${ed(`${P}.alerte`)}>${A.alerte}</p>` : ''}
+      ${imp ? cartons(s, [imp], true) : ''}
+    </section>`;
+  }
+  function ongletProgrammer(s) {
+    const slug = s.slug, C = CARTE.spectacle(slug), B = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null;
+    const lieux = C.aVenir.length ? C.aVenir : C.passe, passe = C.aVenir.length ? C.passe : [];
+    return `<div class="wrap sp-prog">
+      <section class="chap" aria-labelledby="p-sp"><h2 class="chap-t" id="p-sp">${esc(LIB.leSpectacle)}</h2>
+        <ul class="faits">${faitsProg(s)}</ul>
+        ${s.video && s.video.url ? `<div class="prog-video">${lienVideo(s)}</div>` : ''}
+      </section>
+      <section class="chap" aria-labelledby="p-dist"><h2 class="chap-t" id="p-dist">${esc(LIB.distribution)}</h2><div class="chap-corps">${distribution(s, true)}</div></section>
+      <section class="chap" aria-labelledby="p-lieux"><h2 class="chap-t" id="p-lieux">${esc(LIB.lieuxDiffusion)}</h2>
+        <div class="chap-corps">${lieux.length ? boiteCarte({ lieux, passe, teinte: true, souvenir: !C.aVenir.length, seule: true, titre: LIB.lieuxDiffusion, defaut: lieux[0].l }) : ''}${lieuxDiffusion(s)}</div>
+      </section>
+      ${ficheTechnique(s, B)}
+      ${S.ecrire ? `<p class="appel-l"><a class="appel" href="${esc(S.ecrire.href)}">${esc(LIB.ecrire)} ${FL}</a></p>` : ''}
+    </div>`;
+  }
+  // le dossier scolaire de Bérénice : pourquoi l'étudier, les programmes, les consignes, les quatre ateliers
+  function dossierScolaire(s, B) {
+    const P = `dossiers.${s.dossier}`, Q = B.pourquoi, G = B.programmes, Cs = B.consignes, At = B.ateliers, t = teinte(s);
+    const phAt = photosDe(s, p => p.atelier), imp = photosDe(s, p => p.id === 'd-implantation-1')[0];
+    const plusLoin = ['espace', 'alexandrin', 'adaptation'].filter(k => B[k] && B[k].titre);
+    return `<section class="dossier chap" id="ch-dossier" aria-labelledby="t-dossier">
+      <div class="dossier-couv">${t.motif ? motif(t.motif) : ''}
+        <div>
+          <h2 class="chap-t" id="t-dossier" tabindex="-1">${esc(LIB.dossierScolaire)}</h2>
+          <p class="dossier-titre"${ed(`${P}.titre`)}>${esc(B.titre)}</p>
+          ${B.auteur ? `<p class="dossier-auteur"${ed(`${P}.auteur`)}>${esc(B.auteur)}</p>` : ''}
+        </div>
+        <div>
+          <ul class="dossier-faits">${['creation', 'duree', 'format', 'public'].filter(k => B[k]).map(k => `<li${ed(`${P}.${k}`)}>${esc(B[k])}</li>`).join('')}</ul>
+          ${B.cession && (B.cession.formule || []).length ? `<ul class="dossier-formule">${B.cession.formule.map((l, i) => `<li${ed(`${P}.cession.formule.${i}`)}>${esc(l)}</li>`).join('')}</ul>` : ''}
+        </div>
+      </div>
+      ${Q ? `<div class="dos-sec"><h3 class="dos-t"${ed(`${P}.pourquoi.titre`)}>${esc(Q.titre)}</h3>
+        <div class="pourquoi">${(Q.sections || []).map((x, i) => `<div><h4${ed(`${P}.pourquoi.sections.${i}.titre`)}>${esc(x.titre)}</h4><div class="prose">${bloc(x.texte, `${P}.pourquoi.sections.${i}.texte`)}</div></div>`).join('')}</div></div>` : ''}
+      ${G ? `<div class="dos-sec"><h3 class="dos-t" id="t-programmes"${ed(`${P}.programmes.titre`)}>${esc(G.titre)}</h3>
+        <div class="table-s"><table class="prog" aria-labelledby="t-programmes">${(G.niveaux || []).map((n, i) => `<tbody>${(n.lignes || []).map((l, j) => `<tr>${j ? '' : `<th scope="rowgroup" rowspan="${n.lignes.length}"${ed(`${P}.programmes.niveaux.${i}.niveau`)}>${esc(n.niveau)}</th>`}<th scope="row"${ed(`${P}.programmes.niveaux.${i}.lignes.${j}.matiere`)}>${esc(l.matiere)}</th><td${ed(`${P}.programmes.niveaux.${i}.lignes.${j}.intitule`)}>${esc(l.intitule)}</td><td${ed(`${P}.programmes.niveaux.${i}.lignes.${j}.objectif`)}>${esc(l.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div></div>` : ''}
+      ${Cs ? `<div class="dos-sec"><h3 class="dos-t"${ed(`${P}.consignes.titre`)}>${esc(Cs.titre)}</h3>
+        <div class="consignes">
+          <div>${Cs.note ? `<p class="note"${ed(`${P}.consignes.note`)}>${esc(Cs.note)}</p>` : ''}
+            ${Cs.intro ? `<div class="prose" style="margin-top:1rem">${bloc(Cs.intro, `${P}.consignes.intro`)}</div>` : ''}
+            <ul class="demandes">${(Cs.demandes || []).map((x, i) => `<li${ed(`${P}.consignes.demandes.${i}`)}>${esc(x)}</li>`).join('')}</ul></div>
+          <div>${Cs.apres ? `<div class="prose">${bloc(Cs.apres, `${P}.consignes.apres`)}</div>` : ''}
+            <ul class="axes">${(Cs.axes || []).map((x, i) => `<li${ed(`${P}.consignes.axes.${i}`)}>${x}</li>`).join('')}</ul>
+            ${Cs.atelier ? `<div class="encadre prose" style="margin-top:1.5rem">${bloc(Cs.atelier, `${P}.consignes.atelier`)}</div>` : ''}</div>
+        </div></div>` : ''}
+      ${At ? `<div class="dos-sec"><h3 class="dos-t"${ed(`${P}.ateliers.titre`)}>${esc(At.titre || LIB.ateliers)}</h3>
+        <div class="ateliers">${(At.liste || []).map((a, i) => `<article class="atelier">
+          <h4${ed(`${P}.ateliers.liste.${i}.titre`)}>${a.titre}</h4>
+          <div class="prose">${(a.paragraphes || []).map((p, j) => bloc(p, `${P}.ateliers.liste.${i}.paragraphes.${j}`)).join('')}</div>
+          ${(a.etapes || []).length ? `<div class="etapes">${a.etapes.map((e, j) => `<div><h5${ed(`${P}.ateliers.liste.${i}.etapes.${j}.titre`)}>${e.titre}</h5><p${ed(`${P}.ateliers.liste.${i}.etapes.${j}.texte`)}>${e.texte}</p></div>`).join('')}</div>` : ''}
+          ${(a.points || []).length ? `<ul class="points">${a.points.map((x, j) => `<li${ed(`${P}.ateliers.liste.${i}.points.${j}`)}>${x}</li>`).join('')}</ul>` : ''}
+        </article>`).join('')}</div>
+        ${phAt.length || imp ? `<div class="ateliers-ph">${[...phAt, ...(imp ? [imp] : [])].map(p => `<img src="${D.photos[p.cle]}" alt="${esc(p.legende || At.titre || s.titre)}" loading="lazy" decoding="async" data-edit-photo="shows.${esc(s.slug)}.photos.${p.i}">`).join('')}</div>${imp && imp.legende ? `<p class="credit-u"${ed(`shows.${s.slug}.photos.${imp.i}.legende`)}>${esc(imp.legende)}</p>` : ''}${s.creditDossier ? `<p class="credit-u"${ed(`shows.${s.slug}.creditDossier`)}>${esc(s.creditDossier)}</p>` : ''}` : ''}
+      </div>` : ''}
+      ${plusLoin.length ? `<div class="dos-sec plus-loin">${plusLoin.map(k => `<details><summary${ed(`${P}.${k}.titre`)}>${esc(B[k].titre)}</summary><div class="prose">${(B[k].paragraphes || []).map((p, j) => bloc(p, `${P}.${k}.paragraphes.${j}`)).join('')}</div></details>`).join('')}</div>` : ''}
+    </section>`;
+  }
+  function ongletEtablissement(s) {
+    const slug = s.slug, A = s.actionCulturelle || {}, P = `shows.${slug}.actionCulturelle`, B = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null;
+    const sco = D.dates.filter(d => d.slug === slug && d.scolaire);
+    const phEt = photosDe(s, p => p.etablissement && p.id !== 'd-implantation-1');
+    const complet = !A.aCompleter && A.type;
+    return `<div class="wrap sp-etab">
+      <section class="chap" aria-labelledby="e-ac">
+        <h2 class="etiq" id="e-ac">${esc(LIB.actionCulturelle)}</h2>
+        ${complet ? `<p class="ac-type"${ed(`${P}.type`)}>${esc(A.type)}</p>
+        <ul class="ac-meta">${A.public ? `<li><span class="etiq">${esc(LIB.public)}</span><span${ed(`${P}.public`)}>${esc(A.public)}</span></li>` : ''}${A.lieu && (LIB.lieu || {})[A.lieu] ? `<li><span class="ac-pill">${esc(LIB.lieu[A.lieu])}</span></li>` : ''}${A.statut ? `<li><span class="ac-pill"${ed(`${P}.statut`)}>${esc(A.statut)}</span></li>` : ''}</ul>
+        <div class="ac-grille">
+          <div class="texte-u prose">${(A.textes || []).map((x, i) => bloc(x.texte, `${P}.textes.${i}.texte`)).join('')}</div>
+          <div>${(A.formule || []).length ? `<ul class="formule encadre">${A.formule.map((l, i) => `<li${ed(`${P}.formule.${i}`)}>${esc(l)}</li>`).join('')}</ul>` : ''}
+            ${(A.dispositifs || []).length ? `<div class="dispositifs"><p class="etiq">${esc(LIB.dispositifs)}</p><ul>${A.dispositifs.map((x, i) => `<li${ed(`${P}.dispositifs.${i}`)}>${x}</li>`).join('')}</ul></div>` : ''}</div>
+        </div>` : `<p class="a-completer">${esc(LIB.aCompleter)}</p>`}
+      </section>
+      <section class="chap" aria-labelledby="e-sco">${sco.length ? `<h2 class="chap-t" id="e-sco">${esc(LIB.enEtablissement)}</h2><div class="chap-corps" data-agenda="${esc(slug)}"><ol class="dates dates--courtes">${sco.map(d => uneDate(d, { titre: false })).join('')}</ol></div>` : `<div data-agenda="${esc(slug)}"></div>`}</section>
+      ${phEt.length ? `<section class="chap" aria-label="${esc(LIB.photos)}">${cartons(s, phEt, phEt.length === 1)}</section>` : ''}
+      ${B ? dossierScolaire(s, B) : ''}
+      ${S.ecrire ? `<p class="appel-l"><a class="appel" href="${esc(S.ecrire.href)}">${esc(LIB.ecrire)} ${FL}</a></p>` : ''}
+    </div>`;
+  }
+  function pageSpectacle(s, onglet) {
+    const t = teinte(s), slug = s.slug, ix = D.shows.indexOf(s), suivant = D.shows[(ix + 1) % D.shows.length];
+    const pub = D.dates.filter(d => d.slug === slug && !d.scolaire);
+    const lignes = s.titreLignes && s.titreLignes.length ? s.titreLignes : [s.titre];
+    const appel = onglet === 'voir'
+      ? (pub.length ? `<button type="button" class="btn" data-aller="ch-dates">${esc(LIB.dates)} ${FL}</button>` : '')
+      : (S.ecrire ? `<a class="btn" href="${esc(S.ecrire.href)}">${esc(LIB.ecrire)} ${FL}</a>` : '');
+    const corps = onglet === 'programmer' ? ongletProgrammer(s) : onglet === 'etablissement' ? ongletEtablissement(s) : ongletVoir(s, pub);
+    return `<div class="sp ${classeU(s)}" style="${esc(styleU(s))}">
+      <section class="scene scene--spectacle" id="scene" aria-labelledby="t-sp" data-focale="${s.focale ?? 50}">
+        ${visuel(photo(slug), s.focale ?? 50, s.credit, false, `shows.${slug}.photo`)}
+        ${t.motif ? `<div class="gobo" aria-hidden="true">${motif(t.motif)}</div>` : ''}
+        <div class="scene-corps wrap"><div class="scene-txt">
+          <p class="scene-sur"><span${ed(`shows.${slug}.creation`)}>${esc(s.creation)}</span>${s.lieuTemps ? `<span aria-hidden="true">·</span><span${ed(`shows.${slug}.lieuTemps`)}>${esc(s.lieuTemps)}</span>` : ''}</p>
+          <h1 class="scene-titre${lignes.length > 1 ? ' n' + Math.min(3, lignes.length) : ''}${ANIMER ? ' revele' : ''}" id="t-sp" tabindex="-1">${lignes.map((l, i) => `<span class="ligne" style="--i:${i}"${ed(`shows.${slug}.titreLignes.${i}`)}>${esc(l)}</span>`).join('')}</h1>
+          ${s.statut ? `<p class="scene-statut"${ed(`shows.${slug}.statut`)}>${esc(s.statut)}</p>` : ''}
+          ${s.sousTitre ? `<p class="scene-sous"${ed(`shows.${slug}.sousTitre`)}>${s.sousTitre}</p>` : ''}
+          ${s.accroche ? `<p class="scene-accroche${ANIMER ? ' revele' : ''}"${ed(`shows.${slug}.accroche`)}>${esc(s.accroche)}</p>` : ''}
+          ${onglet === 'voir' && pub[0] ? `<p class="scene-date">${esc(pub[0].ligne)}</p>` : ''}
+          ${appel}
+        </div></div>
+        <nav class="onglets" aria-label="${esc(s.titre)}"><div class="wrap"><ul>${(S.entrees || []).map(e => `<li><a class="onglet" href="${lienSp(slug, e.cle)}" data-cle="${esc(e.cle)}" style="--e:${esc(e.couleurVive || e.couleur)}"${e.cle === onglet ? ' aria-current="page"' : ''}><span class="lampe" aria-hidden="true"></span><span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a></li>`).join('')}</ul></div></nav>
+      </section>
+      <div class="sp-corps u-corps">${t.motif ? `<div class="filigrane" aria-hidden="true">${motif(t.motif)}</div>` : ''}${corps}</div>
+      <a class="suivant" href="${lienSp(suivant.slug, onglet)}" style="${esc(styleMini(suivant))}">
+        ${D.photos[suivant.slug] ? `<img src="${D.photos[suivant.slug]}" alt="" style="object-position:${cadrage(suivant)}" decoding="async" loading="lazy">` : ''}
+        <span class="suivant-in wrap"><span class="suivant-t">${esc(suivant.titre)}${FL}</span></span>
+      </a>
+    </div>`;
+  }
+  // le petit sommaire qui suit la lecture
+  function brancherSommaire() {
+    const nav = $('.sommaire', main);
+    if (!nav) return;
+    const btns = $$('button[data-ch]', nav), chaps = btns.map(b => doc.getElementById('ch-' + b.dataset.ch));
+    let raf = 0;
+    const suivre = () => {
+      raf = 0;
+      let cur = null;
+      chaps.forEach(c => { if (c && c.getBoundingClientRect().top < innerHeight * .42) cur = c.id; });
+      btns.forEach(b => { if ('ch-' + b.dataset.ch === cur) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+    };
+    const surDefile = () => { if (!raf) raf = requestAnimationFrame(suivre); };
+    addEventListener('scroll', surDefile, { passive: true });
+    suivre();
+    nettoyer.push(() => { removeEventListener('scroll', surDefile); cancelAnimationFrame(raf); });
+  }
+  function aller(id) {
+    const c = doc.getElementById(id);
+    if (!c) return false;
+    c.scrollIntoView({ behavior: doux() ? 'smooth' : 'auto', block: 'start' });
+    const t = c.querySelector('[tabindex="-1"]');
+    if (t) t.focus({ preventScroll: true });
+    return true;
+  }
+
+  /* ---------- Une saison passée, la compagnie, le contact, les mentions ---------- */
+  function listeSaisons(courante) {
+    return `<div class="saisons-sec"><div class="wrap"><ul class="saisons" aria-label="${esc(LIB.saison)}">${(S.saisons || []).map((x, i) => `<li><a href="${esc(i === 0 && ENT.voir ? ENT.voir.href : x.href)}"${x.saison === courante ? ' aria-current="page"' : ''}>${esc(x.titre)}</a></li>`).join('')}</ul></div></div>`;
   }
   function pageSaison(cle) {
-    const info = S.saisons.find(x => x.saison === cle), sa = D.saisons[cle], lieux = CARTE.saison(cle);
+    const info = (S.saisons || []).find(x => x.saison === cle), sa = D.saisons[cle], lieux = CARTE.saison(cle);
     const premier = sa.spectacles.flatMap(g => g.dates).find(d => d.l != null);
-    return `<div class="page">
-      <div class="page-tete wrap"><p class="sur"><a href="${esc(MENU.agenda.href)}">${esc(MENU.agenda.texte)}</a></p><h1 class="page-titre" tabindex="-1">${esc(info ? info.titre : sa.titre)}</h1></div>
+    const E = ENT.voir || {};
+    return `<div class="page page--entree" style="--e:${esc(E.couleurVive || LUM)}">
+      <header class="page-tete wrap"><p class="sur">${E.href ? `<a href="${esc(E.href)}">${esc(E.texte)}</a>` : ''}</p><h1 class="page-titre" tabindex="-1">${esc(info ? info.titre : sa.titre)}</h1></header>
       <div class="wrap agenda-grille">
-        <div class="agenda-liste" id="liste-saison">${sa.spectacles.map(g => `<section class="saison-sp" style="--c:${esc(couleur(g.slug))}">
-          <h2 class="saison-t">${g.slug && PAR_SLUG[g.slug] ? `<a href="#/spectacle/${esc(g.slug)}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
+        <div class="agenda-liste" id="liste-saison" data-agenda>${sa.spectacles.map(g => { const s = g.slug && PAR_SLUG[g.slug]; return `<section class="saison-sp" style="${esc(s ? styleMini(s) : `--c:${LUM}`)}">
+          <h2 class="saison-t">${s ? `<a href="${lienSp(g.slug)}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
           ${g.sousTitre ? `<p class="saison-s">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="saison-c">${esc(g.creation)}</p>` : ''}
-          <ol class="dates">${g.dates.map(d => `<li class="date date--saison${d.etat ? ' date--etat' : ''}"${d.l != null ? ` data-l="${d.l}"` : ''}>
+          <ol class="dates">${g.dates.map(d => `<li class="date date--saison${d.etat ? ' date--etat' : ''}"${d.l != null ? ` data-l="${d.l}"` : ''} data-date-id="${esc(d.id ?? '')}">
             <p class="date-ligne">${d.lien ? `<a class="lien" ${ext(d.lien)}>${esc(d.ligne)}</a>` : esc(d.ligne)}</p>
-            ${d.etat ? `<p class="date-etat">${esc(d.etat)}</p>` : ''}${(d.details || []).map(detail).join('')}
+            ${d.etat ? `<p class="date-etat">${esc(d.etat)}</p>` : ''}${d.scolaire ? `<p class="date-tag">${esc(LIB.scolaire)}</p>` : ''}${(d.details || []).map(detail).join('')}
           </li>`).join('')}</ol>
-        </section>`).join('')}</div>
+        </section>`; }).join('')}</div>
         <div class="agenda-carte">${lieux.length ? boiteCarte({ lieux, titre: sa.titre, liste: 'liste-saison', defaut: premier ? premier.l : null }) : ''}</div>
       </div>
-      ${listeSaisons(cle, true)}
+      ${listeSaisons(cle)}
     </div>`;
   }
-
-  /* Page spectacle */
-  function medias(s) {
-    let g = null, out = '';
-    (s.medias || []).forEach(x => {
-      if (x.groupe && x.groupe !== g) out += `<li class="media-g">${esc(x.groupe)}</li>`;
-      g = x.groupe;
-      out += `<li><a class="media" ${ext(x.url)}><span class="media-ico" aria-hidden="true">${x.type === 'audio' ? '♪' : '▶'}</span><span><span class="media-t">${esc(x.titre || x.url)}</span>${x.par ? `<span class="media-par">${esc(x.par)}</span>` : ''}</span></a></li>`;
-    });
-    return out ? `<ul class="medias">${out}</ul>` : '';
-  }
-  function pageSpectacle(s) {
-    const suivant = SHOWS[(SHOWS.indexOf(s) + 1) % SHOWS.length];
-    const dates = D.dates.filter(d => d.slug === s.slug), C = CARTE.spectacle(s.slug);
-    const tt = s.tournee ? s.tournee.titre : LIB.actuellementEnTournee;
-    const fiche = [...(s.fiche || []).map(f => `<p class="fiche-l">${f.libelle ? `<span class="fiche-k">${esc(f.libelle)}</span>` : ''}<span>${f.valeur}</span></p>`),
-      s.avec ? `<p class="fiche-l fiche-avec"><span class="fiche-k">${esc(s.avec.libelle)}</span><span>${s.avec.valeur}</span></p>` : ''].join('');
-    let tournee = '';
-    if (dates.length || s.statut) {
-      tournee = `<section class="bloc sp-tournee" aria-labelledby="t-tournee"><div class="wrap">
-        <h2 class="bloc-titre" id="t-tournee">${esc(tt)}</h2>
-        ${s.tournee && s.tournee.texte ? `<p class="sp-tournee-txt">${esc(s.tournee.texte)}</p>` : ''}
-        ${dates.length ? `<div class="tournee-grille">
-          ${boiteCarte({ lieux: C.aVenir, passe: C.passe, teinte: true, titre: tt, liste: 'liste-sp', defaut: dates[0].l })}
-          <ol class="dates dates--courtes" id="liste-sp">${dates.map(d => uneDate(d, { titre: false })).join('')}</ol>
-        </div>` : ''}
-      </div></section>`;
-    } else if (C.passe.length) {           // plus de date à venir : la carte des tournées passées, sans titre
-      tournee = `<section class="bloc sp-tournee" aria-label="${esc(s.titre)}"><div class="wrap">
-        ${boiteCarte({ lieux: C.passe, teinte: true, souvenir: true, seule: true, titre: s.titre, defaut: C.passe[0].l })}
-      </div></section>`;
-    }
-    const cass = s.statut ? `<section class="bloc cass" aria-label="${esc(s.titre)}"><div class="wrap">
-        ${s.genre ? `<p class="cass-genre">${esc(s.genre)}</p>` : ''}${s.cadre ? `<p class="cass-cadre">${esc(s.cadre)}</p>` : ''}
-        <ul class="extraits">${(s.extraits || []).map(x => `<li class="extrait"><blockquote><p>${esc(x.citation)}</p></blockquote><p class="extrait-s">${esc(x.source)}</p></li>`).join('')}</ul>
-      </div></section>` : '';
-    const prod = (s.production || []).map(bloc).join(''), med = medias(s);
-    return `<section class="scene scene--spectacle" id="scene" aria-labelledby="t-sp" data-focale="${s.focale ?? 50}" style="--c:${esc(s.couleur)}">
-      ${visuel(photo(s.slug), s.focale ?? 50, s.credit, false)}
-      <div class="scene-corps wrap"><div class="scene-txt">
-        <p class="scene-sur">${esc(s.creation)}</p>
-        <h1 class="scene-titre" id="t-sp" tabindex="-1">${s.titreLignes.map(l => `<span class="ligne">${esc(l)}</span>`).join('')}</h1>
-        ${s.statut ? `<p class="scene-statut">${esc(s.statut)}</p>` : s.sousTitre ? `<p class="scene-sous">${s.sousTitre}</p>` : ''}
-      </div></div>
-    </section>
-    <div class="spectacle" style="--c:${esc(s.couleur)}">
-      ${cass}
-      <div class="bloc"><div class="wrap">
-        <div class="sp-grille">
-          <div class="sp-texte prose">${(s.texte || []).map(bloc).join('')}</div>
-          <div class="sp-fiche prose">${fiche}${s.duree ? `<p class="sp-duree">${esc(s.duree)}</p>` : ''}${(s.mentions || []).map(m => `<p class="sp-mention">${m}</p>`).join('')}</div>
-        </div>
-        ${prod || med ? `<div class="sp-pied"><div class="sp-prod prose">${prod}</div><div>${med}</div></div>` : ''}
-      </div></div>
-      ${tournee}
-    </div>
-    <a class="suivant" href="#/spectacle/${esc(suivant.slug)}" style="--c:${esc(suivant.couleur)}">
-      <img src="${photo(suivant.slug)}" alt="" style="object-position:${cadrage(suivant)}" decoding="async" loading="lazy">
-      <span class="suivant-in wrap"><span class="suivant-t">${esc(suivant.titre)}${FL}</span></span>
-    </a>`;
-  }
-
-  /* La compagnie : le texte, puis la rampe des années */
   function pageCompagnie() {
-    const C = S.compagnie;
+    const C = S.compagnie, Dr = C.directeur;
     return `<div class="page">
-      <div class="page-tete wrap"><p class="sur">${esc(MENU.compagnie.texte)}</p><h1 class="page-titre" tabindex="-1">${esc(C.titre)}</h1></div>
-      <div class="wrap cie"><div class="cie-txt prose">${C.paragraphes.map(bloc).join('')}</div></div>
+      <header class="page-tete wrap"><p class="sur">${esc((MENU.compagnie || {}).texte || '')}</p><h1 class="page-titre" tabindex="-1"${ed('site.compagnie.titre')}>${esc(C.titre)}</h1></header>
+      <div class="wrap cie"><div class="cie-txt prose">${(C.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div></div>
       <section class="bloc" aria-labelledby="t-dates"><div class="wrap">
-        <h2 class="bloc-titre" id="t-dates">${esc(C.datesTitre)}</h2>
-        <ol class="rampe">${C.dates.map(x => {
-          const s = SHOWS.find(y => String(y.annee) === String(x.annee));
-          const dedans = `<span class="rampe-lampe" aria-hidden="true"></span><span class="rampe-annee">${esc(x.annee)}</span><span class="rampe-t">${esc(x.titre)}</span>`;
-          return `<li style="--c:${esc(s ? s.couleur : LUM)}">${s ? `<a href="#/spectacle/${esc(s.slug)}">${dedans}</a>` : `<span class="rampe-in">${dedans}</span>`}</li>`;
+        <h2 class="bloc-titre" id="t-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
+        <ol class="rampe">${(C.dates || []).map((x, i) => {
+          const s = D.shows.find(y => String(y.annee) === String(x.annee));
+          const dedans = `<span class="rampe-lampe" aria-hidden="true"></span><span class="rampe-annee">${esc(x.annee)}</span><span class="rampe-t"${ed(`site.compagnie.dates.${i}.titre`)}>${esc(x.titre)}</span>`;
+          return `<li style="${esc(s ? styleMini(s) : `--c:${LUM}`)}">${s ? `<a href="${lienSp(s.slug)}">${dedans}</a>` : `<span class="rampe-in">${dedans}</span>`}</li>`;
         }).join('')}</ol>
       </div></section>
+      ${Dr ? `<section class="bloc" aria-labelledby="t-dir" style="padding-top:0"><div class="wrap dir-grille">
+        <div><h2 class="bloc-titre" id="t-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p class="dir-chapeau"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}</div>
+        <div class="cie-txt prose">${(Dr.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.directeur.paragraphes.${i}`)).join('')}</div>
+      </div></section>` : ''}
+      <div class="wrap cie-part"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires || ''}</p></div>
     </div>`;
   }
-  function pageActions() {
-    const A = S.actions;
-    return `<section class="scene scene--page" id="scene" aria-labelledby="t-actions" data-focale="50">
-      ${visuel(photo('actions-culturelles'), 50, A.credit, false)}
-      <div class="scene-corps wrap"><div class="scene-txt"><h1 class="scene-titre" id="t-actions" tabindex="-1">${esc(A.titre)}</h1></div></div>
-    </section>
-    <div class="bloc"><div class="wrap"><div class="actions prose">${A.blocs.map(bloc).join('')}</div></div></div>`;
-  }
-  function pagePro() {
-    const P = S.pro;
-    return `<div class="page page--pro"><div class="wrap pro">
-      <p class="sur">${esc(MENU.pro.texte)}</p>
-      <h1 class="page-titre" tabindex="-1">${esc(P.titre)}</h1>
-      <form class="form" novalidate>
-        <p class="pro-txt">${esc(P.texte)}</p>
-        <div class="champ-ligne"><label for="pro-mdp">${esc(P.champ)}</label><input id="pro-mdp" name="mdp" type="password" autocomplete="current-password"><button class="btn btn--plein" type="submit">${esc(P.bouton)}</button></div>
-      </form>
-    </div></div>`;
-  }
   function pageContact() {
-    const K = S.contact, types = ['text', 'email', 'tel', 'text'], auto = ['name', 'email', 'tel', 'address-level2'];
+    const K = S.contact, CO = S.coordonnees || {}, types = ['text', 'email', 'tel', 'text'], auto = ['name', 'email', 'tel', 'address-level2'];
     const champ = (c, i) => i === K.champs.length - 1
       ? `<div class="champ champ--large"><label for="ct-${i}">${esc(c)}</label><textarea id="ct-${i}" name="c${i}" rows="6"></textarea></div>`
       : `<div class="champ"><label for="ct-${i}">${esc(c)}</label><input id="ct-${i}" name="c${i}" type="${types[i] || 'text'}" autocomplete="${auto[i] || 'off'}"></div>`;
@@ -976,9 +1634,9 @@ ul,ol{padding:0;list-style:none}
       : `<a class="lien" href="#/politique-de-confidentialite">${esc(t)}</a>`;
     return `<div class="page"><div class="wrap contact">
       <div>
-        <p class="sur">${esc(MENU.contact.texte)}</p>
-        <h1 class="page-titre" tabindex="-1">${esc(K.titre)}</h1>
-        <address class="contact-coord"><span class="contact-nom">${esc(CO.nom)}</span>${CO.adresse.map(l => `<span>${esc(l)}</span>`).join('')}</address>
+        <p class="sur">${esc((MENU.contact || {}).texte || '')}</p>
+        <h1 class="page-titre" tabindex="-1"${ed('site.contact.titre')}>${esc(K.titre)}</h1>
+        <address class="contact-coord"><span class="contact-nom">${esc(CO.nom)}</span>${(CO.adresse || []).map(l => `<span>${esc(l)}</span>`).join('')}</address>
       </div>
       <form class="form" novalidate>
         <div class="champs">${K.champs.map(champ).join('')}</div>
@@ -992,13 +1650,16 @@ ul,ol{padding:0;list-style:none}
     const L = S.legal[cle];
     return `<div class="page"><div class="wrap legal">
       <h1 class="page-titre" tabindex="-1">${esc(L.titre)}</h1>
-      <div class="legal-txt prose">${L.blocs.map(bloc).join('')}</div>
+      <div class="legal-txt prose">${(L.blocs || []).map((b, i) => bloc(b, `site.legal.${cle}.blocs.${i}`)).join('')}</div>
     </div></div>`;
   }
 
-  /* Navigation par onglets */
-  const main = $('#contenu'), tete = $('#tete'), menuBtn = $('#menu-btn');
-  let vue = null, surPhoto = true;
+  /* ---------- La navigation : par les trois entrées ---------- */
+  const VUES = { voir: pageVoir, programmer: pageProgrammer, etablissement: pageEtablissement, spectacles: pageSpectacles, compagnie: pageCompagnie, contact: pageContact };
+  const MEMO = 'crescite-m07-entree';
+  const retenir = c => { try { sessionStorage.setItem(MEMO, c); } catch (e) { /* stockage indisponible */ } };
+  const retenue = () => { try { const v = sessionStorage.getItem(MEMO); return ENT[v] ? v : null; } catch (e) { return null; } };
+  let vue = null, surPhoto = true, allerA = null;
   function fermerMenu(rendreFocus) {
     if (!tete.classList.contains('ouvert')) return;
     tete.classList.remove('ouvert');
@@ -1011,71 +1672,128 @@ ul,ol{padding:0;list-style:none}
     tete.classList.toggle('ouvert', ouvert);
     root.classList.toggle('fige', ouvert);
     menuBtn.setAttribute('aria-expanded', String(ouvert));
-    if (ouvert) $('.nav a', tete).focus();
+    if (ouvert) { const a = $('a', navS); if (a) a.focus(); }
   });
+  navS.addEventListener('click', e => { if (e.target.closest('a')) fermerMenu(false); });
   doc.addEventListener('keydown', e => { if (e.key === 'Escape') fermerMenu(true); });
-  replie.addEventListener('change', () => fermerMenu(false));
+  replie.addEventListener('change', () => { fermerMenu(false); ajusterTete(); });
   const enTete = () => tete.classList.toggle('plein', !surPhoto || scrollY > 24);
   addEventListener('scroll', enTete, { passive: true });
+  if ('ResizeObserver' in window) new ResizeObserver(() => ajusterTete()).observe(teteIn);
+  else addEventListener('resize', ajusterTete);
+  if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(ajusterTete);
   main.addEventListener('submit', e => e.preventDefault());   // l'envoi ne fait rien
-
-  function route() {
-    const h = location.hash.startsWith('#/') ? location.hash.slice(2).split('?')[0] : '';
-    const p = h.split('/').filter(Boolean).map(x => { try { return decodeURIComponent(x); } catch (e) { return x; } });
-    if (!p.length) return { cle: 'accueil' };
-    if (p.length === 1 && p[0] === 'spectacles') return { cle: 'spectacles', nav: 'spectacles' };
-    if (p[0] === 'agenda' && p.length === 1) return { cle: 'agenda', nav: 'agenda' };
-    if (p[0] === 'agenda' && p.length === 2 && D.saisons[p[1]]) return p[1] === SAISON.saison ? { cle: 'agenda', nav: 'agenda' } : { cle: 'saison:' + p[1], nav: 'agenda', saison: p[1] };
-    if (p[0] === 'spectacle' && p.length === 2 && PAR_SLUG[p[1]]) return { cle: 'spectacle:' + p[1], nav: 'spectacles', show: PAR_SLUG[p[1]] };
-    if (p.length === 1) {
-      const m = S.menu.find(x => x.href === '#/' + p[0]);
-      if (m) return { cle: m.id, nav: m.id };
-      if (S.legal[p[0]]) return { cle: 'legal:' + p[0], legal: p[0] };
-    }
-    return { cle: 'accueil', inconnue: true };
-  }
-  const PAGES = { spectacles: pageSpectacles, agenda: pageAgenda, compagnie: pageCompagnie, actions: pageActions, pro: pagePro, contact: pageContact };
-  function router() {
-    const h = location.hash;
-    if (h && !h.startsWith('#/') && vue) return;
-    const r = route();
-    if (r.inconnue) history.replaceState(null, '', location.pathname + location.search + '#/');
-    fermerMenu(false);
-    if (r.cle === vue) { scrollTo({ top: 0, behavior: doux() ? 'smooth' : 'auto' }); return; }
-    nettoyer.forEach(f => f()); nettoyer = [];
-    aBrancher.length = 0;
-    vue = r.cle;
-    let titre;
-    if (r.cle === 'accueil') { main.innerHTML = accueil(); titre = S.accueil; }
-    else if (r.saison) { main.innerHTML = pageSaison(r.saison); titre = (S.saisons.find(x => x.saison === r.saison) || D.saisons[r.saison]).titre; }
-    else if (r.show) { main.innerHTML = pageSpectacle(r.show); titre = r.show.titre; }
-    else if (r.legal) { main.innerHTML = pageLegal(r.legal); titre = S.legal[r.legal].titre; }
-    else { main.innerHTML = PAGES[r.cle](); titre = r.cle === 'pro' ? S.pro.titrePage : MENU[r.cle].texte; }
-    doc.title = `${titre} - ${S.titreSuffixe}`;
-    $$('.nav a').forEach(a => { if (a.dataset.nav === r.nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    const sc = $('#scene', main);
-    surPhoto = !!sc;
-    if (sc && r.cle === 'accueil') brancherCarrousel(sc); else if (sc) halo(sc);
-    if (r.cle === 'spectacles') brancherRep();
-    aBrancher.splice(0).forEach(brancherCarte);
-    scrollTo(0, 0);
-    const t = $('h1[tabindex="-1"]', main);
-    if (t && !INTRO.ouverte()) t.focus({ preventScroll: true });
-    enTete();
-  }
+  $('.evitement').addEventListener('click', e => { e.preventDefault(); const t = $('h1[tabindex="-1"]', main) || main; t.focus(); });
+  main.addEventListener('click', e => {
+    const b = e.target.closest('[data-aller]');
+    if (b) { e.preventDefault(); aller(b.dataset.aller); return; }
+    const a = e.target.closest('a[data-vers]');
+    if (a) allerA = a.dataset.vers;
+  });
   doc.addEventListener('click', e => {
+    if (e.target.closest('[data-modifier]') && typeof EDITION !== 'undefined') { EDITION.ouvrir(); return; }
     const a = e.target.closest('a[href^="#/"]');
     if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (a.getAttribute('href') === location.hash) { e.preventDefault(); router(); }
   });
+
+  // ce qui identifie un élément d'une version de la vue à la suivante (pour lui rendre le focus)
+  const signature = el => [el.tagName, el.getAttribute('href'), el.dataset.ch, el.dataset.cle, el.dataset.l, el.dataset.edit, el.getAttribute('name'), el.id, (el.textContent || '').trim().slice(0, 60)].join('|');
+  function etatVue() {
+    const f = doc.activeElement;
+    return { y: scrollY, focus: f && f !== main && main.contains(f) ? signature(f) : null,
+      volets: $$('details', main).map(d => d.open), champs: $$('input, textarea', main).map(c => [c.id || c.name, c.type === 'checkbox' ? c.checked : c.value]) };
+  }
+  function restaurer(v) {
+    const volets = $$('details', main);
+    if (volets.length === v.volets.length) volets.forEach((d, i) => { d.open = v.volets[i]; });
+    v.champs.forEach(([n, x]) => { const c = n && (doc.getElementById(n) || main.querySelector(`[name="${CSS.escape(n)}"]`)); if (c && main.contains(c)) { if (c.type === 'checkbox') c.checked = x; else c.value = x; } });
+    if (Math.abs(scrollY - v.y) > 1) scrollTo(0, v.y);
+    if (v.focus) { const b = $$('a, button, input, textarea, summary, [tabindex], [data-edit]', main).find(x => signature(x) === v.focus); if (b) b.focus({ preventScroll: true }); }
+  }
+  function marquer(r) {
+    // l'entrée de la vue : aria-current="page" sur sa page d'entrée ; "true" quand on lit un spectacle ou une saison passée
+    const ctx = r.entree || r.onglet || (r.saison ? 'voir' : null), val = r.entree ? 'page' : 'true';
+    $$('a.entree', navE).forEach(a => { if (ctx && a.dataset.cle === ctx) a.setAttribute('aria-current', val); else a.removeAttribute('aria-current'); });
+    $$('a', navS).forEach(a => { if (r.nav && a.dataset.nav === r.nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  }
+  let derniere = '';
+  function lireAdresse() {
+    const h = location.hash.startsWith('#/') || !location.hash ? location.hash : derniere;
+    derniere = h;
+    const chemin = (h.startsWith('#/') ? h.slice(2) : '').split('?')[0].replace(/\/+$/, '');
+    return { chemin, p: chemin.split('/').filter(Boolean).map(x => { try { return decodeURIComponent(x); } catch (e) { return x; } }) };
+  }
+  // enPlace : D vient de changer (DONNEES) ; la vue courante est refaite sans remonter, sans voler le focus, sans animation d'entrée
+  function router(enPlace = false) {
+    relire();
+    chrome();
+    const h = location.hash;
+    if (h && !h.startsWith('#/') && vue && !enPlace) return;      // une ancre de la page (« Aller au contenu »)
+    const { chemin, p } = lireAdresse();
+    const red = (S.redirections || {})['#/' + chemin];
+    if (red) { location.replace(red); return; }
+    let r = null;
+    const entree = (S.entrees || []).find(e => e.href === '#/' + chemin), menu = (S.menu || []).find(m => m.href === '#/' + chemin);
+    if (!p.length) r = { cle: 'accueil' };
+    else if (entree && VUES[entree.cle]) r = { cle: entree.cle, entree: entree.cle };
+    else if (menu && VUES[menu.id]) r = { cle: menu.id, nav: menu.id };
+    else if (p[0] === 'spectacle' && PAR_SLUG[p[1]] && p.length <= 3) {
+      if (p.length === 2) { location.replace(lienSp(p[1], retenue() || 'voir')); return; }
+      if (ENT[p[2]]) r = { cle: `spectacle:${p[1]}:${p[2]}`, show: PAR_SLUG[p[1]], onglet: p[2] };
+    }
+    else if (p[0] === 'agenda' && p.length === 2 && D.saisons[p[1]]) {
+      if (p[1] === SAISON.saison && ENT.voir) { location.replace(ENT.voir.href); return; }
+      r = { cle: 'saison:' + p[1], saison: p[1] };
+    }
+    else if (p.length === 1 && S.legal && S.legal[p[0]]) r = { cle: 'legal:' + p[0], legal: p[0] };
+    if (!r) { location.replace('#/'); return; }
+    if (!enPlace && r.cle === vue) { fermerMenu(false); scrollTo({ top: 0, behavior: doux() ? 'smooth' : 'auto' }); return; }
+    const avant = enPlace && r.cle === vue ? etatVue() : null;
+    nettoyer.forEach(f => f()); nettoyer = [];
+    aBrancher.length = 0;
+    vue = r.cle;
+    ANIMER = !avant;
+    let titre;
+    try {
+      if (r.cle === 'accueil') { main.innerHTML = accueil(); titre = S.accueil; }
+      else if (r.entree) { retenir(r.entree); main.innerHTML = VUES[r.entree](); titre = ENT[r.entree].texte; }
+      else if (r.nav) { main.innerHTML = VUES[r.nav](); titre = MENU[r.nav].texte; }
+      else if (r.show) { retenir(r.onglet); main.innerHTML = pageSpectacle(r.show, r.onglet); titre = r.onglet === 'voir' ? r.show.titre : `${r.show.titre} - ${ENT[r.onglet].court}`; }
+      else if (r.saison) { main.innerHTML = pageSaison(r.saison); titre = ((S.saisons || []).find(x => x.saison === r.saison) || D.saisons[r.saison]).titre; }
+      else if (r.legal) { main.innerHTML = pageLegal(r.legal); titre = S.legal[r.legal].titre; }
+      doc.title = `${titre} - ${S.titreSuffixe}`;
+      marquer(r);
+      const sc = $('#scene', main);
+      surPhoto = !!sc;
+      if (sc && r.cle === 'accueil') brancherCarrousel(sc, diapos());
+      else if (sc) { halo(sc); if (ANIMER && doux()) sc.classList.add('allumage'); }
+      if (r.nav === 'spectacles') brancherRep();
+      if (r.show && r.onglet === 'voir') brancherSommaire();
+      aBrancher.splice(0).forEach(brancherCarte);
+    } finally { ANIMER = true; }
+    if (avant) { restaurer(avant); enTete(); return; }
+    fermerMenu(false);
+    scrollTo(0, 0);
+    const cible = allerA; allerA = null;
+    if (!(cible && aller(cible))) {
+      const t = $('h1[tabindex="-1"]', main);
+      if (t && !INTRO.ouverte()) t.focus({ preventScroll: true });
+    }
+    enTete();
+    ajusterTete();
+  }
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  addEventListener('hashchange', router);
+  addEventListener('hashchange', () => router());
   router();
+  // la base de la compagnie : à chaque enregistrement, D change en place et la vue courante est refaite en place
+  if (typeof DONNEES !== 'undefined') DONNEES.surChangement(() => router(true));
 
   /* L'ouverture : le noir, une photo à peine éclairée, le logo blanc ; il grossit et la scène s'allume */
+  const premiere = diapos()[0];
   INTRO.ouvrir({
-    fond: '#0b0809',
-    image: SLIDES.length ? photo(SLIDES[0].slug) : undefined,
+    fond: NOIR,
+    image: premiere ? photo(premiere.slug) : undefined,
     encre: '#f4eee9',
     classe: 'm07-intro',
     apres: () => {
