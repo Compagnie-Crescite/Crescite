@@ -192,4 +192,7 @@ compte du projet inscrit dans `crescite_admins`.
 
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
 suivi, ni les séances), seuls les administrateurs écrivent. Le script a été vérifié sur un PostgreSQL local avec les
-rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrement d'une date, journal).
+rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrement d'une date, journal). Les onze maquettes ont
+ensuite été essayées de bout en bout sur la base réelle : chacune la lit en moins d'une seconde, affiche sans recharger
+une précision ajoutée dans la base, ouvre l'édition après connexion d'un compte administrateur, enregistre dans la base
+un paragraphe écrit dans la page, et ouvre une date passée dans le panneau de modification.
