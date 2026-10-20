@@ -1,0 +1,343 @@
+{
+ "_note": "Dossier scolaire Bérénice 2026 de la compagnie, relevé tel quel (fautes comprises). Le prix de cession, les frais annexes, l'adresse électronique et le téléphone ne sont pas repris : pour écrire à la compagnie, les maquettes renvoient au formulaire de contact. Le dossier lui-même reste dans private/.",
+ "source": "Dossier scolaire Bérénice 2026, Compagnie Crescite",
+ "titre": "BÉRÉNICE",
+ "auteur": "de Jean Racine",
+ "creation": "CRÉATION 2018",
+ "type": "DOSSIER SCOLAIRE",
+ "duree": "DURÉE 1 H 25",
+ "format": "SPECTACLE IN SITU",
+ "public": "À PARTIR DE LA SECONDE",
+ "cession": {
+  "formule": [
+   "6 classes : 2 représentations",
+   "6 ateliers de 1h (1/cl)"
+  ]
+ },
+ "fiche": [
+  [
+   "Mise en scène et adaptation :",
+   "Angelo Jossec"
+  ],
+  [
+   "Musique live et régie :",
+   "William Langlois"
+  ],
+  [
+   "Création lumières :",
+   "Jérôme Hardouin"
+  ],
+  [
+   "Création costumes :",
+   "Jane Avezou"
+  ],
+  [
+   "Distribution :",
+   "Angelo Jossec, Manon Rivier, Lauren Toulin et Adrien Vada"
+  ]
+ ],
+ "production": [
+  "Production : Compagnie Crescite",
+  "Coproduction : l’Archipel - Granville",
+  "Avec les aides à la création 2018 de la DRAC et de la Région Normandie et du Département de Seine-Maritime, et en 2021 de la DRAC Normandie dans le cadre du plan de relance / mesure 5 du plan théâtre"
+ ],
+ "partenaires": "Le Théâtre des Crescite est conventionné par la Ville de Rouen et est soutenu par la DRAC et la Région Normandie, le Département de Seine-Maritime et l'ODIA Normandie",
+ "pourquoi": {
+  "titre": "Pourquoi étudier Bérénice au lycée ?",
+  "sections": [
+   {
+    "titre": "Une poésie à hauteur de jeunes adultes : l’amour face au devoir",
+    "texte": "Étudier Bérénice dès la seconde, c'est explorer un triangle amoureux où la passion se heurte au devoir, à la morale et aux lois de la cité. Jean Racine y élève la douleur d’une séparation au rang de la <strong>tragédie</strong> et crée <strong>l’un des plus beaux poèmes sur les tensions de la relation amoureuse de la littérature française</strong>. Ces tensions deviennent directement sensibles, et peuvent offrir aux élèves des mots et de la nuance pour appréhender leurs propres passions et vivre leurs sentiments face aux pressions sociales, morales ou culturelles."
+   },
+   {
+    "titre": "Faire vivre l'alexandrin",
+    "texte": "Loin d'être une langue figée, l'alexandrin racinien est pour la compagnie un idiome de théâtre fluide et <strong>profondément vivant</strong>. Présenté au centre d'une arène circulaire au plus près des spectateurs, plongés dans une ambiance sonore et musicale, l<strong>e dispositif est immersif et brise la distance des salles traditionnelles</strong>. Porté par l’expérience du vers des comédiens et l’accompagnement musical live, l'alexandrin retrouve toute son oralité et devient <strong>une expérience émotionnelle directe</strong> pour les élèves."
+   },
+   {
+    "titre": "Transmettre un héritage vivant, une priorité pour la compagnie",
+    "texte": "Dans l'esprit du service public cher à Jean Vilar, transmettre les grands classiques s'inscrit dans une démarche citoyenne de démocratisation culturelle. <strong>En offrant un travail exigeant tout en créant un spectacle volontairement accessible</strong>, le Théâtre des Crescite cherche à dépasser les a priori sur le théâtre et à transmettre ce patrimoine universel sans imposer de pensée unique."
+   }
+  ]
+ },
+ "programmes": {
+  "titre": "La place du spectacle dans les programmes scolaires",
+  "niveaux": [
+   {
+    "niveau": "2nde",
+    "lignes": [
+     {
+      "matiere": "Français",
+      "intitule": "Le théâtre du XVIIᵉ siècle au XXIᵉ siècle, texte et représentation",
+      "objectif": "Étudier la tragédie classique, l'alexandrin et la mise en scène"
+     },
+     {
+      "matiere": "Histoire",
+      "intitule": "la Méditerranée antique : empreintes romaines",
+      "objectif": "Replacer l'intrigue dans la Rome antique de l'an 79, interroger la mise en scène du pouvoir et sa représentation au XVIIᵉ siècle"
+     },
+     {
+      "matiere": "EMC",
+      "intitule": "Droit, liberté et responsablité",
+      "objectif": "Interroger le choix des personnages qui sacrifient leur passion personnelle au profit du droit de la communauté"
+     },
+     {
+      "matiere": "LCA",
+      "intitule": "Différences de cultures, différences de conditions : Grecs, Romains et barbares ; hommes libres et esclaves.",
+      "objectif": "Analyser le statut politique des souverains et des étrangers de l'empire romain."
+     }
+    ]
+   },
+   {
+    "niveau": "1ère",
+    "lignes": [
+     {
+      "matiere": "Français",
+      "intitule": "Le théâtre du XVIIe siècle au XXIe siècle",
+      "objectif": "Approfondir l'analyse d'un chef-d'œuvre du répertoire classique et de sa poésie tragique."
+     },
+     {
+      "matiere": "HLP",
+      "intitule": "les pouvoirs de la parole, les métamorphoses du moi",
+      "objectif": "Étudier la rhétorique passionnelle et l'épreuve des sentiments face aux obstacles extérieures (sociaux, moraux, religieux)."
+     }
+    ]
+   },
+   {
+    "niveau": "Tale",
+    "lignes": [
+     {
+      "matiere": "Philosophie",
+      "intitule": "le devoir et la morale, la liberté et la passion, l'État et la politique, l'art",
+      "objectif": "Mettre en perspective les dilemmes éthiques, le sacrifice civique et la fonction cathartique de l'art."
+     },
+     {
+      "matiere": "HLP",
+      "intitule": "la recherche de soi, l'humanité en question",
+      "objectif": "L'expérience de la solitude décisionnelle, la transmission des textes classiques pour aborder ce qu'il y a d'universel dans la condition humaine."
+     }
+    ]
+   }
+  ]
+ },
+ "synopsis": {
+  "titre": "Synopsis",
+  "chapeau": "Rome, an 79. Huit jours après la mort soudaine de l'empereur Vespasien, le destin de Bérénice, Titus et Antiochus bascule.",
+  "paragraphes": [
+   "Titus et Antiochus sont compagnons de guerre et amis. Tous deux aiment Bérénice mais Bérénice n’aime que Titus. Il s’agit d’un triangle amoureux classique pris dans les enjeux politiques de la cité romaine : Titus est le fils de l’empereur de Rome, Vespasien, Bérénice est reine de Palestine, et Antiochus, leur ami, est roi de Comagène...",
+   "Jusqu'ici, les amants fermaient les yeux sur le couperet qui les menaçait : la loi romaine interdit formellement à un empereur d'épouser une reine étrangère. Il s’agit de deux systèmes politiques distincts. À la mort soudaine de l'empereur Vespasien, l'illusion vole en éclats. Titus doit affronter son devoir et se résoudre à répudier Bérénice, qui refuse d'abord d'y croire. De son côté, Antiochus oscille entre loyauté et secret espoir.",
+   "En une seule demi-journée, l’action se précipite vers le destin de nos trois personnages : au lieu de succomber au désespoir, ils sacrifieront leur bonheur individuel au bien commun, élevant leur renoncement tragique en “exemple à l'univers”."
+  ]
+ },
+ "adaptation": {
+  "titre": "Une adaptation resserrée",
+  "paragraphes": [
+   "Pour maintenir une tension dramatique constante et placer l'émotion au cœur de la représentation, la compagnie a fait le choix d’adapter le texte de 1506 alexandrins dans une version resserrée et dynamisée.",
+   "En élaguant les tirades explicatives et les récits de faits passés, <strong>le travail de réécriture conserve le cœur battant de la pièce avec une grande fidélité</strong> : les dilemmes personnels, les confrontations directes, le choc des vérités, et l'intensité des échanges passionnés.",
+   "Les trois confidents originaux sont par exemple fusionnés en un seul personnage. Celui-ci crée un contact direct avec le public et l’accompagne dans la fiction. Entre autres, il lui rappelle en début de spectacle les éléments essentiels de la situation initiale.",
+   "<strong>D'une durée de 1 h 25, le spectacle ne perd rien de l'intrigue originelle ni de sa clarté narrative.</strong> Au contraire. Ce rythme resserré insuffle à la tragédie une urgence moderne où chaque seconde compte et où le spectateur se concentre sur les enjeux de chaque personnage."
+  ]
+ },
+ "espace": {
+  "titre": "Un espace scénique immersif",
+  "paragraphes": [
+   "La scène est une arène. Un espace <strong>circulaire de 5 mètres de diamètre</strong> fermé par les spectateurs.",
+   "Les seuls éléments de décor sont un polygone, trônant au centre, surmonté d’un revolver. Un tapis blanc délimite l’espace scénique au sol.",
+   "Le jeu des acteurs est appuyé par un éclairage à LED qui évolue avec la narration de <strong>manière imperceptible</strong>. C'est un soutien à l’action qui se déroule et apporte le ’’sfumato’’ qui nous accompagne dans l’irréel, le poème.",
+   "Ceci est enfin appuyé par un travail sur le <strong>son et la musique en live</strong>, omniprésents, tantôt discrets, tantôt furieux, accompagnant les émotions intérieures des personnages, leurs passions, et la musicalité de leurs vers."
+  ]
+ },
+ "alexandrin": {
+  "titre": "Le traitement de l’alexandrin classique",
+  "paragraphes": [
+   "Avec Bérénice, un des objectifs fondamentaux du Théâtre des Crescite est d'offrir <strong>la pureté, la clarté mais également l’intensité émotionelle de la langue racinienne</strong> en la défaisant de toute lourdeur académique. L'alexandrin classique, souvent perçu comme une langue corsetée ou désuète, se révèle ici dans toute son évidence théâtrale : un dialecte vivant, fluide et organique.",
+   "Travaillé par la compagnie avec rigueur et précision sur la base du traité <em>Dire le vers,</em> de Jean-Claude Milner et François Regnault, le vers devient <strong>une parole orale.</strong> Cette méthode habitue graduellement l’oreille en résolvant certaines contradictions entre la langue parlée contemporaine et le respect des règles de prosodie classiques.",
+   "Une matière sonore vibrant entre le dialogue parlé et le slam. Il ne s'agit pas de déclamer un texte poétique, mais d'<strong>incarner une langue de théâtre taillée pour le jeu et l'émotion,</strong> imposée à la virgule près par la métrique virtuose de l’alexandrin racinien.",
+   "Petit à petit, l’oreille du spectateur – même non averti – arrive à oublier que cette langue a pu lui paraître étrangère."
+  ]
+ },
+ "consignes": {
+  "titre": "Consignes de préparation au spectacle",
+  "note": "NOTE IMPORTANTE",
+  "intro": "Afin de préserver la surprise de l’intrigue et de laisser les élèves découvrir les rebondissements du récit, nous choisissons de nous charger de la phase de préparation au spectacle. Nous demandons de veiller à :",
+  "demandes": [
+   "DEMANDER AUX ÉLÈVES DE NE PAS LIRE LE TEXTE DE BÉRÉNICE",
+   "NE PAS LES PRÉPARER AU TEXTE",
+   "NE SURTOUT PAS DÉVOILER L’ABSENCE DE MORT DANS LA PIÈCE"
+  ],
+  "apres": "Si un travail approfondi sur la pièce est envisagé, il est préférable de l’effectuer <strong>après les représentations.</strong> Les seuls axes de préparation peuvent être les suivants :",
+  "axes": [
+   "Clarification de l’intrigue qui <strong>précède</strong> le commencement de la pièce : la situation initiale, le triangle amoureux, les fonctions de chaque personnage, la situation géopologique...",
+   "Introduction aux règles de la tragédie classique, les trois unités, la nécessité d’une mort...",
+   "Révision de ce qu’est un alexandrin classique"
+  ],
+  "atelier": "Nous demandons dans tous les cas à ce que <strong>chaque classe effectue un atelier d’une heure de préparation au spectacle</strong> avec un intervenant de la compagnie."
+ },
+ "ateliers": {
+  "titre": "Ateliers",
+  "liste": [
+   {
+    "titre": "Atelier de préparation (obligatoire) - 1h",
+    "paragraphes": [
+     "Le but de la première heure d'atelier est avant tout de susciter l'envie, la curiosité, et de donner les quelques clés indispensables à une expérience de spectateur sereine et intéressée.",
+     "L'accent est mis sur le fait de briser le carcan magistral. En instaurant une dynamique familière et participative."
+    ],
+    "etapes": [
+     {
+      "titre": "Étape 1 : <strong>clarifier l'intrigue (20 min)</strong>",
+      "texte": "En s'appuyant sur des schémas au tableau et sur les références culturelles des élèves (Game of Thrones, Gladiator, Rome...), l'atelier reconstruit l'histoire survenue cinq ans avant le début de la pièce : la situation géopolitique, le triangle amoureux, la loi romaine vis à vis des reines étrangères, le devoir de Titus, analogie avec des dilemmes moraux contemporains (religion, familles...), le concept de la \"friendzone\" en identifiant Antiochus..."
+     },
+     {
+      "titre": "Étape 2 : <strong>l'alexandrin classique, de la culture pop à Racine (40 min</strong>)",
+      "texte": "Pour faire comprendre la mécanique de l'alexandrin, l'atelier part d'une pratique d'écoute quotidienne : le Rap, les publicités, les dictons. En s'appuyant sur des vers sélectionnés, les élèves sont invité à faire émerger intuitivement les règles classiques (les 12 syllabes, le rôle du « e » muet, l'emplacement de la césure et la structure en deux hémistiches...). Puis les vers basculent sans transition au vers raciniens possédant l'ultime rigueur métrique. Ces vers sont l'occasion de mises en voix collectives."
+     }
+    ]
+   },
+   {
+    "titre": "Atelier d'écriture d'alexandrins - 1h",
+    "paragraphes": [
+     "Placés dans la posture du dramaturge, les élèves s'essaient à la rédaction de distiques ou de quatrains en alexandrins."
+    ],
+    "points": [
+     "Thématiques d'écriture : choix parmi des sujets à forte charge émotionnelle (déclarer un amour caché, annoncer une séparation, exprimer l'angoisse d'une nuit blanche, faire une mise en garde).",
+     "Manipulation des contraintes : utilisation guidée des outils de prosodie (alternance des rimes féminines et masculines, respect de la césure, élisions).",
+     "Partage et mise en voix : Lecture sur volontariat à voix haute des écrits."
+    ]
+   },
+   {
+    "titre": "Atelier d'initiation au jeu - 1h",
+    "paragraphes": [
+     "Avec cette heure de pratique sur le plateau, accompagnés de bandes sons sélectionnées, les élèves expérimentent par le corps les enjeux de la tragédie.",
+     "Après des exercices d'échauffement/de préparation à l'exposition au regard des autres, les élèves peuvent être invités à parcourir par exemple :"
+    ],
+    "points": [
+     "des démarches et postures royales : déambulations dans l'espace en explorant différents états physiques (la noblesse du port d'épée, le doute décisionnel, l'urgence amoureuse, la gravité d'un secret).",
+     "la création de tableaux vivants collectifs : création de poses de groupe immortalisant des situations de pouvoir ou de tension (un couronnement, une foule hostile, un conseil de guerre).",
+     "un exercice individuel d'incarnation : l'épreuve du trône"
+    ]
+   },
+   {
+    "titre": "Atelier de sensibilisation à la création - 1h",
+    "paragraphes": [
+     "En lien avec un intervenant de l'équipe de création du spectacle, les élèves sont amenés à échanger de manière informelle sur le travail de recherche que demande une mise en scène.",
+     "<strong>Il est possible d'effectuer cette atelier à la place de l'atelier de préparation obligatoire. Dans ce cas l'intervenant fera une clarification accélérée de l'intrigue qui précède Bérénice et des règles de l'alexandrin pour préparer les élèves au spectacle en 20min avant de se concentrer sur le processus de création.</strong>",
+     "Exemples de thèmes abordés :"
+    ],
+    "points": [
+     "les différents postes techniques et artistiques au théâtre. Analogies avec les autres arts collectifs tels que le cinéma, le jeu vidéo, la musique...",
+     "l'historique d'une production théâtrale",
+     "le rôle du costume, ce qu'il raconte, sa conception. Analogies avec les styles vestimentaires contemporains."
+    ]
+   }
+  ]
+ },
+ "accueil": {
+  "titre": "Conditions d’accueil",
+  "fiche": "Fiche technique",
+  "blocs": [
+   {
+    "titre": null,
+    "lignes": [
+     "Effectifs de l’équipe (repas et hébergement) : <strong>5 personnes</strong>",
+     "Durée : <strong>1h25</strong>",
+     "Jauge par représentation : <strong>100 à 120 places</strong>"
+    ]
+   },
+   {
+    "titre": "PLANNING DE MONTAGE ET PERSONNEL :",
+    "lignes": [
+     "Durée : <strong>6 heures de montage</strong>, effectué par la compagnie",
+     "<strong>Présence d’un régisseur général d’accueil souhaitée</strong>"
+    ]
+   },
+   {
+    "titre": "PLATEAU :",
+    "lignes": [
+     "Aire de jeu (gradins compris) : <strong>idéale 15 m x 15 m / minimum 11 m x 11 m</strong>",
+     "Hauteur sous plafond minimale : <strong>3 m</strong>",
+     "<strong>Nécessité de pouvoir occulter la pièce pour la placer dans le noir</strong>",
+     "Les spectateurs seront placés sur les gradins en cercle qui fermeront l’espace de jeu"
+    ]
+   },
+   {
+    "titre": "MATÉRIEL À FOURNIR PAR L'ORGANISATEUR :",
+    "lignes": [
+     "5 chaises pour l’équipe",
+     "1 échelle en parisienne montant à hauteur de plafond",
+     "1 aspirateur, 1 balai, 1 pelle et 1 serpillère",
+     "3 sources d’alimentation 16A différentes pour la régie, le son, la lumière"
+    ]
+   },
+   {
+    "titre": "COMPOSITION DU DÉCOR AMENÉ PAR LA COMPAGNIE :",
+    "lignes": [
+     "3 gradins (traverses de 2 m, placés de manière à former un cercle de 6 m de diamètre)",
+     "3 pieds d’une hauteur allant jusqu’à 4m et 3 PAR LED",
+     "3 pieds d’enceintes supportant chacun deux enceintes, placés derrière les pieds de lumières",
+     "3 tissus (de 3,50m de haut et de 2m de large)",
+     "1 sol recouvert de moquette blanche en forme de rond",
+     "1 élément central d’une hauteur de 60 cm",
+     "1 table de 2m de long x 70cm de large pour la musique/régie lumière"
+    ]
+   }
+  ],
+  "alerte": "<strong>Un coup de feu à blanc est tiré pendant la pièce,</strong> à une heure environ du début du spectacle.",
+  "photos": "Photos de l’implantation dans différents établissements scolaires"
+ },
+ "compagnie": {
+  "titre": "Présentation de la compagnie",
+  "paragraphes": [
+   "La compagnie Crescite naît en 2011 à Rouen et se caractérise depuis sa création par le désir de mettre l’acteur au centre de son travail. « J’ai l’intime conviction que <strong>c’est ce que l’on vient chercher au théâtre : un \"shoot\" d’humanité dans la réciprocité</strong>. L’on vient voir un autre être humain vivre des choses auxquelles, possiblement, nous serons nous-même confrontés un jour. S’y reconnaître, mieux s’y comprendre et mieux comprendre l’autre. Si le but du théâtre a été un jour de raconter le monde, alors je crois qu’il est toujours nécessaire d’utiliser le récit ou la fable pour éviter l’écueil d’un prêche moralisateur. »",
+   "Les Crescite poursuivent le travail amorcé dès leurs débuts en multipliant les endroits de rencontres avec \"les\" publics. Pour ce faire, la compagnie se questionne constamment sur les formes diverses que nécessite ce croisement des publics : des formes tantôt destinées aux théâtres en \"dur\", tantôt <strong>destinées aux lieux non dédiés dans l’espoir de participer à toujours plus de décentralisation.</strong>",
+   "Le projet esthétique de la compagnie est constamment en interrogation au regard de l’œuvre en travail, et d’elle — d’abord — naît la forme qui semble la plus juste. Une attention particulière est toujours apportée au lien avec le public. L’accompagner, le \"séduire\" — toujours — dans le but de l’amener à l’exigence des thèmes que nous explorons. <strong>Être et dans le divertissement de qualité, et dans un théâtre qui enseigne et interroge.</strong>",
+   "<em>\"Crescite\" pourrait se traduire par \"excroissances\" en italien ou encore par l’impératif latin \"grandissez !\". C’est avec ces deux prérogatives que la compagnie tend à se construire. Tenter un théâtre perméable, tenter un théâtre qui éduque par le divertissement.</em>"
+  ],
+  "datesTitre": "En quelques dates",
+  "dates": [
+   {
+    "annee": "2011",
+    "titre": "L’Imaginaire forcé"
+   },
+   {
+    "annee": "2013",
+    "titre": "Mon Royaume pour un cheval<br/>Romeo and Juliet"
+   },
+   {
+    "annee": "2016",
+    "titre": "Macbeth - fatum"
+   },
+   {
+    "annee": "2018",
+    "titre": "Bérénice"
+   },
+   {
+    "annee": "2021",
+    "titre": "La Folle Idée"
+   },
+   {
+    "annee": "2023",
+    "titre": "Ci-gisait Cyrano"
+   },
+   {
+    "annee": "2024",
+    "titre": "Cléophène"
+   },
+   {
+    "annee": "2027",
+    "titre": "Cassandre(s)"
+   }
+  ]
+ },
+ "directeur": {
+  "titre": "Angelo Jossec, directeur artistique",
+  "chapeau": "Comédien, auteur et metteur en scène.",
+  "paragraphes": [
+   "Après une Licence 3 en Biologie Moléculaire à l’université de Rennes 2 et un DEUG en Arts du Spectacle à l’université de Caen, Angelo Jossec se forme pendant 3 ans à l’ACTEA - La cité Théâtre (CFA à Caen) puis en tant que comédien-compagnon au CDN de Rouen en 2010. A travers ces formations il rencontre notamment, Thomas Jolly, Serge Tranvouez, Brigitte Jacques-Wajeman, Elisabeth Maccoco et David Bobée.",
+   "En tant que comédien, il travaille avec Amélie Clément, Olivier Lopez, Bernard Rozet (<em>Portrait de groupe</em> d’après Molière et <em>Déjeunons sur l’herbe</em> d’après <em>L’Oeuvre</em> d’E. Zola en 2010, CDR Rouen), Annie Pican (<em>La Ronde</em> en 2011, cieThéâtre de la Rampe), Elisabeth Maccoco (<em>Le saut de la Tortue</em> en 2011, CDR Rouen), Catherine Delattres (<em>L’étourdi</em> de Molière en 2014, cie Catherine Delattre) et David Bobée (<em>Paris</em> d’après <em>Mélo</em> de Frédéric Ciriez en 2015, CDN Normandie Rouen). Il assiste par ailleurs Olivier Lopez à la mise en scène de <em>La Griffe</em> de H. Barker en 2010 ; Jérôme Hankins pour le projet <em>Everyman</em> en 2012 (CDR Rouen) et David Bobée sur <em>Paris</em> en 2015 (CDN de Rouen).",
+   "Suite au premier confinement il fonde avec Amélie Chalmey le festival 55. Celui-ci se déroule du 30 juin au 23 août 2020 et rassemble plus de 200 artistes du territoire normand.",
+   "En 2011, il crée la compagnie <em>Crescite</em> pour y mettre en scène ses spectacles dans lesquels il est également comédien."
+  ]
+ },
+ "enTournee": {
+  "titre": "Nos spectacles en tournée"
+ }
+}

@@ -100,24 +100,43 @@ def arms_data():
     return a
 
 
-def photos(shows):
-    """Les photos (privées) des spectacles et de la page Actions culturelles, en data URL ; sinon un substitut neutre."""
+def photo_files(shows):
+    """Les photos (privées) : celle de chaque spectacle et de la page Actions culturelles (clé = slug), puis celles de
+    l'univers de chaque spectacle (clé = slug/id, private/photos/<slug>/<id>.webp). Valeur : le fichier, ou None."""
     out = {}
     for slug, titre in [(s["slug"], s["titre"]) for s in shows] + [("actions-culturelles", "Actions culturelles")]:
         f = PRIVATE / "photos" / f"{slug}.webp"
-        out[slug] = ("data:image/webp;base64," + base64.b64encode(f.read_bytes()).decode()) if f.exists() else proto.placeholder_photo(titre)
+        out[slug] = (f if f.exists() else None, titre)
+    for s in shows:
+        for p in s["photos"]:
+            f = PRIVATE / "photos" / f"{p['cle']}.webp"
+            out[p["cle"]] = (f if f.exists() else None, s["titre"])
+    for i in range(1, 5):
+        f = PRIVATE / "photos" / "actions-culturelles" / f"g-{i}.webp"
+        out[f"actions-culturelles/g-{i}"] = (f if f.exists() else None, "Actions culturelles")
+    return out
+
+
+def photos(files, base=None):
+    """En fichier : chaque photo en data URL (la maquette se lit seule). En ligne (base) : l'adresse de la photo publiée
+    à côté des pages, pour ne pas la recopier dans chacune. Sans la photo : un substitut neutre."""
+    out = {}
+    for k, (f, titre) in files.items():
+        if f is None:
+            out[k] = proto.placeholder_photo(titre)
+        elif base is not None:
+            out[k] = f"{base}{k}.webp"
+        else:
+            out[k] = "data:image/webp;base64," + base64.b64encode(f.read_bytes()).decode()
     return out
 
 
 # Les maquettes reprennent le texte exact de crescite.fr (data/site-crescite.json, relevé par data/site_crescite.py),
-# plus Cassandres, création 2027 (data/cassandres.json). Rien d'autre n'est écrit pour elles : seule la carte des
-# tournées s'ajoute, tracée à partir des dates que le site publie.
+# plus Cassandres, création 2027 (data/cassandres.json), le dossier scolaire de Bérénice (data/berenice-dossier.json)
+# et l'univers et l'action culturelle de chaque spectacle (data/univers-spectacles.json). Rien d'autre n'est écrit
+# pour elles, hormis les quelques libellés de navigation de D.site.libelles ; la carte des tournées est tracée à
+# partir des dates que le site publie.
 ORDRE = ["cassandres", "cleophene", "ci-gisait-cyrano", "la-folle-idee", "berenice", "macbeth-fatum", "mon-royaume", "imaginaire-force"]
-
-# L'univers de Cassandres (couleurs seulement) : la chaleur de 2077 sur la nuit bleue des photos du projet.
-UNIVERS_CASSANDRES = {"nom": "La chronologie", "motif": "chronologie", "focale": 50,
-                      "couleurs": {"fond": "#0b1018", "fond2": "#121b28", "texte": "#e8edf3", "texte2": "#9fb0c3",
-                                   "accent": "#ff7a2f", "accent2": "#3d6fb6", "scene": "#ff7a2f"}}
 
 # Les communes des saisons anciennes absentes de la base des dates : coordonnées approchées, pour la carte seulement.
 COMMUNES_EN_PLUS = {
@@ -130,21 +149,38 @@ COMMUNES_EN_PLUS = {
     "Pont-Audemer|27": (49.355, 0.515),
 }
 
-# Les trois portes : seulement leurs libellés, vers les pages d'origine qui servent chaque public.
-PORTES = [
-    {"cle": "voir", "texte": "Je viens voir", "href": "#/agenda", "couleur": "#c2306f", "couleurVive": "#f07ab6"},
-    {"cle": "programmer", "texte": "Je programme", "href": "#/espace-pro", "couleur": "#8a6410", "couleurVive": "#e8bc5c"},
-    {"cle": "etablissement", "texte": "Je fais venir dans mon établissement", "href": "#/actions-culturelles", "couleur": "#127a6a", "couleurVive": "#5fd0bd"},
+# Les trois entrées, la navigation première : le site se lit selon qui le visite. Chacune a sa page, et chaque page
+# de spectacle se lit dans l'une des trois. L'espace pro à mot de passe disparaît : « Je souhaite programmer » le
+# remplace, ouvert à tous ; les actions culturelles passent dans « Je représente un établissement scolaire ».
+ENTREES = [
+    {"cle": "voir", "texte": "Je viens voir un spectacle", "court": "Voir un spectacle", "href": "#/voir",
+     "couleur": "#c2306f", "couleurVive": "#f07ab6"},
+    {"cle": "programmer", "texte": "Je souhaite programmer", "court": "Programmer", "href": "#/programmer",
+     "couleur": "#8a6410", "couleurVive": "#e8bc5c"},
+    {"cle": "etablissement", "texte": "Je représente un établissement scolaire", "court": "Établissement scolaire",
+     "href": "#/etablissement", "couleur": "#127a6a", "couleurVive": "#5fd0bd"},
 ]
-# Les onglets : ceux des maquettes, plus Actions culturelles et Espace Pro, pages du site d'origine.
+# Le menu second : ce qui ne dépend pas de qui visite.
 MENU = [
     {"id": "spectacles", "texte": "Spectacles", "href": "#/spectacles"},
-    {"id": "agenda", "texte": "Agenda", "href": "#/agenda"},
     {"id": "compagnie", "texte": "La compagnie", "href": "#/compagnie"},
-    {"id": "actions", "texte": "Actions culturelles", "href": "#/actions-culturelles"},
-    {"id": "pro", "texte": "Espace Pro", "href": "#/espace-pro"},
     {"id": "contact", "texte": "Contact", "href": "#/contact"},
 ]
+# Les anciennes adresses, à rediriger : l'agenda vit dans « Je viens voir un spectacle ».
+REDIRECTIONS = {"#/agenda": "#/voir", "#/espace-pro": "#/programmer", "#/actions-culturelles": "#/etablissement"}
+# Les seuls libellés écrits pour les maquettes : la navigation et les intitulés de rubrique des trois entrées.
+LIBELLES = {
+    "enTournee": "EN TOURNÉE", "decouvrir": "découvrir", "actuellementEnTournee": "Actuellement en tournée",
+    "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison",
+    "saisonsPrecedentes": "Saisons précédentes", "toutPublic": "Tout public", "scolaire": "Scolaire",
+    "enEtablissement": "En établissement scolaire", "lieu": {"etablissement": "Dans l’établissement", "salle": "En salle"},
+    "actionCulturelle": "Action culturelle", "aCompleter": "À compléter par la compagnie", "dispositifs": "Dispositifs",
+    "public": "Public", "ateliers": "Ateliers", "duree": "Durée", "jauge": "Jauge", "format": "Format",
+    "distribution": "Distribution", "representations": "Représentations", "lieuxDiffusion": "Lieux de diffusion",
+    "ficheTechnique": "Fiche technique", "conditionsAccueil": "Conditions d’accueil", "bandeAnnonce": "Bande-annonce",
+    "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles",
+    "ouverture": "Ouverture", "dates": "Dates", "photos": "Photos", "dossierScolaire": "Dossier scolaire",
+}
 
 
 def _norm(s):
@@ -196,7 +232,8 @@ def projection(places):
 def build_data():
     site = json.loads((ROOT / "data" / "site-crescite.json").read_text(encoding="utf-8"))
     cass = json.loads((ROOT / "data" / "cassandres.json").read_text(encoding="utf-8"))
-    proto_shows = {s["slug"]: s for s in json.loads((ROOT / "prototype" / "src" / "shows.json").read_text(encoding="utf-8"))}
+    dossier = json.loads((ROOT / "data" / "berenice-dossier.json").read_text(encoding="utf-8"))
+    U = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))
     rows = json.loads((ROOT / "data" / "representations-site-2016-2027.json").read_text(encoding="utf-8"))
     mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
     today = date.today().isoformat()
@@ -251,9 +288,11 @@ def build_data():
                 r = base.get((saison, _norm(dt["ligne"])))
                 l = lieu(r["commune"], r["departement"], r["lat"], r["lon"]) if r and r["lat"] is not None else lieu_de_ligne(dt["ligne"], g["sousTitre"])
                 lien = dt.get("lien") or next((x["lien"] for x in dt["details"] if x.get("lien")), None)
+                texte = " ".join([dt["ligne"]] + [x["texte"] for x in dt["details"]])
+                scolaire = r["type"] == "scolaire" if r else bool(re.search(r"scolaire|collège|lycée", texte, re.I))
                 dates.append({"ligne": dt["ligne"], "details": dt["details"], "etat": dt.get("etat"), "lien": lien,
                               "iso": r["date_debut"] if r else None, "fin": r["date_fin"] if r else None,
-                              "precision": r["precision"] if r else None, "l": l})
+                              "precision": r["precision"] if r else None, "scolaire": scolaire, "l": l})
             groupes.append({"titre": g["titre"], "sousTitre": g["sousTitre"], "creation": g["creation"], "slug": slug, "dates": dates})
         saisons[saison] = {"titre": S["titre"], "spectacles": groupes}
 
@@ -279,33 +318,45 @@ def build_data():
         l = dt["l"]
         return {"slug": g["slug"], "titre": titres_menu.get(g["slug"], g["titre"]), "ligne": dt["ligne"],
                 "ligneDate": date_txt.strip(), "ligneLieu": lieu_txt.strip(), "details": dt["details"], "lien": dt["lien"],
-                "iso": dt["iso"], "fin": dt["fin"], "precision": dt["precision"],
+                "iso": dt["iso"], "fin": dt["fin"], "precision": dt["precision"], "scolaire": dt["scolaire"],
                 "commune": lieux[l]["c"] if l is not None else None, "dep": lieux[l]["dep"] if l is not None else None,
                 "xy": lieux[l]["xy"] if l is not None else None, "l": l}
 
     dates = [date_row(g, dt) for g, dt in a_venir]
     out_shows = []
     for slug in ORDRE:
+        uv = U["spectacles"][slug]
         if slug == "cassandres":
-            sp, u = cass, UNIVERS_CASSANDRES
+            sp = cass
             extra = {"statut": cass["statut"], "genre": cass["genre"], "cadre": cass["cadre"], "extraits": cass["extraits"],
                      "tournee": cass["tournee"], "source": cass["source"], "sousTitre": cass["genre"],
                      "avec": None, "mentions": [], "duree": None, "production": [], "credit": None, "medias": []}
         else:
-            sp, u = site["spectacles"][slug], proto_shows[slug]["univers"]
+            sp = site["spectacles"][slug]
             extra = {"statut": None, "sousTitre": sous_titres.get(slug), "avec": sp["avec"], "mentions": sp["mentions"],
                      "duree": sp["duree"], "production": sp["production"], "credit": sp["credit"], "medias": sp["medias"],
                      "tournee": {"titre": sp["tournee"]["titre"] or "Actuellement en tournée", "texte": None}, "source": sp["url"]}
+        if slug == "berenice":                              # la durée du dossier 2026 (1h25), plus récente que le site (1h20)
+            extra["duree"] = uv["programmer"]["duree"].replace("Durée", "durée")
+        u = uv["univers"]
         c = u["couleurs"]
         mine = [d for d in dates if d["slug"] == slug]
+        video = uv["video"] or next(({"titre": m["titre"], "url": m["url"], "source": "site"} for m in extra["medias"]
+                                     if m["type"] == "video"), None)
         out_shows.append(dict({
             "slug": slug, "titre": titres_menu.get(slug, sp["titreLignes"][0]), "titreLignes": sp["titreLignes"],
             "creation": sp["creation"], "annee": int(re.search(r"\d{4}", sp["creation"]).group()),
             "fiche": sp["fiche"], "texte": sp["texte"], "enTournee": slug in en_tournee,
             "prochaine": mine[0] if mine else None, "nbDates": len(mine),
             # l'univers : une couleur vive sur fond sombre, assombrie pour du texte sur fond clair, et un fond profond
-            "couleur": c["scene"], "couleurTexteClair": for_light(c["scene"]), "fondSombre": c["fond"] if not u.get("clair") else "#1a1016",
-            "palette": c, "clair": bool(u.get("clair")), "motif": u["motif"], "focale": u.get("focale", 50),
+            "couleur": c["scene"], "couleurTexteClair": for_light(c["scene"]), "fondSombre": c["fond"] if not u["clair"] else "#1a1016",
+            "palette": c, "clair": u["clair"], "motif": u["motif"], "focale": 50,
+            "univers": u, "lieuTemps": uv["lieuTemps"], "accroche": uv["accroche"], "affirmations": uv["affirmations"],
+            "citations": uv["citations"], "video": video,
+            "photos": [dict(p, cle=f"{slug}/{p['id']}") for p in uv["photos"]], "creditPhotos": uv["credit"] or extra["credit"],
+            "creditDossier": uv.get("creditDossier"),
+            "actionCulturelle": uv["actionCulturelle"], "programmer": uv["programmer"],
+            "dossier": "berenice" if uv["actionCulturelle"].get("dossier") else None,
         }, **extra))
 
     # ---- la carte : les communes, et les bras par saison, par spectacle, à venir ----
@@ -323,7 +374,10 @@ def build_data():
         par_spectacle[sl] = {"passe": compte(passe), "aVenir": compte(d["l"] for d in dates if d["slug"] == sl)}
     carte = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"],
              "rouen": mp["rouen"], "lieux": lieux, "parSaison": par_saison, "parSpectacle": par_spectacle,
-             "aVenir": compte(d["l"] for d in dates)}
+             "aVenir": compte(d["l"] for d in dates),
+             "aVenirPublic": compte(d["l"] for d in dates if not d["scolaire"]),
+             "aVenirScolaire": compte(d["l"] for d in dates if d["scolaire"]),
+             "tout": compte(dt["l"] for S in saisons.values() for g in S["spectacles"] for dt in g["dates"])}
 
     a = site["accueil"]
     noms_saisons = next(m for m in site["menu"] if m["texte"].startswith("Saison"))["sous"]
@@ -331,14 +385,22 @@ def build_data():
         "saison": D_SAISON, "aujourdhui": today,
         "site": {
             "nom": a["coordonnees"]["nom"], "titreSuffixe": "crescite", "accueil": "Accueil",
-            "menu": MENU, "portes": PORTES,
+            "entrees": ENTREES, "menu": MENU, "redirections": REDIRECTIONS,
             "diaporama": [{"slug": d["lien"].replace("#/spectacle/", "") if d.get("lien") else None, "surtitre": d["surtitre"],
                            "titre": d["titre"], "bouton": d["bouton"], "credit": d["credit"], "href": d["lien"]} for d in a["diaporama"]],
             "donateurs": a["donateurs"][0] if a.get("donateurs") else None,
-            "compagnie": {"titre": a["presentationTitre"], "paragraphes": a["presentation"], "datesTitre": a["datesTitre"], "dates": a["dates"]},
+            # la compagnie : le texte du site, sa frise prolongée jusqu'à Cassandre(s) et le portrait du directeur
+            # artistique, repris du dossier scolaire de Bérénice
+            "compagnie": {"titre": a["presentationTitre"], "paragraphes": a["presentation"], "datesTitre": a["datesTitre"],
+                          "dates": a["dates"] + [d for d in dossier["compagnie"]["dates"] if d["annee"] > a["dates"][-1]["annee"]],
+                          # le portrait du dossier, dont la dernière phrase date la compagnie de 2011 : elle est reprise du
+                          # dossier artistique 2027-2028, qui la date de 2012 comme le site
+                          "directeur": dict(dossier["directeur"], paragraphes=dossier["directeur"]["paragraphes"][:3] + [
+                              "En 2012, il crée la compagnie <em>Crescite</em> pour y mettre en scène ses spectacles dans lesquels il est également comédien."])},
+            # les actions culturelles du site, lues dans « Je représente un établissement scolaire »
             "actions": {"titre": site["actions"]["blocs"][0]["titre"], "blocs": [h for b in site["actions"]["blocs"][1:] for h in b.get("html", [])],
                         "credit": site["actions"]["credit"]},
-            "pro": dict(site["espacePro"], titrePage="Espace Pro"),
+            "ecole": U["ecole"],
             "contact": site["contact"],
             "coordonnees": a["coordonnees"], "ecrire": {"texte": a["ecrire"]["texte"], "href": "#/contact"},
             "facebook": {"texte": a["facebook"]["texte"], "href": None} if a.get("facebook") else None,
@@ -348,19 +410,21 @@ def build_data():
             # les mentions légales d'origine, sans le bloc de l'agence qui a conçu l'ancien site (comme son crédit en pied de page)
             "legal": {k: {"titre": site[k][0]["titre"], "blocs": [h for b in site[k][1:] for h in b.get("html", []) if "Conception et réalisation" not in h]}
                       for k in ("mentions-legales", "politique-de-confidentialite")},
-            "libelles": {"enTournee": "EN TOURNÉE", "decouvrir": "découvrir", "actuellementEnTournee": "Actuellement en tournée",
-                         "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison"},
+            "libelles": LIBELLES,
             "saisons": [{"saison": s, "titre": saisons[s]["titre"], "menu": noms_saisons[i] if i < len(noms_saisons) else saisons[s]["titre"],
                          "href": "#/agenda" if s == D_SAISON else f"#/agenda/{s}"} for i, s in enumerate(saisons)],
         },
         "shows": out_shows,
+        # le dossier scolaire de Bérénice, sans prix, téléphone ni adresse électronique ; sa présentation de la compagnie
+        # et le portrait du directeur sont repris dans D.site.compagnie
+        "dossiers": {"berenice": {k: v for k, v in dossier.items() if k not in ("_note", "compagnie", "directeur", "enTournee")}},
         "dates": dates,
         "saisons": saisons,
         "logo": logo_variants(),
         "arms": arms_data(),
         "carte": carte,
     }
-    return D, photos(out_shows)
+    return D, photo_files(out_shows)
 
 
 D_SAISON = "2026-2027"
@@ -417,21 +481,31 @@ def captures(names):
 NOINDEX = '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">'
 
 
-def pages(D, photo_urls, names):
-    """Le site GitHub Pages (docs/) : la planche en index, et chaque maquette en page à part, hors des moteurs de recherche."""
+def pages(D, files, names):
+    """Le site GitHub Pages (docs/) : la planche en index, chaque maquette en page à part, hors des moteurs de recherche,
+    et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune."""
+    import shutil
     docs = ROOT / "docs"
     docs.mkdir(exist_ok=True)
+    shutil.rmtree(docs / "photos", ignore_errors=True)
+    for k, (f, _) in files.items():
+        if f is not None:
+            dest = docs / "photos" / f"{k}.webp"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(f, dest)
+    photo_urls = photos(files, base="photos/")
     for n in names:
         html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
     build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
     (docs / ".nojekyll").write_text("", encoding="utf-8")
-    size = sum(f.stat().st_size for f in docs.iterdir()) / 1024 / 1024
+    size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
     print(f"pages : {len(names)} maquettes et la planche dans docs/ ({size:.1f} Mo)")
 
 
 def main():
-    D, photo_urls = build_data()
+    D, files = build_data()
+    photo_urls = photos(files)
     DIST.mkdir(parents=True, exist_ok=True)
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     names = args or sorted(p.stem for p in SRC.glob("m[0-9][0-9].html")) + (["synthese"] if (SRC / "synthese.html").exists() else [])
@@ -446,7 +520,7 @@ def main():
     if not args and planche.exists():
         build_planche(D, photo_urls, names)
         if "--pages" in sys.argv:
-            pages(D, photo_urls, names)
+            pages(D, files, names)
 
 
 def build_planche(D, photo_urls, names, web=False, dest=None):

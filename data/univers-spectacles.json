@@ -1,0 +1,766 @@
+{
+ "_note": "Univers des spectacles et action culturelle de chacun, pour une communication de compagnie. Chaque texte est repris tel quel de sa source (champ « source ») : crescite.fr (site), le dossier scolaire Bérénice 2026 (dossier), les pages spectacles d'adrienvada.fr (adrienvada), le dossier artistique 2027-2028 de la compagnie (drac, passages sur les spectacles et les actions culturelles seulement : ni budget, ni salaire, ni contact). Les couleurs et les polices sont des choix de maquette, tirés du dossier pour Bérénice, d'adrienvada.fr pour Cléophène, L'imaginaire forcé et Cassandres, du prototype pour les autres.",
+ "sources": {
+  "site": "https://crescite.fr",
+  "dossier": "Dossier scolaire Bérénice 2026, Compagnie Crescite",
+  "adrienvada": "https://adrienvada.fr/spectacles/",
+  "drac": "Dossier artistique 2027-2028, Compagnie Crescite"
+ },
+ "ecole": {
+  "texte": "Aussi, Les Crescite ont toujours porté une attention particulière aux publics jeunes, en intervenant directement dans les établissements scolaires afin de participer à « l’école du spectateur ». En effet, à l’exclusion des concerts ou one-man-shows, nous serons peut-être leur « unique » rencontre avec le spectacle vivant. De fait, notre mission est citoyenne, et si l’on soutient la formule vilardienne de « service public » de la culture, nous nous devons d’assumer notre part d’éducation populaire. Ainsi, les formes proposées aux scolaires sont les mêmes que celles proposées aux spectateurs adultes. A notre sens, il n’y a pas de théâtre dédié à la jeunesse ; il n’y a que des propositions tout public à partir d’un certain âge.",
+  "source": "drac"
+ },
+ "spectacles": {
+  "berenice": {
+   "univers": {
+    "nom": "L’arène",
+    "source": "dossier",
+    "clair": true,
+    "motif": "arene",
+    "couleurs": {
+     "fond": "#fbefe9",
+     "fond2": "#ffffff",
+     "texte": "#631705",
+     "texte2": "#7d3a2b",
+     "accent": "#cf3723",
+     "accent2": "#dc6d5e",
+     "scene": "#cf3723",
+     "lueur": "rgba(207,55,35,0.22)"
+    },
+    "polices": {
+     "titre": "Ubuntu",
+     "titreGraisse": 700,
+     "texte": "Open Sans",
+     "etiquette": "Raleway"
+    }
+   },
+   "lieuTemps": "Rome, an 79.",
+   "accroche": "Huit jours après la mort soudaine de l’empereur Vespasien, le destin de Bérénice, Titus et Antiochus bascule.",
+   "affirmations": [
+    {
+     "texte": "Une mise en scène resserrée, accessible et exigeante, au service d’un des plus beaux poèmes en alexandrin",
+     "source": "adrienvada"
+    },
+    {
+     "texte": "Un spectacle exigeant qui déconstruit les a priori sur le théâtre classique pour transmettre ce patrimoine universel.",
+     "source": "adrienvada"
+    }
+   ],
+   "citations": [
+    {
+     "vers": [
+      "Que le jour recommence et que le jour finisse",
+      "Sans que jamais Titus puisse voir Bérénice."
+     ],
+     "source": "Bérénice, acte V"
+    },
+    {
+     "vers": [
+      "Depuis huit jours je règne ; et jusques à ce jour,",
+      "Qu’ai-je fait pour l’honneur ? J’ai tout fait pour l’amour."
+     ],
+     "source": "Titus, acte IV"
+    },
+    {
+     "vers": [
+      "Vous m’aimez, vous me le soutenez,",
+      "Et cependant je pars, et vous me l’ordonnez !"
+     ],
+     "source": "Bérénice, acte IV"
+    }
+   ],
+   "photos": [
+    {
+     "id": "av-2",
+     "legende": "Un triangle amoureux élevé au rang de la tragédie.",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-18",
+     "legende": "La scène est une arène en hyper proximité avec le public, baignée dans une ambiance sonore et musicale live.",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-12",
+     "legende": "Bérénice, Antiochus, Acte III",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-1",
+     "legende": "Bérénice, Titus, Acte II",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-17",
+     "legende": "Lycée La Salle, Rouen",
+     "source": "adrienvada",
+     "etablissement": true
+    },
+    {
+     "id": "d-implantation-1",
+     "legende": "Photos de l’implantation dans différents établissements scolaires",
+     "source": "dossier",
+     "etablissement": true
+    },
+    {
+     "id": "d-musique",
+     "legende": null,
+     "source": "dossier"
+    },
+    {
+     "id": "d-atelier-1",
+     "legende": null,
+     "source": "dossier",
+     "atelier": true
+    },
+    {
+     "id": "d-atelier-3",
+     "legende": null,
+     "source": "dossier",
+     "atelier": true
+    }
+   ],
+   "credit": "© Olivier Héron / Alban Van Wassenhove / Thomas Cartron",
+   "creditDossier": "Crédit photos : Olivier Héron",
+   "video": {
+    "titre": "Bande annonce",
+    "url": "https://www.youtube.com/embed/YxQEebMDEZI",
+    "source": "adrienvada"
+   },
+   "actionCulturelle": {
+    "type": "Spectacle in situ",
+    "public": "À partir de la seconde",
+    "lieu": "etablissement",
+    "textes": [
+     {
+      "texte": "La scène est une arène. Un espace <strong>circulaire de 5 mètres de diamètre</strong> fermé par les spectateurs.",
+      "source": "dossier"
+     },
+     {
+      "texte": "Nous demandons dans tous les cas à ce que <strong>chaque classe effectue un atelier d’une heure de préparation au spectacle</strong> avec un intervenant de la compagnie.",
+      "source": "dossier"
+     }
+    ],
+    "formule": [
+     "6 classes : 2 représentations",
+     "6 ateliers de 1h (1/cl)"
+    ],
+    "dispositifs": [
+     "spectacle disponible dans les offres collectives du Pass Culture",
+     "dans le cadre du Parcours Regards de la Région Normandie"
+    ],
+    "dossier": true
+   },
+   "programmer": {
+    "format": "SPECTACLE IN SITU",
+    "duree": "Durée : 1h25",
+    "jauge": "Jauge par représentation : 100 à 120 places",
+    "equipe": "Effectifs de l’équipe (repas et hébergement) : 5 personnes",
+    "representations": "67 représentations au 31 juillet 2026",
+    "lieux": "Scène conventionnée La Barcarolle de Saint-Omer, Théâtre du Cloître à Bellac, Théâtre Jean Legendre à Compiègne, Centre André Malraux d'Hazebrouck, L'Athanor à Guérande, Archipel de Granville, Cité Théâtre à Caen, ODC de l'Orne, Théâtre en Seine à Duclair, L'Eclat à Pont-Audemer, Théâtre de Conches-en-Ouche, Le Piaf à Bernay, Le Siroco à Saint-Romain de Colbosc, La Cidrerie à Beuzeville, Théâtre du Château à Eu, Le Forum de Falaise, Juliobona à Lillebonne, Théâtre les 3 Chênes à Loiron, La Maison de l'Université à Mont-Saint-Aignan, Espaces culturels de Tourville-la-Rivière et d'Amfreville La Mivoie, Aître Saint-Maclou à Rouen, Festival Curieux Printemps à Rouen, Festival Vivacité, Festival Les Echappées Belles à Alençon, et lycées normands (Sotteville-lès-Rouen, Dieppe, Neufchâtel-en-Bray, Déville-lès-Rouen, Falaise).",
+    "ficheTechnique": true
+   }
+  },
+  "cleophene": {
+   "univers": {
+    "nom": "Les jumeaux",
+    "source": "adrienvada",
+    "clair": false,
+    "motif": "jumeaux",
+    "couleurs": {
+     "fond": "#150c05",
+     "fond2": "#241608",
+     "texte": "#f5e8d2",
+     "texte2": "#b59878",
+     "accent": "#d9a24a",
+     "accent2": "#e6b767",
+     "scene": "#d9a24a",
+     "lueur": "rgba(217,162,74,0.32)"
+    },
+    "polices": {
+     "titre": "Cormorant Garamond",
+     "titreGraisse": 600,
+     "texte": "Cormorant Garamond",
+     "etiquette": "Inter"
+    }
+   },
+   "lieuTemps": "Royaume de Pyrie, 124 av. J-C.",
+   "accroche": "Lorsqu’un roi meurt et qu’il est père de jumeaux, lequel des deux est l’aîné et doit prendre sa place ? La reine veuve Cléophène, dépositaire du pouvoir, doit céder sa couronne, et elle seule connaît le secret de son successeur…",
+   "affirmations": [
+    {
+     "texte": "Un drame familial de l’amour et de la haine",
+     "source": "adrienvada"
+    },
+    {
+     "texte": "Dans ce travail de la compagnie Crescite, les rebondissements vont arriver à chaque acte. L’acte final termine en apothéose quasi burlesque, et donne à cette adaptation de Rodogune de Corneille toute sa dimension shakespearienne.",
+     "source": "adrienvada"
+    }
+   ],
+   "citations": [
+    {
+     "vers": [
+      "Rodogune ? Shakespeare n’a rien écrit de plus beau."
+     ],
+     "source": "Stendhal, 16 juillet 1804",
+     "prose": true
+    },
+    {
+     "vers": [
+      "Je vois dans le hasard tous les biens que j’espère,",
+      "Mais ne puis être heureux sans le malheur d’un frère."
+     ],
+     "source": "Antiochus, Acte I"
+    },
+    {
+     "vers": [
+      "Je puis, comme je veux, tourner le droit d’aînesse,",
+      "Et donne à ton rival ton sceptre et ta maîtresse."
+     ],
+     "source": "Cléophène, Acte IV"
+    },
+    {
+     "vers": [
+      "Il vaut mieux mériter le sort le plus étrange.",
+      "Tombe sur moi le ciel, pourvu que je me venge !"
+     ],
+     "source": "Cléophène, Acte V"
+    }
+   ],
+   "photos": [
+    {
+     "id": "av-5",
+     "legende": "Les Crescite poursuivent le travail de l’alexandrin entrepris sur Bérénice. Dans Cléophène, les personnages sont sanguinaires, vils, assoiffés de pouvoir.",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-21",
+     "legende": "La mise en scène, volontairement spectaculaire, dépayse le spectateur dans un univers où sons et lumières soutiennent l’immersion dans un drame antique épique.",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-7",
+     "legende": "La rigueur sur le travail du vers sera la même que sur Bérénice.",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-20",
+     "legende": null,
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-23",
+     "legende": null,
+     "source": "adrienvada"
+    }
+   ],
+   "credit": "© Arnaud Bertereau",
+   "video": null,
+   "actionCulturelle": {
+    "type": "Ateliers parcours du spectateur",
+    "public": null,
+    "lieu": "salle",
+    "textes": [
+     {
+      "texte": "Autour de <em>Cléophène</em> et <em>Bérénice</em> (ou <em>Cyrano</em>) : ateliers parcours du spectateur dans le cadre du dispositif Regards de la Région Normandie saison 2025-2026 pour les lycées de Canteleu, Saint-Lô, Caen et Saint-Etienne du Rouvray.",
+      "source": "drac"
+     },
+     {
+      "texte": "en novembre 2024 : une comédienne a mené un stage de 10h auprès d'adultes amateurs, en lien avec <em>Cléophène</em> programmé au Rayon Vert de Saint-Valéry-en-Caux, et 4h d'ateliers auprès de lycéens.",
+      "source": "drac"
+     }
+    ],
+    "dispositifs": [
+     "dispositif Regards de la Région Normandie"
+    ]
+   },
+   "programmer": {
+    "format": null,
+    "duree": "durée : 1h30",
+    "representations": "16 représentations au 31 juillet 2026",
+    "lieux": "Théâtre l'Etincelle à Rouen, L'Athanor à Guérande, et la Scène Conventionnée le Rayon Vert de Saint-Valéry-en-Caux"
+   }
+  },
+  "imaginaire-force": {
+   "univers": {
+    "nom": "Les annotations",
+    "source": "adrienvada",
+    "clair": false,
+    "motif": "annotations",
+    "couleurs": {
+     "fond": "#160f0a",
+     "fond2": "#241811",
+     "texte": "#f6ead8",
+     "texte2": "#b79b7d",
+     "accent": "#d4823c",
+     "accent2": "#e39a58",
+     "scene": "#d4823c",
+     "lueur": "rgba(212,130,60,0.30)"
+    },
+    "polices": {
+     "titre": "IM Fell French Canon",
+     "titreGraisse": 400,
+     "texte": "Source Serif 4",
+     "etiquette": "Inter"
+    }
+   },
+   "lieuTemps": null,
+   "accroche": "Quand la censure académique leur impose Le Mariage forcé à la place du Malade imaginaire, des comédiens font déraper la lecture jusqu’à transformer la classe en un chantier théâtral et musical jubilatoire.",
+   "affirmations": [
+    {
+     "texte": "Il s’agit moins d’un spectacle que d’un prétexte pour discuter Molière, sa langue et le théâtre du 17e siècle.",
+     "source": "site"
+    }
+   ],
+   "citations": [],
+   "photos": [
+    {
+     "id": "g-2",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-3",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-5",
+     "legende": null,
+     "source": "site"
+    }
+   ],
+   "credit": "© Lauren Toulin",
+   "video": null,
+   "actionCulturelle": {
+    "type": "Forme hybride",
+    "public": null,
+    "lieu": "etablissement",
+    "textes": [
+     {
+      "texte": "Le spectateur pourra expérimenter cette langue au travers de cette intervention puis d’un atelier de pratique théâtrale. Il s’agit donc d’une forme hybride où la pièce, l’histoire choisie, vaut tout autant que la découverte de l’homme qu’était Molière, le théâtre de son époque, ses conditions de travail, une vue d’ensemble sur les thématiques chères à Molière et une explication des intrigues aux vue de l’époque à laquelle elles se font. Prenons pour exemple le mariage, qui est au centre de la plupart, pour ne pas dire toutes, des intrigues de Molière.",
+      "source": "site"
+     }
+    ],
+    "dispositifs": [
+     "spectacle disponible dans <a href=\"https://www.seinemaritime.fr/mon-quotidien/colleges/guide-du-cred76/limaginaire-force/\">le guide du CRED de Seine-Maritime</a><br/>et dans les offres collectives du Pass Culture"
+    ]
+   },
+   "programmer": {
+    "format": null,
+    "duree": "durée : 55 minutes",
+    "representations": "492 représentations au 31 juillet 2026",
+    "lieux": "L'Athanor à Guérande, centre culturel de Sarzeau, Espace Culturel de Méricourt, Festival Curieux Printemps à Rouen, centre culturel d'Amfreville La Mivoie, + collèges normands.",
+    "actualite": "re-création automne 2026 pour Avignon 2027"
+   }
+  },
+  "mon-royaume": {
+   "univers": {
+    "nom": "Le paperboard",
+    "source": "prototype",
+    "clair": true,
+    "motif": "paperboard",
+    "couleurs": {
+     "fond": "#f5f0e6",
+     "fond2": "#e9e1d1",
+     "texte": "#15192e",
+     "texte2": "#4a5068",
+     "accent": "#c8102e",
+     "accent2": "#1d3a8a",
+     "scene": "#ff5a5f",
+     "lueur": "rgba(200,16,46,0.18)"
+    },
+    "polices": {
+     "titre": "IM Fell English",
+     "titreGraisse": 400,
+     "texte": "Source Serif 4",
+     "etiquette": "Inter"
+    }
+   },
+   "lieuTemps": null,
+   "accroche": "Si Shakespeare vous effraie, alors cette pièce est faite pour vous !",
+   "affirmations": [
+    {
+     "texte": "Vous plongerez avec délectation dans l’univers shakespearien et ne voudrez plus en revenir !",
+     "source": "site"
+    }
+   ],
+   "citations": [],
+   "photos": [
+    {
+     "id": "g-1",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-2",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-6",
+     "legende": null,
+     "source": "site"
+    }
+   ],
+   "credit": "© Thomas Cartron",
+   "video": null,
+   "actionCulturelle": {
+    "type": "Spectacle tout-terrain",
+    "public": null,
+    "lieu": "etablissement",
+    "textes": [
+     {
+      "texte": "Avec <em>Mon Royaume pour un cheval – Romeo and Juliet</em>, le Théâtre des Crescite imagine une version condensée et commentée de <em>Roméo et Juliette</em>, dans un spectacle tout-terrain, y mêlant aux détours quelques répliques d’<em>Hamlet</em>, du <em>Roi Lear</em> ou bien encore de <em>Macbeth</em>. Cette pièce, à la forme atypique, est une invitation à découvrir Shakespeare, sa langue, son théâtre, son époque…",
+      "source": "site"
+     }
+    ],
+    "dispositifs": [
+     "spectacle disponible dans <a href=\"https://www.seinemaritime.fr/nos-actions/education-college/guide-du-cred76/immersion-linguistique/mon-royaume-pour-un-cheval-romeo-and-juliet-dapres-shakespeare/\">le guide du CRED de Seine-Maritime</a><br/>et dans les offres collectives du Pass Culture"
+    ]
+   },
+   "programmer": {
+    "format": null,
+    "duree": "durée : 1h10",
+    "representations": "779 représentations au 31 juillet 2026",
+    "lieux": "Festival Off d’Avignon, Théâtre National de Bruxelles – Festival Propulse + tournée dans les centres culturels de Wallonie, Festival Komidi à La Réunion, Le Kef en Tunisie, Festivals Région en Scène et Le Chaînon Manquant à Laval, L'Echandole à Yverdon-les-Bain en Suisse, CDN Normandie-Rouen, Scène Nationale Evreux-Louviers, Scène conventionnée La Barcarolle de Saint-Omer, Le Safran à Amiens, Théâtre Durance à Châteaux-Arnoux, Quai des Arts à Argentan, Archipel de Granville, Théâtre de La Renaissance à Mondeville, Le Jardin de Verre à Cholet, SN61 Alençon, L'Athanor à Guérande, La Méridienne à Luneville, Château d'Hardelot, Théâtre les 3 Chênes à Loiron, Les 400 coups à Mantes-La-Jolie, Ville de Pessac, Le Trait d'Union à Neufchâteau, Scènes et Ciné à Istres, Théâtre Fontblanche à Vitrolles, Scène 55 à Mougins, Maison du Peuple à Millau, L'Astrolabe de Figeac, MJC Rodez, Juliobona à Lillebonne, Espace Culturel F. Mitterrand à Canteleu, Espace culturel d'Avranches, L'Eclat à Pont-Audemer, Atelier à Spectacle à Vernouillet, Théâtre du Château à Eu, Le Forum de Falaise, Le Point d'Eau à Ostwald, Centre André Malraux d'Hazebrouck, Le Sillon de Petit-Couronne, Espace de Retz à Machecoul, Théâtre de Cordemais, Rumilly, Théâtre Beaumarchais à Amboise, Centre des Arts de Concarneau, Centre culturel de Cahors, Théâtre de Pornichet, L'Escapade à Hénin-Beaumont, Théâtre La Gare à Méricourt, Espace Vikings à Yvetot, Théâtre en Seine à Duclair, Festival VivaCité à Sotteville-lès-Rouen, Festival le Curieux Printemps à Rouen, Festival Saint-Valéry-sur-Somme, Festival de Flers, Festival de Saint-Romain de Colbosc, + collèges et lycées normands."
+   }
+  },
+  "ci-gisait-cyrano": {
+   "univers": {
+    "nom": "La tirade du nez",
+    "source": "prototype",
+    "clair": false,
+    "motif": "nez",
+    "couleurs": {
+     "fond": "#0a1124",
+     "fond2": "#111b37",
+     "texte": "#eef2ff",
+     "texte2": "#b3bedf",
+     "accent": "#f2c14e",
+     "accent2": "#d04a52",
+     "scene": "#8fb3ff",
+     "lueur": "rgba(143,179,255,0.28)"
+    },
+    "polices": {
+     "titre": "Bodoni Moda",
+     "titreGraisse": 700,
+     "texte": "Source Serif 4",
+     "etiquette": "Inter"
+    }
+   },
+   "lieuTemps": null,
+   "accroche": "C’est ainsi : à part Roxane… Tout le monde aime Cyrano.",
+   "affirmations": [
+    {
+     "texte": "Je m’y engage : pas un spectateur ne piquera du nez… pas un élève n’aura le nez en l’air !",
+     "source": "site"
+    }
+   ],
+   "citations": [],
+   "photos": [
+    {
+     "id": "g-3",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-5",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-6",
+     "legende": null,
+     "source": "site"
+    }
+   ],
+   "credit": "© Arnaud Bertereau",
+   "video": null,
+   "actionCulturelle": {
+    "type": "Jumelage – résidence d’artistes",
+    "public": null,
+    "lieu": "etablissement",
+    "textes": [
+     {
+      "texte": "<strong>en 2022, 2023 et 2024 </strong>, la compagnie est en résidence de création autour de <em>Ci-gisait Cyrano</em> et mènera des actions culturelles au collège Challemel Lacour d’Avranches et au Lycée Guillaume Le Conquérant de Lillebonne (en partenariat avec Juliobona) dans le cadre du jumelage – résidence d’artistes avec la DRAC Normandie.",
+      "source": "site"
+     },
+     {
+      "texte": "ateliers théâtre et escrime autour de <em>Cyrano</em> dans un collège de Mondeville, en partenariat avec le Théâtre La Renaissance Mondeville (40h par Vladimir Delaye et Adrien Vada) atelier écriture alexandrins auprès d’adultes amateurs à Canteleu (atelier mené par Adrien Vada)",
+      "source": "drac"
+     }
+    ],
+    "dispositifs": [
+     "spectacle disponible dans <a href=\"https://www.seinemaritime.fr/nos-actions/education-college/guide-du-cred76/culture/theatre/ci-gisait-cyrano/\">le guide du CRED de Seine-Maritime</a><br/>et dans les offres collectives du Pass Culture"
+    ]
+   },
+   "programmer": {
+    "format": null,
+    "duree": "durée : 1h10",
+    "representations": "176 représentations au 31 juillet 2026",
+    "lieux": "Festival Off d’Avignon (Présence Pasteur), Théâtre les 3 Chênes à Loiron, Théâtre du Chevalet à Noyon, L'Athanor à Guérande, La Ferme de Bel Ebat de Guyancourt, Les 400 Coups à Mantes-la-Ville, Juliobona à Lillebonne, L'Archipel de Granville, Ville de Flamanville, Le Moulin à Louviers, La Maison de la Culture de Gauchy, Ville de Grand-Quevilly, Le Sillon à Petit-Couronne + collèges et lycées de Normandie, d'Île-de-France et du Centre Val de Loire."
+   }
+  },
+  "la-folle-idee": {
+   "univers": {
+    "nom": "L’horloge",
+    "source": "prototype",
+    "clair": false,
+    "motif": "horloge",
+    "couleurs": {
+     "fond": "#10201a",
+     "fond2": "#172a20",
+     "texte": "#eef5ee",
+     "texte2": "#b6cab9",
+     "accent": "#ffd447",
+     "accent2": "#ff6b3d",
+     "scene": "#ffd447",
+     "lueur": "rgba(255,212,71,0.22)"
+    },
+    "polices": {
+     "titre": "Anton",
+     "titreGraisse": 400,
+     "texte": "Inter",
+     "etiquette": "Inter"
+    }
+   },
+   "lieuTemps": null,
+   "accroche": "Un huis-clos en salle des professeurs.",
+   "affirmations": [
+    {
+     "texte": "La Folle Idée fait entendre la parole d’individus au point de non-retour.",
+     "source": "site"
+    }
+   ],
+   "citations": [],
+   "photos": [
+    {
+     "id": "g-1",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-2",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-6",
+     "legende": null,
+     "source": "site"
+    }
+   ],
+   "credit": "© Arnaud Bertereau – Agence Mona",
+   "video": null,
+   "actionCulturelle": {
+    "type": "Ateliers",
+    "public": null,
+    "lieu": "salle",
+    "textes": [
+     {
+      "texte": "<strong>de 2020 à 2022</strong>, Angelo Jossec et Lauren Toulin ont mené des ateliers autour de la nouvelle création <em>La Folle Idée</em> au Collège Francis Yard de Buchy, au Collège De Gaulle Anthonioz du Neubourg et au Lycée Pierre de Coubertin à Bolbec ;",
+      "source": "site"
+     },
+     {
+      "texte": "<strong>en 2021-2022</strong>, la compagnie est intervenue auprès de 5 lycées normands autour des spectacles <em>Bérénice</em> et <em>La Folle Idée</em> dans le cadre du dispositif Regards de la Région Normandie ;",
+      "source": "site"
+     }
+    ],
+    "dispositifs": [
+     "dispositif Regards de la Région Normandie"
+    ]
+   },
+   "programmer": {
+    "format": null,
+    "duree": null,
+    "representations": "13 représentations jusqu'en mars 2023",
+    "lieux": "CDN Normandie-Rouen, Scène conventionnée La Barcarolle de Saint-Omer, DSN Scène Nationale de Dieppe, Archipel de Granville, Le Forum de Falaise, Théâtre Charles Dullin de Grand-Quevilly, Juliobona à Lillebonne."
+   }
+  },
+  "macbeth-fatum": {
+   "univers": {
+    "nom": "Le fil rouge",
+    "source": "prototype",
+    "clair": false,
+    "motif": "fil",
+    "couleurs": {
+     "fond": "#0b0808",
+     "fond2": "#171010",
+     "texte": "#efe6da",
+     "texte2": "#bdae9b",
+     "accent": "#e0262d",
+     "accent2": "#7d8471",
+     "scene": "#ff3b3f",
+     "lueur": "rgba(224,38,45,0.25)"
+    },
+    "polices": {
+     "titre": "Grenze Gotisch",
+     "titreGraisse": 600,
+     "texte": "Source Serif 4",
+     "etiquette": "Inter"
+    }
+   },
+   "lieuTemps": null,
+   "accroche": "Comment l’homme peut-il se résoudre à tant de cruauté et d’horreurs ?",
+   "affirmations": [
+    {
+     "texte": "Le Théâtre des Crescite revendique le souhait de pratiquer un « théâtre pauvre » au sens noble du terme.",
+     "source": "site"
+    }
+   ],
+   "citations": [],
+   "photos": [
+    {
+     "id": "g-2",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-4",
+     "legende": null,
+     "source": "site"
+    },
+    {
+     "id": "g-7",
+     "legende": null,
+     "source": "site"
+    }
+   ],
+   "credit": "©Arnaud Bertereau – Agence Mona et Thomas Cartron",
+   "video": null,
+   "actionCulturelle": {
+    "type": null,
+    "public": null,
+    "lieu": null,
+    "textes": [],
+    "dispositifs": [],
+    "aCompleter": true
+   },
+   "programmer": {
+    "format": null,
+    "duree": "durée : 1h40",
+    "representations": "40 représentations jusqu'en mai 2019",
+    "lieux": "CDN Normandie-Rouen, Scène Nationale Evreux-Louviers, Scène conventionnée La Barcarolle de Saint-Omer, Le Safran à Amiens, Théâtre Durance à Châteaux-Arnoux, Quai des Arts à Argentan, Théâtre du Cloître à Bellac, Archipel de Granville, L'Arsenal à Val-de-Reuil, Théâtre de La Renaissance à Mondeville, Espace Vikings à Yvetot, Théâtre des Docks à Corbie, Théâtre en Seine à Duclair, Espace culturel Oissel, Espace Culturel F. Mitterrand à Canteleu, Espace culturel d'Avranches, L'Eclat à Pont-Audemer, Théâtre du Château à Eu, Le Forum de Falaise, Le Point d'Eau à Ostwald, Juliobona à Lillebonne, La Glacerie à Cherbourg, Château d'Hardelot, Théâtre les 3 Chênes à Loiron, Théâtre Charles Dullin de Grand-Quevilly."
+   }
+  },
+  "cassandres": {
+   "univers": {
+    "nom": "La chronologie",
+    "source": "adrienvada",
+    "clair": false,
+    "motif": "chronologie",
+    "couleurs": {
+     "fond": "#050913",
+     "fond2": "#0c1426",
+     "texte": "#e4e9f2",
+     "texte2": "#8a95ab",
+     "accent": "#1f3a73",
+     "accent2": "#7f9fe0",
+     "scene": "#7f9fe0",
+     "lueur": "rgba(46,84,170,0.38)"
+    },
+    "polices": {
+     "titre": "Space Grotesk",
+     "titreGraisse": 600,
+     "texte": "Inter",
+     "etiquette": "IBM Plex Mono"
+    }
+   },
+   "lieuTemps": "2077",
+   "accroche": "Sous couvert d’une enquête policière, Cassandre(s) imagine le quotidien de la génération 2000 arrivée au terme de son espérance de vie : la forme est au service du divertissement quand le fond est l’objet de la diversion.",
+   "affirmations": [
+    {
+     "texte": "Tout ce qui est dit ici n’est pas du domaine de la fiction.",
+     "source": "adrienvada"
+    }
+   ],
+   "citations": [
+    {
+     "vers": [
+      "Il fait chaud. Mais on s’en accommode avec cette docilité morne qu’on observe souvent chez les animaux d’élevage."
+     ],
+     "source": "Narrateur, partie 2 — Paris, août 2077, trente-huit degrés",
+     "prose": true
+    },
+    {
+     "vers": [
+      "Tout ce qui est dit ici n’est pas du domaine de la fiction."
+     ],
+     "source": "Premier carton, partie 1",
+     "prose": true
+    },
+    {
+     "vers": [
+      "Les “progrès agricoles” du XXᵉ siècle n’auront consisté qu’à doubler les rendements des cultures pour en bazarder le tiers."
+     ],
+     "source": "Rémi, partie 1",
+     "prose": true
+    },
+    {
+     "vers": [
+      "La fin ou la faim ? » — « Les deux."
+     ],
+     "source": "Charline et Rémi, prologue",
+     "prose": true
+    },
+    {
+     "vers": [
+      "Dans les abattoirs, ils mettent de la musique douce pour attendrir les chairs."
+     ],
+     "source": "Lauren, prologue",
+     "prose": true
+    }
+   ],
+   "photos": [
+    {
+     "id": "av-5",
+     "legende": null,
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-2",
+     "legende": "Partie 1 : de 1841 à 2077, l’histoire de ce que nous mangeons, jouée sur le proscenium.",
+     "source": "adrienvada"
+    },
+    {
+     "id": "av-1",
+     "legende": "L’équipe de la lecture, en répétition.",
+     "source": "adrienvada"
+    }
+   ],
+   "credit": null,
+   "video": null,
+   "actionCulturelle": {
+    "type": "Lieux d’enseignement agronomique",
+    "public": null,
+    "lieu": "etablissement",
+    "statut": "En création",
+    "textes": [
+     {
+      "texte": "Notre première intuition à ce stade du travail est d’aller vers les lieux d’enseignement agronomique, lycées agricoles ou établissements d’enseignement supérieur en lien avec le règne végétal ou le règne animal. Nous allons explorer les possibilités de l’anticipation au théâtre et interroger nos inquiétudes et nos désirs de transformation du rapport au monde vivant.",
+      "source": "drac"
+     },
+     {
+      "texte": "Il existe un corpus théâtral, cinématographique et littéraire fécond pour aller au contact de la jeunesse directement concernée par les changements à venir.",
+      "source": "drac"
+     },
+     {
+      "texte": "Faire lire <em>Les androïdes rêvent-ils de moutons électriques ?</em> de Philip K. Dick aux étudiants vétérinaires… Travailler une mise en scène de <em>Fahrenheit 451</em> à des lycéens vissés à leur smartphone… Regarder <em>Soleil vert</em> avec des lycées se destinant à l’agriculture… Les interroger sur leurs angoisses et leurs rêves, produire des fictions, questionner la scène.",
+      "source": "drac"
+     }
+    ],
+    "dispositifs": []
+   },
+   "programmer": {
+    "format": null,
+    "duree": null,
+    "representations": null,
+    "lieux": null,
+    "equipeCreation": [
+     "Mise en scène : Angelo Jossec",
+     "Distribution : Rémi Dessenoix, Charline Porrone, Jean-Marc Talbot, Lauren Toulin et Adrien Vada"
+    ]
+   }
+  }
+ }
+}

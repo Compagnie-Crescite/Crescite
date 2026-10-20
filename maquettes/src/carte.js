@@ -4,8 +4,12 @@
 
    CARTE.viewBox, CARTE.rouen ([x, y]), CARTE.fond.{pays, belgique, luxembourg} : chemins SVG (attribut d)
    CARTE.lieux                          toutes les communes [{c, dep, xy}] ; « l » est l'indice dans ce tableau
-   (aVenir, saison et spectacle ramènent l'outre-mer dans un encart en bas à gauche : x.encart, x.xyReel ; CARTE.ENCART)
+   (aVenir, tout, saison et spectacle ramènent l'outre-mer dans un encart en bas à gauche : x.encart, x.xyReel ; CARTE.ENCART)
    CARTE.aVenir()                       les communes des dates à venir : [{l, c, dep, xy, n, dates: [D.dates…]}]
+   CARTE.aVenir('public')               les mêmes, sans les dates scolaires (« Je viens voir un spectacle ») ;
+   CARTE.aVenir('scolaire')             seulement les dates scolaires (« Je représente un établissement scolaire »)
+   CARTE.tout()                         toutes les communes de toutes les saisons (« Je souhaite programmer ») :
+                                        [{l, c, dep, xy, n, dates: [lignes de D.saisons, avec spectacle, slug, saison]}]
    CARTE.saison('2019-2020')            les communes d'une saison : [{l, c, dep, xy, n, dates: [lignes de D.saisons]}]
    CARTE.spectacle(slug)                {aVenir: [...], passe: [...]} : les communes d'un spectacle, à venir et passées
    CARTE.nom(lieu)                      « Pont-Audemer (27) »
@@ -30,7 +34,13 @@ const CARTE = (() => {
     return paires.map(([l, n]) => { const p = K.lieux[l], hors = !dansCadre(p.xy); return { l, ...p, xy: hors ? ENCART : p.xy, xyReel: p.xy, encart: hors, n, dates: datesDe(l) }; })
       .sort((a, b) => Math.hypot(a.xy[0] - R[0], a.xy[1] - R[1]) - Math.hypot(b.xy[0] - R[0], b.xy[1] - R[1]));
   }
-  const aVenir = () => regroupe(K.aVenir, l => D.dates.filter(d => d.l === l));
+  const aVenir = filtre => {
+    const garde = d => filtre === 'public' ? !d.scolaire : filtre === 'scolaire' ? !!d.scolaire : true;
+    const paires = filtre === 'public' ? K.aVenirPublic : filtre === 'scolaire' ? K.aVenirScolaire : K.aVenir;
+    return regroupe(paires, l => D.dates.filter(d => d.l === l && garde(d)));
+  };
+  const tout = () => regroupe(K.tout, l => Object.entries(D.saisons).flatMap(([saison, S]) => S.spectacles.flatMap(g =>
+    g.dates.filter(d => d.l === l).map(d => ({ ...d, spectacle: g.titre, slug: g.slug, saison })))));
   const saison = s => regroupe(K.parSaison[s] || [], l => (D.saisons[s]?.spectacles || []).flatMap(g => g.dates.filter(d => d.l === l).map(d => ({ ...d, spectacle: g.titre, slug: g.slug }))));
   const spectacle = slug => {
     const p = K.parSpectacle[slug] || { passe: [], aVenir: [] };
@@ -141,5 +151,5 @@ const CARTE = (() => {
     });
   }
   return { K, viewBox: K.viewBox, rouen: R, ENCART, fond: { pays: K.contour, belgique: K.belgique, luxembourg: K.luxembourg }, lieux: K.lieux,
-    aVenir, saison, spectacle, nom, bras, trait, bout, longueur, cadre, svg, lier, mouvement };
+    aVenir, tout, saison, spectacle, nom, bras, trait, bout, longueur, cadre, svg, lier, mouvement };
 })();
