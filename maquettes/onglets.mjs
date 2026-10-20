@@ -26,7 +26,10 @@ const VUES = [
   ['contact', '#/contact', D => [D.site.contact.titre]],
   ['berenice-voir', '#/spectacle/berenice/voir', D => ['Rome, an 79.']],
   ['berenice-programmer', '#/spectacle/berenice/programmer', D => ['100 à 120 places', D.site.libelles.dossierPdf, D.site.programmation.contact.email]],
-  ['cleophene-programmer', '#/spectacle/cleophene/programmer', D => [D.site.libelles.ficheTechniqueSurDemande, D.site.libelles.dossierPdf]],
+  // une fiche technique déposée (document) se lit en lien ; sans fiche (Macbeth), « Fiche technique sur demande »
+  ['cleophene-programmer', '#/spectacle/cleophene/programmer', D => [D.site.libelles.dossierPdf,
+    ...D.documents.filter(d => d.spectacle === 'cleophene' && d.pour === 'pros').map(d => d.titre)]],
+  ['macbeth-programmer', '#/spectacle/macbeth-fatum/programmer', D => [D.site.libelles.ficheTechniqueSurDemande, D.site.libelles.dossierPdf]],
   ['berenice-etablissement', '#/spectacle/berenice/etablissement', D => ['Atelier de préparation', 'À partir de la seconde']],
   ['cleophene-etablissement', '#/spectacle/cleophene/etablissement', D => ['parcours du spectateur']],
   ['macbeth-etablissement', '#/spectacle/macbeth-fatum/etablissement', D => [D.site.libelles.aCompleter]],
@@ -80,6 +83,8 @@ for (const n of names) {
       window.__corpus = parts.join(' | ');
       window.__norm = norm;
     }, PERMIS);
+    const docs = await page.evaluate(() => (D.documents || []).filter(d => d.pour === 'pros').map(d => [d.spectacle, d.url]));
+    const D_DOCS = slug => new Set(docs.filter(([s]) => s === slug).map(([, u]) => u)).size;
     const titres = new Map();
     for (const [vue, hash, attendus, interdits] of VUES) {
       await page.evaluate(h => { location.hash = h; }, hash);
@@ -124,6 +129,10 @@ for (const n of names) {
           // règle 13 : les boutons du dossier PDF, et les liens mailto: visibles
           dossiers: [...document.querySelectorAll('[data-dossier]')].filter(vis).map(e => e.getAttribute('data-dossier')),
           mailto: [...document.querySelectorAll('a[href^="mailto:"]')].filter(vis).length,
+          // les liens visibles vers les documents publics (D.documents) du spectacle de la vue
+          liensDocs: (() => { const m = /^#\/spectacle\/([^/]+)\/programmer$/.exec(location.hash); if (!m) return 0;
+            const urls = new Set((D.documents || []).filter(d => d.spectacle === m[1] && d.pour === 'pros').map(d => d.url));
+            return new Set([...document.querySelectorAll('a[href]')].filter(a => vis(a) && urls.has(a.href)).map(a => a.href)).size; })(),
         };
       }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, ENTREES]);
       if (etat.debord > 1) log.push(`${tag} ${vue} : débordement horizontal de ${etat.debord}px`);
@@ -139,7 +148,10 @@ for (const n of names) {
       if (etat.sansAction.length) log.push(`${tag} ${vue} : lien visible vers l'onglet établissement de ${[...new Set(etat.sansAction)].join(', ')}, qui n'a pas d'action culturelle (règle 14)`);
       if (vue === 'programmer' && !etat.dossiers.length) log.push(`${tag} programmer : aucun bouton [data-dossier] (dossier PDF, règle 13)`);
       if (vue === 'programmer' && !etat.mailto) log.push(`${tag} programmer : aucun lien mailto: visible vers le contact diffusion (règle 13)`);
-      if (/-programmer$/.test(vue) && !etat.dossiers.includes(vue.split('-')[0])) log.push(`${tag} ${vue} : pas de bouton [data-dossier="${vue.split('-')[0]}"] (règle 13)`);
+      const slugVue = (/^#\/spectacle\/([^/]+)\/programmer$/.exec(hash) || [])[1];
+      if (slugVue && !etat.dossiers.includes(slugVue)) log.push(`${tag} ${vue} : pas de bouton [data-dossier="${slugVue}"] (règle 13)`);
+      // les documents des pros du spectacle, en liens
+      if (slugVue && etat.liensDocs < D_DOCS(slugVue)) log.push(`${tag} ${vue} : ${etat.liensDocs} lien(s) vers les documents du spectacle sur ${D_DOCS(slugVue)} (règle 13)`);
       // le dossier PDF se compose et se télécharge (une fois par maquette)
       if (vue === 'berenice-programmer' && tag === 'tab' && etat.dossiers.includes('berenice')) {
         const dl = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
