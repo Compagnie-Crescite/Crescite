@@ -15,7 +15,8 @@
 const DONNEES = (() => {
   const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
   const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
-  const TABLES = ['crescite_spectacles', 'crescite_lieux', 'crescite_dates', 'crescite_representations', 'crescite_ateliers', 'crescite_textes'];
+  const TABLES = ['crescite_spectacles', 'crescite_lieux', 'crescite_dates', 'crescite_representations', 'crescite_ateliers', 'crescite_textes',
+                  'crescite_personnes', 'crescite_distributions'];
   const abonnes = [];
   const moi = { etat: 'instantane' };
   let actif = true;
@@ -31,6 +32,8 @@ const DONNEES = (() => {
              rouen: D.carte.rouen, projection: D.carte.projection },
     xy: new Map(D.carte.lieux.map(l => [cleCommune(l.c, l.dep), l.xy])),
     photos: Object.assign({}, D.photos),
+    // l'équipe de l'instantané : gardée tant que la base n'a pas encore ses tables d'équipe
+    personnes: D.personnes || {}, equipes: Object.fromEntries((D.shows || []).map(s => [s.slug, s.equipe || []])),
   };
 
   // ------------------------------------------------------------------------------------------- outils
@@ -83,12 +86,19 @@ const DONNEES = (() => {
         lireTable('crescite_ateliers', '*', 'ordre.asc,id.asc', ctl.signal),
         lireTable('crescite_textes', 'cle,valeur', null, ctl.signal),
       ]);
-      return { sp, li, da, re, at, tx };
+      // l'équipe : facultative (une base sans ses tables d'équipe garde celle de l'instantané)
+      let pe, di;
+      try {
+        [pe, di] = await Promise.all([
+          lireTable('crescite_personnes', 'id,slug,prenom,nom,metiers,photo,photo_credit,photo_publique,ordre', 'ordre.asc,id.asc', ctl.signal),
+          lireTable('crescite_distributions', 'spectacle_id,personne_id,categorie,fonction,role,alternance,ordre', 'ordre.asc,id.asc', ctl.signal)]);
+      } catch { pe = di = undefined; }
+      return { sp, li, da, re, at, tx, pe, di };
     } finally { clearTimeout(minuteur); }
   }
 
   // ------------------------------------------------------------------------------------------- composer D
-  function composer({ sp, li, da, re, at, tx }) {
+  function composer({ sp, li, da, re, at, tx, pe, di }) {
     const aujourdhui = iso(new Date()), saison = saisonDe(aujourdhui);
     const texte = Object.fromEntries(tx.map(t => [t.cle, t.valeur]));
     const spId = new Map(sp.map(s => [s.id, s])), lieuId = new Map(li.map(l => [l.id, l]));
@@ -146,6 +156,15 @@ const DONNEES = (() => {
 
     // les spectacles, dans le format des maquettes
     const photos = Object.assign({}, S.photos);
+    // l'équipe : les fiches publiées (la photo seulement si sa publication est accordée) et la distribution de chaque spectacle
+    const avecEquipe = Array.isArray(pe) && Array.isArray(di);
+    const personnes = avecEquipe ? Object.fromEntries(pe.map(p => [p.slug, { prenom: p.prenom, nom: p.nom, metiers: p.metiers || [],
+      photo: p.photo_publique && p.photo ? photo(p.photo) : null, credit: p.photo_publique && p.photo ? p.photo_credit || null : null }])) : S.personnes;
+    const slugPersonne = new Map((pe || []).map(p => [p.id, p.slug]));
+    const equipeDe = s => (avecEquipe
+      ? di.filter(x => x.spectacle_id === s.id && slugPersonne.has(x.personne_id)).map(x => ({ personne: slugPersonne.get(x.personne_id),
+          categorie: x.categorie, fonction: x.fonction || '', role: x.role || null, alternance: x.alternance || null }))
+      : S.equipes[s.slug] || []);
     const shows = pages.map(s => {
       const u = s.univers || {}, c = u.couleurs || {};
       const mine = dates.filter(d => d.slug === s.slug);
@@ -163,7 +182,7 @@ const DONNEES = (() => {
         dossier: s.dossier ? s.dossier.replace(/^dossier:/, '') : null,
         statut: s.statut, sousTitre: s.sous_titre, avec: s.avec, mentions: s.mentions || [], duree: s.duree,
         production: s.production || [], credit: s.credit, medias: s.medias || [], tournee: s.tournee || {}, source: s.source,
-        genre: s.genre, cadre: s.cadre, extraits: s.extraits || [],
+        genre: s.genre, cadre: s.cadre, extraits: s.extraits || [], equipe: equipeDe(s),
       };
     });
 
@@ -202,7 +221,7 @@ const DONNEES = (() => {
      'partenaires', 'liensLegaux', 'legal'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
     site.saisons = cles.map(k => ({ saison: k, titre: `Saison ${k}`, menu: k === saison ? `Saison ${k.slice(2, 4)}-${k.slice(7, 9)}` : `Saison ${k}`,
                                     href: k === saison ? '#/agenda' : `#/agenda/${k}` }));
-    return { saison, aujourdhui, site, shows, dossiers, ateliers, dates, saisons, carte, photos };
+    return { saison, aujourdhui, site, shows, dossiers, ateliers, dates, saisons, carte, photos, personnes };
   }
 
   // ------------------------------------------------------------------------------------------- appliquer, prévenir

@@ -10,6 +10,8 @@
      un chemin qui finit par un rang (…texte.0) est un élément de liste : on peut ajouter un paragraphe après lui, ou le
      retirer, et la maquette se redessine (DONNEES.surChangement) ;
    - data-edit-photo="shows.<slug>.photo" ou "shows.<slug>.photos.<rang>" sur une photo : on la remplace ;
+     data-edit-photo="personnes.<slug>.photo" sur le portrait d'une personne de l'équipe (data-edit="personnes.<slug>.<champ>"
+     pour ses textes) : choisie ici, la photo est montrée sur le site ;
    - data-date-id="<id>" sur chaque ligne d'agenda (D.dates[].id, et l'id des dates de D.saisons) : on la modifie,
      même passée ; data-agenda sur chaque liste de dates (data-agenda="<slug>" pour celle d'un spectacle) : on en ajoute ;
    - les variables CSS --ed-fond, --ed-encre, --ed-accent, --ed-sur-accent, --ed-police, --ed-rayon, --ed-trait : la
@@ -180,6 +182,12 @@ const EDITION = (() => {
         valeur: () => { const v = clone(resoudre(`shows.${k[1]}.${champ}`).valeur); if (champ === 'photos' && Array.isArray(v)) v.forEach(p => delete p.cle); return v; } };
     }
     if (k[0] === 'site' && k[1]) return { rangee: `crescite_textes?cle=eq.${encodeURIComponent(k[1])}`, colonne: 'valeur', valeur: () => clone(D.site[k[1]]) };
+    if (k[0] === 'personnes' && k[2]) {           // une fiche de l'équipe : son nom, ses métiers, sa photo (et l'accord de la montrer)
+      const champ = k[2], p = () => (D.personnes || {})[k[1]] || {};
+      return { rangee: `crescite_personnes?slug=eq.${encodeURIComponent(k[1])}`,
+        colonne: { credit: 'photo_credit', photoPublique: 'photo_publique' }[champ] || champ,
+        valeur: () => (champ === 'photo' ? p()._chemin || null : champ === 'photoPublique' ? true : clone(p()[champ])) };
+    }
     if (k[0] === 'dossiers' && k[1]) {
       if (k[2] === 'ateliers' && k[3] === 'liste' && k[5]) {
         const at = ateliersDe(k[1])[+k[4]];
@@ -368,11 +376,15 @@ const EDITION = (() => {
       annoncer('Envoi de la photo…');
       try {
         const blob = await optimiser(f);
-        const nom = `${k[1]}/${Date.now().toString(36)}-${norm(f.name.replace(/\.[^.]+$/, '')).replace(/[^a-z0-9]+/g, '-').slice(0, 40) || 'photo'}.${blob.type === 'image/webp' ? 'webp' : (f.name.split('.').pop() || 'jpg')}`;
+        const dossier = k[0] === 'personnes' ? `equipe/${k[1]}-` : `${k[1]}/`;
+        const nom = `${dossier}${Date.now().toString(36)}-${norm(f.name.replace(/\.[^.]+$/, '')).replace(/[^a-z0-9]+/g, '-').slice(0, 40) || 'photo'}.${blob.type === 'image/webp' ? 'webp' : (f.name.split('.').pop() || 'jpg')}`;
         await requete('POST', `/storage/v1/object/crescite/${nom.split('/').map(encodeURIComponent).join('/')}`, blob, { 'Content-Type': blob.type || f.type, 'x-upsert': 'false', 'cache-control': '31536000' });
         const url = `${BASE}/storage/v1/object/public/crescite/${nom.split('/').map(encodeURIComponent).join('/')}`;
         const cle = nom.replace(/\.[a-z0-9]+$/i, '');
-        if (k[2] === 'photo') { ecrireD(`shows.${k[1]}.photo`, nom); D.photos[k[1]] = url; noter(`shows.${k[1]}.photo`); }
+        if (k[0] === 'personnes') {                // la photo d'une personne : choisie ici, elle est montrée sur le site
+          const p = (D.personnes || {})[k[1]]; if (!p) throw new Error('fiche inconnue');
+          p.photo = url; p._chemin = nom; noter(`personnes.${k[1]}.photo`); noter(`personnes.${k[1]}.photoPublique`);
+        } else if (k[2] === 'photo') { ecrireD(`shows.${k[1]}.photo`, nom); D.photos[k[1]] = url; noter(`shows.${k[1]}.photo`); }
         else { const p = resoudre(chemin).valeur; if (p) { p.fichier = nom; p.cle = cle; D.photos[cle] = url; noter(`shows.${k[1]}.photos`); } }
         DONNEES.prevenir();
         annoncer('Photo remplacée : enregistrez pour la publier.');

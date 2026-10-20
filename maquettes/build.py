@@ -232,6 +232,28 @@ def projection(places):
     return lambda lon, lat: [round(cx[0] * u + cx[1] * v + cx[2], 1), round(cy[0] * u + cy[1] * v + cy[2], 1)] if (u := lcc(lon, lat)[0]) is not None and (v := lcc(lon, lat)[1]) is not None else None
 
 
+STOCKAGE = "https://omekkqjinvppadsoinvj.supabase.co/storage/v1/object/public/crescite"
+
+
+def equipe_data():
+    """Les personnes de l'équipe et la distribution de chaque spectacle (data/equipe.json), comme la base les donne au
+    site : la photo d'une personne seulement si elle est montrée d'office (identité sûre dans le registre privé des photos,
+    vrai portrait), servie par le stockage de la base, jamais copiée dans le dépôt."""
+    E = json.loads((ROOT / "data" / "equipe.json").read_text(encoding="utf-8"))
+    reg = PRIVATE / "photos" / "equipe" / "registre.json"
+    sures = {}
+    if reg.exists():
+        sures = {r["slug"]: r.get("credit") for r in json.loads(reg.read_text(encoding="utf-8"))
+                 if r.get("fichier") and r.get("confiance") == "sure" and r["slug"] not in E.get("photos_pas_publiees", {})}
+    personnes = {p["slug"]: {"prenom": p["prenom"], "nom": p["nom"], "metiers": p["metiers"],
+                             "photo": f"{STOCKAGE}/equipe/{p['slug']}.webp" if p["slug"] in sures else None,
+                             "credit": f"© {sures[p['slug']]}" if sures.get(p["slug"]) else None} for p in E["personnes"]}
+    equipes = {slug: [{"personne": x["personne"], "categorie": x["categorie"], "fonction": x.get("fonction", ""),
+                       "role": x.get("role"), "alternance": x.get("alternance")} for x in lignes if x.get("publie", True)]
+               for slug, lignes in E["distributions"].items()}
+    return personnes, equipes
+
+
 def build_data():
     site = json.loads((ROOT / "data" / "site-crescite.json").read_text(encoding="utf-8"))
     cass = json.loads((ROOT / "data" / "cassandres.json").read_text(encoding="utf-8"))
@@ -326,6 +348,7 @@ def build_data():
                 "xy": lieux[l]["xy"] if l is not None else None, "l": l}
 
     dates = [date_row(g, dt) for g, dt in a_venir]
+    personnes, equipes = equipe_data()
     out_shows = []
     for slug in ORDRE:
         uv = U["spectacles"][slug]
@@ -361,6 +384,7 @@ def build_data():
             "creditDossier": uv.get("creditDossier"),
             "actionCulturelle": uv["actionCulturelle"], "programmer": uv["programmer"],
             "dossier": "berenice" if uv["actionCulturelle"].get("dossier") else None,
+            "equipe": equipes.get(slug, []),
         }, **extra))
 
     # ---- la carte : les communes, et les bras par saison, par spectacle, à venir ----
@@ -429,6 +453,7 @@ def build_data():
         "logo": logo_variants(),
         "arms": arms_data(),
         "carte": carte,
+        "personnes": personnes,
     }
     return D, photo_files(out_shows)
 

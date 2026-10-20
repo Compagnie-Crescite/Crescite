@@ -47,9 +47,6 @@ TEXTES = {
     "mon-royaume": ("Roméo et Juliette, de Shakespeare (traductions)", "https://fr.wikisource.org/wiki/Roméo_et_Juliette"),
 }
 
-# les photos trouvées qu'on ne montre pas d'office : pas un vrai portrait
-PAS_PUBLIEES = {"jean-francois-levistre": "photo de scène, visage baissé"}
-
 # les dossiers de la compagnie destinés à l'équipe : (spectacle, fichier privé, chemin dans le stockage, titre)
 DOSSIERS_EQUIPE = [("berenice", "Dossier_BERENICE_scolaire_2026.pdf", "berenice/dossier-scolaire-2026.pdf", "Dossier scolaire 2026")]
 
@@ -124,7 +121,7 @@ def main():
             credit = f"© {r['credit']}" if r.get("credit") else None
             # montrée sur le site seulement si l'identité est sûre (la page source cite la compagnie ou un de ses
             # spectacles) et si c'est un vrai portrait ; les autres attendent l'accord de l'administration
-            publique = r.get("confiance") == "sure" and r["slug"] not in PAS_PUBLIEES
+            publique = r.get("confiance") == "sure" and r["slug"] not in EQUIPE.get("photos_pas_publiees", {})
             api("PATCH", f"/rest/v1/crescite_personnes?slug=eq.{r['slug']}",
                 {"photo": chemin, "photo_credit": credit, "photo_source": r.get("page_source"), "photo_publique": publique},
                 {"Prefer": "return=minimal"})
