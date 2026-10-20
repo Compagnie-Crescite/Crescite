@@ -52,7 +52,7 @@ table{border-collapse:collapse}
 .entre{animation:entre .45s ease both}
 @keyframes entre{from{opacity:0}to{opacity:1}}
 .fleche{display:inline-flex;align-items:center;gap:10px;font-weight:600;text-decoration:none}
-.fleche span{transition:transform .3s var(--ease)}
+.fleche span{transition:transform .18s var(--ease)}
 .fleche:hover span{transform:translateX(4px)}
 .ext{display:inline-block;margin-left:5px;font-size:.85em}
 .porte-ico{flex:none;width:16px;height:24px}
@@ -60,7 +60,7 @@ table{border-collapse:collapse}
 /* l'en-tête : le logo, les trois entrées en portes (la navigation première), le menu second, petit et à part */
 .site-header{position:relative;z-index:30;background:var(--top);color:#fff;box-shadow:inset 0 -3px 0 var(--hl)}
 .header-in{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"brand menu" "brand entrees";column-gap:clamp(24px,3.4vw,56px);row-gap:2px;padding-top:8px}
-.brand{grid-area:brand;align-self:center;display:block;width:60px;margin-bottom:3px;color:#fff}
+.brand{grid-area:brand;align-self:center;display:block;width:60px;aspect-ratio:1042/780;margin-bottom:3px;color:#fff}
 .brand svg{display:block;width:100%;height:auto}
 .site-nav{grid-area:menu;justify-self:end;align-self:center}
 .site-nav ul{display:flex;gap:clamp(16px,1.8vw,28px)}
@@ -69,7 +69,7 @@ table{border-collapse:collapse}
 .site-nav a[aria-current="page"]{color:#fff;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.35em}
 .entrees{grid-area:entrees;align-self:end;min-width:0}
 .entrees ul{display:flex;gap:8px}
-.entree{display:flex;align-items:center;gap:11px;min-height:54px;padding:12px 22px 13px 18px;border-radius:27px 27px 0 0;color:#fff;font-family:var(--serif);font-size:1.0625rem;line-height:1.15;font-variation-settings:"opsz" 30,"SOFT" 100;text-decoration:none;white-space:nowrap;box-shadow:inset 0 2px 0 color-mix(in srgb,var(--cv) 70%,transparent);transition:background .3s var(--ease),box-shadow .3s var(--ease)}
+.entree{display:flex;align-items:center;gap:11px;min-height:54px;padding:12px 22px 13px 18px;border-radius:27px 27px 0 0;color:#fff;font-family:var(--serif);font-size:1.0625rem;line-height:1.15;font-variation-settings:"opsz" 30,"SOFT" 100;text-decoration:none;white-space:nowrap;box-shadow:inset 0 2px 0 color-mix(in srgb,var(--cv) 70%,transparent);transition:background .16s var(--ease),box-shadow .16s var(--ease),transform .16s var(--ease)}
 .entree:hover{background:var(--aub-2);box-shadow:inset 0 2px 0 var(--cv)}
 .entree .porte-ico{width:15px;height:22px;color:var(--cv)}
 .entree.on{background:var(--c);box-shadow:inset 0 2px 0 var(--cv)}
@@ -102,8 +102,8 @@ table{border-collapse:collapse}
 .arche-lumiere{position:absolute;inset:6px 6px 0;border-radius:999px 999px 0 0;background:radial-gradient(130% 90% at 50% 100%,#fff 0%,var(--v) 38%,color-mix(in srgb,var(--v) 40%,var(--aub)) 100%);opacity:.6;transition:opacity .6s var(--ease)}
 .arche-battant{position:absolute;inset:6px 6px 0;border-radius:999px 999px 0 0;background:linear-gradient(180deg,var(--aub-3),#2b1226);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--v) 45%,transparent);transform-origin:0 50%;transform:rotateY(20deg);transition:transform .85s var(--ease)}
 .arche-battant::after{content:"";position:absolute;right:16%;top:57%;width:7px;height:7px;border-radius:50%;background:var(--v)}
-.hero-porte .arche-battant{transform:rotateY(64deg);animation:ouvre 1.5s var(--ease) .15s backwards}
-.hero-porte .arche-lumiere{opacity:1;animation:lueur 1.5s var(--ease) .15s backwards}
+.hero-porte .arche-battant{transform:rotateY(64deg);animation:ouvre .9s var(--ease) .12s backwards}
+.hero-porte .arche-lumiere{opacity:1;animation:lueur .9s var(--ease) .12s backwards}
 @keyframes ouvre{from{transform:rotateY(0)}}
 @keyframes lueur{from{opacity:.12}}
 
@@ -112,25 +112,25 @@ table{border-collapse:collapse}
 .seuil-nom{margin-bottom:clamp(14px,2.2vh,24px);font-size:var(--fs-small);font-weight:500;line-height:1.4;color:var(--on-dark-2)}
 .doors{display:flex;gap:14px;min-height:max(480px,calc(100vh - 196px))}
 @supports (height:100svh){.doors{min-height:max(480px,calc(100svh - 196px))}}
-.door{position:relative;isolation:isolate;flex:1 1 0;min-width:0;display:flex;background:var(--aub-2);box-shadow:inset 0 3px 0 var(--v);transition:flex-grow .55s var(--ease)}
-.door::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(110% 70% at 50% 30%,color-mix(in srgb,var(--v) 22%,transparent),transparent 70%);opacity:0;transition:opacity .5s var(--ease)}
-.door::after{content:"";position:absolute;inset:0;border:1px solid var(--v);opacity:0;pointer-events:none;transition:opacity .4s var(--ease)}
+.door{position:relative;isolation:isolate;flex:1 1 0;min-width:0;display:flex;background:var(--aub-2);box-shadow:inset 0 3px 0 var(--v);transition:flex-grow .2s var(--ease)}
+.door::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(110% 70% at 50% 30%,color-mix(in srgb,var(--v) 22%,transparent),transparent 70%);opacity:0;transition:opacity .2s var(--ease)}
+.door::after{content:"";position:absolute;inset:0;border:1px solid var(--v);opacity:0;pointer-events:none;transition:opacity .18s var(--ease)}
 .door-link{display:flex;flex-direction:column;width:100%;padding:clamp(34px,3.4vw,52px) clamp(26px,2.6vw,40px) clamp(24px,2.4vw,34px);color:#fff;text-decoration:none}
 .door-link:focus-visible{outline:2px solid var(--v);outline-offset:-8px}
 .door-arche{position:relative;display:block;flex:1 1 auto;min-height:220px;perspective:1100px}
 .door-arche::before{content:"";position:absolute;inset:-8px -8px 0;border:1.5px solid var(--v);border-bottom:0;border-radius:999px 999px 0 0;pointer-events:none}
 .door-photo,.door-lumiere,.door-battant{position:absolute;inset:0;border-radius:999px 999px 0 0}
 .door-photo{overflow:hidden;background:var(--c)}
-.door-photo img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1) brightness(1.08);mix-blend-mode:luminosity;transition:transform 1.4s var(--ease)}
-.door-lumiere{background:radial-gradient(120% 60% at 50% 100%,color-mix(in srgb,var(--v) 65%,transparent),transparent 70%);mix-blend-mode:screen;opacity:.5;transition:opacity .6s var(--ease)}
-.door-battant{background:linear-gradient(180deg,var(--aub-3),#2b1226 70%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--v) 45%,transparent),16px 0 34px rgba(10,3,8,.5);transform-origin:0 50%;transform:rotateY(42deg);transition:transform .9s var(--ease)}
+.door-photo img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1) brightness(1.08);mix-blend-mode:luminosity;transition:transform .2s var(--ease)}
+.door-lumiere{background:radial-gradient(120% 60% at 50% 100%,color-mix(in srgb,var(--v) 65%,transparent),transparent 70%);mix-blend-mode:screen;opacity:.5;transition:opacity .2s var(--ease)}
+.door-battant{background:linear-gradient(180deg,var(--aub-3),#2b1226 70%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--v) 45%,transparent),16px 0 34px rgba(10,3,8,.5);transform-origin:0 50%;transform:rotateY(42deg);transition:transform .2s var(--ease)}
 .door-battant::after{content:"";position:absolute;right:13%;top:58%;width:9px;height:9px;border-radius:50%;background:var(--v)}
 .door:hover .door-battant,.door:focus-within .door-battant{transform:rotateY(74deg)}
 .door:hover .door-lumiere,.door:focus-within .door-lumiere{opacity:1}
 .door:hover .door-photo img,.door:focus-within .door-photo img{transform:scale(1.04)}
 .door-bas{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-top:30px}
 .door-label{font-family:var(--serif);font-weight:400;font-size:clamp(1.8rem,2.4vw,2.6rem);line-height:1.06;letter-spacing:-.015em;font-variation-settings:"opsz" 72,"SOFT" 100;text-wrap:balance}
-.door-arr{flex:none;display:grid;place-items:center;width:46px;height:46px;border:1px solid color-mix(in srgb,var(--v) 60%,transparent);border-radius:50%;color:var(--v);font-size:1.2rem;line-height:1;transition:transform .45s var(--ease),background .45s var(--ease),color .45s var(--ease)}
+.door-arr{flex:none;display:grid;place-items:center;width:46px;height:46px;border:1px solid color-mix(in srgb,var(--v) 60%,transparent);border-radius:50%;color:var(--v);font-size:1.2rem;line-height:1;transition:transform .18s var(--ease),background .18s var(--ease),color .18s var(--ease)}
 .door:hover .door-arr,.door:focus-within .door-arr{background:var(--v);color:var(--aub);transform:translateX(4px)}
 .doors.salut .door-battant{animation:salut 1.8s var(--ease) backwards;animation-delay:calc(var(--i) * .17s + .05s)}
 .doors.salut .door-lumiere{animation:salut-lueur 1.8s var(--ease) backwards;animation-delay:calc(var(--i) * .17s + .05s)}
@@ -162,13 +162,13 @@ table{border-collapse:collapse}
 .mc-voisin{fill:none;stroke:var(--mc-voisin);stroke-width:1;stroke-dasharray:2 4}
 .mc-passe{fill:var(--mc-passe)}
 .mc-eteint{fill:var(--mc-eteint)}
-.mc-bras{opacity:.88;transition:opacity .35s var(--ease)}
+.mc-bras{opacity:.88;transition:opacity .18s var(--ease)}
 .mc-rouen{fill:var(--mc-rouen);stroke:var(--mc-point);stroke-width:1.2;vector-effect:non-scaling-stroke}
-.mc-lieu{outline:none;transform-box:fill-box;transform-origin:center;transition:opacity .35s var(--ease)}
+.mc-lieu{outline:none;transform-box:fill-box;transform-origin:center;transition:opacity .18s var(--ease)}
 .mc-lieu[role="button"]{cursor:pointer}
-.mc-halo{transform-box:fill-box;transform-origin:center;transition:transform .35s var(--ease)}
+.mc-halo{transform-box:fill-box;transform-origin:center;transition:transform .18s var(--ease)}
 .mc-point{fill:var(--mc-point)}
-.mc-anneau{fill:none;stroke:var(--mc-anneau);stroke-width:1.4;vector-effect:non-scaling-stroke;opacity:0;transition:opacity .25s}
+.mc-anneau{fill:none;stroke:var(--mc-anneau);stroke-width:1.4;vector-effect:non-scaling-stroke;opacity:0;transition:opacity .16s}
 .mc-cible{fill:transparent}
 .mc-lieu.on .mc-halo,.mc-lieu.choisi .mc-halo{transform:scale(1.85)}
 .mc-lieu.choisi .mc-anneau,.mc-lieu:focus-visible .mc-anneau{opacity:1}
@@ -181,7 +181,7 @@ table{border-collapse:collapse}
 @keyframes allume{0%{opacity:0;transform:scale(.2)}45%{opacity:1;transform:scale(1.6)}100%{opacity:1;transform:scale(1)}}
 @keyframes apparait{from{opacity:0}to{opacity:1}}
 @keyframes scintille{0%,100%{opacity:1}50%{opacity:.55}}
-.mc-nom,.mc-rouen-nom{position:absolute;z-index:2;transform:translate(13px,-50%);font-size:.8125rem;font-weight:600;line-height:1.2;letter-spacing:.01em;color:var(--mc-nom);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .25s;text-shadow:0 0 3px var(--mc-ombre),0 0 10px var(--mc-ombre),0 0 18px var(--mc-ombre)}
+.mc-nom,.mc-rouen-nom{position:absolute;z-index:2;transform:translate(13px,-50%);font-size:.8125rem;font-weight:600;line-height:1.2;letter-spacing:.01em;color:var(--mc-nom);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .16s;text-shadow:0 0 3px var(--mc-ombre),0 0 10px var(--mc-ombre),0 0 18px var(--mc-ombre)}
 .mc-nom.g{transform:translate(calc(-100% - 13px),-50%)}
 .mc-nom.on,.mc-nom.choisi,.mc-nom.toujours,.mc-nom.prochain{opacity:1}
 .survol-carte .mc-nom.prochain:not(.on),.survol-liste .mc-nom.prochain:not(.on),.filtre .mc-nom.prochain:not(.choisi){opacity:0}
@@ -202,7 +202,7 @@ table{border-collapse:collapse}
 .bande-liste{grid-area:liste}
 .bande-titre{font-family:var(--serif);font-weight:360;font-size:clamp(2.4rem,1.5rem + 2.6vw,3.9rem);line-height:1;letter-spacing:-.02em;font-variation-settings:"opsz" 144,"SOFT" 100}
 .prochaines{margin-top:clamp(24px,3vw,36px);border-top:1px solid var(--line-dark)}
-.pr-a{display:grid;grid-template-columns:minmax(0,8.5rem) minmax(0,1fr);gap:2px 20px;padding:16px 12px 16px 0;border-bottom:1px solid var(--line-dark);color:#fff;text-decoration:none;transition:background .3s var(--ease),padding .3s var(--ease)}
+.pr-a{display:grid;grid-template-columns:minmax(0,8.5rem) minmax(0,1fr);gap:2px 20px;padding:16px 12px 16px 0;border-bottom:1px solid var(--line-dark);color:#fff;text-decoration:none;transition:background .16s var(--ease),padding .16s var(--ease)}
 .pr-quand{grid-row:span 3;display:flex;flex-direction:column}
 .pr-jour{font-family:var(--serif);font-size:1.55rem;line-height:1.08;font-variation-settings:"opsz" 72,"SOFT" 100}
 .pr-mois{font-size:var(--fs-label);color:var(--on-dark-2)}
@@ -236,10 +236,10 @@ table{border-collapse:collapse}
 /* les cartes de spectacle, en arche */
 .ucartes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(16px,1.8vw,28px)}
 .ucartes.affiches{grid-template-columns:repeat(5,minmax(0,1fr))}
-.uc{position:relative;display:flex;flex-direction:column;padding:10px 10px 22px;background:var(--u-fond);border-radius:999px 999px 16px 16px;box-shadow:0 0 0 1px var(--u-ligne),0 18px 40px -26px rgba(20,8,16,.5);transition:box-shadow .5s var(--ease)}
+.uc{position:relative;display:flex;flex-direction:column;padding:10px 10px 22px;background:var(--u-fond);border-radius:999px 999px 16px 16px;box-shadow:0 0 0 1px var(--u-ligne),0 18px 40px -26px rgba(20,8,16,.5);transition:box-shadow .2s var(--ease),scale .2s var(--ease)}
 .uc:hover{box-shadow:0 0 0 1px var(--u-ligne),0 22px 60px -18px var(--u-lueur)}
 .uc-photo{position:relative;aspect-ratio:4/5;overflow:hidden;border-radius:999px 999px 6px 6px;background:var(--u-fond2)}
-.uc-photo img{width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease)}
+.uc-photo img{width:100%;height:100%;object-fit:cover;transition:transform .2s var(--ease)}
 .uc:hover .uc-photo img{transform:scale(1.05)}
 .uc-etat{position:absolute;left:10px;bottom:10px;padding:2px 10px;border-radius:999px;background:var(--u-aplat);color:var(--u-sur-aplat);font-size:.75rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .uc-corps{display:flex;flex-direction:column;flex:1;padding:18px 12px 0}
@@ -320,7 +320,7 @@ table{border-collapse:collapse}
 .puce span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.22);font-size:1rem;line-height:1}
 .mois{margin-top:44px;padding-bottom:10px;border-bottom:1px solid var(--ink);font-size:var(--fs-label);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--acc)}
 .groupe:first-child .mois{margin-top:0}
-.dl{display:grid;grid-template-columns:minmax(0,10.5rem) minmax(0,1fr);gap:4px 28px;padding:20px 0;border-bottom:1px solid var(--line);transition:opacity .3s var(--ease),background .3s var(--ease)}
+.dl{display:grid;grid-template-columns:minmax(0,10.5rem) minmax(0,1fr);gap:4px 28px;padding:20px 0;border-bottom:1px solid var(--line);transition:opacity .18s var(--ease),background .18s var(--ease)}
 .dl-quand{display:flex;flex-direction:column}
 .dl-jour{font-family:var(--serif);font-size:1.5rem;line-height:1.1;font-variation-settings:"opsz" 72,"SOFT" 100}
 .dl-mois{margin-top:2px;font-size:var(--fs-small);color:var(--muted)}
@@ -366,17 +366,17 @@ table{border-collapse:collapse}
 .idx-tout{flex:none;justify-content:center;width:40px;height:40px;padding:0;border-radius:50%}
 .idx-tout svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .sai{border-bottom:1px solid var(--line);scroll-margin-top:70px}
-.sai>summary{display:grid;grid-template-columns:clamp(72px,8vw,104px) minmax(0,1fr) auto;align-items:center;gap:4px clamp(16px,2.6vw,34px);padding:18px 8px;list-style:none;cursor:pointer;transition:background .3s var(--ease)}
+.sai>summary{display:grid;grid-template-columns:clamp(72px,8vw,104px) minmax(0,1fr) auto;align-items:center;gap:4px clamp(16px,2.6vw,34px);padding:18px 8px;list-style:none;cursor:pointer;transition:background .16s var(--ease)}
 .sai>summary::-webkit-details-marker{display:none}
 .sai>summary:hover,.sai[open]>summary{background:color-mix(in srgb,var(--acc) 6%,transparent)}
-.sai-arche{display:flex;align-items:flex-end;aspect-ratio:4/5;padding:16% 8% 5%;border:1px solid var(--aub-3);border-radius:999px 999px 0 0;background:radial-gradient(90% 70% at 50% 60%,#3a1631,var(--aub) 78%);transition:border-color .35s var(--ease),box-shadow .35s var(--ease)}
+.sai-arche{display:flex;align-items:flex-end;aspect-ratio:4/5;padding:16% 8% 5%;border:1px solid var(--aub-3);border-radius:999px 999px 0 0;background:radial-gradient(90% 70% at 50% 60%,#3a1631,var(--aub) 78%);transition:border-color .2s var(--ease),box-shadow .3s var(--ease),scale .12s}
 .sai>summary:hover .sai-arche,.sai[open] .sai-arche{border-color:var(--acc-v);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc-v) 26%,transparent),0 14px 30px -14px var(--acc-v)}
 .sai[open] .mini-bras,.sai>summary:hover .mini-bras{opacity:1}
 .sai-t{font-family:var(--serif);font-weight:400;font-size:clamp(1.5rem,1.2rem + 1vw,2.1rem);line-height:1.1;font-variation-settings:"opsz" 72,"SOFT" 100}
 .sai-sp{display:block;margin-top:6px;color:var(--muted);font-size:var(--fs-small);line-height:1.45}
 .sai-sp span:not(:last-child)::after{content:"\00a0·"}
 .sai-n{display:inline-flex;align-items:center;gap:10px;font-family:var(--serif);font-size:1.45rem;font-variant-numeric:tabular-nums}
-.sai-n .chev{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s var(--ease)}
+.sai-n .chev{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s var(--ease)}
 .sai[open] .sai-n .chev{transform:rotate(180deg)}
 .sai-corps{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:start;padding:14px 8px 48px}
 .sai-corps:empty{display:none}
@@ -411,7 +411,7 @@ table{border-collapse:collapse}
 .tuile-carte{display:flex;align-items:flex-end;aspect-ratio:4/5;padding:16% 6% 4%;border:1px solid var(--line-dark);border-radius:999px 999px 0 0;background:radial-gradient(90% 70% at 50% 60%,#3a1631,transparent 75%);transition:border-color .35s var(--ease),background-color .35s var(--ease)}
 .mini{display:block;width:100%;height:auto;overflow:hidden}
 .mini .mc-pays{fill:rgba(255,255,255,.04);stroke:rgba(255,236,245,.2)}
-.mini-bras{opacity:.7;transition:opacity .35s var(--ease)}
+.mini-bras{opacity:.7;transition:opacity .2s var(--ease)}
 .mini-rouen{fill:var(--rose-v)}
 .tuile-t{display:block;margin-top:12px;font-family:var(--serif);font-size:1.15rem;line-height:1.2;font-variation-settings:"opsz" 30,"SOFT" 70}
 .tuile:hover .tuile-carte,.tuile:focus-visible .tuile-carte{border-color:var(--rose-v);background-color:rgba(240,122,182,.06)}
@@ -454,7 +454,7 @@ table{border-collapse:collapse}
 .fp-equipe-c{margin-top:12px;font-size:var(--fs-small)}
 .fp-equipe-c li + li{margin-top:4px}
 .fp-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
-.u-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid color-mix(in srgb,var(--u-texte) 45%,transparent);border-radius:999px;color:var(--u-texte);font-size:var(--fs-small);font-weight:600;text-decoration:none;transition:background .3s,color .3s}
+.u-btn{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;border:1px solid color-mix(in srgb,var(--u-texte) 45%,transparent);border-radius:999px;color:var(--u-texte);font-size:var(--fs-small);font-weight:600;text-decoration:none;transition:background .16s,color .16s,border-color .16s}
 .u-btn:hover{border-color:var(--u-texte)}
 .u-btn.plein{background:var(--u-aplat);border-color:var(--u-aplat);color:var(--u-sur-aplat)}
 .u-btn.plein:hover{background:var(--u-texte);border-color:var(--u-texte);color:var(--u-fond)}
@@ -477,6 +477,7 @@ table{border-collapse:collapse}
 .ct-role{display:block;color:var(--on-dark-2)}
 .ct-liens{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;margin-top:12px!important}
 .ct-mail{display:inline-flex;align-items:center;min-height:48px;padding:0 24px;border-radius:999px;background:var(--c,var(--acc));color:#fff;font-family:var(--serif);font-size:1.15rem;text-decoration:none;font-variation-settings:"opsz" 30,"SOFT" 100}
+.ct-mail{transition:transform .16s var(--ease)}
 .ct-mail:hover{transform:translateY(-2px)}
 .ct-tel{font-weight:600;text-decoration:none;color:inherit}
 html:not(.ed-actif) .ct-tel.vide{display:none}
@@ -528,9 +529,9 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .ecrire-s{padding:clamp(48px,6vw,88px) 0}
 .ecrire-in{display:flex;flex-wrap:wrap;align-items:flex-end;gap:24px 40px}
 .ecrire-in .arche{width:clamp(54px,6vw,80px)}
-.btn-ecrire{display:inline-flex;align-items:center;gap:14px;min-height:56px;padding:0 30px;border-radius:999px;background:var(--c,var(--acc));color:#fff;font-family:var(--serif);font-size:1.3rem;text-decoration:none;font-variation-settings:"opsz" 30,"SOFT" 100;transition:transform .35s var(--ease)}
+.btn-ecrire{display:inline-flex;align-items:center;gap:14px;min-height:56px;padding:0 30px;border-radius:999px;background:var(--c,var(--acc));color:#fff;font-family:var(--serif);font-size:1.3rem;text-decoration:none;font-variation-settings:"opsz" 30,"SOFT" 100;transition:transform .18s var(--ease)}
 .btn-ecrire:hover{transform:translateY(-2px)}
-.btn-ecrire span{transition:transform .3s var(--ease)}
+.btn-ecrire span{transition:transform .18s var(--ease)}
 .btn-ecrire:hover span{transform:translateX(4px)}
 
 /* je représente un établissement scolaire */
@@ -620,7 +621,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 /* la barre des trois entrées du spectacle : trois portes en arche, celle où l'on lit dans sa couleur */
 .show-tabs{position:relative;z-index:2;background:var(--u-fond);box-shadow:inset 0 -1px 0 var(--u-ligne)}
 .show-tabs ul{display:flex;gap:clamp(6px,1vw,14px);align-items:flex-end}
-.show-tab{display:flex;align-items:center;gap:10px;min-height:62px;padding:22px clamp(18px,2.6vw,38px) 12px;border:1px solid var(--u-ligne);border-bottom:0;border-radius:50% 50% 0 0 / 44px 44px 0 0;background:color-mix(in srgb,var(--u-fond2) 70%,transparent);color:var(--u-texte);font-size:var(--fs-small);font-weight:600;text-decoration:none;transition:background .3s var(--ease)}
+.show-tab{display:flex;align-items:center;gap:10px;min-height:62px;padding:22px clamp(18px,2.6vw,38px) 12px;border:1px solid var(--u-ligne);border-bottom:0;border-radius:50% 50% 0 0 / 44px 44px 0 0;background:color-mix(in srgb,var(--u-fond2) 70%,transparent);color:var(--u-texte);font-size:var(--fs-small);font-weight:600;text-decoration:none;transition:background .16s var(--ease),transform .16s var(--ease)}
 .show-tab .porte-ico{color:var(--tc);width:14px;height:21px}
 .show-tab:hover{background:var(--u-fond2)}
 .show-tab.on{background:var(--c);border-color:var(--c);color:#fff}
@@ -638,7 +639,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
   .sommaire{display:block;position:sticky;top:24px;align-self:start;padding-top:clamp(48px,5vw,72px)}
 }
 .sommaire ol{border-left:1px solid var(--u-ligne)}
-.sommaire a{display:block;margin-left:-1px;padding:7px 0 7px 16px;border-left:2px solid transparent;color:var(--u-texte2);font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;transition:color .3s,border-color .3s}
+.sommaire a{display:block;margin-left:-1px;padding:7px 0 7px 16px;border-left:2px solid transparent;color:var(--u-texte2);font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;transition:color .16s,border-color .16s}
 .sommaire a:hover{color:var(--u-texte)}
 .sommaire a.on{border-left-color:var(--ecv);color:var(--u-texte)}
 .chapitres{min-width:0}
@@ -765,23 +766,15 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 /* la compagnie */
 .cie{max-width:70ch}
 .cie > p:first-child{font-family:var(--serif);font-size:var(--fs-h3);line-height:1.45;font-variation-settings:"opsz" 30,"SOFT" 100}
-.frise-s{background:var(--aub);color:#fff;padding:clamp(56px,7vw,104px) 0}
-.frise-titre{font-family:var(--serif);font-weight:400;font-size:var(--fs-h2);line-height:1.05;letter-spacing:-.015em;font-variation-settings:"opsz" 72,"SOFT" 100}
-.frise{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:16px;margin-top:clamp(36px,4vw,56px)}
-.frise::before{content:"";position:absolute;left:0;right:0;top:calc(2.5rem + 18px);height:1px;background:linear-gradient(90deg,var(--rose-v),rgba(255,236,245,.3))}
-.frise li{display:flex;flex-direction:column;gap:12px}
-.frise-an{font-family:var(--serif);font-weight:350;font-size:2.5rem;line-height:1;font-variation-settings:"opsz" 144,"SOFT" 100}
-.frise-pt{position:relative;width:12px;height:12px;margin:1px 0 3px;border-radius:50%;background:var(--pt,#fff);box-shadow:0 0 0 4px rgba(255,255,255,.1),0 0 16px 5px color-mix(in srgb,var(--pt,#fff) 55%,transparent)}
-.frise-t{font-size:var(--fs-small);line-height:1.45;color:var(--on-dark-2)}
-.frise-t a{color:#fff;text-decoration-color:rgba(255,255,255,.4)}
-.frise-t a:hover{text-decoration-color:#fff}
-@media (max-width:900px){
-  .frise{grid-auto-flow:row;grid-auto-columns:auto;gap:0;padding-left:28px}
-  .frise::before{left:5px;right:auto;top:8px;bottom:8px;width:1px;height:auto;background:linear-gradient(180deg,var(--rose-v),rgba(255,236,245,.3))}
-  .frise li{position:relative;display:grid;grid-template-columns:4.5rem minmax(0,1fr);align-items:baseline;gap:16px;padding:12px 0}
-  .frise-an{font-size:1.8rem}
-  .frise-pt{position:absolute;left:-28px;top:22px;margin:0}
-}
+/* « En quelques dates » : la frise historique (FRISE) sur le prune, puis la liste des années, petite (elle se modifie sur place) */
+.histoire-s{background:var(--aub);color:#fff;padding:clamp(56px,7vw,104px) 0}
+.histoire-titre{font-family:var(--serif);font-weight:400;font-size:var(--fs-h2);line-height:1.05;letter-spacing:-.015em;font-variation-settings:"opsz" 72,"SOFT" 100}
+.histoire-frise{margin-top:clamp(28px,3.4vw,48px)}
+.annees{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:2px 28px;margin-top:clamp(22px,2.6vw,34px);padding-top:18px;border-top:1px solid var(--line-dark);font-size:var(--fs-small);line-height:1.45}
+.annees li{display:flex;gap:12px;padding:6px 0;color:var(--on-dark-2)}
+.annees .an{flex:none;width:3rem;font-family:var(--serif);font-variant-numeric:tabular-nums;color:#fff}
+.annees a{color:#fff;text-decoration-color:rgba(255,255,255,.4)}
+.annees a:hover{text-decoration-color:#fff}
 .directeur{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:32px clamp(40px,6vw,96px);align-items:start}
 .dir-tete .arche{width:clamp(64px,6vw,92px);margin-bottom:28px;--v:var(--acc-v)}
 .dir-chapeau{margin-top:14px;font-family:var(--serif);font-size:var(--fs-h3);line-height:1.4;color:var(--muted);font-variation-settings:"opsz" 30,"SOFT" 100}
@@ -802,7 +795,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .consent a{color:var(--acc);font-weight:500}
 .calcul{display:flex;align-items:center;gap:14px;font-weight:600}
 .calcul input{width:4.5rem;min-height:44px;text-align:center}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 28px;border:0;border-radius:999px;background:var(--aub);color:#fff;font-size:var(--fs-small);font-weight:600;transition:background .3s}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 28px;border:0;border-radius:999px;background:var(--aub);color:#fff;font-size:var(--fs-small);font-weight:600;transition:background .16s,scale .16s}
 .btn:hover{background:var(--acc)}
 .coord{padding:clamp(24px,3vw,36px);background:var(--aub);color:#fff;font-size:var(--fs-small);line-height:1.6;box-shadow:inset 0 3px 0 var(--acc-v)}
 .coord-nom{font-family:var(--serif);font-size:var(--fs-h3);line-height:1.2}
@@ -815,7 +808,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 /* le pied de page : les trois entrées, encore */
 .site-footer{background:var(--aub);color:#fff;padding:clamp(56px,7vw,96px) 0 32px;border-top:1px solid var(--line-dark)}
 .pied-portes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:clamp(48px,6vw,80px)}
-.pied-portes a{display:flex;align-items:center;gap:14px;height:100%;padding:18px 20px;border-radius:30px 30px 0 0;background:var(--aub-2);box-shadow:inset 0 2px 0 var(--v);color:#fff;font-family:var(--serif);font-size:1.2rem;line-height:1.2;text-decoration:none;transition:background .3s}
+.pied-portes a{display:flex;align-items:center;gap:14px;height:100%;padding:18px 20px;border-radius:30px 30px 0 0;background:var(--aub-2);box-shadow:inset 0 2px 0 var(--v);color:#fff;font-family:var(--serif);font-size:1.2rem;line-height:1.2;text-decoration:none;transition:background .16s,transform .16s}
 .pied-portes a:hover{background:#3a1c33}
 .pied-portes .porte-ico{color:var(--v)}
 .pied-grille{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr) minmax(0,2fr) minmax(0,5fr);gap:36px clamp(28px,4vw,64px);align-items:start;font-size:var(--fs-small);line-height:1.6}
@@ -865,6 +858,159 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
 .ed-bt.ed-plein.ed-ajout{display:flex;width:fit-content;margin:4px 0 14px;padding:10px 20px 9px 16px;border:0;border-radius:24px 24px 4px 4px;background:var(--aub);color:#fff;font-family:var(--serif);font-weight:400;font-size:1rem;box-shadow:inset 0 2px 0 var(--rose-v)}
 .ed-bt.ed-plein.ed-ajout:hover{background:var(--aub-3)}
 
+/* ———————————— le mouvement (règle 15) : les battants ; voir le bloc « Mouvement » en tête du script ————————————
+   Une porte s'ouvre, la lumière passe par l'embrasure, on referme derrière soi. Survol 160 à 200 ms, pression 90 ms, page 420 ms. */
+html{view-transition-name:none}
+main{display:block;min-height:100vh}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas */
+/* les battants : deux vantaux à la couleur de la page qui s'ouvre, sous l'en-tête ; la lumière passe entre eux.
+   Seuls transform et opacity bougent ; rien ne capte le pointeur : un nouveau geste passe au travers */
+.battants{position:fixed;left:0;right:0;bottom:0;top:var(--bt-haut,0px);z-index:25;pointer-events:none;perspective:1700px;perspective-origin:50% 42%;visibility:hidden;overflow:hidden}
+.battants.on{visibility:visible}
+.bt{position:absolute;top:0;bottom:0;width:50.4%;backface-visibility:hidden;will-change:transform,opacity;background:linear-gradient(90deg,color-mix(in srgb,var(--bt-c) 82%,#000) 0%,var(--bt-c) 78%,color-mix(in srgb,var(--bt-c) 86%,var(--bt-l)) 100%)}
+.bt-g{left:0;transform-origin:0 50%}
+.bt-d{right:0;transform-origin:100% 50%;background:linear-gradient(270deg,color-mix(in srgb,var(--bt-c) 82%,#000) 0%,var(--bt-c) 78%,color-mix(in srgb,var(--bt-c) 86%,var(--bt-l)) 100%)}
+.bt-d::before{left:15%;right:13%}
+.bt-d::after{right:auto;left:7%}
+.bt::before{content:"";position:absolute;inset:clamp(40px,9vh,90px) 15% 0 13%;border:1.5px solid color-mix(in srgb,var(--bt-l) 34%,transparent);border-bottom:0;border-radius:999px 999px 0 0}
+.bt::after{content:"";position:absolute;right:7%;top:56%;width:10px;height:10px;border-radius:50%;background:var(--bt-l);box-shadow:0 0 14px 3px color-mix(in srgb,var(--bt-l) 60%,transparent)}
+.bt-jour{position:absolute;top:-10%;bottom:-10%;left:50%;width:min(76vw,980px);margin-left:calc(min(76vw,980px) / -2);opacity:0;will-change:transform,opacity;
+  background:radial-gradient(50% 58% at 50% 46%,color-mix(in srgb,var(--bt-l) 42%,#fff) 0%,color-mix(in srgb,var(--bt-l) 34%,transparent) 34%,transparent 72%)}
+/* la carte d'un spectacle devient l'arche de sa page (élément partagé) ; l'arche d'une porte de l'accueil, celle de sa page */
+::view-transition-group(mv-partage){animation-duration:.42s;animation-timing-function:cubic-bezier(.3,.7,.12,1)}
+::view-transition-old(mv-partage){animation:.16s ease-out both bt-fondu}
+::view-transition-new(mv-partage){animation:.26s cubic-bezier(.2,.7,.2,1) both bt-parait}
+@keyframes bt-fondu{to{opacity:0}}
+@keyframes bt-parait{from{opacity:0}}
+/* d'un onglet à l'autre d'un spectacle : l'en-tête reste, la porte allumée glisse jusqu'à l'onglet choisi */
+html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active}
+::view-transition-group(porte-active){animation-duration:.3s;animation-timing-function:cubic-bezier(.3,.7,.12,1)}
+/* la pression : la porte cède sous la main, à l'instant même ; les boutons s'enfoncent d'un rien */
+.door-link.mv-presse .door-battant{transform:rotateY(86deg);transition-duration:.12s}
+.door-link.mv-presse .door-lumiere{opacity:1;transition-duration:.12s}
+.entree.mv-presse,.show-tab.mv-presse,.pied-portes a.mv-presse{transform:perspective(420px) rotateY(-10deg);transform-origin:0 50%;transition:transform .09s}
+:is(.u-btn,.btn,.btn-ecrire,.ct-mail,.cp,.idx,.idx-tout,.puce,.menu-btn,.pied-modifier,.dos-bt).mv-presse{scale:.965;transition:scale .09s}
+.uc:has(.mv-presse),.fp:has(.fp-titre a.mv-presse){scale:.985;transition:scale .09s}
+.uc:has(.mv-presse) .uc-photo img{transform:scale(1.08)}
+.ep-porte:has(.mv-presse) .ep-battant{transform:rotateY(96deg);transition-duration:.12s}
+.ep-porte:has(.mv-presse) .ep-lumiere{opacity:1}
+.sai>summary.mv-presse .sai-arche{scale:.96;transition:scale .09s}
+/* l'apparition au défilement : les titres montent ; les cartes viennent l'une après l'autre en pivotant sur leur gond, comme un
+   vantail qui se rabat dans son cadre ; les chiffres comptent */
+[data-mv="cascade"].mv-attente:not(.mv-vu)>*{opacity:0;transform:perspective(1400px) rotateY(22deg);transform-origin:0 50%}
+[data-mv="cascade"].mv-attente>*{transition:opacity .5s var(--ease),transform .62s var(--ease);transition-delay:calc(var(--mv-delai,0ms) + min(var(--mv-i,0),12) * 60ms)}
+[data-mv="monte"].mv-attente:not(.mv-vu){opacity:0;transform:translateY(16px)}
+.gros{font:inherit;font-variant-numeric:tabular-nums}
+/* ce qui se déplie : une saison s'ouvre, la porte de sa petite arche s'efface, la lumière y entre */
+.sai-arche{position:relative;perspective:260px}
+.sai-battant{position:absolute;inset:6% 6% 0;border-radius:999px 999px 0 0;background:linear-gradient(90deg,rgba(34,16,29,.82),rgba(67,32,59,.58));box-shadow:inset 0 0 0 1px rgba(240,122,182,.35);transform-origin:0 50%;transform:rotateY(58deg);transition:transform .32s var(--ease),opacity .32s}
+.sai>summary:hover .sai-battant{transform:rotateY(70deg);transition-duration:.18s}
+.sai[open] .sai-battant{transform:rotateY(92deg);opacity:0}
+.sai[open] .sai-arche{box-shadow:0 0 0 3px color-mix(in srgb,var(--acc-v) 30%,transparent),0 0 30px -4px var(--acc-v),inset 0 -40px 50px -30px color-mix(in srgb,var(--acc-v) 70%,transparent)}
+/* une ligne vers laquelle la frise mène : elle s'allume un instant */
+.dl.est-vise,.sl.est-vise,.pr.est-vise .pr-a{animation:vise 1.3s var(--ease)}
+@keyframes vise{0%,30%{background:color-mix(in srgb,var(--acc) 20%,transparent)}}
+.dl.est-allume,.sl.est-allume{background:linear-gradient(90deg,color-mix(in srgb,var(--acc) 12%,transparent),transparent 85%)}
+.univ .dl.est-allume{background:linear-gradient(90deg,color-mix(in srgb,var(--u-vif) 18%,transparent),transparent 85%)}
+.sai.est-allume>summary{background:color-mix(in srgb,var(--acc) 9%,transparent)}
+.mc-lieu.est-allume .mc-halo{transform:scale(1.85)}
+.mc-lieu.est-allume .mc-anneau{opacity:1}
+/* ce qui vit : « EN TOURNÉE » respire, comme une lumière derrière une porte */
+.respire::before{content:"";display:inline-block;width:7px;height:10px;margin-right:9px;border-radius:999px 999px 1px 1px;background:currentColor;vertical-align:0;animation:respire 2.6s ease-in-out infinite}
+@keyframes respire{0%,100%{opacity:1;box-shadow:0 0 0 0 transparent}50%{opacity:.35;box-shadow:0 0 10px 2px currentColor}}
+/* le dossier PDF prêt : sa petite porte s'ouvre en grand, la lumière en sort, puis elle se referme */
+.dos-bt.dos-pret .mp-b{animation:mp-pret 1.4s var(--ease)}
+.dos-bt.dos-pret .mini-porte{animation:mp-lueur 1.4s var(--ease)}
+@keyframes mp-pret{0%{transform:rotateY(18deg)}25%,70%{transform:rotateY(100deg)}100%{transform:rotateY(18deg)}}
+@keyframes mp-lueur{25%,70%{box-shadow:0 0 14px 3px color-mix(in srgb,currentColor 55%,transparent);background:color-mix(in srgb,currentColor 30%,transparent)}}
+
+/* ———— les frises (FRISE) : la rampe du calendrier ; chaque date est une petite porte en arche, à la couleur de son spectacle ;
+   « aujourd'hui », un trait de lumière posé sur l'axe ———— */
+.rampe{position:relative;background:var(--aub);color:#fff;padding:clamp(18px,2.4vw,30px) 0 clamp(14px,2vw,24px);border-top:1px solid var(--line-dark);overflow-x:clip}
+.rampe-frise{min-height:118px}
+.frise[data-frise]{--fr-fond:var(--aub);--fr-encre:#fff;--fr-trait:rgba(255,236,245,.3);--fr-accent:var(--rose-v);--fr-police:var(--sans);--fr-passe:.4;
+  --fr-bulle-fond:#fff;--fr-bulle-encre:var(--ink);--fr-point:11px;--fr-couloir:19px;--fr-haut:30px;--fr-taille:12px;--fr-courbe:var(--ease)}
+.frise[data-frise] .frise-mois-nom{font:400 .98rem/1.1 var(--serif);font-variation-settings:"opsz" 30,"SOFT" 100}
+.frise[data-frise] .frise-an{font:600 .68rem/1.3 var(--sans);letter-spacing:.08em;opacity:.72}
+.frise[data-frise] .frise-point>.frise-repere::before{width:9px;height:12px;border-radius:999px 999px 1.5px 1.5px;translate:0 -4px;transform-origin:50% 100%;
+  box-shadow:0 0 0 2px var(--fr-fond),0 0 12px 1px color-mix(in srgb,var(--fr-c,#fff) 55%,transparent)}
+.frise[data-frise] .frise-point.est-scolaire:not(.est-duree)>.frise-repere::before{rotate:none;width:9px;height:12px;border-radius:999px 999px 1.5px 1.5px;background:var(--fr-fond);box-shadow:inset 0 0 0 2px var(--fr-c,#fff),0 0 0 2px var(--fr-fond)}
+.frise[data-frise] .frise-point.est-duree>.frise-repere::before{height:7px;border-radius:999px 999px 2px 2px;translate:none;box-shadow:0 0 10px 0 color-mix(in srgb,var(--fr-c,#fff) 50%,transparent)}
+.frise[data-frise] .frise-point.est-passe>.frise-repere::before{box-shadow:0 0 0 2px var(--fr-fond)}
+/* la prochaine date : sa porte est éclairée */
+.frise[data-frise] :is(.frise-point.est-passe+.frise-point:not(.est-passe),.frise-point:first-child:not(.est-passe))>.frise-repere::after{content:"";position:absolute;left:50%;top:50%;width:16px;height:20px;margin:-14px 0 0 -8px;border-radius:999px 999px 2px 2px;border:1px solid var(--fr-c,#fff);opacity:0;animation:prochaine 2.8s ease-in-out 1.2s infinite;pointer-events:none}
+@keyframes prochaine{0%{opacity:.7;scale:.7}70%,100%{opacity:0;scale:1.5}}
+.frise[data-frise] .frise-aujourdhui::before{width:2px;left:-1px;opacity:.95;background:linear-gradient(to top,var(--fr-accent),color-mix(in srgb,var(--fr-accent) 0%,transparent))}
+.frise[data-frise] .frise-aujourdhui::after{left:-5px;bottom:-5px;width:10px;height:10px;box-shadow:0 0 12px 3px color-mix(in srgb,var(--fr-accent) 60%,transparent)}
+.frise[data-frise] .frise-aujourdhui-nom{font:700 .62rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase}
+.frise[data-frise] .frise-bulle{border-radius:16px 16px 6px 6px;box-shadow:0 18px 40px -16px rgba(10,3,8,.6);font:400 .86rem/1.4 var(--sans)}
+.frise[data-frise] .frise-bulle b{font:400 1.08rem/1.2 var(--serif);font-variation-settings:"opsz" 30,"SOFT" 100}
+.frise[data-frise] .frise-grappe>span{width:24px;height:26px;margin:-15px 0 0 -12px;border-radius:999px 999px 3px 3px;background:radial-gradient(closest-side,var(--fr-fond) 62%,transparent 66%),conic-gradient(var(--fr-g,currentColor))}
+.frise[data-frise] .frise-grappe-n{font:700 10px/1 var(--sans);padding-top:3px}
+.frise[data-frise] .frise-repere:focus-visible{outline-color:var(--fr-accent)}
+/* les saisons et leur densité : une arche par saison, plus ou moins haute */
+.ag-frise{margin:0 0 18px;padding:18px clamp(8px,1.6vw,20px) 6px;border-radius:30px 30px 12px 12px;background:radial-gradient(70% 90% at 50% 100%,#3a1631,var(--aub) 80%);color:#fff;min-height:132px}
+.frise-saisons{--fr-bande-h:46px;--fr-haut:22px;--fr-pied:32px}
+.frise-saisons .frise-bande-barre{margin:0 3px;border-radius:999px 999px 2px 2px/22px 22px 2px 2px;background:linear-gradient(180deg,var(--rose-v),var(--rose) 80%);opacity:.9}
+.frise-saisons .frise-bande.est-passe .frise-bande-barre{opacity:.62}
+.frise-saisons .frise-bande:is(:hover,.est-allume) .frise-bande-barre{opacity:1;filter:brightness(1.15)}
+.frise-saisons .frise-bande-n{font:600 .74rem var(--sans);color:#fff}
+.frise-saisons .frise-bande-nom{font:500 .7rem var(--sans);color:var(--on-dark-2)}
+/* la diffusion d'un spectacle, saison par saison */
+.diffusion{min-height:96px;margin-top:16px;padding-top:10px;border-top:1px solid var(--u-ligne)}
+.diffusion .ct-k{margin:0;color:var(--u-vif)}
+.frise-diffusion{--fr-bande-h:30px;--fr-haut:14px;--fr-pied:26px;--fr-taille:10px;--fr-fond:var(--u-fond);--fr-encre:var(--u-texte);--fr-trait:var(--u-ligne);--fr-accent:var(--u-vif)}
+.frise-diffusion .frise-bande-barre{margin:0 1.5px;border-radius:999px 999px 1px 1px/12px 12px 1px 1px;background:var(--u-aplat);opacity:.86}
+.frise-diffusion .frise-bande-nom{opacity:.75;letter-spacing:-.02em}
+.frise-diffusion .frise-bande:not(:first-child):not(:last-child) .frise-bande-nom{opacity:0;transition:opacity .16s}
+.frise-diffusion .frise-bande:is(:hover,.est-allume,:focus-within) .frise-bande-nom{opacity:1}
+.frise-diffusion .frise-aujourdhui-nom{display:none}
+.frise-compagnie{--fr-fond:var(--aub);--fr-encre:#fff;--fr-trait:var(--line-dark);--fr-accent:var(--rose-v);--fr-bande-h:44px;--fr-taille:11px}
+.frise-compagnie .frise-bande-barre{background:linear-gradient(180deg,#e8bc5c,#8a6410)}
+.p-diff{min-height:118px;margin-top:22px}
+/* dans l'univers d'un spectacle, et sur l'ivoire */
+.univ .frise[data-frise]{--fr-fond:var(--u-fond);--fr-encre:var(--u-texte);--fr-trait:color-mix(in srgb,var(--u-texte) 30%,transparent);--fr-accent:var(--u-vif);--fr-bulle-fond:var(--u-texte);--fr-bulle-encre:var(--u-fond)}
+.u-frise{min-height:118px;margin:0 0 clamp(24px,3vw,40px)}
+.u-frise .frise-mois-nom{font-family:var(--sans);font-size:.86rem;font-weight:600}
+/* la frise historique de la compagnie : les créations en étiquettes, chacune sur sa petite porte */
+.histoire-frise .frise[data-frise]{--fr-point:12px;--fr-couloir:46px;--fr-haut:30px;--fr-passe:1}
+.histoire-frise .frise-etiquette{font:400 1.02rem/1.2 var(--serif);font-variation-settings:"opsz" 30,"SOFT" 100;max-width:10em}
+.histoire-frise .frise-repere:is(:hover,:focus-visible) .frise-etiquette{color:var(--rose-v);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.histoire-frise .frise-mois-nom{font:500 .78rem var(--sans);opacity:.7}
+
+/* ———— l'espace pro : trois vraies portes, chacune vers son espace ———— */
+.ep-hero{padding-bottom:clamp(20px,2.4vw,36px)}
+.ep-s{padding:clamp(18px,2.4vw,36px) 0 clamp(64px,8vw,120px);background:var(--aub);color:#fff}
+.ep-texte{max-width:52ch}
+.ep-portes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(18px,2.6vw,40px)}
+.ep-porte{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 0 6px;text-align:center}
+.ep-arche{position:relative;display:block;width:min(100%,clamp(170px,17vw,250px));aspect-ratio:5/7;margin-bottom:10px;perspective:1000px}
+.ep-arche::before{content:"";position:absolute;inset:-9px -9px 0;border:1.5px solid var(--v);border-bottom:0;border-radius:999px 999px 0 0;opacity:.7;transition:opacity .18s}
+.ep-salle,.ep-lumiere,.ep-battant{position:absolute;inset:0;border-radius:999px 999px 0 0}
+.ep-salle{background:radial-gradient(90% 60% at 50% 100%,color-mix(in srgb,var(--v) 70%,#fff) 0%,color-mix(in srgb,var(--v) 46%,var(--aub)) 46%,var(--aub-2) 100%)}
+.ep-lumiere{background:radial-gradient(120% 70% at 50% 100%,color-mix(in srgb,var(--v) 80%,transparent),transparent 72%);opacity:.35;transition:opacity .2s var(--ease)}
+.ep-battant{background:linear-gradient(90deg,#1a0b16,var(--aub-3) 70%,#4a2442);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--v) 40%,transparent),18px 0 40px rgba(10,3,8,.55);transform-origin:0 50%;transform:rotateY(8deg);transition:transform .2s var(--ease)}
+.ep-battant::before{content:"";position:absolute;inset:12% 16% 8%;border:1px solid color-mix(in srgb,var(--v) 26%,transparent);border-radius:999px 999px 2px 2px}
+.ep-battant::after{content:"";position:absolute;right:12%;top:56%;width:10px;height:10px;border-radius:50%;background:var(--v);box-shadow:0 0 12px 2px color-mix(in srgb,var(--v) 60%,transparent)}
+.ep-porte:is(:hover,:focus-within) .ep-battant{transform:rotateY(62deg)}
+.ep-porte:is(:hover,:focus-within) .ep-lumiere{opacity:1}
+.ep-porte:is(:hover,:focus-within) .ep-arche::before{opacity:1}
+.ep-t{font-family:var(--serif);font-weight:400;font-size:clamp(1.45rem,1.1rem + 1vw,2.1rem);line-height:1.12;letter-spacing:-.01em;font-variation-settings:"opsz" 72,"SOFT" 100;text-wrap:balance}
+.ep-a{color:#fff;text-decoration:none}
+.ep-a::after{content:"";position:absolute;inset:-12px -8px 0}
+.ep-a:focus-visible{outline:none}
+.ep-porte:focus-within .ep-t{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.2em}
+.ep-porte:has(.ep-a:focus-visible){outline:2px solid var(--v);outline-offset:10px;border-radius:999px 999px 8px 8px}
+.ep-x{color:var(--on-dark-2);font-size:var(--fs-small);line-height:1.55;max-width:34ch}
+.ed-actif .ep-a::after{display:none}
+@media (max-width:900px){
+  .ep-portes{grid-template-columns:minmax(0,1fr);gap:16px}
+  .ep-porte{display:grid;grid-template-columns:clamp(74px,18vw,110px) minmax(0,1fr);grid-template-areas:"arche t" "arche x";align-items:end;column-gap:20px;row-gap:6px;padding:16px 0;border-top:1px solid var(--line-dark);text-align:left}
+  .ep-arche{grid-area:arche;width:100%;margin:0}
+  .ep-arche::before{inset:-5px -5px 0}
+  .ep-t{grid-area:t;align-self:end}
+  .ep-x{grid-area:x;align-self:start}
+}
+
 /* l'ouverture, habillée dans le prune */
 .intro.intro-m04 .intro-indice{color:#f07ab6}
 
@@ -892,12 +1038,36 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
 <script>
 (() => {
   'use strict';
+  /* Mouvement : les battants. Tout passe par une porte : on la pousse, elle s'ouvre, la lumière passe par l'embrasure ; en
+     revenant, on la referme derrière soi. Une seule courbe (rapide, puis posée), jamais plus de 450 ms pour une page.
+     1. Changer de page (MOUVEMENT.transition) : l'en-tête reste, comme un linteau ; dessous, deux vantaux à la couleur de la
+        page qui arrive (celle de l'entrée, ou le fond de l'univers du spectacle) s'ouvrent vers l'intérieur et la lumière passe
+        entre eux (420 ms). Au retour, les vantaux de la page quittée se rabattent et s'effacent : on a refermé derrière soi.
+        La carte d'un spectacle (une arche) devient l'arche de sa page, et l'arche d'une porte de l'accueil celle de sa page
+        (View Transitions, élément partagé) ; d'un onglet à l'autre d'un spectacle, l'en-tête reste et seule la porte allumée
+        glisse. Un geste pendant ce temps termine la transition ; les vantaux ne captent jamais le pointeur.
+     2. Ouvrir une saison : la porte de sa petite arche s'efface, la lumière y entre, ses dates arrivent en cascade ; le menu
+        aussi se déplie ligne à ligne.
+     3. Filtrer, chercher : les dates glissent à leur nouvelle place, celles qui partent s'effacent (MOUVEMENT.flip) ; les
+        repères de la frise glissent, les saisons de la frise des saisons changent de hauteur.
+     4. Survol et focus : 160 à 200 ms ; une porte s'entrouvre et sa lumière monte, rien ne tremble.
+     5. Pression : la porte cède sous la main dès le pointerdown (elle s'ouvre en grand) ; les boutons s'enfoncent d'un rien.
+     6. Défilement (MOUVEMENT.reveler) : les titres montent, les cartes arrivent l'une après l'autre en pivotant sur leur gond,
+        les chiffres comptent ; les bras de la carte poussent depuis Rouen.
+     7. Ce qui vit : « aujourd'hui » posé sur chaque frise comme un trait de lumière, la porte de la prochaine date éclairée,
+        « EN TOURNÉE » qui respire.
+     Les frises (FRISE) sont la rampe de chaque calendrier : chaque date y est une petite porte à la couleur de son spectacle
+     (la saison, les saisons, une saison passée, la tournée d'un spectacle, les dates scolaires, la diffusion saison par
+     saison, l'histoire de la compagnie) ; survoler un repère allume sa ligne et sa commune, et inversement ; un clic y mène.
+     La pieuvre : aucun moment ; la porte est le seul geste de la maquette (le dossier PDF prêt : sa petite porte s'ouvre).
+     Moins d'animations demandé (ou ?anim=0) : tout est posé, rien ne bouge. */
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => Array.from(el.querySelectorAll(sel));
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const chemin = href => String(href || '').replace(/^#\/?/, '');
   const root = document.documentElement, main = $('#main'), header = $('.site-header'), menuBtn = $('.menu-btn');
-  const mouvement = () => CARTE.mouvement();
+  const MV = typeof MOUVEMENT !== 'undefined' ? MOUVEMENT : null, FR = typeof FRISE !== 'undefined' ? FRISE : null;
+  const mouvement = () => CARTE.mouvement() && (!MV || MV.permis());
   const CLE_MEMO = 'crescite-m04-entree';
 
   /* ---------- les couleurs ---------- */
@@ -1010,8 +1180,8 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
   }
   const details = ds => ds && ds.length ? `<ul class="dl-det">${ds.map(x => `<li>${x.lien ? `<a href="${esc(x.lien)}">${esc(x.texte)}<span class="ext" aria-hidden="true">↗</span></a>` : esc(x.texte)}</li>`).join('')}</ul>` : '';
   function ligneDate(d, { titre = true, entree = 'voir' } = {}) {
-    const { jour, mois } = decoupe(d.ligneDate);
-    return `<li class="dl" data-date-id="${esc(d.id ?? '')}" data-l="${d.l ?? ''}">
+    const { jour, mois } = decoupe(d.ligneDate), k = cleProchaine(d);
+    return `<li class="dl" data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(k)}" data-mv-cle="${esc(k)}" data-l="${d.l ?? ''}">
       <p class="dl-quand"><span class="dl-jour">${esc(jour)}</span>${mois ? ` <span class="dl-mois">${esc(mois)}</span>` : ''}</p>
       <div>
         <p class="dl-ou">${esc(d.ligneLieu)}</p>
@@ -1020,15 +1190,77 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       </div>
     </li>`;
   }
-  const groupeMois = (g, entree) => `<section class="groupe"><h3 class="mois">${esc(g.m)}</h3><ol data-agenda="">${g.ds.map(d => ligneDate(d, { entree })).join('')}</ol></section>`;
-  function ligneSaison(t) {
+  const groupeMois = (g, entree) => `<section class="groupe"><h3 class="mois" data-mv-cle="m:${esc(g.m)}">${esc(g.m)}</h3><ol data-agenda="">${g.ds.map(d => ligneDate(d, { entree })).join('')}</ol></section>`;
+  function ligneSaison(t, fid = '') {
     const i = t.ligne.indexOf(' — '), quand = i > 0 ? t.ligne.slice(0, i) : t.ligne, ou = i > 0 ? t.ligne.slice(i + 3) : '';
     const corps = `<span class="sl-quand">${esc(quand)}</span>${ou ? `<span aria-hidden="true"> — </span><span class="sl-ou">${esc(ou)}</span>` : ''}`;
-    return `<li class="sl${t.etat ? ' annule' : ''}" data-date-id="${esc(t.id ?? '')}" data-l="${t.l ?? ''}">
+    return `<li class="sl${t.etat ? ' annule' : ''}" data-date-id="${esc(t.id ?? '')}"${fid ? ` data-frise-id="${esc(fid)}"` : ''} data-l="${t.l ?? ''}">
       <p class="sl-ligne">${t.lien ? `<a href="${esc(t.lien)}">${corps}<span class="ext" aria-hidden="true">↗</span></a>` : corps}</p>
       ${t.etat ? `<p class="sl-etat">${esc(t.etat)}</p>` : ''}
       ${details(t.details)}
     </li>`;
+  }
+
+  /* ---------- les frises (FRISE) : la rampe de chaque calendrier, relue dans D à chaque rendu ---------- */
+  let frises = [];
+  // la largeur d'une frise posée dans .wrap (sa piste a 14 px de marge de chaque côté), calculée sans rien lire de la page
+  const largeurWrap = (moins = 0) => Math.min(innerWidth - 2 * Math.min(56, Math.max(16, innerWidth * .04)), 1328) - 28 - moins;
+  function frise(conteneur, o) {
+    if (!FR || !conteneur) return null;
+    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: root.classList.contains('en-place') }, o));
+    frises.push(f);
+    return f;
+  }
+  // la clé d'un repère, posée aussi sur sa ligne (data-frise-id) : l'id de la base, sinon la date et le lieu
+  const cleBase = d => d && d.id != null && d.id !== '' ? `d${d.id}` : null;
+  const cleProchaine = d => cleBase(d) || `p|${d.slug || d.titre}|${d.iso}|${d.l}`;
+  const cleLigne = (d, saison, i) => cleBase(d) || `l|${saison}|${i}`;
+  const annulee = d => /annul/i.test(d.etat || '');
+  // la couleur d'un spectacle sur le prune (sa couleur claire), ou celle de l'entrée « voir »
+  const couleurPrune = slug => (X.bySlug[slug] && X.bySlug[slug].couleur) || (X.ENTREE.voir || {}).couleurVive || '#f07ab6';
+  // une date à venir (D.dates), écrite comme l'agenda
+  const repereProchaine = (d, couleur) => ({ id: cleProchaine(d), jour: d.iso, fin: d.fin, precision: d.precision, couleur: couleur || couleurPrune(d.slug), titre: d.titre,
+    quand: d.ligneDate, l: d.l, scolaire: d.scolaire, annulee: annulee(d), etat: d.etat });
+  // une ligne de l'agenda (D.saisons) : sa date vient de la base (iso, fin) ou de la ligne elle-même (cleDate)
+  const repereLigne = (d, saison, i, slug, titre, couleur) => { const k = d.iso || cleDate(d, saison);
+    return k ? { id: cleLigne(d, saison, i), jour: k, fin: d.fin || k, precision: d.precision, couleur: couleur || couleurPrune(slug), titre,
+      quand: String(d.ligne || '').split(' — ')[0].trim(), l: d.l, scolaire: d.scolaire, annulee: annulee(d), etat: d.etat } : null; };
+  // une saison en bande de frise ; son nom court, sous la bande, vient de ses années (« 16-17 »)
+  const bandeSaison = (k, n) => ({ id: k, debut: `${k.slice(0, 4)}-09-01`, fin: `${k.slice(5)}-08-31`, titre: D.saisons[k].titre, n, etiquette: `${k.slice(2, 4)}-${k.slice(7, 9)}` });
+  const saisonsConnues = () => Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
+  // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
+  function diffusion(s) {
+    const ks = saisonsConnues();
+    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).length, 0);
+    const premiere = ks.find(k => n(k));
+    return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
+  }
+  // les frises de diffusion : créées quand leur fiche arrive près de l'écran (le visible d'abord) ; d'emblée quand la vue est refaite
+  let ioDiffusion = null;
+  function frisesDiffusion(racine) {
+    const creer = c => { const s = X.bySlug[c.dataset.diffusion], bs = s ? diffusion(s) : [];
+      if (bs.length && c.isConnected && !c.querySelector('.frise')) frise(c, { echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: `${s.titre} – ${X.L.dates}`, classe: 'frise-diffusion', anMin: 26 }); };
+    const cs = $$('[data-diffusion]', racine);
+    if (ioDiffusion) { ioDiffusion.disconnect(); ioDiffusion = null; }
+    if (root.classList.contains('en-place') || !('IntersectionObserver' in window)) { cs.forEach(creer); return; }
+    ioDiffusion = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { ioDiffusion.unobserve(x.target); creer(x.target); } }), { rootMargin: '300px 0px' });
+    cs.forEach(c => ioDiffusion.observe(c));
+  }
+  // les frises à créer quand la vue est dans la page (lierZones) : { id, zone, o } ; zone : la carte et la liste qu'elles allument
+  let plans = [];
+  const planFrise = (id, zone, o, classe = 'rampe-frise') => { if (!o) return ''; plans.push({ id, zone, o }); return `<div class="${classe}" id="${id}"></div>`; };
+  // une rampe : une bande prune sous laquelle le calendrier se lit, au-dessus de sa carte et de sa liste
+  const rampe = (id, zone, o) => o ? `<div class="rampe"><div class="wrap">${planFrise(id, zone, o)}</div></div>` : '';
+  // la diffusion de la compagnie, saison par saison (le nombre de ses dates)
+  const frisesCompagnie = () => { const ks = saisonsConnues(); if (!ks.length) return null;
+    return { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: X.L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', anMin: 36,
+      largeur: innerWidth > 999 ? Math.round((largeurWrap() + 28 - Math.min(88, innerWidth * .05)) * 5 / 12) - 28 : largeurWrap(),
+      bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).length, 0))), choix: () => {} }; };
+  // un clic sur un repère mène à sa ligne, qui s'allume un instant
+  function allerLigne(id) {
+    const li = id ? $(`[data-frise-id="${CSS.escape(id)}"]`, main) : null; if (!li) return;
+    li.scrollIntoView({ behavior: mouvement() ? 'smooth' : 'auto', block: 'center' });
+    li.classList.remove('est-vise'); requestAnimationFrame(() => li.classList.add('est-vise'));
   }
 
   /* ---------- la carte des tournées, dessinée avec les formes de CARTE ---------- */
@@ -1126,7 +1358,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
 
   // la carte et sa liste se répondent : survoler une commune met ses dates en avant, la choisir filtre la liste
   const choixZones = {};   // la commune choisie sur chaque carte, gardée quand la vue est refaite en place
-  function lierZone(zone, { naviguer = null, detail = null } = {}) {
+  function lierZone(zone, { naviguer = null, detail = null, ecoute = null } = {}) {
     const mc = $('.mc', zone);
     if (!mc) return null;
     const type = zone.dataset.zone || '', liste = $('[data-liste]', zone), puces = $('[data-puce]', zone);
@@ -1138,8 +1370,9 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       survole = l; source = src;
       marque(l, 'on', true);
       zone.classList.toggle('survol-carte', l !== null && src === 'carte');
-      zone.classList.toggle('survol-liste', l !== null && src === 'liste');
+      zone.classList.toggle('survol-liste', l !== null && src !== 'carte');
       if (detail && l !== null) detail(l);
+      if (ecoute && src !== 'frise') ecoute(l);   // la frise de la zone répond (allume les repères de la commune)
     };
     const choix = l => {
       if (naviguer) return naviguer(l);
@@ -1169,7 +1402,8 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       liste.addEventListener('focusin', e => survol(de(e), 'liste'));
       liste.addEventListener('focusout', () => survol(null, 'liste'));
     }
-    return { choix };
+    // montrer : une commune allumée depuis la frise (sans lui répondre en retour)
+    return { choix, montrer: l => survol(l, 'frise') };
   }
 
   /* ---------- les morceaux communs ---------- */
@@ -1185,7 +1419,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
   const heroEntree = (e, lead = '', chemin = null, apres = '') => `<header class="page-hero entree-hero" style="--v:${esc(e.couleurVive)};--c:${esc(e.couleur)}">
     <div class="wrap hero-grille">
       <div><h1 class="page-title" tabindex="-1">${esc(e.texte)}</h1>${lead ? `<p class="hero-lead"${ed(chemin)}>${lead}</p>` : ''}${apres}</div>
-      <span class="arche hero-porte" data-tt-cible=".7,.55" aria-hidden="true"><span class="arche-lumiere"></span><span class="arche-battant"></span></span>
+      <span class="arche hero-porte" data-mv-nom="entree-${esc(e.cle)}" aria-hidden="true"><span class="arche-lumiere"></span><span class="arche-battant"></span></span>
     </div>
   </header>`;
   const ecrireBande = e => `<section class="ecrire-s" style="--v:${esc(e.couleurVive)};--c:${esc(e.couleur)}"><div class="wrap ecrire-in">${arche()}<a class="btn-ecrire" href="${esc(X.S.ecrire ? X.S.ecrire.href : '#/contact')}">${esc(X.L.ecrire)}<span aria-hidden="true">→</span></a></div></section>`;
@@ -1215,7 +1449,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const b = e.target.closest('[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
     const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
     OCCUPES.add(slug); occuper(slug, true);
-    DOSSIER.telecharger(slug).then(() => { const c = $(`[data-dossier="${slug}"]`); if (c && typeof TENTACULES !== 'undefined') TENTACULES.confirmer(c); })
+    DOSSIER.telecharger(slug).then(() => { $$(`[data-dossier="${slug}"]`).forEach(c => { c.classList.add('dos-pret'); setTimeout(() => c.classList.remove('dos-pret'), 1500); }); })
       .catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
   });
   const ecrireLien = () => `<p class="ecrire"><a class="btn-ecrire" href="${esc(X.S.ecrire ? X.S.ecrire.href : '#/contact')}">${esc(X.L.ecrire)}<span aria-hidden="true">→</span></a></p>`;
@@ -1240,15 +1474,16 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     return `<ul class="cast" style="--n:${L.length}${pris.size > blocs.length ? ';--pw:132px' : ''}">${blocs.join('')}</ul>`;   // avec des paires : de quoi en tenir trois sur une ligne
   }
   const ficheEquipe = (s, sansAvec = false) => `${(s.fiche || []).length ? `<ul class="fiche">${s.fiche.map((f, i) => `<li>${f.libelle ? `<span class="fiche-l"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></li>`).join('')}</ul>` : ''}${s.avec && !sansAvec ? `<p class="avec"><span class="fiche-l"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''}`;
+  const nombre = t => { const m = String(t || '').match(/^(\d[\d\u00a0\u202f ]*?)(\s+\D[\s\S]*)$/); return m ? `<b class="gros">${esc(m[1])}</b>${esc(m[2])}` : esc(t); };
   const etatDe = s => s.statut || (s.enTournee ? X.L.enTournee : '');
   // l'état d'un spectacle (son statut, modifiable, ou « En tournée »), dans l'élément donné
-  const etatEd = (s, balise, cls) => { const e = etatDe(s); return e ? `<${balise} class="${cls}"${s.statut ? edS(s, 'statut') : ''}>${esc(e)}</${balise}>` : ''; };
+  const etatEd = (s, balise, cls) => { const e = etatDe(s); return e ? `<${balise} class="${cls}${s.statut ? '' : ' respire'}"${s.statut ? edS(s, 'statut') : ''}>${esc(e)}</${balise}>` : ''; };
 
   // une carte de spectacle, dans son univers
   function carteUnivers(s, { href, h = 'h2', accroche = false } = {}) {
     const u = X.U[s.slug];
     return `<li class="uc univ" ${uAttrs(s)}>
-      <div class="uc-photo"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}${etatEd(s, 'span', 'uc-etat')}</div>
+      <div class="uc-photo" data-mv-nom="sp-${esc(s.slug)}"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}${etatEd(s, 'span', 'uc-etat')}</div>
       <div class="uc-corps">
         ${s.lieuTemps ? `<p class="uc-kicker"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}
         <${h} class="uc-titre u-titre"><a href="${esc(href)}"${edS(s, 'titre')}>${esc(s.titre)}</a></${h}>
@@ -1272,7 +1507,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       const [cle, x] = PHOTO_PORTE[e.cle] || [], img = cle ? photo(cle, '', x) : '';
       return `<li class="door" style="--v:${esc(e.couleurVive)};--c:${esc(e.couleur)};--i:${i}">
         <a class="door-link" href="${esc(e.href)}">
-          <span class="door-arche" aria-hidden="true">${img ? `<span class="door-photo">${img}</span>` : ''}<span class="door-lumiere"></span><span class="door-battant"></span></span>
+          <span class="door-arche" aria-hidden="true" data-mv-nom="entree-${esc(e.cle)}">${img ? `<span class="door-photo">${img}</span>` : ''}<span class="door-lumiere"></span><span class="door-battant"></span></span>
           <span class="door-bas"><span class="door-label">${esc(e.texte)}</span><span class="door-arr" aria-hidden="true">→</span></span>
         </a>
       </li>`;
@@ -1290,7 +1525,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       if (!s) return '';
       const t = (d.titre || [s.titre]).join(' '), dp = `site.diaporama.${i}`;
       return `<li class="uc univ" ${uAttrs(s)}>
-        <div class="uc-photo"${edP(s, 'photo')}>${photo(s.slug, t, cadrage(s))}</div>
+        <div class="uc-photo" data-mv-nom="sp-${esc(s.slug)}"${edP(s, 'photo')}>${photo(s.slug, t, cadrage(s))}</div>
         <div class="uc-corps">
           <p class="uc-kicker"${edS(s, s.lieuTemps ? 'lieuTemps' : 'creation')}>${esc(s.lieuTemps || s.creation)}</p>
           <h3 class="uc-titre u-titre">${(d.titre || [s.titre]).map((x, j) => `<span${d.titre ? ed(`${dp}.titre.${j}`) : edS(s, 'titre')}>${esc(x)}</span>`).join(' ')}</h3>
@@ -1317,7 +1552,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     </section>
     <section class="affiches-s" aria-labelledby="h-tournee">
       <div class="wrap">
-        <h2 class="affiches-titre" id="h-tournee">${esc(L.enTournee)}</h2>
+        <h2 class="affiches-titre respire" id="h-tournee">${esc(L.enTournee)}</h2>
         <ul class="ucartes affiches">${(S.diaporama || []).map(affiche).join('')}</ul>
       </div>
     </section>
@@ -1364,7 +1599,8 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
         (g.dates || []).forEach(d => {
           let k = cleDate(d, x.saison); const suite = !k; if (suite) k = prev; else prev = k;
           const sp = g.slug && X.bySlug[g.slug], titre = sp ? sp.titre : g.titre;
-          rows.push({ d, g, k: k || '', i: i++, suite, titre, cle: g.slug || `titre:${g.titre}`,
+          const n = i++;
+          rows.push({ d, g, k: k || '', i: n, fid: cleLigne(d, x.saison, n), suite, titre, cle: g.slug || `titre:${g.titre}`,
             txt: norm(`${titre} ${d.ligne} ${(d.details || []).map(y => y.texte).join(' ')} ${d.l != null && CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) });
         });
       });
@@ -1391,7 +1627,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const { d, g } = r, sp = g.slug && X.bySlug[g.slug], p = decoupeLigne(d.ligne);
     const quoi = r.suite ? '' : `<p class="dl-quoi">${sp ? `<a href="#/spectacle/${esc(g.slug)}/voir">${esc(r.titre)}</a>` : `<span>${esc(r.titre)}</span>`}${d.scolaire ? `<span class="ag-etiq">${esc(X.L.scolaire)}</span>` : ''}</p>`;
     const lieu = p.lieu ? `<p class="dl-ou">${d.lien ? `<a href="${esc(d.lien)}">${esc(p.lieu)}<span class="ext" aria-hidden="true">↗</span></a>` : esc(p.lieu)}</p>` : '';
-    return `<li class="dl${r.suite ? ' suite' : ''}${d.etat ? ' annule' : ''}" data-date-id="${esc(d.id ?? '')}" data-l="${d.l ?? ''}">
+    return `<li class="dl${r.suite ? ' suite' : ''}${d.etat ? ' annule' : ''}" data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(r.fid)}" data-l="${d.l ?? ''}">
       ${r.suite ? '' : `<p class="dl-quand"><span class="dl-jour">${esc(p.jour)}</span>${p.heure ? ` <span class="dl-mois">${esc(p.heure)}</span>` : ''}</p>`}
       <div>${lieu}${quoi}${d.etat ? `<p class="sl-etat">${esc(d.etat)}</p>` : ''}${details(d.details)}</div></li>`;
   }
@@ -1434,18 +1670,18 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       rows.forEach(r => { if (r.d.l != null) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, titre: r.titre, slug: r.g.slug }); } });
       return s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l), n: parL.get(x.l).length }));
     };
-    const listeProchaines = () => parMois(proch.filter(garde).map(r => r.d)).map(g => `<section class="groupe"><h3 class="mois">${esc(g.m)}</h3><ol data-agenda="">${g.ds.map(d => ligneDate(d, { entree: 'voir' })).join('')}</ol></section>`).join('');
+    const listeProchaines = () => parMois(proch.filter(garde).map(r => r.d)).map(g => groupeMois(g, 'voir')).join('');
     const corpsSaison = (s, rows, lx) => {
       const groupes = [];
       rows.forEach(r => { const m = r.k.slice(0, 7), g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
-      return `<div class="sai-liste" data-liste>${groupes.map(g => `<section class="groupe">${g.m ? `<h4 class="mois">${esc(titreMois(g.m))}</h4>` : ''}<ol data-agenda="">${g.rs.map(ligneAgenda).join('')}</ol></section>`).join('')}
+      return `<div class="sai-liste" data-liste>${groupes.map(g => `<section class="groupe">${g.m ? `<h4 class="mois" data-mv-cle="m:${esc(s.k)}:${esc(g.m)}">${esc(titreMois(g.m))}</h4>` : ''}<ol data-agenda="">${g.rs.map(ligneAgenda).join('')}</ol></section>`).join('')}
           ${s.k === D.saison ? '' : `<p class="sai-page"><a class="fleche" href="#/agenda/${esc(s.k)}">${esc(s.titre)}<span aria-hidden="true">→</span></a></p>`}</div>
         <div class="sai-carte">${lx.length ? carte({ lieux: lx, titre: s.titre, interactif: true, filtre: true, theme: 'voir' }) : ''}</div>`;
     };
     const saisonHtml = ({ s, rows }) => {
       const ouv = F.ouv.has(s.k), lx = lieuxDe(s, rows);
-      return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}"${ouv ? ' open' : ''}>
-        <summary><span class="sai-arche">${miniLieux(lx)}</span><span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${chevron}</span></summary>
+      return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
+        <summary><span class="sai-arche">${miniLieux(lx)}<span class="sai-battant" aria-hidden="true"></span></span><span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${chevron}</span></summary>
         <div class="sai-corps" data-sai="${esc(s.k)}">${ouv ? corpsSaison(s, rows, lx) : ''}</div></details>`;
     };
     const indexHtml = vis => {
@@ -1457,11 +1693,18 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const outilsHtml = () => `<div class="ag-outils">
         <label class="recherche"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
         <div class="cps" role="group" aria-label="${esc(L.spectacles)}">${puces.map(s => `<button class="cp" type="button" data-s="${esc(s.cle)}" aria-pressed="${s.cle === F.slug}" style="--c:${s.slug ? esc(X.bySlug[s.slug].couleurTexteClair) : 'var(--muted)'}"><i></i>${esc(s.titre)}</button>`).join('')}<span id="choix-lieu">${F.l !== null ? `<button class="puce" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}<span aria-hidden="true">×</span></button>` : ''}</span></div></div>`;
-    const vis0 = visibles();
+    // la frise de la saison : ses dates tout public, à venir (aux couleurs de leur spectacle) et déjà jouées (en retrait)
+    const encours = passe.find(s => s.k === D.saison);
+    const reperesSaison = () => [...proch.filter(garde).map(r => repereProchaine(r.d)),
+      ...(encours ? encours.rows.filter(r => !r.suite && !r.d.scolaire && garde(r)).map(r => repereLigne(r.d, D.saison, r.i, r.g.slug, r.titre)).filter(Boolean) : [])];
+    // la frise des saisons : chaque saison et sa densité (les dates que le filtre garde)
+    const bandesSaisons = () => passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).length));
     AG = { F };
     // ---- le câblage, une fois la vue dans la page (lierZones)
     AG.brancher = zone => {
       const racine = $('#ag-saisons'), index = $('#ag-index'), liste = $('[data-liste]', zone), mcP = $('.mc', zone);
+      let fSaison = null, fSaisons = null, agenda = false, suite = false;
+      const ctl = lierZone(zone, { naviguer: l => AG.choisir(l), ecoute: l => { if (fSaison) { if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); } } });
       const lierSaison = (corps, immediat) => {
         lierZone(corps, { naviguer: l => AG.choisir(l) });
         animerCarte($('.mc', corps), immediat);
@@ -1484,28 +1727,43 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
         $$('.sai[open] .sai-corps', racine).forEach(c => lierSaison(c, true));
         index.innerHTML = indexHtml(vis);
       };
-      const dessine = () => {
-        recompte();
-        liste.innerHTML = listeProchaines();
-        majCarte();
-        dessineSaisons();
+      const majOutils = () => {
         $('#choix-lieu').innerHTML = F.l !== null ? `<button class="puce" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}<span aria-hidden="true">×</span></button>` : '';
         $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
         if ($('#cherche').value !== F.q) $('#cherche').value = F.q;
       };
+      // filtrer, chercher : la liste et la frise de la saison glissent à leur nouvelle place dans l'image du geste (FLIP) ;
+      // l'agenda passé, sous le pli, suit dans la tâche d'après l'image, ses saisons glissant depuis l'endroit où elles sont
+      const dessine = (anime = true) => {
+        const faire = () => { recompte(); liste.innerHTML = listeProchaines(); majCarte(); majOutils(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
+        if (anime && MV) MV.flip(liste, faire, { cle: '[data-mv-cle]' }); else faire();
+        if (!agenda) return;
+        const saisons = () => { suite = false; if (!racine.isConnected) return;
+          if (anime && MV) MV.flip(racine, dessineSaisons, { cle: '[data-mv-cle]' }); else dessineSaisons();
+          if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+        if (!anime) saisons();
+        else if (!suite) { suite = true; requestAnimationFrame(() => setTimeout(saisons, 0)); }
+      };
       AG.choisir = l => { F.l = F.l === l ? null : l; dessine(); };
-      // l'état d'ouverture : à la main (toggle), ou par l'index
+      // l'état d'ouverture : à la main (toggle), par l'index ou par la frise des saisons ; les dates arrivent en cascade
       const remplir = dt => {
         const k = dt.dataset.saison, s = passe.find(x => x.k === k), c = $('.sai-corps', dt);
-        if (!s || !c || c.firstElementChild) return;
+        if (!s || !c || c.firstElementChild) return false;
         const rows = s.rows.filter(garde);
         c.innerHTML = corpsSaison(s, rows, lieuxDe(s, rows));
         lierSaison(c, false);
+        return true;
+      };
+      const deplier = dt => { const c = $('.sai-liste', dt); if (c && MV) MV.cascade(c, { selecteur: '.mois, .dl', max: 12, pas: 26, decalage: -8 }); };
+      const ouvrirSaison = k => {
+        const dt = $(`#sai-${CSS.escape(k)}`, racine); if (!dt) return;
+        if (!dt.open) { dt.open = true; F.ouv.add(k); if (remplir(dt)) deplier(dt); }
+        dt.scrollIntoView({ behavior: mouvement() ? 'smooth' : 'auto', block: 'start' });
       };
       racine.addEventListener('toggle', ev => {
         const dt = ev.target; if (!dt.matches || !dt.matches('details.sai')) return;
         const k = dt.dataset.saison;
-        if (dt.open) { F.ouv.add(k); remplir(dt); } else { F.ouv.delete(k); const c = $('.sai-corps', dt); if (c) { $$('.mc', c).forEach(m => io && io.unobserve(m)); c.innerHTML = ''; } }
+        if (dt.open) { F.ouv.add(k); if (remplir(dt)) deplier(dt); } else { F.ouv.delete(k); const c = $('.sai-corps', dt); if (c) { $$('.mc', c).forEach(m => io && io.unobserve(m)); c.innerHTML = ''; } }
         const b = $(`[data-k="${CSS.escape(k)}"]`, index); if (b) b.setAttribute('aria-expanded', String(dt.open));
         const vis = visibles(), tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k)), t = $('.idx-tout', index);
         if (t) { t.setAttribute('aria-expanded', String(tout)); t.innerHTML = tout ? doubleHaut : doubleBas; }
@@ -1514,19 +1772,30 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
         const b = ev.target.closest('button'); if (!b) return;
         if (b.classList.contains('idx-tout')) { F.ouv = b.getAttribute('aria-expanded') === 'true' ? new Set() : new Set(visibles().map(x => x.s.k)); dessineSaisons(); return; }
         if (b.dataset.eff) { if (b.dataset.eff === 'q') F.q = ''; else if (b.dataset.eff === 's') F.slug = null; else F.l = null; dessine(); return; }
-        const dt = $(`#sai-${CSS.escape(b.dataset.k)}`, racine); if (!dt) return;
-        dt.open = true; F.ouv.add(b.dataset.k); remplir(dt);
-        dt.scrollIntoView({ behavior: mouvement() ? 'smooth' : 'auto', block: 'start' });
+        ouvrirSaison(b.dataset.k);
       });
       $('#choix-lieu').addEventListener('click', ev => { if (ev.target.closest('button')) { F.l = null; dessine(); $('#cherche').focus(); } });
       $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; dessine(); }));
       let tempo = 0;
       $('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(dessine, 120); });
-      // les saisons ouvertes au départ (la saison en cours) : leurs cartes et leurs listes se répondent
-      $$('.sai[open] .sai-corps', racine).forEach(c => { if (c.firstElementChild) lierZone(c, { naviguer: l => AG.choisir(l) }); });
       if (F.l !== null || F.slug || terme()) majCarte();
+      // la frise de la saison, reliée à la liste et à la carte : un repère allume sa ligne et sa commune ; un clic mène à la ligne
+      fSaison = frise($('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: SAISON0.titre, largeur: largeurWrap(),
+        relier: { liste: main, carte: l => ctl && ctl.montrer(l) },
+        choix: p => { if (!$(`[data-frise-id="${CSS.escape(p.id)}"]`, main) && encours) ouvrirSaison(D.saison); allerLigne(p.id); } });
+      // l'agenda passé (sous le pli) : dessiné dans la tâche qui suit la première image, sauf quand la vue est refaite en place
+      // ou qu'un filtre est déjà là ; la frise des saisons l'accompagne (un clic ouvre la saison et y mène)
+      const agendaPasseVu = () => {
+        if (agenda || !racine.isConnected) return;
+        agenda = true;
+        dessineSaisons();
+        fSaisons = frise($('#ag-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
+          libelle: L.saisonsPrecedentes, classe: 'frise-saisons', largeur: largeurWrap(36), anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
+      };
+      if (enPlace || actif()) agendaPasseVu(); else requestAnimationFrame(() => setTimeout(agendaPasseVu, 0));
     };
     return `${heroEntree(e)}
+    <div class="rampe"><div class="wrap"><div class="rampe-frise" id="v-frise"></div></div></div>
     <section class="split" data-zone="voir" aria-labelledby="h-saison">
       <div class="split-carte"><div class="split-colle">${carte({ lieux: lieuxProch, titre: SAISON0.titre, interactif: true, filtre: true, theme: 'voir' })}</div></div>
       <div class="split-liste">
@@ -1537,8 +1806,9 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     </section>
     <section class="agenda-passe" id="v-agenda" aria-labelledby="h-prec"><div class="wrap">
       <h2 class="sec-titre sec-tete" id="h-prec">${esc(L.saisonsPrecedentes)}</h2>
-      <nav class="ag-index" id="ag-index" aria-label="${esc(L.saison)}">${indexHtml(vis0)}</nav>
-      <div id="ag-saisons">${vis0.map(saisonHtml).join('')}</div>
+      <div class="ag-frise" id="ag-frise"></div>
+      <nav class="ag-index" id="ag-index" aria-label="${esc(L.saison)}"></nav>
+      <div id="ag-saisons"></div>
     </div></section>
     ${enTournee.length ? `<section class="section" aria-labelledby="h-en-tournee"><div class="wrap">
       <h2 class="sec-titre sec-tete" id="h-en-tournee">${esc(L.actuellementEnTournee)}</h2>
@@ -1555,12 +1825,12 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const { L } = X, P = s.programmer || {};
     const faits = faitsDe(s);
     return `<li class="fp univ" ${uAttrs(s)}>
-      <div class="fp-photo"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}</div>
+      <div class="fp-photo" data-mv-nom="sp-${esc(s.slug)}"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}</div>
       <div class="fp-main">
         <p class="fp-kicker"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.statut ? `<span class="etat"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</p>
         <h3 class="fp-titre u-titre"><a href="#/spectacle/${esc(s.slug)}/programmer"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>
         ${s.sousTitre ? `<p class="fp-sous"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
-        ${P.representations ? `<p class="fp-repr"${edS(s, 'programmer', 'representations')}>${esc(P.representations)}</p>` : ''}
+        ${P.representations ? `<p class="fp-repr"${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</p>` : ''}
         ${faits.length ? `<ul class="faits">${faits.map(([f, k]) => `<li${ed(k)}>${esc(f)}</li>`).join('')}</ul>` : ''}
         ${(P.equipeCreation || []).length ? `<ul class="fp-equipe-c">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}
         <p class="fp-actions">
@@ -1570,6 +1840,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
           ${s.video && s.video.url ? `<a class="u-btn" href="${esc(s.video.url)}"><span aria-hidden="true">▶</span>${esc(L.bandeAnnonce)}<span class="ext" aria-hidden="true">↗</span></a>` : ''}
         </p>
         ${docsDe(s, 'pros').length ? `<div class="fp-docs"><p class="ct-k">${esc(L.aTelecharger)}</p>${listeDocs(docsDe(s, 'pros'))}</div>` : ''}
+        ${diffusion(s).length ? `<div class="diffusion"><p class="ct-k">${esc(L.dates)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}
         ${P.lieux ? `<details class="fp-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}
       </div>
       <div class="fp-equipe">${ficheEquipe(s)}</div>
@@ -1594,7 +1865,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     </div></section>
     <section class="bande" data-zone="tout" aria-labelledby="h-lieux">
       <div class="wrap bande-grille">
-        <div class="bande-tete"><h2 class="bande-titre" id="h-lieux">${esc(L.lieuxDiffusion)}</h2></div>
+        <div class="bande-tete"><h2 class="bande-titre" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>${planFrise('p-diff', null, frisesCompagnie(), 'p-diff')}</div>
         <div class="bande-carte">${carte({ lieux: tous, titre: L.lieuxDiffusion, theme: 'programmer', fin: .62 })}</div>
         <div class="bande-liste"><div class="tout-detail" data-detail style="--t:${esc(e.couleurVive)}">${detailLieu(tous[0])}</div></div>
       </div>
@@ -1663,7 +1934,8 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
         ${galerie.length ? `<ul class="galerie-ac">${galerie.map(k => `<li>${photo(k, A.titre)}</li>`).join('')}</ul>` : ''}
       </div>
     </div></section>` : ''}
-    ${SCOLAIRE.length ? `<section class="split" data-zone="scolaire" aria-labelledby="h-scolaire">
+    ${SCOLAIRE.length ? `${rampe('e-frise', 'scolaire', { echelle: 'periode', debut: `${D.aujourdhui.slice(0, 7)}-01`, points: SCOLAIRE.map(d => repereProchaine(d)), libelle: L.enEtablissement })}
+    <section class="split" data-zone="scolaire" aria-labelledby="h-scolaire">
       <div class="split-carte"><div class="split-colle">${carte({ lieux: CARTE.aVenir('scolaire'), titre: L.enEtablissement, interactif: true, filtre: true, theme: 'etablissement' })}</div></div>
       <div class="split-liste">
         <h2 class="split-titre" id="h-scolaire">${esc(L.enEtablissement)}</h2>
@@ -1719,6 +1991,8 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     <div class="dc-carte">${carte({ lieux, passe, titre, interactif: lieux.length > 0, filtre: true, noms: lieux.length <= 5, theme: 'u' })}</div>
     <div class="dc-liste"><div class="puce-zone" data-puce aria-live="polite"></div><ol data-liste data-agenda="${esc(slug)}">${dates.map(d => ligneDate(d, { titre: false, entree })).join('')}</ol></div>
   </div>`;
+  // la largeur de la colonne des chapitres d'un spectacle (le sommaire à gauche à partir de 1100 px), sans rien lire de la page
+  const largeurChap = () => innerWidth >= 1100 ? largeurWrap() - 184 - Math.min(64, Math.max(32, innerWidth * .04)) : largeurWrap();
   // sans date à venir, une liste vide (data-agenda) : en mode édition, on y ajoute la première
   const sansListe = s => `<div data-agenda="${esc(s.slug)}"></div>`;
   function chapitresVoir(s) {
@@ -1729,14 +2003,20 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     if (ps.length) ch.push({ id: 'ch-photos', titre: L.photos, html: galerie(s, ps) });
     const ms = medias(s);
     if (ms) ch.push({ id: 'ch-video', titre: L.bandeAnnonce, html: ms });
-    const pub = PUBLIC.filter(d => d.slug === s.slug), sp = CARTE.spectacle(s.slug);
+    const pub = PUBLIC.filter(d => d.slug === s.slug), sp = CARTE.spectacle(s.slug), u = X.U[s.slug];
+    // la frise de la tournée : toutes ses dates, passées (D.saisons ; elles mènent à leur saison) et à venir, et aujourd'hui
+    const passees = Object.entries(D.saisons || {}).flatMap(([k, SA]) => { let n = 0; return (SA.spectacles || []).flatMap(g => (g.dates || []).map(d => {
+      const i = n++; if (g.slug !== s.slug) return null; const p = repereLigne(d, k, i, s.slug, s.titre, u.vif);
+      return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/agenda/${k}` }) : null; })); }).filter(Boolean);
+    const pts = [...passees, ...pub.map(d => repereProchaine(d, u.vif))];
+    const fTournee = zone => planFrise('u-tournee', zone, pts.length ? { echelle: 'periode', points: pts, libelle: `${s.titre} – ${L.dates}`, largeur: largeurChap() } : null, 'u-frise');
     if (pub.length) {
       const lieux = sp.aVenir.map(x => ({ ...x, dates: (x.dates || []).filter(d => !d.scolaire) })).filter(x => x.dates.length);
-      ch.push({ id: 'ch-dates', titre: T.titre || L.actuellementEnTournee, chemin: T.titre ? `shows.${s.slug}.tournee.titre` : null, html: datesCarte({ lieux, passe: sp.passe, dates: pub, entree: 'voir', titre: T.titre || L.actuellementEnTournee, slug: s.slug }) });
+      ch.push({ id: 'ch-dates', titre: T.titre || L.actuellementEnTournee, chemin: T.titre ? `shows.${s.slug}.tournee.titre` : null, html: fTournee('spectacle') + datesCarte({ lieux, passe: sp.passe, dates: pub, entree: 'voir', titre: T.titre || L.actuellementEnTournee, slug: s.slug }) });
     } else if (s.statut || T.texte) {
       ch.push({ id: 'ch-dates', titre: T.titre || s.statut, chemin: `shows.${s.slug}.${T.titre ? 'tournee.titre' : 'statut'}`, html: `<div class="dc"><div class="dc-carte">${carte({ titre: s.titre, theme: 'u' })}</div>${T.texte ? `<div class="dc-liste"><p class="dc-texte"${edS(s, 'tournee', 'texte')}>${esc(T.texte)}</p></div>` : ''}</div>${sansListe(s)}` });
     } else if (sp.passe.length) {
-      ch.push({ id: 'ch-dates', titre: L.lieuxDiffusion, html: `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>${sansListe(s)}` });
+      ch.push({ id: 'ch-dates', titre: L.lieuxDiffusion, html: `${fTournee('survol')}<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>${sansListe(s)}` });
     }
     ch.push({ id: 'ch-distribution', titre: L.distribution, html: distribution(s, true) });
     return ch;
@@ -1753,13 +2033,13 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const { L } = X, P = s.programmer || {}, ch = [], sp = CARTE.spectacle(s.slug);
     const faits = faitsDe(s);
     ch.push({ id: 'ch-faits', titre: L.leSpectacle, html: `<div class="faits-bloc">
-        ${P.representations ? `<p class="repr-grand"${edS(s, 'programmer', 'representations')}>${esc(P.representations)}</p>` : s.statut ? `<p class="etat"${edS(s, 'statut')}>${esc(s.statut)}</p>` : ''}
+        ${P.representations ? `<p class="repr-grand"${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</p>` : s.statut ? `<p class="etat"${edS(s, 'statut')}>${esc(s.statut)}</p>` : ''}
         ${faits.length ? `<ul class="faits">${faits.map(([f, k]) => `<li${ed(k)}>${esc(f)}</li>`).join('')}</ul>` : ''}
       </div><p class="pr-actions">${dossierBouton(s.slug, 'u-btn plein')}</p>${contactHtml(s)}${(s.texte || []).length ? `<div class="prose-u">${bloc(s.texte[0], `shows.${s.slug}.texte.0`)}</div>` : ''}` });
     ch.push({ id: 'ch-distribution', titre: L.distribution, html: distribution(s) });
     const ms = medias(s);
     if (ms) ch.push({ id: 'ch-video', titre: L.bandeAnnonce, html: ms });
-    if (P.lieux || sp.passe.length || sp.aVenir.length) ch.push({ id: 'ch-lieux', titre: L.lieuxDiffusion, html: `${P.lieux ? `<p class="lieux-texte"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sp.passe.length || sp.aVenir.length ? `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ lieux: sp.aVenir, passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>` : ''}` });
+    if (P.lieux || sp.passe.length || sp.aVenir.length) ch.push({ id: 'ch-lieux', titre: L.lieuxDiffusion, html: `${diffusion(s).length ? `<div class="diffusion"><p class="ct-k">${esc(L.dates)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}${P.lieux ? `<p class="lieux-texte"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sp.passe.length || sp.aVenir.length ? `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ lieux: sp.aVenir, passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>` : ''}` });
     const DB = s.dossier && D.dossiers && D.dossiers[s.dossier];
     const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');   // la fiche technique déposée : en lien, avec le détail de Bérénice s'il y en a un
     if (P.ficheTechnique && DB && DB.accueil) ch.push({ id: 'ch-technique', titre: L.ficheTechnique, html: ficheTechnique(s, DB.accueil) + (fts.length ? listeDocs(fts) : '') });
@@ -1851,7 +2131,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
             ${s.cadre ? `<p class="show-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}
             ${s.accroche ? `<p class="show-accroche"${edS(s, 'accroche')}>${motAMot(s.accroche)}</p>` : ''}
           </div>
-          <figure class="show-photo"><div class="arche-img"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}</div>${s.credit ? `<figcaption${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
+          <figure class="show-photo"><div class="arche-img" data-mv-nom="sp-${esc(s.slug)}"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}</div>${s.credit ? `<figcaption${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
         </div>
       </header>
       <nav class="show-tabs" aria-label="${esc(s.titre)}"><div class="wrap"><ul>${ENTREES.filter(x => x.cle !== 'etablissement' || s.actionCulturelle).map(x => `<li><a class="show-tab${x.cle === cle ? ' on' : ''}" href="#/spectacle/${esc(s.slug)}/${esc(x.cle)}"${x.cle === cle ? ' aria-current="page"' : ''} style="--c:${esc(x.couleur)};--tc:${esc(u.clair ? x.couleur : x.couleurVive)}">${porteIco()}<span>${esc(x.court)}</span></a></li>`).join('')}</ul></div></nav>
@@ -1869,7 +2149,11 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const { S, ENTREE, bySlug } = X, ss = S.saisons || [];
     const i = ss.findIndex(x => x.saison === code), info = ss[i], Sd = D.saisons[code], v = ENTREE.voir;
     const avant = ss[i + 1], apres = i > 1 ? ss[i - 1] : (v ? { href: v.href, titre: ss[0].titre } : null);
+    // le rang de chaque ligne dans la saison (dans l'ordre de D) : la clé de son repère, comme dans l'agenda passé
+    const rang = new Map(); let n = 0; (Sd.spectacles || []).forEach(g => (g.dates || []).forEach(d => rang.set(d, n++)));
+    const pts = (Sd.spectacles || []).flatMap(g => { const sp = g.slug && bySlug[g.slug]; return (g.dates || []).map(d => repereLigne(d, code, rang.get(d), g.slug, sp ? sp.titre : g.titre)); }).filter(Boolean);
     return `${tete({ titre: info.titre, retour: v ? { href: v.href, texte: v.texte } : null })}
+    ${rampe('sa-frise', 'saison', pts.length ? { echelle: 'saison', saison: code, points: pts, libelle: info.titre } : null)}
     <div class="split" data-zone="saison">
       <div class="split-carte"><div class="split-colle">${carte({ lieux: CARTE.saison(code), titre: info.titre, interactif: true, filtre: true, theme: 'voir' })}</div></div>
       <div class="split-liste">
@@ -1878,7 +2162,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
           <h2 class="sp-titre">${g.slug && bySlug[g.slug] ? `<a href="#/spectacle/${esc(g.slug)}/voir">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
           ${g.sousTitre ? `<p class="sp-sous">${g.sousTitre}</p>` : ''}
           ${g.creation ? `<p class="sp-creation">${esc(g.creation)}</p>` : ''}
-          <ul class="sls" data-agenda="${esc(g.slug && bySlug[g.slug] ? g.slug : '')}">${(g.dates || []).map(ligneSaison).join('')}</ul>
+          <ul class="sls" data-agenda="${esc(g.slug && bySlug[g.slug] ? g.slug : '')}">${(g.dates || []).map(d => ligneSaison(d, cleLigne(d, code, rang.get(d)))).join('')}</ul>
         </section>`).join('')}</div>
         <nav class="saison-nav" aria-label="${esc(X.L.saison)}">
           ${avant ? `<a class="fleche" href="${esc(avant.href)}"><span aria-hidden="true">←</span>${esc(avant.titre)}</a>` : '<span></span>'}
@@ -1888,16 +2172,37 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     </div>`;
   }
 
+  /* ---------- l'espace pro : trois vraies portes vers les espaces réservés (equipe/, pro/, admin/, publiés à côté) ---------- */
+  function espacePro() {
+    const { S, ENTREE } = X, P = S.espacePro || {};
+    const lumiere = { equipe: (ENTREE.voir || {}).couleurVive, salles: (ENTREE.programmer || {}).couleurVive, admin: '#faf6f3' };
+    return `<header class="page-hero ep-hero"><div class="wrap">
+      <h1 class="page-title" tabindex="-1"${ed('site.espacePro.titre')}>${esc(P.titre)}</h1>
+      ${P.texte ? `<p class="hero-lead ep-texte"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}
+    </div></header>
+    <section class="ep-s" aria-label="${esc(P.titre)}"><div class="wrap">
+      <ul class="ep-portes">${(P.portes || []).map((x, i) => `<li class="ep-porte" style="--v:${esc(lumiere[x.cle] || '#f07ab6')}">
+        <span class="ep-arche" aria-hidden="true"><span class="ep-salle"></span><span class="ep-lumiere"></span><span class="ep-battant"></span></span>
+        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
+        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>
+      </li>`).join('')}</ul>
+    </div></section>`;
+  }
+
   /* ---------- la compagnie, le contact, les pages légales ---------- */
   function compagnie() {
     const { S, bySlug, SHOWS } = X, C = S.compagnie || {}, Dr = C.directeur;
     const showDe = d => { const s = SHOWS.filter(x => String(x.annee) === String(d.annee)); return s.length === 1 ? s[0] : null; };
     const lien = (d, i) => { const s = showDe(d), k = ed(`site.compagnie.dates.${i}.titre`); return s ? `<a href="#/spectacle/${esc(s.slug)}"${k}>${esc(d.titre)}</a>` : `<span${k}>${esc(d.titre)}</span>`; };
+    const ans = (C.dates || []).map(d => +d.annee).filter(Boolean);
     return `${tete({ titre: C.titre, chemin: 'site.compagnie.titre' })}
     <section class="section"><div class="wrap"><div class="prose cie">${(C.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div></div></section>
-    <section class="frise-s" aria-labelledby="h-dates"><div class="wrap">
-      <h2 class="frise-titre" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
-      <ol class="frise">${(C.dates || []).map((d, i) => { const s = showDe(d), u = s && bySlug[s.slug] ? X.U[s.slug] : null; return `<li${u ? ` style="--pt:${esc(u.clair ? u.aplat : u.titre)}"` : ''}><span class="frise-an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</span><span class="frise-pt" aria-hidden="true"></span><span class="frise-t">${lien(d, i)}</span></li>`; }).join('')}</ol>
+    <section class="histoire-s" aria-labelledby="h-dates"><div class="wrap">
+      <h2 class="histoire-titre" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
+      ${planFrise('c-frise', null, ans.length ? { echelle: 'periode', debut: `${Math.min(...ans)}-01-01`, fin: `${Math.max(...ans)}-12-31`, etiquettes: true, couloirs: 3, anMin: 64,
+        largeurCar: 8.4, largeurMax: 190, libelle: C.datesTitre, choix: () => {},
+        points: (C.dates || []).map((d, i) => { const s = showDe(d); return { id: `c${i}`, annee: d.annee, titre: d.titre, lien: s ? `#/spectacle/${s.slug}` : null, couleur: s ? couleurPrune(s.slug) : (X.ENTREE.voir || {}).couleurVive }; }) } : null, 'histoire-frise')}
+      <ol class="annees">${(C.dates || []).map((d, i) => `<li><span class="an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</span>${lien(d, i)}</li>`).join('')}</ol>
     </div></section>
     ${Dr ? `<section class="section" aria-labelledby="h-directeur"><div class="wrap directeur">
       <div class="dir-tete">${arche()}<h2 class="sec-titre" id="h-directeur"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p class="dir-chapeau"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}</div>
@@ -1943,7 +2248,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       </div>
       <div class="pied-bas">
         <ul class="pied-legal">${(K.legal || []).map((x, i) => `<li${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</li>`).join('')}</ul>
-        <ul class="pied-liens">${(S.liensLegaux || []).map(x => `<li><a href="${esc(x.href)}">${esc(x.texte)}</a></li>`).join('')}${typeof EDITION !== 'undefined' && X.L.modifierSite ? `<li><button type="button" class="pied-modifier" data-modifier>${porteIco()}<span>${esc(X.L.modifierSite)}</span></button></li>` : ''}</ul>
+        <ul class="pied-liens">${S.espacePro ? `<li><a href="#/espace-pro">${esc(S.espacePro.titre)}</a></li>` : ''}${(S.liensLegaux || []).map(x => `<li><a href="${esc(x.href)}">${esc(x.texte)}</a></li>`).join('')}${typeof EDITION !== 'undefined' && X.L.modifierSite ? `<li><button type="button" class="pied-modifier" data-modifier>${porteIco()}<span>${esc(X.L.modifierSite)}</span></button></li>` : ''}</ul>
       </div>
     </div>`;
   }
@@ -1966,7 +2271,8 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     $('.menu-txt').textContent = L.menu || '';
     $('#site-nav').setAttribute('aria-label', L.menu || '');
     $('.entrees ul').innerHTML = ENTREES.map(e => `<li><a class="entree" href="${esc(e.href)}" data-entree="${esc(e.cle)}" style="--c:${esc(e.couleur)};--cv:${esc(e.couleurVive)}">${porteIco()}<span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span></a></li>`).join('');
-    $('#site-nav ul').innerHTML = (S.menu || []).map(m => `<li><a href="${esc(m.href)}" data-onglet="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('');
+    $('#site-nav ul').innerHTML = (S.menu || []).map(m => `<li><a href="${esc(m.href)}" data-onglet="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')
+      + (S.espacePro ? `<li><a href="#/espace-pro" data-onglet="espace-pro">${esc(S.espacePro.titre)}</a></li>` : '');
     $('.site-footer').innerHTML = pied();
     if (ENTREES[0]) { root.style.setProperty('--rose', ENTREES[0].couleur); root.style.setProperty('--rose-v', ENTREES[0].couleurVive); }
     defsGlobales();
@@ -1981,6 +2287,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     let brut = location.hash.replace(/^#\/?/, '');
     try { brut = decodeURIComponent(brut); } catch (e) { /* adresse brute */ }
     const [ch, qs] = brut.split('?'), q = new URLSearchParams(qs || ''), c = ch.replace(/\/$/, '');
+    if (c === 'espace-pro' && S.espacePro) return { q, v: { vue: 'espace-pro', titre: S.espacePro.titre, onglet: 'espace-pro', html: espacePro } };
     const redir = S.redirections || {};
     if (redir['#/' + c]) return { aller: redir['#/' + c] };
     const mS = /^spectacle\/([^/]+)(?:\/([^/]+))?$/.exec(c), mA = /^agenda\/([^/]+)$/.exec(c);
@@ -1990,7 +2297,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
       if (!cle || !ENTREE[cle]) return { aller: `#/spectacle/${s.slug}/${entreeSp(s.slug, memo() || (ENTREE.voir ? 'voir' : Object.keys(ENTREE)[0]))}` };
       if (entreeSp(s.slug, cle) !== cle) return { aller: `#/spectacle/${s.slug}/voir` };   // sans action culturelle : « voir »
       const u = U[s.slug];
-      return { q, cle, v: { vue: 'spectacle', titre: cle === 'voir' ? s.titre : `${s.titre} - ${ENTREE[cle].court}`, entree: cle, marque: 'true', top: u.clair ? (s.fondSombre || '') : u.fond, html: () => spectacle(s, cle) } };
+      return { q, cle, v: { vue: 'spectacle', slug: s.slug, u, titre: cle === 'voir' ? s.titre : `${s.titre} - ${ENTREE[cle].court}`, entree: cle, marque: 'true', top: u.clair ? (s.fondSombre || '') : u.fond, html: () => spectacle(s, cle) } };
     }
     if (mA) {
       if (mA[1] === SAISON0.saison) return { aller: ENTREE.voir ? ENTREE.voir.href : '#/' };
@@ -2031,19 +2338,32 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
   }
 
   function lierZones(q, enPlace) {
+    const zones = {}, frisesZone = {};
     $$('[data-zone]', main).forEach(z => {
       const type = z.dataset.zone;
+      // la frise de la zone répond à sa carte et à sa liste : une commune survolée allume ses repères
+      const ecoute = l => { const f = frisesZone[type]; if (f) { if (l == null) f.eteindre(); else f.allumer({ l }); } };
       let ctl;
       if (type === 'accueil') ctl = lierZone(z, { naviguer: l => { const k = X.PUBLIC.some(d => d.l === l) ? 'voir' : 'etablissement'; if (X.ENTREE[k]) location.hash = `${X.ENTREE[k].href}?l=${l}`; } });
       else if (type === 'tout') {
         const det = $('[data-detail]', z), par = new Map(CARTE.tout().map(x => [x.l, x]));
         ctl = lierZone(z, { detail: l => { if (det && par.has(l)) det.innerHTML = detailLieu(par.get(l)); } });
-      } else if (type === 'voir') { lierZone(z, { naviguer: l => AG.choisir(l) }); AG.brancher(z); return; }
-      else ctl = lierZone(z);
+      } else if (type === 'voir') { AG.brancher(z); return; }
+      else ctl = lierZone(z, { ecoute });
+      zones[type] = { z, ctl };
       if (!ctl || !['voir', 'scolaire', 'saison', 'spectacle'].includes(type)) return;
       const brut = enPlace ? choixZones[type] : (q.get('l') !== null ? +q.get('l') : null);
       if (brut !== null && brut !== undefined && !Number.isNaN(brut) && $(`.mc-lieu[data-l="${brut}"]`, z)) ctl.choix(brut);
     });
+    // les frises de la vue : reliées à la liste et à la carte de leur zone ; un clic sur un repère mène à sa ligne
+    plans.forEach(p => {
+      const c = document.getElementById(p.id), Z = p.zone ? zones[p.zone] : null; if (!c) return;
+      const relier = Z ? { relier: { liste: Z.z.closest('.chap') || Z.z, carte: l => Z.ctl && Z.ctl.montrer(l) } } : {};
+      const f = frise(c, Object.assign({ largeur: largeurWrap(), choix: x => allerLigne(x.id) }, p.o, relier));
+      if (p.zone) frisesZone[p.zone] = f;
+    });
+    plans = [];
+    frisesDiffusion(main);
   }
 
   let ioPortes = null, ioSommaire = null;
@@ -2082,6 +2402,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     if (ea) { root.style.setProperty('--acc', ea.couleur); root.style.setProperty('--acc-v', ea.couleurVive); }
     root.style.setProperty('--hl', e ? e.couleurVive : 'rgba(255,255,255,.07)');
     root.dataset.vue = v.vue;
+    frises.forEach(f => f.detruire()); frises = []; plans = [];
     main.innerHTML = v.html();
     document.title = `${v.titre} - ${X.S.titreSuffixe}`;
     // l'entrée courante : « page » sur sa propre page, « true » quand on lit un spectacle ou une saison dans cette entrée
@@ -2093,18 +2414,100 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     lierZones(q, enPlace);
     suivrePortes(enPlace);
     suivreSommaire();
+    decorer(enPlace);
     if (enPlace) { restaurer(g); return; }
-    main.classList.remove('entre'); void main.offsetWidth; main.classList.add('entre');
-    window.scrollTo(0, 0);
-    const h1 = $('h1', main);
-    if (h1) h1.focus({ preventScroll: true });
+    // la vue remonte en haut et son titre prend le focus à l'image suivante (avant qu'elle soit peinte) : la mise en page se
+    // fait une seule fois, dans l'image, et non en plus dans la tâche du geste
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      const h1 = $('h1', main);
+      if (h1) h1.focus({ preventScroll: true });
+    });
   }
+  // les titres montent, les cartes viennent l'une après l'autre en pivotant sur leur gond, les chiffres comptent ; posé avant
+  // toute lecture de mise en page
+  function decorer(enPlace) {
+    $$('.sec-titre, .split-titre, .bande-titre, .affiches-titre, .histoire-titre, .du-titre, .chap-titre', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
+    $$('.ucartes, .fps, .acs, .galerie, .cast, .citations, .ateliers, .encadres, .ft-blocs, .ep-portes, .galerie-ac', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
+    $$('.gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
+    if (MV) MV.reveler(main, { immediat: enPlace });
+  }
+
+  /* ---------- les battants : la page qui arrive s'ouvre comme une porte, on referme derrière soi en revenant ---------- */
+  let btEl = null, btAnims = [], hautTete = 0;
+  if ('ResizeObserver' in window) new ResizeObserver(es => { const x = es[0]; hautTete = Math.round(x.borderBoxSize && x.borderBoxSize[0] ? x.borderBoxSize[0].blockSize : x.contentRect.height); }).observe(header);
+  // les couleurs d'une page : la porte (le fond de l'univers du spectacle, ou le prune teinté de l'entrée) et sa lumière
+  function couleursDe(v) {
+    if (v.u) return { porte: v.u.fond, lumiere: v.u.clair ? v.u.aplat : v.u.vif };
+    const e = v.vue in VUE_ENTREE && v.entree ? X.ENTREE[v.entree] : null;
+    if (e) return { porte: melange('#22101d', e.couleur, .3), lumiere: e.couleurVive };
+    return { porte: '#2e1628', lumiere: (X.ENTREE.voir || {}).couleurVive || '#f07ab6' };
+  }
+  const finirBattants = () => { btAnims.forEach(a => { try { a.cancel(); } catch (e) { /* finie */ } }); btAnims = []; if (btEl) btEl.classList.remove('on'); };
+  function battants(type, c) {
+    finirBattants();
+    if (!mouvement() || !main.animate || !c || type === 'onglet' || type === 'premiere') return;
+    if (!btEl) { document.body.insertAdjacentHTML('beforeend', '<div class="battants" aria-hidden="true"><i class="bt bt-g"></i><i class="bt bt-d"></i><i class="bt-jour"></i></div>'); btEl = document.body.lastElementChild; }
+    btEl.style.setProperty('--bt-haut', `${hautTete}px`);
+    btEl.style.setProperty('--bt-c', c.porte);
+    btEl.style.setProperty('--bt-l', c.lumiere);
+    btEl.classList.add('on');
+    const [g, d, j] = btEl.children, retour = type === 'retour';
+    // en avant : les vantaux, à peine entrouverts, s'ouvrent vers l'intérieur et la lumière passe ; au retour, ceux de la page
+    // quittée se rabattent et s'effacent (on a refermé derrière soi)
+    const o = { duration: retour ? 380 : 430, easing: retour ? 'cubic-bezier(.45,.05,.55,.95)' : 'cubic-bezier(.32,.6,.16,1)', fill: 'both' };
+    const vantail = k => retour
+      ? [{ transform: `rotateY(${k * 82}deg)`, opacity: .9 }, { transform: `rotateY(${k * 34}deg)`, opacity: .55, offset: .55 }, { transform: `rotateY(${k * 4}deg)`, opacity: 0 }]
+      : [{ transform: `rotateY(${k * 7}deg)` }, { transform: `rotateY(${k * 104}deg)` }];
+    btAnims = [g.animate(vantail(1), o), d.animate(vantail(-1), o)];
+    btAnims.push(retour
+      ? j.animate([{ opacity: .5, transform: 'scaleX(.6)' }, { opacity: 0, transform: 'scaleX(.05)' }], { duration: 300, easing: 'ease-in', fill: 'both' })
+      : j.animate([{ opacity: .9, transform: 'scaleX(.1)' }, { opacity: .85, transform: 'scaleX(.55)', offset: .3 }, { opacity: 0, transform: 'scaleX(1.3)' }], { duration: 430, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' }));
+    btAnims[0].onfinish = finirBattants;
+  }
+  // d'un onglet à l'autre d'un spectacle : les vantaux ne jouent pas ; le corps paraît sous l'en-tête qui reste
+  function corpsParait() {
+    const c = $('.show-corps-fond', main);
+    if (c && c.animate && mouvement()) c.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 40, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
+  }
+
+  /* ---------- la navigation : le genre de chaque passage (une entrée, un spectacle, un onglet, le retour, une page) ---------- */
+  const pile = [];
+  let dernierClic = null, vueCourante = null, couleurCourante = null;
+  document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (a) dernierClic = { a, t: performance.now() }; }, { capture: true, passive: true });
+  const cheminCourant = () => { let h = location.hash.replace(/^#\/?/, ''); try { h = decodeURIComponent(h); } catch (e) { /* brute */ } return h.split('?')[0].replace(/\/$/, ''); };
+  function genre(c) {
+    const h = '#/' + c, retour = pile.length > 1 && pile[pile.length - 2] === h;
+    if (retour) pile.pop(); else if (pile[pile.length - 1] !== h) pile.push(h);
+    if (pile.length > 60) pile.splice(0, pile.length - 60);
+    const sp = c.match(/^spectacle\/([^/]+)\//);
+    if (sp && vueCourante && vueCourante.startsWith(`spectacle/${sp[1]}/`)) return 'onglet';
+    if (retour) return 'retour';
+    if (sp) return 'spectacle';
+    return X.ENTREE[c] ? 'entree' : 'page';
+  }
+  // l'élément partagé : l'arche de la carte ou de la porte cliquée (elle devient celle de la page)
+  const partage = a => { if (!a) return null; const n = a.closest('[data-mv-nom]') || (a.closest('.uc, .fp, .door') || a).querySelector('[data-mv-nom]'); return n && main.contains(n) ? n : null; };
   function route() {
     lire();
     const r = resoudre();
     if (r.aller) { location.replace(r.aller); return; }
     if (r.cle) retenir(r.cle);
-    rendre(r.v, r.q, false);
+    const c = cheminCourant(), premiere = !vueCourante;
+    const type = premiere ? 'premiere' : genre(c);
+    if (premiere) pile.push('#/' + c);
+    const clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
+    dernierClic = null;
+    const depuis = type === 'entree' || type === 'spectacle' ? partage(clic && clic.a) : null;
+    const portes = type === 'retour' ? couleurCourante : couleursDe(r.v);
+    const faire = () => {
+      rendre(r.v, r.q, false);
+      vueCourante = c; couleurCourante = couleursDe(r.v);
+      battants(type, portes);
+      if (type === 'onglet') corpsParait();
+    };
+    // la première vue (et sous l'ouverture) sans transition ; ensuite, la porte s'ouvre (MOUVEMENT.transition)
+    if (premiere || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type, depuis });
   }
   // D a changé (la base de la compagnie) : la vue courante est refaite en place
   function rafraichir() {
@@ -2120,6 +2523,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const open = !header.classList.contains('nav-open');
     header.classList.toggle('nav-open', open);
     menuBtn.setAttribute('aria-expanded', String(open));
+    if (open && MV) MV.cascade($('#site-nav ul'), { pas: 32, decalage: -6 });
   });
   $('#site-nav').addEventListener('click', e => { if (e.target.closest('a')) closeMenu(); });
   // « Modifier le site » : la connexion puis l'édition sur place (EDITION, commun aux maquettes)
@@ -2137,11 +2541,13 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     }
     if (href === location.hash || (href === '#/' && !location.hash)) { e.preventDefault(); route(); }
   });
-  const salut = () => { const d = $('.doors', main); if (!d || !mouvement()) return; d.classList.remove('salut'); void d.offsetWidth; d.classList.add('salut'); };
+  const salut = () => { const d = $('.doors', main); if (!d || !mouvement()) return; d.classList.remove('salut'); requestAnimationFrame(() => d.classList.add('salut')); };
 
   /* ---------- la mise en place ---------- */
-  // les tentacules : roses, comme les portes ; passer une porte, c'est qu'une tentacule remonte l'ouvrir (la porte de l'en-tête d'entrée)
-  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'vive' });
+  // les tentacules : aucun moment dans cette maquette (la porte est son seul geste) ; aucun écouteur, rien ne joue sur un clic
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ clic: false, pages: false });
+  // la pression : la porte cède sous la main, dès le pointerdown
+  if (MV) MV.presse(document);
   lire();
   habiller();
   window.addEventListener('hashchange', route);
