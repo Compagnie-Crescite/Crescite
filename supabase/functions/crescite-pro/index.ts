@@ -8,8 +8,9 @@
 // Le jeton est la seule clé : il est dans le lien envoyé à la salle (…/pro/#<jeton>), jamais dans une adresse de requête.
 //
 // Déploiement, une fois : Supabase → Edge Functions → Deploy a new function → Via Editor, nom « crescite-pro », coller ce
-// fichier, Deploy. « Verify JWT » peut rester coché : la page pro/ s'annonce avec la clé publique du projet. Aucun secret à
-// saisir : SUPABASE_DB_URL, SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis par Supabase.
+// fichier, Deploy, puis dans les réglages de la fonction décocher « Verify JWT » : la page pro/ s'annonce avec la clé
+// publique du projet, qui n'est pas un jeton de connexion, et c'est le jeton de l'invitation qui ouvre l'accès. Aucun
+// secret à saisir : SUPABASE_DB_URL, SUPABASE_URL et SUPABASE_SERVICE_ROLE_KEY sont fournis par Supabase.
 import postgres from 'npm:postgres@3.4.5';
 
 const sql = postgres(Deno.env.get('SUPABASE_DB_URL')!, { prepare: false, max: 2 });
