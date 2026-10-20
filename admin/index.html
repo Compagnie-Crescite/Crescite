@@ -45,7 +45,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
 .direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
 .direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
+/* huit rubriques : sous 1 640 px l'adresse du compte se retire ; sous 1 520 px les rubriques passent sur une seconde ligne */
+@media (max-width: 1639px) { .qui .moi { display: none; } }
+@media (max-width: 1519px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; } }
+@media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
+@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg button { padding: 6px 8px; } }
 
 /* boutons et champs */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-weight: 600; text-decoration: none; color: var(--encre); white-space: nowrap; }
@@ -87,6 +92,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
+@media (min-width: 1101px) and (max-width: 1519px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
@@ -211,7 +217,9 @@ const TABLES = {
   crescite_ateliers: ['ateliers', 'id'], crescite_seances: ['seances', 'id'], crescite_textes: ['textes', 'cle'],
 };
 const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', crescite_dates: 'Date', crescite_representations: 'Représentation',
-  crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site' };
+  crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site',
+  crescite_personnes: 'Fiche d’une personne', crescite_personnes_privees: 'Coordonnées d’une personne', crescite_personnes_suivi: 'Notes sur une personne',
+  crescite_distributions: 'Distribution', crescite_equipes: 'Équipe d’une date', crescite_documents: 'Document de l’équipe', crescite_feuilles: 'Feuille de route' };
 
 // ===================================================================================================== outils
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -332,6 +340,8 @@ function ecranMotDePasse() {
 
 let demarre = false;
 async function demarrer() {
+  // feuille.js et equipe.js se chargent après ce script : on les attend
+  if (document.readyState === 'loading') return void document.addEventListener('DOMContentLoaded', demarrer, { once: true });
   if (!E.session) { demarre = false; return ecranConnexion(); }
   if (demarre) return;
   demarre = true;
@@ -365,11 +375,13 @@ async function tout(table, ordre) {
   }
 }
 async function chargerTout() {
+  const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const [sp, li, da, re, su, ls, at, se, tx, ad] = await Promise.all([
     tout('crescite_spectacles', 'ordre'), tout('crescite_lieux', 'id'), tout('crescite_dates', 'debut'), tout('crescite_representations', 'jour'),
     tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
     tout('crescite_textes'), tout('crescite_admins')]);
   Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad });
+  await equipe;
 }
 async function rechargerJournal() {
   const { data, error } = await sb.from('crescite_journal').select('*').order('id', { ascending: false }).limit(300);
@@ -382,30 +394,34 @@ function ecouter() {
   const ch = sb.channel('crescite-admin');
   Object.keys(TABLES).forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
   ch.subscribe(st => { E.direct = st === 'SUBSCRIBED'; const d = $('.direct'); if (d) { d.classList.toggle('on', E.direct); d.title = E.direct ? 'Connecté en temps réel' : 'Temps réel interrompu'; } });
+  ecouterEquipe();
 }
 function changement(t, p) {
-  const [k, pk] = TABLES[t];
-  const coll = E[k], cle = (p.eventType === 'DELETE' ? p.old : p.new)[pk];
-  const i = coll.findIndex(x => x[pk] === cle);
+  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t];
+  // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
+  const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
+  const i = coll.findIndex(x => cles.every(c => x[c] === ligne[c]));
   if (p.eventType === 'DELETE') { if (i >= 0) coll.splice(i, 1); } else if (i >= 0) coll[i] = p.new; else coll.push(p.new);
   clearTimeout(rendrePlusTard);
   rendrePlusTard = setTimeout(() => { if (!E.sale) rafraichirListes(); }, 200);
 }
 
 // ===================================================================================================== cadre et routes
-const RUBRIQUES = [['representations', 'Représentations'], ['spectacles', 'Spectacles'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+const RUBRIQUES = [['representations', 'Représentations'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
-    <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}">direct</span>
-    <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier sur le site ↗</a><span class="moi">${esc(E.session.user.email)}</span>
+    <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
+    <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
   tt('pieuvre');
 }
 const ROUTES = [
   [/^#\/representations(?:\/(nouvelle|\d+))?$/, m => vueDates(m[1])],
+  [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
   [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
+  [/^#\/equipe(?:\/(nouvelle|documents|\d+))?$/, m => vueEquipe(m[1])],
   [/^#\/ateliers(?:\/(seances|catalogue))?(?:\/(nouvelle|nouveau|\d+))?$/, m => vueAteliers(m[1] || 'seances', m[2])],
   [/^#\/lieux(?:\/(nouveau|\d+))?$/, m => vueLieux(m[1])],
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
@@ -684,12 +700,13 @@ function listeDates(zone, actif) {
 function nouvelleDate() {
   const sp = session.dates?.spectacle ? +session.dates.spectacle : (E.spectacles.find(s => s.page) || {}).id;
   return { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true,
-    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {} };
+    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [] };
 }
 function dateVersForm(d) {
   const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
   const su = E.suivis.find(x => x.date_id === d.id) || {};
-  return { ...clone(d), lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' } };
+  return { ...clone(d), lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
+    equipe: ecartsDate(d.id) };
 }
 const zoneNeuve = sel => { const a = $(sel), z = a.cloneNode(false); a.replaceWith(z); return z; };
 let ouvertureMuette = false;     // après un enregistrement, l'éditeur se redessine : la tentacule s'enroule autour du bouton, elle ne se déroule pas
@@ -723,12 +740,14 @@ function editeurDate(id, depart = null) {
       <div id="d-details"></div>
       <div class="champ"><label for="d-lien">Lien (billetterie ou page du lieu)</label><input type="url" id="d-lien" value="${esc(F.lien)}" placeholder="https://…"></div></div>
 
+    <div class="bloc" id="d-equipe"></div>
+
     <div class="bloc"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3><div class="rangee">
       <div class="champ"><label for="s-org">Organisateur</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
       <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
-    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? '<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>' : ''}`)}`;
+    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`)}`;
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
   const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
   const apercu = () => {
@@ -767,6 +786,7 @@ function editeurDate(id, depart = null) {
   dessinerReps(); dessinerDetails(); titre();
   comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); });
   apercu();
+  blocEquipeDate(zone, F, changer);
 
   zone.addEventListener('input', e => {
     const t = e.target, tr = t.closest('tr[data-i]');
@@ -847,7 +867,10 @@ async function enregistrerDate(F, d0, bouton) {
   const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: charge });
   bouton.disabled = false;
   if (error) return erreur(error);
+  // l'équipe de la date (ce qui change de la distribution en tournée), après la date elle-même
+  const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
+  if (!equipeOk) { F.id = id; history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; return; }
   E.sale = false;
   annoncer(F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.');
   if (!F.id) { history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; }
@@ -864,11 +887,12 @@ async function rechargerDate(id) {
 }
 async function supprimerDate(d) {
   const s = spectacle(d.spectacle_id);
-  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} » et ses représentations ?`)) return;
-  const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)) };
+  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} », ses représentations${avecFeuille(d.id) ? ' et sa feuille de route' : ''} ?`)) return;
+  const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)), equipe: copieEquipeDate(d.id) };
   const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
   if (error) return erreur(error, 'Suppression impossible');
   E.dates = E.dates.filter(x => x.id !== d.id); E.reps = E.reps.filter(x => x.date_id !== d.id); E.suivis = E.suivis.filter(x => x.date_id !== d.id);
+  E.equipes = E.equipes.filter(x => x.date_id !== d.id); E.feuilles = E.feuilles.filter(x => x.date_id !== d.id);
   E.sale = false;
   location.hash = '#/representations';
   annoncer('Date supprimée.', { action: async () => {
@@ -876,6 +900,7 @@ async function supprimerDate(d) {
     let r = await sb.from('crescite_dates').insert(sans(copie.date));
     if (!r.error && copie.reps.length) r = await sb.from('crescite_representations').insert(copie.reps.map(sans));
     if (!r.error && copie.suivi) r = await sb.from('crescite_dates_suivi').insert(sans(copie.suivi));
+    if (!r.error) { const e2 = await retablirEquipeDate(copie.equipe); if (e2) r = { error: e2 }; }
     if (r.error) return erreur(r.error, 'Rétablissement impossible');
     await rechargerDate(copie.date.id);
     annoncer('Date rétablie.');
@@ -995,7 +1020,7 @@ function editeurSpectacle(slug) {
   ['univers', 'action_culturelle', 'programmer'].forEach(k => { F[k] = F[k] || {}; });
   F.univers.couleurs = F.univers.couleurs || {}; F.univers.polices = F.univers.polices || {};
   F.tournee = F.tournee || {}; F.avec = F.avec || { libelle: 'avec :', valeur: '' }; F.video = F.video || { titre: '', url: '' };
-  const onglets = [...Object.keys(SPEC_SPECTACLE), 'Photos'];
+  const onglets = [...Object.keys(SPEC_SPECTACLE), 'Photos', ...ONGLETS_EQUIPE];
   let onglet = sessionStorage.getItem('crescite-onglet-sp') || 'Général';
   if (!onglets.includes(onglet)) onglet = 'Général';
   const dossiers = E.textes.filter(t => t.cle.startsWith('dossier:')).map(t => [t.cle, t.cle.slice(8)]);
@@ -1015,6 +1040,7 @@ function editeurSpectacle(slug) {
   const dessiner = () => {
     nChamp = 0;
     if (onglet === 'Photos') { zone.innerHTML = ongletPhotos(F) + pied(); }
+    else if (ONGLETS_EQUIPE.includes(onglet)) ongletEquipe(onglet, zone, F, s0);   // equipe.js : distribution, déroulé type, documents
     else {
       const specs = SPEC_SPECTACLE[onglet].concat(onglet === 'Action culturelle' ? [{ k: 'dossier', t: 'choix', l: 'Dossier scolaire', choix: [['', 'Aucun'], ...dossiers] }] : []);
       zone.innerHTML = `<div class="bloc">${onglet === 'Univers' ? '<div id="sp-contrastes"></div>' : ''}${specs.map(c => champ(c, F)).join('')}</div>${pied()}`;
@@ -1347,6 +1373,7 @@ function vueTextes(cle) {
 // ===================================================================================================== journal
 function resume(j) {
   const x = j.apres || j.avant || {};
+  if (RESUMES_EQUIPE[j.table_nom]) return RESUMES_EQUIPE[j.table_nom](x);
   if (j.table_nom === 'crescite_dates') { const s = spectacle(x.spectacle_id); return `${s?.titre || 'Date'} · ${jourCourt(x.debut)}${x.intitule ? ` · ${x.intitule.split(' — ')[1] || ''}` : ''}`; }
   if (j.table_nom === 'crescite_representations') { const d = E.dates.find(y => y.id === x.date_id); const s = d && spectacle(d.spectacle_id); return `${s?.titre || ''} · ${jourCourt(x.jour)}${x.heure ? ' · ' + AGENDA.heureTexte(h5(x.heure)) : ''}`; }
   if (j.table_nom === 'crescite_spectacles') return x.titre;
@@ -1373,16 +1400,17 @@ async function vueJournal() {
   dessiner();
   zone.addEventListener('click', async e => {
     const b = e.target.closest('[data-j]'); if (!b) return;
-    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || [null, 'id'];
+    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || TABLES_EQUIPE[j.table_nom] || [null, 'id'];
     const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
+    const ligne = (q, o) => [].concat(pk).reduce((q2, c) => q2.eq(c, o[c]), q);   // une clé d'une ou plusieurs colonnes
     let r;
-    if (j.operation === 'INSERT') { if (!confirm('Retirer cette ligne ajoutée ?')) return; r = await sb.from(j.table_nom).delete().eq(pk, j.apres[pk]); }
-    else if (j.operation === 'UPDATE') { if (!confirm('Remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await sb.from(j.table_nom).update(sans(j.avant)).eq(pk, j.avant[pk]); }
+    if (j.operation === 'INSERT') { if (!confirm('Retirer cette ligne ajoutée ?')) return; r = await ligne(sb.from(j.table_nom).delete(), j.apres); }
+    else if (j.operation === 'UPDATE') { if (!confirm('Remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await ligne(sb.from(j.table_nom).update(sans(j.avant)), j.avant); }
     else {
       if (!confirm('Rétablir cette ligne supprimée ?')) return;
       r = await sb.from(j.table_nom).insert(sans(j.avant));
       if (!r.error && j.table_nom === 'crescite_dates') {
-        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
+        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi', 'crescite_equipes', 'crescite_feuilles'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
         for (const x of liees) { const r2 = await sb.from(x.table_nom).insert(sans(x.avant)); if (r2.error) { r = r2; break; } }
       }
     }
@@ -1391,5 +1419,9 @@ async function vueJournal() {
   });
 }
 </script>
+<!-- la feuille de route (commune avec l'espace de l'équipe) et l'équipe : rubriques Équipe et Feuilles de route,
+     distribution, déroulé type et documents des spectacles, équipe de chaque date -->
+<script src="feuille.js"></script>
+<script src="equipe.js"></script>
 </body>
 </html>

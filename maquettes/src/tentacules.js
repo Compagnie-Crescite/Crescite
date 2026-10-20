@@ -4,7 +4,7 @@
    elle traverse l'écran, à la couleur de la destination, et la pieuvre la reprend. Ouvrir (une saison, un panneau, un menu)
    la déroule le long de ce qui s'ouvre, fermer l'enroule ; un onglet la voit glisser jusqu'à lui ; envoyer un formulaire
    ou enregistrer l'enroule autour du bouton. Un seul code : chaque maquette l'habille dans son style.
-   build.py l'ajoute après edition.js quand TENTACULES=1 est posé ; l'administration le charge à côté de son index.html.
+   build.py l'ajoute après edition.js dans chaque maquette et le copie à côté de l'index.html de l'administration, qui le charge.
 
    RIEN N'EST RETARDÉ NI BLOQUÉ : écouteurs passifs en phase de capture, jamais de preventDefault, un seul calque fixe
    (pointer-events: none, aria-hidden), un seul requestAnimationFrame, arrêté quand plus rien ne joue et quand l'onglet est

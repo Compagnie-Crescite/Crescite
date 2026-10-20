@@ -77,10 +77,10 @@
     const d = new Date(t);
     if (Number.isNaN(d.getTime())) return '';
     const an = d.getFullYear() !== new Date().getFullYear() ? ` ${d.getFullYear()}` : '';
-    return `le ${quantieme(d.getDate())} ${MOIS[d.getMonth()]}${an} à ${d.getHours()} h ${deux(d.getMinutes())}`;
+    return `le ${quantieme(d.getDate())}\u00a0${MOIS[d.getMonth()]}${an} à ${heureCourte(d)}`;
   };
-  const heureCourte = t => { const d = new Date(t); return `${d.getHours()} h ${deux(d.getMinutes())}`; };
-  const pluriel = (n, un, plusieurs = un + 's') => `${n} ${n > 1 ? plusieurs : un}`;
+  const heureCourte = t => { const d = new Date(t); return `${d.getHours()}\u00a0h\u00a0${deux(d.getMinutes())}`; };
+  const pluriel = (n, un, plusieurs = un + 's') => `${n}\u00a0${n > 1 ? plusieurs : un}`;
   const majuscule = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
   // la fin d'une date : son dernier jour ; une date au mois court jusqu'à la fin du mois, une date « saison » jusqu'en août
@@ -149,6 +149,7 @@
     if (code === 'weak_password' || /Password should|password is too weak/i.test(m)) return 'ce mot de passe est trop faible. Choisissez-en un plus long, avec des lettres et des chiffres';
     if (code === 'email_address_invalid' || /invalid format|valid email/i.test(m)) return 'cette adresse électronique n’est pas valide';
     if (code === 'session_not_found' || code === 'refresh_token_not_found' || code === 'PGRST301' || code === 'PGRST303' || /session missing|JWT expired/i.test(m)) return 'votre session a expiré. Reconnectez-vous';
+    if (/Object not found|not_found|does not exist or you do not have access/i.test(m + ' ' + (e?.error || ''))) return 'ce fichier n’est pas (ou plus) dans le stockage, ou il ne vous est pas ouvert. Prévenez l’administration';
     if (code === 'PGRST202' || code === 'PGRST205' || code === '42883' || code === '42P01' || /Could not find the (function|table)/i.test(m)) return 'l’espace de l’équipe n’est pas encore installé dans la base de la compagnie. Prévenez l’administration';
     if (code === '42501' || st === 401 || st === 403) return 'la base refuse cette opération à votre compte. Prévenez l’administration';
     if (st >= 500) return 'la base de la compagnie ne répond pas pour le moment. Réessayez dans un instant';
@@ -172,7 +173,7 @@
     motDePasse: ARRIVEE.erreur ? '' : ARRIVEE.type === 'recovery' ? 'nouveau' : (ARRIVEE.type === 'invite' || ARRIVEE.type === 'signup') ? 'bienvenue' : '',
     personne: null, privee: null, dates: [], distributions: [], equipes: [], documents: [], spectacles: new Map(),
     feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0, horsLigne: 0, rafraichit: false,
-    vue: '', ficheSale: false, retour: null, feuilleVue: null, sortieVoulue: false, versEspace: false,
+    vue: '', ficheSale: false, retour: null, feuilleVue: null, deplies: new Set(), sortieVoulue: false, versEspace: false, sansSession: false,
     messageConnexion: ARRIVEE.erreur ? {
       texte: `Ce lien ne peut plus servir : ${ARRIVEE.code === 'otp_expired' || /expired|invalid/i.test(ARRIVEE.erreur) ? 'il a expiré, ou il a déjà été ouvert une fois' : 'il n’a pas pu être vérifié'}. Demandez-en un nouveau ci-dessous.`,
       genre: 'erreur' } : null,
@@ -192,19 +193,19 @@
         : { texte: 'Votre session a pris fin. Reconnectez-vous.', genre: 'erreur' };
     }
     // jamais d'appel à la base dans ce rappel : supabase-js le déconseille (verrou)
-    if (['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'PASSWORD_RECOVERY'].includes(ev)) setTimeout(demarrer, 0);
+    if (['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT', 'PASSWORD_RECOVERY'].includes(ev) || (ev === 'TOKEN_REFRESHED' && E.sansSession)) setTimeout(demarrer, 0);
   });
 
   function reinitialiser() {
     Object.assign(E, { uid: null, moi: null, pret: false, ouverture: false, personne: null, privee: null, dates: [], distributions: [],
       equipes: [], documents: [], spectacles: new Map(), feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0,
-      horsLigne: 0, vue: '', ficheSale: false, retour: null, feuilleVue: null });
+      horsLigne: 0, vue: '', ficheSale: false, retour: null, feuilleVue: null, deplies: new Set(), sansSession: false });
   }
 
   // une page seule, centrée : connexion, mot de passe, compte sans fiche, panne
   function seul(html) {
     $('#app').innerHTML = `<main class="seul" id="contenu" tabindex="-1"><div class="porte">
-      <p class="porte-marque"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span><span class="marque-sous">équipe</span></p>
+      <p class="porte-marque"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span> <span class="marque-sous">équipe</span></p>
       ${html}</div></main>`;
     tt('pieuvre');
   }
@@ -267,7 +268,7 @@
         <p><button class="lien-btn" type="button" id="b-oubli">Mot de passe oublié ?</button></p>
       </div>
       <p class="note">Les comptes de l’équipe sont ouverts par l’administration de la compagnie. Pas encore de compte, ou une autre adresse ?
-        <a href="mailto:${CONTACT}?subject=${encodeURIComponent('Espace de l’équipe : mon compte')}">Écrivez-lui</a>.</p>`);
+        <a class="insecable" href="mailto:${CONTACT}?subject=${encodeURIComponent('Espace de l’équipe : mon compte')}">Écrivez-lui</a>.</p>`);
     const mel = $('#c-mel'), mdp = $('#c-mdp');
     brancherVoir($('#app'));
     [mel, mdp].forEach(i => i.addEventListener('input', () => effacerErreur(i)));
@@ -293,7 +294,7 @@
       if (!v) return;
       const { error } = await occupe(e.currentTarget, 'Envoi du lien…', () => sb.auth.signInWithOtp({ email: v, options: { shouldCreateUser: false, emailRedirectTo: retourUrl() } }));
       if (error) dire('#c-msg', `Le lien n’a pas pu partir : ${esc(motsErreur(error))}.`);
-      else dire('#c-msg', `Un lien de connexion vient de partir vers <b>${esc(v)}</b>. Ouvrez-le depuis votre messagerie : il vous ramène ici, connecté à votre espace. Il ne sert qu’une fois. Rien reçu d’ici quelques minutes ? Regardez dans les courriels indésirables.`, 'info');
+      else dire('#c-msg', `Un lien de connexion vient de partir vers <b>${esc(v)}</b>. Ouvrez-le depuis votre messagerie : il vous ramène ici, dans votre espace, et ne sert qu’une fois. Rien reçu d’ici quelques minutes ? Regardez dans les indésirables.`, 'info');
     });
     $('#b-oubli').addEventListener('click', async e => {
       const v = adresse();
@@ -318,7 +319,7 @@
           <p class="aide" id="n-aide">Huit caractères au moins. Compte : ${esc(mel)}</p></div>
         <div class="champ"><label for="n-mdp2">Le même, une seconde fois</label><input id="n-mdp2" type="password" autocomplete="new-password" required></div>
         <div class="boutons"><button type="submit" class="btn principal large">Enregistrer le mot de passe</button>
-          <button type="button" class="btn discret large" id="b-plus-tard">${bienvenue ? 'Plus tard' : 'Garder l’ancien mot de passe'}</button></div>
+          <button type="button" class="btn discret large" id="b-plus-tard">Plus tard</button></div>
       </form>`);
     brancherVoir($('#app'));
     const a = $('#n-mdp'), b = $('#n-mdp2');
@@ -346,11 +347,11 @@
     const mel = E.session?.user?.email || '';
     const corps = `Bonjour,\n\nJe n’arrive pas à ouvrir l’espace de l’équipe : mon compte n’est relié à aucune fiche.\nL’adresse de mon compte : ${mel}\n\nMerci !`;
     seul(`<h1 tabindex="-1">Votre compte n’est relié à aucune fiche de l’équipe</h1>
-      <p class="intro">Vous êtes bien connecté avec l’adresse <b>${esc(mel)}</b>, mais aucune fiche de l’équipe ne porte cette adresse.</p>
-      <p class="message info" role="status">Écrivez à l’administration de la compagnie en lui donnant l’adresse de votre compte, <b>${esc(mel)}</b> : elle la reliera à votre fiche.</p>
+      <p class="intro">Votre compte, <b>${esc(mel)}</b>, est bien ouvert, mais aucune fiche de l’équipe ne porte cette adresse.</p>
+      <p class="message conseil" role="status">Écrivez à l’administration de la compagnie en lui donnant l’adresse de votre compte, <b>${esc(mel)}</b> : elle la reliera à votre fiche.</p>
       <div class="boutons">
         <a class="btn principal large" href="mailto:${CONTACT}?subject=${encodeURIComponent('Espace de l’équipe : relier mon compte')}&body=${encodeURIComponent(corps)}">Écrire à l’administration</a>
-        <button type="button" class="btn discret large" data-reessayer>J’ai prévenu l’administration : réessayer</button>
+        <button type="button" class="btn discret large" data-reessayer>Réessayer</button>
         <button type="button" class="btn discret large" data-sortir>Se déconnecter</button>
       </div>`);
     $('#contenu h1').focus();
@@ -364,10 +365,25 @@
   }
 
   // ================================================================================================ démarrage
+  // la session gardée sur cet appareil, même expirée : sans réseau, supabase-js ne peut pas la renouveler et dit « pas de session »
+  const sessionGardee = () => { try { const x = JSON.parse(localStorage.getItem(SESSION) || 'null'); return x && x.refresh_token && x.user && x.user.id ? x : null; } catch (e) { return null; } };
   let tour = 0;
   async function demarrer() {
     const s = E.session;
-    if (!s) { E.motDePasse = ''; reinitialiser(); return ecranConnexion(); }
+    if (!s) {
+      E.motDePasse = '';
+      // sur le quai, sans réseau, la session a expiré : la dernière saison lue reste lisible, et tout se rouvre quand le réseau revient
+      const g = !E.sortieVoulue && sessionGardee(), m = g && reprendre(g.user.id);
+      if (m) {
+        if (E.sansSession && E.pret) return;
+        reinitialiser(); appliquer(m);
+        Object.assign(E, { uid: g.user.id, horsLigne: m.quand || 1, sansSession: true, pret: true });
+        coquille(); router({ arrivee: true });
+        return;
+      }
+      reinitialiser(); return ecranConnexion();
+    }
+    if (E.sansSession) { E.sansSession = false; E.pret = false; E.uid = null; }
     // supabase-js redit SIGNED_IN à chaque retour sur l'onglet : l'écran du mot de passe garde ce qui est tapé
     if (E.motDePasse) { if (!$('#f-mdp')) ecranMotDePasse(); return; }
     if (E.messageConnexion) { annoncer(E.messageConnexion.texte, { erreur: E.messageConnexion.genre === 'erreur' }); E.messageConnexion = null; }
@@ -486,9 +502,9 @@
   // ================================================================================================ le cadre et les routes
   function coquille() {
     $('#app').innerHTML = `<header class="tete"><div class="tete-in">
-        <a class="marque" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span><span class="marque-sous">équipe</span></a>
-        <p class="qui"><span class="qui-nom">${esc(nomDe(E.personne))}</span><button type="button" class="btn petit discret" data-sortir>Déconnexion</button></p>
-        <nav class="onglets" aria-label="Rubriques"><a href="#/saison">Ma saison</a><a href="#/documents">Mes documents</a><a href="#/fiche">Ma fiche</a></nav>
+        <a class="marque" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span> <span class="marque-sous">équipe</span></a>
+        <p class="qui"><span class="qui-nom">${esc(nomDe(E.personne))}</span> <button type="button" class="btn petit discret" data-sortir>Déconnexion</button></p>
+        <nav class="onglets" aria-label="Rubriques"><a href="#/saison">Ma saison</a> <a href="#/documents">Mes documents</a> <a href="#/fiche">Ma fiche</a></nav>
       </div></header>
       <div class="bandeau-etat" id="bandeau-etat"></div>
       <main id="contenu" tabindex="-1"></main>`;
@@ -504,7 +520,7 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    el.innerHTML = E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau.</span>
+    el.innerHTML = E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
   }
 
@@ -553,12 +569,13 @@
     const evs = evenementsAVenir(), nbReps = evs.filter(x => x.r).length, sansHeure = evs.length - nbReps;
     const resume = [nomDe(E.personne), `saison ${saisonDe(auj)}`,
       vivantes.length ? `${pluriel(vivantes.length, 'date')} à venir${nbReps ? `, ${pluriel(nbReps, 'représentation')}` : ''}` : 'aucune date à venir'].filter(Boolean).join(' · ');
-    const aideIcs = evs.length ? `Un fichier .ics de vos ${nbReps ? pluriel(nbReps, 'représentation') + ' à venir' : ''}${nbReps && sansHeure ? ' et de ' : ''}${sansHeure ? pluriel(sansHeure, 'date') + ' sans horaire' : ''}, avec le lieu et l’adresse : il s’ouvre dans l’agenda de votre téléphone ou de votre messagerie.`
-      : 'Aucune représentation à venir à ajouter pour l’instant.';
-    let html = `<div class="titre-vue"><h1>Ma saison</h1><p class="sous">${esc(resume)}</p>
-      <div class="actions"><button type="button" class="btn" id="b-agenda"${evs.length ? '' : ' disabled'}>${ICONES.agenda}Ajouter à mon agenda</button><p class="aide">${esc(aideIcs)}</p></div></div>`;
+    const quoi = [nbReps && (nbReps > 1 ? `vos ${pluriel(nbReps, 'représentation')} à venir` : 'votre représentation à venir'),
+      sansHeure && (sansHeure > 1 ? `${pluriel(sansHeure, 'date')} sans horaire` : 'une date sans horaire')].filter(Boolean).join(' et ');
+    let html = `<div class="titre-vue"><h1>Ma saison</h1><p class="sous">${esc(resume)}</p></div>`;
     if (!E.dates.length) html += '<p class="vide">Aucune date dans votre tournée pour l’instant. Dès que l’administration vous inscrira sur une date, elle apparaîtra ici.</p>';
-    if (prochaine) html += `<h2 class="titre-section">Prochaine date</h2>${billet(prochaine, { prochain: true })}`;
+    if (prochaine) html += `<h2 class="sr">Prochaine date</h2>${billet(prochaine, { prochain: true })}`;
+    if (avenir.length) html += `<div class="agenda"><button type="button" class="btn" id="b-agenda"${evs.length ? '' : ' disabled'}>${ICONES.agenda}Ajouter à mon agenda</button>
+      <p class="aide">${evs.length ? `${esc(majuscule(quoi))}, avec le lieu et l’adresse, en un fichier .ics pour votre téléphone ou votre messagerie.` : 'Aucune représentation à venir à ajouter pour l’instant.'}</p></div>`;
     if (suite.length) html += `<h2 class="titre-section">${prochaine ? 'Ensuite' : 'À venir'}</h2>${parMois(suite)}`;
     else if (E.dates.length && !avenir.length) html += '<p class="vide">Aucune date à venir pour l’instant.</p>';
     if (passees.length) html += `<h2 class="titre-section">Dates passées</h2><div class="saisons">${saisonsPassees(passees)}</div>`;
@@ -583,8 +600,8 @@
     const actuelle = saisonDe(aujourdhui());
     return [...parSaison.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([s, ds]) => {
       const reps = ds.filter(vivante).reduce((n, d) => n + (d.representations.length ? d.representations.filter(r => !r.annulee).length : (d.nb_representations || 0)), 0);
-      return `<details class="saison" data-saison="${esc(s)}"><summary><span class="s-nom">Saison ${esc(s)}${s === actuelle ? ' <span class="s-compte">(en cours)</span>' : ''}</span>
-        <span class="s-compte">${pluriel(ds.length, 'date')}${reps ? ` · ${pluriel(reps, 'représentation')}` : ''}</span></summary><div class="saison-corps"></div></details>`;
+      const compte = [s === actuelle && 'en cours', pluriel(ds.length, s === actuelle ? 'date passée' : 'date', s === actuelle ? 'dates passées' : 'dates'), reps && pluriel(reps, 'représentation')].filter(Boolean).join(' · ');
+      return `<details class="saison" data-saison="${esc(s)}"><summary><span class="s-texte"><span class="s-nom">Saison ${esc(s)}</span> <span class="s-compte">${compte}</span></span></summary><div class="saison-corps"></div></details>`;
     }).join('');
   }
   // une saison passée se dessine à l'ouverture
@@ -641,20 +658,32 @@
     return `du ${jourLong(a)} au ${jourLong(b)}`;
   }
 
+  // un billet : en haut la date (le spectacle, les jours, l'état, les horaires, le lieu) ; sous la perforation, la feuille de
+  // route et le détail (l'adresse et l'itinéraire, qui part, les documents) : déplié pour la prochaine date, d'un geste pour
+  // les autres. Une date annulée ou reportée garde l'essentiel.
   function billet(d, { prochain = false, passee = false } = {}) {
-    const sp = d.spectacle || {}, quand = quandTexte(d), etat = ETATS[d.statut];
+    const sp = d.spectacle || {}, quand = quandTexte(d), etat = ETATS[d.statut], vive = vivante(d);
     const cls = ['billet', prochain && 'prochain', passee && 'passee', etat && d.statut].filter(Boolean).join(' ');
     const precisions = (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte);
+    const detail = vive ? [blocAdresse(d, !passee), blocEquipe(d, passee), !passee && (prochain || !d.feuille) ? blocFeuille(d) : '', passee ? '' : blocDocuments(d)].join('') : '';
+    const feuille = prochain ? '' : feuilleCourte(d);
+    let bas = '';
+    if (prochain) bas = detail ? `<div class="billet-bas">${detail}</div>` : '';
+    else if (feuille || detail) {
+      const ouvert = E.deplies.has(d.id);
+      bas = `<div class="billet-pied">${feuille}${detail ? `<button type="button" class="deplier" aria-expanded="${ouvert}" aria-controls="bd-${d.id}" data-libelle="${passee ? 'Lieu et équipe' : 'Adresse, équipe et documents'}"><span class="deplier-lib">${ouvert ? 'Replier' : passee ? 'Lieu et équipe' : 'Adresse, équipe et documents'}</span><span class="sr"> : ${esc(sp.titre || '')}, ${esc(quand)}</span></button>` : ''}</div>
+        ${detail ? `<div class="billet-bas" id="bd-${d.id}"${ouvert ? '' : ' hidden'}>${detail}</div>` : ''}`;
+    }
     return `<article class="${cls}" id="billet-${d.id}" style="${styleU(sp)}" aria-labelledby="bt-${d.id}">
-      ${prochain ? `<div class="bandeau"><span class="bandeau-lib">Prochaine date</span><span class="decompte">${esc(decompte(d))}</span></div>` : ''}
+      ${prochain ? `<div class="bandeau"><span class="bandeau-lib">Prochaine date</span> <span class="decompte">${esc(decompte(d))}</span></div>` : ''}
       <div class="billet-haut">
-        <h3 class="billet-titre" id="bt-${d.id}"><span class="billet-spectacle">${esc(sp.titre || 'Spectacle')}</span><span class="billet-quand">${esc(majuscule(quand))}</span></h3>
+        <h3 class="billet-titre" id="bt-${d.id}"><span class="billet-spectacle">${esc(sp.titre || 'Spectacle')}</span> <span class="billet-quand">${esc(majuscule(quand))}</span></h3>
         ${etat ? `<p class="etat ${d.statut}">${etat}</p>` : ''}
         ${horaires(d)}
+        ${lieuCourt(d)}
         ${precisions.length ? `<ul class="precisions">${precisions.map(x => `<li>${esc(x.texte)}</li>`).join('')}</ul>` : ''}
       </div>
-      <div class="perfo" aria-hidden="true"></div>
-      <div class="billet-bas">${blocLieu(d)}${blocEquipe(d)}${blocFeuille(d, passee)}${blocDocuments(d)}</div>
+      ${bas ? `<div class="perfo" aria-hidden="true"></div>${bas}` : ''}
     </article>`;
   }
 
@@ -665,27 +694,41 @@
       return `<p class="sans-horaire">${n ? `${pluriel(n, 'représentation')} · ` : ''}horaires pas encore indiqués</p>`;
     }
     const plusieursJours = new Set(reps.map(r => r.jour)).size > 1;
-    return `<ul class="horaires" aria-label="Représentations">${reps.map(r => `<li${r.annulee ? ' class="annulee"' : ''}>
-        ${plusieursJours ? `<span class="h-jour">${esc(jourCourt(r.jour))}</span>` : ''}
+    return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="Représentations">${reps.map((r, i) => `<li${r.annulee ? ' class="annulee"' : ''}>
+        ${plusieursJours ? `<span class="h-jour">${i && reps[i - 1].jour === r.jour ? `<span class="sr">${esc(jourCourt(r.jour))}</span>` : esc(jourCourt(r.jour))}</span>` : ''}
         ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}</span>` : '<span class="heure vague">heure à préciser</span>'}
-        ${PUBLICS[r.public] ? `<span class="public${r.public === 'scolaire' ? ' sco' : ''}">${PUBLICS[r.public]}</span>` : ''}
-        ${r.annulee ? '<span class="etat annulee">annulée</span>' : ''}
-        ${r.note ? `<span class="note">${esc(r.note)}</span>` : ''}</li>`).join('')}</ul>`;
+        <span class="h-plus">${[PUBLICS[r.public] && `<span class="public${r.public === 'scolaire' ? ' sco' : ''}">${PUBLICS[r.public]}</span>`,
+          r.annulee && '<span class="etat annulee">annulée</span>', r.note && `<span class="note">${esc(r.note)}</span>`].filter(Boolean).join(' ')}</span></li>`).join('')}</ul>`;
   }
 
+  const sansAccent = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const contientMot = (texte, mot) => !!mot && new RegExp(`(^|[^a-z0-9])${sansAccent(mot).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-z0-9])`).test(sansAccent(texte));
   const urlSure = u => { try { const x = new URL(u, location.href); return /^https?:$/.test(x.protocol) ? x.href : ''; } catch (e) { return ''; } };
   function itineraire(l) {
     if (l.latitude != null && l.longitude != null && Number.isFinite(+l.latitude) && Number.isFinite(+l.longitude)) return `https://www.google.com/maps/dir/?api=1&destination=${+l.latitude},${+l.longitude}`;
     const q = [l.nom, l.adresse, l.commune].filter(Boolean).join(', ');
     return q ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}` : '';
   }
-  function blocLieu(d) {
+  const communeDe = l => `${l.commune}${l.departement ? `\u00a0(${l.departement})` : ''}`;
+  function lieuCourt(d) {
     const l = d.lieu;
-    if (!l) return `<div class="rubrique"><h4>Lieu</h4><p class="vide-petit">${d.intitule ? esc(d.intitule) : 'Le lieu n’est pas encore indiqué.'}</p></div>`;
-    const carte = itineraire(l), site = l.site_web ? urlSure(l.site_web) : '', nom = l.nom || l.commune;
-    return `<div class="rubrique lieu"><h4>Lieu</h4>
-      <p class="lieu-nom">${esc(nom)}</p>
-      <p class="lieu-adresse">${l.adresse ? `${esc(l.adresse)}<br>` : ''}${esc(l.commune)}${l.departement ? ` (${esc(l.departement)})` : ''}</p>
+    let t;
+    if (l) t = `<b>${esc(l.nom || communeDe(l))}</b>${l.nom ? ` · ${esc(communeDe(l))}` : ''}`;
+    else {
+      const ou = d.intitule && d.intitule.includes(' — ') ? d.intitule.split(' — ').pop() : '';
+      t = ou ? `<b>${esc(ou)}</b> · <span class="vague">salle à préciser</span>` : '<span class="vague">lieu à préciser</span>';
+    }
+    return `<p class="billet-ou">${ICONES.route}<span><span class="sr">Lieu : </span>${t}</span></p>`;
+  }
+  // l'adresse (la commune n'est pas répétée si l'adresse la donne), l'itinéraire et le site du lieu
+  function blocAdresse(d, avecCarte = true) {
+    const l = d.lieu;
+    if (!l) return '';
+    const lignes = l.adresse ? [l.adresse, contientMot(l.adresse, l.commune) ? '' : communeDe(l)].filter(Boolean) : [];
+    const carte = avecCarte ? itineraire(l) : '', site = avecCarte && l.site_web ? urlSure(l.site_web) : '', nom = l.nom || communeDe(l);
+    if (!lignes.length && !carte && !site) return '';
+    return `<div class="rubrique"><h4>${lignes.length ? 'Adresse' : 'Y aller'}</h4>
+      ${lignes.length ? `<p class="lieu-adresse">${lignes.map(esc).join('<br>')}</p>` : ''}
       ${carte || site ? `<p class="liens">${carte ? `<a class="btn petit" href="${esc(carte)}" target="_blank" rel="noopener">${ICONES.route}Itinéraire<span class="sr"> jusqu’à ${esc(nom)}, sur une carte, dans un nouvel onglet</span></a>` : ''}
         ${site ? `<a href="${esc(site)}" target="_blank" rel="noopener">Site du lieu<span class="sr"> (nouvel onglet)</span></a>` : ''}</p>` : ''}
     </div>`;
@@ -711,16 +754,16 @@
     eq.filter(e => e.present).forEach(e => ajouter(e.personne_id, e.personne, e.fonction, e.note));
     return [...gens.values()];
   }
-  function blocEquipe(d) {
-    const gens = quiPart(d);
-    if (!gens.length) return '<div class="rubrique"><h4>Qui part</h4><p class="vide-petit">L’équipe de cette date n’est pas encore indiquée.</p></div>';
-    return `<div class="rubrique"><h4>Qui part <span class="compte-nb">· ${gens.length}</span></h4><ul class="gens">${gens.map(g => `<li>
-        <span class="g-nom">${esc(g.nom || 'Une personne de l’équipe')}</span>${g.id === E.moi ? '<span class="vous">vous</span>' : ''}
-        ${g.fonctions.length ? `<span class="g-fonction">${esc(g.fonctions.join(', '))}</span>` : ''}${g.notes.length ? `<span class="g-fonction">${esc(g.notes.join(' ; '))}</span>` : ''}</li>`).join('')}</ul></div>`;
+  function blocEquipe(d, passee = false) {
+    const gens = quiPart(d), titre = passee ? 'L’équipe' : 'Qui part';
+    if (!gens.length) return `<div class="rubrique"><h4>${titre}</h4><p class="vide-petit">L’équipe de cette date n’est ${passee ? 'pas' : 'pas encore'} indiquée.</p></div>`;
+    return `<div class="rubrique"><h4>${titre} <span class="compte-nb">· ${gens.length}</span></h4><ul class="gens">${gens.map(g => `<li>
+        <span class="g-nom">${esc(g.nom || 'Une personne de l’équipe')}</span>${g.id === E.moi ? ' <span class="vous">vous</span>' : ''}
+        ${g.fonctions.length ? `<span class="g-fonction">${esc(g.fonctions.join(', '))}</span>` : ''} ${g.notes.length ? `<span class="g-note">${esc(g.notes.join(' ; '))}</span>` : ''}</li>`).join('')}</ul></div>`;
   }
 
-  function blocFeuille(d, passee) {
-    if (!d.feuille) return passee ? '' : '<div class="rubrique"><h4>Feuille de route</h4><p class="vide-petit">Pas encore publiée.</p></div>';
+  function blocFeuille(d) {
+    if (!d.feuille) return '<div class="rubrique"><h4>Feuille de route</h4><p class="vide-petit">Pas encore publiée.</p></div>';
     const f = d.feuille, titre = d.spectacle?.titre || '', jour = quandTexte(d);
     const version = `Version ${f.version || 1}${f.publiee_le ? `, publiée ${momentTexte(f.publiee_le)}` : ''}`;
     if (!outilFeuille()) return `<div class="rubrique"><h4>Feuille de route</h4><p class="f-version">${esc(version)}</p>
@@ -728,6 +771,15 @@
     return `<div class="rubrique"><h4>Feuille de route</h4><p class="f-version">${esc(version)}</p>
       <p class="liens"><a class="btn petit principal" href="#/feuille/${d.id}">${ICONES.lire}Lire<span class="sr"> la feuille de route de ${esc(titre)}, ${esc(jour)}</span></a>
       <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(titre)}, ${esc(jour)}</span></button></p></div>`;
+  }
+
+  function feuilleCourte(d) {
+    if (!d.feuille) return '';
+    const f = d.feuille, titre = d.spectacle?.titre || '', jour = quandTexte(d);
+    const lib = `<span class="f-lib">Feuille de route</span> <span class="f-version" title="${esc(`publiée ${momentTexte(f.publiee_le)}`)}">version ${f.version || 1}</span>`;
+    if (!outilFeuille()) return `<p class="f-court">${lib} <span class="vide-petit">L’outil qui l’affiche n’a pas pu être chargé : rechargez la page.</span></p>`;
+    return `<p class="f-court">${lib} <a class="btn petit principal" href="#/feuille/${d.id}">${ICONES.lire}Lire<span class="sr"> la feuille de route de ${esc(titre)}, ${esc(jour)}</span></a>
+      <button type="button" class="btn petit" data-pdf="${d.id}">${ICONES.pdf}PDF<span class="sr"> de la feuille de route de ${esc(titre)}, ${esc(jour)}</span></button></p>`;
   }
 
   const TYPES = { texte: 'Le texte', dossier: 'Le dossier', fiche_technique: 'La fiche technique', plan: 'Le plan' };
@@ -771,7 +823,7 @@
     if (E.erreurLiens) html += `<p class="message erreur" role="alert">Les fichiers ne peuvent pas s’ouvrir d’ici pour le moment (${esc(motsErreur(E.erreurLiens))}). Chacun sera redemandé quand vous l’ouvrirez.</p>`;
     if (!groupes.length) html += '<p class="vide">Aucun document pour l’instant. L’administration les ajoute au fil de la saison : le texte, le dossier, la fiche technique…</p>';
     html += groupes.map(g => `<section class="groupe-docs" style="${g.sp ? styleU(g.sp) : '--u:#a3306b;--u-fond:#f5e4ec;--u-texte:#a3306b'}" aria-labelledby="g-${g.id}">
-        <div class="groupe-tete"><span class="pastille" aria-hidden="true"></span><h2 id="g-${g.id}">${esc(g.sp ? g.sp.titre : 'Toute la compagnie')}</h2><span class="compte-nb">${pluriel(g.docs.length, 'document')}</span></div>
+        <div class="groupe-tete"><span class="pastille" aria-hidden="true"></span><h2 id="g-${g.id}">${esc(g.sp ? g.sp.titre : 'Toute la compagnie')}</h2> <span class="compte-nb">${pluriel(g.docs.length, 'document')}</span></div>
         <ul class="liste-docs">${g.docs.map(x => `<li>${ligneDocument(x)}</li>`).join('')}</ul></section>`).join('');
     html += piedVue();
     afficher('documents', 'Mes documents', html, { focus });
@@ -782,7 +834,7 @@
     if (x.fichier) source = /^[A-Z0-9]{2,4}$/.test(ext) ? ext : 'Fichier';
     else { try { source = new URL(x.url).hostname.replace(/^www\./, '') + ' ↗'; } catch (e) { source = 'Lien'; } }
     return lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span class="doc-texte"><span class="doc-type">${esc(TYPES_COURTS[x.type] || 'Document')}</span>
-      <span class="doc-titre">${esc(x.titre)}</span></span><span class="doc-src">${esc(source)}</span>`, 'doc');
+      <span class="doc-titre">${esc(x.titre)}</span></span> <span class="doc-src">${esc(source)}</span>`, 'doc');
   }
 
   // ================================================================================================ ma fiche
@@ -794,7 +846,7 @@
   ];
   const valeursFiche = () => Object.fromEntries(CHAMPS.map(([k]) => { const v = ($('#f-' + k)?.value || '').trim(); return [k, v || null]; }));
   function vueFiche(focus) {
-    const p = E.personne || {}, v = E.privee || {}, mel = E.session?.user?.email || v.email || '';
+    const p = E.personne || {}, v = E.privee || {}, mel = E.session?.user?.email || v.email || sessionGardee()?.user?.email || '';
     const roles = new Map();
     E.distributions.filter(x => x.personne_id === E.moi).forEach(x => {
       const f = x.categorie === 'jeu' ? (x.role ? `jeu (${x.role})` : 'jeu') : (x.fonction || CATEGORIES[x.categorie]);
@@ -881,9 +933,15 @@
   }
 
   // ================================================================================================ la feuille de route
-  const contexte = d => ({ date: d, spectacle: { titre: d.spectacle?.titre || '', slug: d.spectacle?.slug || '', univers: d.spectacle?.univers || {}, duree: d.spectacle?.duree || '' },
-    lieu: d.lieu || null, representations: d.representations });
-  const nomPdf = d => `feuille-de-route-${d.spectacle?.slug || 'spectacle'}-${d.debut}.pdf`;
+  // le contexte d'une feuille (FEUILLE.html, FEUILLE.pdf) : la date telle que la tournée la donne, et les documents que la
+  // feuille peut citer. Un fichier y est un lien signé, encore bon, dans la page ; dans le PDF, qu'on garde des jours, un lien
+  // vers « Mes documents », qui le signe de nouveau à l'ouverture.
+  const contexte = (d, { pdf = false } = {}) => ({
+    date: d, lieu: d.lieu || null, representations: d.representations,
+    spectacle: { titre: d.spectacle?.titre || '', slug: d.spectacle?.slug || '', univers: d.spectacle?.univers || {}, duree: d.spectacle?.duree || '' },
+    documents: E.documents.filter(x => x.spectacle_id == null || x.spectacle_id === d.spectacle?.id).map(x => ({ id: x.id, titre: x.titre,
+      url: x.fichier ? (!pdf && lienFrais(x.fichier)?.url) || `${retourUrl()}#/documents` : urlSure(x.url) || null })),
+  });
   async function chargerFeuille(id) {
     if (E.feuilles.has(id)) return E.feuilles.get(id);
     const { data, error } = await sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', id).eq('statut', 'publiee').maybeSingle();
@@ -891,38 +949,45 @@
     if (data) E.feuilles.set(id, data);
     return data;
   }
+  // la feuille de route, lue dans la page : FEUILLE.html donne la feuille entière (son en-tête compris) ; la page y ajoute le
+  // retour à la saison, la version et le PDF
   async function vueFeuille(id, focus) {
     const d = E.dates.find(x => x.id === id), ici = () => location.hash === `#/feuille/${id}`;
     const retour = '<p class="retour"><a href="#/saison" data-tt="retour">← Ma saison</a></p>';
-    const montrer = (html, f = focus) => afficher('saison', 'Feuille de route', html, { focus: f, sousPage: true });
+    const titre = `Feuille de route${d?.spectacle?.titre ? ` · ${d.spectacle.titre}` : ''}`;
+    const montrer = (html, f = focus) => afficher('saison', titre, html, { focus: f, sousPage: true });
     E.feuilleVue = null;
     if (!d) return montrer(`${retour}<div class="titre-vue"><h1>Feuille de route</h1></div><p class="message erreur" role="alert">Cette date n’est pas (ou plus) dans votre tournée.</p>`);
     E.retour = id;
     const sp = d.spectacle || {}, l = d.lieu;
-    const tete = (version, pdf) => `${retour}<div class="feuille-tete" style="${styleU(sp)}"><p class="sur">Feuille de route</p>
-      <h1>${esc(sp.titre || 'Spectacle')}</h1><p><b>${esc(majuscule(quandTexte(d)))}</b>${l ? ` · ${esc(l.nom || l.commune)}${l.nom ? `, ${esc(l.commune)}` : ''}` : ''}</p>
-      ${version ? `<p class="f-version">${esc(version)}</p>` : ''}${pdf ? `<div class="actions"><button type="button" class="btn principal" data-pdf="${d.id}">${ICONES.pdf}Télécharger le PDF</button></div>` : ''}</div>`;
+    // sans la feuille elle-même (chargement, erreur) : son en-tête, dit par la page
+    const tete = `${retour}<div class="feuille-tete" style="${styleU(sp)}"><p class="sur">Feuille de route</p><h1>${esc(sp.titre || 'Spectacle')}</h1>
+      <p><b>${esc(majuscule(quandTexte(d)))}</b>${l ? ` · ${esc(l.nom || l.commune)}${l.nom ? `, ${esc(l.commune)}` : ''}` : ''}</p></div>`;
     let f = E.feuilles.get(id) || null;
     if (!f) {
-      montrer(`${tete('', false)}<p class="chargement" role="status">Chargement de la feuille de route…</p>`, false);
+      montrer(`${tete}<p class="chargement" role="status">Chargement de la feuille de route…</p>`, false);
       try { f = await chargerFeuille(id); } catch (e) {
-        if (ici()) montrer(`${tete('', false)}<p class="message erreur" role="alert">La feuille de route n’a pas pu être lue : ${esc(motsErreur(e))}.</p>`);
+        if (ici()) montrer(`${tete}<p class="message erreur" role="alert">La feuille de route n’a pas pu être lue : ${esc(motsErreur(e))}.</p>`);
         return;
       }
       if (!ici()) return;
     }
-    if (!f) return montrer(`${tete('', false)}<p class="message erreur" role="alert">Cette feuille de route n’est pas (ou plus) publiée. L’administration la publiera dès qu’elle sera prête.</p>`);
+    if (!f) return montrer(`${tete}<p class="message erreur" role="alert">Cette feuille de route n’est pas (ou plus) publiée. L’administration la publiera dès qu’elle sera prête.</p>`);
     const version = `Version ${f.version || 1}${f.publiee_le ? `, publiée ${momentTexte(f.publiee_le)}` : ''}`;
     const F = outilFeuille();
-    if (!F) return montrer(`${tete(version, false)}<p class="message erreur" role="alert">Cette feuille de route est publiée, mais elle ne peut pas s’afficher ici : l’outil des feuilles de route (../admin/feuille.js) n’a pas pu être chargé. Rechargez la page ; si rien ne change, prévenez l’administration.</p>`);
-    let corps;
-    try { corps = await F.html(f, contexte(d)); } catch (e) {
-      console.error(e);
-      corps = `<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page : ${esc(e?.message || e)}. Essayez le PDF.</p>`;
-    }
+    if (!F) return montrer(`${tete}<p class="message erreur" role="alert">Cette feuille de route est publiée (${esc(version.toLowerCase())}), mais elle ne peut pas s’afficher ici : l’outil des feuilles de route (../admin/feuille.js) n’a pas pu être chargé. Rechargez la page ; si rien ne change, prévenez l’administration.</p>`);
+    let corps = '';
+    try { corps = await F.html(f, contexte(d)); } catch (e) { console.error(e); }
     if (!ici()) return;
     E.feuilleVue = { id, version: f.version, publiee_le: f.publiee_le };
-    montrer(`${tete(version, true)}<div class="feuille-cadre">${corps}</div>`);
+    const barre = `<div class="barre-feuille"><button type="button" class="btn principal" data-pdf="${d.id}">${ICONES.pdf}Télécharger le PDF</button><p class="f-version">${esc(version)}</p></div>`;
+    if (!corps) return montrer(`${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`);
+    // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
+    const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(sp.titre || '')}, ${esc(quandTexte(d))}</h1>`;
+    montrer(`<div class="vue-feuille">${retour}${titrePage}${barre}<div class="feuille-cadre">${corps}</div></div>`);
+    // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
+    const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
+    $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
   }
 
   async function telechargerPdf(bouton) {
@@ -933,7 +998,7 @@
       await occupe(bouton, 'Préparation du PDF…', async () => {
         const f = await chargerFeuille(id);
         if (!f) throw new Error('cette feuille de route n’est pas (ou plus) publiée');
-        await F.telecharger(f, contexte(d), nomPdf(d));
+        await F.telecharger(f, contexte(d, { pdf: true }));
       });
       annoncer('La feuille de route est téléchargée en PDF.');
     } catch (e) {
@@ -1012,12 +1077,13 @@
     E.ficheSale = false; E.sortieVoulue = true;
     oublier();
     const { error } = await sb.auth.signOut({ scope: 'local' });
-    if (error && E.session) {
-      // hors connexion : la session est oubliée ici, même si la base n'a pas pu en être prévenue
+    if (error && (E.pret || E.sansSession)) {
+      // hors connexion, la base n'a pas pu en être prévenue (et supabase-js garde la session) : elle est oubliée ici quand même
       try { localStorage.removeItem(SESSION); } catch (e) { /* rien */ }
-      E.session = null; E.sortieVoulue = false; reinitialiser();
+      E.session = null; reinitialiser();
       E.messageConnexion = { texte: 'La session est fermée sur cet appareil.', genre: 'info' };
       demarrer();
+      E.sortieVoulue = false;
     }
   }
 
@@ -1047,19 +1113,36 @@
     window.scrollTo(0, y);
     if (!discret) annoncer('Votre espace est à jour.');
   }
+  async function reessayer(voulu = false) {
+    if (E.sansSession) {
+      // le renouvellement de la session (TOKEN_REFRESHED) rouvre l'espace ; sinon, on reste sur la saison gardée
+      const { error } = await sb.auth.getSession();
+      if (error && voulu) annoncer(`Toujours hors connexion : ${motsErreur(error)}.`, { erreur: true });
+      return;
+    }
+    if (!E.pret) { E.uid = null; return demarrer(); }
+    return rafraichir({ discret: !voulu });
+  }
+  window.addEventListener('online', () => { if (E.horsLigne) reessayer(); });
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && E.pret && Date.now() - E.chargeLe > 120000) rafraichir({ discret: true });
+    if (document.visibilityState === 'visible' && E.pret && !E.sansSession && Date.now() - E.chargeLe > 120000) rafraichir({ discret: true });
   });
 
   document.addEventListener('click', async e => {
     const t = e.target.closest('button, a');
     if (!t) return;
     if (t.matches('[data-sortir]')) return sortir();
-    if (t.matches('[data-reessayer]')) {
-      if (!E.pret) { E.uid = null; return demarrer(); }
-      return occupe(t, 'Actualisation…', () => rafraichir());
-    }
+    if (t.matches('[data-reessayer]')) return occupe(t, 'Un instant…', () => reessayer(true));
     if (t.id === 'b-agenda') return telechargerAgenda();
+    if (t.matches('.deplier')) {
+      const bas = document.getElementById(t.getAttribute('aria-controls')), id = Number(t.getAttribute('aria-controls').slice(3)), ouvrir = t.getAttribute('aria-expanded') !== 'true';
+      if (!bas) return;
+      bas.hidden = !ouvrir;
+      t.setAttribute('aria-expanded', String(ouvrir));
+      $('.deplier-lib', t).textContent = ouvrir ? 'Replier' : t.dataset.libelle;
+      if (ouvrir) E.deplies.add(id); else E.deplies.delete(id);
+      return;
+    }
     if (t.matches('[data-pdf]')) return telechargerPdf(t);
     if (t.matches('[data-fichier]')) {
       const chemin = t.dataset.fichier;

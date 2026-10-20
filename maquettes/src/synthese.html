@@ -1940,7 +1940,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { ajuste(); echelle(); });
 
   // les tentacules : comme les bras de la carte, magenta et ponctuées de ventouses ; chaque entrée donne sa couleur à la remontée de sa page
-  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'ventouses', entrees: 'couleur' });
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'ventouses', entrees: 'couleur', detail: { page: .8 } });
   lire();
   cadre();
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);

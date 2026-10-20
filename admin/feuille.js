@@ -30,7 +30,7 @@ const FEUILLE = (() => {
 
   // ================================================================================================ outils
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const clone = o => JSON.parse(JSON.stringify(o ?? null));
   const txt = v => String(v ?? '').trim();
   const maj = s => s ? s[0].toUpperCase() + s.slice(1) : '';
@@ -86,6 +86,11 @@ const FEUILLE = (() => {
     { k: 'representations', titre: 'Représentations', forme: 'liste', base: true, entete: true, ajout: 'Représentation',
       colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'public', l: 'Public', t: 'choix', choix: PUBLICS },
         { k: 'note', l: 'Précision', t: 'texte', ph: 'complet, audiodécrite…' }, { k: 'annulee', l: 'Annulée', t: 'case' }] },
+    { k: 'planning', titre: 'Planning', forme: 'liste', base: true, souple: true, ajout: 'Ligne',
+      colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'fin', l: 'Fin', t: 'heure' },
+        { k: 'quoi', l: 'Quoi', t: 'texte', large: true }, { k: 'qui', l: 'Qui', t: 'texte' }, { k: 'ou', l: 'Où', t: 'texte' }],
+      vue: (v, ctx) => lignesParJour(trier(v), r => ({ h: heure(r.heure), h2: heure(r.fin), titre: txt(r.quoi), sous: [txt(r.qui), txt(r.ou)].filter(Boolean).join(' · '),
+        accent: r.rep === true || /^repr[ée]sentation/i.test(txt(r.quoi)) }), ctx) },
     { k: 'lieu', titre: 'Lieu', forme: 'fiche', base: true,
       champs: [{ k: 'nom', l: 'Nom' }, { k: 'adresse', l: 'Adresse' }, { k: 'commune', l: 'Commune' },
         { k: 'itineraire', l: 'Itinéraire', t: 'url', aide: 'Composé d’après la position du lieu : à remplacer par un meilleur lien au besoin.' },
@@ -107,11 +112,6 @@ const FEUILLE = (() => {
         const ps = [phrase, ...paragraphes(v.details)].filter(Boolean);
         return ps.length ? { forme: 'texte', paragraphes: ps } : null;
       } },
-    { k: 'planning', titre: 'Planning', forme: 'liste', base: true, souple: true, ajout: 'Ligne',
-      colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'fin', l: 'Fin', t: 'heure' },
-        { k: 'quoi', l: 'Quoi', t: 'texte', large: true }, { k: 'qui', l: 'Qui', t: 'texte' }, { k: 'ou', l: 'Où', t: 'texte' }],
-      vue: (v, ctx) => lignesParJour(trier(v), r => ({ h: heure(r.heure), h2: heure(r.fin), titre: txt(r.quoi), sous: [txt(r.qui), txt(r.ou)].filter(Boolean).join(' · '),
-        accent: r.rep === true || /^repr[ée]sentation/i.test(txt(r.quoi)) }), ctx) },
     { k: 'transport', titre: 'Transport', forme: 'liste', ajout: 'Trajet',
       colonnes: [{ k: 'jour', l: 'Jour', t: 'jour' }, { k: 'heure', l: 'Heure', t: 'heure' }, { k: 'mode', l: 'Moyen', t: 'texte', ph: 'Camion, train, voiture…' },
         { k: 'trajet', l: 'Trajet', t: 'texte', ph: 'Rouen – Pont-Audemer', large: true }, { k: 'qui', l: 'Qui', t: 'texte' }, { k: 'details', l: 'Précisions', t: 'texte' }],
@@ -224,6 +224,8 @@ const FEUILLE = (() => {
     if (mel) reste = reste.replace(mel, ' ');
     reste = reste.replace(/\b(t[ée]l[ée]?(?:phone)?|portable|mobile|courriel|e-?mail|m[ée]l)\s*[.:]?\s*(?=[\s,;–—-]|$)/gi, ' ')
       .replace(/\(\s*\)/g, ' ').replace(/\s*[,;–—-]\s*(?=[,;–—-]|$)/g, '').replace(/^\s*[,;:–—-]\s*/, '').replace(/\s+/g, ' ').replace(/[\s,;:–—-]+$/, '').trim();
+    const m = /^([^:\d@,]{2,24}?)\s*:\s*(\S.*)$/.exec(reste);
+    if (m && m[1].trim().split(/\s+/).length <= 2) { role = `${role} (${m[1].trim()[0].toLowerCase()}${m[1].trim().slice(1)})`; reste = m[2]; }
     return { nom: reste, role, telephone: tel ? telTexte(tel) : '', email: mel };
   }
   function composerContacts(suivi, autres) {
@@ -379,7 +381,7 @@ const FEUILLE = (() => {
       const v = c[s.k];
       if (v == null || (Array.isArray(v) && !v.length) || v === '') return null;
       const b = s.vue(v, ctxVue);
-      return b ? { k: s.k, titre: s.titre, ...b } : null;
+      return b ? { ...b, k: s.k, section: s.titre } : null;
     }).filter(Boolean);
     const filet = filetDe(sp);
     return { compagnie: COMPAGNIE, titre: txt(sp.titre) || 'Feuille de route', sousTitre: txt(f.titre), quand, quandCourt, ou, representations, alerte, version, publiee: !!publiee,
@@ -414,13 +416,13 @@ const FEUILLE = (() => {
 .feuille .f-h small{display:block;font-weight:500;color:var(--f-gris);font-size:13px}
 .feuille .f-t{font-weight:600}
 .feuille .f-sous{display:block;color:var(--f-gris);font-size:14px;font-weight:400}
-.feuille .f-l.f-accent{background:var(--f-teinte);border-left:3px solid var(--f-filet);margin:0 -10px;padding:9px 10px 9px 7px;border-bottom-color:transparent;border-radius:3px}
+.feuille .f-l.f-accent{background:var(--f-teinte);border-left:3px solid var(--f-filet);margin:0 0 0 -10px;padding:9px 8px 9px 7px;border-bottom-color:transparent;border-radius:0 3px 3px 0}
 .feuille .f-cartes{display:grid;gap:0 22px}
 .feuille .f-cartes.f-compact{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
 .feuille .f-c{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 14px;padding:9px 0;border-bottom:1px solid var(--f-trait)}
 .feuille .f-c .f-qui{min-width:0;flex:1 1 200px}
 .feuille .f-c .f-coord{display:flex;flex-wrap:wrap;gap:2px 14px;font-variant-numeric:tabular-nums}
-.feuille .f-c .f-coord a{white-space:nowrap}
+.feuille .f-c .f-coord a{white-space:nowrap;color:inherit;text-decoration-color:color-mix(in srgb,var(--f-fonce) 40%,transparent);text-decoration-thickness:1px}
 .feuille .f-fiche .f-titre-fiche{margin:8px 0 0;font-weight:700;font-size:17px}
 .feuille .f-fiche p{margin:2px 0 0}
 .feuille .f-liens{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
@@ -430,6 +432,7 @@ const FEUILLE = (() => {
 .feuille dd{margin:0;white-space:pre-line}
 .feuille .f-texte p{margin:8px 0 0;white-space:pre-line}
 .feuille ul.f-docs{margin:8px 0 0;padding-left:1.2em}
+.feuille ul.f-docs a{color:inherit;text-decoration-color:color-mix(in srgb,var(--f-fonce) 40%,transparent)}
 .feuille .f-pied{margin:30px 0 0;padding:10px 0 0;border-top:1px solid var(--f-trait);display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;font-size:12.5px;color:var(--f-gris)}
 @media (max-width:560px){
   .feuille{padding:20px 16px 18px;border-left:0;border-right:0;border-radius:0;box-shadow:none;font-size:15.5px}
@@ -464,7 +467,7 @@ const FEUILLE = (() => {
 <header><p class="f-sur">${esc(v.compagnie)} · Feuille de route</p><h1>${esc(v.titre)}</h1>${v.sousTitre ? `<p class="f-soustitre">${esc(v.sousTitre)}</p>` : ''}
 ${v.quand ? `<p class="f-quand">${esc(v.quand)}</p>` : ''}${v.ou ? `<p class="f-ou">${esc(v.ou)}</p>` : ''}${seances ? `<ul class="f-seances" aria-label="Représentations">${seances}</ul>` : ''}
 ${v.alerte ? `<p class="f-alerte" role="alert">${esc(v.alerte)}</p>` : ''}</header>
-${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.titre)}</h2>${RENDU_HTML[s.forme](s)}</section>`).join('\n')}
+${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.section)}</h2>${RENDU_HTML[s.forme](s)}</section>`).join('\n')}
 <footer class="f-pied"><span>${esc(v.compagnie)} · ${esc(v.titre)}${v.quandCourt ? ` · ${esc(v.quandCourt)}` : ''}</span><span>${esc(v.version)}</span></footer></article>`;
   }
 
@@ -488,21 +491,29 @@ ${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.titre)}</h2>${R
   const LARGEUR = 595.28 - 2 * 50;
   const tableSobre = { hLineWidth: (i, n) => (i === 0 || i === n.table.body.length ? 0 : 0.5), vLineWidth: () => 0, hLineColor: () => TRAIT,
     paddingLeft: i => (i === 0 ? 0 : 8), paddingRight: () => 0, paddingTop: () => 5, paddingBottom: () => 5 };
+  // les horaires, en retrait de quelques points : la teinte des représentations ne colle pas au texte
+  const tableLignes = { ...tableSobre, paddingLeft: i => (i === 0 ? 6 : 8), paddingRight: i => (i === 1 ? 6 : 0) };
   const RENDU_PDF = {
-    lignes: (b, v) => {
-      const corps = [];
-      b.groupes.forEach(g => {
-        if (g.jour) corps.push([{ text: pt(g.jour), colSpan: 2, bold: true, fontSize: 10, margin: [0, corps.length ? 8 : 2, 0, 0] }, {}]);
-        g.lignes.forEach(x => corps.push([
-          { text: pt(x.h ? (x.h2 ? `${x.h} – ${x.h2}` : x.h) : '–'), bold: true, noWrap: true, fillColor: x.accent ? v.teinte : null, margin: x.accent ? [4, 0, 0, 0] : [0, 0, 0, 0] },
-          { stack: [{ text: pt(x.titre), bold: !!x.accent }, ...(x.sous ? [{ text: pt(x.sous), color: GRIS, fontSize: 8.5, margin: [0, 1, 0, 0] }] : [])], fillColor: x.accent ? v.teinte : null }]));
-      });
-      return { table: { widths: [74, '*'], body: corps, dontBreakRows: true }, layout: tableSobre };
+    // un tableau par jour : une journée ne se coupe pas d'une page à l'autre (sauf si elle dépasse une page)
+    lignes: (b, v) => ({ stack: b.groupes.map((g, n) => ({
+      table: { widths: [78, '*'], dontBreakRows: true, body: [
+        ...(g.jour ? [[{ text: pt(g.jour), colSpan: 2, bold: true, fontSize: 10, margin: [-6, n ? 8 : 2, 0, 0] }, {}]] : []),
+        ...g.lignes.map(x => [
+          { text: pt(x.h ? (x.h2 ? `${x.h} – ${x.h2}` : x.h) : '–'), bold: true, noWrap: true, fillColor: x.accent ? v.teinte : null },
+          { stack: [{ text: pt(x.titre), bold: !!x.accent }, ...(x.sous ? [{ text: pt(x.sous), color: GRIS, fontSize: 8.5, margin: [0, 1, 0, 0] }] : [])], fillColor: x.accent ? v.teinte : null }])] },
+      layout: tableLignes, unbreakable: g.lignes.length <= 22 })) }),
+    cartes: b => {
+      const qui = x => ({ stack: [{ text: pt(x.titre), bold: true }, ...(x.sous ? [{ text: pt(x.sous), color: GRIS, fontSize: 8.5 }] : []), ...(x.lignes || []).map(t => ({ text: pt(t), color: GRIS, fontSize: 8.5 }))] });
+      const tel = x => x.tel ? { text: pt(telTexte(x.tel)), link: telLien(x.tel), noWrap: true } : { text: '' };
+      // l'équipe sur deux colonnes : nom et fonction, téléphone ; les contacts sur une, avec l'adresse électronique
+      if (b.compact) {
+        const corps = [];
+        for (let i = 0; i < b.cartes.length; i += 2) { const [x, y] = [b.cartes[i], b.cartes[i + 1]]; corps.push([qui(x), tel(x), { text: '' }, ...(y ? [qui(y), tel(y)] : [{ text: '' }, { text: '' }])]); }
+        return { table: { widths: ['*', 'auto', 14, '*', 'auto'], dontBreakRows: true, body: corps }, layout: tableSobre };
+      }
+      return { table: { widths: ['*', 'auto', 'auto'], dontBreakRows: true, body: b.cartes.map(x => [qui(x), tel(x),
+        x.email ? { text: pt(x.email), link: 'mailto:' + x.email, color: GRIS } : { text: '' }]) }, layout: tableSobre };
     },
-    cartes: b => ({ table: { widths: ['*', 'auto', 'auto'], dontBreakRows: true, body: b.cartes.map(x => [
-      { stack: [{ text: pt(x.titre), bold: true }, ...(x.sous ? [{ text: pt(x.sous), color: GRIS, fontSize: 8.5 }] : []), ...(x.lignes || []).map(t => ({ text: pt(t), color: GRIS, fontSize: 8.5 }))] },
-      x.tel ? { text: pt(telTexte(x.tel)), link: telLien(x.tel), noWrap: true } : { text: '' },
-      x.email ? { text: pt(x.email), link: 'mailto:' + x.email, color: GRIS } : { text: '' }]) }, layout: tableSobre }),
     fiche: (b, v) => ({ stack: [
       ...(b.titre ? [{ text: pt(b.titre), bold: true, fontSize: 11, margin: [0, 4, 0, 1] }] : []),
       ...b.lignes.map(t => ({ text: pt(t) })),
@@ -520,7 +531,7 @@ ${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.titre)}</h2>${R
       { text: '\n' }]);
     if (seances.length) seances.pop();
     const entete = [
-      { text: pt(`${v.compagnie} · Feuille de route`).toUpperCase(), fontSize: 8, bold: true, characterSpacing: 1.6, color: GRIS },
+      { text: pt(`${v.compagnie} · Feuille de route`).toUpperCase(), fontSize: 8, bold: true, characterSpacing: 1.2, color: GRIS },
       { text: pt(v.titre), fontSize: 23, bold: true, margin: [0, 6, 0, 0], lineHeight: 1.05 },
       ...(v.sousTitre ? [{ text: pt(v.sousTitre), fontSize: 11, color: GRIS, margin: [0, 2, 0, 0] }] : []),
       ...(v.quand ? [{ text: pt(v.quand), fontSize: 13, bold: true, margin: [0, 9, 0, 0] }] : []),
@@ -529,10 +540,16 @@ ${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.titre)}</h2>${R
       { canvas: [{ type: 'rect', x: 0, y: 0, w: LARGEUR, h: 3, color: v.filet }], margin: [0, 12, 0, 0] },
       ...(v.alerte ? [{ table: { widths: ['*'], body: [[{ text: pt(v.alerte), color: '#8c1d16', bold: true, fillColor: '#fdecea', margin: [6, 4, 6, 4] }]] }, layout: 'noBorders', margin: [0, 10, 0, 0] }] : []),
     ];
-    const corps = v.sections.flatMap(s => [
-      { stack: [{ text: pt(s.titre).toUpperCase(), fontSize: 8.5, bold: true, characterSpacing: 1.6, color: GRIS }, { canvas: [{ type: 'line', x1: 0, y1: 3, x2: LARGEUR, y2: 3, lineWidth: 0.6, lineColor: TRAIT }] }],
-        margin: [0, 18, 0, 4], headlineLevel: 1 },
-      RENDU_PDF[s.forme](s, v)]);
+    const titreSection = s => ({ stack: [{ text: pt(s.section).toUpperCase(), fontSize: 8.5, bold: true, characterSpacing: 1.2, color: GRIS },
+      { canvas: [{ type: 'line', x1: 0, y1: 3, x2: LARGEUR, y2: 3, lineWidth: 0.6, lineColor: TRAIT }] }], margin: [0, 18, 0, 4] });
+    // la hauteur d'une section, à peu près : sous une demi-page et demie, elle reste d'un seul tenant
+    const hauteur = s => s.forme === 'lignes' ? s.groupes.reduce((h, g) => h + (g.jour ? 24 : 0) + g.lignes.reduce((x, l) => x + (l.sous ? 30 : 20), 0), 0)
+      : s.forme === 'cartes' ? s.cartes.reduce((h, c) => h + 22 + (c.sous ? 11 : 0) + (c.lignes || []).length * 11, 0) / (s.compact ? 2 : 1)
+      : s.forme === 'fiche' ? 24 + s.lignes.length * 13 + (s.liens.length ? 18 : 0) + s.paires.reduce((h, [, x]) => h + 12 + Math.ceil(String(x).length / 80) * 12, 0)
+      : s.forme === 'texte' ? s.paragraphes.reduce((h, x) => h + 6 + Math.ceil(x.length / 95) * 12, 0) : (s.items || []).length * 13;
+    const corps = v.sections.flatMap(s => hauteur(s) < 430
+      ? [{ stack: [titreSection(s), RENDU_PDF[s.forme](s, v)], unbreakable: true }]
+      : [{ ...titreSection(s), headlineLevel: 1 }, RENDU_PDF[s.forme](s, v)]);
     return {
       pageSize: 'A4', pageMargins: [50, 54, 50, 50],
       info: { title: pt(`Feuille de route · ${v.titre}${v.quandCourt ? ' · ' + v.quandCourt : ''}`), author: COMPAGNIE, subject: pt(v.version) },

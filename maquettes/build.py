@@ -17,7 +17,6 @@ Les fichiers privés (logo 2.0, photos) sont lus dans private/ ; sans eux, des s
 import base64
 import importlib.util
 import json
-import os
 import re
 import sys
 from datetime import date
@@ -464,12 +463,13 @@ D_SAISON = "2026-2027"
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js")
+OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "tentacules.js")
 
 
 def outils():
-    """Les outils communs, dans l'ordre. tentacules.js (la pieuvre guide et ses tentacules) n'y entre que si TENTACULES=1."""
-    return OUTILS + (("tentacules.js",) if os.environ.get("TENTACULES") == "1" else ())
+    """Les outils communs, dans l'ordre. tentacules.js (la pieuvre du logo guide chaque clic et chaque changement de page) vient
+    en dernier ; ?anim=0 dans l'adresse l'éteint (captures, essais)."""
+    return OUTILS
 
 
 def avec_outils(name, src):
@@ -522,11 +522,19 @@ def admin(dest):
     import shutil
     (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
+    for f in ("feuille.js", "equipe.js"):   # la feuille de route (commune avec equipe/) et l'équipe
+        shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
     shutil.copyfile(SRC / "agenda.js", dest / "admin" / "agenda.js")
-    if os.environ.get("TENTACULES") == "1":
-        shutil.copyfile(SRC / "tentacules.js", dest / "admin" / "tentacules.js")
+    shutil.copyfile(SRC / "tentacules.js", dest / "admin" / "tentacules.js")
+
+
+def equipe(dest):
+    """L'espace de l'équipe (equipe/ : la page personnelle de chaque personne), à côté de l'administration : il charge par
+    ../admin/ le client Supabase, l'outil des lignes d'agenda, la feuille de route et les tentacules, que admin(dest) copie."""
+    import shutil
+    shutil.copytree(ROOT / "equipe", dest / "equipe", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
 
 
 def pages(D, files, names):
@@ -547,6 +555,7 @@ def pages(D, files, names):
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
     build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
     admin(docs)
+    equipe(docs)
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
     print(f"pages : {len(names)} maquettes et la planche dans docs/ ({size:.1f} Mo)")
@@ -563,6 +572,7 @@ def main():
         out.write_text(assemble(n, D, photo_urls), encoding="utf-8")
         print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
     admin(DIST)
+    equipe(DIST)
     (DIST / "data.json").write_text(json.dumps(dict(D, photos={k: f"[photo {k}]" for k in photo_urls}), ensure_ascii=False, indent=1), encoding="utf-8")
     if "--captures" in sys.argv:
         captures(names)
