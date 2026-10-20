@@ -375,6 +375,28 @@ html.ed-actif .c-frise { display: none; }
 .legal h2:first-child { margin-top: 0; }
 .legal a { color: var(--magenta-texte); }
 
+/* ———— l'espace pro : trois portes vers les espaces réservés, en index (règle 16) ———— */
+.ep-texte { margin: 22px 0 0; max-width: 34em; font: italic 400 clamp(1.15rem, 1rem + .5vw, 1.4rem)/1.45 var(--serif); color: var(--gris); }
+.ep-portes { list-style: none; margin: 0; padding: 0; }
+.ep { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) auto; align-items: center; gap: 10px clamp(20px, 4vw, 56px); padding: clamp(24px, 3vw, 38px) 0; }
+.ep:last-child { border-bottom: 1px solid var(--filet); }
+.ep > .filet { top: 0; }
+.ep-t { margin: 0; font: italic 400 clamp(1.6rem, 1.15rem + 1.3vw, 2.35rem)/1.08 var(--serif); text-wrap: balance; transition: color .18s; }
+.ep-a { color: inherit; text-decoration: none; }
+/* toute la rangée mène à l'espace : le lien s'étend sur elle (son titre reste son nom) */
+.ep-a::after { content: ''; position: absolute; inset: 0; border-radius: 4px; }
+.ep-a:focus-visible { outline: none; }
+.ep-a:focus-visible::after { outline: 3px solid var(--encre); outline-offset: 2px; }
+html.ed-actif .ep-a::after { content: none; }
+.ep-x { margin: 0; max-width: 32em; color: var(--gris); font: 400 1rem/1.55 var(--sans); }
+.ep-f { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; border: 1.5px solid var(--encre); color: var(--encre); transition: translate .18s var(--mv-courbe), background .18s, border-color .18s, color .18s, scale .12s; }
+/* au survol : le titre prend la couleur de la compagnie, la flèche se remplit et avance, un filet magenta se trace */
+.ep::after { content: ''; position: absolute; z-index: 1; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--magenta); transform: scaleX(0); transform-origin: 0 50%; transition: transform .45s var(--mv-courbe); pointer-events: none; }
+.ep:hover::after, .ep:focus-within::after { transform: none; }
+.ep:hover .ep-t, .ep:focus-within .ep-t { color: var(--magenta-texte); }
+.ep:hover .ep-f, .ep:focus-within .ep-f { background: var(--magenta); border-color: var(--magenta); color: #fff; translate: 4px 0; }
+.ep:has(.ep-a.mv-presse) .ep-f { scale: .92; transition-duration: .06s; }
+
 /* ———— le pied de page ———— */
 footer { background: var(--nuit); color: #d8cdd1; padding: 48px 0 44px; font-size: .92rem; }
 .pied { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 28px; }
@@ -998,6 +1020,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .top .second a { padding: 12px 4px; font-size: 1.05rem; border-bottom: 1px solid var(--filet); }
   .top .second a:last-child { border-bottom: 0; }
   .top .second a[aria-current="page"] { box-shadow: inset 3px 0 0 var(--magenta); padding-left: 14px; }
+  .ep { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "t f" "x x"; padding: 22px 0 24px; }
+  .ep-t { grid-area: t; } .ep-x { grid-area: x; } .ep-f { grid-area: f; width: 42px; height: 42px; }
   .barre { display: flex; }
   body { padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
   .som { right: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); }
@@ -1828,6 +1852,20 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
     $('form', main).addEventListener('submit', e => e.preventDefault());
     return { titre: MENU.contact.texte, menu: 'contact' };
   }
+  /* ---------- l'espace pro : trois portes vers les espaces réservés (equipe/, pro/, admin/, publiés à côté) ---------- */
+  function espacePro() {
+    vue = 'espace-pro';
+    const P = S.espacePro;
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"${ed('site.espacePro.titre')}>${esc(P.titre)}</h1>${trait()}
+        ${P.texte ? `<p class="ep-texte"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}</div>
+      <section class="bloc sans-filet"><div class="wrap">
+        <ul class="ep-portes">${P.portes.map((x, i) => `<li class="ep" data-cle="${esc(x.cle)}"><span class="filet" data-mv="trace" aria-hidden="true"></span>
+          <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
+          <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>
+          <span class="ep-f" aria-hidden="true">${FLECHE}</span></li>`).join('')}</ul>
+      </div></section>`;
+    return { titre: P.titre, menu: 'espace-pro' };
+  }
   function legal(chemin) {
     vue = 'legal';
     const Lg = S.legal[chemin];
@@ -2224,11 +2262,11 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
     const parts = {
       entrees: S.entrees.map(e => lien(e, true)).join(''),
       barre: S.entrees.map(e => lien(e, false)).join(''),
-      second: S.menu.map(x => `<a href="${x.href}" data-id="${x.id}">${esc(x.texte)}</a>`).join(''),
+      second: S.menu.map(x => `<a href="${x.href}" data-id="${x.id}">${esc(x.texte)}</a>`).join('') + (S.espacePro ? `<a href="#/espace-pro" data-id="espace-pro">${esc(S.espacePro.titre)}</a>` : ''),
       pied: `<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
         <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
         <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
-        <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
+        <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.espacePro ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
     };
     const tout = JSON.stringify(parts) + S.titreSuffixe + L.menu;
     if (tout === cadreFait) return;
@@ -2273,17 +2311,19 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
       if ((m = chemin.match(/^spectacle\/([\w-]+)\/(voir|programmer|etablissement)$/)) && bySlug[m[1]]) return entreeSp(m[1], m[2]) === m[2] ? spectacle(m[1], m[2], surPlace) : null;
       if ((m = chemin.match(/^agenda\/([\d-]+)$/)) && D.saisons[m[1]] && m[1] !== D.saison) return saison(m[1]);
       if (S.legal && S.legal[chemin]) return legal(chemin);
-      const V = { '': accueil, voir, programmer, etablissement, spectacles, compagnie, contact };
+      const V = vues();
       if (Object.prototype.hasOwnProperty.call(V, chemin)) return V[chemin](q, surPlace);
       return null;
     } finally { surPlaceRendu = false; }
   }
+  // les vues simples ; une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page)
+  const vues = () => Object.assign({ '': accueil, voir, programmer, etablissement, spectacles, compagnie, contact }, S.espacePro ? { 'espace-pro': espacePro } : {});
   // les filets se tracent, les titres montent, les fiches arrivent l'une après l'autre, les chiffres comptent ; posé avant
   // toute lecture de mise en page (le focus du titre en force une : une seule, sur la page finie)
   function decorer(surPlace) {
     $$('section.bloc:not(.sans-filet), nav.saisons', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
-    $$('.fus, .progs, .fes, .u-cast, .dos-ateliers, .galerie', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
+    $$('.fus, .progs, .fes, .u-cast, .dos-ateliers, .galerie, .ep-portes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
     $$('.u-faits .gros, .prog-faits .gros, .u-rep .gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
     if (MV) MV.reveler(main, { immediat: surPlace });
   }
@@ -2311,7 +2351,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
     const a = analyse(); if (!a) return;
     let m;
     const cible = S.redirections && S.redirections['#/' + a.chemin];
-    if (cible) { location.replace(cible + (a.qs ? '?' + a.qs : '')); return; }
+    if (cible && !Object.prototype.hasOwnProperty.call(vues(), a.chemin)) { location.replace(cible + (a.qs ? '?' + a.qs : '')); return; }
     if ((m = a.chemin.match(/^spectacle\/([\w-]+)$/)) && bySlug[m[1]]) { location.replace(`#/spectacle/${m[1]}/${entreeSp(m[1], retenue() || 'voir')}`); return; }
     if ((m = a.chemin.match(/^spectacle\/([\w-]+)\/etablissement$/)) && bySlug[m[1]] && !bySlug[m[1]].actionCulturelle) { location.replace(`#/spectacle/${m[1]}/voir`); return; }
     if ((m = a.chemin.match(/^agenda\/([\d-]+)$/)) && m[1] === D.saison) { location.replace(E.voir.href); return; }

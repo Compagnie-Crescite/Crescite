@@ -730,6 +730,13 @@ await navigateur.close();
         avertir("version du service de l'application non posée", e)
 
 
+def pro(dest):
+    """L'espace des salles (pro/ : les programmateurs et les directeurs de salle invités y trouvent captations et
+    documents), à côté de l'administration : son logo est celui des feuilles de route, ../admin/logo-feuille.svg."""
+    import shutil
+    shutil.copytree(ROOT / "pro", dest / "pro", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
+
+
 def pages(D, files, names):
     """Le site GitHub Pages (docs/) : la planche en index, chaque maquette en page à part, hors des moteurs de recherche,
     et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune."""
@@ -749,6 +756,7 @@ def pages(D, files, names):
     build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
     admin(docs)
     equipe(docs)
+    pro(docs)
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
     print(f"pages : {len(names)} maquettes et la planche dans docs/ ({size:.1f} Mo)")
@@ -766,6 +774,7 @@ def main():
         print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
     admin(DIST)
     equipe(DIST)
+    pro(DIST)
     (DIST / "data.json").write_text(json.dumps(dict(D, photos={k: f"[photo {k}]" for k in photo_urls}), ensure_ascii=False, indent=1), encoding="utf-8")
     if "--captures" in sys.argv:
         captures(names)

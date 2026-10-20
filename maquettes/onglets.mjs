@@ -4,6 +4,8 @@
 // clic ordinaire sur un lien du menu (TENTACULES.actives() === 0, sauf un lien déclaré data-moment) ; REACTIVITE=1 ajoute
 // les budgets de maquettes/reactivite.mjs (bureau et téléphone ralenti ×4). Le texte se lit même hors de l'écran
 // (content-visibility : auto est forcé à visible, et ce qui apparaît au défilement à son état final, le temps de la lecture).
+// Règle 16 : l'espace pro (#/espace-pro, une page et non plus une redirection) : son h1, ses trois portes et leurs vrais
+// liens vers equipe/, pro/ et admin/ (dans le même onglet), le lien « Espace pro » dans le menu et le pied de page.
 // Captures : <n>-tab-<vue>.png (ordinateur) et <n>-mtab-<vue>.png (téléphone), <n>-intro.png ; rapport des anomalies.
 // Le contrôle du texte compare chaque texte visible aux textes de D (le site d'origine, le dossier scolaire de Bérénice,
 // les univers et les actions culturelles des spectacles) : tout texte absent de D est signalé.
@@ -41,9 +43,12 @@ const VUES = [
   ['cassandres', '#/spectacle/cassandres/voir', D => ['Spectacle en création']],
   ['saison', '#/agenda/2019-2020', D => [D.site.saisons.find(s => s.saison === '2019-2020').titre]],
   ['mentions', '#/mentions-legales'],
+  // l'espace pro (règle 16) : son texte et ses trois portes (leurs liens sont contrôlés à part)
+  ['espace-pro', '#/espace-pro', D => D.site.espacePro ? [D.site.espacePro.titre, D.site.espacePro.texte, ...D.site.espacePro.portes.flatMap(p => [p.titre, p.texte])] : []],
 ];
 // les anciennes adresses et l'adresse d'un spectacle sans entrée : où elles doivent mener
-const REDIRECTIONS = [['#/espace-pro', /^#\/programmer$/], ['#/agenda', /^#\/voir$/], ['#/actions-culturelles', /^#\/etablissement$/],
+// (#/espace-pro n'est plus redirigé vers programmer : c'est la page de l'espace pro, règle 16)
+const REDIRECTIONS = [['#/agenda', /^#\/voir$/], ['#/actions-culturelles', /^#\/etablissement$/],
   ['#/spectacle/mon-royaume', /^#\/spectacle\/mon-royaume\/(voir|programmer|etablissement)$/],
   // un spectacle sans action culturelle n'a pas d'onglet établissement (règle 14)
   ['#/spectacle/cassandres/etablissement', /^#\/spectacle\/cassandres\/voir$/]];
@@ -52,8 +57,9 @@ const ONGLETS = ['voir', 'programmer', 'etablissement', 'spectacles', 'compagnie
 // les trois entrées, à portée de main en haut de ces vues (sans ouvrir de menu)
 const ENTREES = ['#/voir', '#/programmer', '#/etablissement'];
 const A_PORTEE = ['spectacles', 'compagnie', 'berenice-voir'];
-// ce qui a disparu : l'espace pro à mot de passe et les anciens libellés des portes
-const DISPARUS = ['mot de passe', 'espace pro', 'je programme', 'je fais venir dans mon établissement'];
+// ce qui a disparu : le mot de passe de l'ancien espace pro et les anciens libellés des portes (« Espace pro » est revenu,
+// règle 16 : une page de trois portes, sans mot de passe)
+const DISPARUS = ['mot de passe', 'je programme', 'je fais venir dans mon établissement'];
 // les seuls libellés permis hors de D (voir le contrat)
 const PERMIS = ['Accueil', 'Menu', 'Rouen', 'Aller au contenu', 'Fermer'];
 // règle 15 D : les frises chronologiques attendues (au moins tant) dans ces vues
@@ -148,6 +154,14 @@ for (const n of names) {
             return new Set([...document.querySelectorAll('a[href]')].filter(a => vis(a) && urls.has(a.href)).map(a => a.href)).size; })(),
           // règle 15 D : les frises de l'outil commun (FRISE), rendues dans la vue
           frises: [...document.querySelectorAll('.frise[data-frise]')].filter(f => { for (let e = f; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden') return false; } return f.getClientRects().length > 0; }).length,
+          // règle 16 : sur la vue espace-pro, le h1, les liens visibles de chaque porte (et leur cible), le lien du menu et du pied
+          pro: location.hash === '#/espace-pro' && D.site.espacePro ? (() => {
+            const P = D.site.espacePro, n = window.__norm;
+            const h1 = [...document.querySelectorAll('h1')].filter(vis).map(h => n(h.textContent));
+            const liens = P.portes.map(p => ({ href: p.href, vus: [...document.querySelectorAll('main a[href]')].filter(a => a.getAttribute('href') === p.href && vis(a)).map(a => a.getAttribute('target') || '') }));
+            const menu = [...document.querySelectorAll('header a[href="#/espace-pro"], nav a[href="#/espace-pro"]')].filter(a => !a.closest('main, footer') && n(a.textContent).includes(n(P.titre)));
+            return { h1ok: h1.includes(n(P.titre)), liens, menu: menu.length, pied: document.querySelectorAll('footer a[href="#/espace-pro"]').length };
+          })() : null,
         };
         } finally { forcer.remove(); }
       }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, ENTREES]);
@@ -162,6 +176,17 @@ for (const n of names) {
       if (vue === 'voir' && etat.ordre && !etat.ordre.ok) log.push(`${tag} voir : les prochaines dates doivent précéder l'agenda passé (${etat.ordre.detail})`);
       if (etat.presents.length) log.push(`${tag} ${vue} : ne devrait pas apparaître : ${etat.presents.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
       if (etat.sansAction.length) log.push(`${tag} ${vue} : lien visible vers l'onglet établissement de ${[...new Set(etat.sansAction)].join(', ')}, qui n'a pas d'action culturelle (règle 14)`);
+      if (vue === 'espace-pro') {
+        if (etat.hash !== '#/espace-pro') log.push(`${tag} espace-pro : #/espace-pro mène à « ${etat.hash} » au lieu d'être la page de l'espace pro (règle 16)`);
+        else if (!etat.pro) log.push(`${tag} espace-pro : D.site.espacePro absent des données (règle 16)`);
+        else {
+          if (!etat.pro.h1ok) log.push(`${tag} espace-pro : le h1 n'est pas D.site.espacePro.titre (« ${etat.h1.slice(0, 60)} »)`);
+          etat.pro.liens.forEach(l => { if (!l.vus.length) log.push(`${tag} espace-pro : aucun lien visible <a href="${l.href}"> (règle 16)`);
+            else if (l.vus.every(t => t && t !== '_self')) log.push(`${tag} espace-pro : le lien vers ${l.href} s'ouvre dans un autre onglet (règle 16 : le même onglet)`); });
+          if (!etat.pro.menu) log.push(`${tag} espace-pro : pas de lien « Espace pro » vers #/espace-pro dans le menu (règle 16)`);
+          if (!etat.pro.pied) log.push(`${tag} espace-pro : pas de lien vers #/espace-pro dans le pied de page (règle 16)`);
+        }
+      }
       if (FRISES[vue] && etat.frises < FRISES[vue]) log.push(`${tag} ${vue} : ${etat.frises} frise(s) chronologique(s) (.frise[data-frise]) au lieu d'au moins ${FRISES[vue]} (règle 15 D)`);
       if (vue === 'programmer' && !etat.dossiers.length) log.push(`${tag} programmer : aucun bouton [data-dossier] (dossier PDF, règle 13)`);
       if (vue === 'programmer' && !etat.mailto) log.push(`${tag} programmer : aucun lien mailto: visible vers le contact diffusion (règle 13)`);
@@ -181,7 +206,9 @@ for (const n of names) {
       if (process.env.EDITION === '1' && tag === 'tab') {
         const att = { compagnie: [['[data-edit^="site.compagnie.paragraphes"]', 2]], 'berenice-voir': [['[data-edit^="shows.berenice.texte"]', 1], ['[data-edit-photo^="shows.berenice"]', 1]],
           'berenice-etablissement': [['[data-edit^="dossiers.berenice"]', 3], ['[data-edit^="shows.berenice.actionCulturelle"]', 1]], etablissement: [['[data-edit^="site.ecole"]', 1]],
-          voir: [['[data-agenda]', 1], ['[data-date-id]', 10]], programmer: [['[data-edit*=".programmer."]', 3]] }[vue] || [];
+          voir: [['[data-agenda]', 1], ['[data-date-id]', 10]], programmer: [['[data-edit*=".programmer."]', 3]],
+          'espace-pro': [['[data-edit="site.espacePro.titre"]', 1], ['[data-edit="site.espacePro.texte"]', 1],
+            ['[data-edit^="site.espacePro.portes."][data-edit$=".titre"]', 3], ['[data-edit^="site.espacePro.portes."][data-edit$=".texte"]', 3]] }[vue] || [];
         const n = await page.evaluate(sels => sels.map(([s]) => document.querySelectorAll(s).length), att);
         att.forEach(([s, min], i) => { if (n[i] < min) log.push(`${tag} ${vue} : édition : ${n[i]} élément(s) ${s} (au moins ${min})`); });
         const lien = await page.evaluate(() => { const l = D.site.libelles.modifierSite; return [...document.querySelectorAll('a, button')].some(b => b.textContent.trim() === l && b.getClientRects().length); });
