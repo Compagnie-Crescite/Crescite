@@ -95,6 +95,15 @@ visibilité, précisions, lien) et « Ajouter une date » se place en tête de c
 la base : les pages ouvertes ailleurs se mettent à jour. Chaque maquette habille la barre et les panneaux à son style
 (variables `--ed-*`). `?edition` à la fin de l'adresse ouvre directement l'édition.
 
+**La pieuvre guide.** Chaque clic lui répond (`maquettes/src/tentacules.js`, commun aux onze et à l'administration) :
+ses bras se contractent et une tentacule fine part du logo de l'en-tête jusqu'au point cliqué, où elle laisse
+l'empreinte d'une ventouse. Chaque changement de page « remonte » une tentacule à la couleur de la destination (celle de
+l'entrée, ou de l'univers du spectacle) ; ouvrir une saison ou un panneau la déroule, fermer l'enroule, enregistrer
+l'enroule autour du bouton. Rien n'est retardé : la page répond tout de suite, l'animation joue par-dessus. Chaque
+maquette l'habille à son style (`TENTACULES.regler`, variables `--tt-*`) : trait gravé pour la 01, filet de lumière pour
+la 07, ventouses pour la synthèse, fil pour la 08… Avec « réduire les animations », un fondu bref ; `?anim=0` dans
+l'adresse coupe tout.
+
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
 la proposition retenue : l’accueil et les cartes de la 06, l’agenda de la 03 relié à la carte, les portes de la 04
