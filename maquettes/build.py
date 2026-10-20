@@ -3,8 +3,9 @@
 
 Chaque maquette est un fichier maquettes/src/mNN.html qui lit ses contenus dans l'objet D : le texte exact de
 crescite.fr (D.site, D.shows, D.dates, D.saisons), le logo, les photos et la carte des tournées. Le script remplace
-/*__DATA__*/null par ces données et ajoute juste après les outils communs : la carte des tournées
-(maquettes/src/carte.js) et l'ouverture sur le logo (maquettes/src/intro.js).
+/*__DATA__*/null par ces données et ajoute juste après les outils communs (OUTILS) : les lignes d'agenda, les données
+vivantes, la carte des tournées, l'ouverture sur le logo, l'édition sur place, le dossier PDF, les frises
+chronologiques, le mouvement et les tentacules (maquettes/src/*.js).
 
 Usage :
   python3 maquettes/build.py              toutes les maquettes et la planche (maquettes/dist/)
@@ -186,6 +187,8 @@ LIBELLES = {
     "contactDiffusion": "Contact diffusion", "dossierPdf": "Dossier du spectacle (PDF)", "aTelecharger": "À télécharger",
     "conditionsFinancieres": "Conditions financières sur demande", "ficheTechniqueSurDemande": "Fiche technique sur demande",
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
+    # les frises chronologiques (règle 15) : le repère du jour
+    "aujourdhui": "Aujourd’hui",
 }
 
 
@@ -442,6 +445,15 @@ def build_data():
             # l'adresse publique de la compagnie ; le téléphone seulement si l'administration le saisit dans la base
             "programmation": {"contact": {"nom": "Barbara Daussy", "role": "Administratrice", "email": "contact@crescite.fr",
                                           "telephone": None}},
+            # l'espace pro (#/espace-pro, dans le menu) : trois portes vers les espaces réservés, hors des maquettes
+            # (href relatifs au site publié : equipe/, admin/ et pro/ sont à côté des maquettes dans docs/)
+            "espacePro": {"titre": "Espace pro", "texte": "Les espaces réservés de la compagnie.", "portes": [
+                {"cle": "equipe", "titre": "Comédiens et techniciens", "href": "equipe/",
+                 "texte": "Votre tournée, vos horaires, vos feuilles de route et vos documents."},
+                {"cle": "salles", "titre": "Programmateurs et directeurs de salle", "href": "pro/",
+                 "texte": "Les captations et les documents que la compagnie vous a ouverts."},
+                {"cle": "admin", "titre": "Administration", "href": "admin/",
+                 "texte": "La gestion du site, des dates, de l’équipe et des feuilles de route."}]},
             "coordonnees": a["coordonnees"], "ecrire": {"texte": a["ecrire"]["texte"], "href": "#/contact"},
             "facebook": {"texte": a["facebook"]["texte"], "href": None} if a.get("facebook") else None,
             "partenaires": a["pied"]["partenaires"],
@@ -492,13 +504,15 @@ def action_publiee(a):
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "dossier.js", "tentacules.js")
+OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "dossier.js", "frise.js", "mouvement.js", "tentacules.js")
 
 
 def outils():
     """Les outils communs, dans l'ordre. dossier.js compose à la demande le dossier PDF d'un spectacle (pdfmake, chargé depuis
-    admin/vendor/ au premier clic). tentacules.js (la pieuvre du logo guide chaque clic et chaque changement de page) vient
-    en dernier ; ?anim=0 dans l'adresse l'éteint (captures, essais)."""
+    admin/vendor/ au premier clic). frise.js (FRISE) rend les calendriers en frises chronologiques, mouvement.js (MOUVEMENT)
+    donne les transitions de page, les apparitions, le FLIP, les chiffres qui comptent et la pression (règle 15).
+    tentacules.js vient en dernier : la pieuvre et ses tentacules, des moments que la maquette joue à la main (plus aucune
+    réaction automatique par défaut). ?anim=0 dans l'adresse éteint tout mouvement (captures, essais)."""
     return OUTILS
 
 
@@ -548,7 +562,8 @@ NOINDEX = '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet,
 
 
 def admin(dest):
-    """L'administration (admin/index.html, son client Supabase et l'outil des lignes d'agenda), à côté des maquettes."""
+    """L'administration (admin/index.html, son client Supabase et l'outil des lignes d'agenda), à côté des maquettes, avec
+    les outils communs qu'elle charge ou chargera : tentacules.js, frise.js (FRISE) et mouvement.js (MOUVEMENT)."""
     import shutil
     (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
@@ -558,6 +573,9 @@ def admin(dest):
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
     shutil.copyfile(SRC / "agenda.js", dest / "admin" / "agenda.js")
     shutil.copyfile(SRC / "tentacules.js", dest / "admin" / "tentacules.js")
+    # les frises et le mouvement (règle 15) : l'administration et l'espace de l'équipe s'en serviront
+    for f in ("frise.js", "mouvement.js"):
+        shutil.copyfile(SRC / f, dest / "admin" / f)
     # le logo des feuilles de route (admin/feuille.js le lit à côté de lui) : la tache noire, la pieuvre et le mot en blanc,
     # tirés du logo privé (private/brand). Sa source ne va jamais dans le dépôt ; le dessin produit à la construction va,
     # comme le logo des maquettes, dans maquettes/dist et dans le site publié (docs/ : publication décidée par la

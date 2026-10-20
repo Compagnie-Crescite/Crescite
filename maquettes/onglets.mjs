@@ -1,10 +1,15 @@
 // Vérifie qu'une maquette se lit par les trois entrées, s'ouvre sur le logo, et n'affiche que le texte de ses sources.
 // Usage : node maquettes/onglets.mjs <dossier de sortie> m03 [m04 …]
+// Règle 15 : des frises chronologiques (FRISE, .frise[data-frise]) là où il y a un calendrier, aucune tentacule après un
+// clic ordinaire sur un lien du menu (TENTACULES.actives() === 0, sauf un lien déclaré data-moment) ; REACTIVITE=1 ajoute
+// les budgets de maquettes/reactivite.mjs (bureau et téléphone ralenti ×4). Le texte se lit même hors de l'écran
+// (content-visibility : auto est forcé à visible, et ce qui apparaît au défilement à son état final, le temps de la lecture).
 // Captures : <n>-tab-<vue>.png (ordinateur) et <n>-mtab-<vue>.png (téléphone), <n>-intro.png ; rapport des anomalies.
 // Le contrôle du texte compare chaque texte visible aux textes de D (le site d'origine, le dossier scolaire de Bérénice,
 // les univers et les actions culturelles des spectacles) : tout texte absent de D est signalé.
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
 const { chromium } = await import(PW);
+const { mesurer, depassements } = process.env.REACTIVITE === '1' ? await import('./reactivite.mjs') : {};
 const [out, ...names] = process.argv.slice(2);
 const dist = new URL('./dist/', import.meta.url);
 // [vue, adresse, attendus : textes qui doivent être visibles (fonctions de D), interdits : textes qui ne doivent pas l'être]
@@ -51,6 +56,8 @@ const A_PORTEE = ['spectacles', 'compagnie', 'berenice-voir'];
 const DISPARUS = ['mot de passe', 'espace pro', 'je programme', 'je fais venir dans mon établissement'];
 // les seuls libellés permis hors de D (voir le contrat)
 const PERMIS = ['Accueil', 'Menu', 'Rouen', 'Aller au contenu', 'Fermer'];
+// règle 15 D : les frises chronologiques attendues (au moins tant) dans ces vues
+const FRISES = { voir: 2, saison: 1, 'berenice-voir': 1, etablissement: 1, compagnie: 1, programmer: 1 };
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
 const report = {};
 for (const n of names) {
@@ -90,6 +97,12 @@ for (const n of names) {
       await page.evaluate(h => { location.hash = h; }, hash);
       await page.waitForTimeout(900);
       const etat = await page.evaluate(([att, int, DISPARUS, ENTREES]) => {
+        // le contenu hors de l'écran (content-visibility: auto) et ce qui apparaît au défilement (MOUVEMENT.reveler :
+        // .mv-attente) se lisent aussi : on les montre dans leur état final le temps de la lecture
+        const forcer = document.createElement('style');
+        forcer.textContent = '*, *::before, *::after { content-visibility: visible !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; }';
+        document.head.appendChild(forcer);
+        try {
         const vis = el => { for (let e = el; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; } return el.getClientRects().length > 0; };
         const hors = [];
         const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -133,7 +146,10 @@ for (const n of names) {
           liensDocs: (() => { const m = /^#\/spectacle\/([^/]+)\/programmer$/.exec(location.hash); if (!m) return 0;
             const urls = new Set((D.documents || []).filter(d => d.spectacle === m[1] && d.pour === 'pros').map(d => d.url));
             return new Set([...document.querySelectorAll('a[href]')].filter(a => vis(a) && urls.has(a.href)).map(a => a.href)).size; })(),
+          // règle 15 D : les frises de l'outil commun (FRISE), rendues dans la vue
+          frises: [...document.querySelectorAll('.frise[data-frise]')].filter(f => { for (let e = f; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden') return false; } return f.getClientRects().length > 0; }).length,
         };
+        } finally { forcer.remove(); }
       }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, ENTREES]);
       if (etat.debord > 1) log.push(`${tag} ${vue} : débordement horizontal de ${etat.debord}px`);
       if (!etat.h1) log.push(`${tag} ${vue} : aucun h1 visible`);
@@ -146,6 +162,7 @@ for (const n of names) {
       if (vue === 'voir' && etat.ordre && !etat.ordre.ok) log.push(`${tag} voir : les prochaines dates doivent précéder l'agenda passé (${etat.ordre.detail})`);
       if (etat.presents.length) log.push(`${tag} ${vue} : ne devrait pas apparaître : ${etat.presents.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
       if (etat.sansAction.length) log.push(`${tag} ${vue} : lien visible vers l'onglet établissement de ${[...new Set(etat.sansAction)].join(', ')}, qui n'a pas d'action culturelle (règle 14)`);
+      if (FRISES[vue] && etat.frises < FRISES[vue]) log.push(`${tag} ${vue} : ${etat.frises} frise(s) chronologique(s) (.frise[data-frise]) au lieu d'au moins ${FRISES[vue]} (règle 15 D)`);
       if (vue === 'programmer' && !etat.dossiers.length) log.push(`${tag} programmer : aucun bouton [data-dossier] (dossier PDF, règle 13)`);
       if (vue === 'programmer' && !etat.mailto) log.push(`${tag} programmer : aucun lien mailto: visible vers le contact diffusion (règle 13)`);
       const slugVue = (/^#\/spectacle\/([^/]+)\/programmer$/.exec(hash) || [])[1];
@@ -180,7 +197,34 @@ for (const n of names) {
       const h = await page.evaluate(() => location.hash);
       if (!attendu.test(h)) log.push(`${tag} ${hash} : mène à « ${h} » au lieu de ${attendu}`);
     }
+    // règle 15 A : un clic ordinaire sur un lien du menu ne fait jouer aucune tentacule (sauf un moment déclaré data-moment)
+    if (tag === 'tab') {
+      await page.evaluate(() => { location.hash = '#/voir'; });
+      await page.waitForTimeout(900);
+      const hrefs = await page.evaluate(() => [...new Set([...document.querySelectorAll('header a[href^="#/"], nav a[href^="#/"]')].filter(a => !a.closest('main') && a.getClientRects().length).map(a => a.getAttribute('href')))]);
+      for (const href of hrefs.slice(0, 10)) {
+        const pret = await page.evaluate(href => {
+          document.querySelectorAll('[data-onglets-clic]').forEach(a => a.removeAttribute('data-onglets-clic'));
+          const a = [...document.querySelectorAll(`header a[href="${href}"], nav a[href="${href}"]`)].find(x => !x.closest('main') && x.getClientRects().length && getComputedStyle(x).visibility !== 'hidden');
+          if (!a) return null;
+          a.setAttribute('data-onglets-clic', '');
+          return { moment: !!a.closest('[data-moment]') };
+        }, href);
+        if (!pret) continue;
+        await page.click('[data-onglets-clic]', { timeout: 3000 }).catch(() => {});
+        await page.waitForTimeout(150);
+        const n = await page.evaluate(() => typeof TENTACULES !== 'undefined' && typeof TENTACULES.actives === 'function' ? TENTACULES.actives() : 0);
+        if (n > 0 && !pret.moment) log.push(`${tag} : ${n} animation(s) de tentacule après un clic ordinaire sur « ${href} » (règle 15 A ; un moment se déclare par data-moment)`);
+        await page.waitForTimeout(450);
+      }
+    }
     await ctx.close();
+  }
+  // règle 15 C : les budgets de la réactivité (REACTIVITE=1)
+  if (mesurer) for (const profil of ['bureau', 'telephone']) {
+    const m = await mesurer(browser, n, { dist, profil });
+    depassements(m).forEach(d => log.push(`réactivité : ${d}`));
+    log.push(`· réactivité ${profil} : INP max ${Math.max(0, ...m.gestes.filter(g => !g.absent).map(g => g.inp))} ms · CLS ${m.cls} · contenu max ${Math.max(0, ...m.gestes.filter(g => g.navigation && g.contenu != null).map(g => g.contenu))} ms`);
   }
   report[n] = log;
 }
