@@ -205,3 +205,56 @@ rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrem
 ensuite été essayées de bout en bout sur la base réelle : chacune la lit en moins d'une seconde, affiche sans recharger
 une précision ajoutée dans la base, ouvre l'édition après connexion d'un compte administrateur, enregistre dans la base
 un paragraphe écrit dans la page, et ouvre une date passée dans le panneau de modification.
+
+## L'équipe
+
+Une fiche par personne de la distribution et de la technique, la tournée de chacun et les feuilles de route. Le second
+script, `supabase/migrations/20261021_crescite_equipe.sql`, s'exécute après le premier, de la même façon ; il peut
+être relancé sans dommage.
+
+| Table | Ce qu'elle contient |
+| --- | --- |
+| `crescite_personnes` | La fiche publique : nom, métiers, photo et son crédit. La photo n'apparaît sur le site que si sa publication est accordée. |
+| `crescite_personnes_privees` | Adresse du compte, téléphone, ville de départ, régime, urgence : lus par la personne elle-même et par l'administration. |
+| `crescite_personnes_suivi` | Les notes de l'administration sur une personne : jamais lues par elle. |
+| `crescite_distributions` | Qui fait quoi dans chaque spectacle (jeu, création, technique, production), et qui part en tournée par défaut. |
+| `crescite_equipes` | L'équipe d'une date, quand elle s'écarte de la distribution : remplacements, renforts, absences. |
+| `crescite_documents` | Les documents de l'équipe (le texte, le dossier, la fiche technique) : un fichier du stockage privé `crescite-equipe`, ou un lien. |
+| `crescite_feuilles` | Les feuilles de route, une par date : brouillon puis publiée, avec une version qui augmente à chaque republication. |
+
+Une personne connectée ne lit que sa fiche, ses dates (options comprises), les documents de ses spectacles et les
+feuilles de route publiées de ses dates ; un fichier privé ne s'ouvre que par un lien signé, si son document se lit. Le
+public ne lit que les fiches publiées et la distribution des spectacles publiés. Les règles sont vérifiées par 37 essais
+sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs` et `node equipe.mjs`). Le script se termine par
+une vérification : les tables du projet, hors compagnie, qu'un compte connecté pourrait lire. Les comptes de ce projet
+sont aussi ceux du site adrienvada.fr.
+
+**Remplir.** `python3 supabase/equipe.py` importe `data/equipe.json` : les 39 personnes et la distribution de chaque
+spectacle, d'après les fiches de crescite.fr et, pour Cassandres, le dossier artistique (distribution non publiée). Il
+ajoute un déroulé type de journée de représentation par spectacle et les liens vers les textes d'origine du domaine
+public (Wikisource). `--photos` envoie les portraits trouvés en ligne (`private/photos/equipe/`, avec leur source et leur
+crédit dans un registre privé) : ne sont montrés d'office que les vrais portraits dont la page source cite la compagnie
+ou un de ses spectacles ; les autres attendent l'accord de l'administration. `--dossiers` range le dossier scolaire de
+Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'administration.
+
+**L'administration** gagne trois choses :
+- **Équipe** : les fiches (publiques, coordonnées, accès, notes), et les documents de toute la compagnie.
+- **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation et les documents. **Dans
+  chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
+  remplaçant).
+- **Feuilles de route** : « Composer » remplit tout ce que la base sait (le lieu et son itinéraire, le trajet estimé
+  depuis Rouen, les horaires, le planning posé autour des représentations d'après le déroulé type, l'équipe et ses
+  téléphones, les contacts du lieu et de la compagnie) ; transport, hébergement et repas se complètent à la main ;
+  « Publier pour l'équipe », « Télécharger le PDF », « Imprimer ». Recomposer ne perd jamais une saisie. Le module
+  `admin/feuille.js` fait la version web et le PDF (pdfmake, `admin/vendor/`), pour l'administration comme pour l'équipe.
+
+**L'espace de l'équipe** (`equipe/index.html`, en ligne dans `docs/equipe/`) : chacun s'y connecte et retrouve sa
+saison (la prochaine date en avant, les saisons passées fermées), les horaires des représentations, l'itinéraire, qui
+part, la feuille de route (web et PDF), le texte et le dossier de ses spectacles, sa fiche (téléphone, ville, régime,
+urgence), et un fichier agenda (.ics) de ses représentations. La dernière saison lue reste consultable sans réseau.
+
+**Les comptes.** Les inscriptions libres sont fermées sur le projet : un compte se crée dans Supabase (Authentication →
+Users → Add user, avec l'adresse saisie dans la fiche). À la première connexion, il se rattache tout seul à la fiche de
+même adresse. Pour que « Recevoir un lien de connexion » et « Mot de passe oublié » reviennent sur l'espace de l'équipe,
+ajouter son adresse aux Redirect URLs (Authentication → URL Configuration) et configurer un serveur d'envoi de courriels
+(Authentication → Emails) ; sans lui, Supabase n'écrit qu'aux membres de l'équipe du projet, et peu par heure.
