@@ -398,7 +398,10 @@ with souci as (
   from pg_policies p
   where p.schemaname = 'public' and p.tablename not like 'crescite\_%'
     and p.roles && array['authenticated', 'public']::name[]
-    and coalesce(p.qual, '') || coalesce(p.with_check, '') !~ '(auth\.uid|auth\.jwt|auth\.email|auth\.role)'
+    -- une règle qui ne regarde pas qui est connecté, ou seulement s'il l'est (« auth.role() = 'authenticated' »,
+    -- « auth.uid() is not null ») : tout compte de l'équipe y aurait droit
+    and (coalesce(p.qual, '') || coalesce(p.with_check, '') !~ '(auth\.uid|auth\.jwt|auth\.email)'
+         or coalesce(p.qual, '') || coalesce(p.with_check, '') ~* '(auth\.role\(\)\s*=\s*''authenticated''|auth\.uid\(\)\s*is\s+not\s+null)')
 )
 select * from souci
 union all
