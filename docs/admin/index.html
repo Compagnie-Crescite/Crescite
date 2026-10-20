@@ -45,9 +45,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
 .direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
 .direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
-/* huit rubriques : sous 1 640 px l'adresse du compte se retire ; sous 1 520 px les rubriques passent sur une seconde ligne */
-@media (max-width: 1639px) { .qui .moi { display: none; } }
-@media (max-width: 1519px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
+/* neuf rubriques : sous 1 840 px l'adresse du compte se retire ; sous 1 660 px les rubriques passent sur une seconde ligne */
+@media (max-width: 1839px) { .qui .moi { display: none; } }
+@media (max-width: 1659px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 
@@ -91,7 +91,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
-@media (min-width: 1101px) and (max-width: 1519px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
+@media (min-width: 1101px) and (max-width: 1659px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
