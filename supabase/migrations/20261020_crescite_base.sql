@@ -420,8 +420,9 @@ alter table public.crescite_journal enable row level security;
 do $$
 declare p record;
 begin
+  -- ses propres règles seulement (celles de l'équipe, equipe_…, sont refaites par 20261021_crescite_equipe.sql)
   for p in select policyname, tablename from pg_policies
-           where schemaname = 'public' and tablename like 'crescite\_%' loop
+           where schemaname = 'public' and tablename like 'crescite\_%' and policyname in ('lecture', 'ajout', 'modification', 'suppression') loop
     execute format('drop policy %I on public.%I', p.policyname, p.tablename);
   end loop;
 end $$;
