@@ -42,6 +42,10 @@ main:focus,h1[tabindex="-1"]:focus{outline:none}
 .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--g)}
 .sep{margin-inline:.45em}
 
+/* les tentacules (tentacules.js) : la pieuvre du logo guide ; gravées, comme tout le programme : un trait à hachures à l'encre du moment (le papier d'un
+   spectacle change l'encre), l'accent pour les empreintes */
+body{--tt-encre:var(--ink);--tt-accent:var(--mag);--tt-epaisseur:2.2}
+
 /* en-tête : la marque et le menu second, puis les trois entrées, comme les trois rubriques d'un programme */
 .site-h{background:var(--paper);border-bottom:1px solid var(--ink)}
 .mast{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:var(--g)}
@@ -593,7 +597,7 @@ html .ed-annonce{border-radius:0;background:#1c1917;box-shadow:0 0 0 3px #f6f2ec
 <a class="skip" href="#main">Aller au contenu</a>
 <header class="site-h">
   <div class="wrap mast">
-    <a class="brand" href="#/"><span class="octo" id="octo"></span><span class="brand-n" id="brand-n"></span></a>
+    <a class="brand" href="#/"><span class="octo" id="octo" data-pieuvre></span><span class="brand-n" id="brand-n"></span></a>
     <nav class="ent" id="ent"><ul id="ent-l"></ul></nav>
     <button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav"></button>
     <nav class="nav" id="nav"><ul id="nav-l"></ul></nav>
@@ -1661,6 +1665,8 @@ html .ed-annonce{border-radius:0;background:#1c1917;box-shadow:0 0 0 3px #f6f2ec
   });
   let rz = 0;
   addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { ajuster(); main.querySelectorAll('svg.pl').forEach(poser); }, 120); });
+  // les tentacules : gravées (un trait à hachures), à l'encre du programme ; les pages sans couleur reprennent le magenta du programme
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'trait', neutre: '#a8306f', entrees: 'couleur' });
   addEventListener('hashchange', () => route());
   relire();
   cadre();

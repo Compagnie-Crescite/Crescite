@@ -32,6 +32,8 @@
   --fs-s4:clamp(2.5rem,1.6rem + 3.2vw,4.5rem);
   --ease:cubic-bezier(.2,.65,.25,1);
   --k-terre:var(--paper);--k-voisin:#ebe7e1;--k-bord:#d3ccc2;--k-bras:var(--magenta);--k-actif:var(--magenta-dark);--k-passe:#b8aea2;--k-encre:var(--ink);--k-point:#fff;
+  /* les tentacules (tentacules.js) : la pieuvre du logo guide ; nettes comme la maison : un trait magenta lisse, sans ventouses, un anneau à l'arrivée */
+  --tt-encre:#bc3e80;--tt-accent:#a1336c;--tt-neutre:#bc3e80;--tt-epaisseur:2.2;
   /* l'édition sur place (EDITION) dans le style de la maison */
   --ed-fond:#ffffff;--ed-encre:#111111;--ed-accent:#bc3e80;--ed-sur-accent:#ffffff;--ed-police:var(--sans);--ed-rayon:8px;--ed-trait:#d9d4cc;
 }
@@ -785,7 +787,7 @@ html .ed-bt{border-radius:6px}
 <a class="skip" href="#main">Aller au contenu</a>
 <header class="site-header">
   <div class="wrap bar">
-    <a class="brand" href="#/"><span class="brand-mark" data-logo="mark"></span><span class="brand-word"></span></a>
+    <a class="brand" href="#/"><span class="brand-mark" data-logo="mark" data-pieuvre></span><span class="brand-word"></span></a>
     <nav class="entrees"><ul></ul></nav>
     <nav class="menu" id="menu"><ul></ul></nav>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="menu"><span data-menu-label></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path data-menu-icon d="M3 8h18M3 16h18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
@@ -1952,6 +1954,8 @@ html .ed-bt{border-radius:6px}
   icone.href = 'data:image/svg+xml,' + encodeURIComponent((D.logo || {}).mark || '');
   document.head.appendChild(icone);
   route(true);
+  // les tentacules : un trait magenta lisse et net, sans ventouses ; la page se soulève quand elle remonte (rien de fixe dans le <main>)
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'couleur', soulever: true, detail: { ventouses: 0, page: .55, empreinte: 'anneau' } });
   INTRO.ouvrir({ degrade: [[0, '#ffffff'], [.62, '#fbfaf8'], [1, '#eeeae4']], encre: '#ffffff', tache: true, classe: 'maison', apres: revele });
   if (INTRO.ouverte()) { const h = $('.hero', main); if (h) h.classList.add('avant'); }
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);

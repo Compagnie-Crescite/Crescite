@@ -27,6 +27,8 @@
   --fs-h2:clamp(2.25rem,4.6vw,4.25rem);
   --fs-h3:clamp(1.5rem,2.4vw,2.25rem);
   --fs-page:clamp(2.75rem,6.6vw,6rem);
+  /* les tentacules (tentacules.js) : la pieuvre du logo guide ; ici un filet de lumière, comme un faisceau, avec son halo ; chaque clic allume un point */
+  --tt-encre:#ffd9a8;--tt-accent:#fff3e0;--tt-neutre:#ffd9a8;--tt-epaisseur:2.2;
   /* l'édition sur place (EDITION) prend le noir et la lumière de la maquette */
   --ed-fond:#171213;--ed-encre:#f4eee9;--ed-accent:#ffd9a8;--ed-sur-accent:#0b0809;--ed-police:'Figtree',system-ui,sans-serif;--ed-rayon:2px;--ed-trait:rgba(244,238,233,.26);
 }
@@ -794,7 +796,7 @@ details.lieux p{padding-bottom:1.2rem;font-size:.9375rem;line-height:1.7;color:v
 <header class="tete" id="tete">
   <div class="tete-in wrap" id="tete-in">
     <a class="marque" id="marque" href="#/">
-      <span class="marque-pieuvre" id="marque-pieuvre" aria-hidden="true"></span>
+      <span class="marque-pieuvre" id="marque-pieuvre" data-pieuvre aria-hidden="true"></span>
       <span class="marque-mot" id="marque-mot" aria-hidden="true"></span>
     </a>
     <nav class="entrees" id="entrees"></nav>
@@ -1131,7 +1133,7 @@ details.lieux p{padding-bottom:1.2rem;font-size:.9375rem;line-height:1.7;color:v
       ${visuel(photo(x.slug), s ? s.focale ?? 50 : 50, x.credit, true)}
       <div class="scene-corps wrap"><div class="scene-txt" id="scene-panneau" role="tabpanel" aria-labelledby="titre-${actif}">${texteScene(x)}</div></div>
       <div class="programme"><div class="programme-in wrap">
-        <div class="titres" role="tablist" aria-label="${esc(LIB.spectacles)}">
+        <div class="titres" role="tablist" data-tt="clic" aria-label="${esc(LIB.spectacles)}">
           ${slides.map((y, i) => `<button class="titre" type="button" role="tab" id="titre-${i}" aria-controls="scene-panneau" aria-selected="${i === actif}" tabindex="${i === actif ? 0 : -1}" style="${esc(styleDiapo(y))}">${esc(PAR_SLUG[y.slug] ? PAR_SLUG[y.slug].titre : y.titre[0])}<span class="fil" aria-hidden="true"></span></button>`).join('')}
         </div>
         <button class="pause" type="button" id="pause" aria-pressed="${pauseVoulue}" aria-label="Pause">${pauseVoulue ? ICO_LIRE : ICO_PAUSE}</button>
@@ -2033,6 +2035,8 @@ details.lieux p{padding-bottom:1.2rem;font-size:.9375rem;line-height:1.7;color:v
     ajusterTete();
   }
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  // les tentacules : un filet de lumière (le noir et la lumière) ; chaque entrée donne sa couleur à la remontée de sa page, chaque spectacle sa lumière
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'lumiere' });
   addEventListener('hashchange', () => router());
   router();
   // la base de la compagnie : à chaque enregistrement, D change en place et la vue courante est refaite en place

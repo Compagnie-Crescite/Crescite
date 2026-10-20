@@ -19,6 +19,9 @@
   --titre:var(--serif);--titre-w:400;--titre-k:1;
   --t1:clamp(2.75rem,5vw,4.5rem);--t2:clamp(1.875rem,2.9vw,2.75rem);--t3:clamp(1.3rem,1.75vw,1.7rem);--t4:1.25rem;--t5:1.0625rem;--t6:.875rem;
   --hh:72px;--gx:clamp(16px,3.9vw,56px);--fade:350ms;--onglets:58px;
+  /* les tentacules (tentacules.js) : la pieuvre du logo guide ; un fil d'encre, aussi fin qu'un filet de la page, qui part du lien cliqué ;
+     l'empreinte est un point */
+  --tt-encre:#191414;--tt-accent:#191414;--tt-neutre:#191414;--tt-epaisseur:1.9;
   --ed-fond:#f5f1ea;--ed-encre:#191414;--ed-accent:#a3202a;--ed-sur-accent:#f5f1ea;--ed-police:"DM Sans",system-ui,sans-serif;--ed-rayon:2px;--ed-trait:rgba(25,20,20,.3);
 }
 :root,.u{--rule:color-mix(in srgb,var(--ink) 15%,transparent);--rule-s:color-mix(in srgb,var(--ink) 34%,transparent)}
@@ -1901,7 +1904,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   function enTeteHTML() {
     const L = lib(), S = site();
     return `<div class="tete">
-      <a class="brand" href="#/" aria-label="${esc(S.titreSuffixe)}, ${esc(S.accueil)}"><span class="brand-mark" aria-hidden="true">${D.logo.mark}</span><span class="brand-name">${esc(S.titreSuffixe)}</span></a>
+      <a class="brand" href="#/" aria-label="${esc(S.titreSuffixe)}, ${esc(S.accueil)}"><span class="brand-mark" data-pieuvre aria-hidden="true">${D.logo.mark}</span><span class="brand-name">${esc(S.titreSuffixe)}</span></a>
       <nav class="entrees" aria-label="${esc(S.nom)}"><ul>${entrees().map(e => `<li><a class="ent" href="${esc(e.href)}" data-cle="${esc(e.cle)}" style="--e:var(--ent-${esc(e.cle)})"><span class="ent-m" aria-hidden="true"></span><span class="ent-l">${esc(e.texte)}</span><span class="ent-c">${esc(e.court)}</span></a></li>`).join('')}</ul></nav>
       <nav class="menu2" id="menu2" aria-label="${esc(L.menu)}"><ul>${(S.menu || []).map(m => `<li><a href="${esc(m.href)}" data-id="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')}</ul></nav>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu2"><span class="menu-ico" aria-hidden="true"></span><span>${esc(L.menu)}</span></button>
@@ -2081,6 +2084,8 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   window.addEventListener('resize', ajusterEntrees);
 
   /* ——— La mise en place ——— */
+  // les tentacules : un fil d'encre, comme les filets du sommaire ; il sort du lien cliqué et remonte à la pieuvre
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'fil', entrees: 'couleur', voie: 'clic', detail: { page: .16 } });
   polices();
   theme(null);
   enTete();

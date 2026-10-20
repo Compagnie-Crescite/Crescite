@@ -38,7 +38,10 @@
   --ed-police:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
   --ed-rayon:6px;
   --ed-trait:rgba(26,16,22,.18);
+  /* les tentacules (tentacules.js) : la pieuvre du logo guide ; sur la nuit, un magenta vif qui luit ; sur les chapitres clairs, le magenta */
+  --tt-encre:#ef84b8;--tt-accent:#ef84b8;--tt-neutre:#bc3e80;--tt-epaisseur:2.4;
 }
+[data-ton="clair"],.u-clair{--tt-encre:#bc3e80;--tt-accent:#a8306f}
 *,*::before,*::after{box-sizing:border-box}
 html{background:var(--nuit);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html.aimante{scroll-snap-type:y mandatory}
@@ -1123,7 +1126,7 @@ html .ed-ajout{margin:0 0 18px}
   /* ---------- l'en-tête et le pied ---------- */
   function monterTete() {
     tete.innerHTML = `
-      <a class="marque" href="#/" aria-label="${esc(S().nom)}, ${esc(S().accueil)}"><span class="marque-pieuvre" aria-hidden="true">${D.logo.octopus}</span><span class="marque-mot" aria-hidden="true">${esc(S().titreSuffixe)}</span></a>
+      <a class="marque" href="#/" aria-label="${esc(S().nom)}, ${esc(S().accueil)}"><span class="marque-pieuvre" data-pieuvre aria-hidden="true">${D.logo.octopus}</span><span class="marque-mot" aria-hidden="true">${esc(S().titreSuffixe)}</span></a>
       <nav class="entrees" aria-label="${esc(S().nom)}"><ul>${entrees().map((e) => `<li><a class="entree" href="${esc(e.href)}" data-cle="${esc(e.cle)}" style="${couleursE(e)}">${brasE()}<span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span></a></li>`).join('')}</ul></nav>
       <button class="menu-bouton" type="button" aria-expanded="false" aria-controls="second"><span class="menu-icone" aria-hidden="true"></span><span>${esc(L().menu)}</span></button>
       <nav class="second" id="second" aria-label="${esc(L().menu)}"><ul>${(S().menu || []).map((m) => `<li><a href="${esc(m.href)}" data-id="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')}</ul></nav>`;
@@ -2278,6 +2281,8 @@ ${finHTML()}`;
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(rafraichir);
 
   /* ================= le montage ================= */
+  // les tentacules : un magenta vif sur la nuit ; chaque entrée donne sa couleur vive à la remontée de sa page, et la tentacule sort de la porte (la carte) où l'on a cliqué
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'vive', voie: 'clic' });
   polices();
   monterTete();
   pied.innerHTML = piedHTML();

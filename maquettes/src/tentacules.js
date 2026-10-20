@@ -29,6 +29,8 @@
        entrees     'auto' (défaut), 'vive' ou 'couleur' : quelle couleur de D.site.entrees prend la remontée
        couleurDe   function (hash) → couleur CSS, ou rien : la destination à la main ; false : la maquette a son propre geste pour
                    cette page, la pieuvre seule répond (pas de tentacule de page)
+       voie        'bas' (défaut) : la tentacule de page part de sous l'écran, à la hauteur du clic ; 'clic' : elle sort du point
+                   cliqué lui-même et remonte
        remontee    false : pas de tentacule de page    soulever  true : la page se soulève de 24 px et paraît, en 460 ms,
                    quand la tentacule remonte. Un transform sur <main> déplace ses descendants position: fixed pendant ce
                    temps : à n'activer que si <main> n'en contient pas (hors de la page : une barre, une photo de fond, ça va)
@@ -325,7 +327,7 @@ const TENTACULES = (() => {
     const vent = d.ventouses ? creer('path', { fill: d.ventouse }, g) : null;
     const hach = d.hachures ? creer('path', { fill: 'none', stroke: d.couleur, 'stroke-width': .8, 'stroke-linecap': 'round' }, g) : null;
     const sp = d.sp, L = sp.L, k = d.k || 1.15, am = d.amorce || 0, doux = x => { x = clamp(x); return x * x * (3 - 2 * x); };
-    const base = s => { const w = d.w1 + (d.w0 - d.w1) * Math.max(0, 1 - s / L) ** k; return am ? w * (.2 + .8 * doux(s / L / am)) : w; };
+    const base = s => { const w = d.w1 + (d.w0 - d.w1) * Math.max(0, 1 - s / L) ** k, m0 = d.amorceMin == null ? .2 : d.amorceMin; return am ? w * (m0 + (1 - m0) * doux(s / L / am)) : w; };
     function maj(a, gg, t, opa = 1) {
       const s0 = a * L, s1 = Math.max(s0 + .5, gg * L), n = s1 - s0;
       const ond = d.onde ? { A: d.onde.A * (d.onde.decroit ? Math.max(0, 1 - t / d.onde.decroit) : 1), k: 2 * Math.PI / d.onde.lambda, ph: t * d.onde.vitesse } : null;
@@ -600,13 +602,15 @@ const TENTACULES = (() => {
       rg = clamp(Math.min(rc.width, rc.height) * .3, 14, 44); reclame = true;
     }
     if (G && dest.slug && !reclame) { const b = boutPour(G, [W / 2, H], dest.slug); if (b && b.nom !== 'bas') cible = b.p; }
-    const x0 = clamp(depart ? depart.x : W * .66, W * .24, W * .84), racine = [x0, H + 50];
+    // le départ : sous l'écran, à la hauteur du clic (par défaut) ; ou le point cliqué lui-même (voie 'clic') : la tentacule en sort et remonte
+    const clic = R.voie === 'clic' && depart && isFinite(depart.x) && isFinite(depart.y);
+    const x0 = clic ? clamp(depart.x, 24, W - 24) : clamp(depart ? depart.x : W * .66, W * .24, W * .84), racine = clic ? [x0, clamp(depart.y, 48, H - 24)] : [x0, H + 50];
     const sens = x0 > cible[0] ? -1 : 1, bow = graine(...[...(dest.slug || dest.couleur || 'x')].map(c => c.charCodeAt(0))) % 2 ? 1 : -1;
     const dur = dureeDe(admin() ? 330 : 620, P);
     const w0 = clamp(W * .045, 19, 64) * S.page * (admin() ? .55 : 1), w1 = Math.max(1.6, 3.6 * S.page);
     const sp = fil({ de: racine, vers: cible, crosse: { sens, r0: rg, r1: rg * .5, tours: 1.1 },
-      ctrl: (E, te) => [[x0 + bow * W * .1, H * .64], [lerp(x0, E[0], .6) - bow * W * .14 - te[0] * 40, E[1] + H * .38]] });
-    const g = creer('g', {}, svg), tt = tentacule(g, { sp, S, couleur, contre: P.contre, lw: 2.4, w0, w1, k: 1.7, cote: -sens, ventouses: S.ventouses, ventouse: P.ventouse, hachures: S.hachures,
+      ctrl: (E, te) => { const dy = Math.max(60, racine[1] - E[1]); return [[x0 + bow * W * .1, racine[1] - dy * .4], [lerp(x0, E[0], .6) - bow * W * .14 - te[0] * 40, E[1] + dy * .38]]; } });
+    const g = creer('g', {}, svg), tt = tentacule(g, { sp, S, couleur, contre: P.contre, lw: 2.4, w0, w1, k: 1.7, cote: -sens, ventouses: S.ventouses, ventouse: P.ventouse, hachures: S.hachures, amorce: clic ? .2 : 0, amorceMin: .55,
       onde: { A: mobile ? 7 : 12, lambda: 280, vitesse: .011, decroit: dur * 1.1 } });
     const bague = creer('circle', { cx: f1(cible[0]), cy: f1(cible[1]), r: 0, fill: 'none', stroke: couleur, 'stroke-width': 1.5, opacity: 0 }, g);
     const a = { duree: dur, g, debut: performance.now(), recolorer(c) { tt.recolorer(c); bague.setAttribute('stroke', c); }, fin() { g.remove(); if (pageActeur === a) pageActeur = null; } };
@@ -658,10 +662,12 @@ const TENTACULES = (() => {
     if (!pret() || reduit() || !de || !vers || de === vers) return null;
     const a0 = rectDe(de), b0 = rectDe(vers), P = palette(vers), svg = monter();
     if (!svg || !a0.width || !b0.width) return null;
-    const A = [a0.left + a0.width / 2, a0.bottom - 2], B = [b0.left + b0.width / 2, b0.bottom - 2];
+    // des onglets côte à côte : le long de leur filet ; l'un sous l'autre (un sommaire) : le long de la liste, du côté des repères
+    const vert = Math.abs(b0.top - a0.top) > Math.abs(b0.left - a0.left) * 1.5 + 8;
+    const A = vert ? [a0.right - 8, a0.top + a0.height / 2] : [a0.left + a0.width / 2, a0.bottom - 2], B = vert ? [b0.right - 8, b0.top + b0.height / 2] : [b0.left + b0.width / 2, b0.bottom - 2];
     if (Math.hypot(A[0] - B[0], A[1] - B[1]) < 12) return null;
-    const sens = B[0] > A[0] ? 1 : -1, dur = dureeDe(320, P), col = couleur || P.accent;
-    const sp = fil({ de: A, dir0: [sens, .3], vers: B, crosse: { sens: 1, r0: 7, r1: 2.5, tours: .9 }, courbe: 1, raideur: .3 });
+    const sens = vert ? (B[1] > A[1] ? 1 : -1) : (B[0] > A[0] ? 1 : -1), dur = dureeDe(320, P), col = couleur || P.accent;
+    const sp = fil({ de: A, dir0: vert ? [-.3, sens] : [sens, .3], vers: B, crosse: { sens: 1, r0: 7, r1: 2.5, tours: .9 }, courbe: vert ? -.5 : 1, raideur: .3 });
     const g = creer('g', {}, svg), tt = tentacule(g, { sp, S: P.S, couleur: col, contre: P.contre, lw: 2.2, w0: Math.max(5, P.ep * 2.6), w1: 1.2, k: 1.1, amorce: .25, cote: 1, onde: { A: 3.5, lambda: 90, vitesse: .02, decroit: dur } });
     return lancer({ duree: dur, g, fin() { g.remove(); }, pas(t) { const u = clamp(t / dur); tt.maj(ease.inOut(clamp((u - .3) / .7)) * .97, ease.out(clamp(u / .6)), t, 1); return true; } }, 'onglet');
   }

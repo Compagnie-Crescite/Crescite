@@ -18,6 +18,9 @@
   --ce:#fff;--cl:#fff;--cf:var(--magenta);--tip-bg:#fff;--tip-c:var(--magenta-deep);
   --ed-fond:#fff;--ed-encre:#1a1016;--ed-accent:#bc3e80;--ed-sur-accent:#fff;--ed-police:Archivo,"Helvetica Neue",Arial,sans-serif;--ed-rayon:22px;--ed-trait:rgba(26,16,22,.18);
   color-scheme:light;
+  /* les tentacules (tentacules.js) : la pieuvre blanche de la marque ; blanches elles aussi, liserées de magenta (elles se lisent sur la tache
+     comme sur le papier), ponctuées de ventouses magenta ; leur empreinte au magenta profond */
+  --tt-encre:#fff;--tt-accent:#8e2a5f;--tt-ventouse:#bc3e80;--tt-neutre:#fff;--tt-fond:#bc3e80;--tt-epaisseur:2.8;
 }
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -774,7 +777,7 @@ a.an-t:hover{text-decoration:underline}
 <header class="site-head" id="tete">
   <div class="tete-haut" id="tete-haut"><div class="wrap"><nav class="second" id="second"><ul></ul></nav></div></div>
   <div class="wrap tete-bas">
-    <a class="brand" id="brand" href="#/"><span class="brand-mark" id="brand-mark" aria-hidden="true"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
+    <a class="brand" id="brand" href="#/"><span class="brand-mark" id="brand-mark" data-pieuvre aria-hidden="true"></span><span class="brand-word" aria-hidden="true">crescite</span></a>
     <nav class="entrees" id="entrees"><ul></ul></nav>
     <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="tete-haut"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-menu"></use></svg><span class="menu-label"></span></button>
   </div>
@@ -1920,6 +1923,8 @@ a.an-t:hover{text-decoration:underline}
   addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(reajuster); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(reajuster);
   // l'ouverture : la pieuvre et le mot en blanc sur l'aplat magenta ; après la révélation, le bandeau se met en marche
+  // les tentacules : la marque en blanc sur magenta ; toutes les remontées sont blanches, liserées de magenta, comme la pieuvre
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'ventouses', couleurDe: () => '#ffffff' });
   INTRO.ouvrir({ fond: '#bc3e80', encre: '#ffffff', classe: 'm05-intro', apres: () => { if (bdCtl) bdCtl.demarrer(); } });
   addEventListener('hashchange', () => route());
   route();
