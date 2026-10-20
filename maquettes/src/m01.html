@@ -196,6 +196,52 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
 .seasons a{text-decoration:none}
 .seasons .cur{color:var(--mag);font-weight:520}
 
+/* l'agenda passé : le programme des saisons, en table des matières ; fermée au départ, chaque saison s'ouvre sur ses dates et sa planche */
+.ag-outils{display:grid;gap:var(--s1);margin-top:var(--s3)}
+.recherche{position:relative;display:block;max-width:24rem}
+.recherche .ic{position:absolute;left:.1rem;top:50%;width:1.05rem;height:1.05rem;transform:translateY(-50%);fill:none;stroke:var(--ink2);stroke-width:1.4;stroke-linecap:round}
+.recherche input{width:100%;padding:.45rem .5rem .45rem 1.7rem;border:0;border-bottom:1px solid var(--ink);border-radius:0;background:transparent;color:var(--ink);font:inherit}
+.recherche input::placeholder{color:var(--ink2);opacity:1}
+.recherche input:focus-visible{outline:2px solid var(--mag);outline-offset:2px}
+.cps{display:flex;flex-wrap:wrap;gap:.4rem .5rem}
+.cp{font:inherit;font-size:var(--fs-s);line-height:1.25rem;padding:.2rem .7rem;border:1px solid var(--rule);border-radius:0;background:transparent;color:var(--ink);cursor:pointer;text-align:left}
+.cp:hover{border-color:var(--ink)}
+.cp[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.pl-lieu.hors,.pl-route.hors{opacity:.16}
+.pl-lieu.hors{pointer-events:none}
+.ag-index{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:.75rem;margin-top:var(--s2);padding:.6rem 0;background:var(--paper);border-bottom:1px solid var(--ink)}
+.ag-index ul{flex:1 1 auto;min-width:0;display:flex;gap:.4rem;padding:2px;overflow-x:auto;scrollbar-width:none}
+.ag-index li{flex:none}
+.idx,.idx-tout{display:inline-flex;align-items:center;gap:.5rem;font:inherit;font-size:var(--fs-s);line-height:1.25rem;font-variant-numeric:lining-nums tabular-nums;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:0;cursor:pointer;white-space:nowrap}
+.idx{padding:.2rem .7rem}
+.idx small{font-size:.8125rem;color:var(--ink2)}
+.idx:hover,.idx-tout:hover{border-color:var(--ink)}
+.idx[aria-expanded="true"]{border-color:var(--ink);box-shadow:inset 0 -3px 0 var(--ec,var(--mag))}
+.idx-actif{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.idx-actif .ar-x{margin-left:.1rem}
+.idx-tout{flex:none;justify-content:center;width:2.4rem;height:2.4rem;padding:0}
+.idx-tout .ic{width:1.1rem;height:1.1rem;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.sai{border-bottom:1px solid var(--rule);scroll-margin-top:4rem}
+.sai>summary{display:flex;align-items:center;gap:1.25rem;padding:1rem 0;list-style:none;cursor:pointer}
+.sai>summary::-webkit-details-marker{display:none}
+.sai-vg{flex:none;display:block;width:6.5rem;height:auto;--u:1}
+.sai>summary:hover .pl-route,.sai[open] .pl-route{stroke:var(--mag)}
+.sai-c{flex:0 1 auto;min-width:0}
+.sai-t{font-size:var(--fs-l);line-height:2.375rem;font-weight:400;font-style:italic;letter-spacing:-.005em}
+.sai-sp{display:block;margin-top:.1rem;font-size:var(--fs-s);line-height:1.5rem;color:var(--ink2)}
+.sai-sp span:not(:last-child)::after{content:"\00a0·"}
+.sai-pt{flex:1 1 1.5rem;align-self:flex-end;min-width:1rem;margin-bottom:.55rem;border-bottom:2px dotted var(--ink2)}
+.sai-n{flex:none;font-size:var(--fs-m);font-style:italic;font-variant-numeric:lining-nums tabular-nums}
+.sai[open]>summary .sai-t{color:var(--ec,var(--mag))}
+.sai-corps{margin-top:0;padding:var(--s1) 0 var(--s4);align-items:start}
+.sai-corps:empty{display:none}
+.sai-corps .ag-m{top:calc(var(--s2) + 3.5rem)}
+.sai-corps .grp + .grp{margin-top:var(--s3)}
+.sai-corps .mo{font-size:var(--fs-b)}
+.dl-k{margin-left:.6rem;font-style:normal;font-variant-caps:all-small-caps;letter-spacing:.08em;font-weight:520;color:var(--ink2);border:1px solid currentColor;padding:0 .4rem}
+.sai-page{margin-top:var(--s2)}
+.sai-page a{color:var(--ec,var(--mag))}
+
 /* un spectacle hors de sa page : le cartouche dans les couleurs de son univers */
 .ct{position:relative;overflow:hidden;background:radial-gradient(130% 90% at 100% 0%,var(--l),transparent 62%),var(--f);color:var(--t);padding:1.15rem 1.25rem 1.25rem}
 .ct-k{font-variant-caps:all-small-caps;letter-spacing:.1em;font-weight:520;color:var(--at)}
@@ -451,6 +497,7 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
   .fp .ct{grid-column:1/-1;min-height:0}
   .fp-b{grid-column:1/-1;margin-top:var(--s2)}
   .seasons ul{columns:3}
+  .sai-corps .ag-m{position:static}
   .ac-g{grid-template-columns:repeat(2,minmax(0,1fr))}
   .f-c,.f-c2,.f-p{grid-column:span 6}
 }
@@ -487,6 +534,13 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
   .cartes{grid-template-columns:minmax(0,1fr)}
   .fp-fi{columns:1}
   .seasons ul{columns:2}
+  .sai>summary{gap:.75rem;padding:.8rem 0}
+  .sai-vg{width:4.25rem}
+  .sai-pt{display:none}
+  .sai-c{flex:1 1 auto}
+  .sai-n{margin-left:auto}
+  .cps{flex-wrap:nowrap;overflow-x:auto;margin-inline:calc(-1 * var(--m));padding:2px var(--m) 4px;scrollbar-width:none}
+  .cp{flex:none}
   .f-c,.f-c2,.f-p{grid-column:1/-1}
   .show-ph{width:100%;margin-inline:0}
   .show-ph figcaption{padding-inline:var(--m)}
@@ -667,9 +721,9 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
     const det = r.details || [];
     const lieu = p ? (r.lien && !det.some(x => x.lien) ? ext(r.lien, esc(p)) : esc(p)) : '';
     const cle = vers || (r.scolaire ? 'etablissement' : 'voir');
-    const sh = show && r.titre ? `<p class="dl-s">${BY[r.slug] ? `<a href="${lien(BY[r.slug], cle)}">${esc(r.titre)}</a>` : esc(r.titre)}</p>` : '';
+    const sh = show && r.titre ? `<p class="dl-s">${BY[r.slug] ? `<a href="${lien(BY[r.slug], cle)}">${esc(r.titre)}</a>` : esc(r.titre)}${r.scolaire ? `<span class="dl-k">${esc(L.scolaire)}</span>` : ''}</p>` : '';
     const x = det.length ? `<ul class="dl-x">${det.map(t => `<li>${t.lien ? ext(t.lien, esc(t.texte)) : esc(t.texte)}</li>`).join('')}</ul>` : '';
-    return `<li class="dl${r.etat === 'date annulée' ? ' dl--x' : ''}"${r.l != null ? ` data-l="${r.l}"` : ''}>
+    return `<li class="dl${r.etat === 'date annulée' ? ' dl--x' : ''}" data-date-id="${esc(r.id ?? '')}"${r.l != null ? ` data-l="${r.l}"` : ''}>
       <span class="dl-n" aria-hidden="true">${r.l != null && num.has(r.l) ? num.get(r.l) : ''}</span>
       <p class="dl-w"><span class="dl-d">${esc(d)}</span>${lieu ? `<span class="dl-p">${lieu}</span>` : ''}${r.etat ? `<span class="dl-e">${esc(r.etat)}</span>` : ''}</p>
       ${sh || x ? `<div class="dl-i">${sh}${x}</div>` : ''}
@@ -825,7 +879,7 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
   }
 
   const chip = () => `<p class="flt" hidden><button type="button" class="flt-b" aria-pressed="true"><span class="flt-t"></span>${ICON.x}</button></p>`;
-  const groupes = (rows, num, opts) => parMois(rows).map(g => `<section class="grp">${g.t ? `<h3 class="mo">${esc(g.t)}</h3>` : ''}<ul class="dls">${g.r.map(r => ligne(r, num, opts)).join('')}</ul></section>`).join('');
+  const groupes = (rows, num, opts) => parMois(rows).map(g => `<section class="grp">${g.t ? `<h3 class="mo">${esc(g.t)}</h3>` : ''}<ul class="dls" data-agenda="">${g.r.map(r => ligne(r, num, opts)).join('')}</ul></section>`).join('');
   const saisonsNav = cur => `<nav class="sec seasons" aria-labelledby="h-saisons"><h2 class="sec-h" id="h-saisons">${esc(L.saisonsPrecedentes)}</h2><ul>${S.saisons.filter((x, i) => cur || i > 0).map((x, i) => `<li>${x.saison === cur ? `<span class="cur">${esc(x.titre)}</span>` : `<a href="${esc(x.saison === D.saison ? E.voir.href : x.href)}">${esc(x.titre)}</a>`}</li>`).join('')}</ul></nav>`;
 
   /* un spectacle hors de sa page : le cartouche, dans les couleurs de son univers */
@@ -910,6 +964,79 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
     };
   }
 
+  /* ——— je viens voir un spectacle : les prochaines dates, puis le programme des saisons passées, une table des matières ——— */
+  const MOIS_ALT = ML.join('|');
+  const norm = s => String(s || '').replace(/<[^>]+>/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'").toLowerCase();
+  /* ---------- l'agenda passé : toutes les dates publiées (D.saisons), saison par saison, de la plus récente à la plus ancienne ---------- */
+  const MOIS_NOMS = MOIS_ALT.split('|');
+  const MOIS_TOK = `${MOIS_ALT}|janv|févr|avr|juil|sept|oct|nov|déc`;   // les mois, entiers ou abrégés (« 26 sept – 4 oct 2016 »)
+  const RE_JOUR = new RegExp(`(\\d{1,2})(?:er)?\\s+(${MOIS_TOK})\\.?(?:\\s+(\\d{4}))?`, 'gi');
+  const RE_MOIS_AN = new RegExp(`(${MOIS_TOK})\\.?\\s+(\\d{4})`, 'i');
+  const RE_LIGNE = new RegExp(`^(.*?)\\s*((?:${MOIS_TOK})\\.?\\s+\\d{4})([\\s\\S]*)$`, 'i');
+  const p2 = n => String(n).padStart(2, '0');
+  // la date de fin d'une ligne, « 2020-03-04 » : iso/fin quand la base les a, sinon lue dans la ligne (le dernier jour cité)
+  function cleDate(d, saison) {
+    const fin = d.fin || d.iso; if (fin) return fin;
+    const tete = String(d.ligne || '').split(/—|\s:\s/)[0], a0 = +saison.slice(0, 4), mois = x => { const t = x.toLowerCase(); return MOIS_NOMS.findIndex(n => n.startsWith(t) || t.startsWith(n.slice(0, 4))) + 1; };
+    const ms = [...tete.matchAll(RE_JOUR)], dern = ms[ms.length - 1];
+    if (dern) { const mm = mois(dern[2]); return `${dern[3] ? +dern[3] : mm >= 9 ? a0 : a0 + 1}-${p2(mm)}-${p2(+dern[1])}`; }
+    const ma = tete.match(RE_MOIS_AN);
+    return ma ? `${ma[2]}-${p2(mois(ma[1]))}-31` : null;
+  }
+  // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » }
+  function decoupeLigne(ligne) {
+    const t = String(ligne || ''), m = t.match(RE_LIGNE);
+    if (!m) return { jour: '', heure: '', lieu: t.trim() };
+    const reste = m[3], k = reste.indexOf('—'), c = reste.search(/\s:\s/);
+    const [h, l] = k >= 0 ? [reste.slice(0, k), reste.slice(k + 1)] : c >= 0 ? [reste.slice(0, c), reste.slice(c + 3)] : ['', reste];
+    const net = x => x.replace(/^[\s:,–-]+|[\s:]+$/g, '');
+    return { jour: m[1] || m[2], heure: net(h), lieu: net(l) };
+  }
+  const titreMois = m => m ? `${MOIS_NOMS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}` : '';
+  // toutes les saisons passées : [{k, titre, rows: [{d, g, k, i, suite, cle, txt}], titres, lieux}], la plus récente d'abord
+  function agendaPasse() {
+    const out = [];
+    S.saisons.forEach(x => {
+      const SA = D.saisons[x.saison]; if (!SA || x.saison > D.saison) return;
+      const rows = []; let i = 0;
+      (SA.spectacles || []).forEach(g => {
+        let prev = null;
+        (g.dates || []).forEach(d => {
+          let k = cleDate(d, x.saison); const suite = !k; if (suite) k = prev; else prev = k;
+          const sp = g.slug && BY[g.slug], titre = sp ? sp.titre : g.titre;
+          rows.push({ d, g, k: k || '', i: i++, suite, titre, cle: g.slug || `titre:${g.titre}`,
+            txt: norm(`${titre} ${d.ligne} ${(d.details || []).map(y => y.texte).join(' ')} ${d.l != null && CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) });
+        });
+      });
+      const passees = (x.saison === D.saison ? rows.filter(r => r.k && r.k < D.aujourdhui) : rows).sort((a, b) => a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i);
+      if (!passees.length) return;
+      out.push({ k: x.saison, titre: SA.titre, rows: passees, titres: [...new Set(passees.map(r => r.titre))], lieux: CARTE.saison(x.saison) });
+    });
+    return out;
+  }
+  // les spectacles qui ont des dates, à venir ou passées : [{cle, titre, slug}], les spectacles de la compagnie d'abord
+  function spectaclesAgenda(pub, passe) {
+    const m = new Map();
+    D.shows.forEach(s => { if (pub.some(d => d.slug === s.slug) || passe.some(p => p.rows.some(r => r.cle === s.slug))) m.set(s.slug, { cle: s.slug, titre: s.titre, slug: s.slug }); });
+    passe.forEach(p => p.rows.forEach(r => { if (!m.has(r.cle)) m.set(r.cle, { cle: r.cle, titre: r.titre, slug: null }); }));
+    return [...m.values()];
+  }
+
+  const q1 = (s, el = main) => el.querySelector(s), qa = (s, el = main) => [...el.querySelectorAll(s)];
+  const DBL_BAS = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 4l6 5 6-5M4 11l6 5 6-5"/></svg>';
+  const DBL_HAUT = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 9l6-5 6 5M4 16l6-5 6 5"/></svg>';
+  const LOUPE = '<svg class="ic" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M12.6 12.6 17 17"/></svg>';
+  // la planche d'une saison à la taille d'une vignette : le cadre à double filet, le pays, les routes depuis Rouen
+  function vignettePl(lx) {
+    const [bx, by, bw, bh] = CARTE.viewBox.split(/\s+/).map(Number), u = bw / 130, f = v => v.toFixed(1);
+    return `<svg class="sai-vg" viewBox="${f(bx - 14 * u)} ${f(by - 14 * u)} ${f(bw + 28 * u)} ${f(bh + 28 * u)}" aria-hidden="true" focusable="false" style="--u:${u.toFixed(3)}">
+      <rect class="pl-f1" x="${f(bx - 9 * u)}" y="${f(by - 9 * u)}" width="${f(bw + 18 * u)}" height="${f(bh + 18 * u)}"/><rect class="pl-f2" x="${f(bx - 3 * u)}" y="${f(by - 3 * u)}" width="${f(bw + 6 * u)}" height="${f(bh + 6 * u)}"/>
+      <path class="pl-pays" d="${CARTE.fond.pays}"/>
+      ${lx.filter(x => loin(x) && !x.encart).map(x => `<path class="pl-route" d="${CARTE.trait(x.xy, { courbe: .2 })}"/>`).join('')}
+      <circle class="pl-rr" cx="${R[0]}" cy="${R[1]}" r="${f(3.4 * u)}"/></svg>`;
+  }
+  const etatVoir = { v: null };
+  let AG = null;
   function voir() {
     const e = E.voir, rows = D.dates.filter(d => !d.scolaire), num = numeroter(rows), s0 = S.saisons[0];
     const tournee = D.shows.filter(s => rows.some(d => d.slug === s.slug));
@@ -920,17 +1047,151 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
         ${cartouche(s, { cle: 'voir', haut: [s.lieuTemps || s.creation], gm: false, bas: `${s.accroche ? `<p class="pc-acc">${esc(s.accroche)}</p>` : ''}${pr ? `<p class="pc-d"><span class="pc-dd">${esc(pr.ligneDate)}</span><span>${esc(pr.ligneLieu)}</span></p>` : ''}` })}
       </li>`;
     };
+    const passe = agendaPasse(), puces = spectaclesAgenda(rows, passe), lieuxProch = CARTE.aVenir('public');
+    const proch = rows.map(d => ({ d, cle: d.slug, txt: norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')} ${K.lieux[d.l] ? CARTE.nom(K.lieux[d.l]) : ''}`) }));
+    let F = EN_PLACE && etatVoir.v ? etatVoir.v : null;
+    if (!F) {
+      F = { q: '', slug: null, l: null, ouv: new Set(passe.filter(s => s.k === D.saison).map(s => s.k)), avant: null };
+      const l0 = new URLSearchParams(location.hash.split('?')[1] || '').get('l');
+      if (l0 !== null && lieuxProch.some(x => x.l === +l0)) F.l = +l0;
+    }
+    etatVoir.v = F;
+    if (F.slug && !puces.some(s => s.cle === F.slug)) F.slug = null;
+    if (F.l !== null && !K.lieux[F.l]) F.l = null;
+    const terme = () => norm(F.q).trim();
+    const actif = () => !!(F.slug || F.l !== null || terme());
+    const garde = r => (!F.slug || r.cle === F.slug) && (F.l === null || r.d.l === F.l) && (!terme() || r.txt.includes(terme()));
+    const visibles = () => passe.map(s => ({ s, rows: s.rows.filter(garde) })).filter(x => x.rows.length);
+    if (actif() && !F.avant) { F.avant = new Set(F.ouv); F.ouv = new Set(visibles().map(x => x.s.k)); }   // une commune choisie depuis l'accueil : ses saisons s'ouvrent
+    // les lignes passées, au format d'une ligne de date : titre et slug de leur spectacle
+    const aLigne = r => ({ ...r.d, titre: r.titre, slug: r.g.slug });
+    const groupesPasse = (rs, nm) => {
+      const G = [];
+      rs.forEach(r => { const m = r.k.slice(0, 7), g = G[G.length - 1]; if (g && g.m === m) g.r.push(r); else G.push({ m, r: [r] }); });
+      return G.map(g => { let t = g.m ? titreMois(g.m) : ''; if (!g.r.some(r => r.d.ligne.includes(t))) t = '';
+        return `<section class="grp">${t ? `<h4 class="mo">${esc(t)}</h4>` : ''}<ul class="dls" data-agenda="">${g.r.map(r => ligne(aLigne(r), nm, { vers: 'voir' })).join('')}</ul></section>`; }).join('');
+    };
+    const listeProchaines = () => groupes(proch.filter(garde).map(r => r.d), num, { vers: 'voir' });
+    const lieuxDe = (s, rs) => {
+      const parL = new Map();
+      rs.forEach(r => { if (r.d.l != null) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, titre: r.titre, slug: r.g.slug }); } });
+      return s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l), n: parL.get(x.l).length }));
+    };
+    const corpsSaison = (s, rs, lx) => {
+      const nm = numeroter(s.rows.map(r => r.d));
+      return `<div class="ag-l">${groupesPasse(rs, nm)}${s.k === D.saison ? '' : `<p class="sai-page"><a href="#/agenda/${esc(s.k)}">${esc(s.titre)}${ICON.r}</a></p>`}</div>
+        <div class="ag-m">${lx.length ? plate({ lieux: lx, num: nm, label: s.titre }) : ''}</div>`;
+    };
+    const saisonHtml = ({ s, rows: rs }) => {
+      const ouv = F.ouv.has(s.k), lx = lieuxDe(s, rs);
+      return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}"${ouv ? ' open' : ''}>
+        <summary>${vignettePl(lx)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-pt" aria-hidden="true"></span><span class="sai-n">${rs.length}</span></summary>
+        <div class="sai-corps grid lk">${ouv ? corpsSaison(s, rs, lx) : ''}</div></details>`;
+    };
+    const indexHtml = vis => {
+      const tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
+      const actifs = [terme() && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l !== null && ['l', CARTE.nom(K.lieux[F.l])]].filter(Boolean);
+      return `<button type="button" class="idx-tout" aria-expanded="${tout}" aria-label="${esc(L.saisonsPrecedentes)}">${tout ? DBL_HAUT : DBL_BAS}</button>
+        <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${ICON.x}</button></li>`).join('')}${vis.map(({ s, rows: rs }) => `<li><button type="button" class="idx" data-k="${esc(s.k)}" aria-controls="sai-${esc(s.k)}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}<small>${rs.length}</small></button></li>`).join('')}</ul>`;
+    };
+    const vis0 = visibles();
+    AG = {};
+    AG.brancher = () => {
+      const zone = q1('.ag'), svg = q1('svg.pl', zone), racine = q1('#ag-saisons'), index = q1('#ag-index'), liste = q1('#ag-liste'), fl = q1('.flt', zone);
+      // une liste et sa planche se répondent : survoler une ligne met sa commune en avant, choisir une commune filtre tout l'agenda
+      const relier = (scope, sv) => {
+        const marque = l => { qa('.on', scope).forEach(n => n.classList.remove('on')); if (l != null) qa(`[data-l="${l}"]`, scope).forEach(n => n.classList.add('on')); scope.classList.toggle('act', l != null); };
+        if (sv) CARTE.lier(sv, { survol: marque, choix: l => AG.choisir(l) });
+        if (scope.dataset.lie) return;   // les écouteurs de la liste ne se posent qu'une fois
+        scope.dataset.lie = '1';
+        const de = ev => { const li = ev.target.closest('li[data-l]'); return li ? +li.dataset.l : null; };
+        scope.addEventListener('mouseover', ev => marque(de(ev)));
+        scope.addEventListener('mouseleave', () => marque(null));
+        scope.addEventListener('focusin', ev => marque(de(ev)));
+        scope.addEventListener('focusout', () => marque(null));
+      };
+      const lierSaison = (dt, anime) => {
+        const c = q1('.sai-corps', dt), sv = q1('svg.pl', c);
+        if (sv) { poser(sv); if (anime && CARTE.mouvement()) { sv.classList.add('pl-attente'); requestAnimationFrame(() => requestAnimationFrame(() => { sv.classList.remove('pl-attente'); sv.classList.add('pl-trace'); })); } }
+        relier(c, sv);
+      };
+      relier(zone, svg);
+      const majPlanche = () => {
+        const ok = new Set(proch.filter(garde).map(r => r.d.l));
+        qa('.pl-lieu, .pl-route', svg).forEach(n => n.classList.toggle('hors', !ok.has(+n.dataset.l)));
+        qa('.pl-lieu', svg).forEach(g => { g.tabIndex = ok.has(+g.dataset.l) ? 0 : -1; });
+        fl.hidden = F.l === null; q1('.flt-t', fl).textContent = F.l === null ? '' : CARTE.nom(K.lieux[F.l]);
+        zone.classList.toggle('flt-on', false);
+      };
+      const recompte = () => {
+        if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
+        else if (F.avant) { F.ouv = F.avant; F.avant = null; }
+      };
+      const nettoyer = () => qa('svg.pl', racine).forEach(s => PL.delete(s.id));
+      const dessineSaisons = () => {
+        nettoyer();
+        const vis = visibles();
+        racine.innerHTML = vis.map(saisonHtml).join('');
+        qa('.sai[open]', racine).forEach(dt => lierSaison(dt, false));
+        index.innerHTML = indexHtml(vis);
+      };
+      const dessine = () => {
+        recompte();
+        liste.innerHTML = listeProchaines();
+        majPlanche();
+        dessineSaisons();
+        qa('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
+        const inp = q1('#cherche'); if (inp.value !== F.q) inp.value = F.q;
+      };
+      AG.choisir = l => { F.l = F.l === l ? null : l; dessine(); };
+      const remplir = dt => {
+        const s = passe.find(x => x.k === dt.dataset.saison), c = q1('.sai-corps', dt);
+        if (!s || !c || c.firstElementChild) return;
+        const rs = s.rows.filter(garde);
+        c.innerHTML = corpsSaison(s, rs, lieuxDe(s, rs));
+        lierSaison(dt, true);
+      };
+      racine.addEventListener('toggle', ev => {
+        const dt = ev.target; if (!dt.matches || !dt.matches('details.sai')) return;
+        const k = dt.dataset.saison;
+        if (dt.open) { F.ouv.add(k); remplir(dt); } else { F.ouv.delete(k); const c = q1('.sai-corps', dt); if (c) { qa('svg.pl', c).forEach(s => PL.delete(s.id)); c.innerHTML = ''; } }
+        const b = q1(`[data-k="${CSS.escape(k)}"]`, index); if (b) b.setAttribute('aria-expanded', String(dt.open));
+        const vis = visibles(), tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k)), t = q1('.idx-tout', index);
+        if (t) { t.setAttribute('aria-expanded', String(tout)); t.innerHTML = tout ? DBL_HAUT : DBL_BAS; }
+      }, true);
+      index.addEventListener('click', ev => {
+        const b = ev.target.closest('button'); if (!b) return;
+        if (b.classList.contains('idx-tout')) { F.ouv = b.getAttribute('aria-expanded') === 'true' ? new Set() : new Set(visibles().map(x => x.s.k)); dessineSaisons(); return; }
+        if (b.dataset.eff) { if (b.dataset.eff === 'q') F.q = ''; else if (b.dataset.eff === 's') F.slug = null; else F.l = null; dessine(); return; }
+        const dt = q1(`#sai-${CSS.escape(b.dataset.k)}`, racine); if (!dt) return;
+        dt.open = true; F.ouv.add(b.dataset.k); remplir(dt);
+        dt.scrollIntoView({ behavior: CARTE.mouvement() ? 'smooth' : 'auto', block: 'start' });
+      });
+      q1('.flt-b', fl).addEventListener('click', () => { F.l = null; dessine(); q1('#cherche').focus(); });
+      qa('[data-s]').forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; dessine(); }));
+      let tempo = 0;
+      q1('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(dessine, 120); });
+      qa('.sai[open]', racine).forEach(dt => lierSaison(dt, false));
+      majPlanche();
+    };
     return { titre: e.texte, entree: 'voir', html: `<div class="wrap" style="--ec:var(--e-voir)">
       <header class="pg-h pg-h--e"><p class="lab pg-k">${esc(s0.titre)}</p><h1 class="pg-t" tabindex="-1">${esc(e.texte)}</h1></header>
-      <div class="grid ag lk">
-        <div class="ag-l">${chip()}${groupes(rows, num, { vers: 'voir' })}</div>
-        <div class="ag-m">${plate({ lieux: CARTE.aVenir('public'), num, label: s0.titre })}</div>
+      <div class="ag-outils">
+        <label class="recherche">${LOUPE}<input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
+        <div class="cps" role="group" aria-label="${esc(L.spectacles)}">${puces.map(s => `<button class="cp" type="button" data-s="${esc(s.cle)}" aria-pressed="${s.cle === F.slug}">${esc(s.titre)}</button>`).join('')}</div>
       </div>
+      <div class="grid ag lk">
+        <div class="ag-l">${chip()}<div id="ag-liste">${listeProchaines()}</div></div>
+        <div class="ag-m">${plate({ lieux: lieuxProch, num, label: s0.titre })}</div>
+      </div>
+      <section class="sec" id="v-agenda" aria-labelledby="h-prec"><h2 class="sec-h" id="h-prec">${esc(L.saisonsPrecedentes)}</h2>
+        <nav class="ag-index" id="ag-index" aria-label="${esc(L.saison)}">${indexHtml(vis0)}</nav>
+        <div class="sai-liste" id="ag-saisons">${vis0.map(saisonHtml).join('')}</div>
+      </section>
       <section class="sec" aria-labelledby="h-sp"><h2 class="sec-h" id="h-sp">${esc(L.lesSpectacles)}</h2>
         <ul class="sec-b cartes">${tournee.map(carte).join('')}</ul>
       </section>
-      ${saisonsNav(null)}
-    </div>`, apres() { lier(main.querySelector('.ag'), { filtre: true }); } };
+    </div>`, apres() { AG.brancher(); } };
   }
 
   function programmer() {
@@ -1024,7 +1285,7 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
           ${Z.spectacles.map(g => `<section class="grp ss">
             <h2 class="ss-t">${g.slug && BY[g.slug] ? `<a href="${lien(BY[g.slug], 'voir')}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
             ${g.sousTitre ? `<p class="ss-st">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="ss-c">${esc(g.creation)}</p>` : ''}
-            <ul class="dls">${g.dates.map(r => ligne(r, num, { show: false })).join('')}</ul></section>`).join('')}
+            <ul class="dls" data-agenda="">${g.dates.map(r => ligne(r, num, { show: false })).join('')}</ul></section>`).join('')}
         </div>
         <div class="ag-m">${plate({ lieux: CARTE.saison(id), num, label: Z.titre })}</div>
       </div>
@@ -1265,7 +1526,9 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
   const VUES = { '': accueil, voir, programmer, etablissement, spectacles, compagnie, contact,
     'mentions-legales': () => legal('mentions-legales'), 'politique-de-confidentialite': () => legal('politique-de-confidentialite') };
   // enPlace : la même vue refaite après un changement de D (pas de retour en haut, pas de focus, pas d'animation d'entrée)
+  let EN_PLACE = false;
   function route(enPlace = false) {
+    EN_PLACE = enPlace;
     relire();
     PL.clear();
     const brut = (location.hash || '#/').replace(/\/+$/, '');

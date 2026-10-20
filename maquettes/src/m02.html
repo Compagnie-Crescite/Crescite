@@ -391,7 +391,8 @@ button,input,textarea{font:inherit;color:inherit}
 /* la page d'un spectacle : son univers */
 .show{background:var(--u-fond);color:var(--u-texte)}
 .show a:focus-visible,.show summary:focus-visible,.show button:focus-visible{outline-color:var(--u-texte)}
-.u-tete{position:relative;overflow:hidden;background:radial-gradient(60% 90% at 16% 34%,var(--u-lueur),transparent 72%),var(--u-fond)}
+/* la lueur de l'univers rayonne derrière la photo, pas derrière le texte (les contrastes restent ceux du fond) */
+.u-tete{position:relative;overflow:hidden;background:radial-gradient(42% 78% at 74% 50%,var(--u-lueur),transparent 72%),var(--u-fond)}
 .u-tete-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:28px;align-items:center;padding-top:44px;padding-bottom:44px}
 .u-tete-texte{position:relative;grid-column:1/span 5;min-width:0;padding:8px 0}
 .u-tete-texte>*:not(.motif){position:relative}
@@ -702,6 +703,7 @@ html .ed-bt{border-radius:6px}
   .agenda-carte,.cie-dates{position:static}
   .actions-photos,.actions .prose{grid-column:1/-1;grid-row:auto}
   .u-photo{order:-1}
+  .u-tete{background:radial-gradient(90% 26% at 50% 18%,var(--u-lueur),transparent 72%),var(--u-fond)}
   .u-tete-grid{padding-top:20px;padding-bottom:32px}
   .u-motif{left:auto;right:-80px;top:auto;bottom:-60px;transform:none;width:280px;height:280px}
   .u-onglets{position:static}
