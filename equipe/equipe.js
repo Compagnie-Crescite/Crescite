@@ -1955,7 +1955,8 @@
     if (etat === 'actif' || etat === 'inactif') return bascule(etat === 'actif');
     if (etat === 'ios') return `<p>Sur iPhone et iPad, les notifications n’arrivent qu’à l’application installée sur l’écran d’accueil.</p>${ETAPES_IOS}<p class="aide">Puis revenez ici, dans « Moi », pour les activer.</p>`;
     if (etat === 'bloque') return '<p class="message conseil">Les notifications sont bloquées pour cette application dans les réglages du navigateur (ou du téléphone). Autorisez-les, puis revenez ici.</p>';
-    if (etat === 'indisponible') return '<p class="aide">Les notifications sur l’appareil arrivent bientôt. En attendant, elles s’affichent ici, dans l’application.</p>';
+    if (etat === 'indisponible') return `<p class="aide">${E.notifsEtat === 'absent' ? 'Les notifications arrivent bientôt : dans l’application, onglet Notifications, et sur l’appareil.'
+      : 'Les notifications sur l’appareil arrivent bientôt. En attendant, elles s’affichent ici, dans l’application.'}</p>`;
     if (etat === 'non') return '<p class="aide">Ce navigateur ne sait pas recevoir de notifications. Elles restent lisibles dans l’application, onglet Notifications.</p>';
     return '<p class="aide">Impossible de vérifier pour le moment : il faut le réseau. <button type="button" class="lien-btn" data-push-verifier>Réessayer</button></p>';
   }
