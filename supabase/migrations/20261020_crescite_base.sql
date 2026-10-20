@@ -139,6 +139,12 @@ create table if not exists public.crescite_dates (
   modifie_par uuid,
   check (fin is null or fin >= debut)
 );
+-- répétitions et résidences (20261022) : la nature d'une date ; elles ne sont jamais sur le site public
+alter table public.crescite_dates add column if not exists nature text not null default 'representations';
+do $$ begin
+  alter table public.crescite_dates add constraint crescite_dates_nature_valeurs
+    check (nature in ('representations', 'repetitions', 'residence', 'autre'));
+exception when duplicate_object then null; end $$;
 create index if not exists crescite_dates_debut on public.crescite_dates (debut);
 create index if not exists crescite_dates_spectacle on public.crescite_dates (spectacle_id, debut);
 create index if not exists crescite_dates_lieu on public.crescite_dates (lieu_id);
@@ -156,6 +162,7 @@ create table if not exists public.crescite_representations (
   modifie_le timestamptz not null default now(),
   modifie_par uuid
 );
+alter table public.crescite_representations add column if not exists fin time;   -- l'heure de fin (une répétition : 10h-18h)
 create index if not exists crescite_representations_date on public.crescite_representations (date_id, jour, heure);
 create index if not exists crescite_representations_jour on public.crescite_representations (jour);
 
@@ -192,6 +199,15 @@ begin
     end if;
   end if;
   if new.fin is null then new.fin := new.debut; end if;
+  return new;
+end;
+$$;
+
+-- une répétition, une résidence (tout ce qui n'est pas des représentations) n'est jamais sur le site public
+create or replace function public.crescite_dates_nature() returns trigger
+language plpgsql as $$
+begin
+  if new.nature <> 'representations' then new.visible := false; end if;
   return new;
 end;
 $$;
@@ -329,6 +345,9 @@ end $$;
 drop trigger if exists crescite_dates_avant on public.crescite_dates;
 create trigger crescite_dates_avant before insert or update on public.crescite_dates
   for each row execute function public.crescite_dates_avant();
+drop trigger if exists crescite_dates_nature on public.crescite_dates;
+create trigger crescite_dates_nature before insert or update on public.crescite_dates
+  for each row execute function public.crescite_dates_nature();
 drop trigger if exists crescite_representations_apres on public.crescite_representations;
 create trigger crescite_representations_apres after insert or update or delete on public.crescite_representations
   for each row execute function public.crescite_representations_apres();
@@ -351,12 +370,13 @@ begin
   end if;
   if did is null then
     insert into public.crescite_dates (spectacle_id, lieu_id, debut, fin, precision, saison, public, statut, visible,
-                                       intitule, details, lien, nb_representations)
+                                       intitule, details, lien, nb_representations, nature)
     values ((d ->> 'spectacle_id')::bigint, nullif(d ->> 'lieu_id', '')::bigint, (d ->> 'debut')::date,
             nullif(d ->> 'fin', '')::date, coalesce(nullif(d ->> 'precision', ''), 'jour'), nullif(d ->> 'saison', ''),
             coalesce(nullif(d ->> 'public', ''), 'tout_public'), coalesce(nullif(d ->> 'statut', ''), 'confirmee'),
             coalesce((d ->> 'visible')::boolean, true), nullif(d ->> 'intitule', ''), coalesce(d -> 'details', '[]'),
-            nullif(d ->> 'lien', ''), nullif(d ->> 'nb_representations', '')::smallint)
+            nullif(d ->> 'lien', ''), nullif(d ->> 'nb_representations', '')::smallint,
+            coalesce(nullif(d ->> 'nature', ''), 'representations'))
     returning id into did;
   else
     update public.crescite_dates set
@@ -367,7 +387,8 @@ begin
       public = coalesce(nullif(d ->> 'public', ''), 'tout_public'), statut = coalesce(nullif(d ->> 'statut', ''), 'confirmee'),
       visible = coalesce((d ->> 'visible')::boolean, true), intitule = nullif(d ->> 'intitule', ''),
       details = coalesce(d -> 'details', '[]'), lien = nullif(d ->> 'lien', ''),
-      nb_representations = nullif(d ->> 'nb_representations', '')::smallint
+      nb_representations = nullif(d ->> 'nb_representations', '')::smallint,
+      nature = coalesce(nullif(d ->> 'nature', ''), nature)
     where id = did;
     if not found then raise exception 'Date % introuvable', did; end if;
   end if;
@@ -376,13 +397,14 @@ begin
     for r in select * from jsonb_array_elements(d -> 'representations') loop
       rid := nullif(r ->> 'id', '')::bigint;
       if rid is null then
-        insert into public.crescite_representations (date_id, jour, heure, public, annulee, lien, note)
-        values (did, (r ->> 'jour')::date, nullif(r ->> 'heure', '')::time, coalesce(nullif(r ->> 'public', ''), 'tout_public'),
+        insert into public.crescite_representations (date_id, jour, heure, fin, public, annulee, lien, note)
+        values (did, (r ->> 'jour')::date, nullif(r ->> 'heure', '')::time, nullif(r ->> 'fin', '')::time,
+                coalesce(nullif(r ->> 'public', ''), 'tout_public'),
                 coalesce((r ->> 'annulee')::boolean, false), nullif(r ->> 'lien', ''), nullif(r ->> 'note', ''))
         returning id into rid;
       else
         update public.crescite_representations set
-          jour = (r ->> 'jour')::date, heure = nullif(r ->> 'heure', '')::time,
+          jour = (r ->> 'jour')::date, heure = nullif(r ->> 'heure', '')::time, fin = nullif(r ->> 'fin', '')::time,
           public = coalesce(nullif(r ->> 'public', ''), 'tout_public'), annulee = coalesce((r ->> 'annulee')::boolean, false),
           lien = nullif(r ->> 'lien', ''), note = nullif(r ->> 'note', '')
         where id = rid and date_id = did;

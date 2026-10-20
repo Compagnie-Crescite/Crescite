@@ -197,12 +197,12 @@ language sql stable security invoker set search_path = public as $$
   select coalesce(jsonb_agg(x order by x ->> 'debut', (x ->> 'id')::bigint), '[]'::jsonb) from (
     select jsonb_build_object(
       'id', d.id, 'debut', d.debut, 'fin', d.fin, 'precision', d.precision, 'saison', d.saison, 'public', d.public,
-      'statut', d.statut, 'intitule', d.intitule, 'details', d.details, 'lien', d.lien,
+      'statut', d.statut, 'intitule', d.intitule, 'details', d.details, 'lien', d.lien, 'nature', d.nature,
       'spectacle', jsonb_build_object('id', s.id, 'slug', s.slug, 'titre', s.titre, 'duree', s.duree, 'univers', s.univers),
       'lieu', case when l.id is null then null else jsonb_build_object('id', l.id, 'nom', l.nom, 'commune', l.commune,
               'departement', l.departement, 'adresse', l.adresse, 'latitude', l.latitude, 'longitude', l.longitude,
               'site_web', l.site_web) end,
-      'representations', coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'jour', r.jour, 'heure', r.heure,
+      'representations', coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'jour', r.jour, 'heure', r.heure, 'fin', r.fin,
               'public', r.public, 'annulee', r.annulee, 'note', r.note) order by r.jour, r.heure nulls last)
               from public.crescite_representations r where r.date_id = d.id), '[]'::jsonb),
       'feuille', (select jsonb_build_object('id', f.id, 'version', f.version, 'publiee_le', f.publiee_le)
