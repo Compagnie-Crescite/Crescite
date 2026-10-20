@@ -175,7 +175,7 @@ const SPEC_PHOTO_PERSONNE = [
 ];
 const SPEC_PUBLIE_PERSONNE = { k: 'publie', t: 'case', l: 'Fiche publiée', aide: 'Son nom et sa fiche apparaissent sur les pages de spectacle.' };
 const SPEC_COORD = [
-  { k: 'email', t: 'texte', l: 'Adresse électronique du compte', aide: 'Elle se connecte à son espace avec cette adresse.' },
+  { k: 'email', t: 'texte', l: 'Adresse électronique du compte', aide: 'La personne se connecte à son espace avec cette adresse.' },
   { k: 'telephone', t: 'texte', l: 'Téléphone' }, { k: 'ville', t: 'texte', l: 'Ville de départ', ph: 'Rouen' },
   { k: 'regime', t: 'texte', l: 'Régime alimentaire', ph: 'Végétarien, sans gluten…' }, { k: 'urgence', t: 'texte', l: 'En cas d’urgence, prévenir', ph: 'Nom, lien, téléphone' },
 ];
@@ -213,7 +213,7 @@ function editeurPersonne(id) {
     const p = etat.p0, pr = p ? priveeDe(p.id) : null, mel = (pr?.email || '').trim();
     const espace = new URL('../equipe/', location.href).href;
     $('#pe-acces', zone).innerHTML = `<h3>Accès à son espace</h3>${!p ? '<p class="aide">Enregistrez d’abord la fiche, avec son adresse électronique.</p>'
-      : pr?.user_id ? `<p class="acces"><span class="badge ok">Compte rattaché</span><span>Elle se connecte avec ${esc(mel || 'son adresse')} et y trouve sa tournée, les horaires, les documents et les feuilles de route.</span></p>
+      : pr?.user_id ? `<p class="acces"><span class="badge ok">Compte rattaché</span><span>La personne se connecte avec ${esc(mel || 'son adresse')} ; elle y trouve sa tournée, les horaires, les documents et les feuilles de route.</span></p>
         <p class="acces"><button type="button" class="btn petit" id="pe-detacher">Détacher ce compte</button><span class="aide">Si le compte n’est pas le bon : la prochaine connexion avec l’adresse de la fiche le rattachera.</span></p>`
       : mel ? `<p>Créer son accès : Supabase → Authentication → Users → Invite user, avec cette adresse.</p>
         <p class="acces"><code>${esc(mel)}</code><button type="button" class="btn petit" id="pe-copier">Copier l’adresse</button><a class="btn petit" href="https://supabase.com/dashboard/project/${BASE.split('//')[1].split('.')[0]}/auth/users" target="_blank" rel="noopener">Ouvrir Supabase ↗</a></p>
@@ -253,7 +253,7 @@ function editeurPersonne(id) {
     if (b.id === 'pe-copier') return copier((priveeDe(etat.p0.id)?.email || '').trim(), 'Adresse');
     if (b.id === 'pe-copier-lien') return copier(new URL('../equipe/', location.href).href, 'Adresse de son espace');
     if (b.id === 'pe-detacher') {
-      if (!confirm(`Détacher le compte de ${nomDe(etat.p0)} ? Elle ne verra plus son espace tant qu’un compte ne s’y rattache pas de nouveau.`)) return;
+      if (!confirm(`Détacher le compte de ${nomDe(etat.p0)} ? ${nomDe(etat.p0)} ne verra plus son espace tant qu’un compte ne s’y rattache pas de nouveau.`)) return;
       const { data, error } = await sb.from('crescite_personnes_privees').update({ user_id: null }).eq('personne_id', etat.p0.id).select().single();
       if (error) return erreur(error);
       remplacerLigne(E.privees, data, 'personne_id'); dessinerAcces(); annoncer('Compte détaché.'); return;
@@ -376,7 +376,7 @@ function ongletDistribution(z, s) {
     try { await renumeroter(distributionDe(s.id)); } catch (e) { erreur(e, 'Ordre non enregistré'); }
     dessiner();
     annoncer(`Ajouté à la distribution : ${nomDe(p)} (${libelleCategorie(cat)}).`);
-    const l = $(`[data-di="${data.id}"]`, z); tt('ajouter', l); $('[data-dc="fonction"]', l)?.focus();
+    const l = $(`[data-di="${data.id}"]`, z); if (l) { tt('ajouter', l); $('[data-dc="fonction"]', l)?.focus(); }
   }
   z.addEventListener('change', async e => {
     const t = e.target, l = t.closest('[data-di]'); if (!l || !t.dataset.dc) return;
@@ -478,7 +478,7 @@ function ongletDeroule(z, F) {
     if (b.dataset.fmAjout) {
       const neuf = b.dataset.fmAjout === 'apres' ? { avant_min: -30, quoi: '', qui: '', jours: 'dernier', fin: true } : { avant_min: 90, quoi: '', qui: '', jours: 'premier' };
       F.feuille_modele.push(neuf); trierModele(); marquerSale(); dessiner();
-      const l = $(`[data-fm="${F.feuille_modele.indexOf(neuf)}"]`, z); tt('ajouter', l); $('[data-fk="quoi"]', l)?.focus();
+      const l = $(`[data-fm="${F.feuille_modele.indexOf(neuf)}"]`, z); if (l) { tt('ajouter', l); $('[data-fk="quoi"]', l)?.focus(); }
       return;
     }
     if (b.dataset.fmRetirer !== undefined) { F.feuille_modele.splice(+b.closest('[data-fm]').dataset.fm, 1); marquerSale(); dessiner(); }
@@ -516,7 +516,7 @@ function documentsEditeur(z, s) {
     const { data, error } = await sb.from('crescite_documents').insert(ligneDoc).select().single();
     if (error) throw error;
     E.documents.push(data); dessiner();
-    const l = $(`[data-doc="${data.id}"]`, z); tt('ajouter', l); $('[data-dk="titre"]', l)?.focus();
+    const l = $(`[data-doc="${data.id}"]`, z); if (l) { tt('ajouter', l); $('[data-dk="titre"]', l)?.focus(); }
     return data;
   }
   z.addEventListener('change', async e => {
@@ -721,12 +721,15 @@ const METIERS_CONTACT = /administrat|r[ée]gie\s+g[ée]n[ée]rale|r[ée]gisseu(?
 function sourcesFeuille(d) {
   const tel = id => priveeDe(id)?.telephone || '', mel = id => priveeDe(id)?.email || '';
   const equipe = equipeDeLaDate(d).map(x => ({ personne_id: x.personne_id, nom: nomDe(personne(x.personne_id)), fonction: x.fonction, telephone: tel(x.personne_id) }));
-  // l'administration de la compagnie, et la régie générale (celle du spectacle ou de la date, s'il y en a une)
-  const proches = new Set([...distributionDe(d.spectacle_id).map(x => x.personne_id), ...equipe.map(x => x.personne_id)]);
+  // l'administration de la compagnie, et la régie générale : celle de l'équipe de la date, sinon celle de la distribution
+  // du spectacle, sinon toute personne dont c'est le métier
+  const REGIE = /r[ée]gi(?:e|sseu(?:r|se))\s+g[ée]n[ée]ral/i;
   const avecMetier = re => E.personnes.filter(p => (p.metiers || []).some(m => re.test(m)));
-  const regie = avecMetier(/r[ée]gi(?:e|sseu(?:r|se))\s+g[ée]n[ée]ral/i), regieProche = regie.filter(p => proches.has(p.id));
-  const compagnie = [...avecMetier(/administrat/i), ...(regieProche.length ? regieProche : regie)].filter((p, i, xs) => xs.indexOf(p) === i);
-  const contacts = compagnie.map(p => ({ nom: nomDe(p), role: (p.metiers || []).find(m => METIERS_CONTACT.test(m)) || '', telephone: tel(p.id), email: mel(p.id) }));
+  const regieDate = equipe.filter(x => REGIE.test(x.fonction || '')).map(x => personne(x.personne_id));
+  const regieDist = distributionDe(d.spectacle_id).filter(x => REGIE.test(x.fonction || '')).map(x => personne(x.personne_id));
+  const regie = (regieDate.length ? regieDate : regieDist.length ? regieDist : avecMetier(REGIE)).filter(Boolean);
+  const compagnie = [...avecMetier(/administrat/i), ...regie].filter((p, i, xs) => xs.indexOf(p) === i);
+  const contacts = compagnie.map(p => ({ nom: nomDe(p), role: (p.metiers || []).find(m => METIERS_CONTACT.test(m)) || 'Régie générale', telephone: tel(p.id), email: mel(p.id) }));
   return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: DEPART,
     suivi: { ...(E.suivis.find(x => x.date_id === d.id) || {}), lieu: E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id) || {} },
     documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe') };
@@ -973,6 +976,8 @@ const RESUMES_EQUIPE = {
 
 // ===================================================================================================== styles
 document.head.insertAdjacentHTML('beforeend', `<style id="styles-equipe">
+/* les aides, hors des champs : le gris discret de l'administration */
+#eq-onglet .aide, #ed-feuille .aide, #ed-personne .aide, #d-equipe .aide, .eq-docs-compagnie .aide { color: var(--gris); font-size: 13px; }
 input[type=tel] { width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); min-height: 38px; }
 input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-doux); }
 .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--doux) center/cover no-repeat; display: inline-grid; place-items: center; flex: none; font-size: 13px; font-weight: 800; color: var(--gris); border: 1px solid var(--trait); }

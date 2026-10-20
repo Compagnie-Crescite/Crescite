@@ -188,8 +188,11 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .4); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .2s ease-out; } @keyframes monte { from { transform: translateY(8px); opacity: 0; } } }
 
+/* une commande segmentée dans un champ (le statut d'une date) passe à la ligne plutôt que de sortir de sa colonne */
+.champ .seg { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; }
+.champ .seg button { flex: 1 1 auto; }
 /* au téléphone (360 px) : des marges plus serrées, des boutons segmentés qui tiennent sur la largeur */
-@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg { max-width: 100%; } .seg button { padding: 6px 7px; font-size: 14px; } }
+@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg { max-width: 100%; } .seg button { padding: 6px 7px; font-size: 14px; } .rangee > .champ:has(.seg) { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>

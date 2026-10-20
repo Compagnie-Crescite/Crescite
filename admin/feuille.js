@@ -144,7 +144,8 @@ const FEUILLE = (() => {
   const paragraphes = t => String(t || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
   // les lignes d'une liste par jour, dans l'ordre (les lignes sans jour à la fin)
   function lignesParJour(v, f, ctx) {
-    const xs = (Array.isArray(v) ? v : []).filter(r => Object.values(r || {}).some(x => txt(typeof x === 'boolean' ? '' : x)));
+    // une ligne laissée vide (son jour seul est rempli d'office) n'apparaît pas
+    const xs = (Array.isArray(v) ? v : []).filter(r => Object.entries(r || {}).some(([k, x]) => k !== 'jour' && k !== 'personne_id' && typeof x !== 'boolean' && txt(x)));
     if (!xs.length) return null;
     const jours = [...new Set(xs.map(r => estJour(r.jour) ? r.jour : ''))];
     const seul = jours.length === 1 && (!jours[0] || jours[0] === ctx.jourUnique);
@@ -355,7 +356,9 @@ const FEUILLE = (() => {
   function vue(feuille, contexte) {
     const f = feuille || {}, c = f.contenu || {}, ctx = contexte || {}, sp = ctx.spectacle || {}, d = ctx.date || {};
     const vivantes = r => estJour(r?.jour);
-    const reps = (Array.isArray(c.representations) ? c.representations : (ctx.representations || []).map(r => ({ jour: r.jour, heure: h5(r.heure), public: r.public, note: r.note, annulee: !!r.annulee }))).filter(vivantes);
+    // les représentations de la feuille (l'instantané de sa composition), sinon celles de la date
+    const instantane = Array.isArray(c.representations) && c.representations.some(vivantes) ? c.representations : null;
+    const reps = (instantane || (ctx.representations || []).map(r => ({ jour: r.jour, heure: h5(r.heure), public: r.public, note: r.note, annulee: !!r.annulee }))).filter(vivantes);
     const jours = [...new Set(reps.map(r => r.jour))].sort();
     const debut = jours[0] || d.debut || '', fin = jours[jours.length - 1] || d.fin || debut;
     const quand = !debut ? '' : debut === fin ? maj(jourLong(debut)) : `Du ${jourLong(debut, debut.slice(0, 4) !== fin.slice(0, 4))} au ${jourLong(fin)}`;
@@ -364,11 +367,19 @@ const FEUILLE = (() => {
     const ou = [txt(lieu.nom) || txt(l.nom), txt(lieu.commune) || (l.commune ? `${l.commune}${l.departement ? ` (${l.departement})` : ''}` : '')].filter(Boolean).join(', ');
     // les représentations, en tête : « 14h00 représentation scolaire », jour par jour s'il y en a plusieurs
     const publicTexte = p => p === 'scolaire' ? 'scolaire' : p === 'autre' ? '' : 'tout public';
-    const representations = jours.map(j => ({ jour: jours.length > 1 ? maj(jourLong(j, false)) : '', seances: reps.filter(r => r.jour === j).sort((a, b) => cleTemps(a) < cleTemps(b) ? -1 : 1)
-      .map(r => ({ h: heure(r.heure) || 'heure à préciser', texte: [publicTexte(r.public), txt(r.note)].filter(Boolean).join(', '), annulee: !!r.annulee })) }));
+    const representations = jours.map(j => {
+      const rs = reps.filter(r => r.jour === j).sort((a, b) => cleTemps(a) < cleTemps(b) ? -1 : 1);
+      let seances = rs.map(r => ({ h: heure(r.heure), texte: [publicTexte(r.public), txt(r.note)].filter(Boolean).join(', '), annulee: !!r.annulee }));
+      // sans heures : « 2 représentations tout public, heures à préciser » plutôt qu'une pastille par représentation
+      if (rs.length > 1 && seances.every(x => !x.h && !x.annulee && !txt(rs[0].note))) {
+        const pubs = [...new Set(rs.map(r => publicTexte(r.public)))];
+        seances = [{ h: '', texte: `${rs.length} représentations${pubs.length === 1 && pubs[0] ? ` ${pubs[0]}` : ''}, heures à préciser`, annulee: false }];
+      } else seances.forEach(x => { if (!x.h) x.texte = [x.texte, 'heure à préciser'].filter(Boolean).join(', '); });
+      return { jour: jours.length > 1 ? maj(jourLong(j, false)) : '', seances };
+    });
     // les horaires ont changé depuis cette version ? (contexte : la base d'aujourd'hui)
     let alerte = '';
-    if (Array.isArray(c.representations) && Array.isArray(ctx.representations) && ctx.representations.length) {
+    if (instantane && Array.isArray(ctx.representations) && ctx.representations.length) {
       const a = c.representations.filter(vivantes).map(cleRep).sort().join('|'), b = ctx.representations.filter(vivantes).map(r => cleRep({ ...r, annulee: !!r.annulee })).sort().join('|');
       if (a !== b) alerte = `Les horaires ont changé depuis cette version de la feuille. Horaires à jour : ${ctx.representations.filter(vivantes).sort((x, y) => cleTemps(x) < cleTemps(y) ? -1 : 1)
         .map(r => `${jours.length > 1 || new Set(ctx.representations.map(x => x.jour)).size > 1 ? jourLong(r.jour, false) + ' ' : ''}${heure(h5(r.heure)) || 'heure à préciser'}${r.annulee ? ' (annulée)' : ''}`).join(', ')}.`;
@@ -462,7 +473,7 @@ const FEUILLE = (() => {
   };
   function html(feuille, contexte) {
     const v = vue(feuille, contexte);
-    const seances = v.representations.map(g => `${g.jour ? `<li class="f-jour">${esc(g.jour)}</li>` : ''}${g.seances.map(s => `<li${s.annulee ? ' class="f-annulee"' : ''}><b>${esc(s.h)}</b>${esc([s.texte, s.annulee ? 'annulée' : ''].filter(Boolean).join(', '))}</li>`).join('')}`).join('');
+    const seances = v.representations.map(g => `${g.jour ? `<li class="f-jour">${esc(g.jour)}</li>` : ''}${g.seances.map(s => `<li${s.annulee ? ' class="f-annulee"' : ''}>${s.h ? `<b>${esc(s.h)}</b>` : ''}${esc([s.texte, s.annulee ? 'annulée' : ''].filter(Boolean).join(', '))}</li>`).join('')}`).join('');
     return `<style>${CSS}</style><article class="feuille" lang="fr" style="--f-filet:${v.filet};--f-fonce:${v.fonce};--f-teinte:${v.teinte}">
 <header><p class="f-sur">${esc(v.compagnie)} · Feuille de route</p><h1>${esc(v.titre)}</h1>${v.sousTitre ? `<p class="f-soustitre">${esc(v.sousTitre)}</p>` : ''}
 ${v.quand ? `<p class="f-quand">${esc(v.quand)}</p>` : ''}${v.ou ? `<p class="f-ou">${esc(v.ou)}</p>` : ''}${seances ? `<ul class="f-seances" aria-label="Représentations">${seances}</ul>` : ''}
@@ -526,8 +537,8 @@ ${v.sections.map(s => `<section class="f-s f-${s.k}"><h2>${esc(s.section)}</h2>$
     const v = vue(feuille, contexte);
     const seances = v.representations.flatMap(g => [
       ...(g.jour ? [{ text: pt(g.jour) + '  ', bold: true }] : []),
-      ...g.seances.flatMap((s, i) => [...(i ? [{ text: '   ·   ', color: GRIS }] : []), { text: pt(s.h), bold: true, decoration: s.annulee ? 'lineThrough' : undefined },
-        { text: pt(` ${[s.texte, s.annulee ? 'annulée' : ''].filter(Boolean).join(', ')}`), decoration: s.annulee ? 'lineThrough' : undefined, color: s.annulee ? GRIS : ENCRE }]),
+      ...g.seances.flatMap((s, i) => [...(i ? [{ text: '   ·   ', color: GRIS }] : []), ...(s.h ? [{ text: pt(s.h) + ' ', bold: true, decoration: s.annulee ? 'lineThrough' : undefined }] : []),
+        { text: pt([s.texte, s.annulee ? 'annulée' : ''].filter(Boolean).join(', ')), decoration: s.annulee ? 'lineThrough' : undefined, color: s.annulee ? GRIS : ENCRE }]),
       { text: '\n' }]);
     if (seances.length) seances.pop();
     const entete = [
