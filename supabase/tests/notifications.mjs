@@ -162,3 +162,7 @@ ok((await db.query(`select valeur from public.crescite_textes where cle = 'progr
 await db.exec(`update public.crescite_spectacles set action_culturelle = action_culturelle || '{"masquee": false}' where slug = 'cassandres'`);
 await db.exec(notif);
 ok((await ac()).masquee === false, 'rouverte par l’administration, elle n’est pas remasquée quand on relance le script');
+// le stockage public accepte les PDF (les dossiers), sans perdre les images ; relancer le script ne double rien
+const b = (await db.query(`select allowed_mime_types m, file_size_limit l from storage.buckets where id = 'crescite'`)).rows[0];
+ok(b && b.m.includes('application/pdf') && b.m.includes('image/webp') && new Set(b.m).size === b.m.length && Number(b.l) >= 26214400,
+   `le stockage public accepte les PDF jusqu'à 25 Mo (${b && b.m.join(', ')})`);

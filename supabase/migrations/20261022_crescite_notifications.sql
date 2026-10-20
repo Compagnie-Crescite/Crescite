@@ -9,6 +9,7 @@
 --   crescite_representations.fin     l'heure de fin d'une séance (une répétition : 10h-18h)
 --   crescite_documents.pour          + 'pros' et 'scolaires' : des documents publics (dossier artistique, fiche technique,
 --                                    dossier pédagogique), rangés dans le stockage public « crescite », sous documents/
+--                                    (qui accepte maintenant les PDF, jusqu'à 25 Mo)
 --   crescite_notifications           une notification par personne : feuille de route publiée, horaires changés (en
 --                                    répétition comme en tournée), date ajoutée, confirmée, annulée, document ajouté,
 --                                    départ ou retrait d'une date, message de l'administration. La base les écrit seule.
@@ -144,6 +145,12 @@ $$;
 alter table public.crescite_documents drop constraint if exists crescite_documents_pour_check;
 alter table public.crescite_documents add constraint crescite_documents_pour_check
   check (pour in ('equipe', 'administration', 'pros', 'scolaires'));
+
+-- le stockage public accepte aussi les PDF (les dossiers et les fiches techniques), jusqu'à 25 Mo
+update storage.buckets set
+  allowed_mime_types = (select array_agg(distinct m order by m) from unnest(coalesce(allowed_mime_types, '{}'::text[]) || array['application/pdf']) m),
+  file_size_limit = greatest(coalesce(file_size_limit, 0), 26214400)
+where id = 'crescite';
 
 -- ------------------------------------------------------------------------------------------------ les notifications
 

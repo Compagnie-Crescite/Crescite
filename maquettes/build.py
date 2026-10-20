@@ -21,6 +21,7 @@ import re
 import sys
 from datetime import date
 from pathlib import Path
+from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "maquettes" / "src"
@@ -464,13 +465,23 @@ def build_data():
         "carte": carte,
         "personnes": personnes,
         # les documents publics (dossier artistique, fiche technique, dossier pédagogique) : déposés dans la base par
-        # l'administration ; [{spectacle, type, titre, url, pour: 'pros'|'scolaires'}]
-        "documents": [],
+        # l'administration ou par supabase/documents.py ; [{spectacle, type, titre, url, pour: 'pros'|'scolaires'}]
+        "documents": documents_publics(),
     }
     return D, photo_files(out_shows)
 
 
 D_SAISON = "2026-2027"
+
+
+def documents_publics():
+    """Les documents publics de data/documents.json (pour les pros et les scolaires), tels que la base les donnera une
+    fois envoyés par supabase/documents.py. Avec le dossier privé (private/drive/), seulement ceux dont on a le fichier."""
+    docs = json.loads((ROOT / "data" / "documents.json").read_text(encoding="utf-8"))["documents"]
+    drive = PRIVATE / "drive"
+    return [{"spectacle": d["spectacle"], "type": d["type"], "titre": d["titre"], "url": f"{STOCKAGE}/{quote(d['chemin'])}",
+             "pour": d["pour"]} for d in sorted(docs, key=lambda d: d["ordre"])
+            if d["pour"] in ("pros", "scolaires") and (not drive.exists() or (drive / d["source"]).exists())]
 
 
 def action_publiee(a):
@@ -547,6 +558,19 @@ def admin(dest):
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
     shutil.copyfile(SRC / "agenda.js", dest / "admin" / "agenda.js")
     shutil.copyfile(SRC / "tentacules.js", dest / "admin" / "tentacules.js")
+    # le logo des feuilles de route (admin/feuille.js le lit à côté de lui) : la tache noire, la pieuvre et le mot en blanc,
+    # tirés du logo privé (private/brand). Il ne va jamais dans le dépôt : il n'est écrit que dans une sortie que git
+    # ignore (maquettes/dist) ; ailleurs (docs/, versionné) ou sans le logo privé, la feuille montre un badge à sa place.
+    import subprocess
+    logo = dest / "admin" / "logo-feuille.svg"
+    try:
+        ignore = subprocess.run(["git", "-C", str(ROOT), "check-ignore", "-q", str(logo)]).returncode == 0
+    except OSError:
+        ignore = False
+    if ignore and (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists():
+        logo.write_text(logo_variants()["full"].replace('fill="#BC3E80"', 'fill="#1d1d1b"'), encoding="utf-8")
+    elif logo.exists():
+        logo.unlink()
 
 
 def equipe(dest):

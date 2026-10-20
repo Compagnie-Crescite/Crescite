@@ -1,0 +1,33 @@
+{
+ "_note": "Les documents de la compagnie rangés dans la base par supabase/documents.py : chaque fichier vient du Google Drive de la compagnie (CRESCITE SPECTACLES), copié dans private/drive/ (jamais versionné). pour = 'pros' (page « Je souhaite programmer ») ou 'scolaires' (page des établissements) : fichier public, dans le stockage « crescite » sous documents/ ; pour = 'equipe' : fichier privé (stockage « crescite-equipe »), lu par l'équipe du spectacle seulement. Publication décidée par Adrien le 20 octobre 2026.",
+ "documents": [
+  {"spectacle": "berenice", "type": "dossier", "pour": "pros", "ordre": 10, "titre": "Dossier de diffusion 2026", "source": "Dossier BERENICE 2026.pdf", "chemin": "documents/berenice/dossier-diffusion-2026.pdf"},
+  {"spectacle": "cleophene", "type": "dossier", "pour": "pros", "ordre": 10, "titre": "Dossier de diffusion 2026", "source": "Dossier CLEOPHENE 2026.pdf", "chemin": "documents/cleophene/dossier-diffusion-2026.pdf"},
+  {"spectacle": "mon-royaume", "type": "dossier", "pour": "pros", "ordre": 10, "titre": "Dossier de diffusion 2026", "source": "Dossier MON ROYAUME 2026.pdf", "chemin": "documents/mon-royaume/dossier-diffusion-2026.pdf"},
+  {"spectacle": "ci-gisait-cyrano", "type": "dossier", "pour": "pros", "ordre": 10, "titre": "Dossier de diffusion 2026", "source": "Dossier CI-GISAIT CYRANO 2026.pdf", "chemin": "documents/ci-gisait-cyrano/dossier-diffusion-2026.pdf"},
+  {"spectacle": "imaginaire-force", "type": "dossier", "pour": "pros", "ordre": 10, "titre": "Dossier 2026-2027", "source": "Dossier IMAGINAIRE 2026.pdf", "chemin": "documents/imaginaire-force/dossier-2026-2027.pdf"},
+  {"spectacle": "cassandres", "type": "dossier", "pour": "pros", "ordre": 10, "titre": "Dossier de création 2026", "source": "Dossier CASSANDRE(S) 2026.pdf", "chemin": "documents/cassandres/dossier-2026.pdf"},
+
+  {"spectacle": "berenice", "type": "fiche_technique", "pour": "pros", "ordre": 20, "titre": "Fiche technique et plan", "source": "Crescite - Bérénice - fiche technique + plan.pdf", "chemin": "documents/berenice/fiche-technique-et-plan.pdf"},
+  {"spectacle": "cleophene", "type": "fiche_technique", "pour": "pros", "ordre": 20, "titre": "Fiche technique", "source": "FT Cléophène.pdf", "chemin": "documents/cleophene/fiche-technique.pdf"},
+  {"spectacle": "ci-gisait-cyrano", "type": "fiche_technique", "pour": "pros", "ordre": 20, "titre": "Fiche technique", "source": "FT Ci-gisait Cyrano V-avril25_compressed.pdf", "chemin": "documents/ci-gisait-cyrano/fiche-technique.pdf"},
+  {"spectacle": "ci-gisait-cyrano", "type": "fiche_technique", "pour": "pros", "ordre": 21, "titre": "Fiche technique, version légère", "source": "FT Ci-gisait Cyrano-Version légère-compressée.pdf", "chemin": "documents/ci-gisait-cyrano/fiche-technique-version-legere.pdf"},
+  {"spectacle": "mon-royaume", "type": "fiche_technique", "pour": "pros", "ordre": 20, "titre": "Fiche technique (en établissement, 4 classes)", "source": "fiche technique Mon Royaume Sco 4cl.pdf", "chemin": "documents/mon-royaume/fiche-technique-etablissement.pdf"},
+  {"spectacle": "imaginaire-force", "type": "fiche_technique", "pour": "pros", "ordre": 20, "titre": "Fiche technique (4 classes)", "source": "fiche technique L'Imaginaire 4cl.pdf", "chemin": "documents/imaginaire-force/fiche-technique.pdf"},
+
+  {"spectacle": "mon-royaume", "type": "dossier", "pour": "scolaires", "ordre": 10, "titre": "Dossier scolaire 2026-2027", "source": "Dossier MON ROYAUME sco 26-27.pdf", "chemin": "documents/mon-royaume/dossier-scolaire-2026-2027.pdf"},
+  {"spectacle": "ci-gisait-cyrano", "type": "dossier", "pour": "scolaires", "ordre": 10, "titre": "Dossier scolaire 2026-2027", "source": "Dossier CI-GISAIT CYRANO sco 26-27.pdf", "chemin": "documents/ci-gisait-cyrano/dossier-scolaire-2026-2027.pdf"},
+  {"spectacle": "imaginaire-force", "type": "dossier", "pour": "scolaires", "ordre": 10, "titre": "Dossier scolaire 2026-2027", "source": "Dossier IMAGINAIRE 2026.pdf", "chemin": "documents/imaginaire-force/dossier-2026-2027.pdf"},
+  {"spectacle": "berenice", "type": "dossier", "pour": "scolaires", "ordre": 10, "titre": "Dossier scolaire 2026", "source": "Dossier BÉRÉNICE scolaire 2026-1-avec compression.pdf", "chemin": "documents/berenice/dossier-scolaire-2026.pdf"},
+
+  {"spectacle": "berenice", "type": "texte", "pour": "equipe", "ordre": 5, "titre": "Le texte (version de travail, copie du Drive)", "source": "CRESCITE - Bérénice - Texte.pdf", "chemin": "berenice/texte-version-de-travail.pdf"},
+  {"spectacle": "cleophene", "type": "texte", "pour": "equipe", "ordre": 5, "titre": "Le texte (version de travail, copie du Drive)", "source": "CRESCITE - Cléophène - Texte.pdf", "chemin": "cleophene/texte-version-de-travail.pdf"},
+  {"spectacle": "berenice", "type": "autre", "pour": "equipe", "ordre": 40, "titre": "Ateliers : le déroulé", "source": "Bérénice - Ateliers - Déroulé.pdf", "chemin": "berenice/ateliers-deroule.pdf"},
+  {"spectacle": "berenice", "type": "autre", "pour": "equipe", "ordre": 41, "titre": "Ateliers : les alexandrins", "source": "Bérénice - Ateliers - Alexandrins.pdf", "chemin": "berenice/ateliers-alexandrins.pdf"},
+  {"spectacle": "cleophene", "type": "autre", "pour": "equipe", "ordre": 40, "titre": "Mémo J-1 : l'installation", "source": "Crescite - Cléophène - Mémo J-1 installation.pdf", "chemin": "cleophene/memo-j-1-installation.pdf"},
+  {"spectacle": "cleophene", "type": "plan", "pour": "equipe", "ordre": 30, "titre": "Plan (Asteras, intermèdes)", "source": "Crescite - Cléophène - Plan Asteras Intermedes.pdf", "chemin": "cleophene/plan-asteras-intermedes.pdf"},
+  {"spectacle": "berenice", "type": "autre", "pour": "equipe", "ordre": 50, "titre": "Fiche de renseignements (pour les lieux)", "source": "Crescite - Bérénice - Fiche de renseignements.pdf", "chemin": "berenice/fiche-de-renseignements.pdf"},
+  {"spectacle": "cleophene", "type": "autre", "pour": "equipe", "ordre": 50, "titre": "Fiche de renseignements (pour les lieux)", "source": "Crescite - Cléophène - Fiche de renseignement.pdf", "chemin": "cleophene/fiche-de-renseignements.pdf"},
+  {"spectacle": "ci-gisait-cyrano", "type": "autre", "pour": "equipe", "ordre": 50, "titre": "Fiche de renseignements (pour les lieux)", "source": "Fiche de renseignements CYRANO sp.pdf", "chemin": "ci-gisait-cyrano/fiche-de-renseignements.pdf"}
+ ]
+}

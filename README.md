@@ -282,6 +282,17 @@ représentations sont publiques) et l'heure de fin des séances, les documents p
 établissements, le contact diffusion de la page « Je souhaite programmer », et masque l'action culturelle de
 Cassandres. Il est vérifié par 35 essais (`node notifications.mjs`).
 
+**Les documents de la compagnie.** `data/documents.json` liste les documents copiés depuis le Google Drive de la
+compagnie (dossier « CRESCITE SPECTACLES ») dans `private/drive/`, jamais versionné, et
+`python3 supabase/documents.py` les range dans la base :
+- pour les programmateurs et les établissements, en téléchargement public sur le site : les dossiers de diffusion 2026,
+  les fiches techniques et les dossiers scolaires 2026-2027 (publication décidée le 20 octobre 2026). Ils demandent le
+  troisième script SQL ;
+- pour l'équipe, en copies privées : les textes en version de travail, les ateliers de Bérénice, le mémo J-1 et le plan
+  de Cléophène, les fiches de renseignements.
+Un fichier renvoyé remplace l'ancien, et un document déjà inscrit ne l'est pas deux fois. Une nouvelle version dans le
+Drive se recopie, puis on relance le script, ou on la dépose dans l'administration.
+
 **Les comptes.** Les inscriptions libres sont fermées sur le projet : un compte se crée dans Supabase (Authentication →
 Users → Add user, avec l'adresse saisie dans la fiche). À la première connexion, il se rattache tout seul à la fiche de
 même adresse. Pour que « Recevoir un lien de connexion » et « Mot de passe oublié » reviennent sur l'espace de l'équipe,
