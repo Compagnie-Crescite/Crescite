@@ -473,7 +473,7 @@ type Seance = { id: number | string; jour: string; heure: string | null; fin: st
 type DateFlux = {
   id: number | string; debut: string; fin: string | null; precision: string; statut: string; nature: string | null; public: string | null;
   details: { texte?: string }[] | null; titre: string; slug: string; duree: string | null;
-  lieu_nom: string | null; adresse: string | null; commune: string | null; departement: string | null; latitude: number | null; longitude: number | null;
+  lieu_nom: string | null; adresse: string | null; commune: string | null; departement: string | null;
   seances: Seance[];
 };
 
@@ -525,10 +525,9 @@ export function composerFlux(personne: { prenom?: string | null }, dates: DateFl
       if (e.date) L.push(`DTSTART;VALUE=DATE:${e.debut.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${e.fin.replace(/-/g, '')}`);
       else L.push(`DTSTART;TZID=Europe/Paris:${e.debut}`, `DTEND;TZID=Europe/Paris:${e.fin}`);
       L.push(`SUMMARY:${texteIcs(`${option ? 'Option · ' : ''}${d.titre}${e.quoi ? ` — ${e.quoi}` : ''}`)}`);
+      // le lieu par son nom, son adresse et sa commune ; jamais de GEO : les coordonnées des lieux ne sont que le centre de
+      // leur commune (bonnes pour la carte et les distances, pas pour s'y rendre)
       if (ou) L.push(`LOCATION:${texteIcs(ou)}`);
-      if (d.latitude != null && d.longitude != null && Number.isFinite(+d.latitude) && Number.isFinite(+d.longitude)) {
-        L.push(`GEO:${(+d.latitude).toFixed(6)};${(+d.longitude).toFixed(6)}`);
-      }
       const desc = [`${d.titre}${option ? ' (option, pas encore confirmée)' : ''}`, e.detail, e.note, ...precisions, ou,
         nature === 'representations' && d.duree ? `Durée du spectacle : ${String(d.duree).replace(/^durée\s*:\s*/i, '')}` : null,
         `La feuille de route, l’équipe et les documents : ${page}`].filter(Boolean).join('\n');
@@ -547,7 +546,7 @@ async function flux(jeton: string, tete: boolean): Promise<Response> {
   const moi = p.personne_id;
   const dates = await sql`
     select d.id, d.debut::text as debut, d.fin::text as fin, d.precision, d.statut, d.nature, d.public, d.details,
-           s.titre, s.slug, s.duree, l.nom as lieu_nom, l.adresse, l.commune, l.departement, l.latitude, l.longitude,
+           s.titre, s.slug, s.duree, l.nom as lieu_nom, l.adresse, l.commune, l.departement,
            coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'jour', r.jour, 'heure', r.heure, 'fin', r.fin, 'public', r.public,
                                                          'annulee', r.annulee, 'note', r.note) order by r.jour, r.heure nulls last)
                      from public.crescite_representations r where r.date_id = d.id), '[]'::jsonb) as seances

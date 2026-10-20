@@ -38,8 +38,9 @@
   const CONTACT = 'contact@crescite.fr';          // l'adresse publique de la compagnie
   const ROUEN = [49.4431, 1.0993];                // le départ des tournées (latitude, longitude)
   const NOTIFS_MAX = 100;
-  const ONGLETS = ['saison', 'feuilles', 'documents', 'notifications', 'moi'];
-  const TITRES = { saison: 'Ma saison', feuilles: 'Feuilles de route', documents: 'Mes documents', notifications: 'Notifications', moi: 'Moi' };
+  const ONGLETS = ['saison', 'feuilles', 'planning', 'documents', 'notifications', 'moi'];
+  const TITRES = { saison: 'Ma saison', feuilles: 'Feuilles de route', planning: 'Planning', documents: 'Mes documents', notifications: 'Notifications', moi: 'Moi',
+    indisponibilites: 'Mes indisponibilités', agendas: 'Mes agendas', propositions: 'Propositions de dates', proposition: 'Proposition de dates' };
 
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -255,11 +256,18 @@
     croix: ic('<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>'),
     cle: ic('<circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5 19 4M16 7l2.5 2.5M14 9l2 2"/>'),
     sortir: ic('<path d="M14 4.5h4a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/>'),
+    planning: ic('<rect x="3.5" y="4.5" width="17" height="16" rx="2.2"/><path d="M3.5 9.5h17M3.5 15h17M9.2 9.5v11M14.8 9.5v11"/>'),
+    indispo: ic('<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9.5 13l5 5M14.5 13l-5 5"/>'),
+    relier: ic('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
+    question: ic('<circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.5a2.4 2.4 0 1 1 3.3 2.2c-.6.3-1 .8-1 1.4v.6"/><path d="M12 16.6v.4"/>'),
+    crayon: ic('<path d="M4.5 19.5l1-4.2L15.8 5a2 2 0 0 1 2.9 0l.3.3a2 2 0 0 1 0 2.9L8.7 18.5z"/><path d="M13.8 7l3.2 3.2"/>'),
+    alerte: ic('<path d="M12 4.5 21 19.5H3z"/><path d="M12 10v4.2M12 16.8v.3"/>'),
   };
   const GENRES = {
     feuille: { ic: ICONES.feuille, lib: 'Feuille de route' }, horaires: { ic: ICONES.horloge, lib: 'Horaires' },
     date: { ic: ICONES.agenda, lib: 'Date' }, document: { ic: ICONES.doc, lib: 'Document' },
     equipe: { ic: ICONES.equipe, lib: 'Équipe' }, message: { ic: ICONES.message, lib: 'Message' },
+    proposition: { ic: ICONES.question, lib: 'Proposition de dates' },
   };
 
   // la pieuvre des états vides : elle tient ce qui manque (un calendrier, une feuille, une cloche, un dossier)
@@ -335,6 +343,7 @@
     notifs: [], notifsEtat: 'inconnu', canal: null, tempsReel: '', aMarquer: ARRIVEE.lue,
     push: { etat: 'inconnu', cle: undefined, cleLe: 0, verifie: false }, installer: null,
     modifs: { reps: new Map(), dates: new Map() }, cartes: new Map(), cherche: new Set(), chiffresVus: false,
+    dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planning: null, planningEtat: null, planningCache: null,
     messageConnexion: ARRIVEE.erreur ? {
       texte: `Ce lien ne peut plus servir : ${ARRIVEE.code === 'otp_expired' || /expired|invalid/i.test(ARRIVEE.erreur) ? 'il a expiré, ou il a déjà été ouvert une fois' : 'il n’a pas pu être vérifié'}. Demandez-en un nouveau ci-dessous.`,
       genre: 'erreur' } : null,
@@ -366,9 +375,12 @@
     Object.assign(E, { uid: null, moi: null, pret: false, ouverture: false, personne: null, privee: null, dates: [], distributions: [],
       equipes: [], documents: [], spectacles: new Map(), feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0,
       horsLigne: 0, route: null, vue: '', pile: [], defil: {}, declencheur: {}, ficheSale: false, feuilleVue: null, sansSession: false,
-      provisoire: false, notifs: [], notifsEtat: 'inconnu', modifs: { reps: new Map(), dates: new Map() }, cartes: new Map(), cherche: new Set() });
+      provisoire: false, notifs: [], notifsEtat: 'inconnu', modifs: { reps: new Map(), dates: new Map() }, cartes: new Map(), cherche: new Set(),
+      dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planningEtat: null, planningCache: null });
+    if (E.planning) { try { E.planning.detruire(); } catch (e) { /* déjà parti */ } E.planning = null; }
     E.push.verifie = false;
     majBadge();
+    if (typeof majBadgePlanning === 'function') majBadgePlanning();
   }
 
   // une page seule, centrée : connexion, mot de passe, compte sans fiche, panne
@@ -569,7 +581,8 @@
       if (n !== tour) return;
       if (moi == null) { reinitialiser(); return ecranSansFiche(); }
       E.moi = moi;
-      await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); })]);
+      await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
+        chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); })]);
       if (n !== tour) return;
       E.horsLigne = 0;
       garder();
@@ -726,14 +739,16 @@
   // ================================================================================================ la coquille de l'application
   function coquille() {
     if ($('#app > .appli')) return false;
-    const onglet = (k, icone, court, long = court) => `<a class="nav-item" href="#/${k}" data-onglet="${k}"><span class="nav-icone">${icone}${k === 'notifications' ? '<span class="pastille-nb" data-n="0" aria-hidden="true"></span>' : ''}</span><span class="nav-lib">${court === long ? esc(court) : `<span class="nav-lib-court">${esc(court)}</span><span class="nav-lib-long">${esc(long)}</span>`}</span>${k === 'notifications' ? '<span class="sr nb-sr"></span>' : ''}</a>`;
+    const badge = k => k === 'notifications' || k === 'planning';
+    const onglet = (k, icone, court, long = court) => `<a class="nav-item" href="#/${k}" data-onglet="${k}"><span class="nav-icone">${icone}${badge(k) ? '<span class="pastille-nb" data-n="0" aria-hidden="true"></span>' : ''}</span><span class="nav-lib">${court === long ? esc(court) : `<span class="nav-lib-court">${esc(court)}</span><span class="nav-lib-long">${esc(long)}</span>`}</span>${badge(k) ? '<span class="sr nb-sr"></span>' : ''}</a>`;
     $('#app').innerHTML = `<div class="appli">
       <nav class="nav-appli" aria-label="Rubriques">
         <div class="nav-marque" aria-hidden="true"><span class="pieuvre" data-pieuvre></span><span class="nav-marque-texte"><span class="marque-nom">Crescite</span><small>équipe</small></span></div>
         <span class="nav-curseur" aria-hidden="true"></span>
         ${onglet('saison', ICONES.agenda, 'Saison', 'Ma saison')}
         ${onglet('feuilles', ICONES.feuille, 'Feuilles', 'Feuilles de route')}
-        ${onglet('documents', ICONES.dossier, 'Documents')}
+        ${onglet('planning', ICONES.planning, 'Planning')}
+        ${onglet('documents', ICONES.dossier, 'Docs', 'Documents')}
         ${onglet('notifications', ICONES.cloche, 'Notifs', 'Notifications')}
         ${onglet('moi', `<span class="nav-avatar">${ICONES.moi}</span>`, 'Moi')}
         <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button></p>
@@ -762,6 +777,7 @@
     const av = $('.nav-avatar');
     if (av && E.personne) av.innerHTML = avatar(E.personne, { taille: 'nav' });
     majBadge();
+    majBadgePlanning();
   }
   // le curseur des onglets : la pastille glisse d'un onglet à l'autre (sous l'icône au téléphone, sur la ligne à l'ordinateur)
   function placerCurseur(sansAnimation = false) {
@@ -783,7 +799,7 @@
     $$('.nav-item').forEach(a => { if (a.dataset.onglet === r.onglet) a.setAttribute('aria-current', r.profondeur ? 'true' : 'page'); else a.removeAttribute('aria-current'); });
     placerCurseur();
   }
-  const parentDe = r => E.pile[E.pile.length - 1] || (r.k === 'feuille' ? '#/feuilles' : '#/saison');
+  const parentDe = r => E.pile[E.pile.length - 1] || (r.k === 'feuille' ? '#/feuilles' : ['proposition', 'propositions', 'indisponibilites', 'agendas'].includes(r.k) ? '#/planning' : '#/saison');
   function libelleDe(h) {
     const r = lireRoute(h);
     if (r.k === 'date') { const d = E.dates.find(x => x.id === r.id); return d ? d.spectacle?.titre || 'la date' : 'la date'; }
@@ -810,6 +826,7 @@
     document.title = `${n ? `(${n}) ` : ''}${E.titre || 'Équipe'} · Crescite`;
   }
   function afficher(r, titre, html, { focus = false, large = false } = {}) {
+    if (E.planning) demonterPlanning();
     coquille();
     majNav(r);
     majBarre(r, titre);
@@ -839,10 +856,13 @@
     let m = h.match(/^#\/date\/(\d+)$/);
     if (m) return { k: 'date', id: +m[1], onglet: 'saison', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/feuille\/(\d+)$/))) return { k: 'feuille', id: +m[1], onglet: 'feuilles', profondeur: 1, hash: h };
-    if ((m = h.match(/^#\/(saison|feuilles|documents|notifications|moi)$/))) return { k: m[1], onglet: m[1], profondeur: 0, hash: h };
+    if ((m = h.match(/^#\/proposition\/(\d+)$/))) return { k: 'proposition', id: +m[1], onglet: 'planning', profondeur: 1, hash: h };
+    if ((m = h.match(/^#\/(indisponibilites|agendas|propositions)$/))) return { k: m[1], onglet: 'planning', profondeur: 1, hash: h };
+    if ((m = h.match(/^#\/(saison|feuilles|planning|documents|notifications|moi)$/))) return { k: m[1], onglet: m[1], profondeur: 0, hash: h };
     return { redirige: h === '#/fiche' ? '#/moi' : '#/saison' };
   }
-  const VUES = { saison: vueSaison, date: vueDate, feuilles: vueFeuilles, feuille: vueFeuille, documents: vueDocuments, notifications: vueNotifications, moi: vueMoi };
+  const VUES = { saison: vueSaison, date: vueDate, feuilles: vueFeuilles, feuille: vueFeuille, documents: vueDocuments, notifications: vueNotifications, moi: vueMoi,
+    planning: vuePlanning, indisponibilites: vueIndispos, agendas: vueAgendas, propositions: vuePropositions, proposition: vueProposition };
 
   function router(o = {}) {
     if (!E.pret) return;
@@ -957,6 +977,8 @@
     const quoi = [nbReps && (nbReps > 1 ? `vos ${pluriel(nbReps, 'représentation')}` : 'votre représentation'),
       evs.some(x => natureDe(x.d) !== 'representations') && 'vos répétitions'].filter(Boolean).join(' et ') || 'vos dates à venir';
     const principal = [], cote = [];
+    const attente = enAttente();
+    if (attente.length) principal.push(`<div class="o-props">${cartesPropositions(attente)}</div>`);
     principal.push(prochaine ? `<div class="o-heros">${heros(prochaine)}</div>`
       : `<div class="o-heros">${etatVide('calendrier', E.dates.length ? 'Pas de date à venir pour l’instant' : 'Votre saison commence ici', 'Dès que l’administration vous inscrira sur une date, elle apparaîtra ici, avec ses horaires, son lieu et sa feuille de route.')}</div>`);
     principal.push(jourJ());
@@ -1668,7 +1690,7 @@
     }
     copier(url, duree);
   }
-  async function copier(url, duree = '') {
+  async function copier(url, duree = '', message = '') {
     let ok = false;
     try { if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(url); ok = true; } } catch (e) { ok = false; }
     if (!ok) {
@@ -1678,12 +1700,12 @@
       try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
       t.remove();
     }
-    if (ok) annoncer(`Lien copié : collez-le dans votre message.${duree}`);
+    if (ok) annoncer(message || `Lien copié : collez-le dans votre message.${duree}`);
     else window.prompt('Copiez ce lien :', url);
   }
 
   // ================================================================================================ les notifications
-  const LIENS_SURS = /^#\/(saison|feuilles|documents|notifications|moi|date\/\d+|feuille\/\d+)$/;
+  const LIENS_SURS = /^#\/(saison|feuilles|planning|documents|notifications|moi|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+)$/;
   const lienDe = n => (typeof n.lien === 'string' && LIENS_SURS.test(n.lien) ? n.lien : n.date_id ? `#/date/${n.date_id}` : '#/notifications');
   const nonLues = () => E.notifs.filter(x => !x.lue_le).length;
   const trierNotifs = xs => xs.sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le));
@@ -1733,6 +1755,9 @@
   // une notification qui change la saison (horaires, date, feuille, équipe, document) : la saison se relit
   let minuteurRelecture = 0;
   function rafraichirBientot(ns) {
+    if (ns.some(n => n.type === 'proposition')) {
+      chargerPropositions().then(() => { if (E.pret && ['planning', 'propositions', 'proposition', 'saison'].includes(E.vue)) redessiner(); }).catch(() => {});
+    }
     if (!ns.some(n => ['horaires', 'date', 'feuille', 'equipe', 'document'].includes(n.type))) return;
     ns.forEach(n => { if (n.type === 'feuille' && n.date_id) E.feuilles.delete(Number(n.date_id)); });
     clearTimeout(minuteurRelecture);
@@ -1751,11 +1776,11 @@
   }
   function majBadge(nouvelle = false) {
     const n = nonLues();
-    $$('.pastille-nb').forEach(p => {
+    $$('.nav-item[data-onglet="notifications"] .pastille-nb').forEach(p => {
       p.dataset.n = n; p.textContent = n > 99 ? '99+' : n ? String(n) : '';
       if (nouvelle && n) { p.classList.remove('nouvelle'); void p.offsetWidth; p.classList.add('nouvelle'); }
     });
-    $$('.nb-sr').forEach(s => { s.textContent = n ? `, ${pluriel(n, 'non lue', 'non lues')}` : ''; });
+    $$('.nav-item[data-onglet="notifications"] .nb-sr').forEach(s => { s.textContent = n ? `, ${pluriel(n, 'non lue', 'non lues')}` : ''; });
     try { if (navigator.setAppBadge) { if (n) navigator.setAppBadge(n).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } } catch (e) { /* rien */ }
     majTitre();
   }
@@ -1968,6 +1993,536 @@
     return '<p class="aide">Impossible de vérifier pour le moment : il faut le réseau. <button type="button" class="lien-btn" data-push-verifier>Réessayer</button></p>';
   }
 
+  // ================================================================================================ le planning et les disponibilités
+  // Le planning commun (../admin/planning.js, PLANNING : la vue Équipe et la vue Mois), mes indisponibilités (à la main),
+  // mes agendas (reliés : leurs heures occupées deviennent des indisponibilités ; et le flux de mes dates Crescite à ajouter
+  // à mon agenda), les propositions de dates de l'administration. Tout passe par le script SQL 5 et la fonction
+  // crescite-agenda : sans eux, une phrase claire, et rien d'autre ne change.
+  const PL = () => (typeof PLANNING !== 'undefined' && PLANNING && typeof PLANNING.monter === 'function' ? PLANNING : null);
+  const AGENDA_FN = `${BASE}/functions/v1/crescite-agenda`;
+  const REPONSES = { oui: 'Disponible', non: 'Pas disponible', peut_etre: 'Peut-être' };
+  const REPONSES_IC = { oui: 'coche', non: 'croix', peut_etre: 'question' };
+  const fonctionAbsente = e => !!e && (e.code === 'PGRST202' || /Could not find the function/i.test(String(e.message || '')));
+  const colonneAbsente = e => !!e && (e.code === '42703' || e.code === 'PGRST204' || /column .* does not exist|Could not find the .* column/i.test(String(e.message || '')));
+  const dispoAbsente = e => tableAbsente(e) || fonctionAbsente(e) || colonneAbsente(e);
+  const memeId = (a, b) => a != null && b != null && String(a) === String(b);
+  // une journée entière : de minuit à minuit, heure de Paris (fin exclue) ; des heures : à l'heure de Paris
+  const minuitParis = j => new Date(PL() ? PL().outils.minuit(j) : Date.parse(`${j}T00:00:00`)).toISOString();
+  const heureParis = (j, h) => new Date(PL() ? PL().outils.instant(j, h) : Date.parse(`${j}T${h}:00`)).toISOString();
+  const joursPeriode = x => (PL() ? PL().joursDe(x) : []);
+  const texteJours = x => (PL() ? PL().texteJours(x) : jourLong(iso(new Date(x.debut))));
+  const parisJour = t => (PL() ? PL().outils.jourParis(Date.parse(t)) : iso(new Date(t)));
+
+  // ———— lire
+  async function chargerPropositions() {
+    if (E.moi == null) return;
+    const { data, error } = await sb.from('crescite_propositions')
+      .select('id, titre, message, statut, spectacle_id, cree_le, spectacle:crescite_spectacles(id, titre, slug), jours:crescite_propositions_jours(id, debut, fin, journee, reponses:crescite_propositions_reponses(personne_id, reponse, commentaire, repondu_le))')
+      .order('cree_le', { ascending: false }).limit(60);
+    if (error) {
+      if (dispoAbsente(error)) { E.dispo.etat = 'absent'; E.dispo.propositions = []; E.dispo.propositionsLues = true; majBadgePlanning(); return; }
+      throw error;
+    }
+    E.dispo.etat = 'ok';
+    E.dispo.propositionsLues = true;
+    const moi = String(E.moi);
+    E.dispo.propositions = (data || []).map(p => ({ ...p, id: Number(p.id),
+      jours: (p.jours || []).map(j => ({ ...j, id: Number(j.id), moi: (j.reponses || []).find(r => String(r.personne_id) === moi) || null }))
+        .sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : 0)) }))
+      .filter(p => p.jours.some(j => j.moi));                // celles qui me sont adressées (une administratrice les lit toutes)
+    majBadgePlanning();
+  }
+  const aRepondre = p => p.statut === 'ouverte' && p.jours.some(j => j.moi && !j.moi.reponse && Date.parse(j.fin) > Date.now());
+  const enAttente = () => (E.dispo.propositions || []).filter(aRepondre);
+  function majBadgePlanning() {
+    const n = enAttente().length;
+    $$('.nav-item[data-onglet="planning"] .pastille-nb').forEach(p => { p.dataset.n = n; p.textContent = n ? String(n) : ''; });
+    $$('.nav-item[data-onglet="planning"] .nb-sr').forEach(s => { s.textContent = n ? `, ${pluriel(n, 'proposition', 'propositions')} à répondre` : ''; });
+  }
+  async function chargerMesIndispos() {
+    const depuis = new Date(Date.now() - 2 * 864e5).toISOString();
+    const { data, error } = await sb.from('crescite_indisponibilites').select('id, personne_id, debut, fin, journee, motif, source, agenda_id')
+      .eq('personne_id', E.moi).gte('fin', depuis).order('debut').limit(1000);
+    if (error) { if (dispoAbsente(error)) { E.dispo.etat = 'absent'; return null; } throw error; }
+    E.dispo.mesIndispos = data || [];
+    return E.dispo.mesIndispos;
+  }
+  async function chargerAgendas() {
+    // jamais l'adresse (url) : elle s'écrit, elle ne se relit pas
+    const { data, error } = await sb.from('crescite_agendas_lies').select('id, nom, actif, derniere_synchro, erreur, nb_evenements, cree_le')
+      .eq('personne_id', E.moi).order('cree_le').order('id');
+    if (error) { if (dispoAbsente(error)) { E.dispo.etat = 'absent'; return null; } throw error; }
+    E.dispo.agendas = data || [];
+    return E.dispo.agendas;
+  }
+  async function chargerJeton() {
+    const { data, error } = await sb.from('crescite_personnes_privees').select('agenda_jeton').eq('personne_id', E.moi).maybeSingle();
+    if (error) { if (dispoAbsente(error)) { E.dispo.etat = 'absent'; E.dispo.jeton = null; return null; } throw error; }
+    E.dispo.jeton = (data && data.agenda_jeton) || null;
+    return E.dispo.jeton;
+  }
+  const lienFlux = j => `${AGENDA_FN}?flux=${encodeURIComponent(j)}`;
+  const lienWebcal = j => lienFlux(j).replace(/^https:/, 'webcal:');
+  const lienGoogle = j => `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(lienWebcal(j))}`;
+  async function jetonConnexion() { try { const { data } = await sb.auth.getSession(); return data && data.session ? data.session.access_token : null; } catch (e) { return null; } }
+  // la fonction crescite-agenda, au nom de la personne ; { absente: true } si elle n'est pas encore déployée
+  async function appelerAgenda(corps) {
+    const jeton = await jetonConnexion();
+    const r = await fetch(AGENDA_FN, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CLE, ...(jeton ? { Authorization: `Bearer ${jeton}` } : {}) }, body: JSON.stringify(corps) });
+    if (r.status === 404) return { absente: true };
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw Object.assign(new Error(j.erreur || `erreur ${r.status}`), { status: r.status });
+    return j;
+  }
+  // une écriture qui ne relit rien (l'adresse d'un agenda ne se relit pas) : Prefer: return=minimal
+  async function insererSansRelire(table, ligne) {
+    const jeton = await jetonConnexion();
+    const r = await fetch(`${BASE}/rest/v1/${table}`, { method: 'POST', headers: { apikey: CLE, Authorization: `Bearer ${jeton || CLE}`, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(ligne) });
+    if (r.ok) return null;
+    const j = await r.json().catch(() => ({}));
+    return Object.assign(new Error(j.message || `erreur ${r.status}`), { code: j.code, status: r.status });
+  }
+
+  // ———— la vue Planning
+  function vuePlanning(r, { focus }) {
+    const absent = E.dispo.etat === 'absent';
+    let html = `<div class="titre-vue titre-planning"><div><h1>Planning</h1><p class="sous">Qui est libre, qui part : toute l’équipe, jour par jour.</p></div>
+      ${absent ? '' : `<div class="gestes-planning"><a class="btn petit" href="#/indisponibilites">${ICONES.indispo}Mes indisponibilités</a><a class="btn petit" href="#/agendas">${ICONES.relier}Mes agendas</a></div>`}</div>`;
+    if (absent) html += etatVide('calendrier', 'Le planning arrive bientôt', 'La compagnie le met en place : vous y direz quand vous n’êtes pas libre (ou vous relierez votre agenda), et vous verrez les disponibilités de toute l’équipe.');
+    else if (!PL()) html += etatVide('calendrier', 'Le planning ne s’est pas chargé', 'Vérifiez votre connexion, puis actualisez la page.');
+    else {
+      const attente = enAttente();
+      if (attente.length) html += cartesPropositions(attente);
+      html += '<div id="planning" class="zone-planning"></div>';
+    }
+    afficher(r, TITRES.planning, html, { focus, large: true });
+    if (!absent && PL()) monterPlanning();
+  }
+  function cartesPropositions(xs) {
+    return `<section class="propositions-attente" aria-labelledby="t-prop-att"><h2 class="titre-section" id="t-prop-att">${xs.length > 1 ? 'Des dates vous sont proposées' : 'Une proposition attend votre réponse'}</h2>
+      ${xs.map(p => { const n = p.jours.filter(j => j.moi && !j.moi.reponse).length; return `<a class="carte-prop" href="#/proposition/${p.id}">
+        <span class="ic-rond" aria-hidden="true">${ICONES.question}</span><span class="cp-texte"><b>${esc(p.titre)}</b>
+        <small>${esc([p.spectacle?.titre, `${pluriel(p.jours.length, 'jour')} proposé${p.jours.length > 1 ? 's' : ''}`, n < p.jours.length ? `${n} sans réponse` : ''].filter(Boolean).join(' · '))}</small></span>
+        <span class="etiquette a-repondre">Répondre</span>${ICONES.chevron}</a>`; }).join('')}</section>`;
+  }
+  function monterPlanning() {
+    const el = $('#planning');
+    if (!el || !PL()) return;
+    demonterPlanning();
+    const st = E.planningEtat || {}, cache = E.planningCache;
+    const vue = st.vue || 'equipe', jour = st.jour || aujourdhui(), semaines = st.semaines || 6;
+    const per = PLANNING.periode(vue, jour, semaines);
+    const garde = cache && cache.uid === E.uid && cache.de === per.de && cache.a === per.a ? cache.D : undefined;
+    E.planning = PLANNING.monter(el, {
+      vue, jour, semaines, filtre: st.filtre || null, donnees: garde,
+      charger: async (de, a) => {
+        const { data, error } = await sb.rpc('crescite_planning', { de, a });
+        if (error) { if (dispoAbsente(error)) E.dispo.etat = 'absent'; throw error; }
+        E.planningCache = { uid: E.uid, de, a, D: data };
+        return data;
+      },
+      messageErreur: e => (dispoAbsente(e) ? 'Le planning arrive bientôt : la compagnie le met en place.'
+        : estReseau(e) ? 'Le planning se lit en ligne : vérifiez votre connexion, puis réessayez.' : `Le planning n’a pas pu être lu : ${motsErreur(e) || 'réessayez dans un instant'}.`),
+      photo: chemin => `${PUBLIC}/${String(chemin).split('/').map(encodeURIComponent).join('/')}`,
+      spectacles: [...E.spectacles.values()].map(s => ({ id: s.id, titre: s.titre })),
+      distributions: E.distributions.map(x => ({ spectacle_id: x.spectacle_id, personne_id: x.personne_id })),
+      actions: actionsJour,
+      surJour: () => vibrer(6),
+      surChangement: etat => { E.planningEtat = { vue: etat.vue, jour: etat.jour, semaines: etat.semaines, filtre: etat.filtre }; },
+    });
+    if (garde) E.planning.actualiser();
+  }
+  function demonterPlanning() { if (E.planning) { try { E.planning.detruire(); } catch (e) { /* déjà parti */ } E.planning = null; } }
+  // les boutons du jour choisi, dans le planning : les siens seulement
+  function actionsJour(s) {
+    if (s.personne && !memeId(s.personne.id, E.moi)) return [];
+    if (s.jour < aujourdhui()) return [];
+    const moi = String(E.moi), acts = [];
+    const miennes = s.indisponibilites.filter(x => String(x.personne_id) === moi);
+    const manuelle = miennes.find(x => x.source !== 'agenda');
+    if (manuelle) {
+      const un = joursPeriode(manuelle).length === 1;
+      acts.push(un ? { libelle: 'Je suis libre, finalement', principal: true, faire: () => retirerIndispo(manuelle) }
+        : { libelle: 'Modifier cette indisponibilité', principal: true, faire: () => { E.dispo.modifier = manuelle.id; location.hash = '#/indisponibilites'; } });
+    } else {
+      acts.push({ libelle: miennes.length ? 'Pas libre de toute la journée' : 'Je ne suis pas libre ce jour-là', principal: true, faire: sel => ajouterJournee(sel.jour) });
+      acts.push({ libelle: 'Seulement quelques heures…', faire: sel => { E.dispo.brouillon = { type: 'heures', du: sel.jour }; location.hash = '#/indisponibilites'; } });
+    }
+    const vues = new Set();
+    for (const x of s.propositions) {
+      const p = x.proposition;
+      if (vues.has(p.id) || !(x.jour.reponses || []).some(r => String(r.personne_id) === moi)) continue;
+      vues.add(p.id);
+      acts.push({ libelle: `Répondre : ${p.titre}`, faire: () => { location.hash = `#/proposition/${p.id}`; } });
+    }
+    return acts;
+  }
+  function apresEcriture() { E.planningCache = null; if (E.planning) E.planning.actualiser(); }
+  async function ajouterJournee(jour) {
+    const ligne = { personne_id: E.moi, debut: minuitParis(jour), fin: minuitParis(lendemain(jour)), journee: true, motif: null };
+    const { data, error } = await sb.from('crescite_indisponibilites').insert(ligne).select('id, personne_id, debut, fin, journee, motif, source, agenda_id').single();
+    if (error) return annoncer(`Ce n’est pas enregistré : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
+    vibrer(10);
+    E.dispo.mesIndispos = null;
+    annoncer(`C’est noté : vous n’êtes pas libre ${texteJours(ligne)}.`, { action: { libelle: 'Annuler', f: () => retirerIndispo(data, { silencieux: true }) } });
+    apresEcriture();
+  }
+  async function retirerIndispo(x, { silencieux = false } = {}) {
+    const { error } = await sb.from('crescite_indisponibilites').delete().eq('id', x.id).eq('personne_id', E.moi);
+    if (error) return annoncer(`Ce n’est pas retiré : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
+    if (E.dispo.mesIndispos) E.dispo.mesIndispos = E.dispo.mesIndispos.filter(y => y.id !== x.id);
+    annoncer(silencieux ? 'C’est annulé.' : `C’est noté : vous êtes libre ${texteJours(x)}.`);
+    apresEcriture();
+    if (E.vue === 'indisponibilites') majListeIndispos();
+  }
+
+  // ———— mes indisponibilités
+  function vueIndispos(r, { focus }) {
+    const entete = '<div class="titre-vue"><h1>Mes indisponibilités</h1><p class="sous">Les jours où vous n’êtes pas libre. Toute l’équipe voit quand ; le motif reste entre vous et l’administration.</p></div>';
+    if (E.dispo.etat === 'absent') return afficher(r, TITRES.indisponibilites, entete + etatVide('calendrier', 'Bientôt dans l’application', 'La compagnie met en place le planning de l’équipe : vous pourrez y noter vos indisponibilités.'), { focus });
+    const xs = E.dispo.mesIndispos;
+    const edition = E.dispo.modifier != null && xs ? xs.find(x => x.id === E.dispo.modifier && x.source !== 'agenda') || null : null;
+    const brouillon = E.dispo.brouillon;
+    E.dispo.modifier = null; E.dispo.brouillon = null;
+    const html = `${entete}${formIndispo(edition, brouillon)}<div id="zone-indispos">${xs == null ? '<p class="chargement" role="status">Lecture de vos indisponibilités…</p>' : listeIndispos(xs)}</div>
+      <section class="carte-action" aria-labelledby="t-relier-i"><span class="ic-rond" aria-hidden="true">${ICONES.relier}</span><div class="ca-texte"><h2 id="t-relier-i">Votre agenda le sait déjà ?</h2>
+        <p class="aide">Reliez Google Agenda, Apple ou Outlook : vos heures occupées s’y lisent toutes seules, sans titre ni lieu.</p></div><a class="btn petit" href="#/agendas">Relier mon agenda</a></section>`;
+    afficher(r, TITRES.indisponibilites, html, { focus });
+    brancherFormIndispo(edition);
+    if (xs == null) chargerMesIndispos().then(() => majListeIndispos()).catch(e => { const z = $('#zone-indispos'); if (z && E.vue === 'indisponibilites') z.innerHTML = `<p class="message erreur" role="alert">Vos indisponibilités n’ont pas pu être lues : ${esc(motsErreur(e) || 'réessayez')}.</p>`; });
+  }
+  function majListeIndispos() {
+    const z = $('#zone-indispos');
+    if (!z || E.vue !== 'indisponibilites') return;
+    if (E.dispo.mesIndispos == null) { chargerMesIndispos().then(() => { if (E.dispo.mesIndispos) majListeIndispos(); }).catch(() => {}); return; }
+    z.innerHTML = listeIndispos(E.dispo.mesIndispos);
+  }
+  function formIndispo(x, b) {
+    const type = x ? (x.journee ? (joursPeriode(x).length > 1 ? 'jours' : 'jour') : 'heures') : (b && b.type) || 'jour';
+    const js = x ? joursPeriode(x) : [];
+    const du = x ? js[0]?.jour || parisJour(x.debut) : (b && b.du) || '';
+    const au = x && js.length ? js[js.length - 1].jour : '';
+    const de = x && !x.journee ? (js[0]?.de || '09:00') : '09:00', a = x && !x.journee ? (js[js.length - 1]?.a || '18:00') : '18:00';
+    const choix = (v, lib) => `<label class="segment"><input type="radio" name="type" value="${v}"${type === v ? ' checked' : ''}><span>${lib}</span></label>`;
+    return `<form class="carte form-indispo" id="f-indispo" novalidate aria-labelledby="t-indispo" data-type="${type}"${x ? ` data-id="${x.id}"` : ''}>
+      <h2 id="t-indispo">${x ? 'Modifier une indisponibilité' : 'Je ne suis pas libre…'}</h2>
+      <fieldset class="segments"><legend class="sr">Combien de temps</legend>${choix('jour', 'Une journée')}${choix('jours', 'Plusieurs jours')}${choix('heures', 'Quelques heures')}</fieldset>
+      <div class="deux-champs">
+        <div class="champ"><label for="i-du" id="l-du">${type === 'jours' ? 'Du' : 'Le'}</label><input id="i-du" type="date" value="${esc(du)}" min="${aujourdhui()}" required></div>
+        <div class="champ" data-pour="jours"><label for="i-au">Au (compris)</label><input id="i-au" type="date" value="${esc(au)}" min="${aujourdhui()}"></div>
+      </div>
+      <div class="deux-champs" data-pour="heures">
+        <div class="champ"><label for="i-de">De</label><input id="i-de" type="time" step="900" value="${esc(de)}"></div>
+        <div class="champ"><label for="i-a">À</label><input id="i-a" type="time" step="900" value="${esc(a)}"></div>
+      </div>
+      <div class="champ"><label for="i-motif">Motif <span class="facultatif">(facultatif)</span></label><input id="i-motif" maxlength="120" autocomplete="off" value="${esc(x && x.motif || '')}" placeholder="Tournage, vacances, rendez-vous…" aria-describedby="i-motif-aide">
+        <p class="aide" id="i-motif-aide">Visible par vous et l’administration seulement.</p></div>
+      <div class="pied-form"><button type="submit" class="btn principal">${x ? 'Enregistrer' : 'Ajouter'}</button>${x ? '<button type="button" class="btn" data-annuler-indispo>Annuler</button>' : ''}<p class="etat-form" role="status"></p></div>
+    </form>`;
+  }
+  function brancherFormIndispo(edition) {
+    const f = $('#f-indispo');
+    if (!f) return;
+    const du = $('#i-du', f), au = $('#i-au', f), de = $('#i-de', f), a = $('#i-a', f), motif = $('#i-motif', f);
+    const typeDe = () => ($('input[name="type"]:checked', f) || {}).value || 'jour';
+    f.addEventListener('change', e => {
+      if (e.target.name === 'type') { f.dataset.type = typeDe(); $('#l-du', f).textContent = typeDe() === 'jours' ? 'Du' : 'Le'; if (typeDe() === 'jours' && !au.value && du.value) au.value = du.value; }
+      if (e.target === du && au.value && au.value < du.value) au.value = du.value;
+      if (e.target === du) au.min = du.value || aujourdhui();
+    });
+    [du, au, de, a].forEach(i => i.addEventListener('input', () => effacerErreur(i)));
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const t = typeDe();
+      if (!estJour(du.value)) return erreurChamp(du, 'Choisissez le jour.');
+      let ligne;
+      if (t === 'jour') ligne = { debut: minuitParis(du.value), fin: minuitParis(lendemain(du.value)), journee: true };
+      else if (t === 'jours') {
+        if (!estJour(au.value)) return erreurChamp(au, 'Choisissez le dernier jour.');
+        if (au.value < du.value) return erreurChamp(au, 'Le dernier jour vient après le premier.');
+        if (ecartJours(du.value, au.value) > 366) return erreurChamp(au, 'Une année au plus à la fois.');
+        ligne = { debut: minuitParis(du.value), fin: minuitParis(lendemain(au.value)), journee: true };
+      } else {
+        if (!/^\d{2}:\d{2}$/.test(de.value)) return erreurChamp(de, 'Indiquez l’heure du début.');
+        if (!/^\d{2}:\d{2}$/.test(a.value) || a.value <= de.value) return erreurChamp(a, 'L’heure de fin vient après celle du début.');
+        ligne = { debut: heureParis(du.value, de.value), fin: heureParis(du.value, a.value), journee: false };
+      }
+      ligne.motif = motif.value.trim() || null;
+      const id = f.dataset.id ? Number(f.dataset.id) : null;
+      const b = $('button[type=submit]', f);
+      const res = await occupe(b, 'Enregistrement…', () => (id
+        ? sb.from('crescite_indisponibilites').update(ligne).eq('id', id).eq('personne_id', E.moi).select('id')
+        : sb.from('crescite_indisponibilites').insert({ personne_id: E.moi, ...ligne }).select('id')));
+      if (res.error || !res.data || !res.data.length) return dire(zoneMessage(f), `Ce n’est pas enregistré : ${res.error ? esc(motsErreur(res.error) || 'la base a refusé') : 'cette indisponibilité n’est plus là'}.`);
+      vibrer(10);
+      requestAnimationFrame(() => tt('confirmer', b));
+      annoncer(`C’est noté : vous n’êtes pas libre ${texteJours(ligne)}.`);
+      E.dispo.mesIndispos = null;
+      apresEcriture();
+      if (id) { location.hash = '#/indisponibilites'; vueIndispos(E.route, { focus: false }); return; }
+      f.reset(); f.dataset.type = 'jour'; $('#l-du', f).textContent = 'Le';
+      majListeIndispos();
+    });
+  }
+  function listeIndispos(xs) {
+    const maintenant = Date.now();
+    const venir = xs.filter(x => Date.parse(x.fin) > maintenant);
+    const miennes = venir.filter(x => x.source !== 'agenda'), lues = venir.filter(x => x.source === 'agenda');
+    const ligne = x => {
+      const t = majuscule(texteJours(x)), agenda = x.source === 'agenda';
+      return `<li class="indispo-ligne${agenda ? ' agenda' : ''}"><span class="hach" aria-hidden="true"></span><span class="il-texte"><b>${esc(t)}</b>${x.motif || agenda ? `<small>${esc([x.motif, agenda ? 'd’après votre agenda relié' : ''].filter(Boolean).join(' · '))}</small>` : ''}</span>
+        ${agenda ? '' : `<span class="il-gestes"><button type="button" class="bouton-rond" data-modifier-indispo="${x.id}">${ICONES.crayon}<span class="sr">Modifier : ${esc(t)}</span></button><button type="button" class="bouton-rond" data-retirer-indispo="${x.id}">${ICONES.croix}<span class="sr">Retirer : ${esc(t)}</span></button></span>`}</li>`;
+    };
+    let html = `<section class="carte" aria-labelledby="t-liste-i"><h2 id="t-liste-i">À venir</h2>`;
+    html += miennes.length ? `<ul class="liste-indispos">${miennes.map(ligne).join('')}</ul>` : '<p class="vide-court">Rien de noté à la main : vous êtes libre, sauf ce que dit votre agenda.</p>';
+    if (lues.length) html += `<details class="indispos-lues"><summary>${pluriel(lues.length, 'moment occupé', 'moments occupés')} lu${lues.length > 1 ? 's' : ''} dans vos agendas</summary><ul class="liste-indispos">${lues.slice(0, 200).map(ligne).join('')}</ul></details>`;
+    return html + '</section>';
+  }
+
+  // ———— mes agendas : relier un agenda, et mes dates Crescite dans mon agenda
+  const nomAgenda = u => (/google\.com/i.test(u) ? 'Google Agenda' : /icloud\.com/i.test(u) ? 'Apple iCloud' : /outlook|office365|live\.com|hotmail/i.test(u) ? 'Outlook' : 'Mon agenda');
+  function vueAgendas(r, { focus }) {
+    const entete = '<div class="titre-vue"><h1>Mes agendas</h1><p class="sous">Votre agenda dit quand vous êtes pris ; le vôtre reçoit vos dates Crescite.</p></div>';
+    if (E.dispo.etat === 'absent') return afficher(r, TITRES.agendas, entete + etatVide('calendrier', 'Bientôt dans l’application', 'La compagnie met en place le planning de l’équipe : vous pourrez y relier votre agenda, et recevoir vos dates Crescite dans le vôtre.'), { focus });
+    const html = `${entete}<div id="zone-agendas">${blocAgendas()}</div>${formAgenda()}<div id="zone-flux">${blocFlux()}</div>`;
+    afficher(r, TITRES.agendas, html, { focus });
+    brancherFormAgenda();
+    const lire = [];
+    if (E.dispo.agendas == null) lire.push(chargerAgendas().then(() => majZone('#zone-agendas', blocAgendas)));
+    if (E.dispo.jeton === undefined) lire.push(chargerJeton().then(() => { majZone('#zone-flux', blocFlux); verifierFlux(); }));
+    else verifierFlux();
+    Promise.all(lire).catch(e => annoncer(`Vos agendas n’ont pas pu être lus : ${motsErreur(e) || 'réessayez'}.`, { erreur: true }))
+      .then(() => { if (E.dispo.etat === 'absent' && E.vue === 'agendas') vueAgendas(r, { focus: false }); });
+  }
+  const majZone = (s, f) => { const z = $(s); if (z && (E.vue === 'agendas')) z.innerHTML = f(); };
+  function etatAgenda(a) {
+    if (E.dispo.lecture.has(a.id)) return { cls: 'al-attente', texte: 'Lecture en cours…' };
+    if (a.erreur && !a.derniere_synchro) return { cls: 'al-erreur', texte: a.erreur };
+    if (a.erreur) return { cls: 'al-erreur', texte: `${a.erreur} (dernière lecture réussie ${momentTexte(a.derniere_synchro)})` };
+    if (!a.derniere_synchro) return { cls: 'al-attente', texte: E.dispo.fonction === 'absente' ? 'Relié. La lecture automatique n’est pas encore en service : elle commencera dès que la compagnie l’aura activée.' : 'Relié, pas encore lu : la lecture se fait toutes les heures.' };
+    const n = a.nb_evenements || 0;
+    return { cls: 'al-ok', texte: `Lu ${momentTexte(a.derniere_synchro)} · ${n ? `${pluriel(n, 'moment occupé', 'moments occupés')} dans les 13 prochains mois` : 'aucun moment occupé dans les 13 prochains mois'}` };
+  }
+  function blocAgendas() {
+    const xs = E.dispo.agendas;
+    if (xs == null) return '<p class="chargement" role="status">Lecture de vos agendas…</p>';
+    if (!xs.length) return '';
+    return `<section class="carte" aria-labelledby="t-lies"><h2 id="t-lies">${xs.length > 1 ? 'Mes agendas reliés' : 'Mon agenda relié'}</h2><ul class="agendas-lies">${xs.map(a => {
+      const e = etatAgenda(a);
+      return `<li class="agenda-lie ${e.cls}" data-agenda-id="${a.id}"><span class="ic-rond" aria-hidden="true">${e.cls === 'al-erreur' ? ICONES.croix : e.cls === 'al-ok' ? ICONES.coche : ICONES.relier}</span>
+        <div class="al-texte"><b>${esc(a.nom || 'Mon agenda')}</b><small class="al-etat"${e.cls === 'al-erreur' ? ' role="alert"' : ''}>${esc(e.texte)}</small></div>
+        <div class="al-gestes"><button type="button" class="btn petit" data-relire-agenda="${a.id}"${E.dispo.lecture.has(a.id) ? ' disabled' : ''}>${ICONES.actualiser}Relire</button><button type="button" class="btn petit" data-delier-agenda="${a.id}">Délier<span class="sr"> : ${esc(a.nom || 'Mon agenda')}</span></button></div></li>`;
+    }).join('')}</ul><p class="aide">Seules les heures sont lues : ni titre, ni lieu, ni participants. Les événements « disponible » ne comptent pas : dans Google Agenda, un événement « toute la journée » est « disponible » par défaut ; mettez-le en « occupé » pour qu’il compte.</p></section>`;
+  }
+  const ETAPES = {
+    google: ['Sur un ordinateur, ouvrez <b>Google Agenda</b>, puis <b>Paramètres</b> (la roue dentée, en haut).', 'À gauche, sous <b>Paramètres de mes agendas</b>, choisissez votre agenda.',
+      'Descendez jusqu’à <b>Intégrer l’agenda</b>.', 'Copiez l’<b>Adresse secrète au format iCal</b> (elle finit par <code>basic.ics</code>), puis collez-la ci-dessous.'],
+    apple: ['Sur iPhone, ouvrez <b>Calendrier</b>, puis <b>Calendriers</b> en bas.', 'Touchez <b>ⓘ</b> à côté de votre calendrier, et activez <b>Calendrier public</b>.',
+      'Touchez <b>Partager le lien</b>, puis <b>Copier</b>, et collez-le ci-dessous (il commence par <code>webcal://</code>).', 'Sur Mac : dans Calendrier, clic droit sur le calendrier, <b>Partager le calendrier</b>, cochez <b>Calendrier public</b>.'],
+    outlook: ['Sur outlook.com (ou Outlook sur le web), ouvrez <b>Paramètres</b>, puis <b>Calendrier</b>, puis <b>Calendriers partagés</b>.', 'Sous <b>Publier un calendrier</b>, choisissez votre calendrier et <b>Peut afficher quand je suis occupé(e)</b>, puis <b>Publier</b>.',
+      'Copiez le <b>lien ICS</b>, et collez-le ci-dessous.'],
+  };
+  function formAgenda() {
+    const etapes = (k, titre, ouvert) => `<details class="etapes-agenda"${ouvert ? ' open' : ''}><summary>${titre}</summary><ol class="etapes">${ETAPES[k].map(x => `<li>${x}</li>`).join('')}</ol></details>`;
+    return `<form class="carte form-agenda" id="f-agenda" novalidate aria-labelledby="t-relier"><h2 id="t-relier">Relier un agenda</h2>
+      <p class="intro">Vos heures occupées deviennent vos indisponibilités, d’elles-mêmes, toutes les heures. Il faut l’adresse secrète (ou publique) de votre agenda, au format iCal :</p>
+      ${etapes('google', 'Google Agenda', true)}${etapes('apple', 'Apple (iCloud)', false)}${etapes('outlook', 'Outlook', false)}
+      <div class="champ"><label for="a-url">L’adresse de l’agenda</label><input id="a-url" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://… ou webcal://…" aria-describedby="a-url-aide">
+        <p class="aide" id="a-url-aide">Elle reste secrète : personne ne la revoit, pas même vous ; seule la lecture des heures s’en sert.</p></div>
+      <div class="champ"><label for="a-nom">Son nom <span class="facultatif">(facultatif)</span></label><input id="a-nom" maxlength="40" autocomplete="off" placeholder="Google Agenda"></div>
+      <div class="pied-form"><button type="submit" class="btn principal">${ICONES.relier}Relier</button><p class="etat-form" role="status"></p></div>
+    </form>`;
+  }
+  function brancherFormAgenda() {
+    const f = $('#f-agenda');
+    if (!f) return;
+    const url = $('#a-url', f), nom = $('#a-nom', f);
+    url.addEventListener('input', () => { effacerErreur(url); if (!nom.dataset.touche) nom.placeholder = nomAgenda(url.value); });
+    nom.addEventListener('input', () => { nom.dataset.touche = '1'; });
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const u = url.value.trim().replace(/^webcals?:\/\//i, 'https://');
+      if (!u) return erreurChamp(url, 'Collez l’adresse iCal de votre agenda.');
+      if (!/^https:\/\/[^/\s]+\.[^/\s]+\/\S*$/i.test(u)) return erreurChamp(url, 'Il faut l’adresse iCal de l’agenda : elle commence par https:// ou webcal://.');
+      const b = $('button[type=submit]', f);
+      const err = await occupe(b, 'Relier…', () => insererSansRelire('crescite_agendas_lies', { personne_id: E.moi, nom: nom.value.trim() || nomAgenda(u), url: u, actif: true }));
+      if (err) {
+        if (dispoAbsente(err)) { E.dispo.etat = 'absent'; return vueAgendas(E.route, { focus: false }); }
+        return dire(zoneMessage(f), `L’agenda n’est pas relié : ${esc(err.code === '22023' ? 'cette adresse n’est pas une adresse d’agenda iCal (https://… ou webcal://…)' : motsErreur(err) || err.message || 'la base a refusé')}.`);
+      }
+      url.value = ''; nom.value = ''; delete nom.dataset.touche;
+      zoneMessage(f).innerHTML = '';
+      vibrer(10);
+      await chargerAgendas().catch(() => {});
+      const neuf = (E.dispo.agendas || []).reduce((m, a) => (!m || Number(a.id) > Number(m.id) ? a : m), null);
+      majZone('#zone-agendas', blocAgendas);
+      $('#zone-agendas')?.scrollIntoView({ block: 'nearest', behavior: reduit() ? 'auto' : 'smooth' });
+      if (neuf) await relireAgenda(neuf.id, { premiere: true });
+    });
+  }
+  async function relireAgenda(id, { premiere = false } = {}) {
+    E.dispo.lecture.add(Number(id));
+    majZone('#zone-agendas', blocAgendas);
+    try {
+      const r = await appelerAgenda({ synchro: true, agenda_id: Number(id) });
+      if (r.absente) {
+        E.dispo.fonction = 'absente';
+        if (!premiere) annoncer('La lecture automatique n’est pas encore en service : elle commencera dès que la compagnie l’aura activée.');
+      } else if (r.agenda) {
+        E.dispo.fonction = 'ok';
+        E.dispo.agendas = (E.dispo.agendas || []).map(a => (Number(a.id) === Number(r.agenda.id) ? { ...a, ...r.agenda } : a));
+        if (r.agenda.erreur) annoncer('L’agenda n’a pas pu être lu : voyez la raison sous son nom.', { erreur: true });
+        else annoncer(premiere ? `Agenda relié : ${pluriel(r.agenda.nb_evenements || 0, 'moment occupé', 'moments occupés')} lu${(r.agenda.nb_evenements || 0) > 1 ? 's' : ''}.` : 'Agenda relu.');
+        E.dispo.mesIndispos = null;
+        apresEcriture();
+      }
+    } catch (e) {
+      annoncer(`La lecture n’a pas pu se faire : ${esc(e.status === 401 ? 'reconnectez-vous' : estReseau(e) ? 'pas de réseau' : e.message)}.`, { erreur: true });
+    } finally {
+      E.dispo.lecture.delete(Number(id));
+      majZone('#zone-agendas', blocAgendas);
+    }
+  }
+  async function delierAgenda(id) {
+    const a = (E.dispo.agendas || []).find(x => Number(x.id) === Number(id));
+    if (!confirm(`Délier « ${a ? a.nom : 'cet agenda'} » ? Les moments occupés lus dans cet agenda disparaîtront du planning.`)) return;
+    const { error } = await sb.from('crescite_agendas_lies').delete().eq('id', id).eq('personne_id', E.moi);
+    if (error) return annoncer(`L’agenda n’est pas délié : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
+    E.dispo.agendas = (E.dispo.agendas || []).filter(x => Number(x.id) !== Number(id));
+    E.dispo.mesIndispos = null;
+    annoncer('Agenda délié.');
+    majZone('#zone-agendas', blocAgendas);
+    apresEcriture();
+  }
+  function blocFlux() {
+    const j = E.dispo.jeton;
+    const intro = '<h2 id="t-flux">Mes dates Crescite dans mon agenda</h2><p class="intro">Abonnez votre agenda à vos dates (représentations, répétitions, résidences) : elles s’y ajoutent, avec les horaires et les lieux, et s’y mettent à jour d’elles-mêmes.</p>';
+    if (j === undefined) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="chargement" role="status">Lecture de votre lien…</p></section>`;
+    if (!j) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="message conseil">Votre lien personnel n’est pas encore prêt : la compagnie met le service en place.</p></section>`;
+    return `<section class="carte flux" aria-labelledby="t-flux">${intro}
+      <div class="flux-boutons"><a class="btn principal" href="${esc(lienGoogle(j))}" target="_blank" rel="noopener">${ICONES.agenda}Ajouter à Google Agenda<span class="sr"> (nouvel onglet)</span></a>
+        <a class="btn" href="${esc(lienWebcal(j))}">${ICONES.agenda}Apple Calendrier, Outlook</a>
+        <button type="button" class="btn" data-copier-flux>${ICONES.lien}Copier le lien</button></div>
+      <p class="lien-flux"><span class="sr">Le lien : </span><code>${esc(lienFlux(j))}</code></p>
+      <p class="aide" id="etat-flux">Google relit les abonnements de lui-même, toutes les quelques heures : un changement peut mettre un moment à y paraître. Ce lien est personnel : ne le partagez pas.</p>
+      <p class="aide"><button type="button" class="lien-btn" data-nouvelle-cle>Changer la clé du lien</button> si vous l’avez partagé par erreur : l’ancien lien cessera de marcher.</p></section>`;
+  }
+  // le lien répond-il ? (la fonction crescite-agenda déployée)
+  async function verifierFlux() {
+    const j = E.dispo.jeton;
+    if (!j || E.dispo.fluxVerifie === j) return;
+    try {
+      const r = await fetch(lienFlux(j), { method: 'HEAD' });
+      E.dispo.fluxVerifie = j;
+      const p = $('#etat-flux');
+      if (r.status === 404 && p) p.innerHTML = '<span class="message conseil">Le lien marchera dès que la compagnie aura mis en service la lecture des agendas : vous pouvez déjà l’ajouter.</span>';
+    } catch (e) { /* hors connexion : rien à dire */ }
+  }
+  async function nouvelleCle() {
+    if (!confirm('Changer la clé ? L’ancien lien cessera de marcher : il faudra ajouter le nouveau dans votre agenda.')) return;
+    const { data, error } = await sb.rpc('crescite_nouveau_jeton_agenda');
+    if (error) return annoncer(`La clé n’a pas changé : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
+    E.dispo.jeton = data; E.dispo.fluxVerifie = null;
+    majZone('#zone-flux', blocFlux);
+    annoncer('Nouvelle clé : ajoutez le nouveau lien à votre agenda (l’ancien ne marche plus).');
+  }
+
+  // ———— dans « Moi »
+  function sectionPlanningMoi() {
+    const intro = '<h2 id="t-dispo">Mon planning</h2><p class="intro">Dites quand vous n’êtes pas libre, reliez votre agenda, recevez vos dates Crescite dans le vôtre.</p>';
+    if (E.dispo.etat === 'absent') return `<section class="carte" aria-labelledby="t-dispo">${intro}<p class="aide">Bientôt : la compagnie met en place le planning de l’équipe.</p></section>`;
+    const n = enAttente().length;
+    const lien = (h, ic, titre, sous, badge = '') => `<li><a class="ligne-lien" href="${h}">${ic}<span><b>${titre}</b><small>${sous}</small></span>${badge}${ICONES.chevron}</a></li>`;
+    return `<section class="carte" aria-labelledby="t-dispo">${intro}<ul class="liens-moi">
+      ${lien('#/indisponibilites', ICONES.indispo, 'Mes indisponibilités', 'Les jours où vous n’êtes pas libre')}
+      ${lien('#/agendas', ICONES.relier, 'Mes agendas', 'Relier mon agenda · mes dates Crescite dans mon agenda')}
+      ${lien('#/propositions', ICONES.question, 'Propositions de dates', n ? `${pluriel(n, 'proposition', 'propositions')} à répondre` : 'Celles de l’administration', n ? `<span class="pastille-nb" data-n="${n}" aria-hidden="true">${n}</span>` : '')}
+    </ul></section>`;
+  }
+  document.addEventListener('change', e => {
+    const c = e.target.closest && e.target.closest('[data-commentaire]');
+    if (!c) return;
+    const id = Number(c.dataset.commentaire);
+    const p = (E.dispo.propositions || []).find(x => x.jours.some(j => j.id === id)), j = p && p.jours.find(x => x.id === id);
+    if (!j) return;
+    if (j.moi && j.moi.reponse) { if ((j.moi.commentaire || '') !== c.value.trim()) repondre(id, j.moi.reponse, c.value.trim()); return; }
+    const etat = c.closest('[data-jour-prop]') && c.closest('[data-jour-prop]').querySelector('.etat-reponse');
+    if (etat && c.value.trim()) etat.textContent = 'Choisissez une réponse : votre mot partira avec elle.';
+  });
+
+  // ———— les propositions de dates
+  function vuePropositions(r, { focus }) {
+    const entete = '<div class="titre-vue"><h1>Propositions de dates</h1><p class="sous">Les dates que l’administration vous propose : dites pour chaque jour si vous êtes libre.</p></div>';
+    if (E.dispo.etat === 'absent') return afficher(r, TITRES.propositions, entete + etatVide('calendrier', 'Bientôt dans l’application', 'Les propositions de dates arriveront ici, et par courriel.'), { focus });
+    const xs = E.dispo.propositions || [];
+    const att = xs.filter(aRepondre), autres = xs.filter(p => !aRepondre(p));
+    const carte = p => { const rep = p.jours.filter(j => j.moi && j.moi.reponse).length; return `<li><a class="carte-prop" href="#/proposition/${p.id}"><span class="ic-rond" aria-hidden="true">${ICONES.question}</span>
+      <span class="cp-texte"><b>${esc(p.titre)}</b><small>${esc([p.spectacle?.titre, p.jours.length === 1 ? texteJours(p.jours[0]) : `${pluriel(p.jours.length, 'jour')}`, p.statut === 'close' ? 'close' : rep === p.jours.length ? 'répondu' : `${rep}/${p.jours.length} répondu${rep > 1 ? 's' : ''}`].filter(Boolean).join(' · '))}</small></span>
+      ${aRepondre(p) ? '<span class="etiquette a-repondre">Répondre</span>' : ''}${ICONES.chevron}</a></li>`; };
+    const html = `${entete}${!E.dispo.propositionsLues ? '<p class="chargement" role="status">Lecture des propositions…</p>' : !xs.length ? etatVide('calendrier', 'Aucune proposition pour l’instant', 'Quand l’administration vous proposera des dates, elles arriveront ici et par courriel.') : ''}
+      ${att.length ? `<section aria-labelledby="t-att"><h2 class="titre-section" id="t-att">À répondre</h2><ul class="liste-props">${att.map(carte).join('')}</ul></section>` : ''}
+      ${autres.length ? `<section aria-labelledby="t-aut"><h2 class="titre-section" id="t-aut">${att.length ? 'Les autres' : 'Répondues ou closes'}</h2><ul class="liste-props">${autres.map(carte).join('')}</ul></section>` : ''}`;
+    afficher(r, TITRES.propositions, html, { focus });
+    if (!E.dispo.propositionsLues) chargerPropositions().then(() => { if (E.vue === 'propositions') vuePropositions(r, { focus: false }); }).catch(() => {});
+  }
+  function vueProposition(r, { focus }) {
+    if (E.dispo.etat === 'absent') return afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${etatVide('calendrier', 'Bientôt dans l’application', 'Les propositions de dates arriveront ici, et par courriel.')}`, { focus });
+    const p = (E.dispo.propositions || []).find(x => x.id === r.id);
+    if (!p) {
+      if (!E.dispo.propositionsLues || !E.dispo.relu) {
+        afficher(r, TITRES.proposition, '<div class="titre-vue"><h1>Proposition de dates</h1></div><p class="chargement" role="status">Lecture de la proposition…</p>', { focus });
+        E.dispo.relu = true;
+        chargerPropositions().then(() => { if (E.route && E.route.hash === r.hash) vueProposition(r, { focus: false }); }).catch(e => annoncer(`La proposition n’a pas pu être lue : ${motsErreur(e) || 'réessayez'}.`, { erreur: true }));
+        return;
+      }
+      return afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${etatVide('calendrier', 'Cette proposition n’est pas (ou plus) pour vous', 'Elle a pu être retirée par l’administration. Vos propositions sont dans le planning.', '<p><a class="btn" href="#/propositions">Mes propositions</a></p>')}`, { focus });
+    }
+    E.dispo.relu = false;
+    const close = p.statut === 'close';
+    const html = `<div class="titre-vue"><h1>${esc(p.titre)}</h1><p class="sous">${esc([p.spectacle?.titre, `proposée ${momentTexte(p.cree_le).replace(/ à .*$/, '')}`].filter(Boolean).join(' · '))}</p></div>
+      ${p.message ? `<blockquote class="message-prop">${esc(p.message).replace(/\n/g, '<br>')}<cite>L’administration</cite></blockquote>` : ''}
+      ${close ? '<p class="message conseil" role="status">Cette proposition est close : merci pour vos réponses.</p>' : `<p class="intro-prop">Pour ${p.jours.length > 1 ? 'chaque jour' : 'ce jour'}, dites si vous êtes libre. Vous pouvez changer d’avis tant que la proposition est ouverte.</p>`}
+      <div id="jours-prop">${p.jours.filter(j => j.moi).map(j => jourProposition(p, j)).join('')}</div>`;
+    afficher(r, TITRES.proposition, html, { focus });
+    if (E.dispo.mesIndispos == null) chargerMesIndispos().then(() => { if (E.route && E.route.hash === r.hash) $$('[data-jour-prop]').forEach(s => { const j = p.jours.find(x => x.id === Number(s.dataset.jourProp)); if (j) s.outerHTML = jourProposition(p, j); }); }).catch(() => {});
+  }
+  function jourProposition(p, j) {
+    const close = p.statut === 'close' || Date.parse(j.fin) <= Date.now(), rep = j.moi && j.moi.reponse;
+    // un conflit avec ses propres indisponibilités (et ses dates déjà prévues)
+    const js = new Set(joursPeriode(j).map(u => u.jour));
+    const pris = (E.dispo.mesIndispos || []).filter(x => joursPeriode(x).some(u => js.has(u.jour)));
+    const dates = E.dates.filter(d => vivante(d) && (d.precision === 'jour' || d.precision === 'periode') && [...js].some(x => x >= d.debut && x <= finDe(d)));
+    const id = `jp-${j.id}`;
+    return `<section class="carte jour-prop${rep ? ` repondu-${rep}` : ''}" data-jour-prop="${j.id}" aria-labelledby="${id}">
+      <h2 id="${id}">${esc(majuscule(texteJours(j)))}</h2>
+      ${pris.length ? `<p class="conflit-prop">${ICONES.alerte}<span>Vous avez noté ne pas être libre ${esc(pris.map(x => `${texteJours(x)}${x.motif ? ` (${x.motif})` : ''}`).join(', '))}.</span></p>` : ''}
+      ${dates.length ? `<p class="conflit-prop doux">${ICONES.agenda}<span>Vous partez déjà : ${esc(dates.map(d => `${d.spectacle?.titre || 'une date'}${d.lieu ? ` à ${d.lieu.commune || d.lieu.nom}` : ''}`).join(', '))}.</span></p>` : ''}
+      <div class="choix-reponse" role="group" aria-label="Votre réponse pour ${esc(texteJours(j))}">${Object.entries(REPONSES).map(([k, lib]) =>
+        `<button type="button" class="rep ${k}" aria-pressed="${rep === k}" data-repondre="${j.id}" data-reponse="${k}"${close ? ' disabled' : ''}>${ICONES[REPONSES_IC[k]]}${lib}</button>`).join('')}</div>
+      <div class="champ"><label for="c-${j.id}">Un mot pour l’administration <span class="facultatif">(facultatif)</span></label><textarea id="c-${j.id}" rows="2" maxlength="300" data-commentaire="${j.id}"${close ? ' disabled' : ''}>${esc(j.moi && j.moi.commentaire || '')}</textarea></div>
+      <p class="etat-reponse" role="status">${rep ? `${REPONSES[rep]}${j.moi.repondu_le ? ` · répondu ${esc(momentTexte(j.moi.repondu_le))}` : ''}` : close ? 'Sans réponse' : 'Pas encore répondu'}</p>
+    </section>`;
+  }
+  async function repondre(jourId, reponse, commentaire, { depuisBouton = false } = {}) {
+    const p = (E.dispo.propositions || []).find(x => x.jours.some(j => j.id === jourId));
+    const j = p && p.jours.find(x => x.id === jourId);
+    if (!j) return;
+    const { error } = await sb.rpc('crescite_repondre', { jour: jourId, reponse_: reponse, commentaire_: commentaire || null });
+    if (error) return annoncer(`La réponse n’est pas enregistrée : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
+    j.moi = { ...(j.moi || {}), reponse, commentaire: commentaire || null, repondu_le: new Date().toISOString() };
+    vibrer(10);
+    const s = $(`[data-jour-prop="${jourId}"]`);
+    if (s) {
+      const actif = document.activeElement && s.contains(document.activeElement) ? document.activeElement : null;
+      s.outerHTML = jourProposition(p, j);
+      const b = $(`[data-jour-prop="${jourId}"] [data-reponse="${reponse}"]`);
+      if (b && (depuisBouton || actif)) { if (depuisBouton) b.focus({ preventScroll: true }); requestAnimationFrame(() => tt('confirmer', b)); }
+    }
+    annoncer(`C’est noté : ${REPONSES[reponse].toLowerCase()} ${texteJours(j)}.`);
+    majBadgePlanning();
+    E.planningCache = null;
+  }
+
   // ================================================================================================ l'installation
   window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); E.installer = e; majInstallation(); });
   window.addEventListener('appinstalled', () => { E.installer = null; majInstallation(); annoncer('L’application est installée : retrouvez Crescite sur votre écran d’accueil.'); });
@@ -2018,6 +2573,7 @@
         <p class="aide">Pour changer l’adresse du compte ou votre nom, écrivez à l’administration.</p>
       </section>
       <section class="carte" aria-labelledby="t-push"><h2 id="t-push">Notifications</h2><p class="intro">Une feuille de route publiée, des horaires changés (en tournée comme en répétition), une nouvelle date.</p><div data-zone-push="moi"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'moi') : ''}</div></section>
+      ${sectionPlanningMoi()}
       <section class="carte" aria-labelledby="t-app"><h2 id="t-app">L’application</h2><div data-zone-installation="moi">${zoneInstallation('moi')}</div></section>`;
     if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
       : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
@@ -2262,7 +2818,12 @@
     if (bouton) bouton.classList.add('tourne');
     E.rafraichit = (async () => {
       let erreur = null;
-      try { await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); })]); E.horsLigne = 0; garder(); } catch (e) { erreur = e; }
+      try {
+        await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
+          chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); })]);
+        E.horsLigne = 0; garder();
+        E.dispo.mesIndispos = null; E.dispo.agendas = null; E.planningCache = null;
+      } catch (e) { erreur = e; }
       if (erreur) {
         if (estReseau(erreur)) E.horsLigne = E.horsLigne || E.chargeLe || Date.now();
         if (!discret) annoncer(`Actualisation impossible : ${motsErreur(erreur)}.`, { erreur: true });
@@ -2347,6 +2908,19 @@
     if (t.matches('[data-push]')) { const actif = t.getAttribute('aria-checked') === 'true'; t.disabled = true; try { if (actif) await desactiverPush(); else await activerPush(t); } finally { if (t.isConnected) t.disabled = false; } return; }
     if (t.matches('[data-push-activer]')) return activerPush(t);
     if (t.matches('[data-push-verifier]')) { E.push.cle = undefined; $$('[data-zone-push]').forEach(z => { delete z.dataset.etat; }); return majCartePush(); }
+    if (t.matches('[data-modifier-indispo]')) { E.dispo.modifier = Number(t.dataset.modifierIndispo); vueIndispos(E.route, { focus: false }); window.scrollTo({ top: 0, behavior: reduit() ? 'auto' : 'smooth' }); $('#i-du')?.focus({ preventScroll: true }); return; }
+    if (t.matches('[data-retirer-indispo]')) { const x = (E.dispo.mesIndispos || []).find(y => y.id === Number(t.dataset.retirerIndispo)); if (x) retirerIndispo(x); return; }
+    if (t.matches('[data-annuler-indispo]')) return vueIndispos(E.route, { focus: false });
+    if (t.matches('[data-relire-agenda]')) return relireAgenda(Number(t.dataset.relireAgenda));
+    if (t.matches('[data-delier-agenda]')) return delierAgenda(Number(t.dataset.delierAgenda));
+    if (t.matches('[data-copier-flux]')) { if (E.dispo.jeton) copier(lienFlux(E.dispo.jeton), '', 'Lien copié : dans votre agenda, ajoutez un agenda « à partir de l’URL » et collez-le.'); return; }
+    if (t.matches('[data-nouvelle-cle]')) return nouvelleCle();
+    if (t.matches('[data-repondre]')) {
+      const id = Number(t.dataset.repondre), c = $(`[data-commentaire="${id}"]`);
+      t.disabled = true;
+      try { await repondre(id, t.dataset.reponse, c ? c.value.trim() : '', { depuisBouton: true }); } finally { if (t.isConnected) t.disabled = false; }
+      return;
+    }
     if (t.matches('[data-installer]')) return installer();
     if (t.matches('[data-fermer-install]')) { garderPref('installFermee', true); majInstallation(); return; }
     if (t.matches('[data-aide-ios]')) { const z = document.getElementById(t.getAttribute('aria-controls')), ouvrir = t.getAttribute('aria-expanded') !== 'true'; if (z) z.hidden = !ouvrir; t.setAttribute('aria-expanded', String(ouvrir)); return; }

@@ -936,7 +936,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
 .rampe-frise{min-height:118px}
 .frise[data-frise]{--fr-fond:var(--aub);--fr-encre:#fff;--fr-trait:rgba(255,236,245,.3);--fr-accent:var(--rose-v);--fr-police:var(--sans);--fr-passe:.4;
   --fr-bulle-fond:#fff;--fr-bulle-encre:var(--ink);--fr-point:11px;--fr-couloir:19px;--fr-haut:30px;--fr-taille:12px;--fr-courbe:var(--ease)}
-.frise[data-frise] .frise-mois-nom{font:400 .98rem/1.1 var(--serif);font-variation-settings:"opsz" 30,"SOFT" 100}
+.frise[data-frise] .frise-mois-nom{font:400 .94rem/1.1 var(--serif);font-variation-settings:"opsz" 30,"SOFT" 100}
 .frise[data-frise] .frise-an{font:600 .68rem/1.3 var(--sans);letter-spacing:.08em;opacity:.72}
 .frise[data-frise] .frise-point>.frise-repere::before{width:9px;height:12px;border-radius:999px 999px 1.5px 1.5px;translate:0 -4px;transform-origin:50% 100%;
   box-shadow:0 0 0 2px var(--fr-fond),0 0 12px 1px color-mix(in srgb,var(--fr-c,#fff) 55%,transparent)}
@@ -1219,7 +1219,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   const largeurWrap = (moins = 0) => Math.min(innerWidth - 2 * Math.min(56, Math.max(16, innerWidth * .04)), 1328) - 28 - moins;
   function frise(conteneur, o) {
     if (!FR || !conteneur) return null;
-    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: root.classList.contains('en-place') }, o));
+    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: root.classList.contains('en-place'), moisMin: 94 }, o));
     frises.push(f);
     return f;
   }
@@ -2183,7 +2183,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       <div class="show-corps-fond" style="--ec:${esc(e.couleur)};--ecv:${esc(u.clair ? e.couleur : e.couleurVive)}">
         <div class="wrap show-corps">
           <div class="sommaire"><ol>${chapitres.filter(c => c.titre).map(c => `<li><a href="#${c.id}">${esc(c.titre)}</a></li>`).join('')}</ol></div>
-          <div class="chapitres">${chapitres.map(c => `<section class="chap" id="${c.id}" tabindex="-1"${c.titre ? ` aria-labelledby="${c.id}-t"` : ''}>${c.titre ? `<h2 class="chap-titre" id="${c.id}-t"><span${ed(c.chemin)}>${esc(c.titre)}</span></h2>` : ''}${c.html}</section>`).join('')}</div>
+          <div class="chapitres" id="chapitres">${differer(chapitres.map(c => `<section class="chap" id="${c.id}" tabindex="-1"${c.titre ? ` aria-labelledby="${c.id}-t"` : ''}>${c.titre ? `<h2 class="chap-titre" id="${c.id}-t"><span${ed(c.chemin)}>${esc(c.titre)}</span></h2>` : ''}${c.html}</section>`).join(''))}</div>
         </div>
       </div>
     </article>`;
@@ -2382,9 +2382,9 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     if (el && document.activeElement !== el) el.focus({ preventScroll: true });
   }
 
-  function lierZones(q, enPlace) {
+  function lierZones(q, enPlace, racine = main) {
     const zones = {}, frisesZone = {};
-    $$('[data-zone]', main).forEach(z => {
+    $$('[data-zone]', racine).forEach(z => {
       const type = z.dataset.zone;
       // la frise de la zone répond à sa carte et à sa liste : une commune survolée allume ses repères
       const ecoute = l => { const f = frisesZone[type]; if (f) { if (l == null) f.eteindre(); else f.allumer({ l }); } };
@@ -2400,15 +2400,17 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       const brut = enPlace ? choixZones[type] : (q.get('l') !== null ? +q.get('l') : null);
       if (brut !== null && brut !== undefined && !Number.isNaN(brut) && $(`.mc-lieu[data-l="${brut}"]`, z)) ctl.choix(brut);
     });
-    // les frises de la vue : reliées à la liste et à la carte de leur zone ; un clic sur un repère mène à sa ligne
-    plans.forEach(p => {
+    // les frises de la vue : reliées à la liste et à la carte de leur zone ; un clic sur un repère mène à sa ligne (celles dont
+    // le conteneur n'est pas encore dans la page attendent le rendu de la suite)
+    const prets = plans.filter(p => document.getElementById(p.id));
+    plans = plans.filter(p => !prets.includes(p));
+    prets.forEach(p => {
       const c = document.getElementById(p.id), Z = p.zone ? zones[p.zone] : null; if (!c) return;
       const relier = Z ? { relier: { liste: Z.z.closest('.chap') || Z.z, carte: l => Z.ctl && Z.ctl.montrer(l) } } : {};
       const f = frise(c, Object.assign({ largeur: largeurWrap(), choix: x => allerLigne(x.id) }, p.o, relier));
       if (p.zone) frisesZone[p.zone] = f;
     });
-    plans = [];
-    frisesDiffusion(main);
+    frisesDiffusion(racine);
   }
 
   let ioPortes = null, ioSommaire = null;
@@ -2437,6 +2439,20 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     liens[0].classList.add('on');
   }
 
+  // ce qui est sous le pli d'une grande page (les chapitres d'un spectacle) : rendu dans la tâche qui suit la première image du
+  // changement de page (le visible d'abord) ; d'emblée quand la vue est refaite en place
+  let suite = null, permetDiffere = false;
+  const differer = html => { if (!permetDiffere) return html; suite = html; return ''; };
+  function rendreSuite(q) {
+    const html = suite; suite = null;
+    const c = $('#chapitres', main); if (html == null || !c) return;
+    c.innerHTML = html;
+    $$('a[href^="http"]', c).forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+    preparerCartes(c, false);
+    lierZones(q, false, c);
+    suivreSommaire();
+    decorer(false);
+  }
   function rendre(v, q, enPlace) {
     const { ENTREE, ENTREES } = X;
     const e = v.entree ? ENTREE[v.entree] : null, ea = ENTREE[memo() || 'voir'] || ENTREES[0];
@@ -2448,7 +2464,9 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     root.style.setProperty('--hl', e ? e.couleurVive : 'rgba(255,255,255,.07)');
     root.dataset.vue = v.vue;
     frises.forEach(f => f.detruire()); frises = []; plans = [];
+    suite = null; permetDiffere = !enPlace && mouvement();
     main.innerHTML = v.html();
+    permetDiffere = false;
     document.title = `${v.titre} - ${X.S.titreSuffixe}`;
     // l'entrée courante : « page » sur sa propre page, « true » quand on lit un spectacle ou une saison dans cette entrée
     $$('.entree').forEach(a => { const on = !!e && a.dataset.entree === e.cle; a.classList.toggle('on', on); if (on) a.setAttribute('aria-current', v.marque || 'page'); else a.removeAttribute('aria-current'); });
@@ -2467,6 +2485,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       const h1 = $('h1', main);
       if (h1) h1.focus({ preventScroll: true });
+      if (suite != null) setTimeout(() => rendreSuite(q), 0);
     });
   }
   // les titres montent, les cartes viennent l'une après l'autre en pivotant sur leur gond, les chiffres comptent ; posé avant
@@ -2485,7 +2504,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   function couleursDe(v) {
     if (v.u) return { porte: v.u.fond, lumiere: v.u.clair ? v.u.aplat : v.u.vif };
     const e = v.vue in VUE_ENTREE && v.entree ? X.ENTREE[v.entree] : null;
-    if (e) return { porte: melange('#22101d', e.couleur, .3), lumiere: e.couleurVive };
+    if (e) return { porte: melange('#22101d', e.couleur, .2), lumiere: e.couleurVive };
     return { porte: '#2e1628', lumiere: (X.ENTREE.voir || {}).couleurVive || '#f07ab6' };
   }
   const finirBattants = () => { btAnims.forEach(a => { try { a.cancel(); } catch (e) { /* finie */ } }); btAnims = []; if (btEl) btEl.classList.remove('on'); };
@@ -2502,8 +2521,8 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     // quittée se rabattent et s'effacent (on a refermé derrière soi)
     const o = { duration: retour ? 380 : 430, easing: retour ? 'cubic-bezier(.45,.05,.55,.95)' : 'cubic-bezier(.32,.6,.16,1)', fill: 'both' };
     const vantail = k => retour
-      ? [{ transform: `rotateY(${k * 82}deg)`, opacity: .9 }, { transform: `rotateY(${k * 34}deg)`, opacity: .55, offset: .55 }, { transform: `rotateY(${k * 4}deg)`, opacity: 0 }]
-      : [{ transform: `rotateY(${k * 7}deg)` }, { transform: `rotateY(${k * 104}deg)` }];
+      ? [{ transform: `rotateY(${k * 82}deg)`, opacity: .85 }, { transform: `rotateY(${k * 36}deg)`, opacity: .42, offset: .55 }, { transform: `rotateY(${k * 8}deg)`, opacity: 0 }]
+      : [{ transform: `rotateY(${k * 7}deg)`, opacity: 1 }, { transform: `rotateY(${k * 84}deg)`, opacity: 1, offset: .58 }, { transform: `rotateY(${k * 104}deg)`, opacity: 0 }];
     btAnims = [g.animate(vantail(1), o), d.animate(vantail(-1), o)];
     btAnims.push(retour
       ? j.animate([{ opacity: .5, transform: 'scaleX(.6)' }, { opacity: 0, transform: 'scaleX(.05)' }], { duration: 300, easing: 'ease-in', fill: 'both' })

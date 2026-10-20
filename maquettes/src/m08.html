@@ -843,6 +843,7 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
 .ag-ix-outils{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;padding-bottom:30px}
 .ag-ix-outils ul{display:flex;flex-wrap:wrap;gap:6px;overflow:visible}
 .frise-saisons{--fr-bande-h:36px;--fr-haut:18px;--fr-pied:28px;--bande-vive:var(--ent-voir)}
+.frise-saisons .frise-bande-barre,.frise-diffusion .frise-bande-barre{margin:0 2px}
 .sai.est-allume>summary{background:color-mix(in srgb,var(--ink) 7%,transparent)}
 /* la diffusion d'un spectacle, saison par saison (le catalogue, l'onglet programmer) */
 .cf-diff{padding-top:12px;border-top:1px solid var(--rule)}
@@ -929,6 +930,11 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   .som-e .toc-link.is-active .toc-title{color:var(--ink)}
   .som-e .toc-link.is-active .toc-fl{transform:none;color:inherit}
   .cb{padding:52px var(--gx) 56px}
+  .ag-tete{padding:28px var(--gx) 14px}
+  .ag-index{grid-template-columns:minmax(0,1fr)}
+  .ag-ix-outils{justify-content:flex-start;padding-bottom:8px}
+  .c-frise{padding:0 var(--gx) 36px}
+  .ep-t{font-size:1.85rem}
   .cm-marges .cm-svg{width:calc(var(--ext,1) * 100%);margin-left:calc(var(--off,0) * -100%);max-width:none}
   .cm-marges .cm-etiqs{display:none}
   .cm-marges .cm-bras{stroke-width:calc(var(--wb) * 1.7)}
@@ -1806,7 +1812,7 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
       const tournee = () => {
         const v = $('#v-tournee', main), en = shows().filter(s => dates.some(d => d.slug === s.slug));
         if (!v || v.firstElementChild || !en.length) return;
-        v.innerHTML = `<section class="et-u" aria-labelledby="etu-h"><div class="bande-t"><div><p class="kicker">${esc(L.enTournee)}</p><h2 class="band-title" id="etu-h">${esc(L.actuellementEnTournee)}</h2></div></div><ul class="affiches">${en.map(affiche).join('')}</ul></section>`;
+        v.innerHTML = `<section class="et-u" aria-labelledby="etu-h"><div class="bande-t"><div><p class="kicker vit">${esc(L.enTournee)}</p><h2 class="band-title" id="etu-h">${esc(L.actuellementEnTournee)}</h2></div></div><ul class="affiches">${en.map(affiche).join('')}</ul></section>`;
         recadrer();
         decorer(v, SUR_PLACE);
       };
@@ -2551,7 +2557,8 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
       });
     };
     // la première vue, sous l'ouverture, sans transition ; ensuite, on tourne la page (MOUVEMENT.transition)
-    if (!type || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type, depuis: nom ? depuis : null });
+    // (d'un onglet à l'autre, le filet ne glisse que si la barre des onglets ne bouge pas : la page était en haut)
+    if (!type || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type: type === 'onglet' && window.scrollY > 8 ? 'onglet-loin' : type, depuis: nom ? depuis : null });
   }
   // la base a changé (ou une édition vient d'être enregistrée) : la vue se refait en place, sans bouger ni rejouer
   const cleFocus = el => {

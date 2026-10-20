@@ -567,7 +567,7 @@ def admin(dest):
     import shutil
     (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
-    for f in ("feuille.js", "equipe.js"):   # la feuille de route (commune avec equipe/) et l'équipe
+    for f in ("feuille.js", "equipe.js", "planning.js"):   # la feuille de route et le planning (communs avec equipe/), l'équipe
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
@@ -719,7 +719,7 @@ await navigateur.close();
         sw = out / "sw.js"
         h = hashlib.sha256()
         fichiers = sorted(f for f in out.rglob("*") if f.is_file() and f != sw)
-        fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js")]
+        fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js", "planning.js")]
         for f in fichiers:
             if f.is_file():
                 h.update(str(f.relative_to(dest)).encode())

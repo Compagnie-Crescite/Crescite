@@ -325,8 +325,9 @@ const PLANNING = (() => {
 .pl [hidden] { display: none !important; }
 .pl .pl-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .pl-barre { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
-.pl-nav { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1 1 260px; }
-.pl-titre { margin: 0 4px; font-size: 1.05rem; font-weight: 700; line-height: 1.25; min-width: 0; }
+.pl-nav { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
+.pl-titre { margin: 0 4px; font-size: 1.05rem; font-weight: 700; line-height: 1.25; min-width: 0; white-space: nowrap; }
+.pl:not(.compact) .pl-filtres { margin-left: auto; }
 .pl-titre small { display: block; font-size: .78rem; font-weight: 500; color: var(--pl-sourd); }
 .pl-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px;
   border: 1px solid var(--pl-filet); background: var(--pl-fond); cursor: pointer; font-weight: 600; font-size: .9rem; transition: background .15s, transform .15s; }
@@ -455,6 +456,7 @@ details.pl-alerte p { margin: 8px 0 0; }
   font-size: .72rem; font-weight: 650; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: var(--b-fond); color: var(--b-texte); }
 .pl-m-barre.option { background: repeating-linear-gradient(135deg, var(--b-fond) 0 6px, color-mix(in srgb, var(--b-fond) 75%, var(--pl-fond)) 6px 10px); }
 .pl-m-barre.prop { background: color-mix(in srgb, var(--pl-accent) 8%, var(--pl-fond)); color: var(--pl-texte); border: 2px dashed var(--pl-accent); line-height: 16px; }
+.pl-m-barre.prop.close { opacity: .55; }
 .pl-m-barre.coupe-avant { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: 0; }
 .pl-m-barre.coupe-apres { border-top-right-radius: 0; border-bottom-right-radius: 0; margin-right: 0; }
 .pl-m-plus { grid-row: 1; z-index: 2; pointer-events: none; align-self: start; margin: calc(32px + var(--voie) * 23px) 6px 0; font-size: .7rem; font-weight: 650; color: var(--pl-sourd); }
@@ -760,7 +762,7 @@ details.pl-alerte p { margin: 8px 0 0; }
             const d = b.d, cl = ['pl-m-barre', d.statut === 'option' && 'option', b.avant && 'coupe-avant', b.apres && 'coupe-apres'].filter(Boolean).join(' ');
             html.push(`<span class="${cl}" style="grid-column:${c0} / span ${span};--voie:${b.voie};${styleB(d.spectacle)}" aria-hidden="true">${esc(txt(d.spectacle && d.spectacle.titre))}${lieuCourt(d) && span > 1 ? ` · ${esc(lieuCourt(d))}` : ''}</span>`);
           } else {
-            html.push(`<span class="pl-m-barre prop" style="grid-column:${c0} / span ${span};--voie:${b.voie}" aria-hidden="true">${esc(txt(b.x.proposition.titre))}</span>`);
+            html.push(`<span class="pl-m-barre prop${b.x.proposition.statut === 'close' ? ' close' : ''}" style="grid-column:${c0} / span ${span};--voie:${b.voie}" aria-hidden="true">${esc(txt(b.x.proposition.titre))}</span>`);
           }
         }
         for (const [j, nb] of caches) html.push(`<span class="pl-m-plus" style="grid-column:${rang(j) + 1};--voie:${MAXV - 1}" aria-hidden="true">+${nb}</span>`);
@@ -772,7 +774,10 @@ details.pl-alerte p { margin: 8px 0 0; }
 
     // ———— le détail du jour choisi
     function detail(I) {
-      if (!S.selection) return '';
+      if (!S.selection) {
+        if (S.vue !== 'mois' || S.compact) return '';
+        return `<section class="pl-detail pl-invite" aria-label="Détail du jour"><h3>Un jour, en détail</h3><p class="pl-rien">Choisissez un jour : qui part, qui n’est pas libre, ce qui est proposé${typeof O.actions === 'function' ? ', et ce que vous pouvez y faire' : ''}.</p></section>`;
+      }
       const s = selection(I, S.selection.jour, S.selection.personne);
       const items = [];
       for (const d of s.dates) {

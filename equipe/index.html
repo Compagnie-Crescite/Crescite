@@ -174,7 +174,7 @@ main.large { max-width: 1180px; }
 .champ { display: grid; gap: 6px; margin: 0 0 16px; }
 .champ > label { font-weight: 600; }
 .aide { margin: 0; color: var(--gris); font-size: .92rem; }
-input[type=email], input[type=password], input[type=text], input[type=tel], textarea {
+input[type=email], input[type=password], input[type=text], input[type=tel], input[type=url], input[type=date], input[type=time], input:not([type]), textarea {
   width: 100%; min-height: 48px; padding: 11px 14px; border: 1.5px solid var(--bord-champ); border-radius: 14px; background: var(--surface); color: var(--encre); font-size: 1rem; }
 textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 input:focus-visible, textarea:focus-visible { outline: 3px solid var(--magenta); outline-offset: 1px; border-color: var(--magenta); border-radius: 14px; }
@@ -592,6 +592,90 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .annonce button:focus-visible { outline-color: currentColor; }
 @media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .25s ease-out; } @keyframes monte { from { transform: translateY(10px); opacity: 0; } } }
 
+/* ———————————————— le planning (../admin/planning.js), mes indisponibilités, mes agendas, les propositions de dates */
+.titre-planning { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; }
+.gestes-planning { display: flex; flex-wrap: wrap; gap: 8px; }
+.zone-planning { --pl-bas: calc(var(--barre-bas) + var(--bs)); margin-top: 4px; }
+@media (min-width: 760px) { .zone-planning { --pl-bas: 0px; } }
+.propositions-attente { display: grid; gap: 10px; margin: 0 0 20px; }
+.propositions-attente .titre-section { margin: 4px 0 2px; }
+.carte-prop { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--rayon-s); background: var(--surface); color: var(--encre); text-decoration: none;
+  border: 2px dashed color-mix(in srgb, var(--magenta) 55%, transparent); box-shadow: var(--ombre); transition: transform .18s, border-color .18s; }
+.carte-prop:hover { color: var(--encre); border-color: var(--magenta); transform: translateY(-1px); }
+.carte-prop .ic-rond { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 14px; background: var(--magenta-doux); color: var(--magenta); }
+.carte-prop .cp-texte { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.carte-prop .cp-texte small { color: var(--gris); font-size: .86rem; }
+.carte-prop .chevron { flex: none; color: var(--gris); }
+.etiquette.a-repondre { flex: none; padding: 5px 11px; border-radius: 999px; background: var(--magenta); color: var(--sur-action); font: 700 .74rem/1 var(--sans); }
+.liste-props { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 10px; }
+.segments { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; max-width: 460px; margin: 2px 0 16px; padding: 4px; border: 1px solid var(--filet); border-radius: 18px; background: var(--surface-2); }
+.segment { position: relative; display: grid; }
+.segment input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.segment span { display: grid; place-items: center; min-height: 40px; padding: 6px 8px; border-radius: 14px; font-weight: 600; font-size: .9rem; line-height: 1.15; text-align: center; color: var(--gris); transition: background .2s, color .2s; }
+.segment input:checked + span { background: var(--surface); color: var(--encre); box-shadow: 0 1px 3px rgba(0, 0, 0, .14); }
+.segment input:focus-visible + span { outline: 3px solid var(--magenta); outline-offset: 2px; }
+.form-indispo:not([data-type="jours"]) [data-pour="jours"], .form-indispo:not([data-type="heures"]) [data-pour="heures"] { display: none; }
+.facultatif { font-weight: 400; color: var(--gris); }
+.liste-indispos { list-style: none; margin: 0; padding: 0; }
+.indispo-ligne { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--filet); }
+.indispo-ligne:last-child { border-bottom: 0; }
+.indispo-ligne .hach { flex: none; width: 34px; height: 34px; border-radius: 10px; background: repeating-linear-gradient(135deg, var(--magenta) 0 2px, transparent 2px 6px), var(--magenta-doux); }
+.indispo-ligne.agenda .hach { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--encre) 40%, transparent) 0 2px, transparent 2px 6px), var(--surface-2); }
+.il-texte { flex: 1; min-width: 0; display: grid; }
+.il-texte small { color: var(--gris); font-size: .86rem; }
+.il-gestes { display: flex; gap: 6px; flex: none; }
+.indispos-lues { margin-top: 6px; }
+.indispos-lues summary { cursor: pointer; padding: 10px 0 6px; font-weight: 600; color: var(--gris); }
+.vide-court { margin: 0; color: var(--gris); }
+.agendas-lies { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 10px; }
+.agenda-lie { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 12px; align-items: center; padding: 12px; border-radius: var(--rayon-s); background: var(--surface-2); }
+.agenda-lie .ic-rond { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; background: var(--surface); color: var(--gris); }
+.agenda-lie.al-ok .ic-rond { background: var(--ok-doux); color: var(--ok); }
+.agenda-lie.al-erreur .ic-rond { background: var(--alerte-doux); color: var(--alerte); }
+.agenda-lie.al-attente .ic-rond { background: var(--magenta-doux); color: var(--magenta); }
+.al-texte { display: grid; gap: 2px; min-width: 0; }
+.al-etat { color: var(--gris); font-size: .88rem; }
+.agenda-lie.al-erreur .al-etat { color: var(--alerte); font-weight: 550; }
+.al-gestes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+@media (min-width: 640px) { .agenda-lie { grid-template-columns: auto minmax(0, 1fr) auto; } .al-gestes { grid-column: auto; } }
+.etapes-agenda { margin: 0 0 8px; border: 1px solid var(--filet); border-radius: var(--rayon-s); background: var(--surface); }
+.etapes-agenda summary { cursor: pointer; padding: 12px 14px; font-weight: 650; }
+.etapes-agenda[open] summary { border-bottom: 1px solid var(--filet); }
+.etapes-agenda .etapes { margin: 0; padding: 10px 16px 12px 36px; }
+.etapes-agenda .etapes li { margin: 5px 0; }
+.etapes-agenda code, .lien-flux code { font-size: .86em; }
+.form-agenda .champ { margin-top: 14px; }
+.flux-boutons { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+.lien-flux { margin: 0 0 10px; }
+.lien-flux code { display: block; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); color: var(--gris); word-break: break-all; }
+.message-prop { margin: 0 0 16px; padding: 14px 16px; border-left: 4px solid var(--magenta); border-radius: 0 var(--rayon-s) var(--rayon-s) 0; background: var(--magenta-doux); color: var(--encre); }
+.message-prop cite { display: block; margin-top: 6px; font-style: normal; font-size: .84rem; color: var(--gris); }
+.intro-prop { color: var(--gris); margin: 0 0 14px; }
+.jour-prop { border-left: 4px solid var(--filet); }
+.jour-prop h2 { margin: 0 0 10px; font-size: 1.12rem; }
+.jour-prop.repondu-oui { border-left-color: var(--ok); } .jour-prop.repondu-non { border-left-color: var(--alerte); } .jour-prop.repondu-peut_etre { border-left-color: var(--option); }
+.choix-reponse { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; max-width: 520px; margin: 0 0 12px; }
+.rep { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 66px; padding: 8px 6px; border-radius: 16px; border: 1.5px solid var(--bord-champ);
+  background: var(--surface); color: var(--encre); font-weight: 650; font-size: .92rem; line-height: 1.15; text-align: center; cursor: pointer; transition: background .18s, border-color .18s, color .18s, transform .15s; }
+.rep .ic { width: 22px; height: 22px; }
+.rep:hover { border-color: var(--encre); }
+.rep:active { transform: scale(.96); }
+.rep.oui[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.rep.non[aria-pressed="true"] { background: var(--alerte); border-color: var(--alerte); color: var(--surface); }
+.rep.peut_etre[aria-pressed="true"] { background: var(--option); border-color: var(--option); color: var(--surface); }
+.rep:disabled { opacity: .55; cursor: default; }
+.conflit-prop { display: flex; gap: 8px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-radius: 10px; background: var(--alerte-doux); color: var(--alerte); font-weight: 550; }
+.conflit-prop.doux { background: var(--option-doux); color: var(--option); }
+.conflit-prop .ic { margin-top: 1px; }
+.etat-reponse { margin: 8px 0 0; font-size: .88rem; color: var(--gris); }
+.liens-moi { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ligne-lien { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--rayon-s); background: var(--surface-2); color: var(--encre); text-decoration: none; }
+.ligne-lien:hover { color: var(--encre); background: var(--surface-3); }
+.ligne-lien > span { flex: 1; display: grid; min-width: 0; }
+.ligne-lien small { color: var(--gris); font-size: .86rem; }
+.ligne-lien .pastille-nb { position: static; flex: none; }
+.o-props .propositions-attente { margin-bottom: 4px; }
+
 /* ———————————————— les transitions. Avec les View Transitions : la vue glisse (vers la gauche en allant plus loin, vers la
    droite en revenant), la carte d'une date devient sa page ; la navigation, la barre du haut, les annonces et les
    tentacules restent en place. Sans elles, le contenu entre doucement. Rien ne bouge si l'appareil demande moins
@@ -640,6 +724,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 <script src="../admin/agenda.js" defer></script>
 <script src="../admin/feuille.js" defer></script>
 <script src="../admin/tentacules.js" defer></script>
+<script src="../admin/planning.js" defer></script>
 <script src="carte.js" defer></script>
 <script src="equipe.js" defer></script>
 </body>
