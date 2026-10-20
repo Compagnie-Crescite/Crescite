@@ -600,6 +600,22 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .u-disp li { margin: 0 0 8px; }
 .u-distrib .u-avec { margin: 0 0 30px; max-width: 32ch; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.45rem, 1.1rem + 1.3vw, 2.2rem); line-height: 1.22; }
 .u-distrib .u-avec .k { display: block; margin-bottom: 6px; font: 600 .74rem/1.3 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
+/* la distribution en portraits (D.personnes, show.equipe) : la photo en carton, ou le monogramme de l'univers ; ceux qui alternent vont par deux */
+.u-cast { --g: clamp(16px, 2vw, 28px); --pw: 160px; --pmax: 252px; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--pw), calc((100% - var(--g)) / 2)), 1fr)); gap: clamp(26px, 3.4vw, 44px) var(--g); max-width: calc(var(--n, 4) * var(--pmax) + (var(--n, 4) - 1) * var(--g)); margin: 0 0 clamp(36px, 4.4vw, 60px); padding: 0; }
+.u-cast > li { min-width: 0; padding-top: 14px; }
+.u-cast > .u-paire { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: var(--g); border-top: 2px solid var(--u-vif); }
+.u-pt { margin: 0; min-width: 0; }
+.u-pt-cadre { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; container-type: inline-size; border-radius: 3px; background: color-mix(in srgb, var(--u-texte) 7%, var(--u-fond2)); box-shadow: 0 26px 44px -28px rgba(0, 0, 0, .65), 0 0 0 1px var(--u-filet); }
+.chap:not(.alt) .u-pt-cadre { background: color-mix(in srgb, var(--u-texte) 7%, var(--u-fond)); }
+.u-pt-cadre img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+.u-pt-mono { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(closest-side at 50% 44%, var(--u-lueur), transparent 92%); }
+.u-pt-mono b { display: grid; place-items: center; width: 56%; aspect-ratio: 1; border: 1.5px solid var(--u-vif); border-radius: 50%; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 2.2rem; font-size: 21cqw; line-height: 1; text-transform: uppercase; letter-spacing: .02em; color: var(--u-vif); }
+.u-pt figcaption { display: block; }
+.u-pt-cr { display: block; min-height: 1.7em; padding-top: 5px; font: 500 .7rem/1.3 var(--u-etiq); letter-spacing: .03em; color: var(--u-texte2); }
+.u-pt-nom { display: block; margin-top: 6px; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.15rem, 1rem + .55vw, 1.42rem); line-height: 1.12; color: var(--u-texte); text-wrap: balance; }
+.u-pt-alt, .u-pt-role { display: block; margin-top: 4px; font-size: .9rem; line-height: 1.35; color: var(--u-texte2); }
+.u-pt-alt { font-style: italic; }
+.u-pt-role { font: 600 .72rem/1.4 var(--u-etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--u-vif); }
 .u-d-tete { margin: 0 0 18px; font-size: 1.15rem; }
 .u-fiche { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 20px 32px; margin: 0 0 34px; padding: 26px 0 0; border-top: 1px solid var(--u-filet); }
 .u-fiche div { min-width: 0; }
@@ -1582,13 +1598,34 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
       <ol class="som-l" id="som-l" hidden>${chap.map((c, i) => `<li><button type="button" data-c="${c.id}"><span class="n">${i + 1}</span>${esc(c.nom)}</button></li>`).join('')}</ol>
       <button type="button" class="som-b" aria-expanded="false" aria-controls="som-l"><span class="n" id="som-n">1/${chap.length}</span><span id="som-nom">${esc(chap[0].nom)}</span>${HAUT}</button>
     </nav>`;
-  function distribution(s, chap) {
+  /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes ; relus à chaque rendu */
+  const nomDe = p => `${p.prenom} ${p.nom}`;
+  const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
+  const comediens = s => (s.equipe || []).filter(e => e.categorie === 'jeu' && (D.personnes || {})[e.personne]).map(e => ({ e, p: D.personnes[e.personne] }));
+  const portrait = ({ e, p }, credits) => {
+    const nom = nomDe(p), k = `personnes.${e.personne}`;
+    return `<figure class="u-pt"><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+      <figcaption>${credits ? `<small class="u-pt-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="u-pt-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${e.alternance ? `<span class="u-pt-alt">${esc(e.alternance)}</span>` : ''}${e.role ? `<span class="u-pt-role">${esc(e.role)}</span>` : ''}</figcaption></figure>`;
+  };
+  function portraits(s) {
+    const L = comediens(s); if (!L.length) return '';
+    const credits = L.some(x => x.p.photo && x.p.credit), pris = new Set(), blocs = [];
+    L.forEach((x, i) => {
+      if (pris.has(i)) return; pris.add(i);
+      const j = x.e.alternance ? L.findIndex((y, k) => !pris.has(k) && x.e.alternance.includes(nomDe(y.p))) : -1;   // « en alternance avec … » : par deux
+      if (j < 0) blocs.push(`<li>${portrait(x, credits)}</li>`);
+      else { pris.add(j); blocs.push(`<li class="u-paire">${portrait(x, credits)}${portrait(L[j], credits)}</li>`); }
+    });
+    return `<ul class="u-cast" style="--n:${L.length}">${blocs.join('')}</ul>`;
+  }
+  function distribution(s, chap, entree) {
     const P = s.programmer || {}, eq = P.equipeCreation || [], fiche = eq.length ? [] : (s.fiche || []).map((f, i) => ({ f, i }));
     const tete = fiche.filter(x => !x.f.libelle), roles = fiche.filter(x => x.f.libelle);
+    const cast = entree === 'voir' ? portraits(s) : '';
     return chapitre(chap, 'distribution', L.distribution, `<div class="wrap u-distrib">
       <h2 class="u-eti">${petit(mo(s))}${esc(L.distribution)}</h2>
       ${tete.map(({ f, i }) => `<p class="u-d-tete"${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</p>`).join('')}
-      ${s.avec ? `<p class="u-avec"><span class="k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''}
+      ${cast || (s.avec ? `<p class="u-avec"><span class="k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : '')}
       ${eq.map((l, i) => `<p class="u-avec"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</p>`).join('')}
       ${roles.length ? `<dl class="u-fiche">${roles.map(({ f, i }) => `<div><dt${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</dt><dd${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</dd></div>`).join('')}</dl>` : ''}
       ${(s.production || []).length ? `<div class="u-prod">${s.production.map((p, i) => bloc(p, `shows.${s.slug}.production.${i}`)).join('')}</div>` : ''}
@@ -1638,7 +1675,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
         <figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div>`);
     else h += chapitre(chap, 'dates', L.lieuxDiffusion, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>${P.lieux ? `<p class="u-lieux"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sansListe}</div>
         <figure class="carte-sp">${carteTournee(s, sp.passe, [])}</figure></div>`);
-    h += distribution(s, chap);
+    h += distribution(s, chap, 'voir');
     return h;
   }
   function ongletProgrammer(s, chap) {

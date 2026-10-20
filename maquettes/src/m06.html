@@ -492,6 +492,21 @@ main:has(> .page-u) { padding-bottom: 0; }
 .fiche .prod { margin: 12px 0 0; font-size: .88rem; color: var(--gris); }
 .fiche a { color: var(--magenta-texte); }
 .fiche .lib { color: var(--gris); }
+/* la distribution en portraits (D.personnes, show.equipe) : la photo dans un cadre arrondi, ou le monogramme et sa pointe de tentacule ; ceux qui alternent vont par deux */
+.cast { --g: clamp(14px, 1.8vw, 24px); --pw: 150px; --pmax: 236px; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--pw), calc((100% - var(--g)) / 2)), 1fr)); gap: clamp(26px, 3vw, 40px) var(--g); max-width: calc(var(--n, 4) * var(--pmax) + (var(--n, 4) - 1) * var(--g)); margin: 0 0 clamp(30px, 4vw, 48px); padding: 0; }
+.cast > li { min-width: 0; }
+.cast > .cast-paire { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: var(--g); padding: 12px; border-radius: 22px; background: color-mix(in srgb, var(--u-trace) 9%, transparent); }
+.cast-pt { margin: 0; min-width: 0; }
+.cast-cadre { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; container-type: inline-size; border-radius: 16px; background: color-mix(in srgb, var(--u-texte) 7%, var(--u-fond)); box-shadow: 0 22px 38px -28px var(--u-lueur), 0 0 0 1px color-mix(in srgb, var(--u-trace) 30%, transparent); }
+.cast-cadre img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+.cast-mono { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 4px; background: radial-gradient(closest-side at 50% 44%, var(--u-lueur), transparent 92%); }
+.cast-mono b { font-family: var(--u-police); font-weight: var(--u-graisse); font-size: 2.4rem; font-size: 25cqw; line-height: 1; text-transform: uppercase; letter-spacing: .02em; color: var(--u-trace); }
+.cast-mono .be { width: 38cqw; height: auto; stroke: var(--u-trace); stroke-width: 2; }
+.cast-pt figcaption { display: block; }
+.cast-cr { display: block; min-height: 1.7em; padding-top: 5px; font-size: .74rem; line-height: 1.3; color: var(--u-texte2); }
+.cast-nom { display: block; margin-top: 8px; font-family: var(--u-police); font-weight: var(--u-graisse); font-size: clamp(1.1rem, 1rem + .5vw, 1.35rem); line-height: 1.12; color: var(--u-texte); text-wrap: balance; }
+.cast-alt, .cast-role { display: block; margin-top: 4px; font: italic 400 .98rem/1.35 var(--serif); color: var(--u-texte2); }
+.cast-role { font: 700 .72rem/1.4 var(--sans); font-style: normal; letter-spacing: .12em; text-transform: uppercase; color: var(--u-vif); }
 .page-u .chiffres { margin-top: 0; }
 .ft-titre { margin: 0 0 6px; font-size: .74rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--u-texte2); }
 .ft-blocs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
@@ -1333,8 +1348,28 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   }
 
   /* ---------- « Je souhaite programmer » : tous les lieux comme références, le catalogue des spectacles ---------- */
-  const ficheLignes = s => [...s.fiche.map((f, i) => `<p class="f">${f.libelle ? `<span class="lib"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></p>`),
-    s.avec ? `<p class="f"><span class="lib"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''].join('');
+  /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes ; relus à chaque rendu */
+  const nomDe = p => `${p.prenom} ${p.nom}`;
+  const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
+  const comediens = s => (s.equipe || []).filter(e => e.categorie === 'jeu' && (D.personnes || {})[e.personne]).map(e => ({ e, p: D.personnes[e.personne] }));
+  const portrait = ({ e, p }, credits) => {
+    const nom = nomDe(p), k = `personnes.${e.personne}`;
+    return `<figure class="cast-pt"><span class="cast-cadre" data-edit-photo="${esc(k)}.photo"><span class="cast-mono" aria-hidden="true"><b>${esc(initiales(p))}</b>${brasE}</span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+      <figcaption>${credits ? `<small class="cast-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="cast-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${e.alternance ? `<span class="cast-alt">${esc(e.alternance)}</span>` : ''}${e.role ? `<span class="cast-role">${esc(e.role)}</span>` : ''}</figcaption></figure>`;
+  };
+  function portraits(s) {
+    const L = comediens(s); if (!L.length) return '';
+    const credits = L.some(x => x.p.photo && x.p.credit), pris = new Set(), blocs = [];
+    L.forEach((x, i) => {
+      if (pris.has(i)) return; pris.add(i);
+      const j = x.e.alternance ? L.findIndex((y, k) => !pris.has(k) && x.e.alternance.includes(nomDe(y.p))) : -1;   // « en alternance avec … » : par deux
+      if (j < 0) blocs.push(`<li>${portrait(x, credits)}</li>`);
+      else { pris.add(j); blocs.push(`<li class="cast-paire">${portrait(x, credits)}${portrait(L[j], credits)}</li>`); }
+    });
+    return `<ul class="cast" style="--n:${L.length}${pris.size > blocs.length ? ';--pw:132px' : ''}">${blocs.join('')}</ul>`;   // avec des paires : de quoi en tenir trois sur une ligne
+  }
+  const ficheLignes = (s, sansAvec) => [...s.fiche.map((f, i) => `<p class="f">${f.libelle ? `<span class="lib"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></p>`),
+    s.avec && !sansAvec ? `<p class="f"><span class="lib"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''].join('');
   function chiffres(s, P = s.programmer) {
     const duree = P.duree || s.duree, pr = (...k) => edS(s, 'programmer', ...k);
     return `<ul class="chiffres">${P.representations ? `<li class="fort"${pr('representations')}>${esc(P.representations)}</li>` : ''}
@@ -1498,10 +1533,10 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   }
   const video = s => `<a class="video-u" href="${esc(s.video.url)}" target="_blank" rel="noopener" style="background-image:url(&quot;${D.photos[(s.photos[1] || s.photos[0] || {}).cle] || D.photos[s.slug]}&quot;)">
       <span class="jouer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg></span><span class="vu-t"${edS(s, 'video', 'titre')}>${esc(s.video.titre)}</span></a>`;
-  function distribution(s) {
-    const P = s.programmer;
-    return `<p class="signe"${ed('site.nom')}>${esc(S.nom)}</p><div class="fiche">${[
-      ...(P.equipeCreation ? P.equipeCreation.map((x, i) => `<p class="f"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</p>`) : [ficheLignes(s)]),
+  function distribution(s, voir) {
+    const P = s.programmer, cast = voir && !P.equipeCreation ? portraits(s) : '';
+    return `${cast}<p class="signe"${ed('site.nom')}>${esc(S.nom)}</p><div class="fiche">${[
+      ...(P.equipeCreation ? P.equipeCreation.map((x, i) => `<p class="f"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</p>`) : [ficheLignes(s, !!cast)]),
       s.duree ? `<p class="duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : '',
       ...s.mentions.map((m, i) => `<p class="mention"${edS(s, 'mentions', i)}>${m}</p>`),
       ...s.production.map((p, i) => `<p class="prod"${edS(s, 'production', i)}>${p}</p>`)].join('')}</div>`;
@@ -1535,7 +1570,7 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
     else if (D.dates.some(d => d.slug === s.slug && pub(d))) dates = h2u('dates', s.tournee.titre, `shows.${s.slug}.tournee.titre`) + tournee(s, pub);
     else if (CARTE.spectacle(s.slug).passe.length) dates = h2u('dates', L.saisonsPrecedentes) + sansListe + carteDesTournees(s);
     if (dates) ch.push({ id: 'dates', lib: L.dates, html: dates });
-    ch.push({ id: 'distribution', lib: L.distribution, html: h2u('distribution', L.distribution) + distribution(s) });
+    ch.push({ id: 'distribution', lib: L.distribution, html: h2u('distribution', L.distribution) + distribution(s, true) });
     return ch;
   }
   // l'onglet « Je souhaite programmer »

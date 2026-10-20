@@ -541,6 +541,21 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .u-fiche dd { margin-top: 2px; font-weight: 600; }
 .u-fiche .large { grid-column: 1 / -1; }
 .u-fiche .large dd { font: 500 1.375rem/1.35 var(--sg); letter-spacing: -.01em; }
+/* la distribution en portraits (D.personnes, show.equipe) : la photo en aplat net, ou un monogramme composé comme une affiche suisse ; ceux qui alternent vont par deux */
+.cast { --g: var(--gap); --pw: 148px; --pmax: 236px; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(var(--pw), calc((100% - var(--g)) / 2)), 1fr)); gap: 34px var(--g); max-width: calc(var(--n, 4) * var(--pmax) + (var(--n, 4) - 1) * var(--g)); margin: 26px 0 30px; padding: 0; }
+.cast > li { min-width: 0; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--u-texte) 32%, transparent); }
+.cast > .cast-paire { grid-column: span 2; display: grid; grid-template-columns: 1fr 1fr; gap: var(--g); }
+.cast-pt { margin: 0; min-width: 0; }
+.cast-cadre { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; container-type: inline-size; background: color-mix(in srgb, var(--u-titre) 14%, var(--u-fond2)); }
+.cast-cadre img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; }
+.cast-mono { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 0 0 4cqw 6cqw; }
+.cast-mono::before { content: ""; position: absolute; left: 6cqw; top: 6cqw; width: 7cqw; height: 7cqw; background: var(--u-titre); }
+.cast-mono b { font: 500 3.4rem/.82 var(--sg); font-size: 40cqw; letter-spacing: -.06em; text-transform: uppercase; color: var(--u-titre); }
+.cast-pt figcaption { display: block; }
+.cast-cr { display: block; min-height: 1.8em; padding-top: 5px; font-size: .8125rem; line-height: 1.3; color: var(--u-texte2); }
+.cast-nom { display: block; margin-top: 10px; font: 500 1.1875rem/1.2 var(--sg); letter-spacing: -.01em; text-wrap: balance; }
+.cast-alt, .cast-role { display: block; margin-top: 3px; font-size: .9375rem; line-height: 1.4; color: var(--u-texte2); }
+.cast-role { font-weight: 600; color: var(--u-vif); }
 .u-prod { margin-top: 24px; }
 .u-prod p { font-size: .9375rem; line-height: 1.55; color: var(--u-texte2); }
 .u-prod p + p { margin-top: 8px; }
@@ -1557,9 +1572,29 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   }
   const creditsHtml = (s, ps) => { const vus = new Map(); ps.forEach(p => { if (p.credit && !vus.has(p.credit)) vus.set(p.credit, p.creditCle); }); return vus.size ? `<p class="credits">${[...vus].map(([t, k]) => `<span${edS(s, k)}>${esc(t)}</span>`).join('')}</p>` : ''; };
   const figure = (s, p, cls = 'carton') => `<figure><img src="${p.src}" alt="${esc(p.legende || s.titre)}" decoding="async"${edP(`shows.${s.slug}.photos.${p.i}`)}>${p.legende ? `<figcaption class="${cls}"${edS(s, 'photos', p.i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`;
-  function ficheBloc(s, { large = true } = {}) {
-    const f = ficheItems(s);
-    return `${f.length ? `<dl class="u-fiche">${f.map(x => `<div${x.avec && large ? ' class="large"' : ''}>${x.l ? `<dt${edS(s, ...x.kl)}>${esc(x.l)}</dt>` : ''}<dd${edS(s, ...x.kv)}>${x.v}</dd></div>`).join('')}</dl>` : ''}
+  /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes ; relus à chaque rendu */
+  const nomDe = p => `${p.prenom} ${p.nom}`;
+  const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
+  const comediens = s => (s.equipe || []).filter(e => e.categorie === 'jeu' && (D.personnes || {})[e.personne]).map(e => ({ e, p: D.personnes[e.personne] }));
+  const portrait = ({ e, p }, credits) => {
+    const nom = nomDe(p), k = `personnes.${e.personne}`;
+    return `<figure class="cast-pt"><span class="cast-cadre" data-edit-photo="${esc(k)}.photo"><span class="cast-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+      <figcaption>${credits ? `<small class="cast-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="cast-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${e.alternance ? `<span class="cast-alt">${esc(e.alternance)}</span>` : ''}${e.role ? `<span class="cast-role">${esc(e.role)}</span>` : ''}</figcaption></figure>`;
+  };
+  function portraits(s) {
+    const L = comediens(s); if (!L.length) return '';
+    const credits = L.some(x => x.p.photo && x.p.credit), pris = new Set(), blocs = [];
+    L.forEach((x, i) => {
+      if (pris.has(i)) return; pris.add(i);
+      const j = x.e.alternance ? L.findIndex((y, k) => !pris.has(k) && x.e.alternance.includes(nomDe(y.p))) : -1;   // « en alternance avec … » : par deux
+      if (j < 0) blocs.push(`<li>${portrait(x, credits)}</li>`);
+      else { pris.add(j); blocs.push(`<li class="cast-paire">${portrait(x, credits)}${portrait(L[j], credits)}</li>`); }
+    });
+    return `<ul class="cast" style="--n:${L.length}${pris.size > blocs.length ? ';--pw:132px' : ''}">${blocs.join('')}</ul>`;   // avec des paires : de quoi en tenir trois sur une ligne
+  }
+  function ficheBloc(s, { large = true, portraits: avecPortraits = false } = {}) {
+    const cast = avecPortraits ? portraits(s) : '', f = ficheItems(s).filter(x => !(cast && x.avec));   // les portraits remplacent la ligne « avec »
+    return `${cast}${f.length ? `<dl class="u-fiche">${f.map(x => `<div${x.avec && large ? ' class="large"' : ''}>${x.l ? `<dt${edS(s, ...x.kl)}>${esc(x.l)}</dt>` : ''}<dd${edS(s, ...x.kv)}>${x.v}</dd></div>`).join('')}</dl>` : ''}
       ${(s.production || []).length ? `<div class="u-prod">${s.production.map((p, i) => `<p${edS(s, 'production', i)}>${p}</p>`).join('')}</div>` : ''}
       ${(s.mentions || []).map((m, i) => `<p class="u-mention"${edS(s, 'mentions', i)}>${m}</p>`).join('')}`;
   }
@@ -1595,7 +1630,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       dates = `<h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2><div class="g12 t-grid lie"><div class="t-carte seule">${carteSvg({ lieux: [], passe: K.passe, titre: s.titre, couleur, fixe })}</div></div>`;
     }
     if (dates) ch.push(['ch-dates', pub.length || s.statut ? L.dates : L.lieuxDiffusion, dates]);
-    ch.push(['ch-distribution', L.distribution, `<h2 class="u-h2">${esc(L.distribution)}</h2>${ficheBloc(s)}${s.duree ? `<p class="u-duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}`]);
+    ch.push(['ch-distribution', L.distribution, `<h2 class="u-h2">${esc(L.distribution)}</h2>${ficheBloc(s, { portraits: true })}${s.duree ? `<p class="u-duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}`]);
     return `<div class="g12 u-grille">
       <nav class="u-sommaire" aria-label="${esc(L.leSpectacle)}"><ol>${ch.map(([id, t]) => `<li><a href="#/spectacle/${esc(s.slug)}/voir" data-chap="${id}">${esc(t)}</a></li>`).join('')}</ol></nav>
       <div class="u-lecture">${ch.map(([id, , html]) => `<section class="chap" id="${id}" tabindex="-1">${html}</section>`).join('')}</div>
