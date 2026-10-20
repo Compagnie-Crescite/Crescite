@@ -416,7 +416,7 @@ function changement(t, p) {
 }
 
 // ===================================================================================================== cadre et routes
-const RUBRIQUES = [['representations', 'Représentations'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+const RUBRIQUES = [['representations', 'Représentations'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
@@ -431,6 +431,7 @@ const ROUTES = [
   [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
   [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
   [/^#\/equipe(?:\/(nouvelle|documents|\d+))?$/, m => vueEquipe(m[1])],
+  [/^#\/pro(?:\/(nouvelle|\d+))?$/, m => vueEspacePro(m[1])],
   [/^#\/ateliers(?:\/(seances|catalogue))?(?:\/(nouvelle|nouveau|\d+))?$/, m => vueAteliers(m[1] || 'seances', m[2])],
   [/^#\/lieux(?:\/(nouveau|\d+))?$/, m => vueLieux(m[1])],
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],

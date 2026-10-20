@@ -1,25 +1,38 @@
-/* Les tentacules, communes aux maquettes et à l'administration : la pieuvre du logo, dans l'en-tête, guide le visiteur.
-   Chaque clic lui répond : ses bras se contractent et ondulent, une tentacule fine part de la pieuvre, s'enroule sur le
-   point cliqué, y laisse l'empreinte d'une ventouse, puis se retire. Chaque changement de page « remonte » une tentacule :
-   elle traverse l'écran, à la couleur de la destination, et la pieuvre la reprend. Ouvrir (une saison, un panneau, un menu)
-   la déroule le long de ce qui s'ouvre, fermer l'enroule ; un onglet la voit glisser jusqu'à lui ; envoyer un formulaire
-   ou enregistrer l'enroule autour du bouton. Un seul code : chaque maquette l'habille dans son style.
-   build.py l'ajoute après edition.js dans chaque maquette et le copie à côté de l'index.html de l'administration, qui le charge.
+/* Les tentacules, communes aux maquettes et à l'administration : la pieuvre du logo, dans l'en-tête, et ses tentacules.
+   Règle 15 du contrat : la tentacule n'est plus la réponse à chaque geste. PAR DÉFAUT, ELLE NE RÉPOND À RIEN : ni aux clics,
+   ni aux changements de page ; aucun écouteur n'est posé, aucune boucle ne tourne. Elle devient un MOMENT rare et
+   signifiant, que la maquette joue à la main, là où il dit quelque chose (au plus deux par maquette : la tournée qui
+   pousse, l'entrée dans un spectacle, un dossier composé…). Un seul code : chaque maquette l'habille dans son style.
+   build.py l'ajoute après mouvement.js dans chaque maquette et le copie à côté de l'index.html de l'administration.
 
-   RIEN N'EST RETARDÉ NI BLOQUÉ : écouteurs passifs en phase de capture, jamais de preventDefault, un seul calque fixe
-   (pointer-events: none, aria-hidden), un seul requestAnimationFrame, arrêté quand plus rien ne joue et quand l'onglet est
-   caché. Aucun texte n'est ajouté. Des clics rapides remplacent l'animation en cours, sans file d'attente. Rien ne joue
-   dans un champ ni dans un texte en cours d'écriture (input, textarea, select, [contenteditable]), ni tant que
-   INTRO.ouverte() est vrai. prefers-reduced-motion : au plus un fondu bref, aucune tentacule qui voyage.
-   ?anim=0 dans l'adresse : aucune animation (captures, tests).
+   Les moments (à appeler à la main) : une tentacule fine part de la pieuvre, s'enroule sur un point et y laisse l'empreinte
+   d'une ventouse (toucher) ; une tentacule « remonte » l'écran à la couleur d'une page (page) ; elle se déroule le long de ce
+   qui s'ouvre (ouvrir), s'enroule quand ça se ferme (fermer), glisse d'un onglet à l'autre (onglet), s'enroule autour d'un
+   bouton (enrouler, confirmer, retour) ; la pieuvre seule se contracte et ondule (guide).
+
+   Les gestes automatiques d'avant restent possibles, mais seulement si on les demande explicitement :
+     TENTACULES.regler({ clic: true })    chaque clic lui répond (les gestes se reconnaissent seuls, voir plus bas)
+     TENTACULES.regler({ pages: true })   chaque changement d'adresse (hashchange) remonte une tentacule
+   Le profil 'admin' (l'administration et l'espace de l'équipe) garde ses gestes : clic et pages y valent true, sauf
+   clic: false ou pages: false dans le même appel. regler({ clic: false, pages: false }) retire les écouteurs.
+
+   RIEN N'EST RETARDÉ NI BLOQUÉ : écouteurs passifs en phase de capture (seulement si clic ou pages), jamais de
+   preventDefault, un seul calque fixe (pointer-events: none, aria-hidden), un seul requestAnimationFrame, arrêté quand plus
+   rien ne joue et quand l'onglet est caché. Aucun texte n'est ajouté. Un moment rejoué remplace l'animation en cours, sans
+   file d'attente. Rien ne joue dans un champ en cours d'écriture, ni tant que INTRO.ouverte() est vrai.
+   prefers-reduced-motion : au plus un fondu bref, aucune tentacule qui voyage. ?anim=0 dans l'adresse : aucune animation.
+
+   Le vérificateur (onglets.mjs) clique les liens du menu et attend TENTACULES.actives() === 0 juste après : un lien ou un
+   bouton qui joue un moment le déclare avec l'attribut data-moment (sur lui ou un parent).
 
    Ce que la maquette fournit
    - data-pieuvre sur l'élément du logo de l'en-tête (le <span> ou <a> qui contient D.logo.mark, D.logo.octopus ou son
      propre dessin de la pieuvre). L'outil y retrouve les quatre tracés de D.logo.octopusPaths et les anime EN PLACE
      (bras, tête) ; les bras de D.arms donnent le point de départ des tentacules (celui du spectacle visé, quand on va vers
-     sa page : D.arms.armOf). Hôte vide : l'outil y met la pieuvre (D.logo.octopus, ou un dessin neutre). Hôte sans tracé
-     reconnu : il pulse en entier. Pas d'hôte visible : les tentacules partent du bord le plus proche.
-   - TENTACULES.regler({ style, encre, accent, ventouse, neutre, epaisseur, duree, … }), à appeler une fois :
+     sa page : D.arms.armOf). Hôte vide : l'outil y met la pieuvre (D.logo.octopus, ou un dessin neutre), même sans
+     mouvement. Hôte sans tracé reconnu : il pulse en entier. Pas d'hôte visible : les tentacules partent du bord le plus proche.
+   - TENTACULES.regler({ clic, pages, style, encre, accent, ventouse, neutre, epaisseur, duree, … }), à appeler une fois :
+       clic        false (défaut) · true : chaque clic lui répond        pages   false (défaut) · true : chaque changement de page
        style       'encre' (défaut : tentacule pleine et effilée, ventouses) · 'trait' (un trait gravé, à hachures)
                    · 'lumiere' (un filet de lumière, avec halo) · 'fil' (un fil très fin) · 'ventouses' (deux rangées)
        encre       la couleur des tentacules                      accent   l'empreinte, les enroulements, les confirmations
@@ -40,25 +53,30 @@
    - des variables CSS, sur :root (ou sur une région : l'outil lit celles de l'élément cliqué) :
        --tt-encre  --tt-accent  --tt-ventouse  --tt-neutre  --tt-epaisseur  --tt-duree  --tt-style
        --tt-fond   le liseré qui détache la tentacule d'un fond sombre (défaut : la couleur de la page)
-   - des attributs : data-tt="rien" (aucune animation ici) ou le genre d'un geste : "onglet", "ouvre", "bascule", "case",
+   - des attributs : data-moment (ce lien ou ce bouton joue un moment, voir plus haut) ; et, pour les gestes automatiques
+     (clic: true) : data-tt="rien" (aucune animation ici) ou le genre d'un geste : "onglet", "ouvre", "bascule", "case",
      "route", "retour", "clic" ; data-tt-couleur="#…" sur un lien (la couleur de sa remontée) ; data-tt-cible="x,y" sur un
      élément de la page qui arrive (x et y : fractions de sa boîte, .5,.5 par défaut) : la tentacule de page y finit, au lieu de la
      pieuvre (une porte à ouvrir, un titre à atteindre) ; data-tt-local sur un
      conteneur dont les boutons n'ont que des tentacules courtes (la barre d'édition, un panneau) ; data-tt-zone sur la
      fiche qu'un lien « retour » referme (par défaut .editeur).
-   Les gestes se reconnaissent seuls : un lien #/… (remontée de page), un onglet (aria-current, aria-selected, role="tab" :
-   la tentacule glisse de l'onglet quitté à l'onglet choisi), un <summary> ou un bouton aria-expanded (elle se déroule
-   quand ça s'ouvre, s'enroule quand ça se ferme), un bouton aria-pressed ou une case, un envoi de formulaire (elle
-   s'enroule autour du bouton), le panneau de date et l'enregistrement de l'édition sur place.
+   Avec clic: true, les gestes se reconnaissent seuls : un lien #/… (remontée de page), un onglet (aria-current,
+   aria-selected, role="tab" : la tentacule glisse de l'onglet quitté à l'onglet choisi), un <summary> ou un bouton
+   aria-expanded (elle se déroule quand ça s'ouvre, s'enroule quand ça se ferme), un bouton aria-pressed ou une case, un envoi
+   de formulaire (elle s'enroule autour du bouton), le panneau de date et l'enregistrement de l'édition sur place.
 
+   Les moments
    TENTACULES.toucher(el | [x, y])      une tentacule fine jusqu'à ce point, et son empreinte
    TENTACULES.page(destination)         la remontée d'une page ('#/voir', une couleur CSS ou {couleur, slug}) ; automatique
-                                        à chaque changement d'adresse (hashchange)
+                                        à chaque changement d'adresse seulement avec pages: true
    TENTACULES.ouvrir(el)  .fermer(el)   la tentacule se déroule le long de ce qui s'ouvre ; elle s'enroule à la fermeture
-   TENTACULES.enrouler(el)              elle s'enroule autour d'un bouton : un envoi, un enregistrement réussi
+   TENTACULES.enrouler(el)              elle s'enroule autour d'un bouton : un envoi, un enregistrement réussi (= confirmer)
    TENTACULES.retour(el)                elle s'enroule à l'envers (revenir en arrière)
    TENTACULES.onglet(de, vers)          elle glisse d'un onglet à l'autre   TENTACULES.ajouter(el)   une ligne qui s'ajoute
-   TENTACULES.pieuvre()                 met la pieuvre dans les hôtes data-pieuvre vides
+   TENTACULES.guide(genre)              la pieuvre seule se contracte et ondule ('clic', 'page', 'ouvre', 'ferme'…)
+   Le reste
+   TENTACULES.pieuvre()                 met la pieuvre dans les hôtes data-pieuvre vides (fait seul au chargement)
+   TENTACULES.actives()                 le nombre d'animations en cours (0 au repos) : pour le vérificateur
    TENTACULES.arreter()                 coupe tout   TENTACULES.actif   faux avec ?anim=0 */
 const TENTACULES = (() => {
   'use strict';
@@ -76,9 +94,16 @@ const TENTACULES = (() => {
   };
 
   /* ------------------------------------------------------------------------------------------------ réglages */
-  const R = { style: 'encre', encre: '', accent: '', ventouse: '', neutre: '', epaisseur: 0, duree: 1, pieuvre: '[data-pieuvre]',
-    page: 'main, [role="main"]', entrees: 'auto', couleurDe: null, profil: 'site', remontee: true, soulever: false };
-  function regler(o = {}) { Object.assign(R, o); return R; }
+  const R = { clic: false, pages: false, style: 'encre', encre: '', accent: '', ventouse: '', neutre: '', epaisseur: 0, duree: 1,
+    pieuvre: '[data-pieuvre]', page: 'main, [role="main"]', entrees: 'auto', couleurDe: null, profil: 'site', remontee: true, soulever: false };
+  // clic et pages : faux par défaut ; le profil 'admin' (administration, espace de l'équipe) garde ses gestes, sauf contre-ordre
+  function regler(o = {}) {
+    const x = Object.assign({}, o);
+    if (x.profil === 'admin') { if (!('clic' in x)) x.clic = true; if (!('pages' in x)) x.pages = true; }
+    Object.assign(R, x);
+    brancher();
+    return R;
+  }
   const admin = () => R.profil === 'admin';
 
   // ce que chaque style change : la finesse de la tentacule de page, les décors (ventouses, hachures, halo), l'empreinte
@@ -281,11 +306,14 @@ const TENTACULES = (() => {
 
   /* ------------------------------------------------------------------------------------------------ les acteurs */
   const acteurs = new Set(), cles = new Map();
-  let raf = 0;
+  let raf = 0, veille = false;
+  // l'onglet caché coupe tout : l'écouteur n'est posé qu'au premier moment joué
+  const surCache = () => { if (document.hidden) { arreter(); arreterGuide(); } };
   function lancer(a, cle) {
     if (cle) { const ancien = cles.get(cle); if (ancien && ancien !== a) fondre(ancien, 110); cles.set(cle, a); a.cle = cle; }
     if (acteurs.size > 9) fondre([...acteurs][0], 60);
     a.t0 = null; acteurs.add(a);
+    if (!veille) { veille = true; document.addEventListener('visibilitychange', surCache, { passive: true }); }
     if (!raf) raf = requestAnimationFrame(boucle);
     return a;
   }
@@ -898,19 +926,38 @@ const TENTACULES = (() => {
       m.removedNodes.forEach(n => { if (n.nodeType === 1 && panneaux.has(n)) { const r = panneaux.get(n); panneaux.delete(n); if (pret()) fermer(r, { sens: 'gauche' }); } });
     }
   }
+  function surTouche(e) {
+    if (edition() && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = document.querySelector('[data-ed="enregistrer"]'); if (b) enreg = { t: performance.now(), rect: rectDe(b) }; }
+  }
+  /* Les écouteurs des gestes automatiques : posés seulement si la maquette les demande (regler({ clic, pages })), retirés
+     sinon. Sans clic ni pages : rien d'écouté, rien d'observé. */
+  const branche = { clic: false, pages: false };
+  let surveillant = null, attenteCorps = false;
   function brancher() {
-    document.addEventListener('click', surClic, { capture: true, passive: true });
-    window.addEventListener('hashchange', surRoute, { passive: true });
-    document.addEventListener('toggle', surBascule, { capture: true, passive: true });
-    document.addEventListener('submit', surEnvoi, { capture: true, passive: true });
-    document.addEventListener('keydown', e => { if (edition() && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = document.querySelector('[data-ed="enregistrer"]'); if (b) enreg = { t: performance.now(), rect: rectDe(b) }; } }, { capture: true, passive: true });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) { arreter(); arreterGuide(); } });
-    new MutationObserver(surDom).observe(document.body, { childList: true });
-    pieuvre();
+    if (COUPE) return;
+    if (!document.body) {
+      if (!attenteCorps) { attenteCorps = true; document.addEventListener('DOMContentLoaded', () => { attenteCorps = false; brancher(); }, { once: true }); }
+      return;
+    }
+    const clic = !!R.clic, pages = !!R.pages;
+    if (clic !== branche.clic) {
+      const f = clic ? 'addEventListener' : 'removeEventListener', o = { capture: true, passive: true };
+      document[f]('click', surClic, o);
+      document[f]('toggle', surBascule, o);
+      document[f]('submit', surEnvoi, o);
+      document[f]('keydown', surTouche, o);
+      if (clic) { surveillant = surveillant || new MutationObserver(surDom); surveillant.observe(document.body, { childList: true }); }
+      else if (surveillant) { surveillant.disconnect(); annonces.disconnect(); }
+      branche.clic = clic;
+    }
+    if (pages !== branche.pages) {
+      window[pages ? 'addEventListener' : 'removeEventListener']('hashchange', surRoute, { passive: true });
+      branche.pages = pages;
+    }
   }
-  if (!COUPE) {
-    if (document.body) brancher(); else document.addEventListener('DOMContentLoaded', brancher, { once: true });
-  }
+  // la pieuvre dans les hôtes vides : ce n'est pas un mouvement, elle y est même avec ?anim=0
+  if (document.body) pieuvre(); else document.addEventListener('DOMContentLoaded', pieuvre, { once: true });
 
-  return { regler, actif: !COUPE, reglages: R, toucher, page, ouvrir, fermer, enrouler, confirmer, retour, ajouter, onglet, pieuvre, guide: reagir, arreter, couleurDe: destination };
+  return { regler, actif: !COUPE, reglages: R, toucher, page, ouvrir, fermer, enrouler, confirmer, retour, ajouter, onglet, pieuvre,
+    guide: reagir, arreter, couleurDe: destination, actives: () => acteurs.size };
 })();
