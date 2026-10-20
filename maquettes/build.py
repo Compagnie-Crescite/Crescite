@@ -737,6 +737,13 @@ def pro(dest):
     shutil.copytree(ROOT / "pro", dest / "pro", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
 
 
+def reponse(dest):
+    """La page de réponse aux propositions de dates (reponse/), où mènent les liens des courriels : Supabase ne sert pas
+    de page web depuis l'adresse d'une fonction, la page lit et enregistre par la fonction crescite-courriel."""
+    import shutil
+    shutil.copytree(ROOT / "reponse", dest / "reponse", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
+
+
 def pages(D, files, names):
     """Le site GitHub Pages (docs/) : la planche en index, chaque maquette en page à part, hors des moteurs de recherche,
     et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune."""
@@ -757,6 +764,7 @@ def pages(D, files, names):
     admin(docs)
     equipe(docs)
     pro(docs)
+    reponse(docs)
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
     print(f"pages : {len(names)} maquettes et la planche dans docs/ ({size:.1f} Mo)")
@@ -775,6 +783,7 @@ def main():
     admin(DIST)
     equipe(DIST)
     pro(DIST)
+    reponse(DIST)
     (DIST / "data.json").write_text(json.dumps(dict(D, photos={k: f"[photo {k}]" for k in photo_urls}), ensure_ascii=False, indent=1), encoding="utf-8")
     if "--captures" in sys.argv:
         captures(names)
