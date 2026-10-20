@@ -8,10 +8,277 @@
                                Le rendu de chaque vue relit donc D à chaque fois (aucune copie figée au chargement).
    DONNEES.etat                'instantane' (données du dépôt), 'base' (à jour avec la base) ou 'hors-ligne'.
 
-   Version provisoire : la connexion à la base arrive ensuite ; l'interface ci-dessus ne changera pas. */
+   Les lignes d'agenda se composent avec AGENDA (agenda.js), comme dans l'administration.
+   La base : le projet Supabase de la compagnie (tables crescite_, lecture publique de ce qui est publié). Adresse
+   ?base=0 : rester sur l'instantané (tests, hors connexion). */
 const DONNEES = (() => {
+  const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
+  const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
+  const TABLES = ['crescite_spectacles', 'crescite_lieux', 'crescite_dates', 'crescite_representations', 'crescite_ateliers', 'crescite_textes'];
   const abonnes = [];
-  const surChangement = fn => { if (typeof fn === 'function') abonnes.push(fn); };
+  const moi = { etat: 'instantane' };
+  let actif = true;
+  try { actif = new URLSearchParams(location.search).get('base') !== '0' && typeof fetch === 'function' && !window.CRESCITE_SANS_BASE; } catch { actif = false; }
+
+  // ce qui ne vient pas de la base : la navigation, le fond de carte, les photos du dépôt, les positions des communes connues
+  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, "'").toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const cleCommune = (c, dep) => `${norm(c)}|${dep}`;
+  const S = {
+    site: { titreSuffixe: D.site.titreSuffixe, accueil: D.site.accueil, entrees: D.site.entrees, menu: D.site.menu,
+            redirections: D.site.redirections, libelles: D.site.libelles },
+    carte: { viewBox: D.carte.viewBox, contour: D.carte.contour, belgique: D.carte.belgique, luxembourg: D.carte.luxembourg,
+             rouen: D.carte.rouen, projection: D.carte.projection },
+    xy: new Map(D.carte.lieux.map(l => [cleCommune(l.c, l.dep), l.xy])),
+    photos: Object.assign({}, D.photos),
+  };
+
+  // ------------------------------------------------------------------------------------------- outils
+  const { MOIS, iso, saisonDe, jourTexte, heureTexte, liste, quand, ligne, chez, precisions } = AGENDA;
+  const lum = hex => { const f = c => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; return 0.2126 * f(parseInt(hex.slice(1, 3), 16)) + 0.7152 * f(parseInt(hex.slice(3, 5), 16)) + 0.0722 * f(parseInt(hex.slice(5, 7), 16)); };
+  const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  function pourFondClair(hex, fond = '#ffffff', cible = 4.6) {       // comme for_light dans build.py
+    if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return hex;
+    let [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)), c = hex;
+    while (contraste(c, fond) < cible && r + g + b > 0) { r = Math.floor(r * 0.92); g = Math.floor(g * 0.92); b = Math.floor(b * 0.92); c = '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join(''); }
+    return c;
+  }
+  // la projection de la carte (conique conforme de Lambert recalée, comme projection() dans build.py)
+  function projeter(lon, lat) {
+    const P = S.carte.projection;
+    if (!P || lon == null || lat == null) return null;
+    const rad = Math.PI / 180, f1 = 44 * rad, f2 = 49 * rad, f0 = 46.5 * rad;
+    const n = Math.log(Math.cos(f1) / Math.cos(f2)) / Math.log(Math.tan(Math.PI / 4 + f2 / 2) / Math.tan(Math.PI / 4 + f1 / 2));
+    const F = Math.cos(f1) * Math.tan(Math.PI / 4 + f1 / 2) ** n / n, rho = f => F / Math.tan(Math.PI / 4 + f / 2) ** n;
+    const r = rho(lat * rad), th = n * (lon - 3) * rad, u = r * Math.sin(th), v = rho(f0) - r * Math.cos(th);
+    const arr = x => Math.round(x * 10) / 10;
+    return [arr(P.cx[0] * u + P.cx[1] * v + P.cx[2]), arr(P.cy[0] * u + P.cy[1] * v + P.cy[2])];
+  }
+  const photo = fichier => {
+    if (!fichier) return null;
+    const cle = fichier.replace(/\.[a-z0-9]+$/i, '');
+    return S.photos[cle] || `${BASE}/storage/v1/object/public/crescite/${fichier.split('/').map(encodeURIComponent).join('/')}`;
+  };
+
+  // ------------------------------------------------------------------------------------------- lire la base
+  async function lireTable(table, select, ordre, signal) {
+    const out = [];
+    for (let debut = 0; ; debut += 1000) {                 // l'API rend 1 000 lignes au plus par appel
+      const r = await fetch(`${BASE}/rest/v1/${table}?select=${select}${ordre ? `&order=${ordre}` : ''}&limit=1000&offset=${debut}`,
+        { headers: { apikey: CLE, Accept: 'application/json' }, signal, cache: 'no-store' });
+      if (!r.ok) throw new Error(`${table} : ${r.status}`);
+      const lot = await r.json();
+      out.push(...lot);
+      if (lot.length < 1000) return out;
+    }
+  }
+  async function lire() {
+    const ctl = new AbortController(), minuteur = setTimeout(() => ctl.abort(), 12000);
+    try {
+      const [sp, li, da, re, at, tx] = await Promise.all([
+        lireTable('crescite_spectacles', '*', 'ordre.asc,id.asc', ctl.signal),
+        lireTable('crescite_lieux', 'id,nom,type,commune,departement,pays,latitude,longitude,site_web', 'id.asc', ctl.signal),
+        lireTable('crescite_dates', 'id,spectacle_id,lieu_id,debut,fin,precision,saison,public,statut,intitule,details,lien,nb_representations', 'debut.asc,id.asc', ctl.signal),
+        lireTable('crescite_representations', 'id,date_id,jour,heure,public,annulee,lien,note', 'jour.asc,heure.asc.nullslast,id.asc', ctl.signal),
+        lireTable('crescite_ateliers', '*', 'ordre.asc,id.asc', ctl.signal),
+        lireTable('crescite_textes', 'cle,valeur', null, ctl.signal),
+      ]);
+      return { sp, li, da, re, at, tx };
+    } finally { clearTimeout(minuteur); }
+  }
+
+  // ------------------------------------------------------------------------------------------- composer D
+  function composer({ sp, li, da, re, at, tx }) {
+    const aujourdhui = iso(new Date()), saison = saisonDe(aujourdhui);
+    const texte = Object.fromEntries(tx.map(t => [t.cle, t.valeur]));
+    const spId = new Map(sp.map(s => [s.id, s])), lieuId = new Map(li.map(l => [l.id, l]));
+    const repsDe = new Map();
+    re.forEach(r => { if (!repsDe.has(r.date_id)) repsDe.set(r.date_id, []); repsDe.get(r.date_id).push({ ...r, heure: r.heure ? r.heure.slice(0, 5) : null }); });
+    const pages = sp.filter(s => s.page && s.publie);
+    const slugDe = s => (s && s.page ? s.slug : null);
+    const ordre = new Map(sp.map((s, i) => [s.id, i]));
+
+    // les communes de la carte : une par commune et département, à la place des communes du dépôt quand on les connaît
+    const lieux = [], index = new Map();
+    const communeDe = l => {
+      if (!l) return null;
+      const k = cleCommune(l.commune, l.departement);
+      if (!index.has(k)) {
+        const xy = S.xy.get(k) || projeter(l.longitude, l.latitude);
+        if (!xy) { index.set(k, null); return null; }
+        index.set(k, lieux.length);
+        lieux.push({ c: l.commune, dep: l.departement, xy });
+      }
+      return index.get(k);
+    };
+    const precisionAncienne = { jour: 'day', periode: 'range', mois: 'month', saison: 'range' };
+    const etatDe = d => d.statut === 'annulee' ? 'date annulée' : d.statut === 'reportee' ? 'date reportée' : null;
+    const lignes = da.filter(d => spId.has(d.spectacle_id)).map(d => {
+      const s = spId.get(d.spectacle_id), lieu = lieuId.get(d.lieu_id) || null, reps = repsDe.get(d.id) || [];
+      const l = communeDe(lieu), txt = ligne(d, reps, lieu), [ligneDate, ligneLieu = ''] = txt.split(' — ');
+      return {
+        d, s, lieu, reps, l, ligne: txt, ligneDate: ligneDate.trim(), ligneLieu: ligneLieu.trim(),
+        details: precisions(d, reps, lieu), etat: etatDe(d), iso: d.debut, fin: d.fin || d.debut,
+        precision: precisionAncienne[d.precision] || 'day', scolaire: d.public === 'scolaire',
+        representations: reps.map(r => ({ jour: r.jour, heure: r.heure, public: r.public, annulee: r.annulee, lien: r.lien, note: r.note })),
+      };
+    });
+
+    // les dates à venir, et les saisons
+    const aVenir = lignes.filter(x => x.fin >= aujourdhui).sort((a, b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : ordre.get(a.s.id) - ordre.get(b.s.id));
+    const dates = aVenir.map(x => ({
+      id: x.d.id, slug: slugDe(x.s), titre: x.s.titre, ligne: x.ligne, ligneDate: x.ligneDate, ligneLieu: x.ligneLieu,
+      details: x.details, lien: x.d.lien, iso: x.iso, fin: x.fin, precision: x.precision, scolaire: x.scolaire, etat: x.etat,
+      commune: x.l != null ? lieux[x.l].c : null, dep: x.l != null ? lieux[x.l].dep : null, xy: x.l != null ? lieux[x.l].xy : null,
+      l: x.l, representations: x.representations,
+    }));
+    const cles = [...new Set([saison, ...lignes.map(x => x.d.saison)])].sort().reverse();
+    const saisons = {};
+    cles.forEach(k => { saisons[k] = { titre: `Saison ${k}`, spectacles: [] }; });
+    [...lignes].sort((a, b) => ordre.get(a.s.id) - ordre.get(b.s.id) || (a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : a.d.id - b.d.id)).forEach(x => {
+      const S2 = saisons[x.d.saison];
+      let g = S2.spectacles.find(y => y._id === x.s.id);
+      if (!g) { g = { _id: x.s.id, titre: x.s.titre, sousTitre: x.s.sous_titre, creation: x.s.creation, slug: slugDe(x.s), dates: [] }; S2.spectacles.push(g); }
+      g.dates.push({ id: x.d.id, ligne: x.ligne, details: x.details, etat: x.etat, lien: x.d.lien, iso: x.iso, fin: x.fin,
+                     precision: x.precision, scolaire: x.scolaire, l: x.l, representations: x.representations });
+    });
+    Object.values(saisons).forEach(S2 => S2.spectacles.forEach(g => delete g._id));
+
+    // les spectacles, dans le format des maquettes
+    const photos = Object.assign({}, S.photos);
+    const shows = pages.map(s => {
+      const u = s.univers || {}, c = u.couleurs || {};
+      const mine = dates.filter(d => d.slug === s.slug);
+      if (s.photo) photos[s.slug] = photo(s.photo);
+      const ph = (s.photos || []).map(p => { const cle = (p.fichier || '').replace(/\.[a-z0-9]+$/i, ''); photos[cle] = photo(p.fichier); return { ...p, cle }; });
+      return {
+        slug: s.slug, titre: s.titre, titreLignes: s.titre_lignes || [s.titre], creation: s.creation,
+        annee: +((s.creation || '').match(/\d{4}/) || [0])[0], fiche: s.fiche || [], texte: s.texte || [], enTournee: !!s.en_tournee,
+        prochaine: mine[0] || null, nbDates: mine.length,
+        couleur: c.scene, couleurTexteClair: pourFondClair(c.scene), fondSombre: u.clair ? '#1a1016' : c.fond,
+        palette: c, clair: !!u.clair, motif: u.motif, focale: 50, univers: u, lieuTemps: s.lieu_temps, accroche: s.accroche,
+        affirmations: s.affirmations || [], citations: s.citations || [], video: s.video, photos: ph,
+        creditPhotos: s.credit_photos || s.credit, creditDossier: s.credit_dossier,
+        actionCulturelle: s.action_culturelle || {}, programmer: s.programmer || {},
+        dossier: s.dossier ? s.dossier.replace(/^dossier:/, '') : null,
+        statut: s.statut, sousTitre: s.sous_titre, avec: s.avec, mentions: s.mentions || [], duree: s.duree,
+        production: s.production || [], credit: s.credit, medias: s.medias || [], tournee: s.tournee || {}, source: s.source,
+        genre: s.genre, cadre: s.cadre, extraits: s.extraits || [],
+      };
+    });
+
+    // les ateliers, et les dossiers scolaires qui les reprennent
+    const ateliers = at.map(a => ({ id: a.id, slug: slugDe(spId.get(a.spectacle_id)), titre: a.titre, duree: a.duree,
+      obligatoire: a.obligatoire, public: a.public, paragraphes: a.paragraphes || [], etapes: a.etapes || [], points: a.points || [] }));
+    const dossiers = {};
+    Object.entries(texte).filter(([k]) => k.startsWith('dossier:')).forEach(([k, v]) => {
+      const cle = k.slice(8), s = sp.find(x => x.dossier === k);
+      const liste = at.filter(a => s && a.spectacle_id === s.id).map(a => {
+        const x = { titre: a.titre, paragraphes: a.paragraphes || [] };
+        if ((a.etapes || []).length) x.etapes = a.etapes;
+        if ((a.points || []).length) x.points = a.points;
+        return x;
+      });
+      dossiers[cle] = { ...v, ateliers: { ...(v.ateliers || {}), liste } };
+    });
+
+    // la carte
+    const compte = ls => { const n = new Map(); ls.forEach(l => { if (l != null) n.set(l, (n.get(l) || 0) + 1); }); return [...n.entries()].sort((a, b) => a[0] - b[0]); };
+    const parSaison = {};
+    lignes.forEach(x => { (parSaison[x.d.saison] = parSaison[x.d.saison] || []).push(x.l); });
+    Object.keys(parSaison).forEach(k => { parSaison[k] = compte(parSaison[k]); });
+    const parSpectacle = {};
+    pages.forEach(s => {
+      parSpectacle[s.slug] = { passe: compte(lignes.filter(x => x.s.id === s.id && x.fin < aujourdhui).map(x => x.l)),
+                               aVenir: compte(dates.filter(d => d.slug === s.slug).map(d => d.l)) };
+    });
+    const carte = { ...S.carte, lieux, parSaison, parSpectacle, aVenir: compte(dates.map(d => d.l)),
+                    aVenirPublic: compte(dates.filter(d => !d.scolaire).map(d => d.l)),
+                    aVenirScolaire: compte(dates.filter(d => d.scolaire).map(d => d.l)), tout: compte(lignes.map(x => x.l)) };
+
+    // le site : la navigation du dépôt, les textes de la base
+    const site = { ...S.site };
+    ['nom', 'diaporama', 'donateurs', 'compagnie', 'actions', 'ecole', 'contact', 'coordonnees', 'ecrire', 'facebook',
+     'partenaires', 'liensLegaux', 'legal'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
+    site.saisons = cles.map(k => ({ saison: k, titre: `Saison ${k}`, menu: k === saison ? `Saison ${k.slice(2, 4)}-${k.slice(7, 9)}` : `Saison ${k}`,
+                                    href: k === saison ? '#/agenda' : `#/agenda/${k}` }));
+    return { saison, aujourdhui, site, shows, dossiers, ateliers, dates, saisons, carte, photos };
+  }
+
+  // ------------------------------------------------------------------------------------------- appliquer, prévenir
+  const empreinte = n => { try { return JSON.stringify(n); } catch { return String(Math.random()); } };
+  let derniere = null;
+  function appliquer(n) {
+    Object.keys(n).forEach(k => {
+      const a = D[k], b = n[k];
+      if (Array.isArray(a) && Array.isArray(b)) a.splice(0, a.length, ...b);
+      else if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a) && !Array.isArray(b)) {
+        Object.keys(a).forEach(kk => { if (!(kk in b)) delete a[kk]; });
+        Object.assign(a, b);
+      } else D[k] = b;
+    });
+  }
   const prevenir = () => abonnes.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
-  return { surChangement, prevenir, etat: 'instantane' };
+  async function recharger() {
+    try {
+      const n = composer(await lire());
+      const e = empreinte(n);
+      moi.etat = 'base';
+      if (e === derniere) return;
+      derniere = e;
+      appliquer(n);
+      prevenir();
+    } catch (err) {
+      if (moi.etat !== 'base') moi.etat = 'hors-ligne';
+      console.warn('Données de la compagnie indisponibles :', err.message || err);
+    }
+  }
+  let attente = null;
+  const bientot = (ms = 250) => { clearTimeout(attente); attente = setTimeout(recharger, ms); };
+
+  // ------------------------------------------------------------------------------------------- temps réel
+  // le canal de Supabase (protocole Phoenix) : chaque enregistrement dans une table crescite_ publiée relance la lecture
+  let ws = null, battement = null, essais = 0, ref = 0, version = null;
+  function ecouter() {
+    try {
+      ws = new WebSocket(`${BASE.replace(/^http/, 'ws')}/realtime/v1/websocket?apikey=${encodeURIComponent(CLE)}&vsn=1.0.0`);
+    } catch { ws = null; return; }
+    const envoyer = m => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
+    ws.onopen = () => {
+      essais = 0;
+      envoyer({ topic: 'realtime:crescite-site', event: 'phx_join', ref: String(++ref), join_ref: '1',
+        payload: { config: { broadcast: { self: false }, presence: { key: '' }, private: false,
+                             postgres_changes: TABLES.map(table => ({ event: '*', schema: 'public', table })) } } });
+      battement = setInterval(() => envoyer({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: String(++ref) }), 25000);
+    };
+    ws.onmessage = e => {
+      let m; try { m = JSON.parse(e.data); } catch { return; }
+      if (m.event === 'postgres_changes') bientot();
+    };
+    ws.onclose = () => {
+      clearInterval(battement); ws = null;
+      setTimeout(ecouter, Math.min(30000, 1000 * 2 ** essais++));
+    };
+    ws.onerror = () => { try { ws.close(); } catch { /* déjà fermé */ } };
+  }
+  // secours : si le canal est coupé, la version publiée est relue de temps en temps (et au retour sur l'onglet)
+  async function verifier() {
+    if (ws && ws.readyState === 1 && document.visibilityState === 'visible') return;
+    try {
+      const r = await fetch(`${BASE}/rest/v1/rpc/crescite_version`, { method: 'POST', headers: { apikey: CLE, 'Content-Type': 'application/json' }, body: '{}', cache: 'no-store' });
+      if (!r.ok) return;
+      const v = await r.json();
+      if (version !== null && v !== version) bientot(0);
+      version = v;
+    } catch { /* hors connexion : on réessaiera */ }
+  }
+
+  if (actif) {
+    recharger().then(() => { if (moi.etat === 'base') { ecouter(); verifier(); setInterval(verifier, 60000); } });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { verifier(); if (!ws) bientot(0); } });
+  }
+  moi.surChangement = fn => { if (typeof fn === 'function') abonnes.push(fn); };
+  moi.prevenir = prevenir;
+  moi.recharger = recharger;
+  moi.composer = composer;
+  return moi;
 })();

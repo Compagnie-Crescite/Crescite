@@ -46,8 +46,9 @@ for (const n of names) {
     const page = await ctx.newPage();
     page.on('pageerror', e => log.push(`${tag} erreur : ${e.message}`));
     page.on('console', m => { if (m.type() === 'error') log.push(`${tag} console : ${m.text()}`); });
-    page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fonts\.(googleapis|gstatic)\.com/.test(u)) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
-    await page.goto(new URL(`${n}.html`, dist).href, { waitUntil: 'load' });
+    page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fonts\.(googleapis|gstatic)\.com|omekkqjinvppadsoinvj\.supabase\.co/.test(u)) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
+    // par défaut, l'instantané du dépôt (?base=0) : le contrôle ne dépend pas de l'état de la base ; BASE=1 pour la base
+    await page.goto(new URL(`${n}.html${process.env.BASE === '1' ? '' : '?base=0'}`, dist).href, { waitUntil: 'load' });
     await page.waitForTimeout(1200);
     const intro = await page.evaluate(() => !!document.querySelector('.intro'));
     if (!intro) log.push(`${tag} : pas d'ouverture sur le logo au chargement de l'accueil (INTRO.ouvrir)`);

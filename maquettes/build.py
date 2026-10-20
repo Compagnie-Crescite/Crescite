@@ -436,12 +436,12 @@ D_SAISON = "2026-2027"
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("donnees.js", "carte.js", "intro.js")
+OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js")
 
 
 def avec_outils(name, src):
-    """Ajoute, juste après les données D, les outils communs : les données vivantes (donnees.js), la carte des
-    tournées (carte.js) et l'ouverture sur le logo (intro.js)."""
+    """Ajoute, juste après les données D, les outils communs : les lignes d'agenda (agenda.js), les données vivantes
+    (donnees.js), la carte des tournées (carte.js) et l'ouverture sur le logo (intro.js)."""
     if DATA_LIGNE not in src:
         raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
     js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS)
@@ -484,6 +484,16 @@ def captures(names):
 NOINDEX = '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">'
 
 
+def admin(dest):
+    """L'administration (admin/index.html, son client Supabase et l'outil des lignes d'agenda), à côté des maquettes."""
+    import shutil
+    (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
+    for f in (ROOT / "admin" / "vendor").iterdir():
+        shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
+    shutil.copyfile(SRC / "agenda.js", dest / "admin" / "agenda.js")
+
+
 def pages(D, files, names):
     """Le site GitHub Pages (docs/) : la planche en index, chaque maquette en page à part, hors des moteurs de recherche,
     et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune."""
@@ -501,6 +511,7 @@ def pages(D, files, names):
         html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
     build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
+    admin(docs)
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
     print(f"pages : {len(names)} maquettes et la planche dans docs/ ({size:.1f} Mo)")
@@ -516,6 +527,7 @@ def main():
         out = DIST / f"{n}.html"
         out.write_text(assemble(n, D, photo_urls), encoding="utf-8")
         print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
+    admin(DIST)
     (DIST / "data.json").write_text(json.dumps(dict(D, photos={k: f"[photo {k}]" for k in photo_urls}), ensure_ascii=False, indent=1), encoding="utf-8")
     if "--captures" in sys.argv:
         captures(names)

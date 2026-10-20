@@ -1,0 +1,78 @@
+/* L'agenda de la compagnie, commun aux maquettes (donnees.js) et à l'administration : composer, à partir d'une date
+   de la base et de ses représentations, la ligne d'agenda et ses précisions, dans le style du site d'origine.
+
+   AGENDA.ligne(date, reps, lieu)        « 18 décembre 2026 — Pont-Audemer (27) » (ou date.intitule s'il est écrit)
+   AGENDA.quand(date, jours)             « 19 et 20 novembre 2026 », « du 12 au 20 février 2027 », « mars 2027 »
+   AGENDA.precisions(date, reps, lieu)   [{texte, lien}] : date.details, ou « 14h et 20h : représentations au Forum »
+   AGENDA.chez(nom)                      « au Théâtre des Charmes », « à L’Eclat », « à la Ferme de Bel Ebat »
+   AGENDA.saisonDe('2026-10-12')         « 2026-2027 » ; AGENDA.heureTexte('20:30') « 20h30 » ; AGENDA.iso(new Date())
+   date = {debut, fin, precision: 'jour'|'periode'|'mois'|'saison', intitule, details, lien, nb_representations}
+   reps = [{jour, heure, public, annulee}], lieu = {nom, commune, departement} */
+const AGENDA = (() => {
+  const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const saisonDe = j => { const a = +j.slice(0, 4), m = +j.slice(5, 7); return m >= 9 ? `${a}-${a + 1}` : `${a - 1}-${a}`; };
+  const jourTexte = j => { const n = +j.slice(8, 10); return n === 1 ? '1er' : String(n); };
+  const heureTexte = h => { if (!h) return ''; const [hh, mm] = h.split(':'); return `${+hh}h${mm !== '00' ? mm : ''}`; };
+  const liste = xs => xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}`;
+  // « 18 décembre 2026 », « 19 et 20 novembre 2026 », « du 12 au 20 février 2027 », « mars 2027 »
+  function quand(date, jours) {
+    if (date.precision === 'mois') return `${MOIS[+date.debut.slice(5, 7) - 1]} ${date.debut.slice(0, 4)}`;
+    if (date.precision === 'periode' || !jours.length) {
+      const a = date.debut, b = date.fin || date.debut;
+      if (a === b) return `${jourTexte(a)} ${MOIS[+a.slice(5, 7) - 1]} ${a.slice(0, 4)}`;
+      const memeAn = a.slice(0, 4) === b.slice(0, 4), memeMois = memeAn && a.slice(5, 7) === b.slice(5, 7);
+      return `du ${jourTexte(a)}${memeMois ? '' : ` ${MOIS[+a.slice(5, 7) - 1]}${memeAn ? '' : ` ${a.slice(0, 4)}`}`} au ${jourTexte(b)} ${MOIS[+b.slice(5, 7) - 1]} ${b.slice(0, 4)}`;
+    }
+    const js = [...new Set(jours)].sort();
+    const suivis = js.length >= 3 && js.every((j, i) => !i || (Date.parse(j) - Date.parse(js[i - 1])) === 864e5);
+    if (suivis) return quand({ precision: 'periode', debut: js[0], fin: js[js.length - 1] }, []);
+    // les jours, groupés par mois : « 30 janvier et 2 février 2027 »
+    const groupes = [];
+    js.forEach(j => { const k = j.slice(0, 7), g = groupes[groupes.length - 1]; if (g && g.k === k) g.j.push(j); else groupes.push({ k, j: [j] }); });
+    const an = js[js.length - 1].slice(0, 4), memeAn = js[0].slice(0, 4) === an;
+    const morceaux = groupes.map((g, i) => {
+      const fin = i === groupes.length - 1;
+      return `${liste(g.j.map(jourTexte))} ${MOIS[+g.k.slice(5, 7) - 1]}${!fin && !memeAn ? ` ${g.k.slice(0, 4)}` : ''}`;
+    });
+    return `${groupes.length > 1 ? liste(morceaux) : morceaux[0]} ${an}`;
+  }
+  const ou = lieu => lieu ? `${lieu.commune} (${lieu.departement})` : '';
+  function ligne(date, reps = [], lieu = null) {
+    if (date.intitule) return date.intitule;
+    const q = quand(date, reps.map(r => r.jour));
+    return lieu ? `${q} — ${ou(lieu)}` : q;
+  }
+  // « au Théâtre des Charmes », « à L’Eclat », « à la Ferme de Bel Ebat », « à l’Espace culturel »
+  function chez(nom) {
+    const n = (nom || '').trim();
+    if (!n) return '';
+    if (/^le\s/i.test(n)) return `au ${n.slice(3)}`;
+    if (/^les\s/i.test(n)) return `aux ${n.slice(4)}`;
+    if (/^(la\s|l[’'])/i.test(n)) return `à ${n}`;
+    if (/^(théâtre|collège|lycée|centre|forum|relais|point|château|conservatoire|musée|cinéma|foyer|festival|domaine|cloître|palais|parc|quai|carré|siroco|sillon|moulin)\b/i.test(n)) return `au ${n}`;
+    if (/^(salle|maison|ferme|scène|médiathèque|halle|chapelle|cité|grange|mairie|ville|communauté|chartreuse|comédie|commanderie|abbaye)\b/i.test(n)) return `à la ${n}`;
+    if (/^[aeéèêiîoôuy]/i.test(n)) return `à l’${n}`;
+    return `à ${n}`;
+  }
+  // les précisions sous la ligne, quand l'administration n'en a pas écrit : « 14h et 20h : représentations au Forum »
+  function precisions(date, reps, lieu) {
+    if (date.details && date.details.length) return date.details;
+    const vivantes = reps.filter(r => !r.annulee);
+    if (!vivantes.length && !lieu?.nom) return [];
+    const avecHeure = vivantes.filter(r => r.heure);
+    const jours = [...new Set(vivantes.map(r => r.jour))];
+    let heures = '';
+    if (avecHeure.length) {
+      heures = jours.length === 1 ? liste(avecHeure.map(r => heureTexte(r.heure)))
+        : liste(jours.map(j => { const h = avecHeure.filter(r => r.jour === j).map(r => heureTexte(r.heure)); return h.length ? `${jourTexte(j)} ${MOIS[+j.slice(5, 7) - 1]} à ${liste(h)}` : null; }).filter(Boolean));
+    }
+    const n = vivantes.length || date.nb_representations || 0;
+    const scol = vivantes.length && vivantes.every(r => r.public === 'scolaire');
+    const mot = `représentation${n > 1 ? 's' : ''}${scol ? ` scolaire${n > 1 ? 's' : ''}` : ''}`;
+    const texte = heures ? `${heures} : ${mot} ${chez(lieu?.nom)}`.trim() : `${n > 1 ? `${n} ` : ''}${mot} ${chez(lieu?.nom)}`.trim();
+    return [{ texte, lien: date.lien || null }];
+  }
+
+  return { MOIS, iso, saisonDe, jourTexte, heureTexte, liste, quand, ou, ligne, chez, precisions };
+})();

@@ -34,6 +34,10 @@ RE_MOIS = "|".join(sorted(MOIS, key=len, reverse=True))
 
 # ---------------------------------------------------------------------------------------------------- l'API
 
+class ErreurAPI(Exception):
+    pass
+
+
 def api(methode, chemin, corps=None, entetes=None):
     h = {"Content-Type": "application/json", "Accept": "application/json"}
     if CLE:
@@ -46,7 +50,7 @@ def api(methode, chemin, corps=None, entetes=None):
             txt = r.read().decode()
             return json.loads(txt) if txt.strip() else None
     except urllib.error.HTTPError as e:
-        raise SystemExit(f"{methode} {chemin} : {e.code} {e.read().decode()[:600]}")
+        raise ErreurAPI(f"{methode} {chemin} : {e.code} {e.read().decode()[:600]}")
 
 
 def inserer(table, lignes, retour=True):
@@ -229,7 +233,7 @@ def preparer():
                 if debut is None:                     # une ligne sans date : à la suite de la précédente du même spectacle
                     prec = next((x for x in reversed(dates) if x["_slug"] == slug and x["saison"] == saison), None)
                     debut = prec["debut"] if prec else f"{saison[:4]}-09-01"
-                    fin = debut
+                    fin, precision = debut, "periode"     # son texte d'origine (intitule) reste celui qu'on affiche
                 public_reps = public if public in ("scolaire", "tout_public") else "autre"
                 reps = seances(jours if precision == "jour" else [], texte, heure, nb, public_reps)
                 if len({p for _, _, p in reps}) > 1:
@@ -279,7 +283,7 @@ def main():
         out = ROOT / "maquettes" / "dist" / "import-base.json"      # hors du dépôt (dist/ n'est pas versionné)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps({"spectacles": spectacles, "lieux": lieux, "dates": dates, "ateliers": ateliers,
-                                   "textes": [t["cle"] for t in textes]}, ensure_ascii=False, indent=1), encoding="utf-8")
+                                   "textes": textes}, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"essai : rien n'est écrit ; détail dans {out.relative_to(ROOT)}")
         return
 
@@ -306,4 +310,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except ErreurAPI as e:
+        raise SystemExit(str(e))
