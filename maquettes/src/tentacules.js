@@ -39,7 +39,9 @@
        --tt-encre  --tt-accent  --tt-ventouse  --tt-neutre  --tt-epaisseur  --tt-duree  --tt-style
        --tt-fond   le liseré qui détache la tentacule d'un fond sombre (défaut : la couleur de la page)
    - des attributs : data-tt="rien" (aucune animation ici) ou le genre d'un geste : "onglet", "ouvre", "bascule", "case",
-     "route", "retour", "clic" ; data-tt-couleur="#…" sur un lien (la couleur de sa remontée) ; data-tt-local sur un
+     "route", "retour", "clic" ; data-tt-couleur="#…" sur un lien (la couleur de sa remontée) ; data-tt-cible="x,y" sur un
+     élément de la page qui arrive (x et y : fractions de sa boîte, .5,.5 par défaut) : la tentacule de page y finit, au lieu de la
+     pieuvre (une porte à ouvrir, un titre à atteindre) ; data-tt-local sur un
      conteneur dont les boutons n'ont que des tentacules courtes (la barre d'édition, un panneau) ; data-tt-zone sur la
      fiche qu'un lien « retour » referme (par défaut .editeur).
    Les gestes se reconnaissent seuls : un lien #/… (remontée de page), un onglet (aria-current, aria-selected, role="tab" :
@@ -588,10 +590,16 @@ const TENTACULES = (() => {
     if (pageActeur && performance.now() - pageActeur.debut < 160) { pageActeur.recolorer(couleur); return pageActeur; }   // une redirection : même geste
     if (reduit()) return voile(svg, couleur);
     const W = innerWidth, H = innerHeight, G = trouverGuide(), mobile = W < 700, S = P.S;
-    // l'arrivée : le bras du spectacle visé, ou le centre de la pieuvre ; sans pieuvre à l'écran, le bord haut
-    let cible = G ? [G.cx, G.cy] : [clamp(depart ? depart.x * .5 + W * .1 : W * .3, 40, W - 40), 14];
-    if (G && dest.slug) { const b = boutPour(G, [W / 2, H], dest.slug); if (b && b.nom !== 'bas') cible = b.p; }
-    const rg = G ? clamp(Math.max(G.rect.width, G.rect.height) * .62, 14, 44) : 22;
+    // l'arrivée : un élément que la page réclame (data-tt-cible : une porte à ouvrir…), sinon le bras du spectacle visé ou le centre
+    // de la pieuvre ; sans pieuvre à l'écran, le bord haut
+    let cible = G ? [G.cx, G.cy] : [clamp(depart ? depart.x * .5 + W * .1 : W * .3, 40, W - 40), 14], rg = G ? clamp(Math.max(G.rect.width, G.rect.height) * .62, 14, 44) : 22, reclame = false;
+    const ce = document.querySelector('[data-tt-cible]'), rc = ce ? ce.getBoundingClientRect() : null;
+    if (rc && rc.width > 4 && rc.height > 4 && rc.top < H - 24 && rc.bottom > 24 && rc.left < W - 8 && rc.right > 8) {
+      const [fx, fy] = String(ce.getAttribute('data-tt-cible') || '').split(',').map(parseFloat);
+      cible = [rc.left + rc.width * (isFinite(fx) ? fx : .5), rc.top + rc.height * (isFinite(fy) ? fy : .5)];
+      rg = clamp(Math.min(rc.width, rc.height) * .3, 14, 44); reclame = true;
+    }
+    if (G && dest.slug && !reclame) { const b = boutPour(G, [W / 2, H], dest.slug); if (b && b.nom !== 'bas') cible = b.p; }
     const x0 = clamp(depart ? depart.x : W * .66, W * .24, W * .84), racine = [x0, H + 50];
     const sens = x0 > cible[0] ? -1 : 1, bow = graine(...[...(dest.slug || dest.couleur || 'x')].map(c => c.charCodeAt(0))) % 2 ? 1 : -1;
     const dur = dureeDe(admin() ? 330 : 620, P);
