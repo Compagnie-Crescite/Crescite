@@ -310,6 +310,7 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .u-docs li { display: flex; align-items: center; gap: 10px; }
 .u-docs .fleche { width: 18px; height: 18px; color: var(--u-vif); }
 .u-docs a { color: var(--u-vif); }
+.u-docs--ft { margin-top: clamp(18px, 2vw, 28px); }
 .prog-docs { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--u-filet); }
 .prog-docs .k { margin: 0 0 6px; font: 600 .76rem/1.4 var(--u-etiq); letter-spacing: .13em; text-transform: uppercase; color: var(--u-vif); }
 
@@ -1763,9 +1764,11 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
         ${P.representations ? `<p class="u-rep"${pr('representations')}>${nombre(P.representations)}</p>` : ''}${P.lieux ? `<p class="u-lieux"${pr('lieux')}>${esc(P.lieux)}</p>` : ''}
         ${s.statut && s.tournee && s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}</div>
         <figure class="carte-sp">${carteTournee(s, sp.aVenir, sp.passe.filter(x => !vus.has(x.l)))}</figure></div>`);
-    if (P.ficheTechnique && s.dossier && (D.dossiers || {})[s.dossier] && D.dossiers[s.dossier].accueil) h += conditions(s, chap, 'technique', L.ficheTechnique);
+    const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');
+    // Bérénice : le détail du dossier, puis le PDF « fiche technique et plan » en lien
+    if (P.ficheTechnique && s.dossier && (D.dossiers || {})[s.dossier] && D.dossiers[s.dossier].accueil) h += conditions(s, chap, 'technique', L.ficheTechnique, fts.length ? `<ul class="u-docs u-docs--ft">${fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul>` : '');
     else {   // la fiche technique : un document déposé, sinon sur demande (jamais de rubrique vide)
-      const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
+      const href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
       h += chapitre(chap, 'technique', L.ficheTechnique, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.ficheTechnique)}</h2>
         <ul class="u-docs">${fts.length ? fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('') : `<li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li>`}</ul></div>`);
     }
@@ -1833,7 +1836,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     return h;
   }
   // les conditions d'accueil, la fiche technique du dossier et la photo de l'implantation
-  function conditions(s, chap, id, nom) {
+  function conditions(s, chap, id, nom, apres = '') {
     const AC = D.dossiers[s.dossier].accueil, imp = (s.photos || []).find(p => p.id === 'd-implantation-1');
     const ea = (...k) => ed(['dossiers', s.dossier, 'accueil', ...k].join('.'));
     return chapitre(chap, id, nom, `<div class="wrap">
@@ -1841,7 +1844,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
         <div class="dos-accueil">
           <div class="boite"><p class="dos-fiche-t"${ea('fiche')}>${esc(AC.fiche)}</p>${AC.blocs.map((b, i) => `${b.titre ? `<h3 class="dos-h4"${ea('blocs', i, 'titre')}>${esc(b.titre)}</h3>` : ''}<ul>${b.lignes.map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${l}</li>`).join('')}</ul>`).join('')}</div>
           <div>${AC.alerte ? `<p class="dos-alerte">${ALERTE}<span${ea('alerte')}>${AC.alerte}</span></p>` : ''}${fig(s, imp)}${imp && s.creditDossier ? `<p class="u-credit" style="margin-top:10px"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}</div>
-        </div>
+        </div>${apres}
       </div>`, false);
   }
 

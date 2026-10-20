@@ -708,15 +708,17 @@ function listeDates(zone, actif) {
 
 function nouvelleDate() {
   const sp = session.dates?.spectacle ? +session.dates.spectacle : (E.spectacles.find(s => s.page) || {}).id;
-  return { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true,
-    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [] };
+  return { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true, nature: 'representations',
+    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', fin: '', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [] };
 }
 function dateVersForm(d) {
-  const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
+  const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
   const su = E.suivis.find(x => x.date_id === d.id) || {};
-  return { ...clone(d), lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
+  return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
     equipe: ecartsDate(d.id) };
 }
+// la nature d'une date (le troisième script SQL) : seules les représentations vont sur le site
+const NATURES_DATE = [['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidence'], ['autre', 'Autre']];
 const zoneNeuve = sel => { const a = $(sel), z = a.cloneNode(false); a.replaceWith(z); return z; };
 let ouvertureMuette = false;     // après un enregistrement, l'éditeur se redessine : la tentacule s'enroule autour du bouton, elle ne se déroule pas
 function editeurDate(id, depart = null) {
@@ -733,11 +735,13 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="d-sp">Spectacle</label><select id="d-sp">${choixSpectacles().map(([v, t]) => `<option value="${v}"${String(F.spectacle_id) === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
       <div class="champ"><span class="lib">Statut</span><div class="seg" role="group" aria-label="Statut">${[['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']].map(([k, l]) => `<button type="button" data-statut="${k}" aria-pressed="${F.statut === k}">${l}</button>`).join('')}</div>
         <span class="aide">Une option n’apparaît jamais sur le site.</span></div></div>
+      ${E.sql3 ? `<div class="champ"><span class="lib">Nature</span><div class="seg" role="group" aria-label="Nature de la date">${NATURES_DATE.map(([k, l]) => `<button type="button" data-nature="${k}" aria-pressed="${(F.nature || 'representations') === k}">${l}</button>`).join('')}</div>
+        <span class="aide" id="d-nature-aide">Seules les représentations vont sur le site ; répétitions et résidences ne sont que pour l’équipe.</span></div>` : ''}
       <div class="champ"><span class="lib">Lieu</span><div id="d-lieu"></div></div>
-      <label class="case"><input type="checkbox" id="d-visible"${F.visible ? ' checked' : ''}> Publiée sur le site</label></div>
+      <label class="case"><input type="checkbox" id="d-visible"${F.visible && (F.nature || 'representations') === 'representations' ? ' checked' : ''}${(F.nature || 'representations') === 'representations' ? '' : ' disabled'}> Publiée sur le site</label></div>
 
-    <div class="bloc"><h3>Représentations</h3>
-      <table class="reps"><thead><tr><th>Jour</th><th>Heure</th><th>Public</th><th>Précision</th><th>Billetterie</th><th></th></tr></thead><tbody id="d-reps"></tbody></table>
+    <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
+      <table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th></th></tr></thead><tbody id="d-reps"></tbody></table>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn petit" id="d-meme-jour">＋ Le même jour</button><button type="button" class="btn petit" id="d-lendemain">＋ Le lendemain</button><button type="button" class="btn petit" id="d-vide">＋ Représentation</button></div>
       <div id="d-sans" style="margin-top:12px"></div></div>
 
@@ -756,7 +760,7 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
-    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`)}`;
+    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`)}`;
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
   const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
   const apercu = () => {
@@ -774,6 +778,7 @@ function editeurDate(id, depart = null) {
     $('#d-reps').innerHTML = F.representations.map((r, i) => `<tr data-i="${i}">
       <td><input type="date" data-r="jour" value="${esc(r.jour)}" aria-label="Jour"></td>
       <td><input type="time" data-r="heure" value="${esc(r.heure)}" aria-label="Heure" step="300"></td>
+      ${E.sql3 ? `<td><input type="time" data-r="fin" value="${esc(r.fin || '')}" aria-label="Heure de fin" title="Heure de fin (une répétition : 10h-18h)" step="300"></td>` : ''}
       <td><select data-r="public" aria-label="Public"><option value="tout_public"${r.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${r.public === 'scolaire' ? ' selected' : ''}>Scolaire</option><option value="autre"${r.public === 'autre' ? ' selected' : ''}>Autre</option></select></td>
       <td><input type="text" data-r="note" value="${esc(r.note)}" placeholder="complet, audiodécrite…" aria-label="Précision"></td>
       <td><input type="url" data-r="lien" value="${esc(r.lien)}" placeholder="https://…" aria-label="Billetterie"></td>
@@ -831,13 +836,23 @@ function editeurDate(id, depart = null) {
     if (cmd) { const ed = cmd.closest('.item')?.querySelector('.riche'); ed?.focus(); if (cmd.dataset.cmd === 'createLink') { const u = prompt('Adresse du lien (https://…)'); if (u) document.execCommand('createLink', false, u); } else document.execCommand(cmd.dataset.cmd); if (ed) { F.details[+ed.dataset.det].texte = propre(ed.innerHTML); changer(); } return; }
     const st = t.closest('[data-statut]');
     if (st) { F.statut = st.dataset.statut; $$('[data-statut]', zone).forEach(b => b.setAttribute('aria-pressed', b === st)); changer(); return; }
+    const na = t.closest('[data-nature]');
+    if (na) {
+      // une répétition, une résidence : jamais sur le site (la base le garantit aussi)
+      F.nature = na.dataset.nature; $$('[data-nature]', zone).forEach(b => b.setAttribute('aria-pressed', b === na));
+      const rep = F.nature === 'representations', v = $('#d-visible');
+      v.disabled = !rep; if (!rep) { v.checked = false; F.visible = false; }
+      $('#d-reps-titre').textContent = rep ? 'Représentations' : 'Séances';
+      changer(); return;
+    }
+    if (t.id === 'd-prevenir') return panneauPrevenir(zone, d0);
     if (t.dataset.retirer !== undefined) { F.representations.splice(+t.dataset.retirer, 1); dessinerReps(); changer(); return; }
     const der = F.representations[F.representations.length - 1];
     if (t.id === 'd-meme-jour' || t.id === 'd-lendemain' || t.id === 'd-vide') {
       let jour = der?.jour || '', heure = '';
       if (t.id === 'd-lendemain' && jour) { const x = new Date(jour + 'T12:00:00'); x.setDate(x.getDate() + 1); jour = AGENDA.iso(x); heure = der.heure; }
       if (t.id === 'd-vide') { jour = ''; heure = '20:00'; }
-      F.representations.push({ jour, heure, public: der?.public || 'tout_public', annulee: false, lien: '', note: '' });
+      F.representations.push({ jour, heure, fin: t.id === 'd-lendemain' ? der?.fin || '' : '', public: der?.public || 'tout_public', annulee: false, lien: '', note: '' });
       dessinerReps(); changer();
       tt('ajouter', $('#d-reps tr:last-child', zone));
       $(`#d-reps tr:last-child [data-r="${t.id === 'd-vide' ? 'jour' : 'heure'}"]`, zone)?.focus();
@@ -869,9 +884,13 @@ async function enregistrerDate(F, d0, bouton) {
     statut: F.statut, visible: F.visible, intitule: $('#d-libre').checked ? (F.intitule || '').trim() || null : null,
     details: F.details.filter(x => texteSeul(x.texte).trim()).map(x => ({ texte: x.texte, lien: x.lien || null })), lien: (F.lien || '').trim() || null,
     nb_representations: reps.length ? null : F.nb_representations,
-    representations: reps.map(r => ({ id: r.id, jour: r.jour, heure: r.heure || null, public: r.public, annulee: !!r.annulee, lien: (r.lien || '').trim() || null, note: (r.note || '').trim() || null })),
+    representations: reps.map(r => ({ id: r.id, jour: r.jour, heure: r.heure || null, public: r.public, annulee: !!r.annulee, lien: (r.lien || '').trim() || null, note: (r.note || '').trim() || null,
+      ...(E.sql3 ? { fin: r.fin || null } : {}) })),
     suivi: F.suivi,
+    // la nature et l'heure de fin : seulement quand la base les a (troisième script SQL)
+    ...(E.sql3 ? { nature: F.nature || 'representations' } : {}),
   };
+  if (E.sql3 && charge.nature !== 'representations') charge.visible = false;
   bouton.disabled = true;
   const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: charge });
   bouton.disabled = false;
@@ -969,6 +988,7 @@ const SPEC_SPECTACLE = {
     { k: 'medias', t: 'objets', l: 'Autres médias', ajout: 'Média', champs: [{ k: 'type', t: 'choix', l: 'Type', choix: [['video', 'Vidéo'], ['audio', 'Son']] }, { k: 'titre', t: 'texte', l: 'Titre' }, { k: 'url', t: 'url', l: 'Adresse' }, { k: 'groupe', t: 'texte', l: 'Groupe' }] },
   ],
   'Action culturelle': [
+    { k: 'action_culturelle.masquee', t: 'case', l: 'Action culturelle masquée (pas encore construite)', aide: 'Cochée, le site ne la montre pas (ni sur la page des établissements, ni en onglet) ; tout ce qui est écrit ici reste. Pour la rouvrir, décochez.' },
     { k: 'action_culturelle.type', t: 'texte', l: 'Type d’action culturelle', ph: 'Spectacle in situ', aide: 'Affiché en grand dans « Je représente un établissement scolaire ».' },
     { k: 'action_culturelle.public', t: 'texte', l: 'Public', ph: 'À partir de la seconde' },
     { k: 'action_culturelle.lieu', t: 'choix', l: 'Où', choix: [['', '—'], ['etablissement', 'Dans l’établissement'], ['salle', 'En salle']] },
@@ -1343,6 +1363,9 @@ const TEXTES = {
   donateurs: ['Remerciements aux donateurs', null],
   partenaires: ['Partenaires', null],
   coordonnees: ['Coordonnées', [{ k: 'nom', t: 'texte', l: 'Nom' }, { k: 'adresse', t: 'lignes', l: 'Adresse' }, { k: 'legal', t: 'lignes', l: 'Mentions (Siret, APE, licence)' }]],
+  // le contact diffusion de « Je souhaite programmer » (troisième script SQL : sans lui, ce texte n'existe pas encore)
+  programmation: ['Je souhaite programmer : le contact', [{ k: 'contact.nom', t: 'texte', l: 'Nom' }, { k: 'contact.role', t: 'texte', l: 'Rôle', ph: 'Administratrice' },
+    { k: 'contact.email', t: 'texte', l: 'Adresse électronique', ph: 'contact@…' }, { k: 'contact.telephone', t: 'texte', l: 'Téléphone', aide: 'Facultatif : sans numéro, la page n’en montre pas.' }]],
 };
 function vueTextes(cle) {
   const noms = Object.fromEntries(Object.entries(TEXTES).map(([k, v]) => [k, v[0]]));

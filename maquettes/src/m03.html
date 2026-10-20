@@ -629,6 +629,7 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .docs { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
 .docs li { display: flex; align-items: center; gap: 10px; }
 .docs a { font-weight: 700; color: var(--u-vif, var(--ink)); }
+.tech ~ .docs { margin-top: clamp(18px, 2vw, 28px); }
 .fc-docs { padding-top: 12px; border-top: 1px solid var(--rule); }
 .u-chiffres + .chap { margin-top: 44px; }
 @media (max-width: 900px) { .hero > .ct-prg { grid-template-columns: minmax(0, 1fr); } .hero > .ct-prg .ct-cond { justify-self: start; } }
@@ -1704,6 +1705,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     const L = LIB(), p = s.programmer || {}, K = CARTE.spectacle(s.slug), w = ecrire(), couleur = () => u.titre;
     const dos = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null, acc = dos && dos.accueil, dk = `dossiers.${s.dossier}.accueil`;
     const implant = photosDe(s, x => x.id === 'd-implantation-1');
+    const ftDocs = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');   // la fiche technique déposée : en lien, avec le détail de Bérénice s'il y en a un
     const chiffres = [p.representations && `<li class="grand">${repHtml(p.representations, edS(s, 'programmer', 'representations'))}</li>`,
       ...faitsProg(s).map(([t, k]) => `<li${edS(s, k)}>${esc(t)}</li>`), s.statut && `<li${edS(s, 'statut')}>${esc(s.statut)}</li>`].filter(Boolean);
     return `<div class="g12 u-grille">
@@ -1715,8 +1717,9 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
           <div class="tech">${(acc.blocs || []).map((b, i) => `<div class="tech-b">${b.titre ? `<h4${ed(`${dk}.blocs.${i}.titre`)}>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map((x, j) => `<li${ed(`${dk}.blocs.${i}.lignes.${j}`)}>${x}</li>`).join('')}</ul></div>`).join('')}
             ${acc.alerte ? `<p class="alerte">${ALERTE}<span${ed(`${dk}.alerte`)}>${acc.alerte}</span></p>` : ''}</div>
           ${implant.length ? `<div class="photos implant">${implant.map(x => figure(s, x)).join('')}</div>${creditsHtml(s, implant)}` : ''}
+          ${ftDocs.length ? listeDocs(ftDocs) : ''}
         </section>` : `<section class="chap" aria-labelledby="h-tech"><h2 class="u-h2" id="h-tech">${esc(L.ficheTechnique)}</h2>${(() => {   // la fiche technique : un document déposé, sinon sur demande (jamais de rubrique vide)
-          const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
+          const fts = ftDocs, href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
           return fts.length ? listeDocs(fts) : `<ul class="docs"><li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li></ul>`; })()}</section>`}
         <section class="chap" aria-labelledby="h-dl"><h2 class="u-h2" id="h-dl">${esc(L.aTelecharger)}</h2><ul class="docs"><li>${dossierBouton(s.slug)}</li>${docsDe(s, 'pros').map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></section>
         <section class="chap u-lieux" aria-labelledby="h-lieux"><h2 class="u-h2" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>

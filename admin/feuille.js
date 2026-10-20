@@ -25,10 +25,18 @@
        feuille = {titre, contenu, version, publiee_le, statut}
        contexte = {date, spectacle: {titre, slug, univers, duree}, lieu, representations, documents?, moi?}
        (documents : [{id, titre, url}], les liens des documents cités ; moi : {prenom}, mis en valeur dans la version web)
+   FEUILLE.planning : la frise « Le jour J » de l'équipe. Chaque bloc « jour » garde sa date (date: 'AAAA-MM-JJ') ; l'heure
+   d'une ligne se lit à son début (« 9h : », « 10h-11h : », « 14h10 : », « à partir de 9h : »), ou dans ses données
+   d'origine (origine) quand elle vient de la base sans retouche. accent : une représentation (ligne en gras, ou venue
+   d'une représentation). Les lignes sans heure n'y sont pas.
    FEUILLE.composer(sources) donne maintenant un contenu en blocs (sources : plus bas). Pour l'administration :
    FEUILLE.contenu (conversion), FEUILLE.actualiser (« Mettre à jour depuis la base »), FEUILLE.MISE et FEUILLE.cssPage
-   (la mise en page, commune à l'éditeur, à l'impression et au PDF), FEUILLE.impression, FEUILLE.logo, FEUILLE.polices.
+   (la mise en page, commune à l'éditeur, à l'impression et au PDF), FEUILLE.impression, FEUILLE.logo, FEUILLE.polices,
+   FEUILLE.etapes (le planning d'une date en lignes simples, pour l'exemple de l'onglet « Déroulé type »).
    Retirés : FEUILLE.SECTIONS, FEUILLE.fusionner, FEUILLE.vue et FEUILLE.css (l'ancien formulaire).
+   La police FdR Sans (vendor/fdr-sans-*.ttf) est Carlito réduite au latin et renommée (Carlito a un nom réservé) ; le
+   logo (logo-feuille.svg, à côté de ce fichier) est écrit par maquettes/build.py dans le site construit (sa source
+   reste privée) : sans lui, un badge « crescite » à sa place.
 
    Le planning pose le déroulé type du spectacle (spectacle.feuille_modele : [{avant_min, quoi, qui, fin?, jours?}])
    autour des représentations. Un jour à plusieurs représentations : les étapes « avant » (minutes avant le lever de
@@ -45,7 +53,7 @@ const FEUILLE = (() => {
 
   // ================================================================================================ outils
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const norm = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const clone = o => JSON.parse(JSON.stringify(o ?? null));
   const txt = v => String(v ?? '').trim();
   const maj = s => s ? s[0].toUpperCase() + s.slice(1) : '';
@@ -314,6 +322,15 @@ ${s} .s{background:${MISE.surligne}}`;
     return out.map((x, i) => [x, i]).sort((a, b) => a[0].jour < b[0].jour ? -1 : a[0].jour > b[0].jour ? 1 : (a[0].m ?? -1) === -1 || (b[0].m ?? -1) === -1 ? a[1] - b[1] : a[0].m - b[0].m || a[1] - b[1]).map(x => x[0]);
   }
 
+  // les étapes du planning d'une date, en lignes simples (l'onglet « Déroulé type » de l'administration en montre un exemple)
+  //   → [{jour, heure: 'HH:MM' | '', fin, quoi, qui, rep}]
+  function etapes({ representations = [], spectacle = {}, date = {} } = {}) {
+    const seances = representations.filter(r => estJour(r?.jour)).map(r => ({ id: r.id ?? null, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', note: txt(r.note), annulee: !!r.annulee }));
+    return etapesPlanning(seances, date.nature, spectacle.feuille_modele, dureeMinutes(spectacle.duree)).map(e => ({
+      jour: e.jour, heure: e.m == null ? '' : hhmm(e.m), fin: e.fin == null ? '' : hhmm(e.fin),
+      quoi: e.rep && PUBLIC_TEXTE[e.public] ? `${e.quoi} ${PUBLIC_TEXTE[e.public]}` : e.quoi, qui: e.qui, rep: !!e.rep }));
+  }
+
   // un contact écrit à la main (« Marie Dupont, 06 12 34 56 78, marie@lieu.fr ») : nom, téléphone, adresse électronique
   const RE_TEL = /(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}(?!\d)/;
   const RE_MEL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/;
@@ -447,7 +464,7 @@ ${s} .s{background:${MISE.surligne}}`;
       }
       du.forEach(e => {
         const h = e.m == null ? null : e.m, f = e.fin == null ? null : e.fin;
-        const tete = h == null ? [amorce(e.rep ? 'heure ?' : 'heure ?'), seg(' : ')] : [seg(`${heureCourte(h)}${f != null ? `-${heureCourte(f)}` : ''} : `)];
+        const tete = h == null ? [amorce('heure ?'), seg(' : ')] : [seg(`${heureCourte(h)}${f != null ? `-${heureCourte(f)}` : ''} : `)];
         const quoi = e.rep ? `${minuscule(e.quoi)}${PUBLIC_TEXTE[e.public] ? ` ${PUBLIC_TEXTE[e.public]}` : ''}` : minuscule(e.quoi);
         const qui = quiDe(e.qui);
         const tot = h != null && h < 6 * 60 && !e.seance ? [amorce(' très tôt : à vérifier')] : [];
@@ -496,11 +513,12 @@ ${s} .s{background:${MISE.surligne}}`;
       if (repris.length) { B('ligne', [amorce(origineTexte(parLieu))]); repris.forEach(b => blocs.push(b)); }
     }
     B('sous-titre', [seg('contacts compagnie')], { cle: 'cie' });
-    const deja = new Set();
-    equipe.forEach(p => { deja.add(norm(p.prenom + ' ' + p.nom)); base('ligne', [seg(`${prenomDe(p)} `), p.telephone ? seg(p.telephone) : amorce('téléphone ?')], `cie:${p.id ?? cleMot(p.prenom + p.nom)}`); });
+    // l'équipe de la date, puis l'administration et la régie générale de la compagnie (une seule fois chacune)
+    const deja = new Set(), ids = new Set(equipe.map(p => String(p.id)));
+    equipe.forEach(p => { deja.add(norm(p.nom)); deja.add(norm(`${p.prenom} ${p.nom}`)); base('ligne', [seg(`${prenomDe(p)} `), p.telephone ? seg(p.telephone) : amorce('téléphone ?')], `cie:${p.id ?? cleMot(p.prenom + p.nom)}`); });
     (S.contacts || []).forEach(c => {
       const nom = txt(c.nom), prenom = txt(c.prenom) || premierMot(nom);
-      if (!prenom || deja.has(norm(nom)) || [...deja].some(x => x.startsWith(norm(nom)))) return;
+      if (!prenom || (c.personne_id != null && ids.has(String(c.personne_id))) || deja.has(norm(nom))) return;
       deja.add(norm(nom));
       base('ligne', [seg(`${prenom} `), c.telephone ? seg(telTexte(c.telephone)) : amorce('téléphone ?'), ...(c.role ? [amorce(` ${minuscule(c.role)}`)] : [])], `cie:${cleMot(nom)}`);
     });
@@ -706,17 +724,17 @@ ${s} .s{background:${MISE.surligne}}`;
   border:1px solid var(--fdr-trait);border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 26px rgba(0,0,0,.06)}
 .fdr *{box-sizing:border-box}
 .fdr p,.fdr h1,.fdr h2,.fdr h3,.fdr h4,.fdr ul{margin:0;font-size:inherit;font-weight:inherit;line-height:inherit}
-.fdr-tete{margin:0 0 6px}
-.fdr-tete .fdr-l{font-size:1.2em;line-height:1.25}
-.fdr-tete .fdr-l.petit{font-size:1.02em;margin:2px 0}
-.fdr-tete h1.fdr-l{font-size:1.5em;line-height:1.15;margin:1px 0 3px}
-.fdr-alerte-h{margin:14px 0 0;padding:10px 13px;border-radius:8px;background:#fdecea;color:#8c1d16;font-size:.88em;font-weight:700}
-.fdr-rub{font-size:1.27em;font-weight:700;margin:1.15em 0 .3em;padding-bottom:.18em;border-bottom:1px solid var(--fdr-trait)}
-.fdr-st{font-weight:700;margin:.8em 0 .1em}
-.fdr-jour{font-weight:700;margin:.95em 0 .1em}
-.fdr-p{margin:0 0 .12em}
-.fdr-al{font-weight:700;color:${MISE.rouge};margin:0 0 .12em}
-.fdr-vide{height:.5em}
+.fdr .fdr-tete{margin:0 0 6px}
+.fdr .fdr-tete .fdr-l{font-size:1.2em;line-height:1.25}
+.fdr .fdr-tete .fdr-l.petit{font-size:1.02em;margin:2px 0}
+.fdr .fdr-tete h1.fdr-l{font-size:1.5em;line-height:1.15;margin:1px 0 3px}
+.fdr .fdr-alerte-h{margin:14px 0 0;padding:10px 13px;border-radius:8px;background:#fdecea;color:#8c1d16;font-size:.88em;font-weight:700}
+.fdr .fdr-rub{font-size:1.27em;font-weight:700;margin:1.15em 0 .3em;padding-bottom:.18em;border-bottom:1px solid var(--fdr-trait)}
+.fdr .fdr-st{font-weight:700;margin:.8em 0 .1em}
+.fdr .fdr-jour{font-weight:700;margin:.95em 0 .1em}
+.fdr .fdr-p{margin:0 0 .12em}
+.fdr .fdr-al{font-weight:700;color:${MISE.rouge};margin:0 0 .12em}
+.fdr .fdr-vide{height:.5em}
 .fdr ul.fdr-puces{list-style:none;padding:0;margin:.1em 0 .3em}
 .fdr ul.fdr-puces li{position:relative;padding-left:1.35em;margin:0 0 .12em}
 .fdr ul.fdr-puces li::before{content:"\\2022";position:absolute;left:.45em}
@@ -733,7 +751,7 @@ ${s} .s{background:${MISE.surligne}}`;
 .fdr a.tel,.fdr a.mel{white-space:nowrap}
 @media (max-width:560px){
   .fdr{font-size:16px;padding:20px 16px 22px;border-left:0;border-right:0;border-radius:0;box-shadow:none}
-  .fdr-tete h1.fdr-l{font-size:1.38em}
+  .fdr .fdr-tete h1.fdr-l{font-size:1.38em}
 }
 @media print{.fdr{border:0;box-shadow:none;max-width:none;padding:0;font-size:11pt}}`;
   // le prénom de la personne qui lit, mis en valeur (mot entier, sans tenir compte des accents ni des majuscules)
@@ -847,10 +865,10 @@ ${s} .s{background:${MISE.surligne}}`;
   }
   const logoUrl = () => ICI ? new URL('logo-feuille.svg', ICI).href : 'logo-feuille.svg';
   // ce que FdR Sans (et Roboto, au besoin) n'a pas
-  const COUVERT = /[^ -~ -ſƒȘ-țˆ-˝ -⁯€№™←-↙−∕●◦]/g;
+  const COUVERT = /[^\u0020-\u007e\u00a0-\u017f\u0192\u0218-\u021b\u02c6-\u02dd\u2000-\u206f\u20ac\u2116\u2122\u2190-\u2199\u2212\u2215\u25cf\u25e6]/g;
   const pourPdf = (s, roboto) => {
     let x = String(s ?? '').replace(/[✓✔]/g, '•').replace(/[⚠]/g, '!').replace(/[☎✆]/g, 'tél.').replace(/[■▪]/g, '•').replace(COUVERT, '');
-    if (roboto) x = x.replace(/ /g, ' ').replace(/[→⟶]/g, '–').replace(/[←]/g, '–');
+    if (roboto) x = x.replace(/\u202f/g, '\u00a0').replace(/[→⟶]/g, '–').replace(/[←]/g, '–');
     return x;
   };
   function inlinesPdf(segs, ctx, o) {
@@ -861,7 +879,7 @@ ${s} .s{background:${MISE.surligne}}`;
       if (u) { out.push({ text: pourPdf(s.texte, o.roboto), link: u, ...f }); return; }
       jetons(s.texte).forEach(j => out.push({ text: pourPdf(j.t, o.roboto), ...(j.href ? { link: j.href } : {}), ...f }));
     });
-    return out.length ? out : [{ text: ' ' }];
+    return out.length ? out : [{ text: '\u00a0' }];
   }
   // un document pdfmake, page pour page comme l'éditeur
   function definition(feuille, contexte, o = {}) {
@@ -875,13 +893,13 @@ ${s} .s{background:${MISE.surligne}}`;
     const noeud = b => {
       const t = T[b.type] || {};
       const taille = b.type === 'entete' ? (b.petit ? MISE.petit : T.entete.taille) : t.taille || MISE.corps;
-      const texte = vide(b) ? [{ text: ' ' }] : inlinesPdf(b.segments, ctx, { roboto });
       const commun = { fontSize: taille, ...(t.gras ? { bold: true } : {}), ...(t.rouge ? { color: MISE.rouge } : {}) };
       if (b.type === 'tableau') {
         return { table: { widths: b.lignes[0].map(() => '*'), body: b.lignes.map(l => l.map(x => ({ text: inlinesPdf(x, ctx, { roboto }), fontSize: t.taille }))) },
           layout: { hLineWidth: () => 0.5, vLineWidth: () => 0.5, hLineColor: () => '#7a7a7a', vLineColor: () => '#7a7a7a', paddingLeft: () => 4, paddingRight: () => 4, paddingTop: () => 2, paddingBottom: () => 2 },
           margin: [0, t.avant, 0, t.apres] };
       }
+      const texte = vide(b) ? [{ text: '\u00a0' }] : inlinesPdf(b.segments, ctx, { roboto });
       if (b.type === 'puce') return { columns: [{ width: t.puce, text: '' }, { width: t.texte - t.puce, text: '•', fontSize: taille }, { width: '*', text: texte, ...commun }], columnGap: 0 };
       return { text: texte, ...commun, margin: [0, t.avant || 0, 0, t.apres || 0] };
     };
@@ -992,7 +1010,7 @@ ${cssPage('.fdr-imp')}
   const api = {
     composer, contenu, actualiser, planning, html, pdf, telecharger, impression, definition, nomFichier, vendor: vendorDefaut,
     MISE, cssPage, cssPolices, logo, logoUrl, polices, htmlBloc, bloc, segments, visibles, texteBloc, lireHeure, dateDuTexte, nouvelId, jetons,
-    DEROULE, trier, joursEtape, estApres, dureeMinutes, dureeTexte, heure, heureCourte, jourLong, quandTexte, telTexte, telLien, itineraire, lireContact,
+    DEROULE, etapes, trier, joursEtape, estApres, dureeMinutes, dureeTexte, heure, heureCourte, jourLong, quandTexte, telTexte, telLien, itineraire, lireContact,
   };
   return api;
 })();

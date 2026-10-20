@@ -392,6 +392,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .docs{list-style:none;display:grid;gap:10px;margin:0;padding:0}
 .docs li{display:flex;align-items:center;gap:10px}
 .docs a{font-weight:600;color:var(--u-vif)}
+.ft-blocs ~ .docs{margin-top:clamp(18px,2vw,28px)}
 .fpro-docs{margin-top:16px;padding-top:12px;border-top:1px solid color-mix(in srgb,var(--u-texte) 18%,transparent)}
 .fpro-docs .ct-k{margin:0 0 8px}
 .pastille{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;background:var(--u-vif);color:var(--u-fond)}
@@ -1738,8 +1739,9 @@ html .ed-bt{border-radius:6px}
   const implantation = s => (s.photos || []).map((p, i) => ({ p, i })).find(x => /implantation/.test(x.p.id || x.p.cle) && src(x.p.cle));
   function ficheTechnique(s) {
     const B = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null, A = B && B.accueil, dp = `dossiers.${s.dossier}.accueil`;
+    const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');   // la fiche technique déposée : en lien, avec le détail de Bérénice s'il y en a un
     if (!A || !(s.programmer || {}).ficheTechnique) {   // un document déposé, sinon sur demande (jamais de rubrique vide)
-      const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${LIB().ficheTechnique} – ${s.titre}`);
+      const href = mailPrg(`${LIB().ficheTechnique} – ${s.titre}`);
       return `<section class="u-sec" aria-labelledby="c-ft"><h2 class="u-chap" id="c-ft">${esc(LIB().ficheTechnique)}</h2>${fts.length ? listeDocs(fts) : `<ul class="docs"><li>${PDF}${href ? `<a href="${esc(href)}">${esc(LIB().ficheTechniqueSurDemande)}</a>` : `<span>${esc(LIB().ficheTechniqueSurDemande)}</span>`}</li></ul>`}</section>`;
     }
     const ph = implantation(s);
@@ -1749,6 +1751,7 @@ html .ed-bt{border-radius:6px}
       <div class="ft-blocs">${(A.blocs || []).map((b, i) => `<div class="ft-bloc">${b.titre ? `<h4${ed(`${dp}.blocs.${i}.titre`)}>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map((x, j) => `<li${ed(`${dp}.blocs.${i}.lignes.${j}`)}>${x}</li>`).join('')}</ul></div>`).join('')}</div>
       ${A.alerte ? `<p class="ft-alerte"${ed(`${dp}.alerte`)}>${A.alerte}</p>` : ''}
       ${ph ? `<figure class="ft-photo" data-edit-photo="shows.${esc(s.slug)}.photos.${ph.i}">${img(ph.p.cle, ph.p.legende || A.photos || '')}${ph.p.legende ? `<figcaption class="carton"${edS(s, `photos.${ph.i}.legende`)}>${esc(ph.p.legende)}</figcaption>` : ''}</figure>${credits({ slug: s.slug, creditDossier: s.creditDossier }, true)}` : ''}
+      ${fts.length ? listeDocs(fts) : ''}
     </section>`;
   }
   function ongletProgrammer(s) {

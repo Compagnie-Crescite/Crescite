@@ -954,8 +954,8 @@
     const evs = evenementsAVenir(), nbReps = evs.filter(x => natureDe(x.d) === 'representations').reduce((n, x) => n + x.n, 0);
     const prenom = txt(E.personne?.prenom);
     const resume = [`Saison ${saisonDe(auj)}`, vivantes.length ? `${pluriel(vivantes.length, 'date')} à venir${nbReps ? `, ${pluriel(nbReps, 'représentation')}` : ''}` : 'aucune date à venir'].join(' · ');
-    const quoi = [nbReps && (nbReps > 1 ? `vos ${pluriel(nbReps, 'représentation')} à venir` : 'votre représentation à venir'),
-      evs.some(x => natureDe(x.d) !== 'representations') && 'vos répétitions', evs.some(x => !x.r) && 'les dates sans horaire'].filter(Boolean).join(', ');
+    const quoi = [nbReps && (nbReps > 1 ? `vos ${pluriel(nbReps, 'représentation')}` : 'votre représentation'),
+      evs.some(x => natureDe(x.d) !== 'representations') && 'vos répétitions'].filter(Boolean).join(' et ') || 'vos dates à venir';
     const principal = [], cote = [];
     principal.push(prochaine ? `<div class="o-heros">${heros(prochaine)}</div>`
       : `<div class="o-heros">${etatVide('calendrier', E.dates.length ? 'Pas de date à venir pour l’instant' : 'Votre saison commence ici', 'Dès que l’administration vous inscrira sur une date, elle apparaîtra ici, avec ses horaires, son lieu et sa feuille de route.')}</div>`);
@@ -964,7 +964,7 @@
     if (passees.length) principal.push(`<section class="o-passees" aria-labelledby="t-passees"><h2 class="titre-section" id="t-passees">Dates passées</h2><div class="saisons">${saisonsPassees(passees)}</div></section>`);
     cote.push(chiffres(), carteSaison());
     if (avenir.length) cote.push(`<section class="carte-action o-agenda" aria-labelledby="t-agenda"><span class="ic-rond" aria-hidden="true">${ICONES.agenda}</span>
-      <div class="ca-texte"><h2 id="t-agenda">Dans votre agenda</h2><p class="aide">${evs.length ? `${esc(majuscule(quoi))}, avec le lieu et l’adresse, en un fichier .ics pour votre téléphone ou votre messagerie.` : 'Aucune séance à venir à ajouter pour l’instant.'}</p></div>
+      <div class="ca-texte"><h2 id="t-agenda">Dans votre agenda</h2><p class="aide">${evs.length ? `${esc(majuscule(quoi))}, avec l’adresse : un fichier .ics pour votre téléphone ou votre messagerie.` : 'Aucune séance à venir à ajouter pour l’instant.'}</p></div>
       <button type="button" class="btn" id="b-agenda"${evs.length ? '' : ' disabled'}>Ajouter à mon agenda</button></section>`);
     cote.push(`<div class="o-install" data-zone-installation="accueil">${zoneInstallation('accueil')}</div>`);
     const html = `<div class="titre-vue"><h1>${esc(salut())}${prenom ? ` ${esc(prenom)}` : ''}</h1><p class="sous">${esc(resume)}</p></div>
@@ -1081,7 +1081,7 @@
         <${balise} class="heros-titre" id="hx-${d.id}">${page ? titre : `<a class="lien-etendu" href="#/date/${d.id}">${titre}</a>`}</${balise}>
         <p class="heros-quand">${esc(majuscule(quandTexte(d)))}</p>
         ${k ? `<p class="decompte-grand" data-decompte="${d.id}">${decompteHtml(k)}</p>` : ''}
-        ${horairesHeros(d)}
+        ${page ? '' : horairesHeros(d)}
         <p class="heros-ou">${ICONES.route}<span><span class="sr">Lieu : </span>${lieuTexteHtml(d)}</span></p>
         ${gens.length || actions ? `<div class="heros-pied">${gens.length ? `<span class="mini-equipe">${miniAvatars(gens)}<span class="sr">${pluriel(gens.length, 'personne')} sur cette date</span></span>` : '<span></span>'}${actions ? `<span class="heros-actions">${actions}</span>` : ''}</div>` : ''}
       </div>
@@ -1115,7 +1115,7 @@
     let xs = [];
     try {
       const F = outilFeuille();
-      if (f && F && typeof F.planning === 'function') xs = (F.planning(f, contexte(d)) || []).map(x => ({ jour: estJour(x.jour) ? x.jour : '', heure: h5(x.heure), fin: h5(x.fin), quoi: txt(x.texte || x.quoi), qui: txt(x.qui), ou: txt(x.ou), rep: !!(x.accent || x.rep) }));
+      if (f && F && typeof F.planning === 'function') xs = (F.planning(f, contexte(d)) || []).map(x => ({ jour: estJour(x.jour) ? x.jour : '', heure: h5(x.heure), fin: h5(x.fin), quoi: majuscule(txt(x.texte || x.quoi)), qui: txt(x.qui), ou: txt(x.ou), rep: !!(x.accent || x.rep) }));
       else if (f && f.contenu && Array.isArray(f.contenu.planning)) xs = f.contenu.planning.filter(Boolean).map(x => ({ jour: estJour(x.jour) ? x.jour : '', heure: h5(x.heure), fin: h5(x.fin), quoi: txt(x.quoi), qui: txt(x.qui), ou: txt(x.ou), rep: x.rep === true || /^repr[ée]sentation/i.test(txt(x.quoi)) }));
     } catch (e) { console.warn('planning', e); xs = []; }
     xs = xs.filter(x => x.quoi || x.heure);
@@ -1163,7 +1163,7 @@
     const km = Math.round(ds.reduce((t, d) => t + kmDe(d.lieu) * 2, 0) / 10) * 10;
     const chiffre = (n, un, plusieurs) => `<li><b><span data-compter="${n}" aria-hidden="true">${nombre(n)}</span><span class="sr">${nombre(n)}</span></b><span>${n > 1 ? plusieurs : un}</span></li>`;
     return `<section class="o-chiffres" aria-labelledby="t-chiffres"><h2 class="titre-section" id="t-chiffres">La saison ${esc(s)}</h2>
-      <ul class="chiffres">${chiffre(ds.length, 'date', 'dates')}${chiffre(reps, 'représentation', 'représentations')}${km ? chiffre(km, 'km de route, estimés', 'km de route, estimés') : ''}</ul></section>`;
+      <ul class="chiffres">${chiffre(ds.length, 'date', 'dates')}${chiffre(reps, 'repré\u00adsentation', 'repré\u00adsentations')}${km ? chiffre(km, 'km de route, estimés', 'km de route, estimés') : ''}</ul></section>`;
   }
   function animerChiffres() {
     const els = $$('#contenu [data-compter]');
@@ -1253,8 +1253,10 @@
     return `M${pts.join('L')}`;
   }
   // les noms des lieux à venir : à droite du point, sinon à gauche, sans se chevaucher ni sortir du cadre
-  function nomsCarte(lieux, k, [bx, by, bw, bh]) {
-    const R = FRANCE.rouen, fs = 12.5 * k, h = fs * 1.25, ecart = 8 * k, boites = [[R[0] + 8 * k, R[1] - 22 * k, 46 * k, 18 * k]];
+  function nomsCarte(lieux, k, [bx, by, bw, bh], tous = lieux) {
+    const R = FRANCE.rouen, fs = 12.5 * k, h = fs * 1.25, ecart = 8 * k;
+    // déjà pris : le nom de Rouen, son point, et chaque point de la carte
+    const boites = [[R[0] + 8 * k, R[1] - 22 * k, 46 * k, 18 * k], [R[0] - 7 * k, R[1] - 7 * k, 14 * k, 14 * k], ...tous.map(x => [x.xy[0] - 5 * k, x.xy[1] - 5 * k, 10 * k, 10 * k])];
     const libre = b => b[0] > bx + 2 * k && b[0] + b[2] < bx + bw - 2 * k && b[1] > by + 2 * k && b[1] + b[3] < by + bh - 2 * k
       && boites.every(c => b[0] >= c[0] + c[2] || c[0] >= b[0] + b[2] || b[1] >= c[1] + c[3] || c[1] >= b[1] + b[3]);
     return lieux.map(x => {
@@ -1288,7 +1290,7 @@
       <defs><clipPath id="${id}-clip"><circle cx="${R[0]}" cy="${R[1]}" r="${anime ? 0 : rayon}">${anime ? `<animate attributeName="r" from="0" to="${rayon}" dur="1.5s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>` : ''}</circle></clipPath></defs>
       <path class="voisin" d="${FRANCE.belgique || ''}" style="stroke-width:${k.toFixed(2)}px"/><path class="voisin" d="${FRANCE.luxembourg || ''}" style="stroke-width:${k.toFixed(2)}px"/>
       <path class="pays" d="${FRANCE.contour}" style="stroke-width:${(1.2 * k).toFixed(2)}px"/>
-      <g clip-path="url(#${id}-clip)">${bras}${bouts}</g>${points}${nomsCarte(tri.filter(x => x.avenir), k, [bx, by, bw, bh])}
+      <g clip-path="url(#${id}-clip)">${bras}${bouts}</g>${points}${nomsCarte(tri.filter(x => x.avenir), k, [bx, by, bw, bh], tri)}
       <circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="${(5.5 * k).toFixed(2)}" style="stroke-width:${(2 * k).toFixed(2)}px"/>
       <text class="rouen-nom" x="${(R[0] + 9 * k).toFixed(1)}" y="${(R[1] - 8 * k).toFixed(1)}" style="font-size:${(13 * k).toFixed(2)}px;stroke-width:${(4 * k).toFixed(2)}px" aria-hidden="true">Rouen</text>
     </svg>`;
@@ -1354,7 +1356,6 @@
         ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}${r.fin ? `<span class="h-fin">\u2009–\u2009${esc(heureTexte(r.fin))}</span>` : ''}</span>`
           : `<span class="heure vague">${r.n > 1 ? `${esc(quoiSeance(r.n, r.public, nat))}, heures à préciser` : 'heure à préciser'}</span>`}
         <span class="h-plus">${[sco && PUBLICS[r.public] && `<span class="public${r.public === 'scolaire' ? ' sco' : ''}">${PUBLICS[r.public]}</span>`,
-          !sco && r.heure && `<span class="public">${esc(NATURES[nat].toLowerCase().replace(/s$/, ''))}</span>`,
           r.annulee && `<span class="etat annulee">${r.n > 1 ? 'annulées' : 'annulée'}</span>`, modif && '<span class="modifie">modifié</span>',
           r.note && `<span class="note">${esc(r.note)}</span>`].filter(Boolean).join(' ')}</span></li>`;
     }).join('')}</ul>`;
@@ -1432,7 +1433,7 @@
     if (!gens.length) return `<section class="bloc"${attrU(sp)} aria-labelledby="b-equipe"><h2 id="b-equipe">${ICONES.equipe}${titre}</h2><p class="aide">L’équipe de cette date n’est ${passee ? 'pas' : 'pas encore'} indiquée.</p></section>`;
     return `<section class="bloc"${attrU(sp)} aria-labelledby="b-equipe"><h2 id="b-equipe">${ICONES.equipe}${titre} <span class="compte-nb">· ${gens.length}</span></h2>
       <ul class="portraits">${gens.map(g => `<li>${avatar(g.personne || { prenom: g.nom.split(' ')[0], nom: g.nom.split(' ').slice(1).join(' ') })}<span class="qui"><b>${esc(g.nom || 'Une personne de l’équipe')}${g.id === E.moi ? ' <span class="vous">vous</span>' : ''}</b>
-        ${g.fonctions.length ? `<span>${esc(g.fonctions.join(', '))}</span>` : ''}${g.notes.length ? `<em>${esc(g.notes.join(' ; '))}</em>` : ''}</span></li>`).join('')}</ul></section>`;
+        ${g.fonctions.length ? `<span>${esc(g.fonctions.join(', '))}</span>` : ''} ${g.notes.length ? `<em>${esc(g.notes.join(' ; '))}</em>` : ''}</span></li>`).join('')}</ul></section>`;
   }
 
   // la feuille de route dans un billet : sa version, « Lire » et « PDF »
@@ -1811,7 +1812,7 @@
       ${ns.length ? `<button type="button" class="btn petit" data-tout-lu${n ? '' : ' disabled'}>${ICONES.coche}Tout marquer comme lu</button>` : ''}</div>`;
     if (E.notifsEtat === 'absent') html += etatVide('cloche', 'Les notifications arrivent bientôt', 'Une feuille de route publiée, des horaires changés, une nouvelle date : vous le lirez ici dès que la compagnie les aura mises en place.');
     else {
-      html += '<div data-zone-push="notifs"></div>';
+      html += `<div data-zone-push="notifs"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'notifs') : ''}</div>`;
       if (!ns.length) html += etatVide('cloche', 'Rien de neuf pour l’instant', 'Quand une feuille de route est publiée, qu’un horaire change (en tournée comme en répétition) ou qu’une date s’ajoute, vous le lirez ici.');
       else {
         let jour = null, ouvert = false;
@@ -2008,7 +2009,7 @@
         <dl class="compte-mel"><dt>Adresse du compte</dt><dd>${esc(mel)}</dd></dl>
         <p class="aide">Pour changer l’adresse du compte ou votre nom, écrivez à l’administration.</p>
       </section>
-      <section class="carte" aria-labelledby="t-push"><h2 id="t-push">Notifications</h2><p class="intro">Une feuille de route publiée, des horaires changés (en tournée comme en répétition), une nouvelle date.</p><div data-zone-push="moi"></div></section>
+      <section class="carte" aria-labelledby="t-push"><h2 id="t-push">Notifications</h2><p class="intro">Une feuille de route publiée, des horaires changés (en tournée comme en répétition), une nouvelle date.</p><div data-zone-push="moi"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'moi') : ''}</div></section>
       <section class="carte" aria-labelledby="t-app"><h2 id="t-app">L’application</h2><div data-zone-installation="moi">${zoneInstallation('moi')}</div></section>`;
     if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
       : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
@@ -2165,7 +2166,8 @@
       if (m.type === 'push' && E.pret && E.tempsReel !== 'SUBSCRIBED') chargerNotifs({ signaler: true }).catch(() => {});
       if (m.type === 'abonnement-change' && E.pret) majCartePush();
     });
-    navigator.serviceWorker.register('sw.js', { scope: './' }).then(reg => {
+    const suivre = reg => {
+      if (!reg) return;
       const proposer = w => {
         if (!w || !navigator.serviceWorker.controller) return;     // la première installation : rien à proposer
         annoncer('Nouvelle version disponible.', { persistant: true, action: { libelle: 'Mettre à jour', f: () => {
@@ -2175,8 +2177,15 @@
       };
       if (reg.waiting) proposer(reg.waiting);
       reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed') proposer(w); }); });
-      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
-    }).catch(e => console.warn('service de l’application', e));
+      const verifier = () => { if (navigator.onLine) reg.update().catch(() => {}); };
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') verifier(); });
+      window.addEventListener('online', verifier);
+    };
+    // hors connexion, l'enregistrement échoue (le service ne peut pas être relu) : celui qui est déjà là sert quand même
+    navigator.serviceWorker.register('sw.js', { scope: './' }).then(suivre).catch(async e => {
+      if (navigator.onLine) console.warn('service de l’application', e);
+      try { suivre(await navigator.serviceWorker.getRegistration()); } catch (err) { /* aucun */ }
+    });
   }
 
   // ================================================================================================ tirer pour rafraîchir

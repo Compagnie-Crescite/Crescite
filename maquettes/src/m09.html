@@ -426,6 +426,42 @@ details.lieux p{margin-top:12px;font-size:.9375rem;line-height:1.65;color:var(--
 .ac-dispositifs a{color:var(--u-vif)}
 .ac-liens{margin-top:auto;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding-top:8px}
 .bouton-petit{padding:10px 16px 10px 18px;font-size:.9375rem;gap:10px}
+/* le contact diffusion, le dossier PDF et les documents (règle 13) */
+.cd{display:grid;gap:6px;max-width:640px;margin-top:clamp(24px,4vh,40px);padding:24px 28px 22px;border:1px solid color-mix(in srgb,var(--creme) 34%,transparent);border-radius:24px;background:color-mix(in srgb,var(--creme) 8%,transparent);color:var(--creme);position:relative}
+.cd-k{margin:0;font-size:var(--t-petit);font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:inherit;opacity:.76}
+.cd-nom b{display:block;font-family:Gloock,Georgia,serif;font-weight:400;font-size:var(--t-moyen);line-height:1.1}
+.cd-role{display:block;margin-top:2px;opacity:.86}
+.cd-liens{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;margin-top:14px}
+.cd-mail{display:inline-flex;align-items:center;gap:14px;padding:14px 22px 14px 26px;border-radius:999px;background:var(--ev);color:var(--nuit);font-weight:600;line-height:1.2;text-decoration:none;overflow-wrap:anywhere;transition:box-shadow .45s var(--ease)}
+.cd-mail .fleche{display:inline-block;transition:transform .45s var(--ease)}
+.cd-mail:hover{box-shadow:0 14px 34px -14px var(--ev)}
+.cd-mail:hover .fleche{transform:translateX(5px)}
+.cd-tel{font-weight:600;color:inherit}
+html:not(.ed-actif) .cd-tel.vide{display:none}
+.cd-cond{margin:10px 0 0;font-size:var(--t-petit);opacity:.82}
+.cd--s{max-width:none;margin-top:clamp(28px,4vh,44px);padding:18px 22px 16px;border-color:color-mix(in srgb,var(--u-texte) 30%,transparent);border-radius:20px;background:transparent;color:var(--u-texte)}
+.cd--s .cd-k{color:var(--u-texte);opacity:.72}
+.cd--s .cd-nom b{display:inline;font-size:clamp(1.25rem,1.8vw,1.5rem)}
+.cd--s .cd-role{display:inline;margin-left:10px}
+.cd--s .cd-liens{margin-top:10px}
+.cd--s .cd-mail{padding:10px 16px 10px 18px;background:var(--u-vif);color:var(--u-sur);font-size:.9375rem;gap:10px}
+.dos-bt{position:relative;font:inherit;font-weight:600;font-size:.9375rem;border:0;cursor:pointer;text-align:left}
+.dos-bt .dos-ico,.dos-bt .dos-bras{flex:none;width:18px;height:18px}
+.dos-bt .dos-bras{display:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.dos-bt[aria-busy="true"]{cursor:progress}
+.dos-bt[aria-busy="true"] .dos-ico{display:none}
+.dos-bt[aria-busy="true"] .dos-bras{display:block}
+.dos-bras path{stroke-dasharray:1;stroke-dashoffset:1;animation:bras-trace 1.15s var(--ease) infinite}
+@keyframes bras-trace{0%{stroke-dashoffset:1}65%,100%{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.dos-bras path{animation:none;stroke-dashoffset:0}}
+.pr-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin:clamp(24px,3vh,36px) 0 0}
+.docs{display:grid;gap:12px;list-style:none;margin:0;padding:0}
+.docs li{display:flex;align-items:center;gap:12px}
+.docs li>.dos-ico{flex:none;width:18px;height:18px;color:var(--u-vif,var(--e))}
+.docs a{font-weight:600;text-underline-offset:.26em}
+.ft-docs{margin-top:clamp(20px,3vh,32px)}
+.cat-docs{margin-top:4px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--u-texte) 18%,transparent)}
+.cat-docs .cd-k{margin-bottom:10px;color:var(--u-texte);opacity:.72}
 .lien-dossier{font-weight:600;color:var(--u-vif);text-underline-offset:.25em}
 .actions-photos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:clamp(32px,5vh,56px)}
 .actions-photos img{width:100%;height:100%;aspect-ratio:1;object-fit:cover}
@@ -978,6 +1014,8 @@ html .ed-ajout{margin:0 0 18px}
   const L = () => D.site.libelles || {};
   const spectacle = (slug) => (D.shows || []).find((s) => s.slug === slug) || null;
   const entrees = () => D.site.entrees || [];
+  // un spectacle sans action culturelle (Cassandres, pour l'instant) n'a pas d'onglet établissement : on le mène à « voir » (règle 14)
+  const entreeSp = (slug, cle) => cle === 'etablissement' && !(spectacle(slug) || {}).actionCulturelle ? 'voir' : cle;
   const entree = (cle) => entrees().find((e) => e.cle === cle) || null;
   const menuItem = (id) => (D.site.menu || []).find((m) => m.id === id) || null;
   const photo = (cle) => (cle && D.photos && D.photos[cle]) || null;
@@ -1090,7 +1128,7 @@ html .ed-ajout{margin:0 0 18px}
   function ligneDate(d, { titre = true, entree: cle = 'voir', point = null } = {}) {
     const s = spectacle(d.slug), u = s ? univers(s) : null;
     const [jour, mois] = decoupe(d.ligneDate);
-    const quoi = titre ? `<p class="date-quoi">${s ? `<a href="#/spectacle/${esc(s.slug)}/${esc(cle)}">` : '<span>'}<span class="date-point" aria-hidden="true"></span>${esc(d.titre)}${s ? '</a>' : '</span>'}</p>` : '';
+    const quoi = titre ? `<p class="date-quoi">${s ? `<a href="#/spectacle/${esc(s.slug)}/${esc(entreeSp(s.slug, cle))}">` : '<span>'}<span class="date-point" aria-hidden="true"></span>${esc(d.titre)}${s ? '</a>' : '</span>'}</p>` : '';
     return `<li class="date${d.etat ? ' est-annule' : ''}"${dateId(d)}${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${esc(d.slug || '')}" style="--point:${point || (u ? u.papier : 'currentColor')}">
       <p class="date-quand"><span class="date-jour">${esc(jour)}</span>${mois ? `<span class="date-moisan">${esc(mois)}</span>` : ''}</p>
       <div class="date-corps">${quoi}<p class="date-ou">${esc(d.ligneLieu)}</p>${d.etat ? `<p class="pastille">${esc(d.etat)}</p>` : ''}${details(d.details)}</div>
@@ -1203,7 +1241,7 @@ html .ed-ajout{margin:0 0 18px}
     ${tournee}
     <div class="chap-actions">
       <a class="bouton" href="#/spectacle/${esc(s.slug)}">${esc(lib.decouvrir)}<span class="sr"> ${esc(s.titre)}</span><span class="fleche" aria-hidden="true">→</span></a>
-      <ul class="chap-entrees">${entrees().map((e) => `<li><a href="#/spectacle/${esc(s.slug)}/${esc(e.cle)}" style="${couleursE(e)}">${brasE()}<span>${esc(e.court)}</span><span class="sr"> ${esc(s.titre)}</span></a></li>`).join('')}</ul>
+      <ul class="chap-entrees">${entrees().filter((e) => e.cle !== 'etablissement' || s.actionCulturelle).map((e) => `<li><a href="#/spectacle/${esc(s.slug)}/${esc(e.cle)}" style="${couleursE(e)}">${brasE()}<span>${esc(e.court)}</span><span class="sr"> ${esc(s.titre)}</span></a></li>`).join('')}</ul>
     </div>
   </div>
 </section>`;
@@ -1285,13 +1323,13 @@ ${finHTML()}`;
   }
 
   /* ================= les trois entrées ================= */
-  function enteteEntree(e) {
+  function enteteEntree(e, apres = '') {
     return `<header class="ent-tete" data-ton="chapitre">
       <svg class="ent-bras" viewBox="0 0 640 220" aria-hidden="true" focusable="false"><path pathLength="1" d="M-10 200C120 192 228 162 318 114S470 28 540 42s58 70 14 86-62-18-40-40 52-6 50 14"/></svg>
-      <div class="ent-int"><h1 class="ent-titre" id="t-page" tabindex="-1">${esc(e.texte)}</h1></div>
+      <div class="ent-int"><h1 class="ent-titre" id="t-page" tabindex="-1">${esc(e.texte)}</h1>${apres}</div>
     </header>`;
   }
-  const pageEntree = (e, corps) => `<div class="page libre page-entree${enPlace ? ' deja' : ''}" style="${couleursE(e)}">${enteteEntree(e)}${corps}</div>`;
+  const pageEntree = (e, corps, apres = '') => `<div class="page libre page-entree${enPlace ? ' deja' : ''}" style="${couleursE(e)}">${enteteEntree(e, apres)}${corps}</div>`;
   // un spectacle en tournée, dans son univers (Je viens voir un spectacle)
   function mini(s) {
     const u = univers(s);
@@ -1535,6 +1573,37 @@ ${finHTML()}`;
   </section>
   ${enTournee.length ? `<section class="bloc" data-ton="clair" aria-labelledby="t-tournees"><div class="grille"><h2 class="bloc-titre" id="t-tournees">${esc(lib.actuellementEnTournee)}</h2><ul class="minis">${enTournee.map(mini).join('')}</ul></div></section>` : ''}`);
   }
+  /* « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu */
+  const contactPrg = () => (S().programmation || {}).contact || null;
+  const mailPrg = (objet) => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
+  const docsDe = (s, pour) => (D.documents || []).filter((x) => x.spectacle === s.slug && x.pour === pour && x.url);
+  const ICO_PDF = '<svg class="dos-ico" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 3v10M5.5 9 10 13.5 14.5 9M4 17h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // le bras de pieuvre qui se dessine : l'animation du bouton pendant la composition du dossier
+  const BRAS_DOS = '<svg class="dos-bras" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path pathLength="1" d="M3 20c5-1 8.5-4.5 10-9 1.2-3.6 4.4-5.6 7-4.2 2.4 1.3 1.6 4.8-.8 5-2 .1-2.6-2.4-1-3"/></svg>';
+  const lienDoc = (x) => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
+  const listeDocs = (docs) => `<ul class="docs">${docs.map((x) => `<li>${ICO_PDF}${lienDoc(x)}</li>`).join('')}</ul>`;
+  // le contact diffusion : le nom, le rôle, le courriel (lien mailto: avec l'objet), le téléphone s'il existe ; sur un spectacle : compact, aux couleurs de son univers
+  function contactHtml(s) {
+    const lib = L(), c = contactPrg(); if (!c) return '';
+    const k = 'site.programmation.contact', href = mailPrg(s ? `${lib.objetProgrammation} – ${s.titre}` : lib.objetProgrammation), tel = String(c.telephone || '').replace(/[^\d+]/g, '');
+    return `<aside class="cd${s ? ' cd--s' : ''}" aria-label="${esc(lib.contactDiffusion)}">
+      <p class="cd-k">${esc(lib.contactDiffusion)}</p>
+      <p class="cd-nom"><b${ed(`${k}.nom`)}>${esc(c.nom)}</b> <span class="cd-role"${ed(`${k}.role`)}>${esc(c.role)}</span></p>
+      <p class="cd-liens">${c.email ? `<a class="cd-mail${s ? ' bouton bouton-petit' : ''}" href="${esc(href)}"><span${ed(`${k}.email`)}>${esc(c.email)}</span><span class="fleche" aria-hidden="true">→</span></a>` : ''}${c.telephone ? `<a class="cd-tel" href="tel:${esc(tel)}"><span${ed(`${k}.telephone`)}>${esc(c.telephone)}</span></a>` : `<span class="cd-tel vide"${ed(`${k}.telephone`)}></span>`}</p>
+      <p class="cd-cond">${esc(lib.conditionsFinancieres)}</p>
+    </aside>`;
+  }
+  // le dossier du spectacle en PDF, composé à la demande (dossier.js) : pendant ce temps le bouton est occupé (aria-busy), un bras s'y dessine, puis il redevient actif
+  const OCCUPES = new Set();
+  const dossierBouton = (slug) => `<button type="button" class="bouton bouton-petit dos-bt" data-dossier="${esc(slug)}"${OCCUPES.has(slug) ? ' aria-busy="true" disabled' : ''}>${ICO_PDF}${BRAS_DOS}<span>${esc(L().dossierPdf)}</span></button>`;
+  const occuper = (slug, oui) => $$(`[data-dossier="${slug}"]`).forEach((b) => { b.disabled = oui; if (oui) b.setAttribute('aria-busy', 'true'); else b.removeAttribute('aria-busy'); });
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
+    const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
+    OCCUPES.add(slug); occuper(slug, true);
+    DOSSIER.telecharger(slug).then(() => { const c = $(`[data-dossier="${slug}"]`); if (c && typeof TENTACULES !== 'undefined') TENTACULES.confirmer(c); })
+      .catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
+  });
   // une fiche du catalogue, dans l'univers du spectacle (Je souhaite programmer)
   function ficheLignes(s, sansSous = false, sansAvec = false) {
     const P = s.programmer || {};
@@ -1563,9 +1632,11 @@ ${finHTML()}`;
         ${P.actualite ? `<p class="cat-actu"${edS(s, 'programmer.actualite')}>${esc(P.actualite)}</p>` : ''}
         <div class="cat-cols">${faits(s) ? `<div class="cat-a">${faits(s)}</div>` : ''}<div class="cat-fiche">${ficheLignes(s, true)}</div></div>
         <div class="cat-liens">
+          ${dossierBouton(s.slug)}
           <a class="bouton bouton-petit" href="#/spectacle/${esc(s.slug)}/programmer">${esc(ep ? ep.court : s.titre)}<span class="sr"> ${esc(s.titre)}</span><span class="fleche" aria-hidden="true">→</span></a>
           ${s.video && s.video.url ? `<a class="cat-video" href="${esc(s.video.url)}" target="_blank" rel="noopener">${JOUER}<span>${esc(lib.bandeAnnonce)}</span><span class="sr"> ${esc(s.titre)}</span></a>` : ''}
         </div>
+        ${docsDe(s, 'pros').length ? `<div class="cat-docs"><p class="cd-k">${esc(lib.aTelecharger)}</p>${listeDocs(docsDe(s, 'pros'))}</div>` : ''}
         ${P.lieux ? `<details class="lieux" data-cle="lieux-${esc(s.slug)}"><summary>${esc(lib.lieuxDiffusion)}</summary><p${edS(s, 'programmer.lieux')}>${esc(P.lieux)}</p></details>` : ''}
       </div>
     </li>`;
@@ -1585,7 +1656,7 @@ ${finHTML()}`;
         <p>${ecrireCTA()}</p>
       </div>
     </div>
-  </section>`);
+  </section>`, contactHtml(null));
   }
   // une carte d'action culturelle, dans l'univers du spectacle (Je représente un établissement scolaire)
   function carteAC(s) {
@@ -1609,7 +1680,7 @@ ${finHTML()}`;
     const groupes = [
       { cle: 'etablissement', titre: lib.lieu && lib.lieu.etablissement, shows: D.shows.filter((s) => lieuDe(s) === 'etablissement') },
       { cle: 'salle', titre: lib.lieu && lib.lieu.salle, shows: D.shows.filter((s) => lieuDe(s) === 'salle') },
-      { cle: 'autres', titre: null, shows: D.shows.filter((s) => !['etablissement', 'salle'].includes(lieuDe(s))) },
+      { cle: 'autres', titre: null, shows: D.shows.filter((s) => s.actionCulturelle && !['etablissement', 'salle'].includes(lieuDe(s))) },   // sans action culturelle : pas ici (règle 14)
     ].filter((g) => g.shows.length);
     const sco = D.dates.filter((d) => d.scolaire);
     const photosA = ['actions-culturelles', 'actions-culturelles/g-1', 'actions-culturelles/g-2', 'actions-culturelles/g-3', 'actions-culturelles/g-4'].filter(photo);
@@ -1770,7 +1841,7 @@ ${finHTML()}`;
       ${s.credit && photo(s.slug) ? `<p class="ouv-credit"${edS(s, 'credit')}>${esc(s.credit)}</p>` : ''}
     </section>`;
   }
-  const ongletsHTML = (s, cle) => `<nav class="onglets" aria-label="${esc(s.titre)}"><ul>${entrees().map((e) => `<li><a href="#/spectacle/${esc(s.slug)}/${esc(e.cle)}" data-cle="${esc(e.cle)}" style="${couleursE(e)}"${e.cle === cle ? ' aria-current="page"' : ''}>${brasE()}<span class="o-long">${esc(e.texte)}</span><span class="o-court">${esc(e.court)}</span></a></li>`).join('')}</ul></nav>`;
+  const ongletsHTML = (s, cle) => `<nav class="onglets" aria-label="${esc(s.titre)}"><ul>${entrees().filter((e) => e.cle !== 'etablissement' || s.actionCulturelle).map((e) => `<li><a href="#/spectacle/${esc(s.slug)}/${esc(e.cle)}" data-cle="${esc(e.cle)}" style="${couleursE(e)}"${e.cle === cle ? ' aria-current="page"' : ''}>${brasE()}<span class="o-long">${esc(e.texte)}</span><span class="o-court">${esc(e.court)}</span></a></li>`).join('')}</ul></nav>`;
   const citationHTML = (s, c, i) => `<blockquote class="vers${c.prose ? ' prose' : ''}"><p>${(c.vers || []).map((v, j) => `<span class="v"${edS(s, `citations.${i}.vers.${j}`)}>${esc(v)}</span>`).join('')}</p>${c.source ? `<footer${edS(s, `citations.${i}.source`)}>${esc(c.source)}</footer>` : ''}</blockquote>`;
   function videoHTML(s) {
     const ph = photosDe(s, (p) => !p.etablissement && !p.atelier), fond = photo((ph[1] || ph[0] || {}).cle) || photo(s.slug);
@@ -1844,14 +1915,19 @@ ${finHTML()}`;
   }
   function sectionsProgrammer(s) {
     const lib = L(), P = s.programmer || {}, out = [], K = CARTE.spectacle(s.slug);
-    out.push({ id: 'spectacle', som: lib.leSpectacle, titre: lib.leSpectacle, corps: `${P.actualite ? `<p class="actu-u"${edS(s, 'programmer.actualite')}>${esc(P.actualite)}</p>` : ''}${faits(s, 'faits faits-u')}${P.equipeCreation && P.equipeCreation.length ? `<div class="equipe-u">${ficheLignes(s)}</div>` : ''}` });
+    const lienBA = s.video && s.video.url ? `<a class="cat-video" href="${esc(s.video.url)}" target="_blank" rel="noopener">${JOUER}<span>${esc(lib.bandeAnnonce)}</span><span class="sr"> ${esc(s.titre)}</span></a>` : '';
+    out.push({ id: 'spectacle', som: lib.leSpectacle, titre: lib.leSpectacle, corps: `${P.actualite ? `<p class="actu-u"${edS(s, 'programmer.actualite')}>${esc(P.actualite)}</p>` : ''}${faits(s, 'faits faits-u')}${P.equipeCreation && P.equipeCreation.length ? `<div class="equipe-u">${ficheLignes(s)}</div>` : ''}<p class="pr-actions">${dossierBouton(s.slug)}${lienBA}</p>${contactHtml(s)}` });
     if (s.video && s.video.url) out.push({ id: 'video', som: lib.bandeAnnonce, titre: lib.bandeAnnonce, corps: videoHTML(s) });
     const toutes = D.dates.filter((d) => d.slug === s.slug);
     if (P.lieux || K.aVenir.length || K.passe.length) {
       out.push({ id: 'lieux', som: lib.lieuxDiffusion, titre: lib.lieuxDiffusion, corps: `${P.lieux ? `<p class="lieux-u"${edS(s, 'programmer.lieux')}>${esc(P.lieux)}</p>` : ''}${K.aVenir.length || K.passe.length ? tourneeG(s, toutes.length ? `<h3 class="sous-titre">${esc(lib.dates)}</h3>${listeDates(toutes, { titre: false, point: 'var(--u-vif)' })}` : '', K.aVenir, K.passe, lib.lieuxDiffusion) : ''}` });
     }
     const B = s.dossier && D.dossiers && D.dossiers[s.dossier];
-    if (P.ficheTechnique && B && B.accueil) out.push({ id: 'technique', som: lib.ficheTechnique, titre: B.accueil.fiche || lib.ficheTechnique, edit: B.accueil.fiche ? `dossiers.${s.dossier}.accueil.fiche` : '', corps: techniqueHTML(s, B) });
+    // la fiche technique : le détail de Bérénice (blocs du dossier) puis le PDF en lien ; un document déposé ; sinon sur demande (jamais de rubrique vide)
+    const fts = docsDe(s, 'pros').filter((x) => x.type === 'fiche_technique'), hrefFt = mailPrg(`${lib.ficheTechnique} – ${s.titre}`);
+    if (P.ficheTechnique && B && B.accueil) out.push({ id: 'technique', som: lib.ficheTechnique, titre: B.accueil.fiche || lib.ficheTechnique, edit: B.accueil.fiche ? `dossiers.${s.dossier}.accueil.fiche` : '', corps: techniqueHTML(s, B) + (fts.length ? `<div class="ft-docs">${listeDocs(fts)}</div>` : '') });
+    else out.push({ id: 'technique', som: lib.ficheTechnique, titre: lib.ficheTechnique, corps: fts.length ? listeDocs(fts) : `<ul class="docs"><li>${ICO_PDF}${hrefFt ? `<a href="${esc(hrefFt)}">${esc(lib.ficheTechniqueSurDemande)}</a>` : `<span>${esc(lib.ficheTechniqueSurDemande)}</span>`}</li></ul>` });
+    out.push({ id: 'telecharger', som: lib.aTelecharger, titre: lib.aTelecharger, corps: `<ul class="docs"><li>${dossierBouton(s.slug)}</li>${docsDe(s, 'pros').map((x) => `<li>${ICO_PDF}${lienDoc(x)}</li>`).join('')}</ul>` });
     out.push({ id: 'distribution', som: lib.distribution, titre: lib.distribution, corps: `${distributionHTML(s)}<p class="cta-u">${ecrireCTA()}</p>` });
     return out;
   }
@@ -1904,6 +1980,7 @@ ${finHTML()}`;
     out.push({ id: 'action', som: lib.actionCulturelle, titre: lib.actionCulturelle, corps: actionHTML(s, u) });
     const sco = D.dates.filter((d) => d.slug === s.slug && d.scolaire);
     if (sco.length) out.push({ id: 'dates', som: lib.enEtablissement, titre: lib.enEtablissement, corps: tourneeG(s, listeDates(sco, { titre: false, point: 'var(--u-vif)' }), garder(K.aVenir, (d) => d.scolaire), [], lib.enEtablissement) });
+    if (docsDe(s, 'scolaires').length) out.push({ id: 'documents', som: lib.documentsScolaires, titre: lib.documentsScolaires, corps: listeDocs(docsDe(s, 'scolaires')) });
     const B = s.dossier && D.dossiers && D.dossiers[s.dossier];
     if (B) out.push(...dossierSections(s, B));
     out.push({ id: 'distribution', som: lib.distribution, titre: lib.distribution, corps: `${distributionHTML(s)}<p class="cta-u">${ecrireCTA()}</p>` });
@@ -1912,7 +1989,7 @@ ${finHTML()}`;
   function suivantHTML(n, cle) {
     const u = univers(n);
     return `<section class="suivant ${classeU(u)}" data-ton="${u.clair ? 'clair' : 'chapitre'}" aria-labelledby="t-suivant" style="${esc(u.css)}">
-      <a class="suivant-lien" href="#/spectacle/${esc(n.slug)}/${esc(cle)}">
+      <a class="suivant-lien" href="#/spectacle/${esc(n.slug)}/${esc(entreeSp(n.slug, cle))}">
         <span class="suivant-photo">${photo(n.slug) ? `<img src="${photo(n.slug)}" alt="" loading="lazy">` : ''}</span>
         <span class="suivant-texte">
           <span class="suivant-sur">${esc(n.creation)}</span>
@@ -2216,9 +2293,10 @@ ${finHTML()}`;
     }
     if ((m = chemin.match(/^spectacle\/([\w-]+)\/([\w-]+)$/)) && spectacle(m[1]) && entree(m[2])) {
       const s = spectacle(m[1]), x = entree(m[2]);
+      if (x.cle === 'etablissement' && !s.actionCulturelle) return { remplacer: `#/spectacle/${m[1]}/voir` };   // sans action culturelle : « voir »
       return { vue: 'spectacle', s, cle: x.cle, entree: x.cle, marque: 'true', retenir: x.cle, titre: x.cle === 'voir' ? s.titre : `${s.titre} - ${x.court}` };
     }
-    if ((m = chemin.match(/^spectacle\/([\w-]+)$/)) && spectacle(m[1])) return { remplacer: `#/spectacle/${m[1]}/${retenue() || 'voir'}` };
+    if ((m = chemin.match(/^spectacle\/([\w-]+)$/)) && spectacle(m[1])) return { remplacer: `#/spectacle/${m[1]}/${entreeSp(m[1], retenue() || 'voir')}` };
     if ((m = chemin.match(/^agenda\/([\w-]+)$/)) && D.saisons && D.saisons[m[1]]) {
       if (m[1] === saisonCourante().saison && entree('voir')) return { remplacer: entree('voir').href };
       const cle = m[1];

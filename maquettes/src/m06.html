@@ -388,6 +388,7 @@ html:not(.ed-actif) .cu-tel.vide { display: none; }
 .docs-u { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
 .docs-u li { display: flex; align-items: center; gap: 10px; }
 .docs-u a { color: var(--u-vif); font-weight: 600; }
+.ft-blocs ~ .docs-u { margin-top: clamp(18px, 2vw, 28px); }
 .fu-docs { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--filet); }
 .fu-docs .cu-k { margin: 0 0 8px; }
 .lien-video { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px 8px 10px; border-radius: 999px; background: var(--u-aplat); color: var(--u-sur); font-weight: 600; font-size: .92rem; text-decoration: none; }
@@ -1646,16 +1647,16 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
       + (P.equipeCreation ? `<ul class="fu-equipe">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : '')
       + `<div class="texte" style="margin-top:22px"><p${edS(s, 'texte', 0)}>${s.texte[0]}</p></div>` });
     if (s.video) ch.push({ id: 'video', lib: L.bandeAnnonce, html: h2u('video', L.bandeAnnonce) + video(s) });
-    const B = s.dossier && D.dossiers[s.dossier];
+    const B = s.dossier && D.dossiers[s.dossier], ftDocs = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');
     if (P.ficheTechnique && B) {
       const A = B.accueil, impl = s.photos.find(p => p.id === 'd-implantation-1'), ea = (...k) => ed(['dossiers', s.dossier, 'accueil', ...k].join('.'));
       ch.push({ id: 'technique', lib: L.ficheTechnique, html: h2u('technique', A.fiche, `dossiers.${s.dossier}.accueil.fiche`) + `<p class="ft-titre"${ea('titre')}>${esc(A.titre)}</p>
         <div class="ft-blocs">${A.blocs.map((b, i) => `<div class="ft-bloc">${b.titre ? `<h4${ea('blocs', i, 'titre')}>${esc(b.titre)}</h4>` : ''}<ul>${b.lignes.map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${l}</li>`).join('')}</ul></div>`).join('')}</div>
         ${A.alerte ? `<p class="alerte"${ea('alerte')}>${A.alerte}</p>` : ''}
-        ${impl ? `<figure class="photo-u"${edP(s, 'photos', rangPh(s, impl))}><img src="${D.photos[impl.cle]}" alt="${esc(impl.legende || A.photos)}" loading="lazy"><figcaption${impl.legende ? edS(s, 'photos', rangPh(s, impl), 'legende') : ea('photos')}>${esc(impl.legende || A.photos)}</figcaption></figure><p class="credit"${edS(s, impl.source === 'dossier' ? 'creditDossier' : 'creditPhotos')}>${esc(creditDe(s, impl))}</p>` : ''}` });
+        ${impl ? `<figure class="photo-u"${edP(s, 'photos', rangPh(s, impl))}><img src="${D.photos[impl.cle]}" alt="${esc(impl.legende || A.photos)}" loading="lazy"><figcaption${impl.legende ? edS(s, 'photos', rangPh(s, impl), 'legende') : ea('photos')}>${esc(impl.legende || A.photos)}</figcaption></figure><p class="credit"${edS(s, impl.source === 'dossier' ? 'creditDossier' : 'creditPhotos')}>${esc(creditDe(s, impl))}</p>` : ''}${ftDocs.length ? listeDocs(ftDocs) : ''}` });   // puis le PDF « fiche technique et plan » en lien
     }
     else {   // la fiche technique : un document déposé, sinon sur demande (jamais de rubrique vide)
-      const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
+      const fts = ftDocs, href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
       ch.push({ id: 'technique', lib: L.ficheTechnique, html: h2u('technique', L.ficheTechnique) + (fts.length ? listeDocs(fts) : `<ul class="docs-u"><li>${icPdf}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li></ul>`) });
     }
     ch.push({ id: 'telecharger', lib: L.aTelecharger, html: h2u('telecharger', L.aTelecharger) + `<ul class="docs-u"><li>${dossierBouton(s.slug)}</li>${docsDe(s, 'pros').map(x => `<li>${icPdf}${lienDoc(x)}</li>`).join('')}</ul>` });

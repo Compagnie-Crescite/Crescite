@@ -559,15 +559,11 @@ def admin(dest):
     shutil.copyfile(SRC / "agenda.js", dest / "admin" / "agenda.js")
     shutil.copyfile(SRC / "tentacules.js", dest / "admin" / "tentacules.js")
     # le logo des feuilles de route (admin/feuille.js le lit à côté de lui) : la tache noire, la pieuvre et le mot en blanc,
-    # tirés du logo privé (private/brand). Il ne va jamais dans le dépôt : il n'est écrit que dans une sortie que git
-    # ignore (maquettes/dist) ; ailleurs (docs/, versionné) ou sans le logo privé, la feuille montre un badge à sa place.
-    import subprocess
+    # tirés du logo privé (private/brand). Sa source ne va jamais dans le dépôt ; le dessin produit à la construction va,
+    # comme le logo des maquettes, dans maquettes/dist et dans le site publié (docs/ : publication décidée par la
+    # compagnie). Sans le logo privé, la feuille montre un badge à sa place.
     logo = dest / "admin" / "logo-feuille.svg"
-    try:
-        ignore = subprocess.run(["git", "-C", str(ROOT), "check-ignore", "-q", str(logo)]).returncode == 0
-    except OSError:
-        ignore = False
-    if ignore and (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists():
+    if (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists():
         logo.write_text(logo_variants()["full"].replace('fill="#BC3E80"', 'fill="#1d1d1b"'), encoding="utf-8")
     elif logo.exists():
         logo.unlink()
@@ -580,10 +576,12 @@ def equipe(dest):
       carte.js   la France, la Belgique, le Luxembourg, Rouen et la projection des maquettes (prototype/src/map.json), pour
                  la carte de la tournée ;
       icones/    les icônes de l'application (192, 512, 512 « maskable », 180 pour l'iPhone, et le badge des notifications),
-                 tirées du logo : le logo 2.0 (privé) dans une sortie que git ignore (maquettes/dist), la pieuvre de
-                 substitution ailleurs (docs/, versionné), comme le logo des feuilles de route. SVG → PNG par cairosvg,
-                 rsvg-convert ou Chromium (Playwright : PLAYWRIGHT_MODULE, CHROMIUM), gardées dans le dossier temporaire
-                 tant que le logo ne change pas ; sans aucun d'eux, une pastille unie ;
+                 tirées du logo 2.0 dès que sa source privée est là (private/brand), quel que soit dest : la source ne va
+                 jamais dans le dépôt, le dessin produit va, comme le logo des maquettes, dans maquettes/dist et dans le
+                 site publié (docs/, publication décidée par la compagnie). Sans la source privée, la pieuvre de
+                 substitution. SVG → PNG par cairosvg, rsvg-convert ou Chromium (Playwright : PLAYWRIGHT_MODULE,
+                 CHROMIUM), gardées dans le dossier temporaire tant que le logo ne change pas ; sans aucun d'eux, une
+                 pastille unie ;
       sw.js      sa VERSION : une empreinte de tout ce que le service de l'application garde (une nouvelle version s'annonce
                  alors dans l'application).
     Rien de cela n'arrête la construction : en cas d'échec, un avertissement, et l'espace marche sans."""
@@ -626,17 +624,10 @@ def equipe(dest):
                       + bloc(b"IDAT", zlib.compress(b"".join(lignes), 9)) + bloc(b"IEND", b""))
 
     def icones(dossier):
-        try:
-            prive = subprocess.run(["git", "-C", str(ROOT), "check-ignore", "-q", str(dossier / "512.png")]).returncode == 0
-        except OSError:
-            prive = False
-        if prive:
-            v = logo_variants()
-            tache, bras = v["tachePath"], v["octopusPaths"]
-        else:
-            s, _ = proto.fallback_logo_and_arms()
-            traces = {k: re.search(r'd="([^"]*)"', a).group(1) if re.search(r'd="([^"]*)"', a) else "" for k, a in re.findall(r'<path id="([^"]+)"([^>]*)/>', s)}
-            tache, bras = traces.get("blob", ""), [traces.get(k, "") for k in ("tentacles-left", "head-left", "head-right", "tentacles-right")]
+        # logo_variants() lit le logo 2.0 s'il est là, sinon la pieuvre de substitution
+        prive = (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists()
+        v = logo_variants()
+        tache, bras = v["tachePath"], v["octopusPaths"]
         pieuvre = "".join(f'<path d="{d}"/>' for d in bras if d)
         carre = lambda cx, cy, c: f"{cx - c / 2:.1f} {cy - c / 2:.1f} {c:.1f} {c:.1f}"
         svg = lambda vb, corps: f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}" width="{{n}}" height="{{n}}">{corps}</svg>'

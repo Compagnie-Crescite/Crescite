@@ -495,6 +495,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .docs{list-style:none;display:grid;gap:10px;margin:0;padding:0}
 .docs li{display:flex;align-items:center;gap:12px}
 .docs a{font-weight:600;color:var(--u-vif)}
+.ft-blocs ~ .docs{margin-top:clamp(18px,2vw,28px)}
 .fp-docs{margin-top:16px;padding-top:12px;border-top:1px solid var(--u-ligne)}
 .fp-docs .ct-k{margin:0 0 8px}
 /* la distribution en portraits (D.personnes, show.equipe) : chaque comédien sous son arche, la photo, ou le monogramme sur une porte éclairée ; ceux qui alternent vont par deux */
@@ -1760,9 +1761,10 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     if (ms) ch.push({ id: 'ch-video', titre: L.bandeAnnonce, html: ms });
     if (P.lieux || sp.passe.length || sp.aVenir.length) ch.push({ id: 'ch-lieux', titre: L.lieuxDiffusion, html: `${P.lieux ? `<p class="lieux-texte"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sp.passe.length || sp.aVenir.length ? `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ lieux: sp.aVenir, passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>` : ''}` });
     const DB = s.dossier && D.dossiers && D.dossiers[s.dossier];
-    if (P.ficheTechnique && DB && DB.accueil) ch.push({ id: 'ch-technique', titre: L.ficheTechnique, html: ficheTechnique(s, DB.accueil) });
+    const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');   // la fiche technique déposée : en lien, avec le détail de Bérénice s'il y en a un
+    if (P.ficheTechnique && DB && DB.accueil) ch.push({ id: 'ch-technique', titre: L.ficheTechnique, html: ficheTechnique(s, DB.accueil) + (fts.length ? listeDocs(fts) : '') });
     else {   // la fiche technique : un document déposé, sinon sur demande (jamais de rubrique vide)
-      const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
+      const href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
       ch.push({ id: 'ch-technique', titre: L.ficheTechnique, html: fts.length ? listeDocs(fts) : `<ul class="docs"><li>${PORTE}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li></ul>` });
     }
     ch.push({ id: 'ch-telecharger', titre: L.aTelecharger, html: `<ul class="docs"><li>${dossierBouton(s.slug)}</li>${docsDe(s, 'pros').map(x => `<li>${PORTE}${lienDoc(x)}</li>`).join('')}</ul>` });
