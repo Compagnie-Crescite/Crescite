@@ -1131,7 +1131,7 @@ a.an-t:hover{text-decoration:underline}
     const pub = D.dates.filter(d => !d.scolaire);
     const enTournee = D.shows.filter(s => pub.some(d => d.slug === s.slug));
     return enteteEntree(E, S0.titre) + `
-      <section class="sec" aria-labelledby="h-page"><div class="wrap ag">
+      <section class="sec" aria-labelledby="h-dates"><h2 class="sr" id="h-dates">${esc(L.dates)}</h2><div class="wrap ag">
         <div class="ag-carte">${affiche({ lieux: CARTE.aVenir('public'), titre: S0.titre })}<div class="filtre" hidden></div></div>
         ${listeMois(pub, { cle: 'voir' })}
       </div></section>
@@ -1175,7 +1175,7 @@ a.an-t:hover{text-decoration:underline}
   function pageProgrammer() {
     const S = D.site, L = S.libelles, E = entree('programmer');
     return enteteEntree(E) + `
-      <section class="sec" aria-labelledby="h-page"><div class="wrap"><ul class="cat">${D.shows.map(ficheProg).join('')}</ul></div></section>
+      <section class="sec" aria-labelledby="h-cat"><h2 class="sr" id="h-cat">${esc(L.lesSpectacles)}</h2><div class="wrap"><ul class="cat">${D.shows.map(ficheProg).join('')}</ul></div></section>
       <section class="aff-sec sur-mag" aria-labelledby="h-diff"><div class="wrap aff-grille">
         <div class="aff-tete"><p class="lbl aff-sur"${ed('site.nom')}>${esc(S.nom)}</p><h2 class="aff-titre disp" id="h-diff" data-fit="aff">${esc(L.lieuxDiffusion)}</h2>${sep()}
           <p class="aff-part"${ed('site.partenaires')}>${S.partenaires}</p>
