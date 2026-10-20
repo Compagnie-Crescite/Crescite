@@ -672,8 +672,8 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 [data-mv="cascade"].mv-attente>*{transition:opacity .42s var(--m-encre);transition-delay:calc(var(--mv-delai,0ms) + min(var(--mv-i,0),12) * 55ms)}
 [data-mv="cascade"].mv-attente:not(.mv-vu)>*{opacity:0;transform:none}
 /* la page qu'on tourne : la nouvelle page se pose, le pli de la feuille passe dessus et s'efface */
-.pli{position:fixed;z-index:35;top:0;bottom:0;left:0;width:min(34vw,420px);pointer-events:none;
-  background:linear-gradient(to right,transparent 0,color-mix(in srgb,var(--ink) 4%,transparent) 55%,color-mix(in srgb,var(--ink) 13%,transparent) 88%,color-mix(in srgb,var(--paper) 70%,#fff) 92%,transparent 100%)}
+.pli{position:absolute;z-index:35;top:0;height:100vh;left:0;width:min(30vw,360px);pointer-events:none;opacity:0;
+  background:linear-gradient(to right,transparent 0,color-mix(in srgb,var(--ink) 3%,transparent) 50%,color-mix(in srgb,var(--ink) 9%,transparent) 92%,transparent 100%)}
 .pli-retour{transform:scaleX(-1)}
 /* le filet de l'entrée choisie, tiré sous son libellé ; au survol, un trait fin */
 .ent a::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--ec);transform:scaleX(0);transform-origin:0 50%;transition:transform .46s var(--m-regle)}
@@ -713,6 +713,7 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 
 /* ——— les frises (FRISE), imprimées : un filet, des petites capitales, des puces typographiques ——— */
 .fr{margin-top:var(--s3)}
+.fr-saison .frise[data-frise]{--fr-couloir:11px}
 .frise[data-frise]{--fr-fond:var(--paper);--fr-encre:var(--ink);--fr-trait:color-mix(in srgb,var(--ink) 58%,transparent);--fr-accent:var(--mag);
   --fr-police:"Newsreader",Georgia,serif;--fr-point:9px;--fr-couloir:15px;--fr-haut:40px;--fr-taille:13px;--fr-pied:42px;--fr-passe:.3;
   --fr-bulle-fond:#fffdf8;--fr-bulle-encre:#1c1917;--fr-courbe:var(--m-regle)}
@@ -730,8 +731,10 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 .frise .frise-point>.frise-repere:hover::before,.frise .frise-point>.frise-repere:focus-visible::before,.frise .frise-point.est-allume>.frise-repere::before,.frise .frise-point.est-focus>.frise-repere::before{scale:1.5}
 .frise .frise-point.est-duree>.frise-repere::before{rotate:none;border-radius:0;height:4px;width:auto}
 .frise .frise-repere:focus-visible{outline:1.5px solid var(--mag);outline-offset:2px;border-radius:0}
-.frise .frise-grappe>span{background:radial-gradient(closest-side,var(--fr-fond) 70%,transparent 73%),conic-gradient(var(--fr-g))}
-.frise .frise-grappe-n{font:italic 520 11.5px/1 "Newsreader",Georgia,serif}
+/* une grappe de dates trop proches : un losange creux à l'encre, le nombre de ses dates en chiffre italique */
+.frise .frise-grappe>span{width:19px;height:19px;margin:-9.5px 0 0 -9.5px;border-radius:1px;rotate:45deg;background:var(--fr-fond);box-shadow:inset 0 0 0 1.2px var(--fr-encre),0 0 0 2px var(--fr-fond)}
+.frise .frise-grappe-n{rotate:-45deg;font:italic 600 12px/1 "Newsreader",Georgia,serif;font-variant-numeric:lining-nums}
+.frise .frise-grappe:is(:hover,.est-allume,.est-focus)>span{scale:1.2;color:var(--mag);box-shadow:inset 0 0 0 1.5px var(--mag),0 0 0 2px var(--fr-fond)}
 /* aujourd'hui : le tampon dateur, frappé à l'encre magenta sur un filet pointillé */
 .frise .frise-aujourdhui::before{left:0;width:0;top:22px;border-left:1px dashed var(--mag);background:none;opacity:.9}
 .frise .frise-aujourdhui::after{background:var(--mag);left:-3.5px;width:7px;height:7px;bottom:-3.5px;border-radius:0;rotate:45deg}
@@ -752,7 +755,7 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 .frise .frise-bande:hover .frise-bande-barre,.frise .frise-bande.est-allume .frise-bande-barre,.frise .frise-bande:focus-within .frise-bande-barre{opacity:1;background:var(--fr-c,var(--mag))}
 .frise .frise-bande-n{font:italic 520 14px/1 "Newsreader",Georgia,serif;font-variant-numeric:lining-nums}
 .frise .frise-bande-nom{font-variant-caps:all-small-caps;letter-spacing:.06em;font-size:13px;font-variant-numeric:lining-nums;color:var(--ink2)}
-.frise-saisons{--fr-bande-h:44px;--fr-haut:22px;--fr-pied:30px}
+.frise-saisons{--fr-bande-h:44px;--fr-haut:34px;--fr-pied:30px}
 .frise-saisons .frise-bande{--fr-c:var(--ink)}
 .frise-saisons .frise-bande:hover,.frise-saisons .frise-bande.est-allume,.frise-saisons .frise-bande:focus-within{--fr-c:var(--mag)}
 .frise-diffusion{--fr-bande-h:34px;--fr-haut:18px;--fr-pied:28px}
@@ -1262,8 +1265,11 @@ html.ed-actif .ep-a::after{content:none}
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
   }
-  const friseDiffusion = (c, slug, titre, o = {}) => { const bs = diffusion(slug);
-    return bs.length ? frise(c, Object.assign({ echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: titre, classe: 'frise-diffusion', anMin: 30 }, o)) : null; };
+  // compacte : la frise est aussi large que la vie du spectacle (une barre de 72 px par saison au plus)
+  const friseDiffusion = (c, slug, titre, o = {}, compacte = false) => { const bs = diffusion(slug);
+    if (!bs.length || !c) return null;
+    if (compacte) c.style.maxWidth = `${bs.length * 72 + 28}px`;
+    return frise(c, Object.assign({ echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: titre, classe: 'frise-diffusion', anMin: 30 }, o)); };
   // toutes les dates d'un spectacle, passées (D.saisons) et à venir (D.dates) ; une date passée mène à sa saison
   function reperesTournee(slug, titre, garde = () => true) {
     const passees = Object.entries(D.saisons || {}).flatMap(([k, SA]) => { let n = 0; return (SA.spectacles || []).flatMap(g => (g.dates || []).map(d => {
@@ -1706,7 +1712,7 @@ html.ed-actif .ep-a::after{content:none}
   // les frises de diffusion des fiches : créées quand leur fiche arrive près de l'écran (le visible d'abord)
   let ioDiffusion = null;
   function frisesDiffusion(racine) {
-    const creer = c => { const s = BY[c.dataset.diffusion]; if (s && c.isConnected && !c.firstElementChild) friseDiffusion(c, s.slug, `${s.titre} – ${L.dates}`, { largeur: Math.min(largeurWrap() * .55, 600) }); };
+    const creer = c => { const s = BY[c.dataset.diffusion]; if (s && c.isConnected && !c.firstElementChild) friseDiffusion(c, s.slug, `${s.titre} – ${L.dates}`, { largeur: Math.min(diffusion(s.slug).length * 72, largeurWrap() * .55) }, true); };
     const cs = [...racine.querySelectorAll('[data-diffusion]')];
     if (ioDiffusion) ioDiffusion.disconnect();
     if (EN_PLACE || !('IntersectionObserver' in window)) { cs.forEach(creer); return; }
@@ -2039,7 +2045,7 @@ html.ed-actif .ep-a::after{content:none}
   }
 
   /* ——— le cadre commun : la marque, les trois entrées, le menu second, le pied de page (refait si D change) ——— */
-  const octo = document.getElementById('octo'), ent = document.getElementById('ent'), entL = document.getElementById('ent-l');
+  const octo = document.getElementById('octo'), ent = document.getElementById('ent'), entL = document.getElementById('ent-l'), hdr = document.querySelector('.site-h');
   const navL = document.getElementById('nav-l'), nav = document.getElementById('nav'), btn = document.getElementById('menu');
   const ico = document.createElement('link');
   ico.rel = 'icon';
@@ -2100,18 +2106,22 @@ html.ed-actif .ep-a::after{content:none}
   function tourner(sens) {
     finir();
     if (!bouge() || !main.animate) return;
-    const w = innerWidth, dx = Math.round(Math.min(64, w * .05)) * sens;
+    const w = innerWidth, haut = hdr.offsetHeight;
     const pli = document.createElement('div');
     pli.className = 'pli' + (sens < 0 ? ' pli-retour' : '');
     pli.setAttribute('aria-hidden', 'true');
+    pli.style.top = `${haut}px`;
     document.body.appendChild(pli);
-    const lw = Math.min(w * .34, 420), de = sens > 0 ? w : -lw, a = sens > 0 ? -lw : w, flip = sens > 0 ? '' : ' scaleX(-1)';
+    const lw = Math.min(w * .3, 360), de = sens > 0 ? w : -lw, a = sens > 0 ? -lw : w;
+    // la feuille se pose : son bord libre (à droite, à gauche au retour), encore levé, retombe à plat sur la page
+    main.style.transformOrigin = `${sens > 0 ? 0 : w}px ${Math.round(innerHeight / 2)}px`;
     feuille = [
-      main.animate([{ transform: `translateX(${dx}px)`, opacity: .12 }, { opacity: 1, offset: .5 }, { transform: 'none', opacity: 1 }], { duration: 380, easing: 'cubic-bezier(.2,.72,.18,1)' }),
-      pli.animate([{ transform: `translateX(${de}px)${flip}`, opacity: 1 }, { opacity: 1, offset: .7 }, { transform: `translateX(${a}px)${flip}`, opacity: 0 }], { duration: 430, easing: 'cubic-bezier(.42,0,.3,1)' }),
+      main.animate([{ transform: `perspective(2400px) rotateY(${-9 * sens}deg)`, opacity: .3 }, { opacity: 1, offset: .6 }, { transform: 'none', opacity: 1 }], { duration: 400, easing: 'cubic-bezier(.2,.7,.25,1)' }),
+      pli.animate([{ transform: `translateX(${de}px)`, opacity: 1 }, { opacity: 1, offset: .65 }, { transform: `translateX(${a}px)`, opacity: 0 }], { duration: 380, easing: 'cubic-bezier(.4,0,.3,1)', fill: 'both' }),
     ];
     const fin = () => pli.remove();
     feuille[1].onfinish = fin; feuille[1].oncancel = fin;
+    feuille[0].onfinish = () => { main.style.transformOrigin = ''; };
   }
   /* après le rendu : les filets des rubriques se tireront à la règle, les intertitres s'encreront, les fiches s'imprimeront
      l'une après l'autre (MOUVEMENT.reveler) ; rien ne bouge quand la vue est refaite en place */

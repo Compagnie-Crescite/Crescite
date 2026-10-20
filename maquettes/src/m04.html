@@ -177,7 +177,14 @@ table{border-collapse:collapse}
 .attente .mc-lieu,.pousse .mc-lieu:not(.allume),.attente .mc-eteint,.pousse .mc-eteint:not(.allume){opacity:0}
 .mc-lieu.allume{animation:allume .9s var(--ease) backwards}
 .mc-eteint.allume{animation:apparait .6s ease backwards}
-.mc-lieu.allume .mc-halo{animation:scintille 4.6s ease-in-out var(--s,0s) infinite}
+.mc-lieu.allume.prochain .mc-halo{animation:scintille 3.2s ease-in-out 1.4s infinite}
+/* la carte de tous les lieux : des traits fins, des points simples ; elle paraît d'un coup en s'ouvrant depuis Rouen (composé) */
+.mc.leger .mc-traits{fill:none;stroke-width:1;vector-effect:non-scaling-stroke;opacity:.72}
+.mc.leger .mc-pt{fill:#fff;stroke:transparent;stroke-width:14px;transition:r .16s var(--ease),fill .16s}
+.mc.leger .mc-pt.on{r:6px;fill:var(--mc-rouen,#fff)}
+.mc.leger.attente .mc-svg{opacity:0}
+.mc.leger.parait .mc-svg{transform-origin:var(--rouen-xy,50% 30%);animation:leger-parait .9s var(--ease) both}
+@keyframes leger-parait{from{opacity:0;transform:scale(.9)}}
 @keyframes allume{0%{opacity:0;transform:scale(.2)}45%{opacity:1;transform:scale(1.6)}100%{opacity:1;transform:scale(1)}}
 @keyframes apparait{from{opacity:0}to{opacity:1}}
 @keyframes scintille{0%,100%{opacity:1}50%{opacity:.55}}
@@ -1092,6 +1099,11 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   const uStyle = u => `--u-fond:${u.fond};--u-fond2:${u.fond2};--u-texte:${u.texte};--u-texte2:${u.texte2};--u-accent:${u.accent};--u-accent2:${u.accent2};--u-lueur:${u.lueur};--u-titre:${u.titre};--u-vif:${u.vif};--u-aplat:${u.aplat};--u-sur-aplat:${u.surAplat};--u-point:${u.point};--u-police:${u.familles};--u-graisse:${u.graisse}`;
 
   /* ---------- la lecture de D : refaite à chaque rendu, jamais figée au chargement ---------- */
+  // une mémoire des calculs coûteux (l'agenda passé, tous les lieux de diffusion) : oubliée à chaque changement de D (rafraichir),
+  // elle ne fige rien (règle 9 : chaque rendu relit D tel qu'il est)
+  let versionD = 0;
+  const memoire = new Map();
+  const retenu = (cle, f) => { const m = memoire.get(cle); if (m && m.v === versionD) return m.x; const x = f(); memoire.set(cle, { v: versionD, x }); return x; };
   let X = null;
   function lire() {
     const S = D.site || {}, L = S.libelles || {}, SHOWS = D.shows || [], DATES = D.dates || [], ENTREES = S.entrees || [];
@@ -1269,6 +1281,9 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   // theme : la couleur d'une entrée (voir, programmer, etablissement) sur le prune, ou 'u' : l'univers du spectacle
   function carte({ lieux = [], passe = [], titre = '', interactif = false, filtre = false, noms = false, prochain = null, theme = 'voir', fin = 1 } = {}) {
     const [BX, BY, BW, BH] = CARTE.viewBox.split(/\s+/).map(Number), R = CARTE.rouen, id = `mc-clip-${++nCarte}`;
+    // beaucoup de communes (tous les lieux de diffusion) : des traits fins d'un seul tenant et des points simples, sans halo
+    // ni nom ni lumière par commune (une carte légère à dessiner) ; le détail de la commune survolée se lit à côté
+    if (lieux.length > 60 && !interactif) return carteLegere({ lieux, titre, theme });
     const ids = theme === 'u' ? { bras: 'u-bras', lueur: 'u-lueur', rouen: 'u-rouen' } : { bras: `m04-bras-${theme}`, lueur: 'm04-lueur', rouen: `m04-rouen-${theme}` };
     const e = theme === 'u' ? null : X.ENTREE[theme];
     const largeur = x => Math.min(8.5, 2.2 + Math.sqrt(x.n || 1) * 1.4) * fin, k = Math.max(.6, fin);
@@ -1278,7 +1293,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     const encart = [...lieux, ...passe].some(x => x.encart) ? `<circle class="mc-encart" cx="${CARTE.ENCART[0]}" cy="${CARTE.ENCART[1]}" r="26"/>` : '';
     const point = x => {
       const c = `cx="${x.xy[0]}" cy="${x.xy[1]}"`;
-      return `<g class="mc-lieu carte-lieu" data-l="${x.l}" data-d="${dist(x.xy)}" style="--s:${(x.l * 37 % 29 / 10).toFixed(1)}s"${interactif ? ` role="button" tabindex="0"${filtre ? ' aria-pressed="false"' : ''} aria-label="${esc(etiquette(x))}"` : ''}>
+      return `<g class="mc-lieu carte-lieu${x.l === prochain ? ' prochain' : ''}" data-l="${x.l}" data-d="${dist(x.xy)}"${interactif ? ` role="button" tabindex="0"${filtre ? ' aria-pressed="false"' : ''} aria-label="${esc(etiquette(x))}"` : ''}>
         <circle class="mc-halo" fill="url(#${ids.lueur})" ${c} r="${(14 * k).toFixed(1)}"/><circle class="mc-anneau" ${c} r="8"/><circle class="mc-point" ${c} r="${(3.4 * Math.max(.75, k)).toFixed(2)}"/><circle class="mc-cible" ${c} r="15"/>${interactif ? '' : `<title>${esc(etiquette(x))}</title>`}</g>`;
     };
     return `<div class="mc" style="--ar:${(BW / BH).toFixed(4)}${e ? `;--mc-rouen:${esc(e.couleurVive)}` : ''}">
@@ -1295,6 +1310,20 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       </svg>
       ${lieux.map(x => `<span class="mc-nom${x.xy[0] > BX + BW * .5 ? ' g' : ''}${noms ? ' toujours' : ''}${x.l === prochain ? ' prochain' : ''}" data-l="${x.l}" style="${pc(x.xy)}" aria-hidden="true">${esc(CARTE.nom(x))}</span>`).join('')}
       <span class="mc-rouen-nom" style="${pc(R)}" aria-hidden="true">Rouen</span>
+    </div>`;
+  }
+  // la carte de tous les lieux : un trait par commune, tous dans un seul tracé ; un point par commune (survolé : il grandit)
+  function carteLegere({ lieux, titre, theme }) {
+    const [BX, BY, BW, BH] = CARTE.viewBox.split(/\s+/).map(Number), R = CARTE.rouen, e = X.ENTREE[theme];
+    const pc = ([x, y]) => `${((x - BX) / BW * 100).toFixed(2)}% ${((y - BY) / BH * 100).toFixed(2)}%`;
+    const encart = lieux.some(x => x.encart) ? `<circle class="mc-encart" cx="${CARTE.ENCART[0]}" cy="${CARTE.ENCART[1]}" r="26"/>` : '';
+    return `<div class="mc leger" style="--ar:${(BW / BH).toFixed(4)};--rouen-xy:${pc(R)}${e ? `;--mc-rouen:${esc(e.couleurVive)}` : ''}">
+      <svg class="mc-svg" viewBox="${CARTE.viewBox}" role="img" aria-label="${esc(titre)}" focusable="false">
+        <use href="#m04-voisins" class="mc-voisin"/><use href="#m04-pays" class="mc-pays"/>${encart}
+        <path class="mc-traits" stroke="url(#m04-bras-${esc(theme)})" d="${lieux.filter(x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6).map(x => CARTE.trait(x.xy, { courbe: courbe(x) })).join('')}"/>
+        <circle class="mc-rouen-halo" fill="url(#m04-rouen-${esc(theme)})" cx="${R[0]}" cy="${R[1]}" r="20"/><circle class="mc-rouen" cx="${R[0]}" cy="${R[1]}" r="4.6"/>
+        ${lieux.map(x => `<circle class="mc-pt carte-lieu" data-l="${x.l}" cx="${x.xy[0]}" cy="${x.xy[1]}" r="2.6"><title>${esc(CARTE.nom(x))}</title></circle>`).join('')}
+      </svg>
     </div>`;
   }
   // les petites cartes des saisons passées
@@ -1337,12 +1366,13 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     if (io) io.disconnect();
     $$('.mc', zone).forEach(mc => {
       if (immediat || !io || !mouvement()) return toutAllumer(mc);
-      $('.mc-clip', mc).setAttribute('r', '0');
+      const c = $('.mc-clip', mc); if (c) c.setAttribute('r', '0');
       mc.classList.add('attente');
       io.observe(mc);
     });
   }
   function pousse(mc) {
+    if (mc.classList.contains('leger')) { mc.classList.remove('attente'); mc.classList.add('parait'); return; }
     const clip = $('.mc-clip', mc), pts = $$('.mc-lieu, .mc-eteint', mc).map(p => ({ p, d: +p.dataset.d, ok: false }));
     const rmax = Math.max(80, ...pts.map(x => x.d)) + 30, T = 1500 + Math.min(700, rmax * 1.4), t0 = performance.now();
     mc.classList.remove('attente'); mc.classList.add('pousse');
@@ -1356,6 +1386,17 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     requestAnimationFrame(pas);
   }
 
+  // les communes d'une carte (.carte-lieu[data-l]) : survol, focus, clic, Entrée, par délégation (comme CARTE.lier, en un seul jeu)
+  function lierCarte(racine, { survol = () => {}, choix = () => {} } = {}) {
+    const lieu = e => { const g = e.target.closest && e.target.closest('.carte-lieu[data-l]'); return g && racine.contains(g) ? g : null; };
+    let dessus = null;
+    racine.addEventListener('pointerover', e => { const g = lieu(e); if (g && g !== dessus) { dessus = g; survol(+g.dataset.l); } }, { passive: true });
+    racine.addEventListener('pointerout', e => { const g = lieu(e); if (g && !(e.relatedTarget && g.contains(e.relatedTarget))) { dessus = null; survol(null); } }, { passive: true });
+    racine.addEventListener('focusin', e => { const g = lieu(e); if (g) survol(+g.dataset.l); });
+    racine.addEventListener('focusout', e => { if (lieu(e)) survol(null); });
+    racine.addEventListener('click', e => { const g = lieu(e); if (g) choix(+g.dataset.l); });
+    racine.addEventListener('keydown', e => { const g = lieu(e); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); choix(+g.dataset.l); } });
+  }
   // la carte et sa liste se répondent : survoler une commune met ses dates en avant, la choisir filtre la liste
   const choixZones = {};   // la commune choisie sur chaque carte, gardée quand la vue est refaite en place
   function lierZone(zone, { naviguer = null, detail = null, ecoute = null } = {}) {
@@ -1394,7 +1435,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
         if (b) b.addEventListener('click', () => { choix(choisi); const g = $(`.mc-lieu[data-l="${l}"]`, mc); if (g) g.focus({ preventScroll: true }); });
       }
     };
-    CARTE.lier(mc, { survol: l => survol(l, 'carte'), choix });
+    lierCarte(mc, { survol: l => survol(l, 'carte'), choix });
     if (liste) {
       const de = e => { const li = e.target.closest('li[data-l]'); return li && li.dataset.l !== '' ? +li.dataset.l : null; };
       liste.addEventListener('pointerover', e => survol(de(e), 'liste'));
@@ -1643,14 +1684,15 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   function animerCarte(mc, immediat) {
     if (!mc) return;
     if (immediat || !io || !mouvement()) return toutAllumer(mc);
-    $('.mc-clip', mc).setAttribute('r', '0'); mc.classList.add('attente'); io.observe(mc);
+    const c = $('.mc-clip', mc); if (c) c.setAttribute('r', '0');
+    mc.classList.add('attente'); io.observe(mc);
   }
   let AG = null;
   function voir() {
     const { L, ENTREE, PUBLIC, SHOWS, SAISON0 } = X, e = ENTREE.voir;
     const enTournee = SHOWS.filter(s => PUBLIC.some(d => d.slug === s.slug));
     const enPlace = root.classList.contains('en-place');
-    const passe = agendaPasse(), puces = spectaclesAgenda(PUBLIC, passe), lieuxProch = CARTE.aVenir('public');
+    const passe = retenu('agendaPasse', agendaPasse), puces = spectaclesAgenda(PUBLIC, passe), lieuxProch = CARTE.aVenir('public');
     const proch = PUBLIC.map(d => ({ d, cle: d.slug, txt: norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')} ${CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) }));
     let F = enPlace && AG ? AG.F : null;
     if (!F) {
@@ -1703,7 +1745,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     // ---- le câblage, une fois la vue dans la page (lierZones)
     AG.brancher = zone => {
       const racine = $('#ag-saisons'), index = $('#ag-index'), liste = $('[data-liste]', zone), mcP = $('.mc', zone);
-      let fSaison = null, fSaisons = null, agenda = false, suite = false;
+      let fSaison = null, fSaisons = null, agenda = false, suiteCF = false, suiteS = false;
       const ctl = lierZone(zone, { naviguer: l => AG.choisir(l), ecoute: l => { if (fSaison) { if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); } } });
       const lierSaison = (corps, immediat) => {
         lierZone(corps, { naviguer: l => AG.choisir(l) });
@@ -1735,14 +1777,17 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       // filtrer, chercher : la liste et la frise de la saison glissent à leur nouvelle place dans l'image du geste (FLIP) ;
       // l'agenda passé, sous le pli, suit dans la tâche d'après l'image, ses saisons glissant depuis l'endroit où elles sont
       const dessine = (anime = true) => {
-        const faire = () => { recompte(); liste.innerHTML = listeProchaines(); majCarte(); majOutils(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
+        const faire = () => { recompte(); liste.innerHTML = listeProchaines(); majOutils(); };
         if (anime && MV) MV.flip(liste, faire, { cle: '[data-mv-cle]' }); else faire();
-        if (!agenda) return;
-        const saisons = () => { suite = false; if (!racine.isConnected) return;
+        // la carte et la frise de la saison suivent à l'image d'après (le geste se peint d'abord) ; l'agenda passé, sous le pli,
+        // dans une tâche encore après, ses saisons glissant depuis l'endroit où elles sont
+        const carteFrise = () => { if (!liste.isConnected) return; majCarte(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
+        const saisons = () => { if (!agenda || !racine.isConnected) return;
           if (anime && MV) MV.flip(racine, dessineSaisons, { cle: '[data-mv-cle]' }); else dessineSaisons();
           if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
-        if (!anime) saisons();
-        else if (!suite) { suite = true; requestAnimationFrame(() => setTimeout(saisons, 0)); }
+        if (!anime) { carteFrise(); saisons(); return; }
+        if (!suiteCF) { suiteCF = true; requestAnimationFrame(() => setTimeout(() => { suiteCF = false; carteFrise();
+          if (!suiteS) { suiteS = true; setTimeout(() => { suiteS = false; saisons(); }, 0); } }, 0)); }
       };
       AG.choisir = l => { F.l = F.l === l ? null : l; dessine(); };
       // l'état d'ouverture : à la main (toggle), par l'index ou par la frise des saisons ; les dates arrivent en cascade
@@ -1797,7 +1842,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     return `${heroEntree(e)}
     <div class="rampe"><div class="wrap"><div class="rampe-frise" id="v-frise"></div></div></div>
     <section class="split" data-zone="voir" aria-labelledby="h-saison">
-      <div class="split-carte"><div class="split-colle">${carte({ lieux: lieuxProch, titre: SAISON0.titre, interactif: true, filtre: true, theme: 'voir' })}</div></div>
+      <div class="split-carte"><div class="split-colle">${carte({ lieux: lieuxProch, titre: SAISON0.titre, interactif: true, filtre: true, theme: 'voir', prochain: PUBLIC[0] ? PUBLIC[0].l : null })}</div></div>
       <div class="split-liste">
         <h2 class="split-titre" id="h-saison">${esc(SAISON0.titre)}</h2>
         ${outilsHtml()}
@@ -1857,7 +1902,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     return `<p class="td-nom">${esc(CARTE.nom(x))}</p><ul class="td-liste">${[...par].map(([t, v]) => `<li>${v.slug ? `<a href="#/spectacle/${esc(v.slug)}/programmer">${esc(t)}</a>` : `<span>${esc(t)}</span>`}<span class="td-s">${esc([...v.saisons].join(', '))}</span></li>`).join('')}</ul>`;
   }
   function programmer() {
-    const { S, L, ENTREE, SHOWS } = X, e = ENTREE.programmer, tous = CARTE.tout();
+    const { S, L, ENTREE, SHOWS } = X, e = ENTREE.programmer, tous = retenu('tout', () => CARTE.tout());
     return `${heroEntree(e, '', null, contactHtml(null))}
     <section class="section" aria-labelledby="h-catalogue"><div class="wrap">
       <h2 class="sec-titre sec-tete" id="h-catalogue">${esc(L.lesSpectacles)}</h2>
@@ -1936,7 +1981,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     </div></section>` : ''}
     ${SCOLAIRE.length ? `${rampe('e-frise', 'scolaire', { echelle: 'periode', debut: `${D.aujourdhui.slice(0, 7)}-01`, points: SCOLAIRE.map(d => repereProchaine(d)), libelle: L.enEtablissement })}
     <section class="split" data-zone="scolaire" aria-labelledby="h-scolaire">
-      <div class="split-carte"><div class="split-colle">${carte({ lieux: CARTE.aVenir('scolaire'), titre: L.enEtablissement, interactif: true, filtre: true, theme: 'etablissement' })}</div></div>
+      <div class="split-carte"><div class="split-colle">${carte({ lieux: CARTE.aVenir('scolaire'), titre: L.enEtablissement, interactif: true, filtre: true, theme: 'etablissement', prochain: SCOLAIRE[0] ? SCOLAIRE[0].l : null })}</div></div>
       <div class="split-liste">
         <h2 class="split-titre" id="h-scolaire">${esc(L.enEtablissement)}</h2>
         <div class="puce-zone" data-puce aria-live="polite"></div>
@@ -1988,7 +2033,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     </div>`;
   }
   const datesCarte = ({ lieux = [], passe = [], dates = [], entree, titre, slug = '' }) => `<div class="dc" data-zone="spectacle">
-    <div class="dc-carte">${carte({ lieux, passe, titre, interactif: lieux.length > 0, filtre: true, noms: lieux.length <= 5, theme: 'u' })}</div>
+    <div class="dc-carte">${carte({ lieux, passe, titre, interactif: lieux.length > 0, filtre: true, noms: lieux.length <= 5, theme: 'u', prochain: dates[0] ? dates[0].l : null })}</div>
     <div class="dc-liste"><div class="puce-zone" data-puce aria-live="polite"></div><ol data-liste data-agenda="${esc(slug)}">${dates.map(d => ligneDate(d, { titre: false, entree })).join('')}</ol></div>
   </div>`;
   // la largeur de la colonne des chapitres d'un spectacle (le sommaire à gauche à partir de 1100 px), sans rien lire de la page
@@ -2346,7 +2391,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       let ctl;
       if (type === 'accueil') ctl = lierZone(z, { naviguer: l => { const k = X.PUBLIC.some(d => d.l === l) ? 'voir' : 'etablissement'; if (X.ENTREE[k]) location.hash = `${X.ENTREE[k].href}?l=${l}`; } });
       else if (type === 'tout') {
-        const det = $('[data-detail]', z), par = new Map(CARTE.tout().map(x => [x.l, x]));
+        const det = $('[data-detail]', z), par = new Map(retenu('tout', () => CARTE.tout()).map(x => [x.l, x]));
         ctl = lierZone(z, { detail: l => { if (det && par.has(l)) det.innerHTML = detailLieu(par.get(l)); } });
       } else if (type === 'voir') { AG.brancher(z); return; }
       else ctl = lierZone(z, { ecoute });
@@ -2511,6 +2556,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   }
   // D a changé (la base de la compagnie) : la vue courante est refaite en place
   function rafraichir() {
+    versionD++;
     lire();
     habiller();
     const r = resoudre();

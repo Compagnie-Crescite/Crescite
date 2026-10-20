@@ -123,7 +123,7 @@ a:hover>.fl{transform:translateX(4px)}
 /* L'aperçu : chaque calque a son fond (la teinte de l'entrée, ou l'univers du spectacle) */
 .pv{min-width:0;background:var(--paper2);transition:background-color var(--fade) ease}
 .pv-in{position:sticky;top:var(--hh);height:calc(100svh - var(--hh));min-height:560px;display:grid}
-.pv-layer{grid-area:1/1;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:16px;min-height:0;min-width:0;padding:34px var(--gx) 30px;opacity:0;visibility:hidden;transition:opacity var(--fade) ease,visibility 0s linear var(--fade)}
+.pv-layer{grid-area:1/1;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:16px;min-height:0;min-width:0;padding:34px var(--gx) 30px;opacity:0;visibility:hidden;transition:opacity .12s ease,visibility 0s linear .12s,transform .2s var(--mv-courbe)}
 .pv-layer.is-on{opacity:1;visibility:visible;z-index:1;transition:opacity var(--fade) ease,visibility 0s}
 .pv-e{background:color-mix(in srgb,var(--e) 10%,var(--paper))}
 .pv-u{background:radial-gradient(90% 70% at 85% 10%,var(--lueur),transparent 70%) var(--paper)}
@@ -752,8 +752,11 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
 html{view-transition-name:none}
 /* la ligne cliquée (un titre du sommaire, une fiche, une entrée) devient le titre de la page, et y revient */
 ::view-transition-group(mv-partage){animation-duration:.36s;animation-timing-function:cubic-bezier(.3,.75,.15,1)}
-::view-transition-old(mv-partage){animation:.12s ease-out both ed-efface}
-::view-transition-new(mv-partage){animation:.22s var(--mv-courbe) .05s both ed-pose}
+/* un titre devient un titre : l'image suit la largeur de la ligne (sans recadrage), l'ancienne cède à la nouvelle */
+::view-transition-old(mv-partage),::view-transition-new(mv-partage){height:auto;width:100%;object-fit:fill}
+::view-transition-old(mv-partage){animation:.2s ease-out both ed-efface}
+::view-transition-new(mv-partage){animation:.2s ease-out both ed-pose}
+.sh-titre,.page-title,.pv-t,.af-t,.cf-t,.acf-t,.next-t{width:fit-content;max-width:100%}
 /* d'un onglet à l'autre d'un spectacle : l'en-tête ne bouge pas, seul le filet de l'onglet glisse */
 .sh-ong-filet{position:absolute;left:0;right:0;top:-1px;height:4px;background:var(--e);pointer-events:none}
 html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
@@ -1404,7 +1407,7 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   }
   // une page nouvelle se compose ligne à ligne, dans l'ordre de lecture : le titre se découvre de gauche à droite, puis
   // les lignes du premier écran se posent l'une sous l'autre (les premières seulement : la page est lisible tout de suite)
-  const LIGNES = '.mast, .toc-list > li, .kicker, .page-title, .pastille-t, .v-frise, .ag-side-in, .ag-outils, .ag-a-venir > .ag-g, .pg-body > *, .cd, .cat-som, .ep-texte, .ep-som > li, .sh-k, .sh-sous, .sh-cadre, .sh-statut, .sh-photo, .ch-l';
+  const LIGNES = '.mast, .toc-list > li, .kicker, .page-title, .pastille-t, .v-frise, .ag-side-in, .ag-outils, .ag-a-venir > .ag-g, .pg-body > *, .cd, .cat-som, .ep-texte, .ep-som > li, .sh-k, .sh-sous, .sh-cadre, .sh-statut, .ch-l';
   function composer(racine, { tete = true, partage = null } = {}) {
     if (!motionOK() || !racine.animate) return;
     let n = 0;
@@ -1535,7 +1538,7 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
     (calque.__anims || []).forEach(a => a.cancel());
     const anims = [];
     $$('.pv-k, .pv-t, .pv-lead, .pv-dates, .pv-titres, .pv-types, .pv-foot', calque).forEach((el, i) => anims.push(el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
-      { duration: 260, delay: 40 + i * 28, easing: COURBE, fill: 'backwards' })));
+      { duration: 260, delay: 70 + i * 28, easing: COURBE, fill: 'backwards' })));
     $$('.pv-fig img', calque).forEach(im => anims.push(im.animate([{ clipPath: 'inset(100% 0 0 0)' }, { clipPath: 'inset(0 0 0 0)' }], { duration: 340, easing: COURBE, fill: 'backwards' })));
     calque.__anims = anims;
   }
@@ -2411,6 +2414,8 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
       const b = $('.menu-btn', head), ouvert = b.getAttribute('aria-expanded') !== 'true';
       b.setAttribute('aria-expanded', String(ouvert));
       head.classList.toggle('menu-open', ouvert);
+      // le menu s'ouvre : ses lignes se composent l'une sous l'autre
+      if (ouvert && MV) MV.cascade($('.menu2 ul', head), { pas: 30, decalage: 6 });
     });
     ajusterEntrees();
   }
