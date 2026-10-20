@@ -532,7 +532,7 @@ details summary{cursor:pointer}
 .prod p+p,.prod .pb+.pb,.prod p+.pb,.prod .pb+p{margin-top:.55em}
 .signe{margin-top:28px;font:600 .75rem/1.4 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--acc-s)}
 .pr-statut{display:inline-block;padding:4px 12px;border:1px solid var(--acc-s);color:var(--acc-s);font:600 .75rem/1.5 var(--sans);letter-spacing:.14em;text-transform:uppercase;margin-bottom:18px}
-.pr-rep{font:var(--titre-w) calc(var(--t2) * var(--titre-k))/1.1 var(--titre);color:var(--acc);margin-bottom:18px}
+.pr-rep{font:400 var(--t2)/1.12 var(--serif);margin-bottom:18px;text-wrap:balance}
 .pr-format{margin-bottom:14px}
 .pr-format span:last-child{font-weight:600;letter-spacing:.06em}
 .pr-faits+.pr-faits{margin-top:16px}
@@ -670,6 +670,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   .menu2 a[aria-current="page"]{text-decoration-thickness:2px;text-underline-offset:.2em}
   .som,.page,.ag,.foot-in,.saisons-b,.cf,.sh-tete,.sh-corps,.af-a{display:block}
   .pv{display:none}
+  .som{min-height:0}
   .toc{padding:22px var(--gx) 36px}
   .toc-title{font-size:calc(2rem * var(--tk,1));line-height:1.08}
   .toc-link{padding:16px 0 18px;border-bottom:1px solid var(--rule)}
@@ -724,7 +725,8 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   .sh-motif.motif-paperboard,.sh-motif.motif-nez{width:130px;top:auto}
   .sh-motif.motif-fil{bottom:auto;top:40%}
   .sh-motif.motif-chronologie{bottom:auto;top:12px}
-  .sh-onglets{top:var(--hh)}
+  .sh-tete{min-height:0}
+  .sh-onglets{position:static}
   .sh-ong{flex-direction:column;justify-content:center;gap:4px;padding:0 6px;font-size:.8125rem;text-align:center;line-height:1.15}
   .sh-ong .ent-l{display:none}
   .sh-ong .ent-c{display:inline}
@@ -1089,7 +1091,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     const apercu = {
       voir: () => `<div class="pv-media"><figure class="pv-fig">${s0 ? imgV(s0, .7, s0.titre) : ''}${s0 && s0.credit ? `<figcaption class="pv-cap">${esc(s0.credit)}</figcaption>` : ''}</figure>
           <div class="pv-map">${carte({ lieux: CARTE.aVenir('public'), mode: 'nu', k: 2.3, interactif: false, pousse: false, titre: entree('voir').texte })}</div></div>
-        <ul class="pv-dates">${pub.slice(0, 3).map(d => `<li><span class="pv-dd">${esc(d.ligneDate)}</span><span class="pv-dl">${esc(d.ligneLieu)}</span>${d.slug && show(d.slug) ? `<span class="pv-dt sp-t" style="${styleIvoire(show(d.slug))}">${esc(d.titre)}</span>` : `<span class="pv-dt">${esc(d.titre)}</span>`}</li>`).join('')}</ul>`,
+        <ul class="pv-dates">${pub.slice(0, 3).map(d => `<li data-date-id="${esc(d.id ?? '')}"><span class="pv-dd">${esc(d.ligneDate)}</span><span class="pv-dl">${esc(d.ligneLieu)}</span>${d.slug && show(d.slug) ? `<span class="pv-dt sp-t" style="${styleIvoire(show(d.slug))}">${esc(d.titre)}</span>` : `<span class="pv-dt">${esc(d.titre)}</span>`}</li>`).join('')}</ul>`,
       programmer: () => `<div class="pv-media solo"><div class="pv-map pv-tout">${carte({ lieux: CARTE.tout(), mode: 'nu', k: 1.4, interactif: false, pousse: false, titre: L.lieuxDiffusion })}</div></div>
         <p class="pv-titres">${shows().map(s => `<span class="sp-t" style="${styleIvoire(s)}">${esc(s.titre)}</span>`).join('<span class="pv-sep" aria-hidden="true">/</span>')}</p>`,
       etablissement: () => `<div class="pv-media"><figure class="pv-fig">${img('actions-culturelles', A.titre || '')}${A.credit ? `<figcaption class="pv-cap">${esc(A.credit)}</figcaption>` : ''}</figure>
@@ -1438,7 +1440,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     const ph = photosDe(s, p => !p.etablissement && !p.atelier)[0], cle = ph ? ph.p.cle : s.slug;
     return `<a class="ba" href="${esc(lienVideo(s.video.url))}" target="_blank" rel="noopener">${img(cle, '', ' loading="lazy"')}<span class="ba-c"><span class="ba-jeu" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M7 4.5v15l12.5-7.5z"/></svg></span><span class="ba-t"${s.video.titre ? ed(`${P(s)}.video.titre`) : ''}>${esc(s.video.titre || lib().bandeAnnonce)}</span><span class="ext" aria-hidden="true">↗</span></span></a>`;
   }
-  function distributionHTML(s) {
+  function distributionHTML(s, avecDuree = true) {
     const pr = s.programmer || {};
     const eq = !s.avec && (pr.equipeCreation || []).length ? pr.equipeCreation.map((t, i) => `<li class="solo"><span${ed(`${P(s)}.programmer.equipeCreation.${i}`)}>${esc(t)}</span></li>`).join('') : '';
     const fiche = (s.fiche || []).map((f, i) => f.libelle ? `<li><span class="fi-l"${ed(`${P(s)}.fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span class="fi-v"${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>` : eq ? '' : `<li class="solo"><span class="fi-v"${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>`).join('');
@@ -1446,7 +1448,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     const prod = (s.production || []).length ? `<div class="prod">${s.production.map((p, i) => para(p, `${P(s)}.production.${i}`)).join('')}</div>` : '';
     const ment = (s.mentions || []).length ? `<div class="prod">${s.mentions.map((p, i) => para(p, `${P(s)}.mentions.${i}`)).join('')}</div>` : '';
     if (!fiche && !eq && !avec && !prod && !ment) return '';
-    return `${s.duree ? `<p class="dist-duree"${ed(`${P(s)}.duree`)}>${esc(s.duree)}</p>` : ''}${fiche || eq ? `<ul class="fiche">${fiche}${eq}</ul>` : ''}${avec}${prod}${ment}<p class="signe">${esc(site().nom)}</p>`;
+    return `${avecDuree && s.duree ? `<p class="dist-duree"${ed(`${P(s)}.duree`)}>${esc(s.duree)}</p>` : ''}${fiche || eq ? `<ul class="fiche">${fiche}${eq}</ul>` : ''}${avec}${prod}${ment}<p class="signe">${esc(site().nom)}</p>`;
   }
   function chVoir(s) {
     const L = lib(), C = [], T = s.tournee || {}, sp = CARTE.spectacle(s.slug);
@@ -1493,7 +1495,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     if (faits.length) h += `<ul class="pr-faits">${faits.map(([c, t]) => `<li${ed(c)}>${esc(t)}</li>`).join('')}</ul>`;
     if ((pr.equipeCreation || []).length) h += `<ul class="pr-faits">${pr.equipeCreation.map((t, i) => `<li${ed(`${P(s)}.programmer.equipeCreation.${i}`)}>${esc(t)}</li>`).join('')}</ul>`;
     if (h) C.push({ id: 'diffusion', titre: L.representations, html: h });
-    const dist = distributionHTML(s);
+    const dist = distributionHTML(s, !faits.length);
     if (dist) C.push({ id: 'distribution', titre: L.distribution, html: dist });
     if (s.video && s.video.url) C.push({ id: 'ba', titre: L.bandeAnnonce, html: baHTML(s) });
     const { prim, reste, passees } = jeu(s);
