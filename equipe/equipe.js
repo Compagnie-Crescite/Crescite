@@ -549,15 +549,25 @@
   const vivante = d => d.statut !== 'annulee' && d.statut !== 'reportee';
 
   // ce qui part dans l'agenda : chaque représentation à venir, et les dates à venir dont les représentations ne sont pas détaillées
+  // ce qui part dans l'agenda : chaque représentation à venir à heure dite ; celles sans heure, un même jour pour un même public,
+  // en un seul événement sur la journée ; et les dates à venir dont les représentations ne sont pas détaillées
   function evenementsAVenir() {
     const auj = aujourdhui(), out = [];
     for (const d of E.dates) {
       if (!vivante(d) || finDe(d) < auj || d.precision === 'mois' || d.precision === 'saison') continue;
-      if (d.representations.length) d.representations.filter(r => !r.annulee && r.jour >= auj).forEach(r => out.push({ d, r }));
-      else out.push({ d, r: null });
+      if (!d.representations.length) { out.push({ d, r: null, n: 0 }); continue; }
+      const journees = new Map();
+      for (const r of d.representations.filter(x => !x.annulee && x.jour >= auj)) {
+        if (r.heure) { out.push({ d, r, n: 1 }); continue; }
+        const k = `${r.jour}|${r.public}`;
+        if (journees.has(k)) journees.get(k).n++; else { const x = { d, r, n: 1 }; journees.set(k, x); out.push(x); }
+      }
     }
     return out;
   }
+  // « représentation scolaire », « tout public », « 2 représentations scolaires »
+  const quoiRep = (n, pub) => (n > 1 ? `${n} représentations${pub === 'scolaire' ? ' scolaires' : pub === 'tout_public' ? ' tout public' : ''}`
+    : pub === 'scolaire' ? 'représentation scolaire' : pub === 'tout_public' ? 'tout public' : 'représentation');
 
   function vueSaison(focus) {
     const auj = aujourdhui();
@@ -565,7 +575,7 @@
     const vivantes = avenir.filter(vivante);
     const prochaine = vivantes.find(d => d.precision === 'jour' || d.precision === 'periode') || null;
     const suite = avenir.filter(d => d !== prochaine);
-    const evs = evenementsAVenir(), nbReps = evs.filter(x => x.r).length, sansHeure = evs.length - nbReps;
+    const evs = evenementsAVenir(), nbReps = evs.reduce((n, x) => n + x.n, 0), sansHeure = evs.filter(x => !x.r).length;
     const resume = [nomDe(E.personne), `saison ${saisonDe(auj)}`,
       vivantes.length ? `${pluriel(vivantes.length, 'date')} à venir${nbReps ? `, ${pluriel(nbReps, 'représentation')}` : ''}` : 'aucune date à venir'].filter(Boolean).join(' · ');
     const quoi = [nbReps && (nbReps > 1 ? `vos ${pluriel(nbReps, 'représentation')} à venir` : 'votre représentation à venir'),
@@ -680,7 +690,7 @@
         ${etat ? `<p class="etat ${d.statut}">${etat}</p>` : ''}
         ${horaires(d)}
         ${lieuCourt(d)}
-        ${precisions.length ? `<ul class="precisions">${precisions.map(x => `<li>${esc(x.texte)}</li>`).join('')}</ul>` : ''}
+        ${precisions.length ? `<ul class="precisions">${precisions.map(x => { const u = x.lien && urlSure(x.lien); return `<li>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(x.texte)}<span class="sr"> (page du lieu, nouvel onglet)</span></a>` : esc(x.texte)}</li>`; }).join('')}</ul>` : ''}
       </div>
       ${bas ? `<div class="perfo" aria-hidden="true"></div>${bas}` : ''}
     </article>`;
@@ -692,12 +702,18 @@
       const n = d.nb_representations;
       return `<p class="sans-horaire">${n ? `${pluriel(n, 'représentation')} · ` : ''}horaires pas encore indiqués</p>`;
     }
+    // une ligne par représentation à heure dite ; celles sans heure, le même jour, pour le même public, se comptent ensemble
+    const lignes = [];
+    for (const r of reps) {
+      const l = !r.heure && lignes.find(x => !x.heure && x.jour === r.jour && x.public === r.public && x.annulee === r.annulee && !x.note && !r.note);
+      if (l) l.n++; else lignes.push({ ...r, n: 1 });
+    }
     const plusieursJours = new Set(reps.map(r => r.jour)).size > 1;
-    return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="Représentations">${reps.map((r, i) => `<li${r.annulee ? ' class="annulee"' : ''}>
-        ${plusieursJours ? `<span class="h-jour">${i && reps[i - 1].jour === r.jour ? `<span class="sr">${esc(jourCourt(r.jour))}</span>` : esc(jourCourt(r.jour))}</span>` : ''}
-        ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}</span>` : '<span class="heure vague">heure à préciser</span>'}
+    return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="Représentations">${lignes.map((r, i) => `<li${r.annulee || !r.heure ? ` class="${[r.annulee && 'annulee', !r.heure && 'sans-heure'].filter(Boolean).join(' ')}"` : ''}>
+        ${plusieursJours ? `<span class="h-jour">${i && lignes[i - 1].jour === r.jour ? `<span class="sr">${esc(jourCourt(r.jour))}</span>` : esc(jourCourt(r.jour))}</span>` : ''}
+        ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}</span>` : `<span class="heure vague">${r.n > 1 ? `${r.n}\u00a0représentations, heures à préciser` : 'heure à préciser'}</span>`}
         <span class="h-plus">${[PUBLICS[r.public] && `<span class="public${r.public === 'scolaire' ? ' sco' : ''}">${PUBLICS[r.public]}</span>`,
-          r.annulee && '<span class="etat annulee">annulée</span>', r.note && `<span class="note">${esc(r.note)}</span>`].filter(Boolean).join(' ')}</span></li>`).join('')}</ul>`;
+          r.annulee && `<span class="etat annulee">${r.n > 1 ? 'annulées' : 'annulée'}</span>`, r.note && `<span class="note">${esc(r.note)}</span>`].filter(Boolean).join(' ')}</span></li>`).join('')}</ul>`;
   }
 
   const sansAccent = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -712,7 +728,8 @@
   function lieuCourt(d) {
     const l = d.lieu;
     let t;
-    if (l) t = `<b>${esc(l.nom || communeDe(l))}</b>${l.nom ? ` · ${esc(communeDe(l))}` : ''}`;
+    if (l && l.nom && contientMot(l.nom, l.commune)) t = `<b>${esc(l.nom)}</b>${l.departement ? `\u00a0(${esc(l.departement)})` : ''}`;
+    else if (l) t = `<b>${esc(l.nom || communeDe(l))}</b>${l.nom ? ` · ${esc(communeDe(l))}` : ''}`;
     else {
       const ou = d.intitule && d.intitule.includes(' — ') ? d.intitule.split(' — ').pop() : '';
       t = ou ? `<b>${esc(ou)}</b> · <span class="vague">salle à préciser</span>` : '<span class="vague">lieu à préciser</span>';
@@ -726,7 +743,7 @@
     const lignes = l.adresse ? [l.adresse, contientMot(l.adresse, l.commune) ? '' : communeDe(l)].filter(Boolean) : [];
     const carte = avecCarte ? itineraire(l) : '', site = avecCarte && l.site_web ? urlSure(l.site_web) : '', nom = l.nom || communeDe(l);
     if (!lignes.length && !carte && !site) return '';
-    return `<div class="rubrique"><h4>${lignes.length ? 'Adresse' : 'Y aller'}</h4>
+    return `<div class="rubrique r-adresse"><h4>${lignes.length ? 'Adresse' : 'Y aller'}</h4>
       ${lignes.length ? `<p class="lieu-adresse">${lignes.map(esc).join('<br>')}</p>` : ''}
       ${carte || site ? `<p class="liens">${carte ? `<a class="btn petit" href="${esc(carte)}" target="_blank" rel="noopener">${ICONES.route}Itinéraire<span class="sr"> jusqu’à ${esc(nom)}, sur une carte, dans un nouvel onglet</span></a>` : ''}
         ${site ? `<a href="${esc(site)}" target="_blank" rel="noopener">Site du lieu<span class="sr"> (nouvel onglet)</span></a>` : ''}</p>` : ''}
@@ -755,8 +772,8 @@
   }
   function blocEquipe(d, passee = false) {
     const gens = quiPart(d), titre = passee ? 'L’équipe' : 'Qui part';
-    if (!gens.length) return `<div class="rubrique"><h4>${titre}</h4><p class="vide-petit">L’équipe de cette date n’est ${passee ? 'pas' : 'pas encore'} indiquée.</p></div>`;
-    return `<div class="rubrique"><h4>${titre} <span class="compte-nb">· ${gens.length}</span></h4><ul class="gens">${gens.map(g => `<li>
+    if (!gens.length) return `<div class="rubrique r-equipe"><h4>${titre}</h4><p class="vide-petit">L’équipe de cette date n’est ${passee ? 'pas' : 'pas encore'} indiquée.</p></div>`;
+    return `<div class="rubrique r-equipe"><h4>${titre} <span class="compte-nb">· ${gens.length}</span></h4><ul class="gens">${gens.map(g => `<li>
         <span class="g-nom">${esc(g.nom || 'Une personne de l’équipe')}</span>${g.id === E.moi ? ' <span class="vous">vous</span>' : ''}
         ${g.fonctions.length ? `<span class="g-fonction">${esc(g.fonctions.join(', '))}</span>` : ''} ${g.notes.length ? `<span class="g-note">${esc(g.notes.join(' ; '))}</span>` : ''}</li>`).join('')}</ul></div>`;
   }
@@ -1043,32 +1060,34 @@
     const page = retourUrl(), maintenant = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Compagnie Crescite//Espace de l equipe//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
       `X-WR-CALNAME:${texteIcs('Crescite · ma tournée')}`, 'X-WR-TIMEZONE:Europe/Paris', ...FUSEAU];
-    for (const { d, r } of evenementsAVenir()) {
+    for (const { d, r, n } of evenementsAVenir()) {
       const sp = d.spectacle || {}, l = d.lieu, option = d.statut === 'option', duree = dureeMinutes(sp.duree) || 90;
       const ou = l ? [l.nom, l.adresse, `${l.commune}${l.departement ? ` (${l.departement})` : ''}`].filter(Boolean).join(', ') : (d.intitule || '');
-      const pub = r ? PUBLICS[r.public] : PUBLICS[d.public];
+      const quoi = r ? quoiRep(n, r.public) : PUBLICS[d.public] || '';
       L.push('BEGIN:VEVENT', `UID:${r ? `crescite-representation-${r.id}` : `crescite-date-${d.id}`}@crescite.fr`, `DTSTAMP:${maintenant}`);
       if (r && r.heure) L.push(`DTSTART;TZID=Europe/Paris:${plusMinutes(r.jour, r.heure, 0)}`, `DTEND;TZID=Europe/Paris:${plusMinutes(r.jour, r.heure, duree)}`);
       else { const j = r ? r.jour : d.debut, fin = r ? r.jour : (d.fin || d.debut); L.push(`DTSTART;VALUE=DATE:${j.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${lendemain(fin).replace(/-/g, '')}`); }
-      L.push(`SUMMARY:${texteIcs(`${option ? 'Option · ' : ''}${sp.titre || 'Représentation'}${pub ? ` — ${r ? (r.public === 'scolaire' ? 'représentation scolaire' : pub) : pub}` : ''}`)}`);
+      L.push(`SUMMARY:${texteIcs(`${option ? 'Option · ' : ''}${sp.titre || 'Représentation'}${quoi ? ` — ${quoi}` : ''}`)}`);
       if (ou) L.push(`LOCATION:${texteIcs(ou)}`);
       if (l && l.latitude != null && l.longitude != null && Number.isFinite(+l.latitude) && Number.isFinite(+l.longitude)) L.push(`GEO:${(+l.latitude).toFixed(6)};${(+l.longitude).toFixed(6)}`);
-      const desc = [`${sp.titre || ''}${option ? ' (option, pas encore confirmée)' : ''}`, r ? majuscule(pub ? `représentation ${pub === 'scolaire' ? 'scolaire' : pub}` : '') : (d.representations.length ? '' : 'Horaires pas encore indiqués'),
-        r && r.note, ou, sp.duree, `La feuille de route, l’équipe et les documents : ${page}`].filter(Boolean).join('\n');
+      const precisions = (Array.isArray(d.details) ? d.details : []).map(x => x && x.texte).filter(Boolean);
+      const desc = [`${sp.titre || ''}${option ? ' (option, pas encore confirmée)' : ''}`,
+        r ? `${majuscule(quoi === 'tout public' ? 'représentation tout public' : quoi)}${r.heure ? '' : n > 1 ? ', heures à préciser' : ', heure à préciser'}` : (d.representations.length ? '' : 'Horaires pas encore indiqués'),
+        r && r.note, ...precisions, ou, sp.duree, `La feuille de route, l’équipe et les documents : ${page}`].filter(Boolean).join('\n');
       L.push(`DESCRIPTION:${texteIcs(desc)}`, `STATUS:${option ? 'TENTATIVE' : 'CONFIRMED'}`, `URL:${page}`, 'END:VEVENT');
     }
     L.push('END:VCALENDAR');
     return L.map(plier).join('\r\n') + '\r\n';
   }
   function telechargerAgenda() {
-    const n = evenementsAVenir().length;
+    const evs = evenementsAVenir(), n = evs.length;
     if (!n) return annoncer('Aucune représentation à venir à ajouter.', { erreur: true });
     const url = URL.createObjectURL(new Blob([calendrier()], { type: 'text/calendar;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = url; a.download = 'crescite-ma-tournee.ics'; a.hidden = true;
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60000);
-    annoncer(`Le fichier de vos ${n > 1 ? `${n} représentations` : 'représentation'} est téléchargé : ouvrez-le pour l’ajouter à votre agenda.`);
+    annoncer('Le fichier est téléchargé : ouvrez-le pour ajouter vos représentations à votre agenda.');
   }
 
   // ================================================================================================ actions
@@ -1118,7 +1137,9 @@
   }
   async function reessayer(voulu = false) {
     if (E.sansSession) {
-      // le renouvellement de la session (TOKEN_REFRESHED) rouvre l'espace ; sinon, on reste sur la saison gardée
+      // le renouvellement de la session (TOKEN_REFRESHED) rouvre l'espace ; sinon, on reste sur la saison gardée.
+      // Après un échec, supabase-js ne redemande pas avant une minute (lastRefreshFailure) : ce geste voulu passe outre.
+      if (sb.auth && 'lastRefreshFailure' in sb.auth) sb.auth.lastRefreshFailure = null;
       const { error } = await sb.auth.getSession();
       if (error && voulu) annoncer(`Toujours hors connexion : ${motsErreur(error)}.`, { erreur: true });
       return;

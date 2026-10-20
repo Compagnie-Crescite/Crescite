@@ -151,7 +151,10 @@ main { display: block; max-width: var(--large); margin: 0 auto; padding: 22px ma
 .h-plus:empty { display: none; }
 .h-jour { font-weight: 600; color: var(--gris); white-space: nowrap; }
 .heure { min-width: 3.4em; font: 700 1.38rem/1.15 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: -.01em; white-space: nowrap; }
-.heure.vague { font-size: 1rem; font-weight: 600; color: var(--gris); }
+/* sans heure (« 2 représentations, heures à préciser ») : le texte à sa taille, la ligne qui passe à la ligne */
+.billet .horaires .heure.vague { min-width: 0; font: 600 1rem/1.35 var(--sans); letter-spacing: 0; color: var(--gris); white-space: normal; }
+.horaires li.sans-heure { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.horaires.jours li.sans-heure .h-jour { min-width: 5.4em; }
 .public { padding: 1px 8px; border-radius: 6px; background: var(--papier-2); color: var(--encre); font-size: .86rem; font-weight: 600; }
 .public.sco { background: var(--sco-doux); color: var(--sco); }
 .horaires .annulee .heure { text-decoration: line-through; text-decoration-thickness: 2px; color: var(--gris); }
@@ -200,7 +203,10 @@ main { display: block; max-width: var(--large); margin: 0 auto; padding: 22px ma
 .puce-doc .ic { width: 16px; height: 16px; flex: none; color: var(--u-texte, var(--magenta)); }
 .compte-nb { color: var(--gris); font-weight: 600; letter-spacing: 0; }
 @media (min-width: 640px) {
-  .billet-bas { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 26px; }
+  /* à gauche ce qui sert à partir (adresse, feuille de route, documents), à droite qui part */
+  .billet-bas { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-auto-flow: row dense; align-content: start; gap: 18px 26px; }
+  .billet-bas > .rubrique { grid-column: 1; }
+  .billet-bas > .r-equipe { grid-column: 2; grid-row: 1 / span 3; }
   .billet-haut, .billet-bas, .billet-pied, .bandeau { padding-left: 28px; padding-right: 24px; }
 }
 /* la toute prochaine date */
