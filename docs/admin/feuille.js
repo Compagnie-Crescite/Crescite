@@ -451,7 +451,8 @@ ${s} .s{background:${MISE.surligne}}`;
   }
   const dureeRoute = km => Math.max(5, Math.round(km / (km < 30 ? 45 : km < 100 ? 65 : km < 250 ? 85 : 95) * 60 / 5) * 5);
   const aPosition = x => x && x.latitude != null && x.longitude != null && x.latitude !== '' && !isNaN(x.latitude) && !isNaN(x.longitude);
-  const itineraire = l => aPosition(l) ? `https://www.google.com/maps/dir/?api=1&destination=${(+l.latitude).toFixed(5)},${(+l.longitude).toFixed(5)}` : '';
+  // l'itinéraire cherche le lieu par son nom et son adresse : sa position n'est que le centre de sa commune
+  const itineraire = l => { const q = [txt(l.nom), txt(l.adresse), txt(l.commune)].filter(Boolean).join(', '); return q ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}` : ''; };
   const carteAdresse = a => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a)}`;
 
   // « au Théâtre des Arts », « à l’Espace Rotonde », « à la Maison de la culture », « à Commédiamuse »

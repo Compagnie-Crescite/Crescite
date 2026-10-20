@@ -1367,10 +1367,13 @@
 
   const sansAccent = s => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const contientMot = (texte, mot) => !!mot && new RegExp(`(^|[^a-z0-9])${sansAccent(mot).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^a-z0-9])`).test(sansAccent(texte));
+  // l'itinéraire cherche le lieu par son nom et son adresse : sa position n'est que le centre de sa commune, bonne pour la
+  // carte mais pas pour s'y rendre (Google y montrerait le commerce le plus proche)
   function itineraire(l) {
-    if (l.latitude != null && l.longitude != null && Number.isFinite(+l.latitude) && Number.isFinite(+l.longitude)) return `https://www.google.com/maps/dir/?api=1&destination=${+l.latitude},${+l.longitude}`;
     const q = [l.nom, l.adresse, l.commune].filter(Boolean).join(', ');
-    return q ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}` : '';
+    if (q) return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(q)}`;
+    return l.latitude != null && l.longitude != null && Number.isFinite(+l.latitude) && Number.isFinite(+l.longitude)
+      ? `https://www.google.com/maps/dir/?api=1&destination=${+l.latitude},${+l.longitude}` : '';
   }
   const communeDe = l => `${l.commune}${l.departement ? `\u00a0(${l.departement})` : ''}`;
   // le lieu en une ligne : « L'Eclat · Pont-Audemer (27) », « Théâtre Roger Ferdinand de Saint-Lô (50) »
@@ -2135,8 +2138,8 @@
         L.push(`DTSTART;TZID=Europe/Paris:${plusMinutes(r.jour, r.heure, 0)}`, `DTEND;TZID=Europe/Paris:${fin}`);
       } else { const j = r ? r.jour : d.debut, fin = r ? r.jour : (d.fin || d.debut); L.push(`DTSTART;VALUE=DATE:${j.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${lendemain(fin).replace(/-/g, '')}`); }
       L.push(`SUMMARY:${texteIcs(`${option ? 'Option · ' : ''}${sp.titre || 'Représentation'}${quoi ? ` — ${quoi}` : ''}`)}`);
+      // le lieu par son nom et son adresse, sans GEO : la position n'est que le centre de la commune
       if (ou) L.push(`LOCATION:${texteIcs(ou)}`);
-      if (l && l.latitude != null && l.longitude != null && Number.isFinite(+l.latitude) && Number.isFinite(+l.longitude)) L.push(`GEO:${(+l.latitude).toFixed(6)};${(+l.longitude).toFixed(6)}`);
       const precisions = (Array.isArray(d.details) ? d.details : []).map(x => x && x.texte).filter(Boolean);
       const seance = r ? (nat === 'representations' && quoi === 'tout public' ? 'représentation tout public' : quoi) : '';
       const desc = [`${sp.titre || ''}${option ? ' (option, pas encore confirmée)' : ''}`,
