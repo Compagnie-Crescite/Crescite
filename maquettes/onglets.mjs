@@ -10,7 +10,11 @@ const dist = new URL('./dist/', import.meta.url);
 // [vue, adresse, attendus : textes qui doivent être visibles (fonctions de D), interdits : textes qui ne doivent pas l'être]
 const VUES = [
   ['accueil', '#/'],
-  ['voir', '#/voir', D => [D.dates.find(d => !d.scolaire).details[0].texte], D => D.dates.filter(d => d.scolaire).map(d => d.details[0].texte)],
+  // voir : les prochaines dates tout public en haut, puis l'agenda passé, saison par saison (la plus récente d'abord),
+  // les saisons terminées refermées (leurs lignes ne se lisent pas tant qu'on ne les ouvre pas)
+  ['voir', '#/voir', D => [D.dates.find(d => !d.scolaire).details[0].texte, D.site.saisons.find(s => s.saison === '2019-2020').titre],
+    D => [...D.dates.filter(d => d.scolaire).map(d => d.details[0].texte),
+          ...D.saisons['2023-2024'].spectacles.flatMap(g => g.dates).map(d => (d.details[0] || {}).texte).filter(t => t && t.length > 30).slice(0, 3)]],
   ['programmer', '#/programmer', D => [D.shows.find(s => s.slug === 'mon-royaume').programmer.representations]],
   ['etablissement', '#/etablissement', D => ['afin de participer à « l’école du spectateur »', D.shows.find(s => s.slug === 'berenice').actionCulturelle.type]],
   ['spectacles', '#/spectacles', D => D.shows.map(s => s.titreLignes[0])],
@@ -92,8 +96,15 @@ for (const n of names) {
         // une entrée est « à portée » si un lien visible y mène dans le premier écran (en-tête, barre fixe…)
         const aPortee = ENTREES.filter(h => [...document.querySelectorAll(`a[href="${h}"]`)].some(a => {
           if (!vis(a)) return false; const r = a.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth; }));
+        // voir : la première date à venir se lit avant le titre de la saison la plus ancienne
+        let ordre = null;
+        if (location.hash === '#/voir') {
+          const a = window.__norm(D.dates.find(d => !d.scolaire).details[0].texte), b = window.__norm(D.site.saisons[D.site.saisons.length - 1].titre);
+          const ia = lu.indexOf(a), ib = lu.lastIndexOf(b);
+          ordre = { ok: ia >= 0 && ib >= 0 && ia < ib, detail: `${ia} / ${ib}` };
+        }
         return {
-          titre: document.title, hash: location.hash,
+          ordre, titre: document.title, hash: location.hash,
           h1: [...document.querySelectorAll('h1')].filter(h => h.offsetParent || h.getClientRects().length).map(h => h.textContent.trim().replace(/\s+/g, ' ')).join(' | '),
           courant: [...document.querySelectorAll('header [aria-current="page"], nav [aria-current="page"]')].filter(vis).map(a => a.textContent.trim()),
           hauteur: document.documentElement.scrollHeight, haut: Math.round(scrollY),
@@ -111,7 +122,17 @@ for (const n of names) {
       titres.set(etat.titre, etat.hash);
       if (etat.hors.length && tag === 'tab') log.push(`${tag} ${vue} : texte absent des sources : ${etat.hors.slice(0, 12).map(s => `« ${s} »`).join(', ')}${etat.hors.length > 12 ? ` (+${etat.hors.length - 12})` : ''}`);
       if (etat.manquants.length) log.push(`${tag} ${vue} : attendu mais absent : ${etat.manquants.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
+      if (vue === 'voir' && etat.ordre && !etat.ordre.ok) log.push(`${tag} voir : les prochaines dates doivent précéder l'agenda passé (${etat.ordre.detail})`);
       if (etat.presents.length) log.push(`${tag} ${vue} : ne devrait pas apparaître : ${etat.presents.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
+      if (process.env.EDITION === '1' && tag === 'tab') {
+        const att = { compagnie: [['[data-edit^="site.compagnie.paragraphes"]', 2]], 'berenice-voir': [['[data-edit^="shows.berenice.texte"]', 1], ['[data-edit-photo^="shows.berenice"]', 1]],
+          'berenice-etablissement': [['[data-edit^="dossiers.berenice"]', 3], ['[data-edit^="shows.berenice.actionCulturelle"]', 1]], etablissement: [['[data-edit^="site.ecole"]', 1]],
+          voir: [['[data-agenda]', 1], ['[data-date-id]', 10]], programmer: [['[data-edit*=".programmer."]', 3]] }[vue] || [];
+        const n = await page.evaluate(sels => sels.map(([s]) => document.querySelectorAll(s).length), att);
+        att.forEach(([s, min], i) => { if (n[i] < min) log.push(`${tag} ${vue} : édition : ${n[i]} élément(s) ${s} (au moins ${min})`); });
+        const lien = await page.evaluate(() => { const l = D.site.libelles.modifierSite; return [...document.querySelectorAll('a, button')].some(b => b.textContent.trim() === l && b.getClientRects().length); });
+        if (!lien) log.push(`${tag} ${vue} : édition : pas de lien « Modifier le site » visible`);
+      }
       if (A_PORTEE.includes(vue) && etat.aPortee.length < 3) log.push(`${tag} ${vue} : les trois entrées ne sont pas toutes à portée dans le premier écran (liens visibles : ${JSON.stringify(etat.aPortee)})`);
       if (tag === 'tab') log.push(`· ${vue} : « ${etat.titre} » · h1 « ${etat.h1.slice(0, 60)} » · menu actif ${JSON.stringify(etat.courant)} · hauteur ${etat.hauteur}px`);
       await page.screenshot({ path: `${out}/${n}-${tag}-${vue}.png` });

@@ -180,6 +180,7 @@ LIBELLES = {
     "ficheTechnique": "Fiche technique", "conditionsAccueil": "Conditions d’accueil", "bandeAnnonce": "Bande-annonce",
     "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles",
     "ouverture": "Ouverture", "dates": "Dates", "photos": "Photos", "dossierScolaire": "Dossier scolaire",
+    "modifierSite": "Modifier le site",
 }
 
 
@@ -354,7 +355,8 @@ def build_data():
             "palette": c, "clair": u["clair"], "motif": u["motif"], "focale": 50,
             "univers": u, "lieuTemps": uv["lieuTemps"], "accroche": uv["accroche"], "affirmations": uv["affirmations"],
             "citations": uv["citations"], "video": video,
-            "photos": [dict(p, cle=f"{slug}/{p['id']}") for p in uv["photos"]], "creditPhotos": uv["credit"] or extra["credit"],
+            "photo": f"{slug}.webp",
+            "photos": [dict(p, cle=f"{slug}/{p['id']}", fichier=f"{slug}/{p['id']}.webp") for p in uv["photos"]], "creditPhotos": uv["credit"] or extra["credit"],
             "creditDossier": uv.get("creditDossier"),
             "actionCulturelle": uv["actionCulturelle"], "programmer": uv["programmer"],
             "dossier": "berenice" if uv["actionCulturelle"].get("dossier") else None,
@@ -436,7 +438,7 @@ D_SAISON = "2026-2027"
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js")
+OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js")
 
 
 def avec_outils(name, src):

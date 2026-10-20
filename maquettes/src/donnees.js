@@ -7,6 +7,7 @@
                                remonter en haut, sans voler le focus, sans rejouer l'ouverture ni les animations d'entrée.
                                Le rendu de chaque vue relit donc D à chaque fois (aucune copie figée au chargement).
    DONNEES.etat                'instantane' (données du dépôt), 'base' (à jour avec la base) ou 'hors-ligne'.
+   DONNEES.recharger({force})  relit la base ; DONNEES.suspendre(oui) met les nouvelles en attente (édition en cours).
 
    Les lignes d'agenda se composent avec AGENDA (agenda.js), comme dans l'administration.
    La base : le projet Supabase de la compagnie (tables crescite_, lecture publique de ce qui est publié). Adresse
@@ -156,7 +157,7 @@ const DONNEES = (() => {
         prochaine: mine[0] || null, nbDates: mine.length,
         couleur: c.scene, couleurTexteClair: pourFondClair(c.scene), fondSombre: u.clair ? '#1a1016' : c.fond,
         palette: c, clair: !!u.clair, motif: u.motif, focale: 50, univers: u, lieuTemps: s.lieu_temps, accroche: s.accroche,
-        affirmations: s.affirmations || [], citations: s.citations || [], video: s.video, photos: ph,
+        affirmations: s.affirmations || [], citations: s.citations || [], video: s.video, photo: s.photo, photos: ph,
         creditPhotos: s.credit_photos || s.credit, creditDossier: s.credit_dossier,
         actionCulturelle: s.action_culturelle || {}, programmer: s.programmer || {},
         dossier: s.dossier ? s.dossier.replace(/^dossier:/, '') : null,
@@ -218,12 +219,15 @@ const DONNEES = (() => {
     });
   }
   const prevenir = () => abonnes.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
-  async function recharger() {
+  // pendant une édition en cours (edition.js), les nouvelles de la base attendent : on ne perd rien de ce qui s'écrit
+  let suspendu = false, enAttente = null;
+  async function recharger({ force = false } = {}) {
     try {
       const n = composer(await lire());
       const e = empreinte(n);
       moi.etat = 'base';
-      if (e === derniere) return;
+      if (e === derniere && !force) return;
+      if (suspendu) { enAttente = { n, e }; return; }
       derniere = e;
       appliquer(n);
       prevenir();
@@ -277,6 +281,10 @@ const DONNEES = (() => {
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { verifier(); if (!ws) bientot(0); } });
   }
   moi.surChangement = fn => { if (typeof fn === 'function') abonnes.push(fn); };
+  moi.suspendre = oui => {
+    suspendu = !!oui;
+    if (!suspendu && enAttente) { const { n, e } = enAttente; enAttente = null; derniere = e; appliquer(n); prevenir(); }
+  };
   moi.prevenir = prevenir;
   moi.recharger = recharger;
   moi.composer = composer;
