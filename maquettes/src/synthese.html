@@ -223,6 +223,47 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .sa-dates > li > a { text-decoration-color: color-mix(in srgb, var(--encre) 30%, transparent); }
 .etat { margin-left: 6px; font: normal 600 .74rem var(--sans); letter-spacing: .05em; text-transform: uppercase; color: var(--magenta-texte); }
 
+/* ———— l'agenda passé : une saison par bloc, fermée au départ, sa carte pour l'annoncer ———— */
+.ag-index { position: sticky; top: var(--haut); z-index: 20; display: flex; align-items: center; gap: 10px; padding: 10px 0; margin-bottom: 6px; background: var(--papier); border-bottom: 1px solid var(--filet); }
+.ag-index ul { flex: 1 1 auto; min-width: 0; display: flex; gap: 6px; margin: 0; padding: 3px 2px; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.ag-index li { flex: none; }
+.idx, .idx-tout { display: inline-flex; align-items: center; gap: 7px; border: 1.5px solid var(--filet); background: transparent; color: var(--encre); font: 500 .9rem/1.2 var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; white-space: nowrap; }
+.idx { padding: 7px 13px; border-radius: 999px; }
+.idx small { color: var(--gris); font-size: .78rem; }
+.idx:hover, .idx-tout:hover { border-color: var(--encre); }
+.idx[aria-expanded="true"] { border-color: var(--magenta); background: color-mix(in srgb, var(--magenta) 9%, transparent); }
+.idx-actif { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.idx-actif:hover { background: var(--magenta-texte); border-color: var(--magenta-texte); }
+.idx .croix { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.idx-tout { flex: none; justify-content: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; }
+.idx-tout .fleche { width: 18px; height: 18px; }
+.saisons-ag { margin-top: 4px; }
+.sai { border-bottom: 1px solid var(--filet); scroll-margin-top: calc(var(--haut) + 74px); }
+.sai > summary { display: grid; grid-template-columns: clamp(76px, 10vw, 128px) minmax(0, 1fr) auto; align-items: center; gap: 4px clamp(14px, 2.4vw, 30px); padding: 16px 8px; list-style: none; cursor: pointer; border-radius: 8px; transition: background .2s; }
+.sai > summary::-webkit-details-marker { display: none; }
+.sai > summary:hover, .sai[open] > summary { background: color-mix(in srgb, var(--magenta) 6%, transparent); }
+.sai > summary:hover .vignette path { animation: dessine 1s ease-out both; }
+.sai-t { margin: 0; font: italic 500 clamp(1.45rem, 1.15rem + 1vw, 2.1rem)/1.1 var(--serif); }
+.sai-sp { display: block; margin-top: 5px; color: var(--gris); font-size: .9rem; line-height: 1.4; }
+.sai-sp span:not(:last-child)::after { content: "\00a0·"; }
+.sai-n { display: inline-flex; align-items: center; gap: 10px; font: 500 1.35rem var(--sans); font-variant-numeric: tabular-nums; }
+.sai-n .chev { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s; }
+.sai[open] .sai-n .chev { transform: rotate(180deg); }
+.sai-corps { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; padding: 10px 8px 40px; }
+.sai-corps:empty { display: none; }
+.sai-carte { position: sticky; top: calc(var(--haut) + 84px); margin: 0; }
+.sai-carte .carte { max-height: calc(100svh - var(--haut) - 120px); }
+.sai-liste .mois { margin-top: 26px; }
+.sai-liste > .mois:first-child { margin-top: 0; }
+.sai-liste .dates { margin-top: 8px; }
+.dates a.ou { text-decoration-color: color-mix(in srgb, var(--encre) 30%, transparent); text-underline-offset: 3px; }
+.dates a.ou:hover { color: var(--magenta-texte); }
+.dates .qui .etat { margin: 0 0 0 4px; }
+.dates > li.suite { display: block; color: var(--gris); }
+.sai-page { margin: 22px 0 0; }
+.sai-page a { display: inline-flex; align-items: center; gap: 8px; color: var(--magenta-texte); font-weight: 600; text-decoration: none; }
+.sai-page a:hover { text-decoration: underline; }
+
 /* ———— je souhaite programmer ———— */
 .p-intro { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: clamp(24px, 5vw, 72px); align-items: center; }
 .p-texte .rubrique { margin-top: 0; }
@@ -748,10 +789,12 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   .une-carte { margin: 22px 0 8px; }
   .bulle { position: static; max-width: none; margin-top: 8px; }
   .bulle:empty { display: none; }
-  .compagnie, .directeur, .actions, .contact, .ag-corps, .sa-corps, .e-dates, .p-intro, .u-tournee, .u-prog, .dos-accueil, .dos-grille, .dos-pres, .dos-ateliers, .fes, .fus.large { grid-template-columns: minmax(0, 1fr); }
+  .compagnie, .directeur, .actions, .contact, .ag-corps, .sa-corps, .sai-corps, .e-dates, .p-intro, .u-tournee, .u-prog, .dos-accueil, .dos-grille, .dos-pres, .dos-ateliers, .fes, .fus.large { grid-template-columns: minmax(0, 1fr); }
   .dos-pres .boite:first-child { grid-column: auto; }
   .pied { grid-template-columns: minmax(0, 1fr); }
   .une-carte .carte, .ag-carte .carte, .sa-carte .carte, .e-carte .carte, .p-carte .carte { max-height: none; }
+  .sai-carte { position: static; order: -1; }
+  .sai-carte .carte { max-height: 340px; }
   .ag-carte, .sa-carte, .e-carte { position: static; order: -1; }
   .reperes, .photos-ac, .carte-sp, .u-faits { position: static; }
   .u-ouv-grille { grid-template-columns: minmax(0, 1fr); }
@@ -795,6 +838,12 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 @media (max-width: 640px) {
   .formulaire { grid-template-columns: minmax(0, 1fr); }
   .dates > li { grid-template-columns: 6.6rem minmax(0, 1fr); gap: 2px 12px; }
+  .sai > summary { grid-template-columns: 64px minmax(0, 1fr) auto; padding: 14px 4px; }
+  .sai-n { font-size: 1.1rem; gap: 6px; }
+  .ag-outils .filtres { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--gout)); padding: 2px var(--gout) 4px; scrollbar-width: none; max-width: calc(100% + 2 * var(--gout)); }
+  .ag-outils .puce, .ag-outils #choix-lieu { flex: none; }
+  .ag-outils { max-width: 100%; }
+  .sai-corps { padding: 6px 4px 30px; }
   .prochaines a, .prochaines .pl { grid-template-columns: 6.2rem minmax(0, 1fr); }
   .fus.compact .fu-t { font-size: 1.3rem; }
   .fus.compact .fu-c { padding: 2px 12px 16px; }
@@ -1092,46 +1141,181 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
     return { titre: S.accueil };
   }
 
-  /* ---------- je viens voir un spectacle : la saison tout public, reliée à la carte ---------- */
+  /* ---------- l'agenda passé : toutes les dates publiées (D.saisons), saison par saison, de la plus récente à la plus ancienne ---------- */
+  const MOIS_NOMS = MOIS.split('|');
+  const MOIS_TOK = `${MOIS}|janv|févr|avr|juil|sept|oct|nov|déc`;   // les mois, entiers ou abrégés (« 26 sept – 4 oct 2016 »)
+  const RE_JOUR = new RegExp(`(\\d{1,2})(?:er)?\\s+(${MOIS_TOK})\\.?(?:\\s+(\\d{4}))?`, 'gi');
+  const RE_MOIS_AN = new RegExp(`(${MOIS_TOK})\\.?\\s+(\\d{4})`, 'i');
+  const RE_LIGNE = new RegExp(`^(.*?)\\s*((?:${MOIS_TOK})\\.?\\s+\\d{4})([\\s\\S]*)$`, 'i');
+  const p2 = n => String(n).padStart(2, '0');
+  // la date de fin d'une ligne, « 2020-03-04 » : iso/fin quand la base les a, sinon lue dans la ligne (le dernier jour cité)
+  function cleDate(d, saison) {
+    const fin = d.fin || d.iso; if (fin) return fin;
+    const tete = String(d.ligne || '').split(/—|\s:\s/)[0], a0 = +saison.slice(0, 4), mois = x => { const t = x.toLowerCase(); return MOIS_NOMS.findIndex(n => n.startsWith(t) || t.startsWith(n.slice(0, 4))) + 1; };
+    const ms = [...tete.matchAll(RE_JOUR)], dern = ms[ms.length - 1];
+    if (dern) { const mm = mois(dern[2]); return `${dern[3] ? +dern[3] : mm >= 9 ? a0 : a0 + 1}-${p2(mm)}-${p2(+dern[1])}`; }
+    const ma = tete.match(RE_MOIS_AN);
+    return ma ? `${ma[2]}-${p2(mois(ma[1]))}-31` : null;
+  }
+  // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » }
+  function decoupe(ligne) {
+    const t = String(ligne || ''), m = t.match(RE_LIGNE);
+    if (!m) return { jour: '', heure: '', lieu: t.trim() };
+    const reste = m[3], k = reste.indexOf('—'), c = reste.search(/\s:\s/);
+    const [h, l] = k >= 0 ? [reste.slice(0, k), reste.slice(k + 1)] : c >= 0 ? [reste.slice(0, c), reste.slice(c + 3)] : ['', reste];
+    const net = x => x.replace(/^[\s:,–-]+|[\s:]+$/g, '');
+    return { jour: m[1] || m[2], heure: net(h), lieu: net(l) };
+  }
+  const titreMois = m => m ? `${MOIS_NOMS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}` : '';
+  // toutes les saisons passées : [{k, titre, rows: [{d, g, k, i, suite, cle, txt}], titres, lieux}], la plus récente d'abord
+  function agendaPasse() {
+    const out = [];
+    S.saisons.forEach(x => {
+      const SA = D.saisons[x.saison]; if (!SA || x.saison > D.saison) return;
+      const rows = []; let i = 0;
+      (SA.spectacles || []).forEach(g => {
+        let prev = null;
+        (g.dates || []).forEach(d => {
+          let k = cleDate(d, x.saison); const suite = !k; if (suite) k = prev; else prev = k;
+          const sp = g.slug && bySlug[g.slug], titre = sp ? sp.titre : g.titre;
+          rows.push({ d, g, k: k || '', i: i++, suite, titre, cle: g.slug || `titre:${g.titre}`,
+            txt: norm(`${titre} ${d.ligne} ${(d.details || []).map(y => y.texte).join(' ')} ${d.l != null && CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) });
+        });
+      });
+      const passees = (x.saison === D.saison ? rows.filter(r => r.k && r.k < D.aujourdhui) : rows).sort((a, b) => a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i);
+      if (!passees.length) return;
+      out.push({ k: x.saison, titre: SA.titre, rows: passees, titres: [...new Set(passees.map(r => r.titre))], lieux: CARTE.saison(x.saison) });
+    });
+    return out;
+  }
+  // les spectacles qui ont des dates, à venir ou passées : [{cle, titre, slug}], les spectacles de la compagnie d'abord
+  function spectaclesAgenda(pub, passe) {
+    const m = new Map();
+    D.shows.forEach(s => { if (pub.some(d => d.slug === s.slug) || passe.some(p => p.rows.some(r => r.cle === s.slug))) m.set(s.slug, { cle: s.slug, titre: s.titre, slug: s.slug }); });
+    passe.forEach(p => p.rows.forEach(r => { if (!m.has(r.cle)) m.set(r.cle, { cle: r.cle, titre: r.titre, slug: null }); }));
+    return [...m.values()];
+  }
+
+  /* ---------- je viens voir un spectacle : les prochaines dates, puis l'agenda passé saison par saison ---------- */
   const etat = { voir: null };
+  const CHEVRON = '<svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 9l6 6 6-6"/></svg>';
+  const DOUBLE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l6 5 6-5M6 13l6 5 6-5"/></svg>';
+  const DOUBLE_HAUT = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 11l6-5 6 5M6 18l6-5 6 5"/></svg>';
+  const ligneAgenda = r => {
+    const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne);
+    const titre = r.suite ? '' : sp ? `<a class="t" href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="t">${esc(r.titre)}</span>`;
+    const lieu = p.lieu ? (d.lien ? `<a class="ou" href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}</a>` : `<span class="ou">${esc(p.lieu)}</span>`) : '';
+    return `<li data-date-id="${esc(d.id ?? '')}"${d.l != null ? ` data-l="${d.l}"` : ''}${r.suite ? ' class="suite"' : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<time${d.iso ? ` datetime="${d.iso}"` : ''}><b>${esc(p.jour)}</b>${p.heure ? `<small>${esc(p.heure)}</small>` : ''}</time>`}<div class="qui">${titre}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${lieu}${details(d.details)}</div></li>`;
+  };
   function voir(q, surPlace) {
     vue = 'voir';
     const e = E.voir, pub = D.dates.filter(d => !d.scolaire), lieux = CARTE.aVenir('public');
-    const avec = D.shows.filter(s => pub.some(d => d.slug === s.slug));
-    if (!surPlace || !etat.voir) { const l0 = q.get('l'); etat.voir = { q: '', slug: null, l: l0 !== null && lieux.some(x => x.l === +l0) ? +l0 : null }; }
+    const passe = agendaPasse(), puces = spectaclesAgenda(pub, passe);
+    const proch = pub.map(d => ({ d, cle: d.slug, l: d.l, txt: norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')} ${CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) }));
+    if (!surPlace || !etat.voir) { const l0 = q.get('l'); etat.voir = { q: '', slug: null, l: l0 !== null && lieux.some(x => x.l === +l0) ? +l0 : null, ouv: new Set(passe.filter(s => s.k === D.saison).map(s => s.k)), avant: null }; }
     const F = etat.voir;
-    if (F.slug && !avec.some(s => s.slug === F.slug)) F.slug = null;
-    if (F.l !== null && !lieux.some(x => x.l === F.l)) F.l = null;
+    if (F.slug && !puces.some(s => s.cle === F.slug)) F.slug = null;
+    if (F.l !== null && !CARTE.lieux[F.l]) F.l = null;
     retenir('voir');
-    main.innerHTML = `${teteEntree(e, [['v-saison', S.saisons[0].titre], ['v-tournee', L.actuellementEnTournee], ['v-saisons', L.saisonsPrecedentes]])}
+    const terme = () => norm(F.q).trim();
+    const actif = () => !!(F.slug || F.l !== null || terme());
+    const garde = r => (!F.slug || r.cle === F.slug) && (F.l === null || r.l === F.l || (r.d && r.d.l === F.l)) && (!terme() || r.txt.includes(terme()));
+    main.innerHTML = `${teteEntree(e, [['v-saison', S.saisons[0].titre], ['v-agenda', L.saisonsPrecedentes], ['v-tournee', L.actuellementEnTournee]])}
       <section class="bloc sans-filet" id="v-saison" aria-labelledby="h-saison"><div class="wrap">
         <h2 class="titre-bloc" id="h-saison">${esc(S.saisons[0].titre)}</h2>
         <div class="ag-outils">
           <label class="recherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
-          <div class="filtres" role="group" aria-label="${esc(L.spectacles)}">${avec.map(s => `<button class="puce" type="button" data-s="${s.slug}" aria-pressed="false" style="--c:${s.couleurTexteClair}"><i></i>${esc(s.titre)}</button>`).join('')}<span id="choix-lieu"></span></div>
+          <div class="filtres" role="group" aria-label="${esc(L.spectacles)}">${puces.map(s => `<button class="puce" type="button" data-s="${esc(s.cle)}" aria-pressed="false" style="--c:${s.slug ? couleurDe(s.slug) : 'var(--gris)'}"><i></i>${esc(s.titre)}</button>`).join('')}<span id="choix-lieu"></span></div>
         </div>
         <div class="ag-corps"><div class="ag-liste" id="ag-liste"></div><div class="ag-carte">${carte({ lieux, titre: S.saisons[0].titre, couleurs: true })}</div></div>
       </div></section>
+      <section class="bloc" id="v-agenda" aria-labelledby="h-agenda"><div class="wrap">
+        <h2 class="titre-bloc" id="h-agenda">${esc(L.saisonsPrecedentes)}</h2>
+        <nav class="ag-index" id="ag-index" aria-label="${esc(L.saison)}"></nav>
+        <div class="saisons-ag" id="ag-saisons"></div>
+      </div></section>
       <section class="bloc" id="v-tournee" aria-labelledby="h-tournee"><div class="wrap"><h2 class="titre-bloc" id="h-tournee">${esc(L.actuellementEnTournee)}</h2>
-        <ul class="fus large">${D.shows.filter(s => s.enTournee).map(s => ficheU(s, { href: `#/spectacle/${s.slug}/voir`, large: true, date: pub.find(d => d.slug === s.slug) })).join('')}</ul></div></section>
-      ${saisonsBande(D.saison, 'v-saisons')}`;
-    const svg = $('.ag-carte svg'), liste = $('#ag-liste');
-    const filtrees = () => { const t = norm(F.q).trim(); return pub.filter(d => (!F.slug || d.slug === F.slug) && (F.l === null || d.l === F.l)
-      && (!t || norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')}`).includes(t))); };
-    function dessine() {
-      const Ls = filtrees(), groupes = [];
+        <ul class="fus large">${D.shows.filter(s => s.enTournee).map(s => ficheU(s, { href: `#/spectacle/${s.slug}/voir`, large: true, date: pub.find(d => d.slug === s.slug) })).join('')}</ul></div></section>`;
+    const svg = $('.ag-carte svg'), liste = $('#ag-liste'), racine = $('#ag-saisons'), index = $('#ag-index');
+    // quand le filtre change, les saisons qui ont des résultats s'ouvrent ; quand il s'efface, les saisons reprennent leur état d'avant
+    function recompte() {
+      if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
+      else if (F.avant) { F.ouv = F.avant; F.avant = null; }
+    }
+    const visibles = () => passe.map(s => ({ s, rows: s.rows.filter(garde) })).filter(x => x.rows.length);
+    function dessineProchaines() {
+      const Ls = proch.filter(garde).map(r => r.d), groupes = [];
       Ls.forEach(d => { const m = moisDe(d.ligneDate) || d.ligneDate, g = groupes[groupes.length - 1]; if (g && g.m === m) g.ds.push(d); else groupes.push({ m, ds: [d] }); });
-      liste.innerHTML = groupes.map(g => `<h3 class="mois">${esc(g.m)}</h3><ul class="dates">${g.ds.map(d => `<li data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, 'voir')}<span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul>`).join('');
+      liste.innerHTML = groupes.map(g => `<h3 class="mois">${esc(g.m)}</h3><ul class="dates" data-agenda="">${g.ds.map(d => `<li data-date-id="${esc(d.id ?? '')}" data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, 'voir')}<span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul>`).join('');
       const ls = new Set(Ls.map(d => d.l));
       $$('.carte-lieu', svg).forEach(g => g.classList.toggle('eteint', !ls.has(+g.dataset.l)));
       marquer(svg, F.l);
+    }
+    // le contenu d'une saison ouverte : ses dates par mois, de la plus récente à la plus ancienne, et sa carte
+    function corpsSaison(s, rows) {
+      const parL = new Map();
+      rows.forEach(r => { if (r.d.l != null) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, titre: r.titre, slug: r.g.slug }); } });
+      const lx = s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l) })), groupes = [];
+      rows.forEach(r => { const m = r.k.slice(0, 7), g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
+      return `<div class="sai-liste">${groupes.map(g => `${g.m ? `<h4 class="mois">${esc(titreMois(g.m))}</h4>` : ''}<ul class="dates" data-agenda="">${g.rs.map(ligneAgenda).join('')}</ul>`).join('')}
+          ${s.k === D.saison ? '' : `<p class="sai-page"><a href="#/agenda/${s.k}">${esc(s.titre)}${FLECHE}</a></p>`}</div>
+        <div class="sai-carte">${lx.length ? carte({ lieux: lx, titre: s.titre, couleurs: true, simple: true }) : ''}</div>`;
+    }
+    function lierSaison(dt, s) {
+      const sv = $('.sai-carte svg', dt), ul = $('.sai-liste', dt);
+      if (!sv) return;
+      relier(sv, ul, l => { const li = $(`li[data-l="${l}"]`, ul); if (li) li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' }); });
+      bientot(() => { pousser(sv); echelle(); });
+    }
+    function remplir(dt) {
+      const k = dt.dataset.saison, s = passe.find(x => x.k === k), c = $('.sai-corps', dt);
+      if (!s || !c || c.firstElementChild) return;
+      c.innerHTML = corpsSaison(s, s.rows.filter(garde));
+      lierSaison(dt, s);
+    }
+    function vignette(s, rows) {
+      const ls = new Set(rows.map(r => r.d.l));
+      return `<svg class="vignette" viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr"/>${s.lieux.filter(y => ls.has(y.l)).map(y => `<path pathLength="1" d="${CARTE.trait(y.xy)}"/>`).join('')}<circle cx="${CARTE.rouen[0]}" cy="${CARTE.rouen[1]}" r="11"/></svg>`;
+    }
+    function dessineSaisons() {
+      const vis = visibles();
+      racine.innerHTML = vis.map(({ s, rows }) => `<details class="sai" id="sai-${s.k}" data-saison="${s.k}"${F.ouv.has(s.k) ? ' open' : ''}>
+        <summary>${vignette(s, rows)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${CHEVRON}</span></summary>
+        <div class="sai-corps">${F.ouv.has(s.k) ? corpsSaison(s, rows) : ''}</div></details>`).join('');
+      vis.forEach(({ s }) => { if (F.ouv.has(s.k)) lierSaison($(`#sai-${s.k}`, racine), s); });
+      const tousOuverts = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
+      const actifs = [terme() && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l !== null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
+      index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPrecedentes)}">${tousOuverts ? DOUBLE_HAUT : DOUBLE}</button>
+        <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => `<li><button type="button" class="idx" data-k="${s.k}" aria-controls="sai-${s.k}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}<small>${rows.length}</small></button></li>`).join('')}</ul>`;
+    }
+    function majOutils() {
       $('#choix-lieu').innerHTML = F.l !== null ? `<button class="puce choisi" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}${CROIX}</button>` : '';
       $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
+      if ($('#cherche').value !== F.q) $('#cherche').value = F.q;
     }
-    $('#choix-lieu').addEventListener('click', e => { if (e.target.closest('button')) { F.l = null; dessine(); $('#cherche').focus(); } });
+    function dessine() { recompte(); dessineProchaines(); dessineSaisons(); majOutils(); }
+    // ouvrir ou fermer une saison à la main
+    racine.addEventListener('toggle', ev => {
+      const dt = ev.target; if (!dt.matches || !dt.matches('details.sai')) return;
+      const k = dt.dataset.saison;
+      if (dt.open) { F.ouv.add(k); remplir(dt); } else { F.ouv.delete(k); const c = $('.sai-corps', dt); if (c) c.innerHTML = ''; }
+      const b = $(`[data-k="${k}"]`, index); if (b) b.setAttribute('aria-expanded', String(dt.open));
+      const vis = visibles(), tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k)), t = $('.idx-tout', index);
+      if (t) { t.setAttribute('aria-expanded', String(tout)); t.innerHTML = tout ? DOUBLE_HAUT : DOUBLE; }
+    }, true);
+    index.addEventListener('click', ev => {
+      const b = ev.target.closest('button'); if (!b) return;
+      if (b.classList.contains('idx-tout')) { const vis = visibles(); F.ouv = b.getAttribute('aria-expanded') === 'true' ? new Set() : new Set(vis.map(x => x.s.k)); dessineSaisons(); return; }
+      if (b.dataset.eff) { if (b.dataset.eff === 'q') F.q = ''; else if (b.dataset.eff === 's') F.slug = null; else F.l = null; dessine(); return; }
+      const dt = $(`#sai-${b.dataset.k}`, racine); if (!dt) return;
+      dt.open = true; F.ouv.add(b.dataset.k); remplir(dt);
+      dt.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' });
+    });
+    $('#choix-lieu').addEventListener('click', ev => { if (ev.target.closest('button')) { F.l = null; dessine(); $('#cherche').focus(); } });
     $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; dessine(); }));
-    $('#cherche').addEventListener('input', ev => { F.q = ev.target.value; dessine(); });
-    // choisir une commune sur la carte filtre la liste ; survoler l'une allume l'autre
+    let tempo = 0;
+    $('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(dessine, 120); });
+    // choisir une commune sur la carte filtre toute l'agenda ; survoler l'une allume l'autre
     relier(svg, liste, l => { F.l = F.l === l ? null : l; dessine(); });
     liste.addEventListener('mouseleave', () => marquer(svg, F.l));
     dessine();
