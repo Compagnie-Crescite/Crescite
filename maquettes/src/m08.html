@@ -102,10 +102,10 @@ a:hover>.fl{transform:translateX(4px)}
 .som.revele .toc-lead{transition:transform .75s cubic-bezier(.2,.7,.2,1) calc(var(--k,0) * 55ms + 120ms)}
 /* les trois entrées, au cœur de l'accueil */
 .som-e .toc-list{margin-top:18px}
-.som-e .toc-link{padding:22px 0 24px;border-bottom:1px solid var(--rule)}
+.som-e .toc-link{padding:20px 0 22px;border-bottom:1px solid var(--rule)}
 .som-e .toc-row{align-items:center}
 .som-e .ent-m{width:16px;height:16px;align-self:center}
-.som-e .toc-title{font:400 var(--t1)/1 var(--serif);letter-spacing:-.016em}
+.som-e .toc-title{font:400 clamp(2.5rem,4.1vw,3.6rem)/1.02 var(--serif);letter-spacing:-.016em}
 .som-e .toc-lead{transform:none;min-width:20px}
 .toc-fl{flex:none;font-size:1.6rem;line-height:1;transition:transform .3s ease}
 .som-e .toc-link.is-active .toc-title{color:var(--e);text-decoration-color:var(--e)}
@@ -369,7 +369,7 @@ a:hover>.fl{transform:translateX(4px)}
 /* ——— Programmer : le catalogue, une fiche par spectacle dans son univers ——— */
 .cat-som{display:flex;flex-wrap:wrap;align-items:baseline;margin-top:34px;padding-top:14px;background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 3px no-repeat,linear-gradient(var(--ink),var(--ink)) 0 6px/100% 1px no-repeat}
 .cat-som li{display:flex;align-items:baseline}
-.cat-som li+li::before{content:"/";margin:0 14px;color:var(--rule-s);font-family:var(--sans)}
+.cat-som li:not(:last-child)::after{content:"/";margin:0 14px;color:var(--rule-s);font-family:var(--sans)}
 .cat-l{padding:4px 0;font-size:calc(1.4rem * var(--tk,1));line-height:1.3;text-decoration:underline;text-decoration-color:transparent;text-decoration-thickness:2px;text-underline-offset:.2em}
 .cat-l:hover{text-decoration-color:currentColor}
 .cf{position:relative;display:grid;grid-template-columns:minmax(0,45fr) minmax(0,55fr);overflow:clip;border-bottom:1px solid var(--rule)}
@@ -402,7 +402,7 @@ details summary{cursor:pointer}
 .cf-lieux p{margin-top:8px;font-size:.9375rem;line-height:1.6;color:var(--ink2)}
 .cf-motif{right:-70px;top:-70px;width:320px;opacity:.12}
 .cf-motif.motif-fil{left:0;right:0;top:auto;bottom:14px;width:auto;opacity:.3}
-.cf-motif.motif-chronologie{left:var(--gx);right:55%;top:16px;width:auto;opacity:.4}
+.cf-motif.motif-chronologie{left:calc(45% + var(--gx));right:var(--gx);top:auto;bottom:14px;width:auto;opacity:.4}
 
 /* ——— Établissement : les actions culturelles, le type bien lisible ——— */
 .et-g{padding:56px var(--gx) 64px}
@@ -1104,7 +1104,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
         ${(apercu[e.cle] || (() => ''))()}
         <div class="pv-foot"><p class="pv-date"><span class="kicker">${esc(kicker[e.cle] || '')}</span></p><a class="pv-link" href="${esc(e.href)}">${esc(L.decouvrir)}<span class="sr-only"> ${esc(e.texte)}</span>${fleche}</a></div>
       </div>`).join('');
-    return `<section class="som som-e${ANIMER && INTRO.ouverte() ? ' attend' : ''}" data-k="som-e" aria-labelledby="som-e-h">
+    return `<section class="som som-e${INTRO.ouverte() && CARTE.mouvement() ? ' attend' : ''}" data-k="som-e" aria-labelledby="som-e-h">
       <div class="toc"><div class="mast"><h1 class="mast-g" id="som-e-h" tabindex="-1">${esc(site().nom)}</h1><a class="mast-d" href="#/voir">${esc(sais.titre)}</a></div><ol class="toc-list">${items}</ol></div>
       <div class="pv"><div class="pv-in">${calques}</div></div>
     </section>`;
@@ -1138,7 +1138,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     const tete = page
       ? `<h1 class="page-title toc-h1" id="${id}-h" tabindex="-1">${esc(menuTexte('spectacles'))}</h1><div class="mast"><span class="mast-g">${esc(site().nom)}</span><a class="mast-d" href="#/voir">${esc(sais.titre)}</a></div>`
       : `<div class="mast"><h2 class="mast-g" id="${id}-h">${esc(L.lesSpectacles)}</h2><a class="mast-d" href="#/spectacles">${esc(menuTexte('spectacles'))}<span aria-hidden="true"> →</span></a></div>`;
-    return `<section class="som som-s${!page && ANIMER && INTRO.ouverte() ? ' attend' : ''}" data-k="${id}" aria-labelledby="${id}-h">
+    return `<section class="som som-s${!page && INTRO.ouverte() && CARTE.mouvement() ? ' attend' : ''}" data-k="${id}" aria-labelledby="${id}-h">
       <div class="toc">${tete}<ol class="toc-list">${items}</ol></div>
       <div class="pv" style="background:${sp[cur] ? univers(sp[cur]).fond : 'transparent'}"><div class="pv-in">${calques}</div></div>
     </section>`;
@@ -1214,7 +1214,8 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   /* ——— Je souhaite programmer : le catalogue, une fiche par spectacle dans son univers ——— */
   function ficheCatalogue(s) {
     const L = lib(), pr = s.programmer || {}, faits = faitsDe(s);
-    const fiche = (s.fiche || []).map((f, i) => f.libelle ? `<li><span class="fi-l"${ed(`${P(s)}.fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>` : `<li class="solo"><span${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>`).join('');
+    const eq = !s.avec && (pr.equipeCreation || []).length > 0;
+    const fiche = (s.fiche || []).map((f, i) => f.libelle ? `<li><span class="fi-l"${ed(`${P(s)}.fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>` : eq ? '' : `<li class="solo"><span${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>`).join('');
     const avec = s.avec ? `<p class="cf-avec"><span class="fi-l"${ed(`${P(s)}.avec.libelle`)}>${esc(s.avec.libelle)}</span> <span${ed(`${P(s)}.avec.valeur`)}>${s.avec.valeur}</span></p>` : '';
     return `<article class="cf u" id="f-${esc(s.slug)}" style="${styleU(s)}" aria-labelledby="cf-${esc(s.slug)}">
       ${motifHTML(s, 'cf-motif')}
@@ -1439,8 +1440,8 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   }
   function distributionHTML(s) {
     const pr = s.programmer || {};
-    const fiche = (s.fiche || []).map((f, i) => f.libelle ? `<li><span class="fi-l"${ed(`${P(s)}.fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span class="fi-v"${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>` : `<li class="solo"><span class="fi-v"${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>`).join('');
     const eq = !s.avec && (pr.equipeCreation || []).length ? pr.equipeCreation.map((t, i) => `<li class="solo"><span${ed(`${P(s)}.programmer.equipeCreation.${i}`)}>${esc(t)}</span></li>`).join('') : '';
+    const fiche = (s.fiche || []).map((f, i) => f.libelle ? `<li><span class="fi-l"${ed(`${P(s)}.fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span class="fi-v"${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>` : eq ? '' : `<li class="solo"><span class="fi-v"${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>`).join('');
     const avec = s.avec ? `<p class="avec"><span class="fi-l"${ed(`${P(s)}.avec.libelle`)}>${esc(s.avec.libelle)}</span> <span class="fi-v"${ed(`${P(s)}.avec.valeur`)}>${s.avec.valeur}</span></p>` : '';
     const prod = (s.production || []).length ? `<div class="prod">${s.production.map((p, i) => para(p, `${P(s)}.production.${i}`)).join('')}</div>` : '';
     const ment = (s.mentions || []).length ? `<div class="prod">${s.mentions.map((p, i) => para(p, `${P(s)}.mentions.${i}`)).join('')}</div>` : '';
@@ -1505,7 +1506,6 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   function chDossier(s, X) {
     const L = lib(), k = `dossiers.${s.dossier}`, C = [];
     const couv = `<div class="dos-couv aplat">
-        ${X.type ? `<p class="dos-type"${ed(`${k}.type`)}>${esc(X.type)}</p>` : ''}
         ${X.titre ? `<p class="dos-titre"${ed(`${k}.titre`)}>${esc(X.titre)}</p>` : ''}
         ${X.auteur ? `<p class="dos-auteur"${ed(`${k}.auteur`)}>${esc(X.auteur)}</p>` : ''}
         <p class="dos-faits">${['creation', 'duree', 'format', 'public'].filter(c => X[c]).map(c => `<span${ed(`${k}.${c}`)}>${esc(X[c])}</span>`).join('')}</p>
@@ -1772,6 +1772,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     enTete();
     piedDePage();
     route({ enPlace: true });
+    mesurer();
     ouverts.forEach(k => { const d = $(`details[data-k="${CSS.escape(k)}"]`); if (d) d.open = true; });
     if (f) { const el = $$(f.sel)[Math.max(0, f.i)]; if (el && el !== document.activeElement) el.focus({ preventScroll: true }); }
     window.scrollTo(0, y);
@@ -1828,6 +1829,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   INTRO.ouvrir({ fond: IVOIRE, encre: '#191414', image: PAPIER, classe: 'm08-intro', apres: revele });
   window.addEventListener('hashchange', () => route());
   route();
+  mesurer();
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
 })();
 </script>
