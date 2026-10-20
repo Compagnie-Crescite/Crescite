@@ -283,8 +283,10 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 
 /* ———————————————— la saison en chiffres, la carte de la tournée */
 .chiffres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
-.chiffres li { padding: 14px 12px 12px; border-radius: var(--rayon-s); background: var(--surface); border: 1px solid var(--filet); }
-.chiffres b { display: block; font: 800 clamp(1.5rem, 6.6vw, 2rem)/1.05 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: var(--encre); }
+.chiffres li { padding: 14px 12px 12px; border-radius: var(--rayon-s); background: var(--surface); border: 1px solid var(--filet); container-type: inline-size; }
+.chiffres b { display: block; font: 800 clamp(1.5rem, 6.6vw, 2rem)/1.05 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: var(--encre); white-space: nowrap; }
+/* une taille commune aux trois nombres, tirée du plus long (--em, posé par la page) et de la largeur de la tuile */
+@supports (width: 1cqi) { .chiffres b { font-size: clamp(1.05rem, calc(96cqi / var(--em, 1.2)), 2rem); } }
 .chiffres li:first-child b { color: var(--magenta); }
 .chiffres li > span { display: block; margin-top: 4px; color: var(--gris); font-size: .82rem; line-height: 1.25; -webkit-hyphens: auto; hyphens: auto; overflow-wrap: normal; }
 .carte-tournee { margin: 0; padding: 10px 10px 8px; border-radius: var(--rayon); background: var(--surface); border: 1px solid var(--filet); }

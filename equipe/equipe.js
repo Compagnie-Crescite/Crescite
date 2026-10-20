@@ -1163,8 +1163,11 @@
     const km = Math.round(ds.reduce((t, d) => t + kmDe(d.lieu) * 2, 0) / 10) * 10;
     const chiffre = (n, un, plusieurs) => `<li><b><span data-compter="${n}" aria-hidden="true">${nombre(n)}</span><span class="sr">${nombre(n)}</span></b><span>${n > 1 ? plusieurs : un}</span></li>`;
     return `<section class="o-chiffres" aria-labelledby="t-chiffres"><h2 class="titre-section" id="t-chiffres">La saison ${esc(s)}</h2>
-      <ul class="chiffres">${chiffre(ds.length, 'date', 'dates')}${chiffre(reps, 'repré\u00adsentation', 'repré\u00adsentations')}${km ? chiffre(km, 'km de route, estimés', 'km de route, estimés') : ''}</ul></section>`;
+      <ul class="chiffres" style="--em:${largeurChiffres([ds.length, reps, km])}">${chiffre(ds.length, 'date', 'dates')}${chiffre(reps, 'repré\u00adsentation', 'repré\u00adsentations')}${km ? chiffre(km, 'km de route, estimés', 'km de route, estimés') : ''}</ul></section>`;
   }
+  // la largeur du plus long des trois nombres, en em de Work Sans 800 (chiffres tabulaires 0,584 em, espace fine 0,24 em) :
+  // la feuille de style en tire une taille commune qui tient dans la tuile (« 15 100 » ne se coupe pas)
+  const largeurChiffres = ns => Math.max(1.2, ...ns.map(n => [...nombre(n)].reduce((t, c) => t + (/\d/.test(c) ? 0.584 : 0.24), 0))).toFixed(2);
   function animerChiffres() {
     const els = $$('#contenu [data-compter]');
     if (!els.length || reduit() || E.chiffresVus) return;
@@ -1355,7 +1358,8 @@
         ${plusieursJours ? `<span class="h-jour">${i && lignes[i - 1].jour === r.jour ? `<span class="sr">${esc(jourCourt(r.jour))}</span>` : esc(jourCourt(r.jour))}</span>` : ''}
         ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}${r.fin ? `<span class="h-fin">\u2009–\u2009${esc(heureTexte(r.fin))}</span>` : ''}</span>`
           : `<span class="heure vague">${r.n > 1 ? `${esc(quoiSeance(r.n, r.public, nat))}, heures à préciser` : 'heure à préciser'}</span>`}
-        <span class="h-plus">${[sco && PUBLICS[r.public] && `<span class="public${r.public === 'scolaire' ? ' sco' : ''}">${PUBLICS[r.public]}</span>`,
+        <span class="h-plus">${[sco && PUBLICS[r.public] && !(!r.heure && r.n > 1 && (r.public === 'scolaire' || r.public === 'tout_public'))   // « 2 représentations scolaires » le dit déjà
+          && `<span class="public${r.public === 'scolaire' ? ' sco' : ''}">${PUBLICS[r.public]}</span>`,
           r.annulee && `<span class="etat annulee">${r.n > 1 ? 'annulées' : 'annulée'}</span>`, modif && '<span class="modifie">modifié</span>',
           r.note && `<span class="note">${esc(r.note)}</span>`].filter(Boolean).join(' ')}</span></li>`;
     }).join('')}</ul>`;
