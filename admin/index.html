@@ -383,7 +383,7 @@ function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations">Crescite <small>administration</small></a>
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}">direct</span>
-    <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><span class="moi">${esc(E.session.user.email)}</span>
+    <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier sur le site ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
 }
@@ -596,13 +596,12 @@ function formNouveauLieu(zone, texte, etablissement, fini) {
 
 // ===================================================================================================== représentations
 function vueDates(param) {
-  const f = session.dates = Object.assign({ periode: 'avenir', saison: '', spectacle: '', public: '', statut: '', q: '' }, session.dates || {});
+  const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {});
   const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
   cadre('representations', `<div class="tete"><h1>Représentations</h1><a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
     <div class="deux${param ? ' edition' : ''}"><div class="liste"><div class="filtres">
       <input type="search" id="f-q" placeholder="Chercher un lieu, une commune, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><div class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</div>
-      <select id="f-saison" aria-label="Saison"${f.periode === 'avenir' ? ' hidden' : ''}><option value="">Toutes les saisons</option>${saisons.map(s => `<option${f.saison === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><select id="f-saison" aria-label="Aller à la saison"><option value="">Aller à une saison…</option>${saisons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}</select>
       <select id="f-public" aria-label="Public"><option value="">Tous publics</option><option value="tout_public"${f.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${f.public === 'scolaire' ? ' selected' : ''}>Scolaire</option></select>
       <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${[['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']].map(([k, l]) => `<option value="${k}"${f.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="puces" role="group" aria-label="Spectacle">${E.spectacles.filter(s => s.page).map(s => `<button type="button" class="puce" data-sp="${s.id}" style="--c:${couleurSp(s)}" aria-pressed="${String(f.spectacle) === String(s.id)}"><span class="pastille"></span>${esc(s.titre.split(' – ')[0])}</button>`).join('')}</div>
@@ -613,45 +612,57 @@ function vueDates(param) {
   zone.rafraichir();
   const maj = () => { garderFiltres(); zone.rafraichir(); };
   $('#f-q').addEventListener('input', e => { f.q = e.target.value; maj(); });
-  $$('[data-periode]').forEach(b => b.addEventListener('click', () => { f.periode = b.dataset.periode; $$('[data-periode]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('#f-saison').hidden = f.periode === 'avenir'; maj(); }));
-  $('#f-saison').addEventListener('change', e => { f.saison = e.target.value; maj(); });
+  $('#f-saison').addEventListener('change', e => {
+    const s = e.target.value; e.target.value = ''; if (!s) return;
+    if (!f.ouvertes.includes(s)) f.ouvertes.push(s);
+    maj();
+    $(`#saison-${s}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
   $('#f-public').addEventListener('change', e => { f.public = e.target.value; maj(); });
   $('#f-statut').addEventListener('change', e => { f.statut = e.target.value; maj(); });
   $$('[data-sp]').forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; $$('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(f.spectacle) === x.dataset.sp)); maj(); }));
   if (param) editeurDate(param === 'nouvelle' ? null : +param);
 }
 function listeDates(zone, actif) {
-  const f = session.dates, q = norm(f.q).trim();
-  let xs = E.dates.filter(d => {
-    const fin = d.fin || d.debut;
-    if (f.periode === 'avenir' && fin < AUJ) return false;
-    if (f.periode === 'passees' && fin >= AUJ) return false;
-    if (f.periode !== 'avenir' && f.saison && d.saison !== f.saison) return false;
+  const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut);
+  const xs = E.dates.filter(d => {
     if (f.spectacle && String(d.spectacle_id) !== String(f.spectacle)) return false;
     if (f.public && !(d.public === f.public || (d.public === 'mixte'))) return false;
     if (f.statut === 'masquee' ? d.visible : f.statut && d.statut !== f.statut) return false;
     if (q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id); if (!norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''}`).includes(q)) return false; }
     return true;
   });
-  xs.sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id) * (f.periode === 'avenir' ? 1 : -1));
-  $('#f-compte').textContent = `${xs.length} date${xs.length > 1 ? 's' : ''}`;
-  if (!xs.length) { zone.innerHTML = '<p class="vide">Aucune date ne correspond.</p>'; return; }
-  let mois = '', html = '';
-  xs.slice(0, 600).forEach(d => {
-    const m = d.debut.slice(0, 7);
-    if (m !== mois) { mois = m; html += `<div class="mois">${AGENDA.MOIS[+m.slice(5) - 1]} ${m.slice(0, 4)}</div>`; }
+  const avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
+  const passees = xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => a.debut < b.debut ? 1 : a.debut > b.debut ? -1 : b.id - a.id);
+  $('#f-compte').textContent = `${avenir.length} à venir · ${passees.length} passée${passees.length > 1 ? 's' : ''}`;
+  const ligne = d => {
     const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id);
     const badges = [d.statut === 'option' && '<span class="badge option">Option</span>', d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>',
       d.statut === 'reportee' && '<span class="badge option">Reportée</span>', !d.visible && '<span class="badge masquee">Masquée</span>',
       d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>'].filter(Boolean).join('');
     const jours = [...new Set(reps.map(r => r.jour))];
-    html += `<a class="ligne" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"${String(actif) === String(d.id) ? ' aria-current="true"' : ''}>
+    return `<a class="ligne" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"${String(actif) === String(d.id) ? ' aria-current="true"' : ''}>
       <span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${(d.fin && d.fin !== d.debut) ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
       <span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : (d.intitule || '').split(' — ')[1] || 'Lieu à préciser')}</span>
       ${reps.length ? `<span class="reps">${reps.slice(0, 8).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 8 ? `<span class="rep">+${reps.length - 8}</span>` : ''}</span>` : ''}</span>
       <span class="badges">${badges}</span></a>`;
+  };
+  const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
+  const saisonEnCours = AGENDA.saisonDe(AUJ);
+  const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse();
+  zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.length ? parMois(avenir) : '<p class="vide">Aucune date à venir.</p>'}
+    <h2 class="mois" style="font-size:13px;color:var(--accent);margin-top:24px">Dates passées</h2>
+    ${saisons.map(sa => { const ouverte = cherche || sa === saisonEnCours || f.ouvertes.includes(sa) || passees.some(d => String(d.id) === String(actif) && d.saison === sa);
+      return `<details class="saison-ad" id="saison-${sa}" data-saison="${sa}"${ouverte ? ' open' : ''}><summary class="ligne" style="grid-template-columns:1fr auto;cursor:pointer;border-left-color:var(--trait)"><span class="t">Saison ${sa}</span><span class="badge">${passees.filter(d => d.saison === sa).length}</span></summary><div class="contenu-saison"></div></details>`; }).join('') || '<p class="vide">Aucune date passée.</p>'}`;
+  const remplir = det => { const c = $('.contenu-saison', det); if (det.open && !c.innerHTML) c.innerHTML = parMois(passees.filter(d => d.saison === det.dataset.saison)); };
+  $$('details.saison-ad', zone).forEach(det => {
+    remplir(det);
+    det.addEventListener('toggle', () => {
+      const sa = det.dataset.saison;
+      f.ouvertes = det.open ? [...new Set([...f.ouvertes, sa])] : f.ouvertes.filter(x => x !== sa);
+      garderFiltres(); remplir(det);
+    });
   });
-  zone.innerHTML = html + (xs.length > 600 ? '<p class="vide">Les 600 premières dates sont affichées : affinez la recherche.</p>' : '');
 }
 
 function nouvelleDate() {
