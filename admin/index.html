@@ -664,8 +664,9 @@ function dateVersForm(d) {
   const su = E.suivis.find(x => x.date_id === d.id) || {};
   return { ...clone(d), lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' } };
 }
+const zoneNeuve = sel => { const a = $(sel), z = a.cloneNode(false); a.replaceWith(z); return z; };
 function editeurDate(id, depart = null) {
-  const zone = $('#ed-date');
+  const zone = zoneNeuve('#ed-date');
   const d0 = id ? E.dates.find(d => d.id === id) : null;
   if (id && !d0) { zone.innerHTML = '<div class="vide bloc">Cette date n’existe plus.</div>'; return; }
   const F = depart || (d0 ? dateVersForm(d0) : nouvelleDate());
@@ -1022,7 +1023,10 @@ function editeurSpectacle(slug) {
     if (!e.target.matches('[data-enregistrer]')) return;
     $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
     $$('[data-legende]', zone).forEach(t => { F.photos[+t.dataset.legende].legende = t.value.trim() || null; });
-    const champs = Object.keys(F).filter(k => !['id', 'modifie_le', 'modifie_par'].includes(k) && JSON.stringify(F[k]) !== JSON.stringify(s0[k]));
+    if (F.video && !(F.video.url || '').trim()) F.video = null;
+    if (F.avec && !texteSeul(F.avec.valeur).trim()) F.avec = null;
+    if (F.tournee && !(F.tournee.titre || '').trim() && !(F.tournee.texte || '').trim()) F.tournee = null;
+    const champs = Object.keys(F).filter(k => !['id', 'modifie_le', 'modifie_par'].includes(k) && JSON.stringify(F[k]) !== JSON.stringify(s0[k] ?? null));
     if (!champs.length) { marquerSale(false); return annoncer('Rien à enregistrer.'); }
     if (champs.includes('slug') && !/^[a-z0-9-]+$/.test(F.slug)) return annoncer('L’identifiant ne prend que des minuscules, des chiffres et des tirets.', { erreur: true });
     e.target.disabled = true;
@@ -1079,7 +1083,7 @@ function listeAteliers(zone, actif) {
 function editeurAtelier(id) {
   const a0 = id ? E.ateliers.find(a => a.id === id) : null;
   const F = a0 ? clone(a0) : { titre: '', duree: '', public: '', obligatoire: false, publie: true, paragraphes: [], etapes: [], points: [], ordre: 100, spectacle_id: +(session.dates?.spectacle || 0) || null };
-  const zone = $('#ed-at');
+  const zone = zoneNeuve('#ed-at');
   nChamp = 0;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/ateliers/catalogue">←</a><h2>${esc(F.titre || 'Nouvel atelier')}</h2></div><div class="bloc">
     <div class="champ"><label for="a-sp">Spectacle</label><select id="a-sp">${choixSpectacles('Aucun').map(([v, t]) => `<option value="${v}"${String(F.spectacle_id ?? '') === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
@@ -1131,7 +1135,7 @@ function editeurSeance(id, depart = null) {
   const s0 = id ? E.seances.find(s => s.id === id) : null;
   const F = depart || (s0 ? clone(s0) : { atelier_id: null, spectacle_id: null, date_id: null, lieu_id: null, etablissement: '', jour: AUJ, heure_debut: '09:00', heure_fin: '10:00', classe: '', niveau: '', nb_eleves: null, intervenants: '', dispositif: '', statut: 'prevue', notes: '' });
   ['heure_debut', 'heure_fin'].forEach(k => { F[k] = h5(F[k]); });
-  const zone = $('#ed-at');
+  const zone = zoneNeuve('#ed-at');
   const datesProches = () => E.dates.filter(d => (!F.spectacle_id || d.spectacle_id === +F.spectacle_id)).sort((a, b) => Math.abs(Date.parse(a.debut) - Date.parse(F.jour || AUJ)) - Math.abs(Date.parse(b.debut) - Date.parse(F.jour || AUJ))).slice(0, 25);
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/ateliers/seances">←</a><h2>${s0 ? `Séance du ${esc(jourCourt(s0.jour))}` : 'Nouvelle séance'}</h2></div>
     <div class="bloc"><div class="rangee">

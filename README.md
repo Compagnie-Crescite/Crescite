@@ -15,7 +15,8 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
 | `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, et la planche qui les compare. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
-| `supabase/migrations/` | Modèle de données proposé pour la future base de la compagnie : dates, lieux, tournées, troupe, feuilles de route, règles d'accès. **Non exécuté** : à relire avant usage. |
+| `supabase/` | La base de la compagnie : le script qui la crée (`migrations/20261020_crescite_base.sql`) et celui qui la remplit (`importer.py`). |
+| `admin/` | L'administration du site : spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
 | `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle et celles de leurs univers, `dossiers/` les dossiers de la compagnie (scolaire de Bérénice, artistique 2027-2028). |
 
 ## Prototype
@@ -126,8 +127,47 @@ culturelles : ni budget, ni salaire, ni contact). Rien n'y parle de l'action cul
 
 ## Base de données
 
-La compagnie n'a pas encore de base de données : il faut créer un projet Supabase à son nom (rattaché à
-admin@crescite.fr), distinct de tout compte personnel. `supabase/migrations/20261013_modele_dates.sql` y crée le
-modèle (tables, règles d'accès, vue publique de l'agenda) et la liste des spectacles ; l'historique s'importe
-ensuite depuis `data/representations-site-2016-2027.csv`. Le script a passé l'analyseur syntaxique de PostgreSQL
-mais n'a été exécuté sur aucune base : le relire avant de l'exécuter dans le projet neuf.
+La base de la compagnie vit dans le projet Supabase du site adrienvada.fr (décision d'Adrien, octobre 2026). Tout ce qui
+lui appartient porte le préfixe `crescite_` : rien ne touche aux tables du site personnel, et le jour où la compagnie
+aura son propre projet, tout ce qui commence par `crescite_` s'y déplace tel quel.
+
+| Table | Ce qu'elle contient |
+| --- | --- |
+| `crescite_spectacles` | Le contenu de chaque spectacle : titres, textes, fiche, distribution, univers (couleurs, polices, motif), photos, citations, action culturelle, de quoi le programmer. Les spectacles des saisons passées y sont aussi, sans page. |
+| `crescite_lieux` | Salles, festivals et établissements, avec leur position (pour la carte). |
+| `crescite_dates` | Une ligne de l'agenda : un spectacle, un lieu, une période, son statut (option, confirmée, annulée, reportée), sa visibilité, ses précisions et son lien. |
+| `crescite_representations` | Les représentations d'une date : jour, heure, public (tout public ou scolaire), annulation, billetterie. Plusieurs le même jour. |
+| `crescite_ateliers`, `crescite_seances` | Les ateliers proposés (le catalogue publié) et les séances menées dans les établissements (jamais publiées). |
+| `crescite_textes` | Les autres textes du site : présentation de la compagnie, actions culturelles, bandeau d'accueil, dossier scolaire de Bérénice… |
+| `crescite_dates_suivi`, `crescite_lieux_suivi` | Le suivi interne (organisateur, contacts, contrat, notes) : jamais lu par le site. |
+| `crescite_journal` | Chaque modification, avec son auteur, l'avant et l'après : l'administration peut revenir en arrière. |
+| `crescite_admins` | Les comptes qui peuvent modifier. Les autres ne lisent que ce qui est publié. |
+
+**Mise en place**, une fois : coller `supabase/migrations/20261020_crescite_base.sql` dans l'éditeur SQL du projet
+(SQL Editor → New query → Run). Le script crée tables, règles d'accès, temps réel et dossier de photos ; il peut être
+relancé sans dommage. Puis `python3 supabase/importer.py --photos` remplit la base à partir du dépôt (les huit
+spectacles et ceux des saisons passées, 303 lieux, les 524 lignes d'agenda publiées depuis 2016 avec 792
+représentations, les ateliers et les textes), et `python3 supabase/importer.py --admin <adresse>` donne les droits
+d'administration à un compte du projet. L'import refuse une base déjà remplie.
+
+**Le site lit la base en direct.** Chaque maquette s'affiche d'abord avec l'instantané du dépôt, puis
+`maquettes/src/donnees.js` lit la base, recompose ses données et s'abonne au temps réel : chaque enregistrement fait
+dans l'administration change les pages ouvertes dans la seconde, sans recharger. Une ligne d'agenda écrite à la main
+(celles reprises de l'ancien site gardent leur texte d'origine) s'affiche telle quelle ; sinon elle se compose à
+partir des jours, des heures et du lieu (`maquettes/src/agenda.js`, commun au site et à l'administration).
+Ajouter `?base=0` à l'adresse d'une maquette la garde sur l'instantané.
+
+**L'administration** (`admin/index.html`, en ligne dans `docs/admin/`) : connexion par adresse et mot de passe d'un
+compte du projet inscrit dans `crescite_admins`.
+
+- **Représentations** : les dates à venir ou passées, filtrées par saison, spectacle, public ou statut. Une date
+  porte autant de représentations qu'il en faut, le même jour ou non, chacune avec son heure, son public et sa
+  billetterie. L'aperçu montre la ligne telle que le site l'affichera.
+- **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
+- **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
+- **Lieux** : avec la recherche de commune (geo.api.gouv.fr) et la fusion des doublons.
+- **Textes du site** et **Journal**, d'où l'on peut revenir sur une modification.
+
+Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
+suivi, ni les séances), seuls les administrateurs écrivent. Le script a été vérifié sur un PostgreSQL local avec les
+rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrement d'une date, journal).
