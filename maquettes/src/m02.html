@@ -32,6 +32,8 @@
   --fs-s4:clamp(2.5rem,1.6rem + 3.2vw,4.5rem);
   --ease:cubic-bezier(.2,.65,.25,1);
   --k-terre:var(--paper);--k-voisin:#ebe7e1;--k-bord:#d3ccc2;--k-bras:var(--magenta);--k-actif:var(--magenta-dark);--k-passe:#b8aea2;--k-encre:var(--ink);--k-point:#fff;
+  /* l'édition sur place (EDITION) dans le style de la maison */
+  --ed-fond:#ffffff;--ed-encre:#111111;--ed-accent:#bc3e80;--ed-sur-accent:#ffffff;--ed-police:var(--sans);--ed-rayon:8px;--ed-trait:#d9d4cc;
 }
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -210,6 +212,7 @@ button,input,textarea{font:inherit;color:inherit}
 .k-lieu.k-actif .k-point,.k-lieu.k-choisi .k-point{fill:var(--k-bras)}
 .k-on .k-off{opacity:.14}
 .k-fixe .k-pousse,.k-fixe .k-lieu,.k-fixe .k-noms,.k-fixe .k-passes{transition:none!important;animation:none!important}
+.k-encart{fill:none;stroke:var(--k-bord);stroke-dasharray:3 4}
 .k-info{position:absolute;z-index:5;left:0;top:0;width:max-content;max-width:min(300px,86%);padding:12px 14px;border-radius:6px;background:#fff;color:var(--ink);box-shadow:0 10px 30px -10px rgba(17,17,17,.35),0 0 0 1px rgba(17,17,17,.07);font-size:.875rem;line-height:1.4;pointer-events:none;overflow-wrap:anywhere}
 .k-info-nom{font-weight:600}
 .k-info ul{margin-top:6px}
@@ -219,6 +222,7 @@ button,input,textarea{font:inherit;color:inherit}
 
 /* pages */
 .page{padding-bottom:var(--sec)}
+.page.sans-fin{padding-bottom:0}
 .page-head{background:var(--paper)}
 .page-head.entree{background:color-mix(in srgb,var(--e) 8%,#fff)}
 .page-head.entree .overline{color:var(--e)}
@@ -344,10 +348,11 @@ button,input,textarea{font:inherit;color:inherit}
 .u-fiche li{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);column-gap:16px;padding:9px 0 10px;border-bottom:1px solid color-mix(in srgb,var(--u-texte) 18%,transparent);font-size:.9375rem;line-height:1.45}
 .u-fiche .lib{color:var(--u-texte2)}
 .u-fiche .seul{grid-column:1/-1}
-.u-fiche.compacte li{grid-template-columns:minmax(0,1fr);row-gap:2px;padding:7px 0 8px}
+.u-fiche.compacte li{display:block;padding:6px 0 7px}
+.u-fiche.compacte .lib{margin-right:.35em}
 
 /* Je représente un établissement scolaire */
-.ecole{max-width:40em;font:400 clamp(1.375rem,1.1rem + .8vw,1.75rem)/1.4 var(--serif);letter-spacing:-.005em}
+.ecole{max-width:42em;font:400 clamp(1.25rem,1rem + .6vw,1.5rem)/1.42 var(--serif);letter-spacing:-.005em}
 .groupe{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:24px;margin-top:var(--sec);padding-top:22px;border-top:1px solid var(--ink)}
 .groupe-t{grid-column:1/span 3;font:400 var(--fs-s2)/1.1 var(--serif)}
 .groupe-liste{grid-column:4/span 9;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--gap)}
@@ -386,7 +391,7 @@ button,input,textarea{font:inherit;color:inherit}
 /* la page d'un spectacle : son univers */
 .show{background:var(--u-fond);color:var(--u-texte)}
 .show a:focus-visible,.show summary:focus-visible,.show button:focus-visible{outline-color:var(--u-texte)}
-.u-tete{position:relative;background:radial-gradient(60% 90% at 16% 34%,var(--u-lueur),transparent 72%),var(--u-fond)}
+.u-tete{position:relative;overflow:hidden;background:radial-gradient(60% 90% at 16% 34%,var(--u-lueur),transparent 72%),var(--u-fond)}
 .u-tete-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:28px;align-items:center;padding-top:44px;padding-bottom:44px}
 .u-tete-texte{position:relative;grid-column:1/span 5;min-width:0;padding:8px 0}
 .u-tete-texte>*:not(.motif){position:relative}
@@ -456,6 +461,7 @@ button,input,textarea{font:inherit;color:inherit}
 .production strong{font-weight:600;color:var(--u-texte)}
 .u-bande{margin-top:var(--sec);padding:clamp(48px,6vw,80px) 0;background:var(--u-fond2)}
 .u-bande .u-chap{border-top-color:color-mix(in srgb,var(--u-texte) 22%,transparent)}
+.u-bande .k-carte{--k-terre:var(--u-fond);--k-voisin:color-mix(in srgb,var(--u-fond) 86%,var(--u-texte))}
 .tournee-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:32px;align-items:start}
 .tournee-liste{grid-column:1/span 6;min-width:0}
 .tournee-carte{grid-column:8/span 5}
@@ -571,7 +577,7 @@ button,input,textarea{font:inherit;color:inherit}
 .prose{overflow-wrap:anywhere}
 .prose h2{margin:44px 0 14px;font:400 var(--fs-s2)/1.1 var(--serif);letter-spacing:-.005em}
 .prose h3{margin:32px 0 10px;font:600 1.125rem/1.3 var(--sans)}
-.prose>:first-child{margin-top:0}
+.prose>:first-child,.prose>div:first-child>:first-child{margin-top:0}
 .prose p{margin-top:14px;font-size:var(--fs-lead);line-height:1.7}
 .prose ul{margin-top:14px;padding-left:1.2em;list-style:disc}
 .prose li{margin-top:10px;font-size:var(--fs-lead);line-height:1.6}
@@ -625,6 +631,18 @@ button,input,textarea{font:inherit;color:inherit}
 .foot-bas a{text-decoration:none}
 .foot-bas a:hover{text-decoration:underline}
 
+/* l'édition sur place : le lien du pied de page, la barre et les panneaux de l'outil commun, à la manière de la maison */
+.foot-modifier{display:inline-flex;align-items:center;gap:8px;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(255,255,255,.35);text-underline-offset:.22em}
+.foot-modifier:hover{text-decoration-color:#fff}
+.foot-modifier .i{width:1em;height:1em}
+html .ed-barre{border-radius:8px}
+html .ed-bt{border-radius:6px}
+.ed-panneau .ed-tete h2{font:400 1.5rem/1.1 var(--serif);letter-spacing:-.005em}
+.ed-ajout{margin:0 0 16px}
+.ed-actif .ucard-t a::after{display:none}
+.u-ac-type:empty,.ac-type:empty{display:none}
+.ed-actif .u-ac-type:empty,.ed-actif .ac-type:empty{display:block;min-height:1.2em}
+
 /* l'ouverture, habillée */
 .intro.maison .intro-indice{color:var(--magenta)}
 .intro.maison::after{content:"";position:absolute;inset:clamp(10px,1.6vw,22px);border:1px solid rgba(188,62,128,.28);border-radius:4px;pointer-events:none;transition:opacity .3s}
@@ -651,6 +669,7 @@ button,input,textarea{font:inherit;color:inherit}
 /* téléphone et tablette : le menu second se replie, les trois entrées passent en barre fixe en bas d'écran */
 @media (max-width:899.98px){
   body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  html .ed-barre{bottom:calc(76px + env(safe-area-inset-bottom))}
   .bar{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"marque bouton";column-gap:16px}
   .brand{height:64px}
   .menu-toggle{grid-area:bouton;display:inline-flex;align-items:center;gap:10px;min-height:44px;margin-right:-4px;padding:0 4px 0 12px;border:0;background:none;font:600 1rem/1 var(--sans);cursor:pointer}
@@ -752,24 +771,29 @@ button,input,textarea{font:inherit;color:inherit}
   const PLAY = ico('<path d="M7 4.5v11l9-5.5z" fill="currentColor"/>');
   const SON = ico('<path d="M3.5 7.5h3l4-3.5v12l-4-3.5h-3z" fill="currentColor"/><path d="M13.5 7a4 4 0 0 1 0 6M15.5 5a7 7 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5"/>');
   const CROIX = ico('<path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="1.8"/>');
+  const CRAYON = ico('<path d="M3.5 16.5l1-4 9-9 3 3-9 9zM11.5 5.5l3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>');
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const main = $('#main'), header = $('.site-header'), toggle = $('.menu-toggle');
   const menuTexte = id => ((S().menu || []).find(m => m.id === id) || {}).texte || '';
-  const lignes = arr => (arr || []).map(l => `<span>${esc(l)}</span>`).join(' ');
-  const bloc = b => /^\s*<(h[1-6]|ul|ol|p|div|table|blockquote|figure)\b/i.test(b) ? b : `<p>${b}</p>`;
   const src = cle => (D.photos || {})[cle] || '';
   const img = (cle, alt = '', focale = 50, tot = false) => src(cle) ? `<img src="${esc(src(cle))}" alt="${esc(alt)}" style="object-position:${Number(focale) || 50}% 50%"${tot ? '' : ' loading="lazy" decoding="async"'}>` : '';
   const HEX = /^#[0-9a-f]{6}$/i;
   const col = (x, d) => HEX.test(x || '') ? x : d;
   const eStyle = e => `--e:${col(e && e.couleur, '#bc3e80')};--e-vif:${col(e && e.couleurVive, '#f07ab6')}`;
-  // le crédit d'une photo de spectacle (celles du dossier scolaire ont le leur)
+  // l'édition sur place (EDITION) : le chemin dans D de chaque texte affiché, dont l'élément contient exactement la valeur
+  const ed = chemin => ` data-edit="${esc(chemin)}"`;
+  const edS = (s, champ) => ed(`shows.${s.slug}.${champ}`);
+  const lignesEd = (arr, base) => (arr || []).map((l, i) => `<span${base ? ed(`${base}.${i}`) : ''}>${esc(l)}</span>`).join(' ');
+  // un bloc de HTML de D : un paragraphe, ou tel quel s'il est déjà un titre, une liste… (son élément porte data-edit)
+  const blocEd = (b, chemin) => /^\s*<(h[1-6]|ul|ol|p|div|table|blockquote|figure)\b/i.test(b) ? `<div${ed(chemin)}>${b}</div>` : `<p${ed(chemin)}>${b}</p>`;
+  // le crédit d'une photo de spectacle (celles du dossier scolaire ont le leur), et son chemin
   function creditDe(cle) {
     for (const s of SHOWS()) {
-      if (cle === s.slug) return s.credit || s.creditPhotos || '';
+      if (cle === s.slug) return s.credit ? [s.credit, `shows.${s.slug}.credit`] : [s.creditPhotos || '', `shows.${s.slug}.creditPhotos`];
       const p = (s.photos || []).find(x => x.cle === cle);
-      if (p) return (p.source === 'dossier' && s.creditDossier) || s.creditPhotos || s.credit || '';
+      if (p) return p.source === 'dossier' && s.creditDossier ? [s.creditDossier, `shows.${s.slug}.creditDossier`] : [s.creditPhotos || s.credit || '', `shows.${s.slug}.${s.creditPhotos ? 'creditPhotos' : 'credit'}`];
     }
-    return '';
+    return ['', ''];
   }
 
   /* ---------- la mémoire de l'entrée ---------- */
@@ -865,11 +889,12 @@ button,input,textarea{font:inherit;color:inherit}
     if (!list || !list.length) return '';
     return `<ul class="row-details">${list.map(x => `<li>${x.lien ? `<a href="${esc(x.lien)}" target="_blank" rel="noopener">${esc(x.texte)}${EXT}</a>` : esc(x.texte)}</li>`).join('')}</ul>`;
   }
+  const idDate = d => ` data-date-id="${esc(d.id ?? '')}"`;
   // une date à venir : sa ligne découpée, le spectacle (vers la page de l'entrée), le lieu, les précisions
   function rangee(d, { onglet = 'voir', sansTitre = false, scolaire = false } = {}) {
     const etat = d.etat ? `<span class="etat">${esc(d.etat)}</span>` : '';
     const tags = (scolaire && d.scolaire) || etat ? `<p class="row-tags">${scolaire && d.scolaire ? `<span class="tag">${esc(LIB().scolaire)}</span>` : ''}${etat}</p>` : '';
-    return `<li class="row" data-l="${d.l ?? ''}" data-slug="${esc(d.slug)}">${dblock(d.ligneDate)}
+    return `<li class="row" data-l="${d.l ?? ''}" data-slug="${esc(d.slug)}"${idDate(d)}>${dblock(d.ligneDate)}
       <div class="row-main">${sansTitre
         ? `<p class="row-title">${esc(d.ligneLieu)}</p>`
         : `<h3 class="row-title">${d.slug && show(d.slug) ? `<a href="#/spectacle/${esc(d.slug)}/${onglet}">${esc(d.titre)}</a>` : esc(d.titre)}</h3><p class="row-lieu">${PIN}<span>${esc(d.ligneLieu)}</span></p>`}${tags}${details(d.details)}</div></li>`;
@@ -877,7 +902,7 @@ button,input,textarea{font:inherit;color:inherit}
   function rangeeSaison(d) {
     const t = String(d.ligne || ''), i = t.indexOf(' — ');
     const a = i < 0 ? t : t.slice(0, i), b = i < 0 ? '' : t.slice(i + 3);
-    return `<li class="row srow"${d.l != null ? ` data-l="${d.l}"` : ''}><div class="row-main">
+    return `<li class="row srow"${d.l != null ? ` data-l="${d.l}"` : ''}${idDate(d)}><div class="row-main">
       <p class="srow-d">${esc(a)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${b ? `<p class="row-lieu">${PIN}<span>${esc(b)}</span></p>` : ''}${details(d.details)}</div></li>`;
   }
   function parMois(list) {
@@ -915,9 +940,11 @@ button,input,textarea{font:inherit;color:inherit}
       return `${d ? `<path class="k-passe" d="${d}"/>` : ''}<circle class="k-passe-pt" cx="${x.xy[0]}" cy="${x.xy[1]}" r="1.8"/>`;
     }).join('');
     const points = lieux.map(x => `<g class="carte-lieu k-lieu${dist(x) < 6 ? ' k-maison' : ''}" data-l="${x.l}" style="--d:${delai(x)}ms" role="button" tabindex="0" aria-label="${esc(etiquette(x))}"><circle class="k-cible" cx="${x.xy[0]}" cy="${x.xy[1]}" r="12"/><circle class="k-point" cx="${x.xy[0]}" cy="${x.xy[1]}" r="4"/></g>`).join('');
+    // l'outre-mer est ramené dans un encart, en bas à gauche
+    const E = CARTE.ENCART, encart = E && [...lieux, ...passe].some(x => x.encart) ? `<circle class="k-encart" cx="${E[0]}" cy="${E[1]}" r="24"/>` : '';
     return `<div class="k-carte${papier ? ' k-papier' : ''}" data-k="${id}">
       <svg class="k" viewBox="${VB.join(' ')}" role="${lieux.length ? 'group' : 'img'}" aria-label="${esc(titre)}">
-        <path class="k-voisin" d="${K.belgique || CARTE.fond.belgique}"/><path class="k-voisin" d="${K.luxembourg || CARTE.fond.luxembourg}"/><path class="k-pays" d="${K.contour || CARTE.fond.pays}"/>
+        <path class="k-voisin" d="${K.belgique || CARTE.fond.belgique}"/><path class="k-voisin" d="${K.luxembourg || CARTE.fond.luxembourg}"/><path class="k-pays" d="${K.contour || CARTE.fond.pays}"/>${encart}
         <g class="k-passes">${passes}</g><g class="k-brass">${bras}</g>
         <circle class="k-rouen" cx="${RO[0]}" cy="${RO[1]}" r="6"/><text class="k-rouen-nom" x="${RO[0] + 9}" y="${RO[1] - 9}">Rouen</text>
         <g class="k-lieux">${points}</g><g class="k-noms" aria-hidden="true"></g>
@@ -1033,67 +1060,75 @@ button,input,textarea{font:inherit;color:inherit}
 
   /* ---------- les morceaux communs ---------- */
   const teteEntree = (e, over = '') => `<div class="page-head entree" style="${eStyle(e)}"><div class="wrap">${over ? `<p class="overline">${over}</p>` : ''}<h1 class="page-title" tabindex="-1">${esc(e.texte)}</h1></div></div>`;
-  const tete = (h1, over = '') => `<div class="page-head"><div class="wrap">${over ? `<p class="overline">${over}</p>` : ''}<h1 class="page-title" tabindex="-1">${h1}</h1></div></div>`;
+  const tete = (h1, over = '', chemin = '') => `<div class="page-head"><div class="wrap">${over ? `<p class="overline">${over}</p>` : ''}<h1 class="page-title" tabindex="-1"${chemin ? ed(chemin) : ''}>${h1}</h1></div></div>`;
   const ecrire = (classe = 'btn btn-primary') => `<a class="${classe}" href="${esc((S().ecrire && S().ecrire.href) || '#/contact')}">${esc(LIB().ecrire)}${ARROW}</a>`;
+  const partenaires = classe => S().partenaires ? `<p class="${classe}"${ed('site.partenaires')}>${S().partenaires}</p>` : '';
   // une fiche de spectacle dans son univers : photo, motif, création, titre (vers la page), puis ce qu'on y ajoute
   function ucard(s, href, plus = '') {
     const u = univers(s);
     return `<li class="ucard u" style="${uStyle(s)}">
-      <div class="ucard-photo">${img(s.slug, '', s.focale)}${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</div>
+      <div class="ucard-photo">${img(s.slug, '', s.focale)}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</div>
       <div class="ucard-corps">${motif(u.motif, 'ucard-motif')}
-        <p class="ucard-crea">${esc(s.creation || '')}</p>
+        <p class="ucard-crea"${edS(s, 'creation')}>${esc(s.creation || '')}</p>
         <h3 class="ucard-t"><a href="${esc(href)}">${esc(s.titre)}</a></h3>${plus}
       </div></li>`;
   }
-  const ficheListe = (s, compacte = false) => {
-    const rows = (s.fiche || []).map(f => `<li>${f.libelle ? `<span class="lib">${esc(f.libelle)}</span><span>${f.valeur}</span>` : `<span class="seul">${f.valeur}</span>`}</li>`);
-    if (s.avec) rows.push(`<li><span class="lib">${esc(s.avec.libelle)}</span><span>${s.avec.valeur}</span></li>`);
+  const sousTitre = (s, classe = 'ucard-sub') => s.sousTitre ? `<p class="${classe}"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : '';
+  // l'équipe : la fiche (libellé et valeur) et la distribution ; sans les noms déjà dits par l'équipe de création
+  function ficheListe(s, compacte = false) {
+    const deja = ((s.programmer || {}).equipeCreation || []).join(' ');
+    const rows = (s.fiche || []).map((f, i) => compacte && !f.libelle && deja.includes(String(f.valeur).replace(/<[^>]+>/g, '')) ? ''
+      : `<li>${f.libelle ? `<span class="lib"${edS(s, `fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span${edS(s, `fiche.${i}.valeur`)}>${f.valeur}</span>` : `<span class="seul"${edS(s, `fiche.${i}.valeur`)}>${f.valeur}</span>`}</li>`).filter(Boolean);
+    if (s.avec) rows.push(`<li><span class="lib"${edS(s, 'avec.libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec.valeur')}>${s.avec.valeur}</span></li>`);
     return rows.length ? `<ul class="u-fiche${compacte ? ' compacte' : ''}">${rows.join('')}</ul>` : '';
-  };
+  }
   // « 779 représentations au 31 juillet 2026 » : le nombre en grand, la phrase entière
-  const chiffre = t => { const m = String(t || '').match(/^(\d[\d\s ]*)(\s.*)$/); return m ? `<li class="gros"><strong>${esc(m[1].trim())}</strong>${esc(m[2])}</li>` : `<li class="gros">${esc(t)}</li>`; };
+  const chiffre = (t, chemin) => { const m = String(t || '').match(/^(\d[\d\s ]*)(\s.*)$/); return m ? `<li class="gros"${ed(chemin)}><strong>${esc(m[1].trim())}</strong>${esc(m[2])}</li>` : `<li class="gros"${ed(chemin)}>${esc(t)}</li>`; };
   function chiffres(s) {
-    const P = s.programmer || {}, out = [];
-    if (P.representations) out.push(chiffre(P.representations));
-    [P.duree || s.duree, P.format, P.jauge, P.equipe, P.actualite].filter(Boolean).forEach(x => out.push(`<li>${esc(x)}</li>`));
-    (P.equipeCreation || []).forEach(x => out.push(`<li>${esc(x)}</li>`));
+    const P = s.programmer || {}, out = [], p = k => `shows.${s.slug}.programmer.${k}`;
+    if (P.representations) out.push(chiffre(P.representations, p('representations')));
+    if (P.duree) out.push(`<li${ed(p('duree'))}>${esc(P.duree)}</li>`);
+    else if (s.duree) out.push(`<li${edS(s, 'duree')}>${esc(s.duree)}</li>`);
+    ['format', 'jauge', 'equipe', 'actualite'].forEach(k => { if (P[k]) out.push(`<li${ed(p(k))}>${esc(P[k])}</li>`); });
+    (P.equipeCreation || []).forEach((x, i) => out.push(`<li${ed(p(`equipeCreation.${i}`))}>${esc(x)}</li>`));
     return out.length ? `<ul class="chiffres">${out.join('')}</ul>` : '';
   }
   const videoLien = s => s.video && s.video.url ? `<a class="lien-u" href="${esc(s.video.url)}" target="_blank" rel="noopener"><span class="pastille">${PLAY}</span><span>${esc(LIB().bandeAnnonce)}</span></a>` : '';
-  const lieuxRepli = s => (s.programmer || {}).lieux ? `<details class="repli"><summary>${esc(LIB().lieuxDiffusion)}</summary><p>${esc(s.programmer.lieux)}</p></details>` : '';
+  const lieuxRepli = s => (s.programmer || {}).lieux ? `<details class="repli"><summary>${esc(LIB().lieuxDiffusion)}</summary><p${edS(s, 'programmer.lieux')}>${esc(s.programmer.lieux)}</p></details>` : '';
 
   /* ---------- accueil ---------- */
   let diapo = 0;
   const PHOTOS_ENTREES = { voir: 'berenice/av-2', programmer: 'cleophene/av-7', etablissement: 'berenice/d-atelier-1' };
   function accueil(r, { enPlace }) {
-    const s = S(), l = LIB(), dia = (s.diaporama || []).filter(d => d && d.slug), s0 = (s.saisons || [])[0] || {};
+    const s = S(), l = LIB(), s0 = (s.saisons || [])[0] || {};
+    const dia = (s.diaporama || []).map((d, i) => ({ d, i })).filter(x => x.d && x.d.slug), dp = x => `site.diaporama.${x.i}`;
     if (!enPlace || diapo >= dia.length) diapo = 0;
-    const tous = DATES(), aPublic = l => tous.some(d => d.l === l && !d.scolaire);
+    const tous = DATES(), aPublic = n => tous.some(d => d.l === n && !d.scolaire);
     const html = `<h1 class="sr-only" tabindex="-1">${esc(s.nom)}</h1>
     <section class="hero" aria-label="${esc(l.enTournee)}">
       <div class="wrap">
-        <div class="hero-stage">${dia.map((d, i) => {
-          const sh = show(d.slug) || {}, p = tous.find(x => x.slug === d.slug && !x.scolaire) || sh.prochaine, u = univers(sh);
+        <div class="hero-stage">${dia.map((x, i) => {
+          const d = x.d, sh = show(d.slug) || { slug: d.slug }, p = tous.find(y => y.slug === d.slug && !y.scolaire) || sh.prochaine, u = univers(sh);
           return `<article class="slide u${i === diapo ? ' on' : ''}" style="${uStyle(sh)}"${i === diapo ? '' : ' aria-hidden="true" inert'}>
             <div class="slide-text">${motif(u.motif, 'slide-motif')}
-              <p class="overline" style="--k:0">${esc(d.surtitre)}</p>
-              <h2 class="slide-title" style="--k:1">${lignes(d.titre)}</h2>
-              ${sh.sousTitre ? `<p class="slide-sub" style="--k:2">${sh.sousTitre}</p>` : ''}
-              ${p ? `<p class="slide-date" style="--k:3">${PIN}<span>${esc(p.ligne)}</span></p>` : ''}
+              <p class="overline" style="--k:0"${ed(`${dp(x)}.surtitre`)}>${esc(d.surtitre)}</p>
+              <h2 class="slide-title" style="--k:1">${lignesEd(d.titre, `${dp(x)}.titre`)}</h2>
+              ${sh.sousTitre ? `<p class="slide-sub" style="--k:2"${edS(sh, 'sousTitre')}>${sh.sousTitre}</p>` : ''}
+              ${p ? `<p class="slide-date" style="--k:3"${idDate(p)}>${PIN}<span>${esc(p.ligne)}</span></p>` : ''}
               <a class="btn btn-u" style="--k:4" href="${esc(d.href || `#/spectacle/${d.slug}`)}">${esc(d.bouton)}${ARROW}</a>
             </div>
-            <figure class="slide-photo">${img(d.slug, (d.titre || []).join(' '), sh.focale, i === diapo)}${d.credit ? `<figcaption class="credit">${esc(d.credit)}</figcaption>` : ''}</figure>
+            <figure class="slide-photo"${show(d.slug) ? ` data-edit-photo="shows.${esc(d.slug)}.photo"` : ''}>${img(d.slug, (d.titre || []).join(' '), sh.focale, i === diapo)}${d.credit ? `<figcaption class="credit"${ed(`${dp(x)}.credit`)}>${esc(d.credit)}</figcaption>` : ''}</figure>
           </article>`;
         }).join('')}</div>
         ${dia.length > 1 ? `<div class="hero-nav">
-          <div class="hero-tabs">${dia.map((d, i) => `<button class="hero-tab" type="button" data-go="${i}"${i === diapo ? ' aria-current="true"' : ''}>${lignes(d.titre)}</button>`).join('')}</div>
+          <div class="hero-tabs">${dia.map((x, i) => `<button class="hero-tab" type="button" data-go="${i}"${i === diapo ? ' aria-current="true"' : ''}>${(x.d.titre || []).map(t => `<span>${esc(t)}</span>`).join(' ')}</button>`).join('')}</div>
           <div class="hero-fleches"><button class="rond" type="button" data-pas="-1">${PREV}</button><button class="rond" type="button" data-pas="1">${NEXT}</button></div>
         </div>` : ''}
       </div>
     </section>
     <div class="wrap choix"><ul>${ENTREES().map(e => {
       const cle = src(PHOTOS_ENTREES[e.cle]) ? PHOTOS_ENTREES[e.cle] : ((SHOWS()[CLES.indexOf(e.cle)] || {}).slug || '');
-      const cr = creditDe(cle);
+      const [cr] = creditDe(cle);
       return `<li><a href="${esc(e.href)}" style="${eStyle(e)}"><span class="choix-photo">${img(cle, '')}${cr ? `<span class="credit">${esc(cr)}</span>` : ''}</span><span class="choix-t"><span>${esc(e.texte)}</span>${ARROW}</span></a></li>`;
     }).join('')}</ul></div>
     <section class="tour" aria-labelledby="h-tour">
@@ -1101,18 +1136,18 @@ button,input,textarea{font:inherit;color:inherit}
         <div class="tour-text">
           <p class="overline accent">${esc(s0.titre)}</p>
           <h2 class="sec-title" id="h-tour">${esc(l.actuellementEnTournee)}</h2>
-          <ol class="mini">${tous.slice(0, 6).map(d => `<li data-l="${d.l ?? ''}"><a href="#/spectacle/${esc(d.slug)}/${d.scolaire ? 'etablissement' : 'voir'}"><span class="mini-d"><span>${esc(d.ligneDate)}</span>${d.scolaire ? `<span class="tag">${esc(l.scolaire)}</span>` : ''}</span><span class="mini-t">${esc(d.titre)}</span><span class="mini-l">${esc(d.ligneLieu)}</span></a></li>`).join('')}</ol>
+          <div data-agenda><ol class="mini">${tous.slice(0, 6).map(d => `<li data-l="${d.l ?? ''}"${idDate(d)}><a href="#/spectacle/${esc(d.slug)}/${d.scolaire ? 'etablissement' : 'voir'}"><span class="mini-d"><span>${esc(d.ligneDate)}</span>${d.scolaire ? `<span class="tag">${esc(l.scolaire)}</span>` : ''}</span><span class="mini-t">${esc(d.titre)}</span><span class="mini-l">${esc(d.ligneLieu)}</span></a></li>`).join('')}</ol></div>
           ${entree('voir') ? `<p class="tour-go"><a class="go" href="${esc(entree('voir').href)}">${esc(entree('voir').texte)}${ARROW}</a></p>` : ''}
         </div>
         <div class="tour-carte">${carte({ lieux: CARTE.aVenir(), titre: l.actuellementEnTournee, info: infoDates, papier: true,
-          choix: x => { location.hash = aPublic(x) ? `#/voir?l=${x}` : '#/etablissement'; } })}</div>
+          choix: n => { location.hash = aPublic(n) ? `#/voir?l=${n}` : '#/etablissement'; } })}</div>
       </div>
     </section>
     <section class="wrap bloc" aria-labelledby="h-sp">
       <div class="sec-head"><h2 id="h-sp"><a href="#/spectacles">${esc(l.lesSpectacles)}</a></h2></div>
-      <ul class="ucards">${SHOWS().map(sh => ucard(sh, `#/spectacle/${sh.slug}`, sh.lieuTemps ? `<p class="ucard-sub">${esc(sh.lieuTemps)}</p>` : (sh.sousTitre ? `<p class="ucard-sub">${sh.sousTitre}</p>` : ''))).join('')}</ul>
+      <ul class="ucards">${SHOWS().map(x => ucard(x, `#/spectacle/${x.slug}`, x.lieuTemps ? `<p class="ucard-sub"${edS(x, 'lieuTemps')}>${esc(x.lieuTemps)}</p>` : sousTitre(x))).join('')}</ul>
     </section>
-    <section class="merci"><div class="wrap"><p>${s.donateurs || ''}</p></div></section>`;
+    <section class="merci"><div class="wrap"><p${ed('site.donateurs')}>${s.donateurs || ''}</p></div></section>`;
     return { titre: s.accueil, html, init() { diaporama(); relier($('.mini', main), $('.tour .k-carte', main)); } };
   }
   function diaporama() {
@@ -1169,7 +1204,7 @@ button,input,textarea{font:inherit;color:inherit}
     const html = `<div class="page" style="${eStyle(e)}">${teteEntree(e, esc(s0.titre))}
       <div class="wrap page-body agenda" data-page>
         <div class="agenda-carte" style="--k-bras:var(--e);--k-actif:var(--ink)">${carte({ lieux, titre: e.texte, info: infoDates, choix })}</div>
-        <div class="agenda-liste">
+        <div class="agenda-liste" data-agenda>
           <div class="filtres">
             <span class="overline filtres-l">${esc(l.spectacles)}</span>
             ${SHOWS().filter(s => slugs.includes(s.slug)).map(s => `<button class="chip" type="button" data-f="${esc(s.slug)}" aria-pressed="false">${esc(s.titre)}</button>`).join('')}
@@ -1179,7 +1214,7 @@ button,input,textarea{font:inherit;color:inherit}
         </div>
       </div>
       ${enTournee.length ? `<section class="wrap bloc" aria-labelledby="h-sp"><div class="sec-head"><h2 id="h-sp">${esc(l.lesSpectacles)}</h2></div>
-        <ul class="ucards">${enTournee.map(s => ucard(s, `#/spectacle/${s.slug}/voir`, `${s.lieuTemps ? `<p class="ucard-lieu">${esc(s.lieuTemps)}</p>` : ''}${s.accroche ? `<p class="ucard-acc">${esc(s.accroche)}</p>` : ''}`)).join('')}</ul></section>` : ''}
+        <ul class="ucards">${enTournee.map(s => ucard(s, `#/spectacle/${s.slug}/voir`, `${s.lieuTemps ? `<p class="ucard-lieu"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}${s.accroche ? `<p class="ucard-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}`)).join('')}</ul></section>` : ''}
       ${saisonsNav(null)}
     </div>`;
     return { titre: e.texte, entree: 'voir', etat: 'page', html, init() {
@@ -1206,7 +1241,7 @@ button,input,textarea{font:inherit;color:inherit}
       <div class="wrap page-body agenda" data-page>
         <div class="agenda-carte">${carte({ lieux: CARTE.saison(cle), titre: Sa.titre, info: infoSaison, choix })}
           <div class="filtres filtres-carte"><button class="chip" type="button" data-fl aria-pressed="true" hidden><span></span>${CROIX}</button></div></div>
-        <div class="agenda-liste">${(Sa.spectacles || []).map(g => `<section class="grp">
+        <div class="agenda-liste" data-agenda>${(Sa.spectacles || []).map(g => `<section class="grp">
           <div class="grp-head">${g.creation ? `<p class="overline">${esc(g.creation)}</p>` : ''}<h2 class="grp-t">${g.slug && show(g.slug) ? `<a href="#/spectacle/${esc(g.slug)}/voir">${esc(g.titre)}</a>` : esc(g.titre)}</h2>${g.sousTitre ? `<p class="grp-sub">${g.sousTitre}</p>` : ''}</div>
           <ul class="rows">${(g.dates || []).map(rangeeSaison).join('')}</ul></section>`).join('')}</div>
       </div>
@@ -1223,24 +1258,26 @@ button,input,textarea{font:inherit;color:inherit}
   function programmer() {
     const e = entree('programmer'), l = LIB(), s = S();
     const fiche = sh => {
-      const u = univers(sh);
+      // la première photo de la galerie (la photo principale à défaut), plus lisible dans ce cadre en hauteur
+      const u = univers(sh), i = (sh.photos || []).findIndex(p => !p.etablissement && !p.atelier && src(p.cle));
+      const ph = i >= 0 ? [sh.photos[i].cle, `shows.${sh.slug}.photos.${i}`] : [sh.slug, `shows.${sh.slug}.photo`];
       return `<li class="fpro u" style="${uStyle(sh)}">
-        <div class="fpro-photo">${img(sh.slug, '', sh.focale)}</div>
+        <div class="fpro-photo" data-edit-photo="${esc(ph[1])}">${img(ph[0], '', sh.focale)}</div>
         <div class="fpro-corps">${motif(u.motif, 'fpro-motif')}
-          <p class="u-signe"><span>${esc(sh.creation || '')}</span>${sh.statut ? `<span class="statut">${esc(sh.statut)}</span>` : ''}</p>
-          <h2 class="fpro-t"><a href="#/spectacle/${esc(sh.slug)}/programmer">${esc(sh.titre)}</a></h2>
-          ${sh.sousTitre ? `<p class="fpro-sous">${sh.sousTitre}</p>` : ''}
+          <p class="u-signe"><span${edS(sh, 'creation')}>${esc(sh.creation || '')}</span>${sh.statut ? `<span class="statut"${edS(sh, 'statut')}>${esc(sh.statut)}</span>` : ''}</p>
+          <h2 class="fpro-t"><a href="#/spectacle/${esc(sh.slug)}/programmer"${edS(sh, 'titre')}>${esc(sh.titre)}</a></h2>
+          ${sousTitre(sh, 'fpro-sous')}
           <div class="fpro-cols"><div>${chiffres(sh)}</div><div>${ficheListe(sh, true)}</div></div>
           <div class="fpro-actions">${videoLien(sh)}<a class="lien-u" href="#/spectacle/${esc(sh.slug)}/programmer"><span>${esc(l.leSpectacle)}</span>${ARROW}</a>${lieuxRepli(sh)}</div>
         </div></li>`;
     };
-    const html = `<div class="page" style="${eStyle(e)}">${teteEntree(e, esc(s.nom))}
+    const html = `<div class="page sans-fin" style="${eStyle(e)}">${teteEntree(e, esc(s.nom))}
       <div class="wrap page-body"><ul class="cat">${SHOWS().map(fiche).join('')}</ul></div>
       <section class="tour" aria-labelledby="h-lieux">
         <div class="wrap tour-grid">
           <div class="tour-text">
             <h2 class="sec-title" id="h-lieux">${esc(l.lieuxDiffusion)}</h2>
-            <p class="tour-texte">${s.partenaires || ''}</p>
+            ${partenaires('tour-texte')}
             <p class="tour-go">${ecrire('btn btn-e')}</p>
           </div>
           <div class="tour-carte" style="--k-bras:var(--e);--k-actif:var(--ink)">${carte({ lieux: CARTE.tout(), titre: l.lieuxDiffusion, info: infoSaison, papier: true, fin: true })}</div>
@@ -1251,23 +1288,30 @@ button,input,textarea{font:inherit;color:inherit}
   }
 
   /* ---------- Je représente un établissement scolaire : la position de la compagnie, les actions, les dates ---------- */
+  // le type d'action culturelle et ses précisions (public, lieu, statut), communs à la liste et à la page du spectacle
+  function puces(sh) {
+    const C = sh.actionCulturelle || {}, l = LIB();
+    return [C.public ? `<span class="puce"><b>${esc(l.public)}</b><span${edS(sh, 'actionCulturelle.public')}>${esc(C.public)}</span></span>` : '',
+      C.lieu && l.lieu && l.lieu[C.lieu] ? `<span class="puce">${esc(l.lieu[C.lieu])}</span>` : '',
+      C.statut ? `<span class="puce forte"${edS(sh, 'actionCulturelle.statut')}>${esc(C.statut)}</span>` : ''].join('');
+  }
+  // un type vide reste à remplir : le libellé « À compléter », et la place du type pour l'édition
+  const typeAC = (sh, classe) => { const C = sh.actionCulturelle || {}; return C.type ? `<p class="${classe}"${edS(sh, 'actionCulturelle.type')}>${esc(C.type)}</p>` : `<p class="${classe} vide">${esc(LIB().aCompleter)}</p><p class="${classe}"${edS(sh, 'actionCulturelle.type')}></p>`; };
+  const formule = (sh, style = '') => { const C = sh.actionCulturelle || {}; return (C.formule || []).length ? `<p class="formule"${style}>${C.formule.map((x, i) => `<span${edS(sh, `actionCulturelle.formule.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>` : ''; };
+  const dispositifs = sh => { const C = sh.actionCulturelle || {}; return (C.dispositifs || []).length ? `<ul class="dispositifs">${C.dispositifs.map((x, i) => `<li${edS(sh, `actionCulturelle.dispositifs.${i}`)}>${x}</li>`).join('')}</ul>` : ''; };
   function etablissement() {
     const e = entree('etablissement'), l = LIB(), s = S(), A = s.actions || {};
     const ac = sh => {
-      const C = sh.actionCulturelle || {}, u = univers(sh), t = (C.textes || [])[0];
-      const puces = [C.public ? `<span class="puce"><b>${esc(l.public)}</b><span>${esc(C.public)}</span></span>` : '',
-        C.lieu && l.lieu && l.lieu[C.lieu] ? `<span class="puce">${esc(l.lieu[C.lieu])}</span>` : '',
-        C.statut ? `<span class="puce forte">${esc(C.statut)}</span>` : ''].join('');
+      const C = sh.actionCulturelle || {}, u = univers(sh), t = (C.textes || [])[0], p = puces(sh);
       return `<li class="ac u" style="${uStyle(sh)}">
-        <div class="ac-photo">${img(sh.slug, '', sh.focale)}</div>
+        <div class="ac-photo" data-edit-photo="shows.${esc(sh.slug)}.photo">${img(sh.slug, '', sh.focale)}</div>
         <div class="ac-corps">${motif(u.motif, 'ac-motif')}
-          <h3 class="ac-t"><a href="#/spectacle/${esc(sh.slug)}/etablissement">${esc(sh.titre)}</a></h3>
+          <h3 class="ac-t"><a href="#/spectacle/${esc(sh.slug)}/etablissement"${edS(sh, 'titre')}>${esc(sh.titre)}</a></h3>
           <p class="ac-lib">${esc(l.actionCulturelle)}</p>
-          <p class="ac-type${C.type ? '' : ' vide'}">${esc(C.type || l.aCompleter)}</p>
-          ${puces ? `<p class="puces">${puces}</p>` : ''}
-          ${t ? `<div class="ac-texte"><p>${t.texte}</p></div>` : ''}
-          ${(C.formule || []).length ? `<p class="formule">${C.formule.map(x => `<span>${esc(x)}</span>`).join('<br>')}</p>` : ''}
-          ${(C.dispositifs || []).length ? `<ul class="dispositifs">${C.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
+          ${typeAC(sh, 'ac-type')}
+          ${p ? `<p class="puces">${p}</p>` : ''}
+          ${t ? `<div class="ac-texte"><p${edS(sh, 'actionCulturelle.textes.0.texte')}>${t.texte}</p></div>` : ''}
+          ${formule(sh)}${dispositifs(sh)}
           <p class="ac-liens"><a class="lien-u" href="#/spectacle/${esc(sh.slug)}/etablissement"><span>${esc(C.dossier || sh.dossier ? l.dossierScolaire : l.actionCulturelle)}</span>${ARROW}</a></p>
         </div></li>`;
     };
@@ -1279,22 +1323,22 @@ button,input,textarea{font:inherit;color:inherit}
     const photos = ['actions-culturelles', 'actions-culturelles/g-1', 'actions-culturelles/g-2', 'actions-culturelles/g-3', 'actions-culturelles/g-4'].filter(src);
     const html = `<div class="page" style="${eStyle(e)}">${teteEntree(e, esc(s.nom))}
       <div class="wrap page-body">
-        ${s.ecole && s.ecole.texte ? `<p class="ecole">${esc(s.ecole.texte)}</p>` : ''}
+        ${s.ecole && s.ecole.texte ? `<p class="ecole"${ed('site.ecole.texte')}>${esc(s.ecole.texte)}</p>` : ''}
         ${groupes.map(([t, list], i) => `<section class="groupe${t ? '' : ' groupe-seul'}"${t ? ` aria-labelledby="h-g${i}"` : ''}>${t ? `<h2 class="groupe-t" id="h-g${i}">${esc(t)}</h2>` : ''}<ul class="groupe-liste">${list.map(ac).join('')}</ul></section>`).join('')}
       </div>
       <section class="wrap bloc" aria-labelledby="h-actions">
-        <div class="sec-head"><h2 id="h-actions">${esc(A.titre)}</h2></div>
+        <div class="sec-head"><h2 id="h-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2></div>
         <div class="actions">
-          <div class="prose">${(A.blocs || []).map(bloc).join('')}</div>
-          ${photos.length ? `<div class="actions-photos">${photos.map((k, i) => `<figure${i ? '' : ' class="grande"'}>${img(k, i ? '' : A.titre)}</figure>`).join('')}${A.credit ? `<p class="credit-l">${esc(A.credit)}</p>` : ''}</div>` : ''}
+          <div class="prose">${(A.blocs || []).map((b, i) => blocEd(b, `site.actions.blocs.${i}`)).join('')}</div>
+          ${photos.length ? `<div class="actions-photos">${photos.map((k, i) => `<figure${i ? '' : ' class="grande"'}>${img(k, i ? '' : A.titre)}</figure>`).join('')}${A.credit ? `<p class="credit-l"${ed('site.actions.credit')}>${esc(A.credit)}</p>` : ''}</div>` : ''}
         </div>
       </section>
       ${scol.length ? `<section class="wrap bloc" aria-labelledby="h-scol"><div class="sec-head"><h2 id="h-scol">${esc(l.enEtablissement)}</h2></div>
         <div class="agenda" data-page>
           <div class="agenda-carte" style="--k-bras:var(--e);--k-actif:var(--ink)">${carte({ lieux, titre: l.enEtablissement, info: infoDates })}</div>
-          <div class="agenda-liste">${parMois(scol).map(g => `<section class="mois" aria-labelledby="ms${g.k}"><h3 class="mois-t" id="ms${g.k}">${esc(g.label)}</h3><ol class="rows">${g.list.map(d => rangee(d, { onglet: 'etablissement' })).join('')}</ol></section>`).join('')}</div>
+          <div class="agenda-liste" data-agenda>${parMois(scol).map(g => `<section class="mois" aria-labelledby="ms${g.k}"><h3 class="mois-t" id="ms${g.k}">${esc(g.label)}</h3><ol class="rows">${g.list.map(d => rangee(d, { onglet: 'etablissement' })).join('')}</ol></section>`).join('')}</div>
         </div></section>` : ''}
-      <div class="wrap appel"><p class="appel-texte">${s.partenaires || ''}</p>${ecrire('btn btn-e')}</div>
+      <div class="wrap appel">${partenaires('appel-texte')}${ecrire('btn btn-e')}</div>
     </div>`;
     return { titre: e.texte, entree: 'etablissement', etat: 'page', html, init() {
       const pg = $('[data-page]', main);
@@ -1306,16 +1350,16 @@ button,input,textarea{font:inherit;color:inherit}
   function spectacles() {
     const l = LIB();
     const html = `<div class="page">${tete(esc(l.spectacles))}
-      <div class="wrap page-body"><ul class="ucards">${SHOWS().map(s => ucard(s, `#/spectacle/${s.slug}`, `${s.sousTitre ? `<p class="ucard-sub">${s.sousTitre}</p>` : ''}${s.lieuTemps ? `<p class="ucard-lieu" style="margin-top:8px">${esc(s.lieuTemps)}</p>` : ''}`)).join('')}</ul></div></div>`;
+      <div class="wrap page-body"><ul class="ucards">${SHOWS().map(s => ucard(s, `#/spectacle/${s.slug}`, `${sousTitre(s)}${s.lieuTemps ? `<p class="ucard-lieu" style="margin-top:8px"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}`)).join('')}</ul></div></div>`;
     return { titre: menuTexte('spectacles') || l.spectacles, menu: 'spectacles', html };
   }
 
   /* ---------- la page d'un spectacle, dans son univers, par entrée ---------- */
   function medias(s) {
-    const vu = s.video && s.video.url, M = (s.medias || []).filter(m => m.url && m.url !== vu), G = [];
-    M.forEach(m => { const k = m.groupe || ''; let g = G.find(x => x.k === k); if (!g) G.push(g = { k, list: [] }); g.list.push(m); });
-    const lien = (m, lib) => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><span class="pastille">${m.type === 'audio' ? SON : PLAY}</span><span>${lib ? `<span class="m-l">${esc(lib)}</span>` : ''}<span class="m-t">${esc(m.titre || s.titre)}</span>${m.par ? `<span class="m-par">${esc(m.par)}</span>` : ''}</span></a>`;
-    const tout = (vu ? lien(s.video, LIB().bandeAnnonce) : '') + G.map(g => `${g.k ? `<h3>${esc(g.k)}</h3>` : ''}${g.list.map(m => lien(m)).join('')}`).join('');
+    const vu = s.video && s.video.url, G = [];
+    (s.medias || []).forEach((m, i) => { if (!m.url || m.url === vu) return; const k = m.groupe || ''; let g = G.find(x => x.k === k); if (!g) G.push(g = { k, list: [] }); g.list.push({ m, i }); });
+    const lien = (m, lib, chemin) => `<a href="${esc(m.url)}" target="_blank" rel="noopener"><span class="pastille">${m.type === 'audio' ? SON : PLAY}</span><span>${lib ? `<span class="m-l">${esc(lib)}</span>` : ''}<span class="m-t"${m.titre ? edS(s, `${chemin}.titre`) : ''}>${esc(m.titre || s.titre)}</span>${m.par ? `<span class="m-par"${edS(s, `${chemin}.par`)}>${esc(m.par)}</span>` : ''}</span></a>`;
+    const tout = (vu ? lien(s.video, LIB().bandeAnnonce, 'video') : '') + G.map(g => `${g.k ? `<h3>${esc(g.k)}</h3>` : ''}${g.list.map(x => lien(x.m, '', `medias.${x.i}`)).join('')}`).join('');
     return tout ? `<div class="u-video">${tout}</div>` : '';
   }
   function aside(s, { avant = '', plus = '' } = {}) {
@@ -1323,42 +1367,41 @@ button,input,textarea{font:inherit;color:inherit}
     return `<aside class="u-aside" aria-labelledby="c-distribution">${avant}
       <h2 class="u-chap" id="c-distribution">${esc(l.distribution)}</h2>
       ${ficheListe(s)}
-      ${s.duree ? `<p class="duree">${esc(s.duree)}</p>` : ''}
-      ${(s.mentions || []).length ? `<div class="mentions">${s.mentions.map(m => `<p>${m}</p>`).join('')}</div>` : ''}
-      ${(s.production || []).length ? `<div class="production">${s.production.map(p => `<p>${p}</p>`).join('')}</div>` : ''}
+      ${s.duree ? `<p class="duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}
+      ${(s.mentions || []).length ? `<div class="mentions">${s.mentions.map((m, i) => `<p${edS(s, `mentions.${i}`)}>${m}</p>`).join('')}</div>` : ''}
+      ${(s.production || []).length ? `<div class="production">${s.production.map((p, i) => `<p${edS(s, `production.${i}`)}>${p}</p>`).join('')}</div>` : ''}
       ${plus}
     </aside>`;
   }
+  const credits = (s, dossier) => `${s.creditPhotos ? `<p class="u-credit"${edS(s, 'creditPhotos')}>${esc(s.creditPhotos)}</p>` : ''}${dossier && s.creditDossier ? `<p class="u-credit"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}`;
   function photosVoir(s) {
-    const P = (s.photos || []).filter(p => !p.etablissement && !p.atelier && src(p.cle));
+    const P = (s.photos || []).map((p, i) => ({ p, i })).filter(x => !x.p.etablissement && !x.p.atelier && src(x.p.cle));
     if (!P.length) return '';
-    const dossier = P.some(p => p.source === 'dossier') && s.creditDossier;
     return `<section class="wrap u-sec" aria-labelledby="c-photos" style="margin-top:72px">
       <h2 class="u-chap" id="c-photos">${esc(LIB().photos)}</h2>
-      <div class="u-photos">${P.map(p => `<figure>${img(p.cle, p.legende || s.titre)}${p.legende ? `<figcaption class="carton">${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
-      ${s.creditPhotos ? `<p class="u-credit">${esc(s.creditPhotos)}</p>` : ''}${dossier ? `<p class="u-credit">${esc(s.creditDossier)}</p>` : ''}
+      <div class="u-photos">${P.map(({ p, i }) => `<figure data-edit-photo="shows.${esc(s.slug)}.photos.${i}">${img(p.cle, p.legende || s.titre)}${p.legende ? `<figcaption class="carton"${edS(s, `photos.${i}.legende`)}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
+      ${credits(s, P.some(x => x.p.source === 'dossier'))}
     </section>`;
   }
   function tourneeVoir(s) {
     const l = LIB(), T = CARTE.spectacle(s.slug), dates = DATES().filter(d => d.slug === s.slug && !d.scolaire);
-    const lieux = garder(T.aVenir, d => !d.scolaire);
+    const lieux = garder(T.aVenir, d => !d.scolaire), titre = s.tournee && s.tournee.titre;
+    const h2 = (t, chemin) => `<h2 class="u-h2" id="c-dates"${chemin ? edS(s, chemin) : ''}>${esc(t)}</h2>`;
     if (dates.length) {
       return `<section class="u-bande" aria-labelledby="c-dates"><div class="wrap">
-        <p class="u-chap">${esc(l.dates)}</p><h2 class="u-h2" id="c-dates">${esc((s.tournee && s.tournee.titre) || l.actuellementEnTournee)}</h2>
-        <div class="tournee-grid"><ol class="rows tournee-liste">${dates.map(d => rangee(d, { sansTitre: true })).join('')}</ol>
+        <p class="u-chap">${esc(l.dates)}</p>${titre ? h2(titre, 'tournee.titre') : h2(l.actuellementEnTournee)}
+        <div class="tournee-grid"><div class="tournee-liste" data-agenda="${esc(s.slug)}"><ol class="rows">${dates.map(d => rangee(d, { sansTitre: true })).join('')}</ol></div>
         <div class="tournee-carte">${carte({ lieux, passe: T.passe, titre: s.titre, info: infoSpectacle })}</div></div></div></section>`;
     }
     if (s.tournee && s.tournee.texte) {
       return `<section class="u-bande" aria-labelledby="c-dates"><div class="wrap">
-        <p class="u-chap">${esc(l.dates)}</p><h2 class="u-h2" id="c-dates">${esc(s.tournee.titre)}</h2>
-        <div class="tournee-grid"><p class="tournee-texte tournee-liste">${esc(s.tournee.texte)}</p>${T.passe.length ? `<div class="tournee-carte">${carte({ passe: T.passe, titre: s.titre })}</div>` : ''}</div></div></section>`;
+        <p class="u-chap">${esc(l.dates)}</p>${h2(s.tournee.titre, 'tournee.titre')}
+        <div class="tournee-grid"><div class="tournee-liste" data-agenda="${esc(s.slug)}"><p class="tournee-texte"${edS(s, 'tournee.texte')}>${esc(s.tournee.texte)}</p></div>${T.passe.length ? `<div class="tournee-carte">${carte({ passe: T.passe, titre: s.titre })}</div>` : ''}</div></div></section>`;
     }
-    if (T.passe.length) {
-      return `<section class="u-bande" aria-labelledby="c-dates"><div class="wrap">
-        <h2 class="u-chap" id="c-dates">${esc(l.dates)}</h2>
+    if (!T.passe.length) return `<div class="wrap" data-agenda="${esc(s.slug)}"></div>`;
+    return `<section class="u-bande" aria-labelledby="c-dates"><div class="wrap">
+        <h2 class="u-chap" id="c-dates">${esc(l.dates)}</h2><div data-agenda="${esc(s.slug)}"></div>
         <div class="tournee-grid"><div class="tournee-seule">${carte({ passe: T.passe, titre: s.titre })}</div></div></div></section>`;
-    }
-    return '';
   }
   function ongletVoir(s) {
     const l = LIB(), cits = s.citations || [];
@@ -1366,12 +1409,12 @@ button,input,textarea{font:inherit;color:inherit}
         <div class="u-main">
           <section class="u-sec" aria-labelledby="c-ouverture">
             <h2 class="u-chap" id="c-ouverture">${esc(l.ouverture)}</h2>
-            ${(s.affirmations || []).map(a => `<p class="u-affirm">${esc(a.texte)}</p>`).join('')}
-            ${cits.length ? `<div class="u-cits" style="margin-top:36px">${cits.map(c => `<blockquote class="u-cit${c.prose ? ' prose' : ''}"><p>${(c.vers || []).map(v => `<span>${esc(v)}</span>`).join('')}</p>${c.source ? `<cite>${esc(c.source)}</cite>` : ''}</blockquote>`).join('')}</div>` : ''}
+            ${(s.affirmations || []).map((a, i) => `<p class="u-affirm"${edS(s, `affirmations.${i}.texte`)}>${esc(a.texte)}</p>`).join('')}
+            ${cits.length ? `<div class="u-cits" style="margin-top:36px">${cits.map((c, i) => `<blockquote class="u-cit${c.prose ? ' prose' : ''}"><p>${(c.vers || []).map((v, j) => `<span${edS(s, `citations.${i}.vers.${j}`)}>${esc(v)}</span>`).join('')}</p>${c.source ? `<cite${edS(s, `citations.${i}.source`)}>${esc(c.source)}</cite>` : ''}</blockquote>`).join('')}</div>` : ''}
           </section>
           <section class="u-sec" aria-labelledby="c-spectacle">
             <h2 class="u-chap" id="c-spectacle">${esc(l.leSpectacle)}</h2>
-            <div class="u-texte" style="margin-top:0">${(s.texte || []).map(p => `<p>${p}</p>`).join('')}</div>
+            <div class="u-texte" style="margin-top:0">${(s.texte || []).map((p, i) => `<p${edS(s, `texte.${i}`)}>${p}</p>`).join('')}</div>
           </section>
           ${medias(s) ? `<section class="u-sec" aria-labelledby="c-video"><h2 class="u-chap" id="c-video">${esc(l.bandeAnnonce)}</h2>${medias(s)}</section>` : ''}
         </div>
@@ -1380,21 +1423,22 @@ button,input,textarea{font:inherit;color:inherit}
       ${photosVoir(s)}
       ${tourneeVoir(s)}`;
   }
+  const implantation = s => (s.photos || []).map((p, i) => ({ p, i })).find(x => /implantation/.test(x.p.id || x.p.cle) && src(x.p.cle));
   function ficheTechnique(s) {
-    const B = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null, A = B && B.accueil;
+    const B = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null, A = B && B.accueil, dp = `dossiers.${s.dossier}.accueil`;
     if (!A || !(s.programmer || {}).ficheTechnique) return '';
-    const ph = (s.photos || []).find(p => /implantation/.test(p.id || p.cle) && src(p.cle));
+    const ph = implantation(s);
     return `<section class="u-sec" aria-labelledby="c-ft">
       <h2 class="u-chap" id="c-ft">${esc(LIB().ficheTechnique)}</h2>
-      <h3 class="d-t">${esc(A.titre)}</h3>
-      <div class="ft-blocs">${(A.blocs || []).map(b => `<div class="ft-bloc">${b.titre ? `<h4>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('')}</div>
-      ${A.alerte ? `<p class="ft-alerte">${A.alerte}</p>` : ''}
-      ${ph ? `<figure class="ft-photo">${img(ph.cle, ph.legende || A.photos || '')}<figcaption class="carton">${esc(ph.legende || A.photos || '')}</figcaption></figure>${s.creditDossier ? `<p class="u-credit">${esc(s.creditDossier)}</p>` : ''}` : ''}
+      <h3 class="d-t"${ed(`${dp}.titre`)}>${esc(A.titre)}</h3>
+      <div class="ft-blocs">${(A.blocs || []).map((b, i) => `<div class="ft-bloc">${b.titre ? `<h4${ed(`${dp}.blocs.${i}.titre`)}>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map((x, j) => `<li${ed(`${dp}.blocs.${i}.lignes.${j}`)}>${x}</li>`).join('')}</ul></div>`).join('')}</div>
+      ${A.alerte ? `<p class="ft-alerte"${ed(`${dp}.alerte`)}>${A.alerte}</p>` : ''}
+      ${ph ? `<figure class="ft-photo" data-edit-photo="shows.${esc(s.slug)}.photos.${ph.i}">${img(ph.p.cle, ph.p.legende || A.photos || '')}${ph.p.legende ? `<figcaption class="carton"${edS(s, `photos.${ph.i}.legende`)}>${esc(ph.p.legende)}</figcaption>` : ''}</figure>${credits({ slug: s.slug, creditDossier: s.creditDossier }, true)}` : ''}
     </section>`;
   }
   function ongletProgrammer(s) {
     const l = LIB(), T = CARTE.spectacle(s.slug), P = s.programmer || {};
-    const carteTout = T.aVenir.length || T.passe.length;
+    const carteTout = T.aVenir.length || T.passe.length, aVenir = DATES().filter(d => d.slug === s.slug);
     return `<div class="wrap u-grid">
         <div class="u-main">
           <section class="u-sec" aria-labelledby="c-repr">
@@ -1409,119 +1453,117 @@ button,input,textarea{font:inherit;color:inherit}
       ${P.lieux || carteTout ? `<section class="u-bande" aria-labelledby="c-lieux"><div class="wrap">
         <h2 class="u-chap" id="c-lieux">${esc(l.lieuxDiffusion)}</h2>
         <div class="tournee-grid">
-          <div class="tournee-liste">${P.lieux ? `<p class="u-texte" style="margin-top:0;font-size:1.0625rem;line-height:1.7">${esc(P.lieux)}</p>` : ''}
-            ${T.aVenir.length ? `<ol class="rows u-dates" style="margin-top:28px">${DATES().filter(d => d.slug === s.slug).map(d => rangee(d, { sansTitre: true, scolaire: true })).join('')}</ol>` : ''}</div>
+          <div class="tournee-liste">${P.lieux ? `<p class="u-texte" style="margin-top:0;font-size:1.0625rem;line-height:1.7"${edS(s, 'programmer.lieux')}>${esc(P.lieux)}</p>` : ''}
+            <div data-agenda="${esc(s.slug)}" style="margin-top:28px">${aVenir.length ? `<ol class="rows u-dates">${aVenir.map(d => rangee(d, { sansTitre: true, scolaire: true })).join('')}</ol>` : ''}</div></div>
           ${carteTout ? `<div class="tournee-carte">${carte({ lieux: T.aVenir, passe: T.passe, titre: s.titre, info: infoSpectacle })}</div>` : ''}
         </div></div></section>` : ''}
-      <div class="wrap u-appel"><p>${S().partenaires || ''}</p>${ecrire('btn btn-u')}</div>`;
+      <div class="wrap u-appel">${partenaires('')}${ecrire('btn btn-u')}</div>`;
   }
   function dossierScolaire(s) {
     const B = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null;
     if (!B) return '';
-    const l = LIB(), P = B.pourquoi, G = B.programmes, C = B.consignes, A = B.ateliers;
-    const ateliers = (s.photos || []).filter(p => p.atelier && src(p.cle)), implantation = (s.photos || []).find(p => /implantation/.test(p.id || p.cle) && src(p.cle));
-    const couv = [B.creation, B.duree, B.format, B.public].filter(Boolean);
+    const l = LIB(), P = B.pourquoi, G = B.programmes, C = B.consignes, A = B.ateliers, dp = k => ed(`dossiers.${s.dossier}.${k}`);
+    const ateliers = (s.photos || []).map((p, i) => ({ p, i })).filter(x => x.p.atelier && src(x.p.cle)), imp = implantation(s);
+    const couv = ['creation', 'duree', 'format', 'public'].filter(k => B[k]);
     return `<section class="wrap dossier" aria-labelledby="c-dossier">
       <h2 class="u-chap" id="c-dossier">${esc(l.dossierScolaire)}</h2>
-      <div class="d-couv"><div><p class="d-couv-t">${esc(B.titre)}</p>${B.auteur ? `<p class="d-couv-a">${esc(B.auteur)}</p>` : ''}</div>${couv.length ? `<ul>${couv.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
-      ${P ? `<div class="d-sec"><h3 class="d-t">${esc(P.titre)}</h3><div class="d-encadres">${(P.sections || []).map(x => `<article class="d-encadre"><h4>${esc(x.titre)}</h4><p>${x.texte}</p></article>`).join('')}</div></div>` : ''}
-      ${G ? `<div class="d-sec"><div class="table-wrap"><table class="u-table"><caption>${esc(G.titre)}</caption>${(G.niveaux || []).map(N => `<tbody>${(N.lignes || []).map((x, i) => `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${N.lignes.length}" class="t-niveau">${esc(N.niveau)}</th>`}<th scope="row" class="t-matiere">${esc(x.matiere)}</th><td>${esc(x.intitule)}</td><td>${esc(x.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div></div>` : ''}
-      ${C ? `<div class="d-sec d-consignes"><h3 class="d-t">${esc(C.titre)}</h3>${C.note ? `<p class="d-note">${esc(C.note)}</p>` : ''}${C.intro ? `<p>${C.intro}</p>` : ''}
-        ${(C.demandes || []).length ? `<ul class="d-demandes">${C.demandes.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-        ${C.apres ? `<p>${C.apres}</p>` : ''}${(C.axes || []).length ? `<ul class="d-axes">${C.axes.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}
-        ${C.atelier ? `<p class="d-encadre-p">${C.atelier}</p>` : ''}</div>` : ''}
-      ${A ? `<div class="d-sec"><h3 class="d-t">${esc(A.titre || l.ateliers)}</h3>
-        <div class="d-ateliers">${(A.liste || []).map(a => `<article class="d-atelier"><h4>${a.titre}</h4>${(a.paragraphes || []).map(p => `<p>${p}</p>`).join('')}
-          ${(a.etapes || []).length ? `<ol class="d-etapes">${a.etapes.map(x => `<li><p class="d-etape-t">${x.titre}</p><p>${x.texte}</p></li>`).join('')}</ol>` : ''}
-          ${(a.points || []).length ? `<ul class="d-points">${a.points.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</article>`).join('')}</div>
-        ${ateliers.length || implantation ? `<div class="d-photos">${ateliers.map(p => `<figure>${img(p.cle, p.legende || A.titre || '')}</figure>`).join('')}${implantation ? `<figure>${img(implantation.cle, implantation.legende || '')}${implantation.legende ? `<figcaption class="carton">${esc(implantation.legende)}</figcaption>` : ''}</figure>` : ''}</div>${s.creditDossier ? `<p class="u-credit">${esc(s.creditDossier)}</p>` : ''}` : ''}
+      <div class="d-couv"><div><p class="d-couv-t"${dp('titre')}>${esc(B.titre)}</p>${B.auteur ? `<p class="d-couv-a"${dp('auteur')}>${esc(B.auteur)}</p>` : ''}</div>${couv.length ? `<ul>${couv.map(k => `<li${dp(k)}>${esc(B[k])}</li>`).join('')}</ul>` : ''}</div>
+      ${P ? `<div class="d-sec"><h3 class="d-t"${dp('pourquoi.titre')}>${esc(P.titre)}</h3><div class="d-encadres">${(P.sections || []).map((x, i) => `<article class="d-encadre"><h4${dp(`pourquoi.sections.${i}.titre`)}>${esc(x.titre)}</h4><p${dp(`pourquoi.sections.${i}.texte`)}>${x.texte}</p></article>`).join('')}</div></div>` : ''}
+      ${G ? `<div class="d-sec"><div class="table-wrap"><table class="u-table"><caption${dp('programmes.titre')}>${esc(G.titre)}</caption>${(G.niveaux || []).map((N, n) => `<tbody>${(N.lignes || []).map((x, i) => `<tr>${i ? '' : `<th scope="rowgroup" rowspan="${N.lignes.length}" class="t-niveau"${dp(`programmes.niveaux.${n}.niveau`)}>${esc(N.niveau)}</th>`}<th scope="row" class="t-matiere"${dp(`programmes.niveaux.${n}.lignes.${i}.matiere`)}>${esc(x.matiere)}</th><td${dp(`programmes.niveaux.${n}.lignes.${i}.intitule`)}>${esc(x.intitule)}</td><td${dp(`programmes.niveaux.${n}.lignes.${i}.objectif`)}>${esc(x.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></div></div>` : ''}
+      ${C ? `<div class="d-sec d-consignes"><h3 class="d-t"${dp('consignes.titre')}>${esc(C.titre)}</h3>${C.note ? `<p class="d-note"${dp('consignes.note')}>${esc(C.note)}</p>` : ''}${C.intro ? `<p${dp('consignes.intro')}>${C.intro}</p>` : ''}
+        ${(C.demandes || []).length ? `<ul class="d-demandes">${C.demandes.map((x, i) => `<li${dp(`consignes.demandes.${i}`)}>${esc(x)}</li>`).join('')}</ul>` : ''}
+        ${C.apres ? `<p${dp('consignes.apres')}>${C.apres}</p>` : ''}${(C.axes || []).length ? `<ul class="d-axes">${C.axes.map((x, i) => `<li${dp(`consignes.axes.${i}`)}>${x}</li>`).join('')}</ul>` : ''}
+        ${C.atelier ? `<p class="d-encadre-p"${dp('consignes.atelier')}>${C.atelier}</p>` : ''}</div>` : ''}
+      ${A ? `<div class="d-sec"><h3 class="d-t"${A.titre ? dp('ateliers.titre') : ''}>${esc(A.titre || l.ateliers)}</h3>
+        <div class="d-ateliers">${(A.liste || []).map((a, i) => { const k = `ateliers.liste.${i}`; return `<article class="d-atelier"><h4${dp(`${k}.titre`)}>${a.titre}</h4>${(a.paragraphes || []).map((p, j) => `<p${dp(`${k}.paragraphes.${j}`)}>${p}</p>`).join('')}
+          ${(a.etapes || []).length ? `<ol class="d-etapes">${a.etapes.map((x, j) => `<li><p class="d-etape-t"${dp(`${k}.etapes.${j}.titre`)}>${x.titre}</p><p${dp(`${k}.etapes.${j}.texte`)}>${x.texte}</p></li>`).join('')}</ol>` : ''}
+          ${(a.points || []).length ? `<ul class="d-points">${a.points.map((x, j) => `<li${dp(`${k}.points.${j}`)}>${x}</li>`).join('')}</ul>` : ''}</article>`; }).join('')}</div>
+        ${ateliers.length || imp ? `<div class="d-photos">${ateliers.map(({ p, i }) => `<figure data-edit-photo="shows.${esc(s.slug)}.photos.${i}">${img(p.cle, p.legende || A.titre || '')}</figure>`).join('')}${imp ? `<figure data-edit-photo="shows.${esc(s.slug)}.photos.${imp.i}">${img(imp.p.cle, imp.p.legende || '')}${imp.p.legende ? `<figcaption class="carton"${edS(s, `photos.${imp.i}.legende`)}>${esc(imp.p.legende)}</figcaption>` : ''}</figure>` : ''}</div>${s.creditDossier ? `<p class="u-credit"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}` : ''}
       </div>` : ''}
-      <div class="d-plus">${[B.synopsis, B.adaptation, B.espace, B.alexandrin].filter(x => x && x.titre).map(x => `<details class="d-det"><summary>${esc(x.titre)}</summary>${x.chapeau ? `<p class="d-chapeau">${esc(x.chapeau)}</p>` : ''}${(x.paragraphes || []).map(p => `<p>${p}</p>`).join('')}</details>`).join('')}</div>
+      <div class="d-plus">${['synopsis', 'adaptation', 'espace', 'alexandrin'].filter(k => B[k] && B[k].titre).map(k => `<details class="d-det"><summary><span${dp(`${k}.titre`)}>${esc(B[k].titre)}</span></summary>${B[k].chapeau ? `<p class="d-chapeau"${dp(`${k}.chapeau`)}>${esc(B[k].chapeau)}</p>` : ''}${(B[k].paragraphes || []).map((p, j) => `<p${dp(`${k}.paragraphes.${j}`)}>${p}</p>`).join('')}</details>`).join('')}</div>
     </section>`;
   }
   function ongletEtablissement(s) {
-    const l = LIB(), C = s.actionCulturelle || {}, scol = DATES().filter(d => d.slug === s.slug && d.scolaire);
-    const puces = [C.public ? `<span class="puce"><b>${esc(l.public)}</b><span>${esc(C.public)}</span></span>` : '',
-      C.lieu && l.lieu && l.lieu[C.lieu] ? `<span class="puce">${esc(l.lieu[C.lieu])}</span>` : '',
-      C.statut ? `<span class="puce forte">${esc(C.statut)}</span>` : ''].join('');
-    const dates = scol.length ? `<section class="u-dates" aria-labelledby="c-scol" style="margin-bottom:44px"><h2 class="u-chap" id="c-scol">${esc(l.enEtablissement)}</h2><ol class="rows">${scol.map(d => rangee(d, { sansTitre: true })).join('')}</ol><p style="margin-top:20px">${ecrire('btn btn-u')}</p></section>` : '';
+    const l = LIB(), C = s.actionCulturelle || {}, scol = DATES().filter(d => d.slug === s.slug && d.scolaire), p = puces(s);
+    // sans date scolaire, la place de l'agenda reste là, vide : en mode édition, on y ajoute une date
+    const dates = scol.length ? `<section class="u-dates" aria-labelledby="c-scol" style="margin-bottom:44px"><h2 class="u-chap" id="c-scol">${esc(l.enEtablissement)}</h2><div data-agenda="${esc(s.slug)}"><ol class="rows">${scol.map(d => rangee(d, { sansTitre: true })).join('')}</ol></div><p style="margin-top:20px">${ecrire('btn btn-u')}</p></section>` : `<div data-agenda="${esc(s.slug)}"></div>`;
     return `<div class="wrap u-grid">
         <div class="u-main">
           <section class="u-sec u-ac" aria-labelledby="c-ac">
             <h2 class="u-chap" id="c-ac">${esc(l.actionCulturelle)}</h2>
-            <p class="u-ac-type${C.type ? '' : ' vide'}">${esc(C.type || l.aCompleter)}</p>
-            ${puces ? `<p class="puces">${puces}</p>` : ''}
-            ${(C.textes || []).length ? `<div class="ac-texte" style="margin-top:24px">${C.textes.map(t => `<p>${t.texte}</p>`).join('')}</div>` : ''}
-            ${(C.formule || []).length ? `<p class="formule" style="margin-top:24px">${C.formule.map(x => `<span>${esc(x)}</span>`).join('<br>')}</p>` : ''}
-            ${(C.dispositifs || []).length ? `<div style="margin-top:24px"><p class="ac-lib" style="margin-top:0">${esc(l.dispositifs)}</p><ul class="dispositifs">${C.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+            ${typeAC(s, 'u-ac-type')}
+            ${p ? `<p class="puces">${p}</p>` : ''}
+            ${(C.textes || []).length ? `<div class="ac-texte" style="margin-top:24px">${C.textes.map((t, i) => `<p${edS(s, `actionCulturelle.textes.${i}.texte`)}>${t.texte}</p>`).join('')}</div>` : ''}
+            ${formule(s, ' style="margin-top:24px"')}
+            ${(C.dispositifs || []).length ? `<div style="margin-top:24px"><p class="ac-lib" style="margin-top:0">${esc(l.dispositifs)}</p>${dispositifs(s)}</div>` : ''}
           </section>
         </div>
         ${aside(s, { avant: dates, plus: scol.length ? '' : `<p style="margin-top:28px">${ecrire('btn btn-u')}</p>` })}
       </div>
       ${dossierScolaire(s)}
-      <div class="wrap u-appel"><p>${S().partenaires || ''}</p>${ecrire('btn btn-u')}</div>`;
+      <div class="wrap u-appel">${partenaires('')}${ecrire('btn btn-u')}</div>`;
   }
   function spectacle(s, onglet, { enPlace }) {
     const l = LIB(), u = univers(s), e = entree(onglet) || {};
     const p = DATES().find(d => d.slug === s.slug && (onglet === 'etablissement' ? d.scolaire : !d.scolaire));
     const autres = (() => { const i = SHOWS().indexOf(s); return [1, 2, 3].map(k => SHOWS()[(i + k) % SHOWS().length]).filter(x => x && x !== s); })();
     const contenu = onglet === 'programmer' ? ongletProgrammer(s) : onglet === 'etablissement' ? ongletEtablissement(s) : ongletVoir(s);
+    const titres = s.titreLignes && s.titreLignes.length ? lignesEd(s.titreLignes, `shows.${s.slug}.titreLignes`) : `<span${edS(s, 'titre')}>${esc(s.titre)}</span>`;
     const html = `<article class="show u ${u.clair ? 'u-clair' : 'u-sombre'}" style="${uStyle(s)}">
       <div class="u-tete">
         <div class="wrap u-tete-grid">
           <div class="u-tete-texte">${motif(u.motif, 'u-motif')}
-            <p class="u-signe"><span>${esc(S().nom)}</span>${s.creation ? `<span class="sep" aria-hidden="true">·</span><span>${esc(s.creation)}</span>` : ''}${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</p>
-            ${s.lieuTemps ? `<p class="u-lieu">${esc(s.lieuTemps)}</p>` : ''}
-            <h1 class="u-titre${enPlace ? '' : ' devoile'}" tabindex="-1">${lignes(s.titreLignes && s.titreLignes.length ? s.titreLignes : [s.titre])}</h1>
-            ${s.sousTitre ? `<p class="u-sous">${s.sousTitre}</p>` : ''}
-            ${s.genre && s.genre !== s.sousTitre ? `<p class="u-sous">${esc(s.genre)}</p>` : ''}
-            ${s.cadre ? `<p class="u-cadre">${esc(s.cadre)}</p>` : ''}
-            ${s.accroche ? `<p class="u-accroche">${esc(s.accroche)}</p>` : ''}
-            ${p ? `<p class="u-date">${PIN}<span>${esc(p.ligne)}</span></p>` : ''}
+            <p class="u-signe"><span>${esc(S().nom)}</span>${s.creation ? `<span class="sep" aria-hidden="true">·</span><span${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</p>
+            ${s.lieuTemps ? `<p class="u-lieu"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}
+            <h1 class="u-titre${enPlace ? '' : ' devoile'}" tabindex="-1">${titres}</h1>
+            ${sousTitre(s, 'u-sous')}
+            ${s.genre && s.genre !== s.sousTitre ? `<p class="u-sous"${edS(s, 'genre')}>${esc(s.genre)}</p>` : ''}
+            ${s.cadre ? `<p class="u-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}
+            ${s.accroche ? `<p class="u-accroche"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
+            ${p ? `<p class="u-date"${idDate(p)}>${PIN}<span>${esc(p.ligne)}</span></p>` : ''}
           </div>
-          <figure class="u-photo">${img(s.slug, s.titre, s.focale, true)}${s.credit ? `<figcaption class="credit">${esc(s.credit)}</figcaption>` : ''}</figure>
+          <figure class="u-photo" data-edit-photo="shows.${esc(s.slug)}.photo">${img(s.slug, s.titre, s.focale, true)}${s.credit ? `<figcaption class="credit"${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
         </div>
       </div>
       <nav class="u-onglets" aria-label="${esc(s.titre)}"><ul class="wrap">${ENTREES().map(x => `<li><a href="#/spectacle/${esc(s.slug)}/${esc(x.cle)}" style="--pt:${u.clair ? col(x.couleur, '#bc3e80') : col(x.couleurVive, '#f07ab6')}"${x.cle === onglet ? ' aria-current="page"' : ''}><span class="long">${esc(x.texte)}</span><span class="court">${esc(x.court)}</span></a></li>`).join('')}</ul></nav>
       <div class="u-corps">${contenu}</div>
       <section class="wrap autres-s" aria-labelledby="h-autres"><div class="sec-head"><h2 id="h-autres"><a href="#/spectacles">${esc(l.lesSpectacles)}</a></h2></div>
-        <ul class="ucards trois">${autres.map(x => ucard(x, `#/spectacle/${x.slug}/${onglet}`, x.sousTitre ? `<p class="ucard-sub">${x.sousTitre}</p>` : '')).join('')}</ul>
+        <ul class="ucards trois">${autres.map(x => ucard(x, `#/spectacle/${x.slug}/${onglet}`, sousTitre(x))).join('')}</ul>
       </section>
     </article>`;
     const titre = onglet === 'voir' ? s.titre : `${s.titre} - ${e.court || onglet}`;
-    let pg = null;
     return { titre, entree: onglet, etat: 'true', html, init() {
-      pg = $('.u-bande', main);
-      if (pg && onglet === 'voir') relier($('.tournee-liste', pg), $('.k-carte', pg));
-      if (pg && onglet === 'programmer') relier($('.tournee-liste', pg), $('.k-carte', pg));
+      const pg = $('.u-bande', main);
+      if (pg && onglet !== 'etablissement') relier($('.tournee-liste', pg), $('.k-carte', pg));
     } };
   }
 
   /* ---------- la compagnie, le contact, les pages légales ---------- */
   function compagnie() {
     const C = S().compagnie || {}, Dr = C.directeur;
-    const html = `<div class="page">${tete(esc(C.titre), esc(menuTexte('compagnie')))}
+    const html = `<div class="page">${tete(esc(C.titre), esc(menuTexte('compagnie')), 'site.compagnie.titre')}
       <div class="wrap page-body">
         <div class="cie">
-          <div class="cie-texte">${(C.paragraphes || []).map(p => `<p>${p}</p>`).join('')}</div>
-          <aside class="cie-dates" aria-labelledby="h-dates"><h2 id="h-dates">${esc(C.datesTitre)}</h2>
-            <ol class="annees">${(C.dates || []).map(d => {
-              const s = SHOWS().find(x => String(x.annee) === String(d.annee));
-              return `<li><span class="an-photo">${s ? img(s.slug, '', s.focale) : ''}</span><span class="an">${esc(d.annee)}</span>${s ? `<a href="#/spectacle/${esc(s.slug)}">${esc(d.titre)}</a>` : `<span>${esc(d.titre)}</span>`}</li>`;
+          <div class="cie-texte">${(C.paragraphes || []).map((p, i) => `<p${ed(`site.compagnie.paragraphes.${i}`)}>${p}</p>`).join('')}</div>
+          <aside class="cie-dates" aria-labelledby="h-dates"><h2 id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
+            <ol class="annees">${(C.dates || []).map((d, i) => {
+              const s = SHOWS().find(x => String(x.annee) === String(d.annee)), t = `<span${ed(`site.compagnie.dates.${i}.titre`)}>${esc(d.titre)}</span>`;
+              return `<li><span class="an-photo">${s ? img(s.slug, '', s.focale) : ''}</span><span class="an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</span>${s ? `<a href="#/spectacle/${esc(s.slug)}">${t}</a>` : t}</li>`;
             }).join('')}</ol></aside>
         </div>
-        ${Dr ? `<section class="portrait" aria-labelledby="h-dir"><div class="portrait-t"><h2 id="h-dir">${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p>${esc(Dr.chapeau)}</p>` : ''}</div>
-          <div class="portrait-texte">${(Dr.paragraphes || []).map(p => `<p>${p}</p>`).join('')}</div></section>` : ''}
-        ${S().partenaires ? `<p class="partenaires">${S().partenaires}</p>` : ''}
+        ${Dr ? `<section class="portrait" aria-labelledby="h-dir"><div class="portrait-t"><h2 id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}</div>
+          <div class="portrait-texte">${(Dr.paragraphes || []).map((p, i) => `<p${ed(`site.compagnie.directeur.paragraphes.${i}`)}>${p}</p>`).join('')}</div></section>` : ''}
+        ${partenaires('partenaires')}
       </div></div>`;
     return { titre: menuTexte('compagnie') || C.titre, menu: 'compagnie', html };
   }
+  const adresse = co => (co.adresse || []).map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>');
   function contact() {
     const s = S(), K = s.contact || {}, co = s.coordonnees || {}, types = ['text', 'email', 'tel', 'text'], auto = ['name', 'email', 'tel', 'address-level2'];
     const c = K.consentement || '', j = c.indexOf('politique');
     const consent = j < 0 ? `<a href="#/politique-de-confidentialite">${esc(c)}</a>` : `${esc(c.slice(0, j))}<a href="#/politique-de-confidentialite">${esc(c.slice(j))}</a>`;
     const champs = K.champs || [];
-    const html = `<div class="page">${tete(esc(K.titre), esc(menuTexte('contact')))}
+    const html = `<div class="page">${tete(esc(K.titre), esc(menuTexte('contact')), 'site.contact.titre')}
       <div class="wrap page-body contact">
         <form class="form" data-rien>
           ${champs.map((ch, i) => i === champs.length - 1
@@ -1531,14 +1573,14 @@ button,input,textarea{font:inherit;color:inherit}
           <div class="calcul"><label for="c-calc">${esc(K.calcul)}</label><input id="c-calc" inputmode="numeric" maxlength="2"></div>
           <button class="btn btn-primary" type="submit">${esc(K.bouton)}</button>
         </form>
-        <aside class="coords"><p class="coords-nom">${esc(co.nom)}</p><p>${(co.adresse || []).map(esc).join('<br>')}</p>
+        <aside class="coords"><p class="coords-nom"${ed('site.coordonnees.nom')}>${esc(co.nom)}</p><p>${adresse(co)}</p>
           <p>${s.facebook && s.facebook.href ? `<a href="${esc(s.facebook.href)}">${esc(s.facebook.texte)}</a>` : esc((s.facebook || {}).texte)}</p></aside>
       </div></div>`;
     return { titre: menuTexte('contact') || K.titre, menu: 'contact', html };
   }
   function legal(cle) {
     const L = S().legal[cle];
-    return { titre: L.titre, html: `<div class="page">${tete(esc(L.titre))}<div class="wrap page-body"><div class="prose prose-legal">${(L.blocs || []).map(bloc).join('')}</div></div></div>` };
+    return { titre: L.titre, html: `<div class="page">${tete(esc(L.titre), '', `site.legal.${cle}.titre`)}<div class="wrap page-body"><div class="prose prose-legal">${(L.blocs || []).map((b, i) => blocEd(b, `site.legal.${cle}.blocs.${i}`)).join('')}</div></div></div>` };
   }
 
   /* ---------- en-tête et pied de page ---------- */
@@ -1559,17 +1601,17 @@ button,input,textarea{font:inherit;color:inherit}
     $('#pied').innerHTML = `<div class="wrap foot">
         <div class="foot-id">
           <a class="foot-brand" href="#/" aria-label="${esc(s.nom)}"><span class="brand-mark" data-logo="mark"></span><span class="brand-word">${esc(s.titreSuffixe)}</span></a>
-          <p class="foot-addr"><strong>${esc(co.nom)}</strong><br>${(co.adresse || []).map(esc).join('<br>')}</p>
+          <p class="foot-addr"><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong><br>${adresse(co)}</p>
         </div>
         <div class="foot-contact">
           <a class="foot-ecrire" href="${esc((s.ecrire || {}).href || '#/contact')}">${esc((s.ecrire || {}).texte)}${ARROW}</a>
           <p class="foot-fb">${s.facebook && s.facebook.href ? `<a href="${esc(s.facebook.href)}">${esc(s.facebook.texte)}</a>` : esc((s.facebook || {}).texte)}</p>
         </div>
-        <div class="foot-part"><p>${s.partenaires || ''}</p></div>
+        <div class="foot-part">${partenaires('')}</div>
       </div>
       <div class="wrap foot-bas">
-        <p class="foot-legal">${(co.legal || []).map(x => `<span>${esc(x)}</span>`).join('')}</p>
-        <ul>${(s.liensLegaux || []).map(l => `<li><a href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join('')}</ul>
+        <p class="foot-legal">${(co.legal || []).map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('')}</p>
+        <ul>${(s.liensLegaux || []).map(l => `<li><a href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join('')}${LIB().modifierSite ? `<li><button class="foot-modifier" type="button" data-modifier>${CRAYON}${esc(LIB().modifierSite)}</button></li>` : ''}</ul>
       </div>`;
   }
   function logos(root) {
@@ -1656,6 +1698,7 @@ button,input,textarea{font:inherit;color:inherit}
     if (h) h.focus({ preventScroll: true });
   }
   document.addEventListener('click', e => {
+    if (e.target.closest('[data-modifier]')) { if (typeof EDITION !== 'undefined' && EDITION.ouvrir) EDITION.ouvrir(); return; }
     const a = e.target.closest('a[href]');
     if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     const href = a.getAttribute('href');

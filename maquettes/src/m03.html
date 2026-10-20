@@ -33,6 +33,14 @@
   --k-hub: var(--ink);
   --k-passe: var(--ink-2);
   --k-focus: var(--mag);
+  /* l'édition sur place (EDITION) : la barre, la connexion et le panneau des dates sur le papier de l'agenda */
+  --ed-fond: #fbf9f5;
+  --ed-encre: #141414;
+  --ed-accent: #a3306c;
+  --ed-sur-accent: #ffffff;
+  --ed-police: "Public Sans", "Helvetica Neue", Arial, sans-serif;
+  --ed-rayon: 8px;
+  --ed-trait: #bfb7a8;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--head) + 16px); scroll-padding-bottom: var(--bas); }
@@ -70,15 +78,13 @@ table { border-collapse: collapse; }
 .entrees ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); height: var(--h2); }
 .entrees li { display: flex; min-width: 0; }
 .entrees li + li { border-left: 1px solid var(--rule); }
-.entrees a { position: relative; flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 18px; text-decoration: none; color: var(--ink-2); font: 500 1.0625rem/1.15 var(--sg); letter-spacing: -.01em; transition: background-color .2s, color .2s; }
-.entrees li:first-child a { padding-left: 0; }
-.entrees a::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 5px; background: var(--e); transform: scaleY(0); transform-origin: top; transition: transform .2s; }
-.entrees li:first-child a::before { left: 0; }
-.entrees a:hover { color: var(--ink); }
-.entrees a:hover::before { transform: scaleY(.6); }
-.entrees a[aria-current] { color: var(--ink); font-weight: 600; }
+.entrees a { position: relative; flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 18px; text-decoration: none; color: var(--ink); font: 500 1.125rem/1.15 var(--sg); letter-spacing: -.015em; transition: background-color .2s, color .2s; }
+/* chaque entrée porte sa couleur : un trait fin, plein quand on y est */
+.entrees a::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 6px; background: var(--e); transform: scaleY(.34); transform-origin: top; transition: transform .2s; }
+.entrees a:hover { background: color-mix(in srgb, var(--e) 6%, var(--paper)); }
+.entrees a:hover::before { transform: scaleY(.67); }
+.entrees a[aria-current] { font-weight: 600; background: color-mix(in srgb, var(--e) 9%, var(--paper)); }
 .entrees a[aria-current]::before { transform: none; }
-.entrees a[aria-current="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--paper); }
 .e-pt { flex: none; width: 11px; height: 11px; border-radius: 3px; background: var(--e); }
 .e-court { display: none; }
 .e-fl { margin-left: auto; color: var(--e); opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; }
@@ -242,12 +248,24 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .uc-s { font-size: 1rem; color: var(--u-texte2); }
 .uc-acc { font-size: 1rem; line-height: 1.5; }
 .uc-n { margin-top: auto; padding-top: 10px; border-top: 2px solid var(--u-titre); font-size: .9375rem; font-weight: 600; }
-.uc .motif { position: absolute; right: -14px; bottom: -14px; z-index: 0; width: 120px; height: auto; color: var(--u-titre); opacity: .2; pointer-events: none; }
-.uc .motif[data-motif="fil"], .uc .motif[data-motif="chronologie"] { left: 0; right: 0; bottom: 4px; width: 100%; opacity: .3; }
+.uc > .motif, .tour > .motif { position: absolute; right: -14px; bottom: -14px; z-index: 0; width: 120px; height: auto; color: var(--u-titre); opacity: .2; pointer-events: none; }
+/* les motifs en bande : le fil rouge, la frise 1850 → 2077, dans le cours de la mise en page */
+.motif.bande { display: block; pointer-events: none; }
+.motif.bande svg { display: block; width: 100%; height: 26px; overflow: visible; }
+.motif.bande[data-motif="fil"] svg { height: 36px; }
+.ans { display: flex; justify-content: space-between; margin-top: 5px; font: 600 .75rem/1 var(--sg); letter-spacing: .06em; }
+.ans i { font-style: normal; }
+.frise { color: var(--u-titre); opacity: .55; }
+.uc-b > .frise { margin-top: 6px; }
+.fc-frise { grid-column: 1 / -1; }
+.u-frise { grid-column: 1 / -1; color: var(--u-titre); opacity: .6; }
+.u-frise .motif.bande svg { height: 30px; }
+.u-frise .motif.bande[data-motif="fil"] svg { height: 64px; }
 .riches .uc-t { font-size: 2.375rem; }
 .u-et { display: flex; flex-wrap: wrap; gap: 4px 0; font: 700 .75rem/1.35 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
-.u-et > span + span::before { content: "·"; margin: 0 9px; }
-.u-et .statut { margin-left: 6px; letter-spacing: 0; text-transform: none; }
+.u-et > span { white-space: nowrap; }
+.u-et > span:not(:last-child):not(:has(+ .statut))::after { content: "·"; margin: 0 9px; }
+.u-et .statut { margin-left: 10px; letter-spacing: 0; text-transform: none; }
 
 /* Je viens voir : les spectacles en tournée, dans leur univers */
 .tours { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); padding-top: 26px; }
@@ -256,7 +274,7 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .tour .uc-img { aspect-ratio: auto; height: 100%; min-height: 240px; }
 .tour .uc-b { padding: 22px 24px 24px; }
 .tour .uc-t { font-size: 2.25rem; }
-.tour .u-et { color: var(--u-titre); }
+.tour .u-et { color: var(--u-vif); }
 
 /* ---------- Les fiches : programmer, établissement scolaire ---------- */
 .fiches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px var(--gap); align-items: start; padding-top: 20px; }
@@ -264,8 +282,7 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .fc { position: relative; display: flex; flex-direction: column; background: var(--field); border: 1px solid var(--rule); transition: box-shadow .25s; }
 .fc.on { box-shadow: 0 0 0 2px var(--u-titre); }
 .fc-tete { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: end; padding: 20px 22px 20px; background: radial-gradient(80% 120% at 90% 0%, var(--u-lueur), transparent 70%), var(--u-fond); color: var(--u-texte); isolation: isolate; }
-.fc-tete .motif { position: absolute; right: -16px; top: -16px; z-index: -1; width: 150px; height: auto; color: var(--u-titre); opacity: .22; }
-.fc-tete .motif[data-motif="fil"], .fc-tete .motif[data-motif="chronologie"] { left: 0; right: 0; top: auto; bottom: 2px; width: 100%; opacity: .32; }
+.fc-tete > .motif { position: absolute; right: -16px; top: -16px; z-index: -1; width: 150px; height: auto; color: var(--u-titre); opacity: .22; }
 .fc-t { margin-top: 8px; font: var(--u-gr) 2.25rem/1 var(--u-police); letter-spacing: 0; color: var(--u-titre); overflow-wrap: break-word; hyphens: auto; }
 .fc-t a { text-decoration: none; }
 .fc-t a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .12em; }
@@ -346,7 +363,8 @@ details.lx-d p { padding-bottom: 12px; font-size: .9375rem; line-height: 1.55; c
 .galerie { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
 .galerie img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; background: var(--paper-2); }
 .prose h2 { margin: 40px 0 12px; font-size: 1.625rem; }
-.prose > h2:first-child { margin-top: 0; }
+.prose > h2:first-child, .prose > .bl:first-child h2 { margin-top: 0; }
+.prose .bl + p, .prose p + .bl:not(:has(h2)) { margin-top: 14px; }
 .prose p + p, .prose ul + p { margin-top: 14px; }
 .prose ul { margin-top: 12px; border-top: 1px solid var(--rule); }
 .prose li { padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
@@ -388,12 +406,12 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .u :focus-visible { outline-color: var(--u-vif); }
 .u a { color: inherit; }
 .u-tete { position: relative; overflow: hidden; background: radial-gradient(60% 90% at 80% 35%, var(--u-lueur), transparent 72%), var(--u-fond); isolation: isolate; }
-.u-tete-in { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); row-gap: 28px; align-items: end; padding-top: 56px; padding-bottom: 44px; }
+.u-tete-in { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); row-gap: 28px; align-items: end; padding-top: 44px; padding-bottom: 40px; }
 .u-titres { grid-column: 1 / 7; min-width: 0; }
 .u-photo { grid-column: 7 / 13; }
-.u-photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--u-fond2); }
+.u-photo img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: var(--u-fond2); }
 .u-photo figcaption { color: var(--u-texte2); }
-.u-signe { margin-bottom: 18px; color: var(--u-titre); }
+.u-signe { margin-bottom: 18px; color: var(--u-vif); }
 .u-h1 { font: var(--u-gr) clamp(3rem, 7.4vw, 6.5rem)/.92 var(--u-police); letter-spacing: 0; color: var(--u-titre); overflow-wrap: break-word; hyphens: auto; }
 .u-h1 .l { display: block; padding-bottom: .04em; }
 @media (prefers-reduced-motion: no-preference) {
@@ -404,13 +422,11 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .u-genre { margin-top: 4px; font: 400 1.125rem/1.35 var(--sg); color: var(--u-texte2); }
 .u-acc { margin-top: 22px; max-width: 46ch; font-size: 1.1875rem; line-height: 1.55; }
 .u-tete-in .statut { margin-top: 18px; }
-.u-tete .motif { position: absolute; z-index: 0; color: var(--u-titre); opacity: .17; pointer-events: none; }
-.u-tete .motif[data-motif="arene"], .u-tete .motif[data-motif="horloge"], .u-tete .motif[data-motif="jumeaux"] { left: max(-120px, calc(var(--gut) - 220px)); top: 50%; width: min(620px, 70vw); transform: translateY(-50%); }
-.u-tete .motif[data-motif="nez"] { left: -30px; bottom: -40px; width: min(380px, 60vw); opacity: .2; }
-.u-tete .motif[data-motif="annotations"] { left: 6px; top: 26px; width: min(250px, 40vw); opacity: .3; transform: rotate(-4deg); }
-.u-tete .motif[data-motif="paperboard"] { left: max(8px, calc(var(--gut) - 30px)); bottom: -20px; width: min(240px, 44vw); opacity: .2; }
-.u-tete .motif[data-motif="fil"] { left: 0; bottom: 10px; width: 100%; height: 120px; opacity: .55; }
-.u-tete .motif[data-motif="chronologie"] { left: var(--gut); right: var(--gut); bottom: 8px; width: calc(100% - 2 * var(--gut)); height: 64px; opacity: .5; }
+.u-tete > .motif { position: absolute; z-index: 0; color: var(--u-titre); opacity: .17; pointer-events: none; }
+.u-tete > .motif[data-motif="arene"], .u-tete > .motif[data-motif="horloge"], .u-tete > .motif[data-motif="jumeaux"] { left: max(-120px, calc(var(--gut) - 220px)); top: 50%; width: min(620px, 70vw); transform: translateY(-50%); }
+.u-tete > .motif[data-motif="nez"] { left: -30px; bottom: -40px; width: min(380px, 60vw); opacity: .2; }
+.u-tete > .motif[data-motif="annotations"] { left: 6px; top: 26px; width: min(250px, 40vw); opacity: .3; transform: rotate(-4deg); }
+.u-tete > .motif[data-motif="paperboard"] { left: max(8px, calc(var(--gut) - 30px)); bottom: -20px; width: min(240px, 44vw); opacity: .2; }
 .u-onglets { position: relative; z-index: 1; border-block: 1px solid color-mix(in srgb, var(--u-texte) 24%, transparent); background: var(--u-fond); }
 .u-onglets ul { display: flex; }
 .u-onglets li { min-width: 0; }
@@ -454,14 +470,15 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .photos figure:first-child img { aspect-ratio: 16 / 9; }
 .carton { position: relative; z-index: 1; width: fit-content; max-width: min(92%, 52ch); margin: -30px 0 0 16px; padding: 10px 14px 11px; background: var(--u-fond2); color: var(--u-texte); font-size: .9375rem; line-height: 1.45; box-shadow: 0 10px 24px -14px rgba(0, 0, 0, .45); }
 .credits { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: .875rem; color: var(--u-texte2); }
-.bande { display: flex; align-items: center; gap: 18px; margin-top: 24px; padding: 20px 22px; background: var(--u-fond2); text-decoration: none; }
-.bande svg { width: 44px; height: 44px; color: var(--u-titre); transition: transform .2s; }
-.bande:hover svg { transform: scale(1.08); }
-.bande b { display: block; font: 500 1.375rem/1.2 var(--sg); letter-spacing: -.015em; }
-.bande span span { display: block; margin-top: 2px; font-size: .9375rem; color: var(--u-texte2); }
+.bande-a { display: flex; align-items: center; gap: 18px; margin-top: 24px; padding: 20px 22px; background: var(--u-fond2); text-decoration: none; }
+.bande-a svg { width: 44px; height: 44px; color: var(--u-titre); transition: transform .2s; }
+.bande-a:hover svg { transform: scale(1.08); }
+.bande-a b { display: block; font: 500 1.375rem/1.2 var(--sg); letter-spacing: -.015em; }
+.bande-a span span { display: block; margin-top: 2px; font-size: .9375rem; color: var(--u-texte2); }
 .t-texte { margin-top: 14px; font: 500 1.25rem/1.4 var(--sg); }
 .t-grid { margin-top: 24px; align-items: start; row-gap: 28px; }
-.dcards { grid-column: 1 / 7; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; align-content: start; }
+.dates-z { grid-column: 1 / 7; min-width: 0; }
+.dcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; align-content: start; }
 .dcard { padding: 16px 18px 18px; background: var(--u-fond2); border-top: 4px solid var(--u-titre); overflow-wrap: anywhere; }
 .dcard::before { display: none; }
 .dcard.on { box-shadow: 0 0 0 2px var(--u-titre); }
@@ -520,6 +537,10 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .u .ac-txt a, .u .disp a { color: var(--u-vif); }
 .u .formule { background: var(--u-titre); color: var(--u-sur); font-size: 1.625rem; padding: 18px 22px; }
 .ac-bloc > * + * { margin-top: 22px; }
+.ac-bloc + .chap { margin-top: 72px; }
+.u-equipe li { padding: 12px 0 13px; border-bottom: 1px solid color-mix(in srgb, var(--u-texte) 20%, transparent); font: 500 1.25rem/1.35 var(--sg); letter-spacing: -.01em; }
+.u-equipe { margin-top: 14px; }
+.u-boite .liens + .u-agir-p { margin-top: 18px; }
 .ac-vide { margin-top: 18px; font: 500 1.75rem/1.2 var(--sg); color: var(--u-texte2); }
 /* le dossier scolaire de Bérénice */
 .dossier { margin-top: 88px; }
@@ -534,7 +555,7 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .prog-t { width: 100%; margin-top: 18px; font-size: .9375rem; line-height: 1.45; }
 .prog-t th, .prog-t td { padding: 11px 14px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid color-mix(in srgb, var(--u-texte) 22%, transparent); }
 .prog-t tbody th[scope="rowgroup"] { padding: 10px 14px; background: var(--u-titre); color: var(--u-sur); font: var(--u-gr) 1.125rem/1.2 var(--u-police); letter-spacing: .02em; }
-.prog-t th[scope="row"] { width: 16%; font-weight: 700; color: var(--u-titre); }
+.prog-t th[scope="row"] { width: 16%; font-weight: 700; color: var(--u-vif); }
 .prog-t td:nth-of-type(1) { width: 38%; font-weight: 600; }
 .consignes { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); row-gap: 18px; margin-top: 22px; }
 .consignes .c-box { grid-column: 1 / 8; padding: 22px 22px 24px; background: var(--u-fond2); border: 2px solid var(--u-titre); }
@@ -620,6 +641,12 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
 .f-ent .e-pt { background: var(--ev); }
 .f-legal { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 16px; padding-top: 18px; border-top: 1px solid #3a3733; color: #c9c3b8; font-size: .9375rem; }
 .f-ll { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-left: auto; }
+.f-edit { display: inline-flex; align-items: center; gap: 7px; padding: 3px 12px 4px 10px; border: 1px solid #5c5852; border-radius: 999px; background: none; color: #efebe3; font-size: .875rem; font-weight: 600; line-height: 1.4; }
+.f-edit:hover { border-color: #efebe3; color: #fff; }
+.ed-actif .uc-t a::after { display: none; }
+.ed-actif .u-h1 .l { animation: none !important; clip-path: none; }
+.ed-barre { border-color: var(--ink); box-shadow: 0 16px 36px -14px rgba(20, 20, 20, .5); }
+.ed-barre .ed-etat { font-family: var(--sg); letter-spacing: -.01em; }
 
 /* ---------- L'ouverture, sur le papier réglé de l'agenda ---------- */
 .intro.intro-m03::after { content: ""; position: absolute; inset: 0; pointer-events: none; transition: opacity .25s;
@@ -677,13 +704,14 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   .choix-img { aspect-ratio: auto; height: 100%; min-height: 104px; }
   .choix-t { padding: 14px 16px; font-size: 1.375rem; align-items: center; }
   .choix-t svg { width: 24px; height: 24px; }
-  .ag-bar { flex-direction: column; align-items: stretch; }
+  .ag-bar { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
   .chips { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gut)); padding: 0 var(--gut) 4px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip { flex: none; white-space: nowrap; }
   .ag-tools { flex-wrap: wrap; margin-left: 0; }
   .field { width: 100%; }
   .ag-grid > .ag-carte, .ag-grid > .ag-liste, .ag-grid > .pg-liste { grid-column: 1 / -1; grid-row: auto; position: static; }
+  .pg .ag-grid > .ag-carte { order: -1; }
   .ag-carte svg { max-height: none; }
   .row, .ag-accueil .row { grid-template-columns: 96px minmax(0, 1fr); column-gap: 14px; padding: 14px 0 15px; }
   .j-big, .ag-accueil .j-big { font-size: 2.25rem; }
@@ -715,7 +743,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   .u-onglets li + li a { padding-left: 10px; border-left: 1px solid color-mix(in srgb, var(--u-texte) 18%, transparent); }
   .u-corps { padding-top: 32px; }
   .u-sommaire { display: none; }
-  .u-lecture, .u-main, .u-side, .dcards, .t-carte, .t-carte.seule { grid-column: 1 / -1; position: static; }
+  .u-lecture, .u-main, .u-side, .dates-z, .t-carte, .t-carte.seule { grid-column: 1 / -1; position: static; }
   .chap + .chap { margin-top: 64px; }
   .u-h2 { font-size: 1.625rem; }
   .u-fiche, .u-chiffres, .tech { grid-template-columns: minmax(0, 1fr); }
@@ -767,10 +795,16 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   const own = (o, k) => o != null && k != null && Object.prototype.hasOwnProperty.call(o, k);
   const ecrire = () => ({ texte: LIB().ecrire || (site().ecrire || {}).texte, href: (site().ecrire || {}).href || '#/contact' });
 
+  /* ---------- L'édition sur place (EDITION) : chaque texte venu de D porte son chemin dans D ---------- */
+  const ed = chemin => chemin ? ` data-edit="${esc(chemin)}"` : '';
+  const edS = (s, ...k) => ed(['shows', s.slug, ...k].join('.'));
+  const edP = chemin => ` data-edit-photo="${esc(chemin)}"`;
+  const dateId = d => ` data-date-id="${esc(d && d.id != null ? d.id : '')}"`;
+
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const RXM = new RegExp(`^(.*?)\\s*(${MOIS.join('|')})\\s+(\\d{4})$`);
   const GRIS = '#8a847a';
-  const ico = (d, w = 18, extra = '') => `<svg viewBox="0 0 20 20" width="${w}" height="${w}" aria-hidden="true" focusable="false"${extra}>${d}</svg>`;
+  const ico = (d, w = 18) => `<svg viewBox="0 0 20 20" width="${w}" height="${w}" aria-hidden="true" focusable="false">${d}</svg>`;
   const ARROW = ico('<path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>');
   const EXT = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><path d="M5.5 3.5h7v7M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const LOUPE = '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><circle cx="8.5" cy="8.5" r="5.75" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
@@ -781,11 +815,13 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   const CHEVRON = ico('<path d="m5 8 5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>', 16);
   const ALERTE = ico('<path d="M10 2.5 18.5 17h-17z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M10 8v4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.6" r="1.05" fill="currentColor"/>', 22);
   const NON = ico('<circle cx="10" cy="10" r="8.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m6.6 6.6 6.8 6.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>', 20);
+  const PLUME = ico('<path d="M4 16l1-4L13.5 3.5a1.8 1.8 0 0 1 2.5 0l.5.5a1.8 1.8 0 0 1 0 2.5L8 15z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M11.5 5.5l3 3" stroke="currentColor" stroke-width="1.6"/>', 15);
 
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const norm = v => String(v || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[’'`\-–—.,;:()«»"]/g, ' ').replace(/\s+/g, ' ').trim();
-  const bloc = b => /^\s*<(h\d|ul|ol|p|table|div|blockquote)\b/i.test(b) ? b : `<p>${b}</p>`;
-  const lignes = arr => (arr || []).map((x, i) => `<span class="l" style="--i:${i};--n:${Math.max(4, [...String(x)].length)};--dur:${Math.min(1.1, .12 + [...String(x)].length * .05).toFixed(2)}s">${esc(x)}</span>`).join('');
+  // un bloc de texte de D, tel quel : un paragraphe, ou un bloc qui porte déjà sa balise (titre, liste)
+  const BLOC = /^\s*<(h\d|ul|ol|p|table|div|blockquote)\b/i;
+  const bloc = (b, chemin) => BLOC.test(b) ? `<div class="bl"${ed(chemin)}>${b}</div>` : `<p${ed(chemin)}>${b}</p>`;
   const main = document.getElementById('main');
 
   /* ---------- Les couleurs : celles des spectacles sur le papier, et l'univers de chacun ---------- */
@@ -794,6 +830,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   const lum = h => { const f = c => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; return 0.2126 * f(parseInt(h.slice(1, 3), 16)) + 0.7152 * f(parseInt(h.slice(3, 5), 16)) + 0.0722 * f(parseInt(h.slice(5, 7), 16)); };
   const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
   const colPapier = slug => { const s = showDe(slug); return (s && (hex(s.couleurTexteClair) || hex(s.couleur))) || GRIS; };
+  // l'univers d'un spectacle, avec des contrastes AA garantis : texte sur fond, titre (grand) et accent vif sur fond
   function univers(s) {
     const u = s.univers || {}, c = Object.assign({}, s.palette || {}, u.couleurs || {});
     const fond = hex(c.fond) || (s.clair ? '#f4f1ea' : '#141414');
@@ -867,7 +904,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     };
   }
   // « 779 représentations au 31 juillet 2026 » : le nombre en grand, le reste tel quel
-  const repHtml = t => { const m = /^(\d[\d\s.]*)\s+(.+)$/.exec(t || ''); return m ? `<p class="rep"><b>${esc(m[1].trim())}</b><span>${esc(m[2])}</span></p>` : `<p class="rep"><span>${esc(t)}</span></p>`; };
+  const repHtml = (t, attr = '') => { const m = /^(\d[\d\s.]*)\s+(.+)$/.exec(t || ''); return m ? `<p class="rep"${attr}><b>${esc(m[1].trim())}</b><span>${esc(m[2])}</span></p>` : `<p class="rep"${attr}><span>${esc(t)}</span></p>`; };
 
   /* ---------- La carte : un bras par commune et par spectacle, de sa couleur, une pastille au bout ---------- */
   let nCarte = 0;
@@ -886,7 +923,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       const ss = slugsDe(x);
       ss.forEach((slug, j) => paires.push({ x, slug, courbe: .24 + (j - (ss.length - 1) / 2) * .18, n: x.dates.filter(d => (d.slug || '') === slug).length }));
     });
-    const pas = Math.min(.06, 1 / Math.max(1, paires.length)), delai = new Map(), masques = [], bras = [];
+    const pas = Math.min(.06, .5 / Math.max(1, paires.length)), delai = new Map(), masques = [], bras = [];
     paires.forEach((p, i) => {
       const w0 = Math.min(10, 3.4 + Math.sqrt(p.n) * 1.8), d = (i * pas).toFixed(3);
       if (!delai.has(p.x.l)) delai.set(p.x.l, d);
@@ -991,7 +1028,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   function rowHtml(d, compact, entree) {
     const j = decoupe(d.ligneDate || d.ligne), s = showDe(d.slug);
     const titre = `<span class="dot" aria-hidden="true"></span><span class="t-txt">${esc(d.titre || (s && s.titre))}</span>`;
-    return `<li class="row dt" data-l="${d.l == null ? '' : d.l}" data-slug="${esc(d.slug || '')}" style="--c:${colPapier(d.slug)}">
+    return `<li class="row dt"${dateId(d)} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(d.slug || '')}" style="--c:${colPapier(d.slug)}">
       <p class="when"><span aria-hidden="true">${j.grand}</span><span class="sr">${esc(d.ligneDate || d.ligne)}</span></p>
       <div class="what">
         ${s ? `<a class="t-link" href="#/spectacle/${esc(s.slug)}/${entree}">${titre}</a>` : `<p class="t-link">${titre}</p>`}
@@ -1026,7 +1063,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       </div>
       <div class="ag-grid">
         <div class="ag-carte">${carteSvg({ lieux: CARTE.aVenir('public'), titre: S0.titre, attente: mode === 'accueil', fixe })}</div>
-        <div class="ag-liste" data-liste></div>
+        <div class="ag-liste" data-liste data-agenda=""></div>
       </div>
     </div>`;
   }
@@ -1081,7 +1118,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       const parSaison = new Map();
       (x ? x.dates : []).filter(d => !PG.slug || d.slug === PG.slug).forEach(d => { if (!parSaison.has(d.saison)) parSaison.set(d.saison, []); parSaison.get(d.saison).push(d); });
       sel.innerHTML = x ? `<div class="lx"><h3 class="lx-t">${esc(CARTE.nom(x))}</h3>${[...parSaison.keys()].sort().reverse().map(k => `<p class="lx-s">${esc((D.saisons[k] || {}).titre || k)}</p>
-        <ul>${parSaison.get(k).map(d => `<li style="--c:${colPapier(d.slug)}"><span class="dot" aria-hidden="true"></span><span class="lx-sp">${esc(d.spectacle)}</span><span class="lx-l">${esc(d.ligne)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</span></li>`).join('')}</ul>`).join('')}</div>` : '';
+        <ul>${parSaison.get(k).map(d => `<li${dateId(d)} style="--c:${colPapier(d.slug)}"><span class="dot" aria-hidden="true"></span><span class="lx-sp">${esc(d.spectacle)}</span><span class="lx-l">${esc(d.ligne)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</span></li>`).join('')}</ul>`).join('')}</div>` : '';
     } else if (q.length) {
       sel.innerHTML = lieux.length ? `<ul class="lx-res">${lieux.slice(0, 18).map(x => `<li><button type="button" class="lieu-btn dt" data-l="${x.l}" data-k="lieu-${x.l}"><span class="lieu-pin" aria-hidden="true"></span>${esc(CARTE.nom(x))}</button></li>`).join('')}</ul>` : '';
     } else sel.innerHTML = '';
@@ -1091,59 +1128,72 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   /* ---------- Les fiches des spectacles, dans leur univers ---------- */
   const titreLignes = s => (s.titreLignes && s.titreLignes.length ? s.titreLignes : [s.titre]);
   const tlHtml = s => titreLignes(s).map(x => `<span class="l">${esc(x)}</span>`).join('');
+  // le titre de la page d'un spectacle : une ligne par span, qui se révèle lettre à lettre
+  const h1Lignes = s => {
+    const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null;
+    return (tl || [s.titre]).map((x, i) => { const n = [...String(x)].length; return `<span class="l"${tl ? edS(s, 'titreLignes', i) : edS(s, 'titre')} style="--i:${i};--n:${Math.max(4, n)};--dur:${Math.min(1.1, .12 + n * .05).toFixed(2)}s">${esc(x)}</span>`; }).join('');
+  };
   const prochainePub = slug => datesPub().find(d => d.slug === slug) || null;
+  const etiquettes = (s, ...champs) => champs.filter(k => s[k]).map(k => `<span${edS(s, k)}>${esc(s[k])}</span>`).join('');
+  const imgPrincipale = (s, alt = '') => { const img = photo(s.slug); return img ? `<img src="${img}" alt="${esc(alt)}" decoding="async"${edP(`shows.${s.slug}.photo`)}>` : ''; };
   function carteUnivers(s, { riche = false, h = 'h3' } = {}) {
-    const u = univers(s), img = photo(s.slug), pro = prochainePub(s.slug);
+    const u = univers(s), pro = prochainePub(s.slug);
     return `<li class="uc u-${u.clair ? 'clair' : 'sombre'}" style="${uStyle(s)}">
-      <span class="uc-img">${img ? `<img src="${img}" alt="" decoding="async">` : ''}${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</span>
+      <span class="uc-img">${imgPrincipale(s)}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</span>
       <div class="uc-b">
-        <p class="u-et">${[s.creation, s.lieuTemps].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('')}</p>
+        <p class="u-et">${etiquettes(s, 'creation', 'lieuTemps')}</p>
         <${h} class="uc-t"><a href="#/spectacle/${esc(s.slug)}">${tlHtml(s)}</a></${h}>
-        ${riche && s.sousTitre ? `<p class="uc-s">${s.sousTitre}</p>` : ''}
-        ${riche && s.accroche ? `<p class="uc-acc">${esc(s.accroche)}</p>` : ''}
+        ${riche && s.sousTitre ? `<p class="uc-s"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+        ${riche && s.accroche ? `<p class="uc-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
         ${pro ? `<p class="uc-n">${esc(pro.ligne)}</p>` : ''}
+        ${bande(u)}
       </div>
-      ${motifSvg(u.motif)}
+      ${signe(u)}
     </li>`;
   }
   function carteTournee(s) {
-    const u = univers(s), img = photo(s.slug), pro = prochainePub(s.slug);
+    const u = univers(s), pro = prochainePub(s.slug);
     return `<li class="tour u-${u.clair ? 'clair' : 'sombre'}" style="${uStyle(s)}">
-      <span class="uc-img">${img ? `<img src="${img}" alt="" decoding="async">` : ''}</span>
+      <span class="uc-img">${imgPrincipale(s)}</span>
       <div class="uc-b">
-        ${s.lieuTemps ? `<p class="u-et"><span>${esc(s.lieuTemps)}</span></p>` : ''}
+        ${s.lieuTemps ? `<p class="u-et">${etiquettes(s, 'lieuTemps')}</p>` : ''}
         <h3 class="uc-t"><a href="#/spectacle/${esc(s.slug)}/voir">${tlHtml(s)}</a></h3>
-        ${s.accroche ? `<p class="uc-acc">${esc(s.accroche)}</p>` : ''}
+        ${s.accroche ? `<p class="uc-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
         ${pro ? `<p class="uc-n">${esc(pro.ligne)}</p>` : ''}
+        ${bande(u)}
       </div>
-      ${motifSvg(u.motif)}
+      ${signe(u)}
     </li>`;
   }
-  const ficheDl = s => [...(s.fiche || []).map(f => [f.libelle, f.valeur]), ...(s.avec ? [[s.avec.libelle, s.avec.valeur]] : [])];
-  const miniFiche = s => { const f = ficheDl(s); return f.length ? `<dl class="mini">${f.map(([l, v]) => `<div>${l ? `<dt>${esc(l)}</dt>` : ''}<dd>${v}</dd></div>`).join('')}</dl>` : ''; };
+  // la fiche artistique : chaque libellé et chaque nom, avec son chemin dans D
+  const ficheItems = s => [...(s.fiche || []).map((f, i) => ({ l: f.libelle, v: f.valeur, kl: ['fiche', i, 'libelle'], kv: ['fiche', i, 'valeur'] })),
+    ...(s.avec ? [{ l: s.avec.libelle, v: s.avec.valeur, kl: ['avec', 'libelle'], kv: ['avec', 'valeur'], avec: true }] : [])];
+  const miniFiche = s => { const f = ficheItems(s); return f.length ? `<dl class="mini">${f.map(x => `<div>${x.l ? `<dt${edS(s, ...x.kl)}>${esc(x.l)}</dt>` : ''}<dd${edS(s, ...x.kv)}>${x.v}</dd></div>`).join('')}</dl>` : ''; };
   const bandeLien = (s, cls = 'lien-v') => s.video && s.video.url ? `<a class="${cls}" href="${esc(s.video.url)}" target="_blank" rel="noopener" title="${esc(s.video.titre || '')}">${LIRE_P}<span>${esc(LIB().bandeAnnonce)}</span></a>` : '';
-  const lieuxDetails = (s, k) => { const t = (s.programmer || {}).lieux; return t ? `<details class="lx-d" data-k="${k}"><summary><span>${esc(LIB().lieuxDiffusion)}</span>${CHEVRON}</summary><p>${esc(t)}</p></details>` : ''; };
+  const lieuxDetails = (s, k) => { const t = (s.programmer || {}).lieux; return t ? `<details class="lx-d" data-k="${k}"><summary><span>${esc(LIB().lieuxDiffusion)}</span>${CHEVRON}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(t)}</p></details>` : ''; };
+  // ce qu'un programmateur cherche d'abord : format, durée, jauge, équipe, actualité (avec leur chemin dans D)
   function faitsProg(s) {
-    const p = s.programmer || {}, duree = p.duree || s.duree;
-    return [p.format, duree, p.jauge, p.equipe, p.actualite].filter(Boolean);
+    const p = s.programmer || {};
+    return [p.format && [p.format, 'programmer.format'], p.duree ? [p.duree, 'programmer.duree'] : s.duree && [s.duree, 'duree'],
+      p.jauge && [p.jauge, 'programmer.jauge'], p.equipe && [p.equipe, 'programmer.equipe'], p.actualite && [p.actualite, 'programmer.actualite']].filter(Boolean);
   }
   function ficheProg(s) {
-    const u = univers(s), p = s.programmer || {}, img = photo(s.slug);
+    const u = univers(s), p = s.programmer || {}, faits = faitsProg(s);
     return `<article class="fc dt" data-slug="${esc(s.slug)}" style="${uStyle(s)};--c:${u.titre}">
       <header class="fc-tete">
         <div>
-          <p class="u-et">${s.creation ? `<span>${esc(s.creation)}</span>` : ''}${s.statut ? `<span class="statut">${esc(s.statut)}</span>` : ''}</p>
+          <p class="u-et">${etiquettes(s, 'creation')}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</p>
           <h3 class="fc-t"><a href="#/spectacle/${esc(s.slug)}/programmer">${tlHtml(s)}</a></h3>
-          ${s.sousTitre ? `<p class="fc-s">${s.sousTitre}</p>` : ''}
+          ${s.sousTitre ? `<p class="fc-s"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
         </div>
-        ${img ? `<img src="${img}" alt="" decoding="async">` : ''}
-        ${motifSvg(u.motif)}
+        ${imgPrincipale(s)}
+        ${signe(u)}${bande(u, 'frise fc-frise')}
       </header>
       <div class="fc-corps">
         <div class="col-a">
-          ${p.representations ? repHtml(p.representations) : ''}
-          ${faitsProg(s).length ? `<ul class="faits">${faitsProg(s).map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
-          ${(p.equipeCreation || []).length ? `<ul class="equipe">${p.equipeCreation.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
+          ${p.representations ? repHtml(p.representations, edS(s, 'programmer', 'representations')) : ''}
+          ${faits.length ? `<ul class="faits">${faits.map(([t, k]) => `<li${edS(s, k)}>${esc(t)}</li>`).join('')}</ul>` : ''}
+          ${(p.equipeCreation || []).length ? `<ul class="equipe">${p.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}
           ${bandeLien(s) || p.ficheTechnique ? `<p class="liens">${bandeLien(s)}${p.ficheTechnique ? `<a class="lien-v" href="#/spectacle/${esc(s.slug)}/programmer">${ARROW}<span>${esc(LIB().ficheTechnique)}</span></a>` : ''}</p>` : ''}
           ${lieuxDetails(s, 'pg-' + s.slug)}
         </div>
@@ -1154,39 +1204,39 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   const lieuLib = l => (LIB().lieu || {})[l] || '';
   function ficheEtab(s) {
     const u = univers(s), ac = s.actionCulturelle || {}, L = LIB(), t0 = (ac.textes || [])[0];
-    const meta = [ac.public && [L.public, ac.public], ac.statut && [null, ac.statut]].filter(Boolean);
+    const meta = [ac.public && [L.public, ac.public, 'public'], ac.statut && [null, ac.statut, 'statut']].filter(Boolean);
     return `<article class="fc" style="${uStyle(s)}">
       <header class="fc-tete">
         <div>
-          <p class="u-et">${s.creation ? `<span>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span>${esc(s.lieuTemps)}</span>` : ''}</p>
+          <p class="u-et">${etiquettes(s, 'creation', 'lieuTemps')}</p>
           <h3 class="fc-t"><a href="#/spectacle/${esc(s.slug)}/etablissement">${tlHtml(s)}</a></h3>
         </div>
-        ${motifSvg(u.motif)}
+        ${signe(u)}${bande(u, 'frise fc-frise')}
       </header>
       <div class="fc-corps">
         <div>
           <p class="ac-l">${esc(L.actionCulturelle)}</p>
-          ${ac.type ? `<p class="ac-type">${esc(ac.type)}</p>` : `<p class="ac-type vide">${esc(L.aCompleter)}</p>`}
+          ${ac.type ? `<p class="ac-type"${edS(s, 'actionCulturelle', 'type')}>${esc(ac.type)}</p>` : `<p class="ac-type vide">${esc(L.aCompleter)}</p>`}
         </div>
-        ${meta.length ? `<ul class="ac-meta">${meta.map(([k, v]) => `<li>${k ? `<span>${esc(k)}</span>` : ''}<b>${esc(v)}</b></li>`).join('')}</ul>` : ''}
-        ${t0 ? `<div class="ac-txt">${bloc(t0.texte)}</div>` : ''}
-        ${(ac.formule || []).length ? `<p class="formule">${ac.formule.map(x => `<span>${esc(x)}</span>`).join('')}</p>` : ''}
-        ${(ac.dispositifs || []).length ? `<div class="disp"><p class="ac-l">${esc(L.dispositifs)}</p><ul>${ac.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+        ${meta.length ? `<ul class="ac-meta">${meta.map(([k, v, c]) => `<li>${k ? `<span>${esc(k)}</span>` : ''}<b${edS(s, 'actionCulturelle', c)}>${esc(v)}</b></li>`).join('')}</ul>` : ''}
+        ${t0 ? `<div class="ac-txt">${bloc(t0.texte, `shows.${s.slug}.actionCulturelle.textes.0.texte`)}</div>` : ''}
+        ${(ac.formule || []).length ? `<p class="formule">${ac.formule.map((x, i) => `<span${edS(s, 'actionCulturelle', 'formule', i)}>${esc(x)}</span>`).join('')}</p>` : ''}
+        ${(ac.dispositifs || []).length ? `<div class="disp"><p class="ac-l">${esc(L.dispositifs)}</p><ul>${ac.dispositifs.map((x, i) => `<li${edS(s, 'actionCulturelle', 'dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
         ${s.dossier && D.dossiers && D.dossiers[s.dossier] ? `<p><a class="dossier-lien" href="#/spectacle/${esc(s.slug)}/etablissement">${esc(L.dossierScolaire)}${ARROW}</a></p>` : ''}
       </div>
     </article>`;
   }
 
   /* ---------- Les vues ---------- */
-  const tete = (titre, { sur = '', cote = '', apres = '' } = {}) => `<section class="wrap hero"><div class="hero-main">${sur}<h1 class="saison" id="h1" tabindex="-1">${esc(titre)}</h1></div>${cote ? `<div class="hero-side">${cote}</div>` : ''}${apres}</section>`;
+  const tete = (titre, { sur = '', cote = '', apres = '', chemin = null } = {}) => `<section class="wrap hero"><div class="hero-main">${sur}<h1 class="saison" id="h1" tabindex="-1"${ed(chemin)}>${esc(titre)}</h1></div>${cote ? `<div class="hero-side">${cote}</div>` : ''}${apres}</section>`;
   const surEntree = e => `<p class="sur" style="${eStyle(e)}"><span class="e-pt" aria-hidden="true"></span><span>${esc(site().nom)}</span></p>`;
-  const agirHtml = (seul = false, texte = '') => { const w = ecrire(); return `<div class="wrap"><div class="appel${seul || !texte ? ' seul' : ''}">${texte ? `<p>${texte}</p>` : ''}<a class="agir" href="${esc(w.href)}">${esc(w.texte)}${ARROW}</a></div></div>`; };
+  const agirHtml = (texte = '', chemin = null) => { const w = ecrire(); return `<div class="wrap"><div class="appel${texte ? '' : ' seul'}">${texte ? `<p${ed(chemin)}>${texte}</p>` : ''}<a class="agir" href="${esc(w.href)}">${esc(w.texte)}${ARROW}</a></div></div>`; };
 
   function accueilHtml(fixe) {
     const L = LIB(), S0 = saisonsSite()[0] || {}, dia = (site().diaporama || [])[0];
     const images = { voir: photo(dia && dia.slug, 'cleophene'), programmer: photo('berenice/av-18', 'berenice'), etablissement: photo('actions-culturelles') };
     const voir = entreeDe('voir');
-    return `<section class="wrap hero"><div class="hero-main"><h1 class="saison" id="h1" tabindex="-1">${esc(site().nom)}</h1></div>
+    return `<section class="wrap hero"><div class="hero-main"><h1 class="saison" id="h1" tabindex="-1"${ed('site.nom')}>${esc(site().nom)}</h1></div>
         <ul class="choix">${entrees().map(e => `<li><a href="${esc(e.href)}" style="${eStyle(e)}"><span class="choix-img">${images[e.cle] ? `<img src="${images[e.cle]}" alt="">` : ''}</span><span class="choix-t"><span>${esc(e.texte)}</span>${ARROW}</span></a></li>`).join('')}</ul>
       </section>
       <section class="wrap bloc" aria-labelledby="h-saison">
@@ -1196,7 +1246,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       </section>
       <section class="wrap bloc" aria-labelledby="h-sp"><h2 class="h2s" id="h-sp">${esc(L.lesSpectacles)}</h2>
         <ul class="ucs">${shows().map(s => carteUnivers(s)).join('')}</ul></section>
-      ${site().donateurs ? `<div class="wrap dons"><p>${site().donateurs}</p></div>` : ''}`;
+      ${site().donateurs ? `<div class="wrap dons"><p${ed('site.donateurs')}>${site().donateurs}</p></div>` : ''}`;
   }
 
   const saisonsNav = (cur, toutes) => { const L = LIB(), liste = toutes ? saisonsSite() : saisonsSite().slice(1); return liste.length ? `<nav class="wrap saisons" aria-labelledby="h-saisons"><h2 class="h2s" id="h-saisons">${esc(L.saisonsPrecedentes)}</h2><ul class="sa-list">${liste.map(x => `<li><a href="${esc(x.href)}"${x.saison === cur ? ' aria-current="page"' : ''}>${esc(x.titre)}</a></li>`).join('')}</ul></nav>` : ''; };
@@ -1232,7 +1282,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
           </div>
         </div>
       </div>
-      ${agirHtml(false, site().partenaires || '')}`;
+      ${agirHtml(site().partenaires || '', 'site.partenaires')}`;
   }
 
   function etablissementHtml(fixe) {
@@ -1240,33 +1290,33 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     const groupes = [['etablissement', L.lieu && L.lieu.etablissement], ['salle', L.lieu && L.lieu.salle], [null, L.aCompleter]];
     const sc = datesScol();
     const galerie = [1, 2, 3, 4].map(i => photo('actions-culturelles/g-' + i)).filter(Boolean);
-    return `${tete(e.texte, { sur: surEntree(e), apres: ec.texte ? `<p class="lead ecole">${esc(ec.texte)}</p>` : '' })}
+    return `${tete(e.texte, { sur: surEntree(e), apres: ec.texte ? `<p class="lead ecole"${ed('site.ecole.texte')}>${esc(ec.texte)}</p>` : '' })}
       <div class="wrap">${groupes.map(([cle, titre]) => {
         const ss = shows().filter(s => ((s.actionCulturelle || {}).lieu || null) === cle);
-        return ss.length ? `<section class="groupe" aria-labelledby="g-${cle || 'x'}"><h2 class="groupe-h" id="g-${cle || 'x'}" style="${eStyle(e)}">${esc(titre)}</h2><div class="fiches${ss.length > 2 ? ' trois' : ''}">${ss.map(ficheEtab).join('')}</div></section>` : '';
+        return ss.length ? `<section class="groupe" aria-labelledby="g-${cle || 'x'}"><h2 class="groupe-h" id="g-${cle || 'x'}">${esc(titre)}</h2><div class="fiches${ss.length > 2 ? ' trois' : ''}">${ss.map(ficheEtab).join('')}</div></section>` : '';
       }).join('')}</div>
-      <section class="wrap bloc" aria-labelledby="h-act"><h2 class="h2s" id="h-act">${esc(a.titre)}</h2>
-        <div class="g12 act"><div class="act-text prose">${(a.blocs || []).map(bloc).join('')}</div>
-          ${photo('actions-culturelles') ? `<figure class="act-fig"><img src="${photo('actions-culturelles')}" alt="${esc(a.titre)}">${a.credit ? `<figcaption>${esc(a.credit)}</figcaption>` : ''}</figure>` : ''}</div>
+      <section class="wrap bloc" aria-labelledby="h-act"><h2 class="h2s" id="h-act"${ed('site.actions.titre')}>${esc(a.titre)}</h2>
+        <div class="g12 act"><div class="act-text prose">${(a.blocs || []).map((b, i) => bloc(b, `site.actions.blocs.${i}`)).join('')}</div>
+          ${photo('actions-culturelles') ? `<figure class="act-fig"><img src="${photo('actions-culturelles')}" alt="${esc(a.titre)}">${a.credit ? `<figcaption${ed('site.actions.credit')}>${esc(a.credit)}</figcaption>` : ''}</figure>` : ''}</div>
         ${galerie.length ? `<div class="galerie">${galerie.map(src => `<img src="${src}" alt="">`).join('')}</div>` : ''}
       </section>
       ${sc.length ? `<section class="wrap bloc" aria-labelledby="h-sc"><h2 class="h2s" id="h-sc">${esc(L.enEtablissement)}</h2>
-        <div class="sc lie" data-module="scolaire"><div class="ag-grid"><div class="ag-liste">${listeHtml(sc, false, 'etablissement')}</div>
+        <div class="sc lie" data-module="scolaire"><div class="ag-grid"><div class="ag-liste" data-agenda="">${listeHtml(sc, false, 'etablissement')}</div>
         <div class="ag-carte">${carteSvg({ lieux: CARTE.aVenir('scolaire'), titre: L.enEtablissement, fixe })}</div></div></div></section>` : ''}
-      ${agirHtml(true)}`;
+      ${agirHtml()}`;
   }
 
   const spectaclesHtml = () => `${tete(menuDe('spectacles').texte)}<div class="wrap"><ul class="ucs riches">${shows().map(s => carteUnivers(s, { riche: true, h: 'h2' })).join('')}</ul></div>`;
 
   function saisonHtml(key, fixe) {
     const sa = D.saisons[key];
-    const ligne = (d, g) => `<li class="dt" data-l="${d.l == null ? '' : d.l}" data-slug="${esc(g.slug || '')}"><p class="sa-ligne">${esc(d.ligne)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${detailsHtml(d.details)}</li>`;
+    const ligne = (d, g) => `<li class="dt"${dateId(d)} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(g.slug || '')}"><p class="sa-ligne">${esc(d.ligne)}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${detailsHtml(d.details)}</li>`;
     return `${tete(sa.titre)}
       <div class="wrap g12 sa-body lie" data-module="saison">
         <div class="sa-main">${sa.spectacles.map(g => { const s = showDe(g.slug); return `<section class="sa-sp" style="--c:${colPapier(g.slug)};${s ? uStyle(s) : ''}">
           <h2 class="sa-t"><span class="dot" aria-hidden="true"></span>${s ? `<a href="#/spectacle/${esc(s.slug)}/voir">${esc(g.titre)}</a>` : `<span>${esc(g.titre)}</span>`}</h2>
           ${g.sousTitre ? `<p class="sa-s">${g.sousTitre}</p>` : ''}${g.creation ? `<p class="sa-c">${esc(g.creation)}</p>` : ''}
-          <ol class="sa-rows">${g.dates.map(d => ligne(d, g)).join('')}</ol>
+          <div data-agenda="${esc(g.slug || '')}"><ol class="sa-rows">${g.dates.map(d => ligne(d, g)).join('')}</ol></div>
         </section>`; }).join('')}</div>
         <div class="sa-carte">${carteSvg({ lieux: CARTE.saison(key), titre: sa.titre, fixe })}</div>
       </div>
@@ -1275,22 +1325,26 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
 
   /* ---------- La page d'un spectacle : son univers, ses trois onglets d'entrée ---------- */
   function photosDe(s, filtre) {
-    return (s.photos || []).filter(p => filtre(p) && photo(p.cle)).map(p => ({ ...p, src: photo(p.cle), credit: p.source === 'dossier' ? (s.creditDossier || s.creditPhotos) : s.creditPhotos }));
+    return (s.photos || []).map((p, i) => ({ ...p, i })).filter(p => filtre(p) && photo(p.cle)).map(p => {
+      const dossier = p.source === 'dossier' && s.creditDossier;
+      return { ...p, src: photo(p.cle), credit: dossier ? s.creditDossier : s.creditPhotos, creditCle: dossier ? 'creditDossier' : 'creditPhotos' };
+    });
   }
-  const creditsHtml = ps => { const c = [...new Set(ps.map(p => p.credit).filter(Boolean))]; return c.length ? `<p class="credits">${c.map(x => `<span>${esc(x)}</span>`).join('')}</p>` : ''; };
-  const figure = (p, alt) => `<figure><img src="${p.src}" alt="${esc(p.legende || alt)}" decoding="async">${p.legende ? `<figcaption class="carton">${esc(p.legende)}</figcaption>` : ''}</figure>`;
+  const creditsHtml = (s, ps) => { const vus = new Map(); ps.forEach(p => { if (p.credit && !vus.has(p.credit)) vus.set(p.credit, p.creditCle); }); return vus.size ? `<p class="credits">${[...vus].map(([t, k]) => `<span${edS(s, k)}>${esc(t)}</span>`).join('')}</p>` : ''; };
+  const figure = (s, p, cls = 'carton') => `<figure><img src="${p.src}" alt="${esc(p.legende || s.titre)}" decoding="async"${edP(`shows.${s.slug}.photos.${p.i}`)}>${p.legende ? `<figcaption class="${cls}"${edS(s, 'photos', p.i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`;
   function ficheBloc(s, { large = true } = {}) {
-    const f = ficheDl(s);
-    return `${f.length ? `<dl class="u-fiche">${f.map(([l, v], i) => `<div${s.avec && i === f.length - 1 && large ? ' class="large"' : ''}>${l ? `<dt>${esc(l)}</dt>` : ''}<dd>${v}</dd></div>`).join('')}</dl>` : ''}
-      ${(s.production || []).length ? `<div class="u-prod">${s.production.map(p => `<p>${p}</p>`).join('')}</div>` : ''}
-      ${(s.mentions || []).map(m => `<p class="u-mention">${m}</p>`).join('')}`;
+    const f = ficheItems(s);
+    return `${f.length ? `<dl class="u-fiche">${f.map(x => `<div${x.avec && large ? ' class="large"' : ''}>${x.l ? `<dt${edS(s, ...x.kl)}>${esc(x.l)}</dt>` : ''}<dd${edS(s, ...x.kv)}>${x.v}</dd></div>`).join('')}</dl>` : ''}
+      ${(s.production || []).length ? `<div class="u-prod">${s.production.map((p, i) => `<p${edS(s, 'production', i)}>${p}</p>`).join('')}</div>` : ''}
+      ${(s.mentions || []).map((m, i) => `<p class="u-mention"${edS(s, 'mentions', i)}>${m}</p>`).join('')}`;
   }
   function datesCartes(dates) {
-    return dates.map(d => { const j = decoupe(d.ligneDate || d.ligne); return `<li class="dcard dt" data-l="${d.l == null ? '' : d.l}" data-slug="${esc(d.slug || '')}">
+    return dates.map(d => { const j = decoupe(d.ligneDate || d.ligne); return `<li class="dcard dt"${dateId(d)} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(d.slug || '')}">
       <p class="when"><span aria-hidden="true">${j.grand}${j.sous ? `<span class="j-sous">${esc(j.sous)}</span>` : ''}</span><span class="sr">${esc(d.ligneDate || d.ligne)}</span></p>
       ${d.ligneLieu ? `<p class="where">${esc(d.ligneLieu)}</p>` : ''}${detailsHtml(d.details)}</li>`; }).join('');
   }
   const filtreLieux = (lieux, garde) => lieux.map(x => ({ ...x, dates: (x.dates || []).filter(garde) })).filter(x => x.dates.length);
+  const tourneeTexte = s => s.tournee && s.tournee.texte ? `<p class="t-texte"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : '';
 
   function ongletVoir(s, u, fixe) {
     const L = LIB(), K = CARTE.spectacle(s.slug), couleur = () => u.titre;
@@ -1298,76 +1352,80 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     const ps = photosDe(s, p => !p.atelier && !p.etablissement);
     const ch = [];
     if ((s.affirmations || []).length || s.cadre) ch.push(['ch-ouverture', L.ouverture, `<h2 class="u-h2">${esc(L.ouverture)}</h2>
-      <div class="affs">${(s.affirmations || []).map(a => `<p class="aff">${esc(a.texte)}</p>`).join('')}</div>${s.cadre ? `<p class="cadre">${esc(s.cadre)}</p>` : ''}`]);
+      <div class="affs">${(s.affirmations || []).map((a, i) => `<p class="aff"${edS(s, 'affirmations', i, 'texte')}>${esc(a.texte)}</p>`).join('')}</div>${s.cadre ? `<p class="cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}`]);
     if ((s.texte || []).length || (s.citations || []).length) ch.push(['ch-spectacle', L.leSpectacle, `<h2 class="u-h2">${esc(L.leSpectacle)}</h2>
-      <div class="texte">${(s.texte || []).map(p => `<p>${p}</p>`).join('')}</div>
-      ${(s.citations || []).length ? `<div class="vers-l">${s.citations.map(c => `<figure class="vers${c.prose ? ' prose-q' : ''}"><blockquote>${(c.vers || []).map(v => `<span>${esc(v)}</span>`).join('')}</blockquote>${c.source ? `<figcaption><cite>${esc(c.source)}</cite></figcaption>` : ''}</figure>`).join('')}</div>` : ''}`]);
-    if (ps.length) ch.push(['ch-photos', L.photos, `<h2 class="u-h2">${esc(L.photos)}</h2><div class="photos">${ps.map(p => figure(p, s.titre)).join('')}</div>${creditsHtml(ps)}`]);
+      <div class="texte">${(s.texte || []).map((p, i) => `<p${edS(s, 'texte', i)}>${p}</p>`).join('')}</div>
+      ${(s.citations || []).length ? `<div class="vers-l">${s.citations.map((c, i) => `<figure class="vers${c.prose ? ' prose-q' : ''}"><blockquote>${(c.vers || []).map((v, j) => `<span${edS(s, 'citations', i, 'vers', j)}>${esc(v)}</span>`).join('')}</blockquote>${c.source ? `<figcaption><cite${edS(s, 'citations', i, 'source')}>${esc(c.source)}</cite></figcaption>` : ''}</figure>`).join('')}</div>` : ''}`]);
+    if (ps.length) ch.push(['ch-photos', L.photos, `<h2 class="u-h2">${esc(L.photos)}</h2><div class="photos">${ps.map(p => figure(s, p)).join('')}</div>${creditsHtml(s, ps)}`]);
     if (s.video && s.video.url) ch.push(['ch-video', L.bandeAnnonce, `<h2 class="u-h2">${esc(L.bandeAnnonce)}</h2>
-      <a class="bande" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LIRE}<span><b>${esc(L.bandeAnnonce)}</b><span>${esc(s.video.titre || '')}</span></span></a>`]);
+      <a class="bande-a" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LIRE}<span><b>${esc(L.bandeAnnonce)}</b><span>${esc(s.video.titre || '')}</span></span></a>`]);
     let dates;
     if (pub.length) {
-      dates = `<h2 class="u-h2">${esc((s.tournee && s.tournee.titre) || L.actuellementEnTournee)}</h2>${s.tournee && s.tournee.texte ? `<p class="t-texte">${esc(s.tournee.texte)}</p>` : ''}
-        <div class="g12 t-grid lie" data-module="spectacle"><ol class="dcards">${datesCartes(pub)}</ol><div class="t-carte">${carteSvg({ lieux: filtreLieux(K.aVenir, d => !d.scolaire), passe: K.passe, titre: s.titre, couleur, fixe, nomsPasse: false })}</div></div>`;
+      dates = `<h2 class="u-h2"${s.tournee && s.tournee.titre ? edS(s, 'tournee', 'titre') : ''}>${esc((s.tournee && s.tournee.titre) || L.actuellementEnTournee)}</h2>${tourneeTexte(s)}
+        <div class="g12 t-grid lie" data-module="spectacle"><div class="dates-z" data-agenda="${esc(s.slug)}"><ol class="dcards">${datesCartes(pub)}</ol></div><div class="t-carte">${carteSvg({ lieux: filtreLieux(K.aVenir, d => !d.scolaire), passe: K.passe, titre: s.titre, couleur, fixe, nomsPasse: false })}</div></div>`;
     } else if (s.statut && s.tournee && s.tournee.titre && !K.passe.length) {
-      dates = `<h2 class="u-h2">${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p class="t-texte">${esc(s.tournee.texte)}</p>` : ''}
+      dates = `<h2 class="u-h2"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</h2>${tourneeTexte(s)}
         <div class="g12 t-grid lie"><div class="t-carte seule">${carteSvg({ lieux: [], titre: s.titre, couleur, fixe })}</div></div>`;
     } else if (K.passe.length) {
       dates = `<h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2><div class="g12 t-grid lie"><div class="t-carte seule">${carteSvg({ lieux: [], passe: K.passe, titre: s.titre, couleur, fixe })}</div></div>`;
     }
     if (dates) ch.push(['ch-dates', pub.length || s.statut ? L.dates : L.lieuxDiffusion, dates]);
-    ch.push(['ch-distribution', L.distribution, `<h2 class="u-h2">${esc(L.distribution)}</h2>${ficheBloc(s)}${(s.duree) ? `<p class="u-duree">${esc(s.duree)}</p>` : ''}`]);
+    ch.push(['ch-distribution', L.distribution, `<h2 class="u-h2">${esc(L.distribution)}</h2>${ficheBloc(s)}${s.duree ? `<p class="u-duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}`]);
     return `<div class="g12 u-grille">
-      <nav class="u-sommaire" aria-label="${esc(s.titre)}"><ol>${ch.map(([id, t]) => `<li><a href="#/spectacle/${esc(s.slug)}/voir" data-chap="${id}">${esc(t)}</a></li>`).join('')}</ol></nav>
+      <nav class="u-sommaire" aria-label="${esc(L.leSpectacle)}"><ol>${ch.map(([id, t]) => `<li><a href="#/spectacle/${esc(s.slug)}/voir" data-chap="${id}">${esc(t)}</a></li>`).join('')}</ol></nav>
       <div class="u-lecture">${ch.map(([id, , html]) => `<section class="chap" id="${id}" tabindex="-1">${html}</section>`).join('')}</div>
     </div>`;
   }
 
   function ongletProgrammer(s, u, fixe) {
     const L = LIB(), p = s.programmer || {}, K = CARTE.spectacle(s.slug), w = ecrire(), couleur = () => u.titre;
-    const dos = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null, acc = dos && dos.accueil;
+    const dos = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null, acc = dos && dos.accueil, dk = `dossiers.${s.dossier}.accueil`;
     const implant = photosDe(s, x => x.id === 'd-implantation-1');
-    const chiffres = [p.representations && `<li class="grand">${repHtml(p.representations)}</li>`, ...faitsProg(s).map(f => `<li>${esc(f)}</li>`), s.statut && `<li>${esc(s.statut)}</li>`].filter(Boolean);
+    const chiffres = [p.representations && `<li class="grand">${repHtml(p.representations, edS(s, 'programmer', 'representations'))}</li>`,
+      ...faitsProg(s).map(([t, k]) => `<li${edS(s, k)}>${esc(t)}</li>`), s.statut && `<li${edS(s, 'statut')}>${esc(s.statut)}</li>`].filter(Boolean);
     return `<div class="g12 u-grille">
       <div class="u-main">
         ${chiffres.length ? `<ul class="u-chiffres">${chiffres.join('')}</ul>` : ''}
-        ${(p.equipeCreation || []).length ? `<section class="chap"><h2 class="u-h2">${esc(L.distribution)}</h2><dl class="u-fiche">${p.equipeCreation.map(x => `<div class="large"><dd>${esc(x)}</dd></div>`).join('')}</dl></section>` : ''}
-        ${acc && p.ficheTechnique ? `<section class="chap" aria-labelledby="h-tech"><h2 class="u-h2" id="h-tech">${esc(acc.fiche || L.ficheTechnique)}</h2>
-          <h3 class="u-h3">${esc(acc.titre || L.conditionsAccueil)}</h3>
-          <div class="tech">${(acc.blocs || []).map(b => `<div class="tech-b">${b.titre ? `<h4>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map(x => `<li>${x}</li>`).join('')}</ul></div>`).join('')}
-            ${acc.alerte ? `<p class="alerte">${ALERTE}<span>${acc.alerte}</span></p>` : ''}</div>
-          ${implant.length ? `<div class="photos implant">${implant.map(x => figure(x, s.titre)).join('')}</div>${creditsHtml(implant)}` : ''}
+        ${(p.equipeCreation || []).length ? `<section class="chap"><h2 class="u-h2">${esc(L.distribution)}</h2><ul class="u-equipe">${p.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul></section>` : ''}
+        ${acc && p.ficheTechnique ? `<section class="chap" aria-labelledby="h-tech"><h2 class="u-h2" id="h-tech"${acc.fiche ? ed(`${dk}.fiche`) : ''}>${esc(acc.fiche || L.ficheTechnique)}</h2>
+          <h3 class="u-h3"${acc.titre ? ed(`${dk}.titre`) : ''}>${esc(acc.titre || L.conditionsAccueil)}</h3>
+          <div class="tech">${(acc.blocs || []).map((b, i) => `<div class="tech-b">${b.titre ? `<h4${ed(`${dk}.blocs.${i}.titre`)}>${esc(b.titre)}</h4>` : ''}<ul>${(b.lignes || []).map((x, j) => `<li${ed(`${dk}.blocs.${i}.lignes.${j}`)}>${x}</li>`).join('')}</ul></div>`).join('')}
+            ${acc.alerte ? `<p class="alerte">${ALERTE}<span${ed(`${dk}.alerte`)}>${acc.alerte}</span></p>` : ''}</div>
+          ${implant.length ? `<div class="photos implant">${implant.map(x => figure(s, x)).join('')}</div>${creditsHtml(s, implant)}` : ''}
         </section>` : ''}
         <section class="chap u-lieux" aria-labelledby="h-lieux"><h2 class="u-h2" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>
-          ${p.lieux ? `<p>${esc(p.lieux)}</p>` : s.tournee && s.tournee.texte ? `<p class="t-texte">${esc(s.tournee.texte)}</p>` : ''}
+          ${p.lieux ? `<p${edS(s, 'programmer', 'lieux')}>${esc(p.lieux)}</p>` : tourneeTexte(s)}
           <div class="g12 t-grid lie" data-module="spectacle"><div class="t-carte seule">${carteSvg({ lieux: K.aVenir, passe: K.passe, titre: s.titre, couleur, fixe, nomsPasse: false })}</div></div>
         </section>
       </div>
       <aside class="u-side">
         <div class="u-boite"><p class="ac-l">${esc(L.distribution)}</p>${ficheBloc(s, { large: false })}</div>
-        <div class="u-boite">${bandeLien(s) ? `<p class="liens">${bandeLien(s)}</p><p style="margin-top:18px">` : '<p>'}<a class="u-agir" href="${esc(w.href)}">${esc(w.texte)}${ARROW}</a></p></div>
+        <div class="u-boite">${bandeLien(s) ? `<p class="liens">${bandeLien(s)}</p>` : ''}<p class="u-agir-p"><a class="u-agir" href="${esc(w.href)}">${esc(w.texte)}${ARROW}</a></p></div>
       </aside>
     </div>`;
   }
 
   function dossierHtml(s, dos) {
-    const L = LIB(), po = dos.pourquoi || {}, pr = dos.programmes || {}, co = dos.consignes || {}, at = dos.ateliers || {};
+    const L = LIB(), k = `dossiers.${s.dossier}`, po = dos.pourquoi || {}, pr = dos.programmes || {}, co = dos.consignes || {}, at = dos.ateliers || {};
     const ph = photosDe(s, p => p.atelier || p.id === 'd-implantation-1' || (p.etablissement && p.source !== 'dossier'));
     return `<section class="dossier" aria-labelledby="h-dossier">
-      <header class="dos-tete"><div><p class="ac-l">${esc(L.dossierScolaire)}</p><h2 id="h-dossier">${esc(po.titre || L.dossierScolaire)}</h2></div></header>
-      ${(po.sections || []).length ? `<div class="pourquoi">${po.sections.map(x => `<article><h3>${esc(x.titre)}</h3><p>${x.texte}</p></article>`).join('')}</div>` : ''}
-      ${(pr.niveaux || []).length ? `<section class="chap"><h2 class="u-h2">${esc(pr.titre)}</h2>
-        <table class="prog-t"><caption class="sr">${esc(pr.titre)}</caption>${pr.niveaux.map(n => `<tbody><tr><th scope="rowgroup" colspan="3">${esc(n.niveau)}</th></tr>${(n.lignes || []).map(x => `<tr><th scope="row">${esc(x.matiere)}</th><td>${esc(x.intitule)}</td><td>${esc(x.objectif)}</td></tr>`).join('')}</tbody>`).join('')}</table></section>` : ''}
-      ${co.titre ? `<section class="chap"><h2 class="u-h2">${esc(co.titre)}</h2>
-        <div class="consignes"><div class="c-box">${co.note ? `<p class="c-note">${esc(co.note)}</p>` : ''}${co.intro ? `<p>${co.intro}</p>` : ''}
-          ${(co.demandes || []).length ? `<ul class="demandes">${co.demandes.map(x => `<li>${NON}<span>${esc(x)}</span></li>`).join('')}</ul>` : ''}</div>
-          <div class="c-apres">${co.apres ? `<p>${co.apres}</p>` : ''}${(co.axes || []).length ? `<ul>${co.axes.map(x => `<li>${x}</li>`).join('')}</ul>` : ''}</div>
-          ${co.atelier ? `<p class="c-atelier">${co.atelier}</p>` : ''}</div></section>` : ''}
-      ${(at.liste || []).length ? `<section class="chap"><h2 class="u-h2">${esc(at.titre || L.ateliers)}</h2>
-        <div class="ateliers">${at.liste.map(a => `<article class="atelier"><h3>${a.titre}</h3>${(a.paragraphes || []).map(p => `<p>${p}</p>`).join('')}
-          ${(a.etapes || []).length ? `<ol>${a.etapes.map(e => `<li><b>${e.titre}</b>${e.texte}</li>`).join('')}</ol>` : ''}
-          ${(a.points || []).length ? `<ul>${a.points.map(p => `<li>${p}</li>`).join('')}</ul>` : ''}</article>`).join('')}</div>
-        ${ph.length ? `<div class="at-photos">${ph.map(p => `<figure><img src="${p.src}" alt="${esc(p.legende || at.titre || s.titre)}" decoding="async">${p.legende ? `<figcaption>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>${creditsHtml(ph)}` : ''}</section>` : ''}
+      <header class="dos-tete"><div><p class="ac-l">${esc(L.dossierScolaire)}</p><h2 id="h-dossier"${po.titre ? ed(`${k}.pourquoi.titre`) : ''}>${esc(po.titre || L.dossierScolaire)}</h2></div></header>
+      ${(po.sections || []).length ? `<div class="pourquoi">${po.sections.map((x, i) => `<article><h3${ed(`${k}.pourquoi.sections.${i}.titre`)}>${esc(x.titre)}</h3><p${ed(`${k}.pourquoi.sections.${i}.texte`)}>${x.texte}</p></article>`).join('')}</div>` : ''}
+      ${(pr.niveaux || []).length ? `<section class="chap"><h2 class="u-h2"${ed(`${k}.programmes.titre`)}>${esc(pr.titre)}</h2>
+        <table class="prog-t"><caption class="sr">${esc(pr.titre)}</caption>${pr.niveaux.map((n, i) => `<tbody><tr><th scope="rowgroup" colspan="3"${ed(`${k}.programmes.niveaux.${i}.niveau`)}>${esc(n.niveau)}</th></tr>${(n.lignes || []).map((x, j) => {
+          const c = `${k}.programmes.niveaux.${i}.lignes.${j}`;
+          return `<tr><th scope="row"${ed(`${c}.matiere`)}>${esc(x.matiere)}</th><td${ed(`${c}.intitule`)}>${esc(x.intitule)}</td><td${ed(`${c}.objectif`)}>${esc(x.objectif)}</td></tr>`;
+        }).join('')}</tbody>`).join('')}</table></section>` : ''}
+      ${co.titre ? `<section class="chap"><h2 class="u-h2"${ed(`${k}.consignes.titre`)}>${esc(co.titre)}</h2>
+        <div class="consignes"><div class="c-box">${co.note ? `<p class="c-note"${ed(`${k}.consignes.note`)}>${esc(co.note)}</p>` : ''}${co.intro ? `<p${ed(`${k}.consignes.intro`)}>${co.intro}</p>` : ''}
+          ${(co.demandes || []).length ? `<ul class="demandes">${co.demandes.map((x, i) => `<li>${NON}<span${ed(`${k}.consignes.demandes.${i}`)}>${esc(x)}</span></li>`).join('')}</ul>` : ''}</div>
+          <div class="c-apres">${co.apres ? `<p${ed(`${k}.consignes.apres`)}>${co.apres}</p>` : ''}${(co.axes || []).length ? `<ul>${co.axes.map((x, i) => `<li${ed(`${k}.consignes.axes.${i}`)}>${x}</li>`).join('')}</ul>` : ''}</div>
+          ${co.atelier ? `<p class="c-atelier"${ed(`${k}.consignes.atelier`)}>${co.atelier}</p>` : ''}</div></section>` : ''}
+      ${(at.liste || []).length ? `<section class="chap"><h2 class="u-h2"${at.titre ? ed(`${k}.ateliers.titre`) : ''}>${esc(at.titre || L.ateliers)}</h2>
+        <div class="ateliers">${at.liste.map((a, i) => { const c = `${k}.ateliers.liste.${i}`; return `<article class="atelier"><h3${ed(`${c}.titre`)}>${a.titre}</h3>${(a.paragraphes || []).map((p, j) => `<p${ed(`${c}.paragraphes.${j}`)}>${p}</p>`).join('')}
+          ${(a.etapes || []).length ? `<ol>${a.etapes.map((e, j) => `<li><b${ed(`${c}.etapes.${j}.titre`)}>${e.titre}</b><span${ed(`${c}.etapes.${j}.texte`)}>${e.texte}</span></li>`).join('')}</ol>` : ''}
+          ${(a.points || []).length ? `<ul>${a.points.map((p, j) => `<li${ed(`${c}.points.${j}`)}>${p}</li>`).join('')}</ul>` : ''}</article>`; }).join('')}</div>
+        ${ph.length ? `<div class="at-photos">${ph.map(p => figure(s, p, 'leg')).join('')}</div>${creditsHtml(s, ph)}` : ''}</section>` : ''}
     </section>`;
   }
 
@@ -1375,22 +1433,22 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     const L = LIB(), ac = s.actionCulturelle || {}, w = ecrire(), couleur = () => u.titre;
     const sc = datesScol().filter(d => d.slug === s.slug), K = CARTE.spectacle(s.slug);
     const dos = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null;
-    const meta = [ac.public && [L.public, ac.public], ac.lieu && lieuLib(ac.lieu) && [null, lieuLib(ac.lieu)], ac.statut && [null, ac.statut]].filter(Boolean);
+    const meta = [ac.public && [L.public, ac.public, 'public'], ac.lieu && lieuLib(ac.lieu) && [null, lieuLib(ac.lieu), null], ac.statut && [null, ac.statut, 'statut']].filter(Boolean);
     return `<div class="g12 u-grille">
       <div class="u-main">
         <section class="ac-bloc" aria-labelledby="h-ac">
           <p class="ac-l">${esc(L.actionCulturelle)}</p>
-          ${ac.type ? `<h2 class="ac-type" id="h-ac">${esc(ac.type)}</h2>` : `<h2 class="ac-type vide" id="h-ac">${esc(L.aCompleter)}</h2>`}
-          ${meta.length ? `<ul class="ac-meta">${meta.map(([k, v]) => `<li>${k ? `<span>${esc(k)}</span>` : ''}<b>${esc(v)}</b></li>`).join('')}</ul>` : ''}
-          ${(ac.textes || []).map(t => `<div class="ac-txt">${bloc(t.texte)}</div>`).join('')}
-          ${(ac.formule || []).length ? `<p class="formule">${ac.formule.map(x => `<span>${esc(x)}</span>`).join('')}</p>` : ''}
-          ${(ac.dispositifs || []).length ? `<div class="disp"><p class="ac-l">${esc(L.dispositifs)}</p><ul>${ac.dispositifs.map(x => `<li>${x}</li>`).join('')}</ul></div>` : ''}
+          ${ac.type ? `<h2 class="ac-type" id="h-ac"${edS(s, 'actionCulturelle', 'type')}>${esc(ac.type)}</h2>` : `<h2 class="ac-type vide" id="h-ac">${esc(L.aCompleter)}</h2>`}
+          ${meta.length ? `<ul class="ac-meta">${meta.map(([k, v, c]) => `<li>${k ? `<span>${esc(k)}</span>` : ''}<b${c ? edS(s, 'actionCulturelle', c) : ''}>${esc(v)}</b></li>`).join('')}</ul>` : ''}
+          ${(ac.textes || []).map((t, i) => `<div class="ac-txt">${bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.${i}.texte`)}</div>`).join('')}
+          ${(ac.formule || []).length ? `<p class="formule">${ac.formule.map((x, i) => `<span${edS(s, 'actionCulturelle', 'formule', i)}>${esc(x)}</span>`).join('')}</p>` : ''}
+          ${(ac.dispositifs || []).length ? `<div class="disp"><p class="ac-l">${esc(L.dispositifs)}</p><ul>${ac.dispositifs.map((x, i) => `<li${edS(s, 'actionCulturelle', 'dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
         </section>
         ${sc.length ? `<section class="chap" aria-labelledby="h-sc"><h2 class="u-h2" id="h-sc">${esc(L.enEtablissement)}</h2>
-          <div class="g12 t-grid lie" data-module="spectacle"><ol class="dcards">${datesCartes(sc)}</ol><div class="t-carte">${carteSvg({ lieux: filtreLieux(K.aVenir, d => d.scolaire), titre: L.enEtablissement, couleur, fixe })}</div></div></section>` : ''}
+          <div class="g12 t-grid lie" data-module="spectacle"><div class="dates-z" data-agenda="${esc(s.slug)}"><ol class="dcards">${datesCartes(sc)}</ol></div><div class="t-carte">${carteSvg({ lieux: filtreLieux(K.aVenir, d => d.scolaire), titre: L.enEtablissement, couleur, fixe })}</div></div></section>` : ''}
       </div>
       <aside class="u-side">
-        <div class="u-boite"><p><a class="u-agir" href="${esc(w.href)}">${esc(w.texte)}${ARROW}</a></p></div>
+        <div class="u-boite"><p class="u-agir-p"><a class="u-agir" href="${esc(w.href)}">${esc(w.texte)}${ARROW}</a></p></div>
         <div class="u-boite"><p class="ac-l">${esc(L.distribution)}</p>${ficheBloc(s, { large: false })}</div>
       </aside>
     </div>
@@ -1398,21 +1456,22 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   }
 
   function spectacleHtml(s, entree, fixe) {
-    const u = univers(s), L = LIB();
+    const u = univers(s);
     const corps = { voir: ongletVoir, programmer: ongletProgrammer, etablissement: ongletEtablissement }[entree](s, u, fixe);
-    const img = photo(s.slug);
+    const img = imgPrincipale(s, s.titre);
     return `<article class="u u-${u.clair ? 'clair' : 'sombre'}" style="${uStyle(s)}">
       <header class="u-tete">
-        ${motifSvg(u.motif)}
+        ${signe(u)}
         <div class="wrap u-tete-in">
           <div class="u-titres">
-            <p class="u-et u-signe"><span>${esc(site().nom)}</span>${s.creation ? `<span>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span>${esc(s.lieuTemps)}</span>` : ''}</p>
-            <h1 class="u-h1" id="h1" tabindex="-1">${lignes(titreLignes(s))}</h1>
-            ${s.sousTitre ? `<p class="u-sous">${s.sousTitre}</p>` : ''}${s.genre && s.genre !== s.sousTitre ? `<p class="u-genre">${esc(s.genre)}</p>` : ''}
-            ${s.statut ? `<p class="statut">${esc(s.statut)}</p>` : ''}
-            ${s.accroche ? `<p class="u-acc">${esc(s.accroche)}</p>` : ''}
+            <p class="u-et u-signe"><span${ed('site.nom')}>${esc(site().nom)}</span>${etiquettes(s, 'creation', 'lieuTemps')}</p>
+            <h1 class="u-h1" id="h1" tabindex="-1">${h1Lignes(s)}</h1>
+            ${s.sousTitre ? `<p class="u-sous"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}${s.genre && s.genre !== s.sousTitre ? `<p class="u-genre"${edS(s, 'genre')}>${esc(s.genre)}</p>` : ''}
+            ${s.statut ? `<p class="statut"${edS(s, 'statut')}>${esc(s.statut)}</p>` : ''}
+            ${s.accroche ? `<p class="u-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
           </div>
-          ${img ? `<figure class="u-photo"><img src="${img}" alt="${esc(s.titre)}">${s.credit ? `<figcaption>${esc(s.credit)}</figcaption>` : ''}</figure>` : ''}
+          ${img ? `<figure class="u-photo">${img}${s.credit ? `<figcaption${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>` : ''}
+          ${bande(u, 'u-frise')}
         </div>
       </header>
       <nav class="u-onglets" aria-label="${esc(s.titre)}"><div class="wrap"><ul>${entrees().map(e => `<li><a href="#/spectacle/${esc(s.slug)}/${e.cle}" data-k="onglet-${e.cle}" style="${eStyle(e)}"${e.cle === entree ? ' aria-current="page"' : ''}><span class="e-pt" aria-hidden="true"></span><span>${esc(e.court)}</span></a></li>`).join('')}</ul></div></nav>
@@ -1423,22 +1482,22 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   /* ---------- La compagnie, le contact, les mentions ---------- */
   function compagnieHtml() {
     const c = site().compagnie || {}, d = c.directeur;
-    return `${tete(c.titre)}
+    return `${tete(c.titre, { chemin: 'site.compagnie.titre' })}
       <div class="wrap g12 co">
-        <div class="co-text">${(c.paragraphes || []).map(bloc).join('')}</div>
-        <section class="co-dates" aria-labelledby="h-dates"><h2 class="co-h" id="h-dates">${esc(c.datesTitre)}</h2>
-          <ol class="annees">${(c.dates || []).map(x => `<li><span class="an">${esc(x.annee)}</span><span class="an-t">${esc(x.titre)}</span></li>`).join('')}</ol></section>
+        <div class="co-text">${(c.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
+        <section class="co-dates" aria-labelledby="h-dates"><h2 class="co-h" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(c.datesTitre)}</h2>
+          <ol class="annees">${(c.dates || []).map((x, i) => `<li><span class="an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(x.annee)}</span><span class="an-t"${ed(`site.compagnie.dates.${i}.titre`)}>${esc(x.titre)}</span></li>`).join('')}</ol></section>
       </div>
-      ${d ? `<section class="wrap g12 dir" aria-labelledby="h-dir"><div class="dir-h"><h2 id="h-dir">${esc(d.titre)}</h2>${d.chapeau ? `<p>${esc(d.chapeau)}</p>` : ''}</div>
-        <div class="dir-t">${(d.paragraphes || []).map(bloc).join('')}</div></section>` : ''}
-      ${site().partenaires ? `<div class="wrap"><p class="partenaires">${site().partenaires}</p></div>` : ''}`;
+      ${d ? `<section class="wrap g12 dir" aria-labelledby="h-dir"><div class="dir-h"><h2 id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(d.titre)}</h2>${d.chapeau ? `<p${ed('site.compagnie.directeur.chapeau')}>${esc(d.chapeau)}</p>` : ''}</div>
+        <div class="dir-t">${(d.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.directeur.paragraphes.${i}`)).join('')}</div></section>` : ''}
+      ${site().partenaires ? `<div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${site().partenaires}</p></div>` : ''}`;
   }
   function contactHtml() {
     const c = site().contact || {}, co = site().coordonnees || {}, ch = c.champs || [];
     const i = String(c.consentement || '').toLowerCase().indexOf('politique de confidentialité');
     const consent = i > 0 ? `${esc(c.consentement.slice(0, i))}<a href="#/politique-de-confidentialite">${esc(c.consentement.slice(i))}</a>` : esc(c.consentement);
     const types = [['text', 'name'], ['email', 'email'], ['tel', 'tel'], ['text', 'address-level2']];
-    return `${tete(c.titre)}
+    return `${tete(c.titre, { chemin: 'site.contact.titre' })}
       <div class="wrap g12 ct">
         <form class="form ct-form" novalidate>
           <div class="fld-2">${ch.slice(0, 4).map((f, k) => `<p class="fld"><label for="f${k}">${esc(f)}</label><input id="f${k}" type="${types[k][0]}" autocomplete="${types[k][1]}"></p>`).join('')}</div>
@@ -1451,27 +1510,28 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       </div>`;
   }
   // les mentions d'origine, sans le crédit de l'agence web d'origine
-  const legalHtml = key => `${tete(site().legal[key].titre)}<div class="wrap"><div class="prose legal">${(site().legal[key].blocs || []).filter(b => !/réalisation multimédia|envoilauneidee/i.test(b)).map(bloc).join('')}</div></div>`;
+  const legalHtml = key => { const g = site().legal[key]; return `${tete(g.titre, { chemin: `site.legal.${key}.titre` })}<div class="wrap"><div class="prose legal">${(g.blocs || []).map((b, i) => /réalisation multimédia|envoilauneidee/i.test(b) ? '' : bloc(b, `site.legal.${key}.blocs.${i}`)).join('')}</div></div>`; };
 
   /* ---------- L'en-tête et le pied ---------- */
   const teteEl = document.getElementById('tete'), piedEl = document.querySelector('.site-foot');
   function enTete() {
     const ouvert = !!teteEl.querySelector('.menu2.open');
     teteEl.innerHTML = `<div class="tete-1"><div class="wrap"><a class="brand" href="#/" data-k="marque" aria-label="${esc(site().nom)} - ${esc(site().accueil)}"><span class="brand-mark" aria-hidden="true">${D.logo.mark}</span><span>${esc(site().titreSuffixe)}</span></a></div></div>
-      <nav class="entrees" id="entrees" aria-label="${esc(site().nom)}"><ul class="wrap">${entrees().map(e => `<li><a href="${esc(e.href)}" data-e="${e.cle}" data-k="e-${e.cle}" style="${eStyle(e)}"><span class="e-pt" aria-hidden="true"></span><span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span><svg class="e-fl" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>`).join('')}</ul></nav>
+      <nav class="entrees" id="entrees" aria-label="${esc(entrees().map(e => e.court).join(', '))}"><ul class="wrap">${entrees().map(e => `<li><a href="${esc(e.href)}" data-e="${e.cle}" data-k="e-${e.cle}" style="${eStyle(e)}"><span class="e-pt" aria-hidden="true"></span><span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span><svg class="e-fl" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>`).join('')}</ul></nav>
       <button class="menu-btn" type="button" data-k="menu-btn" aria-expanded="${ouvert}" aria-controls="menu2">${BARRES}<span>${esc(LIB().menu)}</span></button>
       <nav class="menu2${ouvert ? ' open' : ''}" id="menu2" aria-label="${esc(LIB().menu)}"><ul>${(site().menu || []).map(m => `<li><a href="${esc(m.href)}" data-m="${esc(m.id)}" data-k="m-${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')}</ul></nav>`;
   }
   function pied() {
     const co = site().coordonnees || {}, f = site().facebook || {}, w = site().ecrire || {};
+    const modifier = typeof EDITION !== 'undefined' && LIB().modifierSite ? `<button type="button" class="f-edit" data-k="modifier-site">${PLUME}<span>${esc(LIB().modifierSite)}</span></button>` : '';
     piedEl.innerHTML = `<div class="wrap g12 foot">
       <div class="f-brand">
         <a class="brand" href="#/" aria-label="${esc(site().nom)} - ${esc(site().accueil)}"><span class="brand-mark" aria-hidden="true">${D.logo.mark}</span><span>${esc(site().titreSuffixe)}</span></a>
         <address><b>${esc(co.nom)}</b><br>${(co.adresse || []).map(esc).join('<br>')}</address>
         <p class="f-links"><a href="${esc(w.href || '#/contact')}">${esc(w.texte)}</a>${f.href ? `<a href="${esc(f.href)}">${esc(f.texte)}</a>` : `<span>${esc(f.texte)}</span>`}</p>
       </div>
-      <div class="f-part"><p>${site().partenaires || ''}</p><p class="f-ent">${entrees().map(e => `<a href="${esc(e.href)}" style="${eStyle(e)}"><span class="e-pt" aria-hidden="true"></span>${esc(e.texte)}</a>`).join('')}</p></div>
-      <div class="f-legal">${(co.legal || []).map(x => `<span>${esc(x)}</span>`).join('')}<span class="f-ll">${(site().liensLegaux || []).map(l => `<a href="${esc(l.href)}">${esc(l.texte)}</a>`).join('')}</span></div>
+      <div class="f-part"><p${ed('site.partenaires')}>${site().partenaires || ''}</p><p class="f-ent">${entrees().map(e => `<a href="${esc(e.href)}" style="${eStyle(e)}"><span class="e-pt" aria-hidden="true"></span>${esc(e.texte)}</a>`).join('')}</p></div>
+      <div class="f-legal">${(co.legal || []).map(x => `<span>${esc(x)}</span>`).join('')}<span class="f-ll">${(site().liensLegaux || []).map(l => `<a href="${esc(l.href)}">${esc(l.texte)}</a>`).join('')}${modifier}</span></div>
     </div>`;
   }
   function fermerMenu() { const m = document.getElementById('menu2'), b = teteEl.querySelector('.menu-btn'); if (m) m.classList.remove('open'); if (b) b.setAttribute('aria-expanded', 'false'); }
@@ -1508,7 +1568,6 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     return { aller: '#/' };
   }
   function vueDe(a) {
-    const L = LIB();
     switch (a.vue) {
       case 'voir': return { titre: entreeDe('voir').texte, entree: { cle: 'voir', mode: 'page' }, rendu: voirHtml };
       case 'programmer': return { titre: entreeDe('programmer').texte, entree: { cle: 'programmer', mode: 'page' }, rendu: programmerHtml };
@@ -1522,13 +1581,13 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       }
       case 'saison': return { titre: D.saisons[a.cle].titre, entree: { cle: 'voir', mode: 'true' }, rendu: f => saisonHtml(a.cle, f) };
       case 'legal': return { titre: site().legal[a.cle].titre, rendu: () => legalHtml(a.cle) };
-      default: return { titre: site().accueil || L.accueil, rendu: accueilHtml };
+      default: return { titre: site().accueil, rendu: accueilHtml };
     }
   }
   let espion = null;
   function route(opts = {}) {
     const a = analyser();
-    if (a.aller) { if (a.aller !== location.hash) { location.replace(a.aller); return; } }
+    if (a.aller && a.aller !== location.hash) { location.replace(a.aller); return; }
     const enPlace = !!opts.enPlace;
     if (!enPlace) fermerMenu();
     const v = vueDe(a);
@@ -1579,7 +1638,8 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     if (!el || el === document.body || el === main) return null;
     if (el.id) return '#' + CSS.escape(el.id);
     if (el.dataset && el.dataset.k) return `[data-k="${CSS.escape(el.dataset.k)}"]`;
-    if (el.matches && el.matches('.carte-lieu')) { const s = svgDe(el), c = lieDe(el); return c && c.id ? `#${CSS.escape(c.id)} .carte-lieu[data-l="${el.dataset.l}"]` : `.carte-lieu[data-l="${el.dataset.l}"]`; }
+    if (el.dataset && el.dataset.edit) return `[data-edit="${CSS.escape(el.dataset.edit)}"]`;
+    if (el.matches && el.matches('.carte-lieu')) { const c = lieDe(el); return c && c.id ? `#${CSS.escape(c.id)} .carte-lieu[data-l="${el.dataset.l}"]` : `.carte-lieu[data-l="${el.dataset.l}"]`; }
     if (el.matches && el.matches('a[href]')) return `a[href="${CSS.escape(el.getAttribute('href'))}"]`;
     return null;
   }
@@ -1615,6 +1675,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
     const el = e.target.closest('button, a');
     if (!el) return;
     if (el.matches('.skip')) { e.preventDefault(); main.focus(); return; }
+    if (el.matches('.f-edit')) { if (typeof EDITION !== 'undefined') EDITION.ouvrir(); return; }
     if (el.matches('.menu-btn')) { const m = document.getElementById('menu2'), o = !m.classList.contains('open'); m.classList.toggle('open', o); el.setAttribute('aria-expanded', String(o)); return; }
     if (el.closest('#menu2')) fermerMenu();
     if (el.matches('a[data-chap]')) {
@@ -1624,11 +1685,11 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
       return;
     }
     if (el.matches('a[href^="#/"]') && el.getAttribute('href') === location.hash) { e.preventDefault(); route(); return; }
-    const mod = el.closest('[data-module]'), st = mod && mod.dataset.module === 'prog' ? PG : AG, maj = mod && mod.dataset.module === 'prog' ? majProg : majAgenda;
+    const mod = el.closest('[data-module]'), prog = !!(mod && mod.dataset.module === 'prog'), st = prog ? PG : AG, maj = prog ? majProg : majAgenda;
     if (el.matches('.chip') && mod) {
       st.slug = st.slug === el.dataset.slug ? null : el.dataset.slug;
-      if (st === AG && AG.l != null && !datesPub().some(d => d.l === AG.l && (!AG.slug || d.slug === AG.slug))) AG.l = null;
-      if (st === PG && PG.l != null && !TOUT.some(x => x.l === PG.l && (!PG.slug || x.dates.some(d => d.slug === PG.slug)))) PG.l = null;
+      if (!prog && AG.l != null && !datesPub().some(d => d.l === AG.l && (!AG.slug || d.slug === AG.slug))) AG.l = null;
+      if (prog && PG.l != null && !TOUT.some(x => x.l === PG.l && (!PG.slug || x.dates.some(d => d.slug === PG.slug)))) PG.l = null;
       maj(true);
     } else if (el.matches('.lieu-chip') && mod) { st.l = null; maj(); }
     else if (el.matches('.lieu-btn') && mod) { PG.l = +el.dataset.l; majProg(true); }
