@@ -354,17 +354,17 @@ a:hover>.fl{transform:translateX(4px)}
 .et-u{padding:64px var(--gx) 72px}
 .affiches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
 .affiche{position:relative;overflow:hidden}
-.aff-a{position:relative;display:grid;grid-template-columns:minmax(0,42fr) minmax(0,58fr);min-height:100%;text-decoration:none}
-.aff-ph img{width:100%;height:100%;min-height:240px;object-fit:cover}
-.aff-c{position:relative;z-index:1;display:flex;flex-direction:column;gap:10px;padding:26px 26px 24px}
-.aff-k{font:600 .75rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--acc-s)}
-.aff-t{font:var(--titre-w) calc(var(--t2) * .9 * var(--titre-k))/1.02 var(--titre);color:var(--acc)}
-.aff-ac{font:italic 400 1.0625rem/1.4 var(--serif)}
-.aff-d{margin-top:auto;padding-top:10px;border-top:1px solid var(--rule-s);font-weight:600;font-size:.9375rem}
-.aff-go{font-weight:600;text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:2px;text-underline-offset:.3em}
-.aff-motif{right:-50px;bottom:-50px;width:230px;opacity:.14}
-.aff-motif.motif-fil{left:0;right:0;bottom:6px;width:auto;opacity:.32}
-.aff-motif.motif-chronologie{left:42%;right:12px;bottom:4px;width:auto;opacity:.32}
+.af-a{position:relative;display:grid;grid-template-columns:minmax(0,42fr) minmax(0,58fr);min-height:100%;text-decoration:none}
+.af-ph img{width:100%;height:100%;min-height:240px;object-fit:cover}
+.af-c{position:relative;z-index:1;display:flex;flex-direction:column;gap:10px;padding:26px 26px 24px}
+.af-k{font:600 .75rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--acc-s)}
+.af-t{font:var(--titre-w) calc(var(--t2) * .9 * var(--titre-k))/1.02 var(--titre);color:var(--acc)}
+.af-ac{font:italic 400 1.0625rem/1.4 var(--serif)}
+.af-d{margin-top:auto;padding-top:10px;border-top:1px solid var(--rule-s);font-weight:600;font-size:.9375rem}
+.af-go{font-weight:600;text-decoration:underline;text-decoration-color:var(--acc);text-decoration-thickness:2px;text-underline-offset:.3em}
+.af-motif{right:-50px;bottom:-50px;width:230px;opacity:.14}
+.af-motif.motif-fil{left:0;right:0;bottom:6px;width:auto;opacity:.32}
+.af-motif.motif-chronologie{left:42%;right:12px;bottom:4px;width:auto;opacity:.32}
 
 /* ——— Programmer : le catalogue, une fiche par spectacle dans son univers ——— */
 .cat-som{display:flex;flex-wrap:wrap;align-items:baseline;margin-top:34px;padding-top:14px;background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 3px no-repeat,linear-gradient(var(--ink),var(--ink)) 0 6px/100% 1px no-repeat}
@@ -450,6 +450,11 @@ details summary{cursor:pointer}
 .sh-accroche{margin-top:30px;max-width:32ch;font:italic 400 var(--t3)/1.38 var(--serif);text-wrap:pretty}
 .sh-photo{position:relative;z-index:1;min-height:360px;margin:0}
 .sh-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sh-photo .sh-flou{display:none}
+.sh-photo.large{background:var(--encre)}
+.sh-photo.large .sh-img{object-fit:contain}
+.sh-photo.large .sh-flou{display:block;filter:blur(24px) brightness(.5) saturate(1.15);transform:scale(1.15)}
+.sh-photo{overflow:hidden}
 .sh-photo figcaption{position:absolute;right:12px;bottom:10px;padding:3px 9px;background:color-mix(in srgb,var(--paper) 84%,transparent);color:var(--ink);font-size:.75rem}
 .anim .l{animation:lettre .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 32ms + 90ms)}
 .anim .w{animation:mot .5s ease both;animation-delay:calc(var(--i) * 30ms + 380ms)}
@@ -663,7 +668,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   .menu2 li+li{border-top:1px solid var(--rule)}
   .menu2 a{padding:14px 0;font:400 1.5rem/1.2 var(--serif);letter-spacing:0;text-transform:none;color:var(--ink)}
   .menu2 a[aria-current="page"]{text-decoration-thickness:2px;text-underline-offset:.2em}
-  .som,.page,.ag,.foot-in,.saisons-b,.cf,.sh-tete,.sh-corps,.aff-a{display:block}
+  .som,.page,.ag,.foot-in,.saisons-b,.cf,.sh-tete,.sh-corps,.af-a{display:block}
   .pv{display:none}
   .toc{padding:22px var(--gx) 36px}
   .toc-title{font-size:calc(2rem * var(--tk,1));line-height:1.08}
@@ -706,14 +711,14 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   .saisons-b{padding:44px var(--gx) 56px}
   .saisons-b h2{margin-bottom:18px}
   .et-u,.et-g{padding:44px var(--gx) 52px}
-  .aff-ph img{min-height:0;aspect-ratio:16/9}
+  .af-ph img{min-height:0;aspect-ratio:16/9}
   .cf-a,.cf-b{padding:30px var(--gx)}
   .cf-b{border-left:0;border-top:1px solid var(--rule)}
   .cta-a{padding:34px var(--gx)}
   .sh-g{padding:30px var(--gx) 36px}
   .sh-titre{font-size:calc(2.9rem * var(--titre-k))}
   .sh-photo{min-height:0}
-  .sh-photo img{position:static;aspect-ratio:4/3}
+  .sh-photo .sh-img{position:relative;aspect-ratio:4/3}
   .sh-motif{width:min(300px,70%);top:24px;transform:none}
   .sh-motif.motif-annotations{width:120px}
   .sh-motif.motif-paperboard,.sh-motif.motif-nez{width:130px;top:auto}
@@ -784,6 +789,33 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
   const photoSrc = cle => (D.photos || {})[cle] || '';
   const img = (cle, alt = '', attrs = '') => photoSrc(cle) ? `<img src="${esc(photoSrc(cle))}" alt="${esc(alt)}" decoding="async"${attrs}>` : '';
   const focale = s => ` style="object-position:${s.focale ?? 50}% 50%"`;
+  // les proportions des photos, mesurées une fois : une case haute prend la photo la mieux cadrée (la principale, ou une
+  // de la galerie), et une photo très large se montre entière dans l'en-tête du spectacle
+  const RATIOS = new Map();
+  const candidates = s => [s.slug, ...(s.photos || []).filter(p => !p.etablissement && !p.atelier).slice(0, 3).map(p => p.cle)].filter(photoSrc);
+  function vignette(s, cible) {
+    const ecart = c => { const r = RATIOS.get(c); return r ? Math.abs(Math.log(r / cible)) + (c === s.slug ? 0 : .3) : (c === s.slug ? .6 : 9); };
+    return candidates(s).sort((a, b) => ecart(a) - ecart(b))[0] || s.slug;
+  }
+  const imgV = (s, cible, alt = '', attrs = '') => { const c = vignette(s, cible); return photoSrc(c) ? `<img src="${esc(photoSrc(c))}" alt="${esc(alt)}" decoding="async" data-vignette="${esc(s.slug)}" data-cible="${cible}"${c === s.slug ? focale(s) : ''}${attrs}>` : ''; };
+  const LARGE = 2.3;
+  function mesurer() {
+    const cles = new Set();
+    shows().forEach(s => candidates(s).forEach(c => { if (!RATIOS.has(c)) cles.add(c); }));
+    let reste = cles.size;
+    cles.forEach(c => {
+      const im = new Image();
+      im.onload = im.onerror = () => { if (im.naturalWidth) RATIOS.set(c, im.naturalWidth / im.naturalHeight); if (--reste === 0) recadrer(); };
+      im.src = photoSrc(c);
+    });
+  }
+  function recadrer() {
+    $$('img[data-vignette]', main).forEach(im => {
+      const s = show(im.dataset.vignette), c = s && vignette(s, +im.dataset.cible || 1);
+      if (c && photoSrc(c) && im.getAttribute('src') !== photoSrc(c)) { im.src = photoSrc(c); if (c !== s.slug) im.style.objectPosition = ''; }
+    });
+    $$('.sh-photo[data-cle]', main).forEach(f => f.classList.toggle('large', (RATIOS.get(f.dataset.cle) || 0) > LARGE));
+  }
   const BLOC = /^\s*<(h\d|ul|ol|p|blockquote|div|table)\b/i;
   const para = (h, chemin, cls = '') => BLOC.test(h || '') ? `<div class="pb${cls ? ' ' + cls : ''}"${ed(chemin)}>${h}</div>` : `<p${cls ? ` class="${cls}"` : ''}${ed(chemin)}>${h ?? ''}</p>`;
   const lienVideo = u => { let m; const s = String(u || ''); if ((m = s.match(/youtube\.com\/embed\/([\w-]+)/))) return `https://www.youtube.com/watch?v=${m[1]}`; if ((m = s.match(/player\.vimeo\.com\/video\/(\d+)/))) return `https://vimeo.com/${m[1]}`; return s; };
@@ -1055,7 +1087,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     const types = shows().filter(s => (s.actionCulturelle || {}).type);
     const cur = etatVue.som['som-e'] ?? 0;
     const apercu = {
-      voir: () => `<div class="pv-media"><figure class="pv-fig">${s0 ? img(s0.slug, s0.titre, focale(s0)) : ''}${s0 && s0.credit ? `<figcaption class="pv-cap">${esc(s0.credit)}</figcaption>` : ''}</figure>
+      voir: () => `<div class="pv-media"><figure class="pv-fig">${s0 ? imgV(s0, .7, s0.titre) : ''}${s0 && s0.credit ? `<figcaption class="pv-cap">${esc(s0.credit)}</figcaption>` : ''}</figure>
           <div class="pv-map">${carte({ lieux: CARTE.aVenir('public'), mode: 'nu', k: 2.3, interactif: false, pousse: false, titre: entree('voir').texte })}</div></div>
         <ul class="pv-dates">${pub.slice(0, 3).map(d => `<li><span class="pv-dd">${esc(d.ligneDate)}</span><span class="pv-dl">${esc(d.ligneLieu)}</span>${d.slug && show(d.slug) ? `<span class="pv-dt sp-t" style="${styleIvoire(show(d.slug))}">${esc(d.titre)}</span>` : `<span class="pv-dt">${esc(d.titre)}</span>`}</li>`).join('')}</ul>`,
       programmer: () => `<div class="pv-media solo"><div class="pv-map pv-tout">${carte({ lieux: CARTE.tout(), mode: 'nu', k: 1.4, interactif: false, pousse: false, titre: L.lieuxDiffusion })}</div></div>
@@ -1085,7 +1117,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
       return `<li style="--k:${i}"><a class="toc-link${i === cur ? ' is-active' : ''}" href="#/spectacle/${esc(s.slug)}" data-i="${i}" style="${styleIvoire(s)}">
         <span class="toc-row"><span class="toc-title sp-t"${ed(`${P(s)}.titre`)}>${esc(s.titre)}</span><span class="toc-lead" aria-hidden="true"></span><span class="toc-year">${esc(s.annee || '')}</span></span>
         <span class="toc-dek">${s.sousTitre ? `<span class="toc-sub"${ed(`${P(s)}.sousTitre`)}>${s.sousTitre}</span>` : '<span></span>'}${tag ? `<span class="toc-tag">${esc(tag)}</span>` : ''}</span>
-        <span class="toc-extra">${img(s.slug, '', focale(s))}<span class="toc-x"><span class="toc-crea">${esc(s.creation)}</span>${s.lieuTemps ? `<span>${esc(s.lieuTemps)}</span>` : ''}${proch ? `<span class="toc-next"><span class="kicker">${esc((s.tournee || {}).titre || L.actuellementEnTournee)}</span>${esc(proch.ligne)}</span>` : ''}</span></span>
+        <span class="toc-extra">${imgV(s, .8, '')}<span class="toc-x"><span class="toc-crea">${esc(s.creation)}</span>${s.lieuTemps ? `<span>${esc(s.lieuTemps)}</span>` : ''}${proch ? `<span class="toc-next"><span class="kicker">${esc((s.tournee || {}).titre || L.actuellementEnTournee)}</span>${esc(proch.ligne)}</span>` : ''}</span></span>
       </a></li>`;
     }).join('');
     const calques = sp.map((s, i) => {
@@ -1094,7 +1126,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
       return `<div class="pv-layer pv-u u${i === cur ? ' is-on' : ''}" data-i="${i}" data-fond="${v.fond}" style="${varsU(v)}">
         ${motifHTML(s, 'pv-motif')}
         <div class="pv-media${aCarte ? '' : ' solo'}">
-          <figure class="pv-fig">${img(s.slug, s.titre, focale(s))}${s.credit ? `<figcaption class="pv-cap"${ed(`${P(s)}.credit`)}>${esc(s.credit)}</figcaption>` : ''}</figure>
+          <figure class="pv-fig">${imgV(s, aCarte ? .7 : 1.4, s.titre)}${s.credit ? `<figcaption class="pv-cap"${ed(`${P(s)}.credit`)}>${esc(s.credit)}</figcaption>` : ''}</figure>
           ${aCarte ? `<div class="pv-map">${carte({ lieux: prim, passe: reste, mode: 'nu', k: 2.3, interactif: false, pousse: false, spectacle: s, passees, titre: s.titre })}</div>` : ''}
         </div>
         <p class="pv-k">${s.lieuTemps ? `<span${ed(`${P(s)}.lieuTemps`)}>${esc(s.lieuTemps)}</span>` : ''}<span${ed(`${P(s)}.creation`)}>${esc(s.creation)}</span>${ac.type ? `<span${ed(`${P(s)}.actionCulturelle.type`)}>${esc(ac.type)}</span>` : ''}</p>
@@ -1151,16 +1183,16 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
     const enTournee = shows().filter(s => dates.some(d => d.slug === s.slug));
     const affiche = s => {
       const proch = dates.find(d => d.slug === s.slug);
-      return `<li class="affiche u" style="${styleU(s)}"><a class="aff-a" href="#/spectacle/${esc(s.slug)}/voir">
-        <span class="aff-ph">${img(s.slug, '', focale(s))}</span>
-        <span class="aff-c">
-          <span class="aff-k"${s.lieuTemps ? ed(`${P(s)}.lieuTemps`) : ed(`${P(s)}.creation`)}>${esc(s.lieuTemps || s.creation)}</span>
-          <span class="aff-t"${ed(`${P(s)}.titre`)}>${esc(s.titre)}</span>
-          ${s.accroche ? `<span class="aff-ac"${ed(`${P(s)}.accroche`)}>${esc(s.accroche)}</span>` : ''}
-          ${proch ? `<span class="aff-d">${esc(proch.ligne)}</span>` : ''}
-          <span class="aff-go">${esc(L.decouvrir)}${fleche}</span>
+      return `<li class="affiche u" style="${styleU(s)}"><a class="af-a" href="#/spectacle/${esc(s.slug)}/voir">
+        <span class="af-ph">${imgV(s, .8, '')}</span>
+        <span class="af-c">
+          <span class="af-k"${s.lieuTemps ? ed(`${P(s)}.lieuTemps`) : ed(`${P(s)}.creation`)}>${esc(s.lieuTemps || s.creation)}</span>
+          <span class="af-t"${ed(`${P(s)}.titre`)}>${esc(s.titre)}</span>
+          ${s.accroche ? `<span class="af-ac"${ed(`${P(s)}.accroche`)}>${esc(s.accroche)}</span>` : ''}
+          ${proch ? `<span class="af-d">${esc(proch.ligne)}</span>` : ''}
+          <span class="af-go">${esc(L.decouvrir)}${fleche}</span>
         </span>
-        ${motifHTML(s, 'aff-motif')}
+        ${motifHTML(s, 'af-motif')}
       </a></li>`;
     };
     return `<section class="ag ag-voir" data-k="voir" aria-labelledby="voir-h" style="--e:var(--ent-voir)">
@@ -1553,7 +1585,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
           ${s.statut ? `<p class="sh-statut"${ed(`${P(s)}.statut`)}>${esc(s.statut)}</p>` : ''}
           ${s.accroche ? `<p class="sh-accroche"${ed(`${P(s)}.accroche`)}>${mots(s.accroche)}</p>` : ''}
         </div>
-        <figure class="sh-photo">${img(s.slug, s.titre, ` data-edit-photo="${P(s)}.photo"${focale(s)}`)}${s.credit ? `<figcaption${ed(`${P(s)}.credit`)}>${esc(s.credit)}</figcaption>` : ''}</figure>
+        <figure class="sh-photo${(RATIOS.get(s.slug) || 0) > LARGE ? ' large' : ''}" data-cle="${esc(s.slug)}">${photoSrc(s.slug) ? `<img class="sh-flou" src="${esc(photoSrc(s.slug))}" alt="" aria-hidden="true">` : ''}${img(s.slug, s.titre, ` class="sh-img" data-edit-photo="${P(s)}.photo"${focale(s)}`)}${s.credit ? `<figcaption${ed(`${P(s)}.credit`)}>${esc(s.credit)}</figcaption>` : ''}</figure>
       </header>
       <nav class="sh-onglets" aria-label="${esc(s.titre)}"><ul>${entrees().map(e => `<li><a class="sh-ong" href="#/spectacle/${esc(s.slug)}/${esc(e.cle)}" style="--e:var(--ent-${esc(e.cle)})"${e.cle === ent ? ' aria-current="page"' : ''}><span class="ent-m" aria-hidden="true"></span><span class="ent-l">${esc(e.texte)}</span><span class="ent-c">${esc(e.court)}</span></a></li>`).join('')}</ul></nav>
       <div class="sh-corps">
@@ -1569,7 +1601,7 @@ html.ed-actif .ed-ajout{border-radius:0;margin:12px 0}
       </div>
       ${ent !== 'voir' ? ctaHTML() : ''}
     </article>
-    ${suivant && suivant !== s ? `<a class="next u" href="#/spectacle/${esc(suivant.slug)}/${ent}" style="${styleU(suivant)}">${motifHTML(suivant, 'next-motif')}<span class="next-c"><span class="kicker next-k">${esc(L.decouvrir)}</span><span class="next-t">${esc(suivant.titre)}</span>${suivant.lieuTemps ? `<span class="next-lt">${esc(suivant.lieuTemps)}</span>` : ''}</span>${img(suivant.slug, '', ` loading="lazy"${focale(suivant)}`)}</a>` : ''}`;
+    ${suivant && suivant !== s ? `<a class="next u" href="#/spectacle/${esc(suivant.slug)}/${ent}" style="${styleU(suivant)}">${motifHTML(suivant, 'next-motif')}<span class="next-c"><span class="kicker next-k">${esc(L.decouvrir)}</span><span class="next-t">${esc(suivant.titre)}</span>${suivant.lieuTemps ? `<span class="next-lt">${esc(suivant.lieuTemps)}</span>` : ''}</span>${imgV(suivant, 1.25, '', ' loading="lazy"')}</a>` : ''}`;
   }
   // le petit sommaire suit la lecture ; il mène à chaque chapitre
   let espion = null;
