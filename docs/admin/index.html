@@ -12,6 +12,8 @@
   --alerte: #b3261e; --alerte-doux: #fbe7e5; --option: #7a5a10; --option-doux: #f8efd9; --ombre: 0 1px 2px rgba(30, 20, 30, .06), 0 4px 18px rgba(30, 20, 30, .06);
   --rayon: 12px; --police: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color-scheme: light;
+  /* les tentacules (tentacules.js) : à l'encre de l'administration, empreintes et confirmations à la couleur d'accent */
+  --tt-encre: var(--encre); --tt-accent: var(--accent); --tt-neutre: var(--gris); --tt-fond: var(--carte); --tt-epaisseur: 2.2;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -32,6 +34,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .barre { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; padding: 10px 20px; background: var(--carte); border-bottom: 1px solid var(--trait); }
 .marque { display: flex; align-items: baseline; gap: 8px; font-weight: 800; letter-spacing: .02em; text-decoration: none; color: var(--encre); white-space: nowrap; }
 .marque small { font-weight: 500; color: var(--gris); letter-spacing: 0; }
+.marque .pieuvre { display: inline-block; flex: none; align-self: center; width: 32px; height: 26px; color: var(--accent); }
+.marque .pieuvre:empty { display: none; }
+.marque .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; }
 .nav a { padding: 7px 12px; border-radius: 999px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; }
 .nav a:hover { background: var(--doux); color: var(--encre); }
@@ -40,7 +45,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
 .direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
 .direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
+/* huit rubriques : sous 1 640 px l'adresse du compte se retire ; sous 1 520 px les rubriques passent sur une seconde ligne */
+@media (max-width: 1639px) { .qui .moi { display: none; } }
+@media (max-width: 1519px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; } }
+@media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 
 /* boutons et champs */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-weight: 600; text-decoration: none; color: var(--encre); white-space: nowrap; }
@@ -82,6 +91,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
+@media (min-width: 1101px) and (max-width: 1519px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
@@ -128,6 +138,10 @@ table.reps td:first-child { padding-left: 0; }
   table.reps thead { display: none; }
   table.reps tr { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 8px; border: 1px solid var(--trait); border-radius: 10px; margin-bottom: 8px; }
   table.reps td { padding: 0; }
+  /* un tableau ne descend pas sous la largeur de ses champs de date : en blocs, les colonnes rétrécissent */
+  table.reps, table.reps tbody { display: block; }
+  table.reps tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  table.reps input, table.reps select { min-width: 0; }
 }
 .combo { position: relative; }
 .suggestions { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); background: var(--carte); border: 1px solid var(--trait); border-radius: 10px; box-shadow: var(--ombre); max-height: 300px; overflow: auto; }
@@ -173,6 +187,12 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .annonce.erreur { background: #8c1d16; }
 .annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .4); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .2s ease-out; } @keyframes monte { from { transform: translateY(8px); opacity: 0; } } }
+
+/* une commande segmentée dans un champ (le statut d'une date) passe à la ligne plutôt que de sortir de sa colonne */
+.champ .seg { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; }
+.champ .seg button { flex: 1 1 auto; }
+/* au téléphone (360 px) : des marges plus serrées, des boutons segmentés qui tiennent sur la largeur */
+@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg { max-width: 100%; } .seg button { padding: 6px 7px; font-size: 14px; } .rangee > .champ:has(.seg) { grid-column: 1 / -1; } }
 </style>
 </head>
 <body>
@@ -180,6 +200,7 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 <div id="annonces" aria-live="polite"></div>
 <script src="vendor/supabase.js"></script>
 <script src="agenda.js"></script>
+<script src="tentacules.js"></script>
 <script>
 'use strict';
 /* L'administration du site de la compagnie Crescite : les spectacles, les dates et leurs représentations, les ateliers,
@@ -189,6 +210,12 @@ const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
 const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
 const SITE = '../synthese.html';
 const sb = supabase.createClient(BASE, CLE, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'crescite-admin', detectSessionInUrl: true } });
+// les tentacules (tentacules.js) : courtes et près du bouton, jamais devant un champ ; absentes, rien ne change
+const TT = typeof TENTACULES !== 'undefined' ? TENTACULES : null;
+if (TT) TT.regler({ profil: 'admin', style: 'encre', remontee: false, soulever: false });
+const tt = (f, ...a) => { if (TT && typeof TT[f] === 'function') { try { return TT[f](...a); } catch (e) { /* le décor ne doit rien casser */ } } };
+// un enregistrement réussi : la tentacule s'enroule autour du bouton (après l'enregistrement, jamais avant)
+const bravo = () => requestAnimationFrame(() => { const b = $('[data-enregistrer]'); if (b) tt('confirmer', b); });
 
 // ===================================================================================================== état
 const E = { session: null, admin: false, pret: false, direct: false, sale: false, hash: location.hash,
@@ -199,7 +226,9 @@ const TABLES = {
   crescite_ateliers: ['ateliers', 'id'], crescite_seances: ['seances', 'id'], crescite_textes: ['textes', 'cle'],
 };
 const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', crescite_dates: 'Date', crescite_representations: 'Représentation',
-  crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site' };
+  crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site',
+  crescite_personnes: 'Fiche d’une personne', crescite_personnes_privees: 'Coordonnées d’une personne', crescite_personnes_suivi: 'Notes sur une personne',
+  crescite_distributions: 'Distribution', crescite_equipes: 'Équipe d’une date', crescite_documents: 'Document de l’équipe', crescite_feuilles: 'Feuille de route' };
 
 // ===================================================================================================== outils
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -228,7 +257,7 @@ function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', del
   const el = document.createElement('div');
   el.className = 'annonce' + (erreur ? ' erreur' : '');
   el.setAttribute('role', erreur ? 'alert' : 'status');
-  el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button">${esc(libelle)}</button>` : ''}`;
+  el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button" data-tt="retour">${esc(libelle)}</button>` : ''}`;
   if (action) $('button', el).addEventListener('click', () => { el.remove(); action(); });
   $('#annonces').append(el);
   setTimeout(() => el.remove(), erreur ? 9000 : delai);
@@ -282,7 +311,9 @@ sb.auth.onAuthStateChange((ev, s) => {
   if (ev === 'INITIAL_SESSION' || ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') setTimeout(demarrer, 0);
 });
 
+let versAdmin = false;     // l'écran de connexion a été montré : l'arrivée dans l'administration remonte une tentacule
 function ecranConnexion(message = '') {
+  versAdmin = true;
   $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-connexion">
     <h1>Crescite · administration</h1><p>Les spectacles, les dates, les ateliers et les textes du site de la compagnie.</p>
     ${message ? `<p role="alert" style="color:var(--alerte)">${esc(message)}</p>` : ''}
@@ -318,6 +349,8 @@ function ecranMotDePasse() {
 
 let demarre = false;
 async function demarrer() {
+  // feuille.js et equipe.js se chargent après ce script : on les attend
+  if (document.readyState === 'loading') return void document.addEventListener('DOMContentLoaded', demarrer, { once: true });
   if (!E.session) { demarre = false; return ecranConnexion(); }
   if (demarre) return;
   demarre = true;
@@ -336,6 +369,7 @@ async function demarrer() {
   if (!location.hash || location.hash === '#') history.replaceState(null, '', '#/representations');
   E.hash = location.hash;
   router();
+  if (versAdmin) { versAdmin = false; requestAnimationFrame(() => tt('page', getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#a8306f')); }
 }
 
 async function tout(table, ordre) {
@@ -350,11 +384,13 @@ async function tout(table, ordre) {
   }
 }
 async function chargerTout() {
+  const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const [sp, li, da, re, su, ls, at, se, tx, ad] = await Promise.all([
     tout('crescite_spectacles', 'ordre'), tout('crescite_lieux', 'id'), tout('crescite_dates', 'debut'), tout('crescite_representations', 'jour'),
     tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
     tout('crescite_textes'), tout('crescite_admins')]);
   Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad });
+  await equipe;
 }
 async function rechargerJournal() {
   const { data, error } = await sb.from('crescite_journal').select('*').order('id', { ascending: false }).limit(300);
@@ -367,29 +403,34 @@ function ecouter() {
   const ch = sb.channel('crescite-admin');
   Object.keys(TABLES).forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
   ch.subscribe(st => { E.direct = st === 'SUBSCRIBED'; const d = $('.direct'); if (d) { d.classList.toggle('on', E.direct); d.title = E.direct ? 'Connecté en temps réel' : 'Temps réel interrompu'; } });
+  ecouterEquipe();
 }
 function changement(t, p) {
-  const [k, pk] = TABLES[t];
-  const coll = E[k], cle = (p.eventType === 'DELETE' ? p.old : p.new)[pk];
-  const i = coll.findIndex(x => x[pk] === cle);
+  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t];
+  // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
+  const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
+  const i = coll.findIndex(x => cles.every(c => x[c] === ligne[c]));
   if (p.eventType === 'DELETE') { if (i >= 0) coll.splice(i, 1); } else if (i >= 0) coll[i] = p.new; else coll.push(p.new);
   clearTimeout(rendrePlusTard);
   rendrePlusTard = setTimeout(() => { if (!E.sale) rafraichirListes(); }, 200);
 }
 
 // ===================================================================================================== cadre et routes
-const RUBRIQUES = [['representations', 'Représentations'], ['spectacles', 'Spectacles'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+const RUBRIQUES = [['representations', 'Représentations'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 function cadre(rubrique, contenu) {
-  $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations">Crescite <small>administration</small></a>
+  $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
-    <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}">direct</span>
-    <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier sur le site ↗</a><span class="moi">${esc(E.session.user.email)}</span>
+    <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
+    <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
+  tt('pieuvre');
 }
 const ROUTES = [
   [/^#\/representations(?:\/(nouvelle|\d+))?$/, m => vueDates(m[1])],
+  [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
   [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
+  [/^#\/equipe(?:\/(nouvelle|documents|\d+))?$/, m => vueEquipe(m[1])],
   [/^#\/ateliers(?:\/(seances|catalogue))?(?:\/(nouvelle|nouveau|\d+))?$/, m => vueAteliers(m[1] || 'seances', m[2])],
   [/^#\/lieux(?:\/(nouveau|\d+))?$/, m => vueLieux(m[1])],
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
@@ -668,22 +709,26 @@ function listeDates(zone, actif) {
 function nouvelleDate() {
   const sp = session.dates?.spectacle ? +session.dates.spectacle : (E.spectacles.find(s => s.page) || {}).id;
   return { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true,
-    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {} };
+    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [] };
 }
 function dateVersForm(d) {
   const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
   const su = E.suivis.find(x => x.date_id === d.id) || {};
-  return { ...clone(d), lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' } };
+  return { ...clone(d), lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
+    equipe: ecartsDate(d.id) };
 }
 const zoneNeuve = sel => { const a = $(sel), z = a.cloneNode(false); a.replaceWith(z); return z; };
+let ouvertureMuette = false;     // après un enregistrement, l'éditeur se redessine : la tentacule s'enroule autour du bouton, elle ne se déroule pas
 function editeurDate(id, depart = null) {
   const zone = zoneNeuve('#ed-date');
   const d0 = id ? E.dates.find(d => d.id === id) : null;
+  if (!depart && !ouvertureMuette) requestAnimationFrame(() => tt('ouvrir', zone, { sens: 'gauche' }));
+  ouvertureMuette = false;
   if (id && !d0) { zone.innerHTML = '<div class="vide bloc">Cette date n’existe plus.</div>'; return; }
   const F = depart || (d0 ? dateVersForm(d0) : nouvelleDate());
   const initial = JSON.stringify(F);
   const libre = !!F.intitule;
-  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/representations" title="Retour à la liste">←</a><h2 id="ed-titre"></h2></div>
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/representations" title="Retour à la liste">←</a><h2 id="ed-titre"></h2></div>
     <div class="bloc"><div class="rangee">
       <div class="champ"><label for="d-sp">Spectacle</label><select id="d-sp">${choixSpectacles().map(([v, t]) => `<option value="${v}"${String(F.spectacle_id) === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
       <div class="champ"><span class="lib">Statut</span><div class="seg" role="group" aria-label="Statut">${[['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']].map(([k, l]) => `<button type="button" data-statut="${k}" aria-pressed="${F.statut === k}">${l}</button>`).join('')}</div>
@@ -704,12 +749,14 @@ function editeurDate(id, depart = null) {
       <div id="d-details"></div>
       <div class="champ"><label for="d-lien">Lien (billetterie ou page du lieu)</label><input type="url" id="d-lien" value="${esc(F.lien)}" placeholder="https://…"></div></div>
 
+    <div class="bloc" id="d-equipe"></div>
+
     <div class="bloc"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3><div class="rangee">
       <div class="champ"><label for="s-org">Organisateur</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
       <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
-    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? '<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>' : ''}`)}`;
+    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`)}`;
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
   const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
   const apercu = () => {
@@ -748,6 +795,7 @@ function editeurDate(id, depart = null) {
   dessinerReps(); dessinerDetails(); titre();
   comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); });
   apercu();
+  blocEquipeDate(zone, F, changer);
 
   zone.addEventListener('input', e => {
     const t = e.target, tr = t.closest('tr[data-i]');
@@ -791,10 +839,11 @@ function editeurDate(id, depart = null) {
       if (t.id === 'd-vide') { jour = ''; heure = '20:00'; }
       F.representations.push({ jour, heure, public: der?.public || 'tout_public', annulee: false, lien: '', note: '' });
       dessinerReps(); changer();
+      tt('ajouter', $('#d-reps tr:last-child', zone));
       $(`#d-reps tr:last-child [data-r="${t.id === 'd-vide' ? 'jour' : 'heure'}"]`, zone)?.focus();
       return;
     }
-    if (t.id === 'd-det-plus') { F.details.push({ texte: '', lien: null }); dessinerDetails(); changer(); $(`[data-det="${F.details.length - 1}"]`, zone)?.focus(); return; }
+    if (t.id === 'd-det-plus') { F.details.push({ texte: '', lien: null }); dessinerDetails(); changer(); tt('ajouter', $(`[data-det="${F.details.length - 1}"]`, zone)?.closest('.item')); $(`[data-det="${F.details.length - 1}"]`, zone)?.focus(); return; }
     if (t.dataset.detSuppr !== undefined) { F.details.splice(+t.dataset.detSuppr, 1); dessinerDetails(); changer(); return; }
     if (t.id === 'd-det-auto') {
       const reps = F.representations.filter(r => r.jour);
@@ -827,11 +876,16 @@ async function enregistrerDate(F, d0, bouton) {
   const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: charge });
   bouton.disabled = false;
   if (error) return erreur(error);
+  // l'équipe de la date (ce qui change de la distribution en tournée), après la date elle-même
+  const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
+  if (!equipeOk) { F.id = id; history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; return; }
   E.sale = false;
   annoncer(F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.');
   if (!F.id) { history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; }
+  ouvertureMuette = true;
   vueDates(id);
+  bravo();
 }
 async function rechargerDate(id) {
   const [a, b, c] = await Promise.all([sb.from('crescite_dates').select('*').eq('id', id), sb.from('crescite_representations').select('*').eq('date_id', id), sb.from('crescite_dates_suivi').select('*').eq('date_id', id)]);
@@ -842,11 +896,12 @@ async function rechargerDate(id) {
 }
 async function supprimerDate(d) {
   const s = spectacle(d.spectacle_id);
-  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} » et ses représentations ?`)) return;
-  const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)) };
+  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} », ses représentations${avecFeuille(d.id) ? ' et sa feuille de route' : ''} ?`)) return;
+  const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)), equipe: copieEquipeDate(d.id) };
   const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
   if (error) return erreur(error, 'Suppression impossible');
   E.dates = E.dates.filter(x => x.id !== d.id); E.reps = E.reps.filter(x => x.date_id !== d.id); E.suivis = E.suivis.filter(x => x.date_id !== d.id);
+  E.equipes = E.equipes.filter(x => x.date_id !== d.id); E.feuilles = E.feuilles.filter(x => x.date_id !== d.id);
   E.sale = false;
   location.hash = '#/representations';
   annoncer('Date supprimée.', { action: async () => {
@@ -854,6 +909,7 @@ async function supprimerDate(d) {
     let r = await sb.from('crescite_dates').insert(sans(copie.date));
     if (!r.error && copie.reps.length) r = await sb.from('crescite_representations').insert(copie.reps.map(sans));
     if (!r.error && copie.suivi) r = await sb.from('crescite_dates_suivi').insert(sans(copie.suivi));
+    if (!r.error) { const e2 = await retablirEquipeDate(copie.equipe); if (e2) r = { error: e2 }; }
     if (r.error) return erreur(r.error, 'Rétablissement impossible');
     await rechargerDate(copie.date.id);
     annoncer('Date rétablie.');
@@ -973,11 +1029,11 @@ function editeurSpectacle(slug) {
   ['univers', 'action_culturelle', 'programmer'].forEach(k => { F[k] = F[k] || {}; });
   F.univers.couleurs = F.univers.couleurs || {}; F.univers.polices = F.univers.polices || {};
   F.tournee = F.tournee || {}; F.avec = F.avec || { libelle: 'avec :', valeur: '' }; F.video = F.video || { titre: '', url: '' };
-  const onglets = [...Object.keys(SPEC_SPECTACLE), 'Photos'];
+  const onglets = [...Object.keys(SPEC_SPECTACLE), 'Photos', ...ONGLETS_EQUIPE];
   let onglet = sessionStorage.getItem('crescite-onglet-sp') || 'Général';
   if (!onglets.includes(onglet)) onglet = 'Général';
   const dossiers = E.textes.filter(t => t.cle.startsWith('dossier:')).map(t => [t.cle, t.cle.slice(8)]);
-  cadre('spectacles', `<div class="tete"><a class="btn petit" href="#/spectacles">←</a><h1>${esc(F.titre)}</h1>
+  cadre('spectacles', `<div class="tete"><a class="btn petit" data-tt="retour" href="#/spectacles">←</a><h1>${esc(F.titre)}</h1>
       <a class="btn" href="${SITE}#/spectacle/${esc(F.slug)}" target="_blank" rel="noopener">Voir sa page ↗</a></div>
     <div class="onglets-ed" role="tablist">${onglets.map(o => `<button type="button" role="tab" data-onglet="${esc(o)}" aria-selected="${o === onglet}">${esc(o)}</button>`).join('')}</div>
     <div class="editeur" id="ed-sp"></div>`);
@@ -993,6 +1049,7 @@ function editeurSpectacle(slug) {
   const dessiner = () => {
     nChamp = 0;
     if (onglet === 'Photos') { zone.innerHTML = ongletPhotos(F) + pied(); }
+    else if (ONGLETS_EQUIPE.includes(onglet)) ongletEquipe(onglet, zone, F, s0);   // equipe.js : distribution, déroulé type, documents
     else {
       const specs = SPEC_SPECTACLE[onglet].concat(onglet === 'Action culturelle' ? [{ k: 'dossier', t: 'choix', l: 'Dossier scolaire', choix: [['', 'Aucun'], ...dossiers] }] : []);
       zone.innerHTML = `<div class="bloc">${onglet === 'Univers' ? '<div id="sp-contrastes"></div>' : ''}${specs.map(c => champ(c, F)).join('')}</div>${pied()}`;
@@ -1047,6 +1104,7 @@ function editeurSpectacle(slug) {
     Object.assign(s0, data); Object.assign(F, clone(data));
     marquerSale(false);
     annoncer(data.publie ? 'Enregistré : la page du spectacle est à jour.' : 'Enregistré (le spectacle n’est pas publié).');
+    bravo();
   });
   zone.addEventListener('input', e => { if (e.target.dataset.legende !== undefined) { F.photos[+e.target.dataset.legende].legende = e.target.value; marquerSale(); } });
 }
@@ -1096,7 +1154,7 @@ function editeurAtelier(id) {
   const F = a0 ? clone(a0) : { titre: '', duree: '', public: '', obligatoire: false, publie: true, paragraphes: [], etapes: [], points: [], ordre: 100, spectacle_id: +(session.dates?.spectacle || 0) || null };
   const zone = zoneNeuve('#ed-at');
   nChamp = 0;
-  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/ateliers/catalogue">←</a><h2>${esc(F.titre || 'Nouvel atelier')}</h2></div><div class="bloc">
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/ateliers/catalogue">←</a><h2>${esc(F.titre || 'Nouvel atelier')}</h2></div><div class="bloc">
     <div class="champ"><label for="a-sp">Spectacle</label><select id="a-sp">${choixSpectacles('Aucun').map(([v, t]) => `<option value="${v}"${String(F.spectacle_id ?? '') === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
     ${SPEC_ATELIER.map(c => champ(c, F)).join('')}</div>${pied(a0 ? 'Tout est enregistré' : 'Nouvel atelier', a0 ? '<button type="button" class="btn danger" id="a-suppr">Supprimer</button>' : '')}`;
   relier(zone, F, SPEC_ATELIER);
@@ -1118,6 +1176,7 @@ function editeurAtelier(id) {
     const i = E.ateliers.findIndex(x => x.id === r.data.id); if (i >= 0) E.ateliers[i] = r.data; else E.ateliers.push(r.data);
     E.sale = false; annoncer('Atelier enregistré.');
     if (!a0) location.hash = `#/ateliers/catalogue/${r.data.id}`; else vueAteliers('catalogue', r.data.id);
+    bravo();
   });
 }
 function listeSeances(zone, actif) {
@@ -1148,7 +1207,7 @@ function editeurSeance(id, depart = null) {
   ['heure_debut', 'heure_fin'].forEach(k => { F[k] = h5(F[k]); });
   const zone = zoneNeuve('#ed-at');
   const datesProches = () => E.dates.filter(d => (!F.spectacle_id || d.spectacle_id === +F.spectacle_id)).sort((a, b) => Math.abs(Date.parse(a.debut) - Date.parse(F.jour || AUJ)) - Math.abs(Date.parse(b.debut) - Date.parse(F.jour || AUJ))).slice(0, 25);
-  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/ateliers/seances">←</a><h2>${s0 ? `Séance du ${esc(jourCourt(s0.jour))}` : 'Nouvelle séance'}</h2></div>
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/ateliers/seances">←</a><h2>${s0 ? `Séance du ${esc(jourCourt(s0.jour))}` : 'Nouvelle séance'}</h2></div>
     <div class="bloc"><div class="rangee">
       <div class="champ"><label for="se-at">Atelier</label><select id="se-at"><option value="">—</option>${E.ateliers.map(a => `<option value="${a.id}"${F.atelier_id === a.id ? ' selected' : ''}>${esc(a.titre)}</option>`).join('')}</select></div>
       <div class="champ"><label for="se-sp">Spectacle</label><select id="se-sp">${choixSpectacles('—').map(([v, t]) => `<option value="${v}"${String(F.spectacle_id ?? '') === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div></div>
@@ -1186,6 +1245,7 @@ function editeurSeance(id, depart = null) {
     const i = E.seances.findIndex(x => x.id === r.data.id); if (i >= 0) E.seances[i] = r.data; else E.seances.push(r.data);
     E.sale = false; annoncer('Séance enregistrée.');
     if (!s0) location.hash = `#/ateliers/seances/${r.data.id}`; else vueAteliers('seances', r.data.id);
+    bravo();
   });
 }
 
@@ -1225,7 +1285,7 @@ function editeurLieu(id) {
   const zone = $('#ed-lieu');
   const nb = l0 ? E.dates.filter(d => d.lieu_id === id).length : 0;
   nChamp = 0;
-  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
     <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button></div>
     <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
@@ -1268,6 +1328,7 @@ function editeurLieu(id) {
     E.lieuxSuivi = E.lieuxSuivi.filter(x => x.lieu_id !== r.data.id).concat([r2.data]);
     E.sale = false; annoncer('Lieu enregistré.');
     if (!l0) location.hash = `#/lieux/${r.data.id}`; else vueLieux(id);
+    bravo();
   });
 }
 
@@ -1300,7 +1361,7 @@ function vueTextes(cle) {
   if (def && def[1]) corps = `<div class="bloc" id="t-f">${def[1].map(c => champ(c, F)).join('')}</div>`;
   else if (typeof F === 'string') corps = `<div class="bloc" id="t-f">${champ({ k: 'v', t: 'html', l: nom(cle) }, { v: F })}</div>`;
   else corps = `<div class="bloc"><p class="aide">Texte structuré : modifiez-le avec soin, la forme doit rester du JSON valide.</p><textarea id="t-json" rows="24" spellcheck="false" style="font:13px/1.5 ui-monospace,monospace">${esc(JSON.stringify(F, null, 2))}</textarea></div>`;
-  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" href="#/textes">←</a><h2>${esc(nom(cle))}</h2></div>${corps}${pied()}`;
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/textes">←</a><h2>${esc(nom(cle))}</h2></div>${corps}${pied()}`;
   const brut = typeof F === 'string';
   const W = brut ? { v: F } : F;
   if ($('#t-f')) relier($('#t-f'), W, def && def[1] ? def[1] : [{ k: 'v', t: 'html' }]);
@@ -1314,12 +1375,14 @@ function vueTextes(cle) {
     e.target.disabled = false;
     if (error) return erreur(error);
     t0.valeur = data.valeur; E.sale = false; marquerSale(false); annoncer('Enregistré : le site est à jour.');
+    bravo();
   });
 }
 
 // ===================================================================================================== journal
 function resume(j) {
   const x = j.apres || j.avant || {};
+  if (RESUMES_EQUIPE[j.table_nom]) return RESUMES_EQUIPE[j.table_nom](x);
   if (j.table_nom === 'crescite_dates') { const s = spectacle(x.spectacle_id); return `${s?.titre || 'Date'} · ${jourCourt(x.debut)}${x.intitule ? ` · ${x.intitule.split(' — ')[1] || ''}` : ''}`; }
   if (j.table_nom === 'crescite_representations') { const d = E.dates.find(y => y.id === x.date_id); const s = d && spectacle(d.spectacle_id); return `${s?.titre || ''} · ${jourCourt(x.jour)}${x.heure ? ' · ' + AGENDA.heureTexte(h5(x.heure)) : ''}`; }
   if (j.table_nom === 'crescite_spectacles') return x.titre;
@@ -1341,21 +1404,22 @@ async function vueJournal() {
     zone.innerHTML = E.journal.map(j => { const ch = champsChanges(j); if (j.operation === 'UPDATE' && !ch.length) return '';
       return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
         <span class="quoi"><b>${OPS[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${esc(resume(j) || '')}${ch.length ? `<span class="diff"> — ${esc(ch.join(', '))}</span>` : ''}</span>
-        <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}">Retirer</button>` : `<button class="btn petit" data-j="${j.id}">Revenir</button>`}</span></div>`; }).join('') || '<p class="vide">Rien encore.</p>';
+        <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('') || '<p class="vide">Rien encore.</p>';
   };
   dessiner();
   zone.addEventListener('click', async e => {
     const b = e.target.closest('[data-j]'); if (!b) return;
-    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || [null, 'id'];
+    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || TABLES_EQUIPE[j.table_nom] || [null, 'id'];
     const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
+    const ligne = (q, o) => [].concat(pk).reduce((q2, c) => q2.eq(c, o[c]), q);   // une clé d'une ou plusieurs colonnes
     let r;
-    if (j.operation === 'INSERT') { if (!confirm('Retirer cette ligne ajoutée ?')) return; r = await sb.from(j.table_nom).delete().eq(pk, j.apres[pk]); }
-    else if (j.operation === 'UPDATE') { if (!confirm('Remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await sb.from(j.table_nom).update(sans(j.avant)).eq(pk, j.avant[pk]); }
+    if (j.operation === 'INSERT') { if (!confirm('Retirer cette ligne ajoutée ?')) return; r = await ligne(sb.from(j.table_nom).delete(), j.apres); }
+    else if (j.operation === 'UPDATE') { if (!confirm('Remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await ligne(sb.from(j.table_nom).update(sans(j.avant)), j.avant); }
     else {
       if (!confirm('Rétablir cette ligne supprimée ?')) return;
       r = await sb.from(j.table_nom).insert(sans(j.avant));
       if (!r.error && j.table_nom === 'crescite_dates') {
-        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
+        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi', 'crescite_equipes', 'crescite_feuilles'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
         for (const x of liees) { const r2 = await sb.from(x.table_nom).insert(sans(x.avant)); if (r2.error) { r = r2; break; } }
       }
     }
@@ -1364,5 +1428,9 @@ async function vueJournal() {
   });
 }
 </script>
+<!-- la feuille de route (commune avec l'espace de l'équipe) et l'équipe : rubriques Équipe et Feuilles de route,
+     distribution, déroulé type et documents des spectacles, équipe de chaque date -->
+<script src="feuille.js"></script>
+<script src="equipe.js"></script>
 </body>
 </html>
