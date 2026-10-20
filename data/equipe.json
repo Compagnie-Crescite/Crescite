@@ -1,5 +1,5 @@
 {
- "_note": "Les personnes de l'équipe et la distribution de chaque spectacle : les fiches publiées sur crescite.fr (avec, mise en scène, lumières, régie…) et, pour Cassandres, le dossier artistique 2027-2028 (distribution non publiée tant que la compagnie ne la confirme pas). Coordonnées et photos ne sont pas ici : elles vont dans la base (fiches privées, stockage), jamais dans ce dépôt public. Import : supabase/equipe.py.",
+ "_note": "Les personnes de l'équipe et la distribution de chaque spectacle : les fiches publiées sur crescite.fr (avec, mise en scène, lumières, régie…) et, pour Cassandres, le dossier artistique 2027-2028 (distribution non publiée tant que la compagnie ne la confirme pas). Inès Chouquet, citée par le dossier artistique dans Mon Royaume et Ci-gisait Cyrano, a sa fiche sans distribution : la compagnie la place. Coordonnées et photos ne sont pas ici : elles vont dans la base (fiches privées, stockage), jamais dans ce dépôt public. Import : supabase/equipe.py.",
  "personnes": [
   {
    "slug": "johann-abiola",
@@ -309,6 +309,14 @@
    "slug": "charline-porrone",
    "prenom": "Charline",
    "nom": "Porrone",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "ines-chouquet",
+   "prenom": "Inès",
+   "nom": "Chouquet",
    "metiers": [
     "Jeu"
    ]
