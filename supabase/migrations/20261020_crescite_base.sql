@@ -125,7 +125,7 @@ create table if not exists public.crescite_dates (
   lieu_id bigint references public.crescite_lieux (id) on delete set null,
   debut date not null,                             -- tenu à jour d'après les représentations s'il y en a
   fin date,
-  precision text not null default 'jour' check (precision in ('jour', 'periode', 'mois')),
+  precision text not null default 'jour' check (precision in ('jour', 'periode', 'mois', 'saison')),  -- saison : une ligne sans date
   saison text not null,                            -- « 2026-2027 » : déduite du début si on ne la donne pas
   public text not null default 'tout_public' check (public in ('tout_public', 'scolaire', 'mixte', 'autre')),
   statut text not null default 'confirmee' check (statut in ('option', 'confirmee', 'annulee', 'reportee')),

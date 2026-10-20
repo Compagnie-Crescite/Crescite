@@ -22,28 +22,29 @@
    CARTE.lier(racine, {survol, choix})  relie les communes d'une carte (data-l) au survol, au clic et au clavier
    CARTE.mouvement()                    false si le visiteur a demandé moins d'animations */
 const CARTE = (() => {
-  const K = D.carte, R = K.rouen;
+  // D.carte se relit à chaque appel : la base de la compagnie peut remplacer ses communes et ses comptes (donnees.js)
+  const C = () => D.carte, R = D.carte.rouen;
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const mouvement = () => !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   // une commune hors du cadre de la France (l'outre-mer : Saint-Denis de La Réunion) est ramenée dans un encart,
   // en bas à gauche : x.encart vaut alors true, et x.xyReel garde sa position projetée
-  const VB = K.viewBox.split(/\s+/).map(Number), ENCART = [VB[0] + 66, VB[1] + VB[3] - 74];
+  const VB = C().viewBox.split(/\s+/).map(Number), ENCART = [VB[0] + 66, VB[1] + VB[3] - 74];
   const dansCadre = ([x, y]) => x >= VB[0] && x <= VB[0] + VB[2] && y >= VB[1] && y <= VB[1] + VB[3];
   function regroupe(paires, datesDe) {
-    return paires.map(([l, n]) => { const p = K.lieux[l], hors = !dansCadre(p.xy); return { l, ...p, xy: hors ? ENCART : p.xy, xyReel: p.xy, encart: hors, n, dates: datesDe(l) }; })
+    return paires.map(([l, n]) => { const p = C().lieux[l], hors = !dansCadre(p.xy); return { l, ...p, xy: hors ? ENCART : p.xy, xyReel: p.xy, encart: hors, n, dates: datesDe(l) }; })
       .sort((a, b) => Math.hypot(a.xy[0] - R[0], a.xy[1] - R[1]) - Math.hypot(b.xy[0] - R[0], b.xy[1] - R[1]));
   }
   const aVenir = filtre => {
     const garde = d => filtre === 'public' ? !d.scolaire : filtre === 'scolaire' ? !!d.scolaire : true;
-    const paires = filtre === 'public' ? K.aVenirPublic : filtre === 'scolaire' ? K.aVenirScolaire : K.aVenir;
+    const paires = filtre === 'public' ? C().aVenirPublic : filtre === 'scolaire' ? C().aVenirScolaire : C().aVenir;
     return regroupe(paires, l => D.dates.filter(d => d.l === l && garde(d)));
   };
-  const tout = () => regroupe(K.tout, l => Object.entries(D.saisons).flatMap(([saison, S]) => S.spectacles.flatMap(g =>
+  const tout = () => regroupe(C().tout, l => Object.entries(D.saisons).flatMap(([saison, S]) => S.spectacles.flatMap(g =>
     g.dates.filter(d => d.l === l).map(d => ({ ...d, spectacle: g.titre, slug: g.slug, saison })))));
-  const saison = s => regroupe(K.parSaison[s] || [], l => (D.saisons[s]?.spectacles || []).flatMap(g => g.dates.filter(d => d.l === l).map(d => ({ ...d, spectacle: g.titre, slug: g.slug }))));
+  const saison = s => regroupe(C().parSaison[s] || [], l => (D.saisons[s]?.spectacles || []).flatMap(g => g.dates.filter(d => d.l === l).map(d => ({ ...d, spectacle: g.titre, slug: g.slug }))));
   const spectacle = slug => {
-    const p = K.parSpectacle[slug] || { passe: [], aVenir: [] };
+    const p = C().parSpectacle[slug] || { passe: [], aVenir: [] };
     const passees = l => Object.values(D.saisons).flatMap(S => S.spectacles.filter(g => g.slug === slug).flatMap(g => g.dates.filter(d => d.l === l && !(d.fin && d.fin >= D.aujourdhui))));
     return { aVenir: regroupe(p.aVenir, l => D.dates.filter(d => d.slug === slug && d.l === l)), passe: regroupe(p.passe, passees) };
   };
@@ -117,7 +118,7 @@ const CARTE = (() => {
   function svg({ lieux = [], passe = [], forme = 'bras', courbe = 0.24, spirale = false, cadre: vb = 'france', pousse = true,
     interactif = false, noms = false, titre = '', classe = '', largeur = 1 } = {}) {
     const id = 'carte-pousse-' + (++n), anime = pousse && mouvement();
-    const box = vb === 'france' ? K.viewBox : vb === 'serre' ? cadre([...lieux, ...passe]) : vb;
+    const box = vb === 'france' ? C().viewBox : vb === 'serre' ? cadre([...lieux, ...passe]) : vb;
     const [bx, by, bw, bh] = box.split(/\s+/).map(Number), echelle = Math.max(bw, bh) / 800;
     const tracer = (x, w0, w1) => forme === 'bras' ? `d="${bras(x.xy, { w0: w0 * echelle, w1: w1 * echelle, courbe })}"` : `d="${trait(x.xy, { courbe })}"`;
     const largeurBras = x => Math.min(7, 1.6 + Math.sqrt(x.n) * 1.1) * largeur;
@@ -125,7 +126,7 @@ const CARTE = (() => {
     const etiquette = x => `${nom(x)}${x.dates?.length ? ' : ' + x.dates.map(d => d.ligne).join(' ; ') : ''}`;
     return `<svg class="carte ${esc(classe)}" viewBox="${box}" ${interactif ? `aria-label="${esc(titre)}"` : `role="img" aria-label="${esc(titre)}"`} data-forme="${forme}">
       <defs><clipPath id="${id}"><circle cx="${R[0]}" cy="${R[1]}" r="${anime ? 0 : rayon}">${anime ? `<animate attributeName="r" from="0" to="${rayon}" dur="1.8s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>` : ''}</circle></clipPath></defs>
-      <path class="carte-voisin" d="${K.belgique}"/><path class="carte-voisin" d="${K.luxembourg}"/><path class="carte-pays" d="${K.contour}"/>
+      <path class="carte-voisin" d="${C().belgique}"/><path class="carte-voisin" d="${C().luxembourg}"/><path class="carte-pays" d="${C().contour}"/>
       ${[...lieux, ...passe].some(x => x.encart) ? `<circle class="carte-encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="${(24 * echelle).toFixed(1)}" fill="none" stroke="currentColor" stroke-opacity=".4" stroke-dasharray="3 4"/>` : ''}
       <g clip-path="url(#${id})">
         ${passe.map(x => `<path class="carte-bras-passe" ${forme === 'bras' ? tracer(x, 1.6, 0.4) : `d="${trait(x.xy, { courbe })}"`}/>`).join('')}
@@ -150,6 +151,6 @@ const CARTE = (() => {
       g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choix(l); } });
     });
   }
-  return { K, viewBox: K.viewBox, rouen: R, ENCART, fond: { pays: K.contour, belgique: K.belgique, luxembourg: K.luxembourg }, lieux: K.lieux,
+  return { get K() { return C(); }, viewBox: C().viewBox, rouen: R, ENCART, fond: { pays: C().contour, belgique: C().belgique, luxembourg: C().luxembourg }, get lieux() { return C().lieux; },
     aVenir, tout, saison, spectacle, nom, bras, trait, bout, longueur, cadre, svg, lier, mouvement };
 })();

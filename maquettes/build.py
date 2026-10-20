@@ -226,6 +226,7 @@ def projection(places):
             x[i] = (V[i] - sum(M[i][c] * x[c] for c in range(i + 1, 3))) / M[i][i]
         return x
     cx, cy = solve(0), solve(1)
+    projection.coefficients = {"cx": [round(v, 6) for v in cx], "cy": [round(v, 6) for v in cy]}
     return lambda lon, lat: [round(cx[0] * u + cx[1] * v + cx[2], 1), round(cy[0] * u + cy[1] * v + cy[2], 1)] if (u := lcc(lon, lat)[0]) is not None and (v := lcc(lon, lat)[1]) is not None else None
 
 
@@ -372,7 +373,9 @@ def build_data():
         passe = [dt["l"] for S in saisons.values() for g in S["spectacles"] if g["slug"] == sl for dt in g["dates"]
                  if not (dt["fin"] and dt["fin"] >= today)]
         par_spectacle[sl] = {"passe": compte(passe), "aVenir": compte(d["l"] for d in dates if d["slug"] == sl)}
+    # projection : de quoi placer une commune nouvelle (donnees.js) exactement comme celles du dépôt
     carte = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"],
+             "projection": projection.coefficients,
              "rouen": mp["rouen"], "lieux": lieux, "parSaison": par_saison, "parSpectacle": par_spectacle,
              "aVenir": compte(d["l"] for d in dates),
              "aVenirPublic": compte(d["l"] for d in dates if not d["scolaire"]),

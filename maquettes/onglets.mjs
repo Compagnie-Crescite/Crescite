@@ -56,11 +56,13 @@ for (const n of names) {
     await page.evaluate(PERMIS => {
       const norm = s => String(s).replace(/<[^>]+>/g, ' ').replace(/&nbsp;|[   ]/g, ' ').replace(/[’‘]/g, "'").replace(/[«»“”"]/g, '"').replace(/\s+/g, ' ').trim().toLowerCase();
       const parts = [];
-      const walk = (v, k) => {
-        if (['photos', 'logo', 'arms', 'carte'].includes(k)) return;
-        if (typeof v === 'string') parts.push(norm(v)); else if (Array.isArray(v)) v.forEach(x => walk(x)); else if (v && typeof v === 'object') Object.entries(v).forEach(([kk, x]) => walk(x, kk));
+      // tout D, sauf les images et le dessin (D.photos, D.logo, D.arms, D.carte, au premier niveau seulement :
+      // les légendes des photos d'un spectacle, elles, sont du texte)
+      const walk = (v, k, n) => {
+        if (n === 1 && ['photos', 'logo', 'arms', 'carte'].includes(k)) return;
+        if (typeof v === 'string') parts.push(norm(v)); else if (Array.isArray(v)) v.forEach(x => walk(x, null, n + 1)); else if (v && typeof v === 'object') Object.entries(v).forEach(([kk, x]) => walk(x, kk, n + 1));
       };
-      walk(D);
+      walk(D, null, 0);
       D.carte.lieux.forEach(l => parts.push(norm(`${l.c} (${l.dep})`)));
       PERMIS.forEach(p => parts.push(norm(p)));
       window.__corpus = parts.join(' | ');
