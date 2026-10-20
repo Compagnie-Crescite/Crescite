@@ -255,7 +255,7 @@ ul,ol{padding:0;list-style:none}
 .ecran .carte{width:100%;height:auto;max-height:calc(100vh - var(--tete-h) - 150px);margin:0 auto}
 .carte-filtre{display:flex;align-items:center;min-height:40px;margin-top:6px}
 .filtre-puce{display:inline-flex;align-items:center;gap:10px;padding:6px 14px;border-radius:999px;background:var(--magenta-vif);color:var(--nuit);font-weight:600;font-size:var(--t-petit)}
-.ecran-u .filtre-puce{background:var(--u-bras);color:var(--u-ecran)}
+.ecran-u .filtre-puce{background:var(--u-bras);color:var(--nuit)}
 .dates-groupe + .dates-groupe{margin-top:44px}
 .dates-mois{padding-bottom:12px;border-bottom:1px solid currentColor;font-size:var(--t-petit);font-weight:600;letter-spacing:.14em;text-transform:uppercase}
 .date{display:grid;grid-template-columns:6.5rem minmax(0,1fr);gap:4px 20px;padding:18px 10px 20px 12px;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent);transition:background-color .3s,box-shadow .3s}
@@ -642,6 +642,13 @@ details.lieux p{margin-top:12px;font-size:.9375rem;line-height:1.65;color:var(--
   .second a[aria-current="page"]{color:var(--magenta-vif);font-weight:400}
   .second a[aria-current="page"]::after,.tete[data-ton="clair"] .second a[aria-current="page"]::after{left:auto;right:2px;top:50%;bottom:auto;width:10px;height:10px;border-radius:50%;transform:translateY(-50%);background:var(--magenta-vif)}
 }
+/* tablette : la pieuvre seule, les entrées resserrées */
+@media (min-width:760px) and (max-width:1023px){
+  .marque-mot{display:none}
+  .entree{gap:6px;padding:8px 10px 8px 8px}
+}
+.tete.serre .entree .bras-e{display:none}
+.tete.serre .entree{padding-left:10px}
 /* ---------- téléphone : les trois entrées dans une barre fixe en bas d'écran ---------- */
 @media (max-width:759px){
   :root{--tete-h:64px;--barre-h:64px}
@@ -825,9 +832,9 @@ details.lieux p{margin-top:12px;font-size:.9375rem;line-height:1.65;color:var(--
   .fiche:not(.deja) .ouv-photo img{animation:recule 1.6s var(--ease) both .05s}
   .fiche:not(.deja) .ouv-motif{animation:motif 2.2s var(--ease) both .2s}
   .fiche:not(.deja) .ouv-haut,.fiche:not(.deja) .ouv-signe,.fiche:not(.deja) .ouv-sur,.fiche:not(.deja) .ouv-sous,.fiche:not(.deja) .ouv-cta{animation:entree 1s var(--ease) both .45s}
-  .fiche:not(.deja) .ouv-sous,.fiche:not(.deja) .ouv-cta{animation-delay:.9s}
-  .fiche:not(.deja) .ouv-titre .l{animation:lettre .75s var(--ease) both;animation-delay:calc(.3s + var(--i) * 36ms)}
-  .fiche:not(.deja) .ouv-accroche .m{animation:mot .6s var(--ease) both;animation-delay:calc(.75s + var(--j) * 40ms)}
+  .fiche:not(.deja) .ouv-sous,.fiche:not(.deja) .ouv-cta{animation-delay:.7s}
+  .fiche:not(.deja) .ouv-titre .l{animation:lettre .7s var(--ease) both;animation-delay:calc(.25s + var(--i) * 32ms)}
+  .fiche:not(.deja) .ouv-accroche .m{animation:mot .5s var(--ease) both;animation-delay:calc(.55s + min(var(--j) * 24ms, 1.1s))}
 }
 @keyframes onde{from{stroke-width:11;opacity:.6}to{stroke-width:54;opacity:0}}
 @keyframes entree{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
@@ -1677,9 +1684,11 @@ ${finHTML()}`;
   }
   // les libellés longs des entrées si la place le permet, sinon les courts
   function ajusterLibelles() {
-    tete.classList.remove('court');
+    tete.classList.remove('court', 'serre');
     const nav = $('.entrees', tete), ul = nav && $('ul', nav);
-    if (ul && innerWidth >= 760 && ul.offsetWidth > nav.clientWidth + 1) tete.classList.add('court');
+    const deborde = () => ul && innerWidth >= 760 && ul.offsetWidth > nav.clientWidth + 1;
+    if (deborde()) tete.classList.add('court');
+    if (deborde()) tete.classList.add('serre');
     $$('.onglets', vueSpectacle).forEach((o) => {
       o.classList.remove('court');
       const u = $('ul', o);
