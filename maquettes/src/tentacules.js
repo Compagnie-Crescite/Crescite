@@ -27,11 +27,14 @@
        epaisseur   l'épaisseur de la tentacule fine, en px (2.2)   duree    facteur de durée (1 = normal)
        pieuvre     sélecteur du guide ('[data-pieuvre]')           page     sélecteur de ce que la remontée soulève ('main')
        entrees     'auto' (défaut), 'vive' ou 'couleur' : quelle couleur de D.site.entrees prend la remontée
-       couleurDe   function (hash) → couleur CSS, ou rien : la destination à la main
+       couleurDe   function (hash) → couleur CSS, ou rien : la destination à la main ; false : la maquette a son propre geste pour
+                   cette page, la pieuvre seule répond (pas de tentacule de page)
        remontee    false : pas de tentacule de page    soulever  true : la page se soulève de 24 px et paraît, en 460 ms,
                    quand la tentacule remonte. Un transform sur <main> déplace ses descendants position: fixed pendant ce
                    temps : à n'activer que si <main> n'en contient pas (hors de la page : une barre, une photo de fond, ça va)
        profil      'admin' : tout dure 350 ms au plus, les tentacules restent près du bouton (jamais devant un champ)
+       detail      retouche le style choisi : { page (finesse de la tentacule de page : 1 = pleine, .1 = un fil), ventouses (0, 1 ou 2
+                   rangées), hachures, halo, empreinte ('anneau', 'grande', 'etoile', 'lueur', 'point'), corps, opa }
    - des variables CSS, sur :root (ou sur une région : l'outil lit celles de l'élément cliqué) :
        --tt-encre  --tt-accent  --tt-ventouse  --tt-neutre  --tt-epaisseur  --tt-duree  --tt-style
        --tt-fond   le liseré qui détache la tentacule d'un fond sombre (défaut : la couleur de la page)
@@ -112,7 +115,7 @@ const TENTACULES = (() => {
     const sombre = lum(fondPage()) < .3;
     const duree = (parseFloat(v('--tt-duree')) || R.duree || 1) * (admin() ? .75 : 1);
     return { encre, accent, neutre: v('--tt-neutre') || R.neutre || encre, ventouse: v('--tt-ventouse') || R.ventouse || (sombre ? 'rgba(0,0,0,.36)' : 'rgba(255,255,255,.5)'),
-      contre: v('--tt-fond') || R.fond || avecAlpha(fondPage(), .85), ep: parseFloat(v('--tt-epaisseur')) || R.epaisseur || 2.2, duree, sombre, S: STYLES[style], style };
+      contre: v('--tt-fond') || R.fond || avecAlpha(fondPage(), .85), ep: parseFloat(v('--tt-epaisseur')) || R.epaisseur || 2.2, duree, sombre, S: R.detail ? Object.assign({}, STYLES[style], R.detail) : STYLES[style], style };
   }
   // la durée d'un geste : 320 ms au plus dans l'administration (350 ms avec la dernière image)
   const dureeDe = (ms, P) => Math.round(admin() ? Math.min(320, ms * P.duree) : ms * P.duree);
@@ -578,6 +581,7 @@ const TENTACULES = (() => {
   function page(dest, depart = null) {
     if (!pret()) return null;
     dest = typeof dest === 'string' && dest[0] === '#' ? destination(dest) : typeof dest === 'string' ? { couleur: dest } : (dest || destination(location.hash));
+    if (dest.muet) { reagir('page', null); return null; }
     const P = palette(), svg = monter();
     if (!svg) return null;
     const couleur = dest.couleur || P.neutre;
@@ -627,7 +631,7 @@ const TENTACULES = (() => {
   // la couleur d'une destination : l'entrée, l'univers du spectacle, sinon une couleur neutre
   function destination(hash) {
     const h = String(hash || '').replace(/^#\/?/, '').split('?')[0].split('/').filter(Boolean).map(x => { try { return decodeURIComponent(x); } catch (e) { return x; } });
-    if (typeof R.couleurDe === 'function') { const c = R.couleurDe(hash); if (c) return { couleur: c, slug: h[0] === 'spectacle' ? h[1] : null }; }
+    if (typeof R.couleurDe === 'function') { const c = R.couleurDe(hash); if (c === false) return { couleur: null, slug: null, muet: true }; if (c) return { couleur: c, slug: h[0] === 'spectacle' ? h[1] : null }; }
     const out = { couleur: null, slug: null };
     if (typeof D === 'undefined' || !D || !D.site) return out;
     const vive = R.entrees === 'vive' || (R.entrees === 'auto' && lum(fondPage()) < .3);

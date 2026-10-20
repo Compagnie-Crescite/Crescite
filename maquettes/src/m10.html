@@ -21,6 +21,9 @@
   --blanc: #f7ecf1; --blanc-2: #c9b7c1; --magenta: #bc3e80; --magenta-texte: #a8306f; --magenta-vif: #f07ab6;
   --serif: "Bodoni Moda", "Bodoni 72", Didot, serif; --sans: "Instrument Sans", system-ui, sans-serif;
   --gout: clamp(16px, 4vw, 56px); --haut: 68px; --barre: 0px; --og-h: 58px;
+  /* les tentacules (tentacules.js) : celles de la carte, d'encre et ponctuées de ventouses ; un rose à mi-chemin du magenta et du magenta vif,
+     lisible sur la nuit comme sur le lait ; pas de liseré (les fonds changent trop). La scène a ses propres bras : l'outil s'y tait. */
+  --tt-encre: #d0509a; --tt-accent: #bc3e80; --tt-neutre: #bc3e80; --tt-epaisseur: 2.6; --tt-fond: transparent;
   /* l'édition sur place (edition.js), dans le style de la maquette */
   --ed-fond: #f6f1ea; --ed-encre: #1b1216; --ed-accent: #a8306f; --ed-sur-accent: #ffffff;
   --ed-police: "Instrument Sans", system-ui, sans-serif; --ed-rayon: 14px; --ed-trait: rgba(27, 18, 22, .2);
@@ -674,14 +677,14 @@ html .ed-ajout { font-family: var(--sans); }
 <body>
 <a class="evitement" href="#main">Aller au contenu</a>
 <header class="top"><div class="top-in">
-  <a class="marque" href="#/"><span class="l" id="marque"></span><span id="marque-mot"></span></a>
+  <a class="marque" href="#/"><span class="l" id="marque" data-pieuvre></span><span id="marque-mot"></span></a>
   <nav class="entrees" id="entrees"></nav>
   <button class="menu" type="button" aria-expanded="false" aria-controls="second"></button>
   <nav class="second" id="second"></nav>
 </div></header>
 <main id="main" tabindex="-1">
   <div id="v-accueil" hidden>
-    <section class="stage" id="scene" aria-labelledby="stage-h">
+    <section class="stage" id="scene" data-tt="rien" aria-labelledby="stage-h">
       <h1 class="stage-h" id="stage-h" tabindex="-1"></h1>
       <canvas class="stage-canvas" aria-hidden="true"></canvas>
       <ul class="t-labels t-entrees"></ul>
@@ -2067,6 +2070,10 @@ html .ed-ajout { font-family: var(--sans); }
     e.preventDefault();
     Ink.cover(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2, () => { location.hash = a.getAttribute('href'); }, encreDe(s));
   });
+  // les tentacules : comme les bras de la carte, d'encre et de ventouses. Sur la scène, c'est la pieuvre vivante qui répond (data-tt="rien") ;
+  // l'outil prolonge : quand l'encre se retire, une tentacule à la couleur de l'univers (ou de l'entrée) remonte jusqu'à la pieuvre de l'en-tête ;
+  // le retour à la scène reste à l'encre qui se retire vers la pieuvre
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'ventouses', entrees: 'vive', duree: .9, detail: { page: .85 }, couleurDe: h => (/^(#\/?)?$/.test(h) ? false : null) });
   // l'ouverture : le logo sur la nuit ; à la révélation, la pieuvre de la scène s'éveille et tend ses bras
   INTRO.ouvrir({ degrade: [[0, '#331629'], [.55, '#1b0c16'], [1, '#0b0509']], encre: '#f7ecf1', classe: 'nuit-pieuvre', apres: () => Stage.eveiller() });
   addEventListener('hashchange', () => route());

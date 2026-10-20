@@ -22,6 +22,8 @@
   --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418; --bulle-lien: #f3a6cd;
   --serif: "Spectral", Georgia, serif; --sans: "Work Sans", system-ui, sans-serif;
   --gout: clamp(16px, 4vw, 56px); --haut: 68px;
+  /* les tentacules (tentacules.js) : la pieuvre du logo guide ; elles sont les bras de la tournée, magenta comme ceux de la carte */
+  --tt-encre: #bc3e80; --tt-accent: #1d1418; --tt-neutre: #bc3e80; --tt-epaisseur: 2.4;
   /* l'édition sur place (EDITION) : la barre, la connexion et le panneau des dates prennent le papier et les bras */
   --ed-fond: #f6f2eb; --ed-encre: #1d1418; --ed-accent: #bc3e80; --ed-sur-accent: #ffffff;
   --ed-police: "Work Sans", system-ui, sans-serif; --ed-rayon: 16px; --ed-trait: #d3c8b8;
@@ -676,7 +678,7 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
 </head>
 <body>
 <header class="top"><div class="barre">
-  <a class="marque" href="#/"><span class="l" aria-hidden="true"></span><span class="mq"></span></a>
+  <a class="marque" href="#/"><span class="l" data-pieuvre aria-hidden="true"></span><span class="mq"></span></a>
   <nav class="entrees" id="entrees"></nav>
   <button class="menu" type="button" aria-expanded="false" aria-controls="second"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7c3-2.2 6 2.2 9 0s6-2.2 9 0M3 12c3-2.2 6 2.2 9 0s6-2.2 9 0M3 17c3-2.2 6 2.2 9 0s6-2.2 9 0"/></svg><span></span></button>
   <nav class="second" id="second"></nav>
@@ -1694,6 +1696,8 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   document.addEventListener('click', e => { if (!e.target.closest('.carte-lieu, .bulle')) depingler(); if (!e.target.closest('.top')) fermer(); });
   addEventListener('keydown', e => { if (e.key === 'Escape') { fermer(); depingler(); } });
 
+  // les tentacules : les bras de la tournée ; chaque entrée donne sa couleur à la remontée de sa page, chaque spectacle la sienne
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'couleur', detail: { page: .34 } });
   // l'ouverture : la pieuvre magenta sur l'encre ; quand elle a révélé l'accueil, les bras de la carte poussent depuis Rouen
   INTRO.ouvrir({ degrade: [[0, '#3a1c2c'], [.55, '#1d1418'], [1, '#0f090c']], encre: '#cf4a8e', classe: 'ouverture-06',
     apres: () => { const f = $('.une-carte', main); if (f && !f.dataset.poussee) pousser(f); } });

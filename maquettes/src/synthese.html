@@ -16,6 +16,8 @@
   --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418; --blanc: #fffdf9;
   --serif: "Spectral", Georgia, serif; --sans: "Work Sans", system-ui, sans-serif;
   --gout: clamp(16px, 4vw, 56px); --haut: 64px; --onglets: 0px;
+  /* les tentacules (tentacules.js) : la pieuvre du logo guide ; ici elles ont la couleur et les ventouses des bras de la tournée */
+  --tt-encre: #bc3e80; --tt-accent: #1d1418; --tt-neutre: #bc3e80; --tt-epaisseur: 2.4;
   /* l'édition sur place (EDITION) : la barre, la connexion et le panneau des dates sur le papier de la synthèse */
   --ed-fond: #fffdf9; --ed-encre: #1d1418; --ed-accent: #bc3e80; --ed-sur-accent: #ffffff;
   --ed-police: "Work Sans", system-ui, sans-serif; --ed-rayon: 10px; --ed-trait: #dcd3c6;
@@ -893,7 +895,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 <body>
 <a class="evitement" href="#main">Aller au contenu</a>
 <header class="top" id="top"><div class="top-in">
-  <a class="marque" href="#/"><span class="l" id="marque" aria-hidden="true"></span><span id="nom"></span></a>
+  <a class="marque" href="#/"><span class="l" id="marque" data-pieuvre aria-hidden="true"></span><span id="nom"></span></a>
   <nav class="entrees" id="entrees"></nav>
   <button class="menu" type="button" aria-expanded="false" aria-controls="second"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14"/></svg><span id="menu-t"></span></button>
   <nav class="second" id="second"></nav>
@@ -1937,6 +1939,8 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
   $('.evitement').addEventListener('click', e => { e.preventDefault(); main.focus(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { ajuste(); echelle(); });
 
+  // les tentacules : comme les bras de la carte, magenta et ponctuées de ventouses ; chaque entrée donne sa couleur à la remontée de sa page
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'ventouses', entrees: 'couleur' });
   lire();
   cadre();
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
