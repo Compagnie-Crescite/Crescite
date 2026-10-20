@@ -1935,7 +1935,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => main.querySelectorAll('svg.carte-m03').forEach(etiqueter));
 
   // les tentacules : la pieuvre du logo guide ; chaque entrée donne sa couleur à la remontée de sa page (papier clair : la couleur franche)
-  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'couleur' });
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'couleur', soulever: true });
   enTete(); pied(); polices();
   // l'ouverture : le papier réglé de l'agenda, le logo à l'encre ; à la révélation, les bras de la carte poussent depuis Rouen
   INTRO.ouvrir({ fond: '#f4f1ea', encre: '#141414', classe: 'intro-m03', apres: () => main.querySelectorAll('svg.carte-m03:not(.pousse)').forEach(pousser) });

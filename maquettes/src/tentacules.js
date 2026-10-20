@@ -28,13 +28,21 @@
        pieuvre     sélecteur du guide ('[data-pieuvre]')           page     sélecteur de ce que la remontée soulève ('main')
        entrees     'auto' (défaut), 'vive' ou 'couleur' : quelle couleur de D.site.entrees prend la remontée
        couleurDe   function (hash) → couleur CSS, ou rien : la destination à la main
-       remontee    false : pas de tentacule de page    soulever  false : la page n'est pas soulevée par la remontée
+       remontee    false : pas de tentacule de page    soulever  true : la page se soulève de 24 px et paraît, en 460 ms,
+                   quand la tentacule remonte. Un transform sur <main> déplace ses descendants position: fixed pendant ce
+                   temps : à n'activer que si <main> n'en contient pas (hors de la page : une barre, une photo de fond, ça va)
        profil      'admin' : tout dure 350 ms au plus, les tentacules restent près du bouton (jamais devant un champ)
    - des variables CSS, sur :root (ou sur une région : l'outil lit celles de l'élément cliqué) :
        --tt-encre  --tt-accent  --tt-ventouse  --tt-neutre  --tt-epaisseur  --tt-duree  --tt-style
+       --tt-fond   le liseré qui détache la tentacule d'un fond sombre (défaut : la couleur de la page)
    - des attributs : data-tt="rien" (aucune animation ici) ou le genre d'un geste : "onglet", "ouvre", "bascule", "case",
      "route", "retour", "clic" ; data-tt-couleur="#…" sur un lien (la couleur de sa remontée) ; data-tt-local sur un
-     conteneur dont les boutons n'ont que des tentacules courtes (la barre d'édition, un panneau).
+     conteneur dont les boutons n'ont que des tentacules courtes (la barre d'édition, un panneau) ; data-tt-zone sur la
+     fiche qu'un lien « retour » referme (par défaut .editeur).
+   Les gestes se reconnaissent seuls : un lien #/… (remontée de page), un onglet (aria-current, aria-selected, role="tab" :
+   la tentacule glisse de l'onglet quitté à l'onglet choisi), un <summary> ou un bouton aria-expanded (elle se déroule
+   quand ça s'ouvre, s'enroule quand ça se ferme), un bouton aria-pressed ou une case, un envoi de formulaire (elle
+   s'enroule autour du bouton), le panneau de date et l'enregistrement de l'édition sur place.
 
    TENTACULES.toucher(el | [x, y])      une tentacule fine jusqu'à ce point, et son empreinte
    TENTACULES.page(destination)         la remontée d'une page ('#/voir', une couleur CSS ou {couleur, slug}) ; automatique
@@ -62,7 +70,7 @@ const TENTACULES = (() => {
 
   /* ------------------------------------------------------------------------------------------------ réglages */
   const R = { style: 'encre', encre: '', accent: '', ventouse: '', neutre: '', epaisseur: 0, duree: 1, pieuvre: '[data-pieuvre]',
-    page: 'main, [role="main"]', entrees: 'auto', couleurDe: null, profil: 'site', remontee: true, soulever: true };
+    page: 'main, [role="main"]', entrees: 'auto', couleurDe: null, profil: 'site', remontee: true, soulever: false };
   function regler(o = {}) { Object.assign(R, o); return R; }
   const admin = () => R.profil === 'admin';
 
@@ -106,8 +114,8 @@ const TENTACULES = (() => {
     return { encre, accent, neutre: v('--tt-neutre') || R.neutre || encre, ventouse: v('--tt-ventouse') || R.ventouse || (sombre ? 'rgba(0,0,0,.36)' : 'rgba(255,255,255,.5)'),
       contre: v('--tt-fond') || R.fond || avecAlpha(fondPage(), .85), ep: parseFloat(v('--tt-epaisseur')) || R.epaisseur || 2.2, duree, sombre, S: STYLES[style], style };
   }
-  // la durée d'un geste : au plus 350 ms dans l'administration
-  const dureeDe = (ms, P) => Math.round(admin() ? Math.min(350, ms * P.duree) : ms * P.duree);
+  // la durée d'un geste : 320 ms au plus dans l'administration (350 ms avec la dernière image)
+  const dureeDe = (ms, P) => Math.round(admin() ? Math.min(320, ms * P.duree) : ms * P.duree);
 
   /* ------------------------------------------------------------------------------------------------ géométrie */
   const creer = (tag, attrs, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
@@ -401,7 +409,7 @@ const TENTACULES = (() => {
       const chemins = [...svg.querySelectorAll('path')], octo = typeof D !== 'undefined' && D && D.logo && D.logo.octopusPaths;
       if (octo && octo.length === 4) {
         const t = octo.map(d => chemins.find(p => p.getAttribute('d') === d));
-        if (t.every(Boolean)) { G.tg = t[0]; G.td = t[3]; G.groupe = t[0].parentNode !== svg ? t[0].parentNode : null; }
+        if (t.every(Boolean)) { G.tg = t[0]; G.td = t[3]; G.groupe = t[0].parentNode !== svg && t[0].parentNode.querySelectorAll(':scope > path').length === 4 ? t[0].parentNode : null; }
       }
       const marque = svg.querySelector('[data-tt="bras-g"]');
       if (!G.tg && marque) {
@@ -460,12 +468,12 @@ const TENTACULES = (() => {
     let dep1 = null, off1 = null, defs = null;
     if (G.tg && G.svg && G.rect.width >= 90) {
       const id = `tt-onde-${++nIds}`;
-      G.svg.insertAdjacentHTML('afterbegin', `<defs data-tt-defs><filter id="${id}" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.0085 0.012" numOctaves="2" seed="11" result="bruit"/><feOffset in="bruit" dx="0" dy="0" result="flot"/><feDisplacementMap in="SourceGraphic" in2="flot" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter></defs>`);
+      G.svg.insertAdjacentHTML('afterbegin', `<defs data-tt-defs><filter id="${id}" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.0036 0.0052" numOctaves="1" seed="11" result="bruit"/><feOffset in="bruit" dx="0" dy="0" result="flot"/><feDisplacementMap in="SourceGraphic" in2="flot" scale="0" xChannelSelector="R" yChannelSelector="G"/></filter></defs>`);
       defs = G.svg.querySelector('defs[data-tt-defs]');
       dep1 = defs.querySelector('feDisplacementMap'); off1 = defs.querySelector('feOffset');
       [G.tg, G.td].forEach(e => { if (e) e.setAttribute('filter', `url(#${id})`); });
     }
-    const ampPx = clamp(G.rect.width * .03, 1, 6), unites = G.echelle ? ampPx / G.echelle : 0;
+    const ampPx = clamp(G.rect.width * .028, 1, 9), unites = G.echelle ? ampPx / G.echelle : 0;
     const surH = !G.tg, styleAvant = G.hote.style.transform, origAvant = G.hote.style.transformOrigin;
     const a = { duree: dur, g: null, fin() { restaurer(); } };
     function restaurer() {
@@ -478,18 +486,18 @@ const TENTACULES = (() => {
       if (!G.hote.isConnected) return false;
       if (tt < retard) return true;
       const u = clamp((tt - retard) / Math.max(1, dur - retard));
-      // la secousse : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant
-      const imp = u < .22 ? ease.out(u / .22) : Math.cos(((u - .22) / .78) * Math.PI * 1.6) * (1 - (u - .22) / .78) ** 1.5;
+      // la secousse : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant (les bras de droite un peu après ceux de gauche)
+      const choc = v => (v <= 0 ? 0 : v < .22 ? ease.out(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * (1 - (v - .22) / .78) ** 1.5), imp = choc(u), impD = choc(u - .07);
       if (surH) { G.hote.style.transform = `scale(${(1 - serre * imp).toFixed(4)}) rotate(${(lean * imp).toFixed(2)}deg)`; return true; }
       G.hote.style.transform = `scale(${(1 - serre * .5 * imp * (sens > 0 ? 1 : -1)).toFixed(4)})`;
       const s = 1 - serre * imp * (sens > 0 ? 1 : -1), [cx, cy] = G.centre;
       if (G.groupe) G.groupe.setAttribute('transform', `translate(${cx} ${cy}) rotate(${(lean * imp).toFixed(2)}) scale(${s.toFixed(4)}) translate(${-cx} ${-cy})`);
       G.tg.setAttribute('transform', `rotate(${(amp * imp * sens).toFixed(2)} ${G.pg[0]} ${G.pg[1]})`);
-      if (G.td) G.td.setAttribute('transform', `rotate(${(-amp * imp * sens).toFixed(2)} ${G.pd[0]} ${G.pd[1]})`);
+      if (G.td) G.td.setAttribute('transform', `rotate(${(-amp * impD * sens).toFixed(2)} ${G.pd[0]} ${G.pd[1]})`);
       if (dep1) {
         const onde = clamp(.3 + Math.abs(imp) * .8) * (1 - u) ** .7;
         dep1.setAttribute('scale', (onde * unites * 2).toFixed(2));
-        off1.setAttribute('dx', (tt * .2).toFixed(1)); off1.setAttribute('dy', (-tt * .15).toFixed(1));
+        off1.setAttribute('dx', (tt * .16).toFixed(1)); off1.setAttribute('dy', (-tt * .11).toFixed(1));
       }
       return true;
     };
@@ -549,7 +557,7 @@ const TENTACULES = (() => {
     a.pas = t => {
       const u = t / dur;
       if (tt) tt.maj(0, clamp(ease.out(clamp((u - .05) / .47)) * (1 - ease.inOut(clamp((u - .6) / .4))), 0, 1), t, 1);
-      const contact = tt ? .5 : 0, c = clamp((u - contact) / .12), p = clamp((u - contact - .1) / (1.08 - contact));
+      const contact = tt ? .5 : 0, c = clamp((u - contact) / .12), p = clamp((u - contact - .1) / (1.15 - contact - .1));
       imp.poser(lerp(1.8, 1, ease.out(c)), u < contact ? 0 : clamp(c * 1.5) * (1 - ease.in(p)));
       return true;
     };
@@ -614,7 +622,7 @@ const TENTACULES = (() => {
     const el = document.querySelector(R.page);
     if (!el || !el.animate) return;
     try { if (levee) levee.cancel(); } catch (e) { /* déjà finie */ }
-    levee = el.animate([{ transform: `translateY(${admin() ? 10 : 24}px)`, opacity: .35 }, { transform: 'translateY(0)', opacity: 1 }], { duration: admin() ? 240 : 460, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
+    levee = el.animate([{ transform: `translateY(${admin() ? 10 : 24}px)`, opacity: .55 }, { transform: 'translateY(0)', opacity: 1 }], { duration: admin() ? 240 : 460, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
   }
   // la couleur d'une destination : l'entrée, l'univers du spectacle, sinon une couleur neutre
   function destination(hash) {
@@ -785,7 +793,10 @@ const TENTACULES = (() => {
     if (dernier && maintenant - dernier.t < 70 && (dernier.el === el || dernier.el.control === el || el.control === dernier.el || dernier.el.contains(el))) return;
     const clavier = e.detail === 0 || (!e.clientX && !e.clientY), but = clavier ? centreDe(r) : [e.clientX, e.clientY];
     dernier = { t: maintenant, el, but };
-    const genre = genreDe(el), local = !!el.closest('[data-tt-local], .ed-boite');
+    let genre = genreDe(el);
+    const local = !!el.closest('[data-tt-local], .ed-boite');
+    // Ctrl, Maj ou Cmd + clic, ou un lien qui s'ouvre ailleurs : la page ne change pas, donc pas de remontée
+    if ((genre === 'route' || genre === 'onglet') && (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || el.target === '_blank')) genre = 'clic';
     const lien = (el.getAttribute('href') || '').match(/^#\/spectacle\/([^/?]+)/), slug = lien ? decodeURIComponent(lien[1]) : null;
     const cc = el.closest('[data-tt-couleur]'), couleurLien = cc ? cc.getAttribute('data-tt-couleur') : null;
     if (el.matches('[data-ed="enregistrer"], [data-x="enregistrer"]')) enreg = { t: maintenant, rect: r };
@@ -841,7 +852,8 @@ const TENTACULES = (() => {
     const dest = destination(location.hash), dep = attente && performance.now() - attente.t < 900 ? attente : null;
     attente = null;
     soulever();
-    if (R.remontee) page(dest, dep); else reagir('page', null);
+    // à l'image suivante : la maquette a alors changé de page et remonté en haut, la pieuvre est de nouveau à l'écran
+    requestAnimationFrame(() => { if (R.remontee) page(dest, dep); else reagir('page', null); });
   }
   function surEnvoi(e) {
     if (!pret()) return;
