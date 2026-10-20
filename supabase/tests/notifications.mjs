@@ -148,3 +148,17 @@ const appels = (await db.query(`select url, body, headers from net.appels`)).row
 const jeton = (await db.query(`select valeur from public.crescite_secrets where cle = 'jeton_push'`)).rows[0].valeur;
 ok(appels.length === 1 && appels[0].url.endsWith('/functions/v1/crescite-push') && appels[0].headers['x-crescite-jeton'] === jeton && jeton.length === 64,
    `seule la personne abonnée déclenche l’envoi (${appels.length} appel), avec le jeton`);
+
+// « Je souhaite programmer » : le contact diffusion, lisible par le public ; l'action culturelle de Cassandres masquée une
+// seule fois (rouverte par l'administration, elle le reste quand on relance le script)
+const prog = (await as('anon', '', `select valeur from public.crescite_textes where cle = 'programmation'`)).rows[0];
+ok(prog && prog.valeur.contact.nom === 'Barbara Daussy' && prog.valeur.contact.telephone === null, 'le contact diffusion est en place, lisible par le public, sans téléphone');
+await db.exec(`update public.crescite_textes set valeur = jsonb_set(valeur, '{contact,telephone}', '"02 00 00 00 00"') where cle = 'programmation'`);
+await db.exec(`insert into public.crescite_spectacles (slug, titre, action_culturelle) values ('cassandres', 'Cassandres', '{"type": "Lieux", "textes": [{"texte": "t"}]}')`);
+await db.exec(notif);
+const ac = async () => (await db.query(`select action_culturelle a from public.crescite_spectacles where slug = 'cassandres'`)).rows[0].a;
+ok((await ac()).masquee === true && (await ac()).type === 'Lieux', 'l’action culturelle de Cassandres est masquée, pas effacée');
+ok((await db.query(`select valeur from public.crescite_textes where cle = 'programmation'`)).rows[0].valeur.contact.telephone === '02 00 00 00 00', 'relancer le script n’écrase pas le contact saisi');
+await db.exec(`update public.crescite_spectacles set action_culturelle = action_culturelle || '{"masquee": false}' where slug = 'cassandres'`);
+await db.exec(notif);
+ok((await ac()).masquee === false, 'rouverte par l’administration, elle n’est pas remasquée quand on relance le script');

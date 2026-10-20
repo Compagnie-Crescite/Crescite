@@ -1351,11 +1351,11 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes ; relus à chaque rendu */
   const nomDe = p => `${p.prenom} ${p.nom}`;
   const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
-  const comediens = s => (s.equipe || []).filter(e => e.categorie === 'jeu' && (D.personnes || {})[e.personne]).map(e => ({ e, p: D.personnes[e.personne] }));
-  const portrait = ({ e, p }, credits) => {
+  const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
+  const portrait = ({ e, p, lignes }, credits) => {
     const nom = nomDe(p), k = `personnes.${e.personne}`;
     return `<figure class="cast-pt"><span class="cast-cadre" data-edit-photo="${esc(k)}.photo"><span class="cast-mono" aria-hidden="true"><b>${esc(initiales(p))}</b>${brasE}</span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
-      <figcaption>${credits ? `<small class="cast-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="cast-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${e.alternance ? `<span class="cast-alt">${esc(e.alternance)}</span>` : ''}${e.role ? `<span class="cast-role">${esc(e.role)}</span>` : ''}</figcaption></figure>`;
+      <figcaption>${credits ? `<small class="cast-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="cast-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${lignes.map(l => `${l.alternance ? `<span class="cast-alt">${esc(l.alternance)}</span>` : ''}${l.role ? `<span class="cast-role">${esc(l.role)}</span>` : ''}`).join('')}</figcaption></figure>`;
   };
   function portraits(s) {
     const L = comediens(s); if (!L.length) return '';
@@ -1534,7 +1534,7 @@ html .ed-annonce { background: var(--encre); border-left: 4px solid var(--magent
   const video = s => `<a class="video-u" href="${esc(s.video.url)}" target="_blank" rel="noopener" style="background-image:url(&quot;${D.photos[(s.photos[1] || s.photos[0] || {}).cle] || D.photos[s.slug]}&quot;)">
       <span class="jouer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg></span><span class="vu-t"${edS(s, 'video', 'titre')}>${esc(s.video.titre)}</span></a>`;
   function distribution(s, voir) {
-    const P = s.programmer, cast = voir && !P.equipeCreation ? portraits(s) : '';
+    const P = s.programmer, cast = voir ? portraits(s) : '';
     return `${cast}<p class="signe"${ed('site.nom')}>${esc(S.nom)}</p><div class="fiche">${[
       ...(P.equipeCreation ? P.equipeCreation.map((x, i) => `<p class="f"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</p>`) : [ficheLignes(s, !!cast)]),
       s.duree ? `<p class="duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : '',

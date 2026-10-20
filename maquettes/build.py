@@ -181,6 +181,10 @@ LIBELLES = {
     "ecrire": "Écrire à la compagnie", "leSpectacle": "Le spectacle", "lesSpectacles": "Les spectacles",
     "ouverture": "Ouverture", "dates": "Dates", "photos": "Photos", "dossierScolaire": "Dossier scolaire",
     "modifierSite": "Modifier le site",
+    # « Je souhaite programmer » : ce qu'il faut à un programmateur ou un directeur de salle
+    "contactDiffusion": "Contact diffusion", "dossierPdf": "Dossier du spectacle (PDF)", "aTelecharger": "À télécharger",
+    "conditionsFinancieres": "Conditions financières sur demande", "ficheTechniqueSurDemande": "Fiche technique sur demande",
+    "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
 }
 
 
@@ -381,8 +385,10 @@ def build_data():
             "photo": f"{slug}.webp",
             "photos": [dict(p, cle=f"{slug}/{p['id']}", fichier=f"{slug}/{p['id']}.webp") for p in uv["photos"]], "creditPhotos": uv["credit"] or extra["credit"],
             "creditDossier": uv.get("creditDossier"),
-            "actionCulturelle": uv["actionCulturelle"], "programmer": uv["programmer"],
-            "dossier": "berenice" if uv["actionCulturelle"].get("dossier") else None,
+            # une action culturelle vide ou « masquee » (pas encore construite, comme celle de Cassandres) n'est pas publiée :
+            # null pour les maquettes, qui n'en montrent alors rien (règle 14 du contrat)
+            "actionCulturelle": action_publiee(uv["actionCulturelle"]), "programmer": uv["programmer"],
+            "dossier": "berenice" if (action_publiee(uv["actionCulturelle"]) or {}).get("dossier") else None,
             "equipe": equipes.get(slug, []),
         }, **extra))
 
@@ -431,6 +437,10 @@ def build_data():
                         "credit": site["actions"]["credit"]},
             "ecole": U["ecole"],
             "contact": site["contact"],
+            # le contact des programmateurs : l'administratrice (nom et rôle publics : mentions légales, dossier artistique),
+            # l'adresse publique de la compagnie ; le téléphone seulement si l'administration le saisit dans la base
+            "programmation": {"contact": {"nom": "Barbara Daussy", "role": "Administratrice", "email": "contact@crescite.fr",
+                                          "telephone": None}},
             "coordonnees": a["coordonnees"], "ecrire": {"texte": a["ecrire"]["texte"], "href": "#/contact"},
             "facebook": {"texte": a["facebook"]["texte"], "href": None} if a.get("facebook") else None,
             "partenaires": a["pied"]["partenaires"],
@@ -453,6 +463,9 @@ def build_data():
         "arms": arms_data(),
         "carte": carte,
         "personnes": personnes,
+        # les documents publics (dossier artistique, fiche technique, dossier pédagogique) : déposés dans la base par
+        # l'administration ; [{spectacle, type, titre, url, pour: 'pros'|'scolaires'}]
+        "documents": [],
     }
     return D, photo_files(out_shows)
 
@@ -460,14 +473,20 @@ def build_data():
 D_SAISON = "2026-2027"
 
 
+def action_publiee(a):
+    """L'action culturelle d'un spectacle telle que le site la montre : None si elle est vide ou masquée (« masquee »)."""
+    return a if a and not a.get("masquee") else None
+
+
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "tentacules.js")
+OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "dossier.js", "tentacules.js")
 
 
 def outils():
-    """Les outils communs, dans l'ordre. tentacules.js (la pieuvre du logo guide chaque clic et chaque changement de page) vient
+    """Les outils communs, dans l'ordre. dossier.js compose à la demande le dossier PDF d'un spectacle (pdfmake, chargé depuis
+    admin/vendor/ au premier clic). tentacules.js (la pieuvre du logo guide chaque clic et chaque changement de page) vient
     en dernier ; ?anim=0 dans l'adresse l'éteint (captures, essais)."""
     return OUTILS
 

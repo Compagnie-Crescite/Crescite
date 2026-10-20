@@ -469,6 +469,21 @@ table{border-collapse:collapse}
 .univ .fiche li{border-bottom-color:var(--u-ligne)}
 .univ .fiche-l{color:var(--u-texte2)}
 .avec{padding:8px 0;border-bottom:1px solid var(--u-ligne,var(--line))}
+/* la distribution en portraits (D.personnes, show.equipe) : chaque comédien sous son arche, la photo, ou le monogramme sur une porte éclairée ; ceux qui alternent vont par deux */
+.cast{--g:clamp(14px,2vw,26px);--pw:150px;--pmax:232px;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(var(--pw),calc((100% - var(--g)) / 2)),1fr));gap:34px var(--g);max-width:calc(var(--n,4) * var(--pmax) + (var(--n,4) - 1) * var(--g));margin:0 0 clamp(34px,4vw,52px);padding:0}
+.cast>li{min-width:0}
+.cast>.cast-paire{grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:var(--g);padding:12px 12px 16px;border-radius:22px;box-shadow:0 0 0 1px var(--u-ligne)}
+.cast-pt{margin:0;min-width:0}
+.cast-cadre{position:relative;display:block;aspect-ratio:4/5;overflow:hidden;container-type:inline-size;border-radius:999px 999px 8px 8px;background:var(--u-fond2);box-shadow:0 0 0 1px var(--u-ligne)}
+.cast-cadre img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 20%}
+.cast-mono{position:absolute;inset:0;display:grid;place-items:center;padding-top:16%;background:radial-gradient(130% 85% at 50% 100%,color-mix(in srgb,var(--u-aplat) 46%,transparent) 0%,color-mix(in srgb,var(--u-aplat) 14%,transparent) 50%,transparent 78%)}
+.cast-mono b{font-family:var(--u-police);font-weight:var(--u-graisse);font-size:2.4rem;font-size:27cqw;line-height:1;text-transform:uppercase;letter-spacing:.01em;color:var(--u-titre)}
+.cast-pt figcaption{display:block;text-align:center}
+.cast-cr{display:block;min-height:1.8em;padding-top:5px;font-size:.75rem;line-height:1.3;color:var(--u-texte2)}
+.cast-nom{display:block;margin-top:10px;font-family:var(--u-police);font-weight:var(--u-graisse);font-size:clamp(1.12rem,1rem + .5vw,1.38rem);line-height:1.1;color:var(--u-texte);text-wrap:balance}
+.univ[data-police="Anton"] .cast-nom{text-transform:uppercase;letter-spacing:.01em}
+.cast-alt,.cast-role{display:block;margin-top:4px;font-size:var(--fs-small);line-height:1.4;color:var(--u-texte2)}
+.cast-role{font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--u-vif)}
 @media (max-width:1100px){.fp{grid-template-columns:minmax(0,150px) minmax(0,1fr)}.fp-equipe{grid-column:1/-1}}
 @media (max-width:640px){.fp{grid-template-columns:minmax(0,1fr);border-radius:80px 18px 18px 18px}.fp-photo{width:150px}}
 /* la carte de tous les lieux de diffusion */
@@ -1144,7 +1159,27 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
   </header>`;
   const ecrireBande = e => `<section class="ecrire-s" style="--v:${esc(e.couleurVive)};--c:${esc(e.couleur)}"><div class="wrap ecrire-in">${arche()}<a class="btn-ecrire" href="${esc(X.S.ecrire ? X.S.ecrire.href : '#/contact')}">${esc(X.L.ecrire)}<span aria-hidden="true">→</span></a></div></section>`;
   const ecrireLien = () => `<p class="ecrire"><a class="btn-ecrire" href="${esc(X.S.ecrire ? X.S.ecrire.href : '#/contact')}">${esc(X.L.ecrire)}<span aria-hidden="true">→</span></a></p>`;
-  const ficheEquipe = s => `${(s.fiche || []).length ? `<ul class="fiche">${s.fiche.map((f, i) => `<li>${f.libelle ? `<span class="fiche-l"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></li>`).join('')}</ul>` : ''}${s.avec ? `<p class="avec"><span class="fiche-l"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''}`;
+  /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes ; relus à chaque rendu */
+  const nomDe = p => `${p.prenom} ${p.nom}`;
+  const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
+  const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
+  const portrait = ({ e, p, lignes }, credits) => {
+    const nom = nomDe(p), k = `personnes.${e.personne}`;
+    return `<figure class="cast-pt"><span class="cast-cadre" data-edit-photo="${esc(k)}.photo"><span class="cast-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+      <figcaption>${credits ? `<small class="cast-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="cast-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${lignes.map(l => `${l.alternance ? `<span class="cast-alt">${esc(l.alternance)}</span>` : ''}${l.role ? `<span class="cast-role">${esc(l.role)}</span>` : ''}`).join('')}</figcaption></figure>`;
+  };
+  function portraits(s) {
+    const L = comediens(s); if (!L.length) return '';
+    const credits = L.some(x => x.p.photo && x.p.credit), pris = new Set(), blocs = [];
+    L.forEach((x, i) => {
+      if (pris.has(i)) return; pris.add(i);
+      const j = x.e.alternance ? L.findIndex((y, k) => !pris.has(k) && x.e.alternance.includes(nomDe(y.p))) : -1;   // « en alternance avec … » : par deux
+      if (j < 0) blocs.push(`<li>${portrait(x, credits)}</li>`);
+      else { pris.add(j); blocs.push(`<li class="cast-paire">${portrait(x, credits)}${portrait(L[j], credits)}</li>`); }
+    });
+    return `<ul class="cast" style="--n:${L.length}${pris.size > blocs.length ? ';--pw:132px' : ''}">${blocs.join('')}</ul>`;   // avec des paires : de quoi en tenir trois sur une ligne
+  }
+  const ficheEquipe = (s, sansAvec = false) => `${(s.fiche || []).length ? `<ul class="fiche">${s.fiche.map((f, i) => `<li>${f.libelle ? `<span class="fiche-l"${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</span> ` : ''}<span${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</span></li>`).join('')}</ul>` : ''}${s.avec && !sansAvec ? `<p class="avec"><span class="fiche-l"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span> <span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : ''}`;
   const etatDe = s => s.statut || (s.enTournee ? X.L.enTournee : '');
   // l'état d'un spectacle (son statut, modifiable, ou « En tournée »), dans l'élément donné
   const etatEd = (s, balise, cls) => { const e = etatDe(s); return e ? `<${balise} class="${cls}"${s.statut ? edS(s, 'statut') : ''}>${esc(e)}</${balise}>` : ''; };
@@ -1611,10 +1646,10 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     const groupes = [...new Set(ms.filter(m => m.groupe).map(m => m.groupe))];
     return `<ul class="medias">${ms.filter(m => !m.groupe).map(m => `<li class="media">${lien(m)}${m.par ? `<p class="media-par"${edS(s, ...m.k.split('.'), 'par')}>${esc(m.par)}</p>` : ''}</li>`).join('')}${groupes.map(g => `<li class="media-groupe"><p class="media-groupe-t">${esc(g)}</p><ul>${ms.filter(m => m.groupe === g).map(m => `<li><a href="${esc(m.url)}"><span aria-hidden="true">▶</span><span${edS(s, ...m.k.split('.'), 'titre')}>${esc(m.titre)}</span></a></li>`).join('')}</ul></li>`).join('')}</ul>`;
   }
-  function distribution(s) {
-    const P = s.programmer || {};
-    return `<div class="distrib">
-      <div>${ficheEquipe(s)}${(P.equipeCreation || []).length ? `<ul class="fiche">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}${s.duree ? `<p class="duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}</div>
+  function distribution(s, voir = false) {
+    const P = s.programmer || {}, cast = voir ? portraits(s) : '';   // les portraits remplacent la ligne « avec »
+    return `${cast}<div class="distrib">
+      <div>${ficheEquipe(s, !!cast)}${(P.equipeCreation || []).length ? `<ul class="fiche">${P.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}${s.duree ? `<p class="duree"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}</div>
       <div>${(s.mentions || []).map((m, i) => `<p class="mention"${edS(s, 'mentions', i)}>${m}</p>`).join('')}${(s.production || []).length ? `<div class="production">${s.production.map((x, i) => bloc(x, `shows.${s.slug}.production.${i}`)).join('')}</div>` : ''}</div>
     </div>`;
   }
@@ -1641,7 +1676,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
     } else if (sp.passe.length) {
       ch.push({ id: 'ch-dates', titre: L.lieuxDiffusion, html: `<div class="dc dc-seule" data-zone="survol"><div class="dc-carte">${carte({ passe: sp.passe, titre: L.lieuxDiffusion, theme: 'u' })}</div></div>${sansListe(s)}` });
     }
-    ch.push({ id: 'ch-distribution', titre: L.distribution, html: distribution(s) });
+    ch.push({ id: 'ch-distribution', titre: L.distribution, html: distribution(s, true) });
     return ch;
   }
   function ficheTechnique(s, A) {

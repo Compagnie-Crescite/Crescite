@@ -87,18 +87,21 @@ const DONNEES = (() => {
         lireTable('crescite_textes', 'cle,valeur', null, ctl.signal),
       ]);
       // l'équipe : facultative (une base sans ses tables d'équipe garde celle de l'instantané)
-      let pe, di;
+      let pe, di, dc;
+      try {             // les documents publics : facultatifs aussi (une base qui ne les a pas encore garde ceux de l'instantané)
+        dc = await lireTable('crescite_documents', 'spectacle_id,type,titre,fichier,url,pour,ordre&pour=in.(pros,scolaires)', 'ordre.asc,id.asc', ctl.signal);
+      } catch { dc = undefined; }
       try {
         [pe, di] = await Promise.all([
           lireTable('crescite_personnes', 'id,slug,prenom,nom,metiers,photo,photo_credit,photo_publique,ordre', 'ordre.asc,id.asc', ctl.signal),
           lireTable('crescite_distributions', 'spectacle_id,personne_id,categorie,fonction,role,alternance,ordre', 'ordre.asc,id.asc', ctl.signal)]);
       } catch { pe = di = undefined; }
-      return { sp, li, da, re, at, tx, pe, di };
+      return { sp, li, da, re, at, tx, pe, di, dc };
     } finally { clearTimeout(minuteur); }
   }
 
   // ------------------------------------------------------------------------------------------- composer D
-  function composer({ sp, li, da, re, at, tx, pe, di }) {
+  function composer({ sp, li, da, re, at, tx, pe, di, dc }) {
     const aujourdhui = iso(new Date()), saison = saisonDe(aujourdhui);
     const texte = Object.fromEntries(tx.map(t => [t.cle, t.valeur]));
     const spId = new Map(sp.map(s => [s.id, s])), lieuId = new Map(li.map(l => [l.id, l]));
@@ -178,7 +181,9 @@ const DONNEES = (() => {
         palette: c, clair: !!u.clair, motif: u.motif, focale: 50, univers: u, lieuTemps: s.lieu_temps, accroche: s.accroche,
         affirmations: s.affirmations || [], citations: s.citations || [], video: s.video, photo: s.photo, photos: ph,
         creditPhotos: s.credit_photos || s.credit, creditDossier: s.credit_dossier,
-        actionCulturelle: s.action_culturelle || {}, programmer: s.programmer || {},
+        // une action culturelle vide ou « masquee » (pas encore construite) n'est pas publiée : null (règle 14 du contrat)
+        actionCulturelle: s.action_culturelle && Object.keys(s.action_culturelle).length && !s.action_culturelle.masquee ? s.action_culturelle : null,
+        programmer: s.programmer || {},
         dossier: s.dossier ? s.dossier.replace(/^dossier:/, '') : null,
         statut: s.statut, sousTitre: s.sous_titre, avec: s.avec, mentions: s.mentions || [], duree: s.duree,
         production: s.production || [], credit: s.credit, medias: s.medias || [], tournee: s.tournee || {}, source: s.source,
@@ -218,10 +223,14 @@ const DONNEES = (() => {
     // le site : la navigation du dépôt, les textes de la base
     const site = { ...S.site };
     ['nom', 'diaporama', 'donateurs', 'compagnie', 'actions', 'ecole', 'contact', 'coordonnees', 'ecrire', 'facebook',
-     'partenaires', 'liensLegaux', 'legal'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
+     'partenaires', 'liensLegaux', 'legal', 'programmation'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
     site.saisons = cles.map(k => ({ saison: k, titre: `Saison ${k}`, menu: k === saison ? `Saison ${k.slice(2, 4)}-${k.slice(7, 9)}` : `Saison ${k}`,
                                     href: k === saison ? '#/agenda' : `#/agenda/${k}` }));
-    return { saison, aujourdhui, site, shows, dossiers, ateliers, dates, saisons, carte, photos, personnes };
+    // les documents publics : un fichier du stockage public (documents/…), ou un lien
+    const documents = Array.isArray(dc) ? dc.map(x => ({ spectacle: slugDe(spId.get(x.spectacle_id)) || null, type: x.type, titre: x.titre,
+      url: x.url || (x.fichier ? `${BASE}/storage/v1/object/public/crescite/${x.fichier.split('/').map(encodeURIComponent).join('/')}` : null), pour: x.pour }))
+      .filter(x => x.url) : (D.documents || []);
+    return { saison, aujourdhui, site, shows, dossiers, ateliers, dates, saisons, carte, photos, personnes, documents };
   }
 
   // ------------------------------------------------------------------------------------------- appliquer, prévenir

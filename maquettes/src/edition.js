@@ -181,7 +181,8 @@ const EDITION = (() => {
       return { rangee: `crescite_spectacles?slug=eq.${encodeURIComponent(k[1])}`, colonne: COLONNES[champ] || champ,
         valeur: () => { const v = clone(resoudre(`shows.${k[1]}.${champ}`).valeur); if (champ === 'photos' && Array.isArray(v)) v.forEach(p => delete p.cle); return v; } };
     }
-    if (k[0] === 'site' && k[1]) return { rangee: `crescite_textes?cle=eq.${encodeURIComponent(k[1])}`, colonne: 'valeur', valeur: () => clone(D.site[k[1]]) };
+    if (k[0] === 'site' && k[1]) return { rangee: `crescite_textes?cle=eq.${encodeURIComponent(k[1])}`, colonne: 'valeur', valeur: () => clone(D.site[k[1]]),
+      creer: { table: 'crescite_textes', cle: k[1] } };
     if (k[0] === 'personnes' && k[2]) {           // une fiche de l'équipe : son nom, ses métiers, sa photo (et l'accord de la montrer)
       const champ = k[2], p = () => (D.personnes || {})[k[1]] || {};
       return { rangee: `crescite_personnes?slug=eq.${encodeURIComponent(k[1])}`,
@@ -277,18 +278,22 @@ const EDITION = (() => {
   }
   async function enregistrer() {
     if (!modifies.size) return;
-    const rangees = new Map();
+    const rangees = new Map(), creations = new Map();
     for (const ch of modifies) {
       const b = versBase(ch);
       if (!b) continue;
       if (!rangees.has(b.rangee)) rangees.set(b.rangee, new Map());
       rangees.get(b.rangee).set(b.colonne, b.valeur);
+      if (b.creer) creations.set(b.rangee, b.creer);
     }
     const bt = $('[data-ed="enregistrer"]', barre); if (bt) bt.disabled = true;
     try {
       for (const [rangee, colonnes] of rangees) {
         const corps = Object.fromEntries([...colonnes].map(([c, f]) => [c, f()]));
-        const r = await requete('PATCH', `/rest/v1/${rangee}`, corps, { Prefer: 'return=representation' });
+        let r = await requete('PATCH', `/rest/v1/${rangee}`, corps, { Prefer: 'return=representation' });
+        // un texte du site qui n'est pas encore dans la base (une rubrique nouvelle, comme « programmation ») : on le crée
+        const c = creations.get(rangee);
+        if (Array.isArray(r) && !r.length && c) r = await requete('POST', `/rest/v1/${c.table}`, { cle: c.cle, ...corps }, { Prefer: 'return=representation' });
         if (!Array.isArray(r) || !r.length) throw new Error('la base n’a rien modifié (droits du compte ?)');
       }
       modifies.clear();

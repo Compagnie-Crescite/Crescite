@@ -15,6 +15,10 @@
 --   crescite_abonnements             les téléphones et ordinateurs abonnés aux notifications (Web Push)
 --   crescite_secrets                 le jeton qui autorise la base à appeler la fonction d'envoi ; les clés d'envoi
 --                                    (VAPID), créées par la fonction elle-même. Jamais lus par le site ni par l'équipe.
+--   crescite_textes 'programmation'  le contact diffusion de la page « Je souhaite programmer » (l'administratrice, et
+--                                    le courriel de la compagnie ; un téléphone seulement si l'administration en saisit un)
+--   Cassandres                       son action culturelle n'est pas encore construite : elle reste en base, masquée
+--                                    (action_culturelle.masquee), et le site ne la montre plus
 -- L'envoi vers les téléphones passe par la fonction Supabase « crescite-push » (supabase/functions/crescite-push) :
 -- tant qu'elle n'est pas déployée, les notifications restent dans l'application, rien ne casse.
 
@@ -460,6 +464,17 @@ revoke execute on function public.crescite_prevenir_equipe(bigint, text, text) f
 revoke execute on function public.crescite_notifier(bigint[], text, text, text, bigint, bigint, text),
   public.crescite_membres_date(bigint), public.crescite_date_texte(bigint), public.crescite_a_venir(bigint) from anon, authenticated, public;
 
+-- ------------------------------------------------------------------------------------------------ « Je souhaite programmer »
+-- le contact diffusion, modifiable ensuite dans l'administration ou sur le site ; jamais écrasé si le script est relancé
+insert into public.crescite_textes (cle, valeur) values
+  ('programmation', '{"contact": {"nom": "Barbara Daussy", "role": "Administratrice", "email": "contact@crescite.fr", "telephone": null}}')
+on conflict (cle) do nothing;
+
+-- l'action culturelle de Cassandres, pas encore construite : masquée, pas effacée. Pour la rouvrir, l'administration
+-- met masquee à false ; ce script ne la remasque pas (il ne touche qu'une action qui n'a jamais eu la clé)
+update public.crescite_spectacles set action_culturelle = action_culturelle || '{"masquee": true}'::jsonb
+where slug = 'cassandres' and not (action_culturelle ? 'masquee');
+
 -- ------------------------------------------------------------------------------------------------ temps réel
 
 do $$
@@ -476,6 +491,9 @@ notify pgrst, 'reload schema';
 
 -- ce qui est en place
 select 'notifications' as "élément", 'prêtes : la base prévient l''équipe à chaque changement' as "état"
+union all
+select 'page des programmateurs', case when exists (select 1 from public.crescite_textes where cle = 'programmation')
+  then 'contact diffusion en place' else 'contact diffusion absent' end
 union all
 select 'envoi aux téléphones', case when exists (select 1 from pg_extension where extname = 'pg_net')
   then 'pg_net est là : il reste à déployer la fonction crescite-push (voir README)'

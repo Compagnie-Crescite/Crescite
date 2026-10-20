@@ -1,5 +1,5 @@
 {
- "_note": "Univers des spectacles et action culturelle de chacun, pour une communication de compagnie. Chaque texte est repris tel quel de sa source (champ « source ») : crescite.fr (site), le dossier scolaire Bérénice 2026 (dossier), les pages spectacles d'adrienvada.fr (adrienvada), le dossier artistique 2027-2028 de la compagnie (drac, passages sur les spectacles et les actions culturelles seulement : ni budget, ni salaire, ni contact). Les couleurs et les polices sont des choix de maquette, tirés du dossier pour Bérénice, d'adrienvada.fr pour Cléophène, L'imaginaire forcé et Cassandres, du prototype pour les autres.",
+ "_note": "Univers des spectacles et action culturelle de chacun, pour une communication de compagnie. Chaque texte est repris tel quel de sa source (champ « source ») : crescite.fr (site), le dossier scolaire Bérénice 2026 (dossier), les pages spectacles d'adrienvada.fr (adrienvada), le dossier artistique 2027-2028 de la compagnie (drac, passages sur les spectacles et les actions culturelles seulement : ni budget, ni salaire, ni contact). Les couleurs et les polices sont des choix de maquette, tirés du dossier pour Bérénice, d'adrienvada.fr pour Cléophène, L'imaginaire forcé et Cassandres, du prototype pour les autres. Une action culturelle marquée « masquee » (Cassandres, pas encore construite) reste dans les données mais n'est pas publiée.",
  "sources": {
   "site": "https://crescite.fr",
   "dossier": "Dossier scolaire Bérénice 2026, Compagnie Crescite",
@@ -731,6 +731,7 @@
    "credit": null,
    "video": null,
    "actionCulturelle": {
+    "masquee": true,
     "type": "Lieux d’enseignement agronomique",
     "public": null,
     "lieu": "etablissement",

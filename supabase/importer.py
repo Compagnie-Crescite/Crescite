@@ -25,6 +25,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "maquettes"))
 import build  # noqa: E402  (les données du site, telles que les maquettes les reçoivent)
 
+UNIVERS = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))["spectacles"]
+
 URL = os.environ.get("SUPABASE_URL", "https://omekkqjinvppadsoinvj.supabase.co")
 CLE = os.environ.get("SUPABASE_CLE_SERVICE")
 MOIS = {m: i + 1 for i, m in enumerate(build.MOIS)}
@@ -173,7 +175,9 @@ def preparer():
             "affirmations": s["affirmations"], "citations": s["citations"], "video": s["video"], "photo": f"{s['slug']}.webp",
             "photos": [{k: v for k, v in dict(p, fichier=f"{p['cle']}.webp").items() if k != "cle"} for p in s["photos"]],
             "credit_photos": s["creditPhotos"], "credit_dossier": s["creditDossier"],
-            "action_culturelle": s["actionCulturelle"], "programmer": s["programmer"],
+            # l'action culturelle telle qu'écrite dans les données, même masquée (D n'a que celles qui sont publiées)
+            "action_culturelle": UNIVERS.get(s["slug"], {}).get("actionCulturelle") or s["actionCulturelle"] or {},
+            "programmer": s["programmer"],
             "dossier": f"dossier:{s['dossier']}" if s["dossier"] else None,
         })
     slugs = {s["slug"] for s in spectacles}
@@ -265,7 +269,8 @@ def preparer():
     # ---- les autres textes du site (la navigation reste dans le code des maquettes)
     site = D["site"]
     textes = [{"cle": k, "valeur": site[k]} for k in ("nom", "diaporama", "donateurs", "compagnie", "actions", "ecole", "contact",
-                                                       "coordonnees", "ecrire", "facebook", "partenaires", "liensLegaux", "legal")]
+                                                       "coordonnees", "ecrire", "facebook", "partenaires", "liensLegaux", "legal",
+                                                       "programmation")]
     textes.append({"cle": "dossier:berenice", "valeur": dict(dos, ateliers={"titre": dos["ateliers"]["titre"]})})
     return spectacles, lieux, dates, ateliers, textes, fichiers
 

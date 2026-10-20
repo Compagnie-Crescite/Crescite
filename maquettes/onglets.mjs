@@ -15,13 +15,18 @@ const VUES = [
   ['voir', '#/voir', D => [D.dates.find(d => !d.scolaire).details[0].texte, D.site.saisons.find(s => s.saison === '2019-2020').titre],
     D => [...D.dates.filter(d => d.scolaire).map(d => d.details[0].texte),
           ...D.saisons['2023-2024'].spectacles.flatMap(g => g.dates).map(d => (d.details[0] || {}).texte).filter(t => t && t.length > 30).slice(0, 3)]],
-  ['programmer', '#/programmer', D => [D.shows.find(s => s.slug === 'mon-royaume').programmer.representations]],
-  ['etablissement', '#/etablissement', D => ['afin de participer à « l’école du spectateur »', D.shows.find(s => s.slug === 'berenice').actionCulturelle.type]],
+  // programmer (règle 13) : le contact diffusion, le dossier PDF, les conditions financières sur demande
+  ['programmer', '#/programmer', D => [D.shows.find(s => s.slug === 'mon-royaume').programmer.representations, D.site.programmation.contact.nom,
+    D.site.libelles.contactDiffusion, D.site.libelles.dossierPdf, D.site.libelles.conditionsFinancieres]],
+  // établissement : rien de l'action culturelle masquée de Cassandres (règle 14)
+  ['etablissement', '#/etablissement', D => ['afin de participer à « l’école du spectateur »', D.shows.find(s => s.slug === 'berenice').actionCulturelle.type],
+    () => ['Lieux d’enseignement agronomique', 'Notre première intuition à ce stade du travail']],
   ['spectacles', '#/spectacles', D => D.shows.map(s => s.titreLignes[0])],
   ['compagnie', '#/compagnie', D => [D.site.compagnie.directeur.titre, 'Cassandre(s)']],
   ['contact', '#/contact', D => [D.site.contact.titre]],
   ['berenice-voir', '#/spectacle/berenice/voir', D => ['Rome, an 79.']],
-  ['berenice-programmer', '#/spectacle/berenice/programmer', D => ['100 à 120 places']],
+  ['berenice-programmer', '#/spectacle/berenice/programmer', D => ['100 à 120 places', D.site.libelles.dossierPdf, D.site.programmation.contact.email]],
+  ['cleophene-programmer', '#/spectacle/cleophene/programmer', D => [D.site.libelles.ficheTechniqueSurDemande, D.site.libelles.dossierPdf]],
   ['berenice-etablissement', '#/spectacle/berenice/etablissement', D => ['Atelier de préparation', 'À partir de la seconde']],
   ['cleophene-etablissement', '#/spectacle/cleophene/etablissement', D => ['parcours du spectateur']],
   ['macbeth-etablissement', '#/spectacle/macbeth-fatum/etablissement', D => [D.site.libelles.aCompleter]],
@@ -31,7 +36,9 @@ const VUES = [
 ];
 // les anciennes adresses et l'adresse d'un spectacle sans entrée : où elles doivent mener
 const REDIRECTIONS = [['#/espace-pro', /^#\/programmer$/], ['#/agenda', /^#\/voir$/], ['#/actions-culturelles', /^#\/etablissement$/],
-  ['#/spectacle/mon-royaume', /^#\/spectacle\/mon-royaume\/(voir|programmer|etablissement)$/]];
+  ['#/spectacle/mon-royaume', /^#\/spectacle\/mon-royaume\/(voir|programmer|etablissement)$/],
+  // un spectacle sans action culturelle n'a pas d'onglet établissement (règle 14)
+  ['#/spectacle/cassandres/etablissement', /^#\/spectacle\/cassandres\/voir$/]];
 // les vues où une entrée du menu doit être marquée aria-current="page" (une seule)
 const ONGLETS = ['voir', 'programmer', 'etablissement', 'spectacles', 'compagnie', 'contact'];
 // les trois entrées, à portée de main en haut de ces vues (sans ouvrir de menu)
@@ -112,6 +119,11 @@ for (const n of names) {
           manquants: fA.filter(s => s && !lu.includes(window.__norm(s))),
           presents: [...fI, ...DISPARUS].filter(s => s && lu.includes(window.__norm(s))),
           aPortee,
+          // règle 14 : aucun lien visible vers l'onglet établissement d'un spectacle sans action culturelle
+          sansAction: D.shows.filter(s => !s.actionCulturelle).flatMap(s => [...document.querySelectorAll(`a[href$="#/spectacle/${s.slug}/etablissement"]`)].filter(vis).map(() => s.slug)),
+          // règle 13 : les boutons du dossier PDF, et les liens mailto: visibles
+          dossiers: [...document.querySelectorAll('[data-dossier]')].filter(vis).map(e => e.getAttribute('data-dossier')),
+          mailto: [...document.querySelectorAll('a[href^="mailto:"]')].filter(vis).length,
         };
       }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, ENTREES]);
       if (etat.debord > 1) log.push(`${tag} ${vue} : débordement horizontal de ${etat.debord}px`);
@@ -124,6 +136,19 @@ for (const n of names) {
       if (etat.manquants.length) log.push(`${tag} ${vue} : attendu mais absent : ${etat.manquants.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
       if (vue === 'voir' && etat.ordre && !etat.ordre.ok) log.push(`${tag} voir : les prochaines dates doivent précéder l'agenda passé (${etat.ordre.detail})`);
       if (etat.presents.length) log.push(`${tag} ${vue} : ne devrait pas apparaître : ${etat.presents.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
+      if (etat.sansAction.length) log.push(`${tag} ${vue} : lien visible vers l'onglet établissement de ${[...new Set(etat.sansAction)].join(', ')}, qui n'a pas d'action culturelle (règle 14)`);
+      if (vue === 'programmer' && !etat.dossiers.length) log.push(`${tag} programmer : aucun bouton [data-dossier] (dossier PDF, règle 13)`);
+      if (vue === 'programmer' && !etat.mailto) log.push(`${tag} programmer : aucun lien mailto: visible vers le contact diffusion (règle 13)`);
+      if (/-programmer$/.test(vue) && !etat.dossiers.includes(vue.split('-')[0])) log.push(`${tag} ${vue} : pas de bouton [data-dossier="${vue.split('-')[0]}"] (règle 13)`);
+      // le dossier PDF se compose et se télécharge (une fois par maquette)
+      if (vue === 'berenice-programmer' && tag === 'tab' && etat.dossiers.includes('berenice')) {
+        const dl = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
+        await page.evaluate(() => { const b = [...document.querySelectorAll('[data-dossier="berenice"]')].find(e => e.getClientRects().length); b.scrollIntoView({ block: 'center' }); b.click(); });
+        const f = await dl;
+        if (!f) log.push(`${tag} ${vue} : le bouton du dossier PDF ne télécharge rien en 20 s`);
+        else if (f.suggestedFilename() !== 'dossier-berenice.pdf') log.push(`${tag} ${vue} : téléchargement inattendu « ${f.suggestedFilename()} »`);
+        await page.evaluate(() => scrollTo(0, 0));
+      }
       if (process.env.EDITION === '1' && tag === 'tab') {
         const att = { compagnie: [['[data-edit^="site.compagnie.paragraphes"]', 2]], 'berenice-voir': [['[data-edit^="shows.berenice.texte"]', 1], ['[data-edit-photo^="shows.berenice"]', 1]],
           'berenice-etablissement': [['[data-edit^="dossiers.berenice"]', 3], ['[data-edit^="shows.berenice.actionCulturelle"]', 1]], etablissement: [['[data-edit^="site.ecole"]', 1]],
