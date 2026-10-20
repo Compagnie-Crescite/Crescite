@@ -95,8 +95,9 @@ const EDITION = (() => {
   .ed-annonce { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 11px; background: #1d1720; color: #fff; box-shadow: 0 8px 28px rgba(0, 0, 0, .3); font: 14px/1.4 var(--ed-police-d); }
   .ed-annonce.ed-erreur { background: #8c1d16; }
   .ed-annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .45); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
-  .ed-ajout { margin: 10px 0; }`;
-  function styles() { if ($('#ed-styles')) return; const s = document.createElement('style'); s.id = 'ed-styles'; s.textContent = STYLE; document.head.append(s); }
+  .ed-ajout { margin: 10px 0; }
+  .ed-boite[hidden], .ed-boite [hidden], .ed-barre [hidden] { display: none !important; }`;
+  function styles() { if ($('#ed-styles')) return; const s = document.createElement('style'); s.id = 'ed-styles'; s.textContent = STYLE; document.head.prepend(s); }   // en tête : à précision égale, les règles de la maquette l'emportent
 
   function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', delai = 5500 } = {}) {
     styles();
@@ -383,7 +384,15 @@ const EDITION = (() => {
   // ----------------------------------------------------------------------------------------------- les dates
   function boutonsAgenda() {
     if (!moi.actif) return;
+    // un seul « Ajouter une date » par agenda (une valeur de data-agenda) : sur sa première liste visible
+    const choisies = new Map();
     $$('[data-agenda]').forEach(z => {
+      const cle = z.dataset.agenda || '', vue = z.getClientRects().length > 0, c = choisies.get(cle);
+      if (!c || (!c.vue && vue)) choisies.set(cle, { z, vue });
+    });
+    const garder = new Set([...choisies.values()].map(c => c.z));
+    $$('.ed-ajout').forEach(b => { if (!garder.has(b.parentElement)) b.remove(); });
+    garder.forEach(z => {
       if (z.querySelector(':scope > .ed-ajout')) return;
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'ed-bt ed-plein ed-ajout ed-boite'; b.textContent = '＋ Ajouter une date';
