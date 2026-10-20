@@ -1,0 +1,860 @@
+{
+ "_note": "Les personnes de l'équipe et la distribution de chaque spectacle : les fiches publiées sur crescite.fr (avec, mise en scène, lumières, régie…) et, pour Cassandres, le dossier artistique 2027-2028 (distribution non publiée tant que la compagnie ne la confirme pas). Coordonnées et photos ne sont pas ici : elles vont dans la base (fiches privées, stockage), jamais dans ce dépôt public. Import : supabase/equipe.py.",
+ "personnes": [
+  {
+   "slug": "johann-abiola",
+   "prenom": "Johann",
+   "nom": "Abiola",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "angelo-jossec",
+   "prenom": "Angelo",
+   "nom": "Jossec",
+   "metiers": [
+    "Direction artistique",
+    "Mise en scène",
+    "Texte",
+    "Scénographie",
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "manon-rivier",
+   "prenom": "Manon",
+   "nom": "Rivier",
+   "metiers": [
+    "Accessoires",
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "lauren-toulin",
+   "prenom": "Lauren",
+   "nom": "Toulin",
+   "metiers": [
+    "Collaboration artistique",
+    "Action culturelle",
+    "Assistanat à la mise en scène",
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "adrien-vada",
+   "prenom": "Adrien",
+   "nom": "Vada",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "william-langlois",
+   "prenom": "William",
+   "nom": "Langlois",
+   "metiers": [
+    "Création sonore et musicale",
+    "Régie son"
+   ]
+  },
+  {
+   "slug": "jerome-hardouin",
+   "prenom": "Jérôme",
+   "nom": "Hardouin",
+   "metiers": [
+    "Création lumières",
+    "Régie générale"
+   ]
+  },
+  {
+   "slug": "jane-avezou",
+   "prenom": "Jane",
+   "nom": "Avezou",
+   "metiers": [
+    "Costumes"
+   ]
+  },
+  {
+   "slug": "emmanuelle-herondelle",
+   "prenom": "Emmanuelle",
+   "nom": "Hérondelle",
+   "metiers": [
+    "Scénographie",
+    "Accessoires",
+    "Maquillage"
+   ]
+  },
+  {
+   "slug": "thomas-janeczko",
+   "prenom": "Thomas",
+   "nom": "Janeczko",
+   "metiers": [
+    "Régie générale"
+   ]
+  },
+  {
+   "slug": "adrian-noguera",
+   "prenom": "Adrián",
+   "nom": "Noguera",
+   "metiers": [
+    "Création lumières",
+    "Régie"
+   ]
+  },
+  {
+   "slug": "garance-morel",
+   "prenom": "Garance",
+   "nom": "Morel",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "bryan-chivot",
+   "prenom": "Bryan",
+   "nom": "Chivot",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "vladimir-delaye",
+   "prenom": "Vladimir",
+   "nom": "Delaye",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "charles-levasseur",
+   "prenom": "Charles",
+   "nom": "Levasseur",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "steeve-brunet",
+   "prenom": "Steeve",
+   "nom": "Brunet",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "helene-cabot",
+   "prenom": "Hélène",
+   "nom": "Cabot",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "sophie-caritte",
+   "prenom": "Sophie",
+   "nom": "Caritté",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "elsa-delmas",
+   "prenom": "Elsa",
+   "nom": "Delmas",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "remi-dessenoix",
+   "prenom": "Rémi",
+   "nom": "Dessenoix",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "jean-francois-levistre",
+   "prenom": "Jean-François",
+   "nom": "Levistre",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "jean-marc-talbot",
+   "prenom": "Jean-Marc",
+   "nom": "Talbot",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "lou-valentini",
+   "prenom": "Lou",
+   "nom": "Valentini",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "corinne-meyniel",
+   "prenom": "Corinne",
+   "nom": "Meyniel",
+   "metiers": [
+    "Texte"
+   ]
+  },
+  {
+   "slug": "amelie-chalmey",
+   "prenom": "Amélie",
+   "nom": "Chalmey",
+   "metiers": [
+    "Assistanat à la mise en scène"
+   ]
+  },
+  {
+   "slug": "renaud-aubin",
+   "prenom": "Renaud",
+   "nom": "Aubin",
+   "metiers": [
+    "Régie son"
+   ]
+  },
+  {
+   "slug": "olivier-leroy",
+   "prenom": "Olivier",
+   "nom": "Leroy",
+   "metiers": [
+    "Scénographie",
+    "Construction des décors"
+   ]
+  },
+  {
+   "slug": "pierre-delmotte",
+   "prenom": "Pierre",
+   "nom": "Delmotte",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "alice-lestienne",
+   "prenom": "Alice",
+   "nom": "Lestienne",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "lisa-peyron",
+   "prenom": "Lisa",
+   "nom": "Peyron",
+   "metiers": [
+    "Conseil artistique",
+    "Accessoires",
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "alexis-magenham",
+   "prenom": "Alexis",
+   "nom": "Magenham",
+   "metiers": [
+    "Traduction"
+   ]
+  },
+  {
+   "slug": "louisa-travers",
+   "prenom": "Louisa",
+   "nom": "Travers",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "eric-guilbaud",
+   "prenom": "Eric",
+   "nom": "Guilbaud",
+   "metiers": [
+    "Création lumières"
+   ]
+  },
+  {
+   "slug": "louison-bayeux",
+   "prenom": "Louison",
+   "nom": "Bayeux",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "claire-le-plomb-martin",
+   "prenom": "Claire",
+   "nom": "Le Plomb Martin",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "louis-le-plomb-martin",
+   "prenom": "Louis",
+   "nom": "Le Plomb Martin",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "charline-porrone",
+   "prenom": "Charline",
+   "nom": "Porrone",
+   "metiers": [
+    "Jeu"
+   ]
+  },
+  {
+   "slug": "barbara-daussy",
+   "prenom": "Barbara",
+   "nom": "Daussy",
+   "metiers": [
+    "Administration"
+   ]
+  }
+ ],
+ "distributions": {
+  "cassandres": [
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Texte et mise en scène",
+    "publie": false
+   },
+   {
+    "personne": "remi-dessenoix",
+    "categorie": "jeu",
+    "fonction": "",
+    "publie": false
+   },
+   {
+    "personne": "charline-porrone",
+    "categorie": "jeu",
+    "fonction": "",
+    "publie": false
+   },
+   {
+    "personne": "jean-marc-talbot",
+    "categorie": "jeu",
+    "fonction": "",
+    "publie": false
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "jeu",
+    "fonction": "",
+    "publie": false
+   },
+   {
+    "personne": "adrien-vada",
+    "categorie": "jeu",
+    "fonction": "",
+    "publie": false
+   },
+   {
+    "personne": "emmanuelle-herondelle",
+    "categorie": "creation",
+    "fonction": "Scénographie",
+    "publie": false
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Scénographie",
+    "publie": false
+   },
+   {
+    "personne": "olivier-leroy",
+    "categorie": "creation",
+    "fonction": "Scénographie",
+    "publie": false
+   },
+   {
+    "personne": "eric-guilbaud",
+    "categorie": "creation",
+    "fonction": "Création lumière",
+    "publie": false
+   },
+   {
+    "personne": "adrian-noguera",
+    "categorie": "creation",
+    "fonction": "Création lumière",
+    "publie": false
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "creation",
+    "fonction": "Création musicale",
+    "publie": false
+   },
+   {
+    "personne": "jane-avezou",
+    "categorie": "creation",
+    "fonction": "Création costumes",
+    "publie": false
+   },
+   {
+    "personne": "emmanuelle-herondelle",
+    "categorie": "creation",
+    "fonction": "Création accessoires",
+    "publie": false
+   }
+  ],
+  "cleophene": [
+   {
+    "personne": "johann-abiola",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "manon-rivier",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "adrien-vada",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Mise en scène et adaptation",
+    "en_tournee": false
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "creation",
+    "fonction": "Création musicale",
+    "en_tournee": false
+   },
+   {
+    "personne": "jerome-hardouin",
+    "categorie": "creation",
+    "fonction": "Création lumières",
+    "en_tournee": false
+   },
+   {
+    "personne": "jane-avezou",
+    "categorie": "creation",
+    "fonction": "Création costumes",
+    "en_tournee": false
+   },
+   {
+    "personne": "emmanuelle-herondelle",
+    "categorie": "creation",
+    "fonction": "Création accessoires",
+    "en_tournee": false
+   },
+   {
+    "personne": "thomas-janeczko",
+    "categorie": "technique",
+    "fonction": "Régisseur général",
+    "en_tournee": true
+   },
+   {
+    "personne": "adrian-noguera",
+    "categorie": "technique",
+    "fonction": "Régisseur",
+    "en_tournee": true
+   }
+  ],
+  "ci-gisait-cyrano": [
+   {
+    "personne": "garance-morel",
+    "categorie": "jeu",
+    "fonction": "",
+    "alternance": "en alternance avec Lauren Toulin"
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "jeu",
+    "fonction": "",
+    "alternance": "en alternance avec Garance Morel"
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "jeu",
+    "fonction": "",
+    "alternance": "en alternance avec Bryan Chivot"
+   },
+   {
+    "personne": "bryan-chivot",
+    "categorie": "jeu",
+    "fonction": "",
+    "alternance": "en alternance avec Angelo Jossec"
+   },
+   {
+    "personne": "vladimir-delaye",
+    "categorie": "jeu",
+    "fonction": "",
+    "alternance": "en alternance avec Charles Levasseur"
+   },
+   {
+    "personne": "charles-levasseur",
+    "categorie": "jeu",
+    "fonction": "",
+    "alternance": "en alternance avec Vladimir Delaye"
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Mise en scène et adaptation",
+    "en_tournee": false
+   },
+   {
+    "personne": "jerome-hardouin",
+    "categorie": "creation",
+    "fonction": "Création lumières",
+    "en_tournee": false
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "creation",
+    "fonction": "Création sonore",
+    "en_tournee": false
+   },
+   {
+    "personne": "emmanuelle-herondelle",
+    "categorie": "creation",
+    "fonction": "Création accessoires et maquillage",
+    "en_tournee": false
+   },
+   {
+    "personne": "thomas-janeczko",
+    "categorie": "technique",
+    "fonction": "Régisseur général",
+    "en_tournee": true
+   },
+   {
+    "personne": "adrian-noguera",
+    "categorie": "technique",
+    "fonction": "Régisseur",
+    "en_tournee": true
+   }
+  ],
+  "la-folle-idee": [
+   {
+    "personne": "steeve-brunet",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "helene-cabot",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "sophie-caritte",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "elsa-delmas",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "remi-dessenoix",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "jean-francois-levistre",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "jean-marc-talbot",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "lou-valentini",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Texte",
+    "en_tournee": false
+   },
+   {
+    "personne": "corinne-meyniel",
+    "categorie": "creation",
+    "fonction": "Texte",
+    "en_tournee": false
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Mise en scène",
+    "en_tournee": false
+   },
+   {
+    "personne": "amelie-chalmey",
+    "categorie": "creation",
+    "fonction": "Assistanat mise en scène",
+    "en_tournee": false
+   },
+   {
+    "personne": "jerome-hardouin",
+    "categorie": "technique",
+    "fonction": "Création lumières et régie générale",
+    "en_tournee": true
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "creation",
+    "fonction": "Création sonore",
+    "en_tournee": false
+   },
+   {
+    "personne": "renaud-aubin",
+    "categorie": "technique",
+    "fonction": "Régie son",
+    "en_tournee": true
+   },
+   {
+    "personne": "jane-avezou",
+    "categorie": "creation",
+    "fonction": "Création costumes",
+    "en_tournee": false
+   },
+   {
+    "personne": "emmanuelle-herondelle",
+    "categorie": "creation",
+    "fonction": "Création accessoires",
+    "en_tournee": false
+   },
+   {
+    "personne": "olivier-leroy",
+    "categorie": "creation",
+    "fonction": "Construction décors",
+    "en_tournee": false
+   }
+  ],
+  "berenice": [
+   {
+    "personne": "angelo-jossec",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "manon-rivier",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "adrien-vada",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Mise en scène et adaptation",
+    "en_tournee": false
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "technique",
+    "fonction": "Création musicale et régisseur son",
+    "en_tournee": true
+   },
+   {
+    "personne": "jerome-hardouin",
+    "categorie": "creation",
+    "fonction": "Création lumières",
+    "en_tournee": false
+   },
+   {
+    "personne": "jane-avezou",
+    "categorie": "creation",
+    "fonction": "Création costumes",
+    "en_tournee": false
+   }
+  ],
+  "macbeth-fatum": [
+   {
+    "personne": "pierre-delmotte",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "alice-lestienne",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "lisa-peyron",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Mise en scène et adaptation",
+    "en_tournee": false
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "creation",
+    "fonction": "Assistante",
+    "en_tournee": false
+   },
+   {
+    "personne": "alexis-magenham",
+    "categorie": "creation",
+    "fonction": "Traduction",
+    "en_tournee": false
+   },
+   {
+    "personne": "lisa-peyron",
+    "categorie": "creation",
+    "fonction": "Conseillère artistique, doublure et accessoiriste",
+    "en_tournee": false
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "creation",
+    "fonction": "Création sonore",
+    "en_tournee": false
+   },
+   {
+    "personne": "jerome-hardouin",
+    "categorie": "creation",
+    "fonction": "Création lumières",
+    "en_tournee": false
+   },
+   {
+    "personne": "jane-avezou",
+    "categorie": "creation",
+    "fonction": "Création costumes",
+    "en_tournee": false
+   }
+  ],
+  "mon-royaume": [
+   {
+    "personne": "alice-lestienne",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "charles-levasseur",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "louisa-travers",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Mise en scène et adaptation",
+    "en_tournee": false
+   },
+   {
+    "personne": "alexis-magenham",
+    "categorie": "creation",
+    "fonction": "Traduction",
+    "en_tournee": false
+   },
+   {
+    "personne": "eric-guilbaud",
+    "categorie": "creation",
+    "fonction": "Création lumières",
+    "en_tournee": false
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "creation",
+    "fonction": "Création sonore",
+    "en_tournee": false
+   },
+   {
+    "personne": "lisa-peyron",
+    "categorie": "creation",
+    "fonction": "Création accessoires",
+    "en_tournee": false
+   },
+   {
+    "personne": "manon-rivier",
+    "categorie": "creation",
+    "fonction": "Création accessoires",
+    "en_tournee": false
+   },
+   {
+    "personne": "thomas-janeczko",
+    "categorie": "technique",
+    "fonction": "Régisseur général",
+    "en_tournee": true
+   }
+  ],
+  "imaginaire-force": [
+   {
+    "personne": "louison-bayeux",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "claire-le-plomb-martin",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "louis-le-plomb-martin",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Mise en scène",
+    "en_tournee": false
+   }
+  ]
+ }
+}
