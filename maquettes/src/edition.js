@@ -32,7 +32,7 @@ const EDITION = (() => {
   const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
   // ----------------------------------------------------------------------------------------------- styles
-  const CSS = `
+  const STYLE = `
   :root { --ed-fond-d: var(--ed-fond, #fff); --ed-encre-d: var(--ed-encre, #1d1720); --ed-accent-d: var(--ed-accent, #a8306f);
     --ed-sur-d: var(--ed-sur-accent, #fff); --ed-police-d: var(--ed-police, system-ui, sans-serif); --ed-rayon-d: var(--ed-rayon, 12px);
     --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); }
@@ -96,7 +96,7 @@ const EDITION = (() => {
   .ed-annonce.ed-erreur { background: #8c1d16; }
   .ed-annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .45); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
   .ed-ajout { margin: 10px 0; }`;
-  function styles() { if ($('#ed-styles')) return; const s = document.createElement('style'); s.id = 'ed-styles'; s.textContent = CSS; document.head.append(s); }
+  function styles() { if ($('#ed-styles')) return; const s = document.createElement('style'); s.id = 'ed-styles'; s.textContent = STYLE; document.head.append(s); }
 
   function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', delai = 5500 } = {}) {
     styles();
@@ -333,8 +333,11 @@ const EDITION = (() => {
     if (!Array.isArray(arr)) return;
     arr.splice(i + 1, 0, vider(clone(arr[i])));
     noter(`${parent}.${i + 1}`);
+    if (document.activeElement?.blur) document.activeElement.blur();
     DONNEES.prevenir();
-    requestAnimationFrame(() => { armerTout(); const n = $(`[data-edit="${CSS.escape(`${parent}.${i + 1}`)}"]`); if (n) { n.focus(); n.classList.add('ed-modifie'); } });
+    // la maquette s'est redessinée : on écrit aussitôt dans le nouveau paragraphe
+    const viser = () => { armerTout(); const n = $(`[data-edit="${CSS.escape(`${parent}.${i + 1}`)}"]`); if (n) { n.classList.add('ed-modifie'); n.focus(); } return !!n; };
+    if (!viser()) requestAnimationFrame(viser);
   }
   function retirer(chemin) {
     const i = +chemin.split('.').pop(), parent = chemin.replace(/\.\d+$/, ''), arr = resoudre(parent).valeur;
