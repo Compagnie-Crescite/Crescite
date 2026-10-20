@@ -73,7 +73,7 @@ const DONNEES = (() => {
     }
   }
   async function lire() {
-    const ctl = new AbortController(), minuteur = setTimeout(() => ctl.abort(), 12000);
+    const ctl = new AbortController(), minuteur = setTimeout(() => ctl.abort(), 20000);
     try {
       const [sp, li, da, re, at, tx] = await Promise.all([
         lireTable('crescite_spectacles', '*', 'ordre.asc,id.asc', ctl.signal),
@@ -272,7 +272,14 @@ const DONNEES = (() => {
   }
 
   if (actif) {
-    recharger().then(() => { if (moi.etat === 'base') { ecouter(); verifier(); setInterval(verifier, 60000); } });
+    // la première lecture : si la base ne répond pas (réseau lent, coupure), la page garde l'instantané et réessaie
+    let branche = false, essai = 0;
+    const brancher = () => { if (branche) return; branche = true; ecouter(); verifier(); setInterval(verifier, 60000); };
+    const premiere = () => recharger().then(() => {
+      if (moi.etat === 'base') brancher();
+      else setTimeout(premiere, [5000, 15000, 45000][essai++] || 120000);
+    });
+    premiere();
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { verifier(); if (!connecte) bientot(0); } });
   }
   moi.surChangement = fn => { if (typeof fn === 'function') abonnes.push(fn); };
