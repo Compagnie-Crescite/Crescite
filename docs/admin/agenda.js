@@ -6,6 +6,9 @@
    AGENDA.precisions(date, reps, lieu)   [{texte, lien}] : date.details, ou « 14h et 20h : représentations au Forum »
    AGENDA.chez(nom)                      « au Théâtre des Charmes », « à L’Eclat », « à la Ferme de Bel Ebat »
    AGENDA.saisonDe('2026-10-12')         « 2026-2027 » ; AGENDA.heureTexte('20:30') « 20h30 » ; AGENDA.iso(new Date())
+   AGENDA.court('2026-12-18', noms)      { semaine: 'ven.', jour: '18', mois: 'déc.', an: '2026', texte: 'ven. 18 déc.' } : un
+                                         bouton de date (réserver) ; noms = { semaine, mois } pour d'autres libellés (D.site.libelles)
+                                         que AGENDA.SEMAINE (lun. … dim.) et AGENDA.MOIS_COURTS (janv. … déc.)
    date = {debut, fin, precision: 'jour'|'periode'|'mois'|'saison', intitule, details, lien, nb_representations}
    reps = [{jour, heure, public, annulee}], lieu = {nom, commune, departement} */
 const AGENDA = (() => {
@@ -14,6 +17,16 @@ const AGENDA = (() => {
   const saisonDe = j => { const a = +j.slice(0, 4), m = +j.slice(5, 7); return m >= 9 ? `${a}-${a + 1}` : `${a - 1}-${a}`; };
   const jourTexte = j => { const n = +j.slice(8, 10); return n === 1 ? '1er' : String(n); };
   const heureTexte = h => { if (!h) return ''; const [hh, mm] = h.split(':'); return `${+hh}h${mm !== '00' ? mm : ''}`; };
+  // les noms courts d'un bouton de date (« ven. 18 déc. ») ; la semaine commence le lundi
+  const SEMAINE = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+  const MOIS_COURTS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+  function court(j, noms = {}) {
+    const s = noms.semaine && noms.semaine.length === 7 ? noms.semaine : SEMAINE, m = noms.mois && noms.mois.length === 12 ? noms.mois : MOIS_COURTS;
+    const w = (new Date(Date.UTC(+j.slice(0, 4), +j.slice(5, 7) - 1, +j.slice(8, 10))).getUTCDay() + 6) % 7;
+    const x = { semaine: s[w], jour: jourTexte(j), mois: m[+j.slice(5, 7) - 1], an: j.slice(0, 4) };
+    x.texte = `${x.semaine} ${x.jour} ${x.mois}`;
+    return x;
+  }
   const liste = xs => xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}`;
   // « 18 décembre 2026 », « 19 et 20 novembre 2026 », « du 12 au 20 février 2027 », « mars 2027 »
   function quand(date, jours) {
@@ -74,5 +87,5 @@ const AGENDA = (() => {
     return [{ texte, lien: date.lien || null }];
   }
 
-  return { MOIS, iso, saisonDe, jourTexte, heureTexte, liste, quand, ou, ligne, chez, precisions };
+  return { MOIS, SEMAINE, MOIS_COURTS, iso, saisonDe, jourTexte, heureTexte, court, liste, quand, ou, ligne, chez, precisions };
 })();

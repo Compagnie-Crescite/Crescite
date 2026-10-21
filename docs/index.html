@@ -169,7 +169,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   /* À propos : le mode d'emploi de la maquette affichée, en quelques parties courtes, chacune avec son schéma */
   // les nouveautés qu'une maquette a déjà en ligne (réserver une date, les vidéos dans la page, le jour et la nuit, la
   // troupe) : le mode d'emploi n'en parle que là
-  const AVEC = {};
+  const AVEC = { synthese: ['reserver', 'videos', 'jour', 'troupe'] };
   const a = (m, f) => (AVEC[m.n] || []).includes(f);
   const etapes = l => `<ol class="schema flux">${l.map(x => `<li>${x}</li>`).join('')}</ol>`;
   function remplirInfos() {
