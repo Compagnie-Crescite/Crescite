@@ -249,6 +249,10 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
 .ag-l{grid-column:1/span 7}
 .ag-m{grid-column:8/span 5;position:sticky;top:var(--s2)}
 .grp + .grp{margin-top:var(--s3)}
+/* un filtre cache des lignes et des mois sans les retirer (montrerLignes) : un mois caché ne compte pas pour l'écart */
+.grp[hidden],.dls>.dl[hidden]{display:none}
+#ag-liste .grp + .grp{margin-top:0}
+#ag-liste .grp:not([hidden]) ~ .grp{margin-top:var(--s3)}
 .mo{padding-bottom:.35rem;border-bottom:1px solid var(--ink);font-size:var(--fs-b);font-weight:520;letter-spacing:.1em;font-variant-caps:all-small-caps;color:var(--ec,var(--mag))}
 .dl{display:grid;grid-template-columns:2.25rem minmax(0,1fr) minmax(0,1fr);column-gap:1rem;padding:.8rem 0 .85rem;border-bottom:1px solid var(--rule)}
 .dl-n{font-style:italic;color:var(--ink2);font-variant-numeric:oldstyle-nums tabular-nums}
@@ -2040,7 +2044,9 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
     const resV = RS ? RS.dates() : [], resCles = new Set(resV.map(d => RS.cle(d)));
     const rsCle = d => { const k = RS ? RS.cle(d) : null; return k != null && resCles.has(k) ? k : null; };
     const parFriseV = new Map(resV.map(d => [cleProchaine(d), RS.cle(d)]));
-    const listeProchaines = () => groupes(proch.filter(garde).map(r => r.d), num, { vers: 'voir', fidDe: cleProchaine, rs: rsCle });
+    // toutes les prochaines dates, dessinées une fois avec leurs boutons de réservation : un filtre, une recherche ne font que
+    // cacher et montrer des lignes (montrerLignes), sans rien réécrire ni refaire les boutons (le geste coûte moins à l'image)
+    const listeProchaines = () => groupes(proch.map(r => r.d), num, { vers: 'voir', fidDe: cleProchaine, rs: rsCle });
     const lieuxDe = (s, rs) => {
       const parL = new Map();
       rs.forEach(r => { if (r.d.l != null) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, titre: r.titre, slug: r.g.slug }); } });
@@ -2100,6 +2106,30 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
         fl.hidden = F.l === null; q1('.flt-t', fl).textContent = F.l === null ? '' : CARTE.nom(K.lieux[F.l]);
         zone.classList.toggle('flt-on', false);
       };
+      // les lignes que le filtre garde se montrent, les autres se cachent (et les mois restés vides) ; le billet ouvert reste
+      // sous sa ligne, cachée avec elle s'il le faut. Pendant un geste (fantomes), ce qui part sous les yeux s'efface à sa
+      // place, comme avant (le reste glisse par MV.flip) : une copie inerte, posée au-dessus puis fondue, sans rien d'autre
+      const montrerLignes = (fantomes = false) => {
+        const ok = new Set(proch.filter(garde).map(r => cleProchaine(r.d))), H = innerHeight;
+        const lignes = qa('.dl[data-frise-id]', liste).map(li => [li, !ok.has(li.dataset.friseId)]);
+        const mois = qa('.grp', liste).map(g => [g, !lignes.some(([li, non]) => !non && g.contains(li))]);
+        // ce qui part : mesuré avant tout changement (une seule mise en page)
+        const partent = !fantomes ? [] : [...lignes.map(([li, non]) => non && !li.hidden && li),
+          ...mois.map(([g, non]) => non && !g.hidden && q1('.mo', g))].filter(Boolean)
+          .map(e => [e, e.getBoundingClientRect()]).filter(([, r]) => r.height && r.bottom > -40 && r.top < H + 40);
+        lignes.forEach(([li, non]) => { if (li.hidden !== non) li.hidden = non; });
+        mois.forEach(([g, non]) => { if (g.hidden !== non) g.hidden = non; });
+        partent.forEach(([e, r]) => {
+          const coque = e.parentElement.cloneNode(false), c = e.cloneNode(true);
+          [coque, c, ...c.querySelectorAll('*')].forEach(x => { [...x.attributes].forEach(a => { if (a.name === 'id' || a.name.startsWith('data-') || a.name.startsWith('aria-')) x.removeAttribute(a.name); }); });
+          c.hidden = coque.hidden = false;
+          coque.setAttribute('aria-hidden', 'true'); coque.inert = true;
+          coque.style.cssText = `position:fixed;left:${r.left}px;top:${r.top}px;width:${r.width}px;margin:0;padding:0;border:0;background:none;pointer-events:none;z-index:2;list-style:none`;
+          coque.appendChild(c); liste.appendChild(coque);
+          const a = coque.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: 'ease-in', fill: 'forwards' });
+          a.onfinish = a.oncancel = () => coque.remove();
+        });
+      };
       const recompte = () => {
         if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
         else if (F.avant) { F.ouv = F.avant; F.avant = null; }
@@ -2119,8 +2149,7 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
       const dessine = anime => {
         const faire = () => {
           recompte();
-          liste.innerHTML = listeProchaines();
-          if (rsVoir) rsVoir.dessiner();   // le billet ouvert reste ouvert sous sa ligne redessinée
+          montrerLignes(anime && bouge());   // rien n'est redessiné : les boutons de date et le billet ouvert restent où ils sont
           majPlanche();
           qa('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
           const inp = q1('#cherche'); if (inp.value !== F.q) inp.value = F.q;
@@ -2173,6 +2202,7 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
       qa('[data-s]').forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; dessine(true); }));
       let tempo = 0;
       q1('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(() => dessine(true), 120); });
+      montrerLignes();
       majPlanche();
       // le billet d'une date s'ouvre sous sa ligne (sans quitter l'agenda), se referme d'un second geste ou d'Échap ; l'adresse
       // garde la date ouverte (?date=…), le titre du billet mène au spectacle sur cette même date
