@@ -411,7 +411,7 @@ html.ed-actif .c-frise { display: none; }
    de chaque côté, qui partent des tentacules du logo ; une personne, une ventouse (sa photo, quand elle est publiée, en est
    une plus grande). Survoler ou choisir une personne allume toutes ses places et ses bras s'étendent vers elles ;
    survoler un spectacle allume son équipe. Au défilement, les bras poussent et les ventouses arrivent une à une. */
-@property --tr-p { syntax: '<number>'; inherits: true; initial-value: 1; }
+@property --tr-p { syntax: '<number>'; inherits: false; initial-value: 1; }   /* non héritée : à chaque image du défilement, seuls la place et son bras se recalculent */
 @property --tr-anneau { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 section.troupe { overflow-x: clip; content-visibility: auto; contain-intrinsic-size: auto 2300px; }   /* hors de l'écran : ni style ni mise en page */
 @media (max-width: 959px) { section.troupe { contain-intrinsic-size: auto 4400px; } }
@@ -477,7 +477,7 @@ html[data-theme="nuit"] .tr-li.tr-queue::before { background-image: url("data:im
 .tr-choeur .a-photo .tr-vignette img { width: var(--tr-v); height: var(--tr-v); }
 .tr-choeur-cat { --tr-v: clamp(60px, 19cqi, 84px); }
 .tr-choeur .a-photo .tr-nom span { display: block; }
-.tr-choeur .a-photo > .tr-ventouse { height: calc(var(--tr-v) + 8px); }   /* une photo introuvable : le nom seul, à sa place */
+.tr-choeur .a-photo > .tr-ventouse { height: var(--tr-v); }   /* une photo introuvable : le nom seul, à sa place (la hauteur de la vignette : rien ne bouge) */
 .tr-choeur .a-photo .tr-nom { font-size: 1.02rem; }
 .tr-choeur .n-g .tr-place { flex-direction: row-reverse; text-align: right; }
 .tr-choeur .n-g > .tr-place > [data-troupe-ancre], .tr-choeur .n-d > .tr-place > [data-troupe-ancre] { width: 20px; }
@@ -535,7 +535,7 @@ html[data-theme="nuit"] .tr-li.tr-queue::before { background-image: url("data:im
   @supports (animation-timeline: view()) {
     html:not(.still) .tr-li { animation: tr-pousse linear both; animation-timeline: view(); animation-range: entry 5% entry 95%; }
     html:not(.still) .tr-li { opacity: clamp(0, var(--tr-p) * 1.5 - .25, 1); }
-    html:not(.still) .tr-li::after { clip-path: inset(0 0 calc((1 - var(--tr-p)) * 100%) 0); }
+    html:not(.still) .tr-li::after { --tr-p: inherit; clip-path: inset(0 0 calc((1 - var(--tr-p)) * 100%) 0); }
     html:not(.still) .tr-bras .tr-m { animation: tr-trace linear both; animation-timeline: --tr-vue; animation-range: entry 60px entry 520px; }
     html:not(.still) .tr-tete { animation: tr-tete linear both; animation-timeline: --tr-vue; animation-range: entry 0px entry 340px; }
   }
@@ -2455,7 +2455,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     }, true);
     // les bras : mesurés après la mise en page, refaits quand la troupe change de taille
     let raf = 0;
-    const refaireBras = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; brasTroupe(tr); }); };
+    // (après l'image : celle qui dessine la troupe ne porte pas aussi le calcul des bras, décoratifs)
+    const refaireBras = () => { if (raf) return; raf = requestAnimationFrame(() => setTimeout(() => { raf = 0; brasTroupe(tr); }, 0)); };
     if (troupeVue) troupeVue.disconnect();
     troupeVue = 'ResizeObserver' in window ? new ResizeObserver(refaireBras) : null;
     if (troupeVue) troupeVue.observe(tr); else refaireBras();
