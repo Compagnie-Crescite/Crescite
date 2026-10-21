@@ -165,7 +165,8 @@ const RESERVER = (() => {
     return `<div class="rs-bande" role="group" aria-label="${esc(o.libelle || Lb.choisirUneDate || '')}"${o.attributs || ''}>${ds.map(d => bouton(d, Object.assign({ choisi: cle(d) === k }, o.bouton ? o.bouton(d) : {}))).join('')}</div>`;
   }
   function seancesHTML(d, Lb) {
-    const ss = seances(d);
+    // deux séances que rien ne distingue (même jour, même heure, même public, même lien) ne font qu'un repère
+    const vus = new Set(), ss = seances(d).filter(x => { const k = [x.jour, x.heure, x.scolaire, x.lien].join('|'); if (vus.has(k)) return false; vus.add(k); return true; });
     if (!ss.length || !ss.some(x => x.heure || x.scolaire)) return `<p class="rs-seances rs-seances--sans"><span class="rs-k">${esc(Lb.representations)}</span> <span class="rs-sans">${esc(Lb.horaireAPreciser)}</span></p>`;
     const plusieurs = new Set(ss.map(x => x.jour)).size > 1;
     return `<div class="rs-seances"><p class="rs-k">${esc(Lb.representations)}</p><ul class="rs-liste">${ss.map(x => {

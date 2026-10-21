@@ -300,12 +300,15 @@ const CONTRASTE = `(() => {
   const visible = el => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity < 1) return false; } return el.getClientRects().length > 0; };
   const pb = [], vus = new Set();
   const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  for (let t; (t = tw.nextNode()) && vus.size < 1500;) {
+  for (let t; (t = tw.nextNode()) && vus.size < 5000;) {
     const el = t.parentElement, txt = t.textContent.replace(/\\s+/g, ' ').trim();
     if (!el || txt.length < 2 || vus.has(el) || el.closest('script,style,noscript,svg,.intro,[aria-hidden="true"],.mv-lecteur,[hidden]') || el.matches(':disabled')) continue;
     vus.add(el);
     if (!visible(el)) continue;
-    const s = getComputedStyle(el), b = fond(el), c = couleur(s.color);
+    // un texte pour les lecteurs d'écran seulement (masqué : 1 px, découpé) n'a pas de contraste à tenir
+    const rc = el.getBoundingClientRect(), s = getComputedStyle(el);
+    if (rc.width <= 2 || rc.height <= 2 || (s.clipPath || '').startsWith('inset(50%')) continue;
+    const b = fond(el), c = couleur(s.color);
     if (!b || !c) continue;
     const k = ratio(sur(c, b), b), grand = parseFloat(s.fontSize) >= 24 || (parseFloat(s.fontSize) >= 18.66 && +s.fontWeight >= 700);
     if (k < (grand ? 3 : 4.5) - .005) pb.push(\`« \${txt.slice(0, 36)} » \${k.toFixed(2)}:1\`);
@@ -385,8 +388,23 @@ async function regle19(page, tag, log) {
     const p2 = await ctx2.newPage();
     await p2.goto(page.url().replace(/#.*$/, '#/voir'), { waitUntil: 'load' });
     await p2.waitForTimeout(900);
-    const ok = await p2.evaluate(() => { const b = [...document.querySelectorAll('[data-theme-bouton]')].find(x => x.getClientRects().length); if (!b) return null; b.click(); return { theme: document.documentElement.dataset.theme, bascule: document.documentElement.classList.contains('theme-bascule') }; });
-    if (!ok || ok.theme !== 'nuit' || ok.bascule) log.push(`${pfx} : sous « moins d'animations », la bascule n'est pas instantanée (${JSON.stringify(ok)})`);
+    // instantanée = sans transition de vue ni cercle (html.theme-bascule), la nuit posée dans les images qui suivent le clic
+    // (la bascule peut attendre que le bouton enfoncé soit dessiné : c'est ce qui garde l'INP bas)
+    const ok = await p2.evaluate(() => new Promise(res => {
+      const html = document.documentElement, b = [...document.querySelectorAll('[data-theme-bouton]')].find(x => x.getClientRects().length);
+      if (!b) return res(null);
+      let vt = 0, bascule = false;
+      const svt = document.startViewTransition;
+      if (svt) document.startViewTransition = function (...a) { vt++; return svt.apply(this, a); };
+      const mo = new MutationObserver(() => { if (html.classList.contains('theme-bascule')) bascule = true; });
+      mo.observe(html, { attributes: true, attributeFilter: ['class'] });
+      const t0 = performance.now();
+      b.click();
+      const fin = () => { mo.disconnect(); if (svt) document.startViewTransition = svt; res({ theme: html.dataset.theme, bascule, transitions: vt, ms: Math.round(performance.now() - t0) }); };
+      const regarde = () => (html.dataset.theme === 'nuit' || performance.now() - t0 > 600 ? fin() : requestAnimationFrame(regarde));
+      regarde();
+    }));
+    if (!ok || ok.theme !== 'nuit' || ok.bascule || ok.transitions || ok.ms > 300) log.push(`${pfx} : sous « moins d'animations », la bascule n'est pas instantanée (${JSON.stringify(ok)})`);
     await ctx2.close();
     log.push(`· règle 19 : le bouton sur ${VUES.length} vues, la bascule (${avant.fond} → ${apres.fond}), gardée, relue en nuit`);
   }
@@ -405,7 +423,11 @@ async function regle20(page, tag, log) {
   const pfx = `${tag} règle 20`;
   await page.evaluate(() => { location.hash = '#/compagnie'; });
   await page.waitForTimeout(1000);
-  const e = await page.evaluate(async () => {
+  const e = await page.evaluate(async css => {
+    // ce qui apparaît au défilement par MOUVEMENT (le titre, les filets) : à son état final le temps de la lecture ; la
+    // troupe garde son propre mouvement (ses places doivent se lire à leur arrivée dans l'écran)
+    const montrer = document.createElement('style'); montrer.textContent = css; document.head.appendChild(montrer);
+    try {
     const T = D.site.troupe || {}, P = D.personnes || {}, cats = (T.categories || []).filter(c => c && c.cle);
     const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’']/g, ' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     const racine = document.querySelector('main [data-troupe]');
@@ -415,7 +437,8 @@ async function regle20(page, tag, log) {
     const suit = (a, b) => !!(a && b && (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING));
     const pb = [], info = [];
     if (!suit(avant, racine) || !suit(racine, apres)) pb.push('la troupe n\'est pas entre la présentation de la compagnie et ses repères');
-    const vis = el => { if (!el || !el.getClientRects().length) return false; for (let x = el; x && x !== document.body; x = x.parentElement) { const s = getComputedStyle(x); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity < .9) return false; } return true; };
+    let pourquoi = '';
+    const vis = el => { if (!el || !el.getClientRects().length) { pourquoi = 'sans boîte'; return false; } for (let x = el; x && x !== document.body; x = x.parentElement) { const s = getComputedStyle(x); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity < .9) { pourquoi = `${x.tagName.toLowerCase()}.${[...x.classList].join('.')} : opacité ${s.opacity}`; return false; } } return true; };
     const image = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const voir = async el => { el.scrollIntoView({ block: 'center', behavior: 'instant' }); await image(); return vis(el); };
     // le titre de la section
@@ -452,15 +475,17 @@ async function regle20(page, tag, log) {
         if (!p.photo && imgs.length) pb.push(`${nom} : une vignette sans photo publiée`);
         vignettes += imgs.length ? 1 : 0;
         // ni silhouette ni initiales : rien que le nom et les métiers
-        let reste = ` ${norm(x.textContent)} `;
+        const mots = []; for (let w = document.createTreeWalker(x, NodeFilter.SHOW_TEXT), t; (t = w.nextNode());) mots.push(t.textContent);
+        let reste = ` ${norm(mots.join(' '))} `;
         [nom, ...(p.metiers || [])].forEach(m => { reste = reste.replace(` ${norm(m)} `, ' '); });
         if (reste.trim()) pb.push(`${nom} : sa place écrit autre chose que son nom et ses métiers (« ${reste.trim().slice(0, 30)} »)`);
-        if (!(await voir(x)) || !norm(x.textContent).includes(norm(nom))) pb.push(`${nom} : son nom ne se lit pas à son arrivée dans l'écran`);
+        if (!(await voir(x)) || !norm(mots.join(' ')).includes(norm(nom))) pb.push(`${nom} : son nom ne se lit pas à son arrivée dans l'écran (${pourquoi || 'nom absent'})`);
       }
     }
     return { pb, info, n: Object.keys(P).length, places, vignettes, cats: [...racine.querySelectorAll('[data-troupe-categorie]')].length,
       multiple: Object.keys(P).find(s => racine.querySelectorAll(`[data-troupe-personne="${s}"]`).length > 1) || null };
-  });
+    } finally { montrer.remove(); }
+  }, '*, *::before, *::after { content-visibility: visible !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; }');
   if (e.absent) { log.push(`${pfx} : pas de troupe ([data-troupe]) sur la page de la compagnie`); return; }
   e.pb.slice(0, 20).forEach(p => log.push(`${pfx} : ${p}`));
   if (e.pb.length > 20) log.push(`${pfx} : (+${e.pb.length - 20} autres)`);

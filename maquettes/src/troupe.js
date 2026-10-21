@@ -24,17 +24,21 @@
 
    LES LIENS
    TROUPE.relier(racine, { liens, clavier, surAllumer, surChoix }) → { allumer(slug, depuis), allumerGroupe([slug]),
-       eteindre(), choisir(slug | null), choisi(), retracer(), detruire() }
-     racine contient les places, chacune un bouton portant data-troupe-place et data-troupe-personne="<slug>" (son point
-     d'accroche : l'élément [data-troupe-ancre] qu'il contient, sinon lui-même), groupées par [data-troupe-categorie].
+       eteindre(), choisir(slug | null), choisirGroupe([slug] | null), choisi(), groupe(), retracer(), detruire(),
+       apresImage(fn) (fn après la prochaine image : ce qui repeint beaucoup ne retient pas le geste) }
+     racine (positionnée : position relative ; marquée data-troupe) contient les places, chacune un bouton portant
+     data-troupe-place et data-troupe-personne="<slug>" (son point d'accroche : l'élément [data-troupe-ancre] qu'il
+     contient, sinon lui-même), groupées par [data-troupe-categorie] (chaque catégorie : un titre h2/h3 et une liste).
      Survoler ou focaliser une place allume toutes les places de la personne (classe est-allume ; la place survolée :
      est-source ; racine : est-allume) et les relie : des bras partent de la place survolée vers chacune des autres
      (calque <svg class="troupe-liens"> ajouté dans racine), tracés en 380 ms, une lueur court le long de chacun
      (offset-path) ; un clic ou Entrée choisit la personne (aria-pressed="true" sur ses places ; elle reste allumée), un
      second clic, Échap ou un clic ailleurs la relâche. allumerGroupe : les places de plusieurs personnes (l'équipe d'un
-     spectacle, racine : est-groupe), sans liens. Au clavier (clavier: true) : un arrêt de tabulation par catégorie, les
+     spectacle, TROUPE.equipe(slug) ; racine : est-groupe), sans liens ; choisirGroupe les garde allumées (eteindre y
+     revient) jusqu'à choisirGroupe(null), Échap, un clic ailleurs ou le choix d'une personne. Au clavier (clavier: true) : un arrêt de tabulation par catégorie, les
      flèches passent d'une personne à l'autre dans la catégorie, Début et Fin. surAllumer(slug | null, { groupe }) et
-     surChoix(slug | null) préviennent la maquette. Les liens se retracent quand racine change de taille.
+     surChoix(slug | null, { groupe }) préviennent la maquette. Les liens se retracent quand racine change de taille. Le
+     calque des liens est sous les places : que les catégories soient positionnées au-dessus (z-index 2).
      Moins d'animations demandé (ou ?anim=0) : les liens sont là d'emblée, sans lueur.
 
    LES ICÔNES
@@ -291,17 +295,18 @@ const TROUPE = (() => {
       else gs.forEach(g => g.remove());
     }
     // des bras de la place survolée vers chacune des autres places de la personne
+    // les lectures d'abord (les places, avant toute écriture : aucune mise en page forcée), puis le dessin
     function dessiner(slug, depuis, anime) {
-      vider(false);
       const ps = placesDe(slug);
-      if (!liens || ps.length < 2) return;
+      if (!liens || ps.length < 2) { vider(false); return; }
       const R = racine.getBoundingClientRect();
       const centre = p => { const r = ancre(p).getBoundingClientRect(); return { x: r.left + r.width / 2 - R.left, y: r.top + r.height / 2 - R.top, r: Math.min(r.width, r.height) / 2 }; };
-      const src = depuis && ps.includes(depuis) ? depuis : ps[0], A = centre(src);
+      const src = depuis && ps.includes(depuis) ? depuis : ps[0], A = centre(src), Bs = ps.filter(p => p !== src).map(centre);
+      vider(false);
       let html = '';
       const chemins = [];
-      ps.filter(p => p !== src).forEach((p, k) => {
-        const B = centre(p), v = [B.x - A.x, B.y - A.y], L = Math.hypot(v[0], v[1]);
+      Bs.forEach((B, k) => {
+        const v = [B.x - A.x, B.y - A.y], L = Math.hypot(v[0], v[1]);
         if (L < 4) return;
         const u = [v[0] / L, v[1] / L], a = [A.x + u[0] * (A.r + 2), A.y + u[1] * (A.r + 2)], b = [B.x - u[0] * (B.r + 2), B.y - u[1] * (B.r + 2)];
         const c = courbe(a, b, { courbe: 0.16, sens: k % 2 ? -1 : 1 });
@@ -343,9 +348,9 @@ const TROUPE = (() => {
       if (slug === allume && depuis === source && !groupe) return;
       const meme = slug === allume && !groupe;
       allume = slug; source = depuis; groupe = null;
+      dessiner(slug, depuis, anime && !meme);
       racine.classList.add('est-allume'); racine.classList.remove('est-groupe');
       marquer([slug], depuis);
-      dessiner(slug, depuis, anime && !meme);
       if (surAllumer) surAllumer(slug, { groupe: false });
     }
     function allumerGroupe(slugs) {
@@ -385,19 +390,30 @@ const TROUPE = (() => {
       if (groupeChoisi) { choisi = null; presser(); allumerGroupe(groupeChoisi); groupe = groupeChoisi; } else eteindre();
       if (surChoix) surChoix(choisi, { groupe: groupeChoisi });
     }
-    // la souris : un petit délai en quittant une place, pour passer à la voisine sans clignoter
-    racine.addEventListener('pointerover', e => { const p = placeDe(e); if (p) allumer(p.getAttribute('data-troupe-personne'), p); }, { passive: true });
+    // la souris survole (un petit délai en quittant une place, pour passer à la voisine sans clignoter) ; le doigt, lui,
+    // choisit d'un geste (le clic) : un toucher n'allume ni n'éteint en passant, rien ne se fait deux fois
+    racine.addEventListener('pointerover', e => { if (e.pointerType === 'touch') return; const p = placeDe(e); if (p) allumer(p.getAttribute('data-troupe-personne'), p); }, { passive: true });
     racine.addEventListener('pointerout', e => {
+      if (e.pointerType === 'touch') return;
       const p = placeDe(e); if (!p || (e.relatedTarget && p.contains(e.relatedTarget))) return;
       clearTimeout(attente); attente = setTimeout(() => { if (!racine.contains(document.activeElement) || !document.activeElement.matches(SEL)) eteindre(); }, 90);
     }, { passive: true });
-    racine.addEventListener('focusin', e => { const p = placeDe(e); if (p) { allumer(p.getAttribute('data-troupe-personne'), p); if (clavier) actif(p); } });
+    // le clavier : la place focalisée s'allume (un focus donné par la souris ou le doigt passe par le survol ou le clic)
+    const auClavier = p => { try { return p.matches(':focus-visible'); } catch (e) { return true; } };
+    racine.addEventListener('focusin', e => { const p = placeDe(e); if (!p) return; if (clavier) actif(p); if (auClavier(p)) allumer(p.getAttribute('data-troupe-personne'), p); });
     racine.addEventListener('focusout', e => { if (!e.relatedTarget || !racine.contains(e.relatedTarget)) { clearTimeout(attente); attente = setTimeout(eteindre, 30); } });
+    // un clic (ou Entrée) choisit : le geste se voit à l'image suivante (aria-pressed, le fond de la place) ; l'allumage,
+    // les bras et la lueur partent juste après cette image, sans retenir le geste (règle 15 C)
+    const apresImage = f => (typeof requestAnimationFrame === 'function' && !document.hidden ? requestAnimationFrame(() => setTimeout(f, 0)) : f());
     racine.addEventListener('click', e => {
       const p = placeDe(e); if (!p) return;
       if (typeof EDITION !== 'undefined' && EDITION.actif) return;
-      const slug = p.getAttribute('data-troupe-personne');
-      choisir(choisi === slug ? null : slug, p);
+      const slug = p.getAttribute('data-troupe-personne'), nouveau = choisi === slug ? null : slug;
+      choisi = nouveau;
+      if (choisi) groupeChoisi = null;
+      presser();
+      if (surChoix) surChoix(choisi, { groupe: groupeChoisi });
+      apresImage(() => { if (choisi !== nouveau) return; if (choisi) allumer(choisi, p.isConnected ? p : placesDe(choisi)[0], { anime: allume !== choisi }); else eteindre(); });
     });
     // au clavier : un arrêt de tabulation par catégorie, les flèches d'une personne à l'autre
     const actif = p => { const c = p.closest(CAT) || racine; c.querySelectorAll(SEL).forEach(x => { if (x.closest(CAT) === p.closest(CAT)) x.tabIndex = x === p ? 0 : -1; }); };
@@ -426,7 +442,7 @@ const TROUPE = (() => {
     ranger();
     return {
       allumer: (slug, depuis) => allumer(slug, depuis || placesDe(slug)[0] || null), allumerGroupe, eteindre, choisir: slug => choisir(slug), choisirGroupe,
-      choisi: () => choisi, groupe: () => groupeChoisi, retracer: () => { ranger(); if (allume) dessiner(allume, source && source.isConnected ? source : placesDe(allume)[0], false); },
+      choisi: () => choisi, groupe: () => groupeChoisi, apresImage, retracer: () => { ranger(); if (allume) dessiner(allume, source && source.isConnected ? source : placesDe(allume)[0], false); },
       detruire: () => { document.removeEventListener('click', dehors, true); if (ro) ro.disconnect(); vider(false); calque.remove(); },
     };
   }

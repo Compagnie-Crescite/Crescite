@@ -15,7 +15,8 @@
                                       instantanée si le visiteur a demandé moins d'animations (ou ?anim=0), si l'onglet est
                                       caché ou sans View Transitions. Rend une promesse, résolue quand le thème est posé.
    THEME.basculer({ depuis })         l'autre thème
-   THEME.bouton({ libelle, classe })  le HTML du bouton à placer dans le menu :
+   THEME.bouton({ libelle, classe })  le HTML du bouton à placer dans le menu (au clic, la bascule part à l'image suivante :
+                                      le geste se voit tout de suite, la page se repeint ensuite) :
                                         <button type="button" class="theme-bouton classe" data-theme-bouton
                                                 aria-pressed="true|false" aria-label="libelle" title="libelle">icône</button>
                                       libelle : un texte de D (D.site.libelles.modeNuit, « Mode nuit ») ; aria-pressed dit si
@@ -148,10 +149,16 @@ html.theme-bascule::view-transition-group(root), html.theme-bascule::view-transi
   }
   const basculer = (o = {}) => choisir(actuel === 'nuit' ? 'jour' : 'nuit', o);
 
-  // les boutons, où qu'ils soient (délégation : un bouton ajouté plus tard est servi aussi)
+  // les boutons, où qu'ils soient (délégation : un bouton ajouté plus tard est servi aussi). Le geste se voit à l'image
+  // suivante (le bouton pressé) ; la bascule, qui repeint toute la page, part juste après cette image : elle ne retient
+  // jamais le geste (règle 15 C)
+  let attente = false;
   document.addEventListener('click', e => {
     const b = e.target && e.target.closest ? e.target.closest('[data-theme-bouton]') : null;
-    if (b) basculer({ depuis: b });
+    if (!b || attente) return;
+    attente = true;
+    const partir = () => { attente = false; basculer({ depuis: b }); };
+    if (document.hidden || typeof requestAnimationFrame !== 'function') partir(); else requestAnimationFrame(() => setTimeout(partir, 0));
   });
   // tant que le visiteur n'a rien choisi, le thème suit l'appareil
   if (sombre && sombre.addEventListener) sombre.addEventListener('change', () => { if (!param && !lireStocke()) choisir(appareil(), { garde: false }); });

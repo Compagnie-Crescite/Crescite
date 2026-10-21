@@ -37,7 +37,7 @@ html[data-theme="nuit"] {
   --ed-fond: #211a1f; --ed-encre: #f2eae4; --ed-accent: #e0559a; --ed-sur-accent: #151014; --ed-trait: #3b2f37;
 }
 html[data-theme="nuit"] .evitement { background: var(--blanc); color: var(--encre); }
-html[data-theme="nuit"] :is(.champ input, .champ textarea, .calcul input) { background: var(--blanc); }
+html[data-theme="nuit"] .champ input, html[data-theme="nuit"] .champ textarea, html[data-theme="nuit"] .calcul input { background: var(--blanc); }
 /* l'entrée où l'on est s'allume de sa couleur vive, l'encre de nuit dessus */
 html[data-theme="nuit"] :is(.entrees, .barre) .pt { background: var(--ev); }
 html[data-theme="nuit"] :is(.entrees, .barre) a[aria-current="page"] { background: var(--ev); border-color: var(--ev); color: var(--papier); }
@@ -48,7 +48,7 @@ html[data-theme="nuit"] footer { border-top: 1px solid var(--filet); }
 html[data-theme="nuit"] .ct-k { color: var(--ev, var(--magenta-texte)); }
 html[data-theme="nuit"] .et-rac button:hover { border-color: var(--ev); color: var(--ev); }
 /* les fiches des spectacles se détachent de la nuit par un filet de leur univers */
-html[data-theme="nuit"] :is(.fu, .prog, .fe, .dos-appel) { box-shadow: 0 0 0 1px color-mix(in srgb, var(--u-texte) 16%, transparent), 0 24px 44px -28px #000; }
+html[data-theme="nuit"] .fu, html[data-theme="nuit"] .prog, html[data-theme="nuit"] .fe, html[data-theme="nuit"] .dos-appel { box-shadow: 0 0 0 1px color-mix(in srgb, var(--u-texte) 16%, transparent), 0 24px 44px -28px #000; }
 /* les univers clairs dans leur nuit (leurs couleurs de D, retournées) ; ce qui reste sur papier blanc garde l'encre du jour */
 html[data-theme="nuit"] .u.u-clair { --u-fond: var(--un-fond) !important; --u-fond2: var(--un-fond2) !important; --u-texte: var(--un-texte) !important;
   --u-texte2: var(--un-texte2) !important; --u-vif: var(--un-vif) !important; }
@@ -60,7 +60,21 @@ html[data-theme="nuit"] .u-arene .u-carton figcaption { background: var(--u-fond
    saumon), qui se lit sur le fond sombre ; les aplats gardent l'accent, et les feuilles blanches leurs encres du jour */
 html[data-theme="nuit"] .u.u-clair { --ac: var(--u-vif); }
 html[data-theme="nuit"] .u-clair .sheet { --ac: var(--u-accent); }
-html[data-theme="nuit"] .u-arene :is(.u-h2, .u-affirm, .u-cit p, .u-ac-type, .u-aside, .u-avec, .suivant b, .prog-t a, .fe-t a, .fe-type, .fu-t, .dos-h3, .dos-h4, .dos-fiche dt, .dos-fiche-t) { color: var(--u-vif); }
+html[data-theme="nuit"] .u-arene .u-h2,
+html[data-theme="nuit"] .u-arene .u-affirm,
+html[data-theme="nuit"] .u-arene .u-cit p,
+html[data-theme="nuit"] .u-arene .u-ac-type,
+html[data-theme="nuit"] .u-arene .u-aside,
+html[data-theme="nuit"] .u-arene .u-avec,
+html[data-theme="nuit"] .u-arene .suivant b,
+html[data-theme="nuit"] .u-arene .prog-t a,
+html[data-theme="nuit"] .u-arene .fe-t a,
+html[data-theme="nuit"] .u-arene .fe-type,
+html[data-theme="nuit"] .u-arene .fu-t,
+html[data-theme="nuit"] .u-arene .dos-h3,
+html[data-theme="nuit"] .u-arene .dos-h4,
+html[data-theme="nuit"] .u-arene .dos-fiche dt,
+html[data-theme="nuit"] .u-arene .dos-fiche-t { color: var(--u-vif); }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--haut) + 16px); }
 body { margin: 0; background: var(--papier); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
@@ -335,7 +349,7 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .ct-tel { font-weight: 600; text-decoration: none; }
 html:not(.ed-actif) .ct-tel.vide { display: none; }
 .ct-cond { margin-top: 8px !important; font-size: .82rem; color: var(--gris); }
-.u .ct-prg { border-color: var(--u-filet); border-left-color: var(--u-vif); background: color-mix(in srgb, var(--u-texte) 6%, transparent); box-shadow: none; color: var(--u-texte); }
+.u .ct-prg { border-color: var(--u-filet); border-left-color: var(--u-vif); background: transparent; box-shadow: none; color: var(--u-texte); }   /* sans voile : la couleur vive y reste AA (Macbeth) */
 .u .ct-k { color: var(--u-vif); }
 .u .ct-role, .u .ct-cond { color: var(--u-texte2); }
 .u-contact { padding: clamp(18px, 2.6vw, 30px) 0; border-bottom: 1px solid var(--u-filet); background: var(--u-fond2); }
@@ -399,7 +413,8 @@ html.ed-actif .c-frise { display: none; }
    survoler un spectacle allume son équipe. Au défilement, les bras poussent et les ventouses arrivent une à une. */
 @property --tr-p { syntax: '<number>'; inherits: true; initial-value: 1; }
 @property --tr-anneau { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-section.troupe { overflow-x: clip; }
+section.troupe { overflow-x: clip; content-visibility: auto; contain-intrinsic-size: auto 2300px; }   /* hors de l'écran : ni style ni mise en page */
+@media (max-width: 959px) { section.troupe { contain-intrinsic-size: auto 4400px; } }
 .tr { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr); gap: 30px; margin-top: 26px; view-timeline: --tr-vue block;
   --troupe-lien: var(--magenta); --troupe-ic-fond: var(--papier); --troupe-ventouse-fond: var(--papier); --tr-col: 52px; --tr-x: 26px; }
 .tr-tete { justify-self: center; width: min(230px, 64vw); color: var(--magenta); line-height: 0; }
@@ -418,7 +433,7 @@ section.troupe { overflow-x: clip; }
 .tr-places { list-style: none; margin: 0; padding: 0; }
 .tr-li { position: relative; }
 .tr-place { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; width: 100%; margin: 0; padding: 7px 0; border: 0; border-radius: 10px; background: none;
-  color: var(--encre); font: inherit; text-align: left; cursor: pointer; transition: opacity .18s, background .18s; }
+  color: var(--encre); font: inherit; text-align: left; cursor: pointer; transition: background .18s; }   /* l'effacement des autres : immédiat (une transition d'opacité par place coûterait une couche chacune) */
 .tr-place > [data-troupe-ancre] { flex: none; display: grid; place-items: center; width: var(--tr-col); }
 .tr-ventouse::before { content: ""; display: block; width: 13px; height: 13px; border-radius: 50%; border: 1.6px solid var(--magenta); background: var(--papier); transition: background .18s, scale .18s; }
 .tr-vignette { position: relative; }
@@ -440,14 +455,13 @@ section.troupe { overflow-x: clip; }
 .tr-place.mv-presse { scale: .97; transition-duration: .06s; }
 /* le bras de chaque métier : une onde qui passe par les ventouses (un morceau par personne : il suit la mise en page),
    et une boucle au bout */
-.tr-li::after, .tr-li.tr-queue::before { content: ""; position: absolute; z-index: 0; pointer-events: none; background: var(--magenta); }
-.tr-li::after { top: 0; bottom: 0; left: calc(var(--tr-x) - 7px); width: 14px;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 40' preserveAspectRatio='none'%3E%3Cpath d='M7 0C12 10 2 30 7 40' fill='none' stroke='%23000' stroke-width='1.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 40' preserveAspectRatio='none'%3E%3Cpath d='M7 0C12 10 2 30 7 40' fill='none' stroke='%23000' stroke-width='1.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+.tr-li::after, .tr-li.tr-queue::before { content: ""; position: absolute; z-index: 0; pointer-events: none; background: 0 0 / 100% 100% no-repeat; }
+/* (une image de fond, pas un masque : la troupe se repeint vite ; sa couleur suit le thème, la magenta du jour ou de la nuit) */
+.tr-li::after { top: 0; bottom: 0; left: calc(var(--tr-x) - 7px); width: 14px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 40' preserveAspectRatio='none'%3E%3Cpath d='M7 0C12 10 2 30 7 40' fill='none' stroke='%23bc3e80' stroke-width='1.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); }
 .tr-li:first-child::after { top: -14px; }
-.tr-li.tr-queue::before { top: 100%; left: calc(var(--tr-x) - 7px); width: 14px; height: 16px;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'%3E%3Cpath d='M7 0C8.8 3.5 9.6 8.5 7 11.2C5.1 13.2 2.6 12.1 3 9.8C3.3 8.2 5.4 7.9 6 9.2' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'%3E%3Cpath d='M7 0C8.8 3.5 9.6 8.5 7 11.2C5.1 13.2 2.6 12.1 3 9.8C3.3 8.2 5.4 7.9 6 9.2' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+.tr-li.tr-queue::before { top: 100%; left: calc(var(--tr-x) - 7px); width: 14px; height: 16px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'%3E%3Cpath d='M7 0C8.8 3.5 9.6 8.5 7 11.2C5.1 13.2 2.6 12.1 3 9.8C3.3 8.2 5.4 7.9 6 9.2' fill='none' stroke='%23bc3e80' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"); }
+html[data-theme="nuit"] .tr-li::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 40' preserveAspectRatio='none'%3E%3Cpath d='M7 0C12 10 2 30 7 40' fill='none' stroke='%23c44386' stroke-width='1.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E"); }
+html[data-theme="nuit"] .tr-li.tr-queue::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'%3E%3Cpath d='M7 0C8.8 3.5 9.6 8.5 7 11.2C5.1 13.2 2.6 12.1 3 9.8C3.3 8.2 5.4 7.9 6 9.2' fill='none' stroke='%23c44386' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"); }
 .tr-cote { display: grid; gap: 34px; align-content: start; min-width: 0; }
 /* le chœur : le jeu, sous la pieuvre ; les visages en quinconce, puis les noms seuls de part et d'autre de son bras */
 .tr-choeur-cat { container: choeur / inline-size; }
@@ -463,6 +477,7 @@ section.troupe { overflow-x: clip; }
 .tr-choeur .a-photo .tr-vignette img { width: var(--tr-v); height: var(--tr-v); }
 .tr-choeur-cat { --tr-v: clamp(60px, 19cqi, 84px); }
 .tr-choeur .a-photo .tr-nom span { display: block; }
+.tr-choeur .a-photo > .tr-ventouse { height: calc(var(--tr-v) + 8px); }   /* une photo introuvable : le nom seul, à sa place */
 .tr-choeur .a-photo .tr-nom { font-size: 1.02rem; }
 .tr-choeur .n-g .tr-place { flex-direction: row-reverse; text-align: right; }
 .tr-choeur .n-g > .tr-place > [data-troupe-ancre], .tr-choeur .n-d > .tr-place > [data-troupe-ancre] { width: 20px; }
@@ -519,7 +534,7 @@ section.troupe { overflow-x: clip; }
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
     html:not(.still) .tr-li { animation: tr-pousse linear both; animation-timeline: view(); animation-range: entry 5% entry 95%; }
-    html:not(.still) .tr-li > .tr-place { opacity: clamp(0, var(--tr-p) * 1.5 - .25, 1); translate: 0 calc((1 - var(--tr-p)) * 14px); }
+    html:not(.still) .tr-li { opacity: clamp(0, var(--tr-p) * 1.5 - .25, 1); }
     html:not(.still) .tr-li::after { clip-path: inset(0 0 calc((1 - var(--tr-p)) * 100%) 0); }
     html:not(.still) .tr-bras .tr-m { animation: tr-trace linear both; animation-timeline: --tr-vue; animation-range: entry 60px entry 520px; }
     html:not(.still) .tr-tete { animation: tr-tete linear both; animation-timeline: --tr-vue; animation-range: entry 0px entry 340px; }
@@ -828,7 +843,12 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .lc-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 26px 20px; }
 .lc-grille .lc-titre { font-size: 1.05rem; }
 .lc-grille .lc-icone { width: 54px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 30%, transparent); }
-.lc-grille .lc-b { padding: 7px 12px 7px 10px; font-size: .82rem; }
+/* sous une petite vidéo, les deux boutons ne gardent que leur icône (leur libellé de D reste leur nom pour les lecteurs d'écran) */
+.lc-grille .lc-outils { gap: 6px; margin-top: 8px; }
+.lc-grille .lc-b { padding: 7px; }
+.lc-grille .lc-b span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.lc-boite::backdrop { background: rgba(14, 7, 11, .9); }
+.lc-boite.lc-boite--nuit::backdrop { background: rgba(4, 2, 3, .98); }
 /* la boîte (un catalogue : « Bande-annonce » loin de toute vidéo) : sur le noir, les boutons restent clairs */
 .lc-boite-in { position: relative; }
 .lc-boite .lc-b { border-color: rgba(255, 255, 255, .5); color: #fff; }
@@ -1178,11 +1198,12 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
    son spectacle ; sur « Je viens voir un spectacle », chaque date de l'agenda ouvre sa carte sous sa ligne. Le geste
    évident de la carte : « Réserver », plein, de la couleur du spectacle. */
 .rs-zone { position: relative; margin: 0 0 clamp(34px, 4.6vw, 60px); scroll-margin-top: calc(var(--onglets) + 6px); }
-@media (pointer: coarse), (max-width: 640px) { .rs-zone.rs-deborde .rs-defile { display: none; } }
+@media (pointer: coarse), (max-width: 640px) { .rs-defile, .rs-zone.rs-deborde .rs-defile { display: none; } }
 .rs-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 18px; margin: 0 0 12px; }
 .rs-k-bande { margin: 0; font: 600 .74rem/1.3 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
-.rs-defile { display: none; gap: 8px; }
-.rs-zone.rs-deborde .rs-defile { display: flex; }
+/* les flèches gardent leur place (rien ne bouge quand elles paraissent) */
+.rs-defile { display: flex; gap: 8px; margin: 0; visibility: hidden; }
+.rs-zone.rs-deborde .rs-defile { visibility: visible; }
 .rs-defile button { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1.5px solid var(--u-filet); border-radius: 50%; background: transparent; color: var(--u-texte); cursor: pointer; transition: border-color .18s, background .18s, opacity .18s; }
 .rs-defile button:hover { border-color: var(--u-texte); background: color-mix(in srgb, var(--u-texte) 8%, transparent); }
 .rs-defile button[disabled] { opacity: .3; cursor: default; }
@@ -1215,6 +1236,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .rs-c { position: relative; display: flex; flex-direction: column; align-items: flex-start; max-width: 28rem; padding: clamp(24px, 3.2vw, 40px); }
 .rs-sp { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.6rem, 1.15rem + 1.5vw, 2.5rem); line-height: 1.02; color: var(--u-texte); text-wrap: balance; }
 .u-arene .rs-sp, .rs-carte.u-arene .rs-sp { text-transform: uppercase; color: var(--u-accent); }
+html[data-theme="nuit"] :is(.u-arene .rs-sp, .rs-carte.u-arene .rs-sp) { color: var(--u-vif); }   /* le rouge du titre, dans la nuit de Bérénice : sa couleur vive */
 .rs-sp a { color: inherit; text-decoration: none; }
 .rs-sp a:hover { color: var(--u-vif); }
 .rs-sp::after { content: ""; display: block; width: 72px; height: 2px; margin: 14px 0 12px; border-radius: 2px; background: var(--u-vif); transform-origin: 0 50%; }
@@ -1259,7 +1281,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 .rs-date--ligne::after { content: ""; position: absolute; right: 11px; top: 13px; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; opacity: .55; rotate: 45deg; transition: rotate .2s var(--mv-courbe); }
 .rs-date--ligne[aria-pressed="true"]::after { left: auto; bottom: auto; width: 7px; height: 7px; border-radius: 0; background: none; transform: none; rotate: 225deg; top: 16px; opacity: .85; }
 .dates > li.rs-li.est-choisi { background: color-mix(in srgb, var(--magenta) 5%, transparent); }
-.rs-ici { --rs-bg: var(--u-fond); grid-column: 1 / -1; margin: 10px 0 6px; min-height: 300px; }
+.rs-ici { --rs-bg: var(--u-fond); grid-column: 1 / -1; margin: 10px 0 6px; min-height: 300px; transform-origin: 50% 0; }
 /* le filet se trace sous le titre de la carte qui change ; sur la carte de France, la commune de la date choisie */
 .rs-carte.rs-anime .rs-sp::after { animation: rs-filet .62s .16s cubic-bezier(.3, .72, .12, 1) backwards; }
 @keyframes rs-filet { from { transform: scaleX(0); } }
@@ -1268,6 +1290,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 .rs-ici .rs-c { max-width: 27rem; }
 @media (max-width: 1000px) {
   .rs-corps { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 759px) {
+  .som { transition: opacity .2s, visibility 0s; }
+  article.rs-vu .som:not(:focus-within) { opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
 }
 @media (max-width: 640px) {
   .rs-carte { min-height: 0; border-radius: 12px; }
@@ -1573,13 +1599,19 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     svg.addEventListener('click', e => { const g = lieu(e); if (g) choix(+g.dataset.l); });
     svg.addEventListener('keydown', e => { const g = lieu(e); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); choix(+g.dataset.l); } });
   }
+  // au doigt, pas de survol : un toucher (et ses évènements de souris de compatibilité, son focus) ne rallume pas toute la
+  // carte de France, qu'il faudrait repeindre deux fois ; le geste reste léger. La souris et le clavier, si.
+  let doigt = 0;
+  document.addEventListener('pointerdown', e => { doigt = e.pointerType === 'touch' ? performance.now() : 0; }, { capture: true, passive: true });
+  const auDoigt = () => doigt > 0 && performance.now() - doigt < 1200;
+  const survolCarte = (svg, l) => { if (!auDoigt()) marquer(svg, l); };
   // relie une liste (li[data-l]) et une carte, dans les deux sens
   function relier(svg, liste, choix = () => {}) {
     const allume = l => $$('li[data-l]', liste).forEach(li => li.classList.toggle('on', l != null && +li.dataset.l === l));
     lierCarte(svg, { survol: l => { marquer(svg, l); allume(l); }, choix });
-    liste.addEventListener('mouseover', e => { const li = e.target.closest('li[data-l]'); marquer(svg, li ? +li.dataset.l : null); });
-    liste.addEventListener('mouseleave', () => marquer(svg, null));
-    liste.addEventListener('focusin', e => { const li = e.target.closest('li[data-l]'); if (li) marquer(svg, +li.dataset.l); });
+    liste.addEventListener('mouseover', e => { const li = e.target.closest('li[data-l]'); survolCarte(svg, li ? +li.dataset.l : null); });
+    liste.addEventListener('mouseleave', () => survolCarte(svg, null));
+    liste.addEventListener('focusin', e => { const li = e.target.closest('li[data-l]'); if (li) survolCarte(svg, +li.dataset.l); });
     return allume;
   }
   // une bulle qui suit la commune survolée
@@ -1698,7 +1730,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const RS = typeof RESERVER !== 'undefined' ? RESERVER : null;
   const GAUCHE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 6l-6 6 6 6"/></svg>';
   const DROITE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 6l6 6-6 6"/></svg>';
-  let etatRs = { slug: null, cle: null }, rsSp = null, roDefile = null;
+  let etatRs = { slug: null, cle: null }, rsSp = null, roDefile = null, ioRs = null;
   // la commune de la date choisie, sur la carte : son point cerclé, son nom écrit ; au choix, son bras repousse depuis Rouen
   function communeChoisie(svg, l, pousse) {
     if (!svg) return;
@@ -1712,16 +1744,28 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     [masque, $('.bout', g)].forEach((p, i) => { if (p && p.animate) p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: i ? 360 : 640, delay: i ? 420 : 0, easing: 'cubic-bezier(.45, 0, .2, 1)', fill: 'backwards' }); });
   }
   // la carte d'une date prend l'univers de son spectacle : sa couleur gagne la carte depuis le bouton choisi (la pousse), sa
-  // photo se découvre, le filet se trace sous le titre, les lignes arrivent l'une après l'autre ; sur la carte de France, le
-  // bras de la commune repousse. Moins d'animations : un fondu bref. (svgDe : la carte de France de la vue)
+  // photo se découvre, le filet se trace sous le titre, le texte monte ; sur la carte de France, le bras de la commune
+  // repousse (si elle est à l'écran). Peu de calques animés : le geste se peint vite, même sur un téléphone lent.
+  // Moins d'animations : un fondu bref. (svgDe : la carte de France de la vue)
   const effetReserver = svgDe => ({ carte: el, date, avant, ancien, fondAvant, premier, ouverture, origine }) => {
-    communeChoisie(svgDe(), date ? date.l : null, !premier);
+    const svg = svgDe();
+    if (premier || !motionOK()) communeChoisie(svg, date ? date.l : null, false);
     if (premier) return;
     const c = $('.rs-c', el), ph = $('.rs-photo', el), courbe = 'cubic-bezier(.3, .72, .12, 1)';
     if (!motionOK()) { if (c && c.animate) c.animate([{ opacity: 0.3 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' }); return; }
+    // la carte de France, à l'image suivante (la mise en page y est faite de toute façon) : le bras repousse si elle se voit
+    requestAnimationFrame(() => communeChoisie(svg, date ? date.l : null, !!svg && (r => r.bottom > 0 && r.top < innerHeight)(svg.getBoundingClientRect())));
+    if (ouverture) {
+      // une carte qui s'ouvre sous sa ligne : elle se déplie depuis elle, dans sa couleur, sa photo se découvre, le texte monte
+      // (des animations composées : rien à repeindre en route, même sur un téléphone lent)
+      el.animate([{ opacity: 0, transform: 'translateY(-12px) scaleY(.94)' }, { opacity: 1, transform: 'none' }], { duration: 440, easing: courbe });
+      if (ph && ph.animate) ph.animate([{ opacity: 0, transform: 'scale(1.08)' }], { duration: 900, delay: 120, easing: courbe, fill: 'backwards' });
+      el.classList.add('rs-anime'); clearTimeout(el.__rsT); el.__rsT = setTimeout(() => el.classList.remove('rs-anime'), 1100);
+      if (c && c.animate) c.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 360, delay: 110, easing: courbe, fill: 'backwards' });
+      return;
+    }
     const { x, y } = origine(), W = el.clientWidth, H = el.clientHeight, R = Math.ceil(Math.hypot(Math.max(x, W - x), Math.max(Math.abs(y), H - y)));
-    if (ouverture) el.animate([{ clipPath: `circle(0px at ${x.toFixed(0)}px ${y.toFixed(0)}px)` }, { clipPath: `circle(${R}px at ${x.toFixed(0)}px ${y.toFixed(0)}px)` }], { duration: 560, easing: courbe });
-    else {
+    {
       // un autre spectacle : son fond pousse depuis le bouton sur celui d'avant ; le même : une vague de sa couleur traverse la carte
       const autre = avant && avant.slug !== date.slug && fondAvant, encre = document.createElement('span');
       encre.className = 'rs-encre'; encre.setAttribute('aria-hidden', 'true');
@@ -1730,8 +1774,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       el.prepend(encre);
       const fin = () => { encre.remove(); if (autre) el.style.backgroundColor = ''; };
       encre.animate(autre ? [{ transform: 'scale(.02)' }, { transform: 'scale(1)' }] : [{ transform: 'scale(.02)', opacity: 1 }, { transform: 'scale(1)', opacity: 0 }], { duration: autre ? 560 : 700, easing: courbe }).finished.then(fin, fin);
-      // l'ancien contenu s'efface sur place, dans ses couleurs
-      if (ancien && ancien.firstChild) {
+      // un autre spectacle : l'ancien contenu s'efface sur place, dans ses couleurs (le même : la vague suffit)
+      if (autre && ancien && ancien.firstChild) {
         ancien.className = 'rs-ancien'; ancien.setAttribute('aria-hidden', 'true');
         if (avant && bySlug[avant.slug] && autre) ancien.style.cssText = uVars(bySlug[avant.slug]);
         el.appendChild(ancien);
@@ -1740,7 +1784,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     }
     if (ph && ph.animate) ph.animate([{ clipPath: 'inset(0 100% 0 0)', transform: 'scale(1.06)' }, { clipPath: 'inset(0 0 0 0)', transform: 'none' }], { duration: 760, delay: ouverture ? 140 : 90, easing: courbe, fill: 'backwards' });
     el.classList.add('rs-anime'); clearTimeout(el.__rsT); el.__rsT = setTimeout(() => el.classList.remove('rs-anime'), 1100);
-    if (MV && c) MV.cascade(c, { pas: 28, duree: 340, decalage: 10, max: 8 });
+    if (c && c.animate) c.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 340, delay: ouverture ? 90 : 40, easing: courbe, fill: 'backwards' });
   };
   // la bande défile au doigt ; à la souris, deux flèches la font avancer d'un écran (elles ne paraissent que si elle déborde)
   function defilement(zone, bande) {
@@ -2046,7 +2090,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       Ls.forEach(r => { const m = moisDe(r.d.ligneDate) || r.d.ligneDate, g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
       liste.innerHTML = groupes.map(g => `<h3 class="mois" data-mv-cle="m:${esc(g.m)}">${esc(g.m)}</h3><ul class="dates" data-agenda="">${g.rs.map(({ d, id }) => {
         const k = RS ? RS.cle(d) : null, rv = k != null && resCles.has(k), s = bySlug[d.slug];
-        return `<li${rv ? ' class="rs-li"' : ''} data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(id)}" data-mv-cle="${esc(id)}" data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${rv ? RS.bouton(d, { classe: 'rs-date--ligne', style: s ? uVars(s) : '', attributs: ` aria-controls="${idIci(k)}"` }) : quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, 'voir')}<span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div>${rv ? `<div class="rs-carte rs-ici ${s ? uClasse(s).replace(/^u /, '') : ''}" id="${idIci(k)}" hidden></div>` : ''}</li>`; }).join('')}</ul>`).join('');
+        return `<li${rv ? ' class="rs-li"' : ''} data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(id)}" data-mv-cle="${esc(id)}" data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${rv ? RS.bouton(d, { classe: 'rs-date--ligne', style: s ? uVars(s) : '', attributs: ` aria-controls="${idIci(k)}"` }) : quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, 'voir')}<span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div>${rv ? `<div class="rs-carte rs-ici ${s ? uClasse(s) : ''}" id="${idIci(k)}" hidden></div>` : ''}</li>`; }).join('')}</ul>`).join('');
       const ls = new Set(Ls.map(r => r.d.l));
       $$('.carte-lieu', svg).forEach(g => g.classList.toggle('eteint', !ls.has(+g.dataset.l)));
       marquer(svg, F.l);
@@ -2158,7 +2202,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       if (F.date && rsVoir.cle() && !surPlace) bientot(() => { const b = $(`[data-reserver="${CSS.escape(F.date)}"]`, liste); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } });
     }
     fSaison = frise($('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: S.saisons[0].titre,
-      relier: { liste: main, carte: l => marquer(svg, l == null ? F.l : l) },
+      relier: { liste: main, carte: l => survolCarte(svg, l == null ? F.l : l) },
       choix: p => { const k = parFriseV.get(p.id); if (k && rsVoir && rsVoir.cle() !== k) rsVoir.choisir(k); allerLigne(p.id); } });
     if (fSaison) lierCarte(svg, { survol: l => { if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); } });
     // l'agenda passé : tout de suite quand la vue se refait en place (D a changé) ou qu'un filtre est actif, sinon juste après
@@ -2323,7 +2367,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   function brasTroupe(tr) {
     const svg = tr && tr.isConnected && $('.tr-bras', tr), tete = tr && $('.tr-tete svg', tr);
     if (!svg || !tete) return;
-    if (!matchMedia('(min-width: 960px)').matches) { if (svg.firstChild) svg.innerHTML = ''; return; }
+    const large = matchMedia('(min-width: 960px)').matches;   // au téléphone : seuls les deux bras qui portent le chœur
     const R = tr.getBoundingClientRect(), T = tete.getBoundingClientRect(), k = T.width / 1042, ox = T.left - R.left - 250 * k, oy = T.top - R.top - 340 * k;
     const A = (D.arms && D.arms.arms) || {};
     const sortie = nom => { const a = A[nom]; return a && a.pts && a.pts[0] ? { p: [ox + a.pts[0][0] * k, oy + a.pts[0][1] * k], d: a.exitdir || [0, 1] } : null; };
@@ -2342,7 +2386,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     // descend en biais depuis la pieuvre, ondule dans son couloir, puis s'enroule vers l'icône du métier
     const cotes = [['g', $('.tr-g', tr), -1], ['d', $('.tr-d', tr), 1]];
     cotes.forEach(([cle, col, sens]) => {
-      if (!col) return;
+      if (!col || !large) return;
       const rc = col.getBoundingClientRect(), bord = sens < 0 ? rc.right - R.left : rc.left - R.left;
       $$(':scope > .tr-cat', col).forEach((cat, i) => {
         const s = sortie(BRAS_TROUPE[cle][Math.min(i, 2)]), ic = $('.tr-ic', cat); if (!s || !ic) return;
@@ -2379,42 +2423,42 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const equipe = b => TROUPE.equipe(b.dataset.troupeSpectacle);
     sps.forEach(b => {
       const montrer = () => ctl.allumerGroupe(equipe(b)), cacher = () => ctl.eteindre();
-      b.addEventListener('pointerenter', montrer); b.addEventListener('pointerleave', cacher);
-      b.addEventListener('focus', montrer); b.addEventListener('blur', cacher);
-      b.addEventListener('click', () => { epingle = epingle === b.dataset.troupeSpectacle ? null : b.dataset.troupeSpectacle;
-        ctl.choisirGroupe(epingle ? equipe(b) : null); sps.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.troupeSpectacle === epingle))); });
+      // la souris survole, le clavier focalise ; le doigt choisit (le clic), sans allumer ni éteindre en passant
+      b.addEventListener('pointerenter', e => { if (e.pointerType !== 'touch') montrer(); }); b.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') cacher(); });
+      b.addEventListener('focus', () => { if (b.matches(':focus-visible')) montrer(); }); b.addEventListener('blur', cacher);
+      // choisi : le bouton se voit enfoncé à l'image suivante, l'équipe s'allume juste après (le geste n'attend pas)
+      b.addEventListener('click', () => { const e = epingle = epingle === b.dataset.troupeSpectacle ? null : b.dataset.troupeSpectacle;
+        sps.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.troupeSpectacle === e)));
+        ctl.apresImage(() => { if (epingle !== e) return;
+          // au téléphone, la bande défile : le spectacle choisi s'y montre en entier
+          const ul = b.closest('.tr-sp');
+          if (e && ul && ul.scrollWidth > ul.clientWidth + 1) {
+            const r = b.getBoundingClientRect(), u = ul.getBoundingClientRect(), m = 16;
+            const dx = r.left < u.left + m ? r.left - u.left - m : r.right > u.right - m ? r.right - u.right + m : 0;
+            if (dx) ul.scrollBy({ left: dx, behavior: motionOK() ? 'smooth' : 'instant' });
+          }
+          ctl.choisirGroupe(e ? equipe(b) : null); }); });
     });
     // les icônes s'animent une fois à leur arrivée dans l'écran
     if (motionOK() && 'IntersectionObserver' in window) {
       const io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { io.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); } }), { rootMargin: '0px 0px -12% 0px' });
       $$('.troupe-icone', tr).forEach(i => io.observe(i));
     }
-    // une photo qui ne se charge pas : la troupe se refait sans sa vignette (une vignette seulement s'il y a une photo)
-    tr.addEventListener('error', e => { const i = e.target; if (i && i.matches && i.matches('img[data-troupe-photo]')) { photosEchec.add(i.getAttribute('src')); refaireTroupe(); } }, true);
+    // une photo qui ne se charge pas (le fichier manque) : sa place garde le nom seul, avec une ventouse, sans rien
+    // déplacer (une vignette seulement s'il y a une photo) ; les prochains rendus la savent absente
+    tr.addEventListener('error', e => {
+      const i = e.target; if (!i || !i.matches || !i.matches('img[data-troupe-photo]')) return;
+      photosEchec.add(i.getAttribute('src'));
+      const a = i.closest('[data-troupe-ancre]');
+      if (a) a.className = 'tr-ventouse';
+      i.remove();
+    }, true);
     // les bras : mesurés après la mise en page, refaits quand la troupe change de taille
     let raf = 0;
     const refaireBras = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; brasTroupe(tr); }); };
     if (troupeVue) troupeVue.disconnect();
     troupeVue = 'ResizeObserver' in window ? new ResizeObserver(refaireBras) : null;
     if (troupeVue) troupeVue.observe(tr); else refaireBras();
-  }
-
-  // la troupe refaite en place (une photo introuvable), sans bouger la page ni perdre le focus
-  let refaireTroupeT = 0;
-  function refaireTroupe() {
-    clearTimeout(refaireTroupeT);
-    refaireTroupeT = setTimeout(() => {
-      const sec = $('section.troupe', main); if (!sec || vue !== 'compagnie') return;
-      const act = document.activeElement, qui = act && sec.contains(act) && act.dataset ? act.dataset.troupePersonne || null : null;
-      const t = document.createElement('div'); t.innerHTML = troupeHTML();
-      const neuf = t.firstElementChild; if (!neuf) return;
-      neuf.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>');
-      $$('.titre-bloc', neuf).forEach(h => h.setAttribute('data-mv', 'monte'));
-      sec.replaceWith(neuf);
-      if (MV) MV.reveler(neuf, { immediat: true });
-      vivreTroupe();
-      if (qui) { const p = $(`[data-troupe-personne="${CSS.escape(qui)}"]`, neuf); if (p) p.focus({ preventScroll: true }); }
-    }, 80);
   }
 
   /* ---------- la compagnie, le contact, les pages légales ---------- */
@@ -2796,20 +2840,26 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     // réserver (règle 17) : la bande des prochaines dates ; la date choisie d'office est la prochaine (ou celle de l'adresse,
     // ?date=…, ou celle d'avant quand la vue se refait en place) ; l'adresse garde le choix ; la carte de France suit
     rsSp = null;
+    if (ioRs) { ioRs.disconnect(); ioRs = null; }
     const zone = $('#rs-zone', main);
     if (zone && RS) {
       const svg = $('.carte-sp svg', zone), bande = $('.rs-bande', zone), res = RS.dates(slug), voulue = q && q.get('date');
       const k0 = surPlace && etatRs.slug === slug && etatRs.cle ? etatRs.cle : voulue && res.some(d => RS.cle(d) === voulue) ? voulue : 'premiere';
-      rsSp = RS.monter(bande, { dates: res, carte: $('#rs-carte', zone), choisie: k0, adresse: true, univers: x => uVars(x),
+      // (l'univers : celui de l'article, hérité, de jour comme de nuit ; rien à poser sur la carte)
+      rsSp = RS.monter(bande, { dates: res, carte: $('#rs-carte', zone), choisie: k0, adresse: true, univers: () => '',
         effet: effetReserver(() => svg), surChoix: (d, k) => { etatRs = { slug, cle: k }; } });
       if (svg) {
         // survoler une commune l'allume, la choisir choisit sa première date ; survoler un bouton de date allume sa commune
         lierCarte(svg, { survol: l => marquer(svg, l), choix: l => { const d = res.find(x => x.l === l); if (d) rsSp.choisir(RS.cle(d)); } });
-        bande.addEventListener('pointerover', e => { const b = e.target.closest('[data-reserver]'); if (b && b.dataset.l !== '') marquer(svg, +b.dataset.l); }, { passive: true });
-        bande.addEventListener('pointerleave', () => marquer(svg, null), { passive: true });
+        // (au doigt, pas de survol : le geste reste léger)
+        bande.addEventListener('pointerover', e => { if (e.pointerType === 'touch') return; const b = e.target.closest('[data-reserver]'); if (b && b.dataset.l !== '') marquer(svg, +b.dataset.l); }, { passive: true });
+        bande.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') marquer(svg, null); }, { passive: true });
       }
       defilement(zone, bande);
       bientot(() => { if (rsSp) rsSp.montrer(); });
+      // au téléphone, le sommaire flottant s'efface tant que la carte de réservation est à l'écran (rien ne couvre « Réserver »)
+      if (ioRs) ioRs.disconnect();
+      if ('IntersectionObserver' in window) { const art = $('article.u', main); ioRs = new IntersectionObserver(es => { if (art) art.classList.toggle('rs-vu', es.some(x => x.isIntersecting)); }, { threshold: 0.2 }); ioRs.observe($('#rs-carte', zone)); }
       // une adresse qui nomme une date (un lien partagé, l'accueil) : la page s'ouvre sur sa carte
       if (voulue && !surPlace && k0 === voulue) bientot(() => { vers('rs-zone', true); const b = $('.rs-date[aria-pressed="true"]', zone); if (b) b.focus({ preventScroll: true }); });
     }
@@ -2824,7 +2874,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       const pts = [...passees, ...D.dates.filter(d => d.slug === slug).map(repereProchaine)];
       // un repère de date réservable la choisit dans la bande (et y mène) ; les autres mènent à leur ligne
       const parFrise = new Map(RS && rsSp ? RS.dates(slug).map(d => [cleProchaine(d), RS.cle(d)]) : []);
-      const fT = pts.length ? frise(ft, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${L.dates}`, relier: { liste: ch, carte: svg ? l => marquer(svg, l) : null },
+      const fT = pts.length ? frise(ft, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${L.dates}`, relier: { liste: ch, carte: svg ? l => survolCarte(svg, l) : null },
         choix: p => { if (rsSp && parFrise.has(p.id)) { rsSp.choisir(parFrise.get(p.id)); rsSp.montrer(); vers('rs-zone'); } else allerLigne(p.id); } }) : null;
       if (fT && svg) lierCarte(svg, { survol: l => { if (l == null) fT.eteindre(); else fT.allumer({ l }); } });
     }
