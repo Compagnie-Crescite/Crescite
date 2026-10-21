@@ -7009,7 +7009,7 @@ const TENTACULES = (() => {
       // sous sa ligne, cachée avec elle s'il le faut. Pendant un geste (fantomes), ce qui part sous les yeux s'efface à sa
       // place, comme avant (le reste glisse par MV.flip) : une copie inerte, posée au-dessus puis fondue, sans rien d'autre
       const montrerLignes = (fantomes = false) => {
-        const ok = new Set(proch.filter(garde).map(r => cleProchaine(r.d))), H = innerHeight;
+        const ok = new Set(proch.filter(garde).map(r => cleProchaine(r.d))), H = fantomes ? innerHeight : 0;   // (lire innerHeight forcerait une mise en page)
         const lignes = qa('.dl[data-frise-id]', liste).map(li => [li, !ok.has(li.dataset.friseId)]);
         const mois = qa('.grp', liste).map(g => [g, !lignes.some(([li, non]) => !non && g.contains(li))]);
         // ce qui part : mesuré avant tout changement (une seule mise en page)

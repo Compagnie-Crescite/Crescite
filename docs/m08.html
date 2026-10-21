@@ -972,8 +972,10 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
 /* au défilement : les titres de rubrique se composent (ils se découvrent de gauche à droite), les filets se tirent à la
    règle, les fiches se posent l'une après l'autre, les chiffres comptent */
 .cb-head,.bande-t,.ag-mois{border-bottom:0;background:linear-gradient(var(--ink),var(--ink)) 0 100%/100% 1px no-repeat}
-[data-mv="compose"].mv-attente{transition:clip-path .6s var(--mv-courbe) var(--mv-delai,0ms)}
-[data-mv="compose"].mv-attente:not(.mv-vu){clip-path:inset(-.3em 100% -.35em -.15em)}
+/* (le titre en attente garde un pixel de large : IntersectionObserver tient compte de son clip-path, et un titre tout à fait
+   découpé ne serait jamais « vu » ; il se découvre ensuite de gauche à droite, d'un découpage à l'autre) */
+[data-mv="compose"].mv-attente{transition:clip-path .6s var(--mv-courbe) var(--mv-delai,0ms);clip-path:inset(-.3em -.3em -.35em -.15em)}
+[data-mv="compose"].mv-attente:not(.mv-vu){clip-path:inset(-.3em calc(100% - 1px) -.35em 0)}
 [data-mv="filet"].mv-attente{transition:background-size .8s var(--mv-courbe) var(--mv-delai,0ms)}
 :is(.mast,.saisons-ag,.saisons,.cat-som,.ep-som)[data-mv="filet"].mv-attente:not(.mv-vu){background-size:0 3px,0 1px}
 :is(.cb-head,.bande-t,.ag-mois)[data-mv="filet"].mv-attente:not(.mv-vu){background-size:0 1px}

@@ -1027,14 +1027,15 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-titre); outline-offset: 2
 .tr { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(48px, 6.4vw, 92px); timeline-scope: --tr-pieuvre;
   --troupe-lien: var(--magenta-vif); --troupe-ic-fond: var(--nuit); --troupe-ventouse-fond: var(--nuit); }
 /* les bras de la pieuvre et les vrilles (dessinés par vivreTroupe, sous les places) */
-.tr-bras { position: absolute; left: 0; top: 0; z-index: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.tr-b path { fill: var(--blanc); opacity: .6; transition: fill .18s, opacity .18s; }
-.tr-b circle { fill: var(--nuit); stroke: var(--blanc); stroke-width: 1.1; opacity: .66; transition: stroke .18s, opacity .18s; }
+.tr-bras { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.tr-bras svg { position: absolute; display: block; overflow: visible; }
+.tr-b path { fill: var(--blanc); opacity: .6; }
+.tr-b circle { fill: var(--nuit); stroke: var(--blanc); stroke-width: 1.1; opacity: .66; }
 .tr-b.est-allume path { fill: var(--magenta-vif); opacity: 1; }
 .tr-b.est-allume circle { stroke: var(--magenta-vif); opacity: 1; }
 .tr-vrille path { fill: var(--magenta-vif); }
 .tr-vrille circle { fill: var(--nuit); stroke: var(--magenta-vif); stroke-width: 1.2; }
-.tr-vrille .tr-vrille-v { fill: none; stroke-width: 2; transform-box: fill-box; transform-origin: center; }
+.tr-vrille .tr-vrille-v { fill: none; stroke-width: 2; }
 .tr-pieuvre { position: relative; z-index: 1; justify-self: center; width: min(400px, 74vw); color: var(--blanc); line-height: 0; view-timeline: --tr-pieuvre block; }
 .tr-pieuvre::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 56%; width: 150%; aspect-ratio: 1.7; transform: translate(-50%, -50%); background: radial-gradient(closest-side, var(--magenta-16), var(--magenta-0)); pointer-events: none; }
 .tr-pieuvre svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -7482,7 +7483,7 @@ const TENTACULES = (() => {
     return `<section class="bloc troupe" aria-labelledby="h-troupe"><div class="wrap">
       <h2 class="h2 tr-titre" id="h-troupe"${ed('site.troupe.titre')}>${esc(TR.titre())}</h2>
       <div class="tr" data-troupe>
-        <svg class="tr-bras" aria-hidden="true" focusable="false"><g class="tr-bras-g"></g><g class="tr-vrilles"></g></svg>
+        <div class="tr-bras" aria-hidden="true"><div class="tr-bras-g"></div><div class="tr-vrilles"></div></div>
         <div class="tr-pieuvre" aria-hidden="true">${D.logo.octopus}</div>
         ${metiers.length ? `<div class="tr-rang" style="--cols:${Math.min(6, metiers.length)}">${metiers.map(c => categorieTroupe(c, `<ul class="tr-places">${c.places.map(placeTroupe).join('')}</ul>`)).join('')}</div>` : ''}
         ${categorieTroupe(jeu, choeur, ' tr-choeur')}
@@ -7496,15 +7497,23 @@ const TENTACULES = (() => {
     return { cols: [...g.map(a => [a]), ...(impair ? [['C1L', 'C1R']] : []), ...d.map(a => [a])], choeur: impair ? (m < 3 ? ['A2L', 'A2R'] : null) : ['C1L', 'C1R'] };
   }
   const LARGE = matchMedia('(min-width: 1100px)');
-  // un bras : la courbe douce par ses points, effilée (de w0 à w1), ponctuée de ventouses de plus en plus petites
-  function brasTroupe(pts, { w0, w1 = 1.2, classe, cle = '' }) {
+  // un bras : la courbe douce par ses points, effilée (de w0 à w1), ponctuée de ventouses de plus en plus petites ; chaque
+  // bras est son propre petit dessin, posé à sa place dans la troupe : il pousse, s'allume ou s'efface seul (transform et
+  // opacity sur lui seul), sans repeindre les autres ni la troupe ; fin : un anneau au bout (une vrille)
+  function brasTroupe(pts, { w0, w1 = 1.2, classe, cle = '', fin = false }) {
     const c = TR.lisse(pts); if (!c || !c.longueur) return '';
     const n = Math.max(2, Math.min(16, Math.round(c.longueur / 36))), vs = [];
     for (let i = 1; i <= n; i++) {
       const t = .1 + .84 * i / (n + 1), q = c.point(t), tg = c.tangente(t), w = (w0 * (1 - t) + w1 * t) / 2 + 2.4, cote = i % 2 ? 1 : -1;
       vs.push(`<circle cx="${(q[0] - tg[1] * w * cote).toFixed(1)}" cy="${(q[1] + tg[0] * w * cote).toFixed(1)}" r="${(2.4 - 1.2 * t).toFixed(2)}"/>`);
     }
-    return `<g class="${classe}"${cle ? ` data-b="${attr(cle)}"` : ''} style="transform-origin:${pts[0][0].toFixed(1)}px ${pts[0][1].toFixed(1)}px"><path d="${TR.effile(c, { w0, w1, n: 56 })}"/>${vs.join('')}</g>`;
+    const b = pts[pts.length - 1];
+    if (fin) vs.push(`<circle class="tr-vrille-v" cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="4.5"/>`);
+    // sa boîte : la courbe, plus la largeur du bras, ses ventouses et l'anneau
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let k = 0; k <= 48; k++) { const q = c.point(k / 48); x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
+    const m = w0 / 2 + 9; x0 = Math.floor(x0 - m); y0 = Math.floor(y0 - m); x1 = Math.ceil(x1 + m); y1 = Math.ceil(y1 + m);
+    return `<svg class="${classe}"${cle ? ` data-b="${attr(cle)}"` : ''} focusable="false" width="${x1 - x0}" height="${y1 - y0}" style="left:${x0}px;top:${y0}px;transform-origin:${(pts[0][0] - x0).toFixed(1)}px ${(pts[0][1] - y0).toFixed(1)}px"><g transform="translate(${-x0} ${-y0})"><path d="${TR.effile(c, { w0, w1, n: 56 })}"/>${vs.join('')}</g></svg>`;
   }
   function dessinerBras(tr) {
     const g = $('.tr-bras-g', tr), logo = $('.tr-pieuvre svg', tr);
@@ -7562,35 +7571,38 @@ const TENTACULES = (() => {
       const C = box(cat), I = box(ic), A = box(an), choeur = cat.classList.contains('tr-choeur'), gauche = A.cx <= (choeur ? I.cx : C.cx), bord = gauche ? C.l - 12 : C.r + 12;
       const a = [gauche ? I.l - 2 : I.r + 2, I.cy], b = choeur ? [A.cx, A.t - 3] : [gauche ? A.l - 3 : A.r + 3, A.cy];
       const pts = choeur ? [a, [a[0] + (gauche ? -40 : 40), I.cy + 20], [b[0], b[1] - 28], b] : [a, [bord, I.cy + 22], [bord, A.cy - 20], b];
-      return brasTroupe(pts, { w0: 3, w1: 1.4, classe: 'tr-vrille' }).replace('</g>', `<circle class="tr-vrille-v" cx="${b[0].toFixed(1)}" cy="${b[1].toFixed(1)}" r="4.5"/></g>`);
+      return brasTroupe(pts, { w0: 3, w1: 1.4, classe: 'tr-vrille', fin: true });
     }).join('');
     g.insertAdjacentHTML('beforeend', html);
     if (!motionOK()) return;
-    $$('.tr-vrille:not(.part)', g).forEach((v, i) => {
-      v.animate([{ opacity: 0, transform: 'scale(.25)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: i * 50, easing: 'cubic-bezier(.3, 1.25, .5, 1)', fill: 'backwards' });
-      const e = $('.tr-vrille-v', v); if (e) e.animate([{ transform: 'scale(.2)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 240, delay: 200 + i * 50, easing: 'cubic-bezier(.3, 1.25, .5, 1)', fill: 'backwards' });
-    });
+    $$('.tr-vrille:not(.part)', g).forEach((v, i) => v.animate([{ opacity: 0, transform: 'scale(.25)' }, { opacity: 1, transform: 'none' }], { duration: 320, delay: i * 50, easing: 'cubic-bezier(.3, 1.25, .5, 1)', fill: 'backwards' }));
   }
   // la troupe prend vie : les liens entre les places d'une personne (TROUPE.relier), les bras de la pieuvre (dessinés quand
   // la troupe paraît, puis à chaque changement de taille), les vrilles, les icônes qui s'animent à leur arrivée
-  let troupeIO = null, troupeRO = null, troupeMaj = null;
+  let troupeIO = null, troupeRO = null, troupeMaj = null, troupeRel = null;
   LARGE.addEventListener('change', () => { if (troupeMaj) troupeMaj(); });
+  // en quittant la page (ou en la refaisant), la troupe d'avant lâche tout : ses liens, ses écouteurs, ses observateurs
+  function quitterTroupe() {
+    if (troupeRel) { troupeRel.detruire(); troupeRel = null; }
+    if (troupeRO) { troupeRO.disconnect(); troupeRO = null; }
+    if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
+    troupeMaj = null;
+  }
   function vivreTroupe() {
+    quitterTroupe();
     const tr = $('.tr[data-troupe]', vPage); if (!tr || !TR) return;
     let rafV = 0, rafB = 0, allume = null;
     const vrilles = () => { rafV = 0; if (tr.isConnected) vrillesTroupe(tr, allume); };
-    TR.relier(tr, { surAllumer: slug => { allume = slug; if (!rafV) rafV = requestAnimationFrame(vrilles); } });
+    troupeRel = TR.relier(tr, { surAllumer: slug => { allume = slug; if (!rafV) rafV = requestAnimationFrame(vrilles); } });
     const rendu = () => !tr.checkVisibility || tr.checkVisibility({ contentVisibilityAuto: true });
     const maj = () => { rafB = 0; if (!tr.isConnected || !rendu()) return; if (dessinerBras(tr) || !LARGE.matches) vrillesTroupe(tr, allume); };
     troupeMaj = () => { if (!rafB) rafB = requestAnimationFrame(maj); };
-    if (troupeRO) troupeRO.disconnect();
     troupeRO = 'ResizeObserver' in window ? new ResizeObserver(troupeMaj) : null;
     if (troupeRO) troupeRO.observe(tr); else troupeMaj();
     const sec = tr.closest('section'); if (sec) sec.addEventListener('contentvisibilityautostatechange', e => { if (!e.skipped) troupeMaj(); });
-    if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
     if (motionOK() && 'IntersectionObserver' in window) {
-      troupeIO = new IntersectionObserver(es => es.forEach(x => { if (!x.isIntersecting) return; troupeIO.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
-      $$('.troupe-icone', tr).forEach(i => troupeIO.observe(i));
+      const io = troupeIO = new IntersectionObserver(es => es.forEach(x => { if (!x.isIntersecting) return; io.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
+      $$('.troupe-icone', tr).forEach(i => io.observe(i));
     }
     // une photo publiée qui ne se charge pas (le fichier manque) : le nom seul, avec sa ventouse ; les rendus suivants la savent absente
     tr.addEventListener('error', e => {
@@ -8063,7 +8075,7 @@ const TENTACULES = (() => {
     // la même vue, refaite en place
     if (enPlace && courant && courant.id === v.id) {
       const etat = v.cle === 'accueil' ? { y: scrollY } : etatVue();
-      ANIMER = false; GEN++; APRES = []; AGV = null; detruireFrises();
+      ANIMER = false; GEN++; APRES = []; AGV = null; detruireFrises(); quitterTroupe();
       try {
         if (v.cle === 'accueil') { accueilSuite(); Stage.maj(); }
         else { vPage.innerHTML = rendu(v); apres(); }
@@ -8091,7 +8103,7 @@ const TENTACULES = (() => {
     const vit = !!avant && motionOK() && !(typeof INTRO !== 'undefined' && INTRO.ouverte());
     const qs = quitte && !memeSp ? show(quitte) : null;
     if (memeSp) { detruireFrises(); changerOnglet(v); return; }
-    detruireFrises();
+    detruireFrises(); quitterTroupe();
     if (v.cle === 'accueil') {
       vPage.hidden = true; vPage.innerHTML = ''; vAccueil.hidden = false;
       accueilSuite();
