@@ -51,6 +51,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 2079px) { .qui .moi { display: none; } }
 @media (max-width: 1939px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
 @media (min-width: 861px) and (max-width: 1099px) { .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
+/* onze rubriques (la Diffusion, quand la base a ses tables) : une seule ligne à partir de 2 080 px, l'adresse du compte à
+   partir de 2 220 px, et les rubriques sur deux rangs jusqu'à 1 219 px */
+@media (min-width: 1100px) and (max-width: 1219px) { .barre.onze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
+@media (min-width: 1940px) and (max-width: 2079px) { .barre.onze { flex-wrap: wrap; row-gap: 6px; } .barre.onze .nav { order: 3; flex-basis: 100%; } .barre.onze .qui { margin-left: auto; } .barre.onze .qui .moi, .barre.onze .chercher .mot { display: inline; } }
+@media (min-width: 2080px) and (max-width: 2219px) { .barre.onze .qui .moi { display: none; } }
+@media (min-width: 1101px) and (max-width: 1219px) { .barre.onze ~ main .deux > .liste { top: 142px; max-height: calc(100vh - 162px); } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 /* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
@@ -424,6 +430,8 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
   .tableur { font-size: 13px; }
   .tableur td.c-jour, .tableur td.c-spectacle { white-space: normal; }
 }
+/* au téléphone, les colonnes collées se resserrent : le reste du tableau garde de la place pour défiler */
+@media (max-width: 520px) { .tab-cadre { --w-jour: 86px; --w-spectacle: 98px; } .tableur th, .tableur td { padding: 5px 7px; } .tableur td.c-spectacle .pastille { display: none; } }
 </style>
 </head>
 <body>
@@ -719,7 +727,7 @@ const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planni
 const rubriquesVisibles = () => RUBRIQUES.filter(([k]) => k !== 'diffusion' || E.ideale);
 const idealeAbsente = titre => `<div class="bloc"><h3>${titre}</h3><p>Exécutez <code>supabase/migrations/20261026_crescite_ideale.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), puis rechargez cette page.</p><p class="aide">Le reste de l’administration marche comme avant.</p></div>`;
 function cadre(rubrique, contenu) {
-  $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
+  $('#app').innerHTML = `<header class="barre${rubriquesVisibles().length > 10 ? ' onze' : ''}"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true">${RACCOURCI_RCH}</kbd></button>
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
@@ -2106,7 +2114,7 @@ const TABLEUR = (() => {
   function editerEquipe(x, c, initial) {
     const td = cellule(T.actif.l, T.actif.c), d = x.d, s = spectacle(d.spectacle_id);
     const avant = equipeIds(d);
-    let ids = [...avant], actifS = 0;
+    let ids = [...avant], actifS = 0, deroulee = false;   // la liste s'ouvre en tapant (ou par ↓), se referme à l'ajout
     const pop = poser(td, `<p class="tab-pop-titre" id="tab-eq-titre">Distribution · ${esc(jourCourt(x.r?.jour || d.debut))}${x.n > 1 ? ` <small>pour les ${x.n} séances de la date</small>` : ''}</p>
       <ul class="tab-pastilles" id="tab-eq-pastilles" aria-label="Qui part"></ul>
       <div class="tab-eq-ajout"><input type="text" id="tab-eq-q" role="combobox" aria-expanded="false" aria-controls="tab-eq-liste" aria-autocomplete="list" aria-label="Ajouter quelqu’un" placeholder="Ajouter quelqu’un…" autocomplete="off" spellcheck="false">
@@ -2127,12 +2135,12 @@ const TABLEUR = (() => {
       const xs = candidats(), deDist = new Set(dist.map(y => y.personne_id));
       actifS = Math.min(actifS, Math.max(0, xs.length - 1));
       liste.innerHTML = xs.map((id, i) => `<li role="option" id="tab-eq-o${i}" data-id="${id}" aria-selected="${i === actifS}">${esc(nomDe(personne(id)))}<small>${deDist.has(id) ? esc(fonctions(id) || 'distribution') : 'hors distribution'}</small></li>`).join('');
-      const ouvert = document.activeElement === q && xs.length > 0;
+      const ouvert = document.activeElement === q && xs.length > 0 && (deroulee || q.value.trim() !== '');
       liste.hidden = !ouvert; q.setAttribute('aria-expanded', String(ouvert));
       if (ouvert) q.setAttribute('aria-activedescendant', `tab-eq-o${actifS}`); else q.removeAttribute('aria-activedescendant');
       T.pop?.placer();
     };
-    const ajouter = id => { if (id && !ids.includes(id)) ids.push(id); q.value = ''; actifS = 0; dessinerP(); q.focus(); };
+    const ajouter = id => { if (id && !ids.includes(id)) ids.push(id); q.value = ''; actifS = 0; deroulee = false; dessinerP(); q.focus(); };
     const valider = () => { fermerPop(); if (JSON.stringify([...ids].sort()) !== JSON.stringify([...avant].sort())) return ecrire([{ x, col: c, v: ids }]); return Promise.resolve(true); };
     T.pop.valider = valider;
     pop.addEventListener('click', e => {
@@ -2143,13 +2151,13 @@ const TABLEUR = (() => {
       if (e.target.closest('[data-eq-etendre]')) { const garder = [...ids]; valider().then(ok => { if (ok) etendre(x, garder); }); }
     });
     pop.addEventListener('mousedown', e => { if (e.target.closest('[role=option]')) e.preventDefault(); });
-    q.addEventListener('input', () => { actifS = 0; dessinerP(); });
+    q.addEventListener('input', () => { actifS = 0; deroulee = q.value.trim() !== ''; dessinerP(); });
     q.addEventListener('focus', dessinerP);
     q.addEventListener('blur', () => setTimeout(() => { if (T.pop?.el === pop && document.activeElement !== q) { liste.hidden = true; q.setAttribute('aria-expanded', 'false'); } }, 120));
     q.addEventListener('keydown', e => {
       const xs = candidats();
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (xs.length) { actifS = (actifS + (e.key === 'ArrowDown' ? 1 : -1) + xs.length) % xs.length; dessinerP(); $(`#tab-eq-o${actifS}`, pop)?.scrollIntoView({ block: 'nearest' }); } }
-      else if (e.key === 'Enter') { e.preventDefault(); if (q.value.trim() && xs.length) ajouter(xs[actifS]); else if (!q.value.trim()) valider(); }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (xs.length) { if (!deroulee && !q.value.trim()) { deroulee = true; actifS = 0; } else actifS = (actifS + (e.key === 'ArrowDown' ? 1 : -1) + xs.length) % xs.length; dessinerP(); $(`#tab-eq-o${actifS}`, pop)?.scrollIntoView({ block: 'nearest' }); } }
+      else if (e.key === 'Enter') { e.preventDefault(); if ((q.value.trim() || deroulee) && xs.length) ajouter(xs[actifS]); else if (!q.value.trim()) valider(); }
       else if (e.key === 'Backspace' && !q.value && ids.length) { ids.pop(); dessinerP(); }
     });
     pastilles.addEventListener('keydown', e => { const b = e.target.closest('[data-retirer]'); if (b && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); ids = ids.filter(id => id !== +b.dataset.retirer); dessinerP(); q.focus(); } });
@@ -2283,7 +2291,6 @@ const TABLEUR = (() => {
         if (a.rien) { etat(`Rien d’ajouté : ${a.texte}.`); return; }
         T.pile.push({ libelle: a.texte, defaire: () => defaireAjout(a) });
         etat(`${a.texte[0].toUpperCase()}${a.texte.slice(1)}.`, 'ok', true);
-        annoncer(`${a.texte[0].toUpperCase()}${a.texte.slice(1)}.`);
         // la séance ajoutée : en vue, et la case de l'heure active
         if ((T.f.periode === 'avenir' && jour < AUJ) || (T.f.periode === 'passees' && jour >= AUJ) || (T.f.spectacle && String(T.f.spectacle) !== String(sp))) { T.f.periode = 'toutes'; T.f.spectacle = ''; garderFiltres(); }
         dessiner();
@@ -2557,7 +2564,7 @@ const TABLEUR = (() => {
       dlg.close();
       if (faits.length) T.pile.push({ libelle: `${pl(faits.length, 'séance')} importée${faits.length > 1 ? 's' : ''}`, defaire: async () => { for (const a of faits.reverse()) await defaireAjout(a); } });
       const nd = faits.filter(a => a.nouvelle).length;
-      etat(`Import : ${pl(faits.length, 'séance')} créée${faits.length > 1 ? 's' : ''}${nd ? `, dont ${pl(nd, 'nouvelle date')}` : ''}${rates ? ` ; ${rates} refusée${rates > 1 ? 's' : ''} par la base` : ''}.`, rates ? 'erreur' : 'ok', !!faits.length);
+      etat(`Import : ${pl(faits.length, 'séance')} créée${faits.length > 1 ? 's' : ''}${nd ? `, dont ${pl(nd, 'nouvelle date', 'nouvelles dates')}` : ''}${rates ? ` ; ${rates} refusée${rates > 1 ? 's' : ''} par la base` : ''}.`, rates ? 'erreur' : 'ok', !!faits.length);
       if (faits.length) { T.f.periode = 'toutes'; garderFiltres(); }
       dessiner();
     });
