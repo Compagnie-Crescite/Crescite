@@ -10,7 +10,7 @@
    d'abord par le réseau.
 
    Jamais gardés : l'authentification, la fonction d'envoi, les liens signés des documents, et toute écriture. */
-const VERSION = '8c77b463b04b';
+const VERSION = '7ecd5de7e0bd';
 const DEV = VERSION.startsWith('__');
 const COQUILLE = `crescite-equipe-coquille-${VERSION}`;   // l'application elle-même, par version
 const OUTILS = 'crescite-equipe-outils';                  // ce qu'elle charge à la demande (pdfmake pour les PDF)
@@ -21,7 +21,7 @@ const ESSENTIELS = ['./', 'equipe.js', 'manifest.webmanifest', '../admin/vendor/
 const UTILES = ['carte.js', '../admin/agenda.js', '../admin/feuille.js', '../admin/tentacules.js', '../admin/planning.js',
   'icones/192.png', 'icones/512.png', 'icones/180.png', 'icones/masquable-512.png', 'icones/badge.png'];
 const MAX_MEDIAS = 120;
-const LIENS_SURS = /^#\/(saison|feuilles|planning|spectacles|documents|notifications|moi|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+|spectacles\/[a-z0-9-]{1,80})$/;
+const LIENS_SURS = /^#\/(saison|feuilles|planning|spectacles|documents|notifications|moi|frais|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+|spectacles\/[a-z0-9-]{1,80})$/;
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {

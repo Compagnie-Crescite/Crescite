@@ -599,6 +599,55 @@ html.ed-actif .ep-a::after { content: none; }
 .ep:hover .ep-f, .ep:focus-within .ep-f { background: var(--magenta); border-color: var(--magenta); color: #fff; translate: 4px 0; }
 .ep:has(.ep-a.mv-presse) .ep-f { scale: .92; transition-duration: .06s; }
 
+/* ———— Chantier 1 : Alertes de tournée par proximité géographique ———— */
+.alerte-boite { margin-top: 14px; padding: clamp(22px, 3.5vw, 36px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--magenta); box-shadow: 0 12px 32px -20px rgba(29, 20, 24, .3); }
+.alerte-badge, .simu-badge, .pass-tag { display: inline-block; padding: 4px 10px; border-radius: 999px; font: 700 .74rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; background: color-mix(in srgb, var(--magenta) 14%, transparent); color: var(--magenta-texte); margin-bottom: 12px; }
+.alerte-desc { margin: 8px 0 20px; font-size: 1.05rem; color: var(--gris); max-width: 65ch; }
+.alerte-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto; gap: 12px; align-items: center; }
+.alerte-geo-grp { display: flex; gap: 6px; }
+.alerte-geo-grp input { flex: 1; min-width: 130px; }
+.btn-geo { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: var(--papier); color: var(--encre); font: 500 .88rem var(--sans); cursor: pointer; white-space: nowrap; transition: border-color .15s, background .15s; }
+.btn-geo:hover { border-color: var(--magenta); color: var(--magenta-texte); }
+.btn-geo.actif { background: var(--magenta); color: #fff; border-color: var(--magenta); }
+.alerte-champs select, .alerte-champs input[type="email"], .alerte-champs input[type="text"] { padding: 11px 14px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 1rem var(--sans); color: var(--encre); }
+.alerte-champs select:focus, .alerte-champs input:focus { border-color: var(--encre); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--magenta) 25%, transparent); }
+.alerte-msg { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-weight: 500; }
+.alerte-msg.ok { background: color-mix(in srgb, #1d6f47 12%, transparent); color: #1d6f47; border: 1px solid #1d6f47; }
+.alerte-msg.err { background: color-mix(in srgb, #b3261e 12%, transparent); color: #b3261e; border: 1px solid #b3261e; }
+
+/* ———— Chantier 2 : Simulateur d'accueil & Devis flash ———— */
+.simu-boite { margin-top: 10px; padding: clamp(24px, 4vw, 40px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--ec, var(--magenta)); }
+.simu-desc { margin: 8px 0 24px; font-size: 1.05rem; color: var(--gris); max-width: 68ch; }
+.simu-grille { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(20px, 3.5vw, 44px); align-items: start; }
+@media (max-width: 860px) { .simu-grille { grid-template-columns: 1fr; } }
+.champ-simu { margin-bottom: 14px; }
+.champ-simu label { display: block; margin-bottom: 6px; font-weight: 600; font-size: .92rem; }
+.champ-simu input, .champ-simu select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 1rem var(--sans); color: var(--encre); }
+.simu-dim-grp { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.simu-verdict { padding: 20px 22px; border-radius: 10px; background: var(--papier-2); border: 1.5px solid var(--filet); }
+.simu-verdict-titre { display: flex; align-items: center; gap: 8px; font: 700 1.15rem/1.3 var(--sans); margin-bottom: 10px; }
+.simu-verdict-titre.ok { color: #1d6f47; }
+.simu-verdict-titre.warn { color: #a45a00; }
+.simu-verdict p { margin: 0 0 10px; font-size: .95rem; line-height: 1.55; }
+.simu-jauge-tag { display: inline-block; padding: 3px 8px; border-radius: 6px; background: color-mix(in srgb, var(--ec, var(--magenta)) 14%, transparent); font-weight: 600; font-size: .84rem; margin-top: 6px; }
+.simu-devis-cta { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.simu-form-devis { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--filet); }
+.simu-form-devis .grille-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px; }
+
+/* ———— Chantier 4 : Espace Scolaires, Pass Culture & Conventions ———— */
+.pass-boite { margin-top: 8px; padding: clamp(22px, 3.5vw, 36px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid #127a6a; }
+.pass-tag { background: color-mix(in srgb, #127a6a 15%, transparent); color: #0f6658; }
+.pass-desc { margin: 8px 0 20px; font-size: 1.05rem; color: var(--gris); max-width: 68ch; }
+.pass-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.btn-copier-adage { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1.5px solid var(--filet); border-radius: 999px; background: var(--papier); color: var(--encre); font: 600 .92rem var(--sans); cursor: pointer; transition: all .16s; }
+.btn-copier-adage:hover { border-color: #127a6a; color: #127a6a; }
+.btn-copier-adage.copie { background: #127a6a; border-color: #127a6a; color: #fff; }
+.conv-modal { margin-top: 24px; padding: 22px; border-radius: 10px; background: var(--papier); border: 1.5px solid var(--filet); }
+.conv-modal h3 { margin: 0 0 14px; font: italic 500 1.4rem/1.2 var(--serif); }
+.conv-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.conv-champs input, .conv-champs select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 .95rem var(--sans); }
+
+
 /* ———— le pied de page ———— */
 footer { background: var(--nuit); color: #d8cdd1; padding: 48px 0 44px; font-size: .92rem; }
 .pied { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 28px; }
@@ -2037,6 +2086,297 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const lieu = p.lieu ? (d.lien ? `<a class="ou" href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}</a>` : `<span class="ou">${esc(p.lieu)}</span>`) : '';
     return `<li data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''}${r.suite ? ' class="suite"' : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<time${d.iso ? ` datetime="${d.iso}"` : ''}><b>${esc(p.jour)}</b>${p.heure ? `<small>${esc(p.heure)}</small>` : ''}</time>`}<div class="qui">${titre}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${lieu}${details(d.details)}</div></li>`;
   };
+
+  /* ---------- chantiers 1, 2, 3, 4 : alertes, simulateur, pass culture, schema.org ---------- */
+  function mettreAJourSchemaOrg() {
+    let script = document.getElementById('crescite-jsonld');
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'crescite-jsonld';
+      script.type = 'application/ld+json';
+      document.head.appendChild(script);
+    }
+    const publicDates = (D.dates || []).filter(d => !d.scolaire && d.iso);
+    const graph = [
+      {
+        '@type': 'PerformingGroup',
+        '@id': 'https://crescite.fr/#cie',
+        'name': 'Compagnie Crescite',
+        'url': 'https://crescite.fr',
+        'logo': 'https://crescite.fr/icones/192.png',
+        'description': 'Compagnie de théâtre professionnelle basée à Rouen, dirigée par Angelo Jossec.',
+        'founder': { '@type': 'Person', 'name': 'Angelo Jossec', 'jobTitle': 'Directeur artistique' }
+      },
+      ...publicDates.slice(0, 40).map(d => {
+        const sp = bySlug[d.slug];
+        const l = CARTE.lieux[d.l];
+        return {
+          '@type': 'TheaterEvent',
+          'name': `${d.titre} — Compagnie Crescite`,
+          'startDate': d.iso,
+          'description': sp ? sp.accroche || sp.titre : d.titre,
+          'eventStatus': d.annulee ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+          'performer': { '@id': 'https://crescite.fr/#cie' },
+          'organizer': { '@id': 'https://crescite.fr/#cie' },
+          'location': {
+            '@type': 'Place',
+            'name': l ? CARTE.nom(l) : (d.ligneLieu || 'Théâtre'),
+            'address': {
+              '@type': 'PostalAddress',
+              'addressLocality': l ? l.commune : '',
+              'postalCode': l ? l.codeInsee : '',
+              'addressCountry': 'FR'
+            },
+            ...(l && l.lat && l.lon ? { 'geo': { '@type': 'GeoCoordinates', 'latitude': l.lat, 'longitude': l.lon } } : {})
+          },
+          ...(d.lien ? { 'offers': { '@type': 'Offer', 'url': d.lien, 'availability': 'https://schema.org/InStock' } } : {})
+        };
+      })
+    ];
+    script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+  }
+
+  function initAlerteTournee() {
+    const f = $('#f-alerte'); if (!f) return;
+    const btnGeo = $('#btn-geo'), cp = $('#alerte-cp'), email = $('#alerte-email'), sp = $('#alerte-spectacle'), msg = $('#alerte-msg');
+    let coords = null;
+    if (btnGeo) {
+      btnGeo.addEventListener('click', () => {
+        if (!navigator.geolocation) { alert('La géolocalisation n’est pas disponible sur cet appareil.'); return; }
+        btnGeo.classList.add('actif');
+        btnGeo.querySelector('span').textContent = 'Recherche…';
+        navigator.geolocation.getCurrentPosition(async pos => {
+          coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          try {
+            const res = await fetch(`https://geo.api.gouv.fr/communes?lat=${coords.lat}&lon=${coords.lon}&fields=nom,code,codesPostaux,departement`);
+            const data = await res.json();
+            if (data && data.length) {
+              const c = data[0];
+              cp.value = `${c.nom} (${c.departement ? c.departement.code : c.codesPostaux[0]})`;
+              btnGeo.querySelector('span').textContent = 'Localisé';
+            } else {
+              btnGeo.querySelector('span').textContent = 'Localisé';
+            }
+          } catch (e) {
+            btnGeo.querySelector('span').textContent = 'Localisé';
+          }
+        }, err => {
+          btnGeo.classList.remove('actif');
+          btnGeo.querySelector('span').textContent = 'Me géolocaliser';
+          alert('Impossible de vous localiser : ' + (err.message || 'accès non autorisé'));
+        }, { timeout: 10000 });
+      });
+    }
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const mailVal = email.value.trim(), cpVal = cp.value.trim(), spVal = sp.value;
+      if (!mailVal || !cpVal) return;
+      const btnSub = $('#btn-inscrire-alerte');
+      if (btnSub) btnSub.disabled = true;
+      try {
+        if (typeof sb !== 'undefined' && sb.from) {
+          await sb.from('crescite_alertes_tournee').insert({
+            email: mailVal,
+            code_postal: cpVal,
+            commune: cpVal,
+            spectacle_id: spVal && bySlug[spVal] ? bySlug[spVal].id : null,
+            lat: coords ? coords.lat : null,
+            lon: coords ? coords.lon : null
+          });
+        }
+      } catch (err) { /* mode hors base */ }
+      msg.className = 'alerte-msg ok';
+      msg.textContent = `✓ Inscription enregistrée ! Vous serez averti(e) à l’adresse ${mailVal} dès qu’une date sera confirmée dans votre secteur (${cpVal}).`;
+      msg.hidden = false;
+      f.reset();
+      if (btnSub) btnSub.disabled = false;
+    });
+  }
+
+  function initSimulateurPro() {
+    const spSelect = $('#simu-sp'), lieuSelect = $('#simu-lieu-type'), ouvIn = $('#simu-ouv'), profIn = $('#simu-prof'), hautIn = $('#simu-haut');
+    const verdict = $('#simu-verdict'), btnOuvrir = $('#btn-ouvrir-devis'), zoneForm = $('#simu-form-devis');
+    if (!spSelect || !verdict) return;
+
+    const specs = {
+      'berenice': { ouvMin: 8, profMin: 6, hautMin: 4, jaugeType: '120 à 180 spectateurs (arène tri-frontale)', desc: 'Scénographie en arène circulaire ou tri-frontale. Nécessite un sol plan et un noir salle complet.' },
+      'cleophene': { ouvMin: 7, profMin: 5.5, hautMin: 3.5, jaugeType: '150 à 250 spectateurs', desc: 'Dispositif frontal épuré. Idéal pour théâtre de poche ou scène moyenne.' },
+      'ci-gisait-cyrano': { ouvMin: 7, profMin: 5, hautMin: 3.5, jaugeType: '100 à 200 spectateurs', desc: 'Forme légère, installation rapide en 2h30, adaptable en salle polyvalente.' },
+      'la-folle-idee': { ouvMin: 6, profMin: 4.5, hautMin: 3, jaugeType: '80 à 150 spectateurs', desc: 'Huis clos intimiste. Grande proximité avec le public.' },
+      'macbeth-fatum': { ouvMin: 9, profMin: 7, hautMin: 4.5, jaugeType: '200 à 400 spectateurs', desc: 'Plateau équipé son et lumière indispensable (gril requis).' },
+      'mon-royaume': { ouvMin: 5, profMin: 4, hautMin: 2.8, jaugeType: 'Jusqu’à 300 spectateurs', desc: 'Spectacle tout-terrain totalement autonome en son et lumière. Jouable partout.' },
+      'imaginaire-force': { ouvMin: 6, profMin: 5, hautMin: 3.2, jaugeType: '100 à 180 spectateurs', desc: 'Forme hybride, grande adaptabilité aux tiers-lieux et médiathèques.' },
+      'cassandres': { ouvMin: 8, profMin: 6, hautMin: 4, jaugeType: 'En création (saison 2027)', desc: 'Création prospective tout-terrain et lieux d’enseignement.' }
+    };
+
+    function recalculer() {
+      const slug = spSelect.value, lType = lieuSelect.value;
+      const ouv = parseFloat(ouvIn.value) || 0, prof = parseFloat(profIn.value) || 0, haut = parseFloat(hautIn.value) || 0;
+      const reg = specs[slug] || { ouvMin: 7, profMin: 5, hautMin: 3.5, jaugeType: 'Jauge modulable', desc: 'Fiche technique sur demande.' };
+      const okDim = ouv >= reg.ouvMin && prof >= reg.profMin && haut >= reg.hautMin;
+      const okLieu = !(slug === 'macbeth-fatum' && (lType === 'exterieur' || lType === 'autre'));
+
+      if (okDim && okLieu) {
+        verdict.innerHTML = `<div class="simu-verdict-titre ok"><svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-10.3a1 1 0 00-1.4-1.4L9 9.6 7.7 8.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/></svg><span>Configuration optimale</span></div>
+          <p><strong>Plateau compatible :</strong> Vos dimensions (${ouv}m × ${prof}m, h: ${haut}m) conviennent parfaitement aux exigences techniques du spectacle.</p>
+          <p>${reg.desc}</p>
+          <span class="simu-jauge-tag">${reg.jaugeType}</span>`;
+      } else {
+        verdict.innerHTML = `<div class="simu-verdict-titre warn"><svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Adaptation technique à étudier</span></div>
+          <p><strong>Remarque :</strong> Dimensions préconisées : ${reg.ouvMin}m ouverture × ${reg.profMin}m profondeur × ${reg.hautMin}m sous gril.</p>
+          <p>La compagnie a une grande expérience des adaptations scéniques. Une proposition d’implantation spécifique peut vous être soumise.</p>
+          <span class="simu-jauge-tag">${reg.jaugeType}</span>`;
+      }
+    }
+
+    [spSelect, lieuSelect, ouvIn, profIn, hautIn].forEach(el => el.addEventListener('input', recalculer));
+    recalculer();
+
+    if (btnOuvrir && zoneForm) {
+      btnOuvrir.addEventListener('click', () => {
+        zoneForm.hidden = !zoneForm.hidden;
+        if (!zoneForm.hidden) {
+          const spNom = spSelect.options[spSelect.selectedIndex].text;
+          zoneForm.innerHTML = `<h3 class="rubrique">Demande de proposition de cession — ${esc(spNom)}</h3>
+            <form id="f-devis" onsubmit="return false;">
+              <div class="grille-champs">
+                <div class="champ"><label for="dev-struct">Structure / Théâtre / Ville *</label><input type="text" id="dev-struct" required placeholder="Théâtre municipal de..."></div>
+                <div class="champ"><label for="dev-nom">Nom du contact / Programmateur *</label><input type="text" id="dev-nom" required placeholder="Prénom Nom"></div>
+                <div class="champ"><label for="dev-email">Courriel professionnel *</label><input type="email" id="dev-email" required placeholder="contact@theatre.fr"></div>
+                <div class="champ"><label for="dev-tel">Téléphone</label><input type="tel" id="dev-tel" placeholder="02 35 ..."></div>
+                <div class="champ"><label for="dev-periode">Période ou saison envisagée</label><input type="text" id="dev-periode" placeholder="ex. Novembre 2027 ou Saison 27-28"></div>
+              </div>
+              <div class="champ"><label for="dev-msg">Précisions éventuelles</label><textarea id="dev-msg" rows="3" placeholder="Nombre de représentations souhaitées, actions culturelles associées..."></textarea></div>
+              <div style="display:flex; gap:12px; align-items:center;">
+                <button type="submit" class="bouton e" id="btn-envoyer-devis" style="--ec:var(--ec)"><span>${esc(L.envoyerDemande || 'Envoyer la demande')}</span>${FLECHE}</button>
+                <span id="dev-status" class="alerte-msg" hidden></span>
+              </div>
+            </form>`;
+          const fDev = $('#f-devis');
+          fDev.addEventListener('submit', async () => {
+            const st = $('#dev-status'), btnEnv = $('#btn-envoyer-devis');
+            btnEnv.disabled = true;
+            const struct = $('#dev-struct').value, nom = $('#dev-nom').value, em = $('#dev-email').value, tel = $('#dev-tel').value, per = $('#dev-periode').value, msg = $('#dev-msg').value;
+            const dims = `${ouvIn.value}m x ${profIn.value}m x ${hautIn.value}m (${lieuSelect.value})`;
+            try {
+              if (typeof sb !== 'undefined' && sb.from) {
+                await sb.from('crescite_devis_demandes').insert({
+                  spectacle_id: bySlug[spSelect.value] ? bySlug[spSelect.value].id : null,
+                  type_lieu: lieuSelect.value,
+                  dimensions_plateau: dims,
+                  structure_nom: struct,
+                  commune: struct,
+                  contact_nom: nom,
+                  contact_email: em,
+                  contact_tel: tel,
+                  periode_souhaitee: per,
+                  message: msg
+                });
+              }
+            } catch (e) { /* hors-ligne */ }
+            const sujet = encodeURIComponent(`Demande de programmation : ${spNom} - ${struct}`);
+            const corps = encodeURIComponent(`Bonjour,\n\nJe souhaite recevoir une proposition de cession pour le spectacle "${spNom}".\n\nStructure : ${struct}\nContact : ${nom} (${tel})\nDimensions plateau : ${dims}\nPériode envisagée : ${per}\n\nPrécisions :\n${msg}\n\nCordialement,\n${nom}`);
+            const diffMail = (S.programmation && S.programmation.contact && S.programmation.contact.email) || 'administration@crescite.fr';
+            st.className = 'alerte-msg ok';
+            st.innerHTML = `✓ Demande transmise avec succès ! Vous pouvez également <a href="mailto:${diffMail}?subject=${sujet}&body=${corps}" style="text-decoration:underline; font-weight:700;">cliquer ici pour ouvrir votre messagerie</a> avec le récapitulatif.`;
+            st.hidden = false;
+            btnEnv.disabled = false;
+          });
+        }
+      });
+    }
+  }
+
+  function initEspaceScolaire() {
+    const btnAdage = $('#btn-copier-adage'), btnConv = $('#btn-ouvrir-conv'), convModal = $('#conv-modal');
+    if (btnAdage) {
+      btnAdage.addEventListener('click', async () => {
+        const txt = `Compagnie Crescite - Offre Collective Pass Culture (ADAGE)\nSpectacles éligibles : Bérénice (Racine, in situ), Ci-gisait Cyrano, Mon Royaume pour un cheval (Shakespeare), L'imaginaire forcé (Molière).\nDispositif : Représentation(s) en temps scolaire + Ateliers de pratique théâtrale (corps, voix, alexandrin).\nPrise en charge intégrale possible via les crédits Pass Culture de l'établissement sur l'application ADAGE.\nContact diffusion & médiation : administration@crescite.fr`;
+        try {
+          await navigator.clipboard.writeText(txt);
+          btnAdage.classList.add('copie');
+          btnAdage.querySelector('span').textContent = '✓ Texte ADAGE copié dans le presse-papier !';
+          setTimeout(() => {
+            btnAdage.classList.remove('copie');
+            btnAdage.querySelector('span').textContent = 'Copier le texte type pour ADAGE';
+          }, 3500);
+        } catch (e) {
+          prompt('Copiez le texte ci-dessous pour ADAGE :', txt);
+        }
+      });
+    }
+    if (btnConv && convModal) {
+      btnConv.addEventListener('click', () => {
+        convModal.hidden = !convModal.hidden;
+        if (!convModal.hidden) {
+          convModal.innerHTML = `<h3>Générateur de Convention de Partenariat Scolaire</h3>
+            <p style="color:var(--gris); margin-bottom:16px;">Générez en un clic la convention officielle d’accueil et d’action culturelle pour signature par le chef d'établissement et vote en Conseil d'Administration.</p>
+            <div class="conv-champs">
+              <input type="text" id="cv-etab" placeholder="Nom de l’établissement (ex. Lycée Corneille)" value="Lycée Pierre Corneille">
+              <input type="text" id="cv-ville" placeholder="Commune (ex. Rouen)" value="Rouen (76)">
+              <input type="text" id="cv-chef" placeholder="Nom du Chef d’établissement" value="Le Proviseur">
+              <select id="cv-spectacle">
+                ${D.shows.filter(s => s.actionCulturelle).map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
+              </select>
+              <input type="text" id="cv-classes" placeholder="Classes concernées (ex. 3 classes de 2nde)" value="3 classes de 2nde et 1re">
+              <input type="text" id="cv-ateliers" placeholder="Volume ateliers (ex. 6 ateliers de 1h)" value="6 ateliers d’initiation (6h)">
+            </div>
+            <button type="button" class="bouton e" id="btn-telecharger-conv" style="--ec:#127a6a">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>Télécharger la convention (PDF)</span>
+            </button>
+            <span id="cv-status" style="margin-left:14px; color:var(--gris); font-size:.9rem;"></span>`;
+          $('#btn-telecharger-conv').addEventListener('click', async () => {
+            const st = $('#cv-status'), etab = $('#cv-etab').value || 'Établissement Partenaire', ville = $('#cv-ville').value || 'Académie de Normandie', chef = $('#cv-chef').value || 'Le Chef d’établissement';
+            const spSlug = $('#cv-spectacle').value, sp = bySlug[spSlug], classes = $('#cv-classes').value || 'Classes participantes', ateliers = $('#cv-ateliers').value || 'Ateliers de pratique';
+            st.textContent = 'Composition du PDF…';
+            try {
+              if (typeof DOSSIER !== 'undefined' && DOSSIER.charger) await DOSSIER.charger();
+              if (typeof pdfMake === 'undefined') throw new Error('pdfmake non disponible');
+              const docDef = {
+                pageSize: 'A4', pageMargins: [48, 48, 48, 48],
+                content: [
+                  { text: 'RÉPUBLIQUE FRANÇAISE\nMINISTÈRE DE L’ÉDUCATION NATIONALE / MINISTÈRE DE LA CULTURE', style: 'devise', alignment: 'center' },
+                  { text: '\nCONVENTION DE PARTENARIAT D’ACTION CULTURELLE', style: 'titre', alignment: 'center' },
+                  { text: 'Dispositif Pass Culture Part Collective & Éducation Artistique et Culturelle (EAC)\n', style: 'sousTitre', alignment: 'center' },
+                  { text: 'ENTRE LES SOUSSIGNÉS :', style: 'h2' },
+                  { text: `1. L’Établissement scolaire : ${etab}, situé à ${ville}, représenté par ${chef}, agissant en qualité de chef d’établissement,\n\n2. La Compagnie Crescite, association loi 1901, sise à Rouen, titulaire des licences d’entrepreneur de spectacles vivants, représentée par M. Angelo Jossec, Directeur artistique,\n\nIL A ÉTÉ CONVENU CE QUI SUIT :`, margin: [0, 6, 0, 14] },
+                  { text: 'Article 1 — Objet de la convention', style: 'article' },
+                  { text: `La présente convention a pour objet d'organiser l'accueil et le déroulement du projet artistique autour du spectacle "${sp ? sp.titre : 'Spectacle Crescite'}" au bénéfice des élèves de l’établissement.\nProjet : ${classes}.\nActions : Représentation(s) in situ ou en salle dédiée et ${ateliers}.` },
+                  { text: '\nArticle 2 — Modalités pédagogiques et calendrier', style: 'article' },
+                  { text: 'Les séances d’ateliers et représentations sont planifiées en concertation étroite entre l’équipe artistique de la Compagnie Crescite et les enseignants référents du projet. Les ateliers sont encadrés par des comédiens professionnels de la troupe.' },
+                  { text: '\nArticle 3 — Modalités financières & Pass Culture', style: 'article' },
+                  { text: 'Le financement du projet est assuré dans le cadre de la part collective du Pass Culture (via la plateforme ADAGE) ou par les crédits EAC de l’établissement votés en Conseil d’Administration.' },
+                  { text: '\nArticle 4 — Engagements et sécurité', style: 'article' },
+                  { text: 'L’établissement met à disposition un espace adapté respectant les contraintes techniques du spectacle (sol plan, dégagement suffisant). Les élèves demeurent sous la responsabilité de l’équipe éducative pendant toute la durée des interventions.' },
+                  { text: '\nFait en deux exemplaires originaux, à Rouen et à ' + ville + '.\n\n\n', margin: [0, 10, 0, 0] },
+                  {
+                    columns: [
+                      { text: `Pour l’Établissement\n${chef}\n(Signature et cachet)`, alignment: 'left' },
+                      { text: 'Pour la Compagnie Crescite\nAngelo Jossec\nDirecteur artistique', alignment: 'right' }
+                    ]
+                  }
+                ],
+                styles: {
+                  devise: { fontSize: 8.5, color: '#666', italics: true },
+                  titre: { fontSize: 16, bold: true, color: '#127a6a', margin: [0, 8, 0, 4] },
+                  sousTitre: { fontSize: 10, italics: true, color: '#444' },
+                  h2: { fontSize: 12, bold: true, margin: [0, 8, 0, 4] },
+                  article: { fontSize: 11, bold: true, color: '#127a6a' }
+                },
+                defaultStyle: { font: 'Roboto', fontSize: 10, lineHeight: 1.35 }
+              };
+              pdfMake.createPdf(docDef).download(`Convention-Crescite-${spSlug || 'scolaire'}.pdf`);
+              st.textContent = '✓ Convention générée et téléchargée !';
+            } catch (err) {
+              st.textContent = 'Erreur génération : ' + (err.message || err);
+            }
+          });
+        }
+      });
+    }
+  }
+
   function voir(q, surPlace) {
     vue = 'voir';
     const e = E.voir, pub = D.dates.filter(d => !d.scolaire), lieux = CARTE.aVenir('public');
@@ -2050,7 +2390,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const terme = () => norm(F.q).trim();
     const actif = () => !!(F.slug || F.l !== null || terme());
     const garde = r => (!F.slug || r.cle === F.slug) && (F.l === null || r.l === F.l || (r.d && r.d.l === F.l)) && (!terme() || r.txt.includes(terme()));
-    main.innerHTML = `${teteEntree(e, [['v-saison', S.saisons[0].titre], ['v-agenda', L.saisonsPrecedentes], ['v-tournee', L.actuellementEnTournee]])}
+    main.innerHTML = `${teteEntree(e, [['v-saison', S.saisons[0].titre], ['v-agenda', L.saisonsPrecedentes], ['v-alerte', L.alerteTournee || 'Alertes proximité'], ['v-tournee', L.actuellementEnTournee]])}
       <section class="bloc sans-filet" id="v-saison" aria-labelledby="h-saison"><div class="wrap">
         <h2 class="titre-bloc" id="h-saison">${esc(S.saisons[0].titre)}</h2>
         <div class="v-frise" id="v-frise"></div>
@@ -2064,6 +2404,34 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         <h2 class="titre-bloc" id="h-agenda">${esc(L.saisonsPrecedentes)}</h2>
         <nav class="ag-index" id="ag-index" aria-labelledby="h-agenda"><div class="idx-frise" id="idx-frise"></div><div class="idx-outils" id="idx-outils"></div></nav>
         <div class="saisons-ag" id="ag-saisons"></div>
+      </div></section>
+      <section class="bloc" id="v-alerte" aria-labelledby="h-alerte"><div class="wrap">
+        <div class="alerte-boite">
+          <span class="alerte-badge">PROXIMITÉ</span>
+          <h2 class="titre-bloc" id="h-alerte">${esc(L.alerteTournee || 'Être prévenu du prochain passage')}</h2>
+          <p class="alerte-desc">${esc(L.alerteTourneeDesc || 'Recevez un courriel ou une notification dès qu’une représentation est confirmée près de chez vous.')}</p>
+          <form id="f-alerte" class="alerte-form" onsubmit="return false;">
+            <div class="alerte-champs">
+              <div class="alerte-geo-grp">
+                <input type="text" id="alerte-cp" placeholder="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" aria-label="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" autocomplete="postal-code" required>
+                <button type="button" class="btn-geo" id="btn-geo" title="${esc(L.meGeolocaliser || 'Me géolocaliser')}">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="2"/></svg>
+                  <span>${esc(L.meGeolocaliser || 'Me géolocaliser')}</span>
+                </button>
+              </div>
+              <select id="alerte-spectacle" aria-label="${esc(L.spectacles || 'Spectacles')}">
+                <option value="">${esc(L.tousSpectacles || 'Tous les spectacles')}</option>
+                ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
+              </select>
+              <input type="email" id="alerte-email" placeholder="votre.email@exemple.fr" aria-label="Adresse électronique" required>
+              <button type="submit" class="bouton e" id="btn-inscrire-alerte" style="--ec:var(--magenta)">
+                <span>${esc(L.mInscrire || 'M’inscrire à l’alerte')}</span>
+                ${FLECHE}
+              </button>
+            </div>
+            <div id="alerte-msg" class="alerte-msg" hidden aria-live="polite"></div>
+          </form>
+        </div>
       </div></section>
       <section class="bloc" id="v-tournee" aria-labelledby="h-tournee"><div class="wrap"><h2 class="titre-bloc" id="h-tournee">${esc(L.actuellementEnTournee)}</h2>
         <ul class="fus large">${D.shows.filter(s => s.enTournee).map(s => ficheU(s, { href: `#/spectacle/${s.slug}/voir`, large: true, date: pub.find(d => d.slug === s.slug) })).join('')}</ul></div></section>`;
@@ -2207,7 +2575,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     if (fSaison) lierCarte(svg, { survol: l => { if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); } });
     // l'agenda passé : tout de suite quand la vue se refait en place (D a changé) ou qu'un filtre est actif, sinon juste après
     if (surPlace || actif()) dessineAgenda(); else setTimeout(dessineAgenda, 0);
-    bientot(() => pousser(svg));
+    bientot(() => { pousser(svg); initAlerteTournee(); });
     return { titre: e.texte, entree: 'voir' };
   }
 
@@ -2216,12 +2584,61 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     vue = 'programmer';
     const e = E.programmer, lieux = retenu('tout', () => CARTE.tout());
     retenir('programmer');
-    main.innerHTML = `${teteEntree(e, [['p-spectacles', L.lesSpectacles], ['p-lieux', L.lieuxDiffusion], ['p-ecrire', L.ecrire]], contactHTML(null))}
+    main.innerHTML = `${teteEntree(e, [['p-spectacles', L.lesSpectacles], ['p-lieux', L.lieuxDiffusion], ['p-simulateur', L.simulateurAccueil || 'Simulateur d’accueil & Devis'], ['p-ecrire', L.ecrire]], contactHTML(null))}
       <section class="bloc sans-filet" id="p-lieux" aria-labelledby="h-lieux"><div class="wrap p-intro">
         <div class="p-texte"><h2 class="rubrique" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>${S.compagnie && S.compagnie.paragraphes && S.compagnie.paragraphes[1] ? bloc(S.compagnie.paragraphes[1], 'site.compagnie.paragraphes.1') : ''}
           <div class="p-diff" id="p-diff"></div>
           <p class="boutons"><a class="bouton e" href="${S.ecrire.href}" style="--ec:${e.couleur}">${esc(L.ecrire)}${FLECHE}</a></p></div>
         <figure class="p-carte">${retenu(`carte-tout-${motionOK()}`, () => carte({ lieux, titre: L.lieuxDiffusion, classe: 'tout', simple: true, fin: .5 }))}<figcaption class="bulle" id="bulle"></figcaption></figure>
+      </div></section>
+      <section class="bloc" id="p-simulateur" aria-labelledby="h-simulateur"><div class="wrap">
+        <div class="simu-boite">
+          <span class="simu-badge">PROGRAMMATION</span>
+          <h2 class="titre-bloc" id="h-simulateur">${esc(L.simulateurAccueil || 'Simulateur d’accueil & Devis')}</h2>
+          <p class="simu-desc">${esc(L.simulateurDesc || 'Testez la faisabilité technique de votre lieu et préparez votre demande de cession en un clic.')}</p>
+          <div class="simu-grille">
+            <div class="simu-param">
+              <div class="champ-simu">
+                <label for="simu-sp">Spectacle envisagé</label>
+                <select id="simu-sp">
+                  ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)} (${esc(s.duree || '')})</option>`).join('')}
+                </select>
+              </div>
+              <div class="champ-simu">
+                <label for="simu-lieu-type">Type d'espace</label>
+                <select id="simu-lieu-type">
+                  <option value="theatre">Théâtre / Scène équipée</option>
+                  <option value="polyvalente">Salle polyvalente / Fêtes</option>
+                  <option value="etablissement">Établissement scolaire / In situ</option>
+                  <option value="exterieur">Cour / Extérieur</option>
+                  <option value="autre">Autre lieu / Tiers-lieu</option>
+                </select>
+              </div>
+              <div class="simu-dim-grp">
+                <div class="champ-simu">
+                  <label for="simu-ouv">Ouverture (m)</label>
+                  <input type="number" id="simu-ouv" value="9" min="4" max="25" step="0.5">
+                </div>
+                <div class="champ-simu">
+                  <label for="simu-prof">Profondeur (m)</label>
+                  <input type="number" id="simu-prof" value="7" min="3" max="25" step="0.5">
+                </div>
+                <div class="champ-simu">
+                  <label for="simu-haut">Hauteur (m)</label>
+                  <input type="number" id="simu-haut" value="5" min="2.5" max="15" step="0.5">
+                </div>
+              </div>
+            </div>
+            <div class="simu-verdict" id="simu-verdict"></div>
+          </div>
+          <div class="simu-devis-cta">
+            <button type="button" class="bouton e grand" id="btn-ouvrir-devis" style="--ec:var(--ec)">
+              <span>${esc(L.demandeDevis || 'Demander une proposition de cession')}</span>
+              ${FLECHE}
+            </button>
+          </div>
+          <div id="simu-form-devis" class="simu-form-devis" hidden></div>
+        </div>
       </div></section>
       <section class="bloc" id="p-spectacles" aria-labelledby="h-progs"><div class="wrap"><h2 class="titre-bloc" id="h-progs">${esc(L.lesSpectacles)}</h2><div class="progs">${D.shows.map(ficheProg).join('')}</div></div></section>
       <section class="bloc p-fin" id="p-ecrire"><div class="wrap"><p class="p-partenaires"${ed('site.partenaires')}>${S.partenaires}</p><p class="boutons"><a class="bouton e grand" href="${S.ecrire.href}" style="--ec:${e.couleur}">${esc(L.ecrire)}${FLECHE}</a></p></div></section>`;
@@ -2233,7 +2650,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', largeur: 520, anMin: 38,
       bandes: ks.map(k => bandeSaison(k, D.saisons[k].spectacles.reduce((a, g) => a + (g.dates || []).length, 0))) });
     frisesDiffusion(main);
-    bientot(() => pousser(svg));
+    bientot(() => { pousser(svg); initSimulateurPro(); });
     return { titre: e.texte, entree: 'programmer' };
   }
 
@@ -2249,7 +2666,26 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const B = ber && D.dossiers[ber.dossier];
     const g = i => `e-g${i}`;
     retenir('etablissement');
-    main.innerHTML = `${teteEntree(e, [...groupes.map((x, i) => [g(i), x[0]]), ...(ber ? [['e-dossier', L.dossierScolaire]] : []), ...(A ? [['e-actions', A.titre]] : []), ['e-dates', L.enEtablissement], ['e-ecrire', L.ecrire]])}
+    main.innerHTML = `${teteEntree(e, [['e-passculture', L.passCulture || 'Pass Culture & ADAGE'], ...groupes.map((x, i) => [g(i), x[0]]), ...(ber ? [['e-dossier', L.dossierScolaire]] : []), ...(A ? [['e-actions', A.titre]] : []), ['e-dates', L.enEtablissement], ['e-ecrire', L.ecrire]])}
+      <section class="bloc sans-filet" id="e-passculture" aria-labelledby="e-pass-h"><div class="wrap">
+        <div class="pass-boite">
+          <span class="pass-tag">DISPOSITIF ADAGE / PASS CULTURE COLLECTIF</span>
+          <h2 class="titre-bloc" id="e-pass-h">${esc(L.passCulture || 'Pass Culture & ADAGE')}</h2>
+          <p class="pass-desc">${esc(L.passCultureDesc || 'Toutes les formes de la compagnie sont éligibles à la part collective du Pass Culture via l’application ADAGE.')}</p>
+          <div class="pass-actions">
+            <button type="button" class="btn-copier-adage" id="btn-copier-adage">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copier le texte type pour ADAGE</span>
+            </button>
+            <button type="button" class="bouton e" id="btn-ouvrir-conv" style="--ec:#127a6a">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>${esc(L.genererConvention || 'Convention d’action culturelle (PDF)')}</span>
+              ${FLECHE}
+            </button>
+          </div>
+          <div id="conv-modal" class="conv-modal" hidden></div>
+        </div>
+      </div></section>
       <section class="bloc sans-filet"><div class="wrap e-lead"><p${S.ecole ? ed('site.ecole.texte') : ''}>${S.ecole ? S.ecole.texte : ''}</p></div></section>
       ${groupes.map((x, i) => `<section class="bloc" id="${g(i)}" aria-labelledby="${g(i)}-h"><div class="wrap"><h2 class="titre-bloc" id="${g(i)}-h">${esc(x[0])}</h2><div class="fes">${ordre(x[1]).map(ficheEtab).join('')}</div></div></section>`).join('')}
       ${reste.length ? `<section class="bloc"><div class="wrap"><div class="fes">${reste.map(ficheEtab).join('')}</div></div></section>` : ''}
@@ -2272,6 +2708,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const fSco = sco.length ? frise($('#e-frise'), { echelle: 'periode', debut: `${D.aujourdhui.slice(0, 7)}-01`, points: sco.map(repereProchaine), libelle: L.enEtablissement,
       relier: { liste, carte: l => marquer(svg, l) }, choix: p => allerLigne(p.id) }) : null;
     if (fSco) lierCarte(svg, { survol: l => { if (l == null) fSco.eteindre(); else fSco.allumer({ l }); } });
+    bientot(() => { initEspaceScolaire(); });
     pousserVu(svg);
     return { titre: e.texte, entree: 'etablissement' };
   }
@@ -3079,6 +3516,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       decorer(false);
       document.title = `${r.titre} - ${S.titreSuffixe}`;
       marquerNav(r);
+      mettreAJourSchemaOrg();
       // la vue remonte en haut et son titre prend le focus à l'image suivante (avant qu'elle soit peinte) : la mise en page
       // se fait alors une seule fois, dans la tâche de l'image, et non en plus du rendu
       requestAnimationFrame(() => {
@@ -3129,6 +3567,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     decorer(true);
     document.title = `${r.titre} - ${S.titreSuffixe}`;
     marquerNav(r);
+    mettreAJourSchemaOrg();
     ouverts.forEach(i => { const d = $$('details', main)[i]; if (d) d.open = true; });
     scrollTo({ top: y, left: 0, behavior: 'instant' });
     if (repere) { const el = repere.id ? document.getElementById(repere.id) : focusables()[repere.i];
