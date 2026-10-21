@@ -487,8 +487,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .sh-signe{margin-bottom:14px;color:var(--u-vif);font-stretch:125%;font-weight:800;font-size:13px;letter-spacing:.22em;text-transform:uppercase}
 .sh-titre{color:var(--u-grand);font-family:var(--u-police);font-weight:var(--u-graisse);text-transform:var(--u-casse);font-size:clamp(46px,8.2vw,136px);line-height:.98;letter-spacing:-.005em}
 .sh-titre .l{display:block}
-.anime .sh-titre .l{animation:lettres calc(var(--n) * 60ms) steps(var(--n)) calc(.2s + var(--k) * .45s) backwards}
-@keyframes lettres{from{clip-path:polygon(0 -40%,0 -40%,0 140%,0 140%)}to{clip-path:polygon(0 -40%,100% -40%,100% 140%,0 140%)}}
+
 .sh-sous{max-width:48ch;margin-top:clamp(14px,1.6vw,22px);font-size:clamp(19px,1.7vw,24px);font-weight:500;line-height:1.35}
 .sh-meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:18px;color:var(--u-vif)}
 .sh-lt{font-family:var(--u-police);font-weight:var(--u-graisse);font-size:clamp(18px,1.6vw,22px);color:var(--u-texte)}
@@ -706,7 +705,7 @@ a.an-t:hover{text-decoration:underline}
    compresse. Une courbe sèche, rapide puis posée ; survol 160 ms, pression 80 ms, page 420 ms. */
 :root{--mv-courbe:cubic-bezier(.16,.84,.2,1)}
 html{view-transition-name:none}
-main{display:block;min-height:100vh}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas */
+main{display:block;min-height:100vh;overflow-x:clip}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; ce qui glisse n'en déborde pas */
 .brand-mark{aspect-ratio:1042/576}
 .en-univers .brand-mark{aspect-ratio:1}
 /* les volets : cinq bandes d'aplat, décalées, qui traversent l'écran sous l'en-tête (de gauche à droite ; de droite à gauche
@@ -764,7 +763,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
 .frise[data-frise]{--fr-fond:#fff;--fr-encre:var(--ink);--fr-trait:rgba(26,16,22,.32);--fr-accent:var(--magenta);--fr-police:Archivo,"Helvetica Neue",Arial,sans-serif;
   --fr-bulle-fond:var(--magenta);--fr-bulle-encre:#fff;--fr-point:12px;--fr-couloir:19px;--fr-haut:30px;--fr-taille:12px;--fr-passe:.32;--fr-courbe:var(--mv-courbe)}
 .frise[data-frise] .frise-axe{height:2px;margin-top:-1px}
-.frise[data-frise] .frise-mois-nom{font-stretch:125%;font-weight:900;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase}
+.frise[data-frise] .frise-mois-nom{font-stretch:100%;font-weight:800;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase}
 .frise[data-frise] .frise-an{font-weight:700;font-size:.7rem;letter-spacing:.1em}
 .frise[data-frise] .frise-point.est-scolaire:not(.est-duree)>.frise-repere::before{rotate:none;border-radius:2px;width:11px;height:11px}
 .frise[data-frise] .frise-aujourdhui::before{width:3px;left:-1.5px;opacity:1;top:14px}
@@ -1112,7 +1111,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   const largeurWrap = (moins = 0) => Math.min(innerWidth - 2 * gout(), 1280) - 28 - moins;
   function frise(conteneur, o) {
     if (!FR || !conteneur) return null;
-    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: !ANIM, largeur: largeurWrap() }, o));
+    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: !ANIM, largeur: largeurWrap(), moisMin: 88 }, o));
     frises.push(f);
     return f;
   }
@@ -1381,7 +1380,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   const photoEntree = cle => { for (const k of PHOTOS_ENTREE[cle] || []) if (D.photos[k]) return D.photos[k]; return ''; };
   const choix = () => `<div class="choix"><ul>${(D.site.entrees || []).map(e => `<li><a class="porte" href="${esc(e.href)}" style="--e:${esc(e.couleur)}"><span class="porte-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${esc(photoEntree(e.cle))}" alt="">` : ''}</span><span class="porte-t" data-fit="porte">${esc(e.texte)}</span>${use('i-go')}</a></li>`).join('')}</ul></div>`;
   const tuile = s => `<li class="tuile u" style="${uStyle(s)}"><a class="tuile-a" href="${lienSp(s.slug)}">
-      <span class="tuile-ph duo-u">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 40%">` : ''}</span>
+      <span class="tuile-ph duo-u" data-mv-nom="sp-${esc(s.slug)}">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 40%">` : ''}</span>
       <span class="tuile-txt"><span class="tuile-sur">${esc(s.lieuTemps || s.statut || s.creation || '')}</span><span class="tuile-t">${lignesTitre(s).map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span>
       <span class="tuile-g">${glyphe(jeton(s).motif)}</span></a></li>`;
   function pageAccueil() {
@@ -1421,7 +1420,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   function carteTournee(s, pub) {
     const d = pub.find(x => x.slug === s.slug);
     return `<li class="ct u" style="${uStyle(s)}">
-      <div class="ct-ph duo-u">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 35%"${edPh(P(s, 'photo'))}>` : ''}</div>
+      <div class="ct-ph duo-u" data-mv-nom="sp-${esc(s.slug)}">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 35%"${edPh(P(s, 'photo'))}>` : ''}</div>
       <div class="ct-c">
         ${s.lieuTemps ? `<p class="ct-lt"${ed(P(s, 'lieuTemps'))}>${esc(s.lieuTemps)}</p>` : s.creation ? `<p class="ct-lt"${ed(P(s, 'creation'))}>${esc(s.creation)}</p>` : ''}
         <h3 class="ct-t"><a class="etire" href="${lienSp(s.slug, 'voir')}">${lignesTitre(s).map(t => `<span>${esc(t)}</span>`).join(' ')}</a></h3>
@@ -1708,7 +1707,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const b = e.target.closest('[data-dossier]'); if (!b || typeof DOSSIER === 'undefined') return;
     const slug = b.dataset.dossier; if (OCCUPES.has(slug)) return;
     OCCUPES.add(slug); occuper(slug, true);
-    DOSSIER.telecharger(slug).then(() => { const c = $(`[data-dossier="${slug}"]`); if (c && typeof TENTACULES !== 'undefined') TENTACULES.confirmer(c); })
+    DOSSIER.telecharger(slug).then(() => { $$(`[data-dossier="${slug}"]`).forEach(c => { c.classList.add('dos-pret'); setTimeout(() => c.classList.remove('dos-pret'), 900); }); })
       .catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
   });
   function ficheProg(s) {
@@ -1812,9 +1811,9 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   /* ---------- les spectacles, une saison passée ---------- */
   function vignette(s) {
     const L = D.site.libelles;
-    const tags = `${s.statut ? `<span class="tag tag--u">${esc(s.statut)}</span>` : ''}${s.enTournee ? `<span class="tag tag--u">${esc(L.enTournee)}</span>` : ''}`;
-    return `<li class="vg u rv" style="${uStyle(s)}">
-      <div class="vg-photo duo-u">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 40%"${edPh(P(s, 'photo'))}>` : ''}</div>
+    const tags = `${s.statut ? `<span class="tag tag--u">${esc(s.statut)}</span>` : ''}${s.enTournee ? `<span class="tag tag--u vit-pt">${esc(L.enTournee)}</span>` : ''}`;
+    return `<li class="vg u" style="${uStyle(s)}">
+      <div class="vg-photo duo-u" data-mv-nom="sp-${esc(s.slug)}">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 40%"${edPh(P(s, 'photo'))}>` : ''}</div>
       <div class="vg-c">${tags ? `<p class="vg-tags">${tags}</p>` : ''}
         <h2 class="vg-titre"><a class="etire" href="${lienSp(s.slug)}">${lignesTitre(s).map(t => `<span>${esc(t)}</span>`).join(' ')}</a></h2>
         ${s.sousTitre ? `<p class="vg-sous"${ed(P(s, 'sousTitre'))}>${s.sousTitre}</p>` : ''}
@@ -1899,12 +1898,12 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     if (pub.length) {
       const lieux = geo.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length);
       const titre = T.titre || L.actuellementEnTournee;
-      return `<h3 class="sous-t"${T.titre ? ed(P(s, 'tournee.titre')) : ''}>${esc(titre)}</h3>
+      return `<h3 class="sous-t"${T.titre ? ed(P(s, 'tournee.titre')) : ''}>${esc(titre)}</h3><div class="u-frise" id="u-tournee"></div>
         <div class="ag ag--u"><div class="ag-carte">${affiche({ lieux, passe: geo.passe, titre })}</div><div class="liste" data-agenda="${esc(s.slug)}"><ol class="rs">${pub.map(d => rangee(d, { avecTitre: false })).join('')}</ol></div></div>`;
     }
     const vide = `<div data-agenda="${esc(s.slug)}"></div>`;
     if (T.texte) return `<h3 class="sous-t"${ed(P(s, 'tournee.titre'))}>${esc(T.titre || '')}</h3><p class="tour-txt"${ed(P(s, 'tournee.texte'))}>${esc(T.texte)}</p>${vide}`;
-    if (geo.passe.length) return `<h3 class="sous-t">${esc(L.lieuxDiffusion)}</h3><div class="ag-carte aff-seule">${affiche({ passe: geo.passe, titre: L.lieuxDiffusion })}</div>${vide}`;
+    if (geo.passe.length) return `<h3 class="sous-t">${esc(L.lieuxDiffusion)}</h3><div class="u-frise" id="u-tournee"></div><div class="ag-carte aff-seule">${affiche({ passe: geo.passe, titre: L.lieuxDiffusion })}</div>${vide}`;
     return vide;
   }
   function chapVoir(s, t) {
@@ -1954,7 +1953,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     if (s.video && s.video.url) C.push(chap('ch-ba', L.bandeAnnonce, bandeAnnonce(s), t));
     const carte = geo.aVenir.length || geo.passe.length ? `<div class="ag-carte aff-seule">${affiche({ lieux: geo.aVenir, passe: geo.passe, titre: L.lieuxDiffusion })}</div>` : '';
     const lieux = p.lieux ? `<details class="lieux" data-k="lieux-${esc(s.slug)}"><summary>${p.representations ? `<span${ed(P(s, 'programmer.representations'))}>${esc(p.representations)}</span>` : esc(L.lieuxDiffusion)}</summary><p${ed(P(s, 'programmer.lieux'))}>${esc(p.lieux)}</p></details>` : '';
-    if (lieux || carte) C.push(chap('ch-lieux', L.lieuxDiffusion, `${lieux}${carte ? `<div style="margin-top:22px">${carte}</div>` : ''}<div data-agenda="${esc(s.slug)}"></div>`, t));
+    if (lieux || carte) C.push(chap('ch-lieux', L.lieuxDiffusion, `${diffusionHtml(s)}${lieux}${carte ? `<div style="margin-top:22px">${carte}</div>` : ''}<div data-agenda="${esc(s.slug)}"></div>`, t));
     // la fiche technique : le détail de Bérénice (blocs du dossier) ET/OU les documents déposés ; à défaut, sur demande (jamais de rubrique vide)
     const ft = p.ficheTechnique ? ficheTechnique(s) : '', fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), hrefFt = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
     C.push(chap('ch-technique', L.ficheTechnique, ft || fts.length
@@ -2011,13 +2010,13 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const mots = String(s.accroche || '').split(/(\s+)/).map((w, k) => /^\s*$/.test(w) ? w : `<span class="mot" style="--k:${k >> 1}">${esc(w)}</span>`).join('');
     return `<div class="show u${anime() ? ' anime' : ''}" style="${uStyle(s)}">
       <section class="sh" aria-labelledby="h-page">
-        <div class="sh-photo">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt=""${edPh(P(s, 'photo'))} style="object-position:${s.focale ?? 50}% 30%">` : ''}</div>
+        <div class="sh-photo" data-mv-nom="sp-${esc(s.slug)}">${imgSrc(s.slug) ? `<img src="${esc(imgSrc(s.slug))}" alt=""${edPh(P(s, 'photo'))} style="object-position:${s.focale ?? 50}% 30%">` : ''}</div>
         <div class="sh-motif" aria-hidden="true">${motifGrand(t.motif)}</div>
         <div class="wrap sh-txt">
           <p class="sh-signe"${ed('site.nom')}>${esc(D.site.nom)}</p>
           <h1 class="sh-titre" id="h-page" tabindex="-1" data-fit="sh">${lignesTitre(s).map((l, k) => `<span class="l" style="--n:${Math.max(1, [...l].length)};--k:${k}"${ed(s.titreLignes && s.titreLignes.length ? P(s, `titreLignes.${k}`) : P(s, 'titre'))}>${esc(l)}</span>`).join(' ')}</h1>
           ${s.sousTitre ? `<p class="sh-sous"${ed(P(s, 'sousTitre'))}>${s.sousTitre}</p>` : ''}
-          <p class="sh-meta">${s.creation ? `<span class="lbl"${ed(P(s, 'creation'))}>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span class="sh-lt"${ed(P(s, 'lieuTemps'))}>${esc(s.lieuTemps)}</span>` : ''}${s.statut ? `<span class="tag tag--plein"${ed(P(s, 'statut'))}>${esc(s.statut)}</span>` : ''}${s.enTournee ? `<span class="tag">${esc(L.enTournee)}</span>` : ''}</p>
+          <p class="sh-meta">${s.creation ? `<span class="lbl"${ed(P(s, 'creation'))}>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span class="sh-lt"${ed(P(s, 'lieuTemps'))}>${esc(s.lieuTemps)}</span>` : ''}${s.statut ? `<span class="tag tag--plein"${ed(P(s, 'statut'))}>${esc(s.statut)}</span>` : ''}${s.enTournee ? `<span class="tag vit-pt">${esc(L.enTournee)}</span>` : ''}</p>
           ${s.accroche ? `<p class="sh-acc"${ed(P(s, 'accroche'))}>${mots}</p>` : ''}
           ${s.credit ? `<p class="sh-credit"${ed(P(s, 'credit'))}>${esc(s.credit)}</p>` : ''}
         </div>
@@ -2035,6 +2034,17 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   let obsSommaire = null;
   function initShow() {
     initCartes();
+    const hote = $('#u-tournee', main), slug = (location.hash.match(/spectacle\/([\w-]+)\//) || [])[1], s = slug && spectacle(slug);
+    if (hote && s) {
+      const c = jeton(s).grand, pub = D.dates.filter(d => d.slug === s.slug && !d.scolaire);
+      const passees = Object.entries(D.saisons || {}).flatMap(([k, SA]) => { let n = 0; return (SA.spectacles || []).flatMap(g => (g.dates || []).map(d => {
+        const i = n++; if (g.slug !== s.slug) return null; const p = repereLigne(d, k, i, s.slug, s.titre, c);
+        return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/agenda/${k}` }) : null; })); }).filter(Boolean);
+      const pts = [...passees, ...pub.map(d => repereProchaine(d, c))];
+      const w = $('#ch-dates .aff', main);
+      if (pts.length) friseCarte(hote, w, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${D.site.libelles.dates}`, largeur: innerWidth > 1100 ? largeurWrap() - 210 - Math.min(80, innerWidth * .044) : largeurWrap() });
+    }
+    frisesDiffusion(main);
     if (obsSommaire) { obsSommaire.disconnect(); obsSommaire = null; }
     const som = $('.sommaire', main);
     if (!som) return;
@@ -2065,11 +2075,19 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     return `<section class="ph" aria-labelledby="h-page"><div class="wrap">${sep()}<h1 class="ph-titre disp" id="h-page" tabindex="-1" data-fit="page"${ed('site.compagnie.titre')}>${esc(C.titre)}</h1></div></section>
       <section class="sec"><div class="wrap"><div class="prose">${(C.paragraphes || []).map((p, i) => `<p${i ? '' : ' class="lead"'}${ed(`site.compagnie.paragraphes.${i}`)}>${p}</p>`).join('')}</div></div></section>
       <section class="sec sec--rose" aria-labelledby="h-dates"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-dates" data-fit="sec"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
+        <div class="histoire-frise" id="c-frise"></div>
         <ol class="annees">${(C.dates || []).map((d, i) => { const s = D.shows.find(x => String(x.annee) === String(d.annee)); return `<li${s ? ` style="${titreStyle(s, '#fff4f8')}"` : ''}><span class="an disp"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</span>${s ? `<a class="an-t" href="${lienSp(s.slug)}"${ed(`site.compagnie.dates.${i}.titre`)}>${esc(d.titre)}</a>` : `<span class="an-t"${ed(`site.compagnie.dates.${i}.titre`)}>${esc(d.titre)}</span>`}</li>`; }).join('')}</ol>
       </div></section>
       ${Dr ? `<section class="sec" aria-labelledby="h-dir"><div class="wrap dir"><div>${sep()}<h2 class="dir-t disp" id="h-dir" data-fit="sec"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p class="dir-chap"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}</div>
         <div class="prose">${(Dr.paragraphes || []).map((p, i) => `<p${ed(`site.compagnie.directeur.paragraphes.${i}`)}>${p}</p>`).join('')}</div></div></section>` : ''}
       <section class="sec sur-mag" aria-label="${esc(S.nom)}"><div class="wrap">${sep()}<p class="part"${ed('site.partenaires')}>${S.partenaires}</p></div></section>`;
+  }
+  function initCie() {
+    const C = D.site.compagnie || {}, ans = (C.dates || []).map(d => +d.annee).filter(Boolean);
+    if (!ans.length) return;
+    frise($('#c-frise'), { echelle: 'periode', debut: `${Math.min(...ans)}-01-01`, fin: `${Math.max(...ans)}-12-31`, etiquettes: true, couloirs: 3, anMin: 64,
+      largeurCar: 9.4, largeurMax: 200, libelle: C.datesTitre, choix: () => {},
+      points: (C.dates || []).map((d, i) => { const s = D.shows.find(x => String(x.annee) === String(d.annee)); return { id: `c${i}`, annee: d.annee, titre: d.titre, lien: s ? lienSp(s.slug) : null, couleur: s ? couleurDe(s.slug) : '#bc3e80' }; }) });
   }
   function pageContact() {
     const S = D.site, C = S.contact, K = S.coordonnees, pol = (S.liensLegaux || []).find(x => /confidentialit/i.test(x.texte));
@@ -2092,6 +2110,16 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       <aside class="coord sur-mag" aria-label="${esc(K.nom)}"><p class="coord-nom"${ed('site.coordonnees.nom')}>${esc(K.nom)}</p><p>${K.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p>${esc(S.facebook.texte)}</p></aside>
     </div></section>`;
   }
+  // l'espace pro : trois portes d'aplat vers les espaces réservés (equipe/, pro/, admin/, publiés à côté), dans le même onglet
+  function pageEspacePro() {
+    const P = D.site.espacePro || {}, aplats = { equipe: 'var(--magenta)', salles: 'var(--magenta-deep)', admin: 'var(--ink)' };
+    return `<section class="ph" aria-labelledby="h-page"><div class="wrap">${sep()}<h1 class="ph-titre disp" id="h-page" tabindex="-1" data-fit="page"${ed('site.espacePro.titre')}>${esc(P.titre)}</h1>
+        ${P.texte ? `<p class="lead" style="margin-top:18px"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}</div></section>
+      <ul class="eps">${(P.portes || []).map((x, i) => `<li class="ep" style="--ep:${aplats[x.cle] || 'var(--magenta)'}">
+        <span class="ep-n disp" aria-hidden="true">${i + 1}</span>
+        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
+        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>${use('i-go')}</li>`).join('')}</ul>`;
+  }
   const pageLegal = p => `<section class="ph" aria-labelledby="h-page"><div class="wrap">${sep()}<h1 class="ph-titre disp" id="h-page" tabindex="-1" data-fit="page"${ed(`site.legal.${p}.titre`)}>${esc(D.site.legal[p].titre)}</h1></div></section>
     <section class="sec"><div class="wrap"><div class="prose">${(D.site.legal[p].blocs || []).map((b, i) => `<div class="bloc"${ed(`site.legal.${p}.blocs.${i}`)}>${b}</div>`).join('')}</div></div></section>`;
   const initForms = () => $$('form', main).forEach(f => f.addEventListener('submit', e => e.preventDefault()));
@@ -2099,18 +2127,19 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   /* ---------- l'en-tête, le pied : reconstruits seulement quand leurs données changent ---------- */
   let sigTete = '', sigPied = '';
   function construireTete() {
-    const S = D.site, L = S.libelles, sig = JSON.stringify([S.entrees, S.menu, L.menu, S.nom, S.accueil]);
+    const S = D.site, L = S.libelles, sig = JSON.stringify([S.entrees, S.menu, L.menu, S.nom, S.accueil, S.espacePro && S.espacePro.titre]);
     if (sig === sigTete) return;
     sigTete = sig;
     $('#entrees ul').innerHTML = (S.entrees || []).map(e => `<li><a class="entree" href="${esc(e.href)}" data-cle="${esc(e.cle)}" style="--ev:${esc(e.couleurVive)}"><span class="entree-pt" aria-hidden="true"></span><span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span></a></li>`).join('');
-    $('#second ul').innerHTML = (S.menu || []).map(m => `<li><a href="${esc(m.href)}" data-menu="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('');
+    $('#second ul').innerHTML = (S.menu || []).map(m => `<li><a href="${esc(m.href)}" data-menu="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')
+      + (S.espacePro ? `<li><a href="#/espace-pro" data-menu="espace-pro">${esc(S.espacePro.titre)}</a></li>` : '');
     $('#second').setAttribute('aria-label', L.menu);
     $('.menu-label').textContent = L.menu;
     $('#brand').setAttribute('aria-label', `${S.nom}, ${S.accueil}`);
   }
   function construirePied() {
     const S = D.site, L = S.libelles, K = S.coordonnees;
-    const sig = JSON.stringify([K, S.ecrire, S.facebook, S.partenaires, S.liensLegaux, L.modifierSite, L.ecrire, S.nom, S.accueil]);
+    const sig = JSON.stringify([K, S.ecrire, S.facebook, S.partenaires, S.liensLegaux, L.modifierSite, L.ecrire, S.nom, S.accueil, S.espacePro && S.espacePro.titre]);
     if (sig === sigPied) return;
     sigPied = sig;
     const fb = S.facebook.href ? `<a class="pied-fb" href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span class="pied-fb">${esc(S.facebook.texte)}</span>`;
@@ -2122,7 +2151,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
         <p class="pied-part"${ed('site.partenaires')}>${S.partenaires}</p>
       </div>
       ${sep()}
-      <div class="pied-bas"><p class="pied-legal">${K.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('')}</p><p class="pied-ll">${(S.liensLegaux || []).map(a => `<a href="${esc(a.href)}">${esc(a.texte)}</a>`).join('')}${L.modifierSite && typeof EDITION !== 'undefined' ? `<button type="button" class="pied-edit" id="pied-edit">${use('i-crayon')}${esc(L.modifierSite)}</button>` : ''}</p></div>
+      <div class="pied-bas"><p class="pied-legal">${K.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('')}</p><p class="pied-ll">${S.espacePro ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${(S.liensLegaux || []).map(a => `<a href="${esc(a.href)}">${esc(a.texte)}</a>`).join('')}${L.modifierSite && typeof EDITION !== 'undefined' ? `<button type="button" class="pied-edit" id="pied-edit">${use('i-crayon')}${esc(L.modifierSite)}</button>` : ''}</p></div>
     </div>`;
     const b = $('#pied-edit');
     if (b) b.addEventListener('click', () => EDITION.ouvrir());
@@ -2200,21 +2229,22 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
 
   /* ---------- les adresses ---------- */
   const tete = $('#tete-haut'), menuBtn = $('#menu-btn');
-  const setMenu = open => { menuBtn.setAttribute('aria-expanded', String(open)); tete.classList.toggle('is-open', open); };
+  const setMenu = open => { const avant = tete.classList.contains('is-open'); menuBtn.setAttribute('aria-expanded', String(open)); tete.classList.toggle('is-open', open); if (open && !avant && MV) MV.cascade($('#second ul'), { pas: 30, decalage: -6 }); };
   function resoudre(chemin) {
     const S = D.site;
     if (chemin === '') return { cle: 'accueil', titre: S.accueil, rendu: pageAccueil, init: initAccueil };
     if (CLES.includes(chemin)) {
       const e = entree(chemin);
       if (!e) return null;
-      const r = { voir: [pageVoir, initVoir], programmer: [pageProgrammer, initCartes], etablissement: [pageEtablissement, initCartes] }[chemin];
+      const r = { voir: [pageVoir, initVoir], programmer: [pageProgrammer, initProgrammer], etablissement: [pageEtablissement, initEtablissement] }[chemin];
       return { cle: chemin, entree: chemin, memo: chemin, titre: e.texte, rendu: r[0], init: r[1] };
     }
     const mi = menuDe(chemin);
     if (mi) {
-      const r = { spectacles: [pageSpectacles], compagnie: [pageCie], contact: [pageContact, initForms] }[chemin];
+      const r = { spectacles: [pageSpectacles], compagnie: [pageCie, initCie], contact: [pageContact, initForms] }[chemin];
       if (r) return { cle: chemin, menu: chemin, titre: mi.texte, rendu: r[0], init: r[1] };
     }
+    if (chemin === 'espace-pro' && S.espacePro) return { cle: chemin, menu: 'espace-pro', titre: S.espacePro.titre, rendu: pageEspacePro };
     if (S.legal && Object.hasOwn(S.legal, chemin)) return { cle: chemin, titre: S.legal[chemin].titre, rendu: () => pageLegal(chemin) };
     let m = chemin.match(/^agenda\/(\d{4}-\d{4})$/);
     if (m && D.saisons[m[1]]) {
@@ -2250,13 +2280,68 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     else if (g.f.l) el = $$('.aff-lieu[data-l]', main).find(x => x.dataset.l === g.f.l);
     if (el) { el.focus({ preventScroll: true }); if (g.f.s != null && el.setSelectionRange) try { el.setSelectionRange(g.f.s, g.f.e); } catch (e) { /* champ sans sélection */ } }
   }
+  /* ---------- les volets : la page arrive sous des aplats qui traversent l'écran ; sa capitale glisse et se compresse ---------- */
+  let voEl = null, voAnims = [], hautTete = 0;
+  if ('ResizeObserver' in window) new ResizeObserver(es => { const x = es[0]; hautTete = Math.round(x.borderBoxSize && x.borderBoxSize[0] ? x.borderBoxSize[0].blockSize : x.contentRect.height); }).observe($('#tete'));
+  // les couleurs d'une page : l'aplat de l'univers du spectacle, celui de l'entrée (et sa couleur vive), sinon le magenta
+  function couleursDe(v) {
+    if (v.show) { const s = spectacle(v.show); if (s) { const t = jeton(s); return { c: t.aplat, c2: t.sombre ? t.texte : t.nuit }; } }
+    const e = v.entree ? entree(v.entree) : v.lecture === 'voir' ? entree('voir') : null;
+    if (e) return { c: e.couleur, c2: e.couleurVive };
+    return { c: '#bc3e80', c2: '#8e2a5f' };
+  }
+  const finirVolets = () => { voAnims.forEach(a => { try { a.cancel(); } catch (e) { /* finie */ } }); voAnims = []; if (voEl) voEl.classList.remove('on'); };
+  function volets(type, c) {
+    finirVolets();
+    if (!bouge() || !main.animate || !c || type === 'onglet' || type === 'premiere') return;
+    if (!voEl) { document.body.insertAdjacentHTML('beforeend', `<div class="volets" aria-hidden="true">${'<i class="volet"></i>'.repeat(5)}</div>`); voEl = document.body.lastElementChild; }
+    voEl.style.setProperty('--vo-haut', `${hautTete}px`);
+    voEl.style.setProperty('--vo-c', c.c);
+    voEl.style.setProperty('--vo-c2', c.c2);
+    voEl.classList.add('on');
+    // cinq bandes décalées de 30 ms : une diagonale d'aplat traverse l'écran (de droite à gauche au retour) ; 450 ms en tout
+    const retour = type === 'retour', de = retour ? 'translateX(162%)' : 'translateX(-101%)', a = retour ? 'translateX(-101%)' : 'translateX(162%)';
+    voAnims = [...voEl.children].map((v, i) => v.animate([{ transform: de }, { transform: a }], { duration: 330, delay: i * 30, easing: 'cubic-bezier(.62,0,.32,1)', fill: 'both' }));
+    voAnims[voAnims.length - 1].onfinish = finirVolets;
+  }
+  // la grande capitale de la page qui arrive : elle glisse depuis la gauche (depuis la droite au retour) et se compresse
+  function capitale(type) {
+    if (!bouge() || !main.animate || type === 'premiere') return;
+    const h = $('h1', main); if (!h || h.closest('.bd')) return;
+    const cibles = h.classList.contains('sh-titre') ? $$('.l', h) : [h], dx = type === 'retour' ? '4%' : '-4%';
+    cibles.forEach((el, i) => { el.style.transformOrigin = '0 60%';
+      el.animate([{ transform: `translateX(${dx}) scaleX(1.24)`, opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: type === 'onglet' ? 300 : 460, delay: 30 + i * 70, easing: 'cubic-bezier(.16,.84,.2,1)', fill: 'backwards' }); });
+  }
+  // d'un onglet à l'autre : l'en-tête reste ; les chapitres paraissent sous lui
+  function corpsParait() {
+    const c = $('.sh-corps', main);
+    if (c && c.animate && bouge()) c.animate([{ opacity: 0, transform: 'translateX(-14px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 40, easing: 'cubic-bezier(.16,.84,.2,1)', fill: 'backwards' });
+  }
+
+  /* ---------- la navigation : le genre de chaque passage (une entrée, un spectacle, un onglet, le retour, une page) ---------- */
+  const pile = [];
+  let dernierClic = null, couleurCourante = null;
+  document.addEventListener('click', e => { const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (a) dernierClic = { a, t: performance.now() }; }, { capture: true, passive: true });
+  function genre(chemin) {
+    const h = '#/' + chemin, retour = pile.length > 1 && pile[pile.length - 2] === h;
+    if (retour) pile.pop(); else if (pile[pile.length - 1] !== h) pile.push(h);
+    if (pile.length > 60) pile.splice(0, pile.length - 60);
+    const sp = chemin.match(/^spectacle\/([^/]+)\//);
+    if (sp && vueCle && vueCle.startsWith(`spectacle/${sp[1]}/`)) return 'onglet';
+    if (retour) return 'retour';
+    if (sp) return 'spectacle';
+    return CLES.includes(chemin) ? 'entree' : 'page';
+  }
+  // l'élément partagé : la photo de la carte cliquée (elle devient la grande photo de sa page)
+  const partage = a => { if (!a) return null; const n = a.closest('[data-mv-nom]') || (a.closest('.tuile, .vg, .ct, .fp') || a).querySelector('[data-mv-nom]'); return n && main.contains(n) ? n : null; };
   let vueCle = null;
   function route(enPlace = false) {
     const h = location.hash;
     if (h && h !== '#' && !h.startsWith('#/') && vueCle) return;
     let chemin = '';
     try { chemin = decodeURIComponent(h.replace(/^#\/?/, '').split('?')[0]).replace(/\/+$/, ''); } catch (e) { chemin = '?'; }
-    const red = (D.site.redirections || {})['#/' + chemin];
+    // une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page)
+    const red = chemin !== 'espace-pro' && (D.site.redirections || {})['#/' + chemin];
     if (red && red !== h) { location.replace(red); return; }
     let m = chemin.match(/^spectacle\/([\w-]+)$/);
     if (m && spectacle(m[1])) { location.replace(lienSp(m[1], retenue() || 'voir')); return; }
@@ -2267,22 +2352,42 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const v = resoudre(chemin);
     if (!v) { location.replace('#/'); return; }
     if (!enPlace && v.cle === vueCle) { window.scrollTo(0, 0); setMenu(false); const t = $('h1', main); if (t && !INTRO.ouverte()) t.focus({ preventScroll: true }); return; }
-    const garde = enPlace ? sauver() : null;
-    ANIM = !garde;
-    vueCle = v.cle;
-    if (v.memo) retenir(v.memo);
-    construireTete(); construirePied(); polices();
-    habiller(v.show ? spectacle(v.show) : null);
-    marquer(v);
-    Object.keys(REG).forEach(k => { if (!document.getElementById(k)) delete REG[k]; });
-    main.innerHTML = v.rendu();
-    document.title = `${v.titre} - ${D.site.titreSuffixe}`;
-    fit();
-    if (v.init) v.init();
-    reveal.reset(!!garde);
-    if (garde) restaurer(garde);
-    else { window.scrollTo(0, 0); setMenu(false); if (!INTRO.ouverte()) { const t = $('h1', main); if (t) t.focus({ preventScroll: true }); } }
-    ANIM = true;
+    if (enPlace) versionD++;
+    const premiere = vueCle == null, type = enPlace ? 'place' : premiere ? 'premiere' : genre(chemin);
+    if (premiere) pile.push('#/' + chemin);
+    const clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
+    dernierClic = null;
+    const depuis = type === 'spectacle' || type === 'entree' ? partage(clic && clic.a) : null;
+    const couleurs = type === 'retour' ? couleurCourante : couleursDe(v);
+    const faire = () => {
+      const garde = enPlace ? sauver() : null;
+      ANIM = !garde;
+      vueCle = v.cle;
+      if (v.memo) retenir(v.memo);
+      construireTete(); construirePied(); polices();
+      habiller(v.show ? spectacle(v.show) : null);
+      marquer(v);
+      Object.keys(REG).forEach(k => { if (!document.getElementById(k)) delete REG[k]; });
+      frises.forEach(f => f.detruire()); frises = [];
+      main.innerHTML = v.rendu();
+      document.title = `${v.titre} - ${D.site.titreSuffixe}`;
+      fit();
+      if (v.init) v.init();
+      decorer(!!garde);
+      couleurCourante = couleursDe(v);
+      if (garde) restaurer(garde);
+      else {
+        setMenu(false);
+        // la vue remonte en haut et son titre prend le focus à l'image suivante (avant qu'elle soit peinte)
+        requestAnimationFrame(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); if (!INTRO.ouverte()) { const t = $('h1', main); if (t) t.focus({ preventScroll: true }); } });
+        volets(type, couleurs);
+        capitale(type);
+        if (type === 'onglet') corpsParait();
+      }
+      ANIM = true;
+    };
+    // la première vue (et sous l'ouverture) sans transition ; ensuite, les volets (MOUVEMENT.transition)
+    if (enPlace || premiere || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type, depuis });
   }
 
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -2300,8 +2405,10 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   addEventListener('resize', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(reajuster); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(reajuster);
   // l'ouverture : la pieuvre et le mot en blanc sur l'aplat magenta ; après la révélation, le bandeau se met en marche
-  // les tentacules : la marque en blanc sur magenta ; toutes les remontées sont blanches, liserées de magenta, comme la pieuvre
-  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'ventouses', couleurDe: () => '#ffffff' });
+  // les tentacules : aucun moment dans cette maquette (l'aplat est son seul geste) ; aucun écouteur, rien ne joue sur un clic
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ clic: false, pages: false });
+  // la pression : la pièce se serre et prend l'aplat, dès le pointerdown
+  if (MV) MV.presse(document);
   INTRO.ouvrir({ fond: '#bc3e80', encre: '#ffffff', classe: 'm05-intro', apres: () => { if (bdCtl) bdCtl.demarrer(); } });
   addEventListener('hashchange', () => route());
   route();

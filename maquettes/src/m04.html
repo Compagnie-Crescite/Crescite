@@ -868,7 +868,7 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
 /* ———————————— le mouvement (règle 15) : les battants ; voir le bloc « Mouvement » en tête du script ————————————
    Une porte s'ouvre, la lumière passe par l'embrasure, on referme derrière soi. Survol 160 à 200 ms, pression 90 ms, page 420 ms. */
 html{view-transition-name:none}
-main{display:block;min-height:100vh}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas */
+main{display:block;min-height:100vh;overflow-x:clip}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; ce qui glisse n'en déborde pas */
 /* les battants : deux vantaux à la couleur de la page qui s'ouvre, sous l'en-tête ; la lumière passe entre eux.
    Seuls transform et opacity bougent ; rien ne capte le pointeur : un nouveau geste passe au travers */
 .battants{position:fixed;left:0;right:0;bottom:0;top:var(--bt-haut,0px);z-index:25;pointer-events:none;perspective:1700px;perspective-origin:50% 42%;visibility:hidden;overflow:hidden}
