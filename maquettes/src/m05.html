@@ -1735,7 +1735,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   /* « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu */
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
-  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
   const PDF = '<svg class="ico" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg>';
   const listeDocs = docs => `<ul class="docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul>`;

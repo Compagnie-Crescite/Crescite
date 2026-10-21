@@ -1224,7 +1224,7 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
   /* « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu */
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
-  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const ICON_DL = '<svg class="ar ar-dl" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M5 .8v7.6M1.4 5.2 5 8.8l3.6-3.6"/></svg>';
   const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}${ICON_DL}</a>`;
   const listeDocs = docs => `<ul class="docs">${docs.map(x => `<li>${lienDoc(x)}</li>`).join('')}</ul>`;

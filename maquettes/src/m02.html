@@ -1868,7 +1868,7 @@ button.lien-u{margin:0;padding:0;border:0;background:none;font:inherit;font-weig
   const PDF = ico('<path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>');
   const contactPrg = () => ((S().programmation || {}).contact) || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
-  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
   const listeDocs = docs => `<ul class="docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul>`;
   // le contact diffusion : le nom, le rôle, le courriel (lien mailto:, avec l'objet), le téléphone s'il existe

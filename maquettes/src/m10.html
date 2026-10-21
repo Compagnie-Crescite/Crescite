@@ -2433,7 +2433,7 @@ html .ed-ajout { font-family: var(--sans); }
   /* « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu */
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
-  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const ICO_PDF = '<svg class="dos-ico" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 3v10M5.5 9 10 13.5 14.5 9M4 17h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // le petit bras des entrées, qui s'enroule en se dessinant : l'animation du bouton pendant la composition du dossier
   const BRAS_DOS = BE.replace('<svg class="be"', '<svg class="dos-bras"').replace('<path ', '<path pathLength="1" ');

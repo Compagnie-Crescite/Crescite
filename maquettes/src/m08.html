@@ -2175,7 +2175,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
   /* ——— « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu ——— */
   const contactPrg = () => (site().programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
-  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const ICO_PDF = '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 3v10M5.5 9 10 13.5 14.5 9M4 17h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="square"/></svg>';
   const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
   const listeDocs = docs => `<ul class="docs">${docs.map(x => `<li>${ICO_PDF}${lienDoc(x)}</li>`).join('')}</ul>`;

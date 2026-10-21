@@ -1902,7 +1902,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const ONDE = '<svg class="onde" viewBox="0 0 120 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M2 6C22 1 38 1 54 5S86 10 100 5C108 2 116 3 118 6"/></svg>';
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
-  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
   // le contact diffusion : le nom, le rôle, le courriel (lien mailto:, avec l'objet), le téléphone s'il existe ; sur un spectacle : en bande
   function contactHTML(s) {

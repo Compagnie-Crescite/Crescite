@@ -1481,7 +1481,7 @@ main{display:block;min-height:100vh;overflow-x:clip}
   /* ---------- « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu ---------- */
   const contactPrg = () => ((X.S.programmation || {}).contact) || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
-  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && x.pour === pour && x.url);
+  const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
   const PORTE = '<span class="mini-porte" aria-hidden="true"><i class="mp-b"></i></span>';
   const listeDocs = docs => `<ul class="docs">${docs.map(x => `<li>${PORTE}${lienDoc(x)}</li>`).join('')}</ul>`;

@@ -24,7 +24,7 @@ from importer import ErreurAPI, api  # noqa: E402
 
 DOCUMENTS = json.loads((ROOT / "data" / "documents.json").read_text(encoding="utf-8"))["documents"]
 DRIVE = ROOT / "private" / "drive"
-PUBLICS = ("pros", "scolaires")
+PUBLICS = ("pros", "scolaires", "tous", "pros_scolaires")
 
 
 def stockage(d):

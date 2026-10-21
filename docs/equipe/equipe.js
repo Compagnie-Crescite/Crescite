@@ -660,7 +660,7 @@
     const miens = new Set([...spectacles.keys(), ...distributions.filter(x => x.personne_id === moi).map(x => x.spectacle_id)]);
     // les documents de l'équipe (ses spectacles, toute la compagnie) ; les documents publics (pros, scolaires) de ses spectacles
     const documents = (dc || []).filter(x => (!x.pour || x.pour === 'equipe') ? (x.spectacle_id == null || miens.has(x.spectacle_id))
-      : (x.pour === 'pros' || x.pour === 'scolaires') ? x.spectacle_id != null && miens.has(x.spectacle_id) : false);
+      : (x.pour === 'pros' || x.pour === 'scolaires' || x.pour === 'tous' || x.pour === 'pros_scolaires') ? x.spectacle_id != null && miens.has(x.spectacle_id) : false);
     const auj = aujourdhui();
     const avecFeuille = dates.filter(d => d.feuille && finDe(d) >= auj).map(d => d.id);
     const tous = [...miens];
@@ -1550,7 +1550,7 @@
 
   const TYPES = { texte: 'Le texte', dossier: 'Le dossier', fiche_technique: 'La fiche technique', plan: 'Le plan' };
   const TYPES_COURTS = { texte: 'Texte', dossier: 'Dossier', fiche_technique: 'Fiche technique', plan: 'Plan', autre: 'Document' };
-  const POUR = { pros: 'pour les programmateurs', scolaires: 'pour les établissements scolaires' };
+  const POUR = { pros: 'pour les programmateurs', scolaires: 'pour les établissements scolaires', tous: 'pour les programmateurs et les scolaires', pros_scolaires: 'pour les programmateurs et les scolaires' };
   const documentsDe = id => E.documents.filter(x => x.spectacle_id === id);
   function blocDocuments(d) {
     const xs = documentsDe(d.spectacle?.id), sp = d.spectacle || {};

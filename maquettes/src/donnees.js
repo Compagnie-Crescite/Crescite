@@ -89,7 +89,7 @@ const DONNEES = (() => {
       // l'équipe : facultative (une base sans ses tables d'équipe garde celle de l'instantané)
       let pe, di, dc;
       try {             // les documents publics : facultatifs aussi (une base qui ne les a pas encore garde ceux de l'instantané)
-        dc = await lireTable('crescite_documents', 'spectacle_id,type,titre,fichier,url,pour,ordre&pour=in.(pros,scolaires)', 'ordre.asc,id.asc', ctl.signal);
+        dc = await lireTable('crescite_documents', 'spectacle_id,type,titre,fichier,url,pour,ordre&pour=in.(pros,scolaires,tous,pros_scolaires)', 'ordre.asc,id.asc', ctl.signal);
       } catch { dc = undefined; }
       try {
         [pe, di] = await Promise.all([

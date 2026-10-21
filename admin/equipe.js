@@ -534,8 +534,14 @@ function ongletDeroule(z, F) {
 // « crescite », sous documents/<spectacle>/ : le site les propose en téléchargement (troisième script SQL). Ceux de
 // l'équipe restent privés, dans « crescite-equipe ». Ceux des salles (quatrième script SQL) aussi, dans « crescite-pro »
 // sous <spectacle>/ : seul l'espace pro (pro/) les ouvre, aux salles invitées, par un lien d'une heure.
-const POUR_PUBLIC = [['pros', 'Programmateurs'], ['scolaires', 'Établissements scolaires']];
-const estPublic = d => d.pour === 'pros' || d.pour === 'scolaires';
+const POUR_PUBLIC = [
+  ['pros', 'Pour les programmateurs'],
+  ['scolaires', 'Pour les établissements scolaires'],
+  ['tous', 'Pour les deux (programmateurs et scolaires)'],
+];
+const estPros = d => d.pour === 'pros' || d.pour === 'tous' || d.pour === 'pros_scolaires';
+const estScolaires = d => d.pour === 'scolaires' || d.pour === 'tous' || d.pour === 'pros_scolaires';
+const estPublic = d => estPros(d) || estScolaires(d);
 const estSalles = d => d.pour === 'salles';
 const stockageDe = d => estSalles(d) ? 'crescite-pro' : estPublic(d) ? 'crescite' : 'crescite-equipe';
 const urlPublique = chemin => sb.storage.from('crescite').getPublicUrl(chemin).data.publicUrl;
@@ -551,10 +557,15 @@ function documentsEditeur(z, s) {
   const groupe = d => estSalles(d) ? salles() : estPublic(d) ? publics() : docs();
   const avecSalles = !!(s && E.sql4);
   const hote = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
+  const acceptDe = d => estSalles(d)
+    ? '.pdf,.jpg,.jpeg,.png,.webp,.mp4,.zip,application/pdf,image/jpeg,image/png,image/webp,video/mp4,application/zip'
+    : estPublic(d)
+      ? '.pdf,application/pdf'
+      : '.pdf,.odt,.docx,.txt,image/*';
   const ligne = (d, i, n) => `<div class="doc-l" data-doc="${d.id}"><select data-dk="type" aria-label="Type">${TYPES_DOC.map(([k, l]) => `<option value="${k}"${d.type === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
     <span class="doc-titre"><input type="text" data-dk="titre" value="${esc(d.titre)}" aria-label="Titre du document"><small>${d.fichier ? `Fichier : ${esc(d.fichier.split('/').pop())}` : `Lien : ${esc(hote(d.url))}`}</small></span>
-    ${estSalles(d) ? '<span class="doc-pour" title="Seules les salles invitées le voient, dans l’espace pro">Salles invitées</span>' : `<select data-dk="pour" aria-label="Pour qui">${(estPublic(d) ? POUR_PUBLIC.map(([k, l]) => [k, `Pour les ${l.toLowerCase()}`]) : [['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']]).map(([k, l]) => `<option value="${k}"${d.pour === k ? ' selected' : ''}>${l}</option>`).join('')}</select>`}
-    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button>${estSalles(d) ? '' : estPublic(d) ? '<button type="button" class="btn petit" data-doc-copier title="Copier l’adresse publique du document">Copier le lien</button>' : d.fichier ? `<button type="button" class="btn petit" data-doc-partager title="Copier une adresse à envoyer, valable ${PARTAGE_JOURS} jours (une fiche technique pour un lieu, par exemple)">Lien ${PARTAGE_JOURS} jours</button>` : ''}<button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span></div>`;
+    ${estSalles(d) ? '<span class="doc-pour" title="Seules les salles invitées le voient, dans l’espace pro">Salles invitées</span>' : `<select data-dk="pour" aria-label="Pour qui">${(estPublic(d) ? POUR_PUBLIC : [['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']]).map(([k, l]) => `<option value="${k}"${(d.pour === k || (k === 'tous' && d.pour === 'pros_scolaires')) ? ' selected' : ''}>${l}</option>`).join('')}</select>`}
+    <span class="dist-outils"><button type="button" class="btn petit" data-doc-ouvrir>Ouvrir</button><label class="btn petit" tabindex="0" role="button" title="Mettre à jour ce document (écrase la version précédente)">Remplacer<input type="file" data-doc-remplacer accept="${acceptDe(d)}" hidden></label>${estSalles(d) ? '' : estPublic(d) ? '<button type="button" class="btn petit" data-doc-copier title="Copier l’adresse publique du document">Copier le lien</button>' : d.fichier ? `<button type="button" class="btn petit" data-doc-partager title="Copier une adresse à envoyer, valable ${PARTAGE_JOURS} jours (une fiche technique pour un lieu, par exemple)">Lien ${PARTAGE_JOURS} jours</button>` : ''}<button type="button" class="btn petit" data-doc-dm="-1" title="Monter" aria-label="Monter"${i ? '' : ' disabled'}>↑</button><button type="button" class="btn petit" data-doc-dm="1" title="Descendre" aria-label="Descendre"${i < n - 1 ? '' : ' disabled'}>↓</button><button type="button" class="btn petit danger" data-doc-suppr title="Supprimer" aria-label="Supprimer ce document">✕</button></span></div>`;
   // la boîte d'un lien à ajouter, pour l'équipe, pour le public (programmateurs) ou pour les salles invitées
   const uid = ++nDocsEditeurs;
   const boiteLien = genre => `<div class="item doc-lien" data-genre="${genre}" hidden><div class="rangee"><div class="champ"><label for="doc-url-${uid}-${genre}">Adresse du lien</label><input type="url" id="doc-url-${uid}-${genre}" data-doc-url placeholder="https://…"></div><div class="champ"><label for="doc-titre-${uid}-${genre}">Titre${genre === 'salles' ? ' (celui que la salle voit)' : ''}</label><input type="text" id="doc-titre-${uid}-${genre}" data-doc-titre placeholder="${{ equipe: 'Le texte sur Wikisource', public: 'Le dossier de diffusion', salles: 'La captation intégrale' }[genre]}"></div></div>
@@ -611,6 +622,51 @@ function documentsEditeur(z, s) {
   z.addEventListener('change', async e => {
     e.stopPropagation();   // dans l'éditeur du spectacle, ce fichier n'est pas une photo
     const t = e.target;
+    if (t.matches('[data-doc-remplacer]')) {
+      const f = t.files[0]; t.value = ''; if (!f) return;
+      const l = t.closest('[data-doc]'); if (!l) return;
+      const d = E.documents.find(x => x.id === +l.dataset.doc); if (!d) return;
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      const base = f.name.replace(/\.[^.]+$/, '');
+      const pub = estPublic(d), sal = estSalles(d);
+      if (pub) {
+        if (ext !== 'pdf' && f.type !== 'application/pdf') return annoncer('Un document public est un PDF.', { erreur: true });
+        if (f.size > 25 * 1024 * 1024) return annoncer('Fichier trop lourd : 25 Mo au plus.', { erreur: true });
+      } else if (sal) {
+        const typeSal = MIMES_SALLES[ext];
+        if (!typeSal || !f.name.includes('.')) return annoncer('Ce type de fichier n’est pas accepté ici : PDF, image (JPEG, PNG, WebP), vidéo MP4 ou ZIP.', { erreur: true });
+        if (f.size > MO_SALLES * 1024 * 1024) return annoncer(`« ${f.name} » pèse ${mo(f.size)} Mo : ${MO_SALLES} Mo au plus.`, { erreur: true });
+      } else {
+        const typeDoc = MIMES_DOC[ext] || f.type;
+        if (!Object.values(MIMES_DOC).includes(typeDoc)) return annoncer('Ce type de fichier n’est pas accepté : PDF, image, texte, ODT ou DOCX.', { erreur: true });
+        if (f.size > 50 * 1024 * 1024) return annoncer('Fichier trop lourd : 50 Mo au plus.', { erreur: true });
+      }
+      const bucket = stockageDe(d);
+      const mime = sal ? MIMES_SALLES[ext] : pub ? 'application/pdf' : (MIMES_DOC[ext] || f.type);
+      const chemin = pub
+        ? `documents/${dossier}/${Date.now().toString(36)}-${slugifier(base) || 'document'}.pdf`
+        : `${dossier}/${Date.now().toString(36)}-${slugifier(base) || 'document'}.${ext}`;
+      annoncer(`Envoi de la nouvelle version « ${f.name} »…`);
+      const { error: errUp } = await sb.storage.from(bucket).upload(chemin, f, { contentType: mime, upsert: true, cacheControl: '3600' });
+      if (errUp) return erreur(errUp, 'Envoi de la nouvelle version impossible');
+      const ancien = d.fichier;
+      const { data, error: errDb } = await sb.from('crescite_documents').update({ fichier: chemin, url: null }).eq('id', d.id).select().single();
+      if (errDb) {
+        await sb.storage.from(bucket).remove([chemin]);
+        return erreur(errDb, 'Mise à jour impossible');
+      }
+      if (ancien && ancien !== chemin) {
+        const partage = pub && E.documents.some(x => x.id !== d.id && x.fichier === ancien && estPublic(x));
+        if (!partage) {
+          const r = await sb.storage.from(bucket).remove([ancien]);
+          if (r.error) console.warn('Ancienne version non supprimée:', r.error);
+        }
+      }
+      remplacerLigne(E.documents, data);
+      dessiner();
+      annoncer(`Document « ${data.titre} » mis à jour avec « ${f.name} » (version précédente écrasée).`);
+      return;
+    }
     if (t.matches('[data-doc-fichier-public]')) {
       const f = t.files[0]; t.value = ''; if (!f) return;
       const ext = (f.name.split('.').pop() || '').toLowerCase();
@@ -2329,7 +2385,7 @@ const etatAcces = a => !a.actif ? { ouverte: false, classe: 'masquee', texte: 'D
   : { ouverte: true, classe: 'ok', texte: `Ouverte jusqu’au ${jourMoyen(a.expire_le)}` };
 const visitesTexte = a => a.visites ? `${a.visites} visite${a.visites > 1 ? 's' : ''}${a.derniere_visite ? `, la dernière le ${new Date(a.derniere_visite).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''}` : 'Pas encore ouverte';
 const compteDocsSalles = id => {
-  const ds = E.documents.filter(d => d.spectacle_id === id), n = ds.filter(estSalles).length, p = ds.filter(d => d.pour === 'pros').length;
+  const ds = E.documents.filter(d => d.spectacle_id === id), n = ds.filter(estSalles).length, p = ds.filter(estPros).length;
   return `${n ? `${n} document${n > 1 ? 's' : ''} réservé${n > 1 ? 's' : ''} aux salles` : 'rien de réservé aux salles'}${p ? `, ${p} pour les programmateurs` : ''}`;
 };
 // « Écrire » : un courriel court, avec le lien et la date de fin, signé de l'administrateur connecté
@@ -2387,7 +2443,7 @@ function listeAcces(zone, actif) {
 }
 // sans invitation choisie : ce qu'est l'espace pro, et ce que chaque spectacle y montre
 function accueilPro() {
-  const sps = E.spectacles.filter(s => s.page || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || d.pour === 'pros'))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
+  const sps = E.spectacles.filter(s => s.page || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || estPros(d)))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
   return `<div class="bloc"><h3>Inviter une salle</h3><p>Une invitation ouvre à une salle ou à un festival l’espace pro : les captations et les documents des spectacles choisis, jusqu’à une date. On lui envoie son lien ; chaque visite et chaque document ouvert s’inscrivent dans son journal.</p>
       <p class="aide">Le lien mène à pro/, une page du site qui demande les documents à la fonction <code>crescite-pro</code> de Supabase (supabase/functions/crescite-pro) : elle doit y être déployée.</p></div>
     <div class="bloc"><h3>Ce que les salles y trouvent</h3>${sps.length ? `<ul class="liste-simple pro-docs">${sps.map(s => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><b>${esc(s.titre)}</b><span class="compte">${esc(compteDocsSalles(s.id))}</span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Documents">Documents</a></li>`).join('')}</ul>` : '<p class="aide">Aucun spectacle.</p>'}
@@ -2400,7 +2456,7 @@ function editeurAcces(id) {
   if (id && !a0) { zone.innerHTML = '<div class="vide bloc">Cette invitation n’existe plus.</div>'; return; }
   const F = a0 ? { nom: a0.nom || '', contact: a0.contact || '', courriel: a0.courriel || '', spectacles: (a0.spectacles || []).map(Number), expire_le: a0.expire_le, notes: a0.notes || '' }
     : { nom: '', contact: '', courriel: '', spectacles: [], expire_le: plusJours(AUJ, 90), notes: '' };
-  const choix = E.spectacles.filter(s => s.page || F.spectacles.includes(s.id) || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || d.pour === 'pros'))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
+  const choix = E.spectacles.filter(s => s.page || F.spectacles.includes(s.id) || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || estPros(d)))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
   nChamp = 0;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/pro" aria-label="Retour aux invitations">←</a><h2>${esc(a0 ? a0.nom : 'Nouvelle invitation')}</h2></div>
     ${a0 ? '<div class="bloc pro-actions" id="pro-actions"></div>' : ''}

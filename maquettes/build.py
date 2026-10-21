@@ -570,7 +570,7 @@ def documents_publics():
     drive = PRIVATE / "drive"
     return [{"spectacle": d["spectacle"], "type": d["type"], "titre": d["titre"], "url": f"{STOCKAGE}/{quote(d['chemin'])}",
              "pour": d["pour"]} for d in sorted(docs, key=lambda d: d["ordre"])
-            if d["pour"] in ("pros", "scolaires") and (not drive.exists() or (drive / d["source"]).exists())]
+            if d["pour"] in ("pros", "scolaires", "tous", "pros_scolaires") and (not drive.exists() or (drive / d["source"]).exists())]
 
 
 def action_publiee(a):
