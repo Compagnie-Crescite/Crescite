@@ -45,6 +45,10 @@ const AVANT = 30, APRES = 400;                 // la fenêtre lue : de J-30 à J
 const DELAI = 15_000, TAILLE = 5 * 1024 * 1024, REDIRECTIONS = 3;
 const MAX_PERIODES = 5000, MAX_PAS = 20_000;   // par agenda : occurrences gardées, pas d'itération d'une récurrence
 const LOT = 30, ENSEMBLE = 4, BUDGET = 100_000; // le passage horaire : agendas lus, en même temps, temps (ms)
+// Supabase arrête un appel vers deux secondes de calcul (erreur 546) : le passage horaire ne commence plus de lecture
+// après 0,9 s de lecture ; les agendas qui restent passent à l'heure suivante (les moins récemment lus d'abord)
+const CALCUL = 900;
+let calcul = 0;
 const RECENTE = 20_000;                        // une lecture réussie plus récente n'est pas refaite à la demande
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -137,14 +141,99 @@ function compte(composant: any): boolean {
   return statut !== 'CANCELLED' && transp !== 'TRANSPARENT';
 }
 
+/* Un agenda de plusieurs années pèse des mégaoctets, et Supabase ne donne qu'environ deux secondes de calcul par appel
+   (au-delà : erreur 546). Avant ical.js, on retire donc du texte les événements qui ne peuvent pas toucher la fenêtre,
+   d'après leurs lignes DTSTART, DTEND, RRULE et RECURRENCE-ID ; le reste du texte (les fuseaux) est gardé tel quel.
+   Une série qui touche la fenêtre est gardée, et ses occurrences déplacées aussi quand elles ou leur date d'origine la
+   touchent. Ce qui ne se lit pas ici est gardé : ical.js tranchera. */
+const jourIcal = (ligne: string | undefined): number | null => {
+  const m = ligne && ligne.match(/:(\d{4})(\d{2})(\d{2})/);
+  return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : null;
+};
+function garder(bloc: string, debutF: number, finF: number): boolean {
+  const deplie = bloc.replace(/\r?\n[ \t]/g, '');            // les lignes repliées
+  const prop = (nom: string) => deplie.match(new RegExp(`^${nom}[;:][^\\r\\n]*`, 'mi'))?.[0];
+  const marge = 2 * JOUR;                                     // une date lue sans son fuseau peut glisser d'un jour
+  const debut = jourIcal(prop('DTSTART'));
+  if (debut == null) return true;
+  const rrule = prop('RRULE');
+  if (rrule || prop('RDATE')) {
+    const u = rrule && rrule.match(/UNTIL=(\d{4})(\d{2})(\d{2})/);
+    if (u && Date.UTC(+u[1], +u[2] - 1, +u[3]) < debutF - marge) return false;     // la série finit avant la fenêtre
+    return debut <= finF + marge;                                                  // ... ou commence après
+  }
+  const fin = jourIcal(prop('DTEND')) ?? debut + 32 * JOUR;  // sans DTEND (une DURATION) : de la marge
+  const touche = fin >= debutF - marge && debut <= finF + marge;
+  const origine = jourIcal(prop('RECURRENCE-ID'));
+  if (origine != null) return touche || (origine >= debutF - marge && origine <= finF + marge);
+  if (!touche) return false;
+  // un événement seul, annulé ou « disponible », ne compte pas (une occurrence déplacée, si : elle retire l'occurrence)
+  return !/^STATUS:CANCELLED\s*$/mi.test(deplie) && !/^TRANSP:TRANSPARENT\s*$/mi.test(deplie);
+}
+export function prefiltrer(contenu: string, debutF: number, finF: number): string {
+  const morceaux: string[] = [];
+  const debutBloc = /\r?\nBEGIN:VEVENT\r?\n/g, finBloc = /\r?\nEND:VEVENT[ \t]*(?=\r?\n|$)/g;
+  let curseur = 0;
+  for (let m = debutBloc.exec(contenu); m; m = debutBloc.exec(contenu)) {
+    finBloc.lastIndex = m.index + m[0].length;
+    const f = finBloc.exec(contenu);
+    if (!f) break;
+    const finIndex = f.index + f[0].length;
+    morceaux.push(contenu.slice(curseur, m.index));
+    if (garder(contenu.slice(m.index, finIndex), debutF, finF)) morceaux.push(contenu.slice(m.index, finIndex));
+    curseur = finIndex;
+    debutBloc.lastIndex = finIndex;
+  }
+  morceaux.push(contenu.slice(curseur));
+  return morceaux.join('');
+}
+
+/* Une série sans COUNT commencée des années avant la fenêtre se parcourt depuis un départ « aligné » juste avant elle :
+   son début avancé d'un nombre entier de périodes (jours, semaines, mois ou années, fois INTERVAL), qui donne les mêmes
+   occurrences sans parcourir des années d'occurrences (et leurs calculs de fuseau). null : depuis son vrai début. */
+// deno-lint-ignore no-explicit-any
+function departAligne(ev: any, exceptions: any[], debutF: number): any {
+  const regles = ev.component.getAllProperties('rrule');
+  if (regles.length !== 1 || ev.component.hasProperty('rdate')) return null;
+  const r = regles[0].getFirstValue();
+  if (r.count) return null;
+  const d0 = ev.startDate, cible = debutF - 40 * JOUR;
+  const t0 = Date.UTC(d0.year, d0.month - 1, d0.day);
+  if (t0 > cible - 366 * JOUR) return null;                 // une série récente : rien à gagner
+  const n = Math.max(1, r.interval || 1), c = new Date(cible);
+  const depart = d0.clone();
+  if (r.freq === 'DAILY' || r.freq === 'WEEKLY') {
+    const pas = r.freq === 'DAILY' ? 1 : 7;
+    const jours = Math.floor((cible - t0) / (pas * JOUR) / n) * n * pas;
+    if (jours <= 0) return null;
+    depart.adjust(jours, 0, 0, 0);
+  } else if (r.freq === 'MONTHLY' || r.freq === 'YEARLY') {
+    if (d0.day > 28) return null;                          // un 29, 30 ou 31 ne tombe pas chaque mois
+    const ecart = (c.getUTCFullYear() - d0.year) * 12 + c.getUTCMonth() + 1 - d0.month - 1;
+    const mois = r.freq === 'MONTHLY' ? Math.floor(ecart / n) * n : Math.floor(ecart / 12 / n) * n * 12;
+    if (mois <= 0) return null;
+    const total = d0.month - 1 + mois;
+    depart.year = d0.year + Math.floor(total / 12);
+    depart.month = total % 12 + 1;
+  } else return null;
+  // une occurrence d'avant le départ, déplacée jusque dans la fenêtre, ne serait plus vue : alors depuis le vrai début
+  const tDepart = Date.UTC(depart.year, depart.month - 1, depart.day);
+  for (const x of exceptions) {
+    const rid = x.getFirstPropertyValue('recurrence-id'), dt = x.getFirstPropertyValue('dtstart');
+    if (rid && dt && Date.UTC(rid.year, rid.month - 1, rid.day) < tDepart && Date.UTC(dt.year, dt.month - 1, dt.day) >= debutF - 31 * JOUR) return null;
+  }
+  return depart;
+}
+
 /* Le cœur : le texte d'un agenda iCal → ses indisponibilités dans la fenêtre (de J-30 à J+400 autour de maintenant).
    Rien d'autre que les heures : { periodes: [{uid, debut, fin, journee}], tronque }. Lève ErreurAgenda si le texte
    n'est pas un agenda. */
 export function lireAgenda(contenu: string, maintenant = Date.now()): { periodes: Periode[]; tronque: boolean } {
   if (!/BEGIN:VCALENDAR/i.test(contenu)) throw new ErreurAgenda(PAS_ICAL);
+  const debutF = maintenant - AVANT * JOUR, finF = maintenant + APRES * JOUR;
   // deno-lint-ignore no-explicit-any
   let jcal: any;
-  try { jcal = ICAL.parse(contenu.replace(/^\uFEFF/, '')); } catch (e) {
+  try { jcal = ICAL.parse(prefiltrer(contenu.replace(/^\uFEFF/, ''), debutF, finF)); } catch (e) {
     throw new ErreurAgenda(`L’agenda est illisible (format iCal invalide : ${String((e as Error)?.message || e).slice(0, 90)}).`);
   }
   // deno-lint-ignore no-explicit-any
@@ -156,7 +245,6 @@ export function lireAgenda(contenu: string, maintenant = Date.now()): { periodes
       try { const tz = new ICAL.Timezone(vtz); if (tz.tzid && !ICAL.TimezoneService.has(tz.tzid)) ICAL.TimezoneService.register(tz, tz.tzid); } catch { /* fuseau illisible : le nom servira */ }
     }
   }
-  const debutF = maintenant - AVANT * JOUR, finF = maintenant + APRES * JOUR;
   // deno-lint-ignore no-explicit-any
   const groupes = new Map<string, { maitre: any; exceptions: any[] }>();
   for (const cal of calendriers) {
@@ -195,16 +283,28 @@ export function lireAgenda(contenu: string, maintenant = Date.now()): { periodes
       const ev = new ICAL.Event(g.maitre);
       for (const x of g.exceptions) { try { ev.relateException(x); } catch { /* exception étrangère à la série */ } }
       if (!ev.isRecurring()) { ajouter(uid, g.maitre, ev.startDate, ev.endDate, null); continue; }
-      const it = ev.iterator();
+      const it = ev.iterator(departAligne(ev, g.exceptions, debutF) || undefined);
       let pas = 0;
+      // deno-lint-ignore no-explicit-any
+      const deplacees = (ev as any).exceptions || {};
+      const vues = new Set<string>();
       for (let t = it.next(); t; t = it.next()) {
         if (++pas > MAX_PAS) { tronque = true; break; }
-        const tn = t.isDate ? instantLocal(t.year, t.month, t.day, 0, 0, 0) : instant(t);
+        // la date « au mur » suffit à situer l'occurrence (à un jour près, d'où la marge) : pas de calcul de fuseau ici
+        const tn = Date.UTC(t.year, t.month - 1, t.day, t.hour || 0, t.minute || 0);
         if (tn > finF + 31 * JOUR) break;    // au-delà de la fenêtre (une exception peut avancer une occurrence : de la marge)
-        // loin avant la fenêtre : on avance sans détailler l'occurrence (sauf si la série a des exceptions, qui déplacent)
-        if (tn < debutF - 31 * JOUR && !g.exceptions.length) continue;
+        // loin avant la fenêtre : on avance sans détailler l'occurrence, sauf si elle a été déplacée
+        const id = t.toString();
+        if (deplacees[id]) vues.add(id);
+        if (tn < debutF - 31 * JOUR && !deplacees[id]) continue;
         const det = ev.getOccurrenceDetails(t);
         ajouter(uid, det.item.component, det.startDate, det.endDate, det.recurrenceId);
+      }
+      // une occurrence déplacée que la série ne donne plus (la série a été raccourcie ou changée depuis) : Google Agenda
+      // la montre toujours, la personne est donc prise ; elle compte telle quelle
+      for (const x of g.exceptions) {
+        const e2 = new ICAL.Event(x);
+        if (e2.recurrenceId && !vues.has(e2.recurrenceId.toString())) ajouter(uid, x, e2.startDate, e2.endDate, e2.recurrenceId);
       }
     } catch (e) {
       console.warn('crescite-agenda : événement illisible', uid.slice(0, 40), String((e as Error)?.message || e).slice(0, 120));
@@ -366,7 +466,9 @@ async function ecrire(agenda: Agenda, periodes: Periode[], maintenant: number, t
 export async function synchroniser(agenda: Agenda, f: typeof fetch = fetch, maintenant = Date.now()): Promise<{ id: string | number; nb_evenements?: number; erreur: string | null }> {
   try {
     const contenu = await telecharger(agenda.url, f);
+    const t = performance.now();
     const { periodes, tronque } = lireAgenda(contenu, maintenant);
+    calcul += performance.now() - t;
     await ecrire(agenda, periodes, maintenant, tronque);
     return { id: agenda.id, nb_evenements: periodes.length, erreur: null };
   } catch (e) {
@@ -380,11 +482,12 @@ export async function synchroniser(agenda: Agenda, f: typeof fetch = fetch, main
 // le passage horaire : les agendas actifs, les moins récemment lus d'abord
 async function synchroTout() {
   const debut = Date.now();
+  calcul = 0;
   const agendas = await sql`select id, personne_id, url from public.crescite_agendas_lies where actif
                             order by derniere_synchro asc nulls first, id limit ${LOT}` as unknown as Agenda[];
   let i = 0, erreurs = 0, lus = 0;
   const ouvrier = async () => {
-    while (i < agendas.length && Date.now() - debut < BUDGET) {
+    while (i < agendas.length && Date.now() - debut < BUDGET && calcul < CALCUL) {
       const a = agendas[i++];
       const r = await synchroniser(a);
       lus++;
