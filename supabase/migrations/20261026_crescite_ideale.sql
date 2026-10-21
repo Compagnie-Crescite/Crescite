@@ -26,7 +26,7 @@ create table if not exists public.crescite_alertes_tournee (
   lon numeric(9, 6),
   rayon_km integer not null default 40,
   spectacle_id integer references public.crescite_spectacles (id) on delete cascade,
-  token_desinscription text not null default encode(gen_random_bytes(16), 'hex'),
+  token_desinscription text not null default replace(gen_random_uuid()::text, '-', ''),   -- sans pgcrypto
   active boolean not null default true,
   derniere_notification_le timestamptz,
   cree_le timestamptz not null default now()
@@ -190,20 +190,26 @@ create policy ide_devis_deposer on public.crescite_devis_demandes for insert to 
 create policy ide_devis_admin on public.crescite_devis_demandes for all to authenticated
   using ((select public.crescite_est_admin())) with check ((select public.crescite_est_admin()));
 
--- 7. Notes de frais : chacun les siennes, l'admin voit et valide tout
+-- 7. Notes de frais : chacun les siennes, l'admin voit et valide tout. Une personne dépose et retouche sa note tant
+-- qu'elle attend : jamais validée, ni remboursée, ni datée de validation par elle-même
 create policy ide_frais_lecture on public.crescite_notes_frais for select to authenticated
   using (personne_id = (select public.crescite_moi()) or (select public.crescite_est_admin()));
 create policy ide_frais_creer on public.crescite_notes_frais for insert to authenticated
-  with check (personne_id = (select public.crescite_moi()) or (select public.crescite_est_admin()));
+  with check ((select public.crescite_est_admin())
+              or (personne_id = (select public.crescite_moi()) and statut = 'en_attente'
+                  and valide_le is null and valide_par is null and rembourse_le is null));
 create policy ide_frais_modif_soi on public.crescite_notes_frais for update to authenticated
   using ((personne_id = (select public.crescite_moi()) and statut = 'en_attente') or (select public.crescite_est_admin()))
-  with check ((personne_id = (select public.crescite_moi()) and statut = 'en_attente') or (select public.crescite_est_admin()));
+  with check ((select public.crescite_est_admin())
+              or (personne_id = (select public.crescite_moi()) and statut = 'en_attente'
+                  and valide_le is null and valide_par is null and rembourse_le is null));
 create policy ide_frais_admin on public.crescite_notes_frais for delete to authenticated
   using ((select public.crescite_est_admin()));
 
--- 8. Matériel & Checklists : l'équipe de la date ou l'admin
+-- 8. Matériel & Checklists : l'équipe de la date ou l'admin. La liste du matériel : les personnes de l'équipe (le
+-- projet Supabase est partagé : un compte qui n'a pas de fiche dans l'équipe ne la lit pas)
 create policy ide_mat_lecture on public.crescite_materiel for select to authenticated
-  using (true);
+  using ((select public.crescite_moi()) is not null or (select public.crescite_est_admin()));
 create policy ide_mat_admin on public.crescite_materiel for all to authenticated
   using ((select public.crescite_est_admin())) with check ((select public.crescite_est_admin()));
 
@@ -220,6 +226,23 @@ create policy ide_chk_suppr on public.crescite_checklists_chargement for delete 
 -- 10. CRM Prospects : réservé aux administrateurs
 create policy ide_crm_prospects on public.crescite_diffusion_prospects for all to authenticated
   using ((select public.crescite_est_admin())) with check ((select public.crescite_est_admin()));
+
+-- Les droits sur les tables (Supabase donne tout à anon et authenticated sur une table neuve ; les règles ci-dessus
+-- filtrent, et les droits ferment ce que le public n'a pas à toucher) : le public dépose une alerte ou une demande de
+-- devis, rien d'autre
+revoke all on public.crescite_alertes_tournee, public.crescite_devis_demandes, public.crescite_notes_frais,
+  public.crescite_materiel, public.crescite_checklists_chargement, public.crescite_diffusion_prospects from anon, public;
+grant insert on public.crescite_alertes_tournee, public.crescite_devis_demandes to anon;
+grant select on public.crescite_alertes_tournee to anon;   -- sa propre alerte, par son jeton (règle ide_alertes_lecture)
+grant select, insert, update, delete on public.crescite_alertes_tournee, public.crescite_devis_demandes, public.crescite_notes_frais,
+  public.crescite_materiel, public.crescite_checklists_chargement, public.crescite_diffusion_prospects to authenticated;
+revoke all on sequence public.crescite_alertes_tournee_id_seq, public.crescite_devis_demandes_id_seq, public.crescite_notes_frais_id_seq,
+  public.crescite_materiel_id_seq, public.crescite_checklists_chargement_id_seq, public.crescite_diffusion_prospects_id_seq from anon, public;
+grant usage on sequence public.crescite_alertes_tournee_id_seq, public.crescite_devis_demandes_id_seq to anon;
+grant usage, select on sequence public.crescite_alertes_tournee_id_seq, public.crescite_devis_demandes_id_seq, public.crescite_notes_frais_id_seq,
+  public.crescite_materiel_id_seq, public.crescite_checklists_chargement_id_seq, public.crescite_diffusion_prospects_id_seq to authenticated;
+grant all on public.crescite_alertes_tournee, public.crescite_devis_demandes, public.crescite_notes_frais,
+  public.crescite_materiel, public.crescite_checklists_chargement, public.crescite_diffusion_prospects to service_role;
 
 -- =====================================================================================================
 -- BUCKET DE STOCKAGE POUR LES JUSTIFICATIFS DE FRAIS (crescite-frais)
@@ -256,5 +279,21 @@ create policy crescite_frais_envoi on storage.objects for insert to authenticate
 
 create policy crescite_frais_admin_suppr on storage.objects for delete to authenticated
   using (bucket_id = 'crescite-frais' and (select public.crescite_est_admin()));
+
+-- ------------------------------------------------------------------------------------------------ temps réel
+-- l'administration écoute ces tables (sur leur propre canal) : sans elles dans la publication, ce canal ne reçoit rien
+
+do $$
+declare t text;
+begin
+  foreach t in array array['crescite_diffusion_prospects', 'crescite_notes_frais', 'crescite_materiel', 'crescite_devis_demandes'] loop
+    begin
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    exception
+      when duplicate_object then null;
+      when others then raise notice 'temps réel, %: %', t, sqlerrm;
+    end;
+  end loop;
+end $$;
 
 commit;

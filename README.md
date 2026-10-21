@@ -455,6 +455,15 @@ l'administration comprise ; le public n'y a aucun droit. Pour commencer, une cl�
 masquées du planning. Tant que le script n'est pas passé, la liste reste sur l'appareil (sans message) ; elle passe dans
 la base à la première ouverture du planning qui suit. 22 essais (`node preferences.mjs`).
 
+**« Compagnie Idéale » (pas encore lancé).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
+s'exécute après les six autres et peut être relancé. Il ajoute les alertes de tournée et les demandes de devis (le public
+les dépose, sans en poser le suivi ; il ne relit que son alerte, par son jeton), les notes de frais (chacun les siennes,
+jamais validées ni remboursées par soi-même ; les justificatifs dans le stockage privé `crescite-frais`, chacun dans le
+dossier de sa fiche), le matériel (lu par l'équipe, tenu par l'administration), les listes de chargement et les pistes
+de diffusion (l'administration seule), et cinq colonnes de diffusion au suivi des dates. Un compte du projet qui n'a pas
+de fiche dans l'équipe n'y a rien. L'administration écoute ces tables sur un canal à part, et seulement quand la base
+les a. 33 essais (`node ideale.mjs`).
+
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
 d'atteinte), jamais sans filtre, avec un mode `--essai`. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;

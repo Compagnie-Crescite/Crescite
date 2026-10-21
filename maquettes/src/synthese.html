@@ -2276,7 +2276,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
             } catch (e) { /* hors-ligne */ }
             const sujet = encodeURIComponent(`Demande de programmation : ${spNom} - ${struct}`);
             const corps = encodeURIComponent(`Bonjour,\n\nJe souhaite recevoir une proposition de cession pour le spectacle "${spNom}".\n\nStructure : ${struct}\nContact : ${nom} (${tel})\nDimensions plateau : ${dims}\nPériode envisagée : ${per}\n\nPrécisions :\n${msg}\n\nCordialement,\n${nom}`);
-            const diffMail = (S.programmation && S.programmation.contact && S.programmation.contact.email) || 'administration@crescite.fr';
+            const diffMail = (contactPrg() || {}).email || '';
             st.className = 'alerte-msg ok';
             st.innerHTML = `✓ Demande transmise avec succès ! Vous pouvez également <a href="mailto:${diffMail}?subject=${sujet}&body=${corps}" style="text-decoration:underline; font-weight:700;">cliquer ici pour ouvrir votre messagerie</a> avec le récapitulatif.`;
             st.hidden = false;
@@ -2291,7 +2291,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const btnAdage = $('#btn-copier-adage'), btnConv = $('#btn-ouvrir-conv'), convModal = $('#conv-modal');
     if (btnAdage) {
       btnAdage.addEventListener('click', async () => {
-        const txt = `Compagnie Crescite - Offre Collective Pass Culture (ADAGE)\nSpectacles éligibles : Bérénice (Racine, in situ), Ci-gisait Cyrano, Mon Royaume pour un cheval (Shakespeare), L'imaginaire forcé (Molière).\nDispositif : Représentation(s) en temps scolaire + Ateliers de pratique théâtrale (corps, voix, alexandrin).\nPrise en charge intégrale possible via les crédits Pass Culture de l'établissement sur l'application ADAGE.\nContact diffusion & médiation : administration@crescite.fr`;
+        const txt = `Compagnie Crescite - Offre Collective Pass Culture (ADAGE)\nSpectacles éligibles : Bérénice (Racine, in situ), Ci-gisait Cyrano, Mon Royaume pour un cheval (Shakespeare), L'imaginaire forcé (Molière).\nDispositif : Représentation(s) en temps scolaire + Ateliers de pratique théâtrale (corps, voix, alexandrin).\nPrise en charge intégrale possible via les crédits Pass Culture de l'établissement sur l'application ADAGE.\nContact diffusion & médiation : ${(contactPrg() || {}).email || ''}`;
         try {
           await navigator.clipboard.writeText(txt);
           btnAdage.classList.add('copie');

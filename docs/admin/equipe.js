@@ -27,7 +27,6 @@ Object.assign(E, { personnes: [], privees: [], suiviPersonnes: [], distributions
 const TABLES_EQUIPE = {
   crescite_personnes: ['personnes', 'id'], crescite_distributions: ['distributions', 'id'], crescite_equipes: ['equipes', ['date_id', 'personne_id']],
   crescite_documents: ['documents', 'id'], crescite_feuilles: ['feuilles', 'id'],
-  crescite_materiel: ['materiel', 'id'], crescite_notes_frais: ['frais', 'id'], crescite_diffusion_prospects: ['prospects', 'id'],
 };
 // le trajet de chaque feuille de route se compte depuis Rouen, d'où part la compagnie
 const DEPART = { commune: 'Rouen', latitude: 49.443232, longitude: 1.099971 };

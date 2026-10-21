@@ -349,6 +349,10 @@ const TABLES = {
   crescite_spectacles: ['spectacles', 'id'], crescite_lieux: ['lieux', 'id'], crescite_dates: ['dates', 'id'],
   crescite_representations: ['reps', 'id'], crescite_dates_suivi: ['suivis', 'date_id'], crescite_lieux_suivi: ['lieuxSuivi', 'lieu_id'],
   crescite_ateliers: ['ateliers', 'id'], crescite_seances: ['seances', 'id'], crescite_textes: ['textes', 'cle'],
+};
+// la diffusion, les frais, le matériel et les devis (supabase/migrations/20261026_crescite_ideale.sql) : sur leur propre
+// canal, et seulement quand la base les a ; un canal qui écoute une table absente ne reçoit plus rien, des autres non plus
+const TABLES_IDEALE = {
   crescite_diffusion_prospects: ['prospects', 'id'], crescite_notes_frais: ['frais', 'id'], crescite_materiel: ['materiel', 'id'], crescite_devis_demandes: ['devis', 'id'],
 };
 const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', crescite_dates: 'Date', crescite_representations: 'Représentation',
@@ -535,17 +539,16 @@ async function tout(table, ordre) {
 }
 async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
+  let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
+  const facultative = table => tout(table).then(x => { ideale = true; return x; }, () => []);
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
     tout('crescite_spectacles', 'ordre'), tout('crescite_lieux', 'id'), tout('crescite_dates', 'debut'), tout('crescite_representations', 'jour'),
     tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
     tout('crescite_textes'), tout('crescite_admins'),
-    tout('crescite_diffusion_prospects').catch(() => []),
-    tout('crescite_notes_frais').catch(() => []),
-    tout('crescite_materiel').catch(() => []),
-    tout('crescite_devis_demandes').catch(() => [])
+    ...Object.keys(TABLES_IDEALE).map(facultative),
   ]);
   Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad,
-    prospects: pr || [], frais: fr || [], materiel: mt || [], devis: dv || [] });
+    prospects: pr, frais: fr, materiel: mt, devis: dv, ideale });
   await equipe;
 }
 // le journal se lit par pages de 300, des plus récentes aux plus anciennes : relire les plus récentes garde les pages plus
@@ -577,9 +580,14 @@ function ecouter() {
   Object.keys(TABLES).forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
   ch.subscribe(st => { E.direct = st === 'SUBSCRIBED'; const d = $('.direct'); if (d) { d.classList.toggle('on', E.direct); d.title = E.direct ? 'Connecté en temps réel' : 'Temps réel interrompu'; } });
   ecouterEquipe();
+  if (E.ideale) {
+    const ci = sb.channel('crescite-admin-ideale');
+    Object.keys(TABLES_IDEALE).forEach(t => ci.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
+    ci.subscribe();
+  }
 }
 function changement(t, p) {
-  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t];
+  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t];
   // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
   const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
   const i = coll.findIndex(x => cles.every(c => x[c] === ligne[c]));
@@ -2329,7 +2337,7 @@ async function vueJournal() {
   });
   zone.addEventListener('click', async e => {
     const b = e.target.closest('[data-j]'); if (!b) return;
-    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || TABLES_EQUIPE[j.table_nom] || [null, 'id'];
+    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || TABLES_EQUIPE[j.table_nom] || TABLES_IDEALE[j.table_nom] || [null, 'id'];
     const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
     const ligne = (q, o) => [].concat(pk).reduce((q2, c) => q2.eq(c, o[c]), q);   // une clé d'une ou plusieurs colonnes
     let r;
