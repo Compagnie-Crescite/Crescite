@@ -282,7 +282,33 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .champ .seg { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; }
 .champ .seg button { flex: 1 1 auto; }
 /* au téléphone (360 px) : des marges plus serrées, des boutons segmentés qui tiennent sur la largeur */
-@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg { max-width: 100%; } .seg button { padding: 6px 7px; font-size: 14px; } .rangee > .champ:has(.seg) { grid-column: 1 / -1; } }
+/* CRM Kanban */
+.crm-tableau { display: grid; grid-template-columns: repeat(5, minmax(260px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 16px; }
+.crm-colonne { background: var(--doux); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 12px; display: flex; flex-direction: column; min-height: 480px; }
+.crm-col-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; font-weight: 700; font-size: 14px; }
+.crm-badge-nb { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--carte); color: var(--gris); }
+.crm-cartes { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.crm-carte { background: var(--carte); border: 1.5px solid var(--trait); border-radius: 10px; padding: 12px; box-shadow: var(--ombre); transition: transform .15s, border-color .15s; }
+.crm-carte:hover { border-color: var(--accent); transform: translateY(-1px); }
+.crm-carte-spectacle { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.crm-carte-structure { font-weight: 700; font-size: 15px; margin: 0 0 2px; }
+.crm-carte-lieu { color: var(--gris); font-size: 13px; margin-bottom: 6px; }
+.crm-carte-contact { font-size: 12.5px; margin-bottom: 8px; color: var(--encre); }
+.crm-carte-cession { font-weight: 800; font-size: 14px; color: var(--accent); }
+.crm-carte-pied { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--trait); }
+.crm-carte-relance { font-size: 11.5px; color: var(--gris); }
+.crm-carte-relance.retard { color: var(--alerte); font-weight: 700; }
+.crm-carte-actions { display: flex; gap: 4px; }
+.crm-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.crm-kpi-boite { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px; box-shadow: var(--ombre); }
+.crm-kpi-boite span { font-size: 12.5px; color: var(--gris); font-weight: 600; display: block; }
+.crm-kpi-boite b { font-size: 22px; font-weight: 800; color: var(--encre); }
+
+/* Frais et matériel */
+.frais-table-photo { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--trait); cursor: pointer; }
+.frais-table-actions { display: flex; gap: 4px; }
+.mat-groupe { margin-bottom: 18px; }
+.mat-groupe h4 { margin: 0 0 8px; font-size: 14px; color: var(--accent); }
 </style>
 </head>
 <body>
@@ -317,16 +343,19 @@ const bravo = () => requestAnimationFrame(() => { const b = $('[data-enregistrer
 
 // ===================================================================================================== état
 const E = { session: null, admin: false, pret: false, direct: false, sale: false, hash: location.hash,
-  spectacles: [], lieux: [], dates: [], reps: [], suivis: [], lieuxSuivi: [], ateliers: [], seances: [], textes: [], admins: [], journal: [] };
+  spectacles: [], lieux: [], dates: [], reps: [], suivis: [], lieuxSuivi: [], ateliers: [], seances: [], textes: [], admins: [], journal: [],
+  prospects: [], frais: [], materiel: [], devis: [] };
 const TABLES = {
   crescite_spectacles: ['spectacles', 'id'], crescite_lieux: ['lieux', 'id'], crescite_dates: ['dates', 'id'],
   crescite_representations: ['reps', 'id'], crescite_dates_suivi: ['suivis', 'date_id'], crescite_lieux_suivi: ['lieuxSuivi', 'lieu_id'],
   crescite_ateliers: ['ateliers', 'id'], crescite_seances: ['seances', 'id'], crescite_textes: ['textes', 'cle'],
+  crescite_diffusion_prospects: ['prospects', 'id'], crescite_notes_frais: ['frais', 'id'], crescite_materiel: ['materiel', 'id'], crescite_devis_demandes: ['devis', 'id'],
 };
 const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', crescite_dates: 'Date', crescite_representations: 'Représentation',
   crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site',
   crescite_personnes: 'Fiche d’une personne', crescite_personnes_privees: 'Coordonnées d’une personne', crescite_personnes_suivi: 'Notes sur une personne',
-  crescite_distributions: 'Distribution', crescite_equipes: 'Équipe d’une date', crescite_documents: 'Document de l’équipe', crescite_feuilles: 'Feuille de route' };
+  crescite_distributions: 'Distribution', crescite_equipes: 'Équipe d’une date', crescite_documents: 'Document de l’équipe', crescite_feuilles: 'Feuille de route',
+  crescite_diffusion_prospects: 'Opportunité de diffusion', crescite_notes_frais: 'Note de frais', crescite_materiel: 'Matériel de tournée', crescite_devis_demandes: 'Demande de devis' };
 
 // ===================================================================================================== outils
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -506,11 +535,17 @@ async function tout(table, ordre) {
 }
 async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
-  const [sp, li, da, re, su, ls, at, se, tx, ad] = await Promise.all([
+  const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
     tout('crescite_spectacles', 'ordre'), tout('crescite_lieux', 'id'), tout('crescite_dates', 'debut'), tout('crescite_representations', 'jour'),
     tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
-    tout('crescite_textes'), tout('crescite_admins')]);
-  Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad });
+    tout('crescite_textes'), tout('crescite_admins'),
+    tout('crescite_diffusion_prospects').catch(() => []),
+    tout('crescite_notes_frais').catch(() => []),
+    tout('crescite_materiel').catch(() => []),
+    tout('crescite_devis_demandes').catch(() => [])
+  ]);
+  Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad,
+    prospects: pr || [], frais: fr || [], materiel: mt || [], devis: dv || [] });
   await equipe;
 }
 // le journal se lit par pages de 300, des plus récentes aux plus anciennes : relire les plus récentes garde les pages plus
@@ -555,7 +590,7 @@ function changement(t, p) {
 }
 
 // ===================================================================================================== cadre et routes
-const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['diffusion', 'Diffusion CRM'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true">${RACCOURCI_RCH}</kbd></button>
@@ -580,7 +615,8 @@ const ROUTES = [
   [/^#\/planning(?:\/(propositions|proposer|proposition\/\d+))?$/, m => vuePlanning(m[1])],
   [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
   [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
-  [/^#\/equipe(?:\/(nouvelle|documents|\d+))?$/, m => vueEquipe(m[1])],
+  [/^#\/equipe(?:\/(nouvelle|documents|frais|\d+))?$/, m => vueEquipe(m[1])],
+  [/^#\/diffusion(?:\/(nouveau|\d+))?$/, m => vueDiffusion(m[1])],
   [/^#\/pro(?:\/(nouvelle|\d+))?$/, m => vueEspacePro(m[1])],
   [/^#\/ateliers(?:\/(seances|catalogue))?(?:\/(nouvelle|nouveau|\d+))?$/, m => vueAteliers(m[1] || 'seances', m[2])],
   [/^#\/lieux(?:\/(nouveau|\d+))?$/, m => vueLieux(m[1])],
@@ -1866,6 +1902,345 @@ function vueTextes(cle) {
     if (error) return erreur(error);
     t0.valeur = data.valeur; E.sale = false; marquerSale(false); annoncer('Enregistré : le site est à jour.');
     bravo();
+  });
+}
+
+// ===================================================================================================== diffusion CRM
+const ETAPES_CRM = [
+  ['contact_pris', '1. Contact pris'],
+  ['dossier_envoye', '2. Dossier / Devis'],
+  ['option_discutee', '3. Option posée'],
+  ['contrat_signe', '4. Cession confirmée'],
+  ['bilan', '5. Bilan / Clôturé']
+];
+
+function vueDiffusion(param) {
+  const auj = aujourdhui();
+  const prospects = E.prospects || [];
+  const actifs = prospects.filter(p => p.etape !== 'bilan' && p.etape !== 'refus');
+  let totalNego = 0, totalSigne = 0;
+  prospects.forEach(p => {
+    const m = Number(p.montant_estime) || 0;
+    if (p.etape === 'contrat_signe') totalSigne += m;
+    else if (p.etape !== 'bilan' && p.etape !== 'refus') totalNego += m;
+  });
+
+  const tete = `
+    <div class="tete">
+      <h1>Diffusion CRM · Pipeline de tournée</h1>
+      <button type="button" class="btn principal" id="b-nouveau-prospect">＋ Nouvelle opportunité</button>
+    </div>
+    <div class="crm-kpi">
+      <div class="crm-kpi-boite">
+        <span>Dossiers actifs</span>
+        <b>${actifs.length}</b>
+      </div>
+      <div class="crm-kpi-boite">
+        <span>En négociation</span>
+        <b>${totalNego.toLocaleString('fr-FR')} €</b>
+      </div>
+      <div class="crm-kpi-boite">
+        <span>Cessions confirmées</span>
+        <b style="color:var(--ok)">${totalSigne.toLocaleString('fr-FR')} €</b>
+      </div>
+    </div>
+  `;
+
+  const tableau = `
+    <div class="crm-tableau" id="kanban-zone">
+      ${ETAPES_CRM.map(([code, lib]) => {
+        const cartes = prospects.filter(p => p.etape === code);
+        return `
+          <div class="crm-colonne" data-colonne="${code}">
+            <div class="crm-col-tete">
+              <span>${esc(lib)}</span>
+              <span class="crm-badge-nb">${cartes.length}</span>
+            </div>
+            <div class="crm-cartes" data-zone-cartes="${code}">
+              ${cartes.map(p => carteCrmHtml(p, auj)).join('')}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+    <div id="crm-modale-zone"></div>
+  `;
+
+  cadre('diffusion', tete + tableau);
+  brancherDiffusion();
+}
+
+function carteCrmHtml(p, auj) {
+  const sp = E.spectacles.find(s => s.id === p.spectacle_id);
+  const coul = sp?.univers?.couleurs?.accent || 'var(--accent)';
+  const enRetard = p.date_prochaine_relance && p.date_prochaine_relance < auj;
+  const montantTxt = p.montant_estime ? `${Number(p.montant_estime).toLocaleString('fr-FR')} €` : '';
+  const etapeIdx = ETAPES_CRM.findIndex(e => e[0] === p.etape);
+
+  return `
+    <div class="crm-carte" data-prospect-id="${p.id}">
+      ${sp ? `<div class="crm-carte-spectacle"><span class="pastille" style="--c:${esc(coul)}"></span><b>${esc(sp.titre)}</b></div>` : ''}
+      <div class="crm-carte-structure">${esc(p.structure)}</div>
+      <div class="crm-carte-lieu">${esc(p.commune || '')} ${p.departement ? `(${esc(p.departement)})` : ''}</div>
+      ${p.contact_nom || p.contact_email ? `<div class="crm-carte-contact">👤 ${esc(p.contact_nom || '')} ${p.contact_email ? `· <a href="mailto:${esc(p.contact_email)}" class="btn lien" style="padding:0;font-size:12px">${esc(p.contact_email)}</a>` : ''}</div>` : ''}
+      ${montantTxt ? `<div class="crm-carte-cession">${montantTxt}</div>` : ''}
+      <div class="crm-carte-pied">
+        <span class="crm-carte-relance${enRetard ? ' retard' : ''}">${p.date_prochaine_relance ? (enRetard ? '⚠️ Relance en retard !' : `Relance le ${esc(p.date_prochaine_relance.split('-').reverse().join('/'))}`) : 'Pas de date de relance'}</span>
+        <div class="crm-carte-actions">
+          ${etapeIdx > 0 ? `<button type="button" class="btn petit" data-crm-deplacer="-1" data-id="${p.id}" title="Étape précédente">◀</button>` : ''}
+          ${etapeIdx < ETAPES_CRM.length - 1 ? `<button type="button" class="btn petit" data-crm-deplacer="1" data-id="${p.id}" title="Étape suivante">▶</button>` : ''}
+          <button type="button" class="btn petit" data-crm-email="${p.id}" title="Générer un courriel de relance">✉</button>
+          <button type="button" class="btn petit" data-crm-editer="${p.id}" title="Modifier">✎</button>
+          <button type="button" class="btn petit danger" data-crm-supprimer="${p.id}" title="Supprimer">✕</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function brancherDiffusion() {
+  $('#b-nouveau-prospect')?.addEventListener('click', () => ouvrirModaleProspect(null));
+
+  $$('[data-crm-editer]').forEach(b => {
+    b.addEventListener('click', () => {
+      const p = E.prospects.find(x => x.id === +b.dataset.crmEditer);
+      if (p) ouvrirModaleProspect(p);
+    });
+  });
+
+  $$('[data-crm-deplacer]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const id = +b.dataset.id;
+      const sens = +b.dataset.crmDeplacer;
+      const p = E.prospects.find(x => x.id === id);
+      if (!p) return;
+      const curIdx = ETAPES_CRM.findIndex(e => e[0] === p.etape);
+      const nextIdx = curIdx + sens;
+      if (nextIdx >= 0 && nextIdx < ETAPES_CRM.length) {
+        const nouvelleEtape = ETAPES_CRM[nextIdx][0];
+        b.disabled = true;
+        try {
+          const { error } = await sb.from('crescite_diffusion_prospects').update({
+            etape: nouvelleEtape,
+            date_dernier_contact: aujourdhui()
+          }).eq('id', id);
+          if (error) throw error;
+          p.etape = nouvelleEtape;
+          p.date_dernier_contact = aujourdhui();
+          annoncer(`Opportunité déplacée vers « ${ETAPES_CRM[nextIdx][1]} ».`);
+          vueDiffusion();
+        } catch (err) {
+          erreur(err, 'Déplacement impossible');
+          b.disabled = false;
+        }
+      }
+    });
+  });
+
+  $$('[data-crm-email]').forEach(b => {
+    b.addEventListener('click', () => {
+      const p = E.prospects.find(x => x.id === +b.dataset.crmEmail);
+      if (p) ouvrirModaleEmailRelance(p);
+    });
+  });
+
+  $$('[data-crm-supprimer]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const id = +b.dataset.crmSupprimer;
+      if (!confirm('Supprimer cette opportunité du pipeline ?')) return;
+      b.disabled = true;
+      try {
+        const { error } = await sb.from('crescite_diffusion_prospects').delete().eq('id', id);
+        if (error) throw error;
+        const idx = E.prospects.findIndex(x => x.id === id);
+        if (idx >= 0) E.prospects.splice(idx, 1);
+        annoncer('Opportunité supprimée.');
+        vueDiffusion();
+      } catch (err) {
+        erreur(err, 'Suppression impossible');
+        b.disabled = false;
+      }
+    });
+  });
+}
+
+function ouvrirModaleProspect(p) {
+  const zone = $('#crm-modale-zone');
+  if (!zone) return;
+  const nouveau = !p;
+  const spList = E.spectacles || [];
+
+  zone.innerHTML = `
+    <div style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;">
+      <div style="background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);max-width:560px;width:100%;max-height:92vh;overflow-y:auto;padding:22px;box-shadow:var(--ombre);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="margin:0;font-size:18px;">${nouveau ? 'Nouvelle opportunité' : 'Modifier l’opportunité'}</h2>
+          <button type="button" class="btn petit" id="b-fermer-mod-crm">✕</button>
+        </div>
+        <form id="f-prospect-crm" novalidate>
+          <div class="champ">
+            <label for="crm-structure">Lieu / Structure / Festival *</label>
+            <input type="text" id="crm-structure" value="${esc(p?.structure || '')}" required placeholder="Ex. Le Rayon Vert, Théâtre de Saint-Lô">
+          </div>
+          <div class="rangee">
+            <div class="champ">
+              <label for="crm-commune">Commune *</label>
+              <input type="text" id="crm-commune" value="${esc(p?.commune || '')}" required placeholder="Ex. Saint-Valery-en-Caux">
+            </div>
+            <div class="champ">
+              <label for="crm-dep">Département</label>
+              <input type="text" id="crm-dep" value="${esc(p?.departement || '')}" placeholder="Ex. 76">
+            </div>
+          </div>
+          <div class="rangee">
+            <div class="champ">
+              <label for="crm-sp">Spectacle ciblé</label>
+              <select id="crm-sp">
+                <option value="">-- Non spécifié --</option>
+                ${spList.map(s => `<option value="${s.id}"${p && p.spectacle_id === s.id ? ' selected' : ''}>${esc(s.titre)}</option>`).join('')}
+              </select>
+            </div>
+            <div class="champ">
+              <label for="crm-etape">Étape dans le pipeline</label>
+              <select id="crm-etape">
+                ${ETAPES_CRM.map(([code, lib]) => `<option value="${code}"${p && p.etape === code ? ' selected' : ''}>${esc(lib)}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          <div class="rangee">
+            <div class="champ">
+              <label for="crm-montant">Montant de cession estimé (€)</label>
+              <input type="number" id="crm-montant" value="${p?.montant_estime || ''}" placeholder="Ex. 3200">
+            </div>
+            <div class="champ">
+              <label for="crm-prochaine">Prochaine relance</label>
+              <input type="date" id="crm-prochaine" value="${p?.date_prochaine_relance || ''}">
+            </div>
+          </div>
+          <div class="rangee">
+            <div class="champ">
+              <label for="crm-contact-nom">Nom du contact</label>
+              <input type="text" id="crm-contact-nom" value="${esc(p?.contact_nom || '')}" placeholder="Prénom Nom">
+            </div>
+            <div class="champ">
+              <label for="crm-contact-email">Email du contact</label>
+              <input type="email" id="crm-contact-email" value="${esc(p?.contact_email || '')}" placeholder="direction@theatre.fr">
+            </div>
+          </div>
+          <div class="champ">
+            <label for="crm-notes">Notes de suivi & échanges</label>
+            <textarea id="crm-notes" rows="3" placeholder="Historique des discussions, conditions d'accueil souhaitées...">${esc(p?.notes || '')}</textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
+            <button type="button" class="btn" id="b-annuler-crm">Annuler</button>
+            <button type="submit" class="btn principal" id="b-sauver-crm">Enregistrer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  const fermer = () => { zone.innerHTML = ''; };
+  $('#b-fermer-mod-crm')?.addEventListener('click', fermer);
+  $('#b-annuler-crm')?.addEventListener('click', fermer);
+
+  $('#f-prospect-crm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const structure = ($('#crm-structure').value || '').trim();
+    const commune = ($('#crm-commune').value || '').trim();
+    if (!structure || !commune) return;
+
+    const b = $('#b-sauver-crm');
+    b.disabled = true;
+    b.textContent = 'Enregistrement…';
+
+    const donnes = {
+      structure,
+      commune,
+      departement: ($('#crm-dep').value || '').trim() || null,
+      spectacle_id: $('#crm-sp').value ? +$('#crm-sp').value : null,
+      etape: $('#crm-etape').value || 'contact_pris',
+      montant_estime: $('#crm-montant').value ? parseFloat($('#crm-montant').value) : null,
+      date_prochaine_relance: $('#crm-prochaine').value || null,
+      contact_nom: ($('#crm-contact-nom').value || '').trim() || null,
+      contact_email: ($('#crm-contact-email').value || '').trim() || null,
+      notes: ($('#crm-notes').value || '').trim() || null,
+      date_dernier_contact: aujourdhui()
+    };
+
+    try {
+      if (nouveau) {
+        const { data, error } = await sb.from('crescite_diffusion_prospects').insert(donnes).select();
+        if (error) throw error;
+        if (data && data.length) E.prospects.push(data[0]);
+      } else {
+        const { error } = await sb.from('crescite_diffusion_prospects').update(donnes).eq('id', p.id);
+        if (error) throw error;
+        Object.assign(p, donnes);
+      }
+      fermer();
+      annoncer('Opportunité enregistrée.');
+      vueDiffusion();
+    } catch (err) {
+      erreur(err, 'Enregistrement impossible');
+      b.disabled = false;
+      b.textContent = 'Enregistrer';
+    }
+  });
+}
+
+function ouvrirModaleEmailRelance(p) {
+  const zone = $('#crm-modale-zone');
+  if (!zone) return;
+  const sp = E.spectacles.find(s => s.id === p.spectacle_id);
+  const titreSp = sp ? sp.titre : 'notre création';
+  const prenomContact = (p.contact_nom || '').split(' ')[0] || 'Madame, Monsieur';
+  const objet = `Compagnie Crescite · Tournée « ${titreSp} »`;
+  const corps = `Bonjour ${prenomContact},\n\n`
+    + `Je me permets de revenir vers vous suite à nos échanges concernant la possible programmation de notre spectacle « ${titreSp} » au sein de ${p.structure}.\n\n`
+    + `Nous finalisons actuellement notre calendrier de tournée et serions ravis de collaborer avec votre équipe sur cette saison.\n\n`
+    + `Vous pouvez consulter les extraits vidéos, la fiche technique et le dossier artistique sur notre espace professionnel dédié :\n`
+    + `https://crescite.fr/pro\n\n`
+    + `Seriez-vous disponible cette semaine pour un court point téléphonique afin de faire le point sur vos créneaux et contraintes d'accueil ?\n\n`
+    + `Bien chaleureusement,\n\n`
+    + `L'équipe de diffusion\nCompagnie Crescite · Rouen\ncontact@crescite.fr`;
+
+  zone.innerHTML = `
+    <div style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;">
+      <div style="background:var(--carte);border:1px solid var(--trait);border-radius:var(--rayon);max-width:620px;width:100%;max-height:92vh;overflow-y:auto;padding:22px;box-shadow:var(--ombre);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h2 style="margin:0;font-size:18px;">Modèle de courriel de relance</h2>
+          <button type="button" class="btn petit" id="b-fermer-mod-mel">✕</button>
+        </div>
+        <div class="champ">
+          <label>Destinataire</label>
+          <input type="text" readonly value="${esc(p.contact_email || 'Adresse non renseignée')}">
+        </div>
+        <div class="champ">
+          <label>Objet</label>
+          <input type="text" id="mel-objet" value="${esc(objet)}">
+        </div>
+        <div class="champ">
+          <label>Message</label>
+          <textarea id="mel-corps" rows="12">${esc(corps)}</textarea>
+        </div>
+        <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px;">
+          <button type="button" class="btn" id="b-copier-mel">📋 Copier le texte</button>
+          ${p.contact_email ? `<a class="btn principal" id="b-mailto-mel" href="mailto:${encodeURIComponent(p.contact_email)}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}" target="_blank" rel="noopener">✉ Ouvrir dans ma messagerie</a>` : ''}
+          <button type="button" class="btn" id="b-fermer-mel">Fermer</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const fermer = () => { zone.innerHTML = ''; };
+  $('#b-fermer-mod-mel')?.addEventListener('click', fermer);
+  $('#b-fermer-mel')?.addEventListener('click', fermer);
+  $('#b-copier-mel')?.addEventListener('click', () => {
+    const texte = $('#mel-corps')?.value || '';
+    navigator.clipboard.writeText(texte).then(() => {
+      annoncer('Texte copié dans le presse-papier.');
+    });
   });
 }
 

@@ -199,6 +199,24 @@ LIBELLES = {
     "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
     # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
     "modeNuit": "Mode nuit", "jour": "Jour", "nuit": "Nuit",
+    # alertes de proximité (chantier 1)
+    "alerteTournee": "Être prévenu du prochain passage",
+    "alerteTourneeDesc": "Recevez un courriel ou une notification dès qu'une représentation est confirmée près de chez vous.",
+    "meGeolocaliser": "Me géolocaliser",
+    "codePostalOuCommune": "Code postal ou ville",
+    "rayonKm": "Rayon",
+    "mInscrire": "M’inscrire à l’alerte",
+    "tousSpectacles": "Tous les spectacles",
+    # simulateur de faisabilité & devis (chantier 2)
+    "simulateurAccueil": "Simulateur d’accueil & Devis",
+    "simulateurDesc": "Testez la faisabilité technique de votre lieu et préparez votre demande de cession en un clic.",
+    "faisabilitePlateau": "Faisabilité du plateau",
+    "demandeDevis": "Demander une proposition de cession",
+    "envoyerDemande": "Envoyer la demande",
+    # Pass Culture & convention (chantier 4)
+    "passCulture": "Pass Culture & ADAGE",
+    "passCultureDesc": "Toutes les formes de la compagnie sont éligibles à la part collective du Pass Culture via l’application ADAGE.",
+    "genererConvention": "Convention d'action culturelle (PDF)",
 }
 # La troupe (règle 20, TROUPE) : toutes les personnes publiées de l'équipe, sur la page de la compagnie, rangées par
 # catégories de métiers. Chaque personne paraît dans chaque catégorie de ses métiers. Un métier absent de ces listes (les

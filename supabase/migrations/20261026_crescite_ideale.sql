@@ -1,0 +1,254 @@
+-- Crescite : extensions « Compagnie Idéale »
+-- Chantiers retenus :
+--   1. Alertes de tournée par proximité géographique (crescite_alertes_tournee)
+--   2. Simulateur d'accueil & Devis flash (crescite_devis_demandes)
+--   7. Notes de frais mobiles pour les intermittents (crescite_notes_frais + bucket crescite-frais)
+--   8. Régie Matériel & Checklist de chargement du camion (crescite_materiel + crescite_checklists_chargement)
+--  10. Pipeline CRM de diffusion Kanban (colonnes CRM sur crescite_dates_suivi + table crescite_diffusion_prospects)
+--
+-- À exécuter dans l'éditeur SQL de Supabase (SQL Editor -> New query -> coller -> Run).
+-- Le script est idempotent et peut être relancé sans dommage.
+
+begin;
+
+-- =====================================================================================================
+-- 1. ALERTES DE TOURNÉE (PROXIMITÉ GÉOGRAPHIQUE)
+-- =====================================================================================================
+
+create table if not exists public.crescite_alertes_tournee (
+  id bigserial primary key,
+  email text,
+  push_subscription jsonb,
+  code_postal text,
+  commune text,
+  departement text,
+  lat numeric(9, 6),
+  lon numeric(9, 6),
+  rayon_km integer not null default 40,
+  spectacle_id integer references public.crescite_spectacles (id) on delete cascade,
+  token_desinscription text not null default encode(gen_random_bytes(16), 'hex'),
+  active boolean not null default true,
+  derniere_notification_le timestamptz,
+  cree_le timestamptz not null default now()
+);
+
+create index if not exists crescite_alertes_tournee_dep on public.crescite_alertes_tournee (departement);
+create index if not exists crescite_alertes_tournee_active on public.crescite_alertes_tournee (active) where active = true;
+
+-- =====================================================================================================
+-- 2. SIMULATEUR D'ACCUEIL & DEVIS FLASH (PROGRAMMATEURS)
+-- =====================================================================================================
+
+create table if not exists public.crescite_devis_demandes (
+  id bigserial primary key,
+  spectacle_id integer references public.crescite_spectacles (id) on delete set null,
+  type_lieu text not null,                          -- 'theatre', 'polyvalente', 'etablissement', 'exterieur', 'autre'
+  dimensions_plateau text,                         -- ex. '9m x 7m x 5m'
+  jauge_estimee integer,
+  structure_nom text not null,
+  commune text not null,
+  departement text,
+  contact_nom text not null,
+  contact_email text not null,
+  contact_tel text,
+  periode_souhaitee text,
+  message text,
+  statut text not null default 'nouveau',          -- 'nouveau', 'en_cours', 'devis_envoye', 'confirme', 'sans_suite'
+  notes_internes text,
+  cree_le timestamptz not null default now()
+);
+
+create index if not exists crescite_devis_statut on public.crescite_devis_demandes (statut);
+
+-- =====================================================================================================
+-- 7. NOTES DE FRAIS MOBILES (INTERMITTENTS EN TOURNÉE)
+-- =====================================================================================================
+
+create table if not exists public.crescite_notes_frais (
+  id bigserial primary key,
+  personne_id integer not null references public.crescite_personnes (id) on delete cascade,
+  date_id bigint references public.crescite_dates (id) on delete set null,
+  categorie text not null,                         -- 'repas', 'transport', 'peage_carburant', 'hebergement', 'autre'
+  montant_ttc numeric(8, 2) not null,
+  photo_url text,
+  commentaire text,
+  statut text not null default 'en_attente',       -- 'en_attente', 'valide', 'rembourse', 'refuse'
+  cree_le timestamptz not null default now(),
+  valide_le timestamptz,
+  valide_par uuid,
+  rembourse_le timestamptz
+);
+
+create index if not exists crescite_notes_frais_personne on public.crescite_notes_frais (personne_id);
+create index if not exists crescite_notes_frais_date on public.crescite_notes_frais (date_id);
+create index if not exists crescite_notes_frais_statut on public.crescite_notes_frais (statut);
+
+-- =====================================================================================================
+-- 8. RÉGIE MATÉRIEL & CHECKLIST DE CHARGEMENT CAMION
+-- =====================================================================================================
+
+create table if not exists public.crescite_materiel (
+  id bigserial primary key,
+  spectacle_id integer references public.crescite_spectacles (id) on delete cascade,
+  malle text not null,                             -- 'Malle Lumière A', 'Fly Son', 'Caisse Décor 1', 'Penderie Costumes'
+  categorie text not null,                         -- 'lumiere', 'son', 'costumes', 'accessoires', 'regie', 'decor'
+  intitule text not null,                          -- 'Projecteurs Découpe 614SX', 'Micro HF serre-tête'
+  quantite integer not null default 1,
+  priorite text not null default 'indispensable',  -- 'indispensable', 'confort', 'rechange'
+  notes text,
+  cree_le timestamptz not null default now()
+);
+
+create index if not exists crescite_materiel_sp on public.crescite_materiel (spectacle_id);
+
+create table if not exists public.crescite_checklists_chargement (
+  id bigserial primary key,
+  date_id bigint not null references public.crescite_dates (id) on delete cascade,
+  materiel_id bigint not null references public.crescite_materiel (id) on delete cascade,
+  phase text not null,                             -- 'depart_rouen', 'arrivee_salle', 'remballage', 'retour_rouen'
+  coche boolean not null default false,
+  coche_par integer references public.crescite_personnes (id) on delete set null,
+  coche_le timestamptz,
+  unique (date_id, materiel_id, phase)
+);
+
+create index if not exists crescite_checklists_date on public.crescite_checklists_chargement (date_id, phase);
+
+-- =====================================================================================================
+-- 10. CRM DE DIFFUSION (PIPELINE KANBAN)
+-- =====================================================================================================
+
+-- Enrichissement de crescite_dates_suivi pour intégrer le suivi d'opportunité commerciale
+alter table public.crescite_dates_suivi
+  add column if not exists etape_crm text not null default 'option_posee',
+  add column if not exists montant_cession numeric(10, 2),
+  add column if not exists date_dernier_contact date,
+  add column if not exists date_prochaine_relance date,
+  add column if not exists notes_diffusion text;
+
+-- Table des pistes/prospects de diffusion (lieux & programmateurs prospectés avant même de poser une date)
+create table if not exists public.crescite_diffusion_prospects (
+  id bigserial primary key,
+  spectacle_id integer references public.crescite_spectacles (id) on delete set null,
+  structure text not null,
+  commune text not null,
+  departement text,
+  contact_nom text,
+  contact_email text,
+  contact_tel text,
+  etape text not null default 'contact_pris',      -- 'contact_pris', 'dossier_envoye', 'option_discutee', 'refus', 'converti_en_date'
+  date_dernier_contact date not null default current_date,
+  date_prochaine_relance date,
+  notes text,
+  date_convertie_id bigint references public.crescite_dates (id) on delete set null,
+  cree_le timestamptz not null default now(),
+  modifie_le timestamptz not null default now()
+);
+
+create index if not exists crescite_diff_prospects_etape on public.crescite_diffusion_prospects (etape);
+
+-- =====================================================================================================
+-- RÈGLES DE SÉCURITÉ (RLS)
+-- =====================================================================================================
+
+alter table public.crescite_alertes_tournee enable row level security;
+alter table public.crescite_devis_demandes enable row level security;
+alter table public.crescite_notes_frais enable row level security;
+alter table public.crescite_materiel enable row level security;
+alter table public.crescite_checklists_chargement enable row level security;
+alter table public.crescite_diffusion_prospects enable row level security;
+
+-- Nettoyage des anciennes politiques ide_...
+do $$
+declare
+  p record;
+begin
+  for p in select schemaname, tablename, policyname from pg_policies
+           where schemaname = 'public' and policyname like 'ide\_%' loop
+    execute format('drop policy %I on %I.%I', p.policyname, p.schemaname, p.tablename);
+  end loop;
+end $$;
+
+-- 1. Alertes : le public peut s'inscrire, désinscrire via son token, l'admin voit tout
+create policy ide_alertes_inscrire on public.crescite_alertes_tournee for insert to anon, authenticated
+  with check (true);
+create policy ide_alertes_lecture on public.crescite_alertes_tournee for select to anon, authenticated
+  using ((select public.crescite_est_admin()) or token_desinscription = current_setting('request.headers', true)::json->>'x-token');
+create policy ide_alertes_admin on public.crescite_alertes_tournee for all to authenticated
+  using ((select public.crescite_est_admin())) with check ((select public.crescite_est_admin()));
+
+-- 2. Devis flash : le public peut envoyer une demande, l'admin gère tout
+create policy ide_devis_deposer on public.crescite_devis_demandes for insert to anon, authenticated
+  with check (true);
+create policy ide_devis_admin on public.crescite_devis_demandes for all to authenticated
+  using ((select public.crescite_est_admin())) with check ((select public.crescite_est_admin()));
+
+-- 7. Notes de frais : chacun les siennes, l'admin voit et valide tout
+create policy ide_frais_lecture on public.crescite_notes_frais for select to authenticated
+  using (personne_id = (select public.crescite_moi()) or (select public.crescite_est_admin()));
+create policy ide_frais_creer on public.crescite_notes_frais for insert to authenticated
+  with check (personne_id = (select public.crescite_moi()) or (select public.crescite_est_admin()));
+create policy ide_frais_modif_soi on public.crescite_notes_frais for update to authenticated
+  using ((personne_id = (select public.crescite_moi()) and statut = 'en_attente') or (select public.crescite_est_admin()))
+  with check ((personne_id = (select public.crescite_moi()) and statut = 'en_attente') or (select public.crescite_est_admin()));
+create policy ide_frais_admin on public.crescite_notes_frais for delete to authenticated
+  using ((select public.crescite_est_admin()));
+
+-- 8. Matériel & Checklists : l'équipe de la date ou l'admin
+create policy ide_mat_lecture on public.crescite_materiel for select to authenticated
+  using (true);
+create policy ide_mat_admin on public.crescite_materiel for all to authenticated
+  using ((select public.crescite_est_admin())) with check ((select public.crescite_est_admin()));
+
+create policy ide_chk_lecture on public.crescite_checklists_chargement for select to authenticated
+  using ((select public.crescite_est_admin()) or public.crescite_membre_date(date_id));
+create policy ide_chk_coche on public.crescite_checklists_chargement for update to authenticated
+  using ((select public.crescite_est_admin()) or public.crescite_membre_date(date_id))
+  with check ((select public.crescite_est_admin()) or public.crescite_membre_date(date_id));
+create policy ide_chk_ajout on public.crescite_checklists_chargement for insert to authenticated
+  with check ((select public.crescite_est_admin()) or public.crescite_membre_date(date_id));
+create policy ide_chk_suppr on public.crescite_checklists_chargement for delete to authenticated
+  using ((select public.crescite_est_admin()));
+
+-- 10. CRM Prospects : réservé aux administrateurs
+create policy ide_crm_prospects on public.crescite_diffusion_prospects for all to authenticated
+  using ((select public.crescite_est_admin())) with check ((select public.crescite_est_admin()));
+
+-- =====================================================================================================
+-- BUCKET DE STOCKAGE POUR LES JUSTIFICATIFS DE FRAIS (crescite-frais)
+-- =====================================================================================================
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('crescite-frais', 'crescite-frais', false, 15728640, array['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+on conflict (id) do update set
+  file_size_limit = 15728640,
+  allowed_mime_types = array['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+
+do $$
+declare
+  p record;
+begin
+  for p in select policyname from pg_policies
+           where schemaname = 'storage' and tablename = 'objects' and policyname like 'crescite_frais\_%' loop
+    execute format('drop policy %I on storage.objects', p.policyname);
+  end loop;
+end $$;
+
+-- Téléchargement des justificatifs : la personne qui a soumis le reçu ou un administrateur
+create policy crescite_frais_lecture on storage.objects for select to authenticated
+  using (bucket_id = 'crescite-frais' and (
+    (select public.crescite_est_admin()) or
+    exists (
+      select 1 from public.crescite_notes_frais f
+      where f.photo_url like '%' || name and f.personne_id = (select public.crescite_moi())
+    )
+  ));
+
+-- Dépose d'un justificatif : membre authentifié
+create policy crescite_frais_envoi on storage.objects for insert to authenticated
+  with check (bucket_id = 'crescite-frais');
+
+create policy crescite_frais_admin_suppr on storage.objects for delete to authenticated
+  using (bucket_id = 'crescite-frais' and (select public.crescite_est_admin()));
+
+commit;

@@ -27,6 +27,7 @@ Object.assign(E, { personnes: [], privees: [], suiviPersonnes: [], distributions
 const TABLES_EQUIPE = {
   crescite_personnes: ['personnes', 'id'], crescite_distributions: ['distributions', 'id'], crescite_equipes: ['equipes', ['date_id', 'personne_id']],
   crescite_documents: ['documents', 'id'], crescite_feuilles: ['feuilles', 'id'],
+  crescite_materiel: ['materiel', 'id'], crescite_notes_frais: ['frais', 'id'], crescite_diffusion_prospects: ['prospects', 'id'],
 };
 // le trajet de chaque feuille de route se compte depuis Rouen, d'où part la compagnie
 const DEPART = { commune: 'Rouen', latitude: 49.443232, longitude: 1.099971 };
@@ -34,7 +35,7 @@ const CATEGORIES = [['jeu', 'Jeu'], ['creation', 'Création'], ['technique', 'Te
 const TYPES_DOC = [['texte', 'Texte'], ['dossier', 'Dossier'], ['fiche_technique', 'Fiche technique'], ['plan', 'Plan'], ['autre', 'Autre']];
 const MIMES_DOC = { pdf: 'application/pdf', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', txt: 'text/plain',
   odt: 'application/vnd.oasis.opendocument.text', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
-const ONGLETS_EQUIPE = ['Distribution', 'Déroulé type', 'Documents'];
+const ONGLETS_EQUIPE = ['Distribution', 'Déroulé type', 'Documents', 'Matériel'];
 
 async function chargerEquipe() {
   // le troisième script SQL (nature des dates, heure de fin des séances, documents publics, notifications) : passé ou
@@ -152,11 +153,16 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-ongl
 
 // ===================================================================================================== rubrique Équipe
 function vueEquipe(param) {
-  const docs = param === 'documents';
-  const tete = `<div class="tete"><h1>Équipe</h1><div class="seg" role="group" aria-label="Partie"><button type="button" data-eq-partie="" aria-pressed="${!docs}">Personnes</button><button type="button" data-eq-partie="documents" aria-pressed="${docs}">Documents de la compagnie</button></div>
-    ${docs || !E.equipeInstallee ? '' : '<a class="btn principal" href="#/equipe/nouvelle">＋ Nouvelle fiche</a>'}</div>`;
+  const docs = param === 'documents', frais = param === 'frais';
+  const tete = `<div class="tete"><h1>Équipe</h1><div class="seg" role="group" aria-label="Partie">
+    <button type="button" data-eq-partie="" aria-pressed="${!docs && !frais}">Personnes</button>
+    <button type="button" data-eq-partie="frais" aria-pressed="${frais}">Notes de frais</button>
+    <button type="button" data-eq-partie="documents" aria-pressed="${docs}">Documents de la compagnie</button>
+  </div>
+    ${docs || frais || !E.equipeInstallee ? '' : '<a class="btn principal" href="#/equipe/nouvelle">＋ Nouvelle fiche</a>'}</div>`;
   const parties = () => $$('[data-eq-partie]').forEach(b => b.addEventListener('click', () => { location.hash = '#/equipe' + (b.dataset.eqPartie ? '/' + b.dataset.eqPartie : ''); }));
   if (!E.equipeInstallee) { cadre('equipe', tete + equipeAbsente()); parties(); return; }
+  if (frais) { vueEquipeFrais(tete, parties); return; }
   if (docs) {
     cadre('equipe', `${tete}<div class="bloc eq-docs-compagnie"><h3>Documents de toute la compagnie</h3><p class="aide">Pour toute l’équipe, quel que soit le spectacle : charte d’accueil, livret, contacts utiles… Les documents d’un spectacle (le texte, le dossier, la fiche technique) se rangent dans son onglet Documents.</p><div id="docs-compagnie"></div></div>`);
     parties(); documentsEditeur($('#docs-compagnie'), null); return;
@@ -364,6 +370,7 @@ function ongletEquipe(onglet, zone, F, s0) {
   const z = $('#eq-onglet', zone);
   if (onglet === 'Distribution') ongletDistribution(z, s0);
   else if (onglet === 'Déroulé type') ongletDeroule(z, F);
+  else if (onglet === 'Matériel') ongletMateriel(z, s0);
   else { z.innerHTML = `<div class="bloc"><h3>${E.sql3 || E.sql4 ? 'Documents' : 'Documents de l’équipe'}</h3><p class="aide">Le texte, le dossier, la fiche technique… pour l’équipe du spectacle, dans son espace et ses feuilles de route ; « Administration seulement » les garde ici. Chaque changement est enregistré aussitôt.</p><div id="docs-sp"></div></div>`; documentsEditeur($('#docs-sp', z), s0); }
 }
 
@@ -2517,7 +2524,313 @@ const RESUMES_EQUIPE = {
   crescite_equipes: x => { const d = E.dates.find(y => y.id === x.date_id); return `${spectacle(d?.spectacle_id)?.titre || 'Date'} · ${jourCourt(d?.debut)} · ${nomDe(personne(x.personne_id)) || 'une personne'}${x.present ? ' (s’ajoute)' : ' (ne part pas)'}`; },
   crescite_documents: x => `${x.titre}${x.spectacle_id ? ` · ${spectacle(x.spectacle_id)?.titre || ''}` : ' · compagnie'}`,
   crescite_feuilles: x => { const d = E.dates.find(y => y.id === x.date_id); return `${spectacle(d?.spectacle_id)?.titre || 'Date'} · ${jourCourt(d?.debut)} · ${x.statut === 'publiee' ? `publiée v${x.version}` : 'brouillon'}`; },
+  crescite_notes_frais: x => `Note de frais · ${x.montant_ttc} € · ${x.categorie || ''}`,
+  crescite_materiel: x => `Matériel · ${x.intitule || ''} (${x.malle || ''})`,
+  crescite_diffusion_prospects: x => `Diffusion · ${x.structure || ''} (${x.commune || ''})`,
 };
+
+// ===================================================================================================== notes de frais (admin)
+function vueEquipeFrais(tete, parties) {
+  const frais = E.frais || [];
+  let attente = 0, valide = 0, rembourse = 0;
+  frais.forEach(x => {
+    const m = Number(x.montant_ttc) || 0;
+    if (x.statut === 'en_attente') attente += m;
+    else if (x.statut === 'valide') valide += m;
+    else if (x.statut === 'rembourse') rembourse += m;
+  });
+
+  const html = `
+    ${tete}
+    <div class="crm-kpi">
+      <div class="crm-kpi-boite"><span>À valider</span><b style="color:var(--option)">${attente.toFixed(2).replace('.', ',')} €</b></div>
+      <div class="crm-kpi-boite"><span>Validé à rembourser</span><b style="color:var(--accent)">${valide.toFixed(2).replace('.', ',')} €</b></div>
+      <div class="crm-kpi-boite"><span>Total remboursé</span><b style="color:var(--ok)">${rembourse.toFixed(2).replace('.', ',')} €</b></div>
+    </div>
+    <div class="bloc">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+        <h3 style="margin:0">Notes de frais soumises par l’équipe</h3>
+        <button type="button" class="btn principal" id="btn-export-csv-frais">📥 Exporter en CSV comptable</button>
+      </div>
+      <table class="simple" id="table-frais">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Bénéficiaire</th>
+            <th>Catégorie</th>
+            <th>Spectacle / Date</th>
+            <th>Montant TTC</th>
+            <th>Justificatif</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${frais.length ? frais.map(f => {
+            const p = E.personnes.find(x => x.id === f.personne_id);
+            const d = f.date_id ? E.dates.find(x => x.id === f.date_id) : null;
+            const sp = d ? spectacle(d.spectacle_id) : null;
+            const dateStr = f.cree_le ? f.cree_le.slice(0, 10).split('-').reverse().join('/') : '';
+            return `
+              <tr data-frais-id="${f.id}">
+                <td><b>${esc(dateStr)}</b></td>
+                <td>${esc(p ? nomDe(p) : 'Personne inconnue')}</td>
+                <td>${esc(f.categorie || '')}</td>
+                <td>${sp ? esc(sp.titre) : 'Général'}</td>
+                <td><b>${(Number(f.montant_ttc) || 0).toFixed(2).replace('.', ',')} €</b></td>
+                <td>${f.photo_url ? `<a href="${esc(f.photo_url)}" target="_blank" rel="noopener"><img src="${esc(f.photo_url)}" class="frais-table-photo" alt="Reçu"></a>` : '<span style="color:var(--gris)">Sans reçu</span>'}</td>
+                <td><span class="badge ${f.statut === 'valide' || f.statut === 'rembourse' ? 'ok' : f.statut === 'refuse' ? 'annulee' : 'option'}">${esc(f.statut || 'en_attente')}</span></td>
+                <td>
+                  <div class="frais-table-actions">
+                    ${f.statut === 'en_attente' ? `<button type="button" class="btn petit" data-valider-frais="${f.id}" title="Valider">Valider</button><button type="button" class="btn petit danger" data-refuser-frais="${f.id}" title="Refuser">Refuser</button>` : ''}
+                    ${f.statut === 'valide' ? `<button type="button" class="btn petit" data-rembourser-frais="${f.id}" title="Marquer remboursée">Rembourser</button>` : ''}
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('') : '<tr><td colspan="8" class="vide">Aucune note de frais enregistrée.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+  cadre('equipe', html);
+  parties();
+  brancherFraisAdmin();
+}
+
+function brancherFraisAdmin() {
+  $('#btn-export-csv-frais')?.addEventListener('click', exporterCsvFrais);
+
+  $$('[data-valider-frais]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const id = +b.dataset.validerFrais;
+      b.disabled = true;
+      try {
+        const { error } = await sb.from('crescite_notes_frais').update({
+          statut: 'valide',
+          valide_le: new Date().toISOString(),
+          valide_par: E.session.user.id
+        }).eq('id', id);
+        if (error) throw error;
+        const f = E.frais.find(x => x.id === id);
+        if (f) { f.statut = 'valide'; f.valide_le = new Date().toISOString(); }
+        annoncer('Note de frais validée.');
+        vueEquipe('frais');
+      } catch (err) {
+        erreur(err, 'Validation impossible');
+        b.disabled = false;
+      }
+    });
+  });
+
+  $$('[data-rembourser-frais]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const id = +b.dataset.rembourserFrais;
+      b.disabled = true;
+      try {
+        const { error } = await sb.from('crescite_notes_frais').update({
+          statut: 'rembourse',
+          rembourse_le: new Date().toISOString()
+        }).eq('id', id);
+        if (error) throw error;
+        const f = E.frais.find(x => x.id === id);
+        if (f) { f.statut = 'rembourse'; f.rembourse_le = new Date().toISOString(); }
+        annoncer('Note de frais marquée remboursée.');
+        vueEquipe('frais');
+      } catch (err) {
+        erreur(err, 'Modification impossible');
+        b.disabled = false;
+      }
+    });
+  });
+
+  $$('[data-refuser-frais]').forEach(b => {
+    b.addEventListener('click', async () => {
+      const id = +b.dataset.refuserFrais;
+      if (!confirm('Refuser cette note de frais ?')) return;
+      b.disabled = true;
+      try {
+        const { error } = await sb.from('crescite_notes_frais').update({ statut: 'refuse' }).eq('id', id);
+        if (error) throw error;
+        const f = E.frais.find(x => x.id === id);
+        if (f) f.statut = 'refuse';
+        annoncer('Note de frais refusée.');
+        vueEquipe('frais');
+      } catch (err) {
+        erreur(err, 'Refus impossible');
+        b.disabled = false;
+      }
+    });
+  });
+}
+
+function exporterCsvFrais() {
+  const frais = E.frais || [];
+  const lignes = [
+    ['Date', 'Beneficiaire', 'Categorie', 'Spectacle', 'Date_tournee', 'Montant_TTC', 'Statut', 'Justificatif_URL', 'Commentaire']
+  ];
+  frais.forEach(f => {
+    const p = E.personnes.find(x => x.id === f.personne_id);
+    const d = f.date_id ? E.dates.find(x => x.id === f.date_id) : null;
+    const sp = d ? spectacle(d.spectacle_id) : null;
+    const dateStr = f.cree_le ? f.cree_le.slice(0, 10) : '';
+    lignes.push([
+      dateStr,
+      p ? nomDe(p) : '',
+      f.categorie || '',
+      sp ? sp.titre : '',
+      d ? d.debut : '',
+      (Number(f.montant_ttc) || 0).toFixed(2),
+      f.statut || 'en_attente',
+      f.photo_url || '',
+      (f.commentaire || '').replace(/[\r\n]+/g, ' ')
+    ]);
+  });
+  const csvContent = '\uFEFF' + lignes.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `crescite_notes_frais_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ===================================================================================================== matériel de tournée
+function ongletMateriel(z, s0) {
+  const dessiner = () => {
+    const items = (E.materiel || []).filter(m => m.spectacle_id === s0.id);
+    const malles = new Map();
+    items.forEach(m => {
+      const malleNom = m.malle || 'Général / Non classé';
+      if (!malles.has(malleNom)) malles.set(malleNom, []);
+      malles.get(malleNom).push(m);
+    });
+
+    z.innerHTML = `
+      <div class="bloc">
+        <h3>Matériel de tournée & Malle camion</h3>
+        <p class="aide">Ce matériel alimente automatiquement la checklist camion de l’équipe de ce spectacle pour chaque date.</p>
+        <form id="f-ajout-materiel" style="margin:16px 0 20px;padding:14px;border:1px solid var(--trait);border-radius:10px;background:var(--doux)">
+          <div style="font-weight:700;margin-bottom:8px">Ajouter un élément de matériel</div>
+          <div class="rangee">
+            <div class="champ">
+              <label for="mat-intitule">Intitulé du matériel *</label>
+              <input type="text" id="mat-intitule" placeholder="Ex: Micro HF serre-tête" required>
+            </div>
+            <div class="champ">
+              <label for="mat-malle">Malle / Emplacement *</label>
+              <input type="text" id="mat-malle" placeholder="Ex: Fly Son 1" required>
+            </div>
+            <div class="champ">
+              <label for="mat-cat">Catégorie</label>
+              <select id="mat-cat">
+                <option value="son">Son</option>
+                <option value="lumiere">Lumière</option>
+                <option value="decor">Décor</option>
+                <option value="costumes">Costumes</option>
+                <option value="accessoires">Accessoires</option>
+                <option value="regie">Régie</option>
+              </select>
+            </div>
+            <div class="champ">
+              <label for="mat-qte">Quantité</label>
+              <input type="number" id="mat-qte" value="1" min="1" style="width:80px">
+            </div>
+          </div>
+          <div class="rangee">
+            <div class="champ" style="grid-column:span 2">
+              <label for="mat-notes">Notes / Consignes particulières</label>
+              <input type="text" id="mat-notes" placeholder="Ex: Piles 9V neuves nécessaires, fragile">
+            </div>
+            <div class="champ" style="align-self:end">
+              <button type="submit" class="btn principal">＋ Ajouter au matériel</button>
+            </div>
+          </div>
+        </form>
+
+        <div id="liste-malles-zone">
+          ${malles.size ? [...malles.entries()].map(([malleNom, xs]) => `
+            <div class="mat-groupe">
+              <h4>📦 ${esc(malleNom)} (${xs.length})</h4>
+              <table class="simple">
+                <thead>
+                  <tr>
+                    <th>Élément</th>
+                    <th>Catégorie</th>
+                    <th>Quantité</th>
+                    <th>Notes</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${xs.map(x => `
+                    <tr>
+                      <td><b>${esc(x.intitule)}</b></td>
+                      <td><span class="badge">${esc(x.categorie)}</span></td>
+                      <td>${x.quantite || 1}</td>
+                      <td><small style="color:var(--gris)">${esc(x.notes || '')}</small></td>
+                      <td><button type="button" class="btn petit danger" data-suppr-mat="${x.id}">✕</button></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `).join('') : '<p class="vide">Aucun matériel enregistré pour ce spectacle pour le moment.</p>'}
+        </div>
+      </div>
+    `;
+
+    $('#f-ajout-materiel', z)?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const intitule = ($('#mat-intitule', z).value || '').trim();
+      const malle = ($('#mat-malle', z).value || '').trim();
+      const cat = $('#mat-cat', z).value;
+      const qte = parseInt($('#mat-qte', z).value, 10) || 1;
+      const notes = ($('#mat-notes', z).value || '').trim();
+      if (!intitule || !malle) return;
+
+      try {
+        const { data, error } = await sb.from('crescite_materiel').insert({
+          spectacle_id: s0.id,
+          intitule,
+          malle,
+          categorie: cat,
+          quantite: qte,
+          notes: notes || null
+        }).select();
+        if (error) throw error;
+        if (data && data.length) {
+          E.materiel.push(data[0]);
+          dessiner();
+          annoncer('Matériel ajouté.');
+        }
+      } catch (err) {
+        erreur(err, 'Ajout impossible');
+      }
+    });
+
+    $$('[data-suppr-mat]', z).forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = +btn.dataset.supprMat;
+        if (!confirm('Retirer cet élément de matériel ?')) return;
+        try {
+          const { error } = await sb.from('crescite_materiel').delete().eq('id', id);
+          if (error) throw error;
+          const idx = E.materiel.findIndex(x => x.id === id);
+          if (idx >= 0) E.materiel.splice(idx, 1);
+          dessiner();
+          annoncer('Matériel retiré.');
+        } catch (err) {
+          erreur(err, 'Suppression impossible');
+        }
+      });
+    });
+  };
+  dessiner();
+}
 
 // ===================================================================================================== styles
 document.head.insertAdjacentHTML('beforeend', `<style id="styles-equipe">

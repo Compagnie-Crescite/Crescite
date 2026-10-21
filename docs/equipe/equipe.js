@@ -44,7 +44,7 @@
   const NOTIFS_MAX = 100;
   const ONGLETS = ['saison', 'feuilles', 'planning', 'spectacles', 'notifications', 'moi'];
   const TITRES = { saison: 'Ma saison', feuilles: 'Feuilles de route', planning: 'Planning', spectacles: 'Mes spectacles', notifications: 'Notifications', moi: 'Moi',
-    indisponibilites: 'Mes indisponibilités', agendas: 'Mes agendas', propositions: 'Propositions de dates', proposition: 'Proposition de dates' };
+    indisponibilites: 'Mes indisponibilités', agendas: 'Mes agendas', propositions: 'Propositions de dates', proposition: 'Proposition de dates', frais: 'Notes de frais' };
 
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -267,6 +267,11 @@
     question: ic('<circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.5a2.4 2.4 0 1 1 3.3 2.2c-.6.3-1 .8-1 1.4v.6"/><path d="M12 16.6v.4"/>'),
     crayon: ic('<path d="M4.5 19.5l1-4.2L15.8 5a2 2 0 0 1 2.9 0l.3.3a2 2 0 0 1 0 2.9L8.7 18.5z"/><path d="M13.8 7l3.2 3.2"/>'),
     alerte: ic('<path d="M12 4.5 21 19.5H3z"/><path d="M12 10v4.2M12 16.8v.3"/>'),
+    euro: ic('<path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12a7.9 7.9 0 0 0 7.8 8 7.7 7.7 0 0 0 5.2-2M4 10h10M4 14h10"/>'),
+    camion: ic('<rect x="1" y="4" width="14" height="12" rx="1.5"/><path d="M15 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.2"/><circle cx="18.5" cy="18.5" r="2.2"/>'),
+    waze: ic('<path d="M12 2a9 9 0 0 0-9 9c0 4 3 7 7 8.5V22l4-2.5c4.5-.5 7-3.5 7-8.5a9 9 0 0 0-9-9z"/><circle cx="9" cy="11" r="1.5" fill="currentColor"/><circle cx="15" cy="11" r="1.5" fill="currentColor"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/>'),
+    apple: ic('<path d="M12 20.9c-.8 0-1.7-.5-2.6-.5-.9 0-1.8.5-2.6.5-1.5 0-3.3-1.6-4.5-4.1C1 14.1 1.7 10.6 3.6 9.6c.9-.5 2-.4 2.8.1.8.5 1.5.8 2.2.8.7 0 1.5-.3 2.3-.8 1-.6 2.3-.7 3.3.1.8.6 1.6 1.7 1.9 2.2-1.7.9-2 3.1-1.3 4.8.6 1.4 1.5 2.5 1.5 2.5-.4 1.1-.9 2.2-1.6 3.1-.7 1-1.6 2.2-2.7 2.2zM12.6 6.5c.5-.7.8-1.6.7-2.5-.8.1-1.8.6-2.3 1.3-.5.6-.9 1.5-.7 2.4.9.1 1.8-.4 2.3-1.2z"/>'),
+    photo: ic('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>'),
   };
   const GENRES = {
     feuille: { ic: ICONES.feuille, lib: 'Feuille de route' }, horaires: { ic: ICONES.horloge, lib: 'Horaires' },
@@ -809,12 +814,13 @@
     placerCurseur();
   }
   const parentDe = r => E.pile[E.pile.length - 1] || (r.k === 'feuille' ? '#/feuilles' : r.k === 'spectacle' ? '#/spectacles'
-    : ['proposition', 'propositions', 'indisponibilites', 'agendas'].includes(r.k) ? '#/planning' : '#/saison');
+    : r.k === 'frais' ? '#/moi' : ['proposition', 'propositions', 'indisponibilites', 'agendas'].includes(r.k) ? '#/planning' : '#/saison');
   function libelleDe(h) {
     const r = lireRoute(h);
     if (r.k === 'date') { const d = E.dates.find(x => x.id === r.id); return d ? d.spectacle?.titre || 'la date' : 'la date'; }
     if (r.k === 'spectacle') { const x = [...E.spectacles.values()].find(s => (s.slug || String(s.id)) === r.slug); return x ? x.titre : 'le spectacle'; }
     if (r.k === 'feuille') return 'la feuille de route';
+    if (r.k === 'frais') return 'Notes de frais';
     return TITRES[r.k] || 'Ma saison';
   }
   function majBarre(r, titre) {
@@ -869,13 +875,14 @@
     if ((m = h.match(/^#\/feuille\/(\d+)$/))) return { k: 'feuille', id: +m[1], onglet: 'feuilles', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/proposition\/(\d+)$/))) return { k: 'proposition', id: +m[1], onglet: 'planning', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/(indisponibilites|agendas|propositions)$/))) return { k: m[1], onglet: 'planning', profondeur: 1, hash: h };
+    if ((m = h.match(/^#\/frais(?:\?.*)?$/))) return { k: 'frais', onglet: 'moi', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/spectacles\/([a-z0-9-]{1,80})$/))) return { k: 'spectacle', slug: m[1], onglet: 'spectacles', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/(saison|feuilles|planning|spectacles|notifications|moi)$/))) return { k: m[1], onglet: m[1], profondeur: 0, hash: h };
     if (/^#\/documents(\/|$)/.test(h)) return { redirige: '#/spectacles' };         // les anciens liens, les notifications « document »
     return { redirige: h === '#/fiche' ? '#/moi' : '#/saison' };
   }
   const VUES = { saison: vueSaison, date: vueDate, feuilles: vueFeuilles, feuille: vueFeuille, spectacles: vueSpectacles, spectacle: vueSpectacle, notifications: vueNotifications, moi: vueMoi,
-    planning: vuePlanning, indisponibilites: vueIndispos, agendas: vueAgendas, propositions: vuePropositions, proposition: vueProposition };
+    planning: vuePlanning, indisponibilites: vueIndispos, agendas: vueAgendas, propositions: vuePropositions, proposition: vueProposition, frais: vueFrais };
 
   function router(o = {}) {
     if (!E.pret) return;
@@ -1354,6 +1361,10 @@
     if (l && itineraire(l)) gestes.push(`<a class="geste" href="${esc(itineraire(l))}" target="_blank" rel="noopener">${ICONES.route}<span>Itinéraire</span><span class="sr"> jusqu’à ${esc(l.nom || l.commune || '')}, sur une carte, dans un nouvel onglet</span></a>`);
     if (d.feuille && outilFeuille()) gestes.push(`<a class="geste" href="#/feuille/${d.id}">${ICONES.feuille}<span>Feuille de route</span></a>`, `<button type="button" class="geste" data-pdf="${d.id}">${ICONES.pdf}<span>PDF</span><span class="sr"> de la feuille de route</span></button>`);
     if (!passee && vive && evenementsAVenir(d.id).length) gestes.push(`<button type="button" class="geste" data-agenda="${d.id}">${ICONES.agenda}<span>Agenda</span><span class="sr"> : ajouter cette date à mon agenda</span></button>`);
+    if (!passee && vive) {
+      gestes.push(`<button type="button" class="geste" data-retard="${d.id}">${ICONES.alerte}<span>Retard</span><span class="sr"> : signaler un retard ou un imprévu</span></button>`);
+      gestes.push(`<a class="geste" href="#/frais?date=${d.id}">${ICONES.euro}<span>Frais</span><span class="sr"> : ajouter une note de frais pour cette date</span></a>`);
+    }
     if (gestes.length) html += `<div class="gestes"${attrU(sp)}>${gestes.join('')}</div>`;
     const precisions = (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte);
     html += `<section class="bloc"${attrU(sp)} aria-labelledby="b-horaires"><h2 id="b-horaires">${ICONES.horloge}${nat === 'representations' ? 'Représentations' : 'Horaires'}</h2>${horaires(d, { complet: true })}
@@ -1363,9 +1374,10 @@
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
         ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
     }
-    html += blocLieu(d) + blocEquipe(d, passee) + blocDocuments(d);
+    html += blocLieu(d) + blocCamion(d) + blocEquipe(d, passee) + blocDocuments(d);
     afficher(r, sp.titre || 'Date', html, { focus });
     preparerPartages(documentsDe(d.spectacle?.id).filter(x => x.type === 'fiche_technique'));
+    chargerChecklistCamion(d.id, d.spectacle?.id);
     if (d.feuille && !f) chargerFeuille(d.id).then(x => {
       const b = location.hash === r.hash && $('#bloc-planning');
       if (!b) return;
@@ -1411,6 +1423,19 @@
     return l.latitude != null && l.longitude != null && Number.isFinite(+l.latitude) && Number.isFinite(+l.longitude)
       ? `https://www.google.com/maps/dir/?api=1&destination=${+l.latitude},${+l.longitude}` : '';
   }
+  function liensGps(l) {
+    if (!l) return null;
+    const q = [l.nom, l.adresse, l.commune].filter(Boolean).join(', ');
+    const coord = (l.latitude != null && l.longitude != null && Number.isFinite(+l.latitude) && Number.isFinite(+l.longitude))
+      ? `${+l.latitude},${+l.longitude}` : '';
+    const qParam = encodeURIComponent(q || coord);
+    if (!qParam) return null;
+    return {
+      google: `https://www.google.com/maps/dir/?api=1&destination=${qParam}`,
+      waze: coord ? `https://waze.com/ul?ll=${coord}&navigate=yes` : `https://waze.com/ul?q=${qParam}&navigate=yes`,
+      apple: `https://maps.apple.com/?daddr=${coord || qParam}`
+    };
+  }
   const communeDe = l => `${l.commune}${l.departement ? `\u00a0(${l.departement})` : ''}`;
   // le lieu en une ligne : « L'Eclat · Pont-Audemer (27) », « Théâtre Roger Ferdinand de Saint-Lô (50) »
   function lieuTexteHtml(d) {
@@ -1427,7 +1452,7 @@
     const l = d.lieu, sp = d.spectacle || {};
     if (!l) return `<section class="bloc"${attrU(sp)} aria-labelledby="b-lieu"><h2 id="b-lieu">${ICONES.route}Le lieu</h2><p>${lieuTexteHtml(d)}</p></section>`;
     const lignes = l.adresse ? [l.adresse, contientMot(l.adresse, l.commune) ? '' : communeDe(l)].filter(Boolean) : [communeDe(l)];
-    const carte = itineraire(l), site = l.site_web ? urlSure(l.site_web) : '', km = Math.round(kmDe(l) / 5) * 5;
+    const gps = liensGps(l), site = l.site_web ? urlSure(l.site_web) : '', km = Math.round(kmDe(l) / 5) * 5;
     let mini = '';
     if (FRANCE && projeter(l.latitude, l.longitude)) {
       E.cartes.set(`d${d.id}`, { lieux: lieuxCarte([d]), mini: true, titre: `De Rouen à ${l.commune || l.nom}${km ? `, environ ${km} km par la route` : ''}` });
@@ -1436,8 +1461,12 @@
     return `<section class="bloc bloc-lieu"${attrU(sp)} aria-labelledby="b-lieu"><h2 id="b-lieu">${ICONES.route}Le lieu</h2>
       <div class="lieu-grille"><div><p class="lieu-nom">${esc(l.nom || communeDe(l))}</p><p class="lieu-adresse">${lignes.map(esc).join('<br>')}</p>
         ${km ? `<p class="aide">Environ ${nombre(km)}\u00a0km de Rouen par la route.</p>` : ''}
-        ${carte || site ? `<p class="liens">${carte ? `<a class="btn petit" href="${esc(carte)}" target="_blank" rel="noopener">${ICONES.route}Itinéraire<span class="sr"> jusqu’à ${esc(l.nom || l.commune || '')}, sur une carte, dans un nouvel onglet</span></a>` : ''}
-          ${site ? `<a href="${esc(site)}" target="_blank" rel="noopener">Site du lieu<span class="sr"> (nouvel onglet)</span></a>` : ''}</p>` : ''}</div>${mini}</div></section>`;
+        ${gps ? `<div class="nav-gps-grille">
+          <a class="btn-gps" href="${esc(gps.google)}" target="_blank" rel="noopener">${ICONES.route} Google Maps</a>
+          <a class="btn-gps" href="${esc(gps.waze)}" target="_blank" rel="noopener">${ICONES.waze} Waze</a>
+          <a class="btn-gps" href="${esc(gps.apple)}" target="_blank" rel="noopener">${ICONES.apple} Apple Plans</a>
+        </div>` : ''}
+        ${site ? `<p class="liens"><a href="${esc(site)}" target="_blank" rel="noopener">Site du lieu<span class="sr"> (nouvel onglet)</span></a></p>` : ''}</div>${mini}</div></section>`;
   }
 
   // qui part sur une date : la distribution « en tournée » du spectacle, moins les absents de la date, plus ses renforts
@@ -2738,6 +2767,7 @@
       </section>
       <section class="carte" aria-labelledby="t-push"><h2 id="t-push">Notifications</h2><p class="intro">Une feuille de route publiée, des horaires changés (en tournée comme en répétition), une nouvelle date.</p><div data-zone-push="moi"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'moi') : ''}</div></section>
       ${sectionPlanningMoi()}
+      <section class="carte" aria-labelledby="t-frais"><h2 id="t-frais">Notes de frais</h2><p class="intro">Déposez vos justificatifs de tournée (repas, carburant, billets, nuitées) et suivez vos remboursements.</p><p><a class="btn" href="#/frais">${ICONES.euro}Mes notes de frais</a></p></section>
       <section class="carte" aria-labelledby="t-app"><h2 id="t-app">L’application</h2><div data-zone-installation="moi">${zoneInstallation('moi')}</div></section>`;
     if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
       : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
@@ -2810,6 +2840,429 @@
     let z = $('.msg-form', form);
     if (!z) { z = document.createElement('div'); z.className = 'msg-form'; $('.pied-form', form).before(z); }
     return z;
+  }
+
+  // ================================================================================================ alerte retard / imprévu
+  function ouvrirModaleRetard(dateId) {
+    const d = E.dates.find(x => x.id === dateId);
+    if (!d) return;
+    const old = $('#modale-retard');
+    if (old) old.remove();
+    const fond = document.createElement('div');
+    fond.className = 'modale-fond';
+    fond.id = 'modale-retard';
+    fond.innerHTML = `
+      <div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="t-mod-retard">
+        <div class="modale-tete">
+          <h2 id="t-mod-retard">${ICONES.alerte} Signaler un retard / imprévu</h2>
+          <button type="button" class="modale-fermer" data-fermer-modale aria-label="Fermer">${ICONES.croix}</button>
+        </div>
+        <p class="intro">Pour <b>${esc(d.spectacle?.titre || 'cette date')}</b> · ${esc(d.lieu?.commune || 'Tournée')}</p>
+        <p class="aide">Prévenez immédiatement l’équipe de tournée et l’administration.</p>
+        <div class="choix-retard">
+          <button type="button" class="btn-choix actif" data-motif="Retard ~15 min (circulation)">⏱ +15 min (bouchons)</button>
+          <button type="button" class="btn-choix" data-motif="Retard ~30 min (train/route)">⏱ +30 min (train / route)</button>
+          <button type="button" class="btn-choix" data-motif="Retard ~1h ou plus">⚠️ +1h ou plus</button>
+          <button type="button" class="btn-choix" data-motif="Panne / Problème véhicule">🚗 Panne véhicule</button>
+        </div>
+        <div class="champ">
+          <label for="retard-texte">Précision / Message (facultatif)</label>
+          <input type="text" id="retard-texte" placeholder="Ex. Accident A13, arrivée vers 14h20">
+        </div>
+        <div class="pied-form">
+          <button type="button" class="btn principal" id="btn-envoyer-retard">${ICONES.message} Envoyer l’alerte à l’équipe</button>
+          <button type="button" class="btn" data-fermer-modale>Annuler</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(fond);
+    let motif = 'Retard ~15 min (circulation)';
+    $$('.btn-choix', fond).forEach(b => {
+      b.addEventListener('click', () => {
+        $$('.btn-choix', fond).forEach(x => x.classList.remove('actif'));
+        b.classList.add('actif');
+        motif = b.dataset.motif;
+      });
+    });
+    const fermer = () => fond.remove();
+    $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', fermer));
+    fond.addEventListener('click', e => { if (e.target === fond) fermer(); });
+    $('#btn-envoyer-retard', fond).addEventListener('click', async () => {
+      const btn = $('#btn-envoyer-retard', fond);
+      btn.disabled = true;
+      btn.textContent = 'Envoi…';
+      const prec = ($('#retard-texte', fond).value || '').trim();
+      const auteur = E.personne ? nomDe(E.personne) : 'Équipe';
+      const msg = `${motif}${prec ? ` : ${prec}` : ''}`;
+      try {
+        await sb.from('crescite_notifications').insert({
+          genre: 'message',
+          titre: `Alerte retard : ${auteur}`,
+          texte: `${msg} (${d.spectacle?.titre || 'Date'})`,
+          date_id: d.id,
+          personne_id: E.moi
+        });
+      } catch (e) {
+        console.warn('Alerte notification insert:', e);
+      }
+      fermer();
+      annoncer('Alerte de retard envoyée à l’équipe.');
+      vibrer(25);
+    });
+  }
+
+  // ================================================================================================ checklist camion & matériel
+  const PHASES_CAMION = [
+    { k: 'depart_rouen', l: '1. Départ Rouen' },
+    { k: 'arrivee_salle', l: '2. Arrivée salle' },
+    { k: 'remballage', l: '3. Remballage' },
+    { k: 'retour_rouen', l: '4. Retour Rouen' }
+  ];
+  const MATOS_DEFAUT = [
+    { id: 'def_1', intitule: 'Malle Régie Son & Micros HF', malle: 'Fly Son 1', categorie: 'son' },
+    { id: 'def_2', intitule: 'Malle Lumière & Câblage', malle: 'Malle Lumière A', categorie: 'lumiere' },
+    { id: 'def_3', intitule: 'Éléments de décor & Structures', malle: 'Décor camion', categorie: 'decor' },
+    { id: 'def_4', intitule: 'Valise Costumes & Cintres', malle: 'Penderie', categorie: 'costumes' },
+    { id: 'def_5', intitule: 'Malle Accessoires & Éléments de jeu', malle: 'Malle Plateau', categorie: 'accessoires' },
+    { id: 'def_6', intitule: 'Caisse outils, gaffer, pharmacie', malle: 'Régie Caisse 1', categorie: 'regie' },
+  ];
+  const ETAT_CAMION = { phase: 'depart_rouen', dateId: null, items: [], coches: new Map() };
+
+  function blocCamion(d) {
+    const sp = d.spectacle || {};
+    return `<section class="bloc bloc-camion"${attrU(sp)} id="bloc-camion" data-date-id="${d.id}">
+      <h2 id="b-camion">${ICONES.camion}Checklist camion & matériel</h2>
+      <div id="zone-camion-${d.id}"><p class="attente-bloc">Chargement de la checklist…</p></div>
+    </section>`;
+  }
+
+  async function chargerChecklistCamion(dateId, spectacleId) {
+    const zone = $(`#zone-camion-${dateId}`);
+    if (!zone) return;
+    ETAT_CAMION.dateId = dateId;
+    let items = [];
+    try {
+      if (spectacleId) {
+        const { data, error } = await sb.from('crescite_materiel').select('*').eq('spectacle_id', spectacleId).order('malle');
+        if (!error && data && data.length) items = data;
+      }
+    } catch (e) { /* fallback offline */ }
+    if (!items.length) items = MATOS_DEFAUT;
+    ETAT_CAMION.items = items;
+
+    // Charger les coches depuis la base ou le localStorage
+    const localKey = `crescite-camion-${dateId}`;
+    let cochesLocales = {};
+    try { cochesLocales = JSON.parse(localStorage.getItem(localKey) || '{}'); } catch (e) {}
+
+    ETAT_CAMION.coches = new Map(Object.entries(cochesLocales));
+
+    try {
+      const { data, error } = await sb.from('crescite_checklists_chargement').select('*').eq('date_id', dateId);
+      if (!error && data) {
+        data.forEach(c => {
+          const k = `${c.phase}_${c.materiel_id}`;
+          ETAT_CAMION.coches.set(k, c.coche);
+        });
+      }
+    } catch (e) {}
+
+    dessinerCamion(dateId);
+  }
+
+  function changerPhaseCamion(phase, dateId) {
+    ETAT_CAMION.phase = phase;
+    dessinerCamion(dateId);
+  }
+
+  function dessinerCamion(dateId) {
+    const zone = $(`#zone-camion-${dateId}`);
+    if (!zone) return;
+    const curPhase = ETAT_CAMION.phase || 'depart_rouen';
+    const items = ETAT_CAMION.items || [];
+    const total = items.length;
+    let nbCoches = 0;
+    items.forEach(it => {
+      const k = `${curPhase}_${it.id}`;
+      if (ETAT_CAMION.coches.get(k)) nbCoches++;
+    });
+    const pct = total ? Math.round((nbCoches / total) * 100) : 0;
+    const phaseComplete = total > 0 && nbCoches === total;
+
+    let h = `
+      <div class="camion-phases" role="tablist">
+        ${PHASES_CAMION.map(p => `
+          <button type="button" class="camion-phase-btn${p.k === curPhase ? ' actif' : ''}" role="tab" aria-selected="${p.k === curPhase}" data-phase-camion="${p.k}" data-date-id="${dateId}">${p.l}</button>
+        `).join('')}
+      </div>
+      <div class="camion-jauge">
+        <span>${nbCoches} / ${total} vérifiés${phaseComplete ? ' ✅' : ''}</span>
+        <div class="camion-barre"><div class="camion-barre-fond" style="width: ${pct}%"></div></div>
+      </div>
+      <ul class="camion-liste">
+        ${items.map(it => {
+          const k = `${curPhase}_${it.id}`;
+          const coche = !!ETAT_CAMION.coches.get(k);
+          return `
+            <li class="camion-item${coche ? ' coche' : ''}" data-mat-id="${it.id}">
+              <input type="checkbox" id="chk-${k}" ${coche ? 'checked' : ''} aria-label="${esc(it.intitule)}">
+              <label class="camion-item-texte" for="chk-${k}">
+                <b>${esc(it.intitule)}</b>
+                ${it.notes ? `<small>${esc(it.notes)}</small>` : ''}
+              </label>
+              ${it.malle ? `<span class="camion-malle-badge">${esc(it.malle)}</span>` : ''}
+            </li>
+          `;
+        }).join('')}
+      </ul>
+    `;
+    zone.innerHTML = h;
+
+    // Attacher les écouteurs de case à cocher
+    $$('.camion-item input[type=checkbox]', zone).forEach(inp => {
+      inp.addEventListener('change', async e => {
+        const itemLi = inp.closest('.camion-item');
+        const matId = itemLi.dataset.matId;
+        const val = inp.checked;
+        const k = `${curPhase}_${matId}`;
+        ETAT_CAMION.coches.set(k, val);
+        itemLi.classList.toggle('coche', val);
+
+        // Sauvegarder en local
+        const localKey = `crescite-camion-${dateId}`;
+        const obj = Object.fromEntries(ETAT_CAMION.coches.entries());
+        try { localStorage.setItem(localKey, JSON.stringify(obj)); } catch (err) {}
+
+        vibrer(8);
+        dessinerCamion(dateId);
+
+        // Sauvegarder dans Supabase si matId est numérique
+        if (/^\d+$/.test(String(matId))) {
+          try {
+            await sb.from('crescite_checklists_chargement').upsert({
+              date_id: dateId,
+              materiel_id: +matId,
+              phase: curPhase,
+              coche: val,
+              coche_par: E.moi,
+              coche_le: new Date().toISOString()
+            }, { onConflict: 'date_id,materiel_id,phase' });
+          } catch (err) {
+            console.warn('Checklist sync:', err);
+          }
+        }
+      });
+    });
+  }
+
+  // ================================================================================================ notes de frais
+  const CAT_FRAIS = { repas: 'Repas', transport: 'Péage / Transport', hebergement: 'Hébergement', autre: 'Achat / Autre' };
+  const STATUT_FRAIS = { en_attente: 'En attente', valide: 'Validée', rembourse: 'Remboursée', refuse: 'Refusée' };
+
+  async function vueFrais(r, { focus } = {}) {
+    const m = location.hash.match(/[?&]date=(\d+)/);
+    const datePre = m ? +m[1] : null;
+
+    let html = `
+      <div class="titre-vue">
+        <h1>Notes de frais</h1>
+        <p class="sous">Déposez et suivez vos défraiements de tournée (repas, trajets, nuitées, matériel).</p>
+      </div>
+      <div id="frais-totaux" class="frais-resume">
+        <div class="frais-carte attente"><span>En attente de validation</span><b id="tot-attente">-- €</b></div>
+        <div class="frais-carte rembourse"><span>Remboursé cette saison</span><b id="tot-rembourse">-- €</b></div>
+      </div>
+      <form class="carte" id="f-nouvelle-frais" novalidate aria-labelledby="t-nv-frais">
+        <h2 id="t-nv-frais">Ajouter un justificatif</h2>
+        <p class="intro">Photographiez ou importez votre ticket ou reçu dès la dépense engagée.</p>
+        <div class="deux-champs">
+          <div class="champ">
+            <label for="nf-date">Date de la dépense *</label>
+            <input type="date" id="nf-date" required value="${aujourdhui()}">
+          </div>
+          <div class="champ">
+            <label for="nf-categorie">Catégorie *</label>
+            <select id="nf-categorie" required>
+              <option value="repas">Repas en déplacement</option>
+              <option value="transport">Péage / Carburant / Billet de train</option>
+              <option value="hebergement">Hôtel / Hébergement</option>
+              <option value="autre">Achat plateau / Régie / Autre</option>
+            </select>
+          </div>
+        </div>
+        <div class="deux-champs">
+          <div class="champ">
+            <label for="nf-montant">Montant TTC (€) *</label>
+            <input type="number" id="nf-montant" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+          <div class="champ">
+            <label for="nf-date-tournee">Date de tournée liée (facultatif)</label>
+            <select id="nf-date-tournee">
+              <option value="">-- Non rattaché à une date précise --</option>
+              ${E.dates.map(d => `<option value="${d.id}"${d.id === datePre ? ' selected' : ''}>${esc(d.spectacle?.titre || 'Date')} · ${quandTexte(d)} (${esc(d.lieu?.commune || '')})</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="champ">
+          <label for="nf-photo">Photo du ticket ou justificatif *</label>
+          <input type="file" id="nf-photo" accept="image/*,application/pdf" capture="environment" required>
+          <p class="aide">Au smartphone : ouvre directement l'appareil photo.</p>
+          <div id="nf-apercu-zone" hidden><img id="nf-apercu-img" class="photo-apercu" alt="Aperçu du ticket"></div>
+        </div>
+        <div class="champ">
+          <label for="nf-commentaire">Commentaire (facultatif)</label>
+          <input type="text" id="nf-commentaire" placeholder="Ex. Déjeuner 2 pers. trajet Rouen-Rennes">
+        </div>
+        <div class="pied-form">
+          <button type="submit" class="btn principal" id="btn-soumettre-frais">${ICONES.coche} Enregistrer la note de frais</button>
+          <p class="etat-form" id="etat-frais" role="status"></p>
+        </div>
+      </form>
+      <section class="carte" aria-labelledby="t-mes-frais">
+        <h2 id="t-mes-frais">Mes notes de frais</h2>
+        <div id="liste-frais-zone"><p class="chargement" role="status">Lecture de vos notes de frais…</p></div>
+      </section>
+    `;
+    afficher(r, 'Notes de frais', html, { focus });
+    initVueFrais();
+  }
+
+  async function initVueFrais() {
+    const f = $('#f-nouvelle-frais');
+    if (!f) return;
+    const inpPhoto = $('#nf-photo', f);
+    const zoneApercu = $('#nf-apercu-zone', f);
+    const imgApercu = $('#nf-apercu-img', f);
+    let fichierDataUrl = null;
+    let fichierSelectionne = null;
+
+    inpPhoto.addEventListener('change', () => {
+      const file = inpPhoto.files[0];
+      if (!file) { zoneApercu.hidden = true; return; }
+      fichierSelectionne = file;
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          imgApercu.src = e.target.result;
+          zoneApercu.hidden = false;
+          fichierDataUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        zoneApercu.hidden = true;
+      }
+    });
+
+    f.addEventListener('submit', async e => {
+      e.preventDefault();
+      const b = $('#btn-soumettre-frais', f);
+      const etat = $('#etat-frais', f);
+      const dateVal = $('#nf-date', f).value;
+      const catVal = $('#nf-categorie', f).value;
+      const montVal = parseFloat($('#nf-montant', f).value);
+      const dateIdVal = $('#nf-date-tournee', f).value ? +$('#nf-date-tournee', f).value : null;
+      const commVal = ($('#nf-commentaire', f).value || '').trim();
+
+      if (!dateVal || isNaN(montVal) || montVal <= 0 || !fichierSelectionne) {
+        etat.className = 'etat-form sale';
+        etat.textContent = 'Veuillez remplir la date, le montant et ajouter la photo du justificatif.';
+        return;
+      }
+
+      b.disabled = true;
+      b.textContent = 'Envoi du justificatif…';
+      etat.className = 'etat-form';
+      etat.textContent = 'Téléversement en cours…';
+
+      try {
+        let photoUrl = '';
+        const ext = (fichierSelectionne.name.split('.').pop() || 'jpg').toLowerCase();
+        const chemin = `${E.moi || '0'}/${Date.now()}_${ext}`;
+        try {
+          const { error: upErr } = await sb.storage.from('crescite-frais').upload(chemin, fichierSelectionne, { upsert: true });
+          if (!upErr) {
+            const { data: pUrl } = sb.storage.from('crescite-frais').getPublicUrl(chemin);
+            photoUrl = pUrl?.publicUrl || chemin;
+          }
+        } catch (errUp) {
+          console.warn('Storage frais fallback:', errUp);
+        }
+        if (!photoUrl && fichierDataUrl) photoUrl = fichierDataUrl;
+
+        const { error: insErr } = await sb.from('crescite_notes_frais').insert({
+          personne_id: E.moi,
+          date_id: dateIdVal,
+          categorie: catVal,
+          montant_ttc: montVal,
+          photo_url: photoUrl || null,
+          commentaire: commVal || null,
+          statut: 'en_attente'
+        });
+
+        if (insErr) throw insErr;
+
+        f.reset();
+        zoneApercu.hidden = true;
+        etat.className = 'etat-form ok';
+        etat.textContent = 'Note de frais enregistrée avec succès.';
+        annoncer('Note de frais transmise à l’administration.');
+        vibrer(15);
+        chargerNotesFrais();
+      } catch (err) {
+        console.error(err);
+        etat.className = 'etat-form sale';
+        etat.textContent = `Erreur : ${err.message || 'Impossible d’enregistrer la note'}.`;
+      } finally {
+        b.disabled = false;
+        b.innerHTML = `${ICONES.coche} Enregistrer la note de frais`;
+      }
+    });
+
+    chargerNotesFrais();
+  }
+
+  async function chargerNotesFrais() {
+    const zone = $('#liste-frais-zone');
+    if (!zone) return;
+    try {
+      const { data, error } = await sb.from('crescite_notes_frais').select('*').eq('personne_id', E.moi).order('cree_le', { ascending: false });
+      if (error) throw error;
+      if (!data || !data.length) {
+        zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>';
+        $('#tot-attente').textContent = '0,00 €';
+        $('#tot-rembourse').textContent = '0,00 €';
+        return;
+      }
+      let totAttente = 0, totRembourse = 0;
+      data.forEach(x => {
+        const m = Number(x.montant_ttc) || 0;
+        if (x.statut === 'en_attente' || x.statut === 'valide') totAttente += m;
+        if (x.statut === 'rembourse') totRembourse += m;
+      });
+      $('#tot-attente').textContent = `${totAttente.toFixed(2).replace('.', ',')} €`;
+      $('#tot-rembourse').textContent = `${totRembourse.toFixed(2).replace('.', ',')} €`;
+
+      zone.innerHTML = data.map(item => {
+        const cat = CAT_FRAIS[item.categorie] || item.categorie;
+        const stClass = item.statut || 'en_attente';
+        const stLabel = STATUT_FRAIS[stClass] || stClass;
+        const dateLue = item.cree_le ? item.cree_le.slice(0, 10).split('-').reverse().join('/') : '';
+        const m = (Number(item.montant_ttc) || 0).toFixed(2).replace('.', ',');
+        return `
+          <div class="frais-ligne">
+            <span class="badge-statut ${stClass}">${stLabel}</span>
+            <div>
+              <b>${esc(cat)}</b> · <small>${esc(dateLue)}</small>
+              ${item.commentaire ? `<br><small class="aide">${esc(item.commentaire)}</small>` : ''}
+              ${item.photo_url ? `<br><a href="${esc(item.photo_url)}" target="_blank" rel="noopener" class="lien-btn" style="font-size:0.84rem">${ICONES.doc} Voir le justificatif</a>` : ''}
+            </div>
+            <div class="montant">${m} €</div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      zone.innerHTML = '<p class="message erreur">Impossible de charger les notes de frais pour le moment.</p>';
+    }
   }
 
   // ================================================================================================ ajouter à mon agenda (.ics)
@@ -3063,6 +3516,8 @@
     if (t.matches('[data-sortir]')) return sortir();
     if (t.matches('[data-reessayer]')) return occupe(t, 'Un instant…', () => reessayer(true));
     if (t.matches('[data-actualiser]')) { vibrer(8); return reessayer(true); }
+    if (t.matches('[data-retard]')) return ouvrirModaleRetard(Number(t.dataset.retard));
+    if (t.matches('[data-phase-camion]')) return changerPhaseCamion(t.dataset.phaseCamion, Number(t.dataset.dateId));
     if (t.id === 'b-agenda') return telechargerAgenda();
     if (t.matches('[data-agenda]')) return telechargerAgenda(Number(t.dataset.agenda));
     if (t.matches('[data-pdf]')) return telechargerPdf(t);
