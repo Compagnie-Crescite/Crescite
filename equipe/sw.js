@@ -21,7 +21,7 @@ const ESSENTIELS = ['./', 'equipe.js', 'manifest.webmanifest', '../admin/vendor/
 const UTILES = ['carte.js', '../admin/agenda.js', '../admin/feuille.js', '../admin/tentacules.js', '../admin/planning.js',
   'icones/192.png', 'icones/512.png', 'icones/180.png', 'icones/masquable-512.png', 'icones/badge.png'];
 const MAX_MEDIAS = 120;
-const LIENS_SURS = /^#\/(saison|feuilles|planning|documents|notifications|moi|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+)$/;
+const LIENS_SURS = /^#\/(saison|feuilles|planning|spectacles|documents|notifications|moi|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+|spectacles\/[a-z0-9-]{1,80})$/;
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {

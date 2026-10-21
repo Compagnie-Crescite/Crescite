@@ -480,8 +480,11 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 @media (max-width: 460px) {
   .doc { grid-template-columns: auto minmax(0, 1fr); }
   .doc-src { grid-column: 2; white-space: normal; }
-  .doc-ligne { flex-wrap: wrap; }
-  .doc-partager { margin-left: auto; }
+}
+/* au téléphone, « Partager » se resserre en un bouton rond (son nom reste dit aux lecteurs d'écran) */
+@media (max-width: 520px) {
+  .doc-partager { width: 48px; min-height: 48px; padding: 0; border-radius: 50%; }
+  .doc-partager > span:not(.sr) { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
 /* ———————————————— les notifications */
@@ -675,6 +678,49 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .ligne-lien small { color: var(--gris); font-size: .86rem; }
 .ligne-lien .pastille-nb { position: static; flex: none; }
 .o-props .propositions-attente { margin-bottom: 4px; }
+
+/* ———————————————— mes spectacles : la liste (chacun dans son univers), la page d'un spectacle, ses fichiers */
+.liste-spectacles { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 12px; }
+@media (min-width: 900px) { .liste-spectacles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.carte-spectacle { position: relative; display: flex; align-items: center; min-height: 132px; height: 100%; overflow: hidden; border-radius: 22px; background: var(--h-fond, #1d1418);
+  color: var(--h-texte, #fff); text-decoration: none; box-shadow: var(--ombre); isolation: isolate; transition: transform .2s, box-shadow .2s; }
+.carte-spectacle:hover { color: var(--h-texte, #fff); transform: translateY(-2px); box-shadow: var(--ombre-haute); }
+.cs-photo { position: absolute; inset: 0 0 0 36%; z-index: -1; }
+.cs-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.cs-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--h-fond) 0%, color-mix(in srgb, var(--h-fond) 78%, transparent) 38%, color-mix(in srgb, var(--h-fond) 30%, transparent) 100%); }
+.cs-corps { flex: 1; min-width: 0; display: grid; align-content: center; gap: 6px; padding: 18px 6px 18px 20px; }
+.cs-titre { font: var(--h-graisse, 700) 1.55rem/1.08 var(--h-police, var(--serif)); text-shadow: 0 1px 12px color-mix(in srgb, var(--h-fond) 60%, transparent); }
+.cs-role { font-weight: 600; font-size: .92rem; }
+.cs-pied { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .86rem; font-weight: 500; }
+.cs-pied > span { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px; background: color-mix(in srgb, var(--h-fond) 72%, transparent); }
+.cs-pied .ic { width: 16px; height: 16px; color: var(--h-accent); }
+.carte-spectacle > .chevron { flex: none; margin-right: 14px; color: var(--h-accent); }
+.tete-spectacle { position: relative; overflow: hidden; margin: 0 0 16px; border-radius: 26px; background: var(--h-fond, #1d1418); color: var(--h-texte, #fff); box-shadow: var(--ombre-haute); isolation: isolate; }
+.ts-photo { position: absolute; inset: 0 0 auto 0; height: 200px; z-index: -1; }
+.ts-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.ts-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--h-fond) 40%, transparent) 0%, transparent 30%, color-mix(in srgb, var(--h-fond) 75%, transparent) 72%, var(--h-fond) 100%); }
+.ts-corps { position: relative; display: grid; gap: 6px; padding: 18px 20px 20px; }
+.tete-spectacle.avec-photo .ts-corps { padding-top: 150px; }
+.ts-haut { margin: 0; }
+.tete-spectacle.avec-photo .ts-haut { position: absolute; top: 14px; left: 16px; }
+.ts-titre { font: var(--h-graisse, 700) clamp(2rem, 7vw, 2.7rem)/1.04 var(--h-police, var(--serif)); }
+.ts-role { margin: 0; font-weight: 650; }
+.ts-duree { margin: 0; opacity: .88; }
+.dates-spectacle { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ds-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); color: var(--encre); text-decoration: none; }
+.ds-ligne:hover { color: var(--encre); background: var(--surface-3); }
+.ds-quand { font-weight: 650; }
+.ds-ou { flex: 1 1 8rem; min-width: 0; color: var(--gris); }
+.ds-ligne > .chevron { margin-left: auto; color: var(--gris); }
+.genre-docs { margin: 18px 0 6px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.bloc.fichiers h2 + .genre-docs, .bloc.fichiers .message + .genre-docs { margin-top: 6px; }
+.groupe-docs.compagnie { margin-top: 18px; }
+/* la cloche des notifications : en haut au téléphone (la barre du bas garde cinq onglets), dans la colonne à l'ordinateur */
+.cloche { position: relative; }
+.cloche .pastille-nb { top: -2px; left: auto; right: -4px; }
+.cloche[aria-current] { background: var(--magenta-doux); color: var(--magenta); }
+@media (max-width: 759.98px) { .nav-item[data-onglet="notifications"] { display: none; } }
+@media (min-width: 760px) { .cloche { display: none !important; } }
 
 /* ———————————————— les transitions. Avec les View Transitions : la vue glisse (vers la gauche en allant plus loin, vers la
    droite en revenant), la carte d'une date devient sa page ; la navigation, la barre du haut, les annonces et les

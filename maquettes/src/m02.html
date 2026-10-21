@@ -312,7 +312,9 @@ button,input,textarea{font:inherit;color:inherit}
 .recherche .i{position:absolute;left:14px;top:50%;width:16px;height:16px;transform:translateY(-50%);color:var(--grey)}
 .recherche input{width:100%;min-height:42px;padding:0 14px 0 40px;border:1px solid var(--rule-paper);border-radius:21px;background:var(--white);font:400 1rem var(--sans);color:var(--ink)}
 .recherche input:focus-visible{outline:2px solid var(--e,var(--magenta));outline-offset:2px}
-.ag-index{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;margin-top:-12px;padding:10px 0;background:var(--white);border-bottom:1px solid var(--rule)}
+.ag-index{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px 16px;margin-top:-12px;padding:0 0 14px;border-bottom:1px solid var(--rule)}
+.ag-index>.fr{margin:0}
+.idx-outils{display:flex;align-items:center;gap:10px;min-width:0}
 .ag-index ul{flex:1 1 auto;min-width:0;display:flex;gap:6px;padding:3px 2px;overflow-x:auto;scrollbar-width:none}
 .ag-index li{flex:none}
 .idx,.idx-tout{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule-paper);background:var(--white);color:var(--ink);font:500 .9375rem/1.2 var(--sans);font-variant-numeric:tabular-nums;white-space:nowrap;cursor:pointer}
@@ -482,7 +484,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .u-lieu{margin-top:22px;font:500 1rem/1.4 var(--sans);letter-spacing:.04em;color:var(--u-vif)}
 .u-titre{margin-top:10px;font-family:var(--u-police,var(--serif)),var(--serif);font-weight:var(--u-graisse,400);font-size:clamp(2.75rem,1.7rem + 3.4vw,5.25rem);line-height:.98;letter-spacing:-.005em;color:var(--u-titre);overflow-wrap:break-word}
 .u-titre span{display:block}
-.u-titre.devoile{animation:devoile .7s var(--ease) both}
+.u-titre.devoile{animation:devoile .42s var(--c2) both}
 @keyframes devoile{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 .u-sous{margin-top:14px;font-size:1.125rem;line-height:1.45}
 .u-cadre{margin-top:8px;font-size:.9375rem;color:var(--u-texte2)}
@@ -826,7 +828,8 @@ html{view-transition-name:none}
 main{display:block;min-height:100svh}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas */
 /* les trois entrées : un seul indicateur, un panneau de la couleur de l'entrée, qui glisse d'une entrée à l'autre (la lecture
    d'un spectacle sous une entrée : le même panneau, en teinte) */
-.entrees{position:relative;background:var(--white)}
+.entrees{background:var(--white)}
+@media (min-width:900px){.entrees{position:relative}}
 .entrees ul{position:relative;z-index:1}
 .entrees li{flex:1 1 0}
 .entrees a{background:transparent;transition:background-color .15s,color .12s .08s}
@@ -855,6 +858,9 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 .hero-tab[aria-current="true"]::before{background:transparent}
 .h-ind{position:absolute;left:0;top:-1px;height:3px;width:calc((100% - (var(--h-n,3) - 1) * var(--gap)) / var(--h-n,3));background:var(--magenta);pointer-events:none;
   transform:translateX(calc(var(--h-i,0) * (100% + var(--gap))));transition:transform .26s var(--c2)}
+/* d'une fiche à la page du spectacle : sa photo seule va à sa place */
+::view-transition-group(mv-partage){animation-duration:.3s;animation-timing-function:var(--c2)}
+::view-transition-old(mv-partage),::view-transition-new(mv-partage){animation-duration:.3s}
 /* la page qui change : l'en-tête de page prend la couleur de la nouvelle entrée en relais de l'ancienne */
 .page-head{transition:background-color .26s var(--c2)}
 /* les filets des rubriques, tracés à l'arrivée ; ce qui monte, monte de 8 px seulement, en .32 s */
@@ -890,7 +896,7 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 /* ——— les frises (FRISE), nettes et fonctionnelles : un axe, des points ronds, des barres pleines, l'heure du jour ——— */
 .fr{margin-bottom:40px}
 .frise[data-frise]{--fr-fond:var(--white);--fr-encre:var(--ink);--fr-trait:#c9c3ba;--fr-accent:var(--magenta);--fr-police:var(--sans);
-  --fr-point:10px;--fr-couloir:16px;--fr-haut:34px;--fr-taille:12px;--fr-pied:34px;--fr-passe:.32;--fr-bulle-fond:#fff;--fr-bulle-encre:var(--ink);--fr-courbe:var(--c2)}
+  --fr-point:10px;--fr-couloir:16px;--fr-haut:34px;--fr-taille:12px;--fr-pied:44px;--fr-passe:.32;--fr-bulle-fond:#fff;--fr-bulle-encre:var(--ink);--fr-courbe:var(--c2)}
 .tour .frise[data-frise],.page-head .frise[data-frise]{--fr-fond:var(--paper)}
 .u .frise[data-frise]{--fr-fond:var(--u-fond);--fr-encre:var(--u-texte);--fr-trait:color-mix(in srgb,var(--u-texte) 32%,transparent);--fr-accent:var(--u-vif);--fr-bulle-fond:var(--u-fond2);--fr-bulle-encre:var(--u-texte)}
 .u .u-bande .frise[data-frise]{--fr-fond:var(--u-fond2);--fr-bulle-fond:var(--u-fond)}
@@ -923,9 +929,14 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 .fpro .frise[data-frise]{--fr-fond:var(--u-fond);--fr-encre:var(--u-texte);--fr-trait:color-mix(in srgb,var(--u-texte) 32%,transparent);--fr-accent:var(--u-vif);--fr-bulle-fond:var(--u-fond2);--fr-bulle-encre:var(--u-texte)}
 .fpro .frise-bande{--fr-c:var(--u-vif)}
 .fpro .frise-bande-nom{color:var(--u-texte2)}
+.frise-sco{--fr-haut:24px;--fr-marge:18px}
+/* dans la colonne, les mois n'ont que leur initiale, comme sur un calendrier mural (le nom entier reste lu) */
+.frise-sco.frise--mois .frise-mois-nom{display:inline-block;font-size:0;letter-spacing:0}
+.frise-sco.frise--mois .frise-mois-nom::first-letter{font-size:11px}
+.u-dates .fr-sco{margin:0 0 8px}
 .fpro-diff{margin-top:20px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--u-texte) 18%,transparent)}
 /* l'histoire de la compagnie : une bande, les années, les créations écrites au-dessus de leur point */
-.c-frise{margin:0 0 56px;padding:28px 0 6px;border-top:1px solid var(--ink);border-bottom:1px solid var(--rule)}
+.c-frise{margin:var(--sec) 0 0;padding:0 0 6px}
 .c-frise .frise[data-frise]{--fr-point:12px;--fr-couloir:42px;--fr-haut:30px;--fr-passe:1}
 .c-frise .frise-etiquette{font:400 1.25rem/1.15 var(--serif);max-width:11em}
 .c-frise .frise-repere:is(:hover,:focus-visible) .frise-etiquette{color:var(--magenta-dark);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
@@ -961,6 +972,9 @@ html.ed-actif .ep-a::after{content:none}
   .ep{min-height:0}
   .m-ind{display:none}
   .menu a[aria-current="page"]{border-left-color:var(--magenta)}
+  .h-ind{display:none}
+  .hero-tab[aria-current="true"]::before{background:var(--magenta)}
+  .ag-index{grid-template-columns:minmax(0,1fr)}
   .fr{margin-bottom:28px}
 }
 @media (prefers-reduced-motion:reduce){
@@ -1212,8 +1226,8 @@ html.ed-actif .ep-a::after{content:none}
       </svg><div class="k-info" hidden></div></div>`;
   }
   // les noms des communes, placés sans se chevaucher, à taille constante à l'écran
-  function placerNoms(w) {
-    const cfg = CARTES[w.dataset.k], svg = $('svg', w), m = svg && svg.getScreenCTM && svg.getScreenCTM();
+  function placerNoms(w, m0) {
+    const cfg = CARTES[w.dataset.k], svg = $('svg', w), m = m0 || (svg && svg.getScreenCTM && svg.getScreenCTM());
     if (!cfg || !m || !m.a) return;
     const { VB, RO } = geo(), dist = x => Math.hypot(x.xy[0] - RO[0], x.xy[1] - RO[1]);
     const u = 1 / m.a, fs = 12 * u, rp = 4.5 * u, e = rp + 3 * u, rfs = 13 * u;
@@ -1231,6 +1245,8 @@ html.ed-actif .ep-a::after{content:none}
     const libre = (b, l) => b.x0 >= VB[0] && b.y0 >= VB[1] && b.x1 <= VB[0] + VB[2] && b.y1 <= VB[1] + VB[3]
       && !B.some(o => o.l !== l && b.x0 < o.x1 && o.x0 < b.x1 && b.y0 < o.y1 && o.y0 < b.y1);
     const sw = (3.5 * u).toFixed(2);
+    // un nom refait (à la taille de la carte) garde l'état de sa commune : écartée par un filtre, ou choisie
+    const etat = c => new Set($$(`.k-lieu.${c}`, svg).map(n => n.dataset.l)), off = etat('k-off'), choisi = etat('k-choisi');
     const tri = cfg.lieux.filter(x => dist(x) >= 6).sort((a, b) => (b.n || 0) - (a.n || 0) || dist(b) - dist(a));
     $('.k-noms', svg).innerHTML = tri.map(x => {
       const [px, py] = x.xy, tw = x.c.length * fs * .58, h = fs * 1.2;
@@ -1242,7 +1258,7 @@ html.ed-actif .ep-a::after{content:none}
       ];
       const ok = C.find(c => libre(c.b, x.l)), c = ok || C[0];
       if (ok) B.push(ok.b);
-      return `<text class="k-nom${ok ? '' : ' k-cache'}" data-l="${x.l}" x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.an}" style="font-size:${fs.toFixed(2)}px;stroke-width:${sw}px">${esc(x.c)}</text>`;
+      return `<text class="k-nom${ok ? '' : ' k-cache'}${off.has(String(x.l)) ? ' k-off' : ''}${choisi.has(String(x.l)) ? ' k-choisi' : ''}" data-l="${x.l}" x="${c.x.toFixed(1)}" y="${c.y.toFixed(1)}" text-anchor="${c.an}" style="font-size:${fs.toFixed(2)}px;stroke-width:${sw}px">${esc(x.c)}</text>`;
     }).join('');
   }
   function placerInfo(w, l) {
@@ -1279,11 +1295,16 @@ html.ed-actif .ep-a::after{content:none}
     $$('.k-carte', root).forEach(w => {
       const cfg = CARTES[w.dataset.k];
       if (!cfg) return;
-      placerNoms(w);
       CARTE.lier(w, { survol: l => surligner(w, l), choix: l => cfg.choix && cfg.choix(l) });
       if (fixe) w.classList.add('k-fixe', 'k-on');
       else if (observe && CARTE.mouvement()) observe.observe(w); else w.classList.add('k-on');
     });
+  }
+  // les noms des communes de toutes les cartes d'une vue : toutes les lectures d'abord (une seule mise en page), puis les écritures
+  function placerTout(root) {
+    const ws = $$('.k-carte', root).filter(w => CARTES[w.dataset.k]);
+    const ms = ws.map(w => { const svg = $('svg', w); return svg && svg.getScreenCTM ? svg.getScreenCTM() : null; });
+    ws.forEach((w, i) => placerNoms(w, ms[i]));
   }
   // une liste reliée à sa carte : survoler une ligne montre sa commune, survoler une commune met ses lignes en avant
   function relier(liste, w) {
@@ -1323,6 +1344,8 @@ html.ed-actif .ep-a::after{content:none}
   let FRISES = [], ouvrirPour = null, EN_PLACE = false;
   // la largeur d'une frise posée dans .wrap (sa piste garde 14 px de marge de chaque côté), calculée sans rien lire de la page
   const largeurWrap = () => { const pad = Math.min(56, Math.max(16, innerWidth * .04)); return Math.min(innerWidth - 2 * pad, 1312) - 28; };
+  // celle d'une frise posée dans la colonne d'une page de spectacle (quatre colonnes sur douze ; toute la largeur au téléphone)
+  const largeurAside = () => { const W = largeurWrap() + 28; return innerWidth < 900 ? W - 28 : (W - 11 * 24) / 3 + 72 - 28; };
   function frise(conteneur, o) {
     if (!FR || !conteneur) return null;
     const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: EN_PLACE, largeur: largeurWrap() }, o));
@@ -1378,7 +1401,7 @@ html.ed-actif .ep-a::after{content:none}
   function ucard(s, href, plus = '') {
     const u = univers(s);
     return `<li class="ucard u" style="${uStyle(s)}">
-      <div class="ucard-photo">${img(s.slug, '', s.focale)}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</div>
+      <div class="ucard-photo" data-mv-nom="sp-${esc(s.slug)}">${img(s.slug, '', s.focale)}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</div>
       <div class="ucard-corps">${motif(u.motif, 'ucard-motif')}
         <p class="ucard-crea"${edS(s, 'creation')}>${esc(s.creation || '')}</p>
         <h3 class="ucard-t"><a href="${esc(href)}">${esc(s.titre)}</a></h3>${plus}
@@ -1478,11 +1501,11 @@ html.ed-actif .ep-a::after{content:none}
               ${p ? `<p class="slide-date" style="--k:3"${idDate(p)}>${PIN}<span>${esc(p.ligne)}</span></p>` : ''}
               <a class="btn btn-u" style="--k:4" href="${esc(d.href || `#/spectacle/${d.slug}`)}">${esc(d.bouton)}${ARROW}</a>
             </div>
-            <figure class="slide-photo"${show(d.slug) ? ` data-edit-photo="shows.${esc(d.slug)}.photo"` : ''}>${img(d.slug, (d.titre || []).join(' '), sh.focale, i === diapo)}${d.credit ? `<figcaption class="credit"${ed(`${dp(x)}.credit`)}>${esc(d.credit)}</figcaption>` : ''}</figure>
+            <figure class="slide-photo"${show(d.slug) ? ` data-edit-photo="shows.${esc(d.slug)}.photo" data-mv-nom="sp-${esc(d.slug)}"` : ''}>${img(d.slug, (d.titre || []).join(' '), sh.focale, i === diapo)}${d.credit ? `<figcaption class="credit"${ed(`${dp(x)}.credit`)}>${esc(d.credit)}</figcaption>` : ''}</figure>
           </article>`;
         }).join('')}</div>
         ${dia.length > 1 ? `<div class="hero-nav">
-          <div class="hero-tabs">${dia.map((x, i) => `<button class="hero-tab" type="button" data-go="${i}"${i === diapo ? ' aria-current="true"' : ''}>${(x.d.titre || []).map(t => `<span>${esc(t)}</span>`).join(' ')}</button>`).join('')}</div>
+          <div class="hero-tabs" style="--h-n:${dia.length};--h-i:${diapo}">${dia.map((x, i) => `<button class="hero-tab" type="button" data-go="${i}"${i === diapo ? ' aria-current="true"' : ''}>${(x.d.titre || []).map(t => `<span>${esc(t)}</span>`).join(' ')}</button>`).join('')}<span class="h-ind" aria-hidden="true"></span></div>
           <div class="hero-fleches"><button class="rond" type="button" data-pas="-1">${PREV}</button><button class="rond" type="button" data-pas="1">${NEXT}</button></div>
         </div>` : ''}
       </div>
@@ -1525,6 +1548,7 @@ html.ed-actif .ep-a::after{content:none}
       b.classList.remove('anime'); void b.offsetWidth;
       b.classList.add('on', 'anime'); b.removeAttribute('aria-hidden'); b.inert = false;
       tabs.forEach((t, j) => { if (j === k) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); });
+      const boite = $('.hero-tabs', h); if (boite) boite.style.setProperty('--h-i', k);
       diapo = k; etiquettes();
     };
     tabs.forEach((t, j) => t.addEventListener('click', () => aller(j)));
@@ -1843,7 +1867,7 @@ html.ed-actif .ep-a::after{content:none}
       const u = univers(sh), i = (sh.photos || []).findIndex(p => !p.etablissement && !p.atelier && src(p.cle));
       const ph = i >= 0 ? [sh.photos[i].cle, `shows.${sh.slug}.photos.${i}`] : [sh.slug, `shows.${sh.slug}.photo`];
       return `<li class="fpro u" style="${uStyle(sh)}">
-        <div class="fpro-photo" data-edit-photo="${esc(ph[1])}">${img(ph[0], '', sh.focale)}</div>
+        <div class="fpro-photo" data-edit-photo="${esc(ph[1])}" data-mv-nom="sp-${esc(sh.slug)}">${img(ph[0], '', sh.focale)}</div>
         <div class="fpro-corps">${motif(u.motif, 'fpro-motif')}
           <p class="u-signe"><span${edS(sh, 'creation')}>${esc(sh.creation || '')}</span>${sh.statut ? `<span class="statut"${edS(sh, 'statut')}>${esc(sh.statut)}</span>` : ''}</p>
           <h2 class="fpro-t"><a href="#/spectacle/${esc(sh.slug)}/programmer"${edS(sh, 'titre')}>${esc(sh.titre)}</a></h2>
@@ -1903,7 +1927,7 @@ html.ed-actif .ep-a::after{content:none}
     const ac = sh => {
       const C = sh.actionCulturelle || {}, u = univers(sh), t = (C.textes || [])[0], p = puces(sh);
       return `<li class="ac u" style="${uStyle(sh)}">
-        <div class="ac-photo" data-edit-photo="shows.${esc(sh.slug)}.photo">${img(sh.slug, '', sh.focale)}</div>
+        <div class="ac-photo" data-edit-photo="shows.${esc(sh.slug)}.photo" data-mv-nom="sp-${esc(sh.slug)}">${img(sh.slug, '', sh.focale)}</div>
         <div class="ac-corps">${motif(u.motif, 'ac-motif')}
           <h3 class="ac-t"><a href="#/spectacle/${esc(sh.slug)}/etablissement"${edS(sh, 'titre')}>${esc(sh.titre)}</a></h3>
           <p class="ac-lib">${esc(l.actionCulturelle)}</p>
@@ -2099,7 +2123,7 @@ html.ed-actif .ep-a::after{content:none}
   function ongletEtablissement(s) {
     const l = LIB(), C = s.actionCulturelle || {}, scol = DATES().filter(d => d.slug === s.slug && d.scolaire), p = puces(s);
     // sans date scolaire, la place de l'agenda reste là, vide : en mode édition, on y ajoute une date
-    const dates = scol.length ? `<section class="u-dates" aria-labelledby="c-scol" style="margin-bottom:44px"><h2 class="u-chap" id="c-scol">${esc(l.enEtablissement)}</h2><div data-agenda="${esc(s.slug)}"><ol class="rows">${scol.map(d => rangee(d, { sansTitre: true })).join('')}</ol></div><p style="margin-top:20px">${ecrire('btn btn-u')}</p></section>` : `<div data-agenda="${esc(s.slug)}"></div>`;
+    const dates = scol.length ? `<section class="u-dates" aria-labelledby="c-scol" style="margin-bottom:44px"><h2 class="u-chap" id="c-scol">${esc(l.enEtablissement)}</h2><div class="fr fr-sco" id="s-frise"></div><div data-agenda="${esc(s.slug)}"><ol class="rows">${scol.map(d => rangee(d, { sansTitre: true })).join('')}</ol></div><p style="margin-top:20px">${ecrire('btn btn-u')}</p></section>` : `<div data-agenda="${esc(s.slug)}"></div>`;
     return `<div class="wrap u-grid">
         <div class="u-main">
           <section class="u-sec u-ac" aria-labelledby="c-ac">
@@ -2117,8 +2141,12 @@ html.ed-actif .ep-a::after{content:none}
       ${dossierScolaire(s)}
       <div class="wrap u-appel">${partenaires('')}${ecrire('btn btn-u')}</div>`;
   }
-  function spectacle(s, onglet, { enPlace }) {
+  function spectacle(s, onglet, { enPlace, precedent }) {
     const l = LIB(), u = univers(s), e = entree(onglet) || {};
+    // les onglets d'entrée du spectacle ; d'un onglet à l'autre du même spectacle, l'indicateur part de l'onglet quitté
+    const onglets = ENTREES().filter(x => x.cle !== 'etablissement' || s.actionCulturelle), iCourant = Math.max(0, onglets.findIndex(x => x.cle === onglet));
+    const memeSp = !enPlace && precedent && precedent.vue === 'spectacle' && precedent.slug === s.slug && precedent.onglet !== onglet;
+    const iAvant = memeSp ? Math.max(0, onglets.findIndex(x => x.cle === precedent.onglet)) : iCourant;
     const p = DATES().find(d => d.slug === s.slug && (onglet === 'etablissement' ? d.scolaire : !d.scolaire));
     const autres = (() => { const i = SHOWS().indexOf(s); return [1, 2, 3].map(k => SHOWS()[(i + k) % SHOWS().length]).filter(x => x && x !== s); })();
     const contenu = onglet === 'programmer' ? ongletProgrammer(s) : onglet === 'etablissement' ? ongletEtablissement(s) : ongletVoir(s);
@@ -2129,26 +2157,38 @@ html.ed-actif .ep-a::after{content:none}
           <div class="u-tete-texte">${motif(u.motif, 'u-motif')}
             <p class="u-signe"><span>${esc(S().nom)}</span>${s.creation ? `<span class="sep" aria-hidden="true">·</span><span${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</p>
             ${s.lieuTemps ? `<p class="u-lieu"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}
-            <h1 class="u-titre${enPlace ? '' : ' devoile'}" tabindex="-1">${titres}</h1>
+            <h1 class="u-titre${enPlace || memeSp ? '' : ' devoile'}" tabindex="-1">${titres}</h1>
             ${sousTitre(s, 'u-sous')}
             ${s.genre && s.genre !== s.sousTitre ? `<p class="u-sous"${edS(s, 'genre')}>${esc(s.genre)}</p>` : ''}
             ${s.cadre ? `<p class="u-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}
             ${s.accroche ? `<p class="u-accroche"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
             ${p ? `<p class="u-date"${idDate(p)}>${PIN}<span>${esc(p.ligne)}</span></p>` : ''}
           </div>
-          <figure class="u-photo" data-edit-photo="shows.${esc(s.slug)}.photo">${img(s.slug, s.titre, s.focale, true)}${s.credit ? `<figcaption class="credit"${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
+          <figure class="u-photo" data-edit-photo="shows.${esc(s.slug)}.photo" data-mv-nom="sp-${esc(s.slug)}">${img(s.slug, s.titre, s.focale, true)}${s.credit ? `<figcaption class="credit"${edS(s, 'credit')}>${esc(s.credit)}</figcaption>` : ''}</figure>
         </div>
       </div>
-      <nav class="u-onglets" aria-label="${esc(s.titre)}"><ul class="wrap">${ENTREES().filter(x => x.cle !== 'etablissement' || s.actionCulturelle).map(x => `<li><a href="#/spectacle/${esc(s.slug)}/${esc(x.cle)}" style="--pt:${u.clair ? col(x.couleur, '#bc3e80') : col(x.couleurVive, '#f07ab6')}"${x.cle === onglet ? ' aria-current="page"' : ''}><span class="long">${esc(x.texte)}</span><span class="court">${esc(x.court)}</span></a></li>`).join('')}</ul></nav>
+      <nav class="u-onglets" aria-label="${esc(s.titre)}" style="--o-n:${onglets.length};--o-i:${iAvant}"><ul class="wrap">${onglets.map(x => `<li><a href="#/spectacle/${esc(s.slug)}/${esc(x.cle)}" style="--pt:${u.clair ? col(x.couleur, '#bc3e80') : col(x.couleurVive, '#f07ab6')}"${x.cle === onglet ? ' aria-current="page"' : ''}><span class="long">${esc(x.texte)}</span><span class="court">${esc(x.court)}</span></a></li>`).join('')}<li class="o-ind" aria-hidden="true"></li></ul></nav>
       <div class="u-corps">${contenu}</div>
       <section class="wrap autres-s" aria-labelledby="h-autres"><div class="sec-head"><h2 id="h-autres"><a href="#/spectacles">${esc(l.lesSpectacles)}</a></h2></div>
         <ul class="ucards trois">${autres.map(x => ucard(x, `#/spectacle/${x.slug}/${entreeSp(x.slug, onglet)}`, sousTitre(x))).join('')}</ul>
       </section>
     </article>`;
     const titre = onglet === 'voir' ? s.titre : `${s.titre} - ${e.court || onglet}`;
-    return { titre, entree: onglet, etat: 'true', html, init() {
+    return { titre, entree: onglet, etat: 'true', memeSp, html, init() {
       const pg = $('.u-bande', main);
       if (pg && onglet !== 'etablissement') relier($('.tournee-liste', pg), $('.k-carte', pg));
+      // l'indicateur glisse de l'onglet quitté à l'onglet choisi
+      if (iAvant !== iCourant) requestAnimationFrame(() => requestAnimationFrame(() => { const n = $('.u-onglets', main); if (n) n.style.setProperty('--o-i', iCourant); }));
+      // voir : la frise de sa tournée (toutes ses dates, passées et à venir) ; programmer : sa diffusion au fil des saisons
+      couleurUnivers = u.vif;
+      const ft = $('#t-frise', main), pts = ft ? reperesTournee(s.slug, s.titre) : [];
+      if (pts.length) frise(ft, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${l.dates}`, relier: { liste: ft.closest('.u-bande'), carte: $('svg.k', ft.closest('.u-bande')) }, choix: p => allerLigne(p.id) });
+      friseDiffusion($('#p-diff', main), s.slug, `${s.titre} – ${l.lieuxDiffusion}`, { classe: 'frise-diffusion frise-sp', anMin: 44 });
+      // établissement : ses représentations scolaires, passées (vers leur saison) et à venir (vers leur ligne), dans la colonne
+      const fs = $('#s-frise', main), sco = fs ? reperesTournee(s.slug, s.titre).filter(x => x.scolaire) : [];
+      if (sco.length) frise(fs, { echelle: 'periode', points: sco, libelle: l.enEtablissement, largeur: largeurAside() - 8, moisMin: 34, anMin: 40,
+        classe: 'frise-sco', relier: { liste: fs.closest('.u-dates') }, choix: p => allerLigne(p.id) });
+      couleurUnivers = null;
     } };
   }
 
@@ -2159,17 +2199,36 @@ html.ed-actif .ep-a::after{content:none}
       <div class="wrap page-body">
         <div class="cie">
           <div class="cie-texte">${(C.paragraphes || []).map((p, i) => `<p${ed(`site.compagnie.paragraphes.${i}`)}>${p}</p>`).join('')}</div>
-          <aside class="cie-dates" aria-labelledby="h-dates"><h2 id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
+          <aside class="cie-dates annees-ed" aria-labelledby="h-dates-ed"><h2 id="h-dates-ed"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
             <ol class="annees">${(C.dates || []).map((d, i) => {
               const s = SHOWS().find(x => String(x.annee) === String(d.annee)), t = `<span${ed(`site.compagnie.dates.${i}.titre`)}>${esc(d.titre)}</span>`;
               return `<li><span class="an-photo">${s ? img(s.slug, '', s.focale) : ''}</span><span class="an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</span>${s ? `<a href="#/spectacle/${esc(s.slug)}">${t}</a>` : t}</li>`;
             }).join('')}</ol></aside>
         </div>
+        <section class="c-frise" aria-labelledby="h-dates"><div class="sec-head"><h2 id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2></div><div id="c-frise"></div></section>
         ${Dr ? `<section class="portrait" aria-labelledby="h-dir"><div class="portrait-t"><h2 id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${Dr.chapeau ? `<p${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}</div>
           <div class="portrait-texte">${(Dr.paragraphes || []).map((p, i) => `<p${ed(`site.compagnie.directeur.paragraphes.${i}`)}>${p}</p>`).join('')}</div></section>` : ''}
         ${partenaires('partenaires')}
       </div></div>`;
-    return { titre: menuTexte('compagnie') || C.titre, menu: 'compagnie', html };
+    return { titre: menuTexte('compagnie') || C.titre, menu: 'compagnie', html, init() {
+      // « En quelques dates » : la frise historique, de la première date à la dernière ; chaque création mène à sa page
+      const ans = (C.dates || []).map(d => +d.annee).filter(Boolean);
+      if (ans.length) frise($('#c-frise', main), { echelle: 'periode', debut: `${Math.min(...ans)}-01-01`, fin: `${Math.max(...ans)}-12-31`, etiquettes: true, couloirs: 3, anMin: 64,
+        largeurCar: 9.4, largeurMax: 200, libelle: C.datesTitre,
+        points: C.dates.map((d, i) => { const sp = SHOWS().find(x => String(x.annee) === String(d.annee)); return { id: `c${i}`, jour: `${d.annee}-06-30`, quand: String(d.annee), titre: d.titre,
+          lien: sp ? `#/spectacle/${sp.slug}` : null, couleur: sp ? col(sp.couleurTexteClair, '#bc3e80') : '#bc3e80' }; }) });
+    } };
+  }
+  /* ---------- l'espace pro (règle 16) : trois panneaux, trois accès réservés ---------- */
+  function espacePro() {
+    const P = S().espacePro;
+    const html = `<div class="page"><div class="page-head"><div class="wrap"><h1 class="page-title" tabindex="-1"${ed('site.espacePro.titre')}>${esc(P.titre)}</h1>
+        ${P.texte ? `<p class="ep-texte"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}</div></div>
+      <div class="wrap page-body"><ul class="ep-portes">${(P.portes || []).map((x, i) => `<li class="ep" data-cle="${esc(x.cle)}">
+        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
+        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>
+        <span class="ep-f" aria-hidden="true">${ARROW}</span></li>`).join('')}</ul></div></div>`;
+    return { titre: P.titre, menu: 'espace-pro', html };
   }
   const adresse = co => (co.adresse || []).map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>');
   function contact() {
@@ -2200,16 +2259,46 @@ html.ed-actif .ep-a::after{content:none}
   /* ---------- en-tête et pied de page ---------- */
   function entete() {
     $('.entrees ul').innerHTML = ENTREES().map(e => `<li><a href="${esc(e.href)}" data-e="${esc(e.cle)}" style="${eStyle(e)}"><span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span>${ARROW}</a></li>`).join('');
-    $('.menu ul').innerHTML = (S().menu || []).map(m => `<li><a href="${esc(m.href)}" data-id="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('');
+    if (!$('.e-ind')) $('.entrees').insertAdjacentHTML('beforeend', '<span class="e-ind" aria-hidden="true"></span>');
+    $('.entrees').style.setProperty('--e-n', ENTREES().length || 3);
+    $('.menu ul').innerHTML = (S().menu || []).map(m => `<li><a href="${esc(m.href)}" data-id="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')
+      + (S().espacePro ? `<li><a href="#/espace-pro" data-id="espace-pro">${esc(S().espacePro.titre)}</a></li>` : '') + '<li class="m-ind" aria-hidden="true"></li>';
+    mesures.clear();
     $('.menu').setAttribute('aria-label', LIB().menu || '');
     $('[data-menu-label]').textContent = LIB().menu || '';
     $('.brand').setAttribute('aria-label', S().nom || '');
     $('.brand-word').textContent = S().titreSuffixe || '';
   }
+  // un seul indicateur pour les entrées : le panneau glisse vers l'entrée de la vue, à sa couleur (en teinte quand on lit un
+  // spectacle sous cette entrée) ; il s'efface sur place quand la vue n'est pas une entrée
   function marquer(v) {
+    const es = ENTREES(), i = es.findIndex(e => e.cle === v.entree), nav = $('.entrees'), avant = nav.dataset.etat;
     $$('.entrees a[data-e]').forEach(a => { if (a.dataset.e === v.entree) a.setAttribute('aria-current', v.etat || 'page'); else a.removeAttribute('aria-current'); });
+    const sans = !avant;   // il paraît sur place la première fois, et après une vue sans entrée
+    nav.classList.toggle('sans-glisse', sans);
+    if (i >= 0) { nav.style.setProperty('--e-i', i); nav.style.setProperty('--e-c', col(es[i].couleur, '#bc3e80')); }
+    nav.dataset.etat = i >= 0 ? (v.etat || 'page') : '';
+    if (sans) requestAnimationFrame(() => requestAnimationFrame(() => nav.classList.remove('sans-glisse')));
     $$('.menu a[data-id]').forEach(a => { if (a.dataset.id === v.menu) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    menuCourant = v.menu || '';
+    filetMenu();
   }
+  // le filet du menu second : la place et la largeur de chaque lien, lues quand la mise en page change (ResizeObserver),
+  // jamais pendant un geste
+  const mesures = new Map();
+  let menuCourant = '';
+  function filetMenu(sans = false) {
+    const m = $('.menu'), g = mesures.get(menuCourant);
+    m.classList.toggle('sans-glisse', sans || !m.dataset.etat);
+    m.dataset.etat = g ? menuCourant : '';
+    if (g) { m.style.setProperty('--m-x', `${g[0]}px`); m.style.setProperty('--m-w', g[1]); }
+    if (sans || m.classList.contains('sans-glisse')) requestAnimationFrame(() => requestAnimationFrame(() => m.classList.remove('sans-glisse')));
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(() => {
+    mesures.clear();
+    $$('.menu a[data-id]').forEach(a => { if (a.offsetParent) mesures.set(a.dataset.id, [a.offsetLeft, a.offsetWidth]); });
+    filetMenu(true);
+  }).observe($('.menu'));
   function pied() {
     const s = S(), co = s.coordonnees || {};
     $('#pied').innerHTML = `<div class="wrap foot">
@@ -2225,7 +2314,7 @@ html.ed-actif .ep-a::after{content:none}
       </div>
       <div class="wrap foot-bas">
         <p class="foot-legal">${(co.legal || []).map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('')}</p>
-        <ul>${(s.liensLegaux || []).map(l => `<li><a href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join('')}${LIB().modifierSite ? `<li><button class="foot-modifier" type="button" data-modifier>${CRAYON}${esc(LIB().modifierSite)}</button></li>` : ''}</ul>
+        <ul>${s.espacePro ? `<li><a href="#/espace-pro">${esc(s.espacePro.titre)}</a></li>` : ''}${(s.liensLegaux || []).map(l => `<li><a href="${esc(l.href)}">${esc(l.texte)}</a></li>`).join('')}${LIB().modifierSite ? `<li><button class="foot-modifier" type="button" data-modifier>${CRAYON}${esc(LIB().modifierSite)}</button></li>` : ''}</ul>
       </div>`;
   }
   function logos(root) {
@@ -2251,6 +2340,7 @@ html.ed-actif .ep-a::after{content:none}
     let p = [];
     try { p = decodeURIComponent(chemin || '').split('/').filter(Boolean); } catch (err) { p = []; }
     const [a, b, c] = p, q = new URLSearchParams(qs || ''), seul = p.length === 1;
+    if (seul && a === 'espace-pro' && S().espacePro) return { vue: 'espace-pro' };
     const redir = (S().redirections || {})['#/' + p.join('/')];
     if (redir) return { aller: redir };
     if (!a) return { vue: 'accueil' };
@@ -2267,7 +2357,7 @@ html.ed-actif .ep-a::after{content:none}
   }
   const VUES = {
     accueil, voir, programmer: () => programmer(), etablissement: () => etablissement(), spectacles: () => spectacles(),
-    compagnie: () => compagnie(), contact: () => contact(),
+    compagnie: () => compagnie(), contact: () => contact(), 'espace-pro': () => espacePro(),
     saison: r => saison(r.saison), spectacle: (r, o) => spectacle(show(r.slug), r.onglet, o), legal: r => legal(r.cle),
   };
   // le focus avant un rendu en place : son id, ou sa place parmi les éléments qu'on peut atteindre
@@ -2285,7 +2375,38 @@ html.ed-actif .ep-a::after{content:none}
     const el = (f.id && document.getElementById(f.id)) || (f.href && tous.find(x => x.getAttribute('href') === f.href)) || tous[f.i];
     if (el && el !== document.activeElement) el.focus({ preventScroll: true });
   }
-  let courant = null;
+  /* ---------- la page qui change : des panneaux qui se relaient (voir le bloc « Mouvement » en tête du script) ----------
+     L'en-tête de la nouvelle page part de la couleur de l'ancien et prend la sienne (.26 s) ; le corps paraît en montant de
+     6 px (.22 s) ; d'une fiche de spectacle à sa page, sa photo seule va à sa place (une View Transition d'un seul élément :
+     la page n'est jamais capturée) ; d'un onglet à l'autre du même spectacle, l'en-tête et les onglets restent, l'indicateur
+     glisse et seul le corps se relaie. Un geste (pointeur, clavier, molette) finit tout de suite ce qui bouge encore. */
+  let relais = [];
+  const finirRelais = () => { const a = relais; relais = []; a.forEach(x => { try { x.finish(); } catch (err) { /* déjà finie */ } }); };
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(t => addEventListener(t, () => { if (relais.length) finirRelais(); }, { capture: true, passive: true }));
+  function relayer(fondAvant, memeSp) {
+    if (!bouge() || !main.animate) return;
+    const racine = main.children.length === 1 ? main.firstElementChild : main;
+    const tete = $(':scope > .page-head, :scope > .u-tete', racine), garde = !!tete && (memeSp || !!fondAvant);
+    if (tete && fondAvant && !memeSp) relais.push(tete.animate([{ backgroundColor: fondAvant, offset: 0 }], { duration: 260, easing: C2 }));
+    [...racine.children].filter(c => !(garde && c === tete) && !(memeSp && c.matches('.u-onglets'))).forEach(c =>
+      relais.push(c.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, delay: garde ? 40 : 0, easing: C2, fill: 'backwards' })));
+  }
+  /* après le rendu : les filets des rubriques se tracent à leur arrivée, les blocs montent de 8 px, les cartes et les fiches
+     arrivent l'une après l'autre (MOUVEMENT.reveler) ; rien ne bouge quand la vue est refaite en place */
+  function decorer(enPlace) {
+    $$('.sec-head', main).forEach(h => { if (!$(':scope > .filet', h)) h.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
+    $$('.ucards, .ep-portes, .cast, .docs', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'cascade'); });
+    $$('.portrait, .tour-grid', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
+    if (MV) MV.reveler(main, { immediat: enPlace });
+  }
+  // la fiche pressée (sa photo porte data-mv-nom) : sa photo ira à la place de celle de la page du spectacle
+  let dernier = null;
+  document.addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="#/spectacle/"]'), c = a && a.closest('.ucard, .fpro, .ac, .slide');
+    const ph = c && $('[data-mv-nom]', c);
+    dernier = ph ? { el: ph, t: performance.now() } : null;
+  }, true);
+  let courant = null, rPrec = null, numero = 0;
   function route(force, enPlace = false) {
     let r = parse();
     if (r.aller) {
@@ -2296,8 +2417,21 @@ html.ed-actif .ep-a::after{content:none}
     const k = [r.vue, r.slug, r.onglet, r.saison, r.cle, r.l].join('|');
     if (k === courant && !force) return;
     courant = k;
+    const precedent = rPrec, n = ++numero, d = dernier;
+    rPrec = r; dernier = null;
+    const depuis = !enPlace && d && performance.now() - d.t < 1500 && d.el.isConnected && r.vue === 'spectacle' && d.el.getAttribute('data-mv-nom') === `sp-${r.slug}` ? d.el : null;
+    if (depuis && MV && bouge() && typeof document.startViewTransition === 'function') MV.transition(() => { if (n === numero) rendre(r, precedent, false, true); }, { type: 'fiche', depuis });
+    else rendre(r, precedent, enPlace, false);
+  }
+  function rendre(r, precedent, enPlace, partage) {
+    finirRelais();
+    EN_PLACE = enPlace;
+    FRISES.forEach(f => f.detruire()); FRISES = []; ouvrirPour = null;
     const ouverts = enPlace ? $$('details', main).map(d => d.open) : [];
-    const v = VUES[r.vue](r, { enPlace });
+    // la couleur de l'en-tête quitté (une lecture de style sur la page encore en place, sans mise en page)
+    const teteAvant = enPlace || partage ? null : $('.page-head, .u-tete', main);
+    const fondAvant = teteAvant ? getComputedStyle(teteAvant).backgroundColor : '';
+    const v = VUES[r.vue](r, { enPlace, precedent });
     main.innerHTML = v.html;
     if (enPlace) $$('details', main).forEach((d, i) => { if (ouverts[i]) d.open = true; });
     document.title = `${v.titre} - ${S().titreSuffixe || ''}`;
@@ -2305,11 +2439,14 @@ html.ed-actif .ep-a::after{content:none}
     if (CLES.includes(v.entree) && (v.etat === 'page' || r.vue === 'spectacle')) retenir(v.entree);
     monter(main, enPlace);
     if (v.init) v.init();
+    decorer(enPlace);
     if (r.vue === 'accueil' && INTRO.ouverte()) { const h = $('.hero', main); if (h) h.classList.add('avant'); }
-    if (enPlace) return;
-    window.scrollTo(0, 0);
-    const h = $('h1', main);
-    if (h) h.focus({ preventScroll: true });
+    if (enPlace) { placerTout(main); return; }
+    if (precedent && !INTRO.ouverte()) relayer(fondAvant, !!v.memeSp);
+    // à l'image suivante, avant qu'elle soit peinte : les noms des cartes posés à leur taille (une seule mise en page), la vue
+    // remonte en haut et son titre prend le focus (dans la transition de la photo : tout de suite, avant la capture)
+    const poser = () => { placerTout(main); window.scrollTo(0, 0); const h = $('h1', main); if (h) h.focus({ preventScroll: true }); };
+    if (partage) poser(); else requestAnimationFrame(poser);
   }
   document.addEventListener('click', e => {
     if (e.target.closest('[data-modifier]')) { if (typeof EDITION !== 'undefined' && EDITION.ouvrir) EDITION.ouvrir(); return; }
@@ -2323,7 +2460,7 @@ html.ed-actif .ep-a::after{content:none}
   let tempo = 0;
   addEventListener('resize', () => {
     clearTimeout(tempo);
-    tempo = setTimeout(() => $$('.k-carte', main).forEach(w => { placerNoms(w); surligner(w, null); }), 150);
+    tempo = setTimeout(() => { placerTout(main); $$('.k-carte', main).forEach(w => surligner(w, null)); }, 150);
   });
   addEventListener('hashchange', () => route());
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -2331,6 +2468,7 @@ html.ed-actif .ep-a::after{content:none}
   // la base de la compagnie a changé D : la vue courante se refait en place (ni défilement, ni focus volé, ni animation)
   function rafraichir() {
     const y = scrollY, f = noterFocus(), ouvert = header.classList.contains('ouvert');
+    cacheAP = null;
     polices(); entete(); pied(); logos(document);
     route(true, true);
     window.scrollTo(0, y);
@@ -2348,8 +2486,11 @@ html.ed-actif .ep-a::after{content:none}
   icone.href = 'data:image/svg+xml,' + encodeURIComponent((D.logo || {}).mark || '');
   document.head.appendChild(icone);
   route(true);
-  // les tentacules : un trait magenta lisse et net, sans ventouses ; la page se soulève quand elle remonte (rien de fixe dans le <main>)
-  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', entrees: 'couleur', soulever: true, detail: { ventouses: 0, page: .55, empreinte: 'anneau' } });
+  // la pieuvre ne bouge pas (règle 15) : aucune tentacule, ni au clic ni au changement de page ; la pression, partout
+  if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', clic: false, pages: false });
+  if (MV) MV.presse(document);
+  // l'agenda passé (toutes les saisons publiées) se lit quand le navigateur n'a rien d'autre à faire : l'entrée « voir » n'attend pas
+  ('requestIdleCallback' in window ? requestIdleCallback : f => setTimeout(f, 400))(() => agendaPasse());
   INTRO.ouvrir({ degrade: [[0, '#ffffff'], [.62, '#fbfaf8'], [1, '#eeeae4']], encre: '#ffffff', tache: true, classe: 'maison', apres: revele });
   if (INTRO.ouverte()) { const h = $('.hero', main); if (h) h.classList.add('avant'); }
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);

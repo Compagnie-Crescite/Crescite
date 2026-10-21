@@ -316,7 +316,7 @@ begin
                     'motif', case when admin or i.personne_id = moi then i.motif end) order by i.debut), '[]'::jsonb)
                   from public.crescite_indisponibilites i where i.debut < t1 and i.fin > t0),
     'dates', (select coalesce(jsonb_agg(jsonb_build_object('id', x.id, 'debut', x.debut, 'fin', x.fin, 'nature', x.nature,
-                    'statut', x.statut, 'public', x.public,
+                    'precision', x.precision, 'statut', x.statut, 'public', x.public,
                     'spectacle', jsonb_build_object('id', s.id, 'slug', s.slug, 'titre', s.titre,
                                                     'couleur', s.univers -> 'couleurs' ->> 'scene'),
                     'lieu', case when l.id is null then null else jsonb_build_object('nom', l.nom, 'commune', l.commune) end,

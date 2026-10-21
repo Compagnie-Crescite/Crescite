@@ -215,6 +215,7 @@ h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin:0}
 .aff-svg.a-survol .aff-passe:not(.on){opacity:.22}
 .aff-passe.on,.aff-pt.on{opacity:1}
 .aff-svg.attend .aff-mt,.aff-svg.attend .aff-s{stroke-dashoffset:1}
+.aff-svg.vit .aff-bras,.aff-svg.vit .aff-passes{mask:none}
 .aff-svg.attend .aff-nom,.aff-svg.attend .aff-rouen-nom{opacity:0}
 .aff-svg.pousse .aff-mt{animation:pousse var(--d,1s) cubic-bezier(.5,0,.2,1) var(--t,0s) both}
 .aff-svg.pousse .aff-s{animation:pousse .8s cubic-bezier(.3,0,.2,1) var(--t,0s) both}
@@ -1204,13 +1205,13 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const noms = bras.length ? bras : ps.length <= 40 ? ps : [];
     // les masques ne servent qu'à faire pousser les bras : sans animation, les bras sont posés tels quels
     const defs = !pousse ? '' : (ps.length ? masque(`${id}-p`, ps.map((x, i) => mt(x, 6 * E, .6 + CARTE.longueur(x.xy, { courbe: courbeDe(x) }) / 900, i * .012)).join('')) : '')
-      + bras.map((x, i) => masque(`${id}-${i}`, mt(x, larg(x) + 10 * E, tps[i].d, tps[i].t))).join('');
-    const mk = i => pousse ? ` mask="url(#${id}-${i})"` : '';
+      + (bras.length ? masque(`${id}-b`, bras.map((x, i) => mt(x, larg(x) + 10 * E, tps[i].d, tps[i].t)).join('')) : '');
     const svg = `<svg class="aff-svg${pousse ? ' attend' : ' vit'}" viewBox="${CARTE.viewBox}" data-fin="${fin.toFixed(2)}" style="--ox:${(R[0] - VX).toFixed(1)}px;--oy:${(R[1] - VY).toFixed(1)}px" role="${clic.size ? 'group' : 'img'}" aria-label="${esc(titre)}">
       ${defs ? `<defs>${defs}</defs>` : ''}
       <path class="aff-voisin" d="${CARTE.fond.belgique}"/><path class="aff-voisin" d="${CARTE.fond.luxembourg}"/><path class="aff-pays" d="${CARTE.fond.pays}"/>
       ${ps.length ? `<g class="aff-passes"${pousse ? ` mask="url(#${id}-p)"` : ''}>${ps.map(x => `<path class="aff-passe" data-l="${x.l}" d="${CARTE.bras(x.xy, { w0: 2.6 * E, w1: .7 * E, courbe: courbeDe(x) })}"/>`).join('')}</g><g>${ps.map(x => `<circle class="aff-pt" data-l="${x.l}" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${(2.3 * E).toFixed(2)}"/>`).join('')}</g>` : ''}
-      ${bras.map((x, i) => `<g class="aff-t" data-l="${x.l}" style="--i:${i}"><path class="aff-b"${mk(i)} d="${CARTE.bras(x.xy, { w0: larg(x), w1: 1.7 * E * f, courbe: courbeDe(x) })}"/><path class="aff-s" data-l="${x.l}" pathLength="1" d="${CARTE.bout(x.xy, { r: 5.2 * E * f, tours: 1.3, courbe: courbeDe(x) })}" stroke-width="${(1.8 * E * f).toFixed(2)}" style="--t:${(tps[i].t + tps[i].d * .9).toFixed(2)}s"/>${clic.has(x.l) ? lieu(x) : ''}</g>`).join('')}
+      ${bras.length ? `<g class="aff-bras"${pousse ? ` mask="url(#${id}-b)"` : ''}>${bras.map((x, i) => `<path class="aff-b aff-t" data-l="${x.l}" style="--i:${i}" d="${CARTE.bras(x.xy, { w0: larg(x), w1: 1.7 * E * f, courbe: courbeDe(x) })}"/>`).join('')}</g>` : ''}
+      ${bras.map((x, i) => `<g class="aff-t" data-l="${x.l}" style="--i:${i}"><path class="aff-s" data-l="${x.l}" pathLength="1" d="${CARTE.bout(x.xy, { r: 5.2 * E * f, tours: 1.3, courbe: courbeDe(x) })}" stroke-width="${(1.8 * E * f).toFixed(2)}" style="--t:${(tps[i].t + tps[i].d * .9).toFixed(2)}s"/>${clic.has(x.l) ? lieu(x) : ''}</g>`).join('')}
       ${bras.length ? '' : ps.filter(x => clic.has(x.l)).map(lieu).join('')}
       <g class="aff-tete"${tete ? ` data-l="${tete.l}"` : ''}><circle class="aff-anneau" cx="${R[0]}" cy="${R[1]}" r="${(14 * E * f).toFixed(1)}"/><circle class="aff-rouen" cx="${R[0]}" cy="${R[1]}" r="${(8.5 * E * f).toFixed(1)}"/>${tete && clic.has(tete.l) ? lieu(tete) : ''}</g>
       <g><text class="aff-rouen-nom" x="${R[0]}" y="${R[1]}">Rouen</text>${noms.map((x, i) => `<text class="aff-nom" data-l="${x.l}" data-x="${x.xy[0]}" data-y="${x.xy[1]}" data-n="${x.n || 1}" x="${x.xy[0]}" y="${x.xy[1]}" style="--tn:${bras.length ? (tps[i].t + tps[i].d).toFixed(2) : '.8'}s">${esc(x.c)}</text>`).join('')}</g>
@@ -1254,9 +1255,11 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   function initAffiche(wrap, { lignes, survol, choix } = {}) {
     if (!wrap) return null;
     const svg = $('svg', wrap), tip = $('.aff-tip', wrap), reg = REG[wrap.id] || new Map();
-    placer(wrap);
-    if (svg.classList.contains('attend')) {
-      const go = () => { svg.classList.remove('attend'); svg.classList.add('pousse'); setTimeout(() => svg.classList.add('vit'), +svg.dataset.fin * 1000); };
+    // une carte qui attend de pousser place ses noms quand elle arrive à l'écran (ils sont encore invisibles) : rien n'est lu
+    // dans la page pendant le geste qui l'a fait naître
+    if (!svg.classList.contains('attend')) placer(wrap);
+    else {
+      const go = () => { placer(wrap); svg.classList.remove('attend'); svg.classList.add('pousse'); setTimeout(() => svg.classList.add('vit'), +svg.dataset.fin * 1000); };
       if ('IntersectionObserver' in window) {
         const io = new IntersectionObserver(es => { if (es.some(en => en.isIntersecting)) { io.disconnect(); go(); } }, { threshold: .2 });
         io.observe(svg);
@@ -1508,6 +1511,13 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   function miniBras(lx) {
     return `<svg class="sai-mini" viewBox="${CARTE.viewBox}" aria-hidden="true" focusable="false"><path class="mb-pays" d="${CARTE.fond.pays}"/>${lx.filter(x => loin(x) && !x.encart).map(x => `<path class="mb-bras" d="${CARTE.bras(x.xy, { w0: (6 + Math.sqrt(x.n || 1) * 2.6) * E, w1: 1.4 * E, courbe: courbeDe(x) })}"/>`).join('')}<circle class="mb-rouen" cx="${R[0]}" cy="${R[1]}" r="${(9 * E).toFixed(1)}"/></svg>`;
   }
+  const miniRetenu = (k, lx) => retenu(`mini:${k}:${lx.map(x => `${x.l}.${x.n}`).join(',')}`, () => miniBras(lx));
+  /* ---------- ce qui est sous le pli : la page arrive par son premier écran ; le reste à la tâche qui suit sa première image ---------- */
+  // pendant le rendu d'une vue après un geste, differer(f) pose une place vide (<template>) et garde f ; apres(g) attend que ces
+  // places soient remplies ; quand la vue est refaite en place, tout est rendu d'emblée
+  let suites = null, attentes = null;
+  const differer = f => { if (!suites) return f(); suites.push(f); return `<template data-suite="${suites.length - 1}"></template>`; };
+  const apres = g => { if (attentes) attentes.push(g); else g(); };
   const etatVoir = { v: null };
   let AGV = null;
   const sansAnim = f => { const a = ANIM; ANIM = false; try { return f(); } finally { ANIM = a; } };
@@ -1547,7 +1557,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     };
     const saisonHtml = ({ s, rows }) => { const ouv = F.ouv.has(s.k);
       return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
-        <summary><span class="sai-carte">${miniBras(lieuxDe(s, rows))}</span><span class="sai-c"><h3 class="sai-t disp">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${titreTxt(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b class="disp">${rows.length}</b>${I_CHEV}</span></summary>
+        <summary><span class="sai-carte">${miniRetenu(s.k, lieuxDe(s, rows))}</span><span class="sai-c"><h3 class="sai-t disp">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${titreTxt(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b class="disp">${rows.length}</b>${I_CHEV}</span></summary>
         <div class="sai-corps">${ouv ? corps(s, rows) : ''}</div></details>`; };
     const indexHtml = vis => {
       const tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
@@ -1563,12 +1573,11 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const listeProchaines = () => groupesMois(proch.filter(garde).map(r => r.d), { cle: 'voir' });
     AGV = { F };
     AGV.brancher = () => {
-      const racine = $('#ag-saisons'), index = $('#ag-index'), zone = $('.ag:not(.sai-ag)', main), liste = $('.liste', zone), wrap = $('.aff', zone), champ = $('#cherche');
-      let fSaison = null, fSaisons = null, agenda = false, suiteCF = false, suiteS = false;
+      const racine = $('#ag-saisons'), index = $('#ag-index'), zone = $('.ag:not(.sai-ag)', main), liste = $('.liste', zone), champ = $('#cherche');
+      let fSaison = null, fSaisons = null, agenda = false, suiteCF = false, suiteS = false, wrap = null, ctlP = null;
       const choisirLieu = l => { F.l = F.l === l ? null : l; AGV.maj(); };
-      const ctlP = initAffiche(wrap, { lignes: lignesAvenir, survol: l => { eclairer(liste, l); vers(fSaison, l); }, choix: l => { choisirLieu(l); } });
-      relier(liste, ctlP);
       const brancherSaison = dt => {
+        dt.dataset.branche = '1';
         const w = $('.aff', dt), ul = $('.liste', dt); if (!w) return;
         const ctl = initAffiche(w, { lignes: lignesSaison, survol: l => eclairer(ul, l), choix: l => choisirLieu(l) });
         relier(ul, ctl);
@@ -1576,18 +1585,19 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       // la carte à venir : les communes sans résultat s'éteignent, la commune choisie garde sa puce
       const majCarte = () => {
         const vus = new Set(proch.filter(garde).map(r => r.d.l)), filtre = actif();
-        $$('svg [data-l]', wrap).forEach(n => n.classList.toggle('hors', filtre && !vus.has(+n.dataset.l)));
-        $$('.aff-lieu', wrap).forEach(n => { n.tabIndex = filtre && !vus.has(+n.dataset.l) ? -1 : 0; });
+        if (wrap) $$('svg [data-l]', wrap).forEach(n => n.classList.toggle('hors', filtre && !vus.has(+n.dataset.l)));
+        if (wrap) $$('.aff-lieu', wrap).forEach(n => { n.tabIndex = filtre && !vus.has(+n.dataset.l) ? -1 : 0; });
         const cl = $('.filtre', zone);
         if (cl) { cl.hidden = F.l == null; cl.innerHTML = F.l == null ? '' : `<button type="button" class="chip" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}${use('i-x')}</button>`; }
       };
       const nettoyer = () => $$('.aff', racine).forEach(a => { delete REG[a.id]; });
-      const dessineSaisons = () => {
+      const brancherOuvertes = () => $$('.sai[open]', racine).forEach(dt => { if (!dt.dataset.branche) { dt.dataset.branche = '1'; brancherSaison(dt); } });
+      const dessineSaisons = (brancher = true) => {
         nettoyer();
         const vis = visibles();
         sansAnim(() => { racine.innerHTML = vis.map(saisonHtml).join(''); });
-        $$('.sai[open]', racine).forEach(dt => brancherSaison(dt));
         index.innerHTML = indexHtml(vis);
+        if (brancher) brancherOuvertes();
       };
       const recompte = () => {
         if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
@@ -1624,7 +1634,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
         if (!dt.open) { dt.open = true; F.ouv.add(k); if (remplir(dt)) deplier(dt); }
         dt.scrollIntoView({ behavior: bouge() ? 'smooth' : 'auto', block: 'start' });
       };
-      $('.filtre', zone).addEventListener('click', ev => { if (ev.target.closest('button')) { F.l = null; ctlP.liberer(); AGV.maj(); } });
+      $('.filtre', zone).addEventListener('click', ev => { if (ev.target.closest('button')) { F.l = null; if (ctlP) ctlP.liberer(); AGV.maj(); } });
       $$('[data-s]', main).forEach(b => b.addEventListener('click', () => { F.slug = F.slug === b.dataset.s ? null : b.dataset.s; AGV.maj(); }));
       let tempo = 0;
       champ.addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(() => AGV.maj(), 120); });
@@ -1639,25 +1649,37 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       index.addEventListener('click', ev => {
         const b = ev.target.closest('button'); if (!b) return;
         if (b.classList.contains('idx-tout')) { F.ouv = b.getAttribute('aria-expanded') === 'true' ? new Set() : new Set(visibles().map(x => x.s.k)); dessineSaisons(); return; }
-        if (b.dataset.eff) { if (b.dataset.eff === 'q') F.q = ''; else if (b.dataset.eff === 's') F.slug = null; else { F.l = null; ctlP.liberer(); } AGV.maj(); return; }
+        if (b.dataset.eff) { if (b.dataset.eff === 'q') F.q = ''; else if (b.dataset.eff === 's') F.slug = null; else { F.l = null; if (ctlP) ctlP.liberer(); } AGV.maj(); return; }
         ouvrirSaison(b.dataset.k);
       });
-      if (F.l != null) ctlP.choisir(F.l);
-      if (actif()) majCarte();
+      // la carte à venir et sa liste (sous le pli) : branchées quand elles sont là
+      apres(() => {
+        wrap = $('.aff', zone);
+        ctlP = initAffiche(wrap, { lignes: lignesAvenir, survol: l => { eclairer(liste, l); vers(fSaison, l); }, choix: l => { choisirLieu(l); } });
+        relier(liste, ctlP);
+        if (F.l != null && ctlP) ctlP.choisir(F.l);
+        if (actif()) majCarte();
+      });
       // la frise de la saison, reliée à la liste et à la carte : une pastille allume sa ligne et montre sa commune ; un clic y mène
       fSaison = frise($('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: S0.titre,
         relier: { liste: main, carte: l => ctlP && ctlP.montre(l) },
         choix: p => { if (!$(`[data-frise-id="${CSS.escape(p.id)}"]`, main) && encours) ouvrirSaison(D.saison); allerLigne(p.id); } });
       // l'agenda passé (sous le pli) : dessiné dans la tâche qui suit la première image, sauf quand la vue est refaite en place
       // ou qu'un filtre est déjà là ; la frise des saisons l'accompagne (un clic ouvre la saison et y mène)
-      const agendaVu = () => {
+      // (en deux tâches courtes : les saisons, puis, à l'image suivante, leurs cartes et leur frise)
+      const agendaVu = (tot = false) => {
         if (agenda || !racine.isConnected) return;
         agenda = true;
-        dessineSaisons();
-        fSaisons = frise($('#ag-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
-          libelle: L.saisonsPrecedentes, classe: 'frise-saisons', anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
+        dessineSaisons(tot);
+        const suite = () => {
+          if (!racine.isConnected) return;
+          brancherOuvertes();
+          fSaisons = frise($('#ag-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
+            libelle: L.saisonsPrecedentes, classe: 'frise-saisons', anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
+        };
+        if (tot) suite(); else requestAnimationFrame(() => setTimeout(suite, 0));
       };
-      if (!ANIM || actif()) agendaVu(); else requestAnimationFrame(() => setTimeout(agendaVu, 0));
+      if (!ANIM || actif()) agendaVu(true); else apres(() => requestAnimationFrame(() => setTimeout(agendaVu, 0)));
     };
     return enteteEntree(E5, S0.titre) + `
       <section class="sec sec--outils" aria-label="${esc(L.rechercher)}"><div class="wrap ag-outils">
@@ -1666,15 +1688,15 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       </div></section>
       <div class="frise-sec"><div class="wrap"><div class="frise-hote" id="v-frise"></div></div></div>
       <section class="sec" aria-labelledby="h-dates"><h2 class="sr" id="h-dates">${esc(L.dates)}</h2><div class="wrap ag">
-        <div class="ag-carte">${affiche({ lieux: CARTE.aVenir('public'), titre: S0.titre })}<div class="filtre" hidden></div></div>
-        <div class="liste" data-agenda>${listeProchaines()}</div>
+        <div class="ag-carte">${differer(() => affiche({ lieux: CARTE.aVenir('public'), titre: S0.titre }))}<div class="filtre" hidden></div></div>
+        <div class="liste" data-agenda>${differer(listeProchaines)}</div>
       </div></section>
       <section class="sec sec--agenda" id="saisons-precedentes" aria-labelledby="h-prec"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-prec" data-fit="sec">${esc(L.saisonsPrecedentes)}</h2>
         <div class="ag-frise" id="ag-frise"></div>
         <nav class="ag-index" id="ag-index" aria-label="${esc(L.saison)}"></nav>
         <div id="ag-saisons"></div></div></section>
       ${enTournee.length ? `<section class="sec sec--rose" aria-labelledby="h-tournee"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-tournee" data-fit="sec">${esc(L.enTournee)}</h2>
-        <ul class="cts">${enTournee.map(s => carteTournee(s, pub)).join('')}</ul></div></section>` : ''}`;
+        <ul class="cts">${differer(() => enTournee.map(s => carteTournee(s, pub)).join(''))}</ul></div></section>` : ''}`;
   }
   function initVoir() { if (AGV) AGV.brancher(); }
 
@@ -2318,6 +2340,22 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     if (c && c.animate && bouge()) c.animate([{ opacity: 0, transform: 'translateX(-14px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 40, easing: 'cubic-bezier(.16,.84,.2,1)', fill: 'backwards' });
   }
 
+  // la suite d'une vue : ses places remplies l'une après l'autre (une par image : chaque mise en page reste courte), puis ce qui
+  // les attendait ; ses capitales s'ajustent à l'image suivante
+  function completer(tour, reste, g) {
+    if (tour !== tours) return;
+    const t = $('template[data-suite]', main);
+    if (t) {
+      const f = reste[+t.dataset.suite];
+      if (f) t.insertAdjacentHTML('beforebegin', f());
+      t.remove();
+      if ($('template[data-suite]', main)) { requestAnimationFrame(() => setTimeout(() => completer(tour, reste, g), 0)); return; }
+    }
+    g.forEach(f => f());
+    decorer(false);
+    requestAnimationFrame(fit);
+  }
+
   /* ---------- la navigation : le genre de chaque passage (une entrée, un spectacle, un onglet, le retour, une page) ---------- */
   const pile = [];
   let dernierClic = null, couleurCourante = null;
@@ -2334,7 +2372,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   }
   // l'élément partagé : la photo de la carte cliquée (elle devient la grande photo de sa page)
   const partage = a => { if (!a) return null; const n = a.closest('[data-mv-nom]') || (a.closest('.tuile, .vg, .ct, .fp') || a).querySelector('[data-mv-nom]'); return n && main.contains(n) ? n : null; };
-  let vueCle = null;
+  let vueCle = null, tours = 0;
   function route(enPlace = false) {
     const h = location.hash;
     if (h && h !== '#' && !h.startsWith('#/') && vueCle) return;
@@ -2359,7 +2397,9 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     dernierClic = null;
     const depuis = type === 'spectacle' || type === 'entree' ? partage(clic && clic.a) : null;
     const couleurs = type === 'retour' ? couleurCourante : couleursDe(v);
+    const tour = ++tours;
     const faire = () => {
+      if (tour !== tours) return;   // une navigation plus récente l'a emporté
       const garde = enPlace ? sauver() : null;
       ANIM = !garde;
       vueCle = v.cle;
@@ -2369,25 +2409,34 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       marquer(v);
       Object.keys(REG).forEach(k => { if (!document.getElementById(k)) delete REG[k]; });
       frises.forEach(f => f.detruire()); frises = [];
+      suites = garde ? null : [];
       main.innerHTML = v.rendu();
+      const reste = suites; suites = null;
+      attentes = reste && reste.length ? [] : null;
       document.title = `${v.titre} - ${D.site.titreSuffixe}`;
-      fit();
+      // en place et à la première vue, les capitales s'ajustent tout de suite ; après un geste, dans l'image qui suit (avant
+      // qu'elle soit peinte) : la page n'est mise en page qu'une fois, dans l'image, et pas en plus dans la tâche du geste
+      const ajuster = !!garde || type === 'premiere';
+      if (ajuster) fit();
       if (v.init) v.init();
       decorer(!!garde);
+      if (attentes) { const g = attentes; attentes = null; requestAnimationFrame(() => setTimeout(() => completer(tour, reste, g), 0)); }
       couleurCourante = couleursDe(v);
       if (garde) restaurer(garde);
       else {
         setMenu(false);
         // la vue remonte en haut et son titre prend le focus à l'image suivante (avant qu'elle soit peinte)
-        requestAnimationFrame(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); if (!INTRO.ouverte()) { const t = $('h1', main); if (t) t.focus({ preventScroll: true }); } });
+        requestAnimationFrame(() => { if (!ajuster) fit(); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); if (!INTRO.ouverte()) { const t = $('h1', main); if (t) t.focus({ preventScroll: true }); } });
         volets(type, couleurs);
         capitale(type);
         if (type === 'onglet') corpsParait();
       }
       ANIM = true;
     };
-    // la première vue (et sous l'ouverture) sans transition ; ensuite, les volets (MOUVEMENT.transition)
-    if (enPlace || premiere || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type, depuis });
+    // la première vue (et sous l'ouverture) sans transition ; ensuite, les volets ; MOUVEMENT.transition (View Transition)
+    // seulement quand un élément passe d'une page à l'autre (la photo d'une carte, l'aplat d'un onglet) : sans lui, elle ne
+    // ferait que retarder la page d'une image
+    if (enPlace || premiere || !MV || INTRO.ouverte() || (!depuis && type !== 'onglet')) faire(); else MV.transition(faire, { type, depuis });
   }
 
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -2412,6 +2461,10 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   INTRO.ouvrir({ fond: '#bc3e80', encre: '#ffffff', classe: 'm05-intro', apres: () => { if (bdCtl) bdCtl.demarrer(); } });
   addEventListener('hashchange', () => route());
   route();
+  // l'agenda passé et tous les lieux de la compagnie : calculés d'avance, quand le navigateur est libre (le geste n'a plus qu'à
+  // les lire)
+  const davance = () => { retenu('agendaPasse', agendaPasse); retenu('tout', () => CARTE.tout()); };
+  if ('requestIdleCallback' in window) requestIdleCallback(davance, { timeout: 1500 }); else setTimeout(davance, 600);
   // la base de la compagnie : chaque enregistrement redessine la vue en place
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(() => route(true));
 })();

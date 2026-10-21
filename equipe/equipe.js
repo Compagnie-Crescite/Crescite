@@ -7,8 +7,12 @@
 
    Les adresses, une par vue : #/saison (l'accueil : la prochaine date en grand, le jour J, la saison en chiffres et sur
    la carte, la suite, les saisons passées), #/date/<id> (une date), #/feuilles et #/feuille/<id> (les feuilles de route ;
-   <id> est celui de la date), #/documents, #/notifications, #/moi (la fiche, les notifications sur l'appareil,
-   l'installation, le mot de passe, la déconnexion). #/fiche mène à #/moi.
+   <id> est celui de la date), #/planning (le planning commun, ../admin/planning.js), #/indisponibilites, #/agendas,
+   #/propositions et #/proposition/<id>, #/spectacles et #/spectacles/<slug> (ses spectacles et leurs fichiers de travail ;
+   #/documents y mène), #/notifications, #/moi (la fiche, les notifications sur l'appareil, l'installation, le mot de
+   passe, la déconnexion). #/fiche mène à #/moi. Au téléphone, la barre du bas garde cinq onglets (Saison, Feuilles,
+   Planning, Spectacles, Moi) et les notifications passent dans une cloche en haut, avec leur badge ; à l'ordinateur, la
+   colonne de gauche les montre toutes les six.
 
    La base (Supabase, tables crescite_) ne montre à chacun que ce qui le concerne : voir les règles d'accès de
    supabase/migrations/20261021_crescite_equipe.sql et 20261022_crescite_notifications.sql. Les comptes sont ouverts par
@@ -38,8 +42,8 @@
   const CONTACT = 'contact@crescite.fr';          // l'adresse publique de la compagnie
   const ROUEN = [49.4431, 1.0993];                // le départ des tournées (latitude, longitude)
   const NOTIFS_MAX = 100;
-  const ONGLETS = ['saison', 'feuilles', 'planning', 'documents', 'notifications', 'moi'];
-  const TITRES = { saison: 'Ma saison', feuilles: 'Feuilles de route', planning: 'Planning', documents: 'Mes documents', notifications: 'Notifications', moi: 'Moi',
+  const ONGLETS = ['saison', 'feuilles', 'planning', 'spectacles', 'notifications', 'moi'];
+  const TITRES = { saison: 'Ma saison', feuilles: 'Feuilles de route', planning: 'Planning', spectacles: 'Mes spectacles', notifications: 'Notifications', moi: 'Moi',
     indisponibilites: 'Mes indisponibilités', agendas: 'Mes agendas', propositions: 'Propositions de dates', proposition: 'Proposition de dates' };
 
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -256,6 +260,7 @@
     croix: ic('<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>'),
     cle: ic('<circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5 19 4M16 7l2.5 2.5M14 9l2 2"/>'),
     sortir: ic('<path d="M14 4.5h4a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5h-4"/><path d="M10 8l-4 4 4 4M6 12h9"/>'),
+    spectacle: ic('<path d="M3.5 4.5h17v15.5h-17z"/><path d="M3.5 4.5c1.4 3.3 2.2 7.5 1.9 15.5M20.5 4.5c-1.4 3.3-2.2 7.5-1.9 15.5M3.5 4.5c3 2.6 5.8 3.6 8.5 3.6s5.5-1 8.5-3.6M8 20v-2.5h8V20"/>'),
     planning: ic('<rect x="3.5" y="4.5" width="17" height="16" rx="2.2"/><path d="M3.5 9.5h17M3.5 15h17M9.2 9.5v11M14.8 9.5v11"/>'),
     indispo: ic('<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M9.5 13l5 5M14.5 13l-5 5"/>'),
     relier: ic('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
@@ -343,7 +348,7 @@
     notifs: [], notifsEtat: 'inconnu', canal: null, tempsReel: '', aMarquer: ARRIVEE.lue,
     push: { etat: 'inconnu', cle: undefined, cleLe: 0, verifie: false }, installer: null,
     modifs: { reps: new Map(), dates: new Map() }, cartes: new Map(), cherche: new Set(), chiffresVus: false,
-    dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planning: null, planningEtat: null, planningCache: null,
+    partages: new Map(), dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planning: null, planningEtat: null, planningCache: null,
     messageConnexion: ARRIVEE.erreur ? {
       texte: `Ce lien ne peut plus servir : ${ARRIVEE.code === 'otp_expired' || /expired|invalid/i.test(ARRIVEE.erreur) ? 'il a expiré, ou il a déjà été ouvert une fois' : 'il n’a pas pu être vérifié'}. Demandez-en un nouveau ci-dessous.`,
       genre: 'erreur' } : null,
@@ -376,7 +381,7 @@
       equipes: [], documents: [], spectacles: new Map(), feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0,
       horsLigne: 0, route: null, vue: '', pile: [], defil: {}, declencheur: {}, ficheSale: false, feuilleVue: null, sansSession: false,
       provisoire: false, notifs: [], notifsEtat: 'inconnu', modifs: { reps: new Map(), dates: new Map() }, cartes: new Map(), cherche: new Set(),
-      dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planningEtat: null, planningCache: null });
+      partages: new Map(), dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planningEtat: null, planningCache: null });
     if (E.planning) { try { E.planning.detruire(); } catch (e) { /* déjà parti */ } E.planning = null; }
     E.push.verifie = false;
     majBadge();
@@ -748,7 +753,7 @@
         ${onglet('saison', ICONES.agenda, 'Saison', 'Ma saison')}
         ${onglet('feuilles', ICONES.feuille, 'Feuilles', 'Feuilles de route')}
         ${onglet('planning', ICONES.planning, 'Planning')}
-        ${onglet('documents', ICONES.dossier, 'Docs', 'Documents')}
+        ${onglet('spectacles', ICONES.spectacle, 'Spectacles')}
         ${onglet('notifications', ICONES.cloche, 'Notifs', 'Notifications')}
         ${onglet('moi', `<span class="nav-avatar">${ICONES.moi}</span>`, 'Moi')}
         <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button></p>
@@ -758,7 +763,7 @@
           <a class="bouton-rond retour" href="#/saison" data-retour data-tt="retour" hidden>${ICONES.retour}<span class="sr">Retour</span></a>
           <a class="marque-mini" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span> <small>équipe</small></a>
           <p class="barre-titre" aria-hidden="true"></p>
-          <div class="barre-actions"><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
+          <div class="barre-actions"><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
         </header>
         <div class="bandeau-etat" id="bandeau-etat"></div>
         <main id="contenu" tabindex="-1"></main>
@@ -786,6 +791,7 @@
     if (!a) { c.style.opacity = '0'; return; }
     const cible = mq('(min-width: 760px)').matches ? a : $('.nav-icone', a);
     const rn = nav.getBoundingClientRect(), rc = cible.getBoundingClientRect();
+    if (!rc.width) { c.style.opacity = '0'; return; }          // l'onglet est caché (les notifications, au téléphone)
     const premiere = !c.dataset.place;
     if (premiere || sansAnimation || reduit()) c.style.transition = 'none';
     c.style.width = `${rc.width}px`; c.style.height = `${rc.height}px`;
@@ -797,12 +803,15 @@
   }
   function majNav(r) {
     $$('.nav-item').forEach(a => { if (a.dataset.onglet === r.onglet) a.setAttribute('aria-current', r.profondeur ? 'true' : 'page'); else a.removeAttribute('aria-current'); });
+    $$('[data-cloche]').forEach(a => { if (r.onglet === 'notifications') a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     placerCurseur();
   }
-  const parentDe = r => E.pile[E.pile.length - 1] || (r.k === 'feuille' ? '#/feuilles' : ['proposition', 'propositions', 'indisponibilites', 'agendas'].includes(r.k) ? '#/planning' : '#/saison');
+  const parentDe = r => E.pile[E.pile.length - 1] || (r.k === 'feuille' ? '#/feuilles' : r.k === 'spectacle' ? '#/spectacles'
+    : ['proposition', 'propositions', 'indisponibilites', 'agendas'].includes(r.k) ? '#/planning' : '#/saison');
   function libelleDe(h) {
     const r = lireRoute(h);
     if (r.k === 'date') { const d = E.dates.find(x => x.id === r.id); return d ? d.spectacle?.titre || 'la date' : 'la date'; }
+    if (r.k === 'spectacle') { const x = [...E.spectacles.values()].find(s => (s.slug || String(s.id)) === r.slug); return x ? x.titre : 'le spectacle'; }
     if (r.k === 'feuille') return 'la feuille de route';
     return TITRES[r.k] || 'Ma saison';
   }
@@ -858,10 +867,12 @@
     if ((m = h.match(/^#\/feuille\/(\d+)$/))) return { k: 'feuille', id: +m[1], onglet: 'feuilles', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/proposition\/(\d+)$/))) return { k: 'proposition', id: +m[1], onglet: 'planning', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/(indisponibilites|agendas|propositions)$/))) return { k: m[1], onglet: 'planning', profondeur: 1, hash: h };
-    if ((m = h.match(/^#\/(saison|feuilles|planning|documents|notifications|moi)$/))) return { k: m[1], onglet: m[1], profondeur: 0, hash: h };
+    if ((m = h.match(/^#\/spectacles\/([a-z0-9-]{1,80})$/))) return { k: 'spectacle', slug: m[1], onglet: 'spectacles', profondeur: 1, hash: h };
+    if ((m = h.match(/^#\/(saison|feuilles|planning|spectacles|notifications|moi)$/))) return { k: m[1], onglet: m[1], profondeur: 0, hash: h };
+    if (/^#\/documents(\/|$)/.test(h)) return { redirige: '#/spectacles' };         // les anciens liens, les notifications « document »
     return { redirige: h === '#/fiche' ? '#/moi' : '#/saison' };
   }
-  const VUES = { saison: vueSaison, date: vueDate, feuilles: vueFeuilles, feuille: vueFeuille, documents: vueDocuments, notifications: vueNotifications, moi: vueMoi,
+  const VUES = { saison: vueSaison, date: vueDate, feuilles: vueFeuilles, feuille: vueFeuille, spectacles: vueSpectacles, spectacle: vueSpectacle, notifications: vueNotifications, moi: vueMoi,
     planning: vuePlanning, indisponibilites: vueIndispos, agendas: vueAgendas, propositions: vuePropositions, proposition: vueProposition };
 
   function router(o = {}) {
@@ -1352,6 +1363,7 @@
     }
     html += blocLieu(d) + blocEquipe(d, passee) + blocDocuments(d);
     afficher(r, sp.titre || 'Date', html, { focus });
+    preparerPartages(documentsDe(d.spectacle?.id).filter(x => x.type === 'fiche_technique'));
     if (d.feuille && !f) chargerFeuille(d.id).then(x => {
       const b = location.hash === r.hash && $('#bloc-planning');
       if (!b) return;
@@ -1560,13 +1572,13 @@
 
   // le contexte d'une feuille (FEUILLE.html, FEUILLE.pdf) : la date telle que la tournée la donne, la personne connectée
   // (son prénom ressort dans la feuille) et les documents que la feuille peut citer. Un fichier y est un lien signé, encore
-  // bon, dans la page ; dans le PDF, qu'on garde des jours, un lien vers « Mes documents », qui le signe de nouveau.
+  // bon, dans la page ; dans le PDF, qu'on garde des jours, un lien vers la page du spectacle, qui le signe de nouveau.
   const contexte = (d, { pdf = false } = {}) => ({
     date: d, lieu: d.lieu || null, representations: d.representations,
     spectacle: { titre: d.spectacle?.titre || '', slug: d.spectacle?.slug || '', univers: d.spectacle?.univers || {}, duree: d.spectacle?.duree || '' },
     moi: E.personne ? { prenom: E.personne.prenom || '', nom: E.personne.nom || '' } : undefined,
     documents: E.documents.filter(x => x.spectacle_id == null || x.spectacle_id === d.spectacle?.id).map(x => ({ id: x.id, titre: x.titre,
-      url: documentPrive(x) ? (!pdf && lienFrais(x.fichier)?.url) || `${retourUrl()}#/documents` : urlDocument(x) })),
+      url: documentPrive(x) ? (!pdf && lienFrais(x.fichier)?.url) || `${retourUrl()}#/spectacles${d.spectacle?.slug ? `/${d.spectacle.slug}` : ''}` : urlDocument(x) })),
   });
   async function chargerFeuille(id) {
     if (E.feuilles.has(id)) return E.feuilles.get(id);
@@ -1639,23 +1651,6 @@
   }
 
   // ================================================================================================ mes documents
-  function vueDocuments(r, { focus }) {
-    const auj = aujourdhui();
-    const prochain = id => { const d = E.dates.find(x => x.spectacle?.id === id && finDe(x) >= auj && vivante(x)); return d ? d.debut : '9999'; };
-    const ids = [...new Set(E.documents.filter(x => x.spectacle_id != null).map(x => x.spectacle_id))]
-      .sort((a, b) => prochain(a).localeCompare(prochain(b)) || String(E.spectacles.get(a)?.titre || '').localeCompare(String(E.spectacles.get(b)?.titre || ''), 'fr'));
-    const groupes = ids.map(id => ({ id: String(id), sp: E.spectacles.get(id) || { titre: 'Spectacle' }, docs: documentsDe(id) }));
-    const compagnie = E.documents.filter(x => x.spectacle_id == null);
-    if (compagnie.length) groupes.push({ id: 'compagnie', sp: null, docs: compagnie });
-    let html = `<div class="titre-vue"><h1>Mes documents</h1><p class="sous">Le texte, les dossiers et les fiches techniques de vos spectacles, et les documents de toute la compagnie.</p></div>`;
-    if (E.erreurLiens) html += `<p class="message erreur" role="alert">Les fichiers ne peuvent pas s’ouvrir d’ici pour le moment (${esc(motsErreur(E.erreurLiens))}). Chacun sera redemandé quand vous l’ouvrirez.</p>`;
-    if (!groupes.length) html += etatVide('dossier', 'Aucun document pour l’instant', 'L’administration les ajoute au fil de la saison : le texte, le dossier, la fiche technique… Ils apparaîtront ici, rangés par spectacle.');
-    html += groupes.map(g => `<section class="groupe-docs"${g.sp ? attrU(g.sp) : ''} aria-labelledby="g-${g.id}">
-        <div class="groupe-tete"><span class="pastille" aria-hidden="true"></span><h2 id="g-${g.id}">${esc(g.sp ? g.sp.titre : 'Toute la compagnie')}</h2> <span class="compte-nb">${pluriel(g.docs.length, 'document')}</span></div>
-        <ul class="liste-docs">${g.docs.map(x => `<li class="doc-ligne">${ligneDocument(x)}${x.type === 'fiche_technique' ? `<button type="button" class="btn petit doc-partager" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</li>`).join('')}</ul></section>`).join('');
-    html += piedVue();
-    afficher(r, TITRES.documents, html, { focus });
-  }
   function ligneDocument(x) {
     const ext = x.fichier ? (x.fichier.split('.').pop() || '').toUpperCase() : '';
     let source = 'Fichier';
@@ -1663,32 +1658,6 @@
     else { try { source = new URL(x.url).hostname.replace(/^www\./, '') + ' ↗'; } catch (e) { source = 'Lien'; } }
     return lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span class="doc-texte"><span class="doc-type">${esc(TYPES_COURTS[x.type] || 'Document')}${POUR[x.pour] ? ` · ${POUR[x.pour]}` : ''}</span>
       <span class="doc-titre">${esc(x.titre)}</span></span> <span class="doc-src">${esc(source)}</span>`, 'doc');
-  }
-  // partager une fiche technique : un lien de trente jours (un fichier privé), ou son adresse publique ; le partage du
-  // téléphone, sinon le lien copié
-  async function partager(bouton) {
-    const x = E.documents.find(y => y.id === Number(bouton.dataset.partager));
-    if (!x) return;
-    const sp = x.spectacle_id != null ? E.spectacles.get(x.spectacle_id) : null;
-    const titre = [x.titre, sp && sp.titre, 'Compagnie Crescite'].filter(Boolean).join(' · ');
-    let url;
-    try {
-      url = await occupe(bouton, 'Un instant…', async () => {
-        if (!documentPrive(x)) { const u = urlDocument(x); if (!u) throw new Error('ce document n’a pas d’adresse à partager'); return u; }
-        const { data, error } = await sb.storage.from(SEAU).createSignedUrl(x.fichier, DUREE_PARTAGE);
-        if (error) throw error;
-        return data.signedUrl;
-      });
-    } catch (e) { return annoncer(`Le lien n’a pas pu être préparé : ${motsErreur(e)}.`, { erreur: true }); }
-    const duree = documentPrive(x) ? ' Il reste valable trente jours.' : '';
-    if (navigator.share) {
-      try { await navigator.share({ title: titre, url }); return; } catch (e) {
-        if (e.name === 'AbortError') return;
-        // le partage veut un geste tout frais (Safari) : on le propose de nouveau
-        if (e.name === 'NotAllowedError') return annoncer(`Le lien est prêt.${duree}`, { persistant: true, action: { libelle: 'Partager', f: () => navigator.share({ title: titre, url }).catch(() => copier(url, duree)) } });
-      }
-    }
-    copier(url, duree);
   }
   async function copier(url, duree = '', message = '') {
     let ok = false;
@@ -1705,8 +1674,11 @@
   }
 
   // ================================================================================================ les notifications
-  const LIENS_SURS = /^#\/(saison|feuilles|planning|documents|notifications|moi|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+)$/;
-  const lienDe = n => (typeof n.lien === 'string' && LIENS_SURS.test(n.lien) ? n.lien : n.date_id ? `#/date/${n.date_id}` : '#/notifications');
+  const LIENS_SURS = /^#\/(saison|feuilles|planning|spectacles|documents|notifications|moi|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+|spectacles\/[a-z0-9-]{1,80})$/;
+  const lienDe = n => {
+    if (n && n.lien === '#/documents' && n.spectacle_id != null) { const sp = E.spectacles.get(Number(n.spectacle_id)); if (sp && sp.slug) return `#/spectacles/${sp.slug}`; }
+    return typeof n.lien === 'string' && LIENS_SURS.test(n.lien) ? n.lien : n.date_id ? `#/date/${n.date_id}` : '#/notifications';
+  };
   const nonLues = () => E.notifs.filter(x => !x.lue_le).length;
   const trierNotifs = xs => xs.sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le));
 
@@ -1776,11 +1748,11 @@
   }
   function majBadge(nouvelle = false) {
     const n = nonLues();
-    $$('.nav-item[data-onglet="notifications"] .pastille-nb').forEach(p => {
+    $$('.nav-item[data-onglet="notifications"] .pastille-nb, [data-cloche] .pastille-nb').forEach(p => {
       p.dataset.n = n; p.textContent = n > 99 ? '99+' : n ? String(n) : '';
       if (nouvelle && n) { p.classList.remove('nouvelle'); void p.offsetWidth; p.classList.add('nouvelle'); }
     });
-    $$('.nav-item[data-onglet="notifications"] .nb-sr').forEach(s => { s.textContent = n ? `, ${pluriel(n, 'non lue', 'non lues')}` : ''; });
+    $$('.nav-item[data-onglet="notifications"] .nb-sr, [data-cloche] .nb-sr').forEach(s => { s.textContent = n ? `, ${pluriel(n, 'non lue', 'non lues')}` : ''; });
     try { if (navigator.setAppBadge) { if (n) navigator.setAppBadge(n).catch(() => {}); else navigator.clearAppBadge().catch(() => {}); } } catch (e) { /* rien */ }
     majTitre();
   }
@@ -2521,6 +2493,138 @@
     annoncer(`C’est noté : ${REPONSES[reponse].toLowerCase()} ${texteJours(j)}.`);
     majBadgePlanning();
     E.planningCache = null;
+  }
+
+  // ================================================================================================ mes spectacles
+  // Les spectacles sur lesquels la personne travaille : sa distribution (jeu, création, technique, production) et ceux où
+  // elle est dans l'équipe d'une date (remplacement, renfort). Chacun dans son univers ; sa page donne ses prochaines dates
+  // et ses fichiers de travail, rangés par genre, qui s'ouvrent d'un geste et se partagent vite.
+  const GENRES_DOCS = [['texte', 'Le texte', 'Les textes'], ['dossier', 'Le dossier', 'Les dossiers'], ['fiche_technique', 'La fiche technique', 'Les fiches techniques'],
+    ['plan', 'Le plan', 'Les plans'], ['autre', 'Les autres', 'Les autres']];
+  const GENRES_CONNUS = new Set(GENRES_DOCS.slice(0, 4).map(([t]) => t));
+  const slugDe = sp => (sp && (sp.slug || (sp.id != null ? String(sp.id) : ''))) || '';
+  function mesSpectacles() {
+    const ids = new Set();
+    E.distributions.filter(x => memeId(x.personne_id, E.moi)).forEach(x => ids.add(Number(x.spectacle_id)));
+    E.dates.forEach(d => { if (d.spectacle && d.spectacle.id != null) ids.add(Number(d.spectacle.id)); });
+    const auj = aujourdhui();
+    const prochaine = id => E.dates.filter(d => Number(d.spectacle?.id) === id && vivante(d) && finDe(d) >= auj && d.precision !== 'saison')
+      .sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id))[0] || null;
+    return [...ids].map(id => ({ id, sp: E.spectacles.get(id) || E.dates.find(d => Number(d.spectacle?.id) === id)?.spectacle || { id, titre: 'Spectacle' }, prochaine: prochaine(id) }))
+      .sort((a, b) => (a.prochaine && b.prochaine ? (a.prochaine.debut < b.prochaine.debut ? -1 : a.prochaine.debut > b.prochaine.debut ? 1 : 0)
+        : a.prochaine ? -1 : b.prochaine ? 1 : ((a.sp.ordre ?? 999) - (b.sp.ordre ?? 999)) || String(a.sp.titre || '').localeCompare(String(b.sp.titre || ''), 'fr')));
+  }
+  // son rôle : « Jeu · Bérénice », « Mise en scène et adaptation », « Remplace Adrien Vada »
+  function rolesDe(id) {
+    const miennes = E.distributions.filter(x => Number(x.spectacle_id) === id && memeId(x.personne_id, E.moi));
+    const xs = miennes.map(x => (x.categorie === 'jeu' ? (x.role ? `Jeu · ${x.role}` : 'Jeu') : majuscule(txt(x.fonction) || CATEGORIES[x.categorie] || '')));
+    if (!miennes.length) {
+      const dates = new Set(E.dates.filter(d => Number(d.spectacle?.id) === id).map(d => d.id));
+      E.equipes.filter(e => memeId(e.personne_id, E.moi) && e.present && dates.has(Number(e.date_id))).forEach(e => xs.push(e.fonction ? majuscule(e.fonction) : 'Dans l’équipe d’une date'));
+    }
+    return [...new Set(xs.filter(Boolean))];
+  }
+  const styleH = sp => { const c = couleurs(sp), f = police(sp); return `--h-fond:${c.hFond};--h-texte:${c.hTexte};--h-accent:${c.hAccent}${f ? `;--h-police:${f.famille};--h-graisse:${f.graisse}` : ''}`; };
+  const ligneFichier = x => `<li class="doc-ligne">${ligneDocument(x)}<button type="button" class="btn petit doc-partager" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button></li>`;
+  const messageLiens = () => (E.erreurLiens ? `<p class="message erreur" role="alert">Les fichiers ne peuvent pas s’ouvrir d’ici pour le moment (${esc(motsErreur(E.erreurLiens) || 'réessayez')}). Chacun sera redemandé quand vous l’ouvrirez.</p>` : '');
+
+  function vueSpectacles(r, { focus }) {
+    const xs = mesSpectacles(), compagnie = E.documents.filter(x => x.spectacle_id == null);
+    let html = '<div class="titre-vue"><h1>Mes spectacles</h1><p class="sous">Ceux sur lesquels vous travaillez, avec leurs fichiers de travail, à ouvrir et à partager.</p></div>';
+    html += messageLiens();
+    html += xs.length ? `<ul class="liste-spectacles">${xs.map(carteSpectacle).join('')}</ul>`
+      : etatVide('dossier', 'Pas encore de spectacle', 'Quand l’administration vous inscrira dans une distribution, ou dans l’équipe d’une date, vos spectacles apparaîtront ici, avec leurs fichiers de travail.');
+    if (compagnie.length) html += `<section class="groupe-docs compagnie" aria-labelledby="t-compagnie"><h2 class="titre-section" id="t-compagnie">Toute la compagnie</h2><ul class="liste-docs">${compagnie.map(ligneFichier).join('')}</ul></section>`;
+    html += piedVue();
+    afficher(r, TITRES.spectacles, html, { focus });
+    preparerPartages(compagnie);
+  }
+  function carteSpectacle({ id, sp, prochaine }) {
+    const photo = photoDe(sp), n = documentsDe(id).length, roles = rolesDe(id);
+    const ou = prochaine && prochaine.lieu ? ` · ${prochaine.lieu.commune || prochaine.lieu.nom}` : '';
+    return `<li><a class="carte-spectacle${photo ? ' avec-photo' : ''}" href="#/spectacles/${esc(encodeURIComponent(slugDe(sp)))}" style="${esc(styleH(sp))}" data-spectacle="${id}">
+      ${photo ? `<span class="cs-photo" aria-hidden="true"><img src="${esc(photo)}" alt="" loading="lazy" decoding="async" crossorigin="anonymous"></span>` : ''}
+      <span class="cs-corps"><span class="cs-titre">${esc(sp.titre || 'Spectacle')}</span>
+        ${roles.length ? `<span class="cs-role">${esc(roles.join(' · '))}</span>` : ''}
+        <span class="cs-pied"><span class="cs-date">${ICONES.agenda}<span>${prochaine ? `${esc(majuscule(quandTexte(prochaine)))}${esc(ou)}` : 'Pas de date à venir'}</span></span>
+        <span class="cs-fichiers">${ICONES.dossier}<span>${n ? pluriel(n, 'fichier') : 'aucun fichier'}</span></span></span></span>${ICONES.chevron}</a></li>`;
+  }
+  function vueSpectacle(r, { focus }) {
+    const x = mesSpectacles().find(y => slugDe(y.sp) === r.slug);
+    if (!x) return afficher(r, 'Spectacle', `<div class="titre-vue"><h1>Spectacle introuvable</h1></div>${etatVide('dossier', 'Ce spectacle n’est pas (ou plus) dans les vôtres', 'Retrouvez vos spectacles dans l’onglet Spectacles.', '<p><a class="btn" href="#/spectacles">Mes spectacles</a></p>')}`, { focus });
+    const { id, sp } = x, docs = documentsDe(id), roles = rolesDe(id), auj = aujourdhui(), photo = photoDe(sp);
+    const avenir = E.dates.filter(d => Number(d.spectacle?.id) === id && finDe(d) >= auj).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
+    let html = `<article class="tete-spectacle${photo ? ' avec-photo' : ''}" style="${esc(styleH(sp))}" aria-labelledby="ts-titre">
+        ${photo ? `<div class="ts-photo" aria-hidden="true"><img src="${esc(photo)}" alt="" decoding="async" crossorigin="anonymous" fetchpriority="high"></div>` : ''}
+        <div class="ts-corps"><p class="ts-haut"><span class="etiquette-verre">Spectacle</span></p><h1 class="ts-titre" id="ts-titre">${esc(sp.titre || 'Spectacle')}</h1>
+          ${roles.length ? `<p class="ts-role">${esc(roles.join(' · '))}</p>` : ''}
+          ${sp.duree ? `<p class="ts-duree">${esc(String(sp.duree).replace(/^durée\s*:\s*/i, 'Durée : '))}</p>` : ''}</div></article>`;
+    html += `<section class="bloc"${attrU(sp)} aria-labelledby="ts-dates"><h2 id="ts-dates">${ICONES.agenda}${avenir.length > 1 ? 'Mes prochaines dates' : 'Ma prochaine date'}</h2>
+      ${avenir.length ? `<ul class="dates-spectacle">${avenir.slice(0, 8).map(d => {
+        const ou = d.lieu ? [d.lieu.nom, d.lieu.nom && d.lieu.commune && !contientMot(d.lieu.nom, d.lieu.commune) ? d.lieu.commune : ''].filter(Boolean).join(' · ') : (d.intitule || '');
+        const nat = natureDe(d);
+        return `<li><a class="ds-ligne" href="#/date/${d.id}"><span class="ds-quand">${esc(majuscule(quandTexte(d)))}</span><span class="ds-ou">${esc(ou)}</span>${nat !== 'representations' ? `<span class="etat nature">${esc(NATURES[nat])}</span>` : ''}${ETATS_COURTS[d.statut] ? `<span class="etat ${d.statut}">${ETATS_COURTS[d.statut]}</span>` : ''}${ICONES.chevron}</a></li>`;
+      }).join('')}</ul>${avenir.length > 8 ? `<p class="aide">Et ${pluriel(avenir.length - 8, 'autre date', 'autres dates')} dans Ma saison.</p>` : ''}` : '<p class="aide">Pas de date à venir pour vous sur ce spectacle.</p>'}</section>`;
+    html += `<section class="bloc fichiers"${attrU(sp)} aria-labelledby="ts-fichiers"><h2 id="ts-fichiers">${ICONES.dossier}Les fichiers de travail</h2>${messageLiens()}`;
+    if (!docs.length) html += '<p class="aide">Pas encore de fichier : l’administration les ajoute au fil de la saison (le texte, le dossier, la fiche technique, les plans…).</p>';
+    for (const [type, un, plusieurs] of GENRES_DOCS) {
+      const xs = docs.filter(d => (type === 'autre' ? !GENRES_CONNUS.has(d.type) : d.type === type));
+      if (xs.length) html += `<h3 class="genre-docs">${esc(xs.length > 1 ? plusieurs : un)}</h3><ul class="liste-docs">${xs.map(ligneFichier).join('')}</ul>`;
+    }
+    html += '</section>' + piedVue();
+    afficher(r, sp.titre || 'Spectacle', html, { focus });
+    preparerPartages(docs);
+  }
+
+  // ———— partager vite. Fichier privé : un lien signé de trente jours, préparé à l'ouverture de la page (un seul appel
+  // pour tous), pour que le geste ouvre aussitôt le partage du téléphone (Safari le refuse après une attente du réseau).
+  // Document public : son adresse publique ; document-lien : son adresse. Sans partage du téléphone : le lien copié.
+  const PARTAGE_FRAIS = (DUREE_PARTAGE - 86400) * 1000;       // un lien de trente jours sert vingt-neuf jours
+  async function preparerPartages(docs) {
+    const chemins = [...new Set(docs.filter(documentPrive).map(x => x.fichier)
+      .filter(c => { const l = E.partages.get(c); return !l || Date.now() - l.quand > PARTAGE_FRAIS; }))];
+    if (!chemins.length || E.horsLigne) return;
+    try {
+      const { data, error } = await sb.storage.from(SEAU).createSignedUrls(chemins, DUREE_PARTAGE);
+      if (error) throw error;
+      const quand = Date.now();
+      (data || []).forEach(x => { if (x && x.signedUrl && !x.error) E.partages.set(x.path, { url: x.signedUrl, quand }); });
+    } catch (e) { /* le geste redemandera le lien */ }
+  }
+  function lienPartage(x) {
+    if (!documentPrive(x)) return urlDocument(x);
+    const l = E.partages.get(x.fichier);
+    return l && Date.now() - l.quand < PARTAGE_FRAIS ? l.url : null;
+  }
+  function partagerMaintenant(d, message) {
+    if (navigator.share && (!navigator.canShare || navigator.canShare(d))) {
+      navigator.share(d).catch(e => { if (e && e.name !== 'AbortError') copier(d.url, '', message); });
+      return;
+    }
+    copier(d.url, '', message);
+  }
+  async function partager(bouton) {
+    const x = E.documents.find(y => y.id === Number(bouton.dataset.partager));
+    if (!x) return;
+    const sp = x.spectacle_id != null ? E.spectacles.get(x.spectacle_id) : null, prive = documentPrive(x);
+    const titre = [x.titre, sp && sp.titre].filter(Boolean).join(' · ') || 'Compagnie Crescite';
+    const d = { title: titre, text: prive ? `${titre}, lien valable 30 jours` : titre };
+    const message = prive ? 'Lien copié, valable 30 jours.' : 'Lien copié.';
+    const prete = lienPartage(x);
+    if (prete) return partagerMaintenant({ ...d, url: prete }, message);
+    if (!prive) return annoncer('Ce document n’a pas d’adresse à partager.', { erreur: true });
+    // pas encore prêt (sans réseau à l'ouverture de la page) : on le prépare ; le partage voudra un geste tout frais
+    let url;
+    try {
+      url = await occupe(bouton, 'Un instant…', async () => {
+        const { data, error } = await sb.storage.from(SEAU).createSignedUrl(x.fichier, DUREE_PARTAGE);
+        if (error) throw error;
+        E.partages.set(x.fichier, { url: data.signedUrl, quand: Date.now() });
+        return data.signedUrl;
+      });
+    } catch (e) { return annoncer(`Le lien n’a pas pu être préparé : ${motsErreur(e) || 'réessayez'}.`, { erreur: true }); }
+    if (navigator.share) return annoncer('Le lien de trente jours est prêt.', { persistant: true, action: { libelle: 'Partager', f: () => partagerMaintenant({ ...d, url }, message) } });
+    copier(url, '', message);
   }
 
   // ================================================================================================ l'installation
