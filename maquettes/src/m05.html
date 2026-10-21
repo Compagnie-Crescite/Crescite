@@ -216,6 +216,7 @@ h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin:0}
 .aff-passe.on,.aff-pt.on{opacity:1}
 .aff-svg.attend .aff-mt,.aff-svg.attend .aff-s{stroke-dashoffset:1}
 .aff-svg.vit .aff-bras,.aff-svg.vit .aff-passes{mask:none}
+[data-suite-attend]{min-height:100vh}
 .aff-svg.attend .aff-nom,.aff-svg.attend .aff-rouen-nom{opacity:0}
 .aff-svg.pousse .aff-mt{animation:pousse var(--d,1s) cubic-bezier(.5,0,.2,1) var(--t,0s) both}
 .aff-svg.pousse .aff-s{animation:pousse .8s cubic-bezier(.3,0,.2,1) var(--t,0s) both}
@@ -2235,7 +2236,8 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       el.appendChild(probe);
       return probe;
     });
-    const mesures = els.map((el, j) => ({ el, w: el.clientWidth, widest: sondes[j].getBoundingClientRect().width, base: parseFloat(getComputedStyle(el).fontSize) }));
+    // (offsetWidth : la largeur posée, sans la transformation d'une capitale qui est en train de glisser)
+    const mesures = els.map((el, j) => ({ el, w: el.clientWidth, widest: sondes[j].offsetWidth, base: parseFloat(getComputedStyle(el).fontSize) }));
     sondes.forEach(p => p.remove());
     const groups = {};
     mesures.forEach(m => { (groups[m.el.dataset.fit] ||= []).push(m); });
@@ -2352,9 +2354,10 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     if (tour !== tours) return;
     const t = $('template[data-suite]', main);
     if (t) {
-      const f = reste[+t.dataset.suite];
+      const f = reste[+t.dataset.suite], parent = t.parentElement;
       if (f) t.insertAdjacentHTML('beforebegin', f());
       t.remove();
+      if (parent && !$('template[data-suite]', parent)) parent.removeAttribute('data-suite-attend');
       if ($('template[data-suite]', main)) { requestAnimationFrame(() => setTimeout(() => completer(tour, reste, g), 0)); return; }
     }
     g.forEach(f => f());
@@ -2404,6 +2407,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const depuis = type === 'spectacle' || type === 'entree' ? partage(clic && clic.a) : null;
     const couleurs = type === 'retour' ? couleurCourante : couleursDe(v);
     const tour = ++tours;
+    let voletsPartis = false;
     const faire = () => {
       if (tour !== tours) return;   // une navigation plus récente l'a emporté
       const garde = enPlace ? sauver() : null;
@@ -2419,6 +2423,8 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       main.innerHTML = v.rendu();
       const reste = suites; suites = null;
       attentes = reste && reste.length ? [] : null;
+      // une place qui attend sa suite garde la hauteur d'un écran : ce qui la suit ne bouge pas sous les yeux quand elle se remplit
+      if (attentes) $$('template[data-suite]', main).forEach(t => t.parentElement.setAttribute('data-suite-attend', ''));
       document.title = `${v.titre} - ${D.site.titreSuffixe}`;
       // en place et à la première vue, les capitales s'ajustent tout de suite ; après un geste, dans l'image qui suit (avant
       // qu'elle soit peinte) : la page n'est mise en page qu'une fois, dans l'image, et pas en plus dans la tâche du geste
@@ -2433,7 +2439,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
         setMenu(false);
         // la vue remonte en haut et son titre prend le focus à l'image suivante (avant qu'elle soit peinte)
         requestAnimationFrame(() => { if (!ajuster) fit(); window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); if (!INTRO.ouverte()) { const t = $('h1', main); if (t) t.focus({ preventScroll: true }); } });
-        volets(type, couleurs);
+        if (!voletsPartis) volets(type, couleurs);
         capitale(type);
         if (type === 'onglet') corpsParait();
       }
@@ -2441,8 +2447,11 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     };
     // la première vue (et sous l'ouverture) sans transition ; ensuite, les volets ; MOUVEMENT.transition (View Transition)
     // seulement quand un élément passe d'une page à l'autre (la photo d'une carte, l'aplat d'un onglet) : sans lui, elle ne
-    // ferait que retarder la page d'une image
-    if (enPlace || premiere || !MV || INTRO.ouverte() || (!depuis && type !== 'onglet')) faire(); else MV.transition(faire, { type, depuis });
+    // ferait que retarder la page d'une image ; sans elle, les volets partent dès l'image du geste et la page se pose dessous à
+    // la tâche suivante (le geste se voit tout de suite)
+    if (enPlace || premiere || !MV || INTRO.ouverte()) faire();
+    else if (!depuis && type !== 'onglet') { volets(type, couleurs); voletsPartis = true; requestAnimationFrame(() => setTimeout(faire, 0)); }
+    else MV.transition(faire, { type, depuis });
   }
 
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';

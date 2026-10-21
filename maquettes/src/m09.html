@@ -979,8 +979,8 @@ html:not(.ed-actif) .cd-tel.vide{display:none}
    de l'onglet) ; le reste de la page est là tout de suite (la capture d'un écran entier coûte, et rien n'y gagne) */
 html{view-transition-name:none}
 ::view-transition-group(mv-partage){animation-duration:.4s;animation-timing-function:cubic-bezier(.3,.72,.12,1)}
-::view-transition-old(mv-partage){animation:.18s ease-out both chap-efface}
-::view-transition-new(mv-partage){animation:.26s var(--courbe) both chap-pose}
+/* l'ancienne image cède à la nouvelle sur toute la durée du voyage (fondu enchaîné : jamais de jour entre les deux) */
+::view-transition-old(mv-partage),::view-transition-new(mv-partage){animation-duration:.4s}
 html[data-mv-transition="onglet"] .onglets .o-filet{view-transition-name:o-filet}
 /* ce qui reste fixe (l'en-tête, la progression, le sommaire) passe au-dessus de la photo qui voyage */
 html[data-mv-transition] .tete{view-transition-name:tete}
@@ -988,8 +988,6 @@ html[data-mv-transition] .avance{view-transition-name:avance}
 html[data-mv-transition] .sommaire:not([hidden]){view-transition-name:sommaire}
 ::view-transition-group(tete),::view-transition-group(avance),::view-transition-group(sommaire){animation-duration:.24s}
 ::view-transition-group(o-filet){animation-duration:.28s;animation-timing-function:var(--courbe)}
-@keyframes chap-efface{to{opacity:0}}
-@keyframes chap-pose{from{opacity:0}}
 /* la progression : une barre de chapitres sous l'en-tête ; un segment par chapitre, à sa couleur, rempli à la lecture */
 .avance{position:fixed;left:0;right:0;top:var(--tete-h);z-index:49;height:3px;pointer-events:none;color:var(--creme);transition:opacity .2s}
 .avance[data-ton="clair"]{color:var(--encre)}
@@ -1074,6 +1072,9 @@ html.immobile *,html.immobile *::before,html.immobile *::after{animation:none!im
 .v-frise{grid-column:1/-1;margin:0 0 clamp(30px,5vh,52px)}
 .frise-saisons{--fr-bande-h:30px;--fr-haut:20px;--fr-pied:26px}
 .frise-saisons .frise-bande{--fr-c:var(--e,var(--magenta))}
+.frise-saisons .frise-bande-nom,.frise-diffusion .frise-bande-nom{font-size:10px;letter-spacing:0}
+/* au téléphone, l'index des saisons ne colle pas en haut : la frise prend toute la largeur, les commandes passent dessous */
+@media (max-width:759px){.ag-index{position:static;flex-wrap:wrap;row-gap:4px}.ag-frise{flex-basis:100%}.ag-ctl{margin-left:auto}}
 .frise-diffusion{--fr-bande-h:26px;--fr-haut:18px;--fr-pied:26px}
 .cat-diff{margin-top:2px}
 .sp-frise{margin:0 0 clamp(30px,5vh,52px)}
@@ -2819,12 +2820,12 @@ ${finHTML()}`;
     if (entreeVue) { try { entreeVue.cancel(); } catch (e) { /* finie */ } entreeVue = null; }
     const racine = vue === 'spectacle' ? vueSpectacle : vue === 'page' ? vuePage : vueAccueil;
     if (type === 'onglet' || type === 'onglet-loin') {
-      $$('.ch', racine).slice(0, 2).forEach((c, i) => c.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 280, delay: i * 50, easing: COURBE, fill: 'backwards' }));
+      $$('.ch', racine).slice(0, 2).forEach((c, i) => c.animate([{ transform: 'translateY(16px)' }, { transform: 'none' }], { duration: 260, delay: i * 40, easing: COURBE, fill: 'backwards' }));
       return;
     }
     if (partage || type === 'spectacle') return;
     const dy = type === 'retour' ? -20 : 20;
-    entreeVue = racine.animate([{ opacity: 0, transform: `translateY(${dy}px)` }, { opacity: 1, transform: 'none' }], { duration: 300, easing: COURBE, fill: 'backwards' });
+    entreeVue = racine.animate([{ opacity: 0.3, transform: `translateY(${dy}px)` }, { opacity: 1, transform: 'none' }], { duration: 280, easing: COURBE, fill: 'backwards' });
   }
   // au défilement : les titres de rubrique tirent leur trait et montent, les fiches arrivent l'une après l'autre, les chiffres comptent
   function decorer(racine, surPlace) {

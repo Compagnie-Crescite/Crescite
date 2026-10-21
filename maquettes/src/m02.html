@@ -214,6 +214,10 @@ button,input,textarea{font:inherit;color:inherit}
 .k-lieu.k-actif .k-point,.k-lieu.k-choisi .k-point{fill:var(--k-bras)}
 .k-on .k-off{opacity:.14}
 .k-fixe .k-pousse,.k-fixe .k-lieu,.k-fixe .k-noms,.k-fixe .k-passes{transition:none!important;animation:none!important}
+.k-nombreux :is(.k-bras,.k-lieu,.k-nom,.k-bras-f,.k-point){transition:none!important;animation:none!important}
+.k-nombreux:not(.k-fixe) svg.k{opacity:0;transition:opacity .45s var(--ease)}
+.k-nombreux.k-on svg.k{opacity:1}
+.k-nombreux .k-lieu{opacity:1!important}
 .k-encart{fill:none;stroke:var(--k-bord);stroke-dasharray:3 4}
 .k-info{position:absolute;z-index:5;left:0;top:0;width:max-content;max-width:min(300px,86%);padding:12px 14px;border-radius:6px;background:#fff;color:var(--ink);box-shadow:0 10px 30px -10px rgba(17,17,17,.35),0 0 0 1px rgba(17,17,17,.07);font-size:.875rem;line-height:1.4;pointer-events:none;overflow-wrap:anywhere}
 .k-info-nom{font-weight:600}
@@ -1195,7 +1199,9 @@ html.ed-actif .ep-a::after{content:none}
   const geo = () => { const K = CARTE.K || {}; return { K, VB: String(K.viewBox || CARTE.viewBox).split(/\s+/).map(Number), RO: K.rouen || CARTE.rouen }; };
   const CARTES = {};
   let nK = 0;
-  function carte({ lieux = [], passe = [], titre = '', info = null, choix = null, papier = false, fin = false } = {}) {
+  // une carte de beaucoup de communes (ou figée) : des bras sans masque, qui ne poussent pas (un masque par bras coûte cher à
+  // chaque image), et rien qui bouge commune par commune : la carte entière paraît d'un fondu
+  function carte({ lieux = [], passe = [], titre = '', info = null, choix = null, papier = false, fin = false, fixe = false } = {}) {
     const { K, VB, RO } = geo(), id = 'k' + (++nK);
     const dist = x => Math.hypot(x.xy[0] - RO[0], x.xy[1] - RO[1]);
     const dans = x => x && x.xy && x.xy[0] >= VB[0] && x.xy[0] <= VB[0] + VB[2] && x.xy[1] >= VB[1] && x.xy[1] <= VB[1] + VB[3];
@@ -1205,9 +1211,11 @@ html.ed-actif .ep-a::after{content:none}
     const delai = x => Math.round(dist(x) / loin * 260);
     const larg = x => fin ? Math.min(5, 1.4 + Math.sqrt(x.n || 1) * .8) : Math.min(9, 3 + Math.sqrt(x.n || 1) * 1.6);
     const etiquette = x => CARTE.nom(x) + ((x.dates || []).length ? ' : ' + x.dates.map(d => d.ligneDate ? `${d.ligneDate}, ${d.titre}` : `${d.ligne}${d.spectacle ? ', ' + d.spectacle : ''}`).join(' ; ') : '');
+    const simple = fixe || lieux.length > 30;
     const bras = lieux.map((x, i) => {
       const d = CARTE.bras(x.xy, { w0: larg(x), w1: .8 });
       if (!d) return '';
+      if (simple) return `<g class="k-bras" data-l="${x.l}"><path class="k-bras-f" d="${d}"/></g>`;
       return `<g class="k-bras" data-l="${x.l}" style="--d:${delai(x)}ms"><mask id="${id}m${i}" maskUnits="userSpaceOnUse" x="${VB[0]}" y="${VB[1]}" width="${VB[2]}" height="${VB[3]}"><path class="k-pousse" d="${CARTE.trait(x.xy)}" pathLength="1" stroke-width="${(larg(x) + 8).toFixed(1)}"/></mask><path class="k-bras-f" d="${d}" mask="url(#${id}m${i})"/></g>`;
     }).join('');
     const passes = passe.map(x => {
@@ -1217,7 +1225,7 @@ html.ed-actif .ep-a::after{content:none}
     const points = lieux.map(x => `<g class="carte-lieu k-lieu${dist(x) < 6 ? ' k-maison' : ''}" data-l="${x.l}" style="--d:${delai(x)}ms" role="button" tabindex="0" aria-label="${esc(etiquette(x))}"><circle class="k-cible" cx="${x.xy[0]}" cy="${x.xy[1]}" r="12"/><circle class="k-point" cx="${x.xy[0]}" cy="${x.xy[1]}" r="4"/></g>`).join('');
     // l'outre-mer est ramené dans un encart, en bas à gauche
     const E = CARTE.ENCART, encart = E && [...lieux, ...passe].some(x => x.encart) ? `<circle class="k-encart" cx="${E[0]}" cy="${E[1]}" r="24"/>` : '';
-    return `<div class="k-carte${papier ? ' k-papier' : ''}" data-k="${id}">
+    return `<div class="k-carte${papier ? ' k-papier' : ''}${simple ? ' k-nombreux' : ''}" data-k="${id}">
       <svg class="k" viewBox="${VB.join(' ')}" role="${lieux.length ? 'group' : 'img'}" aria-label="${esc(titre)}">
         <use class="k-voisin" href="#m02-belgique"/><use class="k-voisin" href="#m02-luxembourg"/><use class="k-pays" href="#m02-pays"/>${encart}
         <g class="k-passes">${passes}</g><g class="k-brass">${bras}</g>
@@ -1682,7 +1690,7 @@ html.ed-actif .ep-a::after{content:none}
       return `<div class="agenda-liste sai-liste">${G.map(g => { const t = g.m ? titreMois(g.m) : '', ok = t && g.rs.some(x => x.d.ligne.includes(t));
           return `<section class="mois">${ok ? `<h3 class="mois-t" data-mv-cle="m:${esc(s.k)}:${esc(g.m)}">${esc(t)}</h3>` : ''}<ol class="rows" data-agenda="">${g.rs.map(rangeePasse).join('')}</ol></section>`; }).join('')}
           ${s.k === D.saison ? '' : `<p class="sai-page"><a class="go" href="#/agenda/${esc(s.k)}">${esc(s.titre)}${ARROW}</a></p>`}</div>
-        <div class="agenda-carte sai-carte" style="--k-bras:var(--e);--k-actif:var(--ink)">${lx.length ? carte({ lieux: lx, titre: s.titre, info: infoSaison, choix, papier: true }) : ''}</div>`;
+        <div class="agenda-carte sai-carte" style="--k-bras:var(--e);--k-actif:var(--ink)">${lx.length ? carte({ lieux: lx, titre: s.titre, info: infoSaison, choix, papier: true, fixe: true }) : ''}</div>`;
     };
     const saisonHtml = ({ s, rows }) => { const ouv = F.ouv.has(s.k);
       return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
