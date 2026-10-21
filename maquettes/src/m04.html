@@ -177,7 +177,9 @@ table{border-collapse:collapse}
 .attente .mc-lieu,.pousse .mc-lieu:not(.allume),.attente .mc-eteint,.pousse .mc-eteint:not(.allume){opacity:0}
 .mc-lieu.allume{animation:allume .9s var(--ease) backwards}
 .mc-eteint.allume{animation:apparait .6s ease backwards}
-.mc-lieu.allume.prochain .mc-halo{animation:scintille 3.2s ease-in-out 1.4s infinite}
+/* la prochaine date scintille deux fois quand sa carte s'allume, puis reste éclairée (un SVG qui bouge se repeint à chaque image :
+   une page au repos ne repeint rien) */
+.mc-lieu.allume.prochain .mc-halo{animation:scintille 3.2s ease-in-out 1.4s 2}
 /* la carte de tous les lieux : des traits fins, des points simples ; elle paraît d'un coup en s'ouvrant depuis Rouen (composé) */
 .mc.leger .mc-traits{fill:none;stroke-width:1;vector-effect:non-scaling-stroke;opacity:.72}
 .mc.leger .mc-pt{fill:#fff;stroke:transparent;stroke-width:14px;transition:r .16s var(--ease),fill .16s}
@@ -868,29 +870,27 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
 /* ———————————— le mouvement (règle 15) : les battants ; voir le bloc « Mouvement » en tête du script ————————————
    Une porte s'ouvre, la lumière passe par l'embrasure, on referme derrière soi. Survol 160 à 200 ms, pression 90 ms, page 420 ms. */
 html{view-transition-name:none}
-main{display:block;min-height:100vh;overflow-x:clip}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; ce qui glisse n'en déborde pas */
+main{display:block;min-height:100vh;overflow-x:clip}
+[data-suite-attend]{min-height:100vh}   /* une place qui attend la suite de la page garde la hauteur d'un écran */   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; ce qui glisse n'en déborde pas */
 /* les battants : deux vantaux à la couleur de la page qui s'ouvre, sous l'en-tête ; la lumière passe entre eux.
    Seuls transform et opacity bougent ; rien ne capte le pointeur : un nouveau geste passe au travers */
 .battants{position:fixed;left:0;right:0;bottom:0;top:var(--bt-haut,0px);z-index:25;pointer-events:none;perspective:1700px;perspective-origin:50% 42%;visibility:hidden;overflow:hidden}
 .battants.on{visibility:visible}
-.bt{position:absolute;top:0;bottom:0;width:50.4%;backface-visibility:hidden;will-change:transform,opacity;background:linear-gradient(90deg,color-mix(in srgb,var(--bt-c) 82%,#000) 0%,var(--bt-c) 78%,color-mix(in srgb,var(--bt-c) 86%,var(--bt-l)) 100%)}
+/* chaque vantail est un aplat (rien à peindre : la carte graphique le remplit d'une couleur) ; seuls son bord intérieur, où la
+   lumière accroche, et sa poignée sont peints */
+.bt{position:absolute;top:0;bottom:0;width:50.4%;backface-visibility:hidden;will-change:transform,opacity;background:var(--bt-c)}
 .bt-g{left:0;transform-origin:0 50%}
-.bt-d{right:0;transform-origin:100% 50%;background:linear-gradient(270deg,color-mix(in srgb,var(--bt-c) 82%,#000) 0%,var(--bt-c) 78%,color-mix(in srgb,var(--bt-c) 86%,var(--bt-l)) 100%)}
-.bt-d::before{left:15%;right:13%}
+.bt-d{right:0;transform-origin:100% 50%}
+.bt::before{content:"";position:absolute;top:0;bottom:0;right:0;width:9%;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--bt-l) 16%,transparent))}
+.bt-d::before{right:auto;left:0;background:linear-gradient(270deg,transparent,color-mix(in srgb,var(--bt-l) 16%,transparent))}
 .bt-d::after{right:auto;left:7%}
-.bt::before{content:"";position:absolute;inset:clamp(40px,9vh,90px) 15% 0 13%;border:1.5px solid color-mix(in srgb,var(--bt-l) 34%,transparent);border-bottom:0;border-radius:999px 999px 0 0}
 .bt::after{content:"";position:absolute;right:7%;top:56%;width:10px;height:10px;border-radius:50%;background:var(--bt-l);box-shadow:0 0 14px 3px color-mix(in srgb,var(--bt-l) 60%,transparent)}
-.bt-jour{position:absolute;top:-10%;bottom:-10%;left:50%;width:min(76vw,980px);margin-left:calc(min(76vw,980px) / -2);opacity:0;will-change:transform,opacity;
+/* la lumière de l'embrasure : un calque étroit que l'animation élargit (peu de pixels à peindre ; une lueur supporte le flou) */
+.bt-jour{position:absolute;top:-10%;bottom:-10%;left:50%;width:min(19vw,245px);margin-left:calc(min(19vw,245px) / -2);opacity:0;will-change:transform,opacity;
   background:radial-gradient(50% 58% at 50% 46%,color-mix(in srgb,var(--bt-l) 42%,#fff) 0%,color-mix(in srgb,var(--bt-l) 34%,transparent) 34%,transparent 72%)}
-/* la carte d'un spectacle devient l'arche de sa page (élément partagé) ; l'arche d'une porte de l'accueil, celle de sa page */
-::view-transition-group(mv-partage){animation-duration:.42s;animation-timing-function:cubic-bezier(.3,.7,.12,1)}
-::view-transition-old(mv-partage){animation:.16s ease-out both bt-fondu}
-::view-transition-new(mv-partage){animation:.26s cubic-bezier(.2,.7,.2,1) both bt-parait}
-@keyframes bt-fondu{to{opacity:0}}
-@keyframes bt-parait{from{opacity:0}}
-/* d'un onglet à l'autre d'un spectacle : l'en-tête reste, la porte allumée glisse jusqu'à l'onglet choisi */
-html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active}
-::view-transition-group(porte-active){animation-duration:.3s;animation-timing-function:cubic-bezier(.3,.7,.12,1)}
+/* la carte d'un spectacle devient l'arche de sa page, l'arche d'une porte de l'accueil celle de sa page : une copie de son image
+   vole de l'une à l'autre, au-dessus des vantaux (transform seul) */
+.arche-vole{position:fixed;z-index:30;margin:0;object-fit:cover;transform-origin:0 0;pointer-events:none;will-change:transform}
 /* la pression : la porte cède sous la main, à l'instant même ; les boutons s'enfoncent d'un rien */
 .door-link.mv-presse .door-battant{transform:rotateY(86deg);transition-duration:.12s}
 .door-link.mv-presse .door-lumiere{opacity:1;transition-duration:.12s}
@@ -904,7 +904,8 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
 /* l'apparition au défilement : les titres montent ; les cartes viennent l'une après l'autre en pivotant sur leur gond, comme un
    vantail qui se rabat dans son cadre ; les chiffres comptent */
 [data-mv="cascade"].mv-attente:not(.mv-vu)>*{opacity:0;transform:perspective(1400px) rotateY(22deg);transform-origin:0 50%}
-[data-mv="cascade"].mv-attente>*{transition:opacity .5s var(--ease),transform .62s var(--ease);transition-delay:calc(var(--mv-delai,0ms) + min(var(--mv-i,0),12) * 60ms)}
+/* la cascade : 360 ms par carte, 30 ms de l'une à l'autre (douze au plus) : tout est posé en moins de 0,75 s */
+[data-mv="cascade"].mv-attente>*{transition:opacity .3s var(--ease),transform .36s var(--ease);transition-delay:calc(var(--mv-delai,0ms) + min(var(--mv-i,0),12) * 30ms)}
 [data-mv="monte"].mv-attente:not(.mv-vu){opacity:0;transform:translateY(16px)}
 .gros{font:inherit;font-variant-numeric:tabular-nums}
 /* ce qui se déplie : une saison s'ouvre, la porte de sa petite arche s'efface, la lumière y entre */
@@ -922,8 +923,9 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
 .mc-lieu.est-allume .mc-halo{transform:scale(1.85)}
 .mc-lieu.est-allume .mc-anneau{opacity:1}
 /* ce qui vit : « EN TOURNÉE » respire, comme une lumière derrière une porte */
-.respire::before{content:"";display:inline-block;width:7px;height:10px;margin-right:9px;border-radius:999px 999px 1px 1px;background:currentColor;vertical-align:0;animation:respire 2.6s ease-in-out infinite}
-@keyframes respire{0%,100%{opacity:1;box-shadow:0 0 0 0 transparent}50%{opacity:.35;box-shadow:0 0 10px 2px currentColor}}
+.respire::before{content:"";display:inline-block;width:7px;height:10px;margin-right:9px;border-radius:999px 999px 1px 1px;background:currentColor;box-shadow:0 0 8px 1px currentColor;vertical-align:0;animation:respire 2.6s ease-in-out infinite}
+/* « EN TOURNÉE » respire : son opacité seule (la carte graphique s'en charge ; rien n'est repeint) */
+@keyframes respire{0%,100%{opacity:1}50%{opacity:.35}}
 /* le dossier PDF prêt : sa petite porte s'ouvre en grand, la lumière en sort, puis elle se referme */
 .dos-bt.dos-pret .mp-b{animation:mp-pret 1.4s var(--ease)}
 .dos-bt.dos-pret .mini-porte{animation:mp-lueur 1.4s var(--ease)}
@@ -934,6 +936,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
    « aujourd'hui », un trait de lumière posé sur l'axe ———— */
 .rampe{position:relative;background:var(--aub);color:#fff;padding:clamp(18px,2.4vw,30px) 0 clamp(14px,2vw,24px);border-top:1px solid var(--line-dark);overflow-x:clip}
 .rampe-frise{min-height:118px}
+#v-frise{min-height:127px}   /* la frise de la saison arrive après la première image : sa place (trois couloirs) est gardée */
 .frise[data-frise]{--fr-fond:var(--aub);--fr-encre:#fff;--fr-trait:rgba(255,236,245,.3);--fr-accent:var(--rose-v);--fr-police:var(--sans);--fr-passe:.4;
   --fr-bulle-fond:#fff;--fr-bulle-encre:var(--ink);--fr-point:11px;--fr-couloir:19px;--fr-haut:30px;--fr-taille:12px;--fr-courbe:var(--ease)}
 .frise[data-frise] .frise-mois-nom{font:400 .94rem/1.1 var(--serif);font-variation-settings:"opsz" 30,"SOFT" 100}
@@ -1047,12 +1050,13 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   'use strict';
   /* Mouvement : les battants. Tout passe par une porte : on la pousse, elle s'ouvre, la lumière passe par l'embrasure ; en
      revenant, on la referme derrière soi. Une seule courbe (rapide, puis posée), jamais plus de 450 ms pour une page.
-     1. Changer de page (MOUVEMENT.transition) : l'en-tête reste, comme un linteau ; dessous, deux vantaux à la couleur de la
-        page qui arrive (celle de l'entrée, ou le fond de l'univers du spectacle) s'ouvrent vers l'intérieur et la lumière passe
-        entre eux (420 ms). Au retour, les vantaux de la page quittée se rabattent et s'effacent : on a refermé derrière soi.
-        La carte d'un spectacle (une arche) devient l'arche de sa page, et l'arche d'une porte de l'accueil celle de sa page
-        (View Transitions, élément partagé) ; d'un onglet à l'autre d'un spectacle, l'en-tête reste et seule la porte allumée
-        glisse. Un geste pendant ce temps termine la transition ; les vantaux ne captent jamais le pointeur.
+     1. Changer de page : l'en-tête reste, comme un linteau ; dessous, deux vantaux à la couleur de la page qui arrive (celle
+        de l'entrée, ou le fond de l'univers du spectacle) partent dès l'image du geste, la page se pose derrière eux à la tâche
+        suivante, ils s'ouvrent vers l'intérieur et la lumière passe entre eux (430 ms). Au retour, les vantaux de la page
+        quittée se rabattent et s'effacent : on a refermé derrière soi. La carte d'un spectacle (une arche) devient l'arche de
+        sa page, et l'arche d'une porte de l'accueil celle de sa page (son image vole de l'une à l'autre) ; d'un onglet à
+        l'autre d'un spectacle, l'en-tête reste et seule la porte allumée glisse. Un geste pendant ce temps l'emporte (la page
+        demandée en dernier se pose seule) ; les vantaux ne captent jamais le pointeur.
      2. Ouvrir une saison : la porte de sa petite arche s'efface, la lumière y entre, ses dates arrivent en cascade ; le menu
         aussi se déplie ligne à ligne.
      3. Filtrer, chercher : les dates glissent à leur nouvelle place, celles qui partent s'effacent (MOUVEMENT.flip) ; les
@@ -1366,9 +1370,11 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     if (en.isIntersecting) { io.unobserve(en.target); pousse(en.target); }
   }), { threshold: .2 }) : null;
   function toutAllumer(mc) { mc.classList.remove('attente', 'pousse'); const c = $('.mc-clip', mc); if (c) c.setAttribute('r', '2000'); $$('.mc-lieu, .mc-eteint', mc).forEach(p => p.classList.add('allume')); }
-  function preparerCartes(zone, immediat) {
-    if (io) io.disconnect();
+  function preparerCartes(zone, immediat, partiel = false) {
+    if (io && !partiel) io.disconnect();
     $$('.mc', zone).forEach(mc => {
+      if (mc.dataset.prete) return;
+      mc.dataset.prete = '1';
       if (immediat || !io || !mouvement()) return toutAllumer(mc);
       const c = $('.mc-clip', mc); if (c) c.setAttribute('r', '0');
       mc.classList.add('attente');
@@ -1378,7 +1384,8 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   function pousse(mc) {
     if (mc.classList.contains('leger')) { mc.classList.remove('attente'); mc.classList.add('parait'); return; }
     const clip = $('.mc-clip', mc), pts = $$('.mc-lieu, .mc-eteint', mc).map(p => ({ p, d: +p.dataset.d, ok: false }));
-    const rmax = Math.max(80, ...pts.map(x => x.d)) + 30, T = 1500 + Math.min(700, rmax * 1.4), t0 = performance.now();
+    // (moins d'une seconde : un cercle de découpe qui grandit se repeint à chaque image)
+    const rmax = Math.max(80, ...pts.map(x => x.d)) + 30, T = 620 + Math.min(330, rmax * .7), t0 = performance.now();
     mc.classList.remove('attente'); mc.classList.add('pousse');
     const pas = now => {
       if (!mc.isConnected) return;
@@ -1717,18 +1724,19 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       return s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l), n: parL.get(x.l).length }));
     };
     const listeProchaines = () => parMois(proch.filter(garde).map(r => r.d)).map(g => groupeMois(g, 'voir')).join('');
-    const corpsSaison = (s, rows, lx) => {
+    const corpsSaison = (s, rows, lx, sansCarte = false) => {
       const groupes = [];
       rows.forEach(r => { const m = r.k.slice(0, 7), g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
       return `<div class="sai-liste" data-liste>${groupes.map(g => `<section class="groupe">${g.m ? `<h4 class="mois" data-mv-cle="m:${esc(s.k)}:${esc(g.m)}">${esc(titreMois(g.m))}</h4>` : ''}<ol data-agenda="">${g.rs.map(ligneAgenda).join('')}</ol></section>`).join('')}
           ${s.k === D.saison ? '' : `<p class="sai-page"><a class="fleche" href="#/agenda/${esc(s.k)}">${esc(s.titre)}<span aria-hidden="true">→</span></a></p>`}</div>
-        <div class="sai-carte">${lx.length ? carte({ lieux: lx, titre: s.titre, interactif: true, filtre: true, theme: 'voir' }) : ''}</div>`;
+        <div class="sai-carte">${lx.length && !sansCarte ? carteSaison(s, lx) : ''}</div>`;
     };
-    const saisonHtml = ({ s, rows }) => {
+    const carteSaison = (s, lx) => carte({ lieux: lx, titre: s.titre, interactif: true, filtre: true, theme: 'voir' });
+    const saisonHtml = ({ s, rows }, vide = false) => {
       const ouv = F.ouv.has(s.k), lx = lieuxDe(s, rows);
       return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
         <summary><span class="sai-arche">${miniLieux(lx)}<span class="sai-battant" aria-hidden="true"></span></span><span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${chevron}</span></summary>
-        <div class="sai-corps" data-sai="${esc(s.k)}">${ouv ? corpsSaison(s, rows, lx) : ''}</div></details>`;
+        <div class="sai-corps" data-sai="${esc(s.k)}">${ouv && !vide ? corpsSaison(s, rows, lx) : ''}</div></details>`;
     };
     const indexHtml = vis => {
       const tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
@@ -1766,12 +1774,20 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
         if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
         else if (F.avant) { F.ouv = F.avant; F.avant = null; }
       };
-      const dessineSaisons = () => {
+      // vides : les saisons ouvertes arrivent sans leur corps, rempli ensuite (une par image : remplirPose)
+      const dessineSaisons = (vides = false) => {
         $$('.mc', racine).forEach(m => io && io.unobserve(m));
         const vis = visibles();
-        racine.innerHTML = vis.map(saisonHtml).join('');
-        $$('.sai[open] .sai-corps', racine).forEach(c => lierSaison(c, true));
+        racine.innerHTML = vis.map(x => saisonHtml(x, vides)).join('');
+        if (!vides) $$('.sai[open] .sai-corps', racine).forEach(c => lierSaison(c, true));
         index.innerHTML = indexHtml(vis);
+      };
+      const remplirPose = dt => {
+        const k = dt.dataset.saison, s = passe.find(x => x.k === k), c = $('.sai-corps', dt);
+        if (!s || !c || c.firstElementChild || !dt.open) return;
+        const rows = s.rows.filter(garde);
+        c.innerHTML = corpsSaison(s, rows, lieuxDe(s, rows));
+        lierSaison(c, true);
       };
       const majOutils = () => {
         $('#choix-lieu').innerHTML = F.l !== null ? `<button class="puce" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}<span aria-hidden="true">×</span></button>` : '';
@@ -1795,12 +1811,17 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       };
       AG.choisir = l => { F.l = F.l === l ? null : l; dessine(); };
       // l'état d'ouverture : à la main (toggle), par l'index ou par la frise des saisons ; les dates arrivent en cascade
+      // ses dates dans le geste ; sa carte à l'image suivante (la carte ne retarde pas l'ouverture)
       const remplir = dt => {
         const k = dt.dataset.saison, s = passe.find(x => x.k === k), c = $('.sai-corps', dt);
         if (!s || !c || c.firstElementChild) return false;
-        const rows = s.rows.filter(garde);
-        c.innerHTML = corpsSaison(s, rows, lieuxDe(s, rows));
-        lierSaison(c, false);
+        const rows = s.rows.filter(garde), lx = lieuxDe(s, rows);
+        c.innerHTML = corpsSaison(s, rows, lx, true);
+        if (lx.length) requestAnimationFrame(() => setTimeout(() => {
+          const sc = $('.sai-carte', c); if (!c.isConnected || !dt.open || !sc || sc.firstElementChild) return;
+          sc.innerHTML = carteSaison(s, lx);
+          lierSaison(c, false);
+        }, 0));
         return true;
       };
       const deplier = dt => { const c = $('.sai-liste', dt); if (c && MV) MV.cascade(c, { selecteur: '.mois, .dl', max: 12, pas: 26, decalage: -8 }); };
@@ -1828,20 +1849,35 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       let tempo = 0;
       $('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(dessine, 120); });
       if (F.l !== null || F.slug || terme()) majCarte();
+      // après un geste, chaque morceau à son image : la liste (la suite de la vue), puis la frise de la saison, puis l'agenda passé
+      const plusTard = (n, f) => { if (!n) return f(); requestAnimationFrame(() => setTimeout(() => plusTard(n - 1, f), 0)); };
       // la frise de la saison, reliée à la liste et à la carte : un repère allume sa ligne et sa commune ; un clic mène à la ligne
-      fSaison = frise($('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: SAISON0.titre, largeur: largeurWrap(),
-        relier: { liste: main, carte: l => ctl && ctl.montrer(l) },
-        choix: p => { if (!$(`[data-frise-id="${CSS.escape(p.id)}"]`, main) && encours) ouvrirSaison(D.saison); allerLigne(p.id); } });
+      const creerFrise = () => {
+        const h = $('#v-frise'); if (!h || !h.isConnected || fSaison) return;
+        fSaison = frise(h, { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: SAISON0.titre, largeur: largeurWrap(),
+          relier: { liste: main, carte: l => ctl && ctl.montrer(l) },
+          choix: p => { if (!$(`[data-frise-id="${CSS.escape(p.id)}"]`, main) && encours) ouvrirSaison(D.saison); allerLigne(p.id); } });
+      };
+      if (enPlace) creerFrise(); else plusTard(2, creerFrise);
       // l'agenda passé (sous le pli) : dessiné dans la tâche qui suit la première image, sauf quand la vue est refaite en place
       // ou qu'un filtre est déjà là ; la frise des saisons l'accompagne (un clic ouvre la saison et y mène)
-      const agendaPasseVu = () => {
+      // après un geste : les saisons d'abord (leurs têtes), puis le corps de chaque saison ouverte, puis leur frise, chacun à son
+      // image (aucune image ne porte tout l'agenda)
+      const agendaPasseVu = (tot = true) => {
         if (agenda || !racine.isConnected) return;
         agenda = true;
-        dessineSaisons();
+        if (tot) { dessineSaisons(); friseSaisons(); return; }
+        dessineSaisons(true);
+        const ouvertes = $$('.sai[open]', racine);
+        const suite = () => { if (!racine.isConnected) return; const dt = ouvertes.shift(); if (dt) { remplirPose(dt); requestAnimationFrame(() => setTimeout(suite, 0)); } else friseSaisons(); };
+        requestAnimationFrame(() => setTimeout(suite, 0));
+      };
+      const friseSaisons = () => {
+        if (!racine.isConnected) return;
         fSaisons = frise($('#ag-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
           libelle: L.saisonsPrecedentes, classe: 'frise-saisons', largeur: largeurWrap(36), anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
       };
-      if (enPlace || actif()) agendaPasseVu(); else requestAnimationFrame(() => setTimeout(agendaPasseVu, 0));
+      if (enPlace || actif()) agendaPasseVu(); else plusTard(3, () => agendaPasseVu(false));
     };
     return `${heroEntree(e)}
     <div class="rampe"><div class="wrap"><div class="rampe-frise" id="v-frise"></div></div></div>
@@ -1850,7 +1886,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       <div class="split-liste">
         <h2 class="split-titre" id="h-saison">${esc(SAISON0.titre)}</h2>
         ${outilsHtml()}
-        <div data-liste>${listeProchaines()}</div>
+        <div data-liste>${differer(listeProchaines)}</div>
       </div>
     </section>
     <section class="agenda-passe" id="v-agenda" aria-labelledby="h-prec"><div class="wrap">
@@ -1861,7 +1897,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     </div></section>
     ${enTournee.length ? `<section class="section" aria-labelledby="h-en-tournee"><div class="wrap">
       <h2 class="sec-titre sec-tete" id="h-en-tournee">${esc(L.actuellementEnTournee)}</h2>
-      <ul class="ucartes">${enTournee.map(s => carteUnivers(s, { href: `#/spectacle/${s.slug}/voir`, h: 'h3', accroche: true })).join('')}</ul>
+      <ul class="ucartes">${differer(() => enTournee.map(s => carteUnivers(s, { href: `#/spectacle/${s.slug}/voir`, h: 'h3', accroche: true })).join(''))}</ul>
     </div></section>` : ''}`;
   }
 
@@ -1910,15 +1946,15 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     return `${heroEntree(e, '', null, contactHtml(null))}
     <section class="section" aria-labelledby="h-catalogue"><div class="wrap">
       <h2 class="sec-titre sec-tete" id="h-catalogue">${esc(L.lesSpectacles)}</h2>
-      <ul class="fps">${SHOWS.map(fichePro).join('')}</ul>
+      <ul class="fps">${SHOWS.map((x, i) => i ? differer(() => fichePro(x)) : fichePro(x)).join('')}</ul>
     </div></section>
-    <section class="bande" data-zone="tout" aria-labelledby="h-lieux">
+    ${differer(() => `<section class="bande" data-zone="tout" aria-labelledby="h-lieux">
       <div class="wrap bande-grille">
         <div class="bande-tete"><h2 class="bande-titre" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>${planFrise('p-diff', null, frisesCompagnie(), 'p-diff')}</div>
         <div class="bande-carte">${carte({ lieux: tous, titre: L.lieuxDiffusion, theme: 'programmer', fin: .62 })}</div>
         <div class="bande-liste"><div class="tout-detail" data-detail style="--t:${esc(e.couleurVive)}">${detailLieu(tous[0])}</div></div>
       </div>
-    </section>
+    </section>`)}
     ${S.partenaires ? `<section class="partenaires-s"><div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p></div></section>` : ''}
     ${ecrireBande(e)}`;
   }
@@ -1968,22 +2004,23 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     const autres = SHOWS.filter(s => s.actionCulturelle && !s.actionCulturelle.lieu);
     const groupe = (lieu, id) => { const ls = de(lieu); return ls.length ? `<section aria-labelledby="${id}"><h2 class="sec-titre ac-groupe-t" id="${id}">${esc((L.lieu || {})[lieu])}</h2><ul class="acs">${ls.map(carteAction).join('')}</ul></section>` : ''; };
     const galerie = [1, 2, 3, 4].map(i => `actions-culturelles/g-${i}`).filter(k => D.photos && D.photos[k]);
+    // le premier écran (l'en-tête, le dossier) d'abord ; les actions culturelles, le texte, les dates scolaires à la suite
     return `${heroEntree(e, S.ecole ? esc(S.ecole.texte) : '', 'site.ecole.texte')}
     ${dossierUne()}
-    <section class="section"><div class="wrap ac-groupes">
+    ${differer(() => `<section class="section"><div class="wrap ac-groupes">
       ${groupe('etablissement', 'g-etablissement')}
       ${groupe('salle', 'g-salle')}
       ${autres.length ? `<ul class="acs">${autres.map(carteAction).join('')}</ul>` : ''}
-    </div></section>
-    ${(A.blocs || []).length ? `<section class="section" aria-labelledby="h-actions" style="padding-top:0"><div class="wrap actions">
+    </div></section>`)}
+    ${differer(() => `${(A.blocs || []).length ? `<section class="section" aria-labelledby="h-actions" style="padding-top:0"><div class="wrap actions">
       <figure class="actions-photo"><div class="arche-img">${photo('actions-culturelles', A.titre)}</div>${A.credit ? `<figcaption${ed('site.actions.credit')}>${esc(A.credit)}</figcaption>` : ''}</figure>
       <div>
         <h2 class="sec-titre" id="h-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2>
         <div class="prose">${A.blocs.map((b, i) => sousTitres(bloc(b, `site.actions.blocs.${i}`))).join('')}</div>
         ${galerie.length ? `<ul class="galerie-ac">${galerie.map(k => `<li>${photo(k, A.titre)}</li>`).join('')}</ul>` : ''}
       </div>
-    </div></section>` : ''}
-    ${SCOLAIRE.length ? `${rampe('e-frise', 'scolaire', { echelle: 'periode', debut: `${D.aujourdhui.slice(0, 7)}-01`, points: SCOLAIRE.map(d => repereProchaine(d)), libelle: L.enEtablissement })}
+    </div></section>` : ''}`)}
+    ${differer(() => `${SCOLAIRE.length ? `${rampe('e-frise', 'scolaire', { echelle: 'periode', debut: `${D.aujourdhui.slice(0, 7)}-01`, points: SCOLAIRE.map(d => repereProchaine(d)), libelle: L.enEtablissement })}
     <section class="split" data-zone="scolaire" aria-labelledby="h-scolaire">
       <div class="split-carte"><div class="split-colle">${carte({ lieux: CARTE.aVenir('scolaire'), titre: L.enEtablissement, interactif: true, filtre: true, theme: 'etablissement', prochain: SCOLAIRE[0] ? SCOLAIRE[0].l : null })}</div></div>
       <div class="split-liste">
@@ -1992,7 +2029,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
         <div data-liste>${parMois(SCOLAIRE).map(g => groupeMois(g, 'etablissement')).join('')}</div>
       </div>
     </section>` : ''}
-    ${ecrireBande(e)}`;
+    ${ecrireBande(e)}`)}`;
   }
 
   /* ---------- les spectacles ---------- */
@@ -2187,7 +2224,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       <div class="show-corps-fond" style="--ec:${esc(e.couleur)};--ecv:${esc(u.clair ? e.couleur : e.couleurVive)}">
         <div class="wrap show-corps">
           <div class="sommaire"><ol>${chapitres.filter(c => c.titre).map(c => `<li><a href="#${c.id}">${esc(c.titre)}</a></li>`).join('')}</ol></div>
-          <div class="chapitres" id="chapitres">${differer(chapitres.map(c => `<section class="chap" id="${c.id}" tabindex="-1"${c.titre ? ` aria-labelledby="${c.id}-t"` : ''}>${c.titre ? `<h2 class="chap-titre" id="${c.id}-t"><span${ed(c.chemin)}>${esc(c.titre)}</span></h2>` : ''}${c.html}</section>`).join(''))}</div>
+          <div class="chapitres" id="chapitres">${chapitres.map(c => differer(() => `<section class="chap" id="${c.id}" tabindex="-1"${c.titre ? ` aria-labelledby="${c.id}-t"` : ''}>${c.titre ? `<h2 class="chap-titre" id="${c.id}-t"><span${ed(c.chemin)}>${esc(c.titre)}</span></h2>` : ''}${c.html}</section>`)).join('')}</div>
         </div>
       </div>
     </article>`;
@@ -2389,6 +2426,8 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   function lierZones(q, enPlace, racine = main) {
     const zones = {}, frisesZone = {};
     $$('[data-zone]', racine).forEach(z => {
+      if (z.dataset.liee) return;
+      z.dataset.liee = '1';
       const type = z.dataset.zone;
       // la frise de la zone répond à sa carte et à sa liste : une commune survolée allume ses repères
       const ecoute = l => { const f = frisesZone[type]; if (f) { if (l == null) f.eteindre(); else f.allumer({ l }); } };
@@ -2443,19 +2482,26 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     liens[0].classList.add('on');
   }
 
-  // ce qui est sous le pli d'une grande page (les chapitres d'un spectacle) : rendu dans la tâche qui suit la première image du
-  // changement de page (le visible d'abord) ; d'emblée quand la vue est refaite en place
-  let suite = null, permetDiffere = false;
-  const differer = html => { if (!permetDiffere) return html; suite = html; return ''; };
-  function rendreSuite(q) {
-    const html = suite; suite = null;
-    const c = $('#chapitres', main); if (html == null || !c) return;
-    c.innerHTML = html;
-    $$('a[href^="http"]', c).forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
-    preparerCartes(c, false);
-    lierZones(q, false, c);
+  // ce qui est sous le pli : la page arrive par son premier écran ; le reste vient à la suite, une place par image (la place
+  // attendue garde la hauteur d'un écran : rien de visible ne bouge) ; d'emblée quand la vue est refaite en place
+  let suites = null, tourRendu = 0;
+  const differer = f => { const h = typeof f === 'function' ? f : () => f; if (!suites) return h(); suites.push(h); return `<template data-suite="${suites.length - 1}"></template>`; };
+  function completer(tour, reste, q) {
+    if (tour !== tourRendu) return;
+    const t = $('template[data-suite]', main);
+    if (!t) { $$('[data-suite-attend]', main).forEach(x => x.removeAttribute('data-suite-attend')); return; }
+    const f = reste[+t.dataset.suite], parent = t.parentElement;
+    suites = reste;   // une place peut à son tour en remettre d'autres à plus tard
+    try { if (f) t.insertAdjacentHTML('beforebegin', f()); } finally { suites = null; }
+    t.remove();
+    $$('template[data-suite]', parent).forEach(x => x.parentElement.setAttribute('data-suite-attend', ''));
+    if (!$('template[data-suite]', parent)) parent.removeAttribute('data-suite-attend');
+    $$('a[href^="http"]', parent).forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+    preparerCartes(parent, false, true);
+    lierZones(q, false, parent);
     suivreSommaire();
     decorer(false);
+    requestAnimationFrame(() => setTimeout(() => completer(tour, reste, q), 0));
   }
   function rendre(v, q, enPlace) {
     const { ENTREE, ENTREES } = X;
@@ -2468,9 +2514,9 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     root.style.setProperty('--hl', e ? e.couleurVive : 'rgba(255,255,255,.07)');
     root.dataset.vue = v.vue;
     frises.forEach(f => f.detruire()); frises = []; plans = [];
-    suite = null; permetDiffere = !enPlace && mouvement();
-    main.innerHTML = v.html();
-    permetDiffere = false;
+    const tour = ++tourRendu;
+    suites = !enPlace && mouvement() ? [] : null;
+    try { main.innerHTML = v.html(); } finally { var reste = suites || []; suites = null; }
     document.title = `${v.titre} - ${X.S.titreSuffixe}`;
     // l'entrée courante : « page » sur sa propre page, « true » quand on lit un spectacle ou une saison dans cette entrée
     $$('.entree').forEach(a => { const on = !!e && a.dataset.entree === e.cle; a.classList.toggle('on', on); if (on) a.setAttribute('aria-current', v.marque || 'page'); else a.removeAttribute('aria-current'); });
@@ -2483,13 +2529,14 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     suivreSommaire();
     decorer(enPlace);
     if (enPlace) { restaurer(g); return; }
+    $$('template[data-suite]', main).forEach(t => t.parentElement.setAttribute('data-suite-attend', ''));
     // la vue remonte en haut et son titre prend le focus à l'image suivante (avant qu'elle soit peinte) : la mise en page se
-    // fait une seule fois, dans l'image, et non en plus dans la tâche du geste
+    // fait une seule fois, dans l'image, et non en plus dans la tâche du geste ; la suite vient après cette image
     requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
       const h1 = $('h1', main);
       if (h1) h1.focus({ preventScroll: true });
-      if (suite != null) setTimeout(() => rendreSuite(q), 0);
+      if (reste.length) setTimeout(() => completer(tour, reste, q), 0);
     });
   }
   // les titres montent, les cartes viennent l'une après l'autre en pivotant sur leur gond, les chiffres comptent ; posé avant
@@ -2529,8 +2576,8 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
       : [{ transform: `rotateY(${k * 7}deg)`, opacity: 1 }, { transform: `rotateY(${k * 84}deg)`, opacity: 1, offset: .58 }, { transform: `rotateY(${k * 104}deg)`, opacity: 0 }];
     btAnims = [g.animate(vantail(1), o), d.animate(vantail(-1), o)];
     btAnims.push(retour
-      ? j.animate([{ opacity: .5, transform: 'scaleX(.6)' }, { opacity: 0, transform: 'scaleX(.05)' }], { duration: 300, easing: 'ease-in', fill: 'both' })
-      : j.animate([{ opacity: .9, transform: 'scaleX(.1)' }, { opacity: .85, transform: 'scaleX(.55)', offset: .3 }, { opacity: 0, transform: 'scaleX(1.3)' }], { duration: 430, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' }));
+      ? j.animate([{ opacity: .5, transform: 'scaleX(2.4)' }, { opacity: 0, transform: 'scaleX(.2)' }], { duration: 300, easing: 'ease-in', fill: 'both' })
+      : j.animate([{ opacity: .9, transform: 'scaleX(.4)' }, { opacity: .85, transform: 'scaleX(2.2)', offset: .3 }, { opacity: 0, transform: 'scaleX(5.2)' }], { duration: 430, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'both' }));
     btAnims[0].onfinish = finirBattants;
   }
   // d'un onglet à l'autre d'un spectacle : les vantaux ne jouent pas ; le corps paraît sous l'en-tête qui reste
@@ -2556,6 +2603,32 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   }
   // l'élément partagé : l'arche de la carte ou de la porte cliquée (elle devient celle de la page)
   const partage = a => { if (!a) return null; const n = a.closest('[data-mv-nom]') || (a.closest('.uc, .fp, .door') || a).querySelector('[data-mv-nom]'); return n && main.contains(n) ? n : null; };
+  // l'arche cliquée vole jusqu'à sa place dans la page : une copie de son image part de la carte (ou de la porte) et se pose
+  // sur l'arche de la page (transform seul, au-dessus des vantaux) ; un nouveau geste l'arrête
+  let vol = null, tours = 0;
+  function archeVole(de, cible) {
+    if (vol) { try { vol.cancel(); } catch (e) { /* fini */ } vol = null; }
+    const im = cible && cible.querySelector('img');
+    if (!im || !de || !de.width || !document.body.animate) return;
+    const a = cible.getBoundingClientRect();
+    if (!a.width || !a.height || a.bottom < 0 || a.top > innerHeight) return;
+    const x = document.createElement('img');
+    x.src = im.currentSrc || im.src; x.alt = ''; x.className = 'arche-vole'; x.setAttribute('aria-hidden', 'true');
+    x.style.cssText = `left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${a.height}px;border-radius:${getComputedStyle(cible).borderRadius};object-position:${im.style.objectPosition || '50% 50%'}`;
+    document.body.appendChild(x);
+    cible.style.visibility = 'hidden';
+    const fin = () => { x.remove(); cible.style.visibility = ''; if (vol === anim) vol = null; };
+    const anim = x.animate([{ transform: `translate(${(de.left - a.left).toFixed(1)}px, ${(de.top - a.top).toFixed(1)}px) scale(${(de.width / a.width).toFixed(4)}, ${(de.height / a.height).toFixed(4)})` }, { transform: 'none' }],
+      { duration: 420, easing: 'cubic-bezier(.3,.7,.12,1)' });
+    anim.onfinish = fin; anim.oncancel = fin;
+    vol = anim;
+  }
+  // d'un onglet à l'autre d'un spectacle : la porte allumée glisse de l'ancien onglet au nouveau
+  function ongletGlisse(oa, t) {
+    if (!t || !t.animate) return;
+    const dx = oa.left - t.getBoundingClientRect().left;
+    if (Math.abs(dx) > 1) t.animate([{ transform: `translateX(${dx.toFixed(1)}px)` }, { transform: 'none' }], { duration: 300, easing: 'cubic-bezier(.3,.7,.12,1)' });
+  }
   function route() {
     LF = innerWidth;
     lire();
@@ -2567,16 +2640,29 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     if (premiere) pile.push('#/' + c);
     const clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
     dernierClic = null;
-    const depuis = type === 'entree' || type === 'spectacle' ? partage(clic && clic.a) : null;
+    const anime = !premiere && !!MV && mouvement() && !INTRO.ouverte();
+    const depuis = anime && (type === 'entree' || type === 'spectacle') ? partage(clic && clic.a) : null;
+    const nom = depuis ? depuis.getAttribute('data-mv-nom') : null, de = depuis ? depuis.getBoundingClientRect() : null;
+    const ongletAvant = anime && type === 'onglet' ? $('.show-tab.on', main) : null, oa = ongletAvant ? ongletAvant.getBoundingClientRect() : null;
     const portes = type === 'retour' ? couleurCourante : couleursDe(r.v);
+    const tour = ++tours;
     const faire = () => {
+      if (tour !== tours) return;   // un geste plus récent l'a emporté
       rendre(r.v, r.q, false);
       vueCourante = c; couleurCourante = couleursDe(r.v);
-      battants(type, portes);
       if (type === 'onglet') corpsParait();
+      // après la remontée et le focus de la vue (rendre), à la même image : l'arche vole, la porte allumée glisse
+      if (de || oa) requestAnimationFrame(() => {
+        if (tour !== tours) return;
+        if (de) archeVole(de, $(`[data-mv-nom="${CSS.escape(nom)}"]`, main));
+        if (oa) ongletGlisse(oa, $('.show-tab.on', main));
+      });
     };
-    // la première vue (et sous l'ouverture) sans transition ; ensuite, la porte s'ouvre (MOUVEMENT.transition)
-    if (premiere || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type, depuis });
+    // la première vue (et sous l'ouverture) : tout de suite ; ensuite les vantaux partent dès l'image du geste et la page se pose
+    // dessous à la tâche suivante (plus de View Transition : elle tenait la page dans une seule longue tâche avant toute image)
+    if (!anime) { faire(); return; }
+    battants(type, portes);
+    requestAnimationFrame(() => setTimeout(faire, 0));
   }
   // D a changé (la base de la compagnie) : la vue courante est refaite en place
   function rafraichir() {
