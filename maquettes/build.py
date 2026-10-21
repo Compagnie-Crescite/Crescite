@@ -567,7 +567,8 @@ def admin(dest):
     import shutil
     (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
-    for f in ("feuille.js", "equipe.js", "planning.js"):   # la feuille de route et le planning (communs avec equipe/), l'équipe
+    # la feuille de route et le planning (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates)
+    for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)

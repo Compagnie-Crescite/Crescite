@@ -45,10 +45,12 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
 .direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
 .direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
-/* neuf rubriques : sous 1 840 px l'adresse du compte se retire ; sous 1 660 px les rubriques passent sur une seconde ligne */
-@media (max-width: 1839px) { .qui .moi { display: none; } }
-@media (max-width: 1659px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
-@media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; } }
+/* dix rubriques : sous 1 940 px l'adresse du compte se retire ; sous 1 740 px les rubriques passent sur une seconde ligne ;
+   entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique courante en vue) */
+@media (max-width: 1939px) { .qui .moi { display: none; } }
+@media (max-width: 1739px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
+@media (min-width: 861px) and (max-width: 1099px) { .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
+@media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 
 /* boutons et champs */
@@ -91,7 +93,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
-@media (min-width: 1101px) and (max-width: 1659px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
+@media (min-width: 1101px) and (max-width: 1739px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
@@ -416,7 +418,7 @@ function changement(t, p) {
 }
 
 // ===================================================================================================== cadre et routes
-const RUBRIQUES = [['representations', 'Représentations'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
@@ -424,10 +426,18 @@ function cadre(rubrique, contenu) {
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
+  // au téléphone, les rubriques défilent : la rubrique courante est amenée en vue (hors du fondu de droite)
+  const nav = $('.nav'), courante = $('.nav a[aria-current="page"]');
+  if (nav && courante && nav.scrollWidth > nav.clientWidth) {
+    const n = nav.getBoundingClientRect(), r = courante.getBoundingClientRect();
+    if (r.right > n.right - 36) nav.scrollLeft += r.right - (n.right - 40);
+    else if (r.left < n.left) nav.scrollLeft -= n.left - r.left + 4;
+  }
   tt('pieuvre');
 }
 const ROUTES = [
   [/^#\/representations(?:\/(nouvelle|\d+))?$/, m => vueDates(m[1])],
+  [/^#\/planning(?:\/(propositions|proposer|proposition\/\d+))?$/, m => vuePlanning(m[1])],
   [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
   [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
   [/^#\/equipe(?:\/(nouvelle|documents|\d+))?$/, m => vueEquipe(m[1])],
@@ -1456,5 +1466,9 @@ async function vueJournal() {
      distribution, déroulé type et documents des spectacles, équipe de chaque date -->
 <script src="feuille.js"></script>
 <script src="equipe.js"></script>
+<!-- le planning commun avec l'espace de l'équipe (PLANNING), puis la rubrique Planning : le planning de toute l'équipe,
+     les propositions de dates et leur suivi (script SQL 5) -->
+<script src="planning.js"></script>
+<script src="disponibilites.js"></script>
 </body>
 </html>
