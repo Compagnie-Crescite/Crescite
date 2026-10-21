@@ -1764,7 +1764,7 @@ main{display:block;min-height:100vh;overflow-x:clip}
     // ---- le câblage, une fois la vue dans la page (lierZones)
     AG.brancher = zone => {
       const racine = $('#ag-saisons'), index = $('#ag-index'), liste = $('[data-liste]', zone), mcP = $('.mc', zone);
-      let fSaison = null, fSaisons = null, agenda = false, suiteCF = false, suiteS = false;
+      let fSaison = null, fSaisons = null, agenda = false, suiteCF = false, suiteS = false, genSaisons = 0;
       const ctl = lierZone(zone, { naviguer: l => AG.choisir(l), ecoute: l => { if (fSaison) { if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); } } });
       const lierSaison = (corps, immediat) => {
         lierZone(corps, { naviguer: l => AG.choisir(l) });
@@ -1807,14 +1807,18 @@ main{display:block;min-height:100vh;overflow-x:clip}
         const faire = () => { recompte(); filtrerListe(liste); majOutils(); };
         if (anime && MV) MV.flip(liste, faire, { cle: '[data-mv-cle]' }); else faire();
         // la carte et la frise de la saison suivent à l'image d'après (le geste se peint d'abord) ; l'agenda passé, sous le pli,
-        // dans une tâche encore après, ses saisons glissant depuis l'endroit où elles sont
+        // à l'image encore après : ses saisons, puis le corps de chaque saison ouverte (une par image), puis la frise des saisons
         const carteFrise = () => { if (!liste.isConnected) return; majCarte(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
         const saisons = () => { if (!agenda || !racine.isConnected) return;
-          if (anime && MV) MV.flip(racine, dessineSaisons, { cle: '[data-mv-cle]' }); else dessineSaisons();
-          if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+          if (!anime) { dessineSaisons(); if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); return; }
+          dessineSaisons(true);
+          const ouvertes = $$('.sai[open]', racine), g = ++genSaisons;
+          const suite = () => { if (g !== genSaisons || !racine.isConnected) return; const dt = ouvertes.shift();
+            if (dt) { remplirPose(dt); requestAnimationFrame(() => setTimeout(suite, 0)); } else if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+          requestAnimationFrame(() => setTimeout(suite, 0)); };
         if (!anime) { carteFrise(); saisons(); return; }
         if (!suiteCF) { suiteCF = true; requestAnimationFrame(() => setTimeout(() => { suiteCF = false; carteFrise();
-          if (!suiteS) { suiteS = true; setTimeout(() => { suiteS = false; saisons(); }, 0); } }, 0)); }
+          if (!suiteS) { suiteS = true; requestAnimationFrame(() => setTimeout(() => { suiteS = false; saisons(); }, 0)); } }, 0)); }
       };
       AG.choisir = l => { F.l = F.l === l ? null : l; dessine(); };
       // l'état d'ouverture : à la main (toggle), par l'index ou par la frise des saisons ; les dates arrivent en cascade
