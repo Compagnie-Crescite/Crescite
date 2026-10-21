@@ -11,6 +11,12 @@ hors d'atteinte, et rien ne se modifie ni ne se retire sans filtre.
     python3 supabase/ecrire.py retirer  <table> "<filtre>"                   retirer des lignes
     python3 supabase/ecrire.py envoyer  <stockage> <chemin> <fichier>        déposer un fichier (remplace l'ancien)
     python3 supabase/ecrire.py appeler  <fonction> '<json>'                  appeler une fonction crescite_ de la base
+    python3 supabase/ecrire.py lot      <fichier.json>                       une liste d'opérations, dans l'ordre :
+          [{"action": "modifier", "table": …, "filtre": …, "valeurs": {…}},
+           {"action": "ajouter", "table": …, "valeurs": {…} ou […], "colonnes": "…", "nom": "x"},
+           {"action": "retirer", "table": …, "filtre": …}]
+          une opération nommée (« nom ») garde sa première ligne : « @x.id » la reprend dans les suivantes.
+          Chaque opération passe par les mêmes contrôles ; à la première erreur, le lot s'arrête.
 
 Le filtre s'écrit comme dans l'API du projet : « id=eq.88 », « slug=eq.imaginaire-force&categorie=eq.jeu ».
 --essai montre la requête sans l'envoyer. La clé vient de SUPABASE_CLE_SERVICE, ou du proxy de la session de travail.
@@ -78,6 +84,45 @@ def envoyer(methode, chemin, corps=None, entetes=None, essai=False):
     return reponse
 
 
+def lot(fichier, essai):
+    if not fichier.is_file():
+        refuser(f"fichier introuvable : {fichier}")
+    ops = lire_json(fichier.read_text(encoding="utf-8"))
+    if not isinstance(ops, list) or not ops:
+        refuser("le lot attend une liste d'opérations")
+    noms = {}
+
+    def resoudre(v):
+        if isinstance(v, str) and v.startswith("@") and "." in v:
+            nom, champ = v[1:].split(".", 1)
+            if nom not in noms:
+                refuser(f"« {v} » : l'opération « {nom} » n'a pas encore eu lieu")
+            return noms[nom].get(champ)
+        if isinstance(v, dict):
+            return {k: resoudre(x) for k, x in v.items()}
+        if isinstance(v, list):
+            return [resoudre(x) for x in v]
+        return v
+
+    for i, op in enumerate(ops, 1):
+        print(f"--- {i}/{len(ops)} · {op.get('action')} {op.get('table', '')} {op.get('filtre', '')}".rstrip())
+        a, t = op.get("action"), op.get("table", "")
+        valeurs = resoudre(op.get("valeurs"))
+        filtre_ = resoudre(op.get("filtre", ""))
+        if a == "modifier":
+            args = ["modifier", t, filtre_, json.dumps(valeurs, ensure_ascii=False)]
+        elif a == "ajouter":
+            args = ["ajouter", t, json.dumps(valeurs, ensure_ascii=False)] + ([op["colonnes"]] if op.get("colonnes") else [])
+        elif a == "retirer":
+            args = ["retirer", t, filtre_]
+        else:
+            refuser(f"opération {i} : action « {a} » inconnue dans un lot")
+        r = main(args + (["--essai"] if essai else []))
+        if op.get("nom"):
+            noms[op["nom"]] = (r[0] if isinstance(r, list) and r else {}) if not essai else {"id": f"<{op['nom']}.id>"}
+    print(f"lot terminé : {len(ops)} opérations{' (essai)' if essai else ''}")
+
+
 def main(args):
     essai = "--essai" in args
     a = [x for x in args if x != "--essai"]
@@ -114,6 +159,8 @@ def main(args):
         type_ = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
         return envoyer("POST", f"/storage/v1/object/{stockage}/{quote(chemin)}", f.read_bytes(),
                        {"Content-Type": type_, "x-upsert": "true", "Cache-Control": "max-age=3600"}, essai=essai)
+    if action == "lot" and len(reste) == 1:
+        return lot(Path(reste[0]), essai)
     if action == "appeler" and len(reste) == 2:
         if not TABLE.match(reste[0]):
             refuser(f"« {reste[0]} » n'est pas une fonction de la compagnie (crescite_…)")

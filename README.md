@@ -134,6 +134,8 @@ d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.ht
 2.0 et les photos (rangées une seule fois dans `docs/photos/`) : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
 chacune demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet,
 noimageindex`), et leur adresse n'est donnée nulle part dans le dépôt (elle figure dans Settings → Pages). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
+Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
+réactivité, la réservation, les vidéos, le jour et la nuit, la troupe) sont dans `maquettes/CONTRAT.md`.
 
 ## Données
 
@@ -359,5 +361,6 @@ chaque proposition (réponses par jour, état des courriels, renvoyer, relancer,
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
-d'atteinte), jamais sans filtre, avec un mode `--essai`. La règle qui l'y autorise est dans `.claude/settings.json`.
+d'atteinte), jamais sans filtre, avec un mode `--essai`. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;
+une ligne ajoutée se reprend dans les suivantes par « @nom.id ». La règle qui l'y autorise est dans `.claude/settings.json`.
 Les scripts SQL et le déploiement des fonctions restent à faire dans Supabase.
