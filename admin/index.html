@@ -368,6 +368,7 @@ const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 const texteSeul = h => { const d = document.createElement('div'); d.innerHTML = h || ''; return d.textContent; };
 const clone = o => JSON.parse(JSON.stringify(o ?? null));
 const AUJ = AGENDA.iso(new Date());
+const aujourdhui = () => AGENDA.iso(new Date());   // le jour d'aujourd'hui, à l'appel (la diffusion s'en sert)
 const JS = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
 const MC = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 const jourCourt = j => { if (!j) return ''; const d = new Date(j + 'T12:00:00'); return `${JS[d.getDay()]} ${d.getDate()} ${MC[d.getMonth()]} ${d.getFullYear()}`; };
@@ -599,10 +600,13 @@ function changement(t, p) {
 
 // ===================================================================================================== cadre et routes
 const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['diffusion', 'Diffusion CRM'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+// la Diffusion n'est là que quand la base a ses tables (le script 20261026_crescite_ideale.sql) : sinon elle se masque
+const rubriquesVisibles = () => RUBRIQUES.filter(([k]) => k !== 'diffusion' || E.ideale);
+const idealeAbsente = titre => `<div class="bloc"><h3>${titre}</h3><p>Exécutez <code>supabase/migrations/20261026_crescite_ideale.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), puis rechargez cette page.</p><p class="aide">Le reste de l’administration marche comme avant.</p></div>`;
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true">${RACCOURCI_RCH}</kbd></button>
-    <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
+    <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
@@ -692,7 +696,7 @@ function indexRch() {
   const xs = [], joursDe = new Map(), feuilles = new Map((E.feuilles || []).map(f => [f.date_id, f]));
   E.reps.forEach(r => { if (!r.jour) return; if (!joursDe.has(r.date_id)) joursDe.set(r.date_id, new Set()); joursDe.get(r.date_id).add(r.jour); });
   const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.titre} ${o.sous || ''} ${plus}`) });
-  RUBRIQUES.forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100 }));
+  rubriquesVisibles().forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100 }));
   E.spectacles.forEach(s => mettre({ type: 'Spectacle', titre: s.titre, sous: s.page ? '' : 'Ancien spectacle', href: `#/spectacles/${s.slug}`, couleur: couleurSp(s), ordre: s.page ? 0 : 1 }));
   (E.personnes || []).forEach(p => mettre({ type: 'Personne', titre: nomDe(p) || 'Sans nom', sous: (p.metiers || []).join(', '), href: `#/equipe/${p.id}` }));
   E.lieux.forEach(l => mettre({ type: 'Lieu', titre: l.nom || l.commune, sous: [l.nom ? l.commune : '', l.departement ? `(${l.departement})` : ''].filter(Boolean).join(' '), href: `#/lieux/${l.id}` }, l.adresse));
@@ -1547,7 +1551,7 @@ function editeurSpectacle(slug) {
   ['univers', 'action_culturelle', 'programmer'].forEach(k => { F[k] = F[k] || {}; });
   F.univers.couleurs = F.univers.couleurs || {}; F.univers.polices = F.univers.polices || {};
   F.tournee = F.tournee || {}; F.avec = F.avec || { libelle: 'avec :', valeur: '' }; F.video = F.video || { titre: '', url: '' };
-  const onglets = [...Object.keys(SPEC_SPECTACLE), 'Photos', ...ONGLETS_EQUIPE];
+  const onglets = [...Object.keys(SPEC_SPECTACLE), 'Photos', ...ONGLETS_EQUIPE.filter(o => o !== 'Matériel' || E.ideale)];
   let onglet = sessionStorage.getItem('crescite-onglet-sp') || 'Général';
   if (!onglets.includes(onglet)) onglet = 'Général';
   const dossiers = E.textes.filter(t => t.cle.startsWith('dossier:')).map(t => [t.cle, t.cle.slice(8)]);
@@ -1923,6 +1927,7 @@ const ETAPES_CRM = [
 ];
 
 function vueDiffusion(param) {
+  if (!E.ideale) { cadre('diffusion', `<div class="tete"><h1>Diffusion</h1></div>${idealeAbsente('La diffusion n’est pas encore installée')}`); return; }
   const auj = aujourdhui();
   const prospects = E.prospects || [];
   const actifs = prospects.filter(p => p.etape !== 'bilan' && p.etape !== 'refus');
