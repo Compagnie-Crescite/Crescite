@@ -282,14 +282,16 @@ CLE_PUBLIQUE = "sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB"     # la clé pu
 def photos_de_la_base():
     """Les photos publiées des personnes, telles que la base les donne au site : {slug: (chemin, crédit)}. Une photo déposée
     par l'administration y a son propre nom de fichier ; None si la base ne répond pas (on garde alors le registre privé)."""
-    try:
-        req = Request(f"{BASE}/rest/v1/crescite_personnes?select=slug,photo,photo_credit&photo_publique=is.true&photo=not.is.null",
-                      headers={"apikey": CLE_PUBLIQUE, "Authorization": f"Bearer {CLE_PUBLIQUE}", "Accept": "application/json"})
-        with urlopen(req, timeout=20) as r:
-            return {x["slug"]: (x["photo"], x.get("photo_credit")) for x in json.loads(r.read().decode())}
-    except Exception as e:                                   # hors ligne, ou la base refuse : le registre suffit
-        print(f"photos de l'équipe : la base ne répond pas ({e}) ; le registre privé sert")
-        return None
+    req = Request(f"{BASE}/rest/v1/crescite_personnes?select=slug,photo,photo_credit&photo_publique=is.true&photo=not.is.null",
+                  headers={"apikey": CLE_PUBLIQUE, "Authorization": f"Bearer {CLE_PUBLIQUE}", "Accept": "application/json"})
+    for essai in range(3):                                   # un réseau qui hoquette : on réessaie avant de se rabattre
+        try:
+            with urlopen(req, timeout=30) as r:
+                return {x["slug"]: (x["photo"], x.get("photo_credit")) for x in json.loads(r.read().decode())}
+        except Exception as e:                               # hors ligne, ou la base refuse : le registre suffit
+            erreur = e
+    print(f"ATTENTION photos de l'équipe : la base ne répond pas ({erreur}) ; le registre privé sert, ses chemins peuvent être anciens")
+    return None
 
 
 def equipe_data():
