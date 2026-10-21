@@ -1665,7 +1665,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       nettoyer();
       const vis = visibles();
       racine.innerHTML = vis.map(({ s, rows }) => { const ouv = F.ouv.has(s.k), lx = lieuxDe(s, rows);
-        return `<details class="sai" id="sai-${s.k}" data-saison="${s.k}" data-frise-id="${s.k}"${ouv ? ' open' : ''}>
+        return `<details class="sai" id="sai-${s.k}" data-saison="${s.k}" data-frise-id="${s.k}"${ouv ? ' open' : ''}${ouv && vides ? ' data-pose="1"' : ''}>
         <summary><span class="sai-mini">${miniSvg(s.k, lx)}</span><span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${chevron}</span></summary>
         <div class="sai-corps">${ouv && !vides ? corpsSaison(s, rows, lx) : ''}</div></details>`; }).join('');
       if (brancherAussi && !vides) brancherOuvertes();
@@ -1693,7 +1693,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
         dessineSaisons(true, true);
         const ouvertes = $$('.sai[open]', racine), g = ++genSaisons;
         const suite = () => { if (g !== genSaisons || !racine.isConnected) return; const dt = ouvertes.shift();
-          if (dt) { remplirSaison(dt, false); requestAnimationFrame(() => setTimeout(suite, 0)); } else if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+          if (dt) { delete dt.dataset.pose; if (dt.open) remplirSaison(dt, false); requestAnimationFrame(() => setTimeout(suite, 0)); } else if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
         requestAnimationFrame(() => setTimeout(suite, 0)); };
       if (!anime) { reponse(); saisons(); return; }
       if (!suiteR) { suiteR = true; requestAnimationFrame(() => setTimeout(() => { suiteR = false; reponse();
@@ -1706,6 +1706,9 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     };
     racine.addEventListener('toggle', ev => {
       const dt = ev.target; if (!dt.matches || !dt.matches('details.sai')) return;
+      // une saison posée ouverte par l'agenda (data-pose) : son corps viendra à son image ; rien à faire ici
+      if (dt.open && dt.dataset.pose) return;
+      delete dt.dataset.pose;
       const k = dt.dataset.saison;
       if (dt.open) { F.ouv.add(k); remplirSaison(dt, true); } else { F.ouv.delete(k); delete dt.dataset.branche; const c = $('.sai-corps', dt); if (c) { $$('figure.carte', c).forEach(f => { cancelAnimationFrame(f._raf); ANIM.delete(f); if (RO) RO.unobserve(f); REG.delete(f.id); }); c.innerHTML = ''; } }
       const b = $(`[data-k="${k}"]`, index); if (b) b.setAttribute('aria-expanded', String(dt.open));

@@ -869,7 +869,10 @@ html .ed-annonce{background:var(--aub-3);border-radius:18px 18px 6px 6px;box-sha
    Une porte s'ouvre, la lumière passe par l'embrasure, on referme derrière soi. Survol 160 à 200 ms, pression 90 ms, page 420 ms. */
 html{view-transition-name:none}
 main{display:block;min-height:100vh;overflow-x:clip}
-[data-suite-attend]{min-height:100vh}   /* une place qui attend la suite de la page garde la hauteur d'un écran */   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; ce qui glisse n'en déborde pas */
+[data-suite-attend]{min-height:100vh}   /* une place qui attend la suite de la page garde la hauteur d'un écran */
+/* l'agenda de « voir » : ce qui est hors de l'écran n'est ni mis en page ni peint tant qu'on n'y va pas (filtrer ne repeint que
+   ce qu'on voit) */
+#v-agenda,html[data-vue="voir"] main>.section,html[data-vue="voir"] .site-footer{content-visibility:auto;contain-intrinsic-size:auto 1200px}   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; ce qui glisse n'en déborde pas */
 /* les battants : deux vantaux à la couleur de la page qui s'ouvre, sous l'en-tête ; la lumière passe entre eux.
    Seuls transform et opacity bougent ; rien ne capte le pointeur : un nouveau geste passe au travers */
 .battants{position:fixed;left:0;right:0;bottom:0;top:var(--bt-haut,0px);z-index:25;pointer-events:none;perspective:1700px;perspective-origin:50% 42%;visibility:hidden;overflow:hidden}
@@ -1742,7 +1745,7 @@ main{display:block;min-height:100vh;overflow-x:clip}
     const carteSaison = (s, lx) => carte({ lieux: lx, titre: s.titre, interactif: true, filtre: true, theme: 'voir' });
     const saisonHtml = ({ s, rows }, vide = false) => {
       const ouv = F.ouv.has(s.k), lx = lieuxDe(s, rows);
-      return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
+      return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}${ouv && vide ? ' data-pose="1"' : ''}>
         <summary><span class="sai-arche">${miniLieux(lx)}<span class="sai-battant" aria-hidden="true"></span></span><span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${chevron}</span></summary>
         <div class="sai-corps" data-sai="${esc(s.k)}">${ouv && !vide ? corpsSaison(s, rows, lx) : ''}</div></details>`;
     };
@@ -1791,6 +1794,7 @@ main{display:block;min-height:100vh;overflow-x:clip}
         index.innerHTML = indexHtml(vis);
       };
       const remplirPose = dt => {
+        delete dt.dataset.pose;
         const k = dt.dataset.saison, s = passe.find(x => x.k === k), c = $('.sai-corps', dt);
         if (!s || !c || c.firstElementChild || !dt.open) return;
         const rows = s.rows.filter(garde);
@@ -1844,6 +1848,9 @@ main{display:block;min-height:100vh;overflow-x:clip}
       };
       racine.addEventListener('toggle', ev => {
         const dt = ev.target; if (!dt.matches || !dt.matches('details.sai')) return;
+        // une saison posée ouverte par l'agenda (data-pose) : son corps viendra à son image ; rien à faire ici
+        if (dt.open && dt.dataset.pose) return;
+        delete dt.dataset.pose;
         const k = dt.dataset.saison;
         if (dt.open) { F.ouv.add(k); if (remplir(dt)) deplier(dt); } else { F.ouv.delete(k); const c = $('.sai-corps', dt); if (c) { $$('.mc', c).forEach(m => io && io.unobserve(m)); c.innerHTML = ''; } }
         const b = $(`[data-k="${CSS.escape(k)}"]`, index); if (b) b.setAttribute('aria-expanded', String(dt.open));

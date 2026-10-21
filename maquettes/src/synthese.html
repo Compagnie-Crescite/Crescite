@@ -13,7 +13,7 @@
    Bérénice, les pages d'adrienvada.fr) où revient l'effet de la 10. Tout le texte visible vient de D, tel quel. */
 :root {
   --papier: #f6f2eb; --papier-2: #ece5da; --carte: #e4dccf; --encre: #1d1418; --gris: #5f565a; --filet: #dcd3c6;
-  --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418; --blanc: #fffdf9;
+  --magenta: #bc3e80; --magenta-texte: #a3306b; --nuit: #1d1418; --blanc: #fffdf9; --magenta-vif: #bc3e80;
   --serif: "Spectral", Georgia, serif; --sans: "Work Sans", system-ui, sans-serif;
   --gout: clamp(16px, 4vw, 56px); --haut: 64px; --onglets: 0px;
   /* les tentacules (tentacules.js) : la pieuvre du logo guide ; ici elles ont la couleur et les ventouses des bras de la tournée */
@@ -32,7 +32,7 @@ html[data-theme="jour"] { color-scheme: light; }
 html[data-theme="nuit"] {
   color-scheme: dark;
   --papier: #151014; --papier-2: #1e171c; --carte: #2b2128; --encre: #f2eae4; --gris: #b0a3aa; --filet: #352a31;
-  --magenta: #c44386; --magenta-texte: #f07ab6; --nuit: #0c080b; --blanc: #211a1f;
+  --magenta: #c44386; --magenta-texte: #f07ab6; --nuit: #0c080b; --blanc: #211a1f; --magenta-vif: #e0559a;
   --tt-encre: #e0559a; --tt-accent: #f2eae4; --tt-neutre: #e0559a;
   --ed-fond: #211a1f; --ed-encre: #f2eae4; --ed-accent: #e0559a; --ed-sur-accent: #151014; --ed-trait: #3b2f37;
 }
@@ -44,6 +44,9 @@ html[data-theme="nuit"] :is(.entrees, .barre) a[aria-current="page"] { backgroun
 html[data-theme="nuit"] :is(.entrees, .barre) a[aria-current="page"] .pt { background: var(--papier); }
 html[data-theme="nuit"] :is(.entrees, .barre) a[aria-current="true"] { border-color: var(--ev); }
 html[data-theme="nuit"] footer { border-top: 1px solid var(--filet); }
+/* ce qui s'écrit dans la couleur d'une entrée prend sa couleur vive (la sombre ne se lirait pas sur la nuit) */
+html[data-theme="nuit"] .ct-k { color: var(--ev, var(--magenta-texte)); }
+html[data-theme="nuit"] .et-rac button:hover { border-color: var(--ev); color: var(--ev); }
 /* les fiches des spectacles se détachent de la nuit par un filet de leur univers */
 html[data-theme="nuit"] :is(.fu, .prog, .fe, .dos-appel) { box-shadow: 0 0 0 1px color-mix(in srgb, var(--u-texte) 16%, transparent), 0 24px 44px -28px #000; }
 /* les univers clairs dans leur nuit (leurs couleurs de D, retournées) ; ce qui reste sur papier blanc garde l'encre du jour */
@@ -53,6 +56,11 @@ html[data-theme="nuit"] .u-paperboard .u-ouv-texte { --u-texte: var(--uj-texte);
 html[data-theme="nuit"] .u-arene .u-ouv { background: color-mix(in srgb, var(--u-accent) 72%, #1a0703); }
 html[data-theme="nuit"] .u-arene .u-onglets { background: color-mix(in srgb, var(--u-fond) 90%, transparent); }
 html[data-theme="nuit"] .u-arene .u-carton figcaption { background: var(--u-fond2); }
+/* dans la nuit d'un univers clair, ce qui s'écrivait dans son accent (le rouge de Bérénice) prend sa couleur vive (le
+   saumon), qui se lit sur le fond sombre ; les aplats gardent l'accent, et les feuilles blanches leurs encres du jour */
+html[data-theme="nuit"] .u.u-clair { --ac: var(--u-vif); }
+html[data-theme="nuit"] .u-clair .sheet { --ac: var(--u-accent); }
+html[data-theme="nuit"] .u-arene :is(.u-h2, .u-affirm, .u-cit p, .u-ac-type, .u-aside, .u-avec, .suivant b, .prog-t a, .fe-t a, .fe-type, .fu-t, .dos-h3, .dos-h4, .dos-fiche dt, .dos-fiche-t) { color: var(--u-vif); }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--haut) + 16px); }
 body { margin: 0; background: var(--papier); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
@@ -423,8 +431,7 @@ section.troupe { overflow-x: clip; }
 .tr-metiers { font: 400 .84rem/1.35 var(--sans); color: var(--gris); }
 .tr-metier + .tr-metier::before { content: " · "; }
 .tr-place:hover .tr-nom, .tr-place.est-allume .tr-nom { color: var(--magenta-texte); }
-.tr-place:is(:hover, :focus-visible, .est-allume) .tr-vignette { --tr-anneau: 360deg; }
-.tr-place:is(:hover, :focus-visible, .est-allume) .tr-vignette::before, .tr-place:is(:hover, :focus-visible, .est-allume) .tr-ventouse::before { --tr-anneau: 360deg; }
+.tr-place:is(:hover, :focus-visible, .est-allume) .tr-vignette::before { --tr-anneau: 360deg; }
 .tr-place.est-allume .tr-ventouse::before, .tr-place:hover .tr-ventouse::before { background: var(--magenta); scale: 1.3; }
 .tr-place[aria-pressed="true"] { background: color-mix(in srgb, var(--magenta) 10%, transparent); }
 .tr-place:focus-visible { outline: 2px solid var(--magenta); outline-offset: 2px; }
@@ -433,12 +440,12 @@ section.troupe { overflow-x: clip; }
 .tr-place.mv-presse { scale: .97; transition-duration: .06s; }
 /* le bras de chaque métier : une onde qui passe par les ventouses (un morceau par personne : il suit la mise en page),
    et une boucle au bout */
-.tr-li::after, .tr-li:last-child::before { content: ""; position: absolute; z-index: 0; pointer-events: none; background: var(--magenta); }
+.tr-li::after, .tr-li.tr-queue::before { content: ""; position: absolute; z-index: 0; pointer-events: none; background: var(--magenta); }
 .tr-li::after { top: 0; bottom: 0; left: calc(var(--tr-x) - 7px); width: 14px;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 40' preserveAspectRatio='none'%3E%3Cpath d='M7 0C12 10 2 30 7 40' fill='none' stroke='%23000' stroke-width='1.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 40' preserveAspectRatio='none'%3E%3Cpath d='M7 0C12 10 2 30 7 40' fill='none' stroke='%23000' stroke-width='1.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
 .tr-li:first-child::after { top: -14px; }
-.tr-li:last-child::before { top: 100%; left: calc(var(--tr-x) - 7px); width: 14px; height: 16px;
+.tr-li.tr-queue::before { top: 100%; left: calc(var(--tr-x) - 7px); width: 14px; height: 16px;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'%3E%3Cpath d='M7 0C8.8 3.5 9.6 8.5 7 11.2C5.1 13.2 2.6 12.1 3 9.8C3.3 8.2 5.4 7.9 6 9.2' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 16'%3E%3Cpath d='M7 0C8.8 3.5 9.6 8.5 7 11.2C5.1 13.2 2.6 12.1 3 9.8C3.3 8.2 5.4 7.9 6 9.2' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
 .tr-cote { display: grid; gap: 34px; align-content: start; min-width: 0; }
@@ -447,54 +454,65 @@ section.troupe { overflow-x: clip; }
 .tr-choeur-cat .tr-cat-t { flex-direction: column; gap: 8px; margin-bottom: 18px; text-align: center; }
 .tr-choeur { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px 10px; }
 .tr-choeur > .tr-li { grid-row: var(--r3); grid-column: var(--c3) / span 2; }
-.tr-choeur > .tr-li::after, .tr-choeur > .tr-li:last-child::before { content: none; }
+.tr-choeur > .tr-li::after, .tr-choeur > .tr-li.tr-queue::before { content: none; }
 .tr-choeur > .tr-li.n-g { grid-column: 1 / 4; }
 .tr-choeur > .tr-li.n-d { grid-column: 4 / 7; }
 .tr-choeur .a-photo { flex-direction: column; gap: 6px; padding: 4px 2px 8px; text-align: center; }
 .tr-choeur .a-photo > [data-troupe-ancre] { width: auto; }
 .tr-choeur .a-photo .tr-vignette::before { width: calc(var(--tr-v) + 8px); height: calc(var(--tr-v) + 8px); }
 .tr-choeur .a-photo .tr-vignette img { width: var(--tr-v); height: var(--tr-v); }
-.tr-choeur-cat { --tr-v: clamp(62px, 20cqi, 84px); }
+.tr-choeur-cat { --tr-v: clamp(60px, 19cqi, 84px); }
 .tr-choeur .a-photo .tr-nom span { display: block; }
 .tr-choeur .a-photo .tr-nom { font-size: 1.02rem; }
 .tr-choeur .n-g .tr-place { flex-direction: row-reverse; text-align: right; }
 .tr-choeur .n-g > .tr-place > [data-troupe-ancre], .tr-choeur .n-d > .tr-place > [data-troupe-ancre] { width: 20px; }
 .tr-choeur .n-g::after { content: ""; top: -6px; bottom: -6px; left: auto; right: -12px; }
-.tr-choeur .n-g:last-child::before, .tr-choeur .n-g.dernier::before { content: ""; left: auto; right: -12px; }
-@container choeur (min-width: 430px) {
+.tr-choeur .n-g.tr-queue::before { content: ""; left: auto; right: -12px; }
+@container choeur (min-width: 400px) {
   .tr-choeur { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   .tr-choeur > .tr-li { grid-row: var(--r4); grid-column: var(--c4) / span 2; }
   .tr-choeur > .tr-li.n-g { grid-column: 1 / 5; }
   .tr-choeur > .tr-li.n-d { grid-column: 5 / 9; }
 }
 /* les équipes : survoler un spectacle allume les siens */
-.tr-sp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 22px 0 0; padding: 0; list-style: none; }
-.tr-spb { display: inline-flex; align-items: center; gap: 8px; padding: 6px 13px; border: 1.5px solid var(--filet); border-radius: 999px; background: transparent; color: var(--encre);
-  font: 500 .88rem/1.2 var(--sans); cursor: pointer; transition: background .18s, border-color .18s, color .18s, scale .12s; }
+.tr-sp-zone { position: relative; z-index: 2; display: grid; justify-items: start; gap: 10px; }
+.tr-sp-t { margin: 0; }
+.tr-sp { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.tr-spb { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border: 1.5px solid var(--filet); border-radius: 999px; background: transparent; color: var(--encre);
+  font: 500 .82rem/1.2 var(--sans); cursor: pointer; transition: background .18s, border-color .18s, color .18s, scale .12s; }
 .tr-spb i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
 .tr-spb:hover, .tr-spb.est-allume { border-color: var(--c); }
 .tr-spb[aria-pressed="true"] { background: var(--encre); border-color: var(--encre); color: var(--papier); }
 .tr-spb.mv-presse { scale: .965; transition-duration: .06s; }
 /* au bureau : la pieuvre au centre, le chœur sous elle, les métiers de part et d'autre ; à gauche, tout se tourne vers elle */
 @media (min-width: 960px) {
-  .tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "g tete d" "g centre d"; grid-template-rows: auto 1fr;
+  .tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); grid-template-areas: "sp sp sp" "g tete d" "g centre d"; grid-template-rows: auto auto 1fr;
     column-gap: clamp(60px, 6.4vw, 100px); row-gap: 10px; align-items: start; }
+  .tr-sp-zone { grid-area: sp; justify-items: center; margin-bottom: 30px; }
+  .tr-sp { justify-content: center; max-width: 980px; }
   .tr-tete { grid-area: tete; width: min(250px, 72%); }
   .tr-choeur-cat { grid-area: centre; }
   .tr-g { grid-area: g; } .tr-d { grid-area: d; }
-  .tr-cote { padding-top: 112px; gap: 42px; }
+  .tr-cote { padding-top: 138px; gap: 42px; }
   .tr-g .tr-cat-t, .tr-g .tr-place { flex-direction: row-reverse; text-align: right; }
-  .tr-g .tr-li::after, .tr-g .tr-li:last-child::before { left: auto; right: calc(var(--tr-x) - 7px); }
-  .tr-g .tr-li:last-child::before { transform: scaleX(-1); }
+  .tr-g .tr-li::after, .tr-g .tr-li.tr-queue::before { left: auto; right: calc(var(--tr-x) - 7px); }
+  .tr-g .tr-li.tr-queue::before { transform: scaleX(-1); }
 }
 @media (min-width: 640px) and (max-width: 959px) {
   .tr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 32px; }
-  .tr-tete, .tr-choeur-cat { grid-column: 1 / -1; }
+  .tr-sp-zone, .tr-tete, .tr-choeur-cat { grid-column: 1 / -1; }
   .tr-choeur-cat { width: min(100%, 560px); justify-self: center; }
 }
 @media (max-width: 639px) {
+  .tr-tete { width: min(190px, 52vw); }
   .tr-choeur-cat .tr-cat-t { margin-bottom: 14px; }
   .tr-nom { font-size: 1.06rem; }
+  /* les spectacles en une rangée qui défile au doigt */
+  .tr-sp { flex-wrap: nowrap; overflow-x: auto; margin: 0 calc(-1 * var(--gout)); padding: 2px var(--gout) 6px; scrollbar-width: none; max-width: calc(100% + 2 * var(--gout)); }
+  .tr-sp::-webkit-scrollbar { display: none; }
+  .tr-sp li { flex: none; }
+  .tr-spb { white-space: nowrap; }
+  .tr-sp-zone { justify-items: stretch; }
 }
 /* le mouvement : au défilement, les ventouses arrivent une à une et le bras de chaque métier pousse avec elles ; les bras
    qui partent de la pieuvre se tracent (animations liées au défilement, --tr-p enregistrée par @property) */
@@ -1099,7 +1117,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 #v-tournee .fus { content-visibility: auto; contain-intrinsic-size: auto 1100px; }
 
 /* ———— les frises (FRISE), sur le papier de la synthèse ———— */
-.frise[data-frise] { --fr-fond: var(--papier); --fr-encre: var(--encre); --fr-trait: color-mix(in srgb, var(--encre) 26%, transparent); --fr-accent: var(--magenta);
+.frise[data-frise] { --fr-fond: var(--papier); --fr-encre: var(--encre); --fr-trait: color-mix(in srgb, var(--encre) 26%, transparent); --fr-accent: var(--magenta-vif);
   --fr-police: var(--sans); --fr-bulle-fond: var(--encre); --fr-bulle-encre: var(--papier); --fr-point: 11px; --fr-couloir: 17px; }
 .frise .frise-mois-nom { font: italic 500 .92rem/1.1 var(--serif); }
 .frise .frise-an { font: 500 .72rem/1.3 var(--sans); letter-spacing: .06em; }
@@ -1159,8 +1177,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
    La bande des prochaines dates (un bouton par date, l'horaire écrit dessus), la carte de la date choisie dans l'univers de
    son spectacle ; sur « Je viens voir un spectacle », chaque date de l'agenda ouvre sa carte sous sa ligne. Le geste
    évident de la carte : « Réserver », plein, de la couleur du spectacle. */
-.rs-zone { position: relative; margin: 0 0 clamp(34px, 4.6vw, 60px); scroll-margin-top: calc(var(--haut) + var(--onglets) + 18px); }
-@media (pointer: coarse) { .rs-zone.rs-deborde .rs-defile { display: none; } }
+.rs-zone { position: relative; margin: 0 0 clamp(34px, 4.6vw, 60px); scroll-margin-top: calc(var(--onglets) + 6px); }
+@media (pointer: coarse), (max-width: 640px) { .rs-zone.rs-deborde .rs-defile { display: none; } }
 .rs-tete { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 18px; margin: 0 0 12px; }
 .rs-k-bande { margin: 0; font: 600 .74rem/1.3 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
 .rs-defile { display: none; gap: 8px; }
@@ -1190,11 +1208,11 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 /* la carte : l'affiche d'une date, dans l'univers de son spectacle (--rs-bg : son fond, que l'encre reprend) */
 .rs-carte { --rs-bg: var(--u-fond2); position: relative; isolation: isolate; overflow: hidden; min-height: 330px; border-radius: 14px; background: var(--rs-bg); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 0 0 1px var(--u-filet), 0 34px 64px -40px rgba(0, 0, 0, .7); }
 .chap.alt .rs-carte { --rs-bg: var(--u-fond); }
-.rs-photo { inset: 0 0 0 auto; width: 60%; height: 100%; object-fit: cover; opacity: .5; -webkit-mask-image: linear-gradient(90deg, transparent, #000 58%); mask-image: linear-gradient(90deg, transparent, #000 58%); }
-.u-clair .rs-photo, .rs-carte.u-clair .rs-photo { opacity: .34; }
+.rs-photo { inset: 0 0 0 auto; width: 50%; height: 100%; object-fit: cover; opacity: .55; -webkit-mask-image: linear-gradient(90deg, transparent, #000 55%); mask-image: linear-gradient(90deg, transparent, #000 55%); }
+.u-clair .rs-photo, .rs-carte.u-clair .rs-photo { opacity: .3; }
 .rs-encre { position: absolute; z-index: -2; border-radius: 50%; background: var(--rs-bg); pointer-events: none; }
 .rs-ancien { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-.rs-c { position: relative; display: flex; flex-direction: column; align-items: flex-start; max-width: 33rem; padding: clamp(24px, 3.2vw, 40px); }
+.rs-c { position: relative; display: flex; flex-direction: column; align-items: flex-start; max-width: 28rem; padding: clamp(24px, 3.2vw, 40px); }
 .rs-sp { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.6rem, 1.15rem + 1.5vw, 2.5rem); line-height: 1.02; color: var(--u-texte); text-wrap: balance; }
 .u-arene .rs-sp, .rs-carte.u-arene .rs-sp { text-transform: uppercase; color: var(--u-accent); }
 .rs-sp a { color: inherit; text-decoration: none; }
@@ -1217,6 +1235,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 .rs-sh { font: 700 1.5rem/1 var(--sans); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 .rs-sh--sans { font: 600 .9rem/1.2 var(--sans); }
 .rs-sj { font: 500 .82rem var(--sans); color: var(--u-texte2); }
+.rs-seance.est-scolaire { border-style: dashed; background: transparent; color: var(--u-texte2); }
 .rs-scol { padding: 0 7px; border: 1px solid currentColor; border-radius: 999px; font: normal 600 .64rem/1.6 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--u-texte2); }
 .rs-action { margin: 28px 0 0; }
 .rs-reserver { position: relative; gap: 18px; padding: 15px 18px 15px 28px; border-radius: 999px; background: var(--u-accent); color: var(--u-sur-accent); box-shadow: 0 18px 38px -18px color-mix(in srgb, var(--u-accent) 80%, transparent); }
@@ -1246,7 +1265,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 @keyframes rs-filet { from { transform: scaleX(0); } }
 .carte .carte-lieu.est-choisi .point { stroke: var(--u-texte, var(--encre)); stroke-width: 2.6; }
 .carte .nom.est-choisi { display: inline; }
-.rs-ici .rs-c { max-width: 30rem; }
+.rs-ici .rs-c { max-width: 27rem; }
 @media (max-width: 1000px) {
   .rs-corps { grid-template-columns: minmax(0, 1fr); }
 }
@@ -1408,6 +1427,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      Les vidéos (LECTEUR, règle 18) arrivent en fondu quand elles sont prêtes ; « assombrir » éteint la page lentement (450 ms),
      la vidéo garde un filet et la lueur de son univers ; la page se rallume vite.
      La pieuvre : un seul moment, quand le dossier PDF d'un spectacle est prêt (la tentacule s'enroule autour du bouton).
+     8. Le jour et la nuit (THEME) : la nuit s'ouvre en cercle depuis le bouton du menu (420 ms), la lune creuse le soleil.
+     9. La troupe (TROUPE, la compagnie) : au défilement, les bras partent des tentacules du logo et poussent jusqu'aux
+        métiers, les ventouses arrivent une à une (animations liées au défilement, --tr-p par @property) ; survoler une
+        personne trace ses bras vers ses autres places, une lueur y court (offset-path, Web Animations), l'anneau de sa
+        vignette se referme (@property) ; les icônes des métiers s'animent à leur arrivée et au survol.
      Moins d'animations demandé (ou ?anim=0) : tout est posé, rien ne bouge. */
 
   /* ---------- outils ---------- */
@@ -2225,7 +2249,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     main.innerHTML = `
       <div class="wrap page-titre"><p class="surtitre"><a href="${E.voir.href}">${esc(E.voir.texte)}</a></p><h1 tabindex="-1">${esc(SA.titre)}</h1>${trait()}</div>
       <section class="bloc sans-filet"><div class="wrap"><div class="sa-frise" id="sa-frise"></div></div><div class="wrap sa-corps">
-        <div class="sa-liste">${SA.spectacles.map(g => { const s = g.slug && bySlug[g.slug]; return `<article class="sa-sp" style="--c:${s ? s.couleurTexteClair : 'var(--gris)'}">
+        <div class="sa-liste">${SA.spectacles.map(g => { const s = g.slug && bySlug[g.slug]; return `<article class="sa-sp" style="--c:${s ? couleurDe(s.slug) : 'var(--gris)'}">
           <h2>${s ? `<a href="${lienSp(s.slug, 'voir')}">${esc(g.titre)}</a>` : esc(g.titre)}</h2>
           ${g.sousTitre || g.creation ? `<p class="st">${g.sousTitre ? `<span>${g.sousTitre}</span>` : ''}${g.creation ? `<span>${esc(g.creation)}</span>` : ''}</p>` : ''}
           <ul class="sa-dates" data-agenda="${esc(s ? s.slug : '')}">${g.dates.map(d => `<li${dateId(d)} data-frise-id="${esc(cleLigne(d, cle, rang.get(d)))}"${d.l != null ? ` data-l="${d.l}"` : ''}>${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(d.ligne)}</a>` : `<span>${esc(d.ligne)}</span>`}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${details(d.details)}</li>`).join('')}</ul></article>`; }).join('')}</div>
@@ -2242,6 +2266,157 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     return { titre: SA.titre, lecture: 'voir' };
   }
 
+  /* ---------- la troupe (règle 20, TROUPE) : la pieuvre de la compagnie, entre la présentation et les repères ----------
+     Relue dans D à chaque rendu : les personnes, leurs métiers, leurs photos (publiées seulement), les titres. */
+  // le chœur en quinconce : a visages sur une rangée longue, a - 1 sur une courte (décalée d'une demi-place), la dernière
+  // centrée ; [rangée, demi-colonne de départ] pour chaque visage
+  function quinconce(n, a) {
+    const pos = []; let r = 1, k = 0, court = false;
+    while (k < n) { const m = Math.min(court ? a - 1 : a, n - k); for (let j = 0; j < m; j++) pos.push([r, 1 + (a - m) + 2 * j]); k += m; r++; court = !court; }
+    return { pos, rangs: r - 1 };
+  }
+  // une place : la photo en vignette si elle est publiée (et se charge : une photo introuvable laisse le nom seul), sinon
+  // une ventouse ; le nom ; les métiers précis (sauf l'évident : « Jeu » dans le jeu)
+  const photosEchec = new Set();
+  const aPhoto = x => !!x.photo && !photosEchec.has(x.photo);
+  function placeTroupe(x, { classe = '', style = '' } = {}) {
+    const metiers = !x.evident && x.metiers.length ? `<span class="tr-metiers">${x.metiers.map(m => `<span class="tr-metier">${esc(m)}</span>`).join('')}</span>` : '';
+    const ancre = aPhoto(x) ? `<span class="tr-vignette" data-troupe-ancre><img src="${esc(x.photo)}" alt="" width="168" height="168" loading="lazy" decoding="async" data-troupe-photo></span>`
+      : '<span class="tr-ventouse" data-troupe-ancre></span>';
+    return `<li class="tr-li${classe ? ' ' + classe : ''}"${style ? ` style="${style}"` : ''}><button type="button" class="tr-place${aPhoto(x) ? ' a-photo' : ''}" data-troupe-place data-troupe-personne="${esc(x.personne)}" aria-pressed="false">${ancre}<span class="tr-qui"><span class="tr-nom">${x.prenom ? `<span>${esc(x.prenom)}</span> ` : ''}<span>${esc(x.nom)}</span></span>${metiers}</span></button></li>`;
+  }
+  const categorieTroupe = (c, lis, classe = '', liste = '') => `<section class="tr-cat${classe ? ' ' + classe : ''}" data-troupe-categorie="${esc(c.cle)}" aria-labelledby="tr-h-${esc(c.cle)}">
+      <h3 class="tr-cat-t" id="tr-h-${esc(c.cle)}"><span class="tr-ic">${TROUPE.icone(c.cle)}</span><span${ed(`site.troupe.categories.${c.i}.titre`)}>${esc(c.titre)}</span></h3>
+      <ul class="tr-places${liste ? ' ' + liste : ''}">${lis}</ul></section>`;
+  function troupeHTML() {
+    if (typeof TROUPE === 'undefined' || !S.troupe) return '';
+    const cs = TROUPE.categories().filter(c => c.places.length);
+    if (!cs.length) return '';
+    // au centre, le jeu (l'acteur au centre) ; les autres métiers de part et d'autre, au plus près de l'équilibre
+    const centre = cs.find(c => c.cle === 'jeu') || cs.reduce((a, b) => (b.places.length > a.places.length ? b : a));
+    const autres = cs.filter(c => c !== centre), poids = c => c.places.length + 2, total = autres.reduce((n, c) => n + poids(c), 0);
+    let k = autres.length ? 1 : 0, cumul = 0, ecart = Infinity;
+    autres.forEach((c, i) => { cumul += poids(c); const e = Math.abs(total - 2 * cumul); if (e < ecart) { ecart = e; k = i + 1; } });
+    const cote = liste => liste.map(c => categorieTroupe(c, c.places.map((x, i) => placeTroupe(x, { classe: i === c.places.length - 1 ? 'tr-queue' : '' })).join(''))).join('');
+    // le chœur : les visages d'abord (en quinconce), puis les noms seuls, de part et d'autre de son bras
+    const vis = centre.places.filter(aPhoto), noms = centre.places.filter(x => !aPhoto(x)), q3 = quinconce(vis.length, 3), q4 = quinconce(vis.length, 4);
+    const dernierG = noms.length - 1 - ((noms.length - 1) % 2);
+    const choeur = [...vis.map((x, i) => placeTroupe(x, { style: `--r3:${q3.pos[i][0]};--c3:${q3.pos[i][1]};--r4:${q4.pos[i][0]};--c4:${q4.pos[i][1]}` })),
+      ...noms.map((x, j) => placeTroupe(x, { classe: `${j % 2 ? 'n-d' : 'n-g'}${j === dernierG ? ' tr-queue' : ''}`, style: `--r3:${q3.rangs + 1 + (j >> 1)};--r4:${q4.rangs + 1 + (j >> 1)}` }))].join('');
+    const equipes = D.shows.filter(s => TROUPE.equipe(s.slug).length);
+    return `<section class="bloc troupe" aria-labelledby="h-troupe"><div class="wrap">
+      <h2 class="titre-bloc" id="h-troupe"${ed('site.troupe.titre')}>${esc(TROUPE.titre())}</h2>
+      <div class="tr" data-troupe>
+        ${equipes.length ? `<div class="tr-sp-zone"><p class="rubrique tr-sp-t" id="tr-sp-t">${esc(L.lesSpectacles)}</p><ul class="tr-sp" aria-labelledby="tr-sp-t">${equipes.map(s => `<li><button type="button" class="tr-spb" data-troupe-spectacle="${esc(s.slug)}" aria-pressed="false" style="--c:${couleurDe(s.slug)}"><i aria-hidden="true"></i>${esc(s.titre)}</button></li>`).join('')}</ul></div>` : ''}
+        <svg class="tr-bras" aria-hidden="true" focusable="false"></svg>
+        <div class="tr-tete" aria-hidden="true">${D.logo.octopus}</div>
+        ${categorieTroupe(centre, choeur, 'tr-choeur-cat', 'tr-choeur')}
+        <div class="tr-cote tr-g">${cote(autres.slice(0, k))}</div>
+        <div class="tr-cote tr-d">${cote(autres.slice(k))}</div>
+      </div>
+    </div></section>`;
+  }
+  // les bras de la pieuvre vers chaque métier (au bureau) : ils partent du bout des tentacules du logo (D.arms), longent
+  // l'entre-deux des colonnes et rejoignent l'icône du métier ; deux bras courts portent le chœur. Mesurés sur la page
+  // (une lecture, après la mise en page), refaits quand la troupe change de taille ; ils poussent au défilement.
+  const BRAS_TROUPE = { g: ['A1outerL', 'A1innerL', 'A2L'], d: ['A1outerR', 'A1innerR', 'A2R'], choeur: ['C1L', 'C1R'] };
+  function brasTroupe(tr) {
+    const svg = tr && tr.isConnected && $('.tr-bras', tr), tete = tr && $('.tr-tete svg', tr);
+    if (!svg || !tete) return;
+    if (!matchMedia('(min-width: 960px)').matches) { if (svg.firstChild) svg.innerHTML = ''; return; }
+    const R = tr.getBoundingClientRect(), T = tete.getBoundingClientRect(), k = T.width / 1042, ox = T.left - R.left - 250 * k, oy = T.top - R.top - 340 * k;
+    const A = (D.arms && D.arms.arms) || {};
+    const sortie = nom => { const a = A[nom]; return a && a.pts && a.pts[0] ? { p: [ox + a.pts[0][0] * k, oy + a.pts[0][1] * k], d: a.exitdir || [0, 1] } : null; };
+    const centre = el => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2 - R.left, r.top + r.height / 2 - R.top, r.width / 2]; };
+    let masques = '', corps = '', n = 0;
+    const bras = (pts, w0, w1) => {
+      const c = TROUPE.lisse(pts); if (!c.d) return;
+      const nv = Math.max(3, Math.floor(c.longueur / 24));
+      const vs = Array.from({ length: nv }, (_, i) => { const t = (i + .8) / (nv + .5), q = c.point(t), tg = c.tangente(t), s = i % 2 ? 1 : -1, w = (w0 * (1 - t) + w1 * t) / 2 + 2.2;
+        return `<circle class="tr-bv" cx="${(q[0] - tg[1] * w * s).toFixed(1)}" cy="${(q[1] + tg[0] * w * s).toFixed(1)}" r="${(1.8 - .7 * t).toFixed(1)}"/>`; }).join('');
+      const id = `tr-m${n++}`;
+      masques += `<mask id="${id}" maskUnits="userSpaceOnUse"><path class="tr-m" pathLength="1" stroke-width="18" d="${c.d}"/></mask>`;
+      corps += `<g mask="url(#${id})"><path class="tr-b" d="${TROUPE.effile(c, { w0, w1, n: 48 })}"/>${vs}</g>`;
+    };
+    // un couloir par bras dans l'entre-deux des colonnes (le plus proche de la colonne pour le métier du haut) : le bras
+    // descend en biais depuis la pieuvre, ondule dans son couloir, puis s'enroule vers l'icône du métier
+    const cotes = [['g', $('.tr-g', tr), -1], ['d', $('.tr-d', tr), 1]];
+    cotes.forEach(([cle, col, sens]) => {
+      if (!col) return;
+      const rc = col.getBoundingClientRect(), bord = sens < 0 ? rc.right - R.left : rc.left - R.left;
+      $$(':scope > .tr-cat', col).forEach((cat, i) => {
+        const s = sortie(BRAS_TROUPE[cle][Math.min(i, 2)]), ic = $('.tr-ic', cat); if (!s || !ic) return;
+        const [cx, cy, cr] = centre(ic), couloir = bord - sens * (15 + 13 * i), [px, py] = s.p, bout = [cx - sens * (cr + 3), cy];
+        const p1 = [px + s.d[0] * 22, py + s.d[1] * 22];
+        // un métier à hauteur de la pieuvre : un simple S jusqu'à lui
+        if (cy - py < 150) { bras([[px, py], p1, [p1[0] + (bout[0] - p1[0]) * .45, Math.max(p1[1], bout[1]) + 30], [bout[0] - sens * 16, cy + 7], bout], 4.2, 1.5); return; }
+        const y0 = py + Math.min(110, Math.abs(couloir - px) * .55 + 30), y1 = cy - 46, pts = [[px, py], p1, [couloir - sens * Math.abs(couloir - px) * .38, y0 - 18], [couloir, y0 + 26]];
+        // l'ondulation du couloir : une vague tous les 150 px environ
+        const nv = Math.max(0, Math.floor((y1 - y0 - 26) / 150));
+        for (let j = 1; j <= nv; j++) pts.push([couloir + (j % 2 ? 5 : -5), y0 + 26 + (y1 - y0 - 26) * j / (nv + 1)]);
+        pts.push([couloir, y1], [bout[0] - sens * 6, cy - 8], bout);
+        bras(pts, 4.2, 1.5);
+      });
+    });
+    const ic = $('.tr-choeur-cat .tr-ic', tr);
+    if (ic) { const [cx, cy, cr] = centre(ic); BRAS_TROUPE.choeur.forEach((nom, i) => { const s = sortie(nom), sens = i ? 1 : -1; if (!s) return;
+      const [px, py] = s.p; bras([[px, py], [px + s.d[0] * 16, py + s.d[1] * 16], [cx + sens * (cr + 22), (py + cy) / 2 + 6], [cx + sens * (cr + 3), cy]], 3.6, 1.5); }); }
+    svg.innerHTML = `<defs>${masques}</defs>${corps}`;
+  }
+  // la troupe prend vie : les liens entre les places (TROUPE.relier), les équipes des spectacles, les bras de la pieuvre
+  let troupeVue = null;
+  function vivreTroupe() {
+    const tr = $('.tr', main); if (!tr || typeof TROUPE === 'undefined') return;
+    const sps = $$('.tr-spb', tr);
+    let epingle = null;
+    const ctl = TROUPE.relier(tr, {
+      // une personne allumée : ses spectacles s'allument aussi
+      surAllumer: slug => { const siens = slug ? new Set(TROUPE.spectacles(slug).map(s => s.slug)) : null;
+        sps.forEach(b => b.classList.toggle('est-allume', !!siens && siens.has(b.dataset.troupeSpectacle))); },
+      surChoix: (slug, o) => { if (!o.groupe) { epingle = null; sps.forEach(b => b.setAttribute('aria-pressed', 'false')); } },
+    });
+    // un spectacle survolé ou focalisé allume son équipe ; choisi, il la garde allumée
+    const equipe = b => TROUPE.equipe(b.dataset.troupeSpectacle);
+    sps.forEach(b => {
+      const montrer = () => ctl.allumerGroupe(equipe(b)), cacher = () => ctl.eteindre();
+      b.addEventListener('pointerenter', montrer); b.addEventListener('pointerleave', cacher);
+      b.addEventListener('focus', montrer); b.addEventListener('blur', cacher);
+      b.addEventListener('click', () => { epingle = epingle === b.dataset.troupeSpectacle ? null : b.dataset.troupeSpectacle;
+        ctl.choisirGroupe(epingle ? equipe(b) : null); sps.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.troupeSpectacle === epingle))); });
+    });
+    // les icônes s'animent une fois à leur arrivée dans l'écran
+    if (motionOK() && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { io.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); } }), { rootMargin: '0px 0px -12% 0px' });
+      $$('.troupe-icone', tr).forEach(i => io.observe(i));
+    }
+    // une photo qui ne se charge pas : la troupe se refait sans sa vignette (une vignette seulement s'il y a une photo)
+    tr.addEventListener('error', e => { const i = e.target; if (i && i.matches && i.matches('img[data-troupe-photo]')) { photosEchec.add(i.getAttribute('src')); refaireTroupe(); } }, true);
+    // les bras : mesurés après la mise en page, refaits quand la troupe change de taille
+    let raf = 0;
+    const refaireBras = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; brasTroupe(tr); }); };
+    if (troupeVue) troupeVue.disconnect();
+    troupeVue = 'ResizeObserver' in window ? new ResizeObserver(refaireBras) : null;
+    if (troupeVue) troupeVue.observe(tr); else refaireBras();
+  }
+
+  // la troupe refaite en place (une photo introuvable), sans bouger la page ni perdre le focus
+  let refaireTroupeT = 0;
+  function refaireTroupe() {
+    clearTimeout(refaireTroupeT);
+    refaireTroupeT = setTimeout(() => {
+      const sec = $('section.troupe', main); if (!sec || vue !== 'compagnie') return;
+      const act = document.activeElement, qui = act && sec.contains(act) && act.dataset ? act.dataset.troupePersonne || null : null;
+      const t = document.createElement('div'); t.innerHTML = troupeHTML();
+      const neuf = t.firstElementChild; if (!neuf) return;
+      neuf.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>');
+      $$('.titre-bloc', neuf).forEach(h => h.setAttribute('data-mv', 'monte'));
+      sec.replaceWith(neuf);
+      if (MV) MV.reveler(neuf, { immediat: true });
+      vivreTroupe();
+      if (qui) { const p = $(`[data-troupe-personne="${CSS.escape(qui)}"]`, neuf); if (p) p.focus({ preventScroll: true }); }
+    }, 80);
+  }
+
   /* ---------- la compagnie, le contact, les pages légales ---------- */
   function compagnie() {
     vue = 'compagnie';
@@ -2251,11 +2426,12 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       <section class="bloc sans-filet"><div class="wrap compagnie">
         <div class="paragraphes">${C.paragraphes.map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
       </div></section>
+      ${troupeHTML()}
       <section class="bloc" aria-labelledby="h-reperes"><div class="wrap">
         <h2 class="titre-bloc" id="h-reperes"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
         <div class="c-frise" id="c-frise"></div>
         <ol class="reperes-liste">${C.dates.map((d, i) => { const s = spDe(d), k = `site.compagnie.dates.${i}`;
-          return `<li${s ? ` style="--c:${s.couleurTexteClair}"` : ''}><span class="an"${ed(`${k}.annee`)}>${esc(d.annee)}</span>${s ? `<a href="${lienSp(s.slug)}"${ed(`${k}.titre`)}>${esc(d.titre)}</a>` : `<span class="ti"${ed(`${k}.titre`)}>${esc(d.titre)}</span>`}</li>`; }).join('')}</ol>
+          return `<li${s ? ` style="--c:${couleurDe(s.slug)}"` : ''}><span class="an"${ed(`${k}.annee`)}>${esc(d.annee)}</span>${s ? `<a href="${lienSp(s.slug)}"${ed(`${k}.titre`)}>${esc(d.titre)}</a>` : `<span class="ti"${ed(`${k}.titre`)}>${esc(d.titre)}</span>`}</li>`; }).join('')}</ol>
       </div></section>
       ${Dr ? `<section class="bloc" aria-labelledby="h-dir"><div class="wrap directeur"><div><h2 class="titre-bloc" id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>${trait()}<p class="chapo"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p></div><div class="paragraphes">${Dr.paragraphes.map((p, i) => bloc(p, `site.compagnie.directeur.paragraphes.${i}`)).join('')}</div></div></section>` : ''}
       <section class="bloc"><div class="wrap"><p class="partenaires"${ed('site.partenaires')}>${S.partenaires}</p></div></section>`;
@@ -2263,7 +2439,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const ans = C.dates.map(d => +d.annee).filter(Boolean);
     if (ans.length) frise($('#c-frise'), { echelle: 'periode', debut: `${Math.min(...ans)}-01-01`, fin: `${Math.max(...ans)}-12-31`, etiquettes: true, couloirs: 3, anMin: 64,
       largeurCar: 8.6, largeurMax: 180,
-      libelle: C.datesTitre, points: C.dates.map((d, i) => { const s = spDe(d); return { id: `c${i}`, annee: d.annee, titre: d.titre, lien: s ? lienSp(s.slug) : null, couleur: s ? s.couleurTexteClair : 'var(--magenta)' }; }) });
+      libelle: C.datesTitre, points: C.dates.map((d, i) => { const s = spDe(d); return { id: `c${i}`, annee: d.annee, titre: d.titre, lien: s ? lienSp(s.slug) : null, couleur: s ? couleurDe(s.slug) : 'var(--magenta)' }; }) });
+    vivreTroupe();
     return { titre: C.titre, menu: 'compagnie' };
   }
   function contact() {
@@ -2634,7 +2811,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       defilement(zone, bande);
       bientot(() => { if (rsSp) rsSp.montrer(); });
       // une adresse qui nomme une date (un lien partagé, l'accueil) : la page s'ouvre sur sa carte
-      if (voulue && !surPlace && k0 === voulue) bientot(() => { zone.scrollIntoView({ block: 'start' }); const b = $('.rs-date[aria-pressed="true"]', zone); if (b) b.focus({ preventScroll: true }); });
+      if (voulue && !surPlace && k0 === voulue) bientot(() => { vers('rs-zone', true); const b = $('.rs-date[aria-pressed="true"]', zone); if (b) b.focus({ preventScroll: true }); });
     }
     // la frise de la tournée : toutes ses dates, passées (D.saisons) et à venir (D.dates), reliée à la liste et à la carte
     const ft = $('[data-tournee]', main);
@@ -2695,7 +2872,20 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     els.forEach(e => io.observe(e));
   }
   // les clics : raccourcis vers une section, sommaire des chapitres
-  const vers = id => { const t = document.getElementById(id); if (t) t.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'start' }); };
+  // aller à une section : les chapitres d'avant (content-visibility) se mesurent en route, la visée se corrige à l'arrivée
+  const vers = (id, instant) => {
+    const t = document.getElementById(id); if (!t) return;
+    const doux = !instant && motionOK();
+    t.scrollIntoView({ behavior: doux ? 'smooth' : 'auto', block: 'start' });
+    let n = 0;
+    const viser = () => {
+      if (!t.isConnected) return;
+      const m = (parseFloat(getComputedStyle(t).scrollMarginTop) || 0) + (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0), d = t.getBoundingClientRect().top - m;
+      if (Math.abs(d) > 12 && n++ < 5) { scrollBy({ top: d, left: 0, behavior: 'instant' }); requestAnimationFrame(() => setTimeout(viser, 60)); }
+    };
+    if ('onscrollend' in window && doux) addEventListener('scrollend', () => setTimeout(viser, 30), { once: true });
+    else requestAnimationFrame(() => setTimeout(viser, 60));
+  };
   const fermerSommaire = () => { const l = $('#som-l'), b = $('.som-b'); if (l) l.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); };
   main.addEventListener('click', e => {
     const va = e.target.closest('[data-va]'); if (va) { vers(va.dataset.va); return; }
@@ -2714,7 +2904,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const W = 1120, H = 700, R = CARTE.rouen;
     const traits = tous().map(x => `<path d="${CARTE.trait(x.xy)}"/>`).join('');
     const bras = CARTE.aVenir().map(x => CARTE.bras(x.xy, { w0: 5, w1: .8 })).filter(Boolean).map(d => `<path d="${d}"/>`).join('');
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${(R[0] - W / 2).toFixed(1)} ${(R[1] - H / 2).toFixed(1)} ${W} ${H}"><path d="${CARTE.fond.pays}" fill="#1d1418" fill-opacity=".03" stroke="#1d1418" stroke-opacity=".1" stroke-width="1.2"/><g fill="none" stroke="#1d1418" stroke-opacity=".09" stroke-width="1.3" stroke-linecap="round">${traits}</g><g fill="#bc3e80" fill-opacity=".18">${bras}</g></svg>`;
+    // la nuit (règle 19) : la carte se trace à l'encre claire, à peine, sous la pieuvre
+    const nuit = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit', trait = nuit ? '#f2eae4' : '#1d1418';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${(R[0] - W / 2).toFixed(1)} ${(R[1] - H / 2).toFixed(1)} ${W} ${H}"><path d="${CARTE.fond.pays}" fill="${trait}" fill-opacity=".03" stroke="${trait}" stroke-opacity=".1" stroke-width="1.2"/><g fill="none" stroke="${trait}" stroke-opacity="${nuit ? '.08' : '.09'}" stroke-width="1.3" stroke-linecap="round">${traits}</g><g fill="${nuit ? '#e0559a' : '#bc3e80'}" fill-opacity="${nuit ? '.22' : '.18'}">${bras}</g></svg>`;
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
@@ -2917,8 +3109,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
   addEventListener('hashchange', route);
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);
+  // l'ouverture sur le papier du jour, ou dans la nuit de la salle (la magenta plus vive)
+  const ouvertureNuit = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit';
   INTRO.ouvrir({
-    degrade: [[0, '#fbf8f3'], [.62, '#f3ece2'], [1, '#e2d7c6']], encre: '#bc3e80', image: fondIntro(), classe: 'intro-synthese',
+    degrade: ouvertureNuit ? [[0, '#2a1b26'], [.62, '#18111a'], [1, '#0d090c']] : [[0, '#fbf8f3'], [.62, '#f3ece2'], [1, '#e2d7c6']],
+    encre: ouvertureNuit ? '#e0559a' : '#bc3e80', image: fondIntro(), classe: 'intro-synthese',
     apres: () => { if (vue === 'accueil') pousser($('.une-carte svg')); },   // révélé : les bras poussent depuis Rouen
   });
   route();

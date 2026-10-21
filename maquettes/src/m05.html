@@ -1566,7 +1566,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
           ${s.k === D.saison ? '' : `<p class="sai-page"><a class="btn" href="#/agenda/${esc(s.k)}">${esc(s.titre)}${use('i-go')}</a></p>`}</div></div>`;
     };
     const saisonHtml = ({ s, rows }, vide = false) => { const ouv = F.ouv.has(s.k);
-      return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
+      return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}${ouv && vide ? ' data-pose="1"' : ''}>
         <summary><span class="sai-carte">${miniRetenu(s.k, lieuxDe(s, rows))}</span><span class="sai-c"><h3 class="sai-t disp">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${titreTxt(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b class="disp">${rows.length}</b>${I_CHEV}</span></summary>
         <div class="sai-corps">${ouv && !vide ? corps(s, rows) : ''}</div></details>`; };
     const indexHtml = vis => {
@@ -1611,6 +1611,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
         if (brancher && !vides) brancherOuvertes();
       };
       const poserSaison = dt => {
+        delete dt.dataset.pose;
         const s = passe.find(x => x.k === dt.dataset.saison), c = $('.sai-corps', dt);
         if (!s || !c || c.firstElementChild || !dt.open) return;
         sansAnim(() => { c.innerHTML = corps(s, s.rows.filter(garde)); });
@@ -1663,6 +1664,9 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       champ.addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(() => AGV.maj(), 120); });
       racine.addEventListener('toggle', ev => {
         const dt = ev.target; if (!dt.matches || !dt.matches('details.sai')) return;
+        // une saison posée ouverte par l'agenda (data-pose) : son corps viendra à son image ; rien à faire ici
+        if (dt.open && dt.dataset.pose) return;
+        delete dt.dataset.pose;
         const k = dt.dataset.saison;
         if (dt.open) { F.ouv.add(k); if (remplir(dt)) deplier(dt); } else { F.ouv.delete(k); const c = $('.sai-corps', dt); if (c) { $$('.aff', c).forEach(a => { delete REG[a.id]; }); c.innerHTML = ''; } }
         const b = $(`[data-k="${CSS.escape(k)}"]`, index); if (b) b.setAttribute('aria-expanded', String(dt.open));
