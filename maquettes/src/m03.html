@@ -703,9 +703,11 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .docs a { font-weight: 700; color: var(--u-vif, var(--ink)); }
 .tech ~ .docs { margin-top: clamp(18px, 2vw, 28px); }
 .fc-docs { padding-top: 12px; border-top: 1px solid var(--rule); }
+.fc .docs a { color: var(--mag-ink); }   /* (sur le papier de la fiche, pas dans l'univers : la magenta qui s'y lit) */
 .u-chiffres + .chap { margin-top: 44px; }
 @media (max-width: 900px) { .hero > .ct-prg { grid-template-columns: minmax(0, 1fr); } .hero > .ct-prg .ct-cond { justify-self: start; } }
 .ac-vide { margin-top: 18px; font: 500 1.75rem/1.2 var(--sg); color: var(--u-texte2); }
+.u .ac-type.vide { color: var(--u-texte2); }
 /* le dossier scolaire de Bérénice */
 .dossier { margin-top: 88px; }
 .dos-tete { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); align-items: end; padding: 28px 0 22px; border-top: 6px solid var(--u-titre); }
@@ -1351,6 +1353,9 @@ a.rs-seance:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 2px
 .lc-boite .lc-b { border-color: var(--video-filet-fort); color: var(--video-encre); }
 .lc-boite .lc-b:hover { border-color: var(--video-encre); }
 button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+/* ce qui est loin sous le pli ne se dessine qu'en approchant (l'agenda passé, les spectacles en tournée, le pied de page) :
+   la bascule du jour et de la nuit, comme chaque geste, ne repeint que ce qui se voit */
+#v-agenda, #v-tours, .site-foot { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 /* les dates de l'agenda, devenues des boutons : leur colonne s'élargit pour le quantième de deux jours (« 19 – 20 ») */
 .ag-complet .row { grid-template-columns: 160px minmax(0, 1fr); }
 .ag-accueil .row { grid-template-columns: 140px minmax(0, 1fr); }
@@ -2378,7 +2383,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
         <div class="fr fr-saisons" id="idx-frise"></div>
         <nav class="ag-index" id="ag-index" aria-label="${esc(L.saison)}"></nav>
         <div class="saisons-ag" id="ag-saisons"></div></section>
-      ${tournee.length ? `<section class="wrap bloc" aria-labelledby="h-tour"><h2 class="h2s" id="h-tour">${esc(L.actuellementEnTournee)}</h2><ul class="tours">${tournee.map(carteTournee).join('')}</ul></section>` : ''}
+      ${tournee.length ? `<section class="wrap bloc" id="v-tours" aria-labelledby="h-tour"><h2 class="h2s" id="h-tour">${esc(L.actuellementEnTournee)}</h2><ul class="tours">${tournee.map(carteTournee).join('')}</ul></section>` : ''}
       `;
   }
 

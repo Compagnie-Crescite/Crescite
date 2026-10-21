@@ -502,9 +502,11 @@ ${s} .s{background:${MISE.surligne}}`;
   //     fin, public, note, annulee, id), equipe: [{personne_id, prenom, nom, fonction, categories, telephone}],
   //     contacts: [{nom, prenom, role, telephone, email}] (l'administration et la régie générale de la compagnie),
   //     depart: {commune, latitude, longitude}, suivi: {organisateur, contact, lieu: {contact, jauge, plateau}},
-  //     documents: [{id, titre, pour}], anterieures: [{contenu, debut, lieu_id, spectacle_id, lieu: {nom, commune}}] }
-  // Repas, transports et hébergement viennent de la feuille précédente du même spectacle (l'hébergement et les contacts
-  // écrits à la main, seulement d'une feuille au même lieu) ; sinon une amorce.
+  //     documents: [{id, titre, pour}], anterieures: [{contenu, debut, lieu_id, spectacle_id, lieu: {nom, commune}, date_id,
+  //     ecrit_le}] (les feuilles des autres dates ; ecrit_le : quand la feuille a été écrite pour la dernière fois) }
+  // Repas et transports viennent de la feuille précédente du même spectacle ; l'hébergement, de la dernière feuille écrite
+  // au même lieu, à défaut dans la même commune (hebergements : le choix se change ensuite, reprendreHebergement) ; les
+  // adresses et contacts écrits à la main, de la feuille précédente au même lieu ; sinon une amorce.
   function composer(sources) {
     const S = sources || {}, d = S.date || {}, sp = S.spectacle || {}, l = S.lieu || null, suivi = S.suivi || {};
     const nature = NATURES[d.nature] ? d.nature : 'representations';
@@ -591,11 +593,10 @@ ${s} .s{background:${MISE.surligne}}`;
     const memeLieu = x => l && x.lieu_id != null && String(x.lieu_id) === String(l.id);
     const memeSp = x => sp.id != null && x.spectacle_id != null && String(x.spectacle_id) === String(sp.id);
     const source = (filtre, ordre) => avant.filter(filtre).sort((a, b) => ordre(b) - ordre(a))[0] || null;
-    const origineTexte = x => `repris de la feuille ${x.debut ? `du ${jourLong(x.debut)}` : 'précédente'}${x.lieu?.nom || x.lieu?.commune ? ` (${txt(x.lieu.nom) || txt(x.lieu.commune)})` : ''} : à vérifier`;
     const rubrique = (k, titre, mots, x, vide, filtre) => {
       B('rubrique', [seg(titre)], { cle: `rub:${k}` });
       const repris = x ? extraire(x.contenu, k, mots, filtre) : [];
-      if (repris.length) { B('ligne', [amorce(origineTexte(x))]); repris.forEach(b => blocs.push(b)); }
+      if (repris.length) { B('ligne', [amorce(origineReprise(x))]); repris.forEach(b => blocs.push(b)); }
       else B('ligne', [amorce(vide)]);
     };
     const parSp = source(memeSp, x => memeLieu(x) ? 1 : 0), parLieu = source(memeLieu, x => memeSp(x) ? 1 : 0);
@@ -604,7 +605,8 @@ ${s} .s{background:${MISE.surligne}}`;
     // une seule journée, près de Rouen, sans arrivée la veille : pas d'hébergement
     const proche = route ? route.km < 100 : aPosition(S.depart) && aPosition(l);
     const uneNuit = joursPl.length <= 1 && proche && !veilleDepart;
-    if (!uneNuit || parLieu) rubrique('hebergement', 'Hébergement', /^hebergements?|^hotels?|^logements?/, parLieu, 'hôtel : nom, adresse, heure d’arrivée ?');
+    const heb = hebergements(S)[0] || null;
+    if (!uneNuit || heb) { B('rubrique', [seg('Hébergement')], { cle: 'rub:hebergement' }); sectionHebergement(heb).forEach(b => blocs.push(b)); }
 
     // ---- adresses et contacts
     B('rubrique', [seg('Adresses et contacts')], { cle: 'rub:adresses' });
@@ -625,7 +627,7 @@ ${s} .s{background:${MISE.surligne}}`;
     if (parLieu) {
       const repris = extraire(parLieu.contenu, 'adresses', /^adresses?|^contacts?/, b => !(b.cle && /^(lieu|contact:|cie)/.test(b.cle)), true);
       if (ecrit) repris.unshift(bloc({ ...visibles([ecrit])[0], id: null, source: null, origine: null }));
-      if (repris.length) { B('ligne', [amorce(origineTexte(parLieu))]); repris.forEach(b => blocs.push(b)); }
+      if (repris.length) { B('ligne', [amorce(origineReprise(parLieu))]); repris.forEach(b => blocs.push(b)); }
     }
     B('sous-titre', [seg('contacts compagnie')], { cle: 'cie' });
     // l'équipe de la date, puis l'administration et la régie générale de la compagnie (une seule fois chacune)
@@ -667,6 +669,56 @@ ${s} .s{background:${MISE.surligne}}`;
     while (out.length && !texteBloc(out[out.length - 1]).trim() && out[out.length - 1].type !== 'tableau') out.pop();
     while (out.length && !texteBloc(out[0]).trim() && out[0].type !== 'tableau') out.shift();
     return out;
+  }
+
+  // ---- l'hébergement : de quelle feuille le reprendre
+  const MOTS_HEB = /^hebergements?|^hotels?|^logements?/;
+  const VIDE_HEB = 'hôtel : nom, adresse, heure d’arrivée ?';
+  const origineReprise = x => `repris de la feuille ${x.debut ? `du ${jourLong(x.debut)}` : 'précédente'}${x.lieu?.nom || x.lieu?.commune ? ` (${txt(x.lieu.nom) || txt(x.lieu.commune)})` : ''} : à vérifier`;
+  // les feuilles d'où reprendre l'hébergement (sources : celles de composer) : celles des autres dates au même lieu qui en
+  // ont un, à défaut celles de la même commune ; la dernière écrite d'abord (ecrit_le), pas la précédente dans le temps.
+  // → [{date_id, debut, lieu, lieu_id, ecrit_le, memeLieu, blocs (l'hébergement écrit, sans l'amorce de reprise)}]
+  function hebergements(sources) {
+    const S = sources || {}, l = S.lieu || null;
+    if (!l) return [];
+    const xs = (S.anterieures || []).filter(x => x && x.contenu && (S.date?.id == null || String(x.date_id) !== String(S.date.id)))
+      .map(x => ({ ...x, memeLieu: x.lieu_id != null && String(x.lieu_id) === String(l.id), blocs: extraire(contenu({ contenu: x.contenu }).blocs, 'hebergement', MOTS_HEB) }))
+      .filter(x => x.blocs.length);
+    const ici = xs.filter(x => x.memeLieu), commune = norm(txt(l.commune));
+    return (ici.length ? ici : xs.filter(x => commune && norm(txt(x.lieu?.commune)) === commune))
+      .sort((a, b) => String(b.ecrit_le || '').localeCompare(String(a.ecrit_le || '')) || String(b.debut || '').localeCompare(String(a.debut || '')));
+  }
+  // les lignes de la rubrique Hébergement repris d'une feuille (x, de hebergements), ou l'amorce sans elle
+  const sectionHebergement = x => (x && x.blocs.length ? [bloc({ type: 'ligne', segments: [amorce(origineReprise(x))] }), ...x.blocs.map(b => bloc({ ...b, id: null }))] : [bloc({ type: 'ligne', segments: [amorce(VIDE_HEB)] })]);
+  // où est la rubrique Hébergement d'une feuille : [début, fin) de ses lignes, ou null
+  function rubriqueHebergement(blocs) {
+    const i = blocs.findIndex(b => b.type === 'rubrique' && (b.cle === 'rub:hebergement' || MOTS_HEB.test(norm(texteBloc(b)).trim())));
+    if (i < 0) return null;
+    let j = i + 1;
+    while (j < blocs.length && blocs[j].type !== 'rubrique' && !(blocs[j].type === 'sous-titre' && /compagnie/.test(norm(texteBloc(blocs[j]))))) j++;
+    while (j > i + 1 && blocs[j - 1].type === 'saut') j--;
+    return [i + 1, j];
+  }
+  // la rubrique Hébergement de la feuille (ses blocs) reprise de x (ou l'amorce, x = null) ; sans rubrique Hébergement,
+  // elle s'ajoute avant « Adresses et contacts ». Passe par l'historique de l'éditeur comme toute modification.
+  function reprendreHebergement(blocs, x) {
+    const out = (blocs || []).map(b => ({ ...b })), r = rubriqueHebergement(out);
+    if (r) { out.splice(r[0], r[1] - r[0], ...sectionHebergement(x)); return out; }
+    let k = out.findIndex(b => b.cle === 'rub:adresses' || (b.type === 'rubrique' && /^adresses?|^contacts?/.test(norm(texteBloc(b)).trim())));
+    if (k < 0) k = out.length;
+    out.splice(k, 0, bloc({ type: 'rubrique', segments: [seg('Hébergement')], cle: 'rub:hebergement' }), ...sectionHebergement(x));
+    return out;
+  }
+  // d'où vient l'hébergement d'une feuille, d'après ce qu'elle dit : l'indice dans xs (hebergements) de la feuille dont il
+  // est la reprise exacte, 'aucune' (l'amorce seule), 'absente' (pas de rubrique) ou 'ecrit' (écrit ou retouché à la main)
+  function origineHebergement(blocs, xs) {
+    const r = rubriqueHebergement(blocs || []);
+    if (!r) return 'absente';
+    const sig = bs => bs.filter(b => b.type !== 'saut').map(b => `${b.type}|${texteBloc(b, true).replace(/\s+/g, ' ').trim()}`).filter(t => !/\|$/.test(t) || /^tableau/.test(t)).join('\n');
+    const ici = sig(blocs.slice(r[0], r[1]));
+    if (ici === sig(sectionHebergement(null))) return 'aucune';
+    const i = (xs || []).findIndex(x => sig(sectionHebergement(x)) === ici);
+    return i >= 0 ? i : 'ecrit';
   }
 
   // ================================================================================================ l'ancien format
@@ -1189,7 +1241,7 @@ ${cssPage('.fdr-imp')}
     composer, contenu, actualiser, planning, html, pdf, telecharger, impression, definition, nomFichier, vendor: vendorDefaut,
     MISE, cssPage, cssPolices, logo, logoUrl, polices, htmlBloc, bloc, segments, visibles, texteBloc, lireHeure, dateDuTexte, nouvelId, jetons,
     DEROULE, etapes, trier, joursEtape, estApres, dureeMinutes, dureeTexte, heure, heureCourte, jourLong, quandTexte, telTexte, telLien, itineraire, lireContact,
-    manques, remplirAmorce, cleMot, aLieu, RE_TEL, RE_MEL,
+    manques, remplirAmorce, cleMot, aLieu, RE_TEL, RE_MEL, hebergements, reprendreHebergement, origineHebergement,
   };
   return api;
 })();

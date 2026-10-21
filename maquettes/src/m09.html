@@ -232,7 +232,8 @@ html[data-theme="nuit"] .theme .theme-icone{filter:drop-shadow(0 0 6px var(--mag
 .chap::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(110% 60% at 50% 100%,var(--u-lueur),transparent 72%)}
 .chap-photo{position:relative;overflow:hidden;aspect-ratio:4/3;background:var(--u-fond2)}
 .chap-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.chap-credit{position:absolute;right:14px;bottom:10px;z-index:2;max-width:80%;font-size:.75rem;line-height:1.4;text-align:right;color:var(--blanc-86);text-shadow:0 1px 8px var(--noir-80)}
+/* (le crédit, posé sur la photo : une étiquette d'ombre derrière lui, qu'il se lise sur une photo claire) */
+.chap-credit{position:absolute;right:10px;bottom:8px;z-index:2;max-width:80%;padding:2px 8px;border-radius:3px;background:var(--ombre-80);font-size:.75rem;line-height:1.4;text-align:right;color:var(--blanc-86)}
 .chap-motif{position:absolute;z-index:-1;right:-10%;bottom:-8%;width:min(70vw,440px);color:var(--u-vif);opacity:.15;stroke-width:3}
 .chap-texte{position:relative;z-index:1;display:flex;flex-direction:column;align-items:flex-start;padding:30px var(--marge) 64px}
 .chap-sur{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-bottom:14px;font-size:var(--t-petit);font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--u-vif)}
@@ -651,7 +652,9 @@ html:not(.ed-actif) .cd-tel.vide{display:none}
 .tr-place.est-allume .tr-nom,.tr-place:hover .tr-nom{color:var(--magenta-vif)}
 .tr-place.est-allume .tr-vignette,.tr-place:hover .tr-vignette{box-shadow:0 0 0 2px var(--nuit),0 0 0 3.5px var(--magenta-vif)}
 .tr-place.est-allume .tr-point::before,.tr-place:hover .tr-point::before{scale:1.6}
-.tr-place[aria-pressed="true"]{background:var(--magenta-vif-10)}
+/* une personne allumée : une petite carte de nuit (les bras qui la relient passent dessous et sortent de son médaillon) */
+.tr-place.est-allume{background:var(--nuit-2)}
+.tr-place[aria-pressed="true"]{background:color-mix(in srgb,var(--magenta-vif) 16%,var(--nuit-2))}
 .tr-place.mv-presse{scale:.97;transition-duration:.06s}
 .tr.est-allume .tr-place:not(.est-allume),.tr.est-groupe .tr-place:not(.est-allume){opacity:.32}
 .tr.est-allume .tr-cat:not(.est-allume) .tr-ic{opacity:.5}
@@ -734,7 +737,8 @@ html:not(.ed-actif) .cd-tel.vide{display:none}
 .ouv-photo::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,var(--u-fond) 0%,var(--u-fond) 3%,color-mix(in srgb,var(--u-fond) 0%,transparent) 46%),linear-gradient(180deg,var(--noir-45),var(--noir-0) 26%)}
 .ouv-motif{position:absolute;z-index:-1;right:-14%;bottom:-8%;width:min(96vw,620px);color:var(--u-vif);opacity:.16;stroke-width:1.6}
 .ouv-haut{position:absolute;top:calc(var(--tete-h) + 18px);left:var(--marge);right:var(--marge);z-index:2;display:flex;justify-content:space-between;gap:20px}
-.retour{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-weight:500;text-decoration:none;border-radius:4px;color:var(--blanc);text-shadow:0 1px 12px var(--noir-55)}
+/* (au téléphone, le retour est posé sur la photo : une pastille d'ombre derrière lui ; au bureau, sur la nuit de l'univers) */
+.retour{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 14px 0 12px;font-weight:500;text-decoration:none;border-radius:999px;background:var(--ombre-66);color:var(--blanc);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .retour span{transition:transform .18s var(--ease)}
 .retour:hover span{transform:translateX(-4px)}
 .ouv-contenu{position:relative;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:0 var(--marge) 44px}
@@ -1241,7 +1245,7 @@ a.rs-seance:focus-visible{outline:2px solid var(--u-vif);outline-offset:2px}
   .ouv-photo::after{background:linear-gradient(90deg,var(--u-fond) 0%,color-mix(in srgb,var(--u-fond) 72%,transparent) 20%,color-mix(in srgb,var(--u-fond) 0%,transparent) 58%),linear-gradient(0deg,var(--u-fond) 0%,color-mix(in srgb,var(--u-fond) 0%,transparent) 38%),linear-gradient(180deg,var(--noir-40),var(--noir-0) 22%)}
   .ouv-motif{left:-8%;right:auto;bottom:-16%;width:min(54vw,720px)}
   .ouv-contenu{position:absolute;left:0;right:0;bottom:0;max-width:min(66%,960px);padding:0 var(--marge) clamp(48px,9vh,96px)}
-  .retour{color:var(--u-texte);text-shadow:none}
+  .retour{padding:0;border-radius:4px;background:none;color:var(--u-texte);-webkit-backdrop-filter:none;backdrop-filter:none}
   .ouv-credit{bottom:22px}
   .onglets{position:sticky;top:var(--tete-h)}
 }

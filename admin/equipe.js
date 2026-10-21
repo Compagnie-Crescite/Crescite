@@ -261,7 +261,7 @@ function editeurPersonne(id) {
     const el = $('#pe-dates', zone); if (!el) return;
     const xs = E.dates.filter(d => (d.fin || d.debut) >= AUJ && d.statut !== 'annulee' && equipeDeLaDate(d).some(x => x.personne_id === etat.p0.id)).sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : 0);
     el.innerHTML = `<h3>Ses prochaines dates <span class="compte">${xs.length || ''}</span></h3>${xs.length ? `<ul class="liste-simple">${xs.slice(0, 20).map(d => `<li><b class="eq-jour">${esc(jourCourt(d.debut))}</b><a href="#/representations/${d.id}">${esc(spectacle(d.spectacle_id)?.titre || '?')}</a>
-      <span class="compte">${esc(lieuTexte(lieu(d.lieu_id)) || 'Lieu à préciser')}</span>${d.statut === 'option' ? '<span class="badge option">Option</span>' : ''}<a href="#/feuilles/${d.id}" class="eq-feuille">${badgeFeuille(d.id)}</a></li>`).join('')}</ul>${xs.length > 20 ? `<p class="aide">Et ${xs.length - 20} autres.</p>` : ''}`
+      <span class="compte">${esc(lieuTexte(lieu(d.lieu_id)) || 'Lieu à préciser')}</span>${d.statut === 'option' ? '<span class="badge option">Option</span>' : ''}<a href="#/feuilles/${d.id}" class="eq-feuille" data-viser="#fr-manques"><span class="sr">Feuille de route du ${esc(jourCourt(d.debut))} : </span>${badgeFeuille(d.id)}${resteFeuille(d.id)}</a></li>`).join('')}</ul>${xs.length > 20 ? `<p class="aide">Et ${xs.length - 20} autres.</p>` : ''}`
       : '<p class="aide">Aucune date à venir.</p>'}`;
   };
   dessinerPhoto(); dessinerAcces(); dessinerSpectacles(); dessinerDates();
@@ -829,6 +829,17 @@ function panneauPrevenir(zone, d) {
 // ===================================================================================================== feuilles de route
 // ce qu'une feuille de route demande encore (ses amorces qui posent une question)
 const aCompleter = dateId => { const f = E.feuilles.find(x => x.date_id === dateId); if (!f) return 0; try { return FEUILLE.manques(FEUILLE.contenu(f).blocs).length; } catch { return 0; } };
+// « n à compléter » : le même compte partout où une date mène à sa feuille (la liste des feuilles, le bouton « Feuille de
+// route » d'une date, les prochaines dates d'une personne, les dates d'un lieu) ; le lien ouvre la feuille sur sa liste
+// « À compléter » (data-viser). forme 'nombre' : le chiffre seul (le bouton « Plus » du téléphone). majACompleter les tient
+// à jour quand une feuille change (le temps réel, un enregistrement).
+const texteACompleter = (n, forme) => (n ? (forme === 'nombre' ? String(n) : `${n} à compléter`) : '');
+const resteFeuille = (dateId, forme = 'texte') => { const n = E.equipeInstallee ? aCompleter(dateId) : 0;
+  return `<span class="badge option a-completer${forme === 'nombre' ? ' nombre' : ''}" data-a-completer="${dateId}" data-forme="${forme}"${forme === 'nombre' ? ' aria-hidden="true"' : ''}${n ? '' : ' hidden'}>${texteACompleter(n, forme)}</span>`; };
+function majACompleter() {
+  $$('[data-a-completer]').forEach(el => { const n = aCompleter(+el.dataset.aCompleter); el.hidden = !n; el.textContent = texteACompleter(n, el.dataset.forme); });
+  $$('[data-statut-feuille]').forEach(el => { const f = E.feuilles.find(x => x.date_id === +el.dataset.statutFeuille); el.textContent = f ? (f.statut === 'publiee' ? `v${f.version}` : 'brouillon') : ''; });
+}
 const badgeFeuille = dateId => {
   const f = E.feuilles.find(x => x.date_id === dateId);
   return !f ? '<span class="badge">Aucune</span>' : f.statut === 'publiee' ? `<span class="badge ok">Publiée v${f.version}</span>` : '<span class="badge option">Brouillon</span>';
@@ -836,7 +847,7 @@ const badgeFeuille = dateId => {
 const boutonFeuille = dateId => {
   if (!E.equipeInstallee) return '';
   const f = E.feuilles.find(x => x.date_id === dateId);
-  return `<a class="btn" href="#/feuilles/${dateId}" id="d-feuille">Feuille de route${f ? ` <span class="compte">${f.statut === 'publiee' ? `v${f.version}` : 'brouillon'}</span>` : ''}</a>`;
+  return `<a class="btn" href="#/feuilles/${dateId}" id="d-feuille" data-viser="#fr-manques">Feuille de route <span class="compte" data-statut-feuille="${dateId}">${f ? (f.statut === 'publiee' ? `v${f.version}` : 'brouillon') : ''}</span>${resteFeuille(dateId)}</a>`;
 };
 function vueFeuilles(param) {
   if (param) return editeurFeuille(+param);
@@ -866,10 +877,10 @@ function listeFeuilles(zone) {
   $('#fr-compte').textContent = `${avenir.length} à venir · ${passees.length} passée${passees.length > 1 ? 's' : ''} · ${n('publiee')} publiée${n('publiee') > 1 ? 's' : ''}, ${n('brouillon')} brouillon${n('brouillon') > 1 ? 's' : ''}`;
   const ligne = d => {
     const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id), jours = [...new Set(reps.map(r => r.jour))], manque = aCompleter(d.id);
-    return `<a class="ligne" href="#/feuilles/${d.id}" style="--c:${couleurSp(s)}"><span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${d.fin && d.fin !== d.debut ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
+    return `<a class="ligne" href="#/feuilles/${d.id}" style="--c:${couleurSp(s)}"${manque ? ' data-viser="#fr-manques"' : ''}><span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${d.fin && d.fin !== d.debut ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
       <span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : (d.intitule || '').split(' — ')[1] || 'Lieu à préciser')}</span>
       ${reps.length ? `<span class="reps">${reps.slice(0, 6).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 6 ? `<span class="rep">+${reps.length - 6}</span>` : ''}</span>` : ''}</span>
-      <span class="badges">${badgeFeuille(d.id)}${manque ? `<span class="badge option">${manque} à compléter</span>` : ''}${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}</span></a>`;
+      <span class="badges">${badgeFeuille(d.id)}${resteFeuille(d.id)}${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}</span></a>`;
   };
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse(), enCours = AGENDA.saisonDe(AUJ);
   zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.map(ligne).join('') || '<p class="vide">Aucune date à venir.</p>'}
@@ -898,7 +909,7 @@ function sourcesFeuille(d) {
   // les feuilles des autres dates : repas, transports, hébergement s'en recopient
   const anterieures = E.feuilles.filter(f => f.date_id !== d.id && f.contenu).map(f => {
     const x = E.dates.find(y => y.id === f.date_id);
-    return x && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null };
+    return x && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null, date_id: f.date_id, ecrit_le: f.modifie_le || null };
   }).filter(Boolean);
   return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: DEPART,
     suivi: { ...(E.suivis.find(x => x.date_id === d.id) || {}), lieu: E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id) || {} },
@@ -974,7 +985,7 @@ function dessinerFeuille(etat) {
   const bouton = (cmd, lib, titre, extra = '') => `<button type="button" class="a4-b" data-a4="${cmd}" title="${esc(titre)}"${extra}>${lib}</button>`;
   zone.innerHTML = `<div class="bloc fr-etat"><div class="fr-etat-l"><span class="fr-badge">${badge}</span>
       <span class="fr-actions"><button type="button" class="btn petit" id="fr-maj" title="L’en-tête, les horaires, l’équipe, les contacts : ce qui vient de la base et n’a pas été retouché. Ce que vous avez écrit ne change pas.">Mettre à jour depuis la base</button><button type="button" class="btn petit" id="fr-pdf">Télécharger le PDF</button><button type="button" class="btn petit" id="fr-imprimer">Imprimer</button></span></div>
-      ${alertesFeuille(d, F)}</div>
+      ${alertesFeuille(d, F)}<p class="fr-reprise" id="fr-reprise" hidden></p></div>
     <div class="bloc fr-manques" id="fr-manques" hidden></div><p class="sr" id="fr-m-annonce" role="status"></p>
     <div class="a4-outils" role="toolbar" aria-label="Mise en forme de la feuille" aria-controls="a4-doc">
       <span class="a4-groupe" role="group" aria-label="Type de ligne">${bouton('type', 'Rubrique', 'Un titre de rubrique : Planning, Repas, Transports…', ' data-type="rubrique" aria-pressed="false"')}${bouton('type', 'Jour', 'Un jour du planning : « mardi 16 décembre »', ' data-type="jour" aria-pressed="false"')}${bouton('type', 'Ligne', 'Une ligne ordinaire', ' data-type="ligne" aria-pressed="false"')}${bouton('type', '• Puce', 'Une liste à puces', ' data-type="puce" aria-pressed="false"')}</span>
@@ -1044,8 +1055,33 @@ function dessinerFeuille(etat) {
   pm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.fr-m-saisie input')) { e.preventDefault(); ecrireManque(e.target.closest('li')); } });
   pm.addEventListener('click', e => { const b = e.target.closest('[data-m-ok]'); if (b) ecrireManque(b.closest('li')); });
   pm.addEventListener('toggle', e => { if (e.target.tagName === 'DETAILS') etat.manquesFermes = !e.target.open; }, true);
+  // ---- l'hébergement : de quelle feuille le reprendre (au même lieu, à défaut dans la même commune ; par défaut, la
+  // dernière écrite : FEUILLE.hebergements). Le choix se lit dans la page (FEUILLE.origineHebergement) : un autre choix
+  // remplace la rubrique (« Annuler » le reprend) ; retouchée à la main, la liste le dit.
+  const hebs = FEUILLE.hebergements(sourcesFeuille(d)), pr = $('#fr-reprise', zone);
+  const ecriteLe = x => (x.ecrit_le && !isNaN(new Date(x.ecrit_le)) ? `, écrite le ${new Date(x.ecrit_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : '');
+  const libelleHeb = x => `repris de la feuille du ${FEUILLE.jourLong(x.debut)}${x.memeLieu ? '' : ` (${x.lieu?.nom || x.lieu?.commune || 'un autre lieu'})`}${ecriteLe(x)}`;
+  let repriseVue = null;
+  function dessinerReprise() {
+    if (!hebs.length) return;
+    const o = FEUILLE.origineHebergement(blocsCourants(), hebs), v = typeof o === 'number' ? String(hebs[o].date_id) : o === 'aucune' ? 'aucune' : o;
+    if (v === repriseVue) return;
+    const focus = document.activeElement?.id === 'fr-heb';
+    repriseVue = v;
+    pr.hidden = false;
+    pr.innerHTML = `<label for="fr-heb">Hébergement</label><select id="fr-heb">${v === 'ecrit' || v === 'absente' ? `<option value="" selected>${v === 'absente' ? 'pas encore dans cette feuille' : 'écrit dans cette feuille'}</option>` : ''}${hebs.map(x => `<option value="${x.date_id}"${String(x.date_id) === v ? ' selected' : ''}>${esc(libelleHeb(x))}</option>`).join('')}<option value="aucune"${v === 'aucune' ? ' selected' : ''}>à écrire : ne rien reprendre</option></select>`;
+    if (focus) $('#fr-heb', pr).focus();
+  }
+  pr.addEventListener('change', e => {
+    if (e.target.id !== 'fr-heb' || !e.target.value) return;
+    const x = e.target.value === 'aucune' ? null : hebs.find(h => String(h.date_id) === e.target.value);
+    const avant = blocsCourants().map(b => ({ ...b }));
+    const poser = blocs => { if (etat.editeur) etat.editeur.remplacer(blocs); else { F.contenu.blocs = blocs; majEtat(); montrer(); } dessinerReprise(); dessinerManques(); };
+    poser(FEUILLE.reprendreHebergement(avant, x));
+    annoncer(x ? `Hébergement ${libelleHeb(x).replace(/, écrite le .*$/, '')} : à vérifier.` : 'Hébergement à écrire : la rubrique attend l’hôtel (en gris).', { libelle: 'Annuler', delai: 10000, action: () => poser(avant) });
+  });
   // la liste suit la page (ce qu'on y écrit, « Annuler », « Mettre à jour depuis la base »), sans perdre une saisie en cours
-  const manquesBientot = () => { clearTimeout(manquesPrevus); manquesPrevus = setTimeout(() => { if (pm.isConnected) dessinerManques(); }, 300); };
+  const manquesBientot = () => { clearTimeout(manquesPrevus); manquesPrevus = setTimeout(() => { if (pm.isConnected) { dessinerManques(); dessinerReprise(); } }, 300); };
   dessinerManques();
   // la barre d'outils colle sous l'en-tête de l'administration
   const barre = $('.barre');
@@ -1067,6 +1103,7 @@ function dessinerFeuille(etat) {
   };
   montrer();
   majEtat();
+  dessinerReprise();
   window.addEventListener('resize', hauteurBarre);
   const quitter = () => { if (location.hash !== `#/feuilles/${d.id}`) { etat.nettoyer(); if (etat.editeur) { etat.editeur.detruire(); etat.editeur = null; } } };
   etat.nettoyer = () => { window.removeEventListener('resize', hauteurBarre); window.removeEventListener('hashchange', quitter); };
@@ -2503,7 +2540,9 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .liste-simple li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 10px; padding: 8px 11px; border-radius: 9px; background: var(--doux); }
 .liste-simple .pastille { align-self: center; }
 .eq-jour { min-width: 9.5em; }
-.eq-feuille { margin-left: auto; text-decoration: none; }
+.eq-feuille { margin-left: auto; text-decoration: none; display: inline-flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.a-completer[hidden] { display: none; }
+#d-feuille .a-completer { margin-left: 2px; }
 .dist-cat { margin-top: 16px; }
 .dist-l.dist-entete { margin: 12px 0 -8px; padding-top: 0; padding-bottom: 0; border: 0; background: none; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); }
 .dist-entete .dist-champs > span { padding-left: 9px; }
@@ -2572,6 +2611,9 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .fr-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .fr-alerte { margin: 10px 0 0; padding: 8px 12px; border-radius: 9px; background: var(--option-doux); color: var(--option); font-size: 13.5px; font-weight: 600; }
 .fr-alerte a, .fr-alerte .btn.lien { color: inherit; text-decoration: underline; padding: 0; font-weight: 700; }
+.fr-reprise { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 12px 0 0; font-size: 14px; }
+.fr-reprise label { font-weight: 700; }
+.fr-reprise select { flex: 0 1 auto; width: auto; min-width: 0; max-width: 100%; min-height: 34px; padding: 4px 8px; }
 .fr-accueil p { max-width: 760px; }
 .fr-etat .fr-actions { margin-top: 0; }
 /* à compléter : ce que la feuille demande encore */
