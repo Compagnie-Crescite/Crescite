@@ -1298,18 +1298,18 @@ function editeurDate(id, depart = null) {
     if (t.matches('[data-enregistrer]')) return enregistrerDate(F, d0, t);
   });
 }
-async function enregistrerDate(F, d0, bouton) {
+// ce que crescite_enregistrer_date reçoit d'une date : la date, toutes ses séances (celles qui manquent sont retirées) et
+// son suivi. Le même chemin pour la fiche d'une date et pour le tableur : les mêmes règles, déclencheurs, notifications
+// et journal. libre : la ligne d'agenda écrite à la main est gardée (sinon le site la compose)
+function chargeDate(F, d0, libre = !!(F.intitule || '').trim()) {
   const reps = F.representations.filter(r => r.jour);
-  if (!F.spectacle_id) return annoncer('Choisissez le spectacle.', { erreur: true });
-  if (F.representations.some(r => !r.jour)) return annoncer('Chaque représentation a besoin de son jour (ou retirez la ligne vide).', { erreur: true });
   const js = reps.map(r => r.jour).sort();
   const debut = js[0] || F.debut;
-  if (!debut) return annoncer('Indiquez au moins un jour.', { erreur: true });
   const ps = new Set(reps.map(r => r.public));
   const charge = {
     id: F.id, spectacle_id: +F.spectacle_id, lieu_id: F.lieu_id, debut, fin: js[js.length - 1] || F.fin || debut, precision: reps.length ? 'jour' : F.precision,
     saison: d0 && d0.debut === debut ? d0.saison : null, public: ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : (F.public || 'tout_public'),
-    statut: F.statut, visible: F.visible, intitule: $('#d-libre').checked ? (F.intitule || '').trim() || null : null,
+    statut: F.statut, visible: F.visible, intitule: libre ? (F.intitule || '').trim() || null : null,
     details: F.details.filter(x => texteSeul(x.texte).trim()).map(x => ({ texte: x.texte, lien: x.lien || null })), lien: (F.lien || '').trim() || null,
     nb_representations: reps.length ? null : F.nb_representations,
     representations: reps.map(r => ({ id: r.id, jour: r.jour, heure: r.heure || null, public: r.public, annulee: !!r.annulee, lien: (r.lien || '').trim() || null, note: (r.note || '').trim() || null,
@@ -1319,13 +1319,29 @@ async function enregistrerDate(F, d0, bouton) {
     ...(E.sql3 ? { nature: F.nature || 'representations' } : {}),
   };
   if (E.sql3 && charge.nature !== 'representations') charge.visible = false;
-  bouton.disabled = true;
-  const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: charge });
-  bouton.disabled = false;
-  if (error) return erreur(error);
-  // l'équipe de la date (ce qui change de la distribution en tournée), après la date elle-même
+  return charge;
+}
+// ce qui manque à une date pour s'enregistrer (une phrase), ou ''
+const manqueDate = F => !F.spectacle_id ? 'Choisissez le spectacle.'
+  : F.representations.some(r => !r.jour) ? 'Chaque représentation a besoin de son jour (ou retirez la ligne vide).'
+  : !(F.representations.find(r => r.jour)?.jour || F.debut) ? 'Indiquez au moins un jour.' : '';
+// écrire une date : la date et ses séances (crescite_enregistrer_date), puis son équipe (ce qui change de la distribution
+// en tournée), puis la relire. → { id, equipeOk } ; une erreur de la base est levée
+async function ecrireDate(F, d0, { libre } = {}) {
+  const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: chargeDate(F, d0, libre) });
+  if (error) throw error;
   const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
+  return { id, equipeOk };
+}
+async function enregistrerDate(F, d0, bouton) {
+  const manque = manqueDate(F);
+  if (manque) return annoncer(manque, { erreur: true });
+  bouton.disabled = true;
+  let r;
+  try { r = await ecrireDate(F, d0, { libre: $('#d-libre').checked }); } catch (e) { bouton.disabled = false; return erreur(e); }
+  bouton.disabled = false;
+  const { id, equipeOk } = r;
   if (!equipeOk) { F.id = id; history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; return; }
   E.sale = false;
   const mot = F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.';
@@ -1344,26 +1360,33 @@ async function rechargerDate(id) {
   remplacer('reps', 'id', b.data, x => x.date_id === id);
   remplacer('suivis', 'date_id', c.data, x => x.date_id === id);
 }
-async function supprimerDate(d) {
-  const s = spectacle(d.spectacle_id);
-  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} », ses représentations${avecFeuille(d.id) ? ' et sa feuille de route' : ''} ?`)) return;
+// supprimer une date (ses séances, son suivi, son équipe et sa feuille partent avec elle) → de quoi la rétablir
+async function effacerDate(d) {
   const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)), equipe: copieEquipeDate(d.id) };
   const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
-  if (error) return erreur(error, 'Suppression impossible');
+  if (error) throw error;
   E.dates = E.dates.filter(x => x.id !== d.id); E.reps = E.reps.filter(x => x.date_id !== d.id); E.suivis = E.suivis.filter(x => x.date_id !== d.id);
   E.equipes = E.equipes.filter(x => x.date_id !== d.id); E.feuilles = E.feuilles.filter(x => x.date_id !== d.id);
-  E.sale = false;
-  location.hash = '#/representations';
-  annoncer('Date supprimée.', { action: async () => {
+  return async () => {
     const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
     let r = await sb.from('crescite_dates').insert(sans(copie.date));
     if (!r.error && copie.reps.length) r = await sb.from('crescite_representations').insert(copie.reps.map(sans));
     if (!r.error && copie.suivi) r = await sb.from('crescite_dates_suivi').insert(sans(copie.suivi));
     if (!r.error) { const e2 = await retablirEquipeDate(copie.equipe); if (e2) r = { error: e2 }; }
-    if (r.error) return erreur(r.error, 'Rétablissement impossible');
+    if (r.error) throw r.error;
     await rechargerDate(copie.date.id);
-    annoncer('Date rétablie.');
-    location.hash = `#/representations/${copie.date.id}`;
+    return copie.date.id;
+  };
+}
+async function supprimerDate(d) {
+  const s = spectacle(d.spectacle_id);
+  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} », ses représentations${avecFeuille(d.id) ? ' et sa feuille de route' : ''} ?`)) return;
+  let retablir;
+  try { retablir = await effacerDate(d); } catch (e) { return erreur(e, 'Suppression impossible'); }
+  E.sale = false;
+  location.hash = '#/representations';
+  annoncer('Date supprimée.', { action: async () => {
+    try { const id = await retablir(); annoncer('Date rétablie.'); location.hash = `#/representations/${id}`; } catch (e) { erreur(e, 'Rétablissement impossible'); }
   }, libelle: 'Annuler', delai: 9000 });
 }
 
