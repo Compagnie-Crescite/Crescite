@@ -362,8 +362,11 @@ ul,ol{padding:0;list-style:none}
 /* Spectacles : un titre éclaire sa photo, en grand derrière la liste, teintée de la lumière de son univers */
 .page--rep{position:relative;isolation:isolate;min-height:100vh;background:none}
 .rep-fond{position:fixed;inset:0;z-index:0;pointer-events:none}
-.rep-fond .ph{filter:brightness(.55) saturate(.9);transition:opacity .9s var(--ease)}
-.rep-teinte{position:absolute;inset:0;background:var(--teinte,transparent);mix-blend-mode:color;opacity:.55;transition:background-color .9s var(--ease)}
+/* chaque photo porte sa gélatine (la couleur du spectacle, fondue dans la photo) ; on passe de l'une à l'autre en fondu d'opacité */
+.rep-ph{position:absolute;inset:0;opacity:0;isolation:isolate;transition:opacity .9s var(--ease)}
+.rep-ph.on{opacity:1}
+.rep-fond .ph{opacity:1;filter:brightness(.55) saturate(.9);transition:none}
+.rep-teinte{position:absolute;inset:0;mix-blend-mode:color;opacity:.55}
 .rep-ombre{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,8,9,.95) 0,rgba(11,8,9,.74) 40%,rgba(11,8,9,.2) 78%,rgba(11,8,9,.35) 100%),linear-gradient(0deg,rgba(11,8,9,.85),rgba(11,8,9,0) 45%),linear-gradient(180deg,rgba(11,8,9,.85),rgba(11,8,9,0) 12rem)}
 .rep-corps{position:relative;z-index:1;padding-bottom:clamp(4rem,8vw,7rem)}
 .rep{max-width:64rem;border-top:1px solid var(--trait)}
@@ -1979,7 +1982,7 @@ main{display:block;min-height:100vh}
   /* ---------- Spectacles : un titre éclaire sa photo, en grand derrière la liste ---------- */
   function pageSpectacles() {
     return `<div class="page page--rep">
-      <div class="rep-fond" aria-hidden="true">${D.shows.map((s, i) => `<img class="ph${i ? '' : ' on'}" src="${photo(s.slug)}" alt="" data-i="${i}" style="object-position:${cadrage(s)}" decoding="async">`).join('')}<div class="rep-teinte"></div><div class="rep-ombre"></div><div class="grain"></div></div>
+      <div class="rep-fond" aria-hidden="true">${D.shows.map((s, i) => `<div class="rep-ph${i ? '' : ' on'}" data-i="${i}"><img class="ph" src="${photo(s.slug)}" alt="" style="object-position:${cadrage(s)}" decoding="async">${teinte(s).k.lueur ? `<i class="rep-teinte" style="background:${esc(teinte(s).k.lueur)}"></i>` : ''}</div>`).join('')}<div class="rep-ombre"></div><div class="grain"></div></div>
       <div class="rep-corps">
         <div class="page-tete wrap"><h1 class="page-titre" tabindex="-1">${esc((MENU.spectacles || {}).texte || LIB.spectacles)}</h1></div>
         <div class="wrap"><ol class="rep" id="rep">${D.shows.map((s, i) => `<li><a href="${lienSp(s.slug)}" data-i="${i}" data-teinte="${esc(teinte(s).k.lueur)}" style="${esc(styleMini(s))}">
@@ -1992,14 +1995,15 @@ main{display:block;min-height:100vh}
     </div>`;
   }
   function brancherRep() {
-    const rep = $('#rep', main), calques = $$('.rep-fond .ph', main), teinteF = $('.rep-teinte', main);
+    const rep = $('#rep', main), calques = $$('.rep-ph', main);
     if (!rep) return;
-    const voir = (i, a) => { calques.forEach(c => c.classList.toggle('on', +c.dataset.i === i)); if (teinteF) teinteF.style.backgroundColor = a.dataset.teinte || 'transparent'; };
+    // chaque photo et sa gélatine (la couleur du spectacle) passent sur la précédente en fondu d'opacité : rien n'est repeint
+    const voir = i => calques.forEach(c => c.classList.toggle('on', +c.dataset.i === i));
     $$('a[data-i]', rep).forEach(a => {
       const i = +a.dataset.i;
-      a.addEventListener('mouseenter', () => { voir(i, a); rep.classList.add('survol'); a.classList.add('on'); });
+      a.addEventListener('mouseenter', () => { voir(i); rep.classList.add('survol'); a.classList.add('on'); });
       a.addEventListener('mouseleave', () => { rep.classList.remove('survol'); a.classList.remove('on'); });
-      a.addEventListener('focus', () => voir(i, a));
+      a.addEventListener('focus', () => voir(i));
     });
   }
 
