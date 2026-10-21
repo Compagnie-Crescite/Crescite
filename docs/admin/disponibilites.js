@@ -14,11 +14,15 @@
                                    Le lien de réponse personnel (sans connexion) n'est pas lisible ici : les règles de la
                                    base gardent la clé de chacun au seul courriel.
    Sans le script 5, la rubrique le dit en une phrase et rien d'autre ne change. Les propositions ne sont pas dans le
-   temps réel de la base : elles se relisent à l'ouverture, par « Actualiser » et au retour sur l'onglet. */
+   temps réel de la base : elles se relisent à l'ouverture, par « Actualiser » et au retour sur l'onglet.
+   Dans le planning, l'administratrice masque les personnes qu'elle ne suit pas (sur leur ligne, ou dans le détail) et les
+   fait revenir par « Masquées » ; la liste est gardée avec son compte (script SQL 6, crescite_preferences), sinon sur cet
+   appareil. */
 const DISPONIBILITES = (() => {
   // ===================================================================================================== état
   Object.assign(E, { sql5: null, sql5Erreur: '', propositions: [], propositionsLues: false });
-  const DP = { planning: null, calendrier: null, lectures: [], canal: null, brouillon: null, sonde: null, renvois: new Map() };
+  const DP = { planning: null, calendrier: null, lectures: [], canal: null, brouillon: null, sonde: null, renvois: new Map(),
+    masques: undefined, masquesDe: null, prefs: null, lectureMasques: null, ecritureMasques: null };
 
   // ===================================================================================================== outils
   const PLN = () => (typeof PLANNING !== 'undefined' && PLANNING && typeof PLANNING.monter === 'function' ? PLANNING : null);
@@ -80,6 +84,39 @@ const DISPONIBILITES = (() => {
     return data;
   }
   const lectureDe = j => DP.lectures.find(x => x.de <= j && x.a >= j) || null;
+  // les personnes masquées du planning : gardées avec le compte (crescite_preferences, script SQL 6, clé planning.masques) ;
+  // sans le script, sur cet appareil (localStorage). La liste de l'appareil passe une fois dans la base quand le script est
+  // là. Une table absente ne se dit pas : le planning marche pareil.
+  const PREF_MASQUES = 'planning.masques', LOCAL_MASQUES = 'crescite-planning-masques';
+  const masquesIci = () => { try { const v = JSON.parse(localStorage.getItem(LOCAL_MASQUES) || 'null'); return Array.isArray(v) ? v : null; } catch { return null; } };
+  const garderIci = ids => { try { if (ids) localStorage.setItem(LOCAL_MASQUES, JSON.stringify(ids)); else localStorage.removeItem(LOCAL_MASQUES); } catch { /* stockage interdit */ } };
+  const ecrirePreference = async (cle, valeur) => (await sb.from('crescite_preferences').upsert({ user_id: E.session.user.id, cle, valeur }, { onConflict: 'user_id,cle' })).error;
+  function lireMasques() {
+    const uid = E.session?.user?.id || null;
+    if (DP.masquesDe !== uid) Object.assign(DP, { masquesDe: uid, masques: undefined, prefs: null, lectureMasques: null });
+    if (!DP.lectureMasques) DP.lectureMasques = (async () => {
+      const locaux = masquesIci() || [];
+      const { data, error } = await sb.from('crescite_preferences').select('valeur').eq('user_id', uid).eq('cle', PREF_MASQUES).maybeSingle();
+      if (DP.masquesDe !== uid) return;                            // un autre compte entre-temps : sa lecture est la sienne
+      if (error) { DP.prefs = absent(error) ? 'absent' : 'erreur'; DP.masques = locaux; return; }
+      DP.prefs = 'ok';
+      if (data) { DP.masques = Array.isArray(data.valeur) ? data.valeur : []; return; }
+      DP.masques = locaux;
+      if (locaux.length) ecrirePreference(PREF_MASQUES, locaux).then(err => { if (!err) garderIci(null); }, () => {});
+    })().catch(() => { if (DP.masques === undefined) DP.masques = masquesIci() || []; });
+    return DP.lectureMasques;
+  }
+  // chaque changement s'enregistre, dans l'ordre
+  function garderMasques(ids) {
+    DP.masques = ids;
+    DP.ecritureMasques = (DP.ecritureMasques || Promise.resolve()).then(async () => {
+      if (DP.prefs === 'absent') return garderIci(ids);
+      const err = await ecrirePreference(PREF_MASQUES, ids);
+      if (!err) { DP.prefs = 'ok'; return; }
+      if (absent(err)) { DP.prefs = 'absent'; garderIci(ids); return; }
+      erreur(err, 'Les personnes masquées ne sont pas enregistrées');
+    }).catch(() => {});
+  }
   // les indisponibilités se voient en direct (la seule table du script 5 dans le temps réel)
   function ecouter() {
     if (DP.canal || !E.sql5) return;
@@ -139,10 +176,18 @@ const DISPONIBILITES = (() => {
     const st = session.planning || {};
     const vueP = st.vue === 'mois' ? 'mois' : 'equipe', jour = estJour(st.jour) ? st.jour : AUJ, semaines = [4, 6, 8].includes(+st.semaines) ? +st.semaines : 6;
     const per = PLN().periode(vueP, jour, semaines);
-    const garde = DP.lectures.find(x => x.de === per.de && x.a === per.a);
-    DP.planning = PLN().monter($('#dp-planning'), {
+    // une période déjà lue s'affiche tout de suite, si l'on sait déjà qui est masqué (sinon, elle se relit avec la liste)
+    let pl = null, masquesPoses = DP.masques !== undefined && DP.masquesDe === (E.session?.user?.id || null);
+    const garde = masquesPoses ? DP.lectures.find(x => x.de === per.de && x.a === per.a) : null;
+    pl = DP.planning = PLN().monter($('#dp-planning'), {
       vue: vueP, jour, semaines, filtre: st.filtre || null, donnees: garde ? garde.D : undefined,
-      charger: lirePlanning,
+      masquer: true, masques: masquesPoses ? DP.masques : [], surMasques: garderMasques,
+      // la première période se lit avec la liste des personnes masquées : le planning paraît sans elles
+      charger: async (de, a) => {
+        const [D] = await Promise.all([lirePlanning(de, a), lireMasques()]);
+        if (pl && !masquesPoses) { masquesPoses = true; pl.masques(DP.masques); }
+        return D;
+      },
       messageErreur: e => (absent(e) ? 'Le planning n’est pas encore installé dans la base.' : `Le planning n’a pas pu être lu : ${e?.message || 'réessayez dans un instant'}.`),
       photo: photoUrl, spectacles: spectaclesPlanning(), distributions: distributionsPlanning(),
       actions: actionsJour, titre: 'Planning de toute l’équipe',

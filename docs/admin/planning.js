@@ -29,10 +29,23 @@
                       semaine, la vue Mois montre son mois
      options.semaines 4, 6 (par défaut) ou 8 : la largeur de la vue Équipe
      options.aujourdhui 'AAAA-MM-JJ' (par défaut, la date du jour à Paris : pour les essais)
-     options.filtre   { spectacle: id | null, personne: id | null }
+     options.filtre   { spectacle: id | null, personne: id | null, groupe: id | null }
      options.spectacles [{id, titre, couleur}] : la liste du filtre « spectacle » (par défaut, ceux des dates lues)
      options.distributions [{spectacle_id, personne_id}] : le filtre « spectacle » montre sa distribution ; sans elles,
                       les personnes qui partent sur ses dates
+     options.groupes  [{ id, libelle, personnes: [id…], spectacles: [id…] }] : des groupes de personnes, en tête de la liste
+                      des personnes (« Mes projets », puis « Toute l’équipe », puis chacun) ; spectacles (facultatif) y
+                      ajoute l'équipe de chaque date de ces spectacles dans les données lues. Un groupe ne filtre que les
+                      personnes (les lignes de la vue Équipe, les portraits « pas libre » de la vue Mois, les conflits), pas
+                      les dates : on voit quand ses partenaires sont pris ailleurs. Qui l'emporte : la personne choisie, puis
+                      le spectacle, puis le groupe, sinon toute l'équipe. Le petit titre dit le groupe (« mes projets »)
+     options.masquer  true : masquer des personnes, pour l'administration (seulement quand les données disent admin) :
+                      « Masquer du planning » dans le détail d'une personne (vue Équipe) et sur sa ligne (au survol, d'un
+                      toucher sur le nom ; au clavier, Maj+Tab depuis la case atteignable). « Masquées (n) », dans la barre
+                      des filtres, les liste, chacune avec « Afficher », et « Tout afficher ». Une personne masquée n'est
+                      plus dans les vues (lignes, portraits, conflits), sauf si on la choisit dans le filtre « personne »
+     options.masques  [id…] : les personnes masquées au départ
+     options.surMasques(ids)             après chaque changement des personnes masquées (la page les garde)
      options.photo(chemin) → url : les portraits (personne.photo, un chemin du stockage public) ; sans elle, des initiales
      options.actions(selection) → [{ libelle, faire(selection), principal?, icone? (SVG) }]
                       les boutons du détail du jour choisi ; selection = { jour, personne (ou null), dates, indisponibilites,
@@ -48,8 +61,9 @@
    planning.actualiser()        relit la période montrée (options.charger) → Promise ; si la lecture échoue alors que des
                                 données de cette période sont là, elles restent, avec un avertissement et « Réessayer »
    planning.vue('equipe'|'mois'), planning.aller('AAAA-MM-JJ'), planning.precedent(), planning.suivant(), planning.ici()
-   planning.semaines(4|6|8), planning.filtrer({spectacle, personne}), planning.choisir(jour, personne?)
-   planning.etat() → { vue, jour, de, a, semaines, filtre, selection }
+   planning.semaines(4|6|8), planning.filtrer({spectacle, personne, groupe}), planning.choisir(jour, personne?)
+   planning.masques([id…])      remplace les personnes masquées (la page les a relues) ; surMasques n'est pas rappelé
+   planning.etat() → { vue, jour, de, a, semaines, filtre: {spectacle, personne, groupe}, selection }
    planning.detruire()
 
    Outils, sans planning monté :
@@ -79,7 +93,8 @@
    Les couleurs des spectacles (spectacle.couleur) s'éclaircissent sur fond sombre ; leur texte est choisi lisible.
    Le mouvement est discret (la grille glisse d'une période à l'autre, le détail paraît) et s'arrête si le visiteur a
    demandé moins d'animations, ou avec ?anim=0 dans l'adresse. Clavier : flèches, Début/Fin, Page précédente/suivante
-   (période), Entrée ou Espace (activer le jour). */
+   (période), Entrée ou Espace (activer le jour), Échap (fermer la feuille du détail, la liste des personnes masquées).
+   Ce qui avait le focus dans la barre ou le détail le retrouve après chaque nouveau dessin. */
 const PLANNING = (() => {
   'use strict';
 
@@ -261,17 +276,30 @@ const PLANNING = (() => {
     }
     return out;
   }
-  // tout ce que les vues lisent, d'un coup : par personne et jour, par jour
-  function indexer(D, filtre, distributions) {
+  // les personnes d'un groupe : les siennes, et l'équipe de chaque date de ses spectacles dans les données lues
+  function membres(D, g) {
+    const ids = new Set(g.personnes);
+    if (g.spectacles.size) for (const d of D.dates || []) if (d.spectacle && g.spectacles.has(String(d.spectacle.id))) (d.equipe || []).forEach(p => ids.add(String(p)));
+    return ids;
+  }
+  // tout ce que les vues lisent, d'un coup : par personne et jour, par jour. Les personnes montrées : celle choisie, sinon
+  // la distribution du spectacle, sinon le groupe, sinon toute l'équipe ; une personne masquée n'y est que choisie
+  function indexer(D, filtre, distributions, groupe = null, masques = null) {
     const personnes = ordonnerPersonnes(D);
     const P = new Map(personnes.map(p => [String(p.id), p]));
     let gardes = personnes;
     const sp = filtre.spectacle != null ? String(filtre.spectacle) : null;
     if (filtre.personne != null) gardes = personnes.filter(p => memeId(p.id, filtre.personne));
-    else if (sp) {
-      const ids = new Set((distributions || []).filter(x => String(x.spectacle_id) === sp).map(x => String(x.personne_id)));
-      if (!ids.size) for (const d of D.dates || []) if (d.spectacle && String(d.spectacle.id) === sp) (d.equipe || []).forEach(p => ids.add(String(p)));
-      gardes = personnes.filter(p => ids.has(String(p.id)));
+    else {
+      if (sp) {
+        const ids = new Set((distributions || []).filter(x => String(x.spectacle_id) === sp).map(x => String(x.personne_id)));
+        if (!ids.size) for (const d of D.dates || []) if (d.spectacle && String(d.spectacle.id) === sp) (d.equipe || []).forEach(p => ids.add(String(p)));
+        gardes = personnes.filter(p => ids.has(String(p.id)));
+      } else if (groupe) {
+        const ids = membres(D, groupe);
+        gardes = personnes.filter(p => ids.has(String(p.id)));
+      }
+      if (masques && masques.size) gardes = gardes.filter(p => !masques.has(String(p.id)));
     }
     const G = new Set(gardes.map(p => String(p.id)));
     const dates = (D.dates || []).filter(d => precise(d) && (!sp || (d.spectacle && String(d.spectacle.id) === sp))
@@ -323,7 +351,7 @@ const PLANNING = (() => {
 .pl *, .pl *::before, .pl *::after { box-sizing: border-box; }
 .pl button { font: inherit; color: inherit; }
 .pl [hidden] { display: none !important; }
-.pl .pl-sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.pl .pl-sr, .pl-annonce { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .pl-barre { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
 .pl-nav { display: flex; align-items: center; gap: 6px; min-width: 0; flex: 0 1 auto; }
 .pl-titre { margin: 0 4px; font-size: 1.05rem; font-weight: 700; line-height: 1.25; min-width: 0; white-space: nowrap; }
@@ -375,6 +403,24 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl.compact .pl-filtres { flex: 1 1 100%; }
 .pl.compact .pl-filtres label, .pl.compact .pl-filtres select { flex: 1 1 100%; max-width: none; }
 .pl.compact .pl-legende { margin: 12px 0 0; }
+/* les personnes masquées : le bouton de la barre des filtres, et sa liste */
+.pl-masquees { position: relative; }
+.pl-btn-masquees { min-height: 38px; font-size: .86rem; }
+.pl-btn-masquees svg { width: 16px; height: 16px; }
+.pl-btn-masquees[aria-expanded="true"] { background: color-mix(in srgb, var(--pl-accent) 10%, var(--pl-fond)); border-color: color-mix(in srgb, var(--pl-accent) 45%, var(--pl-filet)); }
+.pl-masquees-liste { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: max-content; min-width: 250px; max-width: min(340px, calc(100vw - 32px));
+  max-height: min(60vh, 440px); overflow: auto; padding: 8px; border-radius: var(--pl-rayon); background: var(--pl-fond); border: 1px solid var(--pl-filet);
+  box-shadow: 0 14px 34px rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.1); animation: pl-parait .16s ease-out; }
+@keyframes pl-parait { from { opacity: 0; transform: translateY(-4px); } }
+.pl-masquees-liste ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.pl-masquees-liste li { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 4px 4px 4px 6px; border-radius: 10px; font-size: .9rem; }
+.pl-masquees-liste li:hover { background: color-mix(in srgb, var(--pl-texte) 4%, var(--pl-fond)); }
+.pl-masquees-liste li .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-masquees-liste li .pl-btn { flex: none; min-height: 34px; padding: 0 12px; font-size: .84rem; }
+.pl-masquees-liste .pl-tout { width: 100%; margin-top: 8px; }
+.pl.compact .pl-masquees { flex: 1 1 100%; }
+.pl.compact .pl-btn-masquees { width: 100%; }
+.pl.compact .pl-masquees-liste { position: static; width: auto; min-width: 0; max-width: none; max-height: none; margin-top: 8px; box-shadow: none; animation: none; }
 
 /* ———— la vue Équipe */
 .pl-grille-e { --n: 28; display: grid; grid-template-columns: var(--pl-nom) repeat(var(--n), var(--pl-col)); grid-auto-rows: var(--pl-ligne);
@@ -400,6 +446,15 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-e-nom .n small { display: block; font-size: .72rem; color: var(--pl-sourd); overflow: hidden; text-overflow: ellipsis; }
 .pl-e-nom.moi { background: color-mix(in srgb, var(--pl-accent) 7%, var(--pl-fond)); font-weight: 650; }
 .pl-e-nom.moi .n small { color: var(--pl-accent); font-weight: 600; }
+/* « Masquer » sur la ligne d'une personne : au survol, d'un toucher sur le nom, au clavier */
+.pl-e-nom .pl-masquer { position: absolute; z-index: 1; right: 5px; top: 50%; width: 30px; height: 30px; margin-top: -15px; padding: 0; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--pl-filet); background: var(--pl-fond); color: var(--pl-sourd); cursor: pointer; opacity: 0; pointer-events: none;
+  box-shadow: -8px 0 8px -2px var(--pl-fond); transition: opacity .15s, background .15s, color .15s; }
+.pl-e-nom.moi .pl-masquer { background: color-mix(in srgb, var(--pl-accent) 7%, var(--pl-fond)); box-shadow: -8px 0 8px -2px color-mix(in srgb, var(--pl-accent) 7%, var(--pl-fond)); }
+.pl-e-nom .pl-masquer svg { width: 16px; height: 16px; }
+.pl-e-nom:hover .pl-masquer, .pl-e-nom.montre .pl-masquer, .pl-e-nom .pl-masquer:focus-visible { opacity: 1; pointer-events: auto; }
+.pl-e-nom .pl-masquer:hover { color: var(--pl-texte); background: color-mix(in srgb, var(--pl-accent) 10%, var(--pl-fond)); }
+.pl-e-nom .pl-masquer:focus-visible { outline: 2px solid var(--pl-accent); outline-offset: 1px; }
 .pl-e-c { position: relative; border-bottom: 1px solid color-mix(in srgb, var(--pl-filet) 60%, transparent); cursor: pointer; outline: none; }
 .pl-e-c.we { background: var(--pl-we); }
 .pl-e-c.auj { background: color-mix(in srgb, var(--pl-accent) 6%, transparent); }
@@ -520,6 +575,7 @@ details.pl-alerte p { margin: 8px 0 0; }
     apres: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
     ici: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor" stroke="none"/></svg>',
     fermer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
+    masquer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A9.9 9.9 0 0 1 12 5c5.4 0 8.8 4.6 9.8 6.4a1.3 1.3 0 0 1 0 1.2 15.5 15.5 0 0 1-2.4 3.2M6.6 6.6C4.4 8 2.9 10.2 2.2 11.4a1.3 1.3 0 0 0 0 1.2C3.2 14.4 6.6 19 12 19a9.6 9.6 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>',
     gens: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg>',
   };
 
@@ -528,20 +584,36 @@ details.pl-alerte p { margin: 8px 0 0; }
     if (!racine) throw new Error('PLANNING.monter : il faut un élément');
     poserCss();
     const O = options;
+    // les groupes de personnes (« Mes projets »), et les personnes masquées (l'administration)
+    const GROUPES = (Array.isArray(O.groupes) ? O.groupes : []).filter(g => g && g.id != null && txt(g.libelle))
+      .map(g => ({ id: String(g.id), libelle: txt(g.libelle), personnes: new Set((g.personnes || []).map(String)), spectacles: new Set((g.spectacles || []).map(String)) }));
+    const groupeDe = id => (id != null ? GROUPES.find(g => g.id === String(id)) || null : null);
+    const VALEUR_GROUPE = 'groupe:';
     const S = {
       vue: O.vue === 'mois' ? 'mois' : 'equipe',
       jour: estJour(O.jour) ? O.jour : (estJour(O.aujourdhui) ? O.aujourdhui : aujourdhuiParis()),
       semaines: [4, 6, 8].includes(+O.semaines) ? +O.semaines : 6,
-      filtre: { spectacle: O.filtre && O.filtre.spectacle != null ? O.filtre.spectacle : null, personne: O.filtre && O.filtre.personne != null ? O.filtre.personne : null },
+      filtre: { spectacle: O.filtre && O.filtre.spectacle != null ? O.filtre.spectacle : null, personne: O.filtre && O.filtre.personne != null ? O.filtre.personne : null,
+        groupe: O.filtre && groupeDe(O.filtre.groupe) ? String(O.filtre.groupe) : null },
+      masques: new Set((Array.isArray(O.masques) ? O.masques : []).map(String)), masqueesOuvertes: false,
       D: O.donnees || null, plage: null, erreur: null, charge: 0, selection: null, sens: 0, detruit: false,
     };
     const auj = () => (estJour(O.aujourdhui) ? O.aujourdhui : aujourdhuiParis());
+    // masquer des personnes : l'administration seulement (les données le disent)
+    const peutMasquer = () => !!O.masquer && !!(S.D && S.D.admin);
     if (S.D) S.plage = periode(S.vue, S.jour, S.semaines);
     racine.innerHTML = '';
     const el = document.createElement('div');
     el.className = 'pl';
     el.dataset.vue = S.vue;
     racine.appendChild(el);
+    // ce qui change sans se voir à l'endroit du focus (une personne masquée, affichée de nouveau) : dit aux lecteurs d'écran
+    const annonce = document.createElement('p');
+    annonce.className = 'pl-annonce';
+    annonce.setAttribute('role', 'status');
+    racine.appendChild(annonce);
+    let minuteur = null;
+    const dire = t => { annonce.textContent = ''; clearTimeout(minuteur); minuteur = setTimeout(() => { annonce.textContent = t; }, 60); };
     const mq = typeof matchMedia === 'function' ? matchMedia('(max-width: 640px)') : null;
     const sombre = () => { const c = rgb(getComputedStyle(el).getPropertyValue('--pl-fond')) || rgb(getComputedStyle(el).backgroundColor); return c ? lum(c) < 0.25 : false; };
     let teintes = new Map();
@@ -561,16 +633,22 @@ details.pl-alerte p { margin: 8px 0 0; }
       const titre = S.vue === 'mois' ? maj(moisTexte(S.jour))
         : de.slice(0, 7) === a.slice(0, 7) ? maj(moisTexte(de))
         : `${jourTexte(de)} ${MOIS_COURTS[+de.slice(5, 7) - 1]}${de.slice(0, 4) !== a.slice(0, 4) ? ` ${de.slice(0, 4)}` : ''} – ${jourTexte(a)} ${MOIS_COURTS[+a.slice(5, 7) - 1]}${annee}`;
-      const actifs = (S.filtre.spectacle != null) + (S.filtre.personne != null);
+      const gens = ordonnerPersonnes(S.D || {});
+      // le groupe compte quand la liste des personnes le montre (une personne choisie l'emporte) ; les personnes masquées
+      // comptent pour un filtre : leur bouton est dans la barre des filtres
+      const grp = S.filtre.personne == null ? groupeDe(S.filtre.groupe) : null;
+      const masquees = peutMasquer() ? gens.filter(p => S.masques.has(String(p.id))) : [];
+      const actifs = (S.filtre.spectacle != null) + (S.filtre.personne != null) + !!grp + (masquees.length > 0);
       const unite = S.vue === 'mois' ? 'Mois' : `${S.semaines} semaines`;
       const sps = new Map();
       for (const x of O.spectacles || []) sps.set(String(x.id), x);
       for (const d of (S.D && S.D.dates) || []) if (d.spectacle && !sps.has(String(d.spectacle.id))) sps.set(String(d.spectacle.id), d.spectacle);
-      const gens = ordonnerPersonnes(S.D || {});
+      const qui = S.filtre.personne != null ? 'une personne' : S.filtre.spectacle != null ? 'une distribution' : grp ? grp.libelle[0].toLowerCase() + grp.libelle.slice(1) : 'toute l’équipe';
+      const choix = S.filtre.personne != null ? String(S.filtre.personne) : grp ? VALEUR_GROUPE + grp.id : '';
       return `<div class="pl-barre">
         <div class="pl-nav">
           <button type="button" class="pl-btn rond" data-pl="avant" aria-label="${S.vue === 'mois' ? 'Mois précédent' : 'Quatre semaines plus tôt'}">${IC.avant}</button>
-          <h2 class="pl-titre" id="${S.id}-titre" aria-live="polite">${esc(titre)}${S.compact ? '' : `<small>${esc(S.vue === 'mois' ? 'Le mois' : `${S.semaines} semaines, ${S.filtre.personne != null ? 'une personne' : S.filtre.spectacle != null ? 'une distribution' : 'toute l’équipe'}`)}</small>`}</h2>
+          <h2 class="pl-titre" id="${S.id}-titre" aria-live="polite">${esc(titre)}${S.compact ? '' : `<small>${esc(S.vue === 'mois' ? 'Le mois' : `${S.semaines} semaines, ${qui}`)}</small>`}</h2>
           <button type="button" class="pl-btn rond" data-pl="apres" aria-label="${S.vue === 'mois' ? 'Mois suivant' : 'Quatre semaines plus tard'}">${IC.apres}</button>
           ${S.compact ? `<button type="button" class="pl-btn rond" data-pl="ici" aria-label="Aujourd’hui" title="Aujourd’hui">${IC.ici}</button>` : '<button type="button" class="pl-btn" data-pl="ici">Aujourd’hui</button>'}
         </div>
@@ -581,7 +659,10 @@ details.pl-alerte p { margin: 8px 0 0; }
         ${S.compact ? `<button type="button" class="pl-btn pl-btn-filtres" data-pl="filtres" aria-expanded="${!!S.filtresOuverts}" aria-controls="${S.id}-filtres">Filtres${actifs ? ` (${actifs})` : ''}</button>` : ''}
         <div class="pl-filtres" id="${S.id}-filtres"${S.compact && !S.filtresOuverts ? ' hidden' : ''}>
           ${sps.size > 1 || S.filtre.spectacle != null ? `<label><span class="pl-sr">Spectacle</span><select data-pl-filtre="spectacle"><option value="">Tous les spectacles</option>${[...sps.values()].sort((x, y) => txt(x.titre).localeCompare(txt(y.titre), 'fr')).map(x => `<option value="${esc(x.id)}"${memeId(x.id, S.filtre.spectacle) ? ' selected' : ''}>${esc(x.titre)}</option>`).join('')}</select></label>` : ''}
-          ${gens.length > 1 ? `<label><span class="pl-sr">Personne</span><select data-pl-filtre="personne"><option value="">Toute l’équipe</option>${gens.map(p => `<option value="${esc(p.id)}"${memeId(p.id, S.filtre.personne) ? ' selected' : ''}>${esc(nomDe(p))}${memeId(p.id, S.D.moi) ? ' (vous)' : ''}</option>`).join('')}</select></label>` : ''}
+          ${gens.length > 1 ? `<label><span class="pl-sr">Personne</span><select data-pl-filtre="personne">${GROUPES.map(g => `<option value="${esc(VALEUR_GROUPE + g.id)}"${choix === VALEUR_GROUPE + g.id ? ' selected' : ''}>${esc(g.libelle)}</option>`).join('')}<option value=""${choix === '' ? ' selected' : ''}>Toute l’équipe</option>${gens.map(p => `<option value="${esc(p.id)}"${memeId(p.id, S.filtre.personne) ? ' selected' : ''}>${esc(nomDe(p))}${memeId(p.id, S.D.moi) ? ' (vous)' : ''}</option>`).join('')}</select></label>` : ''}
+          ${masquees.length ? `<div class="pl-masquees"><button type="button" class="pl-btn pl-btn-masquees" data-pl="masquees" aria-expanded="${!!S.masqueesOuvertes}" aria-controls="${S.id}-masquees">${IC.masquer}Masquées (${masquees.length})</button>
+            <div class="pl-masquees-liste" id="${S.id}-masquees" role="group" aria-label="Personnes masquées"${S.masqueesOuvertes ? '' : ' hidden'}><ul>${masquees.map(p => `<li>${avatar(p, O.photo)}<span class="n">${esc(nomDe(p))}</span><button type="button" class="pl-btn" data-pl-afficher="${esc(p.id)}" aria-label="Afficher ${esc(nomDe(p))}">Afficher</button></li>`).join('')}</ul>
+            <button type="button" class="pl-btn pl-tout" data-pl="tout-afficher">Tout afficher</button></div></div>` : ''}
           ${S.vue === 'equipe' ? `<label><span class="pl-sr">Largeur</span><select data-pl-semaines>${[4, 6, 8].map(n => `<option value="${n}"${n === S.semaines ? ' selected' : ''}>${n} semaines</option>`).join('')}</select></label>` : ''}
         </div>
         <span class="pl-sr">${esc(unite)}</span>
@@ -657,10 +738,15 @@ details.pl-alerte p { margin: 8px 0 0; }
         html.push(`<div class="pl-vide" style="grid-column:1 / -1">Personne à montrer avec ce filtre.</div>`);
         return { html: html.join(''), n };
       }
+      const masquer = peutMasquer();
       I.personnes.forEach((p, k) => {
         const row = k + 3, id = String(p.id), moi = memeId(p.id, I.moi);
+        const sous = moi ? 'vous' : p.metiers && p.metiers.length ? p.metiers.join(', ') : '';
+        // « Masquer » sur la ligne (pas pour une personne déjà masquée, montrée parce qu'on l'a choisie) ; le nom de la ligne
+        // reste celui de la personne, sans le bouton
+        const bouton = masquer && !S.masques.has(id) ? `<button type="button" class="pl-masquer" data-pl-masquer="${esc(id)}" tabindex="-1" aria-label="Masquer ${esc(nomDe(p))} du planning" title="Masquer du planning">${IC.masquer}</button>` : '';
         html.push(`<div role="row" style="display:contents">`);
-        html.push(`<div role="rowheader" class="pl-e-nom${moi ? ' moi' : ''}" style="grid-row:${row}">${avatar(p, O.photo)}<span class="n">${esc(nomDe(p))}${moi ? '<small>vous</small>' : p.metiers && p.metiers.length ? `<small>${esc(p.metiers.join(', '))}</small>` : ''}</span></div>`);
+        html.push(`<div role="rowheader" class="pl-e-nom${moi ? ' moi' : ''}" style="grid-row:${row}"${bouton ? ` aria-label="${esc([nomDe(p), sous].filter(Boolean).join(', '))}"` : ''}>${avatar(p, O.photo)}<span class="n">${esc(nomDe(p))}${sous ? `<small>${esc(sous)}</small>` : ''}</span>${bouton}</div>`);
         for (const j of jours) {
           const r = rang(j), choisi = S.selection && S.selection.jour === j && memeId(S.selection.personne, p.id);
           const cl = ['pl-e-c', r >= 5 && 'we', r === 0 && 'lundi', j === A && 'auj', moi && 'moi', choisi && 'choisi'].filter(Boolean).join(' ');
@@ -814,16 +900,44 @@ details.pl-alerte p { margin: 8px 0 0; }
       }
       const acts = typeof O.actions === 'function' ? (O.actions(s) || []).filter(x => x && x.libelle) : [];
       S.actionsCourantes = acts;
+      // masquer la personne choisie (l'administration), après les boutons de la page
+      const masquer = !!s.personne && S.vue === 'equipe' && peutMasquer() && !S.masques.has(String(s.personne.id));
       const titre = `${maj(jourLong(s.jour, true))}${s.personne ? `<small>${memeId(s.personne.id, I.moi) ? 'Vous' : esc(nomDe(s.personne))}</small>` : ''}`;
       const feuille = O.feuille === true || (O.feuille !== false && S.compact && S.vue === 'equipe');
       return `<section class="pl-detail${feuille ? ' feuille' : ''}" aria-labelledby="${S.id}-detail">${feuille ? `<button type="button" class="pl-btn rond pl-fermer" data-pl="fermer" aria-label="Fermer le détail">${IC.fermer}</button>` : ''}<h3 id="${S.id}-detail" tabindex="-1">${titre}</h3>
         ${items.length ? `<ul>${items.join('')}</ul>` : `<p class="pl-rien">${s.personne ? (memeId(s.personne.id, I.moi) ? 'Vous êtes libre ce jour-là.' : `${esc(nomDe(s.personne))} est libre ce jour-là.`) : 'Rien de prévu, toute l’équipe est libre.'}</p>`}
-        ${acts.length ? `<div class="pl-actions">${acts.map((x, i) => `<button type="button" class="pl-btn${x.principal ? ' principal' : ''}" data-pl-action="${i}">${x.icone || ''}${esc(x.libelle)}</button>`).join('')}</div>` : ''}</section>`;
+        ${acts.length || masquer ? `<div class="pl-actions">${acts.map((x, i) => `<button type="button" class="pl-btn${x.principal ? ' principal' : ''}" data-pl-action="${i}">${x.icone || ''}${esc(x.libelle)}</button>`).join('')}${masquer ? `<button type="button" class="pl-btn" data-pl="masquer">${IC.masquer}Masquer du planning</button>` : ''}</div>` : ''}</section>`;
     }
 
     // ———— dessiner
     let I = null;
-    function dessiner({ glisser = 0, garderFocus = null } = {}) {
+    // ce qui a le focus dans la barre, la liste des personnes masquées ou le détail (une case : garderFocus s'en charge),
+    // pour le lui rendre après le dessin, qui remplace tout
+    const CLES_FOCUS = [['pl', 'data-pl'], ['plFiltre', 'data-pl-filtre'], ['plVue', 'data-pl-vue'], ['plSemaines', 'data-pl-semaines'],
+      ['plAfficher', 'data-pl-afficher'], ['plMasquer', 'data-pl-masquer'], ['plAction', 'data-pl-action']];
+    function focusGarde() {
+      const a = document.activeElement;
+      if (!a || !a.dataset || !el.contains(a) || a.getAttribute('role') === 'gridcell') return null;
+      const k = CLES_FOCUS.find(([c]) => a.dataset[c] != null);
+      return k ? { attr: k[1], valeur: a.getAttribute(k[1]) } : null;
+    }
+    function rendreFocus(g) {
+      const x = [...el.querySelectorAll(`[${g.attr}]`)].find(y => y.getAttribute(g.attr) === g.valeur);
+      if (x && !x.closest('[hidden]')) x.focus({ preventScroll: true });
+    }
+    function dessiner(o = {}) {
+      const g = o.garderFocus ? null : focusGarde();
+      dessin(o);
+      if (g) rendreFocus(g);
+    }
+    // la seule case atteignable à la tabulation, et le bouton « Masquer » de sa ligne (Maj+Tab depuis la case)
+    function atteignable(c) {
+      el.querySelectorAll('[role="gridcell"][tabindex="0"], .pl-masquer[tabindex="0"]').forEach(y => { y.tabIndex = -1; });
+      c.tabIndex = 0;
+      const b = c.dataset.plP != null ? [...el.querySelectorAll('.pl-masquer')].find(y => y.dataset.plMasquer === c.dataset.plP) : null;
+      if (b) b.tabIndex = 0;
+    }
+    function dessin({ glisser = 0, garderFocus = null } = {}) {
       if (S.detruit) return;
       S.sombre = sombre();
       teintes = new Map();
@@ -841,8 +955,10 @@ details.pl-alerte p { margin: 8px 0 0; }
         el.innerHTML = parts.join('');
         return;
       }
-      I = indexer(S.D, S.filtre, O.distributions);
+      I = indexer(S.D, S.filtre, O.distributions, groupeDe(S.filtre.groupe), peutMasquer() ? S.masques : null);
       if (S.selection && !(S.selection.jour >= periode(S.vue, S.jour, S.semaines).de && S.selection.jour <= periode(S.vue, S.jour, S.semaines).a)) S.selection = null;
+      // une personne choisie qui n'est plus montrée (un autre filtre, masquée) : plus de détail pour elle
+      if (S.selection && S.selection.personne != null && !I.personnes.some(p => memeId(p.id, S.selection.personne))) S.selection = null;
       const { de, a } = periode(S.vue, S.jour, S.semaines);
       const cs = I.conflits.filter(c => c.jour >= de && c.jour <= a);
       if (S.avertissement) parts.push(`<div class="pl-attention" role="status"><span>${esc(S.avertissement)}</span><button type="button" class="pl-btn" data-pl="reessayer">Réessayer</button></div>`);
@@ -871,7 +987,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       // le premier jour atteignable au clavier : le choisi, sinon aujourd'hui, sinon le premier
       const cases = [...el.querySelectorAll('[role="gridcell"]')];
       const cible = el.querySelector('[role="gridcell"][aria-selected="true"]') || cases.find(c => c.dataset.plJour === auj() && (!c.dataset.plP || memeId(c.dataset.plP, S.D.moi))) || cases.find(c => c.dataset.plJour === auj()) || cases[0];
-      if (cible) cible.tabIndex = 0;
+      if (cible) atteignable(cible);
       const d = el.querySelector('[data-pl-defile]');
       if (d) {
         if (defil) { d.scrollLeft = defil[0]; d.scrollTop = defil[1]; }
@@ -883,7 +999,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       }
       if (garderFocus) {
         const c = el.querySelector(`[role="gridcell"][data-pl-jour="${garderFocus.jour}"]${garderFocus.personne != null ? `[data-pl-p="${garderFocus.personne}"]` : ''}`) || cible;
-        if (c) { cases.forEach(x => { x.tabIndex = -1; }); c.tabIndex = 0; c.focus({ preventScroll: false }); }
+        if (c) { atteignable(c); c.focus({ preventScroll: false }); }
       }
       if (glisser && !reduit()) {
         const v = el.querySelector('.pl-vue');
@@ -942,8 +1058,73 @@ details.pl-alerte p { margin: 8px 0 0; }
       signaler();
     }
 
+    // ———— masquer des personnes, les afficher de nouveau (l'administration)
+    const sortie = () => [...S.masques].map(x => (/^\d+$/.test(x) ? Number(x) : x));
+    function changerMasques(ids) {
+      S.masques = new Set(ids.map(String));
+      if (!S.masques.size) S.masqueesOuvertes = false;
+      if (typeof O.surMasques === 'function') try { O.surMasques(sortie()); } catch (e) { console.error(e); }
+    }
+    const personneDe = id => ((S.D && S.D.personnes) || []).find(x => memeId(x.id, id)) || null;
+    // le focus, quand ce qui l'avait disparaît : le premier de ces éléments qui se voit
+    function focusSur(...choix) {
+      for (const c of choix) {
+        const x = typeof c === 'string' ? el.querySelector(c) : c;
+        if (x && !x.closest('[hidden]')) { x.focus({ preventScroll: true }); return; }
+      }
+    }
+    // masquée, la personne quitte les vues ; le focus va au bouton qui la fait revenir (« Masquées », ou « Filtres » au téléphone)
+    function masquer(id) {
+      if (!peutMasquer() || id == null) return;
+      const k = String(id), p = personneDe(k);
+      changerMasques([...S.masques, k]);
+      if (S.selection && memeId(S.selection.personne, k)) S.selection = null;
+      if (memeId(S.filtre.personne, k)) { S.filtre = { ...S.filtre, personne: null }; signaler(); }
+      dessiner();
+      focusSur('[data-pl="masquees"]', '[data-pl="filtres"]', '[role="gridcell"][tabindex="0"]');
+      dire(`Personne masquée du planning : ${nomDe(p)}.`);
+    }
+    function afficher(id) {
+      const k = String(id), p = personneDe(k);
+      const rang = [...el.querySelectorAll('[data-pl-afficher]')].findIndex(b => b.dataset.plAfficher === k);
+      changerMasques([...S.masques].filter(x => x !== k));
+      dessiner();
+      const restes = [...el.querySelectorAll('[data-pl-afficher]')];
+      focusSur(restes[Math.min(Math.max(rang, 0), restes.length - 1)], '[data-pl-filtre="personne"]', '[data-pl="filtres"]', '[role="gridcell"][tabindex="0"]');
+      dire(`Personne affichée de nouveau : ${nomDe(p)}.`);
+    }
+    function toutAfficher() {
+      changerMasques([]);
+      dessiner();
+      focusSur('[data-pl-filtre="personne"]', '[data-pl="filtres"]', '[role="gridcell"][tabindex="0"]');
+      dire('Toutes les personnes masquées sont de nouveau affichées.');
+    }
+    // la liste des personnes masquées s'ouvre sous son bouton ; ouverte, le focus va à sa première personne, et revient au
+    // bouton par Échap
+    function ouvrirMasquees(ouvert, focus = false) {
+      S.masqueesOuvertes = !!ouvert;
+      const b = el.querySelector('[data-pl="masquees"]'), l = el.querySelector('.pl-masquees-liste');
+      if (b) b.setAttribute('aria-expanded', String(S.masqueesOuvertes));
+      if (l) l.hidden = !S.masqueesOuvertes;
+      if (focus) focusSur(S.masqueesOuvertes ? '.pl-masquees-liste [data-pl-afficher]' : b);
+    }
+    // elle se ferme d'un clic, ou d'un focus, ailleurs
+    const dehors = e => {
+      const t = e.target;
+      if (S.masqueesOuvertes && !(t && t.nodeType === 1 && el.contains(t) && t.closest('.pl-masquees'))) ouvrirMasquees(false);
+    };
+    document.addEventListener('pointerdown', dehors, true);
+    document.addEventListener('focusin', dehors);
+
     // ———— les gestes
     el.addEventListener('click', e => {
+      // au toucher, le nom d'une personne montre son bouton « Masquer » (à la souris, le survol suffit)
+      const nom = e.target.closest('.pl-e-nom');
+      if (nom && !e.target.closest('button') && nom.querySelector('.pl-masquer')) {
+        el.querySelectorAll('.pl-e-nom.montre').forEach(x => { if (x !== nom) x.classList.remove('montre'); });
+        nom.classList.toggle('montre');
+        return;
+      }
       const b = e.target.closest('button, [role="gridcell"]');
       if (!b || !el.contains(b)) return;
       const quoi = b.dataset.pl;
@@ -952,24 +1133,36 @@ details.pl-alerte p { margin: 8px 0 0; }
       if (quoi === 'ici') { S.jour = auj(); S.selection = null; return charger(0); }
       if (quoi === 'reessayer') return charger(0);
       if (quoi === 'fermer') { const p = S.selection; S.selection = null; dessiner({ garderFocus: p }); return; }
-      if (quoi === 'filtres') { S.filtresOuverts = !S.filtresOuverts; b.setAttribute('aria-expanded', String(S.filtresOuverts)); const f = el.querySelector('.pl-filtres'); if (f) f.hidden = !S.filtresOuverts; return; }
+      if (quoi === 'filtres') { S.filtresOuverts = !S.filtresOuverts; b.setAttribute('aria-expanded', String(S.filtresOuverts)); const f = el.querySelector('.pl-filtres'); if (f) f.hidden = !S.filtresOuverts; if (!S.filtresOuverts) ouvrirMasquees(false); return; }
+      if (quoi === 'masquees') return ouvrirMasquees(!S.masqueesOuvertes, true);
+      if (quoi === 'tout-afficher') return toutAfficher();
+      if (quoi === 'masquer') return masquer(S.selection && S.selection.personne);
+      if (b.dataset.plAfficher != null) return afficher(b.dataset.plAfficher);
+      if (b.dataset.plMasquer != null) return masquer(b.dataset.plMasquer);
       if (b.dataset.plVue) { if (b.dataset.plVue !== S.vue) { S.vue = b.dataset.plVue; if (S.selection) S.jour = S.selection.jour; charger(0); } return; }
       if (b.dataset.plAction != null) { const a = (S.actionsCourantes || [])[+b.dataset.plAction]; if (a && typeof a.faire === 'function' && I && S.selection) a.faire(selection(I, S.selection.jour, S.selection.personne)); return; }
       if (b.dataset.plJour) choisir(b.dataset.plJour, b.dataset.plP || null, { activer: true });
     });
     el.addEventListener('change', e => {
       const s = e.target;
-      if (s.dataset.plFiltre) { S.filtre = { ...S.filtre, [s.dataset.plFiltre]: s.value === '' ? null : s.value }; dessiner(); signaler(); }
+      if (s.dataset.plFiltre === 'personne') {
+        // la liste des personnes : un groupe, toute l'équipe ou une personne (l'un efface l'autre)
+        const g = s.value.startsWith(VALEUR_GROUPE) ? s.value.slice(VALEUR_GROUPE.length) : null;
+        S.filtre = { ...S.filtre, personne: g == null && s.value !== '' ? s.value : null, groupe: g };
+        dessiner(); signaler();
+      } else if (s.dataset.plFiltre) { S.filtre = { ...S.filtre, [s.dataset.plFiltre]: s.value === '' ? null : s.value }; dessiner(); signaler(); }
       if (s.dataset.plSemaines != null) { S.semaines = +s.value; charger(0); }
     });
     el.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && S.masqueesOuvertes && e.target.closest('.pl-masquees')) { e.preventDefault(); ouvrirMasquees(false, true); return; }
       if (e.key === 'Escape' && el.querySelector('.pl-detail.feuille')) { const p = S.selection; S.selection = null; dessiner({ garderFocus: p }); return; }
       const c = e.target.closest('[role="gridcell"]');
       if (!c || !el.contains(c)) return;
       const j = c.dataset.plJour, p = c.dataset.plP || null;
       let cible = null, sens = 0;
       const pas = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: S.vue === 'mois' ? -7 : 0, ArrowDown: S.vue === 'mois' ? 7 : 0 }[e.key];
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choisir(j, p, { activer: true, focus: true }); const premiere = el.querySelector('.pl-actions button'); if (premiere) premiere.focus(); return; }
+      // Entrée : le premier bouton de la page reçoit le focus (jamais « Masquer du planning », qu'une seconde Entrée déclencherait)
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choisir(j, p, { activer: true, focus: true }); const premiere = el.querySelector('.pl-actions button[data-pl-action]'); if (premiere) premiere.focus(); return; }
       if (e.key === 'PageUp' || e.key === 'PageDown') { e.preventDefault(); deplacer(e.key === 'PageUp' ? -1 : 1, { jour: j, personne: p }); return; }
       if (S.vue === 'equipe' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
         const ids = I ? I.personnes.map(x => String(x.id)) : [];
@@ -989,8 +1182,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       sens = 0;
       const x = el.querySelector(`[role="gridcell"][data-pl-jour="${cible.jour}"]${cible.personne != null ? `[data-pl-p="${cible.personne}"]` : ''}`);
       if (x) {
-        el.querySelectorAll('[role="gridcell"][tabindex="0"]').forEach(y => { y.tabIndex = -1; });
-        x.tabIndex = 0;
+        atteignable(x);
         x.focus();
         if (S.vue === 'mois') {      // le détail suit le jour au clavier (sans l'annoncer : la case est déjà lue)
           S.selection = { jour: cible.jour, personne: null };
@@ -1022,10 +1214,17 @@ details.pl-alerte p { margin: 8px 0 0; }
       precedent() { deplacer(-1); }, suivant() { deplacer(1); },
       ici() { S.jour = auj(); return charger(0); },
       semaines(n) { if ([4, 6, 8].includes(+n)) { S.semaines = +n; return charger(0); } return Promise.resolve(); },
-      filtrer(f = {}) { S.filtre = { spectacle: f.spectacle ?? null, personne: f.personne ?? null }; dessiner(); signaler(); },
+      filtrer(f = {}) { S.filtre = { spectacle: f.spectacle ?? null, personne: f.personne ?? null, groupe: groupeDe(f.groupe) ? String(f.groupe) : null }; dessiner(); signaler(); },
+      masques(ids) { S.masques = new Set((Array.isArray(ids) ? ids : []).map(String)); if (!S.masques.size) S.masqueesOuvertes = false; dessiner(); },
       choisir(j, p = null) { if (estJour(j)) choisir(j, p); },
       etat,
-      detruire() { S.detruit = true; if (mq && mq.removeEventListener) mq.removeEventListener('change', surMq); if (mqSombre && mqSombre.removeEventListener) mqSombre.removeEventListener('change', surMq); racine.innerHTML = ''; },
+      detruire() {
+        S.detruit = true; clearTimeout(minuteur);
+        if (mq && mq.removeEventListener) mq.removeEventListener('change', surMq);
+        if (mqSombre && mqSombre.removeEventListener) mqSombre.removeEventListener('change', surMq);
+        document.removeEventListener('pointerdown', dehors, true); document.removeEventListener('focusin', dehors);
+        racine.innerHTML = '';
+      },
     };
   }
 
