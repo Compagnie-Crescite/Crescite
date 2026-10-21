@@ -35,6 +35,11 @@
    FEUILLE.etapes (le planning d'une date en lignes simples, pour l'exemple de l'onglet « Déroulé type »).
    FEUILLE.manques(blocs) : ce que la feuille n'a pas encore (les amorces qui posent une question), pour la liste « À
    compléter » de l'administration ; FEUILLE.remplirAmorce(bloc, k, texte) en remplit une, comme un clic sur l'amorce.
+   L'hébergement : FEUILLE.hebergements(sources) → les feuilles d'où le reprendre (celles des autres dates au même lieu
+   qui en ont un, à défaut celles de la même commune ; la dernière écrite d'abord, sources.anterieures[].ecrit_le) ;
+   composer prend la première. FEUILLE.reprendreHebergement(blocs, x) remplace la rubrique par celle d'une autre feuille
+   (ou l'amorce, x = null) ; FEUILLE.origineHebergement(blocs, xs) dit d'où vient celle de la page (un indice dans xs,
+   'aucune', 'absente' ou 'ecrit' : retouchée à la main), d'après ce qu'elle dit : rien de plus n'est gardé.
    La mémoire des feuilles (l'administration, equipe.js) relit ce qu'on a écrit dans les lignes composées depuis la base,
    par leur clé : « cie:<id> » (le téléphone d'une personne de l'équipe de la date ; « cie:<prénom-nom> » pour
    l'administration et la régie qui n'en sont pas), « contact:organisateur », « contact:date », « contact:lieu » (le

@@ -298,7 +298,12 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
    en ligne, qui écoute la base en temps réel. Seuls les comptes de crescite_admins peuvent enregistrer.
    Une date montre son lieu tel que sa fiche le connaît (adresse, itinéraire, contact, jauge) et mène à elle ; un lieu,
    ses dates. Sous les champs des fiches, les numéros et les adresses électroniques s'ouvrent d'un geste (sousChamp :
-   « Appeler le … », « Écrire à … »), et une valeur apprise d'une feuille de route dit d'où elle vient (equipe.js). */
+   « Appeler le … », « Écrire à … »), et une valeur apprise d'une feuille de route dit d'où elle vient (equipe.js).
+   Partout : la recherche rapide (Ctrl K, ⌘K, la loupe de l'en-tête : dates, personnes, lieux, spectacles, feuilles,
+   rubriques, dans ce qui est déjà chargé). En tête de Représentations : « À compléter avant la tournée » (téléphones de
+   l'équipe, adresses et contacts des lieux, feuilles de route, pour les prochaines dates confirmées). Un lien peut viser
+   le champ à remplir dans ce qu'il ouvre (data-viser). Le pied d'une date replie ses actions dans « Plus » quand elles
+   ne tiennent pas sur une rangée (ajusterPied). Le Journal se filtre (rubrique ou table, auteur, période) et se cherche. */
 const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
 const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
 const SITE = '../synthese.html';
@@ -423,6 +428,8 @@ sb.auth.onAuthStateChange((ev, s) => {
 let versAdmin = false;     // l'écran de connexion a été montré : l'arrivée dans l'administration remonte une tentacule
 function ecranConnexion(message = '') {
   versAdmin = true;
+  E.pret = false;     // déconnecté : ni les rubriques ni la recherche ne montrent ce qui reste en mémoire
+  $('#recherche')?.close();
   $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-connexion">
     <h1>Crescite · administration</h1><p>Les spectacles, les dates, les ateliers et les textes du site de la compagnie.</p>
     ${message ? `<p role="alert" style="color:var(--alerte)">${esc(message)}</p>` : ''}
@@ -527,6 +534,10 @@ async function journalPlusAncien() {
 // le temps réel : chaque enregistrement, d'ici ou d'ailleurs, met l'écran à jour
 let rendrePlusTard = null;
 function ecouter() {
+  // une fois par page : après une déconnexion puis une reconnexion, les canaux sont toujours là (le client leur passe le
+  // nouveau jeton) ; les réabonner lèverait une erreur et l'administration ne s'afficherait pas
+  if (ecouter.fait) return;
+  ecouter.fait = true;
   const ch = sb.channel('crescite-admin');
   Object.keys(TABLES).forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
   ch.subscribe(st => { E.direct = st === 'SUBSCRIBED'; const d = $('.direct'); if (d) { d.classList.toggle('on', E.direct); d.title = E.direct ? 'Connecté en temps réel' : 'Temps réel interrompu'; } });

@@ -7,10 +7,14 @@
    - dans chaque date : son équipe (la distribution « en tournée », moins qui ne part pas, plus remplaçants et renforts),
      avec le téléphone de chacun (« téléphone ? » mène à sa fiche) ;
    - la rubrique Feuilles de route : composer depuis la base, compléter bloc par bloc, publier pour l'équipe, PDF ;
-     « À compléter » : ce que la feuille demande encore (le gris), en une liste qu'on remplit sans viser la page ; la liste
-     des feuilles dit combien il en reste. La mémoire des feuilles : ce qu'on écrit dans une feuille à la place d'une
-     information de la base (ou là où elle manque) va dans la bonne fiche à l'enregistrement, avec « Annuler » ; MEMOIRE
-     relie la clé de chaque ligne composée à sa fiche et à son champ ; la fiche dit ensuite d'où vient la valeur ;
+     « À compléter » : ce que la feuille demande encore (le gris), en une liste qu'on remplit sans viser la page ;
+     « n à compléter » (aCompleter, resteFeuille) se lit dans la liste des feuilles, sur le bouton « Feuille de route »
+     d'une date, dans les prochaines dates d'une personne et les dates d'un lieu, tenu à jour par le temps réel
+     (majACompleter). L'hébergement se reprend d'une autre feuille du lieu (ou de la commune) : la dernière écrite par
+     défaut, une autre d'un geste (« Hébergement : … », au-dessus de la page). La mémoire des feuilles : ce qu'on écrit
+     dans une feuille à la place d'une information de la base (ou là où elle manque) va dans la bonne fiche à
+     l'enregistrement, avec « Annuler » ; MEMOIRE relie la clé de chaque ligne composée à sa fiche et à son champ ; la
+     fiche dit ensuite d'où vient la valeur ;
    - la rubrique Espace pro : les invitations des salles (pro/), leur lien, leur journal ; et dans chaque spectacle, les
      documents réservés aux salles (captations, photos, fichiers non publics).
    Tant que la base n'a pas l'équipe (supabase/migrations/20261021_crescite_equipe.sql), ces écrans le disent et le
