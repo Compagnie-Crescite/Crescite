@@ -127,7 +127,10 @@ téléchargement réel du dossier PDF, la fiche technique sur demande) et qu'un 
 d'onglet établissement. Avec `EDITION=1`, il vérifie aussi le lien « Modifier le site » et les annotations de l'édition
 (`data-edit`, `data-date-id`, `data-agenda`).
 `maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
-dessous, et pour chacune son principe, ses forces et ses limites (« À propos »).
+dessous. « À propos » est le mode d'emploi de la maquette affichée, en six parties courtes avec leurs schémas :
+naviguer, trouver une date, modifier le site, l'administration et ses rubriques, les espaces réservés autour de la
+base, la planche elle-même ; les nouveautés (réserver, vidéos, jour et nuit, troupe) n'y paraissent que pour les
+maquettes qui les ont en ligne (`AVEC`, dans `planche.html`).
 
 **En ligne.** `python3 maquettes/build.py --pages` écrit le site GitHub Pages dans `docs/` : la planche en page
 d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.html`…). Ces pages embarquent le logo
