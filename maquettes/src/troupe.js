@@ -33,7 +33,7 @@
      est-source ; racine : est-allume) et les relie : des bras partent de la place survolée vers chacune des autres
      (calque <svg class="troupe-liens"> ajouté dans racine), tracés en 380 ms, une lueur court le long de chacun
      (offset-path) ; un clic ou Entrée choisit la personne (aria-pressed="true" sur ses places ; elle reste allumée), un
-     second clic, Échap ou un clic ailleurs la relâche. allumerGroupe : les places de plusieurs personnes (l'équipe d'un
+     second clic, Échap ou un clic ailleurs la relâche (pas la bascule jour/nuit, [data-theme-bouton] : le choix reste). allumerGroupe : les places de plusieurs personnes (l'équipe d'un
      spectacle, TROUPE.equipe(slug) ; racine : est-groupe), sans liens ; choisirGroupe les garde allumées (eteindre y
      revient) jusqu'à choisirGroupe(null), Échap, un clic ailleurs ou le choix d'une personne. Au clavier (clavier: true) : un arrêt de tabulation par catégorie, les
      flèches passent d'une personne à l'autre dans la catégorie, Début et Fin. surAllumer(slug | null, { groupe }) et
@@ -391,11 +391,19 @@ const TROUPE = (() => {
       if (surChoix) surChoix(choisi, { groupe: groupeChoisi });
     }
     // la souris survole (un petit délai en quittant une place, pour passer à la voisine sans clignoter) ; le doigt, lui,
-    // choisit d'un geste (le clic) : un toucher n'allume ni n'éteint en passant, rien ne se fait deux fois
-    racine.addEventListener('pointerover', e => { if (e.pointerType === 'touch') return; const p = placeDe(e); if (p) allumer(p.getAttribute('data-troupe-personne'), p); }, { passive: true });
+    // choisit d'un geste (le clic) : un toucher n'allume ni n'éteint en passant, rien ne se fait deux fois. Seul un vrai
+    // mouvement de la souris allume : quand la page défile sous une souris immobile, personne ne s'allume en passant
+    let sx = null, sy = null, survolee = null;
+    racine.addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch' || (e.screenX === sx && e.screenY === sy)) return;
+      sx = e.screenX; sy = e.screenY;
+      const p = placeDe(e);
+      if (p && p !== survolee) { survolee = p; clearTimeout(attente); allumer(p.getAttribute('data-troupe-personne'), p); }
+    }, { passive: true });
     racine.addEventListener('pointerout', e => {
       if (e.pointerType === 'touch') return;
       const p = placeDe(e); if (!p || (e.relatedTarget && p.contains(e.relatedTarget))) return;
+      if (p === survolee) survolee = null;
       clearTimeout(attente); attente = setTimeout(() => { if (!racine.contains(document.activeElement) || !document.activeElement.matches(SEL)) eteindre(); }, 90);
     }, { passive: true });
     // le clavier : la place focalisée s'allume (un focus donné par la souris ou le doigt passe par le survol ou le clic)
@@ -433,8 +441,14 @@ const TROUPE = (() => {
       const q = ps[Math.max(0, Math.min(ps.length - 1, j))];
       if (q && q !== p) { actif(q); q.focus(); }
     });
-    // un clic ailleurs relâche la personne choisie (et le groupe épinglé)
-    const dehors = e => { if (!racine.isConnected) { document.removeEventListener('click', dehors, true); return; } if (racine.contains(e.target)) return; if (choisi) choisir(null); else if (groupeChoisi) choisirGroupe(null); };
+    // un clic ailleurs relâche la personne choisie (et le groupe épinglé), après l'image ; la bascule jour/nuit
+    // ([data-theme-bouton], THEME) n'est pas un geste sur la page : le choix reste allumé dans l'autre thème
+    const dehors = e => {
+      if (!racine.isConnected) { document.removeEventListener('click', dehors, true); return; }
+      const t = e.target;
+      if (!t || racine.contains(t) || (t.closest && t.closest('[data-theme-bouton]')) || (!choisi && !groupeChoisi)) return;
+      apresImage(() => { if (!racine.isConnected) return; if (choisi) choisir(null); else if (groupeChoisi) choisirGroupe(null); });
+    };
     document.addEventListener('click', dehors, true);
     // les liens suivent la mise en page
     let ro = null, raf = 0;

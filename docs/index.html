@@ -43,32 +43,48 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
 .scene.tel { padding: 16px 0; }
 .scene.tel #cadre { width: 390px; max-width: calc(100% - 24px); height: min(844px, calc(100% - 8px)); border-radius: 20px; box-shadow: 0 24px 70px rgba(0, 0, 0, .55); }
 
-/* le panneau À propos : la maquette affichée, puis la démarche et la recommandation */
+/* le panneau À propos : le mode d'emploi de la maquette affichée, avec des schémas */
 .infos { position: absolute; top: 0; right: 0; bottom: 0; width: min(600px, 100%); overflow-y: auto; background: var(--fond); box-shadow: -24px 0 60px rgba(0, 0, 0, .35); padding: 26px clamp(18px, 3vw, 34px) 40px; z-index: 2; }
 .infos h2 { margin: 0 0 6px; font: italic 500 1.9rem/1.1 var(--serif); }
-.infos h3 { margin: 28px 0 10px; font: italic 500 1.35rem/1.2 var(--serif); }
+.infos h3 { display: flex; align-items: center; gap: 10px; margin: 32px 0 12px; font: italic 500 1.35rem/1.2 var(--serif); }
+.infos h3 .no { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--encre); color: var(--fond); font: normal 700 .8rem/1 var(--sans); }
 .infos .niv { margin: 0; font-weight: 700; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
 .infos .fermer { position: sticky; top: 0; float: right; margin: -10px -10px 0 0; border: 1px solid var(--filet); background: #fff; border-radius: 999px; padding: 6px 12px; font: 600 .85rem var(--sans); cursor: pointer; }
 .infos p, .infos li { max-width: 62ch; }
 .infos a { color: #a8306f; }
-.bilan { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 14px; }
-.bilan h4 { margin: 0 0 6px; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
-.bilan .plus h4 { color: #1f6b4f; } .bilan .moins h4 { color: #9a3412; }
-.bilan ul { margin: 0; padding-left: 1.1em; }
-.demarche { margin-top: 30px; padding-top: 6px; border-top: 1px solid var(--filet); }
-.demarche ol, .demarche ul { padding-left: 1.2em; }
-.demarche li { margin-bottom: 6px; }
-.echelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
-.echelle th, .echelle td { text-align: left; padding: 7px 8px 7px 0; border-bottom: 1px solid var(--filet); vertical-align: baseline; }
-.echelle th { font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; color: var(--gris); }
-.echelle button { border: 0; background: none; padding: 0; font: italic 500 1rem var(--serif); color: var(--encre); cursor: pointer; text-align: left; }
-.echelle button:hover { color: #a8306f; }
-.pts { white-space: nowrap; }
-.pts i { display: inline-block; width: 9px; height: 9px; margin-right: 3px; border-radius: 50%; border: 1.5px solid var(--encre); }
-.pts i.p { background: var(--encre); }
+.infos code { font-size: .88em; padding: 1px 5px; border-radius: 5px; background: #fff; border: 1px solid var(--filet); }
+.infos .ici { margin: 14px 0 0; padding: 10px 14px; border-radius: 10px; background: #fff; border: 1px solid var(--filet); }
+.points { margin: 12px 0 0; padding-left: 1.1em; }
+.points li { margin-bottom: 5px; }
+.infos .note { margin: 8px 0 0; font-size: .9rem; color: var(--gris); }
+.liens { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 10px 0 0; font-weight: 600; font-size: .92rem; }
+/* les schémas : des boîtes et des traits, qui se rangent en colonne sur un téléphone */
+.schema { margin: 0; padding: 16px; border-radius: 14px; background: #fff; border: 1px solid var(--filet); }
+.schema small { display: block; margin-top: 2px; font-size: .8rem; line-height: 1.35; color: var(--gris); font-weight: 400; }
+.trait { display: block; width: 2px; height: 18px; margin: 6px auto; background: var(--filet); }
+.plan .ouverture { margin: 0 auto; max-width: 300px; padding: 10px 14px; border-radius: 999px; text-align: center; font-weight: 700; background: var(--nuit); color: var(--clair); }
+.plan .ouverture small { color: var(--gris-clair); }
+.entrees { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.entrees li { padding: 10px 12px; border-radius: 10px; background: var(--fond); border-top: 4px solid var(--c); font-weight: 700; line-height: 1.25; }
+.entrees .voir { --c: #bc3e80; } .entrees .prog { --c: #b08a1e; } .entrees .etab { --c: #1f7a70; }
+.second { list-style: none; margin: 12px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--filet); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.second li { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--filet); font-size: .85rem; font-weight: 600; }
+.flux { counter-reset: etape; list-style: none; }
+.flux li { position: relative; counter-increment: etape; padding: 2px 0 16px 40px; }
+.flux li:last-child { padding-bottom: 0; }
+.flux li::before { content: counter(etape); position: absolute; left: 0; top: 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--magenta); color: #fff; font: 700 .8rem/1 var(--sans); }
+.flux li:not(:last-child)::after { content: ""; position: absolute; left: 12px; top: 30px; bottom: 2px; width: 2px; background: color-mix(in srgb, var(--magenta) 35%, transparent); }
+.reseau { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+.reseau .esp { padding: 10px 12px; border-radius: 10px; background: var(--fond); border: 1px solid var(--filet); font-weight: 700; line-height: 1.25; }
+.reseau .lien-base { grid-column: span 1; display: block; width: 2px; height: 16px; margin: 4px auto; background: var(--magenta); }
+.reseau .coeur { grid-column: 1 / -1; padding: 12px 14px; border-radius: 12px; text-align: center; background: var(--magenta); color: #fff; font-weight: 700; }
+.reseau .coeur small { color: #fbe3ef; }
+.tuiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 8px; }
+.tuiles li { padding: 10px 12px; border-radius: 10px; background: #fff; border: 1px solid var(--filet); font-size: .85rem; line-height: 1.35; color: var(--gris); }
+.tuiles b { display: block; margin-bottom: 2px; font-size: .93rem; color: var(--encre); }
 
 @media (max-width: 900px) { .barre .titre { display: none; } }
-@media (max-width: 700px) { .taille { display: none; } .bilan { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) { .taille { display: none; } }
 </style>
 </head>
 <body>
@@ -92,51 +108,19 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   /* les dix, de la plus sobre à la plus évoluée, puis la synthèse */
   const M = [
-    { n: 'm01', court: 'Programme', nom: 'Le programme de salle', niveau: 'La plus sobre', voit: 'Les trois entrées en tête, chacune avec sa photo, puis la carte gravée', mvt: 0, pieuvre: 1, effort: 1,
-      principe: 'Le site comme un programme de théâtre imprimé : du papier, de l’encre et des filets, une seule famille de caractères. On entre par la couverture (le logo dans un double filet). L’accueil s’ouvre sur les trois entrées, en italique et chacune avec sa photo, puis le bandeau « EN TOURNÉE » comme une affiche et la carte des tournées gravée à l’encre : chaque commune porte un numéro de note qui renvoie à ses dates. L’agenda se lit comme les pages d’un programme : les prochaines dates mois par mois, puis chaque saison passée sous son titre, à déplier.',
-      plus: ['Lecture immédiate, chargement instantané', 'La carte gravée : sobre et exacte, chaque commune renvoie à sa date', 'La plus simple à tenir à jour'],
-      moins: ['Peu d’images hors des trois entrées : l’émotion des spectacles attend leurs pages', 'Peut sembler austère au jeune public'] },
-    { n: 'm02', court: 'Maison', nom: 'La maison', niveau: 'Sobre', voit: 'Les trois entrées sous le logo, puis le spectacle à l’affiche', mvt: 1, pieuvre: 1, effort: 1,
-      principe: 'La clarté d’un théâtre public. Sous le logo, les trois entrées, chacune dans sa couleur ; dessous, le spectacle à l’affiche (le bandeau d’origine, « EN TOURNÉE » et « découvrir ») et les autres spectacles en onglets, puis une large bande de carte aux bras magenta. Chaque entrée a sa page, avec les mêmes repères d’une page à l’autre ; chaque spectacle a la sienne, dans son univers, avec ses trois onglets d’entrée.',
-      plus: ['Des conventions que tout le monde connaît : on trouve sans chercher', 'Les photos portent l’émotion', 'Les trois entrées visibles dès le premier écran, sur toutes les pages'],
-      moins: ['Ressemble à beaucoup de sites culturels', 'L’identité de la pieuvre passe au second plan'] },
-    { n: 'm03', court: 'Saison', nom: 'La saison', niveau: 'L’agenda d’abord', voit: 'Les trois entrées, puis la saison et sa carte', mvt: 1, pieuvre: 2, effort: 2,
-      principe: 'Pour une compagnie qui tourne, la première question est « quand et où ? ». Sous les trois entrées, l’accueil donne la saison : les dates groupées par mois, un filtre par spectacle, la recherche, et une grande carte où chaque bras prend la couleur de son spectacle. Survoler une date allume son bras ; choisir une commune filtre la liste. Les saisons passées suivent, de la plus récente à la plus ancienne, chacune fermée, avec sa carte en aperçu.',
-      plus: ['Répond tout de suite à la question des spectateurs et des programmateurs', 'La carte et la liste ne font qu’un : la tournée se lit d’un coup d’œil', 'Toute l’histoire des tournées, saison par saison, à un clic'],
-      moins: ['Moins de place pour l’univers des spectacles sur l’accueil', 'Exige un agenda toujours à jour : la base le rend simple'] },
-    { n: 'm04', court: 'Trois portes', nom: 'Trois portes', niveau: 'Le public d’abord', voit: 'Trois grandes portes en arche, une par entrée', mvt: 2, pieuvre: 2, effort: 2,
-      principe: 'Trois grandes portes, chacune dans sa couleur et sur sa photo, dont le battant s’entrouvre au survol : ce sont les trois entrées. Les mêmes portes, en petit, restent dans l’en-tête et le pied de page, et chaque entrée s’ouvre sur la sienne. Dessous, la saison et sa carte aux bras lumineux sur le prune, puis les spectacles en tournée, en arches.',
-      plus: ['Chaque public trouve son chemin en un clic', 'Une identité nocturne et chaleureuse, très lisible au téléphone', 'La carte lumineuse donne envie de suivre la tournée'],
-      moins: ['L’accueil montre peu les spectacles : il faut descendre', 'Demande à chacun de se ranger dans une case'] },
-    { n: 'm05', court: 'Magenta', nom: 'Magenta', niveau: 'La marque en grand', voit: 'Le bandeau « EN TOURNÉE », puis trois portes teintées de leur couleur', mvt: 2, pieuvre: 2, effort: 2,
-      principe: 'Le logo 2.0 donne toute l’identité : le magenta en aplat, la pieuvre blanche, une famille de caractères large en capitales, les photos dans leurs vraies couleurs, chaque spectacle dans la sienne. Après l’ouverture, l’accueil commence par le bandeau « EN TOURNÉE » ; juste dessous, les trois entrées, chacune sur sa photo voilée de sa couleur, puis les spectacles et la saison, sa carte en affiche aux bras blancs sur le magenta. Sur la page d’un spectacle, son univers prend toute la page, en-tête et pied compris : la marque n’y reste qu’en cachet.',
-      plus: ['Identité reconnaissable au premier coup d’œil', 'Une affiche moderne et assumée', 'Se décline facilement : réseaux, affiches, dossiers'],
-      moins: ['Le magenta partout peut écraser les couleurs des spectacles : d’où le cachet, sur leurs pages', 'Les capitales larges supportent mal les titres longs'] },
-    { n: 'm06', court: 'Tournée', nom: 'Les bras de la tournée', niveau: 'La tentacule comme thème', voit: 'La carte : les tournées partent de Rouen comme des tentacules', mvt: 2, pieuvre: 3, effort: 2,
-      principe: 'La tentacule devient un thème : quand le logo s’ouvre, ses tentacules deviennent les bras de la tournée, qui poussent de Rouen vers chaque commune de la saison, sur le réseau gris des tournées passées. À côté, les trois entrées, chacune signée d’une petite tentacule de sa couleur. Une frise des saisons redessine chaque saison sur la carte ; l’agenda reprend l’idée, saison après saison ; chaque page spectacle a la sienne, sous « Actuellement en tournée ». Pour le reste, un site clair et classique.',
-      plus: ['Le thème dit quelque chose de vrai : la compagnie part de Rouen et va chercher son public, jusque dans les classes', 'Une image forte faite de vraies données : toutes les dates publiées depuis 2016', 'La carte sert aussi les programmateurs et les établissements'],
-      moins: ['Exige une base de dates tenue à jour, avec des lieux bien localisés', 'Moins de place pour les photos sur le premier écran'] },
-    { n: 'm07', court: 'Noir', nom: 'Le noir et la lumière', niveau: 'Théâtral', voit: 'Une photo de spectacle en plein écran, puis trois portes qui s’éclairent', mvt: 3, pieuvre: 1, effort: 2,
-      principe: 'La scène dans le noir : le logo s’ouvre sur une photo de spectacle en plein écran ; les titres en bas de l’écran, chacun dans la police de son spectacle, changent la photo en fondu. Viennent trois grandes portes, une par entrée, qui s’éclairent de leur couleur. Chaque spectacle éclaire le noir de sa propre lumière : sa page passe dans ses couleurs, et son motif est projeté sur la photo comme un gobo de projecteur. La carte est faite de lumière : des faisceaux partent de Rouen et les communes s’allument comme des projecteurs.',
-      plus: ['Spectaculaire, met les photos en valeur', 'Chaque spectacle a vraiment sa lumière', 'La carte lumineuse prolonge la scène'],
-      moins: ['Dépend de photos en haute définition : celles du site actuel sont petites, et celle de Ci-gisait Cyrano, noire au centre, assombrit son en-tête au téléphone', 'La photo change seule toutes les 7 secondes (avec un bouton pause) : à couper pour un site plus calme', 'Le Bodoni italique rend certains signes très fins, comme les traits d’union'] },
-    { n: 'm08', court: 'Sommaire', nom: 'Le sommaire', niveau: 'Éditorial', voit: 'Le sommaire des trois entrées, et l’aperçu de celle qu’on survole', mvt: 2, pieuvre: 1, effort: 2,
-      principe: 'Un sommaire et un aperçu : les trois entrées en très grand à gauche, comme une table des matières ; à droite, l’aperçu de l’entrée survolée, tiré des données (les prochaines dates et leur carte, la carte de tous les lieux et les huit titres, les types d’action culturelle). Viennent le sommaire des spectacles, chacun dans sa couleur et sa police, puis la grande carte tracée en filets éditoriaux, les noms des communes composés en marge comme dans un magazine. Chaque page de spectacle prend son univers entier, avec un petit sommaire qui suit la lecture.',
-      plus: ['Élégant comme un magazine, limpide comme une table des matières', 'Tout le répertoire visible d’un coup', 'La même grille partout : on ne se perd jamais'],
-      moins: ['Le survol n’existe pas au téléphone : il faut une autre lecture', 'L’aperçu change dès que la souris passe'] },
-    { n: 'm09', court: 'Chapitres', nom: 'Un spectacle par écran', niveau: 'Chapitres', voit: 'Trois grands panneaux photo, un par entrée, puis un écran par spectacle', mvt: 3, pieuvre: 2, effort: 3,
-      principe: 'L’accueil se lit comme une suite de chapitres. Après l’ouverture sur le logo, le premier écran est le choix : trois grands panneaux photo, un par entrée, dans sa couleur. Viennent ensuite un écran par spectacle, avec son fond, sa couleur et sa photo, et un sommaire en traits fins qui indique où l’on est ; le dernier chapitre raconte la saison en carte : au fil du défilement, les mois passent et les bras poussent de Rouen vers chaque commune.',
-      plus: ['Immersif : chaque spectacle a son moment', 'La saison racontée au défilement : la tournée se déroule sous les yeux', 'Les trois entrées dès le premier écran, en grand'],
-      moins: ['Neuf écrans à parcourir pour voir tout le répertoire (l’agenda reste à un clic, dans le menu)', 'Le défilement aimanté peut gêner certains visiteurs'] },
-    { n: 'm10', court: 'Pieuvre', nom: 'La pieuvre vivante, rangée', niveau: 'La plus évoluée', voit: 'La pieuvre : un bras se tend vers l’entrée ou le titre survolé', mvt: 3, pieuvre: 3, effort: 3,
-      principe: 'Les trois entrées sont posées sur la scène, en grand, sous la pieuvre, et les titres des spectacles de part et d’autre. C’est le bras le plus proche qui se tend vers l’entrée ou le titre survolé, puis l’attire ; quand on entre dans un spectacle, l’encre de son univers recouvre l’écran. Aucun bras n’appartient à un spectacle : leur nombre peut changer sans toucher à la pieuvre. Sur la page d’un spectacle, son motif devient un emblème qui réagit au défilement (l’arène tourne, les aiguilles avancent), et un petit sommaire en forme de bras, une ventouse par chapitre, suit la lecture. La carte est faite de tentacules d’encre ponctuées de ventouses.',
-      plus: ['L’idée la plus singulière, et un geste qu’on retient', 'L’univers de chaque spectacle vit dans sa page', 'Le répertoire peut grandir sans redessiner la pieuvre'],
-      moins: ['La plus longue à réaliser et à entretenir', 'Le geste « tirer » doit se découvrir (un clic suffit aussi)'] },
+    { n: 'm01', court: 'Programme', nom: 'Le programme de salle', niveau: 'La plus sobre', voit: 'Les trois entrées en tête, chacune avec sa photo, puis la carte gravée' },
+    { n: 'm02', court: 'Maison', nom: 'La maison', niveau: 'Sobre', voit: 'Les trois entrées sous le logo, puis le spectacle à l’affiche' },
+    { n: 'm03', court: 'Saison', nom: 'La saison', niveau: 'L’agenda d’abord', voit: 'Les trois entrées, puis la saison et sa carte' },
+    { n: 'm04', court: 'Trois portes', nom: 'Trois portes', niveau: 'Le public d’abord', voit: 'Trois grandes portes en arche, une par entrée' },
+    { n: 'm05', court: 'Magenta', nom: 'Magenta', niveau: 'La marque en grand', voit: 'Le bandeau « EN TOURNÉE », puis trois portes teintées de leur couleur' },
+    { n: 'm06', court: 'Tournée', nom: 'Les bras de la tournée', niveau: 'La tentacule comme thème', voit: 'La carte : les tournées partent de Rouen comme des tentacules' },
+    { n: 'm07', court: 'Noir', nom: 'Le noir et la lumière', niveau: 'Théâtral', voit: 'Une photo de spectacle en plein écran, puis trois portes qui s’éclairent' },
+    { n: 'm08', court: 'Sommaire', nom: 'Le sommaire', niveau: 'Éditorial', voit: 'Le sommaire des trois entrées, et l’aperçu de celle qu’on survole' },
+    { n: 'm09', court: 'Chapitres', nom: 'Un spectacle par écran', niveau: 'Chapitres', voit: 'Trois grands panneaux photo, un par entrée, puis un écran par spectacle' },
+    { n: 'm10', court: 'Pieuvre', nom: 'La pieuvre vivante, rangée', niveau: 'La plus évoluée', voit: 'La pieuvre : un bras se tend vers l’entrée ou le titre survolé' },
   ];
   const SYN = { n: 'synthese', num: 'S', court: 'Synthèse', nom: 'La synthèse : la 06, enrichie', niveau: 'La proposition retenue, en site complet',
-    principe: 'Ce que je recommande, assemblé en un site complet : l’ouverture sur le logo, l’accueil et les cartes de la 06 ; les trois entrées, en bandes de couleur sur leur photo ; l’agenda de la 03 relié à la carte (choisir une commune filtre la liste, survoler une date allume son bras), avec toute l’histoire des tournées, saison par saison ; pour chaque spectacle, son univers et ses trois onglets d’entrée. Tout le reste est commun, et tout se modifie sur place.',
-    plus: ['Le thème tentaculaire porte une information utile à chaque public', 'Chaque spectacle garde son univers ; le reste du site ne change pas', 'Une base prête à développer : reliée à la base de données, avec une adresse pour chaque page, chaque spectacle et chaque saison'],
-    moins: ['Les univers des spectacles sont la partie la plus coûteuse : ils peuvent venir dans un second temps'] };
+    voit: 'La carte des tournées de la 06, qui part de Rouen, puis les trois entrées en bandes de couleur sur leur photo' };
   const TOUTES = [...M, SYN];
   const num = m => m.num || m.n.slice(1);
   // la planche en fichier embarque chaque maquette ; la planche en ligne (P.web) charge les pages publiées à côté d'elle
@@ -182,56 +166,85 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     document.querySelectorAll('[data-taille]').forEach(x => x.setAttribute('aria-pressed', x === b));
   }));
 
-  /* À propos : la maquette affichée, puis la démarche, l'échelle et la recommandation */
-  const pts = (v, nom) => `<span class="pts" aria-label="${nom} : ${v} sur 3">${[1, 2, 3].map(k => `<i class="${k <= v ? 'p' : ''}" aria-hidden="true"></i>`).join('')}</span>`;
+  /* À propos : le mode d'emploi de la maquette affichée, en quelques parties courtes, chacune avec son schéma */
+  // les nouveautés qu'une maquette a déjà en ligne (réserver une date, les vidéos dans la page, le jour et la nuit, la
+  // troupe) : le mode d'emploi n'en parle que là
+  const AVEC = { synthese: ['reserver', 'videos', 'jour', 'troupe'] };
+  const a = (m, f) => (AVEC[m.n] || []).includes(f);
+  const etapes = l => `<ol class="schema flux">${l.map(x => `<li>${x}</li>`).join('')}</ol>`;
   function remplirInfos() {
     const m = courante;
+    const parties = [];
+    parties.push(['Naviguer', `<div class="schema plan">
+        <p class="ouverture">Le logo en grand<small>un clic, la molette ou glisser vers le bas ouvre le site</small></p>
+        <span class="trait" aria-hidden="true"></span>
+        <ul class="entrees" aria-label="Les trois entrées">
+          <li class="voir">Voir un spectacle<small>les prochaines dates, la carte, tout l’agenda</small></li>
+          <li class="prog">Programmer<small>le contact, le catalogue, les dossiers, les fiches techniques</small></li>
+          <li class="etab">Établissement scolaire<small>les actions culturelles, les dossiers scolaires</small></li>
+        </ul>
+        <ul class="second" aria-label="Et aussi"><li>Spectacles</li><li>La compagnie</li><li>Contact</li><li>Espace pro</li></ul>
+      </div>
+      <ul class="points">
+        <li>Les trois entrées sont en tête de chaque page. Au téléphone, elles restent à portée de pouce ; le reste est dans le menu.</li>
+        <li>Chaque spectacle a sa page, dans son univers, avec un onglet par entrée.</li>
+        <li>Chaque page a son adresse : on peut la copier et l’envoyer.</li>
+      </ul>`]);
+    parties.push(['Trouver une date', `${a(m, 'reserver') ? etapes([
+        '<b>Choisir une date</b> sur la page du spectacle : un bouton par date, avec ses heures et sa ville.',
+        '<b>La carte de la date</b> s’ouvre dessous : le lieu, les séances.',
+        '<b>« Réserver »</b> ouvre la billetterie du théâtre, dans un nouvel onglet.']) : ''}
+      <ul class="points">
+        <li>« Voir un spectacle » : les prochaines dates tout public et leur carte, puis l’agenda depuis 2016, saison par saison. Une saison passée s’ouvre d’un clic.</li>
+        <li>Le filtre par spectacle et la recherche par ville portent sur tout l’agenda.</li>
+        ${a(m, 'reserver') ? '' : '<li>Les dates de la saison renvoient à la page du théâtre qui les accueille.</li>'}
+      </ul>`]);
+    if (a(m, 'videos') || a(m, 'jour') || a(m, 'troupe')) parties.push(['Regarder', `<ul class="points">
+        ${a(m, 'videos') ? '<li>Les vidéos se lisent dans la page : « Plein écran », et « Assombrir », qui éteint le reste de la page.</li>' : ''}
+        ${a(m, 'jour') ? '<li>Le bouton du soleil et de la lune, en haut, passe le site en jour ou en nuit ; le choix est gardé.</li>' : ''}
+        ${a(m, 'troupe') ? '<li>« La compagnie » présente toute la troupe, par métiers.</li>' : ''}
+      </ul>`]);
+    parties.push(['Modifier le site', `${etapes([
+        '<b>« Modifier le site »</b>, au pied de chaque page (ou <code>?edition</code> au bout de l’adresse).',
+        '<b>Se connecter</b> avec un compte administrateur.',
+        '<b>Cliquer</b> un texte pour l’écrire, une photo pour la remplacer, une date pour l’ouvrir. « Ajouter une date » est en tête de l’agenda.',
+        '<b>« Enregistrer »</b> : c’est en ligne, sur toutes les pages ouvertes, sans les recharger.'])}
+      <p class="note">Chaque modification est gardée dans le journal de l’administration : on peut revenir en arrière.</p>`]);
+    parties.push(['L’administration', `<p>Tout ce que le site montre s’y gère aussi, avec ce qu’il ne montre pas : les options, le suivi, l’équipe. À l’ordinateur comme au téléphone.</p>
+      <ul class="tuiles">
+        <li><b>Représentations</b>les dates, leurs séances, leurs heures, leurs billetteries</li>
+        <li><b>Planning</b>qui est libre ; proposer des dates à l’équipe</li>
+        <li><b>Feuilles de route</b>la feuille de chaque date, composée depuis la base</li>
+        <li><b>Spectacles</b>la fiche, l’univers, les photos, la distribution</li>
+        <li><b>Équipe</b>les personnes, leurs accès, les documents</li>
+        <li><b>Espace pro</b>les invitations des salles</li>
+        <li><b>Ateliers</b>le catalogue et les séances dans les établissements</li>
+        <li><b>Lieux</b>les salles, leurs adresses ; fusionner les doublons</li>
+        <li><b>Textes du site</b>les textes de la compagnie</li>
+        <li><b>Journal</b>chaque modification, pour revenir en arrière</li>
+      </ul>
+      <p class="liens"><a href="admin/" target="_blank" rel="noopener">Ouvrir l’administration ↗</a></p>`]);
+    parties.push(['Les espaces', `<p>« Espace pro », dans le menu et en bas de page, mène aux espaces réservés. Tous puisent dans la même base.</p>
+      <div class="schema reseau">
+        <p class="esp">Le site public<small>tout le monde, sans compte</small></p>
+        <p class="esp">L’administration<small>les comptes administrateur</small></p>
+        <span class="lien-base" aria-hidden="true"></span><span class="lien-base" aria-hidden="true"></span>
+        <p class="coeur">Une seule base de données<small>ce qui change quelque part change partout, sans recharger</small></p>
+        <span class="lien-base" aria-hidden="true"></span><span class="lien-base" aria-hidden="true"></span>
+        <p class="esp">L’espace de l’équipe<small>chacun avec son compte : sa saison, ses feuilles de route, le planning, ses spectacles. S’installe sur le téléphone.</small></p>
+        <p class="esp">L’espace des salles<small>un directeur de salle invité : les dossiers et les fiches techniques</small></p>
+      </div>
+      <p class="liens"><a href="equipe/" target="_blank" rel="noopener">L’espace de l’équipe ↗</a><a href="pro/" target="_blank" rel="noopener">L’espace des salles ↗</a></p>`]);
+    parties.push(['Cette planche', `<ul class="points">
+        <li>Les onglets : les dix propositions, de la plus sobre (01) à la plus évoluée (10), puis la synthèse.</li>
+        <li>Sur un grand écran, « Ordinateur » et « Téléphone » montrent la même maquette dans les deux écrans.</li>
+        ${P.web ? '<li>« Seule ↗ » ouvre la maquette dans un onglet à part.</li>' : ''}
+        <li>Les données sont les vraies : chaque maquette lit la base en direct.</li>
+      </ul>`]);
     infos.innerHTML = `<button class="fermer" type="button" id="fermer-infos">Fermer</button>
-      <p class="niv">${esc(num(m))} · ${esc(m.niveau)}</p><h2 id="infos-titre">${esc(m.nom)}</h2>
-      <p>${esc(m.principe)}</p>
-      <div class="bilan"><div class="plus"><h4>Ce qui marche</h4><ul>${m.plus.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-        <div class="moins"><h4>Ce qui coince</h4><ul>${m.moins.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div></div>
-      <div class="demarche">
-        <h3>La démarche</h3>
-        <p>Les dix partent du même contenu : le texte de crescite.fr, page par page (les spectacles, les onze saisons et leurs dates, la présentation de la compagnie, les actions culturelles, le contact), plus Cassandres, création 2027, le dossier scolaire de Bérénice et, pour chaque spectacle, son univers et son action culturelle, repris des pages d’adrienvada.fr et du dossier artistique de la compagnie. Rien n’y est inventé : seuls s’ajoutent la carte des tournées et quelques intitulés de rubrique. Elles ne diffèrent que par la manière de montrer ce contenu : de la page imprimée à la pieuvre qu’on tire.</p>
-        <p>Chacune s’ouvre sur le logo en grand : au clic, à la molette ou en glissant vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. Chacune se lit ensuite par trois entrées : « Je viens voir un spectacle » (les dates tout public et leur carte), « Je souhaite programmer » (le catalogue, les lieux de diffusion, la fiche technique), « Je représente un établissement scolaire » (le type d’action culturelle de chaque spectacle, le dossier scolaire de Bérénice). La page de chaque spectacle se lit dans l’une des trois, dans l’univers du spectacle. L’espace pro à mot de passe a disparu.</p>
-        <p>Toutes puisent dans la même base de données : les spectacles, leurs textes et leurs photos, les lieux, les dates et leurs représentations (plusieurs par jour, avec leurs horaires), les ateliers, les textes de la compagnie. Ce qui y est enregistré change les pages ouvertes, sans les recharger. L’agenda de chacune contient toutes les dates publiées depuis 2016 : les prochaines en haut, puis les saisons passées, de la plus récente à la plus ancienne, fermées, chacune avec sa carte. Et chacune se modifie sur place, dans son style : « Modifier le site », au pied de chaque page, ouvre l’édition après connexion ; on clique un paragraphe pour l’écrire, une photo pour la remplacer, une date pour la modifier, même passée, et « Ajouter une date » se place en tête de l’agenda. L’administration complète reste à part, sur une page qui ressemble à l’agenda.</p>
-        <div>
-      <div><h4 style="margin:18px 0 6px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase">Pourquoi le prototype semblait « bordélique »</h4><ol>
-        <li><b>Trop de choses se disputaient l’attention</b> sur le premier écran : huit étiquettes avec chacune trois lignes (titre, année et durée, prochaine date), une bulle d’aide, un bouton, des bras qui bougeaient seuls.</li>
-        <li><b>Un en-tête à deux étages</b> : les trois portes au-dessus, onglets, mode calme, lumière et menu en dessous. Le regard ne savait pas où commencer.</li>
-        <li><b>Huit typographies</b>, une par spectacle. Chaque page avait du caractère, mais l’ensemble ne ressemblait plus à un seul site.</li>
-      </ol></div>
-      <div><h4 style="margin:18px 0 6px;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase">Les règles communes aux dix</h4><ul>
-        <li>Un seul étage d’en-tête, où les trois entrées passent avant tout ; Spectacles, La compagnie et Contact viennent en second. Sur téléphone, les trois entrées restent à portée de pouce.</li>
-        <li>Le texte des sources, mot pour mot : le site, le dossier scolaire de Bérénice, adrienvada.fr, le dossier artistique. Seuls la carte des tournées et quelques intitulés de rubrique s’ajoutent.</li>
-        <li>Un univers par spectacle, signé par la compagnie : ses couleurs, sa police de titre, son motif, ses photos et ses citations. Bérénice prend la charte de son dossier scolaire. Le site garde deux familles de polices ; chaque spectacle n’y ajoute que sa police de titre.</li>
-        <li>Le type d’action culturelle de chaque spectacle, lisible sur sa page et dans « Je représente un établissement scolaire ».</li>
-        <li>Un seul message par écran, des alignements stricts, du texte courant d’au moins 16 px et des contrastes suffisants.</li>
-        <li>La pieuvre ne compte pas les spectacles : aucun bras n’est attribué à un titre.</li>
-        <li>Les prochaines dates à un clic au plus de l’accueil ; tout l’agenda depuis 2016, les saisons terminées fermées.</li>
-        <li>La partie publique, que la compagnie modifie sur place : ni espace troupe, ni espace pro à mot de passe.</li>
-      </ul></div>
-    </div>
-        <h3>L’échelle</h3>
-        <p>De 0 à 3 : la part de mouvement, la place du thème tentaculaire (au-delà du logo, présent partout), et l’effort de réalisation puis d’entretien.</p>
-        <table class="echelle"><thead><tr><th scope="col">N°</th><th scope="col">Maquette</th><th scope="col">Mouvement</th><th scope="col">Tentacules</th><th scope="col">Effort</th></tr></thead>
-          <tbody>${M.map(x => `<tr><td>${num(x)}</td><td><button type="button" data-aller="${x.n}">${esc(x.nom)}</button></td><td>${pts(x.mvt, 'Mouvement')}</td><td>${pts(x.pieuvre, 'Tentacules')}</td><td>${pts(x.effort, 'Effort')}</td></tr>`).join('')}</tbody></table>
-        <h3>Ce que je recommande</h3>
-        <p><b>La 06 comme base.</b> C’est la synthèse : un site aussi clair que la 02, où le thème tentaculaire dit quelque chose de vrai sur la compagnie, qui part de Rouen et va chercher son public jusque dans les classes, au lieu d’être un décor. Les cartes servent aussi les programmateurs et les établissements.</p>
-    <ol>
-      <li><b>L’accueil de la <a href="#m06" data-aller="m06">06</a></b> : la carte des tournées, qui pousse depuis Rouen quand le logo s’ouvre, puis les spectacles.</li>
-      <li><b>L’agenda de la <a href="#m03" data-aller="m03">03</a></b>, dans « Je viens voir un spectacle » : filtres par spectacle, recherche par ville, la carte reliée à la liste, et toutes les saisons passées.</li>
-      <li><b>Les trois portes</b> de la <a href="#m04" data-aller="m04">04</a>, devenues les trois entrées : chacune a sa page, et l’entrée choisie donne l’onglet des pages de spectacle.</li>
-      <li><b>Les pages spectacle</b> : un univers par spectacle, inspiré des pages d’adrienvada.fr et, pour Bérénice, de la charte du dossier scolaire ; ses trois onglets d’entrée ; la carte de ses tournées de la 06.</li>
-    </ol>
-    <p>La pieuvre de la 10 n’est pas perdue : elle peut vivre ailleurs (une page de saison, une affiche animée, une bande-annonce pour les réseaux) sans porter la navigation du site.</p>
-    <p>Si vous voulez la solution la plus sûre et la plus rapide à mettre en ligne : la <a href="#m02" data-aller="m02">02</a>, « La maison ».</p>
-    <p><b>Le texte des sources, tel quel</b>, avec ses incohérences et ses fautes, pour qu’on les voie et qu’on les corrige dans le futur site. Par exemple : L’imaginaire forcé est « création 2012 » sur sa page, « création 2011 » sur les pages de saison et dans le dossier artistique ; la compagnie naît en 2012 sur le site et dans le dossier artistique, en 2011 dans le dossier scolaire de Bérénice ; Bérénice dure 1h20 sur le site, 1h25 dans son dossier (les maquettes prennent le dossier, plus récent) ; « conventionnée la Ville de Rouen » (il manque « par ») ; « l’un des plus beau poème ». Le nombre de représentations de chaque spectacle vient du dossier artistique 2027-2028.</p>
-    <p><b>À compléter par la compagnie.</b> L’action culturelle de Macbeth – Fatum : aucune source n’en parle, les maquettes le disent. Celle de Cassandres vient du dossier artistique (des lycées agricoles et de l’enseignement agronomique), à confirmer. Le dossier scolaire de Bérénice garde ses prix et son téléphone hors du site : on écrit à la compagnie par le formulaire de contact.</p>
-    <p><b>À vérifier dans la base.</b> Trois lieux ne sont pas des lieux : « diptyque » à Ostwald et à Briançon, « 20h30 » à Saint-Genest-Lerpt. Les maquettes les affichent proprement ; leur vrai nom se corrige dans l’administration, rubrique Lieux.</p>
-        ${dispo('synthese') ? '<p><button class="outil" type="button" data-aller="synthese" style="color:#a8306f;padding:0;font-size:1rem">Voir la synthèse assemblée →</button></p>' : ''}
-      </div>`;
+      <p class="niv">${esc(num(m))} · ${esc(m.nom)}</p><h2 id="infos-titre">Mode d’emploi</h2>
+      <p class="ici"><b>Sur l’accueil de cette maquette :</b> ${esc(m.voit)}.</p>
+      ${parties.map(([titre, corps], k) => `<section aria-labelledby="partie-${k}"><h3 id="partie-${k}"><span class="no" aria-hidden="true">${k + 1}</span>${titre}</h3>${corps}</section>`).join('')}`;
     $('#fermer-infos').addEventListener('click', () => basculerInfos(false));
   }
   function basculerInfos(ouvrir) {

@@ -23,6 +23,7 @@ import sys
 from datetime import date
 from pathlib import Path
 from urllib.parse import quote
+from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "maquettes" / "src"
@@ -274,21 +275,41 @@ def projection(places):
 
 
 STOCKAGE = "https://omekkqjinvppadsoinvj.supabase.co/storage/v1/object/public/crescite"
+BASE = "https://omekkqjinvppadsoinvj.supabase.co"
+CLE_PUBLIQUE = "sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB"     # la clé publique du site (lecture de ce qui est publié)
+
+
+def photos_de_la_base():
+    """Les photos publiées des personnes, telles que la base les donne au site : {slug: (chemin, crédit)}. Une photo déposée
+    par l'administration y a son propre nom de fichier ; None si la base ne répond pas (on garde alors le registre privé)."""
+    try:
+        req = Request(f"{BASE}/rest/v1/crescite_personnes?select=slug,photo,photo_credit&photo_publique=is.true&photo=not.is.null",
+                      headers={"apikey": CLE_PUBLIQUE, "Authorization": f"Bearer {CLE_PUBLIQUE}", "Accept": "application/json"})
+        with urlopen(req, timeout=20) as r:
+            return {x["slug"]: (x["photo"], x.get("photo_credit")) for x in json.loads(r.read().decode())}
+    except Exception as e:                                   # hors ligne, ou la base refuse : le registre suffit
+        print(f"photos de l'équipe : la base ne répond pas ({e}) ; le registre privé sert")
+        return None
 
 
 def equipe_data():
     """Les personnes de l'équipe et la distribution de chaque spectacle (data/equipe.json), comme la base les donne au
-    site : la photo d'une personne seulement si elle est montrée d'office (identité sûre dans le registre privé des photos,
-    vrai portrait), servie par le stockage de la base, jamais copiée dans le dépôt."""
+    site : la photo d'une personne seulement si la base la publie (son chemin et son crédit, lus dans la base au moment de
+    construire) ; hors ligne, si elle est montrée d'office (identité sûre dans le registre privé des photos, vrai portrait).
+    Elle est servie par le stockage de la base, jamais copiée dans le dépôt."""
     E = json.loads((ROOT / "data" / "equipe.json").read_text(encoding="utf-8"))
     reg = PRIVATE / "photos" / "equipe" / "registre.json"
     sures = {}
     if reg.exists():
         sures = {r["slug"]: r.get("credit") for r in json.loads(reg.read_text(encoding="utf-8"))
                  if r.get("fichier") and r.get("confiance") == "sure" and r["slug"] not in E.get("photos_pas_publiees", {})}
+    photos = {slug: (f"equipe/{slug}.webp", f"© {c}" if c else None) for slug, c in sures.items()}
+    base = photos_de_la_base()
+    if base is not None:                                     # la base décide : une photo déposée, retirée ou rendue privée
+        photos = base
     personnes = {p["slug"]: {"prenom": p["prenom"], "nom": p["nom"], "metiers": p["metiers"],
-                             "photo": f"{STOCKAGE}/equipe/{p['slug']}.webp" if p["slug"] in sures else None,
-                             "credit": f"© {sures[p['slug']]}" if sures.get(p["slug"]) else None} for p in E["personnes"]}
+                             "photo": f"{STOCKAGE}/{quote(photos[p['slug']][0])}" if p["slug"] in photos else None,
+                             "credit": photos[p["slug"]][1] if p["slug"] in photos else None} for p in E["personnes"]}
     equipes = {slug: [{"personne": x["personne"], "categorie": x["categorie"], "fonction": x.get("fonction", ""),
                        "role": x.get("role"), "alternance": x.get("alternance")} for x in lignes if x.get("publie", True)]
                for slug, lignes in E["distributions"].items()}
