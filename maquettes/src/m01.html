@@ -21,7 +21,26 @@
   --ed-fond:#f6f2ec;--ed-encre:#1c1917;--ed-gris:#57514a;--ed-accent:#a8306f;--ed-sur-accent:#ffffff;
   --ed-police:"Newsreader",Georgia,"Times New Roman",serif;--ed-rayon:0px;--ed-trait:#cfc6b8;
   --ed-ombre:rgba(28,25,23,.3);--ed-ombre-forte:rgba(0,0,0,.4);
+  --voile:rgba(14,12,10,.93);
 }
+/* ——— le jour et la nuit (règle 19, THEME) ———
+   La nuit, le programme est tiré à l'encre ivoire sur un carton noir, comme les programmes de gala : le papier devient un
+   noir chaud, l'encre un ivoire, la magenta s'éclaircit en rose pour se lire sur le noir ; les filets restent des filets.
+   Les univers sombres restent eux-mêmes ; les deux univers clairs (Bérénice, Mon Royaume) passent dans leur propre nuit,
+   tirée de leurs couleurs de D (teinte(s, true) : leur texte, assombri dans le carton, devient leur fond ; leur fond devient
+   leur texte ; leur accent cède à la première de leurs couleurs qui se lit). Sur le carton : ivoire 14:1, gris 7,6:1,
+   rose 6,6:1 ; les entrées prennent leur couleur vive (couleursEntrees), les spectacles la leur (--sp-*, couleursSp). */
+html[data-theme="jour"]{color-scheme:light}
+html[data-theme="nuit"]{color-scheme:dark;
+  --paper:#16130f;--paper2:#201c17;--paper-blanc:#28231d;--ink:#ede5d8;--ink2:#b3a997;--rule:#3d362d;--mag:#e57aa9;
+  --acc:#e57aa9;--titre:#ede5d8;
+  --ed-fond:#201c17;--ed-encre:#ede5d8;--ed-gris:#b3a997;--ed-accent:#e57aa9;--ed-sur-accent:#16130f;--ed-trait:#4a4237;
+  --ed-ombre:rgba(0,0,0,.55);--ed-ombre-forte:rgba(0,0,0,.72);--voile:rgba(5,4,3,.94)}
+/* les couleurs d'univers posées en ligne (cartouches, billets, boutons de date) prennent leur nuit : .u-cl porte celles
+   d'un univers clair (--n*), .vp celles d'un titre posé sur le papier (--hn, --kn) */
+html[data-theme="nuit"] .u-cl{--f:var(--nf)!important;--f2:var(--nf2)!important;--t:var(--nt)!important;--t2:var(--nt2)!important;--a:var(--na)!important;
+  --at:var(--nat)!important;--h:var(--nh)!important;--l:var(--nl)!important;--sur:var(--nsur)!important}
+html[data-theme="nuit"] .vp{--f:var(--fn)!important;--h:var(--hn)!important;--k:var(--kn)!important}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 /* le papier : une couche fixe, peinte une fois ; sur toute la hauteur de la page, il se repeignait à chaque changement de
@@ -52,7 +71,7 @@ body{--tt-encre:var(--ink);--tt-accent:var(--mag);--tt-epaisseur:2.2}
 
 /* en-tête : la marque et le menu second, puis les trois entrées, comme les trois rubriques d'un programme */
 .site-h{background:var(--paper);border-bottom:2px solid var(--ink);box-shadow:0 3px 0 var(--paper),0 4px 0 var(--rule)}
-.mast{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:var(--g)}
+.mast{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;column-gap:var(--g)}
 .brand{grid-area:1/1;justify-self:start;display:flex;align-items:center;gap:.75rem;min-height:3.75rem;color:var(--ink);text-decoration:none}
 .brand:hover{color:var(--ink)}
 .octo{display:block;width:34px}
@@ -65,7 +84,14 @@ body{--tt-encre:var(--ink);--tt-accent:var(--mag);--tt-epaisseur:2.2}
 .nav a[aria-current="page"]{color:var(--ink);box-shadow:inset 0 -1px 0 currentColor}
 .menu{grid-area:1/2;display:none;align-items:center;min-height:2.75rem;font:inherit;font-variant-caps:all-small-caps;letter-spacing:.11em;font-weight:520;color:var(--ink);background:none;border:0;padding:.5rem .25rem;cursor:pointer}
 .menu[aria-expanded="true"]{color:var(--mag)}
-.ent{grid-area:2/1/3/3;border-top:1px solid var(--rule)}
+.ent{grid-area:2/1/3/4;border-top:1px solid var(--rule)}
+/* le jour et la nuit : un petit encadré au bout de la ligne de la marque, filet simple, l'astre à l'encre ; au téléphone,
+   à côté de « Menu » (toujours à portée, sans ouvrir de menu) */
+.theme-place{grid-area:1/3;display:flex;align-items:center;margin-left:calc(-1 * var(--g) + 1.25rem)}
+.theme{display:inline-grid;place-items:center;width:2.75rem;height:2.75rem;margin:0;padding:0;border:1px solid var(--rule);border-radius:0;background:none;color:var(--ink);cursor:pointer;
+  box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 3px transparent}
+.theme .theme-icone{width:1.3rem;height:1.3rem}
+@media (hover:hover){.theme:hover{border-color:var(--ink);color:var(--mag);box-shadow:inset 0 0 0 2px var(--paper),inset 0 0 0 3px var(--rule)}}
 .ent ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .ent li{display:flex;min-width:0}
 .ent li + li{border-left:1px solid var(--rule)}
@@ -486,7 +512,7 @@ figcaption{margin-top:.5rem;font-size:var(--fs-s);line-height:1.5rem;color:var(-
 .tb .tb-i{width:38%;font-style:italic}
 .cs{margin-top:var(--s2);max-width:46rem}
 .cs > * + *{margin-top:var(--s1)}
-.cs-n{display:inline-block;padding:.1rem .6rem;background:var(--acc);color:var(--paper2);font-size:var(--fs-s);letter-spacing:.12em;font-weight:600}
+.cs-n{display:inline-block;padding:.1rem .6rem;background:var(--acc);color:var(--sur-acc,var(--paper2));font-size:var(--fs-s);letter-spacing:.12em;font-weight:600}
 .cs-d{border-left:3px solid var(--acc);padding-left:1rem}
 .cs-d li{padding:.2rem 0;font-weight:560;letter-spacing:.02em}
 .cs-a li{position:relative;padding-left:1.4em;margin-top:.45rem}
@@ -610,7 +636,9 @@ html .ed-annonce{border-radius:0;background:var(--ed-encre);box-shadow:0 0 0 3px
   :root{--g:16px}
   body{padding-bottom:calc(4.25rem + env(safe-area-inset-bottom))}
   .menu{display:inline-flex}
-  .nav{display:none;grid-area:2/1/3/3}
+  .mast{column-gap:.35rem}
+  .theme-place{margin-left:0}
+  .nav{display:none;grid-area:2/1/3/4}
   .nav.open{display:block}
   .nav ul{flex-direction:column;gap:0;padding-bottom:.5rem}
   .nav li{border-top:1px solid var(--rule)}
@@ -859,6 +887,7 @@ html.ed-actif .ep-a::after{content:none}
     <nav class="ent" id="ent"><ul id="ent-l"></ul></nav>
     <button class="menu" id="menu" type="button" aria-expanded="false" aria-controls="nav"></button>
     <nav class="nav" id="nav"><ul id="nav-l"></ul></nav>
+    <span class="theme-place" id="theme-place"></span>
   </div>
 </header>
 <main id="main" tabindex="-1"></main>
@@ -900,6 +929,7 @@ html.ed-actif .ep-a::after{content:none}
     BY = Object.fromEntries(D.shows.map(s => [s.slug, s]));
     E = Object.fromEntries(S.entrees.map(e => [e.cle, e]));
     TEINTES.clear();
+    couleursSp();
   }
   const main = document.getElementById('main');
   const esc = v => String(v ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -982,25 +1012,50 @@ html.ed-actif .ep-a::after{content:none}
   const ajuste = (c, fond, cible = 4.6) => { const vers = lum(fond) > .35 ? '#000000' : '#ffffff'; for (let t = 0; t <= 1.001; t += .04) { const x = mele(c, vers, t); if (cr(x, fond) >= cible) return x; } return vers; };
   const ECHELLE = { 'Anton': .9, 'Space Grotesk': .92, 'Ubuntu': .94, 'Bodoni Moda': .95, 'Cormorant Garamond': 1.06, 'IM Fell French Canon': .98 };
   const TEINTES = new Map();
-  function teinte(s) {
-    if (TEINTES.has(s.slug)) return TEINTES.get(s.slug);
-    const c = s.univers.couleurs, P = s.univers.polices;
-    const ok = (x, n) => cr(x, c.fond) >= n && cr(x, c.fond2) >= n;
+  // le jour ou la nuit (THEME, règle 19) : la nuit, le papier est le carton noir de --paper sous html[data-theme="nuit"]
+  const NUIT = '#16130f';
+  const nuit = () => typeof THEME !== 'undefined' && THEME.actuel() === 'nuit';
+  // les teintes d'un univers, de jour ou de nuit (n) : un univers sombre reste lui-même ; la nuit d'un univers clair est tirée
+  // de ses couleurs de D (son texte, assombri dans le carton, devient son fond ; son fond devient son texte), et ce qui
+  // s'écrivait dans son accent prend la première de ses couleurs qui se lit sur ce fond
+  function teinte(s, n = nuit()) {
+    const cle = n ? `${s.slug}|nuit` : s.slug;
+    if (TEINTES.has(cle)) return TEINTES.get(cle);
+    const c0 = s.univers.couleurs, P = s.univers.polices, nc = n && !!s.univers.clair;
+    const c = nc ? { ...c0, fond: mele(c0.texte, NUIT, .55), fond2: mele(c0.texte, NUIT, .38), texte: c0.fond, texte2: mele(c0.fond, c0.texte2, .25) } : c0;
+    const ok = (x, k) => cr(x, c.fond) >= k && cr(x, c.fond2) >= k;
     const at = [c.accent, c.scene, c.accent2].find(x => ok(x, 4.5)) || ajuste(c.accent, c.fond);
+    const a = [c.accent, c.accent2, c.scene].find(x => ok(x, 3)) || at;
+    // sur le papier (titres, petites lignes) : la couleur claire du spectacle le jour, sa couleur vive éclaircie la nuit
+    const hp = n ? ajuste(s.couleur || s.couleurTexteClair, NUIT) : s.couleurTexteClair;
     const T = {
-      f: c.fond, f2: c.fond2, t: c.texte, t2: c.texte2, l: c.lueur, at,
-      a: [c.accent, c.accent2, c.scene].find(x => ok(x, 3)) || at,          // filets et aplats
-      h: [c.scene, c.accent].find(x => ok(x, 3)) || c.texte,                 // le titre
-      rule: mele(c.fond, c.texte, s.univers.clair ? .2 : .26),
-      ff: P.titre, fw: P.titreGraisse, fz: ECHELLE[P.titre] || 1, clair: !!s.univers.clair,
-      hp: s.couleurTexteClair, kp: ajuste(s.couleurTexteClair, PAPIER)     // sur le papier : titres, petites lignes
+      f: c.fond, f2: c.fond2, t: c.texte, t2: c.texte2, l: c.lueur, at, a,                // a : filets et aplats
+      h: nc ? at : [c.scene, c.accent].find(x => ok(x, 3)) || c.texte,                 // le titre
+      sur: cr('#ffffff', a) >= 4.5 ? '#ffffff' : cr(c.fond, a) >= cr(c.texte, a) ? c.fond : c.texte,   // le texte sur un aplat
+      rule: mele(c.fond, c.texte, s.univers.clair && !n ? .2 : .26),
+      ff: P.titre, fw: P.titreGraisse, fz: ECHELLE[P.titre] || 1, clair: !!s.univers.clair && !n,
+      hp, kp: ajuste(hp, n ? NUIT : PAPIER)
     };
-    TEINTES.set(s.slug, T);
+    TEINTES.set(cle, T);
     return T;
   }
   const police = T => `--ff:'${T.ff}';--fw:${T.fw};--fz:${T.fz}`;
-  const varsCartouche = s => { const T = teinte(s); return `--f:${T.f};--f2:${T.f2};--t:${T.t};--t2:${T.t2};--a:${T.a};--at:${T.at};--h:${T.h};--l:${T.l};${police(T)}`; };
-  const varsPapier = s => { const T = teinte(s); return `--f:${T.f};--h:${T.hp};--k:${T.kp};${police(T)}`; };
+  // les couleurs d'un univers posées en ligne : celles du jour, et pour un univers clair celles de sa nuit (--n*), que
+  // html[data-theme="nuit"] .u-cl prend sans rien refaire
+  const clsU = s => (s && s.univers && s.univers.clair ? ' u-cl' : '');
+  const varsCartouche = s => { const T = teinte(s, false), N = s.univers.clair ? teinte(s, true) : null;
+    return `--f:${T.f};--f2:${T.f2};--t:${T.t};--t2:${T.t2};--a:${T.a};--at:${T.at};--h:${T.h};--l:${T.l};--sur:${T.sur};${police(T)}`
+      + (N ? `;--nf:${N.f};--nf2:${N.f2};--nt:${N.t};--nt2:${N.t2};--na:${N.a};--nat:${N.at};--nh:${N.h};--nl:${N.l};--nsur:${N.sur}` : ''); };
+  const varsPapier = s => { const T = teinte(s, false), N = teinte(s, true); return `--f:${T.f};--h:${T.hp};--k:${T.kp};--fn:${N.f};--hn:${N.hp};--kn:${N.kp};${police(T)}`; };
+  // la couleur de chaque spectacle sur le papier (un repère de frise, un type d'action) : var(--sp-<slug>), qui change avec le thème
+  const feuilleSp = document.head.appendChild(document.createElement('style'));
+  function couleursSp() {
+    const j = [], n = [];
+    D.shows.forEach(s => { if (!/^[a-z0-9-]+$/.test(s.slug || '')) return; j.push(`--sp-${s.slug}:${teinte(s, false).kp}`); n.push(`--sp-${s.slug}:${teinte(s, true).kp}`); });
+    const css = `:root{${j.join(';')}}html[data-theme="nuit"]{${n.join(';')}}`;
+    if (feuilleSp.textContent !== css) feuilleSp.textContent = css;
+  }
+  const varSp = slug => (/^[a-z0-9-]+$/.test(slug || '') ? `var(--sp-${slug}, var(--ink2))` : 'var(--ink2)');
   const couleursEntrees = fond => S.entrees.map(e => `--e-${e.cle}:${[e.couleur, e.couleurVive].find(x => cr(x, fond) >= 4.5) || ajuste(e.couleur, fond)}`).join(';');
   const gamme = s => { const c = s.univers.couleurs; return `<span class="gm" aria-hidden="true">${[c.fond, c.fond2, c.texte, c.texte2, c.accent, c.accent2].map(x => `<i style="background:${x}"></i>`).join('')}</span>`; };
 
@@ -1087,8 +1142,11 @@ html.ed-actif .ep-a::after{content:none}
     return G;
   }
 
-  /* une ligne de date : le numéro en marge, la date et le lieu (la ligne d'origine découpée), le spectacle, les détails */
-  function ligne(r, num, { show = true, vers = null, fid = null } = {}) {
+  /* une ligne de date : le numéro en marge, la date et le lieu (la ligne d'origine découpée), le spectacle, les détails ;
+     une date où l'on réserve (rs : sa clé RESERVER) : la date devient un bouton qui ouvre son billet sous la ligne */
+  function ligne(r, num, { show = true, vers = null, fid = null, rs = null } = {}) {
+    const k = rs ? rs(r) : null;
+    if (k != null) return ligneRs(r, num, k, fid);
     let d = r.ligneDate, p = r.ligneLieu;
     if (d == null) { const i = r.ligne.indexOf(' — '); d = i < 0 ? r.ligne : r.ligne.slice(0, i); p = i < 0 ? '' : r.ligne.slice(i + 3); }
     const det = r.details || [];
@@ -1101,6 +1159,102 @@ html.ed-actif .ep-a::after{content:none}
       <p class="dl-w"><span class="dl-d">${esc(d)}</span>${lieu ? `<span class="dl-p">${lieu}</span>` : ''}${r.etat ? `<span class="dl-e">${esc(r.etat)}</span>` : ''}</p>
       ${sh || x ? `<div class="dl-i">${sh}${x}</div>` : ''}
     </li>`;
+  }
+  // la ligne d'une date où l'on réserve (#/voir) : le bouton de la date (son jour, ses heures, sa commune), le lieu, le
+  // spectacle et les précisions ; son billet, caché sous la ligne, s'imprime quand on la choisit (RESERVER.monter, voir())
+  const idIci = k => `rs-ici-${String(k).replace(/[^\w-]/g, '-')}`;
+  function ligneRs(r, num, k, fid) {
+    const s = BY[r.slug], det = r.details || [];
+    const sh = r.titre ? `<p class="dl-s">${s ? `<a href="${lien(s, 'voir')}">${esc(r.titre)}</a>` : esc(r.titre)}</p>` : '';
+    const x = det.length ? `<ul class="dl-x">${det.map(t => `<li>${t.lien ? ext(t.lien, esc(t.texte)) : esc(t.texte)}</li>`).join('')}</ul>` : '';
+    return `<li class="dl rs-li" data-date-id="${esc(r.id ?? '')}"${fid ? ` data-frise-id="${esc(fid)}" data-mv-cle="${esc(fid)}"` : ''}${r.l != null ? ` data-l="${r.l}"` : ''}>
+      <span class="dl-n" aria-hidden="true">${r.l != null && num.has(r.l) ? num.get(r.l) : ''}</span>
+      <div class="dl-w">${RESERVER.bouton(r, { classe: `rs-date--ligne${clsU(s)}`, style: s ? varsCartouche(s) : '', attributs: ` aria-controls="${idIci(k)}"` })}${r.ligneLieu ? `<span class="dl-p">${esc(r.ligneLieu)}</span>` : ''}${r.etat ? `<span class="dl-e">${esc(r.etat)}</span>` : ''}</div>
+      ${sh || x ? `<div class="dl-i">${sh}${x}</div>` : ''}
+      <div class="rs-carte rs-ici${clsU(s)}" id="${idIci(k)}" hidden></div>
+    </li>`;
+  }
+
+  /* ——— réserver une date, d'un geste (règle 17, RESERVER) : le billet qu'on imprime ———
+     Le billet d'une date : le talon détachable porte le tampon dateur, frappé sur la photo du spectacle tramée ; choisir une
+     date l'imprime : le rouleau de la presse passe sur le billet, les lignes s'encrent dans son sillage, le tampon est frappé
+     en dernier. Sous sa ligne (#/voir), le billet sort d'abord de la presse. Rien que transform et opacity, rien à repeindre en
+     route. Moins d'animations : un fondu bref ; ?anim=0 : rien. */
+  const RS = typeof RESERVER !== 'undefined' ? RESERVER : null;
+  const COUPE = (() => { try { return new URLSearchParams(location.search).get('anim') === '0'; } catch (err) { return false; } })();
+  const M_REGLE = 'cubic-bezier(.62, 0, .3, 1)', M_ENCRE = 'cubic-bezier(.25, .6, .3, 1)', M_POSE = 'cubic-bezier(.2, .72, .18, 1)';
+  // le talon : le tampon dateur (le jour écrit comme sur le bouton : AGENDA et les noms courts de D.site.libelles)
+  function talon(el, d) {
+    const j = RS.jours(d), t = document.createElement('span');
+    t.className = 'rs-talon';
+    t.setAttribute('aria-hidden', 'true');
+    t.innerHTML = `<span class="rs-tampon${String(j.jour).length > 3 ? ' rs-tampon--long' : ''}">${j.semaine.length ? `<span class="rs-t-s">${j.semaine.map(esc).join(' – ')}</span>` : ''}<b class="rs-t-n">${esc(j.jour)}</b>${j.mois.length ? `<span class="rs-t-m">${j.mois.map(esc).join(' – ')}</span>` : ''}</span>`;
+    el.appendChild(t);
+    return t.firstElementChild;
+  }
+  function effetBillet({ carte: el, date: d, premier, ouverture }) {
+    const tampon = talon(el, d);
+    if (premier) return;
+    const c = el.querySelector('.rs-c');
+    if (!bouge()) { if (!COUPE && c && c.animate) c.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
+    if (!el.animate) return;
+    const t0 = ouverture ? 110 : 0, T = 500;
+    // le billet sort de la presse, sous sa ligne
+    if (ouverture) el.animate([{ opacity: 0, transform: 'translateY(-10px) scaleY(.94)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: M_POSE });
+    // le rouleau passe, de haut en bas, à la vitesse du filet tiré à la règle
+    const rouleau = document.createElement('span');
+    rouleau.className = 'rs-rouleau';
+    rouleau.setAttribute('aria-hidden', 'true');
+    el.appendChild(rouleau);
+    const fini = () => rouleau.remove();
+    rouleau.animate([{ transform: 'translateY(-100%)', opacity: 1 }, { opacity: 1, offset: .82 }, { transform: 'translateY(0)', opacity: 0 }], { duration: T, delay: t0, easing: M_REGLE, fill: 'both' }).finished.then(fini, fini);
+    // les lignes s'encrent dans son sillage, l'une après l'autre
+    const lignes = c ? [...c.children] : [];
+    lignes.forEach((x, i) => x.animate([{ opacity: 0 }, { opacity: .75, offset: .45 }, { opacity: 1 }],
+      { duration: 240, delay: t0 + 50 + Math.round(i / Math.max(1, lignes.length) * (T - 140)), easing: M_ENCRE, fill: 'backwards' }));
+    // le tampon dateur, frappé en dernier
+    if (tampon) tampon.animate([{ opacity: 0, transform: 'rotate(-15deg) scale(1.9)' }, { opacity: 1, transform: 'rotate(-6deg) scale(.95)', offset: .55 }, { opacity: 1, transform: 'rotate(-7deg) scale(1)' }],
+      { duration: 380, delay: t0 + T - 80, easing: M_ENCRE, fill: 'backwards' });
+  }
+  // la bande défile au doigt ; à la souris, deux flèches la font avancer (elles ne paraissent que si elle déborde)
+  let roDefile = null;
+  function defilement(zone, bande) {
+    if (roDefile) roDefile.disconnect();
+    let raf = 0;
+    const [g, d] = zone.querySelectorAll('[data-defile]');
+    const maj = () => { raf = 0; zone.classList.toggle('rs-deborde', bande.scrollWidth > bande.clientWidth + 2);
+      if (g) g.disabled = bande.scrollLeft < 4; if (d) d.disabled = bande.scrollLeft + bande.clientWidth > bande.scrollWidth - 4; };
+    const bientot = () => { if (!raf) raf = requestAnimationFrame(maj); };
+    if ('ResizeObserver' in window) { roDefile = new ResizeObserver(bientot); roDefile.observe(bande); } else bientot();
+    bande.addEventListener('scroll', bientot, { passive: true });
+    zone.addEventListener('click', e => { const b = e.target.closest('[data-defile]'); if (b && !b.disabled) bande.scrollBy({ left: +b.dataset.defile * bande.clientWidth * .8, behavior: bouge() ? 'smooth' : 'auto' }); });
+  }
+  // la page d'un spectacle : la bande de ses prochaines dates, la prochaine choisie d'office (ou celle de l'adresse, ?date=,
+  // ou celle d'avant quand la vue se refait en place) ; la planche suit : survoler une date allume sa commune, choisir une
+  // commune choisit sa première date
+  let rsSp = null, etatRs = { slug: null, cle: null };
+  function monterBande(zone, s) {
+    const bande = zone.querySelector('.rs-bande'), carte = zone.querySelector('#rs-carte'), svg = zone.querySelector('svg.pl'), sec = zone.closest('.lk');
+    const res = RS.dates(s.slug), voulue = Q.get('date');
+    const k0 = EN_PLACE && etatRs.slug === s.slug && etatRs.cle ? etatRs.cle : voulue && res.some(d => RS.cle(d) === voulue) ? voulue : 'premiere';
+    const marquer = (l, survol) => {
+      if (!svg) return;
+      svg.querySelectorAll('.on').forEach(n => n.classList.remove('on'));
+      if (l != null) svg.querySelectorAll(`.pl-lieu[data-l="${l}"], .pl-route[data-l="${l}"]`).forEach(n => n.classList.add('on'));
+      if (sec) sec.classList.toggle('act', !!survol && l != null);
+    };
+    const choisie = () => { const d = rsSp && rsSp.date(); return d ? d.l : null; };
+    rsSp = RS.monter(bande, { dates: res, carte, choisie: k0, adresse: true, univers: () => '', effet: effetBillet,
+      surChoix: (d, k) => { etatRs = { slug: s.slug, cle: k }; marquer(d ? d.l : null, false); } });
+    marquer(choisie(), false);
+    if (svg) CARTE.lier(svg, { survol: l => marquer(l == null ? choisie() : l, l != null), choix: l => { const d = res.find(x => x.l === l); if (d) { rsSp.choisir(RS.cle(d)); rsSp.montrer(); } } });
+    // (au doigt, pas de survol : le geste reste léger)
+    bande.addEventListener('pointerover', e => { if (e.pointerType === 'touch') return; const b = e.target.closest('[data-reserver]'); if (b && b.dataset.l) marquer(+b.dataset.l, true); }, { passive: true });
+    bande.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') marquer(choisie(), false); }, { passive: true });
+    defilement(zone, bande);
+    requestAnimationFrame(() => { if (rsSp) rsSp.montrer(); });
+    // une adresse qui nomme une date (un lien partagé, le billet d'une date de #/voir) : la page s'ouvre sur son billet
+    if (voulue && !EN_PLACE && k0 === voulue) requestAnimationFrame(() => requestAnimationFrame(() => { zone.scrollIntoView({ block: 'start' }); const b = zone.querySelector('.rs-date[aria-pressed="true"]'); if (b) b.focus({ preventScroll: true }); }));
   }
 
   /* ——— la planche : la carte gravée au trait, cadre à double filet gradué, numéros en marge ——— */
@@ -1268,8 +1422,9 @@ html.ed-actif .ep-a::after{content:none}
   const cleProchaine = d => cleBase(d) || `p|${d.slug || d.titre}|${d.iso}|${d.l}`;
   const cleLigne = (d, saison, i) => cleBase(d) || `l|${saison}|${i}`;
   const annulee = d => /annul/i.test(d.etat || '');
-  // la couleur d'un spectacle sur le papier du programme (celle de son univers sur sa page)
-  const couleurDe = slug => BY[slug] ? (document.body.classList.contains('u') ? teinte(BY[slug]).at : teinte(BY[slug]).kp) : '#7c746b';
+  // la couleur d'un spectacle sur le papier du programme (celle de son univers sur sa page : --mag, posée par habiller) ;
+  // des variables, qui suivent le jour et la nuit sans rien refaire
+  const couleurDe = slug => BY[slug] ? (document.body.classList.contains('u') ? 'var(--mag)' : varSp(slug)) : 'var(--ink2)';
   // une date à venir (D.dates), écrite comme l'agenda
   const repereProchaine = d => ({ id: cleProchaine(d), jour: d.iso, fin: d.fin, precision: d.precision, couleur: couleurDe(d.slug), titre: d.titre,
     quand: d.ligneDate, l: d.l, scolaire: !!d.scolaire, annulee: annulee(d), etat: d.etat });
@@ -1315,7 +1470,7 @@ html.ed-actif .ep-a::after{content:none}
   // haut : les petites lignes du cartouche, chacune [texte, champ du spectacle] (son chemin : shows.<slug>.<champ>)
   function cartouche(s, { cle = null, niveau = 3, haut = [], bas = '', gm = true, photo = false } = {}) {
     const k = haut.filter(t => t && t[0]);
-    return `<div class="ct" style="${varsCartouche(s)}">
+    return `<div class="ct${clsU(s)}" style="${varsCartouche(s)}">
       ${photo ? `<span class="ct-ph"${edP(s, 'photo')}>${img(s.slug, '')}</span>` : ''}
       ${k.length ? `<p class="ct-k">${k.map(([t, c]) => `<span${edS(s, c)}>${esc(t)}</span>`).join('')}</p>` : ''}
       <h${niveau} class="ct-t"><a href="${lien(s, cle)}"${edS(s, 'titre')}>${esc(s.titre)}</a></h${niveau}>
@@ -1360,6 +1515,101 @@ html.ed-actif .ep-a::after{content:none}
   const galerie = (s, ph, cls = '') => ph.length ? `<div class="gal${cls ? ' ' + cls : ''}">${ph.map(p => { const r = rangPh(s, p);
     return `<figure${r >= 0 ? edP(s, 'photos', r) : ''}>${img(p.cle, p.legende || s.titre)}${p.legende ? `<figcaption>${legende(p.legende, r >= 0 ? `shows.${s.slug}.photos.${r}.legende` : null)}</figcaption>` : ''}</figure>`; }).join('')}</div>${credits(s, ph)}` : '';
 
+  /* ——— les vidéos, lues dans la page (règle 18, LECTEUR) : une planche hors-texte ———
+     La bande-annonce est contrecollée comme les photographies du programme (passe-partout, filet intérieur), sur son affiche
+     (la photo du spectacle, jamais une image de YouTube ou de Vimeo) ; ses autres vidéos (les médias) suivent, par groupe.
+     Ailleurs, « Bande-annonce » y mène (data-lecteur-va), ou l'ouvre dans une boîte loin de toute vidéo (data-lecteur-ouvrir).
+     Une adresse qui n'est ni YouTube ni Vimeo reste un lien. */
+  const LC = typeof LECTEUR !== 'undefined' ? LECTEUR : null;
+  const lisible = v => !!(v && LC && LC.source(v.url));
+  const FL_G = '<svg class="ar" viewBox="0 0 18 10" aria-hidden="true" focusable="false"><path d="M18 5H1.4M5.6.8 1.4 5l4.2 4.2"/></svg>';
+  const LECTURE = '<svg class="ar ar-lc" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><path d="M2.2 1.2v7.6L8.8 5z"/></svg>';
+  function videos(s) {
+    if (!s.video || !lisible(s.video)) return '';
+    const autres = (s.medias || []).map((m, i) => ({ m, i })).filter(({ m }) => m && m.type === 'video' && m.url !== s.video.url && lisible(m)), groupes = [];
+    autres.forEach(x => { const g = groupes.find(y => y.nom === (x.m.groupe || '')); if (g) g.xs.push(x); else groupes.push({ nom: x.m.groupe || '', xs: [x] }); });
+    // les affiches des autres vidéos : les photos du spectacle, à tour de rôle
+    const phs = (s.photos || []).filter(p => !p.etablissement && !p.atelier && D.photos[p.cle]);
+    let n = 0;
+    const affiche = () => (phs.length ? D.photos[phs[n++ % phs.length].cle] : D.photos[s.slug]);
+    return `<section class="sec" aria-labelledby="h-va"><h2 class="sec-h" id="h-va">${esc(L.bandeAnnonce)}</h2>
+      <div class="sec-b va-planche">${LC.html(s.video, { affiche: D.photos[s.slug], id: `lc-${s.slug}`, editTitre: `shows.${s.slug}.video.titre` })}</div>
+      ${groupes.map(g => `${g.nom ? `<h3 class="va-g">${esc(g.nom)}</h3>` : ''}<div class="va-grille">${g.xs.map(({ m, i }) => LC.html(m, { affiche: affiche(), editTitre: m.titre ? `shows.${s.slug}.medias.${i}.titre` : null })).join('')}</div>`).join('')}
+    </section>`;
+  }
+  // « Bande-annonce » loin de la vidéo : vers la vidéo de la page (va) ou dans une boîte (ouvrir) ; sinon le lien d'origine
+  const boutonVideo = (s, vers, cls) => !s.video ? '' : !lisible(s.video) ? `<span class="${cls}">${ext(s.video.url, esc(L.bandeAnnonce))}</span>`
+    : `<button type="button" class="${cls} va-b" ${vers === 'boite' ? `data-lecteur-ouvrir="${esc(s.slug)}"` : `data-lecteur-va="lc-${esc(s.slug)}"`}>${LECTURE}<span>${esc(L.bandeAnnonce)}</span></button>`;
+  // la signature habille la vidéo : elle arrive comme l'encre qui se pose (quand elle est prête) ; « assombrir » pose un voile
+  // d'encre sur le programme, lentement, la planche reste claire ; « rallumer » le lève plus vite
+  if (LC) LC.regler({ univers: s => varsCartouche(s), effet: {
+    arrivee: (fig, ifr) => { if (!bouge() || !ifr.animate) return; ifr.style.opacity = '0';
+      const montrer = () => { if (ifr.style.opacity !== '0') return; ifr.style.opacity = ''; ifr.animate([{ opacity: 0 }, { opacity: .8, offset: .45 }, { opacity: 1 }], { duration: 520, easing: M_ENCRE }); };
+      ifr.addEventListener('load', montrer, { once: true }); setTimeout(montrer, 1600); },
+    eteindre: voile => voile.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 520, easing: M_ENCRE }),
+    rallumer: voile => voile.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: 'ease-out' }).finished,
+  } });
+
+  /* ——— la troupe (règle 20, TROUPE) : la page du programme où l'on présente la troupe ———
+     Le programme ouvert à la page de la troupe : à gauche le jeu (les portraits gravés en médaillons, puis les noms en
+     petites capitales au fil de la ligne, chacun précédé d'un losange), à droite les métiers comme le générique d'un programme
+     imprimé (le métier en italique, des points de conduite jusqu'au nom) ; au pli, la marque de la compagnie frappée comme
+     un tampon. Tout se relit dans D à chaque rendu (les personnes, leurs métiers, leurs photos publiées, les titres). */
+  const photosEchec = new Set();
+  const aPhoto = x => !!x.photo && !photosEchec.has(x.photo);
+  const nomTr = x => `<span class="tr-nom">${x.prenom ? `<span>${esc(x.prenom)}</span> ` : ''}<span>${esc(x.nom)}</span></span>`;
+  const metiersTr = (x, tous) => (tous || !x.evident) && x.metiers.length ? `<span class="tr-ms">${x.metiers.map(m => `<span class="tr-m">${esc(m)}</span>`).join('')}</span>` : '';
+  const placeTr = (x, cls, dedans) => `<li class="tr-li"><button type="button" class="tr-pl ${cls}" data-troupe-place data-troupe-personne="${esc(x.personne)}" aria-pressed="false">${dedans}</button></li>`;
+  // le portrait gravé : la photo seulement si sa publication est accordée (et qu'elle se charge) ; sinon le nom seul, son losange
+  const medaillon = x => placeTr(x, 'tr-pl--med', `<span class="tr-med" data-troupe-ancre><img src="${esc(x.photo)}" alt="" width="96" height="120" loading="lazy" decoding="async" data-troupe-photo></span>${nomTr(x)}${metiersTr(x)}`);
+  const nomSeul = x => placeTr(x, 'tr-pl--nom', `<span class="tr-pt" data-troupe-ancre></span>${nomTr(x)}${metiersTr(x)}`);
+  const ligneTr = x => placeTr(x, 'tr-pl--ligne', `${metiersTr(x, true)}${x.metiers.length ? '<span class="tr-pts" aria-hidden="true"></span>' : ''}<span class="tr-qui">${aPhoto(x)
+    ? `<span class="tr-vg" data-troupe-ancre><img src="${esc(x.photo)}" alt="" width="36" height="36" loading="lazy" decoding="async" data-troupe-photo></span>` : '<span class="tr-pt" data-troupe-ancre></span>'}${nomTr(x)}</span>`);
+  const categorieTr = c => `<section class="tr-cat" data-troupe-categorie="${esc(c.cle)}" aria-labelledby="tr-h-${esc(c.cle)}">
+      <h3 class="tr-cat-t" id="tr-h-${esc(c.cle)}"><span class="tr-ic">${TROUPE.icone(c.cle)}</span><span${ed(`site.troupe.categories.${c.i}.titre`)}>${esc(c.titre)}</span></h3>
+      ${c.cle === 'jeu' ? `${c.places.some(aPhoto) ? `<ul class="tr-meds">${c.places.filter(aPhoto).map(medaillon).join('')}</ul>` : ''}${c.places.some(x => !aPhoto(x)) ? `<ul class="tr-noms">${c.places.filter(x => !aPhoto(x)).map(nomSeul).join('')}</ul>` : ''}`
+        : `<ul class="tr-lignes">${c.places.map(ligneTr).join('')}</ul>`}
+    </section>`;
+  function troupeHtml() {
+    if (typeof TROUPE === 'undefined' || !S.troupe) return '';
+    const cs = TROUPE.categories().filter(c => c.places.length);
+    if (!cs.length) return '';
+    // les deux pages du programme, équilibrées : le jeu et ce qui le suit à gauche, le reste à droite (dans l'ordre de D)
+    const poids = c => c.cle === 'jeu' ? 2 + Math.ceil(c.places.filter(aPhoto).length / 4) * 4.4 + c.places.filter(x => !aPhoto(x)).length / 3 : c.places.length + 2.4;
+    const total = cs.reduce((t, c) => t + poids(c), 0);
+    let g = 0, k = 0;
+    while (k < cs.length - 1 && (k === 0 || g + poids(cs[k]) / 2 <= total / 2)) { g += poids(cs[k]); k++; }
+    const marque = D.logo && D.logo.octopus ? D.logo.octopus.replace(/\s(role|aria-label)="[^"]*"/g, '').replace('<svg', '<svg aria-hidden="true" focusable="false"') : '';
+    return `<section class="sec tr-sec" aria-labelledby="h-troupe"><h2 class="sec-h" id="h-troupe"${ed('site.troupe.titre')}>${esc(TROUPE.titre())}</h2>
+      <div class="tr" data-troupe>
+        ${marque ? `<span class="tr-marque" aria-hidden="true">${marque}</span>` : ''}
+        <div class="tr-page tr-g">${cs.slice(0, k).map(categorieTr).join('')}</div>
+        <div class="tr-page tr-d">${cs.slice(k).map(categorieTr).join('')}</div>
+      </div></section>`;
+  }
+  // la troupe prend vie : survoler (ou focaliser) une personne met toutes ses places en couleur et les relie (TROUPE.relier) ;
+  // la choisir frappe chacune de ses places, l'une après l'autre (Web Animations) ; une photo qui ne se charge pas laisse le
+  // nom seul, avec son losange, sans rien déplacer
+  function vivreTroupe() {
+    const tr = main.querySelector('.tr[data-troupe]');
+    if (!tr || typeof TROUPE === 'undefined') return;
+    TROUPE.relier(tr, { surChoix: slug => {
+      if (!slug || !bouge()) return;
+      [...tr.querySelectorAll('[data-troupe-place]')].filter(p => p.getAttribute('data-troupe-personne') === slug).forEach((p, i) => {
+        const n = p.querySelector('.tr-nom'), a = p.querySelector('[data-troupe-ancre]');
+        if (n && n.animate) n.animate([{ transform: 'scale(1.12)', opacity: .4 }, { transform: 'scale(.98)', opacity: 1, offset: .6 }, { transform: 'none', opacity: 1 }], { duration: 300, delay: i * 70, easing: M_ENCRE, fill: 'backwards' });
+        if (a && a.animate) a.animate([{ transform: 'scale(1.5)' }, { transform: 'none' }], { duration: 300, delay: i * 70, easing: M_ENCRE });
+      });
+    } });
+    tr.addEventListener('error', e => {
+      const i = e.target; if (!i || !i.matches || !i.matches('img[data-troupe-photo]')) return;
+      photosEchec.add(i.getAttribute('src'));
+      const a = i.closest('[data-troupe-ancre]');
+      if (a) a.className = 'tr-pt';
+      i.remove();
+    }, true);
+  }
+
   /* ——— les vues ——— */
   function accueil() {
     const num = numeroter(D.dates), av = CARTE.aVenir(), dia = S.diaporama, s0 = S.saisons[0];
@@ -1382,7 +1632,7 @@ html.ed-actif .ep-a::after{content:none}
       <section class="bill grid" aria-labelledby="h-bill">
         <div class="bill-l">
           <h2 class="lab bill-h" id="h-bill">${esc(L.enTournee)}</h2>
-          <ul class="bill-list">${dia.map((d, i) => { const s = BY[d.slug]; return `<li><a class="bill-a${i ? '' : ' on'}" href="${esc(d.href)}" data-i="${i}"${s ? ` style="${varsPapier(s)}"` : ''}><span class="bill-t">${d.titre.map((t, j) => `<span${ed(`site.diaporama.${i}.titre.${j}`)}>${esc(t)}</span>`).join('')}</span><span class="bill-d">${s ? `<span class="bill-vg" aria-hidden="true">${vignette(s.univers.motif)}</span>${gamme(s)}` : ''}<span>${esc(d.bouton)}${ICON.r}</span></span></a></li>`; }).join('')}</ul>
+          <ul class="bill-list">${dia.map((d, i) => { const s = BY[d.slug]; return `<li><a class="bill-a${i ? '' : ' on'}${s ? ' vp' : ''}" href="${esc(d.href)}" data-i="${i}"${s ? ` style="${varsPapier(s)}"` : ''}><span class="bill-t">${d.titre.map((t, j) => `<span${ed(`site.diaporama.${i}.titre.${j}`)}>${esc(t)}</span>`).join('')}</span><span class="bill-d">${s ? `<span class="bill-vg" aria-hidden="true">${vignette(s.univers.motif)}</span>${gamme(s)}` : ''}<span>${esc(d.bouton)}${ICON.r}</span></span></a></li>`; }).join('')}</ul>
         </div>
         <figure class="bill-ph"${BY[dia[0].slug] ? edP(BY[dia[0].slug], 'photo') : ''}>${img(dia[0].slug, dia[0].titre.join(' '))}<figcaption${ed('site.diaporama.0.credit')}>${esc(dia[0].credit)}</figcaption></figure>
       </section>
@@ -1532,7 +1782,11 @@ html.ed-actif .ep-a::after{content:none}
       return G.map(g => { let t = g.m ? titreMois(g.m) : ''; if (!g.r.some(r => r.d.ligne.includes(t))) t = '';
         return `<section class="grp">${t ? `<h4 class="mo" data-mv-cle="m:${esc(s.k)}:${esc(g.m)}">${esc(t)}</h4>` : ''}<ul class="dls" data-agenda="">${g.r.map(r => ligne(aLigne(r), nm, { vers: 'voir', fid: cleLigne(r.d, s.k, r.i) })).join('')}</ul></section>`; }).join('');
     };
-    const listeProchaines = () => groupes(proch.filter(garde).map(r => r.d), num, { vers: 'voir', fidDe: cleProchaine });
+    // réserver (règle 17) : chaque prochaine date où l'on réserve est un bouton qui ouvre son billet sous sa ligne
+    const resV = RS ? RS.dates() : [], resCles = new Set(resV.map(d => RS.cle(d)));
+    const rsCle = d => { const k = RS ? RS.cle(d) : null; return k != null && resCles.has(k) ? k : null; };
+    const parFriseV = new Map(resV.map(d => [cleProchaine(d), RS.cle(d)]));
+    const listeProchaines = () => groupes(proch.filter(garde).map(r => r.d), num, { vers: 'voir', fidDe: cleProchaine, rs: rsCle });
     const lieuxDe = (s, rs) => {
       const parL = new Map();
       rs.forEach(r => { if (r.d.l != null) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, titre: r.titre, slug: r.g.slug }); } });
@@ -1566,6 +1820,7 @@ html.ed-actif .ep-a::after{content:none}
     AG = {};
     AG.brancher = () => {
       const zone = q1('.ag'), svg = q1('svg.pl', zone), racine = q1('#ag-saisons'), outils = q1('#idx-outils'), liste = q1('#ag-liste'), fl = q1('.flt', zone);
+      let rsVoir = null;
       // une liste et sa planche se répondent : survoler une ligne met sa commune en avant, choisir une commune filtre tout l'agenda
       const relier = (scope, sv) => {
         const marque = l => { qa('.on', scope).forEach(n => n.classList.remove('on')); if (l != null) qa(`[data-l="${l}"]`, scope).forEach(n => n.classList.add('on')); scope.classList.toggle('act', l != null); };
@@ -1611,6 +1866,7 @@ html.ed-actif .ep-a::after{content:none}
         const faire = () => {
           recompte();
           liste.innerHTML = listeProchaines();
+          if (rsVoir) rsVoir.dessiner();   // le billet ouvert reste ouvert sous sa ligne redessinée
           majPlanche();
           qa('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
           const inp = q1('#cherche'); if (inp.value !== F.q) inp.value = F.q;
@@ -1664,9 +1920,26 @@ html.ed-actif .ep-a::after{content:none}
       let tempo = 0;
       q1('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(() => dessine(true), 120); });
       majPlanche();
-      // la frise de la saison, reliée à la liste (les dates à venir et celles de la saison en cours) et à la planche
+      // le billet d'une date s'ouvre sous sa ligne (sans quitter l'agenda), se referme d'un second geste ou d'Échap ; l'adresse
+      // garde la date ouverte (?date=…), le titre du billet mène au spectacle sur cette même date
+      if (RS) {
+        rsVoir = RS.monter(liste, { dates: resV, carte: b => document.getElementById(idIci(b.getAttribute('data-reserver'))),
+          choisie: F.date !== undefined ? F.date : Q.get('date'), basculer: true, roving: false, axe: 'hv', adresse: true,
+          univers: s => (s ? varsCartouche(s) : ''), carteOptions: d => ({ href: `${lien(BY[d.slug] || { slug: d.slug }, 'voir')}?date=${encodeURIComponent(RS.cle(d))}` }),
+          effet: effetBillet, surChoix: (d, k) => { F.date = k; } });
+        liste.addEventListener('keydown', ev => {
+          if (ev.key !== 'Escape' || !rsVoir || rsVoir.cle() == null) return;
+          const b = q1(`[data-reserver="${CSS.escape(rsVoir.cle())}"]`, liste), li = b && b.closest('li');
+          if (li && li.contains(ev.target)) { ev.preventDefault(); rsVoir.choisir(null); b.focus(); }
+        });
+        // une adresse qui nomme une date : la page s'ouvre sur sa ligne et son billet
+        if (!EN_PLACE && Q.get('date') && rsVoir.cle()) requestAnimationFrame(() => requestAnimationFrame(() => {
+          const b = rsVoir.cle() && q1(`[data-reserver="${CSS.escape(rsVoir.cle())}"]`, liste); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } }));
+      }
+      // la frise de la saison, reliée à la liste (les dates à venir et celles de la saison en cours) et à la planche ; le repère
+      // d'une date où l'on réserve ouvre son billet
       fSaison = frise(q1('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: s0.titre, moisMin: 88,
-        relier: { liste: main, carte: svg }, choix: p => allerLigne(p.id) });
+        relier: { liste: main, carte: svg }, choix: p => { const k = parFriseV.get(p.id); if (k && rsVoir && rsVoir.cle() !== k) rsVoir.choisir(k); allerLigne(p.id); } });
       // l'agenda passé et la frise des saisons, sous le pli : dans la tâche qui suit le premier rendu (le visible d'abord) ;
       // tout de suite quand la vue se refait en place (D a changé) ou qu'un filtre est actif
       const immediat = EN_PLACE;
@@ -1716,7 +1989,7 @@ html.ed-actif .ep-a::after{content:none}
           ${diffusion(s.slug).length ? `<div class="fr fr-diff" data-diffusion="${esc(s.slug)}"></div>` : ''}
           ${s.programmer && s.programmer.equipeCreation ? '' : `<div class="fp-fi">${fiche(s, { duree: false }).replace(/ fi-sep/g, '')}</div>`}
           ${P.lieux ? `<details class="lx"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}
-          <p class="fp-l">${dossierBouton(s.slug)}${s.video ? `<span class="go">${ext(s.video.url, esc(L.bandeAnnonce))}</span>` : ''}<a class="go" href="${lien(s, 'programmer')}" aria-label="${esc(L.decouvrir)} : ${esc(s.titre)}">${esc(L.decouvrir)}${ICON.r}</a></p>
+          <p class="fp-l">${dossierBouton(s.slug)}${boutonVideo(s, 'boite', 'go')}<a class="go" href="${lien(s, 'programmer')}" aria-label="${esc(L.decouvrir)} : ${esc(s.titre)}">${esc(L.decouvrir)}${ICON.r}</a></p>
           ${docsDe(s, 'pros').length ? `<div class="fp-dl"><p class="fp-lb">${esc(L.aTelecharger)}</p>${listeDocs(docsDe(s, 'pros'))}</div>` : ''}
         </div>
       </li>`;
@@ -1752,14 +2025,14 @@ html.ed-actif .ep-a::after{content:none}
   function etablissement() {
     const e = E.etablissement, rows = D.dates.filter(d => d.scolaire), num = numeroter(rows), A = S.actions;
     const fe = s => {
-      const C = s.actionCulturelle || {}, T = teinte(s);
+      const C = s.actionCulturelle || {};
       const ac = (...k) => edS(s, 'actionCulturelle', ...k);
       const tags = [C.public && `<span><span class="lb">${esc(L.public)}</span><span${ac('public')}>${esc(C.public)}</span></span>`, C.statut && `<span${ac('statut')}>${esc(C.statut)}</span>`].filter(Boolean);
       const t0 = (C.textes || [])[0];
       return `<li class="fp">
         ${cartouche(s, { cle: 'etablissement', haut: [[s.creation, 'creation']], photo: true })}
         <div class="fp-b">
-          ${C.type && !C.aCompleter ? `<p class="fe-type" style="--h2:${T.hp}"${ac('type')}>${esc(C.type)}</p>` : ''}
+          ${C.type && !C.aCompleter ? `<p class="fe-type" style="--h2:${varSp(s.slug)}"${ac('type')}>${esc(C.type)}</p>` : ''}
           ${tags.length ? `<p class="fe-tags">${tags.join('')}</p>` : ''}
           ${t0 ? `<p class="fe-x"${ac('textes', 0, 'texte')}>${t0.texte}</p>` : ''}
           ${(C.formule || []).length ? `<ul class="fo">${C.formule.map((x, i) => `<li${ac('formule', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}
@@ -1802,7 +2075,7 @@ html.ed-actif .ep-a::after{content:none}
   function spectacles() {
     return { titre: menuTexte('spectacles'), onglet: 'spectacles', html: `<div class="wrap">
       <header class="pg-h"><h1 class="pg-t" tabindex="-1">${esc(L.spectacles)}</h1></header>
-      <ul class="rep">${D.shows.map(s => `<li class="rp" style="${varsPapier(s)}">
+      <ul class="rep">${D.shows.map(s => `<li class="rp vp" style="${varsPapier(s)}">
         <span class="rp-ph"${edP(s, 'photo')}>${img(s.slug, '')}</span>
         <div class="rp-b">${s.statut ? `<p class="lab rp-k"${edS(s, 'statut')}>${esc(s.statut)}</p>` : ''}<h2 class="rp-t"><a href="${lien(s)}"${edS(s, 'titre')}>${esc(s.titre)}</a></h2>${s.sousTitre ? `<p class="rp-s"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}${s.lieuTemps ? `<p class="rp-lt"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</p>` : ''}</div>
         <p class="rp-c"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${gamme(s)}</p></li>`).join('')}</ul>
@@ -1879,8 +2152,20 @@ html.ed-actif .ep-a::after{content:none}
     const af = (s.affirmations || []).length ? `<div class="af">${s.affirmations.map((a, i) => `<p${edS(s, 'affirmations', i, 'texte')}>${esc(a.texte)}</p>`).join('')}</div>` : '';
     const cit = (s.citations || []).length ? `<div class="sec-b grid"><div class="ci">${s.citations.map((c, i) => `<figure${c.prose ? ' class="pr"' : ''}><blockquote><p>${c.vers.map((v, j) => `<span class="v"${edS(s, 'citations', i, 'vers', j)}>${esc(v)}</span>`).join('')}</p></blockquote>${c.source ? `<figcaption${edS(s, 'citations', i, 'source')}>${esc(c.source)}</figcaption>` : ''}</figure>`).join('')}</div></div>` : '';
     const sansListe = `<div data-agenda="${esc(s.slug)}"></div>`;   // sans date à venir : en mode édition, on y ajoute la première
+    // réserver (règle 17) : ses prochaines dates où l'on réserve en une bande de billets, la prochaine choisie d'office, son
+    // billet dessous, à côté de la planche ; une date qui ne se réserve plus (annulée) reste écrite dessous
+    const res = RS && !s.statut ? RS.dates(s.slug) : [], restes = rows.filter(d => !res.includes(d)), numR = numeroter(restes);
+    const titreTour = (s.tournee || {}).titre || L.actuellementEnTournee;
     let tour;
-    if (rows.length) tour = `<section class="sec lk" id="tournee" aria-labelledby="h-tour"><h2 class="sec-h" id="h-tour"${(s.tournee || {}).titre ? edS(s, 'tournee', 'titre') : ''}>${esc((s.tournee || {}).titre || L.actuellementEnTournee)}</h2>
+    if (res.length) tour = `<section class="sec lk" id="tournee" aria-labelledby="h-tour"><h2 class="sec-h" id="h-tour"${(s.tournee || {}).titre ? edS(s, 'tournee', 'titre') : ''}>${esc(titreTour)}</h2>
+      <div class="fr fr-tournee" id="t-frise"></div>
+      <div class="rs-zone" id="rs-zone">
+        <div class="rs-tete"><p class="lab rs-k-bande" id="rs-k">${esc(L.choisirUneDate)}</p><p class="rs-defile" aria-hidden="true"><button type="button" tabindex="-1" data-defile="-1">${FL_G}</button><button type="button" tabindex="-1" data-defile="1">${ICON.r}</button></p></div>
+        ${RS.bande(res, { attributs: ` aria-labelledby="rs-k" data-agenda="${esc(s.slug)}"`, bouton: d => ({ attributs: ` data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}"${d.l != null ? ` data-l="${d.l}"` : ''}` }) })}
+        <div class="grid rs-corps"><div class="rs-carte" id="rs-carte"></div><div class="show-pl">${plate({ lieux, passe: sp.passe, num: numR, label: titreTour })}</div></div>
+      </div>
+      ${restes.length ? `<div class="sec-b grid"><ul class="dls show-dls" data-agenda="${esc(s.slug)}">${restes.map(r => ligne(r, numR, { show: false, fid: cleProchaine(r) })).join('')}</ul></div>` : ''}</section>`;
+    else if (rows.length) tour = `<section class="sec lk" id="tournee" aria-labelledby="h-tour"><h2 class="sec-h" id="h-tour"${(s.tournee || {}).titre ? edS(s, 'tournee', 'titre') : ''}>${esc((s.tournee || {}).titre || L.actuellementEnTournee)}</h2>
       <div class="fr fr-tournee" id="t-frise"></div>
       <div class="sec-b grid"><ul class="dls show-dls" data-agenda="${esc(s.slug)}">${rows.map(r => ligne(r, num, { show: false, fid: cleProchaine(r) })).join('')}</ul>
       <div class="show-pl">${plate({ lieux, passe: sp.passe, num, label: (s.tournee || {}).titre || L.actuellementEnTournee })}</div></div></section>`;
@@ -1892,9 +2177,10 @@ html.ed-actif .ep-a::after{content:none}
     const cast = portraits(s);   // les portraits remplacent la ligne « avec »
     return `${af}
       <section class="sec" aria-labelledby="h-le"><h2 class="sec-h" id="h-le">${esc(L.leSpectacle)}</h2>
-        <div class="sec-b grid"><div class="txt">${(s.texte || []).map((p, i) => `<p${edS(s, 'texte', i)}>${p}</p>`).join('')}${s.video ? `<p class="va">${ext(s.video.url, esc(L.bandeAnnonce))}</p>` : ''}</div></div>
+        <div class="sec-b grid"><div class="txt">${(s.texte || []).map((p, i) => `<p${edS(s, 'texte', i)}>${p}</p>`).join('')}${s.video && !lisible(s.video) ? `<p class="va">${ext(s.video.url, esc(L.bandeAnnonce))}</p>` : ''}</div></div>
         ${cit}
       </section>
+      ${videos(s)}
       ${ph.length ? `<section class="sec" aria-labelledby="h-ph"><h2 class="sec-h" id="h-ph">${esc(L.photos)}</h2><div class="sec-b">${galerie(s, ph)}</div></section>` : ''}
       ${tour}
       <section class="sec" aria-labelledby="h-dist"><h2 class="sec-h" id="h-dist">${esc(L.distribution)}</h2>
@@ -2008,20 +2294,24 @@ html.ed-actif .ep-a::after{content:none}
       <header class="pg-h"><h1 class="pg-t" tabindex="-1"${ed('site.compagnie.titre')}>${esc(C.titre)}</h1></header>
       <div class="grid co">
         <div class="co-txt">${C.paragraphes.map((p, i) => `<p${i ? '' : ' class="co-1"'}${ed(`site.compagnie.paragraphes.${i}`)}>${p}</p>`).join('')}</div>
+      </div>
+      ${troupeHtml()}
+      <div class="grid co co-suite">
         <aside class="co-d" aria-labelledby="h-dates"><h2 class="lab" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
           <div class="c-frise" id="c-frise"></div>
           <ol class="chrono chrono-ed">${C.dates.map((d, i) => `<li><span class="yr"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(d.annee)}</span><span class="ti"${ed(`site.compagnie.dates.${i}.titre`)}>${esc(d.titre)}</span></li>`).join('')}</ol></aside>
+        ${Dr ? `<section class="co-dir" aria-labelledby="h-dir"><h2 class="sec-h" id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>
+          <div class="co-txt">${Dr.chapeau ? `<p class="co-1"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}${Dr.paragraphes.map((p, i) => `<p${ed(`site.compagnie.directeur.paragraphes.${i}`)}>${p}</p>`).join('')}</div>
+        </section>` : ''}
       </div>
-      ${Dr ? `<section class="sec" aria-labelledby="h-dir"><h2 class="sec-h" id="h-dir"${ed('site.compagnie.directeur.titre')}>${esc(Dr.titre)}</h2>
-        <div class="sec-b grid"><div class="co-txt">${Dr.chapeau ? `<p class="co-1"${ed('site.compagnie.directeur.chapeau')}>${esc(Dr.chapeau)}</p>` : ''}${Dr.paragraphes.map((p, i) => `<p${ed(`site.compagnie.directeur.paragraphes.${i}`)}>${p}</p>`).join('')}</div></div>
-      </section>` : ''}
       <div class="sec grid"><p class="part"${ed('site.partenaires')}>${S.partenaires}</p></div>
     </div>`, apres() {
+      vivreTroupe();
       // « En quelques dates » : la chronologie imprimée, de la première date à la dernière ; chaque création mène à sa page
       const ans = C.dates.map(d => +d.annee).filter(Boolean);
       if (ans.length) frise(main.querySelector('#c-frise'), { echelle: 'periode', debut: `${Math.min(...ans)}-01-01`, fin: `${Math.max(...ans)}-12-31`, orientation: 'verticale', hauteur: 760,
         etiquettes: true, couloirs: 1, libelle: C.datesTitre, classe: 'frise-cie-h',
-        points: C.dates.map((d, i) => { const sp = spDe(d); return { id: `c${i}`, jour: `${d.annee}-01-01`, quand: String(d.annee), titre: d.titre, lien: sp ? lien(sp) : null, couleur: sp ? teinte(sp).kp : 'var(--mag)' }; }) });
+        points: C.dates.map((d, i) => { const sp = spDe(d); return { id: `c${i}`, jour: `${d.annee}-01-01`, quand: String(d.annee), titre: d.titre, lien: sp ? lien(sp) : null, couleur: sp ? varSp(sp.slug) : 'var(--mag)' }; }) });
       // seules les années d'une création portent leur millésime
       const ecrites = new Set(C.dates.map(d => String(d.annee)));
       main.querySelectorAll('#c-frise .frise-mois > li').forEach(li => { if (!ecrites.has(li.textContent.trim())) li.classList.add('est-vide'); });
@@ -2095,6 +2385,9 @@ html.ed-actif .ep-a::after{content:none}
       + (S.espacePro ? `<li><a href="#/espace-pro" data-id="espace-pro">${esc(S.espacePro.titre)}</a></li>` : ''));
     nav.setAttribute('aria-label', L.menu);
     btn.textContent = L.menu;
+    // le jour et la nuit (THEME) : le bouton, posé une fois (refait seulement si son libellé change)
+    const tp = document.getElementById('theme-place');
+    if (typeof THEME !== 'undefined' && L.modeNuit && (!tp.firstElementChild || tp.firstElementChild.getAttribute('aria-label') !== L.modeNuit)) tp.innerHTML = THEME.bouton({ libelle: L.modeNuit, classe: 'theme' });
     const co = S.coordonnees;
     remplir(document.getElementById('foot'), `
     <div class="f-c"><p><span class="f-n"${ed('site.coordonnees.nom')}>${esc(co.nom)}</span>${co.adresse.map((a, i) => `<span class="f-a"${ed(`site.coordonnees.adresse.${i}`)}>${esc(a)}</span>`).join('')}</p></div>
@@ -2113,19 +2406,26 @@ html.ed-actif .ep-a::after{content:none}
   nav.addEventListener('click', e => { if (e.target.closest('a')) menu(false); });
   addEventListener('keydown', e => { if (e.key === 'Escape' && nav.classList.contains('open')) { menu(false); btn.focus(); } });
 
-  /* l'univers d'un spectacle habille toute la page : le papier, l'encre, l'accent, la lueur */
+  /* l'univers d'un spectacle habille toute la page : le papier, l'encre, l'accent, la lueur ; de jour ou de nuit (un univers
+     clair a sa nuit), et les entrées prennent la couleur qui se lit sur ce papier. Refait quand le thème change (THEME) */
+  let uCourant = null;
   function habiller(s) {
-    const b = document.body;
-    if (!s) { b.className = ''; b.setAttribute('style', couleursEntrees(PAPIER)); return; }
-    const T = teinte(s);
+    const b = document.body, n = nuit();
+    uCourant = s || null;
+    if (!s) { b.className = ''; b.setAttribute('style', couleursEntrees(n ? NUIT : PAPIER)); return; }
+    const T = teinte(s, n);
     b.className = 'u ' + (T.clair ? 'u-clair' : 'u-sombre');
-    b.setAttribute('style', `--paper:${T.f};--paper2:${T.f2};--ink:${T.t};--ink2:${T.t2};--rule:${T.rule};--mag:${T.at};--acc:${T.a};--titre:${T.h};--lueur:${T.l};${police(T)};color-scheme:${T.clair ? 'light' : 'dark'};${couleursEntrees(T.f)}`);
+    b.setAttribute('style', `--paper:${T.f};--paper2:${T.f2};--ink:${T.t};--ink2:${T.t2};--rule:${T.rule};--mag:${T.at};--acc:${T.a};--sur-acc:${T.sur};--titre:${T.h};--lueur:${T.l};${police(T)};color-scheme:${T.clair ? 'light' : 'dark'};${couleursEntrees(T.f)}`);
   }
+  // la bascule du jour et de la nuit : seul le papier de la page se refait (le reste suit par les variables)
+  if (typeof THEME !== 'undefined') THEME.surChangement(() => habiller(uCourant));
 
   const VUES = { '': accueil, voir, programmer, etablissement, spectacles, compagnie, contact,
     'mentions-legales': () => legal('mentions-legales'), 'politique-de-confidentialite': () => legal('politique-de-confidentialite') };
   // enPlace : la même vue refaite après un changement de D (pas de retour en haut, pas de focus, pas d'animation d'entrée)
   let EN_PLACE = false;
+  // les paramètres de l'adresse (#/voir?l=…, ?date=… : la date dont le billet s'ouvre)
+  let Q = new URLSearchParams();
 
   /* la page qu'on tourne : la nouvelle page se pose d'un rien de la droite (de la gauche au retour) pendant que le pli de la
      feuille passe dessus ; un geste (pointeur, clavier, molette) finit tout de suite ce qui bouge encore */
@@ -2169,6 +2469,7 @@ html.ed-actif .ep-a::after{content:none}
     PL.clear();
     const brut = (location.hash || '#/').replace(/\/+$/, '');
     let path = brut.replace(/^#\/?/, '').split('?')[0];
+    Q = new URLSearchParams(brut.split('?')[1] || '');
     // une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page)
     if (Object.prototype.hasOwnProperty.call(S.redirections, brut) && !(path === 'espace-pro' && S.espacePro)) { location.replace(S.redirections[brut]); return; }
     try { path = decodeURIComponent(path); } catch (err) { path = '\u0000'; }
@@ -2274,7 +2575,8 @@ html.ed-actif .ep-a::after{content:none}
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
   // pendant les temps morts, l'agenda passé est lu d'avance
   ('requestIdleCallback' in window ? requestIdleCallback : f => setTimeout(f, 400))(() => agendaPasse());
-  INTRO.ouvrir({ fond: '#f6f2ec', encre: '#1c1917', mot: true, classe: 'programme' });
+  // l'ouverture : la couverture du programme, sur le papier du jour ou sur le carton de la nuit
+  INTRO.ouvrir(nuit() ? { fond: NUIT, encre: '#ede5d8', mot: true, classe: 'programme' } : { fond: PAPIER, encre: '#1c1917', mot: true, classe: 'programme' });
 })();
 </script>
 </body>

@@ -45,13 +45,44 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
 .direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
 .direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
-/* dix rubriques : sous 1 940 px l'adresse du compte se retire ; sous 1 740 px les rubriques passent sur une seconde ligne ;
-   entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique courante en vue) */
-@media (max-width: 1939px) { .qui .moi { display: none; } }
-@media (max-width: 1739px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
+/* dix rubriques et la recherche : sous 2 080 px l'adresse du compte se retire ; sous 1 940 px les rubriques passent sur
+   une seconde ligne ; entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique
+   courante en vue) */
+@media (max-width: 2079px) { .qui .moi { display: none; } }
+@media (max-width: 1939px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
 @media (min-width: 861px) and (max-width: 1099px) { .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
+/* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
+   La loupe et le raccourci ; le mot en plus quand l'en-tête tient sur deux lignes (de 1 200 à 1 939 px) ; au téléphone,
+   la loupe seule, au bout de la ligne de la marque (les liens du compte passent dessous quand la place manque) */
+.chercher { display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 34px; padding: 4px 6px 4px 10px; border: 1px solid var(--trait); border-radius: 9px; background: var(--doux); color: var(--gris); font-weight: 600; font-size: 13.5px; cursor: pointer; }
+.chercher:hover { border-color: var(--gris); color: var(--encre); }
+.chercher svg { flex: none; }
+.chercher .mot { padding-right: 22px; }
+kbd { font: 650 11.5px/1 var(--police); padding: 3px 5px 2px; border: 1px solid var(--trait); border-bottom-width: 2px; border-radius: 5px; background: var(--carte); color: var(--gris); white-space: nowrap; }
+@media (max-width: 1199px), (min-width: 1940px) { .chercher .mot { display: none; } }
+@media (max-width: 860px) { .chercher { margin-left: auto; width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; } .chercher .mot, .chercher kbd { display: none; } .barre .qui { margin-left: 0; } }
+dialog.recherche { width: min(640px, calc(100% - 24px)); max-width: none; max-height: min(580px, calc(100dvh - 24px)); margin: max(12px, 9vh) auto auto; padding: 0; border: 1px solid var(--trait); border-radius: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 18px 60px rgba(20, 10, 20, .3); overflow: hidden; }
+dialog.recherche[open] { display: flex; }
+dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
+.rch-boite { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.rch-tete { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 16px; border-bottom: 2px solid var(--trait); }
+.rch-tete:focus-within { border-bottom-color: var(--accent); }
+.rch-tete svg { flex: none; color: var(--gris); }
+.rch-tete input[type=text] { flex: 1; min-width: 0; border: 0; background: none; font-size: 17px; padding: 6px 0; min-height: 42px; box-shadow: none; }
+.rch-entete { margin: 0; padding: 10px 18px 4px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.rch-liste { list-style: none; margin: 0; padding: 2px 8px 8px; overflow: auto; overscroll-behavior: contain; flex: 1; min-height: 0; }
+.rch-liste [role=option] { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
+.rch-liste [role=option][aria-selected=true] { background: var(--accent-doux); }
+.rch-liste .pastille { --c: var(--trait); }
+.rch-corps { flex: 1; min-width: 0; display: grid; }
+.rch-corps b, .rch-corps small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rch-corps small { color: var(--gris); font-size: 13px; }
+.rch-type { flex: none; font-size: 12px; font-weight: 700; color: var(--gris); }
+.rch-liste mark { background: none; color: inherit; text-decoration: underline 2px var(--accent); text-underline-offset: 3px; }
+.rch-aide { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 8px 18px; border-top: 1px solid var(--trait); font-size: 12.5px; color: var(--gris); }
+@media (max-width: 520px) { dialog.recherche { width: calc(100% - 16px); margin-top: 8px; max-height: calc(100dvh - 16px); } .rch-aide { display: none; } }
 
 /* boutons et champs */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-weight: 600; text-decoration: none; color: var(--encre); white-space: nowrap; }
@@ -93,7 +124,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
-@media (min-width: 1101px) and (max-width: 1739px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
+@media (min-width: 1101px) and (max-width: 1939px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
@@ -453,12 +484,14 @@ function changement(t, p) {
 const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
+    <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true">${RACCOURCI_RCH}</kbd></button>
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
   $('#b-mdp').addEventListener('click', () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Changer de mot de passe quand même ?')) { E.sale = false; ecranMotDePasse(true); } });
+  $('#b-chercher').addEventListener('click', ouvrirRecherche);
   // au téléphone, les rubriques défilent : la rubrique courante est amenée en vue (hors du fondu de droite)
   const nav = $('.nav'), courante = $('.nav a[aria-current="page"]');
   if (nav && courante && nav.scrollWidth > nav.clientWidth) {
@@ -494,7 +527,139 @@ window.addEventListener('hashchange', () => {
 window.addEventListener('beforeunload', e => { if (E.sale) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]'); if (b) { e.preventDefault(); b.click(); } }
+  if ((SUR_MAC ? e.metaKey : e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && E.pret) { e.preventDefault(); ouvrirRecherche(); }
 });
+
+// ===================================================================================================== la recherche rapide
+/* Ctrl K (⌘K sur un Mac) ou la loupe de l'en-tête : les dates (leur spectacle, leur lieu, leur commune, leurs jours : « 21
+   oct », « mardi », « 21/10 »), les personnes, les lieux, les spectacles, les feuilles de route et les rubriques, cherchés
+   dans ce que l'administration a déjà en mémoire (E) : aucune requête à la frappe. L'index se refait à chaque ouverture
+   (le temps réel a pu changer E entre-temps). Le champ est une combobox, les résultats une listbox : ↑ ↓ (Page ↑ ↓) pour
+   choisir, Entrée pour ouvrir, Échap pour fermer ; sans rien taper, les prochaines dates. Chaque mot tapé doit se trouver ;
+   un mot au début du titre compte plus qu'au milieu d'un mot, et, à égalité, les dates à venir passent avant les passées
+   (les plus proches d'abord), une feuille de route juste après sa date. */
+const SUR_MAC = /mac|iphone|ipad|ipod/i.test(navigator.userAgentData?.platform || navigator.platform || '');
+const RACCOURCI_RCH = SUR_MAC ? '⌘K' : 'Ctrl K';
+const LOUPE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>';
+const JOURS_RCH = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const TYPES_RCH = [['Rubrique', 'Rubrique'], ['Spectacle', 'Spectacle'], ['Personne', 'Personne'], ['Lieu', 'Lieu'], ['Date', 'Date'], ['Feuille de route', 'Feuille']];
+const RCH = { index: [], vus: [], actif: 0, minuteur: null };
+const cleRch = s => ` ${norm(s).replace(/[’‘`]/g, "'").replace(/[^a-z0-9'/]+/g, ' ').trim()} `;
+const motsRch = q => cleRch(q).trim().split(' ').filter(Boolean);
+const jourRch = j => { const d = new Date(`${j}T12:00:00`), n = +j.slice(8, 10), m = +j.slice(5, 7);
+  return `${JOURS_RCH[d.getDay()]} ${n}${n === 1 ? ' 1er' : ''} ${AGENDA.MOIS[m - 1]} ${MC[m - 1]} ${j.slice(0, 4)} ${j.slice(8, 10)}/${j.slice(5, 7)}/${j.slice(0, 4)} ${n}/${m} ${j}`; };
+function indexRch() {
+  const xs = [], joursDe = new Map(), feuilles = new Map((E.feuilles || []).map(f => [f.date_id, f]));
+  E.reps.forEach(r => { if (!r.jour) return; if (!joursDe.has(r.date_id)) joursDe.set(r.date_id, new Set()); joursDe.get(r.date_id).add(r.jour); });
+  const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.titre} ${o.sous || ''} ${plus}`) });
+  RUBRIQUES.forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100 }));
+  E.spectacles.forEach(s => mettre({ type: 'Spectacle', titre: s.titre, sous: s.page ? '' : 'Ancien spectacle', href: `#/spectacles/${s.slug}`, couleur: couleurSp(s), ordre: s.page ? 0 : 1 }));
+  (E.personnes || []).forEach(p => mettre({ type: 'Personne', titre: nomDe(p) || 'Sans nom', sous: (p.metiers || []).join(', '), href: `#/equipe/${p.id}` }));
+  E.lieux.forEach(l => mettre({ type: 'Lieu', titre: l.nom || l.commune, sous: [l.nom ? l.commune : '', l.departement ? `(${l.departement})` : ''].filter(Boolean).join(' '), href: `#/lieux/${l.id}` }, l.adresse));
+  E.dates.forEach(d => {
+    const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), fin = d.fin || d.debut, avenir = fin >= AUJ, t = Date.parse(`${d.debut}T12:00:00Z`) / 864e5;
+    const quand = d.precision === 'mois' ? `${AGENDA.MOIS[+d.debut.slice(5, 7) - 1]} ${d.debut.slice(0, 4)}` : d.precision === 'saison' ? `saison ${d.saison || ''}` : `${jourCourt(d.debut)}${fin !== d.debut ? ` → ${jourCourt(fin)}` : ''}`;
+    const ou = l ? (l.nom ? `${l.nom}, ${l.commune}` : l.commune) : (d.intitule || '').split(' — ')[1] || 'lieu à préciser';
+    const etat = { option: 'option', annulee: 'annulée', reportee: 'reportée' }[d.statut];
+    const jours = new Set(joursDe.get(d.id) || []);
+    if (d.precision !== 'mois' && d.precision !== 'saison') for (let j = d.debut, n = 0; j <= fin && n < 62; j = plusJours(j, 1), n++) jours.add(j);
+    const plus = `${l ? `${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${(NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || ''} ${[...jours].map(jourRch).join(' ')}`;
+    const base = { titre: s?.titre || 'Spectacle à préciser', couleur: couleurSp(s), ordre: avenir ? t : 1e9 - t, avenir, sous: `${quand} · ${ou}${etat ? ` · ${etat}` : ''}` };
+    mettre({ ...base, type: 'Date', href: `#/representations/${d.id}` }, plus);
+    const f = feuilles.get(d.id);
+    if (f) mettre({ ...base, type: 'Feuille de route', sous: `${base.sous} · ${f.statut === 'publiee' ? `publiée (v${f.version})` : 'brouillon'}`, href: `#/feuilles/${d.id}` }, `feuille de route ${plus}`);
+  });
+  return xs;
+}
+function chercherRch(index, mots) {
+  const out = [];
+  for (const x of index) {
+    let s = 0;
+    for (const m of mots) {
+      if (!x.c.includes(m)) { s = -1; break; }
+      s += x.ct.startsWith(` ${m}`) ? 30 : x.ct.includes(` ${m}`) || x.ct.includes(`'${m}`) ? 20 : x.ct.includes(m) ? 10 : x.c.includes(` ${m}`) || x.c.includes(`'${m}`) ? 8 : 3;
+    }
+    if (s >= 0) out.push([s, x]);
+  }
+  return out.sort((a, b) => b[0] - a[0] || a[1].ordre - b[1].ordre || a[1].rang - b[1].rang || a[1].titre.localeCompare(b[1].titre, 'fr')).map(a => a[1]);
+}
+// les mots trouvés, soulignés dans le texte d'origine (accents et majuscules compris)
+function surlignerRch(texte, mots) {
+  const s = String(texte || ''), marque = new Array(s.length).fill(false);
+  let n = ''; const ou = [];
+  for (let i = 0; i < s.length; i++) { const c = norm(s[i]).replace(/[’‘`]/g, "'"); for (let k = 0; k < c.length; k++) { n += c[k]; ou.push(i); } }
+  mots.forEach(m => { for (let p = n.indexOf(m); p >= 0; p = n.indexOf(m, p + m.length)) for (let k = p; k < p + m.length; k++) marque[ou[k]] = true; });
+  let h = '', dedans = false;
+  for (let i = 0; i < s.length; i++) { if (marque[i] !== dedans) { h += dedans ? '</mark>' : '<mark>'; dedans = marque[i]; } h += esc(s[i]); }
+  return h + (dedans ? '</mark>' : '');
+}
+function dialogueRch() {
+  let dlg = $('#recherche');
+  if (dlg) return dlg;
+  dlg = document.createElement('dialog');
+  dlg.id = 'recherche'; dlg.className = 'recherche'; dlg.setAttribute('aria-labelledby', 'rch-titre');
+  dlg.innerHTML = `<div class="rch-boite"><h2 class="sr" id="rch-titre">Rechercher dans l’administration</h2>
+    <div class="rch-tete">${LOUPE}<input type="text" id="rch-q" role="combobox" aria-expanded="false" aria-controls="rch-liste" aria-autocomplete="list" aria-describedby="rch-aide"
+      placeholder="Une date, une personne, un lieu, un spectacle…" aria-label="Rechercher" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><button type="button" class="btn petit" data-fermer>Fermer</button></div>
+    <p class="rch-entete" id="rch-entete"></p><ul class="rch-liste" id="rch-liste" role="listbox" aria-labelledby="rch-entete"></ul>
+    <p class="rch-aide" id="rch-aide"><span><kbd>↑</kbd> <kbd>↓</kbd> pour choisir</span><span><kbd>Entrée</kbd> pour ouvrir</span><span><kbd>Échap</kbd> pour fermer</span></p>
+    <p class="sr" aria-live="polite" id="rch-statut"></p></div>`;
+  document.body.append(dlg);
+  const q = $('#rch-q', dlg), liste = $('#rch-liste', dlg);
+  q.addEventListener('input', rendreRch);
+  q.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); activerRch(RCH.actif + (e.key === 'ArrowDown' ? 1 : -1)); }
+    else if (e.key === 'PageDown' || e.key === 'PageUp') { e.preventDefault(); activerRch(Math.max(0, Math.min(RCH.vus.length - 1, RCH.actif + (e.key === 'PageDown' ? 6 : -6)))); }
+    else if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); allerRch(RCH.actif); }
+  });
+  liste.addEventListener('mousemove', e => { const o = e.target.closest('[role=option]'); if (o && +o.dataset.i !== RCH.actif) activerRch(+o.dataset.i, false); });
+  liste.addEventListener('click', e => { const o = e.target.closest('[role=option]'); if (o) allerRch(+o.dataset.i); });
+  $('[data-fermer]', dlg).addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });   // un clic à côté de la fenêtre la ferme
+  return dlg;
+}
+function ouvrirRecherche() {
+  if (!E.pret) return;
+  const dlg = dialogueRch(), q = $('#rch-q');
+  RCH.index = indexRch();
+  if (!dlg.open) { q.value = ''; dlg.showModal(); }
+  rendreRch();
+  q.focus(); q.select();
+}
+function rendreRch() {
+  const q = $('#rch-q'), mots = motsRch(q.value);
+  let xs, entete;
+  if (!mots.length) {
+    xs = RCH.index.filter(x => x.type === 'Date' && x.avenir).sort((a, b) => a.ordre - b.ordre).slice(0, 8);
+    entete = xs.length ? 'Prochaines dates' : 'Tapez un nom, une commune, un jour…';
+  } else {
+    const tous = chercherRch(RCH.index, mots);
+    xs = tous.slice(0, 50);
+    entete = tous.length ? `${tous.length} résultat${tous.length > 1 ? 's' : ''}${tous.length > xs.length ? `, les ${xs.length} premiers` : ''}` : 'Rien ne correspond';
+  }
+  RCH.vus = xs;
+  $('#rch-entete').textContent = entete;
+  $('#rch-liste').innerHTML = xs.map((x, i) => `<li role="option" id="rch-o${i}" data-i="${i}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}</span><span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
+  q.setAttribute('aria-expanded', String(xs.length > 0));
+  activerRch(0, false);
+  $('#rch-liste').scrollTop = 0;
+  clearTimeout(RCH.minuteur);
+  RCH.minuteur = setTimeout(() => { $('#rch-statut').textContent = mots.length ? entete : ''; }, 450);
+}
+function activerRch(i, defiler = true) {
+  const q = $('#rch-q'), n = RCH.vus.length;
+  if (!n) { q.removeAttribute('aria-activedescendant'); return; }
+  RCH.actif = (i + n) % n;
+  $$('#rch-liste [role=option]').forEach((o, k) => o.setAttribute('aria-selected', String(k === RCH.actif)));
+  q.setAttribute('aria-activedescendant', `rch-o${RCH.actif}`);
+  if (defiler) $(`#rch-o${RCH.actif}`).scrollIntoView({ block: 'nearest' });
+}
+function allerRch(i) {
+  const x = RCH.vus[i];
+  if (!x) return;
+  $('#recherche').close();
+  if (location.hash !== x.href) location.hash = x.href;
+}
 function rafraichirListes() {
   const l = $('[data-liste]');
   if (l && typeof l.rafraichir === 'function') l.rafraichir();

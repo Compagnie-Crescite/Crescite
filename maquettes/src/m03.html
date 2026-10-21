@@ -17,6 +17,7 @@
   --rule-2: #bfb7a8;
   --mag: #bc3e80;
   --mag-ink: #a3306c;
+  --foot-fond: #141414;
   --foot-ink: #efebe3;
   --foot-muted: #c9c3b8;
   --foot-rule: #3a3733;
@@ -58,7 +59,36 @@
   --tt-accent: #a3306c;
   --tt-neutre: #8a847a;
   --tt-epaisseur: 2.4;
+  --sp-aucun: #8a847a;    /* un spectacle hors du répertoire, sur le papier */
+  /* la projection (LECTEUR) : le noir du cadre, son ombre, ses filets, l'encre sur l'affiche ; la page éteinte autour */
+  --video: #0b0a09; --video-ombre: rgba(0, 0, 0, .72); --video-filet: rgba(255, 255, 255, .14); --video-filet-fort: rgba(255, 255, 255, .5);
+  --video-encre: #ffffff; --video-voile: rgba(8, 7, 6, .92);
 }
+/* ———— la nuit (règle 19, THEME) : la saison imprimée en négatif ————
+   La revue retournée, comme une affiche suisse tirée en blanc sur noir : un papier presque noir, chaud ; l'encre devient
+   un blanc cassé, les filets des gris chauds, la magenta s'éclaire pour le texte. Les couleurs des spectacles sur le papier
+   prennent leur couleur de scène (--sp-*, couleurs()), les univers clairs passent dans leur propre nuit (--un-*,
+   univers()) ; les univers sombres restent eux-mêmes. AA : encre 16:1, encre-2 7,6:1, magenta-encre 7:1 sur le papier. */
+html[data-theme="jour"] { color-scheme: light; }
+html[data-theme="nuit"] {
+  color-scheme: dark;
+  --paper: #131211; --paper-2: #1f1d1a; --field: #1a1816; --paper-blanc: #ffffff;
+  --ink: #f1ede5; --ink-2: #b4ada2; --rule: #34312d; --rule-2: #5b564f;
+  --mag: #bc3e80; --mag-ink: #f07ab6;
+  --foot-fond: #0b0a09; --foot-rule: #2c2926; --foot-rule-2: #4e4a45;
+  --shadow-carton: rgba(0, 0, 0, .7); --shadow-barre: rgba(0, 0, 0, .7); --shadow-menu: rgba(0, 0, 0, .55); --shadow-bas: rgba(0, 0, 0, .6);
+  --intro-marge: rgba(240, 122, 182, .34); --intro-ligne: rgba(241, 237, 229, .06);
+  --ed-fond: #1a1816; --ed-encre: #f1ede5; --ed-accent: #f07ab6; --ed-sur-accent: #131211; --ed-trait: #5b564f;
+  --tt-encre: #f1ede5; --tt-accent: #f07ab6; --tt-neutre: #8f887d;
+  --sp-aucun: #9a9387;
+  --lune: #f6d58b;
+}
+/* un univers clair dans sa nuit : ses couleurs de D retournées (son texte, assombri, devient son fond), posées à côté
+   des siennes (--un-*) par uStyle ; les univers sombres n'en ont pas besoin */
+html[data-theme="nuit"] .u-clair { --u-fond: var(--un-fond) !important; --u-fond2: var(--un-fond2) !important; --u-texte: var(--un-texte) !important;
+  --u-texte2: var(--un-texte2) !important; --u-titre: var(--un-titre) !important; --u-vif: var(--un-vif) !important; --u-sur: var(--un-sur) !important; }
+/* une entrée sur le papier de nuit : sa couleur vive (la sombre ne se lirait pas) */
+html[data-theme="nuit"] [style*="--e:"] { --e: var(--ev) !important; }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--head) + 16px); scroll-padding-bottom: var(--bas); }
 body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.125rem/1.5 var(--at); font-kerning: normal; }
@@ -107,12 +137,21 @@ table { border-collapse: collapse; }
 .e-fl { margin-left: auto; color: var(--e); opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; }
 .entrees a:hover .e-fl, .entrees a[aria-current] .e-fl { opacity: 1; transform: none; }
 .entrees a > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.menu2 { position: absolute; top: 0; right: max(var(--gut), calc((100% - 1320px) / 2)); height: var(--h1); display: flex; align-items: center; }
+.menu2 { position: absolute; top: 0; right: calc(max(var(--gut), calc((100% - 1320px) / 2)) + 79px); height: var(--h1); display: flex; align-items: center; }
+/* au bout de la rangée de la marque : le jour et la nuit (règle 19), puis, au téléphone, le bouton du menu */
+.tete-d { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.tete-d::before { content: ""; width: 1px; height: 26px; background: var(--rule-2); }
+.theme-m03 { flex: none; display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--rule-2); border-radius: 50%;
+  background: var(--field); color: var(--ink); cursor: pointer; transition: border-color .15s, color .15s, background-color .15s, transform .15s; }
+.theme-m03:hover { border-color: var(--ink); }
+.theme-m03 .theme-icone { width: 22px; height: 22px; }
+html[data-theme="nuit"] .theme-m03 { color: var(--lune); }   /* la lune, d'un jaune de lampe : 12:1 sur le papier de nuit */
+html[data-theme="nuit"] .theme-m03:hover { border-color: var(--lune); }
 .menu2 ul { display: flex; gap: 24px; }
 .menu2 a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 0 4px; text-decoration: none; font-weight: 600; font-size: .9375rem; color: var(--ink-2); border-bottom: 2px solid transparent; }
 .menu2 a:hover { color: var(--ink); border-bottom-color: var(--rule-2); }
 .menu2 a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
-.menu-btn { display: none; position: absolute; top: calc((var(--h1) - 44px) / 2); right: var(--gut); align-items: center; gap: 9px; height: 44px; padding: 0 16px 0 13px; border: 1px solid var(--ink); border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
+.menu-btn { display: none; flex: none; align-items: center; gap: 9px; height: 44px; padding: 0 16px 0 13px; border: 1px solid var(--ink); border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
 
 /* ---------- Tête de page ---------- */
 .hero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); row-gap: 22px; align-items: end; padding-top: 44px; padding-bottom: 28px; }
@@ -714,6 +753,11 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .co { align-items: start; row-gap: 48px; }
 .co-text { grid-column: 1 / 8; }
 .co-text p { max-width: 66ch; }
+/* la présentation seule sur sa rangée (la troupe et les repères viennent dessous) : composée sur deux colonnes, comme une
+   page de revue, le chapeau sur toute la largeur */
+.co > .co-text:only-child { grid-column: 1 / -1; columns: 2; column-gap: var(--gap); }
+.co > .co-text:only-child > p:first-of-type { column-span: all; max-width: 62ch; margin-bottom: 26px; }
+.co > .co-text:only-child p { break-inside: avoid-column; }
 .co-text > p:first-of-type { font: 500 1.25rem/1.45 var(--sg); letter-spacing: -.015em; color: var(--ink); }
 .co-text p + p { margin-top: 18px; }
 .co-dates { grid-column: 9 / 13; padding: 18px 20px 20px; background: var(--field); border: 1px solid var(--rule-2); border-top: 4px solid var(--ink); }
@@ -751,7 +795,7 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .dons p { padding-top: 16px; border-top: 1px solid var(--rule); max-width: 88ch; font-size: .9375rem; line-height: 1.6; color: var(--ink-2); }
 
 /* ---------- Pied de page ---------- */
-.site-foot { margin-top: 128px; padding: 56px 0 28px; background: var(--ink); color: var(--foot-ink); border-top: 3px double var(--foot-rule-2); }
+.site-foot { margin-top: 128px; padding: 56px 0 28px; background: var(--foot-fond); color: var(--foot-ink); border-top: 3px double var(--foot-rule-2); }
 body[data-vue="spectacle"] .site-foot { margin-top: 0; }
 .site-foot a { color: var(--paper-blanc); }
 .site-foot :focus-visible { outline-color: var(--foot-focus); }
@@ -799,6 +843,8 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   .site-head { top: 0; }
   .tete-1 { border-bottom-color: var(--ink); }
   .menu-btn { display: inline-flex; }
+  .tete-d { gap: 10px; }
+  .tete-d::before { display: none; }
   .menu2 { display: none; top: var(--h1); left: 0; right: 0; height: auto; padding: 4px var(--gut) 18px; background: var(--field); border-bottom: 1px solid var(--ink); box-shadow: 0 18px 32px var(--shadow-menu); }
   .menu2.open { display: block; }
   .menu2 ul { flex-direction: column; gap: 0; }
@@ -948,8 +994,8 @@ main { display: block; min-height: 100svh; }   /* sa place est gardée pendant l
 [data-mv="cascade"].mv-attente > * { transition: opacity .3s var(--c3s), transform .34s var(--c3s); transition-delay: calc(var(--mv-delai, 0ms) + min(var(--mv-i, 0), 10) * 40ms); }
 [data-mv="cascade"].mv-attente:not(.mv-vu) > * { transform: translateX(-12px); }
 /* la pression : la pièce descend d'un pixel, à l'instant même */
-:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .sw-t, .sw-m, .menu-btn, .dos-bt, .btn, .ep-a, .f-edit, .lien-v, .suite, .t-link, .entrees a, .u-onglets a, .menu2 a, .choix a, .sai > summary) { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: .15s; }
-:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .sw-t, .sw-m, .menu-btn, .dos-bt, .btn, .ep-a, .f-edit, .choix a).mv-presse { transform: translateY(1px); transition-duration: .06s; }
+:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .sw-t, .sw-m, .menu-btn, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .lien-v, .suite, .t-link, .entrees a, .u-onglets a, .menu2 a, .choix a, .sai > summary, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place) { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: .15s; }
+:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .sw-t, .sw-m, .menu-btn, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .choix a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place).mv-presse { transform: translateY(1px); transition-duration: .06s; }
 :is(.entrees a, .u-onglets a, .menu2 a, .sai > summary, .t-link, .suite, .lien-v).mv-presse { background-color: color-mix(in srgb, var(--ink) 6%, transparent); transition-duration: .06s; }
 /* une ligne vers laquelle mène une frise : elle se marque d'un aplat, qui s'efface */
 @keyframes m3-vise { 0%, 45% { background-color: color-mix(in srgb, var(--c, var(--ink)) 16%, transparent); } }
@@ -1109,6 +1155,233 @@ html.ed-actif .ep-a::after { content: none; }
   .entrees a::after { top: 0; }
   .co-frise .frise-mois-nom { font-size: 1rem; }
 }
+/* ——— la compagnie : la présentation, la troupe, puis les repères (la table des années, sur quatre colonnes, et la frise) ——— */
+.co-reperes { margin-top: 88px; }
+.co-reperes .co-dates { grid-column: 1 / -1; }
+.co-reperes .annees { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--gap); }
+
+/* ——— la troupe (règle 20, TROUPE) : l'ours de la revue, posé sur la grille ———
+   La pieuvre de la compagnie à la racine ; de là, le filet court sur toute la largeur et tombe sur les colonnes des
+   métiers (un organigramme, qui fait quoi d'un coup d'œil) ; le jeu, sous elle, en planche contact (les visages publiés,
+   bord à bord, en gris, qui prennent leur couleur quand on les allume), puis les noms seuls. Une personne : sa vignette
+   seulement si sa photo est publiée, sinon le nom seul, à côté d'un carré d'encre (les points de l'agenda). Survolée ou
+   choisie, toutes ses places s'allument et des filets magenta les relient ; les autres s'estompent. Au défilement, le
+   filet se trace, les colonnes tombent, les noms se posent dans la grille (animations liées au défilement). */
+.troupe-m03 { margin-top: 88px; }
+.tr3 { --tr3-trait: var(--ink); --troupe-lien: var(--mag); --troupe-ic-fond: var(--paper); --troupe-ventouse-fond: var(--paper);
+  position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); align-items: start; padding-top: 26px; view-timeline: --tr3 block; }
+.tr3-racine { grid-column: 1 / -1; display: flex; align-items: center; height: 52px; }
+.tr3-logo { flex: none; width: 52px; height: 52px; margin-right: 16px; }
+.tr3-logo svg { display: block; width: 100%; height: 100%; }
+.tr3-tronc { flex: 1; height: 2px; background: var(--tr3-trait); transform-origin: 0 50%; }
+.tr3-jeu { grid-column: 1 / 7; }
+.tr3-autres { grid-column: 7 / 13; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--gap); }
+.tr3-cat { position: relative; z-index: 2; min-width: 0; padding: 22px 0 44px; view-timeline: --tr3-cat block; }
+/* les colonnes des métiers tombent du filet : leur trait à gauche, depuis le filet jusqu'au bas de la colonne */
+.tr3-autres .tr3-cat { padding-left: 18px; }
+.tr3-autres .tr3-cat::before { content: ""; position: absolute; left: 0; top: -26px; bottom: 0; width: 1px; background: var(--tr3-trait); transform-origin: 50% 0; }
+.tr3-t { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding-bottom: 12px; border-bottom: 3px double var(--ink); font: 500 1.375rem/1.15 var(--sg); letter-spacing: -.02em; text-wrap: balance; }
+.tr3-ic { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); transition: background-color .15s, color .15s; }
+.tr3-ic .troupe-icone { width: 28px; height: 28px; }
+.tr3-cat:is(:hover, .est-allume) .tr3-ic { background: var(--ink); color: var(--paper); --troupe-ic-fond: var(--ink); }
+.tr3-places { list-style: none; margin: 0; padding: 0; }
+.tr3-li { position: relative; }
+.tr3-place { position: relative; display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 44px; margin: 0; padding: 10px 8px 11px 0; border: 0; border-bottom: 1px solid var(--rule);
+  background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.tr3-pt { flex: none; width: 10px; height: 10px; margin-top: .42em; background: var(--ink); transition: background-color .15s, transform .15s; }
+.tr3-v { flex: none; display: block; width: 44px; height: 44px; overflow: hidden; background: var(--paper-2); }
+.tr3-v img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 22%; filter: grayscale(1) contrast(1.04); transition: filter .2s; }
+.tr3-qui { display: grid; gap: 2px; min-width: 0; }
+.tr3-nom { font: 500 1.125rem/1.2 var(--sg); letter-spacing: -.015em; overflow-wrap: anywhere; transition: color .15s; }
+.tr3-m { font-size: .875rem; line-height: 1.35; color: var(--ink-2); }
+.tr3-m > span + span::before { content: " · "; }
+/* la planche contact : les visages bord à bord, quatre par rang, le nom dessous */
+.tr3-planche { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px 12px; margin-bottom: 8px; }
+.tr3-planche .tr3-place { flex-direction: column; gap: 8px; padding: 0 0 8px; }
+.tr3-planche .tr3-v { width: 100%; height: auto; aspect-ratio: 1; }
+.tr3-planche .tr3-nom span { display: block; }
+.tr3-noms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--gap); }
+/* allumée : la personne et toutes ses places, les autres s'estompent ; choisie, un filet magenta la souligne */
+.tr3-place:is(:hover, .est-allume) .tr3-nom { color: var(--mag-ink); }
+.tr3-place:is(:hover, .est-allume) .tr3-pt { background: var(--mag); transform: rotate(45deg); }
+.tr3-place:is(:hover, .est-allume, [aria-pressed="true"]) .tr3-v img { filter: none; }
+.tr3-place[aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--mag); }
+.tr3-place:focus-visible { outline: 3px solid var(--mag); outline-offset: 2px; }
+.tr3.est-allume .tr3-place:not(.est-allume), .tr3.est-groupe .tr3-place:not(.est-allume) { opacity: .35; }
+.tr3 .troupe-lien { stroke-width: 1.6; }
+.tr3 .troupe-lueur { border-radius: 0; width: 8px; height: 8px; }
+@keyframes tr3-trace { from { transform: scaleX(0); } }
+@keyframes tr3-tombe { from { transform: scaleY(0); } }
+@keyframes tr3-pose { from { opacity: 0; transform: translateX(-12px); } }
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    html:not(.m3-fixe):not(.ed-actif) .tr3-tronc { animation: tr3-trace linear both; animation-timeline: --tr3; animation-range: entry 10% entry 80%; }
+    html:not(.m3-fixe):not(.ed-actif) .tr3-autres .tr3-cat::before { animation: tr3-tombe linear both; animation-timeline: --tr3-cat; animation-range: entry 0% entry 100%; }
+    html:not(.m3-fixe):not(.ed-actif) .tr3-li { animation: tr3-pose linear both; animation-timeline: view(); animation-range: entry 10% entry 90%; }
+  }
+}
+
+/* ———— réserver une date, d'un geste (règle 17, RESERVER) : la grille de la saison ————
+   Sur la page d'un spectacle, la bande de ses prochaines dates, une colonne par date comme dans un calendrier de saison
+   (le jour de la semaine en capitales, le quantième en grand, le mois, les heures en chiffres de même largeur sous un filet,
+   la commune) ; la date choisie s'imprime dans la couleur du spectacle. Sa carte dessous : la fiche de la date dans
+   l'univers du spectacle, sa photo en fond discret, les heures en grand, et « Réserver » en aplat sur toute la largeur, le
+   geste évident. Sur l'accueil et « Je viens voir un spectacle », la date de chaque ligne est un bouton qui ouvre la carte
+   sous elle. */
+.rs-zone { margin-top: 26px; }
+.rs-k-bande { margin: 0 0 10px; font: 700 .8125rem/1.3 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.rs-bande { gap: 0; padding: 0 0 12px; border-top: 2px solid var(--u-texte); scroll-padding-inline: 0; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--u-texte) 35%, transparent) transparent; }
+.rs-date { position: relative; width: 172px; min-height: 148px; padding: 14px 16px 16px; border: 0; border-right: 1px solid color-mix(in srgb, var(--u-texte) 24%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--u-texte) 24%, transparent);
+  background: none; color: var(--u-texte); text-align: left; }
+.rs-date:first-child { border-left: 1px solid color-mix(in srgb, var(--u-texte) 24%, transparent); }
+.rs-date:hover, .rs-date.dt.on { background: color-mix(in srgb, var(--u-texte) 7%, transparent); }
+.rs-date:focus-visible { outline: 3px solid var(--u-vif); outline-offset: -3px; }
+.rs-date.dt::before { content: none; }
+.rs-q { display: block; }
+.rs-s { display: block; min-height: 1.3em; font: 700 .75rem/1.3 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.rs-n { display: block; margin-top: 6px; font: 500 2.75rem/.86 var(--sg); letter-spacing: -.045em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rs-m { display: block; margin-top: 6px; font: 500 1.125rem/1.1 var(--sg); letter-spacing: -.015em; }
+.rs-h { display: block; margin-top: 12px; padding-top: 8px; border-top: 1px solid currentColor; font: 600 1.0625rem/1.25 var(--sg); font-variant-numeric: tabular-nums; }
+.rs-h--sans { font: 400 .875rem/1.3 var(--at); }
+.rs-o { display: block; margin-top: 3px; overflow: hidden; font-size: .875rem; line-height: 1.3; color: var(--u-texte2); white-space: nowrap; text-overflow: ellipsis; }
+.rs-date[aria-pressed="true"] { background: var(--u-titre); color: var(--u-sur); }
+.rs-date[aria-pressed="true"] :is(.rs-s, .rs-o) { color: inherit; }
+.rs-date[aria-pressed="true"]::after { content: ""; position: absolute; left: 22px; bottom: -7px; width: 13px; height: 13px; background: var(--u-titre); transform: rotate(45deg); }
+.rs-corps { margin-top: 14px; align-items: start; row-gap: 26px; }
+.rs-corps > .rs-carte { grid-column: 1 / 8; }
+.rs-corps > .t-carte { grid-column: 8 / 13; position: sticky; top: calc(var(--head) + 16px); }
+/* la carte d'une date : la fiche, dans l'univers de son spectacle (--rs-bg : son fond, que le voile de la grille reprend) */
+.rs-carte { --rs-bg: var(--u-fond2); position: relative; isolation: isolate; overflow: hidden; min-height: 300px; background: var(--rs-bg); color: var(--u-texte); border-top: 6px solid var(--u-titre); }
+.rs-photo { inset: 0 0 0 auto; width: 46%; height: 100%; opacity: .34; -webkit-mask-image: linear-gradient(90deg, transparent, #000 62%); mask-image: linear-gradient(90deg, transparent, #000 62%); }
+.rs-c { position: relative; display: flex; flex-direction: column; align-items: stretch; max-width: 36rem; padding: 22px 24px 24px; }
+.rs-sp { margin: 0; font: var(--u-gr) clamp(1.75rem, 2.6vw, 2.5rem)/1 var(--u-police); letter-spacing: 0; color: var(--u-titre); overflow-wrap: break-word; }
+.rs-sp a { color: inherit; text-decoration: none; }
+.rs-sp a:hover { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .12em; }
+.rs-sp::after { content: ""; display: block; height: 1px; margin: 16px 0 12px; background: color-mix(in srgb, var(--u-texte) 45%, transparent); transform-origin: 0 50%; }
+.rs-quand { margin: 0; font: 500 1.5rem/1.15 var(--sg); letter-spacing: -.02em; }
+.rs-etat { margin-left: 8px; font: normal 700 .75rem var(--at); letter-spacing: .12em; text-transform: uppercase; color: var(--u-vif); }
+.rs-ou { margin: 4px 0 0; font-size: 1rem; line-height: 1.45; color: var(--u-texte2); }
+.rs-lieu { color: var(--u-texte); font-weight: 600; }
+.rs-lieu::after { content: " ·"; color: var(--u-texte2); font-weight: 400; }
+.rs-det { margin: 8px 0 0; padding: 0; list-style: none; font-size: .9375rem; line-height: 1.45; color: var(--u-texte2); }
+.rs-seances { margin: 20px 0 0; }
+.rs-k { margin: 0 0 8px; font: 700 .75rem/1.3 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.rs-seances--sans { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.rs-seances--sans .rs-k { margin: 0; }
+.rs-sans { font: 600 1rem var(--at); }
+.rs-liste { gap: 0; border-top: 1px solid color-mix(in srgb, var(--u-texte) 30%, transparent); }
+.rs-liste > li { flex: 1 1 auto; }
+.rs-seance { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 52px; padding: 10px 14px 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--u-texte) 30%, transparent); color: var(--u-texte); text-decoration: none; }
+a.rs-seance:hover .rs-sh { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .12em; }
+a.rs-seance:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 2px; }
+.rs-sh { font: 500 1.875rem/1 var(--sg); letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.rs-sh--sans { font: 600 1rem/1.2 var(--at); letter-spacing: 0; }
+.rs-sj { font: 600 .875rem var(--at); color: var(--u-texte2); }
+.rs-seance.est-scolaire { color: var(--u-texte2); }
+.rs-scol { padding: 1px 8px 2px; border: 1px solid currentColor; border-radius: 999px; font: normal 700 .6875rem/1.4 var(--at); letter-spacing: .08em; text-transform: uppercase; }
+.rs-action { margin: 24px 0 0; }
+.rs-reserver { display: flex; justify-content: space-between; gap: 18px; min-height: 68px; padding: 14px 18px 14px 22px; background: var(--u-titre); color: var(--u-sur); }
+.rs-r1 { font: 500 1.875rem/1 var(--sg); letter-spacing: -.035em; }
+.rs-r2 { margin-top: 6px; font: 600 .875rem/1.3 var(--at); }
+.rs-reserver .rs-sep { opacity: .7; }
+.rs-reserver .rs-fleche { width: 30px; height: 30px; stroke-width: 1.8; transition: transform .2s var(--c3); }
+.rs-reserver:hover .rs-r1 { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: .14em; }
+.rs-reserver:hover .rs-fleche { transform: translate(3px, -3px); }
+.rs-reserver:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 3px; }
+.rs-aupres { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--u-texte) 30%, transparent); font-size: 1rem; line-height: 1.4; color: var(--u-texte2); }
+.rs-aupres b { color: var(--u-texte); font-weight: 600; }
+/* le voile de la grille (l'effet) : le fond de la carte, aux filets de ses douze colonnes, qui se retire colonne après colonne */
+.rs-voile { position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--u-texte) 22%, transparent) 0 1px, transparent 1px calc(100% / 12)), var(--rs-bg); }
+/* l'agenda (accueil, « Je viens voir un spectacle ») : la date de la ligne, un bouton sur le papier, qui s'imprime dans la
+   couleur du spectacle quand sa carte est ouverte ; la commune est déjà écrite dans la ligne (le bouton la garde pour les
+   lecteurs d'écran) */
+.rs-date--ligne { align-self: start; width: 100%; min-height: 0; padding: 8px 10px 10px; border: 1px solid var(--rule-2); background: var(--field); color: var(--ink); }
+.rs-date--ligne:first-child { border-left: 1px solid var(--rule-2); }
+.rs-date--ligne:hover { border-color: var(--ink); background: var(--field); }
+.rs-date--ligne:focus-visible { outline: 3px solid var(--mag); outline-offset: 2px; }
+.rs-date--ligne .rs-s { color: var(--ink-2); }
+.rs-date--ligne .rs-n { margin-top: 4px; font-size: 2.25rem; white-space: normal; }
+.rs-date--ligne .rs-m { font-size: 1rem; }
+.rs-date--ligne .rs-h { margin-top: 8px; padding-top: 6px; border-top-color: var(--rule-2); font-size: .9375rem; }
+.rs-date--ligne .rs-h--sans { color: var(--ink-2); font-size: .8125rem; }
+.rs-date--ligne .rs-o { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.rs-date--ligne::after { content: ""; position: absolute; right: 9px; top: 11px; width: 7px; height: 7px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; opacity: .6; transform: rotate(45deg); transition: transform .2s var(--c3); }
+.rs-date--ligne[aria-pressed="true"] { border-color: var(--u-titre); background: var(--u-titre); color: var(--u-sur); }
+.rs-date--ligne[aria-pressed="true"] :is(.rs-s, .rs-h--sans) { color: inherit; }
+.rs-date--ligne[aria-pressed="true"] .rs-h { border-top-color: currentColor; }
+.rs-date--ligne[aria-pressed="true"]::after { left: auto; bottom: auto; width: 7px; height: 7px; background: none; transform: rotate(225deg); top: 14px; opacity: .9; }
+.row.rs-li:has(.rs-date[aria-pressed="true"]) { background: color-mix(in srgb, var(--c, var(--ink)) 7%, transparent); }
+.rs-ici { --rs-bg: var(--u-fond); grid-column: 1 / -1; min-height: 0; margin-top: 16px; transform-origin: 50% 0; }
+.rs-ici .rs-c { max-width: 34rem; }
+.ag-accueil .rs-ici .rs-c { padding: 18px 18px 20px; }
+.ag-accueil .rs-date--ligne .rs-n { font-size: 1.875rem; }
+.carte-lieu.est-choisi .pt-in { transform: scale(1.7); }
+.carte-lieu.est-choisi .aura { stroke: var(--mag); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+
+/* ———— les vidéos, lues dans la page (règle 18, LECTEUR) : l'affiche du spectacle, posée dans la grille ————
+   Le cadre noir de la projection, l'affiche (une photo du spectacle) un peu éteinte, la lecture dans une case pleine de la
+   couleur du spectacle, le titre en grotesque ; « plein écran » et « assombrir » dessous, en boutons à filet. */
+.u-video { margin-top: 24px; }
+.lc-cadre { background: var(--video); }
+.lc-affiche { filter: saturate(.92) brightness(.68); transition: transform .6s, filter .3s; }
+.lc-lire::after { content: ""; position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, var(--video-ombre)); pointer-events: none; }
+.lc-lire:hover .lc-affiche { transform: scale(1.03); filter: saturate(.95) brightness(.58); }
+.lc-lire:focus-visible { outline: 3px solid var(--u-vif, var(--mag)); outline-offset: -3px; }
+.lc-icone { z-index: 1; width: 84px; height: 84px; border-radius: 0; background: var(--u-titre, var(--mag)); color: var(--u-sur, var(--paper-blanc)); transition: transform .2s var(--c3); }
+.lc-lire:hover .lc-icone { transform: translate(-50%, -50%) scale(1.06); }
+.lc-titre { z-index: 1; left: 22px; right: 22px; bottom: 18px; font: 500 clamp(1.25rem, 2.2vw, 1.875rem)/1.12 var(--sg); letter-spacing: -.02em; color: var(--video-encre); }
+.lc-outils { gap: 10px; margin-top: 12px; }
+.lc-b { min-height: 44px; padding: 0 16px 0 13px; border: 1px solid color-mix(in srgb, var(--u-texte, var(--ink)) 45%, transparent); border-radius: 0; background: none; color: var(--u-texte, var(--ink)); font: 600 .9375rem/1.2 var(--at); }
+.lc-b:hover { border-color: var(--u-texte, var(--ink)); }
+.lc-b:focus-visible { outline: 3px solid var(--u-vif, var(--mag)); outline-offset: 2px; }
+.lc.lc-eteint .lc-nuit-b { border-color: var(--u-titre); background: var(--u-titre); color: var(--u-sur); }
+.lc.lc-eteint .lc-cadre { box-shadow: 0 0 0 2px var(--u-titre, var(--mag)); }
+.lc.lc-joue .lc-affiche { opacity: 0; }
+.lc-nuit { background: var(--video-voile); }
+.lc-voile { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(90deg, var(--video-filet) 0 1px, transparent 1px calc(100% / 12)), var(--video); }
+.lc-groupe { margin-top: 40px; }
+.lc-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 24px var(--gap); margin-top: 14px; }
+.lc-grille .lc-icone { width: 54px; height: 54px; }
+.lc-grille .lc-titre { left: 14px; right: 14px; bottom: 12px; font-size: 1.0625rem; }
+.lc-grille .lc-outils { gap: 6px; margin-top: 8px; }
+.lc-grille .lc-b { padding: 0 11px; }
+.lc-grille .lc-b span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.lc-boite::backdrop { background: var(--video-voile); }
+.lc-boite .lc-b { border-color: var(--video-filet-fort); color: var(--video-encre); }
+.lc-boite .lc-b:hover { border-color: var(--video-encre); }
+button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+/* les dates de l'agenda, devenues des boutons : leur colonne s'élargit pour le quantième de deux jours (« 19 – 20 ») */
+.ag-complet .row { grid-template-columns: 160px minmax(0, 1fr); }
+.ag-accueil .row { grid-template-columns: 140px minmax(0, 1fr); }
+.ag-complet .rs-date--ligne .rs-n { font-size: 2rem; }
+.ag-accueil .rs-date--ligne .rs-n { font-size: 1.75rem; }
+@media (max-width: 1180px) {
+  .co-reperes .annees { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tr3-planche { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 899px) {
+  .co-reperes, .troupe-m03 { margin-top: 64px; }
+  .co > .co-text:only-child { columns: auto; }
+  .tr3 { grid-template-columns: minmax(0, 1fr); }
+  .tr3-jeu, .tr3-autres { grid-column: 1 / -1; }
+  .tr3-planche { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 10px; }
+  .rs-corps > .rs-carte, .rs-corps > .t-carte { grid-column: 1 / -1; position: static; }
+  .rs-date { width: 148px; min-height: 136px; padding: 12px 14px 14px; }
+  .rs-n { font-size: 2.375rem; }
+  .ag-complet .row, .ag-accueil .row { grid-template-columns: 112px minmax(0, 1fr); }
+  .ag-complet .rs-date--ligne .rs-n, .ag-accueil .rs-date--ligne .rs-n { font-size: 1.5rem; }
+  .rs-date--ligne { padding: 7px 8px 9px; }
+  .rs-date--ligne::after { right: 7px; }
+}
+@media (max-width: 599px) {
+  .co-reperes .annees, .tr3-autres, .tr3-noms { grid-template-columns: minmax(0, 1fr); }
+  .tr3-planche { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rs-photo { inset: 0 0 auto 0; width: 100%; height: 132px; opacity: .3; -webkit-mask-image: linear-gradient(180deg, #000 20%, transparent); mask-image: linear-gradient(180deg, #000 20%, transparent); }
+  .rs-c { padding: 18px 16px 20px; }
+  .rs-reserver { padding: 12px 14px 12px 16px; }
+  .rs-r1, .rs-sh { font-size: 1.625rem; }
+}
 @media (prefers-reduced-motion: reduce) {
   .grille { display: none; }
 }
@@ -1145,8 +1418,14 @@ html.ed-actif .ep-a::after { content: none; }
      La pieuvre ne bouge pas : aucune tentacule (TENTACULES réglé sans clic ni pages, aucun moment joué) ; un dossier composé
      trace son filet jusqu'au bout. Moins d'animations demandé (ou ?anim=0) : tout est en place, rien ne bouge. */
   const MV = typeof MOUVEMENT !== 'undefined' ? MOUVEMENT : null, FR = typeof FRISE !== 'undefined' ? FRISE : null;
+  // réserver une date (RESERVER, règle 17), les vidéos dans la page (LECTEUR, règle 18), la troupe (TROUPE, règle 20)
+  const RS = typeof RESERVER !== 'undefined' ? RESERVER : null, LC = typeof LECTEUR !== 'undefined' ? LECTEUR : null, TR = typeof TROUPE !== 'undefined' ? TROUPE : null;
+  const COUPE = (() => { try { return new URLSearchParams(location.search).get('anim') === '0'; } catch (e) { return false; } })();
   const reduit = matchMedia('(prefers-reduced-motion: reduce)');
   const bouge = () => !reduit.matches && (!MV || MV.permis());
+  // (moins d'animations, ou ?anim=0 : les animations liées au défilement de la troupe s'arrêtent aussi, html.m3-fixe)
+  const fixeHtml = () => document.documentElement.classList.toggle('m3-fixe', !bouge());
+  fixeHtml(); if (reduit.addEventListener) reduit.addEventListener('change', fixeHtml);
   // la largeur de la fenêtre, lue une fois puis à chaque redimensionnement (innerWidth force une mise en page quand la page vient
   // de changer : jamais pendant un rendu) ; la grille de douze colonnes qu'on en déduit
   let LF = innerWidth;
@@ -1177,7 +1456,7 @@ html.ed-actif .ep-a::after { content: none; }
 
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const RXM = new RegExp(`^(.*?)\\s*(${MOIS.join('|')})\\s+(\\d{4})$`);
-  const GRIS = '#8a847a';
+  const GRIS = 'var(--sp-aucun)';   // un spectacle hors du répertoire : un gris chaud, de jour comme de nuit
   const ico = (d, w = 18) => `<svg viewBox="0 0 20 20" width="${w}" height="${w}" aria-hidden="true" focusable="false">${d}</svg>`;
   const ARROW = ico('<path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>');
   const EXT = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false"><path d="M5.5 3.5h7v7M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1203,8 +1482,25 @@ html.ed-actif .ep-a::after { content: none; }
   const rgba = v => typeof v === 'string' && /^rgba?\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*(,\s*[\d.]+\s*)?\)$/i.test(v.trim()) ? v.trim() : null;
   const lum = h => { const f = c => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; return 0.2126 * f(parseInt(h.slice(1, 3), 16)) + 0.7152 * f(parseInt(h.slice(3, 5), 16)) + 0.0722 * f(parseInt(h.slice(5, 7), 16)); };
   const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  const colPapier = slug => { const s = showDe(slug); return (s && (hex(s.couleurTexteClair) || hex(s.couleur))) || GRIS; };
-  // l'univers d'un spectacle, avec des contrastes AA garantis : texte sur fond, titre (grand) et accent vif sur fond
+  // la couleur d'un spectacle sur le papier (un point, un bras de carte, un repère de frise) : var(--sp-<slug>), qui change
+  // avec le thème (couleurs()) ; le jour, celle qui se lit sur le papier clair ; la nuit, sa couleur de scène, éclaircie
+  // jusqu'à se lire sur le papier de nuit
+  const slugSur = slug => typeof slug === 'string' && /^[a-z0-9-]+$/.test(slug);
+  const colPapier = slug => { const s = showDe(slug); return s && slugSur(s.slug) && (hex(s.couleurTexteClair) || hex(s.couleur)) ? `var(--sp-${s.slug})` : GRIS; };
+  const NUIT = '#131211';   // le papier de nuit (--paper de html[data-theme="nuit"])
+  const melange = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+  const eclaircir = (h, fond, cible) => { let c = h; for (let k = 0; k < 40 && contraste(c, fond) < cible; k++) c = melange(c, '#ffffff', .08); return c; };
+  const feuilleCouleurs = document.head.appendChild(document.createElement('style'));
+  function couleurs() {
+    const jour = [], nuit = [];
+    shows().forEach(s => { if (!slugSur(s.slug)) return; const j = hex(s.couleurTexteClair) || hex(s.couleur), v = hex(s.couleur) || j;
+      if (j) jour.push(`--sp-${s.slug}:${j}`); if (v) nuit.push(`--sp-${s.slug}:${eclaircir(v, NUIT, 4.5)}`); });
+    const css = `:root{${jour.join(';')}}html[data-theme="nuit"]{${nuit.join(';')}}`;
+    if (feuilleCouleurs.textContent !== css) feuilleCouleurs.textContent = css;
+  }
+  // l'univers d'un spectacle, avec des contrastes AA garantis : texte sur fond, titre (grand) et accent vif sur fond ;
+  // un univers clair invente aussi sa nuit (règle 19), dans ses propres couleurs de D : son texte, assombri dans le papier
+  // de nuit, devient son fond ; son fond devient son texte ; le titre et la couleur vive, les premières qui restent AA
   function univers(s) {
     const u = s.univers || {}, c = Object.assign({}, s.palette || {}, u.couleurs || {});
     const fond = hex(c.fond) || (s.clair ? '#f4f1ea' : '#141414');
@@ -1220,10 +1516,24 @@ html.ed-actif .ep-a::after { content: none; }
     const police = String(p.titre || '').replace(/[^\p{L}\p{N} -]/gu, '').trim();
     const graisse = /^[1-9]00$/.test(String(p.titreGraisse)) ? +p.titreGraisse : 400;
     const motif = String(u.motif || s.motif || '').replace(/[^a-z]/g, '');
-    return { fond, fond2, texte, texte2, titre, vif, sur, clair, lueur: rgba(c.lueur) || hex(c.lueur) || 'transparent', police, graisse, motif };
+    let nuit = null;
+    if (clair) {
+      const nf = melange(texte, NUIT, .55), nf2 = melange(texte, NUIT, .35);
+      const okN = min => x => x && contraste(x, nf) >= min && contraste(x, nf2) >= min;
+      const nt = [fond].find(okN(7)) || '#f1ede5', nt2 = [melange(fond, hex(c.texte2) || texte, .25)].find(okN(4.5)) || nt;
+      const vifs = [c.accent, c.scene, c.accent2].map(hex);
+      const nTitre = vifs.find(okN(4.5)) || vifs.find(x => x && contraste(x, nf) >= 3) || nt;
+      const nVif = [c.accent, c.accent2, c.scene].map(hex).find(okN(4.5)) || nt2;
+      nuit = { fond: nf, fond2: nf2, texte: nt, texte2: nt2, titre: nTitre, vif: nVif, sur: ['#ffffff', nf, '#141414'].sort((a, b) => contraste(b, nTitre) - contraste(a, nTitre))[0] };
+    }
+    return { fond, fond2, texte, texte2, titre, vif, sur, clair, nuit, lueur: rgba(c.lueur) || hex(c.lueur) || 'transparent', police, graisse, motif };
   }
   const famille = police => police ? `'${police}', ${/grotesk|ubuntu|anton|sans|inter|mono/i.test(police) ? 'sans-serif' : 'serif'}` : 'var(--sg)';
-  const uStyle = s => { const u = univers(s); return `--u-fond:${u.fond};--u-fond2:${u.fond2};--u-texte:${u.texte};--u-texte2:${u.texte2};--u-titre:${u.titre};--u-vif:${u.vif};--u-sur:${u.sur};--u-lueur:${u.lueur};--u-police:${famille(u.police)};--u-gr:${u.graisse}`; };
+  const uStyle = s => { const u = univers(s), n = u.nuit;
+    return `--u-fond:${u.fond};--u-fond2:${u.fond2};--u-texte:${u.texte};--u-texte2:${u.texte2};--u-titre:${u.titre};--u-vif:${u.vif};--u-sur:${u.sur};--u-lueur:${u.lueur};--u-police:${famille(u.police)};--u-gr:${u.graisse}`
+      + (n ? `;--un-fond:${n.fond};--un-fond2:${n.fond2};--un-texte:${n.texte};--un-texte2:${n.texte2};--un-titre:${n.titre};--un-vif:${n.vif};--un-sur:${n.sur}` : ''); };
+  // la classe d'un univers : u-clair (qui a sa nuit, --un-*) ou u-sombre
+  const uClasse = s => `u-${univers(s).clair ? 'clair' : 'sombre'}`;
   const eStyle = e => `--e:${hex(e.couleur) || GRIS};--ev:${hex(e.couleurVive) || hex(e.couleur) || GRIS}`;
 
   // la police de titre d'un univers nouveau (la base peut en apporter) : ajoutée au seul <link> des polices
@@ -1284,9 +1594,9 @@ html.ed-actif .ep-a::after { content: none; }
   let nCarte = 0;
   function pastille([x, y], r, cols) {
     const bord = `<circle class="pt-bord" cx="${x}" cy="${y}" r="${r}" stroke-width="${(r * .34).toFixed(2)}"/>`;
-    if (cols.length < 2) return `<circle cx="${x}" cy="${y}" r="${r}" fill="${cols[0] || '#141414'}"/>${bord}`;
+    if (cols.length < 2) return `<circle cx="${x}" cy="${y}" r="${r}" style="fill:${cols[0] || 'var(--ink)'}"/>${bord}`;
     const a = 2 * Math.PI / cols.length, P = t => `${(x + r * Math.cos(t)).toFixed(2)} ${(y + r * Math.sin(t)).toFixed(2)}`;
-    return cols.map((c, i) => { const a0 = -Math.PI / 2 + i * a; return `<path d="M${x} ${y}L${P(a0)}A${r} ${r} 0 0 1 ${P(a0 + a)}Z" fill="${c}"/>`; }).join('') + bord;
+    return cols.map((c, i) => { const a0 = -Math.PI / 2 + i * a; return `<path d="M${x} ${y}L${P(a0)}A${r} ${r} 0 0 1 ${P(a0 + a)}Z" style="fill:${c}"/>`; }).join('') + bord;
   }
   // enDeux : la carte est rendue en deux temps (le fond et les bras, puis les communes et leurs noms) ; carteSvg rend alors
   // { html, lieux, noms } (une grande carte : chaque temps tient dans son image)
@@ -1307,7 +1617,7 @@ html.ed-actif .ep-a::after { content: none; }
     paires.forEach(p => {
       const w0 = Math.min(10, 3.4 + Math.sqrt(p.n) * 1.8);
       if (!delai.has(p.x.l)) delai.set(p.x.l, passage(p.x));
-      bras.push(`<path class="bras" data-l="${p.x.l}" data-slug="${esc(p.slug)}" fill="${couleur(p.slug)}" d="${CARTE.bras(p.x.xy, { w0, w1: 1, courbe: p.courbe })}"/>`);
+      bras.push(`<path class="bras" data-l="${p.x.l}" data-slug="${esc(p.slug)}" style="fill:${couleur(p.slug)}" d="${CARTE.bras(p.x.xy, { w0, w1: 1, courbe: p.courbe })}"/>`);
     });
     const ici = new Set(lieux.map(x => x.l)), autres = passe.filter(x => loin(x) && !ici.has(x.l));
     const etiquette = x => `${CARTE.nom(x)} : ${(x.dates || []).map(d => d.ligne).join(' ; ')}`;
@@ -1406,6 +1716,7 @@ html.ed-actif .ep-a::after { content: none; }
     const c = lieDe(svg), mod = c && c.dataset.module;
     if (mod === 'agenda' || mod === 'passe') { AG.l = AG.l === l ? null : l; majAgenda(mod === 'agenda'); return; }
     if (mod === 'prog') { PG.l = PG.l === l ? null : l; majProg(true); return; }
+    if (mod === 'spectacle' && rsSp && c.querySelector('.rs-bande')) { const b = c.querySelector(`.rs-bande [data-l="${l}"]`); if (b) { rsSp.choisir(b.getAttribute('data-reserver')); rsSp.montrer(); } return; }
     const r = c && c.querySelector(`.dt[data-l="${l}"]`);
     if (r) r.scrollIntoView({ block: 'center', behavior: CARTE.mouvement() ? 'smooth' : 'auto' });
   }
@@ -1538,19 +1849,26 @@ html.ed-actif .ep-a::after { content: none; }
   const hayPt = (d, titre) => ' ' + norm([titre, d.ligne, d.commune, d.dep, ...(d.details || []).map(t => t.texte), d.l != null && CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''].join(' '));
   const hayDate = d => { const s = showDe(d.slug); return ' ' + norm([d.titre, s && s.titre, d.ligne, d.commune, d.dep, ...(d.details || []).map(t => t.texte)].join(' ')); };
   const detailsHtml = det => det && det.length ? `<ul class="det">${det.map(t => `<li>${t.lien ? `<a href="${esc(t.lien)}" target="_blank" rel="noopener">${esc(t.texte)}${EXT}</a>` : esc(t.texte)}</li>`).join('')}</ul>` : '';
+  // réserver (règle 17) : la date d'une ligne où l'on peut réserver est un bouton (son horaire écrit dessus) qui ouvre la carte
+  // de réservation sous la ligne, dans l'univers de son spectacle ; les dates scolaires, passées ou annulées restent des dates
+  const idCarte = k => 'rs-' + String(k).replace(/[^\w-]/g, '-');
+  let RES = new Set();   // les clés des dates réservables de la liste, relues à chaque rendu
   function rowHtml(d, compact, entree) {
-    const j = decoupe(d.ligneDate || d.ligne), s = showDe(d.slug);
+    const j = decoupe(d.ligneDate || d.ligne), s = showDe(d.slug), k = RS ? RS.cle(d) : null, rv = k != null && RES.has(k);
     const titre = `<span class="dot" aria-hidden="true"></span><span class="t-txt">${esc(d.titre || (s && s.titre))}</span>`;
-    return `<li class="row dt"${dateId(d)}${fid(cleProchaine(d))} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(d.slug || '')}" style="--c:${colPapier(d.slug)}">
-      <p class="when"><span aria-hidden="true">${j.grand}</span><span class="sr">${esc(d.ligneDate || d.ligne)}</span></p>
+    return `<li class="row dt${rv ? ' rs-li' : ''}"${dateId(d)}${fid(cleProchaine(d))} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(d.slug || '')}" style="--c:${colPapier(d.slug)}">
+      ${rv ? RS.bouton(d, { classe: `rs-date--ligne${s ? ' ' + uClasse(s) : ''}`, style: s ? uStyle(s) : '', attributs: ` aria-controls="${idCarte(k)}"` })
+        : `<p class="when"><span aria-hidden="true">${j.grand}</span><span class="sr">${esc(d.ligneDate || d.ligne)}</span></p>`}
       <div class="what">
         ${s ? `<a class="t-link" href="#/spectacle/${esc(s.slug)}/${entreeSp(s.slug, entree)}">${titre}</a>` : `<p class="t-link">${titre}</p>`}
         ${d.ligneLieu ? `<p class="where">${esc(d.ligneLieu)}</p>` : ''}
         ${compact ? '' : detailsHtml(d.details)}
       </div>
+      ${rv ? `<div class="rs-carte rs-ici${s ? ' ' + uClasse(s) : ''}" id="${idCarte(k)}" hidden></div>` : ''}
     </li>`;
   }
   function listeHtml(dates, compact, entree = 'voir') {
+    RES = new Set(entree === 'voir' && RS ? RS.dates().map(RS.cle) : []);
     let html = '', cur = '';
     dates.forEach(d => {
       const ym = String(d.iso || '').slice(0, 7);
@@ -1590,6 +1908,7 @@ html.ed-actif .ep-a::after { content: none; }
     const q = norm(AG.q).split(' ').filter(Boolean);
     const res = datesPub().filter(d => (!AG.slug || d.slug === AG.slug) && (AG.l == null || d.l === AG.l) && (!q.length || q.every(t => hayDate(d).includes(t))));
     ag.querySelector('[data-liste]').innerHTML = listeHtml(res, ag.dataset.mode === 'accueil', 'voir');
+    if (rsAg) rsAg.dessiner();
     const paires = new Set(res.map(d => d.l + '|' + d.slug)), lieux = new Set(res.map(d => d.l));
     const svg = ag.querySelector('svg.carte-m03');
     allumer(svg, null);
@@ -1692,7 +2011,7 @@ html.ed-actif .ep-a::after { content: none; }
     const R = CARTE.rouen, loin = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6;
     const bras = lx.filter(loin).flatMap(x => { const ss = [...new Set(x.dates.map(d => d.slug || ''))];
       return ss.map((slug, j) => { const n = x.dates.filter(d => (d.slug || '') === slug).length;
-        return `<path d="${CARTE.bras(x.xy, { w0: 5 + Math.sqrt(n) * 2.4, w1: 1.4, courbe: .24 + (j - (ss.length - 1) / 2) * .18 })}" fill="${colPapier(slug)}"/>`; }); });
+        return `<path d="${CARTE.bras(x.xy, { w0: 5 + Math.sqrt(n) * 2.4, w1: 1.4, courbe: .24 + (j - (ss.length - 1) / 2) * .18 })}" style="fill:${colPapier(slug)}"/>`; }); });
     return `<svg class="mini-m03" viewBox="${CARTE.viewBox}" aria-hidden="true" focusable="false"><use class="pays" href="#m03-pays"/>${bras.join('')}<circle class="hub-i" cx="${R[0]}" cy="${R[1]}" r="9"/></svg>`;
   }
   function lieuxPasse(s, rows) {
@@ -1885,7 +2204,44 @@ html.ed-actif .ep-a::after { content: none; }
   const ficheItems = s => [...(s.fiche || []).map((f, i) => ({ l: f.libelle, v: f.valeur, kl: ['fiche', i, 'libelle'], kv: ['fiche', i, 'valeur'] })),
     ...(s.avec ? [{ l: s.avec.libelle, v: s.avec.valeur, kl: ['avec', 'libelle'], kv: ['avec', 'valeur'], avec: true }] : [])];
   const miniFiche = s => { const f = ficheItems(s); return f.length ? `<dl class="mini">${f.map(x => `<div>${x.l ? `<dt${edS(s, ...x.kl)}>${esc(x.l)}</dt>` : ''}<dd${edS(s, ...x.kv)}>${x.v}</dd></div>`).join('')}</dl>` : ''; };
-  const bandeLien = (s, cls = 'lien-v') => s.video && s.video.url ? `<a class="${cls}" href="${esc(s.video.url)}" target="_blank" rel="noopener" title="${esc(s.video.titre || '')}">${LIRE_P}<span>${esc(LIB().bandeAnnonce)}</span></a>` : '';
+  /* ---------- Les vidéos, lues dans la page (règle 18, LECTEUR) ----------
+     La bande-annonce et les autres vidéos d'un spectacle (ses médias, par groupe) se lisent sur la page du spectacle, sur
+     une affiche prise dans ses photos ; ailleurs (le catalogue, l'onglet programmer), « Bande-annonce » l'ouvre dans une
+     boîte. Une adresse qui n'est ni YouTube ni Vimeo reste un lien. */
+  const lisibleV = v => !!(v && v.url && LC && LC.source(v.url));
+  const bandeLien = (s, cls = 'lien-v') => !(s.video && s.video.url) ? '' : lisibleV(s.video)
+    ? `<button type="button" class="${cls}" data-lecteur-ouvrir="${esc(s.slug)}">${LIRE_P}<span>${esc(LIB().bandeAnnonce)}</span></button>`
+    : `<a class="${cls}" href="${esc(s.video.url)}" target="_blank" rel="noopener" title="${esc(s.video.titre || '')}">${LIRE_P}<span>${esc(LIB().bandeAnnonce)}</span></a>`;
+  function videosHtml(s) {
+    const L = LIB();
+    if (!lisibleV(s.video)) return `<a class="bande-a" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LIRE}<span><b>${esc(L.bandeAnnonce)}</b><span>${esc(s.video.titre || '')}</span></span></a>`;
+    const phs = (s.photos || []).filter(p => !p.etablissement && !p.atelier && photo(p.cle));
+    let n = 0;
+    const affiche = () => (phs.length ? photo(phs[n++ % phs.length].cle) : photo(s.slug));
+    const groupes = [];
+    (s.medias || []).filter(m => m && m.type === 'video' && m.url !== s.video.url && lisibleV(m)).forEach(m => {
+      const g = groupes.find(x => x.nom === (m.groupe || '')); if (g) g.ms.push(m); else groupes.push({ nom: m.groupe || '', ms: [m] }); });
+    return `<div class="u-video">${LC.html(s.video, { affiche: photo(s.slug), id: `lc-${s.slug}`, editTitre: s.video.titre ? `shows.${s.slug}.video.titre` : null })}</div>
+      ${groupes.map(g => `${g.nom ? `<h3 class="u-h3 lc-groupe">${esc(g.nom)}</h3>` : ''}<div class="lc-grille">${g.ms.map(m => LC.html(m, { affiche: affiche() })).join('')}</div>`).join('')}`;
+  }
+  // la vidéo arrive dans la grille : quand elle est prête, un voile noir, aux filets de ses douze colonnes, se retire colonne
+  // après colonne ; la page s'éteint en un fondu net et se rallume plus vite (moins d'animations : sans)
+  if (LC) LC.regler({ univers: s => uStyle(s), effet: {
+    arrivee: (fig, ifr) => {
+      const cadre = fig.querySelector('.lc-cadre');
+      if (!bouge() || !cadre || !ifr.animate) return;
+      const v = document.createElement('span');
+      v.className = 'lc-voile'; v.setAttribute('aria-hidden', 'true');
+      cadre.appendChild(v);
+      let parti = false;
+      const fin = () => v.remove(), partir = () => { if (parti) return; parti = true;
+        v.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }], { duration: 12 * 24, easing: 'steps(12, end)', fill: 'forwards' }).finished.then(fin, fin); };
+      ifr.addEventListener('load', partir, { once: true });
+      setTimeout(partir, 1600);
+    },
+    eteindre: voile => voile.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, easing: 'cubic-bezier(.65, 0, .35, 1)' }),
+    rallumer: voile => voile.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'cubic-bezier(.2, 0, 0, 1)' }).finished,
+  } });
   /* ---------- « Je souhaite programmer » : ce qu'il faut à un programmateur (règle 13), relu dans D à chaque rendu ---------- */
   const PDF = ico('<path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>');
   const contactPrg = () => (site().programmation || {}).contact || null;
@@ -1924,7 +2280,7 @@ html.ed-actif .ep-a::after { content: none; }
   }
   function ficheProg(s) {
     const u = univers(s), p = s.programmer || {}, faits = faitsProg(s);
-    return `<article class="fc dt" data-slug="${esc(s.slug)}" style="${uStyle(s)};--c:${u.titre}">
+    return `<article class="fc dt ${uClasse(s)}" data-slug="${esc(s.slug)}" style="${uStyle(s)};--c:var(--u-titre)">
       <header class="fc-tete">
         <div>
           <p class="u-et">${etiquettes(s, 'creation')}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</p>
@@ -1952,7 +2308,7 @@ html.ed-actif .ep-a::after { content: none; }
   function ficheEtab(s) {
     const u = univers(s), ac = s.actionCulturelle || {}, L = LIB(), t0 = (ac.textes || [])[0];
     const meta = [ac.public && [L.public, ac.public, 'public'], ac.statut && [null, ac.statut, 'statut']].filter(Boolean);
-    return `<article class="fc" style="${uStyle(s)}">
+    return `<article class="fc ${uClasse(s)}" style="${uStyle(s)}">
       <header class="fc-tete">
         <div>
           <p class="u-et">${etiquettes(s, 'creation', 'lieuTemps')}</p>
@@ -2136,7 +2492,7 @@ html.ed-actif .ep-a::after { content: none; }
   const tourneeTexte = s => s.tournee && s.tournee.texte ? `<p class="t-texte"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : '';
 
   function ongletVoir(s, u, fixe) {
-    const L = LIB(), K = CARTE.spectacle(s.slug), couleur = () => u.titre;
+    const L = LIB(), K = CARTE.spectacle(s.slug), couleur = () => 'var(--u-titre)';
     const pub = datesPub().filter(d => d.slug === s.slug);
     const ps = photosDe(s, p => !p.atelier && !p.etablissement);
     const ch = [];
@@ -2146,10 +2502,20 @@ html.ed-actif .ep-a::after { content: none; }
       <div class="texte">${(s.texte || []).map((p, i) => `<p${edS(s, 'texte', i)}>${p}</p>`).join('')}</div>
       ${(s.citations || []).length ? `<div class="vers-l">${s.citations.map((c, i) => `<figure class="vers${c.prose ? ' prose-q' : ''}"><blockquote>${(c.vers || []).map((v, j) => `<span${edS(s, 'citations', i, 'vers', j)}>${esc(v)}</span>`).join('')}</blockquote>${c.source ? `<figcaption><cite${edS(s, 'citations', i, 'source')}>${esc(c.source)}</cite></figcaption>` : ''}</figure>`).join('')}</div>` : ''}`]);
     if (ps.length) ch.push(['ch-photos', L.photos, `<h2 class="u-h2">${esc(L.photos)}</h2><div class="photos">${ps.map(p => figure(s, p)).join('')}</div>${creditsHtml(s, ps)}`]);
-    if (s.video && s.video.url) ch.push(['ch-video', L.bandeAnnonce, `<h2 class="u-h2">${esc(L.bandeAnnonce)}</h2>
-      <a class="bande-a" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LIRE}<span><b>${esc(L.bandeAnnonce)}</b><span>${esc(s.video.titre || '')}</span></span></a>`]);
+    if (s.video && s.video.url) ch.push(['ch-video', L.bandeAnnonce, `<h2 class="u-h2">${esc(L.bandeAnnonce)}</h2>${videosHtml(s)}`]);
     let dates;
-    if (pub.length) {
+    // réserver (règle 17) : les prochaines dates tout public en une bande, un bouton par date (le jour, les heures, la
+    // commune) ; la prochaine est choisie d'office, sa carte dessous, à côté de la carte de France (RESERVER.monter, brancher())
+    const res = RS && !s.statut ? RS.dates(s.slug) : [];
+    if (res.length) {
+      dates = `<h2 class="u-h2"${s.tournee && s.tournee.titre ? edS(s, 'tournee', 'titre') : ''}>${esc((s.tournee && s.tournee.titre) || L.actuellementEnTournee)}</h2>${tourneeTexte(s)}
+        <div class="fr fr-tournee" data-fr="tournee" data-slug="${esc(s.slug)}"></div>
+        <div class="rs-zone lie" data-module="spectacle" data-slug="${esc(s.slug)}">
+          <p class="rs-k-bande" id="rs-k">${esc(L.choisirUneDate)}</p>
+          ${RS.bande(res, { attributs: ` aria-labelledby="rs-k" data-agenda="${esc(s.slug)}"`, bouton: d => ({ classe: 'dt', attributs: `${dateId(d)}${fid(cleProchaine(d))} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(d.slug || '')}"` }) })}
+          <div class="g12 rs-corps"><div class="rs-carte" id="rs-carte"></div><div class="t-carte">${carteSvg({ lieux: filtreLieux(K.aVenir, d => !d.scolaire), passe: K.passe, titre: s.titre, couleur, fixe, nomsPasse: false })}</div></div>
+        </div>`;
+    } else if (pub.length) {
       dates = `<h2 class="u-h2"${s.tournee && s.tournee.titre ? edS(s, 'tournee', 'titre') : ''}>${esc((s.tournee && s.tournee.titre) || L.actuellementEnTournee)}</h2>${tourneeTexte(s)}
         <div class="fr fr-tournee" data-fr="tournee" data-slug="${esc(s.slug)}"></div>
         <div class="g12 t-grid lie" data-module="spectacle"><div class="dates-z" data-agenda="${esc(s.slug)}"><ol class="dcards">${datesCartes(pub)}</ol></div><div class="t-carte">${carteSvg({ lieux: filtreLieux(K.aVenir, d => !d.scolaire), passe: K.passe, titre: s.titre, couleur, fixe, nomsPasse: false })}</div></div>`;
@@ -2168,7 +2534,7 @@ html.ed-actif .ep-a::after { content: none; }
   }
 
   function ongletProgrammer(s, u, fixe) {
-    const L = LIB(), p = s.programmer || {}, K = CARTE.spectacle(s.slug), w = ecrire(), couleur = () => u.titre;
+    const L = LIB(), p = s.programmer || {}, K = CARTE.spectacle(s.slug), w = ecrire(), couleur = () => 'var(--u-titre)';
     const dos = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null, acc = dos && dos.accueil, dk = `dossiers.${s.dossier}.accueil`;
     const implant = photosDe(s, x => x.id === 'd-implantation-1');
     const ftDocs = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');   // la fiche technique déposée : en lien, avec le détail de Bérénice s'il y en a un
@@ -2227,7 +2593,7 @@ html.ed-actif .ep-a::after { content: none; }
   }
 
   function ongletEtablissement(s, u, fixe) {
-    const L = LIB(), ac = s.actionCulturelle || {}, w = ecrire(), couleur = () => u.titre;
+    const L = LIB(), ac = s.actionCulturelle || {}, w = ecrire(), couleur = () => 'var(--u-titre)';
     const sc = datesScol().filter(d => d.slug === s.slug), K = CARTE.spectacle(s.slug);
     const dos = s.dossier && D.dossiers ? D.dossiers[s.dossier] : null;
     const meta = [ac.public && [L.public, ac.public, 'public'], ac.lieu && lieuLib(ac.lieu) && [null, lieuLib(ac.lieu), null], ac.statut && [null, ac.statut, 'statut']].filter(Boolean);
@@ -2288,12 +2654,73 @@ html.ed-actif .ep-a::after { content: none; }
         <span class="ep-f" aria-hidden="true">${ARROW}</span></li>`).join('')}</ul></div>`;
   }
 
+  /* ---------- La troupe (règle 20, TROUPE) : l'ours de la revue, entre la présentation et les repères ----------
+     Un organigramme posé sur la grille : la pieuvre de la compagnie à la racine, un filet qui court sur toute la largeur
+     et d'où tombent les filets des colonnes (les catégories de métiers : qui fait quoi, d'un coup d'œil) ; le jeu, à
+     gauche, en planche contact (les visages publiés bord à bord, puis les noms) ; les autres métiers dans les colonnes de
+     droite. Une personne paraît dans chaque catégorie de ses métiers, avec le métier précis sous son nom ; la survoler ou
+     la choisir allume toutes ses places et les relie (TROUPE.relier). Relue dans D à chaque rendu. */
+  let troupeCtl = null, troupeIO = null;
+  function placeTroupe(x) {
+    const metiers = !x.evident && x.metiers.length ? `<span class="tr3-m">${x.metiers.map(m => `<span>${esc(m)}</span>`).join('')}</span>` : '';
+    const ancre = x.photo ? `<span class="tr3-v" data-troupe-ancre><img src="${esc(x.photo)}" alt="" width="240" height="240" loading="lazy" decoding="async" data-troupe-photo></span>`
+      : '<span class="tr3-pt" data-troupe-ancre></span>';
+    return `<li class="tr3-li${x.photo ? ' a-photo' : ''}"><button type="button" class="tr3-place${x.photo ? ' a-photo' : ''}" data-troupe-place data-troupe-personne="${esc(x.personne)}" aria-pressed="false">${ancre}<span class="tr3-qui"><span class="tr3-nom">${x.prenom ? `<span>${esc(x.prenom)}</span> ` : ''}<span>${esc(x.nom)}</span></span>${metiers}</span></button></li>`;
+  }
+  // une catégorie : son icône dans sa case, son titre ; le jeu (planche : true), ses visages en planche contact puis les noms
+  // seuls ; les autres, une seule liste, les visages d'abord (un seul arrêt de tabulation par catégorie, les flèches ensuite)
+  function categorieTroupe(c, cls = '', planche = false) {
+    const vis = c.places.filter(x => x.photo), noms = c.places.filter(x => !x.photo);
+    const listes = planche && vis.length ? `<ul class="tr3-places tr3-planche">${vis.map(placeTroupe).join('')}</ul>${noms.length ? `<ul class="tr3-places tr3-noms">${noms.map(placeTroupe).join('')}</ul>` : ''}`
+      : `<ul class="tr3-places">${[...vis, ...noms].map(placeTroupe).join('')}</ul>`;
+    return `<section class="tr3-cat${cls}" data-troupe-categorie="${esc(c.cle)}" aria-labelledby="tr3-h-${esc(c.cle)}">
+      <h3 class="tr3-t" id="tr3-h-${esc(c.cle)}"><span class="tr3-ic">${TR.icone(c.cle)}</span><span${ed(`site.troupe.categories.${c.i}.titre`)}>${esc(c.titre)}</span></h3>
+      ${listes}</section>`;
+  }
+  function troupeHtml() {
+    if (!TR || !site().troupe) return '';
+    const cs = TR.categories().filter(c => c.places.length);
+    if (!cs.length) return '';
+    // le jeu (le plus nombreux) à gauche, en planche ; les autres métiers à droite, deux colonnes
+    const jeu = cs.find(c => c.cle === 'jeu') || cs.reduce((a, b) => (b.places.length > a.places.length ? b : a)), autres = cs.filter(c => c !== jeu);
+    return `<section class="wrap bloc troupe-m03" aria-labelledby="h-troupe">
+      <h2 class="h2s" id="h-troupe"${ed('site.troupe.titre')}>${esc(TR.titre())}</h2>
+      <div class="tr3" data-troupe>
+        <div class="tr3-racine" aria-hidden="true"><span class="tr3-logo">${D.logo.mark}</span><i class="tr3-tronc"></i></div>
+        ${categorieTroupe(jeu, ' tr3-jeu', true)}
+        ${autres.length ? `<div class="tr3-autres">${autres.map(c => categorieTroupe(c)).join('')}</div>` : ''}
+      </div></section>`;
+  }
+  // la troupe prend vie : les liens entre les places d'une personne, les icônes qui s'animent une fois à leur arrivée
+  function vivreTroupe() {
+    if (troupeCtl) { troupeCtl.detruire(); troupeCtl = null; }
+    if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
+    const tr = main.querySelector('.tr3');
+    if (!tr || !TR) return;
+    troupeCtl = TR.relier(tr, { liens: true, clavier: true });
+    if (bouge() && 'IntersectionObserver' in window) {
+      troupeIO = new IntersectionObserver(es => es.forEach(x => { if (!x.isIntersecting) return; troupeIO.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
+      tr.querySelectorAll('.troupe-icone').forEach(i => troupeIO.observe(i));
+    }
+    // une photo publiée qui ne se charge pas (le fichier manque) : sa place garde le nom seul, à sa place
+    tr.addEventListener('error', e => {
+      const i = e.target; if (!i || !i.matches || !i.matches('img[data-troupe-photo]')) return;
+      const a = i.closest('[data-troupe-ancre]'), li = i.closest('.tr3-li'), b = i.closest('.tr3-place');
+      if (a) a.className = 'tr3-pt';
+      if (li) li.classList.remove('a-photo'); if (b) b.classList.remove('a-photo');
+      i.remove();
+    }, true);
+  }
+
   /* ---------- La compagnie, le contact, les mentions ---------- */
   function compagnieHtml() {
     const c = site().compagnie || {}, d = c.directeur;
     return `${tete(c.titre, { chemin: 'site.compagnie.titre' })}
       <div class="wrap g12 co">
         <div class="co-text">${(c.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
+      </div>
+      ${troupeHtml()}
+      <div class="wrap g12 co co-reperes">
         <section class="co-dates" aria-labelledby="h-dates"><h2 class="co-h" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(c.datesTitre)}</h2>
           <ol class="annees">${(c.dates || []).map((x, i) => `<li><span class="an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(x.annee)}</span><span class="an-t"${ed(`site.compagnie.dates.${i}.titre`)}>${esc(x.titre)}</span></li>`).join('')}</ol></section>
         ${(c.dates || []).length ? `<section class="co-frise" aria-labelledby="h-dates"><div data-fr="compagnie"></div></section>` : ''}
@@ -2326,9 +2753,11 @@ html.ed-actif .ep-a::after { content: none; }
   const teteEl = document.getElementById('tete'), piedEl = document.querySelector('.site-foot');
   function enTete() {
     const ouvert = !!teteEl.querySelector('.menu2.open');
-    teteEl.innerHTML = `<div class="tete-1"><div class="wrap"><a class="brand" href="#/" data-k="marque" aria-label="${esc(site().nom)} - ${esc(site().accueil)}"><span class="brand-mark" data-pieuvre aria-hidden="true">${D.logo.mark}</span><span>${esc(site().titreSuffixe)}</span></a></div></div>
+    // le jour et la nuit (THEME, règle 19) : au bout de la rangée de la marque, sur toutes les vues, au téléphone aussi (à côté du menu)
+    const jourNuit = typeof THEME !== 'undefined' && LIB().modeNuit ? THEME.bouton({ libelle: LIB().modeNuit, classe: 'theme-m03' }) : '';
+    teteEl.innerHTML = `<div class="tete-1"><div class="wrap"><a class="brand" href="#/" data-k="marque" aria-label="${esc(site().nom)} - ${esc(site().accueil)}"><span class="brand-mark" data-pieuvre aria-hidden="true">${D.logo.mark}</span><span>${esc(site().titreSuffixe)}</span></a>
+        <span class="tete-d">${jourNuit}<button class="menu-btn" type="button" data-k="menu-btn" aria-expanded="${ouvert}" aria-controls="menu2">${BARRES}<span>${esc(LIB().menu)}</span></button></span></div></div>
       <nav class="entrees" id="entrees" aria-label="${esc(entrees().map(e => e.court).join(', '))}"><ul class="wrap">${entrees().map(e => `<li><a href="${esc(e.href)}" data-e="${e.cle}" data-k="e-${e.cle}" style="${eStyle(e)}"><span class="e-pt" aria-hidden="true"></span><span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span><svg class="e-fl" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M3 10h13.5M11.5 5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></li>`).join('')}</ul></nav>
-      <button class="menu-btn" type="button" data-k="menu-btn" aria-expanded="${ouvert}" aria-controls="menu2">${BARRES}<span>${esc(LIB().menu)}</span></button>
       <nav class="menu2${ouvert ? ' open' : ''}" id="menu2" aria-label="${esc(LIB().menu)}"><ul>${(site().menu || []).map(m => `<li><a href="${esc(m.href)}" data-m="${esc(m.id)}" data-k="m-${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')}${site().espacePro ? `<li><a href="#/espace-pro" data-m="espace-pro" data-k="m-espace-pro">${esc(site().espacePro.titre)}</a></li>` : ''}</ul></nav>`;
   }
   function pied() {
@@ -2447,7 +2876,7 @@ html.ed-actif .ep-a::after { content: none; }
       if (!s) return;
       const pts = reperesTournee(s, c.dataset.fr === 'scolaire' ? d => d.scolaire : () => true);
       if (pts.length) frise(c, { echelle: 'periode', points: pts, libelle: c.dataset.fr === 'scolaire' ? L.enEtablissement : `${s.titre} – ${L.dates}`,
-        largeur: largeurCols(LF < 900 ? 12 : 10) - 28, relier: { liste: lie, carte }, choix: p => allerLigne(p.id) });
+        largeur: largeurCols(LF < 900 ? 12 : 10) - 28, relier: { liste: lie, carte }, choix: p => choisirRepere(p.id) });
     } else if (c.dataset.fr === 'diffusion') {
       friseDiffusion(c, s ? s.slug : null, s ? `${s.titre} – ${L.lieuxDiffusion}` : L.lieuxDiffusion, c.closest('.fc')
         ? { largeur: Math.max(220, (LF < 1181 ? largeurCols(12) : largeurCols(8) * 7 / 12) - 44), anMin: 30 } : { largeur: largeurCols(LF < 900 ? 12 : 8) - 28, anMin: 44 });
@@ -2455,7 +2884,7 @@ html.ed-actif .ep-a::after { content: none; }
       const C = site().compagnie || {}, ans = (C.dates || []).map(d => +d.annee).filter(Boolean);
       if (ans.length) frise(c, { echelle: 'periode', debut: `${Math.min(...ans)}-01-01`, fin: `${Math.max(...ans)}-12-31`, etiquettes: true, couloirs: 3, anMin: 60,
         largeurCar: 9.4, largeurMax: 210, libelle: C.datesTitre, points: C.dates.map((d, i) => { const sp = shows().find(x => String(x.annee) === String(d.annee));
-          return { id: `c${i}`, jour: `${d.annee}-06-30`, quand: String(d.annee), titre: d.titre, lien: sp ? `#/spectacle/${sp.slug}` : null, couleur: sp ? colPapier(sp.slug) : '#141414' }; }) });
+          return { id: `c${i}`, jour: `${d.annee}-06-30`, quand: String(d.annee), titre: d.titre, lien: sp ? `#/spectacle/${sp.slug}` : null, couleur: sp ? colPapier(sp.slug) : 'var(--ink)' }; }) });
     }
   }
   function friserVue(racine = main) {
@@ -2491,6 +2920,7 @@ html.ed-actif .ep-a::after { content: none; }
     if (!enPlace && act && act !== document.body && main.contains(act)) act.blur();
     EN_PLACE = enPlace;
     FRISES.forEach(f => f.detruire()); FRISES = []; SW = null; SWS = []; fSaisons = null; ouvrirPour = null;
+    if (rsAg) { rsAg.detruire(); rsAg = null; } if (rsSp) { rsSp.detruire(); rsSp = null; }
     if (ioFr) ioFr.disconnect();
     if (ENTREES.includes(a.vue)) memoire.ecrire(a.vue);
     else if (a.vue === 'spectacle') memoire.ecrire(a.entree);
@@ -2512,10 +2942,79 @@ html.ed-actif .ep-a::after { content: none; }
       if (h1 && !INTRO.ouverte()) h1.focus({ preventScroll: true });
     });
   }
+  /* ---------- Réserver une date, d'un geste (règle 17, RESERVER) : la grille qui se trace ----------
+     Sur la page d'un spectacle, la bande de ses prochaines dates (la prochaine choisie d'office) et la carte de la date
+     choisie ; sur l'accueil et « Je viens voir un spectacle », chaque date de la liste ouvre sa carte sous sa ligne (un
+     second geste ou Échap la referme). L'adresse garde la date choisie (?date=…). */
+  let rsAg = null, rsAgCle = null, rsSp = null, rsSpEtat = { slug: null, cle: null };
+  const requete = () => new URLSearchParams(String(location.hash || '').split('?')[1] || '');
+  // la commune de la date choisie, sur la carte de France de la même liste : son point grossit, cerclé de magenta
+  function marquerCommune(el, date) {
+    const svg = svgDe(el); if (!svg) return;
+    svg.querySelectorAll('.carte-lieu.est-choisi').forEach(g => g.classList.remove('est-choisi'));
+    const g = date && date.l != null ? svg.querySelector(`.carte-lieu[data-l="${date.l}"]`) : null;
+    if (g) g.classList.add('est-choisi');
+  }
+  /* L'effet, dans la signature de la maquette (la grille suisse) : choisir une date compose sa carte dans la grille. Un
+     voile du fond de la carte, aux filets de ses douze colonnes, se retire colonne après colonne (douze marches, comme la
+     page qui change) et la découvre ; le filet se trace sous le titre ; les séances et « Réserver » se posent dans la grille
+     l'une après l'autre. Une carte qui s'ouvre sous sa ligne descend d'abord d'un rien. Rien que des animations composées
+     (transform, opacity) : le geste se peint tout de suite, même au téléphone. Moins d'animations : un fondu bref. */
+  function effetReserver({ carte: el, date, premier, ouverture }) {
+    marquerCommune(el, date);
+    if (premier || COUPE || !el.animate) return;
+    const c = el.querySelector('.rs-c');
+    if (!bouge()) { if (c) c.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
+    const n = 12, pas = LF < 900 ? 16 : 22, d0 = ouverture ? 80 : 0, courbe = 'cubic-bezier(.2, 0, 0, 1)';
+    if (ouverture) el.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: courbe });
+    const voile = document.createElement('span');
+    voile.className = 'rs-voile'; voile.setAttribute('aria-hidden', 'true');
+    el.appendChild(voile);
+    const fin = () => voile.remove();
+    voile.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }], { duration: n * pas, delay: d0, easing: `steps(${n}, end)`, fill: 'backwards' }).finished.then(fin, fin);
+    const sp = el.querySelector('.rs-sp');
+    if (sp) sp.animate([{ transform: 'scaleX(0)' }, { transform: 'none' }], { pseudoElement: '::after', duration: 420, delay: d0 + n * pas * .5, easing: 'cubic-bezier(.65, 0, .35, 1)', fill: 'backwards' });
+    [...el.querySelectorAll('.rs-liste > li, .rs-action')].slice(0, 8).forEach((x, i) => x.animate([{ opacity: 0, transform: 'translateX(-12px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 300, delay: d0 + n * pas * .6 + i * 40, easing: courbe, fill: 'backwards' }));
+  }
+  // un repère de la frise de la tournée : une date de la bande se choisit (et la bande la montre) ; les autres mènent à leur ligne
+  function choisirRepere(id) {
+    const b = rsSp && id ? main.querySelector(`.rs-bande [data-frise-id="${CSS.escape(id)}"]`) : null;
+    if (b) { rsSp.choisir(b.getAttribute('data-reserver')); rsSp.montrer(); } else allerLigne(id);
+  }
+  function reserver(fixe) {
+    if (!RS) return;
+    const voulue = requete().get('date');
+    const liste = main.querySelector('#ag [data-liste]');
+    if (liste) {
+      rsAg = RS.monter(liste, { dates: RS.dates(), carte: b => document.getElementById(idCarte(b.getAttribute('data-reserver'))),
+        choisie: voulue || (fixe ? rsAgCle : null), basculer: true, roving: false, axe: 'hv', adresse: true,
+        univers: x => (x ? uStyle(x) : ''), carteOptions: d => ({ href: showDe(d.slug) ? `#/spectacle/${d.slug}/voir?date=${encodeURIComponent(RS.cle(d))}` : null }),
+        effet: effetReserver, surChoix: (d, k) => { rsAgCle = k; if (!d) marquerCommune(liste, null); } });
+      liste.addEventListener('keydown', ev => {
+        if (ev.key !== 'Escape' || !rsAg || rsAg.cle() == null) return;
+        const b = liste.querySelector(`[data-reserver="${CSS.escape(rsAg.cle())}"]`), li = b && b.closest('li');
+        if (li && li.contains(ev.target)) { ev.preventDefault(); rsAg.choisir(null); b.focus(); }
+      });
+      // une adresse qui nomme une date (un lien partagé) : la liste s'ouvre sur sa carte
+      if (voulue && !fixe && rsAg.cle() === voulue) bientot(() => { const b = liste.querySelector(`[data-reserver="${CSS.escape(voulue)}"]`); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } });
+    }
+    const zone = main.querySelector('.rs-zone');
+    if (zone) {
+      const slug = zone.dataset.slug, res = RS.dates(slug);
+      const k0 = fixe && rsSpEtat.slug === slug && rsSpEtat.cle ? rsSpEtat.cle : voulue && res.some(d => RS.cle(d) === voulue) ? voulue : 'premiere';
+      // (l'univers : celui de l'article, hérité, de jour comme de nuit ; rien à poser sur la carte)
+      rsSp = RS.monter(zone.querySelector('.rs-bande'), { dates: res, carte: zone.querySelector('.rs-carte'), choisie: k0, adresse: true, univers: () => '',
+        effet: effetReserver, surChoix: (d, k) => { rsSpEtat = { slug, cle: k }; } });
+      bientot(() => { if (rsSp) rsSp.montrer(); });
+      if (voulue && !fixe && k0 === voulue) bientot(() => { zone.scrollIntoView({ block: 'start' }); const b = zone.querySelector('.rs-date[aria-pressed="true"]'); if (b) b.focus({ preventScroll: true }); });
+    }
+  }
   function brancher(fixe) {
     if (ro) ro.disconnect();
     main.querySelectorAll('svg.carte-m03').forEach(svg => brancherVue(svg, fixe));
     majAgenda(false, true);
+    reserver(fixe);
     // établissement : la saison scolaire en frise ; une saison passée : la sienne (une ligne par spectacle)
     const sc = document.getElementById('sc-sw');
     if (sc) { const lie = sc.closest('.sc'), lignes = lignesSaison(D.saison, d => d.scolaire);
@@ -2524,6 +3023,7 @@ html.ed-actif .ep-a::after { content: none; }
     if (sa) { const corps = main.querySelector('.sa-body'), k = sa.dataset.saison;
       poserSW(sa, k, lignesSaison(k, () => true), { module: 'saison', liste: corps, carte: corps && corps.querySelector('svg.carte-m03') }); }
     friserVue();
+    vivreTroupe();
     // Je souhaite programmer : les autres fiches, trois par trois, puis la carte de tous les lieux
     const pg = document.getElementById('pg');
     if (pg && !fixe) {
@@ -2582,12 +3082,16 @@ html.ed-actif .ep-a::after { content: none; }
     if (el.matches && el.matches('a[href]')) return `a[href="${CSS.escape(el.getAttribute('href'))}"]`;
     return null;
   }
+  let rafraichirPlusTard = 0;
   function rafraichir() {
+    // une vidéo chargée (règle 18) : la vue ne se refait pas sous elle (elle s'arrêterait) ; on y revient quand elle ne l'est plus
+    clearTimeout(rafraichirPlusTard);
+    if (LC && LC.actif()) { rafraichirPlusTard = setTimeout(rafraichir, 2500); return; }
     cachePasse = null;
     const y = window.scrollY, act = document.activeElement, cle = cleDe(act);
     const sel = act && typeof act.selectionStart === 'number' ? [act.selectionStart, act.selectionEnd] : null;
     const ouverts = [...main.querySelectorAll('details[data-k]')].filter(d => d.open).map(d => d.dataset.k);
-    polices();
+    polices(); couleurs();
     enTete(); pied();
     route({ enPlace: true });
     ouverts.forEach(k => { const d = main.querySelector(`details[data-k="${CSS.escape(k)}"]`); if (d) d.open = true; });
@@ -2690,14 +3194,16 @@ html.ed-actif .ep-a::after { content: none; }
   // la pieuvre ne bouge pas (règle 15) : aucune tentacule, ni au clic ni au changement de page ; la pression, partout
   if (typeof TENTACULES !== 'undefined') TENTACULES.regler({ style: 'encre', clic: false, pages: false });
   if (MV) MV.presse(document);
-  enTete(); pied(); polices();
+  couleurs(); enTete(); pied(); polices();
   // quand le navigateur n'a rien d'autre à faire : l'agenda passé se lit, les polices des univers se chargent (une police qui
   // arrive pendant qu'on lit refait toute la mise en page)
   const auRepos = 'requestIdleCallback' in window ? requestIdleCallback : f => setTimeout(f, 400);
   auRepos(() => agendaPasse());
   auRepos(() => { if (document.fonts && document.fonts.load) shows().forEach(x => { const u = univers(x); if (u.police) document.fonts.load(`${u.graisse} 1em '${u.police}'`).catch(() => {}); }); });
   // l'ouverture : le papier réglé de l'agenda, le logo à l'encre ; à la révélation, les bras de la carte poussent depuis Rouen
-  INTRO.ouvrir({ fond: '#f4f1ea', encre: '#141414', classe: 'intro-m03', apres: () => main.querySelectorAll('svg.carte-m03:not(.pousse)').forEach(pousser) });
+  // (la nuit, règle 19 : le papier de nuit et l'encre claire)
+  const ouvertureNuit = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit';
+  INTRO.ouvrir({ fond: ouvertureNuit ? NUIT : '#f4f1ea', encre: ouvertureNuit ? '#f1ede5' : '#141414', classe: 'intro-m03', apres: () => main.querySelectorAll('svg.carte-m03:not(.pousse)').forEach(pousser) });
   window.addEventListener('hashchange', () => route());
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
   route();
