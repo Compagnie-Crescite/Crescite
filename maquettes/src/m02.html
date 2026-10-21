@@ -1172,7 +1172,7 @@ button.lien-u{margin:0;padding:0;border:0;background:none;font:inherit;font-weig
    où elle paraît et relie ses places d'un trait magenta (TROUPE.relier). Au défilement, les panneaux se posent, la rampe se
    trace, les portraits paraissent (animations liées au défilement) ; moins d'animations : tout est en place. */
 .troupe{padding-top:var(--sec)}
-.tp{position:relative;isolation:isolate;display:grid;gap:28px;--troupe-lien:var(--magenta);--troupe-ventouse-fond:var(--white)}
+.tp{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr);gap:28px;--troupe-lien:var(--magenta);--troupe-ventouse-fond:var(--white)}
 .tp-tete{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px 28px}
 .tp-maison{flex:none;display:block;width:64px;height:64px}
 .tp-maison svg{width:100%;height:100%}

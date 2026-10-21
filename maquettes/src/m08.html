@@ -970,8 +970,24 @@ a.rs-seance:hover{background:var(--ink);color:var(--paper)}
 .rs-reserver:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
 .rs-reserver.mv-presse{transform:scale(.985);transition:none}
 .rs-aupres{display:flex;flex-wrap:wrap;gap:4px 8px;padding:14px 0 0;border-top:1px solid var(--rule-s);font-size:1.0625rem}
-/* l'ancienne fiche qui cède la place (l'aperçu qui se relaie) */
-.rs-ancien{position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--paper2)}
+/* l'ancienne fiche qui cède la place (l'aperçu qui se relaie), la nouvelle qui se compose ligne à ligne (effetReserver) */
+.rs-ancien{position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--paper2);animation:rs-relais .16s ease-out forwards}
+.rs-compose .rs-c>*{--rs-i:0;animation:rs-ligne .24s var(--mv-courbe) backwards;animation-delay:calc(70ms + var(--rs-i) * 44ms)}
+.rs-compose .rs-c>:nth-child(2){--rs-i:1}
+.rs-compose .rs-c>:nth-child(3){--rs-i:2}
+.rs-compose .rs-c>:nth-child(4){--rs-i:3}
+.rs-compose .rs-c>:nth-child(5){--rs-i:4}
+.rs-compose .rs-c>:nth-child(n+6){--rs-i:5}
+.rs-compose .rs-sp::after{animation:rs-filet .32s var(--mv-courbe) 190ms backwards}
+.rs-compose .rs-photo{animation:rs-pose .34s var(--mv-courbe) 70ms backwards}
+.rs-compose.rs-ouvre{animation:rs-ouvre .24s var(--mv-courbe)}
+.rs-compose.rs-ouvre .rs-c>*{animation-delay:calc(40ms + var(--rs-i) * 44ms)}
+@keyframes rs-ligne{from{opacity:0;transform:translateY(8px)}}
+@keyframes rs-filet{from{transform:scaleX(0)}}
+@keyframes rs-pose{from{opacity:0;transform:translateY(10px)}}
+@keyframes rs-ouvre{from{opacity:0;transform:translateY(-8px)}}
+@keyframes rs-relais{to{opacity:0;transform:translateY(-6px)}}
+html.m8-fixe .rs-compose :is(.rs-c>*,.rs-sp::after,.rs-photo),html.m8-fixe .rs-compose.rs-ouvre,html.m8-fixe .rs-ancien{animation:none}
 .rs-ici .rs-ancien{background:var(--paper)}
 /* « Je viens voir un spectacle » : la date d'une ligne réservable est un bouton ; sa fiche s'ouvre sous la ligne */
 .rs-date--ligne{align-self:start;width:100%;padding:10px 30px 11px 12px;margin:-10px 0 0 -12px;border:1px solid transparent;border-left:3px solid var(--c,var(--ink))}
@@ -2853,25 +2869,19 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
      la place en s'effaçant d'un rien vers le haut (l'aperçu qui se relaie) ; la nouvelle se compose ligne à ligne, dans
      l'ordre de lecture (le titre, la date, le lieu, les séances, « Réserver »), et le filet se tire sous le titre ; sa
      photo se pose. Une carte qui s'ouvre sous sa ligne descend d'abord d'un rien. Rien que des animations composées
-     (transform, opacity). Moins d'animations : un fondu bref ; ?anim=0 : rien. */
+     (transform, opacity), écrites en CSS (.rs-compose : les lignes neuves de la carte s'y composent d'elles-mêmes, sans
+     un appel par ligne qui retiendrait le geste). Moins d'animations : un fondu bref ; ?anim=0 : rien. */
   function effetReserver({ carte: el, ancien, premier, ouverture }) {
     if (premier || COUPE || !el.animate) return;
-    const c = $('.rs-c', el);
-    if (!motionOK()) { if (c) c.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
+    if (!motionOK()) { const c = $('.rs-c', el); if (c) c.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
     if (ancien && ancien.firstChild) {
       ancien.className = 'rs-ancien'; ancien.setAttribute('aria-hidden', 'true');
       el.appendChild(ancien);
       const fin = () => ancien.remove();
-      ancien.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px)' }], { duration: 160, easing: 'ease-out', fill: 'forwards' }).finished.then(fin, fin);
+      ancien.addEventListener('animationend', fin, { once: true }); setTimeout(fin, 500);
     }
-    const d0 = ouverture ? 40 : 70;
-    if (ouverture) el.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: COURBE });
-    $$('.rs-sp, .rs-quand, .rs-ou, .rs-det, .rs-seances, .rs-action', el).forEach((x, i) => x.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
-      { duration: 240, delay: d0 + i * 44, easing: COURBE, fill: 'backwards' }));
-    const sp = $('.rs-sp', el);
-    if (sp) sp.animate([{ transform: 'scaleX(0)' }, { transform: 'none' }], { pseudoElement: '::after', duration: 320, delay: d0 + 120, easing: COURBE, fill: 'backwards' });
-    const ph = $('.rs-photo', el);
-    if (ph) ph.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 340, delay: d0, easing: COURBE, fill: 'backwards' });
+    el.classList.toggle('rs-ouvre', !!ouverture);
+    el.classList.add('rs-compose');
   }
   function reserver(r) {
     if (rsVoir) { rsVoir.detruire(); rsVoir = null; }

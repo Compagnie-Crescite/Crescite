@@ -823,6 +823,9 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 .c-frise .frise-etiquette::before{display:none}
 .c-frise .frise-repere:hover .frise-etiquette,.c-frise .frise-repere:focus-visible .frise-etiquette{color:var(--mag);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.15em}
 .c-frise .frise-aujourdhui-nom{left:auto;right:0;top:-.78em;translate:none}
+/* le tampon « aujourd'hui » se frappe depuis le bord où il s'appuie : au bord d'une frise, il ne déborde pas de la page */
+.c-frise .frise-aujourdhui-nom,.frise .frise-aujourdhui.est-bord-d .frise-aujourdhui-nom{transform-origin:100% 50%}
+.frise .frise-aujourdhui.est-bord-g .frise-aujourdhui-nom{transform-origin:0 50%}
 .c-frise .frise--v .frise-aujourdhui::before{opacity:.6}
 html:not(.ed-actif) .chrono-ed{display:none}
 html.ed-actif .c-frise{display:none}
