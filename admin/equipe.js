@@ -4,8 +4,13 @@
    - la rubrique Équipe : une fiche par personne (fiche publique, coordonnées jamais publiées, accès à son espace, notes
      de suivi, ses spectacles et ses prochaines dates) et les documents de toute la compagnie ;
    - dans chaque spectacle : la distribution, le déroulé type d'une journée de représentation, les documents ;
-   - dans chaque date : son équipe (la distribution « en tournée », moins qui ne part pas, plus remplaçants et renforts) ;
+   - dans chaque date : son équipe (la distribution « en tournée », moins qui ne part pas, plus remplaçants et renforts),
+     avec le téléphone de chacun (« téléphone ? » mène à sa fiche) ;
    - la rubrique Feuilles de route : composer depuis la base, compléter bloc par bloc, publier pour l'équipe, PDF ;
+     « À compléter » : ce que la feuille demande encore (le gris), en une liste qu'on remplit sans viser la page ; la liste
+     des feuilles dit combien il en reste. La mémoire des feuilles : ce qu'on écrit dans une feuille à la place d'une
+     information de la base (ou là où elle manque) va dans la bonne fiche à l'enregistrement, avec « Annuler » ; MEMOIRE
+     relie la clé de chaque ligne composée à sa fiche et à son champ ; la fiche dit ensuite d'où vient la valeur ;
    - la rubrique Espace pro : les invitations des salles (pro/), leur lien, leur journal ; et dans chaque spectacle, les
      documents réservés aux salles (captations, photos, fichiers non publics).
    Tant que la base n'a pas l'équipe (supabase/migrations/20261021_crescite_equipe.sql), ces écrans le disent et le
@@ -155,7 +160,7 @@ function vueEquipe(param) {
   const f = session.equipe = Object.assign({ q: '', categorie: '' }, session.equipe || {});
   cadre('equipe', `${tete}<div class="deux${param ? ' edition' : ''}"><div class="liste"><div class="filtres">
       <input type="search" id="eq-q" placeholder="Chercher un nom, un métier, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
-      <select id="eq-cat" aria-label="Catégorie"><option value="">Toutes les catégories</option>${CATEGORIES.map(([k, l]) => `<option value="${k}"${f.categorie === k ? ' selected' : ''}>${l}</option>`).join('')}<option value="aucune"${f.categorie === 'aucune' ? ' selected' : ''}>Dans aucune distribution</option></select>
+      <select id="eq-cat" aria-label="Catégorie"><option value="">Toutes les catégories</option>${CATEGORIES.map(([k, l]) => `<option value="${k}"${f.categorie === k ? ' selected' : ''}>${l}</option>`).join('')}<option value="aucune"${f.categorie === 'aucune' ? ' selected' : ''}>Dans aucune distribution</option><option value="sans-tel"${f.categorie === 'sans-tel' ? ' selected' : ''}>Sans téléphone</option></select>
       <span class="compte" id="eq-compte"></span></div><div data-liste id="l-equipe"></div></div>
     <section class="editeur" id="ed-personne">${param ? '' : '<div class="vide bloc">Une fiche par personne : jeu, création, technique, production. La fiche publique va sur les pages de spectacle ; les coordonnées restent ici et dans l’espace de la personne.</div>'}</section></div>`);
   parties();
@@ -170,7 +175,7 @@ function listePersonnes(zone, actif) {
   const f = session.equipe, q = norm(f.q).trim();
   const xs = E.personnes.filter(p => {
     const ds = E.distributions.filter(x => x.personne_id === p.id);
-    if (f.categorie === 'aucune' ? ds.length : f.categorie && !ds.some(x => x.categorie === f.categorie)) return false;
+    if (f.categorie === 'sans-tel' ? (priveeDe(p.id)?.telephone || '').trim() : f.categorie === 'aucune' ? ds.length : f.categorie && !ds.some(x => x.categorie === f.categorie)) return false;
     if (!q) return true;
     const pr = priveeDe(p.id);
     return norm(`${nomDe(p)} ${(p.metiers || []).join(' ')} ${ds.map(x => spectacle(x.spectacle_id)?.titre || '').join(' ')} ${pr?.email || ''} ${pr?.ville || ''}`).includes(q);
@@ -223,6 +228,7 @@ function editeurPersonne(id) {
     ${pied(p0 ? 'Tout est enregistré' : 'Nouvelle fiche', p0 ? '<button type="button" class="btn danger" id="pe-suppr">Supprimer</button>' : '')}`;
   $('[data-chemin="email"]', zone).type = 'email';
   $('[data-chemin="telephone"]', zone).type = 'tel';
+  if (p0) { sousChamp($('[data-chemin="telephone"]', zone), v => mentionAppris('crescite_personnes_privees', p0.id, 'telephone', v)); sousChamp($('[data-chemin="email"]', zone)); sousChamp($('[data-chemin="urgence"]', zone)); }
   $('[data-chemin="notes"]', zone).setAttribute('aria-label', 'Notes de suivi');
   relier($('#pe-public', zone), F, [...SPEC_PERSONNE, ...SPEC_PHOTO_PERSONNE, SPEC_PUBLIE_PERSONNE]);
   relier($('#pe-coord', zone), P, SPEC_COORD);
@@ -702,6 +708,9 @@ function documentsEditeur(z, s) {
 }
 
 // ===================================================================================================== l'équipe d'une date
+// le téléphone d'une personne de l'équipe, à appeler d'un geste ; sans lui, « téléphone ? » mène à sa fiche
+const telEquipe = pid => { const t = priveeDe(pid)?.telephone; const n = nomDe(personne(pid));
+  return t ? `<a class="coord" href="${esc(FEUILLE.telLien(t))}" aria-label="Appeler ${esc(n)} : ${esc(FEUILLE.telTexte(t))}">${esc(FEUILLE.telTexte(t))}</a>` : `<a class="manque-tel" href="#/equipe/${pid}" title="Compléter sa fiche">téléphone ?</a>`; };
 // F.equipe ne garde que les écarts avec la distribution « en tournée » : qui ne part pas (present: false), qui s'ajoute
 const ecartsDate = dateId => E.equipes.filter(x => x.date_id === dateId).map(x => ({ personne_id: x.personne_id, present: x.present, fonction: x.fonction || '', note: x.note ?? null }));
 function blocEquipeDate(zone, F, changer) {
@@ -717,9 +726,9 @@ function blocEquipeDate(zone, F, changer) {
     const ajouts = F.equipe.filter(x => x.present && !ids.has(x.personne_id));
     const absents = tournee.filter(x => ecart(x.personne_id)?.present === false);
     el.innerHTML = `<h3>Équipe de cette date</h3>
-      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const part = ecart(x.personne_id)?.present !== false; return `<li${part ? '' : ' class="absent"'}><label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nomDe(personne(x.personne_id)))}</label><span class="compte">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span></li>`; }).join('')}</ul>`
+      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const part = ecart(x.personne_id)?.present !== false; return `<li${part ? '' : ' class="absent"'}><label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nomDe(personne(x.personne_id)))}</label><span class="compte">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span>${part ? telEquipe(x.personne_id) : ''}</li>`; }).join('')}</ul>`
         : `<p class="aide">${spectacle(sp) ? 'Personne n’est « en tournée » dans la distribution de ce spectacle (Spectacles → Distribution).' : 'Choisissez d’abord le spectacle.'}</p>`}
-      ${ajouts.length ? `<div class="eq-ajouts"><span class="lib">Remplaçants et renforts</span>${ajouts.map(x => `<div class="eq-ajout" data-eqd-ajout="${x.personne_id}">${avatar(personne(x.personne_id), true)}<b>${esc(nomDe(personne(x.personne_id)))}</b>
+      ${ajouts.length ? `<div class="eq-ajouts"><span class="lib">Remplaçants et renforts</span>${ajouts.map(x => `<div class="eq-ajout" data-eqd-ajout="${x.personne_id}">${avatar(personne(x.personne_id), true)}<a class="eq-nom" href="#/equipe/${x.personne_id}" title="Sa fiche">${esc(nomDe(personne(x.personne_id)))}</a>
         <input type="text" data-eqd-fonction value="${esc(x.fonction || '')}" placeholder="${esc(absents.length ? `Remplace ${nomDe(personne(absents[0].personne_id))}` : 'Renfort régie, remplaçant…')}" aria-label="Fonction sur cette date">
         <button type="button" class="btn petit danger" data-eqd-retirer title="Retirer de cette date" aria-label="Retirer de cette date">✕</button></div>`).join('')}</div>` : ''}
       <div class="champ eq-ajouter"><span class="lib">Ajouter quelqu’un</span><div id="eqd-combo"></div><span class="aide">Un remplaçant ou un renfort, pour cette date seulement, avec sa fonction.</span></div>`;
@@ -818,6 +827,8 @@ function panneauPrevenir(zone, d) {
 }
 
 // ===================================================================================================== feuilles de route
+// ce qu'une feuille de route demande encore (ses amorces qui posent une question)
+const aCompleter = dateId => { const f = E.feuilles.find(x => x.date_id === dateId); if (!f) return 0; try { return FEUILLE.manques(FEUILLE.contenu(f).blocs).length; } catch { return 0; } };
 const badgeFeuille = dateId => {
   const f = E.feuilles.find(x => x.date_id === dateId);
   return !f ? '<span class="badge">Aucune</span>' : f.statut === 'publiee' ? `<span class="badge ok">Publiée v${f.version}</span>` : '<span class="badge option">Brouillon</span>';
@@ -854,11 +865,11 @@ function listeFeuilles(zone) {
   const n = k => xs.filter(d => etatDe(d) === k).length;
   $('#fr-compte').textContent = `${avenir.length} à venir · ${passees.length} passée${passees.length > 1 ? 's' : ''} · ${n('publiee')} publiée${n('publiee') > 1 ? 's' : ''}, ${n('brouillon')} brouillon${n('brouillon') > 1 ? 's' : ''}`;
   const ligne = d => {
-    const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id), jours = [...new Set(reps.map(r => r.jour))];
+    const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id), jours = [...new Set(reps.map(r => r.jour))], manque = aCompleter(d.id);
     return `<a class="ligne" href="#/feuilles/${d.id}" style="--c:${couleurSp(s)}"><span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${d.fin && d.fin !== d.debut ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
       <span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : (d.intitule || '').split(' — ')[1] || 'Lieu à préciser')}</span>
       ${reps.length ? `<span class="reps">${reps.slice(0, 6).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 6 ? `<span class="rep">+${reps.length - 6}</span>` : ''}</span>` : ''}</span>
-      <span class="badges">${badgeFeuille(d.id)}${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}</span></a>`;
+      <span class="badges">${badgeFeuille(d.id)}${manque ? `<span class="badge option">${manque} à compléter</span>` : ''}${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge option">Reportée</span>' : ''}</span></a>`;
   };
   const saisons = [...new Set(passees.map(d => d.saison))].sort().reverse(), enCours = AGENDA.saisonDe(AUJ);
   zone.innerHTML = `<h2 class="mois" style="font-size:13px;color:var(--accent)">À venir</h2>${avenir.map(ligne).join('') || '<p class="vide">Aucune date à venir.</p>'}
@@ -918,6 +929,7 @@ function editeurFeuille(dateId) {
   const f0 = E.feuilles.find(x => x.date_id === dateId) || null;
   const etat = { d, f0, F: f0 ? feuilleVersForm(f0, d) : null, vue: 'page', editeur: null };
   etat.initial = signatureFeuille(etat.F);
+  etat.lu = lignesLues(etat.F?.contenu.blocs);
   dessinerFeuille(etat);
 }
 const feuilleCourante = etat => {
@@ -932,6 +944,13 @@ function alertesFeuille(d, F) {
   if (s && (d.nature || 'representations') === 'representations' && !FEUILLE.dureeMinutes(s.duree)) out.push(`La durée du spectacle n’est pas indiquée (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Général">Spectacles → Général → Durée</a>) : les étapes d’après le spectacle (démontage) restent sans heure.`);
   if (s && (d.nature || 'representations') === 'representations' && !(s.feuille_modele || []).length) out.push(`${esc(s.titre)} n’a pas de déroulé type (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Déroulé type">Spectacles → Déroulé type</a>) : le planning ne contient que les représentations.`);
   if (F && horairesChanges(d, F.contenu)) out.push('Les horaires de la date ont changé depuis la composition de cette feuille. <button type="button" class="btn lien" data-fr-maj>Mettre à jour depuis la base</button>');
+  // ce qui manque (en gris) et que la base sait maintenant : un téléphone gardé depuis une autre feuille, une adresse…
+  const avant = F ? FEUILLE.manques(F.contenu.blocs) : [];
+  if (avant.length) {
+    const apres = FEUILLE.actualiser(F.contenu, composerPour(d)).contenu.blocs;
+    const n = avant.filter(m => { const b = apres.find(x => x.id === m.id); return b && !(b.segments || []).some(x => x.amorce && x.texte.trim() === m.texte); }).length;
+    if (n) out.push(`La base sait maintenant ${n > 1 ? `${n} informations qui manquent` : 'une information qui manque'} à cette feuille (en gris). <button type="button" class="btn lien" data-fr-maj>Mettre à jour depuis la base</button>`);
+  }
   return out.map(x => `<p class="fr-alerte">${x}</p>`).join('');
 }
 function dessinerFeuille(etat) {
@@ -942,7 +961,7 @@ function dessinerFeuille(etat) {
     zone.innerHTML = `<div class="bloc fr-accueil"><h3>Pas encore de feuille de route pour cette date</h3>
       <p>« Composer » écrit la feuille sur sa page A4, dans la forme habituelle : l’en-tête (le spectacle, l’équipe, les dates, le lieu), le planning jour par jour, les repas, transports et hébergement repris de la feuille précédente, les adresses et les contacts. Il ne reste qu’à relire et compléter : ce qui manque est écrit en gris, cliquez dessus pour l’écrire.</p>
       ${alertesFeuille(d, null)}<p class="fm-boutons"><button type="button" class="btn principal" id="fr-composer">Composer la feuille</button><button type="button" class="btn" id="fr-vide">Partir d’une page blanche</button></p></div>`;
-    const commencer = contenu => { etat.F = { titre: '', contenu, statut: 'brouillon', version: 1, publiee_le: null }; dessinerFeuille(etat); };
+    const commencer = contenu => { etat.F = { titre: '', contenu, statut: 'brouillon', version: 1, publiee_le: null }; etat.lu = lignesLues(contenu.blocs); dessinerFeuille(etat); };
     $('#fr-composer', zone).addEventListener('click', () => { commencer(composerPour(d)); annoncer('Feuille composée : relisez, complétez ce qui est en gris, puis enregistrez.'); });
     $('#fr-vide', zone).addEventListener('click', () => commencer({ format: 2, blocs: [{ type: 'entete', segments: [{ texte: 'FEUILLE DE ROUTE', gras: true, italique: true }] }, { type: 'ligne', segments: [] }], composees: [], pages: [], instantane: [] }));
     return;
@@ -956,6 +975,7 @@ function dessinerFeuille(etat) {
   zone.innerHTML = `<div class="bloc fr-etat"><div class="fr-etat-l"><span class="fr-badge">${badge}</span>
       <span class="fr-actions"><button type="button" class="btn petit" id="fr-maj" title="L’en-tête, les horaires, l’équipe, les contacts : ce qui vient de la base et n’a pas été retouché. Ce que vous avez écrit ne change pas.">Mettre à jour depuis la base</button><button type="button" class="btn petit" id="fr-pdf">Télécharger le PDF</button><button type="button" class="btn petit" id="fr-imprimer">Imprimer</button></span></div>
       ${alertesFeuille(d, F)}</div>
+    <div class="bloc fr-manques" id="fr-manques" hidden></div><p class="sr" id="fr-m-annonce" role="status"></p>
     <div class="a4-outils" role="toolbar" aria-label="Mise en forme de la feuille" aria-controls="a4-doc">
       <span class="a4-groupe" role="group" aria-label="Type de ligne">${bouton('type', 'Rubrique', 'Un titre de rubrique : Planning, Repas, Transports…', ' data-type="rubrique" aria-pressed="false"')}${bouton('type', 'Jour', 'Un jour du planning : « mardi 16 décembre »', ' data-type="jour" aria-pressed="false"')}${bouton('type', 'Ligne', 'Une ligne ordinaire', ' data-type="ligne" aria-pressed="false"')}${bouton('type', '• Puce', 'Une liste à puces', ' data-type="puce" aria-pressed="false"')}</span>
       <span class="a4-groupe" role="group" aria-label="Mise en valeur">${bouton('gras', '<b>Gras</b>', 'Gras (Ctrl+B)', ' aria-pressed="false"')}${bouton('rouge', '<span class="a4-rouge">Rouge</span>', 'Rouge : ce qu’il ne faut pas oublier', ' aria-pressed="false"')}${bouton('surligne', '<span class="a4-jaune">Surligner</span>', 'Surligner : pour qui c’est', ' aria-pressed="false"')}${bouton('noms', 'Surligner les noms', 'Surligne d’un coup, dans le planning, les prénoms de l’équipe et « tout le monde »')}</span>
@@ -982,6 +1002,51 @@ function dessinerFeuille(etat) {
     $('[data-a4="annuler"]', outils).disabled = !e?.annuler;
     $('[data-a4="retablir"]', outils).disabled = !e?.retablir;
   };
+  // ---- à compléter : ce que la feuille demande encore (les amorces en gris qui posent une question), en une liste qu'on
+  // remplit sans viser la page (petite, au téléphone). Ce qu'on y écrit prend la place de l'amorce, comme un clic sur elle
+  // (« Annuler » de la barre le reprend) ; un téléphone, un contact, l'adresse du lieu iront dans leur fiche à l'enregistrement.
+  const pm = $('#fr-manques', zone);
+  let signatureManques = null, manquesPrevus = 0;
+  const blocsCourants = () => (etat.editeur ? etat.editeur.blocs() : F.contenu.blocs);
+  const contexteManque = m => [m.jour, m.ligne.replace(/^[\s:–—-]+|[\s:–—-]+$/g, '') || m.rubrique].filter(Boolean).join(' · ');
+  const exempleManque = m => /^téléphone/.test(m.texte) ? 'le numéro' : /^contact sur place/.test(m.texte) ? 'nom et numéro' : /^adresse/.test(m.texte) ? 'numéro, rue, code postal'
+    : /^heure/.test(m.texte) ? 'l’heure : 9h30' : '';
+  const gardeDe = m => {
+    const e = memoireDe(m.cle).find(x => x.table);
+    const ligne = e && /téléphone|adresse|contact/.test(m.texte) ? e.ligne(m.cle.match(e.cle), d) : null;
+    return ligne == null ? '' : e.ou === 'sa fiche' ? `ira dans la fiche de ${nomDe(personne(ligne))}` : `ira dans ${e.ou === 'son suivi' ? 'le suivi de la date' : e.ou}`;
+  };
+  function dessinerManques(focus = null) {
+    const xs = FEUILLE.manques(blocsCourants()), sig = JSON.stringify(xs.map(m => [m.id, m.k, m.texte, m.ligne]));
+    if (sig === signatureManques && focus === null) return;
+    signatureManques = sig;
+    // ce qui est déjà tapé dans la liste, et le champ où l'on tape, restent
+    const saisies = new Map($$('li[data-m] input', pm).map(i => [i.closest('li').dataset.m, i.value]));
+    const actif = pm.contains(document.activeElement) && document.activeElement.matches('input') ? { m: document.activeElement.closest('li').dataset.m, i: document.activeElement.selectionStart } : null;
+    pm.hidden = !xs.length;
+    pm.innerHTML = xs.length ? `<details${etat.manquesFermes ? '' : ' open'}><summary><span class="fr-m-titre">À compléter</span><span class="badge option">${xs.length}</span><span class="aide">ce qui est encore en gris sur la page</span></summary>
+      <ul class="fr-m-liste">${xs.map((m, i) => { const g = gardeDe(m), cle = `${m.id}|${m.k}`; return `<li data-m="${esc(cle)}"><label for="fr-m-${i}"><span class="fr-m-ctx">${esc(contexteManque(m))}</span> <span class="fr-m-q">${esc(m.texte)}</span>${g ? `<small class="fr-m-garde">${esc(g)}</small>` : ''}</label>
+        <span class="fr-m-saisie"><input id="fr-m-${i}" type="${/^téléphone/.test(m.texte) ? 'tel' : 'text'}" autocomplete="off" enterkeyhint="done" value="${esc(saisies.get(cle) || '')}" placeholder="${esc(exempleManque(m))}"><button type="button" class="btn petit" data-m-ok>Écrire</button></span></li>`; }).join('')}</ul></details>` : '';
+    if (focus !== null) { const ins = $$('li[data-m] input', pm); (ins[Math.min(focus, ins.length - 1)] || $('[data-enregistrer]', zone))?.focus(); }
+    else if (actif) { const i = $$('li[data-m]', pm).find(li => li.dataset.m === actif.m)?.querySelector('input'); if (i) { i.focus(); i.setSelectionRange(actif.i, actif.i); } }
+  }
+  const ecrireManque = li => {
+    const inp = $('input', li), v = inp.value.replace(/\s+/g, ' ').trim();
+    if (!v) { inp.focus(); return; }
+    const [id, k] = li.dataset.m.split('|'), rang = $$('li[data-m]', pm).indexOf(li);
+    const blocs = blocsCourants().map(b => (b.id === id ? FEUILLE.remplirAmorce(b, +k, v) : b));
+    if (etat.editeur) etat.editeur.remplacer(blocs);
+    else { F.contenu.blocs = blocs; majEtat(); montrer(); }
+    const reste = FEUILLE.manques(blocsCourants()).length;
+    $('#fr-m-annonce', zone).textContent = `Écrit dans la feuille : ${v}. ${reste ? `Encore ${reste} à compléter.` : 'Tout est complété : il reste à enregistrer.'}`;
+    dessinerManques(rang);
+  };
+  pm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.fr-m-saisie input')) { e.preventDefault(); ecrireManque(e.target.closest('li')); } });
+  pm.addEventListener('click', e => { const b = e.target.closest('[data-m-ok]'); if (b) ecrireManque(b.closest('li')); });
+  pm.addEventListener('toggle', e => { if (e.target.tagName === 'DETAILS') etat.manquesFermes = !e.target.open; }, true);
+  // la liste suit la page (ce qu'on y écrit, « Annuler », « Mettre à jour depuis la base »), sans perdre une saisie en cours
+  const manquesBientot = () => { clearTimeout(manquesPrevus); manquesPrevus = setTimeout(() => { if (pm.isConnected) dessinerManques(); }, 300); };
+  dessinerManques();
   // la barre d'outils colle sous l'en-tête de l'administration
   const barre = $('.barre');
   const hauteurBarre = () => document.documentElement.style.setProperty('--haut-barre', `${barre ? barre.offsetHeight : 0}px`);
@@ -995,7 +1060,7 @@ function dessinerFeuille(etat) {
       return;
     }
     etat.editeur = editeurA4(z, { blocs: F.contenu.blocs, noms: nomsDeLaDate(d), ref: repsDe(d.id)[0]?.jour || d.debut,
-      quandChange: () => { F.contenu.blocs = etat.editeur.blocs(); F.contenu.pages = etat.editeur.pages(); majEtat(); },
+      quandChange: () => { F.contenu.blocs = etat.editeur.blocs(); F.contenu.pages = etat.editeur.pages(); majEtat(); manquesBientot(); },
       quandEtat: majOutils,
       extra: { lire: () => ({ composees: F.contenu.composees || [], instantane: F.contenu.instantane || [], compose_le: F.contenu.compose_le || null }), ecrire: v => Object.assign(F.contenu, v) } });
     F.contenu.pages = etat.editeur.pages();
@@ -1029,8 +1094,9 @@ function dessinerFeuille(etat) {
     F.contenu.blocs = etat.editeur.blocs(); F.contenu.pages = etat.editeur.pages();
     majEtat();
     $$('.fr-alerte', zone).forEach(x => { if (x.querySelector('[data-fr-maj]')) x.remove(); });
-    const n = r.ajoutes + r.modifies + r.retires;
-    annoncer(n ? `Mise à jour depuis la base : ${[r.modifies && `${r.modifies} ligne${r.modifies > 1 ? 's' : ''} changée${r.modifies > 1 ? 's' : ''}`, r.ajoutes && `${r.ajoutes} ajoutée${r.ajoutes > 1 ? 's' : ''}`, r.retires && `${r.retires} retirée${r.retires > 1 ? 's' : ''}`].filter(Boolean).join(', ')}. Ce que vous avez écrit n’a pas changé.` : 'Rien n’a changé dans la base depuis la composition.',
+    const n = r.ajoutes + r.modifies + r.retires + r.remplies, pl = (k, un, des) => `${k} ${k > 1 ? des : un}`;
+    annoncer(n ? `Mise à jour depuis la base : ${[r.modifies && pl(r.modifies, 'ligne changée', 'lignes changées'), r.ajoutes && pl(r.ajoutes, 'ajoutée', 'ajoutées'), r.retires && pl(r.retires, 'retirée', 'retirées'),
+      r.remplies && pl(r.remplies, 'information qui manquait', 'informations qui manquaient')].filter(Boolean).join(', ')}. Ce que vous avez écrit n’a pas changé.` : 'Rien n’a changé dans la base depuis la composition.',
       n ? { libelle: 'Annuler', delai: 12000, action: () => etat.editeur && etat.editeur.annuler() } : {});
   };
   zone.addEventListener('click', async e => {
@@ -1051,6 +1117,9 @@ function dessinerFeuille(etat) {
 }
 async function enregistrerFeuille(etat, statut, bouton) {
   const { d } = etat, avant = etat.f0, f = feuilleCourante(etat);
+  // la mémoire : ce qui a été écrit depuis l'ouverture et va dans les fiches ; la feuille en garde la trace (contenu.appris)
+  const lecons = lecturesFeuille(etat, f.contenu);
+  if (lecons.aGarder.length) f.contenu = { ...f.contenu, appris: avecAppris(f.contenu.appris, lecons.aGarder) };
   const ligne = { titre: (f.titre || '').trim() || null, contenu: f.contenu, statut };
   bouton.disabled = true;
   const r = avant ? await sb.from('crescite_feuilles').update(ligne).eq('id', avant.id).select().single()
@@ -1059,12 +1128,14 @@ async function enregistrerFeuille(etat, statut, bouton) {
   if (r.error) return erreur(r.error);
   remplacerLigne(E.feuilles, r.data);
   etat.f0 = r.data; etat.F = feuilleVersForm(r.data, d); etat.initial = signatureFeuille(etat.F);
+  etat.lu = lignesLues(etat.F.contenu.blocs);
   E.sale = false;
   if (etat.nettoyer) etat.nettoyer();
   dessinerFeuille(etat);
   annoncer(statut === 'publiee' ? (avant?.statut === 'publiee' ? `Mise à jour publiée : l’équipe voit la version ${r.data.version}.` : `Publiée pour l’équipe : version ${r.data.version}.`)
     : avant?.statut === 'publiee' ? 'Repassée en brouillon : l’équipe ne la voit plus.' : 'Brouillon enregistré : l’équipe ne le voit pas encore.');
   bravo();
+  if (lecons.aGarder.length || lecons.refus.length) await memoriser(etat, lecons);
 }
 // imprimer la feuille telle qu'elle est sur ses pages A4 (dans un cadre caché, sans fenêtre de plus)
 async function imprimerFeuille(feuille, contexte) {
@@ -1078,6 +1149,246 @@ async function imprimerFeuille(feuille, contexte) {
     setTimeout(() => f.remove(), 60000);
   }, { once: true });
   document.body.append(f);
+}
+
+// ===================================================================================================== la mémoire des feuilles
+// Ce qu'on écrit dans une feuille de route à la place d'une information de la base, ou là où elle manque (le téléphone
+// d'une personne, un contact, l'adresse d'un lieu…), va dans la bonne fiche quand on enregistre la feuille : les feuilles
+// suivantes le trouvent tout prêt, l'espace de l'équipe aussi. Chaque ligne que la base a composée porte une clé
+// (feuille.js) ; MEMOIRE dit ce que chaque clé apprend, et où. N'est relu que ce qui a été écrit depuis l'ouverture de la
+// feuille (etat.lu). Rien n'est deviné : deux numéros, pas de numéro reconnaissable, une personne ou un contact qu'on ne
+// retrouve plus, et rien ne s'enregistre (une phrase le dit) ; ce qu'on efface dans la feuille n'efface pas la fiche.
+// La feuille garde la trace de ce qu'elle a appris (contenu.appris : [{table, ligne, champ, le}], rien de la valeur) : la
+// fiche dit d'où vient sa valeur tant que la ligne de la feuille la dit encore.
+const RANGS = { crescite_personnes_privees: ['privees', 'personne_id'], crescite_dates_suivi: ['suivis', 'date_id'], crescite_lieux_suivi: ['lieuxSuivi', 'lieu_id'], crescite_lieux: ['lieux', 'id'] };
+const rangee = (table, ligne) => { const [k, pk] = RANGS[table]; return E[k].find(x => x[pk] === ligne) || null; };
+// « du Théâtre des Essais », « de l’Espace Modèle », « d’Évreux »
+const duLieu = l => (l?.nom ? FEUILLE.aLieu(l.nom) : `à ${l?.commune || 'ce lieu'}`).replace(/^au /, 'du ').replace(/^aux /, 'des ').replace(/^à la /, 'de la ').replace(/^à l’/, 'de l’').replace(/^à /, 'de ').replace(/^de ([aeiouyàâéèêëîïôöùûü])/i, 'd’$1');
+const personneDeCle = k => { const xs = E.personnes.filter(p => FEUILLE.cleMot(nomDe(p)) === k); return xs.length === 1 ? xs[0] : null; };
+const numero = t => String(t || '').replace(/[^\d+]/g, '').replace(/^\+33/, '0');
+const tousDans = (re, t) => String(t || '').match(new RegExp(re.source, 'g')) || [];
+// des chiffres qui ressemblent à un numéro sans en être un (trop courts, d'un autre pays) : rien de reconnaissable, sauf
+// s'ils sont ceux que la fiche a déjà (un numéro étranger, que la feuille montre tel quel)
+const chiffresSansNumero = (t, actuel = '') => { const c = String(t || '').replace(new RegExp(FEUILLE.RE_MEL.source, 'g'), ' ').replace(new RegExp(FEUILLE.RE_TEL.source, 'g'), ' ').replace(/\D/g, '');
+  return c.length >= 8 && !(numero(actuel).replace(/\D/g, '').length >= 8 && c.includes(numero(actuel).replace(/\D/g, ''))); };
+
+// ----------------------------------------------------------------------------------------------- lire ce qui est écrit
+// chaque lecture rend { valeur } (ce que la fiche apprend), { refus } (ambigu : rien ne s'enregistre) ou null (rien à apprendre)
+// le téléphone d'une personne : la ligne la nomme toujours (« Camille 06 00 00 00 00 »), et n'a qu'un numéro, reconnu
+function lireTelephone(texte, actuel, { personne: p }) {
+  const prenom = p?.prenom || nomDe(p).split(' ')[0];
+  if (!norm(texte).startsWith(norm(prenom))) return { refus: `la ligne ne nomme plus ${prenom}` };
+  const c = FEUILLE.lireContact(texte);
+  if (c.telephones.length > 1) return { refus: 'deux numéros dans la ligne' };
+  if (!c.telephones.length) return chiffresSansNumero(texte, actuel) ? { refus: 'pas de numéro reconnaissable' } : null;
+  return numero(c.telephone) === numero(actuel) ? null : { valeur: c.telephone };
+}
+// un contact du suivi (organisateur, contact de la date, contact du lieu) : un texte libre, que la feuille complète ou corrige
+// sans le réécrire (un numéro ou une adresse électronique s'y ajoutent ; un numéro changé y remplace l'ancien), tant que la
+// ligne nomme le même contact ; vide, il prend la ligne entière, si elle a de quoi joindre ce contact
+const ROLE_LIGNE = /,\s*(organisateur|contact de la date|contact du lieu)(\s*\([^)]*\))?\s*:/i;
+function lireContactSuivi(texte, actuel) {
+  const brut = texte.replace(ROLE_LIGNE, ' :').replace(/\s+/g, ' ').trim();
+  const tels = tousDans(FEUILLE.RE_TEL, brut), mels = tousDans(FEUILLE.RE_MEL, brut);
+  if (tels.length > 1) return { refus: 'deux numéros dans la ligne' };
+  if (mels.length > 1) return { refus: 'deux adresses électroniques dans la ligne' };
+  if (!tels.length && !mels.length) return chiffresSansNumero(brut, actuel) ? { refus: 'pas de numéro reconnaissable' } : null;
+  const nomSeul = t => FEUILLE.lireContact(t.replace(new RegExp(FEUILLE.RE_TEL.source, 'g'), ' ').replace(new RegExp(FEUILLE.RE_MEL.source, 'g'), ' ')).nom;
+  const propre = t => norm(t).replace(/[^a-z0-9]+/g, ' ').replace(/\b(ou|et|sinon|puis)\b/g, ' ').replace(/\s+/g, ' ').trim();   // « 02… ou 02… » : « ou » n'est pas un nom
+  const a = String(actuel || '').trim();
+  if (!a) return { valeur: tels.reduce((t, x) => t.replace(x, FEUILLE.telTexte(x)), brut).replace(/^[\s:,;–—-]+|[\s:,;–—-]+$/g, '') };
+  // le même contact ? (un nom écrit dans la ligne et dans la fiche : l'un contient l'autre)
+  const n1 = propre(nomSeul(brut)), n2 = propre(nomSeul(a));
+  if (n1 && n2 && !n1.includes(n2) && !n2.includes(n1)) return { refus: 'un autre nom que dans la fiche' };
+  let v = a;
+  const ajouter = x => { v = `${v.replace(/[\s,;:]+$/, '')}, ${x}`; };
+  if (tels.length) {
+    const deja = tousDans(FEUILLE.RE_TEL, a);
+    if (!deja.some(x => numero(x) === numero(tels[0]))) {
+      if (deja.length > 1) return { refus: 'plusieurs numéros dans la fiche' };
+      if (deja.length) v = v.replace(deja[0], FEUILLE.telTexte(tels[0])); else ajouter(FEUILLE.telTexte(tels[0]));
+    }
+  }
+  if (mels.length) {
+    const deja = tousDans(FEUILLE.RE_MEL, a);
+    if (!deja.some(x => norm(x) === norm(mels[0]))) {
+      if (deja.length > 1) return { refus: 'plusieurs adresses électroniques dans la fiche' };
+      if (deja.length) v = v.replace(deja[0], mels[0]); else ajouter(mels[0]);
+    }
+  }
+  return v === a ? null : { valeur: v };
+}
+// l'adresse du lieu, seulement si sa fiche n'en a pas : ce qui suit son nom (« Théâtre des Essais : 12 rue … »), qui
+// ressemble à une adresse (une voie ou un code postal, un numéro), sans la commune que la composition ajoute
+const VOIE = /\b(rue|avenue|av\.|bd|boulevard|place|pl\.|chemin|all[ée]e|impasse|quai|route|rte|cours|square|esplanade|parvis|rond-point|voie|passage|sentier|hameau|lieu-dit|r[ée]sidence|zone|za|zi|zac|parc|promenade|mail|faubourg|cit[ée]|domaine|lotissement)\b|\b\d{5}\b/i;
+function lireAdresse(texte, actuel, { lieu: l }) {
+  const i = texte.indexOf(':');
+  if (i < 0) return null;
+  const tete = texte.slice(0, i), commune = String(l?.commune || '').trim();
+  if (!norm(tete).includes(norm(l?.nom || commune))) return { refus: 'la ligne ne nomme plus le lieu' };
+  let a = texte.slice(i + 1).replace(/\s+/g, ' ').trim();
+  // « 12 rue de l’Exemple, Évreux » : la commune que la composition ajoute s'en va ; « …, 27000 Évreux » reste entier
+  if (commune && norm(a).endsWith(norm(commune)) && !/\d{5}\s*$/.test(a.slice(0, a.length - commune.length))) a = a.slice(0, a.length - commune.length).replace(/[\s,]+$/, '');
+  if (!a) return null;
+  if (!/\d/.test(a) || !VOIE.test(a) || a.length > 150 || /@/.test(a)) return { refus: 'pas une adresse reconnaissable' };
+  if (String(actuel || '').trim()) return norm(actuel).replace(/\s+/g, ' ') === norm(a) ? null : { refus: 'la fiche du lieu en a déjà une' };
+  return { valeur: a };
+}
+// la jauge et le plateau du lieu, dans « Jauge : 300 places ; plateau : 9 m × 7 m »
+function lireJauge(texte, actuel) {
+  const m = /jauge\s*:?\s*(\d[\d\s.]{0,7})/i.exec(texte);
+  if (!m) return null;
+  const v = +m[1].replace(/[\s.]/g, '');
+  if (!(v >= 10 && v <= 100000)) return { refus: 'une jauge peu vraisemblable' };
+  return v === +actuel ? null : { valeur: v };
+}
+function lirePlateau(texte, actuel) {
+  const m = /plateau\s*:\s*([^;]+)/i.exec(texte);
+  const v = m ? m[1].replace(/[\s.]+$/, '').trim() : '';
+  if (!v || v.length > 80) return null;
+  return norm(v) === norm(actuel) ? null : { valeur: v };
+}
+// une ligne qui donne le même contact pour deux champs du suivi : on ne sait pas lequel corriger
+function lireContactDouble(texte, actuel, { avant }) {
+  const c = FEUILLE.lireContact(texte), b = FEUILLE.lireContact(avant || '');
+  const memes = (x, y) => x.length === y.length && x.every((v, i) => numero(v) === numero(y[i]));
+  return memes(c.telephones, b.telephones) && c.emails.join() === b.emails.join() ? null : { refus: 'il vient de deux champs du suivi, à corriger dans la date' };
+}
+
+// ----------------------------------------------------------------------------------------------- la table de correspondances
+//   cle      la clé de la ligne composée (feuille.js)
+//   table, champ, ligne(m, d)   la fiche où va ce qu'elle apprend : sa table, son champ, sa ligne (null : introuvable)
+//   lire(texte, valeur actuelle, x)   ce que la ligne écrite en apprend (plus haut)
+//   quoi(ligne, d), elle (féminin), ou   pour le dire : « le téléphone de Camille Témoin est gardé dans sa fiche »
+const MEMOIRE = [
+  { cle: /^cie:(\d+)$/, table: 'crescite_personnes_privees', champ: 'telephone', ligne: m => personne(+m[1])?.id ?? null,
+    lire: (t, v, x) => lireTelephone(t, v, { personne: personne(x.ligne) }), quoi: id => `le téléphone de ${nomDe(personne(id))}`, ou: 'sa fiche' },
+  { cle: /^cie:(?!\d+$)([a-z0-9-]+)$/, table: 'crescite_personnes_privees', champ: 'telephone', ligne: m => personneDeCle(m[1])?.id ?? null,
+    lire: (t, v, x) => lireTelephone(t, v, { personne: personne(x.ligne) }), quoi: id => `le téléphone de ${nomDe(personne(id))}`, ou: 'sa fiche', introuvable: 'un téléphone de la compagnie' },
+  { cle: /^contact:organisateur$/, table: 'crescite_dates_suivi', champ: 'organisateur', ligne: (m, d) => d.id,
+    lire: lireContactSuivi, quoi: () => 'l’organisateur de la date', ou: 'son suivi' },
+  { cle: /^contact:date$/, table: 'crescite_dates_suivi', champ: 'contact', ligne: (m, d) => d.id,
+    lire: lireContactSuivi, quoi: () => 'le contact de la date', ou: 'son suivi' },
+  { cle: /^contact:lieu$/, table: 'crescite_lieux_suivi', champ: 'contact', ligne: (m, d) => d.lieu_id ?? null,
+    lire: lireContactSuivi, quoi: id => `le contact ${duLieu(lieu(id))}`, ou: 'la fiche du lieu' },
+  { cle: /^contact:[a-z]+\+/, table: null, quoi: () => 'le contact', lire: lireContactDouble },
+  { cle: /^lieu$/, table: 'crescite_lieux', champ: 'adresse', ligne: (m, d) => d.lieu_id ?? null,
+    lire: (t, v, x) => lireAdresse(t, v, { lieu: lieu(x.ligne) }), quoi: id => `l’adresse ${duLieu(lieu(id))}`, elle: true, ou: 'la fiche du lieu' },
+  { cle: /^lieu:precisions$/, table: 'crescite_lieux_suivi', champ: 'jauge', ligne: (m, d) => d.lieu_id ?? null,
+    lire: lireJauge, quoi: id => `la jauge ${duLieu(lieu(id))}`, elle: true, ou: 'la fiche du lieu' },
+  { cle: /^lieu:precisions$/, table: 'crescite_lieux_suivi', champ: 'plateau', ligne: (m, d) => d.lieu_id ?? null,
+    lire: lirePlateau, quoi: id => `le plateau ${duLieu(lieu(id))}`, ou: 'la fiche du lieu' },
+];
+const memoireDe = cle => MEMOIRE.filter(e => e.cle.test(cle || ''));
+// ce que chaque ligne composée dit, sans ses amorces, à l'ouverture de la feuille ou à son dernier enregistrement
+const lignesLues = blocs => new Map((blocs || []).filter(b => b.cle && Array.isArray(b.segments)).map(b => [b.cle, FEUILLE.texteBloc(b)]));
+
+// ce que la feuille apprend : { aGarder: [{e, ligne, avant, valeur}], refus: [{e, ligne, pourquoi}] }
+function lecturesFeuille(etat, c) {
+  const { d } = etat, out = { aGarder: [], refus: [] };
+  (c.blocs || []).forEach(b => {
+    if (!b.cle || b.source === 'base' || !Array.isArray(b.segments)) return;
+    const texte = FEUILLE.texteBloc(b);
+    if (etat.lu && etat.lu.has(b.cle) && etat.lu.get(b.cle) === texte) return;   // rien d'écrit depuis
+    memoireDe(b.cle).forEach(e => {
+      if (!e.table) { const x = e.lire(texte.trim(), null, { avant: etat.lu?.get(b.cle) }); if (x?.refus) out.refus.push({ e, ligne: null, pourquoi: x.refus }); return; }
+      const ligne = e.ligne(b.cle.match(e.cle), d);
+      if (ligne == null) { if (e.introuvable && /\d/.test(texte)) out.refus.push({ e, ligne, pourquoi: 'personne de ce nom dans l’équipe', quoi: e.introuvable }); return; }
+      const avant = rangee(e.table, ligne)?.[e.champ] ?? null;
+      const x = e.lire(texte.trim(), avant, { ligne });
+      if (x?.refus) out.refus.push({ e, ligne, pourquoi: x.refus });
+      else if (x) out.aGarder.push({ e, ligne, avant, valeur: x.valeur });
+    });
+  });
+  return out;
+}
+const memeAppris = (a, x) => a.table === x.e.table && String(a.ligne) === String(x.ligne) && a.champ === x.e.champ;
+// la trace dans la feuille : une entrée par fiche et par champ, la dernière
+function avecAppris(appris, xs) {
+  const le = new Date().toISOString(), neufs = xs.map(x => ({ table: x.e.table, ligne: x.ligne, champ: x.e.champ, le }));
+  return [...(appris || []).filter(a => !neufs.some(n => n.table === a.table && String(n.ligne) === String(a.ligne) && n.champ === a.champ)), ...neufs].slice(-40);
+}
+// une ligne de la base, d'un champ ou de plusieurs (une fiche privée, un suivi : créés au besoin ; un lieu : modifié)
+async function ecrireRangee(table, ligne, champs) {
+  const [k, pk] = RANGS[table];
+  const r = table === 'crescite_lieux' ? await sb.from(table).update(champs).eq('id', ligne).select().single()
+    : await sb.from(table).upsert({ [pk]: ligne, ...champs }, { onConflict: pk }).select().single();
+  if (r.error) throw r.error;
+  remplacerLigne(E[k], r.data, pk);
+  return r.data;
+}
+const quoiDe = (x, d) => x.quoi || x.e.quoi(x.ligne, d);
+const maj1 = s => (s ? s[0].toUpperCase() + s.slice(1) : '');
+// « Le téléphone de Camille Témoin est gardé dans sa fiche. » ; « Gardés dans les fiches : … » ; « … reste dans la feuille : deux numéros dans la ligne. »
+function phraseMemoire(faits, refus, d) {
+  const out = [];
+  if (faits.length === 1) out.push(`${maj1(quoiDe(faits[0], d))} est gardé${faits[0].e.elle ? 'e' : ''} dans ${faits[0].e.ou}.`);
+  else if (faits.length) out.push(`Gardés dans les fiches : ${listeEt(faits.map(x => quoiDe(x, d)))}.`);
+  if (refus.length === 1) out.push(`${maj1(quoiDe(refus[0], d))} reste dans la feuille : ${refus[0].pourquoi}.`);
+  else if (refus.length) out.push(`Restent dans la feuille : ${refus.map(x => `${quoiDe(x, d)} (${x.pourquoi})`).join(', ')}.`);
+  return out.join(' ');
+}
+// après l'enregistrement de la feuille : les fiches apprennent, une phrase le dit, « Annuler » remet leurs valeurs d'avant
+async function memoriser(etat, { aGarder, refus }) {
+  const faits = [], rates = [...refus];
+  for (const x of aGarder) {
+    try { await ecrireRangee(x.e.table, x.ligne, { [x.e.champ]: x.valeur }); faits.push(x); }
+    catch (err) { console.error(err); rates.push({ ...x, pourquoi: `la base l’a refusé (${err?.message || err})` }); }
+  }
+  // ce qui ne s'est pas écrit sort de la trace (la base l'oubliera au prochain enregistrement de la feuille)
+  if (faits.length < aGarder.length && etat.F?.contenu?.appris) etat.F.contenu.appris = etat.F.contenu.appris.filter(a => !aGarder.some(x => !faits.includes(x) && memeAppris(a, x)));
+  const phrase = phraseMemoire(faits, rates, etat.d);
+  if (!phrase) return;
+  annoncer(phrase, faits.length ? { libelle: 'Annuler', delai: 15000, action: () => oublier(etat, faits) } : { delai: 9000 });
+  revoirFiches();
+}
+async function oublier(etat, faits) {
+  try { for (const x of faits) await ecrireRangee(x.e.table, x.ligne, { [x.e.champ]: x.avant ?? null }); }
+  catch (err) { return erreur(err, 'Retour impossible'); }
+  if (etat.F?.contenu?.appris) etat.F.contenu.appris = etat.F.contenu.appris.filter(a => !faits.some(x => memeAppris(a, x)));
+  annoncer(faits.length > 1 ? 'Les fiches ont repris leurs valeurs d’avant.' : `${maj1(quoiDe(faits[0], etat.d))} a repris sa valeur d’avant dans ${faits[0].e.ou}.`);
+  revoirFiches();
+}
+// une fiche ouverte (personne, lieu, date) se redessine avec ce que la base a appris, si rien n'y attend d'être enregistré
+const revoirFiches = () => { if (!E.sale && /^#\/(equipe|lieux|representations)\/\d+$/.test(location.hash)) router(); };
+
+// ----------------------------------------------------------------------------------------------- d'où vient une valeur
+// la ligne de la feuille dit-elle (encore) la valeur de la fiche ? un numéro, une adresse électronique, une adresse…
+const motsDe = t => norm(t).replace(/[^a-z0-9]+/g, ' ').trim();
+function ligneDit(champ, texte, valeur) {
+  if (valeur == null || String(valeur).trim() === '') return false;
+  if (champ === 'telephone') return FEUILLE.lireContact(texte).telephones.some(t => numero(t) === numero(valeur));
+  if (champ === 'jauge') return lireJauge(texte, null)?.valeur === +valeur;
+  if (champ === 'contact' || champ === 'organisateur') {
+    const c = FEUILLE.lireContact(texte), v = FEUILLE.lireContact(valeur);
+    return c.telephones.some(t => v.telephones.some(x => numero(x) === numero(t))) || c.emails.some(m => v.emails.some(x => norm(x) === norm(m)));
+  }
+  return motsDe(texte).includes(motsDe(valeur));
+}
+// la feuille dont une valeur de fiche a été apprise, tant que sa ligne la dit encore : { feuille, date, le } ou null
+function apprisDe(table, ligne, champ, valeur) {
+  let mieux = null;
+  E.feuilles.forEach(f => (f.contenu?.appris || []).forEach(a => {
+    if (a.table !== table || String(a.ligne) !== String(ligne) || a.champ !== champ || (mieux && a.le <= mieux.le)) return;
+    const d = E.dates.find(x => x.id === f.date_id), blocs = f.contenu.blocs || [];
+    const b = d && MEMOIRE.filter(e => e.table === table && e.champ === champ).map(e => blocs.find(x => e.cle.test(x.cle || '') && String(e.ligne(x.cle.match(e.cle), d)) === String(ligne))).find(Boolean);
+    if (b && ligneDit(champ, FEUILLE.texteBloc(b), valeur)) mieux = { feuille: f, le: a.le, date: d };
+  }));
+  return mieux;
+}
+// sous le champ d'une fiche : « Appris de la feuille de route du jeu. 17 déc. 2026 (La Pièce d’essai), le 21 oct. »
+function mentionAppris(table, ligne, champ, valeur) {
+  const x = apprisDe(table, ligne, champ, valeur);
+  if (!x) return '';
+  const quand = new Date(x.le), s = spectacle(x.date?.spectacle_id);
+  return `<span class="appris">Appris de la <a href="#/feuilles/${x.feuille.date_id}">feuille de route ${x.date ? `du ${esc(jourCourt(x.date.debut))}` : ''}</a>${s ? ` (${esc(s.titre)})` : ''}${isNaN(quand) ? '' : `, le ${esc(quand.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }))}`}</span>`;
+}
+// le journal : ce qu'une feuille enregistrée a appris aux fiches (« le téléphone de Camille Témoin »)
+function apprisDuJournal(j) {
+  if (j.table_nom !== 'crescite_feuilles') return [];
+  const avant = j.avant?.contenu?.appris || [], d = E.dates.find(x => x.id === (j.apres || j.avant)?.date_id) || {};
+  return (j.apres?.contenu?.appris || []).filter(a => !avant.some(b => b.le === a.le && b.table === a.table && b.champ === a.champ && String(b.ligne) === String(a.ligne)))
+    .map(a => { const e = MEMOIRE.find(x => x.table === a.table && x.champ === a.champ); return e ? e.quoi(a.ligne, d) : a.champ; });
 }
 
 // ===================================================================================================== l'éditeur A4
@@ -2263,6 +2574,28 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .fr-alerte a, .fr-alerte .btn.lien { color: inherit; text-decoration: underline; padding: 0; font-weight: 700; }
 .fr-accueil p { max-width: 760px; }
 .fr-etat .fr-actions { margin-top: 0; }
+/* à compléter : ce que la feuille demande encore */
+.bloc.fr-manques { padding: 0; }
+.fr-manques > details > summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 12px 18px; cursor: pointer; list-style: none; }
+.fr-manques > details > summary::-webkit-details-marker { display: none; }
+.fr-manques > details > summary::before { content: ""; width: 7px; height: 7px; border: solid var(--gris); border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .15s; margin-right: 2px; }
+.fr-manques > details[open] > summary::before { transform: rotate(45deg); }
+.fr-m-titre { font-weight: 750; }
+.fr-m-liste { list-style: none; margin: 0; padding: 0 18px 14px; display: grid; gap: 6px; }
+.fr-m-liste li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 360px); gap: 6px 12px; align-items: center; padding: 7px 10px; border-radius: 9px; background: var(--doux); }
+.fr-m-liste label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1px 8px; min-width: 0; font-size: 14px; }
+.fr-m-ctx { font-weight: 650; overflow-wrap: anywhere; }
+.fr-m-q { color: var(--gris); font-style: italic; }
+.fr-m-garde { flex-basis: 100%; color: var(--ok); font-size: 12.5px; }
+.fr-m-saisie { display: flex; gap: 6px; min-width: 0; }
+.fr-m-saisie input { flex: 1; min-width: 0; min-height: 34px; padding: 6px 8px; }
+@media (max-width: 700px) { .fr-m-liste li { grid-template-columns: minmax(0, 1fr); } .fr-manques > details > summary { padding: 12px 14px; } .fr-m-liste { padding: 0 10px 12px; } }
+/* les coordonnées de l'équipe d'une date */
+.eq-date .coord, .eq-date .manque-tel { margin-left: auto; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.eq-date .manque-tel { color: var(--gris); font-style: italic; font-weight: 500; }
+.eq-ajout .eq-nom { font-weight: 700; color: var(--encre); text-decoration: none; }
+.eq-ajout .eq-nom:hover { text-decoration: underline; }
+#pe-coord .rangee > .champ { align-content: start; }
 /* l'espace pro : les invitations des salles, leur lien, leur journal ; les documents réservés aux salles */
 #ed-pro .aide, #l-pro .aide { color: var(--gris); font-size: 13px; }
 #ed-pro .bloc > p + p { margin-top: 8px; }
