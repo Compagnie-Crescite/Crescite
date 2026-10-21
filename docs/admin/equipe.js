@@ -153,9 +153,11 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-ongl
 // ===================================================================================================== rubrique Équipe
 function vueEquipe(param) {
   const docs = param === 'documents', frais = param === 'frais';
+  // les notes de frais : seulement quand la base a leur table (le script « Compagnie Idéale ») ; sinon elles se masquent
+  if (frais && !E.ideale) { location.replace('#/equipe'); return; }
   const tete = `<div class="tete"><h1>Équipe</h1><div class="seg" role="group" aria-label="Partie">
     <button type="button" data-eq-partie="" aria-pressed="${!docs && !frais}">Personnes</button>
-    <button type="button" data-eq-partie="frais" aria-pressed="${frais}">Notes de frais</button>
+    ${E.ideale ? `<button type="button" data-eq-partie="frais" aria-pressed="${frais}">Notes de frais</button>` : ''}
     <button type="button" data-eq-partie="documents" aria-pressed="${docs}">Documents de la compagnie</button>
   </div>
     ${docs || frais || !E.equipeInstallee ? '' : '<a class="btn principal" href="#/equipe/nouvelle">＋ Nouvelle fiche</a>'}</div>`;
