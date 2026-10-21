@@ -1145,7 +1145,13 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   const lum = h => { const f = v => (v /= 255) <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; const [r, g, b] = rgb(h); return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
   const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
   const versHex = c => '#' + c.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+  const LISIBLES = new Map();
   function lisible(c, fond, cible = 4.5) {
+    const cle = `${c}|${fond}|${cible}`;
+    if (!LISIBLES.has(cle)) LISIBLES.set(cle, lisibleCalc(c, fond, cible));
+    return LISIBLES.get(cle);
+  }
+  function lisibleCalc(c, fond, cible) {
     fond = hex6(fond) || IVOIRE;
     const clair = lum(fond) > .4;
     c = hex6(c) || (clair ? '#191414' : '#f5f1ea');
@@ -1417,10 +1423,12 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   function composer(racine, { tete = true, partage = null } = {}) {
     if (!motionOK() || !racine.animate) return;
     let n = 0;
+    // l'élément partagé (la ligne devenue titre) est cherché une fois ; une ligne qui le contient ne se compose pas
+    const part = partage ? $(`[data-mv-nom="${CSS.escape(partage)}"]`, racine) : null;
     for (const el of $$(LIGNES, racine)) {
       if (n >= 11) break;
       if (!tete && el.closest('.sh-tete')) continue;
-      if (el.closest('[data-mv]') || (partage && el.querySelector(`[data-mv-nom="${CSS.escape(partage)}"]`)) || (partage && el.getAttribute('data-mv-nom') === partage)) continue;
+      if (el.closest('[data-mv]') || (part && el.contains(part))) continue;
       const titre = el.matches('.page-title');
       el.animate(titre ? [{ clipPath: 'inset(-.3em 100% -.35em -.15em)' }, { clipPath: 'inset(-.3em -.3em -.35em -.15em)' }] : [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
         { duration: titre ? 320 : 240, delay: n * 22, easing: COURBE, fill: 'backwards' });
@@ -2451,7 +2459,8 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   /* ——— Le routeur : les trois entrées, leur mémoire, les redirections ——— */
   const MEMO = 'crescite-m08-entree';
   const retenue = () => { try { const v = sessionStorage.getItem(MEMO); return CLES.includes(v) ? v : null; } catch (e) { return null; } };
-  const retenir = v => { try { sessionStorage.setItem(MEMO, v); } catch (e) { /* stockage indisponible : pas de mémoire */ } };
+  // (écrite après l'image : le stockage coûte, la première fois)
+  const retenir = v => setTimeout(() => { try { sessionStorage.setItem(MEMO, v); } catch (e) { /* stockage indisponible : pas de mémoire */ } }, 0);
   function lire() {
     const [chemin, qs] = (location.hash || '#/').replace(/^#/, '').split('?');
     const p = '/' + String(chemin || '').replace(/^\/+|\/+$/g, ''), q = new URLSearchParams(qs || '');
@@ -2527,6 +2536,10 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
     const depuis = (clic && clic.el) || (type === 'retour' ? $('h1[data-mv-nom]', main) : null), nom = depuis ? depuis.getAttribute('data-mv-nom') : null;
     const faire = () => {
       vueCle = cle;
+      // le lien cliqué garde le focus : on le lui retire avant de changer l'univers (sinon, l'ôter de la page forcerait le
+      // calcul des styles de toute l'ancienne page, déjà invalidés)
+      const actif = document.activeElement;
+      if (actif && actif !== document.body && main.contains(actif)) actif.blur();
       frises.forEach(f => f.detruire()); frises = []; APRES = [];
       SUR_PLACE = enPlace;
       TITRE_ANIME = type !== 'onglet' && !(nom && r.v === 'spectacle' && nom === `sp-${r.cle}`);
@@ -2556,10 +2569,16 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
         if (r.q && r.q.get('ch')) allerChapitre(r.q.get('ch'), false);
       });
     };
-    // la première vue, sous l'ouverture, sans transition ; ensuite, on tourne la page (MOUVEMENT.transition)
+    // la première vue, sous l'ouverture, sans transition ; ensuite, quand une ligne devient le titre de la page (élément
+    // partagé) ou d'un onglet à l'autre (le filet glisse), on tourne la page (MOUVEMENT.transition) ; sinon la page change à
+    // l'image qui suit le geste (le geste se voit d'abord) et se compose ligne à ligne
     // (d'un onglet à l'autre, le filet ne glisse que si la barre des onglets ne bouge pas : la page était en haut)
-    if (!type || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type: type === 'onglet' && window.scrollY > 8 ? 'onglet-loin' : type, depuis: nom ? depuis : null });
+    const jeton = ++NAV;
+    if (!type || !MV || INTRO.ouverte()) faire();
+    else if (nom || type === 'onglet') MV.transition(faire, { type: type === 'onglet' && window.scrollY > 8 ? 'onglet-loin' : type, depuis: nom ? depuis : null });
+    else ensuite(() => { if (jeton === NAV) faire(); });
   }
+  let NAV = 0;
   // la base a changé (ou une édition vient d'être enregistrée) : la vue se refait en place, sans bouger ni rejouer
   const cleFocus = el => {
     if (!el || el === document.body || el === document.documentElement) return null;
@@ -2641,6 +2660,8 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   window.addEventListener('hashchange', () => route());
   route();
   mesurer();
+  // au repos : l'agenda passé (toutes les saisons) lu d'avance, pour « Je viens voir un spectacle »
+  ('requestIdleCallback' in window ? f => requestIdleCallback(f, { timeout: 2000 }) : f => setTimeout(f, 400))(() => retenu('agendaPasse', agendaPasse));
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
 })();
 </script>

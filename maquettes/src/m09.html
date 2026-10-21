@@ -2843,6 +2843,10 @@ ${finHTML()}`;
   function afficher(r, chemin, { initial = false, ep = false, type = null, partage = false, y = 0, dep = null, q0 = null } = {}) {
     GEN++;
     enPlace = ep;
+    // le lien suivi garde le focus : on le lui retire d'abord (l'ôter de la page quand les styles sont invalidés forcerait
+    // le calcul des styles de toute l'ancienne page) ; une vue refaite en place garde le sien
+    const actif = document.activeElement;
+    if (!ep && actif && actif !== document.body && $('#contenu').contains(actif)) actif.blur();
     // au retour vers un endroit de la page, elle se fait d'un coup (sa hauteur entière), pour y revenir juste
     SYNC = type === 'retour' && y > 0;
     if (SYNC || ep) toutRendre(600);

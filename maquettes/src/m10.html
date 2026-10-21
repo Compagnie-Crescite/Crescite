@@ -2554,6 +2554,10 @@ html .ed-ajout { font-family: var(--sans); }
       return;
     }
 
+    // le lien suivi garde le focus : on le lui retire d'abord (l'ôter de la page plus tard, quand les styles sont invalidés,
+    // forcerait le calcul des styles de toute l'ancienne page)
+    const actif = document.activeElement;
+    if (actif && actif !== document.body && $('#main').contains(actif)) actif.blur();
     fermeMenu();
     Ink.arreter(); vPage.style.visibility = '';
     GEN++; APRES = []; AGV = null; secs = []; chapitres = [];

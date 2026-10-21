@@ -102,8 +102,9 @@ ul,ol{padding:0;list-style:none}
 .scene-visuel{position:absolute;inset:0;z-index:0}
 .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .8s var(--ease)}
 .ph.on{opacity:1}
-.spot{position:absolute;left:0;top:0;width:54vmax;height:54vmax;margin:-27vmax 0 0 -27vmax;pointer-events:none;mix-blend-mode:soft-light;opacity:.45;transition:opacity 1s var(--ease);background:radial-gradient(closest-side,color-mix(in srgb,var(--spot) 95%,transparent) 0,color-mix(in srgb,var(--spot) 42%,transparent) 40.7%,transparent 100%);transform:translate3d(50vw,40vh,0);will-change:transform}
-.scene.lumiere .spot{opacity:1}
+.spot{position:absolute;left:0;top:0;width:54vmax;height:54vmax;margin:-27vmax 0 0 -27vmax;pointer-events:none;mix-blend-mode:soft-light;opacity:.45;transition:opacity 1s var(--ease);background:radial-gradient(closest-side,color-mix(in srgb,var(--spot) 95%,transparent) 0,color-mix(in srgb,var(--spot) 42%,transparent) 40.7%,transparent 100%);transform:translate(50vw,40vh)}
+/* la poursuite n'a son propre calque que lorsqu'elle suit la main : au repos, la scène est peinte d'un seul tenant */
+.scene.lumiere .spot{opacity:1;will-change:transform}
 .scene.allumage .spot{animation:allumage 1.1s var(--ease) both}
 @keyframes allumage{0%{opacity:0}28%{opacity:1}100%{opacity:.45}}
 .ombre{position:absolute;inset:0;pointer-events:none;background:
@@ -226,7 +227,8 @@ ul,ol{padding:0;list-style:none}
 .cl-lieu.on .cl-aura{transform:scale(1.8)}
 .cl-faisceau.on{stroke:var(--pulse-c);opacity:1}
 .cl-halo.on{stroke-opacity:.95}
-.cl-pulse.on{opacity:1;animation:pulse 1.6s linear infinite}
+/* l'impulsion de lumière court deux fois de Rouen à la commune choisie, puis se tait (une page au repos ne repeint rien) */
+.cl-pulse.on{opacity:1;animation:pulse 1.6s linear 2}
 @keyframes pulse{from{stroke-dashoffset:var(--p)}to{stroke-dashoffset:calc(var(--L) * -1)}}
 .cl.choisi .cl-faisceau:not(.on){opacity:.22}
 .cl.choisi .cl-halo:not(.on){opacity:.14}
@@ -949,8 +951,9 @@ main{display:block;min-height:100vh}
      (cubic-bezier(.22, .61, .36, 1)) ; 450 ms au plus pour ce qui accompagne un geste ; seuls transform et opacity bougent.
      1. Changer de page : le noir se fait sur la scène (80 ms ; l'en-tête reste éclairé), la nouvelle page est posée dans le noir,
         puis la lumière remonte : une lueur chaude s'ouvre depuis un point (le titre, ou la photo d'une scène) et la salle
-        s'éclaire (320 ms ; du geste à la salle éclairée, moins de 450 ms). Sur la scène d'un spectacle, la poursuite s'allume et son titre se dévoile comme sous un projecteur
-        qui le balaie. Un nouveau geste interrompt tout (le noir et la lumière sont annulés, la page se pose aussitôt).
+        s'éclaire (320 ms ; du geste à la salle éclairée, moins de 450 ms). Sur la scène d'un spectacle, la lumière s'ouvre depuis
+        la photo et son titre se dévoile comme sous un projecteur qui le balaie ; la poursuite prend la main une fois la salle
+        éclairée. Un nouveau geste interrompt tout (le noir et la lumière sont annulés, la page se pose aussitôt).
      2. Ouvrir une saison : ses dates s'allument l'une après l'autre (cascade), les faisceaux de sa carte partent de Rouen.
      3. Filtrer, chercher : les dates gardées glissent à leur place (MOUVEMENT.flip), les lampes des communes sans date
         s'éteignent, les repères de la frise glissent.
@@ -1388,10 +1391,11 @@ main{display:block;min-height:100vh}
     return `<div class="scene-visuel">${img(true)}${double ? img(false) : ''}<div class="spot" aria-hidden="true"></div><div class="ombre" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>${credit ? `<p class="credit">${esc(credit)}</p>` : ''}</div>`;
   }
   // la poursuite : un disque de lumière déplacé par transform (rien n'est repeint), qui rattrape la main avec un peu de retard
+  // elle ne prend la main qu'une fois la salle éclairée (600 ms après l'arrivée) : pendant que la page se pose, rien ne la bouge
   function halo(sc) {
-    const spot = $('.spot', sc);
+    const spot = $('.spot', sc), pret = performance.now() + 600;
     let x = 50, y = 40, tx = 50, ty = 40, raf = 0, W = LF, H = innerHeight;
-    const poser = () => { spot.style.transform = `translate3d(${(x / 100 * W).toFixed(1)}px,${(y / 100 * H).toFixed(1)}px,0)`; };
+    const poser = () => { spot.style.transform = `translate(${(x / 100 * W).toFixed(1)}px,${(y / 100 * H).toFixed(1)}px)`; };
     const repos = () => { x = tx = +(sc.dataset.focale || 50); y = ty = 38; poser(); };
     const boucle = () => {
       x += (tx - x) * .1; y += (ty - y) * .1; poser();
@@ -1399,7 +1403,7 @@ main{display:block;min-height:100vh}
     };
     repos();
     sc.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || !souris.matches || reduit.matches || mobile.matches) return;
+      if (e.pointerType !== 'mouse' || !souris.matches || reduit.matches || mobile.matches || e.timeStamp < pret) return;
       const r = sc.getBoundingClientRect();
       W = r.width; H = r.height;
       tx = (e.clientX - r.left) / r.width * 100; ty = (e.clientY - r.top) / r.height * 100;
@@ -2496,7 +2500,7 @@ main{display:block;min-height:100vh}
         const sc = $('#scene', main);
         surPhoto = !!sc;
         if (sc && r.cle === 'accueil') brancherCarrousel(sc, diapos());
-        else if (sc) { halo(sc); if (ANIMER && doux()) sc.classList.add('allumage'); }
+        else if (sc) halo(sc);   // la lumière de la salle s'ouvre depuis la photo (lumiere, plus bas) : la poursuite s'allume avec elle
         if (r.nav === 'spectacles') brancherRep();
         aBrancher.splice(0).forEach(brancherCarte);
         if (r.entree === 'voir' && AGV) AGV.brancher();
