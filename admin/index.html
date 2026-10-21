@@ -2251,6 +2251,16 @@ const TABLEUR = (() => {
     T.recents.set(id, Date.now());
     return { id, nouvelle: true, texte: `nouvelle date : ${jourCourt(jour)}, ${spectacle(spectacle_id)?.titre || ''} (${ouDit(lieu_id)})` };
   }
+  // ce qu'on vient d'ajouter doit se voir : les filtres qui le cachent (eux seuls) se relâchent, et leurs boutons le montrent
+  function montrerAjouts(ids) {
+    const neutres = { periode: 'toutes', spectacle: '', saison: '', q: '' }, f0 = { ...T.f };
+    const vus = f => { Object.assign(T.f, f); const xs = lignes(); return ids.every(id => xs.some(x => x.d.id === id)); };
+    const cachent = Object.keys(neutres).filter(k => !vus({ ...neutres, [k]: f0[k] }));
+    Object.assign(T.f, f0, ...cachent.map(k => ({ [k]: neutres[k] })));
+    garderFiltres();
+    $('#tab-q').value = T.f.q; $('#tab-saison').value = T.f.saison; $('#tab-sp').value = T.f.spectacle;
+    $$('[data-tab-periode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tabPeriode === T.f.periode)));
+  }
   // défaire un ajout : la date créée s'efface, ou la séance ajoutée part
   async function defaireAjout(a) {
     const d = E.dates.find(y => y.id === a.id); if (!d) return;
@@ -2297,7 +2307,7 @@ const TABLEUR = (() => {
         T.pile.push({ libelle: a.texte, defaire: () => defaireAjout(a) });
         etat(`${a.texte[0].toUpperCase()}${a.texte.slice(1)}.`, 'ok', true);
         // la séance ajoutée : en vue, et la case de l'heure active
-        if ((T.f.periode === 'avenir' && jour < AUJ) || (T.f.periode === 'passees' && jour >= AUJ) || (T.f.spectacle && String(T.f.spectacle) !== String(sp))) { T.f.periode = 'toutes'; T.f.spectacle = ''; garderFiltres(); }
+        montrerAjouts([a.id]);
         dessiner();
         const l = T.lignes.findIndex(y => y.d.id === a.id && (a.rep ? y.r?.id === a.rep : y.r?.jour === jour));
         if (l >= 0) { activer(l, Math.max(0, T.cols.findIndex(y => y.k === 'heure')), { focus: false }); cellule(l, T.actif.c)?.classList.add('vient-d-ailleurs'); }
@@ -2347,7 +2357,7 @@ const TABLEUR = (() => {
   const cellTsv = v => (/[\t\n"]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   function copie() {
     const p = plage(), out = [];
-    for (let l = p.l0; l <= p.l1; l++) { const x = T.lignes[l]; out.push(T.cols.slice(p.c0, p.c1 + 1).map(c => cellTsv(String(c.copie(x) ?? '')).replace(/\r?\n/g, ' ')).join('\t')); }
+    for (let l = p.l0; l <= p.l1; l++) { const x = T.lignes[l]; out.push(T.cols.slice(p.c0, p.c1 + 1).map(c => cellTsv(String(c.copie(x) ?? '').replace(/\r?\n/g, ' '))).join('\t')); }
     return out.join('\n');
   }
   // un texte de tableur → des lignes de cases (les guillemets d'Excel et de Google Sheets compris)
@@ -2570,7 +2580,7 @@ const TABLEUR = (() => {
       if (faits.length) T.pile.push({ libelle: `${pl(faits.length, 'séance')} importée${faits.length > 1 ? 's' : ''}`, defaire: async () => { for (const a of faits.reverse()) await defaireAjout(a); } });
       const nd = faits.filter(a => a.nouvelle).length;
       etat(`Import : ${pl(faits.length, 'séance')} créée${faits.length > 1 ? 's' : ''}${nd ? `, dont ${pl(nd, 'nouvelle date', 'nouvelles dates')}` : ''}${rates ? ` ; ${rates} refusée${rates > 1 ? 's' : ''} par la base` : ''}.`, rates ? 'erreur' : 'ok', !!faits.length);
-      if (faits.length) { T.f.periode = 'toutes'; garderFiltres(); }
+      if (faits.length) montrerAjouts(faits.map(a => a.id));
       dessiner();
     });
     dlg.showModal();
