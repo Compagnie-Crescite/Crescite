@@ -288,6 +288,7 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .champ .seg { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; }
 .champ .seg button { flex: 1 1 auto; }
 /* au téléphone (360 px) : des marges plus serrées, des boutons segmentés qui tiennent sur la largeur */
+@media (max-width: 520px) { main { padding: 14px 12px; } .bloc { padding: 14px; } .seg { max-width: 100%; } .seg button { padding: 6px 7px; font-size: 14px; } .rangee > .champ:has(.seg) { grid-column: 1 / -1; } }
 /* CRM Kanban */
 .crm-tableau { display: grid; grid-template-columns: repeat(5, minmax(260px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 16px; }
 .crm-colonne { background: var(--doux); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 12px; display: flex; flex-direction: column; min-height: 480px; }
@@ -452,7 +453,11 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
    rubriques, dans ce qui est déjà chargé). En tête de Représentations : « À compléter avant la tournée » (téléphones de
    l'équipe, adresses et contacts des lieux, feuilles de route, pour les prochaines dates confirmées). Un lien peut viser
    le champ à remplir dans ce qu'il ouvre (data-viser). Le pied d'une date replie ses actions dans « Plus » quand elles
-   ne tiennent pas sur une rangée (ajusterPied). Le Journal se filtre (rubrique ou table, auteur, période) et se cherche. */
+   ne tiennent pas sur une rangée (ajusterPied). Le Journal se filtre (rubrique ou table, auteur, période) et se cherche.
+   Représentations → Tableur (TABLEUR) : une ligne par séance, branché sur la base dans les deux sens, par le même chemin
+   que la fiche d'une date (chargeDate, ecrireDate, effacerDate) ; exports Excel, CSV, Google Sheets ; import.
+   La diffusion, les notes de frais et le matériel (le script « Compagnie Idéale ») se masquent quand la base n'a pas
+   leurs tables (E.ideale). */
 const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
 const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
 const SITE = '../synthese.html';

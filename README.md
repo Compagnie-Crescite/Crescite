@@ -242,6 +242,34 @@ compte du projet inscrit dans `crescite_admins`.
   Le pied de la date tient sur une rangée : quand tout n'y tient pas (au téléphone, dans une colonne étroite), Feuille
   de route, Prévenir l'équipe, Dupliquer et Supprimer passent dans un menu « Plus » (↑ ↓, Échap rend le focus) ; seul
   « Enregistrer » reste à côté.
+- **Le tableur** (Représentations → Tableur) : une ligne par séance, comme le tableur où la compagnie récapitule ses
+  représentations ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle, heure et fin, lieu,
+  commune, public, statut, nature, distribution, billetterie, précisions, organisateur, contact, contrat, notes, séance
+  annulée, site. Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la
+  montre). Filtres : saison, spectacle, à venir ou passées, recherche ; tri par date.
+  - Branché sur la base dans les deux sens. Écrire dans une case enregistre aussitôt, par le même chemin que la fiche
+    d'une date (`crescite_enregistrer_date`, puis l'équipe : les mêmes déclencheurs, notifications et journal) ; l'état
+    le dit, « Annuler » ou Ctrl+Z le reprend. Ce qui change ailleurs (une autre administratrice, la fiche d'une date, le
+    site en édition) arrive en direct, et la case clignote. Une case de la date (spectacle, lieu, statut, nature,
+    distribution, billetterie, suivi) vaut pour toutes ses séances : les autres lignes la répètent en gris et s'éclairent
+    avec elle.
+  - Au clavier comme dans un tableur : flèches, Entrée ou F2 (ou taper directement), Échap, Tab, Maj+flèches pour choisir
+    des cases, Ctrl+C et Ctrl+V (des cases venues d'Excel ou de Google Sheets), Suppr pour vider, Ctrl+Suppr pour
+    supprimer la séance (après confirmation), Ctrl+Z. L'en-tête reste en haut, le jour et le spectacle à gauche ; au
+    téléphone, le tableau défile sous les doigts.
+  - « ＋ Séance » : le jour, l'heure, le spectacle, le lieu (la recherche des lieux) ; une date du même spectacle au
+    même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance, sinon une date se crée, et le
+    tableur dit ce qu'il a fait.
+  - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne s'écrit
+    que si on la change), en pastilles qu'on retire et qu'on ajoute, au clavier aussi. « Étendre à… » la pose sur les
+    dates du même spectacle de la saison, de l'année civile ou des lignes choisies (les passées si on le veut), après un
+    aperçu du nombre de dates qui changeront ; les remplaçants posés à la main sont signalés avant d'être remplacés.
+  - Exporter les lignes et les colonnes de la vue : Excel (un .xlsx écrit par l'administration elle-même, sans
+    bibliothèque : de vraies dates et heures, l'en-tête figé et filtrable), CSV (points-virgules, pour Excel en
+    français), Google Sheets (le tableau copié, une feuille vierge sheets.new s'ouvre : on colle). « Importer » : des
+    lignes copiées d'un tableur (les titres de colonnes reconnus, ou l'ordre de l'export) deviennent des séances, après
+    un aperçu ligne par ligne ; « Annuler » reprend tout l'import. Le tableur ne montre ni n'exporte rien des colonnes de
+    diffusion du suivi (ni montant ni prix de cession).
 - **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
 - **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
 - **Lieux** : avec la recherche de commune (geo.api.gouv.fr), la fusion des doublons, et ses dates (à venir, puis
@@ -462,7 +490,8 @@ jamais validées ni remboursées par soi-même ; les justificatifs dans le stock
 dossier de sa fiche), le matériel (lu par l'équipe, tenu par l'administration), les listes de chargement et les pistes
 de diffusion (l'administration seule), et cinq colonnes de diffusion au suivi des dates. Un compte du projet qui n'a pas
 de fiche dans l'équipe n'y a rien. L'administration écoute ces tables sur un canal à part, et seulement quand la base
-les a. 33 essais (`node ideale.mjs`).
+les a. 33 essais (`node ideale.mjs`). Tant que le script n'est pas lancé, la rubrique Diffusion, les notes de frais
+(Équipe) et l'onglet Matériel d'un spectacle se masquent ; le reste de l'administration, le tableur compris, n'en dépend pas.
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
