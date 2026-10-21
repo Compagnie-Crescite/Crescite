@@ -280,13 +280,20 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
 
 **L'espace de l'équipe** (`equipe/index.html`, en ligne dans `docs/equipe/`) est une application qu'on installe sur
 son téléphone (« Ajouter à l'écran d'accueil » ; sur iPhone : Partager → Sur l'écran d'accueil). En bas, les onglets
-Saison, Feuilles, Documents, Notifications et Moi ; sur ordinateur, ils se rangent en colonne à gauche. On y trouve :
+Saison, Feuilles, Planning, Spectacles et Moi, et les notifications dans la cloche en haut ; sur ordinateur, tout se
+range en colonne à gauche. On y trouve :
 - la prochaine date en grand, aux couleurs du spectacle, avec un compte à rebours ;
 - la frise du jour J, tirée de la feuille de route ;
-- qui part, l'itinéraire, la carte de la tournée et les chiffres de la saison ;
+- qui part, l'itinéraire, la carte de la tournée et les chiffres de la saison (l'itinéraire cherche le lieu par son nom
+  et son adresse : la position des lieux dans la base n'est que le centre de leur commune, bonne pour la carte) ;
 - les répétitions et leurs horaires ;
 - la feuille de route (version web et PDF) ;
-- les documents du spectacle (le texte, les dossiers, et la fiche technique qu'on partage d'un lien de 30 jours) ;
+- **Spectacles** : les spectacles sur lesquels la personne travaille (sa distribution, et les dates où elle remplace ou
+  renforce), d'abord ceux qui ont une prochaine date ; dans chacun, ses prochaines dates et ses fichiers de travail
+  rangés par genre, chacun avec « Partager » : la feuille de partage du téléphone, avec un lien de 30 jours pour un
+  fichier privé (préparé à l'ouverture de la page : iOS refuse le partage après une attente) ;
+- **Planning** (le script 5) : le planning de toute l'équipe, ses indisponibilités (à la main, motif privé, ou lues dans
+  son agenda relié), l'abonnement de son agenda à ses dates Crescite, et les dates que l'administration lui propose ;
 - sa fiche, et un fichier agenda (.ics).
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
@@ -321,5 +328,33 @@ Drive se recopie, puis on relance le script, ou on la dépose dans l'administrat
 **Les comptes.** Les inscriptions libres sont fermées sur le projet : un compte se crée dans Supabase (Authentication →
 Users → Add user, avec l'adresse saisie dans la fiche). À la première connexion, il se rattache tout seul à la fiche de
 même adresse. Pour que « Recevoir un lien de connexion » et « Mot de passe oublié » reviennent sur l'espace de l'équipe,
-ajouter son adresse aux Redirect URLs (Authentication → URL Configuration) et configurer un serveur d'envoi de courriels
+ajouter `https://adrienvada.fr/Crescite/**` aux Redirect URLs (Authentication → URL Configuration) et configurer un serveur d'envoi de courriels
 (Authentication → Emails) ; sans lui, Supabase n'écrit qu'aux membres de l'équipe du projet, et peu par heure.
+
+**L'espace des salles.** Le quatrième script, `supabase/migrations/20261023_crescite_pro.sql`, ouvre aux
+programmateurs et aux directeurs de salle, sur invitation, des fichiers qui ne sont pas publics : les captations, des
+photos, une fiche technique détaillée. Dans l'administration, la rubrique Espace pro crée les invitations (une
+structure, son contact, les spectacles ouverts, une durée) et montre le journal des visites et des documents ouverts ;
+dans chaque spectacle, les documents réservés aux salles se déposent (stockage privé `crescite-pro`, 50 Mo par
+fichier) ou se donnent en lien. La salle reçoit un lien `…/pro/#<jeton>` : la page `pro/` passe par la fonction
+`supabase/functions/crescite-pro`, qui vérifie l'invitation et donne pour chaque fichier un lien d'une heure. 25 essais
+(`node pro.mjs`).
+
+**Les disponibilités.** Le cinquième script, `supabase/migrations/20261024_crescite_disponibilites.sql`, ajoute les
+indisponibilités de chacun (à la main, ou lues dans son agenda relié par son adresse iCal secrète, que l'API ne relit
+jamais), le planning commun (toute l'équipe voit les heures de tous, le motif reste à la personne et à
+l'administration ; d'un agenda relié, aucun titre n'est gardé), et les propositions de dates de l'administration, avec
+une réponse par jour. Trois fonctions, à déployer avec « Verify JWT » décoché :
+- `crescite-agenda` relit les agendas reliés toutes les heures (pg_cron, programmé par le script) et à la demande, et
+  donne à chacun le flux de ses dates Crescite (`?flux=<clé>`) à ajouter à son agenda ;
+- `crescite-courriel` écrit à chaque destinataire d'une proposition (Brevo, clé `BREVO_API_KEY` dans les secrets des
+  fonctions ; sans clé, rien ne part et l'administration le voit) ;
+- la réponse d'un clic passe par la page du site `reponse/` : Supabase montre en texte brut toute page web servie par
+  une fonction. Le lien du courriel arrive sur la page avec le choix prêt, qu'on confirme d'un bouton (les messageries
+  ouvrent les liens pour les vérifier). 33 essais du script (`node disponibilites.mjs`), 21 de la fonction des
+  courriels (`node courriel.mjs`).
+
+**Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
+demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
+d'atteinte), jamais sans filtre, avec un mode `--essai`. La règle qui l'y autorise est dans `.claude/settings.json`.
+Les scripts SQL et le déploiement des fonctions restent à faire dans Supabase.
