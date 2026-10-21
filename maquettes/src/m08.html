@@ -987,7 +987,6 @@ a.rs-seance:hover{background:var(--ink);color:var(--paper)}
 @keyframes rs-pose{from{opacity:0;transform:translateY(10px)}}
 @keyframes rs-ouvre{from{opacity:0;transform:translateY(-8px)}}
 @keyframes rs-relais{to{opacity:0;transform:translateY(-6px)}}
-html.m8-fixe .rs-compose :is(.rs-c>*,.rs-sp::after,.rs-photo),html.m8-fixe .rs-compose.rs-ouvre,html.m8-fixe .rs-ancien{animation:none}
 .rs-ici .rs-ancien{background:var(--paper)}
 /* « Je viens voir un spectacle » : la date d'une ligne réservable est un bouton ; sa fiche s'ouvre sous la ligne */
 .rs-date--ligne{align-self:start;width:100%;padding:10px 30px 11px 12px;margin:-10px 0 0 -12px;border:1px solid transparent;border-left:3px solid var(--c,var(--ink))}
@@ -2873,7 +2872,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
      un appel par ligne qui retiendrait le geste). Moins d'animations : un fondu bref ; ?anim=0 : rien. */
   function effetReserver({ carte: el, ancien, premier, ouverture }) {
     if (premier || COUPE || !el.animate) return;
-    if (!motionOK()) { const c = $('.rs-c', el); if (c) c.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
+    if (!motionOK()) { el.classList.remove('rs-compose', 'rs-ouvre'); const c = $('.rs-c', el); if (c) c.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
     if (ancien && ancien.firstChild) {
       ancien.className = 'rs-ancien'; ancien.setAttribute('aria-hidden', 'true');
       el.appendChild(ancien);
