@@ -189,6 +189,40 @@ LIBELLES = {
     "documentsScolaires": "Documents pour les enseignants", "objetProgrammation": "Programmation",
     # les frises chronologiques (règle 15) : le repère du jour
     "aujourdhui": "Aujourd’hui",
+    # réserver une date (règle 17, RESERVER) : la carte de réservation, et les noms courts des boutons de date
+    # (« ven. 18 déc. », comme AGENDA.court)
+    "reserver": "Réserver", "surLeSiteDuLieu": "sur le site du lieu", "horaireAPreciser": "horaire à préciser",
+    "reservationAupresDuLieu": "Réservation auprès du lieu", "choisirUneDate": "Choisir une date",
+    "joursCourts": JOURSC, "moisCourts": MOISC,
+    # les vidéos lues dans le site (règle 18, LECTEUR)
+    "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
+    # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
+    "modeNuit": "Mode nuit", "jour": "Jour", "nuit": "Nuit",
+}
+# La troupe (règle 20, TROUPE) : toutes les personnes publiées de l'équipe, sur la page de la compagnie, rangées par
+# catégories de métiers. Chaque personne paraît dans chaque catégorie de ses métiers. Un métier absent de ces listes (les
+# métiers se saisissent librement dans l'administration) est rangé par TROUPE : par ses mots en commun avec les métiers
+# connus (les plus rares comptent le plus), puis par les alias (jamais affichés), sinon dans la catégorie « defaut » :
+# rien ne se perd. Les titres s'éditent sur place (site.troupe.titre, site.troupe.categories.<i>.titre).
+TROUPE = {
+    "titre": "La troupe", "defaut": "production",
+    "categories": [
+        {"cle": "jeu", "titre": "Le jeu", "metiers": ["Jeu"],
+         "alias": ["comédien", "comédienne", "acteur", "actrice", "interprète", "chant", "chanteur", "chanteuse", "danse", "marionnette"]},
+        {"cle": "mise-en-scene", "titre": "La mise en scène",
+         "metiers": ["Mise en scène", "Direction artistique", "Assistanat à la mise en scène", "Collaboration artistique", "Conseil artistique"],
+         "alias": ["metteur", "metteuse", "chorégraphie", "regard extérieur", "assistant", "assistante", "direction"]},
+        {"cle": "ecriture", "titre": "L’écriture", "metiers": ["Texte", "Traduction"],
+         "alias": ["écriture", "auteur", "autrice", "adaptation", "dramaturgie", "dramaturge", "traducteur", "traductrice"]},
+        {"cle": "decors", "titre": "Les décors, costumes et accessoires",
+         "metiers": ["Scénographie", "Construction des décors", "Accessoires", "Costumes", "Maquillage"],
+         "alias": ["décor", "scénographe", "costumière", "costumier", "habillage", "perruques", "coiffure", "construction", "plasticien", "plasticienne"]},
+        {"cle": "lumiere-son", "titre": "La lumière et le son",
+         "metiers": ["Création lumières", "Régie générale", "Régie", "Régie son", "Création sonore et musicale"],
+         "alias": ["lumière", "éclairagiste", "son", "sonore", "musique", "musicien", "musicienne", "vidéo", "régisseur", "régisseuse", "technique", "machiniste"]},
+        {"cle": "production", "titre": "La production", "metiers": ["Administration", "Action culturelle"],
+         "alias": ["production", "diffusion", "communication", "médiation", "administrateur", "administratrice", "chargé", "chargée", "presse"]},
+    ],
 }
 
 
@@ -454,6 +488,8 @@ def build_data():
                  "texte": "Les captations et les documents que la compagnie vous a ouverts."},
                 {"cle": "admin", "titre": "Administration", "href": "admin/",
                  "texte": "La gestion du site, des dates, de l’équipe et des feuilles de route."}]},
+            # la troupe (#/compagnie, règle 20) : le titre de la section et les catégories de métiers (TROUPE)
+            "troupe": TROUPE,
             "coordonnees": a["coordonnees"], "ecrire": {"texte": a["ecrire"]["texte"], "href": "#/contact"},
             "facebook": {"texte": a["facebook"]["texte"], "href": None} if a.get("facebook") else None,
             "partenaires": a["pied"]["partenaires"],
@@ -504,15 +540,22 @@ def action_publiee(a):
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "dossier.js", "frise.js", "mouvement.js", "tentacules.js")
+OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "dossier.js", "frise.js", "mouvement.js", "reserver.js", "lecteur.js", "troupe.js", "tentacules.js")
+# reserver.js (RESERVER, règle 17) : les dates où réserver, leur bande de boutons, la carte de réservation, le clavier ;
+# lecteur.js (LECTEUR, règle 18) : les vidéos lues dans le site, au geste, en plein écran ou la page assombrie.
+# Les outils de <head>, avant toute feuille de style : theme.js (THEME) pose le jour ou la nuit sur <html> avant le
+# premier dessin (règle 19 : pas d'éclair) ; il ne lit rien de D.
+OUTILS_TETE = ("theme.js",)
 
 
 def outils():
     """Les outils communs, dans l'ordre. dossier.js compose à la demande le dossier PDF d'un spectacle (pdfmake, chargé depuis
     admin/vendor/ au premier clic). frise.js (FRISE) rend les calendriers en frises chronologiques, mouvement.js (MOUVEMENT)
     donne les transitions de page, les apparitions, le FLIP, les chiffres qui comptent et la pression (règle 15).
-    tentacules.js vient en dernier : la pieuvre et ses tentacules, des moments que la maquette joue à la main (plus aucune
-    réaction automatique par défaut). ?anim=0 dans l'adresse éteint tout mouvement (captures, essais)."""
+    troupe.js (TROUPE) range les personnes de l'équipe par catégories de métiers (D.site.troupe), relie les places d'une même
+    personne et dessine les icônes des catégories (règle 20). tentacules.js vient en dernier : la pieuvre et ses tentacules,
+    des moments que la maquette joue à la main (plus aucune réaction automatique par défaut). ?anim=0 dans l'adresse éteint
+    tout mouvement (captures, essais). theme.js (THEME, règle 19) va à part, dans <head> (OUTILS_TETE)."""
     return OUTILS
 
 
@@ -522,7 +565,11 @@ def avec_outils(name, src):
     if DATA_LIGNE not in src:
         raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
     js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in outils())
-    return src.replace(DATA_LIGNE, DATA_LIGNE + js, 1)
+    src = src.replace(DATA_LIGNE, DATA_LIGNE + js, 1)
+    # theme.js dans <head>, juste après les balises meta du début (avant les feuilles de style, qu'un script attendrait)
+    tete = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS_TETE)
+    m = re.search(r'<meta name="viewport"[^>]*>', src) or re.search(r"<meta charset=[^>]*>", src) or re.search(r"<head[^>]*>", src)
+    return src[:m.end()] + tete + src[m.end():] if m else src.replace(DATA_LIGNE, DATA_LIGNE + tete, 1)
 
 
 def assemble(name, D, photo_urls):

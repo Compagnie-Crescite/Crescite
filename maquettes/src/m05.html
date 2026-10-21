@@ -1565,10 +1565,10 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
           return `<section class="grp">${ok ? `<h4 class="mois" data-mv-cle="m:${esc(s.k)}:${esc(g.m)}"><span class="disp">${esc(t)}</span></h4>` : ''}<ol class="rs" data-agenda="">${g.rs.map(rangeePasse).join('')}</ol></section>`; }).join('')}
           ${s.k === D.saison ? '' : `<p class="sai-page"><a class="btn" href="#/agenda/${esc(s.k)}">${esc(s.titre)}${use('i-go')}</a></p>`}</div></div>`;
     };
-    const saisonHtml = ({ s, rows }) => { const ouv = F.ouv.has(s.k);
+    const saisonHtml = ({ s, rows }, vide = false) => { const ouv = F.ouv.has(s.k);
       return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
         <summary><span class="sai-carte">${miniRetenu(s.k, lieuxDe(s, rows))}</span><span class="sai-c"><h3 class="sai-t disp">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${titreTxt(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b class="disp">${rows.length}</b>${I_CHEV}</span></summary>
-        <div class="sai-corps">${ouv ? corps(s, rows) : ''}</div></details>`; };
+        <div class="sai-corps">${ouv && !vide ? corps(s, rows) : ''}</div></details>`; };
     const indexHtml = vis => {
       const tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
       const eff = [termes().length && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l != null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
@@ -1602,29 +1602,42 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       };
       const nettoyer = () => $$('.aff', racine).forEach(a => { delete REG[a.id]; });
       const brancherOuvertes = () => $$('.sai[open]', racine).forEach(dt => { if (!dt.dataset.branche) { dt.dataset.branche = '1'; brancherSaison(dt); } });
-      const dessineSaisons = (brancher = true) => {
+      // vides : les saisons ouvertes arrivent sans leur corps ; poserSaison le remplit ensuite (une saison par image)
+      const dessineSaisons = (brancher = true, vides = false) => {
         nettoyer();
         const vis = visibles();
-        sansAnim(() => { racine.innerHTML = vis.map(saisonHtml).join(''); });
+        sansAnim(() => { racine.innerHTML = vis.map(x => saisonHtml(x, vides)).join(''); });
         index.innerHTML = indexHtml(vis);
-        if (brancher) brancherOuvertes();
+        if (brancher && !vides) brancherOuvertes();
       };
+      const poserSaison = dt => {
+        const s = passe.find(x => x.k === dt.dataset.saison), c = $('.sai-corps', dt);
+        if (!s || !c || c.firstElementChild || !dt.open) return;
+        sansAnim(() => { c.innerHTML = corps(s, s.rows.filter(garde)); });
+        brancherSaison(dt);
+      };
+      let genSaisons = 0;
       const recompte = () => {
         if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
         else if (F.avant) { F.ouv = F.avant; F.avant = null; }
       };
       // filtrer, chercher : dans l'image du geste, la liste seule (ses lignes glissent, celles qui partent s'effacent) ; la carte et
-      // la frise à l'image suivante ; l'agenda passé, sous le pli, encore après (ses saisons glissant depuis l'endroit où elles sont)
+      // la frise à l'image suivante ; l'agenda passé, sous le pli, encore après, une saison ouverte par image
       AGV.maj = (anime = true) => {
         const faire = () => { recompte(); liste.innerHTML = listeProchaines(); $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug))); if (champ.value !== F.q) champ.value = F.q; };
         if (anime && MV) MV.flip(liste, faire, { cle: '[data-mv-cle]' }); else faire();
         const carteFrise = () => { if (!liste.isConnected) return; majCarte(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
+        // l'agenda passé, sous le pli : ses saisons, puis le corps de chaque saison ouverte (une par image), puis la frise des saisons
         const saisons = () => { if (!agenda || !racine.isConnected) return;
-          if (anime && MV) MV.flip(racine, dessineSaisons, { cle: '[data-mv-cle]' }); else dessineSaisons();
-          if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+          if (!anime) { dessineSaisons(); if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); return; }
+          dessineSaisons(true, true);
+          const ouvertes = $$('.sai[open]', racine), g = ++genSaisons;
+          const suite = () => { if (g !== genSaisons || !racine.isConnected) return; const dt = ouvertes.shift();
+            if (dt) { poserSaison(dt); requestAnimationFrame(() => setTimeout(suite, 0)); } else if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+          requestAnimationFrame(() => setTimeout(suite, 0)); };
         if (!anime) { carteFrise(); saisons(); return; }
         if (!suiteCF) { suiteCF = true; requestAnimationFrame(() => setTimeout(() => { suiteCF = false; carteFrise();
-          if (!suiteS) { suiteS = true; setTimeout(() => { suiteS = false; saisons(); }, 0); } }, 0)); }
+          if (!suiteS) { suiteS = true; requestAnimationFrame(() => setTimeout(() => { suiteS = false; saisons(); }, 0)); } }, 0)); }
       };
       const remplir = dt => {
         const s = passe.find(x => x.k === dt.dataset.saison), c = $('.sai-corps', dt);

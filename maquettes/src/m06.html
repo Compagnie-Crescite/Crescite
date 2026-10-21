@@ -1581,7 +1581,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
             <span class="tu-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</span><span class="tu-go">${esc(L.decouvrir)}${fleche}</span></span></a></li>`).join(''))}</ul></section>`);
     const fig = $('.carte-voir', main), liste = $('#ag-liste'), racine = $('#ag-saisons'), index = $('#ag-index');
     const lieuxProch = CARTE.aVenir('public');
-    let fSaison = null, fSaisons = null, agenda = false, suiteR = false, suiteS = false;
+    let fSaison = null, fSaisons = null, agenda = false, suiteR = false, suiteS = false, genSaisons = 0;
     brancher(fig, null, { enVue: false });
     // une liste reliée à sa carte : survoler une ligne allume sa commune, choisir une commune filtre tout l'agenda
     function lierListe(f, ul, choix) {
@@ -1602,7 +1602,17 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       else if (F.avant) { F.ouv = F.avant; F.avant = null; }
     }
     const visibles = () => passe.map(s => ({ s, rows: s.rows.filter(garde) })).filter(x => x.rows.length);
-    const listeProchaines = () => parMois(proch.filter(garde).map(r => r.d), false, true);
+    // toutes les dates à venir sont dans la page ; le filtre cache celles qu'il ne garde pas (rien n'est refait)
+    const parD = new Map(proch.map(r => [r.d, r])), parCle = new Map(proch.map(r => [cleProchaine(r.d), r]));
+    const listeProchaines = () => {
+      const groupes = [];
+      proch.forEach(({ d }) => { const m = coupe(d.ligneDate)[1], g = groupes[groupes.length - 1]; if (g && g.m === m) g.ds.push(d); else groupes.push({ m, ds: [d] }); });
+      return groupes.map(g => `<section class="groupe"${g.ds.some(d => garde(parD.get(d))) ? '' : ' hidden'}><h3 class="mois">${esc(g.m)}</h3><ul class="dates" data-agenda="">${g.ds.map(d => { const h = ligneDate(d); return garde(parD.get(d)) ? h : h.replace('<li class="date"', '<li class="date" hidden'); }).join('')}</ul></section>`).join('');
+    };
+    const filtrerListe = () => {
+      $$('li.date', liste).forEach(li => { const r = parCle.get(li.dataset.friseId), h = !!r && !garde(r); if (li.hidden !== h) li.hidden = h; });
+      $$('.groupe', liste).forEach(g => { const h = !g.querySelector('li.date:not([hidden])'); if (g.hidden !== h) g.hidden = h; });
+    };
     // la carte des dates à venir : les bras des communes gardées (ils repoussent depuis Rouen quand le filtre change)
     function majCarte(anime) {
       const set = new Set(proch.filter(garde).map(r => r.d));
@@ -1650,14 +1660,15 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     const miniSvg = (k, lx) => retenu(`mini:${k}:${lx.map(x => `${x.l}.${x.n}`).join(',')}`, () => `<svg viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr-pays" class="pays"/>${lx.some(dehors) ? `<circle class="encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="24"/>` : ''}${lx.map(x => `<path class="bras" d="${forme(ou(x), largeur(x.n) * 2.3, 1.2)}"/>`).join('')}<circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="10"/></svg>`);
     function nettoyer() { $$('figure.carte', racine).forEach(f => { cancelAnimationFrame(f._raf); ANIM.delete(f); if (RO) RO.unobserve(f); REG.delete(f.id); }); }
     const brancherOuvertes = () => visibles().forEach(({ s }) => { const dt = $(`#sai-${s.k}`, racine); if (dt && dt.open && !dt.dataset.branche) lierSaison(dt, s, false); });
-    function dessineSaisons(brancherAussi = true) {
+    // vides : les saisons ouvertes arrivent sans leur corps ; poserSaison le remplit ensuite (une saison par image)
+    function dessineSaisons(brancherAussi = true, vides = false) {
       nettoyer();
       const vis = visibles();
       racine.innerHTML = vis.map(({ s, rows }) => { const ouv = F.ouv.has(s.k), lx = lieuxDe(s, rows);
         return `<details class="sai" id="sai-${s.k}" data-saison="${s.k}" data-frise-id="${s.k}"${ouv ? ' open' : ''}>
         <summary><span class="sai-mini">${miniSvg(s.k, lx)}</span><span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${chevron}</span></summary>
-        <div class="sai-corps">${ouv ? corpsSaison(s, rows, lx) : ''}</div></details>`; }).join('');
-      if (brancherAussi) brancherOuvertes();
+        <div class="sai-corps">${ouv && !vides ? corpsSaison(s, rows, lx) : ''}</div></details>`; }).join('');
+      if (brancherAussi && !vides) brancherOuvertes();
       const tousOuverts = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
       const actifs = [terme() && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l !== null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
       index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPrecedentes)}">${tousOuverts ? doubleHaut : doubleBas}</button>
@@ -1673,15 +1684,20 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     // l'agenda passé, sous le pli, encore après
     function dessine(anime = true) {
       recompte();
-      const faireListe = () => { liste.innerHTML = listeProchaines(); majOutils(); };
+      const faireListe = () => { filtrerListe(); majOutils(); };
       if (anime && MV) MV.flip(liste, faireListe, { cle: '[data-frise-id]' }); else faireListe();
       const reponse = () => { if (!liste.isConnected) return; majCarte(anime); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
+      // l'agenda passé, sous le pli : ses saisons, puis le corps de chaque saison ouverte (une par image), puis la frise des saisons
       const saisons = () => { if (!agenda || !racine.isConnected) return;
-        if (anime && MV) MV.flip(racine, () => dessineSaisons(), { cle: '[data-saison]' }); else dessineSaisons();
-        if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+        if (!anime) { dessineSaisons(); if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); return; }
+        dessineSaisons(true, true);
+        const ouvertes = $$('.sai[open]', racine), g = ++genSaisons;
+        const suite = () => { if (g !== genSaisons || !racine.isConnected) return; const dt = ouvertes.shift();
+          if (dt) { remplirSaison(dt, false); requestAnimationFrame(() => setTimeout(suite, 0)); } else if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
+        requestAnimationFrame(() => setTimeout(suite, 0)); };
       if (!anime) { reponse(); saisons(); return; }
       if (!suiteR) { suiteR = true; requestAnimationFrame(() => setTimeout(() => { suiteR = false; reponse();
-        if (!suiteS) { suiteS = true; setTimeout(() => { suiteS = false; saisons(); }, 0); } }, 0)); }
+        if (!suiteS) { suiteS = true; requestAnimationFrame(() => setTimeout(() => { suiteS = false; saisons(); }, 0)); } }, 0)); }
     }
     const ouvrirSaison = k => {
       const dt = $(`#sai-${CSS.escape(k)}`, racine); if (!dt) return;

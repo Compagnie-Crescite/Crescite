@@ -143,7 +143,8 @@ const DONNEES = (() => {
       id: x.d.id, slug: slugDe(x.s), titre: x.s.titre, ligne: x.ligne, ligneDate: x.ligneDate, ligneLieu: x.ligneLieu,
       details: x.details, lien: x.d.lien, iso: x.iso, fin: x.fin, precision: x.precision, scolaire: x.scolaire, etat: x.etat,
       commune: x.l != null ? lieux[x.l].c : null, dep: x.l != null ? lieux[x.l].dep : null, xy: x.l != null ? lieux[x.l].xy : null,
-      l: x.l, representations: x.representations,
+      // lieu : le nom du lieu qui accueille (où l'on réserve, règle 17) ; representations : ses séances (jour, heure, lien…)
+      l: x.l, lieu: x.lieu && x.lieu.nom ? x.lieu.nom : null, representations: x.representations,
     }));
     const cles = [...new Set([saison, ...lignes.map(x => x.d.saison)])].sort().reverse();
     const saisons = {};
@@ -223,7 +224,7 @@ const DONNEES = (() => {
     // le site : la navigation du dépôt, les textes de la base
     const site = { ...S.site };
     ['nom', 'diaporama', 'donateurs', 'compagnie', 'actions', 'ecole', 'contact', 'coordonnees', 'ecrire', 'facebook',
-     'partenaires', 'liensLegaux', 'legal', 'programmation', 'espacePro'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
+     'partenaires', 'liensLegaux', 'legal', 'programmation', 'espacePro', 'troupe'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
     site.saisons = cles.map(k => ({ saison: k, titre: `Saison ${k}`, menu: k === saison ? `Saison ${k.slice(2, 4)}-${k.slice(7, 9)}` : `Saison ${k}`,
                                     href: k === saison ? '#/agenda' : `#/agenda/${k}` }));
     // les documents publics : un fichier du stockage public (documents/…), ou un lien

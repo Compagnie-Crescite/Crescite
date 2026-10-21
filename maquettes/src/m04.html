@@ -376,7 +376,7 @@ table{border-collapse:collapse}
 .sai>summary{display:grid;grid-template-columns:clamp(72px,8vw,104px) minmax(0,1fr) auto;align-items:center;gap:4px clamp(16px,2.6vw,34px);padding:18px 8px;list-style:none;cursor:pointer;transition:background .16s var(--ease)}
 .sai>summary::-webkit-details-marker{display:none}
 .sai>summary:hover,.sai[open]>summary{background:color-mix(in srgb,var(--acc) 6%,transparent)}
-.sai-arche{display:flex;align-items:flex-end;aspect-ratio:4/5;padding:16% 8% 5%;border:1px solid var(--aub-3);border-radius:999px 999px 0 0;background:radial-gradient(90% 70% at 50% 60%,#3a1631,var(--aub) 78%);transition:border-color .2s var(--ease),box-shadow .3s var(--ease),scale .12s}
+.sai-arche{display:flex;align-items:flex-end;aspect-ratio:4/5;padding:16% 8% 5%;border:1px solid var(--aub-3);border-radius:999px 999px 0 0;background:radial-gradient(90% 70% at 50% 60%,#3a1631,var(--aub) 78%);transition:border-color .2s var(--ease),scale .12s}
 .sai>summary:hover .sai-arche,.sai[open] .sai-arche{border-color:var(--acc-v);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc-v) 26%,transparent),0 14px 30px -14px var(--acc-v)}
 .sai[open] .mini-bras,.sai>summary:hover .mini-bras{opacity:1}
 .sai-t{font-family:var(--serif);font-weight:400;font-size:clamp(1.5rem,1.2rem + 1vw,2.1rem);line-height:1.1;font-variation-settings:"opsz" 72,"SOFT" 100}
@@ -418,7 +418,7 @@ table{border-collapse:collapse}
 .tuile-carte{display:flex;align-items:flex-end;aspect-ratio:4/5;padding:16% 6% 4%;border:1px solid var(--line-dark);border-radius:999px 999px 0 0;background:radial-gradient(90% 70% at 50% 60%,#3a1631,transparent 75%);transition:border-color .35s var(--ease),background-color .35s var(--ease)}
 .mini{display:block;width:100%;height:auto;overflow:hidden}
 .mini .mc-pays{fill:rgba(255,255,255,.04);stroke:rgba(255,236,245,.2)}
-.mini-bras{opacity:.7;transition:opacity .2s var(--ease)}
+.mini-bras{opacity:.7}
 .mini-rouen{fill:var(--rose-v)}
 .tuile-t{display:block;margin-top:12px;font-family:var(--serif);font-size:1.15rem;line-height:1.2;font-variation-settings:"opsz" 30,"SOFT" 70}
 .tuile:hover .tuile-carte,.tuile:focus-visible .tuile-carte{border-color:var(--rose-v);background-color:rgba(240,122,182,.06)}
@@ -906,11 +906,12 @@ main{display:block;min-height:100vh;overflow-x:clip}
 [data-mv="cascade"].mv-attente>*{transition:opacity .3s var(--ease),transform .36s var(--ease);transition-delay:calc(var(--mv-delai,0ms) + min(var(--mv-i,0),12) * 30ms)}
 [data-mv="monte"].mv-attente:not(.mv-vu){opacity:0;transform:translateY(16px)}
 .gros{font:inherit;font-variant-numeric:tabular-nums}
-/* ce qui se déplie : une saison s'ouvre, la porte de sa petite arche s'efface, la lumière y entre */
-.sai-arche{position:relative;perspective:260px}
-.sai-battant{position:absolute;inset:6% 6% 0;border-radius:999px 999px 0 0;background:linear-gradient(90deg,rgba(34,16,29,.82),rgba(67,32,59,.58));box-shadow:inset 0 0 0 1px rgba(240,122,182,.35);transform-origin:0 50%;transform:rotateY(58deg);transition:transform .32s var(--ease),opacity .32s}
-.sai>summary:hover .sai-battant{transform:rotateY(70deg);transition-duration:.18s}
-.sai[open] .sai-battant{transform:rotateY(92deg);opacity:0}
+/* ce qui se déplie : une saison s'ouvre, la porte de sa petite arche s'efface, la lumière y entre. La porte entrouverte est
+   dessinée à plat (une porte vue de biais : resserrée, inclinée) : au repos, rien n'a son propre calque */
+.sai-arche{position:relative}
+.sai-battant{position:absolute;inset:6% 6% 0;border-radius:999px 999px 0 0;background:linear-gradient(90deg,rgba(34,16,29,.82),rgba(67,32,59,.58));box-shadow:inset 0 0 0 1px rgba(240,122,182,.35);transform-origin:0 50%;transform:scaleX(.53) skewY(-7deg);transition:transform .32s var(--ease),opacity .32s}
+.sai>summary:hover .sai-battant{transform:scaleX(.34) skewY(-9deg);transition-duration:.18s}
+.sai[open] .sai-battant{transform:scaleX(.03) skewY(-10deg);opacity:0}
 .sai[open] .sai-arche{box-shadow:0 0 0 3px color-mix(in srgb,var(--acc-v) 30%,transparent),0 0 30px -4px var(--acc-v),inset 0 -40px 50px -30px color-mix(in srgb,var(--acc-v) 70%,transparent)}
 /* une ligne vers laquelle la frise mène : elle s'allume un instant */
 .dl.est-vise,.sl.est-vise,.pr.est-vise .pr-a{animation:vise 1.3s var(--ease)}
@@ -2719,6 +2720,9 @@ main{display:block;min-height:100vh;overflow-x:clip}
   habiller();
   window.addEventListener('hashchange', route);
   route();
+  // l'agenda passé et tous les lieux : calculés d'avance, quand le navigateur est libre (le geste n'a plus qu'à les lire)
+  const davance = () => { lire(); retenu('agendaPasse', agendaPasse); retenu('tout', () => CARTE.tout()); };
+  if ('requestIdleCallback' in window) requestIdleCallback(davance, { timeout: 1500 }); else setTimeout(davance, 600);
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
 
   // l'ouverture : le logo blanc sur un dégradé prune ; les trois portes apparaissent à travers lui, puis s'entrouvrent
