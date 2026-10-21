@@ -839,6 +839,7 @@ const resteFeuille = (dateId, forme = 'texte') => { const n = E.equipeInstallee 
 function majACompleter() {
   $$('[data-a-completer]').forEach(el => { const n = aCompleter(+el.dataset.aCompleter); el.hidden = !n; el.textContent = texteACompleter(n, el.dataset.forme); });
   $$('[data-statut-feuille]').forEach(el => { const f = E.feuilles.find(x => x.date_id === +el.dataset.statutFeuille); el.textContent = f ? (f.statut === 'publiee' ? `v${f.version}` : 'brouillon') : ''; });
+  ajusterPied();
 }
 const badgeFeuille = dateId => {
   const f = E.feuilles.find(x => x.date_id === dateId);

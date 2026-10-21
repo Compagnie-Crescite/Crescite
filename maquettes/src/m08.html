@@ -2137,6 +2137,105 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
     if (l0 != null && !Number.isNaN(l0) && items.some(it => it.dataset.l === String(l0))) { api.basculer(l0); filtrer(l0); }
   }
 
+  /* ——— La troupe (règle 20, TROUPE) : l'index raisonné de la compagnie, et sa planche hors-texte ———
+     À droite, l'index : les catégories de métiers (qui fait quoi, d'un coup d'œil), chacune sous son double filet et son
+     icône ; les personnes rangées par leur nom, le métier précis au bout de ses points de conduite (le jeu, sur deux
+     colonnes) ; une vignette seulement pour une photo publiée. À gauche, en regard, la planche : la pieuvre de la compagnie
+     en ex-libris au-dessus du portrait de groupe (les visages publiés, rang sur rang, comme une photo de troupe) et sa
+     légende. Survoler une personne, dans l'index ou sur la planche, l'allume partout : ses places reliées par les bras de
+     la pieuvre, tirés au crayon rouge du correcteur (TROUPE.relier), son visage dans le groupe, son nom et ses métiers
+     dans la légende, qui se relaie. Au défilement, l'index se compose ligne à ligne (animations liées au défilement) ; la
+     troupe se rassemble sur la planche à son arrivée (Web Animations). Relue dans D à chaque rendu. */
+  let troupeCtl = null, troupeIO = null, legendeTroupe = null;
+  const parNom = (a, b) => String(a.nom || '').localeCompare(String(b.nom || ''), 'fr', { sensitivity: 'base' }) || String(a.prenom || '').localeCompare(String(b.prenom || ''), 'fr');
+  function placeTroupe(x) {
+    const ancre = x.photo ? `<span class="tr8-v" data-troupe-ancre><img src="${esc(x.photo)}" alt="" width="96" height="120" loading="lazy" decoding="async" data-troupe-photo></span>` : '<span class="tr8-pt" data-troupe-ancre></span>';
+    const m = !x.evident && x.metiers.length ? `<span class="toc-lead tr8-lead" aria-hidden="true"></span><span class="tr8-m">${x.metiers.map(t => `<span>${esc(t)}</span>`).join('<span class="tr8-sep" aria-hidden="true">, </span>')}</span>` : '';
+    return `<li><button type="button" class="tr8-place${x.photo ? ' a-photo' : ''}" data-troupe-place data-troupe-personne="${esc(x.personne)}" aria-pressed="false">${ancre}<span class="tr8-nom"><span class="tt">${x.prenom ? `<span>${esc(x.prenom)}</span> ` : ''}<span>${esc(x.nom)}</span></span></span>${m}</button></li>`;
+  }
+  // le portrait de groupe : des rangs égaux, le plus long au milieu (13 visages : 4, 5, 4)
+  function rangs(n) {
+    if (!n) return [];
+    const k = Math.max(1, Math.ceil(Math.sqrt(n * 1.5))), r = Math.ceil(n / k), t = Array(r).fill(Math.floor(n / r));
+    [...t.keys()].sort((a, b) => Math.abs(a - (r - 1) / 2) - Math.abs(b - (r - 1) / 2)).slice(0, n % r).forEach(i => { t[i]++; });
+    return t;
+  }
+  function troupeHTML() {
+    if (!TR || !site().troupe) return '';
+    const cs = TR.categories().filter(c => c.places.length);
+    if (!cs.length) return '';
+    const visages = TR.personnes().filter(p => p.photo), rs = rangs(visages.length);
+    let i = 0;
+    const groupe = rs.map((n, r) => `<span class="tr8-rang" style="--r:${r}">${visages.slice(i, i += n).map((p, j) => `<span class="tr8-f" data-p="${esc(p.personne)}" style="--i:${i - n + j}"><img src="${esc(p.photo)}" alt="" width="120" height="150" loading="lazy" decoding="async"></span>`).join('')}</span>`).join('');
+    return `<section class="page troupe-08" aria-labelledby="tr8-h" data-troupe>
+      <div class="pg-head"><div class="pg-head-in">
+        <h2 class="band-title" id="tr8-h"${ed('site.troupe.titre')}>${esc(TR.titre())}</h2>
+        <figure class="tr8-planche" aria-hidden="true"><span class="tr8-emb">${D.logo.mark}</span>${groupe ? `<span class="tr8-groupe" style="--k:${Math.max(...rs)}">${groupe}</span>` : ''}<figcaption class="tr8-leg"></figcaption></figure>
+      </div></div>
+      <div class="pg-body tr8-index">${cs.map(c => `<section class="tr8-cat${c.cle === 'jeu' ? ' tr8-jeu' : ''}" data-troupe-categorie="${esc(c.cle)}" aria-labelledby="tr8-h-${esc(c.cle)}">
+        <h3 class="tr8-t" id="tr8-h-${esc(c.cle)}"><span class="tr8-ic">${TR.icone(c.cle)}</span><span${ed(`site.troupe.categories.${c.i}.titre`)}>${esc(c.titre)}</span></h3>
+        <ul class="tr8-places">${[...c.places].sort(parNom).map(placeTroupe).join('')}</ul></section>`).join('')}</div>
+    </section>`;
+  }
+  // la troupe prend vie : les liens entre les places d'une personne (TROUPE), la planche et sa légende qui suivent, les
+  // icônes qui s'animent à leur arrivée, le groupe qui se rassemble
+  function vivreTroupe() {
+    if (troupeCtl) { troupeCtl.detruire(); troupeCtl = null; }
+    if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
+    const tr = $('.troupe-08', main);
+    if (!tr || !TR) return;
+    const pl = $('.tr8-planche', tr), leg = pl && $('.tr8-leg', pl);
+    let vu = undefined;
+    // la légende de la planche se relaie : l'ancienne s'efface vers le haut, la nouvelle se pose (moins d'animations : sans)
+    legendeTroupe = slug => {
+      if (!leg || slug === vu) return;
+      vu = slug;
+      const p = slug ? (D.personnes || {})[slug] : null, neuf = document.createElement('span'), vieux = [...leg.children];
+      neuf.className = 'tr8-leg-in';
+      if (p) neuf.innerHTML = `<span class="tr8-leg-nom">${esc(`${p.prenom || ''} ${p.nom || ''}`.trim())}</span>${(p.metiers || []).length ? `<span class="tr8-leg-m">${p.metiers.map(esc).join(' · ')}</span>` : ''}`;
+      const bouge = motionOK() && neuf.animate;
+      vieux.forEach(x => { if (!bouge || !x.firstChild) { x.remove(); return; } x.classList.add('tr8-leg-part'); const fin = () => x.remove(); x.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px)' }], { duration: 140, easing: 'ease-out', fill: 'forwards' }).finished.then(fin, fin); });
+      leg.appendChild(neuf);
+      if (p && bouge) neuf.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: COURBE });
+    };
+    const marquer = slug => {
+      if (pl) { pl.classList.toggle('est-allume', !!slug); $$('.tr8-f', pl).forEach(f => f.classList.toggle('est-allume', f.dataset.p === slug)); }
+      legendeTroupe(slug);
+    };
+    troupeCtl = TR.relier(tr, { liens: true, clavier: true, surAllumer: slug => marquer(slug) });
+    // la planche se lit aussi à la souris : survoler un visage allume la personne, le toucher (ou un clic) la choisit
+    if (pl) {
+      pl.addEventListener('pointerover', e => { const f = e.target.closest('.tr8-f'); if (f && e.pointerType !== 'touch' && troupeCtl) troupeCtl.allumer(f.dataset.p); });
+      pl.addEventListener('pointerout', e => { const f = e.target.closest('.tr8-f'); if (!f || e.pointerType === 'touch' || (e.relatedTarget && f.contains(e.relatedTarget)) || !troupeCtl) return; troupeCtl.eteindre(); });
+      pl.addEventListener('click', e => { const f = e.target.closest('.tr8-f'); if (!f || !troupeCtl || (typeof EDITION !== 'undefined' && EDITION.actif)) return; troupeCtl.choisir(troupeCtl.choisi() === f.dataset.p ? null : f.dataset.p); });
+    }
+    // à son arrivée : la troupe se rassemble sur la planche (chacun vient prendre sa place dans le groupe, l'ex-libris se
+    // pose), et l'icône de chaque catégorie s'anime une fois
+    if (motionOK() && 'IntersectionObserver' in window) {
+      troupeIO = new IntersectionObserver(es => es.forEach(x => {
+        if (!x.isIntersecting) return;
+        troupeIO.unobserve(x.target);
+        if (x.target === pl) {
+          $$('.tr8-f', pl).forEach((f, k) => { const a = (k * 137.5) % 360 * RAD, d = 14 + (k % 3) * 6;
+            f.animate([{ opacity: 0, transform: `translate(${(Math.cos(a) * d).toFixed(1)}px, ${(Math.sin(a) * d + 10).toFixed(1)}px) rotate(${(k % 2 ? 1 : -1) * (2 + k % 3)}deg)` }, { opacity: 1, transform: 'none' }],
+              { duration: 520, delay: 60 + k * 34, easing: COURBE, fill: 'backwards' }); });
+          const em = $('.tr8-emb', pl);
+          if (em) em.animate([{ opacity: 0, transform: 'scale(.86) rotate(-8deg)' }, { opacity: 1, transform: 'none' }], { duration: 620, delay: 40, easing: COURBE, fill: 'backwards' });
+          return;
+        }
+        x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600);
+      }), { rootMargin: '0px 0px -12% 0px' });
+      if (pl && $('.tr8-f', pl)) troupeIO.observe(pl);
+      $$('.tr8-ic .troupe-icone', tr).forEach(i => troupeIO.observe(i));
+    }
+    // une photo publiée qui ne se charge pas (le fichier manque) : sa place garde le nom seul, son visage quitte la planche
+    tr.addEventListener('error', e => {
+      const i = e.target; if (!i || !i.matches || !i.matches('img')) return;
+      if (i.matches('[data-troupe-photo]')) { const a = i.closest('[data-troupe-ancre]'), b = i.closest('.tr8-place'); if (a) a.className = 'tr8-pt'; if (b) b.classList.remove('a-photo'); i.remove(); }
+      else { const f = i.closest('.tr8-f'); if (f) f.remove(); }
+    }, true);
+  }
+
   /* ——— La compagnie, le contact, les pages légales, les saisons passées ——— */
   function compagnieHTML() {
     const C = site().compagnie || {}, Dr = C.directeur;
@@ -2154,6 +2253,7 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
       <div class="pg-head"><div class="pg-head-in"><h1 class="page-title" id="cie-h" tabindex="-1"${ed('site.compagnie.titre')}>${esc(C.titre)}</h1></div></div>
       <div class="pg-body prose prose-lede">${(C.paragraphes || []).map((p, i) => para(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
     </section>
+    ${troupeHTML()}
     <section class="page" aria-labelledby="dates-h">
       <div class="pg-head"><h2 class="band-title" id="dates-h"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2></div>
       <div class="pg-body"><ol class="chrono">${(C.dates || []).map((d, i) => {
@@ -2759,6 +2859,7 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
       $$('.cb .cm', main).forEach(fig => monter(fig, { choix: fig.dataset.k === 'accueil' ? (l => { location.hash = `#/voir?l=${l}`; }) : null }));
       bindTournees();
       reserver(r);
+      vivreTroupe();
       bindChapitres();
       APRES.forEach(f => f()); APRES = [];
       pousser();

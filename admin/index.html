@@ -160,24 +160,26 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .pied-ed { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; padding: 12px 14px; background: color-mix(in srgb, var(--carte) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--trait); border-radius: var(--rayon); }
 .pied-ed .etat-ed { margin-right: auto; color: var(--gris); font-size: 13px; }
 .pied-ed .etat-ed.sale { color: var(--option); font-weight: 700; }
-/* le menu « Plus » du pied (pied(…, { replier: true })) : au-delà de 760 px, ses actions s'alignent comme les autres */
+/* le menu « Plus » du pied (pied(…, { replier: true })) : tant que tout tient sur une rangée, ses actions s'alignent comme
+   les autres (l'état se resserre d'abord) ; sinon (au téléphone, dans une colonne étroite), .replie : l'état, « Plus »,
+   « Enregistrer », et les autres actions dans le menu (ajusterPied, à chaque changement de largeur) */
 .pied-plus { display: none; }
 .pied-menu, .pied-autres { display: contents; }
 .pied-plus svg { transition: transform .15s; }
 .pied-plus[aria-expanded="true"] svg { transform: rotate(180deg); }
-@media (max-width: 760px) {
-  .pied-ed.a-plus { flex-wrap: nowrap; padding: 10px 12px; }
-  .pied-ed.a-plus .etat-ed { flex: 1 1 auto; min-width: 0; font-size: 12.5px; line-height: 1.25; }
-  .pied-ed.a-plus .pied-menu { display: block; flex: none; }
-  .pied-ed.a-plus .pied-plus { display: inline-flex; }
-  .pied-plus .a-completer.nombre { padding: 1px 7px; font-size: 11.5px; }
-  .pied-ed.a-plus .pied-autres { display: none; position: absolute; right: 8px; bottom: calc(100% + 8px); z-index: 30; width: max-content; min-width: 210px; max-width: calc(100% - 16px); flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 10px 34px rgba(20, 10, 20, .22); }
-  .pied-ed.a-plus .pied-autres.ouvert { display: flex; }
-  .pied-ed.a-plus .pied-autres .btn { justify-content: flex-start; border-color: transparent; padding: 10px 12px; }
-  .pied-ed.a-plus .pied-autres .btn:hover, .pied-ed.a-plus .pied-autres .btn:focus-visible { background: var(--doux); }
-  .pied-ed.a-plus [data-enregistrer] { flex: none; }
-}
-@media (max-width: 420px) { .pied-ed.a-plus { gap: 6px; } .pied-ed.a-plus > .btn, .pied-ed.a-plus .pied-plus { padding: 8px 10px; } }
+.pied-plus .a-completer.nombre { padding: 1px 7px; font-size: 11.5px; }
+.pied-ed.a-plus .etat-ed { flex: 1 1 70px; min-width: 0; margin-right: 0; }
+.pied-ed.a-plus:not(.replie) .btn { padding-left: 12px; padding-right: 12px; }
+.pied-ed.a-plus.replie { flex-wrap: nowrap; padding: 10px 12px; }
+.pied-ed.a-plus.replie .etat-ed { flex: 1 1 auto; font-size: 12.5px; line-height: 1.25; }
+.pied-ed.a-plus.replie .pied-menu { display: block; flex: none; }
+.pied-ed.a-plus.replie .pied-plus { display: inline-flex; }
+.pied-ed.a-plus.replie .pied-autres { display: none; position: absolute; right: 8px; bottom: calc(100% + 8px); z-index: 30; width: max-content; min-width: 210px; max-width: calc(100% - 16px); flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 10px 34px rgba(20, 10, 20, .22); }
+.pied-ed.a-plus.replie .pied-autres.ouvert { display: flex; }
+.pied-ed.a-plus.replie .pied-autres .btn { justify-content: flex-start; border-color: transparent; padding: 10px 12px; }
+.pied-ed.a-plus.replie .pied-autres .btn:hover, .pied-ed.a-plus.replie .pied-autres .btn:focus-visible { background: var(--doux); }
+.pied-ed.a-plus.replie [data-enregistrer] { flex: none; }
+@media (max-width: 420px) { .pied-ed.a-plus.replie { gap: 6px; } .pied-ed.a-plus.replie > .btn, .pied-ed.a-plus.replie .pied-plus { padding: 8px 10px; } }
 .apercu { padding: 12px 14px; border-radius: 10px; background: var(--doux); border: 1px dashed var(--trait); }
 .d-depuis { margin: -4px 0 14px; padding: 10px 14px; border-radius: 10px; background: var(--accent-doux); font-size: 14px; }
 .d-depuis a { font-weight: 700; white-space: nowrap; }
@@ -748,9 +750,11 @@ function rafraichirListes() {
   if (l && typeof l.rafraichir === 'function') l.rafraichir();
 }
 function marquerSale(oui = true) {
+  const avant = E.sale;
   E.sale = oui;
   const el = $('.etat-ed');
   if (el) { el.textContent = oui ? 'Modifications non enregistrées' : 'Tout est enregistré'; el.classList.toggle('sale', oui); }
+  if (avant !== oui) ajusterPied();
 }
 
 // ===================================================================================================== formulaires
@@ -854,13 +858,33 @@ function relier(racine, F, specs, onChange = () => {}) {
     marquerSale(); onChange(p);
   });
 }
-// le pied d'un éditeur : l'état, les autres actions, « Enregistrer ». replier : au téléphone (760 px et moins), les autres
-// actions passent dans un menu « Plus », pour tenir en une rangée (l'état, Plus, Enregistrer) ; voir menuPlus
+// le pied d'un éditeur : l'état, les autres actions, « Enregistrer ». replier : quand tout ne tient pas sur une rangée (au
+// téléphone, dans une colonne étroite), les autres actions passent dans un menu « Plus » (l'état, Plus, Enregistrer) ;
+// marque : ce que « Plus » montre de son menu (le compte « à compléter » de la feuille). Voir ajusterPied et menuPlus
 function pied(etatTexte = 'Tout est enregistré', boutons = '', { replier = false, marque = '' } = {}) {
   const plus = replier && boutons;
   return `<div class="pied-ed${plus ? ' a-plus' : ''}"><span class="etat-ed">${esc(etatTexte)}</span>${plus ? `<span class="pied-menu"><button type="button" class="btn pied-plus" aria-expanded="false" aria-controls="pied-autres">Plus${marque}<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="pied-autres" id="pied-autres" role="group" aria-label="Autres actions">${boutons}</span></span>` : boutons}<button type="button" class="btn principal" data-enregistrer>Enregistrer</button></div>`;
 }
-// le menu « Plus » (au téléphone) : son bouton l'ouvre (le focus sur la première action), ↑ ↓ Début Fin entre les actions,
+// replié ou non : déployé, « Enregistrer » (le dernier) passe-t-il sous l'état (le premier) ? Mesuré quand la largeur du
+// pied change (ResizeObserver), quand l'état ou un bouton change de texte (marquerSale, majACompleter)
+function ajusterPied(pied = $('.pied-ed.a-plus')) {
+  if (!pied || !pied.isConnected || !pied.classList.contains('a-plus')) return;
+  fermerPlus();
+  pied.classList.remove('replie');
+  const etat = $('.etat-ed', pied), der = $('[data-enregistrer]', pied);
+  if (etat && der && der.getBoundingClientRect().top >= etat.getBoundingClientRect().bottom) pied.classList.add('replie');
+}
+function suivrePied(pied) {
+  if (!pied || typeof ResizeObserver === 'undefined') return ajusterPied(pied);
+  let largeur = -1;
+  const ro = new ResizeObserver(es => {
+    if (!pied.isConnected) { ro.disconnect(); return; }
+    const w = Math.round(es[0].contentRect.width);
+    if (w !== largeur) { largeur = w; ajusterPied(pied); }
+  });
+  ro.observe(pied);
+}
+// le menu « Plus » (pied replié) : son bouton l'ouvre (le focus sur la première action), ↑ ↓ Début Fin entre les actions,
 // Échap le ferme et rend le focus au bouton ; une action choisie, un clic ou le focus ailleurs le ferment aussi
 const menuPlus = () => $('#pied-autres');
 function fermerPlus(rendre = false) {
@@ -1141,6 +1165,7 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
+  suivrePied($('.pied-ed', zone));
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
   const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
   const apercu = () => {
