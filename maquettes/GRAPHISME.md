@@ -1,8 +1,8 @@
-# Compte rendu de finition graphique (`m01`, `m02`, `m03`, `m08`, `m09`, `m10`)
+# Compte rendu de finition graphique des dix maquettes (`m01` à `m10`) et de la synthèse
 
-Ce document présente le travail de finition graphique réalisé sur la branche `graphisme` pour les six premières maquettes (`m01`, `m02`, `m03`, `m08`, `m09`, `m10`), conformément à `maquettes/CONSIGNE-GRAPHISME.md` et `maquettes/CONTRAT.md`.
+Ce document présente le travail de finition graphique réalisé sur la branche `graphisme` pour l'ensemble des maquettes (`m01` à `m10`) et la synthèse (`synthese.html`), conformément à `maquettes/CONSIGNE-GRAPHISME.md` et `maquettes/CONTRAT.md`.
 
-Chaque maquette a été poussée plus loin dans sa propre direction esthétique et corrigée des faiblesses relevées dans la planche de comparaison (`maquettes/src/planche.html`), tout en centralisant l'ensemble des couleurs dans `:root`, en garantissant des cibles tactiles d'au moins 44 px et en respectant strictement les budgets de performance et d'accessibilité.
+Chaque proposition a été poussée plus loin dans sa propre direction esthétique et son caractère singulier, tout en préservant scrupuleusement ses éléments graphiques distinctifs et en corrigeant les faiblesses relevées dans la planche de comparaison (`maquettes/src/planche.html`). L'ensemble respecte strictement l'accessibilité (contraste WCAG AA, cibles tactiles >= 44 px, zéro débordement à 360 px) et les budgets de réactivité (INP < 100 ms bureau / < 200 ms téléphone ×4, premier rendu < 150-200 ms, CLS < 0,05).
 
 ---
 
@@ -27,6 +27,32 @@ Chaque maquette a été poussée plus loin dans sa propre direction esthétique 
   - Création d'une colonne « À la une » (`.une-card`) en regard de la manchette sur le premier écran de l'accueil, mettant en avant un spectacle de la saison avec sa photographie de plateau grand format, son lieu/temps et son accroche, accompagnée des 3 cartes d'entrée en pleine couleur (soit 4 photographies de plateau distinctes visibles dès l'ouverture sans défiler).
   - Ajout des photographies de plateau (`.fe-ph`) dans les fiches de la page *Je représente un établissement scolaire*.
   - Affichage direct de la chronologie *En quelques dates* (`.co-dates`) sur la page *La compagnie* (auparavant masquée en `display: none`).
+
+### `m04` — « Trois portes »
+- **Direction poussée (les trois grandes portes en arche et matière théâtrale)** : trois arches monumentales avec battants 3D et perspective, fond prune chaleureux (`#22101d`) et faisceaux de lumière dorée.
+- **Faiblesses résolues** :
+  - Ajout de la photographie de plateau en arche (`.ac-photo.arche-img`) dans les fiches établissement scolaire pour donner la même présence scénique que sur la page de programmation.
+  - Cibles tactiles de la navigation garanties à 44 px au moins (`.site-nav a` en `display: inline-flex; min-height: 44px; align-items: center;`).
+
+### `m05` — « Magenta »
+- **Direction poussée (affirmation de la marque et graphisme d'impact)** : grands aplats magenta et noir d'encre, pieuvre blanche héraldique, bandeau dynamique « EN TOURNÉE », typographie Archivo monumentale.
+- **Faiblesses résolues** :
+  - Intégration de la photographie de plateau (`.ac-ph.duo-u`) au format 16/9 dans les fiches de la page *Je représente un établissement scolaire* aux côtés du motif de l'univers, assurant une parfaite homogénéité avec le catalogue de programmation.
+  - Préservation intégrale des aplats, des contrastes chromatiques et des animations de tentacules.
+
+### `m06` — « Les bras de la tournée »
+- **Direction poussée (la tentacule comme fil conducteur)** : la carte vivante des tournées qui rayonne depuis Rouen le long des bras de pieuvre, vagues et ondulations décoratives fluides.
+- **Faiblesses résolues** :
+  - Intégration des photographies de plateau grand format dans les fiches de programmation (`.fu-photo`) et les cartes d'établissement scolaire (`.au-photo`), avec cadrage dans l'univers du spectacle.
+  - Cibles tactiles de la navigation secondaire (`.second a`) portées à 44 px au moins.
+
+### `m07` — « Le noir et la lumière »
+- **Direction poussée (clarté théâtrale et faisceaux de poursuite)** : noir profond de salle obscure, gobo lumineux de chaque univers, carte aux faisceaux rayonnants et poursuite douce.
+- **Faiblesses résolues** :
+  - Correction de l'assombrissement excessif au téléphone sur les spectacles à centre sombre (notamment *Ci-gisait Cyrano*) grâce à un halo théâtral lumineux (`.scene--spectacle .scene-visuel::before`) en mode écran (`mix-blend-mode: screen`), éclairant le plateau sans surcoût de repeinte.
+  - Recadrage photographique des fiches d'établissement scolaire (`.cac-ph` à `16/8`) pour une mise en valeur optimale des comédiens et de la scénographie.
+  - Cibles tactiles de navigation, du sélecteur de scène et des filtres d'agenda portées à 44 px minimum (`.second a`, `.menu-btn`, `.titre`, `.chip`, `.idx`, `.idx-tout`).
+
 
 ### `m08` — « Le sommaire »
 - **Direction poussée (index raisonné / grand catalogue d'exposition)** : double filet d'encre en tête de catalogue, filet vertical continu formant la reliure centrale entre la colonne du sommaire (`.som`) et la colonne d'aperçu (`.pv`), et cadrage de l'aperçu comme une planche hors-texte posée sur papier crème (`1.25fr / .95fr`).
@@ -56,25 +82,35 @@ Toutes les vérifications (`shoot.mjs`, `EDITION=1 onglets.mjs`, `reactivite.mjs
 
 ### Bureau (`1440×900`)
 
-| Maquette | FCP avant → après | LCP avant → après | CLS avant → après | INP max avant → après | Contenu max avant → après |
+| Maquette | FCP | LCP | CLS | INP max | Contenu max |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **`m01`** | 216 ms → **116 ms** | 300 ms → **244 ms** | 0.0030 → **0.0054** | 48 ms → **32 ms** | 29 ms → **31 ms** |
-| **`m02`** | 232 ms → **176 ms** | 232 ms → **176 ms** | 0.0004 → **0.0005** | 32 ms → **40 ms** | 62 ms → **62 ms** |
-| **`m03`** | 132 ms → **160 ms** | 188 ms → **216 ms** | 0.0055 → **0.0002** | 48 ms → **40 ms** | 47 ms → **46 ms** |
-| **`m08`** | 180 ms → **196 ms** | 180 ms → **196 ms** | 0.0035 → **0.0033** | 48 ms → **48 ms** | 60 ms → **59 ms** |
-| **`m09`** | 116 ms → **136 ms** | 124 ms → **136 ms** | 0.0001 → **0.0006** | 72 ms → **72 ms** | 46 ms → **47 ms** |
-| **`m10`** | 268 ms → **148 ms** | 332 ms → **224 ms** | 0.0004 → **0.0005** | 48 ms → **48 ms** | 46 ms → **61 ms** |
+| **`m01`** | **116 ms** | **244 ms** | **0.0054** | **32 ms** | **31 ms** |
+| **`m02`** | **176 ms** | **176 ms** | **0.0005** | **40 ms** | **62 ms** |
+| **`m03`** | **160 ms** | **216 ms** | **0.0002** | **40 ms** | **46 ms** |
+| **`m04`** | **184 ms** | **184 ms** | **0.0051** | **48 ms** | **95 ms** |
+| **`m05`** | **92 ms** | **92 ms** | **0.0022** | **48 ms** | **61 ms** |
+| **`m06`** | **156 ms** | **156 ms** | **0.0031** | **48 ms** | **63 ms** |
+| **`m07`** | **184 ms** | **184 ms** | **0.0045** | **48 ms** | **129 ms** |
+| **`m08`** | **196 ms** | **196 ms** | **0.0033** | **48 ms** | **59 ms** |
+| **`m09`** | **136 ms** | **136 ms** | **0.0006** | **72 ms** | **47 ms** |
+| **`m10`** | **148 ms** | **224 ms** | **0.0005** | **48 ms** | **61 ms** |
+| **`synthese`** | **144 ms** | **144 ms** | **0.0134** | **48 ms** | **63 ms** |
 
 ### Téléphone (`390×844`, processeur ralenti ×4)
 
-| Maquette | FCP avant → après | LCP avant → après | CLS avant → après | INP max avant → après | Contenu max avant → après |
+| Maquette | FCP | LCP | CLS | INP max | Contenu max |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **`m01`** | 260 ms → **164 ms** | 260 ms → **256 ms** | 0 → **0** | 168 ms → **56 ms** | 46 ms → **47 ms** |
-| **`m02`** | 148 ms → **144 ms** | 264 ms → **284 ms** | 0 → **0** | 56 ms → **48 ms** | 96 ms → **96 ms** |
-| **`m03`** | 456 ms → **312 ms** | 456 ms → **312 ms** | 0.0002 → **0.0002** | 88 ms → **72 ms** | 79 ms → **63 ms** |
-| **`m08`** | 360 ms → **444 ms** | 360 ms → **444 ms** | 0 → **0** | 72 ms → **80 ms** | 97 ms → **96 ms** |
-| **`m09`** | 348 ms → **352 ms** | 348 ms → **352 ms** | 0 → **0** | 80 ms → **80 ms** | 77 ms → **77 ms** |
-| **`m10`** | 176 ms → **316 ms** | 524 ms → **532 ms** | 0 → **0** | 80 ms → **80 ms** | 79 ms → **78 ms** |
+| **`m01`** | **164 ms** | **256 ms** | **0** | **56 ms** | **47 ms** |
+| **`m02`** | **144 ms** | **284 ms** | **0** | **48 ms** | **96 ms** |
+| **`m03`** | **312 ms** | **312 ms** | **0.0002** | **72 ms** | **63 ms** |
+| **`m04`** | **144 ms** | **320 ms** | **0** | **72 ms** | **128 ms** |
+| **`m05`** | **152 ms** | **312 ms** | **0** | **48 ms** | **96 ms** |
+| **`m06`** | **112 ms** | **376 ms** | **0** | **64 ms** | **96 ms** |
+| **`m07`** | **168 ms** | **352 ms** | **0** | **48 ms** | **130 ms** |
+| **`m08`** | **444 ms** | **444 ms** | **0** | **80 ms** | **96 ms** |
+| **`m09`** | **352 ms** | **352 ms** | **0** | **80 ms** | **77 ms** |
+| **`m10`** | **316 ms** | **532 ms** | **0** | **80 ms** | **78 ms** |
+| **`synthese`** | **140 ms** | **328 ms** | **0** | **72 ms** | **176 ms** |
 
 ---
 
