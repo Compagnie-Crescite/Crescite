@@ -1216,7 +1216,11 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   /* ---------- les frises (FRISE) : la rampe de chaque calendrier, relue dans D à chaque rendu ---------- */
   let frises = [];
   // la largeur d'une frise posée dans .wrap (sa piste a 14 px de marge de chaque côté), calculée sans rien lire de la page
-  const largeurWrap = (moins = 0) => Math.min(innerWidth - 2 * Math.min(56, Math.max(16, innerWidth * .04)), 1328) - 28 - moins;
+  // la largeur de la fenêtre, lue une fois avant chaque rendu (au téléphone, lire innerWidth après un changement de la page
+  // recalcule toute sa mise en page)
+  let LF = innerWidth;
+  addEventListener('resize', () => { LF = innerWidth; }, { passive: true });
+  const largeurWrap = (moins = 0) => Math.min(LF - 2 * Math.min(56, Math.max(16, LF * .04)), 1328) - 28 - moins;
   function frise(conteneur, o) {
     if (!FR || !conteneur) return null;
     const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: root.classList.contains('en-place'), moisMin: 94 }, o));
@@ -1266,7 +1270,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   // la diffusion de la compagnie, saison par saison (le nombre de ses dates)
   const frisesCompagnie = () => { const ks = saisonsConnues(); if (!ks.length) return null;
     return { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: X.L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', anMin: 36,
-      largeur: innerWidth > 999 ? Math.round((largeurWrap() + 28 - Math.min(88, innerWidth * .05)) * 5 / 12) - 28 : largeurWrap(),
+      largeur: LF > 999 ? Math.round((largeurWrap() + 28 - Math.min(88, LF * .05)) * 5 / 12) - 28 : largeurWrap(),
       bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).length, 0))), choix: () => {} }; };
   // un clic sur un repère mène à sa ligne, qui s'allume un instant
   function allerLigne(id) {
@@ -2037,7 +2041,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
     <div class="dc-liste"><div class="puce-zone" data-puce aria-live="polite"></div><ol data-liste data-agenda="${esc(slug)}">${dates.map(d => ligneDate(d, { titre: false, entree })).join('')}</ol></div>
   </div>`;
   // la largeur de la colonne des chapitres d'un spectacle (le sommaire à gauche à partir de 1100 px), sans rien lire de la page
-  const largeurChap = () => innerWidth >= 1100 ? largeurWrap() - 184 - Math.min(64, Math.max(32, innerWidth * .04)) : largeurWrap();
+  const largeurChap = () => LF >= 1100 ? largeurWrap() - 184 - Math.min(64, Math.max(32, LF * .04)) : largeurWrap();
   // sans date à venir, une liste vide (data-agenda) : en mode édition, on y ajoute la première
   const sansListe = s => `<div data-agenda="${esc(s.slug)}"></div>`;
   function chapitresVoir(s) {
@@ -2553,6 +2557,7 @@ html[data-mv-transition="onglet"] .show-tab.on{view-transition-name:porte-active
   // l'élément partagé : l'arche de la carte ou de la porte cliquée (elle devient celle de la page)
   const partage = a => { if (!a) return null; const n = a.closest('[data-mv-nom]') || (a.closest('.uc, .fp, .door') || a).querySelector('[data-mv-nom]'); return n && main.contains(n) ? n : null; };
   function route() {
+    LF = innerWidth;
     lire();
     const r = resoudre();
     if (r.aller) { location.replace(r.aller); return; }

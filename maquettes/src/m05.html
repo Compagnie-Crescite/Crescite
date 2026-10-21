@@ -1107,8 +1107,12 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   /* ---------- les frises (FRISE) : chaque calendrier en aplats, relu dans D à chaque rendu ---------- */
   let frises = [];
   // la largeur d'une frise posée dans .wrap (sa piste a 14 px de marge de chaque côté), calculée sans rien lire de la page
-  const gout = () => Math.min(56, Math.max(16, innerWidth * .04));
-  const largeurWrap = (moins = 0) => Math.min(innerWidth - 2 * gout(), 1280) - 28 - moins;
+  // la largeur de la fenêtre, lue une fois avant chaque rendu (au téléphone, lire innerWidth après un changement de la page
+  // recalcule toute sa mise en page)
+  let LF = innerWidth;
+  addEventListener('resize', () => { LF = innerWidth; }, { passive: true });
+  const gout = () => Math.min(56, Math.max(16, LF * .04));
+  const largeurWrap = (moins = 0) => Math.min(LF - 2 * gout(), 1280) - 28 - moins;
   function frise(conteneur, o) {
     if (!FR || !conteneur) return null;
     const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: !ANIM, largeur: largeurWrap(), moisMin: 88 }, o));
@@ -1793,7 +1797,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     initCartes();
     const ks = saisonsConnues(), L = D.site.libelles;
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', anMin: 36,
-      largeur: innerWidth > 980 ? Math.round((largeurWrap() + 28 - Math.min(80, innerWidth * .044)) * 5 / 12) - 28 : largeurWrap(), choix: () => {},
+      largeur: LF > 980 ? Math.round((largeurWrap() + 28 - Math.min(80, LF * .044)) * 5 / 12) - 28 : largeurWrap(), choix: () => {},
       bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).length, 0))) });
     frisesDiffusion(main);
   }
@@ -2073,7 +2077,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
         return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/agenda/${k}` }) : null; })); }).filter(Boolean);
       const pts = [...passees, ...pub.map(d => repereProchaine(d, c))];
       const w = $('#ch-dates .aff', main);
-      if (pts.length) friseCarte(hote, w, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${D.site.libelles.dates}`, largeur: innerWidth > 1100 ? largeurWrap() - 210 - Math.min(80, innerWidth * .044) : largeurWrap() });
+      if (pts.length) friseCarte(hote, w, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${D.site.libelles.dates}`, largeur: LF > 1100 ? largeurWrap() - 210 - Math.min(80, LF * .044) : largeurWrap() });
     }
     frisesDiffusion(main);
     if (obsSommaire) { obsSommaire.disconnect(); obsSommaire = null; }
@@ -2385,6 +2389,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   const partage = a => { if (!a) return null; const n = a.closest('[data-mv-nom]') || (a.closest('.tuile, .vg, .ct, .fp') || a).querySelector('[data-mv-nom]'); return n && main.contains(n) ? n : null; };
   let vueCle = null, tours = 0;
   function route(enPlace = false) {
+    LF = innerWidth;
     const h = location.hash;
     if (h && h !== '#' && !h.startsWith('#/') && vueCle) return;
     let chemin = '';

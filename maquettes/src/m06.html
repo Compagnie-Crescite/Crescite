@@ -98,8 +98,10 @@ main { display: block; min-height: 100vh; overflow-x: clip; padding-bottom: clam
 main:has(> .page-u) { padding-bottom: 0; }
 
 /* ---------- la carte des tournées ---------- */
-.carte { --c: var(--magenta); position: relative; margin: 0; }
-.carte svg { --k: 1; display: block; width: 100%; height: auto; }
+.carte { --c: var(--magenta); --k: 1; position: relative; margin: 0; isolation: isolate; }
+.carte svg { display: block; width: 100%; height: auto; }
+/* le fond de carte (les pays) dans son propre dessin, derrière : quand les bras poussent, lui n'est jamais repeint */
+.carte .carte-fond { position: absolute; inset: 0; z-index: -1; height: 100%; pointer-events: none; }
 .carte .pays { fill: var(--terre); }
 .carte .voisin { fill: color-mix(in srgb, var(--terre) 45%, var(--papier)); }
 .carte .encart { fill: none; stroke: color-mix(in srgb, var(--encre) 35%, transparent); stroke-width: calc(var(--k) * 1px); stroke-dasharray: calc(var(--k) * 3px) calc(var(--k) * 3px); }
@@ -130,7 +132,7 @@ main:has(> .page-u) { padding-bottom: 0; }
 .carte .rouen { r: calc(var(--k) * 5.5px); fill: var(--encre); }
 .carte .rouen-nom { font: italic 600 calc(var(--k) * 15px) var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--terre); stroke-width: calc(var(--k) * 3.5px); stroke-linejoin: round; }
 .carte .onde { r: calc(var(--k) * 5px); fill: none; stroke: var(--c); stroke-width: 1.6; vector-effect: non-scaling-stroke; opacity: 0; transform-box: fill-box; transform-origin: center; }
-.carte.pousse .onde { animation: onde 1.6s cubic-bezier(.2, .6, .3, 1); }
+.carte.pousse .onde { animation: onde 1s cubic-bezier(.2, .6, .3, 1); }
 .carte.attend .onde { animation: onde 2.8s cubic-bezier(.2, .6, .3, 1) infinite; }
 @keyframes onde { from { transform: scale(1); opacity: .9; } to { transform: scale(10); opacity: 0; } }
 .bulle { position: absolute; z-index: 6; width: max-content; max-width: min(300px, 86%); padding: 10px 14px 11px; border-radius: 10px; background: var(--encre); color: var(--papier); font-size: .86rem; line-height: 1.4; pointer-events: none; box-shadow: 0 14px 30px -14px rgb(29 20 24 / .55); }
@@ -517,7 +519,7 @@ html:not(.ed-actif) .cu-tel.vide { display: none; }
 .tournee-g .date { grid-template-columns: 6.2rem minmax(0, 1fr); }
 .tournee-t { margin: -10px 0 22px; font-size: 1.1rem; }
 .carte-sp.seule { max-width: 760px; }
-.carte-sp.seule svg, .carte-sp.attend svg { border-radius: 18px; background: color-mix(in srgb, var(--papier-2) 60%, var(--papier)); }
+.carte-sp.seule .carte-fond, .carte-sp.attend .carte-fond { border-radius: 18px; background: color-mix(in srgb, var(--papier-2) 60%, var(--papier)); }
 .carte-sp.attend { max-width: 620px; }
 .fiche { font-size: .95rem; }
 .fiche .f { margin: 0; padding: 8px 0; border-bottom: 1px solid var(--filet); }
@@ -672,7 +674,8 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
 .bras-page.retour .bp-corps { transform-origin: 100% 50%; clip-path: polygon(0 44%, 100% 0, 100% 100%, 0 56%); }
 .bp-bout { position: absolute; left: 0; top: 0; width: 30px; height: 30px; margin-left: -15px; overflow: visible; }
 .bp-bout path { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.bras-page.retour .bp-bout { scale: -1 1; }
+/* la photo d'une carte qui vole jusqu'à sa page */
+.photo-vole { position: fixed; z-index: 37; margin: 0; object-fit: cover; border-radius: 14px; transform-origin: 0 0; pointer-events: none; }
 /* la pression : la pièce se tasse, comme une ventouse qui prend */
 :is(.entree, .porte, .bouton, .bouton-u, .puce, .idx, .idx-tout, .onglets-u a, .lien-video, .fu-lien, .menu, .carte-u, .tournee-u, .porte-pro, .sommaire button, .ruban a).mv-presse { transform: scale(.97); transition: transform .08s; }
 :is(.carte-u, .tournee-u, .porte-pro).mv-presse { transform: scale(.985); }
@@ -721,6 +724,10 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
 .u-frise { min-height: 112px; margin: 0 0 clamp(22px, 2.6vw, 34px); }
 .histoire { min-height: 170px; margin: 0 0 8px; }
 .frise-compagnie .frise-etiquette { font: italic 500 .95rem/1.2 var(--serif); }
+/* les titres de l'histoire : un couloir par ligne ; le titre d'en bas passe devant le filet de celui d'au-dessus : le filet s'interrompt */
+.frise[data-frise].frise-compagnie { --fr-couloir: 22px; }
+.frise-compagnie .frise-point { z-index: calc(10 - var(--fr-y, 0)); }
+.frise-compagnie .frise-etiquette { max-width: 13.6em; padding: 0 .3em; margin: 0 -.3em; background: var(--fr-fond); }
 
 /* l'espace pro : trois portes, comme celles de l'accueil ; leur bras se dessine au survol */
 .portes-pro { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin: clamp(26px, 3.4vw, 44px) 0 0; padding: 0; }
@@ -825,8 +832,9 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
      1. Changer de page : sous l'en-tête, un bras à la couleur de la page qui arrive (celle de son entrée, la couleur de
         l'univers du spectacle, le magenta de la compagnie) pousse d'un bord à l'autre, effilé, sa pointe enroulée ; la page se
         pose dessous à la tâche suivante et monte derrière lui ; au retour, le bras pousse de droite à gauche. La photo d'une
-        carte de spectacle devient la grande photo de sa page (MOUVEMENT.transition, élément partagé) ; d'un onglet à l'autre,
-        l'en-tête reste et les chapitres montent. Un nouveau geste interrompt tout (les animations sont annulées).
+        carte de spectacle devient la grande photo de sa page (élément partagé : elle vole de la carte à sa place, transform
+        seul, sans View Transition qui retarderait l'image du geste) ; d'un onglet à l'autre, l'en-tête reste et les chapitres
+        montent. Un nouveau geste interrompt tout (les animations sont annulées).
      2. Ouvrir une saison : les bras de sa carte poussent depuis Rouen, ses dates arrivent en cascade.
      3. Filtrer, chercher : les dates glissent à leur nouvelle place (MOUVEMENT.flip) ; puis la frise et la carte répondent
         ensemble : les repères glissent, les bras des communes gardées repoussent depuis Rouen.
@@ -1070,17 +1078,16 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     return `<figure class="carte ${classe}${fin ? ' fin' : ''}" id="${id}" style="--c:${couleur}">
       <svg viewBox="${cadre}" ${lieux.length ? 'role="group"' : 'role="img"'} aria-label="${esc(titre)}">
         <defs><clipPath id="${id}-clip"><circle class="clip" cx="${R[0]}" cy="${R[1]}" r="${vide && (passe.length || fin) ? 0 : 1200}"/></clipPath></defs>
-        <use href="#fr-be" class="voisin"/><use href="#fr-lu" class="voisin"/><use href="#fr-pays" class="pays"/>
-        ${encart ? `<circle class="encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="24"/>` : ''}
         <g class="reseau" clip-path="url(#${id}-clip)"></g><g class="vif"${fin ? ` clip-path="url(#${id}-clip)"` : ''}></g>
         <g class="rouen-g" aria-hidden="true"><circle class="onde" cx="${R[0]}" cy="${R[1]}"/><circle class="rouen" cx="${R[0]}" cy="${R[1]}"/><text class="rouen-nom" x="${R[0] + 9}" y="${R[1] - 8}">Rouen</text></g>
-      </svg>${bulle ? '<div class="bulle" hidden></div>' : ''}</figure>`;
+      </svg><svg class="carte-fond" viewBox="${cadre}" aria-hidden="true" focusable="false"><use href="#fr-be" class="voisin"/><use href="#fr-lu" class="voisin"/><use href="#fr-pays" class="pays"/>
+        ${encart ? `<circle class="encart" cx="${ENCART[0]}" cy="${ENCART[1]}" r="24"/>` : ''}</svg>${bulle ? '<div class="bulle" hidden></div>' : ''}</figure>`;
   }
   // l'échelle de l'écran, pour garder les noms, les points et les traits à la même taille en pixels
   function echelle(fig) {
     const svg = $('svg', fig), m = svg && svg.getScreenCTM();
     const k = m && m.a > 0 ? 1 / m.a : (svg ? svg.viewBox.baseVal.width : VB[2]) / ((svg && svg.clientWidth) || VB[2]);
-    if (svg) svg.style.setProperty('--k', k.toFixed(3));
+    if (svg) fig.style.setProperty('--k', k.toFixed(3));
     return k;
   }
   function activer(fig) {
@@ -1165,7 +1172,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     fig.classList.remove('pousse'); requestAnimationFrame(() => fig.classList.add('pousse'));   // l'onde repart de Rouen
     const lg = bras.map(b => Math.hypot(b.dataset.x - R[0], b.dataset.y - R[1])), lm = Math.max(80, ...lg);
     const plan = fin ? [] : bras.map((b, i) => ({ b, xy: [+b.dataset.x, +b.dataset.y], w: +b.dataset.w, l: b.dataset.l,
-      d0: (vite ? 0 : 150) + Math.random() * (vite ? 140 : 420), dur: (vite ? 320 : 520) + (vite ? 420 : 1050) * lg[i] / lm }));
+      d0: (vite ? 0 : 60) + Math.random() * (vite ? 100 : 180), dur: (vite ? 280 : 360) + (vite ? 340 : 480) * lg[i] / lm }));
     const t0 = performance.now(), TR = fin ? 1100 : 1800, ouvrir = (avecReseau || fin) && clip && +clip.getAttribute('r') < 1200;
     const pas = now => {
       const t = now - t0;
@@ -1253,19 +1260,30 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       <circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="10"/></svg><span>${esc(s.titre)}</span></a></li>`;
   }
   // une carte qui s'active à l'affichage ; liste : la liste de dates à relier
+  // (après un geste, la carte se met en place juste après la première image : sa mise à l'échelle lit la page, rien n'est lu
+  // pendant le geste ni dans son image ; ses bras sont encore vides, rien ne se voit de ce délai)
   function brancher(fig, liste, { enVue = true } = {}) {
     if (!fig) return;
-    activer(fig);
     if (liste) relier(fig, liste);
-    if (!ANIMER) { fig.dataset.poussee = '1'; return; }   // rendu en place : les bras sont déjà posés
-    if (enVue) pousserEnVue(fig); else pousser(fig);
+    const anime = ANIMER;
+    const go = () => {
+      if (!fig.isConnected || !REG.has(fig.id)) return;
+      activer(fig);
+      if (!anime) { fig.dataset.poussee = '1'; return; }   // rendu en place : les bras sont déjà posés
+      if (enVue) pousserEnVue(fig); else pousser(fig);
+    };
+    if (anime && vueCourante != null) requestAnimationFrame(() => setTimeout(go, 0)); else go();
   }
 
   /* ---------- les frises (FRISE) : chaque calendrier en bras, relu dans D à chaque rendu ---------- */
   let frises = [];
   // la largeur d'une frise posée dans .wrap (sa piste a 14 px de marge de chaque côté), calculée sans rien lire de la page
-  const goutPx = () => Math.min(56, Math.max(16, innerWidth * .04));
-  const largeurWrap = () => Math.min(innerWidth, 1320) - 2 * goutPx() - 28;
+  // la largeur de la fenêtre, lue une fois avant chaque rendu (au téléphone, lire innerWidth après un changement de la page
+  // recalcule toute sa mise en page)
+  let LF = innerWidth;
+  addEventListener('resize', () => { LF = innerWidth; }, { passive: true });
+  const goutPx = () => Math.min(56, Math.max(16, LF * .04));
+  const largeurWrap = () => Math.min(LF, 1320) - 2 * goutPx() - 28;
   function frise(conteneur, o) {
     if (!FR || !conteneur) return null;
     const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: !ANIMER, largeur: largeurWrap(), moisMin: 62 }, o));
@@ -1355,7 +1373,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       document.body.insertAdjacentHTML('beforeend', '<div class="bras-page" aria-hidden="true" hidden><i class="bp-corps"></i><svg class="bp-bout" viewBox="0 0 30 30" focusable="false"><path d="M0 15 C 8 15, 13 13, 17 9 C 21 5, 27 7, 26 13 C 25 18, 18 18, 18 13 C 18 10, 22 10, 22 12.5"/></svg></div>');
       bpEl = document.body.lastElementChild;
     }
-    const retour = type === 'retour', W = innerWidth, duree = type === 'onglet' ? 320 : 420, f = retour ? -1 : 1;
+    const retour = type === 'retour', W = LF, duree = type === 'onglet' ? 320 : 420, f = retour ? -1 : 1;
     bpEl.style.setProperty('--bp', couleur);
     bpEl.classList.toggle('retour', retour);
     bpEl.hidden = false;
@@ -1419,7 +1437,14 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       <section class="univers-s"><div class="wrap"><h2 class="titre-s">${esc(L.lesSpectacles)}</h2>${trait()}<ul class="cartes-u">${par(D.shows, 4).map(l => differer(() => l.map(carteU).join(''))).join('')}</ul></div></section>
       <section class="donateurs"><div class="wrap"><p${ed('site.donateurs')}>${S.donateurs}</p></div></section>`;
     const fig = $('.une-carte', main), legende = $('.legende-carte', main), ruban = $('.une-ruban', main), reg = REG.get(fig.id);
-    activer(fig);
+    const anime = ANIMER;
+    const mettre = () => {
+      if (!fig.isConnected || !REG.has(fig.id)) return;
+      activer(fig);
+      // pendant l'ouverture, les bras attendent : ils pousseront quand le logo aura révélé l'accueil
+      if (!INTRO.ouverte()) { if (anime) pousser(fig); else fig.dataset.poussee = '1'; }
+    };
+    if (anime && vueCourante != null) requestAnimationFrame(() => setTimeout(mettre, 0)); else mettre();
     // survoler une entrée montre ses bras : les dates tout public, tous les lieux de diffusion, les établissements
     let vue = '';
     const montrer = (cle, saison) => {
@@ -1447,8 +1472,6 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     $$('a', ruban).forEach(a => { a.addEventListener('mouseenter', () => montrer('', a.dataset.saison)); a.addEventListener('focus', () => montrer('', a.dataset.saison)); });
     ruban.addEventListener('mouseleave', () => montrer(''));
     ruban.addEventListener('focusout', e => { if (!ruban.contains(e.relatedTarget)) montrer(''); });
-    // pendant l'ouverture, les bras attendent : ils pousseront quand le logo aura révélé l'accueil
-    if (!INTRO.ouverte()) { if (ANIMER) pousser(fig); else fig.dataset.poussee = '1'; }
     return S.accueil;
   }
 
@@ -1686,7 +1709,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     // le premier rendu : la liste ; la carte pousse depuis Rouen (brancher) ; la frise de la saison, reliée à la liste et à la
     // carte (un repère survolé allume sa ligne et sa commune ; un clic y mène)
     recompte();
-    liste.innerHTML = listeProchaines();
+    liste.innerHTML = differer(listeProchaines);   // (sous le titre, ses outils et sa frise : à l'image suivante)
     majOutils();
     if (actif()) majCarte(false);
     // (dans la colonne de la liste : au bureau, un mois sur deux est nommé ; au téléphone, la frise défile, aimantée aux mois)
@@ -1807,9 +1830,9 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       <section class="wrap partenaires-s"><p${ed('site.partenaires')}>${S.partenaires}</p>${ecrire()}</section>`);
     brancher($('.carte-prog', main), null, { enVue: false });
     // la diffusion de la compagnie, saison par saison (la densité de ses dates), sous la carte de tous ses lieux
-    const ks = saisonsConnues(), g = goutPx(), larg = Math.min(innerWidth, 1600) - 2 * g;
+    const ks = saisonsConnues(), g = goutPx(), larg = Math.min(LF, 1600) - 2 * g;
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-saisons', anMin: 36, choix: () => {},
-      largeur: (innerWidth > 1100 ? (larg - Math.min(72, Math.max(28, innerWidth * .04))) * 8 / 13 : larg) - 28,
+      largeur: (LF > 1100 ? (larg - Math.min(72, Math.max(28, LF * .04))) * 8 / 13 : larg) - 28,
       bandes: ks.map(k => bandeSaison(k, nDates(k))) });
     // chaque fiche, sa diffusion (quand elle arrive près de l'écran)
     apres(() => frisesDiffusion(main));
@@ -1851,7 +1874,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       const fig = $('.carte-sco', main), liste = $('.ac-section .liste', main);
       brancher(fig, liste);
       if (!sco.length) return;
-      const lf = innerWidth > 1000 ? Math.round((largeurWrap() + 28 - Math.min(72, Math.max(28, innerWidth * .05))) / 2.05) - 28 : largeurWrap();
+      const lf = LF > 1000 ? Math.round((largeurWrap() + 28 - Math.min(72, Math.max(28, LF * .05))) / 2.05) - 28 : largeurWrap();
       const f = frise($('#e-frise', main), { echelle: 'periode', debut: `${D.aujourdhui.slice(0, 7)}-01`, points: sco.map(d => repereProchaine(d)), libelle: L.enEtablissement,
         largeur: lf, relier: { liste, carte: depuisFrise(fig) }, choix: p => allerLigne(p.id) });
       friseCarte(f, fig);
@@ -1869,8 +1892,8 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
 
   /* ---------- une saison passée : par spectacle, ses dates, et sa carte ---------- */
   // la largeur d'une frise dans la colonne d'un agenda (au bureau : à côté de la carte ; au téléphone : toute la largeur)
-  const colonneAgenda = () => innerWidth > 1000 ? Math.round((largeurWrap() + 28 - Math.min(72, Math.max(28, innerWidth * .05))) / 2.15) - 28 : largeurWrap();
-  const optionsColonne = () => { const large = innerWidth > 1000, lf = colonneAgenda(); return { largeur: lf, moisMin: large ? 36 : 62, classe: large && lf < 12 * 62 ? 'frise-etroite' : '' }; };
+  const colonneAgenda = () => LF > 1000 ? Math.round((largeurWrap() + 28 - Math.min(72, Math.max(28, LF * .05))) / 2.15) - 28 : largeurWrap();
+  const optionsColonne = () => { const large = LF > 1000, lf = colonneAgenda(); return { largeur: lf, moisMin: large ? 36 : 62, classe: large && lf < 12 * 62 ? 'frise-etroite' : '' }; };
   function saison(id) {
     const data = D.saisons[id], courante = id === SAISON.saison;
     const rang = new Map(); let n = 0; (data.spectacles || []).forEach(g => (g.dates || []).forEach(d => rang.set(d, n++)));
@@ -2094,7 +2117,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
           return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/agenda/${k}` }) : null; })); }).filter(Boolean);
         const pts = [...passees, ...pub.map(d => repereProchaine(d, c))], fig = $('#ch-dates .carte', main), liste = $('#ch-dates .liste', main) || $('#ch-dates', main);
         if (pts.length) friseCarte(frise(hote, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${L.dates}`,
-          largeur: (Math.min(innerWidth, 1320) - 2 * goutPx() - (innerWidth > 1100 ? 210 + Math.min(64, Math.max(28, innerWidth * .04)) : 0)) - 28,
+          largeur: (Math.min(LF, 1320) - 2 * goutPx() - (LF > 1100 ? 210 + Math.min(64, Math.max(28, LF * .04)) : 0)) - 28,
           relier: fig ? { liste, carte: depuisFrise(fig) } : { liste }, choix: p => allerLigne(p.id) }), fig);
       }
       frisesDiffusion(main);
@@ -2160,6 +2183,7 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
   // enPlace : D vient de changer (DONNEES) ; on refait la vue courante sans remonter, sans voler le focus, sans animation d'entrée
   function route(enPlace = false) {
     if (enPlace) versionD++;
+    LF = innerWidth;
     relire();
     const chemin = location.hash.replace(/^#\/?/, '').split('?')[0].replace(/\/+$/, '');
     // une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page)
@@ -2175,10 +2199,13 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     // la même vue (un lien vers la page où l'on est) : on remonte
     if (!enPlace && chemin === vueCourante) { fermer(); scrollTo({ top: 0, behavior: bouge() ? 'smooth' : 'auto' }); const h = $('h1', main); if (h && !INTRO.ouverte()) h.focus({ preventScroll: true }); return; }
     const premiere = vueCourante == null, type = enPlace ? 'place' : premiere ? 'premiere' : genre(chemin, sp);
+    if (!enPlace && vol) { try { vol.cancel(); } catch (e) { /* fini */ } }
     if (premiere) pile.push('#/' + chemin);
     const clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
     dernierClic = null;
     const depuis = type === 'spectacle' ? partage(clic && clic.a) : null, couleur = couleurDePage(chemin, sp);
+    // la photo de la carte cliquée : sa place à l'écran, lue avant que la page change
+    const de = depuis && bouge() ? (depuis.querySelector('img') || depuis).getBoundingClientRect() : null;
     const tour = ++tours;
     const faire = () => {
       if (tour !== tours) return;   // une navigation plus récente l'a emporté
@@ -2216,13 +2243,36 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
       if (avant) return restaurer(avant);
       fermer();
       // la vue remonte en haut et son titre prend le focus à l'image suivante (avant qu'elle soit peinte)
-      requestAnimationFrame(() => { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); if (!INTRO.ouverte()) { const h1 = $('h1', main); if (h1) h1.focus({ preventScroll: true }); } });
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        if (!INTRO.ouverte()) { const h1 = $('h1', main); if (h1) h1.focus({ preventScroll: true }); }
+        if (de) photoVole(de, $('.tete-photo img', main));
+      });
       monter(type);
     };
     // la première vue (et sous l'ouverture) : tout de suite ; ensuite, le bras de la page part dès l'image du geste et la page se
-    // pose dessous à la tâche suivante ; MOUVEMENT.transition (View Transition) seulement pour la photo d'une carte de spectacle
+    // pose dessous à la tâche suivante (la photo d'une carte vole jusqu'à sa place : photoVole)
     if (enPlace || premiere || !MV || INTRO.ouverte()) faire();
-    else { brasDePage(type, couleur); if (depuis) MV.transition(faire, { type, depuis }); else requestAnimationFrame(() => setTimeout(faire, 0)); }
+    else { brasDePage(type, couleur); requestAnimationFrame(() => setTimeout(faire, 0)); }
+  }
+  // la photo d'une carte de spectacle devient la grande photo de sa page : une copie part de la carte et se pose à sa place
+  // (transform seul, au-dessus de tout) ; un nouveau geste l'arrête
+  let vol = null;
+  function photoVole(de, cible) {
+    if (vol) { try { vol.cancel(); } catch (e) { /* fini */ } vol = null; }
+    if (!de || !cible || !de.width || !bouge() || !document.body.animate) return;
+    const a = cible.getBoundingClientRect();
+    if (!a.width || !a.height) return;
+    const img = document.createElement('img');
+    img.src = cible.currentSrc || cible.src; img.alt = ''; img.className = 'photo-vole'; img.setAttribute('aria-hidden', 'true');
+    img.style.cssText = `left:${a.left}px;top:${a.top}px;width:${a.width}px;height:${a.height}px;object-position:${cible.style.objectPosition || '50% 50%'}`;
+    document.body.appendChild(img);
+    cible.style.visibility = 'hidden';
+    const fin = () => { img.remove(); cible.style.visibility = ''; if (vol === anim) vol = null; };
+    const anim = img.animate([{ transform: `translate(${(de.left - a.left).toFixed(1)}px, ${(de.top - a.top).toFixed(1)}px) scale(${(de.width / a.width).toFixed(4)}, ${(de.height / a.height).toFixed(4)})` }, { transform: 'none' }],
+      { duration: 420, easing: COURBE });
+    anim.onfinish = fin; anim.oncancel = fin;
+    vol = anim;
   }
   btn.addEventListener('click', () => { const o = haut.classList.toggle('ouvert'); btn.setAttribute('aria-expanded', String(o)); });
   navS.addEventListener('click', e => { if (e.target.closest('a')) fermer(); });
@@ -2241,6 +2291,9 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
     apres: () => { const f = $('.une-carte', main); if (f && !f.dataset.poussee) pousser(f); } });
   route();
   addEventListener('hashchange', () => route());
+  // l'agenda passé et tous les lieux de la compagnie : calculés d'avance, quand le navigateur est libre (le geste n'a plus qu'à les lire)
+  const davance = () => { relire(); retenu('agendaPasse', agendaPasse); TOUT(); };
+  if ('requestIdleCallback' in window) requestIdleCallback(davance, { timeout: 1500 }); else setTimeout(davance, 600);
   // la base de la compagnie : à chaque enregistrement, D change en place et la vue courante est refaite en place
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(() => route(true));
 })();
