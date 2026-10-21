@@ -2677,24 +2677,30 @@ html .ed-ajout { font-family: var(--sans); }
   }
   // la troupe prend vie : les liens entre les places d'une personne (TROUPE.relier), les bras de la pieuvre (dessinés quand
   // la troupe paraît, puis à chaque changement de taille), les vrilles, les icônes qui s'animent à leur arrivée
-  let troupeIO = null, troupeRO = null, troupeMaj = null;
+  let troupeIO = null, troupeRO = null, troupeMaj = null, troupeRel = null;
   LARGE.addEventListener('change', () => { if (troupeMaj) troupeMaj(); });
+  // en quittant la page (ou en la refaisant), la troupe d'avant lâche tout : ses liens, ses écouteurs, ses observateurs
+  function quitterTroupe() {
+    if (troupeRel) { troupeRel.detruire(); troupeRel = null; }
+    if (troupeRO) { troupeRO.disconnect(); troupeRO = null; }
+    if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
+    troupeMaj = null;
+  }
   function vivreTroupe() {
+    quitterTroupe();
     const tr = $('.tr[data-troupe]', vPage); if (!tr || !TR) return;
     let rafV = 0, rafB = 0, allume = null;
     const vrilles = () => { rafV = 0; if (tr.isConnected) vrillesTroupe(tr, allume); };
-    TR.relier(tr, { surAllumer: slug => { allume = slug; if (!rafV) rafV = requestAnimationFrame(vrilles); } });
+    troupeRel = TR.relier(tr, { surAllumer: slug => { allume = slug; if (!rafV) rafV = requestAnimationFrame(vrilles); } });
     const rendu = () => !tr.checkVisibility || tr.checkVisibility({ contentVisibilityAuto: true });
     const maj = () => { rafB = 0; if (!tr.isConnected || !rendu()) return; if (dessinerBras(tr) || !LARGE.matches) vrillesTroupe(tr, allume); };
     troupeMaj = () => { if (!rafB) rafB = requestAnimationFrame(maj); };
-    if (troupeRO) troupeRO.disconnect();
     troupeRO = 'ResizeObserver' in window ? new ResizeObserver(troupeMaj) : null;
     if (troupeRO) troupeRO.observe(tr); else troupeMaj();
     const sec = tr.closest('section'); if (sec) sec.addEventListener('contentvisibilityautostatechange', e => { if (!e.skipped) troupeMaj(); });
-    if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
     if (motionOK() && 'IntersectionObserver' in window) {
-      troupeIO = new IntersectionObserver(es => es.forEach(x => { if (!x.isIntersecting) return; troupeIO.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
-      $$('.troupe-icone', tr).forEach(i => troupeIO.observe(i));
+      const io = troupeIO = new IntersectionObserver(es => es.forEach(x => { if (!x.isIntersecting) return; io.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
+      $$('.troupe-icone', tr).forEach(i => io.observe(i));
     }
     // une photo publiée qui ne se charge pas (le fichier manque) : le nom seul, avec sa ventouse ; les rendus suivants la savent absente
     tr.addEventListener('error', e => {
@@ -3167,7 +3173,7 @@ html .ed-ajout { font-family: var(--sans); }
     // la même vue, refaite en place
     if (enPlace && courant && courant.id === v.id) {
       const etat = v.cle === 'accueil' ? { y: scrollY } : etatVue();
-      ANIMER = false; GEN++; APRES = []; AGV = null; detruireFrises();
+      ANIMER = false; GEN++; APRES = []; AGV = null; detruireFrises(); quitterTroupe();
       try {
         if (v.cle === 'accueil') { accueilSuite(); Stage.maj(); }
         else { vPage.innerHTML = rendu(v); apres(); }
@@ -3195,7 +3201,7 @@ html .ed-ajout { font-family: var(--sans); }
     const vit = !!avant && motionOK() && !(typeof INTRO !== 'undefined' && INTRO.ouverte());
     const qs = quitte && !memeSp ? show(quitte) : null;
     if (memeSp) { detruireFrises(); changerOnglet(v); return; }
-    detruireFrises();
+    detruireFrises(); quitterTroupe();
     if (v.cle === 'accueil') {
       vPage.hidden = true; vPage.innerHTML = ''; vAccueil.hidden = false;
       accueilSuite();
