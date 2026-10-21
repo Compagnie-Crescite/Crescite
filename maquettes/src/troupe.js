@@ -391,11 +391,19 @@ const TROUPE = (() => {
       if (surChoix) surChoix(choisi, { groupe: groupeChoisi });
     }
     // la souris survole (un petit délai en quittant une place, pour passer à la voisine sans clignoter) ; le doigt, lui,
-    // choisit d'un geste (le clic) : un toucher n'allume ni n'éteint en passant, rien ne se fait deux fois
-    racine.addEventListener('pointerover', e => { if (e.pointerType === 'touch') return; const p = placeDe(e); if (p) allumer(p.getAttribute('data-troupe-personne'), p); }, { passive: true });
+    // choisit d'un geste (le clic) : un toucher n'allume ni n'éteint en passant, rien ne se fait deux fois. Seul un vrai
+    // mouvement de la souris allume : quand la page défile sous une souris immobile, personne ne s'allume en passant
+    let sx = null, sy = null, survolee = null;
+    racine.addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch' || (e.screenX === sx && e.screenY === sy)) return;
+      sx = e.screenX; sy = e.screenY;
+      const p = placeDe(e);
+      if (p && p !== survolee) { survolee = p; clearTimeout(attente); allumer(p.getAttribute('data-troupe-personne'), p); }
+    }, { passive: true });
     racine.addEventListener('pointerout', e => {
       if (e.pointerType === 'touch') return;
       const p = placeDe(e); if (!p || (e.relatedTarget && p.contains(e.relatedTarget))) return;
+      if (p === survolee) survolee = null;
       clearTimeout(attente); attente = setTimeout(() => { if (!racine.contains(document.activeElement) || !document.activeElement.matches(SEL)) eteindre(); }, 90);
     }, { passive: true });
     // le clavier : la place focalisée s'allume (un focus donné par la souris ou le doigt passe par le survol ou le clic)
