@@ -441,6 +441,8 @@ async function secret(cle: string): Promise<string | null> {
 
 // écrit les indisponibilités d'un agenda, retire celles qui ont disparu dans la fenêtre, note la lecture
 async function ecrire(agenda: Agenda, periodes: Periode[], maintenant: number, tronque: boolean) {
+  // du texte JSON, que la base lit comme du texte avant d'en faire du jsonb : un paramètre vu comme jsonb serait encodé
+  // une seconde fois par postgres.js (une chaîne, et non plus une liste)
   const lignes = JSON.stringify(periodes);
   const uids = JSON.stringify(periodes.map(p => p.uid));
   const debutF = iso(maintenant - AVANT * JOUR), finF = iso(maintenant + APRES * JOUR);
@@ -449,14 +451,14 @@ async function ecrire(agenda: Agenda, periodes: Periode[], maintenant: number, t
     if (periodes.length) {
       await tx`insert into public.crescite_indisponibilites (personne_id, debut, fin, journee, source, agenda_id, uid, maj_le)
                select ${agenda.personne_id}::bigint, x.debut, x.fin, x.journee, 'agenda', ${agenda.id}::bigint, x.uid, now()
-               from jsonb_to_recordset(${lignes}::jsonb) as x(uid text, debut timestamptz, fin timestamptz, journee boolean)
+               from jsonb_to_recordset(${lignes}::text::jsonb) as x(uid text, debut timestamptz, fin timestamptz, journee boolean)
                on conflict (agenda_id, uid) do update set debut = excluded.debut, fin = excluded.fin, journee = excluded.journee, maj_le = now()
                where (crescite_indisponibilites.debut, crescite_indisponibilites.fin, crescite_indisponibilites.journee)
                      is distinct from (excluded.debut, excluded.fin, excluded.journee)`;
     }
     await tx`delete from public.crescite_indisponibilites
              where agenda_id = ${agenda.id}::bigint and source = 'agenda' and debut < ${finF}::timestamptz and fin > ${debutF}::timestamptz
-               and uid not in (select jsonb_array_elements_text(${uids}::jsonb))`;
+               and uid not in (select jsonb_array_elements_text(${uids}::text::jsonb))`;
     await tx`update public.crescite_agendas_lies set derniere_synchro = now(), erreur = ${note}, nb_evenements = ${periodes.length}
              where id = ${agenda.id}::bigint`;
   });
