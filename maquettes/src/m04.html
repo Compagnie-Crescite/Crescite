@@ -64,7 +64,7 @@ table{border-collapse:collapse}
 .brand svg{display:block;width:100%;height:auto}
 .site-nav{grid-area:menu;justify-self:end;align-self:center}
 .site-nav ul{display:flex;gap:clamp(16px,1.8vw,28px)}
-.site-nav a{display:block;padding:5px 0;color:var(--on-dark-2);font-size:var(--fs-label);font-weight:500;letter-spacing:.02em;text-decoration:none;white-space:nowrap}
+.site-nav a{display:inline-flex;align-items:center;min-height:44px;padding:4px 0;color:var(--on-dark-2);font-size:var(--fs-label);font-weight:500;letter-spacing:.02em;text-decoration:none;white-space:nowrap}
 .site-nav a:hover{color:#fff;text-decoration:underline;text-underline-offset:.3em}
 .site-nav a[aria-current="page"]{color:#fff;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.35em}
 .entrees{grid-area:entrees;align-self:end;min-width:0}
@@ -556,7 +556,8 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .ac-groupes{display:grid;gap:clamp(48px,6vw,80px)}
 .ac-groupe-t{margin-bottom:clamp(18px,2.4vw,28px)}
 .acs{display:grid;gap:14px}
-.ac{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:18px clamp(28px,4vw,64px);padding:clamp(22px,3vw,40px);background:var(--u-fond);border-radius:120px 20px 20px 20px;box-shadow:0 0 0 1px var(--u-ligne)}
+.ac{display:grid;grid-template-columns:clamp(110px,13vw,160px) minmax(0,5fr) minmax(0,7fr);gap:18px clamp(24px,3.5vw,48px);padding:clamp(22px,3vw,40px);background:var(--u-fond);border-radius:120px 20px 20px 20px;box-shadow:0 0 0 1px var(--u-ligne)}
+.ac-photo{aspect-ratio:4/5;align-self:start;border-radius:999px 999px 8px 8px}
 .ac-titre{font-size:clamp(1.8rem,1.3rem + 1.4vw,2.6rem);text-wrap:balance}
 .ac-titre a{text-decoration:none}
 .ac-titre a:hover{text-decoration:underline;text-decoration-thickness:1px}
@@ -576,7 +577,7 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .dispositifs li + li{margin-top:6px}
 .dispositifs a,.ac-texte a,.prose-u a{color:var(--u-vif);font-weight:600}
 .ac-liens{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
-@media (max-width:900px){.ac{grid-template-columns:minmax(0,1fr);border-radius:80px 18px 18px 18px}.du-grille{grid-template-columns:minmax(0,1fr)}.du-photo{max-width:300px}}
+@media (max-width:900px){.ac{grid-template-columns:100px minmax(0,1fr);gap:16px 20px;border-radius:80px 18px 18px 18px}.ac-photo{grid-column:1;grid-row:1}.ac > :nth-child(2){grid-column:2;grid-row:1}.ac > :nth-child(3){grid-column:1 / -1}.du-grille{grid-template-columns:minmax(0,1fr)}.du-photo{max-width:300px}}
 .actions{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);gap:48px clamp(48px,7vw,120px);align-items:start}
 .actions-photo .arche-img{aspect-ratio:4/5}
 .actions-photo figcaption{margin-top:10px;font-size:var(--fs-label);color:var(--muted)}
@@ -1982,6 +1983,7 @@ main{display:block;min-height:100vh;overflow-x:clip}
   function carteAction(s) {
     const { L } = X, A = s.actionCulturelle || {}, t = (A.textes || [])[0], ac = (...k) => edS(s, 'actionCulturelle', ...k);
     return `<li class="ac univ" ${uAttrs(s)}>
+      <div class="ac-photo arche-img" data-mv-nom="sp-${esc(s.slug)}"${edP(s, 'photo')}>${photo(s.slug, s.titre, cadrage(s))}</div>
       <div>
         <h3 class="ac-titre u-titre"><a href="#/spectacle/${esc(s.slug)}/etablissement"${edS(s, 'titre')}>${esc(s.titre)}</a></h3>
         <p class="ac-creation"${edS(s, 'creation')}>${esc(s.creation)}</p>
