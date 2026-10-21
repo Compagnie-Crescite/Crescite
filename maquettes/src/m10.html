@@ -823,10 +823,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-titre); outline-offset: 2
 .rs-date--ligne .rs-q { white-space: normal; }
 .rs-date--ligne .rs-o { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .rs-date--ligne:hover { border-color: var(--encre); }
-.rs-date--ligne:focus-visible { outline-color: var(--magenta); }
-.rs-date--ligne[aria-pressed="true"] { background: var(--u-fond); border-color: var(--u-titre); color: var(--u-texte); box-shadow: none; }
-.rs-date--ligne[aria-pressed="true"] :is(.rs-s, .rs-h--sans) { color: var(--u-texte2); }
-.rs-date--ligne[aria-pressed="true"]::before { background: var(--u-titre); border-color: var(--u-titre); }
+.rs-date--ligne:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
+/* (choisie, la ventouse se teinte de la couleur du spectacle sur le papier ; l'univers est celui de sa carte, dessous) */
+.rs-date--ligne[aria-pressed="true"] { background: color-mix(in srgb, var(--c, var(--magenta)) 16%, var(--papier-clair)); border-color: var(--c, var(--magenta)); color: var(--encre); box-shadow: none; }
+.rs-date--ligne[aria-pressed="true"] :is(.rs-s, .rs-h--sans) { color: var(--encre); }
+.rs-date--ligne[aria-pressed="true"]::before { background: var(--c, var(--magenta)); border-color: var(--c, var(--magenta)); }
 .rs-ici { grid-column: 1 / -1; min-height: 0; margin-top: 12px; transform-origin: 50% 0; }
 .rs-ici .rs-c { max-width: 30rem; }
 .rs-ici .rs-sp { font-size: clamp(1.5rem, 1.15rem + 1.1vw, 2.1rem); }
@@ -1329,7 +1330,8 @@ html .ed-ajout { font-family: var(--sans); }
   function ligneDate(d, { titre = true, ctx = 'voir', tag = false, reserver = null } = {}) {
     const s = show(d.slug), lienLieu = d.lien && !(d.details || []).some(x => x.lien);
     const k = reserver && RS ? RS.cle(d) : null, rv = k != null && reserver.has(k);
-    const q = rv ? RS.bouton(d, { classe: `rs-date--ligne${s ? uClair(s) : ''}`, style: s ? uStyle(s) : '', attributs: ` aria-controls="${attr(idIci(k))}"` }) : quand(d.ligneDate || d.ligne);
+    // (le bouton reste sur le papier, sans les variables de l'univers : vingt lignes qui les portent coûtent au calcul des styles)
+    const q = rv ? RS.bouton(d, { classe: 'rs-date--ligne', attributs: ` aria-controls="${attr(idIci(k))}"` }) : quand(d.ligneDate || d.ligne);
     return `<li${rv ? ' class="rs-li"' : ''} data-date-id="${attr(d.id ?? '')}" data-frise-id="${attr(cleProchaine(d))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${attr(d.slug || '')}" style="--c:${couleurSp(d.slug)}">${q}<div class="t">
       ${titre ? (s ? `<a class="ti" href="#/spectacle/${attr(d.slug)}/${attr(entreeSp(d.slug, ctx))}">${esc(d.titre)}</a>` : `<span class="ti">${esc(d.titre)}</span>`) : ''}
       <p class="lieu">${lienLieu ? lienExt(d.lien, esc(d.ligneLieu)) : esc(d.ligneLieu)}${tag && d.scolaire ? ` <span class="etat">${esc(S.libelles.scolaire)}</span>` : ''}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div>${rv ? `<div class="rs-carte rs-ici${s ? uClair(s) : ''}" id="${attr(idIci(k))}" hidden></div>` : ''}</li>`;

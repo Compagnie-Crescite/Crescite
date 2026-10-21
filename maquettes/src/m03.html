@@ -1528,6 +1528,10 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
   // l'univers d'un spectacle, avec des contrastes AA garantis : texte sur fond, titre (grand) et accent vif sur fond ;
   // un univers clair invente aussi sa nuit (règle 19), dans ses propres couleurs de D : son texte, assombri dans le papier
   // de nuit, devient son fond ; son fond devient son texte ; le titre et la couleur vive, les premières qui restent AA
+  // le texte posé sur la couleur de titre (un bouton, la date choisie) : le blanc, le fond ou l'encre, le mieux lu ; s'il
+  // reste sous 4,5:1 (une couleur de titre moyenne), le blanc ou le noir pur, dont l'un passe toujours
+  const surDe = (t, f) => { const m = ['#ffffff', f, '#141414'].sort((a, b) => contraste(b, t) - contraste(a, t))[0];
+    return contraste(m, t) >= 4.5 ? m : contraste('#ffffff', t) >= contraste('#000000', t) ? '#ffffff' : '#000000'; };
   function univers(s) {
     const u = s.univers || {}, c = Object.assign({}, s.palette || {}, u.couleurs || {});
     const fond = hex(c.fond) || (s.clair ? '#f4f1ea' : '#141414');
@@ -1538,7 +1542,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     const texte2 = [hex(c.texte2)].find(x => x && contraste(x, fond) >= 4.5 && contraste(x, fond2) >= 4.5) || texte;
     const titre = [c.accent, c.scene, c.accent2].map(hex).find(ok(3)) || texte;
     const vif = [c.accent, c.accent2, c.scene].map(hex).find(ok(4.5)) || texte;
-    const sur = ['#ffffff', fond, '#141414'].sort((a, b) => contraste(b, titre) - contraste(a, titre))[0];
+    const sur = surDe(titre, fond);
     const p = u.polices || {};
     const police = String(p.titre || '').replace(/[^\p{L}\p{N} -]/gu, '').trim();
     const graisse = /^[1-9]00$/.test(String(p.titreGraisse)) ? +p.titreGraisse : 400;
@@ -1551,7 +1555,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       const vifs = [c.accent, c.scene, c.accent2].map(hex);
       const nTitre = vifs.find(okN(4.5)) || vifs.find(x => x && contraste(x, nf) >= 3) || nt;
       const nVif = [c.accent, c.accent2, c.scene].map(hex).find(okN(4.5)) || nt2;
-      nuit = { fond: nf, fond2: nf2, texte: nt, texte2: nt2, titre: nTitre, vif: nVif, sur: ['#ffffff', nf, '#141414'].sort((a, b) => contraste(b, nTitre) - contraste(a, nTitre))[0] };
+      nuit = { fond: nf, fond2: nf2, texte: nt, texte2: nt2, titre: nTitre, vif: nVif, sur: surDe(nTitre, nf) };
     }
     return { fond, fond2, texte, texte2, titre, vif, sur, clair, nuit, lueur: rgba(c.lueur) || hex(c.lueur) || 'transparent', police, graisse, motif };
   }

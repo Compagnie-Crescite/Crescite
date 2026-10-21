@@ -962,9 +962,11 @@ a.rs-seance:focus-visible{outline:2px solid var(--u-vif);outline-offset:2px}
 .rs-date--ligne .rs-q{white-space:normal}
 .rs-date--ligne .rs-o{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .rs-date--ligne:hover{box-shadow:inset 0 0 0 1px var(--encre)}
-.rs-date--ligne[aria-pressed="true"]{background:var(--u-fond2);color:var(--u-texte);box-shadow:0 0 0 1px color-mix(in srgb,var(--u-texte) 14%,transparent)}
-.rs-date--ligne[aria-pressed="true"]::before{background:var(--u-vif);opacity:1}
-.rs-date--ligne[aria-pressed="true"] :is(.rs-s,.rs-h--sans){color:var(--u-texte2)}
+.rs-date--ligne:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+/* (choisie, la tuile se teinte de la couleur du spectacle sur le papier ; l'univers est celui de sa carte, dessous) */
+.rs-date--ligne[aria-pressed="true"]{background:color-mix(in srgb,var(--point,var(--magenta)) 16%,var(--champ));color:var(--encre);box-shadow:inset 0 0 0 1.5px var(--point,var(--magenta))}
+.rs-date--ligne[aria-pressed="true"]::before{background:var(--point,var(--magenta));opacity:1}
+.rs-date--ligne[aria-pressed="true"] :is(.rs-s,.rs-h--sans){color:var(--encre)}
 .rs-ici{grid-column:1/-1;margin-top:10px;transform-origin:50% 0}
 .rs-ici .rs-c{max-width:28rem}
 .rs-ici .rs-sp{font-size:clamp(1.6rem,1.2rem + 1.2vw,2.2rem)}
@@ -1692,7 +1694,8 @@ html .ed-ajout{margin:0 0 18px}
     const [jour, mois] = decoupe(d.ligneDate);
     const k = reserver && RS ? RS.cle(d) : null, rv = k != null && reserver.has(k);
     const quoi = titre ? `<p class="date-quoi">${s ? `<a href="#/spectacle/${esc(s.slug)}/${esc(entreeSp(s.slug, cle))}">` : '<span>'}<span class="date-point" aria-hidden="true"></span>${esc(d.titre)}${s ? '</a>' : '</span>'}</p>` : '';
-    const quand = rv ? RS.bouton(d, { classe: `rs-date--ligne${u && u.clair ? ' u-clair' : ''}`, style: u ? u.css : '', attributs: ` aria-controls="${esc(idIci(k))}"` })
+    // (le bouton reste sur le papier, sans les variables de l'univers : vingt lignes qui les portent coûtent au calcul des styles)
+    const quand = rv ? RS.bouton(d, { classe: 'rs-date--ligne', attributs: ` aria-controls="${esc(idIci(k))}"` })
       : `<p class="date-quand"><span class="date-jour">${esc(jour)}</span>${mois ? `<span class="date-moisan">${esc(mois)}</span>` : ''}</p>`;
     return `<li class="date${d.etat ? ' est-annule' : ''}${rv ? ' rs-li' : ''}"${dateId(d)} data-frise-id="${esc(cleProchaine(d))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${esc(d.slug || '')}" style="--point:${point || couleurSp(d.slug)}">
       ${quand}
