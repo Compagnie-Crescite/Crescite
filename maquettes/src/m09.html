@@ -1638,9 +1638,13 @@ ${finHTML()}`;
     f.el.style.setProperty('--avance', String(Math.round(x * 100) / 100));
   }
   // une frise dans son conteneur : d'office « aujourd'hui », et sans entrée quand la vue se refait en place (D a changé)
+  // la largeur de l'écran, gardée : au téléphone, lire innerWidth au milieu d'un rendu forcerait la mise en page (la frise
+  // l'estime à partir d'elle, puis se mesure)
+  let VW = innerWidth;
+  addEventListener('resize', () => { VW = innerWidth; }, { passive: true });
   function frise(conteneur, o) {
     if (!FR || !conteneur || !conteneur.isConnected) return null;
-    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: enPlace || SYNC }, o));
+    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: enPlace || SYNC, largeur: Math.max(280, Math.min(VW - 32, 1240)) }, o));
     frises.push(f);
     avancer(f);
     return f;
@@ -1824,19 +1828,18 @@ ${finHTML()}`;
       };
       const redessine = () => { if (MV && !enPlace) MV.flip(rac, () => dessineSaisons(false), { cle: '[data-saison]' }); else dessineSaisons(false); };
       let tempo = 0;
-      // filtrer, chercher : les dates glissent à leur nouvelle place (FLIP), la frise de la saison et celle des saisons suivent
+      // filtrer, chercher : le bouton répond à l'image même ; les dates glissent à leur nouvelle place (FLIP) dans la tâche
+      // d'après, la frise de la saison et celle des saisons suivent encore après (en tapant, quand on s'arrête un instant)
       AGV.maj = (attendre = false) => {
         recompte();
-        const go = () => {
-          prochaines();
-          $$('[data-s]', racine).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
-          if (champ.value !== F.q) champ.value = F.q;
-        };
-        if (MV && !enPlace) MV.flip(venir, go, { cle: '[data-frise-id]' }); else go();
-        // la frise de la saison et l'agenda passé suivent, après l'image (en tapant, quand on s'arrête un instant)
-        clearTimeout(tempo);
+        $$('[data-s]', racine).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
+        if (champ.value !== F.q) champ.value = F.q;
+        const liste = () => { if (MV && !enPlace) MV.flip(venir, prochaines, { cle: '[data-frise-id]' }); else prochaines(); };
         const suite = () => { if (!rac.isConnected) return; if (fSaison) majFrise(fSaison, { points: pointsSaison() }); redessine(); };
-        if (enPlace) suite(); else if (attendre) tempo = setTimeout(suite, 110); else { const g = GEN; ensuite(() => { if (g === GEN) suite(); }); }
+        clearTimeout(tempo);
+        if (enPlace) { liste(); suite(); return; }
+        const g = GEN, apres = () => { if (g !== GEN || !rac.isConnected) return; liste(); ensuite(() => { if (g === GEN) suite(); }); };
+        if (attendre) tempo = setTimeout(apres, 110); else ensuite(apres);
       };
       const recompte = () => {
         if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter((s) => s.rows.some(garde)).map((s) => s.k)); }

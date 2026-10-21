@@ -1015,9 +1015,10 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   'use strict';
   /* Mouvement : l'édition. Le sommaire d'une revue : chaque geste compose la page comme on la met en pages. Une seule
      courbe, typographique (rapide, puis posée) ; survol 160 ms, pression 60 ms, page 360 ms, jamais plus de 450 ms.
-     1. Changer de page (MOUVEMENT.transition, View Transitions) : on tourne la page, la suivante se compose ligne à ligne,
-        dans l'ordre de lecture : les filets se tirent à la règle, le titre se découvre de gauche à droite, puis les lignes du
-        premier écran se posent l'une sous l'autre. La ligne qu'on choisit devient le titre de la page (élément partagé) :
+     1. Changer de page : la page suivante se compose ligne à ligne, dans l'ordre de lecture (elle arrive à l'image qui suit
+        le geste) : les filets se tirent à la règle, le titre se découvre de gauche à droite, puis les lignes du premier
+        écran se posent l'une sous l'autre. Quand la ligne qu'on choisit devient le titre de la page (élément partagé), on
+        tourne la page (MOUVEMENT.transition, View Transitions) :
         le titre d'un spectacle, au sommaire, dans l'aperçu, sur une affiche ou une fiche, devient le titre de son en-tête ;
         une entrée de l'accueil devient le titre de sa page. D'un onglet à l'autre d'un spectacle, l'en-tête reste et seul
         le filet de l'onglet glisse. Un geste interrompt la transition.
@@ -1356,9 +1357,13 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   /* ——— Les frises (FRISE) : le calendrier de chaque page, relu dans D à chaque rendu ——— */
   let frises = [], SUR_PLACE = false;
   // une frise dans son conteneur : d'office « aujourd'hui », et sans entrée quand la vue se refait en place (D a changé)
+  // la largeur de l'écran, gardée : au téléphone, lire innerWidth au milieu d'un rendu forcerait la mise en page (la frise
+  // l'estime à partir d'elle, puis se mesure)
+  let VW = innerWidth;
+  addEventListener('resize', () => { VW = innerWidth; }, { passive: true });
   function frise(conteneur, o) {
     if (!FR || !conteneur || !conteneur.isConnected) return null;
-    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: SUR_PLACE }, o));
+    const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: SUR_PLACE, largeur: Math.max(280, Math.min(VW - 32, 1240)) }, o));
     frises.push(f);
     return f;
   }
@@ -1773,12 +1778,19 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
       };
       // filtrer, chercher : la page se recompose ; la liste et la frise de la saison dans l'image du geste, l'agenda passé
       // (sous le pli) dans la tâche d'après, ses saisons glissant depuis l'endroit où elles sont
+      // (un geste : le bouton répond à l'image même ; la liste glisse dans la tâche d'après, l'agenda passé encore après)
+      let majN = 0;
       AGV.maj = (anime = false) => {
         const faire = () => { recompte(); prochaines(); };
-        if (anime && MV) MV.flip(venir, faire, { cle: '[data-frise-id]' }); else faire();
-        if (!agenda) return;
         const saisons = () => { suite = false; if (!racine.isConnected) return; if (anime && MV) MV.flip(racine, dessineSaisons, { cle: '[data-mv-cle]' }); else dessineSaisons(); };
-        if (!anime) saisons(); else if (!suite) { suite = true; ensuite(saisons); }
+        if (!anime) { faire(); if (agenda) saisons(); return; }
+        $$('[data-s]', sec).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
+        const n = ++majN;
+        ensuite(() => {
+          if (n !== majN || !venir.isConnected) return;
+          if (MV) MV.flip(venir, faire, { cle: '[data-frise-id]' }); else faire();
+          if (agenda && !suite) { suite = true; ensuite(saisons); }
+        });
       };
       const remplir = dt => {
         const s = passe.find(x => x.k === dt.dataset.saison), c = $('.sai-corps', dt);
