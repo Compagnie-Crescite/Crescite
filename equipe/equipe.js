@@ -349,6 +349,7 @@
     push: { etat: 'inconnu', cle: undefined, cleLe: 0, verifie: false }, installer: null,
     modifs: { reps: new Map(), dates: new Map() }, cartes: new Map(), cherche: new Set(), chiffresVus: false,
     partages: new Map(), dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planning: null, planningEtat: null, planningCache: null,
+    masques: undefined, prefs: null, lectureMasques: null, ecritureMasques: null,
     messageConnexion: ARRIVEE.erreur ? {
       texte: `Ce lien ne peut plus servir : ${ARRIVEE.code === 'otp_expired' || /expired|invalid/i.test(ARRIVEE.erreur) ? 'il a expiré, ou il a déjà été ouvert une fois' : 'il n’a pas pu être vérifié'}. Demandez-en un nouveau ci-dessous.`,
       genre: 'erreur' } : null,
@@ -381,7 +382,8 @@
       equipes: [], documents: [], spectacles: new Map(), feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0,
       horsLigne: 0, route: null, vue: '', pile: [], defil: {}, declencheur: {}, ficheSale: false, feuilleVue: null, sansSession: false,
       provisoire: false, notifs: [], notifsEtat: 'inconnu', modifs: { reps: new Map(), dates: new Map() }, cartes: new Map(), cherche: new Set(),
-      partages: new Map(), dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planningEtat: null, planningCache: null });
+      partages: new Map(), dispo: { etat: 'inconnu', propositions: [], propositionsLues: false, mesIndispos: null, agendas: null, jeton: undefined, fonction: 'inconnu', lecture: new Set(), brouillon: null, modifier: null, relu: false, fluxVerifie: null }, planningEtat: null, planningCache: null,
+      masques: undefined, prefs: null, lectureMasques: null, ecritureMasques: null });
     if (E.planning) { try { E.planning.detruire(); } catch (e) { /* déjà parti */ } E.planning = null; }
     E.push.verifie = false;
     majBadge();
@@ -1970,6 +1972,9 @@
   // mes agendas (reliés : leurs heures occupées deviennent des indisponibilités ; et le flux de mes dates Crescite à ajouter
   // à mon agenda), les propositions de dates de l'administration. Tout passe par le script SQL 5 et la fonction
   // crescite-agenda : sans eux, une phrase claire, et rien d'autre ne change.
+  // Le planning s'ouvre sur « Mes projets » (les gens de ses spectacles : voir groupesPlanning) quand la personne en a ;
+  // « Toute l'équipe » est d'un geste dans la même liste. Une administratrice y masque des personnes, comme dans
+  // l'administration : la liste est gardée avec son compte (script SQL 6), sinon sur cet appareil.
   const PL = () => (typeof PLANNING !== 'undefined' && PLANNING && typeof PLANNING.monter === 'function' ? PLANNING : null);
   const AGENDA_FN = `${BASE}/functions/v1/crescite-agenda`;
   const REPONSES = { oui: 'Disponible', non: 'Pas disponible', peut_etre: 'Peut-être' };
@@ -2085,11 +2090,19 @@
     const vue = st.vue || 'equipe', jour = st.jour || aujourdhui(), semaines = st.semaines || 6;
     const per = PLANNING.periode(vue, jour, semaines);
     const garde = cache && cache.uid === E.uid && cache.de === per.de && cache.a === per.a ? cache.D : undefined;
-    E.planning = PLANNING.monter(el, {
-      vue, jour, semaines, filtre: st.filtre || null, donnees: garde,
+    // le filtre de départ : « Mes projets » quand la personne en a, sauf si la session a déjà le sien
+    const groupes = groupesPlanning();
+    const filtre = E.planningEtat ? st.filtre || null : groupes.length ? { groupe: groupes[0].id } : null;
+    let pl = null, masquesPoses = E.masques !== undefined;
+    pl = E.planning = PLANNING.monter(el, {
+      vue, jour, semaines, filtre, groupes, donnees: garde,
+      // masquer des personnes : le planning ne le propose qu'à une administratrice (les données le disent)
+      masquer: true, masques: E.masques || [], surMasques: garderMasques,
       charger: async (de, a) => {
         const { data, error } = await sb.rpc('crescite_planning', { de, a });
         if (error) { if (dispoAbsente(error)) E.dispo.etat = 'absent'; throw error; }
+        // une administratrice : ses personnes masquées, lues une fois, avant que le planning se dessine sans elles
+        if (data && data.admin) { await lireMasques(); if (pl && !masquesPoses) { masquesPoses = true; pl.masques(E.masques); } }
         E.planningCache = { uid: E.uid, de, a, D: data };
         return data;
       },
@@ -2105,6 +2118,36 @@
     if (garde) E.planning.actualiser();
   }
   function demonterPlanning() { if (E.planning) { try { E.planning.detruire(); } catch (e) { /* déjà parti */ } E.planning = null; } }
+  // les personnes masquées du planning (une administratrice) : gardées avec son compte (crescite_preferences, script SQL 6,
+  // clé planning.masques) ; sans le script, sur cet appareil. La liste de l'appareil passe une fois dans la base quand le
+  // script est là. Une table absente ne se dit pas : le planning marche pareil.
+  const PREF_MASQUES = 'planning.masques', LOCAL_MASQUES = 'crescite-planning-masques';
+  const ecrirePreference = async (cle, valeur) => (await sb.from('crescite_preferences').upsert({ user_id: E.uid, cle, valeur }, { onConflict: 'user_id,cle' })).error;
+  function lireMasques() {
+    const uid = E.uid;
+    if (!E.lectureMasques) E.lectureMasques = (async () => {
+      const ici = lireStock(LOCAL_MASQUES), locaux = Array.isArray(ici) ? ici : [];
+      const { data, error } = await sb.from('crescite_preferences').select('valeur').eq('user_id', uid).eq('cle', PREF_MASQUES).maybeSingle();
+      if (E.uid !== uid) return;                                  // un autre compte entre-temps : sa lecture est la sienne
+      if (error) { E.prefs = tableAbsente(error) ? 'absent' : 'erreur'; E.masques = locaux; return; }
+      E.prefs = 'ok';
+      if (data) { E.masques = Array.isArray(data.valeur) ? data.valeur : []; return; }
+      E.masques = locaux;
+      if (locaux.length) ecrirePreference(PREF_MASQUES, locaux).then(err => { if (!err) ecrireStock(LOCAL_MASQUES, null); }, () => {});
+    })().catch(() => { if (E.masques === undefined) E.masques = []; });
+    return E.lectureMasques;
+  }
+  // chaque changement s'enregistre, dans l'ordre
+  function garderMasques(ids) {
+    E.masques = ids;
+    E.ecritureMasques = (E.ecritureMasques || Promise.resolve()).then(async () => {
+      if (E.prefs === 'absent') return ecrireStock(LOCAL_MASQUES, ids);
+      const err = await ecrirePreference(PREF_MASQUES, ids);
+      if (!err) { E.prefs = 'ok'; return; }
+      if (tableAbsente(err)) { E.prefs = 'absent'; ecrireStock(LOCAL_MASQUES, ids); return; }
+      annoncer(`Ce n’est pas enregistré : ${motsErreur(err) || 'la base a refusé'}.`, { erreur: true });
+    }).catch(() => {});
+  }
   // les boutons du jour choisi, dans le planning : les siens seulement
   function actionsJour(s) {
     if (s.personne && !memeId(s.personne.id, E.moi)) return [];
@@ -2503,10 +2546,27 @@
     ['plan', 'Le plan', 'Les plans'], ['autre', 'Les autres', 'Les autres']];
   const GENRES_CONNUS = new Set(GENRES_DOCS.slice(0, 4).map(([t]) => t));
   const slugDe = sp => (sp && (sp.slug || (sp.id != null ? String(sp.id) : ''))) || '';
-  function mesSpectacles() {
+  // ses projets : les spectacles de sa distribution, et ceux des dates où elle part
+  function mesProjets() {
     const ids = new Set();
     E.distributions.filter(x => memeId(x.personne_id, E.moi)).forEach(x => ids.add(Number(x.spectacle_id)));
     E.dates.forEach(d => { if (d.spectacle && d.spectacle.id != null) ids.add(Number(d.spectacle.id)); });
+    return ids;
+  }
+  // « Mes projets », pour le planning : la personne, toute la distribution de ses spectacles et l'équipe de ses dates
+  // (technique, mise en scène, remplaçants : tout le monde) ; le planning y ajoute l'équipe de chaque date de ces
+  // spectacles qu'il lit (crescite_planning la donne, même pour une date où la personne ne part pas)
+  function groupesPlanning() {
+    const projets = E.moi == null ? new Set() : mesProjets();
+    if (!projets.size) return [];
+    const gens = new Set([Number(E.moi)]);
+    E.distributions.forEach(x => { if (projets.has(Number(x.spectacle_id))) gens.add(Number(x.personne_id)); });
+    const spectacleDe = new Map(E.dates.map(d => [Number(d.id), Number(d.spectacle?.id)]));
+    E.equipes.forEach(e => { if (e.present && projets.has(spectacleDe.get(Number(e.date_id)))) gens.add(Number(e.personne_id)); });
+    return [{ id: 'projets', libelle: 'Mes projets', personnes: [...gens], spectacles: [...projets] }];
+  }
+  function mesSpectacles() {
+    const ids = mesProjets();
     const auj = aujourdhui();
     const prochaine = id => E.dates.filter(d => Number(d.spectacle?.id) === id && vivante(d) && finDe(d) >= auj && d.precision !== 'saison')
       .sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id))[0] || null;

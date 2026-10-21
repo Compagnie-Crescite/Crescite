@@ -295,7 +295,12 @@ range en colonne à gauche. On y trouve :
   rangés par genre, chacun avec « Partager » : la feuille de partage du téléphone, avec un lien de 30 jours pour un
   fichier privé (préparé à l'ouverture de la page : iOS refuse le partage après une attente) ;
 - **Planning** (le script 5) : le planning de toute l'équipe, ses indisponibilités (à la main, motif privé, ou lues dans
-  son agenda relié), l'abonnement de son agenda à ses dates Crescite, et les dates que l'administration lui propose ;
+  son agenda relié), l'abonnement de son agenda à ses dates Crescite, et les dates que l'administration lui propose. Il
+  s'ouvre sur « Mes projets » : les gens avec qui la personne travaille, c'est-à-dire, pour chacun de ses spectacles (sa
+  distribution, et les dates où elle part), toute la distribution et toutes les équipes de tournée (jeu, technique,
+  création…), plus elle-même. Seules les personnes sont filtrées (lignes, « pas libre », conflits), pas les dates : on
+  voit quand ses partenaires sont pris ailleurs. « Toute l'équipe » et chaque personne sont dans la même liste ; le choix
+  est gardé le temps de la session. Sans projet, le planning s'ouvre sur toute l'équipe ;
 - sa fiche, et un fichier agenda (.ics).
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
@@ -348,7 +353,12 @@ jamais), le planning commun (toute l'équipe voit les heures de tous, le motif r
 l'administration ; d'un agenda relié, aucun titre n'est gardé), et les propositions de dates de l'administration, avec
 une réponse par jour. Dans l'administration, la rubrique Planning montre le planning de toute l'équipe (vue Équipe et
 vue Mois, motifs et conflits compris), propose des dates en montrant qui n'est pas libre pendant le choix, et suit
-chaque proposition (réponses par jour, état des courriels, renvoyer, relancer, clore). Trois fonctions, à déployer avec
+chaque proposition (réponses par jour, état des courriels, renvoyer, relancer, clore). L'administratrice y masque les
+personnes qu'elle ne suit pas : « Masquer du planning » dans le détail d'une personne, ou sur sa ligne (au survol, d'un
+toucher sur le nom, au clavier par Maj+Tab depuis la case). Une personne masquée quitte les lignes, les « pas libre »
+et les conflits, sauf si on la choisit dans la liste des personnes ; « Masquées (n) », dans la barre des filtres, les
+fait revenir une à une ou toutes. La liste est gardée avec son compte (le script 6, ci-dessous) ; l'espace de l'équipe
+fait de même quand le compte connecté administre. Trois fonctions, à déployer avec
 « Verify JWT » décoché (un nouveau déploiement peut le rallumer : ouverte dans un navigateur, une fonction qui répond
 « Missing authorization header » l'a encore allumé) :
 - `crescite-agenda` relit les agendas reliés toutes les heures (pg_cron, programmé par le script) et à la demande, et
@@ -359,6 +369,13 @@ chaque proposition (réponses par jour, état des courriels, renvoyer, relancer,
   une fonction. Le lien du courriel arrive sur la page avec le choix prêt, qu'on confirme d'un bouton (les messageries
   ouvrent les liens pour les vérifier). 33 essais du script (`node disponibilites.mjs`), 21 de la fonction des
   courriels (`node courriel.mjs`).
+
+**Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
+autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
+retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
+l'administration comprise ; le public n'y a aucun droit. Pour commencer, une clé : `planning.masques`, les personnes
+masquées du planning. Tant que le script n'est pas passé, la liste reste sur l'appareil (sans message) ; elle passe dans
+la base à la première ouverture du planning qui suit. 22 essais (`node preferences.mjs`).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
