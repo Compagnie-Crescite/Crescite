@@ -256,11 +256,12 @@ compte du projet inscrit dans `crescite_admins`.
     avec elle.
   - Au clavier comme dans un tableur : flèches, Entrée ou F2 (ou taper directement), Échap, Tab, Maj+flèches pour choisir
     des cases, Ctrl+C et Ctrl+V (des cases venues d'Excel ou de Google Sheets), Suppr pour vider, Ctrl+Suppr pour
-    supprimer la séance (après confirmation), Ctrl+Z. L'en-tête reste en haut, le jour et le spectacle à gauche ; au
-    téléphone, le tableau défile sous les doigts.
+    supprimer la séance (après confirmation ; à la souris ou au doigt, le bouton « Supprimer la séance du … » dit
+    laquelle), Ctrl+Z. L'en-tête reste en haut, le jour et le spectacle à gauche ; au téléphone, le tableau défile sous
+    les doigts.
   - « ＋ Séance » : le jour, l'heure, le spectacle, le lieu (la recherche des lieux) ; une date du même spectacle au
     même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance, sinon une date se crée, et le
-    tableur dit ce qu'il a fait.
+    tableur dit ce qu'il a fait ; un filtre qui la cacherait se relâche.
   - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne s'écrit
     que si on la change), en pastilles qu'on retire et qu'on ajoute, au clavier aussi. « Étendre à… » la pose sur les
     dates du même spectacle de la saison, de l'année civile ou des lignes choisies (les passées si on le veut), après un

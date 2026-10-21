@@ -330,12 +330,14 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .tab-filtres .tab-choix { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .tab-filtres select { width: auto; flex: 1 1 170px; min-width: 0; }
 .tab-vides { font-weight: 600; font-size: 13.5px; white-space: nowrap; }
-.tab-ligne-etat { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin: 0; }
+.tab-ligne-etat { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; min-height: 30px; margin: 0 2px 6px; }
 .tab-etat { font-size: 13px; color: var(--gris); }
 .tab-etat.encours { color: var(--option); }
 .tab-etat.ok { color: var(--ok); font-weight: 600; }
 .tab-etat.erreur { color: var(--alerte); font-weight: 600; }
 .tab-etat kbd { margin-left: 2px; }
+.btn.tab-suppr { margin-left: auto; color: var(--alerte); }
+.btn.tab-suppr[hidden] { display: none; }
 .tab-cadre { --w-jour: 138px; --w-spectacle: 178px; position: relative; overflow: auto; overscroll-behavior: contain; max-height: 70vh; border: 1px solid var(--trait); border-radius: var(--rayon); background: var(--carte); }
 table.tableur { border-collapse: separate; border-spacing: 0; width: max-content; min-width: 100%; font-size: 13.5px; }
 .tableur th, .tableur td { box-sizing: border-box; padding: 6px 9px; border-bottom: 1px solid var(--trait); border-right: 1px solid var(--trait); text-align: left; vertical-align: top; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1585,8 +1587,8 @@ async function supprimerDate(d) {
    dans sheets.new). « Importer » : des lignes copiées d'Excel deviennent des séances, après un aperçu.
    Au clavier : flèches, Entrée ou F2 (ou taper directement) pour écrire, Échap, Tab, Maj+flèches pour choisir des
    cases, Ctrl+C / Ctrl+V comme dans un tableur, Suppr pour vider, Ctrl+Z pour annuler, Ctrl+Suppr pour supprimer la
-   séance. Le tableur ne lit ni n'écrit rien d'autre que les dates, leurs séances, leur suivi (organisateur, contact,
-   contrat, notes) et leur équipe. */
+   séance (à la souris : le bouton « Supprimer la séance du … », qui dit laquelle). Le tableur ne lit ni n'écrit rien
+   d'autre que les dates, leurs séances, leur suivi (organisateur, contact, contrat, notes) et leur équipe. */
 const TABLEUR = (() => {
   const T = { f: null, cols: [], lignes: [], actif: { l: 0, c: 0 }, ancre: null, edition: null, pop: null, pile: [],
     file: Promise.resolve(), recents: new Map(), textes: null, aRafraichir: false, attente: 0 };
@@ -1770,12 +1772,13 @@ const TABLEUR = (() => {
         <select id="tab-sp" aria-label="Spectacle"><option value="">Tous les spectacles</option>${E.spectacles.slice().sort((a, b) => (b.page - a.page) || a.ordre - b.ordre).map(s => `<option value="${s.id}"${String(f.spectacle) === String(s.id) ? ' selected' : ''}>${esc(s.titre)}</option>`).join('')}</select>
         <span class="seg" role="group" aria-label="Période">${[['avenir', 'À venir'], ['passees', 'Passées'], ['toutes', 'Toutes']].map(([k, l]) => `<button type="button" data-tab-periode="${k}" aria-pressed="${f.periode === k}">${l}</button>`).join('')}</span>
         <label class="case tab-vides"><input type="checkbox" id="tab-vides"${f.vides ? ' checked' : ''}> Colonnes vides</label></div>
-      <p class="tab-ligne-etat"><span class="compte" id="tab-compte"></span><span class="tab-etat" id="tab-etat" aria-live="polite"></span></p>
     </div>
     <form class="bloc tab-ajout" id="tab-ajout" hidden></form>
+    <p class="tab-ligne-etat"><span class="compte" id="tab-compte"></span><span class="tab-etat" id="tab-etat" aria-live="polite"></span>
+      <button type="button" class="btn lien petit tab-suppr" id="tab-suppr" aria-keyshortcuts="Control+Delete" title="Dans le tableau : Ctrl+Suppr">Supprimer la séance…</button></p>
     <div class="tab-cadre" id="tab-cadre"><table class="tableur" id="tab" role="grid" aria-multiselectable="true" aria-label="Représentations : une ligne par séance" aria-describedby="tab-aide">
       <thead id="tab-tete"></thead><tbody id="tab-corps" data-liste></tbody></table></div>
-    <p class="aide tab-aide" id="tab-aide">Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider ; Ctrl+Z pour annuler. Une case grisée répète la date : elle vaut pour toutes ses séances.</p>`);
+    <p class="aide tab-aide" id="tab-aide">Flèches pour aller de case en case ; Entrée (ou taper) pour écrire, Échap pour renoncer ; Maj+flèches pour choisir plusieurs cases ; Ctrl+C, Ctrl+V comme dans un tableur ; Suppr pour vider une case, Ctrl+Suppr pour supprimer la séance ; Ctrl+Z pour annuler. Une case grisée répète la date : elle vaut pour toutes ses séances.</p>`);
     const corps = $('#tab-corps');
     corps.rafraichir = () => { if (T.edition || T.pop) { T.aRafraichir = true; return; } dessiner({ garder: true }); };
     T.actif = { l: 0, c: 0 }; T.ancre = null; T.textes = null;
@@ -1835,6 +1838,9 @@ const TABLEUR = (() => {
   // la case active (tabindex 0), la plage choisie (aria-selected), et la même case de la date sur ses autres séances
   function marquer(focus = false) {
     $$('#tab-corps td.actif, #tab-corps td.choisie, #tab-corps td.meme-date').forEach(td => { td.classList.remove('actif', 'choisie', 'meme-date'); td.tabIndex = -1; td.removeAttribute('aria-selected'); });
+    // le bouton « Supprimer » dit sur quoi il agit : la séance de la case active, ou les lignes choisies
+    const bs = $('#tab-suppr'), pg = plage(), xs = T.lignes.slice(pg.l0, pg.l1 + 1);
+    if (bs) { bs.hidden = !xs.length; bs.textContent = xs.length > 1 ? `Supprimer ces ${xs.length} ${xs.every(y => y.r) ? 'séances' : 'lignes'}…` : xs.length ? `Supprimer ${xs[0].r ? 'la séance' : 'la date'} du ${jourCourt(xs[0].r?.jour || xs[0].d.debut)}…` : ''; }
     const x = T.lignes[T.actif.l], c = T.cols[T.actif.c];
     if (!x || !c) return;
     if (T.ancre) { const p = plage(); for (let l = p.l0; l <= p.l1; l++) for (let j = p.c0; j <= p.c1; j++) { const td = cellule(l, j); if (td) { td.classList.add('choisie'); td.setAttribute('aria-selected', 'true'); } } }
@@ -1883,6 +1889,7 @@ const TABLEUR = (() => {
     $('#tab-etat').addEventListener('click', e => { if (e.target.closest('#tab-annuler')) annuler(); });
     $('#tab-plus').addEventListener('click', () => formAjout());
     $('#tab-importer').addEventListener('click', () => importer());
+    $('#tab-suppr').addEventListener('click', () => supprimerLignes());
     const exp = $('#tab-export'), bExp = $('#tab-exporter');
     const fermerExport = (rendre = false) => { exp.hidden = true; bExp.setAttribute('aria-expanded', 'false'); if (rendre) bExp.focus(); };
     bExp.addEventListener('click', () => { const ouvrir = exp.hidden; exp.hidden = !ouvrir; bExp.setAttribute('aria-expanded', String(ouvrir)); if (ouvrir) $('button', exp).focus(); });
@@ -2326,8 +2333,11 @@ const TABLEUR = (() => {
     xs.forEach(x => { if (!parDate.has(x.d.id)) parDate.set(x.d.id, { d: x.d, reps: new Set(), entiere: !x.r }); const g = parDate.get(x.d.id); if (x.r) g.reps.add(x.r.id); else g.entiere = true; });
     const groupes = [...parDate.values()].map(g => ({ ...g, entiere: g.entiere || repsDe(g.d.id).every(r => g.reps.has(r.id)) }));
     const entieres = groupes.filter(g => g.entiere), nS = xs.filter(x => x.r).length;
-    const quoi = xs.length === 1 ? `la séance du ${jourCourt(xs[0].r?.jour || xs[0].d.debut)}${xs[0].r?.heure ? ` à ${heureT(xs[0].r.heure)}` : ''} (${spectacle(xs[0].d.spectacle_id)?.titre || ''}, ${ouDit(xs[0].d.lieu_id)})` : `${pl(nS || xs.length, 'séance')}`;
-    if (!confirm(`Supprimer ${quoi} ?${entieres.length ? `\n\n${entieres.length > 1 ? `${entieres.length} dates n’auront` : 'Sa date n’aura'} plus de séance : ${entieres.length > 1 ? 'elles sont supprimées' : 'elle est supprimée'}, avec ${entieres.length > 1 ? 'leur' : 'son'} équipe et ${entieres.length > 1 ? 'leur' : 'sa'} feuille de route.` : ''}`)) return;
+    const seul = xs.length === 1 ? xs[0] : null, dateSeule = !!seul && !seul.r;   // une date sans séance (une période)
+    const quoi = seul ? `${dateSeule ? 'la date' : 'la séance'} du ${jourCourt(seul.r?.jour || seul.d.debut)}${seul.r?.heure ? ` à ${heureT(seul.r.heure)}` : ''} (${spectacle(seul.d.spectacle_id)?.titre || ''}, ${ouDit(seul.d.lieu_id)})` : `${pl(nS || xs.length, 'séance')}`;
+    const suite = dateSeule ? 'Elle n’a pas de séance : elle est supprimée, avec son équipe et sa feuille de route.'
+      : entieres.length ? `${entieres.length > 1 ? `${entieres.length} dates n’auront` : 'Sa date n’aura'} plus de séance : ${entieres.length > 1 ? 'elles sont supprimées' : 'elle est supprimée'}, avec ${entieres.length > 1 ? 'leur' : 'son'} équipe et ${entieres.length > 1 ? 'leur' : 'sa'} feuille de route.` : '';
+    if (!confirm(`Supprimer ${quoi} ?${suite ? `\n\n${suite}` : ''}`)) return;
     etat('Suppression…', 'encours');
     const tache = T.file.then(async () => {
       const defaire = [];
@@ -2345,7 +2355,7 @@ const TABLEUR = (() => {
     T.file = tache.catch(() => {});
     try {
       const defaire = await tache;
-      const texte = `${quoi} supprimée${xs.length > 1 ? 's' : ''}${entieres.length ? ` (${pl(entieres.length, 'date')} entière${entieres.length > 1 ? 's' : ''})` : ''}`;
+      const texte = `${quoi} supprimée${xs.length > 1 ? 's' : ''}${entieres.length && !dateSeule ? ` (${pl(entieres.length, 'date')} entière${entieres.length > 1 ? 's' : ''})` : ''}`;
       T.pile.push({ libelle: texte, defaire: async () => { for (const f of defaire.reverse()) await f(); } });
       T.ancre = null;
       etat(`${texte[0].toUpperCase()}${texte.slice(1)}.`, 'ok', true);
