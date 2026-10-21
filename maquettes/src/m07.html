@@ -217,6 +217,7 @@ ul,ol{padding:0;list-style:none}
 .cl-s3{stop-color:var(--lum);stop-opacity:0}
 .cl-trace{stroke-dasharray:var(--L) var(--L)}
 .cl-halo{fill:none;stroke:var(--lum);stroke-opacity:.55;stroke-width:calc(var(--e) * 5);stroke-linecap:round;transition:opacity .35s,stroke-opacity .35s}
+.cl.attend .cl-halos,.cl.joue:not(.pose) .cl-halos{display:none}
 .cl-faisceau{fill:none;stroke:var(--fx);stroke-width:calc(var(--e) * 1.1);stroke-linecap:round;transition:opacity .35s,stroke .35s}
 .cl-pulse{fill:none;stroke:var(--pulse-c);stroke-width:calc(var(--e) * 2.4);stroke-linecap:round;stroke-dasharray:var(--p) var(--L);stroke-dashoffset:var(--p);opacity:0}
 .cl-lieu{cursor:pointer;transition:opacity .35s}
@@ -740,7 +741,8 @@ main{display:block;min-height:100vh}
 .salle{position:fixed;inset:0;z-index:45;pointer-events:none}
 .salle[hidden]{display:none}
 .salle-noir{position:absolute;inset:0;background:var(--noir);opacity:0}
-.salle-spot{position:absolute;left:var(--lx,24%);top:var(--ly,32%);width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;border-radius:50%;background:radial-gradient(closest-side,rgba(255,217,168,.3),rgba(255,217,168,.1) 34%,rgba(255,217,168,0) 68%);opacity:0;transform:scale(.12)}
+/* la lueur : un calque modeste (60vmax, sa lumière va jusqu'au bord) que l'animation agrandit : peu de pixels à peindre */
+.salle-spot{position:absolute;left:var(--lx,24%);top:var(--ly,32%);width:60vmax;height:60vmax;margin:-30vmax 0 0 -30vmax;border-radius:50%;background:radial-gradient(closest-side,rgba(255,217,168,.3),rgba(255,217,168,.1) 50%,rgba(255,217,168,0));opacity:0;transform:scale(.2)}
 /* la pression : la lumière baisse sous le doigt */
 :is(.entree,.onglet,.porte,.btn,.plus,.appel,.chip,.idx,.idx-tout,.titre,.pause,.affiche,.fiche-u .fu-t a,.rep a,.carte-ac,.modifier,.second a,.sommaire button,.ep-porte).mv-presse{opacity:.72;transform:scale(.985);transition:opacity .08s,transform .08s}
 .sai>summary.mv-presse{background:linear-gradient(90deg,rgba(255,217,168,.14),transparent 70%)}
@@ -768,9 +770,9 @@ main{display:block;min-height:100vh}
 .frise[data-frise] .frise-point.est-passe>.frise-repere::before{box-shadow:0 0 0 2px var(--fr-fond)}
 .frise[data-frise] .frise-mois-nom{font-family:var(--serif);font-style:italic;font-weight:600;font-size:.95rem;letter-spacing:0}
 .frise[data-frise] .frise-an{font-size:.72rem;font-weight:600;letter-spacing:.14em;color:var(--gris)}
-/* les mois : un peu plus bas que les lampes (une lampe groupée, sur l'axe, ne touche pas le nom du mois) */
+/* les mois et les années : un peu plus bas que les lampes (une lampe groupée, sur l'axe, ne touche pas leur nom) */
 .frise[data-frise].frise--mois{--fr-pied:46px}
-.frise[data-frise].frise--mois .frise-mois>li>span:first-child{top:13px}
+.frise[data-frise] .frise-mois>li>span:first-child{top:13px}
 .frise[data-frise] .frise-aujourdhui::before{width:1px;background:var(--lumiere);box-shadow:0 0 12px 2px rgba(255,217,168,.55);opacity:1}
 .frise[data-frise] .frise-aujourdhui-nom{font-weight:600;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase}
 .frise[data-frise] .frise-bulle{border:1px solid var(--trait-fort);border-radius:0;box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 30px rgba(255,217,168,.12)}
@@ -780,6 +782,7 @@ main{display:block;min-height:100vh}
 .frise[data-frise] :is(.frise-point.est-passe+.frise-point:not(.est-passe),.frise-point:first-child:not(.est-passe))>.frise-repere::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--fr-c,var(--lumiere));opacity:0;animation:prochaine 2.4s ease-out 1.2s infinite;pointer-events:none}
 @keyframes prochaine{0%{opacity:.6;scale:1}80%,100%{opacity:0;scale:2.8}}
 .frise-hote{min-height:112px;margin-top:clamp(1.5rem,3vw,2.25rem)}
+#v-frise{min-height:126px}
 .u-corps .frise[data-frise]{--fr-fond:var(--u-fond);--fr-encre:var(--u-texte);--fr-trait:color-mix(in srgb,var(--u-trace) 50%,transparent);--fr-accent:var(--u-trace);--fr-bulle-fond:var(--u-fond2);--fr-bulle-encre:var(--u-texte)}
 .u-corps .frise[data-frise] .frise-axe{background:var(--u-trace);box-shadow:0 0 10px 1px color-mix(in srgb,var(--u-lueur,#ffd9a8) 70%,transparent)}
 .frise-saisons{--fr-bande-h:48px;--fr-haut:20px;--fr-pied:30px}
@@ -1162,7 +1165,10 @@ main{display:block;min-height:100vh}
     });
     const st = j => `--d:${tempo[j].d}s;--t:${tempo[j].t}s`;
     const etiquette = x => `${CARTE.nom(x)}${x.dates && x.dates.length ? ' : ' + x.dates.map(d => d.ligne).join(' ; ') : ''}`;
-    const halos = fin ? '' : lieux.map((x, j) => tempo[j].L ? `<path class="cl-halo cl-trace" data-l="${x.l}" d="${CARTE.trait(x.xy)}" style="--L:${tempo[j].L};${st(j)}"/>` : '').join('');
+    // le halo flou des faisceaux ne se trace pas (un flou qui bouge se repeint à chaque image) : il s'allume d'un coup quand les
+    // faisceaux sont arrivés, avec les lampes
+    const halos = fin ? '' : lieux.map((x, j) => tempo[j].L ? `<path class="cl-halo" data-l="${x.l}" d="${CARTE.trait(x.xy)}"/>` : '').join('');
+    const finMs = Math.round(1000 * Math.max(0, ...tempo.map(x => x.d + x.t)));
     const coeurs = fin ? lieux.map((x, j) => tempo[j].L ? `<path class="cl-faisceau" data-l="${x.l}" d="${CARTE.trait(x.xy)}"/>` : '').join('')
       : lieux.map((x, j) => tempo[j].L ? `<path class="cl-faisceau cl-trace" data-l="${x.l}" d="${CARTE.trait(x.xy)}" style="--L:${tempo[j].L};${st(j)}"/><path class="cl-pulse" data-l="${x.l}" d="${CARTE.trait(x.xy)}" style="--L:${tempo[j].L};--p:${k(18)}"/>` : '').join('');
     const lampes = lieux.map((x, j) => {
@@ -1178,14 +1184,14 @@ main{display:block;min-height:100vh}
     const pris = new Set([...lieux, ...passe].map(x => x.l));
     const pous = poussiere ? `<g class="cl-poussiere" aria-hidden="true">${CARTE.lieux.map((x, l) => pris.has(l) ? '' : `<circle cx="${x.xy[0]}" cy="${x.xy[1]}" r="${k(1.25)}"/>`).join('')}</g>` : '';
     const passes = passe.length ? `<g aria-hidden="true">${passe.filter(x => loin(x.xy)).map(x => `<path class="cl-passe" d="${CARTE.trait(x.xy)}"/>`).join('')}${passe.map(x => `<circle class="cl-passe-pt" cx="${x.xy[0]}" cy="${x.xy[1]}" r="${k(1.6)}"/>`).join('')}</g>` : '';
-    return `<svg class="cl${teinteC ? ' cl--teinte' : ''}${souvenir ? ' cl--souvenir' : ''}${fin ? ' cl--fin' : ''}${anime ? ' attend' : ''}" viewBox="${vb}" style="--e:${e.toFixed(3)}" role="group" aria-label="${esc(titre)}">
+    return `<svg class="cl${teinteC ? ' cl--teinte' : ''}${souvenir ? ' cl--souvenir' : ''}${fin ? ' cl--fin' : ''}${anime ? ' attend' : ''}" viewBox="${vb}" style="--e:${e.toFixed(3)}"${anime && halos ? ` data-fin="${finMs}"` : ''} role="group" aria-label="${esc(titre)}">
       <defs>
         <radialGradient id="${id}-a"><stop offset="0" stop-color="#fffaf0"/><stop offset=".16" class="cl-s1"/><stop offset=".45" class="cl-s2"/><stop offset="1" class="cl-s3"/></radialGradient>
         <filter id="${id}-f" filterUnits="userSpaceOnUse" x="${bx - 60}" y="${by - 60}" width="${bw + 120}" height="${bh + 120}"><feGaussianBlur stdDeviation="${k(2.8)}"/></filter>
       </defs>
       <path class="cl-voisin" d="${CARTE.fond.belgique}"/><path class="cl-voisin" d="${CARTE.fond.luxembourg}"/><path class="cl-pays" d="${CARTE.fond.pays}"/>
       ${pous}${passes}
-      ${halos ? `<g filter="url(#${id}-f)" aria-hidden="true">${halos}</g>` : ''}
+      ${halos ? `<g class="cl-halos" filter="url(#${id}-f)" aria-hidden="true">${halos}</g>` : ''}
       <g class="cl-faisceaux" aria-hidden="true">${coeurs}</g>
       <g aria-hidden="true"><circle class="cl-rouen-aura" cx="${R[0]}" cy="${R[1]}" r="${k(30)}" fill="url(#${id}-a)"/><circle class="cl-rouen-coeur" cx="${R[0]}" cy="${R[1]}" r="${k(3.4)}"/></g>
       <text class="cl-rouen-nom" x="${(R[0] + k(8)).toFixed(1)}" y="${(R[1] - k(10)).toFixed(1)}" font-size="${k(15)}">Rouen</text>
@@ -1251,7 +1257,7 @@ main{display:block;min-height:100vh}
     });
     montrer(null);
     if (svg.classList.contains('attend')) {           // les faisceaux partent de Rouen quand la carte entre en scène
-      const go = () => { svg.classList.remove('attend'); svg.classList.add('joue'); };
+      const go = () => { svg.classList.remove('attend'); svg.classList.add('joue'); const fin = +svg.dataset.fin || 0; if (fin) setTimeout(() => svg.classList.add('pose'), fin); };
       if ('IntersectionObserver' in window) {
         const io = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) { io.disconnect(); go(); } }, { threshold: .3 });
         io.observe(svg);
@@ -1323,12 +1329,16 @@ main{display:block;min-height:100vh}
     const t = $('template[data-suite]', main);
     if (t) {
       const f = reste[+t.dataset.suite], parent = t.parentElement;
-      if (f) t.insertAdjacentHTML('beforebegin', f());
+      // ce qu'une place rend peut à son tour remettre à plus tard (les chapitres d'un spectacle) : leurs places suivent
+      suites = reste;
+      try { if (f) t.insertAdjacentHTML('beforebegin', f()); } finally { suites = null; }
       t.remove();
+      if (parent) $$('template[data-suite]', parent).forEach(x => x.parentElement.setAttribute('data-suite-attend', ''));
       if (parent && !$('template[data-suite]', parent)) parent.removeAttribute('data-suite-attend');
       aBrancher.splice(0).forEach(brancherCarte);
       if ($('template[data-suite]', main)) { requestAnimationFrame(() => setTimeout(() => completer(tour, reste, g), 0)); return; }
     }
+    $$('[data-suite-attend]', main).forEach(x => x.removeAttribute('data-suite-attend'));
     g.forEach(f => f());
     decorer(false);
   }
@@ -1364,7 +1374,7 @@ main{display:block;min-height:100vh}
     const courbe = 'cubic-bezier(.22,.61,.36,1)';
     salleAnims = [
       n.animate([{ opacity: 1 }, { opacity: 1, offset: .1 }, { opacity: 0 }], { duration: 290, easing: courbe, fill: 'forwards' }),
-      spot.animate([{ opacity: 0, transform: 'scale(.12)' }, { opacity: 1, transform: 'scale(.55)', offset: .4 }, { opacity: 0, transform: 'scale(1.5)' }], { duration: 320, easing: courbe, fill: 'forwards' })];
+      spot.animate([{ opacity: 0, transform: 'scale(.2)' }, { opacity: 1, transform: 'scale(.95)', offset: .4 }, { opacity: 0, transform: 'scale(1.7)' }], { duration: 320, easing: courbe, fill: 'forwards' })];
     salleAnims[1].onfinish = finirSalle;
   }
 
@@ -1758,7 +1768,12 @@ main{display:block;min-height:100vh}
         requestAnimationFrame(() => setTimeout(() => {
           lampes();
           if (fSaison && liste.isConnected) fSaison.maj({ points: reperesSaison() });
-          tempo = setTimeout(() => { if (agenda && racine.isConnected) { dessineSaisons(); if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); } }, differe ? 110 : 0);
+          // l'agenda passé, puis la frise des saisons : chacun à son image (aucune image ne porte tout)
+          tempo = setTimeout(() => {
+            if (!agenda || !racine.isConnected) return;
+            dessineSaisons();
+            if (fSaisons) requestAnimationFrame(() => { tempo = setTimeout(() => { if (racine.isConnected) fSaisons.maj({ bandes: bandesSaisons() }); }, 0); });
+          }, differe ? 110 : 0);
         }, 0));
       };
       const remplir = dt => {
@@ -1792,10 +1807,15 @@ main{display:block;min-height:100vh}
         if (b.dataset.eff) { if (b.dataset.eff === 'q') F.q = ''; else if (b.dataset.eff === 's') F.slug = null; else F.l = null; AGV.maj(); return; }
         ouvrirSaison(b.dataset.k);
       });
-      // la frise de la saison, reliée à la liste et à la carte : un repère survolé allume sa ligne et sa lampe ; un clic y mène
-      fSaison = frise($('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: SAISON.titre,
-        relier: svgP ? { liste: main, carte: svgP } : { liste: main },
-        choix: p => { if (!$(`[data-frise-id="${CSS.escape(p.id)}"]`, main) && encours) ouvrirSaison(D.saison); allerLigne(p.id); } });
+      // la frise de la saison, reliée à la liste et à la carte : un repère survolé allume sa ligne et sa lampe ; un clic y mène.
+      // Après un geste, elle s'allume une fois la liste posée, à son image à elle (sa place est gardée : rien ne bouge)
+      const creerFrise = () => {
+        const h = $('#v-frise'); if (!h || !h.isConnected || fSaison) return;
+        fSaison = frise(h, { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: SAISON.titre,
+          relier: svgP ? { liste: main, carte: svgP } : { liste: main },
+          choix: p => { if (!$(`[data-frise-id="${CSS.escape(p.id)}"]`, main) && encours) ouvrirSaison(D.saison); allerLigne(p.id); } });
+      };
+      if (ANIMER) apres(() => requestAnimationFrame(() => setTimeout(creerFrise, 0))); else creerFrise();
       apres(() => { if (actif()) prochaines(); });
       // l'agenda passé (sous le pli) : ses saisons après la première image, puis leurs cartes et leur frise ; d'emblée quand la
       // vue est refaite en place ou qu'un filtre est déjà là
@@ -2092,14 +2112,16 @@ main{display:block;min-height:100vh}
     const cit = (s.citations || []).length ? `<div class="citations">${s.citations.map((c, i) => `<figure class="citation${c.prose ? ' citation--prose' : ''}"><blockquote><p>${(c.vers || []).map((v, j) => `<span class="vers"${ed(`shows.${slug}.citations.${i}.vers.${j}`)}>${esc(v)}</span>`).join(c.prose ? ' ' : '')}</p></blockquote>${c.source ? `<figcaption${ed(`shows.${slug}.citations.${i}.source`)}>${esc(c.source)}</figcaption>` : ''}</figure>`).join('')}</div>` : '';
     if (txt || cit) ch.push(['spectacle', LIB.leSpectacle, esc(LIB.leSpectacle), `<div class="texte-u prose">${txt}</div>${cit}`]);
     const phs = photosDe(s, p => !p.etablissement && !p.atelier);
-    if (phs.length) ch.push(['photos', LIB.photos, esc(LIB.photos), cartons(s, phs)]);
-    if (s.video && s.video.url) ch.push(['video', LIB.bandeAnnonce, esc(LIB.bandeAnnonce), lienVideo(s)]);
-    const dt = chapitreDates(s, pub);
-    ch.push(['dates', LIB.dates, dt.titre, dt.html]);
-    ch.push(['distribution', LIB.distribution, esc(LIB.distribution), distribution(s, false, true)]);
+    if (phs.length) ch.push(['photos', LIB.photos, esc(LIB.photos), () => cartons(s, phs)]);
+    if (s.video && s.video.url) ch.push(['video', LIB.bandeAnnonce, esc(LIB.bandeAnnonce), () => lienVideo(s)]);
+    ch.push(['dates', LIB.dates, null, () => chapitreDates(s, pub)]);
+    ch.push(['distribution', LIB.distribution, esc(LIB.distribution), () => distribution(s, false, true)]);
+    // les chapitres arrivent l'un après l'autre (une place par image) : le premier tout de suite, les autres à la suite
+    const section = ([id, , titre, html]) => { const h = typeof html === 'function' ? html() : html, x = titre == null ? h : { titre, html: h };
+      return `<section class="chap" id="ch-${id}" aria-labelledby="t-${id}"><h2 class="chap-t" id="t-${id}" tabindex="-1">${x.titre}</h2><div class="chap-corps">${x.html}</div></section>`; };
     return `<div class="wrap sp-voir">
       <nav class="sommaire" aria-label="${esc(LIB.leSpectacle)}"><ul>${ch.map(([id, lib]) => `<li><button type="button" data-ch="${id}">${esc(lib)}</button></li>`).join('')}</ul>${t.motif ? `<div class="sommaire-signe">${motif(t.motif)}</div>` : ''}</nav>
-      <div class="chapitres">${ch.map(([id, , titre, html]) => `<section class="chap" id="ch-${id}" aria-labelledby="t-${id}"><h2 class="chap-t" id="t-${id}" tabindex="-1">${titre}</h2><div class="chap-corps">${html}</div></section>`).join('')}</div>
+      <div class="chapitres">${ch.map((c, i) => i ? differer(() => section(c)) : section(c)).join('')}</div>
     </div>`;
   }
   function ficheTechnique(s, B) {
@@ -2379,7 +2401,8 @@ main{display:block;min-height:100vh}
   /* ---------- La navigation : par les trois entrées ---------- */
   const VUES = { voir: pageVoir, programmer: pageProgrammer, etablissement: pageEtablissement, spectacles: pageSpectacles, compagnie: pageCompagnie, contact: pageContact };
   const MEMO = 'crescite-m07-entree';
-  const retenir = c => { try { sessionStorage.setItem(MEMO, c); } catch (e) { /* stockage indisponible */ } };
+  // (écrit hors du rendu : l'écriture du stockage n'attend pas la page)
+  const retenir = c => setTimeout(() => { try { sessionStorage.setItem(MEMO, c); } catch (e) { /* stockage indisponible */ } }, 0);
   const retenue = () => { try { const v = sessionStorage.getItem(MEMO); return ENT[v] ? v : null; } catch (e) { return null; } };
   let vue = null, surPhoto = true, allerA = null;
   function fermerMenu(rendreFocus) {
