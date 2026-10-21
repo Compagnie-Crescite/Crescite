@@ -177,9 +177,8 @@ table{border-collapse:collapse}
 .attente .mc-lieu,.pousse .mc-lieu:not(.allume),.attente .mc-eteint,.pousse .mc-eteint:not(.allume){opacity:0}
 .mc-lieu.allume{animation:allume .9s var(--ease) backwards}
 .mc-eteint.allume{animation:apparait .6s ease backwards}
-/* la prochaine date scintille deux fois quand sa carte s'allume, puis reste éclairée (un SVG qui bouge se repeint à chaque image :
-   une page au repos ne repeint rien) */
-.mc-lieu.allume.prochain .mc-halo{animation:scintille 3.2s ease-in-out 1.4s 2}
+/* la prochaine date reste éclairée sur la carte (son halo, immobile : un SVG qui bouge se repeint à chaque image ; c'est la porte
+   de la frise qui bat) */
 /* la carte de tous les lieux : des traits fins, des points simples ; elle paraît d'un coup en s'ouvrant depuis Rouen (composé) */
 .mc.leger .mc-traits{fill:none;stroke-width:1;vector-effect:non-scaling-stroke;opacity:.72}
 .mc.leger .mc-pt{fill:#fff;stroke:transparent;stroke-width:14px;transition:r .16s var(--ease),fill .16s}
@@ -189,7 +188,6 @@ table{border-collapse:collapse}
 @keyframes leger-parait{from{opacity:0;transform:scale(.9)}}
 @keyframes allume{0%{opacity:0;transform:scale(.2)}45%{opacity:1;transform:scale(1.6)}100%{opacity:1;transform:scale(1)}}
 @keyframes apparait{from{opacity:0}to{opacity:1}}
-@keyframes scintille{0%,100%{opacity:1}50%{opacity:.55}}
 .mc-nom,.mc-rouen-nom{position:absolute;z-index:2;transform:translate(13px,-50%);font-size:.8125rem;font-weight:600;line-height:1.2;letter-spacing:.01em;color:var(--mc-nom);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .16s;text-shadow:0 0 3px var(--mc-ombre),0 0 10px var(--mc-ombre),0 0 18px var(--mc-ombre)}
 .mc-nom.g{transform:translate(calc(-100% - 13px),-50%)}
 .mc-nom.on,.mc-nom.choisi,.mc-nom.toujours,.mc-nom.prochain{opacity:1}
@@ -1059,8 +1057,8 @@ main{display:block;min-height:100vh;overflow-x:clip}
         demandée en dernier se pose seule) ; les vantaux ne captent jamais le pointeur.
      2. Ouvrir une saison : la porte de sa petite arche s'efface, la lumière y entre, ses dates arrivent en cascade ; le menu
         aussi se déplie ligne à ligne.
-     3. Filtrer, chercher : les dates glissent à leur nouvelle place, celles qui partent s'effacent (MOUVEMENT.flip) ; les
-        repères de la frise glissent, les saisons de la frise des saisons changent de hauteur.
+     3. Filtrer, chercher : les dates gardées glissent à leur nouvelle place, celles qui reviennent paraissent (MOUVEMENT.flip) ;
+        les repères de la frise glissent, les saisons de la frise des saisons changent de hauteur.
      4. Survol et focus : 160 à 200 ms ; une porte s'entrouvre et sa lumière monte, rien ne tremble.
      5. Pression : la porte cède sous la main dès le pointerdown (elle s'ouvre en grand) ; les boutons s'enfoncent d'un rien.
      6. Défilement (MOUVEMENT.reveler) : les titres montent, les cartes arrivent l'une après l'autre en pivotant sur leur gond,
@@ -1723,7 +1721,16 @@ main{display:block;min-height:100vh;overflow-x:clip}
       rows.forEach(r => { if (r.d.l != null) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, titre: r.titre, slug: r.g.slug }); } });
       return s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l), n: parL.get(x.l).length }));
     };
-    const listeProchaines = () => parMois(proch.filter(garde).map(r => r.d)).map(g => groupeMois(g, 'voir')).join('');
+    // toutes les dates à venir sont dans la page ; le filtre cache celles qu'il ne garde pas (rien n'est refait)
+    const parD = new Map(proch.map(r => [r.d, r])), parCle = new Map(proch.map(r => [cleProchaine(r.d), r]));
+    const listeProchaines = () => parMois(proch.map(r => r.d)).map(g => {
+      const lis = g.ds.map(d => { const h = ligneDate(d, { entree: 'voir' }); return garde(parD.get(d)) ? h : h.replace('<li class="dl"', '<li class="dl" hidden'); });
+      return `<section class="groupe"${g.ds.some(d => garde(parD.get(d))) ? '' : ' hidden'}><h3 class="mois" data-mv-cle="m:${esc(g.m)}">${esc(g.m)}</h3><ol data-agenda="">${lis.join('')}</ol></section>`;
+    }).join('');
+    const filtrerListe = liste => {
+      $$('li.dl', liste).forEach(li => { const r = parCle.get(li.dataset.mvCle), h = !!r && !garde(r); if (li.hidden !== h) li.hidden = h; });
+      $$('.groupe', liste).forEach(g => { const h = !g.querySelector('li.dl:not([hidden])'); if (g.hidden !== h) g.hidden = h; });
+    };
     const corpsSaison = (s, rows, lx, sansCarte = false) => {
       const groupes = [];
       rows.forEach(r => { const m = r.k.slice(0, 7), g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
@@ -1797,7 +1804,7 @@ main{display:block;min-height:100vh;overflow-x:clip}
       // filtrer, chercher : la liste et la frise de la saison glissent à leur nouvelle place dans l'image du geste (FLIP) ;
       // l'agenda passé, sous le pli, suit dans la tâche d'après l'image, ses saisons glissant depuis l'endroit où elles sont
       const dessine = (anime = true) => {
-        const faire = () => { recompte(); liste.innerHTML = listeProchaines(); majOutils(); };
+        const faire = () => { recompte(); filtrerListe(liste); majOutils(); };
         if (anime && MV) MV.flip(liste, faire, { cle: '[data-mv-cle]' }); else faire();
         // la carte et la frise de la saison suivent à l'image d'après (le geste se peint d'abord) ; l'agenda passé, sous le pli,
         // dans une tâche encore après, ses saisons glissant depuis l'endroit où elles sont
