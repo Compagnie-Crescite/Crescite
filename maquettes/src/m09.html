@@ -956,8 +956,8 @@ html:not(.ed-actif) .cd-tel.vide{display:none}
   .fiche:not(.deja) .ouv-motif{animation:motif 1.2s var(--ease) both .1s}
   .fiche:not(.deja) .ouv-haut,.fiche:not(.deja) .ouv-signe,.fiche:not(.deja) .ouv-sur,.fiche:not(.deja) .ouv-sous,.fiche:not(.deja) .ouv-cta{animation:entree .42s var(--ease) both .1s}
   .fiche:not(.deja) .ouv-sous,.fiche:not(.deja) .ouv-cta{animation-delay:.2s}
-  .fiche:not(.deja) .ouv-titre .l{animation:lettre .42s var(--ease) both;animation-delay:calc(.04s + min(var(--i), 24) * 16ms)}
-  .fiche:not(.deja) .ouv-accroche .m{animation:mot .36s var(--ease) both;animation-delay:calc(.22s + min(var(--j) * 12ms, .4s))}
+  .fiche:not(.deja) .ouv-titre .l{animation:lettre .36s var(--ease) both;animation-delay:calc(.04s + min(var(--i), 20) * 12ms)}
+  .fiche:not(.deja) .ouv-accroche .m{animation:mot .3s var(--ease) both;animation-delay:calc(.16s + min(var(--j) * 10ms, .24s))}
 }
 @keyframes onde{from{stroke-width:11;opacity:.6}to{stroke-width:54;opacity:0}}
 @keyframes entree{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
@@ -982,6 +982,11 @@ html{view-transition-name:none}
 ::view-transition-old(mv-partage){animation:.18s ease-out both chap-efface}
 ::view-transition-new(mv-partage){animation:.26s var(--courbe) both chap-pose}
 html[data-mv-transition="onglet"] .onglets .o-filet{view-transition-name:o-filet}
+/* ce qui reste fixe (l'en-tête, la progression, le sommaire) passe au-dessus de la photo qui voyage */
+html[data-mv-transition] .tete{view-transition-name:tete}
+html[data-mv-transition] .avance{view-transition-name:avance}
+html[data-mv-transition] .sommaire:not([hidden]){view-transition-name:sommaire}
+::view-transition-group(tete),::view-transition-group(avance),::view-transition-group(sommaire){animation-duration:.24s}
 ::view-transition-group(o-filet){animation-duration:.28s;animation-timing-function:var(--courbe)}
 @keyframes chap-efface{to{opacity:0}}
 @keyframes chap-pose{from{opacity:0}}

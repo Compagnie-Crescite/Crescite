@@ -1390,11 +1390,11 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const S = D.site, L = S.libelles, S0 = (S.saisons || [])[0] || { titre: '' }, E = entree('voir') || { href: '#/voir', texte: '' };
     return bandeau() + choix() + `
     <section class="sec" aria-labelledby="h-sp"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-sp" data-fit="sec">${esc(L.lesSpectacles)}</h2>
-      <ul class="tuiles">${D.shows.map(tuile).join('')}</ul></div></section>
+      <ul class="tuiles">${par(D.shows, 4).map(l => differer(() => l.map(tuile).join(''))).join('')}</ul></div></section>
     <section class="aff-sec sur-mag" aria-labelledby="h-aff">
       <div class="wrap aff-grille">
         <div class="aff-tete"><p class="lbl aff-sur">${esc(L.actuellementEnTournee)}</p><h2 class="aff-titre disp" id="h-aff" data-fit="aff">${esc(S0.titre)}</h2>${sep()}</div>
-        <div class="aff-carte">${affiche({ lieux: CARTE.aVenir(), titre: S0.titre, grand: true })}</div>
+        <div class="aff-carte">${differer(() => affiche({ lieux: CARTE.aVenir(), titre: S0.titre, grand: true }))}</div>
         <div class="aff-liste">
           <div data-agenda><ol class="prochaines">${D.dates.slice(0, 5).map(d => `<li class="pr" data-l="${d.l ?? ''}" data-date-id="${esc(d.id ?? '')}"><a href="${d.slug ? lienSp(d.slug, d.scolaire ? 'etablissement' : 'voir') : esc(E.href)}"><span class="pr-date">${esc(ligneDate(d))}</span><span class="pr-lieu">${esc(ligneLieu(d))}</span><span class="pr-titre">${titreTxt(d.titre)}</span>${d.scolaire ? `<span class="tag">${esc(L.scolaire)}</span>` : ''}</a></li>`).join('')}</ol></div>
           <a class="btn" href="${esc(E.href)}">${esc(E.texte)}${use('i-go')}</a>
@@ -1405,12 +1405,14 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   }
   function initAccueil() {
     bdCtl = initBandeau($('.bd', main));
-    const liste = $('.prochaines', main);
-    const ctl = initAffiche($('.aff', main), {
-      lignes: lignesAvenir, survol: l => eclairer(liste, l),
-      choix: l => { if (l != null) { filtreCommune = l; location.hash = (entree('voir') || {}).href || '#/voir'; } }
+    apres(() => {
+      const liste = $('.prochaines', main);
+      const ctl = initAffiche($('.aff', main), {
+        lignes: lignesAvenir, survol: l => eclairer(liste, l),
+        choix: l => { if (l != null) { filtreCommune = l; location.hash = (entree('voir') || {}).href || '#/voir'; } }
+      });
+      relier(liste, ctl);
     });
-    relier(liste, ctl);
   }
 
   /* ---------- les pages des trois entrées ---------- */
@@ -1518,6 +1520,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   let suites = null, attentes = null;
   const differer = f => { if (!suites) return f(); suites.push(f); return `<template data-suite="${suites.length - 1}"></template>`; };
   const apres = g => { if (attentes) attentes.push(g); else g(); };
+  const par = (l, n) => { const o = []; for (let i = 0; i < l.length; i += n) o.push(l.slice(i, i + n)); return o; };
   const etatVoir = { v: null };
   let AGV = null;
   const sansAnim = f => { const a = ANIM; ANIM = false; try { return f(); } finally { ANIM = a; } };
@@ -1761,14 +1764,14 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   function pageProgrammer() {
     const S = D.site, L = S.libelles, E = entree('programmer');
     return enteteEntree(E, '', contactHtml(null)) + `
-      <section class="sec" aria-labelledby="h-cat"><h2 class="sr" id="h-cat">${esc(L.lesSpectacles)}</h2><div class="wrap"><ul class="cat">${D.shows.map(ficheProg).join('')}</ul></div></section>
-      <section class="aff-sec sur-mag" aria-labelledby="h-diff"><div class="wrap aff-grille">
+      <section class="sec" aria-labelledby="h-cat"><h2 class="sr" id="h-cat">${esc(L.lesSpectacles)}</h2><div class="wrap"><ul class="cat">${D.shows.slice(0, 1).map(ficheProg).join('')}${par(D.shows.slice(1), 3).map(l => differer(() => l.map(ficheProg).join(''))).join('')}</ul></div></section>
+      <section class="aff-sec sur-mag" aria-labelledby="h-diff">${differer(() => `<div class="wrap aff-grille">
         <div class="aff-tete"><p class="lbl aff-sur"${ed('site.nom')}>${esc(S.nom)}</p><h2 class="aff-titre disp" id="h-diff" data-fit="aff">${esc(L.lieuxDiffusion)}</h2>${sep()}
           <div class="p-diff" id="p-diff"></div>
           <p class="aff-part"${ed('site.partenaires')}>${S.partenaires}</p>
           <a class="btn" href="${esc(S.ecrire.href)}">${esc(L.ecrire)}${use('i-go')}</a></div>
         <div class="aff-carte">${affiche({ passe: retenu('tout', () => CARTE.tout()), titre: L.lieuxDiffusion, grand: true })}</div>
-      </div></section>`;
+      </div>`)}</section>`;
   }
   const PILOTES = new Map(), FRISE_DE = new Map();
   const initCartes = () => { PILOTES.clear(); FRISE_DE.clear();
@@ -1782,7 +1785,8 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     if (wrap && f) FRISE_DE.set(wrap.id, f);
     return f;
   }
-  function initProgrammer() {
+  const initProgrammer = () => apres(initProgrammerSuite);
+  function initProgrammerSuite() {
     initCartes();
     const ks = saisonsConnues(), L = D.site.libelles;
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', anMin: 36,
@@ -1790,7 +1794,8 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).length, 0))) });
     frisesDiffusion(main);
   }
-  function initEtablissement() {
+  const initEtablissement = () => apres(initEtablissementSuite);
+  function initEtablissementSuite() {
     initCartes();
     const sco = D.dates.filter(d => d.scolaire), w = $('#e-sco .aff', main);
     if (sco.length) friseCarte($('#e-frise'), w, { echelle: 'periode', debut: `${D.aujourdhui.slice(0, 7)}-01`, points: sco.map(d => repereProchaine(d)), libelle: D.site.libelles.enEtablissement });
@@ -1818,15 +1823,15 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const petites = [1, 2, 3, 4].map(i => `actions-culturelles/g-${i}`).filter(k => D.photos[k]);
     return enteteEntree(E) + `
       <section class="sec" aria-label="${esc(E.court)}"><div class="wrap">${sep()}<p class="ecole-t"${ed('site.ecole.texte')}>${esc(S.ecole && S.ecole.texte)}</p></div></section>
-      ${groupes.map(([k, lab]) => { const l = D.shows.filter(s => s.actionCulturelle && s.actionCulturelle.lieu === k); return l.length ? `<section class="sec" aria-labelledby="h-ac-${k}"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-ac-${k}" data-fit="sec">${esc(lab)}</h2><ul class="acs">${l.map(carteAC).join('')}</ul></div></section>` : ''; }).join('')}
-      ${autres.length ? `<div class="sec"><div class="wrap"><ul class="acs">${autres.map(carteAC).join('')}</ul></div></div>` : ''}
+      ${groupes.map(([k, lab]) => { const l = D.shows.filter(s => s.actionCulturelle && s.actionCulturelle.lieu === k); return l.length ? `<section class="sec" aria-labelledby="h-ac-${k}"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-ac-${k}" data-fit="sec">${esc(lab)}</h2><ul class="acs">${par(l, 3).map(x => differer(() => x.map(carteAC).join(''))).join('')}</ul></div></section>` : ''; }).join('')}
+      ${autres.length ? `<div class="sec"><div class="wrap"><ul class="acs">${differer(() => autres.map(carteAC).join(''))}</ul></div></div>` : ''}
       <section class="sec sec--rose" aria-labelledby="h-actions"><div class="wrap act">
         <div>${sep()}<h2 class="sec-titre disp" id="h-actions" data-fit="sec"${ed('site.actions.titre')}>${esc(A.titre)}</h2><div class="prose">${(A.blocs || []).map((b, i) => `<div class="bloc"${ed(`site.actions.blocs.${i}`)}>${b}</div>`).join('')}</div></div>
         <figure class="act-ph">${imgSrc('actions-culturelles') ? `<div class="duo"><img src="${esc(imgSrc('actions-culturelles'))}" alt="${esc(A.titre)}"></div>` : ''}${petites.map(k => `<div class="duo duo--p"><img src="${esc(D.photos[k])}" alt="" loading="lazy"></div>`).join('')}${A.credit ? `<figcaption class="cr"${ed('site.actions.credit')}>${esc(A.credit)}</figcaption>` : ''}</figure>
       </div></section>
       ${sco.length ? `<section class="sec" id="e-sco" aria-labelledby="h-sco"><div class="wrap">${sep()}<h2 class="sec-titre disp" id="h-sco" data-fit="sec">${esc(L.enEtablissement)}</h2>
         <div class="frise-hote" id="e-frise"></div>
-        <div class="ag"><div class="ag-carte">${affiche({ lieux: CARTE.aVenir('scolaire'), titre: L.enEtablissement })}<div class="filtre" hidden></div></div>${listeMois(sco, { cle: 'etablissement' })}</div></div></section>` : ''}
+        <div class="ag">${differer(() => `<div class="ag-carte">${affiche({ lieux: CARTE.aVenir('scolaire'), titre: L.enEtablissement })}<div class="filtre" hidden></div></div>${listeMois(sco, { cle: 'etablissement' })}`)}</div></div></section>` : ''}
       ${cta()}`;
   }
 
@@ -2046,7 +2051,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
       <nav class="onglets" aria-label="${esc(s.titre)}"><div class="wrap"><ul>${(D.site.entrees || []).filter(e => e.cle !== 'etablissement' || s.actionCulturelle).map(e => `<li><a class="onglet" href="${lienSp(s.slug, e.cle)}"${e.cle === cle ? ' aria-current="page"' : ''}><span class="e-long">${esc(e.texte)}</span><span class="e-court">${esc(e.court)}</span>${use('i-go')}</a></li>`).join('')}</ul></div></nav>
       <div class="wrap sh-corps">
         <aside class="sommaire" aria-label="${esc(E ? E.court : s.titre)}"><ol>${C.filter(c => c.id).map(c => `<li><a href="#${c.id}" data-ch="${c.id}">${esc(c.label)}</a>${c.sous && c.sous.length ? `<ol>${c.sous.map(x => `<li><a href="#${x.id}" data-ch="${x.id}">${esc(x.label)}</a></li>`).join('')}</ol>` : ''}</li>`).join('')}</ol></aside>
-        <div class="chapitres">${C.map(c => c.html).join('')}</div>
+        <div class="chapitres">${C.map(c => differer(() => c.html)).join('')}</div>
       </div>
       ${cle !== 'voir' ? cta(s) : ''}
       ${nx && nx !== s ? `<a class="next u" href="${lienSp(nx.slug, cle)}" style="${uStyle(nx)}"><span class="wrap next-in"><span class="next-c"><span class="lbl next-sur">${esc(L.spectacles)}</span><span class="next-t" data-fit="next">${lignesTitre(nx).map(l => `<span>${esc(l)}</span>`).join(' ')}</span></span>${use('i-go', 'next-go')}</span></a>` : ''}
@@ -2054,7 +2059,8 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   }
   // le petit sommaire suit la lecture
   let obsSommaire = null;
-  function initShow() {
+  const initShow = () => apres(initShowSuite);
+  function initShowSuite() {
     initCartes();
     const hote = $('#u-tournee', main), slug = (location.hash.match(/spectacle\/([\w-]+)\//) || [])[1], s = slug && spectacle(slug);
     if (hote && s) {

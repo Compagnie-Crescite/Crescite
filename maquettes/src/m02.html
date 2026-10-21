@@ -1219,7 +1219,7 @@ html.ed-actif .ep-a::after{content:none}
     const E = CARTE.ENCART, encart = E && [...lieux, ...passe].some(x => x.encart) ? `<circle class="k-encart" cx="${E[0]}" cy="${E[1]}" r="24"/>` : '';
     return `<div class="k-carte${papier ? ' k-papier' : ''}" data-k="${id}">
       <svg class="k" viewBox="${VB.join(' ')}" role="${lieux.length ? 'group' : 'img'}" aria-label="${esc(titre)}">
-        <path class="k-voisin" d="${K.belgique || CARTE.fond.belgique}"/><path class="k-voisin" d="${K.luxembourg || CARTE.fond.luxembourg}"/><path class="k-pays" d="${K.contour || CARTE.fond.pays}"/>${encart}
+        <use class="k-voisin" href="#m02-belgique"/><use class="k-voisin" href="#m02-luxembourg"/><use class="k-pays" href="#m02-pays"/>${encart}
         <g class="k-passes">${passes}</g><g class="k-brass">${bras}</g>
         <circle class="k-rouen" cx="${RO[0]}" cy="${RO[1]}" r="6"/><text class="k-rouen-nom" x="${RO[0] + 9}" y="${RO[1] - 9}">Rouen</text>
         <g class="k-lieux">${points}</g><g class="k-noms" aria-hidden="true"></g>
@@ -2477,6 +2477,8 @@ html.ed-actif .ep-a::after{content:none}
   }
 
   /* ---------- démarrage ---------- */
+  // les contours (la France, la Belgique, le Luxembourg), écrits une seule fois : chaque carte les reprend par <use>
+  { const { K } = geo(); document.body.insertAdjacentHTML('beforeend', `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><path id="m02-pays" d="${K.contour || CARTE.fond.pays}"/><path id="m02-belgique" d="${K.belgique || CARTE.fond.belgique}"/><path id="m02-luxembourg" d="${K.luxembourg || CARTE.fond.luxembourg}"/></defs></svg>`); }
   polices();
   entete();
   pied();
