@@ -199,6 +199,28 @@ html.theme-bascule::view-transition-group(root), html.theme-bascule::view-transi
   --ed-fond:#f5f1ea;--ed-encre:#191414;--ed-accent:#a3202a;--ed-sur-accent:#f5f1ea;--ed-police:"DM Sans",system-ui,sans-serif;--ed-rayon:2px;--ed-trait:rgba(25,20,20,.3);--ed-ombre:rgba(25,20,20,.24);--ed-clair:#ff9a8f;
 }
 :root,.u{--rule:color-mix(in srgb,var(--ink) 15%,transparent);--rule-s:color-mix(in srgb,var(--ink) 34%,transparent)}
+/* ——— La nuit (règle 19, THEME) : le catalogue tiré sur papier noir ———
+   Le papier devient un noir chaud, l'encre un ivoire ; les filets restent des filets (l'encre à 15 et 34 %), l'aplat
+   s'inverse (l'ivoire sur le noir), le rouge du correcteur s'éclaire. Le pied et le contact gardent leur plaque d'encre,
+   plus profonde que la page. Les couleurs des spectacles sur le papier prennent leur couleur de scène (--c-*, --ct-*,
+   couleurs()), les univers clairs leur propre nuit (--n-*, univers()) ; les univers sombres restent eux-mêmes.
+   AA : encre 15,9:1, encre-2 7,6:1 sur le papier. */
+html[data-theme="jour"]{color-scheme:light}
+html[data-theme="nuit"]{color-scheme:dark;
+  --ivoire:#efe8dd;--encre:#0a0908;--encre-hover:#2b2624;
+  --paper:#141211;--paper2:#1e1b19;--ink:#efe8dd;--ink2:#b3a99e;
+  --acc:#efe8dd;--acc-s:#efe8dd;--aplat:#efe8dd;--sur-aplat:#141211;--lueur:transparent;
+  --rouge-ed:#ff9488;--ba-fond:#060505;--ivoire-45:rgba(239,232,221,.45);--foot-d:#b3a99e;
+  --tt-encre:#efe8dd;--tt-accent:#efe8dd;--tt-neutre:#efe8dd;
+  --ed-fond:#1e1b19;--ed-encre:#efe8dd;--ed-accent:#ff9488;--ed-sur-accent:#141211;--ed-trait:rgba(239,232,221,.3);--ed-ombre:rgba(0,0,0,.55);--ed-clair:#ff9a8f;
+  --lune:#f4d48c}
+/* un univers clair dans sa nuit : ses couleurs de D retournées (son texte, assombri, devient son fond), posées à côté des
+   siennes (--n-*) par styleU ; la page d'un spectacle, elle, prend sa nuit de theme() */
+html[data-theme="nuit"] .u.u-clair{--paper:var(--n-paper)!important;--paper2:var(--n-paper2)!important;--ink:var(--n-ink)!important;--ink2:var(--n-ink2)!important;
+  --acc:var(--n-acc)!important;--acc-s:var(--n-acc-s)!important;--aplat:var(--n-aplat)!important;--sur-aplat:var(--n-sur-aplat)!important}
+html[data-theme="nuit"] .btn{background:var(--aplat);color:var(--sur-aplat)}
+html[data-theme="nuit"] .btn:hover{background:var(--ink2)}
+html[data-theme="nuit"] .cd:not(.cd--s),html[data-theme="nuit"] .site-foot{box-shadow:0 0 0 1px var(--rule)}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;background:var(--paper);color-scheme:light}
 html.sombre{color-scheme:dark}
@@ -301,10 +323,14 @@ a:hover>.fl{transform:translateX(4px)}
 .som-e.revele .toc-link{transition:opacity .6s ease calc(var(--k,0) * 120ms + 80ms),transform .7s cubic-bezier(.2,.7,.2,1) calc(var(--k,0) * 120ms + 80ms)}
 
 /* L'aperçu : chaque calque a son fond (la teinte de l'entrée, ou l'univers du spectacle) */
-.pv{min-width:0;background:var(--paper2);border-left:1px solid var(--ink);transition:background-color var(--fade) ease}
+.pv{min-width:0;background:var(--pv-fond,var(--paper2));border-left:1px solid var(--ink);transition:background-color var(--fade) ease}
+html[data-theme="nuit"] .pv{background:var(--pv-fond-n,var(--pv-fond,var(--paper2)))}
 .pv-in{position:sticky;top:var(--hh);height:calc(100svh - var(--hh));min-height:560px;display:grid}
 .pv-layer{grid-area:1/1;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:16px;min-height:0;min-width:0;padding:34px var(--gx) 30px;opacity:0;visibility:hidden;transition:opacity .12s ease,visibility 0s linear .12s,transform .2s var(--mv-courbe)}
 .pv-layer.is-on{opacity:1;visibility:visible;z-index:1;transition:opacity var(--fade) ease,visibility 0s}
+.pv-layer.dort{content-visibility:hidden}
+/* (ce qui est loin sous le pli ne se recalcule pas tant qu'on n'y va pas : la bascule du jour et de la nuit reste brève) */
+#v-tournee,.site-foot{content-visibility:auto;contain-intrinsic-size:auto 900px}
 .pv-e{background:linear-gradient(var(--e,var(--ink)),var(--e,var(--ink))) 0 0/100% 4px no-repeat,color-mix(in srgb,var(--e) 10%,var(--paper))}
 .pv-u{background:linear-gradient(var(--acc,var(--ink)),var(--acc,var(--ink))) 0 0/100% 4px no-repeat,radial-gradient(90% 70% at 85% 10%,var(--lueur),transparent 70%) var(--paper)}
 .pv-media{position:relative;z-index:1;flex:1 1 0;min-height:180px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.95fr);grid-template-rows:minmax(0,1fr);gap:22px}
@@ -1051,6 +1077,200 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
 .ep:is(:hover,:focus-visible) .tt{background-size:100% 3px}
 .ep:is(:hover,:focus-visible) .toc-fl{transform:translateX(6px)}
 
+/* ——— Le jour et la nuit (règle 19, THEME) : un rond d'encre au bout de l'en-tête, après le menu second ; la nuit, la lune
+   s'y allume. Au téléphone, à côté du bouton du menu. ——— */
+.tete{grid-template-columns:auto minmax(0,1fr) auto auto}
+.theme-m08{display:inline-grid;place-items:center;width:44px;height:44px;flex:none;border:1px solid var(--rule-s);border-radius:50%;color:var(--ink);font-size:1rem;transition:border-color .2s ease,background-color .2s ease}
+.theme-m08:hover{border-color:var(--ink)}
+html[data-theme="nuit"] .theme-m08{color:var(--lune)}
+.theme-m08.mv-presse{background:var(--ink);color:var(--paper);border-color:var(--ink);transition:none}
+
+/* ——— Réserver une date (règle 17, RESERVER) : la bande des dates comme une ligne de sommaire, la carte comme une fiche ———
+   Chaque date est une entrée : le jour en grand dans la police du spectacle, la semaine et le mois en petites capitales,
+   les heures en gras, la commune. La date choisie prend l'aplat de l'univers, et sa fiche se compose dessous. */
+.rs-zone{margin:0 0 34px}
+.rs-k-bande{margin-bottom:12px}
+.rs-zone .rs-bande{gap:0;padding:9px 0 12px;background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 3px no-repeat,linear-gradient(var(--ink),var(--ink)) 0 6px/100% 1px no-repeat;scroll-padding-inline:0;scrollbar-width:thin;scrollbar-color:var(--rule-s) transparent}
+.rs-date{position:relative;gap:5px;min-height:44px;transition:background-color .2s ease,color .2s ease}
+.rs-zone .rs-date{min-width:158px;max-width:220px;padding:14px 18px 16px;border-right:1px solid var(--rule)}
+.rs-q{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 7px;font:600 .71875rem/1.25 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.rs-n{font:var(--titre-w,400) calc(2.15rem * var(--titre-k,1))/1 var(--titre,var(--serif));letter-spacing:-.01em;text-transform:none;color:var(--ink)}
+.rs-h{font:600 1.0625rem/1.3 var(--sans);color:var(--ink)}
+.rs-h--sans{font-weight:400;font-size:.9375rem;color:var(--ink2)}
+.rs-o{font:400 .875rem/1.35 var(--sans);color:var(--ink2);overflow-wrap:anywhere}
+.rs-zone .rs-date:hover{background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.rs-zone .rs-date[aria-pressed="true"]{background:var(--aplat);color:var(--sur-aplat)}
+.rs-date[aria-pressed="true"] :is(.rs-q,.rs-n,.rs-h,.rs-o){color:inherit}
+.rs-zone .rs-date[aria-pressed="true"]::after{content:"";position:absolute;left:24px;bottom:-6px;width:12px;height:12px;background:var(--aplat);transform:rotate(45deg)}
+.rs-date:focus-visible{outline:2px solid var(--ink);outline-offset:-5px}
+.rs-date[aria-pressed="true"]:focus-visible{outline-color:var(--sur-aplat)}
+.rs-date.mv-presse{background:var(--ink);color:var(--paper);transition:none}
+/* la fiche de la date choisie */
+.rs-carte{background:var(--paper2);color:var(--ink)}
+.rs-zone .rs-carte{border-top:3px solid var(--aplat)}
+.rs-carte:empty{display:none}
+.rs-photo{width:46%;opacity:.2;-webkit-mask-image:linear-gradient(90deg,transparent,#000 70%);mask-image:linear-gradient(90deg,transparent,#000 70%)}
+.rs-c{position:relative;display:flex;flex-direction:column;gap:14px;padding:26px clamp(18px,3vw,30px) 28px}
+.rs-sp{position:relative;padding-bottom:12px;font:var(--titre-w,400) calc(var(--t3) * var(--titre-k,1))/1.12 var(--titre,var(--serif));letter-spacing:-.005em;text-wrap:balance}
+.rs-sp::after{content:"";position:absolute;left:0;bottom:0;width:72px;height:3px;background:var(--acc);transform-origin:left}
+.rs-sp a{text-decoration:none}
+.rs-sp a:hover{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.18em}
+.rs-quand{font:400 var(--t4)/1.3 var(--serif)}
+.rs-etat{font:italic 400 1rem var(--sans);color:var(--ink2)}
+.rs-ou{display:flex;flex-direction:column;gap:2px}
+.rs-lieu{font-weight:600}
+.rs-commune{color:var(--ink2)}
+.rs-det{display:flex;flex-direction:column;gap:2px;font-size:.9375rem;color:var(--ink2)}
+.rs-k{display:block;margin-bottom:8px;font:600 .75rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+.rs-seances--sans .rs-k{display:inline;margin:0 8px 0 0}
+.rs-liste{gap:10px}
+.rs-seance{min-height:44px;padding:8px 16px;border:1px solid var(--rule-s);text-decoration:none;align-items:center}
+a.rs-seance{border-color:var(--ink)}
+a.rs-seance:hover{background:var(--ink);color:var(--paper)}
+.rs-seance.mv-presse{background:var(--ink);color:var(--paper);transition:none}
+.rs-sh{font:600 1.25rem/1 var(--sans);letter-spacing:.01em}
+.rs-sj{font:600 .75rem/1 var(--sans);letter-spacing:.1em;text-transform:uppercase}
+.rs-scol{font:italic 400 .875rem var(--sans)}
+.rs-seance.est-scolaire{border-style:dashed;color:var(--ink2)}
+.rs-sans{color:var(--ink2)}
+/* « Réserver » : le geste évident de la fiche, sur toute sa largeur, dans l'aplat de l'univers */
+.rs-action{margin-top:6px}
+.rs-reserver{display:flex;justify-content:space-between;gap:18px;width:100%;min-height:64px;padding:16px 22px;background:var(--aplat);color:var(--sur-aplat);transition:transform .2s var(--mv-courbe)}
+.rs-r1{font:400 calc(1.7rem * var(--titre-k,1))/1.05 var(--titre,var(--serif));font-weight:var(--titre-w,400)}
+.rs-r2{margin-top:6px;font:500 .875rem/1.35 var(--sans)}
+.rs-reserver .rs-fleche{width:30px;height:30px;transition:transform .25s var(--mv-courbe)}
+.rs-reserver:hover .rs-fleche{transform:translate(3px,-3px)}
+.rs-reserver:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.rs-reserver.mv-presse{transform:scale(.985);transition:none}
+.rs-aupres{display:flex;flex-wrap:wrap;gap:4px 8px;padding:14px 0 0;border-top:1px solid var(--rule-s);font-size:1.0625rem}
+/* l'ancienne fiche qui cède la place (l'aperçu qui se relaie), la nouvelle qui se compose ligne à ligne (effetReserver) */
+.rs-ancien{position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--paper2);animation:rs-relais .16s ease-out forwards}
+.rs-compose .rs-c>*{--rs-i:0;animation:rs-ligne .24s var(--mv-courbe) backwards;animation-delay:calc(70ms + var(--rs-i) * 44ms)}
+.rs-compose .rs-c>:nth-child(2){--rs-i:1}
+.rs-compose .rs-c>:nth-child(3){--rs-i:2}
+.rs-compose .rs-c>:nth-child(4){--rs-i:3}
+.rs-compose .rs-c>:nth-child(5){--rs-i:4}
+.rs-compose .rs-c>:nth-child(n+6){--rs-i:5}
+.rs-compose .rs-sp::after{animation:rs-filet .32s var(--mv-courbe) 190ms backwards}
+.rs-compose .rs-photo{animation:rs-pose .34s var(--mv-courbe) 70ms backwards}
+.rs-compose.rs-ouvre{animation:rs-ouvre .24s var(--mv-courbe)}
+.rs-compose.rs-ouvre .rs-c>*{animation-delay:calc(40ms + var(--rs-i) * 44ms)}
+@keyframes rs-ligne{from{opacity:0;transform:translateY(8px)}}
+@keyframes rs-filet{from{transform:scaleX(0)}}
+@keyframes rs-pose{from{opacity:0;transform:translateY(10px)}}
+@keyframes rs-ouvre{from{opacity:0;transform:translateY(-8px)}}
+@keyframes rs-relais{to{opacity:0;transform:translateY(-6px)}}
+.rs-ici .rs-ancien{background:var(--paper)}
+/* « Je viens voir un spectacle » : la date d'une ligne réservable est un bouton ; sa fiche s'ouvre sous la ligne */
+.rs-date--ligne{align-self:start;width:100%;padding:10px 30px 11px 12px;margin:-10px 0 0 -12px;border:1px solid transparent;border-left:3px solid var(--c,var(--ink))}
+.rs-date--ligne .rs-q{gap:0 6px}
+.rs-date--ligne .rs-n{font-size:var(--t3);font-family:var(--serif);font-weight:400;line-height:1.05}
+.rs-date--ligne::after{content:"";position:absolute;right:12px;top:22px;width:8px;height:8px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .25s var(--mv-courbe)}
+.rs-date--ligne:hover{border-color:var(--rule-s);border-left-color:var(--c,var(--ink));background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.rs-date--ligne[aria-pressed="true"]{background:var(--rs-aplat,var(--aplat));color:var(--rs-sur,var(--sur-aplat));border-color:var(--rs-aplat,var(--aplat))}
+html[data-theme="nuit"] .rs-date--ligne[aria-pressed="true"]{background:var(--rs-aplat-n,var(--aplat));color:var(--rs-sur-n,var(--sur-aplat));border-color:var(--rs-aplat-n,var(--aplat))}
+.rs-date--ligne[aria-pressed="true"]::after{transform:translateY(4px) rotate(225deg)}
+.rs-ici{grid-column:1/-1;margin:8px 0 2px}
+.rs-ici .rs-carte,.rs-carte.rs-ici{background:var(--paper)}
+.rs-ici .rs-c{padding:22px clamp(16px,2.6vw,26px) 24px}
+
+/* ——— Les vidéos, lues dans la page (règle 18, LECTEUR) : la planche de la bande-annonce ——— */
+.lc-08 .lc-cadre{background:var(--ba-fond)}
+.lc-08 .lc-affiche{opacity:.6;transition:opacity .35s ease,transform .8s var(--mv-courbe)}
+.lc-08 .lc-lire:is(:hover,:focus-visible) .lc-affiche{opacity:.46;transform:scale(1.025)}
+.lc .lc-icone{width:78px;height:78px;background:transparent;border:2px solid #fff;color:#fff;box-shadow:0 0 0 10px color-mix(in srgb,var(--acc) 38%,transparent)}
+.lc .lc-icone svg{width:34%;height:34%;margin-left:4px}
+.lc-08 .lc-lire:focus-visible{outline:3px solid #fff;outline-offset:-6px}
+.lc-08 .lc-titre{left:26px;right:26px;bottom:22px;font:var(--titre-w,400) calc(var(--t3) * var(--titre-k,1))/1.2 var(--titre,var(--serif));color:#fff;text-shadow:0 1px 14px rgba(0,0,0,.55);text-wrap:balance}
+.lc-outils{gap:10px;margin-top:12px}
+.lc-b{min-height:44px;padding:8px 16px;border:1px solid var(--ink);font:600 .875rem/1 var(--sans);letter-spacing:.02em;transition:background-color .2s ease,color .2s ease}
+.lc-b:hover,.lc-b.mv-presse{background:var(--ink);color:var(--paper)}
+.lc.lc-eteint .lc-nuit-b{background:var(--aplat);border-color:var(--aplat);color:var(--sur-aplat)}
+.lc.lc-eteint .lc-cadre{box-shadow:0 0 0 1px var(--ivoire-45)}
+.lc-nuit{background:rgba(10,8,8,.93)}
+.lc-groupe{margin-top:38px}
+.lc-g-t{padding-top:12px;border-top:1px solid var(--ink)}
+.lc-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:26px 22px}
+.lc-petit .lc-icone{width:54px;height:54px;box-shadow:0 0 0 6px color-mix(in srgb,var(--acc) 38%,transparent)}
+.lc-08.lc-petit .lc-titre{left:16px;right:16px;bottom:12px;font:600 .9375rem/1.3 var(--sans);letter-spacing:0}
+.lc-petit .lc-b{padding:8px 12px;font-size:.8125rem}
+/* la boîte (le catalogue) : la vidéo sur le papier de son univers, de jour comme de nuit */
+.lc-boite-in{padding:12px 12px 14px;background:var(--paper);color:var(--ink)}
+html[data-theme="nuit"] .lc-boite-in[style*="--n-paper"]{--paper:var(--n-paper)!important;--paper2:var(--n-paper2)!important;--ink:var(--n-ink)!important;--ink2:var(--n-ink2)!important;--acc:var(--n-acc)!important;--aplat:var(--n-aplat)!important;--sur-aplat:var(--n-sur-aplat)!important}
+.lc-boite .lc-titre{left:20px;right:20px;bottom:16px;font:400 var(--t4)/1.25 var(--serif);color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.55)}
+.lc-boite .lc-affiche{opacity:.62}
+.lc-boite .lc-cadre{background:var(--ba-fond)}
+.lc-fermer{margin-bottom:12px}
+.lc-boite.lc-boite--nuit .lc-boite-in{background:var(--ba-fond);color:var(--ivoire)}
+.lc-boite.lc-boite--nuit .lc-b{border-color:var(--ivoire-45)}
+button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
+
+/* ——— La troupe (règle 20, TROUPE) : l'index raisonné et sa planche hors-texte ——— */
+.troupe-08{position:relative;--troupe-lien:var(--rouge-ed);--troupe-ventouse-fond:var(--paper);--troupe-ic-fond:var(--paper)}
+.troupe-08>.pg-head,.troupe-08>.pg-body{position:relative;z-index:2}
+.tr8-planche{position:relative;max-width:440px;margin:30px 0 0;padding:22px 20px 0;background:var(--paper2);box-shadow:inset 0 0 0 1px var(--rule-s),inset 0 0 0 6px var(--paper2),inset 0 0 0 7px var(--rule);container-type:inline-size}
+.tr8-emb{display:block;width:58px;height:58px;margin:0 auto 14px}
+.tr8-emb svg{display:block;width:100%;height:100%}
+.tr8-groupe{display:flex;flex-direction:column;align-items:center;padding:0 4px}
+.tr8-rang{position:relative;z-index:var(--r);display:flex;justify-content:center;width:100%}
+.tr8-rang+.tr8-rang{margin-top:calc(100cqi / var(--k) * -.2)}
+.tr8-f{position:relative;flex:none;width:calc((100cqi - 30px) / var(--k));aspect-ratio:4/5;margin:0 -1px;border:3px solid var(--paper2);background:var(--paper);cursor:pointer;transition:transform .3s var(--mv-courbe),opacity .3s ease}
+.tr8-f img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1) contrast(1.06);transition:filter .3s ease}
+.tr8-rang:nth-child(even) .tr8-f:nth-child(odd){transform:translateY(4%)}
+.tr8-planche.est-allume .tr8-f:not(.est-allume){opacity:.4}
+.tr8-f.est-allume{z-index:5;transform:translateY(-7%) scale(1.07)}
+.tr8-f.est-allume img{filter:none}
+.tr8-f.est-allume::after{content:"";position:absolute;left:-3px;right:-3px;bottom:-9px;height:3px;background:var(--rouge-ed)}
+.tr8-leg{display:grid;min-height:76px;margin:0 -20px;padding:14px 20px 16px;border-top:1px solid var(--rule)}
+.tr8-leg-in{grid-area:1/1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tr8-leg-nom{font:400 var(--t4)/1.2 var(--serif)}
+.tr8-leg-m{font:600 .6875rem/1.45 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink2)}
+.tr8-index{display:flex;flex-direction:column;gap:46px}
+.tr8-cat{position:relative;z-index:2}
+.tr8-t{position:relative;display:flex;align-items:center;gap:14px;padding-top:16px;margin-bottom:10px;font:400 var(--t3)/1.15 var(--serif);text-wrap:balance}
+.tr8-t::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;border-top:3px solid var(--ink);border-bottom:1px solid var(--ink);transform-origin:left}
+.tr8-ic{flex:none;display:grid;place-items:center;width:46px;height:46px;border:1px solid var(--rule-s);border-radius:50%;color:var(--ink)}
+.tr8-ic .troupe-icone{width:30px;height:30px}
+.tr8-cat.est-allume .tr8-ic{border-color:var(--rouge-ed);color:var(--rouge-ed)}
+.tr8-places{display:flex;flex-direction:column}
+.tr8-jeu .tr8-places{display:block;columns:2;column-gap:28px}
+.tr8-jeu .tr8-places>li{break-inside:avoid}
+.tr8-places>li{min-width:0;border-bottom:1px solid var(--rule)}
+.tr8-place{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:7px 8px 7px 0;text-align:left;transition:opacity .25s ease,background-color .25s ease}
+.tr8-v{flex:none;width:38px;height:47px;overflow:hidden;background:var(--paper2)}
+.tr8-v img{width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1);transition:filter .3s ease}
+.tr8-pt{flex:none;width:7px;height:7px;margin:0 4px;background:var(--ink);transition:transform .25s var(--mv-courbe),background-color .2s ease}
+.tr8-ligne{flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:12px}
+.tr8-nom{flex:0 1 auto;min-width:0;font:400 1.1875rem/1.25 var(--serif)}
+.tr8-nom .tt{--c:var(--rouge-ed)}
+.tr8-lead{flex:1 1 auto;min-width:20px;transform:translateY(-.32rem);transform-origin:left}
+.tr8-place .tr8-lead{height:0;border-bottom:1px dotted var(--rule-s);background:none}
+.tr8-m{flex:0 1 auto;min-width:0;font:600 .71875rem/1.4 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);text-align:right}
+.tr8-place:is(:hover,:focus-visible) .tt,.tr8-place.est-allume .tt,.tr8-place[aria-pressed="true"] .tt{background-size:100% 3px}
+.troupe-08.est-allume .tr8-place:not(.est-allume){opacity:.45}
+.tr8-place.est-allume{background:linear-gradient(90deg,color-mix(in srgb,var(--rouge-ed) 12%,transparent),transparent 80%)}
+.tr8-place.est-allume .tr8-v img,.tr8-place:hover .tr8-v img{filter:none}
+.tr8-place.est-allume .tr8-pt{background:var(--rouge-ed);transform:rotate(45deg) scale(1.25)}
+.tr8-place[aria-pressed="true"] .tr8-nom{color:var(--ink)}
+.tr8-place[aria-pressed="true"] .tr8-v{box-shadow:0 0 0 2px var(--rouge-ed)}
+.tr8-place:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.tr8-place.mv-presse{background:color-mix(in srgb,var(--rouge-ed) 18%,transparent);transition:none}
+/* au défilement, l'index se compose : le double filet se tire, chaque ligne se pose, les points de conduite courent */
+@media (prefers-reduced-motion:no-preference){
+  @supports (animation-timeline:view()){
+    html:not(.m8-fixe):not(.ed-actif) .tr8-cat{view-timeline:--tr8c block}
+    html:not(.m8-fixe):not(.ed-actif) .tr8-t::before{animation:tr8-filet linear both;animation-timeline:--tr8c;animation-range:entry 0% entry 60%}
+    html:not(.m8-fixe):not(.ed-actif) .tr8-places>li{animation:tr8-ligne linear both;animation-timeline:view();animation-range:entry 5% cover 30%}
+    html:not(.m8-fixe):not(.ed-actif) .tr8-place .tr8-lead{animation:tr8-points linear both;animation-timeline:view();animation-range:entry 30% cover 40%}
+  }
+}
+@keyframes tr8-filet{from{transform:scaleX(0)}to{transform:none}}
+@keyframes tr8-ligne{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes tr8-points{from{transform:translateY(-.32rem) scaleX(0)}to{transform:translateY(-.32rem) scaleX(1)}}
+@media (max-width:1100px){
+  .tr8-jeu .tr8-places{columns:1}
+}
+
 @media (max-width:1279px){
   .ateliers{grid-template-columns:minmax(0,1fr)}
 }
@@ -1181,6 +1401,29 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
   .prog th[scope="row"],.prog td{padding:9px 8px}
   table.prog{font-size:.875rem}
   .carton{margin:-18px 10px 0}
+}
+
+/* (au téléphone : le bouton du jour et de la nuit à côté de celui du menu ; la troupe en une colonne) */
+@media (max-width:859px){
+  .tete{grid-template-columns:auto minmax(0,1fr) auto auto}
+  .theme-m08{grid-column:3}
+  .menu-btn{grid-column:4}
+  .tr8-planche{max-width:none;margin-top:22px}
+  .tr8-index{padding-top:34px}
+  .tr8-jeu .tr8-places{columns:1}
+  .tr8-ligne{flex-wrap:wrap;row-gap:2px}
+  .tr8-place .tr8-lead{display:none}
+  .tr8-m{flex-basis:100%;text-align:left}
+  .rs-zone .rs-date{min-width:142px;padding:12px 14px 14px}
+  .rs-reserver{padding:14px 16px}
+  .rs-r1{font-size:calc(1.45rem * var(--titre-k,1))}
+  .rs-photo{width:60%;opacity:.14}
+  .lc-grille{grid-template-columns:minmax(0,1fr)}
+  .lc .lc-icone{width:62px;height:62px}
+  .lc-08 .lc-titre{left:18px;right:18px;bottom:14px;font-size:var(--t4)}
+}
+@media (max-width:599px){
+  .rs-date--ligne{margin:0;padding-right:34px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}
@@ -5961,6 +6204,12 @@ const TENTACULES = (() => {
   // le mouvement (MOUVEMENT) et les frises (FRISE), outils communs ; sans eux, la maquette reste entière, immobile
   const MV = typeof MOUVEMENT !== 'undefined' ? MOUVEMENT : null, FR = typeof FRISE !== 'undefined' ? FRISE : null;
   const motionOK = () => (MV ? MV.permis() : CARTE.mouvement());
+  // réserver une date (RESERVER, règle 17), les vidéos dans la page (LECTEUR, règle 18), la troupe (TROUPE, règle 20)
+  const RS = typeof RESERVER !== 'undefined' ? RESERVER : null, LC = typeof LECTEUR !== 'undefined' ? LECTEUR : null, TR = typeof TROUPE !== 'undefined' ? TROUPE : null;
+  const COUPE = (() => { try { return new URLSearchParams(location.search).get('anim') === '0'; } catch (e) { return false; } })();
+  // (moins d'animations, ou ?anim=0 : les animations liées au défilement de la troupe s'arrêtent aussi, html.m8-fixe)
+  const fixeHtml = () => document.documentElement.classList.toggle('m8-fixe', !motionOK());
+  fixeHtml(); if (window.matchMedia) { const mq = matchMedia('(prefers-reduced-motion: reduce)'); if (mq.addEventListener) mq.addEventListener('change', fixeHtml); }
   const COURBE = 'cubic-bezier(.22, .8, .24, 1)';
   // le visible d'abord : ce qui est sous le pli se dessine dans les tâches qui suivent l'image (chacune courte)
   const ensuite = f => requestAnimationFrame(() => setTimeout(f, 0));
@@ -6071,6 +6320,10 @@ const TENTACULES = (() => {
   }
   const meilleur = (fond, cs) => cs.filter(hex6).sort((a, b) => contraste(b, fond) - contraste(a, fond))[0];
   const ECHELLE = { 'Anton': .9, 'Space Grotesk': .9, 'Ubuntu': .92, 'Cormorant Garamond': 1.1, 'Bodoni Moda': .94, 'Grenze Gotisch': 1, 'IM Fell English': 1.02, 'IM Fell French Canon': .98 };
+  // la nuit (règle 19) : le papier de nuit (--paper de html[data-theme="nuit"]) ; un mélange de deux couleurs
+  const NUIT = '#141211';
+  const melange = (a, b, t) => versHex(rgb(a).map((v, i) => v * (1 - t) + rgb(b)[i] * t));
+  const nuitMise = () => typeof THEME !== 'undefined' && THEME.actuel() === 'nuit';
   function univers(s) {
     const u = s.univers || {}, c = u.couleurs || s.palette || {}, p = u.polices || {};
     const fond = hex6(c.fond) || IVOIRE, clair = lum(fond) > .4;
@@ -6079,24 +6332,53 @@ const TENTACULES = (() => {
     const vifs = [c.accent, c.accent2, c.scene].filter(hex6);
     const titre = vifs.find(x => contraste(x, fond) >= 3) || texte;        // titres, filets, motifs
     const aplat = vifs.find(x => contraste(x, fond) >= 1.5) || texte;      // les grands aplats
+    const police = p.titre ? `'${String(p.titre).replace(/['"<>]/g, '')}',var(--serif)` : 'var(--serif)', graisse = +p.titreGraisse || 400, k = ECHELLE[p.titre] || 1;
+    // un univers clair invente sa nuit dans ses couleurs de D : son texte, assombri dans le papier de nuit, devient son fond,
+    // son fond devient son texte ; le titre, la première couleur vive qui reste AA (en petit comme en grand)
+    let nuit = null;
+    if (clair) {
+      const nf = melange(texte, NUIT, .55), nf2 = melange(texte, NUIT, .35);
+      const nt = contraste(fond, nf) >= 7 && contraste(fond, nf2) >= 7 ? fond : '#efe8dd', nt2 = lisible(melange(fond, hex6(c.texte2) || texte, .25), nf2, 4.6);
+      const nTitre = vifs.find(x => contraste(x, nf) >= 4.6 && contraste(x, nf2) >= 4.6) || vifs.find(x => contraste(x, nf) >= 3) || nt;
+      const nAplat = vifs.find(x => contraste(x, nf) >= 1.5) || nt;
+      nuit = { fond: nf, fond2: nf2, texte: nt, texte2: nt2, titre: nTitre, petit: lisible(nTitre, nf2, 4.6), aplat: nAplat,
+        surAplat: meilleur(nAplat, [nf, nf2, nt, '#ffffff', '#141414']), lueur: c.lueur || 'transparent', clair: false, police, graisse, k };
+    }
     return { fond, fond2: hex6(c.fond2) || fond, texte, texte2, titre, petit: lisible(titre, fond, 4.6), aplat,
-      surAplat: meilleur(aplat, [c.fond2, fond, texte, '#ffffff', '#141414']), lueur: c.lueur || 'transparent', clair,
-      police: p.titre ? `'${String(p.titre).replace(/['"<>]/g, '')}',var(--serif)` : 'var(--serif)', graisse: +p.titreGraisse || 400, k: ECHELLE[p.titre] || 1 };
+      surAplat: meilleur(aplat, [c.fond2, fond, texte, '#ffffff', '#141414']), lueur: c.lueur || 'transparent', clair, nuit, police, graisse, k };
   }
   const varsU = v => `--paper:${v.fond};--paper2:${v.fond2};--ink:${v.texte};--ink2:${v.texte2};--acc:${v.titre};--acc-s:${v.petit};--aplat:${v.aplat};--sur-aplat:${v.surAplat};--lueur:${v.lueur};--titre:${v.police};--titre-w:${v.graisse};--titre-k:${v.k}`;
-  const styleU = s => varsU(univers(s));
-  // un spectacle sur l'ivoire : sa couleur (lisible), sa police de titre
-  const styleIvoire = s => { const v = univers(s), c = s.couleur || v.titre; return `--c:${lisible(c, IVOIRE, 3)};--ct:${lisible(c, IVOIRE, 4.6)};--tf:${v.police};--tw:${v.graisse};--tk:${v.k}`; };
-  const THEME = ['--paper', '--paper2', '--ink', '--ink2', '--acc', '--acc-s', '--aplat', '--sur-aplat', '--lueur', '--titre', '--titre-w', '--titre-k'];
-  // la page d'un spectacle prend son univers, en-tête compris ; les entrées gardent leur couleur, lisible sur ce fond
+  // (un univers clair porte aussi sa nuit, --n-*, que html[data-theme="nuit"] .u.u-clair prend sans refaire la vue)
+  const varsN = v => v.nuit ? `;--n-paper:${v.nuit.fond};--n-paper2:${v.nuit.fond2};--n-ink:${v.nuit.texte};--n-ink2:${v.nuit.texte2};--n-acc:${v.nuit.titre};--n-acc-s:${v.nuit.petit};--n-aplat:${v.nuit.aplat};--n-sur-aplat:${v.nuit.surAplat}` : '';
+  const styleU = s => { const v = univers(s); return varsU(v) + varsN(v); };
+  const clairU = s => (univers(s).clair ? ' u-clair' : '');
+  // un spectacle sur le papier : sa couleur (lisible, de jour comme de nuit : couleurs()), sa police de titre
+  const slugSur = slug => typeof slug === 'string' && /^[a-z0-9-]+$/.test(slug);
+  const styleIvoire = s => { const v = univers(s); return `--c:var(--c-${slugSur(s.slug) ? s.slug : 'x'}, var(--ink));--ct:var(--ct-${slugSur(s.slug) ? s.slug : 'x'}, var(--ink));--tf:${v.police};--tw:${v.graisse};--tk:${v.k}`; };
+  const feuilleCouleurs = document.head.appendChild(document.createElement('style'));
+  function couleurs() {
+    const jour = [], nuit = [];
+    shows().forEach(s => { if (!slugSur(s.slug)) return; const v = univers(s), c = s.couleur || v.titre;
+      jour.push(`--c-${s.slug}:${lisible(c, IVOIRE, 3)};--ct-${s.slug}:${lisible(c, IVOIRE, 4.6)}`);
+      nuit.push(`--c-${s.slug}:${lisible(c, NUIT, 3)};--ct-${s.slug}:${lisible(c, NUIT, 4.6)}`); });
+    const css = `:root{${jour.join(';')}}html[data-theme="nuit"]{${nuit.join(';')}}`;
+    if (feuilleCouleurs.textContent !== css) feuilleCouleurs.textContent = css;
+  }
+  const VARS_U = ['--paper', '--paper2', '--ink', '--ink2', '--acc', '--acc-s', '--aplat', '--sur-aplat', '--lueur', '--titre', '--titre-w', '--titre-k'];
+  // la page d'un spectacle prend son univers, en-tête compris (la nuit d'un univers clair, la nuit) ; les entrées gardent leur
+  // couleur, lisible sur ce fond ; refaite quand le thème change (THEME.surChangement)
+  let themeSp = null;
   function theme(s) {
-    const html = document.documentElement, st = html.style, v = s ? univers(s) : null;
-    THEME.forEach(k => st.removeProperty(k));
+    themeSp = s || null;
+    const html = document.documentElement, st = html.style, nuit = nuitMise(), v0 = s ? univers(s) : null, v = v0 && nuit && v0.nuit ? v0.nuit : v0;
+    VARS_U.forEach(k => st.removeProperty(k));
     if (v) varsU(v).split(';').forEach(d => { const i = d.indexOf(':'); st.setProperty(d.slice(0, i), d.slice(i + 1)); });
-    const fond = v ? v.fond : IVOIRE, clair = lum(fond) > .4;
-    entrees().forEach(e => st.setProperty(`--ent-${e.cle}`, lisible(clair ? e.couleur : (e.couleurVive || e.couleur), fond, 4.6)));
+    const fond = v ? v.fond : nuit ? NUIT : IVOIRE, clair = lum(fond) > .4;
+    // (5,2:1 sur le fond : l'onglet courant d'un spectacle pose sa couleur sur un fond teinté d'elle, où elle reste AA)
+    entrees().forEach(e => st.setProperty(`--ent-${e.cle}`, lisible(clair ? e.couleur : (e.couleurVive || e.couleur), fond, 5.2)));
     html.classList.toggle('sombre', !!v && !v.clair);
   }
+  if (typeof THEME !== 'undefined') THEME.surChangement(() => theme(themeSp));
 
   /* ——— Les motifs : arène, jumeaux, annotations, paperboard, nez, horloge, fil, chronologie ——— */
   const RAD = Math.PI / 180;
@@ -6278,7 +6560,7 @@ const TENTACULES = (() => {
   const cleProchaine = d => cleBase(d) || `p|${d.slug || d.titre}|${d.iso}|${d.l}`;
   const cleLigne = (d, saison, i) => cleBase(d) || `l|${saison}|${i}`;
   const annulee = d => /annul/i.test(d.etat || '');
-  const couleurSp = slug => { const s = slug ? show(slug) : null; return s ? lisible(s.couleur || univers(s).titre, IVOIRE, 3) : 'var(--ink)'; };
+  const couleurSp = slug => { const s = slug ? show(slug) : null; return s && slugSur(s.slug) ? `var(--c-${s.slug})` : 'var(--ink)'; };
   // une date à venir (D.dates), écrite comme l'agenda
   const repereProchaine = (d, couleur) => ({ id: cleProchaine(d), jour: d.iso, fin: d.fin, precision: d.precision, couleur: couleur || couleurSp(d.slug), titre: d.titre,
     quand: d.ligneDate, l: d.l, scolaire: d.scolaire, annulee: annulee(d), etat: d.etat });
@@ -6348,17 +6630,24 @@ const TENTACULES = (() => {
   }
 
   /* ——— Les morceaux communs ——— */
+  // réserver (règle 17) : sur « Je viens voir un spectacle », la date d'une ligne où l'on peut réserver est un bouton (son
+  // horaire écrit dessus) qui ouvre la carte de réservation sous la ligne ; les dates scolaires, passées ou annulées restent
+  const idCarte = k => 'rs-' + String(k).replace(/[^\w-]/g, '-');
+  let RES = new Set();   // les clés des dates réservables de l'agenda, relues à chaque rendu
   function dateHTML(d, ent) {
     const s = d.slug ? show(d.slug) : null, { j, m } = decoupe(d.ligneDate || d.ligne);
     const det = (d.details || []).filter(x => x && x.texte);
-    return `<li class="ag-it${d.etat ? ' a-etat' : ''}" data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${esc(d.slug || '')}"${ent && s ? ` style="${styleIvoire(s)}"` : ''}>
-      <p class="ag-d${j ? '' : ' sans-j'}">${j ? `<span class="ag-j">${esc(j)}</span>` : ''}<span class="ag-m">${esc(m)}</span></p>
+    const k = RS && ent === 'voir' ? RS.cle(d) : null, rv = k != null && RES.has(k), v = rv && s ? univers(s) : null;
+    return `<li class="ag-it${d.etat ? ' a-etat' : ''}${rv ? ' rs-li' : ''}" data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${esc(d.slug || '')}"${ent && s ? ` style="${styleIvoire(s)}"` : ''}>
+      ${rv ? RS.bouton(d, { classe: 'rs-date--ligne', style: v ? `--rs-aplat:${v.aplat};--rs-sur:${v.surAplat};--rs-aplat-n:${(v.nuit || v).aplat};--rs-sur-n:${(v.nuit || v).surAplat}` : '', attributs: ` aria-controls="${idCarte(k)}"${d.l != null ? ` data-l="${d.l}"` : ''}` })
+        : `<p class="ag-d${j ? '' : ' sans-j'}">${j ? `<span class="ag-j">${esc(j)}</span>` : ''}<span class="ag-m">${esc(m)}</span></p>`}
       <div class="ag-b">
         <p class="ag-lieu">${esc(d.ligneLieu || '')}</p>
         ${ent ? `<p class="ag-sp">${s ? `<a class="sp-t" href="#/spectacle/${esc(s.slug)}/${entreeSp(s.slug, ent)}">${esc(d.titre)}</a>` : `<span>${esc(d.titre)}</span>`}</p>` : ''}
         ${d.etat ? `<p class="sa-etat">${esc(d.etat)}</p>` : ''}
         ${det.length ? `<ul class="ag-det">${det.map(x => `<li>${x.lien ? ext(x.lien, esc(x.texte)) : esc(x.texte)}</li>`).join('')}</ul>` : ''}
       </div>
+      ${rv ? `<div class="rs-carte rs-ici u${s ? clairU(s) : ''}" id="${idCarte(k)}" hidden></div>` : ''}
     </li>`;
   }
   const filtreHTML = '<button class="filtre" type="button" aria-pressed="true" hidden><span class="filtre-n"></span><span class="filtre-x" aria-hidden="true">×</span></button>';
@@ -6396,7 +6685,7 @@ const TENTACULES = (() => {
     const items = entrees().map((e, i) => `<li style="--k:${i}"><a class="toc-link toc-e${i === cur ? ' is-active' : ''}" href="${esc(e.href)}" data-i="${i}" style="--e:var(--ent-${esc(e.cle)})">
         <span class="toc-row"><span class="ent-m" aria-hidden="true"></span>${vignE[e.cle] ? `<span class="toc-vign" aria-hidden="true">${vignE[e.cle]}</span>` : ''}<span class="toc-title" data-mv-nom="entree-${esc(e.cle)}"><span class="tt">${esc(e.texte)}</span></span><span class="toc-lead" aria-hidden="true"></span><span class="toc-fl" aria-hidden="true">→</span></span>
       </a></li>`).join('');
-    const calques = entrees().map((e, i) => `<div class="pv-layer pv-e${i === cur ? ' is-on' : ''}" data-i="${i}" style="--e:var(--ent-${esc(e.cle)})">
+    const calques = entrees().map((e, i) => `<div class="pv-layer pv-e${i === cur ? ' is-on' : ' dort'}" data-i="${i}" style="--e:var(--ent-${esc(e.cle)})">
         ${(apercu[e.cle] || (() => ''))()}
         <div class="pv-foot"><p class="pv-date"><span class="kicker">${esc(kicker[e.cle] || '')}</span></p><a class="pv-link" href="${esc(e.href)}">${esc(L.decouvrir)}<span class="sr-only"> ${esc(e.texte)}</span>${fleche}</a></div>
       </div>`).join('');
@@ -6419,7 +6708,7 @@ const TENTACULES = (() => {
     const calques = sp.map((s, i) => {
       const v = univers(s), { prim, reste, passees } = jeu(s), aCarte = prim.length + reste.length > 0;
       const proch = D.dates.find(d => d.slug === s.slug && !d.scolaire), T = s.tournee || {}, ac = s.actionCulturelle || {};
-      return `<div class="pv-layer pv-u u${i === cur ? ' is-on' : ''}" data-i="${i}" data-fond="${v.fond}" style="${varsU(v)}">
+      return `<div class="pv-layer pv-u u${clairU(s)}${i === cur ? ' is-on' : ' dort'}" data-i="${i}" data-fond="${v.fond}"${v.nuit ? ` data-fond-n="${v.nuit.fond}"` : ''} style="${varsU(v)}${varsN(v)}">
         ${motifHTML(s, 'pv-motif')}
         <div class="pv-media${aCarte ? '' : ' solo'}">
           <figure class="pv-fig">${imgV(s, aCarte ? .7 : 1.4, s.titre)}${s.credit ? `<figcaption class="pv-cap"${ed(`${P(s)}.credit`)}>${esc(s.credit)}</figcaption>` : ''}</figure>
@@ -6436,7 +6725,7 @@ const TENTACULES = (() => {
       : `<div class="mast"><h2 class="mast-g" id="${id}-h">${esc(L.lesSpectacles)}</h2><a class="mast-d" href="#/spectacles">${esc(menuTexte('spectacles'))}<span aria-hidden="true"> →</span></a></div>`;
     return `<section class="som som-s${!page && INTRO.ouverte() && CARTE.mouvement() ? ' attend' : ''}" data-k="${id}" aria-labelledby="${id}-h">
       <div class="toc">${tete}<ol class="toc-list">${items}</ol></div>
-      <div class="pv" style="background:${sp[cur] ? univers(sp[cur]).fond : 'transparent'}"><div class="pv-in">${calques}</div></div>
+      <div class="pv" style="--pv-fond:${sp[cur] ? univers(sp[cur]).fond : 'transparent'}${sp[cur] && univers(sp[cur]).nuit ? `;--pv-fond-n:${univers(sp[cur]).nuit.fond}` : ''}"><div class="pv-in">${calques}</div></div>
     </section>`;
   }
   function bindSommaires() {
@@ -6447,9 +6736,16 @@ const TENTACULES = (() => {
       const choisir = i => {
         if (Number.isNaN(i) || i === cur || !calques[i]) return;
         cur = i; etatVue.som[id] = i;
-        calques.forEach((c, k) => { c.classList.toggle('is-on', k === i); if (k === i) c.classList.add('vu'); });
+        // un aperçu qui n'est pas montré dort (content-visibility: hidden, une fois son fondu fini) : la page ne le recalcule
+        // pas à chaque changement (le jour et la nuit, règle 19) ; il se réveille quand on le montre
+        calques.forEach((c, k) => {
+          clearTimeout(c.__dort);
+          c.classList.toggle('is-on', k === i);
+          if (k === i) { c.classList.remove('dort'); c.classList.add('vu'); }
+          else if (!c.classList.contains('dort')) c.__dort = setTimeout(() => { if (!c.classList.contains('is-on')) c.classList.add('dort'); }, 260);
+        });
         liens.forEach((a, k) => a.classList.toggle('is-active', k === i));
-        if (calques[i].dataset.fond) pv.style.background = calques[i].dataset.fond;
+        if (calques[i].dataset.fond) { pv.style.setProperty('--pv-fond', calques[i].dataset.fond); if (calques[i].dataset.fondN) pv.style.setProperty('--pv-fond-n', calques[i].dataset.fondN); else pv.style.removeProperty('--pv-fond-n'); }
         relayer(calques[i]);
       };
       const pick = e => { const a = e.target.closest('.toc-link'); if (a) choisir(+a.dataset.i); };
@@ -6572,6 +6868,7 @@ const TENTACULES = (() => {
     const E = entree('voir'), L = lib(), sais = site().saisons[0] || {};
     const dates = D.dates.filter(d => !d.scolaire), lieux = CARTE.aVenir('public');
     const passe = retenu('agendaPasse', agendaPasse), puces = spectaclesAgenda(dates, passe);
+    RES = new Set(RS ? RS.dates().map(RS.cle) : []);
     if (!etatVue.voir) {
       const l0 = r && r.q && r.q.has('l') ? +r.q.get('l') : null;
       etatVue.voir = { q: '', slug: null, l: l0 !== null && lieux.some(x => x.l === l0) ? l0 : null, ouv: null, avant: null };
@@ -6617,7 +6914,7 @@ const TENTACULES = (() => {
     const bandesSaisons = () => passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).length));
     const affiche = s => {
       const proch1 = dates.find(d => d.slug === s.slug);
-      return `<li class="affiche u" style="${styleU(s)}"><a class="af-a" href="#/spectacle/${esc(s.slug)}/voir">
+      return `<li class="affiche u${clairU(s)}" style="${styleU(s)}"><a class="af-a" href="#/spectacle/${esc(s.slug)}/voir">
         <span class="af-ph">${imgV(s, .8, '')}</span>
         <span class="af-c">
           <span class="af-k"${s.lieuTemps ? ed(`${P(s)}.lieuTemps`) : ed(`${P(s)}.creation`)}>${esc(s.lieuTemps || s.creation)}</span>
@@ -6799,7 +7096,13 @@ const TENTACULES = (() => {
     OCCUPES.add(slug); occuper(slug, true);
     DOSSIER.telecharger(slug).catch(() => { /* échec : le bouton redevient actif */ }).finally(() => { OCCUPES.delete(slug); occuper(slug, false); });
   });
-  const lienBA = (s, cls = 'cf-ba') => s.video && s.video.url ? `<a class="${cls}" href="${esc(lienVideo(s.video.url))}" target="_blank" rel="noopener"><span class="cf-jeu" aria-hidden="true"></span><span>${esc(lib().bandeAnnonce)}</span><span class="ext" aria-hidden="true">↗</span></a>` : '';
+  // « Bande-annonce » (règle 18) : la vidéo se lit dans le site ; dans le catalogue, dans une boîte (data-lecteur-ouvrir) ;
+  // sur la page d'un spectacle, le bouton mène à la vidéo de son chapitre et la lance (ici : data-lecteur-va) ; une adresse
+  // que LECTEUR ne sait pas lire reste un lien
+  const lisibleV = v => !!(v && v.url && LC && LC.source(v.url));
+  const lienBA = (s, cls = 'cf-ba', ici = false) => !(s.video && s.video.url) ? '' : lisibleV(s.video)
+    ? `<button type="button" class="${cls}" ${ici ? `data-lecteur-va="lc-${esc(s.slug)}"` : `data-lecteur-ouvrir="${esc(s.slug)}"`}><span class="cf-jeu" aria-hidden="true"></span><span>${esc(lib().bandeAnnonce)}</span></button>`
+    : `<a class="${cls}" href="${esc(lienVideo(s.video.url))}" target="_blank" rel="noopener"><span class="cf-jeu" aria-hidden="true"></span><span>${esc(lib().bandeAnnonce)}</span><span class="ext" aria-hidden="true">↗</span></a>`;
 
   /* ——— Je souhaite programmer : le catalogue, une fiche par spectacle dans son univers ——— */
   function ficheCatalogue(s) {
@@ -6807,7 +7110,7 @@ const TENTACULES = (() => {
     const eq = !s.avec && (pr.equipeCreation || []).length > 0;
     const fiche = (s.fiche || []).map((f, i) => f.libelle ? `<li><span class="fi-l"${ed(`${P(s)}.fiche.${i}.libelle`)}>${esc(f.libelle)}</span><span${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>` : eq ? '' : `<li class="solo"><span${ed(`${P(s)}.fiche.${i}.valeur`)}>${f.valeur}</span></li>`).join('');
     const avec = s.avec ? `<p class="cf-avec"><span class="fi-l"${ed(`${P(s)}.avec.libelle`)}>${esc(s.avec.libelle)}</span> <span${ed(`${P(s)}.avec.valeur`)}>${s.avec.valeur}</span></p>` : '';
-    return `<article class="cf u" id="f-${esc(s.slug)}" style="${styleU(s)}" aria-labelledby="cf-${esc(s.slug)}">
+    return `<article class="cf u${clairU(s)}" id="f-${esc(s.slug)}" style="${styleU(s)}" aria-labelledby="cf-${esc(s.slug)}">
       ${motifHTML(s, 'cf-motif')}
       <div class="cf-a">
         <p class="cf-k"><span${ed(`${P(s)}.creation`)}>${esc(s.creation)}</span>${s.statut ? `<span class="cf-statut"${ed(`${P(s)}.statut`)}>${esc(s.statut)}</span>` : ''}</p>
@@ -6872,7 +7175,7 @@ const TENTACULES = (() => {
       ac.public ? `<span class="chip"><span class="chip-l">${esc(L.public)}</span><span${ed(`${k}.public`)}>${esc(ac.public)}</span></span>` : '',
       ac.statut ? `<span class="chip chip-statut"><span${ed(`${k}.statut`)}>${esc(ac.statut)}</span></span>` : '',
     ].join('');
-    return `<article class="acf u" style="${styleU(s)}" aria-labelledby="acf-${esc(s.slug)}">
+    return `<article class="acf u${clairU(s)}" style="${styleU(s)}" aria-labelledby="acf-${esc(s.slug)}">
       ${motifHTML(s, 'acf-motif')}
       ${photoSrc(s.slug) ? `<figure class="acf-ph">${img(s.slug, '', focale(s))}</figure>` : ''}
       <div class="acf-c">
@@ -6914,7 +7217,7 @@ const TENTACULES = (() => {
       <div class="pg-head"><div class="pg-head-in">
         <p class="kicker k-ent"><span class="ent-m" aria-hidden="true"></span><span>${esc(L.actionCulturelle)}</span></p>
         <h1 class="page-title" id="et-h" tabindex="-1" data-mv-nom="entree-etablissement">${esc(E.texte)}</h1>
-        ${dossiers.map(s => { const X = D.dossiers[s.dossier]; return `<a class="dos-lien u aplat" style="${styleU(s)}" href="#/spectacle/${esc(s.slug)}/etablissement?ch=dossier"><span class="kicker">${esc(L.dossierScolaire)}</span><span class="dos-lien-t">${esc(s.titre)}</span>${X.pourquoi && X.pourquoi.titre ? `<span class="dos-lien-s">${esc(X.pourquoi.titre)}</span>` : ''}<span aria-hidden="true">→</span></a>`; }).join('')}
+        ${dossiers.map(s => { const X = D.dossiers[s.dossier]; return `<a class="dos-lien u aplat${clairU(s)}" style="${styleU(s)}" href="#/spectacle/${esc(s.slug)}/etablissement?ch=dossier"><span class="kicker">${esc(L.dossierScolaire)}</span><span class="dos-lien-t">${esc(s.titre)}</span>${X.pourquoi && X.pourquoi.titre ? `<span class="dos-lien-s">${esc(X.pourquoi.titre)}</span>` : ''}<span aria-hidden="true">→</span></a>`; }).join('')}
       </div></div>
       <div class="pg-body prose prose-lede">${ecole.texte ? para(ecole.texte, 'site.ecole.texte') : ''}</div>
     </section>
@@ -6958,6 +7261,105 @@ const TENTACULES = (() => {
     if (l0 != null && !Number.isNaN(l0) && items.some(it => it.dataset.l === String(l0))) { api.basculer(l0); filtrer(l0); }
   }
 
+  /* ——— La troupe (règle 20, TROUPE) : l'index raisonné de la compagnie, et sa planche hors-texte ———
+     À droite, l'index : les catégories de métiers (qui fait quoi, d'un coup d'œil), chacune sous son double filet et son
+     icône ; les personnes rangées par leur nom, le métier précis au bout de ses points de conduite (le jeu, sur deux
+     colonnes) ; une vignette seulement pour une photo publiée. À gauche, en regard, la planche : la pieuvre de la compagnie
+     en ex-libris au-dessus du portrait de groupe (les visages publiés, rang sur rang, comme une photo de troupe) et sa
+     légende. Survoler une personne, dans l'index ou sur la planche, l'allume partout : ses places reliées par les bras de
+     la pieuvre, tirés au crayon rouge du correcteur (TROUPE.relier), son visage dans le groupe, son nom et ses métiers
+     dans la légende, qui se relaie. Au défilement, l'index se compose ligne à ligne (animations liées au défilement) ; la
+     troupe se rassemble sur la planche à son arrivée (Web Animations). Relue dans D à chaque rendu. */
+  let troupeCtl = null, troupeIO = null, legendeTroupe = null;
+  const parNom = (a, b) => String(a.nom || '').localeCompare(String(b.nom || ''), 'fr', { sensitivity: 'base' }) || String(a.prenom || '').localeCompare(String(b.prenom || ''), 'fr');
+  function placeTroupe(x) {
+    const ancre = x.photo ? `<span class="tr8-v" data-troupe-ancre><img src="${esc(x.photo)}" alt="" width="96" height="120" loading="lazy" decoding="async" data-troupe-photo></span>` : '<span class="tr8-pt" data-troupe-ancre></span>';
+    const m = !x.evident && x.metiers.length ? `<span class="toc-lead tr8-lead" aria-hidden="true"></span><span class="tr8-m">${x.metiers.map(t => `<span>${esc(t)}</span>`).join('<span class="tr8-sep" aria-hidden="true">, </span>')}</span>` : '';
+    return `<li><button type="button" class="tr8-place${x.photo ? ' a-photo' : ''}" data-troupe-place data-troupe-personne="${esc(x.personne)}" aria-pressed="false">${ancre}<span class="tr8-ligne"><span class="tr8-nom"><span class="tt">${x.prenom ? `<span>${esc(x.prenom)}</span> ` : ''}<span>${esc(x.nom)}</span></span></span>${m}</span></button></li>`;
+  }
+  // le portrait de groupe : des rangs égaux, le plus long au milieu (13 visages : 4, 5, 4)
+  function rangs(n) {
+    if (!n) return [];
+    const k = Math.max(1, Math.ceil(Math.sqrt(n * 1.5))), r = Math.ceil(n / k), t = Array(r).fill(Math.floor(n / r));
+    [...t.keys()].sort((a, b) => Math.abs(a - (r - 1) / 2) - Math.abs(b - (r - 1) / 2)).slice(0, n % r).forEach(i => { t[i]++; });
+    return t;
+  }
+  function troupeHTML() {
+    if (!TR || !site().troupe) return '';
+    const cs = TR.categories().filter(c => c.places.length);
+    if (!cs.length) return '';
+    const visages = TR.personnes().filter(p => p.photo), rs = rangs(visages.length);
+    let i = 0;
+    const groupe = rs.map((n, r) => `<span class="tr8-rang" style="--r:${r}">${visages.slice(i, i += n).map((p, j) => `<span class="tr8-f" data-p="${esc(p.personne)}" style="--i:${i - n + j}"><img src="${esc(p.photo)}" alt="" width="120" height="150" loading="lazy" decoding="async"></span>`).join('')}</span>`).join('');
+    return `<section class="page troupe-08" aria-labelledby="tr8-h" data-troupe>
+      <div class="pg-head"><div class="pg-head-in">
+        <h2 class="band-title" id="tr8-h"${ed('site.troupe.titre')}>${esc(TR.titre())}</h2>
+        <figure class="tr8-planche" aria-hidden="true"><span class="tr8-emb">${D.logo.mark}</span>${groupe ? `<span class="tr8-groupe" style="--k:${Math.max(...rs)}">${groupe}</span>` : ''}<figcaption class="tr8-leg"></figcaption></figure>
+      </div></div>
+      <div class="pg-body tr8-index">${cs.map(c => `<section class="tr8-cat${c.cle === 'jeu' ? ' tr8-jeu' : ''}" data-troupe-categorie="${esc(c.cle)}" aria-labelledby="tr8-h-${esc(c.cle)}">
+        <h3 class="tr8-t" id="tr8-h-${esc(c.cle)}"><span class="tr8-ic">${TR.icone(c.cle)}</span><span${ed(`site.troupe.categories.${c.i}.titre`)}>${esc(c.titre)}</span></h3>
+        <ul class="tr8-places">${[...c.places].sort(parNom).map(placeTroupe).join('')}</ul></section>`).join('')}</div>
+    </section>`;
+  }
+  // la troupe prend vie : les liens entre les places d'une personne (TROUPE), la planche et sa légende qui suivent, les
+  // icônes qui s'animent à leur arrivée, le groupe qui se rassemble
+  function vivreTroupe() {
+    if (troupeCtl) { troupeCtl.detruire(); troupeCtl = null; }
+    if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
+    const tr = $('.troupe-08', main);
+    if (!tr || !TR) return;
+    const pl = $('.tr8-planche', tr), leg = pl && $('.tr8-leg', pl);
+    let vu = undefined;
+    // la légende de la planche se relaie : l'ancienne s'efface vers le haut, la nouvelle se pose (moins d'animations : sans)
+    legendeTroupe = slug => {
+      if (!leg || slug === vu) return;
+      vu = slug;
+      const p = slug ? (D.personnes || {})[slug] : null, neuf = document.createElement('span'), vieux = [...leg.children];
+      neuf.className = 'tr8-leg-in';
+      if (p) neuf.innerHTML = `<span class="tr8-leg-nom">${esc(`${p.prenom || ''} ${p.nom || ''}`.trim())}</span>${(p.metiers || []).length ? `<span class="tr8-leg-m">${p.metiers.map(esc).join(' · ')}</span>` : ''}`;
+      const bouge = motionOK() && neuf.animate;
+      vieux.forEach(x => { if (!bouge || !x.firstChild) { x.remove(); return; } x.classList.add('tr8-leg-part'); const fin = () => x.remove(); x.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-6px)' }], { duration: 140, easing: 'ease-out', fill: 'forwards' }).finished.then(fin, fin); });
+      leg.appendChild(neuf);
+      if (p && bouge) neuf.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: COURBE });
+    };
+    const marquer = slug => {
+      if (pl) { pl.classList.toggle('est-allume', !!slug); $$('.tr8-f', pl).forEach(f => f.classList.toggle('est-allume', f.dataset.p === slug)); }
+      legendeTroupe(slug);
+    };
+    troupeCtl = TR.relier(tr, { liens: true, clavier: true, surAllumer: slug => marquer(slug) });
+    // la planche se lit aussi à la souris : survoler un visage allume la personne, le toucher (ou un clic) la choisit
+    if (pl) {
+      pl.addEventListener('pointerover', e => { const f = e.target.closest('.tr8-f'); if (f && e.pointerType !== 'touch' && troupeCtl) troupeCtl.allumer(f.dataset.p); });
+      pl.addEventListener('pointerout', e => { const f = e.target.closest('.tr8-f'); if (!f || e.pointerType === 'touch' || (e.relatedTarget && f.contains(e.relatedTarget)) || !troupeCtl) return; troupeCtl.eteindre(); });
+      pl.addEventListener('click', e => { const f = e.target.closest('.tr8-f'); if (!f || !troupeCtl || (typeof EDITION !== 'undefined' && EDITION.actif)) return; troupeCtl.choisir(troupeCtl.choisi() === f.dataset.p ? null : f.dataset.p); });
+    }
+    // à son arrivée : la troupe se rassemble sur la planche (chacun vient prendre sa place dans le groupe, l'ex-libris se
+    // pose), et l'icône de chaque catégorie s'anime une fois
+    if (motionOK() && 'IntersectionObserver' in window) {
+      troupeIO = new IntersectionObserver(es => es.forEach(x => {
+        if (!x.isIntersecting) return;
+        troupeIO.unobserve(x.target);
+        if (x.target === pl) {
+          $$('.tr8-f', pl).forEach((f, k) => { const a = (k * 137.5) % 360 * RAD, d = 14 + (k % 3) * 6;
+            f.animate([{ opacity: 0, transform: `translate(${(Math.cos(a) * d).toFixed(1)}px, ${(Math.sin(a) * d + 10).toFixed(1)}px) rotate(${(k % 2 ? 1 : -1) * (2 + k % 3)}deg)` }, { opacity: 1, transform: 'none' }],
+              { duration: 520, delay: 60 + k * 34, easing: COURBE, fill: 'backwards' }); });
+          const em = $('.tr8-emb', pl);
+          if (em) em.animate([{ opacity: 0, transform: 'scale(.86) rotate(-8deg)' }, { opacity: 1, transform: 'none' }], { duration: 620, delay: 40, easing: COURBE, fill: 'backwards' });
+          return;
+        }
+        x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600);
+      }), { rootMargin: '0px 0px -12% 0px' });
+      if (pl && $('.tr8-f', pl)) troupeIO.observe(pl);
+      $$('.tr8-ic .troupe-icone', tr).forEach(i => troupeIO.observe(i));
+    }
+    // une photo publiée qui ne se charge pas (le fichier manque) : sa place garde le nom seul, son visage quitte la planche
+    tr.addEventListener('error', e => {
+      const i = e.target; if (!i || !i.matches || !i.matches('img')) return;
+      if (i.matches('[data-troupe-photo]')) { const a = i.closest('[data-troupe-ancre]'), b = i.closest('.tr8-place'); if (a) a.className = 'tr8-pt'; if (b) b.classList.remove('a-photo'); i.remove(); }
+      else { const f = i.closest('.tr8-f'); if (f) f.remove(); }
+    }, true);
+  }
+
   /* ——— La compagnie, le contact, les pages légales, les saisons passées ——— */
   function compagnieHTML() {
     const C = site().compagnie || {}, Dr = C.directeur;
@@ -6975,6 +7377,7 @@ const TENTACULES = (() => {
       <div class="pg-head"><div class="pg-head-in"><h1 class="page-title" id="cie-h" tabindex="-1"${ed('site.compagnie.titre')}>${esc(C.titre)}</h1></div></div>
       <div class="pg-body prose prose-lede">${(C.paragraphes || []).map((p, i) => para(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
     </section>
+    ${troupeHTML()}
     <section class="page" aria-labelledby="dates-h">
       <div class="pg-head"><h2 class="band-title" id="dates-h"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2></div>
       <div class="pg-body"><ol class="chrono">${(C.dates || []).map((d, i) => {
@@ -7081,6 +7484,19 @@ const TENTACULES = (() => {
       ${credits.length ? `<p class="credit">${credits.join('<span aria-hidden="true"> · </span>')}</p>` : ''}`;
   }
   const citationsHTML = s => `<div class="vers">${(s.citations || []).map((c, i) => `<blockquote class="cit${c.prose ? ' cit-prose' : ''}">${(c.vers || []).map((v, j) => `<span class="v"${ed(`${P(s)}.citations.${i}.vers.${j}`)}>${esc(v)}</span>`).join('')}${c.source ? `<cite${ed(`${P(s)}.citations.${i}.source`)}>${esc(c.source)}</cite>` : ''}</blockquote>`).join('')}</div>`;
+  // la bande-annonce et les autres vidéos du spectacle (ses médias, par groupe), lues sur place (LECTEUR) : chacune sur une
+  // affiche prise dans ses photos de plateau ; une adresse que LECTEUR ne lit pas garde l'ancien lien
+  function videosHTML(s) {
+    if (!lisibleV(s.video)) return baHTML(s);
+    const phs = photosDe(s, p => !p.etablissement && !p.atelier), cle0 = phs[0] ? phs[0].p.cle : s.slug;
+    let n = 1;
+    const affiche = () => photoSrc(phs.length ? phs[n++ % phs.length].p.cle : s.slug) || photoSrc(s.slug) || null;
+    const groupes = [];
+    (s.medias || []).filter(m => m && m.type === 'video' && m.url !== s.video.url && lisibleV(m)).forEach(m => {
+      const g = groupes.find(x => x.nom === (m.groupe || '')); if (g) g.ms.push(m); else groupes.push({ nom: m.groupe || '', ms: [m] }); });
+    return `${LC.html(s.video, { affiche: photoSrc(cle0) || photoSrc(s.slug) || null, id: `lc-${s.slug}`, classe: 'lc-08', editTitre: s.video.titre ? `${P(s)}.video.titre` : null })}
+      ${groupes.map(g => `<div class="lc-groupe">${g.nom ? `<h3 class="ch-h3 lc-g-t">${esc(g.nom)}</h3>` : ''}<div class="lc-grille">${g.ms.map(m => LC.html(m, { affiche: affiche(), classe: 'lc-08 lc-petit' })).join('')}</div></div>`).join('')}`;
+  }
   function baHTML(s) {
     const ph = photosDe(s, p => !p.etablissement && !p.atelier)[0], cle = ph ? ph.p.cle : s.slug;
     return `<a class="ba" href="${esc(lienVideo(s.video.url))}" target="_blank" rel="noopener">${img(cle, '', ' loading="lazy"')}<span class="ba-c"><span class="ba-jeu" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M7 4.5v15l12.5-7.5z"/></svg></span><span class="ba-t"${s.video.titre ? ed(`${P(s)}.video.titre`) : ''}>${esc(s.video.titre || lib().bandeAnnonce)}</span><span class="ext" aria-hidden="true">↗</span></span></a>`;
@@ -7124,9 +7540,19 @@ const TENTACULES = (() => {
     if (h) C.push({ id: 'spectacle', titre: L.leSpectacle, html: h });
     const phs = photosDe(s, p => !p.etablissement && !p.atelier);
     if (phs.length) C.push({ id: 'photos', titre: L.photos, html: galerieHTML(s, phs) });
-    if (s.video && s.video.url) C.push({ id: 'ba', titre: L.bandeAnnonce, html: baHTML(s) });
-    const pub = D.dates.filter(d => d.slug === s.slug && !d.scolaire);
-    if (pub.length) {
+    if (s.video && s.video.url) C.push({ id: 'ba', titre: L.bandeAnnonce, html: videosHTML(s) });
+    const pub = D.dates.filter(d => d.slug === s.slug && !d.scolaire), res = RS && !s.statut ? RS.dates(s.slug) : [];
+    if (res.length) {
+      // réserver (règle 17) : les prochaines dates en une bande, une entrée par date (le jour, les heures, la commune) ; la
+      // prochaine est choisie d'office, sa carte dessous, puis la carte de France (RESERVER.monter : reserver())
+      const lieux = sp.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length);
+      C.push({ id: 'dates', titre: T.titre || L.actuellementEnTournee, edit: T.titre ? `${P(s)}.tournee.titre` : null,
+        html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div>
+          <div class="rs-zone" data-slug="${esc(s.slug)}"><p class="kicker rs-k-bande" id="rs-k">${esc(L.choisirUneDate)}</p>
+            ${RS.bande(res, { attributs: ` aria-labelledby="rs-k" data-agenda="${esc(s.slug)}"`, bouton: d => ({ attributs: ` data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}"${d.l != null ? ` data-l="${d.l}"` : ''}` }) })}
+            <div class="rs-carte" id="rs-carte"></div></div>
+          ${carte({ lieux, passe: sp.passe, mode: lieux.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, legende: legendeDe(lieux, null), index: lieux.length <= 22, titre: `${T.titre || L.actuellementEnTournee}, ${s.titre}` })}` });
+    } else if (pub.length) {
       const lieux = sp.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length);
       C.push({ id: 'dates', titre: T.titre || L.actuellementEnTournee, edit: T.titre ? `${P(s)}.tournee.titre` : null,
         html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div><ol class="ag-list tour-list" data-agenda="${esc(s.slug)}">${pub.map(d => dateHTML(d, null)).join('')}</ol>${carte({ lieux, passe: sp.passe, mode: lieux.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, legende: legendeDe(lieux, null), index: lieux.length <= 22, titre: `${T.titre || L.actuellementEnTournee}, ${s.titre}` })}` });
@@ -7160,11 +7586,11 @@ const TENTACULES = (() => {
     const faits = faitsDe(s);
     if (faits.length) h += `<ul class="pr-faits">${faits.map(([c, t]) => `<li${ed(c)}>${esc(t)}</li>`).join('')}</ul>`;
     if ((pr.equipeCreation || []).length) h += `<ul class="pr-faits">${pr.equipeCreation.map((t, i) => `<li${ed(`${P(s)}.programmer.equipeCreation.${i}`)}>${esc(t)}</li>`).join('')}</ul>`;
-    h += `<p class="pr-actions">${dossierBouton(s.slug)}${lienBA(s)}</p>${contactHtml(s)}`;   // en tête : le dossier PDF, la bande-annonce, puis le contact compact
+    h += `<p class="pr-actions">${dossierBouton(s.slug)}${lienBA(s, 'cf-ba', true)}</p>${contactHtml(s)}`;   // en tête : le dossier PDF, la bande-annonce, puis le contact compact
     C.push({ id: 'diffusion', titre: L.representations, html: h });
     const dist = distributionHTML(s, !faits.length);
     if (dist) C.push({ id: 'distribution', titre: L.distribution, html: dist });
-    if (s.video && s.video.url) C.push({ id: 'ba', titre: L.bandeAnnonce, html: baHTML(s) });
+    if (s.video && s.video.url) C.push({ id: 'ba', titre: L.bandeAnnonce, html: videosHTML(s) });
     const { prim, reste, passees } = jeu(s);
     if (pr.lieux || prim.length || reste.length) C.push({ id: 'lieux', titre: L.lieuxDiffusion,
       html: `${pr.lieux ? `<p class="pr-lieux"${ed(`${P(s)}.programmer.lieux`)}>${esc(pr.lieux)}</p>` : ''}${prim.length || reste.length ? carte({ lieux: prim, passe: reste, mode: prim.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, passees, legende: legendeDe([...prim, ...reste], null, d => d.ligneDate || d.ligne), index: prim.length <= 22, titre: `${L.lieuxDiffusion}, ${s.titre}` }) : ''}` });
@@ -7278,7 +7704,7 @@ const TENTACULES = (() => {
       </div>
       ${ent !== 'voir' ? ctaHTML() : ''}
     </article>
-    ${suivant && suivant !== s ? `<a class="next u" href="#/spectacle/${esc(suivant.slug)}/${entreeSp(suivant.slug, ent)}" style="${styleU(suivant)}">${motifHTML(suivant, 'next-motif')}<span class="next-c"><span class="kicker next-k">${esc(L.decouvrir)}</span><span class="next-t" data-mv-nom="sp-${esc(suivant.slug)}"><span class="tt">${esc(suivant.titre)}</span></span>${suivant.lieuTemps ? `<span class="next-lt">${esc(suivant.lieuTemps)}</span>` : ''}</span>${imgV(suivant, 1.25, '', ' loading="lazy"')}</a>` : ''}`;
+    ${suivant && suivant !== s ? `<a class="next u${clairU(suivant)}" href="#/spectacle/${esc(suivant.slug)}/${entreeSp(suivant.slug, ent)}" style="${styleU(suivant)}">${motifHTML(suivant, 'next-motif')}<span class="next-c"><span class="kicker next-k">${esc(L.decouvrir)}</span><span class="next-t" data-mv-nom="sp-${esc(suivant.slug)}"><span class="tt">${esc(suivant.titre)}</span></span>${suivant.lieuTemps ? `<span class="next-lt">${esc(suivant.lieuTemps)}</span>` : ''}</span>${imgV(suivant, 1.25, '', ' loading="lazy"')}</a>` : ''}`;
   }
   // la frise de la tournée d'un spectacle : toutes ses dates, jouées (D.saisons ; chacune mène à sa saison) et à venir
   // (reliées à la liste du chapitre), et « aujourd'hui » ; reliée à la carte du chapitre
@@ -7290,7 +7716,8 @@ const TENTACULES = (() => {
       return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/agenda/${k}` }) : null; })); }).filter(Boolean);
     const pts = [...passees, ...D.dates.filter(d => d.slug === s.slug).map(d => repereProchaine(d, 'var(--acc)'))];
     if (!pts.length) { c.remove(); return; }
-    const f = frise(c, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${lib().dates}`, relier: { liste: ch, carte: lf ? lf.carte : null }, choix: p => { if (!p.lien) allerLigne(p.id); } });
+    const f = frise(c, { echelle: 'periode', points: pts, libelle: `${s.titre} – ${lib().dates}`, relier: { liste: ch, carte: lf ? lf.carte : null },
+      choix: p => { const b = rsSp && $(`.rs-bande [data-frise-id="${CSS.escape(p.id)}"]`, main); if (b) { rsSp.choisir(b.getAttribute('data-reserver')); rsSp.montrer(); } else if (!p.lien) allerLigne(p.id); } });
     if (lf) lf.f = f;
   }
   // le petit sommaire suit la lecture ; il mène à chaque chapitre
@@ -7316,15 +7743,88 @@ const TENTACULES = (() => {
   }
   function bindTournees() {
     $$('.ch .cm', main).forEach(fig => {
-      const liste = fig.closest('.ch').querySelector('.tour-list'), items = liste ? $$('[data-l]', liste) : [];
+      const ch = fig.closest('.ch'), liste = ch.querySelector('.tour-list, .rs-bande'), items = liste ? $$('[data-l]', liste) : [];
       // la frise du chapitre (s'il y en a une) s'y range : la carte et elle s'allument l'une l'autre
-      const lf = fig.closest('.ch').__lien = lienFrise();
-      const api = lf.api = monter(fig, { survol: l => { items.forEach(it => it.classList.toggle('is-on', l != null && it.dataset.l === String(l))); lf.survol(l); } });
+      const lf = ch.__lien = lienFrise();
+      // (une commune choisie sur la carte : sa première date se choisit dans la bande, s'il y en a une)
+      const choix = liste && liste.matches('.rs-bande') ? (l, basculer) => { const b = rsSp && liste.querySelector(`[data-l="${l}"]`); if (b) { rsSp.choisir(b.getAttribute('data-reserver')); rsSp.montrer(); } else basculer(l); } : null;
+      const api = lf.api = monter(fig, { survol: l => { items.forEach(it => it.classList.toggle('is-on', l != null && it.dataset.l === String(l))); lf.survol(l); }, choix });
       if (!liste || !items.length) return;
       liste.addEventListener('mouseover', e => { const it = e.target.closest('[data-l]'); api.montrer(it ? +it.dataset.l : null); });
       liste.addEventListener('mouseleave', () => api.montrer(null));
     });
   }
+
+  /* ——— Réserver une date, d'un geste (règle 17, RESERVER) : la page qui se compose ———
+     Sur la page d'un spectacle, la bande de ses prochaines dates (la prochaine choisie d'office) et la carte de la date
+     choisie ; sur « Je viens voir un spectacle », chaque date de l'agenda ouvre sa carte sous sa ligne (un second geste ou
+     Échap la referme). L'adresse garde la date choisie (?date=…). */
+  let rsVoir = null, rsVoirCle = null, rsSp = null, rsSpEtat = { slug: null, cle: null };
+  /* L'effet, dans la signature de la maquette (l'édition) : choisir une date, c'est composer sa page. L'ancienne carte cède
+     la place en s'effaçant d'un rien vers le haut (l'aperçu qui se relaie) ; la nouvelle se compose ligne à ligne, dans
+     l'ordre de lecture (le titre, la date, le lieu, les séances, « Réserver »), et le filet se tire sous le titre ; sa
+     photo se pose. Une carte qui s'ouvre sous sa ligne descend d'abord d'un rien. Rien que des animations composées
+     (transform, opacity), écrites en CSS (.rs-compose : les lignes neuves de la carte s'y composent d'elles-mêmes, sans
+     un appel par ligne qui retiendrait le geste). Moins d'animations : un fondu bref ; ?anim=0 : rien. */
+  function effetReserver({ carte: el, ancien, premier, ouverture }) {
+    if (premier || COUPE || !el.animate) return;
+    if (!motionOK()) { el.classList.remove('rs-compose', 'rs-ouvre'); const c = $('.rs-c', el); if (c) c.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
+    if (ancien && ancien.firstChild) {
+      ancien.className = 'rs-ancien'; ancien.setAttribute('aria-hidden', 'true');
+      el.appendChild(ancien);
+      const fin = () => ancien.remove();
+      ancien.addEventListener('animationend', fin, { once: true }); setTimeout(fin, 500);
+    }
+    el.classList.toggle('rs-ouvre', !!ouverture);
+    el.classList.add('rs-compose');
+  }
+  function reserver(r) {
+    if (rsVoir) { rsVoir.detruire(); rsVoir = null; }
+    if (rsSp) { rsSp.detruire(); rsSp = null; }
+    if (!RS) return;
+    const voulue = r && r.q ? r.q.get('date') : null;
+    const venir = $('.ag-voir .ag-a-venir', main);
+    if (venir) {
+      rsVoir = RS.monter(venir, { dates: RS.dates(), carte: b => document.getElementById(idCarte(b.getAttribute('data-reserver'))),
+        choisie: voulue || (SUR_PLACE ? rsVoirCle : null), basculer: true, roving: false, axe: 'hv', adresse: true,
+        univers: x => (x ? styleU(x) : ''), carteOptions: d => ({ href: show(d.slug) ? `#/spectacle/${d.slug}/voir?date=${encodeURIComponent(RS.cle(d))}` : null }),
+        effet: effetReserver, surChoix: (d, k) => { rsVoirCle = k; } });
+      venir.addEventListener('keydown', ev => {
+        if (ev.key !== 'Escape' || !rsVoir || rsVoir.cle() == null) return;
+        const b = venir.querySelector(`[data-reserver="${CSS.escape(rsVoir.cle())}"]`), li = b && b.closest('li');
+        if (li && li.contains(ev.target)) { ev.preventDefault(); rsVoir.choisir(null); b.focus(); }
+      });
+      // une adresse qui nomme une date (un lien partagé) : l'agenda s'ouvre sur sa carte
+      if (voulue && !SUR_PLACE && rsVoir.cle() === voulue) ensuite(() => { const b = venir.querySelector(`[data-reserver="${CSS.escape(voulue)}"]`); if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); } });
+    }
+    const zone = $('.rs-zone', main);
+    if (zone) {
+      const slug = zone.dataset.slug, res = RS.dates(slug);
+      const k0 = SUR_PLACE && rsSpEtat.slug === slug && rsSpEtat.cle ? rsSpEtat.cle : voulue && res.some(d => RS.cle(d) === voulue) ? voulue : 'premiere';
+      // (l'univers : celui de la page, posé sur <html>, de jour comme de nuit ; rien à poser sur la carte)
+      rsSp = RS.monter($('.rs-bande', zone), { dates: res, carte: $('.rs-carte', zone), choisie: k0, adresse: true, univers: () => '',
+        effet: effetReserver, surChoix: (d, k) => { rsSpEtat = { slug, cle: k }; } });
+      ensuite(() => { if (rsSp) rsSp.montrer(); });
+      if (voulue && !SUR_PLACE && k0 === voulue) ensuite(() => { allerChapitre('dates', false); const b = $('.rs-date[aria-pressed="true"]', zone); if (b) b.focus({ preventScroll: true }); });
+    }
+  }
+
+  /* ——— Les vidéos, lues dans la page (règle 18, LECTEUR) ———
+     La bande-annonce et les autres vidéos d'un spectacle (ses médias, par groupe) se lisent sur sa page, sur une affiche
+     prise dans ses photos ; dans le catalogue, « Bande-annonce » l'ouvre dans une boîte ; sur l'onglet programmer, il mène
+     à la vidéo du chapitre. Une adresse qui n'est ni YouTube ni Vimeo reste un lien. La vidéo arrive comme une ligne qui se
+     pose (elle monte d'un rien en paraissant) ; la page s'éteint et se rallume en fondu (moins d'animations : sans). */
+  if (LC) LC.regler({ univers: s => styleU(s), effet: {
+    arrivee: (fig, ifr) => {
+      if (!motionOK() || !ifr.animate) return;
+      ifr.style.opacity = '0';
+      const montrer = () => { if (ifr.style.opacity !== '0') return; ifr.style.opacity = ''; ifr.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: COURBE }); };
+      ifr.addEventListener('load', montrer, { once: true });
+      setTimeout(montrer, 1600);
+    },
+    eteindre: voile => voile.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 360, easing: COURBE }),
+    rallumer: voile => voile.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-out' }).finished,
+  } });
 
   /* ——— En-tête et pied de page ——— */
   function enTeteHTML() {
@@ -7333,6 +7833,7 @@ const TENTACULES = (() => {
       <a class="brand" href="#/" aria-label="${esc(S.titreSuffixe)}, ${esc(S.accueil)}"><span class="brand-mark" data-pieuvre aria-hidden="true">${D.logo.mark}</span><span class="brand-name">${esc(S.titreSuffixe)}</span></a>
       <nav class="entrees" aria-label="${esc(S.nom)}"><ul>${entrees().map(e => `<li><a class="ent" href="${esc(e.href)}" data-cle="${esc(e.cle)}" style="--e:var(--ent-${esc(e.cle)})"><span class="ent-m" aria-hidden="true"></span><span class="ent-l">${esc(e.texte)}</span><span class="ent-c">${esc(e.court)}</span></a></li>`).join('')}</ul></nav>
       <nav class="menu2" id="menu2" aria-label="${esc(L.menu)}"><ul>${(S.menu || []).map(m => `<li><a href="${esc(m.href)}" data-id="${esc(m.id)}">${esc(m.texte)}</a></li>`).join('')}${S.espacePro ? `<li><a href="#/espace-pro" data-id="espace-pro">${esc(S.espacePro.titre)}</a></li>` : ''}</ul></nav>
+      ${typeof THEME !== 'undefined' && L.modeNuit ? `<!--jour-nuit:${esc(L.modeNuit)}-->` : ''}
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu2"><span class="menu-ico" aria-hidden="true"></span><span>${esc(L.menu)}</span></button>
     </div>`;
   }
@@ -7342,7 +7843,9 @@ const TENTACULES = (() => {
     const h = enTeteHTML();
     if (h === teteFaite) return;
     teteFaite = h;
-    head.innerHTML = h;
+    // le jour et la nuit (règle 19, THEME) : dans l'en-tête, entre le menu second et son bouton, sur toutes les vues ; au
+    // téléphone, à côté du bouton du menu (sans l'ouvrir)
+    head.innerHTML = h.replace(/<!--jour-nuit:[^>]*-->/, () => THEME.bouton({ libelle: lib().modeNuit, classe: 'theme-m08' }));
     muet($('.brand-mark', head));
     $('.menu-btn', head).addEventListener('click', () => {
       const b = $('.menu-btn', head), ouvert = b.getAttribute('aria-expanded') !== 'true';
@@ -7446,7 +7949,8 @@ const TENTACULES = (() => {
     fermerMenu();
     if (CLES.includes(r.v)) retenir(r.v);
     if (r.v === 'spectacle') retenir(r.ent);
-    const V = VUES[r.v], cle = [r.v, r.cle || '', r.ent || '', String(r.q || '')].join('|');
+    const qv = new URLSearchParams(r.q || ''); qv.delete('date');
+    const V = VUES[r.v], cle = [r.v, r.cle || '', r.ent || '', String(qv)].join('|');
     if (cle === vueCle && !enPlace) { window.scrollTo(0, 0); const h1 = $('h1', main); if (h1 && !INTRO.ouverte()) h1.focus({ preventScroll: true }); return; }
     if (cle !== vueCle) etatVue = { som: {}, filtres: {} };
     const premiere = vueCle === null, type = enPlace || premiere ? null : genre(r);
@@ -7472,6 +7976,8 @@ const TENTACULES = (() => {
       $$('.ag', main).forEach(sec => (sec.classList.contains('ag-voir') && AGV ? AGV.brancher(sec, r) : bindListe(sec, r)));
       $$('.cb .cm', main).forEach(fig => monter(fig, { choix: fig.dataset.k === 'accueil' ? (l => { location.hash = `#/voir?l=${l}`; }) : null }));
       bindTournees();
+      reserver(r);
+      vivreTroupe();
       bindChapitres();
       APRES.forEach(f => f()); APRES = [];
       pousser();
@@ -7509,11 +8015,15 @@ const TENTACULES = (() => {
     }
     return null;
   };
+  let rafraichirPlusTard = 0;
   function rafraichir() {
+    // une vidéo chargée (règle 18) : la vue ne se refait pas sous elle (elle s'arrêterait) ; on y revient quand elle ne l'est plus
+    clearTimeout(rafraichirPlusTard);
+    if (LC && LC.actif()) { rafraichirPlusTard = setTimeout(rafraichir, 2500); return; }
     versionD++;
     const y = window.scrollY, f = cleFocus(document.activeElement);
     const ouverts = $$('details[data-k]').filter(d => d.open).map(d => d.dataset.k);
-    polices();
+    polices(); couleurs();
     enTete();
     piedDePage();
     route({ enPlace: true });
@@ -7569,6 +8079,7 @@ const TENTACULES = (() => {
   // la pression : à l'instant même (pointerdown), le filet s'épaissit, l'encre prend
   if (MV) MV.presse(document);
   polices();
+  couleurs();
   theme(null);
   enTete();
   piedDePage();
@@ -7576,7 +8087,9 @@ const TENTACULES = (() => {
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
   // l'ouverture : l'encre sur le papier ; après la révélation, les entrées se posent et les filets du sommaire se tirent
   const PAPIER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000"><defs><filter id="g" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".8" numOctaves="3" seed="8" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .1 0 0 0 0 .08 0 0 0 0 .07 .13 0 0 0 0"/></filter><radialGradient id="v" cx="50%" cy="46%" r="78%"><stop offset=".5" stop-color="#191414" stop-opacity="0"/><stop offset="1" stop-color="#191414" stop-opacity=".1"/></radialGradient></defs><rect width="1600" height="1000" fill="#f5f1ea"/><rect width="1600" height="1000" filter="url(#g)"/><rect width="1600" height="1000" fill="url(#v)"/></svg>');
-  INTRO.ouvrir({ fond: IVOIRE, encre: '#191414', image: PAPIER, classe: 'm08-intro', apres: revele });
+  // (la nuit, règle 19 : le même papier, tiré en noir, l'encre ivoire)
+  const ouvertureNuit = nuitMise(), PAPIER_NUIT = PAPIER.replace(encodeURIComponent('fill="#f5f1ea"'), encodeURIComponent(`fill="${NUIT}"`)).replace(encodeURIComponent('0 0 0 0 .1 0 0 0 0 .08 0 0 0 0 .07 .13 0 0 0 0'), encodeURIComponent('0 0 0 0 .94 0 0 0 0 .91 0 0 0 0 .87 .07 0 0 0 0'));
+  INTRO.ouvrir({ fond: ouvertureNuit ? NUIT : IVOIRE, encre: ouvertureNuit ? '#efe8dd' : '#191414', image: ouvertureNuit ? PAPIER_NUIT : PAPIER, classe: 'm08-intro', apres: revele });
   window.addEventListener('hashchange', () => route());
   route();
   mesurer();

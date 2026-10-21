@@ -33,6 +33,21 @@
    FEUILLE.contenu (conversion), FEUILLE.actualiser (« Mettre à jour depuis la base »), FEUILLE.MISE et FEUILLE.cssPage
    (la mise en page, commune à l'éditeur, à l'impression et au PDF), FEUILLE.impression, FEUILLE.logo, FEUILLE.polices,
    FEUILLE.etapes (le planning d'une date en lignes simples, pour l'exemple de l'onglet « Déroulé type »).
+   FEUILLE.manques(blocs) : ce que la feuille n'a pas encore (les amorces qui posent une question), pour la liste « À
+   compléter » de l'administration ; FEUILLE.remplirAmorce(bloc, k, texte) en remplit une, comme un clic sur l'amorce.
+   L'hébergement : FEUILLE.hebergements(sources) → les feuilles d'où le reprendre (celles des autres dates au même lieu
+   qui en ont un, à défaut celles de la même commune ; la dernière écrite d'abord, sources.anterieures[].ecrit_le) ;
+   composer prend la première. FEUILLE.reprendreHebergement(blocs, x) remplace la rubrique par celle d'une autre feuille
+   (ou l'amorce, x = null) ; FEUILLE.origineHebergement(blocs, xs) dit d'où vient celle de la page (un indice dans xs,
+   'aucune', 'absente' ou 'ecrit' : retouchée à la main), d'après ce qu'elle dit : rien de plus n'est gardé.
+   La mémoire des feuilles (l'administration, equipe.js) relit ce qu'on a écrit dans les lignes composées depuis la base,
+   par leur clé : « cie:<id> » (le téléphone d'une personne de l'équipe de la date ; « cie:<prénom-nom> » pour
+   l'administration et la régie qui n'en sont pas), « contact:organisateur », « contact:date », « contact:lieu » (le
+   suivi ; « contact:organisateur+date » quand deux champs donnent le même contact, et la ligne « contact sur place » quand
+   il n'y en a aucun), « lieu » (le nom et l'adresse du lieu), « lieu:precisions » (jauge, plateau). Les lignes de contact
+   d'avant ces noms (« contact:0 ») prennent la clé du rôle qu'elles écrivent. « Mettre à jour depuis la base » remplit
+   aussi, dans une ligne retouchée à la main, l'amorce « téléphone ? » ou « adresse du lieu ? » quand la base sait
+   maintenant ce qu'elle demande (actualiser(…).remplies).
    Retirés : FEUILLE.SECTIONS, FEUILLE.fusionner, FEUILLE.vue et FEUILLE.css (l'ancien formulaire).
    La police FdR Sans (vendor/fdr-sans-*.ttf) est Carlito réduite au latin et renommée (Carlito a un nom réservé) ; le
    logo (logo-feuille.svg, à côté de ce fichier) est écrit par maquettes/build.py dans le site construit (sa source
@@ -413,35 +428,40 @@ ${s} .s{background:${MISE.surligne}}`;
       quoi: e.rep && PUBLIC_TEXTE[e.public] ? `${e.quoi} ${PUBLIC_TEXTE[e.public]}` : e.quoi, qui: e.qui, rep: !!e.rep, veille: !!e.veille, estime: !!e.estime }));
   }
 
-  // un contact écrit à la main (« Marie Dupont, 06 12 34 56 78, marie@lieu.fr ») : nom, téléphone, adresse électronique
+  // un contact écrit à la main (« Marie Dupont, 06 12 34 56 78, marie@lieu.fr ») : nom, téléphone, adresse électronique ;
+  // telephones et emails : tous ceux du texte (la mémoire des feuilles refuse un texte qui en a deux)
   const RE_TEL = /(?:\+33\s?|0)[1-9](?:[\s.-]?\d{2}){4}(?!\d)/;
   const RE_MEL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/;
+  const tous = (re, t) => String(t || '').match(new RegExp(re.source, 'g')) || [];
   function lireContact(texte, role) {
     let reste = String(texte || '');
-    const tel = (reste.match(RE_TEL) || [''])[0], mel = (reste.match(RE_MEL) || [''])[0];
+    const tels = tous(RE_TEL, reste), mels = tous(RE_MEL, reste), tel = tels[0] || '', mel = mels[0] || '';
     if (tel) reste = reste.replace(tel, ' ');
     if (mel) reste = reste.replace(mel, ' ');
     reste = reste.replace(/\b(t[ée]l[ée]?(?:phone)?|portable|mobile|courriel|e-?mail|m[ée]l)\s*[.:]?\s*(?=[\s,;–—-]|$)/gi, ' ')
       .replace(/\(\s*\)/g, ' ').replace(/\s*[,;–—-]\s*(?=[,;–—-]|$)/g, '').replace(/^\s*[,;:–—-]\s*/, '').replace(/\s+/g, ' ').replace(/[\s,;:–—-]+$/, '').trim();
     const m = /^([^:\d@,]{2,24}?)\s*:\s*(\S.*)$/.exec(reste);
     if (m && m[1].trim().split(/\s+/).length <= 2) { role = `${role} (${m[1].trim()[0].toLowerCase()}${m[1].trim().slice(1)})`; reste = m[2]; }
-    return { nom: reste, role, telephone: tel ? telTexte(tel) : '', email: mel };
+    return { nom: reste, role, telephone: tel ? telTexte(tel) : '', email: mel, telephones: tels.map(telTexte), emails: mels };
   }
+  // les contacts du suivi, chacun avec ses sources (organisateur, date, lieu) : sa ligne s'appelle « contact:lieu », ou
+  // « contact:organisateur+date » quand deux champs donnent le même contact (la mémoire des feuilles n'apprend alors rien)
+  const SOURCES_CONTACT = [['organisateur', 'organisateur', 'Organisateur'], ['date', 'contact', 'Contact de la date'], ['lieu', 'lieu_contact', 'Contact du lieu']];
   function composerContacts(suivi, autres) {
     const out = [];
-    const ajouter = c => {
+    const ajouter = (c, source) => {
       if (!c || (!txt(c.nom) && !txt(c.telephone) && !txt(c.email))) return;
       const dejaLa = out.find(x => (txt(c.telephone) && chiffres(x.telephone) === chiffres(c.telephone)) || (txt(c.email) && norm(x.email) === norm(c.email)) || (txt(c.nom) && norm(x.nom) === norm(c.nom) && norm(x.role) === norm(c.role)));
-      if (!dejaLa) out.push({ nom: txt(c.nom), role: txt(c.role), telephone: telTexte(c.telephone), email: txt(c.email) });
+      if (dejaLa) { if (!dejaLa.sources.includes(source)) dejaLa.sources.push(source); }
+      else out.push({ nom: txt(c.nom), role: txt(c.role), telephone: telTexte(c.telephone), email: txt(c.email), sources: [source] });
     };
-    const s = suivi || {};
-    if (txt(s.organisateur)) ajouter(lireContact(s.organisateur, 'Organisateur'));
-    if (txt(s.contact)) ajouter(lireContact(s.contact, 'Contact de la date'));
-    const cl = s.lieu?.contact ?? s.lieu_contact;
-    if (txt(cl)) ajouter(lireContact(cl, 'Contact du lieu'));
-    (autres || []).forEach(ajouter);
+    const s = { ...(suivi || {}), lieu_contact: suivi?.lieu?.contact ?? suivi?.lieu_contact };
+    SOURCES_CONTACT.forEach(([source, champ, role]) => { if (txt(s[champ])) ajouter(lireContact(s[champ], role), source); });
+    (autres || []).forEach(c => ajouter(c, 'autre'));
     return out;
   }
+  // une ligne de contact d'avant ces clés (« contact:0 ») : son champ se lit dans le rôle qu'elle écrit
+  const cleContactAncienne = t => { const s = norm(t); return /contact du lieu/.test(s) ? 'contact:lieu' : /contact de la date/.test(s) ? 'contact:date' : /organisateur/.test(s) ? 'contact:organisateur' : null; };
   // la distance depuis le départ : à vol d'oiseau × 1,3 ; la durée, d'après une vitesse moyenne qui croît avec la distance
   function distanceKm(a, b) {
     const r = x => x * Math.PI / 180, R = 6371;
@@ -487,9 +507,11 @@ ${s} .s{background:${MISE.surligne}}`;
   //     fin, public, note, annulee, id), equipe: [{personne_id, prenom, nom, fonction, categories, telephone}],
   //     contacts: [{nom, prenom, role, telephone, email}] (l'administration et la régie générale de la compagnie),
   //     depart: {commune, latitude, longitude}, suivi: {organisateur, contact, lieu: {contact, jauge, plateau}},
-  //     documents: [{id, titre, pour}], anterieures: [{contenu, debut, lieu_id, spectacle_id, lieu: {nom, commune}}] }
-  // Repas, transports et hébergement viennent de la feuille précédente du même spectacle (l'hébergement et les contacts
-  // écrits à la main, seulement d'une feuille au même lieu) ; sinon une amorce.
+  //     documents: [{id, titre, pour}], anterieures: [{contenu, debut, lieu_id, spectacle_id, lieu: {nom, commune}, date_id,
+  //     ecrit_le}] (les feuilles des autres dates ; ecrit_le : quand la feuille a été écrite pour la dernière fois) }
+  // Repas et transports viennent de la feuille précédente du même spectacle ; l'hébergement, de la dernière feuille écrite
+  // au même lieu, à défaut dans la même commune (hebergements : le choix se change ensuite, reprendreHebergement) ; les
+  // adresses et contacts écrits à la main, de la feuille précédente au même lieu ; sinon une amorce.
   function composer(sources) {
     const S = sources || {}, d = S.date || {}, sp = S.spectacle || {}, l = S.lieu || null, suivi = S.suivi || {};
     const nature = NATURES[d.nature] ? d.nature : 'representations';
@@ -576,11 +598,10 @@ ${s} .s{background:${MISE.surligne}}`;
     const memeLieu = x => l && x.lieu_id != null && String(x.lieu_id) === String(l.id);
     const memeSp = x => sp.id != null && x.spectacle_id != null && String(x.spectacle_id) === String(sp.id);
     const source = (filtre, ordre) => avant.filter(filtre).sort((a, b) => ordre(b) - ordre(a))[0] || null;
-    const origineTexte = x => `repris de la feuille ${x.debut ? `du ${jourLong(x.debut)}` : 'précédente'}${x.lieu?.nom || x.lieu?.commune ? ` (${txt(x.lieu.nom) || txt(x.lieu.commune)})` : ''} : à vérifier`;
     const rubrique = (k, titre, mots, x, vide, filtre) => {
       B('rubrique', [seg(titre)], { cle: `rub:${k}` });
       const repris = x ? extraire(x.contenu, k, mots, filtre) : [];
-      if (repris.length) { B('ligne', [amorce(origineTexte(x))]); repris.forEach(b => blocs.push(b)); }
+      if (repris.length) { B('ligne', [amorce(origineReprise(x))]); repris.forEach(b => blocs.push(b)); }
       else B('ligne', [amorce(vide)]);
     };
     const parSp = source(memeSp, x => memeLieu(x) ? 1 : 0), parLieu = source(memeLieu, x => memeSp(x) ? 1 : 0);
@@ -589,7 +610,8 @@ ${s} .s{background:${MISE.surligne}}`;
     // une seule journée, près de Rouen, sans arrivée la veille : pas d'hébergement
     const proche = route ? route.km < 100 : aPosition(S.depart) && aPosition(l);
     const uneNuit = joursPl.length <= 1 && proche && !veilleDepart;
-    if (!uneNuit || parLieu) rubrique('hebergement', 'Hébergement', /^hebergements?|^hotels?|^logements?/, parLieu, 'hôtel : nom, adresse, heure d’arrivée ?');
+    const heb = hebergements(S)[0] || null;
+    if (!uneNuit || heb) { B('rubrique', [seg('Hébergement')], { cle: 'rub:hebergement' }); sectionHebergement(heb).forEach(b => blocs.push(b)); }
 
     // ---- adresses et contacts
     B('rubrique', [seg('Adresses et contacts')], { cle: 'rub:adresses' });
@@ -602,11 +624,15 @@ ${s} .s{background:${MISE.surligne}}`;
       if (precisions) base('ligne', [seg(maj(precisions))], 'lieu:precisions');
     } else B('ligne', [amorce('le lieu : nom, adresse ?')]);
     const contacts = composerContacts(suivi, []);
-    contacts.forEach((c, k) => base('ligne', [seg(`${c.nom || c.role}${c.nom && c.role ? `, ${minuscule(c.role)}` : ''} : `), ...(c.telephone ? [seg(c.telephone)] : []), ...(c.telephone && c.email ? [seg(', ')] : []), ...(c.email ? [seg(c.email)] : []), ...(!c.telephone && !c.email ? [amorce('téléphone ?')] : [])], `contact:${k}`));
-    if (!contacts.length) B('ligne', [amorce('contact sur place : nom, téléphone ?')]);
+    contacts.forEach(c => base('ligne', [seg(`${c.nom || c.role}${c.nom && c.role ? `, ${minuscule(c.role)}` : ''} : `), ...(c.telephone ? [seg(c.telephone)] : []), ...(c.telephone && c.email ? [seg(', ')] : []), ...(c.email ? [seg(c.email)] : []), ...(!c.telephone && !c.email ? [amorce('téléphone ?')] : [])], `contact:${c.sources.join('+')}`));
+    // personne dans le suivi : la ligne du contact sur place, celui du lieu (sans lieu, celui de la date). Le contact écrit à
+    // la main dans la feuille précédente au même lieu, que la base n'a pas appris, est repris tel quel (avec sa clé)
+    const ecrit = !contacts.length && l && parLieu ? parLieu.contenu.find(b => b.cle === 'contact:lieu' && b.source !== 'base' && visibles([b])[0]) : null;
+    if (!contacts.length && !ecrit) base('ligne', [amorce('contact sur place : nom, téléphone ?')], l ? 'contact:lieu' : 'contact:date');
     if (parLieu) {
       const repris = extraire(parLieu.contenu, 'adresses', /^adresses?|^contacts?/, b => !(b.cle && /^(lieu|contact:|cie)/.test(b.cle)), true);
-      if (repris.length) { B('ligne', [amorce(origineTexte(parLieu))]); repris.forEach(b => blocs.push(b)); }
+      if (ecrit) repris.unshift(bloc({ ...visibles([ecrit])[0], id: null, source: null, origine: null }));
+      if (repris.length) { B('ligne', [amorce(origineReprise(parLieu))]); repris.forEach(b => blocs.push(b)); }
     }
     B('sous-titre', [seg('contacts compagnie')], { cle: 'cie' });
     // l'équipe de la date, puis l'administration et la régie générale de la compagnie (une seule fois chacune)
@@ -648,6 +674,56 @@ ${s} .s{background:${MISE.surligne}}`;
     while (out.length && !texteBloc(out[out.length - 1]).trim() && out[out.length - 1].type !== 'tableau') out.pop();
     while (out.length && !texteBloc(out[0]).trim() && out[0].type !== 'tableau') out.shift();
     return out;
+  }
+
+  // ---- l'hébergement : de quelle feuille le reprendre
+  const MOTS_HEB = /^hebergements?|^hotels?|^logements?/;
+  const VIDE_HEB = 'hôtel : nom, adresse, heure d’arrivée ?';
+  const origineReprise = x => `repris de la feuille ${x.debut ? `du ${jourLong(x.debut)}` : 'précédente'}${x.lieu?.nom || x.lieu?.commune ? ` (${txt(x.lieu.nom) || txt(x.lieu.commune)})` : ''} : à vérifier`;
+  // les feuilles d'où reprendre l'hébergement (sources : celles de composer) : celles des autres dates au même lieu qui en
+  // ont un, à défaut celles de la même commune ; la dernière écrite d'abord (ecrit_le), pas la précédente dans le temps.
+  // → [{date_id, debut, lieu, lieu_id, ecrit_le, memeLieu, blocs (l'hébergement écrit, sans l'amorce de reprise)}]
+  function hebergements(sources) {
+    const S = sources || {}, l = S.lieu || null;
+    if (!l) return [];
+    const xs = (S.anterieures || []).filter(x => x && x.contenu && (S.date?.id == null || String(x.date_id) !== String(S.date.id)))
+      .map(x => ({ ...x, memeLieu: x.lieu_id != null && String(x.lieu_id) === String(l.id), blocs: extraire(contenu({ contenu: x.contenu }).blocs, 'hebergement', MOTS_HEB) }))
+      .filter(x => x.blocs.length);
+    const ici = xs.filter(x => x.memeLieu), commune = norm(txt(l.commune));
+    return (ici.length ? ici : xs.filter(x => commune && norm(txt(x.lieu?.commune)) === commune))
+      .sort((a, b) => String(b.ecrit_le || '').localeCompare(String(a.ecrit_le || '')) || String(b.debut || '').localeCompare(String(a.debut || '')));
+  }
+  // les lignes de la rubrique Hébergement repris d'une feuille (x, de hebergements), ou l'amorce sans elle
+  const sectionHebergement = x => (x && x.blocs.length ? [bloc({ type: 'ligne', segments: [amorce(origineReprise(x))] }), ...x.blocs.map(b => bloc({ ...b, id: null }))] : [bloc({ type: 'ligne', segments: [amorce(VIDE_HEB)] })]);
+  // où est la rubrique Hébergement d'une feuille : [début, fin) de ses lignes, ou null
+  function rubriqueHebergement(blocs) {
+    const i = blocs.findIndex(b => b.type === 'rubrique' && (b.cle === 'rub:hebergement' || MOTS_HEB.test(norm(texteBloc(b)).trim())));
+    if (i < 0) return null;
+    let j = i + 1;
+    while (j < blocs.length && blocs[j].type !== 'rubrique' && !(blocs[j].type === 'sous-titre' && /compagnie/.test(norm(texteBloc(blocs[j]))))) j++;
+    while (j > i + 1 && blocs[j - 1].type === 'saut') j--;
+    return [i + 1, j];
+  }
+  // la rubrique Hébergement de la feuille (ses blocs) reprise de x (ou l'amorce, x = null) ; sans rubrique Hébergement,
+  // elle s'ajoute avant « Adresses et contacts ». Passe par l'historique de l'éditeur comme toute modification.
+  function reprendreHebergement(blocs, x) {
+    const out = (blocs || []).map(b => ({ ...b })), r = rubriqueHebergement(out);
+    if (r) { out.splice(r[0], r[1] - r[0], ...sectionHebergement(x)); return out; }
+    let k = out.findIndex(b => b.cle === 'rub:adresses' || (b.type === 'rubrique' && /^adresses?|^contacts?/.test(norm(texteBloc(b)).trim())));
+    if (k < 0) k = out.length;
+    out.splice(k, 0, bloc({ type: 'rubrique', segments: [seg('Hébergement')], cle: 'rub:hebergement' }), ...sectionHebergement(x));
+    return out;
+  }
+  // d'où vient l'hébergement d'une feuille, d'après ce qu'elle dit : l'indice dans xs (hebergements) de la feuille dont il
+  // est la reprise exacte, 'aucune' (l'amorce seule), 'absente' (pas de rubrique) ou 'ecrit' (écrit ou retouché à la main)
+  function origineHebergement(blocs, xs) {
+    const r = rubriqueHebergement(blocs || []);
+    if (!r) return 'absente';
+    const sig = bs => bs.filter(b => b.type !== 'saut').map(b => `${b.type}|${texteBloc(b, true).replace(/\s+/g, ' ').trim()}`).filter(t => !/\|$/.test(t) || /^tableau/.test(t)).join('\n');
+    const ici = sig(blocs.slice(r[0], r[1]));
+    if (ici === sig(sectionHebergement(null))) return 'aucune';
+    const i = (xs || []).findIndex(x => sig(sectionHebergement(x)) === ici);
+    return i >= 0 ? i : 'ecrit';
   }
 
   // ================================================================================================ l'ancien format
@@ -716,9 +792,12 @@ ${s} .s{background:${MISE.surligne}}`;
   function contenu(feuille, contexte) {
     const c = feuille?.contenu;
     if (c && c.format === 2 && Array.isArray(c.blocs)) {
-      const blocs = c.blocs.map(bloc), vus = new Set();
+      const blocs = c.blocs.map(bloc), vus = new Set(), anciennes = new Map();
       blocs.forEach(b => { if (vus.has(b.id)) b.id = nouvelId(); vus.add(b.id); });
-      return { ...c, blocs, composees: Array.isArray(c.composees) ? c.composees.map(String) : [], pages: Array.isArray(c.pages) ? c.pages.map(String) : [], instantane: Array.isArray(c.instantane) ? c.instantane : [] };
+      // une ligne de contact d'avant les clés nommées (« contact:0 ») prend celle de son champ, d'après le rôle qu'elle écrit
+      blocs.forEach(b => { if (!/^contact:\d+$/.test(b.cle || '')) return; const k = cleContactAncienne(texteBloc(b)); if (k && !blocs.some(x => x.cle === k)) { anciennes.set(b.cle, k); b.cle = k; } });
+      const composees = Array.isArray(c.composees) ? c.composees.map(k => anciennes.get(String(k)) || String(k)) : [];
+      return { ...c, blocs, composees, pages: Array.isArray(c.pages) ? c.pages.map(String) : [], instantane: Array.isArray(c.instantane) ? c.instantane : [] };
     }
     if (c && typeof c === 'object' && ['representations', 'planning', 'lieu', 'trajet', 'transport', 'hebergement', 'repas', 'equipe', 'contacts', 'documents', 'notes'].some(k => k in c)) return depuisSections(c, contexte);
     return { format: 2, blocs: [], composees: [], pages: [], instantane: [] };
@@ -730,18 +809,50 @@ ${s} .s{background:${MISE.surligne}}`;
   // Rien de ce qui a été écrit ou retouché à la main ne change ; un bloc de la base retiré à la main ne revient pas.
   const STRUCTURE = new Set(['rubrique', 'jour', 'sous-titre']);
   const memeBloc = (a, b) => JSON.stringify([a.type, a.segments, a.lignes, a.date, a.petit, a.origine]) === JSON.stringify([b.type, b.segments, b.lignes, b.date, b.petit, b.origine]);
+  // Une ligne retouchée à la main qui garde une amorce d'information (« téléphone ? », « adresse du lieu ? ») : quand la
+  // base a maintenant l'information, l'amorce laisse place à ce que dit la ligne composée ; si la ligne l'a déjà (écrite à
+  // côté de l'amorce), l'amorce s'en va seulement. Ce qui est écrit à la main ne change pas.
+  const num = t => chiffres(t).replace(/\+33/g, '0');
+  const contient = (texte, v) => {
+    const ts = tous(RE_TEL, v), ms = tous(RE_MEL, v);
+    if (ts.length || ms.length) return ts.every(x => num(texte).includes(num(x))) && ms.every(x => norm(texte).includes(norm(x)));
+    return norm(texte).replace(/\s+/g, ' ').includes(norm(v).replace(/\s+/g, ' ').trim());
+  };
+  const REMPLIR = {
+    'téléphone ?': n => { const c = lireContact(texteSegs(n.segments)); return [c.telephone, c.email].filter(Boolean).join(', '); },
+    'adresse du lieu ?': n => { const t = texteSegs(n.segments), i = t.indexOf(' : '); return i < 0 ? '' : t.slice(i + 3).trim(); },
+  };
+  // qui la ligne composée nomme (« Camille », « Marie Dupont », « Théâtre des Essais ») : la ligne retouchée doit le nommer
+  // encore, sinon l'information irait à quelqu'un d'autre
+  const mots = t => norm(t).replace(/[^a-z0-9]+/g, ' ').trim();
+  const nomme = n => { const t = texteSegs(n.segments), i = t.indexOf(' : '); return mots(i >= 0 ? t.slice(0, i).replace(/,\s*(organisateur|contact de la date|contact du lieu)(\s*\([^)]*\))?\s*$/i, '') : lireContact(t).nom); };
+  function remplir(a, n) {
+    let rempli = 0;
+    const xs = [], qui = nomme(n);
+    (a.segments || []).forEach(s => {
+      const lire = s.amorce && REMPLIR[s.texte];
+      if (!lire || (n.segments || []).some(x => x.amorce && x.texte === s.texte) || (qui && !mots(texteSegs(a.segments)).includes(qui))) { xs.push(s); return; }
+      const v = lire(n);
+      if (!v) { xs.push(s); return; }
+      if (!contient(texteSegs(a.segments), v)) { const avecLien = (n.segments || []).find(x => x.lien && x.texte.trim() === v); xs.push(avecLien ? { texte: v, lien: avecLien.lien } : { texte: v }); }
+      rempli++;
+    });
+    if (rempli) a.segments = segments(xs);
+    return rempli;
+  }
   function actualiser(actuel, nouveau) {
     const A = contenu({ contenu: actuel }), N = contenu({ contenu: nouveau });
     let out = A.blocs.map(b => ({ ...b }));
     const presentes = new Set(out.filter(b => b.cle).map(b => b.cle));
     const retirees = new Set((A.composees || []).filter(k => !presentes.has(k)));
     const clesN = new Set(N.blocs.filter(b => b.cle).map(b => b.cle));
-    let modifies = 0, ajoutes = 0, retires = 0;
+    let modifies = 0, ajoutes = 0, retires = 0, remplies = 0;
     // un bloc de l'ancien format, venu de la base : remplacé par la composition d'aujourd'hui
     const perime = b => b.source === 'base' && b.cle && !clesN.has(b.cle);
     N.blocs.forEach(n => {
       const a = n.cle && out.find(b => b.cle === n.cle);
       if (a && a.source === 'base' && !memeBloc(a, n)) { Object.assign(a, { type: n.type, segments: clone(n.segments), lignes: clone(n.lignes), date: n.date, petit: n.petit, origine: clone(n.origine) }); if (!a.lignes) delete a.lignes; modifies++; }
+      else if (a && a.source !== 'base' && a.type !== 'tableau') remplies += remplir(a, n);
     });
     out = out.filter(b => { if (perime(b)) { retires++; return false; } return true; });
     let ancre = null;
@@ -762,7 +873,35 @@ ${s} .s{background:${MISE.surligne}}`;
     const composees = [...new Set([...(A.composees || []).filter(k => !String(k).startsWith('ancien:')), ...clesN])];
     const c = { ...A, blocs: out, composees, instantane: N.instantane, compose_le: N.compose_le || new Date().toISOString() };
     delete c.ancien;
-    return { contenu: c, ajoutes, modifies, retires };
+    return { contenu: c, ajoutes, modifies, retires, remplies };
+  }
+
+  // ================================================================================================ ce qui manque
+  // Les amorces qui posent une question (« téléphone ? », « heure ? », « hôtel : nom, adresse, heure d’arrivée ? ») : ce que
+  // la feuille n'a pas encore. → [{id, k (le rang de l'amorce parmi les segments du bloc), texte, ligne (le bloc sans ses
+  // amorces), rubrique, jour (le jour du planning où elle se trouve), cle}]. Les blocs sont ceux d'un contenu
+  // (FEUILLE.contenu) ou de l'éditeur ; pas les tableaux.
+  function manques(blocs) {
+    const out = [];
+    let rubrique = '', jour = '';
+    (blocs || []).forEach(b => {
+      if (b.type === 'rubrique') { rubrique = texteBloc(b).trim(); jour = ''; }
+      if (b.type === 'jour') jour = texteBloc(b).trim();
+      if (!Array.isArray(b.segments)) return;
+      b.segments.forEach((s, k) => { if (s.amorce && s.texte.includes('?')) out.push({ id: b.id, k, texte: s.texte.trim(), ligne: texteSegs(b.segments).trim(), rubrique, jour, cle: b.cle || null }); });
+    });
+    return out;
+  }
+  // une amorce remplie : le texte prend sa place, avec la mise en forme du texte voisin (celui d'avant, sinon celui
+  // d'après) ; le bloc est alors retouché à la main (« Mettre à jour depuis la base » ne le change plus)
+  function remplirAmorce(b0, k, texte) {
+    const b = bloc(clone(b0)), xs = b.segments || [];
+    if (!xs[k]?.amorce) return b;
+    const voisin = xs.slice(0, k).reverse().find(s => !s.amorce) || xs.slice(k + 1).find(s => !s.amorce) || {};
+    xs[k] = { texte: String(texte ?? '').replace(/\s+/g, ' ').trim(), ...Object.fromEntries(MARQUES.filter(m => voisin[m]).map(m => [m, true])) };
+    b.segments = segments(xs);
+    delete b.source;
+    return b;
   }
 
   // ================================================================================================ le planning (frise de l'équipe)
@@ -1107,6 +1246,7 @@ ${cssPage('.fdr-imp')}
     composer, contenu, actualiser, planning, html, pdf, telecharger, impression, definition, nomFichier, vendor: vendorDefaut,
     MISE, cssPage, cssPolices, logo, logoUrl, polices, htmlBloc, bloc, segments, visibles, texteBloc, lireHeure, dateDuTexte, nouvelId, jetons,
     DEROULE, etapes, trier, joursEtape, estApres, dureeMinutes, dureeTexte, heure, heureCourte, jourLong, quandTexte, telTexte, telLien, itineraire, lireContact,
+    manques, remplirAmorce, cleMot, aLieu, RE_TEL, RE_MEL, hebergements, reprendreHebergement, origineHebergement,
   };
   return api;
 })();

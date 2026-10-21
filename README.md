@@ -223,15 +223,36 @@ Ajouter `?base=0` à l'adresse d'une maquette la garde sur l'instantané.
 **L'administration** (`admin/index.html`, en ligne dans `docs/admin/`) : connexion par adresse et mot de passe d'un
 compte du projet inscrit dans `crescite_admins`.
 
+- **La recherche rapide** : Ctrl K (⌘K sur un Mac), ou la loupe de l'en-tête (au téléphone, au bout de la ligne du
+  logo). Une date se trouve par son spectacle, son lieu, sa commune ou son jour (« 21 oct », « mardi », « 21/10 »),
+  comme une personne, un lieu, un spectacle, une feuille de route ou une rubrique ; ↑ ↓ choisissent, Entrée ouvre,
+  Échap ferme ; sans rien taper, les prochaines dates. Tout se cherche dans ce que l'administration a déjà chargé :
+  aucune requête à la frappe.
+- **À compléter avant la tournée**, en tête de Représentations (repliable, et repliée elle le reste) : pour les dates
+  confirmées des 60 prochains jours (30 ou 90 au choix), les personnes de l'équipe de tournée sans téléphone, les lieux
+  sans adresse ou sans contact (ou la date sans lieu), les dates sans feuille de route ou dont la feuille a encore du
+  gris. Chaque ligne mène là où on le complète, le curseur dans le champ (la fiche, le lieu, la feuille sur sa liste
+  « À compléter ») ; la liste se vide à mesure.
 - **Représentations**, présentée comme l'agenda du site : les prochaines dates en haut, puis les saisons passées,
   fermées sauf la saison en cours (« Aller à une saison… »), avec les filtres par spectacle, public et statut. On y
   ajoute une date, on y modifie une date passée. Une date porte autant de représentations qu'il en faut, le même
   jour ou non, chacune avec son heure, son public et sa billetterie. L'aperçu montre la ligne telle que le site
-  l'affichera.
+  l'affichera. Sous son lieu, la date montre ce que la fiche du lieu en sait (adresse et itinéraire, contact, jauge,
+  plateau, ou ce qui manque) et mène à elle ; son équipe donne le téléphone de chacun (« téléphone ? » mène à la fiche).
+  Le pied de la date tient sur une rangée : quand tout n'y tient pas (au téléphone, dans une colonne étroite), Feuille
+  de route, Prévenir l'équipe, Dupliquer et Supprimer passent dans un menu « Plus » (↑ ↓, Échap rend le focus) ; seul
+  « Enregistrer » reste à côté.
 - **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
 - **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
-- **Lieux** : avec la recherche de commune (geo.api.gouv.fr) et la fusion des doublons.
-- **Textes du site** et **Journal**, d'où l'on peut revenir sur une modification.
+- **Lieux** : avec la recherche de commune (geo.api.gouv.fr), la fusion des doublons, et ses dates (à venir, puis
+  passées) avec leur feuille de route.
+- Sous les champs des fiches (une personne, un lieu, le suivi d'une date), chaque numéro et chaque adresse électronique
+  s'ouvrent d'un geste : « Appeler le … » (tel:), « Écrire à … » (mailto:) ; une adresse donne son itinéraire.
+- **Textes du site** et **Journal**, d'où l'on peut revenir sur une modification. Le Journal se filtre (une rubrique
+  ou une table, un auteur, une période : aujourd'hui, 7 ou 30 jours, ou deux dates) et se cherche (un nom, un numéro,
+  un champ, jusque dans les valeurs changées), au téléphone comme à l'ordinateur ; il lit les 300 dernières
+  modifications, « Lire 300 modifications plus anciennes » remonte plus loin (et la liste dit quand ce qui est lu ne
+  remonte pas assez).
 - **Modifier sur le site ↗** ouvre la synthèse en mode édition : les mêmes droits, dans la page publique.
 
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
@@ -276,7 +297,8 @@ ou un de ses spectacles ; les autres attendent l'accord de l'administration. `--
 Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'administration.
 
 **L'administration** gagne trois choses :
-- **Équipe** : les fiches (publiques, coordonnées, accès, notes), et les documents de toute la compagnie.
+- **Équipe** : les fiches (publiques, coordonnées, accès, notes), et les documents de toute la compagnie ; la liste
+  trouve aussi les fiches « Sans téléphone », à compléter.
 - **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation et les documents. **Dans
   chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
   remplaçant).
@@ -288,9 +310,40 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   - « Composer » écrit la page à partir de la base : l'en-tête, le planning jour par jour (le déroulé type placé autour
     des représentations : le montage passe la veille plutôt que la nuit, un repas ne tombe qu'aux heures de repas, le
     départ est calculé d'après la route, et rien n'est posé avant 6h), les répétitions, les adresses et les contacts.
-    Repas et transports sont repris de la feuille précédente du spectacle, l'hébergement d'une feuille au même lieu.
+    Repas et transports sont repris de la feuille précédente du spectacle ; ce qui est écrit à la main dans « Adresses
+    et contacts », d'une feuille au même lieu (du même spectacle d'abord, la plus récente avant la date, sinon la plus
+    proche après) ; l'hébergement, de la dernière feuille écrite au même lieu (et non de la précédente dans le temps),
+    à défaut d'une feuille de la même commune. Au-dessus de la page, « Hébergement : repris de la feuille du … » dit
+    d'où il vient et se change d'un geste : une autre feuille du lieu (ou de la commune), ou « à écrire » ; la rubrique
+    est remplacée (« Annuler » la reprend), et retouchée à la main, la liste le dit (« écrit dans cette feuille »).
     Ce qui manque s'écrit en gris cliquable et ne s'imprime jamais.
-  - « Mettre à jour depuis la base » rafraîchit les lignes venues de la base sans toucher à ce qui a été écrit à la main.
+  - **À compléter**, au-dessus de la page : ce que la feuille demande encore (le gris qui pose une question :
+    « téléphone ? », « heure ? », « hôtel : nom, adresse… ? »), en une liste qu'on remplit sans viser la page, au clavier
+    (Entrée passe au suivant) comme au téléphone ; chaque réponse prend la place du gris, comme un clic sur lui (« Annuler »
+    de la barre la reprend), et dit si elle ira dans une fiche. « n à compléter », le même compte, se lit dans la liste
+    des feuilles, sur le bouton « Feuille de route » d'une date (au téléphone, le chiffre sur « Plus »), dans « Ses
+    prochaines dates » d'une personne et dans les dates d'un lieu ; un clic ouvre la feuille sur sa liste « À
+    compléter ». Le compte suit la feuille quand elle change (le temps réel de la base).
+  - « Mettre à jour depuis la base » rafraîchit les lignes venues de la base sans toucher à ce qui a été écrit à la main ;
+    dans une ligne retouchée, le gris « téléphone ? » ou « adresse du lieu ? » prend la valeur que la base a apprise
+    depuis. Quand la base sait de quoi remplir du gris, la feuille le dit dès qu'on l'ouvre.
+  - **La mémoire des feuilles.** Ce qu'on écrit dans une feuille à la place d'une information de la base, ou là où elle
+    manque, va dans la bonne fiche quand on enregistre la feuille : le téléphone d'une personne de la compagnie (sa ligne
+    dans « contacts compagnie » → sa fiche), le contact du lieu, et l'adresse d'un lieu qui n'en a pas, sa jauge et son
+    plateau (→ la fiche du lieu), l'organisateur et le contact propre à la date (→ son suivi). Les feuilles suivantes,
+    et l'espace de l'équipe, le trouvent alors tout prêt. Une phrase le dit (« Le téléphone de … est gardé dans sa
+    fiche ») avec « Annuler », qui remet l'ancienne valeur dans la fiche. Rien n'est deviné : deux numéros dans la ligne,
+    pas de numéro reconnaissable, une personne ou un contact qu'on ne retrouve plus (un autre nom que dans la fiche), une
+    adresse pour un lieu qui en a déjà une, et rien ne s'enregistre ; la phrase dit ce qui reste dans la feuille, et
+    pourquoi. Ce qu'on efface dans la feuille n'efface pas la fiche ; un contact du suivi, texte libre, est complété ou
+    corrigé (un numéro changé remplace l'ancien), jamais réécrit. Seul compte ce qui a été écrit depuis l'ouverture de la
+    feuille : enregistrer de nouveau ne réapprend rien. La fiche d'une personne, d'un lieu ou le suivi d'une date dit
+    ensuite d'où vient une valeur apprise (« Appris de la feuille de route du … », tant que la ligne de la feuille la dit
+    encore ; la feuille ne garde que la trace : quelle fiche, quel champ, quand, rien de la valeur), et le Journal, à la
+    ligne de la feuille, ce qu'elle a gardé (les coordonnées des personnes, elles, ne vont jamais au journal). Les lignes
+    composées depuis la base portent une clé (`cie:<personne>`, `contact:lieu`, `contact:date`, `contact:organisateur`,
+    `lieu`, `lieu:precisions`) ; `MEMOIRE`, dans `admin/equipe.js`, relie chacune à sa fiche et à son champ. Aucune
+    colonne de plus dans la base.
   - Le PDF est identique à la page, avec les mêmes sauts de page. « Publier pour l'équipe » prévient l'équipe.
   - Le module `admin/feuille.js` fait l'éditeur, le PDF (pdfmake, `admin/vendor/`) et la version web, fluide sur
     téléphone, que l'espace de l'équipe affiche.
@@ -373,7 +426,12 @@ jamais), le planning commun (toute l'équipe voit les heures de tous, le motif r
 l'administration ; d'un agenda relié, aucun titre n'est gardé), et les propositions de dates de l'administration, avec
 une réponse par jour. Dans l'administration, la rubrique Planning montre le planning de toute l'équipe (vue Équipe et
 vue Mois, motifs et conflits compris), propose des dates en montrant qui n'est pas libre pendant le choix, et suit
-chaque proposition (réponses par jour, état des courriels, renvoyer, relancer, clore). L'administratrice y masque les
+chaque proposition (réponses par jour, état des courriels, renvoyer, relancer, clore). Chaque jour proposé donne
+« Créer la date » : le formulaire d'une nouvelle date s'ouvre pré-rempli (le spectacle, le jour et ses heures, le lieu
+quand la proposition le nomme ou qu'elle est liée à une date, la nature d'après le titre — des répétitions ne vont
+jamais sur le site —, et l'équipe : celles et ceux qui ont répondu oui ce jour-là) ; une fois la date enregistrée, la
+proposition se clôt (l'annonce le dit) et garde sa date (« Date retenue ») ; quitter le formulaire sans enregistrer
+n'y touche pas. L'administratrice y masque les
 personnes qu'elle ne suit pas : « Masquer du planning » dans le détail d'une personne, ou sur sa ligne (au survol, d'un
 toucher sur le nom, au clavier par Maj+Tab depuis la case). Une personne masquée quitte les lignes, les « pas libre »
 et les conflits, sauf si on la choisit dans la liste des personnes ; « Masquées (n) », dans la barre des filtres, les

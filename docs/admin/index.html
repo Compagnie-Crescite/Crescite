@@ -45,13 +45,44 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
 .direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
 .direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
-/* dix rubriques : sous 1 940 px l'adresse du compte se retire ; sous 1 740 px les rubriques passent sur une seconde ligne ;
-   entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique courante en vue) */
-@media (max-width: 1939px) { .qui .moi { display: none; } }
-@media (max-width: 1739px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
+/* dix rubriques et la recherche : sous 2 080 px l'adresse du compte se retire ; sous 1 940 px les rubriques passent sur
+   une seconde ligne ; entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique
+   courante en vue) */
+@media (max-width: 2079px) { .qui .moi { display: none; } }
+@media (max-width: 1939px) { .barre { flex-wrap: wrap; row-gap: 6px; } .nav { order: 3; flex-basis: 100%; } .qui { margin-left: auto; } .qui .moi { display: inline; } }
 @media (min-width: 861px) and (max-width: 1099px) { .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
+/* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
+   La loupe et le raccourci ; le mot en plus quand l'en-tête tient sur deux lignes (de 1 200 à 1 939 px) ; au téléphone,
+   la loupe seule, au bout de la ligne de la marque (les liens du compte passent dessous quand la place manque) */
+.chercher { display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 34px; padding: 4px 6px 4px 10px; border: 1px solid var(--trait); border-radius: 9px; background: var(--doux); color: var(--gris); font-weight: 600; font-size: 13.5px; cursor: pointer; }
+.chercher:hover { border-color: var(--gris); color: var(--encre); }
+.chercher svg { flex: none; }
+.chercher .mot { padding-right: 22px; }
+kbd { font: 650 11.5px/1 var(--police); padding: 3px 5px 2px; border: 1px solid var(--trait); border-bottom-width: 2px; border-radius: 5px; background: var(--carte); color: var(--gris); white-space: nowrap; }
+@media (max-width: 1199px), (min-width: 1940px) { .chercher .mot { display: none; } }
+@media (max-width: 860px) { .chercher { margin-left: auto; width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; } .chercher .mot, .chercher kbd { display: none; } .barre .qui { margin-left: 0; } }
+dialog.recherche { width: min(640px, calc(100% - 24px)); max-width: none; max-height: min(580px, calc(100dvh - 24px)); margin: max(12px, 9vh) auto auto; padding: 0; border: 1px solid var(--trait); border-radius: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 18px 60px rgba(20, 10, 20, .3); overflow: hidden; }
+dialog.recherche[open] { display: flex; }
+dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
+.rch-boite { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.rch-tete { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 16px; border-bottom: 2px solid var(--trait); }
+.rch-tete:focus-within { border-bottom-color: var(--accent); }
+.rch-tete svg { flex: none; color: var(--gris); }
+.rch-tete input[type=text] { flex: 1; min-width: 0; border: 0; background: none; font-size: 17px; padding: 6px 0; min-height: 42px; box-shadow: none; }
+.rch-entete { margin: 0; padding: 10px 18px 4px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.rch-liste { list-style: none; margin: 0; padding: 2px 8px 8px; overflow: auto; overscroll-behavior: contain; flex: 1; min-height: 0; }
+.rch-liste [role=option] { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; cursor: pointer; }
+.rch-liste [role=option][aria-selected=true] { background: var(--accent-doux); }
+.rch-liste .pastille { --c: var(--trait); }
+.rch-corps { flex: 1; min-width: 0; display: grid; }
+.rch-corps b, .rch-corps small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rch-corps small { color: var(--gris); font-size: 13px; }
+.rch-type { flex: none; font-size: 12px; font-weight: 700; color: var(--gris); }
+.rch-liste mark { background: none; color: inherit; text-decoration: underline 2px var(--accent); text-underline-offset: 3px; }
+.rch-aide { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 8px 18px; border-top: 1px solid var(--trait); font-size: 12.5px; color: var(--gris); }
+@media (max-width: 520px) { dialog.recherche { width: calc(100% - 16px); margin-top: 8px; max-height: calc(100dvh - 16px); } .rch-aide { display: none; } }
 
 /* boutons et champs */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 9px; border: 1px solid var(--trait); background: var(--carte); cursor: pointer; font-weight: 600; text-decoration: none; color: var(--encre); white-space: nowrap; }
@@ -93,7 +124,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .deux > .liste { position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
 @media (max-width: 1100px) { .deux { grid-template-columns: 1fr; } .deux > .liste { position: static; max-height: none; } .deux.edition > .liste { display: none; } }
 @media (max-width: 1100px) { .deux:not(.edition) > .editeur { display: none; } }
-@media (min-width: 1101px) and (max-width: 1739px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
+@media (min-width: 1101px) and (max-width: 1939px) { .deux > .liste { top: 104px; max-height: calc(100vh - 124px); } }
 .filtres { display: grid; gap: 8px; padding: 12px; background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); margin-bottom: 10px; }
 .seg { display: inline-flex; border: 1px solid var(--trait); border-radius: 9px; overflow: hidden; background: var(--carte); }
 .seg button { border: 0; background: none; padding: 6px 11px; cursor: pointer; font-weight: 600; color: var(--gris); }
@@ -129,7 +160,29 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .pied-ed { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 16px; padding: 12px 14px; background: color-mix(in srgb, var(--carte) 92%, transparent); backdrop-filter: blur(6px); border: 1px solid var(--trait); border-radius: var(--rayon); }
 .pied-ed .etat-ed { margin-right: auto; color: var(--gris); font-size: 13px; }
 .pied-ed .etat-ed.sale { color: var(--option); font-weight: 700; }
+/* le menu « Plus » du pied (pied(…, { replier: true })) : tant que tout tient sur une rangée, ses actions s'alignent comme
+   les autres (l'état se resserre d'abord) ; sinon (au téléphone, dans une colonne étroite), .replie : l'état, « Plus »,
+   « Enregistrer », et les autres actions dans le menu (ajusterPied, à chaque changement de largeur) */
+.pied-plus { display: none; }
+.pied-menu, .pied-autres { display: contents; }
+.pied-plus svg { transition: transform .15s; }
+.pied-plus[aria-expanded="true"] svg { transform: rotate(180deg); }
+.pied-plus .a-completer.nombre { padding: 1px 7px; font-size: 11.5px; }
+.pied-ed.a-plus .etat-ed { flex: 1 1 70px; min-width: 0; margin-right: 0; }
+.pied-ed.a-plus:not(.replie) .btn { padding-left: 12px; padding-right: 12px; }
+.pied-ed.a-plus.replie { flex-wrap: nowrap; padding: 10px 12px; }
+.pied-ed.a-plus.replie .etat-ed { flex: 1 1 auto; font-size: 12.5px; line-height: 1.25; }
+.pied-ed.a-plus.replie .pied-menu { display: block; flex: none; }
+.pied-ed.a-plus.replie .pied-plus { display: inline-flex; }
+.pied-ed.a-plus.replie .pied-autres { display: none; position: absolute; right: 8px; bottom: calc(100% + 8px); z-index: 30; width: max-content; min-width: 210px; max-width: calc(100% - 16px); flex-direction: column; align-items: stretch; gap: 2px; padding: 6px; background: var(--carte); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 10px 34px rgba(20, 10, 20, .22); }
+.pied-ed.a-plus.replie .pied-autres.ouvert { display: flex; }
+.pied-ed.a-plus.replie .pied-autres .btn { justify-content: flex-start; border-color: transparent; padding: 10px 12px; }
+.pied-ed.a-plus.replie .pied-autres .btn:hover, .pied-ed.a-plus.replie .pied-autres .btn:focus-visible { background: var(--doux); }
+.pied-ed.a-plus.replie [data-enregistrer] { flex: none; }
+@media (max-width: 420px) { .pied-ed.a-plus.replie { gap: 6px; } .pied-ed.a-plus.replie > .btn, .pied-ed.a-plus.replie .pied-plus { padding: 8px 10px; } }
 .apercu { padding: 12px 14px; border-radius: 10px; background: var(--doux); border: 1px dashed var(--trait); }
+.d-depuis { margin: -4px 0 14px; padding: 10px 14px; border-radius: 10px; background: var(--accent-doux); font-size: 14px; }
+.d-depuis a { font-weight: 700; white-space: nowrap; }
 .apercu .l { font-weight: 700; }
 .apercu .d { color: var(--gris); font-size: 14px; }
 table.reps { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
@@ -165,6 +218,25 @@ table.reps td:first-child { padding-left: 0; }
 .contraste { font-size: 12px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
 .contraste.bon { background: var(--ok-doux); color: var(--ok); }
 .contraste.faible { background: var(--alerte-doux); color: var(--alerte); }
+/* sous un champ : appeler, écrire, d'où vient la valeur ; le lieu d'une date ; ses dates */
+.sous-champ { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; font-size: 12.5px; }
+.sous-champ[hidden] { display: none; }
+.sous-champ a.coord, .lieu-resume a { font-weight: 650; }
+.appris { color: var(--ok); }
+.appris a { color: inherit; }
+.lieu-resume { display: grid; gap: 3px; margin-top: 8px; padding: 8px 11px; border-radius: 9px; background: var(--doux); font-size: 13.5px; overflow-wrap: anywhere; }
+.lieu-resume .manque { color: var(--gris); font-style: italic; }
+/* le journal : ses filtres (chercher, rubrique ou table, auteur, période), puis ses lignes */
+.journal-filtres .j-choix { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.journal-filtres .j-choix select { flex: 1 1 180px; width: auto; min-width: 0; }
+.journal-filtres .j-dates { display: flex; flex-wrap: wrap; gap: 8px; flex: 1 1 100%; }
+.journal-filtres .j-dates[hidden] { display: none; }
+.journal-filtres .j-dates label { display: flex; align-items: center; gap: 6px; flex: 1 1 160px; font-size: 13.5px; color: var(--gris); }
+.journal-filtres .j-dates input { flex: 1; min-width: 0; }
+.j-compte { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0; }
+.j-plus { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 14px 0 0; }
+.j-plus:empty { display: none; }
+.journal-ligne mark { background: none; color: inherit; text-decoration: underline 2px var(--accent); text-underline-offset: 3px; }
 .journal-ligne { display: grid; grid-template-columns: 150px 1fr auto; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--trait); align-items: start; }
 .journal-ligne .quand { color: var(--gris); font-size: 13px; }
 .journal-ligne .quoi b { display: block; }
@@ -189,6 +261,22 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .annonce.erreur { background: #8c1d16; }
 .annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .4); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .2s ease-out; } @keyframes monte { from { transform: translateY(8px); opacity: 0; } } }
+
+/* à compléter avant la tournée (en tête de Représentations) */
+.avant { margin-bottom: 10px; background: var(--carte); border: 1px solid var(--trait); border-left: 4px solid var(--option); border-radius: var(--rayon); }
+.avant > summary { display: flex; align-items: center; gap: 8px; padding: 11px 14px; cursor: pointer; list-style: none; font-weight: 750; }
+.avant > summary::-webkit-details-marker { display: none; }
+.avant > summary::before { content: ""; width: 7px; height: 7px; border: solid var(--gris); border-width: 0 2px 2px 0; transform: rotate(-45deg); transition: transform .15s; margin: 0 2px; }
+.avant[open] > summary::before { transform: rotate(45deg); }
+.avant-corps { display: grid; gap: 6px; padding: 0 12px 12px; }
+.avant-fenetre { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 2px; font-size: 13px; color: var(--gris); }
+.avant-fenetre select { width: auto; min-height: 30px; padding: 2px 6px; }
+.avant-rien { margin: 2px; color: var(--ok); font-weight: 600; font-size: 14px; }
+.avant h3 { margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
+.avant ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.avant li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 6px 9px; border-radius: 8px; background: var(--doux); font-size: 14px; }
+.avant li a { font-weight: 650; }
+.avant li .badge { margin-left: auto; }
 
 /* une commande segmentée dans un champ (le statut d'une date) passe à la ligne plutôt que de sortir de sa colonne */
 .champ .seg { display: flex; flex-wrap: wrap; width: fit-content; max-width: 100%; }
@@ -233,7 +321,15 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 'use strict';
 /* L'administration du site de la compagnie Crescite : les spectacles, les dates et leurs représentations, les ateliers,
    les lieux et les textes. Chaque enregistrement va dans la base (Supabase, tables crescite_) et change aussitôt le site
-   en ligne, qui écoute la base en temps réel. Seuls les comptes de crescite_admins peuvent enregistrer. */
+   en ligne, qui écoute la base en temps réel. Seuls les comptes de crescite_admins peuvent enregistrer.
+   Une date montre son lieu tel que sa fiche le connaît (adresse, itinéraire, contact, jauge) et mène à elle ; un lieu,
+   ses dates. Sous les champs des fiches, les numéros et les adresses électroniques s'ouvrent d'un geste (sousChamp :
+   « Appeler le … », « Écrire à … »), et une valeur apprise d'une feuille de route dit d'où elle vient (equipe.js).
+   Partout : la recherche rapide (Ctrl K, ⌘K, la loupe de l'en-tête : dates, personnes, lieux, spectacles, feuilles,
+   rubriques, dans ce qui est déjà chargé). En tête de Représentations : « À compléter avant la tournée » (téléphones de
+   l'équipe, adresses et contacts des lieux, feuilles de route, pour les prochaines dates confirmées). Un lien peut viser
+   le champ à remplir dans ce qu'il ouvre (data-viser). Le pied d'une date replie ses actions dans « Plus » quand elles
+   ne tiennent pas sur une rangée (ajusterPied). Le Journal se filtre (rubrique ou table, auteur, période) et se cherche. */
 const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
 const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
 const SITE = '../synthese.html';
@@ -294,6 +390,22 @@ function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', del
   setTimeout(() => el.remove(), erreur ? 9000 : delai);
 }
 const erreur = (e, quoi = 'L’enregistrement a échoué') => { console.error(e); annoncer(`${quoi} : ${e?.message || e}`, { erreur: true }); };
+// les coordonnées écrites dans un champ deviennent des liens : chaque numéro « Appeler le … » (tel:), chaque adresse
+// électronique « Écrire à … » (mailto:), reconnus comme dans les feuilles de route (FEUILLE.jetons, feuille.js)
+const jetonsContact = texte => (typeof FEUILLE === 'undefined' ? [{ t: String(texte || '') }] : FEUILLE.jetons(texte || '').map(j => (j.genre === 'tel' || j.genre === 'mel' ? j : { t: j.t })));
+const liensCoordonnees = texte => jetonsContact(texte).filter(j => j.href).map(j => `<a class="coord" href="${esc(j.href)}">${j.genre === 'tel' ? `Appeler le ${esc(FEUILLE.telTexte(j.t))}` : `Écrire à ${esc(j.t)}`}</a>`).join('');
+// le même texte, ses numéros et adresses électroniques en liens, à leur place
+const texteEnLiens = texte => jetonsContact(texte).map(j => (j.href ? `<a class="coord" href="${esc(j.href)}">${esc(j.t)}</a>` : esc(j.t))).join('');
+// sous le champ d'une fiche : ces liens, et ce que mention(valeur) y ajoute (d'où vient la valeur), tenus à jour à la saisie
+function sousChamp(input, mention = () => '') {
+  if (!input) return;
+  const el = document.createElement('span');
+  el.className = 'sous-champ';
+  input.after(el);
+  const maj = () => { el.innerHTML = liensCoordonnees(input.value) + mention(input.value); el.hidden = !el.innerHTML; };
+  input.addEventListener('input', maj);
+  maj();
+}
 
 // un HTML propre : gras, italique, liens, retours à la ligne, intertitres et listes ; rien d'autre
 function propre(html) {
@@ -345,6 +457,8 @@ sb.auth.onAuthStateChange((ev, s) => {
 let versAdmin = false;     // l'écran de connexion a été montré : l'arrivée dans l'administration remonte une tentacule
 function ecranConnexion(message = '') {
   versAdmin = true;
+  E.pret = false;     // déconnecté : ni les rubriques ni la recherche ne montrent ce qui reste en mémoire
+  $('#recherche')?.close();
   $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-connexion">
     <h1>Crescite · administration</h1><p>Les spectacles, les dates, les ateliers et les textes du site de la compagnie.</p>
     ${message ? `<p role="alert" style="color:var(--alerte)">${esc(message)}</p>` : ''}
@@ -434,14 +548,31 @@ async function chargerTout() {
     prospects: pr || [], frais: fr || [], materiel: mt || [], devis: dv || [] });
   await equipe;
 }
+// le journal se lit par pages de 300, des plus récentes aux plus anciennes : relire les plus récentes garde les pages plus
+// anciennes déjà lues (journalPlusAncien) ; E.journalFin : il n'y a rien de plus ancien
+const PAGE_JOURNAL = 300;
 async function rechargerJournal() {
-  const { data, error } = await sb.from('crescite_journal').select('*').order('id', { ascending: false }).limit(300);
-  if (!error) E.journal = data;
+  const { data, error } = await sb.from('crescite_journal').select('*').order('id', { ascending: false }).limit(PAGE_JOURNAL);
+  if (error) return;
+  const bas = data.length ? data[data.length - 1].id : Infinity;
+  E.journal = [...data, ...E.journal.filter(j => j.id < bas)];
+  if (E.journalFin === undefined || E.journal.length === data.length) E.journalFin = data.length < PAGE_JOURNAL;
+}
+async function journalPlusAncien() {
+  const bas = Math.min(...E.journal.map(j => j.id));
+  const { data, error } = await sb.from('crescite_journal').select('*').lt('id', bas).order('id', { ascending: false }).limit(PAGE_JOURNAL);
+  if (error) throw error;
+  E.journal.push(...data);
+  E.journalFin = data.length < PAGE_JOURNAL;
 }
 
 // le temps réel : chaque enregistrement, d'ici ou d'ailleurs, met l'écran à jour
 let rendrePlusTard = null;
 function ecouter() {
+  // une fois par page : après une déconnexion puis une reconnexion, les canaux sont toujours là (le client leur passe le
+  // nouveau jeton) ; les réabonner lèverait une erreur et l'administration ne s'afficherait pas
+  if (ecouter.fait) return;
+  ecouter.fait = true;
   const ch = sb.channel('crescite-admin');
   Object.keys(TABLES).forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
   ch.subscribe(st => { E.direct = st === 'SUBSCRIBED'; const d = $('.direct'); if (d) { d.classList.toggle('on', E.direct); d.title = E.direct ? 'Connecté en temps réel' : 'Temps réel interrompu'; } });
@@ -453,6 +584,7 @@ function changement(t, p) {
   const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
   const i = coll.findIndex(x => cles.every(c => x[c] === ligne[c]));
   if (p.eventType === 'DELETE') { if (i >= 0) coll.splice(i, 1); } else if (i >= 0) coll[i] = p.new; else coll.push(p.new);
+  if (t === 'crescite_feuilles') majACompleter();     // « n à compléter » des dates ouvertes ailleurs (equipe.js)
   clearTimeout(rendrePlusTard);
   rendrePlusTard = setTimeout(() => { if (!E.sale) rafraichirListes(); }, 200);
 }
@@ -461,12 +593,14 @@ function changement(t, p) {
 const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['diffusion', 'Diffusion CRM'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<header class="barre"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
+    <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true">${RACCOURCI_RCH}</kbd></button>
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
   $('#b-mdp').addEventListener('click', () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Changer de mot de passe quand même ?')) { E.sale = false; ecranMotDePasse(true); } });
+  $('#b-chercher').addEventListener('click', ouvrirRecherche);
   // au téléphone, les rubriques défilent : la rubrique courante est amenée en vue (hors du fondu de droite)
   const nav = $('.nav'), courante = $('.nav a[aria-current="page"]');
   if (nav && courante && nav.scrollWidth > nav.clientWidth) {
@@ -492,26 +626,182 @@ const ROUTES = [
 function router() {
   if (!E.pret) return;
   const h = location.hash || '#/representations';
-  for (const [re, f] of ROUTES) { const m = h.match(re); if (m) { E.sale = false; f(m); return; } }
+  for (const [re, f] of ROUTES) { const m = h.match(re); if (m) { E.sale = false; f(m); viser(); return; } }
   location.replace('#/representations');
 }
+// un lien peut viser ce qu'il faut compléter dans ce qu'il ouvre (data-viser : le chemin d'un champ, « telephone », ou un
+// sélecteur, « #fr-manques ») : la page ouverte, la cible vient en vue et prend le focus (un panneau : son titre)
+let visee = null;
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[data-viser]');
+  if (!a || e.button || e.ctrlKey || e.metaKey || e.shiftKey) return;
+  visee = a.dataset.viser;
+  if (a.getAttribute('href') === location.hash) { e.preventDefault(); viser(); }
+}, true);
+function viser() {
+  const k = visee;
+  visee = null;
+  if (!k) return;
+  requestAnimationFrame(() => {
+    const el = $(/^[#.[]/.test(k) ? k : `[data-chemin="${k}"]`, $('#vue') || document);
+    if (!el || el.hidden) return;
+    const cible = el.matches('input, select, textarea, button, a, [tabindex]') ? el : el.querySelector('summary') || el;
+    if (cible.tagName === 'SUMMARY' && !cible.parentNode.open) cible.parentNode.open = true;
+    el.scrollIntoView({ block: 'center' });
+    cible.focus({ preventScroll: true });
+  });
+}
 window.addEventListener('hashchange', () => {
-  if (E.sale && !confirm('Des modifications ne sont pas enregistrées. Quitter cette fiche quand même ?')) { history.replaceState(null, '', E.hash); return; }
+  if (E.sale && !confirm('Des modifications ne sont pas enregistrées. Quitter cette fiche quand même ?')) { visee = null; history.replaceState(null, '', E.hash); return; }
   E.hash = location.hash;
   router();
 });
 window.addEventListener('beforeunload', e => { if (E.sale) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]'); if (b) { e.preventDefault(); b.click(); } }
+  if ((SUR_MAC ? e.metaKey : e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && E.pret) { e.preventDefault(); ouvrirRecherche(); }
 });
+
+// ===================================================================================================== la recherche rapide
+/* Ctrl K (⌘K sur un Mac) ou la loupe de l'en-tête : les dates (leur spectacle, leur lieu, leur commune, leurs jours : « 21
+   oct », « mardi », « 21/10 »), les personnes, les lieux, les spectacles, les feuilles de route et les rubriques, cherchés
+   dans ce que l'administration a déjà en mémoire (E) : aucune requête à la frappe. L'index se refait à chaque ouverture
+   (le temps réel a pu changer E entre-temps). Le champ est une combobox, les résultats une listbox : ↑ ↓ (Page ↑ ↓) pour
+   choisir, Entrée pour ouvrir, Échap pour fermer ; sans rien taper, les prochaines dates. Chaque mot tapé doit se trouver ;
+   un mot au début du titre compte plus qu'au milieu d'un mot, et, à égalité, les dates à venir passent avant les passées
+   (les plus proches d'abord), une feuille de route juste après sa date. */
+const SUR_MAC = /mac|iphone|ipad|ipod/i.test(navigator.userAgentData?.platform || navigator.platform || '');
+const RACCOURCI_RCH = SUR_MAC ? '⌘K' : 'Ctrl K';
+const LOUPE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>';
+const JOURS_RCH = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const TYPES_RCH = [['Rubrique', 'Rubrique'], ['Spectacle', 'Spectacle'], ['Personne', 'Personne'], ['Lieu', 'Lieu'], ['Date', 'Date'], ['Feuille de route', 'Feuille']];
+const RCH = { index: [], vus: [], actif: 0, minuteur: null };
+const cleRch = s => ` ${norm(s).replace(/[’‘`]/g, "'").replace(/[^a-z0-9'/]+/g, ' ').trim()} `;
+const motsRch = q => cleRch(q).trim().split(' ').filter(Boolean);
+const jourRch = j => { const d = new Date(`${j}T12:00:00`), n = +j.slice(8, 10), m = +j.slice(5, 7);
+  return `${JOURS_RCH[d.getDay()]} ${n}${n === 1 ? ' 1er' : ''} ${AGENDA.MOIS[m - 1]} ${MC[m - 1]} ${j.slice(0, 4)} ${j.slice(8, 10)}/${j.slice(5, 7)}/${j.slice(0, 4)} ${n}/${m} ${j}`; };
+function indexRch() {
+  const xs = [], joursDe = new Map(), feuilles = new Map((E.feuilles || []).map(f => [f.date_id, f]));
+  E.reps.forEach(r => { if (!r.jour) return; if (!joursDe.has(r.date_id)) joursDe.set(r.date_id, new Set()); joursDe.get(r.date_id).add(r.jour); });
+  const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.titre} ${o.sous || ''} ${plus}`) });
+  RUBRIQUES.forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100 }));
+  E.spectacles.forEach(s => mettre({ type: 'Spectacle', titre: s.titre, sous: s.page ? '' : 'Ancien spectacle', href: `#/spectacles/${s.slug}`, couleur: couleurSp(s), ordre: s.page ? 0 : 1 }));
+  (E.personnes || []).forEach(p => mettre({ type: 'Personne', titre: nomDe(p) || 'Sans nom', sous: (p.metiers || []).join(', '), href: `#/equipe/${p.id}` }));
+  E.lieux.forEach(l => mettre({ type: 'Lieu', titre: l.nom || l.commune, sous: [l.nom ? l.commune : '', l.departement ? `(${l.departement})` : ''].filter(Boolean).join(' '), href: `#/lieux/${l.id}` }, l.adresse));
+  E.dates.forEach(d => {
+    const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), fin = d.fin || d.debut, avenir = fin >= AUJ, t = Date.parse(`${d.debut}T12:00:00Z`) / 864e5;
+    const quand = d.precision === 'mois' ? `${AGENDA.MOIS[+d.debut.slice(5, 7) - 1]} ${d.debut.slice(0, 4)}` : d.precision === 'saison' ? `saison ${d.saison || ''}` : `${jourCourt(d.debut)}${fin !== d.debut ? ` → ${jourCourt(fin)}` : ''}`;
+    const ou = l ? (l.nom ? `${l.nom}, ${l.commune}` : l.commune) : (d.intitule || '').split(' — ')[1] || 'lieu à préciser';
+    const etat = { option: 'option', annulee: 'annulée', reportee: 'reportée' }[d.statut];
+    const jours = new Set(joursDe.get(d.id) || []);
+    if (d.precision !== 'mois' && d.precision !== 'saison') for (let j = d.debut, n = 0; j <= fin && n < 62; j = plusJours(j, 1), n++) jours.add(j);
+    const plus = `${l ? `${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${(NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || ''} ${[...jours].map(jourRch).join(' ')}`;
+    const base = { titre: s?.titre || 'Spectacle à préciser', couleur: couleurSp(s), ordre: avenir ? t : 1e9 - t, avenir, sous: `${quand} · ${ou}${etat ? ` · ${etat}` : ''}` };
+    mettre({ ...base, type: 'Date', href: `#/representations/${d.id}` }, plus);
+    const f = feuilles.get(d.id);
+    if (f) mettre({ ...base, type: 'Feuille de route', sous: `${base.sous} · ${f.statut === 'publiee' ? `publiée (v${f.version})` : 'brouillon'}`, href: `#/feuilles/${d.id}` }, `feuille de route ${plus}`);
+  });
+  return xs;
+}
+function chercherRch(index, mots) {
+  const out = [];
+  for (const x of index) {
+    let s = 0;
+    for (const m of mots) {
+      if (!x.c.includes(m)) { s = -1; break; }
+      s += x.ct.startsWith(` ${m}`) ? 30 : x.ct.includes(` ${m}`) || x.ct.includes(`'${m}`) ? 20 : x.ct.includes(m) ? 10 : x.c.includes(` ${m}`) || x.c.includes(`'${m}`) ? 8 : 3;
+    }
+    if (s >= 0) out.push([s, x]);
+  }
+  return out.sort((a, b) => b[0] - a[0] || a[1].ordre - b[1].ordre || a[1].rang - b[1].rang || a[1].titre.localeCompare(b[1].titre, 'fr')).map(a => a[1]);
+}
+// les mots trouvés, soulignés dans le texte d'origine (accents et majuscules compris)
+function surlignerRch(texte, mots) {
+  const s = String(texte || ''), marque = new Array(s.length).fill(false);
+  let n = ''; const ou = [];
+  for (let i = 0; i < s.length; i++) { const c = norm(s[i]).replace(/[’‘`]/g, "'"); for (let k = 0; k < c.length; k++) { n += c[k]; ou.push(i); } }
+  mots.forEach(m => { for (let p = n.indexOf(m); p >= 0; p = n.indexOf(m, p + m.length)) for (let k = p; k < p + m.length; k++) marque[ou[k]] = true; });
+  let h = '', dedans = false;
+  for (let i = 0; i < s.length; i++) { if (marque[i] !== dedans) { h += dedans ? '</mark>' : '<mark>'; dedans = marque[i]; } h += esc(s[i]); }
+  return h + (dedans ? '</mark>' : '');
+}
+function dialogueRch() {
+  let dlg = $('#recherche');
+  if (dlg) return dlg;
+  dlg = document.createElement('dialog');
+  dlg.id = 'recherche'; dlg.className = 'recherche'; dlg.setAttribute('aria-labelledby', 'rch-titre');
+  dlg.innerHTML = `<div class="rch-boite"><h2 class="sr" id="rch-titre">Rechercher dans l’administration</h2>
+    <div class="rch-tete">${LOUPE}<input type="text" id="rch-q" role="combobox" aria-expanded="false" aria-controls="rch-liste" aria-autocomplete="list" aria-describedby="rch-aide"
+      placeholder="Une date, une personne, un lieu, un spectacle…" aria-label="Rechercher" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><button type="button" class="btn petit" data-fermer>Fermer</button></div>
+    <p class="rch-entete" id="rch-entete"></p><ul class="rch-liste" id="rch-liste" role="listbox" aria-labelledby="rch-entete"></ul>
+    <p class="rch-aide" id="rch-aide"><span><kbd>↑</kbd> <kbd>↓</kbd> pour choisir</span><span><kbd>Entrée</kbd> pour ouvrir</span><span><kbd>Échap</kbd> pour fermer</span></p>
+    <p class="sr" aria-live="polite" id="rch-statut"></p></div>`;
+  document.body.append(dlg);
+  const q = $('#rch-q', dlg), liste = $('#rch-liste', dlg);
+  q.addEventListener('input', rendreRch);
+  q.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); activerRch(RCH.actif + (e.key === 'ArrowDown' ? 1 : -1)); }
+    else if (e.key === 'PageDown' || e.key === 'PageUp') { e.preventDefault(); activerRch(Math.max(0, Math.min(RCH.vus.length - 1, RCH.actif + (e.key === 'PageDown' ? 6 : -6)))); }
+    else if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); allerRch(RCH.actif); }
+  });
+  liste.addEventListener('mousemove', e => { const o = e.target.closest('[role=option]'); if (o && +o.dataset.i !== RCH.actif) activerRch(+o.dataset.i, false); });
+  liste.addEventListener('click', e => { const o = e.target.closest('[role=option]'); if (o) allerRch(+o.dataset.i); });
+  $('[data-fermer]', dlg).addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });   // un clic à côté de la fenêtre la ferme
+  return dlg;
+}
+function ouvrirRecherche() {
+  if (!E.pret) return;
+  const dlg = dialogueRch(), q = $('#rch-q');
+  RCH.index = indexRch();
+  if (!dlg.open) { q.value = ''; dlg.showModal(); }
+  rendreRch();
+  q.focus(); q.select();
+}
+function rendreRch() {
+  const q = $('#rch-q'), mots = motsRch(q.value);
+  let xs, entete;
+  if (!mots.length) {
+    xs = RCH.index.filter(x => x.type === 'Date' && x.avenir).sort((a, b) => a.ordre - b.ordre).slice(0, 8);
+    entete = xs.length ? 'Prochaines dates' : 'Tapez un nom, une commune, un jour…';
+  } else {
+    const tous = chercherRch(RCH.index, mots);
+    xs = tous.slice(0, 50);
+    entete = tous.length ? `${tous.length} résultat${tous.length > 1 ? 's' : ''}${tous.length > xs.length ? `, les ${xs.length} premiers` : ''}` : 'Rien ne correspond';
+  }
+  RCH.vus = xs;
+  $('#rch-entete').textContent = entete;
+  $('#rch-liste').innerHTML = xs.map((x, i) => `<li role="option" id="rch-o${i}" data-i="${i}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}</span><span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
+  q.setAttribute('aria-expanded', String(xs.length > 0));
+  activerRch(0, false);
+  $('#rch-liste').scrollTop = 0;
+  clearTimeout(RCH.minuteur);
+  RCH.minuteur = setTimeout(() => { $('#rch-statut').textContent = mots.length ? entete : ''; }, 450);
+}
+function activerRch(i, defiler = true) {
+  const q = $('#rch-q'), n = RCH.vus.length;
+  if (!n) { q.removeAttribute('aria-activedescendant'); return; }
+  RCH.actif = (i + n) % n;
+  $$('#rch-liste [role=option]').forEach((o, k) => o.setAttribute('aria-selected', String(k === RCH.actif)));
+  q.setAttribute('aria-activedescendant', `rch-o${RCH.actif}`);
+  if (defiler) $(`#rch-o${RCH.actif}`).scrollIntoView({ block: 'nearest' });
+}
+function allerRch(i) {
+  const x = RCH.vus[i];
+  if (!x) return;
+  $('#recherche').close();
+  if (location.hash !== x.href) location.hash = x.href;
+}
 function rafraichirListes() {
   const l = $('[data-liste]');
   if (l && typeof l.rafraichir === 'function') l.rafraichir();
 }
 function marquerSale(oui = true) {
+  const avant = E.sale;
   E.sale = oui;
   const el = $('.etat-ed');
   if (el) { el.textContent = oui ? 'Modifications non enregistrées' : 'Tout est enregistré'; el.classList.toggle('sale', oui); }
+  if (avant !== oui) ajusterPied();
 }
 
 // ===================================================================================================== formulaires
@@ -615,9 +905,63 @@ function relier(racine, F, specs, onChange = () => {}) {
     marquerSale(); onChange(p);
   });
 }
-function pied(etatTexte = 'Tout est enregistré', boutons = '') {
-  return `<div class="pied-ed"><span class="etat-ed">${esc(etatTexte)}</span>${boutons}<button type="button" class="btn principal" data-enregistrer>Enregistrer</button></div>`;
+// le pied d'un éditeur : l'état, les autres actions, « Enregistrer ». replier : quand tout ne tient pas sur une rangée (au
+// téléphone, dans une colonne étroite), les autres actions passent dans un menu « Plus » (l'état, Plus, Enregistrer) ;
+// marque : ce que « Plus » montre de son menu (le compte « à compléter » de la feuille). Voir ajusterPied et menuPlus
+function pied(etatTexte = 'Tout est enregistré', boutons = '', { replier = false, marque = '' } = {}) {
+  const plus = replier && boutons;
+  return `<div class="pied-ed${plus ? ' a-plus' : ''}"><span class="etat-ed">${esc(etatTexte)}</span>${plus ? `<span class="pied-menu"><button type="button" class="btn pied-plus" aria-expanded="false" aria-controls="pied-autres">Plus${marque}<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="pied-autres" id="pied-autres" role="group" aria-label="Autres actions">${boutons}</span></span>` : boutons}<button type="button" class="btn principal" data-enregistrer>Enregistrer</button></div>`;
 }
+// replié ou non : déployé, « Enregistrer » (le dernier) passe-t-il sous l'état (le premier) ? Mesuré quand la largeur du
+// pied change (ResizeObserver), quand l'état ou un bouton change de texte (marquerSale, majACompleter)
+function ajusterPied(pied = $('.pied-ed.a-plus')) {
+  if (!pied || !pied.isConnected || !pied.classList.contains('a-plus')) return;
+  fermerPlus();
+  pied.classList.remove('replie');
+  const etat = $('.etat-ed', pied), der = $('[data-enregistrer]', pied);
+  if (etat && der && der.getBoundingClientRect().top >= etat.getBoundingClientRect().bottom) pied.classList.add('replie');
+}
+function suivrePied(pied) {
+  if (!pied || typeof ResizeObserver === 'undefined') return ajusterPied(pied);
+  let largeur = -1;
+  const ro = new ResizeObserver(es => {
+    if (!pied.isConnected) { ro.disconnect(); return; }
+    const w = Math.round(es[0].contentRect.width);
+    if (w !== largeur) { largeur = w; ajusterPied(pied); }
+  });
+  ro.observe(pied);
+}
+// le menu « Plus » (pied replié) : son bouton l'ouvre (le focus sur la première action), ↑ ↓ Début Fin entre les actions,
+// Échap le ferme et rend le focus au bouton ; une action choisie, un clic ou le focus ailleurs le ferment aussi
+const menuPlus = () => $('#pied-autres');
+function fermerPlus(rendre = false) {
+  const m = menuPlus();
+  if (!m || !m.classList.contains('ouvert')) return;
+  m.classList.remove('ouvert');
+  const b = $('.pied-plus');
+  b?.setAttribute('aria-expanded', 'false');
+  if (rendre) b?.focus();
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.pied-plus'), m = menuPlus();
+  if (b && m) {
+    if (m.classList.contains('ouvert')) return fermerPlus();
+    m.classList.add('ouvert'); b.setAttribute('aria-expanded', 'true');
+    $('.btn:not([disabled])', m)?.focus();
+    return;
+  }
+  if (m && (!m.contains(e.target) || e.target.closest('.btn'))) fermerPlus();
+});
+document.addEventListener('keydown', e => {
+  const m = menuPlus();
+  if (!m || !m.classList.contains('ouvert')) return;
+  if (e.key === 'Escape') { e.preventDefault(); fermerPlus(true); return; }
+  const xs = $$('.btn:not([disabled])', m), i = xs.indexOf(document.activeElement);
+  if (i < 0) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); xs[(i + (e.key === 'ArrowDown' ? 1 : -1) + xs.length) % xs.length].focus(); }
+  else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); xs[e.key === 'Home' ? 0 : xs.length - 1].focus(); }
+});
+document.addEventListener('focusin', e => { if (!e.target.closest?.('.pied-menu')) fermerPlus(); });
 const choixSpectacles = (vide = null) => [...(vide ? [['', vide]] : []), ...E.spectacles.slice().sort((a, b) => (b.page - a.page) || a.ordre - b.ordre).map(s => [String(s.id), s.titre + (s.page ? '' : ' (ancien)')])];
 
 // ===================================================================================================== lieux : choisir ou créer
@@ -693,7 +1037,7 @@ function vueDates(param) {
   const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {});
   const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
   cadre('representations', `<div class="tete"><h1>Représentations</h1><a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
-    <div class="deux${param ? ' edition' : ''}"><div class="liste"><div class="filtres">
+    <div class="deux${param ? ' edition' : ''}"><div class="liste"><div id="avant"></div><div class="filtres">
       <input type="search" id="f-q" placeholder="Chercher un lieu, une commune, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><select id="f-saison" aria-label="Aller à la saison"><option value="">Aller à une saison…</option>${saisons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}</select>
       <select id="f-public" aria-label="Public"><option value="">Tous publics</option><option value="tout_public"${f.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${f.public === 'scolaire' ? ' selected' : ''}>Scolaire</option></select>
@@ -702,8 +1046,9 @@ function vueDates(param) {
       <span class="compte" id="f-compte"></span></div><div data-liste id="l-dates"></div></div>
       <section class="editeur" id="ed-date">${param ? '' : '<div class="vide bloc">Choisissez une date dans la liste, ou créez-en une.</div>'}</section></div>`);
   const zone = $('#l-dates');
-  zone.rafraichir = () => listeDates(zone, param);
+  zone.rafraichir = () => { listeDates(zone, param); dessinerAvant($('#avant')); };
   zone.rafraichir();
+  relierAvant($('#avant'));
   const maj = () => { garderFiltres(); zone.rafraichir(); };
   $('#f-q').addEventListener('input', e => { f.q = e.target.value; maj(); });
   $('#f-saison').addEventListener('change', e => {
@@ -715,7 +1060,58 @@ function vueDates(param) {
   $('#f-public').addEventListener('change', e => { f.public = e.target.value; maj(); });
   $('#f-statut').addEventListener('change', e => { f.statut = e.target.value; maj(); });
   $$('[data-sp]').forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; $$('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(f.spectacle) === x.dataset.sp)); maj(); }));
-  if (param) editeurDate(param === 'nouvelle' ? null : +param);
+  // une nouvelle date pré-remplie ailleurs (« Créer la date » d'une proposition : E.dateDepart) : à enregistrer
+  const depart = param === 'nouvelle' ? E.dateDepart || null : null;
+  E.dateDepart = null;
+  if (param) editeurDate(param === 'nouvelle' ? null : +param, depart);
+  if (depart) marquerSale(true);
+}
+// ===================================================================================================== à compléter avant la tournée
+/* En tête de Représentations, repliable : pour les dates confirmées des prochains jours (60 par défaut ; 30 ou 90 au
+   choix, retenus dans ce navigateur), ce qu'il faut encore savoir avant de partir. Le téléphone de chacun dans l'équipe de
+   tournée de ces dates, l'adresse et le contact de leurs lieux (ou le lieu lui-même), leur feuille de route (à composer,
+   ou avec du gris : le même compte que la liste des feuilles, aCompleter). Chaque ligne mène là où on le complète, le
+   champ visé prend le focus (data-viser) ; la liste se refait avec la vue et à chaque changement de la base : elle se
+   vide à mesure. Les options, les dates annulées ou reportées n'y sont pas. */
+const JOURS_AVANT = [30, 60, 90];
+const reglagesAvant = () => { let r = {}; try { r = JSON.parse(localStorage.getItem('crescite-admin-avant') || '{}') || {}; } catch { r = {}; } return { ouvert: r.ouvert !== false, jours: JOURS_AVANT.includes(r.jours) ? r.jours : 60 }; };
+const garderAvant = r => { try { localStorage.setItem('crescite-admin-avant', JSON.stringify(r)); } catch { /* navigation privée */ } };
+const jourSansAn = j => jourCourt(j).replace(/ \d{4}$/, '');
+function aCompleterAvant(jours) {
+  const fin = plusJours(AUJ, jours);
+  const ds = E.dates.filter(d => (d.fin || d.debut) >= AUJ && d.debut <= fin && !['annulee', 'reportee', 'option'].includes(d.statut)).sort((a, b) => a.debut.localeCompare(b.debut) || a.id - b.id);
+  const pers = new Map(), lieux = new Map(), sansLieu = [], feuilles = [];
+  ds.forEach(d => {
+    if (E.equipeInstallee) {
+      equipeDeLaDate(d).forEach(x => { if (!(priveeDe(x.personne_id)?.telephone || '').trim() && personne(x.personne_id)) { if (!pers.has(x.personne_id)) pers.set(x.personne_id, { p: personne(x.personne_id), dates: [] }); pers.get(x.personne_id).dates.push(d); } });
+      const f = E.feuilles.find(x => x.date_id === d.id), n = f ? aCompleter(d.id) : 0;
+      if (!f || n) feuilles.push({ d, f, n });
+    }
+    const l = lieu(d.lieu_id);
+    if (!l) { sansLieu.push(d); return; }
+    const manque = [!(l.adresse || '').trim() && 'adresse', !(E.lieuxSuivi.find(x => x.lieu_id === l.id)?.contact || '').trim() && 'contact'].filter(Boolean);
+    if (manque.length) { if (!lieux.has(l.id)) lieux.set(l.id, { l, manque, dates: [] }); lieux.get(l.id).dates.push(d); }
+  });
+  return { ds, pers: [...pers.values()], lieux: [...lieux.values()], sansLieu, feuilles, n: pers.size + lieux.size + sansLieu.length + feuilles.length };
+}
+function dessinerAvant(el) {
+  if (!el) return;
+  const r = reglagesAvant(), a = aCompleterAvant(r.jours);
+  const quand = ds => `${ds.length > 1 ? 'les' : 'le'} ${ds.slice(0, 3).map(d => jourSansAn(d.debut)).join(', ')}${ds.length > 3 ? ` et ${ds.length - 3 > 1 ? `${ds.length - 3} autres` : 'un autre'}` : ''}`;
+  const ouDe = d => { const l = lieu(d.lieu_id); return l ? l.commune : 'lieu à préciser'; };
+  const section = (titre, xs) => xs.length ? `<h3>${titre}</h3><ul>${xs.join('')}</ul>` : '';
+  el.innerHTML = `<details class="avant"${r.ouvert ? ' open' : ''}><summary><span class="avant-titre">À compléter avant la tournée</span>${a.n ? `<span class="badge option">${a.n}</span>` : '<span class="badge ok">Rien</span>'}</summary>
+    <div class="avant-corps"><p class="avant-fenetre"><label for="avant-jours">Les dates confirmées des</label><select id="avant-jours">${JOURS_AVANT.map(n => `<option value="${n}"${n === r.jours ? ' selected' : ''}>${n}</option>`).join('')}</select><span>prochains jours : ${a.ds.length ? `${a.ds.length} date${a.ds.length > 1 ? 's' : ''}` : 'aucune'}.</span></p>
+    ${a.n ? '' : `<p class="avant-rien">${a.ds.length ? 'Rien ne manque : téléphones, lieux et feuilles de route sont complets.' : 'Aucune date confirmée dans cette période.'}</p>`}
+    ${section('Téléphones', a.pers.map(x => `<li><a href="#/equipe/${x.p.id}" data-viser="telephone">${esc(nomDe(x.p))}</a><span class="compte">pas de téléphone · part ${esc(quand(x.dates))}</span></li>`))}
+    ${section('Lieux', [...a.lieux.map(x => `<li><a href="#/lieux/${x.l.id}" data-viser="${x.manque[0]}">${esc(x.l.nom ? `${x.l.nom}, ${x.l.commune}` : x.l.commune)}</a><span class="compte">${x.manque.map(m => `sans ${m}`).join(', ')} · ${esc(quand(x.dates))}</span></li>`),
+      ...a.sansLieu.map(d => `<li><a href="#/representations/${d.id}" data-viser="#d-lieu input">Lieu à préciser</a><span class="compte">${esc(spectacle(d.spectacle_id)?.titre || '?')} · le ${esc(jourSansAn(d.debut))}</span></li>`)])}
+    ${section('Feuilles de route', a.feuilles.map(x => `<li><a href="#/feuilles/${x.d.id}" data-viser="${x.f ? '#fr-manques' : '#fr-composer'}">${esc(jourSansAn(x.d.debut))} · ${esc(ouDe(x.d))}</a><span class="compte">${esc(spectacle(x.d.spectacle_id)?.titre || '?')}</span>${x.f ? `<span class="badge option">${x.n} à compléter</span>` : '<span class="badge">à composer</span>'}</li>`))}</div></details>`;
+}
+function relierAvant(el) {
+  if (!el) return;
+  el.addEventListener('toggle', e => { if (e.target.matches('details.avant')) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);
+  el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
 function listeDates(zone, actif) {
   const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut);
@@ -783,14 +1179,16 @@ function editeurDate(id, depart = null) {
   const F = depart || (d0 ? dateVersForm(d0) : nouvelleDate());
   const initial = JSON.stringify(F);
   const libre = !!F.intitule;
+  const dep = F.depuis;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/representations" title="Retour à la liste">←</a><h2 id="ed-titre"></h2></div>
+    ${dep ? `<p class="d-depuis" role="note">Depuis la proposition « ${esc(dep.titre)} » (${esc(dep.jour)})${E.equipeInstallee ? ` : l’équipe, ${dep.oui ? (dep.oui > 1 ? `les ${dep.oui} personnes qui ont répondu oui` : 'la personne qui a répondu oui') : 'personne pour l’instant (aucun oui ce jour-là)'}` : ''}. Enregistrée, la date ${dep.close ? 'se note dans la proposition' : 'clôt la proposition'}. <a href="#/planning/proposition/${dep.proposition}">Revoir la proposition</a></p>` : ''}
     <div class="bloc"><div class="rangee">
       <div class="champ"><label for="d-sp">Spectacle</label><select id="d-sp">${choixSpectacles().map(([v, t]) => `<option value="${v}"${String(F.spectacle_id) === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
       <div class="champ"><span class="lib">Statut</span><div class="seg" role="group" aria-label="Statut">${[['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']].map(([k, l]) => `<button type="button" data-statut="${k}" aria-pressed="${F.statut === k}">${l}</button>`).join('')}</div>
         <span class="aide">Une option n’apparaît jamais sur le site.</span></div></div>
       ${E.sql3 ? `<div class="champ"><span class="lib">Nature</span><div class="seg" role="group" aria-label="Nature de la date">${NATURES_DATE.map(([k, l]) => `<button type="button" data-nature="${k}" aria-pressed="${(F.nature || 'representations') === k}">${l}</button>`).join('')}</div>
         <span class="aide" id="d-nature-aide">Seules les représentations vont sur le site ; répétitions et résidences ne sont que pour l’équipe.</span></div>` : ''}
-      <div class="champ"><span class="lib">Lieu</span><div id="d-lieu"></div></div>
+      <div class="champ"><span class="lib">Lieu</span><div id="d-lieu"></div><div id="d-lieu-fiche"></div></div>
       <label class="case"><input type="checkbox" id="d-visible"${F.visible && (F.nature || 'representations') === 'representations' ? ' checked' : ''}${(F.nature || 'representations') === 'representations' ? '' : ' disabled'}> Publiée sur le site</label></div>
 
     <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
@@ -813,7 +1211,8 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
-    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`)}`;
+    ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
+  suivrePied($('.pied-ed', zone));
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
   const titre = () => { const s = spectacle(+F.spectacle_id); $('#ed-titre').textContent = id ? `${s?.titre || ''} · ${jourCourt(F.debut)}` : 'Nouvelle date'; };
   const apercu = () => {
@@ -850,8 +1249,20 @@ function editeurDate(id, depart = null) {
       <span class="aide">Vide : le site écrit lui-même « 14h et 20h : représentations au … ».</span></div>`;
   };
   const changer = () => { marquerSale(JSON.stringify(F) !== initial || $('#d-libre').checked !== libre); apercu(); titre(); };
-  dessinerReps(); dessinerDetails(); titre();
-  comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); });
+  // le lieu de la date, tel que sa fiche le connaît (adresse, contact, jauge) : de quoi préparer la date sans changer d'écran
+  const dessinerLieu = () => {
+    const l = lieu(F.lieu_id), el = $('#d-lieu-fiche', zone);
+    if (!l) { el.innerHTML = ''; return; }
+    const sl = E.lieuxSuivi.find(x => x.lieu_id === l.id) || {};
+    el.innerHTML = `<div class="lieu-resume"><span>${l.adresse ? `${esc([l.adresse, l.commune].join(', '))} · <a href="${esc(FEUILLE.itineraire(l))}" target="_blank" rel="noopener">Itinéraire ↗</a>` : '<span class="manque">Adresse à compléter dans la fiche du lieu</span>'}</span>
+      <span>${sl.contact ? `Contact du lieu : ${texteEnLiens(sl.contact)}` : '<span class="manque">Pas de contact dans la fiche du lieu</span>'}</span>
+      ${sl.jauge || sl.plateau ? `<span>${[sl.jauge && `Jauge : ${esc(sl.jauge)} places`, sl.plateau && `plateau : ${esc(sl.plateau)}`].filter(Boolean).join(' · ')}</span>` : ''}
+      <a href="#/lieux/${l.id}">Fiche du lieu →</a></div>`;
+  };
+  dessinerReps(); dessinerDetails(); titre(); dessinerLieu();
+  comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); dessinerLieu(); });
+  sousChamp($('#s-org', zone), v => (d0 ? mentionAppris('crescite_dates_suivi', d0.id, 'organisateur', v) : ''));
+  sousChamp($('#s-contact', zone), v => (d0 ? mentionAppris('crescite_dates_suivi', d0.id, 'contact', v) : ''));
   apercu();
   blocEquipeDate(zone, F, changer);
 
@@ -953,7 +1364,10 @@ async function enregistrerDate(F, d0, bouton) {
   await rechargerDate(id);
   if (!equipeOk) { F.id = id; history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; return; }
   E.sale = false;
-  annoncer(F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.');
+  const mot = F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.';
+  // créée depuis une proposition : elle se clôt, et l'annonce le dit
+  const clos = F.depuis && !d0 && typeof DISPONIBILITES !== 'undefined' ? await DISPONIBILITES.apresDate(F.depuis, id) : null;
+  annoncer(clos ? `${mot} ${clos.texte}` : mot, clos?.erreur ? { erreur: true, delai: 9000 } : clos ? { delai: 8000, libelle: 'Voir', action: () => { location.hash = `#/planning/proposition/${F.depuis.proposition}`; } } : {});
   if (!F.id) { history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; }
   ouvertureMuette = true;
   vueDates(id);
@@ -1350,6 +1764,14 @@ const SPEC_LIEU = [
   { k: 'latitude', t: 'nombre', l: 'Latitude' }, { k: 'longitude', t: 'nombre', l: 'Longitude' },
 ];
 const SPEC_LIEU_SUIVI = [{ k: 'contact', t: 'texte', l: 'Contact' }, { k: 'jauge', t: 'nombre', l: 'Jauge' }, { k: 'plateau', t: 'texte', l: 'Plateau' }, { k: 'notes', t: 'long', l: 'Notes' }];
+// les dates d'un lieu, à venir d'abord, puis les plus récentes, avec leur feuille de route
+function datesDuLieu(id) {
+  const xs = E.dates.filter(d => d.lieu_id === id), avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut.localeCompare(b.debut));
+  const vues = [...avenir, ...xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => b.debut.localeCompare(a.debut))].slice(0, 12);
+  return `<div class="bloc"><h3>Ses dates <span class="compte">${xs.length || ''}</span></h3>${vues.length ? `<ul class="liste-simple">${vues.map(d => `<li><b class="eq-jour">${esc(jourCourt(d.debut))}</b><a href="#/representations/${d.id}">${esc(spectacle(d.spectacle_id)?.titre || '?')}</a>
+    ${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : ''}${E.equipeInstallee ? `<a href="#/feuilles/${d.id}" class="eq-feuille" data-viser="#fr-manques"><span class="sr">Feuille de route du ${esc(jourCourt(d.debut))} : </span>${badgeFeuille(d.id)}${resteFeuille(d.id)}</a>` : ''}</li>`).join('')}</ul>
+    ${xs.length > vues.length ? `<p class="aide">Et ${xs.length - vues.length} autres, dans Représentations.</p>` : ''}` : '<p class="aide">Aucune date dans ce lieu pour l’instant.</p>'}</div>`;
+}
 function editeurLieu(id) {
   const l0 = id ? lieu(id) : null;
   const F = l0 ? clone(l0) : { nom: '', type: 'salle', commune: '', departement: '', pays: 'FR', adresse: '', site_web: '', latitude: null, longitude: null };
@@ -1361,9 +1783,14 @@ function editeurLieu(id) {
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
     <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button></div>
     <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
+    ${l0 ? datesDuLieu(id) : ''}
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
     ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '')}`;
   relier($('#li-f'), F, SPEC_LIEU); relier($('#li-s'), G, SPEC_LIEU_SUIVI);
+  const ch = k => $(`[data-chemin="${k}"]`, zone), appris = (table, k) => v => (l0 ? mentionAppris(table, id, k, v) : '');
+  sousChamp(ch('adresse'), v => `${v.trim() ? `<a href="${esc(FEUILLE.itineraire({ ...F, adresse: v }))}" target="_blank" rel="noopener">Itinéraire ↗</a>` : ''}${appris('crescite_lieux', 'adresse')(v)}`);
+  sousChamp(ch('site_web'), v => (/^https?:\/\/\S+$/.test(v.trim()) ? `<a href="${esc(v.trim())}" target="_blank" rel="noopener">Ouvrir le site ↗</a>` : ''));
+  ['contact', 'jauge', 'plateau'].forEach(k => sousChamp(ch(k), appris('crescite_lieux_suivi', k)));
   $('#li-geo').addEventListener('click', async () => {
     const v = (F.commune || '').trim(); if (!v) return annoncer('Écrivez d’abord le nom de la commune.');
     try {
@@ -1805,23 +2232,101 @@ function resume(j) {
   if (j.table_nom === 'crescite_ateliers') return x.titre;
   if (j.table_nom === 'crescite_seances') return `${jourCourt(x.jour)} · ${x.classe || ''}`;
   if (j.table_nom === 'crescite_textes') return x.cle;
+  if (j.table_nom === 'crescite_lieux_suivi') return lieuTexte(lieu(x.lieu_id)) || j.ligne;
+  if (j.table_nom === 'crescite_dates_suivi') { const d = E.dates.find(y => y.id === x.date_id); return d ? `${spectacle(d.spectacle_id)?.titre || 'Date'} · ${jourCourt(d.debut)}` : j.ligne; }
   return j.ligne;
 }
 const champsChanges = j => j.avant && j.apres ? Object.keys(j.apres).filter(k => !['modifie_le', 'modifie_par'].includes(k) && JSON.stringify(j.avant[k]) !== JSON.stringify(j.apres[k])) : [];
+// le journal : les dernières modifications, filtrées sans requête : une rubrique ou une table, un auteur, une période
+// (aujourd'hui, 7 ou 30 jours, ou deux dates), et des mots cherchés dans ce que dit chaque ligne (son résumé, les champs
+// changés et leurs valeurs avant et après, ce qui est allé dans les fiches, l'auteur). Les filtres restent le temps de la
+// session. « Lire plus ancien » ajoute 300 modifications ; quand une période remonte plus loin que ce qui est lu, le dit.
+const RUBRIQUES_JOURNAL = [['representations', 'Représentations', ['crescite_dates', 'crescite_representations', 'crescite_dates_suivi', 'crescite_equipes']],
+  ['feuilles', 'Feuilles de route', ['crescite_feuilles']], ['spectacles', 'Spectacles', ['crescite_spectacles', 'crescite_distributions', 'crescite_documents']],
+  ['equipe', 'Équipe', ['crescite_personnes']], ['ateliers', 'Ateliers', ['crescite_ateliers', 'crescite_seances']], ['lieux', 'Lieux', ['crescite_lieux', 'crescite_lieux_suivi']],
+  ['textes', 'Textes du site', ['crescite_textes']]];
+const PERIODES_JOURNAL = [['', 'Toute la période'], ['jour', 'Aujourd’hui'], ['7', 'Les 7 derniers jours'], ['30', 'Les 30 derniers jours'], ['choisir', 'Choisir les dates…']];
+const OPS_JOURNAL = { INSERT: 'Ajout', UPDATE: 'Modification', DELETE: 'Suppression' };
+const valeurJournal = v => (v == null ? '' : typeof v === 'object' ? JSON.stringify(v).replace(/["{}\[\]]/g, ' ') : String(v)).slice(0, 1500);
 async function vueJournal() {
-  cadre('journal', '<div class="tete"><h1>Journal</h1><span class="compte">Les 300 dernières modifications. « Revenir » remet la ligne telle qu’elle était juste avant.</span></div><div class="bloc" style="padding:0" data-liste id="l-journal"><p class="vide">Chargement…</p></div>');
-  await rechargerJournal();
-  const zone = $('#l-journal');
+  const f = session.journal = Object.assign({ q: '', quoi: '', qui: '', periode: '', du: '', au: '' }, session.journal || {});
   const qui = id => { const a = E.admins.find(x => x.user_id === id); return a?.nom || (id === E.session.user.id ? E.session.user.email : id ? 'un administrateur' : 'import'); };
-  const OPS = { INSERT: 'Ajout', UPDATE: 'Modification', DELETE: 'Suppression' };
-  zone.rafraichir = async () => { await rechargerJournal(); dessiner(); };
-  const dessiner = () => {
-    zone.innerHTML = E.journal.map(j => { const ch = champsChanges(j); if (j.operation === 'UPDATE' && !ch.length) return '';
-      return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
-        <span class="quoi"><b>${OPS[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${esc(resume(j) || '')}${ch.length ? `<span class="diff"> — ${esc(ch.join(', '))}</span>` : ''}</span>
-        <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('') || '<p class="vide">Rien encore.</p>';
+  const option = (v, l, choisi) => `<option value="${esc(v)}"${choisi === v ? ' selected' : ''}>${esc(l)}</option>`;
+  const auteurs = () => [...new Set([...E.admins.map(a => a.user_id), ...E.journal.map(j => j.qui ?? '')])].map(id => [id || '', qui(id || null)]).sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+  cadre('journal', `<div class="tete"><h1>Journal</h1><span class="compte">« Revenir » remet une ligne telle qu’elle était juste avant la modification.</span></div>
+    <div class="filtres journal-filtres" role="search" aria-label="Filtrer le journal">
+      <input type="search" id="j-q" placeholder="Chercher : un nom, un lieu, un numéro, un champ…" value="${esc(f.q)}" aria-label="Chercher dans le journal">
+      <div class="j-choix">
+        <select id="j-quoi" aria-label="Rubrique ou table"><option value="">Toutes les rubriques</option><optgroup label="Rubriques">${RUBRIQUES_JOURNAL.map(([k, l]) => option(`r:${k}`, l, f.quoi)).join('')}</optgroup>
+          <optgroup label="Tables">${RUBRIQUES_JOURNAL.flatMap(r => r[2]).map(t => option(`t:${t}`, NOMS_TABLES[t] || t, f.quoi)).join('')}</optgroup></select>
+        <select id="j-qui" aria-label="Auteur"></select>
+        <select id="j-periode" aria-label="Période">${PERIODES_JOURNAL.map(([k, l]) => option(k, l, f.periode)).join('')}</select>
+        <span class="j-dates"${f.periode === 'choisir' ? '' : ' hidden'}><label>du <input type="date" id="j-du" value="${esc(f.du)}"></label><label>au <input type="date" id="j-au" value="${esc(f.au)}"></label></span>
+      </div>
+      <p class="j-compte"><span class="compte" id="j-compte"></span><button type="button" class="btn lien petit" id="j-effacer" hidden>Tout montrer</button></p>
+    </div>
+    <div class="bloc" style="padding:0" data-liste id="l-journal"><p class="vide">Chargement…</p></div><p class="j-plus" id="j-plus-zone"></p><p class="sr" id="j-annonce" aria-live="polite"></p>`);
+  const zone = $('#l-journal');
+  const remplirAuteurs = () => { $('#j-qui').innerHTML = `<option value="">Tous les auteurs</option>${auteurs().map(([id, l]) => option(`u:${id}`, l, f.qui)).join('')}`; };
+  remplirAuteurs();
+  await rechargerJournal();
+  if (!zone.isConnected) return;
+  remplirAuteurs();
+  const textes = new Map();   // la ligne du journal en mots (calculée une fois)
+  const texteDe = j => {
+    if (!textes.has(j.id)) {
+      const ch = champsChanges(j), x = j.apres || j.avant || {};
+      const valeurs = j.operation === 'UPDATE' ? ch.map(k => `${valeurJournal(j.avant[k])} ${valeurJournal(j.apres[k])}`) : Object.entries(x).filter(([k]) => !/(^|_)id$|^modifie_|^cree_/.test(k)).map(([, v]) => valeurJournal(v));
+      textes.set(j.id, cleRch(`${OPS_JOURNAL[j.operation]} ${NOMS_TABLES[j.table_nom] || j.table_nom} ${resume(j) || ''} ${ch.join(' ')} ${apprisDuJournal(j).join(' ')} ${qui(j.qui)} ${valeurs.join(' ')}`));
+    }
+    return textes.get(j.id);
   };
+  const jourDe = j => AGENDA.iso(new Date(j.quand));
+  const debutPeriode = () => (f.periode === 'jour' ? AUJ : f.periode === '7' ? plusJours(AUJ, -6) : f.periode === '30' ? plusJours(AUJ, -29) : f.periode === 'choisir' ? f.du || '' : '');
+  const garde = (j, mots) => {
+    if (j.operation === 'UPDATE' && !champsChanges(j).length) return false;
+    if (f.quoi) { const [k, v] = [f.quoi.slice(0, 1), f.quoi.slice(2)]; if (k === 't' ? j.table_nom !== v : !(RUBRIQUES_JOURNAL.find(r => r[0] === v)?.[2] || []).includes(j.table_nom)) return false; }
+    if (f.qui && (j.qui ?? '') !== f.qui.slice(2)) return false;
+    const jj = jourDe(j), de = debutPeriode();
+    if (de && jj < de) return false;
+    if (f.periode === 'choisir' && f.au && jj > f.au) return false;
+    if (mots.length) { const t = texteDe(j); if (!mots.every(m => t.includes(m))) return false; }
+    return true;
+  };
+  const dessiner = () => {
+    const mots = motsRch(f.q), filtre = !!(mots.length || f.quoi || f.qui || f.periode), xs = E.journal.filter(j => garde(j, mots));
+    const total = E.journal.filter(j => j.operation !== 'UPDATE' || champsChanges(j).length).length;
+    zone.innerHTML = xs.map(j => { const ch = champsChanges(j), ap = apprisDuJournal(j);
+      return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
+        <span class="quoi"><b>${OPS_JOURNAL[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${surlignerRch(resume(j) || '', mots)}${ch.length ? `<span class="diff"> — ${surlignerRch(ch.join(', '), mots)}</span>` : ''}${ap.length ? `<span class="diff appris"> — gardé dans les fiches : ${esc(ap.join(', '))}</span>` : ''}</span>
+        <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('')
+      || `<p class="vide">${total ? 'Aucune modification ne correspond.' : 'Rien encore.'}</p>`;
+    const plusVieux = E.journal.length ? jourDe(E.journal[E.journal.length - 1]) : AUJ, de = debutPeriode();
+    $('#j-compte').textContent = `${filtre ? `${xs.length} sur ${total}` : total} modification${total > 1 ? 's' : ''}${E.journalFin ? '' : `, depuis le ${jourCourt(plusVieux)}`}`;
+    $('#j-effacer').hidden = !filtre;
+    $('#j-plus-zone').innerHTML = E.journalFin ? '' : `${filtre && (!de || de < plusVieux) ? `<span class="aide">Le journal lu remonte au ${esc(jourCourt(plusVieux))} : il y a plus ancien.</span>` : ''}<button type="button" class="btn" id="j-plus">Lire ${PAGE_JOURNAL} modifications plus anciennes</button>`;
+    clearTimeout(dessiner.minuteur);
+    dessiner.minuteur = setTimeout(() => { const a = $('#j-annonce'); if (a && filtre) a.textContent = $('#j-compte')?.textContent || ''; }, 500);
+  };
+  zone.rafraichir = async () => { await rechargerJournal(); if (zone.isConnected) dessiner(); };
   dessiner();
+  const maj = () => { garderFiltres(); dessiner(); };
+  $('#j-q').addEventListener('input', e => { f.q = e.target.value; maj(); });
+  $('#j-quoi').addEventListener('change', e => { f.quoi = e.target.value; maj(); });
+  $('#j-qui').addEventListener('change', e => { f.qui = e.target.value; maj(); });
+  $('#j-periode').addEventListener('change', e => { f.periode = e.target.value; $('.j-dates').hidden = f.periode !== 'choisir'; maj(); if (f.periode === 'choisir') $('#j-du').focus(); });
+  $('#j-du').addEventListener('change', e => { f.du = e.target.value; maj(); });
+  $('#j-au').addEventListener('change', e => { f.au = e.target.value; maj(); });
+  $('#j-effacer').addEventListener('click', () => {
+    Object.assign(f, { q: '', quoi: '', qui: '', periode: '', du: '', au: '' });
+    ['#j-q', '#j-quoi', '#j-qui', '#j-periode', '#j-du', '#j-au'].forEach(k => { $(k).value = ''; });
+    $('.j-dates').hidden = true; maj(); $('#j-q').focus();
+  });
+  $('#j-plus-zone').addEventListener('click', async e => {
+    const b = e.target.closest('#j-plus'); if (!b) return;
+    b.disabled = true; b.textContent = 'Lecture…';
+    try { await journalPlusAncien(); remplirAuteurs(); dessiner(); $('#j-plus')?.focus(); } catch (err) { erreur(err, 'Lecture impossible'); b.disabled = false; }
+  });
   zone.addEventListener('click', async e => {
     const b = e.target.closest('[data-j]'); if (!b) return;
     const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || TABLES_EQUIPE[j.table_nom] || [null, 'id'];

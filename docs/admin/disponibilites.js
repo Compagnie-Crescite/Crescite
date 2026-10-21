@@ -11,6 +11,9 @@
      #/planning/proposition/<id>   le suivi : pour chacun et chaque jour, sa réponse et son mot ; l'état de son courriel,
                                    « Renvoyer le courriel » ; « Clore ». Quand le courriel n'est pas parti, de quoi prévenir
                                    soi-même : un courriel tout prêt et le lien de la proposition dans l'espace de l'équipe.
+                                   Chaque jour : « Créer la date », le formulaire d'une nouvelle date pré-rempli (spectacle,
+                                   jour et heures, lieu connu, équipe : qui a dit oui ce jour-là) ; la date enregistrée, la
+                                   proposition se clôt et la garde (date_id : « Date retenue »).
                                    Le lien de réponse personnel (sans connexion) n'est pas lisible ici : les règles de la
                                    base gardent la clé de chacun au seul courriel.
    Sans le script 5, la rubrique le dit en une phrase et rien d'autre ne change. Les propositions ne sont pas dans le
@@ -283,14 +286,14 @@ const DISPONIBILITES = (() => {
       if (!suivi.relu) { suivi.relu = true; chargerPropositions().then(() => { if (location.hash === `#/planning/proposition/${id}` && E.propositions.some(x => x.id === id)) vue(`proposition/${id}`); }).catch(() => {}).finally(() => { suivi.relu = false; }); }
       return;
     }
-    const sp = spectacle(p.spectacle_id), close = p.statut === 'close';
+    const sp = spectacle(p.spectacle_id), close = p.statut === 'close', retenue = p.date_id != null ? E.dates.find(d => memeId(d.id, p.date_id)) : null;
     const dest = p.destinataires.slice().sort((a, b) => norm(nomP(a.personne_id)).localeCompare(norm(nomP(b.personne_id))));
     const prev = aPrevenir(p), sansReponse = dest.filter(d => p.jours.every(j => !reponseDe(j, d.personne_id)?.reponse) && etatCourriel(d, p).classe !== 'attente');
     const jours = p.jours.map(j => {
       const n = { oui: 0, non: 0, peut_etre: 0, attente: 0 };
       for (const d of dest) n[reponseDe(j, d.personne_id)?.reponse || 'attente']++;
       const tous = dest.length && n.oui === dest.length;
-      return `<li><b>${esc(jourLongDe(j))}</b> <span class="dp-bilan">${bilanHtml(n)}</span>${tous ? ' <span class="badge ok">Tout le monde est disponible</span>' : ''}</li>`;
+      return `<li><b>${esc(jourLongDe(j))}</b> <span class="dp-bilan">${bilanHtml(n)}</span>${tous ? ' <span class="badge ok">Tout le monde est disponible</span>' : ''}${retenue ? '' : `<button type="button" class="btn petit dp-creer" data-dp="creer-date" data-jour="${j.id}" aria-label="Créer la date du ${esc(jourLongDe(j))}">Créer la date</button>`}</li>`;
     }).join('');
     const tete = p.jours.map(j => `<th scope="col">${esc(jourCourtDe(j))}</th>`).join('');
     const lignes = dest.map(d => {
@@ -304,7 +307,7 @@ const DISPONIBILITES = (() => {
     }).join('');
     zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/planning/propositions" aria-label="Retour aux propositions">←</a><h2>${esc(p.titre)}</h2></div>
       <div class="bloc dp-entete">
-        <div class="dp-etiquettes"><span class="badge${close ? '' : ' ok'}">${close ? 'Close' : 'Ouverte'}</span>${sp ? `<span class="dp-sp"><span class="pastille" style="--c:${couleurSp(sp)}"></span>${esc(sp.titre)}</span>` : ''}<span class="compte">Proposée le ${esc(quandTexte(p.cree_le))} · ${pl(dest.length, 'personne')} · ${pl(p.jours.length, 'jour')}</span></div>
+        <div class="dp-etiquettes"><span class="badge${close ? '' : ' ok'}">${close ? 'Close' : 'Ouverte'}</span>${sp ? `<span class="dp-sp"><span class="pastille" style="--c:${couleurSp(sp)}"></span>${esc(sp.titre)}</span>` : ''}<span class="compte">Proposée le ${esc(quandTexte(p.cree_le))} · ${pl(dest.length, 'personne')} · ${pl(p.jours.length, 'jour')}</span>${retenue ? `<a class="dp-retenue" href="#/representations/${retenue.id}">Date retenue : ${esc(jourCourt(retenue.debut))} →</a>` : ''}</div>
         ${p.message ? `<p class="dp-message">${esc(p.message).replace(/\n/g, '<br>')}</p>` : ''}
         <ul class="dp-jours-bilan">${jours}</ul>
       </div>
@@ -320,6 +323,7 @@ const DISPONIBILITES = (() => {
       const k = b.dataset.dp;
       if (k === 'actualiser') return rafraichirSuivi(id, true);
       if (k === 'copier-lien') return copier(lienEquipe(p.id), 'Adresse de la proposition dans l’espace de l’équipe');
+      if (k === 'creer-date') { const j = p.jours.find(x => memeId(x.id, b.dataset.jour)); if (j) creerDate(p, j); return; }
       if (k === 'renvoyer') {
         const d = p.destinataires.find(x => memeId(x.id, b.dataset.dest));
         if (!d) return;
@@ -353,6 +357,43 @@ const DISPONIBILITES = (() => {
       }
     };
   }
+  // « Créer la date » depuis un jour de la proposition : le formulaire d'une nouvelle date (Représentations), pré-rempli :
+  // le spectacle, le jour (ou les jours) et ses heures, le lieu quand on le connaît (la date liée à la proposition, sinon un
+  // lieu dont le titre ou le message donne le nom), la nature d'après le titre (des répétitions, une résidence : jamais sur
+  // le site), et l'équipe : celles et ceux qui ont répondu oui ce jour-là (la distribution en tournée moins les autres, plus
+  // les renforts). La proposition se clôt une fois la date enregistrée (apresDate) ; quitter le formulaire n'y touche pas.
+  function dateDepuis(p, j) {
+    const G = nouvelleDate(), js = PLN().joursDe(j);
+    if (!js.length) return null;
+    if (p.spectacle_id != null && spectacle(Number(p.spectacle_id))) G.spectacle_id = Number(p.spectacle_id);
+    G.debut = js[0].jour; G.fin = js[js.length - 1].jour;
+    G.representations = js.map(u => ({ jour: u.jour, heure: u.entier ? '' : u.de || '', fin: u.entier ? '' : u.a || '', public: 'tout_public', annulee: false, lien: '', note: '' }));
+    const t = norm(`${p.titre} ${p.message || ''}`), liee = p.date_id != null ? E.dates.find(d => memeId(d.id, p.date_id)) : null;
+    const nomme = E.lieux.filter(l => norm(l.nom).trim().length > 3 && t.includes(norm(l.nom).trim())).sort((a, b) => b.nom.length - a.nom.length)[0];
+    G.lieu_id = liee?.lieu_id ?? nomme?.id ?? null;
+    if (E.sql3) { G.nature = /repetition/.test(t) ? 'repetitions' : /residence/.test(t) ? 'residence' : 'representations'; if (G.nature !== 'representations') G.visible = false; }
+    const oui = new Set((j.reponses || []).filter(r => r.reponse === 'oui').map(r => Number(r.personne_id)));
+    const base = E.equipeInstallee ? equipeDate(G.spectacle_id, []) : [];
+    G.equipe = [...base.filter(x => !oui.has(x.personne_id)).map(x => ({ personne_id: x.personne_id, present: false, fonction: '', note: null })),
+      ...[...oui].filter(id => personne(id) && !base.some(x => x.personne_id === id)).map(id => ({ personne_id: id, present: true, fonction: '', note: null }))];
+    G.depuis = { proposition: p.id, titre: p.titre, jour: PLN().texteJours(j), close: p.statut === 'close', oui: oui.size };
+    return G;
+  }
+  function creerDate(p, j) {
+    const G = dateDepuis(p, j);
+    if (!G) return;
+    E.dateDepart = G;
+    location.hash = '#/representations/nouvelle';
+  }
+  // la date créée depuis une proposition est enregistrée : la proposition se clôt, sa date retenue ; ce que l'annonce dit
+  async function apresDate(depuis, dateId) {
+    const { data, error } = await sb.from('crescite_propositions').update({ statut: 'close', date_id: dateId }).eq('id', depuis.proposition).select('id, statut, date_id').single();
+    if (error) return { texte: `La proposition « ${depuis.titre} » n’a pas pu être close : ${error.message || error}.`, erreur: true };
+    const p = E.propositions.find(x => memeId(x.id, depuis.proposition));
+    if (p) Object.assign(p, { statut: data.statut, date_id: data.date_id });
+    return { texte: depuis.close ? `La date est notée dans la proposition « ${depuis.titre} ».` : `La proposition « ${depuis.titre} » est close : les réponses sont arrêtées.` };
+  }
+
   // ce qu'il faut pour prévenir soi-même : un courriel tout prêt (en copie cachée), le lien de l'espace de l'équipe
   function prevenirBloc(p, ds) {
     const avec = ds.filter(d => priveeDe(d.personne_id)?.email), sans = ds.filter(d => !priveeDe(d.personne_id)?.email);
@@ -690,6 +731,8 @@ const DISPONIBILITES = (() => {
 .dp-message { margin: 12px 0 0; padding: 10px 14px; border-radius: 10px; background: var(--doux); border-left: 3px solid var(--accent); }
 .dp-jours-bilan { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
 .dp-jours-bilan li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.dp-jours-bilan .dp-creer { margin-left: auto; }
+.dp-retenue { font-weight: 700; font-size: 13.5px; }
 .dp-jours-bilan .dp-bilan { margin: 0; }
 .dp-prevenir { border-color: color-mix(in srgb, var(--option) 40%, var(--trait)); background: color-mix(in srgb, var(--option-doux) 55%, var(--carte)); }
 .dp-prevenir p { margin: 0 0 8px; }
@@ -763,7 +806,7 @@ table.dp-rep tbody th { position: sticky; left: 0; z-index: 1; background: var(-
 @media (max-width: 520px) { .dp-gens { grid-template-columns: 1fr; max-height: none; } .dp-jour-l .seg { order: 3; flex-basis: 100%; } .dp-jour-l .seg button { flex: 1 1 auto; } }
 </style>`);
 
-  return { vue, chargerPropositions };
+  return { vue, chargerPropositions, apresDate };
 })();
 // la route de la rubrique (admin/index.html)
 function vuePlanning(param) { return DISPONIBILITES.vue(param); }
