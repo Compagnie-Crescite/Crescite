@@ -463,8 +463,10 @@ details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
 .fil-ariane a { text-decoration: none; }
 .fil-ariane a:hover { text-decoration: underline; }
 .hero-nom { margin: 0 0 12px; font: 700 .74rem/1.3 var(--sans); letter-spacing: .24em; text-transform: uppercase; color: var(--u-vif); }
-.hero-text h1 { margin: 0; max-width: 13ch; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(2.7rem, 1.4rem + 5.4vw, 6.8rem); line-height: .96; text-wrap: balance; text-shadow: 0 0 60px var(--u-lueur); }
-.hero-text h1 .ligne { display: block; width: fit-content; }
+.hero-text h1 { margin: 0; max-width: 13ch; font-family: var(--u-police); font-weight: var(--u-graisse); color: var(--u-titre); font-size: clamp(2.7rem, 1.4rem + 5.4vw, 6.8rem); line-height: .96; text-wrap: balance; }
+/* la lueur du titre : un halo derrière chaque ligne (un dégradé, bien moins coûteux à peindre qu'une ombre de texte floutée) */
+.hero-text h1 .ligne { position: relative; display: block; width: fit-content; }
+.hero-text h1 .ligne::before { content: ""; position: absolute; z-index: -1; inset: -.5em -.6em; background: radial-gradient(closest-side, var(--u-lueur), transparent); opacity: .5; pointer-events: none; }
 /* le titre fleurit ligne à ligne sous l'encre qui s'ouvre (opacité, flou, montée : rien de mécanique) ; le bras qui le souligne
    s'allonge au défilement */
 .revele { animation: k-fleurit .5s var(--k-doux) calc(var(--k) * 90ms + 120ms) both; }
@@ -473,8 +475,7 @@ details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
 .hero-meta { margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; font: 700 .76rem/1.4 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--u-texte2); }
 .hero-meta .tag { color: var(--u-vif); letter-spacing: .1em; }
 .hero-acc { margin: 16px 0 0; max-width: 38ch; font: 500 clamp(1.08rem, .95rem + .45vw, 1.35rem)/1.48 var(--serif); }
-.mot { display: inline-block; animation: mot .32s ease both; animation-delay: calc(140ms + var(--t) * 260ms); }
-@keyframes mot { from { opacity: 0; transform: translateY(.35em); } }
+.hero-acc.revele { animation-delay: .26s; }
 .hero-credit { position: absolute; z-index: 2; right: var(--gout); bottom: 12px; margin: 0; padding: 2px 9px; border-radius: 3px; font-size: .74rem; background: color-mix(in srgb, var(--u-fond) 72%, transparent); color: var(--u-texte); }
 /* les motifs : une signature discrète, qui réagit au défilement (et au survol des fiches) */
 .motif { display: block; width: 100%; height: auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -660,7 +661,7 @@ footer.pied { background: var(--nuit); color: var(--blanc-2); padding: 48px 0 44
 .arrive .page-tete h1 > span { animation: k-fleurit .36s var(--k-doux) both; }
 .arrive .page-tete h1 > span::after { transform-origin: 0 50%; animation: k-bras .46s var(--k-doux) .04s both; }
 .arrive .page-tete h1 > span::before { animation: k-boucle .34s var(--k-souple) .34s both; }
-@keyframes k-fleurit { from { opacity: .2; filter: blur(6px); transform: translateY(8px); } }
+@keyframes k-fleurit { from { opacity: .15; transform: translateY(10px); } }
 @keyframes k-bras { from { transform: scaleX(0); } }
 @keyframes k-boucle { from { opacity: 0; transform: scale(.2) rotate(-120deg); } }
 /* la pression : une ventouse se pose à l'endroit du doigt, à l'instant même ; le bouton s'enfonce d'un rien */
@@ -756,7 +757,8 @@ html .ed-tete h2 { font: italic 500 1.4rem/1.2 var(--serif); }
 html .ed-voile { background: rgba(21, 10, 17, .62); }
 html .ed-ajout { font-family: var(--sans); }
 
-#ink { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; transition: opacity .32s; }
+#ink { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
+#ink.couvre { pointer-events: auto; }
 
 @media (max-width: 1100px) {
   .tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -911,20 +913,20 @@ html .ed-ajout { font-family: var(--sans); }
   let versionD = 0;
   const memoire = new Map();
   const retenu = (cle, f) => { const m = memoire.get(cle); if (m && m.v === versionD) return m.x; const x = f(); memoire.set(cle, { v: versionD, x }); return x; };
-  // les photos de D (data:…) servies par des adresses courtes (blob:), faites une fois pour toutes
-  const BLOBS = new Map();
+  // les photos de D (data:…) servies par des adresses courtes (blob:) : le navigateur les décode lui-même (fetch), au repos, sans
+  // déchets pour le script ; une photo pas encore convertie sert telle quelle
+  const BLOBS = new Map(), EN_COURS = new Set();
+  function convertir(data) {
+    if (BLOBS.has(data) || EN_COURS.has(data) || typeof fetch !== 'function') return Promise.resolve();
+    EN_COURS.add(data);
+    return fetch(data).then(r => r.blob()).then(b => { BLOBS.set(data, URL.createObjectURL(b)); }).catch(() => {}).finally(() => EN_COURS.delete(data));
+  }
   function urlDe(data) {
     if (typeof data !== 'string' || !data.startsWith('data:')) return data || '';
-    let u = BLOBS.get(data);
+    const u = BLOBS.get(data);
     if (u) return u;
-    try {
-      const i = data.indexOf(','), meta = data.slice(5, i), b64 = /;base64$/.test(meta);
-      const bin = b64 ? atob(data.slice(i + 1)) : decodeURIComponent(data.slice(i + 1)), a = new Uint8Array(bin.length);
-      for (let k = 0; k < bin.length; k++) a[k] = bin.charCodeAt(k);
-      u = URL.createObjectURL(new Blob([a], { type: meta.replace(/;base64$/, '') }));
-    } catch (e) { u = data; }
-    BLOBS.set(data, u);
-    return u;
+    convertir(data);
+    return data;
   }
   const photo = cle => (cle && D.photos && D.photos[cle] ? urlDe(D.photos[cle]) : '');
   // ce qui est loin sous le pli (une grande carte) se dessine quand on s'en approche
@@ -1018,7 +1020,7 @@ html .ed-ajout { font-family: var(--sans); }
      resserre vers la pieuvre et rend la page (420 ms). Un geste suivant l'arrête net. */
   const Ink = (() => {
     const cv = $('#ink'), ctx = cv.getContext('2d');
-    let W = 0, H = 0, raf = 0, on = false;
+    let W = 0, H = 0, raf = 0, on = false, relance = null, tImage = 0;
     // une tache d'encre n'a pas besoin de finesse : la toile est à demi-résolution, et le navigateur l'agrandit (quatre fois moins à peindre)
     const size = () => { W = VW; H = VH; const k = .5; if (cv.width !== Math.round(W * k) || cv.height !== Math.round(H * k)) { cv.width = Math.round(W * k); cv.height = Math.round(H * k); } ctx.setTransform(k, 0, 0, k, 0, 0); };
     const blob = (x, y, r, t) => {
@@ -1027,16 +1029,28 @@ html .ed-ajout { font-family: var(--sans); }
       for (let i = 0; i <= 64; i++) { const a = i / 64 * Math.PI * 2, rr = r * (1 + 0.045 * Math.sin(5 * a + t * 3) + 0.028 * Math.sin(9 * a - t * 4)); const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
       ctx.closePath(); ctx.fill();
     };
-    function arreter() { cancelAnimationFrame(raf); raf = 0; if (on) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); } cv.hidden = true; on = false; ecoute(false); }
-    // un geste (pointeur, clavier, molette) termine l'encre aussitôt
-    const geste = () => arreter();
+    function arreter() { cancelAnimationFrame(raf); raf = 0; cv.hidden = true; cv.classList.remove('couvre'); on = false; ecoute(false); }
+    // un geste (pointeur, clavier, molette) termine l'encre aussitôt. Tant qu'elle couvre l'écran, c'est elle qu'on touche (la page
+    // qui se peint dessous ne change pas sous le pointeur) : un clic donné sur l'encre est relancé sur ce qu'elle couvrait
+    const geste = e => { if (e.type === 'pointerdown') relance = { x: e.clientX, y: e.clientY, t: performance.now() }; arreter(); };
+    addEventListener('click', e => {
+      const r = relance; if (!r || performance.now() - r.t > 1500) return;
+      relance = null;
+      if (e.target !== document.body && e.target !== document.documentElement && e.target !== cv) return;
+      const el = document.elementFromPoint(r.x, r.y), c = el && el.closest('a[href], button, summary, label, [role="button"], input, select, textarea');
+      if (!c) return;
+      if (c.matches('input, select, textarea')) c.focus(); else c.click();
+    }, { capture: true });
     const ecoute = oui => ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(t => (oui ? addEventListener : removeEventListener)(t, geste, { capture: true, passive: true }));
     function jouer(x, y, dur, dessin) {
       cancelAnimationFrame(raf);
-      size(); cv.hidden = false; on = true; ecoute(true);
+      size(); cv.hidden = false; cv.classList.add('couvre'); on = true; ecoute(true);
       const R = Math.hypot(Math.max(x, W - x), Math.max(y, H - y)) * 1.1, t0 = performance.now();
+      // trente images par seconde suffisent à une encre qui s'ouvre (chaque image de la toile coûte à tout l'écran)
       const frame = now => {
         const p = clamp((now - t0) / dur, 0, 1), t = now / 1000;
+        if (p < 1 && now > t0 && now - tImage < 28) { raf = requestAnimationFrame(frame); return; }
+        tImage = now;
         ctx.globalCompositeOperation = 'source-over'; ctx.clearRect(0, 0, W, H);
         dessin(p, R, t);
         ctx.globalCompositeOperation = 'source-over';
@@ -1646,7 +1660,7 @@ html .ed-ajout { font-family: var(--sans); }
   $('#pied').addEventListener('click', e => { if (e.target.closest('.modifier') && typeof EDITION !== 'undefined') EDITION.ouvrir(); });
 
   /* ---------- l'accueil, sous la scène ---------- */
-  const tuile = s => `<li class="tuile" style="${uStyle(s)}"><div class="tu-ph"><img src="${attr(photo(s.slug))}" alt="" loading="lazy"></div>
+  const tuile = s => `<li class="tuile" style="${uStyle(s)}"><div class="tu-ph"><img src="${attr(photo(s.slug))}" alt="" loading="lazy" decoding="async"></div>
     <div class="tu-tx">${s.lieuTemps ? `<p class="tu-lt">${esc(s.lieuTemps)}</p>` : ''}<h3><a class="etire" href="#/spectacle/${attr(s.slug)}">${esc(s.titre)}</a></h3><p class="tu-cr">${esc(s.creation)}</p></div>
     <span class="tu-motif">${motif(univers(s).motif)}</span></li>`;
   function accueilSuite() {
@@ -1839,7 +1853,7 @@ html .ed-ajout { font-family: var(--sans); }
     const e = entree('voir'), Lb = S.libelles, sa = (S.saisons || [])[0], pub = D.dates.filter(d => !d.scolaire), lieux = CARTE.aVenir('public');
     const cartes = D.shows.filter(s => s.enTournee).map(s => {
       const d = prochainePublique(s);
-      return `<li class="cv" style="${uStyle(s)}"><div class="cv-ph"><img src="${attr(photo(s.slug))}" alt="" loading="lazy"></div><div class="cv-tx">
+      return `<li class="cv" style="${uStyle(s)}"><div class="cv-ph"><img src="${attr(photo(s.slug))}" alt="" loading="lazy" decoding="async"></div><div class="cv-tx">
         ${s.lieuTemps ? `<p class="cv-lt"${ed(`shows.${s.slug}.lieuTemps`)}>${esc(s.lieuTemps)}</p>` : ''}
         <h3><a class="etire" href="#/spectacle/${attr(s.slug)}/voir">${esc(s.titre)}</a></h3>
         ${s.accroche ? `<p class="cv-acc"${ed(`shows.${s.slug}.accroche`)}>${esc(s.accroche)}</p>` : ''}
@@ -2113,7 +2127,7 @@ html .ed-ajout { font-family: var(--sans); }
       <section class="bloc"><div class="wrap">${groupe(Lb.lieu.etablissement, g.etablissement)}${groupe(Lb.lieu.salle, g.salle)}${groupe('', g.autre)}</div></section>
       <section class="bloc" aria-labelledby="h-actions"><div class="wrap"><h2 class="h2" id="h-actions"${ed('site.actions.titre')}>${esc(A.titre)}</h2><div class="ac-grille">
         <div class="blocs">${(A.blocs || []).map((b, k) => bloc(b, `site.actions.blocs.${k}`)).join('')}</div>
-        ${photos.length ? `<div class="ac-photos">${photos.map(k => `<img src="${attr(photo(k))}" alt="${attr(A.titre)}" loading="lazy">`).join('')}${A.credit ? `<p class="credit"${ed('site.actions.credit')}>${esc(A.credit)}</p>` : ''}</div>` : ''}
+        ${photos.length ? `<div class="ac-photos">${photos.map(k => `<img src="${attr(photo(k))}" alt="${attr(A.titre)}" loading="lazy" decoding="async">`).join('')}${A.credit ? `<p class="credit"${ed('site.actions.credit')}>${esc(A.credit)}</p>` : ''}</div>` : ''}
       </div></div></section>
       ${sc.length ? `<section class="bloc" aria-labelledby="h-sc"><div class="wrap"><h2 class="h2" id="h-sc">${esc(Lb.enEtablissement)}</h2><div class="v-frise" id="e-frise"></div>
         <div class="ag-grille"><div class="ag-carte">${Encre.svg({ lieux: CARTE.aVenir('scolaire'), cadre: 'serre', titre: Lb.enEtablissement })}</div>
@@ -2126,7 +2140,7 @@ html .ed-ajout { font-family: var(--sans); }
     const bandes = D.shows.map((s, i) => {
       const sl = s.slug, d = prochainePublique(s);
       return `<li class="bande" style="${uStyle(s)}"><div class="bande-in">
-        <div class="bande-ph"><img src="${attr(photo(sl))}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}"></div>
+        <div class="bande-ph"><img src="${attr(photo(sl))}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></div>
         <div class="bande-tx"><span class="bande-embleme">${motif(univers(s).motif)}</span>${s.lieuTemps ? `<p class="bande-lt"${ed(`shows.${sl}.lieuTemps`)}>${esc(s.lieuTemps)}</p>` : ''}
           <h2><a class="etire" href="#/spectacle/${attr(sl)}">${esc(s.titre)}</a></h2>
           ${s.sousTitre ? `<p class="bande-sous"${ed(`shows.${sl}.sousTitre`)}>${s.sousTitre}</p>` : ''}
@@ -2205,14 +2219,7 @@ html .ed-ajout { font-family: var(--sans); }
   const pageLegal = cle => { const L = S.legal[cle]; return tete(L.titre) + `<section class="bloc"><div class="wrap legal">${L.blocs.map(bloc).join('')}</div></section>`; };
 
   /* ---------- la page d'un spectacle : son univers, ses trois entrées ---------- */
-  // l'accroche s'écrit mot à mot (l'édition remet la phrase entière)
-  function mots(txt) {
-    if (!ANIMER || !motionOK() || /<[a-z]/i.test(txt)) return esc(txt);
-    const ms = String(txt).split(/(\s+)/), n = Math.max(1, ms.filter(m => m.trim()).length);
-    let i = 0;
-    return ms.map(m => m.trim() ? `<span class="mot" style="--t:${(i++ / n).toFixed(3)}">${esc(m)}</span>` : m).join('');
-  }
-  const figure = (s, p, k, classe = '') => `<figure class="ph ${classe}"${edp(`shows.${s.slug}.photos.${k}`)}><img src="${attr(photo(p.cle))}" alt="${attr(s.titre)}" loading="lazy"><figcaption class="leg"${ed(`shows.${s.slug}.photos.${k}.legende`)}>${p.legende ? esc(p.legende) : ''}</figcaption></figure>`;
+  const figure = (s, p, k, classe = '') => `<figure class="ph ${classe}"${edp(`shows.${s.slug}.photos.${k}`)}><img src="${attr(photo(p.cle))}" alt="${attr(s.titre)}" loading="lazy" decoding="async"><figcaption class="leg"${ed(`shows.${s.slug}.photos.${k}.legende`)}>${p.legende ? esc(p.legende) : ''}</figcaption></figure>`;
   const credits = (s, liste) => {
     const out = [];
     if (liste.some(x => x.p.source !== 'dossier') && s.creditPhotos) out.push(`<span${ed(`shows.${s.slug}.creditPhotos`)}>${esc(s.creditPhotos)}</span>`);
@@ -2371,7 +2378,7 @@ html .ed-ajout { font-family: var(--sans); }
     const h1 = lignes.map((l, k) => `<span class="ligne${ANIMER && motionOK() ? ' revele' : ''}" style="--n:${Math.max(4, [...String(l)].length)};--k:${k}"${ed(`shows.${slug}.titreLignes.${k}`)}>${esc(l)}</span>`).join(' ');
     const credit = s.creditPhotos || s.credit;
     const hero = `<div class="sx-hero" data-scrolly>
-        <div class="hero-photo"${edp(`shows.${slug}.photo`)}><img src="${attr(photo(slug))}" alt="${attr(s.titre)}"></div>
+        <div class="hero-photo"${edp(`shows.${slug}.photo`)}><img src="${attr(photo(slug))}" alt="${attr(s.titre)}" decoding="async"></div>
         <div class="hero-lueur"></div><div class="hero-motif">${motif(u.motif)}</div>
         <div class="hero-text">
           <p class="fil-ariane"><a href="#/">${esc(S.accueil)}</a> / <a href="${attr(menu('spectacles').href)}">${esc(menu('spectacles').texte)}</a></p>
@@ -2379,7 +2386,7 @@ html .ed-ajout { font-family: var(--sans); }
           <h1 tabindex="-1">${h1}</h1>
           ${s.sousTitre ? `<p class="hero-sous"${ed(`shows.${slug}.sousTitre`)}>${s.sousTitre}</p>` : ''}
           <p class="hero-meta">${s.statut ? `<span class="tag"${ed(`shows.${slug}.statut`)}>${esc(s.statut)}</span>` : ''}${s.creation ? `<span${ed(`shows.${slug}.creation`)}>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span${ed(`shows.${slug}.lieuTemps`)}>${esc(s.lieuTemps)}</span>` : ''}</p>
-          ${s.accroche ? `<p class="hero-acc"${ed(`shows.${slug}.accroche`)}>${mots(s.accroche)}</p>` : ''}
+          ${s.accroche ? `<p class="hero-acc${ANIMER && motionOK() ? ' revele' : ''}"${ed(`shows.${slug}.accroche`)}>${esc(s.accroche)}</p>` : ''}
         </div>
         ${credit ? `<p class="hero-credit"${s.creditPhotos ? ed(`shows.${slug}.creditPhotos`) : ''}>${esc(credit)}</p>` : ''}
       </div>`;
@@ -2455,7 +2462,10 @@ html .ed-ajout { font-family: var(--sans); }
   function arriver() { clearTimeout(tArrive); vPage.classList.add('arrive'); tArrive = setTimeout(() => vPage.classList.remove('arrive'), 900); }
 
   // ce qu'on garde d'une vue refaite en place : la position, les volets ouverts, les champs, le focus
-  const signe = el => !el || el === document.body ? null : el.dataset && el.dataset.edit ? `e:${el.dataset.edit}` : el.id ? `#${el.id}` : el.dataset && el.dataset.chap ? `c:${el.dataset.chap}` : el.getAttribute && el.getAttribute('href') ? `h:${el.getAttribute('href')}:${el.textContent.trim().slice(0, 40)}` : null;
+  const signe = el => !el || el === document.body ? null : el.dataset && el.dataset.edit ? `e:${el.dataset.edit}` : el.id ? `#${el.id}` : el.dataset && el.dataset.chap ? `c:${el.dataset.chap}`
+    : el.dataset && el.dataset.s ? `s:${el.dataset.s}` : el.dataset && el.dataset.eff ? `f:${el.dataset.eff}` : el.matches && el.matches('h1') ? 'h1'
+    : el.matches && el.matches('summary') && el.parentElement && el.parentElement.dataset.saison ? `sai:${el.parentElement.dataset.saison}`
+    : el.getAttribute && el.getAttribute('href') ? `h:${el.getAttribute('href')}:${el.textContent.trim().slice(0, 40)}` : null;
   function etatVue() {
     const a = document.activeElement;
     return { y: scrollY, ouverts: $$('details', vPage).map(d => d.open), champs: $$('input, textarea', vPage).map(c => [c.id, c.type === 'checkbox' ? c.checked : c.value]),
@@ -2466,7 +2476,7 @@ html .ed-ajout { font-family: var(--sans); }
     if (v.ouverts && ds.length === v.ouverts.length) ds.forEach((d, i) => { d.open = v.ouverts[i]; });
     (v.champs || []).forEach(([id, x]) => { const c = id && document.getElementById(id); if (c) { if (c.type === 'checkbox') c.checked = x; else c.value = x; } });
     if (Math.abs(scrollY - v.y) > 1) scrollTo(0, v.y);
-    if (v.focus) { const el = $$('a, button, summary, input, textarea, [tabindex], [data-edit]', vPage).find(x => signe(x) === v.focus); if (el) el.focus({ preventScroll: true }); }
+    if (v.focus) { const el = $$('a, button, summary, input, textarea, [tabindex], [data-edit], h1', vPage).find(x => signe(x) === v.focus); if (el) el.focus({ preventScroll: true }); }
     defile(); suivreChapitre();
   }
   // après un rendu : les liens externes, les cartes reliées à leurs listes, l'agenda, les frises, le sommaire, les révélations ;
@@ -2545,7 +2555,7 @@ html .ed-ajout { font-family: var(--sans); }
     }
 
     fermeMenu();
-    Ink.arreter();
+    Ink.arreter(); vPage.style.visibility = '';
     GEN++; APRES = []; AGV = null; secs = []; chapitres = [];
     clearTimeout(tArrive); vPage.classList.remove('arrive');
     const avant = courant, quitte = venait;
@@ -2577,11 +2587,18 @@ html .ed-ajout { font-family: var(--sans); }
     vPage.innerHTML = rendu(v);
     scrollTo(0, 0);
     apres();
-    // entrer dans un spectacle : la page est déjà là, l'encre de son univers la recouvre et s'ouvre aussitôt depuis le point choisi
-    if (vit && v.cle === 'spectacle') Ink.ouvrir(vu ? vu.x : VW / 2, vu ? vu.y : VH * .42, vu && vu.cols ? vu.cols : encreDe(show(v.slug)));
-    else if (pm) Ink.retirer(pm.x, pm.y, encreDe(qs));
+    const montrer = () => { if (courant !== v) return; vPage.style.visibility = ''; const h1 = $('h1', vPage); if (h1) h1.focus({ preventScroll: true }); };
+    if (vit && v.cle === 'spectacle') {
+      // entrer dans un spectacle : la page est déjà là, l'encre de son univers la recouvre et s'ouvre aussitôt depuis le point
+      // choisi ; la toute première image n'a que l'encre à peindre (la page, couverte, n'y paraît pas), la page vient à la suivante
+      vPage.style.visibility = 'hidden';
+      Ink.ouvrir(vu ? vu.x : VW / 2, vu ? vu.y : VH * .42, vu && vu.cols ? vu.cols : encreDe(show(v.slug)));
+      requestAnimationFrame(() => requestAnimationFrame(montrer));
+      return;
+    }
+    if (pm) Ink.retirer(pm.x, pm.y, encreDe(qs));
     else if (vit) arriver();
-    requestAnimationFrame(() => { const h1 = $('h1', vPage); if (h1 && courant === v) h1.focus({ preventScroll: true }); });
+    requestAnimationFrame(montrer);
   }
   // un lien vers un spectacle, ailleurs que sur la scène : l'encre de son univers partira du point choisi (la navigation suit son cours)
   document.addEventListener('click', e => {
@@ -2618,9 +2635,9 @@ html .ed-ajout { font-family: var(--sans); }
   route();
   // au repos : l'agenda passé lu d'avance, les photos servies une à une par des adresses courtes
   plusTard(() => retenu('passe', agendaPasse));
-  const aConvertir = Object.keys(D.photos || {});
-  const convertir = dl => { while (aConvertir.length && (!dl || !dl.timeRemaining || dl.timeRemaining() > 4)) { photo(aConvertir.shift()); if (!dl) break; } if (aConvertir.length) plusTard(convertir); };
-  plusTard(convertir);
+  const aConvertir = [...Object.values(D.photos || {}), ...Object.values(D.personnes || {}).map(x => x.photo)].filter(x => typeof x === 'string' && x.startsWith('data:'));
+  const suivante = () => { const d = aConvertir.shift(); if (d) plusTard(() => convertir(d).then(suivante)); };
+  suivante();
   // la base de la compagnie : à chaque enregistrement, D change en place et la vue courante est refaite en place
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(() => { versionD++; route(true); });
 })();

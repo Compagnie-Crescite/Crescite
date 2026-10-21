@@ -104,7 +104,7 @@ ul,ol{padding:0;list-style:none}
 .ph.on{opacity:1}
 .spot{position:absolute;left:0;top:0;width:54vmax;height:54vmax;margin:-27vmax 0 0 -27vmax;pointer-events:none;mix-blend-mode:soft-light;opacity:.45;transition:opacity 1s var(--ease);background:radial-gradient(closest-side,color-mix(in srgb,var(--spot) 95%,transparent) 0,color-mix(in srgb,var(--spot) 42%,transparent) 40.7%,transparent 100%);transform:translate3d(50vw,40vh,0);will-change:transform}
 .scene.lumiere .spot{opacity:1}
-.scene.allumage .spot{animation:allumage 2.6s var(--ease) both}
+.scene.allumage .spot{animation:allumage 1.1s var(--ease) both}
 @keyframes allumage{0%{opacity:0}28%{opacity:1}100%{opacity:.45}}
 .ombre{position:absolute;inset:0;pointer-events:none;background:
   linear-gradient(180deg,rgba(11,8,9,.78) 0,rgba(11,8,9,0) 9.5rem),
@@ -147,8 +147,8 @@ ul,ol{padding:0;list-style:none}
 /* le titre d'un spectacle se révèle comme sous un projecteur qui le balaie */
 @keyframes devoile{from{-webkit-mask-position:100% 0;mask-position:100% 0}to{-webkit-mask-position:0 0;mask-position:0 0}}
 @keyframes monte{from{opacity:0;transform:translateY(.6rem)}to{opacity:1;transform:none}}
-.revele .ligne{-webkit-mask-image:linear-gradient(90deg,#000 45%,transparent 55%);mask-image:linear-gradient(90deg,#000 45%,transparent 55%);-webkit-mask-size:240% 100%;mask-size:240% 100%;-webkit-mask-position:0 0;mask-position:0 0;animation:devoile .95s cubic-bezier(.5,0,.25,1) both;animation-delay:calc(.08s + var(--i,0) * .2s)}
-.scene-accroche.revele{animation:monte .8s var(--ease) .25s both}
+.revele .ligne{-webkit-mask-image:linear-gradient(90deg,#000 45%,transparent 55%);mask-image:linear-gradient(90deg,#000 45%,transparent 55%);-webkit-mask-size:240% 100%;mask-size:240% 100%;-webkit-mask-position:0 0;mask-position:0 0;animation:devoile .36s cubic-bezier(.5,0,.25,1) both;animation-delay:calc(var(--i,0) * .04s)}
+.scene-accroche.revele{animation:monte .36s var(--ease) .06s both}
 
 /* Les trois entrées de l'accueil : trois portes, trois lumières */
 .choix{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--trait)}
@@ -245,8 +245,6 @@ ul,ol{padding:0;list-style:none}
 @keyframes trace{from{stroke-dashoffset:var(--L)}to{stroke-dashoffset:0}}
 @keyframes allume{0%{opacity:0}12%{opacity:1}22%{opacity:.3}36%{opacity:1}100%{opacity:1}}
 @keyframes eclat{0%{transform:scale(.2)}35%{transform:scale(2.3)}100%{transform:scale(1)}}
-@keyframes respire{0%,100%{opacity:1}50%{opacity:.55}}
-@keyframes battement{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
 .cl-legende{min-height:5.25rem;margin-top:1rem;padding-left:1rem;border-left:1px solid var(--trait-fort)}
 .carte-boite--seule .cl-legende{margin-top:0;margin-bottom:2rem}
 .cl-legende-nom{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(1.375rem,2vw,1.75rem);line-height:1.15;color:var(--blanc);text-shadow:0 0 22px color-mix(in srgb,var(--lum,#ffd9a8) 35%,transparent)}
@@ -767,6 +765,9 @@ main{display:block;min-height:100vh}
 .frise[data-frise] .frise-point.est-passe>.frise-repere::before{box-shadow:0 0 0 2px var(--fr-fond)}
 .frise[data-frise] .frise-mois-nom{font-family:var(--serif);font-style:italic;font-weight:600;font-size:.95rem;letter-spacing:0}
 .frise[data-frise] .frise-an{font-size:.72rem;font-weight:600;letter-spacing:.14em;color:var(--gris)}
+/* les mois : un peu plus bas que les lampes (une lampe groupée, sur l'axe, ne touche pas le nom du mois) */
+.frise[data-frise].frise--mois{--fr-pied:46px}
+.frise[data-frise].frise--mois .frise-mois>li>span:first-child{top:13px}
 .frise[data-frise] .frise-aujourdhui::before{width:1px;background:var(--lumiere);box-shadow:0 0 12px 2px rgba(255,217,168,.55);opacity:1}
 .frise[data-frise] .frise-aujourdhui-nom{font-weight:600;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase}
 .frise[data-frise] .frise-bulle{border:1px solid var(--trait-fort);border-radius:0;box-shadow:0 18px 44px rgba(0,0,0,.6),0 0 30px rgba(255,217,168,.12)}
@@ -948,7 +949,7 @@ main{display:block;min-height:100vh}
      (cubic-bezier(.22, .61, .36, 1)) ; 450 ms au plus pour ce qui accompagne un geste ; seuls transform et opacity bougent.
      1. Changer de page : le noir se fait sur la scène (80 ms ; l'en-tête reste éclairé), la nouvelle page est posée dans le noir,
         puis la lumière remonte : une lueur chaude s'ouvre depuis un point (le titre, ou la photo d'une scène) et la salle
-        s'éclaire (340 ms). Sur la scène d'un spectacle, la poursuite s'allume et son titre se dévoile comme sous un projecteur
+        s'éclaire (320 ms ; du geste à la salle éclairée, moins de 450 ms). Sur la scène d'un spectacle, la poursuite s'allume et son titre se dévoile comme sous un projecteur
         qui le balaie. Un nouveau geste interrompt tout (le noir et la lumière sont annulés, la page se pose aussitôt).
      2. Ouvrir une saison : ses dates s'allument l'une après l'autre (cascade), les faisceaux de sa carte partent de Rouen.
      3. Filtrer, chercher : les dates gardées glissent à leur place (MOUVEMENT.flip), les lampes des communes sans date
@@ -956,9 +957,9 @@ main{display:block;min-height:100vh}
      4. Survol et focus : 180 ms ; une ligne survolée allume sa lampe sur la carte et son repère sur la frise, et inversement.
      5. Pression : la lumière baisse sous le doigt, dès le pointerdown (MOUVEMENT.presse).
      6. Défilement (MOUVEMENT.reveler) : les titres montent du noir, les affiches s'allument l'une après l'autre.
-     7. Ce qui vit : la poursuite suit la main sur la scène ; « EN TOURNÉE » et le statut d'un spectacle veillent (une lampe
-        qui respire) ; le cœur de Rouen bat sur la carte ; « aujourd'hui » respire et la lampe de la prochaine date bat sur
-        chaque frise.
+     7. Ce qui vit : la poursuite suit la main sur la scène ; « EN TOURNÉE », le statut d'un spectacle, veille (une lampe qui
+        respire) ; « aujourd'hui » respire et la lampe de la prochaine date bat sur chaque frise. Rien d'autre ne bouge au
+        repos (une page immobile n'occupe pas le processeur).
      Les frises (FRISE) s'allument dans le noir : l'axe est un filet de lumière, chaque date une lampe à la couleur de son
      spectacle (éteinte quand elle est passée) : la saison (voir, reliée à la liste et à la carte), les saisons (leur densité),
      une saison passée, la tournée d'un spectacle, les dates scolaires, la diffusion saison par saison (programmer, chaque
@@ -1348,7 +1349,8 @@ main{display:block;min-height:100vh}
     salleAnims = [el.firstElementChild.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 80, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' })];
     return true;
   }
-  // la lumière : une lueur chaude s'ouvre depuis (x, y) (en % de l'écran), la salle s'éclaire ; 420 ms
+  // la lumière : une lueur chaude s'ouvre depuis (x, y) (en % de l'écran), la salle s'éclaire ; 320 ms (avec le noir et la pose
+  // de la page, le geste est fini en moins de 450 ms)
   function lumiere(x, y) {
     if (!salleEl || salleEl.hidden || !doux()) { finirSalle(); return; }
     const [n, spot] = salleEl.children;
@@ -1356,8 +1358,8 @@ main{display:block;min-height:100vh}
     salleAnims.forEach(a => { try { a.cancel(); } catch (e) { /* finie */ } });
     const courbe = 'cubic-bezier(.22,.61,.36,1)';
     salleAnims = [
-      n.animate([{ opacity: 1 }, { opacity: 1, offset: .12 }, { opacity: 0 }], { duration: 380, easing: courbe, fill: 'forwards' }),
-      spot.animate([{ opacity: 0, transform: 'scale(.12)' }, { opacity: 1, transform: 'scale(.55)', offset: .4 }, { opacity: 0, transform: 'scale(1.5)' }], { duration: 420, easing: courbe, fill: 'forwards' })];
+      n.animate([{ opacity: 1 }, { opacity: 1, offset: .1 }, { opacity: 0 }], { duration: 290, easing: courbe, fill: 'forwards' }),
+      spot.animate([{ opacity: 0, transform: 'scale(.12)' }, { opacity: 1, transform: 'scale(.55)', offset: .4 }, { opacity: 0, transform: 'scale(1.5)' }], { duration: 320, easing: courbe, fill: 'forwards' })];
     salleAnims[1].onfinish = finirSalle;
   }
 
@@ -1705,20 +1707,25 @@ main{display:block;min-height:100vh}
       const svgP = boite ? $('svg.cl', boite) : null;
       let fSaison = null, fSaisons = null, agenda = false, tempo = 0;
       const brancherNouvelles = () => aBrancher.splice(0).forEach(brancherCarte);
-      // les dates à venir : le filtre cache les lignes sans résultat, éteint les communes sans date
-      const prochaines = () => {
-        const t = termes(), vus = new Set();
-        $$('.date', liste).forEach(li => {
-          const l = li.dataset.l, nom = l !== '' && CARTE.lieux[+l] ? CARTE.nom(CARTE.lieux[+l]) : '';
-          const txt = ' ' + norm(`${li.textContent} ${nom}`);
-          const ok = (!F.slug || li.dataset.slug === F.slug) && (F.l === null || (l !== '' && +l === F.l)) && t.every(k => txt.includes(k));
-          li.hidden = !ok; if (ok && l !== '') vus.add(+l);
-        });
-        $$('.mois', liste).forEach(m => { m.hidden = !$$('.date', m).some(li => !li.hidden); });
-        if (!svgP) return;
+      // les dates à venir : le filtre cache les lignes sans résultat (le texte de chaque ligne, lu une fois) ; puis les communes
+      // sans date s'éteignent sur la carte (à l'image suivante, avec la frise : la carte ne retarde pas le geste)
+      const textes = new WeakMap();
+      const texteDe = li => { let x = textes.get(li); if (x === undefined) { const l = li.dataset.l, nom = l !== '' && CARTE.lieux[+l] ? CARTE.nom(CARTE.lieux[+l]) : ''; x = ' ' + norm(`${li.textContent} ${nom}`); textes.set(li, x); } return x; };
+      let vus = new Set();
+      const lampes = () => {
+        if (!svgP || !svgP.isConnected) return;
         const filtre = actif();
-        $$('[data-l]', svgP).forEach(n => n.classList.toggle('hors', filtre && !vus.has(+n.dataset.l)));
-        $$('[data-l]', svgP).forEach(n => { if (n.matches('.carte-lieu')) n.tabIndex = (filtre && !vus.has(+n.dataset.l)) ? -1 : 0; });
+        $$('[data-l]', svgP).forEach(n => { const h = filtre && !vus.has(+n.dataset.l); if (n.classList.contains('hors') !== h) n.classList.toggle('hors', h); if (n.matches('.carte-lieu')) n.tabIndex = h ? -1 : 0; });
+      };
+      const prochaines = (carte = true) => {
+        const t = termes(); vus = new Set();
+        $$('.date', liste).forEach(li => {
+          const l = li.dataset.l, txt = texteDe(li);
+          const ok = (!F.slug || li.dataset.slug === F.slug) && (F.l === null || (l !== '' && +l === F.l)) && t.every(k => txt.includes(k));
+          if (li.hidden !== !ok) li.hidden = !ok; if (ok && l !== '') vus.add(+l);
+        });
+        $$('.mois', liste).forEach(m => { const h = !$$('.date', m).some(li => !li.hidden); if (m.hidden !== h) m.hidden = h; });
+        if (carte) lampes();
       };
       const dessineSaisons = (brancher = true) => {
         const vis = visibles();
@@ -1735,7 +1742,7 @@ main{display:block;min-height:100vh}
       AGV.maj = (differe = false) => {
         recompte();
         const faire = () => {
-          prochaines();
+          prochaines(false);
           $$('[data-s]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
           const cl = $('#choix-lieu'); cl.innerHTML = F.l !== null ? `<button class="chip chip--lieu" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}${SVG_CROIX}</button>` : '';
           if (champ.value !== F.q) champ.value = F.q;
@@ -1743,6 +1750,7 @@ main{display:block;min-height:100vh}
         if (MV && doux() && !differe) MV.flip(liste, faire, { cle: '[data-frise-id]' }); else faire();
         clearTimeout(tempo);
         requestAnimationFrame(() => setTimeout(() => {
+          lampes();
           if (fSaison && liste.isConnected) fSaison.maj({ points: reperesSaison() });
           tempo = setTimeout(() => { if (agenda && racine.isConnected) { dessineSaisons(); if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); } }, differe ? 110 : 0);
         }, 0));
@@ -1895,12 +1903,13 @@ main{display:block;min-height:100vh}
   function pageProgrammer() {
     const E = ENT.programmer, lieux = retenu('tout', () => CARTE.tout());
     // la diffusion de la compagnie, saison par saison (sa densité), au-dessus de la carte de tous ses lieux ; chaque fiche, la sienne
-    INIT = () => {
-      const ks = saisonsConnues();
-      if (ks.length) frise($('#p-diff', main), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: LIB.lieuxDiffusion, classe: 'frise-saisons', anMin: 40, choix: () => {},
+    // (sous le pli : elles arrivent avec les fiches, après la première image)
+    INIT = () => apres(() => {
+      const ks = saisonsConnues(), h = $('#p-diff', main);
+      if (ks.length && h) frise(h, { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: LIB.lieuxDiffusion, classe: 'frise-saisons', anMin: 40, choix: () => {},
         bandes: ks.map(k => bandeSaison(k, nDates(k))) });
-      apres(() => frisesDiffusion(main));
-    };
+      frisesDiffusion(main);
+    });
     return `<div class="page page--entree" style="--e:${esc(E.couleurVive || E.couleur)}">
       <header class="page-tete wrap"><p class="sur">${esc(LIB.lesSpectacles)}</p><h1 class="page-titre" tabindex="-1">${esc(E.texte)}</h1>${contactHtml(null)}</header>
       <div class="wrap"><ol class="catalogue">${D.shows.slice(0, 1).map(ficheProg).join('')}${par(D.shows.slice(1), 2).map(l => differer(() => l.map(ficheProg).join(''))).join('')}</ol></div>
