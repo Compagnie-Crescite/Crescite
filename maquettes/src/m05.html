@@ -441,6 +441,8 @@ html:not(.ed-actif) .ct-tel.vide{display:none}
 .ac-t a:hover{text-decoration:underline}
 .ac-t span{display:block}
 .ac-tete svg{flex:none;width:46px;color:var(--u-grand)}
+.ac-ph{position:relative;width:100%;aspect-ratio:16/9;border-radius:4px;overflow:hidden;margin-top:2px}
+.ac-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ac-type{width:100%;padding:12px 0 10px;border-top:3px solid var(--u-grand);border-bottom:1px solid var(--ligne);color:var(--u-texte);font-stretch:125%;font-weight:900;font-size:clamp(20px,1.9vw,26px);line-height:1.08;text-transform:uppercase}
 .ac-type--x{border-top-style:dashed;color:var(--u-texte2)}
 .ac-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-weight:700}
@@ -1831,6 +1833,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const textes = a.textes || [];
     return `<li class="ac u" style="${uStyle(s)}">
       <div class="ac-tete"><h3 class="ac-t"><a href="${lien}">${lignesTitre(s).map(x => `<span>${esc(x)}</span>`).join(' ')}</a></h3>${glyphe(t.motif)}</div>
+      ${imgSrc(s.slug) ? `<div class="ac-ph duo-u" data-mv-nom="sp-${esc(s.slug)}"><img src="${esc(imgSrc(s.slug))}" alt="" loading="lazy" style="object-position:${s.focale ?? 50}% 35%"${edPh(P(s, 'photo'))}></div>` : ''}
       ${a.type ? `<p class="ac-type"${ed(P(s, 'actionCulturelle.type'))}>${esc(a.type)}</p>` : `<p class="ac-type ac-type--x">${esc(L.aCompleter)}</p>`}
       ${a.public || a.statut ? `<p class="ac-meta">${a.public ? `<span class="k">${esc(L.public)}</span> <span${ed(P(s, 'actionCulturelle.public'))}>${esc(a.public)}</span>` : ''}${a.statut ? ` <span class="tag tag--u"${ed(P(s, 'actionCulturelle.statut'))}>${esc(a.statut)}</span>` : ''}</p>` : ''}
       ${textes[0] ? `<p class="ac-txt"${ed(P(s, 'actionCulturelle.textes.0.texte'))}>${textes[0].texte}</p>` : ''}
