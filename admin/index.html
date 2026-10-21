@@ -338,14 +338,19 @@ function ecranConnexion(message = '') {
     if (error) erreur(error, 'Envoi impossible'); else annoncer('Un lien pour choisir un nouveau mot de passe vient de partir.');
   });
 }
-function ecranMotDePasse() {
+// le nouveau mot de passe : après le lien reçu par courriel, ou depuis l'administration (« Mot de passe », avec Annuler)
+function ecranMotDePasse(depuisLaBarre = false) {
   $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-mdp"><h1>Nouveau mot de passe</h1>
     <div class="champ"><label for="n-mdp">Nouveau mot de passe</label><input id="n-mdp" type="password" minlength="8" autocomplete="new-password" required></div>
-    <button class="btn principal" type="submit">Enregistrer</button></form></div>`;
+    <button class="btn principal" type="submit">Enregistrer</button>${depuisLaBarre ? ' <button class="btn" type="button" id="n-annuler">Annuler</button>' : ''}</form></div>`;
+  $('#n-mdp').focus();
+  // l'administration déjà chargée se redessine telle quelle ; sinon (le lien du courriel), elle démarre
+  const reprendre = () => { if (E.pret) router(); else { demarre = false; demarrer(); } };
+  if (depuisLaBarre) $('#n-annuler').addEventListener('click', reprendre);
   $('#f-mdp').addEventListener('submit', async e => {
     e.preventDefault();
     const { error } = await sb.auth.updateUser({ password: $('#n-mdp').value });
-    if (error) erreur(error, 'Mot de passe non changé'); else { annoncer('Mot de passe changé.'); demarrer(); }
+    if (error) erreur(error, 'Mot de passe non changé'); else { annoncer('Mot de passe changé.'); reprendre(); }
   });
 }
 
@@ -424,8 +429,9 @@ function cadre(rubrique, contenu) {
     <nav class="nav" aria-label="Rubriques">${RUBRIQUES.map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
+  $('#b-mdp').addEventListener('click', () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Changer de mot de passe quand même ?')) { E.sale = false; ecranMotDePasse(true); } });
   // au téléphone, les rubriques défilent : la rubrique courante est amenée en vue (hors du fondu de droite)
   const nav = $('.nav'), courante = $('.nav a[aria-current="page"]');
   if (nav && courante && nav.scrollWidth > nav.clientWidth) {
