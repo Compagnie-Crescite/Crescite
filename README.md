@@ -344,7 +344,10 @@ fichier) ou se donnent en lien. La salle reçoit un lien `…/pro/#<jeton>` : la
 indisponibilités de chacun (à la main, ou lues dans son agenda relié par son adresse iCal secrète, que l'API ne relit
 jamais), le planning commun (toute l'équipe voit les heures de tous, le motif reste à la personne et à
 l'administration ; d'un agenda relié, aucun titre n'est gardé), et les propositions de dates de l'administration, avec
-une réponse par jour. Trois fonctions, à déployer avec « Verify JWT » décoché :
+une réponse par jour. Dans l'administration, la rubrique Planning montre le planning de toute l'équipe (vue Équipe et
+vue Mois, motifs et conflits compris), propose des dates en montrant qui n'est pas libre pendant le choix, et suit
+chaque proposition (réponses par jour, état des courriels, renvoyer, relancer, clore). Trois fonctions, à déployer avec
+« Verify JWT » décoché :
 - `crescite-agenda` relit les agendas reliés toutes les heures (pg_cron, programmé par le script) et à la demande, et
   donne à chacun le flux de ses dates Crescite (`?flux=<clé>`) à ajouter à son agenda ;
 - `crescite-courriel` écrit à chaque destinataire d'une proposition (Brevo, clé `BREVO_API_KEY` dans les secrets des

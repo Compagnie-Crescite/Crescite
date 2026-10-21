@@ -1085,6 +1085,33 @@ html.ed-actif .ep-a::after { content: none; }
 <script>
 (() => {
   'use strict';
+  /* ---------- Mouvement (règle 15) : la grille suisse ----------
+     Tout tombe dans la grille, rien ne flotte.
+     1. Changer de page : la page nouvelle se découvre colonne après colonne, aux bords mêmes des douze colonnes de la mise en
+        page (une découpe en marches, 22 ms par colonne), pendant que la grille paraît en filigrane et s'efface. Le geste
+        répond à l'image même (le filet de l'entrée se trace) ; la page se compose à l'image d'après.
+     2. Les filets se tracent de gauche à droite : celui de l'entrée choisie (et celui de l'onglet, du menu), ceux des
+        rubriques et des mois quand ils arrivent dans l'écran (MOUVEMENT.reveler).
+     3. Les nombres comptent : les dates de chaque spectacle sur la frise de la saison, les représentations, les saisons passées.
+     4. Filtrer, chercher : les lignes glissent à leur place (MOUVEMENT.flip), les repères de la frise aussi ; les autres
+        spectacles s'estompent sur la frise.
+     5. Pression : la pièce descend d'un pixel, dès le pointerdown (.mv-presse).
+     6. Les frises (FRISE) : des repères carrés sur un filet d'un pixel ; elles se découvrent en douze marches, comme la
+        page. La saison en frise est le cœur : une ligne par spectacle, les mois en colonnes, « aujourd'hui » d'un trait qui
+        les traverse toutes ; elle mène aux mois de la liste, filtre l'agenda et allume la carte.
+     7. La carte : un trait vertical balaie la France d'ouest en est et découvre les bras ; les pastilles se posent quand il
+        passe. Une carte de beaucoup de communes paraît d'un fondu.
+     La pieuvre ne bouge pas : aucune tentacule (TENTACULES réglé sans clic ni pages, aucun moment joué) ; un dossier composé
+     trace son filet jusqu'au bout. Moins d'animations demandé (ou ?anim=0) : tout est en place, rien ne bouge. */
+  const MV = typeof MOUVEMENT !== 'undefined' ? MOUVEMENT : null, FR = typeof FRISE !== 'undefined' ? FRISE : null;
+  const reduit = matchMedia('(prefers-reduced-motion: reduce)');
+  const bouge = () => !reduit.matches && (!MV || MV.permis());
+  // la largeur de la fenêtre, lue une fois puis à chaque redimensionnement (innerWidth force une mise en page quand la page vient
+  // de changer : jamais pendant un rendu) ; la grille de douze colonnes qu'on en déduit
+  let LF = innerWidth;
+  addEventListener('resize', () => { LF = innerWidth; }, { passive: true });
+  const grilleGeo = () => { const gut = Math.min(48, Math.max(16, LF * .04)), gap = LF < 900 ? 16 : 24, W = Math.min(LF - 2 * gut, 1320); return { gap, W, m: (LF - W) / 2, cw: (W - 11 * gap) / 12 }; };
+  const largeurCols = n => { const g = grilleGeo(); return n * g.cw + (n - 1) * g.gap; };
   /* ---------- Les données : relues à chaque rendu, car la base de la compagnie peut remplacer D en place ---------- */
   const site = () => D.site || {};
   const LIB = () => site().libelles || {};
