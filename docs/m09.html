@@ -7461,14 +7461,19 @@ ${finHTML()}`;
   }
   // la troupe prend vie : les liens entre les places d'une personne (TROUPE.relier : survolée ou choisie, elle s'allume
   // partout et des bras la relient), les icônes qui s'animent une fois à leur arrivée dans l'écran
-  let troupeIO = null;
-  function vivreTroupe(racine) {
-    const tr = $('.tr[data-troupe]', racine); if (!tr || !TR) return;
-    TR.relier(tr, {});
+  let troupeIO = null, troupeRel = null;
+  // en quittant la page (ou en la refaisant), la troupe d'avant lâche tout : ses liens, ses écouteurs, son observateur
+  function quitterTroupe() {
+    if (troupeRel) { troupeRel.detruire(); troupeRel = null; }
     if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
+  }
+  function vivreTroupe(racine) {
+    quitterTroupe();
+    const tr = $('.tr[data-troupe]', racine); if (!tr || !TR) return;
+    troupeRel = TR.relier(tr, {});
     if (permis() && 'IntersectionObserver' in window) {
-      troupeIO = new IntersectionObserver((es) => es.forEach((x) => { if (!x.isIntersecting) return; troupeIO.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
-      $$('.troupe-icone', tr).forEach((i) => troupeIO.observe(i));
+      const io = troupeIO = new IntersectionObserver((es) => es.forEach((x) => { if (!x.isIntersecting) return; io.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
+      $$('.troupe-icone', tr).forEach((i) => io.observe(i));
     }
     // une photo publiée qui ne se charge pas (le fichier manque) : le nom seul, avec son point, sans rien déplacer ; les
     // prochains rendus la savent absente
@@ -8347,6 +8352,7 @@ ${finHTML()}`;
     cacheU = new Map();
     if (r.retenir && !ep) retenir(r.retenir);
     frises.forEach((f) => f.detruire()); frises = [];
+    quitterTroupe();
     APRES = [];
     vue = r.vue; route = r; rendu = chemin;
     doc.classList.remove('aimante');

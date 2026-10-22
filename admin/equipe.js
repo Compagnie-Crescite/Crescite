@@ -27,7 +27,6 @@ Object.assign(E, { personnes: [], privees: [], suiviPersonnes: [], distributions
 const TABLES_EQUIPE = {
   crescite_personnes: ['personnes', 'id'], crescite_distributions: ['distributions', 'id'], crescite_equipes: ['equipes', ['date_id', 'personne_id']],
   crescite_documents: ['documents', 'id'], crescite_feuilles: ['feuilles', 'id'],
-  crescite_materiel: ['materiel', 'id'], crescite_notes_frais: ['frais', 'id'], crescite_diffusion_prospects: ['prospects', 'id'],
 };
 // le trajet de chaque feuille de route se compte depuis Rouen, d'où part la compagnie
 const DEPART = { commune: 'Rouen', latitude: 49.443232, longitude: 1.099971 };
@@ -154,9 +153,11 @@ document.addEventListener('click', e => { const a = e.target.closest('[data-ongl
 // ===================================================================================================== rubrique Équipe
 function vueEquipe(param) {
   const docs = param === 'documents', frais = param === 'frais';
+  // les notes de frais : seulement quand la base a leur table (le script « Compagnie Idéale ») ; sinon elles se masquent
+  if (frais && !E.ideale) { location.replace('#/equipe'); return; }
   const tete = `<div class="tete"><h1>Équipe</h1><div class="seg" role="group" aria-label="Partie">
     <button type="button" data-eq-partie="" aria-pressed="${!docs && !frais}">Personnes</button>
-    <button type="button" data-eq-partie="frais" aria-pressed="${frais}">Notes de frais</button>
+    ${E.ideale ? `<button type="button" data-eq-partie="frais" aria-pressed="${frais}">Notes de frais</button>` : ''}
     <button type="button" data-eq-partie="documents" aria-pressed="${docs}">Documents de la compagnie</button>
   </div>
     ${docs || frais || !E.equipeInstallee ? '' : '<a class="btn principal" href="#/equipe/nouvelle">＋ Nouvelle fiche</a>'}</div>`;

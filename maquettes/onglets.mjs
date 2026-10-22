@@ -345,7 +345,7 @@ async function regle19(page, tag, log) {
       if (!b.icone) log.push(`${pfx} ${theme} ${vue} : le bouton jour/nuit n'a pas d'icône`);
       if (b.theme !== theme) log.push(`${pfx} ${theme} ${vue} : data-theme vaut « ${b.theme} »`);
       if (b.presse !== String(b.theme === 'nuit')) log.push(`${pfx} ${theme} ${vue} : aria-pressed (${b.presse}) ne dit pas l'état (data-theme ${b.theme})`);
-      const e = await page.evaluate(() => ({ debord: document.documentElement.scrollWidth - innerWidth, h1: [...document.querySelectorAll('h1')].some(h => h.getClientRects().length) }));
+      const e = await page.evaluate(L => ({ debord: document.documentElement.scrollWidth - L, h1: [...document.querySelectorAll('h1')].some(h => h.getClientRects().length) }), page.viewportSize().width);
       if (e.debord > 1) log.push(`${pfx} ${theme} ${vue} : débordement horizontal de ${e.debord}px`);
       if (!e.h1) log.push(`${pfx} ${theme} ${vue} : aucun h1 visible`);
       const pb = await contrastes(page);
@@ -534,8 +534,8 @@ async function regle20(page, tag, log) {
     const vp = page.viewportSize();
     await page.setViewportSize({ width: 360, height: vp.height });
     await page.waitForTimeout(500);
-    const d = await page.evaluate(() => { const r = document.querySelector('main [data-troupe]'); return { page: document.documentElement.scrollWidth - innerWidth,
-      places: r ? [...r.querySelectorAll('[data-troupe-place]')].filter(p => { const b = p.getBoundingClientRect(); return b.right > innerWidth + 1 || b.left < -1; }).length : 0 }; });
+    const d = await page.evaluate(L => { const r = document.querySelector('main [data-troupe]'); return { page: document.documentElement.scrollWidth - L,
+      places: r ? [...r.querySelectorAll('[data-troupe-place]')].filter(p => { const b = p.getBoundingClientRect(); return b.right > L + 1 || b.left < -1; }).length : 0 }; }, 360);
     if (d.page > 1 || d.places) log.push(`${pfx} : à 360 px, la troupe déborde (${d.page}px, ${d.places} place(s) hors de l'écran)`);
     await page.setViewportSize(vp);
     await page.waitForTimeout(300);
@@ -582,7 +582,9 @@ for (const n of names) {
     for (const [vue, hash, attendus, interdits] of VUES) {
       await page.evaluate(h => { location.hash = h; }, hash);
       await page.waitForTimeout(900);
-      const etat = await page.evaluate(([att, int, DISPARUS, ENTREES]) => {
+      // (le débordement se mesure contre la largeur de l'écran demandée : en émulation mobile, une page qui déborde
+      // élargit innerWidth avec elle, et le débordement ne se voyait pas)
+      const etat = await page.evaluate(([att, int, DISPARUS, ENTREES, LARGEUR]) => {
         // le contenu hors de l'écran (content-visibility: auto) et ce qui apparaît au défilement (MOUVEMENT.reveler :
         // .mv-attente) se lisent aussi : on les montre dans leur état final le temps de la lecture
         const forcer = document.createElement('style');
@@ -619,7 +621,7 @@ for (const n of names) {
           h1: [...document.querySelectorAll('h1')].filter(h => h.offsetParent || h.getClientRects().length).map(h => h.textContent.trim().replace(/\s+/g, ' ')).join(' | '),
           courant: [...document.querySelectorAll('header [aria-current="page"], nav [aria-current="page"]')].filter(vis).map(a => a.textContent.trim()),
           hauteur: document.documentElement.scrollHeight, haut: Math.round(scrollY),
-          debord: document.documentElement.scrollWidth - innerWidth, hors: [...new Set(hors)],
+          debord: document.documentElement.scrollWidth - LARGEUR, hors: [...new Set(hors)],
           manquants: fA.filter(s => s && !lu.includes(window.__norm(s))),
           presents: [...fI, ...DISPARUS].filter(s => s && lu.includes(window.__norm(s))),
           aPortee,
@@ -644,7 +646,7 @@ for (const n of names) {
           })() : null,
         };
         } finally { forcer.remove(); }
-      }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, ENTREES]);
+      }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, ENTREES, page.viewportSize().width]);
       if (etat.debord > 1) log.push(`${tag} ${vue} : débordement horizontal de ${etat.debord}px`);
       if (!etat.h1) log.push(`${tag} ${vue} : aucun h1 visible`);
       if (etat.haut > 2 && vue !== 'accueil') log.push(`${tag} ${vue} : la page ne remonte pas en haut (scrollY ${etat.haut})`);

@@ -137,8 +137,9 @@ d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.ht
 2.0 et les photos (rangées une seule fois dans `docs/photos/`) : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
 chacune demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet,
 noimageindex`), et leur adresse n'est donnée nulle part dans le dépôt (elle figure dans Settings → Pages). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
-**Réserver, regarder, le jour et la nuit, la troupe** (règles 17 à 20, dans la synthèse d'abord ; les dix maquettes les
-recevront ensuite). Quatre outils communs, injectés dans chaque maquette :
+**Réserver, regarder, le jour et la nuit, la troupe** (règles 17 à 20 : dans la synthèse et les maquettes 01, 02, 03, 08,
+09 et 10, chacune à sa manière ; les maquettes 04 à 07 les recevront après leur reprise graphique). Quatre outils
+communs, injectés dans chaque maquette :
 - `reserver.js` (RESERVER) : sur la page d'un spectacle, un bouton par date à venir (le jour, les heures, la ville), la
   prochaine choisie d'avance ; la date choisie ouvre sa carte dans l'univers du spectacle (le lieu, les séances, une
   séance scolaire signalée sans bouton) et un seul bouton « Réserver » vers la billetterie du théâtre (le lien de la
@@ -153,7 +154,7 @@ recevront ensuite). Quatre outils communs, injectés dans chaque maquette :
 - `troupe.js` (TROUPE) : sur la page de la compagnie, toutes les personnes des équipes, par catégories de métiers (le jeu,
   la mise en scène, l'écriture, les décors et costumes, la lumière et le son, la production), une vignette seulement pour
   une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras.
-Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> synthese`.
+Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> m01 synthese`…
 Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
 réactivité, la réservation, les vidéos, le jour et la nuit, la troupe) sont dans `maquettes/CONTRAT.md`.
 
@@ -242,6 +243,35 @@ compte du projet inscrit dans `crescite_admins`.
   Le pied de la date tient sur une rangée : quand tout n'y tient pas (au téléphone, dans une colonne étroite), Feuille
   de route, Prévenir l'équipe, Dupliquer et Supprimer passent dans un menu « Plus » (↑ ↓, Échap rend le focus) ; seul
   « Enregistrer » reste à côté.
+- **Le tableur** (Représentations → Tableur) : une ligne par séance, comme le tableur où la compagnie récapitule ses
+  représentations ; les séances d'une même date se suivent, en bande. Colonnes : jour, spectacle, heure et fin, lieu,
+  commune, public, statut, nature, distribution, billetterie, précisions, organisateur, contact, contrat, notes, séance
+  annulée, site. Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la
+  montre). Filtres : saison, spectacle, à venir ou passées, recherche ; tri par date.
+  - Branché sur la base dans les deux sens. Écrire dans une case enregistre aussitôt, par le même chemin que la fiche
+    d'une date (`crescite_enregistrer_date`, puis l'équipe : les mêmes déclencheurs, notifications et journal) ; l'état
+    le dit, « Annuler » ou Ctrl+Z le reprend. Ce qui change ailleurs (une autre administratrice, la fiche d'une date, le
+    site en édition) arrive en direct, et la case clignote. Une case de la date (spectacle, lieu, statut, nature,
+    distribution, billetterie, suivi) vaut pour toutes ses séances : les autres lignes la répètent en gris et s'éclairent
+    avec elle.
+  - Au clavier comme dans un tableur : flèches, Entrée ou F2 (ou taper directement), Échap, Tab, Maj+flèches pour choisir
+    des cases, Ctrl+C et Ctrl+V (des cases venues d'Excel ou de Google Sheets), Suppr pour vider, Ctrl+Suppr pour
+    supprimer la séance (après confirmation ; à la souris ou au doigt, le bouton « Supprimer la séance du … » dit
+    laquelle), Ctrl+Z. L'en-tête reste en haut, le jour et le spectacle à gauche ; au téléphone, le tableau défile sous
+    les doigts.
+  - « ＋ Séance » : le jour, l'heure, le spectacle, le lieu (la recherche des lieux) ; une date du même spectacle au
+    même lieu qui touche ce jour (le même, la veille ou le lendemain) reçoit la séance, sinon une date se crée, et le
+    tableur dit ce qu'il a fait ; un filtre qui la cacherait se relâche.
+  - La distribution : l'équipe de la date (la distribution « en tournée » par défaut ; une équipe explicite ne s'écrit
+    que si on la change), en pastilles qu'on retire et qu'on ajoute, au clavier aussi. « Étendre à… » la pose sur les
+    dates du même spectacle de la saison, de l'année civile ou des lignes choisies (les passées si on le veut), après un
+    aperçu du nombre de dates qui changeront ; les remplaçants posés à la main sont signalés avant d'être remplacés.
+  - Exporter les lignes et les colonnes de la vue : Excel (un .xlsx écrit par l'administration elle-même, sans
+    bibliothèque : de vraies dates et heures, l'en-tête figé et filtrable), CSV (points-virgules, pour Excel en
+    français), Google Sheets (le tableau copié, une feuille vierge sheets.new s'ouvre : on colle). « Importer » : des
+    lignes copiées d'un tableur (les titres de colonnes reconnus, ou l'ordre de l'export) deviennent des séances, après
+    un aperçu ligne par ligne ; « Annuler » reprend tout l'import. Le tableur ne montre ni n'exporte rien des colonnes de
+    diffusion du suivi (ni montant ni prix de cession).
 - **Spectacles** : toute la fiche, l'univers (avec le contrôle des contrastes) et les photos (allégées avant l'envoi).
 - **Ateliers** : le catalogue publié et les séances dans les établissements, avec le total des heures par saison.
 - **Lieux** : avec la recherche de commune (geo.api.gouv.fr), la fusion des doublons, et ses dates (à venir, puis
@@ -454,6 +484,16 @@ retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne li
 l'administration comprise ; le public n'y a aucun droit. Pour commencer, une clé : `planning.masques`, les personnes
 masquées du planning. Tant que le script n'est pas passé, la liste reste sur l'appareil (sans message) ; elle passe dans
 la base à la première ouverture du planning qui suit. 22 essais (`node preferences.mjs`).
+
+**« Compagnie Idéale » (pas encore lancé).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
+s'exécute après les six autres et peut être relancé. Il ajoute les alertes de tournée et les demandes de devis (le public
+les dépose, sans en poser le suivi ; il ne relit que son alerte, par son jeton), les notes de frais (chacun les siennes,
+jamais validées ni remboursées par soi-même ; les justificatifs dans le stockage privé `crescite-frais`, chacun dans le
+dossier de sa fiche), le matériel (lu par l'équipe, tenu par l'administration), les listes de chargement et les pistes
+de diffusion (l'administration seule), et cinq colonnes de diffusion au suivi des dates. Un compte du projet qui n'a pas
+de fiche dans l'équipe n'y a rien. L'administration écoute ces tables sur un canal à part, et seulement quand la base
+les a. 33 essais (`node ideale.mjs`). Tant que le script n'est pas lancé, la rubrique Diffusion, les notes de frais
+(Équipe) et l'onglet Matériel d'un spectacle se masquent ; le reste de l'administration, le tableur compris, n'en dépend pas.
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
