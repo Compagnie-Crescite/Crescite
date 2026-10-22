@@ -1138,7 +1138,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
   const saisonsConnues = () => Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
   function diffusion(s) {
     const ks = saisonsConnues();
-    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).length, 0);
+    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0);
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
   }
@@ -1817,7 +1817,7 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
     const ks = saisonsConnues(), L = D.site.libelles;
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', anMin: 36,
       largeur: LF > 980 ? Math.round((largeurWrap() + 28 - Math.min(80, LF * .044)) * 5 / 12) - 28 : largeurWrap(), choix: () => {},
-      bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).length, 0))) });
+      bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0))) });
     frisesDiffusion(main);
   }
   const initEtablissement = () => apres(initEtablissementSuite);

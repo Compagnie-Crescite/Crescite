@@ -1677,7 +1677,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
   // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
   function diffusion(s) {
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).length, 0);
+    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0);
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
   }
@@ -2015,7 +2015,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     const reperesSaison = () => [...proch.filter(garde).map(x => repereProchaine(x.d)),
       ...(encours ? encours.rows.filter(x => !x.suite && !x.d.scolaire && garde(x)).map(x => repereLigne(x.d, x.sk, x.i, x.g.slug, x.titre)).filter(Boolean) : [])];
     // la frise des saisons : chaque saison passée et sa densité (les dates que le filtre garde)
-    const bandesSaisons = () => passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).length));
+    const bandesSaisons = () => passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).reduce((acc, x) => acc + (x.d.nb_representations != null ? +x.d.nb_representations : (x.d.representations ? x.d.representations.length : 1)), 0)));
     const affiche = s => {
       const proch1 = dates.find(d => d.slug === s.slug);
       return `<li class="affiche u${clairU(s)}" style="${styleU(s)}"><a class="af-a" href="#/spectacle/${esc(s.slug)}/voir">

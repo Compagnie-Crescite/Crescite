@@ -154,7 +154,8 @@ const DONNEES = (() => {
       let g = S2.spectacles.find(y => y._id === x.s.id);
       if (!g) { g = { _id: x.s.id, titre: x.s.titre, sousTitre: x.s.sous_titre, creation: x.s.creation, slug: slugDe(x.s), dates: [] }; S2.spectacles.push(g); }
       g.dates.push({ id: x.d.id, ligne: x.ligne, details: x.details, etat: x.etat, lien: x.d.lien, iso: x.iso, fin: x.fin,
-                     precision: x.precision, scolaire: x.scolaire, l: x.l, representations: x.representations });
+                     precision: x.precision, scolaire: x.scolaire, l: x.l, representations: x.representations,
+                     nb_representations: (x.representations && x.representations.length) || (x.d && x.d.nb_representations != null ? x.d.nb_representations : 1) });
     });
     Object.values(saisons).forEach(S2 => S2.spectacles.forEach(g => delete g._id));
 

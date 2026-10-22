@@ -141,7 +141,7 @@ def photos(files, base=None):
 # partir des dates que le site publie.
 ORDRE = ["cassandres", "cleophene", "ci-gisait-cyrano", "la-folle-idee", "berenice", "macbeth-fatum", "mon-royaume", "imaginaire-force"]
 
-# Les communes des saisons anciennes absentes de la base des dates : coordonnées approchées, pour la carte seulement.
+# Les communes des saisons anciennes et des tournées scolaires : coordonnées approchées, pour la carte.
 COMMUNES_EN_PLUS = {
     "Loiron|53": (48.067, -0.933), "Conches-en-Ouche|27": (48.958, 0.940), "Bellac|87": (46.122, 1.049),
     "Vitrolles|13": (43.460, 5.248), "Istres|13": (43.513, 4.988), "Grand-Quevilly|76": (49.409, 1.039),
@@ -150,6 +150,40 @@ COMMUNES_EN_PLUS = {
     "Vernouillet|28": (48.721, 1.360), "Avignon|84": (43.949, 4.806), "Corbie|80": (49.909, 2.509),
     "Avranches|50": (48.684, -1.357), "Saint-Omer|62": (50.767, 2.265), "Gacé|61": (48.795, 0.296),
     "Pont-Audemer|27": (49.355, 0.515),
+    # Communes des tournées scolaires et historiques
+    "Amfreville|76": (49.403, 1.130), "Amfreville-la-Mivoie|76": (49.403, 1.130),
+    "Amiens|80": (49.894, 2.295), "Argences|14": (49.126, -0.167),
+    "Argentan|61": (48.744, -0.018), "Arques|62": (50.733, 2.300),
+    "Aunay sur Odon et Vieux|14": (49.020, -0.631), "Aunay-sur-Odon|14": (49.020, -0.631),
+    "Beaumont-Hague|50": (49.664, -1.836), "Bocage Mayennais|53": (48.433, -0.617),
+    "Bourgtheoulde|27": (49.299, 0.873), "Bourgtheoulde|76": (49.299, 0.873),
+    "Bourgtheroulde|27": (49.299, 0.873), "Bourgtheroulede|27": (49.299, 0.873),
+    "Grand-Bourgtheroulde|27": (49.299, 0.873),
+    "Bussy St-Martin|77": (48.850, 2.688), "Chartres|28": (48.443, 1.489),
+    "Cherbourg|50": (49.633, -1.622), "Château-Arnoux|04": (44.093, 6.009),
+    "Compiègnes|60": (49.417, 2.826), "Compiègne|60": (49.417, 2.826),
+    "Craon|53": (47.848, -0.954), "Elbeuf|76": (49.291, 1.008),
+    "Evreux|27": (49.024, 1.150), "Fauville en Caux|76": (49.654, 0.589),
+    "Franqueville St-Pierre|76": (49.401, 1.178), "Gaillon|27": (49.161, 1.332),
+    "Gd-Quevilly|76": (49.409, 1.039), "Le Grand-Quevilly|76": (49.409, 1.039),
+    "Gonfreville|76": (49.499, 0.231), "Granville et Coutance|50": (48.837, -1.597),
+    "Grigny|91": (48.653, 2.383), "Harfleur|76": (49.507, 0.200),
+    "Honfleur|14": (49.418, 0.233), "Hérouville Saint-Clair|14": (49.204, -0.326),
+    "Isneauville|76": (49.498, 1.144), "La Réunion|97": (-20.882, 55.450),
+    "Le Kef|99": (36.174, 8.705), "Le Pré-St-Gervais|93": (48.883, 2.404),
+    "Le Sillon|76": (49.387, 1.054), "Le Tréport|76": (50.060, 1.372),
+    "Les Andelys|27": (49.247, 1.424), "Leuze|99": (50.598, 3.619),
+    "Lignières-Châtelain|80": (49.774, 1.862), "Lisieux|14": (49.145, 0.227),
+    "Machecoul|44": (46.994, -1.821), "Manneville S/Risle|27": (49.356, 0.540),
+    "Monfort-sur-Meu|35": (48.138, -1.956), "Monfort-sur-Risle|27": (49.298, 0.665),
+    "Mézières-en-Vexin|27": (49.170, 1.503), "Passais Village|61": (48.518, -0.755),
+    "Pré-en-Pail|53": (48.460, -0.202), "Saint Mars La Jaille|44": (47.525, -1.184),
+    "Saint-Omer / Arques|62": (50.767, 2.265), "Saint-Sever|14": (48.841, -1.049),
+    "Sainte-Adresse|76": (49.507, 0.082), "St-Etienne du Rouvray|76": (49.378, 1.104),
+    "St-Romain de Colbosc|76": (49.530, 0.357), "St-Valéry en Caux|76": (49.870, 0.710),
+    "Trun|61": (48.844, 0.033), "Val de Reuil|27": (49.273, 1.209),
+    "Warneton|99": (50.752, 2.952), "Yerville|76": (49.648, 0.898),
+    "Yverdon-les-Bains|99": (46.778, 6.641),
 }
 
 # Les trois entrées, la navigation première : le site se lit selon qui le visite. Chacune a sa page, et chaque page
@@ -388,7 +422,7 @@ def build_data():
         groupes = []
         for g in S["spectacles"]:
             slug = (g["lien"] or "").replace("#/spectacle/", "") or slug_de.get(_norm(g["titre"]))
-            if slug not in site["spectacles"]:
+            if slug not in ORDRE and slug not in site["spectacles"]:
                 slug = next((v for k, v in slug_de.items() if _norm(g["titre"]).startswith(k[:12])), None)
             dates = []
             for dt in g["dates"]:
@@ -396,10 +430,14 @@ def build_data():
                 l = lieu(r["commune"], r["departement"], r["lat"], r["lon"]) if r and r["lat"] is not None else lieu_de_ligne(dt["ligne"], g["sousTitre"])
                 lien = dt.get("lien") or next((x["lien"] for x in dt["details"] if x.get("lien")), None)
                 texte = " ".join([dt["ligne"]] + [x["texte"] for x in dt["details"]])
-                scolaire = r["type"] == "scolaire" if r else bool(re.search(r"scolaire|collège|lycée", texte, re.I))
+                scolaire = dt["scolaire"] if "scolaire" in dt else (r["type"] == "scolaire" if r else bool(re.search(r"scolaire|collège|lycée", texte, re.I)))
+                nb_reps = dt.get("nb_representations")
+                if nb_reps is None:
+                    nb_reps = (r and r.get("nb_representations")) or 0
                 dates.append({"ligne": dt["ligne"], "details": dt["details"], "etat": dt.get("etat"), "lien": lien,
                               "iso": r["date_debut"] if r else None, "fin": r["date_fin"] if r else None,
-                              "precision": r["precision"] if r else None, "scolaire": scolaire, "l": l})
+                              "precision": r["precision"] if r else None, "scolaire": scolaire, "l": l,
+                              "nb_representations": nb_reps})
             groupes.append({"titre": g["titre"], "sousTitre": g["sousTitre"], "creation": g["creation"], "slug": slug, "dates": dates})
         saisons[saison] = {"titre": S["titre"], "spectacles": groupes}
 
@@ -426,6 +464,7 @@ def build_data():
         return {"slug": g["slug"], "titre": titres_menu.get(g["slug"], g["titre"]), "ligne": dt["ligne"],
                 "ligneDate": date_txt.strip(), "ligneLieu": lieu_txt.strip(), "details": dt["details"], "lien": dt["lien"],
                 "iso": dt["iso"], "fin": dt["fin"], "precision": dt["precision"], "scolaire": dt["scolaire"],
+                "nb_representations": dt.get("nb_representations", 1),
                 "commune": lieux[l]["c"] if l is not None else None, "dep": lieux[l]["dep"] if l is not None else None,
                 "xy": lieux[l]["xy"] if l is not None else None, "l": l}
 
@@ -672,7 +711,7 @@ def admin(dest):
     logo = dest / "admin" / "logo-feuille.svg"
     if (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists():
         logo.write_text(logo_variants()["full"].replace('fill="#BC3E80"', 'fill="#1d1d1b"'), encoding="utf-8")
-    elif logo.exists():
+    elif logo.exists() and dest != ROOT / "docs":
         logo.unlink()
 
 

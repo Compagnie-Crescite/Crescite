@@ -1292,7 +1292,7 @@ main{display:block;min-height:100vh}
   // une saison en bande de frise ; son nom court, sous la bande, vient de ses années (« 16-17 »)
   const bandeSaison = (k, n) => ({ id: k, debut: `${k.slice(0, 4)}-09-01`, fin: `${k.slice(5)}-08-31`, titre: D.saisons[k].titre, n, etiquette: `${k.slice(2, 4)}-${k.slice(7, 9)}` });
   const saisonsConnues = () => Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-  const nDates = (k, slug) => (D.saisons[k].spectacles || []).filter(g => !slug || g.slug === slug).reduce((a, g) => a + (g.dates || []).length, 0);
+  const nDates = (k, slug) => (D.saisons[k].spectacles || []).filter(g => !slug || g.slug === slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0);
   function diffusion(s) {
     const ks = saisonsConnues(), premiere = ks.find(k => nDates(k, s.slug));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, nDates(k, s.slug))) : [];

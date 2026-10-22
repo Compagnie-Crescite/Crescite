@@ -2071,7 +2071,7 @@ ${finHTML()}`;
   // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
   function diffusion(s) {
     const ks = Object.keys(D.saisons || {}).filter((k) => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-    const n = (k) => (D.saisons[k].spectacles || []).filter((g) => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).length, 0);
+    const n = (k) => (D.saisons[k].spectacles || []).filter((g) => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0);
     const premiere = ks.find((k) => n(k));
     return premiere ? ks.filter((k) => k >= premiere).map((k) => ({ ...bandeSaison(k, n(k)), couleur: 'var(--u-vif)' })) : [];
   }
@@ -2211,7 +2211,7 @@ ${finHTML()}`;
         return pts;
       };
       // la frise des saisons : chaque saison et le nombre de ses dates (celles que le filtre garde)
-      const bandes = (vis) => { const n = new Map(vis.map((x) => [x.s.k, x.rows.length])); return passe.map((x) => bandeSaison(x.k, n.get(x.k) || 0)); };
+      const bandes = (vis) => { const n = new Map(vis.map((x) => [x.s.k, x.rows.reduce((acc, r) => acc + (r.d.nb_representations != null ? +r.d.nb_representations : (r.d.representations ? r.d.representations.length : 1)), 0)])); return passe.map((x) => bandeSaison(x.k, n.get(x.k) || 0)); };
       // la saison qu'on lit, marquée sur la frise des saisons (au défilement)
       const sec = $('#saisons-precedentes', racine);
       const lire = (force) => {

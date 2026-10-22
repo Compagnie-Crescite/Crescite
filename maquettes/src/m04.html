@@ -1251,10 +1251,10 @@ main{display:block;min-height:100vh;overflow-x:clip}
   // une saison en bande de frise ; son nom court, sous la bande, vient de ses années (« 16-17 »)
   const bandeSaison = (k, n) => ({ id: k, debut: `${k.slice(0, 4)}-09-01`, fin: `${k.slice(5)}-08-31`, titre: D.saisons[k].titre, n, etiquette: `${k.slice(2, 4)}-${k.slice(7, 9)}` });
   const saisonsConnues = () => Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-  // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
+  // la diffusion d'un spectacle, saison par saison (le nombre de ses représentations), de sa première saison à la saison en cours
   function diffusion(s) {
     const ks = saisonsConnues();
-    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).length, 0);
+    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0);
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
   }
@@ -1274,11 +1274,11 @@ main{display:block;min-height:100vh;overflow-x:clip}
   const planFrise = (id, zone, o, classe = 'rampe-frise') => { if (!o) return ''; plans.push({ id, zone, o }); return `<div class="${classe}" id="${id}"></div>`; };
   // une rampe : une bande prune sous laquelle le calendrier se lit, au-dessus de sa carte et de sa liste
   const rampe = (id, zone, o) => o ? `<div class="rampe"><div class="wrap">${planFrise(id, zone, o)}</div></div>` : '';
-  // la diffusion de la compagnie, saison par saison (le nombre de ses dates)
+  // la diffusion de la compagnie, saison par saison (le nombre de ses représentations)
   const frisesCompagnie = () => { const ks = saisonsConnues(); if (!ks.length) return null;
     return { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: X.L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', anMin: 36,
       largeur: LF > 999 ? Math.round((largeurWrap() + 28 - Math.min(88, LF * .05)) * 5 / 12) - 28 : largeurWrap(),
-      bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).length, 0))), choix: () => {} }; };
+      bandes: ks.map(k => bandeSaison(k, (D.saisons[k].spectacles || []).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0))), choix: () => {} }; };
   // un clic sur un repère mène à sa ligne, qui s'allume un instant
   function allerLigne(id) {
     const li = id ? $(`[data-frise-id="${CSS.escape(id)}"]`, main) : null; if (!li) return;
