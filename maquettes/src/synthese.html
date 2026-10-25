@@ -4411,6 +4411,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     if (!(surPlace && vue === 'accueil')) Scene.montrer(false);
     try {
       if ((m = chemin.match(/^spectacle\/([\w-]+)\/(voir|programmer|etablissement)$/)) && bySlug[m[1]]) return entreeSp(m[1], m[2]) === m[2] ? spectacle(m[1], m[2], surPlace, q) : null;
+      // la page unique d'un spectacle qui n'est plus en tournée (règle 21)
+      if ((m = chemin.match(/^spectacle\/([\w-]+)$/)) && fini(bySlug[m[1]])) return spectacle(m[1], null, surPlace, q);
       // une saison passée (#/saisons/<saison>) : la page des saisons, cette saison ouverte et amenée à l'écran (la saison en
       // cours est la page des saisons elle-même)
       if ((m = chemin.match(/^saisons\/([\d-]+)$/)) && D.saisons[m[1]] && m[1] !== D.saison) return Object.assign(voir(q, surPlace, m[1]), { menu: 'saisons', entree: null, lecture: 'voir' });
@@ -4450,7 +4452,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const h = '#/' + a.chemin, retour = pile.length > 1 && pile[pile.length - 2] === h;
     if (retour) pile.pop(); else if (pile[pile.length - 1] !== h) pile.push(h);
     if (pile.length > 60) pile.splice(0, pile.length - 60);
-    const sp = a.chemin.match(/^spectacle\/([\w-]+)\//);
+    const sp = a.chemin.match(/^spectacle\/([\w-]+)(?:\/|$)/);
     if (sp && courant && courant.chemin.startsWith(`spectacle/${sp[1]}/`)) return 'onglet';
     if (retour) return 'retour';
     if (sp) return 'spectacle';
@@ -4462,7 +4464,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     let m;
     const cible = S.redirections && S.redirections['#/' + a.chemin];
     if (cible && !Object.prototype.hasOwnProperty.call(vues(), a.chemin)) { location.replace(cible + (a.qs ? '?' + a.qs : '')); return; }
-    if ((m = a.chemin.match(/^spectacle\/([\w-]+)$/)) && bySlug[m[1]]) { location.replace(`#/spectacle/${m[1]}/${entreeSp(m[1], retenue() || 'voir')}`); return; }
+    // un spectacle qui n'est plus en tournée n'a qu'une page, #/spectacle/<slug> : ses anciens onglets y mènent (la mémoire de
+    // l'entrée ne s'y applique pas) ; les autres, sans onglet nommé, ouvrent celui de l'entrée retenue
+    if ((m = a.chemin.match(/^spectacle\/([\w-]+)\/(voir|programmer|etablissement)$/)) && fini(bySlug[m[1]])) { location.replace(`#/spectacle/${m[1]}`); return; }
+    if ((m = a.chemin.match(/^spectacle\/([\w-]+)$/)) && bySlug[m[1]] && !fini(bySlug[m[1]])) { location.replace(`#/spectacle/${m[1]}/${entreeSp(m[1], retenue() || 'voir')}`); return; }
     if ((m = a.chemin.match(/^spectacle\/([\w-]+)\/etablissement$/)) && bySlug[m[1]] && !bySlug[m[1]].actionCulturelle) { location.replace(`#/spectacle/${m[1]}/voir`); return; }
     // les saisons : #/agenda/<saison> mène à #/saisons/<saison>, et la saison en cours à la page des saisons
     const saisons = (menuDe('saisons') || {}).href || '#/saisons';
