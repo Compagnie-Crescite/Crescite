@@ -270,6 +270,8 @@ LIBELLES = {
     "saisonEnCours": "La saison en cours", "prochainesDates": "Les prochaines dates", "toutesLesDates": "Toutes les dates",
     "saisonsPassees": "Les saisons passées", "bilan": "Le bilan des dates passées",
     "actionsMenees": "Les actions culturelles menées",
+    # les chiffres du bilan (le nombre de dates : « dates », de communes, de saisons)
+    "communes": "Communes", "saisons": "Saisons",
     "saisonsPrecedentes": "Saisons précédentes", "toutPublic": "Tout public", "scolaire": "Scolaire",
     "enEtablissement": "En établissement scolaire", "lieu": {"etablissement": "Dans l’établissement", "salle": "En salle"},
     "actionCulturelle": "Action culturelle", "aCompleter": "À compléter par la compagnie", "dispositifs": "Dispositifs",

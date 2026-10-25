@@ -523,7 +523,8 @@ Partout dans ce contrat, lis désormais `#/saisons` pour `#/voir`, `#/espace-pro
      chacune annoncée par sa petite carte (`CARTE.saison(s)`, dans ton style) et son titre, FERMÉE au départ (elle
      s'ouvre d'un geste, son contenu ne se dessine qu'à l'ouverture), ses dates de la plus récente à la plus ancienne.
      L'index des saisons, le filtre par spectacle et la recherche par commune de la règle 10 portent sur toute la page.
-  `#/saisons/<saison>` ouvre cette saison et y mène (h1 inchangé).
+  `#/saisons/<saison>` ouvre cette saison et y mène (h1 inchangé ; c'est une adresse à part : `document.title` prend le
+  titre de cette saison, « Saison 2019-2020 - crescite »).
 - **`#/spectacles`** : comme avant (les spectacles dans leurs univers) ; un spectacle en tournée est signalé
   (`libelles.enTournee`).
 - **La page d'un spectacle EN TOURNÉE** (`enTournee`) **ou EN CRÉATION** (`statut`, Cassandres) : comme avant, ses trois

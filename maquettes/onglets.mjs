@@ -21,6 +21,7 @@
 // lisent dans le site (LECTEUR). Voir regle17() et regle18() plus bas. Règle 19 (REGLE19=1) : le jour et la nuit (THEME), le
 // bouton sur chaque vue, la bascule gardée, chaque vue relue en nuit, le contraste du texte de jour et de nuit ; règle 20
 // (REGLE20=1) : la troupe sur la page de la compagnie (TROUPE). Voir regle19() et regle20().
+// Au téléphone, chaque vue se relit aussi à 360 px (la largeur visée) : rien ne déborde.
 // Captures : <n>-tab-<vue>.png (ordinateur) et <n>-mtab-<vue>.png (téléphone), <n>-intro.png ; rapport des anomalies.
 // Le contrôle du texte compare chaque texte visible aux textes de D (le site d'origine, le dossier scolaire de Bérénice,
 // les univers et les actions culturelles des spectacles) : tout texte absent de D est signalé.
@@ -691,6 +692,28 @@ for (const n of names) {
         const noeuds = texte => { const t0 = n(texte), out = [], w = document.createTreeWalker(main || document.body, NodeFilter.SHOW_TEXT);
           for (let t; (t = w.nextNode());) if (t.parentElement && n(t.textContent).includes(t0) && vis(t.parentElement)) out.push(t); return out; };
         const boite = t => { const r = document.createRange(); r.selectNodeContents(t); return r.getBoundingClientRect(); };
+        // règle 22 : le thème (D.site.couleurSaison : couleur ou vive, à peine retouchée), porté par un élément, ses descendants ou
+        // leurs ::before / ::after (texte, fond, bordure, filet, ombre, tracé) ; et le magenta de marque d'avant (#bc3e80), qui
+        // ne doit plus paraître nulle part
+        const theme = D.site.couleurSaison || null, rgbDe = h => (/^#[0-9a-f]{6}$/i.test(h || '') ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : null);
+        const ciblesTheme = theme ? [rgbDe(theme.couleur), rgbDe(theme.vive)].filter(Boolean) : [];
+        const couleursDans = v => { const out = [];
+          String(v || '').replace(/rgba?\(([^)]+)\)/g, (_, x) => { const q = x.split(/[\s,\/]+/).filter(Boolean).map(Number); if (!(q.length > 3 && q[3] === 0)) out.push(q.slice(0, 3)); return ''; })
+            .replace(/color\(srgb ([^)]+)\)/g, (_, x) => { const q = x.split(/[\s\/]+/).filter(Boolean).map(Number); if (!(q.length > 3 && q[3] === 0)) out.push(q.slice(0, 3).map(c => c * 255)); return ''; });
+          return out; };
+        const proche = (c, t, d) => Math.hypot(c[0] - t[0], c[1] - t[1], c[2] - t[2]) < d;
+        const PROPS = ['color', 'backgroundColor', 'borderTopColor', 'borderBottomColor', 'borderLeftColor', 'borderRightColor', 'outlineColor', 'fill', 'stroke', 'boxShadow', 'textDecorationColor', 'backgroundImage'];
+        const porteTheme = el => !!el && ciblesTheme.length > 0 && [el, ...el.querySelectorAll('*')].slice(0, 400).some(x => [null, '::before', '::after'].some(ps => {
+          const st = getComputedStyle(x, ps); return PROPS.some(k => couleursDans(st[k]).some(c => ciblesTheme.some(t => proche(c, t, 14)))); }));
+        const magenta = /^#?\/?$|^#\/saisons$/.test(location.hash) ? (() => { const out = [];
+          for (const x of document.querySelectorAll('body *')) {
+            if (out.length >= 3) break;
+            if (x.closest('script, style, noscript') || !x.getClientRects().length) continue;
+            const st = getComputedStyle(x);
+            if (['color', 'backgroundColor', 'fill', 'stroke', 'borderTopColor', 'borderBottomColor'].some(k => couleursDans(st[k]).some(c => proche(c, [188, 62, 128], 8))))
+              out.push(x.tagName.toLowerCase() + (x.id ? '#' + x.id : '') + (typeof x.className === 'string' && x.className.trim() ? '.' + x.className.trim().split(/\s+/).slice(0, 2).join('.') : ''));
+          }
+          return out; })() : [];
         // #/saisons : les prochaines dates avant les saisons passées ; la frise de la saison (la plus colorée des frises de la vue) et
         // la légende de ses spectacles, écrite tout près d'elle ; chaque saison passée annoncée avec sa carte, dans son bloc
         let ordre = null, saisons = null;
@@ -718,7 +741,11 @@ for (const n of names) {
           const aSaCarte = x => noeuds(x.titre).some(t => { for (let el = t.parentElement; el && el !== main && el !== document.body; el = el.parentElement) {
             if (![...el.querySelectorAll('svg')].some(v => vis(v) && estCarte(v))) continue;
             const txt = n(el.innerText || ''); return tous.filter(y => txt.includes(y)).length === 1; } return false; });
-          saisons = { frises: frs.length, couleurs: fr ? fr.k : 0, titres: titresS, legende, passees: passees.length, sansCarte: passees.filter(x => !aSaCarte(x)).map(x => x.titre) };
+          // règle 22 : la marque de la saison en cours (le bloc de son titre) ou l'élément courant du menu porte le thème
+          const marquesTheme = [...[...document.querySelectorAll('[aria-current="page"]')].filter(a => horsContenu(a) && vis(a)),
+            ...noeuds(D.site.saisons[0].titre).flatMap(t => { const out = []; for (let el = t.parentElement, i = 0; el && el !== main && i < 3; el = el.parentElement, i++) out.push(el); return out; })];
+          saisons = { frises: frs.length, couleurs: fr ? fr.k : 0, titres: titresS, legende, passees: passees.length, sansCarte: passees.filter(x => !aSaCarte(x)).map(x => x.titre),
+            theme: theme ? marquesTheme.some(porteTheme) : null };
         }
         // #/saisons/<saison> : la saison est amenée à l'écran (son titre se voit)
         let saisonVue = null;
@@ -729,7 +756,7 @@ for (const n of names) {
         const seul = mSp && finis.includes(mSp[1]) ? { carte: cartes.filter(x => x.getBoundingClientRect().width >= (LARGEUR < 600 ? 240 : 280)).length,
           largeur: Math.round(Math.max(0, ...cartes.map(x => x.getBoundingClientRect().width))) } : null;
         return {
-          ordre, saisons, saisonVue, seul, titre: document.title, hash: location.hash,
+          ordre, saisons, saisonVue, seul, magenta, titre: document.title, hash: location.hash,
           h1: [...document.querySelectorAll('h1')].filter(h => h.offsetParent || h.getClientRects().length).map(h => h.textContent.trim().replace(/\s+/g, ' ')).join(' | '),
           menu, aPortee, courantTete, courantVrai, courantTout: marques('page').length, entreesHors, entreesAccueil, ongletsFinis,
           hauteur: document.documentElement.scrollHeight, haut: Math.round(scrollY),
@@ -793,7 +820,9 @@ for (const n of names) {
         else if (S.couleurs < 3) log.push(`${tag} saisons : la frise de la saison n'a des marques que de ${S.couleurs} couleur(s) (au moins 3 : chaque date à la couleur de son spectacle, sur une seule ligne du temps)`);
         if (S.legende.length < besoin) log.push(`${tag} saisons : la légende de la frise (les titres de ses spectacles, écrits tout près d'elle) ne se lit pas : ${S.legende.length} titre(s) sur ${besoin}`);
         if (S.sansCarte.length) log.push(`${tag} saisons : ${S.sansCarte.length} saison(s) passée(s) sur ${S.passees} sans sa carte (un SVG de la France dans son bloc, avec son titre) : ${S.sansCarte.slice(0, 4).map(t => `« ${t} »`).join(', ')}${S.sansCarte.length > 4 ? '…' : ''}`);
+        if (S.theme === false) log.push(`${tag} saisons : ni la marque de la saison en cours ni l'élément courant du menu ne portent le thème (D.site.couleurSaison, couleur ou vive : règle 22)`);
       }
+      if (etat.magenta.length) log.push(`${tag} ${vue} : magenta de marque encore présent (règle 22 : le thème à la place) : ${etat.magenta.join(', ')}`);
       if (etat.saisonVue && !etat.saisonVue.ok) log.push(`${tag} ${vue} : la saison « ${etat.saisonVue.titre} » n'est pas amenée à l'écran`);
       if (etat.seul && !etat.seul.carte) log.push(`${tag} ${vue} : pas de belle carte de ses tournées (un SVG de la France d'au moins ${page.viewportSize().width < 600 ? 240 : 280} px ; la plus large : ${etat.seul.largeur} px)`);
       if (etat.presents.length) log.push(`${tag} ${vue} : ne devrait pas apparaître : ${etat.presents.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
@@ -842,6 +871,20 @@ for (const n of names) {
       }
       if (tag === 'tab') log.push(`· ${vue} : « ${etat.titre} » · h1 « ${etat.h1.slice(0, 60)} » · menu actif ${JSON.stringify(etat.courantTete)}${etat.courantVrai.length ? ` (true : ${JSON.stringify(etat.courantVrai)})` : ''} · hauteur ${etat.hauteur}px`);
       await page.screenshot({ path: `${out}/${n}-${tag}-${vue}.png` });
+    }
+    // au téléphone étroit (360 px, la largeur visée par les maquettes) : aucune vue ne déborde
+    if (tag === 'mtab') {
+      await page.setViewportSize({ width: 360, height: vp.height });
+      const debords = [];
+      for (const [vue, hash] of VUES) {
+        await page.evaluate(h => { location.hash = h; }, hash);
+        await page.waitForTimeout(600);
+        const d = await page.evaluate(L => document.documentElement.scrollWidth - L, 360);
+        if (d > 1) debords.push(`${vue} (${d}px)`);
+      }
+      if (debords.length) log.push(`${tag} : à 360 px, débordement horizontal : ${debords.join(', ')}`);
+      await page.setViewportSize(vp);
+      await page.waitForTimeout(300);
     }
     for (const [hash, attendu] of REDIRECTIONS) {
       await page.evaluate(h => { location.hash = h; }, hash);
