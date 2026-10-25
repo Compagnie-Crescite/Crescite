@@ -991,16 +991,16 @@ a.rs-seance:hover{background:var(--ink);color:var(--paper)}
 .rs-aupres{display:flex;flex-wrap:wrap;gap:4px 8px;padding:14px 0 0;border-top:1px solid var(--rule-s);font-size:1.0625rem}
 /* l'ancienne fiche qui cède la place (l'aperçu qui se relaie), la nouvelle qui se compose ligne à ligne (effetReserver) */
 .rs-ancien{position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--paper2);animation:rs-relais .16s ease-out forwards}
-.rs-compose .rs-c>*{--rs-i:0;animation:rs-ligne .24s var(--mv-courbe) backwards;animation-delay:calc(70ms + var(--rs-i) * 44ms)}
+.rs-compose .rs-c>:nth-child(-n+4){--rs-i:0;animation:rs-ligne .24s var(--mv-courbe) backwards;animation-delay:calc(70ms + var(--rs-i) * 44ms)}
+/* (ses quatre premières lignes seulement : chaque animation de plus retient l'image qui suit le geste, au téléphone ; les
+   suivantes sont là d'emblée) */
 .rs-compose .rs-c>:nth-child(2){--rs-i:1}
 .rs-compose .rs-c>:nth-child(3){--rs-i:2}
 .rs-compose .rs-c>:nth-child(4){--rs-i:3}
-.rs-compose .rs-c>:nth-child(5){--rs-i:4}
-.rs-compose .rs-c>:nth-child(n+6){--rs-i:5}
 .rs-compose .rs-sp::after{animation:rs-filet .32s var(--mv-courbe) 190ms backwards}
 .rs-compose .rs-photo{animation:rs-pose .34s var(--mv-courbe) 70ms backwards}
 .rs-compose.rs-ouvre{animation:rs-ouvre .24s var(--mv-courbe)}
-.rs-compose.rs-ouvre .rs-c>*{animation-delay:calc(40ms + var(--rs-i) * 44ms)}
+.rs-compose.rs-ouvre .rs-c>:nth-child(-n+4){animation-delay:calc(40ms + var(--rs-i) * 44ms)}
 @keyframes rs-ligne{from{opacity:0;transform:translateY(8px)}}
 @keyframes rs-filet{from{transform:scaleX(0)}}
 @keyframes rs-pose{from{opacity:0;transform:translateY(10px)}}

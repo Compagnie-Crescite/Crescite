@@ -640,6 +640,8 @@ details.lieux p { margin: 10px 0 0; font-size: .9rem; line-height: 1.6; }
 .bl-grille { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
 .bl-saisons .dl > li { grid-template-columns: 96px minmax(0, 1fr); gap: 2px 18px; }
 .bl-grille > .bl-carte { order: 2; position: sticky; top: calc(var(--haut) + 24px); }
+/* (sur une colonne, la carte d'abord, sous la frise : ses dates suivent) */
+@media (max-width: 900px) { .bl-grille > .bl-carte { order: 0; position: static; } }
 .bl-sa + .bl-sa { margin-top: 30px; }
 .bl-sa h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; padding-top: 10px; border-top: 2px solid var(--u-titre); font: italic 500 clamp(1.3rem, 1.1rem + .6vw, 1.7rem)/1.15 var(--serif); letter-spacing: 0; text-transform: none; color: var(--u-texte); }
 .bl-sa h3 small { font: 600 .9rem/1 var(--sans); color: var(--u-texte2); font-variant-numeric: tabular-nums; }
