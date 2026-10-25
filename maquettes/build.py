@@ -813,6 +813,19 @@ def equipe(dest):
     def avertir(quoi, e):
         print(f"equipe : {quoi} ({type(e).__name__} : {e}) ; l'espace de l'équipe marche sans")
 
+    # ———— la pieuvre à la couleur du thème (règle 22 du contrat), comme les icônes : --pieuvre, sombre sur le papier,
+    # vive la nuit (la page la lit, sinon garde le magenta)
+    try:
+        th, page = theme(), out / "index.html"
+        style = (f"<style>:root {{ --pieuvre: {th['couleur']}; }} "
+                 f"@media (prefers-color-scheme: dark) {{ :root {{ --pieuvre: {th['vive']}; }} }}</style>\n</head>")
+        html = page.read_text(encoding="utf-8")
+        if "</head>" not in html:
+            raise ValueError("pas de </head>")
+        page.write_text(html.replace("</head>", style, 1), encoding="utf-8")
+    except Exception as e:
+        avertir("pieuvre au magenta (couleur du thème non posée)", e)
+
     # ———— la carte de la tournée
     try:
         mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))

@@ -75,7 +75,8 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--papier); font-weight: 600; }
 .evitement:focus { top: calc(8px + var(--hs)); color: var(--papier); }
 .ic { width: 20px; height: 20px; flex: none; }
-.pieuvre { display: inline-block; flex: none; width: 30px; height: 25px; color: var(--magenta-vif); }
+/* la pieuvre : à la couleur du thème du site (--pieuvre, que maquettes/build.py pose : règle 22 du contrat), sinon au magenta */
+.pieuvre { display: inline-block; flex: none; width: 30px; height: 25px; color: var(--pieuvre, var(--magenta-vif)); }
 .pieuvre:empty { display: none; }
 .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
@@ -565,7 +566,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 
 /* ———————————————— les états vides : la pieuvre */
 .etat-vide { display: grid; justify-items: center; gap: 8px; padding: 24px 18px 22px; border-radius: var(--rayon); background: var(--surface); border: 1.5px dashed var(--filet); color: var(--gris); text-align: center; }
-.etat-vide .pieuvre-vide { width: 150px; height: auto; overflow: visible; color: var(--magenta-vif); }
+.etat-vide .pieuvre-vide { width: 150px; height: auto; overflow: visible; color: var(--pieuvre, var(--magenta-vif)); }
 .etat-vide b { color: var(--encre); font: 600 1.18rem/1.3 var(--serif); }
 .etat-vide p { margin: 0; max-width: 36ch; }
 .pv-clair { fill: var(--surface); stroke: var(--encre); stroke-width: 2.6; stroke-linejoin: round; }
