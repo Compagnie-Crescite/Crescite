@@ -3366,7 +3366,8 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     // une vidéo chargée (règle 18) : la vue ne se refait pas sous elle (elle s'arrêterait) ; on y revient quand elle ne l'est plus
     clearTimeout(rafraichirPlusTard);
     if (LC && LC.actif()) { rafraichirPlusTard = setTimeout(rafraichir, 2500); return; }
-    cachePasse = null;
+    // les dates de la base remplacent celles de l'instantané : la saison en cours se recalcule aussi (toutes ses dates)
+    cachePasse = null; cacheSaison = null;
     const y = window.scrollY, act = document.activeElement, cle = cleDe(act);
     const sel = act && typeof act.selectionStart === 'number' ? [act.selectionStart, act.selectionEnd] : null;
     const ouverts = [...main.querySelectorAll('details[data-k]')].filter(d => d.open).map(d => d.dataset.k);
