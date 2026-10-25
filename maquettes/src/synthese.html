@@ -1401,11 +1401,6 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .ag-listes { min-width: 0; }
 .ag-listes > .rubrique:first-child { margin-top: 0; }
 .ag-listes .ag-toutes-h { margin-top: clamp(36px, 5vw, 56px); }
-/* (sous le pli à l'arrivée : les dates mois par mois, les saisons passées et l'alerte ne se mettent en page qu'en approchant
-   de l'écran ; la page paraît d'un coup, sans tâche qui la retienne) */
-.ag-liste .dates, .ag-toutes .dates { content-visibility: auto; contain-intrinsic-size: auto 480px; }
-#v-agenda { content-visibility: auto; contain-intrinsic-size: auto 1600px; }
-#v-alerte { content-visibility: auto; contain-intrinsic-size: auto 520px; }
 .dates > li.est-allume, .sa-dates > li.est-allume, .prochaines li.est-allume a { background: color-mix(in srgb, var(--saison-texte) 9%, transparent); }
 .carte .carte-lieu.est-allume .point { stroke: var(--encre); stroke-width: 2.4; }
 /* la frise des saisons : chaque saison et sa densité, au-dessus de l'agenda passé */
@@ -3352,13 +3347,21 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const resV = RS ? RS.dates() : [], resCles = new Set(resV.map(d => RS.cle(d))), parFriseV = new Map(resV.map(d => [cleProchaine(d), RS.cle(d)]));
     const idIci = k => `rs-ici-${String(k).replace(/[^\w-]/g, '-')}`;
     let rsVoir = null;
-    // les prochaines dates, par mois : tout public (un bouton de réservation quand la date en a une), scolaires (marquées)
-    function dessineProchaines() {
+    // les prochaines dates, par mois : tout public (un bouton de réservation quand la date en a une), scolaires (marquées).
+    // À l'arrivée et à chaque geste, les deux premiers mois tout de suite (ils emplissent le premier écran), les suivants
+    // dans la tâche d'après, sous eux (rien ne bouge à l'écran) ; tous d'un coup quand l'adresse nomme une date
+    // (la suite, image après image : chaque morceau se met en page dans sa propre image, aucune ne retient la page)
+    const ensuite = f => requestAnimationFrame(() => setTimeout(f, 0));
+    let suiteListe = 0;
+    function dessineProchaines(tout = false) {
       const Ls = proch.filter(garde), groupes = [];
       Ls.forEach(r => { const m = moisDe(r.d.ligneDate) || r.d.ligneDate, g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
-      liste.innerHTML = groupes.map(g => `<h4 class="mois" data-mv-cle="m:${esc(g.m)}">${esc(g.m)}</h4><ul class="dates" data-agenda="">${g.rs.map(({ d, id }) => {
+      const html = gs => gs.map(g => `<h4 class="mois" data-mv-cle="m:${esc(g.m)}">${esc(g.m)}</h4><ul class="dates" data-agenda="">${g.rs.map(({ d, id }) => {
         const k = RS && !d.scolaire ? RS.cle(d) : null, rv = k != null && resCles.has(k), s = bySlug[d.slug];
         return `<li${rv ? ' class="rs-li"' : ''} data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(id)}" data-mv-cle="${esc(id)}" data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${rv ? RS.bouton(d, { classe: 'rs-date--ligne', style: s ? uVars(s) : '', attributs: ` aria-controls="${idIci(k)}"` }) : quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, d.scolaire ? 'etablissement' : 'voir')}<span class="ou">${esc(d.ligneLieu)}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</span>${details(d.details)}</div>${rv ? `<div class="rs-carte rs-ici ${s ? uClasse(s) : ''}" id="${idIci(k)}" hidden></div>` : ''}</li>`; }).join('')}</ul>`).join('');
+      const n = tout || F.date ? groupes.length : 2, jeton = ++suiteListe;
+      liste.innerHTML = html(groupes.slice(0, n));
+      if (groupes.length > n) ensuite(() => { if (jeton !== suiteListe || !liste.isConnected) return; liste.insertAdjacentHTML('beforeend', html(groupes.slice(n))); if (rsVoir) rsVoir.dessiner(); });
       if (rsVoir) rsVoir.dessiner();
     }
     // toutes les dates de la saison, passées comprises, dans l'ordre du temps, par mois
@@ -3421,23 +3424,28 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     // depuis l'endroit où elles sont
     let suite = false;
     function dessine(anime) {
-      const faire = () => { recompte(); dessineProchaines(); if (tard) dessineToutes(); majOutils(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
+      const faire = () => { recompte(); dessineProchaines(); majOutils(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
       if (anime && MV) MV.flip(main, faire, { cle: '[data-mv-cle]' }); else faire();
       if (!agenda) return;
       const saisons = () => { suite = false; if (!racine.isConnected) return;
+        if (tard) dessineToutes();
         if (anime && MV) MV.flip(racine, dessineSaisons, { cle: '[data-mv-cle]' }); else dessineSaisons();
         if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); };
       if (!anime) saisons();
       else if (!suite) { suite = true; requestAnimationFrame(() => setTimeout(saisons, 0)); }
     }
-    function dessineAgenda() {
+    // toutes les dates de la saison, puis (l'image d'après, sauf maintenant) les saisons passées et leur frise
+    function dessineAgenda(maintenant = false) {
       if (!racine.isConnected) return;
       if (!tard) { tard = true; dessineToutes(); }
-      if (agenda) return;
-      agenda = true;
-      dessineSaisons();
-      fSaisons = frise($('#idx-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
-        libelle: L.saisonsPassees, classe: 'frise-saisons', relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
+      const saisons = () => {
+        if (agenda || !racine.isConnected) return;
+        agenda = true;
+        dessineSaisons();
+        fSaisons = frise($('#idx-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
+          libelle: L.saisonsPassees, classe: 'frise-saisons', relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
+      };
+      if (maintenant) saisons(); else ensuite(saisons);
     }
     // ouvrir une saison (à la main, depuis la frise des saisons, ou tout ouvrir) : ses lignes arrivent en cascade
     const deplier = dt => { const c = $('.sai-liste', dt); if (c && MV) MV.cascade(c, { selecteur: '.mois, .dates > li', max: 12 }); };
@@ -3488,10 +3496,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         choix: p => { const k = parFriseV.get(p.id); if (k && rsVoir && rsVoir.cle() !== k) rsVoir.choisir(k); allerLigne(p.id); } });
       if (fSaison) lierCarte(svg, { survol: l => { if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); } });
     }
-    // le reste, par petites tâches (aucune ne retient la page) : la frise de la saison, puis toutes les dates et les saisons
-    // passées ; tout de suite quand la vue se refait en place (D a changé), qu'un filtre est actif ou qu'une saison est
-    // demandée (#/saisons/<saison>)
-    if (surPlace || actif() || ouvrir) { poserFrise(); dessineAgenda(); } else setTimeout(() => { poserFrise(); setTimeout(dessineAgenda, 0); }, 0);
+    // la frise est dans le premier écran : posée tout de suite (rien ne saute) ; le reste, sous le pli (toutes les dates, les
+    // saisons passées), dans la tâche suivante, sauf quand la vue se refait en place (D a changé), qu'un filtre est actif ou
+    // qu'une saison est demandée (#/saisons/<saison>)
+    poserFrise();
+    if (surPlace || actif() || ouvrir) { dessineProchaines(true); dessineAgenda(true); } else ensuite(() => ensuite(() => dessineAgenda()));
     bientot(() => { pousser(svg); initAlerteTournee(); });
     const SA = ouvrir && D.saisons[ouvrir];
     return SA ? { titre: SA.titre, ancre: `sai-${ouvrir}` } : { titre: M0.texte };
