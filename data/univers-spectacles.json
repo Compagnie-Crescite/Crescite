@@ -314,6 +314,11 @@
    "citations": [],
    "photos": [
     {
+     "id": "principale",
+     "legende": null,
+     "source": "site"
+    },
+    {
      "id": "g-2",
      "legende": null,
      "source": "site"
