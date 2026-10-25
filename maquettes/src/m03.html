@@ -817,6 +817,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   .fs .frise[data-frise] { --fr-pied: 48px; }
   .fs .frise-mois > li:nth-child(even) > span:first-child { top: calc(var(--fr-axe) + 24px); }
   .fs .frise-an { display: none; }   /* les années : le titre de la saison les dit, et elles heurteraient le second rang */
+  .fs:empty { min-height: 233px; }
   .ucs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ucs.riches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fiches.trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1064,6 +1065,8 @@ html.ed-actif .co-frise { display: none; }
    qui la traverse. Dessous, sa légende : la barre de chaque spectacle, son titre, le nombre de ses dates. Choisir une date de
    la frise la choisit dans la liste, et inversement (la date choisie y est cernée d'encre). ——— */
 .fs { margin: 26px 0 8px; }
+.fs:empty { min-height: 199px; }   /* la place de la frise et de sa légende, gardée jusqu'à ce qu'elle se pose (rien ne saute) */
+.sc .fs:empty { min-height: 155px; }
 .fs .frise[data-frise] { --fr-point: 9px; --fr-barre: 18px; --fr-couloir: 22px; --fr-haut: 34px; --fr-pied: 36px; --fr-passe: .34; --fr-marge: 0px; --fr-accent: var(--acc); }
 .fs .frise-axe { height: 3px; margin-top: -1.5px; background: var(--ink); }
 .fs .frise-mois > li { top: 0; height: 100%; border-left: 1px solid var(--rule); }
@@ -1183,6 +1186,7 @@ html.ed-actif .ep-a::after { content: none; }
   /* les deux pages de l'espace pro : le titre à la taille des cartes du téléphone, la flèche toujours dans sa carte */
   .ep-pages .choix-t { font-size: 1.375rem; }
   .ag-toutes { contain-intrinsic-size: auto 7000px; }
+  .fs:empty { min-height: 311px; }
   .troupe-m03 { contain-intrinsic-size: auto 4000px; }
   .choix-t > span { min-width: 0; }
   .choix-t b { overflow-wrap: break-word; hyphens: auto; }
@@ -1205,6 +1209,7 @@ html.ed-actif .ep-a::after { content: none; }
   .ep-pages .choix-t { font-size: 1.25rem; }
 }
 /* ——— la compagnie : la présentation, la troupe, puis les repères (la table des années, sur quatre colonnes, et la frise) ——— */
+#co-suite:empty { min-height: 100vh; }   /* la place de la troupe et des repères, gardée jusqu'à ce qu'ils se posent */
 .co-reperes { margin-top: 88px; }
 .co-reperes .co-dates { grid-column: 1 / -1; }
 .co-reperes .annees { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: var(--gap); }
@@ -2947,13 +2952,24 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
   }
 
   /* ---------- La compagnie, le contact, les mentions ---------- */
+  // la présentation d'abord ; la suite (la troupe, les repères, la direction, les partenaires) se pose quand la vue se branche
+  // (suiteCompagnie), à une place gardée sous la présentation
   function compagnieHtml() {
-    const c = site().compagnie || {}, d = c.directeur;
+    const c = site().compagnie || {};
     return `${tete(c.titre, { chemin: 'site.compagnie.titre' })}
       <div class="wrap g12 co">
         <div class="co-text">${(c.paragraphes || []).map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
       </div>
-      ${troupeHtml()}
+      <div id="co-suite"></div>`;
+  }
+  function suiteCompagnie() {
+    const z = document.getElementById('co-suite');
+    if (!z || z.firstElementChild) return;
+    z.innerHTML = suiteCompagnieHtml();
+  }
+  function suiteCompagnieHtml() {
+    const c = site().compagnie || {}, d = c.directeur;
+    return `${troupeHtml()}
       <div class="wrap g12 co co-reperes">
         <section class="co-dates" aria-labelledby="h-dates"><h2 class="co-h" id="h-dates"${ed('site.compagnie.datesTitre')}>${esc(c.datesTitre)}</h2>
           <ol class="annees">${(c.dates || []).map((x, i) => `<li><span class="an"${ed(`site.compagnie.dates.${i}.annee`)}>${esc(x.annee)}</span><span class="an-t"${ed(`site.compagnie.dates.${i}.titre`)}>${esc(x.titre)}</span></li>`).join('')}</ol></section>
@@ -3156,7 +3172,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     tard.forEach(c => ioFr.observe(c));
   }
 
-  let espion = null, aPrec = null, numero = 0, routee = null;
+  let espion = null, aPrec = null, numero = 0;
   // ce qui suit un geste se fait à l'image d'après : le geste a déjà répondu (rien si la vue a changé entre-temps)
   const bientot = f => { const n = numero; requestAnimationFrame(() => setTimeout(() => { if (n === numero) f(); }, 0)); };
   function route(opts = {}) {
@@ -3165,7 +3181,6 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       try { history.replaceState(null, '', a.aller); a = analyser(); } catch (e) { location.replace(a.aller); return; }
     }
     const enPlace = !!opts.enPlace;
-    routee = location.hash;
     const v = vueDe(a), precedent = enPlace ? null : aPrec, n = ++numero;
     aPrec = a;
     if (enPlace || !precedent) { rendre(a, v, enPlace, precedent); return; }
@@ -3190,8 +3205,12 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     rangOn = null;
     const memeSp = !enPlace && !!precedent && precedent.vue === 'spectacle' && a.vue === 'spectacle' && precedent.slug === a.slug && precedent.entree !== a.entree;
     main.innerHTML = v.rendu(enPlace, { memeSp, avant: memeSp ? precedent.entree : null });
-    brancher(enPlace);
-    decorer(enPlace);
+    // le visible d'abord (règle 15 C) : après un geste, la première image de la page nouvelle ne porte que sa composition
+    // (titres, textes, cartes) ; ce qui s'y branche (les listes et leurs dates, la frise, la réservation, la troupe, les cartes
+    // reliées) vient à l'image d'après, dans sa propre tâche, à une place déjà gardée (rien ne saute). Au chargement, et refaite
+    // en place, la vue se branche tout de suite.
+    if (enPlace || !precedent) { brancher(enPlace); decorer(enPlace); }
+    else { decorer(false); const n = numero; requestAnimationFrame(() => setTimeout(() => { if (n !== numero) return; brancher(false); decorer(false); }, 0)); }
     document.title = v.titre + ' - ' + site().titreSuffixe;
     marquer(v);
     if (enPlace) return;
@@ -3270,6 +3289,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     }
   }
   function brancher(fixe) {
+    suiteCompagnie();
     if (ro) ro.disconnect();
     main.querySelectorAll('svg.carte-m03').forEach(svg => brancherVue(svg, fixe));
     majAgenda(false, true);
@@ -3385,15 +3405,6 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       return;
     }
     if (el.matches('a[href^="#/"]') && el.getAttribute('href') === location.hash) { e.preventDefault(); route(); return; }
-    // un lien du site (#/…), d'un clic simple : l'adresse change ici même (history.pushState) et la vue suit dans la même tâche
-    // (l'élément du menu se marque, la page se compose à l'image d'après). Le navigateur, lui, ferait le tour par son processus
-    // avant le hashchange : le geste ne se verrait qu'avec la page nouvelle. Le retour et l'avance passent par popstate.
-    if (el.matches('a[href^="#/"]') && !e.defaultPrevented && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) && !el.target && !el.hasAttribute('download')) {
-      e.preventDefault();
-      try { history.pushState(null, '', el.getAttribute('href')); } catch (err) { location.hash = el.getAttribute('href'); return; }
-      route();
-      return;
-    }
     const mod = el.closest('[data-module]'), prog = !!(mod && mod.dataset.module === 'prog'), st = prog ? PG : AG, maj = prog ? majProg : majAgenda;
     if (el.matches('.chip') && mod) {
       st.slug = st.slug === el.dataset.slug ? null : el.dataset.slug;
@@ -3432,9 +3443,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
   const ouvertureNuit = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit', th = couleurSaison();
   INTRO.ouvrir({ fond: ouvertureNuit ? NUIT : PAPIER, encre: th ? (ouvertureNuit ? th.nuit : th.jour) : (ouvertureNuit ? '#f1ede5' : '#141414'), classe: 'intro-m03',
     apres: () => main.querySelectorAll('svg.carte-m03:not(.pousse)').forEach(pousser) });
-  // l'adresse changée d'ailleurs (le retour, l'avance, une adresse tapée, location.hash) : la vue suit, une seule fois
-  window.addEventListener('hashchange', () => { if (location.hash !== routee) route(); });
-  window.addEventListener('popstate', () => { if (location.hash !== routee) route(); });
+  window.addEventListener('hashchange', () => route());
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
   route();
 })();

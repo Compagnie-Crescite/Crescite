@@ -2230,7 +2230,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     el.className = 'scene'; el.id = 'scene'; el.setAttribute('aria-labelledby', 'scene-h');
     el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><canvas class="sc-toile" aria-hidden="true"></canvas>
       <h1 class="sc-h" id="scene-h" tabindex="-1" data-edit="site.nom"></h1>
-      <button type="button" class="sc-pause" aria-pressed="false" aria-label="Pause" title="Pause"><svg class="i-p" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg><svg class="i-l" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.2l9.2 5.8-9.2 5.8z"/></svg></button>
+      <button type="button" class="sc-pause" aria-pressed="false"><svg class="i-p" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg><svg class="i-l" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.2l9.2 5.8-9.2 5.8z"/></svg></button>
       <ul class="sc-titres"></ul>`;
     const cv = $('.sc-toile', el), ctx = cv.getContext('2d'), cadreD = $('.sc-cadre', el), ul = $('.sc-titres', el), tete = $('.sc-h', el), bPause = $('.sc-pause', el);
     const toile = () => { const c = document.createElement('canvas'); return [c, c.getContext('2d')]; };
@@ -2345,7 +2345,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       const [x0, y0, x1, y1] = BOX, bw = x1 - x0, bh = y1 - y0, haut = tete.offsetTop + tete.offsetHeight;
       const hEcran = Math.max(480, innerHeight - (($('#top') || {}).offsetHeight || 64));
       const mw = mobile ? W - 2 * gut - 76 : clamp(W * .22, 210, 330);
-      TIT.forEach(T => { T.el.style.transform = 'none'; T.el.style.maxWidth = mw + 'px'; });
+      TIT.forEach(T => { T.el.style.transform = 'none'; T.el.style.maxWidth = mw + 'px'; T.tt.style.width = ''; });
+      // (un titre sur deux lignes : sa boîte serrée sur sa plus longue ligne, le médaillon contre le texte)
+      TIT.forEach(T => { const rg = document.createRange(); rg.selectNodeContents(T.tt); const ls = [...rg.getClientRects()];
+        if (ls.length > 1) T.tt.style.width = Math.ceil(Math.max(...ls.map(l => l.width)) + 1) + 'px'; });
       TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
       if (!mobile) {
         s = clamp(Math.min(W * .3 / bw, (hEcran - 260) / bh), .22, .5); ech = s / .38;
@@ -2649,7 +2652,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       affiche = oui; clearTimeout(tAuto);
       if (!oui) { cancelAnimationFrame(raf); raf = 0; return; }
       if (signature() !== sig) bati();
-      tete.textContent = S.nom;
+      textes();
       // de retour sur l'accueil : chaque bras reprend sa souche ; les liens suivent la mémoire de l'entrée
       TIT.forEach(T => { T.focus = false; T.el.setAttribute('href', lienSp(T.slug)); });
       BRAS.forEach(a => { a.but = null; a.depuis = null; a.q = 1; a.teinte = 0; });
@@ -2659,8 +2662,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       if (eveil === null && (!INTRO.ouverte() || !motionOK())) eveiller();
       reveil(); planifier();
     }
+    // les textes de la scène, lus dans D : le nom de la compagnie, le libellé du bouton de pause
+    function textes() { tete.textContent = S.nom; bPause.setAttribute('aria-label', L.pause); bPause.title = L.pause; }
     // D a changé (la base) : les titres sont refaits en place, sans rejouer l'éveil
-    function maj() { tete.textContent = S.nom; TIT.forEach(T => T.el.setAttribute('href', lienSp(T.slug))); if (signature() !== sig) { bati(); if (affiche) mise(); } }
+    function maj() { textes(); TIT.forEach(T => T.el.setAttribute('href', lienSp(T.slug))); if (signature() !== sig) { bati(); if (affiche) mise(); } }
     return {
       // placée dans l'accueil (refait en place : sans rien rejouer)
       monter(place, surPlace) { if (!place) return; const deja = affiche && surPlace; place.replaceWith(el); if (deja) maj(); else montrer(true); },

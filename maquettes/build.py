@@ -296,6 +296,7 @@ LIBELLES = {
     "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
     # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
     "modeNuit": "Mode nuit", "jour": "Jour", "nuit": "Nuit",
+    "pause": "Pause",   # le bouton qui arrête ce qui bouge de lui-même (l'accueil de la synthèse : les photos, la pieuvre)
     # alertes de proximité (chantier 1)
     "alerteTournee": "Être prévenu du prochain passage",
     "alerteTourneeDesc": "Recevez un courriel dès qu’une représentation est confirmée près de chez vous.",
