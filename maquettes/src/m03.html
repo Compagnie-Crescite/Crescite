@@ -323,10 +323,12 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .uc-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
 .uc:hover .uc-img img { transform: scale(1.04); }
 .uc-img .statut { position: absolute; left: 12px; top: 12px; }
-/* « EN TOURNÉE » : une étiquette d'encre, en capitales, qui respire (règle 15 B 7) */
-.statut-t { border-color: var(--ink); background: var(--ink); color: var(--paper); font-size: .75rem; letter-spacing: .12em; }
-@media (prefers-reduced-motion: no-preference) { html:not(.m3-fixe) .statut-t { animation: m3-respire 2.8s ease-in-out infinite; } }
-@keyframes m3-respire { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--paper) 55%, transparent); } }
+/* « EN TOURNÉE » : une étiquette d'encre, en capitales, qui respire (règle 15 B 7) ; le halo est un calque à part dont seule
+   l'opacité varie (une animation composée : la page ne se repeint pas à chaque image, les gestes restent vifs) */
+.statut-t { position: relative; border-color: var(--ink); background: var(--ink); color: var(--paper); font-size: .75rem; letter-spacing: .12em; }
+.statut-t::after { content: ""; position: absolute; inset: -1px; border-radius: inherit; box-shadow: 0 0 0 5px color-mix(in srgb, var(--paper) 55%, transparent); opacity: 0; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) { html:not(.m3-fixe) .statut-t::after { animation: m3-respire 2.8s ease-in-out infinite; will-change: opacity; } }
+@keyframes m3-respire { 50% { opacity: 1; } }
 .uc-b { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 18px 20px 22px; }
 .uc-t { font: var(--u-gr) 2rem/1 var(--u-police); letter-spacing: 0; color: var(--u-titre); overflow-wrap: break-word; hyphens: auto; }
 .uc-t a { text-decoration: none; }
@@ -969,6 +971,9 @@ main { display: block; min-height: 100svh; }   /* sa place est gardée pendant l
 :is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .lien-v, .suite, .t-link, .menu-p a, .u-onglets a, .choix a, .sai > summary, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place) { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: .15s; }
 :is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .choix a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place).mv-presse { transform: translateY(1px); transition-duration: .06s; }
 :is(.menu-p a, .u-onglets a, .sai > summary, .t-link, .suite, .lien-v).mv-presse { background-color: color-mix(in srgb, var(--ink) 6%, transparent); transition-duration: .06s; }
+/* l'état qu'un geste allume se montre à l'image même, sans transition (il ne s'efface en douceur qu'en partant) : le geste se voit
+   tout de suite, même quand la page nouvelle se compose juste après ; le filet de l'élément du menu, lui, se trace toujours */
+.menu-p a[aria-current], .menu-p a[aria-current] .m-ic, .u-onglets a[aria-current], .sai[open] > summary, .chip[aria-pressed="true"] { transition-duration: 0s; }
 /* une ligne vers laquelle mène une frise : elle se marque d'un aplat, qui s'efface */
 @keyframes m3-vise { 0%, 45% { background-color: color-mix(in srgb, var(--c, var(--ink)) 16%, transparent); } }
 .dt.est-vise, .dcard.est-vise { animation: m3-vise 1.3s var(--c3); }
@@ -3145,7 +3150,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     tard.forEach(c => ioFr.observe(c));
   }
 
-  let espion = null, aPrec = null, numero = 0;
+  let espion = null, aPrec = null, numero = 0, routee = null;
   // ce qui suit un geste se fait à l'image d'après : le geste a déjà répondu (rien si la vue a changé entre-temps)
   const bientot = f => { const n = numero; requestAnimationFrame(() => setTimeout(() => { if (n === numero) f(); }, 0)); };
   function route(opts = {}) {
@@ -3154,6 +3159,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       try { history.replaceState(null, '', a.aller); a = analyser(); } catch (e) { location.replace(a.aller); return; }
     }
     const enPlace = !!opts.enPlace;
+    routee = location.hash;
     const v = vueDe(a), precedent = enPlace ? null : aPrec, n = ++numero;
     aPrec = a;
     if (enPlace || !precedent) { rendre(a, v, enPlace, precedent); return; }
@@ -3373,6 +3379,15 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       return;
     }
     if (el.matches('a[href^="#/"]') && el.getAttribute('href') === location.hash) { e.preventDefault(); route(); return; }
+    // un lien du site (#/…), d'un clic simple : l'adresse change ici même (history.pushState) et la vue suit dans la même tâche
+    // (l'élément du menu se marque, la page se compose à l'image d'après). Le navigateur, lui, ferait le tour par son processus
+    // avant le hashchange : le geste ne se verrait qu'avec la page nouvelle. Le retour et l'avance passent par popstate.
+    if (el.matches('a[href^="#/"]') && !e.defaultPrevented && e.button === 0 && !(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) && !el.target && !el.hasAttribute('download')) {
+      e.preventDefault();
+      try { history.pushState(null, '', el.getAttribute('href')); } catch (err) { location.hash = el.getAttribute('href'); return; }
+      route();
+      return;
+    }
     const mod = el.closest('[data-module]'), prog = !!(mod && mod.dataset.module === 'prog'), st = prog ? PG : AG, maj = prog ? majProg : majAgenda;
     if (el.matches('.chip') && mod) {
       st.slug = st.slug === el.dataset.slug ? null : el.dataset.slug;
@@ -3411,7 +3426,9 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
   const ouvertureNuit = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit', th = couleurSaison();
   INTRO.ouvrir({ fond: ouvertureNuit ? NUIT : PAPIER, encre: th ? (ouvertureNuit ? th.nuit : th.jour) : (ouvertureNuit ? '#f1ede5' : '#141414'), classe: 'intro-m03',
     apres: () => main.querySelectorAll('svg.carte-m03:not(.pousse)').forEach(pousser) });
-  window.addEventListener('hashchange', () => route());
+  // l'adresse changée d'ailleurs (le retour, l'avance, une adresse tapée, location.hash) : la vue suit, une seule fois
+  window.addEventListener('hashchange', () => { if (location.hash !== routee) route(); });
+  window.addEventListener('popstate', () => { if (location.hash !== routee) route(); });
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
   route();
 })();

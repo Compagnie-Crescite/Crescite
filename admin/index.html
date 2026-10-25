@@ -311,6 +311,31 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .crm-kpi-boite span { font-size: 12.5px; color: var(--gris); font-weight: 600; display: block; }
 .crm-kpi-boite b { font-size: 22px; font-weight: 800; color: var(--encre); }
 
+/* la Diffusion : ses parties (les pistes, les demandes de devis, les alertes de tournée) ; une demande de devis ; le résumé
+   des alertes (leurs chiffres, par département et par spectacle, la liste) */
+.di-parties { flex-wrap: wrap; }
+.di-nb { display: inline-block; min-width: 18px; margin-left: 5px; padding: 0 5px; border-radius: 999px; background: var(--option-doux); color: var(--option); font-size: 11.5px; font-weight: 800; line-height: 18px; text-align: center; }
+.seg button[aria-pressed="true"] .di-nb { background: var(--carte); color: var(--accent); }
+.dv-fiche { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 16px; margin: 0; }
+.dv-fiche dt { color: var(--gris); font-size: 13.5px; font-weight: 650; }
+.dv-fiche dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.dv-fiche .sous-champ { display: flex; margin-top: 2px; }
+.dv-message { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--doux); white-space: pre-line; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .dv-fiche { grid-template-columns: minmax(0, 1fr); gap: 1px; } .dv-fiche dd { margin-bottom: 8px; } }
+.al-note { margin: -6px 0 16px; padding: 10px 14px; border-radius: 10px; background: var(--option-doux); color: var(--encre); font-size: 14px; }
+.di-deux { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; margin-bottom: 16px; }
+.di-deux .bloc + .bloc { margin-top: 0; }
+.al-table th:not(:first-child), .al-table td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.al-table td:first-child { overflow-wrap: anywhere; }
+.al-liste { list-style: none; margin: 0; padding: 0; }
+.al-ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 11px 2px; border-top: 1px solid var(--trait); }
+.al-corps { flex: 1 1 260px; min-width: 0; display: grid; gap: 3px; }
+.al-corps b { overflow-wrap: anywhere; }
+.al-quoi { color: var(--gris); font-size: 13px; }
+.al-quoi .badge { margin-right: 4px; }
+.al-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.al-plus { color: var(--gris); font-size: 13.5px; }
+
 /* Frais et matériel */
 .frais-table-photo { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--trait); cursor: pointer; }
 /* le tableau des notes de frais défile de côté au téléphone, sans pousser la page */
@@ -463,7 +488,8 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
    Représentations → Tableur (TABLEUR) : une ligne par séance, branché sur la base dans les deux sens, par le même chemin
    que la fiche d'une date (chargeDate, ecrireDate, effacerDate) ; exports Excel, CSV, Google Sheets ; import.
    La diffusion, les notes de frais et le matériel (le script « Compagnie Idéale ») se masquent quand la base n'a pas
-   leurs tables (E.ideale). */
+   leurs tables (E.ideale). La Diffusion a trois parties : les pistes, les demandes de devis déposées sur le site (statut
+   et notes internes), et le résumé des alertes de tournée, qui demande aussi le onzième script (E.alertesInstallees). */
 const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
 const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
 const SITE = '../synthese.html';
@@ -478,7 +504,7 @@ const bravo = () => requestAnimationFrame(() => { const b = $('[data-enregistrer
 // ===================================================================================================== état
 const E = { session: null, admin: false, pret: false, direct: false, sale: false, hash: location.hash,
   spectacles: [], lieux: [], dates: [], reps: [], suivis: [], lieuxSuivi: [], ateliers: [], seances: [], textes: [], admins: [], journal: [],
-  prospects: [], frais: [], materiel: [], devis: [] };
+  prospects: [], frais: [], materiel: [], devis: [], alertes: [], alertesInstallees: false };
 const TABLES = {
   crescite_spectacles: ['spectacles', 'id'], crescite_lieux: ['lieux', 'id'], crescite_dates: ['dates', 'id'],
   crescite_representations: ['reps', 'id'], crescite_dates_suivi: ['suivis', 'date_id'], crescite_lieux_suivi: ['lieuxSuivi', 'lieu_id'],
@@ -692,6 +718,22 @@ async function chargerTout() {
   await equipe;
   const c = await chiffres;
   E.chiffres = c || []; E.chiffresInstalles = !!c;
+  if (ideale) await lireAlertes();
+}
+// les alertes de tournée, avec leur confirmation (le onzième script, supabase/migrations/20261030_crescite_alertes.sql) :
+// sans leur jeton (les liens des courriels) ni rien d'autre que ce que le résumé montre. Sans le script (confirme_le
+// n'existe pas), E.alertesInstallees est faux et la partie « Alertes » de la Diffusion se masque
+const COLS_ALERTES = 'id,email,code_postal,commune,departement,lat,lon,rayon_km,spectacle_id,active,cree_le,confirme_le,confirmation_le,confirmation_statut,derniere_notification_le';
+async function lireAlertes() {
+  const out = [];
+  for (let a = 0; ; a += 1000) {
+    const { data, error } = await sb.from('crescite_alertes_tournee').select(COLS_ALERTES).order('cree_le', { ascending: false }).range(a, a + 999);
+    if (error) { E.alertes = []; E.alertesInstallees = false; return false; }
+    out.push(...data);
+    if (data.length < 1000) break;
+  }
+  E.alertes = out; E.alertesInstallees = true;
+  return true;
 }
 // le journal se lit par pages de 300, des plus récentes aux plus anciennes : relire les plus récentes garde les pages plus
 // anciennes déjà lues (journalPlusAncien) ; E.journalFin : il n'y a rien de plus ancien
@@ -774,7 +816,7 @@ const ROUTES = [
   [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
   [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
   [/^#\/equipe(?:\/(nouvelle|documents|frais|\d+))?$/, m => vueEquipe(m[1])],
-  [/^#\/diffusion(?:\/(nouveau|\d+))?$/, m => vueDiffusion(m[1])],
+  [/^#\/diffusion(?:\/(nouveau|devis|alertes|\d+))?(?:\/(\d+))?$/, m => vueDiffusion(m[1], m[2])],
   [/^#\/pro(?:\/(nouvelle|\d+))?$/, m => vueEspacePro(m[1])],
   [/^#\/ateliers(?:\/(seances|catalogue))?(?:\/(nouvelle|nouveau|\d+))?$/, m => vueAteliers(m[1] || 'seances', m[2])],
   [/^#\/lieux(?:\/(nouveau|\d+))?$/, m => vueLieux(m[1])],
@@ -3139,8 +3181,21 @@ const ETAPES_CRM = [
   ['bilan', '5. Bilan / Clôturé']
 ];
 
-function vueDiffusion(param) {
+// la Diffusion en trois parties : les pistes (#/diffusion, le pipeline), les demandes de devis déposées sur le site
+// (#/diffusion/devis, #/diffusion/devis/<id>), les alertes de tournée (#/diffusion/alertes : seulement quand la base a le
+// onzième script, qui les fait confirmer par courriel et les envoie)
+function partiesDiffusion(courante) {
+  const nouveaux = (E.devis || []).filter(d => d.statut === 'nouveau').length;
+  const xs = [['', 'Pistes'], ['devis', `Devis${nouveaux ? ` <span class="di-nb">${nouveaux}<span class="sr"> nouvelle${nouveaux > 1 ? 's' : ''}</span></span>` : ''}`],
+    ...(E.alertesInstallees ? [['alertes', 'Alertes de tournée']] : [])];
+  return `<div class="seg di-parties" role="group" aria-label="Partie de la diffusion">${xs.map(([k, l]) => `<button type="button" data-di-partie="${k}" aria-pressed="${k === courante}">${l}</button>`).join('')}</div>`;
+}
+const brancherParties = () => $$('[data-di-partie]').forEach(b => b.addEventListener('click', () => { location.hash = '#/diffusion' + (b.dataset.diPartie ? '/' + b.dataset.diPartie : ''); }));
+
+function vueDiffusion(partie, id) {
   if (!E.ideale) { cadre('diffusion', `<div class="tete"><h1>Diffusion</h1></div>${idealeAbsente('La diffusion n’est pas encore installée')}`); return; }
+  if (partie === 'devis') return vueDevis(id ? +id : null);
+  if (partie === 'alertes') return vueAlertes();
   const auj = aujourdhui();
   const prospects = E.prospects || [];
   const actifs = prospects.filter(p => p.etape !== 'bilan' && p.etape !== 'refus');
@@ -3154,6 +3209,7 @@ function vueDiffusion(param) {
   const tete = `
     <div class="tete">
       <h1>Diffusion CRM · Pipeline de tournée</h1>
+      ${partiesDiffusion('')}
       <button type="button" class="btn principal" id="b-nouveau-prospect">＋ Nouvelle opportunité</button>
     </div>
     <div class="crm-kpi">
@@ -3193,6 +3249,7 @@ function vueDiffusion(param) {
   `;
 
   cadre('diffusion', tete + tableau);
+  brancherParties();
   brancherDiffusion();
 }
 
@@ -3468,6 +3525,183 @@ function ouvrirModaleEmailRelance(p) {
       annoncer('Texte copié dans le presse-papier.');
     });
   });
+}
+
+// ===================================================================================================== demandes de devis
+// Les demandes de proposition de cession déposées sur le site (« Je souhaite programmer », le simulateur d'accueil) : la
+// demande telle que le programmateur l'a écrite, et son suivi (le statut, les notes internes), qu'il ne voit jamais. Elles
+// arrivent en direct (le canal du septième script).
+const STATUTS_DEVIS = [['nouveau', 'Nouvelle', 'option'], ['en_cours', 'En cours', 'sco'], ['devis_envoye', 'Devis envoyé', 'sco'],
+  ['confirme', 'Confirmée', 'ok'], ['sans_suite', 'Sans suite', '']];
+const TYPES_LIEU_DEVIS = { theatre: 'Théâtre, scène équipée', polyvalente: 'Salle polyvalente', etablissement: 'Établissement scolaire, in situ',
+  exterieur: 'Cour, extérieur', autre: 'Autre lieu, tiers-lieu' };
+const badgeDevis = s => { const [, l, c] = STATUTS_DEVIS.find(x => x[0] === s) || [s, s || 'Nouvelle', 'option']; return `<span class="badge${c ? ` ${c}` : ''}">${esc(l)}</span>`; };
+function vueDevis(id) {
+  const f = session.devis = Object.assign({ q: '', statut: '' }, session.devis || {});
+  cadre('diffusion', `<div class="tete"><h1>Diffusion · Demandes de devis</h1>${partiesDiffusion('devis')}</div>
+    <div class="deux${id ? ' edition' : ''}"><div class="liste"><div class="filtres">
+      <input type="search" id="dv-q" placeholder="Chercher une structure, une commune, un contact" value="${esc(f.q)}" aria-label="Chercher une demande">
+      <select id="dv-statut" aria-label="Statut"><option value="">Tous les statuts</option>${STATUTS_DEVIS.map(([k, l]) => `<option value="${k}"${f.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <span class="compte" id="dv-compte"></span></div><div data-liste id="l-devis"></div></div>
+    <section class="editeur" id="ed-devis">${id ? '' : '<div class="vide bloc">Les demandes de proposition déposées sur le site par les programmateurs (« Je souhaite programmer ») : à qui répondre, et où en est chacune. Le statut et les notes ne sont jamais montrés au programmateur.</div>'}</section></div>`);
+  brancherParties();
+  const zone = $('#l-devis');
+  zone.rafraichir = () => listeDevis(zone, id);
+  zone.rafraichir();
+  $('#dv-q').addEventListener('input', e => { f.q = e.target.value; garderFiltres(); zone.rafraichir(); });
+  $('#dv-statut').addEventListener('change', e => { f.statut = e.target.value; garderFiltres(); zone.rafraichir(); });
+  if (id) editeurDevis(id);
+}
+// les nouvelles d'abord, puis les plus récentes
+function listeDevis(zone, actif) {
+  const f = session.devis, q = norm(f.q).trim();
+  const xs = (E.devis || []).filter(d => (!f.statut || d.statut === f.statut)
+      && (!q || norm(`${d.structure_nom} ${d.commune} ${d.departement || ''} ${d.contact_nom} ${d.contact_email} ${spectacle(d.spectacle_id)?.titre || ''}`).includes(q)))
+    .sort((a, b) => (a.statut === 'nouveau' ? 0 : 1) - (b.statut === 'nouveau' ? 0 : 1) || String(b.cree_le).localeCompare(String(a.cree_le)));
+  $('#dv-compte').textContent = `${xs.length} demande${xs.length > 1 ? 's' : ''}`;
+  zone.innerHTML = xs.map(d => {
+    const sp = spectacle(d.spectacle_id), j = String(d.cree_le || '').slice(0, 10);
+    return `<a class="ligne" href="#/diffusion/devis/${d.id}" style="--c:${sp ? couleurSp(sp) : 'var(--gris)'}"${String(actif) === String(d.id) ? ' aria-current="true"' : ''}>
+      <span class="jj">${j ? `<b>${+j.slice(8, 10)}</b>${MC[+j.slice(5, 7) - 1]}` : ''}</span>
+      <span class="corps"><span class="t">${esc(d.structure_nom)}</span><span class="ou">${esc([d.commune, sp?.titre, d.contact_nom].filter(Boolean).join(' · '))}</span></span>
+      <span class="badges">${badgeDevis(d.statut)}</span></a>`;
+  }).join('') || `<p class="vide">${(E.devis || []).length ? 'Aucune demande ne correspond.' : 'Aucune demande pour l’instant.'}</p>`;
+}
+function editeurDevis(id) {
+  const d0 = (E.devis || []).find(x => x.id === id);
+  const zone = zoneNeuve('#ed-devis');
+  if (!d0) { zone.innerHTML = '<div class="vide bloc">Cette demande n’existe plus.</div>'; return; }
+  requestAnimationFrame(() => tt('ouvrir', zone, { sens: 'gauche' }));
+  const F = { statut: d0.statut || 'nouveau', notes_internes: d0.notes_internes || '' };
+  const sp = spectacle(d0.spectacle_id), recue = d0.cree_le ? new Date(d0.cree_le) : null;
+  const fiche = (l, v) => (v ? `<dt>${esc(l)}</dt><dd>${v}</dd>` : '');
+  const SPEC = [{ k: 'statut', t: 'choix', l: 'Statut', choix: STATUTS_DEVIS.map(([k, l]) => [k, l]) },
+    { k: 'notes_internes', t: 'long', l: 'Notes internes', lignes: 5, ph: 'Appel du …, devis envoyé le …, conditions…' }];
+  nChamp = 0;
+  zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/diffusion/devis" title="Retour à la liste">←</a><h2>${esc(d0.structure_nom)}</h2></div>
+    <div class="bloc"><h3>La demande</h3><dl class="dv-fiche">
+      ${fiche('Reçue le', recue ? esc(recue.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' })) : '')}
+      ${fiche('Spectacle', esc(sp ? sp.titre : 'Pas précisé'))}
+      ${fiche('Lieu', esc([TYPES_LIEU_DEVIS[d0.type_lieu] || d0.type_lieu, `${d0.commune}${d0.departement ? ` (${d0.departement})` : ''}`].filter(Boolean).join(' · ')))}
+      ${fiche('Plateau', esc(d0.dimensions_plateau || ''))}
+      ${fiche('Jauge', d0.jauge_estimee != null ? esc(`${d0.jauge_estimee} places`) : '')}
+      ${fiche('Période', esc(d0.periode_souhaitee || ''))}
+      ${fiche('Contact', `${esc(d0.contact_nom)}<span class="sous-champ">${liensCoordonnees([d0.contact_email, d0.contact_tel].filter(Boolean).join(' '))}</span>`)}
+    </dl>${d0.message ? `<p class="dv-message">${esc(d0.message)}</p>` : ''}</div>
+    <div class="bloc" id="dv-suivi"><h3>Le suivi <span class="aide" style="font-weight:400">— jamais montré au programmateur</span></h3>${SPEC.map(c => champ(c, F)).join('')}</div>
+    ${pied('Tout est enregistré', '<button type="button" class="btn danger" id="dv-suppr">Supprimer</button>')}`;
+  relier($('#dv-suivi', zone), F, SPEC);
+  $('#dv-suppr', zone).addEventListener('click', async () => {
+    if (!confirm(`Supprimer la demande de « ${d0.structure_nom} » ? Elle disparaît de la base.`)) return;
+    const { error } = await sb.from('crescite_devis_demandes').delete().eq('id', id);
+    if (error) return erreur(error, 'Suppression impossible');
+    E.devis = E.devis.filter(x => x.id !== id); E.sale = false; location.hash = '#/diffusion/devis'; annoncer('Demande supprimée.');
+  });
+  $('[data-enregistrer]', zone).addEventListener('click', async e => {
+    e.target.disabled = true;
+    const { data, error } = await sb.from('crescite_devis_demandes').update({ statut: F.statut, notes_internes: (F.notes_internes || '').trim() || null })
+      .eq('id', id).select().single();
+    e.target.disabled = false;
+    if (error) return erreur(error);
+    const i = E.devis.findIndex(x => x.id === id); if (i >= 0) E.devis[i] = data;
+    E.sale = false; annoncer('Demande enregistrée.');
+    vueDevis(id);
+    bravo();
+  });
+}
+
+// ===================================================================================================== alertes de tournée
+// Le résumé des alertes de tournée (le onzième script) : combien sont confirmées, combien attendent leur confirmation, par
+// département et par spectacle ; chacune se désactive (elle ne reçoit plus rien, et se réactive) ou s'efface (avec son
+// adresse). Une alerte ne compte qu'une fois confirmée depuis le courriel envoyé à son adresse. Les alertes ne sont pas
+// dans le temps réel : elles se relisent à l'ouverture de la partie.
+const secteurAlerte = a => {
+  const ou = a.commune || a.code_postal || '';
+  if (a.lat != null && a.lon != null) return `${ou ? `${ou}, ` : 'Une position, '}${a.rayon_km} km alentour`;
+  return [ou, a.departement ? `département ${a.departement}` : ''].filter(Boolean).join(', ') || 'Secteur à préciser';
+};
+const etatAlerte = a => (!a.active ? 'desactivee' : a.confirme_le ? 'confirmee' : 'attente');
+const ETATS_ALERTE = { confirmee: ['Confirmée', 'ok'], attente: ['En attente', 'option'], desactivee: ['Désactivée', 'masquee'] };
+const leJour = t => (t ? new Date(t).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+const confirmationPartie = a => !['non_configure'].includes(a.confirmation_statut) && !String(a.confirmation_statut || '').startsWith('erreur');
+function courrielConfirmation(a) {
+  const s = String(a.confirmation_statut || '');
+  if (s === 'envoye') return `courriel de confirmation envoyé le ${leJour(a.confirmation_le)}`;
+  if (s === 'non_configure') return 'courriel de confirmation pas parti : la fonction n’a pas de clé d’envoi';
+  if (s.startsWith('erreur')) return `courriel de confirmation pas parti (${s.replace(/^erreur\s*:\s*/, '').slice(0, 80)})`;
+  if (s === 'en_cours') return 'courriel de confirmation en route';
+  return 'courriel de confirmation au prochain passage du matin';
+}
+function vueAlertes() {
+  const tete = `<div class="tete"><h1>Diffusion · Alertes de tournée</h1>${partiesDiffusion('alertes')}</div>`;
+  if (!E.alertesInstallees) {
+    cadre('diffusion', `${tete}<div class="bloc"><h3>Les alertes de tournée ne sont pas encore en place</h3><p>Exécutez <code>supabase/migrations/20261030_crescite_alertes.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), redéployez la fonction crescite-courriel, puis rechargez cette page.</p></div>`);
+    brancherParties();
+    return;
+  }
+  const f = session.alertes = Object.assign({ q: '', etat: '' }, session.alertes || {});
+  cadre('diffusion', `${tete}<div id="al-chiffres"></div>
+    <div class="bloc"><h3>Les alertes</h3><div class="filtres al-filtres">
+      <input type="search" id="al-q" placeholder="Chercher une adresse, une commune, un département" value="${esc(f.q)}" aria-label="Chercher une alerte">
+      <select id="al-etat" aria-label="État"><option value="">Toutes les alertes</option>${Object.entries(ETATS_ALERTE).map(([k, [l]]) => `<option value="${k}"${f.etat === k ? ' selected' : ''}>${l === 'En attente' ? 'En attente de confirmation' : `${l}s`}</option>`).join('')}</select>
+      <span class="compte" id="al-compte"></span></div><ul class="al-liste" data-liste id="al-liste"></ul></div>`);
+  brancherParties();
+  const zone = $('#al-liste');
+  zone.rafraichir = () => dessinerAlertes(zone);
+  zone.rafraichir();
+  lireAlertes().then(lues => { if (lues && zone.isConnected) zone.rafraichir(); });
+  $('#al-q').addEventListener('input', e => { f.q = e.target.value; garderFiltres(); zone.rafraichir(); });
+  $('#al-etat').addEventListener('change', e => { f.etat = e.target.value; garderFiltres(); zone.rafraichir(); });
+  zone.addEventListener('click', async e => {
+    const b = e.target.closest('[data-al-actif], [data-al-effacer]');
+    if (!b || b.disabled) return;
+    const id = +(b.dataset.alActif || b.dataset.alEffacer), a = E.alertes.find(x => x.id === id);
+    if (!a) return;
+    const effacer = b.hasAttribute('data-al-effacer');
+    if (effacer && !confirm(`Effacer l’alerte de ${a.email} (${secteurAlerte(a)}) ? Elle disparaît de la base, avec son adresse.`)) return;
+    b.disabled = true;
+    const r = effacer ? await sb.from('crescite_alertes_tournee').delete().eq('id', id)
+      : await sb.from('crescite_alertes_tournee').update({ active: !a.active }).eq('id', id).select(COLS_ALERTES).single();
+    if (r.error) { b.disabled = false; return erreur(r.error, effacer ? 'Effacement impossible' : 'Changement impossible'); }
+    if (effacer) E.alertes = E.alertes.filter(x => x.id !== id); else Object.assign(a, r.data);
+    annoncer(effacer ? 'Alerte effacée, avec son adresse.' : a.active ? 'Alerte réactivée : elle reçoit de nouveau les dates de son secteur.' : 'Alerte désactivée : elle ne reçoit plus rien.');
+    zone.rafraichir();
+    ($(`[data-al-actif="${id}"]`, zone) || $('#al-q'))?.focus();
+  });
+}
+// les chiffres (confirmées, en attente, désactivées ; par département, par spectacle) et la liste filtrée (200 au plus)
+function dessinerAlertes(zone) {
+  const xs = E.alertes || [], f = session.alertes, q = norm(f.q).trim();
+  const n = { confirmee: 0, attente: 0, desactivee: 0 };
+  xs.forEach(a => { n[etatAlerte(a)]++; });
+  const bloquees = xs.filter(a => etatAlerte(a) === 'attente' && !confirmationPartie(a)).length;
+  const par = cle => {
+    const m = new Map();
+    xs.forEach(a => { const e = etatAlerte(a); if (e === 'desactivee') return; const k = cle(a), x = m.get(k) || { confirmee: 0, attente: 0 }; x[e]++; m.set(k, x); });
+    return [...m].sort((a, b) => (b[1].confirmee + b[1].attente) - (a[1].confirmee + a[1].attente) || String(a[0]).localeCompare(String(b[0]), 'fr'));
+  };
+  const table = (titre, col, lignes) => `<div class="bloc"><h3>${titre}</h3>${lignes.length ? `<table class="simple al-table"><thead><tr><th scope="col">${col}</th><th scope="col">Confirmées</th><th scope="col">En attente</th></tr></thead>
+    <tbody>${lignes.map(([k, x]) => `<tr><td>${esc(k)}</td><td>${x.confirmee}</td><td>${x.attente}</td></tr>`).join('')}</tbody></table>` : '<p class="aide">Aucune alerte active.</p>'}</div>`;
+  const chiffres = $('#al-chiffres');
+  if (chiffres) chiffres.innerHTML = `<div class="crm-kpi">
+      <div class="crm-kpi-boite"><span>Confirmées</span><b style="color:var(--ok)">${n.confirmee}</b></div>
+      <div class="crm-kpi-boite"><span>En attente de confirmation</span><b>${n.attente}</b></div>
+      <div class="crm-kpi-boite"><span>Désactivées</span><b>${n.desactivee}</b></div></div>
+    ${bloquees ? `<p class="al-note">${bloquees > 1 ? `${bloquees} alertes attendent un courriel de confirmation qui n’est pas parti` : 'Une alerte attend un courriel de confirmation qui n’est pas parti'} (pas de clé d’envoi, ou une erreur) : le passage du matin le reprend dès que la fonction crescite-courriel peut écrire.</p>` : ''}
+    <div class="di-deux">${table('Par département', 'Département', par(a => (a.departement ? a.departement : a.lat != null ? 'Une position' : '—')))}
+      ${table('Par spectacle', 'Spectacle', par(a => spectacle(a.spectacle_id)?.titre || (a.spectacle_id ? 'Un spectacle retiré' : 'Tous les spectacles')))}</div>`;
+  const vues = xs.filter(a => (!f.etat || etatAlerte(a) === f.etat)
+    && (!q || norm(`${a.email} ${a.commune || ''} ${a.code_postal || ''} ${a.departement || ''} ${spectacle(a.spectacle_id)?.titre || ''}`).includes(q)));
+  $('#al-compte').textContent = `${vues.length} alerte${vues.length > 1 ? 's' : ''}`;
+  zone.innerHTML = vues.slice(0, 200).map(a => {
+    const e = etatAlerte(a), [l, c] = ETATS_ALERTE[e];
+    const quoi = e === 'confirmee' ? `confirmée le ${leJour(a.confirme_le)} · ${a.derniere_notification_le ? `dernier courriel le ${leJour(a.derniere_notification_le)}` : 'aucune date à lui écrire pour l’instant'}`
+      : e === 'attente' ? `déposée le ${leJour(a.cree_le)} · ${courrielConfirmation(a)}` : `désactivée${a.confirme_le ? ` (confirmée le ${leJour(a.confirme_le)})` : ''}`;
+    return `<li class="al-ligne"><div class="al-corps"><b>${esc(a.email)}</b><span>${esc(secteurAlerte(a))} · ${esc(spectacle(a.spectacle_id)?.titre || 'tous les spectacles')}</span>
+      <span class="al-quoi"><span class="badge ${c}">${l}</span> ${esc(quoi)}</span></div>
+      <div class="al-actions"><button type="button" class="btn petit" data-al-actif="${a.id}">${a.active ? 'Désactiver' : 'Réactiver'}</button><button type="button" class="btn petit danger" data-al-effacer="${a.id}" aria-label="Effacer l’alerte de ${esc(a.email)}">Effacer</button></div></li>`;
+  }).join('') + (vues.length > 200 ? `<li class="al-ligne al-plus">Et ${vues.length - 200} autres : précisez la recherche.</li>` : '')
+    || `<li class="vide">${xs.length ? 'Aucune alerte ne correspond.' : 'Aucune alerte pour l’instant.'}</li>`;
 }
 
 // ===================================================================================================== journal

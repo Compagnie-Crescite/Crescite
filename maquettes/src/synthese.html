@@ -194,23 +194,218 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .bulle li { display: flex; flex-wrap: wrap; gap: 0 8px; }
 .bulle .t { font-weight: 600; }
 
-/* ———— l'accueil : le nom, les trois entrées, la carte la plus grande ———— */
-.une { padding: clamp(12px, 3vw, 40px) 0 clamp(36px, 5vw, 64px); }
+/* ———— l'accueil, composé par le client : l'ouverture de la 04 devient la pieuvre de la 10, puis le menu, puis les spectacles
+   un par écran (les chapitres de la 09), chacun avec l'effet de son motif ; puis la saison sur la carte, les donateurs ————
+   Les couleurs de la saison (règle 22) viennent de D.site.couleurSaison, écrites par le script (couleursSaison) : --saison
+   (la couleur, qui porte la pieuvre blanche), --saison-vive, --saison-texte (lisible sur le papier, de jour comme de nuit) et
+   la nuit bleue de la scène (--sc-a, --sc-b, --sc-c ; --sc-terne : le blanc atténué, qui reste AA, photo comprise). Rien
+   n'est écrit en dur : une nouvelle création colore l'accueil sans toucher au code. Dans l'accueil, plus de magenta. */
+.acc { --magenta: var(--saison-texte); --magenta-texte: var(--saison-texte); --magenta-vif: var(--saison-vive); }
+.acc .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* le premier écran : la nuit bleue de la saison, la pieuvre au milieu (une toile), les titres autour ; derrière elle, à peine,
+   les photos des spectacles qui s'enchaînent en fondu (celle du spectacle qu'on regarde passe devant) */
+.scene { position: relative; isolation: isolate; overflow: hidden; min-height: calc(100svh - var(--haut)); color: #fff; user-select: none; -webkit-user-select: none;
+  background: radial-gradient(78% 88% at 50% 40%, var(--sc-a) 0%, var(--sc-b) 58%, var(--sc-c) 100%); }
+.scene.sur-bras { cursor: pointer; }
+.sc-diapo { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.sc-cadre { position: sticky; top: var(--haut); height: calc(100svh - var(--haut)); max-height: 100%; overflow: hidden; }
+.sc-image { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s ease; }
+.sc-image.est-vu { opacity: .22; }
+.sc-image img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; filter: saturate(.8) brightness(.8); transform: scale(1.07); transition: transform 9s linear; }
+.sc-image.est-vu img { transform: none; }
+/* (les bords restent la nuit de la scène : les titres s'y lisent) */
+.sc-cadre::after { content: ""; position: absolute; inset: 0; background: radial-gradient(72% 78% at 50% 44%, transparent 28%, color-mix(in srgb, var(--sc-c) 72%, transparent) 100%); }
+.sc-toile { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.sc-h { position: relative; z-index: 2; margin: 0; padding: 26px var(--gout) 0; text-align: center; font: 600 .8rem/1.3 var(--sans); letter-spacing: .32em; text-transform: uppercase; color: var(--sc-terne); }
+.sc-pause { position: absolute; z-index: 4; right: var(--gout); top: 14px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid color-mix(in srgb, #fff 60%, transparent); border-radius: 50%;
+  background: color-mix(in srgb, var(--sc-c) 50%, transparent); color: #fff; cursor: pointer; }
+.sc-pause:hover { border-color: #fff; }
+.sc-pause:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.sc-pause svg { width: 15px; height: 15px; fill: currentColor; }
+.sc-pause .i-l, .sc-pause[aria-pressed="true"] .i-p { display: none; }
+.sc-pause[aria-pressed="true"] .i-l { display: block; }
+html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien à arrêter */
+.sc-titres { list-style: none; margin: 0; padding: 0; }
+.sc-t { position: absolute; left: 0; top: 0; z-index: 3; display: block; min-height: 44px; color: #fff; text-decoration: none; opacity: 0; will-change: transform, opacity; transition: color .2s;
+  -webkit-user-drag: none; -webkit-touch-callout: none; }
+.sc-t.droite { text-align: right; }
+.sc-tl { display: inline-flex; align-items: center; gap: 10px; font: italic 500 clamp(1.15rem, .9rem + .62vw, 1.6rem)/1.15 var(--serif); text-wrap: balance;
+  text-shadow: 0 1px 16px color-mix(in srgb, var(--sc-c) 85%, transparent); }
+.sc-t.droite .sc-tl { flex-direction: row-reverse; }
+.sc-med { position: relative; flex: none; width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: var(--sc-b); border: 1.5px solid var(--c); box-shadow: 0 0 0 3px var(--sc-c);
+  transition: transform .22s var(--mv-courbe), box-shadow .22s; }
+.sc-med img { width: 100%; height: 100%; object-fit: cover; }
+.sc-q { position: absolute; top: calc(100% + 6px); left: 0; width: max-content; max-width: 260px; font: 400 .82rem/1.3 var(--sans); color: var(--sc-terne); opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+.sc-t.droite .sc-q { left: auto; right: 0; }
+.sc-t.est-actif { color: var(--c); }
+.sc-t.est-actif .sc-med { transform: scale(1.14); box-shadow: 0 0 0 3px var(--sc-c), 0 0 0 4.5px var(--c); }
+.sc-t.est-actif .sc-q { opacity: 1; transform: none; }
+.scene.a-actif .sc-t:not(.est-actif) { color: var(--sc-terne); }
+.sc-t:focus-visible { outline: 2px solid #fff; outline-offset: 6px; border-radius: 4px; }
+.scene.mobile .sc-tl { font-size: 1.25rem; }
+.scene.mobile .sc-med { width: 32px; height: 32px; }
+.scene.mobile .sc-q { opacity: 1; transform: none; max-width: calc(100vw - 92px); }
+/* le menu (règle 21), sous la scène : les quatre éléments de D.site.menu, chacun son petit dessin ; l'onde se trace au survol */
+.acc-menu { position: relative; padding: clamp(36px, 5.5vw, 76px) 0; background: var(--papier); border-bottom: 1px solid var(--filet); }
+.am-liste { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.8vw, 24px); }
+.am-a { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; height: 100%; min-height: 210px; padding: 22px 22px 18px; border: 1px solid var(--filet); border-radius: 10px;
+  background: var(--blanc); color: var(--encre); text-decoration: none; transition: border-color .18s, box-shadow .18s, scale .12s; }
+.am-a:hover { border-color: var(--saison-texte); box-shadow: 0 22px 40px -30px color-mix(in srgb, var(--saison) 85%, transparent); }
+.am-a:focus-visible { outline: 3px solid var(--saison-texte); outline-offset: 3px; }
+.am-a.mv-presse { scale: .985; transition-duration: .06s; }
+.am-vis { display: flex; align-items: flex-start; height: 92px; color: var(--saison-texte); }
+.am-vis .vignette { width: auto; height: 100%; }
+.am-a:hover .vignette path, .am-a:focus-visible .vignette path { animation: dessine 1s ease-out both; }
+.am-pts { display: flex; flex-wrap: wrap; gap: 8px; max-width: 132px; align-content: flex-start; padding-top: 4px; }
+.am-pts i { width: 18px; height: 18px; border-radius: 50%; background: var(--c); transition: scale .25s var(--mv-courbe) calc(var(--i) * 25ms); }
+.am-a:hover .am-pts i, .am-a:focus-visible .am-pts i { scale: 1.22; }
+.am-pieuvre { display: block; width: 136px; transform-origin: 50% 30%; transition: scale .3s var(--mv-courbe); }
+.am-pieuvre svg { display: block; width: 100%; height: auto; }
+.am-a:hover .am-pieuvre, .am-a:focus-visible .am-pieuvre { scale: 1.06; }
+.am-portes { display: block; width: 118px; height: 76px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linejoin: round; }
+.am-portes .bat { transform-box: fill-box; transform-origin: 0 50%; transition: transform .35s var(--mv-courbe); }
+.am-a:hover .am-portes .bat, .am-a:focus-visible .am-portes .bat { transform: scaleX(.55); }
+.am-t { display: block; font: italic 400 clamp(1.7rem, 1.25rem + 1vw, 2.4rem)/1.04 var(--serif); text-wrap: balance; }
+.am-a .trait { margin-top: 8px; }
+.am-a .trait path { stroke: var(--saison-texte); stroke-dashoffset: .72; transition: stroke-dashoffset .5s var(--mv-courbe); }
+.am-a:hover .trait path, .am-a:focus-visible .trait path { stroke-dashoffset: 0; }
+@media (max-width: 1000px) { .am-liste { grid-template-columns: repeat(2, minmax(0, 1fr)); } .am-a { min-height: 180px; } }
+@media (max-width: 560px) {
+  .am-liste { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .am-a { display: grid; grid-template-columns: 82px minmax(0, 1fr); grid-template-areas: "vis t" "vis trait"; align-items: center; column-gap: 16px; row-gap: 0; min-height: 0; padding: 14px 16px; }
+  .am-vis { grid-area: vis; height: 58px; justify-content: center; align-items: center; }
+  .am-t { grid-area: t; font-size: 1.6rem; } .am-a .trait { grid-area: trait; margin-top: 4px; }
+  .am-pieuvre { width: 76px; } .am-portes { width: 72px; height: 48px; } .am-pts { max-width: 80px; gap: 5px; } .am-pts i { width: 12px; height: 12px; }
+}
+/* les spectacles, un par écran, chacun dans son univers et pleine page : au bureau, épinglé, il prend la place du précédent
+   (qui s'assombrit dessous) ; son motif joue son effet avec la lecture. --p : son arrivée, --r : sa lecture (épinglé),
+   --q : recouvert par le suivant (0 → 1, posées par le script ; sans mouvement : arrivé, lu, jamais recouvert) */
+.df-pile { position: relative; }
+.df { --p: 1; --r: 1; --q: 0; --m: calc((var(--p) + var(--r)) / 2); --cx: 71%; --cy: 50%; --sens: 1;
+  position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; min-height: calc(100svh - var(--haut)); font-family: var(--u-corps); }
+.df[data-cote="droite"] { --cx: 29%; --sens: -1; }
+.df-photo { position: absolute; inset: 0; z-index: -3; overflow: hidden; background: var(--u-fond2); }
+.df-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 40%; transform-origin: var(--cx) 50%; transform: scale(calc(1.14 - var(--p) * .14)); }
+.df[data-cote="droite"] .df-photo img { object-position: 38% 40%; }
+.df-photo::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--u-fond) 0%, var(--u-fond) 32%, color-mix(in srgb, var(--u-fond) 80%, transparent) 46%, color-mix(in srgb, var(--u-fond) 22%, transparent) 70%, transparent 88%),
+    linear-gradient(0deg, color-mix(in srgb, var(--u-fond) 60%, transparent), transparent 32%); }
+.df[data-cote="droite"] .df-photo::after { background: linear-gradient(270deg, var(--u-fond) 0%, var(--u-fond) 32%, color-mix(in srgb, var(--u-fond) 80%, transparent) 46%, color-mix(in srgb, var(--u-fond) 22%, transparent) 70%, transparent 88%),
+    linear-gradient(0deg, color-mix(in srgb, var(--u-fond) 60%, transparent), transparent 32%); }
+.df-effet { position: absolute; z-index: -2; left: var(--cx); top: var(--cy); translate: -50% -50%; pointer-events: none; color: var(--u-vif); }
+.df-voile { position: absolute; inset: 0; z-index: 6; background: #000; opacity: calc(var(--q) * .55); pointer-events: none; }
+.df-texte { position: relative; z-index: 1; width: 100%; padding-top: clamp(28px, 5vh, 64px); padding-bottom: clamp(28px, 5vh, 64px); }
+.df-in { position: relative; width: min(36rem, 46%); }
+.df[data-cote="droite"] .df-in { margin-left: auto; }
+.df-in > * { --e: clamp(0, calc(var(--p) * 3.33 - 1.33 - var(--k, 0) * .2), 1); opacity: var(--e); transform: translateY(calc((1 - var(--e)) * 28px)); }
+.df-sur { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 clamp(10px, 2vh, 20px); font: 600 .76rem/1.4 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
+.df-lt { color: var(--u-texte2); }
+.df-badge { padding: 2px 10px; border: 1px solid currentColor; border-radius: 999px; letter-spacing: .1em; }
+.df-titre { position: relative; margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(2.2rem, min(5.4vw, 9.4vh), 5.8rem); line-height: .98; letter-spacing: -.01em; color: var(--u-texte); text-wrap: balance; }
+.df-titre.long { font-size: clamp(1.9rem, min(3.9vw, 6.6vh), 4.2rem); }
+.df-l { display: block; }
+.u-arene .df-titre { text-transform: uppercase; color: var(--u-accent); }
+html[data-theme="nuit"] .u-arene .df-titre { color: var(--u-vif); }
+.df-acc { margin: clamp(12px, 2.2vh, 24px) 0 0; max-width: 34ch; font-size: clamp(1.05rem, min(1.45vw, 2.5vh), 1.4rem); line-height: 1.45; }
+.df-dates { margin: clamp(16px, 3vh, 30px) 0 0; max-width: 30rem; }
+.df-k { margin: 0 0 8px; font: 600 .72rem/1.3 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
+.df-liste { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--u-filet); }
+.df-liste li { border-bottom: 1px solid var(--u-filet); }
+.df-date { display: grid; grid-template-columns: minmax(6.4rem, auto) minmax(0, 1fr); align-items: baseline; gap: 0 16px; padding: 8px 6px; color: inherit; text-decoration: none; transition: background .18s; }
+a.df-date:hover { background: color-mix(in srgb, var(--u-vif) 13%, transparent); }
+a.df-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px; }
+.df-q b { font: 600 1.12rem/1.2 var(--sans); font-variant-numeric: tabular-nums; }
+.df-q small { font-size: .82rem; color: var(--u-texte2); }
+.df-o { font-size: .98rem; }
+.df-o .tag { color: var(--u-vif); }
+.df-annonce, .df-bilan { margin: 0; font-size: 1.05rem; line-height: 1.45; }
+.df-bilan .gros { font-size: 1.7em; }
+.df-cta { margin: clamp(16px, 3vh, 30px) 0 0; }
+.df-cta .bu { letter-spacing: .06em; text-transform: uppercase; font-size: .86rem; }
+.df-credit { position: absolute; z-index: 2; right: 12px; bottom: 10px; max-width: 60%; margin: 0; padding: 2px 8px; border-radius: 3px; background: color-mix(in srgb, var(--u-fond) 78%, transparent);
+  font: 400 .72rem/1.4 var(--sans); color: var(--u-texte2); text-align: right; }
+.df[data-cote="droite"] .df-credit { right: auto; left: 12px; text-align: left; }
+/* les motifs de la 10, en grand, qui réagissent à la lecture (--m) : l'arène tourne, les jumeaux se rejoignent, les notes et le
+   fil s'écrivent, le nez s'allonge, les aiguilles tournent, le curseur file de 1850 à 2077 */
+.df-m { display: block; width: 100%; height: auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.df-m text { fill: currentColor; stroke: none; font: 600 17px var(--sans); letter-spacing: .04em; }
+.df-m * { transform-box: view-box; }
+.dm-tourne { transform-origin: 200px 200px; transform: rotate(calc(var(--m) * 150deg)); }
+.dm-g { transform: translateX(calc(var(--m) * 14px)); }
+.dm-d { transform: translateX(calc(var(--m) * -14px)); }
+.dm-ecrit { stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--m)); }
+.dm-nez { transform-origin: 114px 86px; transform: scale(calc(1 + var(--m) * .55), 1); }
+.dm-heure { transform-origin: 120px 120px; transform: rotate(calc(-50deg + var(--m) * 90deg)); }
+.dm-minute { transform-origin: 120px 120px; transform: rotate(calc(var(--m) * 720deg)); }
+.dm-curseur { transform: translateX(calc(var(--m) * 1120px)); }
+/* Bérénice, l'arène : la photo s'ouvre en cercle et l'arène tourne autour */
+.df[data-motif="arene"] .df-photo::after { content: none; }
+.df[data-motif="arene"] .df-photo { background: var(--u-fond); }
+.df[data-motif="arene"] .df-photo img { clip-path: circle(calc(var(--p) * min(25vw, 37vh)) at var(--cx) 50%); }
+.df[data-motif="arene"] .df-effet { width: calc(min(25vw, 37vh) * 2.36); opacity: calc(.15 + var(--p) * .85); color: var(--u-accent); }
+html[data-theme="nuit"] .df[data-motif="arene"] .df-effet { color: var(--u-vif); }
+.df-arene .gradin { stroke-width: 9; opacity: .4; }
+/* Cléophène, les jumeaux : les deux moitiés de la photo se rejoignent ; deux couronnes */
+.df[data-motif="jumeaux"] .df-photo img { clip-path: inset(0 50% 0 0); transform: translateX(calc((1 - var(--p)) * -12vw)) scale(calc(1.08 - var(--p) * .08)); }
+.df[data-motif="jumeaux"] .df-photo .df-jumeau { clip-path: inset(0 0 0 50%); transform: translateX(calc((1 - var(--p)) * 12vw)) scale(calc(1.08 - var(--p) * .08)); }
+.df[data-motif="jumeaux"] .df-effet { width: min(26vw, 40vh); opacity: calc(var(--p) * .55); }
+/* L'imaginaire forcé, les annotations : le titre s'entoure à la main, les notes s'écrivent dans la marge */
+.df-entoure { position: absolute; left: -5%; top: -16%; width: 110%; height: 132%; overflow: visible; fill: none; stroke: var(--u-vif); stroke-width: 2.4; stroke-linecap: round; pointer-events: none; }
+.df-entoure path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, var(--p) * 1.6 - .5, 1)); }
+.df[data-motif="annotations"] .df-effet { width: min(30vw, 46vh); opacity: .6; }
+/* Mon Royaume, le paperboard : le texte est une feuille qui tombe du chevalet ; le feutre dessine */
+.df[data-motif="paperboard"] .df-in { padding: clamp(26px, 4vh, 44px) clamp(22px, 3vw, 40px) clamp(22px, 3.4vh, 36px); background: #fffdf8 repeating-linear-gradient(transparent 0 2.25rem, #d7e3f4 2.25rem calc(2.25rem + 1px));
+  border: 1px solid #d9d0bf; box-shadow: 0 26px 50px -26px rgba(20, 20, 50, .45); transform-origin: 50% 0; transform: perspective(1600px) rotateX(calc((1 - var(--p)) * -78deg)) rotate(-.5deg); }
+.df[data-motif="paperboard"] .df-in::before { content: ""; position: absolute; left: 10%; right: 10%; top: -13px; height: 20px; border-radius: 6px; background: linear-gradient(#585d72, #353849); box-shadow: 0 3px 6px rgba(0, 0, 0, .25); }
+.df[data-motif="paperboard"] .df-in > * { --e: clamp(0, calc(var(--p) * 3.33 - 1.9 - var(--k, 0) * .12), 1); }
+html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--uj-texte); --u-texte2: var(--uj-texte2); --u-vif: var(--uj-vif); --u-filet: color-mix(in srgb, var(--uj-texte) 15%, transparent); color: var(--u-texte); }
+.df[data-motif="paperboard"] .df-effet { width: min(28vw, 44vh); opacity: .7; }
+/* Ci-gisait Cyrano, le nez : la photo entre de profil, la lune se lève, le nez s'allonge */
+.df[data-motif="nez"] .df-photo img { transform: translateX(calc((1 - var(--p)) * var(--sens) * 14%)) scale(calc(1.1 - var(--p) * .1)); }
+.df[data-motif="nez"] .df-effet { width: min(30vw, 46vh); opacity: .75; color: var(--u-texte); }
+.df-lune { position: absolute; z-index: -2; left: calc(var(--cx) + min(14vw, 22vh)); top: 12%; width: clamp(60px, 8vw, 120px); fill: var(--u-accent); opacity: .85; pointer-events: none; transform: translateY(calc((1 - var(--m)) * 34vh)); }
+.df[data-cote="droite"] .df-lune { left: calc(var(--cx) - min(14vw, 22vh) - clamp(60px, 8vw, 120px)); }
+/* La Folle Idée, l'horloge : le temps du huis clos, les aiguilles tournent avec la lecture */
+.df[data-motif="horloge"] .df-effet { width: min(30vw, 50vh); opacity: .55; color: var(--u-accent); }
+.df[data-motif="horloge"] .df-m { stroke-width: 2.2; }
+/* Macbeth – Fatum, le fil rouge : il traverse l'écran, tiré par la lecture */
+.df-fil { inset: 0; left: 0; top: 0; translate: none; width: 100%; height: 100%; }
+.df-fil svg { display: block; width: 100%; height: 100%; overflow: visible; fill: none; }
+.df-fil path { stroke: var(--u-scene); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--m)); }
+/* Cassandres, la chronologie : la photo se découvre comme le temps passe, de 1850 à 2077, le curseur file sur la frise */
+.df[data-motif="chronologie"] .df-photo img { clip-path: inset(0 calc((1 - var(--p)) * 100%) 0 0); }
+.df-chrono { left: 4%; right: 4%; top: auto; bottom: clamp(18px, 4vh, 40px); width: auto; translate: none; opacity: .8; }
+.df-chrono .df-m { stroke-width: 1.6; }
+.df-chrono text { fill: var(--u-texte2); font: 500 13px var(--u-etiq); letter-spacing: .1em; }
+.df-chrono .dm-curseur { fill: var(--u-vif); stroke: none; }
+/* épinglés, au bureau, quand le mouvement est permis : le suivant monte sur celui qu'on lit */
+@media (min-width: 900px) and (min-height: 620px) {
+  html:not(.still) .df { position: sticky; top: var(--haut); height: calc(100svh - var(--haut)); min-height: 0; margin-bottom: 42vh; }
+  html:not(.still) .df:last-child { margin-bottom: 0; }
+}
+/* au téléphone et sur un écran étroit : la photo en haut, le texte dessous ; l'effet joue sur la photo */
+@media (max-width: 899px) {
+  .df { --cx: 50%; --cy: 25svh; display: block; min-height: 0; padding-top: 44svh; }
+  .df[data-cote="droite"] { --cx: 50%; }
+  .df-photo { bottom: auto; height: 54svh; }
+  .df-photo::after, .df[data-cote="droite"] .df-photo::after { background: linear-gradient(0deg, var(--u-fond) 4%, color-mix(in srgb, var(--u-fond) 55%, transparent) 30%, transparent 62%); }
+  .df-in, .df[data-cote="droite"] .df-in { width: 100%; margin-left: 0; }
+  .df[data-motif="arene"] .df-photo img { clip-path: circle(calc(var(--p) * min(36vw, 21svh)) at 50% 25svh); }
+  .df[data-motif="arene"] .df-effet { width: calc(min(36vw, 21svh) * 2.36); }
+  .df[data-motif="jumeaux"] .df-effet, .df[data-motif="annotations"] .df-effet, .df[data-motif="paperboard"] .df-effet, .df[data-motif="nez"] .df-effet, .df[data-motif="horloge"] .df-effet { width: min(52vw, 34svh); }
+  .df-lune { left: auto; right: 6%; top: 4%; } .df[data-cote="droite"] .df-lune { left: auto; }
+  .df-chrono { bottom: auto; top: calc(54svh - 64px); }
+  .df-credit, .df[data-cote="droite"] .df-credit { top: 8px; bottom: auto; right: 8px; left: auto; text-align: right; }
+}
+/* la saison sur la carte, puis les donateurs */
+.acc-saison .une-grille { padding-top: clamp(8px, 2vw, 24px); }
+.acc-saison .titre-bloc { margin-bottom: 8px; }
+.acc-lien { margin: 18px 0 26px; }
+.acc-lien a { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; color: var(--saison-texte); text-decoration: none; }
+.acc-lien a:hover { text-decoration: underline; }
 .une-grille { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-areas: "tete carte" "liste carte"; grid-template-rows: auto 1fr; column-gap: clamp(24px, 4vw, 64px); }
 .une-tete { grid-area: tete; padding-top: clamp(16px, 4vh, 44px); }
 .une-liste { grid-area: liste; }
-.une h1 { margin: 0; font: italic 400 clamp(2.8rem, 1.5rem + 4.2vw, 5.2rem)/.98 var(--serif); letter-spacing: -.01em; text-wrap: balance; }
-.une .trait { width: 140px; height: 22px; margin-top: 16px; }
-.portes { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 10px; }
-.porte { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 84px; padding: 16px 18px 16px 22px; border-radius: 8px; background: var(--ec); color: #fff; text-decoration: none; transition: box-shadow .18s, scale .12s; }
-.porte-ph { position: absolute; inset: 0 0 0 38%; z-index: -1; }
-.porte-ph img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.15); mix-blend-mode: multiply; opacity: .8; -webkit-mask-image: linear-gradient(90deg, transparent, #000 65%); mask-image: linear-gradient(90deg, transparent, #000 65%); transition: scale .2s var(--mv-courbe); }
-.porte-t { font: italic 500 clamp(1.4rem, 1rem + 1.1vw, 1.95rem)/1.12 var(--serif); text-wrap: balance; }
-.porte-f { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .85); transition: translate .18s var(--mv-courbe), background .18s, color .18s; }
-.porte:hover { box-shadow: 0 18px 36px -20px var(--ec); }
-.porte:hover .porte-ph img { scale: 1.03; }
-.porte:hover .porte-f { background: #fff; color: var(--ec); translate: 4px 0; }
-.porte:focus-visible { outline: 3px solid var(--encre); outline-offset: 3px; }
 .prochaines { list-style: none; margin: 0 0 8px; padding: 0; border-top: 1px solid var(--encre); }
 .prochaines a, .prochaines .pl { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr); gap: 0 14px; align-items: baseline; padding: 10px 8px; border-bottom: 1px solid var(--filet); text-decoration: none; transition: background .2s; }
 .prochaines time { grid-row: span 2; }
@@ -617,6 +812,8 @@ html.ed-actif .ep-a::after { content: none; }
 .alerte-msg.ok { background: color-mix(in srgb, #1d6f47 12%, transparent); color: #1d6f47; border: 1px solid #1d6f47; }
 .alerte-msg.err { background: color-mix(in srgb, #b3261e 12%, transparent); color: #b3261e; border: 1px solid #b3261e; }
 .alerte-msg a { color: inherit; font-weight: 700; text-decoration: underline; overflow-wrap: anywhere; }
+/* sous le formulaire : à quoi sert l'adresse (seulement à l'alerte) */
+.alerte-usage { margin: 12px 0 0; font-size: .92rem; color: var(--gris); max-width: 65ch; }
 /* la nuit : les champs de l'alerte et du simulateur sur le papier de la nuit (blancs, leur encre claire ne se lisait pas),
    et les réponses dans un vert et un rouge clairs (AA sur la nuit) */
 html[data-theme="nuit"] :is(.alerte-champs select, .alerte-champs input[type="email"], .alerte-champs input[type="text"], .champ-simu input, .champ-simu select) { background: var(--blanc); }
@@ -1676,6 +1873,25 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   /* ---------- les univers : couleurs, polices, motif (relus dans D à chaque rendu) ---------- */
   const lum = h => { const v = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(c => c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4); return .2126 * v[0] + .7152 * v[1] + .0722 * v[2]; };
   const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  // deux couleurs mêlées ; une couleur éclaircie, ou assombrie, jusqu'à se lire (AA) sur un fond
+  const melange = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+  const eclaircir = (h, fond, cible = 4.6) => { let c = h; for (let k = 0; k < 40 && contraste(c, fond) < cible; k++) c = melange(c, '#ffffff', .08); return c; };
+  const assombrir = (h, fond, cible = 4.6) => { let c = h; for (let k = 0; k < 40 && contraste(c, fond) < cible; k++) c = melange(c, '#000000', .08); return c; };
+  /* le thème de la saison (règle 22) : D.site.couleurSaison, relu à chaque changement de D. La couleur porte la pieuvre
+     blanche et, assombrie s'il le faut, se lit sur le papier ; la vive se lit sur la nuit. L'ouverture et la scène de
+     l'accueil en tirent leur dégradé, de jour (la couleur au cœur) et de nuit (plus profond) ; --sc-terne : le blanc atténué
+     des titres au repos, qui reste AA sur la scène photo comprise (le repère : la couleur éclaircie d'un cinquième, la photo
+     la plus claire qu'on puisse y voir). Aucune couleur de saison n'est écrite ici : une nouvelle création change tout. */
+  const HEX6 = /^#[0-9a-f]{6}$/i;
+  function themeSaison() {
+    const t = (D.site && D.site.couleurSaison) || {}, c = HEX6.test(t.couleur || '') ? t.couleur : '#3a3440', v = HEX6.test(t.vive || '') ? t.vive : eclaircir(c, '#151014');
+    const repere = melange(c, '#ffffff', .2);
+    return { c, v, repere, jour: [c, melange(c, '#000000', .5), melange(c, '#000000', .76)], nuit: [melange(c, '#000000', .3), melange(c, '#000000', .64), melange(c, '#000000', .85)],
+      texte: assombrir(c, '#e4dccf'), texteNuit: eclaircir(v, '#2b2128'), terne: eclaircir(melange('#ffffff', c, .4), repere) };
+  }
+  const couleursSaison = () => { const T = themeSaison();
+    return `:root{--saison:${T.c};--saison-vive:${T.v};--saison-texte:${T.texte};--sc-a:${T.jour[0]};--sc-b:${T.jour[1]};--sc-c:${T.jour[2]};--sc-terne:${T.terne}}`
+      + `html[data-theme="nuit"]{--saison-texte:${T.texteNuit};--sc-a:${T.nuit[0]};--sc-b:${T.nuit[1]};--sc-c:${T.nuit[2]}}`; };
   const SANS = /grotesk|anton|ubuntu|sans|inter|raleway/i;
   const U0 = { fond: '#1a1016', fond2: '#24161f', texte: '#f7ecf1', texte2: '#c9b7c1', accent: '#bc3e80', accent2: '#f07ab6', scene: '#f07ab6', lueur: 'rgba(188, 62, 128, .3)' };
   const P0 = { titre: 'Spectral', titreGraisse: 500, texte: 'Spectral', etiquette: 'Work Sans' };
@@ -2150,37 +2366,61 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const c = contactPrg();
     return c && c.email ? `<a href="${esc(`mailto:${c.email}?subject=${encodeURIComponent(objet)}${corps ? `&body=${encodeURIComponent(corps)}` : ''}`)}">${esc(texte || c.email)}</a>` : '';
   };
+  // l'alerte de tournée : elle ne compte qu'une fois confirmée depuis le courriel envoyé à l'adresse (le onzième script
+  // SQL, la fonction crescite-courriel) ; la page le dit, et ne promet rien d'autre. Le secteur : la position (« Me
+  // géolocaliser » : l'alerte vaut alors dans un rayon autour d'elle) avec sa commune, ou un code postal, ou une commune
+  // cherchée par son nom (geo.api.gouv.fr) ; la base en déduit le département
   function initAlerteTournee() {
     const f = $('#f-alerte'); if (!f) return;
     const btnGeo = $('#btn-geo'), cp = $('#alerte-cp'), email = $('#alerte-email'), sp = $('#alerte-spectacle'), msg = $('#alerte-msg');
-    let coords = null;
+    let ici = null;      // la position prise, sa commune, son code postal, son département et le texte écrit dans le champ
+    const geoTexte = t => { if (btnGeo) btnGeo.querySelector('span').textContent = t; };
+    const oublierIci = () => { ici = null; if (btnGeo) { btnGeo.classList.remove('actif'); geoTexte(L.meGeolocaliser || 'Me géolocaliser'); } };
     if (btnGeo) {
       btnGeo.addEventListener('click', () => {
         if (!navigator.geolocation) { alert('La géolocalisation n’est pas disponible sur cet appareil.'); return; }
         btnGeo.classList.add('actif');
-        btnGeo.querySelector('span').textContent = 'Recherche…';
+        geoTexte('Recherche…');
         navigator.geolocation.getCurrentPosition(async pos => {
-          coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          const lat = pos.coords.latitude, lon = pos.coords.longitude;
+          let c = null;
           try {
-            const res = await fetch(`https://geo.api.gouv.fr/communes?lat=${coords.lat}&lon=${coords.lon}&fields=nom,code,codesPostaux,departement`);
-            const data = await res.json();
-            if (data && data.length) {
-              const c = data[0];
-              cp.value = `${c.nom} (${c.departement ? c.departement.code : c.codesPostaux[0]})`;
-              btnGeo.querySelector('span').textContent = 'Localisé';
-            } else {
-              btnGeo.querySelector('span').textContent = 'Localisé';
-            }
-          } catch (e) {
-            btnGeo.querySelector('span').textContent = 'Localisé';
-          }
+            const res = await fetch(`https://geo.api.gouv.fr/communes?lat=${lat}&lon=${lon}&fields=nom,codesPostaux,codeDepartement`);
+            const data = res.ok ? await res.json() : [];
+            c = data && data[0] || null;
+          } catch (e) { /* hors connexion : la position seule */ }
+          cp.value = c ? `${c.nom} (${c.codeDepartement})` : 'Ma position';
+          ici = { lat, lon, commune: c ? c.nom : null, code_postal: c && c.codesPostaux ? c.codesPostaux[0] || null : null,
+                  departement: c ? c.codeDepartement || null : null, texte: cp.value };
+          geoTexte('Localisé');
         }, err => {
-          btnGeo.classList.remove('actif');
-          btnGeo.querySelector('span').textContent = 'Me géolocaliser';
+          oublierIci();
           alert('Impossible de vous localiser : ' + (err.message || 'accès non autorisé'));
         }, { timeout: 10000 });
       });
     }
+    // le champ retouché : la position n'est plus celle qu'il dit
+    cp.addEventListener('input', () => { if (ici && cp.value !== ici.texte) oublierIci(); });
+    // un secteur écrit : un code postal (« 76000 », « 76000 Rouen »), « Rouen (76) », ou le nom d'une commune ; rien de
+    // trouvé : null
+    async function secteurEcrit(t) {
+      const code = (t.match(/(?:^|\D)(\d{5})(?:\D|$)/) || [])[1];
+      if (code) return { code_postal: code, commune: t.replace(code, '').replace(/[(),]/g, ' ').replace(/\s+/g, ' ').trim() || null };
+      const dep = (t.match(/\(\s*(\d{2,3}|2[AaBb])\s*\)/) || [])[1];
+      if (dep) return { commune: t.replace(/\(.*\)/, '').trim() || null, departement: dep.toUpperCase() };
+      try {
+        const res = await fetch(`https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(t)}&fields=nom,codesPostaux,codeDepartement&boost=population&limit=1`);
+        const c = (res.ok ? await res.json() : [])[0];
+        if (c) return { code_postal: (c.codesPostaux || [])[0] || null, commune: c.nom, departement: c.codeDepartement || null };
+      } catch (e) { /* hors connexion */ }
+      return null;
+    }
+    const dire = (genre, html) => {
+      msg.className = `alerte-msg ${genre}`;
+      msg.setAttribute('role', genre === 'err' ? 'alert' : 'status');
+      msg.innerHTML = html;
+      msg.hidden = false;
+    };
     f.addEventListener('submit', async e => {
       e.preventDefault();
       const mailVal = email.value.trim(), cpVal = cp.value.trim(), spVal = sp.value;
@@ -2189,29 +2429,35 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       if (btnSub) btnSub.disabled = true;
       msg.hidden = true;
       const s = spVal && bySlug[spVal] ? bySlug[spVal] : null;
+      const secteur = ici ? { code_postal: ici.code_postal, commune: ici.commune, departement: ici.departement } : await secteurEcrit(cpVal);
+      if (!secteur) {
+        dire('err', esc(L.alerteSecteurInconnu || 'Ce secteur est introuvable : indiquez un code postal (5 chiffres), ou utilisez « Me géolocaliser ».'));
+        if (btnSub) btnSub.disabled = false;
+        cp.focus();
+        return;
+      }
+      // confirme_le n'existe qu'avec le onzième script (la confirmation par courriel et l'envoi) : sans lui, la base refuse
+      // l'alerte et la page ne promet rien. La base la dépose de toute façon en attente (jamais confirmée)
       const { error } = await deposer('crescite_alertes_tournee', {
         email: mailVal,
-        code_postal: cpVal,
-        commune: cpVal,
+        ...secteur,
         spectacle_id: s && s.id != null ? s.id : null,
-        lat: coords ? coords.lat : null,
-        lon: coords ? coords.lon : null
+        lat: ici ? ici.lat : null,
+        lon: ici ? ici.lon : null,
+        confirme_le: null
       });
-      if (error) {
+      if (error && error.code === 'PT429' && error.message) {
+        // une limite de la base (cinq alertes par adresse) : son message dit laquelle
+        dire('err', esc(error.message));
+      } else if (error) {
         // rien n'est enregistré : on le dit, et on propose d'écrire au contact diffusion
         const lien = versContact(null, `${L.alerteTournee} – ${cpVal}`, [cpVal, s && s.titre].filter(Boolean).join(' · '));
-        msg.className = 'alerte-msg err';
-        msg.setAttribute('role', 'alert');
-        msg.innerHTML = `${esc(L.alerteNonEnregistree)}${lien ? ` ${lien}` : ''}`;
+        dire('err', `${esc(L.alerteNonEnregistree)}${lien ? ` ${lien}` : ''}`);
       } else {
-        msg.className = 'alerte-msg ok';
-        msg.setAttribute('role', 'status');
-        msg.innerHTML = `✓ ${remplir(L.alerteInscrite, { adresse: esc(mailVal), secteur: esc(cpVal) })}`;
+        dire('ok', `✓ ${remplir(L.alerteInscrite, { adresse: esc(mailVal), secteur: esc(cpVal) })}`);
         f.reset();
-        coords = null;
-        if (btnGeo) { btnGeo.classList.remove('actif'); btnGeo.querySelector('span').textContent = L.meGeolocaliser || 'Me géolocaliser'; }
+        oublierIci();
       }
-      msg.hidden = false;
       if (btnSub) btnSub.disabled = false;
     });
   }
@@ -2421,7 +2667,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         <div class="alerte-boite">
           <span class="alerte-badge">PROXIMITÉ</span>
           <h2 class="titre-bloc" id="h-alerte">${esc(L.alerteTournee || 'Être prévenu du prochain passage')}</h2>
-          <p class="alerte-desc">${esc(L.alerteTourneeDesc || 'Recevez un courriel ou une notification dès qu’une représentation est confirmée près de chez vous.')}</p>
+          <p class="alerte-desc">${esc(L.alerteTourneeDesc || 'Recevez un courriel dès qu’une représentation est confirmée près de chez vous.')}</p>
           <form id="f-alerte" class="alerte-form" onsubmit="return false;">
             <div class="alerte-champs">
               <div class="alerte-geo-grp">
@@ -2441,6 +2687,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
                 ${FLECHE}
               </button>
             </div>
+            <p class="alerte-usage">${esc(L.alerteUsage || 'Votre adresse ne sert qu’à cette alerte, et chaque courriel contient un lien pour vous désinscrire.')}</p>
             <div id="alerte-msg" class="alerte-msg" hidden aria-live="polite"></div>
           </form>
         </div>

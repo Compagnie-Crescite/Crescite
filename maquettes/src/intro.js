@@ -12,6 +12,11 @@
                D.site.couleurSaison : règle 22 du contrat)
      mot     : false pour la pieuvre seule, sans « crescite »
      sortie  : 'zoom' (par défaut : le site apparaît à travers le logo qui grossit) ou 'fondu'
+     devient : une fonction qui rend la place de la pieuvre de la page, { x, y, s } : l'origine du dessin (les coordonnées
+               de D.logo et de D.arms) à l'écran, en px, et son échelle ; au départ, le logo ne grossit plus : il glisse et
+               se pose à cette place (ses tentacules battent une fois en route, ses ondes s'apaisent, le mot s'efface, le
+               fond s'éteint sur la page), et la page dessine sa pieuvre au même endroit (apres). Si elle rend null, le
+               départ est celui de sortie. Absente : rien ne change.
      classe  : une classe en plus sur .intro, pour l'habiller en CSS (.intro, .intro-logo, .intro-indice)
      apres   : appelée quand le site est révélé (le focus va ensuite au titre h1 de la page)
    INTRO.ouverte()  vrai tant que l'ouverture est affichée ; l'évènement « intro:fin » est émis sur window à la fin
@@ -127,14 +132,15 @@ const INTRO = (() => {
     Object.assign(b.style, { left: `${cx - bw * s0 / 2}px`, top: `${cy - bh * s0 / 2}px`, width: `${bw * s0}px`, height: `${bh * s0}px` });
   }
   // s : échelle en plus de s0 ; aG, aD : rotation des tentacules (degrés) ; ondes : ampleur des ondulations ;
-  // flot : défilement des ondes ; vers : 0 → 1, la cible du zoom glisse vers le centre de l'écran
-  function poser({ s, aG, aD, ondes, flot, vers, rot = 0 }) {
-    const { s0, cx, cy, bx, by, bw, bh, W, H } = geo, S = s0 * s;
+  // flot : défilement des ondes ; vers : 0 → 1, la cible du zoom glisse vers le centre de l'écran ;
+  // abs : { S, ex, ey }, l'échelle et la place de la cible à l'écran, données telles quelles (le logo qui devient la pieuvre)
+  function poser({ s, aG, aD, ondes, flot, vers, rot = 0, abs = null }) {
+    const { s0, cx, cy, bx, by, bw, bh, W, H } = geo, S = abs ? abs.S : s0 * s;
     const centre = [bx + bw / 2, by + bh / 2];
     const cible = opts.tache ? centre : CIBLE;
     // position écran de la cible : celle du logo centré, puis glisse vers le centre de l'écran
     const ex0 = cx + (cible[0] - centre[0]) * s0, ey0 = cy + (cible[1] - centre[1]) * s0;
-    const ex = ex0 + (W / 2 - ex0) * vers, ey = ey0 + (H / 2 - ey0) * vers;
+    const ex = abs ? abs.ex : ex0 + (W / 2 - ex0) * vers, ey = abs ? abs.ey : ey0 + (H / 2 - ey0) * vers;
     const t = `translate(${ex.toFixed(2)} ${ey.toFixed(2)}) rotate(${rot.toFixed(2)}) scale(${S.toFixed(5)}) translate(${-cible[0]} ${-cible[1]})`;
     el.querySelectorAll('.intro-monde').forEach(g => {
       g.setAttribute('transform', t);
@@ -167,6 +173,8 @@ const INTRO = (() => {
     cancelAnimationFrame(raf);
     el.classList.add('part');
     if (!mouvement() || opts.sortie === 'fondu') return fondu(mouvement() ? 520 : 320);
+    const place = opts.devient && opts.devient();
+    if (place) return devenir(place);
     const T0 = performance.now(), TC = 520, TZ = 1250, trou = el.querySelector('[data-role="trou"]'), dessinG = el.querySelector('[data-role="dessin"]');
     const flot0 = 0;
     const pas = now => {
@@ -187,6 +195,29 @@ const INTRO = (() => {
         if (v > .78) el.style.opacity = String(1 - ease.in(clamp((v - .78) / .22)));
         if (v >= 1) return finir();
       }
+      raf = requestAnimationFrame(pas);
+    };
+    raf = requestAnimationFrame(pas);
+  }
+  // le logo devient la pieuvre de la page (opts.devient) : sans grossir, il glisse et se pose à sa place, relue à chaque
+  // image (la page peut se mettre en page pendant ce temps) ; ses tentacules battent une fois en route, ses ondes
+  // s'apaisent, le mot (et la tache) s'effacent, le fond s'éteint et découvre la page ; à l'arrivée il est exactement la
+  // pieuvre de la page, qui prend le relais (apres)
+  function devenir(place) {
+    const T0 = performance.now(), TD = 1150, { s0, cx, cy, bx, by, bw, bh } = geo;
+    const centre = [bx + bw / 2, by + bh / 2], cible = opts.tache ? centre : CIBLE;
+    const ex0 = cx + (cible[0] - centre[0]) * s0, ey0 = cy + (cible[1] - centre[1]) * s0;
+    const fondG = el.querySelector('.intro-scene > g[mask]'), passent = el.querySelectorAll('[data-role="dessin"] .i-mot, [data-role="dessin"] .i-tache');
+    let c = place;
+    const pas = now => {
+      const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));
+      c = opts.devient() || c;
+      const S = Math.exp(Math.log(s0) + u * (Math.log(c.s) - Math.log(s0)));
+      poser({ aG: 7 * bat, aD: -7 * bat, ondes: 5 * (1 - u), flot: (now - T0) * .05,
+        abs: { S, ex: ex0 + (c.x + cible[0] * c.s - ex0) * u, ey: ey0 + (c.y + cible[1] * c.s - ey0) * u } });
+      passent.forEach(n => { n.style.opacity = String(1 - ease.out(clamp(v * 2.2))); });
+      if (fondG) fondG.style.opacity = String(1 - ease.inOut(clamp((v - .2) / .65)));
+      if (v >= 1) return finir();
       raf = requestAnimationFrame(pas);
     };
     raf = requestAnimationFrame(pas);

@@ -298,16 +298,19 @@ LIBELLES = {
     "modeNuit": "Mode nuit", "jour": "Jour", "nuit": "Nuit",
     # alertes de proximité (chantier 1)
     "alerteTournee": "Être prévenu du prochain passage",
-    "alerteTourneeDesc": "Recevez un courriel ou une notification dès qu'une représentation est confirmée près de chez vous.",
+    "alerteTourneeDesc": "Recevez un courriel dès qu’une représentation est confirmée près de chez vous.",
     "meGeolocaliser": "Me géolocaliser",
     "codePostalOuCommune": "Code postal ou ville",
     "rayonKm": "Rayon",
     "mInscrire": "M’inscrire à l’alerte",
     "tousSpectacles": "Tous les spectacles",
     # ce que l'alerte et la demande de devis répondent : enregistrées dans la base, ou pas (alors on écrit au contact
-    # diffusion, D.site.programmation.contact) ; {adresse}, {secteur}, {lien} : ce que la page y met
-    "alerteInscrite": "Inscription enregistrée ! Vous serez averti(e) à l’adresse {adresse} dès qu’une date sera confirmée dans votre secteur ({secteur}).",
+    # diffusion, D.site.programmation.contact) ; {adresse}, {secteur}, {lien} : ce que la page y met. Une alerte ne compte
+    # qu'une fois confirmée depuis le courriel envoyé à l'adresse (onzième script SQL) : la page le dit, rien de plus
+    "alerteInscrite": "Alerte enregistrée. Elle s’activera quand vous l’aurez confirmée depuis le courriel envoyé à {adresse} ; vous recevrez alors les dates confirmées dans votre secteur ({secteur}).",
     "alerteNonEnregistree": "Votre inscription n’a pas pu être enregistrée. Écrivez-nous directement :",
+    "alerteUsage": "Votre adresse ne sert qu’à cette alerte, et chaque courriel contient un lien pour vous désinscrire.",
+    "alerteSecteurInconnu": "Ce secteur est introuvable : indiquez un code postal (5 chiffres), ou utilisez « Me géolocaliser ».",
     "demandeTransmise": "Demande transmise avec succès !",
     "recapitulatifMessagerie": "Vous pouvez également {lien} avec le récapitulatif.",
     "ouvrirMessagerie": "ouvrir votre messagerie",
