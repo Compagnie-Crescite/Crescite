@@ -2681,6 +2681,7 @@ function vueEquipeFrais(tete, parties) {
           }).join('') : '<tr><td colspan="8" class="vide">Aucune note de frais enregistrée.</td></tr>'}
         </tbody>
       </table>
+      </div>
     </div>
   `;
   cadre('equipe', html);
