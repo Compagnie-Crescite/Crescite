@@ -1412,6 +1412,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .frise .frise-mois-nom { font: italic 500 .92rem/1.1 var(--serif); }
 .frise .frise-an { font: 500 .72rem/1.3 var(--sans); letter-spacing: .06em; }
 .frise .frise-aujourdhui-nom { font: 600 .66rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+/* (« aujourd'hui » paraît avec sa frise, d'un fondu bref et sans attendre l'axe : il se lit dès que la frise est à l'écran) */
+.frise[data-frise].est-vue .frise-aujourdhui { animation-duration: .25s; animation-delay: 0s; }
 .frise .frise-bulle { font: 400 .86rem/1.4 var(--sans); box-shadow: 0 14px 30px -14px rgba(29, 20, 24, .55); }
 .frise .frise-bulle b { font: italic 500 1.08rem/1.2 var(--serif); }
 .frise .frise-grappe-n { font-family: var(--sans); }
