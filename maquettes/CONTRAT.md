@@ -1,4 +1,4 @@
-# Contrat « trois entrées, un univers par spectacle » (v3 ; remplace le contrat « le texte d'origine »)
+# Contrat « les saisons, un univers par spectacle » (v4 : la règle 21 remplace la navigation par trois entrées)
 
 Le client (Adrien, qui reprend l'informatique de la compagnie Crescite) demande, pour TOUTES les propositions :
 1. « En t'inspirant de ce dossier [le dossier scolaire Bérénice 2026 de la compagnie] et des pages de mon site
@@ -475,6 +475,85 @@ imaginatif. Dans le style de chaque maquette. »
   `maquettes/src/troupe.js` (TROUPE) : les catégories, les places des personnes, les liens entre leurs places, les icônes.
 - Édition sur place : `data-edit="site.troupe.titre"` et les titres des catégories.
 
+## Règle 21 : la navigation par les saisons (v4, demande du client ; remplace les règles 2 et 3 là où elles diffèrent)
+« Le menu, ça doit être les saisons, au pluriel, où tu as la saison en cours, les prochaines dates, évidemment, avec un
+mode de sélection, avec une timeline, pas par projet, mais avec des couleurs différentes par projets, une timeline assez
+graphique, et toutes les dates. Et aussi les saisons passées sur cette page-là, avec les cartes. Il faut supprimer le
+parcours je suis un établissement, je viens voir un spectacle, et le menu devient vraiment les saisons, les spectacles,
+la compagnie, l'espace professionnel. Ensuite, on garde par spectacle le fait que je viens voir le spectacle, je veux le
+programmer, je représente un établissement scolaire. » Et : « Sur la page des spectacles qui ne sont plus en tournée, tu
+ne mets pas le parcours programmer ou établissement scolaire, tu mets juste la présentation du spectacle, le bilan des
+dates passées avec une belle carte, et les éventuelles actions culturelles qui ont été menées. »
+
+Partout dans ce contrat, lis désormais `#/saisons` pour `#/voir`, `#/espace-pro/programmer` pour `#/programmer` et
+`#/espace-pro/etablissement` pour `#/etablissement` (règles 10, 13, 14, 17…).
+
+**A. Le menu (remplace la règle 2).**
+- Les données : `D.site.menu` = `[{cle, texte, court, href}]`, dans l'ordre : les saisons (`#/saisons`), les spectacles
+  (`#/spectacles`), la compagnie (`#/compagnie`), l'espace pro (`#/espace-pro`). C'est TOUTE la navigation première :
+  dans l'en-tête de chaque page, en vrais liens, dans le style de ta maquette ; au téléphone, à portée sans ouvrir de
+  menu (une barre fixe avec `court`, par exemple). L'élément courant porte `aria-current="page"` (un seul par vue) ; sur
+  la page d'un spectacle, « les spectacles » est mis en évidence (`aria-current="true"`), dans une sous-page de l'espace
+  pro, « l'espace pro ».
+- Les trois entrées (« Je viens voir un spectacle », « Je souhaite programmer », « Je représente un établissement
+  scolaire ») disparaissent de l'en-tête, des menus, de l'accueil et du pied de page. Elles ne restent que sur la page
+  d'un spectacle en tournée, comme ses trois onglets (B). « Contact » reste dans le pied de page.
+- `D.site.redirections` mène les anciennes adresses aux nouvelles (`location.replace`) : `#/voir` et `#/agenda` →
+  `#/saisons` ; `#/programmer` → `#/espace-pro/programmer` ; `#/etablissement` et `#/actions-culturelles` →
+  `#/espace-pro/etablissement`. `#/agenda/<saison>` mène à `#/saisons/<saison>`.
+- `document.title` : « Les saisons - crescite », « Je souhaite programmer - crescite »… (le h1 de la vue).
+
+**B. Les vues (remplacent celles de la règle 3 qui changent ; les autres restent).**
+- **Accueil `#/`** : l'ouverture (règle 6), puis ton concept d'accueil, sans le choix entre trois entrées. Son cœur : la
+  saison en cours (ses prochaines dates, un lien vers `#/saisons`) et les spectacles dans leurs univers ; puis, dans
+  l'ordre que tu veux, la carte et les remerciements aux donateurs (discrets).
+- **`#/saisons` « Les saisons »** (h1 = `D.site.menu[0].texte`) : TOUT l'agenda, sur une page.
+  1. La saison en cours (`D.site.saisons[0]`, son titre) :
+     - **les prochaines dates** (`libelles.prochainesDates`), avec le mode de sélection de la règle 17 : chaque date tout
+       public est un bouton qui ouvre sa carte de réservation sur place ; une date scolaire est marquée
+       `libelles.scolaire`, sans bouton de réservation ;
+     - **la frise de la saison** : une frise chronologique GRAPHIQUE de toutes les dates de la saison (passées et à
+       venir), sur une seule ligne du temps (pas une ligne par spectacle), chaque date à la COULEUR DE SON SPECTACLE
+       (couleur lisible tirée de son univers), avec une légende des spectacles (leurs titres) ; « aujourd'hui » marqué ;
+       choisir une date de la frise la choisit dans la liste (et inversement). L'outil commun `FRISE` (`frise.js`) peut
+       servir ; habille-la dans ton style ;
+     - **toutes les dates de la saison** (`libelles.toutesLesDates`), dans l'ordre chronologique, passées comprises, avec
+       la carte de la saison.
+  2. **Les saisons passées** (`libelles.saisonsPassees`), sur la même page, de la plus récente à la plus ancienne :
+     chacune annoncée par sa petite carte (`CARTE.saison(s)`, dans ton style) et son titre, FERMÉE au départ (elle
+     s'ouvre d'un geste, son contenu ne se dessine qu'à l'ouverture), ses dates de la plus récente à la plus ancienne.
+     L'index des saisons, le filtre par spectacle et la recherche par commune de la règle 10 portent sur toute la page.
+  `#/saisons/<saison>` ouvre cette saison et y mène (h1 inchangé).
+- **`#/spectacles`** : comme avant (les spectacles dans leurs univers) ; un spectacle en tournée est signalé
+  (`libelles.enTournee`).
+- **La page d'un spectacle EN TOURNÉE** (`enTournee`) **ou EN CRÉATION** (`statut`, Cassandres) : comme avant, ses trois
+  onglets `#/spectacle/<slug>/<voir|programmer|etablissement>` (règles 8, 13, 14, 17), la mémoire de l'onglet comprise.
+- **La page d'un spectacle qui N'EST PLUS en tournée** (ni `enTournee` ni `statut` : aujourd'hui La Folle Idée et
+  Macbeth – Fatum) : UNE page, `#/spectacle/<slug>`, SANS onglets (aucun lien vers ses adresses programmer ou
+  établissement ; elles, et `…/voir`, mènent à `#/spectacle/<slug>` par remplacement). Dans son univers :
+  - la présentation : l'en-tête d'univers, `affirmations`, `texte`, `photos`, `citations`, `video`, la fiche (`fiche`,
+    `avec`, `production`, `mentions`) et sa distribution (règle 12) ;
+  - **le bilan** (`libelles.bilan`) : ses dates passées, toutes saisons (de `D.saisons`), avec une BELLE carte de ses
+    tournées (tous ses lieux), et des chiffres tirés des données seules (le nombre de dates, de communes, les saisons) ;
+    les dates par saison, de la plus récente à la plus ancienne ;
+  - **les actions culturelles menées** (`libelles.actionsMenees`), s'il y en a : son `actionCulturelle` (sans
+    « à compléter » ici : sans texte, la rubrique ne paraît pas) et ses dates scolaires passées.
+- **`#/espace-pro`** (règle 16, étendue) : le h1 et le texte, puis DEUX pages pour les professionnels et les enseignants
+  (avant les trois portes) : « Programmer » vers `#/espace-pro/programmer` et « Établissements scolaires » vers
+  `#/espace-pro/etablissement` (titres : le `court` de `D.site.entrees` programmer et etablissement), puis les trois portes.
+- **`#/espace-pro/programmer`** (h1 = `texte` de l'entrée programmer) : le contenu de l'ancien `#/programmer` (règles 3 et
+  13), sans les dates tout public, qui sont dans les saisons. **`#/espace-pro/etablissement`** (h1 = `texte` de l'entrée
+  etablissement) : le contenu de l'ancien `#/etablissement` (règles 3 et 14).
+- `#/compagnie`, `#/contact`, les pages légales et le pied de page (les quatre éléments du menu, contact, liens légaux) :
+  comme avant.
+
+**C. Le vérificateur** (`maquettes/onglets.mjs`) contrôle : les quatre éléments du menu à portée sur chaque vue (et au
+téléphone), un seul `aria-current="page"`, l'absence des trois entrées dans l'en-tête, l'accueil et le pied ; sur
+`#/saisons` : une date à venir, les boutons de date (règle 17), la frise (`.frise[data-frise]`) avec des marques de
+plusieurs couleurs et la légende, le titre « Saison 2019-2020 » dans les saisons passées, fermées au départ, chacune avec
+sa carte ; la page de La Folle Idée sans onglets, avec son bilan et sa carte ; les sous-pages de l'espace pro ; les
+redirections.
+
 ## Les contrôles des règles 17 à 20
 Le vérificateur (`maquettes/onglets.mjs`) ne contrôle chaque règle que si sa variable d'environnement est posée
 (`REGLE17=1`, `REGLE18=1`, `REGLE19=1`, `REGLE20=1`), le temps que toutes les maquettes l'aient.
@@ -484,8 +563,8 @@ Le vérificateur (`maquettes/onglets.mjs`) ne contrôle chaque règle que si sa 
   node maquettes/onglets.mjs <ton dossier> mNN
 Le rapport liste chaque vue puis les anomalies : il ne doit en rester aucune (lignes sans « · »), y compris « texte absent
 des sources », « attendu mais absent », « ne devrait pas apparaître », les redirections et « à portée ». Regarde au moins :
-l'intro, l'accueil, voir, programmer, établissement, berenice-voir, berenice-etablissement, cassandres, et voir au
-téléphone. Ne touche à aucun autre fichier que maquettes/src/mNN.html. Ni commit ni push.
+l'intro, l'accueil, les saisons, l'espace pro et ses deux pages, berenice-voir, berenice-etablissement, la page de La
+Folle Idée, cassandres, et les saisons au téléphone. Ne touche à aucun autre fichier que maquettes/src/mNN.html. Ni commit ni push.
 
 ## Rendu
-Un message final court : la navigation par entrées, comment les univers sont rendus, ce qui a été vérifié.
+Un message final court : la navigation par les saisons, comment les univers sont rendus, ce qui a été vérifié.

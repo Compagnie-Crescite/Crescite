@@ -207,26 +207,36 @@ COMMUNES_EN_PLUS = {
 # Les trois entrées, la navigation première : le site se lit selon qui le visite. Chacune a sa page, et chaque page
 # de spectacle se lit dans l'une des trois. L'espace pro à mot de passe disparaît : « Je souhaite programmer » le
 # remplace, ouvert à tous ; les actions culturelles passent dans « Je représente un établissement scolaire ».
+# (v4, règle 21 du contrat) Les trois entrées ne sont plus la navigation : elles restent les trois onglets de la page d'un
+# spectacle en tournée ; les pages générales « programmer » et « établissement » vivent dans l'espace pro, et « voir »
+# dans les saisons.
 ENTREES = [
-    {"cle": "voir", "texte": "Je viens voir un spectacle", "court": "Voir un spectacle", "href": "#/voir",
+    {"cle": "voir", "texte": "Je viens voir un spectacle", "court": "Voir un spectacle", "href": "#/saisons",
      "couleur": "#c2306f", "couleurVive": "#f07ab6"},
-    {"cle": "programmer", "texte": "Je souhaite programmer", "court": "Programmer", "href": "#/programmer",
+    {"cle": "programmer", "texte": "Je souhaite programmer", "court": "Programmer", "href": "#/espace-pro/programmer",
      "couleur": "#8a6410", "couleurVive": "#e8bc5c"},
     {"cle": "etablissement", "texte": "Je représente un établissement scolaire", "court": "Établissement scolaire",
-     "href": "#/etablissement", "couleur": "#127a6a", "couleurVive": "#5fd0bd"},
+     "href": "#/espace-pro/etablissement", "couleur": "#127a6a", "couleurVive": "#5fd0bd"},
 ]
-# Le menu second : ce qui ne dépend pas de qui visite.
+# Le menu, toute la navigation première (règle 21) : les saisons, les spectacles, la compagnie, l'espace pro. « Contact »
+# reste dans le pied de page (libelles.contact).
 MENU = [
-    {"id": "spectacles", "texte": "Spectacles", "href": "#/spectacles"},
-    {"id": "compagnie", "texte": "La compagnie", "href": "#/compagnie"},
-    {"id": "contact", "texte": "Contact", "href": "#/contact"},
+    {"cle": "saisons", "id": "saisons", "texte": "Les saisons", "court": "Saisons", "href": "#/saisons"},
+    {"cle": "spectacles", "id": "spectacles", "texte": "Les spectacles", "court": "Spectacles", "href": "#/spectacles"},
+    {"cle": "compagnie", "id": "compagnie", "texte": "La compagnie", "court": "Compagnie", "href": "#/compagnie"},
+    {"cle": "espacePro", "id": "espace-pro", "texte": "Espace pro", "court": "Espace pro", "href": "#/espace-pro"},
 ]
-# Les anciennes adresses, à rediriger : l'agenda vit dans « Je viens voir un spectacle ».
-REDIRECTIONS = {"#/agenda": "#/voir", "#/actions-culturelles": "#/etablissement"}
+# Les anciennes adresses, à rediriger (#/agenda/<saison> mène à #/saisons/<saison>, par le code des maquettes).
+REDIRECTIONS = {"#/voir": "#/saisons", "#/agenda": "#/saisons", "#/programmer": "#/espace-pro/programmer",
+                "#/etablissement": "#/espace-pro/etablissement", "#/actions-culturelles": "#/espace-pro/etablissement"}
 # Les seuls libellés écrits pour les maquettes : la navigation et les intitulés de rubrique des trois entrées.
 LIBELLES = {
     "enTournee": "EN TOURNÉE", "decouvrir": "découvrir", "actuellementEnTournee": "Actuellement en tournée",
-    "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison",
+    "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison", "contact": "Contact",
+    # les saisons (règle 21) et la page d'un spectacle qui n'est plus en tournée
+    "saisonEnCours": "La saison en cours", "prochainesDates": "Les prochaines dates", "toutesLesDates": "Toutes les dates",
+    "saisonsPassees": "Les saisons passées", "bilan": "Le bilan des dates passées",
+    "actionsMenees": "Les actions culturelles menées",
     "saisonsPrecedentes": "Saisons précédentes", "toutPublic": "Tout public", "scolaire": "Scolaire",
     "enEtablissement": "En établissement scolaire", "lieu": {"etablissement": "Dans l’établissement", "salle": "En salle"},
     "actionCulturelle": "Action culturelle", "aCompleter": "À compléter par la compagnie", "dispositifs": "Dispositifs",
