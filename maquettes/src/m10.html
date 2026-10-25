@@ -1032,7 +1032,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .frise[data-frise] .frise-point.est-duree > .frise-repere::before { height: 8px; border-radius: 4px; background: var(--fr-c, currentColor); }
 /* une semaine de résidence (règle 23) : le signe de FRISE, un carré évidé ; une période, en pointillé */
 .frise[data-frise] .frise-point.est-residence:not(.est-duree) > .frise-repere::before { width: 11px; height: 11px; border-radius: 2px; background: var(--fr-fond); box-shadow: inset 0 0 0 2px var(--fr-c, currentColor), 0 0 0 2px var(--fr-fond); }
-.frise[data-frise] .frise-point.est-duree.est-residence > .frise-repere::before { background: repeating-linear-gradient(90deg, var(--fr-c, currentColor) 0 5px, transparent 5px 9px); }
+.frise[data-frise] .frise-point.est-duree.est-residence > .frise-repere::before { width: auto; background: repeating-linear-gradient(90deg, var(--fr-c, currentColor) 0 5px, transparent 5px 9px); }
 .frise[data-frise] .frise-point > .frise-repere:is(:hover, :focus-visible)::before, .frise[data-frise] .frise-point:is(.est-allume, .est-focus) > .frise-repere::before { scale: 1.4; }
 .frise[data-frise] .frise-grappe > span { width: 24px; height: 24px; margin: -12px 0 0 -12px; box-shadow: 0 0 0 2px var(--fr-fond); transition: scale .18s var(--k-souple); }
 .frise[data-frise] .frise-grappe.est-passe > span { opacity: 1; filter: saturate(.5); }

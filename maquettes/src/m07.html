@@ -2015,7 +2015,9 @@ html[data-theme="jour"] .intro.m07-intro .intro-indice{color:var(--lumiere)}
     const n = new Map(), rs = new Map(), vus = new Map();
     pts.forEach(p => { const m = p.residence ? rs : n; m.set(p.cle, (m.get(p.cle) || 0) + 1); });
     tous.forEach(p => { if (!vus.has(p.cle)) vus.set(p.cle, p); });
-    const rang = c => { const j = D.shows.findIndex(x => x.slug === c); return j < 0 ? 999 : j; };
+    // (dans l'ordre des puces : les spectacles en tournée d'abord, règle 23)
+    const ordre = [...D.shows.filter(x => x.enTournee), ...D.shows.filter(x => !x.enTournee)];
+    const rang = c => { const j = ordre.findIndex(x => x.slug === c); return j < 0 ? 999 : j; };
     return [...vus.values()].sort((a, b) => rang(a.cle) - rang(b.cle)).map(p => { const k = n.get(p.cle) || 0, vide = !k && !rs.get(p.cle);
       return `<li class="fs7-l${vide ? ' est-vide' : ''}" data-cle="${esc(p.cle)}" style="--c:${p.couleur}"><i aria-hidden="true"></i><span>${esc(p.titre)}${k || vide ? `&nbsp;<b>${k}</b>` : ''}</span></li>`; }).join('')
       + (tous.some(p => p.scolaire) && LIB.scolaire ? `<li class="fs7-l fs7-sc"><i aria-hidden="true"></i><span>${esc(LIB.scolaire)}</span></li>` : '')

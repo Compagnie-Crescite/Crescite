@@ -1949,7 +1949,7 @@ a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
       const tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
       const eff = [termes().length && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l != null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
       return `<button type="button" class="idx-tout" aria-expanded="${tout}" aria-label="${esc(L.saisonsPassees)}">${tout ? I_HAUT : I_BAS}</button>
-        <ul>${eff.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${I_CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => `<li><button type="button" class="idx" data-k="${esc(s.k)}" aria-controls="sai-${esc(s.k)}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}${nJouees(rows) ? `<small>${nJouees(rows)}</small>` : ''}</small></button></li>`).join('')}</ul>`;
+        <ul>${eff.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${I_CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => `<li><button type="button" class="idx" data-k="${esc(s.k)}" aria-controls="sai-${esc(s.k)}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}${nJouees(rows) ? `<small>${nJouees(rows)}</small>` : ''}</button></li>`).join('')}</ul>`;
     };
     // la frise de la saison : toutes ses dates (D.saisons), passées et à venir, à la couleur de leur spectacle (éclaircie sur la tache) ;
     // une date connue au mois près se pose au milieu de son mois

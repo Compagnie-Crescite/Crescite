@@ -424,6 +424,14 @@ html[data-theme="nuit"] .pv{background:var(--pv-fond-n,var(--pv-fond,var(--paper
 .sai-page{margin-top:24px}
 .sa-etat,.sa-scol{font:600 .6875rem/1.6 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--rouge-ed)}
 .sa-scol{color:var(--ink2)}
+/* une semaine de résidence (règle 23) : « Résidence », comme « Scolaire », son signe de frise devant (un carré évidé, un point
+   au cœur : le plein et l'évidé disent déjà « à venir » et « jouée ») */
+.sa-res{display:flex;align-items:center;gap:8px;font:600 .6875rem/1.6 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+.sa-res::before,.v-leg-r .v-leg-m{content:"";flex:none;width:9px;height:9px;background:linear-gradient(currentColor,currentColor) center/3px 3px no-repeat;box-shadow:inset 0 0 0 1.5px currentColor}
+.v-leg-r{display:flex;align-items:center;gap:9px;margin:0;padding:4px 0 2px;font:600 .6875rem/1.6 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+.v-leg-r .v-leg-m{width:10px;height:10px;color:var(--ink)}
+.sh .v-leg-r .v-leg-m{color:var(--acc)}
+.sh-frise+.v-leg-r{margin:-18px 0 26px}
 /* (dans l'univers d'un spectacle, son bilan : l'état d'une date prend la petite couleur de l'univers, lisible sur son papier) */
 .sh .sa-etat{color:var(--acc-s)}
 
@@ -836,9 +844,12 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
 .frise .frise-point.est-passe:is(.est-allume,.est-focus)>.frise-repere::before{opacity:1}
 .frise .frise-point.est-duree>.frise-repere::before{height:4px;border-radius:0}
 .frise .frise-point:is(.est-allume,.est-focus)>.frise-repere::before,.frise .frise-point>.frise-repere:hover::before{scale:1.4}
+/* une semaine de résidence (règle 23) : un carré évidé, un point au cœur ; une période, en pointillé */
+.frise .frise-point.est-residence:not(.est-duree)>.frise-repere::before{width:11px;height:11px;background:linear-gradient(var(--fr-c,var(--ink)),var(--fr-c,var(--ink))) center/3px 3px no-repeat,var(--fr-fond);box-shadow:inset 0 0 0 1.5px var(--fr-c,var(--ink)),0 0 0 2px var(--fr-fond)}
+.frise .frise-point.est-residence.est-duree>.frise-repere::before{background:repeating-linear-gradient(90deg,var(--fr-c,var(--ink)) 0 5px,transparent 5px 8px);box-shadow:none}
 /* la prochaine date : un cadre fin qui respire autour de son carré */
-.frise .frise-point.est-passe+.frise-point:not(.est-passe):not(.est-groupe):not(.est-duree)>.frise-repere::after,
-.frise .frise-points>.frise-point:first-child:not(.est-passe):not(.est-groupe):not(.est-duree)>.frise-repere::after{content:"";position:absolute;left:50%;top:50%;width:calc(var(--fr-point) + 8px);height:calc(var(--fr-point) + 8px);margin:calc(var(--fr-point) / -2 - 4px) 0 0 calc(var(--fr-point) / -2 - 4px);box-shadow:inset 0 0 0 1px var(--fr-c,var(--ink));animation:ed-respire 2.4s ease-in-out infinite;pointer-events:none}
+.frise .frise-point.est-passe+.frise-point:not(.est-passe):not(.est-groupe):not(.est-duree):not(.est-residence)>.frise-repere::after,
+.frise .frise-points>.frise-point:first-child:not(.est-passe):not(.est-groupe):not(.est-duree):not(.est-residence)>.frise-repere::after{content:"";position:absolute;left:50%;top:50%;width:calc(var(--fr-point) + 8px);height:calc(var(--fr-point) + 8px);margin:calc(var(--fr-point) / -2 - 4px) 0 0 calc(var(--fr-point) / -2 - 4px);box-shadow:inset 0 0 0 1px var(--fr-c,var(--ink));animation:ed-respire 2.4s ease-in-out infinite;pointer-events:none}
 .frise .frise-grappe>span{border-radius:0;background:var(--fr-fond);box-shadow:inset 0 0 0 1.5px var(--ink)}
 .frise .frise-grappe.est-passe>span{opacity:1;box-shadow:inset 0 0 0 1px var(--rule-s)}
 .frise .frise-grappe.est-passe .frise-grappe-n{color:var(--ink2)}
@@ -1711,17 +1722,24 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
   const couleurSp = slug => { const s = slug ? show(slug) : null; return s && slugSur(s.slug) ? `var(--c-${s.slug})` : 'var(--ink)'; };
   // une date à venir (D.dates), écrite comme l'agenda
   const repereProchaine = (d, couleur) => ({ id: cleProchaine(d), jour: d.iso, fin: d.fin, precision: d.precision, couleur: couleur || couleurSp(d.slug), titre: d.titre,
-    quand: d.ligneDate, l: d.l, scolaire: d.scolaire, annulee: annulee(d), etat: d.etat });
+    quand: d.ligneDate, l: d.l, scolaire: d.scolaire, residence: !!d.residence, annulee: annulee(d), etat: d.etat });
   // une ligne de l'agenda (D.saisons) : sa date vient de la base (iso, fin) ou de la ligne elle-même (cleDate)
   const repereLigne = (d, saison, i, slug, titre, couleur) => { const k = d.iso || cleDate(d, saison);
     return k ? { id: cleLigne(d, saison, i), jour: k, fin: d.fin || k, precision: d.precision, couleur: couleur || couleurSp(slug), titre,
-      quand: String(d.ligne || '').split(' — ')[0].trim(), l: d.l, scolaire: d.scolaire, annulee: annulee(d), etat: d.etat } : null; };
+      quand: String(d.ligne || '').split(' — ')[0].trim(), l: d.l, scolaire: d.scolaire, residence: !!d.residence, annulee: annulee(d), etat: d.etat } : null; };
+  // les représentations d'une date (une semaine de résidence n'en compte aucune, règle 23) ; le nombre de dates de lignes
+  const nbRep = dt => (dt.residence ? 0 : dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1));
+  const nDates = rows => rows.reduce((n, r) => n + (r.d.residence ? 0 : 1), 0);
+  // un spectacle qui a eu des semaines de résidence (sa frise les montre, au passé)
+  const aResidencesPassees = s => Object.values(D.saisons || {}).some(SA => (SA.spectacles || []).some(g => g.slug === s.slug && (g.dates || []).some(d => d.residence && (d.fin || d.iso || '~') < D.aujourdhui)));
+  // sous la frise d'un spectacle ou d'une saison qui a des semaines de résidence : leur signe, nommé (règle 23)
+  const legendeResidence = oui => (oui && lib().residence ? `<p class="v-leg-r"><span class="v-leg-m" aria-hidden="true"></span>${esc(lib().residence)}</p>` : '');
   // une saison en barre de frise ; son nom court, sous la barre, vient de ses années (« 16-17 »)
   const bandeSaison = (k, n) => ({ id: k, debut: `${k.slice(0, 4)}-09-01`, fin: `${k.slice(5)}-08-31`, titre: (D.saisons[k] || {}).titre || k, n, etiquette: `${k.slice(2, 4)}-${k.slice(7, 9)}` });
   // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
   function diffusion(s) {
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0);
+    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + nbRep(dt), 0), 0);
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
   }
@@ -1976,12 +1994,15 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     return { jour: `${y}-${p2(mm)}-01`, fin: `${y}-${p2(mm)}-${p2(new Date(Date.UTC(y, mm, 0)).getUTCDate())}`, precision: 'mois' };
   }
   // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » }
+  // (« 2020 — Rouen (76) » : l'année seule tient lieu de jour ; « mai-juin 2023 — … » : les deux mois ensemble)
+  const RE_DEUX_MOIS = new RegExp(`^(?:${MOIS_TOK})\\.?\\s*[-–]$`, 'i');
   function decoupeLigne(ligne) {
     const t = String(ligne || ''), m = t.match(RE_LIGNE);
-    if (!m) return { jour: '', mois: '', heure: '', lieu: t.trim() };
+    if (!m) { const a = t.match(/^\s*(\d{4})\s*(?:—|:)\s*([\s\S]*)$/); return a ? { jour: a[1], mois: '', heure: '', lieu: a[2].trim() } : { jour: '', mois: '', heure: '', lieu: t.trim() }; }
     const reste = m[3], k = reste.indexOf('—'), c = reste.search(/\s:\s/);
     const [h, l] = k >= 0 ? [reste.slice(0, k), reste.slice(k + 1)] : c >= 0 ? [reste.slice(0, c), reste.slice(c + 3)] : ['', reste];
     const net = x => x.replace(/^[\s:,–-]+|[\s:]+$/g, '');
+    if (RE_DEUX_MOIS.test(m[1].trim())) return { jour: m[1].trim() + m[2], mois: '', heure: net(h), lieu: net(l) };
     return { jour: m[1] || m[2], mois: m[2], heure: net(h), lieu: net(l) };
   }
   const titreMois = m => m ? `${MOIS_NOMS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}` : '';
@@ -2028,15 +2049,16 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
   const I_X = SVG('<path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>');
   const I_LOUPE = SVG('<circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>');
   // une ligne d'agenda : le jour, le mois et l'heure dessous, puis le lieu (lien s'il existe), le spectacle (sauf sur sa propre
-  // page : sansTitre), les précisions, l'état ; une date déjà jouée de la saison en cours, à l'encre seconde
+  // page : sansTitre), les précisions, l'état ; une date déjà jouée de la saison en cours, à l'encre seconde ; une semaine de
+  // résidence (règle 23) : « Résidence », comme « Scolaire », jamais réservable
   function ligneAgenda(r, sansTitre) {
     const { d, g } = r, s = g.slug && show(g.slug), p = decoupeLigne(d.ligne), det = (d.details || []).filter(x => x && x.texte);
-    return `<li class="ag-it${d.etat ? ' a-etat' : ''}${r.passe && r.sk === D.saison ? ' est-passe' : ''}" data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.id || cleLigne(d, r.sk, r.i))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${esc(g.slug || '')}"${s ? ` style="${styleIvoire(s)}"` : ''}>
-      ${r.suite ? '<p class="ag-d sans-j"></p>' : `<p class="ag-d${p.jour ? '' : ' sans-j'}"><span class="ag-j">${esc(p.jour)}</span>${p.mois ? `<span class="ag-m">${esc(p.mois)}</span>` : ''}${p.heure ? `<span class="ag-m ag-h">${esc(p.heure)}</span>` : ''}</p>`}
+    return `<li class="ag-it${d.etat ? ' a-etat' : ''}${r.passe && r.sk === D.saison ? ' est-passe' : ''}${d.residence ? ' est-residence' : ''}" data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.id || cleLigne(d, r.sk, r.i))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${esc(g.slug || '')}"${s ? ` style="${styleIvoire(s)}"` : ''}>
+      ${r.suite ? '<p class="ag-d sans-j"></p>' : `<p class="ag-d${p.jour ? '' : ' sans-j'}"><span class="ag-j">${esc(p.jour)}</span>${p.mois && p.mois !== p.jour ? `<span class="ag-m">${esc(p.mois)}</span>` : ''}${p.heure ? `<span class="ag-m ag-h">${esc(p.heure)}</span>` : ''}</p>`}
       <div class="ag-b">
         ${p.lieu ? `<p class="ag-lieu">${d.lien ? ext(d.lien, esc(p.lieu)) : esc(p.lieu)}</p>` : ''}
         ${r.suite || sansTitre === true ? '' : `<p class="ag-sp">${s ? `<a class="sp-t" href="${esc(hrefSp(s, d.scolaire ? 'etablissement' : 'voir'))}">${esc(r.titre)}</a>` : `<span>${esc(r.titre)}</span>`}</p>`}
-        ${d.etat ? `<p class="sa-etat">${esc(d.etat)}</p>` : ''}${d.scolaire ? `<p class="sa-scol">${esc(lib().scolaire)}</p>` : ''}
+        ${d.etat ? `<p class="sa-etat">${esc(d.etat)}</p>` : ''}${d.scolaire ? `<p class="sa-scol">${esc(lib().scolaire)}</p>` : ''}${d.residence ? `<p class="sa-res">${esc(lib().residence)}</p>` : ''}
         ${det.length ? `<ul class="ag-det">${det.map(x => `<li>${x.lien ? ext(x.lien, esc(x.texte)) : esc(x.texte)}</li>`).join('')}</ul>` : ''}
       </div></li>`;
   }
@@ -2062,9 +2084,13 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     const dates = D.dates || [], lieux = CARTE.saison(D.saison);
     const passe = retenu('agendaPasse', agendaPasse), lignes = retenu('saisonEnCours', saisonEnCours);
     RES = new Set(RS ? RS.dates().map(RS.cle) : []);
-    // les spectacles de la saison : la légende de sa frise (leur titre, le nombre de leurs dates), qui filtre la page
+    // les spectacles de la saison : la légende de sa frise (leur titre, le nombre de leurs dates, sans les semaines de
+    // résidence), qui filtre la page ; les spectacles en tournée d'abord, dans l'ordre de D.shows (règle 23), puis les autres
     const sps = [];
-    lignes.forEach(x => { let e = sps.find(y => y.cle === x.cle); if (!e) sps.push(e = { cle: x.cle, titre: x.titre, s: x.g.slug ? show(x.g.slug) : null, n: 0 }); e.n++; });
+    lignes.forEach(x => { let e = sps.find(y => y.cle === x.cle); if (!e) sps.push(e = { cle: x.cle, titre: x.titre, s: x.g.slug ? show(x.g.slug) : null, n: 0 }); if (!x.d.residence) e.n++; });
+    const tournee = (D.shows || []).filter(s => s.enTournee).map(s => s.slug), rang = e => { const i = tournee.indexOf(e.cle); return i >= 0 ? i : tournee.length; };
+    sps.splice(0, sps.length, ...sps.map((e, i) => [e, i]).sort((a, b) => rang(a[0]) - rang(b[0]) || a[1] - b[1]).map(x => x[0]));
+    const aResidences = lignes.some(x => x.d.residence);
     // l'état de la page : la recherche, le spectacle, la commune, les saisons passées ouvertes (#/saisons/<saison> : la sienne)
     if (!etatVue.voir) {
       const l0 = r && r.q && r.q.has('l') ? +r.q.get('l') : null;
@@ -2080,7 +2106,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     if (actif() && !F.avant) { F.avant = new Set(F.ouv); F.ouv = new Set(visibles().map(x => x.s.k)); }
     const lieuxDe = (s, rows) => {
       const parL = new Map();
-      rows.forEach(x => { if (x.d.l != null) { if (!parL.has(x.d.l)) parL.set(x.d.l, []); parL.get(x.d.l).push({ ...x.d, titre: x.titre, slug: x.g.slug, spectacle: x.titre }); } });
+      rows.forEach(x => { if (x.d.l != null && !x.d.residence) { if (!parL.has(x.d.l)) parL.set(x.d.l, []); parL.get(x.d.l).push({ ...x.d, titre: x.titre, slug: x.g.slug, spectacle: x.titre }); } });
       return s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l), n: parL.get(x.l).length }));
     };
     const corps = (s, rows) => { const lx = lieuxDe(s, rows);
@@ -2089,7 +2115,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     // (plein : son contenu tout de suite, s'il est ouvert ; sinon quand on s'en approche)
     const saisonHtml = ({ s, rows }, plein = true) => { const ouv = F.ouv.has(s.k);
       return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
-        <summary>${miniTrait(lieuxDe(s, rows))}<span class="sai-c"><h3 class="sai-t" data-mv-nom="saison-${esc(s.k)}">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="ss-lead" aria-hidden="true"></span><span class="sai-n"><b>${rows.length}</b>${I_CHEV}</span></summary>
+        <summary>${miniTrait(lieuxDe(s, rows))}<span class="sai-c"><h3 class="sai-t" data-mv-nom="saison-${esc(s.k)}">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="ss-lead" aria-hidden="true"></span><span class="sai-n">${nDates(rows) ? `<b>${nDates(rows)}</b>` : ''}${I_CHEV}</span></summary>
         <div class="sai-corps">${ouv && plein ? corps(s, rows) : ''}</div></details>`; };
     // les outils des saisons passées : les filtres actifs (pour les effacer), tout ouvrir ou tout fermer
     const outilsHtml = vis => {
@@ -2100,9 +2126,9 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     // la frise de la saison : toutes ses lignes, jouées (au trait) et à venir (pleines), chacune à la couleur de son spectacle ;
     // une ligne d'un mois entier en trait ; « aujourd'hui » de la couleur de la saison
     const reperesSaison = () => lignes.filter(x => x.b && garde(x)).map(x => ({ id: x.id, jour: x.b.jour, fin: x.b.fin, precision: x.b.precision, couleur: couleurSp(x.g.slug), titre: x.titre,
-      quand: String(x.d.ligne || '').split(' — ')[0].trim(), l: x.d.l, scolaire: x.d.scolaire, annulee: annulee(x.d), etat: x.d.etat }));
+      quand: String(x.d.ligne || '').split(' — ')[0].trim(), l: x.d.l, scolaire: x.d.scolaire, residence: !!x.d.residence, annulee: annulee(x.d), etat: x.d.etat }));
     // la frise des saisons passées : chaque saison et sa densité (les dates que le filtre garde)
-    const bandesSaisons = () => passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).reduce((acc, x) => acc + (x.d.nb_representations != null ? +x.d.nb_representations : (x.d.representations ? x.d.representations.length : 1)), 0)));
+    const bandesSaisons = () => passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).reduce((acc, x) => acc + nbRep(x.d), 0)));
     const signature = () => JSON.stringify([F.slug, F.l, F.q.trim()]);
     AGV = { F };
     AGV.brancher = sec => {
@@ -2238,12 +2264,12 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
       // (une tâche courte après l'autre : toutes les dates, puis les saisons passées et la saison de l'adresse)
       if (SUR_PLACE || actif()) { remplirToutes(); dessineAgenda(); if (aller) ensuite(arriver); } else ensuite(() => { remplirToutes(); ensuite(() => { dessineAgenda(); arriver(); }); });
     };
-    const leg = sps.map(p => `<li><button type="button" class="v-leg-b" data-s="${esc(p.cle)}" aria-pressed="${p.cle === F.slug}"${p.s ? ` style="${styleIvoire(p.s)}"` : ''}><span class="v-leg-m" aria-hidden="true"></span><span class="v-leg-t${p.s ? ' sp-t' : ''}">${esc(p.titre)}</span><span class="v-leg-n">${p.n}</span></button></li>`).join('');
+    const leg = sps.map(p => `<li><button type="button" class="v-leg-b" data-s="${esc(p.cle)}" aria-pressed="${p.cle === F.slug}"${p.s ? ` style="${styleIvoire(p.s)}"` : ''}><span class="v-leg-m" aria-hidden="true"></span><span class="v-leg-t${p.s ? ' sp-t' : ''}">${esc(p.titre)}</span>${p.n ? `<span class="v-leg-n">${p.n}</span>` : ''}</button></li>`).join('');
     return `<section class="ag-tete sa-tete" aria-labelledby="sa-h">
         <h1 class="page-title" id="sa-h" tabindex="-1">${esc(M0.texte)}</h1>
         <div class="s0"><p class="s0-k">${esc(L.saisonEnCours)}</p><p class="s0-t"><span data-mv-nom="saison-${esc(D.saison)}">${esc(S0.titre)}</span></p></div>
         <div class="v-frise" id="v-frise"></div>
-        ${sps.length ? `<ul class="v-leg" aria-label="${esc(L.spectacles)}">${leg}</ul>` : ''}
+        ${sps.length ? `<ul class="v-leg" aria-label="${esc(L.spectacles)}">${leg}</ul>` : ''}${legendeResidence(aResidences)}
       </section>
       <section class="ag ag-sa" data-k="saisons" aria-label="${esc(S0.titre)}">
       <div class="ag-side"><div class="ag-side-in">
@@ -2705,7 +2731,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
       // prochaine est choisie d'office, sa carte dessous, puis la carte de France (RESERVER.monter : reserver())
       const lieux = sp.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length);
       C.push({ id: 'dates', titre: T.titre || L.actuellementEnTournee, edit: T.titre ? `${P(s)}.tournee.titre` : null,
-        html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div>
+        html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div>${legendeResidence(aResidencesPassees(s))}
           <div class="rs-zone" data-slug="${esc(s.slug)}"><p class="kicker rs-k-bande" id="rs-k">${esc(L.choisirUneDate)}</p>
             ${RS.bande(res, { attributs: ` aria-labelledby="rs-k" data-agenda="${esc(s.slug)}"`, bouton: d => ({ attributs: ` data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}"${d.l != null ? ` data-l="${d.l}"` : ''}` }) })}
             <div class="rs-carte" id="rs-carte"></div></div>
@@ -2713,14 +2739,14 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     } else if (pub.length) {
       const lieux = sp.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length);
       C.push({ id: 'dates', titre: T.titre || L.actuellementEnTournee, edit: T.titre ? `${P(s)}.tournee.titre` : null,
-        html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div><ol class="ag-list tour-list" data-agenda="${esc(s.slug)}">${pub.map(d => dateHTML(d, null)).join('')}</ol>${carte({ lieux, passe: sp.passe, mode: lieux.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, legende: legendeDe(lieux, null), index: lieux.length <= 22, titre: `${T.titre || L.actuellementEnTournee}, ${s.titre}` })}` });
+        html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div>${legendeResidence(aResidencesPassees(s))}<ol class="ag-list tour-list" data-agenda="${esc(s.slug)}">${pub.map(d => dateHTML(d, null)).join('')}</ol>${carte({ lieux, passe: sp.passe, mode: lieux.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, legende: legendeDe(lieux, null), index: lieux.length <= 22, titre: `${T.titre || L.actuellementEnTournee}, ${s.titre}` })}` });
     } else if (s.statut && T.texte) {
       C.push({ id: 'dates', titre: T.titre || s.statut, edit: T.titre ? `${P(s)}.tournee.titre` : null,
         html: `<p class="tour-texte"${ed(`${P(s)}.tournee.texte`)}>${esc(T.texte)}</p><ol class="ag-list tour-list" data-agenda="${esc(s.slug)}"></ol>${carte({ mode: 'nu', k: 1.5, interactif: false, pousse: false, spectacle: s, titre: T.titre || s.titre })}` });
     } else {
       // sans date à venir : pas de « Actuellement en tournée », la carte des tournées passées
       C.push({ id: 'dates', titre: L.lieuxDiffusion,
-        html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div><ol class="ag-list tour-list" data-agenda="${esc(s.slug)}"></ol>${sp.passe.length ? carte({ lieux: sp.passe, mode: sp.passe.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, passees: true, legende: legendeDe(sp.passe, null, d => d.ligne), index: sp.passe.length <= 22, titre: `${L.lieuxDiffusion}, ${s.titre}` }) : ''}` });
+        html: `<div class="sh-frise" data-tournee="${esc(s.slug)}"></div>${legendeResidence(aResidencesPassees(s))}<ol class="ag-list tour-list" data-agenda="${esc(s.slug)}"></ol>${sp.passe.length ? carte({ lieux: sp.passe, mode: sp.passe.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, passees: true, legende: legendeDe(sp.passe, null, d => d.ligne), index: sp.passe.length <= 22, titre: `${L.lieuxDiffusion}, ${s.titre}` }) : ''}` });
     }
     const dist = distributionHTML(s, true, true);
     if (dist) C.push({ id: 'distribution', titre: L.distribution, html: dist });
@@ -2843,15 +2869,16 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
   }
   function chBilan(s) {
     const L = lib(), G = datesPassees(s); if (!G.length) return null;
-    const pr = s.programmer || {}, jouees = G.flatMap(g => g.rows).filter(r => !r.suite && !annulee(r.d)), sp = CARTE.spectacle(s.slug);
-    const chiffres = [[jouees.length, L.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes], [G.length, L.saisons]].filter(([n, t]) => n && t);
+    // (les chiffres : ni les dates annulées, ni les semaines de résidence, règle 23 ; celles-ci restent dans ses dates, marquées)
+    const pr = s.programmer || {}, jouees = G.flatMap(g => g.rows).filter(r => !r.suite && !annulee(r.d) && !r.d.residence), sp = CARTE.spectacle(s.slug);
+    const chiffres = [[jouees.length, L.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes], [new Set(jouees.map(r => r.sk)).size, L.saisons]].filter(([n, t]) => n && t);
     const lx = sp.passe;
     return { id: 'bilan', titre: L.bilan, html: `${pr.representations ? `<p class="pr-rep"${ed(`${P(s)}.programmer.representations`)}>${nombre(pr.representations)}</p>` : ''}
       ${chiffres.length ? `<ul class="bl-n">${chiffres.map(([n, t]) => `<li><b class="nb">${n}</b><span class="kicker">${esc(t)}</span></li>`).join('')}</ul>` : ''}
-      <div class="sh-frise" data-tournee="${esc(s.slug)}"></div>
+      <div class="sh-frise" data-tournee="${esc(s.slug)}"></div>${legendeResidence(G.some(g => g.rows.some(r => r.d.residence)))}
       ${lx.length ? carte({ lieux: lx, mode: lx.length > 22 ? 'actif' : 'marges', k: 1.02, spectacle: s, passees: true, legende: legendeDe(lx, null, d => d.ligne), index: lx.length <= 22, classe: 'bl-carte', titre: `${L.bilan}, ${s.titre}` }) : ''}
       ${pr.lieux ? `<div class="bl-lieux"><p class="kicker">${esc(L.lieuxDiffusion)}</p><p class="pr-lieux"${ed(`${P(s)}.programmer.lieux`)}>${esc(pr.lieux)}</p></div>` : ''}
-      <div class="bl-saisons" data-agenda="${esc(s.slug)}">${G.map(g => `<section class="bl-s" aria-label="${esc(g.titre)}"><h3 class="bl-t"><span>${esc(g.titre)}</span><span class="bl-c">${g.rows.length}</span></h3><ol class="ag-list">${g.rows.map(r => ligneAgenda(r, true)).join('')}</ol></section>`).join('')}</div>` };
+      <div class="bl-saisons" data-agenda="${esc(s.slug)}">${G.map(g => `<section class="bl-s" aria-label="${esc(g.titre)}"><h3 class="bl-t"><span>${esc(g.titre)}</span>${nDates(g.rows) ? `<span class="bl-c">${nDates(g.rows)}</span>` : ''}</h3><ol class="ag-list">${g.rows.map(r => ligneAgenda(r, true)).join('')}</ol></section>`).join('')}</div>` };
   }
   // les actions culturelles menées : le type, le public, le lieu, les textes, la formule, les dispositifs, les photos, et les
   // dates scolaires passées ; sans rien de cela (« à compléter »), la rubrique ne paraît pas
