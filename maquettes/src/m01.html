@@ -734,8 +734,9 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 /* les fiches, les portraits, les cartouches : imprimés l'un après l'autre (sans glisser : l'encre ne bouge pas) */
 [data-mv="cascade"].mv-attente>*{transition:opacity .42s var(--m-encre);transition-delay:calc(var(--mv-delai,0ms) + min(var(--mv-i,0),12) * 55ms)}
 [data-mv="cascade"].mv-attente:not(.mv-vu)>*{opacity:0;transform:none}
-/* la page qu'on tourne : la nouvelle page se pose, le pli de la feuille passe dessus et s'efface */
-.pli{position:absolute;z-index:35;top:0;height:100vh;left:0;width:min(30vw,360px);pointer-events:none;opacity:0;
+/* la page qu'on tourne : la nouvelle page se pose, le pli de la feuille passe dessus et s'efface (fixé à l'écran : parti du bord
+   droit, il n'élargit jamais la page, même quand une machine lente le laisse encore hors de l'écran) */
+.pli{position:fixed;z-index:35;top:0;height:100vh;left:0;width:min(30vw,360px);pointer-events:none;opacity:0;
   background:linear-gradient(to right,transparent 0,color-mix(in srgb,var(--ink) 3%,transparent) 50%,color-mix(in srgb,var(--ink) 9%,transparent) 92%,transparent 100%)}
 .pli-retour{transform:scaleX(-1)}
 /* le filet de la rubrique où l'on lit, tiré à la règle sous son libellé, à l'encre de la saison (règle 22) ; celui d'une page qui
