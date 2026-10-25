@@ -304,7 +304,7 @@ ok(ma.sujet === 'Crescite près de chez vous : 2 dates' && ma.html.includes('Bé
 ok(/Vendredi|Samedi|Dimanche|Lundi|Mardi|Mercredi|Jeudi/.test(ma.html) && ma.html.includes('à 20h30') && ma.html.includes('https://billetterie.exemple.fr/rouen'),
   'le jour, l’heure de la séance et le lien de réservation de la date');
 ok(mg.html.includes('https://billetterie.exemple.fr/pont-audemer') && !mg.html.includes('14h'), 'une date mixte : le lien de sa séance tout public, sans la séance scolaire');
-ok(ma.html.includes('https://site.exemple.fr/Crescite/synthese.html#/spectacle/berenice/voir') && ma.html.includes('https://site.exemple.fr/Crescite/synthese.html#/voir')
+ok(ma.html.includes('https://site.exemple.fr/Crescite/synthese.html#/spectacle/berenice/voir') && ma.html.includes('https://site.exemple.fr/Crescite/synthese.html#/saisons')
    && ma.html.includes(`https://site.exemple.fr/Crescite/reponse/?alerte=${a.token_desinscription}&amp;action=arreter`)
    && ma.texte.includes(`reponse/?alerte=${a.token_desinscription}&action=arreter`) && !/<img/i.test(ma.html),
   'les liens du site (le spectacle, toutes les dates) et la désinscription ; aucune image de suivi');

@@ -245,7 +245,7 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   // au bas de chaque courriel d'alerte). La page montre l'alerte, le bouton agit ; ouvrir le lien ne fait rien
   const jetonAlerte = q.get('alerte') || '';
   const actionAlerte = q.get('action') === 'arreter' ? 'arreter' : 'confirmer';
-  const DATES = '../synthese.html#/voir';      // les dates de la compagnie, sur le site
+  const DATES = '../synthese.html#/saisons';   // les dates de la compagnie, sur le site
   let va = null;                               // l'alerte vue par son jeton : { alerte, attente, autres }
   let faitAlerte = null;                       // ce qui vient d'être fait : { action, n, liste, tout }
   const secteurs = xs => `<ul class="secteurs">${xs.map(a => `<li>${esc(a.secteur)}<span>${esc(a.spectacle || 'Tous les spectacles')}</span></li>`).join('')}</ul>`;

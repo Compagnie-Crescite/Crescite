@@ -186,7 +186,7 @@ function quandTexte(d: DateAlerte) {
   return fin ? `Du ${JOUR_SANS_AN.format(jourDe(d.debut))} au ${JOUR.format(jourDe(fin))}` : maj(JOUR.format(jourDe(d.debut)));
 }
 const lieuTexte = (d: DateAlerte) => (d.lieu ? [d.lieu.nom, `${d.lieu.commune}${d.lieu.departement ? ` (${d.lieu.departement})` : ''}`].filter(Boolean).join(', ') : '');
-const pageSpectacle = (d: DateAlerte) => (d.spectacle.page ? `${PAGES}#/spectacle/${encodeURIComponent(d.spectacle.slug)}/voir` : `${PAGES}#/voir`);
+const pageSpectacle = (d: DateAlerte) => (d.spectacle.page ? `${PAGES}#/spectacle/${encodeURIComponent(d.spectacle.slug)}/voir` : `${PAGES}#/saisons`);
 const bouton = (href: string, texte: string) => `<a href="${esc(href)}" style="display:inline-block;margin-top:8px;padding:9px 16px;border-radius:999px;background:#a3306b;color:#fff;text-decoration:none;font-weight:600">${esc(texte)}</a>`;
 const gabarit = (corps: string) => `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f4f6;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#1d1720">
 <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#fff;padding:28px 24px"><tr><td>
@@ -224,7 +224,7 @@ async function confirmation(id: number) {
 // le courriel d'une alerte : les dates de son secteur qu'elle n'a pas encore reçues
 async function ecrireAlerte(a: { id: number; email: string; jeton: string; secteur: Secteur; dates: DateAlerte[] }) {
   const dates = a.dates || [], n = dates.length, s = a.secteur, secteur = secteurTexte(s);
-  const arret = `${SITE}/reponse/?alerte=${a.jeton}&action=arreter`, toutes = `${PAGES}#/voir`;
+  const arret = `${SITE}/reponse/?alerte=${a.jeton}&action=arreter`, toutes = `${PAGES}#/saisons`;
   const d0 = dates[0];
   const sujet = (n === 1 ? `Crescite près de chez vous : ${d0.spectacle.titre}${d0.lieu ? `, ${d0.lieu.commune}` : ''}` : `Crescite près de chez vous : ${n} dates`)
     .replace(/\s+/g, ' ').trim();
