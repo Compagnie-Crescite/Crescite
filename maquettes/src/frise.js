@@ -9,12 +9,13 @@
                   'annees'   plusieurs saisons, en bandes : de `debut` à `fin` ('2016-2017', '2026-2027' ou 'AAAA-MM-JJ')
                   'periode'  de `debut` à `fin` ('AAAA-MM-JJ'), libres ; sans eux, les mois (ou les années) des points
      aujourdhui   'AAAA-MM-JJ' (D.aujourdhui) : le repère « aujourd'hui » (libellé D.site.libelles.aujourdhui), qui respire
-     points       [{ id, jour, fin, couleur, titre, quand, texte, lien, slug, l, scolaire, annulee, etat, annee }]
+     points       [{ id, jour, fin, couleur, titre, quand, texte, lien, slug, l, scolaire, residence, annulee, etat, annee }]
                     jour, fin  'AAAA-MM-JJ' (fin : le dernier jour ; une date longue devient un trait)
                     quand      la date écrite comme l'agenda (d.ligneDate…) ; sans elle, AGENDA.quand ; annee : une année seule
                     titre      le spectacle ; l : la commune (CARTE.lieux[l]) ; texte : une ligne de plus dans la bulle
                     lien       le repère est un lien ; sinon un bouton (choix)
-                    scolaire, annulee (barrée), etat (« date annulée » : écrit dans la bulle)
+                    scolaire, annulee (barrée), etat (« date annulée » : écrit dans la bulle) ; residence : une semaine de
+                    résidence (règle 23), un repère évidé (une période : un trait en pointillé), nommé D.site.libelles.residence
                     id         la clé du repère : relie la liste ([data-frise-id] ou [data-date-id]) et fait glisser (maj)
      bandes       [{ id, debut, fin, titre, n, lien, etiquette }] : une saison et sa densité (échelle annees) ;
                     etiquette : le nom court sous la bande (par défaut les années de la saison, « 2019-2020 »)
@@ -69,6 +70,8 @@
    Attention : m03, m04 et m06 ont déjà une classe .frise à elles ; les styles de base ne visent que .frise[data-frise]. */
 const FRISE = (() => {
   'use strict';
+  // le nom d'une semaine de résidence (règle 23), un texte de D
+  const LIB_RESIDENCE = () => (typeof D !== 'undefined' && D && D.site && D.site.libelles && D.site.libelles.residence) || '';
   const MOIS = typeof AGENDA !== 'undefined' && AGENDA.MOIS ? AGENDA.MOIS
     : ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
   const COUPE = (() => { try { return new URLSearchParams(location.search).get('anim') === '0'; } catch (e) { return false; } })();
@@ -134,6 +137,9 @@ const FRISE = (() => {
 :where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere) { width: 100%; min-width: 10px; height: 18px; margin: -9px 0 0; border-radius: 9px; place-items: center stretch; }
 :where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere)::before { width: auto; height: 6px; border-radius: 3px; }
 :where(.frise[data-frise]) :where(.frise-point.est-duree.est-scolaire) > :where(.frise-repere)::before { background: var(--fr-fond); box-shadow: inset 0 0 0 1.5px var(--fr-c, currentColor); }
+/* une semaine de résidence (règle 23) : un repère carré évidé ; une période, un trait en pointillé */
+:where(.frise[data-frise]) :where(.frise-point.est-residence:not(.est-duree)) > :where(.frise-repere)::before { border-radius: 2px; background: var(--fr-fond); box-shadow: inset 0 0 0 2px var(--fr-c, currentColor), 0 0 0 2px var(--fr-fond); }
+:where(.frise[data-frise]) :where(.frise-point.est-duree.est-residence) > :where(.frise-repere)::before { background: repeating-linear-gradient(90deg, var(--fr-c, currentColor) 0 5px, transparent 5px 9px); }
 :where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere:hover, .frise-repere:focus-visible)::before,
 :where(.frise[data-frise]) :where(.frise-point.est-duree.est-allume) > :where(.frise-repere)::before { scale: 1 1.6; }
 :where(.frise[data-frise]) :where(.frise-point.est-groupe) > :where(.frise-repere) { pointer-events: none; }
@@ -413,9 +419,9 @@ const FRISE = (() => {
       // les repères
       const courant = M.pts.find(q => !q.passe) || M.pts[M.pts.length - 1];
       const lieux = new Map(), lieu = l => { if (l == null) return ''; let n = lieux.get(l); if (n === undefined) { n = nomLieu(l); lieux.set(l, n); } return n; };
-      const nom = q => { const p = q.p, c = lieu(p.l) || p.commune || ''; let s = quandDe(p); if (p.titre) s += (s ? ', ' : '') + p.titre; if (c) s += ', ' + c; if (p.etat) s += ', ' + p.etat; return s; };
+      const nom = q => { const p = q.p, c = lieu(p.l) || p.commune || ''; let s = quandDe(p); if (p.titre) s += (s ? ', ' : '') + p.titre; if (c) s += ', ' + c; if (p.residence && LIB_RESIDENCE()) s += ', ' + LIB_RESIDENCE(); if (p.etat) s += ', ' + p.etat; return s; };
       const repere = (q) => {
-        const p = q.p, cls = 'frise-point' + (q.passe ? ' est-passe' : '') + (p.scolaire ? ' est-scolaire' : '') + (p.annulee ? ' est-annule' : '') + (q.duree ? ' est-duree' : '')
+        const p = q.p, cls = 'frise-point' + (q.passe ? ' est-passe' : '') + (p.scolaire ? ' est-scolaire' : '') + (p.residence ? ' est-residence' : '') + (p.annulee ? ' est-annule' : '') + (q.duree ? ' est-duree' : '')
           + (q.grappe ? ' est-groupe' : '') + (q.droite ? ' est-a-droite' : '');
         const x = q.grappe ? q.xg : q.x, tab = q === courant ? '0' : '-1';
         const etiq = o.etiquettes && p.titre ? `<span class="frise-etiquette">${esc(p.titre)}</span>` : '';

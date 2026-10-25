@@ -592,3 +592,24 @@ Folle Idée, cassandres, et les saisons au téléphone. Ne touche à aucun autre
 
 ## Rendu
 Un message final court : la navigation par les saisons, comment les univers sont rendus, ce qui a été vérifié.
+
+## Règle 23 : les semaines de résidence, et les spectacles en tournée d'abord dans les filtres (demande du client)
+« Dans la page saisons, mets les filtres des spectacles encore en tournée en priorité. Ajoute les semaines de résidence. »
+(octobre 2026 ; le menu dit aussi « Saisons » au lieu de « Les saisons », D.site.menu)
+- Les résidences viennent de la base (crescite_dates, nature « residence ») : dans D.saisons[k].spectacles[].dates[], avec
+  `residence: true` et `nb_representations: 0`, leur ligne et leurs précisions (celles de la base, sinon « Résidence au … »,
+  AGENDA.precisions). Jamais dans D.dates : ni « prochaines dates », ni réservation (RESERVER), ni alerte ; jamais sur les
+  cartes (D.carte : les tournées, les représentations seules). Une saison à venir (des résidences déjà prévues) n'est pas
+  dans D.saisons : elle y vient quand elle commence.
+- Sur `#/saisons` (toutes les dates de la saison en cours) et dans chaque saison passée : chaque résidence à sa place dans
+  l'ordre du temps, sa ligne marquée « Résidence » (D.site.libelles.residence), dans le style de la maquette (comme
+  « Scolaire »), avec son data-date-id ; aucun bouton de réservation.
+- La frise : `residence: true` sur son repère (FRISE : un repère carré évidé, une période en pointillé) ; la légende de la
+  frise dit « Résidence » (le même signe) quand la saison en a.
+- Les chiffres ne comptent pas les résidences : le nombre de dates d'une saison ou d'un spectacle, le bilan d'un spectacle
+  qui ne tourne plus (dates, communes, saisons, représentations), la légende. Elles peuvent paraître dans les dates d'un
+  bilan, marquées.
+- Les filtres par spectacle de `#/saisons` (des puces, une légende qui filtre…) : les spectacles en tournée
+  (`D.shows[].enTournee`) d'abord, dans leur ordre, puis les autres.
+- Le vérificateur : `REGLE23=1`, avec `INSTANTANE=<dossier>` (un instantané de la base, un `<table>.json` par table, où sont
+  les résidences : l'instantané du dépôt n'en a pas).

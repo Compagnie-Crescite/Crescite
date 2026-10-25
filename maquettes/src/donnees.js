@@ -101,7 +101,7 @@ const DONNEES = (() => {
       const [sp, li, da, re, at, tx] = await Promise.all([
         lireTable('crescite_spectacles', '*', 'ordre.asc,id.asc', ctl.signal),
         lireTable('crescite_lieux', 'id,nom,type,commune,departement,pays,latitude,longitude,site_web', 'id.asc', ctl.signal),
-        lireTable('crescite_dates', 'id,spectacle_id,lieu_id,debut,fin,precision,saison,public,statut,intitule,details,lien,nb_representations', 'debut.asc,id.asc', ctl.signal),
+        lireTable('crescite_dates', 'id,spectacle_id,lieu_id,debut,fin,precision,saison,public,statut,nature,intitule,details,lien,nb_representations', 'debut.asc,id.asc', ctl.signal),
         lireTable('crescite_representations', 'id,date_id,jour,heure,public,annulee,lien,note', 'jour.asc,heure.asc.nullslast,id.asc', ctl.signal),
         lireTable('crescite_ateliers', '*', 'ordre.asc,id.asc', ctl.signal),
         lireTable('crescite_textes', 'cle,valeur', null, ctl.signal),
@@ -152,13 +152,15 @@ const DONNEES = (() => {
       return {
         d, s, lieu, reps, l, ligne: txt, ligneDate: ligneDate.trim(), ligneLieu: ligneLieu.trim(),
         details: precisions(d, reps, lieu), etat: etatDe(d), iso: d.debut, fin: d.fin || d.debut,
-        precision: precisionAncienne[d.precision] || 'day', scolaire: d.public === 'scolaire',
+        // une semaine de résidence (règle 23) : dans l'agenda des saisons, marquée ; ni représentation, ni réservation, ni carte
+        residence: d.nature === 'residence',
+        precision: precisionAncienne[d.precision] || 'day', scolaire: d.public === 'scolaire' && d.nature !== 'residence',
         representations: reps.map(r => ({ jour: r.jour, heure: r.heure, public: r.public, annulee: r.annulee, lien: r.lien, note: r.note })),
       };
     });
 
     // les dates à venir, et les saisons
-    const aVenir = lignes.filter(x => x.fin >= aujourdhui).sort((a, b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : ordre.get(a.s.id) - ordre.get(b.s.id));
+    const aVenir = lignes.filter(x => x.fin >= aujourdhui && !x.residence).sort((a, b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : ordre.get(a.s.id) - ordre.get(b.s.id));
     const dates = aVenir.map(x => ({
       id: x.d.id, slug: slugDe(x.s), titre: x.s.titre, ligne: x.ligne, ligneDate: x.ligneDate, ligneLieu: x.ligneLieu,
       details: x.details, lien: x.d.lien, iso: x.iso, fin: x.fin, precision: x.precision, scolaire: x.scolaire, etat: x.etat,
@@ -166,16 +168,19 @@ const DONNEES = (() => {
       // lieu : le nom du lieu qui accueille (où l'on réserve, règle 17) ; representations : ses séances (jour, heure, lien…)
       l: x.l, lieu: x.lieu && x.lieu.nom ? x.lieu.nom : null, representations: x.representations,
     }));
-    const cles = [...new Set([saison, ...lignes.map(x => x.d.saison)])].sort().reverse();
+    // les saisons : la saison en cours et celles d'avant ; une saison à venir (des résidences déjà prévues) attend son tour
+    // (une représentation d'une saison à venir reste dans les dates à venir)
+    const cles = [...new Set([saison, ...lignes.map(x => x.d.saison)])].filter(k => k <= saison).sort().reverse();
     const saisons = {};
     cles.forEach(k => { saisons[k] = { titre: `Saison ${k}`, spectacles: [] }; });
     [...lignes].sort((a, b) => ordre.get(a.s.id) - ordre.get(b.s.id) || (a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : a.d.id - b.d.id)).forEach(x => {
       const S2 = saisons[x.d.saison];
+      if (!S2) return;
       let g = S2.spectacles.find(y => y._id === x.s.id);
       if (!g) { g = { _id: x.s.id, titre: x.s.titre, sousTitre: x.s.sous_titre, creation: x.s.creation, slug: slugDe(x.s), dates: [] }; S2.spectacles.push(g); }
       g.dates.push({ id: x.d.id, ligne: x.ligne, details: x.details, etat: x.etat, lien: x.d.lien, iso: x.iso, fin: x.fin,
-                     precision: x.precision, scolaire: x.scolaire, l: x.l, representations: x.representations,
-                     nb_representations: (x.representations && x.representations.length) || (x.d && x.d.nb_representations != null ? x.d.nb_representations : 1) });
+                     precision: x.precision, scolaire: x.scolaire, residence: x.residence, l: x.l, representations: x.representations,
+                     nb_representations: x.residence ? 0 : (x.representations && x.representations.length) || (x.d && x.d.nb_representations != null ? x.d.nb_representations : 1) });
     });
     Object.values(saisons).forEach(S2 => S2.spectacles.forEach(g => delete g._id));
 
@@ -231,17 +236,17 @@ const DONNEES = (() => {
 
     // la carte
     const compte = ls => { const n = new Map(); ls.forEach(l => { if (l != null) n.set(l, (n.get(l) || 0) + 1); }); return [...n.entries()].sort((a, b) => a[0] - b[0]); };
-    const parSaison = {};
-    lignes.forEach(x => { (parSaison[x.d.saison] = parSaison[x.d.saison] || []).push(x.l); });
+    const parSaison = {}, jouees = lignes.filter(x => !x.residence);
+    jouees.forEach(x => { (parSaison[x.d.saison] = parSaison[x.d.saison] || []).push(x.l); });
     Object.keys(parSaison).forEach(k => { parSaison[k] = compte(parSaison[k]); });
     const parSpectacle = {};
     pages.forEach(s => {
-      parSpectacle[s.slug] = { passe: compte(lignes.filter(x => x.s.id === s.id && x.fin < aujourdhui).map(x => x.l)),
+      parSpectacle[s.slug] = { passe: compte(jouees.filter(x => x.s.id === s.id && x.fin < aujourdhui).map(x => x.l)),
                                aVenir: compte(dates.filter(d => d.slug === s.slug).map(d => d.l)) };
     });
     const carte = { ...S.carte, lieux, parSaison, parSpectacle, aVenir: compte(dates.map(d => d.l)),
                     aVenirPublic: compte(dates.filter(d => !d.scolaire).map(d => d.l)),
-                    aVenirScolaire: compte(dates.filter(d => d.scolaire).map(d => d.l)), tout: compte(lignes.map(x => x.l)) };
+                    aVenirScolaire: compte(dates.filter(d => d.scolaire).map(d => d.l)), tout: compte(jouees.map(x => x.l)) };
 
     // le site : la navigation du dépôt, les textes de la base
     const site = { ...S.site };

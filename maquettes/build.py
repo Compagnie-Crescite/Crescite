@@ -273,6 +273,8 @@ LIBELLES = {
     # les chiffres du bilan (le nombre de dates : « dates », de communes, de saisons)
     "communes": "Communes", "saisons": "Saisons",
     "saisonsPrecedentes": "Saisons précédentes", "toutPublic": "Tout public", "scolaire": "Scolaire",
+    # une semaine de résidence (règle 23) : marquée dans l'agenda des saisons, et dans la légende des frises
+    "residence": "Résidence", "residences": "Résidences",
     "enEtablissement": "En établissement scolaire", "lieu": {"etablissement": "Dans l’établissement", "salle": "En salle"},
     "actionCulturelle": "Action culturelle", "aCompleter": "À compléter par la compagnie", "dispositifs": "Dispositifs",
     "public": "Public", "ateliers": "Ateliers", "duree": "Durée", "jauge": "Jauge", "format": "Format",

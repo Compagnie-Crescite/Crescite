@@ -27,6 +27,7 @@
 // les univers et les actions culturelles des spectacles) : tout texte absent de D est signalé.
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
 const { chromium } = await import(PW);
+const { readFileSync } = await import('node:fs');
 const { mesurer, depassements } = process.env.REACTIVITE === '1' ? await import('./reactivite.mjs') : {};
 const [out, ...names] = process.argv.slice(2);
 const dist = new URL('./dist/', import.meta.url);
@@ -402,6 +403,73 @@ async function regle19(page, tag, log) {
   if (tag === 'tab') log.push(`· règle 19 : la nuit sur ${VUES.length} vues, d'emblée, sans bouton jour/nuit`);
 }
 
+// ------------------------------------------------------------------------------------------------ règle 23 (REGLE23=1)
+// Les semaines de résidence et l'ordre des filtres (demande de la compagnie, octobre 2026). Sur #/saisons et sur
+// #/saisons/<saison> d'une saison qui en a (la saison en cours et deux saisons passées au plus) : chaque résidence de
+// D.saisons (residence: true) est à l'écran ([data-date-id]), sa ligne dit « Résidence » (D.site.libelles.residence), aucun
+// bouton de réservation ne lui revient ; la frise de la saison en cours la marque (.frise-point.est-residence). Sur #/saisons,
+// dans chaque groupe de boutons de spectacles (aria-pressed : les filtres, une légende qui filtre), les spectacles en tournée
+// (D.shows, enTournee) d'abord. Les résidences ne viennent que de la base : l'instantané du dépôt n'en a pas (INSTANTANE).
+async function regle23(page, tag, log) {
+  const pfx = `${tag} règle 23`;
+  const aller = async h => {
+    await page.evaluate(h => { location.hash = h; }, h); await page.waitForTimeout(1300);
+    await page.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 700) { scrollTo(0, y); await new Promise(r => setTimeout(r, 25)); } scrollTo(0, 0); });
+    await page.waitForTimeout(400);
+  };
+  const info = await page.evaluate(() => {
+    const parSaison = {};
+    for (const [k, S] of Object.entries(D.saisons || {})) { const r = S.spectacles.flatMap(g => g.dates.filter(d => d.residence).map(d => d.id)); if (r.length) parSaison[k] = r; }
+    return { saison: D.saison, parSaison, lib: ((D.site || {}).libelles || {}).residence || '', enTournee: (D.shows || []).filter(s => s.enTournee).map(s => s.titre),
+      titres: [...new Set([...(D.shows || []).map(s => s.titre), ...Object.values(D.saisons || {}).flatMap(S => S.spectacles.map(g => g.titre))])].filter(Boolean) };
+  });
+  // les filtres
+  await aller('#/saisons');
+  const groupes = await page.evaluate(({ titres }) => {
+    const norm = s => String(s || '').normalize('NFC').replace(/[’']/g, "'").replace(/\s+/g, ' ').trim().toLowerCase();
+    const T = titres.map(t => [norm(t), t]).sort((a, b) => b[0].length - a[0].length);
+    const par = new Map();
+    for (const b of document.querySelectorAll('main [aria-pressed]')) {
+      if (!b.getClientRects().length) continue;
+      const x = norm(b.textContent), t = (T.find(([k]) => x.includes(k)) || [])[1];
+      if (!t) continue;
+      const g = b.parentElement.closest('[role="group"], ul, ol, div, nav, p') || b.parentElement;
+      if (!par.has(g)) par.set(g, []);
+      if (!par.get(g).includes(t)) par.get(g).push(t);
+    }
+    return [...par.values()].filter(l => l.length >= 2);
+  }, { titres: info.titres });
+  const tournee = new Set(info.enTournee);
+  for (const l of groupes) {
+    const dernier = Math.max(-1, ...l.map((t, i) => (tournee.has(t) ? i : -1))), premier = l.findIndex(t => !tournee.has(t));
+    if (premier !== -1 && dernier > premier) log.push(`${pfx} : les filtres ne mettent pas d'abord les spectacles en tournée (${l.join(', ')})`);
+  }
+  if (!groupes.length) log.push(`${pfx} : aucun groupe de filtres par spectacle reconnu sur #/saisons (des boutons aria-pressed au titre des spectacles)`);
+  // les résidences
+  const saisons = Object.keys(info.parSaison).sort().reverse();
+  const choisies = [...(saisons.includes(info.saison) ? [info.saison] : []), ...saisons.filter(k => k !== info.saison).slice(0, 2)];
+  let vues = 0;
+  for (const k of choisies) {
+    await aller(k === info.saison ? '#/saisons' : `#/saisons/${k}`);
+    const r = await page.evaluate(({ ids, lib, enCours }) => {
+      const pb = [];
+      for (const id of ids) {
+        const el = [...document.querySelectorAll(`main [data-date-id="${id}"]`)].find(x => x.getClientRects().length && (x.textContent || '').trim().length > 8)
+          || document.querySelector(`main [data-date-id="${id}"]`);
+        if (!el) { pb.push(`la résidence ${id} n'est pas à l'écran`); continue; }
+        if (lib && !(el.textContent || '').includes(lib)) pb.push(`la ligne de la résidence ${id} ne dit pas « ${lib} »`);
+        if (el.querySelector('[data-reserver]') || document.querySelector(`main [data-reserver][data-date-id="${id}"]`)) pb.push(`la résidence ${id} a un bouton de réservation`);
+      }
+      if (enCours && !document.querySelector('.frise .frise-point.est-residence')) pb.push(`la frise de la saison ne marque pas ses résidences (residence: true, .est-residence)`);
+      return pb;
+    }, { ids: info.parSaison[k], lib: info.lib, enCours: k === info.saison });
+    vues += info.parSaison[k].length;
+    r.slice(0, 6).forEach(x => log.push(`${pfx} ${k} : ${x}`));
+    if (r.length > 6) log.push(`${pfx} ${k} : … et ${r.length - 6} autre(s)`);
+  }
+  if (tag === 'tab') log.push(`· règle 23 : ${saisons.length ? `${vues} résidences relues sur ${choisies.length} saison(s)` : 'aucune résidence dans les données de la page (INSTANTANE pour les apporter)'} ; filtres : ${groupes.length} groupe(s), ${info.enTournee.length} spectacles en tournée`);
+}
+
 // ------------------------------------------------------------------------------------------------ règle 20 (REGLE20=1)
 // La troupe, sur la page de la compagnie (TROUPE) : sa racine [data-troupe] entre la présentation (site.compagnie.paragraphes)
 // et les repères (site.compagnie.datesTitre) ; son titre (data-edit="site.troupe.titre") ; chaque catégorie qui a quelqu'un
@@ -546,8 +614,23 @@ for (const n of names) {
     page.on('console', m => { if (m.type() === 'error') log.push(`${tag} console : ${m.text()}`); });
     // (règle 18 : le lecteur d'une vidéo, YouTube sans cookie ou Vimeo, n'est permis qu'après le geste qui la lance)
     page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fonts\.(googleapis|gstatic)\.com|omekkqjinvppadsoinvj\.supabase\.co/.test(u) && !(page.__geste18 && LECTEURS.test(u))) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
-    // par défaut, l'instantané du dépôt (?base=0) : le contrôle ne dépend pas de l'état de la base ; BASE=1 pour la base
-    await page.goto(new URL(`${n}.html${process.env.BASE === '1' ? '' : '?base=0'}`, dist).href, { waitUntil: 'load' });
+    // par défaut, l'instantané du dépôt (?base=0) : le contrôle ne dépend pas de l'état de la base ; BASE=1 pour la base.
+    // INSTANTANE=<dossier> : la page lit la base, servie par un instantané (un <table>.json par table : ce que le public y
+    // lit) ; le contrôle porte alors sur les vraies données (leurs numéros de date, les résidences…), sans réseau. Une table
+    // absente de l'instantané répond une liste vide.
+    const INST = process.env.INSTANTANE;
+    if (INST) {
+      await ctx.route('https://omekkqjinvppadsoinvj.supabase.co/rest/v1/**', route => {
+        const u = new URL(route.request().url()), m = u.pathname.match(/\/rest\/v1\/(crescite_[a-z_]+)/);
+        let rows = [];
+        try { rows = m ? JSON.parse(readFileSync(`${INST}/${m[1]}.json`, 'utf8')) : []; } catch (e) { rows = []; }
+        const off = Number(u.searchParams.get('offset') || 0), lim = Number(u.searchParams.get('limit') || 1000);
+        return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(rows.slice(off, off + lim)) });
+      });
+    }
+    await page.goto(new URL(`${n}.html${process.env.BASE === '1' || INST ? '' : '?base=0'}`, dist).href, { waitUntil: 'load' });
+    if (INST) await page.waitForFunction(() => { try { return Object.values(D.saisons || {}).some(S => S.spectacles.some(g => g.dates.some(d => d.id != null))); } catch (e) { return false; } }, null, { timeout: 30000 })
+      .catch(() => log.push(`${tag} : l'instantané de la base n'a pas remplacé les données de la page`));
     await page.waitForTimeout(1200);
     const intro = await page.evaluate(() => !!document.querySelector('.intro'));
     if (!intro) log.push(`${tag} : pas d'ouverture sur le logo au chargement de l'accueil (INTRO.ouvrir)`);
@@ -850,6 +933,7 @@ for (const n of names) {
     // règles 19 et 20, de même (REGLE19=1, REGLE20=1) ; la 19 relit toutes les vues (la nuit, seule)
     if (process.env.REGLE20 === '1') await regle20(page, tag, log);
     if (process.env.REGLE19 === '1') await regle19(page, tag, log);
+    if (process.env.REGLE23 === '1') await regle23(page, tag, log);
     // règle 15 A : un clic ordinaire sur un lien du menu ne fait jouer aucune tentacule (sauf un moment déclaré data-moment)
     if (tag === 'tab') {
       await page.evaluate(() => { location.hash = '#/saisons'; });

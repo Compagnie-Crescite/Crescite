@@ -95,7 +95,7 @@ const RESERVER = (() => {
   const toutesAnnulees = d => (d.representations || []).length > 0 && d.representations.every(r => r && r.annulee);
   function dates(slug) {
     const auj = (typeof D !== 'undefined' && D.aujourdhui) || (A ? A.iso(new Date()) : '');
-    return ((typeof D !== 'undefined' && D.dates) || []).filter(d => d && !d.scolaire && !annulee(d) && !toutesAnnulees(d)
+    return ((typeof D !== 'undefined' && D.dates) || []).filter(d => d && !d.scolaire && !d.residence && !annulee(d) && !toutesAnnulees(d)
       && (d.fin || d.iso || '') >= auj && (!slug || d.slug === slug));
   }
   const cle = d => (d.id != null && d.id !== '' ? String(d.id) : [d.slug || '', d.iso || '', d.l ?? ''].join('~'));
