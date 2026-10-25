@@ -82,6 +82,32 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
 .tuiles li { padding: 10px 12px; border-radius: 10px; background: #fff; border: 1px solid var(--filet); font-size: .85rem; line-height: 1.35; color: var(--gris); }
 .tuiles b { display: block; margin-bottom: 2px; font-size: .93rem; color: var(--encre); }
 
+/* Composer : une ligne par partie du site, une pastille par maquette ; un clic montre la partie, « Garder » la choisit */
+.compo { position: absolute; top: 0; right: 0; bottom: 0; width: min(560px, 100%); overflow-y: auto; background: var(--fond); box-shadow: -24px 0 60px rgba(0, 0, 0, .35); padding: 22px clamp(16px, 3vw, 30px) 40px; z-index: 2; }
+.compo h2 { margin: 0 0 4px; font: italic 500 1.9rem/1.1 var(--serif); }
+.compo > p { margin: 0 0 14px; max-width: 60ch; color: var(--gris); }
+.compo .fermer { position: sticky; top: 0; float: right; margin: -8px -8px 0 0; border: 1px solid var(--filet); background: #fff; border-radius: 999px; padding: 6px 12px; font: 600 .85rem var(--sans); cursor: pointer; }
+.partie { margin: 0 0 10px; padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--filet); }
+.partie.vue { border-color: var(--magenta); box-shadow: 0 0 0 1px var(--magenta); }
+.partie h3 { margin: 0; font: 700 1rem/1.3 var(--sans); }
+.partie .quoi { margin: 2px 0 8px; font-size: .86rem; line-height: 1.35; color: var(--gris); }
+.pastilles { display: flex; flex-wrap: wrap; gap: 5px; }
+.pastilles button { min-width: 44px; min-height: 36px; padding: 0 8px; border: 1px solid var(--filet); border-radius: 8px; background: var(--fond); color: var(--encre); font: 700 .85rem var(--sans); font-variant-numeric: tabular-nums; cursor: pointer; }
+.pastilles button:hover { border-color: var(--encre); }
+.pastilles button[aria-current="true"] { background: var(--nuit); color: var(--clair); border-color: var(--nuit); }
+.pastilles button.choisie { background: var(--magenta); color: #fff; border-color: var(--magenta); }
+.pastilles button.choisie::after { content: " ✓"; }
+.garder { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: .88rem; }
+.garder button, .bilan-choix button { border: 0; border-radius: 999px; padding: 7px 14px; background: var(--magenta); color: #fff; font: 700 .86rem var(--sans); cursor: pointer; }
+.garder button[disabled] { background: var(--filet); color: var(--gris); cursor: default; }
+.garder .choix { color: var(--gris); }
+.bilan-choix { margin-top: 18px; padding: 14px; border-radius: 12px; background: var(--nuit); color: var(--clair); }
+.bilan-choix h3 { margin: 0 0 6px; font: italic 500 1.25rem var(--serif); }
+.bilan-choix ol { margin: 0 0 12px; padding-left: 1.2em; font-size: .9rem; }
+.bilan-choix .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bilan-choix .discret { background: none; border: 1px solid rgba(255, 255, 255, .35); }
+.bilan-choix [role="status"] { font-size: .86rem; color: var(--gris-clair); }
+
 @media (max-width: 900px) { .barre .titre { display: none; } }
 @media (max-width: 700px) { .taille { display: none; } }
 </style>
@@ -93,12 +119,14 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   <div class="outils">
     <div class="taille" role="group" aria-label="Écran"><button type="button" data-taille="bureau" aria-pressed="true">Ordinateur</button><button type="button" data-taille="tel" aria-pressed="false">Téléphone</button></div>
     <a class="outil" id="direct" href="#" target="_blank" rel="noopener" title="Ouvrir la maquette seule, dans un nouvel onglet" hidden>Seule ↗</a>
+    <button class="outil" type="button" id="bouton-compo" aria-expanded="false" aria-controls="compo">Composer</button>
     <button class="outil" type="button" id="bouton-infos" aria-expanded="false" aria-controls="infos">À propos</button>
   </div>
 </header>
 <main class="scene" id="scene" role="tabpanel">
   <iframe id="cadre" title="Maquette"></iframe>
   <aside class="infos" id="infos" aria-labelledby="infos-titre" hidden></aside>
+  <aside class="compo" id="compo" aria-labelledby="compo-titre" hidden></aside>
 </main>
 <script>const P = /*__PLANCHE__*/null;</script>
 <script>
@@ -248,6 +276,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     $('#fermer-infos').addEventListener('click', () => basculerInfos(false));
   }
   function basculerInfos(ouvrir) {
+    if (ouvrir && !compo.hidden) basculerCompo(false);
     infos.hidden = !ouvrir;
     boutonInfos.setAttribute('aria-expanded', ouvrir);
     if (ouvrir) { remplirInfos(); $('#fermer-infos').focus(); } else boutonInfos.focus();
@@ -255,6 +284,81 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   boutonInfos.addEventListener('click', () => basculerInfos(infos.hidden));
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !infos.hidden) basculerInfos(false); });
   infos.addEventListener('click', e => { const a = e.target.closest('[data-aller]'); if (!a) return; e.preventDefault(); montrer(a.dataset.aller); basculerInfos(false); });
+
+  /* Composer : pour chaque partie du site, regarder ce qu'en fait chaque maquette, puis garder celle qu'on préfère. Les
+     choix restent sur cet appareil ; « Copier mes choix » en fait un texte à envoyer pour assembler le site final. */
+  const PARTIES = [
+    { cle: 'ouverture', titre: 'L’ouverture sur le logo', quoi: 'l’écran d’introduction, avant le site', route: '' },
+    { cle: 'accueil', titre: 'L’accueil', quoi: 'la première page, après l’ouverture', route: '#/' },
+    { cle: 'saisons', titre: 'Les saisons', quoi: 'la saison en cours, ses prochaines dates, la frise, toutes les dates', route: '#/saisons' },
+    { cle: 'passees', titre: 'Les saisons passées', quoi: 'chaque saison et sa petite carte, sur la même page', route: '#/saisons/2023-2024' },
+    { cle: 'spectacles', titre: 'La présentation des spectacles', quoi: 'la page « Les spectacles »', route: '#/spectacles' },
+    { cle: 'univers', titre: 'L’univers d’un spectacle', quoi: 'la page d’un spectacle en tournée (Bérénice)', route: '#/spectacle/berenice/voir' },
+    { cle: 'reserver', titre: 'Réserver une date', quoi: 'les dates d’un spectacle et sa carte de réservation', route: '#/spectacle/ci-gisait-cyrano/voir' },
+    { cle: 'bilan', titre: 'Un spectacle qui n’est plus en tournée', quoi: 'sa présentation et le bilan de ses dates (La Folle Idée)', route: '#/spectacle/la-folle-idee' },
+    { cle: 'compagnie', titre: 'La compagnie et la troupe', quoi: 'la présentation, la troupe, les repères', route: '#/compagnie' },
+    { cle: 'pro', titre: 'L’espace pro', quoi: 'programmer, établissements scolaires, espaces réservés', route: '#/espace-pro' },
+  ];
+  const CLE_CHOIX = 'crescite-composition';
+  const lireChoix = () => { try { return JSON.parse(localStorage.getItem(CLE_CHOIX)) || {}; } catch { return {}; } };
+  const garderChoix = c => { try { localStorage.setItem(CLE_CHOIX, JSON.stringify(c)); } catch { /* le choix reste le temps de la visite */ } };
+  let choix = lireChoix(), regard = null;   // regard : la partie et la maquette affichées depuis le tableau
+  const compo = $('#compo'), boutonCompo = $('#bouton-compo');
+  const nomDe = n => { const m = LISTE.find(x => x.n === n); return m ? `${num(m)} · ${m.nom}` : n; };
+  function regarder(cle, n) {
+    const pa = PARTIES.find(x => x.cle === cle);
+    regard = { cle, n };
+    montrer(n);
+    // la partie demandée : l'ouverture se joue depuis le début ; les autres vues s'ouvrent sans elle
+    const suite = pa.route ? `?intro=0${pa.route}` : '';
+    if (P.web) cadre.src = `${n}.html${suite}`;
+    else if (suite) cadre.addEventListener('load', () => { try { cadre.contentWindow.location.hash = pa.route; } catch { /* page isolée */ } }, { once: true });
+    remplirCompo();
+  }
+  function texteChoix() {
+    const lignes = PARTIES.filter(pa => choix[pa.cle]).map(pa => `- ${pa.titre} : ${nomDe(choix[pa.cle])}`);
+    return lignes.length ? `Mes choix pour le site de Crescite :\n${lignes.join('\n')}` : '';
+  }
+  function remplirCompo() {
+    const faits = PARTIES.filter(pa => choix[pa.cle]);
+    compo.innerHTML = `<button class="fermer" type="button" id="fermer-compo">Fermer</button>
+      <h2 id="compo-titre">Composer le site</h2>
+      <p>Pour chaque partie, touchez une maquette pour voir ce qu’elle en fait, puis gardez celle que vous préférez.</p>
+      ${PARTIES.map(pa => {
+        const vue = regard && regard.cle === pa.cle;
+        return `<section class="partie${vue ? ' vue' : ''}" aria-labelledby="pa-${pa.cle}"><h3 id="pa-${pa.cle}">${esc(pa.titre)}</h3>
+          <p class="quoi">${esc(pa.quoi)}</p>
+          <div class="pastilles" role="group" aria-label="${esc(pa.titre)} : les maquettes">${LISTE.map(m => `<button type="button" data-voir="${pa.cle}|${m.n}"${choix[pa.cle] === m.n ? ' class="choisie"' : ''}${vue && regard.n === m.n ? ' aria-current="true"' : ''} title="${esc(num(m) + ' · ' + m.nom)}">${esc(num(m))}</button>`).join('')}</div>
+          <div class="garder"><button type="button" data-garder="${pa.cle}"${vue ? '' : ' disabled'}>${vue ? (regard.n === 'synthese' ? 'Garder la synthèse' : `Garder la ${esc(regard.n.slice(1))}`) : 'Garder'}</button>
+            <span class="choix">${choix[pa.cle] ? `Choisie : ${esc(nomDe(choix[pa.cle]))}` : 'Pas encore choisie'}</span></div>
+        </section>`;
+      }).join('')}
+      <section class="bilan-choix" aria-labelledby="bilan-choix-titre"><h3 id="bilan-choix-titre">Mes choix (${faits.length} sur ${PARTIES.length})</h3>
+        ${faits.length ? `<ol>${faits.map(pa => `<li>${esc(pa.titre)} : ${esc(nomDe(choix[pa.cle]))}</li>`).join('')}</ol>` : '<p>Aucun pour l’instant.</p>'}
+        <div class="actions"><button type="button" id="copier-choix"${faits.length ? '' : ' disabled'}>Copier mes choix</button>
+          <button type="button" class="discret" id="effacer-choix"${faits.length ? '' : ' disabled'}>Tout effacer</button>
+          <span role="status" id="etat-choix"></span></div>
+      </section>`;
+    $('#fermer-compo').addEventListener('click', () => basculerCompo(false));
+  }
+  compo.addEventListener('click', async e => {
+    const v = e.target.closest('[data-voir]'), g = e.target.closest('[data-garder]');
+    if (v) { const [cle, n] = v.dataset.voir.split('|'); regarder(cle, n); compo.querySelector(`[data-voir="${cle}|${n}"]`)?.focus(); return; }
+    if (g && regard && regard.cle === g.dataset.garder) { choix[regard.cle] = regard.n; garderChoix(choix); remplirCompo(); compo.querySelector(`[data-garder="${g.dataset.garder}"]`)?.focus(); return; }
+    if (e.target.closest('#effacer-choix')) { choix = {}; garderChoix(choix); remplirCompo(); return; }
+    if (e.target.closest('#copier-choix')) {
+      const t = texteChoix(), etat = $('#etat-choix');
+      try { await navigator.clipboard.writeText(t); etat.textContent = 'Copié : collez-le dans votre message.'; }
+      catch { etat.textContent = ''; prompt('Copiez ce texte :', t); }
+    }
+  });
+  function basculerCompo(ouvrir) {
+    compo.hidden = !ouvrir;
+    boutonCompo.setAttribute('aria-expanded', ouvrir);
+    if (ouvrir) { if (!infos.hidden) basculerInfos(false); remplirCompo(); $('#fermer-compo').focus(); } else boutonCompo.focus();
+  }
+  boutonCompo.addEventListener('click', () => basculerCompo(compo.hidden));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !compo.hidden) basculerCompo(false); });
 
   addEventListener('hashchange', () => { const n = location.hash.slice(1); if (n && (!courante || n !== courante.n)) montrer(n); });
   montrer(location.hash.slice(1) || LISTE[0].n);
