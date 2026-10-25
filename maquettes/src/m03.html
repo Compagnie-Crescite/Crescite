@@ -1171,6 +1171,8 @@ html.ed-actif .ep-a::after { content: none; }
   .ep { min-height: 0; }
   /* les deux pages de l'espace pro : le titre à la taille des cartes du téléphone, la flèche toujours dans sa carte */
   .ep-pages .choix-t { font-size: 1.375rem; }
+  .ag-toutes { contain-intrinsic-size: auto 7000px; }
+  .troupe-m03 { contain-intrinsic-size: auto 4000px; }
   .choix-t > span { min-width: 0; }
   .choix-t b { overflow-wrap: break-word; hyphens: auto; }
   /* les saisons : les prochaines dates, la carte de la saison, puis toutes les dates, l'une sous l'autre */
@@ -1409,9 +1411,12 @@ a.rs-seance:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 2px
 .lc-boite .lc-b { border-color: var(--video-filet-fort); color: var(--video-encre); }
 .lc-boite .lc-b:hover { border-color: var(--video-encre); }
 button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
-/* ce qui est loin sous le pli ne se dessine qu'en approchant (l'agenda passé, les spectacles en tournée, le pied de page) :
-   la bascule du jour et de la nuit, comme chaque geste, ne repeint que ce qui se voit */
+/* ce qui est loin sous le pli ne se dessine qu'en approchant (l'agenda passé, les spectacles en tournée, le pied de page ; toutes
+   les dates de la saison en cours, sous ses prochaines dates ; la troupe, sous la présentation de la compagnie) : une page nouvelle
+   se compose vite, et la bascule du jour et de la nuit, comme chaque geste, ne repeint que ce qui se voit */
 #v-agenda, #v-tours, .site-foot { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+.ag-toutes { content-visibility: auto; contain-intrinsic-size: auto 5000px; }
+.troupe-m03 { content-visibility: auto; contain-intrinsic-size: auto 1800px; }
 /* les dates de l'agenda, devenues des boutons : leur colonne s'élargit pour le quantième de deux jours (« 19 – 20 ») */
 .ag-complet .row { grid-template-columns: 160px minmax(0, 1fr); }
 .ag-accueil .row { grid-template-columns: 140px minmax(0, 1fr); }
