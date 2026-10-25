@@ -871,6 +871,8 @@ html[data-mv-transition="onglet"] .sh-ong-filet{view-transition-name:ed-filet}
 .s0-k{font:600 .75rem/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--saison)}
 .s0-t{font:italic 400 var(--t2)/1.05 var(--serif);letter-spacing:-.01em;color:var(--saison)}
 .sa-tete .v-frise{margin-top:18px}
+/* (sa place, gardée avant qu'elle soit posée, à l'image d'après : rien ne saute) */
+.sa-tete .v-frise:empty{min-height:109px}
 .v-leg{display:flex;flex-wrap:wrap;gap:0 26px;margin-top:4px}
 .v-leg-b{display:inline-flex;align-items:baseline;gap:9px;min-height:44px;padding:9px 0 8px;color:var(--ink);text-align:left;transition:box-shadow .16s var(--mv-courbe)}
 .v-leg-m{flex:none;align-self:center;width:10px;height:10px;background:var(--c,var(--ink));transition:transform .2s var(--mv-courbe)}
@@ -2134,13 +2136,18 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
         $$('.ag-g', venir).forEach(g => { g.hidden = !$$('.ag-it', g).some(it => !it.hidden); });
         const tr = lignes.filter(garde);
         tr.forEach(x => { if (x.d.l != null) vus.add(x.d.l); });
-        if (signature() !== sigToutes) { sigToutes = signature(); toutes.innerHTML = moisHTML(tr, { signet: true }); }
+        // toutes les dates, refaites à la tâche d'après (le geste et les prochaines dates d'abord ; en place, tout de suite)
+        if (signature() !== sigToutes) {
+          sigToutes = signature();
+          const refaire = () => { if (toutes.isConnected && sigToutes === signature()) toutes.innerHTML = moisHTML(lignes.filter(garde), { signet: true }); };
+          if (SUR_PLACE) refaire(); else ensuite(refaire);
+        }
         const filtre = actif();
         $$('[data-l]', fig).forEach(n => n.classList.toggle('hors', filtre && !vus.has(+n.dataset.l)));
         if (chip) { chip.hidden = F.l === null; if (F.l !== null) $('.filtre-n', chip).textContent = CARTE.nom(CARTE.lieux[F.l]); }
         $$('[data-s]', tete).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
         if (champ.value !== F.q) champ.value = F.q;
-        if (fSaison) fSaison.maj({ points: reperesSaison() });
+        if (fSaison) { if (SUR_PLACE) fSaison.maj({ points: reperesSaison() }); else ensuite(() => { if (fSaison) fSaison.maj({ points: reperesSaison() }); }); }
       };
       const dessineSaisons = () => {
         $$('.cm', racine).forEach(f => CARTES.delete(f.id));
@@ -2213,16 +2220,19 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
       if (F.l !== null) api.basculer(F.l);
       recompte(); prochaines();
       // la frise de la saison : dans le premier écran, reliée aux listes (survoler un repère allume sa ligne, et inversement ;
-      // un clic y mène) et à la carte (sa commune s'allume)
-      fSaison = frise($('#v-frise', tete), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: S0.titre,
-        relier: { liste: sec, carte: l => { parFrise = true; try { api.montrer(l); } finally { parFrise = false; } } }, choix: p => allerLigne(p.id) });
+      // un clic y mène) et à la carte (sa commune s'allume) ; posée à l'image d'après (sa place est gardée : rien ne saute), le
+      // reste de la page d'abord
+      const poserFrise = () => { if (!tete.isConnected) return; fSaison = frise($('#v-frise', tete), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: S0.titre,
+        relier: { liste: sec, carte: l => { parFrise = true; try { api.montrer(l); } finally { parFrise = false; } } }, choix: p => allerLigne(p.id) }); };
+      if (SUR_PLACE) poserFrise(); else ensuite(poserFrise);
       // #/saisons/<saison> : cette saison, ouverte, amenée à l'écran (la saison en cours : sa marque)
       const arriver = () => { if (!aller) return; if (aller === D.saison) { const m = $('.s0', tete); if (m) m.scrollIntoView({ block: 'start' }); } else ouvrirSaison(aller, true); };
       // les saisons passées : tout de suite quand la vue se refait en place ou qu'un filtre est actif, sinon dans la tâche qui
       // suit l'image
       // toutes les dates de la saison aussi, sous le pli : posées avant les saisons passées (rien ne saute ensuite)
       const remplirToutes = () => { if (!toutes.firstElementChild) toutes.innerHTML = moisHTML(lignes.filter(garde), { signet: true }); };
-      if (SUR_PLACE || actif()) { remplirToutes(); dessineAgenda(); if (aller) ensuite(arriver); } else ensuite(() => { remplirToutes(); dessineAgenda(); arriver(); });
+      // (une tâche courte après l'autre : toutes les dates, puis les saisons passées et la saison de l'adresse)
+      if (SUR_PLACE || actif()) { remplirToutes(); dessineAgenda(); if (aller) ensuite(arriver); } else ensuite(() => { remplirToutes(); ensuite(() => { dessineAgenda(); arriver(); }); });
     };
     const leg = sps.map(p => `<li><button type="button" class="v-leg-b" data-s="${esc(p.cle)}" aria-pressed="${p.cle === F.slug}"${p.s ? ` style="${styleIvoire(p.s)}"` : ''}><span class="v-leg-m" aria-hidden="true"></span><span class="v-leg-t${p.s ? ' sp-t' : ''}">${esc(p.titre)}</span><span class="v-leg-n">${p.n}</span></button></li>`).join('');
     return `<section class="ag-tete sa-tete" aria-labelledby="sa-h">

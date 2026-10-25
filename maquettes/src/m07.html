@@ -12,7 +12,8 @@
 /* Maquette 07 — Le noir et la lumière. Le noir de la salle, une photo de spectacle en plein écran, la lumière qui révèle.
    Chaque spectacle apporte sa lumière : ses couleurs, sa police de titre, son motif projeté comme un gobo sur la scène.
    La saison a sa gélatine (règle 22 : D.site.couleurSaison, le bleu jusqu'à la création de Cassandres) : la lumière de
-   l'interface (l'élément courant du menu, les liens, les filets, la marque de la saison, « aujourd'hui ») et la pieuvre.
+   l'interface (l'élément courant du menu, les liens, les filets, la marque de la saison, « aujourd'hui »), les faisceaux de
+   la carte et la pieuvre.
    Le menu (règle 21) : les saisons, les spectacles, la compagnie, l'espace pro, chacun avec sa lampe ; au téléphone, une
    barre fixe au bas de l'écran. La nuit est la salle dans le noir (la maquette est née sombre) ; le jour, la salle
    éclairée : le papier d'un programme, l'encre, la gélatine de la saison ; les photos, elles, restent dans le noir. */
@@ -20,7 +21,7 @@
   --noir:#0b0809;--noir2:#141011;--blanc:#f4eee9;--gris:#a59a96;
   --blanc-doux:rgba(244,238,233,.84);
   --trait:rgba(244,238,233,.15);--trait-fort:rgba(244,238,233,.34);
-  /* --chaud : la lumière chaude de la salle (la poursuite, les lampes de la carte) ; --lumiere : la gélatine de la saison
+  /* --chaud : la lumière chaude de la salle (la poursuite, la lune du bouton de nuit, l'ouverture) ; --lumiere : la gélatine de la saison
      (règle 22), posée par le script (couleurs()) : sa vive la nuit, sa couleur le jour, chacune lisible sur son fond ;
      --sur-lumiere : le texte posé sur elle */
   --chaud:#ffd9a8;--lumiere-nuit:#ffd9a8;--lumiere-jour:#5c3d12;--lumiere:var(--lumiere-nuit);--sur-lumiere:#0b0809;--c:var(--lumiere);
@@ -51,7 +52,7 @@ html[data-theme="nuit"]{color-scheme:dark}
 html[data-theme="jour"]{color-scheme:light;
   --noir:#f3eee7;--noir2:#e9e2d7;--blanc:#18110f;--gris:#62574f;--blanc-doux:#3a302b;
   --trait:rgba(24,17,15,.14);--trait-fort:rgba(24,17,15,.32);
-  --lumiere:var(--lumiere-jour);--sur-lumiere:#f3eee7;--tete-fond:rgba(243,238,231,.97);--barre-fond:#f3eee7;
+  --lumiere:var(--lumiere-jour);--sur-lumiere:#f3eee7;--tete-fond:#f3eee7;--barre-fond:#f3eee7;
   --ed-fond:#fbf8f3;--ed-encre:#18110f;--ed-trait:rgba(24,17,15,.22)}
 html[data-theme="jour"] :is(.scene,.suivant,.ep-page){--noir:#0b0809;--noir2:#141011;--blanc:#f4eee9;--gris:#a59a96;--blanc-doux:rgba(244,238,233,.84);
   --trait:rgba(244,238,233,.15);--trait-fort:rgba(244,238,233,.34);--lumiere:var(--lumiere-nuit);--sur-lumiere:#0b0809;--c:var(--lumiere);color:var(--blanc)}
@@ -235,12 +236,13 @@ html[data-theme="nuit"] .theme7{color:var(--chaud)}
 .affiche:hover .affiche-ph img,.affiche:focus-visible .affiche-ph img{filter:brightness(.95) saturate(1);transform:scale(1.03)}
 .u--clair :focus-visible{outline-color:var(--u-texte)}
 
-/* La carte : de la lumière sur le noir */
+/* La carte : de la lumière sur le noir, à la gélatine de la saison (ses faisceaux, ses lampes) ; celle d'un spectacle (cl--teinte)
+   à sa couleur, ses faisceaux d'un blanc chaud */
 .tournee-grille{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:2.5rem clamp(2rem,4.5vw,5rem);align-items:start;margin-top:clamp(2rem,4vw,3.5rem)}
 .carte-boite{position:relative;margin:0;min-width:0}
 .carte-boite--seule{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1.5rem clamp(2rem,4vw,4rem);align-items:end}
-.cl{width:100%;height:auto;--lum:#ffd59e;--e:1;--pays:#151011;--pays-t:rgba(244,238,233,.17);--voisin:#0f0b0c;--voisin-t:rgba(244,238,233,.07);--fx:#fff1dc;--lampe-c:#fffaf2;--coeur:#fff;--nom:var(--blanc);--nom-t:var(--noir);--anneau:#fff;--pulse-c:#fff}
-.cl--teinte{--lum:var(--c)}
+.cl{width:100%;height:auto;--lum:var(--lumiere);--e:1;--pays:#151011;--pays-t:rgba(244,238,233,.17);--voisin:#0f0b0c;--voisin-t:rgba(244,238,233,.07);--fx:color-mix(in srgb,var(--lumiere) 45%,#fff);--lampe-c:color-mix(in srgb,var(--lumiere) 18%,#fff);--coeur:#fff;--nom:var(--blanc);--nom-t:var(--noir);--anneau:#fff;--pulse-c:#fff}
+.cl--teinte{--lum:var(--c);--fx:#fff1dc;--lampe-c:#fffaf2}
 :where(html[data-theme="jour"]) .cl{--lum:var(--lumiere);--pays:#e4dccf;--pays-t:rgba(24,17,15,.2);--voisin:#ece6dc;--voisin-t:rgba(24,17,15,.1);--fx:var(--lumiere);--lampe-c:var(--lumiere);--coeur:#18110f;--nom:#18110f;--nom-t:#f3eee7;--anneau:#18110f;--pulse-c:var(--lumiere)}
 :where(html[data-theme="jour"]) .cl--teinte{--lum:var(--c);--fx:var(--c);--lampe-c:var(--c)}
 .cl-pays{fill:var(--pays);stroke:var(--pays-t);stroke-width:calc(var(--e) * .9);stroke-linejoin:round}
@@ -808,7 +810,8 @@ main{display:block;min-height:100vh}
 .frise[data-frise] :is(.frise-point.est-passe+.frise-point:not(.est-passe),.frise-point:first-child:not(.est-passe))>.frise-repere::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--fr-c,var(--lumiere));opacity:0;animation:prochaine 2.4s ease-out 1.2s infinite;pointer-events:none}
 @keyframes prochaine{0%{opacity:.6;scale:1}80%,100%{opacity:0;scale:2.8}}
 .frise-hote{min-height:112px;margin-top:clamp(1.5rem,3vw,2.25rem)}
-#v-frise{min-height:126px}
+/* la place de la frise de la saison (quatre couloirs), réservée : rien ne bouge quand elle paraît */
+#v-frise{min-height:146px}
 .u-corps .frise[data-frise]{--fr-fond:var(--u-fond);--fr-encre:var(--u-texte);--fr-trait:color-mix(in srgb,var(--u-trace) 50%,transparent);--fr-accent:var(--u-trace);--fr-bulle-fond:var(--u-fond2);--fr-bulle-encre:var(--u-texte)}
 .u-corps .frise[data-frise] .frise-axe{background:var(--u-trace);box-shadow:0 0 10px 1px color-mix(in srgb,var(--u-lueur,#ffd9a8) 70%,transparent)}
 .frise-saisons{--fr-bande-h:48px;--fr-haut:20px;--fr-pied:30px}
@@ -2234,7 +2237,7 @@ html[data-theme="jour"] .intro.m07-intro .intro-indice{color:var(--lumiere)}
       </div>
       <section class="s7" id="s0" aria-labelledby="t-s0"><div class="wrap">
         <header class="s7-tete"><h2 class="s7-t" id="t-s0" tabindex="-1">${esc(SAISON.titre)}</h2><p class="s7-k"><span class="gel" aria-hidden="true"></span>${esc(LIB.saisonEnCours)}</p></header>
-        <div class="fs7"><div class="frise-hote" id="v-frise"></div><ul class="fs7-leg" aria-label="${esc(LIB.spectacles)}"></ul></div>
+        <div class="fs7"><div class="frise-hote" id="v-frise"></div><ul class="fs7-leg" aria-label="${esc(LIB.spectacles)}">${legendeHtml(tousPts, reperesSaison())}</ul></div>
         <div class="agenda-grille ag7">
           <div class="ag7-proch"><h3 class="s7-h">${esc(LIB.prochainesDates)}</h3><div class="agenda-liste" id="liste-agenda" data-agenda>${differer(() => parMois(pub, { entree: 'voir', tag: true, reserver: true, hm: 4, hn: 5 }))}</div></div>
           <div class="agenda-carte">${boiteCarte({ lieux, titre: SAISON.titre, liste: 'liste-agenda', defaut: pub[0] ? pub[0].l : null, choix: choixLieu })}</div>

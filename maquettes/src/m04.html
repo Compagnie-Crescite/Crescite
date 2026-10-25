@@ -1802,9 +1802,11 @@ a.rs-seance:focus-visible{outline:2px solid var(--u-titre);outline-offset:2px}
     lierCarte(mc, { survol: l => survol(l, 'carte'), choix });
     if (liste) {
       const de = e => { const li = e.target.closest('li[data-l]'); return li && li.dataset.l !== '' ? +li.dataset.l : null; };
-      liste.addEventListener('pointerover', e => survol(de(e), 'liste'));
-      liste.addEventListener('pointerleave', () => survol(null, 'liste'));
-      liste.addEventListener('focusin', e => survol(de(e), 'liste'));
+      // la souris survole, le clavier arrive : la commune s'allume ; un doigt qui touche une ligne la choisit sans ce détour
+      // (rien à recalculer avant que son geste ne se peigne)
+      liste.addEventListener('pointerover', e => { if (e.pointerType !== 'touch') survol(de(e), 'liste'); });
+      liste.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') survol(null, 'liste'); });
+      liste.addEventListener('focusin', e => { if (e.target.matches(':focus-visible')) survol(de(e), 'liste'); });
       liste.addEventListener('focusout', () => survol(null, 'liste'));
     }
     // montrer : une commune allumée depuis la frise (sans lui répondre en retour)

@@ -800,6 +800,8 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
 .frise-diffusion{--fr-bande-h:30px;--fr-haut:14px;--fr-pied:26px;--fr-taille:10px}
 .frise-diffusion .frise-bande-barre{margin:0 1px;background:var(--u-grand,var(--tache));opacity:.92}
 .frise-diffusion .frise-bande-nom{opacity:.8;letter-spacing:-.02em}
+/* sur l'aplat de la tache (la nuit, la couleur de la saison s'éclaircit : le blanc y tient 4,7:1, pas une miette de moins) */
+.sur-mag .frise-diffusion .frise-bande-nom{opacity:1}
 .frise-diffusion .frise-bande:not(:first-child):not(:last-child) .frise-bande-nom{opacity:0;transition:opacity .16s}
 .frise-diffusion .frise-bande:is(:hover,.est-allume,:focus-within) .frise-bande-nom{opacity:1}
 .frise-diffusion .frise-aujourdhui-nom{display:none}
@@ -1806,6 +1808,7 @@ a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
   let rsAg = null, rsSp = null, rsSpEtat = { slug: null, cle: null };
   const requete = () => new URLSearchParams(String(location.hash || '').split('?')[1] || '');
   const idCarte = k => 'rs-' + String(k).replace(/[^\w-]/g, '-');
+  const balais = new WeakMap();   // la carte et son dernier balai : un balai fini n'arrête pas le suivant
   function effetReserver({ carte: el, premier, fondAvant }) {
     if (premier || !el.animate) return;
     if (!bouge()) { const c = $('.rs-c', el); if (c) c.animate([{ opacity: .25 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' }); return; }
@@ -1813,9 +1816,12 @@ a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
     b.className = 'rs-balai'; b.setAttribute('aria-hidden', 'true');
     if (fondAvant) b.style.setProperty('--rs-balai-avant', fondAvant);
     el.appendChild(b);
-    const fin = () => { b.remove(); el.classList.remove('rs-balaie'); };
+    balais.set(el, b);
+    const fin = () => { b.remove(); if (balais.get(el) === b) el.classList.remove('rs-balaie'); };
     b.addEventListener('animationend', fin, { once: true }); setTimeout(fin, 900);
-    el.classList.remove('rs-balaie'); void el.offsetWidth; el.classList.add('rs-balaie');
+    // la carte vient d'être écrite et le balai est neuf : leurs animations partent d'elles-mêmes, sans relire la page (pas de
+    // mise en page forcée pendant le geste)
+    el.classList.add('rs-balaie');
   }
   // la page d'un spectacle : la bande de ses prochaines dates et la carte de la date choisie (la prochaine d'office, ou celle de
   // l'adresse : ?date=…) ; refaite en place, la date choisie reste
@@ -2058,22 +2064,24 @@ a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
       const ligneDe = e => { const li = e.target.closest && e.target.closest('li.r[data-l]'); return li && liste.contains(li) && li.dataset.l !== '' ? +li.dataset.l : null; };
       let survolee = null;
       const survol = l => { if (l === survolee) return; survolee = l; if (ctlP) ctlP.montre(l); };
-      liste.addEventListener('pointerover', e => survol(ligneDe(e)), { passive: true });
-      liste.addEventListener('pointerleave', () => survol(null), { passive: true });
-      liste.addEventListener('focusin', e => survol(ligneDe(e)));
+      // (la souris et le clavier seulement : un doigt qui touche une ligne la choisit, rien à peindre avant son geste)
+      liste.addEventListener('pointerover', e => { if (e.pointerType !== 'touch') survol(ligneDe(e)); }, { passive: true });
+      liste.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') survol(null); }, { passive: true });
+      liste.addEventListener('focusin', e => { if (e.target.matches(':focus-visible')) survol(ligneDe(e)); });
       liste.addEventListener('focusout', () => survol(null));
       // la carte de la saison et la frise : branchées quand elles sont là
       const marquerFrise = d => { const f = fSaison; if (!f || !f.el.isConnected) return;
         $$('.frise-point.est-choisi', f.el).forEach(x => x.classList.remove('est-choisi'));
         const pt = d ? $(`.frise-point[data-frise-cle="i:${CSS.escape(cleProchaine(d))}"]`, f.el) : null; if (pt) { pt.classList.add('est-choisi'); f.aller(cleProchaine(d)); } };
       // réserver (règle 17) : chaque prochaine date tout public ouvre sa carte sous sa ligne (un second geste ou Échap la referme) ;
-      // l'adresse garde la date choisie (?date=…), la frise la cerne
+      // l'adresse garde la date choisie (?date=…), la frise la cerne une image plus tard (elle défile et mesure : le geste se
+      // peint d'abord)
       if (RS && liste) {
         const voulue = requete().get('date');
         rsAg = RS.monter(liste, { dates: RS.dates(), carte: b => document.getElementById(idCarte(b.getAttribute('data-reserver'))),
           choisie: voulue || null, basculer: true, roving: false, axe: 'hv', adresse: true,
           univers: x => (x ? uStyleBrut(x) : ''), carteOptions: d => ({ href: spectacle(d.slug) ? `${lienSp(d.slug, 'voir')}?date=${encodeURIComponent(RS.cle(d))}` : null }),
-          effet: effetReserver, surChoix: d => marquerFrise(d || null) });
+          effet: effetReserver, surChoix: () => bientot(() => marquerFrise(rsAg ? rsAg.date() : null)) });
         liste.addEventListener('keydown', ev => {
           if (ev.key !== 'Escape' || !rsAg || rsAg.cle() == null) return;
           const b = liste.querySelector(`[data-reserver="${CSS.escape(rsAg.cle())}"]`), li = b && b.closest('li');

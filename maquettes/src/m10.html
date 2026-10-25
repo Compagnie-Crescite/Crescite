@@ -1039,7 +1039,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .frise[data-frise] .frise-bande.est-lue .frise-bande-nom { font-weight: 700; color: var(--saison-texte); }
 .frise[data-frise].frise--etiquettes .frise-etiquette { font: italic 500 14px/1.2 var(--serif); max-width: 15em; }
 .v-frise { margin: 0 0 clamp(26px, 4vw, 44px); }
-.v-frise:empty { min-height: 110px; }
+.v-frise:empty { min-height: 130px; }
 .frise-saisons { --fr-bande-h: 30px; --fr-haut: 20px; --fr-pied: 26px; }
 .frise-diffusion { --fr-bande-h: 26px; --fr-haut: 18px; --fr-pied: 26px; }
 .frise-saisons .frise-bande-nom, .frise-diffusion .frise-bande-nom { letter-spacing: 0; }
@@ -2479,16 +2479,22 @@ html .ed-ajout { font-family: var(--sans); }
         if (b.dataset.eff) { if (b.dataset.eff === 'q') F.q = ''; else if (b.dataset.eff === 's') F.slug = null; else F.l = null; AGV.maj(); }
       });
       if (actif()) filtrer();
-      fSaison = frise($('#v-frise', vPage), { echelle: 'saison', saison: D.saison, points: pointsSaison(), libelle: titreSa, relier: { liste: vPage, carte: svgP }, choix: p => allerLigne(p.id) });
-      // sous le pli, après la première image : toutes les dates de la saison, l'agenda passé et la frise des saisons
+      // une tâche courte après l'autre (le geste se voit d'abord) : la frise de la saison, dans le premier écran (sa place est
+      // gardée : rien ne saute) ; toutes les dates de la saison, sous le pli, posées avant les saisons passées (rien ne saute
+      // ensuite) ; puis l'agenda passé et la frise des saisons ; enfin la saison de l'adresse, ouverte et amenée à l'écran
       differe(() => {
-        const l = $('.ag-toutes-l', toutes);
-        if (l && !l.firstElementChild) { l.innerHTML = toutesHTML(enCours); if (actif()) filtrer(); }
-        dessineSaisons(true);
-        fSaisons = frise($('#ag-frise', vPage), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandes(visibles()), anMin: 30,
-          libelle: Lb.saisonsPassees, classe: 'frise-saisons', relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
-        lue = undefined;
-        if (kOuvrir && ANIMER) ouvrirSaison(kOuvrir, true);
+        fSaison = frise($('#v-frise', vPage), { echelle: 'saison', saison: D.saison, points: pointsSaison(), libelle: titreSa, relier: { liste: vPage, carte: svgP }, choix: p => allerLigne(p.id) });
+        differe(() => {
+          const l = $('.ag-toutes-l', toutes);
+          if (l && !l.firstElementChild) { l.innerHTML = toutesHTML(enCours); if (actif()) filtrer(); }
+          differe(() => {
+            dessineSaisons(true);
+            fSaisons = frise($('#ag-frise', vPage), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandes(visibles()), anMin: 30,
+              libelle: Lb.saisonsPassees, classe: 'frise-saisons', relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
+            lue = undefined;
+            if (kOuvrir && ANIMER) ouvrirSaison(kOuvrir, true);
+          });
+        });
       });
     };
     return tete(M.texte) + `
