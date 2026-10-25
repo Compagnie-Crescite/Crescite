@@ -238,7 +238,7 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
 .sc-med { position: relative; flex: none; width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: var(--sc-b); border: 1.5px solid var(--c); box-shadow: 0 0 0 3px var(--sc-c);
   transition: transform .22s var(--mv-courbe), box-shadow .22s; }
 .sc-med img { width: 100%; height: 100%; object-fit: cover; }
-.sc-q { position: absolute; top: calc(100% + 6px); left: 0; width: max-content; max-width: 260px; font: 400 .82rem/1.3 var(--sans); color: var(--sc-terne); opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
+.sc-q { position: absolute; top: calc(100% + 9px); left: 0; width: max-content; max-width: 260px; font: 400 .82rem/1.3 var(--sans); color: var(--sc-terne); opacity: 0; transform: translateY(-4px); transition: opacity .2s, transform .2s; }
 .sc-t.droite .sc-q { left: auto; right: 0; }
 .sc-t.est-actif { color: var(--c); }
 .sc-t.est-actif .sc-med { transform: scale(1.14); box-shadow: 0 0 0 3px var(--sc-c), 0 0 0 4.5px var(--c); }
@@ -285,15 +285,17 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
    --q : recouvert par le suivant (0 → 1, posées par le script ; sans mouvement : arrivé, lu, jamais recouvert) */
 .df-pile { position: relative; }
 .df { --p: 1; --r: 1; --q: 0; --m: calc((var(--p) + var(--r)) / 2); --cx: 71%; --cy: 50%; --sens: 1;
+  --bord: calc((100% - min(1240px, 100%)) / 2 + var(--gout) + min(36rem, (min(1240px, 100%) - 2 * var(--gout)) * .46));
   position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; min-height: calc(100svh - var(--haut)); font-family: var(--u-corps); }
 .df[data-cote="droite"] { --cx: 29%; --sens: -1; }
 .df-photo { position: absolute; inset: 0; z-index: -3; overflow: hidden; background: var(--u-fond2); }
 .df-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 40%; transform-origin: var(--cx) 50%; transform: scale(calc(1.14 - var(--p) * .14)); }
 .df[data-cote="droite"] .df-photo img { object-position: 38% 40%; }
+/* (le voile : uni sous toute la colonne de texte, --bord, pour que tout s'y lise, AA, quelle que soit la photo ; puis il s'efface) */
 .df-photo::after { content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, var(--u-fond) 0%, var(--u-fond) 32%, color-mix(in srgb, var(--u-fond) 80%, transparent) 46%, color-mix(in srgb, var(--u-fond) 22%, transparent) 70%, transparent 88%),
+  background: linear-gradient(90deg, var(--u-fond) 0, var(--u-fond) calc(var(--bord) + 16px), color-mix(in srgb, var(--u-fond) 70%, transparent) calc(var(--bord) + 7%), color-mix(in srgb, var(--u-fond) 25%, transparent) calc(var(--bord) + 16%), transparent calc(var(--bord) + 26%)),
     linear-gradient(0deg, color-mix(in srgb, var(--u-fond) 60%, transparent), transparent 32%); }
-.df[data-cote="droite"] .df-photo::after { background: linear-gradient(270deg, var(--u-fond) 0%, var(--u-fond) 32%, color-mix(in srgb, var(--u-fond) 80%, transparent) 46%, color-mix(in srgb, var(--u-fond) 22%, transparent) 70%, transparent 88%),
+.df[data-cote="droite"] .df-photo::after { background: linear-gradient(270deg, var(--u-fond) 0, var(--u-fond) calc(var(--bord) + 16px), color-mix(in srgb, var(--u-fond) 70%, transparent) calc(var(--bord) + 7%), color-mix(in srgb, var(--u-fond) 25%, transparent) calc(var(--bord) + 16%), transparent calc(var(--bord) + 26%)),
     linear-gradient(0deg, color-mix(in srgb, var(--u-fond) 60%, transparent), transparent 32%); }
 .df-effet { position: absolute; z-index: -2; left: var(--cx); top: var(--cy); translate: -50% -50%; pointer-events: none; color: var(--u-vif); }
 .df-voile { position: absolute; inset: 0; z-index: 6; background: #000; opacity: calc(var(--q) * .55); pointer-events: none; }
@@ -354,9 +356,10 @@ html[data-theme="nuit"] .df[data-motif="arene"] .df-effet { color: var(--u-vif);
 .df[data-motif="jumeaux"] .df-photo img { clip-path: inset(0 50% 0 0); transform: translateX(calc((1 - var(--p)) * -12vw)) scale(calc(1.08 - var(--p) * .08)); }
 .df[data-motif="jumeaux"] .df-photo .df-jumeau { clip-path: inset(0 0 0 50%); transform: translateX(calc((1 - var(--p)) * 12vw)) scale(calc(1.08 - var(--p) * .08)); }
 .df[data-motif="jumeaux"] .df-effet { width: min(26vw, 40vh); opacity: calc(var(--p) * .55); }
-/* L'imaginaire forcé, les annotations : le titre s'entoure à la main, les notes s'écrivent dans la marge */
-.df-entoure { position: absolute; left: -5%; top: -16%; width: 110%; height: 132%; overflow: visible; fill: none; stroke: var(--u-vif); stroke-width: 2.4; stroke-linecap: round; pointer-events: none; }
-.df-entoure path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, var(--p) * 1.6 - .5, 1)); }
+/* L'imaginaire forcé, les annotations : le titre se souligne à la main (comme sur sa page, sans passer sur les lettres), les
+   notes s'écrivent dans la marge */
+.df-souligne { display: block; width: min(100%, 380px); height: 22px; margin: 8px 0 -6px -6px; overflow: visible; fill: none; stroke: var(--u-vif); stroke-width: 2.4; stroke-linecap: round; pointer-events: none; }
+.df-souligne path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, var(--p) * 1.6 - .5, 1)); }
 .df[data-motif="annotations"] .df-effet { width: min(30vw, 46vh); opacity: .6; }
 /* Mon Royaume, le paperboard : le texte est une feuille qui tombe du chevalet ; le feutre dessine */
 .df[data-motif="paperboard"] .df-in { padding: clamp(26px, 4vh, 44px) clamp(22px, 3vw, 40px) clamp(22px, 3.4vh, 36px); background: #fffdf8 repeating-linear-gradient(transparent 0 2.25rem, #d7e3f4 2.25rem calc(2.25rem + 1px));
@@ -373,20 +376,25 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 /* La Folle Idée, l'horloge : le temps du huis clos, les aiguilles tournent avec la lecture */
 .df[data-motif="horloge"] .df-effet { width: min(30vw, 50vh); opacity: .55; color: var(--u-accent); }
 .df[data-motif="horloge"] .df-m { stroke-width: 2.2; }
-/* Macbeth – Fatum, le fil rouge : il traverse l'écran, tiré par la lecture */
-.df-fil { inset: 0; left: 0; top: 0; translate: none; width: 100%; height: 100%; }
+/* Macbeth – Fatum, le fil rouge : il traverse l'écran, tiré par la lecture, et passe sous la colonne de texte (il s'efface
+   avant elle : rien ne passe sous les lettres) */
+.df-fil { inset: 0; left: 0; top: 0; translate: none; width: 100%; height: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--bord) + 8px), #000 calc(var(--bord) + 12%)); mask-image: linear-gradient(90deg, transparent calc(var(--bord) + 8px), #000 calc(var(--bord) + 12%)); }
 .df-fil svg { display: block; width: 100%; height: 100%; overflow: visible; fill: none; }
+.df[data-cote="droite"] .df-fil { -webkit-mask-image: linear-gradient(270deg, transparent calc(var(--bord) + 8px), #000 calc(var(--bord) + 12%)); mask-image: linear-gradient(270deg, transparent calc(var(--bord) + 8px), #000 calc(var(--bord) + 12%)); }
 .df-fil path { stroke: var(--u-scene); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--m)); }
 /* Cassandres, la chronologie : la photo se découvre comme le temps passe, de 1850 à 2077, le curseur file sur la frise */
 .df[data-motif="chronologie"] .df-photo img { clip-path: inset(0 calc((1 - var(--p)) * 100%) 0 0); }
-.df-chrono { left: 4%; right: 4%; top: auto; bottom: clamp(18px, 4vh, 40px); width: auto; translate: none; opacity: .8; }
+.df-chrono { left: 4%; right: 4%; top: auto; bottom: clamp(18px, 4vh, 40px); width: auto; translate: none; }
 .df-chrono .df-m { stroke-width: 1.6; }
-.df-chrono text { fill: var(--u-texte2); font: 500 13px var(--u-etiq); letter-spacing: .1em; }
+.df-chrono path { opacity: .8; }
+.df-an { position: absolute; top: calc(100% + 2px); left: 3.33%; font: 500 13px/1 var(--u-etiq); letter-spacing: .1em; color: var(--u-texte); text-shadow: 0 0 3px var(--u-fond), 0 0 9px var(--u-fond); }
+.df-an-fin { left: auto; right: 3.33%; }
 .df-chrono .dm-curseur { fill: var(--u-vif); stroke: none; }
-/* épinglés, au bureau, quand le mouvement est permis : le suivant monte sur celui qu'on lit */
+/* épinglés, au bureau, quand le mouvement est permis : le suivant monte sur celui qu'on lit ; un écran de défilement par
+   spectacle (sans repos entre deux : --r suit alors --p) */
 @media (min-width: 900px) and (min-height: 620px) {
-  html:not(.still) .df { position: sticky; top: var(--haut); height: calc(100svh - var(--haut)); min-height: 0; margin-bottom: 42vh; }
-  html:not(.still) .df:last-child { margin-bottom: 0; }
+  html:not(.still) .df { position: sticky; top: var(--haut); height: calc(100svh - var(--haut)); min-height: 0; }
 }
 /* au téléphone et sur un écran étroit : la photo en haut, le texte dessous ; l'effet joue sur la photo */
 @media (max-width: 899px) {
@@ -399,7 +407,8 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
   .df[data-motif="arene"] .df-effet { width: calc(min(36vw, 21svh) * 2.36); }
   .df[data-motif="jumeaux"] .df-effet, .df[data-motif="annotations"] .df-effet, .df[data-motif="paperboard"] .df-effet, .df[data-motif="nez"] .df-effet, .df[data-motif="horloge"] .df-effet { width: min(52vw, 34svh); }
   .df-lune { left: auto; right: 6%; top: 4%; } .df[data-cote="droite"] .df-lune { left: auto; }
-  .df-chrono { bottom: auto; top: calc(54svh - 64px); }
+  .df-chrono { bottom: auto; top: calc(44svh - 34px); }
+  .df-fil, .df[data-cote="droite"] .df-fil { -webkit-mask-image: linear-gradient(#000 30svh, transparent 42svh); mask-image: linear-gradient(#000 30svh, transparent 42svh); }
   .df-credit, .df[data-cote="droite"] .df-credit { top: 8px; bottom: auto; right: 8px; left: auto; text-align: right; }
 }
 /* la saison sur la carte, puis les donateurs */
@@ -2264,7 +2273,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       sig = signature();
       ul.innerHTML = D.shows.map(sh => `<li><a class="sc-t" href="${lienSp(sh.slug)}" draggable="false" style="--c:${couleurScene(sh)}"><span class="sc-tl"><span class="sc-tt"${edS(sh, 'titre')}>${esc(sh.titre)}</span>${D.photos[sh.slug] ? `<span class="sc-med" aria-hidden="true"><img src="${D.photos[sh.slug]}" alt="" decoding="async"></span>` : ''}</span><span class="sc-q">${meta(sh)}</span></a></li>`).join('');
       TIT = $$('.sc-t', ul).map((a, i) => { const sh = D.shows[i];
-        const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurScene(sh)) };
+        const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), q: $('.sc-q', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurScene(sh)) };
         ecouter(T); return T; });
       ul.setAttribute('aria-label', L.lesSpectacles);
       BRAS.forEach(a => { a.but = null; a.depuis = null; a.q = 1; a.teinte = 0; a.rel = []; a.T = []; });
@@ -2350,6 +2359,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       TIT.forEach(T => { const rg = document.createRange(); rg.selectNodeContents(T.tt); const ls = [...rg.getClientRects()];
         if (ls.length > 1) T.tt.style.width = Math.ceil(Math.max(...ls.map(l => l.width)) + 1) + 'px'; });
       TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
+      // ce qui s'écrit dans chaque titre (ses lignes, sa date), par rapport à lui : les bras passent dessous (image())
+      TIT.forEach(T => { const r0 = T.el.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(T.tt);
+        T.ecrit = [...rg.getClientRects()].map(l => [l.left - r0.left - 3, l.top - r0.top - 3, l.width + 6, l.height + 6]);
+        if (T.q && T.q.offsetWidth) T.ecrit.push([T.q.offsetLeft - 3, T.q.offsetTop - 1, T.q.offsetWidth + 6, T.q.offsetHeight + 3, 1]); });
       if (!mobile) {
         s = clamp(Math.min(W * .3 / bw, (hEcran - 260) / bh), .22, .5); ech = s / .38;
         const ow = bw * s, oh = bh * s, cx = W / 2, rx = ow / 2 + clamp(W * .11, 100, 210), ry = oh * .5 + clamp(hEcran * .1, 70, 130), K = [1, .84, .95, .8, .9, .86];
@@ -2553,6 +2566,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       const u = boite ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
       boite = b;
       const X0 = Math.max(0, Math.floor(u.x0 * dpr)), Y0 = Math.max(0, Math.floor(u.y0 * dpr)), Rw = Math.min(cv.width, Math.ceil(u.x1 * dpr)) - X0, Rh = Math.min(cv.height, Math.ceil(u.y1 * dpr)) - Y0;
+      const allumes = new Set(act ? [act] : []);
+      for (const a of BRAS) if (a.but && a.teinte > .45) allumes.add(a.but);
       if (Rw > 0 && Rh > 0) {
         // les bras, glissés sous le logo, puis le logo (pas avant l'éveil : c'est encore l'ouverture qui le porte)
         lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(X0, Y0, Rw, Rh);
@@ -2563,12 +2578,16 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         lctx.setTransform(1, 0, 0, 1, 0, 0);
         const bx = bob.x * dpr, by = bob.y * dpr;
         lctx.globalCompositeOperation = 'destination-out'; lctx.drawImage(msk, X0 - bx, Y0 - by, Rw, Rh, X0, Y0, Rw, Rh); lctx.globalCompositeOperation = 'source-over';
+        // ils passent aussi sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes)
+        for (const T of TIT) {
+          if (!T.ecrit || T.em <= 0) continue;
+          const dy = (1 - T.em) * 12, date = mobile || allumes.has(T);
+          for (const [x, y, w, h, d] of T.ecrit) if (!d || date) lctx.clearRect((T.bx + x) * dpr, (T.by + dy + y) * dpr, w * dpr, h * dpr);
+        }
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(X0, Y0, Rw, Rh);
         ctx.drawImage(lay, X0, Y0, Rw, Rh, X0, Y0, Rw, Rh);
         if (eveil !== null) ctx.drawImage(lg, X0 - bx, Y0 - by, Rw, Rh, X0, Y0, Rw, Rh);
       }
-      const allumes = new Set(act ? [act] : []);
-      for (const a of BRAS) if (a.but && a.teinte > .45) allumes.add(a.but);
       for (const T of TIT) placer(T, allumes.has(T), now, anime);
       if (pres || (eveil !== null && now - eveil < 2600)) occupe = true;
       if (!une && occupe) raf = requestAnimationFrame(image);
@@ -2695,7 +2714,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      Pleine page, dans son univers : sa photo, son titre dans sa police, son accroche, ses prochaines dates principales (deux
      ou trois, tout public d'abord ; sans date, la phrase de son bilan dans D, ou son annonce s'il est en création) et le
      lien vers sa page. L'effet vient de son motif, ceux que la 10 fait déjà réagir au défilement : l'arène (la photo s'ouvre
-     en cercle et l'arène tourne), les jumeaux (les deux moitiés se rejoignent), les annotations (le titre s'entoure à la
+     en cercle et l'arène tourne), les jumeaux (les deux moitiés se rejoignent), les annotations (le titre se souligne à la
      main), le paperboard (la feuille tombe du chevalet), le nez (de profil, la lune se lève), l'horloge (les aiguilles
      tournent), le fil (rouge, il traverse l'écran), la chronologie (la photo se découvre de 1850 à 2077). */
   const motif10 = m => {
@@ -2712,10 +2731,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const ARENE = () => `<svg class="df-m df-arene" viewBox="0 0 400 400" aria-hidden="true" focusable="false"><circle cx="200" cy="200" r="197"/><g class="dm-tourne">${[0, 120, 240].map(a => `<path class="gradin" d="${arc(200, 200, 183, a + 9, a + 111)}"/>`).join('')}</g><circle cx="200" cy="200" r="168" stroke-dasharray="1.5 7"/></svg>`;
   const FIL = '<svg viewBox="0 0 1400 800" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M-30 760C200 720 420 800 640 724S760 420 724 262 820 30 1010 86 1300 270 1440 120"/></svg>';
   const LUNE = '<svg class="df-lune" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>';
-  const ENTOURE = '<svg class="df-entoure" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M34 64C40 24 150 6 236 22s74 62 10 82-196 14-226-14 18-62 112-70"/></svg>';
+  const SOULIGNE = '<svg class="df-souligne" viewBox="0 0 320 30" preserveAspectRatio="none" aria-hidden="true" focusable="false" style="--k:1"><path pathLength="1" d="M4 18c28-10 52 8 80-2s50-12 78 0 54 10 80-2 46-8 74 4"/></svg>';
   const FRISE_CHRONO = () => { const x = a => 40 + (a - 1850) / 227 * 1120, ticks = [];
     for (let a = 1850; a <= 2070; a += 10) ticks.push(`<path d="M${x(a).toFixed(1)} ${a % 50 ? 25 : 18}V39"/>`);
-    return `<svg class="df-m" viewBox="0 0 1200 64" aria-hidden="true" focusable="false"><path d="M40 32H1160"/>${ticks.join('')}<path d="M1160 14V48"/><text x="40" y="61">1850</text><text x="1160" y="61" text-anchor="end">2077</text><circle class="dm-curseur" cx="40" cy="32" r="7"/></svg>`; };
+    // (les années, en HTML sous le trait : elles gardent leur taille quand la frise rétrécit, au téléphone)
+    return `<svg class="df-m" viewBox="0 10 1200 42" aria-hidden="true" focusable="false"><path d="M40 32H1160"/>${ticks.join('')}<path d="M1160 14V48"/><circle class="dm-curseur" cx="40" cy="32" r="7"/></svg><span class="df-an">1850</span><span class="df-an df-an-fin">2077</span>`; };
   const effetEcran = m => m === 'arene' ? `<div class="df-effet" aria-hidden="true">${ARENE()}</div>`
     : m === 'fil' ? `<div class="df-effet df-fil" aria-hidden="true">${FIL}</div>`
     : m === 'chronologie' ? `<div class="df-effet df-chrono" aria-hidden="true">${FRISE_CHRONO()}</div>`
@@ -2749,7 +2769,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       ${effetEcran(m)}
       <div class="wrap df-texte"><div class="df-in">
         <p class="df-sur" style="--k:0"><span${edS(s, 'creation')}>${esc(s.creation || '')}</span>${s.lieuTemps ? `<span class="df-lt"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${badge ? `<span class="df-badge">${badge}</span>` : ''}</p>
-        <h2 class="df-titre${long ? ' long' : ''}" id="df-t-${esc(s.slug)}" style="--k:1">${titre}${m === 'annotations' ? ENTOURE : ''}</h2>
+        <h2 class="df-titre${long ? ' long' : ''}" id="df-t-${esc(s.slug)}" style="--k:1">${titre}</h2>${m === 'annotations' ? SOULIGNE : ''}
         ${s.accroche ? `<p class="df-acc" style="--k:2"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
         ${datesEcran(s)}
         <p class="df-cta" style="--k:4"><a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></p>
@@ -2764,8 +2784,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   let ecrans = [], dfM = null;
   function mesurerEcrans() {
     const e0 = ecrans[0];
-    dfM = e0 && e0.isConnected ? { pile: getComputedStyle(e0).position === 'sticky', h: e0.offsetHeight, m: parseFloat(getComputedStyle(e0).marginBottom) || 0,
-      haut: ($('#top') || {}).offsetHeight || 64 } : null;
+    // (haut : là où les écrans s'épinglent, leur top ; le filet de l'en-tête n'en fait pas partie)
+    const st = e0 && e0.isConnected ? getComputedStyle(e0) : null;
+    dfM = st ? { pile: st.position === 'sticky', h: e0.offsetHeight, m: parseFloat(st.marginBottom) || 0,
+      haut: (st.position === 'sticky' && parseFloat(st.top)) || ($('#top') || {}).offsetHeight || 64 } : null;
   }
   function defileEcrans() {
     if (!ecrans.length || !ecrans[0].isConnected) return;
@@ -2790,7 +2812,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     if (!dfM) mesurerEcrans();
     if (!dfM || !dfM.pile) return;
     const d = dfM.haut - el.parentElement.getBoundingClientRect().top, a = i * (dfM.h + dfM.m), v = clamp(d, a, i < ecrans.length - 1 ? a + dfM.m : a);
-    if (Math.abs(v - d) > 1) scrollTo({ top: scrollY + v - d, behavior: 'instant' });
+    if (Math.abs(v - d) > .5) scrollTo({ top: Math.ceil(scrollY + v - d), behavior: 'instant' });   // (arrondi vers le bas de la page : épinglé)
   }
 
   /* ---------- l'accueil : la scène (la pieuvre), le menu, les spectacles un par écran, la saison sur la carte, les donateurs ---------- */
