@@ -314,7 +314,7 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 /* Frais et matériel */
 .frais-table-photo { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; border: 1px solid var(--trait); cursor: pointer; }
 /* le tableau des notes de frais défile de côté au téléphone, sans pousser la page */
-.frais-defile { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--rayon); }
+.frais-defile { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--rayon); }   /* relative : ce qu'il porte de caché (.sr) défile avec lui */
 .frais-defile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .frais-defile table.simple { min-width: 820px; }
 .frais-table-actions { display: flex; gap: 4px; }

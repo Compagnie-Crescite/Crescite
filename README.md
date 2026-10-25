@@ -497,12 +497,37 @@ la base à la première ouverture du planning qui suit. 22 essais (`node prefere
 **« Compagnie Idéale » (pas encore lancé).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
 s'exécute après les six autres et peut être relancé. Il ajoute les alertes de tournée et les demandes de devis (le public
 les dépose, sans en poser le suivi ; il ne relit que son alerte, par son jeton), les notes de frais (chacun les siennes,
-jamais validées ni remboursées par soi-même ; les justificatifs dans le stockage privé `crescite-frais`, chacun dans le
-dossier de sa fiche), le matériel (lu par l'équipe, tenu par l'administration), les listes de chargement et les pistes
-de diffusion (l'administration seule), et cinq colonnes de diffusion au suivi des dates. Un compte du projet qui n'a pas
-de fiche dans l'équipe n'y a rien. L'administration écoute ces tables sur un canal à part, et seulement quand la base
-les a. 33 essais (`node ideale.mjs`). Tant que le script n'est pas lancé, la rubrique Diffusion, les notes de frais
-(Équipe) et l'onglet Matériel d'un spectacle se masquent ; le reste de l'administration, le tableur compris, n'en dépend pas.
+jamais validées ni remboursées par soi-même, avec le jour de la dépense ; les justificatifs dans le stockage privé
+`crescite-frais`, chacun dans le dossier de sa fiche), le matériel (lu par l'équipe, tenu par l'administration), les
+listes de chargement et les pistes de diffusion (l'administration seule), et cinq colonnes de diffusion au suivi des
+dates. Un compte du projet qui n'a pas de fiche dans l'équipe n'y a rien. L'administration écoute ces tables sur un canal
+à part, et seulement quand la base les a. 34 essais (`node ideale.mjs`). Tant que le script n'est pas lancé, la rubrique
+Diffusion, les notes de frais (Équipe) et l'onglet Matériel d'un spectacle se masquent ; le reste de l'administration, le
+tableur compris, n'en dépend pas. De même dans l'espace de l'équipe (une lecture de `crescite_notes_frais` le dit, une
+fois par chargement) : le geste « Frais » d'une date, la carte « Notes de frais » de Moi, `#/frais` (qui mène alors à
+`#/moi`) et la checklist du camion. Un justificatif se dépose dans `<fiche>/<horodatage>_<nom>`, jamais par-dessus un
+autre fichier ; la note garde ce chemin, et le fichier ne s'ouvre que par un lien signé d'une heure (au clic dans l'espace
+de l'équipe, par lot dans l'administration ; l'export CSV garde le chemin). Sur le site, l'alerte de tournée et la
+demande de devis ne se disent enregistrées que si la base les a enregistrées ; sinon, la page propose d'écrire au
+contact diffusion, le récapitulatif prêt.
+
+**Les documents communs (pas encore lancé).** Le huitième script, `supabase/migrations/20261027_crescite_documents_publics.sql`,
+s'exécute après les sept autres et peut être relancé. Un document public peut être pour les programmateurs et les
+établissements à la fois (`pour` = `tous` ; `pros_scolaires`, son ancien nom, est accepté aussi) : il refait la règle de
+lecture publique des documents (`public_lecture`, une seule, pour le public comme pour les comptes connectés : les
+documents publics des spectacles publiés) et les documents qu'une invitation de l'espace pro ouvre. La liste complète
+des valeurs est aussi dans les troisième et quatrième scripts : relancés après lui, ils ne refusent pas les documents
+communs déjà rangés et ne retirent rien de ce qu'il ouvre. 20 essais (`node documents.mjs` : les huit scripts relancés
+dans le désordre avec des documents communs rangés, ce que le public, l'équipe et l'espace pro en lisent).
+
+**L'alerte de retard (pas encore lancé).** Le neuvième script, `supabase/migrations/20261028_crescite_signaler.sql`,
+s'exécute après les huit autres et peut être relancé. Dans l'espace de l'équipe, le geste « Retard » d'une date à venir
+prévient l'équipe de la date (celles et ceux qui partent et ont un compte : la distribution « en tournée », corrigée par
+l'équipe de la date) et les administrateurs dont le compte est relié à une fiche, jamais son auteur : une notification
+dans l'application et sur les téléphones abonnés, comme les autres. La fonction `crescite_signaler` n'est appelable que
+par l'équipe de la date et l'administration ; 280 caractères au plus, cinq alertes par heure et par compte ; chaque
+alerte est gardée dans `crescite_signalements` (son auteur la relit, l'administration toutes). Tant que le script n'est
+pas lancé, le geste ne se montre pas ; il ne dit « envoyée » que si la base l'a envoyée. 32 essais (`node signaler.mjs`).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

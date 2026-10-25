@@ -10,7 +10,8 @@
    <id> est celui de la date), #/planning (le planning commun, ../admin/planning.js), #/indisponibilites, #/agendas,
    #/propositions et #/proposition/<id>, #/spectacles et #/spectacles/<slug> (ses spectacles et leurs fichiers de travail ;
    #/documents y mène), #/notifications, #/moi (la fiche, les notifications sur l'appareil, l'installation, le mot de
-   passe, la déconnexion). #/fiche mène à #/moi. Au téléphone, la barre du bas garde cinq onglets (Saison, Feuilles,
+   passe, la déconnexion), #/frais (les notes de frais : seulement quand la base a le septième script, voir sonder).
+   #/fiche mène à #/moi. Au téléphone, la barre du bas garde cinq onglets (Saison, Feuilles,
    Planning, Spectacles, Moi) et les notifications passent dans une cloche en haut, avec leur badge ; à l'ordinateur, la
    colonne de gauche les montre toutes les six.
 

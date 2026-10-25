@@ -606,6 +606,8 @@ html.ed-actif .ep-a::after { content: none; }
 .alerte-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto; gap: 12px; align-items: center; }
 .alerte-geo-grp { display: flex; gap: 6px; }
 .alerte-geo-grp input { flex: 1; min-width: 130px; }
+/* au téléphone, les champs l'un sous l'autre : côte à côte, ils sortaient de la boîte */
+@media (max-width: 600px) { .alerte-champs { grid-template-columns: minmax(0, 1fr); } .alerte-geo-grp input { min-width: 0; } }
 .btn-geo { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: var(--papier); color: var(--encre); font: 500 .88rem var(--sans); cursor: pointer; white-space: nowrap; transition: border-color .15s, background .15s; }
 .btn-geo:hover { border-color: var(--magenta); color: var(--magenta-texte); }
 .btn-geo.actif { background: var(--magenta); color: #fff; border-color: var(--magenta); }
@@ -615,6 +617,11 @@ html.ed-actif .ep-a::after { content: none; }
 .alerte-msg.ok { background: color-mix(in srgb, #1d6f47 12%, transparent); color: #1d6f47; border: 1px solid #1d6f47; }
 .alerte-msg.err { background: color-mix(in srgb, #b3261e 12%, transparent); color: #b3261e; border: 1px solid #b3261e; }
 .alerte-msg a { color: inherit; font-weight: 700; text-decoration: underline; overflow-wrap: anywhere; }
+/* la nuit : les champs de l'alerte et du simulateur sur le papier de la nuit (blancs, leur encre claire ne se lisait pas),
+   et les réponses dans un vert et un rouge clairs (AA sur la nuit) */
+html[data-theme="nuit"] :is(.alerte-champs select, .alerte-champs input[type="email"], .alerte-champs input[type="text"], .champ-simu input, .champ-simu select) { background: var(--blanc); }
+html[data-theme="nuit"] .alerte-msg.ok { color: #7fd6a4; border-color: #7fd6a4; }
+html[data-theme="nuit"] .alerte-msg.err { color: #ff9d94; border-color: #ff9d94; }
 
 /* ———— Chantier 2 : Simulateur d'accueil & Devis flash ———— */
 .simu-boite { margin-top: 10px; padding: clamp(24px, 4vw, 40px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--ec, var(--magenta)); }
