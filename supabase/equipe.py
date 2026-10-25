@@ -2,7 +2,8 @@
 
     python3 supabase/equipe.py --essai       ce qui serait écrit, sans rien écrire (détail dans maquettes/dist/)
     python3 supabase/equipe.py               les fiches, les distributions, les déroulés types et les liens vers les textes
-    python3 supabase/equipe.py --photos      aussi les photos de private/photos/equipe (registre.json), stockage « crescite »
+    python3 supabase/equipe.py --photos      aussi les photos de private/photos/equipe (registre.json) : stockage « crescite »
+                                             si elles peuvent être publiées, sinon « crescite-equipe » (privé)
     python3 supabase/equipe.py --dossiers    aussi le dossier scolaire de Bérénice, dans le stockage privé « crescite-equipe »
 
 Ce qu'il importe : data/equipe.json (les personnes et la distribution de chaque spectacle, d'après les fiches de
@@ -151,18 +152,19 @@ def main():
             if r["slug"] not in ids or actuelles.get(r["slug"]):
                 continue
             f = PHOTOS / Path(r["fichier"]).name
-            chemin = f"equipe/{r['slug']}.webp"
-            api("POST", f"/storage/v1/object/crescite/{chemin}", f.read_bytes(),
-                {"Content-Type": "image/webp", "x-upsert": "true", "Cache-Control": "max-age=3600"})
             credit = f"© {r['credit']}" if r.get("credit") else None
             # montrée sur le site seulement si l'identité est sûre (la page source cite la compagnie ou un de ses
-            # spectacles) et si c'est un vrai portrait ; les autres attendent l'accord de l'administration
+            # spectacles) et si c'est un vrai portrait ; les autres attendent l'accord de l'administration, dans le
+            # stockage privé de l'équipe (ils ne se téléchargent pas ; l'administration les publie en cochant l'accord)
             publique = r.get("confiance") == "sure" and r["slug"] not in EQUIPE.get("photos_pas_publiees", {})
+            seau, chemin = ("crescite", f"equipe/{r['slug']}.webp") if publique else ("crescite-equipe", f"portraits/{r['slug']}.webp")
+            api("POST", f"/storage/v1/object/{seau}/{chemin}", f.read_bytes(),
+                {"Content-Type": "image/webp", "x-upsert": "true", "Cache-Control": "max-age=3600"})
             api("PATCH", f"/rest/v1/crescite_personnes?slug=eq.{r['slug']}",
                 {"photo": chemin, "photo_credit": credit, "photo_source": r.get("page_source"), "photo_publique": publique},
                 {"Prefer": "return=minimal"})
             n += 1
-        print(f"{n} photos envoyées dans le stockage « crescite » (equipe/)")
+        print(f"{n} photos envoyées (publiées : « crescite », equipe/ ; en attente d'accord : « crescite-equipe », portraits/)")
 
     if "--dossiers" in sys.argv:
         for slug, fichier, chemin, titre in DOSSIERS_EQUIPE:

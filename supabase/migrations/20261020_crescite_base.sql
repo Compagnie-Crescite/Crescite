@@ -486,7 +486,12 @@ begin
 end $$;
 
 grant select on public.crescite_spectacles, public.crescite_lieux, public.crescite_dates, public.crescite_representations,
-  public.crescite_ateliers, public.crescite_textes to anon, authenticated;
+  public.crescite_ateliers, public.crescite_textes to authenticated;
+grant select on public.crescite_spectacles, public.crescite_dates, public.crescite_representations, public.crescite_ateliers,
+  public.crescite_textes to anon;
+-- des lieux, le public ne lit que ce que le site montre (ni l'adresse postale, ni le code INSEE, ni qui les a modifiés)
+revoke select on public.crescite_lieux from anon;
+grant select (id, nom, type, commune, departement, pays, latitude, longitude, site_web) on public.crescite_lieux to anon;
 grant select on public.crescite_dates_suivi, public.crescite_lieux_suivi, public.crescite_seances, public.crescite_journal,
   public.crescite_admins to authenticated;
 grant insert, update, delete on public.crescite_spectacles, public.crescite_lieux, public.crescite_dates,

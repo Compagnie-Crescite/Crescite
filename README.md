@@ -540,8 +540,9 @@ date, dans son espace), le public et un compte du projet sans fiche n'y ont aucu
 journal. `crescite_dates_suivi` (organisateur, contacts, contrat) reste à l'administration seule. Tant que le script
 n'est pas lancé, rien de cela ne se montre. 19 essais (`node chiffres.mjs`).
 
-**Les alertes de tournée (pas encore lancé).** Le onzième script, `supabase/migrations/20261030_crescite_alertes.sql`,
-s'exécute après les dix autres et peut être relancé ; la fonction `crescite-courriel` est ensuite à redéployer. Sur le
+**Les alertes de tournée (lancé le 25 octobre 2026 ; ses derniers renforts viennent avec le treizième script).** Le onzième
+script, `supabase/migrations/20261030_crescite_alertes.sql`, s'exécute après les dix autres et peut être relancé ; la
+fonction `crescite-courriel` est ensuite à redéployer. Sur le
 site, « Être prévenu du prochain passage » dépose une alerte : une adresse, un secteur (un code postal ou une commune, et
 le département qui s'en déduit ; ou la position du visiteur, 40 km alentour), un spectacle ou tous. Elle ne compte
 qu'une fois confirmée d'un clic depuis le courriel envoyé à l'adresse : sans cela, n'importe qui inscrirait l'adresse
@@ -551,7 +552,9 @@ l'adresse.
 - Ce que la base garantit (des déclencheurs, que le septième script relancé ne défait pas) : le public ne dépose jamais
   une alerte confirmée, ne choisit pas son jeton et ne lit pas celles des autres ; cinq alertes actives au plus par
   adresse ; un courriel de confirmation au plus par adresse et par 24 heures (son lien confirme toutes les alertes en
-  attente de l'adresse), et 50 adresses au plus par 24 heures ; la même alerte déposée deux fois ne se double pas.
+  attente de l'adresse), et 50 adresses au plus par 24 heures, courriels du dépôt et du matin ensemble ; la même alerte
+  déposée deux fois ne se double pas ; la commune, reprise dans les courriels, n'y garde que des lettres (ni lien, ni
+  balise) ; une position est gardée au kilomètre près.
 - Chaque matin (7 h 17, heure UTC, pg_cron), `crescite-courriel` efface les alertes non confirmées 30 jours après leur
   courriel de confirmation, envoie les confirmations restées en attente (« non_configure » compris, dès qu'une clé
   d'envoi existe), puis un seul courriel par alerte confirmée, avec les dates qu'elle n'a pas encore reçues (le premier :
@@ -578,7 +581,7 @@ l'adresse.
 `crescite-courriel` (Edge Functions → crescite-courriel → coller `supabase/functions/crescite-courriel/index.ts` →
 Deploy) et vérifier que « Verify JWT » est resté décoché ; la clé d'envoi (`BREVO_API_KEY` ou `RESEND_API_KEY`) et
 l'expéditeur vérifié restent ceux des propositions. Tant que le script n'est pas lancé, la base refuse l'alerte : le site
-ne dit rien enregistré et propose d'écrire au contact diffusion. 71 essais (`node alertes.mjs` : les onze scripts, le
+ne dit rien enregistré et propose d'écrire au contact diffusion. 72 essais (`node alertes.mjs` : les onze scripts, le
 onzième relancé, le septième et le troisième relancés après lui ; la fonction dans Node, Brevo et Resend simulés).
 
 **Les semaines de résidence sur le site (pas encore lancé).** Le douzième script,
@@ -591,8 +594,31 @@ Claude les montre (`ecrire.py`). Les alertes de tournée ne prennent toujours qu
 résidence passée ne prévient personne. 11 essais (`node residences.mjs` : les dix premiers scripts et le douzième, relancé
 avant et après le premier et le troisième, qui ont la même règle).
 
+**La sécurité (pas encore lancé).** Le treizième script, `supabase/migrations/20261101_crescite_securite.sql`, s'exécute
+après les douze autres (il s'arrête et le dit si le onzième manque) et peut être relancé. Il ferme ce que la revue de
+sécurité d'octobre 2026 a trouvé dans la base :
+- un compte ne se rattache à une fiche de l'équipe que par une adresse confirmée, lue dans le compte lui-même (plus
+  celle que porte le jeton) ;
+- ce que le public dépose passe par un débit : 5 alertes par heure et 20 par jour depuis une même connexion, 300 par
+  jour en tout ; 3 demandes de devis par heure et 10 par jour, 100 par jour en tout (au-delà, la base répond 429 et le
+  site le dit, avec l'adresse où écrire). La connexion n'est gardée que sous la forme d'une empreinte salée de l'adresse
+  IP, deux jours ; l'administration et les imports ne sont pas comptés ;
+- le public n'écrit que les champs de ses formulaires (ni l'identifiant, ni la date, ni le suivi, ni le jeton), et une
+  demande de devis a des longueurs bornées partout ;
+- un abonnement aux notifications ne va qu'aux services connus (Google, Mozilla, Apple, Microsoft), en https ;
+- le public ne lit des lieux que ceux d'une date qu'il voit, sans leur adresse postale, et des fiches de l'équipe que ce
+  que le site montre (ni les biographies, ni la source des photos) ;
+- les renforts des alertes de tournée (communes sans lien, positions au kilomètre, 50 adresses par jour en tout).
+Les scripts 1, 2, 7 et 11 portent les mêmes droits et les mêmes fonctions : relancés, ils ne rouvrent rien. Les
+lectures du site (`donnees.js`) et le temps réel n'en changent pas. 35 essais (`node securite.mjs` : les douze scripts,
+le treizième deux fois, puis les scripts 1, 2, 3, 7, 11 et 12 relancés après lui).
+
+Les portraits qui attendent l'accord de publication ne sont plus dans le stockage public : l'administration les range
+dans le stockage privé de l'équipe (`crescite-equipe`, `portraits/…`) et les change de stockage quand l'accord change ;
+un portrait remplacé ou retiré est effacé.
+
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
-d'atteinte), jamais sans filtre, avec un mode `--essai`. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;
+d'atteinte), jamais sans filtre, avec un mode `--essai`. `effacer <stockage> <chemin>` efface un fichier d'un stockage de la compagnie. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;
 une ligne ajoutée se reprend dans les suivantes par « @nom.id ». La règle qui l'y autorise est dans `.claude/settings.json`.
 Les scripts SQL et le déploiement des fonctions restent à faire dans Supabase.

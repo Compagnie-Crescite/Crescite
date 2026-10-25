@@ -107,8 +107,14 @@ begin
   new.code_postal := substring(secteur from '(?:^|[^0-9])([0-9]{5})(?:[^0-9]|$)');
   new.commune := nullif(left(btrim(regexp_replace(regexp_replace(coalesce(new.commune, ''),
                    '\(\s*([0-9]{2,3}|2[AaBb])\s*\)', '', 'g'), '[0-9]{5}', '', 'g')), 120), '');
+  -- un nom de commune : des lettres, des espaces, des traits d'union, des apostrophes ; rien d'autre (il est repris dans les
+  -- courriels : ni adresse de site, ni lien n'y passent)
+  new.commune := nullif(btrim(regexp_replace(regexp_replace(coalesce(new.commune, ''), '[^[:alpha:][:space:]''’-]+', ' ', 'g'), '\s+', ' ', 'g')), '');
   if new.lat is null or new.lon is null or new.lat not between -90 and 90 or new.lon not between -180 and 180 then
     new.lat := null; new.lon := null;
+  else
+    -- au kilomètre près : l'alerte n'a pas besoin de plus, l'adresse de la personne n'est pas gardée
+    new.lat := round(new.lat, 2); new.lon := round(new.lon, 2);
   end if;
   if tg_op = 'INSERT' and current_user in ('anon', 'authenticated') then
     new.confirme_le := null; new.confirmation_le := null; new.confirmation_statut := null;
@@ -321,6 +327,10 @@ create or replace function public.crescite_alertes_confirmations(limite integer)
 language plpgsql security definer set search_path = public as $$
 declare x record;
 begin
+  -- les 50 adresses par 24 heures valent pour tous les courriels de confirmation : ceux partis au dépôt d'une alerte
+  -- comptent, le passage du matin ne fait que compléter
+  limite := least(coalesce(limite, 0), 50 - (select count(distinct lower(a.email))::int from public.crescite_alertes_tournee a
+                   where a.confirmation_statut in ('en_cours', 'envoye') and a.confirmation_le > now() - interval '24 hours'));
   for x in
     select g.m, g.id from (
       select lower(a.email) as m, min(a.id) as id, min(a.cree_le) as depuis
@@ -430,6 +440,8 @@ alter table public.crescite_alertes_envois enable row level security;
 revoke all on public.crescite_alertes_envois from anon, authenticated, public;
 grant all on public.crescite_alertes_envois to service_role;
 
+-- le formulaire du site envoie confirme_le (vide ; la garde le vide de toute façon) : le public l'écrit, comme ses autres champs
+grant insert (confirme_le) on public.crescite_alertes_tournee to anon;
 -- le département d'un secteur sert à la garde, qui passe sous le rôle de celui qui dépose (un calcul, rien à lire)
 grant execute on function public.crescite_departement(text) to anon, authenticated;
 -- le reste ne sert qu'à la base et à la fonction crescite-courriel

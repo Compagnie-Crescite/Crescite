@@ -137,13 +137,17 @@ const appels = async () => (await db.query(`select body, headers from net.appels
 const vieillir = (m, heures) => db.exec(`update public.crescite_alertes_tournee set confirmation_le = confirmation_le - interval '${heures} hours' where lower(email) = '${m}'`);
 
 // ---------------------------------------------------------------------------------------------- le dépôt
-ok(await inscrire({ email: ' A@Exemple.FR ', code_postal: '76000', commune: 'Rouen', lat: 49.44, lon: 1.10, confirme_le: new Date().toISOString(),
-  token_desinscription: 'x'.repeat(32), confirmation_statut: 'envoye', cree_le: '2020-01-01', derniere_notification_le: null,
-  push_subscription: '{"endpoint":"https://push.exemple.fr"}' }) === null, 'le public dépose une alerte (géolocalisée autour de Rouen)');
+const horsChamps = await Promise.all([{ token_desinscription: 'x'.repeat(32) }, { confirmation_statut: 'envoye' }, { cree_le: '2020-01-01' },
+  { derniere_notification_le: null }, { push_subscription: '{"endpoint":"https://push.exemple.fr"}' }, { active: false }]
+  .map(x => inscrire({ email: 'hors@exemple.fr', code_postal: '76000', ...x })));
+ok(horsChamps.every(e => e?.code === '42501') && (await alertesDe('hors@exemple.fr')).length === 0,
+  'le public n’écrit que les champs du formulaire : ni le jeton, ni le suivi, ni la date, ni un abonnement (refusé)');
+ok(await inscrire({ email: ' A@Exemple.FR ', code_postal: '76000', commune: 'Rouen', lat: 49.44, lon: 1.10, confirme_le: new Date().toISOString() }) === null,
+  'le public dépose une alerte (géolocalisée autour de Rouen)');
 const [a] = await alertesDe('a@exemple.fr');
-ok(a && a.confirme_le === null && a.confirmation_statut === 'en_cours' && a.token_desinscription !== 'x'.repeat(32) && /^[0-9a-f]{32}$/.test(a.token_desinscription)
-   && new Date(a.cree_le).getFullYear() > 2020 && a.push_subscription === null && a.email === 'a@exemple.fr' && a.departement === '76',
-  'jamais confirmée, ni son jeton ni sa date choisis par le public ; l’adresse en minuscules, le département déduit du code postal');
+ok(a && a.confirme_le === null && a.confirmation_statut === 'en_cours' && /^[0-9a-f]{32}$/.test(a.token_desinscription)
+   && a.push_subscription === null && a.email === 'a@exemple.fr' && a.departement === '76',
+  'jamais confirmée, son jeton tiré par la base ; l’adresse en minuscules, le département déduit du code postal');
 let ap = await appels();
 ok(ap.length === 1 && ap[0].body.alerte_confirmation === Number(a.id) && ap[0].headers['x-crescite-jeton'] === jetonBase,
   'le courriel de confirmation est demandé à crescite-courriel, avec le jeton de la base');
@@ -427,9 +431,10 @@ ok(vider().length === bilan.alertes && bilan.alertes > 0 && (await db.query(`sel
 // le septième (il refait ses règles d'accès) et le troisième, après le onzième : rien ne s'affaiblit
 const confirmeesAvant = (await db.query(`select count(*)::int n from public.crescite_alertes_tournee where confirme_le is not null`)).rows[0].n;
 for (const k of ['crescite_ideale', 'crescite_notifications', 'crescite_alertes']) await db.exec(S[k]);
-ok(await inscrire({ email: 'apres@exemple.fr', code_postal: '76000', confirme_le: new Date().toISOString(), token_desinscription: 'y'.repeat(32) }) === null
-   && (await alertesDe('apres@exemple.fr'))[0].confirme_le === null && (await alertesDe('apres@exemple.fr'))[0].token_desinscription !== 'y'.repeat(32),
-  'le septième et le troisième relancés : le public ne dépose toujours pas d’alerte confirmée, ni son jeton');
+ok((await inscrire({ email: 'apres@exemple.fr', code_postal: '76000', token_desinscription: 'y'.repeat(32) }))?.code === '42501'
+   && await inscrire({ email: 'apres@exemple.fr', code_postal: '76000', confirme_le: new Date().toISOString() }) === null
+   && (await alertesDe('apres@exemple.fr')).length === 1 && (await alertesDe('apres@exemple.fr'))[0].confirme_le === null,
+  'le septième et le troisième relancés : le public dépose encore par le formulaire, jamais une alerte confirmée, ni son jeton');
 await db.exec(S.crescite_ideale);
 ok((await db.query(`select count(*)::int n from pg_trigger where tgrelid = 'public.crescite_alertes_tournee'::regclass and tgname like 'crescite_alertes_%'`)).rows[0].n === 3
    && await essai('anon', '', `select * from public.crescite_alertes_envois`) !== 'ok'

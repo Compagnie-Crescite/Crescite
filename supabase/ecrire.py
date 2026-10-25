@@ -10,6 +10,7 @@ hors d'atteinte, et rien ne se modifie ni ne se retire sans filtre.
                                                                             qui existe déjà est mise à jour
     python3 supabase/ecrire.py retirer  <table> "<filtre>"                   retirer des lignes
     python3 supabase/ecrire.py envoyer  <stockage> <chemin> <fichier>        déposer un fichier (remplace l'ancien)
+    python3 supabase/ecrire.py effacer  <stockage> <chemin>                  effacer un fichier d'un stockage
     python3 supabase/ecrire.py appeler  <fonction> '<json>'                  appeler une fonction crescite_ de la base
     python3 supabase/ecrire.py lot      <fichier.json>                       une liste d'opérations, dans l'ordre :
           [{"action": "modifier", "table": …, "filtre": …, "valeurs": {…}},
@@ -67,6 +68,8 @@ def envoyer(methode, chemin, corps=None, entetes=None, essai=False):
         h.update({"apikey": CLE, "Authorization": f"Bearer {CLE}"})
     h.update(entetes or {})
     data = corps if isinstance(corps, (bytes, type(None))) else json.dumps(corps, ensure_ascii=False).encode()
+    if data is None:
+        h.pop("Content-Type", None)   # (un envoi sans corps n'en annonce pas : le stockage refuse un JSON vide)
     if essai:
         apercu = f"{len(data)} octets" if isinstance(corps, bytes) else (data or b"").decode()[:600]
         print(f"essai, rien n'est envoyé : {methode} {chemin}\n{apercu}")
@@ -159,6 +162,13 @@ def main(args):
         type_ = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
         return envoyer("POST", f"/storage/v1/object/{stockage}/{quote(chemin)}", f.read_bytes(),
                        {"Content-Type": type_, "x-upsert": "true", "Cache-Control": "max-age=3600"}, essai=essai)
+    if action == "effacer" and len(reste) == 2:
+        stockage, chemin = reste
+        if stockage not in STOCKAGES:
+            refuser(f"« {stockage} » n'est pas un stockage de la compagnie ({', '.join(sorted(STOCKAGES))})")
+        if ".." in chemin.split("/") or chemin.startswith("/") or not chemin.strip() or chemin.endswith("/"):
+            refuser(f"chemin « {chemin} » : un fichier, pas un dossier")
+        return envoyer("DELETE", f"/storage/v1/object/{stockage}/{quote(chemin)}", essai=essai)
     if action == "lot" and len(reste) == 1:
         return lot(Path(reste[0]), essai)
     if action == "appeler" and len(reste) == 2:

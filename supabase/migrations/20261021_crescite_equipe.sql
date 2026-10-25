@@ -172,17 +172,20 @@ language sql stable security definer set search_path = public as $$
                    where x.spectacle_id = s and e.personne_id = moi.id and e.present)))
 $$;
 
--- à la première connexion : rattache le compte à la fiche dont l'adresse est celle du compte (si aucune fiche ne l'est
--- encore) ; renvoie l'identifiant de la fiche, ou rien
+-- à la première connexion : rattache le compte à la fiche dont l'adresse est celle du compte, si cette adresse est
+-- confirmée (et si aucune fiche ne l'est encore) ; renvoie l'identifiant de la fiche, ou rien. L'adresse vient du
+-- compte lui-même (auth.users), jamais du jeton seul
 create or replace function public.crescite_rattacher() returns bigint
 language plpgsql security definer set search_path = public as $$
 declare
-  courriel text := lower(nullif(auth.jwt() ->> 'email', ''));
+  courriel text;
   p bigint;
 begin
   if auth.uid() is null then return null; end if;
   select personne_id into p from public.crescite_personnes_privees where user_id = auth.uid();
-  if p is not null or courriel is null then return p; end if;
+  if p is not null then return p; end if;
+  select lower(nullif(u.email, '')) into courriel from auth.users u where u.id = auth.uid() and u.email_confirmed_at is not null;
+  if courriel is null then return null; end if;
   update public.crescite_personnes_privees set user_id = auth.uid(), modifie_le = now()
    where lower(email) = courriel and user_id is null
   returning personne_id into p;
@@ -330,7 +333,11 @@ begin
   end loop;
 end $$;
 
-grant select on public.crescite_personnes, public.crescite_distributions to anon, authenticated;
+grant select on public.crescite_personnes, public.crescite_distributions to authenticated;
+grant select on public.crescite_distributions to anon;
+-- des fiches, le public ne lit que ce que le site montre (ni les biographies, ni la source des photos, ni le suivi)
+revoke select on public.crescite_personnes from anon;
+grant select (id, slug, prenom, nom, metiers, photo, photo_credit, photo_publique, publie, ordre) on public.crescite_personnes to anon;
 grant select on public.crescite_personnes_privees, public.crescite_personnes_suivi, public.crescite_equipes,
   public.crescite_documents, public.crescite_feuilles to authenticated;
 grant insert, update, delete on public.crescite_personnes, public.crescite_personnes_privees, public.crescite_personnes_suivi,

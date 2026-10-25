@@ -236,7 +236,18 @@ create policy ide_crm_prospects on public.crescite_diffusion_prospects for all t
 -- devis, rien d'autre
 revoke all on public.crescite_alertes_tournee, public.crescite_devis_demandes, public.crescite_notes_frais,
   public.crescite_materiel, public.crescite_checklists_chargement, public.crescite_diffusion_prospects from anon, public;
-grant insert on public.crescite_alertes_tournee, public.crescite_devis_demandes to anon;
+-- (les champs de ses formulaires seulement : ni l'identifiant, ni la date, ni le suivi ; confirme_le vient du onzième script)
+do $$
+declare c text;
+begin
+  select string_agg(quote_ident(column_name), ', ') into c from information_schema.columns
+   where table_schema = 'public' and table_name = 'crescite_alertes_tournee'
+     and column_name in ('email', 'code_postal', 'commune', 'departement', 'lat', 'lon', 'rayon_km', 'spectacle_id', 'confirme_le');
+  execute format('grant insert (%s) on public.crescite_alertes_tournee to anon', c);
+end $$;
+grant insert (spectacle_id, type_lieu, dimensions_plateau, jauge_estimee, structure_nom, commune, departement, contact_nom,
+              contact_email, contact_tel, periode_souhaitee, message)
+  on public.crescite_devis_demandes to anon;
 grant select on public.crescite_alertes_tournee to anon;   -- sa propre alerte, par son jeton (règle ide_alertes_lecture)
 grant select, insert, update, delete on public.crescite_alertes_tournee, public.crescite_devis_demandes, public.crescite_notes_frais,
   public.crescite_materiel, public.crescite_checklists_chargement, public.crescite_diffusion_prospects to authenticated;
