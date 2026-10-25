@@ -9,8 +9,12 @@
 //        moins de 20 secondes n'est pas refaite. → { agenda: { id, actif, derniere_synchro, nb_evenements, erreur } }
 //   GET  ?flux=<agenda_jeton> : le flux iCalendar (text/calendar) des dates Crescite de la personne, celles où elle part
 //        (l'équipe de la date, ou sa distribution « en tournée ») : les représentations à leur heure, les répétitions avec
-//        leur fin, le lieu, des UID stables. C'est l'adresse qu'on ajoute à Google Agenda (« À partir de l'URL »), à
-//        Apple Calendrier ou à Outlook (webcal://…). Une clé inconnue (changée depuis) : 404.
+//        leur fin, le lieu, des UID stables. Puis les propositions de dates qui lui sont adressées, encore ouvertes : un
+//        événement par jour proposé (une période proposée d'un tenant : un seul), « à confirmer » (TENTATIVE), sans
+//        occuper l'agenda (TRANSPARENT), sa réponse dans le titre, le lien vers la proposition dans l'espace de l'équipe.
+//        Ni les jours passés, ni ceux où elle a répondu non ; une proposition close, retirée, ou devenue une date qui est
+//        dans le flux, n'y est plus. C'est l'adresse qu'on ajoute à Google Agenda (« À partir de l'URL »), à Apple
+//        Calendrier ou à Outlook (webcal://…). Une clé inconnue (changée depuis) : 404.
 //
 // La lecture d'un agenda relié :
 //   - l'adresse : https seulement (webcal:// devient https://) ; refusés : un hôte en adresse IP, localhost, un nom local
@@ -28,7 +32,8 @@
 //
 // Déploiement, une fois : Supabase → Edge Functions → Deploy a new function → Via Editor, nom « crescite-agenda », coller
 // ce fichier, Deploy ; puis, dans les réglages de la fonction, décocher « Verify JWT » : le flux s'ouvre sans compte (sa
-// clé est dans l'adresse), la base s'annonce par son jeton, et la personne est vérifiée ici même. Aucun secret à saisir :
+// clé est dans l'adresse), la base s'annonce par son jeton, et la personne est vérifiée ici même. Ce fichier changé, on
+// le recolle (Deploy) et on revérifie « Verify JWT » : un redéploiement peut le recocher. Aucun secret à saisir :
 // SUPABASE_DB_URL, SUPABASE_URL et SUPABASE_ANON_KEY sont fournis par Supabase ; SITE_URL (facultatif, comme pour
 // crescite-courriel) : l'adresse du site, pour les liens des événements du flux. Le script SQL 5 a posé la relecture
 // horaire (pg_cron, tâche « crescite-agendas »).
@@ -534,7 +539,11 @@ const FUSEAU = ['BEGIN:VTIMEZONE', 'TZID:Europe/Paris', 'X-LIC-LOCATION:Europe/P
   'BEGIN:DAYLIGHT', 'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST', 'DTSTART:19700329T020000', 'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU', 'END:DAYLIGHT',
   'BEGIN:STANDARD', 'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET', 'DTSTART:19701025T030000', 'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU', 'END:STANDARD',
   'END:VTIMEZONE'];
-const texteIcs = (s: unknown) => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+// un texte iCalendar : \ ; et , échappés, chaque retour à la ligne (\r\n, \n, ou \r seul) en \n ; les autres caractères
+// de contrôle, interdits dans une ligne, sont retirés (la tabulation reste)
+const texteIcs = (s: unknown) => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r\n?|\n/g, '\\n')
+  // deno-lint-ignore no-control-regex
+  .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
 // une ligne de plus de 75 octets se plie (RFC 5545, 3.1), sans couper un caractère
 function plier(ligne: string): string {
   const enc = new TextEncoder();
@@ -581,15 +590,42 @@ type DateFlux = {
   lieu_nom: string | null; adresse: string | null; commune: string | null; departement: string | null;
   seances: Seance[];
 };
+// un jour proposé à la personne (script SQL 5) : la proposition (id, titre, message, statut, spectacle, date_id : la date
+// qu'elle est devenue), le jour (jour_id, debut et fin : des instants ; journee : de minuit à minuit, fin exclue) et sa
+// réponse à elle (oui, non, peut_etre, ou rien)
+type PropositionFlux = {
+  id: number | string; jour_id: number | string; titre: string | null; message: string | null; statut?: string | null;
+  spectacle: string | null; date_id: number | string | null; debut: string | Date; fin: string | Date; journee: boolean;
+  reponse: string | null;
+};
+const REPONDU: Record<string, string> = { oui: 'disponible', peut_etre: 'peut-être' };
+const instantDe = (x: string | Date) => (x instanceof Date ? x.getTime() : Date.parse(String(x)));
+// un instant → son heure à Paris, au format iCalendar (AAAAMMJJTHHMMSS)
+const murParis = (t: number) => new Date(t + decalage(t, ZONE)).toISOString().slice(0, 19).replace(/[-:]/g, '');
+// le jour d'une borne de journée entière : minuit à Paris comme minuit UTC y tombent, à midi près (comme le planning)
+const jourDe = (t: number) => new Date(t + 43_200_000).toISOString().slice(0, 10);
+// le titre d'une proposition, sans ce que « Proposition : … (à confirmer) » dit déjà : « Option : Théâtre de Flers »
+// → « Théâtre de Flers » ; le titre donné faute de mieux (« Des dates à confirmer ») n'ajoute rien
+function objetProposition(titre: unknown): string {
+  const t = String(titre ?? '').trim().replace(/^(options?|propositions?)\s*:\s*/i, '');
+  return /^des dates à confirmer$/i.test(t) ? '' : t;
+}
+const contient = (a: string, b: string) => !!b && a.toLowerCase().includes(b.toLowerCase());
 
 /* Le flux iCalendar des dates d'une personne (pur : les essais l'appellent directement). personne = {prenom} ;
-   dates : comme la requête de flux() les donne ; maintenant : pour DTSTAMP. */
-export function composerFlux(personne: { prenom?: string | null }, dates: DateFlux[], maintenant = new Date()): string {
+   dates : comme la requête de flux() les donne ; maintenant : pour DTSTAMP, et les jours proposés déjà passés ;
+   propositions : ses jours proposés, comme la requête de flux() les donne. Les dates d'abord, telles quelles, puis les
+   propositions, un événement par jour proposé : chaque jour a sa réponse (un non ne retire que lui), ses heures ou non,
+   et les jours d'une proposition ne se suivent pas toujours ; une période proposée d'un tenant (une seule ligne) reste un
+   seul événement. Une proposition close, un jour passé ou répondu non, une proposition devenue une date de ce flux :
+   rien. */
+export function composerFlux(personne: { prenom?: string | null }, dates: DateFlux[], maintenant = new Date(), propositions: PropositionFlux[] = []): string {
   const stamp = maintenant.toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Compagnie Crescite//Dates de l equipe//FR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     `X-WR-CALNAME:${texteIcs(`Crescite${personne?.prenom ? ` · ${personne.prenom}` : ''}`)}`,
-    `X-WR-CALDESC:${texteIcs('Vos dates avec la compagnie Crescite : représentations, répétitions, résidences. Mis à jour automatiquement.')}`,
+    `X-WR-CALDESC:${texteIcs('Vos dates avec la compagnie Crescite : représentations, répétitions, résidences, et les dates qu’elle vous propose, à confirmer. Mis à jour automatiquement.')}`,
     'X-WR-TIMEZONE:Europe/Paris', 'X-PUBLISHED-TTL:PT1H', 'REFRESH-INTERVAL;VALUE=DURATION:PT1H', ...FUSEAU];
+  const dansLeFlux = new Set<string>();      // les dates écrites ici : une proposition devenue l'une d'elles n'y revient pas
   for (const d of dates) {
     if (d.precision === 'mois' || d.precision === 'saison') continue;      // pas de jour précis : rien à mettre dans un agenda
     const nature = d.nature || 'representations', option = d.statut === 'option';
@@ -625,6 +661,7 @@ export function composerFlux(personne: { prenom?: string | null }, dates: DateFl
           detail: `${quoi[0].toUpperCase()}${quoi.slice(1)}, ${n > 1 ? 'heures à préciser' : 'heure à préciser'}`, note: s.note });
       }
     }
+    dansLeFlux.add(String(d.id));
     for (const e of evenements) {
       L.push('BEGIN:VEVENT', `UID:${e.uid}@crescite.fr`, `DTSTAMP:${stamp}`);
       if (e.date) L.push(`DTSTART;VALUE=DATE:${e.debut.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${e.fin.replace(/-/g, '')}`);
@@ -639,6 +676,29 @@ export function composerFlux(personne: { prenom?: string | null }, dates: DateFl
       L.push(`DESCRIPTION:${texteIcs(desc)}`, `STATUS:${option ? 'TENTATIVE' : 'CONFIRMED'}`, `URL:${page}`, 'TRANSP:OPAQUE', 'END:VEVENT');
     }
   }
+  // les propositions : « à confirmer » (TENTATIVE), sans occuper l'agenda (TRANSPARENT), et le lien vers la proposition
+  // dans l'espace de l'équipe (on y répond connecté ; la clé de réponse du courriel ne va jamais dans un agenda)
+  const tMaintenant = maintenant.getTime();
+  for (const p of propositions || []) {
+    if ((p.statut && p.statut !== 'ouverte') || p.reponse === 'non') continue;
+    if (p.date_id != null && dansLeFlux.has(String(p.date_id))) continue;   // devenue une date : elle est déjà là
+    const t0 = instantDe(p.debut), t1 = instantDe(p.fin);
+    if (!(t1 > t0) || t1 <= tMaintenant) continue;                          // illisible, ou passé
+    const jours = p.journee ? [jourDe(t0), jourDe(t1)] : null;
+    if (jours && jours[1] <= jours[0]) continue;                              // pas un jour entier (le planning n'en montre rien)
+    const sp = String(p.spectacle ?? '').trim(), titre = String(p.titre ?? '').trim() || 'Des dates à confirmer';
+    const objet = objetProposition(titre), repondu = REPONDU[String(p.reponse || '')];
+    const quoi = [contient(objet, sp) ? '' : sp, objet].filter(Boolean).join(' — ');
+    const page = `${SITE}/equipe/#/proposition/${p.id}`;
+    L.push('BEGIN:VEVENT', `UID:crescite-proposition-${p.id}-jour-${p.jour_id}@crescite.fr`, `DTSTAMP:${stamp}`);
+    if (jours) L.push(`DTSTART;VALUE=DATE:${jours[0].replace(/-/g, '')}`, `DTEND;VALUE=DATE:${jours[1].replace(/-/g, '')}`);
+    else L.push(`DTSTART;TZID=Europe/Paris:${murParis(t0)}`, `DTEND;TZID=Europe/Paris:${murParis(t1)}`);
+    L.push(`SUMMARY:${texteIcs(`${quoi ? `Proposition : ${quoi}` : 'Proposition de dates'} (à confirmer${repondu ? `, vous avez répondu : ${repondu}` : ''})`)}`);
+    const desc = [`Des dates que la compagnie vous propose, pas encore confirmées : « ${titre} »${sp && !contient(titre, sp) ? ` (${sp})` : ''}.`,
+      repondu ? `Vous avez répondu : ${repondu}. Vous pouvez changer d’avis tant que la proposition est ouverte.` : 'Vous n’avez pas encore répondu.',
+      p.message, `Répondre dans l’application : ${page}`].filter(Boolean).join('\n');
+    L.push(`DESCRIPTION:${texteIcs(desc)}`, 'STATUS:TENTATIVE', `URL:${page}`, 'TRANSP:TRANSPARENT', 'END:VEVENT');
+  }
   L.push('END:VCALENDAR');
   return L.map(plier).join('\r\n') + '\r\n';
 }
@@ -649,7 +709,9 @@ async function flux(jeton: string, tete: boolean): Promise<Response> {
                         join public.crescite_personnes pe on pe.id = v.personne_id where v.agenda_jeton = ${jeton}`;
   if (!p) return texte('Ce lien d’agenda ne marche plus : sa clé a été changée. Reprenez le nouveau lien dans l’espace de l’équipe (Moi → Mes agendas).', 404);
   const moi = p.personne_id;
-  const dates = await sql`
+  // ses dates, et ses jours proposés : deux lectures à la fois ; celle des propositions, si elle échoue, laisse le flux
+  // des dates tel quel
+  const [dates, propositions] = await Promise.all([sql`
     select d.id, d.debut::text as debut, d.fin::text as fin, d.precision, d.statut, d.nature, d.public, d.details,
            s.titre, s.slug, s.duree, l.nom as lieu_nom, l.adresse, l.commune, l.departement,
            coalesce((select jsonb_agg(jsonb_build_object('id', r.id, 'jour', r.jour, 'heure', r.heure, 'fin', r.fin, 'public', r.public,
@@ -662,8 +724,20 @@ async function flux(jeton: string, tete: boolean): Promise<Response> {
       and (exists (select 1 from public.crescite_equipes e where e.date_id = d.id and e.personne_id = ${moi} and e.present)
            or (exists (select 1 from public.crescite_distributions di where di.spectacle_id = d.spectacle_id and di.personne_id = ${moi} and di.en_tournee)
                and not exists (select 1 from public.crescite_equipes e where e.date_id = d.id and e.personne_id = ${moi} and not e.present)))
-    order by d.debut, d.id`;
-  const corps = composerFlux({ prenom: p.prenom }, dates as unknown as DateFlux[]);
+    order by d.debut, d.id`,
+    // ce que la personne a le droit d'en voir, comme dans l'application : les propositions dont elle est destinataire
+    // (retirée de la liste, elle ne les voit plus) et, de chaque jour qui lui est proposé, sa seule réponse ; ni les
+    // autres destinataires, ni leurs réponses, ni sa clé de réponse
+    sql`
+    select p.id, j.id as jour_id, p.titre, p.message, p.statut, p.date_id, s.titre as spectacle, j.debut, j.fin, j.journee, r.reponse
+    from public.crescite_propositions_destinataires q
+    join public.crescite_propositions p on p.id = q.proposition_id
+    join public.crescite_propositions_jours j on j.proposition_id = p.id
+    join public.crescite_propositions_reponses r on r.jour_id = j.id and r.personne_id = q.personne_id
+    left join public.crescite_spectacles s on s.id = p.spectacle_id
+    where q.personne_id = ${moi} and p.statut = 'ouverte' and j.fin > now() and r.reponse is distinct from 'non'
+    order by j.debut, j.id limit 500`.catch((e: unknown) => { console.error('crescite-agenda : propositions', e); return []; })]);
+  const corps = composerFlux({ prenom: p.prenom }, dates as unknown as DateFlux[], new Date(), propositions as unknown as PropositionFlux[]);
   return new Response(tete ? null : corps, { headers: { ...CORS, 'Content-Type': 'text/calendar; charset=utf-8',
     'Cache-Control': 'private, max-age=900', 'Content-Disposition': 'inline; filename="crescite.ics"' } });
 }
