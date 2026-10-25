@@ -529,6 +529,15 @@ par l'équipe de la date et l'administration ; 280 caractères au plus, cinq ale
 alerte est gardée dans `crescite_signalements` (son auteur la relit, l'administration toutes). Tant que le script n'est
 pas lancé, le geste ne se montre pas ; il ne dit « envoyée » que si la base l'a envoyée. 32 essais (`node signaler.mjs`).
 
+**Les chiffres des dates (pas encore lancé).** Le dixième script, `supabase/migrations/20261029_crescite_chiffres.sql`,
+s'exécute après les neuf autres et peut être relancé. Il ajoute `crescite_dates_chiffres` : pour une date, la jauge (les
+places), les spectateurs (le public venu) et les heures d'ateliers, avec leur source (le récapitulatif des
+représentations de la compagnie, feuille et ligne). Jamais publiés : l'administration les lit et les écrit (la fiche
+d'une date, bloc « Les chiffres » ; trois colonnes du tableur, exportées en nombres), l'équipe les lit (la page d'une
+date, dans son espace), le public et un compte du projet sans fiche n'y ont aucun droit ; chaque changement va au
+journal. `crescite_dates_suivi` (organisateur, contacts, contrat) reste à l'administration seule. Tant que le script
+n'est pas lancé, rien de cela ne se montre. 19 essais (`node chiffres.mjs`).
+
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
 d'atteinte), jamais sans filtre, avec un mode `--essai`. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;

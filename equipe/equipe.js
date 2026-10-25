@@ -621,19 +621,21 @@
   }
 
   // ================================================================================================ ce que la base a déjà
-  // Deux scripts SQL ne sont pas encore lancés partout : le septième (20261026_crescite_ideale.sql : les notes de frais,
-  // le matériel, les listes de chargement) et le neuvième (20261028_crescite_signaler.sql : l'alerte de retard). Une
-  // lecture minimale de leur table le dit, une fois par chargement de la page, connecté (une base qui ne les a pas répond
-  // 404 : attendu). Tant que la réponse n'est pas venue (sans réseau aussi), ce qu'ils apportent reste masqué : le geste
-  // « Frais » d'une date, la carte « Notes de frais » de Moi, #/frais (qui mène à #/moi), la checklist du camion d'une
-  // date ; le geste « Retard ».
-  const SONDES = { ideale: 'inconnu', signaler: 'inconnu' };
-  const TABLES_SONDES = { ideale: 'crescite_notes_frais', signaler: 'crescite_signalements' };
+  // Trois scripts SQL ne sont pas encore lancés partout : le septième (20261026_crescite_ideale.sql : les notes de frais,
+  // le matériel, les listes de chargement), le neuvième (20261028_crescite_signaler.sql : l'alerte de retard) et le
+  // dixième (20261029_crescite_chiffres.sql : les chiffres des dates). Une lecture minimale de leur table le dit, une fois
+  // par chargement de la page, connecté (une base qui ne les a pas répond 404 : attendu). Tant que la réponse n'est pas
+  // venue (sans réseau aussi), ce qu'ils apportent reste masqué : le geste « Frais » d'une date, la carte « Notes de
+  // frais » de Moi, #/frais (qui mène à #/moi), la checklist du camion d'une date ; le geste « Retard » ; les chiffres
+  // d'une date.
+  const SONDES = { ideale: 'inconnu', signaler: 'inconnu', chiffres: 'inconnu' };
+  const TABLES_SONDES = { ideale: 'crescite_notes_frais', signaler: 'crescite_signalements', chiffres: 'crescite_dates_chiffres' };
+  const COLONNE_SONDE = { chiffres: 'date_id' };     // (les autres tables ont un id)
   let sondage = null;
   function sonder() {
     if (!sondage) sondage = Promise.all(Object.keys(TABLES_SONDES).filter(k => SONDES[k] === 'inconnu').map(async k => {
       try {
-        const { error } = await sb.from(TABLES_SONDES[k]).select('id').limit(1);
+        const { error } = await sb.from(TABLES_SONDES[k]).select(COLONNE_SONDE[k] || 'id').limit(1);
         if (!error) SONDES[k] = 'ok';
         else if (tableAbsente(error)) SONDES[k] = 'absent';
       } catch (e) { /* sans réseau : la prochaine lecture redemandera */ }
@@ -642,6 +644,7 @@
   }
   const avecIdeale = () => SONDES.ideale === 'ok';
   const avecSignaler = () => SONDES.signaler === 'ok';
+  const avecChiffres = () => SONDES.chiffres === 'ok';
 
   // en attendant la base : l'application, et la forme de ce qui arrive
   function squelette() {
@@ -1402,8 +1405,9 @@
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
         ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
     }
-    html += blocLieu(d) + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d);
+    html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d);
     afficher(r, sp.titre || 'Date', html, { focus });
+    if (avecChiffres()) chargerChiffres(d.id);
     preparerPartages(documentsDe(d.spectacle?.id).filter(x => x.type === 'fiche_technique'));
     if (avecIdeale()) chargerChecklistCamion(d.id, d.spectacle?.id);
     if (d.feuille && !f) chargerFeuille(d.id).then(x => {
@@ -1495,6 +1499,24 @@
           <a class="btn-gps" href="${esc(gps.apple)}" target="_blank" rel="noopener">${ICONES.apple} Apple Plans</a>
         </div>` : ''}
         ${site ? `<p class="liens"><a href="${esc(site)}" target="_blank" rel="noopener">Site du lieu<span class="sr"> (nouvel onglet)</span></a></p>` : ''}</div>${mini}</div></section>`;
+  }
+
+  // les chiffres d'une date (le dixième script, jamais publiés : l'équipe les lit) : la jauge, le public venu, les heures
+  // d'ateliers. Le bloc attend, caché, sa lecture ; il ne se montre que si la date en a.
+  function blocChiffres(d) {
+    return `<section class="bloc" id="bloc-chiffres" hidden${attrU(d.spectacle || {})} aria-labelledby="b-chiffres"><h2 id="b-chiffres">${ICONES.planning}Les chiffres</h2><p id="chiffres-texte"></p></section>`;
+  }
+  async function chargerChiffres(id) {
+    let data = null;
+    try { ({ data } = await sb.from('crescite_dates_chiffres').select('jauge,spectateurs,heures_ateliers').eq('date_id', id).maybeSingle()); } catch (e) { return; }
+    const bloc = $('#bloc-chiffres');
+    if (!bloc || !data || location.hash !== `#/date/${id}`) return;
+    const morceaux = [data.jauge != null && `Jauge : ${nombre(data.jauge)} places`,
+      data.spectateurs != null && `${nombre(data.spectateurs)}\u00a0spectateur${Number(data.spectateurs) > 1 ? 's' : ''}`,
+      data.heures_ateliers != null && `${nombre(data.heures_ateliers)}\u00a0h d’ateliers`].filter(Boolean);
+    if (!morceaux.length) return;
+    $('#chiffres-texte', bloc).textContent = morceaux.join(' · ');
+    bloc.hidden = false;
   }
 
   // qui part sur une date : la distribution « en tournée » du spectacle, moins les absents de la date, plus ses renforts
