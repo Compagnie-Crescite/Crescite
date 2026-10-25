@@ -76,7 +76,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 .evitement:focus { top: calc(8px + var(--hs)); color: var(--papier); }
 .ic { width: 20px; height: 20px; flex: none; }
 /* la pieuvre : à la couleur du thème du site (--pieuvre, que maquettes/build.py pose : règle 22 du contrat), sinon au magenta */
-.pieuvre { display: inline-block; flex: none; width: 30px; height: 25px; color: var(--pieuvre, var(--magenta-vif)); }
+.pieuvre { display: inline-block; flex: none; width: 40px; height: 23px; color: var(--pieuvre, var(--magenta-vif)); }
 .pieuvre:empty { display: none; }
 .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
 
@@ -123,7 +123,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
   .nav-appli { top: 0; right: auto; width: var(--rail); height: auto; flex-direction: column; gap: 4px; padding: calc(18px + var(--hs)) 14px 18px max(14px, var(--gs));
     border-top: 0; border-right: 1px solid var(--filet); background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .nav-marque { display: flex; align-items: center; gap: 10px; margin: 0 8px 24px; }
-  .nav-marque .pieuvre { width: 38px; height: 32px; }
+  .nav-marque .pieuvre { width: 50px; height: 28px; }
   .nav-marque-texte { display: grid; gap: 4px; }
   .nav-marque .marque-nom { font-size: 1.42rem; }
   .nav-curseur { border-radius: 14px; }
@@ -554,7 +554,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 /* ———————————————— les pages seules : connexion, mot de passe, compte sans fiche, panne */
 .seul { max-width: 460px; margin: 0 auto; padding: calc(max(28px, 6vh) + var(--hs)) max(var(--gout), var(--ds)) 40px max(var(--gout), var(--gs)); }
 .porte-marque { display: flex; align-items: center; gap: 10px; margin: 0 0 26px; }
-.porte-marque .pieuvre { width: 40px; height: 34px; }
+.porte-marque .pieuvre { width: 58px; height: 32px; }
 .porte-marque .marque-nom { font-size: 1.6rem; }
 .porte h1 { font: 600 clamp(1.75rem, 7vw, 2.2rem)/1.12 var(--serif); margin: 0 0 10px; }
 .porte .intro { margin: 0 0 24px; color: var(--gris); font-size: 1.04rem; }
@@ -828,6 +828,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 <script src="../admin/vendor/supabase.js" defer></script>
 <script src="../admin/agenda.js" defer></script>
 <script src="../admin/feuille.js" defer></script>
+<script src="../admin/logo.js" defer></script>
 <script src="../admin/tentacules.js" defer></script>
 <script src="../admin/planning.js" defer></script>
 <script src="carte.js" defer></script>

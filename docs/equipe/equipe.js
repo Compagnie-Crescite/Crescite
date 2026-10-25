@@ -406,7 +406,7 @@
   }
   function poserPieuvres() {
     if (TT) tt('pieuvre');
-    $$('[data-pieuvre]').forEach(h => { if (!h.firstElementChild) h.innerHTML = PIEUVRE_MARQUE; });
+    $$('[data-pieuvre]').forEach(h => { if (!h.firstElementChild) h.innerHTML = (self.CRESCITE_LOGO && self.CRESCITE_LOGO.logo && self.CRESCITE_LOGO.logo.octopus) || PIEUVRE_MARQUE; });
   }
   function dire(cible, texteHtml, genre = 'erreur') {
     const el = typeof cible === 'string' ? $(cible) : cible;

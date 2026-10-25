@@ -34,7 +34,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .barre { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; padding: 10px 20px; background: var(--carte); border-bottom: 1px solid var(--trait); }
 .marque { display: flex; align-items: baseline; gap: 8px; font-weight: 800; letter-spacing: .02em; text-decoration: none; color: var(--encre); white-space: nowrap; }
 .marque small { font-weight: 500; color: var(--gris); letter-spacing: 0; }
-.marque .pieuvre { display: inline-block; flex: none; align-self: center; width: 32px; height: 26px; color: var(--accent); }
+.marque .pieuvre { display: inline-block; flex: none; align-self: center; width: 42px; height: 24px; color: var(--pieuvre, var(--accent)); }
 .marque .pieuvre:empty { display: none; }
 .marque .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; }
@@ -467,12 +467,14 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 /* au téléphone, les colonnes collées se resserrent : le reste du tableau garde de la place pour défiler */
 @media (max-width: 520px) { .tab-cadre { --w-jour: 86px; --w-spectacle: 98px; } .tableur th, .tableur td { padding: 5px 7px; } .tableur td.c-spectacle .pastille { display: none; } }
 </style>
+<style>:root { --pieuvre: #1f3a73; } @media (prefers-color-scheme: dark) { :root { --pieuvre: #7f9fe0; } }</style>
 </head>
 <body>
 <div id="app"><p class="chargement">Chargement…</p></div>
 <div id="annonces" aria-live="polite"></div>
 <script src="vendor/supabase.js"></script>
 <script src="agenda.js"></script>
+<script src="logo.js"></script>
 <script src="tentacules.js"></script>
 <script>
 'use strict';

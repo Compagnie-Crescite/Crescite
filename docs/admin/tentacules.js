@@ -416,10 +416,14 @@ const TENTACULES = (() => {
       bouts, pg: [50, 58], pd: [70, 58], centre: [60, 50] };
     return generique;
   }
+  // le logo et ses bras : D dans les maquettes ; CRESCITE_LOGO dans l'administration et l'espace de l'équipe (admin/logo.js,
+  // écrit par build.py) ; sinon rien (la pieuvre neutre)
+  const LOGO = () => (typeof D !== 'undefined' && D && D.logo ? D : (typeof self !== 'undefined' && self.CRESCITE_LOGO) || null);
   // met la pieuvre dans les hôtes data-pieuvre vides
   function remplir(h) {
     if (h.firstElementChild || h.textContent.trim()) return;
-    h.innerHTML = typeof D !== 'undefined' && D && D.logo && D.logo.octopus ? D.logo.octopus : pieuvreNeutre().svg;
+    const L = LOGO();
+    h.innerHTML = L && L.logo && L.logo.octopus ? L.logo.octopus : pieuvreNeutre().svg;
   }
   function pieuvre() { document.querySelectorAll(R.pieuvre).forEach(remplir); }
 
@@ -441,7 +445,7 @@ const TENTACULES = (() => {
     let ctm = null;
     try { ctm = svg && svg.getScreenCTM(); } catch (e) { ctm = null; }
     if (svg && ctm) {
-      const chemins = [...svg.querySelectorAll('path')], octo = typeof D !== 'undefined' && D && D.logo && D.logo.octopusPaths;
+      const chemins = [...svg.querySelectorAll('path')], L = LOGO(), octo = L && L.logo && L.logo.octopusPaths;
       if (octo && octo.length === 4) {
         const t = octo.map(d => chemins.find(p => p.getAttribute('d') === d));
         if (t.every(Boolean)) { G.tg = t[0]; G.td = t[3]; G.groupe = t[0].parentNode !== svg && t[0].parentNode.querySelectorAll(':scope > path').length === 4 ? t[0].parentNode : null; }
@@ -451,8 +455,8 @@ const TENTACULES = (() => {
         G.tg = marque; G.td = svg.querySelector('[data-tt="bras-d"]'); G.groupe = marque.parentNode !== svg ? marque.parentNode : null;
         const ge = pieuvreNeutre(); G.pg = ge.pg; G.pd = ge.pd; G.centre = ge.centre;
         G.bouts = ge.bouts.map(b => ({ nom: b.nom, p: ecran(ctm, b.p), dir: dirEcran(ctm, b.dir) }));
-      } else if (G.tg && typeof D !== 'undefined' && D.arms && D.arms.arms) {
-        G.bouts = Object.entries(D.arms.arms).map(([nom, a]) => ({ nom, p: ecran(ctm, a.pts[a.pts.length - 1]), dir: dirEcran(ctm, a.exitdir || [0, 1]) }));
+      } else if (G.tg && LOGO() && LOGO().arms && LOGO().arms.arms) {
+        G.bouts = Object.entries(LOGO().arms.arms).map(([nom, a]) => ({ nom, p: ecran(ctm, a.pts[a.pts.length - 1]), dir: dirEcran(ctm, a.exitdir || [0, 1]) }));
       }
       if (G.tg) G.echelle = Math.hypot(ctm.a, ctm.b) || 1;
     }
@@ -462,7 +466,7 @@ const TENTACULES = (() => {
   // le bras d'où part une tentacule : celui du spectacle visé, sinon le plus tourné vers le but
   function boutPour(G, but, slug) {
     const v = [but[0] - G.cx, but[1] - G.cy], n = Math.hypot(v[0], v[1]) || 1;
-    const nom = slug && typeof D !== 'undefined' && D.arms && D.arms.armOf && D.arms.armOf[slug];
+    const nom = slug && LOGO() && LOGO().arms && LOGO().arms.armOf && LOGO().arms.armOf[slug];
     let best = G.bouts[0], bs = -9;
     for (const b of G.bouts) {
       const sc = (b.dir[0] * v[0] + b.dir[1] * v[1]) / n + (b.nom === nom ? 3 : 0);
