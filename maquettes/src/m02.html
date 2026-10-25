@@ -2422,7 +2422,8 @@ button.lien-u{margin:0;padding:0;border:0;background:none;font:inherit;font-weig
       });
       if (actif()) appliquer();
       // la frise de la saison, reliée aux listes et à la carte ; le repère d'une date où l'on réserve ouvre son panneau, les
-      // autres mènent à leur ligne
+      // autres mènent à leur ligne. Chaque date a son repère, sans grappe (des dates proches montent en couloirs) : une grappe
+      // cacherait la couleur de ses dates et le carré évidé d'une semaine de résidence (règle 23), et son nombre la compterait
       fSaison = frise($('#v-frise'), { echelle: 'saison', saison: K0, points: reperesSaison(), libelle: s0.titre, moisMin: 84, regrouper: 0, couloirs: 4,
         relier: { liste: page, carte: $('svg.k', w) }, choix: p => { const k = parFrise.get(p.id); if (k && rsVoir && rsVoir.cle() !== k) rsVoir.choisir(k); allerLigne(p.id); } });
       if (rsVoir && rsVoir.date && rsVoir.date()) marquerFrise(cleSaison(rsVoir.date(), rsVoir.date().slug));
