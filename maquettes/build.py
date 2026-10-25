@@ -157,6 +157,21 @@ def arms_data():
     return a
 
 
+# les pages qui ont la scène de la pieuvre (la 10 et la synthèse) : ses vraies tentacules s'y déploient (pieuvre.js, D.pieuvre)
+PAGES_PIEUVRE = ("m10", "synthese")
+
+
+def pieuvre_data():
+    """Les huit tentacules du logo, prêtes à se déployer (faites par maquettes/pieuvre.py) ; None sans le fichier (les pages
+    gardent alors le logo entier, immobile)."""
+    f = fichier_marque("crescite-logo-2.0-tentacules.json")
+    if not f:
+        return None
+    a = json.loads(f.read_text(encoding="utf-8"))
+    a.pop("_note", None)
+    return a
+
+
 def photo_files(shows):
     """Les photos (privées) : celle de chaque spectacle et de la page Actions culturelles (clé = slug), puis celles de
     l'univers de chaque spectacle (clé = slug/id, private/photos/<slug>/<id>.webp). Valeur : le fichier, ou None."""
@@ -736,7 +751,7 @@ def avec_outils(name, src):
     (donnees.js), la carte des tournées (carte.js) et l'ouverture sur le logo (intro.js)."""
     if DATA_LIGNE not in src:
         raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
-    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in outils())
+    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in outils() + (("pieuvre.js",) if name in PAGES_PIEUVRE else ()))
     src = src.replace(DATA_LIGNE, DATA_LIGNE + js, 1)
     # theme.js dans <head>, juste après les balises meta du début (avant les feuilles de style, qu'un script attendrait)
     tete = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS_TETE)
@@ -747,6 +762,8 @@ def avec_outils(name, src):
 def assemble(name, D, photo_urls):
     src = avec_outils(name, (SRC / f"{name}.html").read_text(encoding="utf-8"))
     data = dict(D, photos=photo_urls)
+    if name in PAGES_PIEUVRE:
+        data["pieuvre"] = pieuvre_data()
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     if "/*__DATA__*/null" not in src:
         raise SystemExit(f"{name}.html : le marqueur /*__DATA__*/null est absent")
@@ -1055,7 +1072,7 @@ def build_planche(D, photo_urls, names, web=False, dest=None):
     if web:
         data = {"web": True, "pages": names}
     else:
-        data = {"D": dict(D, photos=photo_urls), "sources": {n: avec_outils(n, (SRC / f"{n}.html").read_text(encoding="utf-8")) for n in names}}
+        data = {"D": dict(D, photos=photo_urls, pieuvre=pieuvre_data()), "sources": {n: avec_outils(n, (SRC / f"{n}.html").read_text(encoding="utf-8")) for n in names}}
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace("/*__PLANCHE__*/null", payload)
     html = html.replace("</head>", f"<style>:root {{ --saison: {theme()['couleur']}; }}</style>\n</head>", 1)
