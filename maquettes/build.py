@@ -321,9 +321,6 @@ LIBELLES = {
     "ouvrirMessagerie": "ouvrir votre messagerie",
     "demandeNonEnregistree": "Votre demande n’a pas pu être enregistrée. Écrivez-nous directement, le récapitulatif est prêt :",
     # simulateur de faisabilité & devis (chantier 2)
-    "simulateurAccueil": "Simulateur d’accueil & Devis",
-    "simulateurDesc": "Testez la faisabilité technique de votre lieu et préparez votre demande de cession en un clic.",
-    "faisabilitePlateau": "Faisabilité du plateau",
     "demandeDevis": "Demander une proposition de cession",
     "envoyerDemande": "Envoyer la demande",
     # la demande de proposition de cession (la synthèse) : le spectacle, le lieu et son plateau, les conditions d'accueil du
