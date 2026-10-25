@@ -470,13 +470,22 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 « Verify JWT » décoché (un nouveau déploiement peut le rallumer : ouverte dans un navigateur, une fonction qui répond
 « Missing authorization header » l'a encore allumé) :
 - `crescite-agenda` relit les agendas reliés toutes les heures (pg_cron, programmé par le script) et à la demande, et
-  donne à chacun le flux de ses dates Crescite (`?flux=<clé>`) à ajouter à son agenda ;
+  donne à chacun le flux de ses dates Crescite (`?flux=<clé>`) à ajouter à son agenda. Le flux porte aussi les
+  propositions de dates qui lui sont adressées et encore ouvertes : un événement par jour proposé (une période proposée
+  d'un tenant en fait un seul), « Proposition : Bérénice — Théâtre de Flers (à confirmer, vous avez répondu :
+  disponible) », provisoire (TENTATIVE) et sans occuper l'agenda (TRANSPARENT), à ses heures s'il en a, sinon en
+  journées entières, avec le lien de la proposition dans l'espace de l'équipe (jamais la clé de réponse du courriel).
+  Un jour passé ou répondu non, une proposition close, retirée ou devenue une date (elle y est comme date) n'y sont
+  pas. Depuis ce changement, la fonction est **à redéployer** par Adrien (aucun script SQL à lancer) : recoller
+  `supabase/functions/crescite-agenda/index.ts` dans son éditeur (Edge Functions → crescite-agenda), Deploy, puis
+  vérifier que « Verify JWT » est resté décoché : un redéploiement peut le recocher, et le flux ne s'ouvrirait plus ;
 - `crescite-courriel` écrit à chaque destinataire d'une proposition (Brevo, clé `BREVO_API_KEY` dans les secrets des
   fonctions ; sans clé, rien ne part et l'administration le voit) ;
 - la réponse d'un clic passe par la page du site `reponse/` : Supabase montre en texte brut toute page web servie par
   une fonction. Le lien du courriel arrive sur la page avec le choix prêt, qu'on confirme d'un bouton (les messageries
   ouvrent les liens pour les vérifier). 33 essais du script (`node disponibilites.mjs`), 21 de la fonction des
-  courriels (`node courriel.mjs`).
+  courriels (`node courriel.mjs`), 39 du flux d'agenda (`node agenda.mjs` : les dates inchangées, les propositions,
+  l'échappement et le pliage des lignes).
 
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et

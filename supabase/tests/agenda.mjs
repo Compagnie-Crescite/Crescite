@@ -156,6 +156,13 @@ const brut = dur.split('\r\n'), suites = brut.filter(l => l.startsWith(' '));
 ok(suites.length >= 6 && brut.some(l => l.startsWith('SUMMARY:') && Buffer.byteLength(l) > 70)
    && rendre(e2.SUMMARY) === `Proposition : Bérénice — ${long.replace(/^Option : /, '')} (à confirmer)` && rendre(e2.DESCRIPTION).includes(long.repeat(3)),
   `les lignes longues sont pliées (${suites.length} suites, une espace en tête) et se déplient à l’identique`);
+// le pliage de référence, octets comptés par TextEncoder : 75 octets en première ligne, 74 ensuite (après l'espace)
+const enc = new TextEncoder();
+const plierRef = l => { const m = []; let cur = '', n = 0, max = 75; for (const c of l) { const k = enc.encode(c).length; if (n + k > max) { m.push(cur); cur = ''; n = 0; max = 74; } cur += c; n += k; } m.push(cur); return m.join('\r\n '); };
+const replie = ics => deplier(ics).split('\r\n').map(plierRef).join('\r\n');
+const piege = composerFlux(personne, [], T, [jourProp(22, 220, '2026-11-11T23:00:00.000Z', '2026-11-12T23:00:00.000Z', true,
+  { titre: `${'x'.repeat(40)}é—🎭${'é'.repeat(30)}\ud800${'🎭'.repeat(20)}`, message: `${'a'.repeat(60)}${'—'.repeat(40)}` })]);
+ok(replie(dur) === dur && replie(avec) === avec && replie(piege) === piege, 'chaque ligne est pliée là où TextEncoder la plierait (accents, tirets, emoji, moitié de paire isolée)');
 
 // le coût : un gros flux se compose en quelques millisecondes (Supabase arrête un appel vers deux secondes de calcul)
 const grosDates = Array.from({ length: 400 }, (_, i) => ({ ...DATES[0], id: 1000 + i, seances: [seance(5000 + 3 * i, '2026-11-04', '14:00:00'),
