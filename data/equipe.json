@@ -866,7 +866,7 @@
   ]
  },
  "historique": {
-  "_note": "L'équipe des dates passées quand elle n'était pas la distribution d'aujourd'hui (d'après Adrien Vada, octobre 2026). Pour chaque période (les dates qui commencent à partir de « depuis » et avant « avant ») : qui ne jouait pas encore, qui jouait alors. L'import l'écrit date par date dans l'équipe de la date, sans toucher à ce que l'administration y a déjà réglé. Avant 2026, on ne sait pas qui jouait L'imaginaire forcé à la place d'Adrien Vada.",
+  "_note": "L'équipe des dates passées quand elle n'était pas la distribution d'aujourd'hui (d'après Adrien Vada, octobre 2026). Pour chaque période (les dates qui commencent à partir de « depuis » et avant « avant ») : qui ne jouait pas encore, qui jouait alors. L'import l'écrit date par date dans l'équipe de la date, sans toucher à ce que l'administration y a déjà réglé. Avant la saison 2026-2027, on ne sait pas qui jouait L'imaginaire forcé à la place d'Adrien Vada.",
   "berenice": [
    {
     "avant": "2021-06-01",
@@ -892,7 +892,7 @@
   ],
   "imaginaire-force": [
    {
-    "avant": "2026-01-01",
+    "avant": "2026-09-01",
     "absents": [
      "adrien-vada"
     ]
