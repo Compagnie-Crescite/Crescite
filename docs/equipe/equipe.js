@@ -10,7 +10,8 @@
    <id> est celui de la date), #/planning (le planning commun, ../admin/planning.js), #/indisponibilites, #/agendas,
    #/propositions et #/proposition/<id>, #/spectacles et #/spectacles/<slug> (ses spectacles et leurs fichiers de travail ;
    #/documents y mène), #/notifications, #/moi (la fiche, les notifications sur l'appareil, l'installation, le mot de
-   passe, la déconnexion). #/fiche mène à #/moi. Au téléphone, la barre du bas garde cinq onglets (Saison, Feuilles,
+   passe, la déconnexion), #/frais (les notes de frais : seulement quand la base a le septième script, voir sonder).
+   #/fiche mène à #/moi. Au téléphone, la barre du bas garde cinq onglets (Saison, Feuilles,
    Planning, Spectacles, Moi) et les notifications passent dans une cloche en haut, avec leur badge ; à l'ordinateur, la
    colonne de gauche les montre toutes les six.
 
@@ -594,7 +595,7 @@
       if (moi == null) { reinitialiser(); return ecranSansFiche(); }
       E.moi = moi;
       await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
-        chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); })]);
+        chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder()]);
       if (n !== tour) return;
       E.horsLigne = 0;
       garder();
@@ -618,6 +619,29 @@
     if (error) throw error;
     return data == null ? null : Number(data);
   }
+
+  // ================================================================================================ ce que la base a déjà
+  // Deux scripts SQL ne sont pas encore lancés partout : le septième (20261026_crescite_ideale.sql : les notes de frais,
+  // le matériel, les listes de chargement) et le neuvième (20261028_crescite_signaler.sql : l'alerte de retard). Une
+  // lecture minimale de leur table le dit, une fois par chargement de la page, connecté (une base qui ne les a pas répond
+  // 404 : attendu). Tant que la réponse n'est pas venue (sans réseau aussi), ce qu'ils apportent reste masqué : le geste
+  // « Frais » d'une date, la carte « Notes de frais » de Moi, #/frais (qui mène à #/moi), la checklist du camion d'une
+  // date ; le geste « Retard ».
+  const SONDES = { ideale: 'inconnu', signaler: 'inconnu' };
+  const TABLES_SONDES = { ideale: 'crescite_notes_frais', signaler: 'crescite_signalements' };
+  let sondage = null;
+  function sonder() {
+    if (!sondage) sondage = Promise.all(Object.keys(TABLES_SONDES).filter(k => SONDES[k] === 'inconnu').map(async k => {
+      try {
+        const { error } = await sb.from(TABLES_SONDES[k]).select('id').limit(1);
+        if (!error) SONDES[k] = 'ok';
+        else if (tableAbsente(error)) SONDES[k] = 'absent';
+      } catch (e) { /* sans réseau : la prochaine lecture redemandera */ }
+    })).then(() => { if (Object.values(SONDES).includes('inconnu')) sondage = null; });
+    return sondage;
+  }
+  const avecIdeale = () => SONDES.ideale === 'ok';
+  const avecSignaler = () => SONDES.signaler === 'ok';
 
   // en attendant la base : l'application, et la forme de ce qui arrive
   function squelette() {
@@ -888,6 +912,9 @@
     if (!E.pret) return;
     const r = lireRoute();
     if (r.redirige) { history.replaceState(null, '', r.redirige); return router(o); }
+    // les notes de frais demandent le septième script : sans lui, #/frais mène à #/moi (à l'ouverture, la page attend la
+    // réponse de la base avant d'en décider)
+    if (r.k === 'frais' && !avecIdeale() && !(SONDES.ideale === 'inconnu' && (E.provisoire || E.ouverture))) { history.replaceState(null, '', '#/moi'); return router(o); }
     const avant = E.route;
     if (avant && avant.k === 'moi' && r.k !== 'moi' && E.ficheSale && !o.rafraichir) {
       if (!confirm('Vos modifications de fiche ne sont pas enregistrées. Les abandonner ?')) { history.replaceState(null, '', '#/moi'); return; }
@@ -1362,8 +1389,9 @@
     if (d.feuille && outilFeuille()) gestes.push(`<a class="geste" href="#/feuille/${d.id}">${ICONES.feuille}<span>Feuille de route</span></a>`, `<button type="button" class="geste" data-pdf="${d.id}">${ICONES.pdf}<span>PDF</span><span class="sr"> de la feuille de route</span></button>`);
     if (!passee && vive && evenementsAVenir(d.id).length) gestes.push(`<button type="button" class="geste" data-agenda="${d.id}">${ICONES.agenda}<span>Agenda</span><span class="sr"> : ajouter cette date à mon agenda</span></button>`);
     if (!passee && vive) {
-      gestes.push(`<button type="button" class="geste" data-retard="${d.id}">${ICONES.alerte}<span>Retard</span><span class="sr"> : signaler un retard ou un imprévu</span></button>`);
-      gestes.push(`<a class="geste" href="#/frais?date=${d.id}">${ICONES.euro}<span>Frais</span><span class="sr"> : ajouter une note de frais pour cette date</span></a>`);
+      // seulement quand la base a leurs scripts (le neuvième, le septième : voir sonder)
+      if (avecSignaler()) gestes.push(`<button type="button" class="geste" data-retard="${d.id}">${ICONES.alerte}<span>Retard</span><span class="sr"> : signaler un retard ou un imprévu</span></button>`);
+      if (avecIdeale()) gestes.push(`<a class="geste" href="#/frais?date=${d.id}">${ICONES.euro}<span>Frais</span><span class="sr"> : ajouter une note de frais pour cette date</span></a>`);
     }
     if (gestes.length) html += `<div class="gestes"${attrU(sp)}>${gestes.join('')}</div>`;
     const precisions = (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte);
@@ -1374,10 +1402,10 @@
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
         ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
     }
-    html += blocLieu(d) + blocCamion(d) + blocEquipe(d, passee) + blocDocuments(d);
+    html += blocLieu(d) + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d);
     afficher(r, sp.titre || 'Date', html, { focus });
     preparerPartages(documentsDe(d.spectacle?.id).filter(x => x.type === 'fiche_technique'));
-    chargerChecklistCamion(d.id, d.spectacle?.id);
+    if (avecIdeale()) chargerChecklistCamion(d.id, d.spectacle?.id);
     if (d.feuille && !f) chargerFeuille(d.id).then(x => {
       const b = location.hash === r.hash && $('#bloc-planning');
       if (!b) return;
@@ -2440,7 +2468,7 @@
   }
   function blocFlux() {
     const j = E.dispo.jeton;
-    const intro = '<h2 id="t-flux">Mes dates Crescite dans mon agenda</h2><p class="intro">Abonnez votre agenda à vos dates (représentations, répétitions, résidences) : elles s’y ajoutent, avec les horaires et les lieux, et s’y mettent à jour d’elles-mêmes.</p>';
+    const intro = '<h2 id="t-flux">Mes dates Crescite dans mon agenda</h2><p class="intro">Abonnez votre agenda à vos dates (représentations, répétitions, résidences) : elles s’y ajoutent, avec les horaires et les lieux, et s’y mettent à jour d’elles-mêmes. Les dates que l’administration vous propose y paraissent aussi, « à confirmer », jusqu’à ce que vous répondiez non ou que la proposition soit close.</p>';
     if (j === undefined) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="chargement" role="status">Lecture de votre lien…</p></section>`;
     if (!j) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="message conseil">Votre lien personnel n’est pas encore prêt : la compagnie met le service en place.</p></section>`;
     return `<section class="carte flux" aria-labelledby="t-flux">${intro}
@@ -2767,7 +2795,7 @@
       </section>
       <section class="carte" aria-labelledby="t-push"><h2 id="t-push">Notifications</h2><p class="intro">Une feuille de route publiée, des horaires changés (en tournée comme en répétition), une nouvelle date.</p><div data-zone-push="moi"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'moi') : ''}</div></section>
       ${sectionPlanningMoi()}
-      <section class="carte" aria-labelledby="t-frais"><h2 id="t-frais">Notes de frais</h2><p class="intro">Déposez vos justificatifs de tournée (repas, carburant, billets, nuitées) et suivez vos remboursements.</p><p><a class="btn" href="#/frais">${ICONES.euro}Mes notes de frais</a></p></section>
+      ${avecIdeale() ? `<section class="carte" aria-labelledby="t-frais"><h2 id="t-frais">Notes de frais</h2><p class="intro">Déposez vos justificatifs de tournée (repas, carburant, billets, nuitées) et suivez vos remboursements.</p><p><a class="btn" href="#/frais">${ICONES.euro}Mes notes de frais</a></p></section>` : ''}
       <section class="carte" aria-labelledby="t-app"><h2 id="t-app">L’application</h2><div data-zone-installation="moi">${zoneInstallation('moi')}</div></section>`;
     if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
       : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
@@ -2843,32 +2871,44 @@
   }
 
   // ================================================================================================ alerte retard / imprévu
-  function ouvrirModaleRetard(dateId) {
+  // Le geste « Retard » d'une date (quand la base a le neuvième script) : un motif d'un geste, une précision, et l'alerte
+  // part par crescite_signaler à l'équipe de la date et à l'administration, jamais à soi : dans leur onglet Notifications
+  // et sur leurs téléphones abonnés. Elle ne se dit envoyée que si la base l'a envoyée ; sinon la boîte reste ouverte et
+  // dit pourquoi (la base n'en accepte que cinq par heure et par compte, de 280 caractères au plus).
+  const MAX_RETARD = 280;
+  function raisonRetard(e) {
+    const code = String(e?.code || '');
+    if (code === 'PT429' || e?.status === 429) return 'cinq alertes en une heure, c’est le maximum. Appelez directement l’équipe';
+    if (code === '42501') return 'vous n’êtes pas (ou plus) dans l’équipe de cette date';
+    if (code === '22023' && e.message) return e.message[0].toLowerCase() + e.message.slice(1);
+    return motsErreur(e);
+  }
+  function ouvrirModaleRetard(dateId, declencheur = null) {
     const d = E.dates.find(x => x.id === dateId);
-    if (!d) return;
-    const old = $('#modale-retard');
-    if (old) old.remove();
+    if (!d || !avecSignaler()) return;
+    $('#modale-retard')?.remove();
     const fond = document.createElement('div');
     fond.className = 'modale-fond';
     fond.id = 'modale-retard';
     fond.innerHTML = `
-      <div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="t-mod-retard">
+      <div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="t-mod-retard" aria-describedby="d-mod-retard">
         <div class="modale-tete">
           <h2 id="t-mod-retard">${ICONES.alerte} Signaler un retard / imprévu</h2>
           <button type="button" class="modale-fermer" data-fermer-modale aria-label="Fermer">${ICONES.croix}</button>
         </div>
         <p class="intro">Pour <b>${esc(d.spectacle?.titre || 'cette date')}</b> · ${esc(d.lieu?.commune || 'Tournée')}</p>
-        <p class="aide">Prévenez immédiatement l’équipe de tournée et l’administration.</p>
-        <div class="choix-retard">
-          <button type="button" class="btn-choix actif" data-motif="Retard ~15 min (circulation)">⏱ +15 min (bouchons)</button>
-          <button type="button" class="btn-choix" data-motif="Retard ~30 min (train/route)">⏱ +30 min (train / route)</button>
-          <button type="button" class="btn-choix" data-motif="Retard ~1h ou plus">⚠️ +1h ou plus</button>
-          <button type="button" class="btn-choix" data-motif="Panne / Problème véhicule">🚗 Panne véhicule</button>
+        <p class="aide" id="d-mod-retard">L’équipe de cette date et l’administration sont prévenues aussitôt, dans l’application et sur leur téléphone.</p>
+        <div class="choix-retard" role="group" aria-label="Le motif">
+          <button type="button" class="btn-choix actif" aria-pressed="true" data-motif="Retard ~15 min (circulation)">⏱ +15 min (bouchons)</button>
+          <button type="button" class="btn-choix" aria-pressed="false" data-motif="Retard ~30 min (train/route)">⏱ +30 min (train / route)</button>
+          <button type="button" class="btn-choix" aria-pressed="false" data-motif="Retard ~1h ou plus">⚠️ +1h ou plus</button>
+          <button type="button" class="btn-choix" aria-pressed="false" data-motif="Panne / Problème véhicule">🚗 Panne véhicule</button>
         </div>
         <div class="champ">
           <label for="retard-texte">Précision / Message (facultatif)</label>
-          <input type="text" id="retard-texte" placeholder="Ex. Accident A13, arrivée vers 14h20">
+          <input type="text" id="retard-texte" maxlength="200" autocomplete="off" placeholder="Ex. Accident A13, arrivée vers 14h20">
         </div>
+        <div class="msg-retard" id="msg-retard"></div>
         <div class="pied-form">
           <button type="button" class="btn principal" id="btn-envoyer-retard">${ICONES.message} Envoyer l’alerte à l’équipe</button>
           <button type="button" class="btn" data-fermer-modale>Annuler</button>
@@ -2879,34 +2919,43 @@
     let motif = 'Retard ~15 min (circulation)';
     $$('.btn-choix', fond).forEach(b => {
       b.addEventListener('click', () => {
-        $$('.btn-choix', fond).forEach(x => x.classList.remove('actif'));
-        b.classList.add('actif');
+        $$('.btn-choix', fond).forEach(x => { x.classList.remove('actif'); x.setAttribute('aria-pressed', 'false'); });
+        b.classList.add('actif'); b.setAttribute('aria-pressed', 'true');
         motif = b.dataset.motif;
       });
     });
-    const fermer = () => fond.remove();
+    // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le focus revient au geste
+    const fermer = () => { fond.remove(); document.removeEventListener('keydown', clavier, true); if (declencheur && declencheur.isConnected) declencheur.focus(); };
+    function clavier(e) {
+      if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
+      if (e.key !== 'Tab') return;
+      const xs = $$('button:not([disabled]), input', fond), i = xs.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); }
+    }
+    document.addEventListener('keydown', clavier, true);
     $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', fermer));
     fond.addEventListener('click', e => { if (e.target === fond) fermer(); });
-    $('#btn-envoyer-retard', fond).addEventListener('click', async () => {
-      const btn = $('#btn-envoyer-retard', fond);
-      btn.disabled = true;
-      btn.textContent = 'Envoi…';
-      const prec = ($('#retard-texte', fond).value || '').trim();
-      const auteur = E.personne ? nomDe(E.personne) : 'Équipe';
-      const msg = `${motif}${prec ? ` : ${prec}` : ''}`;
-      try {
-        await sb.from('crescite_notifications').insert({
-          genre: 'message',
-          titre: `Alerte retard : ${auteur}`,
-          texte: `${msg} (${d.spectacle?.titre || 'Date'})`,
-          date_id: d.id,
-          personne_id: E.moi
-        });
-      } catch (e) {
-        console.warn('Alerte notification insert:', e);
+    $('.btn-choix.actif', fond).focus();
+    const zone = $('#msg-retard', fond);
+    $('#btn-envoyer-retard', fond).addEventListener('click', async e => {
+      const prec = txt($('#retard-texte', fond).value).replace(/\s+/g, ' ');
+      const msg = `${motif}${prec ? ` : ${prec}` : ''}`.slice(0, MAX_RETARD);
+      dire(zone, '');
+      const { data, error } = await occupe(e.currentTarget, 'Envoi…', () => sb.rpc('crescite_signaler', { d: d.id, texte_: msg }));
+      if (error) {
+        // la base n'a pas (ou plus) la fonction : le geste disparaît, et on le dit
+        if (fonctionAbsente(error)) {
+          SONDES.signaler = 'absent';
+          fermer();
+          if (location.hash === `#/date/${d.id}`) router({ rafraichir: true });
+          return annoncer('L’alerte de retard n’est pas encore installée dans la base de la compagnie : rien n’est parti. Prévenez l’équipe par téléphone.', { erreur: true });
+        }
+        return dire(zone, `L’alerte n’est pas partie : ${esc(raisonRetard(error))}.`);
       }
+      const n = Number(data) || 0;
       fermer();
-      annoncer('Alerte de retard envoyée à l’équipe.');
+      if (!n) return annoncer('L’alerte n’a prévenu personne : personne d’autre sur cette date, ni à l’administration, n’a de compte dans l’espace de l’équipe. Appelez l’équipe.', { erreur: true });
+      annoncer(`Alerte envoyée : ${pluriel(n, 'personne prévenue', 'personnes prévenues')}.`);
       vibrer(25);
     });
   }
@@ -3036,30 +3085,53 @@
         vibrer(8);
         dessinerCamion(dateId);
 
-        // Sauvegarder dans Supabase si matId est numérique
+        // Sauvegarder dans Supabase si matId est numérique (sinon, la liste par défaut : sur cet appareil seulement)
         if (/^\d+$/.test(String(matId))) {
-          try {
-            await sb.from('crescite_checklists_chargement').upsert({
-              date_id: dateId,
-              materiel_id: +matId,
-              phase: curPhase,
-              coche: val,
-              coche_par: E.moi,
-              coche_le: new Date().toISOString()
-            }, { onConflict: 'date_id,materiel_id,phase' });
-          } catch (err) {
-            console.warn('Checklist sync:', err);
-          }
+          const { error } = await sb.from('crescite_checklists_chargement').upsert({
+            date_id: dateId,
+            materiel_id: +matId,
+            phase: curPhase,
+            coche: val,
+            coche_par: E.moi,
+            coche_le: new Date().toISOString()
+          }, { onConflict: 'date_id,materiel_id,phase' });
+          if (error) annoncer(`Gardé sur cet appareil seulement : la base ne l’a pas enregistré (${motsErreur(error)}).`, { erreur: true });
         }
       });
     });
   }
 
   // ================================================================================================ notes de frais
+  // Une note de frais (quand la base a le septième script) : le jour de la dépense, sa catégorie, son montant, la date de
+  // tournée, et le justificatif, déposé dans le stockage privé « crescite-frais », dans le dossier de sa fiche :
+  // <E.moi>/<horodatage>_<nom>, sans upsert (jamais par-dessus un autre fichier). La note garde ce chemin ; le fichier se
+  // lit par un lien signé, demandé au clic. Le justificatif part d'abord : s'il ne part pas, rien ne s'enregistre ; si la
+  // note échoue ensuite, le fichier déjà envoyé resservira à l'essai suivant (la personne ne peut pas l'effacer).
+  const SEAU_FRAIS = 'crescite-frais';
+  const TYPES_JUSTIF = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+  const EXT_JUSTIF = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', pdf: 'application/pdf' };
+  const MO_JUSTIF = 15;                           // la limite du stockage « crescite-frais »
   const CAT_FRAIS = { repas: 'Repas', transport: 'Péage / Transport', hebergement: 'Hébergement', autre: 'Achat / Autre' };
   const STATUT_FRAIS = { en_attente: 'En attente', valide: 'Validée', rembourse: 'Remboursée', refuse: 'Refusée' };
+  const typeJustif = f => (TYPES_JUSTIF[f.type] ? f.type : EXT_JUSTIF[((/\.([a-z0-9]{1,5})$/i.exec(f.name || '') || [])[1] || '').toLowerCase()] || null);
+  // « 1761400000000_ticket-peage-a13.jpg » : l'horodatage, puis le nom du fichier sans accents ni espaces
+  const nomJustificatif = (f, type) => {
+    const base = String(f.name || '').replace(/\.[^.]*$/, '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    return `${Date.now()}_${base || 'justificatif'}.${TYPES_JUSTIF[type]}`;
+  };
+  // le chemin d'un justificatif dans « crescite-frais » (une note écrite par une version d'avant gardait une adresse)
+  const cheminJustificatif = v => { const m = /\/crescite-frais\/([^?#]+)/.exec(String(v || '')); return m ? decodeURIComponent(m[1]) : String(v || ''); };
+  async function signerJustificatif(v) {
+    const { data, error } = await sb.storage.from(SEAU_FRAIS).createSignedUrl(cheminJustificatif(v), DUREE_LIEN);
+    if (error) throw error;
+    return data.signedUrl;
+  }
+  const euros = n => `${(Number(n) || 0).toFixed(2).replace('.', ',')} €`;
 
   async function vueFrais(r, { focus } = {}) {
+    // à l'ouverture, la base n'a pas encore dit si elle a les notes de frais (voir router)
+    if (!avecIdeale()) return afficher(r, TITRES.frais, '<div class="titre-vue"><h1>Notes de frais</h1></div><p class="chargement" role="status">Lecture de vos notes de frais…</p>', { focus });
     const m = location.hash.match(/[?&]date=(\d+)/);
     const datePre = m ? +m[1] : null;
 
@@ -3069,7 +3141,7 @@
         <p class="sous">Déposez et suivez vos défraiements de tournée (repas, trajets, nuitées, matériel).</p>
       </div>
       <div id="frais-totaux" class="frais-resume">
-        <div class="frais-carte attente"><span>En attente de validation</span><b id="tot-attente">-- €</b></div>
+        <div class="frais-carte attente"><span>En attente de remboursement</span><b id="tot-attente">-- €</b></div>
         <div class="frais-carte rembourse"><span>Remboursé cette saison</span><b id="tot-rembourse">-- €</b></div>
       </div>
       <form class="carte" id="f-nouvelle-frais" novalidate aria-labelledby="t-nv-frais">
@@ -3078,7 +3150,7 @@
         <div class="deux-champs">
           <div class="champ">
             <label for="nf-date">Date de la dépense *</label>
-            <input type="date" id="nf-date" required value="${aujourdhui()}">
+            <input type="date" id="nf-date" required value="${aujourdhui()}" max="${aujourdhui()}">
           </div>
           <div class="champ">
             <label for="nf-categorie">Catégorie *</label>
@@ -3093,7 +3165,7 @@
         <div class="deux-champs">
           <div class="champ">
             <label for="nf-montant">Montant TTC (€) *</label>
-            <input type="number" id="nf-montant" step="0.01" min="0" placeholder="0.00" required>
+            <input type="number" id="nf-montant" step="0.01" min="0.01" max="999999.99" inputmode="decimal" placeholder="0.00" required>
           </div>
           <div class="champ">
             <label for="nf-date-tournee">Date de tournée liée (facultatif)</label>
@@ -3105,8 +3177,8 @@
         </div>
         <div class="champ">
           <label for="nf-photo">Photo du ticket ou justificatif *</label>
-          <input type="file" id="nf-photo" accept="image/*,application/pdf" capture="environment" required>
-          <p class="aide">Au smartphone : ouvre directement l'appareil photo.</p>
+          <input type="file" id="nf-photo" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required aria-describedby="nf-photo-aide">
+          <p class="aide" id="nf-photo-aide">Au smartphone : ouvre directement l'appareil photo. Une photo (JPEG, PNG, WebP) ou un PDF, ${MO_JUSTIF}&nbsp;Mo au plus.</p>
           <div id="nf-apercu-zone" hidden><img id="nf-apercu-img" class="photo-apercu" alt="Aperçu du ticket"></div>
         </div>
         <div class="champ">
@@ -3133,24 +3205,16 @@
     const inpPhoto = $('#nf-photo', f);
     const zoneApercu = $('#nf-apercu-zone', f);
     const imgApercu = $('#nf-apercu-img', f);
-    let fichierDataUrl = null;
     let fichierSelectionne = null;
+    let envoye = null;                               // { fichier, chemin } : le justificatif déjà déposé, pas encore noté
 
     inpPhoto.addEventListener('change', () => {
       const file = inpPhoto.files[0];
-      if (!file) { zoneApercu.hidden = true; return; }
-      fichierSelectionne = file;
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          imgApercu.src = e.target.result;
-          zoneApercu.hidden = false;
-          fichierDataUrl = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        zoneApercu.hidden = true;
-      }
+      fichierSelectionne = file || null;
+      if (!file || !file.type.startsWith('image/')) { zoneApercu.hidden = true; return; }
+      const reader = new FileReader();
+      reader.onload = e => { imgApercu.src = e.target.result; zoneApercu.hidden = false; };
+      reader.readAsDataURL(file);
     });
 
     f.addEventListener('submit', async e => {
@@ -3162,59 +3226,51 @@
       const montVal = parseFloat($('#nf-montant', f).value);
       const dateIdVal = $('#nf-date-tournee', f).value ? +$('#nf-date-tournee', f).value : null;
       const commVal = ($('#nf-commentaire', f).value || '').trim();
+      const sale = texte => { etat.className = 'etat-form sale'; etat.textContent = texte; };
 
-      if (!dateVal || isNaN(montVal) || montVal <= 0 || !fichierSelectionne) {
-        etat.className = 'etat-form sale';
-        etat.textContent = 'Veuillez remplir la date, le montant et ajouter la photo du justificatif.';
-        return;
-      }
+      if (!dateVal || isNaN(montVal) || montVal <= 0 || !fichierSelectionne) return sale('Veuillez remplir la date, le montant et ajouter la photo du justificatif.');
+      const fichier = fichierSelectionne, type = typeJustif(fichier);
+      if (!type) return sale('Le justificatif doit être une photo (JPEG, PNG ou WebP) ou un PDF.');
+      if (fichier.size > MO_JUSTIF * 1024 * 1024) return sale(`Le justificatif pèse plus de ${MO_JUSTIF} Mo : prenez une photo moins lourde, ou un PDF plus léger.`);
 
       b.disabled = true;
       b.textContent = 'Envoi du justificatif…';
       etat.className = 'etat-form';
       etat.textContent = 'Téléversement en cours…';
-
       try {
-        let photoUrl = '';
-        const ext = (fichierSelectionne.name.split('.').pop() || 'jpg').toLowerCase();
-        const chemin = `${E.moi || '0'}/${Date.now()}_${ext}`;
-        try {
-          const { error: upErr } = await sb.storage.from('crescite-frais').upload(chemin, fichierSelectionne, { upsert: true });
-          if (!upErr) {
-            const { data: pUrl } = sb.storage.from('crescite-frais').getPublicUrl(chemin);
-            photoUrl = pUrl?.publicUrl || chemin;
-          }
-        } catch (errUp) {
-          console.warn('Storage frais fallback:', errUp);
+        // dans son dossier, sous un nom neuf ; déjà déposé (la note avait échoué) : il resert
+        const chemin = envoye && envoye.fichier === fichier ? envoye.chemin : `${E.moi}/${nomJustificatif(fichier, type)}`;
+        if (!envoye || envoye.chemin !== chemin) {
+          // le type part avec le fichier (un PDF sans type, reconnu à son extension, le reçoit ici)
+          const corps = fichier.type === type ? fichier : fichier.slice(0, fichier.size, type);
+          const { error: errEnvoi } = await sb.storage.from(SEAU_FRAIS).upload(chemin, corps, { contentType: type, cacheControl: '3600' });
+          if (errEnvoi) return sale(`Le justificatif n’a pas pu être envoyé : ${motsErreur(errEnvoi)}. Rien n’est enregistré.`);
+          envoye = { fichier, chemin };
         }
-        if (!photoUrl && fichierDataUrl) photoUrl = fichierDataUrl;
-
-        const { error: insErr } = await sb.from('crescite_notes_frais').insert({
+        etat.textContent = 'Enregistrement de la note…';
+        const { error: errNote } = await sb.from('crescite_notes_frais').insert({
           personne_id: E.moi,
           date_id: dateIdVal,
+          date_depense: dateVal,
           categorie: catVal,
           montant_ttc: montVal,
-          photo_url: photoUrl || null,
+          photo_url: chemin,
           commentaire: commVal || null,
           statut: 'en_attente'
         });
-
-        if (insErr) throw insErr;
-
+        if (errNote) return sale(`La note de frais n’est pas enregistrée : ${motsErreur(errNote)}. Le justificatif est envoyé : réessayez, il ne repartira pas.`);
+        envoye = null; fichierSelectionne = null;
         f.reset();
         zoneApercu.hidden = true;
         etat.className = 'etat-form ok';
-        etat.textContent = 'Note de frais enregistrée avec succès.';
+        etat.textContent = 'Note de frais enregistrée.';
         annoncer('Note de frais transmise à l’administration.');
         vibrer(15);
         chargerNotesFrais();
       } catch (err) {
-        console.error(err);
-        etat.className = 'etat-form sale';
-        etat.textContent = `Erreur : ${err.message || 'Impossible d’enregistrer la note'}.`;
+        sale(`La note de frais n’est pas enregistrée : ${motsErreur(err)}.`);
       } finally {
-        b.disabled = false;
-        b.innerHTML = `${ICONES.coche} Enregistrer la note de frais`;
+        if (b.isConnected) { b.disabled = false; b.innerHTML = `${ICONES.coche} Enregistrer la note de frais`; }
       }
     });
 
@@ -3227,41 +3283,38 @@
     try {
       const { data, error } = await sb.from('crescite_notes_frais').select('*').eq('personne_id', E.moi).order('cree_le', { ascending: false });
       if (error) throw error;
-      if (!data || !data.length) {
-        zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>';
-        $('#tot-attente').textContent = '0,00 €';
-        $('#tot-rembourse').textContent = '0,00 €';
-        return;
-      }
+      if (!zone.isConnected) return;
+      // en attente : ce qui n'est pas encore remboursé (validé ou non) ; remboursé : dans la saison en cours
+      const saison = saisonDe(aujourdhui());
       let totAttente = 0, totRembourse = 0;
-      data.forEach(x => {
+      (data || []).forEach(x => {
         const m = Number(x.montant_ttc) || 0;
         if (x.statut === 'en_attente' || x.statut === 'valide') totAttente += m;
-        if (x.statut === 'rembourse') totRembourse += m;
+        if (x.statut === 'rembourse' && saisonDe(iso(new Date(x.rembourse_le || x.cree_le))) === saison) totRembourse += m;
       });
-      $('#tot-attente').textContent = `${totAttente.toFixed(2).replace('.', ',')} €`;
-      $('#tot-rembourse').textContent = `${totRembourse.toFixed(2).replace('.', ',')} €`;
+      $('#tot-attente').textContent = euros(totAttente);
+      $('#tot-rembourse').textContent = euros(totRembourse);
+      if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
 
       zone.innerHTML = data.map(item => {
         const cat = CAT_FRAIS[item.categorie] || item.categorie;
-        const stClass = item.statut || 'en_attente';
-        const stLabel = STATUT_FRAIS[stClass] || stClass;
-        const dateLue = item.cree_le ? item.cree_le.slice(0, 10).split('-').reverse().join('/') : '';
-        const m = (Number(item.montant_ttc) || 0).toFixed(2).replace('.', ',');
+        const stClass = STATUT_FRAIS[item.statut] ? item.statut : 'en_attente';
+        const quand = estJour(item.date_depense) ? jourCourt(item.date_depense) : item.cree_le ? jourCourt(iso(new Date(item.cree_le))) : '';
+        const d = item.date_id != null ? E.dates.find(x => x.id === Number(item.date_id)) : null;
         return `
           <div class="frais-ligne">
-            <span class="badge-statut ${stClass}">${stLabel}</span>
+            <span class="badge-statut ${stClass}">${STATUT_FRAIS[stClass]}</span>
             <div>
-              <b>${esc(cat)}</b> · <small>${esc(dateLue)}</small>
+              <b>${esc(cat)}</b> · <small>${esc(quand)}${d ? ` · ${esc(d.spectacle?.titre || 'Date')}${d.lieu?.commune ? `, ${esc(d.lieu.commune)}` : ''}` : ''}</small>
               ${item.commentaire ? `<br><small class="aide">${esc(item.commentaire)}</small>` : ''}
-              ${item.photo_url ? `<br><a href="${esc(item.photo_url)}" target="_blank" rel="noopener" class="lien-btn" style="font-size:0.84rem">${ICONES.doc} Voir le justificatif</a>` : ''}
+              ${item.photo_url ? `<br><button type="button" class="lien-btn" data-justificatif="${esc(item.photo_url)}" style="font-size:0.84rem">${ICONES.doc} Voir le justificatif<span class="sr"> (dans un nouvel onglet)</span></button>` : ''}
             </div>
-            <div class="montant">${m} €</div>
+            <div class="montant">${euros(item.montant_ttc)}</div>
           </div>
         `;
       }).join('');
     } catch (e) {
-      zone.innerHTML = '<p class="message erreur">Impossible de charger les notes de frais pour le moment.</p>';
+      if (zone.isConnected) zone.innerHTML = `<p class="message erreur">Vos notes de frais ne se lisent pas pour le moment : ${esc(motsErreur(e))}.</p>`;
     }
   }
 
@@ -3437,7 +3490,7 @@
       let erreur = null;
       try {
         await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
-          chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); })]);
+          chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder()]);
         E.horsLigne = 0; garder();
         E.dispo.mesIndispos = null; E.dispo.agendas = null; E.planningCache = null;
       } catch (e) { erreur = e; }
@@ -3516,7 +3569,20 @@
     if (t.matches('[data-sortir]')) return sortir();
     if (t.matches('[data-reessayer]')) return occupe(t, 'Un instant…', () => reessayer(true));
     if (t.matches('[data-actualiser]')) { vibrer(8); return reessayer(true); }
-    if (t.matches('[data-retard]')) return ouvrirModaleRetard(Number(t.dataset.retard));
+    if (t.matches('[data-retard]')) return ouvrirModaleRetard(Number(t.dataset.retard), t);
+    if (t.matches('[data-justificatif]')) {
+      // un justificatif de frais : le stockage est privé, un lien signé se demande au clic (une heure)
+      e.preventDefault();
+      const w = window.open('', '_blank');                      // ouvert pendant le clic, pour ne pas être bloqué
+      try {
+        const url = await signerJustificatif(t.dataset.justificatif);
+        if (w) { w.opener = null; w.location.href = url; } else location.href = url;
+      } catch (err) {
+        if (w) w.close();
+        annoncer(`Le justificatif ne s’ouvre pas : ${motsErreur(err)}.`, { erreur: true });
+      }
+      return;
+    }
     if (t.matches('[data-phase-camion]')) return changerPhaseCamion(t.dataset.phaseCamion, Number(t.dataset.dateId));
     if (t.id === 'b-agenda') return telechargerAgenda();
     if (t.matches('[data-agenda]')) return telechargerAgenda(Number(t.dataset.agenda));

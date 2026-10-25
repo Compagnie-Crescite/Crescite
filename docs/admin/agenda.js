@@ -28,9 +28,11 @@ const AGENDA = (() => {
     return x;
   }
   const liste = xs => xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}`;
-  // « 18 décembre 2026 », « 19 et 20 novembre 2026 », « du 12 au 20 février 2027 », « mars 2027 »
+  // « 18 décembre 2026 », « 19 et 20 novembre 2026 », « du 12 au 20 février 2027 », « mars 2027 », « 2014 »
   function quand(date, jours) {
     if (date.precision === 'mois') return `${MOIS[+date.debut.slice(5, 7) - 1]} ${date.debut.slice(0, 4)}`;
+    // une date sans jour ni mois (les anciennes saisons du récapitulatif de la compagnie) : son année, rien de plus précis
+    if (date.precision === 'saison') return date.debut.slice(0, 4);
     if (date.precision === 'periode' || !jours.length) {
       const a = date.debut, b = date.fin || date.debut;
       if (a === b) return `${jourTexte(a)} ${MOIS[+a.slice(5, 7) - 1]} ${a.slice(0, 4)}`;
