@@ -154,9 +154,12 @@ manière). Quatre outils communs, injectés dans chaque maquette :
 - `troupe.js` (TROUPE) : sur la page de la compagnie, toutes les personnes des équipes, par catégories de métiers (le jeu,
   la mise en scène, l'écriture, les décors et costumes, la lumière et le son, la production), une vignette seulement pour
   une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras.
+- `cadrage.js` (CADRAGE) : chaque photo des spectacles garde dans son cadre sa zone d'intérêt (les comédiens, pas le
+  noir du plateau), sur ordinateur comme sur téléphone ; les zones sont dans `data/cadrages.json` (une par photo, posée
+  à l'œil sur chacune), et une photo ajoutée y reçoit la sienne.
 Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> m01 synthese`…
 Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
-réactivité, la réservation, les vidéos, la nuit seule, la troupe) sont dans `maquettes/CONTRAT.md`.
+réactivité, la réservation, les vidéos, la nuit seule, la troupe, le cadrage des photos) sont dans `maquettes/CONTRAT.md`.
 
 ## Données
 

@@ -613,3 +613,18 @@ Un message final court : la navigation par les saisons, comment les univers sont
   (`D.shows[].enTournee`) d'abord, dans leur ordre, puis les autres.
 - Le vérificateur : `REGLE23=1`, avec `INSTANTANE=<dossier>` (un instantané de la base, un `<table>.json` par table, où sont
   les résidences : l'instantané du dépôt n'en a pas).
+
+## Règle 24 : chaque photo cadrée sur sa zone d'intérêt (demande du client)
+« Veille à ce que les images soient correctement centrées et cadrées, en définissant des zones d'intérêt par image pour
+smartphone : celle de Cyrano, c'est le plus souvent noir. Il faut sélectionner les acteurs. » (octobre 2026)
+- `data/cadrages.json` : pour chaque photo des spectacles (la clé de D.photos), une zone `[gauche, haut, droite, bas]` et
+  un point `[x, y]`, en % de l'image : la zone, ce qui doit rester dans le cadre quand il le peut (les comédiens) ; le
+  point, ce que garde un cadre plus petit qu'elle (un visage). D.cadrages les porte ; `focale` de chaque spectacle est
+  l'abscisse du point de sa photo principale.
+- `cadrage.js` (CADRAGE, outil commun) : toute photo en `object-fit: cover` d'une clé connue est placée pour que sa zone
+  soit au centre de son cadre, entière si elle y tient, sinon son point au centre ; c'est refait quand le cadre change de
+  taille (jamais à chaque image d'une animation), et les photos posées ensuite sont prises au passage. Un cadre peut
+  déplacer ce centre par `--cadre-x` et `--cadre-y` (de 0 à 1), pour laisser la place à un texte (la synthèse : la photo
+  d'un spectacle par écran, du côté libre de sa colonne de texte).
+- Une photo ajoutée reçoit sa zone dans `data/cadrages.json` ; sans zone, elle garde la position de sa feuille de style ;
+  `data-cadre="non"` l'exclut.

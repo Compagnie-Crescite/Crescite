@@ -477,6 +477,7 @@ def build_data():
     cass = json.loads((ROOT / "data" / "cassandres.json").read_text(encoding="utf-8"))
     dossier = json.loads((ROOT / "data" / "berenice-dossier.json").read_text(encoding="utf-8"))
     U = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))
+    cadrages = {k: v for k, v in json.loads((ROOT / "data" / "cadrages.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
     rows = json.loads((ROOT / "data" / "representations-site-2016-2027.json").read_text(encoding="utf-8"))
     mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
     today = date.today().isoformat()
@@ -599,7 +600,7 @@ def build_data():
             "prochaine": mine[0] if mine else None, "nbDates": len(mine),
             # l'univers : une couleur vive sur fond sombre, assombrie pour du texte sur fond clair, et un fond profond
             "couleur": c["scene"], "couleurTexteClair": for_light(c["scene"]), "fondSombre": c["fond"] if not u["clair"] else "#1a1016",
-            "palette": c, "clair": u["clair"], "motif": u["motif"], "focale": 50,
+            "palette": c, "clair": u["clair"], "motif": u["motif"], "focale": (cadrages.get(slug) or {}).get("point", [50])[0],
             "univers": u, "lieuTemps": uv["lieuTemps"], "accroche": uv["accroche"], "affirmations": uv["affirmations"],
             "citations": uv["citations"], "video": video,
             "photo": f"{slug}.webp",
@@ -703,7 +704,10 @@ def build_data():
         # l'administration ou par supabase/documents.py ; [{spectacle, type, titre, url, pour: 'pros'|'scolaires'}]
         "documents": documents_publics(),
     }
-    return D, photo_files(out_shows)
+    fichiers = photo_files(out_shows)
+    # la zone d'intérêt de chaque photo (data/cadrages.json, règle 24) : celles des photos que les pages ont
+    D["cadrages"] = {k: cadrages[k] for k in fichiers if k in cadrages}
+    return D, fichiers
 
 
 D_SAISON = "2026-2027"
@@ -727,9 +731,10 @@ def action_publiee(a):
 DATA_LIGNE = "<script>const D = /*__DATA__*/null;</script>"
 
 
-OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "dossier.js", "frise.js", "mouvement.js", "reserver.js", "lecteur.js", "troupe.js", "tentacules.js")
+OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "dossier.js", "frise.js", "mouvement.js", "reserver.js", "lecteur.js", "troupe.js", "cadrage.js", "tentacules.js")
 # reserver.js (RESERVER, règle 17) : les dates où réserver, leur bande de boutons, la carte de réservation, le clavier ;
-# lecteur.js (LECTEUR, règle 18) : les vidéos lues dans le site, au geste, en plein écran ou la page assombrie.
+# lecteur.js (LECTEUR, règle 18) : les vidéos lues dans le site, au geste, en plein écran ou la page assombrie ;
+# cadrage.js (CADRAGE, règle 24) : chaque photo des spectacles garde sa zone d'intérêt dans son cadre (D.cadrages).
 # Les outils de <head>, avant toute feuille de style : theme.js (THEME) pose le jour ou la nuit sur <html> avant le
 # premier dessin (règle 19 : pas d'éclair) ; il ne lit rien de D.
 OUTILS_TETE = ("theme.js",)

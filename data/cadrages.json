@@ -1,0 +1,555 @@
+{
+ "_note": "La zone d'intérêt de chaque photo des spectacles, en pourcentage de l'image : « zone » [gauche, haut, droite, bas], ce qui doit rester dans le cadre quand il le peut (les comédiens, pas le noir du plateau) ; « point », ce que le cadre garde quand il est plus petit que la zone (un visage). maquettes/src/cadrage.js en tire la position de chaque photo dans son cadre, sur ordinateur comme sur téléphone ; « focale » de chaque spectacle (D.shows) est l'abscisse du point de sa photo principale. Clé : celle de D.photos.",
+ "ci-gisait-cyrano": {
+  "zone": [
+   66,
+   8,
+   96,
+   100
+  ],
+  "point": [
+   80,
+   30
+  ]
+ },
+ "berenice": {
+  "zone": [
+   10,
+   0,
+   80,
+   100
+  ],
+  "point": [
+   66,
+   25
+  ]
+ },
+ "cassandres": {
+  "zone": [
+   28,
+   30,
+   85,
+   85
+  ],
+  "point": [
+   62,
+   55
+  ]
+ },
+ "cleophene": {
+  "zone": [
+   20,
+   18,
+   82,
+   100
+  ],
+  "point": [
+   48,
+   52
+  ]
+ },
+ "la-folle-idee": {
+  "zone": [
+   15,
+   12,
+   95,
+   95
+  ],
+  "point": [
+   48,
+   45
+  ]
+ },
+ "imaginaire-force": {
+  "zone": [
+   15,
+   15,
+   92,
+   90
+  ],
+  "point": [
+   52,
+   55
+  ]
+ },
+ "macbeth-fatum": {
+  "zone": [
+   22,
+   10,
+   62,
+   100
+  ],
+  "point": [
+   36,
+   30
+  ]
+ },
+ "mon-royaume": {
+  "zone": [
+   5,
+   5,
+   97,
+   100
+  ],
+  "point": [
+   53,
+   25
+  ]
+ },
+ "actions-culturelles": {
+  "zone": [
+   15,
+   0,
+   75,
+   70
+  ],
+  "point": [
+   50,
+   25
+  ]
+ },
+ "ci-gisait-cyrano/g-3": {
+  "zone": [
+   8,
+   0,
+   96,
+   86
+  ],
+  "point": [
+   26,
+   52
+  ]
+ },
+ "ci-gisait-cyrano/g-5": {
+  "zone": [
+   10,
+   3,
+   98,
+   95
+  ],
+  "point": [
+   54,
+   30
+  ]
+ },
+ "ci-gisait-cyrano/g-6": {
+  "zone": [
+   60,
+   15,
+   86,
+   72
+  ],
+  "point": [
+   72,
+   40
+  ]
+ },
+ "imaginaire-force/principale": {
+  "zone": [
+   15,
+   15,
+   92,
+   90
+  ],
+  "point": [
+   52,
+   55
+  ]
+ },
+ "imaginaire-force/g-2": {
+  "zone": [
+   5,
+   10,
+   100,
+   100
+  ],
+  "point": [
+   28,
+   35
+  ]
+ },
+ "imaginaire-force/g-3": {
+  "zone": [
+   16,
+   0,
+   84,
+   82
+  ],
+  "point": [
+   48,
+   30
+  ]
+ },
+ "imaginaire-force/g-5": {
+  "zone": [
+   0,
+   0,
+   100,
+   100
+  ],
+  "point": [
+   50,
+   35
+  ]
+ },
+ "la-folle-idee/g-1": {
+  "zone": [
+   15,
+   12,
+   95,
+   95
+  ],
+  "point": [
+   48,
+   45
+  ]
+ },
+ "la-folle-idee/g-2": {
+  "zone": [
+   15,
+   10,
+   65,
+   85
+  ],
+  "point": [
+   38,
+   30
+  ]
+ },
+ "la-folle-idee/g-6": {
+  "zone": [
+   16,
+   20,
+   100,
+   90
+  ],
+  "point": [
+   45,
+   32
+  ]
+ },
+ "macbeth-fatum/g-2": {
+  "zone": [
+   28,
+   38,
+   76,
+   100
+  ],
+  "point": [
+   48,
+   50
+  ]
+ },
+ "macbeth-fatum/g-4": {
+  "zone": [
+   18,
+   15,
+   82,
+   95
+  ],
+  "point": [
+   48,
+   55
+  ]
+ },
+ "macbeth-fatum/g-7": {
+  "zone": [
+   22,
+   42,
+   43,
+   78
+  ],
+  "point": [
+   32,
+   60
+  ]
+ },
+ "mon-royaume/g-1": {
+  "zone": [
+   8,
+   5,
+   90,
+   95
+  ],
+  "point": [
+   62,
+   50
+  ]
+ },
+ "mon-royaume/g-2": {
+  "zone": [
+   5,
+   20,
+   100,
+   100
+  ],
+  "point": [
+   28,
+   42
+  ]
+ },
+ "mon-royaume/g-6": {
+  "zone": [
+   5,
+   2,
+   95,
+   100
+  ],
+  "point": [
+   60,
+   30
+  ]
+ },
+ "berenice/av-1": {
+  "zone": [
+   12,
+   15,
+   80,
+   100
+  ],
+  "point": [
+   66,
+   32
+  ]
+ },
+ "berenice/av-2": {
+  "zone": [
+   25,
+   35,
+   78,
+   70
+  ],
+  "point": [
+   52,
+   52
+  ]
+ },
+ "berenice/av-12": {
+  "zone": [
+   10,
+   3,
+   92,
+   100
+  ],
+  "point": [
+   60,
+   25
+  ]
+ },
+ "berenice/av-17": {
+  "zone": [
+   22,
+   30,
+   78,
+   90
+  ],
+  "point": [
+   50,
+   65
+  ]
+ },
+ "berenice/av-18": {
+  "zone": [
+   15,
+   25,
+   88,
+   80
+  ],
+  "point": [
+   50,
+   55
+  ]
+ },
+ "berenice/d-atelier-1": {
+  "zone": [
+   20,
+   3,
+   75,
+   100
+  ],
+  "point": [
+   58,
+   28
+  ]
+ },
+ "berenice/d-atelier-3": {
+  "zone": [
+   55,
+   15,
+   92,
+   100
+  ],
+  "point": [
+   73,
+   35
+  ]
+ },
+ "berenice/d-implantation-1": {
+  "zone": [
+   22,
+   30,
+   78,
+   90
+  ],
+  "point": [
+   50,
+   65
+  ]
+ },
+ "berenice/d-musique": {
+  "zone": [
+   20,
+   3,
+   90,
+   70
+  ],
+  "point": [
+   45,
+   35
+  ]
+ },
+ "cassandres/av-1": {
+  "zone": [
+   5,
+   5,
+   97,
+   100
+  ],
+  "point": [
+   48,
+   25
+  ]
+ },
+ "cassandres/av-2": {
+  "zone": [
+   15,
+   10,
+   95,
+   100
+  ],
+  "point": [
+   34,
+   40
+  ]
+ },
+ "cassandres/av-5": {
+  "zone": [
+   18,
+   25,
+   82,
+   90
+  ],
+  "point": [
+   50,
+   60
+  ]
+ },
+ "cleophene/av-5": {
+  "zone": [
+   15,
+   3,
+   45,
+   100
+  ],
+  "point": [
+   27,
+   35
+  ]
+ },
+ "cleophene/av-7": {
+  "zone": [
+   55,
+   45,
+   80,
+   98
+  ],
+  "point": [
+   66,
+   72
+  ]
+ },
+ "cleophene/av-20": {
+  "zone": [
+   22,
+   8,
+   76,
+   100
+  ],
+  "point": [
+   45,
+   28
+  ]
+ },
+ "cleophene/av-21": {
+  "zone": [
+   22,
+   25,
+   52,
+   100
+  ],
+  "point": [
+   41,
+   35
+  ]
+ },
+ "cleophene/av-23": {
+  "zone": [
+   15,
+   15,
+   42,
+   95
+  ],
+  "point": [
+   29,
+   30
+  ]
+ },
+ "actions-culturelles/g-1": {
+  "zone": [
+   45,
+   0,
+   100,
+   100
+  ],
+  "point": [
+   65,
+   45
+  ]
+ },
+ "actions-culturelles/g-2": {
+  "zone": [
+   15,
+   0,
+   75,
+   70
+  ],
+  "point": [
+   50,
+   25
+  ]
+ },
+ "actions-culturelles/g-3": {
+  "zone": [
+   60,
+   0,
+   100,
+   80
+  ],
+  "point": [
+   82,
+   35
+  ]
+ },
+ "actions-culturelles/g-4": {
+  "zone": [
+   28,
+   5,
+   60,
+   80
+  ],
+  "point": [
+   44,
+   45
+  ]
+ }
+}

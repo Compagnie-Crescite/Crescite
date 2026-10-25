@@ -299,6 +299,9 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
 .df-photo { position: absolute; inset: 0; z-index: -3; overflow: hidden; background: var(--u-fond2); }
 .df-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 40%; transform-origin: var(--cx) 50%; transform: scale(calc(1.14 - var(--p) * .14)); }
 .df[data-cote="droite"] .df-photo img { object-position: 38% 40%; }
+/* (CADRAGE, règle 24 : la zone d'intérêt de la photo du côté libre, loin de la colonne de texte et de son voile) */
+.df-photo img { --cadre-x: .71; --cadre-y: .5; }
+.df[data-cote="droite"] .df-photo img { --cadre-x: .29; }
 /* (le voile : uni sous toute la colonne de texte, --bord, pour que tout s'y lise, AA, quelle que soit la photo ; puis il s'efface) */
 .df-photo::after { content: ""; position: absolute; inset: 0;
   background: linear-gradient(90deg, var(--u-fond) 0, var(--u-fond) calc(var(--bord) + 16px), color-mix(in srgb, var(--u-fond) 70%, transparent) calc(var(--bord) + 7%), color-mix(in srgb, var(--u-fond) 25%, transparent) calc(var(--bord) + 16%), transparent calc(var(--bord) + 26%)),
@@ -409,6 +412,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
   .df { --cx: 50%; --cy: 25svh; display: block; min-height: 0; padding-top: 44svh; }
   .df[data-cote="droite"] { --cx: 50%; }
   .df-photo { bottom: auto; height: 54svh; }
+  .df-photo img, .df[data-cote="droite"] .df-photo img { --cadre-x: .5; --cadre-y: .42; }
   .df-photo::after, .df[data-cote="droite"] .df-photo::after { background: linear-gradient(0deg, var(--u-fond) 4%, color-mix(in srgb, var(--u-fond) 55%, transparent) 30%, transparent 62%); }
   .df-in, .df[data-cote="droite"] .df-in { width: 100%; margin-left: 0; }
   .df[data-motif="arene"] .df-photo img { clip-path: circle(calc(var(--p) * min(36vw, 21svh)) at 50% 25svh); }
