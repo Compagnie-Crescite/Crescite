@@ -59,7 +59,10 @@ const VUES = [
     D => D.dates.filter(d => !d.scolaire).map(d => ((d.details || [])[0] || {}).texte).filter(t => t && t.length > 30).slice(0, 2)],
   // établissement : Macbeth « à compléter », rien de l'action culturelle masquée de Cassandres (règle 14)
   ['pro-etablissement', '#/espace-pro/etablissement', D => [D.site.entrees.find(e => e.cle === 'etablissement').texte, 'afin de participer à « l’école du spectateur »',
-    D.shows.find(s => s.slug === 'berenice').actionCulturelle.type, D.site.libelles.aCompleter],
+    D.shows.find(s => s.slug === 'berenice').actionCulturelle.type,
+    // « à compléter » : seulement si un spectacle a une action culturelle sans type (l'instantané du dépôt : Macbeth ; la base
+    // n'en a pas pour lui, et la page ne le montre pas)
+    D.shows.some(s => s.actionCulturelle && !s.actionCulturelle.type) ? D.site.libelles.aCompleter : null],
     () => ['Lieux d’enseignement agronomique', 'Notre première intuition à ce stade du travail']],
   ['berenice-voir', '#/spectacle/berenice/voir', D => ['Rome, an 79.']],
   ['berenice-programmer', '#/spectacle/berenice/programmer', D => ['100 à 120 places', D.site.libelles.dossierPdf, D.site.programmation.contact.email]],
@@ -627,6 +630,8 @@ for (const n of names) {
         const off = Number(u.searchParams.get('offset') || 0), lim = Number(u.searchParams.get('limit') || 1000);
         return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(rows.slice(off, off + lim)) });
       });
+      // le temps réel de la base : fermé sur place (rien ne part vers la vraie base)
+      await ctx.routeWebSocket(/omekkqjinvppadsoinvj\.supabase\.co/, ws => ws.close());
     }
     await page.goto(new URL(`${n}.html${process.env.BASE === '1' || INST ? '' : '?base=0'}`, dist).href, { waitUntil: 'load' });
     if (INST) await page.waitForFunction(() => { try { return Object.values(D.saisons || {}).some(S => S.spectacles.some(g => g.dates.some(d => d.id != null))); } catch (e) { return false; } }, null, { timeout: 30000 })
