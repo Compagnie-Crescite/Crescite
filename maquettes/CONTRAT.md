@@ -554,6 +554,20 @@ plusieurs couleurs et la légende, le titre « Saison 2019-2020 » dans les sais
 sa carte ; la page de La Folle Idée sans onglets, avec son bilan et sa carte ; les sous-pages de l'espace pro ; les
 redirections.
 
+## Règle 22 : les couleurs de la saison et des spectacles (demande d'Angelo Jossec, directeur artistique)
+« La couleur générale de cette saison, et cela jusqu'à la création de Cassandre, ça doit être le bleu. Voici les couleurs
+de chaque spectacle : Mon Royaume pour un cheval jaune, Bérénice violet, Cyrano gris anthracite, L'Imaginaire forcé vert
+sauge, Cassandre bleu, Cléophène rose saumon, Macbeth rouge sang ; La Folle Idée, pas encore décidé. »
+- **Les spectacles** : leurs univers ont ces couleurs (`univers.couleurs`, dans la base et dans
+  data/univers-spectacles.json ; `scene` est la couleur du spectacle, `accent` sa couleur lisible sur son fond).
+  Ne mets aucune couleur de spectacle en dur : lis-les dans D, elles peuvent encore changer (La Folle Idée).
+  Bérénice passe au violet : la charte de son dossier (règle 8) ne vaut plus pour sa couleur.
+- **La saison** : `D.site.couleurSaison` = `{couleur, vive}` (le bleu de Cassandres : `couleur` sur fond clair ou en
+  texte, `vive` sur fond sombre). C'est la couleur générale du site pour cette saison : la maquette s'en sert pour ses
+  accents d'interface (liens, boutons, l'élément courant du menu, les filets, la marque de la saison en cours sur
+  `#/saisons`, « aujourd'hui » sur la frise), à la place de l'accent qu'elle avait. Le logo garde sa tache magenta.
+  Chaque maquette l'adopte dans son style ; contraste AA comme partout (règle 19 de jour et de nuit).
+
 ## Les contrôles des règles 17 à 20
 Le vérificateur (`maquettes/onglets.mjs`) ne contrôle chaque règle que si sa variable d'environnement est posée
 (`REGLE17=1`, `REGLE18=1`, `REGLE19=1`, `REGLE20=1`), le temps que toutes les maquettes l'aient.

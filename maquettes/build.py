@@ -269,6 +269,14 @@ LIBELLES = {
     "rayonKm": "Rayon",
     "mInscrire": "M’inscrire à l’alerte",
     "tousSpectacles": "Tous les spectacles",
+    # ce que l'alerte et la demande de devis répondent : enregistrées dans la base, ou pas (alors on écrit au contact
+    # diffusion, D.site.programmation.contact) ; {adresse}, {secteur}, {lien} : ce que la page y met
+    "alerteInscrite": "Inscription enregistrée ! Vous serez averti(e) à l’adresse {adresse} dès qu’une date sera confirmée dans votre secteur ({secteur}).",
+    "alerteNonEnregistree": "Votre inscription n’a pas pu être enregistrée. Écrivez-nous directement :",
+    "demandeTransmise": "Demande transmise avec succès !",
+    "recapitulatifMessagerie": "Vous pouvez également {lien} avec le récapitulatif.",
+    "ouvrirMessagerie": "ouvrir votre messagerie",
+    "demandeNonEnregistree": "Votre demande n’a pas pu être enregistrée. Écrivez-nous directement, le récapitulatif est prêt :",
     # simulateur de faisabilité & devis (chantier 2)
     "simulateurAccueil": "Simulateur d’accueil & Devis",
     "simulateurDesc": "Testez la faisabilité technique de votre lieu et préparez votre demande de cession en un clic.",
@@ -583,6 +591,9 @@ def build_data():
             "contact": site["contact"],
             # le contact des programmateurs : l'administratrice (nom et rôle publics : mentions légales, dossier artistique),
             # l'adresse publique de la compagnie ; le téléphone seulement si l'administration le saisit dans la base
+            # la couleur générale de la saison (règle 22) : le bleu, jusqu'à la création de Cassandres (demande d'Angelo
+            # Jossec) ; « couleur » pour un fond clair ou un texte, « vive » pour un fond sombre
+            "couleurSaison": {"couleur": "#1f3a73", "vive": "#7f9fe0", "jusqua": "cassandres"},
             "programmation": {"contact": {"nom": "Barbara Daussy", "role": "Administratrice", "email": "contact@crescite.fr",
                                           "telephone": None}},
             # l'espace pro (#/espace-pro, dans le menu) : trois portes vers les espaces réservés, hors des maquettes

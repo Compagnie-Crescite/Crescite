@@ -18,14 +18,14 @@
     "clair": true,
     "motif": "arene",
     "couleurs": {
-     "fond": "#fbefe9",
+     "fond": "#f6f0fb",
      "fond2": "#ffffff",
-     "texte": "#631705",
-     "texte2": "#7d3a2b",
-     "accent": "#cf3723",
-     "accent2": "#dc6d5e",
-     "scene": "#cf3723",
-     "lueur": "rgba(207,55,35,0.22)"
+     "texte": "#2b1440",
+     "texte2": "#5e4a73",
+     "accent": "#5b2a8c",
+     "accent2": "#8a5cc2",
+     "scene": "#7b3fb5",
+     "lueur": "rgba(123,63,181,0.20)"
     },
     "polices": {
      "titre": "Ubuntu",
@@ -168,14 +168,14 @@
     "clair": false,
     "motif": "jumeaux",
     "couleurs": {
-     "fond": "#150c05",
-     "fond2": "#241608",
-     "texte": "#f5e8d2",
-     "texte2": "#b59878",
-     "accent": "#d9a24a",
-     "accent2": "#e6b767",
-     "scene": "#d9a24a",
-     "lueur": "rgba(217,162,74,0.32)"
+     "fond": "#1a0f0e",
+     "fond2": "#2a1715",
+     "texte": "#fbeae6",
+     "texte2": "#cfa9a1",
+     "accent": "#f4a497",
+     "accent2": "#ffc2b5",
+     "scene": "#f08a7e",
+     "lueur": "rgba(240,138,126,0.30)"
     },
     "polices": {
      "titre": "Cormorant Garamond",
@@ -287,14 +287,14 @@
     "clair": false,
     "motif": "annotations",
     "couleurs": {
-     "fond": "#160f0a",
-     "fond2": "#241811",
-     "texte": "#f6ead8",
-     "texte2": "#b79b7d",
-     "accent": "#d4823c",
-     "accent2": "#e39a58",
-     "scene": "#d4823c",
-     "lueur": "rgba(212,130,60,0.30)"
+     "fond": "#121712",
+     "fond2": "#1b231b",
+     "texte": "#eef2e8",
+     "texte2": "#b4c0ad",
+     "accent": "#9cb89a",
+     "accent2": "#c5d6b8",
+     "scene": "#8fae8b",
+     "lueur": "rgba(143,174,139,0.26)"
     },
     "polices": {
      "titre": "IM Fell French Canon",
@@ -360,14 +360,14 @@
     "clair": true,
     "motif": "paperboard",
     "couleurs": {
-     "fond": "#f5f0e6",
-     "fond2": "#e9e1d1",
-     "texte": "#15192e",
-     "texte2": "#4a5068",
-     "accent": "#c8102e",
-     "accent2": "#1d3a8a",
-     "scene": "#ff5a5f",
-     "lueur": "rgba(200,16,46,0.18)"
+     "fond": "#f7f1dc",
+     "fond2": "#efe4bf",
+     "texte": "#1f1a0c",
+     "texte2": "#5b5236",
+     "accent": "#7d5800",
+     "accent2": "#b38200",
+     "scene": "#f2b705",
+     "lueur": "rgba(242,183,5,0.24)"
     },
     "polices": {
      "titre": "IM Fell English",
@@ -432,14 +432,14 @@
     "clair": false,
     "motif": "nez",
     "couleurs": {
-     "fond": "#0a1124",
-     "fond2": "#111b37",
-     "texte": "#eef2ff",
-     "texte2": "#b3bedf",
-     "accent": "#f2c14e",
-     "accent2": "#d04a52",
-     "scene": "#8fb3ff",
-     "lueur": "rgba(143,179,255,0.28)"
+     "fond": "#1c1d20",
+     "fond2": "#26282c",
+     "texte": "#eceae6",
+     "texte2": "#b9b6b0",
+     "accent": "#d6d2ca",
+     "accent2": "#9aa0a8",
+     "scene": "#4a4e55",
+     "lueur": "rgba(154,160,168,0.22)"
     },
     "polices": {
      "titre": "Bodoni Moda",
@@ -588,10 +588,10 @@
      "fond2": "#171010",
      "texte": "#efe6da",
      "texte2": "#bdae9b",
-     "accent": "#e0262d",
+     "accent": "#e03a46",
      "accent2": "#7d8471",
-     "scene": "#ff3b3f",
-     "lueur": "rgba(224,38,45,0.25)"
+     "scene": "#a3121f",
+     "lueur": "rgba(163,18,31,0.35)"
     },
     "polices": {
      "titre": "Grenze Gotisch",
@@ -763,5 +763,6 @@
     ]
    }
   }
- }
+ },
+ "_couleurs": "Les couleurs des spectacles, données par Angelo Jossec (octobre 2026) : Mon Royaume jaune, Bérénice violet, Ci-gisait Cyrano gris anthracite, L’Imaginaire forcé vert sauge, Cassandres bleu, Cléophène rose saumon, Macbeth – Fatum rouge sang ; La Folle Idée pas encore décidée (elle garde les siennes)."
 }
