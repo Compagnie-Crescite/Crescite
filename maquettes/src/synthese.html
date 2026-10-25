@@ -132,6 +132,9 @@ img { display: block; max-width: 100%; }
 .barre a[aria-current="page"] { background: var(--ec); color: #fff; }
 .barre a[aria-current="page"] .pt { background: #fff; }
 .barre a[aria-current="true"] { border-color: var(--ec); background: color-mix(in srgb, var(--ev) 14%, var(--papier)); }
+/* le menu par les saisons (règle 21) est toute la navigation : sans menu second, ni lui ni le bouton « Menu » */
+.top.sans-second .second, .top.sans-second .menu { display: none !important; }
+@media (max-width: 759px) { .top.sans-second .theme { margin-left: auto; } }
 
 /* ———— blocs communs ———— */
 section.bloc { padding: clamp(48px, 7vw, 96px) 0; border-top: 1px solid var(--filet); }
@@ -1659,8 +1662,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   .fus.compact { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
-/* l'ouverture, habillée : le papier, la pieuvre magenta, et derrière elle, à peine, la carte des tournées */
-.intro.intro-synthese .intro-indice { color: var(--encre); opacity: .55; }
+/* l'ouverture, habillée (celle de la 04) : le logo blanc sur le dégradé de la saison ; la flèche à sa couleur vive.
+   Moins d'animations : les photos de la scène changent quand même d'un fondu bref */
+.intro.intro-synthese .intro-indice { color: var(--saison-vive); opacity: .9; }
+@media (prefers-reduced-motion: reduce) { .sc-image { transition: opacity .35s ease !important; } }
 </style>
 </head>
 <body>
@@ -2206,7 +2211,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       ${rac && rac.length ? `<ul class="et-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}
       ${apres}
     </div></section>`;
-  const saisonsBande = (actuelle, id = 's-saisons') => `<nav class="saisons" id="${id}" aria-labelledby="${id}-h"><div class="wrap"><h2 class="titre-bloc" id="${id}-h">${esc(L.saisonsPrecedentes)}</h2><ul class="saisons-liste">${S.saisons.filter(x => x.saison !== actuelle && x.saison !== D.saison && D.saisons[x.saison]).map(x => `<li><a href="#/agenda/${x.saison}">
+  const saisonsBande = (actuelle, id = 's-saisons') => `<nav class="saisons" id="${id}" aria-labelledby="${id}-h"><div class="wrap"><h2 class="titre-bloc" id="${id}-h">${esc(L.saisonsPrecedentes)}</h2><ul class="saisons-liste">${S.saisons.filter(x => x.saison !== actuelle && x.saison !== D.saison && D.saisons[x.saison]).map(x => `<li><a href="#/saisons/${x.saison}">
       <svg class="vignette" viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr"/>${CARTE.saison(x.saison).map(y => `<path pathLength="1" d="${CARTE.trait(y.xy)}"/>`).join('')}<circle cx="${CARTE.rouen[0]}" cy="${CARTE.rouen[1]}" r="11"/></svg><span>${esc(x.titre)}</span></a></li>`).join('')}</ul></div></nav>`;
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
@@ -3291,7 +3296,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       const lx = s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l) })), groupes = [];
       rows.forEach(r => { const m = r.k.slice(0, 7), g = groupes[groupes.length - 1]; if (g && g.m === m) g.rs.push(r); else groupes.push({ m, rs: [r] }); });
       return `<div class="sai-liste">${groupes.map(g => `${g.m ? `<h4 class="mois" data-mv-cle="m:${s.k}:${g.m}">${esc(titreMois(g.m))}</h4>` : ''}<ul class="dates" data-agenda="">${g.rs.map(ligneAgenda).join('')}</ul>`).join('')}
-          ${s.k === D.saison ? '' : `<p class="sai-page"><a href="#/agenda/${s.k}">${esc(s.titre)}${FLECHE}</a></p>`}</div>
+          ${s.k === D.saison ? '' : `<p class="sai-page"><a href="#/saisons/${s.k}">${esc(s.titre)}${FLECHE}</a></p>`}</div>
         <div class="sai-carte">${lx.length ? carte({ lieux: lx, titre: s.titre, couleurs: true, simple: true }) : ''}</div>`;
     }
     function lierSaison(dt, s) {
@@ -3743,7 +3748,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const C = S.contact, co = S.coordonnees, mot = 'politique de confidentialité', k = C.consentement.indexOf(mot);
     const politique = (S.liensLegaux.find(x => /confidentialit/.test(x.href)) || {}).href || '#/politique-de-confidentialite';
     const types = { 'Nom': ['text', 'name'], 'Adresse e-mail': ['email', 'email'], 'Téléphone': ['tel', 'tel'], 'Ville': ['text', 'address-level2'] };
-    main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(MENU.contact.texte)}</p><h1 tabindex="-1"${ed('site.contact.titre')}>${esc(C.titre)}</h1>${trait()}</div>
+    // (le menu par les saisons n'a plus « Contact » : son libellé vient alors de D.site.libelles)
+    const nomC = (MENU.contact || {}).texte || L.contact;
+    main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(nomC)}</p><h1 tabindex="-1"${ed('site.contact.titre')}>${esc(C.titre)}</h1>${trait()}</div>
       <section class="bloc sans-filet"><div class="wrap contact">
         <form class="formulaire" novalidate>
           ${C.champs.map((c, i) => i === C.champs.length - 1 ? `<p class="champ large"><label for="f${i}">${esc(c)}</label><textarea id="f${i}" rows="6"></textarea></p>`
@@ -3755,7 +3762,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         <address class="coord"><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong><br>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</address>
       </div></section>`;
     $('form', main).addEventListener('submit', e => e.preventDefault());
-    return { titre: MENU.contact.texte, menu: 'contact' };
+    return { titre: nomC, menu: 'contact' };
   }
   /* ---------- l'espace pro : trois portes vers les espaces réservés (equipe/, pro/, admin/, publiés à côté) ---------- */
   function espacePro() {
@@ -4121,7 +4128,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       const passees = Object.entries(D.saisons || {}).flatMap(([k, SA]) => { let n = 0; return (SA.spectacles || []).flatMap(g => (g.dates || []).map(d => {
         const i = n++; if (g.slug !== slug) return null; const p = repereLigne(d, k, i, slug, s.titre);
         // une date passée mène à sa saison (la saison en cours se lit dans « Je viens voir un spectacle »)
-        return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/agenda/${k}` }) : null; })); }).filter(Boolean);
+        return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/saisons/${k}` }) : null; })); }).filter(Boolean);
       const pts = [...passees, ...D.dates.filter(d => d.slug === slug).map(repereProchaine)];
       // un repère de date réservable la choisit dans la bande (et y mène) ; les autres mènent à leur ligne
       const parFrise = new Map(RS && rsSp ? RS.dates(slug).map(d => [cleProchaine(d), RS.cle(d)]) : []);
@@ -4204,13 +4211,15 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   /* ---------- l'en-tête et le pied de page, refaits seulement quand D change ---------- */
   let cadreFait = '';
   function cadre() {
-    const lien = (e, long) => `<a href="${e.href}" data-e="${e.cle}" style="--ec:${e.couleur};--ev:${e.couleurVive}"><span class="pt" aria-hidden="true"></span>${long ? `<span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span>` : `<span>${esc(e.court)}</span>`}</a>`;
-    const co = S.coordonnees;
+    // le menu par les saisons (règle 21, D.site.menu) est toute la navigation première : dans l'en-tête, et au téléphone dans
+    // la barre du bas (son libellé court), à la couleur de la saison ; les trois parcours ne restent que sur la page d'un
+    // spectacle (ses onglets). Plus de menu second : « Contact » est dans le pied de page
+    const lien = (x, long) => `<a href="${x.href}" data-id="${x.id || x.cle}" style="--ec:var(--saison);--ev:var(--saison-vive)"><span class="pt" aria-hidden="true"></span>${long ? `<span class="long">${esc(x.texte)}</span><span class="court">${esc(x.court || x.texte)}</span>` : `<span>${esc(x.court || x.texte)}</span>`}</a>`;
+    const co = S.coordonnees, M = (S.menu || []).filter(x => x && x.href);
     const parts = {
-      entrees: S.entrees.map(e => lien(e, true)).join(''),
-      barre: S.entrees.map(e => lien(e, false)).join(''),
-      // (le menu de D a désormais « Espace pro » : on ne l'ajoute que s'il n'y est pas)
-      second: S.menu.map(x => `<a href="${x.href}" data-id="${x.id}">${esc(x.texte)}</a>`).join('') + (S.espacePro && !S.menu.some(x => x.href === '#/espace-pro') ? `<a href="#/espace-pro" data-id="espace-pro">${esc(S.espacePro.titre)}</a>` : ''),
+      entrees: M.map(x => lien(x, true)).join(''),
+      barre: M.map(x => lien(x, false)).join(''),
+      second: '',
       pied: `<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
         <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
         <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
@@ -4232,6 +4241,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     $('#entrees').innerHTML = parts.entrees;
     $('#barre').innerHTML = parts.barre;
     $('#second').innerHTML = parts.second;
+    $('#top').classList.toggle('sans-second', !parts.second);   // (sans menu second, ni lui ni le bouton « Menu »)
     $('#pied').innerHTML = parts.pied;
     ajuste();
   }
@@ -4242,11 +4252,12 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     if (matchMedia('(max-width: 759px)').matches) return;
     for (const c of ['serre', 'replie', 'compact']) { if (inn.scrollWidth <= inn.clientWidth + 1) break; top.classList.add(c); }
   }
+  // l'élément du menu de la vue porte aria-current="page" ; celui dont elle dépend est mis en évidence (« true ») : les
+  // spectacles pour la page d'un spectacle, l'espace pro pour ses deux pages (menuLu)
   function marquerNav(r) {
-    $$('#entrees a, #barre a').forEach(a => { a.removeAttribute('aria-current');
-      if (r.entree && a.dataset.e === r.entree) a.setAttribute('aria-current', 'page'); else if (r.lecture && a.dataset.e === r.lecture) a.setAttribute('aria-current', 'true'); });
-    // (menuLu : l'élément du menu dont la vue dépend, mis en évidence sans être la page : une sous-page de l'espace pro)
-    $$('#second a').forEach(a => { if (r.menu && a.dataset.id === r.menu) a.setAttribute('aria-current', 'page'); else if (r.menuLu && a.dataset.id === r.menuLu) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+    const lu = r.menuLu || (vue === 'spectacle' ? 'spectacles' : null);
+    $$('#entrees a, #barre a, #second a').forEach(a => { a.removeAttribute('aria-current');
+      if (r.menu && a.dataset.id === r.menu) a.setAttribute('aria-current', 'page'); else if (lu && a.dataset.id === lu) a.setAttribute('aria-current', 'true'); });
   }
 
   /* ---------- la navigation : les adresses, les redirections, la mémoire de l'entrée ---------- */
@@ -4417,12 +4428,14 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
   addEventListener('hashchange', route);
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);
-  // l'ouverture sur le papier du jour, ou dans la nuit de la salle (la magenta plus vive)
-  const ouvertureNuit = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit';
+  // l'ouverture de la 04, aux couleurs de la saison : le logo blanc sur le dégradé de la saison (calculé depuis
+  // D.site.couleurSaison, plus profond la nuit) ; au geste, il ne grossit plus : il devient la pieuvre du premier écran (il
+  // glisse à sa place, Scene.cible), puis ses bras vont chercher les spectacles (Scene.eveiller). Sans mouvement : un fondu
+  const thO = themeSaison(), gO = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit' ? thO.nuit : thO.jour;
   INTRO.ouvrir({
-    degrade: ouvertureNuit ? [[0, '#2a1b26'], [.62, '#18111a'], [1, '#0d090c']] : [[0, '#fbf8f3'], [.62, '#f3ece2'], [1, '#e2d7c6']],
-    encre: ouvertureNuit ? '#e0559a' : '#bc3e80', image: fondIntro(), classe: 'intro-synthese',
-    apres: () => { if (vue === 'accueil') pousser($('.une-carte svg')); },   // révélé : les bras poussent depuis Rouen
+    degrade: [[0, gO[0]], [.55, gO[1]], [1, gO[2]]], encre: '#ffffff', classe: 'intro-synthese',
+    sortie: motionOK() ? undefined : 'fondu', devient: () => Scene.cible(),
+    apres: () => Scene.eveiller(),
   });
   route();
 })();

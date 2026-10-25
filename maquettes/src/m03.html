@@ -974,6 +974,12 @@ main { display: block; min-height: 100svh; }   /* sa place est gardée pendant l
 /* l'état qu'un geste allume se montre à l'image même, sans transition (il ne s'efface en douceur qu'en partant) : le geste se voit
    tout de suite, même quand la page nouvelle se compose juste après ; le filet de l'élément du menu, lui, se trace toujours */
 .menu-p a[aria-current], .menu-p a[aria-current] .m-ic, .u-onglets a[aria-current], .sai[open] > summary, .chip[aria-pressed="true"] { transition-duration: 0s; }
+/* au doigt (sans survol) : les couleurs et les fonds changent à l'instant même, seules les animations composées (transform, opacity)
+   glissent ; rien ne retient le fil principal quand la page nouvelle se compose juste après le geste */
+@media (hover: none) {
+  :is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .lien-v, .suite, .t-link, .menu-p a, .u-onglets a, .choix a, .sai > summary, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place), .menu-p a .m-ic { transition-property: transform, opacity; }
+  :is(.menu-p a, .u-onglets a, .sai > summary, .t-link, .suite, .lien-v).mv-presse { transition-duration: 0s; }
+}
 /* une ligne vers laquelle mène une frise : elle se marque d'un aplat, qui s'efface */
 @keyframes m3-vise { 0%, 45% { background-color: color-mix(in srgb, var(--c, var(--ink)) 16%, transparent); } }
 .dt.est-vise, .dcard.est-vise { animation: m3-vise 1.3s var(--c3); }
