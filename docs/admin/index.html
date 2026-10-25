@@ -494,6 +494,10 @@ const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', 
   crescite_personnes: 'Fiche d’une personne', crescite_personnes_privees: 'Coordonnées d’une personne', crescite_personnes_suivi: 'Notes sur une personne',
   crescite_distributions: 'Distribution', crescite_equipes: 'Équipe d’une date', crescite_documents: 'Document', crescite_feuilles: 'Feuille de route',
   crescite_diffusion_prospects: 'Opportunité de diffusion', crescite_notes_frais: 'Note de frais', crescite_materiel: 'Matériel de tournée', crescite_devis_demandes: 'Demande de devis' };
+// les chiffres des dates (la jauge, les spectateurs, les heures d'ateliers : supabase/migrations/20261029_crescite_chiffres.sql),
+// jamais publiés : lus et écoutés à part, et seulement quand la base les a (E.chiffresInstalles)
+const TABLES_CHIFFRES = { crescite_dates_chiffres: ['chiffres', 'date_id'] };
+NOMS_TABLES.crescite_dates_chiffres = 'Chiffres d’une date';
 
 // ===================================================================================================== outils
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -674,6 +678,7 @@ async function tout(table, ordre) {
 }
 async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
+  const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
   const facultative = table => tout(table).then(x => { ideale = true; return x; }, () => []);
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
@@ -685,6 +690,8 @@ async function chargerTout() {
   Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad,
     prospects: pr, frais: fr, materiel: mt, devis: dv, ideale });
   await equipe;
+  const c = await chiffres;
+  E.chiffres = c || []; E.chiffresInstalles = !!c;
 }
 // le journal se lit par pages de 300, des plus récentes aux plus anciennes : relire les plus récentes garde les pages plus
 // anciennes déjà lues (journalPlusAncien) ; E.journalFin : il n'y a rien de plus ancien
@@ -720,9 +727,14 @@ function ecouter() {
     Object.keys(TABLES_IDEALE).forEach(t => ci.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
     ci.subscribe();
   }
+  if (E.chiffresInstalles) {
+    const cc = sb.channel('crescite-admin-chiffres');
+    Object.keys(TABLES_CHIFFRES).forEach(t => cc.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
+    cc.subscribe();
+  }
 }
 function changement(t, p) {
-  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t];
+  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t];
   // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
   const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
   const i = coll.findIndex(x => cles.every(c => x[c] === ligne[c]));
@@ -1305,13 +1317,32 @@ function listeDates(zone, actif) {
 function nouvelleDate() {
   const sp = session.dates?.spectacle ? +session.dates.spectacle : (E.spectacles.find(s => s.page) || {}).id;
   return { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true, nature: 'representations',
-    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', fin: '', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [] };
+    intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', fin: '', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [],
+    chiffres: Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])) };
 }
 function dateVersForm(d) {
   const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
   const su = E.suivis.find(x => x.date_id === d.id) || {};
   return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
-    equipe: ecartsDate(d.id) };
+    equipe: ecartsDate(d.id), chiffres: chiffresVersForm(d.id) };
+}
+// les chiffres d'une date (le dixième script) : la jauge, les spectateurs, les heures d'ateliers ; dans le formulaire, des
+// nombres ou '' (vide)
+const CHIFFRES = [['jauge', 'Jauge (places)', 1, 100000], ['spectateurs', 'Spectateurs', 1, 1000000], ['heures_ateliers', 'Heures d’ateliers', .5, 100000]];
+const chiffresDe = id => (E.chiffres || []).find(x => x.date_id === id) || {};
+const chiffresVersForm = id => { const c = chiffresDe(id); return Object.fromEntries(CHIFFRES.map(([k]) => [k, c[k] == null ? '' : Number(c[k])])); };
+const nombreFr = n => Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 });   // « 1 456 », « 12,5 »
+// les écrire (l'administration seule) : rien quand ils n'ont pas changé, la ligne effacée quand ils sont tous vides
+async function ecrireChiffres(id, F) {
+  if (!E.chiffresInstalles || !F.chiffres) return;
+  const avant = chiffresVersForm(id), ligne = { date_id: id };
+  CHIFFRES.forEach(([k]) => { const v = F.chiffres[k]; ligne[k] = v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v); });
+  if (CHIFFRES.every(([k]) => (avant[k] === '' ? null : avant[k]) === ligne[k])) return;
+  const vide = CHIFFRES.every(([k]) => ligne[k] == null);
+  const { error } = vide ? await sb.from('crescite_dates_chiffres').delete().eq('date_id', id)
+    : await sb.from('crescite_dates_chiffres').upsert(ligne, { onConflict: 'date_id' });
+  if (error) { error.message = `La date est enregistrée, mais pas ses chiffres : ${error.message}`; throw error; }
+  E.chiffres = (E.chiffres || []).filter(x => x.date_id !== id).concat(vide ? [] : [{ ...chiffresDe(id), ...ligne }]);
 }
 // la nature d'une date (le troisième script SQL) : seules les représentations vont sur le site
 const NATURES_DATE = [['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidence'], ['autre', 'Autre']];
@@ -1358,6 +1389,8 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
+    ${E.chiffresInstalles ? `<div class="bloc"><h3>Les chiffres <span class="aide" style="font-weight:400">— jamais publiés ; l’équipe les lit</span></h3><div class="rangee">
+      ${CHIFFRES.map(([k, l, pas, max]) => `<div class="champ"><label for="c-${k}">${l}</label><input type="number" id="c-${k}" data-chiffre="${k}" min="0" max="${max}" step="${pas}" inputmode="${pas < 1 ? 'decimal' : 'numeric'}" value="${esc(F.chiffres?.[k] ?? '')}"></div>`).join('')}</div></div>` : ''}
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
   suivrePied($('.pied-ed', zone));
   const etatPublic = () => { const ps = new Set(F.representations.filter(r => r.jour).map(r => r.public)); return ps.size > 1 ? 'mixte' : ps.size ? [...ps][0] : F.public; };
@@ -1423,6 +1456,7 @@ function editeurDate(id, depart = null) {
     else if (t.id === 'd-nb') F.nb_representations = t.value ? +t.value : null;
     else if (t.dataset.det !== undefined) F.details[+t.dataset.det].texte = propre(t.innerHTML);
     else if (t.dataset.detLien !== undefined) F.details[+t.dataset.detLien].lien = t.value;
+    else if (t.dataset.chiffre) F.chiffres[t.dataset.chiffre] = t.value === '' ? '' : Number(t.value);
     else if (t.id === 's-org') F.suivi.organisateur = t.value;
     else if (t.id === 's-contact') F.suivi.contact = t.value;
     else if (t.id === 's-notes') F.suivi.notes = t.value;
@@ -1513,6 +1547,7 @@ const manqueDate = F => !F.spectacle_id ? 'Choisissez le spectacle.'
 async function ecrireDate(F, d0, { libre } = {}) {
   const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: chargeDate(F, d0, libre) });
   if (error) throw error;
+  await ecrireChiffres(id, F);
   const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
   return { id, equipeOk };
@@ -1545,16 +1580,19 @@ async function rechargerDate(id) {
 }
 // supprimer une date (ses séances, son suivi, son équipe et sa feuille partent avec elle) → de quoi la rétablir
 async function effacerDate(d) {
-  const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)), equipe: copieEquipeDate(d.id) };
+  const copie = { date: clone(d), reps: clone(E.reps.filter(r => r.date_id === d.id)), suivi: clone(E.suivis.find(x => x.date_id === d.id)), equipe: copieEquipeDate(d.id),
+    chiffres: clone((E.chiffres || []).find(x => x.date_id === d.id)) };
   const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
   if (error) throw error;
   E.dates = E.dates.filter(x => x.id !== d.id); E.reps = E.reps.filter(x => x.date_id !== d.id); E.suivis = E.suivis.filter(x => x.date_id !== d.id);
   E.equipes = E.equipes.filter(x => x.date_id !== d.id); E.feuilles = E.feuilles.filter(x => x.date_id !== d.id);
+  E.chiffres = (E.chiffres || []).filter(x => x.date_id !== d.id);
   return async () => {
     const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
     let r = await sb.from('crescite_dates').insert(sans(copie.date));
     if (!r.error && copie.reps.length) r = await sb.from('crescite_representations').insert(copie.reps.map(sans));
     if (!r.error && copie.suivi) r = await sb.from('crescite_dates_suivi').insert(sans(copie.suivi));
+    if (!r.error && copie.chiffres) { r = await sb.from('crescite_dates_chiffres').insert(sans(copie.chiffres)); if (!r.error) E.chiffres.push(copie.chiffres); }
     if (!r.error) { const e2 = await retablirEquipeDate(copie.equipe); if (e2) r = { error: e2 }; }
     if (r.error) throw r.error;
     await rechargerDate(copie.date.id);
@@ -1592,7 +1630,8 @@ async function supprimerDate(d) {
    Au clavier : flèches, Entrée ou F2 (ou taper directement) pour écrire, Échap, Tab, Maj+flèches pour choisir des
    cases, Ctrl+C / Ctrl+V comme dans un tableur, Suppr pour vider, Ctrl+Z pour annuler, Ctrl+Suppr pour supprimer la
    séance (à la souris : le bouton « Supprimer la séance du … », qui dit laquelle). Le tableur ne lit ni n'écrit rien
-   d'autre que les dates, leurs séances, leur suivi (organisateur, contact, contrat, notes) et leur équipe. */
+   d'autre que les dates, leurs séances, leur suivi (organisateur, contact, contrat, notes), leurs chiffres (jauge,
+   spectateurs, heures d'ateliers : quand la base a le dixième script) et leur équipe. */
 const TABLEUR = (() => {
   const T = { f: null, cols: [], lignes: [], actif: { l: 0, c: 0 }, ancre: null, edition: null, pop: null, pile: [],
     file: Promise.resolve(), recents: new Map(), textes: null, aRafraichir: false, attente: 0 };
@@ -1729,6 +1768,12 @@ const TABLEUR = (() => {
     { k: 'contrat', l: 'Contrat', niveau: 'date', type: 'choix', choix: () => [['', '—'], ...CONTRATS], val: x => suiviDe(x.d).contrat || '', texte: x => libelleDe(CONTRATS, suiviDe(x.d).contrat || ''),
       lire: t => (String(t ?? '').trim() ? lireChoix(CONTRATS)(t) : ''), vider: true, ecrire: (F, x, v) => { F.suivi.contrat = v; } },
     { k: 'notes', l: 'Notes', niveau: 'date', type: 'long', val: x => suiviDe(x.d).notes || '', texte: x => suiviDe(x.d).notes || '', lire: t => String(t ?? '').trim(), vider: true, ecrire: (F, x, v) => { F.suivi.notes = v; } },
+    // les chiffres (le dixième script) : jamais publiés ; des nombres (« 12,5 » s'écrit aussi), vides quand on ne sait pas
+    ...CHIFFRES.map(([k, l, pas, max]) => ({ k: `chiffre-${k}`, l: l.replace(' (places)', ''), niveau: 'date', type: 'texte', nombre: true, si: () => !!E.chiffresInstalles,
+      val: x => chiffresVersForm(x.d.id)[k], texte: x => { const v = chiffresVersForm(x.d.id)[k]; return v === '' ? '' : nombreFr(v); },
+      lire: t => { const n = String(t ?? '').trim().replace(/\s/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n);
+        return Number.isFinite(v) && v >= 0 && v <= max ? (pas < 1 ? Math.round(v * 2) / 2 : Math.round(v)) : undefined; },
+      vider: true, ecrire: (F, x, v) => { F.chiffres = F.chiffres || {}; F.chiffres[k] = v; } })),
     { k: 'annulee', l: 'Séance annulée', niveau: 'seance', type: 'case', val: x => !!x.r?.annulee, texte: x => (x.r?.annulee ? 'annulée' : ''),
       html: x => (x.r?.annulee ? '<span class="badge annulee">annulée</span>' : ''), lire: t => /^(oui|x|vrai|true|1|annulee?)$/i.test(norm(t).trim()) || (String(t ?? '').trim() ? undefined : false),
       ecrire: (F, x, v) => { repDe(F, x).annulee = !!v; } },
@@ -2416,6 +2461,7 @@ const TABLEUR = (() => {
     return { entetes: T.cols.map(c => c.l), lignes: T.lignes.map(x => T.cols.map(c => {
       if (c.type === 'jour') return { t: 'd', v: c.exp(x).jour };
       if (c.type === 'heure') { const h = c.exp(x).heure; return h ? { t: 'h', v: h } : { t: 's', v: '' }; }
+      if (c.nombre) { const v = c.val(x); return v === '' || v == null ? { t: 's', v: '' } : { t: 'n', v: Number(v) }; }
       return { t: 's', v: c.texte(x) };
     })) };
   }
@@ -2431,7 +2477,7 @@ const TABLEUR = (() => {
       const ok = document.execCommand('copy'); z.remove(); return ok;
     }
   }
-  const texteCase = (c, sep) => (c.t === 'd' ? jjmmaaaa(c.v) : c.t === 'h' ? c.v : String(c.v ?? '').replace(/\r?\n/g, sep === '\t' ? ' ' : '\n'));
+  const texteCase = (c, sep) => (c.t === 'd' ? jjmmaaaa(c.v) : c.t === 'h' ? c.v : c.t === 'n' ? String(c.v).replace('.', ',') : String(c.v ?? '').replace(/\r?\n/g, sep === '\t' ? ' ' : '\n'));
   async function exporter(genre) {
     if (!T.lignes.length) return etat('Rien à exporter : aucune séance dans la vue.', 'erreur');
     const t = tableau(), n = pl(t.lignes.length, 'ligne');
@@ -2462,6 +2508,7 @@ const TABLEUR = (() => {
       const ref = `${colLettre(j)}${r}`;
       if (c.t === 'd' && c.v) return `<c r="${ref}" s="2"><v>${jourExcel(c.v)}</v></c>`;
       if (c.t === 'h' && c.v) return `<c r="${ref}" s="3"><v>${heureExcel(c.v)}</v></c>`;
+      if (c.t === 'n') return `<c r="${ref}"><v>${Number(c.v)}</v></c>`;
       return c.v === '' || c.v == null ? '' : `<c r="${ref}" t="inlineStr"${c.gras ? ' s="1"' : ''}><is><t xml:space="preserve">${xmlEsc(c.v)}</t></is></c>`;
     };
     const larg = entetes.map((e, j) => Math.min(60, Math.max(e.length + 2, ...lignes.slice(0, 400).map(l => (l[j].t === 'd' ? 11 : l[j].t === 'h' ? 6 : String(l[j].v || '').length) + 2))));
@@ -3435,7 +3482,7 @@ function resume(j) {
   if (j.table_nom === 'crescite_seances') return `${jourCourt(x.jour)} · ${x.classe || ''}`;
   if (j.table_nom === 'crescite_textes') return x.cle;
   if (j.table_nom === 'crescite_lieux_suivi') return lieuTexte(lieu(x.lieu_id)) || j.ligne;
-  if (j.table_nom === 'crescite_dates_suivi') { const d = E.dates.find(y => y.id === x.date_id); return d ? `${spectacle(d.spectacle_id)?.titre || 'Date'} · ${jourCourt(d.debut)}` : j.ligne; }
+  if (j.table_nom === 'crescite_dates_suivi' || j.table_nom === 'crescite_dates_chiffres') { const d = E.dates.find(y => y.id === x.date_id); return d ? `${spectacle(d.spectacle_id)?.titre || 'Date'} · ${jourCourt(d.debut)}` : j.ligne; }
   return j.ligne;
 }
 const champsChanges = j => j.avant && j.apres ? Object.keys(j.apres).filter(k => !['modifie_le', 'modifie_par'].includes(k) && JSON.stringify(j.avant[k]) !== JSON.stringify(j.apres[k])) : [];
@@ -3443,7 +3490,7 @@ const champsChanges = j => j.avant && j.apres ? Object.keys(j.apres).filter(k =>
 // (aujourd'hui, 7 ou 30 jours, ou deux dates), et des mots cherchés dans ce que dit chaque ligne (son résumé, les champs
 // changés et leurs valeurs avant et après, ce qui est allé dans les fiches, l'auteur). Les filtres restent le temps de la
 // session. « Lire plus ancien » ajoute 300 modifications ; quand une période remonte plus loin que ce qui est lu, le dit.
-const RUBRIQUES_JOURNAL = [['representations', 'Représentations', ['crescite_dates', 'crescite_representations', 'crescite_dates_suivi', 'crescite_equipes']],
+const RUBRIQUES_JOURNAL = [['representations', 'Représentations', ['crescite_dates', 'crescite_representations', 'crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes']],
   ['feuilles', 'Feuilles de route', ['crescite_feuilles']], ['spectacles', 'Spectacles', ['crescite_spectacles', 'crescite_distributions', 'crescite_documents']],
   ['equipe', 'Équipe', ['crescite_personnes']], ['ateliers', 'Ateliers', ['crescite_ateliers', 'crescite_seances']], ['lieux', 'Lieux', ['crescite_lieux', 'crescite_lieux_suivi']],
   ['textes', 'Textes du site', ['crescite_textes']]];
@@ -3541,7 +3588,7 @@ async function vueJournal() {
       if (!confirm('Rétablir cette ligne supprimée ?')) return;
       r = await sb.from(j.table_nom).insert(sans(j.avant));
       if (!r.error && j.table_nom === 'crescite_dates') {
-        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi', 'crescite_equipes', 'crescite_feuilles'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
+        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes', 'crescite_feuilles'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
         for (const x of liees) { const r2 = await sb.from(x.table_nom).insert(sans(x.avant)); if (r2.error) { r = r2; break; } }
       }
     }
