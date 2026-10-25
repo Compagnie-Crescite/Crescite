@@ -2937,7 +2937,7 @@
     $('.btn-choix.actif', fond).focus();
     const zone = $('#msg-retard', fond);
     $('#btn-envoyer-retard', fond).addEventListener('click', async e => {
-      const prec = txt($('#retard-texte', fond).value);
+      const prec = txt($('#retard-texte', fond).value).replace(/\s+/g, ' ');
       const msg = `${motif}${prec ? ` : ${prec}` : ''}`.slice(0, MAX_RETARD);
       dire(zone, '');
       const { data, error } = await occupe(e.currentTarget, 'Envoi…', () => sb.rpc('crescite_signaler', { d: d.id, texte_: msg }));
@@ -3240,7 +3240,9 @@
         // dans son dossier, sous un nom neuf ; déjà déposé (la note avait échoué) : il resert
         const chemin = envoye && envoye.fichier === fichier ? envoye.chemin : `${E.moi}/${nomJustificatif(fichier, type)}`;
         if (!envoye || envoye.chemin !== chemin) {
-          const { error: errEnvoi } = await sb.storage.from(SEAU_FRAIS).upload(chemin, fichier, { contentType: type, cacheControl: '3600' });
+          // le type part avec le fichier (un PDF sans type, reconnu à son extension, le reçoit ici)
+          const corps = fichier.type === type ? fichier : fichier.slice(0, fichier.size, type);
+          const { error: errEnvoi } = await sb.storage.from(SEAU_FRAIS).upload(chemin, corps, { contentType: type, cacheControl: '3600' });
           if (errEnvoi) return sale(`Le justificatif n’a pas pu être envoyé : ${motsErreur(errEnvoi)}. Rien n’est enregistré.`);
           envoye = { fichier, chemin };
         }

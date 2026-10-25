@@ -15,19 +15,22 @@
   --ink-2: #57524a;
   --rule: #dcd6cb;
   --rule-2: #bfb7a8;
-  --mag: #bc3e80;
-  --mag-ink: #a3306c;
+  /* l'accent de l'interface : la couleur de la saison (règle 22, D.site.couleurSaison), posée par le script (couleurs()) ;
+     celle-ci en attendant. --acc-sur : le texte posé sur l'accent ; --acc-vive : l'accent sur un fond sombre (le pied) */
+  --acc: #a3306c;
+  --acc-sur: #ffffff;
+  --acc-vive: #f07ab6;
   --foot-fond: #141414;
   --foot-ink: #efebe3;
   --foot-muted: #c9c3b8;
   --foot-rule: #3a3733;
   --foot-rule-2: #5c5852;
-  --foot-focus: #f07ab6;
+  --foot-focus: var(--acc-vive);
   --shadow-carton: rgba(0, 0, 0, .45);
   --shadow-barre: rgba(20, 20, 20, .5);
   --shadow-menu: rgba(20, 20, 20, .16);
   --shadow-bas: rgba(20, 20, 20, .4);
-  --intro-marge: rgba(188, 62, 128, .38);
+  --intro-marge: color-mix(in srgb, var(--acc) 38%, transparent);
   --intro-ligne: rgba(20, 20, 20, .075);
   --sg: "Space Grotesk", "Helvetica Neue", Arial, sans-serif;
   --at: "Public Sans", "Helvetica Neue", Arial, sans-serif;
@@ -45,18 +48,18 @@
   --k-halo: var(--paper);
   --k-hub: var(--ink);
   --k-passe: var(--ink-2);
-  --k-focus: var(--mag);
+  --k-focus: var(--acc);
   /* l'édition sur place (EDITION) : la barre, la connexion et le panneau des dates sur le papier de l'agenda */
   --ed-fond: #fbf9f5;
   --ed-encre: #141414;
-  --ed-accent: #a3306c;
-  --ed-sur-accent: #ffffff;
+  --ed-accent: var(--acc);
+  --ed-sur-accent: var(--acc-sur);
   --ed-police: "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --ed-rayon: 8px;
   --ed-trait: #bfb7a8;
-  /* les tentacules (TENTACULES) : la pieuvre de l'en-tête guide, à l'encre du programme sur le papier réglé ; les empreintes de ventouse sont magenta */
+  /* les tentacules (TENTACULES) : la pieuvre de l'en-tête guide, à l'encre du programme sur le papier réglé ; les empreintes de ventouse ont la couleur de la saison */
   --tt-encre: #141414;
-  --tt-accent: #a3306c;
+  --tt-accent: var(--acc);
   --tt-neutre: #8a847a;
   --tt-epaisseur: 2.4;
   --sp-aucun: #8a847a;    /* un spectacle hors du répertoire, sur le papier */
@@ -66,20 +69,20 @@
 }
 /* ———— la nuit (règle 19, THEME) : la saison imprimée en négatif ————
    La revue retournée, comme une affiche suisse tirée en blanc sur noir : un papier presque noir, chaud ; l'encre devient
-   un blanc cassé, les filets des gris chauds, la magenta s'éclaire pour le texte. Les couleurs des spectacles sur le papier
+   un blanc cassé, les filets des gris chauds, l'accent prend la couleur vive de la saison. Les couleurs des spectacles sur le papier
    prennent leur couleur de scène (--sp-*, couleurs()), les univers clairs passent dans leur propre nuit (--un-*,
-   univers()) ; les univers sombres restent eux-mêmes. AA : encre 16:1, encre-2 7,6:1, magenta-encre 7:1 sur le papier. */
+   univers()) ; les univers sombres restent eux-mêmes. AA : encre 16:1, encre-2 7,6:1, l'accent au moins 4,5:1 sur le papier. */
 html[data-theme="jour"] { color-scheme: light; }
 html[data-theme="nuit"] {
   color-scheme: dark;
   --paper: #131211; --paper-2: #1f1d1a; --field: #1a1816; --paper-blanc: #ffffff;
   --ink: #f1ede5; --ink-2: #b4ada2; --rule: #34312d; --rule-2: #5b564f;
-  --mag: #bc3e80; --mag-ink: #f07ab6;
+  --acc: #f07ab6; --acc-sur: #131211;
   --foot-fond: #0b0a09; --foot-rule: #2c2926; --foot-rule-2: #4e4a45;
   --shadow-carton: rgba(0, 0, 0, .7); --shadow-barre: rgba(0, 0, 0, .7); --shadow-menu: rgba(0, 0, 0, .55); --shadow-bas: rgba(0, 0, 0, .6);
-  --intro-marge: rgba(240, 122, 182, .34); --intro-ligne: rgba(241, 237, 229, .06);
-  --ed-fond: #1a1816; --ed-encre: #f1ede5; --ed-accent: #f07ab6; --ed-sur-accent: #131211; --ed-trait: #5b564f;
-  --tt-encre: #f1ede5; --tt-accent: #f07ab6; --tt-neutre: #8f887d;
+  --intro-ligne: rgba(241, 237, 229, .06);
+  --ed-fond: #1a1816; --ed-encre: #f1ede5; --ed-trait: #5b564f;
+  --tt-encre: #f1ede5; --tt-neutre: #8f887d;
   --sp-aucun: #9a9387;
   --lune: #f6d58b;
 }
@@ -101,7 +104,7 @@ button, input, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 svg { flex: none; }
 table { border-collapse: collapse; }
-:focus-visible { outline: 3px solid var(--mag); outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
 [tabindex="-1"]:focus { outline: none; }
 [hidden] { display: none !important; }
 .sr { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
@@ -114,31 +117,34 @@ table { border-collapse: collapse; }
 .statut { display: inline-block; padding: 3px 11px 4px; border: 1px solid var(--ink); border-radius: 999px; background: var(--paper); color: var(--ink); font: 700 .875rem/1.3 var(--at); }
 .fl { display: inline-block; vertical-align: -3px; }
 
-/* ---------- L'en-tête : la marque et le menu second, puis les trois entrées, qui restent en haut ---------- */
+/* ---------- L'en-tête : la marque, puis le menu (règle 21 : les saisons, les spectacles, la compagnie, l'espace pro), qui reste en haut ----------
+   Quatre colonnes égales sur la grille, chacune un pictogramme au trait et son nom ; un filet d'encre au-dessus, que l'élément
+   courant remplace par un filet de la couleur de la saison (règle 22), tracé depuis la gauche. Au téléphone, le menu devient une barre fixe en bas d'écran
+   (le nom court de D). */
 .site-head { position: sticky; top: calc(-1 * var(--h1)); z-index: 30; background: var(--paper); border-top: 3px solid var(--ink); }
 .tete-1 { height: var(--h1); border-bottom: 1px solid var(--ink); }
 .tete-1 .wrap { display: flex; align-items: center; height: 100%; }
 .brand { display: inline-flex; align-items: center; gap: 12px; flex: none; text-decoration: none; font: 700 1.5625rem/1 var(--sg); letter-spacing: -.035em; }
 .brand-mark { width: 38px; height: 38px; }
 .brand-mark svg { display: block; width: 100%; height: 100%; }
-.entrees { border-bottom: 3px double var(--ink); background: var(--paper); }
-.entrees ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); height: var(--h2); }
-.entrees li { display: flex; min-width: 0; }
-.entrees li + li { border-left: 1px solid var(--ink); }
-.entrees a { position: relative; flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 18px; text-decoration: none; color: var(--ink); font: 500 1.125rem/1.15 var(--sg); letter-spacing: -.015em; transition: background-color .2s, color .2s; }
-/* chaque entrée porte sa couleur : un trait fin, plein quand on y est */
-.entrees a::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 6px; background: var(--e); transform: scaleY(.34); transform-origin: top; transition: transform .2s; }
-.entrees a:hover { background: color-mix(in srgb, var(--e) 6%, var(--paper)); }
-.entrees a:hover::before { transform: scaleY(.67); }
-.entrees a[aria-current] { font-weight: 600; background: color-mix(in srgb, var(--e) 9%, var(--paper)); }
-.entrees a[aria-current]::before { transform: none; }
+.menu-p { border-bottom: 3px double var(--ink); background: var(--paper); }
+.menu-p ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); height: var(--h2); }
+.menu-p li { display: flex; min-width: 0; }
+.menu-p li + li { border-left: 1px solid var(--ink); }
+.menu-p a { position: relative; flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 18px; text-decoration: none; color: var(--ink); font: 500 1.125rem/1.15 var(--sg); letter-spacing: -.015em; transition: background-color .2s, color .2s; }
+.menu-p a::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 6px; background: var(--ink); transform: scaleY(.34); transform-origin: top; transition: transform .2s; }
+.menu-p a:hover { background: color-mix(in srgb, var(--ink) 5%, var(--paper)); }
+.menu-p a:hover::before { transform: scaleY(.67); }
+.menu-p a[aria-current] { font-weight: 600; background: color-mix(in srgb, var(--acc) 8%, var(--paper)); }
+.m-ic { flex: none; width: 22px; height: 22px; color: var(--ink-2); transition: color .2s; }
+.menu-p a:hover .m-ic { color: var(--ink); }
+.menu-p a[aria-current] .m-ic { color: var(--acc); }
+.m-court { display: none; }
+.m-fl { margin-left: auto; color: var(--acc); opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; }
+.menu-p a:hover .m-fl, .menu-p a[aria-current] .m-fl { opacity: 1; transform: none; }
+.menu-p a > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .e-pt { flex: none; width: 11px; height: 11px; border-radius: 3px; background: var(--e); }
-.e-court { display: none; }
-.e-fl { margin-left: auto; color: var(--e); opacity: 0; transform: translateX(-4px); transition: opacity .2s, transform .2s; }
-.entrees a:hover .e-fl, .entrees a[aria-current] .e-fl { opacity: 1; transform: none; }
-.entrees a > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.menu2 { position: absolute; top: 0; right: calc(max(var(--gut), calc((100% - 1320px) / 2)) + 79px); height: var(--h1); display: flex; align-items: center; }
-/* au bout de la rangée de la marque : le jour et la nuit (règle 19), puis, au téléphone, le bouton du menu */
+/* au bout de la rangée de la marque : le jour et la nuit (règle 19) */
 .tete-d { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .tete-d::before { content: ""; width: 1px; height: 26px; background: var(--rule-2); }
 .theme-m03 { flex: none; display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--rule-2); border-radius: 50%;
@@ -147,11 +153,6 @@ table { border-collapse: collapse; }
 .theme-m03 .theme-icone { width: 22px; height: 22px; }
 html[data-theme="nuit"] .theme-m03 { color: var(--lune); }   /* la lune, d'un jaune de lampe : 12:1 sur le papier de nuit */
 html[data-theme="nuit"] .theme-m03:hover { border-color: var(--lune); }
-.menu2 ul { display: flex; gap: 24px; }
-.menu2 a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 0 4px; text-decoration: none; font-weight: 600; font-size: .9375rem; color: var(--ink-2); border-bottom: 2px solid transparent; }
-.menu2 a:hover { color: var(--ink); border-bottom-color: var(--rule-2); }
-.menu2 a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }
-.menu-btn { display: none; flex: none; align-items: center; gap: 9px; height: 44px; padding: 0 16px 0 13px; border: 1px solid var(--ink); border-radius: 999px; background: none; font-weight: 600; font-size: 1rem; }
 
 /* ---------- Tête de page ---------- */
 .hero { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); row-gap: 22px; align-items: end; padding-top: 44px; padding-bottom: 28px; }
@@ -164,20 +165,21 @@ html[data-theme="nuit"] .theme-m03:hover { border-color: var(--lune); }
 .hero-saison { font: 500 2.25rem/1 var(--sg); letter-spacing: -.035em; color: var(--ink-2); white-space: nowrap; }
 .lead { max-width: 62ch; font: 400 1.375rem/1.5 var(--at); }
 .h2s { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; padding-bottom: 14px; border-bottom: 3px double var(--ink); font-size: 2.5rem; letter-spacing: -.035em; }
-.h2s::before { content: ""; flex: none; width: 12px; height: 12px; background: var(--mag); transform: translateY(-.12em); }
+.h2s::before { content: ""; flex: none; width: 12px; height: 12px; background: var(--acc); transform: translateY(-.12em); }
 .h2s.grand { font-size: 3.25rem; letter-spacing: -.045em; }
 .h2s.grand::before { width: 15px; height: 15px; }
 .bloc { margin-top: 88px; }
 .agir { display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 26px; border-radius: 999px; background: var(--ink); color: var(--paper); text-decoration: none; font-weight: 700; font-size: 1.0625rem; transition: background-color .2s; }
-.agir:hover { background: var(--mag-ink); }
+.agir:hover { background: var(--acc); }
 .agir svg { transition: transform .2s; }
 .agir:hover svg { transform: translateX(4px); }
 .suite { display: inline-flex; align-items: center; gap: 10px; margin-top: 22px; font: 500 1.375rem/1.2 var(--sg); letter-spacing: -.015em; text-decoration: none; }
-.suite svg { color: var(--e, var(--mag)); transition: transform .2s; }
+.suite svg { color: var(--e, var(--acc)); transition: transform .2s; }
 .suite:hover span { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
 .suite:hover svg { transform: translateX(4px); }
 
-/* ---------- Accueil : La Une de revue culturelle + le choix entre les trois entrées ---------- */
+/* ---------- Accueil : La Une de revue culturelle (règle 21 : plus de choix entre trois entrées ; ses grandes cases servent
+   désormais aux deux pages de l'espace pro, .choix) ---------- */
 .hero-une { align-items: stretch; padding-top: 32px; row-gap: 24px; }
 .hero-une > .une-edito { grid-column: 1 / 6; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 18px; border-bottom: 3px double var(--ink); }
 .hero-une > .une-edito .saison { font-size: clamp(3rem, 5.2vw, 4.5rem); line-height: .92; }
@@ -197,7 +199,7 @@ html[data-theme="nuit"] .theme-m03:hover { border-color: var(--lune); }
 .une-img img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s; }
 .une-card:hover .une-img img { transform: scale(1.04); }
 .une-card > .motif { position: absolute; left: 42%; bottom: -18px; z-index: 0; width: 136px; height: auto; color: var(--u-titre); opacity: .18; pointer-events: none; }
-.choix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); }
+.choix { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); }
 .choix a { position: relative; display: flex; flex-direction: column; height: 100%; text-decoration: none; background: var(--field); border: 1px solid var(--rule-2); border-top: 6px solid var(--e); transition: border-color .2s, box-shadow .25s; }
 .choix a:hover { border-color: var(--ink); border-top-color: var(--e); }
 .choix-img { position: relative; display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--ink); }
@@ -207,6 +209,8 @@ html[data-theme="nuit"] .theme-m03:hover { border-color: var(--lune); }
 .choix a:hover .choix-img::after, .choix a:focus-visible .choix-img::after { opacity: .2; }
 .choix-t { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex: 1; padding: 18px 20px 20px; font: 500 clamp(1.375rem, 2.1vw, 1.875rem)/1.08 var(--sg); letter-spacing: -.03em; }
 .choix-t svg { flex: none; width: 28px; height: 28px; color: var(--e); transition: transform .2s; }
+.choix-t b { display: block; font: inherit; }
+.choix-t small { display: block; margin-top: 8px; font: 400 1rem/1.4 var(--at); letter-spacing: 0; color: var(--ink-2); }
 .choix a:hover .choix-t svg { transform: translateX(5px); }
 
 /* ---------- L'agenda : filtres, recherche, carte et liste reliées ---------- */
@@ -254,7 +258,7 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .where { margin-top: 5px; padding-left: 22px; font-weight: 600; }
 .det { margin-top: 6px; padding-left: 22px; color: var(--ink-2); font-size: 1rem; line-height: 1.45; }
 .det li + li { margin-top: 4px; }
-.det a { color: var(--mag-ink); font-weight: 600; }
+.det a { color: var(--acc); font-weight: 600; }
 .det a svg { display: inline; margin-left: 4px; vertical-align: -1px; }
 .ag-accueil .mois { margin-top: 22px; }
 .ag-accueil .mois-h { font-size: 1.5rem; padding-bottom: 8px; }
@@ -324,7 +328,7 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .uc-s { font-size: 1rem; color: var(--u-texte2); }
 .uc-acc { font-size: 1rem; line-height: 1.5; }
 .uc-n { margin-top: auto; padding-top: 10px; border-top: 2px solid var(--u-titre); font-size: .9375rem; font-weight: 600; }
-.uc > .motif, .tour > .motif { position: absolute; right: -14px; bottom: -14px; z-index: 0; width: 120px; height: auto; color: var(--u-titre); opacity: .2; pointer-events: none; }
+.uc > .motif { position: absolute; right: -14px; bottom: -14px; z-index: 0; width: 120px; height: auto; color: var(--u-titre); opacity: .2; pointer-events: none; }
 /* les motifs en bande : le fil rouge, la frise 1850 → 2077, dans le cours de la mise en page */
 .motif.bande { display: block; pointer-events: none; }
 .motif.bande svg { display: block; width: 100%; height: 26px; overflow: visible; }
@@ -342,15 +346,6 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .u-et > span { white-space: nowrap; }
 .u-et > span:not(:last-child):not(:has(+ .statut))::after { content: "·"; margin: 0 9px; }
 .u-et .statut { margin-left: 10px; letter-spacing: 0; text-transform: none; }
-
-/* Je viens voir : les spectacles en tournée, dans leur univers */
-.tours { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); padding-top: 26px; }
-.tour { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); overflow: hidden; background: var(--u-fond); color: var(--u-texte); isolation: isolate; }
-.tour:hover { box-shadow: 0 18px 42px -18px var(--u-lueur), 0 0 0 1px color-mix(in srgb, var(--u-titre) 40%, transparent); }
-.tour .uc-img { aspect-ratio: auto; height: 100%; min-height: 240px; }
-.tour .uc-b { padding: 22px 24px 24px; }
-.tour .uc-t { font-size: 2.25rem; }
-.tour .u-et { color: var(--u-vif); }
 
 /* ---------- Les fiches : programmer, établissement scolaire ---------- */
 .fiches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px var(--gap); align-items: start; padding-top: 20px; }
@@ -377,7 +372,7 @@ a.t-link:hover .t-txt { text-decoration: underline; text-decoration-thickness: 1
 .mini dd { display: inline; margin-left: 6px; font-weight: 600; }
 .liens { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; }
 .lien-v { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; text-decoration: none; }
-.lien-v svg { color: var(--u-titre, var(--mag)); }
+.lien-v svg { color: var(--u-titre, var(--acc)); }
 .fc .lien-v svg { color: var(--ink); }
 .lien-v:hover span { text-decoration: underline; }
 details.lx-d { border-top: 1px solid var(--rule); }
@@ -419,7 +414,7 @@ details.lx-d p { padding-bottom: 12px; font-size: .9375rem; line-height: 1.55; c
 .ac-meta li span:first-child { color: var(--ink-2); }
 .ac-meta li b { font-weight: 700; }
 .ac-txt { font-size: 1rem; line-height: 1.55; }
-.ac-txt a, .disp a { color: var(--mag-ink); }
+.ac-txt a, .disp a { color: var(--acc); }
 .formule { display: grid; gap: 2px; padding: 12px 16px; background: var(--u-fond); color: var(--u-texte); font: 500 1.25rem/1.25 var(--sg); letter-spacing: -.015em; }
 .disp p { margin-bottom: 4px; }
 .disp li { padding: 5px 0 5px 16px; position: relative; font-size: .9375rem; line-height: 1.45; }
@@ -444,7 +439,7 @@ details.lx-d p { padding-bottom: 12px; font-size: .9375rem; line-height: 1.55; c
 .prose p + p, .prose ul + p { margin-top: 14px; }
 .prose ul { margin-top: 12px; border-top: 1px solid var(--rule); }
 .prose li { padding: 12px 0 13px; border-bottom: 1px solid var(--rule); }
-.prose a { color: var(--mag-ink); overflow-wrap: anywhere; }
+.prose a { color: var(--acc); overflow-wrap: anywhere; }
 .prose p, .prose li { max-width: 66ch; }
 figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 
@@ -460,7 +455,7 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .idx { min-height: 44px; padding: 0 14px; border-radius: 999px; }
 .idx small { font: 500 .8125rem var(--at); color: var(--ink-2); }
 .idx:hover, .idx-tout:hover { border-color: var(--ink); }
-.idx[aria-expanded="true"] { border-color: var(--ink); box-shadow: inset 0 -3px 0 var(--mag); }
+.idx[aria-expanded="true"] { border-color: var(--ink); box-shadow: inset 0 -3px 0 var(--acc); }
 .idx-actif { background: var(--ink); border-color: var(--ink); color: var(--paper); }
 .idx-tout { flex: none; justify-content: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
 .sai { border-bottom: 1px solid var(--rule-2); scroll-margin-top: calc(var(--head) + 70px); }
@@ -487,33 +482,9 @@ figcaption { margin-top: 8px; font-size: .875rem; color: var(--ink-2); }
 .row.suite { display: block; color: var(--ink-2); }
 .row.annule .where, .row.annule .t-link { color: var(--ink-2); }
 .what .where a { text-decoration-color: color-mix(in srgb, var(--ink) 30%, transparent); }
-.what .where a:hover { color: var(--mag-ink); }
+.what .where a:hover { color: var(--acc); }
 .tag-sc { display: inline-block; margin-left: 10px; padding: 1px 9px 2px; border: 1px solid currentColor; border-radius: 999px; color: var(--ink-2); font: 700 .75rem/1.4 var(--at); letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
-.sai-page { margin-top: 24px; }
-.sai-page .suite { margin-top: 0; }
 
-/* ---------- Les saisons ---------- */
-.saisons { margin-top: 72px; }
-.saisons .h2s { font-size: 1.75rem; border-bottom: 0; padding-bottom: 12px; }
-.sa-list { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 18px; border-top: 1px solid var(--ink); }
-.sa-list a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 15px; border: 1px solid var(--rule-2); border-radius: 999px; background: var(--field); text-decoration: none; font-weight: 600; font-size: .9375rem; }
-.sa-list a:hover { border-color: var(--ink); }
-.sa-list a[aria-current] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.sa-body { align-items: start; }
-.sa-main { grid-column: 1 / 9; min-width: 0; }
-.sa-carte { grid-column: 9 / 13; position: sticky; top: calc(var(--head) + 16px); }
-.sa-sp { padding-top: 18px; border-top: 1px solid var(--ink); }
-.sa-sp + .sa-sp { margin-top: 52px; }
-.sa-t { display: flex; align-items: baseline; gap: 12px; font-size: 1.75rem; }
-.sa-t .dot { position: relative; top: -.08em; }
-.sa-t a, .sa-t span.u-p { text-decoration: none; font-family: var(--u-police, var(--sg)); font-weight: var(--u-gr, 500); letter-spacing: 0; }
-.sa-t a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
-.sa-s { margin-top: 6px; padding-left: 24px; font: 400 1.125rem/1.35 var(--sg); color: var(--ink-2); }
-.sa-c { margin-top: 2px; padding-left: 24px; font-size: .9375rem; font-weight: 600; }
-.sa-rows { margin-top: 14px; }
-.sa-rows li { padding: 12px 0 13px 24px; border-bottom: 1px solid var(--rule); overflow-wrap: anywhere; }
-.sa-rows .det { padding-left: 0; }
-.sa-ligne { font-weight: 600; }
 .etat { display: inline-block; margin-left: 8px; padding: 1px 9px 2px; border-radius: 999px; background: var(--ink); color: var(--paper); font-size: .8125rem; font-weight: 700; vertical-align: 1px; }
 
 /* ---------- La page d'un spectacle, dans son univers ---------- */
@@ -703,7 +674,7 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .docs a { font-weight: 700; color: var(--u-vif, var(--ink)); }
 .tech ~ .docs { margin-top: clamp(18px, 2vw, 28px); }
 .fc-docs { padding-top: 12px; border-top: 1px solid var(--rule); }
-.fc .docs a { color: var(--mag-ink); }   /* (sur le papier de la fiche, pas dans l'univers : la magenta qui s'y lit) */
+.fc .docs a { color: var(--acc); }   /* (sur le papier de la fiche, pas dans l'univers : l'accent de la saison, qui s'y lit) */
 .u-chiffres + .chap { margin-top: 44px; }
 @media (max-width: 900px) { .hero > .ct-prg { grid-template-columns: minmax(0, 1fr); } .hero > .ct-prg .ct-cond { justify-self: start; } }
 .ac-vide { margin-top: 18px; font: 500 1.75rem/1.2 var(--sg); color: var(--u-texte2); }
@@ -784,11 +755,11 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .fld-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; }
 .chk { display: flex; align-items: flex-start; gap: 10px; margin-top: 22px; font-size: 1rem; }
 .chk input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--ink); }
-.chk a { color: var(--mag-ink); font-weight: 600; }
+.chk a { color: var(--acc); font-weight: 600; }
 .calc { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
 .calc input { width: 72px; }
 .btn { margin-top: 26px; height: 48px; padding: 0 30px; border: 0; border-radius: 999px; background: var(--ink); color: var(--paper); font-weight: 700; font-size: 1rem; }
-.btn:hover { background: var(--mag-ink); }
+.btn:hover { background: var(--acc); }
 .ct { align-items: start; row-gap: 48px; }
 .ct-form { grid-column: 1 / 8; }
 .ct-form .fld:first-child { margin-top: 0; }
@@ -807,10 +778,9 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
 .f-brand address { margin-top: 18px; font-style: normal; color: var(--foot-muted); }
 .f-links { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 14px; font-weight: 600; }
 .f-part { grid-column: 6 / 13; color: var(--foot-muted); font-size: 1rem; line-height: 1.6; }
-.f-ent { display: flex; flex-wrap: wrap; gap: 8px 26px; margin-top: 18px; }
-.f-ent a { display: inline-flex; align-items: center; gap: 9px; font-weight: 600; text-decoration: none; }
-.f-ent a:hover { text-decoration: underline; }
-.f-ent .e-pt { background: var(--ev); }
+.f-menu { display: flex; flex-wrap: wrap; gap: 8px 26px; margin-top: 18px; font-weight: 600; }
+.f-menu a { text-decoration: none; }
+.f-menu a:hover { text-decoration: underline; }
 .f-legal { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; margin-top: 16px; padding-top: 18px; border-top: 1px solid var(--foot-rule); color: var(--foot-muted); font-size: .9375rem; }
 .f-ll { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 22px; margin-left: auto; }
 .f-edit { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 3px 14px 4px 12px; border: 1px solid var(--foot-rule-2); border-radius: 999px; background: none; color: var(--foot-ink); font-size: .875rem; font-weight: 600; line-height: 1.4; }
@@ -825,18 +795,13 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   background: linear-gradient(to right, transparent calc(var(--gut) + 96px), var(--intro-marge) calc(var(--gut) + 96px) calc(var(--gut) + 97px), transparent calc(var(--gut) + 97px)),
     repeating-linear-gradient(to bottom, transparent 0 55px, var(--intro-ligne) 55px 56px); }
 .intro.intro-m03.part::after { opacity: 0; }
-.intro.intro-m03 .intro-indice { color: var(--mag); }
+.intro.intro-m03 .intro-indice { color: var(--acc); }
 
 /* ---------- Mises en page ---------- */
-@media (max-width: 1359px) {
-  .e-long { display: none; }
-  .e-court { display: inline; }
-}
 @media (max-width: 1180px) {
   .ucs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ucs.riches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fiches.trois { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .tours { grid-template-columns: minmax(0, 1fr); }
   .pg .fc-corps { grid-template-columns: minmax(0, 1fr); }
   .pourquoi { grid-template-columns: minmax(0, 1fr); }
 }
@@ -844,26 +809,16 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   :root { --h1: 60px; --head: var(--h1); --gap: 16px; --bas: 64px; }
   .site-head { top: 0; }
   .tete-1 { border-bottom-color: var(--ink); }
-  .menu-btn { display: inline-flex; }
   .tete-d { gap: 10px; }
   .tete-d::before { display: none; }
-  .menu2 { display: none; top: var(--h1); left: 0; right: 0; height: auto; padding: 4px var(--gut) 18px; background: var(--field); border-bottom: 1px solid var(--ink); box-shadow: 0 18px 32px var(--shadow-menu); }
-  .menu2.open { display: block; }
-  .menu2 ul { flex-direction: column; gap: 0; }
-  .menu2 a { padding: 14px 0; border-bottom: 1px solid var(--rule); font-size: 1.0625rem; color: var(--ink); }
-  .menu2 li:last-child a { border-bottom: 0; }
-  .menu2 a[aria-current="page"] { border-bottom-color: var(--rule); box-shadow: inset 4px 0 0 var(--mag); padding-left: 14px; }
-  .entrees { position: fixed; left: 0; right: 0; bottom: 0; z-index: 35; border-top: 1px solid var(--ink); border-bottom: 0; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -10px 24px -16px var(--shadow-bas); }
-  .entrees ul { height: auto; padding: 0; }
-  .entrees li:first-child a { padding-left: 4px; }
-  .entrees a { flex-direction: column; justify-content: center; gap: 5px; min-height: var(--bas); padding: 7px 4px 8px; text-align: center; font: 600 .8125rem/1.15 var(--at); letter-spacing: 0; }
-  .entrees a > span { white-space: normal; overflow: visible; }
-  .entrees a::before { top: 0; }
-  .entrees a[aria-current] { background: color-mix(in srgb, var(--e) 11%, var(--paper)); }
-  .entrees a[aria-current="true"]::after { display: none; }
-  .e-fl { display: none; }
-  .e-long { display: none; }
-  .e-court { display: inline; }
+  /* le menu, en barre fixe au bas de l'écran : quatre colonnes, le pictogramme sur le nom court */
+  .menu-p { position: fixed; left: 0; right: 0; bottom: 0; z-index: 35; border-top: 1px solid var(--ink); border-bottom: 0; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -10px 24px -16px var(--shadow-bas); }
+  .menu-p ul { height: auto; padding: 0; }
+  .menu-p a { flex-direction: column; justify-content: center; gap: 4px; min-height: var(--bas); padding: 7px 2px 8px; text-align: center; font: 600 .8125rem/1.15 var(--at); letter-spacing: 0; }
+  .menu-p a > span { white-space: normal; overflow: visible; }
+  .menu-p a::before, .menu-p a::after { top: 0; }
+  .m-fl, .m-long { display: none; }
+  .m-court { display: inline; }
   .site-foot { padding-bottom: calc(28px + var(--bas) + env(safe-area-inset-bottom)); }
   .hero { padding-top: 28px; padding-bottom: 22px; }
   .hero > .hero-main, .hero > .hero-side, .hero-une > .une-edito, .hero-une > .une-affiche { grid-column: 1 / -1; justify-self: start; text-align: left; }
@@ -875,7 +830,7 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   .h2s { font-size: 2rem; }
   .h2s.grand { font-size: clamp(2.25rem, 10vw, 3.25rem); }
   .bloc { margin-top: 64px; }
-  .choix { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .choix, .ep-pages { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .choix a { display: grid; grid-template-columns: 38% minmax(0, 1fr); border-top: 0; border-left: 6px solid var(--e); }
   .choix-img { aspect-ratio: auto; height: 100%; min-height: 104px; }
   .choix-t { padding: 14px 16px; font-size: 1.375rem; align-items: center; }
@@ -899,15 +854,12 @@ body[data-vue="spectacle"] .site-foot { margin-top: 0; }
   .t-link, .ag-accueil .t-link { font-size: 1.125rem; gap: 9px; }
   .mois-h { font-size: 1.5rem; }
   .fiches, .fiches.trois { grid-template-columns: minmax(0, 1fr); }
-  .tour { grid-template-columns: minmax(0, 1fr); }
-  .tour .uc-img { aspect-ratio: 16 / 9; height: auto; min-height: 0; }
   .fc-tete img { width: 92px; }
   .fc-t { font-size: 1.875rem; }
   .groupe-h { font-size: 1.625rem; }
   .appel p, .appel .agir, .appel.seul .agir { grid-column: 1 / -1; justify-self: start; }
   .appel { margin-top: 64px; }
-  .act-text, .act-fig, .sa-main, .sa-carte, .co-text, .co-dates, .dir-h, .dir-t, .ct-form, .ct-co, .f-brand, .f-part { grid-column: 1 / -1; position: static; }
-  .sa-carte { grid-row: 1; }
+  .act-text, .act-fig, .co-text, .co-dates, .dir-h, .dir-t, .ct-form, .ct-co, .f-brand, .f-part { grid-column: 1 / -1; position: static; }
   .galerie { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fld-2 { grid-template-columns: minmax(0, 1fr); }
   .f-ll { margin-left: 0; }
@@ -959,18 +911,14 @@ html { view-transition-name: none; }
 main { display: block; min-height: 100svh; }   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas */
 /* la grille de la mise en page, en filigrane, le temps d'un changement de page (ses colonnes posées par le script) */
 .grille { position: fixed; inset: 0; z-index: 25; pointer-events: none; opacity: 0; }
-/* les entrées : le filet épais de l'entrée choisie se trace depuis la gauche ; celui de l'entrée quittée se retire vers la droite */
-.entrees a[aria-current]::before { transform: scaleY(.34); }
-.entrees a::after { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 6px; background: var(--e); pointer-events: none;
+/* le menu : le filet épais de l'élément choisi se trace depuis la gauche, à la couleur de la saison (règle 22) ; celui de
+   l'élément quitté se retire vers la droite ; « true » (une page qui en dépend : un spectacle, une page de l'espace pro) : à demi */
+.menu-p a[aria-current]::before { transform: scaleY(.34); }
+.menu-p a::after { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 6px; background: var(--acc); pointer-events: none;
   transform: scaleX(0); transform-origin: 100% 50%; transition: transform .3s var(--c3); }
-.entrees a[aria-current]::after { transform: none; transform-origin: 0 50%; }
-.entrees a[aria-current="true"]::after { height: 3px; }
-.entrees a { transition: background-color .3s var(--c3), color .2s; }
-.menu2 a { position: relative; border-bottom-color: transparent !important; }
-.menu2 a::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--ink); pointer-events: none;
-  transform: scaleX(0); transform-origin: 100% 50%; transition: transform .3s var(--c3); }
-.menu2 a:hover::after { transform: scaleX(1); transform-origin: 0 50%; background: var(--rule-2); }
-.menu2 a[aria-current="page"]::after { transform: none; transform-origin: 0 50%; background: var(--ink); }
+.menu-p a[aria-current]::after { transform: none; transform-origin: 0 50%; }
+.menu-p a[aria-current="true"]::after { height: 3px; }
+.menu-p a { transition: background-color .3s var(--c3), color .2s; }
 /* les onglets d'un spectacle : le même filet, qui passe de l'onglet quitté à l'onglet choisi */
 .u-onglets a { position: relative; border-bottom-color: transparent !important; }
 .u-onglets a::after { content: ""; position: absolute; left: 0; right: 26px; bottom: 0; height: 4px; background: var(--u-titre); pointer-events: none;
@@ -996,9 +944,9 @@ main { display: block; min-height: 100svh; }   /* sa place est gardée pendant l
 [data-mv="cascade"].mv-attente > * { transition: opacity .3s var(--c3s), transform .34s var(--c3s); transition-delay: calc(var(--mv-delai, 0ms) + min(var(--mv-i, 0), 10) * 40ms); }
 [data-mv="cascade"].mv-attente:not(.mv-vu) > * { transform: translateX(-12px); }
 /* la pression : la pièce descend d'un pixel, à l'instant même */
-:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .sw-t, .sw-m, .menu-btn, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .lien-v, .suite, .t-link, .entrees a, .u-onglets a, .menu2 a, .choix a, .sai > summary, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place) { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: .15s; }
-:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .sw-t, .sw-m, .menu-btn, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .choix a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place).mv-presse { transform: translateY(1px); transition-duration: .06s; }
-:is(.entrees a, .u-onglets a, .menu2 a, .sai > summary, .t-link, .suite, .lien-v).mv-presse { background-color: color-mix(in srgb, var(--ink) 6%, transparent); transition-duration: .06s; }
+:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .lien-v, .suite, .t-link, .menu-p a, .u-onglets a, .choix a, .sai > summary, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place) { transition-property: color, background-color, border-color, box-shadow, transform, opacity; transition-duration: .15s; }
+:is(.chip, .lieu-chip, .lieu-btn, .agir, .u-agir, .idx, .idx-tout, .theme-m03, .dos-bt, .btn, .ep-a, .f-edit, .choix a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .tr3-place).mv-presse { transform: translateY(1px); transition-duration: .06s; }
+:is(.menu-p a, .u-onglets a, .sai > summary, .t-link, .suite, .lien-v).mv-presse { background-color: color-mix(in srgb, var(--ink) 6%, transparent); transition-duration: .06s; }
 /* une ligne vers laquelle mène une frise : elle se marque d'un aplat, qui s'efface */
 @keyframes m3-vise { 0%, 45% { background-color: color-mix(in srgb, var(--c, var(--ink)) 16%, transparent); } }
 .dt.est-vise, .dcard.est-vise { animation: m3-vise 1.3s var(--c3); }
@@ -1020,7 +968,7 @@ main { display: block; min-height: 100svh; }   /* sa place est gardée pendant l
 @keyframes m3-fait { 0% { transform: scaleX(0); transform-origin: 0 50%; } 35%, 75% { transform: scaleX(1); transform-origin: 0 50%; } 100% { transform: scaleX(0); transform-origin: 100% 50%; } }
 
 /* ——— les frises (FRISE) dans la grille : des filets d'un pixel, des repères carrés, les mois en capitales, les nombres en chiffres de même largeur ——— */
-.frise[data-frise] { --fr-fond: var(--paper); --fr-encre: var(--ink); --fr-trait: var(--rule-2); --fr-accent: var(--mag); --fr-police: var(--at);
+.frise[data-frise] { --fr-fond: var(--paper); --fr-encre: var(--ink); --fr-trait: var(--rule-2); --fr-accent: var(--acc); --fr-police: var(--at);
   --fr-point: 10px; --fr-couloir: 15px; --fr-haut: 30px; --fr-taille: 12px; --fr-pied: 42px; --fr-passe: .3; --fr-courbe: var(--c3);
   --fr-bulle-fond: var(--ink); --fr-bulle-encre: var(--paper); }
 .u .frise[data-frise] { --fr-fond: var(--u-fond); --fr-encre: var(--u-texte); --fr-trait: color-mix(in srgb, var(--u-texte) 30%, transparent); --fr-accent: var(--u-vif);
@@ -1070,56 +1018,97 @@ main { display: block; min-height: 100svh; }   /* sa place est gardée pendant l
 .co-frise .frise-mois > li > span:first-child { top: 14px; left: 4px; }
 .co-frise .frise-etiquette { font: 500 1.0625rem/1.2 var(--sg); letter-spacing: -.01em; max-width: 11em; }
 .co-frise .frise-etiquette::before { background: var(--ink); }
-.co-frise .frise-repere:is(:hover, :focus-visible) .frise-etiquette { color: var(--mag-ink); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.co-frise .frise-repere:is(:hover, :focus-visible) .frise-etiquette { color: var(--acc); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 html.ed-actif .co-frise { display: none; }
 /* l'entrée des frises : l'axe se trace, les repères se posent dans l'ordre du temps, comme on remplit une grille */
 .frise[data-frise].est-vue:not(.est-immobile):not(.est-deja) .frise-axe { animation: fr-trace .5s var(--c3) both; }
 .frise[data-frise].est-vue:not(.est-immobile):not(.est-deja) .frise-mois { animation: fr-parait .3s var(--c3) .1s both; }
 .frise[data-frise].est-vue:not(.est-immobile):not(.est-deja) :is(.frise-points, .frise-grappes, .frise-bandes) { animation: fr-devoile .55s steps(12, end) .05s backwards; }
 
-/* ——— la saison en frise : le cœur. Une ligne par spectacle (une frise chacune, toutes sur la même échelle), les mois en
-   colonnes au-dessus, « aujourd'hui » d'un trait qui traverse tout ; reliée à la liste par mois, au filtre et à la carte ——— */
-.sw { margin: 22px 0 6px; }
-.sw-tete, .sw-l { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); }
-.sw-coin, .sw-t { grid-column: 1 / 4; min-width: 0; }
-.sw-axe, .sw-f { grid-column: 4 / 13; min-width: 0; }
-.sw-axe { position: relative; height: 34px; margin: 0 6px; }
-.sw-mois { position: absolute; inset: 0; }
-.sw-mois > li { position: absolute; top: 0; bottom: 0; left: calc(var(--x) * 1%); width: calc(var(--w) * 1%); border-left: 1px solid var(--rule-2); }
-.sw-m { display: block; width: 100%; height: 100%; padding: 0 0 0 6px; border: 0; background: none; text-align: left; white-space: nowrap; overflow: hidden;
-  font: 700 .625rem/34px var(--at); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
-button.sw-m { cursor: pointer; }
-button.sw-m:hover { color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); }
-.sw-m.est-courant { color: var(--ink); }
-.sw-auj { position: absolute; left: calc(var(--x) * 1%); bottom: 100%; translate: -50% 0; padding: 2px 6px 3px; background: var(--mag); color: var(--paper-blanc);
-  font: 700 .625rem/1.2 var(--at); letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
-.sw-auj::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1.5px; height: 34px; margin-left: -.75px; background: var(--mag); }
-.sw-lignes { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); }
-.sw-l { align-items: center; border-top: 1px solid var(--rule); transition: opacity .25s var(--c3); }
-.sw-l:first-child { border-top: 0; }
-.sw-l.est-hors { opacity: .28; }
-.sw-t { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 4px 8px 4px 0; border: 0; background: none; text-align: left; cursor: pointer;
-  font: 500 1rem/1.15 var(--sg); letter-spacing: -.01em; color: var(--ink); }
-.sw-t .dot { width: 10px; height: 10px; border-radius: 2px; }
-.sw-nom { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sw-n { flex: none; min-width: 2ch; text-align: right; font: 500 1rem/1 var(--sg); font-variant-numeric: tabular-nums; color: var(--ink-2); }
-.sw-t:hover .sw-nom { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .15em; }
-.sw-t[aria-pressed="true"] { color: var(--ink); }
-.sw-t[aria-pressed="true"] .sw-nom { font-weight: 700; }
-.sw-t[aria-pressed="true"] .sw-n { color: var(--ink); }
-.sw-f { position: relative; }
-.sw .frise[data-frise] { --fr-haut: 7px; --fr-couloir: 13px; --fr-pied: 9px; --fr-point: 9px; --fr-marge: 6px; --fr-passe: .32; }
-.sw .frise-mois-nom, .sw .frise-an, .sw .frise-aujourdhui-nom, .sw .frise-souffle, .sw .frise-aujourdhui::after { display: none; }
-.sw .frise-mois > li { top: 0; height: 100%; border-left-color: var(--rule); }
-.sw .frise-axe { background: color-mix(in srgb, var(--ink) 22%, transparent); }
-.sw .frise-aujourdhui { height: 100%; }
-.sw .frise-aujourdhui::before { top: 0; bottom: 0; background: var(--mag); }
-.sw .frise-piste { overflow: hidden; }
-.sw-l.est-survol { background: color-mix(in srgb, var(--c) 7%, transparent); }
-.ag-accueil .sw { margin-top: 18px; }
-.sc .sw { margin: 8px 0 22px; }
-.sa-sw { margin: 8px 0 40px; }
-.sa-sw .frise[data-frise] { --fr-passe: 1; }
+/* ——— la frise de la saison (règle 21) : le cœur. Une seule ligne du temps, de septembre à août : chaque date une barre à la
+   couleur de son spectacle (évidée pour une date scolaire, un aplat cerné pour une date longue), posée en couloirs quand elle en
+   touche une autre ; les mois en colonnes, un axe d'encre épais, « aujourd'hui » d'un trait de la couleur de la saison (règle 22)
+   qui la traverse. Dessous, sa légende : la barre de chaque spectacle, son titre, le nombre de ses dates. Choisir une date de
+   la frise la choisit dans la liste, et inversement (la date choisie y est cernée d'encre). ——— */
+.fs { margin: 26px 0 8px; }
+.fs .frise[data-frise] { --fr-point: 9px; --fr-barre: 18px; --fr-couloir: 22px; --fr-haut: 34px; --fr-pied: 36px; --fr-passe: .34; --fr-marge: 0px; --fr-accent: var(--acc); }
+.fs .frise-axe { height: 3px; margin-top: -1.5px; background: var(--ink); }
+.fs .frise-mois > li { top: 0; height: 100%; border-left: 1px solid var(--rule); }
+.fs .frise-mois > li > span:first-child { top: calc(var(--fr-axe) + 9px); left: 6px; }
+.fs .frise-mois-nom { font: 700 .6875rem/1.2 var(--at); letter-spacing: .1em; }
+/* les barres se posent sur l'axe (le centre du repère, 12 px au-dessus), les couloirs montent de 22 px */
+.fs .frise-point { top: calc(var(--fr-axe) - 13px - var(--fr-y, 0) * var(--fr-couloir)); }
+.fs .frise-point:not(.est-duree) > .frise-repere::before { width: var(--fr-point); height: var(--fr-barre); border-radius: 0; box-shadow: 0 0 0 1px var(--fr-fond); }
+.fs .frise-point.est-scolaire:not(.est-duree) > .frise-repere::before { width: var(--fr-point); height: var(--fr-barre); border-radius: 0; background: var(--fr-fond); box-shadow: inset 0 0 0 2px var(--fr-c), 0 0 0 1px var(--fr-fond); }
+.fs .frise-point.est-duree > .frise-repere { height: var(--fr-barre); margin-top: calc(var(--fr-barre) / -2); }
+.fs .frise-point.est-duree > .frise-repere::before { height: var(--fr-barre); border-radius: 0; background: color-mix(in srgb, var(--fr-c) 26%, var(--fr-fond)); box-shadow: inset 0 0 0 2px var(--fr-c); }
+.fs .frise-point.est-duree.est-scolaire > .frise-repere::before { background: var(--fr-fond); }
+.fs .frise-point > .frise-repere:is(:hover, :focus-visible)::before, .fs .frise-point:is(.est-allume, .est-focus) > .frise-repere::before { scale: 1.35 1.12; }
+.fs .frise-point.est-duree > .frise-repere:is(:hover, :focus-visible)::before, .fs .frise-point.est-duree:is(.est-allume, .est-focus) > .frise-repere::before { scale: 1 1.12; }
+.fs .frise-point.est-choisi > .frise-repere::before { opacity: 1; box-shadow: 0 0 0 2px var(--fr-fond), 0 0 0 4px var(--ink); }
+.fs .frise-point.est-scolaire.est-choisi > .frise-repere::before { box-shadow: inset 0 0 0 2px var(--fr-c), 0 0 0 2px var(--fr-fond), 0 0 0 4px var(--ink); }
+.fs .frise-aujourdhui { height: 100%; }
+.fs .frise-aujourdhui::before { top: 0; bottom: 0; left: -1px; width: 2px; background: var(--acc); opacity: 1; }
+.fs .frise-aujourdhui::after { display: none; }
+.fs .frise-aujourdhui-nom { top: 0; padding: 2px 6px 3px; background: var(--acc); color: var(--acc-sur); font: 700 .625rem/1.2 var(--at); letter-spacing: .12em; text-transform: uppercase; }
+.fs .frise-souffle { border-radius: 0; bottom: auto; top: calc(var(--fr-axe) - 4px); background: var(--acc); }
+.fs .frise.est-filtre .frise-point:not(.est-sp) { opacity: .16; }
+.fs-leg { display: flex; flex-wrap: wrap; gap: 6px 26px; padding-top: 12px; border-top: 1px solid var(--ink); }
+.fs-l { display: inline-flex; align-items: center; gap: 9px; min-height: 28px; font: 500 1rem/1.2 var(--sg); letter-spacing: -.01em; transition: opacity .2s var(--c3); }
+.fs-l i { flex: none; width: 9px; height: 18px; background: var(--c); }
+.fs-l b { font: 500 1rem/1 var(--sg); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.fs-l.est-vide { opacity: .4; }
+.fs-l.fs-sc i { background: var(--paper); box-shadow: inset 0 0 0 2px var(--ink-2); }
+.fs-l.fs-sc span { color: var(--ink-2); }
+.u .fs-leg { border-top-color: var(--u-texte); }
+.ag-accueil .fs { margin-top: 18px; }
+.sc .fs { margin: 8px 0 22px; }
+
+/* ——— les saisons (#/saisons, règle 21) : la saison en cours (sa marque à la couleur de la saison, sa frise, ses prochaines dates,
+   toutes ses dates et sa carte), puis les saisons passées, fermées ——— */
+.s0 { margin-top: 30px; scroll-margin-top: calc(var(--head) + 12px); }
+.s0-tete { padding-top: 16px; border-top: 8px solid var(--acc); }
+.s0-k { display: block; margin-bottom: 10px; font: 700 .8125rem/1.3 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--acc); }
+.s0-t { font-size: clamp(2.5rem, 1.5rem + 3.4vw, 4.5rem); line-height: .95; letter-spacing: -.045em; }
+.s0-h { display: flex; align-items: baseline; gap: 12px; margin-top: 36px; padding-bottom: 10px; border-bottom: 1px solid var(--ink); font-size: 1.75rem; letter-spacing: -.03em; }
+.s0-h::before { content: ""; flex: none; width: 10px; height: 10px; background: var(--acc); transform: translateY(-.08em); }
+.ag-prochaines > .s0-h:first-child { margin-top: 18px; }
+.ag-complet .ag-toutes { grid-column: 1 / 9; grid-row: 2; min-width: 0; }
+.ag-complet .ag-carte { grid-row: 1 / span 2; align-self: start; }
+.ag-toutes .mois:first-of-type { margin-top: 18px; }
+/* une date déjà jouée : en retrait (le texte en encre seconde, le point évidé) ; « aujourd'hui », un filet de la saison */
+.row.est-passe .when, .row.est-passe .t-link, .row.est-passe .where { color: var(--ink-2); }
+.row.est-passe .dot { background: none; box-shadow: inset 0 0 0 2px var(--c, var(--ink-2)); }
+.auj-l { display: flex; align-items: center; gap: 12px; margin: 16px 0 6px; font: 700 .75rem/1 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--acc); }
+.auj-l::after { content: ""; flex: 1; height: 2px; background: var(--acc); }
+
+/* ——— la page d'un spectacle qui n'est plus en tournée (règle 21) : sa présentation, le bilan de ses dates passées (ses chiffres,
+   la frise de sa tournée, ses dates par saison à côté d'une grande carte de tous ses lieux), les actions culturelles menées ——— */
+.u-filet { border-top: 1px solid color-mix(in srgb, var(--u-texte) 24%, transparent); }
+.u .bilan-rep { margin-top: 22px; }
+.bilan-n { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: var(--gap); margin-top: 24px; border-top: 2px solid var(--u-titre); }
+.bilan-n li { padding: 16px 0 18px; border-bottom: 1px solid color-mix(in srgb, var(--u-texte) 22%, transparent); }
+.bilan-n b { display: block; font: 500 clamp(3rem, 6vw, 5.25rem)/.86 var(--sg); letter-spacing: -.05em; color: var(--u-titre); font-variant-numeric: tabular-nums; }
+.bilan-n span { display: block; margin-top: 10px; font: 700 .8125rem/1.3 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.bilan-g { margin-top: 30px; align-items: start; row-gap: 28px; }
+.bilan-dates { grid-column: 1 / 7; min-width: 0; }
+.bilan-carte { grid-column: 7 / 13; position: sticky; top: calc(var(--head) + 16px); }
+.bl-s + .bl-s { margin-top: 40px; }
+.bl-t { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--u-texte); font: 500 1.5rem/1.1 var(--sg); letter-spacing: -.03em; }
+.bl-t small { font: 500 1.125rem/1 var(--sg); color: var(--u-texte2); font-variant-numeric: tabular-nums; }
+.ac-menees > * + * { margin-top: 22px; }
+/* les lignes de dates dans un univers : ses couleurs */
+.u .row { border-bottom-color: color-mix(in srgb, var(--u-texte) 18%, transparent); }
+.u .row .when, .u .row .where, .u .row .t-link { color: var(--u-texte); }
+.u .j-sous, .u .det, .u .tag-sc { color: var(--u-texte2); }
+.u .det a, .u .what .where a:hover { color: var(--u-vif); }
+.u .etat { background: var(--u-texte); color: var(--u-fond); }
+.u .dt { --c: var(--u-titre); }
+.u .dt.on, .u .dt.est-allume { background: color-mix(in srgb, var(--u-titre) 14%, transparent); }
+
+/* ——— l'espace pro : ses deux pages (programmer, établissements scolaires) en grandes cases, avant ses trois portes ——— */
+.ep-pages { margin: 4px 0 56px; }
+.ep-pages .choix-t { font-size: clamp(1.625rem, 2.4vw, 2.25rem); }
 
 /* ——— l'espace pro : trois accès, posés sur trois fois quatre colonnes ——— */
 .ep-texte { grid-column: 1 / 9; max-width: 56ch; font: 400 1.375rem/1.5 var(--at); color: var(--ink-2); }
@@ -1131,7 +1120,7 @@ button.sw-m:hover { color: var(--ink); background: color-mix(in srgb, var(--ink)
 .ep-a { text-decoration: none; color: inherit; }
 .ep-a::after { content: ""; position: absolute; inset: 0; }
 .ep-a:focus-visible { outline: none; }
-.ep-a:focus-visible::after { outline: 3px solid var(--mag); outline-offset: 4px; }
+.ep-a:focus-visible::after { outline: 3px solid var(--acc); outline-offset: 4px; }
 .ep-x { margin-top: 14px; max-width: 34ch; font-size: 1rem; line-height: 1.55; color: var(--ink-2); }
 .ep-f { margin-top: auto; padding-top: 28px; color: var(--ink); transition: transform .2s var(--c3); }
 .ep-f svg { width: 30px; height: 30px; }
@@ -1139,22 +1128,20 @@ button.sw-m:hover { color: var(--ink); background: color-mix(in srgb, var(--ink)
 html.ed-actif .ep-a::after { content: none; }
 
 @media (max-width: 899px) {
-  .sw-coin { display: none; }
-  .sw-axe, .sw-f, .sw-t { grid-column: 1 / -1; }
-  .sw-axe { margin: 18px 6px 0; height: 26px; }
-  .sw-m { padding-left: 3px; line-height: 26px; font-size: 0; letter-spacing: 0; }
-  .sw-m::first-letter { font-size: .625rem; }
-  .sw-auj::after { height: 26px; }
-  .sw-l { row-gap: 0; padding: 6px 0 4px; }
-  .sw-t { min-height: 44px; padding: 0; font-size: .9375rem; }
   .ep-texte { grid-column: 1 / -1; font-size: 1.1875rem; }
   #pg-carte:empty::before { content: ""; display: block; aspect-ratio: 800 / 780; }   /* la carte de tous les lieux vient après : sa place est gardée */
   .u-onglets a::after { right: 8px; }
   .u-onglets li + li a::after { left: 10px; }
   .ep-portes { grid-template-columns: minmax(0, 1fr); }
   .ep { min-height: 0; }
-  .entrees a[aria-current="true"]::after { display: block; }
-  .entrees a::after { top: 0; }
+  /* les saisons : les prochaines dates, la carte de la saison, puis toutes les dates, l'une sous l'autre */
+  .ag-complet .ag-liste, .ag-complet .ag-toutes, .ag-complet .ag-carte { grid-column: 1 / -1; grid-row: auto; }
+  .s0-h { font-size: 1.5rem; }
+  /* le bilan : la carte d'abord, puis les dates */
+  .bilan-dates, .bilan-carte { grid-column: 1 / -1; position: static; }
+  .bilan-carte { order: -1; }
+  .bilan-n b { font-size: 2.75rem; }
+  .bilan-n span { font-size: .6875rem; letter-spacing: .1em; }
   .co-frise .frise-mois-nom { font-size: 1rem; }
 }
 /* ——— la compagnie : la présentation, la troupe, puis les repères (la table des années, sur quatre colonnes, et la frise) ——— */
@@ -1167,10 +1154,10 @@ html.ed-actif .ep-a::after { content: none; }
    métiers (un organigramme, qui fait quoi d'un coup d'œil) ; le jeu, sous elle, en planche contact (les visages publiés,
    bord à bord, en gris, qui prennent leur couleur quand on les allume), puis les noms seuls. Une personne : sa vignette
    seulement si sa photo est publiée, sinon le nom seul, à côté d'un carré d'encre (les points de l'agenda). Survolée ou
-   choisie, toutes ses places s'allument et des filets magenta les relient ; les autres s'estompent. Au défilement, le
+   choisie, toutes ses places s'allument et des filets de la couleur de la saison les relient ; les autres s'estompent. Au défilement, le
    filet se trace, les colonnes tombent, les noms se posent dans la grille (animations liées au défilement). */
 .troupe-m03 { margin-top: 88px; }
-.tr3 { --tr3-trait: var(--ink); --troupe-lien: var(--mag); --troupe-ic-fond: var(--paper); --troupe-ventouse-fond: var(--paper);
+.tr3 { --tr3-trait: var(--ink); --troupe-lien: var(--acc); --troupe-ic-fond: var(--paper); --troupe-ventouse-fond: var(--paper);
   position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--gap); align-items: start; padding-top: 26px; view-timeline: --tr3 block; }
 .tr3-racine { grid-column: 1 / -1; display: flex; align-items: center; height: 52px; }
 .tr3-logo { flex: none; width: 52px; height: 52px; margin-right: 16px; }
@@ -1203,12 +1190,12 @@ html.ed-actif .ep-a::after { content: none; }
 .tr3-planche .tr3-v { width: 100%; height: auto; aspect-ratio: 1; }
 .tr3-planche .tr3-nom span { display: block; }
 .tr3-noms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--gap); }
-/* allumée : la personne et toutes ses places, les autres s'estompent ; choisie, un filet magenta la souligne */
-.tr3-place:is(:hover, .est-allume) .tr3-nom { color: var(--mag-ink); }
-.tr3-place:is(:hover, .est-allume) .tr3-pt { background: var(--mag); transform: rotate(45deg); }
+/* allumée : la personne et toutes ses places, les autres s'estompent ; choisie, un filet de la couleur de la saison la souligne */
+.tr3-place:is(:hover, .est-allume) .tr3-nom { color: var(--acc); }
+.tr3-place:is(:hover, .est-allume) .tr3-pt { background: var(--acc); transform: rotate(45deg); }
 .tr3-place:is(:hover, .est-allume, [aria-pressed="true"]) .tr3-v img { filter: none; }
-.tr3-place[aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--mag); }
-.tr3-place:focus-visible { outline: 3px solid var(--mag); outline-offset: 2px; }
+.tr3-place[aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--acc); }
+.tr3-place:focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
 .tr3.est-allume .tr3-place:not(.est-allume), .tr3.est-groupe .tr3-place:not(.est-allume) { opacity: .35; }
 .tr3 .troupe-lien { stroke-width: 1.6; }
 .tr3 .troupe-lueur { border-radius: 0; width: 8px; height: 8px; }
@@ -1323,7 +1310,7 @@ a.rs-seance:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 2px
 .rs-date--ligne { align-self: start; width: 100%; min-height: 0; padding: 8px 10px 10px; border: 1px solid var(--rule-2); background: var(--field); color: var(--ink); }
 .rs-date--ligne:first-child { border-left: 1px solid var(--rule-2); }
 .rs-date--ligne:hover { border-color: var(--ink); background: var(--field); }
-.rs-date--ligne:focus-visible { outline: 3px solid var(--mag); outline-offset: 2px; }
+.rs-date--ligne:focus-visible { outline: 3px solid var(--acc); outline-offset: 2px; }
 .rs-date--ligne .rs-s { color: var(--ink-2); }
 .rs-date--ligne .rs-n { margin-top: 4px; font-size: 2.25rem; white-space: normal; }
 .rs-date--ligne .rs-m { font-size: 1rem; }
@@ -1341,7 +1328,7 @@ a.rs-seance:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 2px
 .ag-accueil .rs-ici .rs-c { padding: 18px 18px 20px; }
 .ag-accueil .rs-date--ligne .rs-n { font-size: 1.875rem; }
 .carte-lieu.est-choisi .pt-in { transform: scale(1.7); }
-.carte-lieu.est-choisi .aura { stroke: var(--mag); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
+.carte-lieu.est-choisi .aura { stroke: var(--acc); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
 
 /* ———— les vidéos, lues dans la page (règle 18, LECTEUR) : l'affiche du spectacle, posée dans la grille ————
    Le cadre noir de la projection, l'affiche (une photo du spectacle) un peu éteinte, la lecture dans une case pleine de la
@@ -1351,16 +1338,16 @@ a.rs-seance:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 2px
 .lc-affiche { filter: saturate(.92) brightness(.68); transition: transform .6s, filter .3s; }
 .lc-lire::after { content: ""; position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, var(--video-ombre)); pointer-events: none; }
 .lc-lire:hover .lc-affiche { transform: scale(1.03); filter: saturate(.95) brightness(.58); }
-.lc-lire:focus-visible { outline: 3px solid var(--u-vif, var(--mag)); outline-offset: -3px; }
-.lc-icone { z-index: 1; width: 84px; height: 84px; border-radius: 0; background: var(--u-titre, var(--mag)); color: var(--u-sur, var(--paper-blanc)); transition: transform .2s var(--c3); }
+.lc-lire:focus-visible { outline: 3px solid var(--u-vif, var(--acc)); outline-offset: -3px; }
+.lc-icone { z-index: 1; width: 84px; height: 84px; border-radius: 0; background: var(--u-titre, var(--acc)); color: var(--u-sur, var(--paper-blanc)); transition: transform .2s var(--c3); }
 .lc-lire:hover .lc-icone { transform: translate(-50%, -50%) scale(1.06); }
 .lc-titre { z-index: 1; left: 22px; right: 22px; bottom: 18px; font: 500 clamp(1.25rem, 2.2vw, 1.875rem)/1.12 var(--sg); letter-spacing: -.02em; color: var(--video-encre); }
 .lc-outils { gap: 10px; margin-top: 12px; }
 .lc-b { min-height: 44px; padding: 0 16px 0 13px; border: 1px solid color-mix(in srgb, var(--u-texte, var(--ink)) 45%, transparent); border-radius: 0; background: none; color: var(--u-texte, var(--ink)); font: 600 .9375rem/1.2 var(--at); }
 .lc-b:hover { border-color: var(--u-texte, var(--ink)); }
-.lc-b:focus-visible { outline: 3px solid var(--u-vif, var(--mag)); outline-offset: 2px; }
+.lc-b:focus-visible { outline: 3px solid var(--u-vif, var(--acc)); outline-offset: 2px; }
 .lc.lc-eteint .lc-nuit-b { border-color: var(--u-titre); background: var(--u-titre); color: var(--u-sur); }
-.lc.lc-eteint .lc-cadre { box-shadow: 0 0 0 2px var(--u-titre, var(--mag)); }
+.lc.lc-eteint .lc-cadre { box-shadow: 0 0 0 2px var(--u-titre, var(--acc)); }
 .lc.lc-joue .lc-affiche { opacity: 0; }
 .lc-nuit { background: var(--video-voile); }
 .lc-voile { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(90deg, var(--video-filet) 0 1px, transparent 1px calc(100% / 12)), var(--video); }
@@ -1464,12 +1451,21 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
   const LIB = () => site().libelles || {};
   const shows = () => D.shows || [];
   const showDe = slug => shows().find(s => s.slug === slug) || null;
+  // règle 21 : un spectacle en tournée (ou en création : Cassandres) a ses trois onglets ; les autres, une seule page
+  const aOnglets = s => !!(s && (s.enTournee || s.statut));
   // un spectacle sans action culturelle (Cassandres, pour l'instant) n'a pas d'onglet établissement (règle 14)
   const entreeSp = (slug, entree) => entree === 'etablissement' && !(showDe(slug) || {}).actionCulturelle ? 'voir' : entree;
+  // l'adresse d'un spectacle : l'onglet demandé s'il a des onglets, sa seule page sinon (jamais un lien vers un onglet qui n'existe pas)
+  const lienSp = (s, entree = 'voir') => { const x = typeof s === 'string' ? showDe(s) : s;
+    return !x ? '#/' : aOnglets(x) ? `#/spectacle/${x.slug}/${entreeSp(x.slug, entree)}` : `#/spectacle/${x.slug}`; };
+  // les trois entrées (D.site.entrees) : les onglets d'un spectacle en tournée ; programmer et établissement sont aussi les deux
+  // pages de l'espace pro (règle 21)
   const ENTREES = ['voir', 'programmer', 'etablissement'];
   const entrees = () => (site().entrees || []).filter(e => ENTREES.includes(e.cle));
   const entreeDe = cle => entrees().find(e => e.cle === cle) || null;
-  const menuDe = id => (site().menu || []).find(m => m.id === id) || null;
+  // le menu (règle 21) : les saisons, les spectacles, la compagnie, l'espace pro (D.site.menu, par sa clé ou son id)
+  const menu = () => site().menu || [];
+  const menuDe = cle => menu().find(m => m.cle === cle || m.id === cle) || null;
   const saisonsSite = () => site().saisons || [];
   const photo = (...cles) => { for (const k of cles) if (k && D.photos && D.photos[k]) return D.photos[k]; return null; };
   const own = (o, k) => o != null && k != null && Object.prototype.hasOwnProperty.call(o, k);
@@ -1509,19 +1505,29 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
   const rgba = v => typeof v === 'string' && /^rgba?\(\s*[\d.]+\s*,\s*[\d.]+\s*,\s*[\d.]+\s*(,\s*[\d.]+\s*)?\)$/i.test(v.trim()) ? v.trim() : null;
   const lum = h => { const f = c => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; return 0.2126 * f(parseInt(h.slice(1, 3), 16)) + 0.7152 * f(parseInt(h.slice(3, 5), 16)) + 0.0722 * f(parseInt(h.slice(5, 7), 16)); };
   const contraste = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  // la couleur d'un spectacle sur le papier (un point, un bras de carte, un repère de frise) : var(--sp-<slug>), qui change
-  // avec le thème (couleurs()) ; le jour, celle qui se lit sur le papier clair ; la nuit, sa couleur de scène, éclaircie
-  // jusqu'à se lire sur le papier de nuit
+  // la couleur d'un spectacle sur le papier (un point, une barre de la frise, un bras de carte : des marques, jamais du texte) :
+  // var(--sp-<slug>), qui change avec le thème (couleurs()) ; sa couleur (règle 22 : celle que la compagnie lui donne, lue
+  // dans D), assombrie le jour ou éclaircie la nuit juste assez pour se voir sur le papier (3:1)
   const slugSur = slug => typeof slug === 'string' && /^[a-z0-9-]+$/.test(slug);
-  const colPapier = slug => { const s = showDe(slug); return s && slugSur(s.slug) && (hex(s.couleurTexteClair) || hex(s.couleur)) ? `var(--sp-${s.slug})` : GRIS; };
-  const NUIT = '#131211';   // le papier de nuit (--paper de html[data-theme="nuit"])
+  const colPapier = slug => { const s = showDe(slug); return s && slugSur(s.slug) && (hex(s.couleur) || hex(s.couleurTexteClair)) ? `var(--sp-${s.slug})` : GRIS; };
+  const PAPIER = '#f4f1ea', NUIT = '#131211';   // les papiers du jour et de la nuit (--paper)
   const melange = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
   const eclaircir = (h, fond, cible) => { let c = h; for (let k = 0; k < 40 && contraste(c, fond) < cible; k++) c = melange(c, '#ffffff', .08); return c; };
+  const assombrir = (h, fond, cible) => { let c = h; for (let k = 0; k < 40 && contraste(c, fond) < cible; k++) c = melange(c, '#000000', .08); return c; };
+  // la couleur de la saison (règle 22, D.site.couleurSaison : le bleu, jusqu'à la création de Cassandres) : l'accent de
+  // l'interface. « couleur » sur le papier du jour, « vive » sur celui de la nuit (et sur le pied, toujours sombre), chacune
+  // gardée lisible (4,5:1) sur son papier ; sans elle, l'accent d'avant reste (les valeurs de :root)
+  function couleurSaison() {
+    const c = site().couleurSaison || {}, j = hex(c.couleur) || hex(c.vive), v = hex(c.vive) || j;
+    return j ? { jour: assombrir(j, PAPIER, 4.5), nuit: eclaircir(v, NUIT, 4.5) } : null;
+  }
   const feuilleCouleurs = document.head.appendChild(document.createElement('style'));
   function couleurs() {
     const jour = [], nuit = [];
-    shows().forEach(s => { if (!slugSur(s.slug)) return; const j = hex(s.couleurTexteClair) || hex(s.couleur), v = hex(s.couleur) || j;
-      if (j) jour.push(`--sp-${s.slug}:${j}`); if (v) nuit.push(`--sp-${s.slug}:${eclaircir(v, NUIT, 4.5)}`); });
+    shows().forEach(s => { if (!slugSur(s.slug)) return; const c = hex(s.couleur) || hex(s.couleurTexteClair);
+      if (c) { jour.push(`--sp-${s.slug}:${assombrir(c, PAPIER, 3)}`); nuit.push(`--sp-${s.slug}:${eclaircir(c, NUIT, 3)}`); } });
+    const sa = couleurSaison();
+    if (sa) { jour.push(`--acc:${sa.jour}`, `--acc-sur:${surDe(sa.jour, PAPIER)}`, `--acc-vive:${sa.nuit}`); nuit.push(`--acc:${sa.nuit}`, `--acc-sur:${surDe(sa.nuit, NUIT)}`); }
     const css = `:root{${jour.join(';')}}html[data-theme="nuit"]{${nuit.join(';')}}`;
     if (feuilleCouleurs.textContent !== css) feuilleCouleurs.textContent = css;
   }
@@ -2872,7 +2878,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     grilleAnims.push(cible.animate(kf, { duration: n * pas }));
     if (!filigrane) return;
     if (!grilleEl) { grilleEl = document.createElement('div'); grilleEl.className = 'grille'; grilleEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(grilleEl); }
-    grilleEl.style.background = `repeating-linear-gradient(90deg, rgba(188, 62, 128, .055) 0 ${g.cw.toFixed(2)}px, transparent ${g.cw.toFixed(2)}px ${(g.cw + g.gap).toFixed(2)}px) ${g.m.toFixed(2)}px 0 / ${g.W.toFixed(2)}px 100% no-repeat`;
+    grilleEl.style.background = `repeating-linear-gradient(90deg, color-mix(in srgb, var(--acc) 6%, transparent) 0 ${g.cw.toFixed(2)}px, transparent ${g.cw.toFixed(2)}px ${(g.cw + g.gap).toFixed(2)}px) ${g.m.toFixed(2)}px 0 / ${g.W.toFixed(2)}px 100% no-repeat`;
     grilleAnims.push(grilleEl.animate([{ opacity: 1 }, { opacity: 1, offset: .5 }, { opacity: 0 }], { duration: n * pas + 200, easing: 'linear' }));
   }
   // d'un onglet à l'autre du même spectacle : le filet passe de l'onglet quitté à l'onglet choisi, le corps se découvre seul
@@ -2979,7 +2985,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
      second geste ou Échap la referme). L'adresse garde la date choisie (?date=…). */
   let rsAg = null, rsAgCle = null, rsSp = null, rsSpEtat = { slug: null, cle: null };
   const requete = () => new URLSearchParams(String(location.hash || '').split('?')[1] || '');
-  // la commune de la date choisie, sur la carte de France de la même liste : son point grossit, cerclé de magenta
+  // la commune de la date choisie, sur la carte de France de la même liste : son point grossit, cerclé de la couleur de la saison
   function marquerCommune(el, date) {
     const svg = svgDe(el); if (!svg) return;
     svg.querySelectorAll('.carte-lieu.est-choisi').forEach(g => g.classList.remove('est-choisi'));
