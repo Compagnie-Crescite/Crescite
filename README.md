@@ -579,6 +579,16 @@ l'expéditeur vérifié restent ceux des propositions. Tant que le script n'est 
 ne dit rien enregistré et propose d'écrire au contact diffusion. 71 essais (`node alertes.mjs` : les onze scripts, le
 onzième relancé, le septième et le troisième relancés après lui ; la fonction dans Node, Brevo et Resend simulés).
 
+**Les semaines de résidence sur le site (pas encore lancé).** Le douzième script,
+`supabase/migrations/20261031_crescite_residences.sql`, change une seule règle : jusqu'ici une date qui n'était pas une
+représentation était masquée d'office ; désormais une résidence se montre ou non, comme une représentation (sa case
+« Publiée sur le site », que l'administration laisse cocher), et les répétitions et les dates « autre » restent pour
+l'équipe. Le script ne montre rien de lui-même : les 45 résidences saisies restent masquées jusqu'à ce que les maquettes
+les marquent (règle 23 : « Résidence » dans l'agenda des saisons, sans réservation, hors des cartes et des chiffres), puis
+Claude les montre (`ecrire.py`). Les alertes de tournée ne prennent toujours que des représentations ; montrer une
+résidence passée ne prévient personne. 11 essais (`node residences.mjs` : les dix premiers scripts et le douzième, relancé
+avant et après le premier et le troisième, qui ont la même règle).
+
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
 d'atteinte), jamais sans filtre, avec un mode `--essai`. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;

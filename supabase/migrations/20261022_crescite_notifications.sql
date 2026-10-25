@@ -38,7 +38,9 @@ alter table public.crescite_representations add column if not exists fin time;
 create or replace function public.crescite_dates_nature() returns trigger
 language plpgsql as $$
 begin
-  if new.nature <> 'representations' then new.visible := false; end if;
+  -- une répétition, une date « autre » : jamais sur le site ; une représentation, une résidence : sa case « visible »
+  -- (une résidence va sur le site depuis le douzième script, 20261031_crescite_residences.sql)
+  if new.nature not in ('representations', 'residence') then new.visible := false; end if;
   return new;
 end;
 $$;

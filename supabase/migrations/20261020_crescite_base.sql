@@ -203,11 +203,13 @@ begin
 end;
 $$;
 
--- une répétition, une résidence (tout ce qui n'est pas des représentations) n'est jamais sur le site public
+-- une répétition, une date « autre » n'est jamais sur le site public (une résidence peut y aller : douzième script)
 create or replace function public.crescite_dates_nature() returns trigger
 language plpgsql as $$
 begin
-  if new.nature <> 'representations' then new.visible := false; end if;
+  -- une répétition, une date « autre » : jamais sur le site ; une représentation, une résidence : sa case « visible »
+  -- (une résidence va sur le site depuis le douzième script, 20261031_crescite_residences.sql)
+  if new.nature not in ('representations', 'residence') then new.visible := false; end if;
   return new;
 end;
 $$;
