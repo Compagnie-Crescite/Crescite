@@ -164,18 +164,19 @@ h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin:0}
 .bd-pause .i-l,.bd-pause[aria-pressed="true"] .i-p{display:none}
 .bd-pause[aria-pressed="true"] .i-l{display:block}
 
-/* le choix : les trois entrées, en grand, chacune dans sa couleur */
-.choix ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;padding:0;list-style:none}
+/* l'espace pro : ses deux pages (programmer, les établissements scolaires), en grand, chacune dans la couleur de son parcours */
+.ep-pages{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:0;padding:0;list-style:none}
 .porte{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;height:100%;min-height:230px;padding:clamp(22px,2.4vw,36px) clamp(20px,2.4vw,38px);background:var(--e);color:#fff;text-decoration:none;overflow:hidden;isolation:isolate;--focus:#fff}
 .porte-ph{position:absolute;inset:0;z-index:-1;background:var(--e)}
 .porte-ph img{width:100%;height:100%;object-fit:cover;transition:transform .9s ease}
 .porte-ph::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,color-mix(in srgb,var(--e) 70%,#000 30%) 0%,transparent 70%);mix-blend-mode:multiply}
 .porte-t{display:block;flex:1 1 auto;min-width:0;font-stretch:125%;font-weight:900;font-size:clamp(24px,2.5vw,40px);line-height:1.02;letter-spacing:-.01em;text-transform:uppercase;text-wrap:balance}
+.porte-t small{display:block;margin-top:10px;font-stretch:100%;font-weight:700;font-size:clamp(14px,1.1vw,16px);letter-spacing:.06em;line-height:1.3}
 .porte .ico{width:clamp(28px,2.4vw,40px);height:clamp(28px,2.4vw,40px);transition:transform .3s}
 .porte:hover .porte-ph img{transform:scale(1.05)}
 .porte:hover .ico{transform:translateX(6px)}
 .porte:focus-visible{outline-offset:-8px}
-.choix li+li .porte{box-shadow:inset 2px 0 0 rgba(255,255,255,.55)}
+.ep-pages li+li .porte{box-shadow:inset 2px 0 0 rgba(255,255,255,.55)}
 
 /* les spectacles dans leurs univers (tuiles de l'accueil) */
 .tuiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,1.4vw,20px);margin:0;padding:0;list-style:none}
@@ -848,6 +849,206 @@ html[data-mv-transition="onglet"] .onglet[aria-current="page"]{view-transition-n
 .ep:is(:hover,:focus-within) .ico{transform:translateX(6px)}
 .ed-actif .ep-a::after{display:none}
 @media (max-width:860px){.eps{grid-template-columns:minmax(0,1fr)}.ep{min-height:220px}.ep+.ep{box-shadow:inset 0 2px 0 rgba(255,255,255,.55)}}
+
+/* ———— les saisons (règle 21) : tout l'agenda sur une page. La saison en cours sur l'aplat de la tache (sa marque : la couleur de
+   la saison, règle 22), sa frise (une seule ligne du temps, chaque date une pastille pleine à la couleur de son spectacle) et sa
+   légende ; puis, à côté de la carte-affiche, ses prochaines dates à choisir (règle 17) et toutes ses dates ; enfin les saisons
+   passées, chacune fermée sous sa petite carte ———— */
+.s0{padding:clamp(26px,3.2vw,46px) 0 clamp(30px,3.4vw,50px)}
+.s0 .sep{max-width:440px;margin-bottom:clamp(14px,1.8vw,22px)}
+.s0-t{font-size:clamp(40px,6.2vw,100px)}
+.s0-k{margin-bottom:10px}
+.fs{margin-top:clamp(18px,2.2vw,30px)}
+.fs-f{min-height:154px}
+.fs-leg{display:flex;flex-wrap:wrap;gap:8px 24px;margin:12px 0 0;padding:14px 0 0;border-top:2px solid rgba(255,255,255,.45);list-style:none}
+.fs-l{display:inline-flex;align-items:center;gap:10px;min-height:30px;font-stretch:112%;font-weight:800;font-size:14.5px;letter-spacing:.04em;line-height:1.2;text-transform:uppercase;transition:opacity .16s}
+.fs-l i{flex:none;width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #fff}
+.fs-l b{font-weight:700;font-size:13px}
+.fs-l.est-vide{opacity:.5}
+.fs-l.fs-sc i{border-radius:2px;background:none;box-shadow:inset 0 0 0 2.5px #fff}
+.frise.est-filtre .frise-point:not(.est-sp){opacity:.18}
+.ag-h{display:flex;align-items:center;gap:16px;margin:clamp(44px,5vw,68px) 0 14px;color:var(--accg);font-size:clamp(26px,3vw,46px)}
+.ag-h:first-child{margin-top:0}
+.ag-h::after{content:"";flex:1;height:4px;background:currentColor}
+.auj-l{display:flex;align-items:center;gap:12px;margin:18px 0 6px;color:var(--tache-txt);font-stretch:125%;font-weight:900;font-size:12.5px;letter-spacing:.16em;line-height:1;text-transform:uppercase;list-style:none}
+.auj-l::after{content:"";flex:1;height:4px;background:currentColor}
+.r.est-passe .r-big,.r.est-passe .r-lieu{color:var(--fg2)}
+.saisons-ag>.ag-carte{top:calc(var(--head) + 18px)}
+/* une date à choisir (règle 17) : une pièce rectangulaire, le jour en grandes capitales, l'horaire dessous ; choisie, elle prend
+   l'aplat de son spectacle et sa carte s'ouvre sous sa ligne */
+.r.rs-li{align-items:start}
+.rs-date--ligne{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;max-width:210px;padding:12px 14px;border:2px solid var(--encre);border-radius:4px;background:var(--papier);color:var(--encre);text-align:left;cursor:pointer;transform-origin:0 50%;transition:background-color .16s,color .16s,border-color .16s}
+.rs-date--ligne .rs-q{display:flex;flex-direction:column;align-items:flex-start}
+.rs-date--ligne .rs-s{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--fg2)}
+.rs-date--ligne .rs-n{font-stretch:125%;font-weight:900;font-size:clamp(22px,2vw,30px);line-height:1.02}
+.rs-date--ligne .rs-m{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.rs-date--ligne .rs-h{display:block;align-self:stretch;margin-top:6px;padding-top:6px;border-top:2px solid currentColor;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.rs-date--ligne .rs-h--sans{font-weight:600;color:var(--fg2)}
+.rs-date--ligne .rs-o{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.rs-date--ligne:hover{border-color:var(--tache-txt)}
+.rs-date--ligne:focus-visible{outline:3px solid var(--tache-txt);outline-offset:3px}
+.rs-date--ligne[aria-pressed="true"]{border-color:var(--u-aplat);background:var(--u-aplat);color:var(--u-sur)}
+.rs-date--ligne[aria-pressed="true"] :is(.rs-s,.rs-h--sans){color:inherit}
+.rs-ici{grid-column:1/-1;margin-top:12px}
+
+/* ———— réserver une date (règle 17) : sur la page d'un spectacle, la bande de ses prochaines dates, chacune une pièce d'aplat (le
+   jour en grandes capitales, l'horaire, la commune) ; la carte de la date choisie dessous. La signature de la maquette : un aplat
+   balaie la carte (à la couleur du spectacle choisi), les séances et « Réserver » glissent et se serrent en place ———— */
+.rs-zone{margin-top:clamp(18px,2vw,28px)}
+.rs-k-bande{margin:0 0 10px;color:var(--u-vif)}
+.rs-bande{gap:10px;padding:2px 2px 14px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--u-texte) 35%,transparent) transparent}
+.rs-bande .rs-date{align-items:flex-start;width:168px;min-height:156px;padding:14px 16px;border:2px solid color-mix(in srgb,var(--u-texte) 42%,transparent);border-radius:4px;background:transparent;color:var(--u-texte);text-align:left;transform-origin:0 50%;transition:background-color .16s,color .16s,border-color .16s}
+.rs-bande .rs-q{display:flex;flex-direction:column;align-items:flex-start}
+.rs-bande .rs-s{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--u-texte2)}
+.rs-bande .rs-n{font-stretch:125%;font-weight:900;font-size:36px;line-height:1;white-space:nowrap}
+.rs-bande .rs-m{font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.rs-bande .rs-h{display:block;align-self:stretch;margin-top:8px;padding-top:8px;border-top:2px solid currentColor;font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.rs-bande .rs-h--sans{font-weight:600;color:var(--u-texte2)}
+.rs-bande .rs-o{display:block;max-width:100%;margin-top:4px;overflow:hidden;font-size:13px;font-weight:700;color:var(--u-texte2);white-space:nowrap;text-overflow:ellipsis}
+.rs-bande .rs-date:hover{border-color:var(--u-grand)}
+.rs-bande .rs-date:focus-visible{outline:3px solid var(--u-texte);outline-offset:3px}
+.rs-bande .rs-date[aria-pressed="true"]{border-color:var(--u-aplat);background:var(--u-aplat);color:var(--u-sur)}
+.rs-bande .rs-date[aria-pressed="true"] :is(.rs-s,.rs-o,.rs-h--sans){color:inherit}
+.rs-corps{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,3vw,48px);align-items:start;margin-top:14px}
+/* la carte d'une date : un carton dans l'univers du spectacle (son fond, sa police de titre, sa photo en fond discret) */
+.rs-carte{position:relative;isolation:isolate;overflow:hidden;min-height:240px;background:var(--u-fond2);color:var(--u-texte);box-shadow:inset 0 0 0 1px var(--ligne),0 18px 40px -26px rgba(0,0,0,.6)}
+.rs-photo{inset:0 0 0 auto;width:48%;height:100%;opacity:.26;-webkit-mask-image:linear-gradient(90deg,transparent,#000 75%);mask-image:linear-gradient(90deg,transparent,#000 75%)}
+.rs-c{position:relative;display:flex;flex-direction:column;align-items:stretch;max-width:36rem;padding:clamp(22px,2.6vw,34px)}
+.rs-sp{margin:0;font-family:var(--u-police);font-weight:var(--u-graisse);text-transform:var(--u-casse);font-size:clamp(28px,2.8vw,42px);line-height:1;color:var(--u-grand);overflow-wrap:break-word}
+.rs-sp a{color:inherit;text-decoration:none}
+.rs-sp a:hover{text-decoration:underline;text-decoration-thickness:2px}
+.rs-quand{margin:12px 0 0;font-stretch:125%;font-weight:900;font-size:clamp(19px,1.7vw,24px);line-height:1.1;text-transform:uppercase}
+.rs-etat{margin-left:8px;font-style:normal;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--u-vif)}
+.rs-ou{margin:6px 0 0;font-size:16px;line-height:1.45;color:var(--u-texte2)}
+.rs-lieu{color:var(--u-texte);font-weight:700}
+.rs-det{margin:8px 0 0;padding:0;list-style:none;font-size:15px;line-height:1.45;color:var(--u-texte2)}
+.rs-seances{margin:18px 0 0}
+.rs-k{margin:0 0 8px;font-size:12.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--u-vif)}
+.rs-seances--sans{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.rs-seances--sans .rs-k{margin:0}
+.rs-sans{font-weight:700}
+.rs-liste{gap:8px}
+.rs-seance{display:inline-flex;align-items:baseline;gap:8px;min-height:46px;padding:10px 16px;border:2px solid var(--u-texte);border-radius:4px;color:var(--u-texte);text-decoration:none;transition:background-color .16s,color .16s}
+a.rs-seance:hover{background:var(--u-texte);color:var(--u-fond)}
+a.rs-seance:hover .rs-sj{color:inherit}
+a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
+.rs-sh{font-stretch:125%;font-weight:900;font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.rs-sh--sans{font-size:15px}
+.rs-sj{font-size:14px;color:var(--u-texte2)}
+.rs-seance.est-scolaire{border-style:dashed;color:var(--u-texte2)}
+.rs-scol{padding:1px 8px;border:1.5px solid currentColor;border-radius:999px;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.rs-action{margin:22px 0 0}
+.rs-reserver,.u .rs-reserver{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:70px;padding:12px 20px 12px 24px;border-radius:4px;background:var(--u-aplat);color:var(--u-sur);text-decoration:none;transform-origin:0 50%}
+.rs-reserver:focus-visible{outline:3px solid var(--u-texte);outline-offset:3px}
+.rs-r1{font-stretch:125%;font-weight:900;font-size:clamp(22px,2vw,28px);line-height:1;letter-spacing:.02em;text-transform:uppercase}
+.rs-r2{margin-top:6px;font-size:14px;font-weight:700}
+.rs-reserver .rs-sep{opacity:1}
+.rs-reserver .rs-fleche{width:30px;height:30px;stroke-width:2.2;transition:transform .2s var(--mv-courbe)}
+.rs-reserver:hover .rs-fleche{transform:translateX(6px)}
+.rs-aupres{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding-top:12px;border-top:2px solid var(--ligne);font-size:15px;line-height:1.4;color:var(--u-texte2)}
+.rs-aupres b{color:var(--u-texte);font-weight:800}
+/* l'aplat qui balaie (effetReserver) : à la couleur du spectacle choisi, il traverse la carte et la découvre ; les séances et
+   « Réserver » glissent et se serrent en place. Moins d'animations : un fondu bref */
+.rs-balai{position:absolute;inset:0;z-index:4;pointer-events:none;background:var(--rs-balai,var(--u-aplat));transform:translateX(101%)}
+.rs-balaie .rs-balai{animation:rs5-balai .44s cubic-bezier(.62,0,.32,1) both}
+.rs-balaie :is(.rs-sp,.rs-quand,.rs-liste>li,.rs-action){animation:rs5-pose .36s var(--mv-courbe) backwards;animation-delay:calc(170ms + var(--rs-i,0) * 40ms)}
+.rs-balaie .rs-quand{--rs-i:1}.rs-balaie .rs-liste>li:nth-child(1){--rs-i:2}.rs-balaie .rs-liste>li:nth-child(2){--rs-i:3}.rs-balaie .rs-liste>li:nth-child(n+3){--rs-i:4}.rs-balaie .rs-action{--rs-i:5}
+@keyframes rs5-balai{from{transform:translateX(0)}to{transform:translateX(101%)}}
+@keyframes rs5-pose{from{opacity:0;transform:translateX(-18px) scaleX(1.1)}}
+@media (max-width:900px){.rs-corps{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.rs-bande .rs-date{width:142px;min-height:140px;padding:12px}.rs-bande .rs-n{font-size:30px}.rs-date--ligne{max-width:15rem}}
+
+/* ———— les vidéos dans la page (règle 18, LECTEUR) : l'écran en carton, le bouton de lecture en pastille d'aplat ; au geste, un
+   aplat à la couleur du spectacle découvre la vidéo ; la page s'éteint d'un coup sec autour d'elle ———— */
+.lc{margin:0}
+.lc-cadre{border-radius:4px;background:var(--video);box-shadow:0 18px 40px -26px rgba(0,0,0,.6)}
+.lc-cadre:fullscreen{border-radius:0}
+.lc-affiche{filter:brightness(.7) saturate(.95);transition:transform .5s,filter .3s}
+.lc-lire:hover .lc-affiche{transform:scale(1.03);filter:brightness(.6)}
+.lc-lire:focus-visible{outline:3px solid var(--u-texte,var(--encre));outline-offset:-6px}
+.lc-icone{width:clamp(72px,7vw,104px);height:clamp(72px,7vw,104px);border-radius:50%;background:var(--u-aplat,var(--tache));color:var(--u-sur,#fff);transition:transform .3s}
+.lc-lire:hover .lc-icone{transform:translate(-50%,-50%) scale(1.08)}
+.lc-titre{left:24px;right:24px;bottom:20px;font-stretch:125%;font-weight:900;font-size:clamp(17px,1.6vw,24px);line-height:1.1;text-transform:uppercase;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+.lc-outils{gap:10px;margin-top:12px}
+.lc-b{min-height:44px;padding:0 18px 0 14px;border:2px solid var(--u-texte,var(--encre));border-radius:999px;background:transparent;color:var(--u-texte,var(--encre));font-stretch:112%;font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.lc-b:hover{background:var(--u-texte,var(--encre));color:var(--u-fond,var(--papier))}
+.lc-b:focus-visible{outline:3px solid var(--u-texte,var(--encre));outline-offset:2px}
+.lc.lc-eteint .lc-nuit-b{border-color:var(--u-aplat,var(--tache));background:var(--u-aplat,var(--tache));color:var(--u-sur,#fff)}
+.lc.lc-eteint .lc-cadre{box-shadow:0 0 0 4px var(--u-aplat,var(--tache))}
+.lc.lc-joue .lc-affiche{opacity:0}
+.lc-nuit{background:var(--video-voile)}
+.lc-balai{position:absolute;inset:0;z-index:2;pointer-events:none;background:var(--u-aplat,var(--tache))}
+.lc-balai.part{animation:lc5-balai .46s cubic-bezier(.62,0,.32,1) forwards}
+@keyframes lc5-balai{to{transform:translateX(101%)}}
+.lc-groupe{margin:clamp(30px,3.4vw,44px) 0 0;color:var(--u-vif);font-stretch:125%;font-weight:900;font-size:clamp(18px,1.6vw,22px);letter-spacing:.04em;text-transform:uppercase}
+.lc-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:18px;margin-top:16px}
+.lc-grille .lc-icone{width:56px;height:56px}
+.lc-grille .lc-titre{left:14px;right:14px;bottom:12px;font-size:14px}
+.lc-grille .lc-outils{gap:6px;margin-top:8px}
+.lc-grille .lc-b{padding:0 12px}
+.lc-grille .lc-b span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.lc-boite::backdrop{background:var(--video-voile)}
+.lc-boite .lc-b{border-color:rgba(255,255,255,.6);color:#fff}
+.lc-boite .lc-b:hover{background:#fff;color:#000}
+.lc-boite .lc-cadre{box-shadow:none}
+.medias-l{margin-top:clamp(24px,2.6vw,34px)}
+
+/* ———— la troupe (règle 20, TROUPE) : l'organigramme en aplats. La tache de la marque, la pieuvre blanche dessus, d'où part la
+   ligne-tentacule ; chaque catégorie de métiers, un aplat (son icône dans une pastille blanche, son titre en capitales larges),
+   ceux qui y travaillent dessous en capitales, le métier précis à côté (une vignette carrée quand la photo est publiée, sinon
+   le nom seul). Les aplats glissent et se serrent à leur arrivée dans l'écran (animations liées au défilement) ; survoler
+   quelqu'un allume toutes ses places et les relie (TROUPE.relier) ———— */
+.troupe5{position:relative;--troupe-lien:var(--tache-txt);--troupe-ic-fond:#fff}
+.tr5-racine{display:flex;align-items:center;gap:clamp(14px,2vw,26px);margin-bottom:28px;padding:14px clamp(16px,2vw,24px);background:var(--tache);color:#fff;--sep:#fff}
+.tr5-logo{flex:none;width:clamp(96px,11vw,150px)}
+.tr5-logo svg{display:block;width:100%;height:auto}
+.tr5-racine .sep{flex:1;min-width:0}
+.tr5-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:34px clamp(16px,2vw,28px);align-items:start}
+.tr5-cat{position:relative;z-index:2;min-width:0}
+.tr5-jeu{grid-column:span 2}
+.tr5-tete{display:flex;align-items:center;gap:14px;margin-bottom:6px;padding:12px 14px;background:var(--tache);color:#fff;transform-origin:0 50%}
+.tr5-ic{flex:none;display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#fff;color:var(--tache-deep)}
+.tr5-ic .troupe-icone{width:32px;height:32px}
+.tr5-t{min-width:0;font-stretch:125%;font-weight:900;font-size:clamp(16px,1.35vw,20px);line-height:1.05;text-transform:uppercase;text-wrap:balance}
+.tr5-places{display:grid;margin:0;padding:0;list-style:none}
+.tr5-jeu .tr5-places{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:clamp(14px,1.6vw,24px)}
+.tr5-li{min-width:0}
+.tr5-place{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:46px;margin:0;padding:8px 6px 8px 2px;border:0;border-bottom:1px solid var(--ligne);background:none;color:var(--encre);font:inherit;text-align:left;cursor:pointer;transition:opacity .16s,background-color .16s}
+.tr5-v{flex:none;display:block;width:48px;height:48px;overflow:hidden;background:var(--tache)}
+.tr5-v img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 22%;filter:grayscale(1) contrast(1.05);transition:filter .2s}
+.tr5-pt{flex:none;width:10px;height:10px;margin:0 8px 0 4px;background:var(--tache-txt)}
+.tr5-qui{display:grid;gap:2px;min-width:0}
+.tr5-nom{font-stretch:112%;font-weight:800;font-size:15px;line-height:1.2;letter-spacing:.03em;text-transform:uppercase;overflow-wrap:anywhere}
+.tr5-m{font-size:13.5px;line-height:1.35;color:var(--encre2)}
+.tr5-m>span+span::before{content:" · "}
+.tr5-place:is(:hover,.est-allume){background:color-mix(in srgb,var(--tache-txt) 10%,transparent)}
+.tr5-place:is(:hover,.est-allume) .tr5-nom{color:var(--tache-txt)}
+.tr5-place:is(:hover,.est-allume,[aria-pressed="true"]) .tr5-v img{filter:none}
+.tr5-place[aria-pressed="true"]{box-shadow:inset 4px 0 0 var(--tache-txt)}
+.tr5-place:focus-visible{outline:3px solid var(--tache-txt);outline-offset:2px}
+.troupe5.est-allume .tr5-place:not(.est-allume),.troupe5.est-groupe .tr5-place:not(.est-allume){opacity:.4}
+.troupe5 .troupe-lien{stroke-width:2}
+@supports (animation-timeline:view()){
+  html:not(.m5-fixe) .tr5-tete{animation:tr5-serre linear both;animation-timeline:view();animation-range:entry 0% cover 28%}
+}
+@keyframes tr5-serre{from{transform:translateX(-26px) scaleX(1.14);opacity:.25}to{transform:none;opacity:1}}
+@media (max-width:640px){.tr5-jeu{grid-column:auto}.tr5-jeu .tr5-places{grid-template-columns:minmax(0,1fr)}.tr5-racine{padding:10px 14px}}
+
+/* ———— le bilan d'un spectacle qui n'est plus en tournée (règle 21) : ses chiffres en aplats, la frise de sa tournée, ses dates par
+   saison à côté de la carte-affiche de tous ses lieux ; puis les actions culturelles menées ———— */
+.bilan-rep{margin:0 0 20px;font-size:clamp(19px,1.6vw,22px);font-weight:600;line-height:1.3}
+.bilan-n{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:720px;margin:0 0 clamp(24px,3vw,36px);padding:0;list-style:none}
+.bilan-n li{display:flex;flex-direction:column;justify-content:flex-end;gap:8px;min-height:132px;padding:16px 18px;background:var(--u-aplat);color:var(--u-sur)}
+.bilan-n b{font-stretch:125%;font-weight:900;font-size:clamp(46px,5vw,76px);line-height:.9;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.bilan-n span{font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.bilan-g{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,6fr);gap:clamp(24px,3vw,48px);align-items:start;margin-top:22px}
+.bilan-carte{position:sticky;top:calc(var(--head) + 24px)}
+.bl-s+.bl-s{margin-top:34px}
+.bl-t{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:3px solid var(--u-grand);color:var(--u-grand);font-stretch:125%;font-weight:900;font-size:clamp(20px,1.8vw,26px);line-height:1.05;text-transform:uppercase}
+.bl-t small{font-size:15px;color:var(--u-texte2)}
+.ac-sc-h{margin:28px 0 6px;color:var(--u-vif)}
+@media (max-width:900px){.bilan-g{grid-template-columns:minmax(0,1fr)}.bilan-carte{position:static;order:-1}}
+@media (max-width:480px){.bilan-n li{min-height:96px;padding:12px 10px}.bilan-n span{font-size:11px;letter-spacing:.05em}}
 
 .intro.m05-intro .intro-indice{opacity:1}
 
