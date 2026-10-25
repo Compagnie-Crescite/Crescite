@@ -620,11 +620,13 @@ def build_data():
 
     a = site["accueil"]
     noms_saisons = next(m for m in site["menu"] if m["texte"].startswith("Saison"))["sous"]
+    th = theme()
     D = {
         "saison": D_SAISON, "aujourdhui": today,
         "site": {
             "nom": a["coordonnees"]["nom"], "titreSuffixe": "crescite", "accueil": "Accueil",
-            "entrees": ENTREES, "menu": MENU, "redirections": REDIRECTIONS,
+            "entrees": [dict(e, couleur=th["couleur"], couleurVive=th["vive"]) if e["cle"] == "voir" else e for e in ENTREES],
+            "menu": MENU, "redirections": REDIRECTIONS,
             "diaporama": [{"slug": d["lien"].replace("#/spectacle/", "") if d.get("lien") else None, "surtitre": d["surtitre"],
                            "titre": d["titre"], "bouton": d["bouton"], "credit": d["credit"], "href": d["lien"]} for d in a["diaporama"]],
             "donateurs": a["donateurs"][0] if a.get("donateurs") else None,
@@ -645,7 +647,7 @@ def build_data():
             # l'adresse publique de la compagnie ; le téléphone seulement si l'administration le saisit dans la base
             # le thème de la saison (règle 22) : les couleurs de la création la plus récente (aujourd'hui Cassandres) ;
             # « couleur » sur fond clair, en texte et sous la pieuvre blanche du logo, « vive » sur fond sombre
-            "couleurSaison": theme(),
+            "couleurSaison": th,
             "programmation": {"contact": {"nom": "Barbara Daussy", "role": "Administratrice", "email": "contact@crescite.fr",
                                           "telephone": None}},
             # l'espace pro (#/espace-pro, dans le menu) : trois portes vers les espaces réservés, hors des maquettes
@@ -1055,6 +1057,7 @@ def build_planche(D, photo_urls, names, web=False, dest=None):
         data = {"D": dict(D, photos=photo_urls), "sources": {n: avec_outils(n, (SRC / f"{n}.html").read_text(encoding="utf-8")) for n in names}}
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     html = html.replace("/*__PLANCHE__*/null", payload)
+    html = html.replace("</head>", f"<style>:root {{ --saison: {theme()['couleur']}; }}</style>\n</head>", 1)
     if web:
         html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
     out = dest or DIST / "maquettes.html"

@@ -205,9 +205,10 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   }));
 
   /* À propos : le mode d'emploi de la maquette affichée, en quelques parties courtes, chacune avec son schéma */
-  // les nouveautés qu'une maquette a déjà en ligne (réserver une date, les vidéos dans la page, le jour et la nuit, la
-  // troupe) : le mode d'emploi n'en parle que là ; les onze les ont toutes aujourd'hui
-  const TOUT = ['reserver', 'videos', 'jour', 'troupe'];
+  // les nouveautés qu'une maquette a déjà en ligne (réserver une date, les vidéos dans la page, la troupe) : le mode
+  // d'emploi n'en parle que là ; les onze les ont toutes aujourd'hui. (Le jour et la nuit : retirés du site public, qui
+  // n'a plus que son thème sombre.)
+  const TOUT = ['reserver', 'videos', 'troupe'];
   const AVEC = Object.fromEntries(TOUTES.map(m => [m.n, TOUT]));
   const a = (m, f) => (AVEC[m.n] || []).includes(f);
   const etapes = l => `<ol class="schema flux">${l.map(x => `<li>${x}</li>`).join('')}</ol>`;
@@ -239,9 +240,9 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <li>Les spectacles de la légende servent de filtre ; la recherche par ville porte sur tout l’agenda.</li>
         ${a(m, 'reserver') ? '' : '<li>Les dates de la saison renvoient à la page du théâtre qui les accueille.</li>'}
       </ul>`]);
-    if (a(m, 'videos') || a(m, 'jour') || a(m, 'troupe')) parties.push(['Regarder', `<ul class="points">
+    if (a(m, 'videos') || a(m, 'troupe')) parties.push(['Regarder', `<ul class="points">
         ${a(m, 'videos') ? '<li>Les vidéos se lisent dans la page : « Plein écran », et « Assombrir », qui éteint le reste de la page.</li>' : ''}
-        ${a(m, 'jour') ? '<li>Le bouton du soleil et de la lune, en haut, passe le site en jour ou en nuit ; le choix est gardé.</li>' : ''}
+        <li>Le site est en thème sombre, sur toutes ses pages.</li>
         ${a(m, 'troupe') ? '<li>« La compagnie » présente toute la troupe, par métiers.</li>' : ''}
       </ul>`]);
     parties.push(['Modifier le site', `${etapes([
@@ -312,7 +313,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     { cle: 'bilan', titre: 'Un spectacle qui n’est plus en tournée', quoi: 'La Folle Idée : sa présentation et ses dates passées', route: '#/spectacle/la-folle-idee' },
     { cle: 'compagnie', titre: 'La compagnie et la troupe', quoi: 'la présentation, la troupe, les repères', route: '#/compagnie' },
     { cle: 'pro', titre: 'L’espace pro', quoi: 'programmer, établissements scolaires, espaces réservés', route: '#/espace-pro' },
-    { cle: 'allure', titre: 'L’allure générale', quoi: 'les caractères, les couleurs, le jour et la nuit', route: '#/' },
+    { cle: 'allure', titre: 'L’allure générale', quoi: 'les caractères, les couleurs du thème sombre', route: '#/' },
     { cle: 'mouvement', titre: 'Le mouvement', quoi: 'les passages d’une page à l’autre, les effets', route: '#/' },
   ];
   const CLE_CHOIX = 'crescite-composition', CLE_NOTES = 'crescite-composition-notes';

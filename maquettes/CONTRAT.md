@@ -441,19 +441,20 @@ réserver, avec un effet visuel lié au spectacle qu'on choisit. »
 - Où : partout où une vidéo apparaît aujourd'hui (la page d'un spectacle, ses médias) ; une seule vidéo joue à la fois.
 - Le mouvement de ta signature (règle 15) habille l'extinction et l'arrivée de la vidéo ; « moins d'animations » : sans.
 
-## Règle 19 : le mode jour et nuit, partout (demande du client)
-« Ajoute un mode lumineux jour/nuit en raccourci dans le menu partout sur le site. »
-- Un bouton dans le menu, sur toutes les vues (en-tête ou menu second, toujours à portée, au téléphone aussi), avec une
-  icône soleil et lune et un libellé de D pour les lecteurs d'écran. Il bascule entre jour et nuit.
-- Au départ : le réglage de l'appareil (prefers-color-scheme) ; ensuite le choix est gardé (localStorage, clé
-  `crescite-theme`, dans un try), et posé en `data-theme="jour"|"nuit"` sur `<html>` avant le premier dessin (pas d'éclair).
-- Chaque maquette dessine ses DEUX palettes, dans son style : une maquette née sombre (07) invente son jour, une née claire
-  invente sa nuit ; les univers des spectacles restent lisibles dans les deux (couleurs claires ou sombres de D), les
-  photos et la carte aussi. Contraste AA partout.
-- La bascule se voit : une transition de vue qui part du bouton (un cercle qui s'ouvre, ou la signature de ta maquette),
-  brève ; « moins d'animations » : instantané. Aucun saut de mise en page.
-- Outil commun `maquettes/src/theme.js` (THEME) : le choix, la mémoire, l'icône, la transition ; chaque maquette ne fait que
-  ses palettes et la place du bouton.
+## Règle 19 : la nuit, seule, sur le site public (demande du client)
+« Supprime le mode jour nuit pour le site public. Ne le laisse que pour les interfaces personnelles, administrateur et
+comédien. Ne mets que le thème sombre sur le site. » (octobre 2026 ; elle remplace « un mode jour/nuit partout »)
+- Le site public (les maquettes, la synthèse) n'a qu'un thème : la nuit de chaque maquette. Aucun bouton jour/nuit, nulle
+  part ; rien à prévoir pour lui dans l'en-tête ou le menu.
+- `data-theme="nuit"` est posé sur `<html>` avant le premier dessin (pas d'éclair), quel que soit le réglage de l'appareil
+  ou un choix « jour » gardé d'une visite d'avant (la clé `crescite-theme` est effacée). Outil commun
+  `maquettes/src/theme.js` (THEME : `actuel()` vaut `'nuit'`, `seul` vaut `true`, `bouton()` ne dessine plus rien).
+- Chaque maquette soigne sa nuit, dans son style : une maquette née claire garde son caractère dans le sombre. Les univers
+  des spectacles restent lisibles (couleurs sombres de D), les photos et la carte aussi. Contraste AA partout (l'opacité des
+  parents d'un texte comprise).
+- Les palettes de jour qui restent dans une maquette ne servent plus : on ne les soigne plus, on peut les retirer.
+- L'administration, l'espace de l'équipe et l'espace des salles gardent le jour et la nuit : ils suivent le réglage de
+  l'appareil (`prefers-color-scheme`).
 
 ## Règle 20 : la troupe, sur la page de la compagnie (demande du client)
 « Ajoute dans la présentation de la compagnie l'ensemble des membres des équipes, avec une vignette seulement s'il y a
@@ -575,7 +576,7 @@ sauge, Cassandre bleu, Cléophène rose saumon, Macbeth rouge sang ; La Folle Id
 - **Le logo n'est plus magenta, ni posé sur du magenta.** `D.logo.full` et `D.logo.mark` ont leur tache à `couleur`
   (`<path class="logo-tache">`, qu'un style peut recolorer en direct) ; l'ouverture (`INTRO`, `tache: true`) aussi ; la
   pieuvre seule prend `couleur` sur fond clair, `vive` ou le blanc sur fond sombre. Plus aucun `#bc3e80` (ni magenta
-  de marque) dans une maquette : remplace-les par le thème. Contraste AA comme partout (règle 19, de jour et de nuit).
+  de marque) dans une maquette : remplace-les par le thème. Contraste AA comme partout (règle 19, la nuit).
 
 ## Les contrôles des règles 17 à 20
 Le vérificateur (`maquettes/onglets.mjs`) ne contrôle chaque règle que si sa variable d'environnement est posée

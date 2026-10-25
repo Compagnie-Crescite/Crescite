@@ -96,12 +96,14 @@ async function cibler(page, quoi) {
     else if (quoi === 'spectacle') el = premier(['main a[href^="#/spectacle/"]']);
     else if (quoi === 'saison') el = premier(['main details:not([open]) > summary', 'main [aria-expanded="false"]:not(header *)']);
     else if (quoi === 'date') el = premier(['main button[data-reserver][aria-pressed="false"]']);
-    else if (quoi === 'filtre') el = premier(['main button[aria-pressed="false"]']);
+    else if (quoi === 'filtre') el = premier(['main button[aria-pressed="false"]:not([data-reserver])']);
     else if (quoi === 'recherche') el = premier(['main input[type="search"]', 'main input[placeholder]']);
     if (!el) return false;
     el.setAttribute('data-reactivite', 'cible');
     el.scrollIntoView({ block: 'center', behavior: 'instant' });
-    return true;
+    // le geste part sans les vérifications de Playwright (force) : la cible doit être celle qu'on touche, en son centre
+    const r = el.getBoundingClientRect(), dessus = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+    return !!dessus && (dessus === el || el.contains(dessus));
   }, quoi);
 }
 
@@ -124,7 +126,7 @@ export async function mesurer(browser, n, { dist, profil = 'bureau' } = {}) {
   const charge = await page.evaluate(() => ({ fcp: Math.round(window.__mesures.paints['first-contentful-paint'] || 0), lcp: Math.round(window.__mesures.lcp || 0),
     taches: window.__mesures.longtasks.length, tacheMax: Math.round(Math.max(0, ...window.__mesures.longtasks.map(e => e.d))) }));
   const gestes = [];
-  const toucher = async () => { const l = page.locator('[data-reactivite="cible"]'); if (P.hasTouch) await l.tap(); else await l.click(); };
+  const toucher = async () => { const l = page.locator('[data-reactivite="cible"]'); if (P.hasTouch) await l.tap({ force: true }); else await l.click({ force: true }); };
   async function geste(nom, faire, { h1 = true } = {}) {
     await page.evaluate(h => window.__debutGeste(h), h1);
     const fait = await faire();
@@ -168,7 +170,7 @@ export function depassements(m) {
     if (g.absent) continue;
     if (g.inp >= inpMax) out.push(`${m.maquette} ${m.profil} ${g.nom} : INP ${g.inp} ms (budget < ${inpMax} ms)`);
     if (bureau && g.navigation && (g.contenu == null || g.contenu >= BUDGETS.contenuBureau)) out.push(`${m.maquette} ${m.profil} ${g.nom} : contenu ${g.contenu == null ? 'jamais vu' : g.contenu + ' ms'} (budget < ${BUDGETS.contenuBureau} ms)`);
-    if (bureau && g.tacheMax > BUDGETS.tacheGeste) out.push(`${m.maquette} ${m.profil} ${g.nom} : tâche de ${g.tacheMax} ms pendant le geste (budget ≤ ${BUDGETS.tacheGeste} ms)`);
+    if (bureau && g.tacheMax > BUDGETS.tacheGeste) out.push(`${m.maquette} ${m.profil} ${g.nom} : tâche de ${g.tacheMax} ms pendant le geste (budget ≤ ${BUDGETS.tacheGeste} ms)${m.chargeMachine && m.chargeMachine[0] > 4 ? ` — machine chargée (${m.chargeMachine[0]})` : ''}`);
   }
   for (const e of m.erreurs) out.push(`${m.maquette} ${m.profil} : erreur ${e}`);
   return out;

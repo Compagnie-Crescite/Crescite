@@ -35,7 +35,7 @@ const EDITION = (() => {
 
   // ----------------------------------------------------------------------------------------------- styles
   const STYLE = `
-  :root { --ed-fond-d: var(--ed-fond, #fff); --ed-encre-d: var(--ed-encre, #1d1720); --ed-accent-d: var(--ed-accent, #a8306f);
+  :root { --ed-fond-d: var(--ed-fond, #fff); --ed-encre-d: var(--ed-encre, #1d1720); --ed-accent-d: var(--ed-accent, #1d1720);
     --ed-sur-d: var(--ed-sur-accent, #fff); --ed-police-d: var(--ed-police, system-ui, sans-serif); --ed-rayon-d: var(--ed-rayon, 12px);
     --ed-trait-d: var(--ed-trait, rgba(0, 0, 0, .16)); }
   .ed-actif [data-edit] { outline: 1.5px dashed color-mix(in srgb, var(--ed-accent-d) 55%, transparent); outline-offset: 3px; cursor: text; border-radius: 2px; }

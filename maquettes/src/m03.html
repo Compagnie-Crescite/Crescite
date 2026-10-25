@@ -148,6 +148,7 @@ table { border-collapse: collapse; }
 /* le jour et la nuit (règle 19), toujours à portée : au bureau, la dernière case de la barre du menu (qui reste en haut) ; au
    téléphone, le bout de la rangée de la marque (qui y reste) */
 .tete-d { display: none; margin-left: auto; align-items: center; gap: 12px; }
+.tete-d:empty { display: none; }
 .menu-jn { flex: none; display: grid; place-items: center; width: calc(var(--h2) + 16px); border-left: 1px solid var(--ink); }
 .theme-m03 { flex: none; display: inline-grid; place-items: center; width: 44px; height: 44px; margin: 0; padding: 0; border: 1px solid var(--rule-2); border-radius: 50%;
   background: var(--field); color: var(--ink); cursor: pointer; transition: border-color .15s, color .15s, background-color .15s, transform .15s; }

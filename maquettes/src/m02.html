@@ -139,6 +139,7 @@ html{scroll-padding-top:calc(var(--h-tete) + 16px)}
 .bar{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:stretch;column-gap:24px}
 /* le jour et la nuit : un bouton rond au bout de la ligne, comme les flèches du diaporama */
 .theme-place{display:flex;align-items:center}
+.theme-place:empty{display:none}
 .theme{display:inline-grid;place-items:center;width:44px;height:44px;margin:0;padding:0;border:1px solid var(--rule-paper);border-radius:50%;background:var(--white);color:var(--ink);cursor:pointer;transition:border-color .15s,color .15s}
 .theme:hover{border-color:var(--saison-trait);color:var(--saison-ecrite)}
 .theme .theme-icone{width:20px;height:20px}

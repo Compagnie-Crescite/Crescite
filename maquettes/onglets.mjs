@@ -18,9 +18,9 @@
 // Règle 16 : l'espace pro (#/espace-pro, une page et non plus une redirection) : son h1, ses trois portes et leurs vrais
 // liens vers equipe/, pro/ et admin/ (dans le même onglet), le lien « Espace pro » dans le menu et le pied de page.
 // Règle 17 (REGLE17=1 seulement) : réserver une date, d'un geste (RESERVER) ; règle 18 (REGLE18=1 seulement) : les vidéos se
-// lisent dans le site (LECTEUR). Voir regle17() et regle18() plus bas. Règle 19 (REGLE19=1) : le jour et la nuit (THEME), le
-// bouton sur chaque vue, la bascule gardée, chaque vue relue en nuit, le contraste du texte de jour et de nuit ; règle 20
-// (REGLE20=1) : la troupe sur la page de la compagnie (TROUPE). Voir regle19() et regle20().
+// lisent dans le site (LECTEUR). Voir regle17() et regle18() plus bas. Règle 19 (REGLE19=1) : la nuit seule (THEME), sur
+// chaque vue, d'emblée, sans bouton jour/nuit, et le contraste du texte de nuit ; règle 20 (REGLE20=1) : la troupe sur la
+// page de la compagnie (TROUPE). Voir regle19() et regle20().
 // Au téléphone, chaque vue se relit aussi à 360 px (la largeur visée) : rien ne déborde.
 // Captures : <n>-tab-<vue>.png (ordinateur) et <n>-mtab-<vue>.png (téléphone), <n>-intro.png ; rapport des anomalies.
 // Le contrôle du texte compare chaque texte visible aux textes de D (le site d'origine, le dossier scolaire de Bérénice,
@@ -240,6 +240,7 @@ async function regle18(page, tag, log) {
     await page.evaluate(h => { location.hash = h; }, s.ici);
     await page.waitForTimeout(900);
     const b = page.locator('main figure[data-lecteur] [data-lecteur-lire]').first();
+    if (!(await b.count())) { log.push(`${pfx} ${s.slug} : aucune vidéo lisible dans la page`); continue; }
     await b.scrollIntoViewIfNeeded(); await b.click(); await page.waitForTimeout(500);
     const src = await page.evaluate(() => [...document.querySelectorAll('main iframe')].map(i => i.src));
     const ok = /youtube/.test(s.url) ? /^https:\/\/www\.youtube-nocookie\.com\/embed\//.test(src[0] || '') : /^https:\/\/player\.vimeo\.com\/video\/\d+\?.*dnt=1/.test(src[0] || '');
@@ -307,13 +308,13 @@ async function regle18(page, tag, log) {
 }
 
 // ------------------------------------------------------------------------------------------------ règle 19 (REGLE19=1)
-// Le jour et la nuit (THEME). Sur chaque vue, au premier écran et hors du contenu (en-tête, menu, barre) : un bouton
-// [data-theme-bouton] visible, avec son icône, nommé par un libellé de D (libelles.modeNuit, jour ou nuit) et qui dit son
-// état (aria-pressed : la nuit est mise). La bascule pose data-theme="nuit" sur <html>, assombrit le fond de la page, se
-// garde (localStorage « crescite-theme ») et se retrouve au rechargement, posée avant le premier dessin ; sous « moins
-// d'animations », elle est instantanée. Puis chaque vue se relit en nuit (rien de cassé : son h1, aucun débordement, aucune
-// erreur) ; de jour comme de nuit, le contraste de chaque texte sur son fond (AA : 4,5:1, 3:1 pour un grand texte), quand
-// ce fond est une couleur unie (un texte sur une photo ou un dégradé n'est pas mesuré).
+// La nuit, seule (THEME) : la compagnie a retiré le jour du site public (octobre 2026) ; le jour et la nuit restent à
+// l'administration et aux espaces personnels. Sur chaque vue : data-theme="nuit" sur <html>, posé avant le premier dessin,
+// quel que soit le réglage de l'appareil (clair dans ce navigateur) ou un choix « jour » gardé d'une visite d'avant
+// (localStorage « crescite-theme ») ; un fond de page sombre ; aucun bouton jour/nuit ([data-theme-bouton]) ; rien de
+// cassé (son h1, aucun débordement) ; le contraste de chaque texte sur son fond (AA : 4,5:1, 3:1 pour un grand texte),
+// quand ce fond est une couleur unie (un texte sur une photo ou un dégradé n'est pas mesuré), l'opacité de ses parents
+// comprise.
 const CONTRASTE = `(() => {
   const couleur = s => {
     let m = /^rgba?\\(([^)]+)\\)$/.exec(s || '');
@@ -338,18 +339,21 @@ const CONTRASTE = `(() => {
     for (let i = couches.length - 1; i >= 0; i--) b = sur(couches[i], b);
     return b;
   };
-  const visible = el => { for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity < 1) return false; } return el.getClientRects().length > 0; };
+  // l'opacité qu'il reste au texte : le produit de celles de ses parents (0 : caché, rien à mesurer)
+  const opacite = el => { let o = 1; for (let e = el; e && e !== document.documentElement; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden') return 0; o *= +s.opacity; } return el.getClientRects().length > 0 ? o : 0; };
   const pb = [], vus = new Set();
   const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let t; (t = tw.nextNode()) && vus.size < 5000;) {
     const el = t.parentElement, txt = t.textContent.replace(/\\s+/g, ' ').trim();
     if (!el || txt.length < 2 || vus.has(el) || el.closest('script,style,noscript,svg,.intro,[aria-hidden="true"],.mv-lecteur,[hidden]') || el.matches(':disabled')) continue;
     vus.add(el);
-    if (!visible(el)) continue;
+    const op = opacite(el);
+    if (op < .05) continue;
     // un texte pour les lecteurs d'écran seulement (masqué : 1 px, découpé) n'a pas de contraste à tenir
     const rc = el.getBoundingClientRect(), s = getComputedStyle(el);
     if (rc.width <= 2 || rc.height <= 2 || (s.clipPath || '').startsWith('inset(50%')) continue;
     const b = fond(el), c = couleur(s.color);
+    if (c) c[3] *= op;
     if (!b || !c) continue;
     const k = ratio(sur(c, b), b), grand = parseFloat(s.fontSize) >= 24 || (parseFloat(s.fontSize) >= 18.66 && +s.fontWeight >= 700);
     if (k < (grand ? 3 : 4.5) - .005) pb.push(\`« \${txt.slice(0, 36)} » \${k.toFixed(2)}:1\`);
@@ -363,92 +367,33 @@ async function contrastes(page) {
 }
 async function regle19(page, tag, log) {
   const pfx = `${tag} règle 19`;
-  const bouton = () => page.evaluate(() => {
-    const L = D.site.libelles, noms = [L.modeNuit, L.jour, L.nuit].filter(Boolean);
-    const vis = e => { for (let x = e; x && x !== document.body; x = x.parentElement) { const s = getComputedStyle(x); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; } return e.getClientRects().length > 0; };
-    document.querySelectorAll('[data-r19]').forEach(x => x.removeAttribute('data-r19'));
-    const b = [...document.querySelectorAll('[data-theme-bouton]')].filter(vis).find(x => !x.closest('main, footer'));
-    if (!b) return { absent: true };
-    b.setAttribute('data-r19', '');
-    const r = b.getBoundingClientRect(), nom = (b.getAttribute('aria-label') || b.textContent || '').trim();
-    return { portee: r.bottom > 0 && r.top < innerHeight && r.left >= -1 && r.right <= innerWidth + 1, nom, nomD: noms.includes(nom), presse: b.getAttribute('aria-pressed'),
-      theme: document.documentElement.dataset.theme, icone: !!b.querySelector('svg'), fond: getComputedStyle(document.body).backgroundColor };
-  });
   const aller = async h => { await page.evaluate(h => { location.hash = h; }, h); await page.waitForTimeout(700); };
   const lumFond = f => { const p = (f.match(/[\d.]+/g) || []).map(Number); const c = x => (x /= 255) <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; return .2126 * c(p[0]) + .7152 * c(p[1]) + .0722 * c(p[2]); };
-  const relire = async (theme) => {
-    for (const [vue, hash] of VUES) {
-      await aller(hash);
-      const b = await bouton();
-      if (b.absent) { log.push(`${pfx} ${theme} ${vue} : pas de bouton jour/nuit [data-theme-bouton] visible hors du contenu (en-tête, menu)`); continue; }
-      if (!b.portee) log.push(`${pfx} ${theme} ${vue} : le bouton jour/nuit n'est pas à portée dans le premier écran`);
-      if (!b.nomD) log.push(`${pfx} ${theme} ${vue} : le bouton jour/nuit n'est pas nommé par un libellé de D (« ${b.nom} »)`);
-      if (!b.icone) log.push(`${pfx} ${theme} ${vue} : le bouton jour/nuit n'a pas d'icône`);
-      if (b.theme !== theme) log.push(`${pfx} ${theme} ${vue} : data-theme vaut « ${b.theme} »`);
-      if (b.presse !== String(b.theme === 'nuit')) log.push(`${pfx} ${theme} ${vue} : aria-pressed (${b.presse}) ne dit pas l'état (data-theme ${b.theme})`);
-      const e = await page.evaluate(L => ({ debord: document.documentElement.scrollWidth - L, h1: [...document.querySelectorAll('h1')].some(h => h.getClientRects().length) }), page.viewportSize().width);
-      if (e.debord > 1) log.push(`${pfx} ${theme} ${vue} : débordement horizontal de ${e.debord}px`);
-      if (!e.h1) log.push(`${pfx} ${theme} ${vue} : aucun h1 visible`);
-      const pb = await contrastes(page);
-      if (pb.length) log.push(`${pfx} ${theme} ${vue} : contraste insuffisant : ${pb.slice(0, 8).join(', ')}${pb.length > 8 ? ` (+${pb.length - 8})` : ''}`);
-    }
-  };
-  // le jour (le réglage de l'appareil : clair dans ce navigateur), puis la bascule
-  await relire('jour');
-  await aller('#/saisons');
-  const avant = await bouton();
-  if (avant.absent) return;
-  await page.click('[data-r19]');
-  await page.waitForTimeout(800);
-  const apres = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, fond: getComputedStyle(document.body).backgroundColor,
-    garde: (() => { try { return localStorage.getItem('crescite-theme'); } catch (e) { return 'indisponible'; } })(), bascule: document.documentElement.classList.contains('theme-bascule'),
-    presse: (document.querySelector('[data-r19]') || {}).getAttribute ? document.querySelector('[data-r19]').getAttribute('aria-pressed') : null }));
-  if (apres.theme !== 'nuit') log.push(`${pfx} : la bascule ne pose pas data-theme="nuit" (« ${apres.theme} »)`);
-  if (apres.fond === avant.fond || lumFond(apres.fond) > .1) log.push(`${pfx} : la nuit ne change pas le fond de la page (${avant.fond} → ${apres.fond})`);
-  if (apres.garde !== 'nuit') log.push(`${pfx} : le choix n'est pas gardé (localStorage crescite-theme : ${apres.garde})`);
-  if (apres.bascule) log.push(`${pfx} : la transition de la bascule ne se termine pas (html.theme-bascule)`);
-  if (apres.presse !== 'true') log.push(`${pfx} : après la bascule, le bouton ne dit pas « enfoncé » (aria-pressed ${apres.presse})`);
-  // gardé : au rechargement, la nuit est là avant le premier dessin
+  // un choix « jour » gardé d'une visite d'avant, un appareil réglé clair : la nuit quand même, dès le premier dessin
+  await page.evaluate(() => { try { localStorage.setItem('crescite-theme', 'jour'); } catch (e) { /* sans stockage */ } });
   await page.reload({ waitUntil: 'commit' });
   const tot = await page.waitForFunction(() => document.documentElement && document.documentElement.dataset.theme, null, { timeout: 5000 }).then(h => h.jsonValue()).catch(() => null);
   await page.waitForTimeout(1200);
-  if (tot !== 'nuit') log.push(`${pfx} : au rechargement, la nuit n'est pas posée d'emblée (data-theme « ${tot} »)`);
-  // rien de cassé en nuit
-  await relire('nuit');
-  // et le retour au jour
-  await aller('#/');
-  if (!(await bouton()).absent) {
-    await page.click('[data-r19]');
-    await page.waitForTimeout(800);
-    const j = await page.evaluate(() => ({ theme: document.documentElement.dataset.theme, garde: localStorage.getItem('crescite-theme') }));
-    if (j.theme !== 'jour' || j.garde !== 'jour') log.push(`${pfx} : le retour au jour ne se fait pas (${JSON.stringify(j)})`);
+  if (tot !== 'nuit') log.push(`${pfx} : la nuit n'est pas posée d'emblée (data-theme « ${tot} », appareil clair et choix « jour » gardé)`);
+  for (const [vue, hash] of VUES) {
+    await aller(hash);
+    const e = await page.evaluate(L => {
+      // le fond de la page : celui du corps, ou celui de <html> si le corps est transparent
+      const fond = [document.body, document.documentElement].map(x => getComputedStyle(x).backgroundColor).find(c => !/^(transparent|rgba\(0, 0, 0, 0\))$/.test(c)) || 'rgb(255, 255, 255)';
+      return { theme: document.documentElement.dataset.theme, fond,
+        boutons: [...document.querySelectorAll('[data-theme-bouton]')].filter(b => b.getClientRects().length).length,
+        debord: document.documentElement.scrollWidth - L, h1: [...document.querySelectorAll('h1')].some(h => h.getClientRects().length) };
+    }, page.viewportSize().width);
+    if (e.theme !== 'nuit') log.push(`${pfx} ${vue} : data-theme vaut « ${e.theme} »`);
+    if (lumFond(e.fond) > .1) log.push(`${pfx} ${vue} : le fond de la page n'est pas sombre (${e.fond})`);
+    if (e.boutons) log.push(`${pfx} ${vue} : un bouton jour/nuit reste à l'écran ([data-theme-bouton])`);
+    if (e.debord > 1) log.push(`${pfx} ${vue} : débordement horizontal de ${e.debord}px`);
+    if (!e.h1) log.push(`${pfx} ${vue} : aucun h1 visible`);
+    const pb = await contrastes(page);
+    if (pb.length) log.push(`${pfx} ${vue} : contraste insuffisant : ${pb.slice(0, 8).join(', ')}${pb.length > 8 ? ` (+${pb.length - 8})` : ''}`);
   }
-  // « moins d'animations » : la bascule est instantanée
-  if (tag === 'tab') {
-    const ctx2 = await page.context().browser().newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce', locale: 'fr-FR' });
-    const p2 = await ctx2.newPage();
-    await p2.goto(page.url().replace(/#.*$/, '#/saisons'), { waitUntil: 'load' });
-    await p2.waitForTimeout(900);
-    // instantanée = sans transition de vue ni cercle (html.theme-bascule), la nuit posée dans les images qui suivent le clic
-    // (la bascule peut attendre que le bouton enfoncé soit dessiné : c'est ce qui garde l'INP bas)
-    const ok = await p2.evaluate(() => new Promise(res => {
-      const html = document.documentElement, b = [...document.querySelectorAll('[data-theme-bouton]')].find(x => x.getClientRects().length);
-      if (!b) return res(null);
-      let vt = 0, bascule = false;
-      const svt = document.startViewTransition;
-      if (svt) document.startViewTransition = function (...a) { vt++; return svt.apply(this, a); };
-      const mo = new MutationObserver(() => { if (html.classList.contains('theme-bascule')) bascule = true; });
-      mo.observe(html, { attributes: true, attributeFilter: ['class'] });
-      const t0 = performance.now();
-      b.click();
-      const fin = () => { mo.disconnect(); if (svt) document.startViewTransition = svt; res({ theme: html.dataset.theme, bascule, transitions: vt, ms: Math.round(performance.now() - t0) }); };
-      const regarde = () => (html.dataset.theme === 'nuit' || performance.now() - t0 > 600 ? fin() : requestAnimationFrame(regarde));
-      regarde();
-    }));
-    if (!ok || ok.theme !== 'nuit' || ok.bascule || ok.transitions || ok.ms > 300) log.push(`${pfx} : sous « moins d'animations », la bascule n'est pas instantanée (${JSON.stringify(ok)})`);
-    await ctx2.close();
-    log.push(`· règle 19 : le bouton sur ${VUES.length} vues, la bascule (${avant.fond} → ${apres.fond}), gardée, relue en nuit`);
-  }
+  await page.evaluate(() => { try { localStorage.removeItem('crescite-theme'); } catch (e) { /* sans stockage */ } });
+  if (tag === 'tab') log.push(`· règle 19 : la nuit sur ${VUES.length} vues, d'emblée, sans bouton jour/nuit`);
 }
 
 // ------------------------------------------------------------------------------------------------ règle 20 (REGLE20=1)
@@ -612,6 +557,7 @@ for (const n of names) {
         if (typeof v === 'string') parts.push(norm(v)); else if (Array.isArray(v)) v.forEach(x => walk(x, null, n + 1)); else if (v && typeof v === 'object') Object.entries(v).forEach(([kk, x]) => walk(x, kk, n + 1));
       };
       walk(D, null, 0);
+      Object.values(D.personnes || {}).forEach(p => p && p.prenom && p.nom && parts.push(norm(`${p.prenom} ${p.nom}`)));
       D.carte.lieux.forEach(l => parts.push(norm(`${l.c} (${l.dep})`)));
       PERMIS.forEach(p => parts.push(norm(p)));
       window.__corpus = parts.join(' | ');
@@ -895,7 +841,7 @@ for (const n of names) {
     // règles 17 et 18 : seulement si leur variable est posée (le temps que toutes les maquettes les aient)
     if (process.env.REGLE17 === '1') await regle17(page, tag, log);
     if (process.env.REGLE18 === '1') await regle18(page, tag, log);
-    // règles 19 et 20, de même (REGLE19=1, REGLE20=1) ; la 19 relit toutes les vues en nuit, puis revient au jour
+    // règles 19 et 20, de même (REGLE19=1, REGLE20=1) ; la 19 relit toutes les vues (la nuit, seule)
     if (process.env.REGLE20 === '1') await regle20(page, tag, log);
     if (process.env.REGLE19 === '1') await regle19(page, tag, log);
     // règle 15 A : un clic ordinaire sur un lien du menu ne fait jouer aucune tentacule (sauf un moment déclaré data-moment)

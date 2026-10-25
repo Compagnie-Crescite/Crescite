@@ -299,7 +299,7 @@ const RESERVER = (() => {
   const STYLE = `
 :where(.rs-bande) { display: flex; gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: thin; }
 :where(.rs-bande) > :where(*) { flex: none; scroll-snap-align: start; }
-:where(.rs-date) { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+:where(.rs-date) { position: relative; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 :where(.rs-date .rs-sep) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 :where(.rs-carte) { position: relative; isolation: isolate; overflow: hidden; background: var(--rs-fond2, #fff); color: var(--rs-texte, inherit); }
 :where(.rs-photo) { position: absolute; z-index: -1; inset: 0 0 0 auto; width: 55%; height: 100%; object-fit: cover; opacity: .3; pointer-events: none; }

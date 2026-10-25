@@ -107,6 +107,7 @@ html{scroll-padding-top:calc(var(--h-rub) + 1rem)}
 /* le jour et la nuit : un petit encadré, filet simple, l'astre à l'encre ; au bureau au bout des rubriques (il reste en haut avec
    elles), au téléphone au bout de la marque (qui reste en haut) : toujours à portée, même au milieu d'une page */
 .theme-place{display:flex;align-items:center}
+.theme-place:empty{display:none}
 .tp-bur{flex:none;padding-left:1.1rem;border-left:1px solid var(--rule)}
 .tp-tel{display:none}
 .theme{display:inline-grid;place-items:center;width:2.75rem;height:2.75rem;margin:0;padding:0;border:1px solid var(--rule);border-radius:0;background:none;color:var(--ink);cursor:pointer;

@@ -53,7 +53,7 @@ const INTRO = (() => {
 
   function dessin(remplissage, trou) {
     const o = opts, f = trou ? '' : ' filter="url(#intro-onde)"';
-    const coul = (D.site && D.site.couleurSaison && D.site.couleurSaison.couleur) || '#BC3E80';
+    const coul = (D.site && D.site.couleurSaison && D.site.couleurSaison.couleur) || '#141414';
     const tache = o.tache ? `<path class="i-tache" d="${L.tachePath}" fill="${trou ? '#000' : coul}"/>` : '';
     if (trou && o.tache) return tache;            // posé sur sa tache, le site apparaît à travers la tache entière
     return `${tache}

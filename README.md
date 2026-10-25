@@ -137,9 +137,8 @@ d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.ht
 2.0 et les photos (rangées une seule fois dans `docs/photos/`) : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
 chacune demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet,
 noimageindex`), et leur adresse n'est donnée nulle part dans le dépôt (elle figure dans Settings → Pages). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
-**Réserver, regarder, le jour et la nuit, la troupe** (règles 17 à 20 : dans la synthèse et les maquettes 01, 02, 03, 08,
-09 et 10, chacune à sa manière ; les maquettes 04 à 07 les recevront après leur reprise graphique). Quatre outils
-communs, injectés dans chaque maquette :
+**Réserver, regarder, la nuit, la troupe** (règles 17 à 20 : dans la synthèse et les dix maquettes, chacune à sa
+manière). Quatre outils communs, injectés dans chaque maquette :
 - `reserver.js` (RESERVER) : sur la page d'un spectacle, un bouton par date à venir (le jour, les heures, la ville), la
   prochaine choisie d'avance ; la date choisie ouvre sa carte dans l'univers du spectacle (le lieu, les séances, une
   séance scolaire signalée sans bouton) et un seul bouton « Réserver » vers la billetterie du théâtre (le lien de la
@@ -148,15 +147,16 @@ communs, injectés dans chaque maquette :
 - `lecteur.js` (LECTEUR) : les vidéos se lisent dans la page, sur leur affiche ; rien de YouTube (youtube-nocookie) ni de
   Vimeo (`dnt=1`) ne se charge avant le geste ; « Plein écran » (absent là où le navigateur ne le permet pas, l'iPhone),
   « Assombrir » éteint le reste de la page (Échap ou « Rallumer ») ; une seule vidéo à la fois.
-- `theme.js` (THEME, dans le `<head>`) : le bouton du soleil et de la lune, partout ; le thème suit d'abord le réglage de
-  l'appareil, puis le choix du visiteur (gardé sur l'appareil) ; `data-theme="jour"|"nuit"` sur `<html>` avant le premier
-  dessin ; la bascule s'ouvre en cercle depuis le bouton ; `?theme=nuit` force un thème le temps d'une visite.
+- `theme.js` (THEME, dans le `<head>`) : le site public n'a que son thème sombre (décision de la compagnie, octobre 2026) :
+  `data-theme="nuit"` sur `<html>` avant le premier dessin, quel que soit le réglage de l'appareil, et plus de bouton
+  jour/nuit. Le jour et la nuit restent à l'administration et aux espaces de l'équipe et des salles, qui suivent le
+  réglage de l'appareil.
 - `troupe.js` (TROUPE) : sur la page de la compagnie, toutes les personnes des équipes, par catégories de métiers (le jeu,
   la mise en scène, l'écriture, les décors et costumes, la lumière et le son, la production), une vignette seulement pour
   une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras.
 Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> m01 synthese`…
 Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
-réactivité, la réservation, les vidéos, le jour et la nuit, la troupe) sont dans `maquettes/CONTRAT.md`.
+réactivité, la réservation, les vidéos, la nuit seule, la troupe) sont dans `maquettes/CONTRAT.md`.
 
 ## Données
 
