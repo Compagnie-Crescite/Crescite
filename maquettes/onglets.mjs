@@ -363,7 +363,13 @@ const CONTRASTE = `(() => {
 // ce qui apparaît au défilement, montré à son état final le temps de la lecture (comme pour le contrôle du texte)
 const MONTRER = '*, *::before, *::after { content-visibility: visible !important; transition: none !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; } [data-troupe] *, [data-troupe] *::before, [data-troupe] *::after { animation: none !important; transition: none !important; }';
 async function contrastes(page) {
-  return page.evaluate(([css, code]) => { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); try { return (0, eval)(code); } finally { s.remove(); } }, [MONTRER, CONTRASTE]);
+  return page.evaluate(([css, code]) => {
+    // les animations à leur fin (un libellé qui paraît en fondu se lit fini) ; celles du défilement, retirées (l'état de base)
+    for (const a of document.getAnimations()) {
+      try { if (a.timeline && typeof DocumentTimeline !== 'undefined' && !(a.timeline instanceof DocumentTimeline)) a.cancel(); else a.finish(); } catch (e) { /* une animation sans fin : laissée */ }
+    }
+    const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); try { return (0, eval)(code); } finally { s.remove(); }
+  }, [MONTRER, CONTRASTE]);
 }
 async function regle19(page, tag, log) {
   const pfx = `${tag} règle 19`;

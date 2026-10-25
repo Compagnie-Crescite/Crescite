@@ -90,7 +90,7 @@ h1,h2,h3,h4,p,figure,blockquote,dl,dd{margin:0}
 .m:hover{background:rgba(255,255,255,.13)}
 .m:hover .m-pt,.m[aria-current] .m-pt{opacity:1}
 .m[aria-current="true"]{border-color:currentColor}
-.m[aria-current="page"]{background:#fff;color:var(--tache)}
+.m[aria-current="page"]{background:#fff;color:var(--tache-jour,var(--tache))}
 .m-court{display:none}
 .tete-jn{flex:none;display:flex}
 .tete-jn:empty{display:none}
@@ -1260,7 +1260,7 @@ a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
   const feuilleCouleurs = document.head.appendChild(document.createElement('style'));
   function couleurs() {
     const sa = couleurSaison();
-    const css = sa ? `:root{--tache:${sa.tache};--tache-deep:${sa.deep};--tache-txt:${sa.tache};--papier2:${sa.papier2}}html[data-theme="nuit"]{--tache:${sa.nuit};--tache-txt:${sa.txtNuit}}` : '';
+    const css = sa ? `:root{--tache:${sa.tache};--tache-jour:${sa.tache};--tache-deep:${sa.deep};--tache-txt:${sa.tache};--papier2:${sa.papier2}}html[data-theme="nuit"]{--tache:${sa.nuit};--tache-txt:${sa.txtNuit}}` : '';
     if (feuilleCouleurs.textContent !== css) feuilleCouleurs.textContent = css;
     return sa;
   }

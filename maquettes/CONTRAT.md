@@ -504,13 +504,13 @@ Partout dans ce contrat, lis désormais `#/saisons` pour `#/voir`, `#/espace-pro
 - `D.site.redirections` mène les anciennes adresses aux nouvelles (`location.replace`) : `#/voir` et `#/agenda` →
   `#/saisons` ; `#/programmer` → `#/espace-pro/programmer` ; `#/etablissement` et `#/actions-culturelles` →
   `#/espace-pro/etablissement`. `#/agenda/<saison>` mène à `#/saisons/<saison>`.
-- `document.title` : « Les saisons - crescite », « Je souhaite programmer - crescite »… (le h1 de la vue).
+- `document.title` : « Saisons - crescite », « Je souhaite programmer - crescite »… (le h1 de la vue).
 
 **B. Les vues (remplacent celles de la règle 3 qui changent ; les autres restent).**
 - **Accueil `#/`** : l'ouverture (règle 6), puis ton concept d'accueil, sans le choix entre trois entrées. Son cœur : la
   saison en cours (ses prochaines dates, un lien vers `#/saisons`) et les spectacles dans leurs univers ; puis, dans
   l'ordre que tu veux, la carte et les remerciements aux donateurs (discrets).
-- **`#/saisons` « Les saisons »** (h1 = `D.site.menu[0].texte`) : TOUT l'agenda, sur une page.
+- **`#/saisons` « Saisons »** (h1 = `D.site.menu[0].texte`) : TOUT l'agenda, sur une page.
   1. La saison en cours (`D.site.saisons[0]`, son titre) :
      - **les prochaines dates** (`libelles.prochainesDates`), avec le mode de sélection de la règle 17 : chaque date tout
        public est un bouton qui ouvre sa carte de réservation sur place ; une date scolaire est marquée

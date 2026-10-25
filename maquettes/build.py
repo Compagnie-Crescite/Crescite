@@ -254,7 +254,7 @@ ENTREES = [
 # Le menu, toute la navigation première (règle 21) : les saisons, les spectacles, la compagnie, l'espace pro. « Contact »
 # reste dans le pied de page (libelles.contact).
 MENU = [
-    {"cle": "saisons", "id": "saisons", "texte": "Les saisons", "court": "Saisons", "href": "#/saisons"},
+    {"cle": "saisons", "id": "saisons", "texte": "Saisons", "court": "Saisons", "href": "#/saisons"},
     {"cle": "spectacles", "id": "spectacles", "texte": "Les spectacles", "court": "Spectacles", "href": "#/spectacles"},
     {"cle": "compagnie", "id": "compagnie", "texte": "La compagnie", "court": "Compagnie", "href": "#/compagnie"},
     {"cle": "espacePro", "id": "espace-pro", "texte": "Espace pro", "court": "Espace pro", "href": "#/espace-pro"},

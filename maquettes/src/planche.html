@@ -65,7 +65,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
 .plan .ouverture small { color: var(--gris-clair); }
 .entrees { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
 .entrees li { padding: 10px 12px; border-radius: 10px; background: var(--fond); border-top: 4px solid var(--c); font-weight: 700; line-height: 1.25; }
-/* le menu : « Les saisons » à la couleur de la saison (règle 22 ; aujourd'hui le bleu de Cassandres) */
+/* le menu : « Saisons » à la couleur de la saison (règle 22 ; aujourd'hui le bleu de Cassandres) */
 .entrees .saisons { --c: var(--saison, #1f3a73); } .entrees .spectacles { --c: #b08a1e; } .entrees .compagnie { --c: #1f7a70; } .entrees .pro { --c: #5a5560; }
 .second { list-style: none; margin: 12px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--filet); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .second li { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--filet); font-size: .85rem; font-weight: 600; }
@@ -219,7 +219,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <p class="ouverture">Le logo en grand<small>un clic, la molette ou glisser vers le bas ouvre le site</small></p>
         <span class="trait" aria-hidden="true"></span>
         <ul class="entrees" aria-label="Le menu">
-          <li class="saisons">Les saisons<small>la saison en cours, ses dates à réserver, sa carte ; puis les saisons passées</small></li>
+          <li class="saisons">Saisons<small>la saison en cours, ses dates à réserver, sa carte ; puis les saisons passées</small></li>
           <li class="spectacles">Les spectacles<small>chacun dans son univers ; ceux qui ne tournent plus, avec leur bilan</small></li>
           <li class="compagnie">La compagnie<small>la présentation, la troupe</small></li>
           <li class="pro">Espace pro<small>programmer, les établissements scolaires, les espaces réservés</small></li>
@@ -232,11 +232,11 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
         <li>Chaque page a son adresse : on peut la copier et l’envoyer.</li>
       </ul>`]);
     parties.push(['Trouver une date', `${a(m, 'reserver') ? etapes([
-        '<b>Choisir une date</b> dans « Les saisons » ou sur la page du spectacle : un bouton par date, avec ses heures et sa ville.',
+        '<b>Choisir une date</b> dans « Saisons » ou sur la page du spectacle : un bouton par date, avec ses heures et sa ville.',
         '<b>La carte de la date</b> s’ouvre dessous : le lieu, les séances.',
         '<b>« Réserver »</b> ouvre la billetterie du théâtre, dans un nouvel onglet.']) : ''}
       <ul class="points">
-        <li>« Les saisons » : la saison en cours (sa frise, ses prochaines dates, toutes ses dates et sa carte), puis les saisons passées depuis 2016, chacune avec sa carte. Une saison passée s’ouvre d’un clic.</li>
+        <li>« Saisons » : la saison en cours (sa frise, ses prochaines dates, toutes ses dates et sa carte), puis les saisons passées depuis 2016, chacune avec sa carte. Une saison passée s’ouvre d’un clic.</li>
         <li>Les spectacles de la légende servent de filtre ; la recherche par ville porte sur tout l’agenda.</li>
         ${a(m, 'reserver') ? '' : '<li>Les dates de la saison renvoient à la page du théâtre qui les accueille.</li>'}
       </ul>`]);
@@ -305,7 +305,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     { cle: 'accueil', titre: 'Le premier écran de l’accueil', quoi: 'ce qu’on voit juste après l’ouverture', route: '#/' },
     { cle: 'defile', titre: 'Les spectacles en descendant l’accueil', quoi: 'faites défiler l’accueil : la façon de présenter les spectacles un à un, et leurs prochaines dates', route: '#/' },
     { cle: 'menu', titre: 'Le menu', quoi: 'l’en-tête, et la barre du téléphone', route: '#/spectacles' },
-    { cle: 'saisons', titre: 'Les saisons', quoi: 'la saison en cours : sa frise, ses prochaines dates, sa carte', route: '#/saisons' },
+    { cle: 'saisons', titre: 'Saisons', quoi: 'la saison en cours : sa frise, ses prochaines dates, sa carte', route: '#/saisons' },
     { cle: 'passees', titre: 'Les saisons passées', quoi: 'chaque saison et sa petite carte', route: '#/saisons/2023-2024' },
     { cle: 'spectacles', titre: 'La page des spectacles', quoi: 'tous les spectacles, chacun dans son univers', route: '#/spectacles' },
     { cle: 'univers', titre: 'L’univers d’un spectacle', quoi: 'la page d’un spectacle en tournée (Bérénice)', route: '#/spectacle/berenice/voir' },
