@@ -230,6 +230,9 @@ const FRISE = (() => {
     s.textContent = STYLE;
     document.head.insertBefore(s, document.head.firstChild);   // en tête : la maquette passe après
   }
+  // posée dès le chargement (comme reserver.js) : le premier geste vers une page à frise n'ajoute plus de feuille, ni ne
+  // recalcule le style de toute la page
+  if (typeof document !== 'undefined' && document.head) styles();
 
   /* ---------------------------------------------------------------------------------------------- les observateurs (partagés) */
   const vivantes = new Set();
@@ -352,7 +355,8 @@ const FRISE = (() => {
       // de proche en proche, mais jamais plus large que trois fois le seuil (des repères très denses font plusieurs grappes)
       let g = null;
       const seuil = o.regrouper ?? 14;
-      pts.filter(q => !q.duree).forEach(q => {
+      // une résidence n'entre dans aucune grappe (règle 23) : son repère évidé reste à lui, le chiffre d'une grappe ne la compte pas
+      pts.filter(q => !q.duree && !q.p.residence).forEach(q => {
         const xpx = q.x / 100 * W;
         if (g && xpx - g.dernier < seuil && xpx - g.debut < seuil * 3) { g.membres.push(q); g.dernier = xpx; }
         else { g = { membres: [q], dernier: xpx, debut: xpx }; grappes.push(g); }
