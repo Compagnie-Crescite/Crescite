@@ -50,19 +50,14 @@ html[data-theme="nuit"] .fu, html[data-theme="nuit"] .prog, html[data-theme="nui
 /* les univers clairs dans leur nuit (leurs couleurs de D, retournées) ; ce qui reste sur papier blanc garde l'encre du jour */
 html[data-theme="nuit"] .u.u-clair { --u-fond: var(--un-fond) !important; --u-fond2: var(--un-fond2) !important; --u-texte: var(--un-texte) !important;
   --u-texte2: var(--un-texte2) !important; --u-vif: var(--un-vif) !important; }
-html[data-theme="nuit"] .u-paperboard .u-ouv-texte { --u-texte: var(--uj-texte); --u-texte2: var(--uj-texte2); --u-vif: var(--uj-vif); color: var(--u-texte); }
-html[data-theme="nuit"] .u-arene .u-ouv { background: color-mix(in srgb, var(--u-accent) 72%, #1a0703); }
 html[data-theme="nuit"] .u-arene .u-onglets { background: color-mix(in srgb, var(--u-fond) 90%, transparent); }
-html[data-theme="nuit"] .u-arene .u-carton figcaption { background: var(--u-fond2); }
 /* dans la nuit d'un univers clair, ce qui s'écrivait dans son accent (le rouge de Bérénice) prend sa couleur vive (le
    saumon), qui se lit sur le fond sombre ; les aplats gardent l'accent, et les feuilles blanches leurs encres du jour */
 html[data-theme="nuit"] .u.u-clair { --ac: var(--u-vif); }
-html[data-theme="nuit"] .u-clair .sheet { --ac: var(--u-accent); }
-html[data-theme="nuit"] .u-arene .u-h2,
+html[data-theme="nuit"] .u-arene .chap-t,
 html[data-theme="nuit"] .u-arene .u-affirm,
-html[data-theme="nuit"] .u-arene .u-cit p,
+html[data-theme="nuit"] .u-arene .sp-cit p,
 html[data-theme="nuit"] .u-arene .u-ac-type,
-html[data-theme="nuit"] .u-arene .u-aside,
 html[data-theme="nuit"] .u-arene .u-avec,
 html[data-theme="nuit"] .u-arene :is(.suivant b),   /* (le lien vers le spectacle suivant porte lui-même son univers) */
 html[data-theme="nuit"] .u-arene .prog-t a,
@@ -996,31 +991,15 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 
 /* ———— la page d'un spectacle : l'ouverture ———— */
 article.u { font-family: var(--u-corps); overflow-x: clip; }
-.u-ouv { position: relative; isolation: isolate; overflow: clip; display: flex; align-items: center; min-height: calc(100svh - var(--haut) - 56px); padding: clamp(36px, 5vw, 72px) 0 clamp(52px, 7vw, 92px); }
-.u-ouv > .wrap { width: 100%; }
-.u-ouv-fond { position: absolute; inset: 0; z-index: -3; }
-.u-ouv-fond img { width: 100%; height: 100%; object-fit: cover; opacity: .15; filter: grayscale(.5); -webkit-mask-image: linear-gradient(180deg, #000 15%, transparent 92%); mask-image: linear-gradient(180deg, #000 15%, transparent 92%); }
-.u-ouv-lueur { position: absolute; inset: 0; z-index: -2; background: radial-gradient(48% 58% at var(--gx, 26%) var(--gy, 42%), var(--u-lueur), transparent 72%); pointer-events: none; }
-.u-ouv-grille { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: clamp(28px, 5vw, 84px); align-items: center; }
-.u-ouv-texte { position: relative; }
 .u-sur { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0 0 20px; font: 600 .76rem/1.4 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
 .u-titre { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(2.7rem, 1.2rem + 5.2vw, 6.3rem); line-height: .98; letter-spacing: -.005em; color: var(--u-texte); }
 .u-titre.long { font-size: clamp(2.3rem, 1rem + 4vw, 4.7rem); }
 .u-titre .ligne { display: block; }
 .u-titre .mt { display: inline-block; white-space: nowrap; }
 .u-titre .ch { display: inline-block; }
-.u-st { margin: 20px 0 0; font-size: 1.18rem; line-height: 1.45; color: var(--u-texte2); }
-.u-lt { margin: 28px 0 0; font: 600 .9rem/1.4 var(--u-etiq); letter-spacing: .18em; text-transform: uppercase; color: var(--u-vif); }
-.u-cadre { margin: 6px 0 0; font: 500 .82rem/1.5 var(--u-etiq); letter-spacing: .08em; color: var(--u-texte2); }
-.u-accroche { margin: 12px 0 0; max-width: 36ch; font-size: clamp(1.18rem, 1rem + .7vw, 1.55rem); line-height: 1.45; color: var(--u-texte); }
 .u-signe { margin: 26px 0 0; font: 600 .76rem/1.4 var(--u-etiq); letter-spacing: .2em; text-transform: uppercase; color: var(--u-texte2); }
 .u-cta { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 0; }
-.u-carton { position: relative; justify-self: center; width: 100%; max-width: 500px; margin: 0; }
-.ph-cadre { position: relative; display: block; }
-.u-carton .ph { position: relative; display: block; overflow: hidden; border-radius: 4px; box-shadow: 0 34px 70px -30px rgba(0, 0, 0, .65), 0 0 0 1px var(--u-filet); }
-.u-carton img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
-.u-carton figcaption, .u-fig figcaption { position: relative; z-index: 1; width: fit-content; max-width: min(520px, calc(100% - 28px)); margin: -34px 0 0 clamp(14px, 3vw, 28px); padding: 11px 16px 12px; background: var(--u-fond2); color: var(--u-texte); font-size: .92rem; line-height: 1.45; border-left: 3px solid var(--u-vif); box-shadow: 0 16px 30px -18px rgba(0, 0, 0, .55); }
-.u-carton .cr { display: block; margin-top: 3px; font-size: .74rem; color: var(--u-texte2); }
+.u-fig figcaption { position: relative; z-index: 1; width: fit-content; max-width: min(520px, calc(100% - 28px)); margin: -34px 0 0 clamp(14px, 3vw, 28px); padding: 11px 16px 12px; background: var(--u-fond2); color: var(--u-texte); font-size: .92rem; line-height: 1.45; border-left: 3px solid var(--u-vif); box-shadow: 0 16px 30px -18px rgba(0, 0, 0, .55); }
 /* le titre se révèle lettre à lettre, la phrase s'écrit mot à mot */
 .w { display: inline-block; }
 html:not(.still):not(.sur-place) .u-titre .ch { opacity: 0; transform: translateY(.45em) rotate(5deg); filter: blur(8px); animation: lettre .6s cubic-bezier(.2, .75, .2, 1) forwards; animation-delay: calc(.05s + var(--i) * var(--pas, 34ms)); }
@@ -1031,17 +1010,23 @@ html:not(.still):not(.sur-place) .ecrit.vu .w { animation: mot .45s cubic-bezier
 html:not(.still):not(.sur-place) .apparait { opacity: 0; transform: translateY(26px); }
 html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; transition: opacity .9s, transform .9s cubic-bezier(.2, .7, .2, 1); }
 
-/* la barre des trois entrées du spectacle, et ce qui suit la lecture */
+/* la barre des trois entrées du spectacle (la 07) : une lampe à la couleur de chacune, la courante allumée et soulignée de sa
+   lumière ; au bureau, elle se colle sous l'en-tête (le titre du spectacle y paraît, la lecture avance sur son bord) */
 .u-onglets { position: relative; z-index: 25; background: color-mix(in srgb, var(--u-fond) 90%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-top: 1px solid var(--u-filet); border-bottom: 1px solid var(--u-filet); }
-.u-onglets-in { display: flex; align-items: center; gap: 6px; min-height: 54px; overflow-x: auto; scrollbar-width: none; }
+.u-onglets-in { display: flex; align-items: center; gap: clamp(18px, 2.6vw, 44px); min-height: 56px; overflow-x: auto; scrollbar-width: none; }
 .u-onglets-in::-webkit-scrollbar { display: none; }
-.u-onglets .ut { flex: none; max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 1.12rem; color: var(--u-texte); transition: max-width .4s, opacity .3s, margin .4s; }
-.u-onglets.colle .ut { max-width: 360px; opacity: 1; margin-right: 12px; }
-.u-onglets a { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 999px; color: var(--u-texte2); font: 600 .9rem/1.2 var(--sans); text-decoration: none; white-space: nowrap; transition: background .2s, color .2s; }
-.u-onglets a .pt { width: 8px; height: 8px; border-radius: 50%; background: var(--ec); box-shadow: 0 0 0 2px color-mix(in srgb, #fff 55%, transparent); }
-.u-onglets a:hover { color: var(--u-texte); background: color-mix(in srgb, var(--u-texte) 9%, transparent); }
-.u-onglets a[aria-current="page"] { color: var(--u-sur-accent); background: var(--u-accent); }
-.u-progres { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--u-vif); transform-origin: 0 50%; transform: scaleX(var(--lu, 0)); }
+.u-onglets .ut { flex: none; max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 1.12rem; color: var(--u-texte); transition: max-width .4s, opacity .3s; }
+.u-onglets.colle .ut { max-width: 360px; opacity: 1; }
+.u-onglets a { position: relative; flex: none; display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 12px 0; color: var(--u-texte2); font: 600 .97rem/1.2 var(--sans); text-decoration: none; white-space: nowrap; transition: color .2s; }
+.u-onglets a .pt { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--e); opacity: .55; transition: opacity .2s, box-shadow .2s; }
+.u-onglets a::after { content: ""; position: absolute; left: 19px; right: 0; bottom: 4px; height: 2px; background: var(--e); box-shadow: 0 0 12px 1px var(--e); transform: scaleX(0); transform-origin: 0 50%; transition: transform .2s var(--mv-courbe); }
+.u-onglets a:hover, .u-onglets a[aria-current="page"] { color: var(--u-texte); }
+.u-onglets a:hover .pt { opacity: 1; box-shadow: 0 0 12px 2px var(--e); }
+.u-onglets a[aria-current="page"] .pt { opacity: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--e) 28%, transparent), 0 0 18px 4px var(--e); }
+.u-onglets a[aria-current="page"]::after { transform: none; }
+.u-onglets .court { display: none; }
+@media (max-width: 1199px) { .u-onglets .long { display: none; } .u-onglets .court { display: inline; } }
+.u-progres { position: absolute; left: 0; right: 0; top: -1px; height: 2px; background: var(--u-vif); transform-origin: 0 50%; transform: scaleX(var(--lu, 0)); }
 .som { position: fixed; right: 16px; bottom: 16px; z-index: 35; }
 .som-b { display: inline-flex; align-items: center; gap: 10px; padding: 9px 14px 9px 13px; border: 1px solid var(--u-filet); border-radius: 999px; background: color-mix(in srgb, var(--u-fond2) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--u-texte); font: 600 .84rem/1.2 var(--sans); cursor: pointer; box-shadow: 0 12px 30px -14px rgba(0, 0, 0, .55); }
 .som-b .n { font-variant-numeric: tabular-nums; color: var(--u-vif); }
@@ -1054,33 +1039,18 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .som-l .n { min-width: 1.2em; font-variant-numeric: tabular-nums; color: var(--u-vif); }
 
 /* les chapitres */
-.chap { position: relative; padding: clamp(60px, 8vw, 124px) 0; scroll-margin-top: var(--onglets); }
-.chap.alt { background: var(--u-fond2); }
+.chap { position: relative; scroll-margin-top: calc(var(--onglets) + 24px); }
+.chap + .chap { margin-top: clamp(64px, 8vw, 112px); }
 .u-eti { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 22px; font: 600 .76rem/1.35 var(--u-etiq); letter-spacing: .17em; text-transform: uppercase; color: var(--u-vif); }
 .u-eti .mo { flex: none; width: 26px; height: 26px; }
-.u-eti .u-duree { margin-left: auto; letter-spacing: .1em; color: var(--u-texte2); }
-.u-h2 { margin: 0 0 26px; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(2rem, 1.2rem + 2.6vw, 3.3rem); line-height: 1.04; color: var(--u-texte); text-wrap: balance; }
 .u-affirm { margin: 0 0 40px; max-width: 24ch; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.9rem, 1.1rem + 2.6vw, 3.6rem); line-height: 1.08; color: var(--u-texte); text-wrap: balance; }
 .u-texte { max-width: 66ch; font-size: 1.13rem; line-height: 1.72; }
 .u-texte p { margin: 0 0 1.1em; }
 .u-texte .chapo { font-family: inherit; font-size: clamp(1.25rem, 1.05rem + .5vw, 1.45rem); line-height: 1.55; }
 .u-texte a, .u-mention a, .u-disp a, .u-prod a { color: var(--u-vif); }
-.u-photos { display: grid; gap: clamp(52px, 7vw, 112px); }
 .u-fig { position: relative; margin: 0; }
 .u-fig img { width: 100%; border-radius: 3px; }
-.u-fig.plein img { max-height: 84vh; object-fit: cover; }
-.chap.alt .u-fig figcaption { background: var(--u-fond); }
-.u-duo { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(18px, 3vw, 44px); align-items: start; }
-.u-duo > :nth-child(2) { margin-top: clamp(48px, 9vw, 140px); }
 .u-credit { margin: 0; font-size: .8rem; color: var(--u-texte2); }
-.u-cit { position: relative; isolation: isolate; max-width: 32em; margin: 0 auto; padding: clamp(10px, 2vw, 24px) 0; text-align: center; }
-.u-cit::before { content: ""; position: absolute; inset: -30% -12%; z-index: -1; background: radial-gradient(closest-side, var(--u-lueur), transparent); pointer-events: none; }
-.u-cit p { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.45rem, 1rem + 1.8vw, 2.5rem); line-height: 1.3; color: var(--u-texte); }
-.u-cit .vers { display: block; }
-.u-cit .vers:first-child::before { content: "« "; color: var(--u-vif); }
-.u-cit .vers:last-child::after { content: " »"; color: var(--u-vif); }
-.u-cit cite { display: block; margin-top: 20px; font: normal 600 .76rem/1.4 var(--u-etiq); letter-spacing: .17em; text-transform: uppercase; color: var(--u-vif); }
-.u-aside { max-width: 40ch; margin: 0 auto; text-align: center; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.3rem, 1rem + 1.1vw, 1.9rem); line-height: 1.35; color: var(--u-texte); }
 /* les vidéos, lues dans la page (règle 18, LECTEUR) : l'affiche du spectacle, son titre, la lecture au geste ; « plein écran »
    et « assombrir » dessous. La page éteinte, la vidéo garde sa lumière : un filet de l'univers et sa lueur autour d'elle */
 .lc-cadre { border-radius: 6px; box-shadow: 0 34px 70px -34px rgba(0, 0, 0, .7), 0 0 0 1px var(--u-filet); transition: box-shadow .45s var(--mv-courbe); }
@@ -1147,10 +1117,8 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .u .carte .rouen { fill: var(--u-texte); }
 .u .carte .rouen-nom, .u .carte .nom { fill: var(--u-texte); stroke: var(--u-fond); }
 .u .carte .encart { stroke: var(--u-texte2); }
-.chap.alt .carte .rouen-nom, .chap.alt .carte .nom { stroke: var(--u-fond2); }
 .u-prog { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: clamp(28px, 5vw, 80px); align-items: start; }
 .u-faits { position: sticky; top: calc(var(--haut) + var(--onglets) + 20px); display: grid; gap: 14px; margin: 0; padding: 26px; list-style: none; border-top: 3px solid var(--u-vif); border-radius: 6px; background: var(--u-fond2); }
-.chap.alt .u-faits { background: var(--u-fond); }
 .u-faits li { font-size: 1rem; line-height: 1.45; }
 .u-faits .gros { display: block; margin-bottom: 4px; font-size: clamp(2.6rem, 2rem + 2vw, 3.8rem); }
 .u-faits .bu { justify-self: start; }
@@ -1158,7 +1126,6 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .u-ac-puces { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 30px; padding: 0; }
 .u-ac-puces .k { margin-right: 6px; color: var(--u-texte2); }
 .u-formule { display: inline-grid; gap: 4px; margin: 0 0 26px; padding: 16px 22px; border-left: 4px solid var(--u-vif); background: var(--u-fond2); font-weight: 700; font-size: 1.1rem; }
-.chap.alt .u-formule { background: var(--u-fond); }
 .u-formule p { margin: 0; }
 .u-disp ul { margin: 0; padding-left: 1.1em; max-width: 70ch; }
 .u-disp li { margin: 0 0 8px; }
@@ -1200,57 +1167,265 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .suivant .wrap { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .suivant-c { display: grid; gap: 8px; }
 .suivant-c .u-sur { margin: 0; }
+.suivant-c .u-sur .mo { flex: none; width: 26px; height: 26px; }
 .suivant b { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(2rem, 1.3rem + 2.8vw, 3.8rem); line-height: 1.02; color: var(--u-texte); }
 .suivant .fleche { width: 46px; height: 46px; color: var(--u-vif); transition: translate .18s var(--mv-courbe); }
 .suivant:hover .fleche { translate: 8px 0; }
 
-/* ———— les motifs, signatures discrètes de chaque univers ———— */
-.mo-g { position: absolute; z-index: -1; pointer-events: none; color: var(--u-vif); }
-.mo-arene { inset: -8.5%; width: 117%; height: 117%; color: #fff; opacity: .75; }
-.mo-arene .gradin { stroke-width: 9; opacity: .32; }
-.u-jumeaux .u-carton .ph { border-radius: 999px 999px 4px 4px; }
-.u-jumeaux .ph-cadre::before { content: ""; position: absolute; inset: 0; z-index: -1; border: 1.5px solid var(--u-vif); border-radius: 999px 999px 4px 4px; transform: translate(9%, -6%); opacity: .75; }
-.mo-nez { left: 41%; top: 24%; width: auto; height: 52%; color: var(--u-scene); opacity: .55; stroke-width: 1.4; }
-.mo-nez .lune { fill: var(--u-accent); stroke: none; opacity: .8; }
-.mo-horloge { right: 2%; top: 7%; width: min(44vw, 580px); height: auto; opacity: .28; }
-.mo-horloge .aig-h, .mo-horloge .aig-m { transform-box: view-box; transform-origin: 100px 100px; }
-.mo-horloge .aig-h { stroke-width: 4; animation: tourne 720s linear infinite; }
-.mo-horloge .aig-m { stroke-width: 2.4; animation: tourne 60s linear infinite; }
-@keyframes tourne { to { transform: rotate(360deg); } }
-.mo-fil { inset: 0; width: 100%; height: 100%; color: var(--u-scene); opacity: .8; }
-.mo-fil path { stroke-width: 2.2; vector-effect: non-scaling-stroke; stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: dessine 3.2s .3s cubic-bezier(.45, 0, .2, 1) forwards; }
-.mo-feutre { width: min(100%, 420px); height: 22px; margin: 8px 0 0 -4px; color: var(--u-accent); }
-.mo-feutre path { stroke-width: 5; stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: dessine 1.2s .9s cubic-bezier(.45, 0, .2, 1) forwards; }
-.mo-souligne { width: min(100%, 380px); height: 22px; margin: 6px 0 0 -6px; color: var(--u-vif); }
-.mo-souligne path, .mo-entoure path { stroke-width: 2.4; stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: dessine 1.4s 1s cubic-bezier(.45, 0, .2, 1) forwards; }
-.mo-entoure { inset: -7% -9%; width: 118%; height: 114%; color: var(--u-vif); opacity: .9; }
-.mo-note { left: calc(-1 * clamp(10px, 3vw, 46px)); top: 46%; width: 30px; height: 30px; color: var(--u-vif); }
-.mo-frise-w { position: absolute; left: 0; right: 0; bottom: 14px; z-index: -1; pointer-events: none; }
-.mo-frise { width: 100%; height: auto; color: var(--u-vif); opacity: .75; }
-.mo-frise text { fill: var(--u-texte2); stroke: none; font: 500 13px var(--u-etiq); letter-spacing: .1em; }
-.mo-frise .curseur { fill: var(--u-vif); stroke: none; animation: frise 2.6s .4s cubic-bezier(.45, 0, .2, 1) both; }
-@keyframes frise { from { transform: translateX(-1120px); } }
-.u-paperboard .u-ouv-texte { padding: clamp(30px, 4vw, 50px) clamp(22px, 3.4vw, 46px) clamp(28px, 3.6vw, 44px); background: #fffdf8 repeating-linear-gradient(transparent 0 2.25rem, #d7e3f4 2.25rem calc(2.25rem + 1px)); border: 1px solid #d9d0bf; box-shadow: 0 26px 50px -26px rgba(20, 20, 50, .45); transform: rotate(-.5deg); }
-.u-paperboard .u-ouv-texte::before { content: ""; position: absolute; left: 10%; right: 10%; top: -13px; height: 20px; border-radius: 6px; background: linear-gradient(#585d72, #353849); box-shadow: 0 3px 6px rgba(0, 0, 0, .25); }
-.u-paperboard .u-carton .ph { transform: rotate(1.4deg); }
-.u-paperboard .u-carton .ph::before { content: ""; position: absolute; left: 50%; top: -4px; z-index: 1; width: 90px; height: 26px; margin-left: -45px; background: rgba(255, 253, 248, .75); transform: rotate(-3deg); box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
+/* ———— la page d'un spectacle, composée : l'univers de la 07, réserver et le bilan de la 10 ————
+   Un spectacle en tournée (ou en création) : l'ouverture de la 07 (sa photo principale plein cadre dans le noir de son
+   univers, le texte en bas à gauche, le motif projeté comme un gobo, le crédit le long du bord), ses trois entrées en onglets,
+   puis les chapitres à côté d'un petit sommaire (des filets) ; dans « voir », le récit : le texte pas à pas, à côté des
+   photos épinglées qui se relaient. Un spectacle qui n'est plus en tournée : l'ouverture de la 10 (la photo s'éloigne, le
+   titre et son filet qui s'allonge avec la lecture, le motif en haut), le sommaire en bras et ventouses, un filet entre les
+   chapitres. Les dates : la bande et la carte de réservation de la 10. --bord : du bord du contenu au bord de l'écran (le
+   récit y déborde). */
+.sp { --bord: max(var(--gout), calc((100vw - 1240px) / 2 + var(--gout))); }
+article.u.sp-seul { --onglets: 0px; }
+/* le motif en grand (celui de la 10) : il suit la lecture (--p, posé sur l'ouverture) */
+.sp-motif { display: block; width: 100%; height: auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.sp-motif text { fill: currentColor; stroke: none; font: 600 17px var(--u-etiq); letter-spacing: .04em; }
+.sp-motif * { transform-box: view-box; }
+.sp-motif .m-tourne { transform-origin: 120px 120px; transform: rotate(calc(var(--p, 0) * 120deg)); }
+.sp-motif .m-g { transform: translateX(calc(var(--p, 0) * 13px)); }
+.sp-motif .m-d { transform: translateX(calc(var(--p, 0) * -13px)); }
+.sp-motif .m-ecrit { stroke-dasharray: 1; stroke-dashoffset: calc(.55 - var(--p, 0) * .55); }
+.sp-motif .m-nez { transform-origin: 114px 86px; transform: scale(calc(1 + var(--p, 0) * .45), 1); }
+.sp-motif .m-heure { transform-origin: 120px 120px; transform: rotate(calc(-40deg + var(--p, 0) * 60deg)); }
+.sp-motif .m-minute { transform-origin: 120px 120px; transform: rotate(calc(var(--p, 0) * 540deg)); }
+.sp-motif .m-curseur { transform: translateX(calc(var(--p, 0) * 200px)); }
+/* l'ouverture (la 07) : la photo plein cadre, le noir de l'univers qui monte du bas et de la gauche, la poursuite qui suit la
+   main (--gx, --gy), le motif en gobo ; le titre, « en tournée » qui respire, l'accroche, la prochaine date, l'appel */
+.sp-une { position: relative; isolation: isolate; overflow: clip; display: flex; flex-direction: column; justify-content: flex-end; min-height: max(32rem, calc(100svh - var(--haut) - var(--onglets))); background: var(--u-fond); }
+.une-ph { position: absolute; inset: 0; z-index: -3; overflow: hidden; background: var(--u-fond2); }
+.une-ph img { width: 100%; height: 100%; object-fit: cover; }
+html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) scale(calc(1.03 + var(--p, 0) * .05)); }
+.une-ombre { position: absolute; inset: 0; z-index: -2; pointer-events: none; background:
+  linear-gradient(180deg, color-mix(in srgb, var(--u-fond) 72%, transparent) 0, transparent 8rem),
+  linear-gradient(0deg, var(--u-fond) 0, color-mix(in srgb, var(--u-fond) 88%, transparent) 16%, color-mix(in srgb, var(--u-fond) 42%, transparent) 44%, transparent 66%),
+  linear-gradient(90deg, color-mix(in srgb, var(--u-fond) 86%, transparent) 0, color-mix(in srgb, var(--u-fond) 44%, transparent) 40%, transparent 66%); }
+.une-lueur { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(42% 52% at var(--gx, 30%) var(--gy, 64%), var(--u-lueur), transparent 72%); }
+.une-motif { position: absolute; z-index: -1; right: max(var(--gout), 5vw); top: clamp(20px, 5vh, 56px); width: min(36vmin, 23rem); color: var(--u-vif); opacity: .3; pointer-events: none; }
+.une-corps { position: relative; width: 100%; padding-top: clamp(96px, 16vh, 180px); padding-bottom: clamp(32px, 6vh, 64px); }
+.une-texte { max-width: 54rem; }
+.une-credit { position: absolute; z-index: 1; right: max(10px, calc(var(--gout) / 2.4)); bottom: clamp(32px, 6vh, 64px); margin: 0; writing-mode: vertical-rl; transform: rotate(180deg); font: 400 .74rem/1.3 var(--sans); letter-spacing: .06em; color: color-mix(in srgb, var(--u-texte) 84%, transparent); text-shadow: 0 0 6px rgba(0, 0, 0, .85); }
+.une-sur { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; margin: 0; font: 600 .82rem/1.4 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-texte); }
+.une-sur::before { content: ""; flex: none; width: 2.5rem; height: 1px; margin-right: 14px; background: var(--u-vif); box-shadow: 0 0 8px var(--u-vif); }
+.une-sur span + span::before { content: "·"; margin: 0 12px; color: var(--u-vif); }
+.sp-une .u-titre { margin-top: 14px; font-size: clamp(3rem, 1.2rem + 5.8vw, 7.25rem); line-height: .96; text-wrap: balance; text-shadow: 0 0 46px var(--u-lueur); }
+.sp-une .u-titre.long { font-size: clamp(2.5rem, 1rem + 4.2vw, 5rem); }
+.une-statut { display: flex; align-items: center; gap: 10px; margin: 16px 0 0; font: 600 .8rem/1.4 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
+.une-statut::before { content: ""; flex: none; width: .55rem; height: .55rem; border-radius: 50%; background: currentColor; box-shadow: 0 0 14px 3px currentColor; animation: respire 2.4s ease-in-out infinite; }
+.une-st { margin: 14px 0 0; max-width: 40rem; font-size: 1.25rem; line-height: 1.45; color: var(--u-texte); }
+.une-acc { margin: 14px 0 0; max-width: 40rem; font-size: clamp(1.06rem, 1rem + .3vw, 1.22rem); line-height: 1.55; color: var(--u-texte); }
+.une-date { margin: 18px 0 0; font: 600 1.06rem/1.4 var(--sans); color: var(--u-texte); }
+.sp-une .u-cta { margin-top: 24px; }
+/* l'ouverture de la 10 (la page seule) : la photo à droite, le noir de l'univers à gauche, le motif en haut ; le fil d'Ariane, la
+   compagnie qui signe, le titre et son filet qui s'allonge avec la lecture */
+.sp-une10 .une-ombre { background: linear-gradient(90deg, var(--u-fond) 0, var(--u-fond) 22%, color-mix(in srgb, var(--u-fond) 84%, transparent) 42%, color-mix(in srgb, var(--u-fond) 28%, transparent) 64%, transparent 84%),
+  linear-gradient(0deg, color-mix(in srgb, var(--u-fond) 84%, transparent) 0, transparent 36%); }
+.sp-une10 .une-motif { left: var(--bord); right: auto; width: clamp(110px, 20vh, 200px); opacity: .55; }
+@media (min-width: 760px) and (max-height: 760px) { .sp-une10 .une-motif { display: none; } }
+.une-ariane { margin: 0 0 14px; font-size: .88rem; color: var(--u-texte2); }
+.une-ariane a { text-decoration: none; }
+.une-ariane a:hover { text-decoration: underline; }
+.une-nom { margin: 0 0 12px; font: 700 .74rem/1.3 var(--u-etiq); letter-spacing: .24em; text-transform: uppercase; color: var(--u-vif); }
+.sp-une10 .u-titre { margin-top: 0; max-width: 13ch; }
+.sp-une10 .u-titre::after { content: ""; display: block; width: calc(90px + var(--p, 0) * min(320px, 34vw)); height: 4px; margin-top: 20px; border-radius: 2px; background: var(--u-vif); }
+.sp-une10 .une-st { font-style: italic; }
+.une-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 14px 0 0; font: 700 .76rem/1.4 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-texte2); }
+.sp-une10 .une-credit { right: var(--gout); bottom: 12px; padding: 2px 9px; border-radius: 3px; writing-mode: horizontal-tb; transform: none; background: color-mix(in srgb, var(--u-fond) 72%, transparent); text-shadow: none; }
+/* les chapitres, à côté du petit sommaire qui suit la lecture (la 07 : des filets, celui du chapitre lu s'allume) */
+.sp-grille { display: grid; grid-template-columns: minmax(0, 1fr); padding-top: clamp(48px, 7vw, 104px); padding-bottom: clamp(56px, 8vw, 112px); }
+.sp-chaps { min-width: 0; }
+.sp-chaps .wrap { max-width: none; margin: 0; padding: 0; }
+.chap-t { margin: 0 0 clamp(26px, 3vw, 40px); font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(2.1rem, 1.3rem + 2.4vw, 3.4rem); line-height: 1.02; letter-spacing: -.005em; color: var(--u-vif); text-wrap: balance; overflow-wrap: break-word; }
+.sp-som { display: none; }
+.sp-som ol { list-style: none; margin: 0; padding: 0; }
+.sp-som button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 40px; padding: 6px 0; border: 0; background: none; color: var(--u-texte2); font: 600 .74rem/1.3 var(--u-etiq); letter-spacing: .12em; text-transform: uppercase; text-align: left; cursor: pointer; transition: color .18s; }
+.sp-som button::before { content: ""; flex: none; width: 1.25rem; height: 1px; background: currentColor; transition: width .3s var(--mv-courbe), height .3s, background-color .3s; }
+.sp-som button:hover, .sp-som li.on button { color: var(--u-texte); }
+.sp-som li.on button::before { width: 2.5rem; height: 2px; background: var(--u-vif); box-shadow: 0 0 10px var(--u-lueur); }
+.sp-som-signe { display: block; width: 4.5rem; margin-top: 28px; color: var(--u-vif); opacity: .6; }
+/* (plus étroit, le sommaire flottant attend qu'on ait quitté l'ouverture : il en couvrirait l'appel) */
+.sp-tournee.une-vu .som:not(:focus-within) { opacity: 0; visibility: hidden; transition: opacity .2s, visibility 0s .2s; }
+@media (min-width: 1000px) {
+  .sp-grille { grid-template-columns: 11.5rem minmax(0, 1fr); column-gap: clamp(32px, 5vw, 80px); }
+  .sp-som { display: block; position: sticky; top: calc(var(--haut) + var(--onglets) + 32px); align-self: start; }
+  .sp .som { display: none; }
+}
+/* la page seule (la 10) : le sommaire, un bras et ses ventouses (celle du chapitre lu, pleine) ; au téléphone, des pastilles ;
+   un filet entre les chapitres */
+.sp-som--seul { display: block; margin: 0 0 26px; }
+.sp-som--seul ol { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.sp-som--seul button { width: auto; min-height: 36px; padding: 5px 13px; border: 1.5px solid var(--u-filet); border-radius: 999px; font: 500 .86rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; }
+.sp-som--seul button::before { display: none; }
+.sp-som--seul li.on button { border-color: var(--u-vif); }
+.sp-seul .chap { padding-bottom: clamp(40px, 5vw, 72px); }
+.sp-seul .chap + .chap { margin-top: 0; padding-top: clamp(34px, 4vw, 56px); border-top: 1px solid var(--u-filet); }
+@media (min-width: 900px) {
+  .sp-seul .sp-grille { grid-template-columns: 190px minmax(0, 1fr); column-gap: clamp(28px, 4vw, 72px); }
+  .sp-som--seul { position: sticky; top: calc(var(--haut) + 28px); align-self: start; margin: 0; }
+  .sp-som--seul ol { position: relative; display: block; padding: 2px 0 2px 32px; }
+  .sp-som--seul ol::before { content: ""; position: absolute; left: 9px; top: 0; bottom: 0; width: 6px; background: color-mix(in srgb, var(--u-vif) 50%, transparent); clip-path: polygon(0 0, 100% 0, 66% 100%, 34% 100%); }
+  .sp-som--seul li { position: relative; }
+  .sp-som--seul li::before { content: ""; position: absolute; left: calc(-32px + 12px - (14px - var(--i) * 1px) / 2); top: 50%; width: calc(14px - var(--i) * 1px); aspect-ratio: 1; transform: translateY(-50%); border-radius: 50%; background: var(--u-fond); border: 2px solid color-mix(in srgb, var(--u-vif) 75%, transparent); transition: background-color .25s, transform .25s; }
+  .sp-som--seul li.on::before { background: var(--u-vif); transform: translateY(-50%) scale(1.25); }
+  .sp-som--seul button { width: 100%; min-height: 44px; padding: 7px 0; border: 0; border-radius: 0; font-size: .92rem; }
+  .sp-som--seul li.on button { font-weight: 700; }
+}
+/* le récit (voir) : le texte, pas à pas, à côté des photos épinglées qui se relaient ; le pas qu'on lit s'allume d'un filet,
+   les autres restent lisibles ; un filet par photo, en haut du cadre, dit où l'on en est. Au téléphone, les photos occupent
+   l'écran et le texte passe dessus, en cartons. Moins d'animations : rien n'est épinglé, le récit se lit d'un trait */
+.sp .chap.rc-chap { content-visibility: visible; }
+.rc { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); column-gap: clamp(28px, 4vw, 64px); margin-right: calc(-1 * var(--bord)); }
+.rc--seul { display: block; margin-right: 0; }
+.rc-pas { grid-column: 1; grid-row: 1; min-width: 0; padding-bottom: 16svh; }
+.rc-p { display: flex; flex-direction: column; justify-content: center; min-height: 56svh; padding: 4svh 0; color: var(--u-texte2); transition: color .4s var(--mv-courbe); }
+.rc-p:first-child { min-height: 46svh; justify-content: flex-start; padding-top: 0; }
+.rc-in { position: relative; padding-left: 26px; }
+.rc-in::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; border-radius: 2px; background: var(--u-vif); box-shadow: 0 0 12px var(--u-lueur); transform: scaleY(0); transform-origin: 50% 0; transition: transform .5s var(--mv-courbe); }
+.rc-p.on { color: var(--u-texte); }
+.rc-p.on .rc-in::before { transform: none; }
+.rc-p .u-texte { max-width: 38rem; }
+.rc-p .u-texte p:last-child { margin-bottom: 0; }
+.rc-cadre { margin: 0 0 14px; font: 600 .78rem/1.5 var(--u-etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--u-vif); }
+.rc-dit { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.55rem, 1rem + 1.7vw, 2.5rem); line-height: 1.16; text-wrap: balance; }
+.rc-vis { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--haut) + var(--onglets)); height: calc(100svh - var(--haut) - var(--onglets)); align-self: start; }
+.rc-photos { position: absolute; inset: 0; overflow: hidden; background: var(--u-fond2); }
+.rc-ph { position: absolute; inset: 0; margin: 0; opacity: 0; visibility: hidden; transition: opacity .7s var(--mv-courbe), visibility 0s .7s; }
+.rc-ph.on { opacity: 1; visibility: visible; transition: opacity .7s var(--mv-courbe), visibility 0s; }
+.rc-ph img { width: 100%; height: 100%; object-fit: cover; }
+.rc-ph figcaption { position: absolute; left: clamp(14px, 2vw, 24px); bottom: clamp(14px, 2vw, 24px); width: fit-content; max-width: min(28rem, calc(100% - 28px)); margin: 0; padding: 10px 14px 11px; background: var(--u-fond2); color: var(--u-texte); border-left: 3px solid var(--u-vif); font-size: .9rem; line-height: 1.45; box-shadow: 0 16px 30px -18px rgba(0, 0, 0, .6); }
+.rc-ph figcaption small { display: block; margin-top: 2px; font-size: .74rem; color: var(--u-texte2); }
+.rc-ph figcaption small:only-child { margin-top: 0; }
+.rc-fil { position: absolute; left: clamp(14px, 2vw, 24px); right: clamp(14px, 2vw, 24px); top: 16px; display: flex; gap: 6px; pointer-events: none; }
+.rc-fil i { position: relative; flex: 1; height: 3px; overflow: hidden; border-radius: 2px; background: rgba(255, 255, 255, .3); box-shadow: 0 0 6px rgba(0, 0, 0, .45); }
+.rc-fil i::after { content: ""; position: absolute; inset: 0; background: #fff; transform: scaleX(var(--f, 0)); transform-origin: 0 50%; }
+@media (max-width: 899px) {
+  .rc { display: flex; flex-direction: column; margin: 0 calc(-1 * var(--gout)); --rc-h: calc(100svh - var(--haut) - var(--onglets) - var(--rc-bas, 0px)); }
+  .rc--seul { margin: 0; }
+  .rc-vis { order: -1; align-self: stretch; height: var(--rc-h); }   /* (le cadre d'abord, le texte passe dessus) */
+  .rc-pas { position: relative; z-index: 1; margin-top: calc(46svh - var(--rc-h)); padding: 0 var(--gout) 4svh; }
+  .rc--seul .rc-pas { margin-top: 0; padding: 0; }
+  .rc-p, .rc-p:first-child { min-height: 0; margin: 0 0 54svh; padding: 22px 20px 22px 14px; border-radius: 4px; background: var(--u-fond); color: var(--u-texte); box-shadow: 0 0 0 1px var(--u-filet), 0 26px 50px -24px rgba(0, 0, 0, .8); }
+  .rc-p:last-child { margin-bottom: 8svh; }
+  .rc--seul .rc-p { margin-bottom: 18px; }
+  .rc-ph figcaption { top: 34px; bottom: auto; }
+}
+@media (max-width: 759px) { .rc { --rc-bas: calc(66px + env(safe-area-inset-bottom)); } }
+.still .rc-vis { position: relative; top: auto; height: auto; aspect-ratio: 4 / 5; }
+.still .rc-ph:not(:first-child), .still .rc-fil { display: none; }
+.still .rc-ph:first-child { opacity: 1; visibility: visible; }
+.still .rc-p, .still .rc-p:first-child { min-height: 0; justify-content: flex-start; padding-top: 0; padding-bottom: 1.4em; color: var(--u-texte); }
+.still .rc-in::before { display: none; }
+.still .rc-in { padding-left: 0; }
+@media (max-width: 899px) {
+  .still .rc-vis { aspect-ratio: 3 / 2; }
+  .still .rc-pas { margin-top: 0; padding-top: 22px; }
+  .still .rc-p, .still .rc-p:first-child { margin: 0; padding: 0 0 1.2em; border-radius: 0; background: none; box-shadow: none; }
+}
+/* les citations : un vers par ligne (une réplique en prose, entre guillemets), le filet de l'univers, la source */
+.sp-cit { margin: 0; max-width: 46rem; }
+.sp-cit blockquote { margin: 0; padding-left: 1.4rem; border-left: 2px solid var(--u-vif); }
+.sp-cit p { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.25rem, 1rem + 1vw, 1.8rem); line-height: 1.32; }
+.sp-cit .v { display: block; }
+.sp-cit.prose .v { display: inline; }
+.sp-cit.prose p::before { content: "« "; }
+.sp-cit.prose p::after { content: " »"; }
+.sp-cit figcaption { margin: 10px 0 0 1.4rem; font: 600 .74rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.u-texte + .sp-cit, .sp-cit + .sp-cit { margin-top: 32px; }
+.rc-in .sp-cit blockquote { padding-left: 0; border-left: 0; }   /* (dans le récit, le filet du pas suffit) */
+.rc-in .sp-cit figcaption { margin-left: 0; }
+/* la présentation de la page seule (la 10) : le cadre, les affirmations (la première en grand, un filet de l'univers) */
+.sp-cadre { margin: 0 0 22px; font: 700 .82rem/1.6 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.sp-affirm { margin: 0 0 24px; max-width: 30em; padding-left: 22px; border-left: 3px solid var(--u-vif); font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.4rem, 1.05rem + 1.4vw, 2.25rem); line-height: 1.22; color: var(--u-texte); text-wrap: balance; }
+.sp-affirm + .sp-affirm { font-size: clamp(1.2rem, 1rem + .8vw, 1.6rem); color: var(--u-texte2); }
+.sp .u-affirm { max-width: 30ch; margin-bottom: 28px; font-size: clamp(1.5rem, 1rem + 1.6vw, 2.4rem); }
+/* les photos en cartons (la 07) : la première en large, les autres deux par deux, la légende en carton sur la photo */
+.cartons7 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 24px; }
+.carton7 { min-width: 0; margin: 0; }
+.carton7:first-child:not(:last-child), .carton7:only-child { grid-column: 1 / -1; }
+.carton7 img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 3px; background: var(--u-fond2); }
+.carton7:first-child:not(:last-child) img, .carton7:only-child img { aspect-ratio: 16 / 8; }
+.carton7 figcaption { position: relative; width: fit-content; max-width: calc(100% - 2.25rem); margin: -1.75rem 1rem 0 1.25rem; padding: .8rem 1.1rem; background: var(--u-fond2); color: var(--u-texte); border-left: 3px solid var(--u-vif); font-size: .94rem; line-height: 1.5; box-shadow: 0 18px 40px -24px rgba(0, 0, 0, .75); }
+.cartons7 + .u-credit { margin-top: 18px; }
+/* la distribution (la 07) : la fiche d'un côté ; la durée, la production, les mentions et la compagnie qui signe de l'autre */
+.u-distrib-g { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px clamp(32px, 5vw, 80px); align-items: start; }
+.u-distrib-g .u-fiche { grid-template-columns: minmax(0, 1fr); gap: 14px; margin: 0; }
+.u-distrib-g .u-avec { margin-bottom: 24px; }
+.u-duree-d { margin: 0 0 18px; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: 1.5rem; line-height: 1.2; color: var(--u-vif); }
+.u-distrib-g .u-signe { margin: 24px 0 8px; }
+/* les dates (la 10) : la frise de la tournée, la bande des prochaines dates (une ventouse sur chaque bouton, pleine quand la
+   date est choisie), la carte de la date choisie (l'affiche de la 10, dans l'univers du spectacle) à côté de la carte de ses
+   tournées, puis toutes les dates de la saison */
+.sp .rs-zone { margin: 0 0 clamp(26px, 4vw, 40px); }
+.sp .rs-k-bande { color: var(--u-texte2); }
+.sp .rs-defile button { width: 44px; height: 44px; }
+.sp .rs-date { min-width: 8.4rem; max-width: 12.5rem; padding: 14px 34px 13px 16px; border-radius: 16px; }
+.sp .rs-date::before { content: ""; position: absolute; right: 13px; top: 15px; width: 11px; height: 11px; border: 2px solid var(--u-vif); border-radius: 50%; transition: transform .18s var(--mv-courbe), background-color .18s; }
+.sp .rs-date:hover::before { transform: scale(1.3); }
+.sp .rs-date[aria-pressed="true"]::before { background: var(--u-sur-accent); border-color: var(--u-sur-accent); }
+.sp .rs-date[aria-pressed="true"]::after { content: none; }
+.sp .rs-n { font-size: 2rem; }
+.sp .rs-m { font: italic 500 1.05rem/1.2 var(--u-corps); }
+.sp .rs-carte { min-height: 320px; border-radius: 4px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--u-vif) 26%, transparent), 0 18px 36px -24px rgba(0, 0, 0, .6); }
+.sp .rs-photo { width: 56%; opacity: .5; -webkit-mask-image: radial-gradient(130% 100% at 100% 42%, #000 34%, transparent 72%); mask-image: radial-gradient(130% 100% at 100% 42%, #000 34%, transparent 72%); }
+.sp .rs-c { max-width: 31rem; padding: clamp(24px, 3.2vw, 40px) clamp(20px, 3vw, 38px); }
+.sp .rs-sp { color: var(--u-vif); }
+.sp .rs-quand { font: italic 500 clamp(1.2rem, 1.05rem + .5vw, 1.5rem)/1.25 var(--u-corps); }
+.sp .rs-seance { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 18px; border-color: color-mix(in srgb, var(--u-texte) 32%, transparent); background: none; }
+.sp .rs-reserver { min-height: 58px; padding: 12px 22px 12px 28px; }
+.sp .rs-aupres { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 12px 20px; border: 1.5px dashed color-mix(in srgb, var(--u-texte) 45%, transparent); border-radius: 999px; font-weight: 600; color: var(--u-texte); }
+@media (min-width: 1000px) { .sp .rs-corps { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); } }
+.sp-tout { margin: 20px 0 0; }
+.sp-tout a { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--u-texte); text-decoration: none; }
+.sp-tout a:hover { color: var(--u-vif); }
+.sp-tout .fleche { width: 18px; height: 18px; }
+/* le bilan (la 10) : sa phrase, ses chiffres en grand, ses dates saison par saison (un filet de l'univers sur chaque saison) */
+.u-bilan-rep { margin: 0 0 18px; font-family: var(--u-titre-f); font-size: clamp(1.2rem, 1rem + .6vw, 1.5rem); line-height: 1.35; color: var(--u-texte); }
+.sp .u-bilan-s .mois { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 30px 0 0; padding-top: 10px; border-top: 2px solid var(--u-vif); font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(1.3rem, 1.1rem + .6vw, 1.7rem); }
+.sp .u-bilan-s:first-child .mois { margin-top: 0; }
+.sp .u-bilan-s .dates { border-top: 0; }
+/* dans la colonne des chapitres : le contact (programmer) en tête, l'appel à la fin */
+.sp-chaps .u-contact { margin: 0 0 clamp(48px, 6vw, 80px); padding: 0; border: 0; background: none; }
+.sp-chaps .u-appel { margin-top: clamp(64px, 8vw, 112px); padding: clamp(36px, 5vw, 56px) 0 0; border-top: 1px solid var(--u-filet); background: none; text-align: left; }
+.sp-chaps .u-appel .wrap { align-items: flex-start; }
+@media (max-width: 759px) {
+  /* l'ouverture au téléphone : la photo en haut, le texte dessous, qui la recouvre d'un rien ; les trois entrées en trois cases */
+  .sp-une { display: block; min-height: 0; --une-h: max(50svh, 19rem); }
+  .sp-une10 { --une-h: min(62vw, 420px); }
+  .une-ph { position: relative; inset: auto; height: var(--une-h); }
+  .une-ombre, .une-lueur { bottom: auto; height: var(--une-h); }
+  .une-ombre, .sp-une10 .une-ombre { background: linear-gradient(180deg, color-mix(in srgb, var(--u-fond) 60%, transparent) 0, transparent 6rem), linear-gradient(0deg, var(--u-fond) 0, color-mix(in srgb, var(--u-fond) 78%, transparent) 22%, transparent 56%); }
+  .une-motif, .sp-une10 .une-motif { top: 12px; right: 34px; left: auto; width: 7.5rem; opacity: .6; }
+  .une-corps { margin-top: -8rem; padding-top: 0; padding-bottom: 28px; }
+  .sp-une10 .une-corps { margin-top: -3.5rem; }
+  .une-credit { top: 14px; right: 6px; bottom: auto; }
+  .sp-une10 .une-credit { position: static; display: block; width: fit-content; max-width: calc(100% - 2 * var(--gout)); margin: 0 var(--gout) 16px auto; }
+  .sp-une .u-titre, .sp-une .u-titre.long { font-size: clamp(2.4rem, 10vw, 3.4rem); }
+  .u-onglets { margin: 0 var(--gout); background: none; -webkit-backdrop-filter: none; backdrop-filter: none; border: 0; }
+  .u-onglets-in { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0; min-height: 0; padding: 0; overflow: visible; border: 1px solid color-mix(in srgb, var(--u-texte) 30%, transparent); }
+  .u-onglets .ut, .u-progres { display: none; }
+  .u-onglets a { flex-direction: column; justify-content: center; gap: 7px; min-height: 64px; padding: 10px 4px; white-space: normal; text-align: center; font-size: .8rem; line-height: 1.2; }
+  .u-onglets a + a { border-left: 1px solid color-mix(in srgb, var(--u-texte) 30%, transparent); }
+  .u-onglets a[aria-current="page"] { background: color-mix(in srgb, var(--e) 18%, transparent); }
+  .u-onglets a::after { display: none; }
+  .u-distrib-g { grid-template-columns: minmax(0, 1fr); }
+  .sp .rs-carte { min-height: 0; }
+  .sp .rs-photo { position: relative; display: block; inset: auto; width: 100%; height: 150px; opacity: .65; -webkit-mask-image: linear-gradient(0deg, transparent, #000 70%); mask-image: linear-gradient(0deg, transparent, #000 70%); }
+  .sp .rs-c { margin-top: -40px; padding: 0 18px 22px; }
+}
+@media (max-width: 640px) {
+  .cartons7 { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .carton7:first-child:not(:last-child) img { aspect-ratio: 3 / 2; }
+}
 /* Bérénice : la charte du dossier scolaire (crème, rouge, bordeaux ; Ubuntu gras, Open Sans, Raleway) */
 .u-arene { --u-carte: var(--u-accent); }
-.u-arene .u-ouv { background: var(--u-accent); }
-.u-arene .u-ouv-fond img { opacity: .34; filter: grayscale(1) contrast(1.2); mix-blend-mode: multiply; -webkit-mask-image: none; mask-image: none; }
-.u-arene .u-ouv-lueur { background: radial-gradient(46% 56% at var(--gx, 28%) var(--gy, 42%), rgba(99, 23, 5, .55), transparent 72%); }
-.u-arene .u-ouv :is(.u-titre, .u-st, .u-accroche, .u-sur, .u-lt, .u-signe, .u-cadre) { color: #fff; }
-.u-arene :is(.u-titre, .u-h2, .dos-h3, .prog-t, .fe-t, .suivant b, .u-ac-type) { text-transform: uppercase; }
+.u-arene :is(.u-titre, .chap-t, .dos-h3, .prog-t, .fe-t, .suivant b, .u-ac-type) { text-transform: uppercase; }
 .u-arene .fu-t { text-transform: uppercase; color: var(--u-accent); }
-.u-arene .u-ouv .bu { color: #fff; border-color: rgba(255, 255, 255, .75); }
-.u-arene .u-ouv .bu:hover { background: rgba(255, 255, 255, .12); }
-.u-arene .u-ouv .bu.plein { background: #fff; border-color: #fff; color: var(--u-accent); }
-.u-arene .u-carton .ph { border-radius: 50%; box-shadow: 0 0 0 10px rgba(255, 255, 255, .12), 0 40px 70px -30px rgba(60, 10, 0, .7); }
-.u-arene .u-carton img { aspect-ratio: 1; }
-.u-arene .u-carton figcaption { margin: 22px auto 0; background: #fff; color: var(--u-texte); border-left-color: var(--u-accent); text-align: center; }
-.u-arene :is(.u-h2, .u-affirm, .u-cit p, .u-ac-type, .u-aside, .u-avec, .suivant b, .prog-t a, .fe-t a, .fe-type) { color: var(--u-accent); }
+.u-arene :is(.chap-t, .u-affirm, .sp-cit p, .u-ac-type, .u-avec, .suivant b, .prog-t a, .fe-t a, .fe-type) { color: var(--u-accent); }
 .u-arene .u-onglets { background: color-mix(in srgb, #fff 82%, transparent); }
-.u-arene .chap.alt .u-fig figcaption { background: var(--u-fond); }
 .dos-couv { position: relative; isolation: isolate; overflow: hidden; display: grid; justify-items: center; gap: 6px; padding: clamp(30px, 5vw, 64px) clamp(20px, 4vw, 48px); border-radius: 8px; background: var(--u-accent); color: #fff; text-align: center; }
 .dos-couv-fond { position: absolute; inset: 0; z-index: -1; }
 .dos-couv-fond img { width: 100%; height: 100%; object-fit: cover; opacity: .32; filter: grayscale(1) contrast(1.2); mix-blend-mode: multiply; }
@@ -1305,68 +1480,6 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .dos-alerte { display: flex; gap: 14px; align-items: flex-start; margin: 0 0 22px; padding: 18px 20px; border: 2px solid var(--u-accent); border-radius: 8px; background: var(--u-fond2); }
 .dos-alerte svg { flex: none; width: 26px; height: 26px; color: var(--u-accent); }
 
-/* ———— les effets de la 10, dans l'univers de chaque spectacle ———— */
-.sx { position: relative; }
-.sx-pin { position: sticky; top: calc(var(--haut) + var(--onglets)); height: calc(100vh - var(--haut) - var(--onglets)); height: calc(100svh - var(--haut) - var(--onglets)); overflow: hidden; }
-.sx-sig { height: 280vh; background: var(--bg2); color: var(--fg); }
-.sx-chronologie { height: 360vh; }
-.sig { position: relative; height: 100%; overflow: hidden; }
-.sig-phrase { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); width: min(900px, 90%); margin: 0; text-align: center; font: 500 clamp(1.2rem, .85rem + 1.4vw, 2.1rem)/1.22 var(--titre); text-wrap: balance; opacity: clamp(0, (var(--p) - .5) * 5, 1); }
-.sig-chrono { display: grid; place-items: center; padding: 0 var(--gout); }
-.chaleur { position: absolute; left: -20%; right: -20%; bottom: -55%; height: 100%; background: radial-gradient(closest-side, color-mix(in srgb, var(--ac2) 45%, transparent), transparent); opacity: calc(.12 + var(--p) * .8); transform: translateY(calc((1 - var(--p)) * 25%)); pointer-events: none; }
-.ligne-temps { position: absolute; left: 0; top: 13%; width: 200%; height: 40px; transform: translateX(calc(var(--p) * -50%)); }
-.ligne-temps path { stroke: var(--fg2); stroke-width: 1.5; opacity: .45; }
-.cartons { position: relative; display: grid; width: min(860px, 100%); margin: 0; padding: 0; list-style: none; }
-.cartons li { grid-area: 1 / 1; align-self: center; opacity: 0; transform: translateY(18px); transition: opacity .5s, transform .5s; }
-.cartons li.on { opacity: 1; transform: none; }
-.cartons blockquote { margin: 0; text-align: center; }
-.cartons p { margin: 0; font: 600 clamp(1.45rem, 1rem + 2vw, 2.8rem)/1.2 var(--u-titre-f); text-wrap: balance; }
-.cartons cite { display: block; margin-top: 18px; font: normal 600 .76rem/1.4 var(--u-etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--u-vif); }
-.sig-jumeaux .twin { position: absolute; top: 12%; height: 50%; width: min(26vw, 400px); overflow: hidden; border: 1px solid var(--ac); border-radius: 999px 999px 4px 4px; }
-.sig-jumeaux .twin.l { left: calc(50% - min(13vw, 200px) - clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
-.sig-jumeaux .twin.r { left: calc(50% - min(13vw, 200px) + clamp(0, var(--p) * 1.6, 1) * min(21vw, 320px)); }
-.sig-jumeaux .twin img { width: 100%; height: 100%; object-fit: cover; }
-.sig-jumeaux .twin.r img { transform: scaleX(-1); }
-.sig-jumeaux .crown { position: absolute; left: 50%; top: 3%; width: 92px; transform: translateX(-50%); fill: none; stroke: var(--ac); stroke-width: 2.5; stroke-linejoin: round; }
-.sig-jumeaux .crown path { stroke-dasharray: 1; stroke-dashoffset: calc(1 - clamp(0, var(--p) * 2.2, 1)); }
-.sig-nez { display: grid; place-items: center; padding: 0 var(--gout); }
-.sig-nez .moon { position: absolute; right: 9vw; top: 8%; width: clamp(70px, 11vw, 150px); fill: var(--ac); transform: translateY(calc((1 - var(--p)) * 30vh)); }
-.nez-lines { margin: 0; max-width: 1100px; text-align: center; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); line-height: 1.05; }
-.nez-lines span { display: block; margin-top: .3em; font-size: calc(1.3rem + var(--i) * 1.5vw); opacity: clamp(0, (var(--p) * 3.4 - var(--i) * 1.05 - .1) * 2.5, 1); transform: translateY(calc((1 - clamp(0, var(--p) * 3.4 - var(--i) * 1.05 - .1, 1)) * 40px)); }
-.nez-lines span:last-child { color: var(--ac); font-size: clamp(2rem, .9rem + 4.4vw, 5.6rem); transform-origin: 0 50%; }
-.ring-photo { position: absolute; left: 50%; top: 40%; width: min(40vh, 58vw); aspect-ratio: 1; transform: translate(-50%, -50%) scale(calc(.62 + var(--p) * .38)); clip-path: circle(50%); }
-.ring-photo img { width: 100%; height: 100%; object-fit: cover; }
-.ring { position: absolute; left: 50%; top: 40%; width: min(64vh, 92vw); transform: translate(-50%, -50%); overflow: visible; }
-.ring text { font-family: var(--u-corps); font-size: 14px; letter-spacing: .8px; fill: var(--fg); }
-.ring text.inner { font-family: var(--u-etiq); font-weight: 700; font-size: 10.5px; letter-spacing: 4px; text-transform: uppercase; fill: var(--ac); }
-.ring-line { fill: none; stroke: var(--ac); stroke-width: 1.2; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
-.ring-rot { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * 150deg)); }
-.ring-rot2 { transform-box: view-box; transform-origin: 200px 200px; transform: rotate(calc(var(--p) * -110deg)); }
-.sig-cercle .sig-phrase { bottom: 4%; font: 700 clamp(1.05rem, .8rem + 1.1vw, 1.8rem)/1.25 var(--u-titre-f); color: var(--ac); }
-.sheets { list-style: none; margin: 0; padding: 0; position: absolute; left: 50%; top: 12%; width: min(620px, 84vw); height: 66%; transform: translateX(-50%); perspective: 1600px; }
-.sheet { position: absolute; inset: 0; z-index: var(--z); display: flex; align-items: center; padding: 8%; background: #fffdf8 linear-gradient(transparent 96%, #d7e3f4 96%) 0 0 / 100% 2.2em; border: 1px solid #d9d0bf; box-shadow: 0 18px 40px rgba(20, 20, 50, .16); transform-origin: 50% 0; backface-visibility: hidden; transform: rotateX(calc(clamp(0, var(--p) * 3.2 - var(--i) - .3, 1) * -168deg)); }
-.sheet:last-child { transform: none; }
-.sheet span { font: clamp(1.3rem, .9rem + 1.6vw, 2.3rem)/1.2 var(--u-titre-f); color: var(--ac2); text-wrap: balance; }
-.sheet:nth-child(2) span { color: var(--ac); }
-.sig-ann { display: grid; place-items: center; padding: 0 var(--gout); }
-.ann-text { max-width: 36ch; margin: 0; font: clamp(1.25rem, .8rem + 1.6vw, 2.25rem)/1.7 var(--u-titre-f); }
-.ann { position: relative; white-space: nowrap; --k: clamp(0, var(--p) * 3.4 - var(--i) * .9 - .2, 1); }
-.ann::before { content: ""; position: absolute; inset: -.06em -.3em -.02em; border: 2.5px solid var(--ac); border-radius: 50%; transform: rotate(-3deg); clip-path: inset(0 calc((1 - var(--k)) * 100%) 0 0); }
-.sig-clock { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 4vw; padding: 0 max(var(--gout), 5vw); }
-.clock { width: min(44vh, 36vw); justify-self: center; overflow: visible; }
-.clock > circle { fill: none; stroke: var(--fg); stroke-width: 3; }
-.clock .ticks line { stroke: var(--fg); stroke-width: 1.5; stroke-linecap: round; }
-.clock .hand-h { stroke: var(--fg); stroke-width: 6; stroke-linecap: round; }
-.clock .hand-m { stroke: var(--ac); stroke-width: 3.5; stroke-linecap: round; }
-.clock .pin { fill: var(--ac2); }
-.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; font: clamp(1.15rem, .95rem + .9vw, 1.8rem)/1.25 var(--u-titre-f); }
-.steps li { position: relative; padding-left: 24px; opacity: .18; transform: translateX(-10px); transition: opacity .45s, transform .45s; }
-.steps li::before { content: ""; position: absolute; left: 0; top: .5em; width: 10px; height: 10px; border-radius: 50%; background: var(--ac); }
-.steps li.on { opacity: 1; transform: none; }
-.sig-fil { display: grid; place-items: center; padding: 0 var(--gout); }
-.thread { position: absolute; inset: 0; width: 100%; height: 100%; }
-.thread path { fill: none; stroke: var(--u-scene); stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--p)); }
-.fil-vers { position: relative; margin: 0; max-width: 16ch; text-align: center; font: clamp(2.4rem, 1rem + 5.2vw, 6.4rem)/1 var(--u-titre-f); text-wrap: balance; color: color-mix(in srgb, var(--fg) calc((1 - clamp(0, (var(--p) - .4) * 3, 1)) * 100%), var(--u-scene)); }
 
 
 /* ———————————— le mouvement (règle 15) : la pousse et le filet ; voir le bloc « Mouvement » en tête du script ————————————
@@ -1386,7 +1499,7 @@ html[data-mv-transition="onglet"] .u-onglets a[aria-current="page"] { view-trans
 @keyframes page-fondu { to { opacity: 0; } }
 @keyframes page-fondu-entre { from { opacity: 0; } }
 /* entre les onglets, le titre ne se réécrit pas */
-.u-ouv.deja .u-titre .ch, .u-ouv.deja .ecrit .w { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+.sp-une.deja .u-titre .ch, .sp-une.deja .ecrit .w { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
 /* les filets se tracent de gauche à droite, à l'arrivée dans l'écran */
 section.bloc { position: relative; border-top: 0; }
 .filet { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--filet); transform-origin: 0 50%; pointer-events: none; }
@@ -1473,7 +1586,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 /* dans l'univers d'un spectacle */
 .u .frise[data-frise] { --fr-fond: var(--u-fond); --fr-encre: var(--u-texte); --fr-trait: color-mix(in srgb, var(--u-texte) 30%, transparent); --fr-accent: var(--u-vif);
   --fr-bulle-fond: var(--u-texte); --fr-bulle-encre: var(--u-fond); --fr-police: var(--u-etiq); }
-.u .chap.alt .frise[data-frise], .u .prog-d .frise[data-frise] { --fr-fond: var(--u-fond2); }
+.u .prog-d .frise[data-frise] { --fr-fond: var(--u-fond2); }
 .u .frise .frise-mois-nom { font-family: var(--u-corps); font-style: normal; }
 .u .frise .frise-bulle b { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-style: normal; }
 .u-frise { margin: 0 0 clamp(26px, 4vw, 44px); }
@@ -1519,7 +1632,6 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .rs-corps { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: clamp(22px, 4vw, 56px); align-items: start; margin-top: 2px; }
 /* la carte : l'affiche d'une date, dans l'univers de son spectacle (--rs-bg : son fond, que l'encre reprend) */
 .rs-carte { --rs-bg: var(--u-fond2); position: relative; isolation: isolate; overflow: hidden; min-height: 330px; border-radius: 14px; background: var(--rs-bg); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 0 0 1px var(--u-filet), 0 34px 64px -40px rgba(0, 0, 0, .7); }
-.chap.alt .rs-carte { --rs-bg: var(--u-fond); }
 .rs-photo { inset: 0 0 0 auto; width: 50%; height: 100%; object-fit: cover; opacity: .55; -webkit-mask-image: linear-gradient(90deg, transparent, #000 55%); mask-image: linear-gradient(90deg, transparent, #000 55%); }
 .u-clair .rs-photo, .rs-carte.u-clair .rs-photo { opacity: .3; }
 .rs-encre { position: absolute; z-index: -2; border-radius: 50%; background: var(--rs-bg); pointer-events: none; }
@@ -1598,16 +1710,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 }
 
 /* moins d'animations : tout est posé, rien n'est épinglé ; et quand les données changent, la vue se refait sans entrée */
-.still .sx { height: auto !important; }
-.still .sx-pin { position: relative; top: 0; height: auto; min-height: 86vh; }
-.still .sig { min-height: 86vh; }
-.still .cartons { padding: 12vh 0; }
-.still .cartons li { grid-area: auto; opacity: 1; transform: none; margin: 0 0 48px; }
-.still .steps li { opacity: 1; transform: none; }
 .still .carte .m, .still .carte .bout, .sur-place .carte .m, .sur-place .carte .bout { stroke-dashoffset: 0; transition: none; }
 .still .carte .point, .sur-place .carte .point { opacity: 1; transition: none; }
-.still .mo-g path, .still .mo-feutre path, .still .mo-souligne path, .still .mo-entoure path, .sur-place .mo-g path, .sur-place .mo-feutre path, .sur-place .mo-souligne path, .sur-place .mo-entoure path { animation: none; stroke-dashoffset: 0; }
-.sur-place .mo-frise .curseur, .sur-place .trait path { animation: none; }
+.sur-place .trait path { animation: none; }
 
 @media (min-width: 760px) {
   article.u { --onglets: 56px; }
@@ -1632,13 +1737,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   .ag-carte, .sa-carte, .e-carte { position: static; order: -1; }
   .reperes, .photos-ac, .carte-sp, .u-faits { position: static; }
   .u-bilan { grid-template-columns: minmax(0, 1fr); } .u-bilan .carte-sp { order: -1; }
-  .u-ouv-grille { grid-template-columns: minmax(0, 1fr); }
-  .u-ouv { min-height: 0; }
-  .u-carton { max-width: 440px; justify-self: start; }
-  .mo-horloge { opacity: .2; }
-  .mo-nez { left: auto; right: 2%; top: 4%; height: 34%; opacity: .3; }
-  .sig-clock { grid-template-columns: minmax(0, 1fr); align-content: center; gap: 28px; }
-  .clock { width: min(30vh, 56vw); }
   .dos-appel { grid-template-columns: minmax(0, 1fr); }
   .dos-appel-ph { min-height: 200px; }
 }
@@ -1667,10 +1765,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   .fus.large .fu-ph::after { inset: auto 0 0; width: auto; height: 46%; background: linear-gradient(transparent, var(--u-fond)); }
   .fus.large .fu-c { padding: 4px 18px 20px; }
   .fus.large .fu .mo { top: -6px; }
-  .u-duo { grid-template-columns: minmax(0, 1fr); }
-  .u-duo > :nth-child(2) { margin-top: 0; }
-  .mo-frise-w { display: none; }
-  .mo-note { display: none; }
   .ag-index { position: static; grid-template-columns: minmax(0, 1fr); }
   .idx-outils { justify-content: flex-start; padding-bottom: 0; }
 }
@@ -1691,12 +1785,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   .galerie { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dos-table { min-width: 540px; font-size: .9rem; }
   .dos-table th, .dos-table td { padding: 10px; }
-  .sig-jumeaux .twin { width: 40vw; height: 34%; top: 14%; }
-  .sig-jumeaux .twin.l { left: calc(50% - 20vw - clamp(0, var(--p) * 1.6, 1) * 23vw); }
-  .sig-jumeaux .twin.r { left: calc(50% - 20vw + clamp(0, var(--p) * 1.6, 1) * 23vw); }
-  .sig-jumeaux .sig-phrase { bottom: 10%; }
-  .sig-cercle .sig-phrase { bottom: 3%; }
-  .ring-photo, .ring { top: 36%; }
 }
 @media (max-width: 419px) {
   .fus.compact { grid-template-columns: minmax(0, 1fr); }
@@ -1989,22 +2077,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     chronologie: () => `<path d="M2 27H38"/>${[4, 12, 20, 28, 36].map((x, i) => `<path d="M${x} ${i % 2 ? 23 : 20}V31"/>`).join('')}<circle cx="36" cy="13" r="3"/>`,
   };
   const petit = m => PETITS[m] ? `<svg class="mo" viewBox="0 0 40 40" aria-hidden="true" focusable="false">${PETITS[m]()}</svg>` : '';
-  // les motifs en grand, dans l'ouverture de la page du spectacle
-  function motifGrand(m) {
-    if (m === 'nez') return `<svg class="mo mo-g mo-nez" viewBox="0 0 260 360" aria-hidden="true" focusable="false"><path d="M110 8C62 24 46 78 58 128c4 18 13 30 15 43l120 54c8 4 4 14-8 14l-96 4c-2 12 8 21 4 31-5 9 4 17-1 27-6 13 4 25 13 34 8 20 2 40-12 58"/><path class="lune" d="M214 36a30 30 0 1 0 20 52a24 24 0 1 1 -20 -52z"/></svg>`;
-    if (m === 'horloge') return `<svg class="mo mo-g mo-horloge" viewBox="0 0 200 200" aria-hidden="true" focusable="false"><circle cx="100" cy="100" r="96"/>${Array.from({ length: 60 }, (_, i) => `<line x1="100" y1="${i % 5 ? 10 : 6}" x2="100" y2="${i % 5 ? 14 : 20}" transform="rotate(${i * 6} 100 100)"/>`).join('')}<line class="aig-h" x1="100" y1="100" x2="100" y2="52"/><line class="aig-m" x1="100" y1="100" x2="100" y2="24"/><circle cx="100" cy="100" r="3.5" fill="currentColor"/></svg>`;
-    if (m === 'fil') return '<svg class="mo mo-g mo-fil" viewBox="0 0 1400 800" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M-30 760C200 720 420 800 640 724S760 420 724 262 820 30 1010 86 1300 270 1440 120"/></svg>';
-    if (m === 'chronologie') {
-      const x = a => 40 + (a - 1850) / 227 * 1120, ticks = [];
-      for (let a = 1850; a <= 2070; a += 10) ticks.push(`<path d="M${x(a).toFixed(1)} ${a % 50 ? 24 : 17}V36"/>`);
-      return `<div class="wrap mo-frise-w" aria-hidden="true"><svg class="mo mo-frise" viewBox="0 0 1200 58" focusable="false"><path d="M40 30H1160"/>${ticks.join('')}<path d="M1160 12V42"/><text x="40" y="55">1850</text><text x="1160" y="55" text-anchor="end">2077</text><circle class="curseur" cx="1160" cy="30" r="6"/></svg></div>`;
-    }
-    return '';
-  }
-  const sousTitre = m => m === 'paperboard' ? '<svg class="mo mo-feutre" viewBox="0 0 320 26" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M4 17C70 7 130 22 200 12S290 9 316 15"/></svg>'
-    : m === 'annotations' ? '<svg class="mo mo-souligne" viewBox="0 0 320 30" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M4 18c28-10 52 8 80-2s50-12 78 0 54 10 80-2 46-8 74 4"/></svg><svg class="mo mo-g mo-note" viewBox="0 0 30 30" aria-hidden="true" focusable="false"><path d="M15 3v24M4 9l22 12M26 9L4 21"/></svg>' : '';
-  const autourPhoto = m => m === 'arene' ? `<svg class="mo mo-g mo-arene" viewBox="0 0 400 400" aria-hidden="true" focusable="false"><circle cx="200" cy="200" r="197"/>${[0, 120, 240].map(a => `<path class="gradin" d="${arc(200, 200, 183, a + 9, a + 111)}"/>`).join('')}<circle cx="200" cy="200" r="168" stroke-dasharray="1.5 7"/></svg>`
-    : m === 'annotations' ? '<svg class="mo mo-g mo-entoure" viewBox="0 0 300 300" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M40 60C110 10 250 20 280 110S240 280 140 284 6 220 18 140 70 50 150 36"/></svg>' : '';
 
   // le titre se révèle lettre à lettre, les phrases s'écrivent mot à mot
   function lettres(lignes, attrs = []) {
@@ -2015,7 +2087,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   }
   const mots = t => String(t || '').split(/[ \n\t]+/).filter(Boolean);
   const ecrit = (t, i0 = 0) => mots(t).map((w, i) => `<span class="w" style="--w:${i0 + i}">${esc(w)}</span>`).join(' ');
-  const citation = (s, c, ic) => { let k = 0; return `<blockquote class="u-cit"><p class="ecrit">${(c.vers || []).map((v, j) => { const h = `<span class="vers"${edS(s, 'citations', ic, 'vers', j)}>${ecrit(v, k)}</span>`; k += mots(v).length; return h; }).join('')}</p><cite${edS(s, 'citations', ic, 'source')}>${esc(c.source)}</cite></blockquote>`; };
   const creditDe = (s, p) => p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
   const cleCredit = p => p && p.source === 'dossier' ? 'creditDossier' : 'creditPhotos';
   const fig = (s, p, cls = '') => { if (!p) return ''; const i = rangPh(s, p);
@@ -2031,7 +2102,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   // sont ses photos (D), jamais une image venue de YouTube ou de Vimeo
   function videos(s, chap) {
     if (!s.video) return '';
-    const tete = `<h2 class="u-eti">${petit(mo(s))}${esc(L.bandeAnnonce)}</h2>`;
+    const tete = titreChap(esc(L.bandeAnnonce));
     if (!lisible(s.video)) return chapitre(chap, 'video', L.bandeAnnonce, `<div class="wrap">${tete}<p class="u-faits-liens">${lienVideo(s)}</p></div>`);
     const autres = (s.medias || []).filter(m => m && m.type === 'video' && m.url !== s.video.url && lisible(m)), groupes = [];
     autres.forEach(m => { const g = groupes.find(x => x.nom === (m.groupe || '')); if (g) g.ms.push(m); else groupes.push({ nom: m.groupe || '', ms: [m] }); });
@@ -3774,99 +3845,102 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     return { titre: Lg.titre };
   }
 
-  /* ---------- l'effet de chaque spectacle (de la 10) : seulement des phrases entières de son texte ---------- */
-  // la phrase qui commence par « debut » et finit par « fin » (ponctuation comprise), prise telle quelle ; sinon rien
-  function phrase(s, debut, fin) {
-    for (const p of s.texte || []) {
-      const t = p.replace(/'/g, '’'), i = t.indexOf(debut);
-      if (i < 0) continue;
-      const j = t.indexOf(fin, i);
-      if (j < 0) return '';
-      let k = j + fin.length;
-      const m = t.slice(k).match(/^[\s  ]*[!?.…]+/);
-      if (m) k += m[0].length;
-      return p.slice(i, k);
-    }
-    return '';
-  }
-  const phrases = (s, Ls) => Ls.map(([a, b]) => phrase(s, a, b)).filter(Boolean);
-  const SIG = {
-    chronologie: s => `<div class="sig sig-chrono"><div class="chaleur" aria-hidden="true"></div>
-      <svg class="ligne-temps" viewBox="0 0 2000 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 20H2000"/>${Array.from({ length: 81 }, (_, i) => `<path d="M${i * 25} ${i % 4 ? 14 : 6}V${i % 4 ? 26 : 34}"/>`).join('')}</svg>
-      <ol class="cartons">${(s.extraits || []).map((x, i) => `<li${i ? '' : ' class="on"'}><blockquote><p${edS(s, 'extraits', i, 'citation')}>${esc(x.citation)}</p><cite${edS(s, 'extraits', i, 'source')}>${esc(x.source)}</cite></blockquote></li>`).join('')}</ol></div>`,
-    jumeaux: s => { const t = phrase(s, 'Lorsqu’un roi meurt', 'sa place');
-      return `<div class="sig sig-jumeaux"><div class="twin l"><img src="${D.photos[s.slug]}" alt=""></div><div class="twin r"><img src="${D.photos[s.slug]}" alt=""></div>
-        <svg class="crown" viewBox="0 0 120 70" aria-hidden="true"><path pathLength="1" d="M8 62 L14 18 L38 42 L60 8 L82 42 L106 18 L112 62 Z M8 62 H112"/></svg>${t ? `<p class="sig-phrase">${t}</p>` : ''}</div>`; },
-    nez: s => { const t = phrase(s, 'Je m’y engage', 'le nez en l’air'), Ls = t ? t.split(/(?<=[:…])\s+/) : [];
-      return `<div class="sig sig-nez"><svg class="moon" viewBox="0 0 100 100" aria-hidden="true"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>${Ls.length ? `<p class="nez-lines">${Ls.map((v, i) => `<span style="--i:${i}">${v}</span>`).join(' ')}</p>` : ''}</div>`; },
-    arene: s => { const a = phrase(s, 'Titus aime Bérénice', 'le savoir'), b = phrase(s, 'C’est ainsi', 'comme ça'), c = phrase(s, 'Ici-bas', 'sublime');
-      return `<div class="sig sig-cercle"><div class="ring-photo"><img src="${D.photos[s.slug]}" alt=""></div>
-        <svg class="ring" viewBox="0 0 400 400" aria-hidden="true"><defs><path id="ring-a" d="M200 200m-178 0a178 178 0 1 1 356 0a178 178 0 1 1-356 0"/><path id="ring-b" d="M200 200m-146 0a146 146 0 1 1 292 0a146 146 0 1 1-292 0"/></defs>
-          <circle class="ring-line" cx="200" cy="200" r="194" pathLength="1"/>${a ? `<g class="ring-rot"><text><textPath href="#ring-a">${a}</textPath></text></g>` : ''}
-          ${b ? `<g class="ring-rot2"><text class="inner"><textPath href="#ring-b"><tspan>${b}</tspan><tspan> · </tspan><tspan>${b}</tspan><tspan> · </tspan></textPath></text></g>` : ''}</svg>
-        ${c ? `<p class="sig-phrase">${c}</p>` : ''}</div>`; },
-    paperboard: s => { const Ls = phrases(s, [['Si Shakespeare vous effraie', 'pour vous'], ['Cette pièce, à la forme atypique', 'son époque'], ['Vous plongerez', 'en revenir']]);
-      return `<div class="sig sig-board"><ol class="sheets">${Ls.map((t, i) => `<li class="sheet" style="--i:${i};--z:${Ls.length - i}"><span>${t}</span></li>`).join('')}</ol></div>`; },
-    annotations: s => { let t = phrase(s, 'La brièveté de cette pièce', 'son époque'), n = 0;
-      if (!t) return '';
-      ['lazzi', 'arrêts de jeu', 'parenthèses'].forEach(w => { t = t.replace(w, m => `<span class="ann" style="--i:${n++}">${m}</span>`); });
-      return `<div class="sig sig-ann"><p class="ann-text">${t}</p></div>`; },
-    horloge: s => { const Ls = phrases(s, [['Un huis-clos', 'professeurs'], ['Alors l’idée leur vient', 'leur vient'], ['Puisque la contestation', 'l’insurrection'], ['Et cette journée', 'macabre']]);
-      const ticks = Array.from({ length: 60 }, (_, i) => `<line x1="100" y1="${i % 5 ? 11 : 7}" x2="100" y2="${i % 5 ? 15 : 21}" transform="rotate(${i * 6} 100 100)"/>`).join('');
-      return `<div class="sig sig-clock"><svg class="clock" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="96"/><g class="ticks">${ticks}</g>
-        <line class="hand-h" x1="100" y1="100" x2="100" y2="54"/><line class="hand-m" x1="100" y1="100" x2="100" y2="28"/><circle class="pin" cx="100" cy="100" r="4"/></svg>
-        <ol class="steps">${Ls.map(t => `<li>${t}</li>`).join('')}</ol></div>`; },
-    fil: s => { const t = phrase(s, 'Le couple est prêt', 'triompher');
-      return `<div class="sig sig-fil"><svg class="thread" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M-20 120 C 260 40, 420 260, 300 420 S 120 760, 420 780 S 860 560, 760 340 S 520 120, 700 60 S 1000 200, 1040 520"/></svg>${t ? `<p class="fil-vers">${t}</p>` : ''}</div>`; },
+  /* ---------- la page d'un spectacle, composée : l'univers de la 07, réserver et le bilan de la 10 ----------
+     Un spectacle en tournée (ou en création) : l'ouverture de la 07 (sa photo principale plein cadre dans le noir de son
+     univers, le titre, l'accroche, la prochaine date, l'appel de l'entrée ; son motif projeté comme un gobo), ses trois
+     entrées en onglets (une lampe à la couleur de chacune), puis ses chapitres à côté d'un petit sommaire qui suit la
+     lecture. Dans « voir », la présentation se lit en récit : le texte se découvre pas à pas à côté de ses photos (la
+     principale d'abord, puis les autres dans l'ordre de D), épinglées, qui se relaient au fil de la lecture (un filet par
+     photo dit où l'on en est) ; puis ses dates et la carte de réservation de la 10 (RESERVER, règle 17). Un spectacle qui
+     n'est plus en tournée (règle 21) : la page de la 10 (son ouverture, ses chapitres, un sommaire qui suit la lecture),
+     sa présentation d'abord, puis le bilan de ses dates passées, les actions culturelles menées en dernier, et seulement
+     si elles ont un texte. Moins d'animations : rien n'est épinglé, le récit se lit d'un trait. */
+  // les motifs en grand (ceux de la 10) : la signature de l'ouverture, qui suit la lecture (--p, de 0 à 1 en la quittant)
+  const MOTIFS = {
+    arene: '<g class="m-tourne"><circle cx="120" cy="120" r="106" stroke-width="5" stroke-dasharray=".1 12.3"/><circle cx="120" cy="120" r="94"/></g><circle cx="120" cy="120" r="66" stroke-width="1.4"/><path d="M120 103l15 8.5v17L120 137l-15-8.5v-17z"/>',
+    jumeaux: '<g class="m-g"><circle cx="94" cy="134" r="48"/><path d="M64 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g><g class="m-d"><circle cx="146" cy="134" r="48"/><path d="M116 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g>',
+    annotations: '<path class="m-ecrit" pathLength="1" d="M26 58c8-7 15 7 23 0s15 7 23 0 15 7 23 0 15 7 23 0"/><path class="m-ecrit" pathLength="1" d="M26 86c8-6 15 6 23 0s15 6 23 0 15 6 21 0"/><path class="m-ecrit" pathLength="1" d="M26 114c8-6 15 6 23 0s15 6 23 0"/><path class="m-ecrit" pathLength="1" d="M24 136c46 7 98 5 150-5"/><ellipse class="m-ecrit" pathLength="1" cx="176" cy="76" rx="36" ry="22" transform="rotate(-8 176 76)"/><path class="m-ecrit" pathLength="1" d="M120 196c22-26 46-38 76-44m-15-10 15 10-12 13"/>',
+    paperboard: '<path d="M120 172v56M84 172l-26 58M156 172l26 58"/><rect x="52" y="34" width="136" height="138" rx="2"/><path d="M46 34h148" stroke-width="5"/><path class="m-ecrit" pathLength="1" d="M120 146c-34-20-36-50-13-53 7-1 13 4 13 11 0-7 6-12 13-11 23 3 21 33-13 53z"/><path class="m-ecrit" pathLength="1" d="M68 58h40M68 72h26"/><path class="m-ecrit" pathLength="1" d="M150 52l20 22m0-22-20 22"/>',
+    nez: '<path d="M156 30c-24 4-40 22-42 54"/><g class="m-nez"><path d="M114 84c-12 16-40 32-70 44 18 8 46 10 66 12"/></g><path d="M110 140c-4 7 5 11-3 17 8 4 2 10 4 15 2 15 11 23 24 25 4 13 2 23-1 31"/><path d="M134 108c6-3 12-3 16 0" stroke-width="2.4"/>',
+    horloge: '<circle cx="120" cy="120" r="98"/><circle cx="120" cy="120" r="86" stroke-width="9" stroke-dasharray="1.6 43.43"/><g class="m-heure"><path d="M120 120V74" stroke-width="5"/></g><g class="m-minute"><path d="M120 120V46" stroke-width="2.6"/></g><circle cx="120" cy="120" r="5" fill="currentColor" stroke="none"/>',
+    fil: '<path class="m-ecrit" pathLength="1" d="M4 168C44 120 70 196 108 150c18-22 30-56 8-62s-30 32 2 42c30 10 44-30 70-26 22 3 30 30 48 18"/>',
+    chronologie: '<path d="M20 140h200"/><path d="M20 126v28M60 132v16M100 132v16M140 132v16M180 132v16M220 126v28"/><text x="20" y="112">1850</text><text x="220" y="112" text-anchor="end">2077</text><circle class="m-curseur" cx="20" cy="140" r="8" fill="currentColor" stroke="none"/>',
   };
+  const motifG = m => MOTIFS[m] ? `<svg class="sp-motif m-${m}" viewBox="0 0 240 240" aria-hidden="true" focusable="false">${MOTIFS[m]}</svg>` : '';
+  // ce qui suit la lecture : l'ouverture (--p : le motif tourne, la photo s'éloigne d'un rien) ; le récit (la photo du moment,
+  // le filet de chaque photo, le pas qu'on lit)
   const FX = {
-    horloge(sec, p) {
-      const h = $('.hand-h', sec), m = $('.hand-m', sec);
-      if (h) { h.setAttribute('transform', `rotate(${240 + p * 300} 100 100)`); m.setAttribute('transform', `rotate(${p * 3600} 100 100)`); }
-      const Ls = $$('.steps li', sec), k = Math.min(Ls.length - 1, Math.floor(p * (Ls.length + .3)));
-      Ls.forEach((li, i) => li.classList.toggle('on', !motionOK() || (i <= k && p > .03)));
+    une(sec) {
+      if (!motionOK()) return;
+      sec.style.setProperty('--p', clamp(scrollY / Math.max(1, sec.offsetHeight * .85), 0, 1).toFixed(3));
     },
-    chronologie(sec, p) { const Ls = $$('.cartons li', sec), k = Math.min(Ls.length - 1, Math.floor(p * Ls.length)); Ls.forEach((li, i) => li.classList.toggle('on', i === k)); },
+    recit(sec) {
+      if (!motionOK()) return;
+      const vh = innerHeight, r = sec.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > vh) return;
+      const vis = sec.__vis || (sec.__vis = $('.rc-vis', sec)), pas = sec.__pas || (sec.__pas = $$('.rc-p', sec));
+      const phs = sec.__phs || (sec.__phs = $$('.rc-ph', sec)), fil = sec.__fil || (sec.__fil = $$('.rc-fil i', sec));
+      if (vis && phs.length) {
+        // (le cadre épinglé : à sa place avant, collé sous l'en-tête pendant, en bas du récit après : de 0 à 1)
+        const v = vis.getBoundingClientRect(), p = clamp((v.top - r.top) / Math.max(1, r.height - v.height), 0, 1);
+        const n = phs.length, x = p * n, j = Math.min(n - 1, Math.floor(x));
+        if (sec.__j !== j) { phs.forEach((f, i) => f.classList.toggle('on', i === j)); sec.__j = j; }
+        fil.forEach((g, i) => g.style.setProperty('--f', i < j ? '1' : i > j ? '0' : clamp(x - j, 0, 1).toFixed(3)));
+      }
+      // le pas qu'on lit : le dernier dont le haut a passé les trois cinquièmes de l'écran
+      let k = 0;
+      pas.forEach((el, i) => { if (el.getBoundingClientRect().top < vh * .6) k = i; });
+      if (sec.__k !== k) { pas.forEach((el, i) => el.classList.toggle('on', i === k)); sec.__k = k; }
+    },
   };
 
   /* ---------- la page d'un spectacle : un univers, trois entrées ---------- */
-  let nAlt = 0;
-  // un chapitre : il entre au sommaire ; ses fonds alternent (fond, fond2), sauf demande contraire
-  const chapitre = (chap, id, nom, html, alt) => { chap.push({ id, nom }); const a = alt === undefined ? nAlt++ % 2 === 1 : alt; return `<section class="chap${a ? ' alt' : ''}" id="c-${id}" data-chap="${esc(nom)}">${html}</section>`; };
+  // un chapitre : il entre au sommaire (dans l'ordre de la page) ; cls : une classe de plus
+  const chapitre = (chap, id, nom, html, cls = '') => { chap.push({ id, nom }); return `<section class="chap${cls ? ' ' + cls : ''}" id="c-${id}" data-chap="${esc(nom)}">${html}</section>`; };
+  const titreChap = (t, attrs = '') => `<h2 class="chap-t" tabindex="-1" data-mv="monte"${attrs}>${t}</h2>`;
+  // l'ouverture : celle de la 07 pour un spectacle en tournée (entree), celle de la 10 pour la page seule d'un spectacle qui
+  // ne l'est plus ; la photo principale plein cadre, le titre qui se révèle lettre à lettre, l'accroche qui s'écrit mot à mot
   function ouverture(s, entree, pub) {
-    const m = mo(s), carton = (s.photos || []).find(p => !p.etablissement && !p.atelier);
-    const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null;
-    const badge = badgeDe(s), T = lettres(tl || [s.titre], tl ? tl.map((x, k) => edS(s, 'titreLignes', k)) : [edS(s, 'titre')]);
-    const d1 = T.fin.toFixed(2), d2 = (T.fin + (s.lieuTemps ? .1 + mots(s.lieuTemps).length * .02 : 0)).toFixed(2);
-    const sansDates = !s.statut && !pub.length, reservables = entree === 'voir' && !s.statut && RS && RS.dates(s.slug).length;
-    // « voir » : l'invitation à réserver mène à la bande des dates (règle 17) ; la bande-annonce se lit plus bas (règle 18)
-    const cta = !entree ? `<button type="button" class="bu plein" data-va="c-bilan">${esc(L.bilan)}${BAS}</button>${lienVideo(s)}`
-      : entree === 'voir' ? `${reservables ? `<button type="button" class="bu plein" data-va="rs-zone">${esc(L.reserver)}${BAS}</button>` : `<button type="button" class="bu plein" data-va="c-dates">${esc(sansDates ? L.lieuxDiffusion : L.dates)}${BAS}</button>`}${lienVideo(s)}`
-      : entree === 'programmer' ? `<a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>${lienVideo(s)}`
-      : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>`;
-    const legende = carton && carton.legende, credit = carton && creditDe(s, carton);
-    return `<section class="u-ouv mv-principal${ouvDeja ? ' deja' : ''}" id="c-ouverture" data-chap="${esc(L.ouverture)}" data-mv-nom="sp-${esc(s.slug)}">
-      <div class="u-ouv-fond" aria-hidden="true"><img src="${D.photos[s.slug]}" alt=""></div><div class="u-ouv-lueur" aria-hidden="true"></div>
-      ${motifGrand(m)}
-      <div class="wrap u-ouv-grille">
-        <div class="u-ouv-texte">
-          <p class="u-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${badge ? `<span class="pt" aria-hidden="true"></span>${badge}` : ''}</p>
-          <h1 class="u-titre${T.n > 22 ? ' long' : ''}" tabindex="-1" aria-label="${esc(s.titre)}" style="--pas:${T.pas}ms"><span aria-hidden="true">${T.html}</span></h1>
-          ${sousTitre(m)}
-          ${s.sousTitre ? `<p class="u-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
-          ${s.lieuTemps ? `<p class="u-lt ecrit" style="--d0:${d1}s"${edS(s, 'lieuTemps')}>${ecrit(s.lieuTemps)}</p>` : ''}${s.cadre ? `<p class="u-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}
-          ${s.accroche ? `<p class="u-accroche ecrit" style="--d0:${d2}s"${edS(s, 'accroche')}>${ecrit(s.accroche)}</p>` : ''}
-          <p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p>
-          <p class="u-cta">${cta}</p>
-        </div>
-        ${carton ? `<figure class="u-carton"><span class="ph-cadre">${autourPhoto(m)}<span class="ph"${edP(s, 'photos', rangPh(s, carton))}><img src="${D.photos[carton.cle]}" alt="${esc(legende || s.titre)}"></span></span>${legende || credit ? `<figcaption>${legende ? `<span${edS(s, 'photos', rangPh(s, carton), 'legende')}>${esc(legende)}</span>` : ''}${credit ? `<span class="cr"${edS(s, cleCredit(carton))}>${esc(credit)}</span>` : ''}</figcaption>` : ''}</figure>` : ''}
-      </div>
+    const m = mo(s), tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null;
+    const T = lettres(tl || [s.titre], tl ? tl.map((x, k) => edS(s, 'titreLignes', k)) : [edS(s, 'titre')]);
+    const d0 = (T.fin + .1).toFixed(2), credit = s.creditPhotos || s.credit, foc = Number.isFinite(+s.focale) ? +s.focale : 50;
+    const titre = `<h1 class="u-titre${T.n > 22 ? ' long' : ''}" tabindex="-1" aria-label="${esc(s.titre)}" style="--pas:${T.pas}ms"><span aria-hidden="true">${T.html}</span></h1>`;
+    const st = s.sousTitre ? `<p class="une-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : '';
+    const acc = s.accroche ? `<p class="une-acc ecrit" style="--d0:${d0}s"${edS(s, 'accroche')}>${ecrit(s.accroche)}</p>` : '';
+    let texte;
+    if (!entree) {
+      // la 10 : le fil d'Ariane, la compagnie qui signe, le titre et son filet, la création et le lieu et le temps
+      const sp = menuDe('spectacles') || { href: '#/spectacles', texte: L.spectacles };
+      texte = `<p class="une-ariane"><a href="#/">${esc(S.accueil)}</a> / <a href="${esc(sp.href)}">${esc(sp.texte)}</a></p><p class="une-nom"${ed('site.nom')}>${esc(S.nom)}</p>${titre}${st}
+        <p class="une-meta"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${acc}`;
+    } else {
+      // la 07 : la création, le lieu et le temps, le titre, « en tournée » qui respire, l'accroche ; dans « voir », la
+      // prochaine date et l'invitation à réserver (elle mène à la bande des dates, règle 17) ; la bande-annonce se lit plus bas
+      const res = entree === 'voir' && !s.statut && RS ? RS.dates(s.slug) : [], prochaine = entree === 'voir' && !s.statut ? res[0] || pub[0] : null;
+      const cta = entree === 'voir' ? `${res.length ? `<button type="button" class="bu plein" data-va="rs-zone">${esc(L.reserver)}${BAS}</button>` : `<button type="button" class="bu plein" data-va="c-dates">${esc(!s.statut && !pub.length ? L.lieuxDiffusion : L.dates)}${BAS}</button>`}${lienVideo(s)}`
+        : entree === 'programmer' ? `<a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>${lienVideo(s)}`
+        : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>`;
+      const etat = s.statut ? `<p class="une-statut"${edS(s, 'statut')}>${esc(s.statut)}</p>` : s.enTournee ? `<p class="une-statut">${esc(L.enTournee)}</p>` : '';
+      texte = `<p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
+        ${prochaine ? `<p class="une-date">${esc(prochaine.ligne)}</p>` : ''}<p class="u-cta">${cta}</p>`;
+    }
+    return `<section class="sp-une sp-une${entree ? 7 : 10} mv-principal${ouvDeja ? ' deja' : ''}" id="c-une" data-mv-nom="sp-${esc(s.slug)}" data-scrolly data-fx="une">
+      <div class="une-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" style="object-position:${foc}% 38%" decoding="async"></div>
+      <div class="une-ombre" aria-hidden="true"></div><div class="une-lueur" aria-hidden="true"></div>
+      <div class="une-motif" aria-hidden="true">${motifG(m)}</div>
+      <div class="wrap une-corps"><div class="une-texte">${texte}</div></div>
+      ${credit ? `<p class="une-credit"${edS(s, s.creditPhotos ? 'creditPhotos' : 'credit')}>${esc(credit)}</p>` : ''}
     </section>`;
   }
+  // les trois entrées du spectacle (la 07) : une lampe à la couleur de chacune, la courante allumée ; le texte entier quand la
+  // place le permet, sinon le court
   const onglets = (s, entree) => `<nav class="u-onglets" aria-label="${esc(s.titre)}"><div class="wrap u-onglets-in">
       <span class="ut" aria-hidden="true">${esc(s.titre)}</span>
-      ${S.entrees.filter(e => e.cle !== 'etablissement' || s.actionCulturelle).map(e => `<a href="#/spectacle/${s.slug}/${e.cle}" style="--ec:${e.couleur}"${e.cle === entree ? ' aria-current="page"' : ''}><span class="pt" aria-hidden="true"></span>${esc(e.court)}</a>`).join('')}
+      ${S.entrees.filter(e => e.cle !== 'etablissement' || s.actionCulturelle).map(e => `<a href="#/spectacle/${s.slug}/${e.cle}" style="--e:${e.couleurVive || e.couleur}"${e.cle === entree ? ' aria-current="page"' : ''}><span class="pt" aria-hidden="true"></span><span class="long">${esc(e.texte)}</span><span class="court">${esc(e.court)}</span></a>`).join('')}
     </div><span class="u-progres" aria-hidden="true"></span></nav>`;
+  // le petit sommaire qui suit la lecture, à gauche des chapitres : des filets (la 07), un bras et ses ventouses (la 10 : la
+  // page seule ; au téléphone, des pastilles) ; et, au téléphone, le sommaire flottant d'un spectacle en tournée
+  const sommaireSp = (s, entree, chap) => `<nav class="sp-som${entree ? '' : ' sp-som--seul'}" aria-label="${esc(entree ? `${s.titre} – ${E[entree].court}` : s.titre)}"><ol>${chap.map((c, i) => `<li style="--i:${i}"><button type="button" data-c="${c.id}">${esc(c.nom)}</button></li>`).join('')}</ol>${entree ? `<span class="sp-som-signe" aria-hidden="true">${motifG(mo(s))}</span>` : ''}</nav>`;
   const sommaire = (s, entree, chap) => `<nav class="som" aria-label="${esc(entree ? `${s.titre} – ${E[entree].court}` : s.titre)}">
       <ol class="som-l" id="som-l" hidden>${chap.map((c, i) => `<li><button type="button" data-c="${c.id}"><span class="n">${i + 1}</span>${esc(c.nom)}</button></li>`).join('')}</ol>
       <button type="button" class="som-b" aria-expanded="false" aria-controls="som-l"><span class="n" id="som-n">1/${chap.length}</span><span id="som-nom">${esc(chap[0].nom)}</span>${HAUT}</button>
@@ -3891,87 +3965,118 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     });
     return `<ul class="u-cast" style="--n:${L.length}">${blocs.join('')}</ul>`;
   }
-  function distribution(s, chap, entree) {
+  // la distribution (la 07) : les portraits, puis la fiche d'un côté, la durée, la production, les mentions et la compagnie qui
+  // signe de l'autre (sansDuree : l'onglet programmer la dit déjà)
+  function distribution(s, chap, entree, sansDuree = false) {
     const P = s.programmer || {}, eq = P.equipeCreation || [], fiche = eq.length ? [] : (s.fiche || []).map((f, i) => ({ f, i }));
     const tete = fiche.filter(x => !x.f.libelle), roles = fiche.filter(x => x.f.libelle);
     const cast = entree === 'voir' ? portraits(s) : '';
     return chapitre(chap, 'distribution', L.distribution, `<div class="wrap u-distrib">
-      <h2 class="u-eti">${petit(mo(s))}${esc(L.distribution)}</h2>
+      ${titreChap(esc(L.distribution))}
       ${tete.map(({ f, i }) => `<p class="u-d-tete"${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</p>`).join('')}
-      ${cast || (s.avec ? `<p class="u-avec"><span class="k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>` : '')}
-      ${eq.map((l, i) => `<p class="u-avec"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</p>`).join('')}
-      ${roles.length ? `<dl class="u-fiche">${roles.map(({ f, i }) => `<div><dt${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</dt><dd${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</dd></div>`).join('')}</dl>` : ''}
-      ${(s.production || []).length ? `<div class="u-prod">${s.production.map((p, i) => bloc(p, `shows.${s.slug}.production.${i}`)).join('')}</div>` : ''}
-      ${(s.mentions || []).map((x, i) => `<p class="u-mention"${edS(s, 'mentions', i)}>${x}</p>`).join('')}
-      <p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p>
-      ${s.creditPhotos ? `<p class="u-credit"${edS(s, 'creditPhotos')}>${esc(s.creditPhotos)}</p>` : ''}
+      ${cast}
+      <div class="u-distrib-g"><div>
+        ${cast || !s.avec ? '' : `<p class="u-avec"><span class="k"${edS(s, 'avec', 'libelle')}>${esc(s.avec.libelle)}</span><span${edS(s, 'avec', 'valeur')}>${s.avec.valeur}</span></p>`}
+        ${eq.map((l, i) => `<p class="u-avec"${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</p>`).join('')}
+        ${roles.length ? `<dl class="u-fiche">${roles.map(({ f, i }) => `<div><dt${edS(s, 'fiche', i, 'libelle')}>${esc(f.libelle)}</dt><dd${edS(s, 'fiche', i, 'valeur')}>${f.valeur}</dd></div>`).join('')}</dl>` : ''}
+      </div><div>
+        ${s.duree && !sansDuree ? `<p class="u-duree-d"${edS(s, 'duree')}>${esc(s.duree)}</p>` : ''}
+        ${(s.production || []).length ? `<div class="u-prod">${s.production.map((p, i) => bloc(p, `shows.${s.slug}.production.${i}`)).join('')}</div>` : ''}
+        ${(s.mentions || []).map((x, i) => `<p class="u-mention"${edS(s, 'mentions', i)}>${x}</p>`).join('')}
+        <p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p>
+        ${s.creditPhotos ? `<p class="u-credit"${edS(s, 'creditPhotos')}>${esc(s.creditPhotos)}</p>` : ''}
+      </div></div>
     </div>`);
   }
   const appel = s => `<section class="u-appel"><div class="wrap"><p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p><a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
   const carteTournee = (s, lieux, passe) => lieux.length || passe.length ? carte({ lieux, passe, titre: s.titre }) : carte({ titre: s.titre, classe: 'attente', interactif: false });
 
-  // la présentation d'un spectacle (l'onglet voir avant ses dates ; la page d'un spectacle fini la reprend) : le spectacle,
-  // son motif en grand, les photos et les citations, la vidéo
-  function presentationSp(s, chap) {
-    const [a0, ...autres] = s.affirmations || [], sig = SIG[mo(s)] ? SIG[mo(s)](s) : '';
-    let h = chapitre(chap, 'spectacle', L.leSpectacle, `<div class="wrap">
-        <p class="u-eti">${petit(mo(s))}<span>${esc(L.leSpectacle)}</span>${s.duree ? `<span class="u-duree"${edS(s, 'duree')}>${esc(s.duree)}</span>` : ''}</p>
-        ${a0 ? `<h2 class="u-affirm ecrit"${edS(s, 'affirmations', 0, 'texte')}>${ecrit(a0.texte)}</h2>` : `<h2 class="u-h2"${edS(s, 'titre')}>${esc(s.titre)}</h2>`}
-        <div class="u-texte">${(s.texte || []).map((p, k) => k === 0 && p.length < 340 && !/^\s*</.test(p) ? `<p class="chapo"${edS(s, 'texte', k)}>${p}</p>` : bloc(p, `shows.${s.slug}.texte.${k}`)).join('')}</div>
-      </div>`);
-    if (sig) h += `<div class="sx sx-sig sx-${mo(s)}" data-scrolly data-fx="${mo(s)}"${mo(s) === 'chronologie' ? '' : ' aria-hidden="true"'}><div class="sx-pin">${sig}</div></div>`;
-    // les photos en cartons, entre elles les vers ; le premier carton est dans l'ouverture
-    const galerie = (s.photos || []).filter(p => !p.etablissement && !p.atelier).slice(1), cits = mo(s) === 'chronologie' ? [] : (s.citations || []);
-    if (galerie.length || cits.length || autres.length) {
-      const items = []; let ci = 0, pi = 0;
-      while (pi < galerie.length) {
-        if (pi === 0 || galerie.length - pi === 1) { items.push(fig(s, galerie[pi], 'plein')); pi += 1; }
-        else { items.push(`<div class="u-duo">${fig(s, galerie[pi])}${fig(s, galerie[pi + 1])}</div>`); pi += 2; }
-        if (ci < cits.length) { items.push(citation(s, cits[ci], ci)); ci += 1; }
-      }
-      while (ci < cits.length) { items.push(citation(s, cits[ci], ci)); ci += 1; }
-      autres.forEach((a, i) => items.push(`<p class="u-aside ecrit"${edS(s, 'affirmations', i + 1, 'texte')}>${ecrit(a.texte)}</p>`));
-      const credits = [];
-      galerie.forEach(p => { const k = cleCredit(p); if (s[k] && !credits.some(c => s[c] === s[k])) credits.push(k); });
-      h += chapitre(chap, 'photos', L.photos, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.photos)}</h2><div class="u-photos">${items.join('')}${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div></div>`);
-    }
-    h += videos(s, chap);
-    return h;
+  // le texte du spectacle, paragraphe par paragraphe (le premier, court, en chapeau) ; ses citations (un vers par ligne, ou une
+  // réplique en prose)
+  const texteSp = s => (s.texte || []).map((p, k) => k === 0 && p.length < 340 && !/^\s*</.test(p) ? `<p class="chapo"${edS(s, 'texte', k)}>${p}</p>` : bloc(p, `shows.${s.slug}.texte.${k}`));
+  const citationSp = (s, c, ic) => `<figure class="sp-cit${c.prose ? ' prose' : ''}"><blockquote><p>${(c.vers || []).map((v, j) => `<span class="v"${edS(s, 'citations', ic, 'vers', j)}>${esc(v)}</span>`).join(c.prose ? ' ' : '')}</p></blockquote>${c.source ? `<figcaption${edS(s, 'citations', ic, 'source')}>${esc(c.source)}</figcaption>` : ''}</figure>`;
+  // les photos du récit : la principale d'abord, puis les autres de la scène, dans l'ordre de D (pas celles d'un atelier ni
+  // d'un établissement ; la principale, quand la liste la reprend, n'y revient pas)
+  function photosRecit(s) {
+    const p0 = D.photos[s.slug], out = p0 ? [{ src: p0, attr: edP(s, 'photo'), credit: s.creditPhotos || s.credit, kc: s.creditPhotos ? 'creditPhotos' : 'credit' }] : [];
+    (s.photos || []).forEach((p, i) => {
+      const src = D.photos[p.cle]; if (!src || p.etablissement || p.atelier || src === p0 || p.id === 'principale') return;
+      out.push({ src, attr: edP(s, 'photos', i), p, i, credit: creditDe(s, p), kc: cleCredit(p) });
+    });
+    return out;
   }
-  // sous les dates d'un spectacle, le lien vers toutes les dates de la saison : l'élément « saisons » du menu (règle 21)
-  const ctaSaisons = () => { const m = menuDe('saisons') || { texte: L.saisons, href: '#/saisons' };
-    return `<p class="u-cta"><a class="bu" href="${esc(m.href)}">${esc(m.texte)}${FLECHE}</a></p>`; };
-  function ongletVoir(s, chap, pub) {
-    let h = presentationSp(s, chap);
-    // les dates tout public et la carte ; sans date, les lieux de diffusion et les tournées passées
-    const sp = CARTE.spectacle(s.slug), res = RS && !s.statut ? RS.dates(s.slug) : [];
+  // le récit (voir) : la présentation, pas à pas (le cadre et la première affirmation, chaque paragraphe du texte, les autres
+  // affirmations, les citations), à côté des photos qui se relaient, épinglées ; le texte reste du texte (il se lit, se
+  // sélectionne, se parcourt au clavier) ; moins d'animations : rien n'est épinglé, il se lit d'un trait
+  function recit(s, chap) {
+    const [a0, ...autres] = s.affirmations || [], pas = [];
+    if (s.cadre || a0) pas.push(`${s.cadre ? `<p class="rc-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}${a0 ? `<p class="rc-dit ecrit"${edS(s, 'affirmations', 0, 'texte')}>${ecrit(a0.texte)}</p>` : ''}`);
+    texteSp(s).forEach(h => pas.push(`<div class="u-texte">${h}</div>`));
+    autres.forEach((a, i) => pas.push(`<p class="rc-dit"${edS(s, 'affirmations', i + 1, 'texte')}>${esc(a.texte)}</p>`));
+    (s.citations || []).forEach((c, ic) => pas.push(citationSp(s, c, ic)));
+    const phs = photosRecit(s);
+    if (!pas.length) return '';
+    const legende = x => (x.p && x.p.legende) || x.credit ? `<figcaption>${x.p && x.p.legende ? `<span${edS(s, 'photos', x.i, 'legende')}>${esc(x.p.legende)}</span>` : ''}${x.credit ? `<small${edS(s, x.kc)}>${esc(x.credit)}</small>` : ''}</figcaption>` : '';
+    return chapitre(chap, 'spectacle', L.leSpectacle, `${titreChap(esc(L.leSpectacle))}
+      <div class="rc${phs.length ? '' : ' rc--seul'}" data-scrolly data-fx="recit">
+        <div class="rc-pas">${pas.map((h, i) => `<div class="rc-p${i ? '' : ' on'}"><div class="rc-in apparait">${h}</div></div>`).join('')}</div>
+        ${phs.length ? `<div class="rc-vis"><div class="rc-photos">${phs.map((x, j) => `<figure class="rc-ph${j ? '' : ' on'}"${x.attr}><img src="${x.src}" alt=""${j ? ' loading="lazy"' : ''} decoding="async">${legende(x)}</figure>`).join('')}</div>
+          ${phs.length > 1 ? `<div class="rc-fil" aria-hidden="true">${phs.map(() => '<i></i>').join('')}</div>` : ''}</div>` : ''}
+      </div>`, 'rc-chap');
+  }
+  // les photos en cartons (la 07) : la première en large, les autres deux par deux, chacune sa légende en carton ; les crédits
+  function photosSp(s, chap) {
+    const phs = (s.photos || []).map((p, i) => ({ p, i })).filter(({ p }) => !p.etablissement && !p.atelier && D.photos[p.cle]);
+    if (!phs.length) return '';
+    const credits = [];
+    phs.forEach(({ p }) => { const k = cleCredit(p); if (s[k] && !credits.some(c => s[c] === s[k])) credits.push(k); });
+    return chapitre(chap, 'photos', L.photos, `<div class="wrap">${titreChap(esc(L.photos))}<div class="cartons7" data-mv="cascade">${phs.map(({ p, i }) => `<figure class="carton7"${edP(s, 'photos', i)}><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy" decoding="async">${p.legende ? `<figcaption${edS(s, 'photos', i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
+      ${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div>`);
+  }
+  // la présentation d'un spectacle qui n'est plus en tournée (la 10) : l'ouverture (le cadre, les affirmations), le spectacle
+  // (son texte, ses citations), les photos, la vidéo
+  function presentationSeule(s, chap) {
+    const affs = s.affirmations || [], texte = texteSp(s).join('');
+    let h = '';
+    if (s.cadre || affs.length) h += chapitre(chap, 'ouverture', L.ouverture, `<div class="wrap">${titreChap(esc(L.ouverture))}${s.cadre ? `<p class="sp-cadre"${edS(s, 'cadre')}>${esc(s.cadre)}</p>` : ''}
+      ${affs.map((a, k) => `<p class="sp-affirm${k ? '' : ' ecrit'}"${edS(s, 'affirmations', k, 'texte')}>${k ? esc(a.texte) : ecrit(a.texte)}</p>`).join('')}</div>`);
+    if (texte || (s.citations || []).length) h += chapitre(chap, 'spectacle', L.leSpectacle, `<div class="wrap">${titreChap(esc(L.leSpectacle))}<div class="u-texte">${texte}</div>
+      ${(s.citations || []).map((c, ic) => citationSp(s, c, ic)).join('')}</div>`);
+    return h + photosSp(s, chap) + videos(s, chap);
+  }
+  // les dates d'un spectacle (la 10) : la frise de toute sa tournée, puis réserver (règle 17) : ses prochaines dates en une bande
+  // de boutons (l'horaire écrit sur chacun), la carte de la date choisie dessous, à côté de la carte de ses tournées ; une date
+  // tout public qui ne se réserve pas (annulée) reste dessous, dans sa ligne ; puis toutes les dates de la saison. En création :
+  // l'annonce de sa tournée ; sans date à venir : ses lieux de diffusion, la carte de ses tournées passées
+  function datesSp(s, chap, pub) {
+    const sl = s.slug, sp = CARTE.spectacle(sl), res = RS && !s.statut ? RS.dates(sl) : [], P = s.programmer || {};
     const av = sp.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length), vus = new Set(av.map(x => x.l));
-    const P = s.programmer || {};
-    // sans date à venir, une liste vide (data-agenda) : en mode édition, on y ajoute la première
-    const sansListe = `<div data-agenda="${esc(s.slug)}"></div>`;
-    if (s.statut) h += chapitre(chap, 'dates', L.dates, `<div class="wrap u-tournee"><div><h2 class="u-h2"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</h2>${s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}${sansListe}</div>
-        <figure class="carte-sp">${carte({ titre: s.titre, classe: 'attente', interactif: false })}</figure></div>`);
-    // réserver (règle 17) : la bande des prochaines dates, un bouton par date avec son horaire, la carte de la date choisie
-    // dessous, à côté de la carte de France ; la frise de toute la tournée suit (RESERVER.monter, dans spectacle())
-    else if (res.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap">${s.tournee && s.tournee.titre ? `<h2 class="u-h2"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</h2>` : `<h2 class="u-h2">${esc(L.actuellementEnTournee)}</h2>`}
+    const titre = s.tournee && s.tournee.titre ? titreChap(esc(s.tournee.titre), edS(s, 'tournee', 'titre')) : titreChap(esc(L.actuellementEnTournee));
+    const frise = `<div class="u-frise" data-tournee="${esc(sl)}"></div>`, vide = `<div data-agenda="${esc(sl)}"></div>`;
+    const m = menuDe('saisons') || { href: '#/saisons' }, tout = `<p class="sp-tout"><a href="${esc(m.href)}">${esc(L.toutesLesDates)}${FLECHE}</a></p>`;
+    if (s.statut) return chapitre(chap, 'dates', L.dates, `<div class="wrap">${titre}<div class="u-tournee"><div>${s.tournee && s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}${vide}</div>
+        <figure class="carte-sp">${carte({ titre: s.titre, classe: 'attente', interactif: false })}</figure></div></div>`);
+    if (res.length) {
+      const cles = new Set(res.map(RS.cle)), autres = pub.filter(d => !cles.has(RS.cle(d)));
+      return chapitre(chap, 'dates', L.dates, `<div class="wrap">${titre}${frise}
         <div class="rs-zone" id="rs-zone"><div class="rs-tete"><p class="rs-k-bande" id="rs-k">${esc(L.choisirUneDate)}</p><p class="rs-defile" aria-hidden="true"><button type="button" tabindex="-1" data-defile="-1">${GAUCHE}</button><button type="button" tabindex="-1" data-defile="1">${DROITE}</button></p></div>
-          ${RS.bande(res, { attributs: ` aria-labelledby="rs-k" data-agenda="${esc(s.slug)}"`, bouton: d => ({ attributs: ` data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}" data-l="${d.l ?? ''}"` }) })}
-          <div class="rs-corps"><div class="rs-carte" id="rs-carte"></div><figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div></div>
-        <div class="u-frise" data-tournee="${esc(s.slug)}"></div>
-        ${ctaSaisons()}</div>`);
-    else if (pub.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap"><div class="u-frise" data-tournee="${esc(s.slug)}"></div></div><div class="wrap u-tournee"><div>${s.tournee && s.tournee.titre ? `<h2 class="u-h2"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</h2>` : `<h2 class="u-h2">${esc(L.actuellementEnTournee)}</h2>`}${listeDates(pub, s.slug)}
-        ${ctaSaisons()}</div>
-        <figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div>`);
-    else h += chapitre(chap, 'dates', L.lieuxDiffusion, `<div class="wrap"><div class="u-frise" data-tournee="${esc(s.slug)}"></div></div><div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>${P.lieux ? `<p class="u-lieux"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sansListe}</div>
-        <figure class="carte-sp">${carteTournee(s, sp.passe, [])}</figure></div>`);
-    h += distribution(s, chap, 'voir');
-    return h;
+          ${RS.bande(res, { attributs: ` aria-labelledby="rs-k" data-agenda="${esc(sl)}"`, bouton: d => ({ attributs: ` data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}" data-l="${d.l ?? ''}"` }) })}
+          <div class="rs-corps"><div class="rs-carte" id="rs-carte"></div><figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre, serre: true })}</figure></div></div>
+        ${autres.length ? listeDates(autres, sl) : ''}${tout}</div>`);
+    }
+    if (pub.length) return chapitre(chap, 'dates', L.dates, `<div class="wrap">${titre}${frise}<div class="u-tournee"><div>${listeDates(pub, sl)}${tout}</div>
+        <figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div></div>`);
+    return chapitre(chap, 'dates', L.lieuxDiffusion, `<div class="wrap">${titreChap(esc(L.lieuxDiffusion))}${frise}<div class="u-tournee"><div>${P.lieux ? `<p class="u-lieux"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${vide}</div>
+        <figure class="carte-sp">${carteTournee(s, sp.passe, [])}</figure></div></div>`);
   }
+  // « voir » : le récit, les photos, la vidéo, les dates, la distribution
+  const ongletVoir = (s, chap, pub) => recit(s, chap) + photosSp(s, chap) + videos(s, chap) + datesSp(s, chap, pub) + distribution(s, chap, 'voir');
   /* ---------- la page d'un spectacle qui n'est plus en tournée (règle 21) : une seule page, sans onglets ----------
-     Sa présentation, puis le bilan de ses dates passées (sa phrase de D, ses chiffres tirés des données seules : ses dates,
-     ses communes, ses saisons ; la frise de sa tournée ; ses dates par saison, de la plus récente à la plus ancienne, à côté
-     d'une grande carte de tous ses lieux), les actions culturelles menées s'il y en a (un texte : sans lui, la rubrique ne
-     paraît pas) avec ses dates scolaires passées, et sa distribution. */
+     Sa présentation (l'ouverture, le spectacle, les photos, la vidéo, la distribution), puis le bilan de ses dates passées
+     (sa phrase de D, ses chiffres tirés des données seules : ses dates, ses communes, ses saisons ; la frise de sa tournée ;
+     ses dates par saison, de la plus récente à la plus ancienne, à côté d'une grande carte de tous ses lieux), enfin les
+     actions culturelles menées, seulement si elles ont un texte (sans paragraphe, le chapitre ne paraît pas, ni au sommaire),
+     avec ses dates scolaires passées. */
   // ses dates passées, toutes saisons : [{ k, titre, rows }], la plus récente d'abord, et dans chaque saison de la plus récente
   // à la plus ancienne (une ligne sans date reste à la suite de la sienne)
   function datesPassees(s) {
@@ -3984,9 +4089,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const P = s.programmer || {}, jouees = G.flatMap(g => g.rows).filter(jouee), T = CARTE.spectacle(s.slug);
     const chiffres = [[jouees.length, L.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes],
       [G.filter(g => g.rows.some(jouee)).length, L.saisons]].filter(([n, l]) => n && l);
-    return chapitre(chap, 'bilan', L.bilan, `<div class="wrap">
-        ${P.representations ? `<p class="u-eti">${petit(mo(s))}<span>${esc(L.bilan)}</span></p>
-        <h2 class="u-h2 u-bilan-t"${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</h2>` : `<h2 class="u-h2">${esc(L.bilan)}</h2>`}
+    return chapitre(chap, 'bilan', L.bilan, `<div class="wrap">${titreChap(esc(L.bilan))}
+        ${P.representations ? `<p class="u-bilan-rep"${edS(s, 'programmer', 'representations')}>${esc(P.representations)}</p>` : ''}
         ${chiffres.length ? `<ul class="u-bilan-n">${chiffres.map(([n, l]) => `<li><b class="gros">${n}</b><span>${esc(l)}</span></li>`).join('')}</ul>` : ''}
         <div class="u-frise" data-tournee="${esc(s.slug)}"></div>
         <div class="u-bilan">
@@ -3995,17 +4099,17 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         </div>
       </div>`);
   }
-  // les actions culturelles menées : son action culturelle, seulement si elle a un texte (sans lui, « à compléter » : la rubrique
-  // ne paraît pas ici), et ses dates scolaires passées
+  // les actions culturelles menées : son action culturelle, seulement si elle a un paragraphe de description (sans texte, le
+  // chapitre ne paraît pas, ni au sommaire), et ses dates scolaires passées
+  const aDuTexte = A => !!A && (A.textes || []).some(t => t && String(t.texte || '').replace(/<[^>]*>/g, '').trim());
   function actionsMenees(s, chap, G) {
     const A = s.actionCulturelle;
-    if (!A || A.aCompleter && !A.type || !(A.type || ['textes', 'formule', 'dispositifs'].some(k => (A[k] || []).length))) return '';
+    if (!aDuTexte(A)) return '';
     const ac = (...k) => edS(s, 'actionCulturelle', ...k), sco = G.flatMap(g => g.rows).filter(r => r.d.scolaire);
-    return chapitre(chap, 'actions', L.actionsMenees, `<div class="wrap">
-        <p class="u-eti">${petit(mo(s))}<span>${esc(L.actionsMenees)}</span></p>
-        ${A.type ? `<h2 class="u-ac-type"${ac('type')}>${esc(A.type)}</h2>` : `<h2 class="u-h2">${esc(L.actionsMenees)}</h2>`}
+    return chapitre(chap, 'actions', L.actionsMenees, `<div class="wrap">${titreChap(esc(L.actionsMenees))}
+        ${A.type ? `<p class="u-ac-type"${ac('type')}>${esc(A.type)}</p>` : ''}
         ${A.public || A.lieu || A.statut ? `<ul class="u-ac-puces">${A.public ? `<li><span class="k">${esc(L.public)}</span><span${ac('public')}>${esc(A.public)}</span></li>` : ''}${A.lieu && L.lieu[A.lieu] ? `<li>${esc(L.lieu[A.lieu])}</li>` : ''}${A.statut ? `<li${ac('statut')}>${esc(A.statut)}</li>` : ''}</ul>` : ''}
-        ${(A.textes || []).length ? `<div class="u-texte">${A.textes.map((t, i) => bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.${i}.texte`)).join('')}</div>` : ''}
+        <div class="u-texte">${A.textes.map((t, i) => bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.${i}.texte`)).join('')}</div>
         ${A.formule && A.formule.length ? `<div class="u-formule">${A.formule.map((l, i) => `<p${ac('formule', i)}>${esc(l)}</p>`).join('')}</div>` : ''}
         ${A.dispositifs && A.dispositifs.length ? `<div class="u-disp"><h3 class="u-eti">${esc(L.dispositifs)}</h3><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
         ${sco.length ? `<h3 class="rubrique">${esc(L.enEtablissement)}</h3><ul class="dates" data-agenda="${esc(s.slug)}">${sco.map(r => ligneAgenda(r, 'a:', true)).join('')}</ul>` : ''}
@@ -4013,11 +4117,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   }
   function pageSeule(s, chap) {
     const G = datesPassees(s);
-    let h = presentationSp(s, chap);
-    if (G.length) h += bilanSp(s, chap, G);
-    h += actionsMenees(s, chap, G);
-    h += distribution(s, chap, 'voir');
-    return h;
+    return presentationSeule(s, chap) + distribution(s, chap, 'voir') + (G.length ? bilanSp(s, chap, G) : '') + actionsMenees(s, chap, G);
   }
   function ongletProgrammer(s, chap) {
     const P = s.programmer || {}, sp = CARTE.spectacle(s.slug), vus = new Set(sp.aVenir.map(x => x.l));
@@ -4025,29 +4125,28 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const faits = [P.representations && `<li${pr('representations')}>${nombre(P.representations)}</li>`, s.statut && `<li${edS(s, 'statut')}>${esc(s.statut)}</li>`, s.duree && `<li${edS(s, 'duree')}>${esc(s.duree)}</li>`, P.format && `<li${pr('format')}>${esc(P.format)}</li>`,
       P.jauge && `<li${pr('jauge')}>${esc(P.jauge)}</li>`, P.equipe && `<li${pr('equipe')}>${esc(P.equipe)}</li>`, P.actualite && `<li${pr('actualite')}>${esc(P.actualite)}</li>`].filter(Boolean);
     const [a0] = s.affirmations || [];
-    let h = chapitre(chap, 'spectacle', L.leSpectacle, `<div class="wrap u-prog">
-        <div><p class="u-eti">${petit(mo(s))}<span>${esc(L.leSpectacle)}</span></p>
-          ${a0 ? `<h2 class="u-affirm ecrit"${edS(s, 'affirmations', 0, 'texte')}>${ecrit(a0.texte)}</h2>` : `<h2 class="u-h2"${edS(s, 'titre')}>${esc(s.titre)}</h2>`}
+    let h = `<div class="u-contact">${contactHTML(s)}</div>`;
+    h += chapitre(chap, 'spectacle', L.leSpectacle, `<div class="wrap">${titreChap(esc(L.leSpectacle))}<div class="u-prog">
+        <div>${a0 ? `<p class="u-affirm ecrit"${edS(s, 'affirmations', 0, 'texte')}>${ecrit(a0.texte)}</p>` : ''}
           <div class="u-texte">${(s.texte || []).map((p, k) => bloc(p, `shows.${s.slug}.texte.${k}`)).join('')}</div></div>
         <ul class="u-faits">${faits.join('')}<li class="u-faits-liens">${s.video ? lienVideo(s) : ''}${dossierBouton(s.slug, 'bu plein')}</li></ul>
-      </div>`);
-    h = `<section class="u-contact"><div class="wrap">${contactHTML(s)}</div></section>` + h;
+      </div></div>`);
     h += videos(s, chap);   // la bande-annonce se lit ici aussi (règle 18) : un programmateur la regarde avant d'écrire
-    h += distribution(s, chap);
-    h += chapitre(chap, 'lieux', L.lieuxDiffusion, `<div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>
+    h += distribution(s, chap, 'programmer', true);
+    h += chapitre(chap, 'lieux', L.lieuxDiffusion, `<div class="wrap">${titreChap(esc(L.lieuxDiffusion))}<div class="u-tournee"><div>
         ${P.representations ? `<p class="u-rep"${pr('representations')}>${nombre(P.representations)}</p>` : ''}${P.lieux ? `<p class="u-lieux"${pr('lieux')}>${esc(P.lieux)}</p>` : ''}
         ${s.statut && s.tournee && s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}
         ${diffusion(s).some(b => b.n) ? `<div class="u-diff"><p class="k">${esc(L.dates)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}</div>
-        <figure class="carte-sp">${carteTournee(s, sp.aVenir, sp.passe.filter(x => !vus.has(x.l)))}</figure></div>`);
+        <figure class="carte-sp">${carteTournee(s, sp.aVenir, sp.passe.filter(x => !vus.has(x.l)))}</figure></div></div>`);
     const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');
     // Bérénice : le détail du dossier, puis le PDF « fiche technique et plan » en lien
     if (P.ficheTechnique && s.dossier && (D.dossiers || {})[s.dossier] && D.dossiers[s.dossier].accueil) h += conditions(s, chap, 'technique', L.ficheTechnique, fts.length ? `<ul class="u-docs u-docs--ft">${fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul>` : '');
     else {   // la fiche technique : un document déposé, sinon sur demande (jamais de rubrique vide)
       const href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
-      h += chapitre(chap, 'technique', L.ficheTechnique, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.ficheTechnique)}</h2>
+      h += chapitre(chap, 'technique', L.ficheTechnique, `<div class="wrap">${titreChap(esc(L.ficheTechnique))}
         <ul class="u-docs">${fts.length ? fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('') : `<li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li>`}</ul></div>`);
     }
-    h += chapitre(chap, 'telecharger', L.aTelecharger, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.aTelecharger)}</h2>
+    h += chapitre(chap, 'telecharger', L.aTelecharger, `<div class="wrap">${titreChap(esc(L.aTelecharger))}
       <ul class="u-docs"><li>${dossierBouton(s.slug, 'bu')}</li>${docsDe(s, 'pros').map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
     return h + appel(s);
   }
@@ -4056,17 +4155,17 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const ac = (...k) => edS(s, 'actionCulturelle', ...k), aType = !(A.aCompleter || !A.type);
     let h = chapitre(chap, 'action', L.actionCulturelle, `<div class="wrap">
         <p class="u-eti">${petit(mo(s))}<span>${esc(L.actionCulturelle)}</span></p>
-        <h2 class="u-ac-type"${aType ? ac('type') : ''}>${esc(aType ? A.type : L.aCompleter)}</h2>
+        <h2 class="u-ac-type" tabindex="-1"${aType ? ac('type') : ''}>${esc(aType ? A.type : L.aCompleter)}</h2>
         ${A.public || A.lieu || A.statut ? `<ul class="u-ac-puces">${A.public ? `<li><span class="k">${esc(L.public)}</span><span${ac('public')}>${esc(A.public)}</span></li>` : ''}${A.lieu && L.lieu[A.lieu] ? `<li>${esc(L.lieu[A.lieu])}</li>` : ''}${A.statut ? `<li${ac('statut')}>${esc(A.statut)}</li>` : ''}</ul>` : ''}
         ${(A.textes || []).length ? `<div class="u-texte">${A.textes.map((t, i) => bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.${i}.texte`)).join('')}</div>` : ''}
         ${A.formule && A.formule.length ? `<div class="u-formule">${A.formule.map((l, i) => `<p${ac('formule', i)}>${esc(l)}</p>`).join('')}</div>` : ''}
         ${A.dispositifs && A.dispositifs.length ? `<div class="u-disp"><h3 class="u-eti">${esc(L.dispositifs)}</h3><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
-      </div>`, B ? false : undefined);
-    if (sco.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap"><h2 class="u-h2">${esc(L.enEtablissement)}</h2>${listeDates(sco, s.slug)}</div>`, B ? false : undefined);
+      </div>`);
+    if (sco.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap">${titreChap(esc(L.enEtablissement))}${listeDates(sco, s.slug)}</div>`);
     const docs = docsDe(s, 'scolaires');
-    if (docs.length) h += chapitre(chap, 'documents', L.documentsScolaires, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.documentsScolaires)}</h2><ul class="u-docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`, B ? false : undefined);
+    if (docs.length) h += chapitre(chap, 'documents', L.documentsScolaires, `<div class="wrap">${titreChap(esc(L.documentsScolaires))}<ul class="u-docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
     if (B) h += dossier(s, chap, B);
-    else h += distribution(s, chap);
+    else h += distribution(s, chap, 'etablissement');
     return h + appel(s);
   }
   // le dossier scolaire, à la charte de la compagnie : pourquoi, programmes, présentation, consignes, ateliers, accueil
@@ -4077,7 +4176,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const musique = photo('d-musique'), ateliersPh = (s.photos || []).filter(p => p.atelier);
     const pres = ['synopsis', 'adaptation', 'espace', 'alexandrin'].filter(k => B[k]);
     let h = chapitre(chap, 'dossier', L.dossierScolaire, `<div class="wrap">
-        <h2 class="u-eti">${petit(mo(s))}${esc(L.dossierScolaire)}</h2>
+        ${titreChap(esc(L.dossierScolaire))}
         <div class="dos-couv"><div class="dos-couv-fond" aria-hidden="true"><img src="${D.photos[s.slug]}" alt=""></div>
           <p class="dos-type"${edD('type')}>${esc(B.type)}</p><p class="dos-titre"${edD('titre')}>${esc(B.titre)}</p><p class="dos-auteur"${edD('auteur')}>${esc(B.auteur)}</p><p class="dos-creation"${edD('creation')}>${esc(B.creation)}</p>
           <p class="dos-duree"${edD('duree')}><span>${esc(dureeMot)}</span> <span>${esc(dureeReste.join(' '))}</span></p><p class="dos-format"${edD('format')}>${esc(B.format)}</p><p class="dos-public"${edD('public')}>${esc(B.public)}</p></div>
@@ -4093,10 +4192,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         ${pres.length ? `<section class="dos-s dos-pres">${pres.map(k => { const x = B[k];
           return `<div class="boite"><h3 class="dos-h4"${edD(k, 'titre')}>${esc(x.titre)}</h3>${x.chapeau ? `<p class="dos-chapeau"${edD(k, 'chapeau')}>${esc(x.chapeau)}</p>` : ''}${paras(x.paragraphes, `${dk}.${k}.paragraphes`)}${k === 'espace' && musique ? fig(s, musique) : ''}</div>`; }).join('')}</section>` : ''}
         ${musique ? `<p class="u-credit"${s.creditDossier ? edS(s, 'creditDossier') : ''}>${esc(s.creditDossier || '')}</p>` : ''}
-      </div>`, false);
+      </div>`);
     const C = B.consignes, At = B.ateliers;
     if (C || At) h += chapitre(chap, 'ateliers', L.ateliers, `<div class="wrap">
-        <h2 class="u-eti">${petit(mo(s))}${At ? `<span${edD('ateliers', 'titre')}>${esc(At.titre)}</span>` : esc(L.ateliers)}</h2>
+        ${titreChap(At ? `<span${edD('ateliers', 'titre')}>${esc(At.titre)}</span>` : esc(L.ateliers))}
         ${C ? `<section class="dos-s" style="margin-top:0" aria-labelledby="dos-cs"><h3 class="dos-h3" id="dos-cs"${edD('consignes', 'titre')}>${esc(C.titre)}</h3><div class="boite">
           <p class="dos-note"${edD('consignes', 'note')}>${esc(C.note)}</p><p${edD('consignes', 'intro')}>${C.intro}</p>
           <ul class="dos-demandes">${(C.demandes || []).map((d, i) => `<li${edD('consignes', 'demandes', i)}>${esc(d)}</li>`).join('')}</ul>
@@ -4106,7 +4205,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
             ${(a.etapes || []).map((e, j) => `<div class="etape"><h4${ak('etapes', j, 'titre')}>${e.titre}</h4><p${ak('etapes', j, 'texte')}>${esc(e.texte)}</p></div>`).join('')}
             ${a.points ? `<ul>${a.points.map((p, j) => `<li${ak('points', j)}>${esc(p)}</li>`).join('')}</ul>` : ''}</article>${ateliersPh[i] ? fig(s, ateliersPh[i], 'atelier-ph') : ''}`; }).join('')}</div>` : ''}
         ${ateliersPh.length && s.creditDossier ? `<p class="u-credit" style="margin-top:18px"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}
-      </div>`, false);
+      </div>`);
     if (B.accueil) h += conditions(s, chap, 'conditions', L.conditionsAccueil);
     return h;
   }
@@ -4115,12 +4214,12 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const AC = D.dossiers[s.dossier].accueil, imp = (s.photos || []).find(p => p.id === 'd-implantation-1');
     const ea = (...k) => ed(['dossiers', s.dossier, 'accueil', ...k].join('.'));
     return chapitre(chap, id, nom, `<div class="wrap">
-        <h2 class="u-eti">${petit(mo(s))}<span${ea('titre')}>${esc(AC.titre)}</span></h2>
+        ${titreChap(`<span${ea('titre')}>${esc(AC.titre)}</span>`)}
         <div class="dos-accueil">
           <div class="boite"><p class="dos-fiche-t"${ea('fiche')}>${esc(AC.fiche)}</p>${AC.blocs.map((b, i) => `${b.titre ? `<h3 class="dos-h4"${ea('blocs', i, 'titre')}>${esc(b.titre)}</h3>` : ''}<ul>${b.lignes.map((l, j) => `<li${ea('blocs', i, 'lignes', j)}>${l}</li>`).join('')}</ul>`).join('')}</div>
           <div>${AC.alerte ? `<p class="dos-alerte">${ALERTE}<span${ea('alerte')}>${AC.alerte}</span></p>` : ''}${fig(s, imp)}${imp && s.creditDossier ? `<p class="u-credit" style="margin-top:10px"${edS(s, 'creditDossier')}>${esc(s.creditDossier)}</p>` : ''}</div>
         </div>${apres}
-      </div>`, false);
+      </div>`);
   }
 
   let secs = [], chaps = [], chapK = -1, sraf = 0, ouvDeja = false;
@@ -4132,15 +4231,14 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const pub = D.dates.filter(d => d.slug === slug && !d.scolaire);
     // un spectacle qui n'est plus en tournée : une seule page, sans onglets (entree vaut null), et la mémoire de l'entrée reste
     if (fini(s)) entree = null; else retenir(entree);
-    nAlt = 0;
-    const chap = [{ id: 'ouverture', nom: L.ouverture }];
+    const chap = [];
     const corps = !entree ? pageSeule(s, chap) : entree === 'voir' ? ongletVoir(s, chap, pub) : entree === 'programmer' ? ongletProgrammer(s, chap) : ongletEtablissement(s, chap);
-    main.innerHTML = `<article class="${uClasse(s)}" style="${uVars(s)}">
+    main.innerHTML = `<article class="${uClasse(s)} sp ${entree ? 'sp-tournee une-vu' : 'sp-seul'}" style="${uVars(s)}">
       ${ouverture(s, entree, pub)}
       ${entree ? onglets(s, entree) : ''}
-      ${corps}
+      <div class="wrap sp-grille">${sommaireSp(s, entree, chap)}<div class="sp-chaps">${corps}</div></div>
       <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="${lienSp(nx.slug, entree || 'voir')}" data-mv-nom="sp-${esc(nx.slug)}"><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span${edS(nx, 'creation')}>${esc(nx.creation)}</span></span><b${edS(nx, 'titre')}>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
-      ${sommaire(s, entree, chap)}
+      ${entree && chap.length ? sommaire(s, entree, chap) : ''}
     </article>`;
     // les cartes : reliées à la liste des dates, elles poussent quand elles arrivent à l'écran
     $$('.carte-sp', main).forEach(f => { const svg = $('svg', f), ul = $('.dates-sp', f.parentElement);
@@ -4190,34 +4288,32 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     }
     frisesDiffusion(main);
     secs = $$('[data-scrolly]', main);
-    chaps = $$('#c-ouverture, .chap', main); chapK = -1;
+    chaps = $$('.chap', main); chapK = -1;
     return { titre: !entree || entree === 'voir' ? s.titre : `${s.titre} - ${E[entree].court}`, lecture: entree || 'voir' };
   }
+  // le chapitre qu'on lit : marqué dans le sommaire de gauche (sa ventouse pleine, son filet allumé) et dans le sommaire flottant
   function majSommaire(k) {
+    $$('.sp-som li', main).forEach((li, i) => { li.classList.toggle('on', i === k); const b = $('button', li); if (i === k) b.setAttribute('aria-current', 'location'); else b.removeAttribute('aria-current'); });
     const som = $('.som', main); if (!som || !chaps[k]) return;
     $('#som-n', som).textContent = `${k + 1}/${chaps.length}`;
     $('#som-nom', som).textContent = chaps[k].dataset.chap;
     $$('.som-l button', som).forEach((b, i) => { if (i === k) b.setAttribute('aria-current', 'location'); else b.removeAttribute('aria-current'); });
   }
-  // le moteur du défilement : une variable --p (0 → 1) par bande épinglée, le chapitre lu, la progression
+  // le moteur du défilement : ce qui suit la lecture (FX : l'ouverture, le récit), le chapitre lu, la progression
   function defile() {
     sraf = 0;
     const vh = innerHeight;
     defileEcrans();   // (l'accueil : les spectacles, un par écran)
-    for (const sec of secs) {
-      if (!sec.isConnected) continue;
-      const r = sec.getBoundingClientRect(), span = r.height - vh;
-      const p = !motionOK() ? 1 : span > 40 ? clamp((-r.top + 64) / span, 0, 1) : 1;
-      sec.style.setProperty('--p', p.toFixed(4));
-      const fx = FX[sec.dataset.fx]; if (fx) fx(sec, p);
-    }
+    for (const sec of secs) if (sec.isConnected && FX[sec.dataset.fx]) FX[sec.dataset.fx](sec);
     if (chaps.length && chaps[0].isConnected) {
       let k = 0; const y = vh * .4;
       chaps.forEach((c, i) => { if (c.getBoundingClientRect().top <= y) k = i; });
       if (k !== chapK) { chapK = k; majSommaire(k); }
-      const art = $('article.u', main), ouv = $('.u-ouv', main), ong = $('.u-onglets', main);
+      const art = $('article.u', main), une = $('.sp-une', main), ong = $('.u-onglets', main);
       if (art) { const r = art.getBoundingClientRect(); art.style.setProperty('--lu', clamp(-r.top / Math.max(1, r.height - vh), 0, 1).toFixed(3)); }
-      if (ong && ouv) ong.classList.toggle('colle', ouv.getBoundingClientRect().bottom < 140);
+      if (ong && une) ong.classList.toggle('colle', une.getBoundingClientRect().bottom < 140);
+      // (tant que l'ouverture tient l'écran, le sommaire flottant s'efface : il couvrirait son appel)
+      if (art && une) art.classList.toggle('une-vu', une.getBoundingClientRect().bottom > vh * .45);
     }
   }
   addEventListener('scroll', () => { if ((secs.length || chaps.length || ecrans.length) && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
@@ -4227,7 +4323,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   let io = null;
   function ecrire(surPlace) {
     if (io) { io.disconnect(); io = null; }
-    const els = $$('.ecrit, .apparait', main);
+    // (l'ouverture d'un spectacle s'écrit tout de suite, à la suite de son titre : son accroche est parfois au bas de l'écran)
+    const els = $$('.ecrit, .apparait', main).filter(e => { if (!e.closest('.sp-une')) return true; e.classList.add('vu'); return false; });
     if (surPlace || !motionOK() || !('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('vu')); return; }
     io = new IntersectionObserver(es => es.forEach(x => { if (x.isIntersecting) { x.target.classList.add('vu'); io.unobserve(x.target); } }), { rootMargin: '0px 0px -10% 0px' });
     els.forEach(e => io.observe(e));
@@ -4251,12 +4348,13 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   main.addEventListener('click', e => {
     const va = e.target.closest('[data-va]'); if (va) { vers(va.dataset.va); return; }
     const sb = e.target.closest('.som-b'); if (sb) { const l = $('#som-l'), o = l.hidden; l.hidden = !o; sb.setAttribute('aria-expanded', String(o)); if (o && MV) MV.cascade(l, { decalage: 6 }); return; }
-    const c = e.target.closest('[data-c]'); if (c) { fermerSommaire(); vers('c-' + c.dataset.c); }
+    // un chapitre du sommaire : la page y va, et son titre prend le focus (le clavier continue de là)
+    const c = e.target.closest('[data-c]'); if (c) { fermerSommaire(); vers('c-' + c.dataset.c); const t = $(`#c-${CSS.escape(c.dataset.c)} [tabindex="-1"]`, main); if (t) t.focus({ preventScroll: true }); }
   });
-  // la lueur de l'accent suit la main dans l'ouverture
+  // la lueur de l'accent suit la main dans l'ouverture (la poursuite de la 07)
   let lraf = 0;
   main.addEventListener('pointermove', e => {
-    const ouv = e.target.closest && e.target.closest('.u-ouv'); if (!ouv || !motionOK() || lraf) return;
+    const ouv = e.target.closest && e.target.closest('.sp-une'); if (!ouv || !motionOK() || lraf) return;
     lraf = requestAnimationFrame(() => { lraf = 0; const r = ouv.getBoundingClientRect(); ouv.style.setProperty('--gx', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`); ouv.style.setProperty('--gy', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`); });
   });
 
