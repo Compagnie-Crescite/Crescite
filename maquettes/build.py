@@ -314,6 +314,8 @@ LIBELLES = {
     "alerteNonEnregistree": "Votre inscription n’a pas pu être enregistrée. Écrivez-nous directement :",
     "alerteUsage": "Votre adresse ne sert qu’à cette alerte, et chaque courriel contient un lien pour vous désinscrire.",
     "alerteSecteurInconnu": "Ce secteur est introuvable : indiquez un code postal (5 chiffres), ou utilisez « Me géolocaliser ».",
+    # (l'alerte : son badge, et le nom de son champ d'adresse, écrit aussi dans le champ vide, sans adresse d'exemple)
+    "alerteBadge": "Proximité", "adresseElectronique": "Adresse électronique",
     "demandeTransmise": "Demande transmise avec succès !",
     "recapitulatifMessagerie": "Vous pouvez également {lien} avec le récapitulatif.",
     "ouvrirMessagerie": "ouvrir votre messagerie",

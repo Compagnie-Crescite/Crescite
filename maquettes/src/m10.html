@@ -223,6 +223,11 @@ a.etire::after { content: ""; position: absolute; inset: 0; z-index: 2; }
 .dl.petit > li { grid-template-columns: 104px minmax(0, 1fr); padding: 12px 0; }
 .dl.petit .q b { font-size: 1.2rem; }
 .etat { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 999px; border: 1px solid currentColor; font-size: .72rem; font-weight: 700; color: var(--saison-texte); vertical-align: 2px; }
+/* une semaine de résidence (règle 23) : « Résidence », le signe de la frise devant (un carré évidé), le trait du spectacle en pointillé */
+.etat-res::before, .leg-res i { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 5px; border: 1.5px solid currentColor; border-radius: 1.5px; vertical-align: 0; }
+.dl > li.est-residence .ti::before { background: repeating-linear-gradient(90deg, var(--c) 0 4px, transparent 4px 7px); }
+.leg-res { margin: -4px 0 0; display: flex; align-items: center; gap: 4px; font: 600 .84rem/1.3 var(--sans); color: var(--gris); }
+.leg-res i { width: 10px; height: 10px; margin: 0 6px 0 0; border-width: 2px; border-radius: 2px; color: var(--encre); }
 
 /* ---------- la carte : des tentacules d'encre, des ventouses, une goutte à chaque commune ---------- */
 .carte.encre { display: block; width: 100%; height: auto; overflow: visible; transform-origin: var(--ox, 50%) var(--oy, 50%); --k-encre: var(--encre-bras); --k-papier: var(--lait); --k-vif: var(--saison); --k-pays: var(--lait-3); --k-trait: var(--carte-trait); }
@@ -1025,6 +1030,9 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .frise[data-frise] .frise-point.est-passe:is(.est-allume, .est-focus) > .frise-repere::before { opacity: 1; }
 .frise[data-frise] .frise-point.est-scolaire:not(.est-duree) > .frise-repere::before { rotate: none; width: 11px; height: 11px; border-radius: 38%; }
 .frise[data-frise] .frise-point.est-duree > .frise-repere::before { height: 8px; border-radius: 4px; background: var(--fr-c, currentColor); }
+/* une semaine de résidence (règle 23) : le signe de FRISE, un carré évidé ; une période, en pointillé */
+.frise[data-frise] .frise-point.est-residence:not(.est-duree) > .frise-repere::before { width: 11px; height: 11px; border-radius: 2px; background: var(--fr-fond); box-shadow: inset 0 0 0 2px var(--fr-c, currentColor), 0 0 0 2px var(--fr-fond); }
+.frise[data-frise] .frise-point.est-duree.est-residence > .frise-repere::before { background: repeating-linear-gradient(90deg, var(--fr-c, currentColor) 0 5px, transparent 5px 9px); }
 .frise[data-frise] .frise-point > .frise-repere:is(:hover, :focus-visible)::before, .frise[data-frise] .frise-point:is(.est-allume, .est-focus) > .frise-repere::before { scale: 1.4; }
 .frise[data-frise] .frise-grappe > span { width: 24px; height: 24px; margin: -12px 0 0 -12px; box-shadow: 0 0 0 2px var(--fr-fond); transition: scale .18s var(--k-souple); }
 .frise[data-frise] .frise-grappe.est-passe > span { opacity: 1; filter: saturate(.5); }
@@ -1048,6 +1056,9 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .fp-diff:empty { min-height: 96px; }
 .sp-frise { margin: 0 0 clamp(26px, 4vw, 40px); }
 .sp-frise:empty { min-height: 110px; }
+.sp-frise + .sp-leg { margin: calc(-1 * clamp(18px, 3vw, 30px)) 0 clamp(24px, 3.6vw, 36px); }
+.show .leg-res { color: var(--u-texte2); }
+.show .leg-res i { color: var(--u-titre); }
 .co-frise { margin: 0 0 clamp(30px, 5vw, 56px); }
 .co-frise:empty { min-height: 110px; }
 /* l'histoire : les étiquettes basses passent devant les filets des étiquettes hautes (qui passent dessous, comme sous un pont) */
@@ -1424,7 +1435,7 @@ html .ed-ajout { font-family: var(--sans); }
   function ligneSaison(d, cle = '') {
     const i = d.ligne.indexOf(' — '), q = i > 0 ? d.ligne.slice(0, i) : '', ou = i > 0 ? d.ligne.slice(i + 3) : d.ligne;
     return `<li data-date-id="${attr(d.id ?? '')}"${cle ? ` data-frise-id="${attr(cle)}"` : ''}${d.l != null ? ` data-l="${d.l}"` : ''}>${q ? quand(q) : '<p class="q"></p>'}<div class="t">
-      <p class="lieu">${d.lien ? lienExt(d.lien, esc(ou)) : esc(ou)}${d.scolaire ? ` <span class="etat">${esc(S.libelles.scolaire)}</span>` : ''}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
+      <p class="lieu">${d.lien ? lienExt(d.lien, esc(ou)) : esc(ou)}${d.scolaire ? ` <span class="etat">${esc(S.libelles.scolaire)}</span>` : ''}${d.residence ? ` <span class="etat etat-res">${esc(S.libelles.residence)}</span>` : ''}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
   }
 
   /* ---------- l'encre : le second moment de la pieuvre ---------- */
@@ -2152,12 +2163,15 @@ html .ed-ajout { font-family: var(--sans); }
     return ma ? `${ma[2]}-${p2(mois(ma[1]))}-31` : null;
   }
   // « 24 janvier 2020 à 20h — Théâtre en Seine, Duclair (76) » → { jour: « 24 », heure: « à 20h », lieu: « Théâtre en Seine, Duclair (76) » }
+  // (« 2020 — Rouen (76) » : l'année seule tient lieu de jour ; « mai-juin 2023 — … » : les deux mois ensemble)
+  const RE_DEUX_MOIS = new RegExp(`^(?:${MOIS_TOK})\\.?\\s*[-–]$`, 'i');
   function decoupeLigne(ligne) {
     const t = String(ligne || ''), m = t.match(RE_LIGNE);
-    if (!m) return { jour: '', mois: '', heure: '', lieu: t.trim() };
+    if (!m) { const a = t.match(/^\s*(\d{4})\s*(?:—|:)\s*([\s\S]*)$/); return a ? { jour: a[1], mois: '', heure: '', lieu: a[2].trim() } : { jour: '', mois: '', heure: '', lieu: t.trim() }; }
     const reste = m[3], k = reste.indexOf('—'), c = reste.search(/\s:\s/);
     const [h, l] = k >= 0 ? [reste.slice(0, k), reste.slice(k + 1)] : c >= 0 ? [reste.slice(0, c), reste.slice(c + 3)] : ['', reste];
     const net = x => x.replace(/^[\s:,–-]+|[\s:]+$/g, '');
+    if (RE_DEUX_MOIS.test(m[1].trim())) return { jour: m[1].trim() + m[2], mois: m[1].trim() + m[2], heure: net(h), lieu: net(l) };
     return { jour: m[1] || m[2], mois: m[2], heure: net(h), lieu: net(l) };
   }
   const titreMois = m => m ? `${MOIS_NOMS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}` : '';
@@ -2187,6 +2201,10 @@ html .ed-ajout { font-family: var(--sans); }
   // la saison en cours : toutes ses dates, passées comprises, dans l'ordre chronologique (une ligne sans date, à la fin)
   const lignesEnCours = () => retenu('enCours', () => lignesDe(D.saison).sort((a, b) => { const x = a.k || '~', y = b.k || '~'; return x < y ? -1 : x > y ? 1 : a.i - b.i; }));
   const agendaPasse = () => (S.saisons || []).map(x => retenu(`passe:${x.saison}`, () => saisonPassee(x))).filter(Boolean);
+  // le nombre de dates d'une liste de lignes : ni ses semaines de résidence (règle 23)
+  const nDates = rows => rows.reduce((n, r) => n + (r.d.residence ? 0 : 1), 0);
+  // sous la frise d'un spectacle qui a eu des semaines de résidence : leur signe, nommé (règle 23)
+  const legendeResidence = rows => (S.libelles.residence && rows.some(r => r.d.residence) ? `<p class="leg-res sp-leg"><i aria-hidden="true"></i>${esc(S.libelles.residence)}</p>` : '');
   // les spectacles qui ont des dates, à venir ou passées : [{cle, titre, slug}], les spectacles de la compagnie d'abord
   function spectaclesAgenda(pub, passe) {
     const m = new Map();
@@ -2202,12 +2220,14 @@ html .ed-ajout { font-family: var(--sans); }
   const I_X = SVG_I('<path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>');
   const I_LOUPE = SVG_I('<circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 15.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>');
   // une ligne d'une date d'une saison : le jour en grand, le mois et l'heure dessous, puis le spectacle (sauf sur sa propre
-  // page : sansTitre), le lieu, les précisions, l'état ; passe : déjà jouée (dans la saison en cours, son jour à l'encre seconde)
+  // page : sansTitre), le lieu, les précisions, l'état ; passe : déjà jouée (dans la saison en cours, son jour à l'encre seconde) ;
+  // une semaine de résidence (règle 23) : marquée « Résidence », jamais réservable
   function ligneAgenda(r, o = {}) {
     const { d, g } = r, s = g.slug && show(g.slug), p = decoupeLigne(d.ligne), lienLieu = d.lien && !(d.details || []).some(x => x.lien);
-    return `<li${o.passe ? ' class="est-passe"' : ''} data-date-id="${attr(d.id ?? '')}" data-frise-id="${attr(cleRang(r))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${attr(g.slug || '')}" style="--c:${couleurSp(g.slug)}">${r.suite ? '<p class="q"></p>' : `<p class="q"><b>${esc(p.jour)}</b>${p.mois && p.mois !== p.jour ? `<span>${esc(p.mois)}</span>` : ''}${p.heure ? `<span>${esc(p.heure)}</span>` : ''}</p>`}<div class="t">
+    const cls = [o.passe && 'est-passe', d.residence && 'est-residence'].filter(Boolean).join(' ');
+    return `<li${cls ? ` class="${cls}"` : ''} data-date-id="${attr(d.id ?? '')}" data-frise-id="${attr(cleRang(r))}"${d.l != null ? ` data-l="${d.l}"` : ''} data-slug="${attr(g.slug || '')}" style="--c:${couleurSp(g.slug)}">${r.suite ? '<p class="q"></p>' : `<p class="q"><b>${esc(p.jour)}</b>${p.mois && p.mois !== p.jour ? `<span>${esc(p.mois)}</span>` : ''}${p.heure ? `<span>${esc(p.heure)}</span>` : ''}</p>`}<div class="t">
       ${r.suite || o.sansTitre ? '' : (s ? `<a class="ti" href="${attr(hrefSp(s, d.scolaire ? 'etablissement' : 'voir'))}">${esc(r.titre)}</a>` : `<span class="ti">${esc(r.titre)}</span>`)}
-      <p class="lieu">${p.lieu ? (lienLieu ? lienExt(d.lien, esc(p.lieu)) : esc(p.lieu)) : ''}${d.scolaire ? ` <span class="etat">${esc(S.libelles.scolaire)}</span>` : ''}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
+      <p class="lieu">${p.lieu ? (lienLieu ? lienExt(d.lien, esc(p.lieu)) : esc(p.lieu)) : ''}${d.scolaire ? ` <span class="etat">${esc(S.libelles.scolaire)}</span>` : ''}${d.residence ? ` <span class="etat etat-res">${esc(S.libelles.residence)}</span>` : ''}${d.etat ? ` <span class="etat">${esc(d.etat)}</span>` : ''}</p>${details(d.details)}</div></li>`;
   }
   // la petite carte d'une saison : un bras d'encre vers chaque commune, une goutte au bout (tous les bras en un tracé, toutes les gouttes en un autre)
   const disqueMini = (x, y, r) => `M${(x - r).toFixed(1)} ${(+y).toFixed(1)}a${r.toFixed(1)} ${r.toFixed(1)} 0 1 0 ${(2 * r).toFixed(1)} 0a${r.toFixed(1)} ${r.toFixed(1)} 0 1 0 ${(-2 * r).toFixed(1)} 0`;
@@ -2235,15 +2255,17 @@ html .ed-ajout { font-family: var(--sans); }
   const annulee = d => /annul/i.test(d.etat || '');
   const couleurLait = couleurSp;
   const repereProchaine = (d, couleur) => ({ id: cleProchaine(d), jour: d.iso, fin: d.fin, precision: d.precision, couleur: couleur || couleurLait(d.slug), titre: d.titre,
-    quand: d.ligneDate, l: d.l, scolaire: d.scolaire, annulee: annulee(d), etat: d.etat });
+    quand: d.ligneDate, l: d.l, scolaire: d.scolaire, residence: !!d.residence, annulee: annulee(d), etat: d.etat });
   const repereRang = (r, couleur) => { const jour = r.d.iso || r.k; if (!jour) return null;
     return { id: cleRang(r), jour, fin: r.d.fin || r.k || jour, precision: r.d.precision, couleur: couleur || couleurLait(r.g.slug), titre: r.titre,
-      quand: String(r.d.ligne || '').split(/\s—\s|\s:\s/)[0].trim(), l: r.d.l, scolaire: r.d.scolaire, annulee: annulee(r.d), etat: r.d.etat }; };
+      quand: String(r.d.ligne || '').split(/\s—\s|\s:\s/)[0].trim(), l: r.d.l, scolaire: r.d.scolaire, residence: !!r.d.residence, annulee: annulee(r.d), etat: r.d.etat }; };
+  // les représentations d'une date (une semaine de résidence n'en compte aucune, règle 23)
+  const nbRep = dt => (dt.residence ? 0 : dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1));
   const bandeSaison = (k, n) => ({ id: k, debut: `${k.slice(0, 4)}-09-01`, fin: `${k.slice(5)}-08-31`, titre: (D.saisons[k] || {}).titre || k, n, etiquette: `${k.slice(2, 4)}-${k.slice(7, 9)}` });
   // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
   function diffusion(s) {
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + (dt.nb_representations != null ? +dt.nb_representations : (dt.representations ? dt.representations.length : 1)), 0), 0);
+    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + (g.dates || []).reduce((acc, dt) => acc + nbRep(dt), 0), 0);
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => ({ ...bandeSaison(k, n(k)), couleur: 'var(--u-titre)' })) : [];
   }
@@ -2280,10 +2302,10 @@ html .ed-ajout { font-family: var(--sans); }
     li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' });
     li.classList.remove('est-vise'); requestAnimationFrame(() => li.classList.add('est-vise'));
   }
-  // les communes d'une saison passée, avec ses dates (celles que le filtre garde) ; sa petite carte, gardée
+  // les communes d'une saison passée, avec ses dates (celles que le filtre garde ; ni ses résidences, règle 23) ; sa petite carte, gardée
   function lieuxDeSaison(s, rows) {
     const parL = new Map();
-    rows.forEach(r => { if (r.d.l != null) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, spectacle: r.titre, slug: r.g.slug }); } });
+    rows.forEach(r => { if (r.d.l != null && !r.d.residence) { if (!parL.has(r.d.l)) parL.set(r.d.l, []); parL.get(r.d.l).push({ ...r.d, spectacle: r.titre, slug: r.g.slug }); } });
     return s.lieux.filter(x => parL.has(x.l)).map(x => ({ ...x, dates: parL.get(x.l), n: parL.get(x.l).length }));
   }
   const miniSaison = (s, rows, filtre) => retenu(`mini:${s.k}:${filtre}`, () => miniEncre(lieuxDeSaison(s, rows)));
@@ -2307,9 +2329,12 @@ html .ed-ajout { font-family: var(--sans); }
         ${s.accroche ? `<p class="cv-acc"${ed(`shows.${s.slug}.accroche`)}>${esc(s.accroche)}</p>` : ''}
         ${d ? `<p class="cv-date">${esc(d.ligne)}</p>` : ''}</div></li>`;
     }).join('');
-    // (la légende de la frise : les spectacles de la saison en cours d'abord, puis ceux des saisons passées, qu'elle filtre aussi)
+    // (la légende de la frise, qui filtre : les spectacles en tournée d'abord, dans l'ordre de D.shows (règle 23), puis ceux
+    // de la saison en cours, puis ceux des saisons passées)
     const passe = retenu('passe', agendaPasse), dansSaison = new Set([...prochaines.map(d => d.slug), ...enCours.map(r => r.cle)]);
-    const puces = spectaclesAgenda(prochaines, [{ rows: enCours }, ...passe]).sort((a, b) => dansSaison.has(b.cle) - dansSaison.has(a.cle));
+    const tournee = D.shows.filter(s => s.enTournee).map(s => s.slug), rang = p => { const i = tournee.indexOf(p.cle); return i >= 0 ? i : tournee.length + (dansSaison.has(p.cle) ? 0 : 1); };
+    const puces = spectaclesAgenda(prochaines, [{ rows: enCours }, ...passe]).map((p, i) => [p, i]).sort((a, b) => rang(a[0]) - rang(b[0]) || a[1] - b[1]).map(x => x[0]);
+    const aResidences = enCours.some(r => r.d.residence);
     if (ANIMER || !etatVoir.v) etatVoir.v = { q: '', slug: null, l: null, ouv: null, avant: null, date: dateVoulue() };
     const F = etatVoir.v;
     // réserver (règle 17) : la date d'une ligne réservable est un bouton (son horaire écrit dessus) qui ouvre la carte de
@@ -2335,7 +2360,7 @@ html .ed-ajout { font-family: var(--sans); }
     };
     const saisonHtml = ({ s, rows }) => { const ouv = F.ouv.has(s.k);
       return `<details class="sai" id="sai-${attr(s.k)}" data-saison="${attr(s.k)}" data-frise-id="${attr(s.k)}"${ouv ? ' open' : ''}>
-        <summary>${miniSaison(s, rows, `${F.slug}|${F.l}|${termes().join(' ')}`)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n"><b>${rows.length}</b>${I_CHEV}</span></summary>
+        <summary>${miniSaison(s, rows, `${F.slug}|${F.l}|${termes().join(' ')}`)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n">${nDates(rows) ? `<b>${nDates(rows)}</b>` : ''}${I_CHEV}</span></summary>
         <div class="sai-corps"></div></details>`; };
     // les commandes de l'index : les filtres en cours (à retirer), tout ouvrir ou tout refermer ; la frise des saisons tient lieu d'index
     const ctlHtml = vis => {
@@ -2389,14 +2414,15 @@ html .ed-ajout { font-family: var(--sans); }
         $$('[data-l]', svgP).forEach(n => n.classList.toggle('hors', filtre && !vus.has(+n.dataset.l)));
         allumerP(F.l);
       };
-      // la frise de la saison : toutes ses dates, à venir et déjà jouées (les scolaires aussi), celles que le filtre garde
+      // la frise de la saison : toutes ses dates, à venir et déjà jouées (les scolaires aussi ; ses résidences, à venir comprises,
+      // qui ne sont pas dans D.dates), celles que le filtre garde
       const pointsSaison = () => {
         const t = termes(), ok = x => (!F.slug || x.cle === F.slug) && (F.l === null || x.d.l === F.l) && t.every(k => x.txt.includes(k));
         const pts = proch.filter(ok).map(x => repereProchaine(x.d));
-        enCours.forEach(r => { if (r.k && r.k < D.aujourdhui && !r.suite && garde(r)) { const q = repereRang(r); if (q) pts.push(q); } });
+        enCours.forEach(r => { if (r.k && (r.k < D.aujourdhui || r.d.residence) && !r.suite && garde(r)) { const q = repereRang(r); if (q) pts.push(q); } });
         return pts;
       };
-      const bandes = vis => { const n = new Map(vis.map(x => [x.s.k, x.rows.reduce((acc, r) => acc + (r.d.nb_representations != null ? +r.d.nb_representations : (r.d.representations ? r.d.representations.length : 1)), 0)])); return passe.map(x => bandeSaison(x.k, n.get(x.k) || 0)); };
+      const bandes = vis => { const n = new Map(vis.map(x => [x.s.k, x.rows.reduce((acc, r) => acc + nbRep(r.d), 0)])); return passe.map(x => bandeSaison(x.k, n.get(x.k) || 0)); };
       // la saison qu'on lit, marquée sur la frise des saisons (au défilement)
       const lire = force => {
         if (!fSaisons || !racine.isConnected) return;
@@ -2505,6 +2531,7 @@ html .ed-ajout { font-family: var(--sans); }
         <div class="v-frise" id="v-frise"></div>
         <div class="ag-outils">
           <div class="cps" role="group" aria-label="${attr(Lb.spectacles)}">${puces.map(p => `<button class="cp" type="button" data-s="${attr(p.cle)}" aria-pressed="${p.cle === F.slug}"${p.slug && show(p.slug) ? ` style="--c:${couleurSp(p.slug)}"` : ''}><i aria-hidden="true"></i>${esc(p.titre)}</button>`).join('')}</div>
+          ${aResidences && Lb.residence ? `<p class="leg-res"><i aria-hidden="true"></i>${esc(Lb.residence)}</p>` : ''}
           <label class="recherche">${I_LOUPE}<input id="cherche" type="search" placeholder="${attr(Lb.rechercher)}" aria-label="${attr(Lb.rechercher)}" autocomplete="off" value="${attr(F.q)}"></label>
         </div>
         <div class="ag-grille"><div class="ag-carte">${carteGeree(Encre.svg({ lieux, titre: titreSa }))}</div>
@@ -2989,7 +3016,7 @@ html .ed-ajout { font-family: var(--sans); }
       else if (K.passe.length) ch.push({ id: 'dates', label: Lb.dates, html: h2('dates', Lb.lieuxDiffusion) + `<div data-agenda="${attr(sl)}"></div>${Encre.svg({ lieux: K.passe, cadre: 'serre', titre: s.titre })}` });
       // la frise de sa tournée : toutes ses dates, passées et à venir, et « aujourd'hui », en tête de la rubrique des dates
       if (aDesDates(sl)) {
-        const boite = '<div class="sp-frise" id="sp-frise"></div>', c = ch.find(x => x.id === 'dates');
+        const boite = `<div class="sp-frise" id="sp-frise"></div>${legendeResidence(passeDe(sl))}`, c = ch.find(x => x.id === 'dates');
         if (c) c.html = c.html.replace('</h2>', '</h2>' + boite); else ch.push({ id: 'dates', label: Lb.dates, html: h2('dates', Lb.dates) + boite });
         APRES.push(() => differe(() => friseTournee(s)));
       }
@@ -3163,14 +3190,15 @@ html .ed-ajout { font-family: var(--sans); }
     rows.forEach(r => { let g = G.find(x => x.k === r.sa); if (!g) G.push(g = { k: r.sa, titre: (D.saisons[r.sa] || {}).titre || r.sa, rs: [] }); g.rs.push(r); });
     G.sort((a, b) => (a.k < b.k ? 1 : a.k > b.k ? -1 : 0));
     G.forEach(g => g.rs.sort((a, b) => (a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i)));
-    const jouees = rows.filter(r => !annulee(r.d));
-    const n = [[jouees.length, Lb.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, Lb.communes], [G.length, Lb.saisons]].filter(([x, l]) => x && l);
+    // (les chiffres : ni les dates annulées, ni les semaines de résidence, règle 23 ; celles-ci restent dans ses dates, marquées)
+    const jouees = rows.filter(r => !annulee(r.d) && !r.d.residence);
+    const n = [[jouees.length, Lb.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, Lb.communes], [new Set(jouees.map(r => r.sa)).size, Lb.saisons]].filter(([x, l]) => x && l);
     APRES.push(() => differe(() => friseTournee(s)));
     return { id: 'bilan', label: Lb.bilan, html: `<h2 id="h-bilan">${esc(Lb.bilan)}</h2>`
       + (P.representations ? `<p class="bl-rep"${ed(`shows.${sl}.programmer.representations`)}>${esc(P.representations)}</p>` : '')
       + (n.length ? `<ul class="bl-n">${n.map(([x, l]) => `<li><b>${x}</b><span>${esc(l)}</span></li>`).join('')}</ul>` : '')
-      + `<div class="sp-frise" id="sp-frise"></div><div class="tour-grille bl-grille"><div class="bl-carte">${Encre.svg({ lieux: K.passe, titre: s.titre })}</div>
-        <div class="bl-saisons" data-agenda="${attr(sl)}">${G.map(g => `<section class="bl-sa" aria-labelledby="bl-${attr(g.k)}"><h3 id="bl-${attr(g.k)}"><span>${esc(g.titre)}</span><small>${g.rs.length}</small></h3><ul class="dl">${g.rs.map(r => ligneAgenda(r, { sansTitre: true })).join('')}</ul></section>`).join('')}</div></div>`
+      + `<div class="sp-frise" id="sp-frise"></div>${legendeResidence(rows)}<div class="tour-grille bl-grille"><div class="bl-carte">${Encre.svg({ lieux: K.passe, titre: s.titre })}</div>
+        <div class="bl-saisons" data-agenda="${attr(sl)}">${G.map(g => `<section class="bl-sa" aria-labelledby="bl-${attr(g.k)}"><h3 id="bl-${attr(g.k)}"><span>${esc(g.titre)}</span>${nDates(g.rs) ? `<small>${nDates(g.rs)}</small>` : ''}</h3><ul class="dl">${g.rs.map(r => ligneAgenda(r, { sansTitre: true })).join('')}</ul></section>`).join('')}</div></div>`
       + (P.lieux ? `<h3>${esc(Lb.lieuxDiffusion)}</h3><p class="lieux-texte"${ed(`shows.${sl}.programmer.lieux`)}>${esc(P.lieux)}</p>` : '') };
   }
   function chapitreActions(s) {
