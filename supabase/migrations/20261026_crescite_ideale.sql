@@ -68,9 +68,10 @@ create table if not exists public.crescite_notes_frais (
   id bigserial primary key,
   personne_id integer not null references public.crescite_personnes (id) on delete cascade,
   date_id bigint references public.crescite_dates (id) on delete set null,
+  date_depense date,                               -- le jour de la dépense (celui du ticket)
   categorie text not null,                         -- 'repas', 'transport', 'peage_carburant', 'hebergement', 'autre'
   montant_ttc numeric(8, 2) not null,
-  photo_url text,
+  photo_url text,                                  -- le chemin du justificatif dans « crescite-frais » : <personne_id>/<horodatage>_<nom>
   commentaire text,
   statut text not null default 'en_attente',       -- 'en_attente', 'valide', 'rembourse', 'refuse'
   cree_le timestamptz not null default now(),
@@ -78,6 +79,9 @@ create table if not exists public.crescite_notes_frais (
   valide_par uuid,
   rembourse_le timestamptz
 );
+
+-- (une table créée par une version d'avant de ce script : la colonne s'ajoute)
+alter table public.crescite_notes_frais add column if not exists date_depense date;
 
 create index if not exists crescite_notes_frais_personne on public.crescite_notes_frais (personne_id);
 create index if not exists crescite_notes_frais_date on public.crescite_notes_frais (date_id);

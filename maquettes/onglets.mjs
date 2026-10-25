@@ -202,15 +202,17 @@ async function regle17(page, tag, log) {
 // et (si l'API Fullscreen existe) libelles.pleinEcran ; aucun lecteur (iframe) ni aucune requête vers YouTube ou Vimeo avant
 // le geste ; au geste, le lecteur youtube-nocookie.com ou player.vimeo.com avec dnt=1 ; une seule vidéo à la fois (Macbeth et
 // ses teasers) ; « assombrir » éteint la page (le voile .lc-nuit), le focus reste dans la vidéo, Échap rallume, un geste hors
-// de la vidéo aussi ; « plein écran » met le cadre du lecteur en plein écran ; sur #/programmer, « Bande-annonce » ouvre la
-// vidéo dans une boîte (dialog), Échap la ferme et arrête la vidéo. Les lecteurs sont simulés (aucune requête ne sort).
+// de la vidéo aussi ; « plein écran » met le cadre du lecteur en plein écran ; sur #/espace-pro/programmer, « Bande-annonce »
+// ouvre la vidéo dans une boîte (dialog), Échap la ferme et arrête la vidéo. Les lecteurs sont simulés (aucune requête ne sort).
+// La page d'un spectacle : son onglet voir s'il est en tournée (ou en création), sa seule page sinon (règle 21).
 const LECTEURS = /^https:\/\/(www\.youtube-nocookie\.com|player\.vimeo\.com)\//;
 async function regle18(page, tag, log) {
   const pfx = `${tag} règle 18`;
   await page.route(LECTEURS, r => r.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><meta charset="utf-8"><title>lecteur</title><body style="margin:0;background:#000"></body>' }));
-  const shows = await page.evaluate(() => D.shows.filter(s => s.video).map(s => ({ slug: s.slug, titre: s.video.titre, url: s.video.url })));
+  const shows = await page.evaluate(() => D.shows.filter(s => s.video).map(s => ({ slug: s.slug, titre: s.video.titre, url: s.video.url,
+    ici: s.enTournee || s.statut ? `#/spectacle/${s.slug}/voir` : `#/spectacle/${s.slug}` })));
   for (const s of shows) {
-    await page.evaluate(h => { location.hash = h; }, `#/spectacle/${s.slug}/voir`);
+    await page.evaluate(h => { location.hash = h; }, s.ici);
     await page.waitForTimeout(900);
     const e = await page.evaluate(s => {
       const L = D.site.libelles, photos = new Set(Object.values(D.photos)), vis = el => !!el && el.getClientRects().length > 0;
@@ -234,7 +236,7 @@ async function regle18(page, tag, log) {
   // au geste : le lecteur sans cookie (YouTube) ou dnt=1 (Vimeo), sur place
   page.__geste18 = true;
   for (const s of shows.filter(x => /youtube|vimeo/.test(x.url)).filter((x, i, a) => a.findIndex(y => /youtube/.test(y.url) === /youtube/.test(x.url)) === i)) {
-    await page.evaluate(h => { location.hash = h; }, `#/spectacle/${s.slug}/voir`);
+    await page.evaluate(h => { location.hash = h; }, s.ici);
     await page.waitForTimeout(900);
     const b = page.locator('main figure[data-lecteur] [data-lecteur-lire]').first();
     await b.scrollIntoViewIfNeeded(); await b.click(); await page.waitForTimeout(500);
@@ -243,23 +245,24 @@ async function regle18(page, tag, log) {
     if (src.length !== 1 || !ok) log.push(`${pfx} ${s.slug} : au geste, le lecteur attendu (youtube-nocookie ou vimeo dnt=1) n'est pas chargé (${JSON.stringify(src).slice(0, 120)})`);
   }
   // une seule vidéo à la fois (Macbeth : sa bande-annonce et ses teasers)
-  const plusieurs = await page.evaluate(() => (D.shows.find(s => (s.medias || []).filter(m => m.type === 'video').length > 1) || {}).slug);
+  const plusieurs = await page.evaluate(() => { const s = D.shows.find(x => (x.medias || []).filter(m => m.type === 'video').length > 1);
+    return s ? { slug: s.slug, ici: s.enTournee || s.statut ? `#/spectacle/${s.slug}/voir` : `#/spectacle/${s.slug}` } : null; });
   if (plusieurs) {
-    await page.evaluate(h => { location.hash = h; }, `#/spectacle/${plusieurs}/voir`);
+    await page.evaluate(h => { location.hash = h; }, plusieurs.ici);
     await page.waitForTimeout(900);
     const ls = page.locator('main figure[data-lecteur] [data-lecteur-lire]');
-    if (await ls.count() < 2) log.push(`${pfx} ${plusieurs} : ses autres vidéos (médias) ne se lisent pas dans la page`);
+    if (await ls.count() < 2) log.push(`${pfx} ${plusieurs.slug} : ses autres vidéos (médias) ne se lisent pas dans la page`);
     else {
       await ls.nth(0).scrollIntoViewIfNeeded(); await ls.nth(0).click(); await page.waitForTimeout(300);
       await ls.nth(1).scrollIntoViewIfNeeded(); await ls.nth(1).click(); await page.waitForTimeout(300);
       const n = await page.evaluate(() => document.querySelectorAll('main iframe').length);
-      if (n !== 1) log.push(`${pfx} ${plusieurs} : ${n} vidéos jouent en même temps`);
+      if (n !== 1) log.push(`${pfx} ${plusieurs.slug} : ${n} vidéos jouent en même temps`);
     }
   }
   // assombrir : la page s'éteint autour de la vidéo, le focus y reste ; Échap, puis un geste hors de la vidéo, la rallument
   const s0 = shows[0];
   if (s0) {
-    await page.evaluate(h => { location.hash = h; }, `#/spectacle/${s0.slug}/voir`);
+    await page.evaluate(h => { location.hash = h; }, s0.ici);
     await page.waitForTimeout(900);
     const nuit = page.locator('main figure[data-lecteur] [data-lecteur-nuit]').first();
     await nuit.scrollIntoViewIfNeeded(); await nuit.click(); await page.waitForTimeout(600);
@@ -285,8 +288,8 @@ async function regle18(page, tag, log) {
       await page.evaluate(() => document.fullscreenElement && document.exitFullscreen().catch(() => {})); await page.waitForTimeout(300);
     }
   }
-  // un catalogue (#/programmer) : « Bande-annonce » ouvre la vidéo dans une boîte, Échap la ferme et l'arrête
-  await page.evaluate(() => { location.hash = '#/programmer'; });
+  // un catalogue (#/espace-pro/programmer) : « Bande-annonce » ouvre la vidéo dans une boîte, Échap la ferme et l'arrête
+  await page.evaluate(() => { location.hash = '#/espace-pro/programmer'; });
   await page.waitForTimeout(900);
   const ouvrir = page.locator('main [data-lecteur-ouvrir]').first();
   if (await ouvrir.count()) {
@@ -391,7 +394,7 @@ async function regle19(page, tag, log) {
   };
   // le jour (le réglage de l'appareil : clair dans ce navigateur), puis la bascule
   await relire('jour');
-  await aller('#/voir');
+  await aller('#/saisons');
   const avant = await bouton();
   if (avant.absent) return;
   await page.click('[data-r19]');
@@ -423,7 +426,7 @@ async function regle19(page, tag, log) {
   if (tag === 'tab') {
     const ctx2 = await page.context().browser().newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce', locale: 'fr-FR' });
     const p2 = await ctx2.newPage();
-    await p2.goto(page.url().replace(/#.*$/, '#/voir'), { waitUntil: 'load' });
+    await p2.goto(page.url().replace(/#.*$/, '#/saisons'), { waitUntil: 'load' });
     await p2.waitForTimeout(900);
     // instantanée = sans transition de vue ni cercle (html.theme-bascule), la nuit posée dans les images qui suivent le clic
     // (la bascule peut attendre que le bouton enfoncé soit dessiné : c'est ce qui garde l'INP bas)
@@ -612,16 +615,27 @@ for (const n of names) {
       PERMIS.forEach(p => parts.push(norm(p)));
       window.__corpus = parts.join(' | ');
       window.__norm = norm;
+      // les précisions de dates qu'on ne lit que dans une saison (assez longues, absentes des autres saisons et des dates à
+      // venir) : de quoi savoir si une saison est ouverte ou fermée sans la confondre avec une autre ; et les précisions des
+      // dates passées d'un spectacle, toutes saisons (son bilan)
+      const precisions = d => (d.details || []).map(x => x && x.texte).filter(Boolean);
+      window.__propres = (k, n = 3, min = 30) => {
+        const ailleurs = new Set([...Object.entries(D.saisons || {}).filter(([kk]) => kk !== k).flatMap(([, S]) => (S.spectacles || []).flatMap(g => (g.dates || []).flatMap(precisions))),
+          ...(D.dates || []).flatMap(precisions)]);
+        return [...new Set(((D.saisons || {})[k] || { spectacles: [] }).spectacles.flatMap(g => (g.dates || []).map(d => precisions(d)[0])).filter(t => t && t.length >= min && !ailleurs.has(t)))].slice(0, n);
+      };
+      window.__passees = (slug, n = 3, min = 20) => [...new Set(Object.values(D.saisons || {}).flatMap(S => (S.spectacles || []).filter(g => g.slug === slug)
+        .flatMap(g => (g.dates || []).map(d => precisions(d)[0]))).filter(t => t && t.length >= min))].slice(0, n);
     }, PERMIS);
     const docs = await page.evaluate(() => (D.documents || []).filter(d => d.pour === 'pros').map(d => [d.spectacle, d.url]));
     const D_DOCS = slug => new Set(docs.filter(([s]) => s === slug).map(([, u]) => u)).size;
-    const titres = new Map();
+    const titres = new Map(), signale = new Set();
     for (const [vue, hash, attendus, interdits] of VUES) {
       await page.evaluate(h => { location.hash = h; }, hash);
       await page.waitForTimeout(900);
       // (le débordement se mesure contre la largeur de l'écran demandée : en émulation mobile, une page qui déborde
       // élargit innerWidth avec elle, et le débordement ne se voyait pas)
-      const etat = await page.evaluate(([att, int, DISPARUS, ENTREES, LARGEUR]) => {
+      const etat = await page.evaluate(([att, int, DISPARUS, LARGEUR]) => {
         // le contenu hors de l'écran (content-visibility: auto) et ce qui apparaît au défilement (MOUVEMENT.reveler :
         // .mv-attente) se lisent aussi : on les montre dans leur état final le temps de la lecture
         const forcer = document.createElement('style');
@@ -629,39 +643,99 @@ for (const n of names) {
         document.head.appendChild(forcer);
         try {
         const vis = el => { for (let e = el; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; } return el.getClientRects().length > 0; };
-        const hors = [];
+        const n = window.__norm, main = document.querySelector('main');
+        // hors du contenu : l'en-tête, les barres, le pied (tout ce qui n'est pas dans <main>)
+        const horsContenu = el => !(main && main.contains(el));
+        const dansEcran = el => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth; };
+        const hors = [], textesHors = [];
         const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         for (let t; (t = tw.nextNode());) {
           const p = t.parentElement;
           if (!p || p.closest('script,style,noscript,.intro,[aria-hidden="true"] title,svg title,.sr-only,.visually-hidden,.sr') || !vis(p)) continue;
-          const s = window.__norm(t.textContent);
+          const s = n(t.textContent);
+          if (s && horsContenu(p)) textesHors.push(s);
           if (s.length < 4 || /^[\d\s.,:;\/–—\-+()·•|→←↗↓↑×]+$/.test(s)) continue;
           if (!window.__corpus.includes(s)) hors.push(t.textContent.trim().replace(/\s+/g, ' ').slice(0, 80));
         }
         // le texte lisible de la vue (hors ouverture), pour les attendus et les interdits
         const intro = document.querySelector('.intro');
-        const lu = window.__norm(document.body.innerText.replace(intro ? intro.innerText : '', ''));
+        const lu = n(document.body.innerText.replace(intro ? intro.innerText : '', ''));
         const fA = att ? new Function('D', `return (${att})(D)`)(D) : [];
         const fI = int ? new Function('D', `return (${int})(D)`)(D) : [];
-        // une entrée est « à portée » si un lien visible y mène dans le premier écran (en-tête, barre fixe…)
-        const aPortee = ENTREES.filter(h => [...document.querySelectorAll(`a[href="${h}"]`)].some(a => {
-          if (!vis(a)) return false; const r = a.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth; }));
-        // voir : la première date à venir se lit avant le titre de la saison la plus ancienne
-        let ordre = null;
-        if (location.hash === '#/voir') {
-          const a = window.__norm(D.dates.find(d => !d.scolaire).details[0].texte), b = window.__norm(D.site.saisons[D.site.saisons.length - 1].titre);
-          const ia = lu.indexOf(a), ib = lu.lastIndexOf(b);
+        // règle 21 : un élément du menu est « à portée » si un lien visible y mène, hors du contenu, dans le premier écran (en-tête,
+        // barre fixe…), sans ouvrir de menu
+        const menu = (D.site.menu || []).map(m => ({ cle: m.cle, href: m.href, texte: m.texte }));
+        const aPortee = menu.filter(m => [...document.querySelectorAll('a[href]')].some(a => a.getAttribute('href') === m.href && horsContenu(a) && vis(a) && dansEcran(a))).map(m => m.href);
+        // les marques aria-current : dans l'en-tête et les menus hors du contenu ; puis toutes (les onglets d'un spectacle compris)
+        const marques = v => [...document.querySelectorAll(`header [aria-current="${v}"], nav [aria-current="${v}"]`)].filter(vis);
+        const courantTete = marques('page').filter(horsContenu).map(a => a.getAttribute('href') || a.textContent.trim().replace(/\s+/g, ' '));
+        const courantVrai = [...document.querySelectorAll('[aria-current="true"]')].filter(a => horsContenu(a) && vis(a)).map(a => a.getAttribute('href') || '');
+        // règle 21 : les trois entrées ne sont plus ni dans l'en-tête ni dans le pied (rien hors du contenu), ni sur l'accueil
+        const E = D.site.entrees || [], textesTete = ' ' + textesHors.join(' | ') + ' ';
+        const entreesHors = [...new Set(E.flatMap(e => [e.texte, e.court]).filter(t => t && textesTete.includes(n(t))))];
+        const entreesAccueil = /^#?\/?$/.test(location.hash) ? E.map(e => e.texte).filter(t => t && lu.includes(n(t))) : [];
+        // règle 21 : un spectacle qui n'est plus en tournée n'a qu'une page : aucun lien visible vers ses onglets programmer et
+        // établissement, nulle part ; sur sa page, aucun non plus vers son onglet voir
+        const finis = D.shows.filter(s => !s.enTournee && !s.statut).map(s => s.slug), ici = (/^#\/spectacle\/([^/?]+)/.exec(location.hash) || [])[1];
+        const ongletsFinis = [...document.querySelectorAll('a[href]')].filter(vis).map(a => a.getAttribute('href') || '').filter(h => {
+          const m = /#\/spectacle\/([^/?]+)\/(voir|programmer|etablissement)(?:[?/]|$)/.exec(h);
+          return !!m && finis.includes(m[1]) && (m[2] !== 'voir' || m[1] === ici); });
+        // une carte de France : un SVG qui trace le contour de D.carte (un chemin, ou un <use> qui le reprend)
+        const contour = D.carte && D.carte.contour;
+        const estCarte = svg => !!contour && [...svg.querySelectorAll('path, use')].some(x => {
+          if (x.tagName.toLowerCase() !== 'use') return x.getAttribute('d') === contour;
+          const h = x.getAttribute('href') || x.getAttribute('xlink:href') || '', c = h[0] === '#' ? document.getElementById(h.slice(1)) : null;
+          return !!c && (c.getAttribute('d') === contour || [...c.querySelectorAll('path')].some(q => q.getAttribute('d') === contour)); });
+        const cartes = main ? [...main.querySelectorAll('svg')].filter(x => vis(x) && estCarte(x)) : [];
+        // les nœuds de texte visibles du contenu qui contiennent ce texte
+        const noeuds = texte => { const t0 = n(texte), out = [], w = document.createTreeWalker(main || document.body, NodeFilter.SHOW_TEXT);
+          for (let t; (t = w.nextNode());) if (t.parentElement && n(t.textContent).includes(t0) && vis(t.parentElement)) out.push(t); return out; };
+        const boite = t => { const r = document.createRange(); r.selectNodeContents(t); return r.getBoundingClientRect(); };
+        // #/saisons : les prochaines dates avant les saisons passées ; la frise de la saison (la plus colorée des frises de la vue) et
+        // la légende de ses spectacles, écrite tout près d'elle ; chaque saison passée annoncée avec sa carte, dans son bloc
+        let ordre = null, saisons = null;
+        if (location.hash === '#/saisons') {
+          const d0 = D.dates.find(d => !d.scolaire && (d.details || [])[0]);
+          const a = d0 ? n(d0.details[0].texte) : '', b = n(D.site.saisons[D.site.saisons.length - 1].titre);
+          const ia = a ? lu.indexOf(a) : -1, ib = lu.lastIndexOf(b);
           ordre = { ok: ia >= 0 && ib >= 0 && ia < ib, detail: `${ia} / ${ib}` };
+          const frs = main ? [...main.querySelectorAll('.frise[data-frise]')].filter(vis) : [];
+          // les couleurs des marques : --fr-c des repères de FRISE ; sinon les petites formes pleines d'une frise faite à la main
+          const couleurs = f => { const cs = new Set();
+            f.querySelectorAll('.frise-point').forEach(x => { const c = getComputedStyle(x).getPropertyValue('--fr-c').trim().toLowerCase(); if (c) cs.add(c); });
+            if (!cs.size) f.querySelectorAll('*').forEach(x => { const r = x.getBoundingClientRect(); if (r.width < 3 || r.width > 40 || r.height < 3 || r.height > 40) return;
+              const st = getComputedStyle(x); if (st.backgroundColor && !/^(transparent|rgba\(0, 0, 0, 0\))$/.test(st.backgroundColor)) cs.add(st.backgroundColor);
+              if (x instanceof SVGElement && st.fill && st.fill !== 'none') cs.add(st.fill); });
+            return cs; };
+          const fr = frs.map(f => ({ f, k: couleurs(f).size })).sort((x, y) => y.k - x.k)[0];
+          const SA = (D.saisons || {})[D.saison] || { spectacles: [] }, titreDe = slug => (D.shows.find(s => s.slug === slug) || {}).titre;
+          const titresS = [...new Set([...SA.spectacles.map(g => titreDe(g.slug) || g.titre), ...(D.dates || []).map(d => titreDe(d.slug) || d.titre)].filter(Boolean))];
+          const legende = [];
+          if (fr) { const R = fr.f.getBoundingClientRect();
+            titresS.forEach(x => { if (noeuds(x).some(t => { const r = boite(t); return r.width > 0 && r.bottom > R.top - 260 && r.top < R.bottom + 260; })) legende.push(x); }); }
+          const passees = (D.site.saisons || []).filter(x => x.saison < D.saison && ((D.saisons || {})[x.saison] || { spectacles: [] }).spectacles.some(g => (g.dates || []).length));
+          const tous = passees.map(x => n(x.titre));
+          const aSaCarte = x => noeuds(x.titre).some(t => { for (let el = t.parentElement; el && el !== main && el !== document.body; el = el.parentElement) {
+            if (![...el.querySelectorAll('svg')].some(v => vis(v) && estCarte(v))) continue;
+            const txt = n(el.innerText || ''); return tous.filter(y => txt.includes(y)).length === 1; } return false; });
+          saisons = { frises: frs.length, couleurs: fr ? fr.k : 0, titres: titresS, legende, passees: passees.length, sansCarte: passees.filter(x => !aSaCarte(x)).map(x => x.titre) };
         }
+        // #/saisons/<saison> : la saison est amenée à l'écran (son titre se voit)
+        let saisonVue = null;
+        const mS = /^#\/saisons\/(\d{4}-\d{4})$/.exec(location.hash), xS = mS && (D.site.saisons || []).find(x => x.saison === mS[1]);
+        if (xS) saisonVue = { titre: xS.titre, ok: noeuds(xS.titre).some(t => { const r = boite(t); return r.height > 0 && r.bottom > 0 && r.top < innerHeight; }) };
+        // la page d'un spectacle qui n'est plus en tournée : une belle carte de ses tournées
+        const mSp = /^#\/spectacle\/([^/?]+)$/.exec(location.hash);
+        const seul = mSp && finis.includes(mSp[1]) ? { carte: cartes.filter(x => x.getBoundingClientRect().width >= (LARGEUR < 600 ? 240 : 280)).length,
+          largeur: Math.round(Math.max(0, ...cartes.map(x => x.getBoundingClientRect().width))) } : null;
         return {
-          ordre, titre: document.title, hash: location.hash,
+          ordre, saisons, saisonVue, seul, titre: document.title, hash: location.hash,
           h1: [...document.querySelectorAll('h1')].filter(h => h.offsetParent || h.getClientRects().length).map(h => h.textContent.trim().replace(/\s+/g, ' ')).join(' | '),
-          courant: [...document.querySelectorAll('header [aria-current="page"], nav [aria-current="page"]')].filter(vis).map(a => a.textContent.trim()),
+          menu, aPortee, courantTete, courantVrai, courantTout: marques('page').length, entreesHors, entreesAccueil, ongletsFinis,
           hauteur: document.documentElement.scrollHeight, haut: Math.round(scrollY),
           debord: document.documentElement.scrollWidth - LARGEUR, hors: [...new Set(hors)],
-          manquants: fA.filter(s => s && !lu.includes(window.__norm(s))),
-          presents: [...fI, ...DISPARUS].filter(s => s && lu.includes(window.__norm(s))),
-          aPortee,
+          manquants: fA.filter(s => s && !lu.includes(n(s))),
+          presents: [...fI, ...DISPARUS].filter(s => s && lu.includes(n(s))),
           // règle 14 : aucun lien visible vers l'onglet établissement d'un spectacle sans action culturelle
           sansAction: D.shows.filter(s => !s.actionCulturelle).flatMap(s => [...document.querySelectorAll(`a[href$="#/spectacle/${s.slug}/etablissement"]`)].filter(vis).map(() => s.slug)),
           // règle 13 : les boutons du dossier PDF, et les liens mailto: visibles
@@ -673,26 +747,55 @@ for (const n of names) {
             return new Set([...document.querySelectorAll('a[href]')].filter(a => vis(a) && urls.has(a.href)).map(a => a.href)).size; })(),
           // règle 15 D : les frises de l'outil commun (FRISE), rendues dans la vue
           frises: [...document.querySelectorAll('.frise[data-frise]')].filter(f => { for (let e = f; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden') return false; } return f.getClientRects().length > 0; }).length,
-          // règle 16 : sur la vue espace-pro, le h1, les liens visibles de chaque porte (et leur cible), le lien du menu et du pied
+          // règles 16 et 21 : sur la vue espace-pro, le h1, ses deux pages (programmer, établissements scolaires) avant ses trois
+          // portes, les liens visibles de chaque porte (et leur cible), le lien du menu et du pied
           pro: location.hash === '#/espace-pro' && D.site.espacePro ? (() => {
-            const P = D.site.espacePro, n = window.__norm;
+            const P = D.site.espacePro;
             const h1 = [...document.querySelectorAll('h1')].filter(vis).map(h => n(h.textContent));
             const liens = P.portes.map(p => ({ href: p.href, vus: [...document.querySelectorAll('main a[href]')].filter(a => a.getAttribute('href') === p.href && vis(a)).map(a => a.getAttribute('target') || '') }));
-            const menu = [...document.querySelectorAll('header a[href="#/espace-pro"], nav a[href="#/espace-pro"]')].filter(a => !a.closest('main, footer') && n(a.textContent).includes(n(P.titre)));
-            return { h1ok: h1.includes(n(P.titre)), liens, menu: menu.length, pied: document.querySelectorAll('footer a[href="#/espace-pro"]').length };
+            const menuPro = [...document.querySelectorAll('header a[href="#/espace-pro"], nav a[href="#/espace-pro"]')].filter(a => !a.closest('main, footer') && n(a.textContent).includes(n(P.titre)));
+            const pages = ['#/espace-pro/programmer', '#/espace-pro/etablissement'].map(h => [h, [...document.querySelectorAll(`main a[href="${h}"]`)].find(vis) || null]);
+            const porte = [...document.querySelectorAll('main a[href]')].find(a => vis(a) && P.portes.some(p => p.href === a.getAttribute('href')));
+            return { h1ok: h1.includes(n(P.titre)), liens, menu: menuPro.length, pied: document.querySelectorAll('footer a[href="#/espace-pro"]').length,
+              pages: pages.filter(([, a]) => !a).map(([h]) => h), avant: pages.every(([, a]) => a && porte && !!(a.compareDocumentPosition(porte) & Node.DOCUMENT_POSITION_FOLLOWING)) };
           })() : null,
         };
         } finally { forcer.remove(); }
-      }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, ENTREES, page.viewportSize().width]);
+      }, [attendus && attendus.toString(), interdits && interdits.toString(), DISPARUS, page.viewportSize().width]);
       if (etat.debord > 1) log.push(`${tag} ${vue} : débordement horizontal de ${etat.debord}px`);
       if (!etat.h1) log.push(`${tag} ${vue} : aucun h1 visible`);
-      if (etat.haut > 2 && vue !== 'accueil') log.push(`${tag} ${vue} : la page ne remonte pas en haut (scrollY ${etat.haut})`);
-      if (ONGLETS.includes(vue) && !mobile && etat.courant.length !== 1) log.push(`${tag} ${vue} : ${etat.courant.length} entrée(s) de menu marquée(s) aria-current="page" au lieu d'une`);
+      // (#/saisons/<saison> mène à sa saison, plus bas dans la page des saisons)
+      if (etat.haut > 2 && vue !== 'accueil' && vue !== 'saison-passee') log.push(`${tag} ${vue} : la page ne remonte pas en haut (scrollY ${etat.haut})`);
+      // règle 21 : les quatre éléments du menu à portée sur chaque vue, au bureau comme au téléphone
+      const pasAPortee = etat.menu.filter(m => !etat.aPortee.includes(m.href));
+      if (pasAPortee.length) log.push(`${tag} ${vue} : le menu n'est pas tout entier à portée dans le premier écran (hors du contenu, sans ouvrir de menu) : manque ${pasAPortee.map(m => `« ${m.texte} »`).join(', ')}`);
+      // un seul aria-current="page" par vue (en-tête, barres et onglets compris) : sur la vue d'un élément du menu, le sien ; sur
+      // une vue qui en dépend (la page d'un spectacle, une sous-page de l'espace pro), l'élément est marqué aria-current="true"
+      const cour = COURANT[vue] || (/^#\/spectacle\//.test(hash) ? ['spectacles', 'true'] : null), hrefCour = cour && (etat.menu.find(m => m.cle === cour[0]) || {}).href;
+      if (etat.courantTout > 1) log.push(`${tag} ${vue} : ${etat.courantTout} marques aria-current="page" visibles au lieu d'une au plus`);
+      if (cour && cour[1] === 'page' && (etat.courantTete.length !== 1 || etat.courantTete[0] !== hrefCour)) log.push(`${tag} ${vue} : le menu doit marquer « ${hrefCour} » aria-current="page", et lui seul (marqués : ${JSON.stringify(etat.courantTete)})`);
+      if (cour && cour[1] === 'true') {
+        if (etat.courantTete.length) log.push(`${tag} ${vue} : aria-current="page" dans l'en-tête (${JSON.stringify(etat.courantTete)}) ; ici, « ${hrefCour} » se marque aria-current="true"`);
+        if (!etat.courantVrai.includes(hrefCour)) log.push(`${tag} ${vue} : « ${hrefCour} » n'est pas mis en évidence dans le menu (aria-current="true")`);
+      }
+      // les trois entrées : plus dans l'en-tête ni dans le pied (signalé une fois), plus sur l'accueil
+      if (etat.entreesHors.length && !signale.has('entrees')) { signale.add('entrees'); log.push(`${tag} ${vue} : les trois entrées se lisent encore hors du contenu (en-tête, barre ou pied ; règle 21) : ${etat.entreesHors.map(s => `« ${s} »`).join(', ')}`); }
+      if (etat.entreesAccueil.length) log.push(`${tag} ${vue} : les trois entrées se lisent encore sur l'accueil (règle 21) : ${etat.entreesAccueil.map(s => `« ${s} »`).join(', ')}`);
+      if (etat.ongletsFinis.length) log.push(`${tag} ${vue} : lien visible vers un onglet d'un spectacle qui n'est plus en tournée (règle 21 : une seule page) : ${[...new Set(etat.ongletsFinis)].slice(0, 4).join(', ')}`);
       if (titres.has(etat.titre) && titres.get(etat.titre) !== etat.hash && vue !== 'accueil') log.push(`${tag} ${vue} : document.title identique à un autre onglet (« ${etat.titre} »)`);
       titres.set(etat.titre, etat.hash);
       if (etat.hors.length && tag === 'tab') log.push(`${tag} ${vue} : texte absent des sources : ${etat.hors.slice(0, 12).map(s => `« ${s} »`).join(', ')}${etat.hors.length > 12 ? ` (+${etat.hors.length - 12})` : ''}`);
       if (etat.manquants.length) log.push(`${tag} ${vue} : attendu mais absent : ${etat.manquants.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
-      if (vue === 'voir' && etat.ordre && !etat.ordre.ok) log.push(`${tag} voir : les prochaines dates doivent précéder l'agenda passé (${etat.ordre.detail})`);
+      if (vue === 'saisons' && etat.ordre && !etat.ordre.ok) log.push(`${tag} saisons : les prochaines dates doivent précéder les saisons passées (${etat.ordre.detail})`);
+      if (vue === 'saisons' && etat.saisons) {
+        const S = etat.saisons, besoin = Math.min(3, S.titres.length);
+        if (!S.frises) log.push(`${tag} saisons : pas de frise de la saison (.frise[data-frise], règle 21)`);
+        else if (S.couleurs < 3) log.push(`${tag} saisons : la frise de la saison n'a des marques que de ${S.couleurs} couleur(s) (au moins 3 : chaque date à la couleur de son spectacle, sur une seule ligne du temps)`);
+        if (S.legende.length < besoin) log.push(`${tag} saisons : la légende de la frise (les titres de ses spectacles, écrits tout près d'elle) ne se lit pas : ${S.legende.length} titre(s) sur ${besoin}`);
+        if (S.sansCarte.length) log.push(`${tag} saisons : ${S.sansCarte.length} saison(s) passée(s) sur ${S.passees} sans sa carte (un SVG de la France dans son bloc, avec son titre) : ${S.sansCarte.slice(0, 4).map(t => `« ${t} »`).join(', ')}${S.sansCarte.length > 4 ? '…' : ''}`);
+      }
+      if (etat.saisonVue && !etat.saisonVue.ok) log.push(`${tag} ${vue} : la saison « ${etat.saisonVue.titre} » n'est pas amenée à l'écran`);
+      if (etat.seul && !etat.seul.carte) log.push(`${tag} ${vue} : pas de belle carte de ses tournées (un SVG de la France d'au moins ${page.viewportSize().width < 600 ? 240 : 280} px ; la plus large : ${etat.seul.largeur} px)`);
       if (etat.presents.length) log.push(`${tag} ${vue} : ne devrait pas apparaître : ${etat.presents.map(s => `« ${String(s).slice(0, 60)} »`).join(', ')}`);
       if (etat.sansAction.length) log.push(`${tag} ${vue} : lien visible vers l'onglet établissement de ${[...new Set(etat.sansAction)].join(', ')}, qui n'a pas d'action culturelle (règle 14)`);
       if (vue === 'espace-pro') {
@@ -704,11 +807,13 @@ for (const n of names) {
             else if (l.vus.every(t => t && t !== '_self')) log.push(`${tag} espace-pro : le lien vers ${l.href} s'ouvre dans un autre onglet (règle 16 : le même onglet)`); });
           if (!etat.pro.menu) log.push(`${tag} espace-pro : pas de lien « Espace pro » vers #/espace-pro dans le menu (règle 16)`);
           if (!etat.pro.pied) log.push(`${tag} espace-pro : pas de lien vers #/espace-pro dans le pied de page (règle 16)`);
+          etat.pro.pages.forEach(h => log.push(`${tag} espace-pro : aucun lien visible vers sa page <a href="${h}"> (règle 21)`));
+          if (!etat.pro.pages.length && !etat.pro.avant) log.push(`${tag} espace-pro : ses deux pages (programmer, établissements scolaires) doivent précéder les trois portes (règle 21)`);
         }
       }
       if (FRISES[vue] && etat.frises < FRISES[vue]) log.push(`${tag} ${vue} : ${etat.frises} frise(s) chronologique(s) (.frise[data-frise]) au lieu d'au moins ${FRISES[vue]} (règle 15 D)`);
-      if (vue === 'programmer' && !etat.dossiers.length) log.push(`${tag} programmer : aucun bouton [data-dossier] (dossier PDF, règle 13)`);
-      if (vue === 'programmer' && !etat.mailto) log.push(`${tag} programmer : aucun lien mailto: visible vers le contact diffusion (règle 13)`);
+      if (vue === 'pro-programmer' && !etat.dossiers.length) log.push(`${tag} ${vue} : aucun bouton [data-dossier] (dossier PDF, règle 13)`);
+      if (vue === 'pro-programmer' && !etat.mailto) log.push(`${tag} ${vue} : aucun lien mailto: visible vers le contact diffusion (règle 13)`);
       const slugVue = (/^#\/spectacle\/([^/]+)\/programmer$/.exec(hash) || [])[1];
       if (slugVue && !etat.dossiers.includes(slugVue)) log.push(`${tag} ${vue} : pas de bouton [data-dossier="${slugVue}"] (règle 13)`);
       // les documents des pros du spectacle, en liens
@@ -724,17 +829,18 @@ for (const n of names) {
       }
       if (process.env.EDITION === '1' && tag === 'tab') {
         const att = { compagnie: [['[data-edit^="site.compagnie.paragraphes"]', 2]], 'berenice-voir': [['[data-edit^="shows.berenice.texte"]', 1], ['[data-edit-photo^="shows.berenice"]', 1]],
-          'berenice-etablissement': [['[data-edit^="dossiers.berenice"]', 3], ['[data-edit^="shows.berenice.actionCulturelle"]', 1]], etablissement: [['[data-edit^="site.ecole"]', 1]],
-          voir: [['[data-agenda]', 1], ['[data-date-id]', 10]], programmer: [['[data-edit*=".programmer."]', 3]],
+          'berenice-etablissement': [['[data-edit^="dossiers.berenice"]', 3], ['[data-edit^="shows.berenice.actionCulturelle"]', 1]], 'pro-etablissement': [['[data-edit^="site.ecole"]', 1]],
+          saisons: [['[data-agenda]', 1], ['[data-date-id]', 10]], 'pro-programmer': [['[data-edit*=".programmer."]', 3]],
+          // la page d'un spectacle qui n'est plus en tournée : ses textes, et les lignes de son bilan (dates passées, éditables)
+          'la-folle-idee': [['[data-edit^="shows.la-folle-idee."]', 5], ['[data-agenda]', 1], ['[data-date-id]', 5]],
           'espace-pro': [['[data-edit="site.espacePro.titre"]', 1], ['[data-edit="site.espacePro.texte"]', 1],
             ['[data-edit^="site.espacePro.portes."][data-edit$=".titre"]', 3], ['[data-edit^="site.espacePro.portes."][data-edit$=".texte"]', 3]] }[vue] || [];
-        const n = await page.evaluate(sels => sels.map(([s]) => document.querySelectorAll(s).length), att);
-        att.forEach(([s, min], i) => { if (n[i] < min) log.push(`${tag} ${vue} : édition : ${n[i]} élément(s) ${s} (au moins ${min})`); });
+        const nb = await page.evaluate(sels => sels.map(([s]) => document.querySelectorAll(s).length), att);
+        att.forEach(([s, min], i) => { if (nb[i] < min) log.push(`${tag} ${vue} : édition : ${nb[i]} élément(s) ${s} (au moins ${min})`); });
         const lien = await page.evaluate(() => { const l = D.site.libelles.modifierSite; return [...document.querySelectorAll('a, button')].some(b => b.textContent.trim() === l && b.getClientRects().length); });
         if (!lien) log.push(`${tag} ${vue} : édition : pas de lien « Modifier le site » visible`);
       }
-      if (A_PORTEE.includes(vue) && etat.aPortee.length < 3) log.push(`${tag} ${vue} : les trois entrées ne sont pas toutes à portée dans le premier écran (liens visibles : ${JSON.stringify(etat.aPortee)})`);
-      if (tag === 'tab') log.push(`· ${vue} : « ${etat.titre} » · h1 « ${etat.h1.slice(0, 60)} » · menu actif ${JSON.stringify(etat.courant)} · hauteur ${etat.hauteur}px`);
+      if (tag === 'tab') log.push(`· ${vue} : « ${etat.titre} » · h1 « ${etat.h1.slice(0, 60)} » · menu actif ${JSON.stringify(etat.courantTete)}${etat.courantVrai.length ? ` (true : ${JSON.stringify(etat.courantVrai)})` : ''} · hauteur ${etat.hauteur}px`);
       await page.screenshot({ path: `${out}/${n}-${tag}-${vue}.png` });
     }
     for (const [hash, attendu] of REDIRECTIONS) {
@@ -751,7 +857,7 @@ for (const n of names) {
     if (process.env.REGLE19 === '1') await regle19(page, tag, log);
     // règle 15 A : un clic ordinaire sur un lien du menu ne fait jouer aucune tentacule (sauf un moment déclaré data-moment)
     if (tag === 'tab') {
-      await page.evaluate(() => { location.hash = '#/voir'; });
+      await page.evaluate(() => { location.hash = '#/saisons'; });
       await page.waitForTimeout(900);
       const hrefs = await page.evaluate(() => [...new Set([...document.querySelectorAll('header a[href^="#/"], nav a[href^="#/"]')].filter(a => !a.closest('main') && a.getClientRects().length).map(a => a.getAttribute('href')))]);
       for (const href of hrefs.slice(0, 10)) {

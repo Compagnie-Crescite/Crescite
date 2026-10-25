@@ -8,6 +8,7 @@
                                Le rendu de chaque vue relit donc D à chaque fois (aucune copie figée au chargement).
    DONNEES.etat                'instantane' (données du dépôt), 'base' (à jour avec la base) ou 'hors-ligne'.
    DONNEES.recharger({force})  relit la base ; DONNEES.suspendre(oui) met les nouvelles en attente (édition en cours).
+   DONNEES.deposer(table, l)   écrit une ligne du public (alerte de tournée, demande de devis) ; rend { error }.
 
    Les lignes d'agenda se composent avec AGENDA (agenda.js), comme dans l'administration.
    La base : le projet Supabase de la compagnie (tables crescite_, lecture publique de ce qui est publié). Adresse
@@ -176,6 +177,7 @@ const DONNEES = (() => {
       if (s.photo) photos[s.slug] = photo(s.photo);
       const ph = (s.photos || []).map(p => { const cle = (p.fichier || '').replace(/\.[a-z0-9]+$/i, ''); photos[cle] = photo(p.fichier); return { ...p, cle }; });
       return {
+        id: s.id,                     // le numéro du spectacle dans la base (une alerte, une demande de devis le portent)
         slug: s.slug, titre: s.titre, titreLignes: s.titre_lignes || [s.titre], creation: s.creation,
         annee: +((s.creation || '').match(/\d{4}/) || [0])[0], fiche: s.fiche || [], texte: s.texte || [], enTournee: !!s.en_tournee,
         prochaine: mine[0] || null, nbDates: mine.length,
@@ -320,5 +322,19 @@ const DONNEES = (() => {
   moi.prevenir = prevenir;
   moi.recharger = recharger;
   moi.composer = composer;
+  // ------------------------------------------------------------------------------------------- les dépôts du public
+  // DONNEES.deposer(table, ligne) : une ligne que le public écrit sans la relire (une alerte de tournée, une demande de
+  // devis : le septième script SQL les lui ouvre). Rend { error } comme supabase-js : null quand la base l'a enregistrée,
+  // sinon l'erreur ; sans la base (?base=0, hors connexion), une erreur aussi : la page ne promet rien.
+  moi.deposer = async (table, ligne) => {
+    if (!actif) return { error: { message: 'sans la base', code: '', status: 0 } };
+    try {
+      const r = await fetch(`${BASE}/rest/v1/${table}`, { method: 'POST', cache: 'no-store',
+        headers: { apikey: CLE, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(ligne) });
+      if (r.ok) return { error: null };
+      const j = await r.json().catch(() => ({}));
+      return { error: { message: j.message || `${table} : ${r.status}`, code: j.code || '', status: r.status } };
+    } catch (e) { return { error: { message: String((e && e.message) || e), code: '', status: 0 } }; }
+  };
   return moi;
 })();

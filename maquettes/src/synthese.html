@@ -614,6 +614,7 @@ html.ed-actif .ep-a::after { content: none; }
 .alerte-msg { margin-top: 14px; padding: 12px 16px; border-radius: 8px; font-weight: 500; }
 .alerte-msg.ok { background: color-mix(in srgb, #1d6f47 12%, transparent); color: #1d6f47; border: 1px solid #1d6f47; }
 .alerte-msg.err { background: color-mix(in srgb, #b3261e 12%, transparent); color: #b3261e; border: 1px solid #b3261e; }
+.alerte-msg a { color: inherit; font-weight: 700; text-decoration: underline; overflow-wrap: anywhere; }
 
 /* ———— Chantier 2 : Simulateur d'accueil & Devis flash ———— */
 .simu-boite { margin-top: 10px; padding: clamp(24px, 4vw, 40px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--ec, var(--magenta)); }
@@ -2131,6 +2132,17 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
   }
 
+  // un dépôt du public (une alerte de tournée, une demande de devis) : il ne se dit enregistré que si la base l'a enregistré
+  // (DONNEES.deposer rend { error }) ; sinon, la page propose d'écrire directement au contact diffusion des données
+  const deposer = (table, ligne) => (typeof DONNEES !== 'undefined' && DONNEES.deposer ? DONNEES.deposer(table, ligne) : Promise.resolve({ error: { message: 'sans la base' } }));
+  // un libellé de D.site.libelles à trous ({adresse}, {lien}…), rempli de morceaux déjà échappés
+  const remplir = (gabarit, v) => esc(gabarit || '').replace(/\{(\w+)\}/g, (m, k) => (k in v ? v[k] : m));
+  // un lien mailto: vers le contact diffusion des données, avec l'objet et le texte (son adresse, sans autre texte) ; ''
+  // quand les données n'ont pas d'adresse
+  const versContact = (texte, objet, corps = '') => {
+    const c = contactPrg();
+    return c && c.email ? `<a href="${esc(`mailto:${c.email}?subject=${encodeURIComponent(objet)}${corps ? `&body=${encodeURIComponent(corps)}` : ''}`)}">${esc(texte || c.email)}</a>` : '';
+  };
   function initAlerteTournee() {
     const f = $('#f-alerte'); if (!f) return;
     const btnGeo = $('#btn-geo'), cp = $('#alerte-cp'), email = $('#alerte-email'), sp = $('#alerte-spectacle'), msg = $('#alerte-msg');
@@ -2168,22 +2180,31 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       if (!mailVal || !cpVal) return;
       const btnSub = $('#btn-inscrire-alerte');
       if (btnSub) btnSub.disabled = true;
-      try {
-        if (typeof sb !== 'undefined' && sb.from) {
-          await sb.from('crescite_alertes_tournee').insert({
-            email: mailVal,
-            code_postal: cpVal,
-            commune: cpVal,
-            spectacle_id: spVal && bySlug[spVal] ? bySlug[spVal].id : null,
-            lat: coords ? coords.lat : null,
-            lon: coords ? coords.lon : null
-          });
-        }
-      } catch (err) { /* mode hors base */ }
-      msg.className = 'alerte-msg ok';
-      msg.textContent = `✓ Inscription enregistrée ! Vous serez averti(e) à l’adresse ${mailVal} dès qu’une date sera confirmée dans votre secteur (${cpVal}).`;
+      msg.hidden = true;
+      const s = spVal && bySlug[spVal] ? bySlug[spVal] : null;
+      const { error } = await deposer('crescite_alertes_tournee', {
+        email: mailVal,
+        code_postal: cpVal,
+        commune: cpVal,
+        spectacle_id: s && s.id != null ? s.id : null,
+        lat: coords ? coords.lat : null,
+        lon: coords ? coords.lon : null
+      });
+      if (error) {
+        // rien n'est enregistré : on le dit, et on propose d'écrire au contact diffusion
+        const lien = versContact(null, `${L.alerteTournee} – ${cpVal}`, [cpVal, s && s.titre].filter(Boolean).join(' · '));
+        msg.className = 'alerte-msg err';
+        msg.setAttribute('role', 'alert');
+        msg.innerHTML = `${esc(L.alerteNonEnregistree)}${lien ? ` ${lien}` : ''}`;
+      } else {
+        msg.className = 'alerte-msg ok';
+        msg.setAttribute('role', 'status');
+        msg.innerHTML = `✓ ${remplir(L.alerteInscrite, { adresse: esc(mailVal), secteur: esc(cpVal) })}`;
+        f.reset();
+        coords = null;
+        if (btnGeo) { btnGeo.classList.remove('actif'); btnGeo.querySelector('span').textContent = L.meGeolocaliser || 'Me géolocaliser'; }
+      }
       msg.hidden = false;
-      f.reset();
       if (btnSub) btnSub.disabled = false;
     });
   }
@@ -2235,14 +2256,14 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
           zoneForm.innerHTML = `<h3 class="rubrique">Demande de proposition de cession — ${esc(spNom)}</h3>
             <form id="f-devis" onsubmit="return false;">
               <div class="grille-champs">
-                <div class="champ"><label for="dev-struct">Structure / Théâtre / Ville *</label><input type="text" id="dev-struct" required placeholder="Théâtre municipal de..."></div>
-                <div class="champ"><label for="dev-nom">Nom du contact / Programmateur *</label><input type="text" id="dev-nom" required placeholder="Prénom Nom"></div>
-                <div class="champ"><label for="dev-email">Courriel professionnel *</label><input type="email" id="dev-email" required placeholder="contact@theatre.fr"></div>
-                <div class="champ"><label for="dev-tel">Téléphone</label><input type="tel" id="dev-tel" placeholder="02 35 ..."></div>
-                <div class="champ"><label for="dev-periode">Période ou saison envisagée</label><input type="text" id="dev-periode" placeholder="ex. Novembre 2027 ou Saison 27-28"></div>
+                <div class="champ"><label for="dev-struct">Structure / Théâtre / Ville *</label><input type="text" id="dev-struct" required maxlength="120" placeholder="Théâtre municipal de..."></div>
+                <div class="champ"><label for="dev-nom">Nom du contact / Programmateur *</label><input type="text" id="dev-nom" required maxlength="200" placeholder="Prénom Nom"></div>
+                <div class="champ"><label for="dev-email">Courriel professionnel *</label><input type="email" id="dev-email" required maxlength="254" placeholder="contact@theatre.fr"></div>
+                <div class="champ"><label for="dev-tel">Téléphone</label><input type="tel" id="dev-tel" maxlength="40" placeholder="02 35 ..."></div>
+                <div class="champ"><label for="dev-periode">Période ou saison envisagée</label><input type="text" id="dev-periode" maxlength="200" placeholder="ex. Novembre 2027 ou Saison 27-28"></div>
               </div>
-              <div class="champ"><label for="dev-msg">Précisions éventuelles</label><textarea id="dev-msg" rows="3" placeholder="Nombre de représentations souhaitées, actions culturelles associées..."></textarea></div>
-              <div style="display:flex; gap:12px; align-items:center;">
+              <div class="champ"><label for="dev-msg">Précisions éventuelles</label><textarea id="dev-msg" rows="3" maxlength="5000" placeholder="Nombre de représentations souhaitées, actions culturelles associées..."></textarea></div>
+              <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
                 <button type="submit" class="bouton e" id="btn-envoyer-devis" style="--ec:var(--ec)"><span>${esc(L.envoyerDemande || 'Envoyer la demande')}</span>${FLECHE}</button>
                 <span id="dev-status" class="alerte-msg" hidden></span>
               </div>
@@ -2251,29 +2272,36 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
           fDev.addEventListener('submit', async () => {
             const st = $('#dev-status'), btnEnv = $('#btn-envoyer-devis');
             btnEnv.disabled = true;
-            const struct = $('#dev-struct').value, nom = $('#dev-nom').value, em = $('#dev-email').value, tel = $('#dev-tel').value, per = $('#dev-periode').value, msg = $('#dev-msg').value;
+            st.hidden = true;
+            const struct = $('#dev-struct').value.trim(), nom = $('#dev-nom').value.trim(), em = $('#dev-email').value.trim(), tel = $('#dev-tel').value.trim(), per = $('#dev-periode').value.trim(), msg = $('#dev-msg').value.trim();
             const dims = `${ouvIn.value}m x ${profIn.value}m x ${hautIn.value}m (${lieuSelect.value})`;
-            try {
-              if (typeof sb !== 'undefined' && sb.from) {
-                await sb.from('crescite_devis_demandes').insert({
-                  spectacle_id: bySlug[spSelect.value] ? bySlug[spSelect.value].id : null,
-                  type_lieu: lieuSelect.value,
-                  dimensions_plateau: dims,
-                  structure_nom: struct,
-                  commune: struct,
-                  contact_nom: nom,
-                  contact_email: em,
-                  contact_tel: tel,
-                  periode_souhaitee: per,
-                  message: msg
-                });
-              }
-            } catch (e) { /* hors-ligne */ }
-            const sujet = encodeURIComponent(`Demande de programmation : ${spNom} - ${struct}`);
-            const corps = encodeURIComponent(`Bonjour,\n\nJe souhaite recevoir une proposition de cession pour le spectacle "${spNom}".\n\nStructure : ${struct}\nContact : ${nom} (${tel})\nDimensions plateau : ${dims}\nPériode envisagée : ${per}\n\nPrécisions :\n${msg}\n\nCordialement,\n${nom}`);
-            const diffMail = (contactPrg() || {}).email || '';
-            st.className = 'alerte-msg ok';
-            st.innerHTML = `✓ Demande transmise avec succès ! Vous pouvez également <a href="mailto:${diffMail}?subject=${sujet}&body=${corps}" style="text-decoration:underline; font-weight:700;">cliquer ici pour ouvrir votre messagerie</a> avec le récapitulatif.`;
+            const s = bySlug[spSelect.value] || null;
+            const { error } = await deposer('crescite_devis_demandes', {
+              spectacle_id: s && s.id != null ? s.id : null,
+              type_lieu: lieuSelect.value,
+              dimensions_plateau: dims,
+              structure_nom: struct,
+              commune: struct,
+              contact_nom: nom,
+              contact_email: em,
+              contact_tel: tel || null,
+              periode_souhaitee: per || null,
+              message: msg || null
+            });
+            // le récapitulatif, prêt dans un courriel au contact diffusion
+            const sujet = `Demande de programmation : ${spNom} - ${struct}`;
+            const corps = `Bonjour,\n\nJe souhaite recevoir une proposition de cession pour le spectacle "${spNom}".\n\nStructure : ${struct}\nContact : ${nom} (${tel})\nDimensions plateau : ${dims}\nPériode envisagée : ${per}\n\nPrécisions :\n${msg}\n\nCordialement,\n${nom}`;
+            if (error) {
+              const lien = versContact(null, sujet, corps);
+              st.className = 'alerte-msg err';
+              st.setAttribute('role', 'alert');
+              st.innerHTML = `${esc(L.demandeNonEnregistree)}${lien ? ` ${lien}` : ''}`;
+            } else {
+              const lien = versContact(L.ouvrirMessagerie, sujet, corps);
+              st.className = 'alerte-msg ok';
+              st.setAttribute('role', 'status');
+              st.innerHTML = `✓ ${esc(L.demandeTransmise)}${lien ? ` ${remplir(L.recapitulatifMessagerie, { lien })}` : ''}`;
+            }
             st.hidden = false;
             btnEnv.disabled = false;
           });
@@ -2400,7 +2428,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
                 <option value="">${esc(L.tousSpectacles || 'Tous les spectacles')}</option>
                 ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
               </select>
-              <input type="email" id="alerte-email" placeholder="votre.email@exemple.fr" aria-label="Adresse électronique" required>
+              <input type="email" id="alerte-email" placeholder="votre.email@exemple.fr" aria-label="Adresse électronique" maxlength="254" required>
               <button type="submit" class="bouton e" id="btn-inscrire-alerte" style="--ec:var(--magenta)">
                 <span>${esc(L.mInscrire || 'M’inscrire à l’alerte')}</span>
                 ${FLECHE}

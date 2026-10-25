@@ -1,4 +1,5 @@
-// Captures d'une ou plusieurs maquettes : accueil (écran et page entière), page spectacle, onglet Agenda, téléphone.
+// Captures d'une ou plusieurs maquettes : accueil (écran et page entière), page spectacle, les saisons (l'agenda, règle 21),
+// téléphone.
 // Usage : node maquettes/shoot.mjs <dossier de sortie> m03 [m04 …]
 // Variables : PLAYWRIGHT_MODULE (chemin du module playwright), CHROMIUM (exécutable).
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
@@ -13,7 +14,7 @@ for (const n of names) {
   for (const [view, vp, opts] of [
     ['home', { width: 1440, height: 900 }, {}],
     ['show', { width: 1440, height: 900 }, { hash: '#/spectacle/berenice/voir' }],
-    ['agenda', { width: 1440, height: 900 }, { hash: '#/voir' }],
+    ['agenda', { width: 1440, height: 900 }, { hash: '#/saisons' }],
     ['mobile', { width: 390, height: 844 }, { mobile: true }],
     ['mshow', { width: 390, height: 844 }, { mobile: true, hash: '#/spectacle/ci-gisait-cyrano/voir' }],
   ]) {

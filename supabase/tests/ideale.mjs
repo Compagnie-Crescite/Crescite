@@ -120,6 +120,9 @@ ok(await essai('authenticated', U.admin, `update public.crescite_notes_frais set
 ok((await as('authenticated', U.lauren, `update public.crescite_notes_frais set statut = 'en_attente', montant_ttc = 99 where id = ${note} returning id`)).rows.length === 0
    && (await db.query(`select statut, montant_ttc::float m from public.crescite_notes_frais where id = ${note}`)).rows[0].m === 12.5,
   'validée, Lauren ne la change plus (ni son montant, ni pour la remettre en attente)');
+// ce que dépose la page de l'équipe : le jour de la dépense, et le chemin du justificatif (le stockage est privé)
+ok((await as('authenticated', U.lauren, FRAIS(P.lauren, [', date_depense, photo_url', `, '2026-10-20', '${P.lauren}/1761400000000_recu.jpg'`]) + ' returning date_depense::text j, photo_url')).rows[0]?.j === '2026-10-20',
+  'une note garde le jour de la dépense et le chemin de son justificatif');
 
 // 4. le matériel : l'équipe le lit, l'administration le tient
 ok(await essai('authenticated', U.admin, `insert into public.crescite_materiel (spectacle_id, malle, categorie, intitule) values (${ber}, 'Malle A', 'lumiere', 'Découpes')`) === 'ok',
@@ -136,12 +139,13 @@ ok(await essai('authenticated', U.admin, `insert into public.crescite_diffusion_
    && await essai('anon', '', `select * from public.crescite_diffusion_prospects`) !== 'ok', 'les pistes de diffusion : l’administration seule');
 
 // 6. les justificatifs : chacun dans son dossier (son numéro de fiche), l'administration partout
-const DEPOT = (dossier, nom = 'recu.jpg') => `insert into storage.objects (bucket_id, name) values ('crescite-frais', '${dossier}/${nom}')`;
-// ce que fait la page de l'équipe : upload(…, { upsert: true }) → un « insert … on conflict do update » sur un nom neuf
+// ce que fait la page de l'équipe : upload(« <fiche>/<horodatage>_<nom> », fichier), sans upsert → un insert simple ;
+// un upsert sur un nom neuf (« insert … on conflict do update », ce que faisait une version d'avant) passe aussi
+const DEPOT = (dossier, nom = '1761400000000_recu.jpg') => `insert into storage.objects (bucket_id, name) values ('crescite-frais', '${dossier}/${nom}')`;
 const DEPOT_UPSERT = dossier => `insert into storage.objects (bucket_id, name) values ('crescite-frais', '${dossier}/neuf.jpg')
   on conflict (bucket_id, name) do update set name = excluded.name`;
 ok(await essai('authenticated', U.lauren, DEPOT(P.lauren)) === 'ok' && await essai('authenticated', U.lauren, DEPOT_UPSERT(P.lauren)) === 'ok',
-  'Lauren dépose un justificatif dans son dossier (aussi comme le fait la page, par un upsert)');
+  'Lauren dépose un justificatif dans son dossier (comme la page, sans upsert ; par un upsert aussi)');
 ok(await essai('authenticated', U.lauren, DEPOT(P.adrien)) !== 'ok' && await essai('authenticated', U.lauren, DEPOT('autre')) !== 'ok'
    && await essai('authenticated', U.lauren, `insert into storage.objects (bucket_id, name) values ('crescite-frais', 'a-la-racine.jpg')`) !== 'ok',
   'ni dans celui d’Adrien, ni ailleurs');

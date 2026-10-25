@@ -2587,6 +2587,36 @@ const RESUMES_EQUIPE = {
 };
 
 // ===================================================================================================== notes de frais (admin)
+// Une note garde le chemin de son justificatif dans le stockage privé « crescite-frais » (<personne_id>/<horodatage>_<nom>,
+// déposé par l'espace de l'équipe). Ses liens signés (une heure) se demandent par lot, à l'affichage, et se gardent un peu
+// moins longtemps ; l'export garde le chemin, qui ne périme pas.
+const CAT_FRAIS = { repas: 'Repas', transport: 'Péage / Transport', hebergement: 'Hébergement', autre: 'Achat / Autre' };
+const STATUT_FRAIS = { en_attente: 'En attente', valide: 'Validée', rembourse: 'Remboursée', refuse: 'Refusée' };
+const LIENS_FRAIS = new Map();
+// une note écrite par une version d'avant de l'espace de l'équipe pouvait garder une adresse entière : son chemin
+const cheminJustificatif = v => { const m = /\/crescite-frais\/([^?#]+)/.exec(String(v || '')); return m ? decodeURIComponent(m[1]) : String(v || ''); };
+async function signerJustificatifs(chemins) {
+  const t = Date.now(), manque = [...new Set(chemins)].filter(c => !(LIENS_FRAIS.get(c)?.quand > t - 50 * 60000));
+  if (manque.length) {
+    const { data, error } = await sb.storage.from('crescite-frais').createSignedUrls(manque, 3600);
+    if (error) throw error;
+    (data || []).forEach(x => { if (x && x.signedUrl && !x.error) LIENS_FRAIS.set(x.path, { url: x.signedUrl, quand: t }); });
+  }
+  return LIENS_FRAIS;
+}
+// les cases [data-justif] du tableau : la vignette (une photo) ou un lien (un PDF), sinon ce qui manque
+function poserJustificatifs(zone) {
+  const cases = $$('[data-justif]', zone);
+  if (!cases.length) return;
+  signerJustificatifs(cases.map(c => c.dataset.justif)).then(liens => cases.forEach(c => {
+    if (!c.isConnected) return;
+    const l = liens.get(c.dataset.justif);
+    if (!l) { c.textContent = 'Fichier introuvable'; return; }
+    c.innerHTML = /\.pdf$/i.test(c.dataset.justif)
+      ? `<a class="btn petit" href="${esc(l.url)}" target="_blank" rel="noopener">PDF<span class="sr"> : ${esc(c.dataset.nom)} (nouvel onglet)</span></a>`
+      : `<a href="${esc(l.url)}" target="_blank" rel="noopener"><img src="${esc(l.url)}" class="frais-table-photo" alt="${esc(c.dataset.nom)} (nouvel onglet)"></a>`;
+  }), e => cases.forEach(c => { if (c.isConnected) c.textContent = `Non lu : ${e?.message || 'erreur'}`; }));
+}
 function vueEquipeFrais(tete, parties) {
   const frais = E.frais || [];
   let attente = 0, valide = 0, rembourse = 0;
@@ -2627,16 +2657,18 @@ function vueEquipeFrais(tete, parties) {
             const p = E.personnes.find(x => x.id === f.personne_id);
             const d = f.date_id ? E.dates.find(x => x.id === f.date_id) : null;
             const sp = d ? spectacle(d.spectacle_id) : null;
-            const dateStr = f.cree_le ? f.cree_le.slice(0, 10).split('-').reverse().join('/') : '';
+            const jour = f.date_depense || (f.cree_le || '').slice(0, 10);       // le jour de la dépense, sinon du dépôt
+            const dateStr = jour ? jour.split('-').reverse().join('/') : '';
+            const nomJustif = `Justificatif de ${p ? nomDe(p) : 'la note'}, ${CAT_FRAIS[f.categorie] || f.categorie || ''}, ${dateStr}`;
             return `
               <tr data-frais-id="${f.id}">
                 <td><b>${esc(dateStr)}</b></td>
                 <td>${esc(p ? nomDe(p) : 'Personne inconnue')}</td>
-                <td>${esc(f.categorie || '')}</td>
+                <td>${esc(CAT_FRAIS[f.categorie] || f.categorie || '')}</td>
                 <td>${sp ? esc(sp.titre) : 'Général'}</td>
                 <td><b>${(Number(f.montant_ttc) || 0).toFixed(2).replace('.', ',')} €</b></td>
-                <td>${f.photo_url ? `<a href="${esc(f.photo_url)}" target="_blank" rel="noopener"><img src="${esc(f.photo_url)}" class="frais-table-photo" alt="Reçu"></a>` : '<span style="color:var(--gris)">Sans reçu</span>'}</td>
-                <td><span class="badge ${f.statut === 'valide' || f.statut === 'rembourse' ? 'ok' : f.statut === 'refuse' ? 'annulee' : 'option'}">${esc(f.statut || 'en_attente')}</span></td>
+                <td>${f.photo_url ? `<span class="frais-justif" data-justif="${esc(cheminJustificatif(f.photo_url))}" data-nom="${esc(nomJustif)}">Lecture…</span>` : '<span style="color:var(--gris)">Sans reçu</span>'}</td>
+                <td><span class="badge ${f.statut === 'valide' || f.statut === 'rembourse' ? 'ok' : f.statut === 'refuse' ? 'annulee' : 'option'}">${esc(STATUT_FRAIS[f.statut] || f.statut || STATUT_FRAIS.en_attente)}</span></td>
                 <td>
                   <div class="frais-table-actions">
                     ${f.statut === 'en_attente' ? `<button type="button" class="btn petit" data-valider-frais="${f.id}" title="Valider">Valider</button><button type="button" class="btn petit danger" data-refuser-frais="${f.id}" title="Refuser">Refuser</button>` : ''}
@@ -2653,6 +2685,7 @@ function vueEquipeFrais(tete, parties) {
   cadre('equipe', html);
   parties();
   brancherFraisAdmin();
+  poserJustificatifs($('#table-frais'));
 }
 
 function brancherFraisAdmin() {
@@ -2724,13 +2757,13 @@ function brancherFraisAdmin() {
 function exporterCsvFrais() {
   const frais = E.frais || [];
   const lignes = [
-    ['Date', 'Beneficiaire', 'Categorie', 'Spectacle', 'Date_tournee', 'Montant_TTC', 'Statut', 'Justificatif_URL', 'Commentaire']
+    ['Date', 'Beneficiaire', 'Categorie', 'Spectacle', 'Date_tournee', 'Montant_TTC', 'Statut', 'Justificatif_chemin', 'Commentaire']
   ];
   frais.forEach(f => {
     const p = E.personnes.find(x => x.id === f.personne_id);
     const d = f.date_id ? E.dates.find(x => x.id === f.date_id) : null;
     const sp = d ? spectacle(d.spectacle_id) : null;
-    const dateStr = f.cree_le ? f.cree_le.slice(0, 10) : '';
+    const dateStr = f.date_depense || (f.cree_le ? f.cree_le.slice(0, 10) : '');
     lignes.push([
       dateStr,
       p ? nomDe(p) : '',
@@ -2739,7 +2772,7 @@ function exporterCsvFrais() {
       d ? d.debut : '',
       (Number(f.montant_ttc) || 0).toFixed(2),
       f.statut || 'en_attente',
-      f.photo_url || '',
+      f.photo_url ? cheminJustificatif(f.photo_url) : '',       // le chemin dans « crescite-frais » : un lien signé périmerait
       (f.commentaire || '').replace(/[\r\n]+/g, ' ')
     ]);
   });

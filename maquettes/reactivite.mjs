@@ -6,8 +6,9 @@
 // Pour chaque maquette (<dist>/<n>.html?base=0&intro=0) : le bureau (1440×900), puis le téléphone (390×844, tactile)
 // avec le processeur ralenti ×4 (CDP Emulation.setCPUThrottlingRate). On mesure le premier rendu (FCP, LCP), le
 // décalage de mise en page (CLS, par fenêtres de session) et les longues tâches du chargement ; puis on rejoue les
-// gestes : chaque entrée, une carte de spectacle, ouvrir une saison de l'agenda, le filtre par spectacle, trois caractères
-// dans la recherche, le retour. Pour chaque geste : la durée d'évènement (Event Timing, durationThreshold 16 : l'INP du
+// gestes : chaque élément du menu (règle 21 : les saisons, les spectacles, la compagnie, l'espace pro), une carte de
+// spectacle, puis sur la page des saisons : choisir une date (règle 17), ouvrir une saison passée, le filtre par spectacle,
+// trois caractères dans la recherche ; enfin le retour. Pour chaque geste : la durée d'évènement (Event Timing, durationThreshold 16 : l'INP du
 // geste), le délai jusqu'à l'image suivante, le temps jusqu'au nouveau contenu (le h1 de la page) et les longues tâches
 // pendant le geste.
 // Budgets : INP < 100 ms au bureau et < 200 ms ralenti ×4 ; contenu d'une page nouvelle < 150 ms au bureau ; aucune tâche
@@ -93,6 +94,7 @@ async function cibler(page, quoi) {
     if (quoi.entree) el = premier([`header a[href="${quoi.entree}"]`, `nav a[href="${quoi.entree}"]`, `a[href="${quoi.entree}"]`]);
     else if (quoi === 'spectacle') el = premier(['main a[href^="#/spectacle/"]']);
     else if (quoi === 'saison') el = premier(['main details:not([open]) > summary', 'main [aria-expanded="false"]:not(header *)']);
+    else if (quoi === 'date') el = premier(['main button[data-reserver][aria-pressed="false"]']);
     else if (quoi === 'filtre') el = premier(['main button[aria-pressed="false"]']);
     else if (quoi === 'recherche') el = premier(['main input[type="search"]', 'main input[placeholder]']);
     if (!el) return false;
@@ -130,15 +132,18 @@ export async function mesurer(browser, n, { dist, profil = 'bureau' } = {}) {
     const r = await page.evaluate(() => window.__finGeste(1000));
     gestes.push({ nom, ...r, navigation: h1 });
   }
-  // les trois entrées, l'une après l'autre, par l'en-tête (ou la barre du téléphone)
-  for (const h of ['#/voir', '#/programmer', '#/etablissement']) {
-    await geste(`entrée ${h.slice(2)}`, async () => { if (!(await cibler(page, { entree: h }))) return false; await toucher(); });
+  // les éléments du menu, l'un après l'autre, par l'en-tête (ou la barre du téléphone) ; s'il manque, les adresses de la règle 21
+  const menu = await page.evaluate(() => ((typeof D !== 'undefined' && D.site && D.site.menu) || []).map(m => m.href).filter(Boolean));
+  for (const h of menu.length ? menu : ['#/saisons', '#/spectacles', '#/compagnie', '#/espace-pro']) {
+    await geste(`menu ${h.slice(2)}`, async () => { if (!(await cibler(page, { entree: h }))) return false; await toucher(); });
   }
   // une carte de spectacle
   await aller(page, '#/spectacles', P.repos);
   await geste('carte de spectacle', async () => { if (!(await cibler(page, 'spectacle'))) return false; await toucher(); });
-  // l'agenda : ouvrir une saison, filtrer par spectacle, chercher
-  await aller(page, '#/voir', P.repos);
+  // les saisons : choisir une date (sa carte de réservation s'ouvre sur place), ouvrir une saison passée, filtrer par
+  // spectacle, chercher
+  await aller(page, '#/saisons', P.repos);
+  await geste('choisir une date', async () => { if (!(await cibler(page, 'date'))) return false; await toucher(); }, { h1: false });
   await geste('ouvrir une saison', async () => { if (!(await cibler(page, 'saison'))) return false; await toucher(); }, { h1: false });
   await geste('filtre par spectacle', async () => { if (!(await cibler(page, 'filtre'))) return false; await toucher(); }, { h1: false });
   await geste('recherche (3 caractères)', async () => {

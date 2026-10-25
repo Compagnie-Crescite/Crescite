@@ -3084,20 +3084,17 @@
         vibrer(8);
         dessinerCamion(dateId);
 
-        // Sauvegarder dans Supabase si matId est numérique
+        // Sauvegarder dans Supabase si matId est numérique (sinon, la liste par défaut : sur cet appareil seulement)
         if (/^\d+$/.test(String(matId))) {
-          try {
-            await sb.from('crescite_checklists_chargement').upsert({
-              date_id: dateId,
-              materiel_id: +matId,
-              phase: curPhase,
-              coche: val,
-              coche_par: E.moi,
-              coche_le: new Date().toISOString()
-            }, { onConflict: 'date_id,materiel_id,phase' });
-          } catch (err) {
-            console.warn('Checklist sync:', err);
-          }
+          const { error } = await sb.from('crescite_checklists_chargement').upsert({
+            date_id: dateId,
+            materiel_id: +matId,
+            phase: curPhase,
+            coche: val,
+            coche_par: E.moi,
+            coche_le: new Date().toISOString()
+          }, { onConflict: 'date_id,materiel_id,phase' });
+          if (error) annoncer(`Gardé sur cet appareil seulement : la base ne l’a pas enregistré (${motsErreur(error)}).`, { erreur: true });
         }
       });
     });
@@ -3207,24 +3204,16 @@
     const inpPhoto = $('#nf-photo', f);
     const zoneApercu = $('#nf-apercu-zone', f);
     const imgApercu = $('#nf-apercu-img', f);
-    let fichierDataUrl = null;
     let fichierSelectionne = null;
+    let envoye = null;                               // { fichier, chemin } : le justificatif déjà déposé, pas encore noté
 
     inpPhoto.addEventListener('change', () => {
       const file = inpPhoto.files[0];
-      if (!file) { zoneApercu.hidden = true; return; }
-      fichierSelectionne = file;
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = e => {
-          imgApercu.src = e.target.result;
-          zoneApercu.hidden = false;
-          fichierDataUrl = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      } else {
-        zoneApercu.hidden = true;
-      }
+      fichierSelectionne = file || null;
+      if (!file || !file.type.startsWith('image/')) { zoneApercu.hidden = true; return; }
+      const reader = new FileReader();
+      reader.onload = e => { imgApercu.src = e.target.result; zoneApercu.hidden = false; };
+      reader.readAsDataURL(file);
     });
 
     f.addEventListener('submit', async e => {
@@ -3236,59 +3225,49 @@
       const montVal = parseFloat($('#nf-montant', f).value);
       const dateIdVal = $('#nf-date-tournee', f).value ? +$('#nf-date-tournee', f).value : null;
       const commVal = ($('#nf-commentaire', f).value || '').trim();
+      const sale = texte => { etat.className = 'etat-form sale'; etat.textContent = texte; };
 
-      if (!dateVal || isNaN(montVal) || montVal <= 0 || !fichierSelectionne) {
-        etat.className = 'etat-form sale';
-        etat.textContent = 'Veuillez remplir la date, le montant et ajouter la photo du justificatif.';
-        return;
-      }
+      if (!dateVal || isNaN(montVal) || montVal <= 0 || !fichierSelectionne) return sale('Veuillez remplir la date, le montant et ajouter la photo du justificatif.');
+      const fichier = fichierSelectionne, type = typeJustif(fichier);
+      if (!type) return sale('Le justificatif doit être une photo (JPEG, PNG ou WebP) ou un PDF.');
+      if (fichier.size > MO_JUSTIF * 1024 * 1024) return sale(`Le justificatif pèse plus de ${MO_JUSTIF} Mo : prenez une photo moins lourde, ou un PDF plus léger.`);
 
       b.disabled = true;
       b.textContent = 'Envoi du justificatif…';
       etat.className = 'etat-form';
       etat.textContent = 'Téléversement en cours…';
-
       try {
-        let photoUrl = '';
-        const ext = (fichierSelectionne.name.split('.').pop() || 'jpg').toLowerCase();
-        const chemin = `${E.moi || '0'}/${Date.now()}_${ext}`;
-        try {
-          const { error: upErr } = await sb.storage.from('crescite-frais').upload(chemin, fichierSelectionne, { upsert: true });
-          if (!upErr) {
-            const { data: pUrl } = sb.storage.from('crescite-frais').getPublicUrl(chemin);
-            photoUrl = pUrl?.publicUrl || chemin;
-          }
-        } catch (errUp) {
-          console.warn('Storage frais fallback:', errUp);
+        // dans son dossier, sous un nom neuf ; déjà déposé (la note avait échoué) : il resert
+        const chemin = envoye && envoye.fichier === fichier ? envoye.chemin : `${E.moi}/${nomJustificatif(fichier, type)}`;
+        if (!envoye || envoye.chemin !== chemin) {
+          const { error: errEnvoi } = await sb.storage.from(SEAU_FRAIS).upload(chemin, fichier, { contentType: type, cacheControl: '3600' });
+          if (errEnvoi) return sale(`Le justificatif n’a pas pu être envoyé : ${motsErreur(errEnvoi)}. Rien n’est enregistré.`);
+          envoye = { fichier, chemin };
         }
-        if (!photoUrl && fichierDataUrl) photoUrl = fichierDataUrl;
-
-        const { error: insErr } = await sb.from('crescite_notes_frais').insert({
+        etat.textContent = 'Enregistrement de la note…';
+        const { error: errNote } = await sb.from('crescite_notes_frais').insert({
           personne_id: E.moi,
           date_id: dateIdVal,
+          date_depense: dateVal,
           categorie: catVal,
           montant_ttc: montVal,
-          photo_url: photoUrl || null,
+          photo_url: chemin,
           commentaire: commVal || null,
           statut: 'en_attente'
         });
-
-        if (insErr) throw insErr;
-
+        if (errNote) return sale(`La note de frais n’est pas enregistrée : ${motsErreur(errNote)}. Le justificatif est envoyé : réessayez, il ne repartira pas.`);
+        envoye = null; fichierSelectionne = null;
         f.reset();
         zoneApercu.hidden = true;
         etat.className = 'etat-form ok';
-        etat.textContent = 'Note de frais enregistrée avec succès.';
+        etat.textContent = 'Note de frais enregistrée.';
         annoncer('Note de frais transmise à l’administration.');
         vibrer(15);
         chargerNotesFrais();
       } catch (err) {
-        console.error(err);
-        etat.className = 'etat-form sale';
-        etat.textContent = `Erreur : ${err.message || 'Impossible d’enregistrer la note'}.`;
+        sale(`La note de frais n’est pas enregistrée : ${motsErreur(err)}.`);
       } finally {
-        b.disabled = false;
-        b.innerHTML = `${ICONES.coche} Enregistrer la note de frais`;
+        if (b.isConnected) { b.disabled = false; b.innerHTML = `${ICONES.coche} Enregistrer la note de frais`; }
       }
     });
 
@@ -3301,41 +3280,38 @@
     try {
       const { data, error } = await sb.from('crescite_notes_frais').select('*').eq('personne_id', E.moi).order('cree_le', { ascending: false });
       if (error) throw error;
-      if (!data || !data.length) {
-        zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>';
-        $('#tot-attente').textContent = '0,00 €';
-        $('#tot-rembourse').textContent = '0,00 €';
-        return;
-      }
+      if (!zone.isConnected) return;
+      // en attente : ce qui n'est pas encore remboursé (validé ou non) ; remboursé : dans la saison en cours
+      const saison = saisonDe(aujourdhui());
       let totAttente = 0, totRembourse = 0;
-      data.forEach(x => {
+      (data || []).forEach(x => {
         const m = Number(x.montant_ttc) || 0;
         if (x.statut === 'en_attente' || x.statut === 'valide') totAttente += m;
-        if (x.statut === 'rembourse') totRembourse += m;
+        if (x.statut === 'rembourse' && saisonDe(iso(new Date(x.rembourse_le || x.cree_le))) === saison) totRembourse += m;
       });
-      $('#tot-attente').textContent = `${totAttente.toFixed(2).replace('.', ',')} €`;
-      $('#tot-rembourse').textContent = `${totRembourse.toFixed(2).replace('.', ',')} €`;
+      $('#tot-attente').textContent = euros(totAttente);
+      $('#tot-rembourse').textContent = euros(totRembourse);
+      if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
 
       zone.innerHTML = data.map(item => {
         const cat = CAT_FRAIS[item.categorie] || item.categorie;
-        const stClass = item.statut || 'en_attente';
-        const stLabel = STATUT_FRAIS[stClass] || stClass;
-        const dateLue = item.cree_le ? item.cree_le.slice(0, 10).split('-').reverse().join('/') : '';
-        const m = (Number(item.montant_ttc) || 0).toFixed(2).replace('.', ',');
+        const stClass = STATUT_FRAIS[item.statut] ? item.statut : 'en_attente';
+        const quand = estJour(item.date_depense) ? jourCourt(item.date_depense) : item.cree_le ? jourCourt(iso(new Date(item.cree_le))) : '';
+        const d = item.date_id != null ? E.dates.find(x => x.id === Number(item.date_id)) : null;
         return `
           <div class="frais-ligne">
-            <span class="badge-statut ${stClass}">${stLabel}</span>
+            <span class="badge-statut ${stClass}">${STATUT_FRAIS[stClass]}</span>
             <div>
-              <b>${esc(cat)}</b> · <small>${esc(dateLue)}</small>
+              <b>${esc(cat)}</b> · <small>${esc(quand)}${d ? ` · ${esc(d.spectacle?.titre || 'Date')}${d.lieu?.commune ? `, ${esc(d.lieu.commune)}` : ''}` : ''}</small>
               ${item.commentaire ? `<br><small class="aide">${esc(item.commentaire)}</small>` : ''}
-              ${item.photo_url ? `<br><a href="${esc(item.photo_url)}" target="_blank" rel="noopener" class="lien-btn" style="font-size:0.84rem">${ICONES.doc} Voir le justificatif</a>` : ''}
+              ${item.photo_url ? `<br><button type="button" class="lien-btn" data-justificatif="${esc(item.photo_url)}" style="font-size:0.84rem">${ICONES.doc} Voir le justificatif<span class="sr"> (dans un nouvel onglet)</span></button>` : ''}
             </div>
-            <div class="montant">${m} €</div>
+            <div class="montant">${euros(item.montant_ttc)}</div>
           </div>
         `;
       }).join('');
     } catch (e) {
-      zone.innerHTML = '<p class="message erreur">Impossible de charger les notes de frais pour le moment.</p>';
+      if (zone.isConnected) zone.innerHTML = `<p class="message erreur">Vos notes de frais ne se lisent pas pour le moment : ${esc(motsErreur(e))}.</p>`;
     }
   }
 
