@@ -1760,21 +1760,24 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
 
   /* ---------- Les frises (FRISE) : le calendrier de chaque page, dans la grille ; relues dans D à chaque rendu ---------- */
   const $$ = (q, r = document) => [...r.querySelectorAll(q)];
-  let FRISES = [], EN_PLACE = false, ouvrirPour = null, SW = null, SWS = [];
+  let FRISES = [], EN_PLACE = false, ouvrirPour = null, FS = null;
   function frise(conteneur, o) {
     if (!FR || !conteneur) return null;
     const f = FR.creer(conteneur, Object.assign({ aujourdhui: D.aujourdhui, immediat: EN_PLACE, largeur: largeurCols(12) - 28 }, o));
     FRISES.push(f);
     return f;
   }
-  // la clé d'un repère, posée aussi sur sa ligne (data-frise-id) : l'id de la base, sinon la date et le lieu (ou le rang dans la saison)
+  // la clé d'une date, posée aussi sur sa ligne (data-frise-id) : l'id de la base, sinon son spectacle, son jour, sa commune et
+  // son public. C'est la même dans les prochaines dates (D.dates), dans toutes les dates de la saison (D.saisons) et sur la
+  // frise : une date choisie ici se retrouve là. Une ligne d'une saison passée : son rang dans la saison.
   const avecId = d => d && d.id != null && d.id !== '';
-  const cleProchaine = d => avecId(d) ? `d${d.id}` : `p|${d.slug || d.titre || ''}|${d.iso}|${d.l == null ? '' : d.l}|${d.scolaire ? 's' : 't'}`;
+  const cleDateDe = (slug, titre, d) => avecId(d) ? `d${d.id}` : `p|${slug || titre || ''}|${d.iso || d.ligne || ''}|${d.l == null ? '' : d.l}|${d.scolaire ? 's' : 't'}`;
+  const cleProchaine = d => cleDateDe(d.slug, d.titre, d);
   const cleLigne = (d, k, i) => avecId(d) ? `d${d.id}` : `l|${k}|${i}`;
   const fid = c => ` data-frise-id="${esc(c)}"`;
   const annulee = d => /annul/i.test(d.etat || '');
   const quandLigne = d => String(d.ligne || '').split(/\s—\s/)[0].trim();
-  const ptProchain = d => ({ id: cleProchaine(d), jour: d.iso, fin: d.fin, precision: d.precision, couleur: colPapier(d.slug),
+  const ptProchain = d => ({ id: cleProchaine(d), jour: d.iso, fin: d.fin, precision: d.precision, couleur: colPapier(d.slug), cle: d.slug || `titre:${d.titre}`,
     titre: d.titre || (showDe(d.slug) || {}).titre || '', quand: d.ligneDate, l: d.l, scolaire: !!d.scolaire, annulee: annulee(d), etat: d.etat });
   const ptLigne = (d, k, i, slug, titre, fin) => ({ id: cleLigne(d, k, i), jour: d.iso || fin, fin: d.fin || fin, precision: d.precision,
     couleur: colPapier(slug), titre, quand: quandLigne(d), l: d.l, scolaire: !!d.scolaire, annulee: annulee(d), etat: d.etat });
@@ -1796,96 +1799,135 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
   }
   const friseDiffusion = (c, slug, titre, o = {}) => { const bs = diffusion(slug);
     return bs.length && c ? frise(c, Object.assign({ echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: titre, classe: 'frise-diffusion', anMin: 34 }, o)) : null; };
-  // toutes les dates d'un spectacle, passées (D.saisons, vers leur saison) et à venir (D.dates, vers leur ligne)
-  function reperesTournee(s, garde = () => true) {
+  // toutes les dates d'un spectacle, passées (D.saisons) et à venir (D.dates, vers leur ligne) ; liens : une date passée mène à
+  // sa saison (#/saisons/<saison>), sinon le repère mène à sa ligne dans la page (le bilan d'un spectacle qui n'est plus en tournée)
+  function reperesTournee(s, garde = () => true, { liens = true } = {}) {
     const passees = [];
     Object.entries(D.saisons || {}).forEach(([k, SA]) => { let i = 0; (SA.spectacles || []).forEach(g => (g.dates || []).forEach(d => {
       const n = i++; if (g.slug !== s.slug || !garde(d)) return;
       const fin = cleDate(d, k); if (!fin || fin >= D.aujourdhui) return;
-      passees.push(Object.assign(ptLigne(d, k, n, g.slug, s.titre, fin), { lien: k === D.saison ? null : `#/agenda/${k}` })); })); });
+      passees.push(Object.assign(ptLigne(d, k, n, g.slug, s.titre, fin), { lien: liens && k !== D.saison ? `#/saisons/${k}` : null })); })); });
     return [...passees, ...(D.dates || []).filter(d => d.slug === s.slug && garde(d)).map(ptProchain)];
   }
 
-  /* ---------- La saison en frise : le cœur. Une ligne par spectacle, toutes sur la même échelle (une frise chacune), les mois en
-     colonnes au-dessus, « aujourd'hui » d'un trait qui les traverse ; reliée à la liste par mois, au filtre et à la carte ---------- */
-  const p2s = n => String(n).padStart(2, '0');
-  // les lignes d'une saison : [{ cle, slug, titre, couleur, pts }], dans l'ordre des spectacles de la compagnie, puis les autres ;
-  // garde(d, titre) choisit les dates ; la saison en cours : ses dates déjà jouées (D.saisons) et ses dates à venir (D.dates)
-  function lignesSaison(k, garde) {
-    const L = new Map(), ajouter = (cle, slug, titre, p) => { if (!L.has(cle)) L.set(cle, { cle, slug, titre, couleur: colPapier(slug), pts: [] }); L.get(cle).pts.push(p); };
-    const SA = D.saisons[k]; let i = 0;
-    ((SA && SA.spectacles) || []).forEach(g => (g.dates || []).forEach(d => {
-      const n = i++, sp = g.slug && showDe(g.slug), titre = sp ? sp.titre : g.titre;
-      if (!garde(d, titre)) return;
-      const fin = cleDate(d, k); if (!fin || (k === D.saison && fin >= D.aujourdhui)) return;
-      ajouter(g.slug || `titre:${g.titre}`, g.slug || null, titre, ptLigne(d, k, n, g.slug, titre, fin));
+  /* ---------- La frise de la saison (règle 21) : le cœur de la maquette ----------
+     Une seule ligne du temps, de septembre à août (FRISE, échelle de la saison) : toutes les dates de la saison, passées et à
+     venir, chacune à la couleur de son spectacle (lue dans D, règle 22), une barre pleine (tout public) ou évidée (scolaire), un
+     aplat cerné pour une date longue ; les couloirs montent quand deux dates se touchent ; « aujourd'hui » d'un trait de la couleur
+     de la saison. Dessous, la légende des spectacles (leur barre, leur titre, le nombre de leurs dates) ; la survoler isole les
+     dates d'un spectacle sur la frise et ses bras sur la carte. Choisir une date de la frise la choisit dans la liste des
+     prochaines dates (sa carte de réservation s'ouvre) ou mène à sa ligne ; choisir une date dans la liste la cerne sur la frise. */
+  // les jours d'une ligne d'agenda : ceux de la base (iso, fin), sinon lus dans la ligne (« 12 octobre 2019 à 19h30 — … » :
+  // le premier et le dernier jour cités ; « novembre 2026 — … » : le mois entier) ; null pour une année seule
+  function bornesLigne(d, k) {
+    if (d.iso) return { jour: d.iso, fin: d.fin || d.iso, precision: d.precision || 'jour' };
+    const tete = String(d.ligne || '').split(/—|\s:\s/)[0], a0 = +String(k).slice(0, 4);
+    const mois = x => { const t = x.toLowerCase(); return MOIS_NOMS.findIndex(nm => nm.startsWith(t) || t.startsWith(nm.slice(0, 4))) + 1; };
+    const ms = [...tete.matchAll(RE_JOUR)];
+    if (ms.length) { const iso = m => { const mm = mois(m[2]); return `${m[3] ? +m[3] : mm >= 9 ? a0 : a0 + 1}-${p2(mm)}-${p2(+m[1])}`; };
+      return { jour: iso(ms[0]), fin: iso(ms[ms.length - 1]), precision: 'jour' }; }
+    const ma = tete.match(RE_MOIS_AN);
+    if (!ma) return null;
+    const mm = mois(ma[1]), y = +ma[2];
+    return { jour: `${y}-${p2(mm)}-01`, fin: `${y}-${p2(mm)}-${p2(new Date(Date.UTC(y, mm, 0)).getUTCDate())}`, precision: 'mois' };
+  }
+  // la saison en cours, ligne par ligne : toutes ses dates publiées (D.saisons), passées et à venir, dans l'ordre du temps (celles
+  // qu'on ne sait pas dater à la fin) ; refaite quand D change
+  let cacheSaison = null;
+  const lignesEnCours = () => cacheSaison || (cacheSaison = calculerSaison(D.saison));
+  function calculerSaison(k) {
+    const SA = (D.saisons || {})[k]; if (!SA) return [];
+    const out = []; let i = 0;
+    (SA.spectacles || []).forEach(g => (g.dates || []).forEach(d => {
+      const n = i++, b = bornesLigne(d, k), sp = g.slug && showDe(g.slug), titre = sp ? sp.titre : g.titre;
+      out.push({ d, g, k, i: n, slug: g.slug || null, titre, cle: g.slug || `titre:${g.titre}`, id: cleDateDe(g.slug, g.titre, d),
+        debut: b ? b.jour : '', fin: b ? b.fin : '', precision: b ? b.precision : null, passe: !!(b && b.fin < D.aujourdhui),
+        txt: ' ' + norm(`${titre} ${d.ligne} ${(d.details || []).map(y => y.texte).join(' ')} ${d.l != null && CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) });
     }));
-    if (k === D.saison) (D.dates || []).forEach(d => { const sp = showDe(d.slug), titre = sp ? sp.titre : d.titre; if (garde(d, titre)) ajouter(d.slug || `titre:${d.titre}`, d.slug || null, titre, ptProchain(d)); });
+    const t = r => r.debut || '9';
+    return out.sort((a, b) => (t(a) < t(b) ? -1 : t(a) > t(b) ? 1 : a.i - b.i));
+  }
+  // les repères de la frise : les lignes datées de la saison, de septembre à août
+  const ptSaison = r => ({ id: r.id, jour: r.debut, fin: r.fin, precision: r.precision, couleur: colPapier(r.slug), titre: r.titre, cle: r.cle,
+    quand: quandLigne(r.d), l: r.d.l, scolaire: !!r.d.scolaire, annulee: annulee(r.d), etat: r.d.etat });
+  const ptsSaison = rows => { const a = +String(D.saison).slice(0, 4), t0 = `${a}-09-01`, t1 = `${a + 1}-09-01`; return rows.filter(r => r.debut >= t0 && r.debut < t1).map(ptSaison); };
+  // la légende : chaque spectacle de la frise (tous ses repères, filtrés ou non : la légende ne bouge pas), sa barre, son titre, le
+  // nombre de ses dates qui restent (un spectacle que le filtre écarte s'estompe) ; puis la barre évidée des dates scolaires
+  function legendeHtml(tous, pts, premier) {
+    const n = new Map(), vus = new Map();
+    pts.forEach(p => n.set(p.cle, (n.get(p.cle) || 0) + 1));
+    tous.forEach(p => { if (!vus.has(p.cle)) vus.set(p.cle, p); });
     const rang = c => { const j = shows().findIndex(x => x.slug === c); return j < 0 ? 999 : j; };
-    return [...L.values()].sort((a, b) => rang(a.slug) - rang(b.slug));
+    return [...vus.values()].sort((a, b) => rang(a.cle) - rang(b.cle)).map(p => { const k = n.get(p.cle) || 0;
+      return `<li class="fs-l${k ? '' : ' est-vide'}" data-cle="${esc(p.cle)}" style="--c:${p.couleur}"><i aria-hidden="true"></i><span>${esc(p.titre)}</span><b${premier ? ' data-mv="compte"' : ''}>${k}</b></li>`; }).join('')
+      + (tous.some(p => p.scolaire) && LIB().scolaire ? `<li class="fs-l fs-sc"><i aria-hidden="true"></i><span>${esc(LIB().scolaire)}</span></li>` : '');
   }
-  // les mois d'une saison (de septembre à août) : leur place et leur largeur sur l'échelle de la frise, en %
-  const jourUTC = iso => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
-  function moisSaison(k) {
-    const a = +k.slice(0, 4), t0 = Date.UTC(a, 8, 1), span = Date.UTC(a + 1, 8, 1) - t0;
-    return Array.from({ length: 12 }, (_, i) => { const m = (8 + i) % 12, y = i >= 4 ? a + 1 : a, d0 = Date.UTC(y, m, 1), d1 = Date.UTC(m === 11 ? y + 1 : y, (m + 1) % 12, 1);
-      return { cle: `${y}-${p2s(m + 1)}`, nom: MOIS[m], x: (d0 - t0) / span * 100, w: (d1 - d0) / span * 100 }; });
+  // la frise posée dans sa zone, avec sa légende ; reliée à la liste (survol : data-frise-id) et à la carte
+  function poserFrise(zone, { pts, tous = pts, liste = main, carte = null, libelle = '' }) {
+    if (!zone || !FR) return null;
+    zone.innerHTML = `<div class="fs-f"></div><ul class="fs-leg" aria-label="${esc(LIB().spectacles)}"></ul>`;
+    const f = frise(zone.firstElementChild, { echelle: 'saison', saison: D.saison, points: pts, regrouper: 0, couloirs: 4, moisMin: LF < 900 ? 58 : 0,
+      libelle, classe: 'frise-saison', relier: { liste, carte }, choix: p => choisirDate(p.id) });
+    if (!f) return null;
+    const fs = { zone, f, tous, pts, carte };
+    zone.__fs = fs;
+    majFrise(fs, pts, true);
+    return fs;
   }
-  function swHtml(k, lignes, { mois = null, sel = null } = {}) {
-    const a = +k.slice(0, 4), t0 = Date.UTC(a, 8, 1), span = Date.UTC(a + 1, 8, 1) - t0, ici = String(D.aujourdhui || '').slice(0, 7);
-    const xa = k === D.saison && D.aujourdhui ? (jourUTC(D.aujourdhui) + 432e5 - t0) / span * 100 : -1;
-    return `<div class="sw-tete"><span class="sw-coin"></span><div class="sw-axe"><ol class="sw-mois">${moisSaison(k).map(m => `<li style="--x:${m.x.toFixed(3)};--w:${m.w.toFixed(3)}">${mois && mois.has(m.cle)
-        ? `<button type="button" class="sw-m${m.cle === ici ? ' est-courant' : ''}" data-mois="${m.cle}">${m.nom}</button>` : `<span class="sw-m${m.cle === ici ? ' est-courant' : ''}">${m.nom}</span>`}</li>`).join('')}</ol>
-      ${xa >= 0 && xa <= 100 && LIB().aujourdhui ? `<span class="sw-auj" style="--x:${xa.toFixed(3)}">${esc(LIB().aujourdhui)}</span>` : ''}</div></div>
-      <ol class="sw-lignes">${lignes.map(L => `<li class="sw-l${sel && L.cle !== sel ? ' est-hors' : ''}" data-cle="${esc(L.cle)}" data-slug="${esc(L.slug || '')}" style="--c:${L.couleur}">
-        <button type="button" class="sw-t" data-cle="${esc(L.cle)}" aria-pressed="${L.cle === sel}"><span class="dot" aria-hidden="true"></span><span class="sw-nom">${esc(L.titre)}</span><span class="sw-n" data-mv="compte">${L.pts.length}</span></button>
-        <div class="sw-f"></div></li>`).join('')}</ol>`;
+  // les filtres ont changé : les repères glissent à leur place (FRISE.maj), la légende suit, la date choisie reste cernée
+  function majFrise(fs, pts, premier = false) {
+    if (!fs || !fs.f) return;
+    fs.pts = pts;
+    if (!premier) fs.f.maj({ points: pts });
+    const leg = fs.zone.querySelector('.fs-leg'); if (leg) leg.innerHTML = legendeHtml(fs.tous, pts, premier);
+    marquerFrise();
   }
-  // la saison en frise posée dans sa zone : une frise par ligne ; elles mènent aux lignes de la liste, allument la carte
-  function poserSW(zone, k, lignes, { module, liste = main, carte = null, sel = null, mois = null } = {}) {
-    if (!zone || !lignes.length) return null;
-    zone.classList.add('sw');
-    zone.innerHTML = swHtml(k, lignes, { mois, sel });
-    const W = Math.max(200, (LF < 900 ? largeurCols(12) : largeurCols(9)) - 12);
-    const fs = $$('.sw-f', zone).map((c, j) => frise(c, { echelle: 'saison', saison: k, points: lignes[j].pts, largeur: W, couloirs: 2, regrouper: 11, moisMin: 0,
-      libelle: lignes[j].titre, relier: { liste, carte }, choix: p => allerLigne(p.id) }));
-    const sw = { zone, k, lignes, fs, carte, module, sel };
-    zone.__sw = sw;
-    SWS.push(sw);
-    return sw;
+  // une date de la frise : à venir et réservable, elle se choisit dans la liste des prochaines dates (sa carte s'ouvre sous sa
+  // ligne, qui vient à l'écran) ; sinon on va à sa ligne
+  function choisirDate(id) {
+    const li = id ? main.querySelector(`[data-liste] [data-frise-id="${CSS.escape(id)}"]`) : null, b = li && li.querySelector('[data-reserver]');
+    if (!b || !rsAg) { allerLigne(id); return; }
+    const k = b.getAttribute('data-reserver');
+    if (rsAg.cle() !== k) rsAg.choisir(k);
+    li.scrollIntoView({ behavior: bouge() ? 'smooth' : 'auto', block: 'center' });
+    b.focus({ preventScroll: true });
   }
-  // les filtres ont changé : chaque ligne garde sa place, ses repères glissent (FRISE.maj), son nombre suit ; les autres
-  // spectacles s'estompent quand on en choisit un
-  function majSW(sw, garde, sel) {
-    if (!sw) return;
-    const par = new Map(lignesSaison(sw.k, garde).map(L => [L.cle, L])), lis = $$('.sw-l', sw.zone);
-    sw.sel = sel;
-    sw.lignes.forEach((L, j) => {
-      const pts = (par.get(L.cle) || { pts: [] }).pts, li = lis[j]; if (!li) return;
-      if (sw.fs[j]) sw.fs[j].maj({ points: pts });
-      li.classList.toggle('est-hors', !!sel && L.cle !== sel);
-      li.classList.toggle('est-vide', !pts.length);
-      const b = li.querySelector('.sw-t'); if (b) b.setAttribute('aria-pressed', String(L.cle === sel));
-      const n = li.querySelector('.sw-n'); if (n && !n.__mvCompte) n.textContent = pts.length;
-    });
+  // la date choisie dans la liste, cernée sur la frise (la frise défile jusqu'à elle, au doigt)
+  let choisieFrise = null;
+  function marquerFrise(d) {
+    if (d !== undefined) choisieFrise = d ? cleProchaine(d) : null;
+    const f = FS && FS.f; if (!f || !f.el.isConnected) return;
+    f.el.querySelectorAll('.frise-point.est-choisi').forEach(x => x.classList.remove('est-choisi'));
+    const li = choisieFrise ? f.el.querySelector(`.frise-point[data-frise-cle="i:${CSS.escape(choisieFrise)}"]`) : null;
+    if (li) li.classList.add('est-choisi');
+    if (li && d) f.aller(choisieFrise);
   }
-  // un mois de la frise mène à ses lignes dans la liste (dans la saison en cours de l'agenda passé, pour un mois déjà joué)
-  function allerMois(m) {
-    let sec = $$(`.mois[data-mois="${m}"]`, main).find(x => x.getClientRects().length);
-    if (!sec) { const dt = document.getElementById('sai-' + D.saison); if (dt && !dt.open) { dt.open = true; remplirPasse(dt, false); sec = $$(`.mois[data-mois="${m}"]`, dt)[0]; } }
-    if (!sec) return;
-    sec.scrollIntoView({ behavior: bouge() ? 'smooth' : 'auto', block: 'start' });
-    const h = sec.querySelector('.mois-h'); if (h) { h.classList.remove('est-vise'); requestAnimationFrame(() => h.classList.add('est-vise')); }
+  // la légende survolée : les dates de ce spectacle seules sur la frise, ses bras sur la carte
+  let legendeOn = null;
+  function survolLegende(li) {
+    if (li === legendeOn) return;
+    const avant = legendeOn && legendeOn.closest('.fs'), fa = avant && avant.__fs;
+    legendeOn = li;
+    if (fa) { fa.f.el.classList.remove('est-filtre'); fa.f.el.querySelectorAll('.est-sp').forEach(x => x.classList.remove('est-sp')); if (fa.carte) allumer(fa.carte, null); }
+    const zone = li && li.closest('.fs'), fs = zone && zone.__fs; if (!fs) return;
+    const cle = li.dataset.cle, ids = new Set(fs.pts.filter(p => p.cle === cle).map(p => `i:${p.id}`));
+    fs.f.el.classList.add('est-filtre');
+    fs.f.el.querySelectorAll('.frise-point[data-frise-cle]').forEach(x => x.classList.toggle('est-sp', ids.has(x.dataset.friseCle)));
+    if (fs.carte && !cle.startsWith('titre:')) allumer(fs.carte, { slug: cle });
   }
 
-  /* ---------- L'agenda tout public : filtres par spectacle, recherche par ville, liste et carte reliées ---------- */
-  const AG = { slug: null, l: null, q: '', ouv: null, avant: null };
+  /* ---------- La saison en cours (l'accueil et #/saisons) : les filtres par spectacle et par commune, la recherche, qui portent sur
+     toute la page ; la frise de la saison ; ses prochaines dates (règle 17 : une date tout public est un bouton qui ouvre sa carte
+     de réservation sous sa ligne ; une date scolaire est marquée, sans bouton) ; toutes ses dates (#/saisons) ; la carte de la
+     saison, reliée aux listes ---------- */
+  const AG = { slug: null, l: null, q: '', ouv: null, avant: null, aller: null };
   const datesPub = () => (D.dates || []).filter(d => !d.scolaire);
   const datesScol = () => (D.dates || []).filter(d => d.scolaire);
-  // le texte où l'on cherche, pour un repère de la frise (une date à venir ou déjà jouée)
-  const hayPt = (d, titre) => ' ' + norm([titre, d.ligne, d.commune, d.dep, ...(d.details || []).map(t => t.texte), d.l != null && CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''].join(' '));
+  // le texte où l'on cherche une date à venir
   const hayDate = d => { const s = showDe(d.slug); return ' ' + norm([d.titre, s && s.titre, d.ligne, d.commune, d.dep, ...(d.details || []).map(t => t.texte)].join(' ')); };
   const detailsHtml = det => det && det.length ? `<ul class="det">${det.map(t => `<li>${t.lien ? `<a href="${esc(t.lien)}" target="_blank" rel="noopener">${esc(t.texte)}${EXT}</a>` : esc(t.texte)}</li>`).join('')}</ul>` : '';
+  // une date scolaire : le libellé de D, sans bouton de réservation
+  const tagScolaire = d => d.scolaire && LIB().scolaire ? `<span class="tag-sc">${esc(LIB().scolaire)}</span>` : '';
   // réserver (règle 17) : la date d'une ligne où l'on peut réserver est un bouton (son horaire écrit dessus) qui ouvre la carte
   // de réservation sous la ligne, dans l'univers de son spectacle ; les dates scolaires, passées ou annulées restent des dates
   const idCarte = k => 'rs-' + String(k).replace(/[^\w-]/g, '-');
@@ -1897,14 +1939,15 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       ${rv ? RS.bouton(d, { classe: `rs-date--ligne${s ? ' ' + uClasse(s) : ''}`, style: s ? uStyle(s) : '', attributs: ` aria-controls="${idCarte(k)}"` })
         : `<p class="when"><span aria-hidden="true">${j.grand}</span><span class="sr">${esc(d.ligneDate || d.ligne)}</span></p>`}
       <div class="what">
-        ${s ? `<a class="t-link" href="#/spectacle/${esc(s.slug)}/${entreeSp(s.slug, entree)}">${titre}</a>` : `<p class="t-link">${titre}</p>`}
+        ${s ? `<a class="t-link" href="${esc(lienSp(s, entree))}">${titre}</a>` : `<p class="t-link">${titre}</p>`}${tagScolaire(d)}
         ${d.ligneLieu ? `<p class="where">${esc(d.ligneLieu)}</p>` : ''}
         ${compact ? '' : detailsHtml(d.details)}
       </div>
       ${rv ? `<div class="rs-carte rs-ici${s ? ' ' + uClasse(s) : ''}" id="${idCarte(k)}" hidden></div>` : ''}
     </li>`;
   }
-  function listeHtml(dates, compact, entree = 'voir') {
+  // les prochaines dates, par mois (h : le niveau des titres de mois)
+  function listeHtml(dates, compact, entree = 'voir', h = 'h3') {
     RES = new Set(entree === 'voir' && RS ? RS.dates().map(RS.cle) : []);
     let html = '', cur = '';
     dates.forEach(d => {
@@ -1913,66 +1956,92 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
         if (cur) html += '</ol></section>';
         cur = ym;
         const [y, m] = ym.split('-').map(Number);
-        html += `<section class="mois" data-mois="${ym}"><h3 class="mois-h"><span class="mo">${MOIS[m - 1] || ''}</span> <span class="yr">${y || ''}</span></h3><ol>`;
+        html += `<section class="mois" data-mois="${ym}"><${h} class="mois-h"><span class="mo">${MOIS[m - 1] || ''}</span> <span class="yr">${y || ''}</span></${h}><ol>`;
       }
       html += rowHtml(d, compact, entree);
     });
     return cur ? html + '</ol></section>' : '';
   }
+  // toutes les dates de la saison, par mois, dans l'ordre du temps (les dates jouées en retrait) ; « aujourd'hui » d'un filet de la
+  // couleur de la saison entre la dernière date jouée et la première à venir
+  function toutesHtml(rows) {
+    const L = LIB(); let html = '', cur = null, vu = false;
+    rows.forEach(r => {
+      const m = r.debut ? r.debut.slice(0, 7) : '', premiere = !vu && !r.passe && !!r.debut;
+      if (premiere) vu = true;
+      if (m !== cur) {
+        if (cur !== null) html += '</ol></section>';
+        if (premiere && html && L.aujourdhui) html += `<p class="auj-l">${esc(L.aujourdhui)}</p>`;
+        cur = m;
+        html += `<section class="mois"${m ? ` data-mois="${m}"` : ''}>${m ? `<h4 class="mois-h"><span class="mo">${MOIS[+m.slice(5, 7) - 1]}</span> <span class="yr">${m.slice(0, 4)}</span></h4>` : ''}<ol>`;
+      } else if (premiere && L.aujourdhui) html += `<li class="auj-l">${esc(L.aujourdhui)}</li>`;
+      html += ligneHtml(r, { id: r.id, passe: r.passe });
+    });
+    return cur !== null ? html + '</ol></section>' : '';
+  }
+  // les communes de la saison en cours (sa carte) : une commune dont toutes les dates sont jouées est en retrait
+  const lieuxSaison = () => CARTE.saison(D.saison).map(x => ({ ...x, passe: (x.dates || []).every(d => { const f = cleDate(d, D.saison); return !!f && f < D.aujourdhui; }) }));
   const champ = (id, val) => `<div class="field" role="search"><label class="sr" for="${id}">${esc(LIB().rechercher)}</label>${LOUPE}<input id="${id}" type="search" placeholder="${esc(LIB().rechercher)}" value="${esc(val)}" autocomplete="off" spellcheck="false"></div>`;
   const chipsHtml = (liste, slugActif) => `<div class="chips" role="group" aria-label="${esc(LIB().spectacles)}">${liste.map(s => `<button type="button" class="chip" data-slug="${esc(s.slug)}" data-k="chip-${esc(s.slug)}" aria-pressed="${s.slug === slugActif}" style="--c:${colPapier(s.slug)}"><span class="dot" aria-hidden="true"></span>${esc(s.titre)}</button>`).join('')}</div>`;
+  // mode 'accueil' : la frise, la carte et les prochaines dates tout public ; mode 'complet' (#/saisons) : la saison en cours sous sa
+  // marque (la couleur de la saison, règle 22), sa frise, ses prochaines dates (scolaires comprises), toutes ses dates, sa carte
   function agendaHtml(mode, fixe) {
-    const dates = datesPub(), slugs = new Set(dates.map(d => d.slug).filter(Boolean));
-    // « Je viens voir un spectacle » : le filtre porte sur tout l'agenda, à venir et passé
-    const puces = mode === 'complet' ? spectaclesAgenda(dates, agendaPasse()).map(p => ({ slug: p.cle, titre: p.titre })) : shows().filter(s => slugs.has(s.slug));
+    const L = LIB(), complet = mode === 'complet', S0 = saisonsSite()[0] || {};
+    const prochaines = complet ? (D.dates || []) : datesPub(), slugs = new Set([...prochaines.map(d => d.slug), ...lignesEnCours().map(r => r.slug)].filter(Boolean));
+    // #/saisons : le filtre porte sur toute la page, la saison en cours et les saisons passées
+    const puces = complet ? spectaclesAgenda(prochaines, [{ rows: lignesEnCours() }, ...agendaPasse()]).map(p => ({ slug: p.cle, titre: p.titre })) : shows().filter(s => slugs.has(s.slug));
     if (AG.slug && !puces.some(p => p.slug === AG.slug)) AG.slug = null;
-    const S0 = saisonsSite()[0] || {};
     return `<div class="ag ag-${mode} lie" id="ag" data-module="agenda" data-mode="${mode}">
       <div class="ag-bar">${chipsHtml(puces, AG.slug)}
         <div class="ag-tools"><span data-sel></span>${champ('q', AG.q)}</div>
       </div>
-      <div class="sw-zone" id="ag-sw"></div>
+      ${complet ? `<section class="s0" id="s-${esc(D.saison)}" aria-labelledby="h-s0"><header class="s0-tete"><p class="s0-k">${esc(L.saisonEnCours)}</p><h2 class="s0-t" id="h-s0">${esc(S0.titre)}</h2></header>` : ''}
+      <div class="fs" id="ag-fs"></div>
       <div class="ag-grid">
-        <div class="ag-carte">${carteSvg({ lieux: CARTE.aVenir('public'), titre: S0.titre, attente: mode === 'accueil', fixe })}</div>
-        <div class="ag-liste" data-liste data-agenda=""></div>
+        <div class="ag-liste ag-prochaines">${complet ? `<h3 class="s0-h">${esc(L.prochainesDates)}</h3>` : ''}<div data-liste data-agenda=""></div></div>
+        <div class="ag-carte">${carteSvg({ lieux: lieuxSaison(), titre: S0.titre, attente: !complet, fixe })}</div>
+        ${complet ? `<div class="ag-liste ag-toutes"><h3 class="s0-h">${esc(L.toutesLesDates)}</h3><div data-toutes data-agenda=""></div></div>` : ''}
       </div>
+      ${complet ? '</section>' : ''}
     </div>`;
   }
   const lieuChip = l => { const x = l != null && CARTE.lieux[l]; return x ? `<button type="button" class="lieu-chip" data-k="lieu-sel" aria-pressed="true"><span class="lieu-pin" aria-hidden="true"></span>${esc(CARTE.nom(x))}${CROIX}</button>` : ''; };
   function majAgenda(remonter, init = false) {
     const ag = document.getElementById('ag');
     if (!ag) return;
-    const q = norm(AG.q).split(' ').filter(Boolean);
-    const res = datesPub().filter(d => (!AG.slug || d.slug === AG.slug) && (AG.l == null || d.l === AG.l) && (!q.length || q.every(t => hayDate(d).includes(t))));
-    ag.querySelector('[data-liste]').innerHTML = listeHtml(res, ag.dataset.mode === 'accueil', 'voir');
+    const complet = ag.dataset.mode === 'complet', q = norm(AG.q).split(' ').filter(Boolean);
+    const garde = d => (!AG.slug || d.slug === AG.slug) && (AG.l == null || d.l === AG.l) && (!q.length || q.every(t => hayDate(d).includes(t)));
+    const res = (complet ? (D.dates || []) : datesPub()).filter(garde), rows = lignesEnCours().filter(r => gardePasse(r, q));
+    ag.querySelector('[data-liste]').innerHTML = listeHtml(res, !complet, 'voir', complet ? 'h4' : 'h3');
     if (rsAg) rsAg.dessiner();
-    const paires = new Set(res.map(d => d.l + '|' + d.slug)), lieux = new Set(res.map(d => d.l));
+    const tz = ag.querySelector('[data-toutes]'); if (tz) tz.innerHTML = toutesHtml(rows);
+    // la carte de la saison : les communes et les bras qui restent après les filtres
+    const paires = new Set([...res.map(d => d.l + '|' + (d.slug || '')), ...rows.map(r => r.d.l + '|' + (r.slug || ''))]), lieux = new Set([...res.map(d => d.l), ...rows.map(r => r.d.l)]);
     const svg = ag.querySelector('svg.carte-m03');
-    allumer(svg, null);
-    svg.querySelectorAll('.bras').forEach(b => b.classList.toggle('hors', !paires.has(b.dataset.l + '|' + b.dataset.slug)));
-    svg.querySelectorAll('.carte-lieu').forEach(g => {
-      const l = +g.dataset.l, hors = !lieux.has(l);
-      g.classList.toggle('hors', hors); g.classList.toggle('sel', l === AG.l);
-      g.setAttribute('aria-pressed', String(l === AG.l)); g.tabIndex = hors ? -1 : 0;
-    });
-    svg.querySelectorAll('.nom').forEach(t => t.classList.toggle('hors', !lieux.has(+t.dataset.l)));
+    if (svg) {
+      allumer(svg, null);
+      svg.querySelectorAll('.bras').forEach(b => b.classList.toggle('hors', !paires.has(b.dataset.l + '|' + b.dataset.slug)));
+      svg.querySelectorAll('.carte-lieu').forEach(g => {
+        const l = +g.dataset.l, hors = !lieux.has(l);
+        g.classList.toggle('hors', hors); g.classList.toggle('sel', l === AG.l);
+        g.setAttribute('aria-pressed', String(l === AG.l)); g.tabIndex = hors ? -1 : 0;
+      });
+      svg.querySelectorAll('.nom').forEach(t => t.classList.toggle('hors', !lieux.has(+t.dataset.l)));
+    }
     ag.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.slug === AG.slug)));
     ag.querySelector('[data-sel]').innerHTML = lieuChip(AG.l);
     const champQ = ag.querySelector('#q'); if (champQ && champQ.value !== AG.q) champQ.value = AG.q;
-    // la saison en frise : une ligne par spectacle (tout public), qui suit le filtre ; posée une fois, ses repères glissent ensuite
-    const gardeSW = (d, titre) => !d.scolaire && (AG.l == null || d.l === AG.l) && (!q.length || q.every(t => hayPt(d, titre).includes(t)));
-    if (!SW) {
-      const lignes = lignesSaison(D.saison, d => !d.scolaire);
-      SW = poserSW(document.getElementById('ag-sw'), D.saison, lignes, { module: 'agenda', carte: svg, sel: AG.slug, mois: new Set(lignes.flatMap(L => L.pts.map(x => String(x.jour).slice(0, 7)))) });
-      if (SW && (AG.l != null || q.length)) majSW(SW, gardeSW, AG.slug);
-    } else majSW(SW, gardeSW, AG.slug);
+    // la frise de la saison : posée une fois, ses repères glissent ensuite
+    const pts = ptsSaison(rows);
+    if (!FS) FS = poserFrise(document.getElementById('ag-fs'), { pts, tous: ptsSaison(lignesEnCours()), liste: ag, carte: svg, libelle: (saisonsSite()[0] || {}).titre });
+    else majFrise(FS, pts);
     planPasse(init);
     if (remonter && ag.getBoundingClientRect().top < 0) ag.scrollIntoView({ block: 'start' });
   }
 
-  /* ---------- L'agenda passé : toutes les dates publiées (D.saisons), saison par saison, de la plus récente à la plus ancienne ---------- */
+  /* ---------- Les saisons passées (règle 21) : toutes les dates publiées (D.saisons) des saisons d'avant la saison en cours, de la
+     plus récente à la plus ancienne ; chacune annoncée par sa petite carte et son titre, fermée au départ ---------- */
   const MOIS_ALT = MOIS.join('|');
-  /* ---------- l'agenda passé : toutes les dates publiées (D.saisons), saison par saison, de la plus récente à la plus ancienne ---------- */
   const MOIS_NOMS = MOIS_ALT.split('|');
   const MOIS_TOK = `${MOIS_ALT}|janv|févr|avr|juil|sept|oct|nov|déc`;   // les mois, entiers ou abrégés (« 26 sept – 4 oct 2016 »)
   const RE_JOUR = new RegExp(`(\\d{1,2})(?:er)?\\s+(${MOIS_TOK})\\.?(?:\\s+(\\d{4}))?`, 'gi');
@@ -1998,13 +2067,14 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     return { jour: m[1] || m[2], mois: m[2], heure: net(h), lieu: net(l) };
   }
   const titreMois = m => m ? `${MOIS_NOMS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}` : '';
-  // toutes les saisons passées : [{k, titre, rows: [{d, g, k, i, suite, cle, txt}], titres, lieux}], la plus récente d'abord
-  let cachePasse = null;   // refait à chaque rendu (D peut changer)
+  // toutes les saisons passées : [{k, titre, rows: [{d, g, k, i, suite, cle, txt}], titres, lieux}], la plus récente d'abord (la saison
+  // en cours n'y est pas : toutes ses dates sont plus haut, dans « Toutes les dates »)
+  let cachePasse = null;   // refait quand D change
   const agendaPasse = () => cachePasse || (cachePasse = calculerPasse());
   function calculerPasse() {
     const out = [];
     saisonsSite().forEach(x => {
-      const SA = D.saisons[x.saison]; if (!SA || x.saison > D.saison) return;
+      const SA = D.saisons[x.saison]; if (!SA || x.saison >= D.saison) return;
       const rows = []; let i = 0;
       (SA.spectacles || []).forEach(g => {
         let prev = null;
@@ -2015,7 +2085,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
             txt: ' ' + norm(`${titre} ${d.ligne} ${(d.details || []).map(y => y.texte).join(' ')} ${d.l != null && CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) });
         });
       });
-      const passees = (x.saison === D.saison ? rows.filter(r => r.k && r.k < D.aujourdhui) : rows).sort((a, b) => a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i);
+      const passees = rows.sort((a, b) => a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i);
       if (!passees.length) return;
       out.push({ k: x.saison, titre: SA.titre, rows: passees, titres: [...new Set(passees.map(r => r.titre))], lieux: CARTE.saison(x.saison) });
     });
@@ -2031,15 +2101,17 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
 
   const DBL_BAS = ico('<path d="M5 4.5l5 4.5 5-4.5M5 11l5 4.5 5-4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>');
   const DBL_HAUT = ico('<path d="M5 9l5-4.5L15 9M5 15.5l5-4.5 5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>');
-  // une ligne d'une date passée : le jour en grand, l'heure dessous, puis le spectacle, le lieu (lien s'il existe), les précisions, l'état
-  function rowPasse(r, k) {
-    const { d, g } = r, s = showDe(g.slug), p = decoupeLigne(d.ligne), j = p.jour ? decoupe(`${p.jour} ${p.mois}`) : null;
-    const titre = r.suite ? '' : `<span class="dot" aria-hidden="true"></span><span class="t-txt">${esc(r.titre)}</span>`;
+  // une ligne de l'agenda publié (D.saisons : toutes les dates de la saison en cours, une saison passée, le bilan d'un spectacle) : le
+  // jour en grand, l'heure dessous, puis le spectacle (vers sa page ; avecTitre false : sur la page même du spectacle), « Scolaire »,
+  // l'état (« date annulée »), le lieu (lien s'il existe), les précisions ; passe : une date déjà jouée, en retrait
+  function ligneHtml(r, { id, passe = false, avecTitre = true } = {}) {
+    const { d, g } = r, s = showDe(g.slug), p = decoupeLigne(d.ligne), quand = p.jour === p.mois ? p.jour : `${p.jour} ${p.mois}`, j = p.jour ? decoupe(quand) : null;
+    const titre = r.suite || !avecTitre ? '' : `<span class="dot" aria-hidden="true"></span><span class="t-txt">${esc(r.titre)}</span>`;
     const lieu = p.lieu ? `<p class="where">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${EXT}</a>` : esc(p.lieu)}</p>` : '';
-    return `<li class="row dt${r.suite ? ' suite' : ''}${d.etat ? ' annule' : ''}"${dateId(d)}${fid(cleLigne(d, k, r.i))} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(g.slug || '')}" style="--c:${colPapier(g.slug)}">
-      ${j ? `<p class="when"><span aria-hidden="true">${j.grand}</span><span class="sr">${esc(p.jour)} ${esc(p.mois)}</span>${p.heure ? `<span class="j-sous">${esc(p.heure)}</span>` : ''}</p>` : '<span></span>'}
+    return `<li class="row dt${r.suite ? ' suite' : ''}${d.etat ? ' annule' : ''}${passe ? ' est-passe' : ''}"${dateId(d)}${fid(id)} data-l="${d.l == null ? '' : d.l}" data-slug="${esc(g.slug || '')}" style="--c:${colPapier(g.slug)}">
+      ${j ? `<p class="when"><span aria-hidden="true">${j.grand}</span><span class="sr">${esc(quand)}</span>${p.heure ? `<span class="j-sous">${esc(p.heure)}</span>` : ''}</p>` : '<span></span>'}
       <div class="what">
-        ${titre ? (s ? `<a class="t-link" href="#/spectacle/${esc(s.slug)}/voir">${titre}</a>` : `<p class="t-link">${titre}</p>`) : ''}${d.scolaire ? `<span class="tag-sc">${esc(LIB().scolaire)}</span>` : ''}${d.etat ? `<span class="etat">${esc(d.etat)}</span>` : ''}
+        ${titre ? (s ? `<a class="t-link" href="${esc(lienSp(s))}">${titre}</a>` : `<p class="t-link">${titre}</p>`) : ''}${tagScolaire(d)}${d.etat ? `<span class="etat">${esc(d.etat)}</span>` : ''}
         ${lieu}${detailsHtml(d.details)}
       </div></li>`;
   }
@@ -2061,8 +2133,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     rows.forEach(r => { const m = r.k.slice(0, 7), g = G[G.length - 1]; if (g && g.m === m) g.rs.push(r); else G.push({ m, rs: [r] }); });
     const lx = lieuxPasse(s, rows);
     return `<div class="sai-liste">${G.map(g => { const t = g.m ? titreMois(g.m) : '', ok = t && g.rs.some(r => r.d.ligne.includes(t)), [mo, an] = ok ? t.split(' ') : ['', ''];
-        return `<section class="mois"${g.m ? ` data-mois="${esc(g.m)}"` : ''}>${ok ? `<h4 class="mois-h"><span class="mo">${esc(mo)}</span> <span class="yr">${esc(an)}</span></h4>` : ''}<ol data-agenda="">${g.rs.map(r => rowPasse(r, s.k)).join('')}</ol></section>`; }).join('')}
-        ${s.k === D.saison ? '' : `<p class="sai-page"><a class="suite" href="#/agenda/${esc(s.k)}"><span>${esc(s.titre)}</span>${ARROW}</a></p>`}</div>
+        return `<section class="mois"${g.m ? ` data-mois="${esc(g.m)}"` : ''}>${ok ? `<h4 class="mois-h"><span class="mo">${esc(mo)}</span> <span class="yr">${esc(an)}</span></h4>` : ''}<ol data-agenda="">${g.rs.map(r => ligneHtml(r, { id: cleLigne(r.d, s.k, r.i) })).join('')}</ol></section>`; }).join('')}</div>
       <div class="sai-carte">${lx.length ? carteSvg({ lieux: lx, titre: s.titre, fixe: true }) : ''}</div>`;
   }
   // une carte ajoutée après coup : ses noms, ses liens avec la liste, ses bras qui poussent
@@ -2090,16 +2161,20 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     else tPasse = setTimeout(() => majPasse(false), 110);
   }
   let fSaisons = null;
-  const ouvrirSaison = k => {
-    const dt = document.getElementById('sai-' + k); if (!dt) return;
-    if (!dt.open) { dt.open = true; AG.ouv.add(k); remplirPasse(dt, true); }
-    dt.scrollIntoView({ behavior: bouge() ? 'smooth' : 'auto', block: 'start' });
-  };
+  // une saison, ouverte et amenée à l'écran : une saison passée (ses dates se dessinent), ou la saison en cours (sa section) ;
+  // focus : son titre prend le focus (#/saisons/<saison>)
+  function ouvrirSaison(k, { lisse = true, focus = false } = {}) {
+    const cible = document.getElementById((k === D.saison ? 's-' : 'sai-') + k); if (!cible) return;
+    if (cible.matches('details') && !cible.open) { cible.open = true; AG.ouv.add(k); remplirPasse(cible, lisse); }
+    cible.scrollIntoView({ behavior: lisse && bouge() ? 'smooth' : 'auto', block: 'start' });
+    const t = focus && (cible.matches('details') ? cible.querySelector('summary') : null);
+    if (t) t.focus({ preventScroll: true });
+  }
   function majPasse(init) {
     const zone = document.getElementById('ag-saisons'), index = document.getElementById('ag-index');
     if (!zone || !index) return;
     const passe = agendaPasse(), q = norm(AG.q).split(' ').filter(Boolean);
-    if (!AG.ouv) AG.ouv = new Set(passe.filter(s => s.k === D.saison).map(s => s.k));
+    if (!AG.ouv) AG.ouv = new Set();
     const garde = r => gardePasse(r, q), actif = !!(AG.slug || AG.l != null || q.length);
     const resultats = () => new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k));
     // le filtre ouvre les saisons qui ont des résultats ; quand il s'efface, les saisons reprennent leur état d'avant
@@ -2117,14 +2192,17 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
     }).join('');
     zone.querySelectorAll('.sai[open]').forEach(dt => brancherCarte(dt.querySelector('svg.carte-m03'), false));
     if (init && MV) MV.reveler(zone, { immediat: EN_PLACE });
-    // la frise des saisons : chaque saison passée, la hauteur de sa colonne, le nombre de ses dates (filtrées) ; un clic l'ouvre
+    // la frise des saisons : chaque saison (les passées, puis la saison en cours), la hauteur de sa colonne, le nombre de ses dates
+    // (filtrées) ; un clic l'ouvre et y mène
     const fz = document.getElementById('idx-frise');
-    const bandes = passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).length));
+    const bandes = [...passe.slice().reverse().map(s => bandeSaison(s.k, s.rows.filter(garde).length)), ...(D.saisons[D.saison] ? [bandeSaison(D.saison, lignesEnCours().filter(garde).length)] : [])];
     if (fz && bandes.length) {
-      if (!fSaisons || !fSaisons.el.isConnected) fSaisons = frise(fz, { echelle: 'annees', debut: bandes[0].id, fin: D.saison, bandes, libelle: LIB().saisonsPrecedentes,
+      if (!fSaisons || !fSaisons.el.isConnected) fSaisons = frise(fz, { echelle: 'annees', debut: bandes[0].id, fin: D.saison, bandes, libelle: LIB().saisonsPassees,
         classe: 'frise-saisons', anMin: 34, relier: { liste: zone }, choix: b => ouvrirSaison(b.id) });
       else fSaisons.maj({ bandes });
     }
+    // #/saisons/<saison> : cette saison, ouverte, vient à l'écran, son titre prend le focus
+    if (AG.aller) { const k = AG.aller; AG.aller = null; ouvrirSaison(k, { lisse: false, focus: true }); }
     // un repère d'une saison fermée : la saison s'ouvre
     ouvrirPour = id => {
       const m = /^l\|(\d{4}-\d{4})\|/.exec(id || ''), dt = m && document.getElementById('sai-' + m[1]); if (!dt) return null;
@@ -2132,8 +2210,8 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       return dt.querySelector(`[data-frise-id="${CSS.escape(id)}"]`);
     };
     const tout = vis.length > 0 && vis.every(({ s }) => AG.ouv.has(s.k));
-    const puces = [q.length && ['q', AG.q.trim()], AG.slug && ['s', (spectaclesAgenda(datesPub(), passe).find(x => x.cle === AG.slug) || {}).titre], AG.l != null && ['l', CARTE.nom(CARTE.lieux[AG.l])]].filter(Boolean);
-    index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tout}" aria-label="${esc(LIB().saisonsPrecedentes)}">${tout ? DBL_HAUT : DBL_BAS}</button>
+    const puces = [q.length && ['q', AG.q.trim()], AG.slug && ['s', (spectaclesAgenda(D.dates || [], [{ rows: lignesEnCours() }, ...passe]).find(x => x.cle === AG.slug) || {}).titre], AG.l != null && ['l', CARTE.nom(CARTE.lieux[AG.l])]].filter(Boolean);
+    index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tout}" aria-label="${esc(LIB().saisonsPassees)}">${tout ? DBL_HAUT : DBL_BAS}</button>
       <ul>${puces.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => `<li><button type="button" class="idx" data-k="${esc(s.k)}" aria-controls="sai-${esc(s.k)}" aria-expanded="${AG.ouv.has(s.k)}">${esc(s.k)}<small>${rows.length}</small></button></li>`).join('')}</ul>`;
   }
   const visiblesPasse = () => { const q = norm(AG.q).split(' ').filter(Boolean); return agendaPasse().filter(s => s.rows.some(r => gardePasse(r, q))); };
@@ -2217,20 +2295,6 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
         <${h} class="uc-t"><a href="#/spectacle/${esc(s.slug)}">${tlHtml(s)}</a></${h}>
         ${riche && s.sousTitre ? `<p class="uc-s"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
         ${riche && s.accroche ? `<p class="uc-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
-        ${pro ? `<p class="uc-n">${esc(pro.ligne)}</p>` : ''}
-        ${bande(u)}
-      </div>
-      ${signe(u)}
-    </li>`;
-  }
-  function carteTournee(s) {
-    const u = univers(s), pro = prochainePub(s.slug);
-    return `<li class="tour u-${u.clair ? 'clair' : 'sombre'}" style="${uStyle(s)}">
-      <span class="uc-img">${imgPrincipale(s)}</span>
-      <div class="uc-b">
-        ${s.lieuTemps ? `<p class="u-et">${etiquettes(s, 'lieuTemps')}</p>` : ''}
-        <h3 class="uc-t"><a href="#/spectacle/${esc(s.slug)}/voir">${tlHtml(s)}</a></h3>
-        ${s.accroche ? `<p class="uc-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
         ${pro ? `<p class="uc-n">${esc(pro.ligne)}</p>` : ''}
         ${bande(u)}
       </div>
@@ -2321,7 +2385,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       <header class="fc-tete">
         <div>
           <p class="u-et">${etiquettes(s, 'creation')}${s.statut ? `<span class="statut"${edS(s, 'statut')}>${esc(s.statut)}</span>` : ''}</p>
-          <h3 class="fc-t"><a href="#/spectacle/${esc(s.slug)}/programmer">${tlHtml(s)}</a></h3>
+          <h3 class="fc-t"><a href="${esc(lienSp(s, 'programmer'))}">${tlHtml(s)}</a></h3>
           ${s.sousTitre ? `<p class="fc-s"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
         </div>
         ${imgPrincipale(s)}
@@ -2333,7 +2397,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
           ${faits.length ? `<ul class="faits">${faits.map(([t, k]) => `<li${edS(s, k)}>${esc(t)}</li>`).join('')}</ul>` : ''}
           ${diffusion(s.slug).length ? `<div class="fc-diff" data-fr="diffusion" data-slug="${esc(s.slug)}" data-plus-tard=""></div>` : ''}
           ${(p.equipeCreation || []).length ? `<ul class="equipe">${p.equipeCreation.map((x, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(x)}</li>`).join('')}</ul>` : ''}
-          <p class="liens">${dossierBouton(s.slug)}${bandeLien(s)}${p.ficheTechnique ? `<a class="lien-v" href="#/spectacle/${esc(s.slug)}/programmer">${ARROW}<span>${esc(LIB().ficheTechnique)}</span></a>` : ''}</p>
+          <p class="liens">${dossierBouton(s.slug)}${bandeLien(s)}${p.ficheTechnique ? `<a class="lien-v" href="${esc(lienSp(s, 'programmer'))}">${ARROW}<span>${esc(LIB().ficheTechnique)}</span></a>` : ''}</p>
           ${docsDe(s, 'pros').length ? `<div class="fc-docs"><p class="ac-l">${esc(LIB().aTelecharger)}</p>${listeDocs(docsDe(s, 'pros'))}</div>` : ''}
           ${lieuxDetails(s, 'pg-' + s.slug)}
         </div>
@@ -2349,7 +2413,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       <header class="fc-tete">
         <div>
           <p class="u-et">${etiquettes(s, 'creation', 'lieuTemps')}</p>
-          <h3 class="fc-t"><a href="#/spectacle/${esc(s.slug)}/etablissement">${tlHtml(s)}</a></h3>
+          <h3 class="fc-t"><a href="${esc(lienSp(s, 'etablissement'))}">${tlHtml(s)}</a></h3>
         </div>
         ${imgPrincipale(s)}
         ${signe(u)}${bande(u, 'bandeau fc-frise')}
@@ -2363,7 +2427,7 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
         ${t0 ? `<div class="ac-txt">${bloc(t0.texte, `shows.${s.slug}.actionCulturelle.textes.0.texte`)}</div>` : ''}
         ${(ac.formule || []).length ? `<p class="formule">${ac.formule.map((x, i) => `<span${edS(s, 'actionCulturelle', 'formule', i)}>${esc(x)}</span>`).join('')}</p>` : ''}
         ${(ac.dispositifs || []).length ? `<div class="disp"><p class="ac-l">${esc(L.dispositifs)}</p><ul>${ac.dispositifs.map((x, i) => `<li${edS(s, 'actionCulturelle', 'dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
-        ${s.dossier && D.dossiers && D.dossiers[s.dossier] ? `<p><a class="dossier-lien" href="#/spectacle/${esc(s.slug)}/etablissement">${esc(L.dossierScolaire)}${ARROW}</a></p>` : ''}
+        ${s.dossier && D.dossiers && D.dossiers[s.dossier] ? `<p><a class="dossier-lien" href="${esc(lienSp(s, 'etablissement'))}">${esc(L.dossierScolaire)}${ARROW}</a></p>` : ''}
       </div>
     </article>`;
   }

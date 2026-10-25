@@ -778,11 +778,18 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .photo-apercu { max-width: 130px; max-height: 100px; border-radius: 10px; object-fit: cover; border: 1px solid var(--filet); margin-top: 6px; display: block; }
 .frais-ligne { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 14px; border: 1px solid var(--filet); border-radius: var(--rayon-s); background: var(--surface); margin-bottom: 8px; }
 .frais-ligne .montant { font: 800 1.15rem/1.1 var(--sans); text-align: right; white-space: nowrap; }
+@media (max-width: 480px) { .frais-ligne { grid-template-columns: 1fr auto; } .frais-ligne .badge-statut { grid-column: 1 / -1; justify-self: start; } }
 .badge-statut { display: inline-block; padding: 2px 8px; border-radius: 999px; font: 700 0.72rem/1.5 var(--sans); text-transform: uppercase; letter-spacing: 0.05em; }
 .badge-statut.en_attente { background: var(--option-doux); color: var(--option); }
 .badge-statut.valide { background: var(--sco-doux); color: var(--sco); }
 .badge-statut.rembourse { background: var(--ok-doux); color: var(--ok); }
 .badge-statut.refuse { background: var(--alerte-doux); color: var(--alerte); }
+/* les champs du dépôt : les listes et le montant comme les autres champs, et jamais plus larges que l'écran (une date de
+   tournée au long nom ne pousse pas la page au téléphone) */
+#f-nouvelle-frais .champ { min-width: 0; }
+#f-nouvelle-frais select, #f-nouvelle-frais input[type=number] { width: 100%; min-width: 0; min-height: 48px; padding: 11px 14px; border: 1.5px solid var(--bord-champ); border-radius: 14px; background: var(--surface); color: var(--encre); font-size: 1rem; }
+#f-nouvelle-frais select:focus-visible, #f-nouvelle-frais input[type=number]:focus-visible { outline: 3px solid var(--magenta); outline-offset: 1px; border-color: var(--magenta); }
+#f-nouvelle-frais input[type=file] { max-width: 100%; min-width: 0; }
 
 /* ———————————————— checklist camion */
 .camion-phases { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; margin-bottom: 12px; border-bottom: 1px solid var(--filet); }

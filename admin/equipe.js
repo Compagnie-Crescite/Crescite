@@ -2639,6 +2639,7 @@ function vueEquipeFrais(tete, parties) {
         <h3 style="margin:0">Notes de frais soumises par l’équipe</h3>
         <button type="button" class="btn principal" id="btn-export-csv-frais">📥 Exporter en CSV comptable</button>
       </div>
+      <div class="frais-defile" data-defile tabindex="0" role="region" aria-label="Notes de frais (le tableau défile de côté)">
       <table class="simple" id="table-frais">
         <thead>
           <tr>
