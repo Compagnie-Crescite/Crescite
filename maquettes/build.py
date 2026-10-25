@@ -777,6 +777,22 @@ def admin(dest):
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
     shutil.copyfile(SRC / "agenda.js", dest / "admin" / "agenda.js")
     shutil.copyfile(SRC / "tentacules.js", dest / "admin" / "tentacules.js")
+    # le logo 2.0 pour l'administration et l'espace de l'équipe, qui n'ont pas les données D des maquettes : la pieuvre de
+    # leur en-tête et ses vrais bras, que tentacules.js y pose et anime (CRESCITE_LOGO ; sans ce fichier, un dessin neutre)
+    v = logo_variants()
+    partage = {"logo": {"octopus": v["octopus"], "octopusPaths": v["octopusPaths"]}, "arms": arms_data()}
+    (dest / "admin" / "logo.js").write_text(
+        "/* Écrit par maquettes/build.py (admin) : le logo 2.0 (sa pieuvre, ses quatre tracés, ses bras) pour l'administration\n"
+        "   et l'espace de l'équipe ; tentacules.js le pose dans l'en-tête (data-pieuvre). */\n"
+        f"self.CRESCITE_LOGO = {json.dumps(partage, ensure_ascii=False, separators=(',', ':'))};\n", encoding="utf-8")
+    # la pieuvre de l'en-tête à la couleur du thème (règle 22), comme dans l'espace de l'équipe
+    try:
+        th, page = theme(), dest / "admin" / "index.html"
+        html = page.read_text(encoding="utf-8")
+        page.write_text(html.replace("</head>", f"<style>:root {{ --pieuvre: {th['couleur']}; }} "
+                                     f"@media (prefers-color-scheme: dark) {{ :root {{ --pieuvre: {th['vive']}; }} }}</style>\n</head>", 1), encoding="utf-8")
+    except Exception as e:
+        print(f"admin : pieuvre au magenta (couleur du thème non posée : {e})")
     # les frises et le mouvement (règle 15) : l'administration et l'espace de l'équipe s'en serviront
     for f in ("frise.js", "mouvement.js"):
         shutil.copyfile(SRC / f, dest / "admin" / f)
@@ -937,7 +953,7 @@ await navigateur.close();
         sw = out / "sw.js"
         h = hashlib.sha256()
         fichiers = sorted(f for f in out.rglob("*") if f.is_file() and f != sw)
-        fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js", "planning.js")]
+        fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js", "planning.js", "logo.js")]
         for f in fichiers:
             if f.is_file():
                 h.update(str(f.relative_to(dest)).encode())
