@@ -301,3 +301,21 @@ begin
 end $$;
 
 commit;
+
+notify pgrst, 'reload schema';
+
+-- ce qui est en place
+select 'Compagnie Idéale' as "élément",
+  case when (select count(*) from information_schema.tables where table_schema = 'public' and table_name in
+             ('crescite_alertes_tournee', 'crescite_devis_demandes', 'crescite_notes_frais', 'crescite_materiel',
+              'crescite_checklists_chargement', 'crescite_diffusion_prospects')) = 6
+    then 'prête : alertes de tournée, demandes de devis, notes de frais, matériel, listes de chargement, pistes de diffusion'
+    else 'incomplète : relancez ce script' end as "état"
+union all
+select 'justificatifs', case when exists (select 1 from storage.buckets where id = 'crescite-frais' and not public)
+  then 'stockage privé « crescite-frais » : chacun dépose et relit dans son dossier, l''administration lit tout'
+  else 'stockage « crescite-frais » absent : relancez ce script' end
+union all
+select 'temps réel', (select count(*) from pg_publication_tables where pubname = 'supabase_realtime'
+  and schemaname = 'public' and tablename in ('crescite_diffusion_prospects', 'crescite_notes_frais', 'crescite_materiel',
+                                              'crescite_devis_demandes')) || ' tables sur 4 écoutées par l''administration';

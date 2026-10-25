@@ -49,7 +49,10 @@ select 'documents communs' as "élément",
     then 'prêts : programmateurs et établissements les lisent, une seule règle de lecture publique'
     else 'plusieurs règles de lecture publique : relancez ce script' end as "état"
 union all
-select 'documents publics', (select case count(*) when 0 then 'aucun pour l''instant' when 1 then 'un document'
-                                     else count(*) || ' documents' end
-                             from public.crescite_documents where pour in ('pros', 'scolaires', 'tous', 'pros_scolaires'))
-  || ', dont ' || (select count(*) from public.crescite_documents where pour in ('tous', 'pros_scolaires')) || ' communs';
+select 'documents publics', (select case when n = 0 then 'aucun pour l''instant'
+                                          else n || case when n = 1 then ' document' else ' documents' end
+                                               || case c when 0 then ', aucun commun pour l''instant' when 1 then ', dont un commun'
+                                                         else ', dont ' || c || ' communs' end end
+                             from (select count(*) filter (where pour in ('pros', 'scolaires', 'tous', 'pros_scolaires')) n,
+                                          count(*) filter (where pour in ('tous', 'pros_scolaires')) c
+                                   from public.crescite_documents) x);
