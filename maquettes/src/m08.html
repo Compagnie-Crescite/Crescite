@@ -2086,10 +2086,11 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
     const corps = (s, rows) => { const lx = lieuxDe(s, rows);
       return `<div class="sai-liste">${moisHTML(rows, { h: 'h4' })}</div>
         <div class="sai-carte">${lx.length ? carte({ lieux: lx, mode: 'actif', k: 1.4, titre: s.titre }) : ''}</div>`; };
-    const saisonHtml = ({ s, rows }) => { const ouv = F.ouv.has(s.k);
+    // (plein : son contenu tout de suite, s'il est ouvert ; sinon quand on s'en approche)
+    const saisonHtml = ({ s, rows }, plein = true) => { const ouv = F.ouv.has(s.k);
       return `<details class="sai" id="sai-${esc(s.k)}" data-saison="${esc(s.k)}" data-frise-id="${esc(s.k)}" data-mv-cle="s:${esc(s.k)}"${ouv ? ' open' : ''}>
         <summary>${miniTrait(lieuxDe(s, rows))}<span class="sai-c"><h3 class="sai-t" data-mv-nom="saison-${esc(s.k)}">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="ss-lead" aria-hidden="true"></span><span class="sai-n"><b>${rows.length}</b>${I_CHEV}</span></summary>
-        <div class="sai-corps">${ouv ? corps(s, rows) : ''}</div></details>`; };
+        <div class="sai-corps">${ouv && plein ? corps(s, rows) : ''}</div></details>`; };
     // les outils des saisons passées : les filtres actifs (pour les effacer), tout ouvrir ou tout fermer
     const outilsHtml = vis => {
       const tout = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
@@ -2152,8 +2153,11 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
       const dessineSaisons = () => {
         $$('.cm', racine).forEach(f => CARTES.delete(f.id));
         const vis = visibles();
-        sansAnimer(() => { racine.innerHTML = vis.map(saisonHtml).join(''); });
-        $$('.sai[open]', racine).forEach(brancherSaison);
+        // la première saison ouverte, tout de suite ; les autres quand on s'en approche (un filtre qui en ouvre dix ne retient
+        // pas le geste)
+        let premiere = true;
+        sansAnimer(() => { racine.innerHTML = vis.map(x => { const plein = premiere || !F.ouv.has(x.s.k); if (F.ouv.has(x.s.k)) premiere = false; return saisonHtml(x, plein); }).join(''); });
+        $$('.sai[open]', racine).forEach(dt => { if ($('.sai-corps', dt).firstElementChild) brancherSaison(dt); else paresseux(dt, () => { if (dt.isConnected && dt.open) remplir(dt); }); });
         outils.innerHTML = outilsHtml(vis);
         if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() });
       };
@@ -2198,7 +2202,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
       // ouvrir une saison passée et l'amener à l'écran (net : à l'arrivée par son adresse, sans glisser, le focus sur elle)
       const ouvrirSaison = (k, net = false) => {
         const dt = $(`#sai-${CSS.escape(k)}`, racine); if (!dt) return;
-        if (!dt.open) { dt.open = true; F.ouv.add(k); if (remplir(dt) && !net) deplier(dt); }
+        if (!dt.open) { dt.open = true; F.ouv.add(k); if (remplir(dt) && !net) deplier(dt); } else remplir(dt);
         dt.scrollIntoView({ behavior: net || !motionOK() ? 'auto' : 'smooth', block: 'start' });
         if (net) { const su = $('summary', dt); if (su) su.focus({ preventScroll: true }); }
       };

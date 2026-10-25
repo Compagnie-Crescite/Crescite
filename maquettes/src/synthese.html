@@ -2916,9 +2916,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const DOUBLE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l6 5 6-5M6 13l6 5 6-5"/></svg>';
   const DOUBLE_HAUT = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 11l6-5 6 5M6 18l6-5 6 5"/></svg>';
   // (pre : un préfixe de la clé de mouvement, quand la même ligne paraît deux fois dans la vue)
-  const ligneAgenda = (r, pre = '') => {
+  const ligneAgenda = (r, pre = '', sansTitre = false) => {
     const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne);
-    const titre = r.suite ? '' : sp ? `<a class="t" href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="t">${esc(r.titre)}</span>`;
+    const titre = r.suite || sansTitre ? '' : sp ? `<a class="t" href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="t">${esc(r.titre)}</span>`;
     const lieu = p.lieu ? (d.lien ? `<a class="ou" href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}</a>` : `<span class="ou">${esc(p.lieu)}</span>`) : '';
     return `<li data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(pre + r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''}${r.suite ? ' class="suite"' : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<time${d.iso ? ` datetime="${d.iso}"` : ''}><b>${esc(p.jour)}</b>${p.heure ? `<small>${esc(p.heure)}</small>` : ''}</time>`}<div class="qui">${titre}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${lieu}${details(d.details)}</div></li>`;
   };
@@ -3928,7 +3928,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const d1 = T.fin.toFixed(2), d2 = (T.fin + (s.lieuTemps ? .1 + mots(s.lieuTemps).length * .02 : 0)).toFixed(2);
     const sansDates = !s.statut && !pub.length, reservables = entree === 'voir' && !s.statut && RS && RS.dates(s.slug).length;
     // « voir » : l'invitation à réserver mène à la bande des dates (règle 17) ; la bande-annonce se lit plus bas (règle 18)
-    const cta = entree === 'voir' ? `${reservables ? `<button type="button" class="bu plein" data-va="rs-zone">${esc(L.reserver)}${BAS}</button>` : `<button type="button" class="bu plein" data-va="c-dates">${esc(sansDates ? L.lieuxDiffusion : L.dates)}${BAS}</button>`}${lienVideo(s)}`
+    const cta = !entree ? `<button type="button" class="bu plein" data-va="c-bilan">${esc(L.bilan)}${BAS}</button>${lienVideo(s)}`
+      : entree === 'voir' ? `${reservables ? `<button type="button" class="bu plein" data-va="rs-zone">${esc(L.reserver)}${BAS}</button>` : `<button type="button" class="bu plein" data-va="c-dates">${esc(sansDates ? L.lieuxDiffusion : L.dates)}${BAS}</button>`}${lienVideo(s)}`
       : entree === 'programmer' ? `<a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>${lienVideo(s)}`
       : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>`;
     const legende = carton && carton.legende, credit = carton && creditDe(s, carton);
@@ -3954,7 +3955,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       <span class="ut" aria-hidden="true">${esc(s.titre)}</span>
       ${S.entrees.filter(e => e.cle !== 'etablissement' || s.actionCulturelle).map(e => `<a href="#/spectacle/${s.slug}/${e.cle}" style="--ec:${e.couleur}"${e.cle === entree ? ' aria-current="page"' : ''}><span class="pt" aria-hidden="true"></span>${esc(e.court)}</a>`).join('')}
     </div><span class="u-progres" aria-hidden="true"></span></nav>`;
-  const sommaire = (s, entree, chap) => `<nav class="som" aria-label="${esc(`${s.titre} – ${E[entree].court}`)}">
+  const sommaire = (s, entree, chap) => `<nav class="som" aria-label="${esc(entree ? `${s.titre} – ${E[entree].court}` : s.titre)}">
       <ol class="som-l" id="som-l" hidden>${chap.map((c, i) => `<li><button type="button" data-c="${c.id}"><span class="n">${i + 1}</span>${esc(c.nom)}</button></li>`).join('')}</ol>
       <button type="button" class="som-b" aria-expanded="false" aria-controls="som-l"><span class="n" id="som-n">1/${chap.length}</span><span id="som-nom">${esc(chap[0].nom)}</span>${HAUT}</button>
     </nav>`;
@@ -3997,7 +3998,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const appel = s => `<section class="u-appel"><div class="wrap"><p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p><a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
   const carteTournee = (s, lieux, passe) => lieux.length || passe.length ? carte({ lieux, passe, titre: s.titre }) : carte({ titre: s.titre, classe: 'attente', interactif: false });
 
-  function ongletVoir(s, chap, pub) {
+  // la présentation d'un spectacle (l'onglet voir avant ses dates ; la page d'un spectacle fini la reprend) : le spectacle,
+  // son motif en grand, les photos et les citations, la vidéo
+  function presentationSp(s, chap) {
     const [a0, ...autres] = s.affirmations || [], sig = SIG[mo(s)] ? SIG[mo(s)](s) : '';
     let h = chapitre(chap, 'spectacle', L.leSpectacle, `<div class="wrap">
         <p class="u-eti">${petit(mo(s))}<span>${esc(L.leSpectacle)}</span>${s.duree ? `<span class="u-duree"${edS(s, 'duree')}>${esc(s.duree)}</span>` : ''}</p>
@@ -4021,6 +4024,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       h += chapitre(chap, 'photos', L.photos, `<div class="wrap"><h2 class="u-eti">${petit(mo(s))}${esc(L.photos)}</h2><div class="u-photos">${items.join('')}${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div></div>`);
     }
     h += videos(s, chap);
+    return h;
+  }
+  function ongletVoir(s, chap, pub) {
+    let h = presentationSp(s, chap);
     // les dates tout public et la carte ; sans date, les lieux de diffusion et les tournées passées
     const sp = CARTE.spectacle(s.slug), res = RS && !s.statut ? RS.dates(s.slug) : [];
     const av = sp.aVenir.map(x => ({ ...x, dates: x.dates.filter(d => !d.scolaire) })).filter(x => x.dates.length), vus = new Set(av.map(x => x.l));
@@ -4042,6 +4049,57 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         <figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div>`);
     else h += chapitre(chap, 'dates', L.lieuxDiffusion, `<div class="wrap"><div class="u-frise" data-tournee="${esc(s.slug)}"></div></div><div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>${P.lieux ? `<p class="u-lieux"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sansListe}</div>
         <figure class="carte-sp">${carteTournee(s, sp.passe, [])}</figure></div>`);
+    h += distribution(s, chap, 'voir');
+    return h;
+  }
+  /* ---------- la page d'un spectacle qui n'est plus en tournée (règle 21) : une seule page, sans onglets ----------
+     Sa présentation, puis le bilan de ses dates passées (sa phrase de D, ses chiffres tirés des données seules : ses dates,
+     ses communes, ses saisons ; la frise de sa tournée ; ses dates par saison, de la plus récente à la plus ancienne, à côté
+     d'une grande carte de tous ses lieux), les actions culturelles menées s'il y en a (un texte : sans lui, la rubrique ne
+     paraît pas) avec ses dates scolaires passées, et sa distribution. */
+  // ses dates passées, toutes saisons : [{ k, titre, rows }], la plus récente d'abord, et dans chaque saison de la plus récente
+  // à la plus ancienne (une ligne sans date reste à la suite de la sienne)
+  function datesPassees(s) {
+    return Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k)).sort().reverse().map(k => ({ k, titre: D.saisons[k].titre,
+      rows: lignesSaison(k).filter(r => r.g.slug === s.slug && (!r.k || r.k < D.aujourdhui)).sort((a, b) => a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i) })).filter(x => x.rows.length);
+  }
+  function bilanSp(s, chap, G) {
+    const P = s.programmer || {}, jouees = G.flatMap(g => g.rows).filter(r => !r.suite && !annulee(r.d)), T = CARTE.spectacle(s.slug);
+    const chiffres = [[jouees.length, L.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes],
+      [G.filter(g => g.rows.some(r => !r.suite && !annulee(r.d))).length, L.saisons]].filter(([n, l]) => n && l);
+    return chapitre(chap, 'bilan', L.bilan, `<div class="wrap">
+        <p class="u-eti">${petit(mo(s))}<span>${esc(L.bilan)}</span></p>
+        <h2 class="u-h2">${esc(L.bilan)}</h2>
+        ${P.representations ? `<p class="u-rep"${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</p>` : ''}
+        ${chiffres.length ? `<ul class="u-bilan-n">${chiffres.map(([n, l]) => `<li><b class="gros">${n}</b><span>${esc(l)}</span></li>`).join('')}</ul>` : ''}
+        <div class="u-frise" data-tournee="${esc(s.slug)}"></div>
+        <div class="u-bilan">
+          <div class="u-bilan-dates dates-sp">${G.map(g => `<section class="u-bilan-s"><h3 class="mois"><a href="#/saisons/${g.k}">${esc(g.titre)}</a> <small>${g.rows.filter(r => !r.suite).length}</small></h3><ul class="dates" data-agenda="${esc(s.slug)}">${g.rows.map(r => ligneAgenda(r, '', true)).join('')}</ul></section>`).join('')}</div>
+          <figure class="carte-sp carte-bilan">${carte({ lieux: T.passe, titre: s.titre, serre: true })}</figure>
+        </div>
+      </div>`);
+  }
+  // les actions culturelles menées : son action culturelle, seulement si elle a un texte (sans lui, « à compléter » : la rubrique
+  // ne paraît pas ici), et ses dates scolaires passées
+  function actionsMenees(s, chap, G) {
+    const A = s.actionCulturelle;
+    if (!A || A.aCompleter && !A.type || !(A.type || ['textes', 'formule', 'dispositifs'].some(k => (A[k] || []).length))) return '';
+    const ac = (...k) => edS(s, 'actionCulturelle', ...k), sco = G.flatMap(g => g.rows).filter(r => r.d.scolaire);
+    return chapitre(chap, 'actions', L.actionsMenees, `<div class="wrap">
+        <p class="u-eti">${petit(mo(s))}<span>${esc(L.actionsMenees)}</span></p>
+        ${A.type ? `<h2 class="u-ac-type"${ac('type')}>${esc(A.type)}</h2>` : `<h2 class="u-h2">${esc(L.actionsMenees)}</h2>`}
+        ${A.public || A.lieu || A.statut ? `<ul class="u-ac-puces">${A.public ? `<li><span class="k">${esc(L.public)}</span><span${ac('public')}>${esc(A.public)}</span></li>` : ''}${A.lieu && L.lieu[A.lieu] ? `<li>${esc(L.lieu[A.lieu])}</li>` : ''}${A.statut ? `<li${ac('statut')}>${esc(A.statut)}</li>` : ''}</ul>` : ''}
+        ${(A.textes || []).length ? `<div class="u-texte">${A.textes.map((t, i) => bloc(t.texte, `shows.${s.slug}.actionCulturelle.textes.${i}.texte`)).join('')}</div>` : ''}
+        ${A.formule && A.formule.length ? `<div class="u-formule">${A.formule.map((l, i) => `<p${ac('formule', i)}>${esc(l)}</p>`).join('')}</div>` : ''}
+        ${A.dispositifs && A.dispositifs.length ? `<div class="u-disp"><h3 class="u-eti">${esc(L.dispositifs)}</h3><ul>${A.dispositifs.map((x, i) => `<li${ac('dispositifs', i)}>${x}</li>`).join('')}</ul></div>` : ''}
+        ${sco.length ? `<h3 class="rubrique">${esc(L.enEtablissement)}</h3><ul class="dates" data-agenda="${esc(s.slug)}">${sco.map(r => ligneAgenda(r, 'a:', true)).join('')}</ul>` : ''}
+      </div>`);
+  }
+  function pageSeule(s, chap) {
+    const G = datesPassees(s);
+    let h = presentationSp(s, chap);
+    if (G.length) h += bilanSp(s, chap, G);
+    h += actionsMenees(s, chap, G);
     h += distribution(s, chap, 'voir');
     return h;
   }
@@ -4156,15 +4214,16 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     ouvDeja = !!surPlace || !!(courant && courant.chemin.startsWith(`spectacle/${slug}/`));
     const s = bySlug[slug], i = D.shows.indexOf(s), nx = D.shows[(i + 1) % D.shows.length];
     const pub = D.dates.filter(d => d.slug === slug && !d.scolaire);
-    retenir(entree);
+    // un spectacle qui n'est plus en tournée : une seule page, sans onglets (entree vaut null), et la mémoire de l'entrée reste
+    if (fini(s)) entree = null; else retenir(entree);
     nAlt = 0;
     const chap = [{ id: 'ouverture', nom: L.ouverture }];
-    const corps = entree === 'voir' ? ongletVoir(s, chap, pub) : entree === 'programmer' ? ongletProgrammer(s, chap) : ongletEtablissement(s, chap);
+    const corps = !entree ? pageSeule(s, chap) : entree === 'voir' ? ongletVoir(s, chap, pub) : entree === 'programmer' ? ongletProgrammer(s, chap) : ongletEtablissement(s, chap);
     main.innerHTML = `<article class="${uClasse(s)}" style="${uVars(s)}">
       ${ouverture(s, entree, pub)}
-      ${onglets(s, entree)}
+      ${entree ? onglets(s, entree) : ''}
       ${corps}
-      <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="${lienSp(nx.slug, entree)}" data-mv-nom="sp-${esc(nx.slug)}"><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span${edS(nx, 'creation')}>${esc(nx.creation)}</span></span><b${edS(nx, 'titre')}>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
+      <a class="suivant ${uClasse(nx)}" style="${uVars(nx)}" href="${lienSp(nx.slug, entree || 'voir')}" data-mv-nom="sp-${esc(nx.slug)}"><span class="wrap"><span class="suivant-c"><span class="u-sur">${petit(mo(nx))}<span${edS(nx, 'creation')}>${esc(nx.creation)}</span></span><b${edS(nx, 'titre')}>${esc(nx.titre)}</b></span>${FLECHE}</span></a>
       ${sommaire(s, entree, chap)}
     </article>`;
     // les cartes : reliées à la liste des dates, elles poussent quand elles arrivent à l'écran
@@ -4203,8 +4262,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       const ch = ft.closest('.chap'), svg = ch && $('.carte-sp svg', ch);
       const passees = Object.entries(D.saisons || {}).flatMap(([k, SA]) => { let n = 0; return (SA.spectacles || []).flatMap(g => (g.dates || []).map(d => {
         const i = n++; if (g.slug !== slug) return null; const p = repereLigne(d, k, i, slug, s.titre);
-        // une date passée mène à sa saison (la saison en cours se lit dans « Je viens voir un spectacle »)
-        return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? null : `#/saisons/${k}` }) : null; })); }).filter(Boolean);
+        // une date passée mène à sa saison (celle de la saison en cours, à la page des saisons)
+        return p && p.fin < D.aujourdhui ? Object.assign(p, { lien: k === D.saison ? ((menuDe('saisons') || {}).href || '#/saisons') : `#/saisons/${k}` }) : null; })); }).filter(Boolean);
       const pts = [...passees, ...D.dates.filter(d => d.slug === slug).map(repereProchaine)];
       // un repère de date réservable la choisit dans la bande (et y mène) ; les autres mènent à leur ligne
       const parFrise = new Map(RS && rsSp ? RS.dates(slug).map(d => [cleProchaine(d), RS.cle(d)]) : []);
@@ -4215,7 +4274,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     frisesDiffusion(main);
     secs = $$('[data-scrolly]', main);
     chaps = $$('#c-ouverture, .chap', main); chapK = -1;
-    return { titre: entree === 'voir' ? s.titre : `${s.titre} - ${E[entree].court}`, lecture: entree };
+    return { titre: !entree || entree === 'voir' ? s.titre : `${s.titre} - ${E[entree].court}`, lecture: entree || 'voir' };
   }
   function majSommaire(k) {
     const som = $('.som', main); if (!som || !chaps[k]) return;
