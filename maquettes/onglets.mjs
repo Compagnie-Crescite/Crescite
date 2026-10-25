@@ -1,5 +1,16 @@
-// Vérifie qu'une maquette se lit par les trois entrées, s'ouvre sur le logo, et n'affiche que le texte de ses sources.
+// Vérifie qu'une maquette se lit par son menu (les saisons, les spectacles, la compagnie, l'espace pro), s'ouvre sur le logo,
+// et n'affiche que le texte de ses sources.
 // Usage : node maquettes/onglets.mjs <dossier de sortie> m03 [m04 …]
+// Règle 21 (v4, la navigation par les saisons) : sur chaque vue, au bureau comme au téléphone, les quatre éléments du menu
+// (D.site.menu) sont à portée dans le premier écran, hors du contenu et sans ouvrir de menu ; un seul aria-current="page" (sur
+// l'élément du menu de la vue ; sur la page d'un spectacle, « les spectacles » est marqué aria-current="true", dans une
+// sous-page de l'espace pro, « l'espace pro ») ; les trois entrées ne sont plus ni dans l'en-tête ni dans le pied, ni sur
+// l'accueil. #/saisons : une date à venir (une date scolaire aussi, marquée), la frise de la saison (.frise[data-frise] : des
+// marques d'au moins trois couleurs, --fr-c pour FRISE, et la légende des titres écrite tout près), toutes les dates, puis les
+// saisons passées, fermées, chacune annoncée avec sa carte (un SVG de la France). #/saisons/<saison> : la même page, cette
+// saison ouverte et amenée à l'écran. La page d'un spectacle qui n'est plus en tournée : une seule page, aucun lien vers ses
+// onglets (nulle part vers ses onglets programmer et établissement), son bilan et une belle carte de ses tournées. Les deux
+// pages de l'espace pro (#/espace-pro/programmer reprend les contrôles de la règle 13). Les anciennes adresses redirigées.
 // Règle 15 : des frises chronologiques (FRISE, .frise[data-frise]) là où il y a un calendrier, aucune tentacule après un
 // clic ordinaire sur un lien du menu (TENTACULES.actives() === 0, sauf un lien déclaré data-moment) ; REACTIVITE=1 ajoute
 // les budgets de maquettes/reactivite.mjs (bureau et téléphone ralenti ×4). Le texte se lit même hors de l'écran
@@ -19,63 +30,89 @@ const { mesurer, depassements } = process.env.REACTIVITE === '1' ? await import(
 const [out, ...names] = process.argv.slice(2);
 const dist = new URL('./dist/', import.meta.url);
 // [vue, adresse, attendus : textes qui doivent être visibles (fonctions de D), interdits : textes qui ne doivent pas l'être]
+// (les fonctions se lisent dans la page : window.__propres(saison) y donne les précisions de dates qu'on ne lit que dans cette
+// saison, window.__passees(slug) celles des dates passées d'un spectacle ; voir plus bas, au chargement de chaque maquette)
 const VUES = [
   ['accueil', '#/'],
-  // voir : les prochaines dates tout public en haut, puis l'agenda passé, saison par saison (la plus récente d'abord),
-  // les saisons terminées refermées (leurs lignes ne se lisent pas tant qu'on ne les ouvre pas)
-  ['voir', '#/voir', D => [D.dates.find(d => !d.scolaire).details[0].texte, D.site.saisons.find(s => s.saison === '2019-2020').titre],
-    D => [...D.dates.filter(d => d.scolaire).map(d => d.details[0].texte),
-          ...D.saisons['2023-2024'].spectacles.flatMap(g => g.dates).map(d => (d.details[0] || {}).texte).filter(t => t && t.length > 30).slice(0, 3)]],
-  // programmer (règle 13) : le contact diffusion, le dossier PDF, les conditions financières sur demande
-  ['programmer', '#/programmer', D => [D.shows.find(s => s.slug === 'mon-royaume').programmer.representations, D.site.programmation.contact.nom,
-    D.site.libelles.contactDiffusion, D.site.libelles.dossierPdf, D.site.libelles.conditionsFinancieres]],
-  // établissement : rien de l'action culturelle masquée de Cassandres (règle 14)
-  ['etablissement', '#/etablissement', D => ['afin de participer à « l’école du spectateur »', D.shows.find(s => s.slug === 'berenice').actionCulturelle.type],
-    () => ['Lieux d’enseignement agronomique', 'Notre première intuition à ce stade du travail']],
+  // les saisons (règle 21) : le titre du menu, la saison en cours (ses prochaines dates, une date scolaire comprise et marquée ;
+  // toutes ses dates), puis les saisons passées, la plus récente d'abord, fermées (leurs lignes ne se lisent pas tant qu'on ne
+  // les ouvre pas : celles de 2023-2024 qu'on ne lit que là)
+  ['saisons', '#/saisons', D => { const L = D.site.libelles, pub = D.dates.find(d => !d.scolaire && (d.details || [])[0]), sco = D.dates.find(d => d.scolaire && (d.details || [])[0]);
+    return [D.site.menu[0].texte, D.site.saisons[0].titre, L.prochainesDates, L.toutesLesDates, L.saisonsPassees, pub && pub.details[0].texte,
+      sco && sco.details[0].texte, sco && L.scolaire, D.site.saisons.find(s => s.saison === '2019-2020').titre]; },
+    () => window.__propres('2023-2024', 3)],
+  // une saison passée (#/saisons/2019-2020) : la page des saisons, cette saison ouverte (ses lignes se lisent) et amenée à l'écran
+  ['saison-passee', '#/saisons/2019-2020', D => [D.site.saisons.find(s => s.saison === '2019-2020').titre, ...window.__propres('2019-2020', 2, 24)]],
   ['spectacles', '#/spectacles', D => D.shows.map(s => s.titreLignes[0])],
   ['compagnie', '#/compagnie', D => [D.site.compagnie.directeur.titre, 'Cassandre(s)']],
   ['contact', '#/contact', D => [D.site.contact.titre]],
+  // l'espace pro (règles 16 et 21) : son texte, ses deux pages (le « court » des entrées programmer et établissement), puis ses
+  // trois portes (les liens sont contrôlés à part)
+  ['espace-pro', '#/espace-pro', D => D.site.espacePro ? [D.site.espacePro.titre, D.site.espacePro.texte, ...D.site.espacePro.portes.flatMap(p => [p.titre, p.texte]),
+    ...D.site.entrees.filter(e => e.cle !== 'voir').map(e => e.court)] : []],
+  // programmer (règles 13 et 21) : le contact diffusion, le dossier PDF, les conditions financières sur demande ; aucune date
+  // tout public (elles sont dans les saisons)
+  ['pro-programmer', '#/espace-pro/programmer', D => [D.site.entrees.find(e => e.cle === 'programmer').texte, D.shows.find(s => s.slug === 'mon-royaume').programmer.representations,
+    D.site.programmation.contact.nom, D.site.libelles.contactDiffusion, D.site.libelles.dossierPdf, D.site.libelles.conditionsFinancieres],
+    D => D.dates.filter(d => !d.scolaire).map(d => ((d.details || [])[0] || {}).texte).filter(t => t && t.length > 30).slice(0, 2)],
+  // établissement : Macbeth « à compléter », rien de l'action culturelle masquée de Cassandres (règle 14)
+  ['pro-etablissement', '#/espace-pro/etablissement', D => [D.site.entrees.find(e => e.cle === 'etablissement').texte, 'afin de participer à « l’école du spectateur »',
+    D.shows.find(s => s.slug === 'berenice').actionCulturelle.type, D.site.libelles.aCompleter],
+    () => ['Lieux d’enseignement agronomique', 'Notre première intuition à ce stade du travail']],
   ['berenice-voir', '#/spectacle/berenice/voir', D => ['Rome, an 79.']],
   ['berenice-programmer', '#/spectacle/berenice/programmer', D => ['100 à 120 places', D.site.libelles.dossierPdf, D.site.programmation.contact.email]],
-  // une fiche technique déposée (document) se lit en lien ; sans fiche (Macbeth), « Fiche technique sur demande »
+  // une fiche technique déposée (document) se lit en lien ; sans fiche (Cassandres, en création), « Fiche technique sur demande »
   ['cleophene-programmer', '#/spectacle/cleophene/programmer', D => [D.site.libelles.dossierPdf,
     ...D.documents.filter(d => d.spectacle === 'cleophene' && d.pour === 'pros').map(d => d.titre)]],
-  ['macbeth-programmer', '#/spectacle/macbeth-fatum/programmer', D => [D.site.libelles.ficheTechniqueSurDemande, D.site.libelles.dossierPdf]],
+  ['cassandres-programmer', '#/spectacle/cassandres/programmer', D => [D.site.libelles.dossierPdf,
+    D.documents.some(d => d.spectacle === 'cassandres' && d.type === 'fiche_technique') ? null : D.site.libelles.ficheTechniqueSurDemande]],
   ['berenice-etablissement', '#/spectacle/berenice/etablissement', D => ['Atelier de préparation', 'À partir de la seconde']],
   ['cleophene-etablissement', '#/spectacle/cleophene/etablissement', D => ['parcours du spectateur']],
-  ['macbeth-etablissement', '#/spectacle/macbeth-fatum/etablissement', D => [D.site.libelles.aCompleter]],
   ['cassandres', '#/spectacle/cassandres/voir', D => ['Spectacle en création']],
-  ['saison', '#/agenda/2019-2020', D => [D.site.saisons.find(s => s.saison === '2019-2020').titre]],
+  // un spectacle qui n'est plus en tournée (règle 21) : une seule page, sans onglets ; sa présentation, son bilan (ses dates
+  // passées, sa carte), les actions culturelles menées s'il y en a (leur type, leur texte), jamais « à compléter »
+  ['la-folle-idee', '#/spectacle/la-folle-idee', D => { const L = D.site.libelles, ac = D.shows.find(s => s.slug === 'la-folle-idee').actionCulturelle || {};
+    const brut = h => String(h || '').split(/<[^>]+>/).map(x => x.trim()).sort((a, b) => b.length - a.length)[0];
+    return [L.bilan, ac.type || (ac.textes || []).length ? L.actionsMenees : null, ac.type, (ac.textes || [])[0] && brut(ac.textes[0].texte), ...window.__passees('la-folle-idee', 3)]; },
+    D => [D.site.libelles.aCompleter]],
+  ['macbeth', '#/spectacle/macbeth-fatum', D => [D.site.libelles.bilan, ...window.__passees('macbeth-fatum', 2)],
+    D => { const ac = D.shows.find(s => s.slug === 'macbeth-fatum').actionCulturelle || {}, texte = ac.type || ['textes', 'formule', 'dispositifs'].some(k => (ac[k] || []).length);
+      return [D.site.libelles.aCompleter, texte ? null : D.site.libelles.actionsMenees]; }],
   ['mentions', '#/mentions-legales'],
-  // l'espace pro (règle 16) : son texte et ses trois portes (leurs liens sont contrôlés à part)
-  ['espace-pro', '#/espace-pro', D => D.site.espacePro ? [D.site.espacePro.titre, D.site.espacePro.texte, ...D.site.espacePro.portes.flatMap(p => [p.titre, p.texte])] : []],
 ];
-// les anciennes adresses et l'adresse d'un spectacle sans entrée : où elles doivent mener
+// les anciennes adresses et les adresses d'un spectacle sans onglet : où elles doivent mener
 // (#/espace-pro n'est plus redirigé vers programmer : c'est la page de l'espace pro, règle 16)
-const REDIRECTIONS = [['#/agenda', /^#\/voir$/], ['#/actions-culturelles', /^#\/etablissement$/],
+const REDIRECTIONS = [['#/voir', /^#\/saisons$/], ['#/agenda', /^#\/saisons$/], ['#/programmer', /^#\/espace-pro\/programmer$/],
+  ['#/etablissement', /^#\/espace-pro\/etablissement$/], ['#/actions-culturelles', /^#\/espace-pro\/etablissement$/],
+  ['#/agenda/2019-2020', /^#\/saisons\/2019-2020$/],
   ['#/spectacle/mon-royaume', /^#\/spectacle\/mon-royaume\/(voir|programmer|etablissement)$/],
   // un spectacle sans action culturelle n'a pas d'onglet établissement (règle 14)
-  ['#/spectacle/cassandres/etablissement', /^#\/spectacle\/cassandres\/voir$/]];
-// les vues où une entrée du menu doit être marquée aria-current="page" (une seule)
-const ONGLETS = ['voir', 'programmer', 'etablissement', 'spectacles', 'compagnie', 'contact'];
-// les trois entrées, à portée de main en haut de ces vues (sans ouvrir de menu)
-const ENTREES = ['#/voir', '#/programmer', '#/etablissement'];
-const A_PORTEE = ['spectacles', 'compagnie', 'berenice-voir'];
+  ['#/spectacle/cassandres/etablissement', /^#\/spectacle\/cassandres\/voir$/],
+  // un spectacle qui n'est plus en tournée n'a qu'une page (règle 21) : ses anciens onglets y mènent, et la mémoire de l'onglet
+  // ne s'y applique pas
+  ['#/spectacle/la-folle-idee/programmer', /^#\/spectacle\/la-folle-idee$/], ['#/spectacle/la-folle-idee/voir', /^#\/spectacle\/la-folle-idee$/],
+  ['#/spectacle/macbeth-fatum/etablissement', /^#\/spectacle\/macbeth-fatum$/], ['#/spectacle/la-folle-idee', /^#\/spectacle\/la-folle-idee$/]];
+// règle 21 : l'élément du menu (sa clé dans D.site.menu) marqué dans chaque vue : aria-current="page" sur les vues du menu, « true »
+// dans les vues qui en dépendent (la page d'un spectacle : « spectacles », ajouté plus bas ; une sous-page de l'espace pro) ;
+// les autres vues (accueil, contact, mentions) ne marquent aucun élément du menu
+const COURANT = { saisons: ['saisons', 'page'], 'saison-passee': ['saisons', 'page'], spectacles: ['spectacles', 'page'], compagnie: ['compagnie', 'page'],
+  'espace-pro': ['espacePro', 'page'], 'pro-programmer': ['espacePro', 'true'], 'pro-etablissement': ['espacePro', 'true'] };
 // ce qui a disparu : le mot de passe de l'ancien espace pro et les anciens libellés des portes (« Espace pro » est revenu,
 // règle 16 : une page de trois portes, sans mot de passe)
 const DISPARUS = ['mot de passe', 'je programme', 'je fais venir dans mon établissement'];
 // les seuls libellés permis hors de D (voir le contrat)
 const PERMIS = ['Accueil', 'Menu', 'Rouen', 'Aller au contenu', 'Fermer'];
-// règle 15 D : les frises chronologiques attendues (au moins tant) dans ces vues
-const FRISES = { voir: 2, saison: 1, 'berenice-voir': 1, etablissement: 1, compagnie: 1, programmer: 1 };
+// règle 15 D : les frises chronologiques attendues (au moins tant) dans ces vues (les saisons : celle de la saison en cours et
+// celle des saisons passées ; la page d'un spectacle qui n'est plus en tournée : la frise de sa tournée, dans son bilan)
+const FRISES = { saisons: 2, 'saison-passee': 2, 'berenice-voir': 1, 'pro-etablissement': 1, compagnie: 1, 'pro-programmer': 1, 'la-folle-idee': 1, macbeth: 1 };
 // ------------------------------------------------------------------------------------------------ règle 17 (REGLE17=1)
 // Réserver une date, d'un geste. Sur une page de spectacle qui a des dates à venir (Ci-gisait Cyrano en a beaucoup) et sur
-// #/voir : des boutons de date [data-reserver] (des <button aria-pressed>) qui écrivent leurs heures (celles de D, sinon
+// #/saisons (ses prochaines dates, règle 21) : des boutons de date [data-reserver] (des <button aria-pressed>) qui écrivent leurs heures (celles de D, sinon
 // libelles.horaireAPreciser) et leur commune ; aucun bouton pour une date scolaire, passée ou annulée ; un seul choisi ; la
 // carte de la date choisie [data-reserver-carte] : un lien libelles.reserver vers une adresse http(s) de la date, en nouvel
 // onglet (rel noopener), quand la date en a une dans D, sinon libelles.reservationAupresDuLieu sans bouton ; ses liens ne
 // mènent qu'aux adresses de la date dans D ; choisir change la carte sur place (même vue, même position) ; au clavier, la
-// flèche passe au bouton suivant et Entrée le choisit (Échap referme la carte d'une ligne de #/voir) ; au téléphone, la
+// flèche passe au bouton suivant et Entrée le choisit (Échap referme la carte d'une ligne de #/saisons) ; au téléphone, la
 // bande défile, aimantée.
 const ETAT17 = `(() => {
   const L = D.site.libelles, auj = D.aujourdhui, http = u => typeof u === 'string' && /^https?:\\/\\//i.test(u);
@@ -117,10 +154,10 @@ async function regle17(page, tag, log) {
   const pose = async () => { let y = -1; for (let i = 0; i < 20; i++) { const z = await page.evaluate(() => scrollY); if (z === y) return; y = z; await page.waitForTimeout(150); } };
   const toucher = async k => { const l = page.locator(`main [data-reserver="${k}"]`).first(); await l.scrollIntoViewIfNeeded(); await pose(); await l.scrollIntoViewIfNeeded();
     const y1 = await page.evaluate(() => scrollY); await l.click(); await page.waitForTimeout(450); return Math.abs((await page.evaluate(() => scrollY)) - y1); };
-  for (const [vue, hash] of [['ci-gisait-cyrano-voir', '#/spectacle/ci-gisait-cyrano/voir'], ['voir', '#/voir']]) {
+  for (const [vue, hash] of [['ci-gisait-cyrano-voir', '#/spectacle/ci-gisait-cyrano/voir'], ['saisons', '#/saisons']]) {
     await page.evaluate(h => { location.hash = h; }, hash);
     await page.waitForTimeout(1000);
-    const liste = vue === 'voir';
+    const liste = vue === 'saisons';
     let e = await etat();
     e.pb.forEach(p => log.push(`${pfx} ${vue} : ${p}`));
     if (e.n < 2) { log.push(`${pfx} ${vue} : ${e.n} bouton(s) de date [data-reserver] au lieu d'au moins 2`); continue; }
@@ -153,7 +190,7 @@ async function regle17(page, tag, log) {
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
       e = await etat();
-      if (e.cartes.length || e.choisis.length) log.push(`${pfx} voir : Échap ne referme pas la carte (${JSON.stringify(e.cartes)})`);
+      if (e.cartes.length || e.choisis.length) log.push(`${pfx} ${vue} : Échap ne referme pas la carte (${JSON.stringify(e.cartes)})`);
     }
     if (tag === 'tab') log.push(`· règle 17 ${vue} : ${e.n} boutons de date, dont ${e.avecLien.length} avec un lien de réservation`);
   }
