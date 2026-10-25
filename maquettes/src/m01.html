@@ -739,6 +739,9 @@ main{display:block;min-height:100svh}   /* sa place est gardée pendant la lectu
 .pli{position:fixed;z-index:35;top:0;height:100vh;left:0;width:min(30vw,360px);pointer-events:none;opacity:0;
   background:linear-gradient(to right,transparent 0,color-mix(in srgb,var(--ink) 3%,transparent) 50%,color-mix(in srgb,var(--ink) 9%,transparent) 92%,transparent 100%)}
 .pli-retour{transform:scaleX(-1)}
+/* pendant que la feuille retombe, son bord levé (plus près de l'œil) dépasse un peu de l'écran : la page ne s'élargit pas pour lui
+   (au téléphone, elle ne se dézoome pas d'un rien le temps du geste) */
+html.m-tourne,html.m-tourne body{overflow-x:clip}
 /* le filet de la rubrique où l'on lit, tiré à la règle sous son libellé, à l'encre de la saison (règle 22) ; celui d'une page qui
    en dépend (un spectacle, une page de l'espace pro : aria-current="true"), d'un trait fin ; au survol, un trait fin sous le mot */
 .rub a::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--logo);transform:scaleX(0);transform-origin:0 50%;transition:transform .46s var(--m-regle)}
@@ -3137,6 +3140,7 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
   let feuille = [];
   const finir = () => { const a = feuille; feuille = []; a.forEach(x => { try { x.finish(); } catch (err) { /* déjà finie */ } }); };
   ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(t => addEventListener(t, () => { if (feuille.length) finir(); }, { capture: true, passive: true }));
+  let tourneEn = null;   // la feuille qui retombe (html.m-tourne tant qu'elle n'est pas posée)
   function tourner(sens) {
     finir();
     if (!bouge() || !main.animate) return;
@@ -3156,6 +3160,11 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
     const fin = () => pli.remove();
     feuille[1].onfinish = fin; feuille[1].oncancel = fin;
     feuille[0].onfinish = () => { main.style.transformOrigin = ''; };
+    // le bord levé ne fait pas déborder la page (html.m-tourne) : jusqu'à ce que cette feuille-ci soit posée
+    const a0 = feuille[0];
+    tourneEn = a0; document.documentElement.classList.add('m-tourne');
+    const posee = () => { if (tourneEn !== a0) return; tourneEn = null; document.documentElement.classList.remove('m-tourne'); };
+    a0.addEventListener('finish', posee); a0.addEventListener('cancel', posee);
   }
   /* après le rendu : les filets des rubriques se tireront à la règle, les intertitres s'encreront, les fiches s'imprimeront
      l'une après l'autre (MOUVEMENT.reveler) ; rien ne bouge quand la vue est refaite en place */
