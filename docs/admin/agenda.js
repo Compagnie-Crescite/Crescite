@@ -9,7 +9,7 @@
    AGENDA.court('2026-12-18', noms)      { semaine: 'ven.', jour: '18', mois: 'déc.', an: '2026', texte: 'ven. 18 déc.' } : un
                                          bouton de date (réserver) ; noms = { semaine, mois } pour d'autres libellés (D.site.libelles)
                                          que AGENDA.SEMAINE (lun. … dim.) et AGENDA.MOIS_COURTS (janv. … déc.)
-   date = {debut, fin, precision: 'jour'|'periode'|'mois'|'saison', intitule, details, lien, nb_representations}
+   date = {debut, fin, precision: 'jour'|'periode'|'mois'|'saison', intitule, details, lien, nb_representations, nature}
    reps = [{jour, heure, public, annulee}], lieu = {nom, commune, departement} */
 const AGENDA = (() => {
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -73,6 +73,8 @@ const AGENDA = (() => {
   // les précisions sous la ligne, quand l'administration n'en a pas écrit : « 14h et 20h : représentations au Forum »
   function precisions(date, reps, lieu) {
     if (date.details && date.details.length) return date.details;
+    // une semaine de résidence (nature « residence ») : ni séance ni représentation, le lieu qui l'accueille
+    if (date.nature === 'residence') return [{ texte: `Résidence ${chez(lieu?.nom)}`.trim(), lien: date.lien || null }];
     const vivantes = reps.filter(r => !r.annulee);
     if (!vivantes.length && !lieu?.nom) return [];
     const avecHeure = vivantes.filter(r => r.heure);

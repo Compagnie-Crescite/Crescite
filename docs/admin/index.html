@@ -1390,7 +1390,9 @@ async function ecrireChiffres(id, F) {
   if (error) { error.message = `La date est enregistrée, mais pas ses chiffres : ${error.message}`; throw error; }
   E.chiffres = (E.chiffres || []).filter(x => x.date_id !== id).concat(vide ? [] : [{ ...chiffresDe(id), ...ligne }]);
 }
-// la nature d'une date (le troisième script SQL) : seules les représentations vont sur le site
+// la nature d'une date (le troisième script SQL) : les représentations et les résidences vont sur le site (le douzième
+// script : une résidence se montre ou non, comme une représentation) ; les répétitions et les dates « autre » restent pour l'équipe
+const PUBLIABLE = n => ['representations', 'residence'].includes(n || 'representations');
 const NATURES_DATE = [['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidence'], ['autre', 'Autre']];
 const zoneNeuve = sel => { const a = $(sel), z = a.cloneNode(false); a.replaceWith(z); return z; };
 let ouvertureMuette = false;     // après un enregistrement, l'éditeur se redessine : la tentacule s'enroule autour du bouton, elle ne se déroule pas
@@ -1411,9 +1413,9 @@ function editeurDate(id, depart = null) {
       <div class="champ"><span class="lib">Statut</span><div class="seg" role="group" aria-label="Statut">${[['option', 'Option'], ['confirmee', 'Confirmée'], ['annulee', 'Annulée'], ['reportee', 'Reportée']].map(([k, l]) => `<button type="button" data-statut="${k}" aria-pressed="${F.statut === k}">${l}</button>`).join('')}</div>
         <span class="aide">Une option n’apparaît jamais sur le site.</span></div></div>
       ${E.sql3 ? `<div class="champ"><span class="lib">Nature</span><div class="seg" role="group" aria-label="Nature de la date">${NATURES_DATE.map(([k, l]) => `<button type="button" data-nature="${k}" aria-pressed="${(F.nature || 'representations') === k}">${l}</button>`).join('')}</div>
-        <span class="aide" id="d-nature-aide">Seules les représentations vont sur le site ; répétitions et résidences ne sont que pour l’équipe.</span></div>` : ''}
+        <span class="aide" id="d-nature-aide">Les représentations et les résidences vont sur le site (une résidence y est marquée « Résidence », sans réservation) ; les répétitions et les autres dates ne sont que pour l’équipe.</span></div>` : ''}
       <div class="champ"><span class="lib">Lieu</span><div id="d-lieu"></div><div id="d-lieu-fiche"></div></div>
-      <label class="case"><input type="checkbox" id="d-visible"${F.visible && (F.nature || 'representations') === 'representations' ? ' checked' : ''}${(F.nature || 'representations') === 'representations' ? '' : ' disabled'}> Publiée sur le site</label></div>
+      <label class="case"><input type="checkbox" id="d-visible"${F.visible && PUBLIABLE(F.nature) ? ' checked' : ''}${PUBLIABLE(F.nature) ? '' : ' disabled'}> Publiée sur le site</label></div>
 
     <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
       <table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th></th></tr></thead><tbody id="d-reps"></tbody></table>
@@ -1529,10 +1531,10 @@ function editeurDate(id, depart = null) {
     if (st) { F.statut = st.dataset.statut; $$('[data-statut]', zone).forEach(b => b.setAttribute('aria-pressed', b === st)); changer(); return; }
     const na = t.closest('[data-nature]');
     if (na) {
-      // une répétition, une résidence : jamais sur le site (la base le garantit aussi)
+      // une répétition, une date « autre » : jamais sur le site (la base le garantit aussi) ; une résidence peut y aller
       F.nature = na.dataset.nature; $$('[data-nature]', zone).forEach(b => b.setAttribute('aria-pressed', b === na));
       const rep = F.nature === 'representations', v = $('#d-visible');
-      v.disabled = !rep; if (!rep) { v.checked = false; F.visible = false; }
+      v.disabled = !PUBLIABLE(F.nature); if (v.disabled) { v.checked = false; F.visible = false; }
       $('#d-reps-titre').textContent = rep ? 'Représentations' : 'Séances';
       changer(); return;
     }
@@ -1581,7 +1583,7 @@ function chargeDate(F, d0, libre = !!(F.intitule || '').trim()) {
     // la nature et l'heure de fin : seulement quand la base les a (troisième script SQL)
     ...(E.sql3 ? { nature: F.nature || 'representations' } : {}),
   };
-  if (E.sql3 && charge.nature !== 'representations') charge.visible = false;
+  if (E.sql3 && !PUBLIABLE(charge.nature)) charge.visible = false;
   return charge;
 }
 // ce qui manque à une date pour s'enregistrer (une phrase), ou ''
@@ -1798,7 +1800,7 @@ const TABLEUR = (() => {
       html: x => (x.d.statut === 'confirmee' ? 'Confirmée' : `<span class="badge ${x.d.statut === 'annulee' ? 'annulee' : 'option'}">${esc(libelleDe(STATUTS, x.d.statut))}</span>`),
       lire: lireChoix(STATUTS), ecrire: (F, x, v) => { F.statut = v; } },
     { k: 'nature', l: 'Nature', niveau: 'date', type: 'choix', si: () => E.sql3, choix: () => NATURES_DATE, val: x => nature(x.d), texte: x => libelleDe(NATURES_DATE, nature(x.d)),
-      lire: lireChoix(NATURES_DATE), ecrire: (F, x, v) => { F.nature = v; if (v !== 'representations') F.visible = false; } },
+      lire: lireChoix(NATURES_DATE), ecrire: (F, x, v) => { F.nature = v; if (!PUBLIABLE(v)) F.visible = false; } },
     { k: 'distribution', l: 'Distribution', niveau: 'date', type: 'equipe', si: () => E.equipeInstallee, val: x => equipeIds(x.d),
       texte: x => equipeIds(x.d).map(id => nomDe(personne(id))).filter(Boolean).join(', '),
       // des pastilles sur une ligne : autant qu'il en tient, puis « +n »
