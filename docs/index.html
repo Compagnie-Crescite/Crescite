@@ -66,7 +66,8 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
 .plan .ouverture small { color: var(--gris-clair); }
 .entrees { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
 .entrees li { padding: 10px 12px; border-radius: 10px; background: var(--fond); border-top: 4px solid var(--c); font-weight: 700; line-height: 1.25; }
-.entrees .voir { --c: #bc3e80; } .entrees .prog { --c: #b08a1e; } .entrees .etab { --c: #1f7a70; }
+/* le menu : « Saisons » à la couleur de la saison (règle 22 ; aujourd'hui le bleu de Cassandres) */
+.entrees .saisons { --c: var(--saison, #1f3a73); } .entrees .spectacles { --c: #b08a1e; } .entrees .compagnie { --c: #1f7a70; } .entrees .pro { --c: #5a5560; }
 .second { list-style: none; margin: 12px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--filet); display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .second li { padding: 4px 11px; border-radius: 999px; border: 1px solid var(--filet); font-size: .85rem; font-weight: 600; }
 .flux { counter-reset: etape; list-style: none; }
@@ -122,6 +123,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
 @media (max-width: 900px) { .barre .titre { display: none; } }
 @media (max-width: 700px) { .taille { display: none; } }
 </style>
+<style>:root { --saison: #1f3a73; }</style>
 </head>
 <body>
 <header class="barre">
@@ -205,10 +207,11 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   }));
 
   /* À propos : le mode d'emploi de la maquette affichée, en quelques parties courtes, chacune avec son schéma */
-  // les nouveautés qu'une maquette a déjà en ligne (réserver une date, les vidéos dans la page, le jour et la nuit, la
-  // troupe) : le mode d'emploi n'en parle que là
-  const TOUT = ['reserver', 'videos', 'jour', 'troupe'];
-  const AVEC = { m01: TOUT, m02: TOUT, m03: TOUT, m08: TOUT, m09: TOUT, m10: TOUT, synthese: TOUT };
+  // les nouveautés qu'une maquette a déjà en ligne (réserver une date, les vidéos dans la page, la troupe) : le mode
+  // d'emploi n'en parle que là ; les onze les ont toutes aujourd'hui. (Le jour et la nuit : retirés du site public, qui
+  // n'a plus que son thème sombre.)
+  const TOUT = ['reserver', 'videos', 'troupe'];
+  const AVEC = Object.fromEntries(TOUTES.map(m => [m.n, TOUT]));
   const a = (m, f) => (AVEC[m.n] || []).includes(f);
   const etapes = l => `<ol class="schema flux">${l.map(x => `<li>${x}</li>`).join('')}</ol>`;
   function remplirInfos() {
@@ -217,30 +220,31 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     parties.push(['Naviguer', `<div class="schema plan">
         <p class="ouverture">Le logo en grand<small>un clic, la molette ou glisser vers le bas ouvre le site</small></p>
         <span class="trait" aria-hidden="true"></span>
-        <ul class="entrees" aria-label="Les trois entrées">
-          <li class="voir">Voir un spectacle<small>les prochaines dates, la carte, tout l’agenda</small></li>
-          <li class="prog">Programmer<small>le contact, le catalogue, les dossiers, les fiches techniques</small></li>
-          <li class="etab">Établissement scolaire<small>les actions culturelles, les dossiers scolaires</small></li>
+        <ul class="entrees" aria-label="Le menu">
+          <li class="saisons">Saisons<small>la saison en cours, ses dates à réserver, sa carte ; puis les saisons passées</small></li>
+          <li class="spectacles">Les spectacles<small>chacun dans son univers ; ceux qui ne tournent plus, avec leur bilan</small></li>
+          <li class="compagnie">La compagnie<small>la présentation, la troupe</small></li>
+          <li class="pro">Espace pro<small>programmer, les établissements scolaires, les espaces réservés</small></li>
         </ul>
-        <ul class="second" aria-label="Et aussi"><li>Spectacles</li><li>La compagnie</li><li>Contact</li><li>Espace pro</li></ul>
+        <ul class="second" aria-label="Et aussi, en bas de page"><li>Contact</li><li>Mentions légales</li></ul>
       </div>
       <ul class="points">
-        <li>Les trois entrées sont en tête de chaque page. Au téléphone, elles restent à portée de pouce ; le reste est dans le menu.</li>
-        <li>Chaque spectacle a sa page, dans son univers, avec un onglet par entrée.</li>
+        <li>Le menu est en tête de chaque page. Au téléphone, il reste à portée de pouce, en bas de l’écran.</li>
+        <li>Un spectacle en tournée a sa page, dans son univers, avec un onglet pour le public, un pour les programmateurs et un pour les établissements scolaires. Un spectacle qui ne tourne plus a une seule page : son bilan et la carte de ses tournées.</li>
         <li>Chaque page a son adresse : on peut la copier et l’envoyer.</li>
       </ul>`]);
     parties.push(['Trouver une date', `${a(m, 'reserver') ? etapes([
-        '<b>Choisir une date</b> sur la page du spectacle : un bouton par date, avec ses heures et sa ville.',
+        '<b>Choisir une date</b> dans « Saisons » ou sur la page du spectacle : un bouton par date, avec ses heures et sa ville.',
         '<b>La carte de la date</b> s’ouvre dessous : le lieu, les séances.',
         '<b>« Réserver »</b> ouvre la billetterie du théâtre, dans un nouvel onglet.']) : ''}
       <ul class="points">
-        <li>« Voir un spectacle » : les prochaines dates tout public et leur carte, puis l’agenda depuis 2016, saison par saison. Une saison passée s’ouvre d’un clic.</li>
-        <li>Le filtre par spectacle et la recherche par ville portent sur tout l’agenda.</li>
+        <li>« Saisons » : la saison en cours (sa frise, ses prochaines dates, toutes ses dates et sa carte), puis les saisons passées depuis 2016, chacune avec sa carte. Une saison passée s’ouvre d’un clic.</li>
+        <li>Les spectacles de la légende servent de filtre ; la recherche par ville porte sur tout l’agenda.</li>
         ${a(m, 'reserver') ? '' : '<li>Les dates de la saison renvoient à la page du théâtre qui les accueille.</li>'}
       </ul>`]);
-    if (a(m, 'videos') || a(m, 'jour') || a(m, 'troupe')) parties.push(['Regarder', `<ul class="points">
+    if (a(m, 'videos') || a(m, 'troupe')) parties.push(['Regarder', `<ul class="points">
         ${a(m, 'videos') ? '<li>Les vidéos se lisent dans la page : « Plein écran », et « Assombrir », qui éteint le reste de la page.</li>' : ''}
-        ${a(m, 'jour') ? '<li>Le bouton du soleil et de la lune, en haut, passe le site en jour ou en nuit ; le choix est gardé.</li>' : ''}
+        <li>Le site est en thème sombre, sur toutes ses pages.</li>
         ${a(m, 'troupe') ? '<li>« La compagnie » présente toute la troupe, par métiers.</li>' : ''}
       </ul>`]);
     parties.push(['Modifier le site', `${etapes([
@@ -303,15 +307,15 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     { cle: 'accueil', titre: 'Le premier écran de l’accueil', quoi: 'ce qu’on voit juste après l’ouverture', route: '#/' },
     { cle: 'defile', titre: 'Les spectacles en descendant l’accueil', quoi: 'faites défiler l’accueil : la façon de présenter les spectacles un à un, et leurs prochaines dates', route: '#/' },
     { cle: 'menu', titre: 'Le menu', quoi: 'l’en-tête, et la barre du téléphone', route: '#/spectacles' },
-    { cle: 'saisons', titre: 'Les saisons', quoi: 'les prochaines dates, l’agenda de la saison, sa carte', route: '#/voir' },
-    { cle: 'passees', titre: 'Les saisons passées', quoi: 'chaque saison et sa petite carte', route: '#/agenda/2023-2024' },
+    { cle: 'saisons', titre: 'Saisons', quoi: 'la saison en cours : sa frise, ses prochaines dates, sa carte', route: '#/saisons' },
+    { cle: 'passees', titre: 'Les saisons passées', quoi: 'chaque saison et sa petite carte', route: '#/saisons/2023-2024' },
     { cle: 'spectacles', titre: 'La page des spectacles', quoi: 'tous les spectacles, chacun dans son univers', route: '#/spectacles' },
     { cle: 'univers', titre: 'L’univers d’un spectacle', quoi: 'la page d’un spectacle en tournée (Bérénice)', route: '#/spectacle/berenice/voir' },
     { cle: 'reserver', titre: 'Réserver une date', quoi: 'les dates d’un spectacle et la carte de réservation (Ci-gisait Cyrano)', route: '#/spectacle/ci-gisait-cyrano/voir' },
     { cle: 'bilan', titre: 'Un spectacle qui n’est plus en tournée', quoi: 'La Folle Idée : sa présentation et ses dates passées', route: '#/spectacle/la-folle-idee' },
     { cle: 'compagnie', titre: 'La compagnie et la troupe', quoi: 'la présentation, la troupe, les repères', route: '#/compagnie' },
     { cle: 'pro', titre: 'L’espace pro', quoi: 'programmer, établissements scolaires, espaces réservés', route: '#/espace-pro' },
-    { cle: 'allure', titre: 'L’allure générale', quoi: 'les caractères, les couleurs, le jour et la nuit', route: '#/' },
+    { cle: 'allure', titre: 'L’allure générale', quoi: 'les caractères, les couleurs du thème sombre', route: '#/' },
     { cle: 'mouvement', titre: 'Le mouvement', quoi: 'les passages d’une page à l’autre, les effets', route: '#/' },
   ];
   const CLE_CHOIX = 'crescite-composition', CLE_NOTES = 'crescite-composition-notes';

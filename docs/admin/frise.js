@@ -613,8 +613,9 @@ const FRISE = (() => {
     function relier() {
       if (R.liste) {
         const sur = e => { const n = e.target.closest && e.target.closest('[data-frise-id], [data-date-id]'); if (!n || el.contains(n)) return; const id = n.getAttribute('data-frise-id') || n.getAttribute('data-date-id'); if (id) allumer(id, { liste: false }); };
-        ecoute(R.liste, 'pointerover', sur, { passive: true });
-        ecoute(R.liste, 'focusin', sur, { passive: true });
+        // un toucher (son pointerover) ou un focus posé à la souris n'allument rien : le survol et le clavier, si
+        ecoute(R.liste, 'pointerover', e => { if (e.pointerType !== 'touch') sur(e); }, { passive: true });
+        ecoute(R.liste, 'focusin', e => { if (!e.target.matches || e.target.matches(':focus-visible')) sur(e); }, { passive: true });
         ecoute(R.liste, 'pointerleave', () => { if (!survole) eteindre(); }, { passive: true });
       }
       if (R.carte && typeof R.carte !== 'function') {
