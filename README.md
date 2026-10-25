@@ -319,7 +319,9 @@ une vérification : les tables du projet, hors compagnie, qu'un compte connecté
 sont aussi ceux du site adrienvada.fr.
 
 **Remplir.** `python3 supabase/equipe.py` importe `data/equipe.json` : les 39 personnes et la distribution de chaque
-spectacle, d'après les fiches de crescite.fr et, pour Cassandres, le dossier artistique (distribution non publiée). Il
+spectacle, d'après les fiches de crescite.fr et, pour Cassandres, le dossier artistique (distribution non publiée). Les
+dates passées dont l'équipe n'était pas la distribution d'aujourd'hui (`historique` : Bérénice avant 2023, L'imaginaire
+forcé avant 2026) reçoivent leur équipe d'alors, date par date (qui n'y jouait pas encore, qui y jouait). Il
 ajoute un déroulé type de journée de représentation par spectacle et les liens vers les textes d'origine du domaine
 public (Wikisource). `--photos` envoie les portraits trouvés en ligne (`private/photos/equipe/`, avec leur source et leur
 crédit dans un registre privé) : ne sont montrés d'office que les vrais portraits dont la page source cite la compagnie

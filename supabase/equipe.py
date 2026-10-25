@@ -6,7 +6,8 @@
     python3 supabase/equipe.py --dossiers    aussi le dossier scolaire de Bérénice, dans le stockage privé « crescite-equipe »
 
 Ce qu'il importe : data/equipe.json (les personnes et la distribution de chaque spectacle, d'après les fiches de
-crescite.fr et, pour Cassandres, le dossier artistique), un déroulé type de journée de représentation pour chaque
+crescite.fr et, pour Cassandres, le dossier artistique ; l'équipe des dates passées quand elle n'était pas la
+distribution d'aujourd'hui, écrite date par date), un déroulé type de journée de représentation pour chaque
 spectacle qui n'en a pas, et pour chaque spectacle tiré d'un texte du domaine public un lien vers ce texte sur
 Wikisource. Il n'écrase rien : une fiche, une distribution, un déroulé ou un document déjà là reste tel quel (le travail
 de l'administration prime). Les photos ne remplacent pas une photo déjà choisie.
@@ -67,6 +68,29 @@ def lignes_equipe(spectacles):
     return personnes, distributions
 
 
+def lignes_historique(spectacles, ids, dates):
+    """L'équipe des dates passées qui ne suivaient pas la distribution d'aujourd'hui (data/equipe.json → historique) :
+    pour chaque date d'une période, qui n'y jouait pas (absent) et qui y jouait (présent, au jeu)."""
+    lignes = []
+    for slug, periodes in EQUIPE.get("historique", {}).items():
+        if slug.startswith("_") or slug not in spectacles:
+            continue
+        for d in (x for x in dates if x["spectacle_id"] == spectacles[slug]):
+            for p in periodes:
+                if p.get("depuis", "") <= d["debut"] < p["avant"]:
+                    lignes += [{"date_id": d["id"], "personne_id": ids[s], "present": False, "fonction": None, "note": None}
+                               for s in p.get("absents", [])]
+                    lignes += [{"date_id": d["id"], "personne_id": ids[s], "present": True, "fonction": "jeu", "note": None}
+                               for s in p.get("presents", [])]
+    return lignes
+
+
+def dates_historique(spectacles):
+    """Les dates des spectacles qui ont un historique d'équipe."""
+    sps = [str(spectacles[s]) for s in EQUIPE.get("historique", {}) if s in spectacles]
+    return api("GET", f"/rest/v1/crescite_dates?select=id,spectacle_id,debut&spectacle_id=in.({','.join(sps)})&order=id") if sps else []
+
+
 def main():
     essai = "--essai" in sys.argv
     try:
@@ -83,12 +107,18 @@ def main():
     registre = json.loads((PHOTOS / "registre.json").read_text(encoding="utf-8")) if (PHOTOS / "registre.json").exists() else []
     photos = [r for r in registre if r.get("fichier") and (PHOTOS / Path(r["fichier"]).name).exists()]
     if essai:
+        try:
+            historique = lignes_historique(spectacles, {p["slug"]: p["id"] for p in api("GET", "/rest/v1/crescite_personnes?select=id,slug")},
+                                           dates_historique(spectacles))
+        except (ErreurAPI, KeyError):
+            historique = []   # pas encore d'équipe dans la base : les fiches n'ont pas d'identifiant
         out = ROOT / "maquettes" / "dist" / "import-equipe.json"
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps({"personnes": personnes, "distributions": distributions, "deroules": deroules,
-                                   "documents": docs, "photos": photos}, ensure_ascii=False, indent=1), encoding="utf-8")
+                                   "documents": docs, "photos": photos, "historique": historique}, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"essai : {len(personnes)} fiches, {len(distributions)} lignes de distribution, {len(deroules)} déroulés types, "
-              f"{len(docs)} liens vers les textes, {len(photos)} photos ; rien n'est écrit, détail dans {out.relative_to(ROOT)}")
+              f"{len(docs)} liens vers les textes, {len(photos)} photos, {len(historique)} lignes d'historique des équipes ; "
+              f"rien n'est écrit, détail dans {out.relative_to(ROOT)}")
         return
 
     # les fiches : seulement celles qui manquent
@@ -106,7 +136,13 @@ def main():
     nouveaux = [d for d in docs if (d["spectacle_id"], d["url"]) not in deja]
     if nouveaux:
         api("POST", "/rest/v1/crescite_documents", nouveaux, {"Prefer": "return=minimal"})
-    print(f"{len(ids)} fiches, {len(lignes)} lignes de distribution, {len(deroules)} déroulés types, {len(nouveaux)} liens vers les textes")
+    # l'historique des équipes : une date que l'administration a déjà réglée pour cette personne reste telle quelle
+    historique = lignes_historique(spectacles, ids, dates_historique(spectacles))
+    if historique:
+        api("POST", "/rest/v1/crescite_equipes?on_conflict=date_id,personne_id", historique,
+            {"Prefer": "resolution=ignore-duplicates,return=minimal"})
+    print(f"{len(ids)} fiches, {len(lignes)} lignes de distribution, {len(deroules)} déroulés types, {len(nouveaux)} liens vers les textes, "
+          f"{len(historique)} lignes d'historique des équipes")
 
     if "--photos" in sys.argv:
         actuelles = {p["slug"]: p["photo"] for p in api("GET", "/rest/v1/crescite_personnes?select=slug,photo")}
