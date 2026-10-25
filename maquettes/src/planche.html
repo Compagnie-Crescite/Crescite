@@ -107,6 +107,10 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
 .bilan-choix .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .bilan-choix .discret { background: none; border: 1px solid rgba(255, 255, 255, .35); }
 .bilan-choix [role="status"] { font-size: .86rem; color: var(--gris-clair); }
+.note-choix { display: grid; gap: 3px; margin-top: 8px; font-size: .8rem; font-weight: 700; color: var(--gris); }
+.note-choix textarea { width: 100%; min-height: 36px; resize: vertical; padding: 7px 10px; border: 1px solid var(--filet); border-radius: 8px; background: var(--fond); color: var(--encre); font: 400 .9rem/1.35 var(--sans); }
+.note-choix.sombre { margin: 0 0 12px; color: var(--gris-clair); }
+.note-choix.sombre textarea { background: var(--nuit-2); border-color: rgba(255, 255, 255, .25); color: var(--clair); }
 /* au téléphone, le tableau se replie en barre pendant qu'on regarde la partie choisie */
 .compo.replie { top: auto; width: 100%; padding: 10px 14px; box-shadow: 0 -12px 40px rgba(0, 0, 0, .35); }
 .compo.replie .barre-regard { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
@@ -294,21 +298,27 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
   /* Composer : pour chaque partie du site, regarder ce qu'en fait chaque maquette, puis garder celle qu'on préfère. Les
      choix restent sur cet appareil ; « Copier mes choix » en fait un texte à envoyer pour assembler le site final. */
   const PARTIES = [
-    { cle: 'ouverture', titre: 'L’ouverture sur le logo', quoi: 'l’écran d’introduction, avant le site', route: '' },
-    { cle: 'accueil', titre: 'L’accueil', quoi: 'la première page, après l’ouverture', route: '#/' },
-    { cle: 'saisons', titre: 'Les saisons', quoi: 'la saison en cours, ses prochaines dates, la frise, toutes les dates', route: '#/saisons' },
-    { cle: 'passees', titre: 'Les saisons passées', quoi: 'chaque saison et sa petite carte, sur la même page', route: '#/saisons/2023-2024' },
-    { cle: 'spectacles', titre: 'La présentation des spectacles', quoi: 'la page « Les spectacles »', route: '#/spectacles' },
+    { cle: 'ouverture', titre: 'L’ouverture', quoi: 'le logo, la pieuvre qui apparaît, avant le site', route: '' },
+    { cle: 'accueil', titre: 'Le premier écran de l’accueil', quoi: 'ce qu’on voit juste après l’ouverture', route: '#/' },
+    { cle: 'defile', titre: 'Les spectacles en descendant l’accueil', quoi: 'faites défiler l’accueil : la façon de présenter les spectacles un à un, et leurs prochaines dates', route: '#/' },
+    { cle: 'menu', titre: 'Le menu', quoi: 'l’en-tête, et la barre du téléphone', route: '#/spectacles' },
+    { cle: 'saisons', titre: 'Les saisons', quoi: 'les prochaines dates, l’agenda de la saison, sa carte', route: '#/voir' },
+    { cle: 'passees', titre: 'Les saisons passées', quoi: 'chaque saison et sa petite carte', route: '#/agenda/2023-2024' },
+    { cle: 'spectacles', titre: 'La page des spectacles', quoi: 'tous les spectacles, chacun dans son univers', route: '#/spectacles' },
     { cle: 'univers', titre: 'L’univers d’un spectacle', quoi: 'la page d’un spectacle en tournée (Bérénice)', route: '#/spectacle/berenice/voir' },
-    { cle: 'reserver', titre: 'Réserver une date', quoi: 'les dates d’un spectacle et sa carte de réservation', route: '#/spectacle/ci-gisait-cyrano/voir' },
-    { cle: 'bilan', titre: 'Un spectacle qui n’est plus en tournée', quoi: 'sa présentation et le bilan de ses dates (La Folle Idée)', route: '#/spectacle/la-folle-idee' },
+    { cle: 'reserver', titre: 'Réserver une date', quoi: 'les dates d’un spectacle et la carte de réservation (Ci-gisait Cyrano)', route: '#/spectacle/ci-gisait-cyrano/voir' },
+    { cle: 'bilan', titre: 'Un spectacle qui n’est plus en tournée', quoi: 'La Folle Idée : sa présentation et ses dates passées', route: '#/spectacle/la-folle-idee' },
     { cle: 'compagnie', titre: 'La compagnie et la troupe', quoi: 'la présentation, la troupe, les repères', route: '#/compagnie' },
     { cle: 'pro', titre: 'L’espace pro', quoi: 'programmer, établissements scolaires, espaces réservés', route: '#/espace-pro' },
+    { cle: 'allure', titre: 'L’allure générale', quoi: 'les caractères, les couleurs, le jour et la nuit', route: '#/' },
+    { cle: 'mouvement', titre: 'Le mouvement', quoi: 'les passages d’une page à l’autre, les effets', route: '#/' },
   ];
-  const CLE_CHOIX = 'crescite-composition';
+  const CLE_CHOIX = 'crescite-composition', CLE_NOTES = 'crescite-composition-notes';
   const lireChoix = () => { try { return JSON.parse(localStorage.getItem(CLE_CHOIX)) || {}; } catch { return {}; } };
   const garderChoix = c => { try { localStorage.setItem(CLE_CHOIX, JSON.stringify(c)); } catch { /* le choix reste le temps de la visite */ } };
-  let choix = lireChoix(), regard = null;   // regard : la partie et la maquette affichées depuis le tableau
+  const lireNotes = () => { try { return JSON.parse(localStorage.getItem(CLE_NOTES)) || {}; } catch { return {}; } };
+  const garderNotes = c => { try { localStorage.setItem(CLE_NOTES, JSON.stringify(c)); } catch { /* la note reste le temps de la visite */ } };
+  let choix = lireChoix(), notes = lireNotes(), regard = null;   // regard : la partie et la maquette affichées depuis le tableau
   const compo = $('#compo'), boutonCompo = $('#bouton-compo');
   const nomDe = n => { const m = LISTE.find(x => x.n === n); return m ? `${num(m)} · ${m.nom}` : n; };
   function regarder(cle, n) {
@@ -322,8 +332,10 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     remplirCompo();
   }
   function texteChoix() {
-    const lignes = PARTIES.filter(pa => choix[pa.cle]).map(pa => `- ${pa.titre} : ${nomDe(choix[pa.cle])}`);
-    return lignes.length ? `Mes choix pour le site de Crescite :\n${lignes.join('\n')}` : '';
+    const lignes = PARTIES.filter(pa => choix[pa.cle] || (notes[pa.cle] || '').trim()).map(pa =>
+      `- ${pa.titre} : ${choix[pa.cle] ? nomDe(choix[pa.cle]) : 'pas de maquette choisie'}${(notes[pa.cle] || '').trim() ? ` (${notes[pa.cle].trim()})` : ''}`);
+    const autre = (notes._autre || '').trim();
+    return lignes.length || autre ? `Mes choix pour le site de Crescite :\n${lignes.join('\n')}${autre ? `\nEt aussi : ${autre}` : ''}` : '';
   }
   const etroit = () => matchMedia('(max-width: 899px)').matches;
   function remplirCompo() {
@@ -337,7 +349,7 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     }
     compo.innerHTML = `<button class="fermer" type="button" id="fermer-compo">Fermer</button>
       <h2 id="compo-titre">Composer le site</h2>
-      <p>Pour chaque partie, touchez une maquette pour voir ce qu’elle en fait, puis gardez celle que vous préférez.</p>
+      <p>Pour chaque élément, touchez une maquette pour voir ce qu’elle en fait, puis gardez celle que vous préférez. La note dit ce que vous en gardez exactement.</p>
       ${PARTIES.map(pa => {
         const vue = regard && regard.cle === pa.cle;
         return `<section class="partie${vue ? ' vue' : ''}" aria-labelledby="pa-${pa.cle}"><h3 id="pa-${pa.cle}">${esc(pa.titre)}</h3>
@@ -345,12 +357,14 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
           <div class="pastilles" role="group" aria-label="${esc(pa.titre)} : les maquettes">${LISTE.map(m => `<button type="button" data-voir="${pa.cle}|${m.n}"${choix[pa.cle] === m.n ? ' class="choisie"' : ''}${vue && regard.n === m.n ? ' aria-current="true"' : ''} title="${esc(num(m) + ' · ' + m.nom)}">${esc(num(m))}</button>`).join('')}</div>
           <div class="garder"><button type="button" data-garder="${pa.cle}"${vue ? '' : ' disabled'}>${vue ? (regard.n === 'synthese' ? 'Garder la synthèse' : `Garder la ${esc(regard.n.slice(1))}`) : 'Garder'}</button>
             <span class="choix">${choix[pa.cle] ? `Choisie : ${esc(nomDe(choix[pa.cle]))}` : 'Pas encore choisie'}</span></div>
+          <label class="note-choix"><span>Note</span><textarea rows="1" data-note="${pa.cle}" placeholder="ce que vous en gardez, ce qu’il faut changer…">${esc(notes[pa.cle] || '')}</textarea></label>
         </section>`;
       }).join('')}
       <section class="bilan-choix" aria-labelledby="bilan-choix-titre"><h3 id="bilan-choix-titre">Mes choix (${faits.length} sur ${PARTIES.length})</h3>
         ${faits.length ? `<ol>${faits.map(pa => `<li>${esc(pa.titre)} : ${esc(nomDe(choix[pa.cle]))}</li>`).join('')}</ol>` : '<p>Aucun pour l’instant.</p>'}
-        <div class="actions"><button type="button" id="copier-choix"${faits.length ? '' : ' disabled'}>Copier mes choix</button>
-          <button type="button" class="discret" id="effacer-choix"${faits.length ? '' : ' disabled'}>Tout effacer</button>
+        <label class="note-choix sombre"><span>Et aussi</span><textarea rows="2" data-note="_autre" placeholder="tout ce que vous voulez ajouter">${esc(notes._autre || '')}</textarea></label>
+        <div class="actions"><button type="button" id="copier-choix">Copier mes choix</button>
+          <button type="button" class="discret" id="effacer-choix"${faits.length || Object.values(notes).some(x => (x || '').trim()) ? '' : ' disabled'}>Tout effacer</button>
           <span role="status" id="etat-choix"></span></div>
       </section>`;
     $('#fermer-compo').addEventListener('click', () => basculerCompo(false));
@@ -360,12 +374,17 @@ body { display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-col
     if (v) { const [cle, n] = v.dataset.voir.split('|'); if (etroit()) compo.classList.add('replie'); regarder(cle, n); (compo.querySelector(`[data-voir="${cle}|${n}"]`) || compo.querySelector('[data-garder]'))?.focus(); return; }
     if (e.target.closest('#revoir-tableau')) { compo.classList.remove('replie'); remplirCompo(); compo.querySelector(`[data-voir="${regard.cle}|${regard.n}"]`)?.focus(); return; }
     if (g && regard && regard.cle === g.dataset.garder) { choix[regard.cle] = regard.n; garderChoix(choix); compo.classList.remove('replie'); remplirCompo(); compo.querySelector(`[data-garder="${g.dataset.garder}"]`)?.focus(); return; }
-    if (e.target.closest('#effacer-choix')) { choix = {}; garderChoix(choix); remplirCompo(); return; }
+    if (e.target.closest('#effacer-choix')) { choix = {}; notes = {}; garderChoix(choix); garderNotes(notes); remplirCompo(); return; }
     if (e.target.closest('#copier-choix')) {
       const t = texteChoix(), etat = $('#etat-choix');
+      if (!t) { etat.textContent = 'Choisissez d’abord une maquette, ou écrivez une note.'; return; }
       try { await navigator.clipboard.writeText(t); etat.textContent = 'Copié : collez-le dans votre message.'; }
       catch { etat.textContent = ''; prompt('Copiez ce texte :', t); }
     }
+  });
+  compo.addEventListener('input', e => {
+    const n = e.target.closest('[data-note]'); if (!n) return;
+    notes[n.dataset.note] = n.value; garderNotes(notes);
   });
   function basculerCompo(ouvrir) {
     compo.hidden = !ouvrir;
