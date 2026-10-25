@@ -117,8 +117,15 @@ Ce qui change page par page :
 - `python3 maquettes/build.py synthese` puis `EDITION=1 REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 node maquettes/onglets.mjs
   <sortie> synthese` : 19 vues, **aucune anomalie** (texte des sources, menu, frises, redirections, réservation, vidéos,
   nuit, troupe, 360 px).
-- `node maquettes/reactivite.mjs <sortie> synthese`, avant et après, dans le même environnement (un conteneur partagé, plus
-  lent que le poste de `GRAPHISME.md`) : voir le compte rendu de la branche pour les chiffres ; tous les budgets tenus.
+- `node maquettes/reactivite.mjs <sortie> synthese`, la base puis la branche, dans le même environnement (un conteneur
+  partagé, plus lent que le poste de `GRAPHISME.md`, d'où des chiffres qui bougent d'une mesure à l'autre) :
+  - bureau : INP max 88 → 80 ms (budget 100 ; « carte de spectacle », l'arrivée sur la page d'un spectacle : 80 → 80 ms),
+    contenu max 96 → 102 ms (budget 150), CLS 0 ;
+  - téléphone ralenti ×4 : INP max 144 → 144 ms (budget 200), contenu max 347 → 323 ms, CLS 0 ;
+  - un seul budget dépassé, sur la base comme sur la branche : une tâche de 52 → 67 ms pendant « menu spectacles » (le
+    sommaire de la 08, que la branche ne touche pas ; budget 50 ms).
+  La première version allumait les mots par une animation chacun : l'arrivée sur la page d'un spectacle montait à 104 ms ;
+  une animation par bloc (`--lit`, `@property`) la ramène au niveau de la base.
 - Captures avant / après aux mêmes hauteurs de défilement, bureau et téléphone ; sondes des valeurs (`--p`, `--r`, `--q`,
   l'opacité des mots, les bras poussés, l'étape lue, la sortie de l'ouverture, le bandeau du suivant).
 
