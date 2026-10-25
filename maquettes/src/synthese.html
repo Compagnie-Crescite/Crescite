@@ -134,7 +134,6 @@ img { display: block; max-width: 100%; }
 .barre a[aria-current="true"] { border-color: var(--ec); background: color-mix(in srgb, var(--ev) 14%, var(--papier)); }
 /* le menu par les saisons (règle 21) est toute la navigation : sans menu second, ni lui ni le bouton « Menu » */
 .top.sans-second .second, .top.sans-second .menu { display: none !important; }
-@media (max-width: 759px) { .top.sans-second .theme { margin-left: auto; } }
 
 /* ———— blocs communs ———— */
 section.bloc { padding: clamp(48px, 7vw, 96px) 0; border-top: 1px solid var(--filet); }
@@ -743,16 +742,6 @@ html[data-theme="nuit"] .tr-li.tr-queue::before { background-image: url("data:im
 @keyframes tr-trace { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 @keyframes tr-tete { from { opacity: 0; scale: .86; } to { opacity: 1; scale: 1; } }
 @keyframes tr-respire { 0%, 100% { scale: 1; } 50% { scale: 1.025; } }
-/* le jour et la nuit (règle 19, THEME) : le bouton, au bout de l'en-tête ; le soleil, et la nuit une lune au clair chaud */
-.theme-place { display: contents; }
-.theme { flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; margin: 0; padding: 0; border: 1px solid var(--filet); border-radius: 50%;
-  background: transparent; color: var(--encre); cursor: pointer; transition: background .18s, border-color .18s, color .18s, scale .12s; }
-.theme:hover { border-color: var(--encre); color: var(--magenta-texte); }
-.theme .theme-icone { width: 21px; height: 21px; }
-.theme.mv-presse { scale: .9; transition-duration: .06s; }
-html[data-theme="nuit"] .theme { color: #f3d9a4; }
-html[data-theme="nuit"] .theme .theme-icone { filter: drop-shadow(0 0 6px rgba(243, 217, 164, .45)); }
-html[data-theme="nuit"] .theme:hover { color: #fff1cf; border-color: #f3d9a4; }
 
 /* ———— le contact, les pages légales ———— */
 .champ { margin: 0 0 16px; }
@@ -1713,7 +1702,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   <nav class="entrees" id="entrees"></nav>
   <button class="menu" type="button" aria-expanded="false" aria-controls="second"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14"/></svg><span id="menu-t"></span></button>
   <nav class="second" id="second"></nav>
-  <span class="theme-place" id="theme-place"></span>
 </div></header>
 <nav class="barre" id="barre"></nav>
 <main id="main" tabindex="-1"></main>
@@ -4348,12 +4336,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     };
     // les couleurs des spectacles, et celles de la saison (règle 22 : le thème, relu dans D à chaque changement)
     const couleurs = couleursSp() + couleursSaison();
-    const tout = JSON.stringify(parts) + S.titreSuffixe + L.menu + (L.modeNuit || '') + couleurs;
+    const tout = JSON.stringify(parts) + S.titreSuffixe + L.menu + couleurs;
     if (tout === cadreFait) return;
     cadreFait = tout;
     feuilleSp.textContent = couleurs;
-    // le jour et la nuit (THEME, règle 19) : le bouton, au bout de l'en-tête, sur toutes les vues et au téléphone
-    $('#theme-place').innerHTML = typeof THEME !== 'undefined' && L.modeNuit ? THEME.bouton({ libelle: L.modeNuit, classe: 'theme' }) : '';
     $('#marque').innerHTML = D.logo.mark;
     $('#nom').textContent = S.titreSuffixe;
     $('.marque').setAttribute('aria-label', S.titreSuffixe);
