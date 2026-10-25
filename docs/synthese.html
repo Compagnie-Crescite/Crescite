@@ -264,7 +264,7 @@ img { display: block; max-width: 100%; }
 
 /* le motif : une onde qui s'enroule au bout, sous les titres ; elle se dessine à l'arrivée */
 .trait { display: block; width: 92px; height: 16px; margin-top: 10px; overflow: visible; }
-.trait path { fill: none; stroke: var(--c, var(--magenta)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; }
+.trait path { fill: none; stroke: var(--c, var(--saison-texte)); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; }
 .page-titre .trait path, .une .trait path, .et .trait path { animation: dessine 1.1s .15s cubic-bezier(.45, 0, .2, 1) both; }
 @keyframes dessine { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
 
@@ -341,13 +341,13 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .carte .encart { fill: none; stroke: var(--gris); stroke-opacity: .5; stroke-dasharray: 3 4; }
 .carte.serre { overflow: hidden; }
 .carte .passe path { fill: none; stroke: color-mix(in srgb, var(--encre) 22%, transparent); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linecap: round; }
-.carte .bras-trait { fill: none; stroke: var(--kc, var(--magenta)); stroke-width: 1.3px; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: .85; }
+.carte .bras-trait { fill: none; stroke: var(--kc, var(--saison-texte)); stroke-width: 1.3px; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: .85; }
 .carte .m { fill: none; stroke: #fff; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .9s cubic-bezier(.45, 0, .2, 1) var(--d, 0s); }
 .carte.pousse .m { stroke-dashoffset: 0; }
-.carte .bras { fill: var(--kc, var(--magenta)); }
-.carte .bout { fill: none; stroke: var(--kc, var(--magenta)); stroke-width: 1.7; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .5s ease-out calc(var(--d, 0s) + .7s); }
+.carte .bras { fill: var(--kc, var(--saison-texte)); }
+.carte .bout { fill: none; stroke: var(--kc, var(--saison-texte)); stroke-width: 1.7; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .5s ease-out calc(var(--d, 0s) + .7s); }
 .carte.pousse .bout { stroke-dashoffset: 0; }
-.carte .point { fill: var(--kc, var(--magenta)); stroke: var(--papier); stroke-width: 1.2; opacity: 0; transition: opacity .3s calc(var(--d, 0s) + .6s); }
+.carte .point { fill: var(--kc, var(--saison-texte)); stroke: var(--papier); stroke-width: 1.2; opacity: 0; transition: opacity .3s calc(var(--d, 0s) + .6s); }
 .carte.pousse .point { opacity: 1; }
 /* une carte de beaucoup de communes : ses points paraissent avec elle (un seul fondu composé), pas un par un */
 .carte.simple .point { opacity: 1; transition: none; }
@@ -359,6 +359,9 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .carte .rouen { fill: var(--encre); }
 .carte .rouen-nom, .carte .nom { font: italic 500 calc(16px * var(--k, 1)) var(--serif); fill: var(--encre); paint-order: stroke; stroke: var(--papier); stroke-width: calc(4px * var(--k, 1)); stroke-linejoin: round; }
 .carte .nom { display: none; font: 600 calc(13px * var(--k, 1)) var(--sans); }
+/* (« Rouen » un peu à l'écart de son point, qui bat quand la carte attend : la même distance à l'écran, quelle que soit la
+   taille de la carte) */
+.carte .rouen-nom { transform: translate(calc(4px * var(--k, 1)), calc(-3px * var(--k, 1))); }
 .carte .nom.on { display: inline; }
 .carte.attente .rouen { transform-box: fill-box; transform-origin: center; animation: battement 2.2s ease-in-out infinite; }
 @keyframes battement { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.9); } }
@@ -651,11 +654,11 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .saisons-liste a { display: block; text-decoration: none; }
 .vignette { display: block; width: 100%; height: auto; }
 .vignette use { fill: var(--carte); }
-.vignette path { fill: none; stroke: var(--magenta); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 1 1; }
+.vignette path { fill: none; stroke: var(--saison-texte); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 1 1; }
 .saisons-liste a:hover .vignette path { animation: dessine 1s ease-out both; }
 .vignette circle { fill: var(--encre); }
 .saisons-liste span { display: block; margin-top: 6px; font: italic 500 1.05rem/1.25 var(--serif); }
-.saisons-liste a:hover span { color: var(--magenta-texte); }
+.saisons-liste a:hover span { color: var(--saison-texte); }
 
 /* une saison passée, comme sa page d'origine */
 .sa-sp { padding: 0 0 26px; }
@@ -688,7 +691,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .sai { border-bottom: 1px solid var(--filet); scroll-margin-top: calc(var(--haut) + 74px); }
 .sai > summary { display: grid; grid-template-columns: clamp(76px, 10vw, 128px) minmax(0, 1fr) auto; align-items: center; gap: 4px clamp(14px, 2.4vw, 30px); padding: 16px 8px; list-style: none; cursor: pointer; border-radius: 8px; transition: background .16s; }
 .sai > summary::-webkit-details-marker { display: none; }
-.sai > summary:hover, .sai[open] > summary { background: color-mix(in srgb, var(--magenta) 6%, transparent); }
+.sai > summary:hover, .sai[open] > summary { background: color-mix(in srgb, var(--saison-texte) 6%, transparent); }
 .sai > summary:hover .vignette path { animation: dessine 1s ease-out both; }
 .sai-t { margin: 0; font: italic 500 clamp(1.45rem, 1.15rem + 1vw, 2.1rem)/1.1 var(--serif); }
 .sai-sp { display: block; margin-top: 5px; color: var(--gris); font-size: .9rem; line-height: 1.4; }
@@ -704,11 +707,11 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .sai-liste > .mois:first-child { margin-top: 0; }
 .sai-liste .dates { margin-top: 8px; }
 .dates a.ou { text-decoration-color: color-mix(in srgb, var(--encre) 30%, transparent); text-underline-offset: 3px; }
-.dates a.ou:hover { color: var(--magenta-texte); }
+.dates a.ou:hover { color: var(--saison-texte); }
 .dates .qui .etat { margin: 0 0 0 4px; }
 .dates > li.suite { display: block; color: var(--gris); }
 .sai-page { margin: 22px 0 0; }
-.sai-page a { display: inline-flex; align-items: center; gap: 8px; color: var(--magenta-texte); font-weight: 600; text-decoration: none; }
+.sai-page a { display: inline-flex; align-items: center; gap: 8px; color: var(--saison-texte); font-weight: 600; text-decoration: none; }
 .sai-page a:hover { text-decoration: underline; }
 
 /* ———— je souhaite programmer ———— */
@@ -1573,7 +1576,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 #v-tournee .fus { content-visibility: auto; contain-intrinsic-size: auto 1100px; }
 
 /* ———— les frises (FRISE), sur le papier de la synthèse ———— */
-.frise[data-frise] { --fr-fond: var(--papier); --fr-encre: var(--encre); --fr-trait: color-mix(in srgb, var(--encre) 26%, transparent); --fr-accent: var(--magenta-vif);
+.frise[data-frise] { --fr-fond: var(--papier); --fr-encre: var(--encre); --fr-trait: color-mix(in srgb, var(--encre) 26%, transparent); --fr-accent: var(--saison-texte);
   --fr-police: var(--sans); --fr-bulle-fond: var(--encre); --fr-bulle-encre: var(--papier); --fr-point: 11px; --fr-couloir: 17px; }
 .frise .frise-mois-nom { font: italic 500 .92rem/1.1 var(--serif); }
 .frise .frise-an { font: 500 .72rem/1.3 var(--sans); letter-spacing: .06em; }
@@ -1582,7 +1585,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .frise .frise-bulle b { font: italic 500 1.08rem/1.2 var(--serif); }
 .frise .frise-grappe-n { font-family: var(--sans); }
 .v-frise, .sa-frise, .e-frise { margin: 0 0 26px; }
-.dates > li.est-allume, .sa-dates > li.est-allume, .prochaines li.est-allume a { background: color-mix(in srgb, var(--magenta) 9%, transparent); }
+.dates > li.est-allume, .sa-dates > li.est-allume, .prochaines li.est-allume a { background: color-mix(in srgb, var(--saison-texte) 9%, transparent); }
 .carte .carte-lieu.est-allume .point { stroke: var(--encre); stroke-width: 2.4; }
 /* la frise des saisons : chaque saison et sa densité, au-dessus de l'agenda passé */
 .ag-index { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 10px 18px; padding: 8px 0 12px; }
@@ -1590,12 +1593,16 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .idx-outils { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; padding-bottom: 34px; }
 .idx-outils ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .frise-saisons { --fr-bande-h: 38px; --fr-haut: 18px; --fr-pied: 30px; }
-.frise-saisons .frise-bande-barre { background: var(--magenta); border-radius: 2px 2px 0 0; }
+.frise-saisons .frise-bande-barre { background: var(--fr-c, var(--saison-texte)); border-radius: 2px 2px 0 0; }
 .frise-saisons .frise-bande.est-passe .frise-bande-barre { opacity: .55; }
 .frise-saisons .frise-bande:hover .frise-bande-barre, .frise-saisons .frise-bande.est-allume .frise-bande-barre { opacity: 1; }
 .frise-saisons .frise-bande-n { font: 600 .72rem var(--sans); }
 .frise-saisons .frise-bande-nom { font: 500 .7rem var(--sans); color: var(--gris); }
-.sai.est-allume > summary { background: color-mix(in srgb, var(--magenta) 8%, transparent); }
+/* (sur la page d'une saison passée, la frise des saisons marque la sienne) */
+.sa-idx { margin: 0 0 clamp(22px, 3.4vw, 36px); }
+.frise-saisons .frise-bande.est-ici .frise-bande-barre { opacity: 1; }
+.frise-saisons .frise-bande.est-ici .frise-bande-nom { color: var(--saison-texte); font-weight: 700; }
+.sai.est-allume > summary { background: color-mix(in srgb, var(--saison-texte) 8%, transparent); }
 /* la diffusion d'un spectacle, saison par saison (programmer) */
 .prog-frise { margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--u-filet); }
 .prog-frise .k, .u-diff .k { margin: 0 0 2px; font: 600 .76rem/1.4 var(--u-etiq); letter-spacing: .13em; text-transform: uppercase; color: var(--u-vif); }
@@ -7192,7 +7199,7 @@ const TENTACULES = (() => {
       ${rac && rac.length ? `<ul class="et-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}
       ${apres}
     </div></section>`;
-  const saisonsBande = (actuelle, id = 's-saisons') => `<nav class="saisons" id="${id}" aria-labelledby="${id}-h"><div class="wrap"><h2 class="titre-bloc" id="${id}-h">${esc(L.saisonsPrecedentes)}</h2><ul class="saisons-liste">${S.saisons.filter(x => x.saison !== actuelle && x.saison !== D.saison && D.saisons[x.saison]).map(x => `<li><a href="#/saisons/${x.saison}">
+  const saisonsBande = (actuelle, id = 's-saisons') => `<nav class="saisons" id="${id}" aria-labelledby="${id}-h"><div class="wrap"><h2 class="titre-bloc" id="${id}-h">${esc(L.saisonsPrecedentes)}</h2><div class="sa-idx" id="${id}-frise"></div><ul class="saisons-liste">${S.saisons.filter(x => x.saison !== actuelle && x.saison !== D.saison && D.saisons[x.saison]).map(x => `<li><a href="#/saisons/${x.saison}">
       <svg class="vignette" viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr"/>${CARTE.saison(x.saison).map(y => `<path pathLength="1" d="${CARTE.trait(y.xy)}"/>`).join('')}<circle cx="${CARTE.rouen[0]}" cy="${CARTE.rouen[1]}" r="11"/></svg><span>${esc(x.titre)}</span></a></li>`).join('')}</ul></div></nav>`;
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
@@ -8571,6 +8578,20 @@ const TENTACULES = (() => {
     const pts = SA.spectacles.flatMap(g => { const sp = g.slug && bySlug[g.slug]; return g.dates.map(d => repereLigne(d, cle, rang.get(d), g.slug, sp ? sp.titre : g.titre)); }).filter(Boolean);
     const fS = frise($('#sa-frise'), { echelle: 'saison', saison: cle, points: pts, libelle: SA.titre, relier: { liste, carte: l => marquer(svg, l) }, choix: p => allerLigne(p.id) });
     if (fS) lierCarte(svg, { survol: l => { if (l == null) fS.eteindre(); else fS.allumer({ l }); } });
+    // la frise des saisons (de la première à celle d'aujourd'hui), comme sur la page des saisons : chaque saison et sa densité,
+    // un lien vers sa page (la saison en cours : la page des saisons) ; celle-ci est marquée
+    const hs = (menuDe('saisons') || {}).href || '#/saisons', passe = retenu('agendaPasse', agendaPasse);
+    const bandes = passe.slice().reverse().map(x => ({ id: x.k, debut: `${x.k.slice(0, 4)}-09-01`, fin: `${x.k.slice(5)}-08-31`, titre: x.titre, n: x.rows.length, lien: x.k === D.saison ? hs : `${hs}/${x.k}` }));
+    const fI = bandes.length > 1 ? frise($('#s-saisons-frise'), { echelle: 'annees', debut: bandes[0].id, fin: D.saison, bandes, libelle: L.saisonsPrecedentes, classe: 'frise-saisons' }) : null;
+    const ici = fI && $(`.frise-bande[data-id="${cle}"]`, fI.el);
+    if (ici) { ici.classList.add('est-ici'); const a = $('a', ici); if (a) a.setAttribute('aria-current', 'true'); }
+    // au doigt, la frise défile : quand elle paraît, elle s'ouvre sur cette saison (après FRISE, qui la centre sur aujourd'hui)
+    const piste = ici && $('.frise-piste', fI.el);
+    if (piste && 'IntersectionObserver' in window) new IntersectionObserver((es, io) => {
+      if (!es.some(x => x.isIntersecting)) return;
+      io.disconnect();
+      requestAnimationFrame(() => requestAnimationFrame(() => { if (piste.scrollWidth > piste.clientWidth + 1) piste.scrollLeft = ici.offsetLeft + ici.offsetWidth / 2 - piste.clientWidth / 2; }));
+    }).observe(fI.el);
     bientot(() => pousser(svg));
     return { titre: SA.titre, lecture: 'voir' };
   }
