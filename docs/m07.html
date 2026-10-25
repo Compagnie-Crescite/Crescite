@@ -1445,17 +1445,20 @@ const DONNEES = (() => {
       return index.get(k);
     };
     const precisionAncienne = { jour: 'day', periode: 'range', mois: 'month', saison: 'range' };
+    // un lien venu de la base ne passe que s'il mène à une page web (http ou https) : jamais « javascript: », ni rien d'autre
+    const http = u => (typeof u === 'string' && /^https?:\/\/\S+$/i.test(u.trim()) ? u.trim() : null);
+    const sursDetails = ds => (Array.isArray(ds) ? ds.map(t => (t && t.lien ? { ...t, lien: http(t.lien) } : t)) : ds);
     const etatDe = d => d.statut === 'annulee' ? 'date annulée' : d.statut === 'reportee' ? 'date reportée' : null;
     const lignes = da.filter(d => spId.has(d.spectacle_id)).map(d => {
       const s = spId.get(d.spectacle_id), lieu = lieuId.get(d.lieu_id) || null, reps = repsDe.get(d.id) || [];
       const l = communeDe(lieu), txt = ligne(d, reps, lieu), [ligneDate, ligneLieu = ''] = txt.split(' — ');
       return {
         d, s, lieu, reps, l, ligne: txt, ligneDate: ligneDate.trim(), ligneLieu: ligneLieu.trim(),
-        details: precisions(d, reps, lieu), etat: etatDe(d), iso: d.debut, fin: d.fin || d.debut,
+        details: sursDetails(precisions(d, reps, lieu)), etat: etatDe(d), iso: d.debut, fin: d.fin || d.debut, lien: http(d.lien),
         // une semaine de résidence (règle 23) : dans l'agenda des saisons, marquée ; ni représentation, ni réservation, ni carte
         residence: d.nature === 'residence',
         precision: precisionAncienne[d.precision] || 'day', scolaire: d.public === 'scolaire' && d.nature !== 'residence',
-        representations: reps.map(r => ({ jour: r.jour, heure: r.heure, public: r.public, annulee: r.annulee, lien: r.lien, note: r.note })),
+        representations: reps.map(r => ({ jour: r.jour, heure: r.heure, public: r.public, annulee: r.annulee, lien: http(r.lien), note: r.note })),
       };
     });
 
@@ -1463,7 +1466,7 @@ const DONNEES = (() => {
     const aVenir = lignes.filter(x => x.fin >= aujourdhui && !x.residence).sort((a, b) => a.iso < b.iso ? -1 : a.iso > b.iso ? 1 : ordre.get(a.s.id) - ordre.get(b.s.id));
     const dates = aVenir.map(x => ({
       id: x.d.id, slug: slugDe(x.s), titre: x.s.titre, ligne: x.ligne, ligneDate: x.ligneDate, ligneLieu: x.ligneLieu,
-      details: x.details, lien: x.d.lien, iso: x.iso, fin: x.fin, precision: x.precision, scolaire: x.scolaire, etat: x.etat,
+      details: x.details, lien: x.lien, iso: x.iso, fin: x.fin, precision: x.precision, scolaire: x.scolaire, etat: x.etat,
       commune: x.l != null ? lieux[x.l].c : null, dep: x.l != null ? lieux[x.l].dep : null, xy: x.l != null ? lieux[x.l].xy : null,
       // lieu : le nom du lieu qui accueille (où l'on réserve, règle 17) ; representations : ses séances (jour, heure, lien…)
       l: x.l, lieu: x.lieu && x.lieu.nom ? x.lieu.nom : null, representations: x.representations,
@@ -1478,7 +1481,7 @@ const DONNEES = (() => {
       if (!S2) return;
       let g = S2.spectacles.find(y => y._id === x.s.id);
       if (!g) { g = { _id: x.s.id, titre: x.s.titre, sousTitre: x.s.sous_titre, creation: x.s.creation, slug: slugDe(x.s), dates: [] }; S2.spectacles.push(g); }
-      g.dates.push({ id: x.d.id, ligne: x.ligne, details: x.details, etat: x.etat, lien: x.d.lien, iso: x.iso, fin: x.fin,
+      g.dates.push({ id: x.d.id, ligne: x.ligne, details: x.details, etat: x.etat, lien: x.lien, iso: x.iso, fin: x.fin,
                      precision: x.precision, scolaire: x.scolaire, residence: x.residence, l: x.l, representations: x.representations,
                      nb_representations: x.residence ? 0 : (x.representations && x.representations.length) || (x.d && x.d.nb_representations != null ? x.d.nb_representations : 1) });
     });

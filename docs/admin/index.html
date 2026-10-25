@@ -710,7 +710,7 @@ async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
-  const facultative = table => tout(table).then(x => { ideale = true; return x; }, () => []);
+  const facultative = table => tout(table, 'id').then(x => { ideale = true; return x; }, () => []);   // (par id : des pages de 1 000 qui ne se chevauchent pas)
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
     tout('crescite_spectacles', 'ordre'), tout('crescite_lieux', 'id'), tout('crescite_dates', 'debut'), tout('crescite_representations', 'jour'),
     tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
@@ -2525,7 +2525,10 @@ const TABLEUR = (() => {
       const ok = document.execCommand('copy'); z.remove(); return ok;
     }
   }
-  const texteCase = (c, sep) => (c.t === 'd' ? jjmmaaaa(c.v) : c.t === 'h' ? c.v : c.t === 'n' ? String(c.v).replace('.', ',') : String(c.v ?? '').replace(/\r?\n/g, sep === '\t' ? ' ' : '\n'));
+  // une case de texte qui commence par = + - @ (une formule pour Excel ou Google Sheets : un commentaire saisi ailleurs
+  // ne doit rien calculer ni appeler chez celui qui ouvre le fichier) part précédée d'une apostrophe
+  const sansFormule = v => (/^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
+  const texteCase = (c, sep) => (c.t === 'd' ? jjmmaaaa(c.v) : c.t === 'h' ? c.v : c.t === 'n' ? String(c.v).replace('.', ',') : sansFormule(String(c.v ?? '').replace(/\r?\n/g, sep === '\t' ? ' ' : '\n')));
   async function exporter(genre) {
     if (!T.lignes.length) return etat('Rien à exporter : aucune séance dans la vue.', 'erreur');
     const t = tableau(), n = pl(t.lignes.length, 'ligne');
