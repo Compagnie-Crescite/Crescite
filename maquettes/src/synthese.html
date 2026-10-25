@@ -940,6 +940,104 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 .fus.large .fu .mo { top: 18px; }
 .fus.large .fu-t { font-size: clamp(1.7rem, 1.3rem + 1vw, 2.2rem); }
 
+/* ———— la page des spectacles (#/spectacles) : le sommaire de la 08 ————
+   À gauche, la table des matières sur le papier de la nuit : une ligne par spectacle, sa vignette, son titre dans la police
+   de son univers, un filet de conduite jusqu'à son année (le folio), son sous-titre et son état (« En création » ; « en
+   tournée », qui respire) à la couleur du spectacle ; la ligne survolée, choisie au clavier ou montrée prend cette couleur
+   et le filet souligne son titre. À droite, épinglé, l'aperçu qui la suit, dans l'univers du spectacle (ses couleurs, sa
+   lueur, son motif, sa police de titre) : sa photo et la carte de ses tournées, son lieu et son temps, sa création, son
+   action culturelle, son accroche, sa prochaine date (ou son annonce) et le lien vers sa page. Jusqu'à 899 px, la liste
+   seule : chaque ligne avec sa vignette, sa création, son lieu et son temps, sa prochaine date. */
+.tdm { display: grid; grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); min-height: calc(100svh - var(--haut)); }
+.tdm-g { min-width: 0; padding: 0 var(--gout) clamp(40px, 6vw, 72px); }
+.tdm-g .page-titre { padding-bottom: clamp(20px, 2.6vw, 32px); }
+/* le titre courant du sommaire : la compagnie et la saison, sous un double filet qui se trace */
+.tdm-mast { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 16px; margin: 0 0 6px; padding: 14px 0 8px;
+  border-bottom: 1px solid var(--filet); font: 700 .74rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; }
+.tdm-filets { position: absolute; left: 0; right: 0; top: 0; height: 7px; border-top: 3px solid var(--encre); border-bottom: 1px solid var(--encre); transform-origin: 0 50%; pointer-events: none; }
+.tdm-filets[data-mv="trace"].mv-attente { transition: transform .9s var(--mv-courbe); }
+.tdm-mast a { display: inline-flex; align-items: center; min-height: 40px; margin: -6px 0; color: var(--saison-texte); text-decoration: none; }
+.tdm-mast a:hover { text-decoration: underline; text-underline-offset: .3em; }
+.tdm-l { list-style: none; margin: 0; padding: 0; }
+.tdm-a { position: relative; display: grid; grid-template-columns: 54px minmax(0, 1fr); grid-template-areas: "v ligne" ". dek"; align-items: center; column-gap: 16px; row-gap: 3px;
+  margin: 0 -12px; padding: 12px 12px 13px; border-bottom: 1px solid var(--filet); color: var(--encre); text-decoration: none; transition: background-color .18s, box-shadow .18s; }
+.tdm-v { grid-area: v; display: block; width: 54px; height: 40px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--encre) 22%, transparent); border-radius: 2px; background: var(--papier-2); }
+.tdm-v img { width: 100%; height: 100%; object-fit: cover; transition: scale .2s var(--mv-courbe); }
+.tdm-ligne { grid-area: ligne; display: flex; align-items: last baseline; gap: 14px; min-width: 0; }
+.tdm-t { flex: 0 1 auto; min-width: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: calc(clamp(1.7rem, .9rem + 1.6vw, 2.5rem) * var(--tk, 1)); line-height: 1.06;
+  text-wrap: balance; overflow-wrap: anywhere; transition: color .18s; }
+.tdm-t .tt { background: linear-gradient(var(--c), var(--c)) 0 100% / 0 2px no-repeat; transition: background-size .2s var(--mv-courbe); }
+.tdm-fil { flex: 1 1 auto; min-width: 24px; height: 1px; background: color-mix(in srgb, var(--encre) 30%, transparent); transform: translateY(-.4rem); transition: background-color .18s; }
+.tdm-an { flex: none; font: 600 .86rem/1 var(--texte); font-variant-numeric: tabular-nums; color: var(--gris); }
+.tdm-dek { grid-area: dek; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 18px; min-width: 0; font-size: .9rem; line-height: 1.45; color: var(--gris); }
+.tdm-tag { margin-left: auto; font: 700 .68rem/1.4 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--c); white-space: nowrap; }
+.tdm-tag.vit::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: .12em; animation: respire 2.4s ease-in-out infinite; }
+.tdm-x { display: none; }
+/* (Bérénice, l'arène : ses titres en capitales, comme sur sa page) */
+.tdm-i[data-motif="arene"] .tdm-t, .u-arene .tdm-pt { text-transform: uppercase; }
+.tdm-a:is(:hover, :focus-visible, .est-actif) { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 11%, transparent), transparent 88%); box-shadow: inset 3px 0 0 var(--c); }
+.tdm-a:is(:hover, :focus-visible, .est-actif) .tdm-t { color: var(--c); }
+.tdm-a:is(:hover, :focus-visible, .est-actif) .tt { background-size: 100% 2px; }
+.tdm-a:is(:hover, .est-actif) .tdm-v img { scale: 1.06; }
+.tdm-a.est-actif .tdm-fil { background: var(--c); }
+.tdm-a:focus-visible { outline: 2px solid var(--c); outline-offset: -2px; }
+.tdm-a.mv-presse .tt { background-size: 100% 4px; transition-duration: .06s; }
+/* l'aperçu : un calque par spectacle, celui qu'on montre au-dessus des autres (qui dorment : rien à mettre en page) */
+.tdm-pv { min-width: 0; border-left: 1px solid var(--filet); }
+.tdm-pv-in { position: sticky; top: var(--haut); display: grid; height: calc(100svh - var(--haut)); min-height: 540px; }
+.tdm-c { grid-area: 1 / 1; position: relative; overflow: hidden auto; scrollbar-width: thin; display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0;
+  padding: clamp(24px, 2.8vw, 38px) var(--gout) clamp(20px, 2.4vw, 30px); font-family: var(--u-corps);
+  background: linear-gradient(var(--u-vif), var(--u-vif)) 0 0 / 100% 3px no-repeat, radial-gradient(90% 70% at 85% 8%, var(--u-lueur), transparent 70%), var(--u-fond);
+  opacity: 0; visibility: hidden; transition: opacity .14s ease, visibility 0s linear .14s; }
+.tdm-c.est-actif { z-index: 1; opacity: 1; visibility: visible; transition: opacity .2s ease, visibility 0s; }
+.tdm-c.dort { content-visibility: hidden; }
+.still .tdm-c { transition: none; }
+/* (les bras de sa carte à sa couleur vive : elle se lit sur son fond, de nuit aussi) */
+.tdm-c.u { --u-carte: var(--u-vif); }
+/* la photo principale (un panoramique, le plus souvent) en bande ; elle cède de la hauteur quand l'écran en manque */
+.tdm-fig { position: relative; flex: 0 1 auto; aspect-ratio: 2 / 1; min-height: 130px; margin: 0; }
+.tdm-fig img { position: absolute; left: 0; top: 0; width: 100%; height: calc(100% - 22px); object-fit: cover; border-radius: 4px; background: var(--u-fond2); box-shadow: 0 18px 38px -20px rgba(0, 0, 0, .75); }
+.tdm-fig figcaption { position: absolute; right: 0; bottom: 0; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: .78rem; line-height: 18px; color: var(--u-texte2); }
+.tdm-corps { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 0 clamp(18px, 2.4vw, 32px); align-items: start; }
+.tdm-corps.solo { grid-template-columns: minmax(0, 1fr); }
+.tdm-txt { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tdm-carte { margin: 0; padding-top: 8px; border-top: 1px solid var(--u-filet); }
+.tdm-carte .carte { max-height: 340px; }
+.tdm-k { display: flex; align-items: center; gap: 12px; margin: 0; font: 600 .74rem/1.5 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.tdm-k .mo { flex: none; width: 22px; height: 22px; }
+/* (le point qui sépare les mentions : celui qui ouvrirait une ligne est rogné, à gauche) */
+.tdm-kl { flex: 1 1 auto; min-width: 0; overflow: hidden; }
+.tdm-kk { display: flex; flex-wrap: wrap; row-gap: 2px; margin-left: -1.6em; }
+.tdm-kk > span::before { content: "·"; display: inline-block; width: 1.6em; text-align: center; color: var(--u-texte2); }
+.tdm-pt { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: calc(clamp(1.8rem, 1rem + 1.6vw, 2.8rem) * var(--tk, 1)); line-height: 1.04; color: var(--u-vif); text-wrap: balance; }
+.tdm-acc { margin: 0; max-width: 42ch; font-size: clamp(1rem, .82rem + .4vw, 1.22rem); line-height: 1.5; color: var(--u-texte); text-wrap: pretty; }
+.tdm-pied { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--u-filet); }
+.tdm-date { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; min-width: 0; margin: 0; color: var(--u-texte); }
+.tdm-date .k { font: 600 .7rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.tdm-d { font-weight: 600; }
+.tdm-pied .bu { flex: none; margin-left: auto; font-size: .86rem; letter-spacing: .06em; text-transform: uppercase; }
+.tdm .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 899px) {
+  .tdm { display: block; min-height: 0; }
+  .tdm-pv { display: none; }
+  .tdm-a { grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "ligne ligne" "dek dek" "v x"; align-items: start; column-gap: 14px; row-gap: 4px; margin: 0; padding: 18px 0 20px; }
+  .tdm-a:is(:hover, .est-actif):not(:focus-visible) { background: none; box-shadow: none; }
+  .tdm-a:is(:hover, .est-actif):not(:focus-visible) .tdm-t { color: inherit; }
+  .tdm-a:is(:hover, .est-actif):not(:focus-visible) .tt { background-size: 0 2px; }
+  .tdm-fil { display: none; }
+  .tdm-ligne { justify-content: space-between; }
+  .tdm-t { font-size: calc(1.9rem * var(--tk, 1)); line-height: 1.08; }
+  .tdm-v { width: 112px; height: auto; aspect-ratio: 3 / 2; margin-top: 10px; border-radius: 4px; }
+  .tdm-x { grid-area: x; display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 10px; font-size: .95rem; line-height: 1.45; }
+  .tdm-x > span, .tdm-suite .k { display: block; }
+  .tdm-cr { font: 700 .7rem/1.5 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
+  .tdm-suite .k { margin-bottom: 1px; font: 700 .68rem/1.4 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+}
+@media (max-width: 599px) {
+  .tdm-dek { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .tdm-tag { margin-left: 0; }
+}
+
 /* la fiche « programmer » : le catalogue */
 .prog { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.25fr) minmax(0, 1fr); overflow: hidden; border-radius: 8px; font-family: var(--u-corps); box-shadow: 0 18px 36px -28px rgba(0, 0, 0, .6); }
 .prog-ph { position: relative; display: block; min-height: 220px; overflow: hidden; }
@@ -3542,12 +3640,119 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     return { titre: e.texte, entree: 'etablissement' };
   }
 
-  /* ---------- les spectacles ---------- */
+  /* ---------- les spectacles : le sommaire de la 08 ----------
+     La table des matières de tous les spectacles : une ligne chacun (sa vignette, son titre dans la police de son univers,
+     son année en folio au bout d'un filet de conduite, son sous-titre, son état : « En création », « en tournée »), un lien
+     vers sa page. À côté, épinglé, l'aperçu de celui qu'on survole ou qu'on choisit au clavier, dans son univers : sa photo,
+     la carte de ses tournées, son lieu et son temps, sa création, son action culturelle, son accroche, sa prochaine date tout
+     public (ou son annonce, en création) et le lien vers sa page. L'aperçu se relaie : un fondu, ses lignes arrivent l'une
+     après l'autre (MOUVEMENT.cascade) et, la première fois qu'il paraît, les bras de sa carte poussent depuis Rouen. Au
+     téléphone, la liste seule, chaque ligne avec sa vignette, sa création, son lieu et son temps, sa prochaine date. Relu dans
+     D à chaque rendu ; le spectacle de l'aperçu est gardé d'une visite à l'autre (et quand D change, la vue se refait sur lui). */
+  let tdmChoisi = null;
+  // (les polices de titre n'ont pas la même taille apparente : le coefficient de chacune, celui de la 08)
+  const TK = { 'Anton': .9, 'Space Grotesk': .9, 'Ubuntu': .92, 'Cormorant Garamond': 1.1, 'Bodoni Moda': .94, 'IM Fell English': 1.02, 'IM Fell French Canon': .98 };
+  const styleTdm = s => `${uVars(s)};--c:${couleurDe(s.slug)};--tk:${TK[((s.univers || {}).polices || {}).titre] || 1}`;
+  // la prochaine date tout public d'un spectacle, ou, en création, son annonce (s.tournee) ; t : la balise (span dans un lien)
+  function suiteTdm(s, t, cls) {
+    const d = D.dates.find(x => x.slug === s.slug && !x.scolaire), T = s.tournee || {};
+    if (d) return `<${t} class="${cls}"><span class="k"${T.titre ? edS(s, 'tournee', 'titre') : ''}>${esc(T.titre || L.actuellementEnTournee)}</span><span class="tdm-d"${dateId(d)}>${esc(d.ligne)}</span></${t}>`;
+    if (s.statut && T.titre) return `<${t} class="${cls}"><span class="k"${edS(s, 'tournee', 'titre')}>${esc(T.titre)}</span>${T.texte ? `<span${edS(s, 'tournee', 'texte')}>${esc(T.texte)}</span>` : ''}</${t}>`;
+    return '';
+  }
+  // la carte de ses tournées : ses communes à venir (et ses tournées passées en filets), sinon toutes celles où il a joué
+  function lieuxTdm(s) {
+    const sp = CARTE.spectacle(s.slug), R = CARTE.rouen, loin = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6;
+    const aVenir = sp.aVenir.some(loin), vus = new Set(sp.aVenir.map(x => x.l));
+    return { lieux: aVenir ? sp.aVenir : sp.passe, passe: aVenir ? sp.passe.filter(x => !vus.has(x.l)) : [] };
+  }
+  // (l'aperçu ne se montre qu'à partir de 900 px, la même requête que la feuille de style : en deçà, ses calques ne sont pas
+  // faits ; chaque carte n'est dessinée que quand son aperçu paraît)
+  const ETROIT_TDM = matchMedia('(max-width: 899px)'), largeTdm = () => !ETROIT_TDM.matches;
+  function carteTdm(c) {
+    const f = $('.tdm-carte[data-carte]', c), s = f && bySlug[f.dataset.carte];
+    if (!s || f.firstElementChild) return;
+    const { lieux, passe } = lieuxTdm(s);
+    f.innerHTML = carte({ lieux, passe, titre: s.titre, interactif: false, simple: lieux.length > 14 });
+    echelle();
+  }
+  // (la fenêtre s'élargit sur la page : l'aperçu se fait, sur la ligne montrée)
+  ETROIT_TDM.addEventListener('change', () => {
+    const pv = vue === 'spectacles' && largeTdm() ? $('.tdm-pv-in', main) : null;
+    if (!pv) return;
+    const i0 = Math.max(0, $$('.tdm-a', main).findIndex(a => a.classList.contains('est-actif')));
+    if (!pv.firstElementChild) pv.innerHTML = D.shows.map((s, i) => apercuTdm(s, i, i === i0)).join('');
+    montrerTdm(i0, false);
+  });
+  const ligneTdm = (s, i, actif) => `<li class="tdm-i" data-motif="${esc(mo(s))}" data-mv-nom="sp-${esc(s.slug)}" style="${styleTdm(s)}">
+      <a class="tdm-a${actif ? ' est-actif' : ''}" href="${lienSp(s.slug)}" data-i="${i}" data-slug="${esc(s.slug)}">
+        <span class="tdm-v"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" width="112" height="75" loading="lazy" decoding="async"></span>
+        <span class="tdm-ligne"><span class="tdm-t"><span class="tt"${edS(s, 'titre')}>${esc(s.titre)}</span></span><span class="tdm-fil" aria-hidden="true"></span>${s.annee ? `<span class="tdm-an">${esc(s.annee)}</span>` : ''}</span>
+        <span class="tdm-dek">${s.sousTitre ? `<span class="tdm-st"${edS(s, 'sousTitre')}>${s.sousTitre}</span>` : ''}${badgeDe(s) ? `<span class="tdm-tag${s.statut ? '' : ' vit'}">${badgeDe(s)}</span>` : ''}</span>
+        <span class="tdm-x">${s.creation ? `<span class="tdm-cr"${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${suiteTdm(s, 'span', 'tdm-suite')}</span>
+      </a></li>`;
+  function apercuTdm(s, i, actif) {
+    const A = s.actionCulturelle, L0 = lieuxTdm(s), k = L0.lieux.length + L0.passe.length > 0;
+    // (les photos principales sont des panoramiques : une bande sur toute la largeur ; la carte va à côté du texte)
+    return `<div class="tdm-c ${uClasse(s)}${actif ? ' est-actif' : ' dort'}" style="${styleTdm(s)}" data-slug="${esc(s.slug)}" data-mv-nom="sp-${esc(s.slug)}">
+        <figure class="tdm-fig"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" decoding="async">${s.creditPhotos ? `<figcaption${edS(s, 'creditPhotos')}>${esc(s.creditPhotos)}</figcaption>` : ''}</figure>
+        <div class="tdm-corps${k ? '' : ' solo'}"><div class="tdm-txt">
+          <p class="tdm-k">${petit(mo(s))}<span class="tdm-kl"><span class="tdm-kk">${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${s.creation ? `<span${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${A && A.type ? `<span${edS(s, 'actionCulturelle', 'type')}>${esc(A.type)}</span>` : ''}</span></span></p>
+          <p class="tdm-pt"${edS(s, 'titre')}>${esc(s.titre)}</p>
+          ${s.accroche ? `<p class="tdm-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
+        </div>${k ? `<figure class="tdm-carte" data-carte="${esc(s.slug)}"></figure>` : ''}</div>
+        <div class="tdm-pied">${suiteTdm(s, 'p', 'tdm-date') || '<span></span>'}<a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></div>
+      </div>`;
+  }
   function spectacles() {
     vue = 'spectacles';
-    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1">${esc(MENU.spectacles.texte)}</h1>${trait()}</div>
-      <section class="bloc sans-filet"><div class="wrap"><ul class="fus large">${D.shows.map(s => ficheU(s, { href: lienSp(s.slug), large: true })).join('')}</ul></div></section>`;
+    const sh = D.shows, i0 = Math.max(0, sh.findIndex(s => s.slug === tdmChoisi)), S0 = (S.saisons || [])[0] || {}, ms = menuDe('saisons');
+    tdmChoisi = sh[i0] ? sh[i0].slug : null;
+    main.innerHTML = `<section class="tdm">
+      <div class="tdm-g">
+        <div class="page-titre"><h1 id="tdm-h" tabindex="-1">${esc(MENU.spectacles.texte)}</h1>${trait()}</div>
+        <p class="tdm-mast"><span class="tdm-filets" data-mv="trace" aria-hidden="true"></span>${S.nom ? `<span>${esc(S.nom)}</span>` : ''}${S0.titre ? (ms ? `<a href="${esc(ms.href)}">${esc(S0.titre)}</a>` : `<span>${esc(S0.titre)}</span>`) : ''}</p>
+        <ol class="tdm-l" data-mv="cascade" aria-labelledby="tdm-h">${sh.map((s, i) => ligneTdm(s, i, i === i0)).join('')}</ol>
+      </div>
+      <div class="tdm-pv"><div class="tdm-pv-in">${largeTdm() ? sh.map((s, i) => apercuTdm(s, i, i === i0)).join('') : ''}</div></div>
+    </section>`;
+    lierSommaire(i0);
     return { titre: MENU.spectacles.texte, menu: 'spectacles' };
+  }
+  // l'aperçu d'une ligne : son calque passe devant, celui qu'on quitte s'efface puis s'endort (content-visibility) ; sa carte
+  // se dessine, et ses bras poussent (premier : la vue vient de se faire, ils poussent quand la carte entre dans l'écran)
+  function montrerTdm(i, premier) {
+    const calques = $$('.tdm-pv .tdm-c', main);
+    if (!calques[i] || !largeTdm()) return;
+    calques.forEach((c, k) => {
+      clearTimeout(c.__dort);
+      if (k === i) { c.classList.remove('dort'); c.classList.add('est-actif'); }
+      else if (c.classList.contains('est-actif')) { c.classList.remove('est-actif'); c.__dort = setTimeout(() => { if (!c.classList.contains('est-actif')) c.classList.add('dort'); }, 260); }
+    });
+    carteTdm(calques[i]);
+    if (premier) pousserVu($('svg.carte', calques[i])); else relayerTdm(calques[i]);
+  }
+  // l'aperçu suit la ligne survolée ou choisie au clavier
+  function lierSommaire(i0) {
+    const liste = $('.tdm-l', main), liens = liste ? $$('.tdm-a', liste) : [];
+    if (!liens.length) return;
+    let cur = i0;
+    montrerTdm(cur, true);
+    const choisir = i => {
+      if (!liens[i] || i === cur) return;
+      cur = i; tdmChoisi = liens[i].dataset.slug;
+      liens.forEach((a, k) => a.classList.toggle('est-actif', k === i));
+      montrerTdm(i, false);
+    };
+    const suivre = e => { const a = e.target.closest && e.target.closest('.tdm-a'); if (a) choisir(+a.dataset.i); };
+    liste.addEventListener('mouseover', suivre, { passive: true });
+    liste.addEventListener('focusin', suivre);
+  }
+  // l'aperçu qui prend le relais : ses lignes arrivent l'une après l'autre ; la première fois, les bras de sa carte poussent
+  function relayerTdm(c) {
+    const svg = $('svg.carte', c);
+    if (svg && !svg.classList.contains('pousse')) bientot(() => pousser(svg));
+    if (MV && motionOK()) MV.cascade(c, { selecteur: '.tdm-k, .tdm-pt, .tdm-acc, .tdm-pied', pas: 30, duree: 240, decalage: 8 });
   }
 
   /* ---------- la troupe (règle 20, TROUPE) : la pieuvre de la compagnie, entre la présentation et les repères ----------
