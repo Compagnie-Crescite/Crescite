@@ -2209,33 +2209,594 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const saisonsBande = (actuelle, id = 's-saisons') => `<nav class="saisons" id="${id}" aria-labelledby="${id}-h"><div class="wrap"><h2 class="titre-bloc" id="${id}-h">${esc(L.saisonsPrecedentes)}</h2><ul class="saisons-liste">${S.saisons.filter(x => x.saison !== actuelle && x.saison !== D.saison && D.saisons[x.saison]).map(x => `<li><a href="#/agenda/${x.saison}">
       <svg class="vignette" viewBox="${CARTE.viewBox}" aria-hidden="true"><use href="#fr"/>${CARTE.saison(x.saison).map(y => `<path pathLength="1" d="${CARTE.trait(y.xy)}"/>`).join('')}<circle cx="${CARTE.rouen[0]}" cy="${CARTE.rouen[1]}" r="11"/></svg><span>${esc(x.titre)}</span></a></li>`).join('')}</ul></div></nav>`;
 
-  /* ---------- l'accueil : le nom, le choix des trois entrées, la carte, les spectacles ---------- */
-  function accueil() {
+  /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
+     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : il s'y pose, et ses huit bras, ceux du logo (D.logo,
+     D.arms : rien n'est ajouté par-dessus), poussent et vont chercher chacun un titre de spectacle, autant qu'il y en a,
+     posés de part et d'autre (au téléphone, dessous) ; puis ils se reposent, ondulent, se penchent vers la souris. Survoler
+     ou choisir au clavier un titre, ou survoler un bras (au doigt : un premier toucher ; au téléphone, le titre qui passe au
+     milieu de l'écran) : son bras se tend vers lui, le souligne et s'y enroule, et la photo du spectacle passe devant, à
+     peine, derrière la pieuvre. Sinon les photos des spectacles s'enchaînent en fondu, chacune présentée par son bras. Le
+     bouton de pause arrête tout ce qui bouge de lui-même ; moins d'animations : rien ne bouge, les photos changent d'un
+     fondu bref. La scène est faite une fois et replacée dans l'accueil à chaque rendu : quand D change, rien ne se rejoue. */
+  const Scene = (() => {
+    const el = document.createElement('section');
+    el.className = 'scene'; el.id = 'scene'; el.setAttribute('aria-labelledby', 'scene-h');
+    el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><canvas class="sc-toile" aria-hidden="true"></canvas>
+      <h1 class="sc-h" id="scene-h" tabindex="-1" data-edit="site.nom"></h1>
+      <button type="button" class="sc-pause" aria-pressed="false" aria-label="Pause" title="Pause"><svg class="i-p" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg><svg class="i-l" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.2l9.2 5.8-9.2 5.8z"/></svg></button>
+      <ul class="sc-titres"></ul>`;
+    const cv = $('.sc-toile', el), ctx = cv.getContext('2d'), cadreD = $('.sc-cadre', el), ul = $('.sc-titres', el), tete = $('.sc-h', el), bPause = $('.sc-pause', el);
+    const toile = () => { const c = document.createElement('canvas'); return [c, c.getContext('2d')]; };
+    const [lay, lctx] = toile(), [msk, mctx] = toile(), [lg, gctx] = toile();
+    // le dessin du logo et de ses bras : la marque (ni la base ni l'administration n'y touchent)
+    const AR = D.arms, BOX = AR.box, W0 = AR.width, GAPL = AR.gap;
+    const paths = D.logo.octopusPaths.map(d => new Path2D(d));
+    const INK = [255, 255, 255], COEUR = [771, 640], NB = 40, NM = 20, NC = 30, PRES = 2900;
+    const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+    const easeInOut = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2), easeOut = t => 1 - Math.pow(1 - t, 3);
+    let W = 0, H = 0, dpr = 1, s = .38, ox = 0, oy = 0, mobile = false, gut = 24, ech = 1;
+    let raf = 0, visible = true, affiche = false, eveil = null, tPrec = 0, tVie = 0, sraf = 0, pres = null, presFaite = false, pause = false;
+    let survol = null, brasSurvol = null, pointeur = null, dernierPointeur = '', boite = null, LB = { x0: 0, y0: 0, x1: 0, y1: 0 }, tDessin = 0, actifAvant = null;
+    let couches = new Map(), montre = null, iAuto = 0, tAuto = 0, dernierActif = null;
+    const bob = { x: 0, y: 0 };
+    const rgb = h => HEX6.test(h || '') ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : INK;
+
+    // les bras : ceux du logo, au service de tous les titres (aucun n'est à un spectacle : la pieuvre ne compte pas)
+    const BRAS = Object.entries(AR.arms).map(([cle, A], i) => ({ cle, A, i, cote: cle.slice(-1), rang: 99,
+      long: /^A1outer/.test(cle) ? 46 : /^A1inner/.test(cle) ? 60 : /^A2/.test(cle) ? 76 : 90,
+      phase: i * 2.399, but: null, depuis: null, q: 1, teinte: 0, penche: 0, em: 0, rel: [], col: INK, P: [], cum: [], nPre: 0, sOwn: 0, sMax: 0, T: [], repos: null }));
+    // les titres : un par spectacle, en nombre libre ; refaits quand D change
+    let TIT = [], sig = '';
+    const prochaine = sh => D.dates.find(x => x.slug === sh.slug && !x.scolaire) || D.dates.find(x => x.slug === sh.slug);
+    // sous chaque titre : sa prochaine date (telle que l'agenda l'écrit), sinon son statut, sinon sa création
+    const meta = sh => { const d = prochaine(sh); return d ? esc(d.ligne) : sh.statut ? `<span${edS(sh, 'statut')}>${esc(sh.statut)}</span>` : sh.creation ? `<span${edS(sh, 'creation')}>${esc(sh.creation)}</span>` : ''; };
+    // la couleur d'un spectacle sur la scène : sa couleur de scène, éclaircie jusqu'à se lire (AA) sur la nuit, photo comprise
+    const couleurScene = sh => { const c = (sh.univers && sh.univers.couleurs) || {}, x = [c.scene, c.accent2, c.accent].find(h => HEX6.test(h || '')); return x ? eclaircir(x, themeSaison().repere) : '#ffffff'; };
+    const signature = () => JSON.stringify([D.shows.map(x => [x.slug, x.titre, meta(x), couleurScene(x), !!D.photos[x.slug]]), L.lesSpectacles]);
+    function bati() {
+      sig = signature();
+      ul.innerHTML = D.shows.map(sh => `<li><a class="sc-t" href="${lienSp(sh.slug)}" draggable="false" style="--c:${couleurScene(sh)}"><span class="sc-tl"><span class="sc-tt"${edS(sh, 'titre')}>${esc(sh.titre)}</span>${D.photos[sh.slug] ? `<span class="sc-med" aria-hidden="true"><img src="${D.photos[sh.slug]}" alt="" decoding="async"></span>` : ''}</span><span class="sc-q">${meta(sh)}</span></a></li>`).join('');
+      TIT = $$('.sc-t', ul).map((a, i) => { const sh = D.shows[i];
+        const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurScene(sh)) };
+        ecouter(T); return T; });
+      ul.setAttribute('aria-label', L.lesSpectacles);
+      BRAS.forEach(a => { a.but = null; a.depuis = null; a.q = 1; a.teinte = 0; a.rel = []; a.T = []; });
+      survol = null; brasSurvol = null; dernierActif = null;
+      diapo();
+    }
+    // le diaporama : une couche par spectacle, sa photo chargée au moment de paraître (et la suivante, d'avance)
+    function diapo() {
+      cadreD.innerHTML = D.shows.map(sh => `<div class="sc-image" data-slug="${esc(sh.slug)}"><img alt="" decoding="async"></div>`).join('');
+      couches = new Map($$('.sc-image', cadreD).map(c => [c.dataset.slug, c]));
+      montre = null; iAuto = Math.min(iAuto, Math.max(0, D.shows.length - 1));
+    }
+    const charger = slug => { const c = couches.get(slug), im = c && c.firstElementChild; if (im && !im.getAttribute('src') && D.photos[slug]) im.src = D.photos[slug]; };
+    function montrerImage(slug) {
+      if (!slug || slug === montre) return;
+      montre = slug; charger(slug);
+      couches.forEach((c, k) => c.classList.toggle('est-vu', k === slug));
+      const i = D.shows.findIndex(x => x.slug === slug), nx = D.shows[(i + 1) % D.shows.length]; if (nx) charger(nx.slug);
+    }
+    // l'enchaînement : un spectacle toutes les six secondes et demie ; arrêté en pause, hors de l'écran, en mode édition, le
+    // temps qu'on regarde un titre (il reprend ensuite depuis celui-là) ; jamais sans mouvement
+    const roule = () => affiche && visible && !document.hidden && !pause && motionOK() && !document.documentElement.classList.contains('ed-actif') && TIT.length > 1;
+    function planifier() { clearTimeout(tAuto); if (affiche && !pause && motionOK()) tAuto = setTimeout(avancer, 6500); }
+    function avancer() { if (roule() && !actif() && !(pres && performance.now() - pres.t0 < PRES + 1600)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
+
+    const sortie = a => a.A.pts[a.A.pts.length - 1];
+    const ecran = p => [ox + bob.x + p[0] * s, oy + bob.y + p[1] * s];
+    // chaque titre a son bras : dans l'ordre du tour de la pieuvre (titres et bouts des bras rangés par leur angle autour de
+    // son cœur), sans croisement ; s'il y a plus de titres que de bras, un bras en sert plusieurs
+    function attribuer() {
+      const c = [ox + COEUR[0] * s, oy + COEUR[1] * s];
+      const angle = (x, y) => { let a = Math.atan2(y - c[1], x - c[0]) * 180 / Math.PI; if (a < -90) a += 360; return a; };
+      const bs = BRAS.map(a => { const p = sortie(a); return { a, ang: angle(ox + p[0] * s, oy + p[1] * s) }; }).sort((x, y) => x.ang - y.ang);
+      const ts = TIT.map(T => ({ T, ang: angle(T.ancre.x, T.ancre.y) })).sort((x, y) => x.ang - y.ang);
+      BRAS.forEach(a => { a.T = []; a.rang = 99; });
+      const n = ts.length, m = bs.length;
+      if (!n || !m) return;
+      let choix;
+      if (n <= m) {
+        // les n bras qui suivent au mieux les n titres, dans l'ordre (l'écart d'angle le plus petit)
+        const C = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(Infinity)), P = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+        C[0].fill(0);
+        for (let i = 1; i <= n; i++) for (let j = i; j <= m; j++) {
+          const prend = C[i - 1][j - 1] + Math.abs(ts[i - 1].ang - bs[j - 1].ang);
+          if (prend <= C[i][j - 1]) { C[i][j] = prend; P[i][j] = 1; } else C[i][j] = C[i][j - 1];
+        }
+        choix = new Array(n);
+        for (let i = n, j = m; i > 0; j--) if (P[i][j]) { choix[i - 1] = j - 1; i--; }
+      } else choix = ts.map((_, i) => Math.floor(i * m / n));
+      ts.forEach((t, i) => { const a = bs[choix[i]].a; t.T.bras = a; a.T.push(t.T); if (a.rang === 99) a.rang = i; });
+    }
+    // écarte les titres qui se chevauchent, et les tient hors de la pieuvre
+    function relacher(mobiles, obst, minY) {
+      const mx = 30, my = 16;
+      for (let it = 0; it < 120; it++) {
+        let bouge = false;
+        const pousse = (a, b, fixe) => {
+          const ox_ = Math.min(a.bx + a.w, b.bx + b.w) - Math.max(a.bx, b.bx) + mx, oy_ = Math.min(a.by + a.bh, b.by + b.bh) - Math.max(a.by, b.by) + my;
+          if (ox_ <= 0 || oy_ <= 0) return;
+          bouge = true;
+          const k = fixe ? 1 : .5;
+          if (ox_ < oy_) { const sg = a.bx + a.w / 2 < b.bx + b.w / 2 ? -1 : 1; a.bx += sg * ox_ * k; if (!fixe) b.bx -= sg * ox_ * k; }
+          else { const sg = a.by + a.bh / 2 < b.by + b.bh / 2 ? -1 : 1; a.by += sg * oy_ * k; if (!fixe) b.by -= sg * oy_ * k; }
+        };
+        for (let i = 0; i < mobiles.length; i++) for (let j = i + 1; j < mobiles.length; j++) pousse(mobiles[i], mobiles[j], false);
+        for (const T of mobiles) for (const o of obst) pousse(T, { bx: o.x, by: o.y, w: o.w, bh: o.h }, true);
+        for (const T of mobiles) { T.bx = clamp(T.bx, gut, W - gut - T.w); T.by = Math.max(T.by, minY); }
+        if (!bouge) break;
+      }
+    }
+    // la mise en page : au bureau, la pieuvre au milieu du premier écran et les titres sur deux arcs, de part et d'autre ; au
+    // téléphone, la pieuvre en haut et les titres dessous, de part et d'autre d'une ligne
+    function mise() {
+      const r = el.getBoundingClientRect();
+      if (r.width < 10) return;
+      W = r.width; mobile = W < 760; gut = mobile ? 16 : clamp(W * .035, 24, 56);
+      el.classList.toggle('mobile', mobile);
+      const [x0, y0, x1, y1] = BOX, bw = x1 - x0, bh = y1 - y0, haut = tete.offsetTop + tete.offsetHeight;
+      const hEcran = Math.max(480, innerHeight - (($('#top') || {}).offsetHeight || 64));
+      const mw = mobile ? W - 2 * gut - 76 : clamp(W * .22, 210, 330);
+      TIT.forEach(T => { T.el.style.transform = 'none'; T.el.style.maxWidth = mw + 'px'; });
+      TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
+      if (!mobile) {
+        s = clamp(Math.min(W * .3 / bw, (hEcran - 260) / bh), .22, .5); ech = s / .38;
+        const ow = bw * s, oh = bh * s, cx = W / 2, rx = ow / 2 + clamp(W * .11, 100, 210), ry = oh * .5 + clamp(hEcran * .1, 70, 130), K = [1, .84, .95, .8, .9, .86];
+        ox = W / 2 - (x0 + bw / 2) * s;
+        const nG = Math.ceil(TIT.length / 2), cotes = [TIT.slice(0, nG), TIT.slice(nG)];
+        cotes.forEach((col, c) => col.forEach((T, k) => {
+          const m = col.length, t = m > 1 ? k / (m - 1) : .5, th = (-38 + 92 * t) * Math.PI / 180;
+          const px = cx + (c ? 1 : -1) * rx * Math.cos(th) * K[k % K.length], py = oh * .5 + ry * Math.sin(th);
+          T.droite = !c; T.dirU = c ? 1 : -1;
+          T.bx = c ? px : px - T.w; T.by = py - T.th;
+        }));
+        // l'ensemble (la pieuvre, ses bras au repos, les titres) centré dans le premier écran, sous le nom
+        const bas = Math.max(oh + 100 * ech, ...TIT.map(T => T.by + T.bh)), haut0 = Math.min(0, ...TIT.map(T => T.by));
+        const dy = haut + 22 + Math.max(0, (hEcran - haut - 52 - (bas - haut0)) / 2) - haut0;
+        oy = dy - y0 * s; TIT.forEach(T => { T.by += dy; });
+        relacher(TIT, [{ x: W / 2 - ow / 2 - 24, y: dy - 14, w: ow + 48, h: oh + 36 }], haut + 14);
+        H = Math.max(hEcran, ...TIT.map(T => T.by + T.bh + 40), dy + oh + 120 * ech);
+      } else {
+        s = clamp((W - 2 * gut) * .62 / bw, .19, .32); ech = s / .3;
+        const oh = bh * s, oTop = haut + 18, IND = [0, 26, 10, 34, 4, 20, 30, 14];
+        ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
+        let y = oTop + oh + 74 * ech;
+        TIT.forEach((T, i) => {
+          const g = i % 2 === 0, ind = IND[i % IND.length];
+          T.droite = !g; T.dirU = g ? 1 : -1;
+          T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
+          y += T.bh + 30;
+        });
+        H = Math.max(y + 26, hEcran);
+      }
+      el.style.height = H + 'px';
+      TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.w + 6 : T.bx - 6, y: T.by + T.th + 5 }; });
+      attribuer();
+      dpr = Math.min(2, devicePixelRatio || 1);
+      for (const c of [cv, lay, msk, lg]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+      masque(); logo();
+      LB = { x0: ox + x0 * s - 12, y0: oy + y0 * s - 12, x1: ox + x1 * s + 12, y1: oy + y1 * s + 12 };
+      boite = null; TIT.forEach(T => { T.tr = T.op = T.on = null; }); actifAvant = undefined;
+      if (mobile) suivre();
+      tPrec = 0; image(performance.now(), true);
+    }
+    // le logo épaissi d'un liseré, sauf autour de la racine des bras : les bras passent dessous
+    function masque() {
+      const g = mctx, gap = Math.max(GAPL, 1.1 / s);
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, msk.width, msk.height);
+      g.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy);
+      g.fillStyle = g.strokeStyle = '#000'; g.lineWidth = 2 * gap; g.lineJoin = 'round';
+      for (const p of paths) { g.fill(p, 'evenodd'); g.stroke(p); }
+      g.globalCompositeOperation = 'destination-out'; g.lineCap = 'butt'; g.lineWidth = W0 + 2 * gap + 3;
+      for (const a of BRAS) {
+        if (a.A.under) continue;
+        const pts = a.A.pts, fin = Math.min(pts.length - 1, a.A.own + 2);
+        g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+        for (let j = 1; j <= fin; j++) g.lineTo(pts[j][0], pts[j][1]);
+        g.stroke();
+      }
+      g.globalCompositeOperation = 'source-over';
+    }
+    // le logo, blanc comme celui de l'ouverture (le même tracé, la même règle de remplissage : la relève ne se voit pas)
+    function logo() {
+      gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.clearRect(0, 0, lg.width, lg.height);
+      gctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy); gctx.fillStyle = 'rgb(255,255,255)';
+      for (const p of paths) gctx.fill(p, 'evenodd');
+    }
+    // au repos : le bras pend, ondule et s'enroule (points relatifs à sa sortie du logo)
+    function souche(a, t, anime) {
+      const edir = a.A.exitdir, a0 = Math.atan2(edir[1], edir[0]), Lg = a.long * ech * (mobile ? .85 : 1);
+      let dd = Math.PI / 2 - a0; dd = Math.atan2(Math.sin(dd), Math.cos(dd));
+      const sens = a.cote === 'L' ? 1 : -1, P = [[0, 0]];
+      let x = 0, y = 0, v0 = 0;
+      for (const [n, part] of [[NB, .56], [NM, .2], [NC, .24]]) {
+        const du = Lg * part / n;
+        for (let j = 1; j <= n; j++) {
+          const v = v0 + part * (j - .5) / n;
+          const onde = anime ? .42 * Math.sin(t * 1.3 + a.phase - v * 3.4) + .16 * Math.sin(t * .55 + a.phase * 1.7) : .2;
+          const g = v > .58 ? ((v - .58) / .42) ** 2 : 0;
+          const ang = a0 + dd * .38 * v + onde * v + a.penche * v + sens * 6.4 * g;
+          x += Math.cos(ang) * du; y += Math.sin(ang) * du; P.push([x, y]);
+        }
+        v0 += part;
+      }
+      return P;
+    }
+    // tendu vers un titre : jusqu'à son extrémité, puis dessous, puis la pointe s'enroule
+    function portee(a, T) {
+      const E = ecran(sortie(a)), edir = a.A.exitdir, du = T.dirU;
+      const Ax = T.ancre.x - E[0], Ay = T.ancre.y - E[1], d = Math.hypot(Ax, Ay), k = d * (mobile ? .5 : .42);
+      const c1 = [edir[0] * k, edir[1] * k], c2 = [Ax - du * k * .85, Ay], P = [[0, 0]];
+      for (let j = 1; j <= NB; j++) { const u = j / NB, b = 3 * (1 - u) ** 2 * u, c = 3 * (1 - u) * u * u, e = u ** 3; P.push([b * c1[0] + c * c2[0] + e * Ax, b * c1[1] + c * c2[1] + e * Ay]); }
+      const U = T.U + 8;
+      for (let j = 1; j <= NM; j++) P.push([Ax + du * U * j / NM, Ay]);
+      const Lc = mobile ? 40 : 52, dl = Lc / NC, sens = du < 0 ? 1 : -1, k0 = 1.5 * Math.PI * 2.3 / Lc;
+      let ang = du < 0 ? Math.PI : 0, x = Ax + du * U, y = Ay;
+      for (let j = 1; j <= NC; j++) { const kap = k0 * Math.pow((j - .5) / NC, 1.3); ang += sens * kap * dl * .5; x += Math.cos(ang) * dl; y += Math.sin(ang) * dl; ang += sens * kap * dl * .5; P.push([x, y]); }
+      return P;
+    }
+    function construire(a, t, anime) {
+      const but = a.but ? portee(a, a.but) : souche(a, t, anime);
+      let rel = but;
+      if (a.depuis && a.q < 1) { const e = easeInOut(a.q); rel = but.map((p, k) => [lerp(a.depuis[k][0], p[0], e), lerp(a.depuis[k][1], p[1], e)]); }
+      a.rel = rel;
+      const pre = a.A.pts.map(ecran), E = pre[pre.length - 1];
+      const P = pre.concat(rel.slice(1).map(p => [E[0] + p[0], E[1] + p[1]])), cum = [0];
+      for (let k = 1; k < P.length; k++) cum.push(cum[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]));
+      a.P = P; a.cum = cum; a.nPre = pre.length; a.sOwn = cum[a.A.own];
+      a.sMax = a.sOwn + a.em * (cum[cum.length - 1] - a.sOwn);
+      // sa boîte, avec la demi-largeur du bras (teinté, il s'épaissit)
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const q of P) { if (q[0] < x0) x0 = q[0]; if (q[0] > x1) x1 = q[0]; if (q[1] < y0) y0 = q[1]; if (q[1] > y1) y1 = q[1]; }
+      const m = Math.max(W0 * s, 1.7) * .75 + 3;
+      a.bx0 = x0 - m; a.by0 = y0 - m; a.bx1 = x1 + m; a.by1 = y1 + m;
+      // (pour la souris : un bras tendu garde aussi son tracé de repos, qu'on reconnaisse encore le bras qu'on survolait)
+      a.repos = a.but && pointeur && !mobile ? souche(a, t, anime).map(p => [E[0] + p[0], E[1] + p[1]]) : null;
+    }
+    function largeur(a, k) {
+      const w0 = Math.max(W0 * s, 1.7), j = k - (a.nPre - 1);
+      if (j <= 0) return w0;
+      const w = j <= NB ? lerp(w0, w0 * .78, j / NB) : j <= NB + NM ? lerp(w0 * .78, w0 * .68, (j - NB) / NM) : lerp(w0 * .68, .5, Math.pow((j - NB - NM) / NC, .85));
+      return w * (1 + .4 * a.teinte * Math.min(1, j / 6));
+    }
+    function tracer(g, a, alpha) {
+      const P = a.P, cum = a.cum, n = P.length, sMax = a.sMax;
+      if (sMax <= a.sOwn + .5) return;
+      const front = a.em < 1 ? 14 : 0, G = [], Dr = [];
+      for (let k = 0; k < n; k++) {
+        let u = cum[k], x = P[k][0], y = P[k][1];
+        if (u > sMax) { const f = (sMax - cum[k - 1]) / Math.max(1e-6, u - cum[k - 1]); x = lerp(P[k - 1][0], x, f); y = lerp(P[k - 1][1], y, f); u = sMax; }
+        const p0 = P[Math.max(0, k - 1)], p1 = P[Math.min(n - 1, k + 1)];
+        let tx = p1[0] - p0[0], ty = p1[1] - p0[1]; const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
+        let w = largeur(a, k) / 2;
+        if (front) w *= Math.pow(clamp((sMax - u) / front, 0, 1), .6);
+        G.push([x - ty * w, y + tx * w]); Dr.push([x + ty * w, y - tx * w]);
+        if (u >= sMax) break;
+      }
+      g.beginPath(); g.moveTo(G[0][0], G[0][1]);
+      for (let k = 1; k < G.length; k++) g.lineTo(G[k][0], G[k][1]);
+      for (let k = Dr.length - 1; k >= 0; k--) g.lineTo(Dr[k][0], Dr[k][1]);
+      g.closePath();
+      const c = a.col, h = a.teinte;
+      g.fillStyle = `rgba(${Math.round(lerp(INK[0], c[0], h))},${Math.round(lerp(INK[1], c[1], h))},${Math.round(lerp(INK[2], c[2], h))},${alpha})`;
+      g.fill();
+    }
+    const actif = () => survol || TIT.find(T => T.focus) || brasSurvol || null;
+    // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
+    function placer(T, allume, now, anime) {
+      let em = 0;
+      if (eveil !== null) {
+        const a = T.bras, viaBras = pres && a && a.T[0] === T;
+        em = !anime ? 1 : viaBras ? lisse(.45, .9, a.em) : lisse(0, 1, (now - eveil - 650 - T.i * 60) / 520);
+      }
+      T.em = Math.max(T.em, em);
+      const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
+      if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
+      if (T.op !== op) { T.el.style.opacity = op; T.op = op; }
+      if (T.on !== allume) { T.el.classList.toggle('est-actif', allume); T.on = allume; }
+    }
+    function image(now, une) {
+      if (!une) raf = 0;
+      if (!affiche || (!une && (!visible || document.hidden))) return;
+      const anime = motionOK(), vivant = anime && !pause, act = actif();
+      const dt = Math.min(50, tPrec ? now - tPrec : 16); tPrec = now;
+      if (pres && now - pres.t0 > PRES + 12 * 120 + 900) pres = null;
+      const vif = act || pres || (eveil !== null && now - eveil < 2600) || BRAS.some(a => a.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
+      // au repos (rien ne se tend, rien ne s'éveille), l'ondulation lente se contente de trente images par seconde
+      if (!une && !vif && vivant && now - tDessin < 30) { raf = requestAnimationFrame(image); return; }
+      tDessin = now;
+      if (vivant) tVie += dt / 1000;   // (le temps de la pieuvre : il s'arrête en pause, elle se fige là où elle était)
+      let occupe = vivant;
+      // elle flotte, doucement, une fois posée (la relève de l'ouverture se fait sans ce flottement)
+      const fl = anime && eveil !== null ? lisse(0, 1, (now - eveil) / 1600) : 0;
+      bob.x = Math.sin(tVie * .41) * 3 * fl; bob.y = Math.sin(tVie * .9) * 5 * fl;
+      if (actifAvant !== !!act) { el.classList.toggle('a-actif', !!act); actifAvant = !!act; }
+      // la photo du spectacle qu'on regarde passe devant ; sinon celle de l'enchaînement, qui reprend depuis le dernier regardé
+      if (act) dernierActif = act; else if (dernierActif) { iAuto = dernierActif.i; dernierActif = null; planifier(); }
+      const vise = act || TIT[iAuto % Math.max(1, TIT.length)];
+      if (vise) montrerImage(vise.slug);
+      // le bras du spectacle montré le présente (au bureau, une fois l'éveil passé)
+      const autoT = !act && vivant && !mobile && eveil !== null && !pres && TIT.length > 1 ? TIT[iAuto % TIT.length] : null;
+      for (const a of BRAS) {
+        a.em = eveil === null ? 0 : anime ? easeOut(clamp((now - eveil - a.i * 80) / 1100, 0, 1)) : 1;
+        let voulu = null;
+        if (act) voulu = act.bras === a ? act : null;
+        else if (pres && a.T.length && now - pres.t0 < PRES + Math.min(a.rang, 12) * 120) voulu = a.T[0];   // l'éveil : chaque bras va chercher son titre
+        else if (autoT && autoT.bras === a) voulu = autoT;
+        if (a.but !== voulu) { a.depuis = a.rel.length ? a.rel.map(p => p.slice()) : null; a.but = voulu; a.q = a.depuis ? 0 : 1; if (voulu) a.col = voulu.col; }
+        if (a.q < 1) { a.q = anime ? Math.min(1, a.q + dt / (a.but ? 460 : 560)) : 1; occupe = true; }
+        const tv = a.but ? 1 : 0;
+        if (Math.abs(a.teinte - tv) > .005) { a.teinte += (tv - a.teinte) * (anime ? .16 : 1); occupe = true; } else a.teinte = tv;
+        // curieuse : au repos, les bras se penchent vers la souris
+        let pv = 0;
+        if (pointeur && !a.but && vivant) {
+          const p = sortie(a), dx = pointeur.x - (ox + p[0] * s), dy = pointeur.y - (oy + p[1] * s), d = Math.hypot(dx, dy);
+          if (d < 260) { let df = Math.atan2(dy, dx) - Math.atan2(a.A.exitdir[1], a.A.exitdir[0]); df = Math.atan2(Math.sin(df), Math.cos(df)); pv = clamp(df, -1.2, 1.2) * .7 * (1 - d / 260); }
+        }
+        a.penche += (pv - a.penche) * .08;
+        construire(a, tVie, anime);
+      }
+      // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)
+      const b = { x0: LB.x0, y0: LB.y0, x1: LB.x1, y1: LB.y1 };
+      for (const a of BRAS) if (a.sMax > a.sOwn + .5) { b.x0 = Math.min(b.x0, a.bx0); b.y0 = Math.min(b.y0, a.by0); b.x1 = Math.max(b.x1, a.bx1); b.y1 = Math.max(b.y1, a.by1); }
+      const u = boite ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
+      boite = b;
+      const X0 = Math.max(0, Math.floor(u.x0 * dpr)), Y0 = Math.max(0, Math.floor(u.y0 * dpr)), Rw = Math.min(cv.width, Math.ceil(u.x1 * dpr)) - X0, Rh = Math.min(cv.height, Math.ceil(u.y1 * dpr)) - Y0;
+      if (Rw > 0 && Rh > 0) {
+        // les bras, glissés sous le logo, puis le logo (pas avant l'éveil : c'est encore l'ouverture qui le porte)
+        lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(X0, Y0, Rw, Rh);
+        lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        const ab = act && act.bras;
+        for (const a of BRAS) if (a !== ab) tracer(lctx, a, act ? .5 : 1);
+        if (ab) tracer(lctx, ab, 1);
+        lctx.setTransform(1, 0, 0, 1, 0, 0);
+        const bx = bob.x * dpr, by = bob.y * dpr;
+        lctx.globalCompositeOperation = 'destination-out'; lctx.drawImage(msk, X0 - bx, Y0 - by, Rw, Rh, X0, Y0, Rw, Rh); lctx.globalCompositeOperation = 'source-over';
+        ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(X0, Y0, Rw, Rh);
+        ctx.drawImage(lay, X0, Y0, Rw, Rh, X0, Y0, Rw, Rh);
+        if (eveil !== null) ctx.drawImage(lg, X0 - bx, Y0 - by, Rw, Rh, X0, Y0, Rw, Rh);
+      }
+      const allumes = new Set(act ? [act] : []);
+      for (const a of BRAS) if (a.but && a.teinte > .45) allumes.add(a.but);
+      for (const T of TIT) placer(T, allumes.has(T), now, anime);
+      if (pres || (eveil !== null && now - eveil < 2600)) occupe = true;
+      if (!une && occupe) raf = requestAnimationFrame(image);
+      else if (une && occupe) reveil();
+    }
+    const reveil = () => { if (!raf && affiche && visible && !document.hidden) raf = requestAnimationFrame(image); };
+
+    /* ---------- regarder un titre, survoler un bras ---------- */
+    const dSeg = (p, a, b) => { const vx = b[0] - a[0], vy = b[1] - a[1], l = vx * vx + vy * vy, t = l ? clamp(((p.x - a[0]) * vx + (p.y - a[1]) * vy) / l, 0, 1) : 0; return Math.hypot(p.x - a[0] - t * vx, p.y - a[1] - t * vy); };
+    const dLigne = (p, P, k0) => { let d = Infinity; for (let k = Math.max(1, k0); k < P.length; k++) d = Math.min(d, dSeg(p, P[k - 1], P[k])); return d; };
+    // le bras sous la souris, à 16 px près de son tracé (hors du logo), s'il mène à un titre
+    function brasSous(p) {
+      let best = null, bd = 16;
+      for (const a of BRAS) {
+        if (!a.T.length || a.sMax <= a.sOwn + .5) continue;
+        const d = Math.min(dLigne(p, a.P, a.A.own + 1), a.repos ? dLigne(p, a.repos, 1) : Infinity);
+        if (d < bd) { bd = d; best = a; }
+      }
+      return best;
+    }
+    function bouger(e) {
+      if (e.pointerType !== 'mouse') return;
+      const r = el.getBoundingClientRect(); pointeur = { x: e.clientX - r.left, y: e.clientY - r.top };
+      // sur un titre, c'est lui qui compte ; ailleurs, le bras sous la souris anime son spectacle (le plus proche de ses titres)
+      let T = null;
+      if (!mobile && eveil !== null && !e.target.closest('.sc-t, .sc-pause')) {
+        const a = brasSous(pointeur), d = t => Math.hypot(t.ancre.x - pointeur.x, t.ancre.y - pointeur.y);
+        T = a ? a.T.reduce((x, y) => (d(y) < d(x) ? y : x)) : null;
+      }
+      if (T !== brasSurvol) { brasSurvol = T; el.classList.toggle('sur-bras', !!T); }
+      reveil();
+    }
+    el.addEventListener('pointermove', bouger, { passive: true });
+    el.addEventListener('pointerleave', () => { pointeur = null; if (brasSurvol) { brasSurvol = null; el.classList.remove('sur-bras'); } reveil(); });
+    // un bras survolé mène à son spectacle, comme son titre ; au doigt, toucher la scène hors d'un titre le relâche
+    el.addEventListener('click', e => { if (brasSurvol && !e.target.closest('a, button')) location.hash = brasSurvol.el.getAttribute('href'); });
+    el.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !mobile && survol && !e.target.closest('.sc-t')) { survol = null; reveil(); } }, { passive: true });
+    function ecouter(T) {
+      const a = T.el;
+      a.addEventListener('pointerdown', e => { dernierPointeur = e.pointerType; }, { passive: true });
+      a.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { survol = T; reveil(); } });
+      a.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && survol === T) { survol = null; reveil(); } });
+      // le clavier : le titre focalisé attire son bras (pas le focus que pose un toucher)
+      a.addEventListener('focus', () => { if (a.matches(':focus-visible')) { T.focus = true; reveil(); } });
+      a.addEventListener('blur', () => { if (T.focus) { T.focus = false; reveil(); } });
+      a.addEventListener('click', e => {
+        const touche = dernierPointeur === 'touch'; dernierPointeur = '';
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || document.documentElement.classList.contains('ed-actif')) return;
+        // au doigt, le premier toucher fait ce que fait le survol (le bras se tend, la photo passe devant) ; le second y mène
+        if (touche && actif() !== T) { e.preventDefault(); survol = T; reveil(); }
+      });
+      a.addEventListener('keydown', e => {
+        const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (d) { e.preventDefault(); TIT[(TIT.indexOf(T) + d + TIT.length) % TIT.length].el.focus(); }
+      });
+    }
+    // au téléphone, le titre qui passe au milieu de l'écran attire le bras le plus proche, et sa photo
+    function suivre() {
+      sraf = 0;
+      if (!mobile || !affiche) return;
+      const r = el.getBoundingClientRect(), mid = innerHeight * .52;
+      let best = null, bd = 110;
+      for (const T of TIT) { const d = Math.abs(r.top + T.by + T.th / 2 - mid); if (d < bd) { bd = d; best = T; } }
+      if (best !== survol) { survol = best; reveil(); }
+    }
+    addEventListener('scroll', () => { if (mobile && affiche && !sraf) sraf = requestAnimationFrame(suivre); }, { passive: true });
+    bPause.addEventListener('click', () => { pause = !pause; bPause.setAttribute('aria-pressed', String(pause)); tPrec = 0; planifier(); reveil(); });
+    if ('ResizeObserver' in window) new ResizeObserver(() => { if (affiche) mise(); }).observe(el);
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; if (visible) { tPrec = 0; reveil(); } }, { threshold: .01 }).observe(el);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) { tPrec = 0; reveil(); } });
+    if (document.fonts) document.fonts.ready.then(() => { if (affiche) mise(); });
+
+    // l'éveil : à la relève de l'ouverture (ou à la première visite de l'accueil sans elle), chaque bras va chercher son titre
+    function eveiller() {
+      if (eveil !== null) return;
+      eveil = performance.now() - (motionOK() ? 0 : 5000);
+      if (motionOK() && !presFaite && TIT.length) { pres = { t0: eveil }; presFaite = true; }
+      tPrec = 0; image(performance.now(), true); reveil(); planifier();
+    }
+    function montrer(oui) {
+      affiche = oui; clearTimeout(tAuto);
+      if (!oui) { cancelAnimationFrame(raf); raf = 0; return; }
+      if (signature() !== sig) bati();
+      tete.textContent = S.nom;
+      // de retour sur l'accueil : chaque bras reprend sa souche ; les liens suivent la mémoire de l'entrée
+      TIT.forEach(T => { T.focus = false; T.el.setAttribute('href', lienSp(T.slug)); });
+      BRAS.forEach(a => { a.but = null; a.depuis = null; a.q = 1; a.teinte = 0; });
+      survol = null; brasSurvol = null; el.classList.remove('a-actif', 'sur-bras');
+      mise();
+      // sous l'ouverture, la pieuvre attend la relève ; sans mouvement, elle est là d'emblée, sous le fondu
+      if (eveil === null && (!INTRO.ouverte() || !motionOK())) eveiller();
+      reveil(); planifier();
+    }
+    // D a changé (la base) : les titres sont refaits en place, sans rejouer l'éveil
+    function maj() { tete.textContent = S.nom; TIT.forEach(T => T.el.setAttribute('href', lienSp(T.slug))); if (signature() !== sig) { bati(); if (affiche) mise(); } }
+    return {
+      // placée dans l'accueil (refait en place : sans rien rejouer)
+      monter(place, surPlace) { if (!place) return; const deja = affiche && surPlace; place.replaceWith(el); if (deja) maj(); else montrer(true); },
+      montrer, eveiller,
+      // où l'ouverture doit poser le logo : l'origine du dessin à l'écran, et son échelle
+      cible: () => { if (!affiche || !W || !el.isConnected) return null; const r = cv.getBoundingClientRect(); return { x: r.left + ox, y: r.top + oy, s }; },
+    };
+  })();
+
+  /* ---------- l'accueil, 2 : le menu (règle 21), les quatre éléments de D.site.menu, chacun avec son petit dessin ---------- */
+  const menuDe = cle => (S.menu || []).find(m => m && (m.cle === cle || m.id === cle)) || null;
+  const PORTES_PRO = `<svg class="am-portes" viewBox="0 0 118 76" aria-hidden="true" focusable="false">${[3, 45, 87].map(x => `<path d="M${x} 74V24a14 14 0 0 1 28 0v50"/><path class="bat" d="M${x + 4} 74V25a10 10 0 0 1 20 0v49z" fill="currentColor" fill-opacity=".16" stroke="none"/>`).join('')}</svg>`;
+  function menuAccueil() {
+    const M = (S.menu || []).filter(m => m && m.href && m.texte);
+    if (!M.length) return '';
+    const dessin = m => { const c = m.cle || m.id;
+      if (c === 'saisons') return `<svg class="vignette" viewBox="${CARTE.viewBox}" aria-hidden="true" focusable="false"><use href="#fr"/>${CARTE.aVenir().map(y => `<path pathLength="1" d="${CARTE.trait(y.xy)}"/>`).join('')}<circle cx="${CARTE.rouen[0]}" cy="${CARTE.rouen[1]}" r="11"/></svg>`;
+      if (c === 'spectacles') return `<span class="am-pts">${D.shows.map((s, i) => `<i style="--c:${couleurDe(s.slug)};--i:${i}"></i>`).join('')}</span>`;
+      if (c === 'compagnie') return `<span class="am-pieuvre">${D.logo.octopus}</span>`;
+      if (/^espace/i.test(c)) return PORTES_PRO;
+      return ''; };
+    return `<nav class="acc-menu" aria-label="${esc(L.menu)}"><div class="wrap"><ul class="am-liste">${M.map(m => `<li class="am"><a class="am-a" href="${esc(m.href)}">
+      <span class="am-vis" aria-hidden="true">${dessin(m)}</span><span><span class="am-t">${esc(m.texte)}</span>${trait()}</span></a></li>`).join('')}</ul></div></nav>`;
+  }
+
+  /* ---------- l'accueil, 3 : les spectacles, un par écran (les chapitres de la 09), chacun avec l'effet de son motif ----------
+     Pleine page, dans son univers : sa photo, son titre dans sa police, son accroche, ses prochaines dates principales (deux
+     ou trois, tout public d'abord ; sans date, la phrase de son bilan dans D, ou son annonce s'il est en création) et le
+     lien vers sa page. L'effet vient de son motif, ceux que la 10 fait déjà réagir au défilement : l'arène (la photo s'ouvre
+     en cercle et l'arène tourne), les jumeaux (les deux moitiés se rejoignent), les annotations (le titre s'entoure à la
+     main), le paperboard (la feuille tombe du chevalet), le nez (de profil, la lune se lève), l'horloge (les aiguilles
+     tournent), le fil (rouge, il traverse l'écran), la chronologie (la photo se découvre de 1850 à 2077). */
+  const motif10 = m => {
+    const svg = inner => `<svg class="df-m" viewBox="0 0 240 240" aria-hidden="true" focusable="false">${inner}</svg>`;
+    switch (m) {
+      case 'jumeaux': return svg('<g class="dm-g"><circle cx="94" cy="134" r="48"/><path d="M64 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g><g class="dm-d"><circle cx="146" cy="134" r="48"/><path d="M116 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g>');
+      case 'annotations': return svg('<path class="dm-ecrit" pathLength="1" d="M26 58c8-7 15 7 23 0s15 7 23 0 15 7 23 0 15 7 23 0"/><path class="dm-ecrit" pathLength="1" d="M26 86c8-6 15 6 23 0s15 6 23 0 15 6 21 0"/><path class="dm-ecrit" pathLength="1" d="M26 114c8-6 15 6 23 0s15 6 23 0"/><path class="dm-ecrit" pathLength="1" d="M24 136c46 7 98 5 150-5"/><ellipse class="dm-ecrit" pathLength="1" cx="176" cy="76" rx="36" ry="22" transform="rotate(-8 176 76)"/><path class="dm-ecrit" pathLength="1" d="M120 196c22-26 46-38 76-44m-15-10 15 10-12 13"/>');
+      case 'paperboard': return svg('<path d="M120 172v56M84 172l-26 58M156 172l26 58"/><rect x="52" y="34" width="136" height="138" rx="2"/><path d="M46 34h148" stroke-width="5"/><path class="dm-ecrit" pathLength="1" d="M120 146c-34-20-36-50-13-53 7-1 13 4 13 11 0-7 6-12 13-11 23 3 21 33-13 53z"/><path class="dm-ecrit" pathLength="1" d="M68 58h40M68 72h26"/><path class="dm-ecrit" pathLength="1" d="M150 52l20 22m0-22-20 22"/>');
+      case 'nez': return svg('<path d="M156 30c-24 4-40 22-42 54"/><g class="dm-nez"><path d="M114 84c-12 16-40 32-70 44 18 8 46 10 66 12"/></g><path d="M110 140c-4 7 5 11-3 17 8 4 2 10 4 15 2 15 11 23 24 25 4 13 2 23-1 31"/><path d="M134 108c6-3 12-3 16 0" stroke-width="2.4"/>');
+      case 'horloge': return svg('<circle cx="120" cy="120" r="98"/><circle cx="120" cy="120" r="86" stroke-width="9" stroke-dasharray="1.6 43.43"/><g class="dm-heure"><path d="M120 120V74" stroke-width="5"/></g><g class="dm-minute"><path d="M120 120V46" stroke-width="2.6"/></g><circle cx="120" cy="120" r="5" fill="currentColor" stroke="none"/>');
+    }
+    return '';
+  };
+  const ARENE = () => `<svg class="df-m df-arene" viewBox="0 0 400 400" aria-hidden="true" focusable="false"><circle cx="200" cy="200" r="197"/><g class="dm-tourne">${[0, 120, 240].map(a => `<path class="gradin" d="${arc(200, 200, 183, a + 9, a + 111)}"/>`).join('')}</g><circle cx="200" cy="200" r="168" stroke-dasharray="1.5 7"/></svg>`;
+  const FIL = '<svg viewBox="0 0 1400 800" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M-30 760C200 720 420 800 640 724S760 420 724 262 820 30 1010 86 1300 270 1440 120"/></svg>';
+  const LUNE = '<svg class="df-lune" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><path d="M62 8a42 42 0 1 0 30 70A36 36 0 1 1 62 8z"/></svg>';
+  const ENTOURE = '<svg class="df-entoure" viewBox="0 0 300 120" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M34 64C40 24 150 6 236 22s74 62 10 82-196 14-226-14 18-62 112-70"/></svg>';
+  const FRISE_CHRONO = () => { const x = a => 40 + (a - 1850) / 227 * 1120, ticks = [];
+    for (let a = 1850; a <= 2070; a += 10) ticks.push(`<path d="M${x(a).toFixed(1)} ${a % 50 ? 25 : 18}V39"/>`);
+    return `<svg class="df-m" viewBox="0 0 1200 64" aria-hidden="true" focusable="false"><path d="M40 32H1160"/>${ticks.join('')}<path d="M1160 14V48"/><text x="40" y="61">1850</text><text x="1160" y="61" text-anchor="end">2077</text><circle class="dm-curseur" cx="40" cy="32" r="7"/></svg>`; };
+  const effetEcran = m => m === 'arene' ? `<div class="df-effet" aria-hidden="true">${ARENE()}</div>`
+    : m === 'fil' ? `<div class="df-effet df-fil" aria-hidden="true">${FIL}</div>`
+    : m === 'chronologie' ? `<div class="df-effet df-chrono" aria-hidden="true">${FRISE_CHRONO()}</div>`
+    : motif10(m) ? `<div class="df-effet" aria-hidden="true">${motif10(m)}</div>${m === 'nez' ? LUNE : ''}` : '';
+  // une prochaine date, écrite comme dans l'agenda (le jour en grand, le mois, la commune) ; réservable, elle mène à sa carte
+  // de réservation, sur la page du spectacle (règle 17)
+  const dateEcran = (s, d) => { const [j, m] = coupe(d.ligneDate), k = RS && !d.scolaire ? RS.cle(d) : null, rv = k != null && !!RS.trouver(k);
+    const corps = `<span class="df-q"><b>${esc(j)}</b>${m ? ` <small>${esc(m)}</small>` : ''}</span><span class="df-o">${esc(d.ligneLieu)}${d.scolaire ? ` <em class="tag">${esc(L.scolaire)}</em>` : ''}${d.etat ? ` <em class="tag">${esc(d.etat)}</em>` : ''}</span>`;
+    return `<li${dateId(d)}>${rv ? `<a class="df-date" href="#/spectacle/${esc(s.slug)}/voir?date=${encodeURIComponent(k)}">${corps}<span class="sr"> ${esc(s.titre)}</span></a>` : `<span class="df-date">${corps}</span>`}</li>`; };
+  // ses prochaines dates principales : tout public d'abord, jusqu'à trois (deux au moins avec les scolaires, marquées) ;
+  // sans date, son annonce s'il est en création, sinon la phrase de son bilan (D), sinon rien : rien n'est inventé
+  function datesEcran(s) {
+    const ds = D.dates.filter(d => d.slug === s.slug), choisies = ds.filter(d => !d.scolaire).slice(0, 3);
+    if (choisies.length < 2) choisies.push(...ds.filter(d => d.scolaire).slice(0, 2 - choisies.length));
+    choisies.sort((a, b) => ds.indexOf(a) - ds.indexOf(b));
+    if (choisies.length) return `<div class="df-dates" style="--k:3"><p class="df-k">${esc(L.prochainesDates)}</p><ul class="df-liste" data-agenda="${esc(s.slug)}">${choisies.map(d => dateEcran(s, d)).join('')}</ul></div>`;
+    if (s.statut && s.tournee && s.tournee.titre) return `<div class="df-dates" style="--k:3"><p class="df-k"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</p>${s.tournee.texte ? `<p class="df-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}</div>`;
+    const P = s.programmer || {};
+    if (P.representations) return `<div class="df-dates" style="--k:3">${s.enTournee ? '' : `<p class="df-k">${esc(L.bilan)}</p>`}<p class="df-bilan"${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</p></div>`;
+    return '';
+  }
+  function ecranSp(s, i) {
+    const m = mo(s), ph = (s.photos || []).find(p => !p.etablissement && !p.atelier && D.photos[p.cle]), src = ph ? D.photos[ph.cle] : D.photos[s.slug];
+    const credit = ph ? creditDe(s, ph) : s.creditPhotos, kCredit = ph ? cleCredit(ph) : 'creditPhotos';
+    const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null, lignes = tl || [s.titre];
+    const titre = lignes.map((l, k) => `<span class="df-l"${tl ? edS(s, 'titreLignes', k) : edS(s, 'titre')}>${esc(l)}</span>`).join(' ');
+    const long = lignes.length > 2 || lignes.join(' ').length > 26, badge = badgeDe(s);
+    const img = (cls = '') => src ? `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="" loading="lazy" decoding="async">` : '';
+    return `<article class="df ${uClasse(s)}" style="${uVars(s)}" data-motif="${esc(m)}" data-cote="${i % 2 ? 'droite' : 'gauche'}" aria-labelledby="df-t-${esc(s.slug)}">
+      <div class="df-photo"${ph ? edP(s, 'photos', rangPh(s, ph)) : edP(s, 'photo')}>${img()}${m === 'jumeaux' ? img('df-jumeau') : ''}</div>
+      ${effetEcran(m)}
+      <div class="wrap df-texte"><div class="df-in">
+        <p class="df-sur" style="--k:0"><span${edS(s, 'creation')}>${esc(s.creation || '')}</span>${s.lieuTemps ? `<span class="df-lt"${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${badge ? `<span class="df-badge">${badge}</span>` : ''}</p>
+        <h2 class="df-titre${long ? ' long' : ''}" id="df-t-${esc(s.slug)}" style="--k:1">${titre}${m === 'annotations' ? ENTOURE : ''}</h2>
+        ${s.accroche ? `<p class="df-acc" style="--k:2"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
+        ${datesEcran(s)}
+        <p class="df-cta" style="--k:4"><a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></p>
+      </div></div>
+      ${credit ? `<p class="df-credit"${edS(s, kCredit)}>${esc(credit)}</p>` : ''}
+      <div class="df-voile" aria-hidden="true"></div>
+    </article>`;
+  }
+  // le défilé, au fil de la lecture : --p (l'arrivée de l'écran), --r (sa lecture, épinglé), --q (recouvert par le suivant).
+  // Au bureau, les écrans sont épinglés l'un après l'autre (sticky) : leur place se calcule depuis la pile, sans les lire un
+  // par un ; ailleurs, chacun suit sa place dans l'écran. Seules les valeurs qui changent sont réécrites.
+  let ecrans = [], dfM = null;
+  function mesurerEcrans() {
+    const e0 = ecrans[0];
+    dfM = e0 && e0.isConnected ? { pile: getComputedStyle(e0).position === 'sticky', h: e0.offsetHeight, m: parseFloat(getComputedStyle(e0).marginBottom) || 0,
+      haut: ($('#top') || {}).offsetHeight || 64 } : null;
+  }
+  function defileEcrans() {
+    if (!ecrans.length || !ecrans[0].isConnected) return;
+    if (!dfM) mesurerEcrans();
+    if (!dfM) return;
+    const poser = (el, p, r, q) => { const v = `${p.toFixed(3)} ${r.toFixed(3)} ${q.toFixed(3)}`; if (el.__df === v) return; el.__df = v;
+      el.style.setProperty('--p', p.toFixed(3)); el.style.setProperty('--r', r.toFixed(3)); el.style.setProperty('--q', q.toFixed(3)); };
+    if (!motionOK()) { ecrans.forEach(el => poser(el, 1, 1, 0)); return; }
+    const vh = innerHeight;
+    if (dfM.pile) {
+      const d = dfM.haut - ecrans[0].parentElement.getBoundingClientRect().top, Hs = Math.max(1, dfM.h), M = dfM.m;
+      const ps = ecrans.map((el, i) => clamp((d - (i * (Hs + M) - Hs)) / Hs, 0, 1));
+      ecrans.forEach((el, i) => poser(el, ps[i], M > 0 ? clamp((d - i * (Hs + M)) / M, 0, 1) : ps[i], ps[i + 1] || 0));
+    } else ecrans.forEach(el => { const r = el.getBoundingClientRect(); if (r.bottom < -vh || r.top > 2 * vh) return;
+      poser(el, clamp((vh - r.top) / (vh * .7), 0, 1), clamp((vh * .3 - r.top) / Math.max(1, r.height * .8), 0, 1), 0); });
+  }
+
+  /* ---------- l'accueil : la scène (la pieuvre), le menu, les spectacles un par écran, la saison sur la carte, les donateurs ---------- */
+  function accueil(q, surPlace) {
     vue = 'accueil';
-    const lieux = CARTE.aVenir(), vus = new Set(lieux.map(x => x.l)), passe = tous().filter(x => !vus.has(x.l));
-    const nb = s => +((String((s.programmer || {}).representations || '').match(/^\d+/) || [0])[0]);
-    const plus = D.shows.slice().sort((a, b) => nb(b) - nb(a))[0], pub = D.dates.find(d => !d.scolaire);
-    const image = { voir: pub && D.photos[pub.slug], programmer: plus && D.photos[plus.slug], etablissement: D.photos['actions-culturelles'] };
-    main.innerHTML = `
-      <section class="une"><div class="wrap une-grille">
-        <div class="une-tete"><p class="surtitre">${esc(S.saisons[0].titre)}</p><h1 tabindex="-1"${ed('site.nom')}>${esc(S.nom)}</h1>${trait()}
-          <ul class="portes">${S.entrees.map(e => `<li><a class="porte" href="${e.href}" data-mv-nom="entree-${e.cle}" style="--ec:${e.couleur};--ev:${e.couleurVive}">${image[e.cle] ? `<span class="porte-ph" aria-hidden="true"><img src="${image[e.cle]}" alt=""></span>` : ''}<span class="porte-t">${esc(e.texte)}</span><span class="porte-f">${FLECHE}</span></a></li>`).join('')}</ul></div>
+    const lieux = CARTE.aVenir(), vus = new Set(lieux.map(x => x.l)), passe = tous().filter(x => !vus.has(x.l)), ms = menuDe('saisons');
+    main.innerHTML = `<div class="acc"><div id="sc-place"></div>
+      ${menuAccueil()}
+      <div class="df-pile">${D.shows.map(ecranSp).join('')}</div>
+      <section class="bloc acc-saison" aria-labelledby="h-acc-saison"><div class="wrap une-grille">
+        <div class="une-tete"><h2 class="titre-bloc" id="h-acc-saison">${esc(S.saisons[0].titre)}</h2>${trait()}${ms ? `<p class="acc-lien"><a href="${esc(ms.href)}">${esc(ms.texte)}${FLECHE}</a></p>` : ''}</div>
         <figure class="une-carte">${carte({ lieux, passe, titre: S.saisons[0].titre, classe: 'grande' })}<figcaption class="bulle" id="bulle"></figcaption></figure>
-        <div class="une-liste"><h2 class="rubrique">${esc(L.actuellementEnTournee)}</h2>
+        <div class="une-liste"><h3 class="rubrique">${esc(L.actuellementEnTournee)}</h3>
           <ol class="prochaines" data-agenda="">${D.dates.slice(0, 5).map(d => `<li${dateId(d)} data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${bySlug[d.slug] ? `<a href="${lienSp(d.slug, d.scolaire ? 'etablissement' : 'voir')}">` : '<div class="pl">'}${quand(d.ligneDate, d.iso)}<span class="t">${esc(d.titre)}</span><span class="ou">${esc(d.ligneLieu)}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</span>${bySlug[d.slug] ? '</a>' : '</div>'}</li>`).join('')}</ol></div>
       </div></section>
-      <section class="bloc" aria-labelledby="h-sp"><div class="wrap"><h2 class="titre-bloc" id="h-sp">${esc(L.lesSpectacles)}</h2><ul class="fus compact">${D.shows.map(s => ficheU(s, { href: lienSp(s.slug) })).join('')}</ul></div></section>
-      <section class="merci"><div class="wrap">${trait()}<p${ed('site.donateurs')}>${S.donateurs || ''}</p></div></section>`;
-    const svg = $('.une-carte svg'), ol = $('.prochaines');
+      <section class="merci"><div class="wrap">${trait()}<p${ed('site.donateurs')}>${S.donateurs || ''}</p></div></section></div>`;
+    Scene.monter($('#sc-place', main), surPlace);
+    const svg = $('.une-carte svg', main), ol = $('.prochaines', main);
     const montre = bulleSur(svg, $('#bulle'), l => { const x = lieux.find(y => y.l === l);
       return x ? `<b>${esc(CARTE.nom(x))}</b><ul>${x.dates.map(d => `<li><span class="t">${esc(d.titre)}</span><span>${esc(d.ligneDate)}</span>${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}</li>`).join('')}</ul>` : ''; },
-      l => { const x = lieux.find(y => y.l === l); location.hash = x && x.dates.some(d => !d.scolaire) ? `#/voir?l=${l}` : E.etablissement.href; });
+      l => { const x = lieux.find(y => y.l === l); location.hash = x && x.dates.some(d => !d.scolaire) ? `${ms ? ms.href : E.voir.href}?l=${l}` : E.etablissement.href; });
     const allume = l => { montre(l); $$('li[data-l]', ol).forEach(li => li.classList.toggle('on', l != null && +li.dataset.l === l)); };
     ol.addEventListener('mouseover', e => { const li = e.target.closest('li[data-l]'); if (li) allume(+li.dataset.l); });
     ol.addEventListener('mouseleave', () => allume(null));
     ol.addEventListener('focusin', e => { const li = e.target.closest('li[data-l]'); if (li) allume(+li.dataset.l); });
     ol.addEventListener('focusout', () => allume(null));
-    if (!INTRO.ouverte()) bientot(() => pousser(svg));   // sinon, l'ouverture les fera pousser (apres)
+    if (surPlace) pousser(svg); else pousserVu(svg);   // (la carte est loin sous le pli : ses bras poussent quand on y arrive)
+    ecrans = $$('.df', main); dfM = null;
     return { titre: S.accueil };
   }
 
@@ -3583,6 +4144,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   function defile() {
     sraf = 0;
     const vh = innerHeight;
+    defileEcrans();   // (l'accueil : les spectacles, un par écran)
     for (const sec of secs) {
       if (!sec.isConnected) continue;
       const r = sec.getBoundingClientRect(), span = r.height - vh;
@@ -3599,8 +4161,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       if (ong && ouv) ong.classList.toggle('colle', ouv.getBoundingClientRect().bottom < 140);
     }
   }
-  addEventListener('scroll', () => { if ((secs.length || chaps.length) && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
-  addEventListener('resize', () => { requestAnimationFrame(() => { echelle(); ajuste(); if (secs.length || chaps.length) defile(); }); });
+  addEventListener('scroll', () => { if ((secs.length || chaps.length || ecrans.length) && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
+  addEventListener('resize', () => { requestAnimationFrame(() => { echelle(); ajuste(); dfM = null; if (secs.length || chaps.length || ecrans.length) defile(); }); });
 
   // les phrases s'écrivent et les photos apparaissent quand elles arrivent à l'écran
   let io = null;
@@ -3639,17 +4201,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     lraf = requestAnimationFrame(() => { lraf = 0; const r = ouv.getBoundingClientRect(); ouv.style.setProperty('--gx', `${((e.clientX - r.left) / r.width * 100).toFixed(1)}%`); ouv.style.setProperty('--gy', `${((e.clientY - r.top) / r.height * 100).toFixed(1)}%`); });
   });
 
-  /* ---------- l'ouverture : derrière la pieuvre, à peine, la carte des tournées qui part de Rouen ---------- */
-  function fondIntro() {
-    const W = 1120, H = 700, R = CARTE.rouen;
-    const traits = tous().map(x => `<path d="${CARTE.trait(x.xy)}"/>`).join('');
-    const bras = CARTE.aVenir().map(x => CARTE.bras(x.xy, { w0: 5, w1: .8 })).filter(Boolean).map(d => `<path d="${d}"/>`).join('');
-    // la nuit (règle 19) : la carte se trace à l'encre claire, à peine, sous la pieuvre
-    const nuit = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit', trait = nuit ? '#f2eae4' : '#1d1418';
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${(R[0] - W / 2).toFixed(1)} ${(R[1] - H / 2).toFixed(1)} ${W} ${H}"><path d="${CARTE.fond.pays}" fill="${trait}" fill-opacity=".03" stroke="${trait}" stroke-opacity=".1" stroke-width="1.2"/><g fill="none" stroke="${trait}" stroke-opacity="${nuit ? '.08' : '.09'}" stroke-width="1.3" stroke-linecap="round">${traits}</g><g fill="${nuit ? '#e0559a' : '#bc3e80'}" fill-opacity="${nuit ? '.22' : '.18'}">${bras}</g></svg>`;
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  }
-
   /* ---------- l'en-tête et le pied de page, refaits seulement quand D change ---------- */
   let cadreFait = '';
   function cadre() {
@@ -3658,13 +4209,15 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const parts = {
       entrees: S.entrees.map(e => lien(e, true)).join(''),
       barre: S.entrees.map(e => lien(e, false)).join(''),
-      second: S.menu.map(x => `<a href="${x.href}" data-id="${x.id}">${esc(x.texte)}</a>`).join('') + (S.espacePro ? `<a href="#/espace-pro" data-id="espace-pro">${esc(S.espacePro.titre)}</a>` : ''),
+      // (le menu de D a désormais « Espace pro » : on ne l'ajoute que s'il n'y est pas)
+      second: S.menu.map(x => `<a href="${x.href}" data-id="${x.id}">${esc(x.texte)}</a>`).join('') + (S.espacePro && !S.menu.some(x => x.href === '#/espace-pro') ? `<a href="#/espace-pro" data-id="espace-pro">${esc(S.espacePro.titre)}</a>` : ''),
       pied: `<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
         <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
         <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
         <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.espacePro ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
     };
-    const couleurs = couleursSp();
+    // les couleurs des spectacles, et celles de la saison (règle 22 : le thème, relu dans D à chaque changement)
+    const couleurs = couleursSp() + couleursSaison();
     const tout = JSON.stringify(parts) + S.titreSuffixe + L.menu + (L.modeNuit || '') + couleurs;
     if (tout === cadreFait) return;
     cadreFait = tout;
@@ -3692,7 +4245,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   function marquerNav(r) {
     $$('#entrees a, #barre a').forEach(a => { a.removeAttribute('aria-current');
       if (r.entree && a.dataset.e === r.entree) a.setAttribute('aria-current', 'page'); else if (r.lecture && a.dataset.e === r.lecture) a.setAttribute('aria-current', 'true'); });
-    $$('#second a').forEach(a => { if (r.menu && a.dataset.id === r.menu) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    // (menuLu : l'élément du menu dont la vue dépend, mis en évidence sans être la page : une sous-page de l'espace pro)
+    $$('#second a').forEach(a => { if (r.menu && a.dataset.id === r.menu) a.setAttribute('aria-current', 'page'); else if (r.menuLu && a.dataset.id === r.menuLu) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
   }
 
   /* ---------- la navigation : les adresses, les redirections, la mémoire de l'entrée ---------- */
@@ -3706,18 +4260,27 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   function rendre(a, surPlace) {
     const { chemin, q } = a; let m;
     frises.forEach(f => f.detruire()); frises = [];
-    secs = []; chaps = []; surPlaceRendu = !!surPlace;
+    secs = []; chaps = []; ecrans = []; dfM = null; surPlaceRendu = !!surPlace;
+    // la scène de l'accueil s'arrête en le quittant (refait en place, l'accueil la garde telle quelle)
+    if (!(surPlace && vue === 'accueil')) Scene.montrer(false);
     try {
       if ((m = chemin.match(/^spectacle\/([\w-]+)\/(voir|programmer|etablissement)$/)) && bySlug[m[1]]) return entreeSp(m[1], m[2]) === m[2] ? spectacle(m[1], m[2], surPlace, q) : null;
-      if ((m = chemin.match(/^agenda\/([\d-]+)$/)) && D.saisons[m[1]] && m[1] !== D.saison) return saison(m[1]);
+      // une saison passée : sa page (#/saisons/<saison> ; la saison en cours est la page des saisons elle-même)
+      if ((m = chemin.match(/^saisons\/([\d-]+)$/)) && D.saisons[m[1]] && m[1] !== D.saison) { const r = saison(m[1]); r.menu = 'saisons'; return r; }
       if (S.legal && S.legal[chemin]) return legal(chemin);
       const V = vues();
       if (Object.prototype.hasOwnProperty.call(V, chemin)) return V[chemin](q, surPlace);
       return null;
     } finally { surPlaceRendu = false; }
   }
-  // les vues simples ; une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page)
-  const vues = () => Object.assign({ '': accueil, voir, programmer, etablissement, spectacles, compagnie, contact }, S.espacePro ? { 'espace-pro': espacePro } : {});
+  // les vues simples ; une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page). Les
+  // adresses du menu par les saisons (règle 21) mènent, en attendant leurs pages, aux vues les plus proches : les saisons à
+  // l'agenda de la saison et aux saisons passées (« Je viens voir un spectacle »), les deux pages de l'espace pro à
+  // « Je souhaite programmer » et à « Je représente un établissement scolaire » ; les anciennes adresses (#/voir,
+  // #/programmer, #/etablissement…) suivent D.site.redirections
+  const sousMenu = (f, menu, menuLu) => (q, surPlace) => Object.assign(f(q, surPlace), menu ? { menu, entree: null, lecture: 'voir' } : { menuLu });
+  const vues = () => Object.assign({ '': accueil, saisons: sousMenu(voir, 'saisons'), 'espace-pro/programmer': sousMenu(programmer, null, 'espace-pro'),
+    'espace-pro/etablissement': sousMenu(etablissement, null, 'espace-pro'), spectacles, compagnie, contact }, S.espacePro ? { 'espace-pro': espacePro } : {});
   // les filets se tracent, les titres montent, les fiches arrivent l'une après l'autre, les chiffres comptent ; posé avant
   // toute lecture de mise en page (le focus du titre en force une : une seule, sur la page finie)
   function decorer(surPlace) {
@@ -3754,7 +4317,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     if (cible && !Object.prototype.hasOwnProperty.call(vues(), a.chemin)) { location.replace(cible + (a.qs ? '?' + a.qs : '')); return; }
     if ((m = a.chemin.match(/^spectacle\/([\w-]+)$/)) && bySlug[m[1]]) { location.replace(`#/spectacle/${m[1]}/${entreeSp(m[1], retenue() || 'voir')}`); return; }
     if ((m = a.chemin.match(/^spectacle\/([\w-]+)\/etablissement$/)) && bySlug[m[1]] && !bySlug[m[1]].actionCulturelle) { location.replace(`#/spectacle/${m[1]}/voir`); return; }
-    if ((m = a.chemin.match(/^agenda\/([\d-]+)$/)) && m[1] === D.saison) { location.replace(E.voir.href); return; }
+    // les saisons : #/agenda/<saison> mène à #/saisons/<saison>, et la saison en cours à la page des saisons
+    const saisons = (menuDe('saisons') || {}).href || '#/saisons';
+    if ((m = a.chemin.match(/^agenda\/([\d-]+)$/))) { location.replace(m[1] === D.saison ? saisons : `${saisons}/${m[1]}`); return; }
+    if ((m = a.chemin.match(/^saisons\/([\d-]+)$/)) && m[1] === D.saison) { location.replace(saisons); return; }
     const type = genre(a), clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
     dernierClic = null;
     const depuis = (clic && clic.el) || $('.mv-principal[data-mv-nom]', main);
