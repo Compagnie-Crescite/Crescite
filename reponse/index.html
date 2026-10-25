@@ -90,6 +90,7 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .secteurs li + li { margin-top: 6px; }
 .secteurs li span { display: block; font-weight: 400; color: var(--gris); }
 .confirmer .note-alerte { margin-top: 12px; font-weight: 400; color: var(--gris); font-size: .94rem; }
+.confirmer .actions:first-child { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) { .choix button { transition: none; } .choix button:active { transform: none; } }
 </style>
 </head>
@@ -280,7 +281,7 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
       corps = `<h1 tabindex="-1">${plus ? 'Confirmez vos alertes' : 'Confirmez votre alerte'}</h1>
         <p class="bonjour">Vous avez demandé à recevoir par courriel les dates de la compagnie près de chez vous :</p>${secteurs(attente)}
         <section class="confirmer" aria-label="Confirmer"><div class="actions"><button class="principal" type="button" data-alerte="confirmer">${plus ? 'Confirmer mes alertes' : 'Confirmer mon alerte'}</button></div>
-        <p class="note-alerte">Tant qu’elle n’est pas confirmée, rien ne vous est envoyé. Ce n’est pas vous ? Fermez simplement cette page.</p></section>`;
+        <p class="note-alerte">${plus ? 'Tant qu’elles ne sont pas confirmées' : 'Tant qu’elle n’est pas confirmée'}, rien ne vous est envoyé. Ce n’est pas vous ? Fermez simplement cette page.</p></section>`;
     } else if (a.active && a.confirmee) {
       corps = `<h1 tabindex="-1">Votre alerte est déjà active</h1><p class="bonjour">Vous recevez par courriel les dates de la compagnie confirmées dans ce secteur :</p>${secteurs([a])}
         <p class="bonjour"><a href="?alerte=${encodeURIComponent(jetonAlerte)}&amp;action=arreter">Ne plus la recevoir</a></p>`;

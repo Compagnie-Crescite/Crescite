@@ -361,6 +361,17 @@ e = vider();
 ok(e.length === 10 && bilan.reste === false && new Set(e.map(x => x.a)).size === 10 && e.every(x => /^masse\d+@/.test(x.a)), 'le passage suivant écrit les dix autres');
 await db.exec(`delete from public.crescite_alertes_tournee where email like 'masse%@exemple.fr'`);
 
+// l'administration désactive une alerte : elle ne reçoit plus rien ; elle l'efface : ce qui lui a été écrit s'en va aussi
+const gId = (await alertesDe('g@exemple.fr'))[0].id;
+ok(await essai('authenticated', U.admin, `update public.crescite_alertes_tournee set active = false where id = ${gId}`) === 'ok', 'l’administration désactive une alerte');
+await date('rouen6', 'berenice', 'rouen', 34);
+bilan = await (await parLaBase({ alertes: true })).json();
+e = vider();
+ok(pour('g@exemple.fr').length === 0 && pour('a@exemple.fr').length === 1, 'une alerte désactivée ne reçoit plus rien (les autres, si)');
+ok(await essai('authenticated', U.admin, `delete from public.crescite_alertes_tournee where id = ${gId}`) === 'ok'
+   && (await db.query(`select count(*)::int n from public.crescite_alertes_envois where alerte_id = $1`, [gId])).rows[0].n === 0,
+  'l’administration efface une alerte, et ce qui lui a été écrit avec elle');
+
 // ---------------------------------------------------------------------------------------------- l'effacement
 await db.exec(`insert into public.crescite_alertes_tournee (email, code_postal, cree_le, confirmation_statut, confirmation_le, confirme_le) values
   ('vieille@exemple.fr', '76000', now() - interval '31 days', null, null, null),

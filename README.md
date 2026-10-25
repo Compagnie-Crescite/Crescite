@@ -480,7 +480,7 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
   `supabase/functions/crescite-agenda/index.ts` dans son éditeur (Edge Functions → crescite-agenda), Deploy, puis
   vérifier que « Verify JWT » est resté décoché : un redéploiement peut le recocher, et le flux ne s'ouvrirait plus ;
 - `crescite-courriel` écrit à chaque destinataire d'une proposition (Brevo, clé `BREVO_API_KEY` dans les secrets des
-  fonctions ; sans clé, rien ne part et l'administration le voit) ;
+  fonctions ; sans clé, rien ne part et l'administration le voit), et, avec le onzième script, les alertes de tournée ;
 - la réponse d'un clic passe par la page du site `reponse/` : Supabase montre en texte brut toute page web servie par
   une fonction. Le lien du courriel arrive sur la page avec le choix prêt, qu'on confirme d'un bouton (les messageries
   ouvrent les liens pour les vérifier). 33 essais du script (`node disponibilites.mjs`), 21 de la fonction des
@@ -537,6 +537,45 @@ d'une date, bloc « Les chiffres » ; trois colonnes du tableur, exportées en n
 date, dans son espace), le public et un compte du projet sans fiche n'y ont aucun droit ; chaque changement va au
 journal. `crescite_dates_suivi` (organisateur, contacts, contrat) reste à l'administration seule. Tant que le script
 n'est pas lancé, rien de cela ne se montre. 19 essais (`node chiffres.mjs`).
+
+**Les alertes de tournée (pas encore lancé).** Le onzième script, `supabase/migrations/20261030_crescite_alertes.sql`,
+s'exécute après les dix autres et peut être relancé ; la fonction `crescite-courriel` est ensuite à redéployer. Sur le
+site, « Être prévenu du prochain passage » dépose une alerte : une adresse, un secteur (un code postal ou une commune, et
+le département qui s'en déduit ; ou la position du visiteur, 40 km alentour), un spectacle ou tous. Elle ne compte
+qu'une fois confirmée d'un clic depuis le courriel envoyé à l'adresse : sans cela, n'importe qui inscrirait l'adresse
+d'un autre. Le lien mène à la page `reponse/?alerte=…`, qui fait confirmer d'un bouton (les messageries ouvrent les liens
+pour les vérifier) ; le formulaire du site, lui, dit seulement que l'alerte s'activera une fois confirmée, et à quoi sert
+l'adresse.
+- Ce que la base garantit (des déclencheurs, que le septième script relancé ne défait pas) : le public ne dépose jamais
+  une alerte confirmée, ne choisit pas son jeton et ne lit pas celles des autres ; cinq alertes actives au plus par
+  adresse ; un courriel de confirmation au plus par adresse et par 24 heures (son lien confirme toutes les alertes en
+  attente de l'adresse), et 50 adresses au plus par 24 heures ; la même alerte déposée deux fois ne se double pas.
+- Chaque matin (7 h 17, heure UTC, pg_cron), `crescite-courriel` efface les alertes non confirmées 30 jours après leur
+  courriel de confirmation, envoie les confirmations restées en attente (« non_configure » compris, dès qu'une clé
+  d'envoi existe), puis un seul courriel par alerte confirmée, avec les dates qu'elle n'a pas encore reçues (le premier :
+  toutes les dates à venir) : confirmées, visibles, tout public ou mixte (jamais une scolaire), à venir, d'un spectacle
+  publié (celui de l'alerte s'il y en a un), dans son secteur (à moins de 40 km quand l'alerte et le lieu ont une
+  position, sinon le même département : la Corse en 2A et 2B, l'outre-mer en trois chiffres). Le courriel donne le
+  spectacle, le jour et l'heure, le lieu, la commune, le lien de réservation, les pages du site et le lien pour arrêter
+  l'alerte (elle s'efface, avec son adresse ; « toutes mes alertes » efface l'adresse entière). Chaque date écrite est
+  notée (`crescite_alertes_envois`) : jamais deux fois la même ; 200 courriels au plus par passage (Brevo gratuit : 300 par
+  jour, il en faut pour les propositions et les liens de connexion), le reste le lendemain. Sans clé d'envoi, rien ne
+  part : c'est noté « non_configure ».
+- Aucun suivi d'ouverture ni de clic n'est ajouté aux courriels. Brevo, lui, en pose sur les courriels transactionnels,
+  avec son propre en-tête de désinscription (List-Unsubscribe) : pour s'en passer, le lui demander, ou envoyer par Resend
+  (`RESEND_API_KEY`), qui reçoit alors le désabonnement d'un geste des messageries (List-Unsubscribe-Post).
+- Dans l'administration, la Diffusion a trois parties : les pistes ; les demandes de devis déposées sur le site (la
+  demande, le contact, le statut — nouvelle, en cours, devis envoyé, confirmée, sans suite — et les notes internes, que le
+  programmateur ne voit jamais ; il suffit du septième script) ; les alertes de tournée (combien sont confirmées, en
+  attente, par département et par spectacle ; désactiver, réactiver ou effacer une alerte), masquées tant que le onzième
+  script manque.
+
+À faire, dans l'ordre : coller le script dans l'éditeur SQL (Run) : il dit à la fin ce qui est en place ; puis redéployer
+`crescite-courriel` (Edge Functions → crescite-courriel → coller `supabase/functions/crescite-courriel/index.ts` →
+Deploy) et vérifier que « Verify JWT » est resté décoché ; la clé d'envoi (`BREVO_API_KEY` ou `RESEND_API_KEY`) et
+l'expéditeur vérifié restent ceux des propositions. Tant que le script n'est pas lancé, la base refuse l'alerte : le site
+ne dit rien enregistré et propose d'écrire au contact diffusion. 71 essais (`node alertes.mjs` : les onze scripts, le
+onzième relancé, le septième et le troisième relancés après lui ; la fonction dans Node, Brevo et Resend simulés).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

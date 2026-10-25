@@ -226,7 +226,8 @@ async function ecrireAlerte(a: { id: number; email: string; jeton: string; secte
   const dates = a.dates || [], n = dates.length, s = a.secteur, secteur = secteurTexte(s);
   const arret = `${SITE}/reponse/?alerte=${a.jeton}&action=arreter`, toutes = `${PAGES}#/voir`;
   const d0 = dates[0];
-  const sujet = n === 1 ? `Crescite près de chez vous : ${d0.spectacle.titre}${d0.lieu ? `, ${d0.lieu.commune}` : ''}` : `Crescite près de chez vous : ${n} dates`;
+  const sujet = (n === 1 ? `Crescite près de chez vous : ${d0.spectacle.titre}${d0.lieu ? `, ${d0.lieu.commune}` : ''}` : `Crescite près de chez vous : ${n} dates`)
+    .replace(/\s+/g, ' ').trim();
   const intro = `${n > 1 ? `Voici les ${n} dates` : 'Voici la date'} de la compagnie ${n > 1 ? 'confirmées' : 'confirmée'} dans votre secteur (${secteur})`;
   const lignes = dates.map(d => `<tr><td style="padding:14px 0;border-top:1px solid #eee">
 <strong><a href="${esc(pageSpectacle(d))}" style="color:#1d1720">${esc(d.spectacle.titre)}</a></strong><br>
