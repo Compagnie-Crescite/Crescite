@@ -28,7 +28,7 @@ const DONNEES = (() => {
   const cleCommune = (c, dep) => `${norm(c)}|${dep}`;
   const S = {
     site: { titreSuffixe: D.site.titreSuffixe, accueil: D.site.accueil, entrees: D.site.entrees, menu: D.site.menu,
-            redirections: D.site.redirections, libelles: D.site.libelles },
+            redirections: D.site.redirections, libelles: D.site.libelles, couleurSaison: D.site.couleurSaison },
     carte: { viewBox: D.carte.viewBox, contour: D.carte.contour, belgique: D.carte.belgique, luxembourg: D.carte.luxembourg,
              rouen: D.carte.rouen, projection: D.carte.projection },
     xy: new Map(D.carte.lieux.map(l => [cleCommune(l.c, l.dep), l.xy])),
@@ -63,6 +63,25 @@ const DONNEES = (() => {
     const cle = fichier.replace(/\.[a-z0-9]+$/i, '');
     return S.photos[cle] || `${BASE}/storage/v1/object/public/crescite/${fichier.split('/').map(encodeURIComponent).join('/')}`;
   };
+
+  // le thème d'un spectacle (règle 22) : « couleur », assez sombre pour porter la pieuvre blanche du logo et un texte sur
+  // fond clair (l'accent, sinon la couleur du spectacle assombrie) ; « vive », lisible sur un fond sombre
+  const lumiere = h => {
+    const f = c => (c /= 255) <= .04045 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4, n = parseInt(String(h).slice(1, 7), 16);
+    return .2126 * f(n >> 16 & 255) + .7152 * f(n >> 8 & 255) + .0722 * f(n & 255);
+  };
+  const hexa = h => /^#[0-9a-f]{6}$/i.test(String(h || ''));
+  function themeDe(s) {
+    const c = s.univers.couleurs, surBlanc = h => 1.05 / (lumiere(h) + .05), surNuit = h => (lumiere(h) + .05) / (lumiere('#14070f') + .05);
+    let couleur = hexa(c.accent) && surBlanc(c.accent) >= 4.5 ? c.accent : null;
+    if (!couleur && hexa(c.scene)) {
+      const n = parseInt(c.scene.slice(1), 16), rgb = [n >> 16 & 255, n >> 8 & 255, n & 255];
+      for (let k = 1; k >= .2; k -= .02) { couleur = '#' + rgb.map(v => Math.round(v * k).toString(16).padStart(2, '0')).join(''); if (surBlanc(couleur) >= 4.5) break; }
+    }
+    if (!couleur) return null;
+    const vive = [c.scene, c.accent2, c.accent].find(x => hexa(x) && surNuit(x) >= 4.5) || c.texte;
+    return { slug: s.slug, couleur, vive };
+  }
 
   // ------------------------------------------------------------------------------------------- lire la base
   async function lireTable(table, select, ordre, signal) {
@@ -229,11 +248,14 @@ const DONNEES = (() => {
     ['nom', 'diaporama', 'donateurs', 'compagnie', 'actions', 'ecole', 'contact', 'coordonnees', 'ecrire', 'facebook',
      'partenaires', 'liensLegaux', 'legal', 'programmation', 'espacePro', 'troupe'].forEach(k => { site[k] = k in texte ? texte[k] : D.site[k]; });
     site.saisons = cles.map(k => ({ saison: k, titre: `Saison ${k}`, menu: k === saison ? `Saison ${k.slice(2, 4)}-${k.slice(7, 9)}` : `Saison ${k}`,
-                                    href: k === saison ? '#/agenda' : `#/agenda/${k}` }));
+                                    href: k === saison ? '#/saisons' : `#/saisons/${k}` }));
     // les documents publics : un fichier du stockage public (documents/…), ou un lien
     const documents = Array.isArray(dc) ? dc.map(x => ({ spectacle: slugDe(spId.get(x.spectacle_id)) || null, type: x.type, titre: x.titre,
       url: (/^https?:\/\//i.test(x.url || '') ? x.url : null) || (x.fichier ? `${BASE}/storage/v1/object/public/crescite/${x.fichier.split('/').map(encodeURIComponent).join('/')}` : null), pour: x.pour }))
       .filter(x => x.url) : (D.documents || []);
+    // le thème (règle 22 du contrat) : la création la plus récente colore tout le site, logo compris (comme theme() du build)
+    const derniere = shows.filter(s => s.annee && s.univers && s.univers.couleurs).sort((a, b) => b.annee - a.annee || (a.slug < b.slug ? 1 : -1))[0];
+    if (derniere) site.couleurSaison = themeDe(derniere) || site.couleurSaison;
     return { saison, aujourdhui, site, shows, dossiers, ateliers, dates, saisons, carte, photos, personnes, documents };
   }
 

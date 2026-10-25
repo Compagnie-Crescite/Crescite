@@ -562,11 +562,17 @@ sauge, Cassandre bleu, Cléophène rose saumon, Macbeth rouge sang ; La Folle Id
   data/univers-spectacles.json ; `scene` est la couleur du spectacle, `accent` sa couleur lisible sur son fond).
   Ne mets aucune couleur de spectacle en dur : lis-les dans D, elles peuvent encore changer (La Folle Idée).
   Bérénice passe au violet : la charte de son dossier (règle 8) ne vaut plus pour sa couleur.
-- **La saison** : `D.site.couleurSaison` = `{couleur, vive}` (le bleu de Cassandres : `couleur` sur fond clair ou en
-  texte, `vive` sur fond sombre). C'est la couleur générale du site pour cette saison : la maquette s'en sert pour ses
-  accents d'interface (liens, boutons, l'élément courant du menu, les filets, la marque de la saison en cours sur
-  `#/saisons`, « aujourd'hui » sur la frise), à la place de l'accent qu'elle avait. Le logo garde sa tache magenta.
-  Chaque maquette l'adopte dans son style ; contraste AA comme partout (règle 19 de jour et de nuit).
+- **Le thème : « le dernier spectacle de la saison colore le thème complet du site », logo compris.** C'est la
+  création la plus récente (aujourd'hui Cassandres, donc le bleu). `D.site.couleurSaison` = `{slug, couleur, vive}`,
+  calculé par le build (`theme()`) et en direct par `DONNEES` (une nouvelle création, ou de nouvelles couleurs dans la
+  base, changent le thème sans rien toucher) : `couleur` est assez sombre pour un texte sur fond clair et pour porter la
+  pieuvre blanche du logo ; `vive` se lit sur un fond sombre. La maquette s'en sert pour tout ce qui était sa couleur de
+  marque : ses accents d'interface (liens, boutons, l'élément courant du menu, les filets, la marque de la saison en
+  cours sur `#/saisons`, « aujourd'hui » sur la frise) ET le logo.
+- **Le logo n'est plus magenta, ni posé sur du magenta.** `D.logo.full` et `D.logo.mark` ont leur tache à `couleur`
+  (`<path class="logo-tache">`, qu'un style peut recolorer en direct) ; l'ouverture (`INTRO`, `tache: true`) aussi ; la
+  pieuvre seule prend `couleur` sur fond clair, `vive` ou le blanc sur fond sombre. Plus aucun `#bc3e80` (ni magenta
+  de marque) dans une maquette : remplace-les par le thème. Contraste AA comme partout (règle 19, de jour et de nuit).
 
 ## Les contrôles des règles 17 à 20
 Le vérificateur (`maquettes/onglets.mjs`) ne contrôle chaque règle que si sa variable d'environnement est posée

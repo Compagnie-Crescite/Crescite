@@ -82,6 +82,38 @@ def for_light(hexcol, bg="#ffffff", target=4.6):
     return col
 
 
+def _lum(h):
+    h = h.lstrip("#")
+    f = lambda c: c / 12.92 if c <= .04045 else ((c + .055) / 1.055) ** 2.4
+    r, g, b = (f(int(h[i:i + 2], 16) / 255) for i in (0, 2, 4))
+    return .2126 * r + .7152 * g + .0722 * b
+
+
+def theme():
+    """Le thème du site (règle 22 du contrat) : la création la plus récente colore tout le site, logo compris (« le
+    dernier spectacle de la saison colore le thème complet », Angelo Jossec ; aujourd'hui Cassandres). → {slug, couleur
+    (assez sombre pour un texte sur fond clair et une pieuvre blanche dessus : la tache du logo), vive (sur fond sombre)}."""
+    site = json.loads((ROOT / "data" / "site-crescite.json").read_text(encoding="utf-8"))
+    cass = json.loads((ROOT / "data" / "cassandres.json").read_text(encoding="utf-8"))
+    U = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))["spectacles"]
+    annees = {s: int(re.search(r"\d{4}", sp["creation"]).group()) for s, sp in site["spectacles"].items() if sp.get("creation")}
+    annees["cassandres"] = int(re.search(r"\d{4}", cass["creation"]).group())
+    slug = max((s for s in annees if s in U), key=lambda s: (annees[s], s))
+    c = U[slug]["univers"]["couleurs"]
+    contraste = lambda a: 1.05 / (_lum(a) + .05)                 # contre le blanc
+    # la tache : l'accent s'il porte une pieuvre blanche (4,5:1), sinon la couleur du spectacle assombrie jusque-là
+    couleur = c["accent"] if contraste(c["accent"]) >= 4.5 else None
+    if couleur is None:
+        h = c["scene"].lstrip("#"); rgb = [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+        k = 1.0
+        while True:
+            couleur = "#" + "".join(f"{round(v * k):02x}" for v in rgb)
+            if contraste(couleur) >= 4.5 or k < .2: break
+            k -= .02
+    vive = next((x for x in (c["scene"], c["accent2"], c["accent"]) if (_lum(x) + .05) / (_lum("#14070f") + .05) >= 4.5), c["texte"])
+    return {"slug": slug, "couleur": couleur, "vive": vive}
+
+
 def logo_variants():
     path = fichier_marque(LOGO)
     if path:
@@ -96,6 +128,7 @@ def logo_variants():
     word = d_of("wordmark")
     blob = d_of("blob")
     svg = lambda vb, body, label: (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}" role="img" aria-label="{label}">{body}</svg>')
+    tache = theme()["couleur"]
     return {
         # les tracés de la pieuvre seule (coordonnées du dessin 1536 px), pour les maquettes qui la dessinent elles-mêmes
         "octopusPaths": [d_of(k) for k in ("tentacles-left", "head-left", "head-right", "tentacles-right")],
@@ -105,10 +138,10 @@ def logo_variants():
         "octopus": svg("250 340 1042 576", f'<g fill="currentColor" fill-rule="evenodd">{octo}</g>', "Crescite"),
         # la pieuvre et le mot « crescite », couleur du texte
         "octopusWord": svg("250 340 1042 780", f'<g fill="currentColor" fill-rule="evenodd">{octo}<path d="{word}"/></g>', "Crescite"),
-        # le logo complet : la tache magenta, la pieuvre blanche, le mot
-        "full": svg("63 65 1408 1405", f'<path fill="#BC3E80" d="{blob}"/><g fill="#fff" fill-rule="evenodd">{octo}<path d="{word}"/></g>', "Crescite"),
-        # la marque : tache magenta et pieuvre blanche, sans le mot (favicon, petit format)
-        "mark": svg("63 65 1408 1405", f'<path fill="#BC3E80" d="{blob}"/><g fill="#fff" fill-rule="evenodd">{octo}</g>', "Crescite"),
+        # le logo complet : la tache (à la couleur du thème, règle 22 : plus de magenta), la pieuvre blanche, le mot
+        "full": svg("63 65 1408 1405", f'<path class="logo-tache" fill="{tache}" d="{blob}"/><g fill="#fff" fill-rule="evenodd">{octo}<path d="{word}"/></g>', "Crescite"),
+        # la marque : la tache et la pieuvre blanche, sans le mot (favicon, petit format)
+        "mark": svg("63 65 1408 1405", f'<path class="logo-tache" fill="{tache}" d="{blob}"/><g fill="#fff" fill-rule="evenodd">{octo}</g>', "Crescite"),
     }
 
 
@@ -591,9 +624,9 @@ def build_data():
             "contact": site["contact"],
             # le contact des programmateurs : l'administratrice (nom et rôle publics : mentions légales, dossier artistique),
             # l'adresse publique de la compagnie ; le téléphone seulement si l'administration le saisit dans la base
-            # la couleur générale de la saison (règle 22) : le bleu, jusqu'à la création de Cassandres (demande d'Angelo
-            # Jossec) ; « couleur » pour un fond clair ou un texte, « vive » pour un fond sombre
-            "couleurSaison": {"couleur": "#1f3a73", "vive": "#7f9fe0", "jusqua": "cassandres"},
+            # le thème de la saison (règle 22) : les couleurs de la création la plus récente (aujourd'hui Cassandres) ;
+            # « couleur » sur fond clair, en texte et sous la pieuvre blanche du logo, « vive » sur fond sombre
+            "couleurSaison": theme(),
             "programmation": {"contact": {"nom": "Barbara Daussy", "role": "Administratrice", "email": "contact@crescite.fr",
                                           "telephone": None}},
             # l'espace pro (#/espace-pro, dans le menu) : trois portes vers les espaces réservés, hors des maquettes
@@ -617,7 +650,7 @@ def build_data():
                       for k in ("mentions-legales", "politique-de-confidentialite")},
             "libelles": LIBELLES,
             "saisons": [{"saison": s, "titre": saisons[s]["titre"], "menu": noms_saisons[i] if i < len(noms_saisons) else saisons[s]["titre"],
-                         "href": "#/agenda" if s == D_SAISON else f"#/agenda/{s}"} for i, s in enumerate(saisons)],
+                         "href": "#/saisons" if s == D_SAISON else f"#/saisons/{s}"} for i, s in enumerate(saisons)],
         },
         "shows": out_shows,
         # le dossier scolaire de Bérénice, sans prix, téléphone ni adresse électronique ; sa présentation de la compagnie
@@ -747,7 +780,7 @@ def admin(dest):
     # compagnie). Sans le logo privé, la feuille montre un badge à sa place.
     logo = dest / "admin" / "logo-feuille.svg"
     if fichier_marque(LOGO):
-        logo.write_text(logo_variants()["full"].replace('fill="#BC3E80"', 'fill="#1d1d1b"'), encoding="utf-8")
+        logo.write_text(re.sub(r'class="logo-tache" fill="#[0-9a-fA-F]{6}"', 'class="logo-tache" fill="#1d1d1b"', logo_variants()["full"]), encoding="utf-8")
     elif logo.exists() and dest != ROOT / "docs":
         logo.unlink()
 
@@ -816,8 +849,9 @@ def equipe(dest):
         svg = lambda vb, corps: f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}" width="{{n}}" height="{{n}}">{corps}</svg>'
         # la marque (tache magenta, pieuvre blanche) sur fond transparent ; la pieuvre blanche sur un carré magenta plein
         # (dans la zone sûre des icônes « maskable » : 62 % de la largeur) ; la pieuvre seule, blanche, pour le badge
-        marque = svg(carre(767, 767.5, 1408 * 1.06), f'<path fill="#BC3E80" d="{tache}"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
-        pleine = lambda part: svg(carre(771, 628, 1042 / part), f'<rect x="-2000" y="-2000" width="6000" height="6000" fill="#BC3E80"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
+        coul = theme()["couleur"]
+        marque = svg(carre(767, 767.5, 1408 * 1.06), f'<path fill="{coul}" d="{tache}"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
+        pleine = lambda part: svg(carre(771, 628, 1042 / part), f'<rect x="-2000" y="-2000" width="6000" height="6000" fill="{coul}"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
         badge = svg(carre(771, 628, 1042 / .94), f'<g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
         travaux = [("192.png", 192, marque, True), ("512.png", 512, marque, True), ("masquable-512.png", 512, pleine(.62), False),
                    ("180.png", 180, pleine(.66), False), ("badge.png", 96, badge, True)]

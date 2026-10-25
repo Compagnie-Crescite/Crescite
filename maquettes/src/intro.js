@@ -8,7 +8,8 @@
      fond    : la couleur du fond (par défaut #14070f)
      degrade : un dégradé radial à la place du fond : [[0, '#3a1030'], [1, '#0d0710']] (du centre vers les bords)
      image   : une image (data URL) sous le logo, en couverture, par exemple une photo assombrie
-     encre   : la couleur du logo (par défaut #fff) ; tache : true pour poser le logo sur sa tache magenta
+     encre   : la couleur du logo (par défaut #fff) ; tache : true pour poser le logo sur sa tache (la couleur du thème,
+               D.site.couleurSaison : règle 22 du contrat)
      mot     : false pour la pieuvre seule, sans « crescite »
      sortie  : 'zoom' (par défaut : le site apparaît à travers le logo qui grossit) ou 'fondu'
      classe  : une classe en plus sur .intro, pour l'habiller en CSS (.intro, .intro-logo, .intro-indice)
@@ -47,7 +48,8 @@ const INTRO = (() => {
 
   function dessin(remplissage, trou) {
     const o = opts, f = trou ? '' : ' filter="url(#intro-onde)"';
-    const tache = o.tache ? `<path class="i-tache" d="${L.tachePath}" fill="${trou ? '#000' : '#BC3E80'}"/>` : '';
+    const coul = (D.site && D.site.couleurSaison && D.site.couleurSaison.couleur) || '#BC3E80';
+    const tache = o.tache ? `<path class="i-tache" d="${L.tachePath}" fill="${trou ? '#000' : coul}"/>` : '';
     if (trou && o.tache) return tache;            // posé sur sa tache, le site apparaît à travers la tache entière
     return `${tache}
       <g class="i-tg"${f}><path d="${TG}" fill="${remplissage}" fill-rule="evenodd"/></g>
