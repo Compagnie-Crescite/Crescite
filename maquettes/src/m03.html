@@ -1137,6 +1137,7 @@ html.ed-actif .co-frise { display: none; }
 .bilan-n span { display: block; margin-top: 10px; font: 700 .8125rem/1.3 var(--at); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
 /* la frise du bilan : toutes ses dates sont passées, aucune n'est en retrait */
 [data-fr="bilan"] .frise[data-frise] { --fr-passe: 1; --fr-point: 11px; }
+[data-fr="bilan"] .frise .frise-grappe.est-passe > span { opacity: 1; }
 .bilan-g { margin-top: 30px; align-items: start; row-gap: 28px; }
 .bilan-dates { grid-column: 1 / 7; min-width: 0; }
 .bilan-carte { grid-column: 7 / 13; position: sticky; top: calc(var(--head) + 16px); }
@@ -1879,7 +1880,9 @@ button.lien-v { min-height: 44px; padding: 0; border: 0; background: none; color
       const n = i++; if (g.slug !== s.slug || !garde(d)) return;
       const fin = cleDate(d, k); if (!fin || fin >= D.aujourdhui) return;
       passees.push(Object.assign(ptLigne(d, k, n, g.slug, s.titre, fin), { lien: liens && k !== D.saison ? `#/saisons/${k}` : null })); })); });
-    return [...passees, ...(D.dates || []).filter(d => d.slug === s.slug && garde(d)).map(ptProchain)];
+    // (une frise d'un seul spectacle, dans son univers : ses repères prennent la couleur vive de l'univers, lisible sur son fond,
+    // de jour comme de nuit, plutôt que sa couleur sur le papier)
+    return [...passees, ...(D.dates || []).filter(d => d.slug === s.slug && garde(d)).map(ptProchain)].map(p => Object.assign(p, { couleur: 'var(--u-vif)' }));
   }
 
   /* ---------- La frise de la saison (règle 21) : le cœur de la maquette ----------
