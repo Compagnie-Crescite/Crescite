@@ -83,7 +83,7 @@ const priveeDe = id => E.privees.find(x => x.personne_id === id) || null;
 const remplacerLigne = (coll, row, pk = 'id') => { const i = coll.findIndex(x => x[pk] === row[pk]); if (i >= 0) coll[i] = row; else coll.push(row); };
 const sansMeta = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
 const initiales = p => `${(p?.prenom || '').trim()[0] || ''}${(p?.nom || '').trim()[0] || ''}`.toUpperCase();
-const avatar = (p, petit = false) => `<span class="avatar${petit ? ' petit' : ''}"${p?.photo ? ` style="background-image:url('${photoUrl(p.photo)}')"` : ''} aria-hidden="true">${p?.photo ? '' : esc(initiales(p))}</span>`;
+const avatar = (p, petit = false) => `<span class="avatar${petit ? ' petit' : ''}"${p?.photo && !portraitPrive(p.photo) ? ` style="background-image:url('${photoUrl(p.photo)}')"` : ''} aria-hidden="true">${p?.photo && !portraitPrive(p.photo) ? '' : esc(initiales(p))}</span>`;
 const rangCategorie = c => Math.max(0, CATEGORIES.findIndex(x => x[0] === c));
 const libelleCategorie = c => (CATEGORIES.find(x => x[0] === c) || [c, c])[1];
 const distributionDe = spId => E.distributions.filter(x => x.spectacle_id === spId).sort((a, b) => rangCategorie(a.categorie) - rangCategorie(b.categorie) || a.ordre - b.ordre || a.id - b.id);
@@ -245,9 +245,13 @@ function editeurPersonne(id) {
   relier($('#pe-coord', zone), P, SPEC_COORD);
   relier($('#pe-suivi', zone), N, [{ k: 'notes', t: 'long' }]);
   const dessinerPhoto = () => {
-    $('#pe-photo', zone).innerHTML = `${F.photo ? `<img src="${photoUrl(F.photo)}" alt="Photo de ${esc(nomDe(F))}">` : `<div class="sans">${avatar(F)}</div>`}
+    $('#pe-photo', zone).innerHTML = `${F.photo ? `<img${portraitPrive(F.photo) ? '' : ` src="${photoUrl(F.photo)}"`} alt="Photo de ${esc(nomDe(F))}">` : `<div class="sans">${avatar(F)}</div>`}
       <figcaption>${F.photo ? (F.photo_publique ? 'Publiée sur le site' : 'Pas publiée : accord à cocher') : 'Pas de photo'}</figcaption>
       <div class="photo-outils"><label class="btn petit">${F.photo ? 'Remplacer' : 'Envoyer une photo'}<input type="file" accept="image/*" id="pe-fichier" hidden></label>${F.photo ? '<button type="button" class="btn petit danger" id="pe-sans-photo">Retirer</button>' : ''}</div>`;
+    if (F.photo && portraitPrive(F.photo)) {
+      const p = F.photo;
+      sb.storage.from(PORTRAITS).createSignedUrl(p, 3600).then(({ data }) => { const im = $('#pe-photo img', zone); if (im && F.photo === p && data?.signedUrl) im.src = data.signedUrl; });
+    }
   };
   const dessinerAcces = () => {
     const p = etat.p0, pr = p ? priveeDe(p.id) : null, mel = (pr?.email || '').trim();
@@ -282,7 +286,7 @@ function editeurPersonne(id) {
     const slug = etat.p0?.slug || slugifier(`${F.prenom} ${F.nom}`) || 'personne';
     annoncer('Envoi de la photo…');
     try {
-      F.photo = await envoyerPhoto(new File([f], `${slug}.${(f.name.split('.').pop() || 'jpg').toLowerCase()}`, { type: f.type }), 'equipe');
+      F.photo = await envoyerPortrait(new File([f], `${slug}.${(f.name.split('.').pop() || 'jpg').toLowerCase()}`, { type: f.type }), !!F.photo_publique);
       marquerSale(); dessinerPhoto(); annoncer('Photo envoyée : enregistrez la fiche pour la garder.');
     } catch (err) { erreur(err, 'Envoi impossible'); }
   });
@@ -320,13 +324,47 @@ function editeurPersonne(id) {
     } finally { b.disabled = false; }
   });
 }
+// Les portraits : avec l'accord de publication, dans le stockage public (« crescite », equipe/…) ; sans, dans le stockage
+// privé de l'équipe (« crescite-equipe », portraits/…), que seuls les administrateurs lisent : un portrait qui attend son
+// accord ne se télécharge pas, même si l'on connaît son chemin. Il passe de l'un à l'autre quand l'accord change ; un
+// portrait remplacé ou retiré est effacé (une fois la fiche enregistrée).
+const PORTRAITS = 'crescite-equipe';
+const portraitPrive = p => /^portraits\//.test(p || '');
+async function envoyerPortrait(fichier, publique) {
+  if (publique) return envoyerPhoto(fichier, 'equipe');
+  const blob = await optimiser(fichier);
+  const ext = blob.type === 'image/webp' ? 'webp' : (fichier.name.split('.').pop() || 'jpg').toLowerCase();
+  const chemin = `portraits/${Date.now().toString(36)}-${slugifier(fichier.name.replace(/\.[^.]+$/, '')) || 'photo'}.${ext}`;
+  const { error } = await sb.storage.from(PORTRAITS).upload(chemin, blob, { contentType: blob.type || fichier.type, upsert: false });
+  if (error) throw error;
+  return chemin;
+}
+async function rangerPortrait(chemin, publique) {
+  if (!chemin || portraitPrive(chemin) !== publique) return chemin;   // déjà à sa place
+  const de = publique ? PORTRAITS : 'crescite', vers = publique ? 'crescite' : PORTRAITS;
+  const nom = chemin.split('/').pop(), dest = publique ? `equipe/${nom}` : `portraits/${nom}`;
+  const { data, error } = await sb.storage.from(de).download(chemin);
+  if (error) throw error;
+  const r = await sb.storage.from(vers).upload(dest, data, { contentType: data.type || 'image/webp', upsert: true, ...(publique ? { cacheControl: '31536000' } : {}) });
+  if (r.error) throw r.error;
+  return dest;
+}
+async function effacerPortrait(chemin) {
+  if (!chemin) return;
+  const { error } = await sb.storage.from(portraitPrive(chemin) ? PORTRAITS : 'crescite').remove([chemin]);
+  if (error) console.warn('portrait non effacé', chemin, error.message);
+}
 async function enregistrerPersonne(etat, F, P, N) {
+  const avant = etat.p0?.photo || null;
+  F.photo = await rangerPortrait(F.photo || null, !!F.photo_publique);
   const ligne = { prenom: F.prenom.trim() || null, nom: F.nom.trim(), metiers: (F.metiers || []).map(x => x.trim()).filter(Boolean), bio: F.bio.trim() || null,
     photo: F.photo || null, photo_credit: F.photo_credit.trim() || null, photo_source: F.photo_source.trim() || null, photo_publique: !!F.photo_publique, publie: !!F.publie };
   const r = etat.p0 ? await sb.from('crescite_personnes').update(ligne).eq('id', etat.p0.id).select().single()
     : await sb.from('crescite_personnes').insert({ ...ligne, slug: slugPersonne(`${ligne.prenom || ''} ${ligne.nom}`), ordre: Math.max(0, ...E.personnes.map(p => p.ordre || 0)) + 10 }).select().single();
   if (r.error) throw r.error;
   remplacerLigne(E.personnes, r.data); etat.p0 = r.data;
+  // l'ancien portrait (remplacé, retiré, ou passé dans l'autre stockage) ne reste nulle part
+  if (avant && avant !== r.data.photo) effacerPortrait(avant);
   const pid = r.data.id;
   const coord = Object.fromEntries(SPEC_COORD.map(c => [c.k, (P[c.k] || '').trim() || null]));
   const r2 = await sb.from('crescite_personnes_privees').upsert({ personne_id: pid, ...coord }, { onConflict: 'personne_id' }).select().single();
