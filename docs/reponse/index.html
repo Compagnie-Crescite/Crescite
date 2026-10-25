@@ -15,10 +15,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600;700&display=swap" crossorigin>
 <style>
-/* La page de réponse aux propositions de dates (reponse/) : les liens des courriels y mènent, avec la clé de la
+/* La page de réponse aux propositions de dates (reponse/?r=…) : les liens des courriels y mènent, avec la clé de la
    personne. Elle lit la proposition et enregistre les réponses par la fonction crescite-courriel. Un lien de courriel
    n'enregistre rien tout seul : le choix arrive prêt, on le confirme d'un bouton. Papier, encre et magenta, comme
-   l'espace des salles ; le mode sombre suit le réglage de l'appareil. */
+   l'espace des salles ; le mode sombre suit le réglage de l'appareil.
+   Les alertes de tournée (reponse/?alerte=<jeton>&action=confirmer|arreter, le onzième script SQL) : la page montre
+   l'alerte (son secteur, jamais l'adresse) et fait confirmer d'un bouton, ou arrêter (l'alerte s'efface, ou toutes
+   celles de l'adresse) ; là non plus, ouvrir le lien ne fait rien tout seul. */
 :root {
   --papier: #f6f2eb; --surface: #fffdf9; --encre: #1d1418; --gris: #5f565a; --filet: #ded4c6;
   --magenta: #a3306b; --magenta-fonce: #87245a; --magenta-doux: #f5e4ec; --sur-magenta: #fff;
@@ -58,6 +61,7 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .confirmer .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 14px; }
 .principal { min-height: 48px; padding: 0 22px; border-radius: 999px; border: 0; background: var(--magenta); color: var(--sur-magenta); font-weight: 700; cursor: pointer; }
 .principal:hover { background: var(--magenta-fonce); }
+.principal:disabled, .secondaire:disabled { opacity: .6; cursor: default; }
 .secondaire { padding: 0; border: 0; background: none; color: var(--gris); text-decoration: underline; text-underline-offset: .18em; cursor: pointer; }
 
 .etat { margin-top: 18px; padding: 12px 16px; border-left: 4px solid var(--magenta); border-radius: 0 12px 12px 0; background: var(--surface); font-weight: 600; }
@@ -79,6 +83,14 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .close { margin-top: 18px; color: var(--gris); }
 .pied { margin-top: 26px; color: var(--gris); font-size: .94rem; }
 .pied p + p { margin-top: 6px; }
+
+/* une alerte de tournée : ses secteurs (le spectacle à la ligne), et ce qu'on peut en faire */
+.secteurs { list-style: none; margin: 12px 0 0; padding: 0; }
+.secteurs li { padding: 10px 14px; border-radius: 12px; background: var(--magenta-doux); font-weight: 600; }
+.secteurs li + li { margin-top: 6px; }
+.secteurs li span { display: block; font-weight: 400; color: var(--gris); }
+.confirmer .note-alerte { margin-top: 12px; font-weight: 400; color: var(--gris); font-size: .94rem; }
+.confirmer .actions:first-child { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) { .choix button { transition: none; } .choix button:active { transform: none; } }
 </style>
 </head>
@@ -129,8 +141,8 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
       <p class="bonjour">Écrivez-nous pour recevoir de nouveau la proposition : <a href="mailto:${CONTACT}">${CONTACT}</a>.</p>`;
   }
 
-  function panne(fn) {
-    main.innerHTML = `<p class="sur">Compagnie Crescite</p><h1>La proposition n’a pas pu s’ouvrir</h1>
+  function panne(fn, titre = 'La proposition n’a pas pu s’ouvrir') {
+    main.innerHTML = `<p class="sur">Compagnie Crescite</p><h1>${titre}</h1>
       <p class="bonjour">Vérifiez la connexion, puis réessayez.</p>
       <p class="bonjour"><button class="principal" type="button" data-reessayer>Réessayer</button></p>`;
     main.querySelector('[data-reessayer]').addEventListener('click', fn);
@@ -228,7 +240,105 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
       panne(charger);
     }
   }
-  charger();
+
+  // ———— les alertes de tournée : ?alerte=<jeton>&action=confirmer (le courriel de confirmation) ou arreter (le lien
+  // au bas de chaque courriel d'alerte). La page montre l'alerte, le bouton agit ; ouvrir le lien ne fait rien
+  const jetonAlerte = q.get('alerte') || '';
+  const actionAlerte = q.get('action') === 'arreter' ? 'arreter' : 'confirmer';
+  const DATES = '../synthese.html#/saisons';   // les dates de la compagnie, sur le site
+  let va = null;                               // l'alerte vue par son jeton : { alerte, attente, autres }
+  let faitAlerte = null;                       // ce qui vient d'être fait : { action, n, liste, tout }
+  const secteurs = xs => `<ul class="secteurs">${xs.map(a => `<li>${esc(a.secteur)}<span>${esc(a.spectacle || 'Tous les spectacles')}</span></li>`).join('')}</ul>`;
+  const piedAlerte = () => `<div class="pied"><p><a href="${DATES}">Les dates de la compagnie</a></p><p>Une question ? <a href="mailto:${CONTACT}">${CONTACT}</a></p></div>`;
+
+  function alerteIntrouvable() {
+    document.title = 'Crescite · Lien expiré';
+    main.innerHTML = `<p class="sur">Compagnie Crescite</p><h1 tabindex="-1">Ce lien n’est plus valable</h1>
+      <p class="bonjour">L’alerte a peut-être déjà été arrêtée, ou effacée faute de confirmation dans les 30 jours.
+      Pour en créer une nouvelle : <a href="${DATES}">les dates de la compagnie</a>.</p>${piedAlerte()}`;
+    main.removeAttribute('aria-busy');
+  }
+
+  function rendreAlerte(texte = '') {
+    const a = va.alerte, attente = va.attente || [], autres = va.autres || 0, plus = attente.length > 1;
+    document.title = 'Crescite · Alerte de tournée';
+    let corps;
+    if (faitAlerte && faitAlerte.action === 'arreter') {
+      corps = faitAlerte.tout
+        ? `<h1 tabindex="-1">Vos alertes sont arrêtées</h1><p class="bonjour">Elles sont effacées, et votre adresse avec elles : vous ne recevrez plus nos courriels d’alerte.</p>`
+        : `<h1 tabindex="-1">Votre alerte est arrêtée</h1><p class="bonjour">Elle est effacée : vous ne recevrez plus ses courriels.${autres ? ` ${autres > 1 ? `Vos ${autres} autres alertes continuent` : 'Votre autre alerte continue'}, chacune avec son lien pour l’arrêter.` : ''}</p>`;
+    } else if (faitAlerte && faitAlerte.action === 'confirmer') {
+      const n = faitAlerte.n;
+      corps = `<h1 tabindex="-1">${n > 1 ? 'Vos alertes sont actives' : 'Votre alerte est active'}</h1>
+        <p class="bonjour">Merci ! Vous recevrez par courriel les dates de la compagnie confirmées dans ${n > 1 ? 'ces secteurs' : 'ce secteur'} :</p>${secteurs(faitAlerte.liste)}
+        <p class="bonjour">Chaque courriel contient un lien pour arrêter l’alerte.</p>`;
+    } else if (actionAlerte === 'arreter') {
+      corps = `<h1 tabindex="-1">Arrêter votre alerte</h1><p class="bonjour">Cette alerte vous écrit les dates de la compagnie près de chez vous :</p>${secteurs([a])}
+        <section class="confirmer" aria-label="Arrêter l’alerte"><p>Vous ne recevrez plus ses courriels, et elle sera effacée.</p>
+        <div class="actions"><button class="principal" type="button" data-alerte="arreter">Arrêter cette alerte</button>
+        ${autres ? `<button class="secondaire" type="button" data-alerte="arreter-tout">Arrêter toutes mes alertes (${autres + 1})</button>` : ''}</div></section>`;
+    } else if (attente.length) {
+      corps = `<h1 tabindex="-1">${plus ? 'Confirmez vos alertes' : 'Confirmez votre alerte'}</h1>
+        <p class="bonjour">Vous avez demandé à recevoir par courriel les dates de la compagnie près de chez vous :</p>${secteurs(attente)}
+        <section class="confirmer" aria-label="Confirmer"><div class="actions"><button class="principal" type="button" data-alerte="confirmer">${plus ? 'Confirmer mes alertes' : 'Confirmer mon alerte'}</button></div>
+        <p class="note-alerte">${plus ? 'Tant qu’elles ne sont pas confirmées' : 'Tant qu’elle n’est pas confirmée'}, rien ne vous est envoyé. Ce n’est pas vous ? Fermez simplement cette page.</p></section>`;
+    } else if (a.active && a.confirmee) {
+      corps = `<h1 tabindex="-1">Votre alerte est déjà active</h1><p class="bonjour">Vous recevez par courriel les dates de la compagnie confirmées dans ce secteur :</p>${secteurs([a])}
+        <p class="bonjour"><a href="?alerte=${encodeURIComponent(jetonAlerte)}&amp;action=arreter">Ne plus la recevoir</a></p>`;
+    } else {
+      corps = `<h1 tabindex="-1">Cette alerte est désactivée</h1><p class="bonjour">La compagnie l’a désactivée : elle ne vous écrit plus.
+        Pour en créer une nouvelle : <a href="${DATES}">les dates de la compagnie</a>.</p>`;
+    }
+    main.innerHTML = `<p class="sur">Compagnie Crescite · Alerte de tournée</p>${corps}
+      <p class="etat" role="status" aria-live="polite" tabindex="-1">${esc(texte)}</p>${piedAlerte()}`;
+    main.removeAttribute('aria-busy');
+  }
+
+  async function agirAlerte(action, tout, bouton) {
+    main.querySelectorAll('button[data-alerte]').forEach(b => { b.disabled = true; });
+    bouton.classList.add('en-cours');
+    let texte = '';
+    try {
+      const w = await appeler({ alerte: jetonAlerte, action, tout });
+      if (!w) return alerteIntrouvable();
+      if (action === 'confirmer') {
+        const liste = va.attente || [];
+        va = { alerte: w.alerte, attente: w.attente || [], autres: w.autres || 0 };
+        if (w.enregistre) faitAlerte = { action, n: w.confirmees, liste };
+        else texte = 'Rien n’attendait sa confirmation : votre alerte était déjà active.';
+      } else {
+        faitAlerte = { action, n: w.arretees, tout };
+      }
+    } catch (e) {
+      texte = 'Cela n’a pas pu se faire. Vérifiez la connexion, puis réessayez.';
+    }
+    rendreAlerte(texte);
+    (texte ? main.querySelector('.etat') : main.querySelector('h1'))?.focus();
+  }
+
+  main.addEventListener('click', e => {
+    const b = e.target.closest('button[data-alerte]');
+    if (!b || b.disabled || !va) return;
+    const quoi = b.dataset.alerte;
+    agirAlerte(quoi === 'confirmer' ? 'confirmer' : 'arreter', quoi === 'arreter-tout', b);
+  });
+
+  async function chargerAlerte() {
+    main.setAttribute('aria-busy', 'true');
+    main.innerHTML = '<p class="chargement">Chargement de votre alerte…</p>';
+    document.title = 'Crescite · Alerte de tournée';
+    if (jetonAlerte.length < 32) return alerteIntrouvable();
+    try {
+      const w = await appeler({ alerte: jetonAlerte });
+      if (!w) return alerteIntrouvable();
+      va = w;
+      rendreAlerte();
+    } catch (e) {
+      panne(chargerAlerte, 'L’alerte n’a pas pu s’ouvrir');
+    }
+  }
+
+  if (jetonAlerte) chargerAlerte(); else charger();
 })();
 </script>
 </body>
