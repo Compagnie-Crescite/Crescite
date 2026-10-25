@@ -30,14 +30,15 @@ git clone https://github.com/adrienvada/Crescite.git    # si le dépôt n'est pa
 cd Crescite
 git fetch origin
 git switch -c graphisme origin/ccr-2a930e2f-48qjrr
-mkdir -p private && cp -r docs/photos private/photos    # les photos déjà publiées, pour travailler avec les vraies images
 python3 maquettes/build.py m01                          # → maquettes/dist/m01.html
 python3 -m http.server 8000 -d maquettes/dist            # → http://localhost:8000/m01.html
 ```
 
 - `private/` et `maquettes/dist/` ne sont jamais versionnés (`.gitignore`) : ne force jamais leur ajout.
-- Sans la source privée du logo, les versions de travail montrent une pieuvre de substitution à la place du logo :
-  c'est normal, ne la remplace pas. Le vrai rendu (logo et photos) se voit dans les pages publiées, qui sont dans le
+- Le vrai logo 2.0 est dans `marque/` et les photos des spectacles dans `docs/photos/` : le build s'en sert tout seul.
+  Si une version de travail montre une pieuvre de substitution à la place du logo, c'est que `marque/` manque : ne
+  remplace pas le logo, et ne publie surtout pas (`build.py --pages` refuse d'ailleurs de publier sans lui). Le rendu
+  publié se voit aussi dans les pages publiées, qui sont dans le
   dépôt : `python3 -m http.server 8001 -d docs` → http://localhost:8001/m01.html.
 - Dans l'adresse : `?base=0` en reste aux données du build (sans la base), `?intro=0` saute l'ouverture sur le logo,
   `?anim=0` coupe les animations, `#/voir`, `#/programmer`, `#/etablissement`, `#/compagnie`… mènent aux vues.

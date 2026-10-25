@@ -1,5 +1,6 @@
-# Fichiers privés de la compagnie : jamais dans ce dépôt public
-# (logo 2.0 non publié, photos sous droits, dates internes Supabase, audit de sécurité)
+# Fichiers privés de la compagnie : jamais dans ce dépôt public (dossiers et budgets, documents du Drive, feuilles de
+# route, audit de sécurité). Le logo 2.0 est dans marque/ et les photos publiées dans docs/photos/ : toute copie du dépôt
+# construit le vrai site.
 private/
 # Prototype assemblé : il embarque les fichiers privés quand ils sont présents
 prototype/dist/

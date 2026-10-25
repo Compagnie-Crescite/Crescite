@@ -601,8 +601,7 @@ html.ed-actif .ep-a::after { content: none; }
 
 /* ———— Chantier 1 : Alertes de tournée par proximité géographique ———— */
 .alerte-boite { margin-top: 14px; padding: clamp(22px, 3.5vw, 36px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--magenta); box-shadow: 0 12px 32px -20px rgba(29, 20, 24, .3); }
-.alerte-badge, .simu-badge, .pass-tag { display: inline-block; padding: 4px 10px; border-radius: 999px; font: 700 .74rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; background: color-mix(in srgb, var(--magenta) 14%, transparent); color: var(--magenta-texte); margin-bottom: 12px; }
-.alerte-desc { margin: 8px 0 20px; font-size: 1.05rem; color: var(--gris); max-width: 65ch; }
+.alerte-badge, .simu-badge, .alerte-desc { margin: 8px 0 20px; font-size: 1.05rem; color: var(--gris); max-width: 65ch; }
 .alerte-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto; gap: 12px; align-items: center; }
 .alerte-geo-grp { display: flex; gap: 6px; }
 .alerte-geo-grp input { flex: 1; min-width: 130px; }
@@ -634,14 +633,9 @@ html.ed-actif .ep-a::after { content: none; }
 .simu-form-devis { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--filet); }
 .simu-form-devis .grille-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px; }
 
-/* ———— Chantier 4 : Espace Scolaires, Pass Culture & Conventions ———— */
+/* ———— Chantier 4 : Espace Scolaires, la convention d'action culturelle ———— */
 .pass-boite { margin-top: 8px; padding: clamp(22px, 3.5vw, 36px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid #127a6a; }
-.pass-tag { background: color-mix(in srgb, #127a6a 15%, transparent); color: #0f6658; }
-.pass-desc { margin: 8px 0 20px; font-size: 1.05rem; color: var(--gris); max-width: 68ch; }
 .pass-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
-.btn-copier-adage { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border: 1.5px solid var(--filet); border-radius: 999px; background: var(--papier); color: var(--encre); font: 600 .92rem var(--sans); cursor: pointer; transition: all .16s; }
-.btn-copier-adage:hover { border-color: #127a6a; color: #127a6a; }
-.btn-copier-adage.copie { background: #127a6a; border-color: #127a6a; color: #fff; }
 .conv-modal { margin-top: 24px; padding: 22px; border-radius: 10px; background: var(--papier); border: 1.5px solid var(--filet); }
 .conv-modal h3 { margin: 0 0 14px; font: italic 500 1.4rem/1.2 var(--serif); }
 .conv-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
@@ -2087,7 +2081,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     return `<li data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''}${r.suite ? ' class="suite"' : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<time${d.iso ? ` datetime="${d.iso}"` : ''}><b>${esc(p.jour)}</b>${p.heure ? `<small>${esc(p.heure)}</small>` : ''}</time>`}<div class="qui">${titre}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${lieu}${details(d.details)}</div></li>`;
   };
 
-  /* ---------- chantiers 1, 2, 3, 4 : alertes, simulateur, pass culture, schema.org ---------- */
+  /* ---------- chantiers 1, 2, 3, 4 : alertes, simulateur, convention, schema.org ---------- */
   function mettreAJourSchemaOrg() {
     let script = document.getElementById('crescite-jsonld');
     if (!script) {
@@ -2288,23 +2282,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   }
 
   function initEspaceScolaire() {
-    const btnAdage = $('#btn-copier-adage'), btnConv = $('#btn-ouvrir-conv'), convModal = $('#conv-modal');
-    if (btnAdage) {
-      btnAdage.addEventListener('click', async () => {
-        const txt = `Compagnie Crescite - Offre Collective Pass Culture (ADAGE)\nSpectacles éligibles : Bérénice (Racine, in situ), Ci-gisait Cyrano, Mon Royaume pour un cheval (Shakespeare), L'imaginaire forcé (Molière).\nDispositif : Représentation(s) en temps scolaire + Ateliers de pratique théâtrale (corps, voix, alexandrin).\nPrise en charge intégrale possible via les crédits Pass Culture de l'établissement sur l'application ADAGE.\nContact diffusion & médiation : ${(contactPrg() || {}).email || ''}`;
-        try {
-          await navigator.clipboard.writeText(txt);
-          btnAdage.classList.add('copie');
-          btnAdage.querySelector('span').textContent = '✓ Texte ADAGE copié dans le presse-papier !';
-          setTimeout(() => {
-            btnAdage.classList.remove('copie');
-            btnAdage.querySelector('span').textContent = 'Copier le texte type pour ADAGE';
-          }, 3500);
-        } catch (e) {
-          prompt('Copiez le texte ci-dessous pour ADAGE :', txt);
-        }
-      });
-    }
+    const btnConv = $('#btn-ouvrir-conv'), convModal = $('#conv-modal');
     if (btnConv && convModal) {
       btnConv.addEventListener('click', () => {
         convModal.hidden = !convModal.hidden;
@@ -2336,17 +2314,15 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
               const docDef = {
                 pageSize: 'A4', pageMargins: [48, 48, 48, 48],
                 content: [
-                  { text: 'RÉPUBLIQUE FRANÇAISE\nMINISTÈRE DE L’ÉDUCATION NATIONALE / MINISTÈRE DE LA CULTURE', style: 'devise', alignment: 'center' },
-                  { text: '\nCONVENTION DE PARTENARIAT D’ACTION CULTURELLE', style: 'titre', alignment: 'center' },
-                  { text: 'Dispositif Pass Culture Part Collective & Éducation Artistique et Culturelle (EAC)\n', style: 'sousTitre', alignment: 'center' },
+                  { text: 'CONVENTION DE PARTENARIAT D’ACTION CULTURELLE', style: 'titre', alignment: 'center' },
                   { text: 'ENTRE LES SOUSSIGNÉS :', style: 'h2' },
                   { text: `1. L’Établissement scolaire : ${etab}, situé à ${ville}, représenté par ${chef}, agissant en qualité de chef d’établissement,\n\n2. La Compagnie Crescite, association loi 1901, sise à Rouen, titulaire des licences d’entrepreneur de spectacles vivants, représentée par M. Angelo Jossec, Directeur artistique,\n\nIL A ÉTÉ CONVENU CE QUI SUIT :`, margin: [0, 6, 0, 14] },
                   { text: 'Article 1 — Objet de la convention', style: 'article' },
                   { text: `La présente convention a pour objet d'organiser l'accueil et le déroulement du projet artistique autour du spectacle "${sp ? sp.titre : 'Spectacle Crescite'}" au bénéfice des élèves de l’établissement.\nProjet : ${classes}.\nActions : Représentation(s) in situ ou en salle dédiée et ${ateliers}.` },
                   { text: '\nArticle 2 — Modalités pédagogiques et calendrier', style: 'article' },
                   { text: 'Les séances d’ateliers et représentations sont planifiées en concertation étroite entre l’équipe artistique de la Compagnie Crescite et les enseignants référents du projet. Les ateliers sont encadrés par des comédiens professionnels de la troupe.' },
-                  { text: '\nArticle 3 — Modalités financières & Pass Culture', style: 'article' },
-                  { text: 'Le financement du projet est assuré dans le cadre de la part collective du Pass Culture (via la plateforme ADAGE) ou par les crédits EAC de l’établissement votés en Conseil d’Administration.' },
+                  { text: '\nArticle 3 — Modalités financières', style: 'article' },
+                  { text: 'Les modalités financières du projet sont précisées dans une annexe signée par les deux parties.' },
                   { text: '\nArticle 4 — Engagements et sécurité', style: 'article' },
                   { text: 'L’établissement met à disposition un espace adapté respectant les contraintes techniques du spectacle (sol plan, dégagement suffisant). Les élèves demeurent sous la responsabilité de l’équipe éducative pendant toute la durée des interventions.' },
                   { text: '\nFait en deux exemplaires originaux, à Rouen et à ' + ville + '.\n\n\n', margin: [0, 10, 0, 0] },
@@ -2666,20 +2642,13 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const B = ber && D.dossiers[ber.dossier];
     const g = i => `e-g${i}`;
     retenir('etablissement');
-    main.innerHTML = `${teteEntree(e, [['e-passculture', L.passCulture || 'Pass Culture & ADAGE'], ...groupes.map((x, i) => [g(i), x[0]]), ...(ber ? [['e-dossier', L.dossierScolaire]] : []), ...(A ? [['e-actions', A.titre]] : []), ['e-dates', L.enEtablissement], ['e-ecrire', L.ecrire]])}
-      <section class="bloc sans-filet" id="e-passculture" aria-labelledby="e-pass-h"><div class="wrap">
+    main.innerHTML = `${teteEntree(e, [['e-convention', L.genererConvention], ...groupes.map((x, i) => [g(i), x[0]]), ...(ber ? [['e-dossier', L.dossierScolaire]] : []), ...(A ? [['e-actions', A.titre]] : []), ['e-dates', L.enEtablissement], ['e-ecrire', L.ecrire]])}
+      <section class="bloc sans-filet" id="e-convention"><div class="wrap">
         <div class="pass-boite">
-          <span class="pass-tag">DISPOSITIF ADAGE / PASS CULTURE COLLECTIF</span>
-          <h2 class="titre-bloc" id="e-pass-h">${esc(L.passCulture || 'Pass Culture & ADAGE')}</h2>
-          <p class="pass-desc">${esc(L.passCultureDesc || 'Toutes les formes de la compagnie sont éligibles à la part collective du Pass Culture via l’application ADAGE.')}</p>
           <div class="pass-actions">
-            <button type="button" class="btn-copier-adage" id="btn-copier-adage">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              <span>Copier le texte type pour ADAGE</span>
-            </button>
             <button type="button" class="bouton e" id="btn-ouvrir-conv" style="--ec:#127a6a">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-              <span>${esc(L.genererConvention || 'Convention d’action culturelle (PDF)')}</span>
+              <span>${esc(L.genererConvention)}</span>
               ${FLECHE}
             </button>
           </div>

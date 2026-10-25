@@ -29,6 +29,27 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "maquettes" / "src"
 DIST = ROOT / "maquettes" / "dist"
 PRIVATE = ROOT / "private"
+# la marque (le logo 2.0 et le tracé de ses bras) est versionnée dans marque/ : toute copie du dépôt (un agent, un autre
+# poste) construit et publie le vrai logo. private/brand/ reste lu si marque/ manque.
+MARQUE = ROOT / "marque"
+LOGO = "crescite-logo-2.0.svg"
+
+
+def fichier_marque(nom):
+    """Un fichier de la marque : dans marque/, sinon dans private/brand/ ; None s'il n'est nulle part."""
+    for d in (MARQUE, PRIVATE / "brand"):
+        if (d / nom).exists():
+            return d / nom
+    return None
+
+
+def fichier_photo(rel):
+    """Une photo des spectacles : dans private/photos/, sinon parmi celles déjà publiées (docs/photos/, versionnées) ;
+    None si elle n'est nulle part."""
+    for d in (PRIVATE / "photos", ROOT / "docs" / "photos"):
+        if (d / rel).exists():
+            return d / rel
+    return None
 
 _spec = importlib.util.spec_from_file_location("proto_build", ROOT / "prototype" / "build.py")
 proto = importlib.util.module_from_spec(_spec)
@@ -62,8 +83,8 @@ def for_light(hexcol, bg="#ffffff", target=4.6):
 
 
 def logo_variants():
-    path = PRIVATE / "brand" / "crescite-logo-2.0.svg"
-    if path.exists():
+    path = fichier_marque(LOGO)
+    if path:
         s = path.read_text(encoding="utf-8")
     else:
         s, _ = proto.fallback_logo_and_arms()
@@ -93,8 +114,8 @@ def logo_variants():
 
 def arms_data():
     """Le tracé des huit bras (privé) ; sans lui, celui de la pieuvre de substitution."""
-    f = PRIVATE / "brand" / "crescite-logo-2.0-arms.json"
-    if f.exists() and (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists():
+    f = fichier_marque("crescite-logo-2.0-arms.json")
+    if f and fichier_marque(LOGO):
         a = json.loads(f.read_text(encoding="utf-8"))
         a.pop("_note", None)
     else:
@@ -108,15 +129,12 @@ def photo_files(shows):
     l'univers de chaque spectacle (clé = slug/id, private/photos/<slug>/<id>.webp). Valeur : le fichier, ou None."""
     out = {}
     for slug, titre in [(s["slug"], s["titre"]) for s in shows] + [("actions-culturelles", "Actions culturelles")]:
-        f = PRIVATE / "photos" / f"{slug}.webp"
-        out[slug] = (f if f.exists() else None, titre)
+        out[slug] = (fichier_photo(f"{slug}.webp"), titre)
     for s in shows:
         for p in s["photos"]:
-            f = PRIVATE / "photos" / f"{p['cle']}.webp"
-            out[p["cle"]] = (f if f.exists() else None, s["titre"])
+            out[p["cle"]] = (fichier_photo(f"{p['cle']}.webp"), s["titre"])
     for i in range(1, 5):
-        f = PRIVATE / "photos" / "actions-culturelles" / f"g-{i}.webp"
-        out[f"actions-culturelles/g-{i}"] = (f if f.exists() else None, "Actions culturelles")
+        out[f"actions-culturelles/g-{i}"] = (fichier_photo(f"actions-culturelles/g-{i}.webp"), "Actions culturelles")
     return out
 
 
@@ -247,9 +265,7 @@ LIBELLES = {
     "faisabilitePlateau": "Faisabilité du plateau",
     "demandeDevis": "Demander une proposition de cession",
     "envoyerDemande": "Envoyer la demande",
-    # Pass Culture & convention (chantier 4)
-    "passCulture": "Pass Culture & ADAGE",
-    "passCultureDesc": "Toutes les formes de la compagnie sont éligibles à la part collective du Pass Culture via l’application ADAGE.",
+    # la convention d'action culturelle (chantier 4)
     "genererConvention": "Convention d'action culturelle (PDF)",
 }
 # La troupe (règle 20, TROUPE) : toutes les personnes publiées de l'équipe, sur la page de la compagnie, rangées par
@@ -709,7 +725,7 @@ def admin(dest):
     # comme le logo des maquettes, dans maquettes/dist et dans le site publié (docs/ : publication décidée par la
     # compagnie). Sans le logo privé, la feuille montre un badge à sa place.
     logo = dest / "admin" / "logo-feuille.svg"
-    if (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists():
+    if fichier_marque(LOGO):
         logo.write_text(logo_variants()["full"].replace('fill="#BC3E80"', 'fill="#1d1d1b"'), encoding="utf-8")
     elif logo.exists() and dest != ROOT / "docs":
         logo.unlink()
@@ -771,7 +787,7 @@ def equipe(dest):
 
     def icones(dossier):
         # logo_variants() lit le logo 2.0 s'il est là, sinon la pieuvre de substitution
-        prive = (PRIVATE / "brand" / "crescite-logo-2.0.svg").exists()
+        prive = fichier_marque(LOGO) is not None
         v = logo_variants()
         tache, bras = v["tachePath"], v["octopusPaths"]
         pieuvre = "".join(f'<path d="{d}"/>' for d in bras if d)
@@ -876,14 +892,18 @@ def pages(D, files, names):
     """Le site GitHub Pages (docs/) : la planche en index, chaque maquette en page à part, hors des moteurs de recherche,
     et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune."""
     import shutil
+    # jamais de site publié avec la pieuvre de substitution à la place du vrai logo
+    if not fichier_marque(LOGO):
+        sys.exit(f"pages : le logo 2.0 manque ({MARQUE.relative_to(ROOT)}/{LOGO}) ; rien n'est publié dans docs/.")
     docs = ROOT / "docs"
     docs.mkdir(exist_ok=True)
+    # (les photos sont lues avant d'effacer docs/photos/ : sans private/, c'est de là qu'elles viennent)
+    contenus = {k: f.read_bytes() for k, (f, _) in files.items() if f is not None}
     shutil.rmtree(docs / "photos", ignore_errors=True)
-    for k, (f, _) in files.items():
-        if f is not None:
-            dest = docs / "photos" / f"{k}.webp"
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(f, dest)
+    for k, octets in contenus.items():
+        dest = docs / "photos" / f"{k}.webp"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(octets)
     photo_urls = photos(files, base="photos/")
     for n in names:
         html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
