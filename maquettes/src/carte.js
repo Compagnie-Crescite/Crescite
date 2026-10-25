@@ -40,12 +40,13 @@ const CARTE = (() => {
     const paires = filtre === 'public' ? C().aVenirPublic : filtre === 'scolaire' ? C().aVenirScolaire : C().aVenir;
     return regroupe(paires, l => D.dates.filter(d => d.l === l && garde(d)));
   };
+  // les cartes disent les tournées : les dates d'une commune sont ses représentations, jamais ses résidences (règle 23)
   const tout = () => regroupe(C().tout, l => Object.entries(D.saisons).flatMap(([saison, S]) => S.spectacles.flatMap(g =>
-    g.dates.filter(d => d.l === l).map(d => ({ ...d, spectacle: g.titre, slug: g.slug, saison })))));
-  const saison = s => regroupe(C().parSaison[s] || [], l => (D.saisons[s]?.spectacles || []).flatMap(g => g.dates.filter(d => d.l === l).map(d => ({ ...d, spectacle: g.titre, slug: g.slug }))));
+    g.dates.filter(d => d.l === l && !d.residence).map(d => ({ ...d, spectacle: g.titre, slug: g.slug, saison })))));
+  const saison = s => regroupe(C().parSaison[s] || [], l => (D.saisons[s]?.spectacles || []).flatMap(g => g.dates.filter(d => d.l === l && !d.residence).map(d => ({ ...d, spectacle: g.titre, slug: g.slug }))));
   const spectacle = slug => {
     const p = C().parSpectacle[slug] || { passe: [], aVenir: [] };
-    const passees = l => Object.values(D.saisons).flatMap(S => S.spectacles.filter(g => g.slug === slug).flatMap(g => g.dates.filter(d => d.l === l && !(d.fin && d.fin >= D.aujourdhui))));
+    const passees = l => Object.values(D.saisons).flatMap(S => S.spectacles.filter(g => g.slug === slug).flatMap(g => g.dates.filter(d => d.l === l && !d.residence && !(d.fin && d.fin >= D.aujourdhui))));
     return { aVenir: regroupe(p.aVenir, l => D.dates.filter(d => d.slug === slug && d.l === l)), passe: regroupe(p.passe, passees) };
   };
   const nom = x => `${x.c} (${x.dep})`;
