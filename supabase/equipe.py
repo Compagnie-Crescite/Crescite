@@ -25,6 +25,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from importer import ErreurAPI, api  # noqa: E402
 
 EQUIPE = json.loads((ROOT / "data" / "equipe.json").read_text(encoding="utf-8"))
+# ce que le dépôt public ne montre pas (une distribution que la compagnie n'a pas confirmée) : private/equipe-privee.json,
+# ajouté ici s'il est là (sans lui, ces lignes ne s'importent pas ; rien n'est jamais effacé de la base)
+PRIVEE = ROOT / "private" / "equipe-privee.json"
+if PRIVEE.exists():
+    for _slug, _lignes in json.loads(PRIVEE.read_text(encoding="utf-8")).get("distributions", {}).items():
+        EQUIPE["distributions"].setdefault(_slug, []).extend(_lignes)
 PHOTOS = ROOT / "private" / "photos" / "equipe"
 DOSSIERS = ROOT / "private" / "dossiers"
 

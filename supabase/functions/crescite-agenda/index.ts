@@ -239,7 +239,8 @@ export function lireAgenda(contenu: string, maintenant = Date.now()): { periodes
   // deno-lint-ignore no-explicit-any
   let jcal: any;
   try { jcal = ICAL.parse(prefiltrer(contenu.replace(/^\uFEFF/, ''), debutF, finF)); } catch (e) {
-    throw new ErreurAgenda(`L’agenda est illisible (format iCal invalide : ${String((e as Error)?.message || e).slice(0, 90)}).`);
+    // (sans le message du lecteur : il pourrait reprendre une ligne de l'agenda, et rien de ses événements n'est gardé)
+    throw new ErreurAgenda('L’agenda est illisible (format iCal invalide).');
   }
   // deno-lint-ignore no-explicit-any
   const calendriers: any[] = (Array.isArray(jcal) && Array.isArray(jcal[0]) ? jcal : [jcal]).map((x: unknown) => new ICAL.Component(x as never));
@@ -479,7 +480,8 @@ export async function synchroniser(agenda: Agenda, f: typeof fetch = fetch, main
     await ecrire(agenda, periodes, maintenant, tronque);
     return { id: agenda.id, nb_evenements: periodes.length, erreur: null };
   } catch (e) {
-    const message = e instanceof ErreurAgenda ? e.message : `La lecture a échoué (${String((e as Error)?.message || e).slice(0, 120)}).`;
+    // une erreur imprévue : un message général (le détail, dans le journal de la fonction, ne va pas dans la base)
+    const message = e instanceof ErreurAgenda ? e.message : 'La lecture a échoué : la prochaine lecture réessaiera.';
     if (!(e instanceof ErreurAgenda)) console.error('crescite-agenda', agenda.id, e);
     await sql`update public.crescite_agendas_lies set erreur = ${message} where id = ${agenda.id}`;
     return { id: agenda.id, erreur: message };

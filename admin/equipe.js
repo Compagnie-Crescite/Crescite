@@ -2816,7 +2816,9 @@ function exporterCsvFrais() {
       (f.commentaire || '').replace(/[\r\n]+/g, ' ')
     ]);
   });
-  const csvContent = '\uFEFF' + lignes.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  // (une case qui commence par = + - @ part précédée d'une apostrophe : un commentaire ne doit rien calculer dans le tableur)
+  const sansFormule = v => (/^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
+  const csvContent = '\uFEFF' + lignes.map(r => r.map(cell => `"${sansFormule(String(cell)).replace(/"/g, '""')}"`).join(';')).join('\r\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

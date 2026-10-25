@@ -21,6 +21,7 @@ const ESSENTIELS = ['./', 'equipe.js', 'manifest.webmanifest', '../admin/vendor/
 const UTILES = ['carte.js', '../admin/agenda.js', '../admin/feuille.js', '../admin/logo.js', '../admin/tentacules.js', '../admin/planning.js',
   'icones/192.png', 'icones/512.png', 'icones/180.png', 'icones/masquable-512.png', 'icones/badge.png'];
 const MAX_MEDIAS = 120;
+const MAX_DONNEES = 30 * 864e5;                            // une réponse de la base gardée sert un mois au plus hors connexion
 const LIENS_SURS = /^#\/(saison|feuilles|planning|spectacles|documents|notifications|moi|frais|indisponibilites|agendas|propositions|date\/\d+|feuille\/\d+|proposition\/\d+|spectacles\/[a-z0-9-]{1,80})$/;
 
 self.addEventListener('install', e => {
@@ -94,7 +95,8 @@ async function parDessous(nom, req, e, max = 0) {
 const media = (req, e) => parDessous(MEDIAS, req, e, MAX_MEDIAS);
 async function elaguer(c, max) { const ks = await c.keys(); for (const k of ks.slice(0, Math.max(0, ks.length - max))) await c.delete(k); }
 
-// la base : d'abord le réseau ; sans lui, la dernière réponse à la même question, pour la même personne (lue dans son jeton)
+// la base : d'abord le réseau ; sans lui, la dernière réponse à la même question, pour la même personne (lue dans son jeton),
+// si elle a moins d'un mois (MAX_DONNEES) ; une réponse plus vieille s'efface
 function qui(req) {
   const m = /^Bearer\s+[^.]+\.([^.]+)\./.exec(req.headers.get('authorization') || '');
   if (!m) return null;
@@ -105,12 +107,21 @@ async function base(req) {
   const sub = qui(req);
   try {
     const r = await fetch(req);
-    if (r.ok && sub) { const copie = r.clone(); caches.open(DONNEES).then(c => c.put(cleDe(req, sub), copie)).catch(() => {}); }
+    if (r.ok && sub) {
+      const copie = r.clone();
+      (async () => {
+        const h = new Headers(copie.headers);
+        h.set('x-crescite-garde-le', String(Date.now()));
+        const garde = new Response(await copie.blob(), { status: copie.status, statusText: copie.statusText, headers: h });
+        await (await caches.open(DONNEES)).put(cleDe(req, sub), garde);
+      })().catch(() => {});
+    }
     return r;
   } catch (err) {
     if (!sub) throw err;
-    const x = await (await caches.open(DONNEES)).match(cleDe(req, sub));
+    const c = await caches.open(DONNEES), cle = cleDe(req, sub), x = await c.match(cle);
     if (!x) throw err;
+    if (!(Date.now() - Number(x.headers.get('x-crescite-garde-le') || 0) < MAX_DONNEES)) { await c.delete(cle); throw err; }
     const h = new Headers(x.headers);
     h.set('x-crescite-hors-ligne', '1');
     return new Response(await x.blob(), { status: x.status, statusText: x.statusText, headers: h });

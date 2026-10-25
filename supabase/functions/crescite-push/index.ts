@@ -64,6 +64,8 @@ Deno.serve(async (req) => {
     }
     return json({ envoyees, retirees });
   } catch (e) {
-    return json({ erreur: String((e as Error)?.message ?? e) }, 500);
+    // le détail reste dans le journal de la fonction : la réponse n'en dit rien (ni la base, ni les clés)
+    console.error('crescite-push', e);
+    return json({ erreur: 'erreur interne' }, 500);
   }
 });

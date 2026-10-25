@@ -376,6 +376,8 @@
       E.sortieVoulue = false;
       arreterTempsReel();
       oublier(); reinitialiser();
+      // une session qui prend fin d'elle-même (expirée, retirée) efface aussi les réponses que le service garde hors connexion
+      try { messageSW({ type: 'oublier' }); } catch (e) { /* le service n'est pas encore branché */ }
       E.messageConnexion = voulue ? { texte: 'La session est fermée sur cet appareil.', genre: 'info' }
         : { texte: 'Votre session a pris fin. Reconnectez-vous.', genre: 'erreur' };
     }
