@@ -2149,8 +2149,11 @@ button.lien-u{margin:0;padding:0;border:0;background:none;font:inherit;font-weig
      légende, juste dessous ; la carte de ses communes, à côté ; ses prochaines dates (règle 17 : une date où l'on réserve est un
      panneau qui devient l'onglet de son panneau de réservation ; une date scolaire est marquée) ; toutes ses dates, les jouées
      en retrait, « aujourd'hui » entre la dernière jouée et la première à venir. Puis les saisons passées, fermées, chacune
-     annoncée par sa petite carte, et la frise des saisons qui leur sert d'index. Le filtre par spectacle, la recherche et la
-     commune choisie (sur la carte, ou ?l= depuis l'accueil) portent sur toute la page.
+     annoncée par sa petite carte, et la frise des saisons qui leur sert d'index. Le filtre par spectacle (les spectacles en
+     tournée d'abord), la recherche et la commune choisie (sur la carte, ou ?l= depuis l'accueil) portent sur toute la page.
+     Les semaines de résidence (règle 23) : à leur place dans les dates, marquées « Résidence » comme une date scolaire, sans
+     panneau de réservation ; sur la frise, un carré évidé (un trait en pointillé pour une période), dit dans la légende ; jamais
+     comptées (les nombres de dates, les cartes, le bilan d'un spectacle).
      ouvrir : #/saisons/<saison>, la même page, cette saison ouverte et amenée à l'écran (le titre du document la nomme). */
   const moisDe = x => { const t = x.toLowerCase(); return MOIS_NOMS.findIndex(n => n.startsWith(t) || t.startsWith(n.slice(0, 4))) + 1; };
   // les jours d'une ligne d'agenda : ceux de la base (iso, fin), sinon lus dans la ligne (le premier et le dernier jour cités ;
