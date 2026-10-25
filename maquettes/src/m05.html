@@ -950,6 +950,8 @@ a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
 .lc-icone{width:clamp(72px,7vw,104px);height:clamp(72px,7vw,104px);border-radius:50%;background:var(--u-aplat,var(--tache));color:var(--u-sur,#fff);transition:transform .3s}
 .lc-lire:hover .lc-icone{transform:translate(-50%,-50%) scale(1.08)}
 .lc-titre{left:24px;right:24px;bottom:20px;font-stretch:125%;font-weight:900;font-size:clamp(17px,1.6vw,24px);line-height:1.1;text-transform:uppercase;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+/* l'écran étroit : le rond remonte et rapetisse, le titre sur deux lignes ne le touche pas */
+@media (max-width:520px){.lc-icone{top:42%;width:60px;height:60px}.lc-titre{left:16px;right:16px;bottom:14px;font-size:15px}}
 .lc-outils{gap:10px;margin-top:12px}
 .lc-b{min-height:44px;padding:0 18px 0 14px;border:2px solid var(--u-texte,var(--encre));border-radius:999px;background:transparent;color:var(--u-texte,var(--encre));font-stretch:112%;font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase}
 .lc-b:hover{background:var(--u-texte,var(--encre));color:var(--u-fond,var(--papier))}

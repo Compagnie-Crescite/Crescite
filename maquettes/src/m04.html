@@ -1207,6 +1207,8 @@ a.rs-seance:focus-visible{outline:2px solid var(--u-titre);outline-offset:2px}
 .lc-icone{width:76px;height:90px;border-radius:999px 999px 10px 10px;background:var(--u-aplat,var(--sai));color:var(--u-sur-aplat,var(--sai-sur));box-shadow:0 0 0 6px color-mix(in srgb,var(--u-aplat,var(--sai)) 25%,transparent);transition:transform .2s var(--ease)}
 .lc-lire:hover .lc-icone{transform:translate(-50%,-50%) scale(1.06)}
 .lc-titre{left:26px;right:26px;bottom:20px;font-family:var(--serif);font-size:clamp(1.15rem,1rem + .8vw,1.6rem);line-height:1.2;font-variation-settings:"opsz" 30,"SOFT" 100;color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+/* l'écran étroit (moins de 190px de haut) : la petite porte remonte et rapetisse, le titre ne la touche pas */
+@media (max-width:520px){.u-video .lc-icone{top:43%;width:58px;height:68px}.u-video .lc-titre{left:18px;right:18px;bottom:14px;font-size:1.05rem}}
 .lc-outils{gap:10px;margin-top:12px}
 .lc-b{min-height:44px;padding:0 18px 0 14px;border:1.5px solid color-mix(in srgb,var(--u-texte,var(--ink)) 40%,transparent);border-radius:999px;background:transparent;color:var(--u-texte,var(--ink));font-size:var(--fs-small);font-weight:600}
 .lc-b:hover{border-color:var(--u-texte,var(--ink))}
