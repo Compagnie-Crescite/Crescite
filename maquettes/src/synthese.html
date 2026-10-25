@@ -601,7 +601,8 @@ html.ed-actif .ep-a::after { content: none; }
 
 /* ———— Chantier 1 : Alertes de tournée par proximité géographique ———— */
 .alerte-boite { margin-top: 14px; padding: clamp(22px, 3.5vw, 36px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--magenta); box-shadow: 0 12px 32px -20px rgba(29, 20, 24, .3); }
-.alerte-badge, .simu-badge, .alerte-desc { margin: 8px 0 20px; font-size: 1.05rem; color: var(--gris); max-width: 65ch; }
+.alerte-badge, .simu-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font: 700 .74rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; background: color-mix(in srgb, var(--magenta) 14%, transparent); color: var(--magenta-texte); margin-bottom: 12px; }
+.alerte-desc { margin: 8px 0 20px; font-size: 1.05rem; color: var(--gris); max-width: 65ch; }
 .alerte-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) auto; gap: 12px; align-items: center; }
 .alerte-geo-grp { display: flex; gap: 6px; }
 .alerte-geo-grp input { flex: 1; min-width: 130px; }
