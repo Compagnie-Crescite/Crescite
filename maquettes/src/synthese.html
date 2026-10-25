@@ -2156,12 +2156,14 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
    « cover » (toute la traversée). */
 /* 1. le texte qui s'allume à la lecture : affirmation, citations, apartés (.lit, --n mots) : chaque mot passe de l'ombre à
    la lumière quand sa phrase traverse le milieu de l'écran, dans l'ordre, au rythme du lecteur ; en remontant, il s'éteint */
+@property --lit { syntax: '<number>'; inherits: true; initial-value: 1; }   /* (la lecture du bloc, 0 → 1 ; posée à 1 : tout se lit) */
 @supports (animation-timeline: view()) {
-  html:not(.still):not(.sur-place) .lit { view-timeline: --lit block; }
-  html:not(.still):not(.sur-place) .lit .w, html:not(.still):not(.sur-place) .lit.vu .w { opacity: 1; transform: none; filter: none;
-    animation: mot-lu linear both; animation-timeline: --lit;
-    animation-range: cover calc(18% + var(--w, 0) * 34% / var(--n, 20)) cover calc(30% + var(--w, 0) * 34% / var(--n, 20)); }
-  @keyframes mot-lu { from { opacity: .18; transform: translateY(.08em); } to { opacity: 1; transform: none; } }
+  /* une seule animation par bloc (pas une par mot : la page d'un spectacle en compte une centaine, elle resterait sous
+     son budget de rendu), qui fait avancer --lit ; chaque mot en tire son éclat (--e) d'après son rang */
+  html:not(.still):not(.sur-place) .lit { animation: lit-lu linear both; animation-timeline: view(); animation-range: cover 18% cover 64%; }
+  @keyframes lit-lu { from { --lit: 0; } to { --lit: 1; } }
+  html:not(.still):not(.sur-place) .lit .w, html:not(.still):not(.sur-place) .lit.vu .w { --e: clamp(0, calc((var(--lit) * (var(--n, 20) + 3) - var(--w, 0)) / 3), 1);
+    opacity: calc(.18 + var(--e) * .82); translate: 0 calc((1 - var(--e)) * .08em); transform: none; filter: none; animation: none; }
   /* 2. l'ouverture d'un spectacle prend de la profondeur : en la quittant, la photo reste en arrière (elle suit déjà la
      lecture, --p), le texte monte plus vite que la page et s'efface, la poursuite et le gobo s'éteignent : une scène, une salle */
   html:not(.still) .sp-une { view-timeline: --une block; }
