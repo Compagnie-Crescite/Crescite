@@ -66,7 +66,7 @@ html[data-theme="nuit"] .u-arene .u-cit p,
 html[data-theme="nuit"] .u-arene .u-ac-type,
 html[data-theme="nuit"] .u-arene .u-aside,
 html[data-theme="nuit"] .u-arene .u-avec,
-html[data-theme="nuit"] .u-arene .suivant b,
+html[data-theme="nuit"] .u-arene :is(.suivant b),   /* (le lien vers le spectacle suivant porte lui-même son univers) */
 html[data-theme="nuit"] .u-arene .prog-t a,
 html[data-theme="nuit"] .u-arene .fe-t a,
 html[data-theme="nuit"] .u-arene .fe-type,
@@ -163,6 +163,8 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 /* la carte paraît d'un fondu (une couche, composée par la carte graphique) ; ses bras masqués poussent depuis Rouen */
 .carte:not(.pousse) { opacity: 0; }
 .carte.pousse { transition: opacity .45s var(--mv-courbe); }
+/* (la grande carte du bilan d'un spectacle, règle 21, se voit d'emblée, la France et Rouen ; ses bras poussent à l'écran) */
+.carte.bilan:not(.pousse) { opacity: 1; }
 .carte .pays { fill: var(--carte); }
 .carte .voisin { fill: var(--papier-2); }
 .carte .encart { fill: none; stroke: var(--gris); stroke-opacity: .5; stroke-dasharray: 3 4; }
@@ -268,9 +270,11 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
 .am-pieuvre { display: block; width: 136px; transform-origin: 50% 30%; transition: scale .3s var(--mv-courbe); }
 .am-pieuvre svg { display: block; width: 100%; height: auto; }
 .am-a:hover .am-pieuvre, .am-a:focus-visible .am-pieuvre { scale: 1.06; }
-.am-portes { display: block; width: 118px; height: 76px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linejoin: round; }
-.am-portes .bat { transform-box: fill-box; transform-origin: 0 50%; transition: transform .35s var(--mv-courbe); }
-.am-a:hover .am-portes .bat, .am-a:focus-visible .am-portes .bat { transform: scaleX(.55); }
+.am-portes, .am-dessin { display: block; width: 118px; height: 76px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linejoin: round; }
+.am-portes .bat, .am-dessin .bat { transform-box: fill-box; transform-origin: 0 50%; transition: transform .35s var(--mv-courbe); }
+.am-a:hover :is(.am-portes, .am-dessin) .bat, .am-a:focus-visible :is(.am-portes, .am-dessin) .bat { transform: scaleX(.55); }
+.am-dessin .bat.d { transform-origin: 100% 50%; }
+.am-dessin .l { stroke-width: 1.4; stroke-linecap: round; opacity: .6; }
 .am-t { display: block; font: italic 400 clamp(1.7rem, 1.25rem + 1vw, 2.4rem)/1.04 var(--serif); text-wrap: balance; }
 .am-a .trait { margin-top: 8px; }
 .am-a .trait path { stroke: var(--saison-texte); stroke-dashoffset: .72; transition: stroke-dashoffset .5s var(--mv-courbe); }
@@ -281,7 +285,7 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
   .am-a { display: grid; grid-template-columns: 82px minmax(0, 1fr); grid-template-areas: "vis t" "vis trait"; align-items: center; column-gap: 16px; row-gap: 0; min-height: 0; padding: 14px 16px; }
   .am-vis { grid-area: vis; height: 58px; justify-content: center; align-items: center; }
   .am-t { grid-area: t; font-size: 1.6rem; } .am-a .trait { grid-area: trait; margin-top: 4px; }
-  .am-pieuvre { width: 76px; } .am-portes { width: 72px; height: 48px; } .am-pts { max-width: 80px; gap: 5px; } .am-pts i { width: 12px; height: 12px; }
+  .am-pieuvre { width: 76px; } .am-portes, .am-dessin { width: 72px; height: 48px; } .am-pts { max-width: 80px; gap: 5px; } .am-pts i { width: 12px; height: 12px; }
 }
 /* les spectacles, un par écran, chacun dans son univers et pleine page : au bureau, épinglé, il prend la place du précédent
    (qui s'assombrit dessous) ; son motif joue son effet avec la lecture. --p : son arrivée, --r : sa lecture (épinglé),
@@ -773,6 +777,18 @@ html[data-theme="nuit"] .theme:hover { color: #fff1cf; border-color: #f3d9a4; }
 
 /* ———— l'espace pro : trois portes vers les espaces réservés, en index (règle 16) ———— */
 .ep-texte { margin: 22px 0 0; max-width: 34em; font: italic 400 clamp(1.15rem, 1rem + .5vw, 1.4rem)/1.45 var(--serif); color: var(--gris); }
+/* ses deux pages (règle 21), avant les portes : les cartes du menu de l'accueil, chacune son dessin et la couleur de sa page */
+.am-liste.ep-pages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ep-page { --ep: var(--ec); }
+html[data-theme="nuit"] .ep-page { --ep: var(--ev); }
+.ep-page .am-vis { color: var(--ep); }
+.ep-page:hover { border-color: var(--ep); box-shadow: 0 22px 40px -30px color-mix(in srgb, var(--ep) 85%, transparent); }
+.ep-page:focus-visible { outline-color: var(--ep); }
+.ep-page .trait path { stroke: var(--ep); }
+/* (le texte de l'espace pro, qui parle de ses espaces réservés, les annonce) */
+.bloc .ep-texte { margin: 0 0 clamp(16px, 2.4vw, 26px); }
+.ep-sous { display: block; margin-top: 12px; color: var(--gris); font: 400 1rem/1.45 var(--sans); }
+@media (max-width: 560px) { .am-liste.ep-pages { grid-template-columns: minmax(0, 1fr); } .ep-sous { margin-top: 6px; font-size: .92rem; } }
 .ep-portes { list-style: none; margin: 0; padding: 0; }
 .ep { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr) auto; align-items: center; gap: 10px clamp(20px, 4vw, 56px); padding: clamp(24px, 3vw, 38px) 0; }
 .ep:last-child { border-bottom: 1px solid var(--filet); }
@@ -820,20 +836,24 @@ html[data-theme="nuit"] .alerte-msg.ok { color: #7fd6a4; border-color: #7fd6a4; 
 html[data-theme="nuit"] .alerte-msg.err { color: #ff9d94; border-color: #ff9d94; }
 
 /* ———— Chantier 2 : Simulateur d'accueil & Devis flash ———— */
-.simu-boite { margin-top: 10px; padding: clamp(24px, 4vw, 40px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--ec, var(--magenta)); }
+.simu-boite { margin-top: 10px; padding: clamp(24px, 4vw, 40px); border-radius: 12px; background: var(--blanc); border: 1.5px solid var(--filet); border-left: 5px solid var(--saison); }
 .simu-desc { margin: 8px 0 24px; font-size: 1.05rem; color: var(--gris); max-width: 68ch; }
 .simu-grille { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(20px, 3.5vw, 44px); align-items: start; }
 @media (max-width: 860px) { .simu-grille { grid-template-columns: 1fr; } }
 .champ-simu { margin-bottom: 14px; }
 .champ-simu label { display: block; margin-bottom: 6px; font-weight: 600; font-size: .92rem; }
 .champ-simu input, .champ-simu select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 1rem var(--sans); color: var(--encre); }
-.simu-dim-grp { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.simu-dim-grp { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: end; }
 .simu-verdict { padding: 20px 22px; border-radius: 10px; background: var(--papier-2); border: 1.5px solid var(--filet); }
-.simu-verdict-titre { display: flex; align-items: center; gap: 8px; font: 700 1.15rem/1.3 var(--sans); margin-bottom: 10px; }
-.simu-verdict-titre.ok { color: #1d6f47; }
-.simu-verdict-titre.warn { color: #a45a00; }
-.simu-verdict p { margin: 0 0 10px; font-size: .95rem; line-height: 1.55; }
-.simu-jauge-tag { display: inline-block; padding: 3px 8px; border-radius: 6px; background: color-mix(in srgb, var(--ec, var(--magenta)) 14%, transparent); font-weight: 600; font-size: .84rem; margin-top: 6px; }
+/* (les conditions d'accueil du spectacle choisi, celles de D ; au thème) */
+.simu-verdict-titre { margin: 0 0 12px; font: 700 1.05rem/1.3 var(--sans); color: var(--saison-texte); }
+.simu-faits { list-style: none; display: grid; gap: 6px; margin: 0 0 14px; padding: 0; font-size: .98rem; line-height: 1.45; }
+.simu-faits li::first-letter { text-transform: uppercase; }
+.simu-docs { list-style: none; display: grid; gap: 8px; margin: 0; padding: 0; }
+.simu-docs li { display: flex; align-items: center; gap: 10px; }
+.simu-docs .fleche { flex: none; width: 18px; height: 18px; color: var(--saison-texte); }
+.simu-docs a { color: var(--saison-texte); font-weight: 600; text-underline-offset: 3px; }
+.simu-envoi { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .simu-devis-cta { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .simu-form-devis { margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--filet); }
 .simu-form-devis .grille-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px; }
@@ -1104,9 +1124,23 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .lc-boite .lc-cadre { box-shadow: 0 40px 90px -30px rgba(0, 0, 0, .8); }
 .u-tournee { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(26px, 5vw, 70px); align-items: start; }
 .carte-sp { position: sticky; top: calc(var(--haut) + var(--onglets) + 16px); margin: 0; }
+/* la page d'un spectacle qui n'est plus en tournée : le bilan (ses chiffres, la frise de sa tournée, ses dates par saison à
+   côté d'une grande carte de tous ses lieux) */
+.u-bilan-t .gros { color: var(--u-vif); }
+.u .etat { color: var(--u-texte2); }   /* (« date annulée », dans un univers : en retrait, pas à la couleur du site) */
+.u-bilan-n { list-style: none; display: flex; flex-wrap: wrap; gap: 14px clamp(28px, 4vw, 64px); margin: 4px 0 clamp(22px, 3vw, 34px); padding: 0; }
+.u-bilan-n li { display: grid; gap: 6px; }
+.u-bilan-n .gros { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: clamp(2.6rem, 2rem + 2vw, 4rem); line-height: 1; color: var(--u-vif); font-variant-numeric: tabular-nums; }
+.u-bilan-n span { font: 600 .76rem/1.3 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.u-bilan { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: clamp(24px, 4vw, 56px); align-items: start; margin-top: clamp(18px, 3vw, 30px); }
+.u-bilan-s .mois { margin-top: 30px; }
+.u-bilan-s:first-child .mois { margin-top: 0; }
+.u-bilan-s .mois a { color: inherit; text-decoration: none; }
+.u-bilan-s .mois a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+.u-bilan-s .mois small { margin-left: 8px; font: 600 .8rem var(--u-etiq); color: var(--u-texte2); }
 .u .dates { border-top-color: var(--u-texte); }
 .u .dates > li { border-bottom-color: var(--u-filet); }
-.u .dates time small, .u .det { color: var(--u-texte2); font-family: var(--sans); }
+.u .dates time small, .u .det, .u .dates > li.suite { color: var(--u-texte2); font-family: var(--sans); }
 .u .det a { color: var(--u-vif); }
 .u .dates > li.on { background: color-mix(in srgb, var(--u-vif) 13%, transparent); }
 .u-annonce { margin: 0 0 18px; font-size: 1.35rem; line-height: 1.45; color: var(--u-texte2); }
@@ -1450,7 +1484,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 
 /* ———— réserver une date, d'un geste (règle 17, RESERVER) ————
    La bande des prochaines dates (un bouton par date, l'horaire écrit dessus), la carte de la date choisie dans l'univers de
-   son spectacle ; sur « Je viens voir un spectacle », chaque date de l'agenda ouvre sa carte sous sa ligne. Le geste
+   son spectacle ; sur les saisons (#/saisons), chaque date de l'agenda ouvre sa carte sous sa ligne. Le geste
    évident de la carte : « Réserver », plein, de la couleur du spectacle. */
 .rs-zone { position: relative; margin: 0 0 clamp(34px, 4.6vw, 60px); scroll-margin-top: calc(var(--onglets) + 6px); }
 @media (pointer: coarse), (max-width: 640px) { .rs-defile, .rs-zone.rs-deborde .rs-defile { display: none; } }
@@ -1524,7 +1558,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 .rs-reserver:focus-visible { outline: 3px solid var(--u-vif); outline-offset: 3px; }
 .rs-aupres { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding-top: 14px; border-top: 1px solid var(--u-filet); font: 400 1.02rem/1.4 var(--sans); color: var(--u-texte2); }
 .rs-aupres b { color: var(--u-texte); font-weight: 600; }
-/* « Je viens voir un spectacle » : chaque date de l'agenda est un bouton (le papier de la page) qui ouvre sa carte sous sa ligne */
+/* les saisons (#/saisons) : chaque date de l'agenda est un bouton (le papier de la page) qui ouvre sa carte sous sa ligne */
 .rs-date--ligne { width: 100%; min-width: 0; max-width: none; padding: 9px 12px 11px; border-color: var(--filet); border-radius: 10px; background: var(--blanc); color: var(--encre); }
 .rs-date--ligne:hover { border-color: var(--encre); }
 .rs-date--ligne:focus-visible { outline-color: var(--magenta); }
@@ -1595,6 +1629,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   .sai-carte .carte { max-height: 340px; }
   .ag-carte, .sa-carte, .e-carte { position: static; order: -1; }
   .reperes, .photos-ac, .carte-sp, .u-faits { position: static; }
+  .u-bilan { grid-template-columns: minmax(0, 1fr); } .u-bilan .carte-sp { order: -1; }
   .u-ouv-grille { grid-template-columns: minmax(0, 1fr); }
   .u-ouv { min-height: 0; }
   .u-carton { max-width: 440px; justify-self: start; }
@@ -1701,7 +1736,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      6. Défilement (MOUVEMENT.reveler) : les filets se tracent de gauche à droite, les titres montent, les fiches arrivent
         l'une après l'autre, les chiffres comptent ; les bras de la carte poussent depuis Rouen.
      7. Ce qui vit : « aujourd'hui » respire sur chaque frise, le point « en tournée » aussi.
-     Les frises (FRISE) sont le calendrier de chaque page : la saison et les saisons sur « Je viens voir un spectacle », la
+     Les frises (FRISE) sont le calendrier de chaque page : la saison et les saisons passées sur #/saisons, la
      saison passée, la tournée d'un spectacle, les dates scolaires, la diffusion saison par saison, l'histoire de la
      compagnie ; survoler un repère allume sa ligne et sa commune, et inversement ; un clic y mène.
      Réserver une date (RESERVER, règle 17) : choisir une date, c'est la pousse jusque dans sa carte : la couleur du spectacle
@@ -2699,6 +2734,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   /* ---------- l'accueil, 2 : le menu (règle 21), les quatre éléments de D.site.menu, chacun avec son petit dessin ---------- */
   const menuDe = cle => (S.menu || []).find(m => m && (m.cle === cle || m.id === cle)) || null;
   const PORTES_PRO = `<svg class="am-portes" viewBox="0 0 118 76" aria-hidden="true" focusable="false">${[3, 45, 87].map(x => `<path d="M${x} 74V24a14 14 0 0 1 28 0v50"/><path class="bat" d="M${x + 4} 74V25a10 10 0 0 1 20 0v49z" fill="currentColor" fill-opacity=".16" stroke="none"/>`).join('')}</svg>`;
+  // les deux pages de l'espace pro (règle 21) : programmer, une scène dont les rideaux s'ouvrent ; les établissements
+  // scolaires, un livre ouvert dont la page se soulève
+  const DESSINS_PRO = {
+    programmer: `<svg class="am-dessin" viewBox="0 0 118 76" aria-hidden="true" focusable="false"><path d="M6 74V6h106v68M2 74h114"/><path d="M6 15q13.25 7 26.5 0t26.5 0t26.5 0t26.5 0"/><path class="bat" d="M10 18h38c-3 20-10 39-24 56H10z" fill="currentColor" fill-opacity=".16"/><path class="bat d" d="M108 18H70c3 20 10 39 24 56h14z" fill="currentColor" fill-opacity=".16"/></svg>`,
+    etablissement: `<svg class="am-dessin" viewBox="0 0 118 76" aria-hidden="true" focusable="false"><path d="M59 17C46 10 26 8 8 11v53c18-3 38-1 51 6M59 17c13-7 33-9 51-6v53c-18-3-38-1-51 6M59 17v53"/><path class="l" d="M17 23c11-1 22 0 33 4M17 33c11-1 22 0 33 4M17 43c11-1 22 0 33 4M17 53c8-.8 15 0 22 2M68 27c11-4 22-5 33-4M68 37c11-4 22-5 33-4M68 47c11-4 22-5 33-4"/><path class="bat" d="M59 17c13-7 33-9 51-6v53c-18-3-38-1-51 6z" fill="currentColor" fill-opacity=".16" stroke="none"/></svg>` };
   function menuAccueil() {
     const M = (S.menu || []).filter(m => m && m.href && m.texte);
     if (!M.length) return '';
@@ -3079,105 +3119,74 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     });
   }
 
+  /* la demande de proposition de cession : le spectacle choisi et ses conditions d'accueil telles que D les donne (format,
+     durée, jauge, équipe ; sa fiche technique déposée, sinon sur demande), le lieu et son plateau, puis le formulaire. Rien
+     d'inventé : aucun seuil, aucune jauge, aucun prix ; les textes sont ceux de D (libelles) */
+  const accueilSp = s => { if (!s) return '';
+    const P = s.programmer || {}, fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique'), href = mailPrg(`${L.ficheTechnique} – ${s.titre}`);
+    const faits = [P.format, P.duree || s.duree, P.jauge, P.equipe].filter(Boolean);
+    return `<h3 class="simu-verdict-titre">${esc(L.conditionsAccueil)}</h3>${faits.length ? `<ul class="simu-faits">${faits.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+      <ul class="simu-docs">${fts.length ? fts.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('') : `<li>${PDF}${href ? `<a href="${esc(href)}">${esc(L.ficheTechniqueSurDemande)}</a>` : `<span>${esc(L.ficheTechniqueSurDemande)}</span>`}</li>`}</ul>`; };
   function initSimulateurPro() {
     const spSelect = $('#simu-sp'), lieuSelect = $('#simu-lieu-type'), ouvIn = $('#simu-ouv'), profIn = $('#simu-prof'), hautIn = $('#simu-haut');
-    const verdict = $('#simu-verdict'), btnOuvrir = $('#btn-ouvrir-devis'), zoneForm = $('#simu-form-devis');
-    if (!spSelect || !verdict) return;
-
-    const specs = {
-      'berenice': { ouvMin: 8, profMin: 6, hautMin: 4, jaugeType: '120 à 180 spectateurs (arène tri-frontale)', desc: 'Scénographie en arène circulaire ou tri-frontale. Nécessite un sol plan et un noir salle complet.' },
-      'cleophene': { ouvMin: 7, profMin: 5.5, hautMin: 3.5, jaugeType: '150 à 250 spectateurs', desc: 'Dispositif frontal épuré. Idéal pour théâtre de poche ou scène moyenne.' },
-      'ci-gisait-cyrano': { ouvMin: 7, profMin: 5, hautMin: 3.5, jaugeType: '100 à 200 spectateurs', desc: 'Forme légère, installation rapide en 2h30, adaptable en salle polyvalente.' },
-      'la-folle-idee': { ouvMin: 6, profMin: 4.5, hautMin: 3, jaugeType: '80 à 150 spectateurs', desc: 'Huis clos intimiste. Grande proximité avec le public.' },
-      'macbeth-fatum': { ouvMin: 9, profMin: 7, hautMin: 4.5, jaugeType: '200 à 400 spectateurs', desc: 'Plateau équipé son et lumière indispensable (gril requis).' },
-      'mon-royaume': { ouvMin: 5, profMin: 4, hautMin: 2.8, jaugeType: 'Jusqu’à 300 spectateurs', desc: 'Spectacle tout-terrain totalement autonome en son et lumière. Jouable partout.' },
-      'imaginaire-force': { ouvMin: 6, profMin: 5, hautMin: 3.2, jaugeType: '100 à 180 spectateurs', desc: 'Forme hybride, grande adaptabilité aux tiers-lieux et médiathèques.' },
-      'cassandres': { ouvMin: 8, profMin: 6, hautMin: 4, jaugeType: 'En création (saison 2027)', desc: 'Création prospective tout-terrain et lieux d’enseignement.' }
-    };
-
-    function recalculer() {
-      const slug = spSelect.value, lType = lieuSelect.value;
-      const ouv = parseFloat(ouvIn.value) || 0, prof = parseFloat(profIn.value) || 0, haut = parseFloat(hautIn.value) || 0;
-      const reg = specs[slug] || { ouvMin: 7, profMin: 5, hautMin: 3.5, jaugeType: 'Jauge modulable', desc: 'Fiche technique sur demande.' };
-      const okDim = ouv >= reg.ouvMin && prof >= reg.profMin && haut >= reg.hautMin;
-      const okLieu = !(slug === 'macbeth-fatum' && (lType === 'exterieur' || lType === 'autre'));
-
-      if (okDim && okLieu) {
-        verdict.innerHTML = `<div class="simu-verdict-titre ok"><svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-10.3a1 1 0 00-1.4-1.4L9 9.6 7.7 8.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z" clip-rule="evenodd"/></svg><span>Configuration optimale</span></div>
-          <p><strong>Plateau compatible :</strong> Vos dimensions (${ouv}m × ${prof}m, h: ${haut}m) conviennent parfaitement aux exigences techniques du spectacle.</p>
-          <p>${reg.desc}</p>
-          <span class="simu-jauge-tag">${reg.jaugeType}</span>`;
-      } else {
-        verdict.innerHTML = `<div class="simu-verdict-titre warn"><svg viewBox="0 0 20 20" width="20" height="20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg><span>Adaptation technique à étudier</span></div>
-          <p><strong>Remarque :</strong> Dimensions préconisées : ${reg.ouvMin}m ouverture × ${reg.profMin}m profondeur × ${reg.hautMin}m sous gril.</p>
-          <p>La compagnie a une grande expérience des adaptations scéniques. Une proposition d’implantation spécifique peut vous être soumise.</p>
-          <span class="simu-jauge-tag">${reg.jaugeType}</span>`;
-      }
-    }
-
-    [spSelect, lieuSelect, ouvIn, profIn, hautIn].forEach(el => el.addEventListener('input', recalculer));
-    recalculer();
-
-    if (btnOuvrir && zoneForm) {
-      btnOuvrir.addEventListener('click', () => {
-        zoneForm.hidden = !zoneForm.hidden;
-        if (!zoneForm.hidden) {
-          const spNom = spSelect.options[spSelect.selectedIndex].text;
-          zoneForm.innerHTML = `<h3 class="rubrique">Demande de proposition de cession — ${esc(spNom)}</h3>
-            <form id="f-devis" onsubmit="return false;">
-              <div class="grille-champs">
-                <div class="champ"><label for="dev-struct">Structure / Théâtre / Ville *</label><input type="text" id="dev-struct" required maxlength="120" placeholder="Théâtre municipal de..."></div>
-                <div class="champ"><label for="dev-nom">Nom du contact / Programmateur *</label><input type="text" id="dev-nom" required maxlength="200" placeholder="Prénom Nom"></div>
-                <div class="champ"><label for="dev-email">Courriel professionnel *</label><input type="email" id="dev-email" required maxlength="254" placeholder="contact@theatre.fr"></div>
-                <div class="champ"><label for="dev-tel">Téléphone</label><input type="tel" id="dev-tel" maxlength="40" placeholder="02 35 ..."></div>
-                <div class="champ"><label for="dev-periode">Période ou saison envisagée</label><input type="text" id="dev-periode" maxlength="200" placeholder="ex. Novembre 2027 ou Saison 27-28"></div>
-              </div>
-              <div class="champ"><label for="dev-msg">Précisions éventuelles</label><textarea id="dev-msg" rows="3" maxlength="5000" placeholder="Nombre de représentations souhaitées, actions culturelles associées..."></textarea></div>
-              <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center;">
-                <button type="submit" class="bouton e" id="btn-envoyer-devis" style="--ec:var(--ec)"><span>${esc(L.envoyerDemande || 'Envoyer la demande')}</span>${FLECHE}</button>
-                <span id="dev-status" class="alerte-msg" hidden></span>
-              </div>
-            </form>`;
-          const fDev = $('#f-devis');
-          fDev.addEventListener('submit', async () => {
-            const st = $('#dev-status'), btnEnv = $('#btn-envoyer-devis');
-            btnEnv.disabled = true;
-            st.hidden = true;
-            const struct = $('#dev-struct').value.trim(), nom = $('#dev-nom').value.trim(), em = $('#dev-email').value.trim(), tel = $('#dev-tel').value.trim(), per = $('#dev-periode').value.trim(), msg = $('#dev-msg').value.trim();
-            const dims = `${ouvIn.value}m x ${profIn.value}m x ${hautIn.value}m (${lieuSelect.value})`;
-            const s = bySlug[spSelect.value] || null;
-            const { error } = await deposer('crescite_devis_demandes', {
-              spectacle_id: s && s.id != null ? s.id : null,
-              type_lieu: lieuSelect.value,
-              dimensions_plateau: dims,
-              structure_nom: struct,
-              commune: struct,
-              contact_nom: nom,
-              contact_email: em,
-              contact_tel: tel || null,
-              periode_souhaitee: per || null,
-              message: msg || null
-            });
-            // le récapitulatif, prêt dans un courriel au contact diffusion
-            const sujet = `Demande de programmation : ${spNom} - ${struct}`;
-            const corps = `Bonjour,\n\nJe souhaite recevoir une proposition de cession pour le spectacle "${spNom}".\n\nStructure : ${struct}\nContact : ${nom} (${tel})\nDimensions plateau : ${dims}\nPériode envisagée : ${per}\n\nPrécisions :\n${msg}\n\nCordialement,\n${nom}`;
-            if (error) {
-              const lien = versContact(null, sujet, corps);
-              st.className = 'alerte-msg err';
-              st.setAttribute('role', 'alert');
-              st.innerHTML = `${esc(L.demandeNonEnregistree)}${lien ? ` ${lien}` : ''}`;
-            } else {
-              const lien = versContact(L.ouvrirMessagerie, sujet, corps);
-              st.className = 'alerte-msg ok';
-              st.setAttribute('role', 'status');
-              st.innerHTML = `✓ ${esc(L.demandeTransmise)}${lien ? ` ${remplir(L.recapitulatifMessagerie, { lien })}` : ''}`;
-            }
-            st.hidden = false;
-            btnEnv.disabled = false;
-          });
+    const panneau = $('#simu-verdict'), btnOuvrir = $('#btn-ouvrir-devis'), zoneForm = $('#simu-form-devis');
+    if (!spSelect || !panneau) return;
+    const choisi = () => bySlug[spSelect.value] || null, nomChoisi = () => (choisi() || {}).titre || spSelect.value;
+    spSelect.addEventListener('change', () => { panneau.innerHTML = accueilSp(choisi()); const h = $('#simu-form-devis h3'); if (h) h.textContent = `${L.demandeCession} — ${nomChoisi()}`; });
+    if (!btnOuvrir || !zoneForm) return;
+    const champ = (id, cle, { type = 'text', requis = false, max = 200, auto = '' } = {}) => `<div class="champ"><label for="${id}">${esc(L[cle])}${requis ? '<span aria-hidden="true"> *</span>' : ''}</label><input type="${type}" id="${id}"${requis ? ' required' : ''} maxlength="${max}"${auto ? ` autocomplete="${auto}"` : ''}></div>`;
+    btnOuvrir.addEventListener('click', () => {
+      zoneForm.hidden = !zoneForm.hidden;
+      btnOuvrir.setAttribute('aria-expanded', String(!zoneForm.hidden));
+      if (zoneForm.hidden) return;
+      zoneForm.innerHTML = `<h3 class="rubrique">${esc(`${L.demandeCession} — ${nomChoisi()}`)}</h3>
+        <form id="f-devis" onsubmit="return false;">
+          <div class="grille-champs">${champ('dev-struct', 'devisStructure', { requis: true, max: 120, auto: 'organization' })}${champ('dev-nom', 'devisContact', { requis: true, auto: 'name' })}${champ('dev-email', 'devisCourriel', { type: 'email', requis: true, max: 254, auto: 'email' })}${champ('dev-tel', 'devisTelephone', { type: 'tel', max: 40, auto: 'tel' })}${champ('dev-periode', 'devisPeriode')}</div>
+          <div class="champ"><label for="dev-msg">${esc(L.devisPrecisions)}</label><textarea id="dev-msg" rows="3" maxlength="5000"></textarea></div>
+          <div class="simu-envoi">
+            <button type="submit" class="bouton e" id="btn-envoyer-devis" style="--ec:var(--saison)"><span>${esc(L.envoyerDemande)}</span>${FLECHE}</button>
+            <span id="dev-status" class="alerte-msg" hidden></span>
+          </div>
+        </form>`;
+      $('#f-devis').addEventListener('submit', async () => {
+        const st = $('#dev-status'), btnEnv = $('#btn-envoyer-devis');
+        btnEnv.disabled = true;
+        st.hidden = true;
+        const v = id => $(id).value.trim();
+        const struct = v('#dev-struct'), nom = v('#dev-nom'), em = v('#dev-email'), tel = v('#dev-tel'), per = v('#dev-periode'), msg = v('#dev-msg');
+        const dims = `${ouvIn.value || '?'}m x ${profIn.value || '?'}m x ${hautIn.value || '?'}m (${lieuSelect.value})`;
+        const s = choisi(), spNom = nomChoisi(), typeNom = (lieuSelect.options[lieuSelect.selectedIndex] || {}).text || lieuSelect.value;
+        const { error } = await deposer('crescite_devis_demandes', {
+          spectacle_id: s && s.id != null ? s.id : null,
+          type_lieu: lieuSelect.value,
+          dimensions_plateau: dims,
+          structure_nom: struct,
+          commune: struct,
+          contact_nom: nom,
+          contact_email: em,
+          contact_tel: tel || null,
+          periode_souhaitee: per || null,
+          message: msg || null
+        });
+        // le récapitulatif, prêt dans un courriel au contact diffusion : chaque champ rempli, sous son libellé
+        const sujet = `${L.objetProgrammation} – ${spNom} – ${struct}`;
+        const corps = `${L.demandeCession} : ${spNom}\n\n${[[L.devisStructure, struct], [L.devisContact, nom], [L.devisCourriel, em], [L.devisTelephone, tel], [L.devisLieu, typeNom],
+          [L.devisOuverture, ouvIn.value], [L.devisProfondeur, profIn.value], [L.devisHauteur, hautIn.value], [L.devisPeriode, per], [L.devisPrecisions, msg]].filter(([, x]) => x).map(([k, x]) => `${k} : ${x}`).join('\n')}`;
+        if (error) {
+          const lien = versContact(null, sujet, corps);
+          st.className = 'alerte-msg err';
+          st.setAttribute('role', 'alert');
+          st.innerHTML = `${esc(L.demandeNonEnregistree)}${lien ? ` ${lien}` : ''}`;
+        } else {
+          const lien = versContact(L.ouvrirMessagerie, sujet, corps);
+          st.className = 'alerte-msg ok';
+          st.setAttribute('role', 'status');
+          st.innerHTML = `✓ ${esc(L.demandeTransmise)}${lien ? ` ${remplir(L.recapitulatifMessagerie, { lien })}` : ''}`;
         }
+        st.hidden = false;
+        btnEnv.disabled = false;
       });
-    }
+    });
   }
 
   function initEspaceScolaire() {
@@ -3511,7 +3520,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     vue = 'programmer';
     const e = E.programmer, lieux = retenu('tout', () => CARTE.tout());
     retenir('programmer');
-    main.innerHTML = `${teteEntree(e, [['p-spectacles', L.lesSpectacles], ['p-lieux', L.lieuxDiffusion], ['p-simulateur', L.simulateurAccueil || 'Simulateur d’accueil & Devis'], ['p-ecrire', L.ecrire]], contactHTML(null))}
+    main.innerHTML = `${teteEntree(e, [['p-spectacles', L.lesSpectacles], ['p-lieux', L.lieuxDiffusion], ['p-simulateur', L.devisTitre], ['p-ecrire', L.ecrire]], contactHTML(null))}
       <section class="bloc sans-filet" id="p-lieux" aria-labelledby="h-lieux"><div class="wrap p-intro">
         <div class="p-texte"><h2 class="rubrique" id="h-lieux">${esc(L.lieuxDiffusion)}</h2>${S.compagnie && S.compagnie.paragraphes && S.compagnie.paragraphes[1] ? bloc(S.compagnie.paragraphes[1], 'site.compagnie.paragraphes.1') : ''}
           <div class="p-diff" id="p-diff"></div>
@@ -3520,49 +3529,21 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       </div></section>
       <section class="bloc" id="p-simulateur" aria-labelledby="h-simulateur"><div class="wrap">
         <div class="simu-boite">
-          <span class="simu-badge">PROGRAMMATION</span>
-          <h2 class="titre-bloc" id="h-simulateur">${esc(L.simulateurAccueil || 'Simulateur d’accueil & Devis')}</h2>
-          <p class="simu-desc">${esc(L.simulateurDesc || 'Testez la faisabilité technique de votre lieu et préparez votre demande de cession en un clic.')}</p>
+          <span class="simu-badge">${esc(L.devisBadge)}</span>
+          <h2 class="titre-bloc" id="h-simulateur">${esc(L.devisTitre)}</h2>
+          <p class="simu-desc">${esc(L.devisDesc)}</p>
           <div class="simu-grille">
             <div class="simu-param">
-              <div class="champ-simu">
-                <label for="simu-sp">Spectacle envisagé</label>
-                <select id="simu-sp">
-                  ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)} (${esc(s.duree || '')})</option>`).join('')}
-                </select>
-              </div>
-              <div class="champ-simu">
-                <label for="simu-lieu-type">Type d'espace</label>
-                <select id="simu-lieu-type">
-                  <option value="theatre">Théâtre / Scène équipée</option>
-                  <option value="polyvalente">Salle polyvalente / Fêtes</option>
-                  <option value="etablissement">Établissement scolaire / In situ</option>
-                  <option value="exterieur">Cour / Extérieur</option>
-                  <option value="autre">Autre lieu / Tiers-lieu</option>
-                </select>
-              </div>
-              <div class="simu-dim-grp">
-                <div class="champ-simu">
-                  <label for="simu-ouv">Ouverture (m)</label>
-                  <input type="number" id="simu-ouv" value="9" min="4" max="25" step="0.5">
-                </div>
-                <div class="champ-simu">
-                  <label for="simu-prof">Profondeur (m)</label>
-                  <input type="number" id="simu-prof" value="7" min="3" max="25" step="0.5">
-                </div>
-                <div class="champ-simu">
-                  <label for="simu-haut">Hauteur (m)</label>
-                  <input type="number" id="simu-haut" value="5" min="2.5" max="15" step="0.5">
-                </div>
-              </div>
+              <div class="champ-simu"><label for="simu-sp">${esc(L.devisSpectacle)}</label>
+                <select id="simu-sp">${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}</select></div>
+              <div class="champ-simu"><label for="simu-lieu-type">${esc(L.devisLieu)}</label>
+                <select id="simu-lieu-type">${Object.entries(L.typesLieu || {}).map(([k, t]) => `<option value="${esc(k)}">${esc(t)}</option>`).join('')}</select></div>
+              <div class="simu-dim-grp">${[['simu-ouv', L.devisOuverture], ['simu-prof', L.devisProfondeur], ['simu-haut', L.devisHauteur]].map(([id, t]) => `<div class="champ-simu"><label for="${id}">${esc(t)}</label><input type="number" id="${id}" min="0" step="0.5" inputmode="decimal"></div>`).join('')}</div>
             </div>
-            <div class="simu-verdict" id="simu-verdict"></div>
+            <div class="simu-verdict" id="simu-verdict" aria-live="polite">${accueilSp(D.shows[0])}</div>
           </div>
           <div class="simu-devis-cta">
-            <button type="button" class="bouton e grand" id="btn-ouvrir-devis" style="--ec:var(--ec)">
-              <span>${esc(L.demandeDevis || 'Demander une proposition de cession')}</span>
-              ${FLECHE}
-            </button>
+            <button type="button" class="bouton e grand" id="btn-ouvrir-devis" style="--ec:var(--saison)" aria-expanded="false" aria-controls="simu-form-devis"><span>${esc(L.demandeDevis)}</span>${FLECHE}</button>
           </div>
           <div id="simu-form-devis" class="simu-form-devis" hidden></div>
         </div>
@@ -3840,13 +3821,16 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     $('form', main).addEventListener('submit', e => e.preventDefault());
     return { titre: nomC, menu: 'contact' };
   }
-  /* ---------- l'espace pro : trois portes vers les espaces réservés (equipe/, pro/, admin/, publiés à côté) ---------- */
+  /* ---------- l'espace pro (règles 16 et 21) : ses deux pages, programmer et établissements scolaires, puis trois portes vers
+     les espaces réservés (equipe/, pro/, admin/, publiés à côté) ---------- */
   function espacePro() {
     vue = 'espace-pro';
-    const P = S.espacePro;
-    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"${ed('site.espacePro.titre')}>${esc(P.titre)}</h1>${trait()}
-        ${P.texte ? `<p class="ep-texte"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}</div>
+    const P = S.espacePro, deux = ['programmer', 'etablissement'].map(k => E[k]).filter(e => e && e.href);
+    main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"${ed('site.espacePro.titre')}>${esc(P.titre)}</h1>${trait()}</div>
+      ${deux.length ? `<div class="wrap"><ul class="am-liste ep-pages">${deux.map(e => `<li class="am"><a class="am-a ep-page" href="${esc(e.href)}" style="--ec:${e.couleur};--ev:${e.couleurVive}">
+        <span class="am-vis" aria-hidden="true">${DESSINS_PRO[e.cle] || ''}</span><span><span class="am-t">${esc(e.court)}</span>${trait()}<span class="ep-sous">${esc(e.texte)}</span></span></a></li>`).join('')}</ul></div>` : ''}
       <section class="bloc sans-filet"><div class="wrap">
+        ${P.texte ? `<p class="ep-texte"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}
         <ul class="ep-portes">${P.portes.map((x, i) => `<li class="ep" data-cle="${esc(x.cle)}"><span class="filet" data-mv="trace" aria-hidden="true"></span>
           <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
           <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>
@@ -4026,6 +4010,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     h += videos(s, chap);
     return h;
   }
+  // sous les dates d'un spectacle, le lien vers toutes les dates de la saison : l'élément « saisons » du menu (règle 21)
+  const ctaSaisons = () => { const m = menuDe('saisons') || { texte: L.saisons, href: '#/saisons' };
+    return `<p class="u-cta"><a class="bu" href="${esc(m.href)}">${esc(m.texte)}${FLECHE}</a></p>`; };
   function ongletVoir(s, chap, pub) {
     let h = presentationSp(s, chap);
     // les dates tout public et la carte ; sans date, les lieux de diffusion et les tournées passées
@@ -4043,9 +4030,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
           ${RS.bande(res, { attributs: ` aria-labelledby="rs-k" data-agenda="${esc(s.slug)}"`, bouton: d => ({ attributs: ` data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(cleProchaine(d))}" data-l="${d.l ?? ''}"` }) })}
           <div class="rs-corps"><div class="rs-carte" id="rs-carte"></div><figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div></div>
         <div class="u-frise" data-tournee="${esc(s.slug)}"></div>
-        <p class="u-cta"><a class="bu" href="${E.voir.href}">${esc(E.voir.texte)}${FLECHE}</a></p></div>`);
+        ${ctaSaisons()}</div>`);
     else if (pub.length) h += chapitre(chap, 'dates', L.dates, `<div class="wrap"><div class="u-frise" data-tournee="${esc(s.slug)}"></div></div><div class="wrap u-tournee"><div>${s.tournee && s.tournee.titre ? `<h2 class="u-h2"${edS(s, 'tournee', 'titre')}>${esc(s.tournee.titre)}</h2>` : `<h2 class="u-h2">${esc(L.actuellementEnTournee)}</h2>`}${listeDates(pub, s.slug)}
-        <p class="u-cta"><a class="bu" href="${E.voir.href}">${esc(E.voir.texte)}${FLECHE}</a></p></div>
+        ${ctaSaisons()}</div>
         <figure class="carte-sp">${carte({ lieux: av, passe: sp.passe.filter(x => !vus.has(x.l)), titre: s.titre })}</figure></div>`);
     else h += chapitre(chap, 'dates', L.lieuxDiffusion, `<div class="wrap"><div class="u-frise" data-tournee="${esc(s.slug)}"></div></div><div class="wrap u-tournee"><div><h2 class="u-h2">${esc(L.lieuxDiffusion)}</h2>${P.lieux ? `<p class="u-lieux"${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p>` : ''}${sansListe}</div>
         <figure class="carte-sp">${carteTournee(s, sp.passe, [])}</figure></div>`);
@@ -4068,14 +4055,13 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const chiffres = [[jouees.length, L.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes],
       [G.filter(g => g.rows.some(r => !r.suite && !annulee(r.d))).length, L.saisons]].filter(([n, l]) => n && l);
     return chapitre(chap, 'bilan', L.bilan, `<div class="wrap">
-        <p class="u-eti">${petit(mo(s))}<span>${esc(L.bilan)}</span></p>
-        <h2 class="u-h2">${esc(L.bilan)}</h2>
-        ${P.representations ? `<p class="u-rep"${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</p>` : ''}
+        ${P.representations ? `<p class="u-eti">${petit(mo(s))}<span>${esc(L.bilan)}</span></p>
+        <h2 class="u-h2 u-bilan-t"${edS(s, 'programmer', 'representations')}>${nombre(P.representations)}</h2>` : `<h2 class="u-h2">${esc(L.bilan)}</h2>`}
         ${chiffres.length ? `<ul class="u-bilan-n">${chiffres.map(([n, l]) => `<li><b class="gros">${n}</b><span>${esc(l)}</span></li>`).join('')}</ul>` : ''}
         <div class="u-frise" data-tournee="${esc(s.slug)}"></div>
         <div class="u-bilan">
           <div class="u-bilan-dates dates-sp">${G.map(g => `<section class="u-bilan-s"><h3 class="mois"><a href="#/saisons/${g.k}">${esc(g.titre)}</a> <small>${g.rows.filter(r => !r.suite).length}</small></h3><ul class="dates" data-agenda="${esc(s.slug)}">${g.rows.map(r => ligneAgenda(r, '', true)).join('')}</ul></section>`).join('')}</div>
-          <figure class="carte-sp carte-bilan">${carte({ lieux: T.passe, titre: s.titre, serre: true })}</figure>
+          <figure class="carte-sp carte-bilan">${carte({ lieux: T.passe, titre: s.titre, serre: true, classe: 'bilan' })}</figure>
         </div>
       </div>`);
   }
@@ -4422,11 +4408,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       return null;
     } finally { surPlaceRendu = false; }
   }
-  // les vues simples ; une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page). Les
-  // adresses du menu par les saisons (règle 21) mènent, en attendant leurs pages, aux vues les plus proches : les saisons à
-  // l'agenda de la saison et aux saisons passées (« Je viens voir un spectacle »), les deux pages de l'espace pro à
-  // « Je souhaite programmer » et à « Je représente un établissement scolaire » ; les anciennes adresses (#/voir,
-  // #/programmer, #/etablissement…) suivent D.site.redirections
+  // les vues simples ; une vue l'emporte sur une redirection de D (#/espace-pro, autrefois redirigé, est une page). Le
+  // menu par les saisons (règle 21) : #/saisons (la saison en cours, ses dates, les saisons passées ; #/saisons/<saison> en
+  // ouvre une), #/espace-pro et ses deux pages, « Je souhaite programmer » et « Je représente un établissement scolaire »
+  // (l'élément « Espace pro » du menu y est « true ») ; les anciennes adresses (#/voir, #/programmer, #/etablissement…)
+  // suivent D.site.redirections
   const sousMenu = (f, menu, menuLu) => (q, surPlace) => Object.assign(f(q, surPlace), menu ? { menu, entree: null, lecture: 'voir' } : { menuLu });
   const vues = () => Object.assign({ '': accueil, saisons: sousMenu(voir, 'saisons'), 'espace-pro/programmer': sousMenu(programmer, null, 'espace-pro'),
     'espace-pro/etablissement': sousMenu(etablissement, null, 'espace-pro'), spectacles, compagnie, contact }, S.espacePro ? { 'espace-pro': espacePro } : {});
@@ -4435,7 +4421,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   function decorer(surPlace) {
     $$('section.bloc:not(.sans-filet)', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
-    $$('.fus, .progs, .fes, .u-cast, .dos-ateliers, .galerie, .ep-portes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
+    $$('.fus, .progs, .fes, .u-cast, .dos-ateliers, .galerie, .ep-pages, .ep-portes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
     $$('.u-faits .gros, .prog-faits .gros, .u-rep .gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
     if (MV) MV.reveler(main, { immediat: surPlace });
   }

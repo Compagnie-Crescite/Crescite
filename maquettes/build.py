@@ -322,6 +322,19 @@ LIBELLES = {
     "faisabilitePlateau": "Faisabilité du plateau",
     "demandeDevis": "Demander une proposition de cession",
     "envoyerDemande": "Envoyer la demande",
+    # la demande de proposition de cession (la synthèse) : le spectacle, le lieu et son plateau, les conditions d'accueil du
+    # spectacle telles que D les donne, puis le formulaire ; aucun prix, aucun chiffre inventé (les codes des types de lieu
+    # sont ceux qu'enregistre la base)
+    "devisTitre": "Accueillir un spectacle",
+    "devisDesc": "Choisissez un spectacle, décrivez votre lieu, puis demandez une proposition de cession.",
+    "devisBadge": "Programmation",
+    "devisSpectacle": "Spectacle envisagé", "devisLieu": "Type de lieu",
+    "typesLieu": {"theatre": "Théâtre ou scène équipée", "polyvalente": "Salle polyvalente",
+                  "etablissement": "Établissement scolaire", "exterieur": "Lieu en extérieur", "autre": "Autre lieu"},
+    "devisOuverture": "Ouverture (m)", "devisProfondeur": "Profondeur (m)", "devisHauteur": "Hauteur sous gril (m)",
+    "demandeCession": "Demande de proposition de cession",
+    "devisStructure": "Structure et ville", "devisContact": "Nom du contact", "devisCourriel": "Courriel",
+    "devisTelephone": "Téléphone", "devisPeriode": "Période ou saison envisagée", "devisPrecisions": "Précisions",
     # la convention d'action culturelle (chantier 4)
     "genererConvention": "Convention d'action culturelle (PDF)",
 }
