@@ -19,9 +19,11 @@ begin;
 
 -- ------------------------------------------------------------------------------------------------ les documents des salles
 
+-- la liste complète (les documents communs aux programmateurs et aux établissements viennent du huitième script) :
+-- relancé après lui, ce script ne refuse aucun document déjà rangé
 alter table public.crescite_documents drop constraint if exists crescite_documents_pour_check;
 alter table public.crescite_documents add constraint crescite_documents_pour_check
-  check (pour in ('equipe', 'administration', 'pros', 'scolaires', 'salles'));
+  check (pour in ('equipe', 'administration', 'pros', 'scolaires', 'salles', 'tous', 'pros_scolaires'));
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('crescite-pro', 'crescite-pro', false, 52428800,
@@ -64,11 +66,12 @@ language sql stable security definer set search_path = public as $$
   where a.jeton = j and a.actif and a.expire_le >= current_date and length(coalesce(j, '')) >= 32
 $$;
 
--- les documents qu'une invitation ouvre : ceux des salles et ceux des pros, pour ses spectacles
+-- les documents qu'une invitation ouvre : ceux des salles et ceux des pros (communs aux établissements compris : le
+-- huitième script), pour ses spectacles
 create or replace function public.crescite_pro_documents_de(a public.crescite_acces_pro) returns setof public.crescite_documents
 language sql stable security definer set search_path = public as $$
   select d.* from public.crescite_documents d
-  where d.pour in ('salles', 'pros') and d.spectacle_id is not null
+  where d.pour in ('salles', 'pros', 'tous', 'pros_scolaires') and d.spectacle_id is not null
     and (case when coalesce(cardinality(a.spectacles), 0) = 0
               then exists (select 1 from public.crescite_documents x where x.spectacle_id = d.spectacle_id and x.pour = 'salles')
               else d.spectacle_id = any (a.spectacles) end)

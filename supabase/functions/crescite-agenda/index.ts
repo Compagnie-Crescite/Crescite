@@ -544,14 +544,20 @@ const FUSEAU = ['BEGIN:VTIMEZONE', 'TZID:Europe/Paris', 'X-LIC-LOCATION:Europe/P
 const texteIcs = (s: unknown) => String(s ?? '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r\n?|\n/g, '\\n')
   // deno-lint-ignore no-control-regex
   .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '');
-// une ligne de plus de 75 octets se plie (RFC 5545, 3.1), sans couper un caractère
+// une ligne de plus de 75 octets se plie (RFC 5545, 3.1), sans couper un caractère. Les octets se comptent d'après le
+// point de code, comme TextEncoder les écrirait (une moitié de paire isolée : 3), sans rien encoder : encoder chaque
+// caractère prenait les quatre cinquièmes du calcul d'un gros flux
+const octets = (c: string) => { const p = c.codePointAt(0) as number; return p < 0x80 ? 1 : p < 0x800 ? 2 : p < 0x10000 ? 3 : 4; };
 function plier(ligne: string): string {
-  const enc = new TextEncoder();
-  if (enc.encode(ligne).length <= 75) return ligne;
+  if (ligne.length <= 25) return ligne;                // 25 unités UTF-16 font au plus 75 octets
+  let n = 0;
+  for (const c of ligne) n += octets(c);
+  if (n <= 75) return ligne;
   const morceaux: string[] = [];
-  let cur = '', n = 0, max = 75;
+  let cur = '', max = 75;
+  n = 0;
   for (const c of ligne) {
-    const k = enc.encode(c).length;
+    const k = octets(c);
     if (n + k > max) { morceaux.push(cur); cur = ''; n = 0; max = 74; }
     cur += c; n += k;
   }

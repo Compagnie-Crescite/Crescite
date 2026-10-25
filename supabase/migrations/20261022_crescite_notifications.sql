@@ -142,9 +142,11 @@ $$;
 
 -- 'pros' : pour les programmateurs (dossier artistique, fiche technique) ; 'scolaires' : pour les établissements
 -- (dossier pédagogique). Leurs fichiers sont dans le stockage public « crescite », sous documents/<spectacle>/.
+-- La liste complète (les salles du quatrième script, les documents communs du huitième) : relancé après eux, ce script
+-- ne refuse aucun document déjà rangé.
 alter table public.crescite_documents drop constraint if exists crescite_documents_pour_check;
 alter table public.crescite_documents add constraint crescite_documents_pour_check
-  check (pour in ('equipe', 'administration', 'pros', 'scolaires'));
+  check (pour in ('equipe', 'administration', 'pros', 'scolaires', 'salles', 'tous', 'pros_scolaires'));
 
 -- le stockage public accepte aussi les PDF (les dossiers et les fiches techniques), jusqu'à 25 Mo
 update storage.buckets set
@@ -453,9 +455,9 @@ create policy notif_suppression on public.crescite_abonnements for delete to aut
 
 -- crescite_secrets : aucune règle, aucun droit : personne ne le lit par l'API (seulement la base et la fonction d'envoi)
 
--- les documents publics (pros, scolaires) : tout le monde les lit
+-- les documents publics (pros, scolaires, et ceux communs aux deux du huitième script) : tout le monde les lit
 create policy public_lecture on public.crescite_documents for select to anon, authenticated
-  using (pour in ('pros', 'scolaires') and (spectacle_id is null
+  using (pour in ('pros', 'scolaires', 'tous', 'pros_scolaires') and (spectacle_id is null
          or exists (select 1 from public.crescite_spectacles s where s.id = spectacle_id and s.publie)));
 
 grant select, delete on public.crescite_notifications to authenticated;
