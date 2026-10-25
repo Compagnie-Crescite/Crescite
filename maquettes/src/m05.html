@@ -28,8 +28,8 @@
   --tt-encre:#fff;--tt-accent:var(--tache-deep);--tt-ventouse:var(--tache);--tt-neutre:#fff;--tt-fond:var(--tache);--tt-epaisseur:2.8;
 }
 /* ———— la nuit (règle 19, THEME) : la maquette, née sur le papier blanc, invente sa nuit. Le papier devient une encre presque
-   noire, l'encre un blanc cassé ; les aplats de la tache restent des aplats (un peu plus clairs : la tache se voit sur la nuit,
-   son texte blanc reste lisible), le texte à sa couleur prend sa couleur vive. Les univers clairs passent dans leur nuit
+   noire, l'encre un blanc cassé ; les aplats de la tache restent des aplats, profonds (à peine plus clairs que le jour : la
+   tache se voit sur la nuit, son texte blanc est au-dessus de 7:1), le texte à sa couleur prend sa couleur vive. Les univers clairs passent dans leur nuit
    (--un-*, jeton()) ; les univers sombres restent eux-mêmes. AA partout. ———— */
 html[data-theme="jour"]{color-scheme:light}
 html[data-theme="nuit"]{color-scheme:dark;
@@ -1251,8 +1251,10 @@ a.rs-seance:focus-visible{outline:3px solid var(--u-texte);outline-offset:2px}
     const c = (D.site || {}).couleurSaison || {}, j = hex6(c.couleur) ? c.couleur.toLowerCase() : hex6(c.vive) ? c.vive.toLowerCase() : null;
     if (!j) return null;
     const v = hex6(c.vive) ? c.vive.toLowerCase() : j, tache = assombrit(j, '#ffffff', 4.5);
+    // la nuit (le seul thème du site, règle 19) : des aplats profonds, qui reposent (demande de la compagnie) ; la tache s'éclaircit
+    // vers sa couleur vive tant que son texte blanc reste au-dessus de 7:1 (AAA), pas plus : elle se voit encore sur la nuit
     let nuit = tache;
-    for (let t = .05; t <= 1; t += .05) { const x = melange(tache, v, t); if (ratio('#ffffff', x) < 4.6) break; nuit = x; }
+    for (let t = .05; t <= 1; t += .05) { const x = melange(tache, v, t); if (ratio('#ffffff', x) < 7) break; nuit = x; }
     return { tache, deep: melange(tache, '#000000', .32), nuit, txtNuit: eclaircit(v, NUIT5_2, 4.5), papier2: melange(tache, '#ffffff', .93) };
   }
   const feuilleCouleurs = document.head.appendChild(document.createElement('style'));
