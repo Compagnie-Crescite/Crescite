@@ -357,7 +357,7 @@ const CONTRASTE = `(() => {
   return [...new Set(pb)];
 })()`;
 // ce qui apparaît au défilement, montré à son état final le temps de la lecture (comme pour le contrôle du texte)
-const MONTRER = '*, *::before, *::after { content-visibility: visible !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; } [data-troupe] *, [data-troupe] *::before, [data-troupe] *::after { animation: none !important; transition: none !important; }';
+const MONTRER = '*, *::before, *::after { content-visibility: visible !important; transition: none !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; } [data-troupe] *, [data-troupe] *::before, [data-troupe] *::after { animation: none !important; transition: none !important; }';
 async function contrastes(page) {
   return page.evaluate(([css, code]) => { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); try { return (0, eval)(code); } finally { s.remove(); } }, [MONTRER, CONTRASTE]);
 }
@@ -526,7 +526,7 @@ async function regle20(page, tag, log) {
     return { pb, info, n: Object.keys(P).length, places, vignettes, cats: [...racine.querySelectorAll('[data-troupe-categorie]')].length,
       multiple: Object.keys(P).find(s => racine.querySelectorAll(`[data-troupe-personne="${s}"]`).length > 1) || null };
     } finally { montrer.remove(); }
-  }, '*, *::before, *::after { content-visibility: visible !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; }');
+  }, '*, *::before, *::after { content-visibility: visible !important; transition: none !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; }');
   if (e.absent) { log.push(`${pfx} : pas de troupe ([data-troupe]) sur la page de la compagnie`); return; }
   e.pb.slice(0, 20).forEach(p => log.push(`${pfx} : ${p}`));
   if (e.pb.length > 20) log.push(`${pfx} : (+${e.pb.length - 20} autres)`);
@@ -640,7 +640,7 @@ for (const n of names) {
         // le contenu hors de l'écran (content-visibility: auto) et ce qui apparaît au défilement (MOUVEMENT.reveler :
         // .mv-attente) se lisent aussi : on les montre dans leur état final le temps de la lecture
         const forcer = document.createElement('style');
-        forcer.textContent = '*, *::before, *::after { content-visibility: visible !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; }';
+        forcer.textContent = '*, *::before, *::after { content-visibility: visible !important; transition: none !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; }';
         document.head.appendChild(forcer);
         try {
         const vis = el => { for (let e = el; e && e !== document.body; e = e.parentElement) { const s = getComputedStyle(e); if (s.display === 'none' || s.visibility === 'hidden' || +s.opacity === 0) return false; } return el.getClientRects().length > 0; };

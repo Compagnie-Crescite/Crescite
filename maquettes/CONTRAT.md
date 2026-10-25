@@ -352,6 +352,8 @@ C. Réactif, mesuré (maquettes/reactivite.mjs). Budgets, au bureau et avec le p
   - un changement de page montre son contenu en moins de 150 ms (bureau) ; une transition dure 450 ms au plus et
     n'empêche jamais un nouveau geste (interruptible) ; aucune tâche de plus de 50 ms pendant un geste ;
   - les longues listes (l'agenda depuis 2016) se rendent par morceaux (content-visibility, ou le visible d'abord) ;
+    content-visibility: auto seulement sur un bloc qu'aucun geste ne déplace tant qu'il est caché (sinon, un billet
+    ouvert au-dessus le déplace, et un saut qui le fait reparaître compte ses lignes comme décalées : du CLS) ;
   - aucun décalage de mise en page (CLS < 0,05) : les images ont leurs dimensions.
 
 D. Des frises chronologiques partout où il y a un calendrier (FRISE, l'outil commun frise.js), dans l'univers de ta
