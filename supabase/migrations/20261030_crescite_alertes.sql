@@ -35,6 +35,11 @@
 
 begin;
 
+-- (une réparation du septième script) les pistes de diffusion : le montant de cession estimé, que l'administration écrit
+-- déjà (une piste, et les totaux du tableau des pistes) et que la table n'avait pas : créer ou changer une piste échouait.
+-- Comme le reste de la table, l'administration seule le lit
+alter table public.crescite_diffusion_prospects add column if not exists montant_estime numeric(10, 2);
+
 -- ------------------------------------------------------------------------------------------------ la confirmation
 
 alter table public.crescite_alertes_tournee

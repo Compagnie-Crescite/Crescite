@@ -301,6 +301,8 @@ html.still .sc-pause { display: none; }   /* rien ne bouge de lui-même : rien �
 .df-in { position: relative; width: min(36rem, 46%); }
 .df[data-cote="droite"] .df-in { margin-left: auto; }
 .df-in > * { --e: clamp(0, calc(var(--p) * 3.33 - 1.33 - var(--k, 0) * .2), 1); opacity: var(--e); transform: translateY(calc((1 - var(--e)) * 28px)); }
+/* au clavier, l'écran du lien qui a le focus est arrivé tout entier, même avant que le script l'amène à sa place */
+.df:has(:focus-visible) { --p: 1 !important; }
 .df-sur { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 0 0 clamp(10px, 2vh, 20px); font: 600 .76rem/1.4 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-vif); }
 .df-lt { color: var(--u-texte2); }
 .df-badge { padding: 2px 10px; border: 1px solid currentColor; border-radius: 999px; letter-spacing: .1em; }
@@ -2775,6 +2777,16 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     } else ecrans.forEach(el => { const r = el.getBoundingClientRect(); if (r.bottom < -vh || r.top > 2 * vh) return;
       poser(el, clamp((vh - r.top) / (vh * .7), 0, 1), clamp((vh * .3 - r.top) / Math.max(1, r.height * .8), 0, 1), 0); });
   }
+  // au clavier, dans la pile : l'écran du lien qui prend le focus vient à sa place, épinglé et pas encore recouvert (le dernier,
+  // que rien ne recouvre, en haut) ; ailleurs, le navigateur amène déjà le lien dans l'écran
+  function placerEcran(el) {
+    const i = ecrans.indexOf(el);
+    if (i < 0 || !motionOK()) return;
+    if (!dfM) mesurerEcrans();
+    if (!dfM || !dfM.pile) return;
+    const d = dfM.haut - el.parentElement.getBoundingClientRect().top, a = i * (dfM.h + dfM.m), v = clamp(d, a, i < ecrans.length - 1 ? a + dfM.m : a);
+    if (Math.abs(v - d) > 1) scrollTo({ top: scrollY + v - d, behavior: 'instant' });
+  }
 
   /* ---------- l'accueil : la scène (la pieuvre), le menu, les spectacles un par écran, la saison sur la carte, les donateurs ---------- */
   function accueil(q, surPlace) {
@@ -2802,6 +2814,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     ol.addEventListener('focusout', () => allume(null));
     if (surPlace) pousser(svg); else pousserVu(svg);   // (la carte est loin sous le pli : ses bras poussent quand on y arrive)
     ecrans = $$('.df', main); dfM = null;
+    $('.df-pile', main).addEventListener('focusin', e => { if (e.target.matches(':focus-visible')) requestAnimationFrame(() => placerEcran(e.target.closest('.df'))); });
     return { titre: S.accueil };
   }
 

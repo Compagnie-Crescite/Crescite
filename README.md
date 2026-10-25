@@ -494,7 +494,7 @@ l'administration comprise ; le public n'y a aucun droit. Pour commencer, une cl�
 masquées du planning. Tant que le script n'est pas passé, la liste reste sur l'appareil (sans message) ; elle passe dans
 la base à la première ouverture du planning qui suit. 22 essais (`node preferences.mjs`).
 
-**« Compagnie Idéale » (pas encore lancé).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
+**« Compagnie Idéale » (lancé le 25 octobre 2026).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
 s'exécute après les six autres et peut être relancé. Il ajoute les alertes de tournée et les demandes de devis (le public
 les dépose, sans en poser le suivi ; il ne relit que son alerte, par son jeton), les notes de frais (chacun les siennes,
 jamais validées ni remboursées par soi-même, avec le jour de la dépense ; les justificatifs dans le stockage privé
@@ -511,7 +511,7 @@ de l'équipe, par lot dans l'administration ; l'export CSV garde le chemin). Sur
 demande de devis ne se disent enregistrées que si la base les a enregistrées ; sinon, la page propose d'écrire au
 contact diffusion, le récapitulatif prêt.
 
-**Les documents communs (pas encore lancé).** Le huitième script, `supabase/migrations/20261027_crescite_documents_publics.sql`,
+**Les documents communs (lancé le 25 octobre 2026).** Le huitième script, `supabase/migrations/20261027_crescite_documents_publics.sql`,
 s'exécute après les sept autres et peut être relancé. Un document public peut être pour les programmateurs et les
 établissements à la fois (`pour` = `tous` ; `pros_scolaires`, son ancien nom, est accepté aussi) : il refait la règle de
 lecture publique des documents (`public_lecture`, une seule, pour le public comme pour les comptes connectés : les
@@ -520,7 +520,7 @@ des valeurs est aussi dans les troisième et quatrième scripts : relancés apr�
 communs déjà rangés et ne retirent rien de ce qu'il ouvre. 20 essais (`node documents.mjs` : les huit scripts relancés
 dans le désordre avec des documents communs rangés, ce que le public, l'équipe et l'espace pro en lisent).
 
-**L'alerte de retard (pas encore lancé).** Le neuvième script, `supabase/migrations/20261028_crescite_signaler.sql`,
+**L'alerte de retard (lancé le 25 octobre 2026).** Le neuvième script, `supabase/migrations/20261028_crescite_signaler.sql`,
 s'exécute après les huit autres et peut être relancé. Dans l'espace de l'équipe, le geste « Retard » d'une date à venir
 prévient l'équipe de la date (celles et ceux qui partent et ont un compte : la distribution « en tournée », corrigée par
 l'équipe de la date) et les administrateurs dont le compte est relié à une fiche, jamais son auteur : une notification
@@ -529,7 +529,7 @@ par l'équipe de la date et l'administration ; 280 caractères au plus, cinq ale
 alerte est gardée dans `crescite_signalements` (son auteur la relit, l'administration toutes). Tant que le script n'est
 pas lancé, le geste ne se montre pas ; il ne dit « envoyée » que si la base l'a envoyée. 32 essais (`node signaler.mjs`).
 
-**Les chiffres des dates (pas encore lancé).** Le dixième script, `supabase/migrations/20261029_crescite_chiffres.sql`,
+**Les chiffres des dates (lancé le 25 octobre 2026 ; les chiffres du récapitulatif y sont rangés).** Le dixième script, `supabase/migrations/20261029_crescite_chiffres.sql`,
 s'exécute après les neuf autres et peut être relancé. Il ajoute `crescite_dates_chiffres` : pour une date, la jauge (les
 places), les spectateurs (le public venu) et les heures d'ateliers, avec leur source (le récapitulatif des
 représentations de la compagnie, feuille et ligne). Jamais publiés : l'administration les lit et les écrit (la fiche
@@ -561,6 +561,8 @@ l'adresse.
   notée (`crescite_alertes_envois`) : jamais deux fois la même ; 200 courriels au plus par passage (Brevo gratuit : 300 par
   jour, il en faut pour les propositions et les liens de connexion), le reste le lendemain. Sans clé d'envoi, rien ne
   part : c'est noté « non_configure ».
+- Le script répare aussi le septième : les pistes de diffusion gagnent leur montant de cession estimé
+  (`montant_estime`), que l'administration écrivait sans que la table l'ait (créer ou changer une piste échouait).
 - Aucun suivi d'ouverture ni de clic n'est ajouté aux courriels. Brevo, lui, en pose sur les courriels transactionnels,
   avec son propre en-tête de désinscription (List-Unsubscribe) : pour s'en passer, le lui demander, ou envoyer par Resend
   (`RESEND_API_KEY`), qui reçoit alors le désabonnement d'un geste des messageries (List-Unsubscribe-Post).
