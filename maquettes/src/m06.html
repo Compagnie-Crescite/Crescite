@@ -764,12 +764,13 @@ html.attend-polices body > :not(.intro) { visibility: hidden; }
 .frise[data-frise].est-filtre .frise-point { transition: opacity .2s; }
 .frise[data-frise].est-filtre .frise-point:not(.est-sp) { opacity: .16; }
 .fs-leg { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 4px 0 0; padding: 0; font-size: .9rem; }
-.fs-l { display: inline-flex; align-items: center; gap: 8px; cursor: default; }
-.fs-l i { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
-.fs-l b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--gris); }
+/* un titre long passe à la ligne, son nombre à la suite de son dernier mot ; la pastille reste à la hauteur de la première ligne */
+.fs-l { display: inline-flex; align-items: flex-start; gap: 8px; cursor: default; }
+.fs-l i { flex: none; width: 12px; height: 12px; margin-top: calc((1lh - 12px) / 2); border-radius: 50%; background: var(--c); }
+.fs-l b { margin-left: .2em; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--gris); }
 .fs-l.est-vide span, .fs-l.est-vide b { color: var(--gris); }
 .fs-l.est-vide i { background: transparent; box-shadow: inset 0 0 0 2px var(--c); }
-.fs-sc i { width: 10px; height: 10px; border-radius: 2px; rotate: 45deg; background: var(--encre); }
+.fs-sc i { width: 10px; height: 10px; margin-top: calc((1lh - 10px) / 2); border-radius: 2px; rotate: 45deg; background: var(--encre); }
 /* les prochaines dates et toutes les dates, la carte de la saison entre elles (au téléphone : dessous les prochaines) */
 .ag-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); grid-template-areas: "prochaines carte" "toutes carte"; grid-template-rows: auto 1fr;
   column-gap: clamp(28px, 5vw, 72px); align-items: start; margin-top: clamp(28px, 3.4vw, 46px); }
@@ -1850,7 +1851,7 @@ a.rs-seance:hover { border-color: var(--u-trace, var(--bras)); }
     tous.forEach(p => { if (!vus.has(p.cle)) vus.set(p.cle, p); });
     const rang = c => { const j = D.shows.findIndex(x => x.slug === c); return j < 0 ? 999 : j; };
     return [...vus.values()].sort((a, b) => rang(a.cle) - rang(b.cle)).map(p => { const k = n.get(p.cle) || 0;
-      return `<li class="fs-l${k ? '' : ' est-vide'}" data-cle="${esc(p.cle)}" style="--c:${p.couleur}"><i aria-hidden="true"></i><span>${esc(p.titre)}</span><b>${k}</b></li>`; }).join('')
+      return `<li class="fs-l${k ? '' : ' est-vide'}" data-cle="${esc(p.cle)}" style="--c:${p.couleur}"><i aria-hidden="true"></i><span>${esc(p.titre)}&nbsp;<b>${k}</b></span></li>`; }).join('')
       + (tous.some(p => p.scolaire) && L.scolaire ? `<li class="fs-l fs-sc"><i aria-hidden="true"></i><span>${esc(L.scolaire)}</span></li>` : '');
   }
   // toutes les saisons passées (avant la saison en cours, dont toutes les dates sont plus haut) : [{k, titre, rows, titres, lieux}],

@@ -912,10 +912,11 @@ html.ed-actif .c-frise{display:none}
 /* la date choisie dans la liste, cernée sur la frise (un losange doublé d'un filet d'encre) */
 .frise .frise-point.est-choisi>.frise-repere::before{scale:1.5;box-shadow:0 0 0 2px var(--fr-fond),0 0 0 3.5px var(--ink)}
 .frise .frise-point.est-choisi.est-scolaire>.frise-repere::before{box-shadow:inset 0 0 0 1.6px var(--fr-c,currentColor),0 0 0 2px var(--fr-fond),0 0 0 3.5px var(--ink)}
-/* ce qui est loin sous le pli ne se dessine qu'en approchant (toutes les dates de la saison, les saisons passées) : une page
-   nouvelle se compose vite, et chaque geste ne repeint que ce qui se voit (pas le pied de page : il reste d'une vue à l'autre,
-   et ses couleurs, qui changent avec le papier de la vue, ne se mettraient pas à jour tant qu'il est hors de l'écran) */
-.tdl{content-visibility:auto;contain-intrinsic-size:auto 3600px}
+/* ce qui est loin sous le pli ne se dessine qu'en approchant (les saisons passées, au bas de la page) : une page nouvelle se
+   compose vite, et chaque geste ne repeint que ce qui se voit. Pas toutes les dates de la saison : un billet ouvert plus haut
+   les déplace, et leurs lignes, restées où elles étaient, sauteraient sous les yeux quand un saut plus bas (une saison passée)
+   les fait reparaître ; pas le pied de page non plus : il reste d'une vue à l'autre, et ses couleurs, qui changent avec le
+   papier de la vue, ne se mettraient pas à jour tant qu'il est hors de l'écran */
 #v-agenda{content-visibility:auto;contain-intrinsic-size:auto 1800px}
 
 /* ——— la page d'un spectacle qui n'est plus en tournée (règle 21) : sa présentation, puis le bilan de ses dates passées, comme la
@@ -3154,9 +3155,10 @@ html[data-theme="nuit"] .tampon{mix-blend-mode:screen}
     }
     const n = ++vueN;
     if (enPlace || avant === null) { rendre(a, { enPlace, avant, onglet, sens }); return; }
-    // le geste répond à l'image même : le filet de la rubrique se tire ; la page nouvelle se compose à l'image d'après
+    // le geste répond à l'image même : le filet de la rubrique se tire ; la page nouvelle se compose une fois cette image
+    // montrée (deux images plus tard : sur un téléphone chargé, la composer plus tôt retarderait l'image du geste)
     marquer(a);
-    requestAnimationFrame(() => setTimeout(() => { if (n === vueN) rendre(a, { enPlace: false, avant, onglet, sens }); }, 0));
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { if (n === vueN) rendre(a, { enPlace: false, avant, onglet, sens }); }, 0)));
   }
   function rendre(a, { enPlace, avant, onglet, sens }) {
     EN_PLACE = enPlace;

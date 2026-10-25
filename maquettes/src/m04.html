@@ -2287,12 +2287,13 @@ a.rs-seance:focus-visible{outline:2px solid var(--u-titre);outline-offset:2px}
         if ($('#cherche').value !== F.q) $('#cherche').value = F.q;
         const lg = $('.fs-leg', main); if (lg) lg.innerHTML = legendeHtml();
       };
-      // filtrer, chercher : la liste des prochaines dates glisse à sa nouvelle place dans l'image du geste (FLIP) ; toutes les dates,
-      // la carte et la frise de la saison à l'image d'après ; l'agenda passé, sous le pli, encore après, ses saisons glissant depuis
-      // l'endroit où elles sont
+      // filtrer, chercher : la liste des prochaines dates glisse à sa nouvelle place dans l'image du geste (FLIP ; au téléphone,
+      // elle change sur place : mesurer deux fois une page aussi longue retiendrait le geste) ; toutes les dates, la carte et la
+      // frise de la saison à l'image d'après ; l'agenda passé, sous le pli, encore après, ses saisons glissant depuis l'endroit
+      // où elles sont
       const dessine = (anime = true) => {
         const faire = () => { recompte(); filtrerListe(liste, k => parCle.get(k)); majOutils(); };
-        if (anime && MV) MV.flip(liste, faire, { cle: '[data-mv-cle]' }); else faire();
+        if (anime && MV && LF >= 760) MV.flip(liste, faire, { cle: '[data-mv-cle]' }); else faire();
         const carteFrise = () => { if (!liste.isConnected) return; const t = toutes(); if (t) filtrerListe(t, k => parId.get(k)); majCarte(); if (fSaison) fSaison.maj({ points: reperesSaison() }); };
         const saisonsP = () => { if (!agenda || !racine.isConnected) return;
           if (!anime) { dessineSaisons(); if (fSaisons) fSaisons.maj({ bandes: bandesSaisons() }); return; }
@@ -2353,7 +2354,8 @@ a.rs-seance:focus-visible{outline:2px solid var(--u-titre);outline-offset:2px}
       $('#cherche').addEventListener('input', ev => { F.q = ev.target.value; clearTimeout(tempo); tempo = setTimeout(dessine, 120); });
       if (F.l !== null || F.slug || terme()) majCarte();
       // réserver (règle 17) : chaque prochaine date tout public ouvre sa carte sous sa ligne (un second geste ou Échap la referme) ;
-      // l'adresse garde la date choisie (?date=…), la frise la cerne
+      // l'adresse garde la date choisie (?date=…), la frise la cerne une image plus tard (elle défile et mesure : le geste se
+      // peint d'abord)
       const marquerFrise = d => { const f = fSaison; if (!f || !f.el.isConnected) return;
         $$('.frise-point.est-choisi', f.el).forEach(x => x.classList.remove('est-choisi'));
         const p = d ? $(`.frise-point[data-frise-cle="i:${CSS.escape(cleProchaine(d))}"]`, f.el) : null; if (p) { p.classList.add('est-choisi'); f.aller(cleProchaine(d)); } };
@@ -2362,7 +2364,7 @@ a.rs-seance:focus-visible{outline:2px solid var(--u-titre);outline-offset:2px}
         rsAg = RS.monter(liste, { dates: RS.dates(), carte: b => document.getElementById(idCarte(b.getAttribute('data-reserver'))),
           choisie: voulue || null, basculer: true, roving: false, axe: 'hv', adresse: true,
           univers: x => (x ? uStyle(X.U[x.slug]) : ''), carteOptions: d => ({ href: X.bySlug[d.slug] ? `${lienSp(d.slug)}?date=${encodeURIComponent(RS.cle(d))}` : null }),
-          effet: effetReserver, surChoix: d => { if (!d) marquerCommune(liste, null); marquerFrise(d || null); } });
+          effet: effetReserver, surChoix: d => { if (!d) marquerCommune(liste, null); bientot(() => marquerFrise(rsAg ? rsAg.date() : null)); } });
         liste.addEventListener('keydown', ev => {
           if (ev.key !== 'Escape' || !rsAg || rsAg.cle() == null) return;
           const b = liste.querySelector(`[data-reserver="${CSS.escape(rsAg.cle())}"]`), li = b && b.closest('li');

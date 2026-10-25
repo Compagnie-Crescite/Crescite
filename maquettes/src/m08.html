@@ -163,7 +163,9 @@ html[data-theme="nuit"] .pv{background:var(--pv-fond-n,var(--pv-fond,var(--paper
 .site-foot{content-visibility:auto;contain-intrinsic-size:auto 900px}
 /* les longues listes des saisons et du bilan : celles qui sont loin sous le pli ne se mettent pas en page avant qu'on y aille
    (le téléphone répond tout de suite au geste) */
-.ag-toutes>.ag-g,.sai-liste>.ag-g,.bl-s{content-visibility:auto;contain-intrinsic-size:auto 480px}
+/* (pas « toutes les dates » de la saison en cours : au-dessus des saisons passées, une hauteur estimée les ferait sauter quand
+   on y va) */
+.sai-liste>.ag-g,.bl-s{content-visibility:auto;contain-intrinsic-size:auto 480px}
 /* (la saison entière : le papier teinté de sa couleur, son filet en tête) */
 .pv-sa{background:linear-gradient(var(--saison),var(--saison)) 0 0/100% 4px no-repeat,color-mix(in srgb,var(--saison) 9%,var(--paper))}
 .pv-u{background:linear-gradient(var(--acc,var(--ink)),var(--acc,var(--ink))) 0 0/100% 4px no-repeat,radial-gradient(90% 70% at 85% 10%,var(--lueur),transparent 70%) var(--paper)}
@@ -1998,25 +2000,24 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
   }
   // les saisons passées (avant la saison en cours, dont toutes les dates sont plus haut) : [{k, titre, rows: [{d, g, k, i, suite,
   // cle, txt}], titres, lieux}], la plus récente d'abord
-  function agendaPasse() {
-    const out = [];
-    (site().saisons || []).forEach(x => {
-      const SA = D.saisons[x.saison]; if (!SA || x.saison >= D.saison) return;
-      const rows = []; let i = 0;
-      (SA.spectacles || []).forEach(g => {
-        let prev = null;
-        (g.dates || []).forEach(d => {
-          let k = cleDate(d, x.saison); const suite = !k; if (suite) k = prev; else prev = k;
-          const sp = g.slug && show(g.slug), titre = sp ? sp.titre : g.titre;
-          rows.push({ d, g, k: k || '', i: i++, suite, titre, cle: g.slug || `titre:${g.titre}`, sk: x.saison, txt: texteLigne(titre, d) });
-        });
+  // une saison passée (avant la saison en cours) : {k, titre, rows, titres, lieux}, ses dates de la plus récente à la plus ancienne
+  function saisonPassee(x) {
+    const SA = D.saisons[x.saison]; if (!SA || x.saison >= D.saison) return null;
+    const rows = []; let i = 0;
+    (SA.spectacles || []).forEach(g => {
+      let prev = null;
+      (g.dates || []).forEach(d => {
+        let k = cleDate(d, x.saison); const suite = !k; if (suite) k = prev; else prev = k;
+        const sp = g.slug && show(g.slug), titre = sp ? sp.titre : g.titre;
+        rows.push({ d, g, k: k || '', i: i++, suite, titre, cle: g.slug || `titre:${g.titre}`, sk: x.saison, txt: texteLigne(titre, d) });
       });
-      if (!rows.length) return;
-      rows.sort((a, b) => a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i);
-      out.push({ k: x.saison, titre: SA.titre, rows, titres: [...new Set(rows.map(r => r.titre))], lieux: CARTE.saison(x.saison) });
     });
-    return out;
+    if (!rows.length) return null;
+    rows.sort((a, b) => a.k < b.k ? 1 : a.k > b.k ? -1 : a.i - b.i);
+    return { k: x.saison, titre: SA.titre, rows, titres: [...new Set(rows.map(r => r.titre))], lieux: CARTE.saison(x.saison) };
   }
+  // toutes les saisons passées, la plus récente d'abord (chacune lue une fois tant que D ne change pas)
+  const agendaPasse = () => (site().saisons || []).map(x => retenu(`passe:${x.saison}`, () => saisonPassee(x))).filter(Boolean);
 
   const SVG = (d, c = 'ic') => `<svg class="${c}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${d}</svg>`;
   const I_CHEV = SVG('<path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>', 'chev');
@@ -2110,13 +2111,15 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
       const versFrise = l => { if (!fSaison || parFrise) return; if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); };
       const api = monter(fig, { survol: l => { surligner(venir, l); surligner(toutes, l); versFrise(l); }, choix: (l, basculer) => { basculer(l); F.l = api.etat.epingle; AGV.maj(true); } });
       const lieu = ev => { const it = ev.target.closest('[data-l]'); api.montrer(it && it.dataset.l !== '' ? +it.dataset.l : null); };
-      [venir, toutes].forEach(ul => { ul.addEventListener('mouseover', lieu); ul.addEventListener('focusin', lieu); ul.addEventListener('mouseleave', () => api.montrer(null)); });
+      // (à la souris et au clavier seulement : un doigt qui touche une date ne refait pas toute la carte et les listes)
+      const souris = f => ev => { if (ev.pointerType !== 'touch') f(ev); }, clavier = f => ev => { if (ev.target.matches(':focus-visible')) f(ev); };
+      [venir, toutes].forEach(ul => { ul.addEventListener('pointerover', souris(lieu)); ul.addEventListener('focusin', clavier(lieu)); ul.addEventListener('pointerleave', souris(() => api.montrer(null))); });
       const epingler = l => { if (api.etat.epingle !== l) { if (api.etat.epingle !== null && l === null) api.basculer(api.etat.epingle); else api.basculer(l); } };
       const brancherSaison = dt => {
         const f = $('.cm', dt), ul = $('.sai-liste', dt); if (!f) return;
         const a = monter(f, { survol: l => surligner(ul, l), choix: l => { F.l = F.l === l ? null : l; epingler(F.l); AGV.maj(true); } });
         const v = ev => { const it = ev.target.closest('[data-l]'); a.montrer(it && it.dataset.l !== '' ? +it.dataset.l : null); };
-        ul.addEventListener('mouseover', v); ul.addEventListener('focusin', v); ul.addEventListener('mouseleave', () => a.montrer(null));
+        ul.addEventListener('pointerover', souris(v)); ul.addEventListener('focusin', clavier(v)); ul.addEventListener('pointerleave', souris(() => a.montrer(null)));
         if (f.classList.contains('attend')) requestAnimationFrame(() => f.classList.replace('attend', 'anime'));
       };
       // la saison en cours, filtrée : les prochaines dates se masquent (leurs cartes de réservation restent en place), toutes
@@ -2217,7 +2220,9 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
       const arriver = () => { if (!aller) return; if (aller === D.saison) { const m = $('.s0', tete); if (m) m.scrollIntoView({ block: 'start' }); } else ouvrirSaison(aller, true); };
       // les saisons passées : tout de suite quand la vue se refait en place ou qu'un filtre est actif, sinon dans la tâche qui
       // suit l'image
-      if (SUR_PLACE || actif()) { dessineAgenda(); if (aller) ensuite(arriver); } else ensuite(() => { dessineAgenda(); arriver(); });
+      // toutes les dates de la saison aussi, sous le pli : posées avant les saisons passées (rien ne saute ensuite)
+      const remplirToutes = () => { if (!toutes.firstElementChild) toutes.innerHTML = moisHTML(lignes.filter(garde), { signet: true }); };
+      if (SUR_PLACE || actif()) { remplirToutes(); dessineAgenda(); if (aller) ensuite(arriver); } else ensuite(() => { remplirToutes(); dessineAgenda(); arriver(); });
     };
     const leg = sps.map(p => `<li><button type="button" class="v-leg-b" data-s="${esc(p.cle)}" aria-pressed="${p.cle === F.slug}"${p.s ? ` style="${styleIvoire(p.s)}"` : ''}><span class="v-leg-m" aria-hidden="true"></span><span class="v-leg-t${p.s ? ' sp-t' : ''}">${esc(p.titre)}</span><span class="v-leg-n">${p.n}</span></button></li>`).join('');
     return `<section class="ag-tete sa-tete" aria-labelledby="sa-h">
@@ -2236,7 +2241,7 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
         <section class="ag-sec" aria-labelledby="pd-h"><h2 class="sp-h" id="pd-h">${esc(L.prochainesDates)}</h2>
           <div class="ag-a-venir" data-agenda="">${groupesMois(dates).map(g => `<section class="ag-g" aria-label="${esc(g.t)}"><h3 class="ag-mois">${esc(g.t)}</h3><ol class="ag-list">${g.dates.map(d => dateHTML(d, 'voir')).join('')}</ol></section>`).join('')}</div></section>
         <section class="ag-sec" aria-labelledby="td-h"><h2 class="sp-h" id="td-h">${esc(L.toutesLesDates)}</h2>
-          <div class="ag-toutes" id="ag-toutes" data-agenda="">${moisHTML(lignes.filter(garde), { signet: true })}</div></section>
+          <div class="ag-toutes" id="ag-toutes" data-agenda=""></div></section>
         <section class="ag-passe" id="saisons-passees" aria-labelledby="sp-h"><h2 class="sp-h" id="sp-h">${esc(L.saisonsPassees)}</h2>
           <nav class="ag-index" id="ag-index" aria-label="${esc(L.saisonsPassees)}"><div class="ag-ix-frise" id="ag-ix-frise"></div><div class="ag-ix-outils" id="ag-ix-outils"></div></nav>
           <div class="saisons-ag" id="ag-saisons"></div></section>
@@ -3286,8 +3291,12 @@ button.cf-ba{font:inherit;font-weight:600;color:inherit;cursor:pointer}
   window.addEventListener('hashchange', () => route());
   route();
   mesurer();
-  // au repos : les saisons (la saison en cours, les saisons passées) lues d'avance, pour la page des saisons
-  ('requestIdleCallback' in window ? f => requestIdleCallback(f, { timeout: 2000 }) : f => setTimeout(f, 400))(() => { retenu('saisonEnCours', saisonEnCours); retenu('agendaPasse', agendaPasse); });
+  // au repos : les saisons lues d'avance pour la page des saisons, la saison en cours puis une saison passée par tâche (chacune
+  // courte : un geste n'attend jamais qu'elles finissent)
+  const auRepos = 'requestIdleCallback' in window ? f => requestIdleCallback(f, { timeout: 2000 }) : f => setTimeout(f, 400);
+  const aLire = (site().saisons || []).slice();
+  const lireUne = () => { const x = aLire.shift(); if (!x) return; retenu(`passe:${x.saison}`, () => saisonPassee(x)); auRepos(lireUne); };
+  auRepos(() => { retenu('saisonEnCours', saisonEnCours); auRepos(lireUne); });
   if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rafraichir);
 })();
 </script>

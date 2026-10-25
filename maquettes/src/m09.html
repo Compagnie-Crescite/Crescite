@@ -407,7 +407,9 @@ html[data-theme="nuit"] .theme .theme-icone{filter:drop-shadow(0 0 6px var(--sai
 .auj::after{flex:1 1 auto}
 .auj span{font-size:.75rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
 .date.est-passe :is(.date-jour,.date-moisan,.date-ou){color:var(--encre-2)}
-.ag-toutes>.dates-groupe,.sai-liste>.dates-groupe{content-visibility:auto;contain-intrinsic-size:auto 560px}
+/* (pas « toutes les dates » de la saison en cours : au-dessus des saisons passées, une hauteur estimée les ferait sauter quand
+   on y va) */
+.sai-liste>.dates-groupe{content-visibility:auto;contain-intrinsic-size:auto 560px}
 
 /* l'agenda : la carte dans un écran de nuit, reliée à la liste */
 .ecran{position:relative;margin-bottom:40px;padding:clamp(12px,2vw,24px);border-radius:6px;background:radial-gradient(70% 55% at 40% 20%,var(--saison-vive-30),var(--saison-vive-0) 72%),var(--nuit);color:var(--creme)}
@@ -2265,9 +2267,10 @@ ${finHTML()}`;
           if (l != null) { $$(`[data-l="${l}"]`, svg).forEach((x) => x.classList.add('est-survol')); $$(`li[data-l="${l}"]`, ul).forEach((x) => x.classList.add('est-survol')); }
         };
         CARTE.lier(svg, { survol: marquer, choix: (l) => { F.l = F.l === l ? null : l; AGV.maj(); } });
-        ul.addEventListener('mouseover', (ev) => { const li = ev.target.closest('li[data-l]'); marquer(li ? +li.dataset.l : null); });
-        ul.addEventListener('mouseleave', () => marquer(null));
-        ul.addEventListener('focusin', (ev) => { const li = ev.target.closest('li[data-l]'); if (li) marquer(+li.dataset.l); });
+        // (à la souris et au clavier seulement : un doigt qui touche une date ne refait pas toute la carte et la liste)
+        ul.addEventListener('pointerover', (ev) => { if (ev.pointerType === 'touch') return; const li = ev.target.closest('li[data-l]'); marquer(li ? +li.dataset.l : null); });
+        ul.addEventListener('pointerleave', (ev) => { if (ev.pointerType !== 'touch') marquer(null); });
+        ul.addEventListener('focusin', (ev) => { if (!ev.target.matches(':focus-visible')) return; const li = ev.target.closest('li[data-l]'); if (li) marquer(+li.dataset.l); });
       };
       if (svgP) relier(svgP, liste);
       // la carte de réservation d'une date s'ouvre sous sa ligne (sans quitter les saisons), se referme d'un second geste ou
@@ -2403,7 +2406,9 @@ ${finHTML()}`;
       // sous le pli, après la première image : les saisons passées et leur frise ; puis, à l'arrivée par son adresse, la saison
       // passée nommée, ouverte et amenée à l'écran (la saison en cours : la page en haut)
       const aller = !enPlace && ouvrir && ouvrir !== D.saison ? ouvrir : null;
+      // (toutes les dates de la saison d'abord, sous le pli elles aussi : posées avant les saisons passées, rien ne saute ensuite)
       differe(() => {
+        if (!toutes.firstElementChild) toutes.innerHTML = toutesHTML(lignes.filter(garde));
         dessineSaisons(true);
         fSaisons = frise($('#ag-frise', racine), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandes(visibles()), anMin: 30,
           libelle: lib.saisonsPassees, classe: 'frise-saisons', relier: { liste: rac }, choix: (b) => ouvrirSaison(b.id) });
@@ -2429,7 +2434,7 @@ ${finHTML()}`;
         <h2 class="bloc-titre" id="t-prochaines">${esc(lib.prochainesDates)}</h2>
         <div class="ag-prochaines" data-agenda="">${listeDates(dates, { titre: true, entree: 'voir', reserver: resCles })}</div>
         <h2 class="bloc-titre ag-toutes-t" id="t-toutes">${esc(lib.toutesLesDates)}</h2>
-        <div class="ag-toutes" data-agenda="">${toutesHTML(lignes.filter(garde))}</div>
+        <div class="ag-toutes" data-agenda=""></div>
       </div>
     </div>
   </section>
@@ -2936,7 +2941,8 @@ ${finHTML()}`;
       if (c) c.animate([{ opacity: 0, transform: `translateX(${sens * 5}%)` }, { opacity: 1, transform: 'none' }], { duration: 420, delay: 40, easing: COURBE, fill: 'backwards' });
     }
     if (ph) ph.animate([{ opacity: 0, transform: 'translateY(9%) scale(1.06)' }], { duration: 720, delay: 40, easing: COURBE, fill: 'backwards' });
-    if (c) [...c.children].slice(0, 8).forEach((x, i) => x.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: 90 + i * 40, easing: COURBE, fill: 'backwards' }));
+    // (ses trois premières lignes seulement : chaque animation de plus retient l'image qui suit le geste, au téléphone)
+    if (c) [...c.children].slice(0, 3).forEach((x, i) => x.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 380, delay: 90 + i * 40, easing: COURBE, fill: 'backwards' }));
   };
   function sectionsVoir(s, seul = false) {
     const lib = L(), out = [], K = CARTE.spectacle(s.slug);
