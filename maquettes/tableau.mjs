@@ -19,6 +19,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   const { ctx, page, erreurs } = await ouvrir(navigateur);
   await page.waitForSelector(`${tuile('journal')} .tb-l, ${tuile('journal')} .tb-rien:not([role])`, { timeout: 15000 }).catch(() => {});
   await page.waitForSelector(`${tuile('propositions')} .tb-l`, { timeout: 15000 }).catch(() => {});
+  ok('la tuile des propositions liste les créneaux libres proposés par l’équipe (crescite_creneaux) : Camille, du … au …', (await compte(page, `${tuile('propositions')} .tb-creneaux li`)) === 1 && /Camille Essai/.test(await texte(page, `${tuile('propositions')} .tb-creneaux`)) && /Libre pour une tournée/.test(await texte(page, `${tuile('propositions')} .tb-creneaux`)), await texte(page, `${tuile('propositions')} .tb-creneaux`));
   ok('l’administration s’ouvre sur le tableau de bord', await page.evaluate(() => location.hash) === '#/accueil' && (await texte(page, 'main h1')) === 'Tableau de bord', await page.evaluate(() => location.hash));
   ok('la rubrique « Tableau de bord » est la rubrique courante, douze rubriques dans l’en-tête', (await texte(page, '.nav a[aria-current="page"]')) === 'Tableau de bord' && await page.$eval('.barre', e => e.classList.contains('douze')));
   const ordre = await page.$$eval('.tb-tuile', xs => xs.map(x => x.dataset.k));

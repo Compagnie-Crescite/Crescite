@@ -17,7 +17,7 @@ const OUTILS = 'crescite-equipe-outils';                  // ce qu'elle charge �
 const DONNEES = 'crescite-equipe-donnees';                // les dernières réponses de la base, par personne
 const MEDIAS = 'crescite-equipe-medias';                  // les photos, les portraits, les polices
 const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
-const ESSENTIELS = ['./', 'equipe.js', 'manifest.webmanifest', '../admin/vendor/supabase.js'];
+const ESSENTIELS = ['./', 'equipe.js', 'tournee.js', 'manifest.webmanifest', '../admin/vendor/supabase.js'];
 const UTILES = ['carte.js', '../admin/agenda.js', '../admin/feuille.js', '../admin/logo.js', '../admin/tentacules.js', '../admin/gestes.js', '../admin/planning.js',
   'icones/192.png', 'icones/512.png', 'icones/180.png', 'icones/masquable-512.png', 'icones/badge.png'];
 const MAX_MEDIAS = 120;

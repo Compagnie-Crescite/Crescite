@@ -88,6 +88,8 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   const etapes = await page.$$eval('#ed-date .parcours li', xs => xs.map(x => `${x.className}:${x.querySelector('.pc-l').textContent}`));
   ok('3 · le parcours de la date de Caen : confirmée et contrat signé faits, lieu complet, équipe, feuille en brouillon, bilan plus tard', etapes.includes('pc-fait:Confirmée') && etapes.includes('pc-fait:Contrat') && etapes.includes('pc-fait:Lieu') && etapes.some(e => e.startsWith('pc-encours:Feuille')) && etapes.includes('pc-attente:Bilan'), etapes.join(' | '));
   ok('3 · une étape dit ce qui manque : l’équipe, quelqu’un sans téléphone', /1 sans téléphone/.test(await texte(page, '#ed-date .parcours .pc-encours .pc-d')), await texte(page, '#ed-date .parcours'));
+  ok('3 · l’étape Équipe compte les présences confirmées par l’équipe (crescite_presences) : « 1 sur 2 a confirmé »', /1 sur 2 a confirmé/.test(await texte(page, '#ed-date .parcours .pc-encours .pc-d')), await texte(page, '#ed-date .parcours .pc-encours .pc-d'));
+  ok('3 · l’étape Équipe compte les présences confirmées par l’équipe (crescite_presences) : « 1 sur 2 a confirmé »', /1 sur 2 a confirmé/.test(await texte(page, '#ed-date .parcours .pc-encours .pc-d')), await texte(page, '#ed-date .parcours .pc-encours .pc-d'));
   await page.click('#ed-date .parcours [data-pc-viser="#s-contrat"]');
   await page.waitForTimeout(300);
   ok('3 · l’étape « Contrat » vise le champ du contrat', await page.evaluate(() => document.activeElement?.id === 's-contrat'));

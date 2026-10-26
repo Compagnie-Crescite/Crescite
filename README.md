@@ -61,6 +61,7 @@ node maquettes/onglets.mjs /tmp/x synthese # parcourt les vues de la synthèse e
                                          # (en parties, 4 à la fois ; PARALLELE=1 une à une ; au-delà des cœurs
                                          # de la machine, les attentes ne suffisent plus et de fausses anomalies sortent)
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
+node maquettes/equipe-niveau.mjs        # la tournée vue par l'équipe (equipe/tournee.js), dans Chromium, sur une base simulée (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
@@ -389,7 +390,7 @@ compte du projet inscrit dans `crescite_admins`.
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
     pièce jointe dans le stockage privé de l'équipe (`notes/`). Le journal garde tout.
   - `node maquettes/niveau.mjs` vérifie les dix idées dans Chromium, hors ligne, sur la base fictive commune
-    (`maquettes/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 57 vérifications, des captures dans
+    (`maquettes/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 59 vérifications, des captures dans
     `maquettes/dist/shots-niveau/`.
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
@@ -510,7 +511,7 @@ script, `supabase/migrations/20261021_crescite_equipe.sql`, s'exécute après le
 | Table | Ce qu'elle contient |
 | --- | --- |
 | `crescite_personnes` | La fiche publique : nom, métiers, photo et son crédit. La photo n'apparaît sur le site que si sa publication est accordée. |
-| `crescite_personnes_privees` | Adresse du compte, téléphone, ville de départ, régime, urgence : lus par la personne elle-même et par l'administration. |
+| `crescite_personnes_privees` | Adresse du compte, téléphone, ville de départ, urgence : lus par la personne elle-même et par l'administration. |
 | `crescite_personnes_suivi` | Les notes de l'administration sur une personne : jamais lues par elle. |
 | `crescite_distributions` | Qui fait quoi dans chaque spectacle (jeu, création, technique, production), et qui part en tournée par défaut. |
 | `crescite_equipes` | L'équipe d'une date, quand elle s'écarte de la distribution : remplacements, renforts, absences. |
@@ -660,6 +661,38 @@ range en colonne à gauche. On y trouve :
   simulée en lecture-écriture, stockage compris, où le compte administre : la date, un horaire, une présence, le lieu,
   prévenir, une notification, un document modifié puis un fichier ajouté, une ligne de feuille de route, la mise à
   jour depuis la base, le brouillon, la publication, la composition), après `python3 maquettes/build.py synthese`.
+
+**La tournée vue par l'équipe** (`equipe/tournee.js`, chargé après `equipe/equipe.js`, qui lui ouvre son état, sa base
+et ses outils par `window.CRESCITE_EQUIPE` et lit ce qu'il offre par `window.CRESCITE_EXT` : des blocs dans la page
+d'une date, d'une feuille, de « Moi » et de la saison, des gestes, des vues ; sans lui, l'application marche comme
+avant). Dix choses de plus :
+- **Le direct du jour J** (`#/direct/<date>`, depuis la section « Aujourd'hui » et le geste « Direct » de la date) :
+  le rideau dans…, l'étape en cours et la suivante d'après la feuille de route, la frise du jour, appeler la régie,
+  l'itinéraire ; l'écran sombre, en grand, gardé allumé si l'appareil le permet.
+- **« Je serai là » / « Je ne pourrai pas »** (avec un motif) sur chaque date à venir, et **« J'ai lu cette feuille »**
+  sur sa feuille de route : l'équipe voit qui a confirmé et qui a lu (`crescite_presences`) ; l'administration voit les
+  confirmations dans le parcours de la date.
+- **Le fil de la date** (`crescite_fil`) : des messages, `@Prénom Nom` mentionne quelqu'un de la date, une photo du
+  téléphone (stockage privé `fil/`) ; la base prévient l'équipe de la date ; les photos du fil prises dans un lieu
+  reviennent sur « L'équipe du soir » des dates suivantes au même lieu.
+- **Trajets et covoiturage** (`crescite_trajets`) : d'où je pars, quand, en voiture, en train, en camion, combien de
+  places ; « Je monte » (`crescite_trajet_monter`) ; les trajets sont repris sous la feuille de route.
+- **Ma check-list** par date (`crescite_checklists`), et mon modèle ; cochée sans réseau, écrite dès qu'il revient.
+- **Mon compteur** (`#/compteur`) : cachets joués, dates, jours de répétition et de résidence, à venir, saison par
+  saison ; un CSV, un relevé à imprimer.
+- **Les frais sans friction** : en « transport », un kilométrage sans ticket, calculé de ma ville au lieu de la date
+  (la position des communes par geo.api.gouv.fr, × 1,3 par la route, aller-retour), au barème (`crescite_textes`, clé
+  `frais`, `bareme_km` ; 0,636 €/km à défaut) ; le récapitulatif mois par mois et un CSV de mes notes.
+- **Tout emporter hors connexion** : « Emporter » une date range ses documents et sa feuille de route sur l'appareil
+  (IndexedDB) ; sans réseau, ils s'ouvrent de là ; « Moi » dit ce qui est sur l'appareil et le retire.
+- **Répondre d'un tap** aux propositions de dates depuis la notification ; un rappel sur la saison quand une réponse
+  attend ; **mes créneaux libres** (`#/creneaux`, `crescite_creneaux`), que l'administration voit sous ses propositions.
+- **L'équipe du soir** (`#/equipe/<date>`) : visages, rôles, téléphones et adresses de l'équipe de la date
+  (`crescite_equipe_du_jour`), un SMS et un mail à tous, le lieu avec ses contacts et l'itinéraire.
+Sans le seizième script, chaque bloc qui en dépend dit « Bientôt dans l'application » ; le direct, l'équipe du soir, le
+compteur, les frais et le hors-ligne marchent quand même. La fiche privée ne porte plus de régime alimentaire : la
+compagnie a une politique vegan, les repas suivent. `node maquettes/equipe-niveau.mjs` vérifie le tout dans Chromium
+(52 vérifications, sur la saison fictive partagée `maquettes/equipe-fictif.mjs`, avec puis sans le script).
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
@@ -893,6 +926,16 @@ le treizième deux fois, puis les scripts 1, 2, 3, 7, 11 et 12 relancés après 
 Les portraits qui attendent l'accord de publication ne sont plus dans le stockage public : l'administration les range
 dans le stockage privé de l'équipe (`crescite-equipe`, `portraits/…`) et les change de stockage quand l'accord change ;
 un portrait remplacé ou retiré est effacé.
+
+**La tournée vue par l'équipe (pas encore lancé).** Le seizième script, `supabase/migrations/20261104_crescite_tournee.sql`,
+s'exécute après les autres (il s'appuie sur `crescite_moi`, `crescite_membre_date` et `crescite_est_admin`) et peut être
+relancé. Il crée `crescite_presences` (qui sera là, qui a lu la feuille de route et en quelle version), `crescite_fil`
+(les messages d'une date, leurs mentions, leur photo ; la base prévient l'équipe de la date), `crescite_trajets` (d'où,
+quand, comment, combien de places, qui monte : `crescite_trajet_monter`), `crescite_checklists` (ma check-list par date,
+mon modèle) et `crescite_creneaux` (mes créneaux libres, lus par l'administration) ; leurs règles (une personne ne lit
+que les dates dont elle est, n'écrit que pour elle ; l'administration lit tout) ; la fonction `crescite_equipe_du_jour`
+(l'équipe d'une date avec ses téléphones, pour ses membres) ; les droits du dossier `fil/` du stockage `crescite-equipe`.
+Sans lui, les blocs qui en dépendent le disent et le reste de l'espace marche.
 
 **Les notes internes (pas encore lancé).** Le quinzième script, `supabase/migrations/20261103_crescite_notes.sql`,
 crée `crescite_notes` (le fil de notes de chaque fiche de l'administration : texte, personnes mentionnées, pièce jointe,

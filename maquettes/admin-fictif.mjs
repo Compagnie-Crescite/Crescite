@@ -58,6 +58,9 @@ const DB = {
   crescite_textes: [{ cle: 'coordonnees', valeur: { nom: 'Compagnie Crescite', adresse: ['72 boulevard d’Orléans', '76100 Rouen'], legal: ['Siret 000 000 000 00000', 'Licence 2-000000'] } },
     { cle: 'programmation', valeur: { contact: { nom: 'Adrien Vada', role: 'Directeur artistique', email: 'contact@crescite.fr', telephone: '' } } }],
   crescite_notes: [],
+  // le seizième script (20261104_crescite_tournee.sql) : Camille a confirmé Caen, et propose un créneau libre
+  crescite_presences: [{ date_id: 101, personne_id: 1, statut: 'present', motif: null, feuille_lue_version: null, feuille_lue_le: null, maj_le: ilYA(60) }],
+  crescite_creneaux: [{ id: 1, personne_id: 1, debut: plus(30), fin: plus(34), message: 'Libre pour une tournée', cree_le: ilYA(100) }],
   crescite_indisponibilites: [{ id: 1, personne_id: 2, debut: `${plus(3)}T00:00:00+00:00`, fin: `${plus(4)}T00:00:00+00:00`, journee: true, motif: 'Tournage' }],
   crescite_personnes: [
     { id: 1, slug: 'camille-essai', prenom: 'Camille', nom: 'Essai', metiers: ['comédienne'], photo: null, photo_publique: false, publie: true, ordre: 10 },
