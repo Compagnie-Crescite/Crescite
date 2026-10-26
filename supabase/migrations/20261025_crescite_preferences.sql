@@ -11,6 +11,9 @@
 --                           dans l'espace de l'équipe quand son compte administre) ; « Masquées » les fait revenir.
 --                           Avant ce script, la liste reste sur l'appareil ; elle passe dans la base à la première
 --                           ouverture du planning qui suit.
+--   accueil.tableau         la disposition du tableau de bord de l'administration (admin/tableau.js) : l'ordre, la
+--                           taille et les réglages des tuiles, les colonnes, la page d'ouverture, le mémo. Avant ce
+--                           script, elle reste sur l'appareil ; elle passe dans la base à la première ouverture qui suit.
 
 begin;
 
