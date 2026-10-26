@@ -4399,7 +4399,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const tousOuverts = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
       const actifs = [terme() && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l !== null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
       index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPassees)}">${tousOuverts ? DOUBLE_HAUT : DOUBLE}</button>
-        <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => { const n = rows.filter(jouee).length;
+        <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => { const n = nbReps(rows.filter(jouee));   // (ses représentations, comme la frise au-dessus)
           return `<li><button type="button" class="idx" data-k="${s.k}" aria-controls="sai-${s.k}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}${n ? `<small>${n}</small>` : ''}</button></li>`; }).join('')}</ul>`;
     }
     // l'onglet d'une saison ouverte se voit dans la bande (au téléphone, la bande défile)
@@ -4409,7 +4409,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     function dessineSaisons() {
       const vis = visibles();
       racine.innerHTML = vis.map(({ s, rows }) => `<details class="sai" id="sai-${s.k}" data-saison="${s.k}" data-frise-id="${s.k}" data-mv-cle="s:${s.k}"${F.ouv.has(s.k) ? ' open' : ''}>
-        <summary>${vignette(s, rows)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n">${((n) => n ? `<b>${n}</b>` : '')(rows.filter(jouee).length)}${CHEVRON}</span></summary>
+        <summary>${vignette(s, rows)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n">${((n) => n ? `<b>${n}</b>` : '')(nbReps(rows.filter(jouee)))}${CHEVRON}</span></summary>
         <div class="sai-corps">${F.ouv.has(s.k) ? corpsSaison(s, rows) : ''}</div></details>`).join('');
       vis.forEach(({ s }) => { if (F.ouv.has(s.k)) lierSaison($(`#sai-${s.k}`, racine), s); });
       dessineIndex(vis);
