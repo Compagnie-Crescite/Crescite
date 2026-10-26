@@ -1129,7 +1129,7 @@ function dessinerFeuille(etat) {
   // remplit sans viser la page (petite, au téléphone). Ce qu'on y écrit prend la place de l'amorce, comme un clic sur elle
   // (« Annuler » de la barre le reprend) ; un téléphone, un contact, l'adresse du lieu iront dans leur fiche à l'enregistrement.
   const pm = $('#fr-manques', zone);
-  let signatureManques = null, manquesPrevus = 0;
+  let signatureManques = null, manquesPrevus = 0, nbManquesAvant = null;
   const blocsCourants = () => (etat.editeur ? etat.editeur.blocs() : F.contenu.blocs);
   const contexteManque = m => [m.jour, m.ligne.replace(/^[\s:–—-]+|[\s:–—-]+$/g, '') || m.rubrique].filter(Boolean).join(' · ');
   const exempleManque = m => /^téléphone/.test(m.texte) ? 'le numéro' : /^contact sur place/.test(m.texte) ? 'nom et numéro' : /^adresse/.test(m.texte) ? 'numéro, rue, code postal'
@@ -1150,6 +1150,8 @@ function dessinerFeuille(etat) {
     pm.innerHTML = xs.length ? `<details${etat.manquesFermes ? '' : ' open'}><summary><span class="fr-m-titre">À compléter</span><span class="badge option">${xs.length}</span><span class="aide">ce qui est encore en gris sur la page</span></summary>
       <ul class="fr-m-liste">${xs.map((m, i) => { const g = gardeDe(m), cle = `${m.id}|${m.k}`; return `<li data-m="${esc(cle)}"><label for="fr-m-${i}"><span class="fr-m-ctx">${esc(contexteManque(m))}</span> <span class="fr-m-q">${esc(m.texte)}</span>${g ? `<small class="fr-m-garde">${esc(g)}</small>` : ''}</label>
         <span class="fr-m-saisie"><input id="fr-m-${i}" type="${/^téléphone/.test(m.texte) ? 'tel' : 'text'}" autocomplete="off" enterkeyhint="done" value="${esc(saisies.get(cle) || '')}" placeholder="${esc(exempleManque(m))}"><button type="button" class="btn petit" data-m-ok>Écrire</button></span></li>`; }).join('')}</ul></details>` : '';
+    if (nbManquesAvant !== null && xs.length < nbManquesAvant) $('summary .badge', pm)?.classList.add('pop');   // le compte saute quand il baisse
+    nbManquesAvant = xs.length;
     if (focus !== null) { const ins = $$('li[data-m] input', pm); (ins[Math.min(focus, ins.length - 1)] || $('[data-enregistrer]', zone))?.focus(); }
     else if (actif) { const i = $$('li[data-m]', pm).find(li => li.dataset.m === actif.m)?.querySelector('input'); if (i) { i.focus(); i.setSelectionRange(actif.i, actif.i); } }
   }

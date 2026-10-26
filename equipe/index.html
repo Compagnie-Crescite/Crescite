@@ -867,6 +867,10 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 .feuille-cadre .fdr .fdr-p.maintenant { padding-left: 9px; border-left: 3px solid var(--u, var(--magenta)); border-radius: 4px; background: color-mix(in srgb, var(--u, var(--magenta)) 8%, transparent); }
 .feuille-cadre .fdr .fdr-p.maintenant::after { content: " · en ce moment"; color: var(--u-texte, var(--magenta)); font-weight: 700; }
 .attend { cursor: progress; }
+/* 13. le bandeau d'une notification dit le temps qu'il reste (bn-temps) ; le bandeau d'état entre quand il change */
+.bandeau-notif .bn-temps { position: absolute; left: 16px; right: 16px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--n-encre, var(--magenta)); opacity: .55; transform-origin: 0 50%; transform: scaleX(0); }
+.puce-doc { transition: border-color .2s, transform .15s; }
+.puce-doc:active { transform: scale(.97); }
 .btn.principal.fait { background: var(--ok); border-color: var(--ok); color: #fff; }
 /* 9. les notifications au doigt : « Lu » attend derrière la notification qu'on glisse vers la gauche */
 .liste-notifs li { position: relative; border-radius: var(--rayon-s); }
@@ -932,6 +936,10 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   .carte-spectacle:hover .cs-photo img { transform: scale(1.06); }
   .btn.fait, .rep.pop { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1); }
   .attend { animation: attend .9s ease-in-out infinite alternate; }
+  .bandeau-notif.visible .bn-temps { animation: bn-temps 6.5s linear forwards; }
+  .bandeau-notif:hover .bn-temps { animation-play-state: paused; }
+  @keyframes bn-temps { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  .bandeau-etat > .message { animation: monte .3s cubic-bezier(.2, .8, .2, 1) both; }
   @keyframes attend { to { opacity: .4; } }
   /* 9. « tout marquer comme lu » : les notifications s'éteignent l'une après l'autre */
   .notif.balaye { animation: balaye .7s ease-out calc(var(--i, 0) * 50ms) both; }

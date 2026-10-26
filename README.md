@@ -302,8 +302,9 @@ choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les
 compteurs « n à compléter » et le badge d'une feuille publiée sautent ; dans le planning, aujourd'hui se pose ; une liste
 qui se redessine (le temps réel, un enregistrement) glisse ses lignes à leur nouvelle place (`glisserVers`) ; le champ
 visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une précision ajoutée se pose ; la cloche de « Prévenir
-l'équipe » sonne une fois la notification partie. Rien de tout cela si l'appareil demande moins d'animations, ni avec
-`?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
+l'équipe » sonne une fois la notification partie ; dans la Diffusion, l'opportunité déplacée glisse jusqu'à sa nouvelle
+colonne ; dans une feuille de route, le compte « à compléter » saute quand il baisse. Rien de tout cela si l'appareil
+demande moins d'animations, ni avec `?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
 une base fictive.
 
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
@@ -449,7 +450,8 @@ marquer lues (`brancherGlisserNotif`), leurs jours épinglés, « tout marquer c
 l'autre ; la pieuvre qui s'étire et nage quand on tire pour rafraîchir, la photo du héros qui dérive ; et encore : l'arrivée en
 fondu du squelette au contenu, un bouton qui a réussi le dit un instant (`occupe`), les billets d'une saison passée
 arrivent l'un après l'autre, la photo d'un spectacle s'approche au survol, la réponse à une proposition saute, la feuille
-de route se lit en direct le jour J (les lignes passées pâlissent, celle du moment se marque : `majFeuilleDirect`). Tout ce
+de route se lit en direct le jour J (les lignes passées pâlissent, celle du moment se marque : `majFeuilleDirect`), le
+bandeau d'une notification dit le temps qu'il lui reste, le bandeau d'état n'entre que s'il change. Tout ce
 qui bouge en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations, ni
 avec `?anim=0`, la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
 ligne, sur une saison fictive.

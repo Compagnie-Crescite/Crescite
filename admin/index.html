@@ -489,6 +489,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .carte-sp .img::after { transition: height .2s; }
 .carte-sp:hover .img::after { height: 9px; }
 .ligne { transition: box-shadow .15s, border-color .15s; }
+.nav a, .seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
 .btn:active:not([disabled]) { transform: scale(.97); }
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
@@ -1123,10 +1124,10 @@ function reperer(racine) {
   $$('.ligne[href], .crm-carte[data-prospect-id]', racine).forEach(el => { const r = el.getBoundingClientRect(); if (r.width) m.set(CLE_FLIP(el), [r.left, r.top + window.scrollY]); });
   return m;
 }
-function glisserVers(avant) {
-  if (!avant.size || CALME_ADMIN()) return;
+function glisserVers(avant, racine = $('[data-liste]')) {
+  if (!racine || !avant.size || CALME_ADMIN()) return;
   const doux = 'cubic-bezier(.2, .8, .2, 1)';
-  $$('[data-liste] .ligne[href], [data-liste] .crm-carte[data-prospect-id]').forEach(el => {
+  $$('.ligne[href], .crm-carte[data-prospect-id]', racine).forEach(el => {
     const a = avant.get(CLE_FLIP(el)), r = el.getBoundingClientRect();
     if (!r.width) return;
     if (!a) { el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: doux }); return; }
@@ -3483,7 +3484,9 @@ function brancherDiffusion() {
           p.etape = nouvelleEtape;
           p.date_dernier_contact = aujourdhui();
           annoncer(`Opportunité déplacée vers « ${ETAPES_CRM[nextIdx][1]} ».`);
+          const places = reperer($('#kanban-zone') || document);   // la carte glisse jusqu'à sa nouvelle colonne
           vueDiffusion();
+          glisserVers(places, $('#kanban-zone'));
         } catch (err) {
           erreur(err, 'Déplacement impossible');
           b.disabled = false;

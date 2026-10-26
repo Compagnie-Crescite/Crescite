@@ -918,8 +918,10 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    el.innerHTML = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
+    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
+    if (el.dataset.h === html) return;                     // le bandeau ne se redessine (et n'entre) que s'il change
+    el.dataset.h = html; el.innerHTML = html;
   }
 
   // ================================================================================================ les adresses et les transitions
@@ -1945,7 +1947,7 @@
     const z = $('#bandeau-notif');
     if (!z) return;
     const g = GENRES[n.type] || GENRES.message;
-    z.innerHTML = `<a class="bandeau-notif n-${esc(n.type)}" href="${esc(lienDe(n))}" data-notif="${n.id}"><span class="ic-rond" aria-hidden="true">${g.ic}</span><span class="n-titre">${esc(n.titre)}</span>${n.texte ? `<span class="n-texte">${esc(n.texte)}</span>` : ''}</a>`;
+    z.innerHTML = `<a class="bandeau-notif n-${esc(n.type)}" href="${esc(lienDe(n))}" data-notif="${n.id}"><span class="bn-temps" aria-hidden="true"></span><span class="ic-rond" aria-hidden="true">${g.ic}</span><span class="n-titre">${esc(n.titre)}</span>${n.texte ? `<span class="n-texte">${esc(n.texte)}</span>` : ''}</a>`;
     const a = z.firstElementChild;
     requestAnimationFrame(() => requestAnimationFrame(() => a.classList.add('visible')));
     clearTimeout(minuteurBanniere);
