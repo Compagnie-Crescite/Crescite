@@ -3210,7 +3210,7 @@ const CARTE = (() => {
    vitesse et le site apparaît à travers lui. Si le visiteur a demandé moins d'animations : un simple fondu.
    build.py l'ajoute après les données D ; chaque maquette l'habille dans son univers.
 
-   INTRO.ouvrir({ fond, degrade, image, encre, tache, mot, sortie, classe, apres, vivante })
+   INTRO.ouvrir({ fond, degrade, image, encre, tache, mot, sortie, classe, apres, vivante, cibles })
      à appeler une fois, au chargement ; l'ouverture ne s'affiche que si l'adresse est celle de l'accueil
      fond    : la couleur du fond (par défaut #14070f)
      degrade : un dégradé radial à la place du fond : [[0, '#3a1030'], [1, '#0d0710']] (du centre vers les bords)
@@ -3229,6 +3229,14 @@ const CARTE = (() => {
                (au départ, elles rament une fois : un coup de nage dans le sens où elle va, le corps se contracte) ; aucune
                turbulence, aucune rotation en bloc. Le mot reste en SVG. Sans `devient` (sortie 'zoom'), le dessin SVG reprend
                pour le zoom. Sans mouvement, ou sans D.pieuvre : comme avant
+     cibles  : avec vivante et devient : une fonction qui rend, à chaque image du départ, ce que chaque tentacule doit
+               rejoindre : [{ cle, cible, col }] (cle : la clé de la tentacule, cible : ce que PIEUVRE vise, à l'écran, col :
+               [r, g, b] la couleur vers laquelle elle se teinte). Dès le geste, ces tentacules se déroulent vers leur
+               cible (en 1,5 s : plus que le glissement, qui dure 1,15 s), leur bout se colorant en route, pendant que le
+               logo glisse à sa place ; la page reprend leur trajet où il en est (INTRO.relais())
+   INTRO.relais()   pendant `apres` : { TS, teinte, t0 } les tentacules de l'ouverture (PIEUVRE), telles qu'elles sont (pose,
+               trajet en cours), la teinte atteinte, et l'instant du geste : la pieuvre de la page y copie leur état et
+               continue leur mouvement sans à-coup. null sans pieuvre vivante
      classe  : une classe en plus sur .intro, pour l'habiller en CSS (.intro, .intro-logo, .intro-indice)
      apres   : appelée quand le site est révélé (le focus va ensuite au titre h1 de la page)
    INTRO.ouverte()  vrai tant que l'ouverture est affichée ; l'évènement « intro:fin » est émis sur window à la fin
@@ -3382,7 +3390,7 @@ const INTRO = (() => {
   // la pieuvre vivante, une image : son corps (contracté de `serre` autour de son cœur, bras compris) et ses tentacules à la
   // place posée par poser(), qui ondulent depuis leurs racines (onde) et rament (rame : elles se penchent à l'opposé du sens
   // `vers` où elle va, d'autant plus vers leur pointe)
-  function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0 } = {}) {
+  function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0, teinte = 0, cols = null } = {}) {
     if (!vie || !geo || !geo.pose) return;
     const { cv, ctx, TS, CORPS, dpr } = vie, { S, ox, oy } = geo.pose;
     const dt = Math.min(50, vie.tPrec ? now - vie.tPrec : 16); vie.tPrec = now; vie.t += dt / 1000;
@@ -3394,10 +3402,11 @@ const INTRO = (() => {
     const arr = vers && rame ? Math.atan2(-vers[1], -vers[0]) : 0;
     for (const t of TS) {
       let penche = 0;
-      if (rame && vers) { let df = arr - t.RS[t.M - 1]; df = Math.atan2(Math.sin(df), Math.cos(df)); penche = clamp(df, -1.2, 1.2) * rame; }
+      if (rame && vers && !t.cible) { let df = arr - t.RS[t.M - 1]; df = Math.atan2(Math.sin(df), Math.cos(df)); penche = clamp(df, -1.2, 1.2) * rame; }
       t.deplacer(ox, oy, S);
       t.avancer(dt, { temps: vie.t, onde, penche });
-      PIEUVRE.dessiner(ctx, t, { encre: vie.encre, lisere: PIEUVRE.lisere });
+      const col = cols && cols[t.cle];
+      PIEUVRE.dessiner(ctx, t, { encre: vie.encre, lisere: PIEUVRE.lisere, vers: col ? `rgb(${col.join(',')})` : null, teinte: col ? teinte : 0 });
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
@@ -3459,6 +3468,10 @@ const INTRO = (() => {
     const ex0 = cx + (cible[0] - centre[0]) * s0, ey0 = cy + (cible[1] - centre[1]) * s0;
     const fondG = el.querySelector('.intro-scene > g[mask]'), passent = el.querySelectorAll('[data-role="dessin"] .i-mot, [data-role="dessin"] .i-tache');
     let c = place;
+    // (vivante, avec des cibles : dès le geste, chaque tentacule qui a une cible se déroule vers elle, en 1,5 s ; la cible est
+    // relue à chaque image, le trajet continue vers sa place du moment)
+    const viseur = vie && opts.cibles ? () => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; t.viser(x.cible, 1500); cols[x.cle] = x.col; } return cols; } : null;
+    if (vie) { vie.t0 = T0; vie.teinte = 0; }
     const pas = now => {
       const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));
       c = opts.devient() || c;
@@ -3467,7 +3480,11 @@ const INTRO = (() => {
       poser({ aG: vie ? 0 : 7 * bat, aD: vie ? 0 : -7 * bat, ondes: vie ? 0 : 5 * (1 - u), flot: (now - T0) * .05, abs: { S, ex, ey } });
       // (vivante : un coup de nage, les tentacules ramant à l'opposé du chemin, le corps contracté ; ses ondulations s'apaisent
       // pour que la pieuvre de la page la relaie telle quelle)
-      if (vie) { const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0; peindre(now, { onde: 1.3 * (1 - u), rame: .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat }); }
+      if (vie) {
+        const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0, cols = viseur ? viseur() : null;
+        vie.teinte = clamp((now - T0) / 700);
+        peindre(now, { onde: 1.3 * (1 - u), rame: .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat, teinte: vie.teinte, cols });
+      }
       passent.forEach(n => { n.style.opacity = String(1 - ease.out(clamp(v * 2.2))); });
       if (fondG) fondG.style.opacity = String(1 - ease.inOut(clamp((v - .2) / .65)));
       if (v >= 1) return finir();
@@ -3490,6 +3507,7 @@ const INTRO = (() => {
     document.documentElement.classList.remove('intro-active');
     inertes.forEach(n => { n.inert = false; }); inertes = [];
     try { opts.apres && opts.apres(); } catch (err) { console.error(err); }
+    vie = null;
     dispatchEvent(new Event('intro:fin'));
     const h1 = document.querySelector('main h1, h1');
     if (h1 && !location.hash.replace(/^#\/?/, '')) { if (!h1.hasAttribute('tabindex')) h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
@@ -3505,7 +3523,7 @@ const INTRO = (() => {
     if (['Enter', ' ', 'Spacebar', 'ArrowDown', 'PageDown', 'End'].includes(e.key)) { e.preventDefault(); partir(); }
   }
 
-  return { ouvrir, ouverte: () => etat !== 'ferme', partir };
+  return { ouvrir, ouverte: () => etat !== 'ferme', partir, relais: () => (vie ? { TS: vie.TS, teinte: vie.teinte || 0, t0: vie.t0 || performance.now() } : null) };
 })();
 </script>
 <script>
@@ -9485,10 +9503,13 @@ const CREATURE = (() => {
         ${rac.length ? `<ul class="ep-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}${apres}</div></section>`;
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
-     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : il s'y pose d'un rebond (le corps se ramasse, se détend),
-     puis ses huit tentacules, les vraies, celles du dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté
-     par-dessus), se déploient ensemble, vite (chacune part à son instant, à quelques dixièmes près), et font paraître tous
-     les spectacles : chacun a sa tentacule, qui se déroule depuis sa racine jusqu'à son titre, le souligne et s'y enroule.
+     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : dès le geste, ses huit tentacules, les vraies, celles du
+     dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté par-dessus), se déroulent vers les spectacles (cibles),
+     leur bout se colorant en route, pendant que le logo glisse à sa place ; à la pose (un rebond : le corps se ramasse, se
+     détend), chaque bras reprend le trajet de son double de l'ouverture où il en est (eveiller, INTRO.relais) et l'achève :
+     un seul mouvement, du geste aux titres, qui paraissent en route. Sans ouverture (l'accueil rejoint autrement), les
+     tentacules se déploient ensemble à l'arrivée (la présentation). Chaque spectacle a sa tentacule, qui se déroule depuis
+     sa racine jusqu'à son titre, le souligne et s'y enroule.
      Au bureau, les titres sont posés sur deux arcs de part et d'autre ; au téléphone, dessous, de part et d'autre d'une
      ligne, et les tentacules passent par les côtés : celles de gauche servent les titres de gauche, celles de droite ceux de
      droite, chacune file vers le bord de l'écran, s'éloigne le long du bord (plus fine, plus pâle : au lointain, dans son
@@ -9772,7 +9793,7 @@ const CREATURE = (() => {
     // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
     function placer(T, allume, now, anime) {
       let em = 0;
-      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (pres && T.tPres != null ? T.tPres + 600 : eveil + 500)) / 520);
+      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (T.tPres != null ? T.tPres + 600 : eveil + 500)) / 520);
       T.em = Math.max(T.em, em);
       const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
       if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
@@ -9960,11 +9981,25 @@ const CREATURE = (() => {
     if (document.fonts) document.fonts.ready.then(() => { if (affiche) mise(); });
 
     // l'éveil : à la relève de l'ouverture (ou à la première visite de l'accueil sans elle), chaque bras va chercher son titre
-    function eveiller() {
+    function eveiller(relais = null) {
       if (eveil !== null) return;
       eveil = performance.now() - (motionOK() ? 0 : 5000);
-      // (la présentation, une fois : elle commence après le rebond de la pose, et se planifie à la première image)
-      if (motionOK() && !presFaite && TIT.length) { pres = { t0: eveil + 260, plan: null, fin: eveil + 5000 }; presFaite = true; }
+      // le relais de l'ouverture (INTRO.relais()) : ses tentacules visaient déjà leurs titres depuis le geste ; chaque bras copie
+      // l'état de son double (sa pose, son trajet en cours, sa cible) et continue sans à-coup ; les titres paraissent comme
+      // si tout avait commencé au geste. Sinon, la présentation, une fois : elle commence après le rebond de la pose
+      let repris = 0;
+      if (relais && relais.TS && motionOK()) {
+        for (const a of BRAS) {
+          const d = relais.TS.find(x => x.cle === a.cle), T = d && d.cible && TIT.find(x => x.slug === d.cible.cle);
+          if (!T) continue;
+          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne'];
+          for (const k of cles) t[k] = d[k];
+          t.libreRac = -1; t.poly = null;
+          a.but = T; a.tenu = T; a.col = T.col; a.teinte = relais.teinte; repris++;
+        }
+        if (repris) { presFaite = true; pres = null; TIT.forEach(T => { T.tPres = relais.t0; }); tenirTous(); }
+      }
+      if (!repris && motionOK() && !presFaite && TIT.length) { pres = { t0: eveil + 260, plan: null, fin: eveil + 5000 }; presFaite = true; }
       tPrec = 0; image(performance.now(), true); reveil(); planifier();
     }
     function montrer(oui) {
@@ -9975,6 +10010,7 @@ const CREATURE = (() => {
       // de retour sur l'accueil : chaque bras reprend sa souche ; les liens suivent la mémoire de l'entrée
       TIT.forEach(T => { T.focus = false; T.el.setAttribute('href', lienSp(T.slug)); });
       BRAS.forEach(a => { a.but = null; a.tenu = null; a.tension = 0; a.teinte = 0; a.t.viser(null, 0); });
+      TIT.forEach(T => { T.tPres = null; });
       survol = null; brasSurvol = null; remonte = null; el.classList.remove('a-actif', 'sur-bras');
       mise();
       // sous l'ouverture, la pieuvre attend la relève ; sans mouvement, elle est là d'emblée, sous le fondu
@@ -9991,6 +10027,12 @@ const CREATURE = (() => {
       montrer, eveiller,
       // où l'ouverture doit poser le logo : l'origine du dessin à l'écran, et son échelle
       cible: () => { if (!affiche || !W || !el.isConnected) return null; const r = cv.getBoundingClientRect(); return { x: r.left + ox, y: r.top + oy, s }; },
+      // ce que les tentacules de l'ouverture visent dès le geste : la cible de chaque titre (à l'écran), par tentacule
+      cibles: () => {
+        if (!affiche || !W || !el.isConnected || !motionOK()) return [];
+        const r = cv.getBoundingClientRect(), vus = new Set();
+        return TIT.filter(T => T.bras && !vus.has(T.bras) && vus.add(T.bras)).map(T => { const c = cibleDe(T); c.x += r.left; c.y += r.top; if (c.rail != null) c.rail += r.left; return { cle: T.bras.cle, cible: c, col: T.col }; });
+      },
       // le cœur de la pieuvre à l'écran, la page tout en haut (l'encre d'un spectacle qu'on quitte s'y resserre)
       coeur: () => ({ x: ox + COEUR[0] * s, y: oy + COEUR[1] * s }),
       // un geste : la pieuvre lui laisse la main (ms)
@@ -12691,13 +12733,14 @@ const CREATURE = (() => {
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);
   // l'ouverture de la 04, aux couleurs de la saison : le logo blanc sur le dégradé de la saison (calculé depuis
   // D.site.couleurSaison, plus profond la nuit), vivant (ses vraies tentacules ondulent depuis leurs racines, INTRO vivante) ;
-  // au geste, il ne grossit plus : il devient la pieuvre du premier écran (il glisse à sa place d'un coup de nage, Scene.cible),
-  // puis ses bras vont chercher les spectacles (Scene.eveiller). Sans mouvement : un fondu
+  // au geste, il ne grossit plus : il devient la pieuvre du premier écran (il glisse à sa place, Scene.cible) pendant que ses
+  // tentacules se déroulent déjà vers les spectacles (Scene.cibles), et la pieuvre de la page reprend leur trajet où il en est
+  // (Scene.eveiller, INTRO.relais). Sans mouvement : un fondu
   const thO = themeSaison(), gO = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit' ? thO.nuit : thO.jour;
   INTRO.ouvrir({
     degrade: [[0, gO[0]], [.55, gO[1]], [1, gO[2]]], encre: '#ffffff', classe: 'intro-synthese', vivante: true,
-    sortie: motionOK() ? undefined : 'fondu', devient: () => Scene.cible(),
-    apres: () => Scene.eveiller(),
+    sortie: motionOK() ? undefined : 'fondu', devient: () => Scene.cible(), cibles: () => Scene.cibles(),
+    apres: () => Scene.eveiller(INTRO.relais()),
   });
   route();
 })();
