@@ -182,6 +182,13 @@ const PIEUVRE = (() => {
       this.pose = null; this.depuis = null; this.q = 1;
     }
     deplacer(ox, oy, s) { this.ox = ox; this.oy = oy; this.s = s; this.pose_ = true; }
+    // la pieuvre est remise en page en route (une police qui arrive, une barre de défilement, la fenêtre) : la tentacule garde
+    // son trajet là où il en est, ses longueurs à la nouvelle échelle ; sa cible est relue à chaque image de toute façon
+    reposer(ox, oy, s) {
+      const k = this.s ? s / this.s : 1;
+      if (k !== 1) for (const P of [this.pose, this.depuis, this.but]) if (P && P.ln) for (let i = 0; i < P.ln.length; i++) P.ln[i] *= k;
+      this.deplacer(ox, oy, s);
+    }
     // la racine de cette image, en unités du dessin (par rapport à ox, oy), et l'angle dont la racine a pivoté : au repos, celle du
     // dessin ; en se déployant, glissée vers son attache sur la tête (et tournée vers sa direction), selon le mouvement
     // (collée : une fois déployée, la tentacule ne retourne plus à sa place du logo, à côté de la tête ; remontée, elle

@@ -51,6 +51,7 @@ const INTRO = (() => {
     s.id = 'intro-style';
     s.textContent = `
       html.intro-active, html.intro-active body { overflow: hidden !important; }
+      html.intro-active { scrollbar-gutter: stable; }   /* (la place de la barre de défilement reste prise : la page ne se décale pas d'un coup quand elle revient, à la fin) */
       .intro { position: fixed; inset: 0; z-index: 2147483000; color: #fff; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; }
       .intro-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
       .intro-logo { position: absolute; border: 0; background: transparent; padding: 0; margin: 0; cursor: pointer; border-radius: 28px; color: inherit; }

@@ -3843,7 +3843,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le bout tourné vers le bord de
       // l'écran : la tentacule arrive de là, et le souligné va vers le médaillon)
       TIT.forEach(T => { T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
-      BRAS.forEach(a => a.t.poser(ox, oy, s));
+      // (un bras en route, ou tendu, garde son trajet : une mise en page en plein déploiement, la barre de défilement qui revient
+      // à la fin de l'ouverture, une police qui arrive, ne le renvoie pas au repos pour repartir de zéro)
+      BRAS.forEach(a => (a.t.cible || a.t.q < 1 ? a.t.reposer(ox, oy, s) : a.t.poser(ox, oy, s)));
       attribuer(); tenirTous();
       if (pres) pres.plan = null;   // (la présentation se replanifie sur cette mise en page)
       dpr = Math.min(2, devicePixelRatio || 1);
