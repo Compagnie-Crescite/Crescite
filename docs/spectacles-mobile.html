@@ -242,7 +242,10 @@ a { color: inherit; }
 /* ———— B. La pile d'affiches : les huit tranches tiennent dans l'écran ; on en touche une, l'affiche se déplie ———— */
 .b-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px var(--gout) 8px; }
 .b-pile { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 22px; }
-.b-aff { border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
+.b-aff { position: relative; border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
+.b-aller { position: absolute; z-index: 1; right: 12px; top: 12px; min-height: 40px; padding: 8px 14px; font-size: .8rem; box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .7); opacity: 0; visibility: hidden; transition: opacity .25s, visibility 0s linear .25s; }
+.b-aff.ouvert .b-aller { opacity: 1; visibility: visible; transition: opacity .35s .3s, visibility 0s .3s; }
+.b-aff.ouvert .b-in { cursor: pointer; }
 .b-h { margin: 0; }
 .b-dos { position: relative; display: block; width: 100%; height: 72px; padding: 0; border: 0; background: var(--u-fond); color: var(--u-texte); text-align: left; cursor: pointer; overflow: hidden; transition: height .45s var(--mv-courbe); }
 .b-dos:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -3px; }
@@ -344,7 +347,7 @@ html.still .a-i, html.still .a-t, html.still .a-an, html.still .a-dek, html.stil
     <div class="fiche">
       <div class="en-tete"><span class="lettre" aria-hidden="true">B</span><div><h2 id="t-b">La pile d’affiches</h2><span class="geste">Le geste : <b>déplier</b> · coût : moyen</span></div></div>
       <p><b>Les huit spectacles tiennent dans l’écran</b>, sans défiler : chacun est une tranche d’affiche, sa photo cadrée sur les visages, son titre dans sa police, son année, son état et sa prochaine date. On embrasse tout le répertoire d’un regard, comme la table des matières du bureau.</p>
-      <p>On touche une tranche : <b>l’affiche se déplie</b>. La photo s’ouvre en grand, puis la fiche : lieu et temps, création, action culturelle, l’accroche, la prochaine date, la carte de sa tournée dont les bras poussent depuis Rouen, et « découvrir ». Une seule affiche ouverte à la fois ; la toucher encore la replie.</p>
+      <p>On touche une tranche : <b>l’affiche se déplie</b>. La photo s’ouvre en grand, « découvrir » se pose dessus, puis la fiche : lieu et temps, création, action culturelle, l’accroche, la prochaine date, la carte de sa tournée dont les bras poussent depuis Rouen. <b>L’affiche dépliée est tout entière le lien vers sa page</b> : une touche de plus, n’importe où, y mène. Une seule affiche ouverte à la fois ; toucher une autre tranche replie la première.</p>
       <dl>
         <dt>Mécanique</dt><dd>Un bouton par spectacle (<code>aria-expanded</code>), une hauteur qui se déplie en CSS (<code>grid-template-rows</code>), la carte dessinée à la première ouverture.</dd>
         <dt>À surveiller</dt><dd>Les huit tranches tiennent dans un écran de 390 × 844 ; à 360 × 640, la pile dépasse d’un tiers et il faut défiler. Les titres longs sont coupés sur la tranche fermée, entiers une fois ouverte.</dd>
@@ -367,7 +370,7 @@ html.still .a-i, html.still .a-t, html.still .a-an, html.still .a-dek, html.stil
     <div class="tel tel-cadre" data-prop="actuel"><p class="attente">La page d’aujourd’hui se charge quand on l’amène à l’écran.</p></div>
     <div class="fiche">
       <div class="en-tete"><span class="lettre" aria-hidden="true">·</span><div><h2 id="t-actuel">Dans la synthèse</h2><span class="geste">La page publiée, telle quelle</span></div></div>
-      <p>La page des spectacles de la synthèse, chargée ici telle quelle : au téléphone, <b>la pile d’affiches</b>, portée depuis la proposition B (les huit tranches, l’affiche dépliée avec sa fiche et la carte de sa tournée, l’édition sur place sur chaque texte). À partir de 900 px, le sommaire et son aperçu, inchangés. Avant ce portage, il n’y avait ici qu’une liste : vignette, création, lieu et temps, prochaine date.</p>
+      <p>La page des spectacles de la synthèse, chargée ici telle quelle : au téléphone, <b>la pile d’affiches</b>, portée depuis la proposition B (les huit tranches, l’affiche dépliée avec sa fiche et la carte de sa tournée, une touche de plus n’importe où qui ouvre sa page, l’édition sur place sur chaque texte). À partir de 900 px, le sommaire et son aperçu, inchangés. Avant ce portage, il n’y avait ici qu’une liste : vignette, création, lieu et temps, prochaine date.</p>
     </div>
   </section>
 </main>
@@ -1585,13 +1588,13 @@ const CADRAGE = (() => {
         <span class="b-txt"><span class="b-t"><span class="ut">${esc(s.titre)}</span></span>${s.annee ? `<span class="b-an">${esc(s.annee)}</span>` : '<span></span>'}
           <span class="b-sous">${etat(s)}${x && x.ligne && !s.statut ? `<span class="pro">${esc(x.ligne)}</span>` : ''}</span></span>
       </button></h2>
+      <a class="b-aller bu plein" href="${lien(s)}" target="_blank" rel="noopener">${esc(L().decouvrir || '')}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a>
       <div class="b-corps" id="${id}-c" role="region" aria-labelledby="${id}-b" inert><div class="b-in"><div class="b-fiche">
         ${s.sousTitre ? `<p class="b-st">${s.sousTitre}</p>` : ''}
         ${kLigne(s)}
         ${s.accroche ? `<p class="acc">${esc(s.accroche)}</p>` : ''}
         ${dateBloc(s, 'date')}
         <figure class="b-carte" data-carte="${esc(s.slug)}" hidden></figure>
-        <p class="pied-u">${decouvrir(s)}</p>
       </div></div></div>
     </article>`; };
   function rendreB(tel) {
@@ -1606,16 +1609,20 @@ const CADRAGE = (() => {
       if (f && !f.firstElementChild) { const html = carteDe(bySlug(a.dataset.slug) || {}); if (html) { f.innerHTML = html; f.hidden = false; } }
       pousser(a);
       if (premier) return;
-      if (MV && anime()) MV.cascade($('.b-fiche', a), { selecteur: '.b-st, .kl, .acc, .date, .b-carte, .pied-u', pas: 40, duree: 300, decalage: 8 });
+      if (MV && anime()) MV.cascade($('.b-fiche', a), { selecteur: '.b-st, .kl, .acc, .date, .b-carte', pas: 40, duree: 300, decalage: 8 });
       // l'affiche dépliée vient en haut de l'écran (une fois sa hauteur prise)
       const aller = () => ecran.scrollTo({ top: Math.max(0, a.offsetTop - 6), behavior: anime() ? 'smooth' : 'auto' });
       if (anime()) setTimeout(aller, 470); else aller();
     };
-    affs.forEach(a => $('.b-dos', a).addEventListener('click', () => {
-      const etait = a.classList.contains('ouvert');
+    // une tranche touchée se déplie ; l'affiche dépliée est tout entière le lien vers sa page (une touche de plus, n'importe où)
+    $('.b-pile', tel).addEventListener('click', e => {
+      if (e.target.closest('.b-aller')) return;
+      const a = e.target.closest('.b-aff'); if (!a) return;
+      if (a.classList.contains('ouvert')) { window.open(lien(bySlug(a.dataset.slug) || {}), '_blank', 'noopener'); return; }
+      if (!e.target.closest('.b-dos')) return;
       affs.forEach(x => { if (x !== a && x.classList.contains('ouvert')) fermer(x); });
-      if (etait) fermer(a); else ouvrir(a, false);
-    }));
+      ouvrir(a, false);
+    });
     if (etatB.ouvert) { const a = affs.find(x => x.dataset.slug === etatB.ouvert); if (a) ouvrir(a, true); }
   }
 
