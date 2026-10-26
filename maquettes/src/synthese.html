@@ -3713,12 +3713,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       TIT.forEach(T => { const rg = document.createRange(); rg.selectNodeContents(T.tt); const ls = [...rg.getClientRects()];
         if (ls.length > 1) T.tt.style.width = Math.ceil(Math.max(...ls.map(l => l.width)) + 1) + 'px'; });
       TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
-      // ce qui s'écrit dans chaque titre (ses lignes, sa date), par rapport à lui : les bras passent dessous (image()) ; et les
-      // deux bouts du texte (tx0, tx1), par rapport à lui aussi : c'est le texte que la tentacule souligne, pas le médaillon
-      TIT.forEach(T => { const r0 = T.el.getBoundingClientRect(), rt = T.tt.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(T.tt);
-        T.tx0 = rt.left - r0.left; T.tx1 = rt.right - r0.left;
-        T.ecrit = [...rg.getClientRects()].map(l => [l.left - r0.left - 3, l.top - r0.top - 3, l.width + 6, l.height + 6]);
-        if (T.q && T.q.offsetWidth) T.ecrit.push([T.q.offsetLeft - 3, T.q.offsetTop - 1, T.q.offsetWidth + 6, T.q.offsetHeight + 3, 1]); });
       if (!mobile) {
         // (la composition tient au-dessus de la bande du menu, en bas du premier écran)
         const hComp = hEcran - hMenu - 40;
@@ -3758,9 +3752,18 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
       el.style.height = H + 'px';
       if (affiche) Menu.sousPieuvre(yMenu);
+      // ce qui s'écrit dans chaque titre (ses lignes, sa date), par rapport à lui : les bras passent dessous (image()) ; et les
+      // deux bouts du texte (tx0, tx1), par rapport à lui aussi : c'est le texte que la tentacule souligne, pas le médaillon.
+      // Mesuré une fois le côté posé (la classe droite renverse le médaillon et aligne la date à droite : mesurée avant, la
+      // date d'un titre de droite partait de sa gauche et son rectangle effaçait les bras jusqu'au bord de l'écran)
+      TIT.forEach(T => T.el.classList.toggle('droite', T.droite));
+      TIT.forEach(T => { const r0 = T.el.getBoundingClientRect(), rt = T.tt.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(T.tt);
+        T.tx0 = rt.left - r0.left; T.tx1 = rt.right - r0.left;
+        T.ecrit = [...rg.getClientRects()].map(l => [l.left - r0.left - 3, l.top - r0.top - 3, l.width + 6, l.height + 6]);
+        if (T.q && T.q.offsetWidth) T.ecrit.push([T.q.offsetLeft - 3, T.q.offsetTop - 1, T.q.offsetWidth + 6, T.q.offsetHeight + 3, 1]); });
       // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le bout tourné vers le bord de
       // l'écran : la tentacule arrive de là, et le souligné va vers le médaillon)
-      TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
+      TIT.forEach(T => { T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
       BRAS.forEach(a => a.t.poser(ox, oy, s));
       attribuer(); tenirTous();
       if (pres) pres.plan = null;   // (la présentation se replanifie sur cette mise en page)
