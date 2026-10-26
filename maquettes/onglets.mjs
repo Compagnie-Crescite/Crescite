@@ -708,7 +708,11 @@ for (const n of names) {
     const docs = await page.evaluate(() => (D.documents || []).filter(d => d.pour === 'pros').map(d => [d.spectacle, d.url]));
     const D_DOCS = slug => new Set(docs.filter(([s]) => s === slug).map(([, u]) => u)).size;
     const titres = new Map(), signale = new Set();
+    let avant = null;
     for (const [vue, hash, attendus, interdits] of VUES) {
+      // (d'un onglet à l'autre d'un même spectacle, la page ne remonte pas : elle se pose sous les menus arrimés, plus bas)
+      const onglet = !!avant && /^#\/spectacle\/[^/?]+\//.test(hash) && avant.split('/').slice(0, 3).join('/') === hash.split('/').slice(0, 3).join('/');
+      avant = hash;
       await page.evaluate(h => { location.hash = h; }, hash);
       await page.waitForTimeout(900);
       // (le débordement se mesure contre la largeur de l'écran demandée : en émulation mobile, une page qui déborde
@@ -869,7 +873,11 @@ for (const n of names) {
       if (etat.debord > 1) log.push(`${tag} ${vue} : débordement horizontal de ${etat.debord}px`);
       if (!etat.h1) log.push(`${tag} ${vue} : aucun h1 visible`);
       // (#/saisons/<saison> mène à sa saison, plus bas dans la page des saisons)
-      if (etat.haut > 2 && vue !== 'accueil' && vue !== 'saison-passee') log.push(`${tag} ${vue} : la page ne remonte pas en haut (scrollY ${etat.haut})`);
+      if (etat.haut > 2 && vue !== 'accueil' && vue !== 'saison-passee' && !onglet) log.push(`${tag} ${vue} : la page ne remonte pas en haut (scrollY ${etat.haut})`);
+      // un onglet du même spectacle : la barre des entrées est à l'écran, arrimée en haut, et le contenu commence sous elle
+      if (onglet) { const o = await page.evaluate(() => { const u = document.querySelector('main .u-onglets'), g = document.querySelector('main .sp-grille'); if (!u || !g) return null;
+          const a = u.getBoundingClientRect(), b = g.getBoundingClientRect(); return { haut: Math.round(a.top), bas: Math.round(a.bottom), contenu: Math.round(b.top) }; });
+        if (!o || o.haut < 0 || o.bas > 160 || Math.abs(o.contenu - o.bas) > 2) log.push(`${tag} ${vue} : d'un onglet à l'autre, la page ne se pose pas sous les menus arrimés (${JSON.stringify(o)})`); }
       // règle 21 : les quatre éléments du menu à portée sur chaque vue, au bureau comme au téléphone
       const pasAPortee = etat.menu.filter(m => !etat.aPortee.includes(m.href));
       if (pasAPortee.length) log.push(`${tag} ${vue} : le menu n'est pas tout entier à portée dans le premier écran (hors du contenu, sans ouvrir de menu) : manque ${pasAPortee.map(m => `« ${m.texte} »`).join(', ')}`);
