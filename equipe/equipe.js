@@ -346,7 +346,7 @@
 
   // ================================================================================================ état
   const E = {
-    session: null, uid: null, moi: null, pret: false, ouverture: false,
+    session: null, uid: null, moi: null, pret: false, ouverture: false, admin: false,
     motDePasse: ARRIVEE.erreur ? '' : ARRIVEE.type === 'recovery' ? 'nouveau' : (ARRIVEE.type === 'invite' || ARRIVEE.type === 'signup') ? 'bienvenue' : '',
     personne: null, privee: null, dates: [], distributions: [], equipes: [], documents: [], spectacles: new Map(),
     feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0, horsLigne: 0, rafraichit: null,
@@ -606,7 +606,7 @@
       if (moi == null) { reinitialiser(); return ecranSansFiche(); }
       E.moi = moi;
       await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
-        chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder()]);
+        chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder(), sonderAdmin()]);
       if (n !== tour) return;
       E.horsLigne = 0;
       garder();
@@ -652,6 +652,10 @@
       } catch (e) { /* sans réseau : la prochaine lecture redemandera */ }
     })).then(() => { if (Object.values(SONDES).includes('inconnu')) sondage = null; });
     return sondage;
+  }
+  // le compte administre-t-il la compagnie ? (crescite_est_admin) : alors l'appui long modifie (voir « modifier »)
+  async function sonderAdmin() {
+    try { const { data, error } = await sb.rpc('crescite_est_admin'); if (!error) E.admin = data === true; } catch (e) { /* hors ligne : ce qu'on savait */ }
   }
   const avecIdeale = () => SONDES.ideale === 'ok';
   const avecSignaler = () => SONDES.signaler === 'ok';
@@ -724,14 +728,14 @@
 
   // la mémoire de la dernière lecture (sans la fiche privée) : pour lire sa saison quand le réseau manque
   function garder() {
-    ecrireStock(MEMOIRE, { v: 2, uid: E.uid, moi: E.moi, quand: E.chargeLe, personne: E.personne,
+    ecrireStock(MEMOIRE, { v: 2, uid: E.uid, moi: E.moi, quand: E.chargeLe, personne: E.personne, admin: !!E.admin,
       dates: E.dates, distributions: E.distributions, equipes: E.equipes, documents: E.documents,
       spectacles: [...E.spectacles.values()], feuilles: [...E.feuilles.values()], notifs: E.notifs, notifsEtat: E.notifsEtat });
   }
   function reprendre(uid) { const m = lireStock(MEMOIRE); return m && (m.v === 1 || m.v === 2) && m.uid === uid ? m : null; }
   function oublier() { ecrireStock(MEMOIRE, null); ecrireStock(MODIFS, null); }
   function appliquer(m) {
-    Object.assign(E, { moi: m.moi, personne: m.personne, privee: null, dates: (m.dates || []).map(d => ({ ...d, nature: natureDe(d), representations: d.representations || [] })),
+    Object.assign(E, { moi: m.moi, personne: m.personne, admin: !!m.admin, privee: null, dates: (m.dates || []).map(d => ({ ...d, nature: natureDe(d), representations: d.representations || [] })),
       distributions: m.distributions || [], equipes: m.equipes || [], documents: m.documents || [],
       spectacles: new Map((m.spectacles || []).map(x => [x.id, x])), feuilles: new Map((m.feuilles || []).map(f => [Number(f.date_id), f])),
       liens: new Map(), erreurLiens: null, chargeLe: m.quand || 0, notifs: m.notifs || [], notifsEtat: m.notifsEtat || 'inconnu' });
@@ -1529,10 +1533,10 @@
       if (l) { l.n++; l.ids.push(r.id); } else lignes.push({ ...r, n: 1, ids: [r.id] });
     }
     const plusieursJours = new Set(reps.map(r => r.jour)).size > 1;
-    return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="${sco ? 'Représentations' : 'Horaires'}">${lignes.map((r, i) => {
+    return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="${sco ? 'Représentations' : 'Horaires'}" data-date="${d.id}">${lignes.map((r, i) => {
       const modif = r.ids.some(id => E.modifs.reps.has(id)), fraiche = modif && r.ids.some(id => Date.now() - E.modifs.reps.get(id) < 20000);
       const cls = [r.annulee && 'annulee', !r.heure && 'sans-heure', modif && 'modifiee', fraiche && 'fraiche'].filter(Boolean).join(' ');
-      return `<li${cls ? ` class="${cls}"` : ''}>
+      return `<li${cls ? ` class="${cls}"` : ''} data-reps="${r.ids.join(',')}">
         ${plusieursJours ? `<span class="h-jour">${i && lignes[i - 1].jour === r.jour ? `<span class="sr">${esc(jourCourt(r.jour))}</span>` : esc(jourCourt(r.jour))}</span>` : ''}
         ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}${r.fin ? `<span class="h-fin">\u2009–\u2009${esc(heureTexte(r.fin))}</span>` : ''}</span>`
           : `<span class="heure vague">${r.n > 1 ? `${esc(quoiSeance(r.n, r.public, nat))}, heures à préciser` : 'heure à préciser'}</span>`}
@@ -1588,7 +1592,7 @@
       E.cartes.set(`d${d.id}`, { lieux: lieuxCarte([d]), mini: true, titre: `De Rouen à ${l.commune || l.nom}${km ? `, environ ${km} km par la route` : ''}` });
       mini = `<figure class="carte-tournee mini" data-carte="d${d.id}"><div class="carte-svg"></div></figure>`;
     }
-    return `<section class="bloc bloc-lieu"${attrU(sp)} aria-labelledby="b-lieu"><h2 id="b-lieu">${ICONES.route}Le lieu</h2>
+    return `<section class="bloc bloc-lieu"${attrU(sp)} aria-labelledby="b-lieu" data-lieu="${l.id}" data-date="${d.id}"><h2 id="b-lieu">${ICONES.route}Le lieu</h2>
       <div class="lieu-grille"><div><p class="lieu-nom">${esc(l.nom || communeDe(l))}</p><p class="lieu-adresse">${lignes.map(esc).join('<br>')}</p>
         ${km ? `<p class="aide">Environ <span data-compter="${km}" data-route aria-hidden="true">${nombre(km)}</span><span class="sr">${nombre(km)}</span>\u00a0km de Rouen par la route.</p>` : ''}
         ${gps ? `<div class="nav-gps-grille">
@@ -1652,7 +1656,7 @@
     const gens = vivante(d) ? quiPart(d) : [], sp = d.spectacle || {}, titre = passee ? 'L’équipe' : 'Qui part';
     if (!gens.length) return `<section class="bloc"${attrU(sp)} aria-labelledby="b-equipe"><h2 id="b-equipe">${ICONES.equipe}${titre}</h2><p class="aide">L’équipe de cette date n’est ${passee ? 'pas' : 'pas encore'} indiquée.</p></section>`;
     return `<section class="bloc"${attrU(sp)} aria-labelledby="b-equipe"><h2 id="b-equipe">${ICONES.equipe}${titre} <span class="compte-nb">· ${gens.length}</span></h2>
-      <ul class="portraits">${gens.map(g => `<li>${avatar(g.personne || { prenom: g.nom.split(' ')[0], nom: g.nom.split(' ').slice(1).join(' ') })}<span class="qui"><b>${esc(g.nom || 'Une personne de l’équipe')}${g.id === E.moi ? ' <span class="vous">vous</span>' : ''}</b>
+      <ul class="portraits" data-date="${d.id}">${gens.map(g => `<li data-personne="${g.id}">${avatar(g.personne || { prenom: g.nom.split(' ')[0], nom: g.nom.split(' ').slice(1).join(' ') })}<span class="qui"><b>${esc(g.nom || 'Une personne de l’équipe')}${g.id === E.moi ? ' <span class="vous">vous</span>' : ''}</b>
         ${g.fonctions.length ? `<span>${esc(g.fonctions.join(', '))}</span>` : ''} ${g.notes.length ? `<em>${esc(g.notes.join(' ; '))}</em>` : ''}</span></li>`).join('')}</ul></section>`;
   }
 
@@ -3486,13 +3490,14 @@
       $('#tot-rembourse').textContent = euros(totRembourse);
       if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
 
+      E.fraisLus = data;
       zone.innerHTML = data.map((item, i) => {
         const cat = CAT_FRAIS[item.categorie] || item.categorie;
         const stClass = STATUT_FRAIS[item.statut] ? item.statut : 'en_attente';
         const quand = estJour(item.date_depense) ? jourCourt(item.date_depense) : item.cree_le ? jourCourt(iso(new Date(item.cree_le))) : '';
         const d = item.date_id != null ? E.dates.find(x => x.id === Number(item.date_id)) : null;
         return `
-          <div class="frais-ligne${neuve && !i && !reduit() ? ' neuve' : ''}">
+          <div class="frais-ligne${neuve && !i && !reduit() ? ' neuve' : ''}" data-frais="${item.id}">
             <span class="badge-statut ${stClass}">${STATUT_FRAIS[stClass]}</span>
             <div>
               <b>${esc(cat)}</b> · <small>${esc(quand)}${d ? ` · ${esc(d.spectacle?.titre || 'Date')}${d.lieu?.commune ? `, ${esc(d.lieu.commune)}` : ''}` : ''}</small>
@@ -3674,6 +3679,7 @@
         const d = dateDe(el);
         if (!d) return [];
         const l = d.lieu, passee = finDe(d) < aujourdhui(), vive = vivante(d), ici = location.hash === `#/date/${d.id}`;
+        const I = G.ICO;
         return [ici ? null : { libelle: 'Ouvrir la date', href: `#/date/${d.id}`, icone: ICONES.chevron },
           l && itineraire(l) ? { libelle: 'Itinéraire', detail: l.nom || l.commune, href: itineraire(l), externe: true, icone: ICONES.route } : null,
           d.feuille && outilFeuille() ? { libelle: 'Feuille de route', detail: `v${d.feuille.version || 1}`, href: `#/feuille/${d.id}`, icone: ICONES.feuille } : null,
@@ -3682,25 +3688,331 @@
           !passee && vive && avecSignaler() ? { libelle: 'Signaler un retard', faire: () => ouvrirModaleRetard(d.id, el.querySelector('a, button') || el), icone: ICONES.alerte } : null,
           !passee && vive && avecIdeale() ? { libelle: 'Note de frais', href: `#/frais?date=${d.id}`, icone: ICONES.euro } : null,
           { separateur: true },
-          { libelle: 'Partager la date', detail: 'le lien de cette page', icone: ICONES.partager, faire: () => partagerMaintenant({ title: `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`, text: `${d.spectacle?.titre || ''} ${quandTexte(d)}${l ? ` · ${l.nom || l.commune}` : ''}`.trim(), url: new URL(`#/date/${d.id}`, location.href).href }, 'Lien de la date copié') }];
+          { libelle: 'Partager la date', detail: 'le lien de cette page', icone: ICONES.partager, faire: () => partagerMaintenant({ title: `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`, text: `${d.spectacle?.titre || ''} ${quandTexte(d)}${l ? ` · ${l.nom || l.commune}` : ''}`.trim(), url: new URL(`#/date/${d.id}`, location.href).href }, 'Lien de la date copié') },
+          // le compte administre : modifier, ici même
+          ...(E.admin ? [{ separateur: true },
+            { libelle: 'Modifier la date…', detail: 'statut, nature, publication, lien, précisions', icone: I.reglages, faire: () => modifierDate(d) },
+            { libelle: natureDe(d) === 'representations' ? 'Les représentations…' : 'Les horaires…', detail: 'ajouter, changer, annuler une séance', icone: ICONES.horloge, faire: () => modifierHoraires(d) },
+            { libelle: 'Qui part…', detail: 'la distribution, les remplaçants', icone: ICONES.equipe, faire: () => modifierEquipe(d) },
+            l ? { libelle: 'Modifier le lieu…', detail: l.nom || l.commune, icone: I.carte, faire: () => modifierLieu(d) } : null,
+            { libelle: 'Suivi interne…', detail: 'organisateur, contact, contrat, notes', icone: I.feuille, faire: () => modifierSuivi(d) },
+            avecChiffres() ? { libelle: 'Les chiffres…', detail: 'jauge, spectateurs, heures d’ateliers', icone: ICONES.planning, faire: () => modifierChiffres(d) } : null,
+            !passee && vive ? { libelle: 'Prévenir l’équipe…', detail: 'un message à toute l’équipe de la date', icone: ICONES.message, faire: () => prevenirEquipe(d) } : null,
+            { libelle: 'Dans l’administration', detail: 'la fiche complète, la feuille de route', href: lienAdmin(`#/representations/${d.id}`), externe: true, icone: I.externe },
+            { separateur: true }, { libelle: 'Supprimer la date…', danger: true, icone: I.poubelle, faire: () => supprimerDate(d) }] : [])];
       } });
+    // un horaire : changer, annuler, retirer la séance (le compte administre)
+    G.menu({ cible: '.horaires li[data-reps]', titre: el => { const d = E.dates.find(x => x.id === Number(el.closest('.horaires')?.dataset.date)); return d ? titreDate(d) : 'Séance'; }, actions: el => {
+      if (!E.admin) return [];
+      const d = E.dates.find(x => x.id === Number(el.closest('.horaires')?.dataset.date)); if (!d) return [];
+      const ids = String(el.dataset.reps || '').split(',').map(Number).filter(Boolean), annulee = el.classList.contains('annulee');
+      return [{ libelle: 'Changer l’heure…', detail: 'toutes les séances de la date', icone: ICONES.horloge, faire: () => modifierHoraires(d) },
+        { libelle: annulee ? 'Rétablir la séance' : 'Annuler la séance', icone: annulee ? ICONES.coche : ICONES.croix, faire: () => annulerSeances(d, ids, !annulee) },
+        { libelle: 'Retirer la séance…', danger: true, icone: G.ICO.poubelle, faire: () => retirerSeances(d, ids) }];
+    } });
+    // le lieu : l'itinéraire, le site, l'adresse ; le modifier (le compte administre)
+    G.menu({ cible: '.bloc-lieu[data-lieu]', titre: el => $('.lieu-nom', el)?.textContent || 'Le lieu', actions: el => {
+      const d = E.dates.find(x => x.id === Number(el.dataset.date)), l = d && d.lieu; if (!l) return [];
+      const site = l.site_web ? urlSure(l.site_web) : '';
+      return [itineraire(l) ? { libelle: 'Itinéraire', href: itineraire(l), externe: true, icone: ICONES.route } : null, site ? { libelle: 'Site du lieu', href: site, externe: true, icone: ICONES.lien } : null,
+        l.adresse ? { libelle: 'Copier l’adresse', icone: G.ICO.copier, faire: () => copier(`${l.nom ? `${l.nom}, ` : ''}${l.adresse}, ${l.commune || ''}`, '', 'Adresse copiée') } : null,
+        E.admin ? { libelle: 'Modifier le lieu…', detail: 'nom, adresse, site, contact, jauge, plateau', icone: G.ICO.reglages, faire: () => modifierLieu(d) } : null];
+    } });
+    // une personne de l'équipe de la date : sa fiche (vous) ; ses coordonnées, sa présence (le compte administre)
+    const nomPortrait = el => ($('.qui b', el)?.textContent || '').replace(/\s*vous\s*$/, '').trim();
+    G.menu({ cible: '.portraits li[data-personne]', titre: el => nomPortrait(el) || 'Une personne', actions: el => {
+      const d = E.dates.find(x => x.id === Number(el.closest('.portraits')?.dataset.date)), id = Number(el.dataset.personne), nom = nomPortrait(el) || 'cette personne';
+      if (!d) return [];
+      const moi = id === Number(E.moi);
+      return [moi ? { libelle: 'Ma fiche', detail: 'mes coordonnées', href: '#/moi', icone: ICONES.moi } : null,
+        E.admin && !moi ? { libelle: 'Coordonnées…', detail: 'téléphone, adresse électronique, ville', icone: G.ICO.tel, faire: () => modifierCoordonnees(id, nom) } : null,
+        E.admin ? { libelle: 'Ne part pas sur cette date', icone: G.ICO.croix, faire: () => basculerPresence(d, id) } : null,
+        E.admin ? { libelle: 'Qui part…', detail: 'toute l’équipe de la date', icone: ICONES.equipe, faire: () => modifierEquipe(d) } : null];
+    } });
+    // une note de frais : la modifier tant qu'elle attend (la sienne) ; la supprimer (le compte administre)
+    G.menu({ cible: '.frais-ligne[data-frais]', titre: 'Note de frais', actions: el => {
+      const item = (E.fraisLus || []).find(x => Number(x.id) === Number(el.dataset.frais)); if (!item) return [];
+      const mienne = Number(item.personne_id) === Number(E.moi), attente = (item.statut || 'en_attente') === 'en_attente';
+      return [(mienne && attente) || E.admin ? { libelle: 'Modifier…', icone: G.ICO.reglages, faire: () => modifierFrais(item) } : null,
+        item.photo_url ? { libelle: 'Voir le justificatif', icone: ICONES.doc, faire: () => $(`[data-justificatif="${CSS.escape(item.photo_url)}"]`)?.click() } : null,
+        E.admin ? { libelle: 'Supprimer…', danger: true, icone: G.ICO.poubelle, faire: () => supprimerFrais(item) } : null];
+    } });
+    // une indisponibilité : la modifier, la retirer
+    G.menu({ cible: '.indispo-ligne[data-indispo]:not(.agenda)', titre: el => $('.il-texte b', el)?.textContent || 'Indisponibilité', actions: el => [
+      { libelle: 'Modifier…', icone: ICONES.crayon, faire: () => $('[data-modifier-indispo]', el)?.click() }, { libelle: 'Retirer', danger: true, icone: ICONES.croix, faire: () => $('[data-retirer-indispo]', el)?.click() }] });
+    // la feuille de route : le PDF, la date ; la modifier dans l'administration (le compte administre)
+    G.menu({ cible: '.vue-feuille', titre: 'Feuille de route', actions: () => {
+      const m = location.hash.match(/^#\/feuille\/(\d+)$/); if (!m) return [];
+      return [{ libelle: 'Télécharger le PDF', icone: ICONES.pdf, faire: () => $('.barre-feuille [data-pdf]')?.click() }, { libelle: 'La date', href: `#/date/${m[1]}`, icone: ICONES.chevron },
+        E.admin ? { libelle: 'Modifier dans l’administration', detail: 'composer, compléter, republier', href: lienAdmin(`#/feuilles/${m[1]}`), externe: true, icone: G.ICO.externe } : null];
+    } });
     G.menu({ cible: '.liste-notifs .notif[data-notif], .bandeau-notif[data-notif]', titre: 'Notification', actions: el => {
       const n = E.notifs.find(x => x.id === Number(el.dataset.notif));
       return [{ libelle: 'Ouvrir', href: el.getAttribute('href'), icone: ICONES.chevron },
         n && !n.lue_le ? { libelle: 'Marquer comme lue', icone: ICONES.coche, faire: () => { vibrer(10); marquerLue(n.id); } } : null,
-        nonLues() > 0 ? { libelle: 'Tout marquer comme lu', icone: ICONES.coche, faire: () => toutMarquerLu($('[data-tout-lu]') || faux('toutLu', '1')) } : null];
+        nonLues() > 0 ? { libelle: 'Tout marquer comme lu', icone: ICONES.coche, faire: () => toutMarquerLu($('[data-tout-lu]') || faux('toutLu', '1')) } : null,
+        n ? { separateur: true } : null, n ? { libelle: 'Effacer', danger: true, icone: ICONES.croix, faire: () => effacerNotif(n) } : null];
     } });
     G.menu({ cible: '.doc-ligne, .puces-docs li', titre: el => (el.querySelector('a, button')?.textContent || 'Document').trim(), actions: el => {
       const a = el.querySelector('a[href]'), p = el.querySelector('[data-partager]');
       return [a ? { libelle: 'Ouvrir', href: a.getAttribute('href'), externe: a.target === '_blank', icone: ICONES.doc } : null,
         p ? { libelle: 'Partager', detail: 'un lien de trente jours', icone: ICONES.partager, faire: () => partager(p) } : null];
     } });
-    G.menu({ cible: 'a.carte-prop[href]', titre: 'Proposition de dates', actions: el => [{ libelle: 'Répondre', href: el.getAttribute('href'), icone: ICONES.question }, { libelle: 'Toutes mes propositions', href: '#/propositions', icone: ICONES.planning }] });
+    // une proposition : répondre d'un geste quand elle ne propose qu'un jour, sinon l'ouvrir
+    G.menu({ cible: 'a.carte-prop[href]', titre: el => (E.dispo.propositions || []).find(p => `#/proposition/${p.id}` === el.getAttribute('href'))?.titre || 'Proposition de dates', actions: el => {
+      const p = (E.dispo.propositions || []).find(x => `#/proposition/${x.id}` === el.getAttribute('href')), j = p && p.statut === 'ouverte' && p.jours.length === 1 ? p.jours[0] : null;
+      return [{ libelle: j ? 'Voir la proposition' : 'Répondre', href: el.getAttribute('href'), icone: ICONES.question },
+        ...(j ? [{ separateur: true }, ...Object.entries(REPONSES).map(([k, l]) => ({ libelle: l, detail: j.moi && j.moi.reponse === k ? 'votre réponse' : '', icone: k === 'oui' ? ICONES.coche : k === 'non' ? ICONES.croix : ICONES.question, faire: () => repondre(j.id, k, j.moi?.commentaire || null) }))] : []),
+        { libelle: 'Toutes mes propositions', href: '#/propositions', icone: ICONES.planning }];
+    } });
     // ← → et le balayage : la date (ou la feuille) d'avant, d'après ; pas depuis le bord (le retour au doigt), ni sur ce qui défile de côté
     G.clavierPrecSuiv(document, { modif: 'aucun', portee: '#contenu' });
     G.glisser(document.body, { gauche: () => $('#contenu .nav-dates [data-gps="1"]:not([disabled])')?.click(), droite: () => $('#contenu .nav-dates [data-gps="-1"]:not([disabled])')?.click(),
       ignorer: t => !!(t.closest && t.closest('[data-pl-defile], .carte-tournee, .frise, .feuille-cadre, .liste-notifs, [data-defile]')) });
   }
+  // ================================================================================================ modifier depuis le téléphone
+  /* L'appui long (brancherGestes) modifie presque tout, quand le compte administre (E.admin) : la date (statut, nature,
+     publication, lien, précisions), chaque horaire (ajouter, changer, annuler, retirer une séance), le lieu (nom, adresse,
+     site, contact, jauge, plateau), qui part, le suivi interne, les chiffres, un message à l'équipe, les coordonnées
+     d'une personne, supprimer la date. Chacun modifie sa note de frais en attente, retire une notification, répond à une
+     proposition d'un geste. Chaque écriture va dans la base (ses règles d'accès décident : GESTES.formulaire le dit si
+     elle refuse), puis l'espace se relit. */
+  const MOD = {
+    STATUTS: [['confirmee', 'Confirmée'], ['option', 'Option'], ['annulee', 'Annulée'], ['reportee', 'Reportée']],
+    NATURES: [['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidence'], ['autre', 'Autre']],
+    PUBLICS: [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['mixte', 'Tout public et scolaire'], ['autre', 'Autre']],
+    CONTRATS: [['', '—'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']],
+  };
+  const F = () => (typeof GESTES !== 'undefined' && GESTES && typeof GESTES.formulaire === 'function' ? GESTES : null);
+  const titreDate = d => `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`;
+  const texteErreur = e => `${motsErreur(e) || 'la base a refusé'}`;
+  // après une écriture : l'espace se relit (discrètement), et le dit
+  async function apresModif(message) {
+    try { await rafraichir({ discret: true }); } catch (e) { /* l'actualisation le dira */ }
+    if (message) annoncer(message);
+  }
+  // les requêtes d'une écriture, l'une après l'autre ; la première erreur arrête et se dit dans la feuille
+  async function serie(requetes) {
+    for (const r of requetes) { const { error } = await r(); if (error) return texteErreur(error); }
+    return true;
+  }
+  function modifierDate(d) {
+    const G = F(); if (!G) return;
+    const publiable = n => n === 'representations' || n === 'residence';
+    G.formulaire({ titre: 'Modifier la date', sousTitre: titreDate(d), champs: [
+      { k: 'statut', t: 'choix', seg: true, l: 'Statut', choix: MOD.STATUTS, valeur: d.statut || 'confirmee' },
+      { k: 'nature', t: 'choix', seg: true, l: 'Nature', choix: MOD.NATURES, valeur: natureDe(d) },
+      { k: 'visible', t: 'case', l: 'Publiée sur le site', valeur: d.visible !== false && d.statut !== 'option', aide: 'Une option ou une répétition n’y va jamais.' },
+      { k: 'public', t: 'choix', l: 'Public', choix: MOD.PUBLICS, valeur: d.public || 'tout_public' },
+      { k: 'lien', t: 'url', l: 'Lien (billetterie ou page du lieu)', valeur: d.lien || '', ph: 'https://…' },
+      { k: 'details', t: 'long', l: 'Précisions affichées sous la ligne', valeur: (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte).map(x => `${x.texte}${x.lien ? ` | ${x.lien}` : ''}`).join('\n'), aide: 'Une par ligne ; « texte | lien » pour y joindre un lien.' },
+    ], enregistrer: async v => {
+      const details = String(v.details || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => { const [texte, lien] = l.split('|').map(x => x.trim()); return lien ? { texte, lien } : { texte }; });
+      const maj = { statut: v.statut, nature: v.nature, visible: !!v.visible && publiable(v.nature) && v.statut !== 'option', public: v.public, lien: v.lien || null, details };
+      const { error } = await sb.from('crescite_dates').update(maj).eq('id', d.id);
+      if (error) return texteErreur(error);
+      await apresModif('Date enregistrée.');
+      return true;
+    } });
+  }
+  function modifierHoraires(d) {
+    const G = F(); if (!G) return;
+    const reps = d.representations.map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', annulee: !!r.annulee, note: r.note || '' }));
+    const sco = natureDe(d) === 'representations';
+    G.formulaire({ titre: sco ? 'Les représentations' : 'Les horaires', sousTitre: titreDate(d), champs: [
+      { k: 'reps', t: 'groupe', l: sco ? 'Une ligne par représentation' : 'Une ligne par séance', ajout: sco ? 'Représentation' : 'Séance', valeur: reps,
+        neuf: () => ({ jour: (reps.length ? reps[reps.length - 1].jour : d.debut) || aujourdhui(), heure: sco ? '20:00' : '', fin: '', public: d.public && d.public !== 'mixte' ? d.public : 'tout_public', annulee: false, note: '' }),
+        champs: [{ k: 'jour', t: 'date', l: 'Jour', requis: true }, { k: 'heure', t: 'heure', l: 'Heure' }, { k: 'fin', t: 'heure', l: 'Fin' },
+          ...(sco ? [{ k: 'public', t: 'choix', l: 'Public', choix: [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']] }] : []),
+          { k: 'note', t: 'texte', l: 'Précision', ph: 'complet, audiodécrite…' }, { k: 'annulee', t: 'case', l: 'Annulée' }] },
+    ], note: 'Le début et la fin de la date suivent ses séances.', enregistrer: async v => {
+      const xs = (v.reps || []).filter(r => estJour(r.jour)), garder = new Set(), requetes = [];
+      for (const r of xs) {
+        const ligne = { jour: r.jour, heure: r.heure || null, fin: r.fin || null, public: r.public || 'tout_public', annulee: !!r.annulee, note: r.note || null };
+        if (r.id) {
+          garder.add(Number(r.id));
+          const avant = reps.find(x => String(x.id) === String(r.id));
+          if (avant && (avant.jour !== ligne.jour || avant.heure !== (ligne.heure || '') || avant.fin !== (ligne.fin || '') || avant.public !== ligne.public || avant.annulee !== ligne.annulee || (avant.note || '') !== (ligne.note || ''))) requetes.push(() => sb.from('crescite_representations').update(ligne).eq('id', Number(r.id)));
+        } else requetes.push(() => sb.from('crescite_representations').insert({ ...ligne, date_id: d.id }));
+      }
+      const retirer = reps.filter(r => !garder.has(Number(r.id))).map(r => Number(r.id));
+      if (retirer.length) requetes.push(() => sb.from('crescite_representations').delete().in('id', retirer));
+      if (!requetes.length) return true;
+      const r = await serie(requetes);
+      if (r !== true) return r;
+      await apresModif('Horaires enregistrés : l’équipe de la date est prévenue.');
+      return true;
+    } });
+  }
+  async function annulerSeances(d, ids, annulee) {
+    const { error } = await sb.from('crescite_representations').update({ annulee }).in('id', ids);
+    if (error) return annoncer(`Séance non changée : ${texteErreur(error)}.`, { erreur: true });
+    await apresModif(annulee ? 'Séance annulée : l’équipe est prévenue.' : 'Séance rétablie.');
+  }
+  async function retirerSeances(d, ids) {
+    if (!confirm(`Retirer ${ids.length > 1 ? 'ces séances' : 'cette séance'} de la date ?`)) return;
+    const { error } = await sb.from('crescite_representations').delete().in('id', ids);
+    if (error) return annoncer(`Séance non retirée : ${texteErreur(error)}.`, { erreur: true });
+    await apresModif('Séance retirée.');
+  }
+  async function modifierLieu(d) {
+    const G = F(), l = d.lieu; if (!G || !l) return;
+    let su = {};
+    try { const { data } = await sb.from('crescite_lieux_suivi').select('contact, jauge, plateau').eq('lieu_id', l.id).maybeSingle(); su = data || {}; } catch (e) { /* sans suivi */ }
+    G.formulaire({ titre: 'Modifier le lieu', sousTitre: l.nom ? `${l.nom}, ${l.commune}` : l.commune, champs: [
+      { k: 'nom', t: 'texte', l: 'Nom du lieu', valeur: l.nom || '' },
+      { k: 'adresse', t: 'texte', l: 'Adresse', valeur: l.adresse || '', ph: 'numéro, rue', aide: `À ${l.commune || ''}${l.departement ? ` (${l.departement})` : ''}.` },
+      { k: 'site_web', t: 'url', l: 'Site du lieu', valeur: l.site_web || '', ph: 'https://…' },
+      { k: 'contact', t: 'long', l: 'Contact du lieu', valeur: su.contact || '', lignes: 2, ph: 'Nom, rôle, téléphone, adresse électronique', aide: 'Jamais publié : pour l’équipe et les feuilles de route.' },
+      { k: 'jauge', t: 'nombre', l: 'Jauge (places)', valeur: su.jauge ?? '', min: 0, pas: 1 },
+      { k: 'plateau', t: 'texte', l: 'Plateau', valeur: su.plateau || '', ph: '12 × 10 m' },
+    ], enregistrer: async v => {
+      const r = await serie([
+        () => sb.from('crescite_lieux').update({ nom: v.nom.trim() || null, adresse: v.adresse.trim() || null, site_web: v.site_web.trim() || null }).eq('id', l.id),
+        () => sb.from('crescite_lieux_suivi').upsert({ lieu_id: l.id, contact: v.contact.trim() || null, jauge: v.jauge == null || v.jauge === '' ? null : Number(v.jauge), plateau: v.plateau.trim() || null }, { onConflict: 'lieu_id' }),
+      ]);
+      if (r !== true) return r;
+      await apresModif('Lieu enregistré.');
+      return true;
+    } });
+  }
+  // qui part : la distribution « en tournée » du spectacle, moins qui ne part pas, plus remplaçants et renforts
+  function candidatsEquipe(d) {
+    const sp = d.spectacle?.id, eq = E.equipes.filter(e => Number(e.date_id) === d.id);
+    const gens = new Map();
+    E.distributions.filter(x => x.spectacle_id === sp && x.en_tournee).forEach(x => { if (!gens.has(x.personne_id)) gens.set(x.personne_id, { id: x.personne_id, nom: nomDe(x.personne), distribution: true, fonction: x.categorie === 'jeu' ? (x.role ? `jeu (${x.role})` : 'jeu') : (x.fonction || CATEGORIES[x.categorie]) }); });
+    eq.forEach(e => { if (!gens.has(e.personne_id)) gens.set(e.personne_id, { id: e.personne_id, nom: nomDe(e.personne), distribution: false, fonction: e.fonction || '' }); });
+    E.distributions.forEach(x => { if (!gens.has(x.personne_id)) gens.set(x.personne_id, { id: x.personne_id, nom: nomDe(x.personne), distribution: false, fonction: '', autre: true }); });
+    const presents = new Set(quiPart(d).map(g => g.id));
+    return [...gens.values()].map(g => ({ ...g, date_id: d.id, part: presents.has(g.id), ligne: eq.find(e => Number(e.personne_id) === Number(g.id)) || null }));
+  }
+  // une personne part, ou ne part plus : la ligne d'écart de la date (crescite_equipes), ou son absence
+  function ecartPour(g, part) {
+    if (g.distribution) return part ? () => sb.from('crescite_equipes').delete().match({ date_id: g.date_id, personne_id: g.id }) : () => sb.from('crescite_equipes').upsert({ date_id: g.date_id, personne_id: g.id, present: false }, { onConflict: 'date_id,personne_id' });
+    return part ? () => sb.from('crescite_equipes').upsert({ date_id: g.date_id, personne_id: g.id, present: true, fonction: g.ligne?.fonction || null }, { onConflict: 'date_id,personne_id' }) : () => sb.from('crescite_equipes').delete().match({ date_id: g.date_id, personne_id: g.id });
+  }
+  function modifierEquipe(d) {
+    const G = F(); if (!G) return;
+    const xs = candidatsEquipe(d), tri = (a, b) => (b.part - a.part) || (b.distribution - a.distribution) || a.nom.localeCompare(b.nom, 'fr');
+    G.formulaire({ titre: 'Qui part', sousTitre: titreDate(d), champs: [
+      { k: 'part', t: 'cases', l: 'Sur cette date', choix: xs.slice().sort(tri).map(g => [String(g.id), g.nom, g.distribution ? `distribution · ${g.fonction}` : g.autre ? 'un autre spectacle' : g.fonction || 'renfort']), valeur: xs.filter(g => g.part).map(g => String(g.id)) },
+    ], note: 'La distribution « en tournée » part d’office ; décochez qui ne part pas, cochez un renfort ou un remplaçant.', enregistrer: async v => {
+      const voulus = new Set((v.part || []).map(String));
+      const requetes = xs.filter(g => voulus.has(String(g.id)) !== g.part).map(g => ecartPour(g, voulus.has(String(g.id))));
+      if (!requetes.length) return true;
+      const r = await serie(requetes);
+      if (r !== true) return r;
+      await apresModif('Équipe de la date enregistrée : les personnes concernées sont prévenues.');
+      return true;
+    } });
+  }
+  async function basculerPresence(d, personneId) {
+    const g = candidatsEquipe(d).find(x => Number(x.id) === Number(personneId));
+    if (!g) return;
+    const { error } = await ecartPour(g, !g.part)();
+    if (error) return annoncer(`Équipe non changée : ${texteErreur(error)}.`, { erreur: true });
+    await apresModif(g.part ? `${g.nom} ne part plus sur cette date.` : `${g.nom} part sur cette date.`);
+  }
+  async function modifierSuivi(d) {
+    const G = F(); if (!G) return;
+    let su = {};
+    try { const { data } = await sb.from('crescite_dates_suivi').select('organisateur, contact, contrat, notes').eq('date_id', d.id).maybeSingle(); su = data || {}; } catch (e) { /* sans suivi */ }
+    G.formulaire({ titre: 'Suivi interne', sousTitre: titreDate(d), champs: [
+      { k: 'organisateur', t: 'texte', l: 'Organisateur', valeur: su.organisateur || '' },
+      { k: 'contact', t: 'long', l: 'Contact', valeur: su.contact || '', lignes: 2, ph: 'Nom, téléphone, adresse électronique' },
+      { k: 'contrat', t: 'choix', seg: true, l: 'Contrat', choix: MOD.CONTRATS, valeur: su.contrat || '' },
+      { k: 'notes', t: 'long', l: 'Notes', valeur: su.notes || '', lignes: 4 },
+    ], note: 'Jamais publié, jamais montré à l’équipe.', enregistrer: async v => {
+      const { error } = await sb.from('crescite_dates_suivi').upsert({ date_id: d.id, organisateur: v.organisateur.trim() || null, contact: v.contact.trim() || null, contrat: v.contrat || null, notes: v.notes.trim() || null }, { onConflict: 'date_id' });
+      if (error) return texteErreur(error);
+      annoncer('Suivi enregistré.');
+      return true;
+    } });
+  }
+  async function modifierChiffres(d) {
+    const G = F(); if (!G) return;
+    let c = {};
+    try { const { data } = await sb.from('crescite_dates_chiffres').select('jauge, spectateurs, heures_ateliers').eq('date_id', d.id).maybeSingle(); c = data || {}; } catch (e) { /* sans chiffres */ }
+    G.formulaire({ titre: 'Les chiffres', sousTitre: titreDate(d), champs: [
+      { k: 'jauge', t: 'nombre', l: 'Jauge (places)', valeur: c.jauge ?? '', min: 0, pas: 1 }, { k: 'spectateurs', t: 'nombre', l: 'Spectateurs', valeur: c.spectateurs ?? '', min: 0, pas: 1 },
+      { k: 'heures_ateliers', t: 'nombre', l: 'Heures d’ateliers', valeur: c.heures_ateliers ?? '', min: 0, pas: 0.5 },
+    ], note: 'Jamais publiés ; l’équipe les lit.', enregistrer: async v => {
+      const n = k => (v[k] == null || v[k] === '' ? null : Number(v[k]));
+      const ligne = { date_id: d.id, jauge: n('jauge'), spectateurs: n('spectateurs'), heures_ateliers: n('heures_ateliers') };
+      const vide = ligne.jauge == null && ligne.spectateurs == null && ligne.heures_ateliers == null;
+      const { error } = vide ? await sb.from('crescite_dates_chiffres').delete().eq('date_id', d.id) : await sb.from('crescite_dates_chiffres').upsert(ligne, { onConflict: 'date_id' });
+      if (error) return texteErreur(error);
+      if (location.hash === `#/date/${d.id}`) chargerChiffres(d.id);
+      annoncer('Chiffres enregistrés.');
+      return true;
+    } });
+  }
+  function prevenirEquipe(d) {
+    const G = F(); if (!G) return;
+    G.formulaire({ titre: 'Prévenir l’équipe', sousTitre: titreDate(d), champs: [
+      { k: 'titre', t: 'texte', l: 'Titre', valeur: 'Message de l’administration', requis: true },
+      { k: 'texte', t: 'long', l: 'Message', valeur: '', lignes: 4, ph: 'Ce que l’équipe de la date doit savoir', requis: true },
+    ], ok: 'Envoyer', note: 'Une notification à chaque personne de l’équipe de cette date, dans son espace et sur son téléphone.', enregistrer: async v => {
+      if (!v.titre.trim() || !v.texte.trim()) return 'Un titre et un message.';
+      const { data, error } = await sb.rpc('crescite_prevenir_equipe', { d: d.id, titre_: v.titre.trim(), texte_: v.texte.trim() });
+      if (error) return texteErreur(error);
+      annoncer(`Message envoyé à ${pluriel(Number(data) || 0, 'personne')}.`);
+      return true;
+    } });
+  }
+  async function supprimerDate(d) {
+    if (!confirm(`Supprimer « ${titreDate(d)} », ses séances, son équipe et sa feuille de route ?`)) return;
+    const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
+    if (error) return annoncer(`Date non supprimée : ${texteErreur(error)}.`, { erreur: true });
+    if (location.hash === `#/date/${d.id}` || location.hash === `#/feuille/${d.id}`) location.hash = '#/saison';
+    await apresModif('Date supprimée.');
+  }
+  async function modifierCoordonnees(personneId, nom) {
+    const G = F(); if (!G) return;
+    if (Number(personneId) === Number(E.moi)) { location.hash = '#/moi'; return; }
+    let pv = {};
+    try { const { data } = await sb.from('crescite_personnes_privees').select('telephone, email, ville').eq('personne_id', personneId).maybeSingle(); pv = data || {}; } catch (e) { /* rien */ }
+    G.formulaire({ titre: 'Coordonnées', sousTitre: nom, champs: [
+      { k: 'telephone', t: 'tel', l: 'Téléphone', valeur: pv.telephone || '', ph: '06 12 34 56 78' }, { k: 'email', t: 'mel', l: 'Adresse électronique', valeur: pv.email || '' }, { k: 'ville', t: 'texte', l: 'Ville de départ', valeur: pv.ville || '' },
+    ], note: 'Jamais publié : pour l’équipe et les feuilles de route.', enregistrer: async v => {
+      const { error } = await sb.from('crescite_personnes_privees').upsert({ personne_id: Number(personneId), telephone: v.telephone.trim() || null, email: v.email.trim() || null, ville: v.ville.trim() || null }, { onConflict: 'personne_id' });
+      if (error) return texteErreur(error);
+      annoncer(`Coordonnées de ${nom} enregistrées.`);
+      return true;
+    } });
+  }
+  function modifierFrais(item) {
+    const G = F(); if (!G) return;
+    G.formulaire({ titre: 'Modifier la note de frais', sousTitre: `${CAT_FRAIS[item.categorie] || item.categorie} · ${euros(item.montant_ttc)}`, champs: [
+      { k: 'categorie', t: 'choix', seg: true, l: 'Catégorie', choix: Object.entries(CAT_FRAIS), valeur: item.categorie || 'autre' },
+      { k: 'montant_ttc', t: 'nombre', l: 'Montant TTC (€)', valeur: item.montant_ttc ?? '', min: 0, pas: 0.01, requis: true },
+      { k: 'date_depense', t: 'date', l: 'Jour de la dépense', valeur: item.date_depense || '' },
+      { k: 'commentaire', t: 'long', l: 'Commentaire', valeur: item.commentaire || '', lignes: 2 },
+    ], danger: E.admin ? { libelle: 'Supprimer', faire: () => supprimerFrais(item) } : null, enregistrer: async v => {
+      if (v.montant_ttc == null || !(Number(v.montant_ttc) > 0)) return 'Un montant.';
+      const { error } = await sb.from('crescite_notes_frais').update({ categorie: v.categorie, montant_ttc: Number(v.montant_ttc), date_depense: v.date_depense || null, commentaire: v.commentaire.trim() || null }).eq('id', item.id);
+      if (error) return texteErreur(error);
+      annoncer('Note de frais modifiée.');
+      if (E.route && E.route.k === 'frais') vueFrais(E.route, { focus: false });
+      return true;
+    } });
+  }
+  async function supprimerFrais(item) {
+    if (!confirm(`Supprimer cette note de frais (${euros(item.montant_ttc)}) ?`)) return;
+    const { error } = await sb.from('crescite_notes_frais').delete().eq('id', item.id);
+    if (error) return annoncer(`Note non supprimée : ${texteErreur(error)}.`, { erreur: true });
+    annoncer('Note de frais supprimée.');
+    if (E.route && E.route.k === 'frais') vueFrais(E.route, { focus: false });
+  }
+  async function effacerNotif(n) {
+    const { error } = await sb.from('crescite_notifications').delete().eq('id', n.id);
+    if (error) return annoncer(`Notification non effacée : ${texteErreur(error)}.`, { erreur: true });
+    E.notifs = E.notifs.filter(x => x.id !== n.id);
+    majNotifs();
+    annoncer('Notification effacée.');
+  }
+  const lienAdmin = h => new URL(`../admin/${h}`, location.href).href;
+
   function brancherRetour() {
     let x0 = null, y0 = 0, t0 = 0, dx = 0, actif = false;
     const contenu = () => $('#contenu'), seuil = () => Math.min(140, window.innerWidth * 0.35);
@@ -3858,7 +4170,7 @@
       let erreur = null;
       try {
         await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
-          chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder()]);
+          chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder(), sonderAdmin()]);
         E.horsLigne = 0; garder();
         E.dispo.mesIndispos = null; E.dispo.agendas = null; E.planningCache = null;
       } catch (e) { erreur = e; }

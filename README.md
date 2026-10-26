@@ -520,8 +520,25 @@ range en colonne à gauche. On y trouve :
   proposition : répondre. La page d'une date (et d'une feuille de route) a **date précédente / date suivante**, deux
   boutons nommés, qu'un **balayage** du doigt vers la gauche ou la droite actionne aussi, comme **← →** au clavier ; le
   planning se balaie de même d'une période à l'autre. Rien ne vibre si l'appareil demande moins d'animations.
-  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium, hors ligne (18 vérifications), après
-  `python3 maquettes/build.py synthese`.
+  Un appui long sur un **horaire**, le **lieu**, une **personne** de « Qui part », une **note de frais**, une
+  **indisponibilité** ou la **feuille de route** a aussi ses actions (itinéraire, site, copier l'adresse, sa fiche,
+  le justificatif, modifier ou retirer l'indisponibilité, le PDF…).
+- **Modifier depuis le téléphone** : quand le compte connecté administre (`crescite_est_admin()`, sondé au
+  chargement et gardé hors ligne), ces mêmes appuis longs **modifient** presque tout, sans passer par l'administration,
+  dans une feuille de modification qui monte du bas (`GESTES.formulaire`, partagée avec l'administration) et dont
+  l'enregistrement relit la page : sur une date, son **statut**, sa nature, sa publication, son lien et ses précisions ;
+  **ses représentations** (jour, heure, fin, public, précision, annulée ; en ajouter, en retirer) ; **qui part** (toute
+  la distribution du spectacle à cocher, les remplaçants) ; **le lieu** (nom, adresse, site, jauge, plateau, contact,
+  accès et notes de suivi) ; **le suivi interne** (organisateur, contact, contrat, cachet, notes) ; **les chiffres**
+  (jauge, spectateurs, heures d'ateliers) ; **prévenir l'équipe** (une notification à chaque personne de la date, via
+  `crescite_prevenir_equipe`) ; **supprimer la date**. Sur un horaire : changer l'heure, annuler ou rétablir la séance,
+  la retirer. Sur une personne : ses **coordonnées** (téléphone, adresse électronique, ville, urgence), « ne part pas
+  sur cette date », qui part. Sur une note de frais : la modifier (la sienne tant qu'elle attend ; toutes pour
+  l'administration), la supprimer. Sur une notification : l'effacer. Sur une proposition ouverte : répondre d'un geste.
+  Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
+  feuille, sans rien perdre de la saisie.
+  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium (31 vérifications : hors ligne, puis sur une base
+  simulée en lecture-écriture où le compte administre), après `python3 maquettes/build.py synthese`.
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
