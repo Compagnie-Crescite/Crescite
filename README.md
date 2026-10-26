@@ -184,8 +184,10 @@ prend son univers, la carte se redessine). La synthèse est chargée à côté p
 règles du contrat (le texte vient de D, la nuit, « réduire les animations », 44 px, 360 px). C'est une page annexe de
 `build.py` (`ANNEXES`) : construite avec les maquettes, publiée dans `docs/`, hors de la planche. **La pile d'affiches a été
 retenue** (octobre 2026) et portée dans la synthèse : jusqu'à 899 px, `#/spectacles` est la pile (`afficheTdm`, `lierPile`,
-styles `.pil-*`) ; une tranche touchée se déplie, sa carte se dessine à la première ouverture, une seule dépliée à la fois,
-gardée quand D change ou que la fenêtre change de côté de 900 px ; au bureau, le sommaire et son aperçu sont inchangés.
+styles `.pil-*`) ; une tranche touchée se déplie, sa carte se dessine à la première ouverture, « découvrir » se pose sur sa
+photo et l'affiche dépliée est tout entière le lien vers sa page (une touche de plus, n'importe où, y mène) ; une seule
+dépliée à la fois, gardée quand D change ou que la fenêtre change de côté de 900 px ; au bureau, le sommaire et son aperçu
+sont inchangés.
 L'édition sur place porte sur chaque texte de la tranche et de la fiche, la photo et la date, sans déplier.
 
 ## Données
