@@ -62,6 +62,7 @@ node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
+python3 maquettes/build.py spectacles-mobile   # la page des spectacles au téléphone, trois propositions (maquettes/dist/spectacles-mobile.html)
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 
@@ -172,6 +173,20 @@ manière). Quatre outils communs, injectés dans chaque maquette :
 Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> m01 synthese`…
 Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
 réactivité, la réservation, les vidéos, la nuit seule, la troupe, le cadrage des photos) sont dans `maquettes/CONTRAT.md`.
+
+**La page des spectacles au téléphone** (prévisualisation, `maquettes/src/spectacles-mobile.html`, en ligne dans
+`docs/spectacles-mobile.html`). Au téléphone, `#/spectacles` de la synthèse se réduit à une liste ; cette page met côte à côte,
+dans trois téléphones et avec les vraies données de la base, trois façons de la refaire, un geste chacune : **A. La
+poursuite** (lire : la ligne qu'on lit s'allume dans son univers, sa photo s'éclaire, un index épinglé des huit vignettes),
+**B. La pile d'affiches** (déplier : les huit tranches tiennent dans l'écran, une tranche touchée se déplie en affiche, avec
+sa fiche et la carte de sa tournée), **C. Le présentoir** (feuilleter : une affiche à la fois, qu'on fait glisser, la page
+prend son univers, la carte se redessine). La synthèse est chargée à côté pour comparer. Chaque proposition tient les
+règles du contrat (le texte vient de D, la nuit, « réduire les animations », 44 px, 360 px). C'est une page annexe de
+`build.py` (`ANNEXES`) : construite avec les maquettes, publiée dans `docs/`, hors de la planche. **La pile d'affiches a été
+retenue** (octobre 2026) et portée dans la synthèse : jusqu'à 899 px, `#/spectacles` est la pile (`afficheTdm`, `lierPile`,
+styles `.pil-*`) ; une tranche touchée se déplie, sa carte se dessine à la première ouverture, une seule dépliée à la fois,
+gardée quand D change ou que la fenêtre change de côté de 900 px ; au bureau, le sommaire et son aperçu sont inchangés.
+L'édition sur place porte sur chaque texte de la tranche et de la fiche, la photo et la date, sans déplier.
 
 ## Données
 

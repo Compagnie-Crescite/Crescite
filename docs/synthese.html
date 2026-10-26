@@ -1084,8 +1084,8 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
    tournée », qui respire) à la couleur du spectacle ; la ligne survolée, choisie au clavier ou montrée prend cette couleur
    et le filet souligne son titre. À droite, épinglé, l'aperçu qui la suit, dans l'univers du spectacle (ses couleurs, sa
    lueur, son motif, sa police de titre) : sa photo et la carte de ses tournées, son lieu et son temps, sa création, son
-   action culturelle, son accroche, sa prochaine date (ou son annonce) et le lien vers sa page. Jusqu'à 899 px, la liste
-   seule : chaque ligne avec sa vignette, sa création, son lieu et son temps, sa prochaine date. */
+   action culturelle, son accroche, sa prochaine date (ou son annonce) et le lien vers sa page. Jusqu'à 899 px, la pile
+   d'affiches (plus bas, .pil-*) : les huit tranches dans l'écran, l'affiche dépliée d'une touche. */
 .tdm { display: grid; grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); min-height: calc(100svh - var(--haut)); }
 .tdm-g { min-width: 0; padding: 0 var(--gout) clamp(40px, 6vw, 72px); }
 .tdm-g .page-titre { padding-bottom: clamp(20px, 2.6vw, 32px); }
@@ -1110,7 +1110,6 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 .tdm-dek { grid-area: dek; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 18px; min-width: 0; font-size: .9rem; line-height: 1.45; color: var(--gris); }
 .tdm-tag { margin-left: auto; font: 700 .68rem/1.4 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--c); white-space: nowrap; }
 .tdm-tag.vit::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: .12em; animation: respire 2.4s ease-in-out infinite; }
-.tdm-x { display: none; }
 /* (Bérénice, l'arène : ses titres en capitales, comme sur sa page) */
 .tdm-i[data-motif="arene"] .tdm-t, .u-arene .tdm-pt { text-transform: uppercase; }
 .tdm-a:is(:hover, :focus-visible, .est-actif) { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 11%, transparent), transparent 88%); box-shadow: inset 3px 0 0 var(--c); }
@@ -1158,23 +1157,60 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 @media (max-width: 899px) {
   .tdm { display: block; min-height: 0; }
   .tdm-pv { display: none; }
-  .tdm-a { grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "ligne ligne" "dek dek" "v x"; align-items: start; column-gap: 14px; row-gap: 4px; margin: 0; padding: 18px 0 20px; }
-  .tdm-a:is(:hover, .est-actif):not(:focus-visible) { background: none; box-shadow: none; }
-  .tdm-a:is(:hover, .est-actif):not(:focus-visible) .tdm-t { color: inherit; }
-  .tdm-a:is(:hover, .est-actif):not(:focus-visible) .tt { background-size: 0 2px; }
-  .tdm-fil { display: none; }
-  .tdm-ligne { justify-content: space-between; }
-  .tdm-t { font-size: calc(1.9rem * var(--tk, 1)); line-height: 1.08; }
-  .tdm-v { width: 112px; height: auto; aspect-ratio: 3 / 2; margin-top: 10px; border-radius: 4px; }
-  .tdm-x { grid-area: x; display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 10px; font-size: .95rem; line-height: 1.45; }
-  .tdm-x > span, .tdm-suite .k { display: block; }
-  .tdm-cr { font: 700 .7rem/1.5 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
-  .tdm-suite .k { margin-bottom: 1px; font: 700 .68rem/1.4 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
 }
-@media (max-width: 599px) {
-  .tdm-dek { flex-direction: column; align-items: flex-start; gap: 2px; }
-  .tdm-tag { margin-left: 0; }
-}
+
+/* ———— la page des spectacles au téléphone (jusqu'à 899 px) : la pile d'affiches ————
+   Les huit spectacles tiennent dans l'écran, une tranche d'affiche chacun : sa photo cadrée sur sa zone d'intérêt (CADRAGE)
+   sous un voile de son univers, son titre dans sa police, son année, son état (« En création » ; « en tournée », qui respire)
+   et sa prochaine date. On touche une tranche : l'affiche se déplie (la photo s'ouvre, le voile tourne, puis la fiche arrive
+   en cascade : son sous-titre, son lieu et son temps, sa création, son action culturelle, son accroche, sa prochaine date, la
+   carte de sa tournée dont les bras poussent depuis Rouen, « découvrir ») ; une seule ouverte à la fois, la toucher encore la
+   replie. La hauteur se déplie en CSS (grid-template-rows, la hauteur de la tranche) : rien n'est mesuré. Au bureau, le
+   sommaire et son aperçu restent tels quels. Choisie parmi trois propositions (docs/spectacles-mobile.html). */
+.tdm-g .pil-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0 10px; }
+.pil-tete h1 { font-size: 1.55rem; }
+.pil-sai { font: 700 .66rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--saison-texte); text-decoration: none; white-space: nowrap; }
+a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
+.pil { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 0 -6px; padding: 0 0 22px; }
+.pil-aff { border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
+.pil-h { margin: 0; }
+.pil-dos { position: relative; display: block; width: 100%; height: 72px; padding: 0; border: 0; background: var(--u-fond); color: var(--u-texte); font: inherit; text-align: left; cursor: pointer; overflow: hidden; transition: height .45s var(--mv-courbe); }
+.pil-dos:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -3px; }
+.pil-aff.ouvert .pil-dos { height: 214px; }
+.pil-ph { position: absolute; inset: 0; display: block; }
+.pil-ph img { width: 100%; height: 100%; object-fit: cover; transition: scale .7s var(--mv-courbe); }
+.pil-dos:hover .pil-ph img { scale: 1.03; }
+.pil-voile, .pil-voile2 { position: absolute; inset: 0; transition: opacity .45s; }
+.pil-voile { background: linear-gradient(90deg, color-mix(in srgb, var(--u-fond) 94%, transparent) 36%, color-mix(in srgb, var(--u-fond) 55%, transparent) 72%, color-mix(in srgb, var(--u-fond) 30%, transparent)); }
+.pil-voile2 { background: linear-gradient(180deg, transparent 28%, color-mix(in srgb, var(--u-fond) 80%, transparent) 72%, var(--u-fond)); opacity: 0; }
+.pil-aff.ouvert .pil-voile { opacity: 0; }
+.pil-aff.ouvert .pil-voile2 { opacity: 1; }
+.pil-txt { position: absolute; left: 14px; right: 14px; bottom: 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: last baseline; text-shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 2px 14px rgba(0, 0, 0, .5); }
+.pil-t { min-width: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: calc(1.45rem * var(--tk, 1)); line-height: 1.02; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .45s var(--mv-courbe); }
+.pil-aff.ouvert .pil-t { white-space: normal; font-size: calc(2.1rem * var(--tk, 1)); text-wrap: balance; }
+.u-arene .pil-t { text-transform: uppercase; }
+.pil-an { font: 600 .8rem/1 var(--texte); font-variant-numeric: tabular-nums; }
+.pil-sous { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; min-width: 0; margin-top: 3px; font-size: .82rem; line-height: 1.4; }
+.pil-etat { flex: none; font: 700 .66rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); white-space: nowrap; }
+.pil-etat.vit::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: .12em; animation: respire 2.4s ease-in-out infinite; }
+.pil-pro { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pil-aff.ouvert .pil-pro { display: none; }
+.pil-corps { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--mv-courbe); }
+.pil-aff.ouvert .pil-corps { grid-template-rows: 1fr; }
+.pil-in { min-height: 0; overflow: hidden; }
+.pil-fiche { display: flex; flex-direction: column; gap: 13px; padding: 14px 16px 18px; }
+.pil-st { margin: -4px 0 0; font-size: .95rem; color: var(--u-texte2); }
+.pil-fiche .tdm-k { font-size: .72rem; }
+.pil-acc { margin: 0; font-size: 1.02rem; line-height: 1.5; color: var(--u-texte); text-wrap: pretty; }
+.pil-date { display: flex; flex-direction: column; gap: 2px; margin: 0; color: var(--u-texte); }
+.pil-date .k { font: 700 .68rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.pil-date .tdm-d { font-weight: 600; }
+.pil-fiche .tdm-carte { padding-top: 10px; }
+.pil-pied { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin: 0; }
+.pil-pied .bu { min-height: 44px; font-size: .86rem; letter-spacing: .06em; text-transform: uppercase; }
+.still :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img) { transition: none; }
+.still .pil-etat.vit::before { animation: none; }
+@media (prefers-reduced-motion: reduce) { :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img) { transition: none; } .pil-etat.vit::before { animation: none; } }
 
 /* la fiche « programmer » (la 05) : le catalogue de #/espace-pro/programmer. La photo à gauche, dans l'univers du spectacle ;
    à droite sa création, son titre dans sa police, le nombre de ses représentations en grand, ses faits en pièces, sa fiche,
@@ -10022,8 +10058,9 @@ const CREATURE = (() => {
      la carte de ses tournées, son lieu et son temps, sa création, son action culturelle, son accroche, sa prochaine date tout
      public (ou son annonce, en création) et le lien vers sa page. L'aperçu se relaie : un fondu, ses lignes arrivent l'une
      après l'autre (MOUVEMENT.cascade) et, la première fois qu'il paraît, les bras de sa carte poussent depuis Rouen. Au
-     téléphone, la liste seule, chaque ligne avec sa vignette, sa création, son lieu et son temps, sa prochaine date. Relu dans
-     D à chaque rendu ; le spectacle de l'aperçu est gardé d'une visite à l'autre (et quand D change, la vue se refait sur lui). */
+     téléphone (jusqu'à 899 px), la pile d'affiches (afficheTdm, lierPile) : les huit tranches dans l'écran, l'affiche dépliée
+     d'une touche, avec sa fiche et la carte de sa tournée. Relu dans D à chaque rendu ; le spectacle de l'aperçu, comme
+     l'affiche dépliée, sont gardés d'une visite à l'autre (et quand D change, la vue se refait sur eux). */
   let tdmChoisi = null;
   // (les polices de titre n'ont pas la même taille apparente : le coefficient de chacune, celui de la 08)
   const TK = { 'Anton': .9, 'Space Grotesk': .9, 'Ubuntu': .92, 'Cormorant Garamond': 1.1, 'Bodoni Moda': .94, 'IM Fell English': 1.02, 'IM Fell French Canon': .98 };
@@ -10051,20 +10088,14 @@ const CREATURE = (() => {
     f.innerHTML = carte({ lieux, passe, titre: s.titre, interactif: false, simple: lieux.length > 14 });
     echelle();
   }
-  // (la fenêtre s'élargit sur la page : l'aperçu se fait, sur la ligne montrée)
-  ETROIT_TDM.addEventListener('change', () => {
-    const pv = vue === 'spectacles' && largeTdm() ? $('.tdm-pv-in', main) : null;
-    if (!pv) return;
-    const i0 = Math.max(0, $$('.tdm-a', main).findIndex(a => a.classList.contains('est-actif')));
-    if (!pv.firstElementChild) pv.innerHTML = D.shows.map((s, i) => apercuTdm(s, i, i === i0)).join('');
-    montrerTdm(i0, false);
-  });
+  // (la fenêtre passe d'un côté à l'autre de 900 px sur la page : la vue se refait en place, le sommaire et son aperçu sur la
+  // ligne montrée, ou la pile sur l'affiche dépliée)
+  ETROIT_TDM.addEventListener('change', () => { if (vue === 'spectacles') refaire(); });
   const ligneTdm = (s, i, actif) => `<li class="tdm-i" data-motif="${esc(mo(s))}" data-mv-nom="sp-${esc(s.slug)}" style="${styleTdm(s)}">
       <a class="tdm-a${actif ? ' est-actif' : ''}" href="${lienSp(s.slug)}" data-i="${i}" data-slug="${esc(s.slug)}">
         <span class="tdm-v"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" width="112" height="75" loading="lazy" decoding="async"></span>
         <span class="tdm-ligne"><span class="tdm-t"><span class="tt"${edS(s, 'titre')}>${esc(s.titre)}</span></span><span class="tdm-fil" aria-hidden="true"></span>${s.annee ? `<span class="tdm-an">${esc(s.annee)}</span>` : ''}</span>
         <span class="tdm-dek">${s.sousTitre ? `<span class="tdm-st"${edS(s, 'sousTitre')}>${s.sousTitre}</span>` : ''}${badgeDe(s) ? `<span class="tdm-tag${s.statut ? '' : ' vit'}">${badgeDe(s)}</span>` : ''}</span>
-        <span class="tdm-x">${s.creation ? `<span class="tdm-cr"${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${suiteTdm(s, 'span', 'tdm-suite')}</span>
       </a></li>`;
   function apercuTdm(s, i, actif) {
     const A = s.actionCulturelle, L0 = lieuxTdm(s), k = L0.lieux.length + L0.passe.length > 0;
@@ -10079,10 +10110,68 @@ const CREATURE = (() => {
         <div class="tdm-pied">${suiteTdm(s, 'p', 'tdm-date') || '<span></span>'}<a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></div>
       </div>`;
   }
+  // la pile d'affiches (au téléphone) : une tranche par spectacle, l'affiche dépliée d'une touche ; l'affiche dépliée est
+  // gardée d'un rendu à l'autre (D qui change, la fenêtre qui se resserre)
+  let pileOuverte = null;
+  function afficheTdm(s) {
+    const d = D.dates.find(x => x.slug === s.slug && !x.scolaire), A = s.actionCulturelle, id = `pil-${s.slug}`, ouvert = pileOuverte === s.slug;
+    const L0 = lieuxTdm(s), k = L0.lieux.length + L0.passe.length > 0;
+    return `<li class="pil-aff ${uClasse(s)}${ouvert ? ' ouvert' : ''}" style="${styleTdm(s)}" data-slug="${esc(s.slug)}" data-mv-nom="sp-${esc(s.slug)}">
+      <h2 class="pil-h"><button type="button" class="pil-dos" id="${id}-b" aria-expanded="${ouvert}" aria-controls="${id}-c">
+        <span class="pil-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" decoding="async"></span><span class="pil-voile" aria-hidden="true"></span><span class="pil-voile2" aria-hidden="true"></span>
+        <span class="pil-txt"><span class="pil-t"${edS(s, 'titre')}>${esc(s.titre)}</span>${s.annee ? `<span class="pil-an">${esc(s.annee)}</span>` : '<span></span>'}
+          <span class="pil-sous">${badgeDe(s) ? `<span class="pil-etat${s.statut ? '' : ' vit'}">${badgeDe(s)}</span>` : ''}${d && !s.statut ? `<span class="pil-pro"${dateId(d)}>${esc(d.ligne)}</span>` : ''}</span></span>
+      </button></h2>
+      <div class="pil-corps" id="${id}-c" role="region" aria-labelledby="${id}-b"${ouvert ? '' : ' inert'}><div class="pil-in"><div class="pil-fiche">
+        ${s.sousTitre ? `<p class="pil-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+        <p class="tdm-k">${petit(mo(s))}<span class="tdm-kl"><span class="tdm-kk">${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${s.creation ? `<span${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${A && A.type ? `<span${edS(s, 'actionCulturelle', 'type')}>${esc(A.type)}</span>` : ''}</span></span></p>
+        ${s.accroche ? `<p class="pil-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
+        ${suiteTdm(s, 'p', 'pil-date')}
+        ${k ? `<figure class="tdm-carte" data-carte="${esc(s.slug)}" hidden></figure>` : ''}
+        <p class="pil-pied"><a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></p>
+      </div></div></div>
+    </li>`;
+  }
+  // une tranche touchée se déplie (sa carte se dessine à la première ouverture, ses bras poussent, sa fiche arrive en
+  // cascade, puis l'affiche vient en haut de l'écran) ; une seule dépliée à la fois, la toucher encore la replie. En mode
+  // édition, les textes, la photo et la date de la tranche s'éditent sans la déplier (EDITION arrête le clic avant nous)
+  function lierPile() {
+    const pile = $('.pil', main); if (!pile) return;
+    const affs = $$('.pil-aff', pile), haut = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--haut')) || 56;
+    const fermer = li => { li.classList.remove('ouvert'); $('.pil-dos', li).setAttribute('aria-expanded', 'false'); $('.pil-corps', li).setAttribute('inert', ''); if (pileOuverte === li.dataset.slug) pileOuverte = null; };
+    const deplier = (li, deja) => {
+      li.classList.add('ouvert'); pileOuverte = li.dataset.slug;
+      $('.pil-dos', li).setAttribute('aria-expanded', 'true'); $('.pil-corps', li).removeAttribute('inert');
+      const f = $('.tdm-carte[data-carte]', li);
+      if (f) { carteTdm(li); f.hidden = false; }
+      const svg = $('svg.carte', li);
+      if (deja) { if (svg) pousser(svg); return; }
+      if (svg) bientot(() => pousser(svg));
+      if (MV && motionOK()) MV.cascade($('.pil-fiche', li), { selecteur: '.pil-st, .tdm-k, .pil-acc, .pil-date, .tdm-carte, .pil-pied', pas: 40, duree: 300, decalage: 8 });
+      const aller = () => scrollTo({ top: Math.max(0, li.getBoundingClientRect().top + scrollY - haut() - 8), behavior: motionOK() ? 'smooth' : 'instant' });
+      if (motionOK()) setTimeout(aller, 470); else aller();
+    };
+    pile.addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('.pil-dos'); if (!b) return;
+      const li = b.closest('.pil-aff'), etait = li.classList.contains('ouvert');
+      affs.forEach(x => { if (x !== li && x.classList.contains('ouvert')) fermer(x); });
+      if (etait) fermer(li); else deplier(li, false);
+    });
+    const deja = pileOuverte ? affs.find(x => x.dataset.slug === pileOuverte) : null;
+    if (deja) deplier(deja, true);
+  }
   function spectacles() {
     vue = 'spectacles';
     const sh = D.shows, i0 = Math.max(0, sh.findIndex(s => s.slug === tdmChoisi)), S0 = (S.saisons || [])[0] || {}, ms = menuDe('saisons');
     tdmChoisi = sh[i0] ? sh[i0].slug : null;
+    if (!largeTdm()) {
+      main.innerHTML = `<section class="tdm"><div class="tdm-g">
+        <div class="page-titre pil-tete"><h1 id="tdm-h" tabindex="-1">${esc(MENU.spectacles.texte)}</h1>${S0.titre ? (ms ? `<a class="pil-sai" href="${esc(ms.href)}">${esc(S0.titre)}</a>` : `<span class="pil-sai">${esc(S0.titre)}</span>`) : ''}</div>
+        <ol class="pil" aria-labelledby="tdm-h">${sh.map(afficheTdm).join('')}</ol>
+      </div></section>`;
+      lierPile();
+      return { titre: MENU.spectacles.texte, menu: 'spectacles' };
+    }
     main.innerHTML = `<section class="tdm">
       <div class="tdm-g">
         <div class="page-titre"><h1 id="tdm-h" tabindex="-1">${esc(MENU.spectacles.texte)}</h1>${trait()}</div>
