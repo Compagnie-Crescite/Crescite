@@ -819,6 +819,8 @@ async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
   const tableau = typeof TABLEAU !== 'undefined' ? TABLEAU.charger() : null;   // la disposition du tableau de bord (tableau.js) : ne lève jamais d'erreur
+  // la tournée vue par l'équipe (le seizième script) : les présences confirmées et les créneaux libres proposés ; null sans le script
+  const tournee = Promise.all([tout('crescite_presences', 'date_id').then(x => x, () => null), tout('crescite_creneaux', 'id').then(x => x, () => null)]);
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
   const facultative = table => tout(table, 'id').then(x => { ideale = true; return x; }, () => []);   // (par id : des pages de 1 000 qui ne se chevauchent pas)
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
@@ -830,6 +832,8 @@ async function chargerTout() {
   Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad,
     prospects: pr, frais: fr, materiel: mt, devis: dv, ideale });
   await equipe;
+  const [ps, cr] = await tournee;
+  E.presences = ps || []; E.creneaux = cr || []; E.tourneeInstallee = !!ps;
   const c = await chiffres;
   E.chiffres = c || []; E.chiffresInstalles = !!c;
   if (ideale) await lireAlertes();

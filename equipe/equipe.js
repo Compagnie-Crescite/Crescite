@@ -87,6 +87,12 @@
   const AG = typeof AGENDA !== 'undefined' ? AGENDA : null;
   const TT = typeof TENTACULES !== 'undefined' ? TENTACULES : null;
   const FRANCE = typeof CRESCITE_CARTE !== 'undefined' && CRESCITE_CARTE && CRESCITE_CARTE.projection && CRESCITE_CARTE.contour ? CRESCITE_CARTE : null;
+  // les extensions (tournee.js, chargé après ce fichier) : des blocs, des gestes et des vues posés dans l'application
+  // sans toucher à ce fichier ; chaque crochet est facultatif, une erreur dans l'un n'arrête rien
+  const EXT = () => (window.CRESCITE_EXT && typeof window.CRESCITE_EXT === 'object' ? window.CRESCITE_EXT : {});
+  const extHtml = (k, ...a) => { const f = EXT()[k]; if (typeof f !== 'function') return ''; try { return f(...a) || ''; } catch (e) { console.error(e); return ''; } };
+  const extListe = (k, ...a) => { const f = EXT()[k]; if (typeof f !== 'function') return []; try { return (f(...a) || []).filter(Boolean); } catch (e) { console.error(e); return []; } };
+  const extAppel = (k, ...a) => { const f = EXT()[k]; if (typeof f !== 'function') return null; try { return f(...a); } catch (e) { console.error(e); return null; } };
   const tt = (f, ...a) => { if (TT && typeof TT[f] === 'function') { try { return TT[f](...a); } catch (e) { /* le décor ne casse rien */ } } return null; };
   const outilFeuille = () => (typeof FEUILLE !== 'undefined' && FEUILLE && typeof FEUILLE.html === 'function' ? FEUILLE : null);
   // les tentacules : chaque geste leur répond ; chaque changement de vue en fait remonter une, à la couleur de la date visée
@@ -697,7 +703,7 @@
     const rs = await Promise.all([
       sb.rpc('crescite_ma_tournee'),
       sb.from('crescite_personnes').select('id, slug, prenom, nom, metiers, photo, photo_publique').eq('id', moi).maybeSingle(),
-      sb.from('crescite_personnes_privees').select('personne_id, email, telephone, ville, regime, urgence').eq('personne_id', moi).maybeSingle(),
+      sb.from('crescite_personnes_privees').select('personne_id, email, telephone, ville, urgence').eq('personne_id', moi).maybeSingle(),
       sb.from('crescite_distributions').select(`id, spectacle_id, personne_id, categorie, fonction, role, alternance, en_tournee, ordre, personne:crescite_personnes(${P})`).order('ordre'),
       sb.from('crescite_equipes').select(`date_id, personne_id, present, fonction, note, personne:crescite_personnes(${P})`),
       sb.from('crescite_documents').select('id, spectacle_id, type, titre, fichier, url, pour, ordre').order('ordre').order('titre'),
@@ -736,6 +742,7 @@
       feuilles: new Map((fe.data || []).map(f => [Number(f.date_id), f])),
       chargeLe: Date.now(),
     });
+    try { await extAppel('apresCharger'); } catch (e) { console.error(e); }
   }
 
   // la mémoire de la dernière lecture (sans la fiche privée) : pour lire sa saison quand le réseau manque
@@ -943,6 +950,7 @@
 
   // ================================================================================================ les adresses et les transitions
   function lireRoute(h = location.hash) {
+    const x = extAppel('lireRoute', h); if (x) return x;
     let m = h.match(/^#\/date\/(\d+)$/);
     if (m) return { k: 'date', id: +m[1], onglet: 'saison', profondeur: 1, hash: h };
     if ((m = h.match(/^#\/feuille\/(\d+)$/))) return { k: 'feuille', id: +m[1], onglet: 'feuilles', profondeur: 1, hash: h };
@@ -983,7 +991,7 @@
     E.route = r; E.vue = r.k; E.rafraichi = !!o.rafraichir;
     const y = o.rafraichir ? window.scrollY : sens === 'arriere' || (r.profondeur === 0 && sens !== 'aucun') ? (E.defil[r.hash] || 0) : 0;
     const rendre = () => {
-      try { VUES[r.k](r, { focus: !o.arrivee && !o.rafraichir && sens !== 'arriere' }); } catch (e) { console.error(e); }
+      try { (VUES[r.k] || (EXT().vues || {})[r.k])(r, { focus: !o.arrivee && !o.rafraichir && sens !== 'arriere' }); } catch (e) { console.error(e); }
       window.scrollTo(0, y);
       if (sens === 'arriere') { const h = E.declencheur[r.hash], el = h && $(`#contenu a[href="${CSS.escape(h)}"]`); (el || $('#contenu h1'))?.focus({ preventScroll: true }); }
     };
@@ -1085,7 +1093,7 @@
     if (attente.length) principal.push(`<div class="o-props">${cartesPropositions(attente)}</div>`);
     principal.push(prochaine ? `<div class="o-heros">${heros(prochaine)}</div>`
       : `<div class="o-heros">${etatVide('calendrier', E.dates.length ? 'Pas de date à venir pour l’instant' : 'Votre saison commence ici', 'Dès que l’administration vous inscrira sur une date, elle apparaîtra ici, avec ses horaires, son lieu et sa feuille de route.')}</div>`);
-    principal.push(jourJ());
+    principal.push(jourJ(), extHtml('blocsSaison'));
     if (suite.length) principal.push(`<section class="o-suite" aria-labelledby="t-suite"><h2 class="titre-section" id="t-suite">${prochaine ? 'Ensuite' : 'À venir'}</h2>${parMois(suite)}</section>`);
     if (passees.length) principal.push(`<section class="o-passees" aria-labelledby="t-passees"><h2 class="titre-section" id="t-passees">Dates passées</h2><div class="saisons">${saisonsPassees(passees)}</div></section>`);
     cote.push(chiffres(), carteSaison());
@@ -1243,7 +1251,7 @@
     const sp = d.spectacle || {}, l = d.lieu;
     return `<section class="jourj o-jourj"${attrU(sp)} aria-labelledby="t-jourj"><h2 id="t-jourj">${ICONES.horloge}<span>Aujourd’hui · ${esc(sp.titre || '')}${l ? ` à ${esc(l.commune || l.nom)}` : ''}</span></h2>
       ${frise(lignes, { unJour: true })}
-      ${d.feuille ? `<p class="liens"><a class="btn petit" href="#/feuille/${d.id}">${ICONES.feuille}Toute la feuille de route</a></p>` : ''}</section>`;
+      <p class="liens">${extHtml('jourJ', d)}${d.feuille ? `<a class="btn petit" href="#/feuille/${d.id}">${ICONES.feuille}Toute la feuille de route</a>` : ''}</p></section>`;
   }
   // le planning d'une date : FEUILLE.planning s'il existe, sinon le planning de la feuille (contenu.planning), sinon les séances
   function lignesPlanning(d, f) {
@@ -1510,6 +1518,7 @@
       if (modifierDateEnEquipe()) gestes.push(`<button type="button" class="geste" data-modifier-date="${d.id}" aria-haspopup="dialog">${ICONES.crayon}<span>Modifier</span><span class="sr"> : l’horaire et les précisions de cette date</span></button>`);
       if (avecIdeale()) gestes.push(`<a class="geste" href="#/frais?date=${d.id}">${ICONES.euro}<span>Frais</span><span class="sr"> : ajouter une note de frais pour cette date</span></a>`);
     }
+    gestes.push(...extListe('gestesDate', d, { passee, vive }));
     if (gestes.length) html += `<div class="gestes"${attrU(sp)}>${gestes.join('')}</div>`;
     html += navDates(d, 'date');
     const precisions = (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte);
@@ -1520,8 +1529,9 @@
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
         ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
     }
-    html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d);
+    html += extHtml('blocsDate', d, { passee, vive, f }) + blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d);
     afficher(r, sp.titre || 'Date', html, { focus });
+    extAppel('apresDate', d, { passee, vive, f });
     if (avecChiffres()) chargerChiffres(d.id);
     preparerPartages(documentsDe(d.spectacle?.id).filter(x => x.type === 'fiche_technique'));
     if (avecIdeale()) chargerChecklistCamion(d.id, d.spectacle?.id);
@@ -1689,6 +1699,7 @@
     if (ETATS[d.statut]) xs.push(`<span class="etat ${d.statut}">${ETATS[d.statut]}</span>`);
     if (E.modifs.dates.has(d.id)) xs.push('<span class="etat maj">Mise à jour</span>');
     if (decompteTexte) xs.push(`<span class="etat bientot">${esc(decompteTexte)}</span>`);
+    xs.push(...extListe('etiquettes', d));
     return xs.length ? `<p class="etiquettes">${xs.join(' ')}</p>` : '';
   }
   // un billet : une date de la saison (le spectacle, les jours, l'état, les horaires, le lieu), qui s'ouvre en sa page ;
@@ -1823,7 +1834,8 @@
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
-    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
+    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div>${extHtml('blocsFeuille', d, f)}</div>`, { focus });
+    extAppel('apresFeuille', d, f);
     // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
     const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
     $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
@@ -2028,7 +2040,7 @@
   function vueNotifications(r, { focus }) {
     const ns = E.notifs, n = nonLues();
     let html = `<div class="titre-vue titre-notifs"><div><h1>Notifications</h1><p class="sous">${E.notifsEtat === 'absent' ? 'Bientôt dans l’application' : n ? pluriel(n, 'non lue', 'non lues') : ns.length ? 'Tout est lu' : 'Les nouvelles de la compagnie'}</p></div>
-      ${ns.length ? `<button type="button" class="btn petit" data-tout-lu${n ? '' : ' disabled'}>${ICONES.coche}Tout marquer comme lu</button>` : ''}</div>`;
+      ${ns.length ? `<button type="button" class="btn petit" data-tout-lu${n ? '' : ' disabled'}>${ICONES.coche}Tout marquer comme lu</button>` : ''}</div>${extHtml('bandeauNotifs')}`;
     if (E.notifsEtat === 'absent') html += etatVide('cloche', 'Les notifications arrivent bientôt', 'Une feuille de route publiée, des horaires changés, une nouvelle date : vous le lirez ici dès que la compagnie les aura mises en place.');
     else {
       html += `<div data-zone-push="notifs"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'notifs') : ''}</div>`;
@@ -2040,7 +2052,7 @@
           if (j !== jour) { if (ouvert) html += '</ul></section>'; html += `<section class="notifs-groupe" aria-label="${esc(j)}"><h2 class="notifs-jour">${esc(j)}</h2><ul class="liste-notifs">`; jour = j; ouvert = true; }
           html += `<li><a class="notif n-${esc(x.type)}${x.lue_le ? '' : ' non-lue'}" href="${esc(lienDe(x))}" data-notif="${x.id}">
             ${iconeNotif(x)}<span class="n-titre">${esc(x.titre)}${x.lue_le ? '' : '<span class="sr"> (non lue)</span>'}</span>
-            <span class="n-heure"><span class="sr">, </span>${esc(quandNotif(x.cree_le))}</span>${x.texte ? `<span class="n-texte">${esc(x.texte)}</span>` : ''}${x.lue_le ? '' : '<span class="point-non-lu" aria-hidden="true"></span>'}</a></li>`;
+            <span class="n-heure"><span class="sr">, </span>${esc(quandNotif(x.cree_le))}</span>${x.texte ? `<span class="n-texte">${esc(x.texte)}</span>` : ''}${x.lue_le ? '' : '<span class="point-non-lu" aria-hidden="true"></span>'}</a>${extHtml('actionsNotif', x)}</li>`;
         }
         if (ouvert) html += '</ul></section>';
         if (ns.some(x => x.lue_le)) html += '<p class="pied-vue"><button type="button" class="lien-btn" data-effacer-lues>Effacer les notifications lues</button></p>';
@@ -2979,7 +2991,6 @@
   const CHAMPS = [
     ['telephone', 'Téléphone', 'tel', 'tel', 'Le numéro où l’équipe et l’administration vous joignent en tournée.'],
     ['ville', 'Ville de départ', 'text', 'address-level2', 'D’où vous partez en tournée : pour les trajets et les défraiements.'],
-    ['regime', 'Régime alimentaire', 'long', 'off', 'Ce que l’accueil doit savoir pour les repas : végétarien, allergies, sans porc…'],
     ['urgence', 'En cas d’urgence', 'long', 'off', 'Qui prévenir : son nom, son lien avec vous, son téléphone.'],
   ];
   const valeursFiche = () => Object.fromEntries(CHAMPS.map(([k]) => { const v = ($('#f-' + k)?.value || '').trim(); return [k, v || null]; }));
@@ -3000,13 +3011,13 @@
         <p class="aide">Pour changer l’adresse du compte ou votre nom, écrivez à l’administration.</p>
       </section>
       <section class="carte" aria-labelledby="t-push"><h2 id="t-push">Notifications</h2><p class="intro">Une feuille de route publiée, des horaires changés (en tournée comme en répétition), une nouvelle date.</p><div data-zone-push="moi"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'moi') : ''}</div></section>
-      ${sectionPlanningMoi()}
+      ${sectionPlanningMoi()}${extHtml('blocsMoi')}
       ${avecIdeale() ? `<section class="carte" aria-labelledby="t-frais"><h2 id="t-frais">Notes de frais</h2><p class="intro">Déposez vos justificatifs de tournée (repas, carburant, billets, nuitées) et suivez vos remboursements.</p><p><a class="btn" href="#/frais">${ICONES.euro}Mes notes de frais</a></p></section>` : ''}
       <section class="carte" aria-labelledby="t-app"><h2 id="t-app">L’application</h2><div data-zone-installation="moi">${zoneInstallation('moi')}</div></section>`;
     if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
       : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
     else html += `<form class="carte" id="f-fiche" novalidate aria-labelledby="t-coord"><h2 id="t-coord">Mes coordonnées</h2>
-        <p class="intro">Elles servent aux feuilles de route, aux réservations et aux repas. Seules l’administration et vous les lisez.</p>
+        <p class="intro">Elles servent aux feuilles de route, aux trajets et aux défraiements. Seules l’administration et vous les lisez.</p>
         <div class="deux-champs">${CHAMPS.slice(0, 2).map(champFiche).join('')}</div>${CHAMPS.slice(2).map(champFiche).join('')}
         <div class="pied-form"><button type="submit" class="btn principal">Enregistrer</button><p class="etat-form" id="etat-fiche" role="status">Tout est enregistré.</p></div>
       </form>`;
@@ -3021,6 +3032,7 @@
         <p><button type="button" class="btn" data-sortir>${ICONES.sortir}Se déconnecter</button></p></section>`;
     afficher(r, TITRES.moi, html, { focus });
     E.ficheSale = false;
+    extAppel('apresMoi');
     majCartePush();
     const f = $('#f-fiche');
     if (f) {
@@ -3036,7 +3048,7 @@
         const valeurs = valeursFiche(), b = $('button[type=submit]', f);
         if (valeurs.telephone && !/^[+()\d\s.\-/]{6,}$/.test(valeurs.telephone)) return erreurChamp($('#f-telephone'), 'Ce numéro de téléphone n’a pas l’air complet : des chiffres, des espaces, éventuellement un + au début.');
         effacerErreur($('#f-telephone'));
-        const res = await occupe(b, 'Enregistrement…', () => sb.from('crescite_personnes_privees').update(valeurs).eq('personne_id', E.moi).select('personne_id, email, telephone, ville, regime, urgence'));
+        const res = await occupe(b, 'Enregistrement…', () => sb.from('crescite_personnes_privees').update(valeurs).eq('personne_id', E.moi).select('personne_id, email, telephone, ville, urgence'));
         if (res.error || !res.data || !res.data.length) {
           etat.className = 'etat-form sale'; etat.textContent = 'Modifications non enregistrées.';
           return dire(zoneMessage(f), `Votre fiche n’a pas été enregistrée : ${res.error ? esc(motsErreur(res.error)) : 'la base ne l’a pas trouvée pour votre compte. Prévenez l’administration'}.`);
@@ -3813,10 +3825,11 @@
       const commVal = ($('#nf-commentaire', f).value || '').trim();
       const sale = texte => { etat.className = 'etat-form sale'; etat.textContent = texte; };
 
-      if (!dateVal || isNaN(montVal) || montVal <= 0 || !fichierSelectionne) return sale('Veuillez remplir la date, le montant et ajouter la photo du justificatif.');
-      const fichier = fichierSelectionne, type = typeJustif(fichier);
-      if (!type) return sale('Le justificatif doit être une photo (JPEG, PNG ou WebP) ou un PDF.');
-      if (fichier.size > MO_JUSTIF * 1024 * 1024) return sale(`Le justificatif pèse plus de ${MO_JUSTIF} Mo : prenez une photo moins lourde, ou un PDF plus léger.`);
+      const sansPhoto = !fichierSelectionne && extAppel('sansJustificatif', f) === true;   // un kilométrage (tournee.js) : pas de ticket à montrer
+      if (!dateVal || isNaN(montVal) || montVal <= 0 || (!fichierSelectionne && !sansPhoto)) return sale('Veuillez remplir la date, le montant et ajouter la photo du justificatif.');
+      const fichier = fichierSelectionne, type = fichier ? typeJustif(fichier) : null;
+      if (fichier && !type) return sale('Le justificatif doit être une photo (JPEG, PNG ou WebP) ou un PDF.');
+      if (fichier && fichier.size > MO_JUSTIF * 1024 * 1024) return sale(`Le justificatif pèse plus de ${MO_JUSTIF} Mo : prenez une photo moins lourde, ou un PDF plus léger.`);
 
       b.disabled = true;
       b.textContent = 'Envoi du justificatif…';
@@ -3824,8 +3837,8 @@
       etat.textContent = 'Téléversement en cours…';
       try {
         // dans son dossier, sous un nom neuf ; déjà déposé (la note avait échoué) : il resert
-        const chemin = envoye && envoye.fichier === fichier ? envoye.chemin : `${E.moi}/${nomJustificatif(fichier, type)}`;
-        if (!envoye || envoye.chemin !== chemin) {
+        const chemin = !fichier ? null : envoye && envoye.fichier === fichier ? envoye.chemin : `${E.moi}/${nomJustificatif(fichier, type)}`;
+        if (fichier && (!envoye || envoye.chemin !== chemin)) {
           // le type part avec le fichier (un PDF sans type, reconnu à son extension, le reçoit ici)
           const corps = fichier.type === type ? fichier : fichier.slice(0, fichier.size, type);
           const { error: errEnvoi } = await sb.storage.from(SEAU_FRAIS).upload(chemin, corps, { contentType: type, cacheControl: '3600' });
@@ -3860,6 +3873,7 @@
       }
     });
 
+    extAppel('apresFrais', f);
     chargerNotesFrais();
   }
 
@@ -3898,6 +3912,7 @@
       if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
 
       E.fraisLus = data;
+      extAppel('apresNotesFrais', data);
       zone.innerHTML = data.map((item, i) => {
         const cat = CAT_FRAIS[item.categorie] || item.categorie;
         const stClass = STATUT_FRAIS[item.statut] ? item.statut : 'en_attente';
@@ -4095,6 +4110,7 @@
           !passee && vive && avecSignaler() ? { libelle: 'Signaler un retard', faire: () => ouvrirModaleRetard(d.id, el.querySelector('a, button') || el), icone: ICONES.alerte } : null,
           !passee && vive && modifierDateEnEquipe() ? { libelle: 'Modifier la date', detail: 'l’horaire, les précisions', faire: () => ouvrirModaleDate(d.id, el.querySelector('a, button') || el), icone: ICONES.crayon } : null,
           !passee && vive && avecIdeale() ? { libelle: 'Note de frais', href: `#/frais?date=${d.id}`, icone: ICONES.euro } : null,
+          ...extListe('actionsBillet', d, { passee, vive }),
           { separateur: true },
           { libelle: 'Partager la date', detail: 'le lien de cette page', icone: ICONES.partager, faire: () => partagerMaintenant({ title: `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`, text: `${d.spectacle?.titre || ''} ${quandTexte(d)}${l ? ` · ${l.nom || l.commune}` : ''}`.trim(), url: new URL(`#/date/${d.id}`, location.href).href }, 'Lien de la date copié') },
           // le compte administre : modifier, ici même
@@ -5081,8 +5097,20 @@
     appliquer(m);
     Object.assign(E, { pret: true, provisoire: true });
     coquille();
-    router({ arrivee: true });
+    // une adresse que seule une extension lit (#/direct/…, #/compteur…) : tournee.js, différé lui aussi, n'est pas encore
+    // passé (les scripts différés courent avant DOMContentLoaded) ; router tout de suite la perdrait (renvoi vers la
+    // saison). Le contenu attend la fin des scripts, un instant, et part de toute façon peu après
+    if (lireRoute().redirige && document.readyState !== 'complete') {
+      let parti = false; const partir = () => { if (parti) return; parti = true; router({ arrivee: true }); };
+      document.addEventListener('DOMContentLoaded', partir, { once: true }); setTimeout(partir, 400);
+    } else router({ arrivee: true });
   })();
+  // ce que les extensions (tournee.js) peuvent lire et appeler : l'état, la base, les outils d'affichage et de date
+  window.CRESCITE_EQUIPE = { E, sb, $, $$, esc, txt, ic, ICONES, GENRES, annoncer, vibrer, reduit, occupe, ouvrirModale, formulaire: F, aujourdhui, iso, jourDe, joursDe, finDe, vivante, natureDe, NATURES,
+    quandTexte, jourSansAn, jourLong, heureTexte, heureCourte, h5, estJour, momentTexte, majuscule, pluriel, nomDe, avatar, quiPart, lignesPlanning, frise, majFrises, attrU, couleurs, etatVide, itineraire, liensGps,
+    documentsDe, documentPrive, lienDocument, signerUn, lireStock, ecrireStock, garderPref, PREF, SEAU, PUBLIC, CONTACT, personneConnue, memeId, repondre, enAttente, REPONSES, texteJours, lienDe, marquerLue,
+    router, rafraichir, afficher, TITRES, contexte, outilFeuille, motsErreur, chargerFeuille, euros, saisonDe, kmDe, ecartJours, CAT_FRAIS, chargerNotesFrais, teinter, apresRendu, SONDES, avecIdeale, avecModifier, avecSignaler,
+    telechargerPdf, dire, erreurChamp, effacerErreur, zoneMessage, copier, titreDate, texteErreur, relireApres, apresModif, sessionGardee, retourUrl, salut };
   brancherSW();
   brancherTirer();
   brancherRetour();

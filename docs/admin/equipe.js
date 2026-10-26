@@ -216,7 +216,7 @@ const SPEC_PUBLIE_PERSONNE = { k: 'publie', t: 'case', l: 'Fiche publiée', aide
 const SPEC_COORD = [
   { k: 'email', t: 'texte', l: 'Adresse électronique du compte', aide: 'La personne se connecte à son espace avec cette adresse.' },
   { k: 'telephone', t: 'texte', l: 'Téléphone' }, { k: 'ville', t: 'texte', l: 'Ville de départ', ph: 'Rouen' },
-  { k: 'regime', t: 'texte', l: 'Régime alimentaire', ph: 'Végétarien, sans gluten…' }, { k: 'urgence', t: 'texte', l: 'En cas d’urgence, prévenir', ph: 'Nom, lien, téléphone' },
+  { k: 'urgence', t: 'texte', l: 'En cas d’urgence, prévenir', ph: 'Nom, lien, téléphone' },
 ];
 function editeurPersonne(id) {
   const zone = zoneNeuve('#ed-personne');

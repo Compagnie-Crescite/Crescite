@@ -54,6 +54,13 @@ const TABLEAU = (() => {
   const ligne = ({ href, viser, couleur, gauche, titre, sous, droite, classe, externe, attrs = '' }) => `<a class="tb-l${gauche ? '' : ' sans-gauche'}${classe ? ` ${classe}` : ''}" href="${esc(href)}"${viser ? ` data-viser="${esc(viser)}"` : ''}${externe ? ' target="_blank" rel="noopener"' : ''}${couleur ? ` style="--c:${esc(couleur)}"` : ''}${attrs ? ` ${attrs}` : ''}>${gauche || ''}<span class="tb-l-corps"><span class="tb-l-t">${titre}</span>${sous ? `<span class="tb-l-s">${sous}</span>` : ''}</span>${droite ? `<span class="tb-l-d">${droite}</span>` : ''}</a>`;
   const rien = (texte, ok = false) => `<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
   const plus = (n, href, texte = 'Tout voir') => (n > 0 ? `<a class="tb-plus" href="${esc(href)}">${n > 1 ? `Et ${n} autres` : 'Et une autre'} · ${texte} →</a>` : '');
+  // les créneaux libres proposés par l'équipe (crescite_creneaux, le seizième script) : sous les propositions, pour en proposer une
+  const creneaux = () => {
+    const xs = (E.creneaux || []).filter(c => c.fin >= AUJ).sort((a, b) => (a.debut < b.debut ? -1 : 1)).slice(0, 6);
+    if (!xs.length) return '';
+    const nom = id => { const p = typeof personne === 'function' ? personne(id) : null; return p ? (typeof nomDe === 'function' ? nomDe(p) : [p.prenom, p.nom].filter(Boolean).join(' ')) : 'Quelqu’un'; };
+    return `<p class="tb-note tb-creneaux-t">Créneaux libres proposés par l’équipe</p><ul class="tb-creneaux">${xs.map(c => `<li><b>${esc(nom(c.personne_id))}</b> : ${esc(c.debut === c.fin ? jourSansAn(c.debut) : `du ${jourSansAn(c.debut)} au ${jourSansAn(c.fin)}`)}${c.message ? ` <span class="tb-l-s">${esc(c.message)}</span>` : ''}</li>`).join('')}</ul>`;
+  };
   // l'auteur d'une modification, comme le journal : un administrateur (son nom), une personne de l'équipe qui a modifié
   // depuis son espace (le quatorzième script : son nom, « équipe »), le compte connecté, sinon un import
   const nomAdmin = id => {
@@ -281,7 +288,7 @@ const TABLEAU = (() => {
         const bouton = '<a class="btn petit tb-bouton" href="#/planning/proposer">＋ Proposer des dates</a>';
         return { n: xs.length, html: (xs.length ? xs.slice(0, r.n).map(p => { const j0 = (p.jours || [])[0]; return ligne({ href: `#/planning/proposition/${p.id}`, attrs: `data-proposition="${p.id}"${p.spectacle_id ? ` data-sp="${p.spectacle_id}"` : ''} draggable="true"`, couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--accent)', gauche: jj(j0 ? String(j0.debut).slice(0, 10) : ''), titre: esc(p.titre),
           sous: `${esc(pl((p.destinataires || []).length, 'personne'))}${(p.jours || []).length > 1 ? ` · ${pl(p.jours.length, 'jour')}` : ''}${sp(p.spectacle_id) ? ` · ${esc(titreCourt(sp(p.spectacle_id)))}` : ''}<span class="dp-bilan">${bilanHtml(bilanDe(p))}</span>` }); }).join('') + plus(xs.length - r.n, '#/planning/propositions')
-          : rien('Aucune proposition ouverte.')) + bouton };
+          : rien('Aucune proposition ouverte.')) + creneaux() + bouton };
       } },
     ateliers: { titre: 'Séances d’atelier à venir', description: 'Les séances menées dans les établissements dans les semaines qui viennent.', taille: 'p', lien: () => ['#/ateliers/seances', 'Ateliers'],
       reglages: [{ k: 'jours', t: 'choix', l: 'Dans les', choix: JOURS.slice(1, 4), defaut: 30 }],
@@ -1285,6 +1292,10 @@ const TABLEAU = (() => {
 .tb-rien { margin: 4px 2px; color: var(--gris); font-size: 14px; }
 .tb-rien.ok { color: var(--ok); font-weight: 600; }
 .tb-note { margin: 2px 2px 0; font-size: 12.5px; color: var(--gris); }
+.tb-creneaux-t { margin-top: 10px; text-transform: uppercase; letter-spacing: .05em; font-size: 11.5px; }
+.tb-creneaux { list-style: none; margin: 4px 0 8px; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.tb-creneaux li { padding: 6px 8px; border-radius: 8px; background: var(--surface-2, rgba(0, 0, 0, .04)); }
+.tb-creneaux .tb-l-s { display: block; }
 .tb-cat { display: grid; gap: 5px; }
 .tb-cat h3 { display: flex; align-items: center; gap: 8px; margin: 6px 2px 0; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--gris); }
 .tb-cat:first-child h3 { margin-top: 0; }

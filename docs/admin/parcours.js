@@ -31,7 +31,9 @@ const PARCOURS = (() => {
       let eq = [];
       try { eq = F ? equipeDuForm(F) : equipeDeLaDate(d); } catch (e) { eq = []; }
       const sansTel = eq.filter(x => !(priveeDe(x.personne_id)?.telephone || '').trim());
-      xs.push({ k: 'equipe', l: 'Équipe', etat: !eq.length ? 'afaire' : sansTel.length ? 'encours' : 'fait', detail: !eq.length ? 'personne ne part' : sansTel.length ? `${sansTel.length} sans téléphone` : `${eq.length} ${eq.length > 1 ? 'personnes' : 'personne'}`, viser: '#d-equipe' });
+      const ps = E.tourneeInstallee ? (E.presences || []).filter(x => x.date_id === d.id) : [], oui = ps.filter(x => x.statut === 'present').length, non = ps.filter(x => x.statut === 'absent');
+      const presences = !eq.length || !E.tourneeInstallee ? '' : non.length ? ` · ${non.length} ne ${non.length > 1 ? 'pourront' : 'pourra'} pas` : oui ? ` · ${oui} sur ${eq.length} ${oui > 1 ? 'ont' : 'a'} confirmé` : '';
+      xs.push({ k: 'equipe', l: 'Équipe', etat: !eq.length ? 'afaire' : sansTel.length || non.length ? 'encours' : 'fait', detail: (!eq.length ? 'personne ne part' : sansTel.length ? `${sansTel.length} sans téléphone` : `${eq.length} ${eq.length > 1 ? 'personnes' : 'personne'}`) + presences, viser: '#d-equipe' });
       const f = E.feuilles.find(x => x.date_id === d.id), n = f ? aCompleter(d.id) : 0;
       xs.push({ k: 'feuille', l: 'Feuille de route', etat: !f ? 'afaire' : f.statut === 'publiee' ? 'fait' : 'encours', detail: !f ? 'à composer' : f.statut === 'publiee' ? `publiée v${f.version}` : `brouillon${n ? ` · ${n} à compléter` : ''}`, href: `#/feuilles/${d.id}`, viserLoin: f ? '#fr-manques' : '#fr-composer' });
     }
