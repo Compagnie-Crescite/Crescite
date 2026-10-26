@@ -50,7 +50,7 @@ const TABLEAU = (() => {
     d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>', d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>',
     d.nature && d.nature !== 'representations' && `<span class="badge">${esc((NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || d.nature)}</span>`].filter(Boolean).join('');
   // une ligne du tableau : ce qui est à gauche (le jour, un avatar), le titre et son sous-titre, ce qui est à droite
-  const ligne = ({ href, viser, couleur, gauche, titre, sous, droite, classe, externe }) => `<a class="tb-l${gauche ? '' : ' sans-gauche'}${classe ? ` ${classe}` : ''}" href="${esc(href)}"${viser ? ` data-viser="${esc(viser)}"` : ''}${externe ? ' target="_blank" rel="noopener"' : ''}${couleur ? ` style="--c:${esc(couleur)}"` : ''}>${gauche || ''}<span class="tb-l-corps"><span class="tb-l-t">${titre}</span>${sous ? `<span class="tb-l-s">${sous}</span>` : ''}</span>${droite ? `<span class="tb-l-d">${droite}</span>` : ''}</a>`;
+  const ligne = ({ href, viser, couleur, gauche, titre, sous, droite, classe, externe, attrs = '' }) => `<a class="tb-l${gauche ? '' : ' sans-gauche'}${classe ? ` ${classe}` : ''}" href="${esc(href)}"${viser ? ` data-viser="${esc(viser)}"` : ''}${externe ? ' target="_blank" rel="noopener"' : ''}${couleur ? ` style="--c:${esc(couleur)}"` : ''}${attrs ? ` ${attrs}` : ''}>${gauche || ''}<span class="tb-l-corps"><span class="tb-l-t">${titre}</span>${sous ? `<span class="tb-l-s">${sous}</span>` : ''}</span>${droite ? `<span class="tb-l-d">${droite}</span>` : ''}</a>`;
   const rien = (texte, ok = false) => `<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
   const plus = (n, href, texte = 'Tout voir') => (n > 0 ? `<a class="tb-plus" href="${esc(href)}">${n > 1 ? `Et ${n} autres` : 'Et une autre'} · ${texte} →</a>` : '');
   const nomAdmin = id => { const a = E.admins.find(x => x.user_id === id); return a?.nom || (id === uid() ? E.session.user.email : id ? 'un administrateur' : 'import'); };
@@ -92,13 +92,13 @@ const TABLEAU = (() => {
   // ce qu'il y a à traiter : une catégorie par source, chacune avec ses lignes (tri : la plus urgente d'abord)
   const CATEGORIES = [
     { k: 'devis', titre: 'Demandes de devis à répondre', tout: '#/diffusion/devis', dispo: () => E.ideale,
-      lignes: () => (E.devis || []).filter(d => (d.statut || 'nouveau') === 'nouveau').map(d => ({ tri: String(d.cree_le), href: `#/diffusion/devis/${d.id}`, couleur: sp(d.spectacle_id) ? couleurSp(sp(d.spectacle_id)) : 'var(--option)',
+      lignes: () => (E.devis || []).filter(d => (d.statut || 'nouveau') === 'nouveau').map(d => ({ tri: String(d.cree_le), href: `#/diffusion/devis/${d.id}`, attrs: `data-devis="${d.id}"`, couleur: sp(d.spectacle_id) ? couleurSp(sp(d.spectacle_id)) : 'var(--option)',
         titre: esc(d.structure_nom), sous: esc([d.commune, sp(d.spectacle_id)?.titre, d.periode_souhaitee].filter(Boolean).join(' · ')), droite: `<span class="badge option">${esc(depuisTexte(d.cree_le))}</span>` })) },
     { k: 'relances', titre: 'Relances de diffusion en retard', tout: '#/diffusion', dispo: () => E.ideale,
-      lignes: () => (E.prospects || []).filter(p => p.date_prochaine_relance && p.date_prochaine_relance <= AUJ && !['bilan', 'refus', 'converti_en_date'].includes(p.etape)).map(p => ({ tri: p.date_prochaine_relance, href: '#/diffusion', couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--alerte)',
+      lignes: () => (E.prospects || []).filter(p => p.date_prochaine_relance && p.date_prochaine_relance <= AUJ && !['bilan', 'refus', 'converti_en_date'].includes(p.etape)).map(p => ({ tri: p.date_prochaine_relance, href: '#/diffusion', attrs: `data-prospect="${p.id}"`, couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--alerte)',
         titre: esc(p.structure), sous: esc([p.commune, sp(p.spectacle_id)?.titre, p.contact_nom].filter(Boolean).join(' · ')), droite: `<span class="badge annulee">relance ${esc(p.date_prochaine_relance === AUJ ? 'aujourd’hui' : `le ${jourSansAn(p.date_prochaine_relance)}`)}</span>` })) },
     { k: 'frais', titre: 'Notes de frais à valider', tout: '#/equipe/frais', dispo: () => E.ideale && E.equipeInstallee,
-      lignes: () => (E.frais || []).filter(f => (f.statut || 'en_attente') === 'en_attente').map(f => ({ tri: String(f.cree_le), href: '#/equipe/frais', couleur: 'var(--option)',
+      lignes: () => (E.frais || []).filter(f => (f.statut || 'en_attente') === 'en_attente').map(f => ({ tri: String(f.cree_le), href: '#/equipe/frais', attrs: `data-frais="${f.id}"`, couleur: 'var(--option)',
         titre: esc(nomDe(personne(f.personne_id)) || 'Une personne'), sous: esc([CAT_FRAIS[f.categorie] || f.categorie, f.date_depense ? jourSansAn(f.date_depense) : '', f.commentaire].filter(Boolean).join(' · ')), droite: `<b>${esc(euros(f.montant_ttc))}</b>` })) },
     { k: 'options', titre: 'Options à confirmer', tout: '#/representations',
       lignes: () => E.dates.filter(d => d.statut === 'option' && aVenir(d) && !sansJour(d) && dansJours(d.debut) <= 60).map(d => ({ tri: d.debut, href: `#/representations/${d.id}`, viser: '[data-statut="confirmee"]', couleur: couleurDate(d),
@@ -118,7 +118,7 @@ const TABLEAU = (() => {
         return { tri: String(p.cree_le), href: `#/planning/proposition/${p.id}`, couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--accent)', titre: esc(p.titre), sous: bilanHtml(n),
           droite: tous ? '<span class="badge ok">un jour où tout le monde est libre</span>' : n.attente ? `<span class="badge option">${pl(n.attente, 'réponse')} en attente</span>` : '<span class="badge">à clore</span>' }; }) },
     { k: 'pro', titre: 'Invitations pro qui échoient', tout: '#/pro', dispo: () => E.sql4,
-      lignes: () => (E.acces || []).filter(a => a.actif && a.expire_le >= AUJ && dansJours(a.expire_le) <= 15).map(a => ({ tri: a.expire_le, href: `#/pro/${a.id}`, couleur: 'var(--option)', titre: esc(a.nom), sous: esc([a.contact, visitesTexte(a)].filter(Boolean).join(' · ')), droite: `<span class="badge option">échoit ${esc(dansTexte(a.expire_le))}</span>` })) },
+      lignes: () => (E.acces || []).filter(a => a.actif && a.expire_le >= AUJ && dansJours(a.expire_le) <= 15).map(a => ({ tri: a.expire_le, href: `#/pro/${a.id}`, attrs: `data-acces="${a.id}"`, couleur: 'var(--option)', titre: esc(a.nom), sous: esc([a.contact, visitesTexte(a)].filter(Boolean).join(' · ')), droite: `<span class="badge option">échoit ${esc(dansTexte(a.expire_le))}</span>` })) },
     { k: 'portraits', titre: 'Portraits sans accord de publication', tout: '#/equipe', dispo: () => E.equipeInstallee, defaut: false,
       lignes: () => (E.personnes || []).filter(p => p.photo && !p.photo_publique && p.publie !== false).map(p => ({ tri: norm(nomDe(p)), href: `#/equipe/${p.id}`, viser: 'photo_publique', couleur: 'var(--gris)', titre: esc(nomDe(p)), sous: esc((p.metiers || []).join(', ')), droite: '<span class="badge">accord à cocher</span>' })) },
   ];
@@ -170,8 +170,8 @@ const TABLEAU = (() => {
       corps: r => {
         const xs = ACTIONS.filter(a => r.actions.includes(a[0]) && (!a[3] || a[3]()));
         return { html: xs.length ? `<div class="tb-actions">${xs.map(([k, l, href, , externe], i) => (href.startsWith('#') || externe
-          ? `<a class="btn${i === 0 ? ' principal' : ''}" href="${esc(href)}"${externe ? ' target="_blank" rel="noopener"' : ''}>${esc(l)}</a>`
-          : `<button type="button" class="btn${i === 0 ? ' principal' : ''}" data-tb-action="${esc(href)}">${esc(l)}</button>`)).join('')}</div>` : rien('Aucune action choisie : cochez-en dans les réglages (⚙).') };
+          ? `<a class="btn${i === 0 ? ' principal' : ''}" href="${esc(href)}" data-action="${k}"${externe ? ' target="_blank" rel="noopener"' : ''}>${esc(l)}</a>`
+          : `<button type="button" class="btn${i === 0 ? ' principal' : ''}" data-tb-action="${esc(href)}" data-action="${k}">${esc(l)}</button>`)).join('')}</div>` : rien('Aucune action choisie : cochez-en dans les réglages (⚙).') };
       } },
     urgent: { titre: 'À traiter', description: 'Ce qui attend une réponse ou une décision : devis, relances, notes de frais, options, horaires, contrats, feuilles, propositions, invitations.', taille: 'm', lien: () => null,
       reglages: [{ k: 'categories', t: 'cases', l: 'Ce que la tuile suit', choix: () => CATEGORIES.filter(c => !c.dispo || c.dispo()).map(c => [c.k, c.titre]), defaut: CATEGORIES_DEFAUT },
@@ -202,7 +202,7 @@ const TABLEAU = (() => {
       reglages: [{ k: 'n', t: 'choix', l: 'Montrer', choix: [[5, '5 dates'], [8, '8 dates'], [12, '12 dates'], [20, '20 dates']], defaut: 8 }, { k: 'options', t: 'case', l: 'Les options aussi', defaut: true }, { k: 'autres', t: 'case', l: 'Répétitions, résidences et autres dates', defaut: true }],
       corps: r => {
         const xs = E.dates.filter(d => aVenir(d) && d.statut !== 'annulee' && (r.options || d.statut !== 'option') && (r.autres || (d.nature || 'representations') === 'representations')).sort(parDebut);
-        return { html: xs.length ? xs.slice(0, r.n).map(d => ligne({ href: `#/representations/${d.id}`, couleur: couleurDate(d), gauche: jj(d.debut), titre: esc(titreDate(d)), sous: `${esc(ouDe(d))}${d.fin && d.fin !== d.debut ? ` · jusqu’au ${esc(jourSansAn(d.fin))}` : ''}${heuresDe(d)}`,
+        return { html: xs.length ? xs.slice(0, r.n).map(d => ligne({ href: `#/representations/${d.id}`, attrs: `data-date="${d.id}"`, couleur: couleurDate(d), gauche: jj(d.debut), titre: esc(titreDate(d)), sous: `${esc(ouDe(d))}${d.fin && d.fin !== d.debut ? ` · jusqu’au ${esc(jourSansAn(d.fin))}` : ''}${heuresDe(d)}`,
           droite: `<span class="compte">${esc(dansTexte(d.debut))}</span>${badgesDate(d)}${E.equipeInstallee ? resteFeuille(d.id) : ''}` })).join('') + plus(xs.length - r.n, '#/representations') : rien('Aucune date à venir.') };
       } },
     chiffres: { titre: 'La saison en chiffres', description: 'Dates, représentations, lieux, séances d’atelier et spectateurs de la saison, à côté de la précédente.', taille: 'p', lien: () => ['#/representations', 'Représentations'],
@@ -228,7 +228,7 @@ const TABLEAU = (() => {
         ds.forEach(d => equipeDeLaDate(d).forEach(x => { const p = personne(x.personne_id); if (!p) return; if (!pers.has(p.id)) pers.set(p.id, { p, fonctions: new Set(), dates: [] }); const o = pers.get(p.id); if (x.fonction) o.fonctions.add(x.fonction); o.dates.push(d); }));
         const xs = [...pers.values()].sort((a, b) => parDebut(a.dates[0], b.dates[0]) || norm(nomDe(a.p)).localeCompare(norm(nomDe(b.p))));
         return { n: xs.length, html: xs.length ? xs.map(x => { const tel = (priveeDe(x.p.id)?.telephone || '').trim(), href = tel ? (jetonsContact(tel).find(j => j.genre === 'tel') || {}).href : '';
-          return ligne({ href: `#/equipe/${x.p.id}`, viser: tel ? '' : 'telephone', couleur: couleurDate(x.dates[0]), gauche: avatar(x.p, true), titre: esc(nomDe(x.p)), sous: `${esc([...x.fonctions].join(', ') || (x.p.metiers || []).join(', '))}${x.fonctions.size || (x.p.metiers || []).length ? ' · ' : ''}${esc(x.dates.slice(0, 3).map(d => `${jourSansAn(d.debut)} ${ouDe(d).split(',').pop().trim()}`).join(', '))}${x.dates.length > 3 ? ` +${x.dates.length - 3}` : ''}`,
+          return ligne({ href: `#/equipe/${x.p.id}`, viser: tel ? '' : 'telephone', attrs: `data-personne="${x.p.id}"`, couleur: couleurDate(x.dates[0]), gauche: avatar(x.p, true), titre: esc(nomDe(x.p)), sous: `${esc([...x.fonctions].join(', ') || (x.p.metiers || []).join(', '))}${x.fonctions.size || (x.p.metiers || []).length ? ' · ' : ''}${esc(x.dates.slice(0, 3).map(d => `${jourSansAn(d.debut)} ${ouDe(d).split(',').pop().trim()}`).join(', '))}${x.dates.length > 3 ? ` +${x.dates.length - 3}` : ''}`,
             droite: tel && href ? `<span class="tb-tel" data-tel="${esc(href)}">${esc(typeof FEUILLE !== 'undefined' ? FEUILLE.telTexte(tel) : tel)}</span>` : '<span class="badge option">téléphone ?</span>' }); }).join('')
           : rien(ds.length ? 'Aucune équipe de tournée connue pour ces dates.' : 'Aucune date confirmée dans cette période.') };
       } },
@@ -269,7 +269,7 @@ const TABLEAU = (() => {
         const xs = E.seances.filter(s => s.jour >= AUJ && dansJours(s.jour) <= r.jours && s.statut !== 'annulee').sort((a, b) => (a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : String(a.heure_debut || '').localeCompare(String(b.heure_debut || ''))));
         const heures = xs.reduce((n, s) => n + heuresSeance(s), 0);
         return { n: xs.length, html: xs.length ? xs.slice(0, 8).map(s => { const a = E.ateliers.find(x => x.id === s.atelier_id), l = lieu(s.lieu_id), spx = sp(s.spectacle_id || a?.spectacle_id);
-          return ligne({ href: `#/ateliers/seances/${s.id}`, couleur: couleurSp(spx), gauche: jj(s.jour), titre: esc(a?.titre || spx?.titre || 'Séance d’atelier'), sous: esc([l ? (l.nom || l.commune) : s.etablissement, s.classe, s.niveau, s.nb_eleves ? pl(s.nb_eleves, 'élève') : ''].filter(Boolean).join(' · ')),
+          return ligne({ href: `#/ateliers/seances/${s.id}`, attrs: `data-seance="${s.id}"`, couleur: couleurSp(spx), gauche: jj(s.jour), titre: esc(a?.titre || spx?.titre || 'Séance d’atelier'), sous: esc([l ? (l.nom || l.commune) : s.etablissement, s.classe, s.niveau, s.nb_eleves ? pl(s.nb_eleves, 'élève') : ''].filter(Boolean).join(' · ')),
             droite: `<span class="compte">${s.heure_debut ? esc(AGENDA.heureTexte(h5(s.heure_debut)) + (s.heure_fin ? `–${AGENDA.heureTexte(h5(s.heure_fin))}` : '')) : 'heure ?'}</span>${s.statut === 'option' ? '<span class="badge option">Option</span>' : ''}` }); }).join('')
           + plus(xs.length - 8, '#/ateliers/seances') + `<p class="tb-note">${pl(xs.length, 'séance')}${heures ? ` · ${entier(Math.round(heures * 10) / 10)} h d’éducation artistique` : ''}</p>` : rien('Aucune séance d’atelier dans cette période.') };
       } },
@@ -705,7 +705,14 @@ const TABLEAU = (() => {
 @media (prefers-reduced-motion: reduce) { .tb-replier svg { transition: none; } }
 </style>`);
 
-  return { vue, charger, depart, TUILES, conf, normaliser };
+  // une action rapide retirée depuis son menu (menus.js) : comme décochée dans les réglages
+  function retirerAction(k) {
+    const t = tuile('actions'); if (!t) return;
+    t.reglages = t.reglages || {};
+    t.reglages.actions = valeurs('actions').actions.filter(x => x !== k);
+    garder(); dessinerCorps('actions'); annoncerSr('Action retirée.');
+  }
+  return { vue, charger, depart, TUILES, conf, normaliser, retirerAction, lienJournal };
 })();
 // la route de la rubrique (admin/index.html)
 function vueTableau() { return TABLEAU.vue(); }
