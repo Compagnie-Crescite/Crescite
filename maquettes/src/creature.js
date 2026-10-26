@@ -64,14 +64,12 @@ const CREATURE = (() => {
   const intro = () => typeof INTRO !== 'undefined' && INTRO.ouverte && INTRO.ouverte();
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
   const lerp = (a, b, t) => a + (b - a) * t;
-  const lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
   const ease = t => 1 - Math.pow(1 - t, 3);
   const TAU = Math.PI * 2, RAD = Math.PI / 180;
   const PRET = typeof PIEUVRE !== 'undefined' && !!PIEUVRE.pret;
   const actif = PRET && !COUPE;
   const CENTRE = [771, 640];   // le cœur de la pieuvre, en unités du dessin (comme la scène de l'accueil)
   const LARGEUR = 1042;        // la largeur du dessin de la pieuvre seule (D.logo.octopus), en unités
-  const COU = PRET ? PIEUVRE.COU : 770, SOMMET = PRET ? PIEUVRE.SOMMET : 420;   // la tête : du cou (le corps ne bouge pas) au sommet
   const ORDRE = ['queueL', 'queueR', 'spiraleExtL', 'spiraleExtR', 'boucleL', 'boucleR', 'spiraleL', 'spiraleR'];   // pour tenir : de la racine la plus haute à la plus basse
   const HEX6 = /^#[0-9a-f]{6}$/i;
   function rgb(c) {
@@ -120,7 +118,7 @@ const CREATURE = (() => {
       const TS = PIEUVRE.creer();
       this.POINTS = PIEUVRE.contours();
       // dir : le sens de la pointe au repos (vers où la tentacule se penche) ; col : la couleur vers laquelle elle se teinte
-      this.BRAS = TS.map((t, i) => ({ t, i, cle: t.cle, but: null, teinte: 0, penche: 0, col: this.ENCRE, dir: t.RS[t.M - 1], geste: null, prise: null, wt: lisse(COU, SOMMET, t.RY[0]) }));
+      this.BRAS = TS.map((t, i) => ({ t, i, cle: t.cle, but: null, teinte: 0, penche: 0, col: this.ENCRE, dir: t.RS[t.M - 1], geste: null, prise: null }));
       this.cv = null; this.ctx = null; this.W = 0; this.H = 0; this.dpr = 1; this.cw = 0; this.ch = 0; this.cx0 = 0; this.cy0 = 0; this.tTaille = 0;
       this.raf = 0; this.tPrec = 0; this.tVie = 0; this.tDessin = 0; this.vivant = false; this.cache = true;
       this.s = 0; this.ox = 0; this.oy = 0; this.place = null; this.placeSale = true; this.tPlace = 0; this.tache = null; this.enMouvement = false;
@@ -362,9 +360,7 @@ const CREATURE = (() => {
         this.dyTete += (-46 * coup * retenue + Math.sin(tVie * .8) * 5 - this.dyTete) * .25;
       }
       const theta = this.theta, ct = Math.cos(theta), st = Math.sin(theta), dxT = this.dxTete, dyT = this.dyTete;
-      // (ce que la tête fait à un point du dessin : il tourne autour du cou, d'autant plus qu'il est haut)
-      const tete = (x, y, w, out) => PIEUVRE.tete(x, y, w, theta, dxT, dyT, out);
-      const rame = coup * (mesure ? .95 : .55) * (sens || 1), pt = [0, 0];
+      const rame = coup * (mesure ? .95 : .55) * (sens || 1);
       for (const a of BRAS) {
         let pv = 0;
         if (!a.but && !a.geste) {
@@ -381,11 +377,10 @@ const CREATURE = (() => {
         a.penche += (pv - a.penche) * .08;
         const tv = a.but ? 1 : 0;
         if (Math.abs(a.teinte - tv) > .005) a.teinte += (tv - a.teinte) * .12; else a.teinte = tv;
-        // (sa racine suit la tête : déplacée et pivotée d'autant)
+        // (sa racine suit la tête, là où elle est, à sa place du logo ou sur son attache : déplacée et pivotée d'autant)
         const t = a.t;
-        tete(t.RX[0], t.RY[0], a.wt, pt);
-        t.deplacer(ox + (pt[0] - t.RX[0]) * s, oy + (pt[1] - t.RY[0]) * s, s);
-        t.avancer(dt * this.rythme, { temps: tVie, onde: this.onde + agite + coup * (mesure ? 3 : 1.5), penche: a.penche, bob, tourne: theta * a.wt });
+        const tT = t.suivreTete(ox, oy, s, theta, dxT, dyT);
+        t.avancer(dt * this.rythme, { temps: tVie, onde: this.onde + agite + coup * (mesure ? 3 : 1.5), penche: a.penche, bob, tourne: tT });
       }
       // le sillage : là où elle vient de passer (il s'efface quand elle s'arrête)
       if (this.sillage) { const tr = this.trace; if (this.enMouvement || Math.abs(v) > .3) { tr.push(cx + bob.x, cy + bob.y); if (tr.length > 44) tr.splice(0, tr.length - 44); } else if (tr.length) tr.splice(0, 2); }
