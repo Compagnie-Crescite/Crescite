@@ -282,6 +282,9 @@ LIBELLES = {
     # les saisons (règle 21) et la page d'un spectacle qui n'est plus en tournée
     "saisonEnCours": "La saison en cours", "prochainesDates": "Les prochaines dates", "toutesLesDates": "Toutes les dates",
     "saisonsPassees": "Les saisons passées", "bilan": "Le bilan des dates passées", "historique": "Historique",
+    # les filtres des saisons (la synthèse) : effacer ceux en cours, et au téléphone, leur barre en bas de l'écran et leur
+    # panneau, qui mène aux dates gardées
+    "filtres": "Filtres", "effacerFiltres": "Tout effacer", "voirLesDates": "Voir les dates",
     "actionsMenees": "Les actions culturelles menées",
     # les chiffres du bilan (le nombre de dates : « dates », de communes, de saisons)
     "communes": "Communes", "saisons": "Saisons",
