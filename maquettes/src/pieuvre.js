@@ -234,7 +234,8 @@ const PIEUVRE = (() => {
       const rail = c.rail != null && du * (c.x - c.rail) > 20 && dy > 160;
       if (rail) {
         const cub = (x0, y0, x1, y1, x2, y2, x3, y3, de) => { const pts = []; for (let j = de; j <= 64; j++) { const u = j / 64, b0 = (1 - u) ** 3, b1 = 3 * (1 - u) ** 2 * u, b2 = 3 * (1 - u) * u * u, b3 = u ** 3; pts.push([b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3, b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3]); } return pts; };
-        const yM = py + Math.max(70, Math.min(140, dy * .4)), kA = Math.max(30, (yM - py) * .5), kD = (yM - py) * .6;
+        // (kD : ce qu'elle continue dans son sens avant de s'infléchir ; une boucle qui part vers le haut monte un peu, pas plus)
+        const yM = py + Math.max(70, Math.min(140, dy * .4)), kA = Math.max(30, (yM - py) * .5), kD = Math.max(24, Math.min(56, (yM - py) * .45));
         corps = cub(px, py, px + Math.cos(a0) * kD, py + Math.sin(a0) * kD, c.rail, yM - kA, c.rail, yM, 0)
           .concat(cub(c.rail, yM, c.rail, yM + (c.y - yM) * .5, c.rail, c.y, c.x, c.y, 1));
       } else {
