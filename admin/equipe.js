@@ -2736,6 +2736,8 @@ function vueEquipeFrais(tete, parties) {
   poserJustificatifs($('#table-frais'));
 }
 
+// la note de frais dont le statut vient de changer : son badge saute, une fois la liste redessinée
+const sauterStatutFrais = id => requestAnimationFrame(() => $(`[data-frais-id="${id}"] .badge`)?.classList.add('pop'));
 function brancherFraisAdmin() {
   $('#btn-export-csv-frais')?.addEventListener('click', exporterCsvFrais);
 
@@ -2753,7 +2755,7 @@ function brancherFraisAdmin() {
         const f = E.frais.find(x => x.id === id);
         if (f) { f.statut = 'valide'; f.valide_le = new Date().toISOString(); }
         annoncer('Note de frais validée.');
-        vueEquipe('frais');
+        vueEquipe('frais'); sauterStatutFrais(id);
       } catch (err) {
         erreur(err, 'Validation impossible');
         b.disabled = false;
@@ -2774,7 +2776,7 @@ function brancherFraisAdmin() {
         const f = E.frais.find(x => x.id === id);
         if (f) { f.statut = 'rembourse'; f.rembourse_le = new Date().toISOString(); }
         annoncer('Note de frais marquée remboursée.');
-        vueEquipe('frais');
+        vueEquipe('frais'); sauterStatutFrais(id);
       } catch (err) {
         erreur(err, 'Modification impossible');
         b.disabled = false;
@@ -2793,7 +2795,7 @@ function brancherFraisAdmin() {
         const f = E.frais.find(x => x.id === id);
         if (f) f.statut = 'refuse';
         annoncer('Note de frais refusée.');
-        vueEquipe('frais');
+        vueEquipe('frais'); sauterStatutFrais(id);
       } catch (err) {
         erreur(err, 'Refus impossible');
         b.disabled = false;

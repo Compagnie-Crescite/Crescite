@@ -1259,7 +1259,7 @@
   function majFeuilleDirect(auj, m) {
     const fdr = $('.feuille-cadre .fdr');
     if (!fdr) return;
-    $$('.passe, .maintenant', fdr).forEach(x => x.classList.remove('passe', 'maintenant'));
+    $$('.passe, .maintenant', fdr).forEach(x => { x.classList.remove('passe', 'maintenant'); x.removeAttribute('aria-current'); });
     const titreJour = jourLong(auj).replace(/ \d{4}$/, '').toLowerCase();
     let dedans = false;
     const lignes = [];
@@ -1276,6 +1276,7 @@
       const s = lignes.slice(i + 1).find(y => y.a != null), fin = l.b != null && l.b > l.a ? l.b : s ? s.a : l.a + 45;
       etat = m >= fin ? 'passe' : m >= l.a ? 'maintenant' : '';
       if (etat) l.el.classList.add(etat);
+      if (etat === 'maintenant') l.el.setAttribute('aria-current', 'time');
     });
   }
   function majFrises() {
@@ -2367,7 +2368,7 @@
     if (E.dispo.mesIndispos) E.dispo.mesIndispos = E.dispo.mesIndispos.filter(y => y.id !== x.id);
     annoncer(silencieux ? 'C’est annulé.' : `C’est noté : vous êtes libre ${texteJours(x)}.`);
     apresEcriture();
-    if (E.vue === 'indisponibilites') majListeIndispos();
+    if (E.vue === 'indisponibilites') { await retirerLigne($(`[data-indispo="${x.id}"]`)); majListeIndispos(); }
   }
 
   // ———— mes indisponibilités
@@ -2385,11 +2386,20 @@
     brancherFormIndispo(edition);
     if (xs == null) chargerMesIndispos().then(() => majListeIndispos()).catch(e => { const z = $('#zone-indispos'); if (z && E.vue === 'indisponibilites') z.innerHTML = `<p class="message erreur" role="alert">Vos indisponibilités n’ont pas pu être lues : ${esc(motsErreur(e) || 'réessayez')}.</p>`; });
   }
+  // une ligne qui s'en va se replie (puis la liste se redessine sans elle)
+  async function retirerLigne(el) {
+    if (!el || reduit() || typeof el.animate !== 'function') return;
+    el.style.overflow = 'hidden';
+    await el.animate([{ height: `${el.offsetHeight}px`, opacity: 1 }, { height: '0px', opacity: 0, paddingTop: '0px', paddingBottom: '0px', marginTop: '0px', marginBottom: '0px' }], { duration: 260, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' }).finished.catch(() => {});
+  }
   function majListeIndispos() {
     const z = $('#zone-indispos');
     if (!z || E.vue !== 'indisponibilites') return;
     if (E.dispo.mesIndispos == null) { chargerMesIndispos().then(() => { if (E.dispo.mesIndispos) majListeIndispos(); }).catch(() => {}); return; }
+    const deja = z.dataset.rendu === '1', avant = new Set($$('[data-indispo]', z).map(x => x.dataset.indispo));
     z.innerHTML = listeIndispos(E.dispo.mesIndispos);
+    z.dataset.rendu = '1';
+    if (deja && !reduit()) $$('[data-indispo]', z).forEach(li => { if (!avant.has(li.dataset.indispo)) li.classList.add('neuve'); });   // la neuve se pose
   }
   function formIndispo(x, b) {
     const type = x ? (x.journee ? (joursPeriode(x).length > 1 ? 'jours' : 'jour') : 'heures') : (b && b.type) || 'jour';
@@ -2464,7 +2474,7 @@
     const miennes = venir.filter(x => x.source !== 'agenda'), lues = venir.filter(x => x.source === 'agenda');
     const ligne = x => {
       const t = majuscule(texteJours(x)), agenda = x.source === 'agenda';
-      return `<li class="indispo-ligne${agenda ? ' agenda' : ''}"><span class="hach" aria-hidden="true"></span><span class="il-texte"><b>${esc(t)}</b>${x.motif || agenda ? `<small>${esc([x.motif, agenda ? 'd’après votre agenda relié' : ''].filter(Boolean).join(' · '))}</small>` : ''}</span>
+      return `<li class="indispo-ligne${agenda ? ' agenda' : ''}" data-indispo="${x.id}"><span class="hach" aria-hidden="true"></span><span class="il-texte"><b>${esc(t)}</b>${x.motif || agenda ? `<small>${esc([x.motif, agenda ? 'd’après votre agenda relié' : ''].filter(Boolean).join(' · '))}</small>` : ''}</span>
         ${agenda ? '' : `<span class="il-gestes"><button type="button" class="bouton-rond" data-modifier-indispo="${x.id}">${ICONES.crayon}<span class="sr">Modifier : ${esc(t)}</span></button><button type="button" class="bouton-rond" data-retirer-indispo="${x.id}">${ICONES.croix}<span class="sr">Retirer : ${esc(t)}</span></button></span>`}</li>`;
     };
     let html = `<section class="carte" aria-labelledby="t-liste-i"><h2 id="t-liste-i">À venir</h2>`;

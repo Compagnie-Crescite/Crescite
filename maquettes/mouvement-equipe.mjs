@@ -182,6 +182,11 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.goto(`${URL0}#/saison`); await page.waitForSelector('#billet-102', { timeout: 8000 });
   await page.waitForTimeout(300);
   ok('4 · le talon du billet : règle :active sur .billet-pied', await page.evaluate(() => [...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.cssText.includes('.billet:has(.lien-etendu:active) .billet-pied')); } catch (e) { return false; } })));
+  // 14. la page d'un spectacle se pose : sa photo se cale puis dérive, ses lignes montent
+  await page.goto(`${URL0}#/spectacles/berenice`); await page.waitForSelector('.tete-spectacle', { timeout: 8000 });
+  await page.waitForTimeout(200);
+  const ts = await page.evaluate(() => ({ photo: getComputedStyle(document.querySelector('.ts-photo img')).animationName, corps: getComputedStyle(document.querySelector('.ts-corps > :nth-child(2)')).animationName, clip: getComputedStyle(document.querySelector('.ts-photo')).overflow }));
+  ok('14 · la page d\'un spectacle se pose (pose puis dérive, lignes qui montent, photo cadrée)', /pose/.test(ts.photo) && /derive/.test(ts.photo) && ts.corps === 'monte' && ts.clip === 'hidden', JSON.stringify(ts));
   // 9. les notifications : en-têtes épinglés, glisser pour lire, tout marquer lu
   await page.goto(`${URL0}#/notifications`);
   await page.waitForSelector('.liste-notifs .notif.non-lue', { timeout: 8000 });
