@@ -22,8 +22,9 @@
    notifications (crescite_notifications, en temps réel, sinon relues chaque minute). Sur un appareil abonné
    (crescite_abonnements), la fonction crescite-push les pousse aussi quand l'application est fermée (sw.js). Quand la
    base a le quatorzième script (20261102_crescite_equipe_modifie.sql), chacun change aussi ce qui le concerne : l'horaire
-   et les précisions de ses dates (le geste « Modifier » d'une date), les fichiers de ses spectacles (la page d'un
-   spectacle) ; la base prévient toute l'équipe concernée, avec le nom de l'auteur (voir « l'équipe modifie »).
+   et les précisions sans lien de ses dates (le geste « Modifier » d'une date), les fichiers des spectacles dont il est
+   aujourd'hui (la page d'un spectacle) ; la base prévient toute l'équipe concernée, avec le nom de l'auteur (voir
+   « l'équipe modifie »).
 
    Chargés avant ce fichier : ../admin/vendor/supabase.js (supabase-js), ../admin/agenda.js (AGENDA), ../admin/feuille.js
    (FEUILLE), ../admin/tentacules.js (TENTACULES) et carte.js (CRESCITE_CARTE : la France et Rouen, écrit par
@@ -2801,9 +2802,14 @@
   // un fichier de travail : l'ouvrir, le partager ; s'il est de l'équipe de ce spectacle (quatorzième script), le modifier
   const ligneFichier = (x, modifiable = false) => `<li class="doc-ligne">${ligneDocument(x)}<span class="doc-actions"><button type="button" class="btn petit doc-partager" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>${modifiable === true
     ?`<button type="button" class="btn petit doc-modifier" data-modifier-document="${x.id}" aria-haspopup="dialog">${ICONES.crayon}<span>Modifier</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</span></li>`;
+  // l'équipe actuelle d'un spectacle, comme la base la compte (crescite_membre_actuel) : sa distribution, ou présente dans
+  // l'équipe d'une de ses dates à venir. Elle seule en change les fichiers ; quelqu'un d'une date passée les lit encore
+  const membreActuel = id => E.distributions.some(x => memeId(x.spectacle_id, id) && memeId(x.personne_id, E.moi))
+    || E.dates.some(d => memeId(d.spectacle?.id, id) && (d.fin || d.debut) >= aujourdhui()
+      && E.equipes.some(e => memeId(e.date_id, d.id) && memeId(e.personne_id, E.moi) && e.present));
   // les documents que l'équipe d'un spectacle tient elle-même : ceux de l'équipe (pas les documents publics, ni ceux des salles,
-  // ni ceux de toute la compagnie, qui restent à l'administration)
-  const documentEquipe = (x, id) => avecModifier() && (!x.pour || x.pour === 'equipe') && x.spectacle_id != null && memeId(x.spectacle_id, id);
+  // ni ceux de toute la compagnie, qui restent à l'administration), pour qui en est aujourd'hui
+  const documentEquipe = (x, id) => avecModifier() && (!x.pour || x.pour === 'equipe') && x.spectacle_id != null && memeId(x.spectacle_id, id) && membreActuel(id);
   const messageLiens = () => (E.erreurLiens ? `<p class="message erreur" role="alert">Les fichiers ne peuvent pas s’ouvrir d’ici pour le moment (${esc(motsErreur(E.erreurLiens) || 'réessayez')}). Chacun sera redemandé quand vous l’ouvrirez.</p>` : '');
 
   function vueSpectacles(r, { focus }) {
@@ -2830,7 +2836,7 @@
   function vueSpectacle(r, { focus }) {
     const x = mesSpectacles().find(y => slugDe(y.sp) === r.slug);
     if (!x) return afficher(r, 'Spectacle', `<div class="titre-vue"><h1>Spectacle introuvable</h1></div>${etatVide('dossier', 'Ce spectacle n’est pas (ou plus) dans les vôtres', 'Retrouvez vos spectacles dans l’onglet Spectacles.', '<p><a class="btn" href="#/spectacles">Mes spectacles</a></p>')}`, { focus });
-    const { id, sp } = x, docs = documentsDe(id), roles = rolesDe(id), auj = aujourdhui(), photo = photoDe(sp);
+    const { id, sp } = x, docs = documentsDe(id), roles = rolesDe(id), auj = aujourdhui(), photo = photoDe(sp), gerer = avecModifier() && membreActuel(id);
     const avenir = E.dates.filter(d => Number(d.spectacle?.id) === id && finDe(d) >= auj).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
     let html = `<article class="tete-spectacle${photo ? ' avec-photo' : ''}" style="${esc(styleH(sp))}" aria-labelledby="ts-titre">
         ${photo ? `<div class="ts-photo" aria-hidden="true"><img src="${esc(photo)}" alt="" decoding="async" crossorigin="anonymous" fetchpriority="high"></div>` : ''}
@@ -2844,14 +2850,15 @@
         return `<li><a class="ds-ligne" href="#/date/${d.id}"><span class="ds-quand">${esc(majuscule(quandTexte(d)))}</span><span class="ds-ou">${esc(ou)}</span>${nat !== 'representations' ? `<span class="etat nature">${esc(NATURES[nat])}</span>` : ''}${ETATS_COURTS[d.statut] ? `<span class="etat ${d.statut}">${ETATS_COURTS[d.statut]}</span>` : ''}${ICONES.chevron}</a></li>`;
       }).join('')}</ul>${avenir.length > 8 ? `<p class="aide">Et ${pluriel(avenir.length - 8, 'autre date', 'autres dates')} dans Ma saison.</p>` : ''}` : '<p class="aide">Pas de date à venir pour vous sur ce spectacle.</p>'}</section>`;
     html += `<section class="bloc fichiers"${attrU(sp)} aria-labelledby="ts-fichiers"><h2 id="ts-fichiers">${ICONES.dossier}Les fichiers de travail</h2>${messageLiens()}`;
-    if (!docs.length) html += avecModifier() ? '<p class="aide">Pas encore de fichier : ajoutez le premier (le texte, le dossier, la fiche technique, les plans…). Toute l’équipe du spectacle en sera prévenue.</p>'
+    if (!docs.length) html += gerer ? '<p class="aide">Pas encore de fichier : ajoutez le premier (le texte, le dossier, la fiche technique, les plans…). Toute l’équipe du spectacle en sera prévenue.</p>'
       : '<p class="aide">Pas encore de fichier : l’administration les ajoute au fil de la saison (le texte, le dossier, la fiche technique, les plans…).</p>';
     for (const [type, un, plusieurs] of GENRES_DOCS) {
       const xs = docs.filter(d => (type === 'autre' ? !GENRES_CONNUS.has(d.type) : d.type === type));
       if (xs.length) html += `<h3 class="genre-docs">${esc(xs.length > 1 ? plusieurs : un)}</h3><ul class="liste-docs">${xs.map(x => ligneFichier(x, documentEquipe(x, id))).join('')}</ul>`;
     }
-    // (quatorzième script) l'équipe du spectacle ajoute ses fichiers ; elle modifie ceux de l'équipe, pas les documents publics
-    if (avecModifier()) html += `<p class="liens ajout-fichier"><button type="button" class="btn petit" data-ajouter-fichier="${id}" aria-haspopup="dialog">${ICONES.plus}Ajouter un fichier<span class="sr"> à ${esc(sp.titre || 'ce spectacle')}</span></button>
+    // (quatorzième script) l'équipe actuelle du spectacle ajoute ses fichiers ; elle modifie ceux de l'équipe, pas les
+    // documents publics
+    if (gerer) html += `<p class="liens ajout-fichier"><button type="button" class="btn petit" data-ajouter-fichier="${id}" aria-haspopup="dialog">${ICONES.plus}Ajouter un fichier<span class="sr"> à ${esc(sp.titre || 'ce spectacle')}</span></button>
       ${docs.some(x => !documentEquipe(x, id)) ? '<span class="aide">Les documents publics (programmateurs, établissements) restent à l’administration.</span>' : ''}</p>`;
     html += '</section>' + piedVue();
     afficher(r, sp.titre || 'Spectacle', html, { focus });
@@ -3150,13 +3157,15 @@
 
   // ================================================================================================ l'équipe modifie
   // Quand la base a le quatorzième script (20261102_crescite_equipe_modifie.sql) : le geste « Modifier » d'une date change
-  // l'heure et la fin de ses séances, leur précision (« complet », « hors les murs… ») et le texte des précisions de la
-  // date (crescite_modifier_date) ; sur la page d'un spectacle, « Ajouter un fichier », et « Modifier » d'un fichier de
-  // l'équipe : son titre, son genre, une nouvelle version, ou le supprimer. Un fichier part au chemin que la base prépare
-  // (crescite_preparer_fichier), puis s'inscrit ; celui qu'il remplace (ou un fichier supprimé) s'efface ensuite du
-  // stockage. La base prévient l'équipe concernée et l'administration, avec le nom de l'auteur, jamais lui, et garde chaque
-  // changement au journal. Le reste (le jour, le public, l'annulation, la billetterie, les liens, le statut d'une date, les
-  // documents publics) demeure à l'administration : la page ne le propose pas, et la base le refuse.
+  // l'heure et la fin de ses séances, leur précision (« complet », « hors les murs… ») et les précisions de la date qui
+  // n'ont pas de lien (crescite_modifier_date) ; sur la page d'un spectacle dont on est aujourd'hui (sa distribution, ou
+  // l'équipe d'une de ses dates à venir : membreActuel), « Ajouter un fichier », et « Modifier » d'un fichier de l'équipe :
+  // son titre, son genre, une nouvelle version, ou le retirer. Un fichier part au chemin que la base prépare
+  // (crescite_preparer_fichier), puis s'inscrit ; la page n'efface jamais rien du stockage (elle ne le peut pas) : la
+  // version remplacée, le fichier retiré restent à l'administration, qui peut rétablir le document depuis le journal. La
+  // base prévient l'équipe concernée et l'administration, avec le nom de l'auteur, jamais lui, et garde chaque changement
+  // au journal. Le reste (le jour, le public, l'annulation, la billetterie, les précisions qui portent un lien, le statut
+  // d'une date, les documents publics) demeure à l'administration : la page ne le propose pas, et la base le refuse.
 
   // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le reste de la page est inerte ; le focus revient
   // au geste qui l'a ouverte. avantFermer() : faux, la boîte reste (une écriture en cours, des changements à garder) ;
@@ -3205,8 +3214,15 @@
       if (el && (document.activeElement === document.body || !document.activeElement)) el.focus({ preventScroll: true });
     }).catch(() => {});
   }
-  // ce que la base refuse dans un texte de l'équipe (crescite_lire_texte), dit avant d'envoyer
-  const texteRefuse = t => (/[<>]/.test(t) ? 'ni « < » ni « > », du texte seulement' : /(https?:|www\.|:\/\/)/i.test(t) ? 'pas de lien, l’administration les ajoute' : '');
+  // ce que la base refuse dans un texte de l'équipe (crescite_lire_texte), dit avant d'envoyer : une balise, un caractère
+  // de contrôle ou invisible qui cache ou retourne le texte (trait d'union conditionnel, liants sans chasse, marques,
+  // enchâssements et isolats de sens d'écriture, gluon de mots, indicateur d'ordre des octets : les mêmes plages que la
+  // base), un lien. Les espaces insécables passent
+  const PLAGES_INVISIBLES = [[0x0, 0x1f], [0x7f, 0x9f], [0xad, 0xad], [0x61c, 0x61c], [0x200b, 0x200f], [0x202a, 0x202e], [0x2060, 0x2069], [0xfeff, 0xfeff]];
+  const invisible = t => [...String(t ?? '')].some(c => { const n = c.codePointAt(0); return PLAGES_INVISIBLES.some(([a, b]) => n >= a && n <= b); });
+  const texteRefuse = t => (/[<>]/.test(t) ? 'ni « < » ni « > », du texte seulement'
+    : invisible(t) ? 'pas de caractère invisible ou de contrôle (un texte collé d’ailleurs en cache parfois : retapez-le)'
+    : /(https?:|www\.|:\/\/)/i.test(t) ? 'pas de lien, l’administration les ajoute' : '');
   const resserrer = t => String(t ?? '').replace(/\s+/g, ' ').trim();
   // le message de la base, dans une phrase de la page : « Rien n’est enregistré : vingt modifications en une heure… »
   const premiereMinuscule = m => (m ? m[0].toLowerCase() + m.slice(1) : m).replace(/\.$/, '');
@@ -3214,7 +3230,7 @@
     const code = String(e?.code || '');
     if (code === 'PT429' || e?.status === 429) return premiereMinuscule(e?.message || 'Trop de modifications en une heure : réessayez plus tard');
     if (code === 'PT409' || e?.status === 409) return 'quelqu’un vient de la modifier aussi : elle est relue, recommencez';
-    if (code === '42501' && /^(Ce champ reste|Les liens|Les fichiers|Ce document)/.test(e.message || '')) return premiereMinuscule(e.message);
+    if (code === '42501' && /^(Ce champ reste|Les précisions|Les liens|Les fichiers|Ce document)/.test(e.message || '')) return premiereMinuscule(e.message);
     if (code === '42501') return `vous n’êtes pas (ou plus) dans l’équipe de ${quoi}`;
     if (code === '22023' && e.message) return premiereMinuscule(e.message);
     return motsErreur(e);
@@ -3229,8 +3245,9 @@
 
   // ———— une date : l'horaire de ses séances, leur précision, les précisions de la date
   const MAX_NOTE = 120, MAX_PRECISION = 200, MAX_PRECISIONS = 8;
-  // une précision de la date : un texte, et son lien s'il en a un (il reste) ; une précision mise en forme par
-  // l'administration (des balises) reste telle quelle : la page ne la réécrit pas
+  // une précision de la date : un texte, et son lien s'il en a un. Celle qui porte un lien (la billetterie, un plan) reste
+  // à l'administration, telle quelle, texte et lien : la page la montre sans la proposer (la base la refuserait changée,
+  // retirée ou doublée). Une précision mise en forme par l'administration (des balises) ne se réécrit pas non plus
   const precisionsDe = d => (Array.isArray(d.details) ? d.details : [])
     .map(x => (typeof x === 'string' ? { texte: x, lien: null } : x && typeof x === 'object' && typeof x.texte === 'string' ? { texte: x.texte, lien: x.lien || null } : null))
     .filter(x => x && x.texte.trim());
@@ -3244,7 +3261,7 @@
     const seances = d.representations.filter(r => !r.annulee && r.id != null).sort((a, b) => (a.jour + h5(a.heure)).localeCompare(b.jour + h5(b.heure)));
     const annulees = d.representations.filter(r => r.annulee).length;
     const avant = precisionsDe(d);
-    const precisions = avant.map(x => ({ ...x, orig: x.texte, fixe: /[<>]/.test(x.texte) }));
+    const precisions = avant.map(x => ({ ...x, orig: x.texte, fixe: !!x.lien || /[<>]/.test(x.texte) }));
     let enCours = false;
     const nomSeance = r => [plusieursJours ? majuscule(jourSansAn(r.jour)) : '', r.heure ? heureTexte(r.heure) : 'heure à préciser',
       nat === 'representations' ? PUBLICS[r.public] || '' : NATURES[nat].toLowerCase().replace(/s$/, '')].filter(Boolean).join(' · ');
@@ -3255,12 +3272,15 @@
         </div>
         <div class="champ"><label for="sm-n-${r.id}">Précision <span class="facultatif">(facultatif)</span></label><input type="text" id="sm-n-${r.id}" value="${esc(r.note || '')}" maxlength="${MAX_NOTE}" autocomplete="off" placeholder="complet, hors les murs…" aria-describedby="sm-aide-note"></div>
       </fieldset>`;
-    const lignePrecision = (x, i) => `<li class="precision-modif">
+    // une précision à lien : son texte, et une ligne qui dit pourquoi elle ne se change pas (ni champ, ni « Retirer »)
+    const lignePrecision = (x, i) => (x.lien ? `<li class="precision-modif precision-liee">
+        <p class="precision-fixe">${esc(x.texte.replace(/<[^>]*>/g, ''))}</p>
+        <p class="aide">${ICONES.lien}<span>Avec son lien (${esc(hoteDe(x.lien))}), elle reste à l’administration.</span></p>
+      </li>` : `<li class="precision-modif">
         ${x.fixe ? `<p class="precision-fixe">${esc(x.texte.replace(/<[^>]*>/g, ''))}</p><p class="aide">Mise en forme par l’administration : elle seule la change.</p>`
           : `<label class="sr" for="pm-${i}">Précision ${i + 1}</label><textarea id="pm-${i}" rows="2" maxlength="${MAX_PRECISION}" data-precision="${i}" aria-describedby="pm-aide">${esc(x.texte)}</textarea>`}
-        <p class="precision-pied">${x.lien ? `<span class="aide">${ICONES.lien}<span>Son lien reste : ${esc(hoteDe(x.lien))}</span></span>`
-          : `<button type="button" class="lien-btn" data-retirer-precision="${i}">Retirer<span class="sr"> la précision ${i + 1}</span></button>`}</p>
-      </li>`;
+        <p class="precision-pied"><button type="button" class="lien-btn" data-retirer-precision="${i}">Retirer<span class="sr"> la précision ${i + 1}</span></button></p>
+      </li>`);
     const corps = `<form class="form-modale" id="f-modif-date" novalidate>
         <p class="intro"><b>${esc(sp.titre || 'Spectacle')}</b> · ${esc(majuscule(quandTexte(d)))}${d.lieu ? ` · ${esc(d.lieu.commune || d.lieu.nom || '')}` : ''}</p>
         <section aria-labelledby="t-md-seances"><h3 id="t-md-seances">${nat === 'representations' ? 'Les représentations' : 'Les horaires'}</h3>
@@ -3269,7 +3289,7 @@
           ${seances.length ? '<p class="aide" id="sm-aide-note">La précision d’une séance se lit aussi sur le site : « complet », « audiodécrite », « hors les murs, au collège… ».</p>' : ''}
         </section>
         <section aria-labelledby="t-md-precisions"><h3 id="t-md-precisions">Les précisions de la date</h3>
-          <p class="aide" id="pm-aide">Sous la date, ici et sur le site de la compagnie : du texte seulement, ${MAX_PRECISION} caractères au plus. Les liens restent à l’administration.</p>
+          <p class="aide" id="pm-aide">Sous la date, ici et sur le site de la compagnie : du texte seulement, ${MAX_PRECISION} caractères au plus. Celles qui portent un lien restent à l’administration.</p>
           <ul class="liste-precisions" id="pm-liste">${precisions.map(lignePrecision).join('')}</ul>
           <p class="ajout-precision"><button type="button" class="btn petit" data-ajouter-precision>${ICONES.plus}Ajouter une précision</button></p>
         </section>
@@ -3336,7 +3356,6 @@
       for (const [i, p] of precisions.entries()) {
         if (p.fixe || p.texte === p.orig) continue;
         const champ = $(`#pm-${i}`, fond), t = resserrer(p.texte);
-        if (!t && p.lien) { erreurChamp(champ, 'Une précision qui porte un lien garde son texte.'); return false; }
         const refus = texteRefuse(t);
         if (refus) { erreurChamp(champ, `Une précision : ${refus}.`); return false; }
       }
@@ -3381,24 +3400,26 @@
   const titreDeFichier = n => majuscule(String(n || '').replace(/\.[^.]*$/, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()).slice(0, 120);
   const genreDeFichier = n => { const s = sansAccent(n); return /fiche.?tech/.test(s) ? 'fiche_technique' : /plan/.test(s) ? 'plan' : /dossier/.test(s) ? 'dossier' : /texte|version|script/.test(s) ? 'texte' : 'autre'; };
   const motsEnvoi = e => { const m = `${e?.message || ''} ${e?.statusCode || ''}`; return /size|large|exceed|413/i.test(m) ? `il dépasse ${MO_DOC} Mo` : /mime|type|415/i.test(m) ? 'le stockage n’accepte pas ce type de fichier' : motsErreur(e); };
-  const effacerFichier = chemin => { if (chemin) sb.storage.from(SEAU).remove([chemin]).then(r => { if (r.error) console.warn('stockage', r.error); }).catch(() => {}); };
 
   function ouvrirModaleDocument({ spectacle = null, doc = null }, declencheur = null) {
     if (!avecModifier()) return;
     const x = doc != null ? E.documents.find(y => y.id === doc) || null : null;
     const spId = x ? x.spectacle_id : spectacle;
     if (doc != null && (!x || !documentEquipe(x, spId))) return annoncer('Ce fichier n’est plus là, ou il reste à l’administration : actualisez la page.', { erreur: true });
+    if (doc == null && !membreActuel(spId)) return annoncer('Les fichiers de ce spectacle se changent par son équipe actuelle (sa distribution, ou l’équipe d’une date à venir) : demandez à l’administration.', { erreur: true });
     const sp = E.spectacles.get(Number(spId)) || [...E.spectacles.values()].find(s => memeId(s.id, spId)) || {};
     const ajout = !x, retour = ajout ? `[data-ajouter-fichier="${spId}"]` : `[data-modifier-document="${x.id}"]`;
     const genre0 = x ? (GENRES_CONNUS.has(x.type) ? x.type : 'autre') : 'autre';
-    let envoye = null;                               // { fichier, chemin } : déjà déposé, pas encore inscrit (l'inscription a échoué)
+    // { fichier, chemin } : déjà déposé, pas encore inscrit (l'inscription a échoué) ; un nouvel essai le reprend. Abandonné,
+    // il reste dans le stockage, que la page ne peut pas effacer (l'administration le fait)
+    let envoye = null;
     let enCours = false, titreAuto = '';
     const quoi = x ? (x.fichier ? (x.fichier.split('.').pop() || '').toUpperCase() || 'Fichier' : 'Lien') : '';
     const corps = `<form class="form-modale" id="f-document" novalidate>
         <p class="intro">${ajout ? `Dans les fichiers de travail de <b>${esc(sp.titre || 'ce spectacle')}</b>.` : `<b>${esc(x.titre)}</b> · ${esc(quoi)} · ${esc(sp.titre || '')}`}</p>
         <div class="champ"><label for="fd-fichier">${ajout ? 'Le fichier' : 'Une nouvelle version <span class="facultatif">(facultatif)</span>'}</label>
           <input type="file" id="fd-fichier" accept="${esc(ACCEPTE_DOC)}" aria-describedby="fd-fichier-aide">
-          <p class="aide" id="fd-fichier-aide">PDF, image (JPEG, PNG, WebP), texte, ODT ou DOCX ; ${MO_DOC} Mo au plus.${ajout ? '' : ' Elle remplace l’ancienne, pour toute l’équipe.'}</p></div>
+          <p class="aide" id="fd-fichier-aide">PDF, image (JPEG, PNG, WebP), texte, ODT ou DOCX ; ${MO_DOC} Mo au plus.${ajout ? '' : ' Elle remplace l’ancienne pour toute l’équipe (l’administration garde la précédente).'}</p></div>
         <div class="champ"><label for="fd-titre">Titre</label><input type="text" id="fd-titre" maxlength="120" autocomplete="off" value="${esc(x ? x.titre : '')}"></div>
         <div class="champ"><label for="fd-genre">Rangé avec</label><select id="fd-genre">${GENRES_CHOIX.map(([k, l]) => `<option value="${k}"${k === genre0 ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
         <p class="aide prevenus">${ICONES.cloche}<span>L’équipe du spectacle et l’administration sont prévenues, avec votre nom.</span></p>
@@ -3409,8 +3430,6 @@
     const { fond, fermer } = ouvrirModale({ id: 'modale-document', titre: ajout ? 'Ajouter un fichier' : 'Modifier le fichier', icone: ajout ? ICONES.plus : ICONES.crayon, corps, declencheur,
       avantFermer: () => {
         if (enCours) { annoncer('Un instant : l’envoi est en cours.'); return false; }
-        // déposé mais pas inscrit : il s'efface (la base le permet à celui qui l'a déposé)
-        if (envoye) { effacerFichier(envoye.chemin); envoye = null; }
         return true;
       } });
     const form = $('#f-document', fond), zone = $('#msg-document', fond);
@@ -3447,8 +3466,9 @@
           if (f) {
             if (envoye && envoye.fichier === f) chemin = envoye.chemin;
             else {
-              if (envoye) { effacerFichier(envoye.chemin); envoye = null; }
-              // le chemin que la base prépare (une heure), puis le fichier, jamais par-dessus un autre
+              envoye = null;
+              // le chemin que la base prépare (une heure), puis le fichier, jamais par-dessus un autre (sans upsert : l'envoi
+              // seul, la base ne permet rien d'autre)
               etape = 'inscription';
               const p = await sb.rpc('crescite_preparer_fichier', { s: Number(spId), nom: f.name });
               if (p.error) throw p.error;
@@ -3470,14 +3490,13 @@
         });
       } catch (err) { enCours = false; return echec(err, etape === 'envoi'); }
       enCours = false;
-      effacerFichier(resultat.ancien_fichier);       // la version remplacée, que la base vient de libérer
       fermer(true);
       const n = Number(resultat.prevenus) || 0;
       annoncer(ajout ? `« ${titre} » est ajouté${prevenusTexte(n)}.` : resultat.modifications === 0 ? 'Rien n’a changé.' : `« ${titre} » est enregistré${prevenusTexte(n)}.`);
       relireApres(retour);
     });
     $('[data-supprimer-document]', form)?.addEventListener('click', async ev => {
-      if (!confirm(`Supprimer « ${x.titre} » ? Le fichier est effacé, et l’équipe du spectacle en est prévenue.`)) return;
+      if (!confirm(`Supprimer « ${x.titre} » des fichiers de travail ? L’équipe du spectacle en est prévenue ; l’administration garde le fichier et peut le rétablir.`)) return;
       enCours = true;
       let r;
       try { r = await occupe(ev.currentTarget, 'Suppression…', () => sb.rpc('crescite_supprimer_document', { doc: x.id })); }
@@ -3487,7 +3506,6 @@
         if (fonctionAbsente(r.error)) { fermer(true); return pasInstalle('La modification des fichiers', retour); }
         return dire(zone, `Le fichier n’est pas supprimé : ${esc(raisonModif(r.error, 'ce spectacle'))}.`);
       }
-      effacerFichier(r.data && r.data.ancien_fichier);
       fermer(true);
       E.documents = E.documents.filter(y => y.id !== x.id);   // tout de suite, la base relue ensuite
       if (E.route && E.route.k === 'spectacle') router({ rafraichir: true });
@@ -4058,6 +4076,7 @@
           d.feuille && outilFeuille() ? { libelle: 'PDF de la feuille de route', faire: () => telechargerPdf(faux('pdf', d.id)), icone: ICONES.pdf } : null,
           !passee && vive && evenementsAVenir(d.id).length ? { libelle: 'Ajouter à mon agenda', faire: () => telechargerAgenda(d.id), icone: ICONES.agenda } : null,
           !passee && vive && avecSignaler() ? { libelle: 'Signaler un retard', faire: () => ouvrirModaleRetard(d.id, el.querySelector('a, button') || el), icone: ICONES.alerte } : null,
+          !passee && vive && avecModifier() ? { libelle: 'Modifier la date', detail: 'l’horaire, les précisions', faire: () => ouvrirModaleDate(d.id, el.querySelector('a, button') || el), icone: ICONES.crayon } : null,
           !passee && vive && avecIdeale() ? { libelle: 'Note de frais', href: `#/frais?date=${d.id}`, icone: ICONES.euro } : null,
           { separateur: true },
           { libelle: 'Partager la date', detail: 'le lien de cette page', icone: ICONES.partager, faire: () => partagerMaintenant({ title: `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`, text: `${d.spectacle?.titre || ''} ${quandTexte(d)}${l ? ` · ${l.nom || l.commune}` : ''}`.trim(), url: new URL(`#/date/${d.id}`, location.href).href }, 'Lien de la date copié') }];
@@ -4069,9 +4088,10 @@
         nonLues() > 0 ? { libelle: 'Tout marquer comme lu', icone: ICONES.coche, faire: () => toutMarquerLu($('[data-tout-lu]') || faux('toutLu', '1')) } : null];
     } });
     G.menu({ cible: '.doc-ligne, .puces-docs li', titre: el => (el.querySelector('a, button')?.textContent || 'Document').trim(), actions: el => {
-      const a = el.querySelector('a[href]'), p = el.querySelector('[data-partager]');
+      const a = el.querySelector('a[href]'), p = el.querySelector('[data-partager]'), m = el.querySelector('[data-modifier-document]');
       return [a ? { libelle: 'Ouvrir', href: a.getAttribute('href'), externe: a.target === '_blank', icone: ICONES.doc } : null,
-        p ? { libelle: 'Partager', detail: 'un lien de trente jours', icone: ICONES.partager, faire: () => partager(p) } : null];
+        p ? { libelle: 'Partager', detail: 'un lien de trente jours', icone: ICONES.partager, faire: () => partager(p) } : null,
+        m ? { libelle: 'Modifier', detail: 'le titre, le rangement, une nouvelle version', icone: ICONES.crayon, faire: () => ouvrirModaleDocument({ doc: Number(m.dataset.modifierDocument) }, m) } : null];
     } });
     G.menu({ cible: 'a.carte-prop[href]', titre: 'Proposition de dates', actions: el => [{ libelle: 'Répondre', href: el.getAttribute('href'), icone: ICONES.question }, { libelle: 'Toutes mes propositions', href: '#/propositions', icone: ICONES.planning }] });
     // ← → et le balayage : la date (ou la feuille) d'avant, d'après ; pas depuis le bord (le retour au doigt), ni sur ce qui défile de côté

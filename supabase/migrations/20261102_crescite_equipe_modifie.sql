@@ -6,43 +6,51 @@
 -- règles crescite_equipe_membre_…).
 --
 -- Ce que le script ajoute :
---   crescite_modifier_date(d, changements)         pour l'équipe de la date (et l'administration), sur une date à venir,
---                                                  ni annulée ni reportée : l'heure et la fin de ses séances, la précision
---                                                  de chaque séance (« complet », « hors les murs, au collège… »), le texte
---                                                  des précisions de la date (« 14 h et 20 h : représentations à… »). Les
---                                                  précisions restent du texte simple (ni lien, ni balise : l'administration
---                                                  les ouvre dans un éditeur riche), et une précision qui porte un lien le
---                                                  garde. changements = {representations: [{id, heure?, fin?, note?,
---                                                  avant?}], precisions: [{texte, lien}]} ; « avant » : ce que la page avait
---                                                  lu (si la séance a changé depuis, rien n'est écrasé).
---   crescite_preparer_fichier(s, nom)              pour l'équipe d'un spectacle (et l'administration) : le chemin où
---                                                  déposer un fichier, <spectacle>/<repère>-<nom>.<ext>, valable une heure ;
---                                                  le stockage n'accepte de l'équipe que ce chemin-là
+--   crescite_modifier_date(d, changements)         pour l'équipe de la date (et l'administration), sur une date à venir
+--                                                  (au jour de Paris), ni annulée ni reportée : l'heure et la fin de ses
+--                                                  séances, la précision de chaque séance (« complet », « hors les murs, au
+--                                                  collège… »), et les précisions de la date qui n'ont pas de lien
+--                                                  (« Garer le camion derrière le théâtre ») : les changer, en ajouter, en
+--                                                  retirer. Elles restent du texte simple (ni lien, ni balise, ni caractère
+--                                                  invisible : l'administration les ouvre dans un éditeur riche). Une
+--                                                  précision qui porte un lien (la billetterie, un plan) reste telle quelle,
+--                                                  son texte avec son lien ; seul son rang peut changer. changements =
+--                                                  {representations: [{id, heure?, fin?, note?, avant?}], precisions:
+--                                                  [{texte, lien}]} ; « avant » : ce que la page avait lu (si la séance a
+--                                                  changé depuis, rien n'est écrasé).
+--   crescite_preparer_fichier(s, nom)              pour l'équipe actuelle d'un spectacle (sa distribution, ou l'équipe d'une
+--                                                  de ses dates à venir) et l'administration : le chemin où déposer un
+--                                                  fichier, <spectacle>/<repère>-<nom>.<ext>, valable une heure. Le
+--                                                  stockage n'accepte de l'équipe que ce chemin-là, et seulement l'envoi :
+--                                                  ni relire, ni remplacer, ni effacer
 --   crescite_ajouter_document(s, document)         le fichier déposé devient un document de l'équipe du spectacle
 --                                                  ({titre, type, fichier})
 --   crescite_modifier_document(doc, changements)   son titre, son genre (texte, dossier, fiche technique, plan, autre), ou
---                                                  une nouvelle version du fichier ({titre?, type?, fichier?}) ; l'ancien
---                                                  fichier, libéré, peut être effacé par celui qui l'a remplacé
---   crescite_supprimer_document(doc)               le document s'efface ; son fichier peut l'être par celui qui l'a retiré
+--                                                  une nouvelle version du fichier ({titre?, type?, fichier?})
+--   crescite_supprimer_document(doc)               le document quitte les fichiers de travail du spectacle
 --   crescite_modifications                         chaque modification faite ainsi : qui, quoi, la notification, combien de
 --                                                  personnes l'ont reçue. L'auteur relit les siennes, l'administration
 --                                                  toutes ; seules les fonctions l'écrivent. Vingt modifications par heure
 --                                                  et par compte, et vingt fichiers préparés. L'espace de l'équipe y lit une
 --                                                  ligne pour savoir si ce script est passé : avant lui, ses gestes
 --                                                  (« Modifier » d'une date, les fichiers d'un spectacle) ne se montrent pas.
---   crescite_fichiers_equipe                       les fichiers en chemin : un dépôt préparé, un fichier libéré (lus par les
---                                                  règles du stockage, jamais par l'API)
+--   crescite_fichiers_equipe                       les dépôts préparés (lus par la règle du stockage, jamais par l'API)
 --   crescite_notifications.auteur_id               la fiche de qui a fait la modification (l'application montre son portrait)
 -- Chaque modification prévient tout le monde, une fois, avec le nom de son auteur (« Lauren Toulin a changé l'horaire du
--- 19 novembre à Eu », « 20 h → 20 h 30 · Bérénice »), jamais son auteur : l'équipe de la date (ou, pour un fichier, du
--- spectacle) qui a un compte, et les administrateurs qui ont une fiche. Elle arrive dans l'application (en temps réel) et
--- sur les téléphones abonnés, par le déclencheur des notifications du troisième script ; les déclencheurs « horaires
--- changés » et « nouveau document » se taisent pendant ce geste (il n'y a qu'une notification, celle qui dit qui). Chaque
--- changement va au journal, avec son auteur, comme ceux de l'administration, qui peut y revenir.
+-- 19 novembre à Eu », « 20 h → 20 h 30 · Bérénice »), jamais son auteur : l'équipe de la date (ou, pour un fichier,
+-- l'équipe actuelle du spectacle) qui a un compte, et les administrateurs qui ont une fiche. Elle arrive dans
+-- l'application (en temps réel) et sur les téléphones abonnés, par le déclencheur des notifications du troisième script ;
+-- les déclencheurs « horaires changés » et « nouveau document » se taisent pendant ce geste (il n'y a qu'une
+-- notification, celle qui dit qui). Chaque changement va au journal, avec son auteur, comme ceux de l'administration, qui
+-- peut y revenir : un fichier remplacé ou retiré par l'équipe reste dans le stockage (l'équipe n'y efface rien), et le
+-- document rétabli depuis le journal le retrouve. Un fichier déposé mais jamais inscrit y reste aussi, sans que personne
+-- de l'équipe puisse le relire (vingt par heure et par compte au plus) : l'administration l'efface dans Storage.
+-- « À venir », « passée » : au jour qu'il est à Paris, quel que soit le fuseau que la connexion choisit.
 -- Ce qui reste à l'administration : le jour d'une séance, son public, son annulation, sa billetterie ; le statut d'une
--- date, sa visibilité, sa nature, son lieu, sa ligne d'agenda, ses liens et les liens de ses précisions ; le suivi
--- (organisateur, contacts, contrat, montants), les chiffres, l'équipe d'une date, les feuilles de route ; les documents
--- publics (programmateurs, établissements, salles), ceux de l'administration et ceux de toute la compagnie.
+-- date, sa visibilité, sa nature, son lieu, sa ligne d'agenda, ses liens et les précisions qui portent un lien ; le
+-- suivi (organisateur, contacts, contrat, montants), les chiffres, l'équipe d'une date, les feuilles de route ; les
+-- documents publics (programmateurs, établissements, salles), ceux de l'administration et ceux de toute la compagnie ;
+-- effacer un fichier du stockage.
 
 begin;
 
@@ -70,17 +78,25 @@ create table if not exists public.crescite_modifications (
 );
 create index if not exists crescite_modifications_compte on public.crescite_modifications (user_id, cree_le desc);
 
--- les fichiers de l'équipe en chemin dans « crescite-equipe » : un dépôt préparé (une heure pour l'envoyer, un jour pour
--- l'effacer s'il n'est pas devenu un document) ; un fichier qu'un geste vient de libérer, remplacé ou retiré (un jour pour
--- l'effacer). Seules les fonctions de ce script l'écrivent ; les règles du stockage le lisent
+-- les dépôts préparés dans « crescite-equipe » : le chemin qu'un compte a reçu pour un fichier d'un spectacle (une heure
+-- pour l'envoyer ; inscrit, le dépôt s'oublie ; sinon, au bout de deux jours). Seules les fonctions de ce script
+-- l'écrivent ; la règle du stockage le lit
 create table if not exists public.crescite_fichiers_equipe (
   nom text primary key,                                                          -- le chemin dans « crescite-equipe »
-  geste text not null check (geste in ('depot', 'retrait')),
   spectacle_id bigint references public.crescite_spectacles (id) on delete cascade,
   user_id uuid not null references auth.users (id) on delete cascade,
   quand timestamptz not null default now()
 );
-create index if not exists crescite_fichiers_equipe_compte on public.crescite_fichiers_equipe (user_id, geste, quand desc);
+-- (une première version de ce script y gardait aussi les fichiers libérés, que l'équipe pouvait effacer : on les oublie)
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+             where table_schema = 'public' and table_name = 'crescite_fichiers_equipe' and column_name = 'geste') then
+    execute 'delete from public.crescite_fichiers_equipe where geste <> ''depot''';
+    alter table public.crescite_fichiers_equipe drop column geste;
+  end if;
+end $$;
+create index if not exists crescite_fichiers_equipe_compte on public.crescite_fichiers_equipe (user_id, quand desc);
 
 -- qui a fait la modification qu'une notification annonce (vide : la base, ou l'administration)
 alter table public.crescite_notifications add column if not exists auteur_id bigint
@@ -179,16 +195,19 @@ end;
 $$;
 
 -- un texte écrit par l'équipe : les espaces resserrés ; vide : rien ; jamais plus de maxi caractères, ni balise (« < »,
--- « > » : l'administration ouvre les précisions dans un éditeur riche), ni caractère de contrôle, ni lien (les liens
--- restent à l'administration)
+-- « > » : l'administration ouvre les précisions dans un éditeur riche), ni caractère de contrôle, ni caractère
+-- invisible qui cache ou retourne le texte : trait d'union conditionnel, marque de lettre arabe, espaces et liants sans
+-- chasse, marques, enchâssements et isolats de sens d'écriture (un « Planning » suivi d'un renversement et de
+-- « fdp.exe » se lirait « Planningexe.pdf »), gluon de mots, indicateur d'ordre des octets. Ni lien (les liens restent
+-- à l'administration). Les espaces insécables, elles, restent permises
 create or replace function public.crescite_lire_texte(t text, maxi integer, quoi text) returns text
 language plpgsql immutable as $$
 declare v text := btrim(regexp_replace(coalesce(t, ''), '\s+', ' ', 'g'));
 begin
   if v = '' then return null; end if;
   if char_length(v) > maxi then raise exception '% dépasse % caractères', quoi, maxi using errcode = '22023'; end if;
-  if v ~ '[<>[:cntrl:]]' then
-    raise exception '% ne peut contenir ni « < », ni « > », ni caractère de contrôle', quoi using errcode = '22023';
+  if v ~ '[<>[:cntrl:]\u00AD\u061C\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]' then
+    raise exception '% ne peut contenir ni « < », ni « > », ni caractère de contrôle ou invisible', quoi using errcode = '22023';
   end if;
   if v ~* '(https?:|www\.|://)' then
     raise exception '% ne porte pas de lien : l’administration les ajoute', quoi using errcode = '22023';
@@ -197,16 +216,39 @@ begin
 end;
 $$;
 
--- ------------------------------------------------------------------------------------------------ qui est prévenu
+-- ------------------------------------------------------------------------------------------------ qui le peut, qui est prévenu
 
--- les personnes d'un spectacle qui ont un compte : sa distribution, et l'équipe de ses dates
+-- le jour qu'il est à Paris. Une page peut choisir le fuseau de sa connexion (PostgREST l'accepte), et current_date le
+-- suit : une date d'hier redeviendrait « à venir ». Les gestes de ce script comptent donc au jour de Paris
+-- (crescite_a_venir, du troisième script, reste tel quel : relancé, il reviendrait)
+create or replace function public.crescite_aujourdhui_paris() returns date
+language sql stable as $$
+  select (now() at time zone 'Europe/Paris')::date
+$$;
+
+-- vrai si la personne connectée est aujourd'hui de l'équipe de ce spectacle : dans sa distribution, ou présente dans
+-- l'équipe d'une de ses dates à venir. C'est elle qui peut en changer les fichiers. (crescite_membre_spectacle, du
+-- deuxième script, compte aussi les dates passées, même d'il y a des années : d'autres lectures s'en servent, on n'y
+-- touche pas ; les gestes de ce script passent par celle-ci)
+create or replace function public.crescite_membre_actuel(s bigint) returns boolean
+language sql stable security definer set search_path = public as $$
+  with moi as (select public.crescite_moi() as id)
+  select exists (select 1 from moi where moi.id is not null and (
+           exists (select 1 from public.crescite_distributions di where di.spectacle_id = s and di.personne_id = moi.id)
+        or exists (select 1 from public.crescite_equipes e join public.crescite_dates x on x.id = e.date_id
+                   where x.spectacle_id = s and e.personne_id = moi.id and e.present
+                     and coalesce(x.fin, x.debut) >= public.crescite_aujourdhui_paris())))
+$$;
+
+-- l'équipe actuelle d'un spectacle qui a un compte : sa distribution, et l'équipe de ses dates à venir (ceux qui peuvent
+-- en changer les fichiers, et qu'un changement de ses fichiers concerne)
 create or replace function public.crescite_membres_spectacle(s bigint) returns setof bigint
 language sql stable security definer set search_path = public as $$
   select distinct t.p from (
     select di.personne_id as p from public.crescite_distributions di where di.spectacle_id = s
     union
     select e.personne_id from public.crescite_equipes e join public.crescite_dates x on x.id = e.date_id
-     where x.spectacle_id = s and e.present
+     where x.spectacle_id = s and e.present and coalesce(x.fin, x.debut) >= public.crescite_aujourdhui_paris()
   ) t
   where exists (select 1 from public.crescite_personnes_privees v where v.personne_id = t.p and v.user_id is not null)
 $$;
@@ -302,7 +344,10 @@ begin
   end if;
   select * into x from public.crescite_dates where id = d for update;
   if x.id is null then raise exception 'Date % introuvable', d using errcode = '22023'; end if;
-  if not public.crescite_a_venir(d) then raise exception 'Cette date est passée' using errcode = '22023'; end if;
+  -- (au jour de Paris, pas au fuseau que la connexion a choisi)
+  if coalesce(x.fin, x.debut) is null or coalesce(x.fin, x.debut) < public.crescite_aujourdhui_paris() then
+    raise exception 'Cette date est passée' using errcode = '22023';
+  end if;
   if x.statut in ('annulee', 'reportee') then
     raise exception 'Cette date est % : l’administration seule y touche',
       case x.statut when 'annulee' then 'annulée' else 'reportée' end using errcode = '22023';
@@ -377,7 +422,9 @@ begin
     end loop;
   end if;
 
-  -- les précisions de la date : leurs textes ; leurs liens ne changent pas
+  -- les précisions de la date. Celles qui portent un lien (la billetterie, un plan) restent telles quelles, chacune son
+  -- texte avec son lien : un lien ne passe pas sur un autre texte (« Spectacle annulé : demandez le remboursement ici »).
+  -- La page les renvoie, dans l'ordre qu'elle veut ; l'équipe change, ajoute ou retire celles qui n'en ont pas
   if changements ? 'precisions' then
     if jsonb_typeof(changements -> 'precisions') <> 'array' then
       raise exception 'Les précisions : une liste' using errcode = '22023';
@@ -400,21 +447,29 @@ begin
       end loop;
       l := nullif(r ->> 'lien', '');
       t := r ->> 'texte';
-      -- un texte déjà là passe tel quel (l'administration l'a peut-être mis en forme) ; un texte neuf est relu
+      if l is not null then
+        -- une précision à lien : l'une de celles d'avant, son texte avec son lien, telle quelle
+        if not exists (select 1 from jsonb_array_elements(anciens) a where a ->> 'lien' = l and a ->> 'texte' = t) then
+          raise exception 'Les précisions qui portent un lien restent à l’administration : ni leur texte ni leur lien ne changent'
+            using errcode = '42501';
+        end if;
+        nouveaux := nouveaux || jsonb_build_array(jsonb_build_object('texte', t, 'lien', l));
+        continue;
+      end if;
+      -- sans lien : un texte déjà là passe tel quel (l'administration l'a peut-être mis en forme) ; un texte neuf est relu
       if t is null or not exists (select 1 from jsonb_array_elements(anciens) a where a ->> 'texte' = t) then
         t := public.crescite_lire_texte(t, 200, 'Une précision');
       end if;
-      if t is null then
-        if l is not null then raise exception 'Une précision qui porte un lien garde son texte' using errcode = '22023'; end if;
-        continue;
-      end if;
-      nouveaux := nouveaux || jsonb_build_array(jsonb_build_object('texte', t, 'lien', l));
+      if t is null then continue; end if;
+      nouveaux := nouveaux || jsonb_build_array(jsonb_build_object('texte', t, 'lien', null));
     end loop;
-    -- les liens : exactement ceux d'avant (l'administration seule en ajoute, en change ou en retire)
-    if (select coalesce(array_agg(a ->> 'lien' order by a ->> 'lien'), '{}') from jsonb_array_elements(anciens) a where a ->> 'lien' is not null)
+    -- chaque précision à lien d'avant est encore là, une fois : ni retirée, ni doublée (l'administration seule en ajoute,
+    -- en change ou en retire)
+    if (select coalesce(array_agg(a::text order by a::text), '{}') from jsonb_array_elements(anciens) a where a ->> 'lien' is not null)
        is distinct from
-       (select coalesce(array_agg(a ->> 'lien' order by a ->> 'lien'), '{}') from jsonb_array_elements(nouveaux) a where a ->> 'lien' is not null) then
-      raise exception 'Les liens des précisions restent à l’administration' using errcode = '42501';
+       (select coalesce(array_agg(a::text order by a::text), '{}') from jsonb_array_elements(nouveaux) a where a ->> 'lien' is not null) then
+      raise exception 'Les précisions qui portent un lien restent à l’administration : ni leur texte ni leur lien ne changent'
+        using errcode = '42501';
     end if;
     if nouveaux is distinct from anciens then
       update public.crescite_dates set details = nouveaux where id = d;
@@ -448,15 +503,15 @@ $$;
 -- ------------------------------------------------------------------------------------------------ les fichiers d'un spectacle
 
 -- un document que l'équipe peut changer : un document de l'équipe (pour = 'equipe') d'un spectacle dont la personne
--- connectée est (ou l'administration). Les documents publics, ceux des salles, ceux de l'administration et ceux de toute
--- la compagnie restent à l'administration
+-- connectée est aujourd'hui (crescite_membre_actuel), ou l'administration. Les documents publics, ceux des salles, ceux
+-- de l'administration et ceux de toute la compagnie restent à l'administration
 create or replace function public.crescite_document_equipe(doc bigint) returns public.crescite_documents
 language plpgsql security definer set search_path = public as $$
 declare x public.crescite_documents;
 begin
   select * into x from public.crescite_documents where id = doc for update;
   if auth.uid() is null or x.id is null or x.pour <> 'equipe' or x.spectacle_id is null
-     or not (public.crescite_est_admin() or public.crescite_membre_spectacle(x.spectacle_id)) then
+     or not (public.crescite_est_admin() or public.crescite_membre_actuel(x.spectacle_id)) then
     raise exception 'Ce document n’est pas (ou plus) un document de l’équipe de vos spectacles' using errcode = '42501';
   end if;
   return x;
@@ -468,21 +523,9 @@ create or replace function public.crescite_fichier_prepare(chemin text, s bigint
 language sql stable security definer set search_path = public as $$
   select chemin is not null
      and exists (select 1 from public.crescite_fichiers_equipe f
-                  where f.nom = chemin and f.geste = 'depot' and f.user_id = auth.uid() and f.spectacle_id = s
+                  where f.nom = chemin and f.user_id = auth.uid() and f.spectacle_id = s
                     and f.quand > now() - interval '1 hour')
      and not exists (select 1 from public.crescite_documents x where x.fichier = chemin)
-$$;
-
--- le fichier qu'un geste libère (remplacé, retiré) : celui qui l'a libéré peut l'effacer, un jour durant, si plus aucun
--- document ne le tient
-create or replace function public.crescite_liberer_fichier(chemin text, s bigint) returns text
-language plpgsql security definer set search_path = public as $$
-begin
-  if chemin is null or exists (select 1 from public.crescite_documents x where x.fichier = chemin) then return null; end if;
-  insert into public.crescite_fichiers_equipe (nom, geste, spectacle_id, user_id) values (chemin, 'retrait', s, auth.uid())
-  on conflict (nom) do update set geste = 'retrait', spectacle_id = excluded.spectacle_id, user_id = excluded.user_id, quand = now();
-  return chemin;
-end;
 $$;
 
 -- le chemin où déposer un fichier d'un spectacle : <spectacle>/<repère>-<nom sans accents>.<ext>, les types que le
@@ -495,8 +538,8 @@ declare
   base text;
   chemin text;
 begin
-  if auth.uid() is null or not (public.crescite_est_admin() or public.crescite_membre_spectacle(s)) then
-    raise exception 'Réservé à l’équipe de ce spectacle et à l’administration' using errcode = '42501';
+  if auth.uid() is null or not (public.crescite_est_admin() or public.crescite_membre_actuel(s)) then
+    raise exception 'Réservé à l’équipe actuelle de ce spectacle et à l’administration' using errcode = '42501';
   end if;
   select slug into dossier from public.crescite_spectacles where id = s;
   if dossier is null then raise exception 'Spectacle % introuvable', s using errcode = '22023'; end if;
@@ -508,9 +551,10 @@ begin
     raise exception 'Ce type de fichier n’est pas accepté : PDF, image (JPEG, PNG, WebP), texte, ODT ou DOCX' using errcode = '22023';
   end if;
   perform pg_advisory_xact_lock(hashtext('crescite_fichiers ' || auth.uid()::text));
+  -- (un dépôt jamais inscrit s'oublie au bout de deux jours ; son fichier, s'il est parti, reste à l'administration)
   delete from public.crescite_fichiers_equipe where quand < now() - interval '2 days';
   if (select count(*) from public.crescite_fichiers_equipe
-      where user_id = auth.uid() and geste = 'depot' and quand > now() - interval '1 hour') >= 20 then
+      where user_id = auth.uid() and quand > now() - interval '1 hour') >= 20 then
     raise exception 'Vingt fichiers en une heure : c’est le maximum. Réessayez plus tard.' using errcode = 'PT429';
   end if;
   base := btrim(regexp_replace(lower(translate(regexp_replace(coalesce(nom, ''), '\.[^.]*$', ''),
@@ -519,7 +563,7 @@ begin
   base := coalesce(nullif(btrim(left(base, 60), '-'), ''), 'document');
   chemin := dossier || '/' || to_hex((extract(epoch from clock_timestamp()) * 1000)::bigint) || substr(md5(random()::text), 1, 4)
             || '-' || base || '.' || ext;
-  insert into public.crescite_fichiers_equipe (nom, geste, spectacle_id, user_id) values (chemin, 'depot', s, auth.uid());
+  insert into public.crescite_fichiers_equipe (nom, spectacle_id, user_id) values (chemin, s, auth.uid());
   return chemin;
 end;
 $$;
@@ -538,8 +582,8 @@ declare
   titre_n text;
   n integer;
 begin
-  if auth.uid() is null or not (public.crescite_est_admin() or public.crescite_membre_spectacle(s)) then
-    raise exception 'Réservé à l’équipe de ce spectacle et à l’administration' using errcode = '42501';
+  if auth.uid() is null or not (public.crescite_est_admin() or public.crescite_membre_actuel(s)) then
+    raise exception 'Réservé à l’équipe actuelle de ce spectacle et à l’administration' using errcode = '42501';
   end if;
   select * into sp from public.crescite_spectacles where id = s;
   if sp.id is null then raise exception 'Spectacle % introuvable', s using errcode = '22023'; end if;
@@ -576,8 +620,9 @@ begin
 end;
 $$;
 
--- le titre, le genre, ou une nouvelle version du fichier d'un document de l'équipe ; rend {prevenus, modifications,
--- ancien_fichier} (ancien_fichier : le fichier remplacé, que la page efface du stockage)
+-- le titre, le genre, ou une nouvelle version du fichier d'un document de l'équipe ; rend {prevenus, modifications}.
+-- La version remplacée reste dans le stockage (l'équipe n'y efface rien) : rétabli depuis le journal, le document la
+-- retrouve
 create or replace function public.crescite_modifier_document(doc bigint, changements jsonb) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
@@ -588,7 +633,6 @@ declare
   titre_ text;
   genre_ text;
   fichier_ text;
-  ancien text;
   titre_n text;
   texte_n text;
   n integer;
@@ -622,10 +666,7 @@ begin
   update public.crescite_documents set titre = titre_, type = genre_, fichier = coalesce(fichier_, fichier),
          url = case when fichier_ is not null then null else url end
   where id = doc;
-  if fichier_ is not null then
-    delete from public.crescite_fichiers_equipe where nom = fichier_;
-    ancien := public.crescite_liberer_fichier(x.fichier, x.spectacle_id);
-  end if;
+  if fichier_ is not null then delete from public.crescite_fichiers_equipe where nom = fichier_; end if;
   select * into sp from public.crescite_spectacles where id = x.spectacle_id;
   if fichier_ is not null then
     titre_n := public.crescite_auteur_nom(moi) || ' a remplacé un document ' || public.crescite_prep_de(sp.titre);
@@ -644,18 +685,18 @@ begin
                                              x.spectacle_id, '#/spectacles/' || sp.slug, moi);
   insert into public.crescite_modifications (quoi, spectacle_id, document_id, personne_id, user_id, titre, texte, prevenus)
   values ('document', x.spectacle_id, doc, moi, auth.uid(), titre_n, texte_n, n);
-  return jsonb_build_object('prevenus', n, 'modifications', 1, 'ancien_fichier', ancien);
+  return jsonb_build_object('prevenus', n, 'modifications', 1);
 end;
 $$;
 
--- un document de l'équipe s'efface ; rend {prevenus, ancien_fichier} (le fichier, que la page efface du stockage)
+-- un document de l'équipe quitte les fichiers de travail ; rend {prevenus}. Son fichier reste dans le stockage
+-- (l'équipe n'y efface rien) : l'administration rétablit le document depuis le journal, ou efface le fichier
 create or replace function public.crescite_supprimer_document(doc bigint) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare
   moi bigint := public.crescite_moi();
   x public.crescite_documents;
   sp public.crescite_spectacles;
-  ancien text;
   titre_n text;
   n integer;
 begin
@@ -663,44 +704,35 @@ begin
   perform public.crescite_modifications_limite();
   perform set_config('crescite.geste', 'equipe', true);
   delete from public.crescite_documents where id = doc;
-  ancien := public.crescite_liberer_fichier(x.fichier, x.spectacle_id);
   select * into sp from public.crescite_spectacles where id = x.spectacle_id;
   titre_n := public.crescite_auteur_nom(moi) || ' a supprimé un document ' || public.crescite_prep_de(sp.titre);
   n := public.crescite_prevenir_modification(public.crescite_a_prevenir(null, x.spectacle_id, moi), 'document', titre_n, x.titre,
                                              x.spectacle_id, '#/spectacles/' || sp.slug, moi);
   insert into public.crescite_modifications (quoi, spectacle_id, document_id, personne_id, user_id, titre, texte, prevenus)
   values ('document', x.spectacle_id, doc, moi, auth.uid(), titre_n, x.titre, n);
-  return jsonb_build_object('prevenus', n, 'ancien_fichier', ancien);
+  return jsonb_build_object('prevenus', n);
 end;
 $$;
 
 -- ------------------------------------------------------------------------------------------------ le stockage « crescite-equipe »
 
 -- déposer : seulement au chemin préparé par ce compte (crescite_preparer_fichier), dans l'heure, s'il est toujours de
--- l'équipe du spectacle. (Les règles du stockage appellent ces fonctions sous le rôle de la personne connectée.)
+-- l'équipe actuelle du spectacle. (La règle du stockage appelle cette fonction sous le rôle de la personne connectée.)
 create or replace function public.crescite_equipe_peut_deposer(nom text) returns boolean
 language sql stable security definer set search_path = public as $$
   select auth.uid() is not null and exists (
     select 1 from public.crescite_fichiers_equipe f
-     where f.nom = crescite_equipe_peut_deposer.nom and f.geste = 'depot' and f.user_id = auth.uid()
+     where f.nom = crescite_equipe_peut_deposer.nom and f.user_id = auth.uid()
        and f.quand > now() - interval '1 hour'
-       and (public.crescite_est_admin() or public.crescite_membre_spectacle(f.spectacle_id)))
-$$;
-
--- relire et effacer : un dépôt de ce compte resté sans document (un envoi interrompu), ou le fichier qu'un de ses gestes
--- vient de libérer (remplacé, retiré), un jour durant ; jamais un fichier qu'un document tient encore
-create or replace function public.crescite_equipe_peut_retirer(nom text) returns boolean
-language sql stable security definer set search_path = public as $$
-  select auth.uid() is not null
-     and not exists (select 1 from public.crescite_documents x where x.fichier = crescite_equipe_peut_retirer.nom)
-     and exists (
-       select 1 from public.crescite_fichiers_equipe f
-        where f.nom = crescite_equipe_peut_retirer.nom and f.user_id = auth.uid() and f.quand > now() - interval '1 day'
-          and (public.crescite_est_admin() or public.crescite_membre_spectacle(f.spectacle_id)))
+       and (public.crescite_est_admin() or public.crescite_membre_actuel(f.spectacle_id)))
 $$;
 
 -- les règles de ce script s'appellent crescite_equipe_membre_… : on les refait à chaque passage, sans toucher à celles
--- de l'administration (crescite_equipe_lecture, _ajout, _modification, _suppression, du deuxième script)
+-- de l'administration (crescite_equipe_lecture, _ajout, _modification, _suppression, du deuxième script). L'équipe n'a
+-- que l'envoi, au chemin préparé : ni relire (pas de lien signé d'un fichier qu'aucun document ne tient), ni remplacer
+-- (pas d'upsert), ni effacer. Elle lit les fichiers de ses documents par la règle du deuxième script, comme avant.
+-- (Une première version de ce script donnait aussi la relecture et l'effacement de ce qu'un geste libérait : ces deux
+-- règles, crescite_equipe_membre_lecture et _retrait, et leurs fonctions s'en vont ici)
 do $$
 declare p record;
 begin
@@ -709,12 +741,10 @@ begin
     execute format('drop policy %I on storage.objects', p.policyname);
   end loop;
 end $$;
+drop function if exists public.crescite_equipe_peut_retirer(text);
+drop function if exists public.crescite_liberer_fichier(text, bigint);
 create policy crescite_equipe_membre_depot on storage.objects for insert to authenticated
   with check (bucket_id = 'crescite-equipe' and public.crescite_equipe_peut_deposer(name));
-create policy crescite_equipe_membre_lecture on storage.objects for select to authenticated
-  using (bucket_id = 'crescite-equipe' and public.crescite_equipe_peut_retirer(name));
-create policy crescite_equipe_membre_retrait on storage.objects for delete to authenticated
-  using (bucket_id = 'crescite-equipe' and public.crescite_equipe_peut_retirer(name));
 
 -- ------------------------------------------------------------------------------------------------ les déclencheurs du troisième script
 
@@ -781,7 +811,7 @@ begin
 end $$;
 
 -- chacun relit ses modifications, l'administration toutes ; aucune règle d'écriture : seules les fonctions écrivent.
--- crescite_fichiers_equipe : aucune règle, aucun droit (les fonctions et les règles du stockage seulement)
+-- crescite_fichiers_equipe : aucune règle, aucun droit (les fonctions et la règle du stockage seulement)
 create policy modif_lecture on public.crescite_modifications for select to authenticated
   using (user_id = (select auth.uid()) or (select public.crescite_est_admin()));
 
@@ -789,22 +819,23 @@ revoke all on public.crescite_modifications, public.crescite_fichiers_equipe fro
 grant select on public.crescite_modifications to authenticated;
 grant all on public.crescite_modifications, public.crescite_fichiers_equipe to service_role;
 
+-- l'API : les cinq gestes ; la règle du stockage : crescite_equipe_peut_deposer (appelée sous le rôle de la personne)
 grant execute on function public.crescite_modifier_date(bigint, jsonb), public.crescite_preparer_fichier(bigint, text),
   public.crescite_ajouter_document(bigint, jsonb), public.crescite_modifier_document(bigint, jsonb),
-  public.crescite_supprimer_document(bigint), public.crescite_equipe_peut_deposer(text),
-  public.crescite_equipe_peut_retirer(text) to authenticated;
+  public.crescite_supprimer_document(bigint), public.crescite_equipe_peut_deposer(text) to authenticated;
 revoke execute on function public.crescite_modifier_date(bigint, jsonb), public.crescite_preparer_fichier(bigint, text),
   public.crescite_ajouter_document(bigint, jsonb), public.crescite_modifier_document(bigint, jsonb),
-  public.crescite_supprimer_document(bigint), public.crescite_equipe_peut_deposer(text),
-  public.crescite_equipe_peut_retirer(text) from anon, public;
+  public.crescite_supprimer_document(bigint), public.crescite_equipe_peut_deposer(text) from anon, public;
+-- le reste ne sert qu'à l'intérieur des gestes
 revoke execute on function public.crescite_heure_texte(time), public.crescite_seance_texte(time, time),
   public.crescite_jour_texte(date), public.crescite_jour_court(date), public.crescite_periode_texte(date, date, text, text),
   public.crescite_prep_a(text), public.crescite_prep_de(text), public.crescite_guillemets(text),
   public.crescite_auteur_nom(bigint), public.crescite_lire_heure(jsonb), public.crescite_lire_texte(text, integer, text),
+  public.crescite_aujourdhui_paris(), public.crescite_membre_actuel(bigint),
   public.crescite_membres_spectacle(bigint), public.crescite_a_prevenir(bigint, bigint, bigint),
   public.crescite_prevenir_modification(bigint[], text, text, text, bigint, text, bigint),
   public.crescite_modifications_limite(), public.crescite_document_equipe(bigint),
-  public.crescite_fichier_prepare(text, bigint), public.crescite_liberer_fichier(text, bigint)
+  public.crescite_fichier_prepare(text, bigint)
   from anon, authenticated, public;
 
 commit;
@@ -815,15 +846,19 @@ notify pgrst, 'reload schema';
 select 'modifications de l''équipe' as "élément",
   case when exists (select 1 from pg_proc where proname = 'crescite_modifier_date')
         and exists (select 1 from pg_proc where proname = 'crescite_supprimer_document')
+        and exists (select 1 from pg_proc where proname = 'crescite_membre_actuel')
         and (select count(*) from pg_policies where schemaname = 'public' and tablename = 'crescite_modifications'
                                                 and policyname like 'modif\_%') = 1
-    then 'prêtes : l''équipe change l''horaire et les précisions de ses dates, et les fichiers de ses spectacles (vingt modifications par heure et par compte)'
+    then 'prêtes : l''équipe change l''horaire et les précisions sans lien de ses dates à venir, et les fichiers des spectacles dont elle est aujourd''hui (vingt modifications par heure et par compte)'
     else 'incomplètes : relancez ce script' end as "état"
 union all
 select 'stockage de l''équipe',
   case when (select count(*) from pg_policies where schemaname = 'storage' and tablename = 'objects'
-                                              and policyname like 'crescite\_equipe\_membre\_%') = 3
-    then 'prêt : l''équipe dépose au chemin préparé (vingt fichiers par heure) et efface ce qu''elle remplace ou retire'
+                                              and policyname like 'crescite\_equipe\_membre\_%') = 1
+        and exists (select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects'
+                    and policyname = 'crescite_equipe_membre_depot' and cmd = 'INSERT')
+        and to_regprocedure('public.crescite_equipe_peut_retirer(text)') is null
+    then 'prêt : l''équipe envoie au chemin préparé (vingt fichiers par heure), sans rien relire ni effacer ; ce qu''elle remplace ou retire reste à l''administration'
     else 'incomplet : relancez ce script' end
 union all
 select 'notifications',

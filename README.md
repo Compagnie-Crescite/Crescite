@@ -759,25 +759,31 @@ un portrait remplacé ou retiré est effacé.
 
 **L'équipe modifie (pas encore lancé).** Le quatorzième script, `supabase/migrations/20261102_crescite_equipe_modifie.sql`,
 s'exécute après les treize autres (il s'arrête et le dit si le treizième manque) et peut être relancé ; aucune fonction
-n'est à redéployer. Dans l'espace de l'équipe, le geste « Modifier » d'une date à venir permet à son équipe (la
-distribution « en tournée », corrigée par l'équipe de la date) d'en changer l'heure et la fin des séances, la précision
-de chaque séance (« complet », « hors les murs… ») et le texte des précisions de la date ; sur la page d'un spectacle,
-son équipe (sa distribution, l'équipe de ses dates) ajoute, renomme, range, remplace et supprime les fichiers de travail.
-Le reste demeure à l'administration, et la base le refuse : le jour, le public, l'annulation et la billetterie d'une
-séance ; le statut, la visibilité, la nature, le lieu, la ligne d'agenda et les liens d'une date (une précision garde son
-lien) ; le suivi (contacts, contrat, montants), les chiffres, l'équipe d'une date, les feuilles de route ; les documents
-publics, ceux des salles, de l'administration et de toute la compagnie. Les textes de l'équipe sont du texte simple (ni
-lien, ni balise). Chaque modification prévient une fois l'équipe concernée qui a un compte et les administrateurs qui ont
-une fiche, jamais son auteur, et dit qui l'a faite (« Lauren Toulin a changé l'horaire du 19 novembre à Eu »,
+n'est à redéployer. Dans l'espace de l'équipe, le geste « Modifier » d'une date à venir (au jour de Paris) permet à son
+équipe (la distribution « en tournée », corrigée par l'équipe de la date) d'en changer l'heure et la fin des séances, la
+précision de chaque séance (« complet », « hors les murs… ») et les précisions de la date qui n'ont pas de lien ; une
+précision qui porte un lien (la billetterie, un plan) reste telle quelle, son texte avec son lien. Sur la page d'un
+spectacle, son équipe actuelle (sa distribution, ou l'équipe d'une de ses dates à venir : pas quelqu'un venu une fois il
+y a deux ans) ajoute, renomme, range, remplace et supprime les fichiers de travail. Le reste demeure à l'administration,
+et la base le refuse : le jour, le public, l'annulation et la billetterie d'une séance ; le statut, la visibilité, la
+nature, le lieu, la ligne d'agenda et les liens d'une date ; le suivi (contacts, contrat, montants), les chiffres,
+l'équipe d'une date, les feuilles de route ; les documents publics, ceux des salles, de l'administration et de toute la
+compagnie. Les textes de l'équipe sont du texte simple (ni lien, ni balise, ni caractère invisible qui cache ou retourne
+le texte). Chaque modification prévient une fois l'équipe concernée qui a un compte et les administrateurs qui ont une
+fiche, jamais son auteur, et dit qui l'a faite (« Lauren Toulin a changé l'horaire du 19 novembre à Eu »,
 « 20 h → 20 h 30 · Bérénice ») : dans l'application, avec son portrait, et sur les téléphones abonnés. Les déclencheurs
 « Horaires modifiés » et « Nouveau document » du troisième script se taisent pendant ce geste (le troisième script porte
 la même règle : relancé, il ne la défait pas) ; ils parlent comme avant quand l'administration modifie. Chaque changement
 va au journal avec son auteur : l'administration y lit son nom (« Lauren Toulin (équipe) ») et peut revenir en arrière.
 Un fichier part au chemin que la base prépare (`<spectacle>/<repère>-<nom>.<ext>`, une heure) : le stockage
-`crescite-equipe` n'accepte de l'équipe que ce chemin, et celle qui remplace ou supprime un fichier n'efface que l'ancien.
-Vingt modifications et vingt fichiers par heure et par compte (`crescite_modifications` garde chaque modification : son
-auteur la relit, l'administration toutes). Tant que le script n'est pas lancé, ces gestes ne se montrent pas. 145 essais
-(`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1, 2, 3 et 13 relancés après lui).
+`crescite-equipe` n'accepte de l'équipe que cet envoi, à ce chemin ; elle n'y relit ni n'y efface rien. Un fichier
+remplacé ou supprimé par l'équipe reste donc dans le stockage : le document rétabli depuis le journal le retrouve. Un
+fichier envoyé mais jamais inscrit (un envoi interrompu) y reste aussi, sans que personne de l'équipe puisse le relire ;
+ces restes sont bornés par la limite de vingt fichiers par heure et par compte, et l'administration les efface dans
+Storage (`crescite-equipe`) si besoin. Vingt modifications par heure et par compte (`crescite_modifications` garde
+chaque modification : son auteur la relit, l'administration toutes). Tant que le script n'est pas lancé, ces gestes ne se
+montrent pas. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1, 2, 3 et
+13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

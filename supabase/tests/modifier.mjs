@@ -1,11 +1,16 @@
 // L'équipe modifie ce qui la concerne (le quatorzième script), dans un Postgres local (PGlite) : les treize premiers
-// scripts, le quatorzième deux fois (sans le treizième, il s'arrête). L'horaire, la précision d'une séance et le texte
-// des précisions d'une date ; les fichiers d'un spectacle (préparer le chemin, déposer, inscrire, renommer, remplacer,
-// supprimer, effacer l'ancien fichier). Qui le peut (l'équipe de la date, ou du spectacle, et l'administration) et qui
-// ne le peut pas (une personne retirée de la date, une autre troupe, un compte sans fiche, le public) ; ce qui reste à
-// l'administration ; une notification par personne, jamais pour l'auteur, qui le nomme, une seule (les déclencheurs du
-// troisième script se taisent pendant le geste, et parlent de nouveau après) ; le journal avec l'auteur ; vingt
-// modifications et vingt fichiers par heure et par compte ; les anciens scripts relancés après lui. Adresses fictives.
+// scripts, le quatorzième deux fois (sans le treizième, il s'arrête). L'horaire, la précision d'une séance et les
+// précisions sans lien d'une date (celles qui portent un lien restent telles quelles, texte et lien) ; les fichiers d'un
+// spectacle (préparer le chemin, déposer, inscrire, renommer, remplacer, supprimer : l'équipe n'efface ni ne relit rien
+// du stockage, la version remplacée ou le fichier retiré restent à l'administration, qui rétablit le document depuis le
+// journal). Qui le peut (l'équipe de la date ; l'équipe actuelle du spectacle ; l'administration) et qui ne le peut pas
+// (une personne retirée de la date, quelqu'un d'une date d'il y a deux ans, une autre troupe, un compte sans fiche, le
+// public) ; ce qui reste à l'administration ; les caractères invisibles refusés ; le jour de Paris, quel que soit le
+// fuseau de la connexion ; une notification par personne, jamais pour l'auteur, qui le nomme, une seule (les
+// déclencheurs du troisième script se taisent pendant le geste, et parlent de nouveau après) ; le journal avec
+// l'auteur ; vingt modifications et vingt fichiers par heure et par compte ; les droits de chaque fonction ; les anciens
+// scripts relancés après lui, et le quatorzième relancé sur une base où sa première version était passée. Adresses
+// fictives. (Les essais reprennent ceux de la relecture de sécurité du quatorzième script.)
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync } from 'node:fs';
 const migration = f => readFileSync(new URL(`../migrations/${f}`, import.meta.url), 'utf8');
@@ -74,26 +79,28 @@ ok(!echecs.length, `les treize scripts passent, puis le quatorzième deux fois${
 const etat = fin ? fin.at(-1).rows : [];
 ok(etat.length === 4 && etat.slice(0, 3).every(r => /^prêt(e?s)? :/.test(r['état'])), `il dit ce qui est en place : ${etat.map(r => r['état']).join(' | ')}`);
 const n = async (q, p = []) => (await db.query(q, p)).rows[0].n;
-ok(await n(`select count(*)::int n from pg_policies where schemaname = 'storage' and policyname like 'crescite\\_equipe\\_membre\\_%'`) === 3
-   && await n(`select count(*)::int n from pg_policies where tablename = 'crescite_modifications'`) === 1,
-  'ses trois règles du stockage et sa règle de lecture, une fois chacune');
+const reglesStockage = async () => (await db.query(`select policyname, cmd from pg_policies where schemaname = 'storage'
+  and policyname like 'crescite\\_equipe\\_membre\\_%' order by 1`)).rows.map(r => `${r.policyname}:${r.cmd}`).join();
+ok(await reglesStockage() === 'crescite_equipe_membre_depot:INSERT' && await n(`select count(*)::int n from pg_policies where tablename = 'crescite_modifications'`) === 1,
+  'une seule règle du stockage pour l’équipe, l’envoi (ni relire, ni remplacer, ni effacer), et sa règle de lecture du registre');
 
 // ---------------------------------------------------------------------------------------------- les données
 // Bérénice : Lauren et Adrien partent en tournée (Adrien est retiré de la date d'Eu, un remplaçant y est ajouté), Thomas
-// est dans la distribution sans partir, une personne n'a pas de compte ; Cléophène : une autre comédienne. Barbara
-// administre et a sa fiche, un second compte administre sans fiche, un compte du projet n'est pas de l'équipe
+// est dans la distribution sans partir, une personne n'a pas de compte, et un ancien remplaçant n'a été que de l'équipe
+// d'une date d'il y a deux ans ; Cléophène : une autre comédienne. Barbara administre et a sa fiche, un second compte
+// administre sans fiche, un compte du projet n'est pas de l'équipe
 const U = { barbara: '11111111-1111-1111-1111-111111111111', lauren: '22222222-2222-2222-2222-222222222222', adrien: '33333333-3333-3333-3333-333333333333',
   thomas: '44444444-4444-4444-4444-444444444444', rempl: '55555555-5555-5555-5555-555555555555', admin2: '66666666-6666-6666-6666-666666666666',
-  autre: '77777777-7777-7777-7777-777777777777', dehors: '88888888-8888-8888-8888-888888888888' };
+  autre: '77777777-7777-7777-7777-777777777777', dehors: '88888888-8888-8888-8888-888888888888', ancien: '99999999-9999-9999-9999-999999999999' };
 for (const k in U) await db.exec(`insert into auth.users values ('${U[k]}', '${k}@exemple.fr', now())`);
 await db.exec(`insert into public.crescite_admins (user_id) values ('${U.barbara}'), ('${U.admin2}')`);
 const id = async (q, p = []) => (await db.query(q, p)).rows[0]?.id;
 const P = {};
 for (const [slug, prenom, nom] of [['lauren', 'Lauren', 'Toulin'], ['adrien', 'Adrien', 'Vada'], ['thomas', 'Thomas', 'J'], ['rempl', 'Rem', 'Plaçant'],
-  ['autre', 'Autre', 'Comédienne'], ['sans-compte', 'Sans', 'Compte'], ['barbara', 'Barbara', 'D']]) {
+  ['autre', 'Autre', 'Comédienne'], ['sans-compte', 'Sans', 'Compte'], ['barbara', 'Barbara', 'D'], ['ancien', 'Ancien', 'Remplaçant']]) {
   P[slug] = await id(`insert into public.crescite_personnes (slug, prenom, nom) values ($1, $2, $3) returning id`, [slug, prenom, nom]);
 }
-for (const k of ['lauren', 'adrien', 'thomas', 'rempl', 'autre', 'barbara']) {
+for (const k of ['lauren', 'adrien', 'thomas', 'rempl', 'autre', 'barbara', 'ancien']) {
   await db.query(`insert into public.crescite_personnes_privees (personne_id, email, user_id) values ($1, $2, $3)`, [P[k], `${k}@exemple.fr`, U[k]]);
 }
 await db.query(`insert into public.crescite_personnes_privees (personne_id) values ($1)`, [P['sans-compte']]);
@@ -128,6 +135,10 @@ await seance(annulee, 25, '20:00');
 const dc = await date(cleo, eu);
 const r7 = await seance(dc, 22, '20:00');
 await db.query(`insert into public.crescite_equipes (date_id, personne_id, present) values ($1, $2, false), ($1, $3, true)`, [d, P.adrien, P.rempl]);
+// il y a deux ans, l'ancien remplaçant est venu une fois, à Eu ; il n'est pas dans la distribution
+const vieille = await date(ber, eu);
+await seance(vieille, -700, '20:00');
+await db.query(`insert into public.crescite_equipes (date_id, personne_id, present) values ($1, $2, true)`, [vieille, P.ancien]);
 await db.query(`insert into public.crescite_abonnements (personne_id, endpoint, p256dh, auth) values ($1, 'https://fcm.googleapis.com/fcm/send/r', 'k', 'a'),
   ($2, 'https://fcm.googleapis.com/fcm/send/l', 'k', 'a')`, [P.rempl, P.lauren]);
 // les documents : de l'équipe (un fichier, un lien), public, de l'administration, d'une autre troupe, de toute la compagnie
@@ -162,6 +173,15 @@ const vider = () => db.exec(`delete from public.crescite_notifications; delete f
 const ligneRep = async r => (await db.query(`select heure, fin, note, modifie_par from public.crescite_representations where id = $1`, [r])).rows[0];
 const journal = async (table, ligne) => (await db.query(`select qui, operation, avant, apres from public.crescite_journal where table_nom = $1 and ligne = $2
   order by id desc limit 1`, [table, String(ligne)])).rows[0];
+// les caractères invisibles que la base refuse dans un texte de l'équipe (crescite_lire_texte), par leur numéro : trait
+// d'union conditionnel, marque de lettre arabe, espaces et liants sans chasse, marques, enchâssements, forçages et
+// isolats de sens d'écriture, gluon de mots et opérateurs invisibles, indicateur d'ordre des octets
+const INVISIBLES = [0x00AD, 0x061C, 0x200B, 0x200C, 0x200D, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E,
+  0x2060, 0x2061, 0x2062, 0x2063, 0x2064, 0x2066, 0x2067, 0x2068, 0x2069, 0xFEFF];
+const car = c => String.fromCharCode(c);
+const hexa = c => `U+${c.toString(16).toUpperCase().padStart(4, '0')}`;
+// la connexion choisit son fuseau (PostgREST accepte « Prefer: timezone=… ») : current_date le suit
+const avecFuseau = async (fuseau, f) => { await db.exec(`set timezone = '${fuseau}'`); try { return await f(); } finally { await db.exec('reset timezone'); } };
 
 // ---------------------------------------------------------------------------------------------- 1. l'horaire d'une séance
 const J20 = jour(20), J30 = jour(30);
@@ -191,6 +211,16 @@ ok(await n(`select count(*)::int n from public.crescite_modifications`) === 1
    && (await as('authenticated', U.rempl, `select count(*)::int n from public.crescite_modifications`)).rows[0].n === 0
    && (await as('authenticated', U.barbara, `select count(*)::int n from public.crescite_modifications`)).rows[0].n === 1,
   'les autres ne relisent pas celles de Lauren ; l’administration toutes');
+// le drapeau qui fait taire les déclencheurs du troisième script ne vaut que pendant la transaction du geste
+await db.exec('begin');
+let dansGeste = null;
+try {
+  await db.exec(`set local role authenticated; select set_config('request.jwt.claim.sub', '${U.lauren}', true)`);
+  await db.query(`select public.crescite_modifier_date($1, $2::jsonb)`, [d, JSON.stringify({ representations: [{ id: r1, heure: '20:30' }] })]);
+  dansGeste = (await db.query(`select current_setting('crescite.geste', true) g`)).rows[0].g;
+} finally { await db.exec('commit'); }
+const apresGeste = (await db.query(`select coalesce(current_setting('crescite.geste', true), '') g`)).rows[0].g;
+ok(dansGeste === 'equipe' && apresGeste === '', `le drapeau du geste vaut pendant sa transaction (« ${dansGeste} »), plus après (« ${apresGeste} ») : l’administration est entendue de nouveau`);
 
 // la fin et la précision d'une séance, par le remplaçant
 await vider();
@@ -212,38 +242,56 @@ ok((await recues('rempl')).length === 0 && (await recues('barbara')).length === 
 
 // ---------------------------------------------------------------------------------------------- 2. les précisions de la date
 await vider();
-const precisions = [{ texte: '14h et 20h30 : représentations à Eu', lien: LIEN }, { texte: 'Garer le camion derrière le théâtre', lien: null }, { texte: 'Loges au premier étage' }];
+// la précision qui porte un lien (la billetterie) reste telle quelle ; les autres changent, s'ajoutent, et l'ordre aussi
+const LIEE = { texte: '14h et 20h : représentations à Eu', lien: LIEN };
+const precisions = [{ texte: 'Garer le camion derrière le théâtre, côté cour', lien: null }, { texte: 'Loges au premier étage' }, LIEE];
+const SANS = precisions.slice(0, 2);
 const res4 = await modifierDate('lauren', d, { precisions });
-const det = (await db.query(`select details from public.crescite_dates where id = $1`, [d])).rows[0].details;
+const lirePrec = async () => (await db.query(`select details from public.crescite_dates where id = $1`, [d])).rows[0].details;
+const det = await lirePrec();
 const n4 = (await recues('rempl'))[0];
 ok(res4.prevenus === 2 && n4 && n4.type === 'date' && n4.titre === `Lauren Toulin a changé les précisions du ${jourTexte(J20)} à Eu`
    && n4.texte === 'précisions de la date mises à jour · Bérénice', `les précisions de la date : « ${n4?.titre} » — « ${n4?.texte} »`);
-ok(det.length === 3 && det[0].lien === LIEN && det[0].texte === '14h et 20h30 : représentations à Eu' && det[2].texte === 'Loges au premier étage' && det[2].lien === null,
-  'le texte change, le lien de la précision reste ; une précision s’ajoute');
+ok(det.length === 3 && det[0].texte === 'Garer le camion derrière le théâtre, côté cour' && det[0].lien === null && det[1].texte === 'Loges au premier étage'
+   && det[1].lien === null && det[2].texte === LIEE.texte && det[2].lien === LIEN,
+  'une précision sans lien change, une autre s’ajoute ; celle qui porte un lien reste telle quelle, texte et lien (seul son rang change)');
 const jd = await journal('crescite_dates', d);
 ok(jd && jd.qui === U.lauren && jd.operation === 'UPDATE' && jd.avant.details.length === 2 && jd.apres.details.length === 3, 'le journal garde les précisions d’avant et l’auteur');
+// ce qu'une précision à lien ne devient pas : elle reste à l'administration (42501), texte et lien ensemble
 const refusPrec = {
-  'retirer la précision qui porte un lien': [precisions[1], precisions[2]],
-  'changer son lien': [{ ...precisions[0], lien: 'https://pirate.exemple/eu' }, precisions[1]],
-  'ajouter un lien': [precisions[0], { ...precisions[1], lien: 'https://exemple.fr/camion' }],
-  'un autre champ (gras)': [{ ...precisions[0], gras: true }],
+  'retirer la précision qui porte un lien': SANS,
+  'changer son lien': [...SANS, { ...LIEE, lien: 'https://pirate.exemple/eu' }],
+  'changer son texte (le lien resterait)': [...SANS, { ...LIEE, texte: '14h et 20h30 : représentations à Eu' }],
+  'passer son lien sur un autre texte': [{ texte: 'Spectacle annulé : demandez le remboursement ici', lien: LIEN }, { texte: LIEE.texte, lien: null }],
+  'vider son texte': [...SANS, { texte: ' ', lien: LIEN }],
+  'la doubler': [...SANS, LIEE, LIEE],
+  'ajouter un lien à une autre': [{ ...SANS[0], lien: 'https://exemple.fr/camion' }, SANS[1], LIEE],
 };
 for (const [quoi, ps] of Object.entries(refusPrec)) {
   const r = await essaiDate('lauren', d, { precisions: ps });
-  ok(/^42501/.test(r), `${quoi} : refusé (${r})`);
+  ok(/^42501 Les précisions qui portent un lien restent à l’administration/.test(r), `${quoi} : refusé (${r})`);
 }
+ok(/^42501 Ce champ reste à l’administration : gras$/.test(await essaiDate('lauren', d, { precisions: [{ ...LIEE, gras: true }] })), 'un autre champ d’une précision (gras) : refusé');
 const refusTexte = {
-  'vider le texte d’une précision qui porte un lien': [{ texte: ' ', lien: LIEN }],
-  'une balise': [precisions[0], { texte: 'Loges <b>au premier</b>' }],
-  'un lien dans le texte': [precisions[0], { texte: 'Plan : https://exemple.fr/plan' }],
-  '201 caractères': [precisions[0], { texte: 'x'.repeat(201) }],
-  'neuf précisions': [precisions[0], ...Array.from({ length: 8 }, (_, i) => ({ texte: `Précision ${i}` }))],
+  'une balise': [LIEE, { texte: 'Loges <b>au premier</b>' }],
+  'un lien dans le texte': [LIEE, { texte: 'Plan : https://exemple.fr/plan' }],
+  '201 caractères': [LIEE, { texte: 'x'.repeat(201) }],
+  'neuf précisions': [LIEE, ...Array.from({ length: 8 }, (_, i) => ({ texte: `Précision ${i}` }))],
 };
+for (const c of INVISIBLES) refusTexte[`un caractère invisible (${hexa(c)})`] = [LIEE, { texte: `Loges${car(c)}au premier étage` }];
+let refusTextes = 0;
+const refusTexteRates = [];
 for (const [quoi, ps] of Object.entries(refusTexte)) {
   const r = await essaiDate('lauren', d, { precisions: ps });
-  ok(/^22023/.test(r), `${quoi} : refusé (${r})`);
+  if (/^22023/.test(r) && (!/invisible/.test(quoi) || /^22023 Une précision ne peut contenir/.test(r))) refusTextes++; else refusTexteRates.push(`${quoi} : ${r}`);
 }
-ok((await db.query(`select details from public.crescite_dates where id = $1`, [d])).rows[0].details.length === 3, 'rien de refusé n’est écrit');
+ok(refusTextes === Object.keys(refusTexte).length, `une balise, un lien dans le texte, 201 caractères, neuf précisions, et chacun des ${INVISIBLES.length} caractères invisibles : refusés (22023)${refusTexteRates.length ? ` ; passés : ${refusTexteRates.join(' ; ')}` : ''}`);
+ok(JSON.stringify(await lirePrec()) === JSON.stringify(det), 'rien de refusé n’est écrit');
+// retirer une précision sans lien, et remettre la précision à lien en tête : permis
+const res4b = await modifierDate('lauren', d, { precisions: [LIEE, SANS[1]] });
+const det2 = await lirePrec();
+ok(res4b.modifications === 1 && det2.length === 2 && det2[0].lien === LIEN && det2[0].texte === LIEE.texte && det2[1].texte === 'Loges au premier étage',
+  'retirer une précision sans lien et changer l’ordre : permis');
 
 // ---------------------------------------------------------------------------------------------- 3. ce qui reste à l'administration
 const champsDate = { statut: 'annulee', visible: false, nature: 'repetitions', lien: 'https://exemple.fr/billets', intitule: 'Ailleurs', details: [],
@@ -276,7 +324,24 @@ for (const [quoi, ch] of Object.entries(refus)) {
   const r = await essaiDate('lauren', d, ch);
   ok(/^22023/.test(r), `${quoi} : refusé (${r})`);
 }
+let notesRefusees = 0;
+for (const c of INVISIBLES) if (/^22023 La précision d’une séance ne peut contenir/.test(await essaiDate('lauren', d, { representations: [{ id: r1, note: `complet${car(c)}` }] }))) notesRefusees++;
+ok(notesRefusees === INVISIBLES.length, `la précision d’une séance : chacun des ${INVISIBLES.length} caractères invisibles est refusé (${notesRefusees})`);
+const NBSP = car(0xA0), NNBSP = car(0x202F);
+ok((await modifierDate('lauren', d, { representations: [{ id: r2, note: `complet${NNBSP}! salle${NBSP}2` }] })).modifications === 1,
+  'les espaces insécables (U+00A0, U+202F), elles, passent');
 ok(/^22023 Cette date est passée/.test(await essaiDate('lauren', passee, { representations: [{ id: r5, heure: '21:00' }] })), 'une date passée ne se modifie pas');
+// le jour de Paris, quel que soit le fuseau que la connexion choisit : hier reste passé, aujourd'hui reste à venir
+const parisAuj = (await db.query(`select ((now() at time zone 'Europe/Paris')::date)::text j`)).rows[0].j;
+const decaler = (j, k) => { const t = new Date(`${j}T12:00:00Z`); t.setUTCDate(t.getUTCDate() + k); return t.toISOString().slice(0, 10); };
+const seanceLe = async (dd, j) => id(`insert into public.crescite_representations (date_id, jour, heure, public) values ($1, $2, '20:00', 'tout_public') returning id`, [dd, j]);
+const dHier = await date(ber, eu), rHier = await seanceLe(dHier, decaler(parisAuj, -1));
+const dAuj = await date(ber, eu), rAuj = await seanceLe(dAuj, parisAuj);
+const hierUtc12 = await avecFuseau('Etc/GMT+12', () => essaiDate('lauren', dHier, { representations: [{ id: rHier, heure: '21:00' }] }));
+ok(/^22023 Cette date est passée/.test(hierUtc12), `la connexion à l’heure d’UTC−12 (Etc/GMT+12) : la date d’hier, à Paris, reste passée (${hierUtc12})`);
+const aujUtc14 = await avecFuseau('Etc/GMT-14', () => essaiDate('lauren', dAuj, { representations: [{ id: rAuj, heure: '21:00' }] }));
+ok(aujUtc14 === 'ok', `à l’heure d’UTC+14 (Etc/GMT-14) : celle d’aujourd’hui, à Paris, se modifie encore (${aujUtc14})`);
+ok((await ligneRep(rHier)).heure === '20:00:00' && (await ligneRep(rAuj)).heure === '21:00:00', 'la séance d’hier n’a pas bougé ; celle d’aujourd’hui, si');
 ok(/^22023 Cette date est annulée/.test(await essaiDate('barbara', annulee, { precisions: [] })), 'ni une date annulée (même par l’administration)');
 ok((await ligneRep(r1)).heure === '20:30:00', 'rien de refusé n’est écrit');
 ok(/^PT409/.test(await essaiDate('lauren', d, { representations: [{ id: r1, heure: '21:00', avant: { heure: '20:00' } }] })),
@@ -329,7 +394,16 @@ for (const [quoi, [qui, nom]] of Object.entries(refusDepot)) {
 }
 const cAutre = await preparer('lauren', ber, 'plan.png');
 ok((await deposer('adrien', cAutre)) !== 'ok' && (await deposer(null, cAutre, 'anon')) !== 'ok', 'le chemin préparé par Lauren n’est qu’à elle (ni Adrien, ni le public)');
-ok(await voit('lauren', c1) && !(await voit('adrien', c1)), 'avant d’être un document, son dépôt n’est visible que d’elle');
+ok(!(await voit('lauren', c1)) && !(await voit('adrien', c1)) && await voit('barbara', c1),
+  'avant d’être un document, son dépôt ne se relit pas, pas même par elle (pas de lien signé : rien à héberger) ; l’administration le voit');
+ok(await deposer('lauren', c1) !== 'ok', 'il ne se redépose pas par-dessus (ni remplacer, ni upsert)');
+ok((await as('authenticated', U.lauren, `update storage.objects set name = name || '.bis' where bucket_id = 'crescite-equipe' and name = $1 returning name`, [c1])).rows.length === 0
+   && await n(`select count(*)::int n from storage.objects where name = $1`, [c1]) === 1, 'ni ne se renomme ni ne se change (aucune règle de mise à jour pour l’équipe)');
+// l'équipe d'hier : l'ancien remplaçant (une date il y a deux ans, pas la distribution) n'est plus de l'équipe actuelle
+ok((await as('authenticated', U.ancien, `select public.crescite_membre_spectacle($1) m`, [ber])).rows[0].m === true,
+  'le deuxième script compte encore l’ancien remplaçant dans Bérénice (crescite_membre_spectacle, inchangée : d’autres lectures s’en servent)');
+ok(/^42501/.test(await code('authenticated', U.ancien, `select public.crescite_preparer_fichier($1, 'x.pdf')`, [ber])),
+  'mais il ne prépare plus de fichier pour ce spectacle (crescite_membre_actuel : sa distribution, ou une date à venir)');
 
 // inscrire le document
 const ajouter = (qui, s, docu) => as('authenticated', U[qui], `select public.crescite_ajouter_document($1, $2::jsonb) r`, [s, JSON.stringify(docu)]).then(x => x.rows[0].r);
@@ -340,7 +414,8 @@ ok(a1.prevenus === 4 && nd && nd.type === 'document' && nd.titre === 'Lauren Tou
    && nd.lien === '#/spectacles/berenice' && Number(nd.auteur_id) === Number(P.lauren),
   `le document est inscrit ; l’équipe du spectacle et l’administratrice prévenues (${a1.prevenus}) : « ${nd?.titre} »`);
 ok((await recues('thomas')).length === 1 && (await recues('rempl')).length === 1 && (await recues('barbara')).length === 1 && (await recues('lauren')).length === 0
-   && (await recues('autre')).length === 0, 'Adrien, Thomas (la distribution), le remplaçant (l’équipe d’une date), l’administratrice ; ni Lauren, ni l’autre troupe');
+   && (await recues('autre')).length === 0 && (await recues('ancien')).length === 0,
+  'Adrien, Thomas (la distribution), le remplaçant (l’équipe d’une date à venir), l’administratrice ; ni Lauren, ni l’autre troupe, ni l’ancien remplaçant (une date d’il y a deux ans)');
 ok(!(await toutes()).some(x => x.titre === 'Nouveau document'), 'une seule notification : le déclencheur « Nouveau document » s’est tu');
 const ligneDoc = (await db.query(`select pour, spectacle_id, ordre, modifie_par from public.crescite_documents where id = $1`, [a1.id])).rows[0];
 ok(ligneDoc.pour === 'equipe' && Number(ligneDoc.spectacle_id) === Number(ber) && ligneDoc.ordre > 100, 'un document de l’équipe, à la fin de la liste');
@@ -356,6 +431,9 @@ for (const k of ['pour', 'url', 'spectacle_id', 'ordre']) {
 }
 ok(/^22023/.test(await essaiAjout('lauren', ber, { titre: ' ', fichier: cAutre })) && /^22023/.test(await essaiAjout('lauren', ber, { titre: 'x'.repeat(121), fichier: cAutre }))
    && /^22023/.test(await essaiAjout('lauren', ber, { titre: 'Plan', type: 'secret', fichier: cAutre })), 'un titre vide ou trop long, un genre inconnu : refusés');
+let titresRefuses = 0;
+for (const c of INVISIBLES) if (/^22023 Le titre ne peut contenir/.test(await essaiAjout('lauren', ber, { titre: `Planning${car(c)}fdp.exe`, fichier: cAutre }))) titresRefuses++;
+ok(titresRefuses === INVISIBLES.length, `un titre : chacun des ${INVISIBLES.length} caractères invisibles est refusé (« Planning », un renversement, « fdp.exe » se lirait « Planningexe.pdf ») (${titresRefuses})`);
 const cThomas = await preparer('thomas', ber, 'note de mise en scène.docx');
 ok(await deposer('thomas', cThomas) === 'ok' && (await ajouter('thomas', ber, { titre: 'Note de mise en scène', type: 'dossier', fichier: cThomas })).prevenus === 4,
   'Thomas (la distribution, sans partir) ajoute aussi un fichier au spectacle');
@@ -379,20 +457,31 @@ const c2 = await preparer('lauren', ber, 'texte-v4.pdf');
 ok(await deposer('lauren', c2) === 'ok', 'une nouvelle version déposée au chemin préparé');
 const rp = await modifierDoc('lauren', D.texte, { fichier: c2 });
 const np = (await recues('adrien'))[0];
-ok(rp.ancien_fichier === 'berenice/texte.pdf' && np && np.titre === 'Lauren Toulin a remplacé un document de Bérénice' && np.texte === 'Le texte, version de travail, nouvelle version',
-  `remplacer : « ${np?.titre} » — « ${np?.texte} » ; l’ancien fichier est rendu`);
+ok(rp.modifications === 1 && !('ancien_fichier' in rp) && np && np.titre === 'Lauren Toulin a remplacé un document de Bérénice' && np.texte === 'Le texte, version de travail, nouvelle version',
+  `remplacer : « ${np?.titre} » — « ${np?.texte} » ; la base ne rend aucun fichier à effacer`);
 ok((await db.query(`select fichier from public.crescite_documents where id = $1`, [D.texte])).rows[0].fichier === c2, 'le document tient le nouveau fichier');
-ok(await effacer('adrien', 'berenice/texte.pdf') === 0, 'Adrien n’efface pas l’ancien fichier (ce n’est pas son geste)');
-ok(await voit('lauren', 'berenice/texte.pdf') && await effacer('lauren', 'berenice/texte.pdf') === 1, 'Lauren, qui l’a remplacé, le relit et l’efface');
+const existe = async nom => await n(`select count(*)::int n from storage.objects where bucket_id = 'crescite-equipe' and name = $1`, [nom]) === 1;
+ok(await effacer('lauren', 'berenice/texte.pdf') === 0 && await effacer('adrien', 'berenice/texte.pdf') === 0 && await existe('berenice/texte.pdf'),
+  'la version remplacée reste dans le stockage : ni Lauren, qui l’a remplacée, ni Adrien ne l’effacent');
+ok(!(await voit('lauren', 'berenice/texte.pdf')) && !(await voit('adrien', 'berenice/texte.pdf')) && await voit('barbara', 'berenice/texte.pdf'),
+  'plus aucun document ne la tient : l’équipe ne la relit plus, l’administration si');
 const intouchables = { 'le fichier d’un document': c2, 'celui d’un document de l’administration': 'berenice/contrat.pdf', 'un fichier orphelin d’un autre': 'berenice/orphelin.pdf',
   'un portrait': 'portraits/lauren.webp', 'un fichier d’une autre troupe': 'cleophene/texte.pdf', 'un fichier de toute la compagnie': 'compagnie/charte.pdf' };
 for (const [quoi, nom] of Object.entries(intouchables)) ok(await effacer('lauren', nom) === 0, `elle n’efface pas ${quoi}`);
 ok(!(await voit('lauren', 'berenice/contrat.pdf')) && !(await voit('lauren', 'berenice/orphelin.pdf')) && !(await voit('lauren', 'portraits/lauren.webp')),
   'ni ne lit le contrat, un orphelin, un portrait');
-// une inscription interrompue : son propre dépôt s'efface
+// un dépôt resté sans document (une inscription interrompue) : personne de l'équipe ne le relit ni ne l'efface ; deux
+// jours après, la base l'oublie, et le fichier reste à l'administration, qui l'efface dans Storage
 const c3 = await preparer('lauren', ber, 'brouillon.txt');
 await deposer('lauren', c3);
-ok(await effacer('adrien', c3) === 0 && await effacer('lauren', c3) === 1, 'un dépôt resté sans document : celle qui l’a déposé l’efface, pas les autres');
+ok(await effacer('adrien', c3) === 0 && await effacer('lauren', c3) === 0 && !(await voit('lauren', c3)) && await existe(c3),
+  'un dépôt resté sans document : personne de l’équipe ne le relit ni ne l’efface, pas même celle qui l’a déposé');
+await db.query(`update public.crescite_fichiers_equipe set quand = now() - interval '3 days' where nom = $1`, [c3]);
+await preparer('lauren', ber, 'autre-brouillon.txt');   // (ce passage oublie les dépôts de plus de deux jours)
+ok(await n(`select count(*)::int n from public.crescite_fichiers_equipe where nom = $1`, [c3]) === 0 && await existe(c3) && await effacer('lauren', c3) === 0,
+  'deux jours après, la base oublie le dépôt ; le fichier reste, et Lauren ne l’efface toujours pas');
+ok((await as('authenticated', U.barbara, `delete from storage.objects where bucket_id = 'crescite-equipe' and name = $1 returning name`, [c3])).rows.length === 1,
+  'l’administration, elle, l’efface (dans Storage)');
 
 // ---------------------------------------------------------------------------------------------- 9. ce qui reste à l'administration
 const interdits = { 'un document public': D.pros, 'un document de l’administration': D.admin, 'un document de toute la compagnie': D.cie, 'le document d’une autre troupe': D.cleo };
@@ -408,6 +497,13 @@ ok(/^22023/.test(await essaiDoc('lauren', D.texte, { fichier: 'berenice/contrat.
 ok(/^42501/.test(await essaiDoc('dehors', D.texte, { titre: 'X' })) && /^42501/.test(await essaiDoc('autre', D.texte, { titre: 'X' }))
    && /permission denied/.test(await code('anon', '', `select public.crescite_modifier_document($1, '{}'::jsonb)`, [D.texte])),
   'un compte hors de l’équipe, une autre troupe, le public : refusés');
+ok(/^42501/.test(await essaiDoc('ancien', D.texte, { titre: 'X' })) && /^42501/.test(await essaiDoc('ancien', D.texte, { fichier: cAutre }))
+   && /^42501/.test(await code('authenticated', U.ancien, `select public.crescite_supprimer_document($1)`, [D.texte]))
+   && /^42501/.test(await essaiAjout('ancien', ber, { titre: 'X', fichier: cAutre })),
+  'l’ancien remplaçant (une date d’il y a deux ans) ne renomme, ne remplace, ne supprime ni n’ajoute un document de Bérénice');
+let titresDocRefuses = 0;
+for (const c of INVISIBLES) if (/^22023 Le titre ne peut contenir/.test(await essaiDoc('lauren', D.texte, { titre: `Fiche${car(c)}technique` }))) titresDocRefuses++;
+ok(titresDocRefuses === INVISIBLES.length, `renommer : chacun des ${INVISIBLES.length} caractères invisibles est refusé (${titresDocRefuses})`);
 ok((await db.query(`select titre from public.crescite_documents where id = $1`, [D.pros])).rows[0].titre === 'Dossier artistique', 'rien de cela n’a changé');
 
 // ---------------------------------------------------------------------------------------------- 10. supprimer
@@ -415,12 +511,18 @@ await vider();
 const supprimer = (qui, x) => as('authenticated', U[qui], `select public.crescite_supprimer_document($1) r`, [x]).then(y => y.rows[0].r);
 const s1 = await supprimer('lauren', D.lien);
 const ns = (await recues('thomas'))[0];
-ok(s1.ancien_fichier === null && ns && ns.titre === 'Lauren Toulin a supprimé un document de Bérénice' && ns.texte === 'Le texte sur Wikisource',
+ok(!('ancien_fichier' in s1) && ns && ns.titre === 'Lauren Toulin a supprimé un document de Bérénice' && ns.texte === 'Le texte sur Wikisource',
   `supprimer un lien : « ${ns?.titre} » — « ${ns?.texte} »`);
 const js = await journal('crescite_documents', D.lien);
 ok(js && js.qui === U.lauren && js.operation === 'DELETE' && js.avant.titre === 'Le texte sur Wikisource', 'le journal garde le document supprimé et son auteur (l’administration peut le rétablir)');
 const s2 = await supprimer('lauren', a1.id);
-ok(s2.ancien_fichier === c1 && await effacer('lauren', c1) === 1, 'supprimer un fichier : celle qui l’a supprimé l’efface du stockage');
+ok(!('ancien_fichier' in s2) && await existe(c1) && await effacer('lauren', c1) === 0 && !(await voit('lauren', c1)) && !(await voit('adrien', c1)),
+  'supprimer un fichier : il quitte les fichiers de travail mais reste dans le stockage ; personne de l’équipe ne l’efface ni ne le relit');
+// l'administration le rétablit depuis le journal : le document revient, et son fichier est toujours là
+const js2 = await journal('crescite_documents', a1.id);
+await db.query(`insert into public.crescite_documents select * from jsonb_populate_record(null::public.crescite_documents, $1::jsonb)`, [JSON.stringify(js2.avant)]);
+ok(js2.operation === 'DELETE' && await n(`select count(*)::int n from public.crescite_documents where id = $1`, [a1.id]) === 1 && await existe(c1) && await voit('adrien', c1),
+  'l’administration rétablit le document depuis le journal : il revient avec son fichier, que l’équipe relit de nouveau');
 
 // ---------------------------------------------------------------------------------------------- 11. les limites
 const compter = async (qui) => (await db.query(`select count(*)::int n from public.crescite_modifications where user_id = $1 and cree_le > now() - interval '1 hour'`, [U[qui]])).rows[0].n;
@@ -433,7 +535,7 @@ ok((await ligneRep(r1)).heure === '21:00:00', 'et rien n’est écrit');
 ok((await modifierDate('rempl', d, { representations: [{ id: r1, heure: '19:45' }] })).prevenus === 2, 'la limite est celle de chaque compte');
 await db.query(`update public.crescite_modifications set cree_le = cree_le - interval '61 minutes' where user_id = $1`, [U.lauren]);
 ok((await modifierDate('lauren', d, { representations: [{ id: r1, heure: '20:00' }] })).modifications === 1, 'une heure plus tard, Lauren modifie de nouveau');
-const dejaDepots = (await db.query(`select count(*)::int n from public.crescite_fichiers_equipe where user_id = $1 and geste = 'depot'`, [U.lauren])).rows[0].n;
+const dejaDepots = (await db.query(`select count(*)::int n from public.crescite_fichiers_equipe where user_id = $1 and quand > now() - interval '1 hour'`, [U.lauren])).rows[0].n;
 for (let i = dejaDepots; i < 20; i++) await preparer('lauren', ber, `plan-${i}.png`);
 ok(/^PT429 Vingt fichiers en une heure/.test(await code('authenticated', U.lauren, `select public.crescite_preparer_fichier($1, 'un-de-trop.pdf')`, [ber])),
   'vingt fichiers préparés par heure et par compte, au plus');
@@ -446,8 +548,22 @@ await db.query(`update public.crescite_equipes set present = true where date_id 
 // ---------------------------------------------------------------------------------------------- 12. ce que personne n'appelle
 ok(/permission denied/.test(await code('authenticated', U.lauren, `select public.crescite_prevenir_modification(array[$1::bigint], 'message', 'x', null, null, null, null)`, [P.adrien]))
    && /permission denied/.test(await code('authenticated', U.lauren, `select public.crescite_a_prevenir($1, null, null)`, [d]))
-   && /permission denied/.test(await code('authenticated', U.lauren, `select public.crescite_liberer_fichier('berenice/contrat.pdf', $1)`, [ber])),
-  'les fonctions internes ne s’appellent pas par l’API (écrire une notification, libérer un fichier)');
+   && /permission denied/.test(await code('authenticated', U.lauren, `select public.crescite_membre_actuel($1)`, [ber])),
+  'les fonctions internes ne s’appellent pas par l’API (écrire une notification, dire qui prévenir, qui est de l’équipe actuelle)');
+ok(await n(`select count(*)::int n from pg_proc where proname in ('crescite_liberer_fichier', 'crescite_equipe_peut_retirer')`) === 0,
+  'aucune fonction ne libère plus un fichier pour que l’équipe l’efface');
+// chaque fonction du quatorzième script : seuls les cinq gestes et la règle du stockage s'appellent, par une personne
+// connectée seulement (ni le public, ni anon) ; chaque « security definer » fixe son search_path
+const FONCTIONS = [...new Set([...MODIFIE.matchAll(/create or replace function public\.(\w+)\(/g)].map(m => m[1]))];
+const API = ['crescite_ajouter_document', 'crescite_equipe_peut_deposer', 'crescite_modifier_date', 'crescite_modifier_document', 'crescite_preparer_fichier', 'crescite_supprimer_document'];
+const droits = (await db.query(`select p.proname f, p.prorettype = 'trigger'::regtype declencheur, p.prosecdef sd, coalesce(array_to_string(p.proconfig, ','), '') cfg,
+    has_function_privilege('anon', p.oid, 'execute') a, has_function_privilege('authenticated', p.oid, 'execute') u, has_function_privilege('public', p.oid, 'execute') pu
+  from pg_proc p join pg_namespace s on s.oid = p.pronamespace where s.nspname = 'public' and p.proname = any($1)`, [FONCTIONS])).rows;
+const appelables = droits.filter(x => !x.declencheur && x.u).map(x => x.f).sort();
+const ouvertes = droits.filter(x => !x.declencheur && (x.a || x.pu)).map(x => x.f);
+const sansChemin = droits.filter(x => x.sd && !/search_path=public/.test(x.cfg)).map(x => x.f);
+ok(droits.length === FONCTIONS.length && JSON.stringify(appelables) === JSON.stringify(API) && !ouvertes.length && !sansChemin.length,
+  `ses ${FONCTIONS.length} fonctions : ${appelables.length} s’appellent, par une personne connectée seulement (${appelables.join(', ')}) ; aucune n’est ouverte au public${ouvertes.length ? ` (sauf ${ouvertes.join(', ')})` : ''} ; chaque « security definer » fixe son search_path${sansChemin.length ? ` (sauf ${sansChemin.join(', ')})` : ''}`);
 let dehorsGeste = null;
 try { await db.query(`select public.crescite_prevenir_modification(array[$1::bigint], 'message', 'x', null, null, null, null)`, [P.adrien]); } catch (e) { dehorsGeste = e.code; }
 ok(dehorsGeste === '42501', 'et hors d’un geste de l’équipe, la notification refuse de partir');
@@ -466,8 +582,7 @@ for (const i of [0, 1, 2, 12]) { try { await db.exec(S[i]); } catch (e) { relanc
 ok(!relances.length, `les scripts 1, 2, 3 et 13 se relancent après le quatorzième${relances.length ? ` (${relances.join(' ; ')})` : ''}`);
 ok(JSON.stringify(await definitions()) === JSON.stringify(apres14) && apres14.every(x => x.includes('crescite.geste')),
   'le troisième script porte les mêmes déclencheurs : relancé, il ne fait pas revenir la double notification');
-ok(await n(`select count(*)::int n from pg_policies where schemaname = 'storage' and policyname like 'crescite\\_equipe\\_membre\\_%'`) === 3,
-  'relancer le deuxième script ne retire pas les règles du stockage de l’équipe');
+ok(await reglesStockage() === 'crescite_equipe_membre_depot:INSERT', 'relancer le deuxième script ne retire pas la règle d’envoi de l’équipe');
 await vider();
 await db.query(`update public.crescite_modifications set cree_le = cree_le - interval '2 hours'`);
 await modifierDate('lauren', d, { representations: [{ id: r1, heure: '20:15' }] });
@@ -475,4 +590,30 @@ ok((await toutes()).length === 2 && (await recues('rempl'))[0]?.titre === titre1
 const fin2 = await db.exec(MODIFIE);
 ok(fin2.at(-1).rows.slice(0, 3).every(r => /^prêt(e?s)? :/.test(r['état'])) && /^un /.test(fin2.at(-1).rows[3]['état']),
   `relancé encore, le quatorzième le dit : ${fin2.at(-1).rows.map(r => r['état']).join(' | ')}`);
+
+// ---------------------------------------------------------------------------------------------- 14. après sa première version
+// une base où la première version du quatorzième script était passée : deux règles de plus (relire, effacer ce qu'un
+// geste libérait), leur fonction, celle qui libérait un fichier, la colonne « geste » et un fichier libéré. Ici, la
+// fonction d'alors laisse tout relire et effacer : relancé, le script doit tout retirer
+await db.exec(`
+  create or replace function public.crescite_equipe_peut_retirer(nom text) returns boolean language sql stable security definer set search_path = public as $$ select auth.uid() is not null $$;
+  create or replace function public.crescite_liberer_fichier(chemin text, s bigint) returns text language sql security definer set search_path = public as $$ select chemin $$;
+  grant execute on function public.crescite_equipe_peut_retirer(text) to authenticated;
+  create policy crescite_equipe_membre_lecture on storage.objects for select to authenticated using (bucket_id = 'crescite-equipe' and public.crescite_equipe_peut_retirer(name));
+  create policy crescite_equipe_membre_retrait on storage.objects for delete to authenticated using (bucket_id = 'crescite-equipe' and public.crescite_equipe_peut_retirer(name));
+  alter table public.crescite_fichiers_equipe add column geste text not null default 'depot' check (geste in ('depot', 'retrait'));
+  drop index public.crescite_fichiers_equipe_compte;
+  create index crescite_fichiers_equipe_compte on public.crescite_fichiers_equipe (user_id, geste, quand desc);
+  insert into public.crescite_fichiers_equipe (nom, geste, spectacle_id, user_id) values ('berenice/texte.pdf', 'retrait', ${Number(ber)}, '${U.lauren}');`);
+ok(await voit('lauren', 'berenice/orphelin.pdf') && (await reglesStockage()).split(',').length === 3, '(la base d’avant : trois règles, et l’équipe y relit un fichier qui n’est pas à elle)');
+const fin3 = await db.exec(MODIFIE);
+ok(await reglesStockage() === 'crescite_equipe_membre_depot:INSERT'
+   && await n(`select count(*)::int n from pg_proc where proname in ('crescite_liberer_fichier', 'crescite_equipe_peut_retirer')`) === 0
+   && await n(`select count(*)::int n from information_schema.columns where table_name = 'crescite_fichiers_equipe' and column_name = 'geste'`) === 0
+   && await n(`select count(*)::int n from public.crescite_fichiers_equipe where nom = 'berenice/texte.pdf'`) === 0
+   && await n(`select count(*)::int n from pg_indexes where indexname = 'crescite_fichiers_equipe_compte' and indexdef not like '%geste%'`) === 1,
+  'relancé sur cette base, il retire les deux règles, leurs fonctions, la colonne « geste » et le fichier libéré (son index est refait)');
+ok(!(await voit('lauren', 'berenice/orphelin.pdf')) && await effacer('lauren', 'berenice/orphelin.pdf') === 0 && await existe('berenice/orphelin.pdf'),
+  'l’équipe n’y relit ni n’y efface plus rien');
+ok(fin3.at(-1).rows.slice(0, 3).every(r => /^prêt(e?s)? :/.test(r['état'])), `et il le dit : ${fin3.at(-1).rows[1]['état']}`);
 await db.close();
