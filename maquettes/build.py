@@ -670,11 +670,13 @@ def build_data():
                                           "telephone": None}},
             # l'espace pro (#/espace-pro, dans le menu) : trois portes vers les espaces réservés, hors des maquettes
             # (href relatifs au site publié : equipe/, admin/ et pro/ sont à côté des maquettes dans docs/)
+            # (dans l'ordre de la compagnie : les salles, puis l'équipe, puis l'administration ; la synthèse place la page des
+            # établissements scolaires entre les salles et l'équipe)
             "espacePro": {"titre": "Espace pro", "texte": "Les espaces réservés de la compagnie.", "portes": [
-                {"cle": "equipe", "titre": "Comédiens et techniciens", "href": "equipe/",
-                 "texte": "Votre tournée, vos horaires, vos feuilles de route et vos documents."},
                 {"cle": "salles", "titre": "Programmateurs et directeurs de salle", "href": "pro/",
                  "texte": "Les captations et les documents que la compagnie vous a ouverts."},
+                {"cle": "equipe", "titre": "Comédiens et techniciens", "href": "equipe/",
+                 "texte": "Votre tournée, vos horaires, vos feuilles de route et vos documents."},
                 {"cle": "admin", "titre": "Administration", "href": "admin/",
                  "texte": "La gestion du site, des dates, de l’équipe et des feuilles de route."}]},
             # la troupe (#/compagnie, règle 20) : le titre de la section et les catégories de métiers (TROUPE)
