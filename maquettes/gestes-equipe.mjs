@@ -59,9 +59,63 @@ const compte = async (page, sel) => page.$$eval(sel, xs => xs.length);
 const texte = async (page, sel) => (await page.$eval(sel, e => e.textContent.replace(/\s+/g, ' ').trim()).catch(() => ''));
 const hash = page => page.evaluate(() => location.hash);
 
-async function ouvrir(navigateur, { telephone = true, hash = '#/saison' } = {}) {
+// ---- la base simulée, en lecture et en écriture (le compte administre) : ce que l'application lit (sa tournée, sa fiche,
+// la distribution, l'équipe, les notifications), ce qu'elle écrit (les menus de modification), gardé dans MODIFS
+const MODIFS = [];
+function baseSimulee() {
+  const personnes = { 1: { id: 1, slug: 'camille-essai', prenom: 'Camille', nom: 'Essai', metiers: ['comédienne'], photo: null, photo_publique: false }, 2: { id: 2, slug: 'jean-durand', prenom: 'Jean', nom: 'Durand', metiers: ['régisseur'], photo: null, photo_publique: false } };
+  const lieux = { 5: caen, 6: havre, 7: paris };
+  const DB = {
+    crescite_dates: MEMOIRE.dates.map(d => ({ id: d.id, spectacle_id: d.spectacle_id, lieu_id: d.lieu.id, debut: d.debut, fin: d.fin, precision: 'jour', saison: d.saison, public: 'tout_public', statut: d.statut, visible: true, intitule: null, details: [], lien: null, nature: 'representations' })),
+    crescite_representations: MEMOIRE.dates.flatMap(d => d.representations.map(r => ({ id: r.id, date_id: d.id, jour: r.jour, heure: r.heure ? `${r.heure}:00` : null, fin: r.fin ? `${r.fin}:00` : null, public: r.public, annulee: false, note: null }))),
+    crescite_lieux: Object.values(lieux).map(l => ({ ...l, site_web: null })), crescite_spectacles: [berenice, folle].map(s => ({ ...s, duree: null, ordre: s.id * 10, photo: null })),
+    crescite_personnes: Object.values(personnes), crescite_personnes_privees: [{ personne_id: 1, email: 'camille@example.org', telephone: '06 12 34 56 78', ville: 'Rouen', regime: null, urgence: null }],
+    crescite_distributions: [{ id: 1, spectacle_id: 2, personne_id: 1, categorie: 'jeu', fonction: '', role: null, alternance: null, en_tournee: true, ordre: 10, personne: personnes[1] }, { id: 2, spectacle_id: 2, personne_id: 2, categorie: 'technique', fonction: 'Régie générale', role: null, alternance: null, en_tournee: true, ordre: 20, personne: personnes[2] },
+      { id: 3, spectacle_id: 1, personne_id: 1, categorie: 'jeu', fonction: '', role: 'Bérénice', alternance: null, en_tournee: true, ordre: 10, personne: personnes[1] }],
+    crescite_equipes: [], crescite_documents: [], crescite_feuilles: [], crescite_propositions: [], crescite_notifications: MEMOIRE.notifs.map(n => ({ ...n, personne_id: 1, date_id: null, spectacle_id: null, lien: null })),
+    crescite_notes_frais: [], crescite_signalements: [], crescite_dates_chiffres: [], crescite_checklists_chargement: [], crescite_lieux_suivi: [], crescite_dates_suivi: [], crescite_materiel: [],
+  };
+  const tournee = () => DB.crescite_dates.map(d => ({ ...d, spectacle: DB.crescite_spectacles.find(s => s.id === d.spectacle_id), lieu: DB.crescite_lieux.find(l => l.id === d.lieu_id) || null,
+    representations: DB.crescite_representations.filter(r => r.date_id === d.id).sort((a, b) => (a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : String(a.heure || '99').localeCompare(String(b.heure || '99')))), feuille: null }));
+  const filtrer = (rows, params) => { for (const [k, v] of params) { let m; if ((m = /^eq\.(.*)$/.exec(v))) rows = rows.filter(r => String(r[k]) === m[1]); else if ((m = /^in\.\((.*)\)$/.exec(v))) { const xs = m[1].split(','); rows = rows.filter(r => xs.includes(String(r[k]))); } } return rows; };
+  const route = async r => {
+    const req = r.request(), url = new URL(req.url()), partie = url.pathname.split('/'), table = partie.pop(), objet = /pgrst\.object/.test(req.headers().accept || '');
+    const json = (status, body) => r.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    if (!url.pathname.startsWith('/rest/v1/')) return r.abort();
+    if (partie[partie.length - 1] === 'rpc') {
+      const corps = JSON.parse(req.postData() || '{}');
+      MODIFS.push({ rpc: table, corps });
+      if (table === 'crescite_rattacher') return json(200, 1);
+      if (table === 'crescite_est_admin') return json(200, true);
+      if (table === 'crescite_ma_tournee') return json(200, tournee());
+      if (table === 'crescite_prevenir_equipe') return json(200, 2);
+      return json(200, null);
+    }
+    if (!(table in DB)) return json(404, { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` });
+    if (req.method() === 'GET') {
+      let rows = filtrer(DB[table], url.searchParams);
+      const limit = url.searchParams.get('limit'); if (limit) rows = rows.slice(0, +limit);
+      if (objet) return rows.length ? json(200, rows[0]) : json(406, { code: 'PGRST116', details: 'The result contains 0 rows', message: 'JSON object requested, multiple (or no) rows returned' });
+      return json(200, rows);
+    }
+    const body = req.postData() ? JSON.parse(req.postData()) : {};
+    if (req.method() === 'PATCH') { const rows = filtrer(DB[table], url.searchParams); rows.forEach(x => Object.assign(x, body)); MODIFS.push({ table, patch: body, n: rows.length }); return objet ? json(200, rows[0] || null) : r.fulfill({ status: 204, body: '' }); }
+    if (req.method() === 'DELETE') { const rows = filtrer(DB[table], url.searchParams); DB[table] = DB[table].filter(x => !rows.includes(x)); MODIFS.push({ table, delete: rows.map(x => x.id ?? x), n: rows.length }); return r.fulfill({ status: 204, body: '' }); }
+    if (req.method() === 'POST') {
+      const xs = Array.isArray(body) ? body : [body], cles = (url.searchParams.get('on_conflict') || '').split(',').filter(Boolean);
+      for (const x of xs) { const existant = cles.length ? DB[table].find(y => cles.every(k => String(y[k]) === String(x[k]))) : null; if (existant) Object.assign(existant, x); else DB[table].push({ id: Date.now() % 100000 + DB[table].length, ...x }); }
+      MODIFS.push({ table, post: xs, conflit: cles });
+      return objet ? json(201, xs[0]) : r.fulfill({ status: 201, contentType: 'application/json', body: '[]' });
+    }
+    return json(200, []);
+  };
+  return { DB, route };
+}
+
+async function ouvrir(navigateur, { telephone = true, hash = '#/saison', base = null } = {}) {
   const ctx = await navigateur.newContext(telephone ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, locale: 'fr-FR', timezoneId: 'UTC' } : { viewport: { width: 1280, height: 900 }, locale: 'fr-FR', timezoneId: 'UTC' });
-  await ctx.route(/supabase\.co|fonts\.g/, r => (/crescite_notifications/.test(r.request().url()) && r.request().method() === 'PATCH' ? r.fulfill({ status: 204, body: '' }) : r.abort()));
+  if (base) { await ctx.route(/supabase\.co/, base.route); await ctx.route(/fonts\.g/, r => r.abort()); await ctx.routeWebSocket(/realtime/, () => {}); }
+  else await ctx.route(/supabase\.co|fonts\.g/, r => (/crescite_notifications/.test(r.request().url()) && r.request().method() === 'PATCH' ? r.fulfill({ status: 204, body: '' }) : r.abort()));
   const page = await ctx.newPage();
   const erreurs = [];
   page.on('pageerror', e => erreurs.push(String(e.message || e)));
@@ -79,6 +133,18 @@ async function appuiLong(page, x, y, duree = 650) {
   await page.waitForTimeout(duree);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await cdp.detach();
+}
+// l'appui long sur un élément (défilé en vue), jusqu'à ce que le menu attendu s'ouvre : la page peut se redessiner entre-temps
+async function menuSur(page, selecteur, attendu, { dx = null, dy = null, essais = 3 } = {}) {
+  for (let i = 0; i < essais; i++) {
+    const el = await page.$(selecteur); if (!el) { await page.waitForTimeout(500); continue; }
+    await el.scrollIntoViewIfNeeded().catch(() => {}); await page.waitForTimeout(300);
+    const r = await el.boundingBox(); if (!r) continue;
+    await appuiLong(page, r.x + (dx ?? r.width / 2), dy == null ? r.y + r.height / 2 : dy < 0 ? r.y + r.height + dy : r.y + dy);
+    if (await page.waitForSelector(`.gm-feuille [data-gm]:has-text("${attendu}")`, { timeout: 2500 }).catch(() => null)) return true;
+    await page.keyboard.press('Escape').catch(() => {}); await page.waitForTimeout(400);
+  }
+  return false;
 }
 async function balayer(page, [x0, y0], [x1, y1], { pas = 8, dt = 14 } = {}) {
   const cdp = await page.context().newCDPSession(page);
@@ -141,7 +207,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForSelector('.liste-notifs .notif[data-notif="1"]', { timeout: 10000 });
   await page.click('.liste-notifs .notif[data-notif="1"]', { button: 'right' });
   await page.waitForSelector('.gm-boite [data-gm]:has-text("Marquer comme lue")', { timeout: 3000 }).catch(() => {});
-  ok('clic droit sur une notification : ouvrir, marquer comme lue, tout marquer', (await compte(page, '.gm-boite [data-gm]')) === 3, String(await compte(page, '.gm-boite [data-gm]')));
+  ok('clic droit sur une notification : ouvrir, marquer comme lue, tout marquer, effacer', (await compte(page, '.gm-boite [data-gm]')) === 4, String(await compte(page, '.gm-boite [data-gm]')));
   await page.click('.gm-boite [data-gm]:has-text("Marquer comme lue")');
   await page.waitForFunction(() => !document.querySelector('.liste-notifs .notif[data-notif="1"].non-lue'), null, { timeout: 4000 }).catch(() => {});
   ok('« Marquer comme lue » la marque, sans quitter la page', (await compte(page, '.liste-notifs .notif[data-notif="1"].non-lue')) === 0 && (await hash(page)) === '#/notifications');
@@ -165,6 +231,79 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('clic droit sur le héros d’une date : ses actions', (await compte(page, '.gm-boite [data-gm]')) >= 2);
   await page.keyboard.press('Escape');
   ok('ordinateur · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ le compte administre : modifier d'un appui long
+{
+  const base = baseSimulee();
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/date/102', base });
+  await page.waitForFunction(() => document.querySelector('#contenu .heros[data-date="102"]') && document.querySelector('#contenu .portraits li[data-personne="2"]'), null, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(600);
+  ok('en ligne, le compte est reconnu administrateur et la page lit la base simulée (l’équipe de la date : Camille, Jean)', MODIFS.some(m => m.rpc === 'crescite_est_admin') && (await compte(page, '#contenu .portraits li[data-personne]')) === 2, String(await compte(page, '#contenu .portraits li[data-personne]')));
+  await menuSur(page, '.heros[data-date="102"]', 'Modifier la date…', { dy: -30 });
+  const items = await page.$$eval('.gm-feuille [data-gm]', xs => xs.map(x => x.querySelector('.gm-l').firstChild.textContent));
+  ok('l’appui long sur la date, en administrateur : modifier la date, les représentations, qui part, le lieu, le suivi, prévenir, supprimer', ['Modifier la date…', 'Les représentations…', 'Qui part…', 'Modifier le lieu…', 'Suivi interne…', 'Prévenir l’équipe…', 'Supprimer la date…'].every(x => items.includes(x)), items.join(' | '));
+  await page.waitForTimeout(400); await page.screenshot({ path: `${CAPT}/admin-menu.png`, fullPage: false });
+  // la date : son statut, en feuille
+  await page.tap('.gm-feuille [data-gm]:has-text("Modifier la date…")');
+  await page.waitForSelector('.gf [role="dialog"]', { timeout: 3000 }).catch(() => {});
+  ok('« Modifier la date… » ouvre une feuille de modification (statut, nature, publication, lien, précisions)', (await texte(page, '.gf h2')) === 'Modifier la date' && (await compte(page, '.gf [data-gf-seg="statut"] button')) === 4 && (await compte(page, '.gf [name="lien"]')) === 1);
+  await page.waitForTimeout(400); await page.screenshot({ path: `${CAPT}/admin-formulaire.png`, fullPage: false });
+  await page.tap('.gf [data-gf-seg="statut"] button[data-val="option"]');
+  await page.tap('.gf button[type="submit"]');
+  await page.waitForFunction(() => !document.querySelector('.gf') && document.querySelector('#contenu .heros[data-date="102"] .etat-option'), null, { timeout: 8000 }).catch(() => {});
+  ok('Enregistrer écrit le statut dans la base (une option n’est jamais publiée), la feuille se ferme, la page relue dit « Option »', MODIFS.some(m => m.table === 'crescite_dates' && m.patch && m.patch.statut === 'option' && m.patch.visible === false && m.n === 1) && (await compte(page, '.gf')) === 0 && base.DB.crescite_dates.find(d => d.id === 102).statut === 'option' && (await texte(page, '#contenu .heros[data-date="102"] .etat-option')) === 'Option', `${JSON.stringify(MODIFS.filter(m => m.table === 'crescite_dates'))} · ${await texte(page, '#contenu .heros-haut')}`);
+  // l'horaire : en feuille, l'heure change
+  await page.waitForTimeout(600);
+  await menuSur(page, '#contenu .horaires li[data-reps]', 'Changer l’heure…', { dx: 60 });
+  ok('l’appui long sur un horaire : changer l’heure, annuler, retirer la séance', (await compte(page, '.gm-feuille [data-gm]')) === 3, String(await compte(page, '.gm-feuille [data-gm]')));
+  await page.tap('.gm-feuille [data-gm]:has-text("Changer l’heure…")');
+  await page.waitForSelector('.gf input[name="reps.0.heure"]', { timeout: 3000 }).catch(() => {});
+  await page.fill('.gf input[name="reps.0.heure"]', '21:00');
+  await page.tap('.gf button[type="submit"]');
+  await page.waitForFunction(() => !document.querySelector('.gf') && /21h00/.test(document.querySelector('#contenu .horaires')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
+  ok('la nouvelle heure est écrite (représentation 1020 → 21:00) et la page la montre', MODIFS.some(m => m.table === 'crescite_representations' && m.patch && m.patch.heure === '21:00') && /21h00/.test(await texte(page, '#contenu .horaires')), await texte(page, '#contenu .horaires'));
+  // qui part : Jean ne part pas
+  await page.waitForTimeout(600);
+  await menuSur(page, '#contenu .portraits li[data-personne="2"]', 'Ne part pas sur cette date', { dx: 80 });
+  ok('l’appui long sur une personne de l’équipe : ses coordonnées, « ne part pas », qui part', (await compte(page, '.gm-feuille [data-gm]')) === 3, `${await compte(page, '.gm-feuille [data-gm]')} · ${await page.$$eval('.gm-feuille [data-gm]', xs => xs.map(x => x.textContent.trim()).join(' | '))}`);
+  await page.tap('.gm-feuille [data-gm]:has-text("Ne part pas sur cette date")');
+  await page.waitForFunction(() => !document.querySelector('#contenu .portraits li[data-personne="2"]'), null, { timeout: 8000 }).catch(() => {});
+  ok('« Ne part pas sur cette date » écrit l’écart (crescite_equipes, present faux) et Jean quitte « Qui part »', MODIFS.some(m => m.table === 'crescite_equipes' && m.post && m.post[0].personne_id === 2 && m.post[0].present === false) && (await compte(page, '#contenu .portraits li[data-personne="2"]')) === 0 && (await compte(page, '#contenu .portraits li[data-personne="1"]')) === 1);
+  // le lieu : l'adresse
+  await page.waitForTimeout(600);
+  await menuSur(page, '#contenu .bloc-lieu[data-lieu]', 'Modifier le lieu…', { dy: 40 });
+  await page.tap('.gm-feuille [data-gm]:has-text("Modifier le lieu…")');
+  await page.waitForSelector('.gf input[name="adresse"]', { timeout: 3000 }).catch(() => {});
+  await page.fill('.gf input[name="adresse"]', '8 place Oscar-Niemeyer');
+  await page.fill('.gf textarea[name="contact"]', 'Régie : 02 35 19 10 10');
+  await page.tap('.gf button[type="submit"]');
+  await page.waitForFunction(() => !document.querySelector('.gf') && /Oscar-Niemeyer/.test(document.querySelector('#contenu .bloc-lieu')?.textContent || ''), null, { timeout: 8000 }).catch(() => {});
+  ok('le lieu : l’adresse écrite dans crescite_lieux, le contact dans son suivi, la page relue', MODIFS.some(m => m.table === 'crescite_lieux' && m.patch && m.patch.adresse === '8 place Oscar-Niemeyer') && MODIFS.some(m => m.table === 'crescite_lieux_suivi' && m.post && /02 35 19 10 10/.test(m.post[0].contact)) && /Oscar-Niemeyer/.test(await texte(page, '#contenu .bloc-lieu')));
+  // prévenir l'équipe
+  await page.waitForTimeout(600);
+  await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(250);
+  await menuSur(page, '.heros[data-date="102"]', 'Prévenir l’équipe…', { dy: -30 });
+  await page.tap('.gm-feuille [data-gm]:has-text("Prévenir l’équipe…")');
+  await page.waitForSelector('.gf textarea[name="texte"]', { timeout: 3000 }).catch(() => {});
+  await page.fill('.gf textarea[name="texte"]', 'Rendez-vous 14 h au Volcan.');
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: `${CAPT}/admin-prevenir.png`, fullPage: false });
+  await page.tap('.gf button[type="submit"]');
+  await page.waitForFunction(() => !document.querySelector('.gf'), null, { timeout: 6000 }).catch(() => {});
+  const prevenu = MODIFS.find(m => m.rpc === 'crescite_prevenir_equipe');
+  ok('« Prévenir l’équipe… » appelle crescite_prevenir_equipe avec la date, le titre et le message', !!prevenu && prevenu.corps.d === 102 && prevenu.corps.texte_ === 'Rendez-vous 14 h au Volcan.' && /Message de l’administration/.test(prevenu.corps.titre_), JSON.stringify(prevenu));
+  ok('et le dit', /Message envoyé à 2/.test(await texte(page, '#annonces')), await texte(page, '#annonces'));
+  // une notification s'efface
+  await page.goto(`${URL0}#/notifications`);
+  await page.waitForSelector('.liste-notifs .notif[data-notif="2"]', { timeout: 10000 });
+  await page.waitForTimeout(500);
+  await menuSur(page, '.liste-notifs .notif[data-notif="2"]', 'Effacer');
+  await page.tap('.gm-feuille [data-gm]:has-text("Effacer")');
+  await page.waitForFunction(() => !document.querySelector('.liste-notifs .notif[data-notif="2"]'), null, { timeout: 6000 }).catch(() => {});
+  ok('« Effacer » retire la notification de la base et de la liste', MODIFS.some(m => m.table === 'crescite_notifications' && m.delete && m.delete.includes(2)) && (await compte(page, '.liste-notifs .notif[data-notif="2"]')) === 0);
+  ok('administrateur · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 
