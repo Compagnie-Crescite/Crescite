@@ -59,6 +59,7 @@ python3 maquettes/build.py              # les dix maquettes et la planche (maque
 python3 maquettes/build.py m06          # une seule maquette
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
 node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
+                                         # (4 visites à la fois ; PARALLELE=1 pour les faire une à une)
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
@@ -121,9 +122,12 @@ l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en 
 (`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
 souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
 va souligner le titre à la couleur du spectacle, puis revient. Sur la page de la compagnie, la pieuvre de la troupe est
-une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo) : quand la
-lecture descend, elle rapetisse et nage dans la marge, par impulsions, et une tentacule attrape le médaillon du métier
-qu'on lit, qui s'anime.
+une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo, et sa tête
+hoche et se tourne à part du corps, au bout d'un ressort) : quand la lecture descend, elle rapetisse et vit dans la
+marge, jamais sur la même ligne : elle choisit un point à sa portée (la marge, ou le vide sous le titre d'un métier), y
+file au galop (elle se ramasse, bondit étirée dans le sens du bond, un sillage derrière elle), y flotte, repart ; une
+tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelqu'un (un clic sur une de ses places) :
+elle sursaute, puis ses tentacules, lumineuses, vont tenir toutes ses places (`c.tenir`), à la place des fils des liens.
 
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble

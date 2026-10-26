@@ -10,6 +10,8 @@
    data-cadre="non", garde la position de sa feuille de style. Aucune dépendance.
 
    CADRAGE.cle(src)          la clé de D.photos de cette adresse, ou null
+   CADRAGE.alias(src, cle)   une autre adresse de la même photo (une page qui remplace ses data:… par des blob:… : les
+                             photos déjà posées sous l'ancienne adresse restent reconnues)
    CADRAGE.position(img)     recalcule la position d'une photo (rend la valeur posée, ou null)
    CADRAGE.calcul(cadre, image, c, biais)
                              la position seule : cadre { l, h } et image { l, h } en pixels, c = { zone, point },
@@ -17,15 +19,20 @@
 const CADRAGE = (() => {
   const donnees = () => (typeof D !== 'undefined' && D) || {};
   let source = null, parSrc = new Map();
+  const alias = new Map();
+  // une adresse est souvent la photo elle-même (data:…, des centaines de Ko) : on la reconnaît à sa longueur, son début et sa
+  // fin, sans la hacher tout entière à chaque photo posée
+  const empreinte = src => `${src.length}:${src.slice(0, 40)}:${src.slice(-96)}`;
   function cle(src) {
     const d = donnees();
     if (!src || !d.cadrages || !d.photos) return null;
     if (source !== d.photos) {          // D.photos lu une fois (et relu s'il change)
       source = d.photos;
       parSrc = new Map();
-      for (const [k, v] of Object.entries(d.photos)) if (typeof v === 'string' && d.cadrages[k]) parSrc.set(v, k);
+      for (const [k, v] of Object.entries(d.photos)) if (typeof v === 'string' && d.cadrages[k]) parSrc.set(empreinte(v), k);
     }
-    return parSrc.get(src) || null;
+    const e = empreinte(src);
+    return parSrc.get(e) || alias.get(e) || null;
   }
 
   // sur un axe : la taille de l'image mise à l'échelle (t) et du cadre (v), en pixels ; la zone [a, b] et le point p en %
@@ -69,8 +76,9 @@ const CADRAGE = (() => {
     if (!cle(img.getAttribute('src'))) return;
     suivies.add(img);
     img.addEventListener('load', () => position(img));
+    // (déjà chargée : sa première mesure par ResizeObserver, après la mise en page, la cadre ; sans lui, tout de suite)
     if (tailles) tailles.observe(img); else position(img);
-    if (img.complete) position(img);
+    if (img.complete && !tailles) position(img);
   }
   function oublier(img) { if (suivies.has(img)) { suivies.delete(img); if (tailles) tailles.unobserve(img); } }
   const parcourir = (n, f) => {
@@ -93,5 +101,5 @@ const CADRAGE = (() => {
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer, { once: true });
     else demarrer();
   }
-  return { cle, position: img => position(img), calcul };
+  return { cle, position: img => position(img), calcul, alias: (src, k) => { if (src && k) alias.set(empreinte(src), k); } };
 })();

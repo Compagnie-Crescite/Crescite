@@ -1,6 +1,7 @@
 // Vérifie qu'une maquette se lit par son menu (les saisons, les spectacles, la compagnie, l'espace pro), s'ouvre sur le logo,
 // et n'affiche que le texte de ses sources.
 // Usage : node maquettes/onglets.mjs <dossier de sortie> m03 [m04 …]
+// Les visites (une maquette au bureau, une au téléphone) vont en parallèle, PARALLELE à la fois (4 par défaut).
 // Règle 21 (v4, la navigation par les saisons) : sur chaque vue, au bureau comme au téléphone, les quatre éléments du menu
 // (D.site.menu) sont à portée dans le premier écran, hors du contenu et sans ouvrir de menu ; un seul aria-current="page" (sur
 // l'élément du menu de la vue ; sur la page d'un spectacle, « les spectacles » est marqué aria-current="true", dans une
@@ -39,7 +40,9 @@ const VUES = [
   // les saisons (règle 21) : le titre du menu, la saison en cours (ses prochaines dates, une date scolaire comprise et marquée ;
   // toutes ses dates), puis les saisons passées, la plus récente d'abord, fermées (leurs lignes ne se lisent pas tant qu'on ne
   // les ouvre pas : celles de 2023-2024 qu'on ne lit que là)
-  ['saisons', '#/saisons', D => { const L = D.site.libelles, pub = D.dates.find(d => !d.scolaire && (d.details || [])[0]), sco = D.dates.find(d => d.scolaire && (d.details || [])[0]);
+  // (une date au jour encore à fixer, « novembre 2026 », ne paraît pas dans les saisons de la synthèse : règle 21 D)
+  ['saisons', '#/saisons', D => { const L = D.site.libelles, fixe = d => !(d.precision === 'month' && (d.fin || d.iso || '') >= D.aujourdhui);
+    const pub = D.dates.find(d => !d.scolaire && fixe(d) && (d.details || [])[0]), sco = D.dates.find(d => d.scolaire && fixe(d) && (d.details || [])[0]);
     return [D.site.menu[0].texte, D.site.saisons[0].titre, L.prochainesDates, L.toutesLesDates, L.saisonsPassees, pub && pub.details[0].texte,
       sco && sco.details[0].texte, sco && L.scolaire, D.site.saisons.find(s => s.saison === '2019-2020').titre]; },
     () => window.__propres('2023-2024', 3)],
@@ -641,11 +644,12 @@ async function regle20(page, tag, log) {
   if (tag === 'tab') log.push(`· règle 20 : ${e.n} personnes, ${e.places} places en ${e.cats} catégories, ${e.vignettes} vignettes${e.info.length ? ` ; ${e.info.join(', ')}` : ''}`);
 }
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
-const report = {};
-for (const n of names) {
-  const log = [];
-  for (const [tag, vp, mobile] of [['tab', { width: 1440, height: 900 }, false], ['mtab', { width: 390, height: 844 }, true]]) {
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] });
+// une visite (une maquette, au bureau ou au téléphone) passe l'essentiel de son temps à attendre : les visites vont en
+// parallèle, PARALLELE à la fois (4 par défaut ; PARALLELE=1 pour les faire l'une après l'autre) ; le rapport garde l'ordre
+const VISITES = [['tab', { width: 1440, height: 900 }, false], ['mtab', { width: 390, height: 844 }, true]];
+const visite = async (n, tag, vp, mobile) => {
+    const log = [];
     const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, locale: 'fr-FR' });
     const page = await ctx.newPage();
     page.on('pageerror', e => log.push(`${tag} erreur : ${e.message}`));
@@ -722,7 +726,11 @@ for (const n of names) {
     const docs = await page.evaluate(() => (D.documents || []).filter(d => d.pour === 'pros').map(d => [d.spectacle, d.url]));
     const D_DOCS = slug => new Set(docs.filter(([s]) => s === slug).map(([, u]) => u)).size;
     const titres = new Map(), signale = new Set();
+    let avant = null;
     for (const [vue, hash, attendus, interdits] of VUES) {
+      // (d'un onglet à l'autre d'un même spectacle, la page ne remonte pas : elle se pose sous les menus arrimés, plus bas)
+      const onglet = !!avant && /^#\/spectacle\/[^/?]+\//.test(hash) && avant.split('/').slice(0, 3).join('/') === hash.split('/').slice(0, 3).join('/');
+      avant = hash;
       await page.evaluate(h => { location.hash = h; }, hash);
       await page.waitForTimeout(900);
       // (le débordement se mesure contre la largeur de l'écran demandée : en émulation mobile, une page qui déborde
@@ -826,7 +834,10 @@ for (const n of names) {
           const titresS = [...new Set([...SA.spectacles.map(g => titreDe(g.slug) || g.titre), ...(D.dates || []).map(d => titreDe(d.slug) || d.titre)].filter(Boolean))];
           const legende = [];
           if (fr) { const R = fr.f.getBoundingClientRect();
-            titresS.forEach(x => { if (noeuds(x).some(t => { const r = boite(t); return r.width > 0 && r.bottom > R.top - 260 && r.top < R.bottom + 260; })) legende.push(x); }); }
+            titresS.forEach(x => { if (noeuds(x).some(t => { const r = boite(t); return r.width > 0 && r.bottom > R.top - 260 && r.top < R.bottom + 260; })) legende.push(x); });
+            // (règle 21 D, la synthèse) les puces des spectacles, qui filtrent la page juste au-dessus de la frise, en font la légende
+            const grp = [...main.querySelectorAll('[role="group"]')].find(g => vis(g) && g.getBoundingClientRect().bottom <= R.top + 1 && g.querySelectorAll('button[aria-pressed]').length >= 3);
+            if (grp && legende.length < Math.min(3, titresS.length)) { const t = n(grp.textContent || ''); titresS.forEach(x => { if (!legende.includes(x) && t.includes(n(x))) legende.push(x); }); } }
           const passees = (D.site.saisons || []).filter(x => x.saison < D.saison && ((D.saisons || {})[x.saison] || { spectacles: [] }).spectacles.some(g => (g.dates || []).length));
           const tous = passees.map(x => n(x.titre));
           const aSaCarte = x => noeuds(x.titre).some(t => { for (let el = t.parentElement; el && el !== main && el !== document.body; el = el.parentElement) {
@@ -883,7 +894,11 @@ for (const n of names) {
       if (etat.debord > 1) log.push(`${tag} ${vue} : débordement horizontal de ${etat.debord}px`);
       if (!etat.h1) log.push(`${tag} ${vue} : aucun h1 visible`);
       // (#/saisons/<saison> mène à sa saison, plus bas dans la page des saisons)
-      if (etat.haut > 2 && vue !== 'accueil' && vue !== 'saison-passee') log.push(`${tag} ${vue} : la page ne remonte pas en haut (scrollY ${etat.haut})`);
+      if (etat.haut > 2 && vue !== 'accueil' && vue !== 'saison-passee' && !onglet) log.push(`${tag} ${vue} : la page ne remonte pas en haut (scrollY ${etat.haut})`);
+      // un onglet du même spectacle : la barre des entrées est à l'écran, arrimée en haut, et le contenu commence sous elle
+      if (onglet) { const o = await page.evaluate(() => { const u = document.querySelector('main .u-onglets'), g = document.querySelector('main .sp-grille'); if (!u || !g) return null;
+          const a = u.getBoundingClientRect(), b = g.getBoundingClientRect(); return { haut: Math.round(a.top), bas: Math.round(a.bottom), contenu: Math.round(b.top) }; });
+        if (!o || o.haut < 0 || o.bas > 160 || Math.abs(o.contenu - o.bas) > 2) log.push(`${tag} ${vue} : d'un onglet à l'autre, la page ne se pose pas sous les menus arrimés (${JSON.stringify(o)})`); }
       // règle 21 : les quatre éléments du menu à portée sur chaque vue, au bureau comme au téléphone
       const pasAPortee = etat.menu.filter(m => !etat.aPortee.includes(m.href));
       if (pasAPortee.length) log.push(`${tag} ${vue} : le menu n'est pas tout entier à portée dans le premier écran (hors du contenu, sans ouvrir de menu) : manque ${pasAPortee.map(m => `« ${m.texte} »`).join(', ')}`);
@@ -1022,8 +1037,19 @@ for (const n of names) {
     }
     if (gelees.length) log.push(`${tag} : ${gelees.length} changement(s) de page gelé(s), la transition attend la capture de l'ancienne page (règle 15 C) : ${[...new Set(gelees)].slice(0, 6).join(' ; ')}`);
     await ctx.close();
-  }
-  // règle 15 C : les budgets de la réactivité (REACTIVITE=1)
+    return log;
+};
+const taches = names.flatMap(n => VISITES.map(v => [n, ...v]));
+const logs = new Array(taches.length);
+let suivante = 0;
+await Promise.all(Array.from({ length: Math.max(1, Math.min(taches.length, Number(process.env.PARALLELE) || 4)) }, async () => {
+  for (let i; (i = suivante++) < taches.length;) logs[i] = await visite(...taches[i]);
+}));
+const report = {};
+for (const [k, n] of names.entries()) {
+  const log = logs.slice(k * VISITES.length, (k + 1) * VISITES.length).flat();
+  // règle 15 C : les budgets de la réactivité (REACTIVITE=1), mesurés seuls, après les visites (une mesure faite pendant
+  // d'autres visites serait faussée)
   if (mesurer) for (const profil of ['bureau', 'telephone']) {
     const m = await mesurer(browser, n, { dist, profil });
     depassements(m).forEach(d => log.push(`réactivité : ${d}`));
