@@ -906,7 +906,7 @@ function panneauPrevenir(zone, d) {
   if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); return; }
   const s = spectacle(d.spectacle_id), n = equipeDeLaDate(d).length;
   const p = document.createElement('div');
-  p.className = 'bloc'; p.id = 'd-prevenir-zone';
+  p.className = 'bloc ad-neuf'; p.id = 'd-prevenir-zone';
   p.innerHTML = `<h3>Prévenir l’équipe</h3>
     <p class="aide">Une notification à ${n ? `chacune des ${n} personnes de l’équipe de cette date` : 'l’équipe de cette date (personne pour l’instant)'} : dans son espace, et sur son téléphone si elle s’y est abonnée.</p>
     <div class="champ"><label for="pv-titre">Titre</label><input type="text" id="pv-titre" maxlength="120" value="${esc(`${s?.titre || 'Date'} · ${jourCourt(d.debut)}`)}"></div>
@@ -928,6 +928,7 @@ function panneauPrevenir(zone, d) {
       return erreur(error, 'Notification non envoyée');
     }
     p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false');
+    const b = $('#d-prevenir', zone); if (b && +data) { b.classList.add('sonne'); setTimeout(() => b.classList.remove('sonne'), 900); }   // la cloche sonne
     annoncer(+data ? `Notification envoyée à ${+data} personne${+data > 1 ? 's' : ''}.` : 'Personne à prévenir : l’équipe de cette date est vide.');
   });
 }

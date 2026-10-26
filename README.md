@@ -299,8 +299,11 @@ se vide à mesure : ce qui vient d'être complété reste un instant en vert, «
 (`listeQuiSeVide`) ; la recherche rapide s'ouvre et ses premiers résultats arrivent l'un après l'autre ; la pastille
 « direct » bat quand un changement arrive ; dans le tableur, la case qu'on vient d'écrire s'encadre de vert ; l'onglet
 choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les annonces s'en vont en douceur ; les
-compteurs « n à compléter » et le badge d'une feuille publiée sautent ; dans le planning, aujourd'hui se pose. Rien de
-tout cela si l'appareil demande moins d'animations. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
+compteurs « n à compléter » et le badge d'une feuille publiée sautent ; dans le planning, aujourd'hui se pose ; une liste
+qui se redessine (le temps réel, un enregistrement) glisse ses lignes à leur nouvelle place (`glisserVers`) ; le champ
+visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une précision ajoutée se pose ; la cloche de « Prévenir
+l'équipe » sonne une fois la notification partie. Rien de tout cela si l'appareil demande moins d'animations, ni avec
+`?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
 une base fictive.
 
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
@@ -445,9 +448,10 @@ et l'heure qui vient de changer, lavée de jaune ; la coche de la liste de charg
 marquer lues (`brancherGlisserNotif`), leurs jours épinglés, « tout marquer comme lu » qui les éteint l'une après
 l'autre ; la pieuvre qui s'étire et nage quand on tire pour rafraîchir, la photo du héros qui dérive ; et encore : l'arrivée en
 fondu du squelette au contenu, un bouton qui a réussi le dit un instant (`occupe`), les billets d'une saison passée
-arrivent l'un après l'autre, la photo d'un spectacle s'approche au survol, la réponse à une proposition saute. Tout ce qui bouge
-en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations (`?anim=0`
-arrête ce que le script déclenche), la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
+arrivent l'un après l'autre, la photo d'un spectacle s'approche au survol, la réponse à une proposition saute, la feuille
+de route se lit en direct le jour J (les lignes passées pâlissent, celle du moment se marque : `majFeuilleDirect`). Tout ce
+qui bouge en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations, ni
+avec `?anim=0`, la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
 ligne, sur une saison fictive.
 
 **Les notifications.** Le troisième script, `supabase/migrations/20261022_crescite_notifications.sql`, s'exécute

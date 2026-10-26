@@ -58,6 +58,8 @@
 }
 [data-u] { --u-fond: var(--ul-fond); --u-texte: var(--ul-texte); }
 @media (prefers-color-scheme: dark) { [data-u] { --u-fond: var(--us-fond); --u-texte: var(--us-texte); } }
+/* ?anim=0 (captures et essais) : rien ne bouge, ni ce que le script déclenche ni ce que la feuille de style anime */
+html.still *, html.still *::before, html.still *::after { animation: none !important; transition: none !important; }
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--haut) + var(--hs) + 12px); scroll-padding-bottom: calc(var(--barre-bas) + var(--bs) + 12px); -webkit-tap-highlight-color: transparent; }
@@ -811,9 +813,9 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .camion-item-texte small { color: var(--gris); font-size: 0.82rem; }
 .camion-malle-badge { font: 700 0.74rem/1 var(--sans); padding: 4px 8px; border-radius: 6px; background: var(--surface-2); color: var(--encre); border: 1px solid var(--filet); margin-left: auto; white-space: nowrap; }
 
-/* ———————————————— le mouvement de l'espace de l'équipe : dix effets (equipe.js les déclenche). Rien de tout cela si
-   l'appareil demande moins d'animations (?anim=0 arrête ce que le script déclenche). Tout ce qui bouge en continu ne
-   touche que transform et opacity. */
+/* ———————————————— le mouvement de l'espace de l'équipe : dix effets (equipe.js les déclenche), et leur suite. Rien de
+   tout cela si l'appareil demande moins d'animations, ni avec ?anim=0. Tout ce qui bouge en continu ne touche que
+   transform et opacity. */
 /* 5. l'application à la couleur du spectacle : --accent et --accent-doux, le magenta d'ordinaire ; sur la page d'une date,
    d'une feuille de route ou d'un spectacle, la teinte de son univers (teinter, dans equipe.js : --teinte, --teinte-douce et
    leur jeu de nuit). Le curseur des onglets, le retour et la marque la prennent, en trois dixièmes de seconde. */
@@ -859,6 +861,12 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 .camion-jauge.complete .camion-barre-fond { box-shadow: 0 0 10px color-mix(in srgb, var(--ok) 70%, transparent); }
 .photo-envol { position: fixed; z-index: 90; border-radius: 10px; object-fit: cover; pointer-events: none; }
 .btn.fait { border-color: var(--ok); color: var(--ok); }
+/* 12. la feuille de route en direct (majFeuilleDirect) : le jour J, les lignes passées pâlissent, celle du moment se marque ;
+   un document qui s'ouvre attend son lien */
+.feuille-cadre .fdr .fdr-p.passe { opacity: .55; transition: opacity .4s; }
+.feuille-cadre .fdr .fdr-p.maintenant { padding-left: 9px; border-left: 3px solid var(--u, var(--magenta)); border-radius: 4px; background: color-mix(in srgb, var(--u, var(--magenta)) 8%, transparent); }
+.feuille-cadre .fdr .fdr-p.maintenant::after { content: " · en ce moment"; color: var(--u-texte, var(--magenta)); font-weight: 700; }
+.attend { cursor: progress; }
 .btn.principal.fait { background: var(--ok); border-color: var(--ok); color: #fff; }
 /* 9. les notifications au doigt : « Lu » attend derrière la notification qu'on glisse vers la gauche */
 .liste-notifs li { position: relative; border-radius: var(--rayon-s); }
@@ -923,6 +931,8 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   .cs-photo img { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
   .carte-spectacle:hover .cs-photo img { transform: scale(1.06); }
   .btn.fait, .rep.pop { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1); }
+  .attend { animation: attend .9s ease-in-out infinite alternate; }
+  @keyframes attend { to { opacity: .4; } }
   /* 9. « tout marquer comme lu » : les notifications s'éteignent l'une après l'autre */
   .notif.balaye { animation: balaye .7s ease-out calc(var(--i, 0) * 50ms) both; }
   @keyframes balaye { from { background: color-mix(in srgb, var(--magenta-doux) 60%, var(--surface)); border-color: color-mix(in srgb, var(--magenta) 32%, var(--filet)); } }

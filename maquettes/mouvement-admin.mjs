@@ -48,6 +48,8 @@ const TABLES = { crescite_admins: [{ user_id: 'u-admin', nom: 'Essai' }], cresci
   crescite_distributions: [], crescite_equipes: [], crescite_documents: [], crescite_feuilles: [], crescite_journal: [] };
 const SESSION = { access_token: 'x', refresh_token: 'y', token_type: 'bearer', expires_in: 864000, expires_at: Math.floor(d0 / 1000) + 864000, user: { id: 'u-admin', email: 'admin@example.org', aud: 'authenticated' } };
 const INIT = `localStorage.setItem('crescite-admin', ${JSON.stringify(JSON.stringify(SESSION))});
+window.__longues = []; window.__pret = 0;
+try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (window.__pret && e.startTime > window.__pret) window.__longues.push(Math.round(e.duration)); }).observe({ type: 'longtask', buffered: true }); } catch (e) {}
 window.__vt = []; const _svt = document.startViewTransition; if (_svt) document.startViewTransition = function (cb) { window.__vt.push(document.documentElement.dataset.sens || ''); return _svt.call(document, cb); };`;
 
 const resultats = [];
@@ -73,6 +75,7 @@ async function ouvrir(navigateur, { reduit = false, hash = '#/representations', 
   await page.addInitScript(INIT);
   await page.goto(`${URL0}${hash}`);
   await page.waitForSelector('#vue', { timeout: 20000 });
+  await page.evaluate(() => { window.__pret = performance.now(); });
   return { ctx, page, erreurs };
 }
 
@@ -92,6 +95,23 @@ fs.mkdirSync(CAPT, { recursive: true });
   const fait = await page.evaluate(() => { const li = document.querySelector('.avant-faits li.fait'); return { fait: !!li, texte: li && li.textContent, pop: !!document.querySelector('.avant summary .badge.pop'), reste: !!document.querySelector('.avant li a[href="#/lieux/5"]') }; });
   await page.waitForTimeout(2500);
   ok('« à compléter » : Caen, complété, reste un instant en vert puis se retire', fait.fait && /Caen/.test(fait.texte) && /complété/.test(fait.texte) && !fait.reste && await page.evaluate(() => !document.querySelector('.avant-faits')), JSON.stringify(fait));
+  // la liste qui glisse : deux dates échangent leur jour, la liste se redessine, les lignes glissent
+  const glisse = await page.evaluate(() => {
+    const a = E.dates.find(d => d.id === 101), b = E.dates.find(d => d.id === 102), t = a.debut; a.debut = b.debut; a.fin = b.fin; b.debut = t; b.fin = t;
+    rafraichirListes();
+    return [...document.querySelectorAll('#l-dates .ligne[href]')].map(l => `${l.getAttribute('href').split('/').pop()}:${l.getAnimations().length}`);
+  });
+  ok('la liste qui glisse : les deux lignes échangées s\'animent, les autres non', JSON.stringify(glisse) === JSON.stringify(['102:1', '101:1', '103:0', '104:0']), JSON.stringify(glisse));
+  await page.waitForTimeout(450);
+  // le champ visé s'allume : « à compléter » mène au lieu du Havre (sans contact), sur son champ contact
+  await page.click('.avant li a[href="#/lieux/6"]');
+  await page.waitForFunction(() => location.hash === '#/lieux/6' && document.querySelector('.visee'), null, { timeout: 8000 }).catch(() => {});
+  const visee = await page.evaluate(() => { const v = document.querySelector('.visee'); return { visee: !!v, chemin: v && v.dataset.chemin, focus: document.activeElement && document.activeElement.closest('.visee') === v, anim: v && getComputedStyle(v).animationName }; });
+  ok('le champ visé par « à compléter » s\'allume et prend le focus', visee.visee && visee.chemin === 'contact' && visee.focus && visee.anim === 'visee', JSON.stringify(visee));
+  await page.goto(`${URL0}#/representations`);
+  await page.waitForFunction(() => location.hash === '#/representations' && document.querySelector('#l-dates .ligne'), null, { timeout: 8000 });
+  await page.evaluate(() => { window.__vt = []; });
+  await page.waitForTimeout(300);
   // les vues s'enchaînent : la liste → une date (avant), la date → la liste (arrière), une autre rubrique (fondu)
   await page.click('#l-dates a.ligne[href="#/representations/101"]');
   await page.waitForFunction(() => location.hash === '#/representations/101' && document.querySelector('#ed-date .bloc'), null, { timeout: 8000 });
@@ -148,6 +168,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.evaluate(() => ecranConnexion('Adresse ou mot de passe incorrect.'));
   ok('la connexion refusée secoue le formulaire', await page.evaluate(() => { const f = document.querySelector('#f-connexion'); return f.classList.contains('secoue') && getComputedStyle(f).animationName === 'secoue'; }));
   ok('erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  const longues = await page.evaluate(() => window.__longues);
+  ok('tâches longues après l\'ouverture : aucune au-delà de 200 ms', longues.every(d => d < 200), JSON.stringify(longues));
   await ctx.close();
 }
 
@@ -161,6 +183,15 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(300);
   ok('réduit · pas de transition de vue', await page.evaluate(() => window.__vt.length === 0 && !document.querySelector('#vue').classList.contains('fondu')), await page.evaluate(() => JSON.stringify(window.__vt)));
   ok('réduit · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
+// ================================================================================ ?anim=0 : rien ne bouge, pas même la feuille de style
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '?anim=0#/representations' });
+  await page.waitForTimeout(300);
+  ok('?anim=0 · html.still, pas de main.entree, le curseur sans transition', await page.evaluate(() => document.documentElement.classList.contains('still') && !document.querySelector('#vue').classList.contains('entree') && getComputedStyle(document.querySelector('#l-dates .ligne')).transitionDuration.split(',').every(x => x.trim() === '0s')));
+  ok('?anim=0 · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   await ctx.close();
 }
 

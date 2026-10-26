@@ -71,6 +71,7 @@
   const MOINS = mq('(prefers-reduced-motion: reduce)');
   const CALME = /[?&]anim=0\b/.test(location.search);                    // captures et essais : rien ne bouge
   const reduit = () => MOINS.matches || CALME;
+  if (CALME) document.documentElement.classList.add('still');    // la feuille de style arrête aussi tout ce qu'elle anime
   const installee = () => mq('(display-mode: standalone)').matches || mq('(display-mode: fullscreen)').matches || navigator.standalone === true;
   const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   // un léger retour au doigt, sur les téléphones qui le permettent, et seulement après un premier geste
@@ -1249,8 +1250,35 @@
     if (unJour || groupes.length === 1) return ol(lignes);
     return groupes.map(g => `<h3 class="jour-frise">${esc(g.jour ? majuscule(jourSansAn(g.jour)) : 'Jour à préciser')}</h3>${ol(g.lignes)}`).join('');
   }
+  // la feuille de route en direct : le jour J, dans la feuille publiée, les lignes du planning déjà passées pâlissent et
+  // celle qui se passe maintenant se marque (comme la frise). Le jour se reconnaît à son titre (« mardi 27 octobre »),
+  // l'heure au début de la ligne (« 9h30 : », « 10h-11h : ») ; une ligne sans heure (le déjeuner) suit la précédente.
+  const RE_HEURE_LIGNE = /^\s*(\d{1,2})h(\d{2})?(?:\s*-\s*(\d{1,2})h(\d{2})?)?\s*:/;
+  function majFeuilleDirect(auj, m) {
+    const fdr = $('.feuille-cadre .fdr');
+    if (!fdr) return;
+    $$('.passe, .maintenant', fdr).forEach(x => x.classList.remove('passe', 'maintenant'));
+    const titreJour = jourLong(auj).replace(/ \d{4}$/, '').toLowerCase();
+    let dedans = false;
+    const lignes = [];
+    for (const el of fdr.children) {
+      if (el.matches('h3.fdr-jour')) { dedans = el.textContent.trim().toLowerCase().startsWith(titreJour); continue; }
+      if (el.matches('h2, header')) { dedans = false; continue; }
+      if (!dedans || !el.matches('p.fdr-p')) continue;
+      const x = RE_HEURE_LIGNE.exec(el.textContent);
+      lignes.push({ el, a: x ? +x[1] * 60 + +(x[2] || 0) : null, b: x && x[3] ? +x[3] * 60 + +(x[4] || 0) : null });
+    }
+    let etat = '';
+    lignes.forEach((l, i) => {
+      if (l.a == null) { if (etat === 'passe') l.el.classList.add('passe'); return; }
+      const s = lignes.slice(i + 1).find(y => y.a != null), fin = l.b != null && l.b > l.a ? l.b : s ? s.a : l.a + 45;
+      etat = m >= fin ? 'passe' : m >= l.a ? 'maintenant' : '';
+      if (etat) l.el.classList.add(etat);
+    });
+  }
   function majFrises() {
     const auj = aujourdhui(), now = new Date(), m = now.getHours() * 60 + now.getMinutes();
+    majFeuilleDirect(auj, m);
     $$('[data-frise]').forEach(ol => {
       let suivant = null;
       $$('li[data-debut]', ol).forEach(li => {
@@ -1772,7 +1800,7 @@
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
-    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}<div class="feuille-cadre">${corps}</div></div>`, { focus });
+    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
     // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
     const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
     $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
@@ -3885,6 +3913,7 @@
       if (t.tagName === 'A' && lienFrais(chemin)) return;     // le lien signé est encore bon : le navigateur l'ouvre
       e.preventDefault();
       const w = window.open('', '_blank');                      // ouvert pendant le clic, pour ne pas être bloqué
+      t.classList.add('attend');                                // le temps de signer le lien
       try {
         const url = await signerUn(chemin);
         if (w) { w.opener = null; w.location.href = url; } else location.href = url;
@@ -3892,7 +3921,7 @@
       } catch (err) {
         if (w) w.close();
         annoncer(`Le document ne s’ouvre pas : ${motsErreur(err)}.`, { erreur: true });
-      }
+      } finally { t.classList.remove('attend'); }
     }
   });
   // un portrait qui ne se charge pas : ses initiales restent
