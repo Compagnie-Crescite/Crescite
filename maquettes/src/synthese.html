@@ -3134,7 +3134,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      par-dessus), se déploient ensemble, vite (chacune part à son instant, à quelques dixièmes près), et font paraître tous
      les spectacles : chacun a sa tentacule, qui se déroule depuis sa racine jusqu'à son titre, le souligne et s'y enroule.
      Au bureau, les titres sont posés sur deux arcs de part et d'autre ; au téléphone, dessous, de part et d'autre d'une
-     ligne (de chaque côté, les tentacules courtes vont aux titres proches, les longues aux lointains). Une fois en place,
+     ligne, et les tentacules passent par les côtés : celles de gauche servent les titres de gauche, celles de droite ceux de
+     droite, chacune file vers le bord de l'écran, s'éloigne le long du bord (plus fine, plus pâle : au lointain, dans son
+     couloir, les courtes au plus près des titres, les longues au plus près du bord), puis revient en avant sous son titre,
+     par l'extérieur, et le souligne vers son médaillon : rien ne se croise. Une fois en place,
      elles restent. Un clic sur un spectacle (son titre, ou sa tentacule) remonte sa tentacule d'un coup élastique (la pointe
      se love d'abord, dépasse, se balance, et le corps a un sursaut) ; la photo du spectacle passe devant. Un clic sur un
      autre spectacle redéploie la première et remonte la sienne ; un second clic sur le même mène à sa page (au clavier,
@@ -3216,10 +3219,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur. Au téléphone, la boucle
     // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
     // plat de derrière le point d'accroche, dans la place qu'il y a jusqu'au bord de l'écran (marge : l'épine reste à 14 px du bord)
-    // (au téléphone, les boucles et les queues se prolongent depuis leur descente (racine .7) ; les franges, courtes, se
-    // déroulent presque entières (racine .15))
-    const cibleDe = T => { const fr = mobile && T.bras && /^frange/.test(T.bras.cle); return { cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
-      ...(mobile ? { racine: fr ? .15 : .7, corps: fr ? .72 : .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4 } : {}) }; };
+    // (au téléphone, les boucles et les queues se prolongent depuis leur descente (racine .7), les franges, courtes, se
+    // déroulent presque entières (racine .15) ; chacune passe par un couloir le long du bord de son côté (rail : la queue au
+    // plus près du bord, puis la boucle, la frange haute, la frange basse), au lointain (loin))
+    const COULOIR = { queue: 0, boucle: 1, frangeH: 2, frangeB: 3 };
+    const cibleDe = T => {
+      const cle = mobile && T.bras ? T.bras.cle : '', fr = /^frange/.test(cle), voie = COULOIR[cle.replace(/[LR]$/, '')] || 0;
+      return { cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
+        ...(mobile ? { racine: fr ? .15 : .7, corps: fr ? .72 : .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4, rail: T.dirU > 0 ? 14 + voie * 6 : W - 14 - voie * 6, loin: .45 } : {}) };
+    };
     // chaque titre a sa tentacule : dans l'ordre du tour de la pieuvre (titres et pointes rangés par leur angle autour de son
     // cœur), sans croisement ; s'il y a plus de titres que de tentacules, une tentacule en sert plusieurs
     function attribuer() {
@@ -3230,9 +3238,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       BRAS.forEach(a => { a.T = []; a.rang = 99; });
       const n = ts.length, m = bs.length;
       if (!n || !m) return;
-      // au téléphone, les huit tentacules : celles de gauche pour un titre souligné vers la droite (elles arrivent par sa
-      // gauche), celles de droite pour l'autre sens ; de chaque côté, de la plus courte et la plus basse (une frange) à la plus
-      // longue (la queue), vers les titres du plus proche au plus lointain : leurs chemins s'emboîtent sans se croiser
+      // au téléphone, les huit tentacules : celles de gauche pour un titre de gauche (souligné vers la droite, depuis le bord :
+      // elles arrivent par le côté gauche), celles de droite pour l'autre côté ; de chaque côté, de la plus courte et la plus
+      // basse (une frange) à la plus longue (la queue), vers les titres du plus proche au plus lointain : leurs couloirs
+      // s'emboîtent sans se croiser
       if (mobile) {
         const S = { L: ['frangeBL', 'frangeHL', 'boucleL', 'queueL'], R: ['frangeBR', 'frangeHR', 'boucleR', 'queueR'] }, nb = { L: 0, R: 0 };
         for (const c of 'LR') S[c] = S[c].map(cle => BRAS.find(a => a.cle === cle)).filter(Boolean);
@@ -3328,9 +3337,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
         // les titres sous la pieuvre, puis le menu, sous le dernier (au moins au bas du premier écran)
         let y = oTop + oh + 40 * ech;
+        // (la tentacule arrive par l'extérieur, sous le bout du texte tourné vers le bord, et souligne vers le médaillon)
         TIT.forEach((T, i) => {
           const g = i % 2 === 0, ind = IND[i % IND.length];
-          T.droite = !g; T.dirU = g ? -1 : 1;
+          T.droite = !g; T.dirU = g ? 1 : -1;
           T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
           y += T.bh + 30;
         });
@@ -3339,8 +3349,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
       el.style.height = H + 'px';
       if (affiche) Menu.sousPieuvre(yMenu);
-      // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le médaillon est de ce côté : la
-      // tentacule arrive sous lui, et le souligné part du texte)
+      // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le bout tourné vers le bord de
+      // l'écran : la tentacule arrive de là, et le souligné va vers le médaillon)
       TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
       BRAS.forEach(a => a.t.poser(ox, oy, s));
       attribuer(); tenirTous();
@@ -3460,7 +3470,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           if (kp !== 1) { ctx.translate(cxh, cyh); ctx.scale(kp, kp); ctx.translate(-cxh, -cyh); }
           ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y); ctx.fillStyle = ENCRE; ctx.fill(CORPS, 'evenodd'); ctx.restore();
-          const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere });
+          // (au téléphone, en route par le côté, la tentacule pâlit au loin : de l'encre en haut, à demi transparente au milieu du
+          // chemin, la couleur du spectacle au titre)
+          const degradeDe = a => {
+            if (!mobile || !a.but || a.teinte < .01) return null;
+            const y0 = oy + bob.y + 760 * s, y1 = a.but.ancre.y, E = a.col, k = a.teinte;
+            if (y1 - y0 < 120) return null;
+            const g = ctx.createLinearGradient(0, y0, 0, y1);
+            g.addColorStop(0, ENCRE); g.addColorStop(.45, `rgba(255,255,255,${(1 - .5 * k).toFixed(3)})`);
+            g.addColorStop(.85, `rgba(${Math.round(lerp(255, E[0], k))},${Math.round(lerp(255, E[1], k))},${Math.round(lerp(255, E[2], k))},${(1 - .1 * k).toFixed(3)})`);
+            g.addColorStop(1, `rgb(${Math.round(lerp(255, E[0], k))},${Math.round(lerp(255, E[1], k))},${Math.round(lerp(255, E[2], k))})`);
+            return g;
+          };
+          const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere, degrade: degradeDe(a) });
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
           // une lueur court le long de chaque tentacule posée sur un titre, à la couleur du spectacle : elle invite à la
