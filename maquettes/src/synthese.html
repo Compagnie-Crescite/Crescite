@@ -4606,7 +4606,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // une tranche touchée se déplie (sa carte se dessine à la première ouverture, ses bras poussent, sa fiche arrive en
   // cascade, puis l'affiche vient en haut de l'écran) ; une seule dépliée à la fois, toucher une autre tranche replie la
   // première. L'affiche dépliée est tout entière le lien vers sa page : une touche de plus, n'importe où (la tranche, la fiche,
-  // la carte), y mène, avec la transition d'un spectacle depuis l'affiche (dernierClic) ; « découvrir », posé sur la photo, est
+  // la carte), y mène, l'encre du spectacle ouverte depuis la touche (dernierClic) ; « découvrir », posé sur la photo, est
   // le lien lui-même (clavier, lecteurs d'écran). En mode édition, les textes, la photo et la date s'éditent sans déplier
   // (EDITION arrête le clic avant nous), et une touche ailleurs sur l'affiche dépliée ne quitte pas la page
   function lierPile() {
@@ -4630,7 +4630,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const li = e.target.closest('.pil-aff'); if (!li) return;
       if (li.classList.contains('ouvert')) {
         if (document.documentElement.classList.contains('ed-actif')) return;
-        dernierClic = { el: li, t: performance.now() };
+        let x = e.clientX, y = e.clientY;
+        if (!x && !y) { const r = li.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; }
+        dernierClic = { x, y, t: performance.now() };   // (l'encre du spectacle s'ouvre de la touche)
         location.hash = lienSp(li.dataset.slug);
         return;
       }
