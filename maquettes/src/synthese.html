@@ -3990,15 +3990,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           PIEUVRE.palmure(ctx, TS, ENCRE);
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
-          // une lueur court le long de chaque tentacule posée sur un titre, à la couleur du spectacle : elle invite à la
-          // remonter ; rien en pause
-          if (vivant) for (const a of BRAS) {
-            if (!a.tenu || a.but !== a.tenu || a.t.mouvement() < .95) continue;
-            const t = a.t, kr = t.bornes(t.cible)[0], u = (tVie * .45 + a.i * .37) % 1, kk = Math.round(kr + (t.M - kr) * u), x = t.X[kk], y = t.Y[kk];
-            const g = ctx.createRadialGradient(x, y, 0, x, y, 10), E = a.col;
-            g.addColorStop(0, `rgba(255,255,255,.9)`); g.addColorStop(.45, `rgba(${E[0]},${E[1]},${E[2]},.45)`); g.addColorStop(1, `rgba(${E[0]},${E[1]},${E[2]},0)`);
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
-          }
+          // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
+          // remonter ; plus de lueur qui court dessus)
           ctx.setTransform(1, 0, 0, 1, 0, 0);
           // elles passent sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes) ; un titre
           // qui paraît n'efface le bras qu'à mesure (un bras en route sous un titre encore invisible n'est pas haché)
