@@ -3125,11 +3125,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ${rac.length ? `<ul class="ep-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}${apres}</div></section>`;
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
-     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : il s'y pose, et huit de ses tentacules, les vraies, celles
-     du dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté par-dessus), se déroulent et vont chercher chacune
-     un titre de spectacle, autant qu'il y en a, posés de part et d'autre ; puis elles reviennent se lover dans le logo,
-     ondulent à peine, se penchent vers la souris. Au téléphone (les titres dessous), une seule à la fois : celle du titre qui
-     passe au milieu de l'écran. Survoler ou choisir au clavier un titre, ou survoler une tentacule (au doigt : un premier
+     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : il s'y pose d'un rebond (le corps se ramasse, se détend),
+     puis ses huit tentacules, les vraies, celles du dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté
+     par-dessus), se déploient l'une après l'autre, en cadence (la présentation) : chacune se déroule vers un titre de
+     spectacle, qui paraît quand elle l'atteint, de haut en bas, un côté puis l'autre (l'éventail s'ouvre) ; celles qui n'ont
+     pas de titre s'étirent à leur tour, au même rythme ; puis elles reviennent se lover dans le logo, dans le même ordre,
+     ondulent à peine, se penchent vers la souris. Au téléphone (les titres dessous), les deux grandes boucles descendent de
+     titre en titre, chacune de son côté, une à chaque temps, et les autres s'étirent entre deux ; ensuite une seule à la
+     fois : celle du titre qui passe au milieu de l'écran. Survoler ou choisir au clavier un titre, ou survoler une tentacule (au doigt : un premier
      toucher) : elle se déroule vers lui, le souligne et s'y enroule, et la photo du spectacle passe devant, à peine, derrière
      la pieuvre. Sinon les photos des spectacles s'enchaînent en fondu, chacune présentée par sa tentacule. Le
      bouton de pause arrête tout ce qui bouge de lui-même ; moins d'animations : rien ne bouge, les photos changent d'un
@@ -3156,7 +3159,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 
     // les tentacules : celles du logo, au service de tous les titres (aucune n'est à un spectacle : la pieuvre ne compte pas) ;
     // dir : le sens de sa pointe au repos (vers où elle se penche)
-    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
+    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, geste: null, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
+    // la secousse d'un rebond : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant (comme la créature)
+    const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? easeOut(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
     // les titres : un par spectacle, en nombre libre ; refaits quand D change
     let TIT = [], sig = '';
     const prochaine = sh => D.dates.find(x => x.slug === sh.slug && !x.scolaire) || D.dates.find(x => x.slug === sh.slug);
@@ -3172,8 +3177,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), q: $('.sc-q', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurScene(sh)) };
         ecouter(T); return T; });
       ul.setAttribute('aria-label', L.lesSpectacles);
-      BRAS.forEach(a => { a.but = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
+      BRAS.forEach(a => { a.but = null; a.geste = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
       survol = null; brasSurvol = null; dernierActif = null;
+      if (pres) pres.plan = null;
       diapo();
     }
     // le diaporama : une couche par spectacle, sa photo chargée au moment de paraître (et la suivante, d'avance)
@@ -3193,7 +3199,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // temps qu'on regarde un titre (il reprend ensuite depuis celui-là) ; jamais sans mouvement
     const roule = () => affiche && visible && !document.hidden && !pause && motionOK() && !document.documentElement.classList.contains('ed-actif') && TIT.length > 1;
     function planifier() { clearTimeout(tAuto); if (affiche && !pause && motionOK()) tAuto = setTimeout(avancer, 6500); }
-    function avancer() { if (roule() && !actif() && !(pres && performance.now() - pres.t0 < PRES + 1600)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
+    function avancer() { if (roule() && !actif() && !(pres && performance.now() < pres.fin)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
 
     // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur. Au téléphone, la boucle
     // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
@@ -3322,6 +3328,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
       BRAS.forEach(a => a.t.poser(ox, oy, s));
       attribuer();
+      if (pres) pres.plan = null;   // (la présentation se replanifie sur cette mise en page)
       dpr = Math.min(2, devicePixelRatio || 1);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       LB = { x0: ox + x0 * s - 12, y0: oy + y0 * s - 12, x1: ox + x1 * s + 12, y1: oy + y1 * s + 12 };
@@ -3330,13 +3337,39 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       tPrec = 0; image(performance.now(), true);
     }
     const actif = () => survol || TIT.find(T => T.focus) || brasSurvol || null;
+    // la présentation : le plan des visites de chaque bras (un titre, ou un geste), en cadence (un temps par titre : de 150 à
+    // 240 ms au bureau selon leur nombre, 560 ms au téléphone, où les boucles descendent de titre en titre) ; chaque titre
+    // reçoit son temps (tPres : il paraît quand son bras l'atteint)
+    function presenter() {
+      const P = pres, pas = mobile ? 560 : clamp(1300 / Math.max(1, TIT.length), 150, 240), V = new Map();
+      TIT.forEach(T => { T.tPres = null; });
+      let fin = P.t0;
+      if (mobile) {
+        // les deux boucles, chacune de son côté, un titre à chaque temps (la précédente visite s'achève quand la suivante
+        // commence : la boucle passe de l'un à l'autre) ; les autres bras s'étirent entre deux temps
+        TIT.forEach(T => { T.tPres = P.t0 + T.i * pas; const a = T.bras; if (!a) return; const v = V.get(a) || []; if (v.length) v[v.length - 1].fin = T.tPres; v.push({ t0: T.tPres, fin: T.tPres + 1400, T }); V.set(a, v); });
+        let k = 0;
+        for (const a of BRAS) if (!V.has(a)) { const t0 = P.t0 + (k++ + .5) * pas; V.set(a, [{ t0, fin: t0 + 1100, c: gesteDe(a, t0) }]); }
+      } else {
+        // de haut en bas, un côté puis l'autre : l'éventail s'ouvre ; les bras sans titre s'étirent ensuite, à leur tour
+        const avec = BRAS.filter(a => a.T.length).sort((x, y) => x.T[0].by - y.T[0].by), sans = BRAS.filter(a => !a.T.length);
+        avec.forEach((a, k) => { const t0 = P.t0 + k * pas; a.T.forEach(T => { if (T.tPres === null) T.tPres = t0; }); V.set(a, [{ t0, fin: t0 + PRES, T: a.T[0] }]); });
+        sans.forEach((a, k) => { const t0 = P.t0 + (avec.length + k) * pas; V.set(a, [{ t0, fin: t0 + 1100, c: gesteDe(a, t0) }]); });
+        TIT.forEach((T, i) => { if (T.tPres === null) T.tPres = P.t0 + i * pas; });
+      }
+      V.forEach(v => v.forEach(x => { fin = Math.max(fin, x.fin); }));
+      P.plan = V; P.fin = fin + 900;
+    }
+    // un geste : le bras s'étire un peu vers où il pointe (d'autant plus qu'il est long), s'enroule, et reste dans l'écran
+    function gesteDe(a, t0) {
+      const p = a.t.pointe(), L = clamp(a.t.L0 * s * .35, 16, 70), ang = a.dir + ((a.i % 3) - 1) * .35;
+      const x = clamp(p.x + Math.cos(ang) * L, gut + 8, W - gut - 8), y = Math.max(LB.y0 - 10, p.y + Math.sin(ang) * L), sens = x >= p.x ? 1 : -1;
+      return { cle: 'geste' + a.cle + Math.round(t0), x, y, sens, U: 8, mobile, marge: sens > 0 ? x - gut : W - gut - x, racine: /^queue/.test(a.cle) ? .6 : undefined, epaisseur: 2, boucle: clamp(a.t.L0 * s / 200, .3, 1) };
+    }
     // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
     function placer(T, allume, now, anime) {
       let em = 0;
-      if (eveil !== null) {
-        const a = T.bras, viaBras = pres && a && a.T[0] === T;
-        em = !anime ? 1 : viaBras ? lisse(.45, .9, a.em) : lisse(0, 1, (now - eveil - 650 - T.i * 60) / 520);
-      }
+      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (pres && T.tPres != null ? T.tPres + 380 : eveil + 650 + T.i * 60)) / 460);
       T.em = Math.max(T.em, em);
       const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
       if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
@@ -3350,7 +3383,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (!une && now < repit) { raf = requestAnimationFrame(image); return; }
       const anime = motionOK(), vivant = anime && !pause, act = actif();
       const dt = Math.min(50, tPrec ? now - tPrec : 16); tPrec = now;
-      if (pres && now - pres.t0 > PRES + 12 * 120 + 900) pres = null;
+      if (pres && !pres.plan) presenter();
+      if (pres && now > pres.fin) pres = null;
       const vif = act || pres || (eveil !== null && now - eveil < 2600) || BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
       // au repos (rien ne se tend, rien ne s'éveille), l'ondulation lente se contente de trente images par seconde (vingt au
       // téléphone)
@@ -3370,13 +3404,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const autoT = !act && vivant && !mobile && eveil !== null && !pres && TIT.length > 1 ? TIT[iAuto % TIT.length] : null;
       // l'ondulation au repos : elle vient doucement après l'éveil ; ni en pause, ni sans mouvement
       const onde = vivant && eveil !== null ? lisse(0, 1, (now - eveil) / 1600) : 0;
+      // (la visite en cours d'un bras dans la présentation : un titre, ou un geste)
+      const visite = a => { const v = pres.plan.get(a); let r = null; if (v) for (const x of v) if (now >= x.t0 && now < x.fin) r = x; return r; };
       for (const a of BRAS) {
-        let voulu = null;
-        if (act) voulu = act.bras === a ? act : null;
-        else if (pres && a.T.length && now - pres.t0 < PRES + Math.min(a.rang, 12) * 120) voulu = a.T[0];   // l'éveil : chaque tentacule va chercher son titre
+        let voulu = null, g = null;
+        // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; au téléphone, le titre au milieu de l'écran attend la
+        // fin de la présentation ; au bureau, la souris a toujours la main)
+        if (act && eveil !== null && !(pres && mobile)) voulu = act.bras === a ? act : null;
+        else if (pres) { const v = visite(a); if (v) { if (v.T) voulu = v.T; else g = v.c; } }   // la présentation : chaque tentacule à son tour
         else if (autoT && autoT.bras === a) voulu = autoT;
-        if (a.but !== voulu) { a.but = voulu; if (voulu) a.col = voulu.col; a.t.viser(voulu ? cibleDe(voulu) : null, anime ? (voulu ? 820 : 760) : 0); }
-        else if (voulu) a.t.viser(cibleDe(voulu));      // (le titre a pu bouger : la forme visée le suit)
+        if (a.but !== voulu || a.geste !== g) {
+          a.but = voulu; a.geste = g;
+          if (voulu) { a.col = voulu.col; a.t.viser(cibleDe(voulu), anime ? 820 : 0); }
+          else if (g) a.t.viser(g, anime ? 640 : 0);
+          else a.t.viser(null, anime ? 760 : 0);
+        } else if (voulu) a.t.viser(cibleDe(voulu));      // (le titre a pu bouger : la forme visée le suit)
         const tv = a.but ? 1 : 0;
         if (Math.abs(a.teinte - tv) > .005) { a.teinte += (tv - a.teinte) * (anime ? .12 : 1); occupe = true; } else a.teinte = tv;
         // curieuse : au repos, les tentacules se penchent vers la souris
@@ -3392,7 +3434,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)
       const b = { x0: LB.x0, y0: LB.y0, x1: LB.x1, y1: LB.y1 };
       for (const a of BRAS) { const r = a.t.boite(6); b.x0 = Math.min(b.x0, r.x0); b.y0 = Math.min(b.y0, r.y0); b.x1 = Math.max(b.x1, r.x1); b.y1 = Math.max(b.y1, r.y1); }
-      const u = boite ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
+      // le rebond de la pose : à la relève, le corps se ramasse puis se détend, bras compris (ils ne partent qu'ensuite)
+      const kp = anime && eveil !== null ? 1 - .07 * choc((now - eveil) / 640) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
+      const u = boite && kp === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
       boite = b;
       const X0 = Math.max(0, Math.floor(u.x0 * dpr)), Y0 = Math.max(0, Math.floor(u.y0 * dpr)), Rw = Math.min(cv.width, Math.ceil(u.x1 * dpr)) - X0, Rh = Math.min(cv.height, Math.ceil(u.y1 * dpr)) - Y0;
       const allumes = new Set(act ? [act] : []);
@@ -3404,8 +3448,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         // l'éveil : c'est encore l'ouverture qui porte le logo
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(X0, Y0, Rw, Rh);
         if (eveil !== null) {
-          ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (ox + bob.x), dpr * (oy + bob.y)); ctx.fillStyle = ENCRE; ctx.fill(CORPS, 'evenodd');
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          if (kp !== 1) { ctx.translate(cxh, cyh); ctx.scale(kp, kp); ctx.translate(-cxh, -cyh); }
+          ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y); ctx.fillStyle = ENCRE; ctx.fill(CORPS, 'evenodd'); ctx.restore();
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere });
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
@@ -3492,8 +3537,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     function eveiller() {
       if (eveil !== null) return;
       eveil = performance.now() - (motionOK() ? 0 : 5000);
-      // (au téléphone, pas toutes à la fois : celle du titre au milieu de l'écran y va seule)
-      if (motionOK() && !presFaite && TIT.length && !mobile) { pres = { t0: eveil }; presFaite = true; }
+      // (la présentation, une fois : elle commence après le rebond de la pose, et se planifie à la première image)
+      if (motionOK() && !presFaite && TIT.length) { pres = { t0: eveil + 260, plan: null, fin: eveil + 5000 }; presFaite = true; }
       tPrec = 0; image(performance.now(), true); reveil(); planifier();
     }
     function montrer(oui) {
@@ -4810,7 +4855,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // la pieuvre de la troupe : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre de tête,
   // toujours en mouvement (ses tentacules battent, elle respire, se balance, sa tête hoche et se tourne au bout d'un ressort, un
   // halo l'entoure). Quand la lecture descend, elle quitte sa place, rapetisse de moitié et vit dans la marge de gauche, autour
-  // de la hauteur de lecture : elle choisit un point à sa portée, y file au galop (une impulsion toutes les 0,6 s : elle se
+  // de la hauteur de lecture : elle choisit un point à sa portée, y file au galop (une impulsion toutes les 0,85 s : elle se
   // ramasse, bondit, étirée dans le sens du bond, le corps contracté, les tentacules rejetées en arrière, puis glisse, un sillage
   // derrière elle), y flotte un moment (elle respire, regarde autour d'elle), puis repart ailleurs : jamais sur la même ligne.
   // Au passage, une tentacule attrape le médaillon du métier qu'on lit (qui s'anime), et le lâche pour le suivant. Quand on
@@ -4821,7 +4866,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
     let x = null, y = null, bouge = false, prise = null, but = null, tBut = 0, tPrec = 0;
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.8, onde: 6, rythme: 2.6, lueur: true, sillage: true,
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.4, onde: 4.5, rythme: 1.7, lueur: true, sillage: true,
       eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante', 'est-reliee'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
       placer() {
         const g = troupeGeo;
@@ -4843,19 +4888,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           const dy = (Math.random() * 2 - 1) * ampY, yr = base + dy - r.top, zone = g.zones.find(z => yr > z.y0 + demi && yr < z.y1 - demi);
           // (une fois sur deux, s'il y a une zone vide à cette hauteur, elle y va : jusqu'au bord droit de la colonne du titre)
           const xMax = zone && Math.random() < .55 ? zone.x1 - demi - g.xg : ampX;
-          but = { dx: -ampX + Math.random() * (ampX + xMax), dy }; tBut = t + 1.2 + Math.random() * 2.2;
+          but = { dx: -ampX + Math.random() * (ampX + xMax), dy }; tBut = t + 2 + Math.random() * 3.2;
         }
         const calme = tient ? .2 : 1;
         const viseY = base + but.dy * calme + Math.sin(t * 2.9) * 5 * calme, viseX0 = but.dx * calme + Math.sin(t * 1.6 + 1) * 6 * calme;
         if (y === null) { y = viseY; x = viseX0; }
-        // le galop : une impulsion toutes les 0,6 s (coup : elle monte vite, retombe) ; juste avant, elle se ramasse (etire < 0),
+        // le galop : une impulsion toutes les 0,85 s (coup : elle monte vite, retombe) ; juste avant, elle se ramasse (etire < 0),
         // puis bondit vers sa cible, étirée dans le sens du bond, d'autant plus loin qu'elle en est loin ; près du but, les
         // impulsions se font petites : elle flotte
-        const ph = (t % .6) / .6, coup0 = ph < .2 ? ph / .2 : Math.max(0, 1 - (ph - .2) / .55);
-        const d = viseY - y, loin = Math.abs(d), force = clamp(loin / 50, .18, 1), coup = coup0 * force;
-        const v = Math.sign(d) * Math.min(loin, (.5 + 5.2 * coup0) * force * (1 + loin / 140) * dts * 60);
+        const ph = (t % .85) / .85, coup0 = ph < .18 ? ph / .18 : Math.max(0, 1 - (ph - .18) / .6);
+        const d = viseY - y, loin = Math.abs(d), force = clamp(loin / 60, .15, 1), coup = coup0 * force;
+        const v = Math.sign(d) * Math.min(loin, (.4 + 4.2 * coup0) * force * (1 + loin / 160) * dts * 60);
         y += v; bouge = loin > .6;
-        const dxv = viseX0 - x, vx = Math.sign(dxv) * Math.min(Math.abs(dxv), (.3 + 3 * coup0) * clamp(Math.abs(dxv) / 20, .2, 1) * dts * 60);
+        const dxv = viseX0 - x, vx = Math.sign(dxv) * Math.min(Math.abs(dxv), (.25 + 2.4 * coup0) * clamp(Math.abs(dxv) / 20, .2, 1) * dts * 60);
         x += vx;
         const etire = ph < .14 ? -.7 * (ph / .14) * force : coup, ang = Math.atan2(v, vx || 1e-6);
         // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 80 px) et gagne la marge
