@@ -1,6 +1,7 @@
 // Vérifie qu'une maquette se lit par son menu (les saisons, les spectacles, la compagnie, l'espace pro), s'ouvre sur le logo,
 // et n'affiche que le texte de ses sources.
 // Usage : node maquettes/onglets.mjs <dossier de sortie> m03 [m04 …]
+// Les visites (une maquette au bureau, une au téléphone) vont en parallèle, PARALLELE à la fois (4 par défaut).
 // Règle 21 (v4, la navigation par les saisons) : sur chaque vue, au bureau comme au téléphone, les quatre éléments du menu
 // (D.site.menu) sont à portée dans le premier écran, hors du contenu et sans ouvrir de menu ; un seul aria-current="page" (sur
 // l'élément du menu de la vue ; sur la page d'un spectacle, « les spectacles » est marqué aria-current="true", dans une
@@ -643,11 +644,12 @@ async function regle20(page, tag, log) {
   if (tag === 'tab') log.push(`· règle 20 : ${e.n} personnes, ${e.places} places en ${e.cats} catégories, ${e.vignettes} vignettes${e.info.length ? ` ; ${e.info.join(', ')}` : ''}`);
 }
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
-const report = {};
-for (const n of names) {
-  const log = [];
-  for (const [tag, vp, mobile] of [['tab', { width: 1440, height: 900 }, false], ['mtab', { width: 390, height: 844 }, true]]) {
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] });
+// une visite (une maquette, au bureau ou au téléphone) passe l'essentiel de son temps à attendre : les visites vont en
+// parallèle, PARALLELE à la fois (4 par défaut ; PARALLELE=1 pour les faire l'une après l'autre) ; le rapport garde l'ordre
+const VISITES = [['tab', { width: 1440, height: 900 }, false], ['mtab', { width: 390, height: 844 }, true]];
+const visite = async (n, tag, vp, mobile) => {
+    const log = [];
     const ctx = await browser.newContext({ viewport: vp, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, locale: 'fr-FR' });
     const page = await ctx.newPage();
     page.on('pageerror', e => log.push(`${tag} erreur : ${e.message}`));
@@ -1035,8 +1037,19 @@ for (const n of names) {
     }
     if (gelees.length) log.push(`${tag} : ${gelees.length} changement(s) de page gelé(s), la transition attend la capture de l'ancienne page (règle 15 C) : ${[...new Set(gelees)].slice(0, 6).join(' ; ')}`);
     await ctx.close();
-  }
-  // règle 15 C : les budgets de la réactivité (REACTIVITE=1)
+    return log;
+};
+const taches = names.flatMap(n => VISITES.map(v => [n, ...v]));
+const logs = new Array(taches.length);
+let suivante = 0;
+await Promise.all(Array.from({ length: Math.max(1, Math.min(taches.length, Number(process.env.PARALLELE) || 4)) }, async () => {
+  for (let i; (i = suivante++) < taches.length;) logs[i] = await visite(...taches[i]);
+}));
+const report = {};
+for (const [k, n] of names.entries()) {
+  const log = logs.slice(k * VISITES.length, (k + 1) * VISITES.length).flat();
+  // règle 15 C : les budgets de la réactivité (REACTIVITE=1), mesurés seuls, après les visites (une mesure faite pendant
+  // d'autres visites serait faussée)
   if (mesurer) for (const profil of ['bureau', 'telephone']) {
     const m = await mesurer(browser, n, { dist, profil });
     depassements(m).forEach(d => log.push(`réactivité : ${d}`));
