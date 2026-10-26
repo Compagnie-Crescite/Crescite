@@ -429,9 +429,9 @@ def projection(places):
     return lambda lon, lat: [round(cx[0] * u + cx[1] * v + cx[2], 1), round(cy[0] * u + cy[1] * v + cy[2], 1)] if (u := lcc(lon, lat)[0]) is not None and (v := lcc(lon, lat)[1]) is not None else None
 
 
-STOCKAGE = "https://omekkqjinvppadsoinvj.supabase.co/storage/v1/object/public/crescite"
-BASE = "https://omekkqjinvppadsoinvj.supabase.co"
-CLE_PUBLIQUE = "sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB"     # la clé publique du site (lecture de ce qui est publié)
+STOCKAGE = "https://fwjgyfzcbcmfyfkhhtuh.supabase.co/storage/v1/object/public/crescite"
+BASE = "https://fwjgyfzcbcmfyfkhhtuh.supabase.co"
+CLE_PUBLIQUE = "sb_publishable__SvO0qVI2BvcBK5vYgxjZQ_U-evgPKD"     # la clé publique du site (lecture de ce qui est publié)
 
 
 def fond_carte():

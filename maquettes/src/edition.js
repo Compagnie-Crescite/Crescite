@@ -21,8 +21,8 @@
 
    EDITION.ouvrir()   connexion si besoin, puis mode édition        EDITION.actif   vrai en mode édition */
 const EDITION = (() => {
-  const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
-  const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
+  const BASE = 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co';
+  const CLE = 'sb_publishable__SvO0qVI2BvcBK5vYgxjZQ_U-evgPKD';
   const STOCK = 'crescite-admin';
   const ADMIN = 'admin/index.html';
   const moi = { actif: false };

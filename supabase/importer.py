@@ -27,7 +27,7 @@ import build  # noqa: E402  (les données du site, telles que les maquettes les 
 
 UNIVERS = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))["spectacles"]
 
-URL = os.environ.get("SUPABASE_URL", "https://omekkqjinvppadsoinvj.supabase.co")
+URL = os.environ.get("SUPABASE_URL", "https://fwjgyfzcbcmfyfkhhtuh.supabase.co")
 CLE = os.environ.get("SUPABASE_CLE_SERVICE")
 MOIS = {m: i + 1 for i, m in enumerate(build.MOIS)}
 MOIS.update({"janv": 1, "févr": 2, "fév": 2, "avr": 4, "juil": 7, "sept": 9, "oct": 10, "nov": 11, "déc": 12})

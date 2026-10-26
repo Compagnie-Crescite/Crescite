@@ -55,7 +55,7 @@ const jetonBase = (await db.query(`select valeur from public.crescite_secrets wh
 ok(pid > 0 && jours.length === 2 && dest?.jeton?.length >= 32 && jetonBase, 'une proposition de deux jours, une clé par destinataire');
 
 // la fonction, chargée comme Supabase la lance : ses variables, son serveur, son accès à la base, l'envoi par Brevo
-const ENV = { SUPABASE_DB_URL: 'postgres://local', SUPABASE_URL: 'https://omekkqjinvppadsoinvj.supabase.co', SITE_URL: 'https://adrienvada.fr/Crescite/', BREVO_API_KEY: 'essai' };
+const ENV = { SUPABASE_DB_URL: 'postgres://local', SUPABASE_URL: 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co', SITE_URL: 'https://adrienvada.fr/Crescite/', BREVO_API_KEY: 'essai' };
 let servir;
 globalThis.Deno = { env: { get: k => ENV[k] }, serve: h => { servir = h; } };
 globalThis.__postgres = () => (parts, ...vals) => db.query(parts.reduce((q, s, i) => q + s + (i < vals.length ? `$${i + 1}` : ''), ''), vals).then(r => r.rows);
@@ -73,7 +73,7 @@ const charger = async nom => {
   await import(pathToFileURL(join(dossier, nom)).href);
 };
 await charger('index.mjs');
-const ICI = 'https://omekkqjinvppadsoinvj.supabase.co/functions/v1/crescite-courriel';
+const ICI = 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co/functions/v1/crescite-courriel';
 const appel = (methode, corps, entetes = {}, q = '') => servir(new Request(ICI + q, { method: methode, headers: { 'Content-Type': 'application/json', ...entetes },
   body: corps === undefined ? undefined : (typeof corps === 'string' ? corps : JSON.stringify(corps)) }));
 
