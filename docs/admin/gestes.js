@@ -12,6 +12,9 @@
    - Précédent / suivant (GESTES.precSuiv, GESTES.clavierPrecSuiv) : deux boutons nommés (« Précédent : Bérénice ·
      mar. 4 nov. »), les mêmes partout, et leurs touches (Alt+↑ Alt+↓ dans l'administration ; ← → dans l'espace de
      l'équipe, hors d'un champ). Un bouton porte l'adresse où aller (data-href).
+   - Le formulaire (GESTES.formulaire) : une feuille de modification, depuis le bas au téléphone, au centre à
+     l'ordinateur, avec ses champs, Annuler, Enregistrer ; ce que l'espace de l'équipe ouvre d'un appui long pour
+     modifier une date, ses horaires, son lieu, son équipe, son suivi, une note de frais…
    Rien ne vibre ni ne s'anime si l'appareil demande moins d'animations (prefers-reduced-motion, html.still, ?anim=0). */
 const GESTES = (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -271,8 +274,150 @@ const GESTES = (() => {
     });
   }
 
+  // ===================================================================================================== le formulaire
+  /* Une feuille de modification : depuis le bas au téléphone, au centre à l'ordinateur. Des champs (texte, tel, url, mel,
+     nombre, date, heure, long, choix (un select, ou des boutons avec seg), case, cases, groupe : une liste d'objets aux
+     mêmes champs, qu'on ajoute et retire), Annuler, Enregistrer, et une action à part (danger). enregistrer(valeurs) rend
+     vrai (ou rien) quand c'est fait, un texte quand ça a échoué : la feuille reste ouverte et le dit. Résout avec les
+     valeurs enregistrées, ou null. Échap, le voile et Annuler ferment ; Tab reste dans la feuille. */
+  let ouvertF = null;
+  function formulaire({ titre, sousTitre = '', champs = [], ok = 'Enregistrer', annuler = 'Annuler', danger = null, enregistrer, note = '' }) {
+    fermerFormulaire();
+    fermer();
+    return new Promise(resolve => {
+      let n = 0;
+      const id = () => `gf-c${++n}`;
+      const champ = (c, v, base = '') => {
+        const nom = base ? `${base}.${c.k}` : c.k, i = id(), aide = c.aide ? `<small class="gf-aide">${esc(c.aide)}</small>` : '';
+        const attr = `name="${esc(nom)}" id="${i}"${c.requis ? ' required' : ''}`;
+        const lib = `<label for="${i}">${esc(c.l || '')}</label>`;
+        switch (c.t) {
+          case 'long': return `<div class="gf-champ${c.large ? ' gf-large' : ''}">${lib}<textarea ${attr} rows="${c.lignes || 3}"${c.ph ? ` placeholder="${esc(c.ph)}"` : ''}>${esc(v ?? '')}</textarea>${aide}</div>`;
+          case 'case': return `<div class="gf-champ gf-case"><label class="gf-coche"><input type="checkbox" ${attr}${v ? ' checked' : ''}> ${esc(c.l || '')}</label>${aide}</div>`;
+          case 'cases': return `<fieldset class="gf-champ gf-cases"><legend>${esc(c.l || '')}</legend>${(c.choix || []).map(([val, l, det]) => `<label class="gf-coche"><input type="checkbox" name="${esc(nom)}" value="${esc(val)}"${(Array.isArray(v) ? v : []).some(x => String(x) === String(val)) ? ' checked' : ''}> <span>${esc(l)}${det ? `<small>${esc(det)}</small>` : ''}</span></label>`).join('')}${aide}</fieldset>`;
+          case 'choix': return c.seg ? `<div class="gf-champ" role="group" aria-labelledby="${i}-l"><span class="gf-lib" id="${i}-l">${esc(c.l || '')}</span><span class="gf-seg" data-gf-seg="${esc(nom)}">${(c.choix || []).map(([val, l]) => `<button type="button" data-val="${esc(val)}" aria-pressed="${String(v ?? '') === String(val)}">${esc(l)}</button>`).join('')}<input type="hidden" name="${esc(nom)}" value="${esc(v ?? '')}"></span>${aide}</div>`
+            : `<div class="gf-champ">${lib}<select ${attr}>${(c.choix || []).map(([val, l]) => `<option value="${esc(val)}"${String(v ?? '') === String(val) ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>${aide}</div>`;
+          case 'groupe': { const xs = Array.isArray(v) ? v : [];
+            return `<div class="gf-champ gf-groupe" data-gf-groupe="${esc(nom)}" data-gf-modele="${esc(JSON.stringify(c.modele || {}))}"><span class="gf-lib">${esc(c.l || '')}</span><div class="gf-items">${xs.map((x, k) => item(c, x, nom, k)).join('')}</div>
+              <button type="button" class="gf-ajout" data-gf-ajouter>${ICO.plus} ${esc(c.ajout || 'Ajouter')}</button>${aide}</div>`; }
+          case 'nombre': return `<div class="gf-champ">${lib}<input type="number" ${attr} value="${esc(v ?? '')}"${c.min != null ? ` min="${c.min}"` : ''}${c.max != null ? ` max="${c.max}"` : ''} step="${c.pas || 'any'}" inputmode="${c.pas && c.pas < 1 ? 'decimal' : 'numeric'}">${aide}</div>`;
+          default: { const type = { tel: 'tel', url: 'url', mel: 'email', date: 'date', heure: 'time' }[c.t] || 'text';
+            return `<div class="gf-champ${c.large ? ' gf-large' : ''}">${lib}<input type="${type}" ${attr} value="${esc(v ?? '')}"${c.ph ? ` placeholder="${esc(c.ph)}"` : ''}${type === 'text' ? ' autocomplete="off"' : ''}${c.t === 'tel' ? ' inputmode="tel"' : ''}>${aide}</div>`; }
+        }
+      };
+      const item = (c, x, nom, k) => `<div class="gf-item" data-gf-item><input type="hidden" name="${esc(nom)}.${k}._id" value="${esc(x && x.id != null ? x.id : '')}"><div class="gf-rangee">${c.champs.map(s => champ(s, x ? x[s.k] : undefined, `${nom}.${k}`)).join('')}</div><button type="button" class="gf-retirer" data-gf-retirer aria-label="Retirer">${ICO.croix}</button></div>`;
+      const m = document.createElement('div');
+      m.className = `gf${reduit() ? ' gf-calme' : ''}`;
+      m.innerHTML = `<div class="gf-voile" data-gf-annuler></div><form class="gf-boite" role="dialog" aria-modal="true" aria-labelledby="gf-titre" novalidate>
+        <div class="gf-tete"><span class="gm-poignee" aria-hidden="true"></span><h2 id="gf-titre">${esc(titre)}</h2>${sousTitre ? `<p class="gf-sous">${esc(sousTitre)}</p>` : ''}</div>
+        <div class="gf-corps">${champs.map(c => champ(c, c.valeur)).join('')}${note ? `<p class="gf-note">${esc(note)}</p>` : ''}</div>
+        <p class="gf-erreur" role="alert" hidden></p>
+        <div class="gf-pied">${danger ? `<button type="button" class="gf-btn gf-danger" data-gf-danger>${esc(danger.libelle)}</button>` : ''}<span class="gf-fin"><button type="button" class="gf-btn" data-gf-annuler>${esc(annuler)}</button><button type="submit" class="gf-btn principal">${esc(ok)}</button></span></div></form>`;
+      document.body.append(m);
+      document.documentElement.classList.add('gf-ouvert');
+      const form = $('form', m), declencheur = document.activeElement;
+      ouvertF = { m, resolve: null };
+      const finir = valeur => { if (ouvertF && ouvertF.m === m) ouvertF = null; m.remove(); if (!$('.gf')) document.documentElement.classList.remove('gf-ouvert'); if (declencheur && declencheur.isConnected && typeof declencheur.focus === 'function') declencheur.focus({ preventScroll: true }); resolve(valeur); };
+      ouvertF.resolve = finir;
+      // les valeurs : par nom, les chemins a.b.c en objets, les groupes en tableaux, les cases en booléens, les nombres en nombres
+      const lire = () => {
+        const out = {};
+        const poser = (chemin, val) => { const ks = chemin.split('.'); let o = out; ks.slice(0, -1).forEach((k, i) => { if (o[k] == null) o[k] = /^\d+$/.test(ks[i + 1]) ? [] : {}; o = o[k]; }); o[ks[ks.length - 1]] = val; };
+        champsPlats(champs).forEach(({ c, nom }) => {
+          if (c.t === 'cases') { poser(nom, $$(`input[name="${CSS.escape(nom)}"]:checked`, form).map(x => x.value)); return; }
+          if (c.t === 'groupe') {
+            const xs = $$(`[data-gf-groupe="${CSS.escape(nom)}"] > .gf-items > [data-gf-item]`, form).map(it => { const o = { id: $('input[type=hidden]', it).value || null };
+              c.champs.forEach(s => { const el = $(`[name$=".${CSS.escape(s.k)}"]`, it); o[s.k] = !el ? undefined : s.t === 'case' ? el.checked : s.t === 'nombre' ? (el.value === '' ? null : Number(el.value)) : el.value; });
+              return o; });
+            poser(nom, xs); return;
+          }
+          const el = $(`[name="${CSS.escape(nom)}"]`, form);
+          if (!el) return;
+          poser(nom, c.t === 'case' ? el.checked : c.t === 'nombre' ? (el.value === '' ? null : Number(el.value)) : el.value);
+        });
+        return out;
+      };
+      const champsPlats = xs => xs.map(c => ({ c, nom: c.k }));
+      form.addEventListener('click', e => {
+        const seg = e.target.closest('[data-gf-seg] button');
+        if (seg) { const z = seg.closest('[data-gf-seg]'); $$('button', z).forEach(b => b.setAttribute('aria-pressed', String(b === seg))); $('input[type=hidden]', z).value = seg.dataset.val; return; }
+        if (e.target.closest('[data-gf-annuler]')) { e.preventDefault(); finir(null); return; }
+        if (e.target.closest('[data-gf-danger]')) { e.preventDefault(); finir(null); try { danger.faire(); } catch (err) { console.error(err); } return; }
+        const ret = e.target.closest('[data-gf-retirer]');
+        if (ret) { e.preventDefault(); const it = ret.closest('[data-gf-item]'); const g = it.closest('[data-gf-groupe]'); it.remove(); renumeroter(g); return; }
+        const aj = e.target.closest('[data-gf-ajouter]');
+        if (aj) {
+          e.preventDefault();
+          const g = aj.closest('[data-gf-groupe]'), c = champs.find(x => x.k === g.dataset.gfGroupe), k = $$('[data-gf-item]', g).length;
+          let modele = {}; try { modele = JSON.parse(g.dataset.gfModele || '{}'); } catch (err) { /* vide */ }
+          $('.gf-items', g).insertAdjacentHTML('beforeend', item(c, typeof c.neuf === 'function' ? c.neuf() : modele, c.k, k));
+          const dernier = $$('[data-gf-item]', g).pop(); $('input:not([type=hidden]), select, textarea', dernier)?.focus();
+        }
+      });
+      const renumeroter = g => $$('[data-gf-item]', g).forEach((it, k) => $$('[name]', it).forEach(el => { el.name = el.name.replace(/\.\d+\./, `.${k}.`); }));
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const b = $('button[type=submit]', form), err = $('.gf-erreur', form);
+        const v = lire();
+        b.disabled = true; b.setAttribute('aria-busy', 'true'); err.hidden = true;
+        let r;
+        try { r = typeof enregistrer === 'function' ? await enregistrer(v) : true; } catch (ex) { r = (ex && ex.message) || String(ex); }
+        b.disabled = false; b.removeAttribute('aria-busy');
+        if (typeof r === 'string' && r) { err.textContent = r; err.hidden = false; vibrer(20); return; }
+        vibrer(10);
+        finir(v);
+      });
+      form.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finir(null); return; }
+        if (e.key === 'Tab') { const xs = $$('input:not([type=hidden]), select, textarea, button', form).filter(x => !x.disabled && x.offsetParent !== null); if (!xs.length) return; const i = xs.indexOf(document.activeElement); if (e.shiftKey && (i <= 0)) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && i === xs.length - 1) { e.preventDefault(); xs[0].focus(); } }
+      });
+      requestAnimationFrame(() => { ($('input:not([type=hidden]):not([type=checkbox]), select, textarea, [data-gf-seg] button[aria-pressed="true"], input[type=checkbox]', form) || $('button[type=submit]', form))?.focus({ preventScroll: true }); });
+    });
+  }
+  function fermerFormulaire() { if (ouvertF) { const o = ouvertF; ouvertF = null; o.resolve(null); } }
+  window.addEventListener('hashchange', fermerFormulaire);
+
   // ===================================================================================================== styles
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-gestes">
+/* le formulaire (GESTES.formulaire) : une feuille depuis le bas au téléphone, au centre à l'ordinateur */
+html.gf-ouvert { overflow: hidden; }
+.gf { position: fixed; inset: 0; z-index: 92; font: 15px/1.4 var(--police, var(--sans, system-ui, sans-serif)); color: var(--encre, #222); }
+.gf-voile { position: absolute; inset: 0; background: rgba(23, 15, 26, .45); }
+.gf-boite { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; max-height: calc(100dvh - 24px); margin: 0; padding: 0; border: 1px solid var(--trait, var(--filet, #ddd)); border-bottom: 0; border-radius: 20px 20px 0 0; background: var(--carte, var(--surface, #fff)); box-shadow: 0 -12px 40px rgba(20, 10, 20, .25); }
+.gf-tete { padding: 6px 18px 4px; }
+.gf-tete h2 { margin: 0; font-size: 17px; line-height: 1.3; }
+.gf-sous { margin: 2px 0 0; color: var(--gris, #777); font-size: 13.5px; }
+.gf-corps { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; display: grid; gap: 12px; padding: 10px 18px 14px; }
+.gf-champ { display: grid; gap: 4px; min-width: 0; }
+.gf-champ > label, .gf-lib, .gf-cases legend { font-weight: 650; font-size: 13.5px; }
+.gf-aide, .gf-note { margin: 0; color: var(--gris, #777); font-size: 12.5px; }
+.gf input:not([type=checkbox]):not([type=hidden]), .gf select, .gf textarea { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--trait, var(--filet, #ccc)); border-radius: 10px; background: var(--carte, var(--surface, #fff)); color: inherit; font: inherit; font-size: 16px; }
+.gf textarea { min-height: 72px; resize: vertical; }
+.gf input:focus, .gf select:focus, .gf textarea:focus { outline: none; border-color: var(--accent, var(--magenta, #a8306f)); box-shadow: 0 0 0 3px var(--accent-doux, var(--magenta-doux, #f7e6ef)); }
+.gf-coche { display: flex; align-items: flex-start; gap: 10px; min-height: 40px; padding: 6px 0; font-weight: 600; cursor: pointer; }
+.gf-coche input { width: 20px; height: 20px; margin-top: 1px; flex: none; accent-color: var(--accent, var(--magenta, #a8306f)); }
+.gf-coche small { display: block; font-weight: 500; color: var(--gris, #777); font-size: 12.5px; }
+.gf-cases { margin: 0; padding: 0; border: 0; display: grid; gap: 0; }
+.gf-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.gf-seg button { min-height: 40px; padding: 6px 14px; border: 1px solid var(--trait, var(--filet, #ccc)); border-radius: 999px; background: var(--carte, var(--surface, #fff)); color: var(--gris, #777); font: 600 14px/1.2 inherit; font-family: inherit; cursor: pointer; }
+.gf-seg button[aria-pressed="true"] { background: var(--accent, var(--magenta, #a8306f)); border-color: var(--accent, var(--magenta, #a8306f)); color: #fff; }
+.gf-rangee { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px 10px; }
+.gf-rangee .gf-large { grid-column: 1 / -1; }
+.gf-items { display: grid; gap: 8px; }
+.gf-item { position: relative; padding: 10px 44px 10px 12px; border: 1px solid var(--trait, var(--filet, #ddd)); border-radius: 12px; background: var(--doux, var(--surface-2, #f5f5f5)); }
+.gf-retirer { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--gris, #777); cursor: pointer; display: inline-grid; place-items: center; }
+.gf-retirer:hover { background: var(--carte, var(--surface, #fff)); color: var(--alerte, #b3261e); }
+.gf-ajout { display: inline-flex; align-items: center; gap: 6px; justify-self: start; min-height: 38px; padding: 6px 14px; border: 1px dashed var(--trait, var(--filet, #ccc)); border-radius: 999px; background: none; color: var(--accent, var(--magenta, #a8306f)); font: 600 14px/1.2 inherit; font-family: inherit; cursor: pointer; }
+.gf-erreur { margin: 0 18px; padding: 8px 12px; border-radius: 10px; background: var(--alerte-doux, #fbe7e5); color: var(--alerte, #b3261e); font-weight: 600; font-size: 14px; }
+.gf-erreur[hidden] { display: none; }
+.gf-pied { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--trait, var(--filet, #ddd)); }
+.gf-fin { display: flex; gap: 8px; margin-left: auto; }
+.gf-btn { min-height: 44px; padding: 8px 18px; border: 1px solid var(--trait, var(--filet, #ccc)); border-radius: 999px; background: var(--carte, var(--surface, #fff)); color: inherit; font: 600 15px/1.2 inherit; font-family: inherit; cursor: pointer; }
+.gf-btn.principal { background: var(--accent, var(--magenta, #a8306f)); border-color: var(--accent, var(--magenta, #a8306f)); color: #fff; }
+.gf-btn[disabled] { opacity: .6; cursor: default; }
+.gf-danger { color: var(--alerte, #b3261e); }
+@media (min-width: 641px) { .gf-boite { left: 50%; right: auto; top: 50%; bottom: auto; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); transform: translate(-50%, -50%); border-radius: 18px; border-bottom: 1px solid var(--trait, var(--filet, #ddd)); } .gf-tete .gm-poignee { display: none; } .gf-tete { padding-top: 16px; } }
+@media (prefers-reduced-motion: no-preference) { .gf:not(.gf-calme) .gf-voile { animation: gm-paraitre .2s ease-out; } .gf:not(.gf-calme) .gf-boite { animation: gm-monte .24s cubic-bezier(.2, .8, .2, 1); } @media (min-width: 641px) { .gf:not(.gf-calme) .gf-boite { animation-name: gf-centre; } @keyframes gf-centre { from { transform: translate(-50%, calc(-50% + 16px)); opacity: 0; } } } }
 /* le menu contextuel : près du pointeur ; en feuille depuis le bas au téléphone (gm-feuille) */
 .gm { position: fixed; inset: 0; z-index: 90; pointer-events: none; font: 15px/1.4 var(--police, var(--sans, system-ui, sans-serif)); }
 .gm-boite { position: fixed; z-index: 2; min-width: 220px; max-width: min(360px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow: auto; padding: 6px; border: 1px solid var(--trait, var(--filet, #ddd)); border-radius: 12px; background: var(--carte, var(--surface, #fff)); color: var(--encre, #222); box-shadow: 0 12px 40px rgba(20, 10, 20, .26); pointer-events: auto; outline: none; }
@@ -314,5 +459,5 @@ const GESTES = (() => {
 .gps-texte .gps-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>`);
 
-  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert };
+  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert };
 })();
