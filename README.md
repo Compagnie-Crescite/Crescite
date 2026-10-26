@@ -125,7 +125,10 @@ adresses, la disparition de l'espace pro, la présence des contenus attendus de 
 (les prochaines dates d'abord, les saisons terminées fermées). Il vérifie la page des programmateurs (le contact, le
 téléchargement réel du dossier PDF, la fiche technique sur demande) et qu'un spectacle sans action culturelle n'a pas
 d'onglet établissement. Avec `EDITION=1`, il vérifie aussi le lien « Modifier le site » et les annotations de l'édition
-(`data-edit`, `data-date-id`, `data-agenda`).
+(`data-edit`, `data-date-id`, `data-agenda`). Il relève tout changement de page gelé (une transition qui attend plus
+d'une seconde la capture de l'ancienne page), sur toute la visite et depuis chaque page de spectacle défilée : une
+animation liée au défilement qui garde son état final hors de sa plage (`both`) gelait l'écran 4 s dans Chrome ; elles
+remplissent en `backwards` (règle 15 C du contrat).
 `maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
 dessous. « À propos » est le mode d'emploi de la maquette affichée, en six parties courtes avec leurs schémas :
 naviguer, trouver une date, modifier le site, l'administration et ses rubriques, les espaces réservés autour de la

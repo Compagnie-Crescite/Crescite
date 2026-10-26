@@ -336,7 +336,8 @@ a.df-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px;
   font: 400 .72rem/1.4 var(--sans); color: var(--u-texte2); text-align: right; }
 .df[data-cote="droite"] .df-credit { right: auto; left: 12px; text-align: left; }
 /* les motifs de la 10, en grand, qui réagissent à la lecture (--m) : l'arène tourne, les jumeaux se rejoignent, les notes et le
-   fil s'écrivent, le nez s'allonge, les aiguilles tournent, le curseur file de 1850 à 2077 */
+   fil s'écrivent, les aiguilles tournent, le curseur file de 1850 à 2077 (Ci-gisait Cyrano : la lune seule, sans le dessin
+   du nez, à la demande du client) */
 .df-m { display: block; width: 100%; height: auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .df-m text { fill: currentColor; stroke: none; font: 600 17px var(--sans); letter-spacing: .04em; }
 .df-m * { transform-box: view-box; }
@@ -344,7 +345,6 @@ a.df-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px;
 .dm-g { transform: translateX(calc(var(--m) * 14px)); }
 .dm-d { transform: translateX(calc(var(--m) * -14px)); }
 .dm-ecrit { stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--m)); }
-.dm-nez { transform-origin: 114px 86px; transform: scale(calc(1 + var(--m) * .55), 1); }
 .dm-heure { transform-origin: 120px 120px; transform: rotate(calc(-50deg + var(--m) * 90deg)); }
 .dm-minute { transform-origin: 120px 120px; transform: rotate(calc(var(--m) * 720deg)); }
 .dm-curseur { transform: translateX(calc(var(--m) * 1120px)); }
@@ -371,9 +371,8 @@ html[data-theme="nuit"] .df[data-motif="arene"] .df-effet { color: var(--u-vif);
 .df[data-motif="paperboard"] .df-in > * { --e: clamp(0, calc(var(--p) * 3.33 - 1.9 - var(--k, 0) * .12), 1); }
 html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--uj-texte); --u-texte2: var(--uj-texte2); --u-vif: var(--uj-vif); --u-filet: color-mix(in srgb, var(--uj-texte) 15%, transparent); color: var(--u-texte); }
 .df[data-motif="paperboard"] .df-effet { width: min(28vw, 44vh); opacity: .7; }
-/* Ci-gisait Cyrano, le nez : la photo entre de profil, la lune se lève, le nez s'allonge */
+/* Ci-gisait Cyrano : la photo entre de profil, la lune se lève */
 .df[data-motif="nez"] .df-photo img { transform: translateX(calc((1 - var(--p)) * var(--sens) * 14%)) scale(calc(1.1 - var(--p) * .1)); }
-.df[data-motif="nez"] .df-effet { width: min(30vw, 46vh); opacity: .75; color: var(--u-texte); }
 .df-lune { position: absolute; z-index: -2; left: calc(var(--cx) + min(14vw, 22vh)); top: 12%; width: clamp(60px, 8vw, 120px); fill: var(--u-accent); opacity: .85; pointer-events: none; transform: translateY(calc((1 - var(--m)) * 34vh)); }
 .df[data-cote="droite"] .df-lune { left: calc(var(--cx) - min(14vw, 22vh) - clamp(60px, 8vw, 120px)); }
 /* La Folle Idée, l'horloge : le temps du huis clos, les aiguilles tournent avec la lecture */
@@ -415,7 +414,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
   .df-in, .df[data-cote="droite"] .df-in { width: 100%; margin-left: 0; }
   .df[data-motif="arene"] .df-photo img { clip-path: circle(calc(var(--p) * min(36vw, 21svh)) at 50% 25svh); }
   .df[data-motif="arene"] .df-effet { width: calc(min(36vw, 21svh) * 2.36); }
-  .df[data-motif="jumeaux"] .df-effet, .df[data-motif="annotations"] .df-effet, .df[data-motif="paperboard"] .df-effet, .df[data-motif="nez"] .df-effet, .df[data-motif="horloge"] .df-effet { width: min(52vw, 34svh); }
+  .df[data-motif="jumeaux"] .df-effet, .df[data-motif="annotations"] .df-effet, .df[data-motif="paperboard"] .df-effet, .df[data-motif="horloge"] .df-effet { width: min(52vw, 34svh); }
   .df-lune { left: auto; right: 6%; top: 4%; } .df[data-cote="droite"] .df-lune { left: auto; }
   .df-chrono { bottom: auto; top: calc(44svh - 34px); }
   .df-fil, .df[data-cote="droite"] .df-fil { -webkit-mask-image: linear-gradient(#000 30svh, transparent 42svh); mask-image: linear-gradient(#000 30svh, transparent 42svh); }
@@ -695,8 +694,10 @@ figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
    l'étape lue (.recit-vue.est-vue, posée par le script, ligne de lecture). Au téléphone, le panneau reste en haut, les étapes
    passent dessous. En édition sur place, la frise s'efface et la liste reste, annotée */
 .recit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 80px); align-items: start; margin-top: clamp(28px, 4vw, 48px); }
-.recit-panneau { position: sticky; top: calc(var(--haut) + 24px); display: grid; height: min(68svh, 640px); overflow: hidden; border-radius: 8px; background: var(--papier-2); isolation: isolate; }
-.recit-vue { grid-area: 1 / 1; position: relative; margin: 0; opacity: 0; transition: opacity .6s var(--mv-courbe); }
+.recit-panneau { position: sticky; top: calc(var(--haut) + 24px); display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); height: min(68svh, 640px); overflow: hidden; border-radius: 8px; background: var(--papier-2); isolation: isolate; }
+/* (une seule case, à la hauteur du panneau : sans elle, la case prenait la hauteur de la plus haute photo, chaque photo
+   débordait du panneau, qui n'en montrait que le haut, et son cadrage (CADRAGE) se calculait sur ce qu'on ne voyait pas) */
+.recit-vue { grid-area: 1 / 1; position: relative; min-height: 0; margin: 0; opacity: 0; transition: opacity .6s var(--mv-courbe); }
 .recit-vue.est-vue { opacity: 1; }
 .recit-vue img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: saturate(.85); transform: scale(1.07); transition: transform 1.4s var(--mv-courbe); }
 .recit-vue.est-vue img { transform: none; }
@@ -1287,7 +1288,7 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 /* les vidéos, lues dans la page (règle 18, LECTEUR) : l'affiche du spectacle, son titre, la lecture au geste ; « plein écran »
    et « assombrir » dessous. La page éteinte, la vidéo garde sa lumière : un filet de l'univers et sa lueur autour d'elle */
 .lc-cadre { border-radius: 6px; box-shadow: 0 34px 70px -34px rgba(0, 0, 0, .7), 0 0 0 1px var(--u-filet); transition: box-shadow .45s var(--mv-courbe); }
-.lc-affiche { filter: brightness(.55) saturate(.9); transition: scale .2s var(--mv-courbe), filter .2s, opacity .3s; }
+.lc-affiche { --cadre-y: .3; filter: brightness(.55) saturate(.9); transition: scale .2s var(--mv-courbe), filter .2s, opacity .3s; }   /* (le sujet au tiers haut, au-dessus du bouton de lecture : CADRAGE) */
 .lc-lire::after { content: ""; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgba(0, 0, 0, .78)); pointer-events: none; }
 .lc-lire:hover .lc-affiche { scale: 1.02; filter: brightness(.45) saturate(.9); }
 .lc-lire:focus-visible { outline: 3px solid var(--u-vif); outline-offset: -3px; }
@@ -1434,7 +1435,6 @@ article.u.sp-seul { --onglets: 0px; }
 .sp-motif .m-g { transform: translateX(calc(var(--p, 0) * 13px)); }
 .sp-motif .m-d { transform: translateX(calc(var(--p, 0) * -13px)); }
 .sp-motif .m-ecrit { stroke-dasharray: 1; stroke-dashoffset: calc(.55 - var(--p, 0) * .55); }
-.sp-motif .m-nez { transform-origin: 114px 86px; transform: scale(calc(1 + var(--p, 0) * .45), 1); }
 .sp-motif .m-heure { transform-origin: 120px 120px; transform: rotate(calc(-40deg + var(--p, 0) * 60deg)); }
 .sp-motif .m-minute { transform-origin: 120px 120px; transform: rotate(calc(var(--p, 0) * 540deg)); }
 .sp-motif .m-curseur { transform: translateX(calc(var(--p, 0) * 200px)); }
@@ -2164,35 +2164,38 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
    (l'écriture mot à mot à l'arrivée, la carte qui pousse d'un coup). L'état de base est toujours l'état final, lisible :
    sans mouvement (html.still) ou l'animation retirée (le vérificateur), tout est posé. Les durées ne sont plus en
    millisecondes mais en hauteur d'écran : « entry » (ce qui entre par le bas), « exit » (ce qui sort par le haut),
-   « cover » (toute la traversée). */
+   « cover » (toute la traversée). Une animation ne garde pas son état final au-delà de sa plage (backwards, jamais both) :
+   l'état de base est déjà l'état final, ou ce qui l'a passé est hors de l'écran ; et quand une animation composée garde
+   son état final hors de sa plage, Chrome n'arrive plus à capturer la page pour la transition (le changement de page
+   gelait 4 s, puis était abandonné, depuis une page de spectacle défilée). */
 /* 1. le texte qui s'allume à la lecture : affirmation, citations, apartés (.lit, --n mots) : chaque mot passe de l'ombre à
    la lumière quand sa phrase traverse le milieu de l'écran, dans l'ordre, au rythme du lecteur ; en remontant, il s'éteint */
 @property --lit { syntax: '<number>'; inherits: true; initial-value: 1; }   /* (la lecture du bloc, 0 → 1 ; posée à 1 : tout se lit) */
 @supports (animation-timeline: view()) {
   /* une seule animation par bloc (pas une par mot : la page d'un spectacle en compte une centaine, elle resterait sous
      son budget de rendu), qui fait avancer --lit ; chaque mot en tire son éclat (--e) d'après son rang */
-  html:not(.still):not(.sur-place) .lit { animation: lit-lu linear both; animation-timeline: view(); animation-range: cover 18% cover 64%; }
+  html:not(.still):not(.sur-place) .lit { animation: lit-lu linear backwards; animation-timeline: view(); animation-range: cover 18% cover 64%; }
   @keyframes lit-lu { from { --lit: 0; } to { --lit: 1; } }
   html:not(.still):not(.sur-place) .lit .w, html:not(.still):not(.sur-place) .lit.vu .w { --e: clamp(0, calc((var(--lit) * (var(--n, 20) + 3) - var(--w, 0)) / 3), 1);
     opacity: calc(.18 + var(--e) * .82); translate: 0 calc((1 - var(--e)) * .08em); transform: none; filter: none; animation: none; }
   /* 2. l'ouverture d'un spectacle prend de la profondeur : en la quittant, la photo reste en arrière (elle suit déjà la
      lecture, --p), le texte monte plus vite que la page et s'efface, la poursuite et le gobo s'éteignent : une scène, une salle */
   html:not(.still) .sp-une { view-timeline: --une block; }
-  html:not(.still) .une-texte { animation: une-texte linear both; animation-timeline: --une; animation-range: exit 0% exit 100%; }
-  html:not(.still) .une-lueur, html:not(.still) .une-motif { animation: une-lueur linear both; animation-timeline: --une; animation-range: exit 0% exit 100%; }
+  html:not(.still) .une-texte { animation: une-texte linear backwards; animation-timeline: --une; animation-range: exit 0% exit 100%; }
+  html:not(.still) .une-lueur, html:not(.still) .une-motif { animation: une-lueur linear backwards; animation-timeline: --une; animation-range: exit 0% exit 100%; }
   @keyframes une-texte { from { translate: 0 0; opacity: 1; } to { translate: 0 -22%; opacity: .08; } }
   @keyframes une-lueur { from { opacity: 1; } to { opacity: 0; } }
   /* 3. la scène de l'accueil se retire : la pieuvre et ses titres glissent plus lentement que la page et s'éteignent sous le
      menu ; les cartes du menu montent à leur entrée, l'une après l'autre (--i) */
-  html:not(.still) .scene { animation: scene-part linear both; animation-timeline: view(); animation-range: exit 0% exit 100%; }
+  html:not(.still) .scene { animation: scene-part linear backwards; animation-timeline: view(); animation-range: exit 0% exit 100%; }
   @keyframes scene-part { from { translate: 0 0; opacity: 1; } to { translate: 0 28%; opacity: .2; } }
-  html:not(.still) .am { animation: carte-monte linear both; animation-timeline: view(); animation-range: entry calc(var(--i, 0) * 12%) entry calc(64% + var(--i, 0) * 12%); }
+  html:not(.still) .am { animation: carte-monte linear backwards; animation-timeline: view(); animation-range: entry calc(var(--i, 0) * 12%) entry calc(64% + var(--i, 0) * 12%); }
   @keyframes carte-monte { from { translate: 0 44px; opacity: 0; } to { translate: 0 0; opacity: 1; } }
   /* 4. le spectacle suivant monte : au bout de la page d'un spectacle, la photo du suivant se lève avec son bandeau */
-  html:not(.still) .suivant-fond img { animation: suivant-monte linear both; animation-timeline: view(); animation-range: entry 0% entry 100%; }
+  html:not(.still) .suivant-fond img { animation: suivant-monte linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @keyframes suivant-monte { from { translate: 0 42%; opacity: 0; } to { translate: 0 0; opacity: .34; } }
   /* 5. l'histoire de la compagnie en chapitres : l'étape qui traverse le milieu de l'écran s'allume, les autres attendent */
-  html:not(.still) .frise-l > li { animation: etape-lue linear both; animation-timeline: view(); animation-range: cover 0% cover 100%; }
+  html:not(.still) .frise-l > li { animation: etape-lue linear backwards; animation-timeline: view(); animation-range: cover 0% cover 100%; }
   @keyframes etape-lue { 0%, 16% { opacity: .28; } 34%, 64% { opacity: 1; } 84%, 100% { opacity: .28; } }
   @media (max-width: 899px) {
     html:not(.still) .frise-l > li { animation-name: etape-lue-haut; }
@@ -2571,7 +2574,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const PETITS = {
     arene: () => `<circle cx="20" cy="20" r="16"/>${[0, 120, 240].map(a => `<path d="${arc(20, 20, 10.5, a + 14, a + 106)}" stroke-width="3.2"/>`).join('')}`,
     jumeaux: () => '<path d="M5 35V17a7.5 7.5 0 0 1 15 0v18M20 35V17a7.5 7.5 0 0 1 15 0v18"/>',
-    nez: () => '<path d="M14 3C8 6 7 13 9 18l1 3 20 4c1 .5.4 2.5-1.4 2.5L13 28c0 1.6 1.5 2.6.8 3.6-.8 1.3.7 2.5.2 3.9-.4 1.5-1.8 2.6-3 4"/>',
     horloge: () => '<circle cx="20" cy="20" r="16"/><path d="M20 20V9M20 20l7.5 4.5"/>',
     fil: () => '<path d="M2 30C9 4 17 36 23 17S35 6 38 22"/>',
     paperboard: () => '<rect x="8" y="8" width="24" height="27" rx="1.5"/><path d="M13 4.5h14M12 16h16M12 22h16M12 28h9"/>',
@@ -3262,7 +3264,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      ou trois, tout public d'abord ; sans date, la phrase de son bilan dans D, ou son annonce s'il est en création) et le
      lien vers sa page. L'effet vient de son motif, ceux que la 10 fait déjà réagir au défilement : l'arène (la photo s'ouvre
      en cercle et l'arène tourne), les jumeaux (les deux moitiés se rejoignent), les annotations (le titre se souligne à la
-     main), le paperboard (la feuille tombe du chevalet), le nez (de profil, la lune se lève), l'horloge (les aiguilles
+     main), le paperboard (la feuille tombe du chevalet), Cyrano (la lune se lève : le dessin du nez est retiré), l'horloge (les aiguilles
      tournent), le fil (rouge, il traverse l'écran), la chronologie (la photo se découvre de 1850 à 2077). */
   const motif10 = m => {
     const svg = inner => `<svg class="df-m" viewBox="0 0 240 240" aria-hidden="true" focusable="false">${inner}</svg>`;
@@ -3270,7 +3272,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       case 'jumeaux': return svg('<g class="dm-g"><circle cx="94" cy="134" r="48"/><path d="M64 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g><g class="dm-d"><circle cx="146" cy="134" r="48"/><path d="M116 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g>');
       case 'annotations': return svg('<path class="dm-ecrit" pathLength="1" d="M26 58c8-7 15 7 23 0s15 7 23 0 15 7 23 0 15 7 23 0"/><path class="dm-ecrit" pathLength="1" d="M26 86c8-6 15 6 23 0s15 6 23 0 15 6 21 0"/><path class="dm-ecrit" pathLength="1" d="M26 114c8-6 15 6 23 0s15 6 23 0"/><path class="dm-ecrit" pathLength="1" d="M24 136c46 7 98 5 150-5"/><ellipse class="dm-ecrit" pathLength="1" cx="176" cy="76" rx="36" ry="22" transform="rotate(-8 176 76)"/><path class="dm-ecrit" pathLength="1" d="M120 196c22-26 46-38 76-44m-15-10 15 10-12 13"/>');
       case 'paperboard': return svg('<path d="M120 172v56M84 172l-26 58M156 172l26 58"/><rect x="52" y="34" width="136" height="138" rx="2"/><path d="M46 34h148" stroke-width="5"/><path class="dm-ecrit" pathLength="1" d="M120 146c-34-20-36-50-13-53 7-1 13 4 13 11 0-7 6-12 13-11 23 3 21 33-13 53z"/><path class="dm-ecrit" pathLength="1" d="M68 58h40M68 72h26"/><path class="dm-ecrit" pathLength="1" d="M150 52l20 22m0-22-20 22"/>');
-      case 'nez': return svg('<path d="M156 30c-24 4-40 22-42 54"/><g class="dm-nez"><path d="M114 84c-12 16-40 32-70 44 18 8 46 10 66 12"/></g><path d="M110 140c-4 7 5 11-3 17 8 4 2 10 4 15 2 15 11 23 24 25 4 13 2 23-1 31"/><path d="M134 108c6-3 12-3 16 0" stroke-width="2.4"/>');
       case 'horloge': return svg('<circle cx="120" cy="120" r="98"/><circle cx="120" cy="120" r="86" stroke-width="9" stroke-dasharray="1.6 43.43"/><g class="dm-heure"><path d="M120 120V74" stroke-width="5"/></g><g class="dm-minute"><path d="M120 120V46" stroke-width="2.6"/></g><circle cx="120" cy="120" r="5" fill="currentColor" stroke="none"/>');
     }
     return '';
@@ -3286,7 +3287,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   const effetEcran = m => m === 'arene' ? `<div class="df-effet" aria-hidden="true">${ARENE()}</div>`
     : m === 'fil' ? `<div class="df-effet df-fil" aria-hidden="true">${FIL}</div>`
     : m === 'chronologie' ? `<div class="df-effet df-chrono" aria-hidden="true">${FRISE_CHRONO()}</div>`
-    : motif10(m) ? `<div class="df-effet" aria-hidden="true">${motif10(m)}</div>${m === 'nez' ? LUNE : ''}` : '';
+    : m === 'nez' ? LUNE   // (Ci-gisait Cyrano : la lune seule, sans le dessin du nez, à la demande du client)
+    : motif10(m) ? `<div class="df-effet" aria-hidden="true">${motif10(m)}</div>` : '';
   // une prochaine date, écrite comme dans l'agenda (le jour en grand, le mois, la commune) ; réservable, elle mène à sa carte
   // de réservation, sur la page du spectacle (règle 17)
   const dateEcran = (s, d, rang = 0) => { const [j, m] = coupe(d.ligneDate), k = RS && !d.scolaire ? RS.cle(d) : null, rv = k != null && !!RS.trouver(k);
@@ -4580,7 +4582,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     jumeaux: '<g class="m-g"><circle cx="94" cy="134" r="48"/><path d="M64 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g><g class="m-d"><circle cx="146" cy="134" r="48"/><path d="M116 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g>',
     annotations: '<path class="m-ecrit" pathLength="1" d="M26 58c8-7 15 7 23 0s15 7 23 0 15 7 23 0 15 7 23 0"/><path class="m-ecrit" pathLength="1" d="M26 86c8-6 15 6 23 0s15 6 23 0 15 6 21 0"/><path class="m-ecrit" pathLength="1" d="M26 114c8-6 15 6 23 0s15 6 23 0"/><path class="m-ecrit" pathLength="1" d="M24 136c46 7 98 5 150-5"/><ellipse class="m-ecrit" pathLength="1" cx="176" cy="76" rx="36" ry="22" transform="rotate(-8 176 76)"/><path class="m-ecrit" pathLength="1" d="M120 196c22-26 46-38 76-44m-15-10 15 10-12 13"/>',
     paperboard: '<path d="M120 172v56M84 172l-26 58M156 172l26 58"/><rect x="52" y="34" width="136" height="138" rx="2"/><path d="M46 34h148" stroke-width="5"/><path class="m-ecrit" pathLength="1" d="M120 146c-34-20-36-50-13-53 7-1 13 4 13 11 0-7 6-12 13-11 23 3 21 33-13 53z"/><path class="m-ecrit" pathLength="1" d="M68 58h40M68 72h26"/><path class="m-ecrit" pathLength="1" d="M150 52l20 22m0-22-20 22"/>',
-    nez: '<path d="M156 30c-24 4-40 22-42 54"/><g class="m-nez"><path d="M114 84c-12 16-40 32-70 44 18 8 46 10 66 12"/></g><path d="M110 140c-4 7 5 11-3 17 8 4 2 10 4 15 2 15 11 23 24 25 4 13 2 23-1 31"/><path d="M134 108c6-3 12-3 16 0" stroke-width="2.4"/>',
     horloge: '<circle cx="120" cy="120" r="98"/><circle cx="120" cy="120" r="86" stroke-width="9" stroke-dasharray="1.6 43.43"/><g class="m-heure"><path d="M120 120V74" stroke-width="5"/></g><g class="m-minute"><path d="M120 120V46" stroke-width="2.6"/></g><circle cx="120" cy="120" r="5" fill="currentColor" stroke="none"/>',
     fil: '<path class="m-ecrit" pathLength="1" d="M4 168C44 120 70 196 108 150c18-22 30-56 8-62s-30 32 2 42c30 10 44-30 70-26 22 3 30 30 48 18"/>',
     chronologie: '<path d="M20 140h200"/><path d="M20 126v28M60 132v16M100 132v16M140 132v16M180 132v16M220 126v28"/><text x="20" y="112">1850</text><text x="220" y="112" text-anchor="end">2077</text><circle class="m-curseur" cx="20" cy="140" r="8" fill="currentColor" stroke="none"/>',
