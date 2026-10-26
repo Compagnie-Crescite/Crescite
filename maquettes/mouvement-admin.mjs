@@ -57,10 +57,11 @@ const ok = (nom, v, detail = '') => { resultats.push([v ? 'ok' : 'KO', nom, deta
 
 async function ouvrir(navigateur, { reduit = false, hash = '#/representations', largeur = 1280 } = {}) {
   const ctx = await navigateur.newContext({ viewport: { width: largeur, height: 820 }, reducedMotion: reduit ? 'reduce' : 'no-preference', locale: 'fr-FR', timezoneId: 'UTC' });
-  await ctx.route(/supabase\.co|fonts\.g/, r => {
+  await ctx.route(/supabase\.co|fonts\.g/, async r => {
     const u = new URL(r.request().url()), m = u.pathname.match(/\/rest\/v1\/([a-z_]+)/);
     if (m && r.request().method() === 'GET') {
       const xs = TABLES[m[1]];
+      if (m[1] === 'crescite_admins') await new Promise(res => setTimeout(res, 500));   // le squelette a le temps de se voir
       if (!xs) return r.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ code: 'PGRST205', message: `Could not find the table 'public.${m[1]}'` }) });
       return r.fulfill({ status: 200, contentType: 'application/json', headers: { 'content-range': `0-${xs.length}/${xs.length}` }, body: JSON.stringify(xs) });
     }
@@ -74,9 +75,10 @@ async function ouvrir(navigateur, { reduit = false, hash = '#/representations', 
   await page.clock.install({ time: d0 });
   await page.addInitScript(INIT);
   await page.goto(`${URL0}${hash}`);
+  const squelette = await page.waitForSelector('.ad-squelette', { timeout: 4000 }).then(() => true).catch(() => false);
   await page.waitForSelector('#vue', { timeout: 20000 });
   await page.evaluate(() => { window.__pret = performance.now(); });
-  return { ctx, page, erreurs };
+  return { ctx, page, erreurs, squelette };
 }
 
 const navigateur = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
@@ -84,8 +86,9 @@ fs.mkdirSync(CAPT, { recursive: true });
 
 // ================================================================================ à l'ordinateur, mouvement permis
 {
-  const { ctx, page, erreurs } = await ouvrir(navigateur);
+  const { ctx, page, erreurs, squelette } = await ouvrir(navigateur);
   await page.waitForTimeout(300);
+  ok('le chargement montre un squelette qui luit, puis le contenu paraît', squelette && await page.evaluate(() => document.querySelector('#vue').classList.contains('fondu')));
   ok('les listes arrivent : main.entree au premier rendu, les lignes animées', await page.evaluate(() => { const m = document.querySelector('#vue'), l = document.querySelector('#l-dates .ligne'); return m.classList.contains('entree') && !!l && getComputedStyle(l).animationName === 'ad-arrive'; }));
   await page.waitForTimeout(1000);
   ok('… puis main.entree se retire (les rafraîchissements ne rejouent rien)', await page.evaluate(() => !document.querySelector('#vue').classList.contains('entree')));

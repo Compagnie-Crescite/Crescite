@@ -290,7 +290,8 @@ compte du projet inscrit dans `crescite_admins`.
   remonte pas assez).
 - **Modifier sur le site ↗** ouvre la synthèse en mode édition : les mêmes droits, dans la page publique.
 
-**Son mouvement.** Les vues s'enchaînent (les View Transitions : la fiche glisse vers la gauche en s'ouvrant, la liste
+**Son mouvement.** L'administration s'ouvre sur un squelette qui luit le temps de lire la base, puis le contenu paraît.
+Les vues s'enchaînent (les View Transitions : la fiche glisse vers la gauche en s'ouvrant, la liste
 revient par la droite, une autre rubrique arrive en fondu ; l'en-tête et les annonces restent en place : `changerVueAdmin`,
 `sensVue`) ; au premier rendu d'une vue, ses lignes, ses cartes et ses blocs arrivent l'un après l'autre (`main.entree`,
 retiré au bout d'une seconde : les rafraîchissements du temps réel ne rejouent rien) ; le pied d'une fiche dit l'état
@@ -304,7 +305,7 @@ qui se redessine (le temps réel, un enregistrement) glisse ses lignes à leur n
 visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une précision ajoutée se pose ; la cloche de « Prévenir
 l'équipe » sonne une fois la notification partie ; dans la Diffusion, l'opportunité déplacée glisse jusqu'à sa nouvelle
 colonne ; dans une feuille de route, le compte « à compléter » saute quand il baisse ; le statut d'une note de frais
-qui change saute. Rien de tout cela si l'appareil
+qui change saute ; les photos ajoutées à un spectacle se posent ; les champs changent en douceur. Rien de tout cela si l'appareil
 demande moins d'animations, ni avec `?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
 une base fictive.
 

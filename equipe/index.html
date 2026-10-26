@@ -182,6 +182,7 @@ input[type=email], input[type=password], input[type=text], input[type=tel], inpu
 textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 input:focus-visible, textarea:focus-visible { outline: 3px solid var(--magenta); outline-offset: 1px; border-color: var(--magenta); border-radius: 14px; }
 input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--alerte); }
+input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .erreur-champ { color: var(--alerte); font-size: .92rem; font-weight: 600; margin: 0; }
 .mdp { position: relative; }
 .mdp input { padding-right: 96px; }

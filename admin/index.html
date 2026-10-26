@@ -490,6 +490,18 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .carte-sp:hover .img::after { height: 9px; }
 .ligne { transition: box-shadow .15s, border-color .15s; }
 .nav a, .seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
+.champ input, .champ select, .champ textarea, .riche, input[type=search], .filtres input, .filtres select { transition: border-color .15s, box-shadow .15s; }
+/* le squelette du chargement : la barre, une liste et une fiche, qui luisent (le contenu paraît ensuite, main.fondu) */
+.ad-squelette { --h: 16px; }
+.sq { position: relative; display: block; height: var(--h); border-radius: 8px; background: var(--doux); overflow: hidden; }
+.sq-barre { display: flex; align-items: center; gap: 18px; padding: 14px 20px; border-bottom: 1px solid var(--trait); background: var(--carte); }
+.sq-rond { width: 42px; height: 24px; border-radius: 999px; }
+.sq-main { display: grid; gap: 16px; max-width: 1500px; margin: 0 auto; padding: 20px; }
+.sq-deux { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 18px; }
+.sq-deux > div { display: grid; gap: 8px; align-content: start; }
+.sq-ligne { height: 64px; border-radius: 10px; }
+.sq-bloc { height: 320px; border-radius: 12px; }
+@media (max-width: 1100px) { .sq-deux { grid-template-columns: 1fr; } .sq-bloc { display: none; } }
 .btn:active:not([disabled]) { transform: scale(.97); }
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
@@ -502,6 +514,8 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
   @keyframes ad-sort-droite { to { opacity: 0; transform: translateX(16px); } }
   @keyframes ad-entre-gauche { from { opacity: 0; transform: translateX(-22px); } }
   main.fondu { animation: ad-paraitre .22s ease-out; }
+  .sq::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--carte) 85%, transparent), transparent); animation: sq-lueur 1.3s infinite; }
+  @keyframes sq-lueur { to { transform: translateX(100%); } }
   @keyframes ad-paraitre { from { opacity: 0; } }
   @keyframes ad-arrive { from { opacity: 0; transform: translateY(8px); } }
   main.entree .ligne, main.entree .carte-sp, main.entree .editeur > .bloc, main.entree .avant, .editeur.onglet-neuf > .bloc, .editeur.onglet-neuf #eq-onglet > * { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
@@ -753,7 +767,8 @@ async function demarrer() {
   if (!E.session) { demarre = false; return ecranConnexion(); }
   if (demarre) return;
   demarre = true;
-  $('#app').innerHTML = '<p class="chargement">Chargement de la base…</p>';
+  $('#app').innerHTML = `<div class="ad-squelette" aria-hidden="true"><div class="sq-barre"><span class="sq sq-rond"></span><span class="sq" style="width:120px"></span><span class="sq" style="width:160px;margin-left:auto"></span></div>
+    <div class="sq-main"><span class="sq" style="width:220px;height:26px"></span><div class="sq-deux"><div>${'<span class="sq sq-ligne"></span>'.repeat(6)}</div><span class="sq sq-bloc"></span></div></div></div><p class="sr" role="status">Chargement de la base…</p>`;
   const { data, error } = await sb.from('crescite_admins').select('user_id').eq('user_id', E.session.user.id);
   if (error) { demarre = false; return ecranConnexion(/crescite_admins/.test(error.message) ? 'La base de la compagnie n’est pas encore installée.' : error.message); }
   if (!data.length) {
@@ -924,7 +939,8 @@ function router() {
 function sensVue(h) {
   const avant = E.hashVue || '';
   E.hashVue = h;
-  if (!avant || avant === h) return 'aucun';
+  if (avant === h) return 'aucun';
+  if (!avant) return 'fondu';                              // le premier rendu paraît (après le squelette)
   const rub = x => (x.match(/^#\/([a-z]+)/) || [])[1] || '', prof = x => x.split('/').length;
   if (rub(avant) !== rub(h)) return 'fondu';
   return prof(h) > prof(avant) ? 'avant' : prof(h) < prof(avant) ? 'arriere' : 'fondu';
@@ -3027,6 +3043,8 @@ function editeurSpectacle(slug) {
         else F.photos.push({ id: chemin.split('/').pop().replace(/\.[^.]+$/, ''), fichier: chemin, legende: '', source: 'site' });
       }
       marquerSale(); dessiner(); annoncer('Photos ajoutées : enregistrez pour les publier.');
+      const minis = $$('.miniatures .mini', zone);                 // les photos arrivées se posent
+      (inp.dataset.photo === 'principale' ? [minis[0]] : inp.dataset.remplacer !== undefined ? [minis[+inp.dataset.remplacer + 1]] : minis.slice(-fichiers.length)).forEach(m => m && m.classList.add('ad-neuf'));
     } catch (err) { erreur(err, 'Envoi impossible'); }
   });
   zone.addEventListener('click', async e => {
