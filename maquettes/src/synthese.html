@@ -5753,13 +5753,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // derrière elle), y flotte un moment (elle respire, regarde autour d'elle), puis repart ailleurs : jamais sur la même ligne.
   // Au passage, une tentacule attrape le médaillon du métier qu'on lit (qui s'anime), et le lâche pour le suivant. Quand on
   // choisit quelqu'un (troupeTenues), elle se poste à la hauteur de ses places et les tient toutes de ses tentacules, lumineuses.
+  // On peut la toucher (un doigt, un clic) : elle exulte, bondit, lance ses tentacules et une gerbe de bulles (CREATURE, joie).
   // Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe pas (le dessin de tête reste)
   let troupeTenues = [];
   function creatureTroupe(tr) {
     if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
     let x = null, y = null, bouge = false, prise = null, but = null, tBut = 0, tPrec = 0;
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.4, onde: 4.5, rythme: 1.7, lueur: true, sillage: true,
+    // (on peut la toucher : elle exulte, ses bulles aux couleurs des spectacles ; dès la troisième touche rapprochée, les médaillons
+    // des métiers s'animent à leur tour, en vague, du plus proche d'elle au plus lointain)
+    const couleurs = D.shows.map(sh => { const c = (sh.univers && sh.univers.couleurs) || {}, h = [c.scene, c.accent2, c.accent].find(x => HEX6.test(x || '')); return h ? eclaircir(h, themeSaison().repere, 2.4) : null; }).filter(Boolean);
+    const vague = n => {
+      if (n !== 3) return;
+      const yc = y === null ? innerHeight / 2 : y, ics = $$('.troupe-icone', tr).map(i => ({ i, d: Math.abs(i.getBoundingClientRect().top - yc) })).sort((a, b) => a.d - b.d);
+      ics.forEach(({ i }, k) => setTimeout(() => { if (!i.isConnected) return; i.classList.remove('est-vivant'); void i.offsetWidth; i.classList.add('est-vivant'); setTimeout(() => i.classList.remove('est-vivant'), 1600); }, Math.min(900, k * 70)));
+    };
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.4, onde: 4.5, rythme: 1.7, lueur: true, sillage: true, toucher: vague, couleurs,
       eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante', 'est-reliee'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
       placer() {
         const g = troupeGeo;
