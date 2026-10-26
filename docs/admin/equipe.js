@@ -943,7 +943,11 @@ const texteACompleter = (n, forme) => (n ? (forme === 'nombre' ? String(n) : `${
 const resteFeuille = (dateId, forme = 'texte') => { const n = E.equipeInstallee ? aCompleter(dateId) : 0;
   return `<span class="badge option a-completer${forme === 'nombre' ? ' nombre' : ''}" data-a-completer="${dateId}" data-forme="${forme}"${forme === 'nombre' ? ' aria-hidden="true"' : ''}${n ? '' : ' hidden'}>${texteACompleter(n, forme)}</span>`; };
 function majACompleter() {
-  $$('[data-a-completer]').forEach(el => { const n = aCompleter(+el.dataset.aCompleter); el.hidden = !n; el.textContent = texteACompleter(n, el.dataset.forme); });
+  $$('[data-a-completer]').forEach(el => {
+    const n = aCompleter(+el.dataset.aCompleter), t = texteACompleter(n, el.dataset.forme);
+    if (!el.hidden && el.textContent !== t) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }   // le compte saute
+    el.hidden = !n; el.textContent = t;
+  });
   $$('[data-statut-feuille]').forEach(el => { const f = E.feuilles.find(x => x.date_id === +el.dataset.statutFeuille); el.textContent = f ? (f.statut === 'publiee' ? `v${f.version}` : 'brouillon') : ''; });
   ajusterPied();
 }
@@ -1276,6 +1280,7 @@ async function enregistrerFeuille(etat, statut, bouton) {
   E.sale = false;
   if (etat.nettoyer) etat.nettoyer();
   dessinerFeuille(etat);
+  if (statut === 'publiee') $('.fr-badge .badge')?.classList.add('pop');
   annoncer(statut === 'publiee' ? (avant?.statut === 'publiee' ? `Mise à jour publiée : l’équipe voit la version ${r.data.version}.` : `Publiée pour l’équipe : version ${r.data.version}.`)
     : avant?.statut === 'publiee' ? 'Repassée en brouillon : l’équipe ne la voit plus.' : 'Brouillon enregistré : l’équipe ne le voit pas encore.');
   bravo();

@@ -559,6 +559,7 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-av-3 { background: color-mix(in srgb, #3d7d5a 22%, var(--pl-fond)); } .pl-av-4 { background: color-mix(in srgb, #6b4fa0 22%, var(--pl-fond)); }
 .pl-av-5 { background: color-mix(in srgb, #1f7a7a 22%, var(--pl-fond)); }
 @media (max-width: 640px) { .pl { --pl-nom: 118px; --pl-col: 34px; --pl-ligne: 40px; } .pl-e-nom .pl-av { display: none; } .pl-e-nom { padding-left: 8px; } }
+@media (prefers-reduced-motion: no-preference) { .pl-e-jour.auj b { animation: pl-auj .6s cubic-bezier(.3, 1.6, .5, 1) both; } @keyframes pl-auj { from { transform: scale(.4); } } }   /* aujourd'hui se pose */
 @media (prefers-reduced-motion: reduce) { .pl *, .pl *::before, .pl *::after { transition: none !important; animation: none !important; } }
 `;
   function poserCss() {

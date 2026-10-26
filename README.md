@@ -60,6 +60,7 @@ python3 maquettes/build.py m06          # une seule maquette
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
 node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
+node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 
@@ -289,6 +290,19 @@ compte du projet inscrit dans `crescite_admins`.
   remonte pas assez).
 - **Modifier sur le site ↗** ouvre la synthèse en mode édition : les mêmes droits, dans la page publique.
 
+**Son mouvement.** Les vues s'enchaînent (les View Transitions : la fiche glisse vers la gauche en s'ouvrant, la liste
+revient par la droite, une autre rubrique arrive en fondu ; l'en-tête et les annonces restent en place : `changerVueAdmin`,
+`sensVue`) ; au premier rendu d'une vue, ses lignes, ses cartes et ses blocs arrivent l'un après l'autre (`main.entree`,
+retiré au bout d'une seconde : les rafraîchissements du temps réel ne rejouent rien) ; le pied d'une fiche dit l'état
+d'une barre, ambre quand elle est modifiée, verte un instant quand elle est enregistrée ; « À compléter avant la tournée »
+se vide à mesure : ce qui vient d'être complété reste un instant en vert, « complété », puis se retire
+(`listeQuiSeVide`) ; la recherche rapide s'ouvre et ses premiers résultats arrivent l'un après l'autre ; la pastille
+« direct » bat quand un changement arrive ; dans le tableur, la case qu'on vient d'écrire s'encadre de vert ; l'onglet
+choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les annonces s'en vont en douceur ; les
+compteurs « n à compléter » et le badge d'une feuille publiée sautent ; dans le planning, aujourd'hui se pose. Rien de
+tout cela si l'appareil demande moins d'animations. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
+une base fictive.
+
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
 suivi, ni les séances), seuls les administrateurs écrivent. Le script a été vérifié sur un PostgreSQL local avec les
 rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrement d'une date, journal). Les onze maquettes ont
@@ -429,7 +443,9 @@ sur la carte (`brancherAllumage`) ; les billets qui glissent à leur nouvelle pl
 et l'heure qui vient de changer, lavée de jaune ; la coche de la liste de chargement qui se trace, la jauge qui luit à
 100 %, le ticket photographié qui s'envole vers le total des notes de frais ; les notifications qu'on glisse pour les
 marquer lues (`brancherGlisserNotif`), leurs jours épinglés, « tout marquer comme lu » qui les éteint l'une après
-l'autre ; la pieuvre qui s'étire et nage quand on tire pour rafraîchir, la photo du héros qui dérive. Tout ce qui bouge
+l'autre ; la pieuvre qui s'étire et nage quand on tire pour rafraîchir, la photo du héros qui dérive ; et encore : l'arrivée en
+fondu du squelette au contenu, un bouton qui a réussi le dit un instant (`occupe`), les billets d'une saison passée
+arrivent l'un après l'autre, la photo d'un spectacle s'approche au survol, la réponse à une proposition saute. Tout ce qui bouge
 en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations (`?anim=0`
 arrête ce que le script déclenche), la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
 ligne, sur une saison fictive.

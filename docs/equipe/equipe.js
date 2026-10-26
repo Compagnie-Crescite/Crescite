@@ -446,7 +446,14 @@
   async function occupe(bouton, texte, f) {
     const avant = bouton.innerHTML;
     bouton.disabled = true; bouton.setAttribute('aria-busy', 'true'); bouton.textContent = texte;
-    try { return await f(); } finally { if (bouton.isConnected) { bouton.disabled = false; bouton.removeAttribute('aria-busy'); bouton.innerHTML = avant; } }
+    let ok = false;
+    try { const r = await f(); ok = !(r && r.error); return r; }
+    finally {
+      if (bouton.isConnected) {
+        bouton.disabled = false; bouton.removeAttribute('aria-busy'); bouton.innerHTML = avant;
+        if (ok && !reduit()) { bouton.classList.add('fait'); setTimeout(() => bouton.classList.remove('fait'), 1400); }   // réussi : le bouton le dit un instant
+      }
+    }
   }
 
   function ecranConnexion() {
@@ -949,7 +956,7 @@
       if (E.pile.length && E.pile[E.pile.length - 1] === r.hash) { E.pile.pop(); sens = 'arriere'; }
       else if (r.profondeur === 0) { E.pile = []; const i = ONGLETS.indexOf(avant.onglet), j = ONGLETS.indexOf(r.onglet); sens = j > i ? 'avant' : j < i ? 'arriere' : avant.profondeur > 0 ? 'arriere' : 'fondu'; }
       else { E.pile.push(avant.hash); E.declencheur[avant.hash] = r.hash; sens = 'avant'; }
-    } else if (o.arrivee) E.pile = [];
+    } else if (o.arrivee) { E.pile = []; if ($('#contenu .squelette')) sens = 'fondu'; }      // du squelette au contenu, en fondu
     if (r.profondeur > 0) r.onglet = (E.pile.length && lireRoute(E.pile[0]).onglet) || (o.rafraichir && avant && avant.hash === r.hash ? avant.onglet : r.onglet);
     const partage = sens === 'avant' && avant && avant.k === 'saison' && r.k === 'date' ? { nom: `date-${r.id}`, avant: `.heros[data-date="${r.id}"], #billet-${r.id}`, apres: `.heros[data-date="${r.id}"]` }
       : sens === 'arriere' && avant && avant.k === 'date' && r.k === 'saison' ? { nom: `date-${avant.id}`, avant: `.heros[data-date="${avant.id}"]`, apres: `.heros[data-date="${avant.id}"], #billet-${avant.id}` } : null;
@@ -2673,6 +2680,7 @@
       const actif = document.activeElement && s.contains(document.activeElement) ? document.activeElement : null;
       s.outerHTML = jourProposition(p, j);
       const b = $(`[data-jour-prop="${jourId}"] [data-reponse="${reponse}"]`);
+      if (b && !reduit()) b.classList.add('pop');
       if (b && (depuisBouton || actif)) { if (depuisBouton) b.focus({ preventScroll: true }); requestAnimationFrame(() => tt('confirmer', b)); }
     }
     annoncer(`C’est noté : ${REPONSES[reponse].toLowerCase()} ${texteJours(j)}.`);

@@ -858,6 +858,8 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 .camion-item:has(input:focus-visible) .coche-svg { outline: 3px solid var(--magenta); outline-offset: 2px; }
 .camion-jauge.complete .camion-barre-fond { box-shadow: 0 0 10px color-mix(in srgb, var(--ok) 70%, transparent); }
 .photo-envol { position: fixed; z-index: 90; border-radius: 10px; object-fit: cover; pointer-events: none; }
+.btn.fait { border-color: var(--ok); color: var(--ok); }
+.btn.principal.fait { background: var(--ok); border-color: var(--ok); color: #fff; }
 /* 9. les notifications au doigt : « Lu » attend derrière la notification qu'on glisse vers la gauche */
 .liste-notifs li { position: relative; border-radius: var(--rayon-s); }
 .liste-notifs li::after { content: "Lu"; position: absolute; z-index: 0; inset: 0 0 0 auto; display: grid; place-items: center; width: 100px; border-radius: var(--rayon-s); background: var(--ok-doux); color: var(--ok); font: 700 .9rem/1 var(--sans); opacity: 0; pointer-events: none; transition: opacity .2s, background-color .2s; }
@@ -908,6 +910,19 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   .tirer.pret .pieuvre, .tirer.charge .pieuvre { animation: nage .7s ease-in-out infinite; }
   .tirer.charge .pieuvre { animation-duration: .55s; }
   @keyframes nage { 0%, 100% { transform: rotate(-7deg) scaleY(calc(1 + var(--etire, 0) * .45)); } 50% { transform: rotate(7deg) scaleY(calc(1.08 + var(--etire, 0) * .45)); } }
+  /* 11. les saisons passées qui s'ouvrent : leurs billets arrivent l'un après l'autre ; la photo d'un spectacle s'approche au
+     survol ; un bouton qui a réussi le dit (occupe) ; la réponse à une proposition saute */
+  details.saison[open] .saison-corps > .billet { animation: monte .35s cubic-bezier(.2, .8, .2, 1) both; }
+  details.saison[open] .saison-corps > .billet:nth-child(2) { animation-delay: 0.04s; }
+  details.saison[open] .saison-corps > .billet:nth-child(3) { animation-delay: 0.08s; }
+  details.saison[open] .saison-corps > .billet:nth-child(4) { animation-delay: 0.12s; }
+  details.saison[open] .saison-corps > .billet:nth-child(5) { animation-delay: 0.16s; }
+  details.saison[open] .saison-corps > .billet:nth-child(6) { animation-delay: 0.20s; }
+  details.saison[open] .saison-corps > .billet:nth-child(7) { animation-delay: 0.24s; }
+  details.saison[open] .saison-corps > .billet:nth-child(8) { animation-delay: 0.28s; }
+  .cs-photo img { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+  .carte-spectacle:hover .cs-photo img { transform: scale(1.06); }
+  .btn.fait, .rep.pop { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1); }
   /* 9. « tout marquer comme lu » : les notifications s'éteignent l'une après l'autre */
   .notif.balaye { animation: balaye .7s ease-out calc(var(--i, 0) * 50ms) both; }
   @keyframes balaye { from { background: color-mix(in srgb, var(--magenta-doux) 60%, var(--surface)); border-color: color-mix(in srgb, var(--magenta) 32%, var(--filet)); } }
