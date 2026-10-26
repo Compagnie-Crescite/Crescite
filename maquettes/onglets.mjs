@@ -413,7 +413,11 @@ async function regle19(page, tag, log) {
 // bouton de réservation ne lui revient ; la frise de la saison en cours la marque (.frise-point.est-residence). Sur #/saisons,
 // dans chaque groupe de boutons de spectacles (aria-pressed : les filtres, une légende qui filtre), les spectacles en tournée
 // (D.shows, enTournee) d'abord. Les résidences ne viennent que de la base : l'instantané du dépôt n'en a pas (INSTANTANE).
-async function regle23(page, tag, log) {
+// La synthèse (demande de la compagnie, octobre 2026) : les résidences ne sont plus dans les saisons (aucune sur #/saisons ni
+// sur #/saisons/<saison>, aucun repère .est-residence sur leurs frises) mais dans l'historique de chaque spectacle : sur sa
+// page, chacune a sa ligne (dans un historique replié, ou le bilan), qui dit « Résidence », sans réservation, et la frise de sa
+// tournée la marque.
+async function regle23(page, tag, log, n = '') {
   const pfx = `${tag} règle 23`;
   const aller = async h => {
     await page.evaluate(h => { location.hash = h; }, h); await page.waitForTimeout(1300);
@@ -452,6 +456,37 @@ async function regle23(page, tag, log) {
   const saisons = Object.keys(info.parSaison).sort().reverse();
   const choisies = [...(saisons.includes(info.saison) ? [info.saison] : []), ...saisons.filter(k => k !== info.saison).slice(0, 2)];
   let vues = 0;
+  if (n === 'synthese') {
+    // aucune dans les saisons
+    for (const k of choisies) {
+      await aller(k === info.saison ? '#/saisons' : `#/saisons/${k}`);
+      const r = await page.evaluate(({ ids }) => [...ids.filter(id => document.querySelector(`main [data-date-id="${id}"]`)).map(id => `la résidence ${id} est dans la saison`),
+        ...(document.querySelector('main .frise .frise-point.est-residence') ? ['une frise de la saison marque une résidence'] : [])], { ids: info.parSaison[k] });
+      r.slice(0, 6).forEach(x => log.push(`${pfx} ${k} : ${x}`));
+    }
+    // chacune dans l'historique de son spectacle (deux spectacles au plus)
+    const parSp = await page.evaluate(() => { const m = {}; for (const S of Object.values(D.saisons || {})) for (const g of S.spectacles) for (const d of g.dates) if (d.residence && g.slug) (m[g.slug] = m[g.slug] || []).push(d.id); return m; });
+    const sps = Object.keys(parSp).slice(0, 2);
+    for (const sl of sps) {
+      await aller(`#/spectacle/${sl}`);
+      const r = await page.evaluate(({ ids, lib }) => {
+        const pb = [];
+        for (const id of ids) {
+          const el = document.querySelector(`main [data-date-id="${id}"]`);
+          if (!el) { pb.push(`la résidence ${id} n'est pas dans l'historique du spectacle`); continue; }
+          if (lib && !(el.textContent || '').includes(lib)) pb.push(`la ligne de la résidence ${id} ne dit pas « ${lib} »`);
+          if (el.querySelector('[data-reserver]')) pb.push(`la résidence ${id} a un bouton de réservation`);
+        }
+        if (!document.querySelector('main .frise .frise-point.est-residence')) pb.push(`la frise de la tournée ne marque pas ses résidences (.est-residence)`);
+        return pb;
+      }, { ids: parSp[sl], lib: info.lib });
+      vues += parSp[sl].length;
+      r.slice(0, 6).forEach(x => log.push(`${pfx} ${sl} : ${x}`));
+      if (r.length > 6) log.push(`${pfx} ${sl} : … et ${r.length - 6} autre(s)`);
+    }
+    if (tag === 'tab') log.push(`· règle 23 : ${saisons.length ? `aucune résidence dans ${choisies.length} saison(s) ; ${vues} résidences relues dans l'historique de ${sps.length} spectacle(s)` : 'aucune résidence dans les données de la page (INSTANTANE pour les apporter)'} ; filtres : ${groupes.length} groupe(s), ${info.enTournee.length} spectacles en tournée`);
+    return;
+  }
   for (const k of choisies) {
     await aller(k === info.saison ? '#/saisons' : `#/saisons/${k}`);
     const r = await page.evaluate(({ ids, lib, enCours }) => {
@@ -656,6 +691,7 @@ for (const n of names) {
       PERMIS.forEach(p => parts.push(norm(p)));
       window.__corpus = parts.join(' | ');
       window.__norm = norm;
+      window.__sansResidences = document.title !== '' && /synthese\.html/.test(location.pathname);
       // les précisions de dates qu'on ne lit que dans une saison (assez longues, absentes des autres saisons et des dates à
       // venir) : de quoi savoir si une saison est ouverte ou fermée sans la confondre avec une autre ; et les précisions des
       // dates passées d'un spectacle, toutes saisons (son bilan)
@@ -663,7 +699,8 @@ for (const n of names) {
       window.__propres = (k, n = 3, min = 30) => {
         const ailleurs = new Set([...Object.entries(D.saisons || {}).filter(([kk]) => kk !== k).flatMap(([, S]) => (S.spectacles || []).flatMap(g => (g.dates || []).flatMap(precisions))),
           ...(D.dates || []).flatMap(precisions)]);
-        return [...new Set(((D.saisons || {})[k] || { spectacles: [] }).spectacles.flatMap(g => (g.dates || []).map(d => precisions(d)[0])).filter(t => t && t.length >= min && !ailleurs.has(t)))].slice(0, n);
+        // (la synthèse ne met pas les résidences dans les saisons, règle 23 : leurs précisions n'y servent pas de repère)
+        return [...new Set(((D.saisons || {})[k] || { spectacles: [] }).spectacles.flatMap(g => (g.dates || []).filter(d => !(window.__sansResidences && d.residence)).map(d => precisions(d)[0])).filter(t => t && t.length >= min && !ailleurs.has(t)))].slice(0, n);
       };
       window.__passees = (slug, n = 3, min = 20) => [...new Set(Object.values(D.saisons || {}).flatMap(S => (S.spectacles || []).filter(g => g.slug === slug)
         .flatMap(g => (g.dates || []).map(d => precisions(d)[0]))).filter(t => t && t.length >= min))].slice(0, n);
@@ -938,7 +975,7 @@ for (const n of names) {
     // règles 19 et 20, de même (REGLE19=1, REGLE20=1) ; la 19 relit toutes les vues (la nuit, seule)
     if (process.env.REGLE20 === '1') await regle20(page, tag, log);
     if (process.env.REGLE19 === '1') await regle19(page, tag, log);
-    if (process.env.REGLE23 === '1') await regle23(page, tag, log);
+    if (process.env.REGLE23 === '1') await regle23(page, tag, log, n);
     // règle 15 A : un clic ordinaire sur un lien du menu ne fait jouer aucune tentacule (sauf un moment déclaré data-moment)
     if (tag === 'tab') {
       await page.evaluate(() => { location.hash = '#/saisons'; });
