@@ -808,7 +808,7 @@
           <a class="bouton-rond retour" href="#/saison" data-retour data-tt="retour" hidden>${ICONES.retour}<span class="sr">Retour</span></a>
           <a class="marque-mini" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span> <small>équipe</small></a>
           <p class="barre-titre" aria-hidden="true"></p>
-          <div class="barre-actions"><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
+          <div class="barre-actions"><button type="button" class="installer-barre" data-installer-barre hidden>${ICONES.installer}<span>Installer<span class="sr"> l’application</span></span></button><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
         </header>
         <div class="bandeau-etat" id="bandeau-etat"></div>
         <main id="contenu" tabindex="-1"></main>
@@ -818,6 +818,7 @@
     </div>`;
     poserPieuvres();
     majCoquille();
+    majInstallation();
     if (window.ResizeObserver) new ResizeObserver(() => placerCurseur(true)).observe($('.nav-appli'));
     return true;
   }
@@ -2894,13 +2895,36 @@
     if (ou === 'moi') return '<p class="aide">Dans le menu de votre navigateur, choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ». Ce navigateur ne le propose pas ? Ouvrez cette page dans Chrome, Edge ou Safari.</p>';
     return '';
   }
-  function majInstallation() { $$('[data-zone-installation]').forEach(z => { z.innerHTML = zoneInstallation(z.dataset.zoneInstallation); }); }
+  function majInstallation() {
+    $$('[data-zone-installation]').forEach(z => { z.innerHTML = zoneInstallation(z.dataset.zoneInstallation); });
+    $$('[data-installer-barre]').forEach(b => { b.hidden = installee(); });   // la barre : tant que l'application n'est pas installée
+  }
   async function installer() {
     const p = E.installer;
     if (!p) return;
     E.installer = null;
     try { p.prompt(); const { outcome } = await p.userChoice; if (outcome !== 'accepted') E.installer = null; } catch (e) { /* refusé */ }
     majInstallation();
+  }
+  // le bouton « Installer » de la barre (au téléphone, dans le navigateur, en permanence) : l'invite du navigateur quand il
+  // en a une (installer), sinon la marche à suivre, dans une fenêtre
+  function ouvrirModaleInstallation(declencheur = null) {
+    $('#modale-installation')?.remove();
+    const fond = document.createElement('div');
+    fond.className = 'modale-fond'; fond.id = 'modale-installation';
+    const corps = IOS ? `<p>Elle s’ouvre en un geste depuis l’écran d’accueil, même sans réseau, et reçoit les notifications.</p>${ETAPES_IOS}`
+      : '<p>Elle s’ouvre en un geste depuis l’écran d’accueil, même sans réseau.</p><p>Dans le menu de votre navigateur, choisissez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>. Ce navigateur ne le propose pas ? Ouvrez cette page dans Chrome, Edge ou Safari.</p>';
+    fond.innerHTML = `<div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="t-mod-inst">
+        <div class="modale-tete"><h2 id="t-mod-inst">${ICONES.installer} Installer l’application</h2><button type="button" class="modale-fermer" data-fermer-modale aria-label="Fermer">${ICONES.croix}</button></div>
+        <div class="modale-corps">${corps}</div>
+        <div class="pied-form"><button type="button" class="btn principal" data-fermer-modale>Compris</button></div></div>`;
+    document.body.appendChild(fond);
+    const surTouche = e => { if (e.key === 'Escape') fermer(); };
+    const fermer = () => { fond.remove(); document.removeEventListener('keydown', surTouche); if (declencheur && declencheur.isConnected) declencheur.focus(); };
+    $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', fermer));
+    fond.addEventListener('click', e => { if (e.target === fond) fermer(); });
+    document.addEventListener('keydown', surTouche);
+    $('.modale-fermer', fond).focus();
   }
 
   // ================================================================================================ moi
@@ -3920,6 +3944,7 @@
       try { await repondre(id, t.dataset.reponse, c ? c.value.trim() : '', { depuisBouton: true }); } finally { if (t.isConnected) t.disabled = false; }
       return;
     }
+    if (t.matches('[data-installer-barre]')) { vibrer(6); return E.installer ? installer() : ouvrirModaleInstallation(t); }
     if (t.matches('[data-installer]')) return installer();
     if (t.matches('[data-fermer-install]')) { garderPref('installFermee', true); majInstallation(); return; }
     if (t.matches('[data-aide-ios]')) { const z = document.getElementById(t.getAttribute('aria-controls')), ouvrir = t.getAttribute('aria-expanded') !== 'true'; if (z) z.hidden = !ouvrir; t.setAttribute('aria-expanded', String(ouvrir)); return; }

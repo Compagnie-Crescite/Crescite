@@ -116,6 +116,14 @@ fs.mkdirSync(CAPT, { recursive: true });
   const bandeau = await page.evaluate(() => { const m = document.querySelector('.bandeau-etat .message'); return { la: !!m, anim: m && getComputedStyle(m).animationName, h: !!document.querySelector('#bandeau-etat').dataset.h }; });
   ok('13 · le bandeau d\'état entre une fois (monte) et garde sa signature', bandeau.la && bandeau.anim === 'monte' && bandeau.h, JSON.stringify(bandeau));
   ok('15 · les mois de la saison restent en haut', await page.$eval('.o-suite .mois', e => getComputedStyle(e).position) === 'sticky');
+  // le bouton « Installer » de la barre : visible au téléphone dans le navigateur, sa fenêtre s'ouvre et se ferme
+  const inst = await page.evaluate(() => { const b = document.querySelector('[data-installer-barre]'); const r = b.getBoundingClientRect(); return { la: !!b && !b.hidden && getComputedStyle(b).display !== 'none', largeur: Math.round(r.width), texte: b.textContent.trim() }; });
+  await page.click('[data-installer-barre]');
+  await page.waitForTimeout(100);
+  const modale = await page.evaluate(() => { const m = document.querySelector('#modale-installation .modale-boite'); return { la: !!m, titre: m && m.querySelector('h2').textContent.trim(), focus: document.activeElement && document.activeElement.closest('#modale-installation') !== null }; });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(100);
+  ok('« Installer » reste dans la barre au téléphone, ouvre la marche à suivre, Échap la ferme et rend le focus', inst.la && inst.largeur > 70 && /Installer/.test(inst.texte) && modale.la && /Installer l’application/.test(modale.titre) && modale.focus && await page.evaluate(() => !document.querySelector('#modale-installation') && document.activeElement === document.querySelector('[data-installer-barre]')), JSON.stringify({ inst, modale }));
   // 5. l'accueil garde le magenta
   ok('5 · accueil : pas de teinte', await page.$eval('.appli', e => !e.hasAttribute('data-teinte')));
   // 6. la carte : bras et lieux portent leurs dates ; survoler un billet allume son bras
@@ -292,6 +300,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(600);
   const t = await page.evaluate(() => ({ teinte: document.querySelector('.appli').dataset.teinte, onglet: getComputedStyle(document.querySelector('.nav-item[aria-current]')).color, fondCurseur: getComputedStyle(document.querySelector('.nav-curseur')).backgroundColor }));
   ok('ordinateur · la page de Bérénice teinte le rail', t.teinte === '#7a2a5a', JSON.stringify(t));
+  ok('ordinateur · pas de bouton « Installer » dans la barre', await page.$eval('[data-installer-barre]', e => getComputedStyle(e).display === 'none'));
   await page.screenshot({ path: `${CAPT}/ordinateur-date.png` });
   ok('ordinateur · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   await ctx.close();
