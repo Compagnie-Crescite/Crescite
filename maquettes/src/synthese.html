@@ -2260,7 +2260,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      5. Pression : la pièce s'enfonce d'un rien dès le pointerdown (.mv-presse).
      6. Défilement (MOUVEMENT.reveler) : les filets se tracent de gauche à droite, les titres montent, les fiches arrivent
         l'une après l'autre, les chiffres comptent ; les bras de la carte poussent depuis Rouen.
-     7. Ce qui vit : « aujourd'hui » respire sur chaque frise, le point « en tournée » aussi.
+     7. Ce qui vit : « aujourd'hui » respire sur chaque frise, le point « en tournée » aussi ; et la petite pieuvre de
+        l'en-tête (CREATURE, creature.js) : dessinée avec ses vraies tentacules, elle ondule et respire, se penche vers la
+        souris, suit le courant quand la page défile ; à chaque page elle se contracte, et en entrant dans un spectacle une
+        tentacule va souligner le titre, à la couleur du spectacle, puis revient. Lente et de quelques pixels : jamais pénible.
      Les frises (FRISE) sont le calendrier de chaque page : la saison et les saisons passées sur #/saisons, la
      saison passée, la tournée d'un spectacle, les dates scolaires, la diffusion saison par saison, l'histoire de la
      compagnie ; survoler un repère allume sa ligne et sa commune, et inversement ; un clic y mène.
@@ -2939,8 +2942,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     function planifier() { clearTimeout(tAuto); if (affiche && !pause && motionOK()) tAuto = setTimeout(avancer, 6500); }
     function avancer() { if (roule() && !actif() && !(pres && performance.now() - pres.t0 < PRES + 1600)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
 
-    // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur
-    const cibleDe = T => ({ cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile });
+    // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur. Au téléphone, la boucle
+    // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
+    // plat de derrière le point d'accroche, dans la place qu'il y a jusqu'au bord de l'écran (marge : l'épine reste à 14 px du bord)
+    const cibleDe = T => ({ cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
+      ...(mobile ? { racine: .7, corps: .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14 } : {}) });
     // chaque titre a sa tentacule : dans l'ordre du tour de la pieuvre (titres et pointes rangés par leur angle autour de son
     // cœur), sans croisement ; s'il y a plus de titres que de tentacules, une tentacule en sert plusieurs
     function attribuer() {
@@ -2951,11 +2957,12 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       BRAS.forEach(a => { a.T = []; a.rang = 99; });
       const n = ts.length, m = bs.length;
       if (!n || !m) return;
-      // au téléphone, une seule tentacule sort à la fois : la grande boucle en S du côté du titre, la plus épaisse
+      // au téléphone, une seule tentacule sort à la fois : une grande boucle en S, la plus épaisse, qui descend du milieu du logo ;
+      // celle de gauche pour un titre souligné vers la droite (elle arrive par sa gauche), celle de droite pour l'autre sens
       if (mobile) {
         const S = { L: BRAS.find(a => a.cle === 'boucleL'), R: BRAS.find(a => a.cle === 'boucleR') };
         if (S.L && S.R) {
-          TIT.forEach(T => { const a = T.bx + T.w / 2 < W / 2 ? S.L : S.R; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
+          TIT.forEach(T => { const a = T.dirU > 0 ? S.L : S.R; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
           return;
         }
       }
@@ -2993,7 +3000,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       }
     }
     // la mise en page : au bureau, la pieuvre au milieu du premier écran et les titres sur deux arcs, de part et d'autre ; au
-    // téléphone, la pieuvre en haut et les titres dessous, de part et d'autre d'une ligne
+    // téléphone, la pieuvre en haut et les titres dessous, de part et d'autre d'une ligne. Une tentacule rejoint un titre par
+    // son bout tourné vers la pieuvre, le souligne et s'enroule à l'autre bout : au bureau, c'est le bout intérieur, le médaillon
+    // au bout extérieur ; au téléphone, le médaillon est au bout intérieur (près de la ligne) : la tentacule arrive sous lui et
+    // souligne le texte vers l'extérieur (le bout extérieur touche le bord de l'écran : l'y faire venir l'en ferait sortir)
     function mise() {
       const r = el.getBoundingClientRect();
       if (r.width < 10) return;
@@ -3007,8 +3017,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       TIT.forEach(T => { const rg = document.createRange(); rg.selectNodeContents(T.tt); const ls = [...rg.getClientRects()];
         if (ls.length > 1) T.tt.style.width = Math.ceil(Math.max(...ls.map(l => l.width)) + 1) + 'px'; });
       TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
-      // ce qui s'écrit dans chaque titre (ses lignes, sa date), par rapport à lui : les bras passent dessous (image())
-      TIT.forEach(T => { const r0 = T.el.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(T.tt);
+      // ce qui s'écrit dans chaque titre (ses lignes, sa date), par rapport à lui : les bras passent dessous (image()) ; et les
+      // deux bouts du texte (tx0, tx1), par rapport à lui aussi : c'est le texte que la tentacule souligne, pas le médaillon
+      TIT.forEach(T => { const r0 = T.el.getBoundingClientRect(), rt = T.tt.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(T.tt);
+        T.tx0 = rt.left - r0.left; T.tx1 = rt.right - r0.left;
         T.ecrit = [...rg.getClientRects()].map(l => [l.left - r0.left - 3, l.top - r0.top - 3, l.width + 6, l.height + 6]);
         if (T.q && T.q.offsetWidth) T.ecrit.push([T.q.offsetLeft - 3, T.q.offsetTop - 1, T.q.offsetWidth + 6, T.q.offsetHeight + 3, 1]); });
       if (!mobile) {
@@ -3035,14 +3047,16 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         let y = oTop + oh + 74 * ech;
         TIT.forEach((T, i) => {
           const g = i % 2 === 0, ind = IND[i % IND.length];
-          T.droite = !g; T.dirU = g ? 1 : -1;
+          T.droite = !g; T.dirU = g ? -1 : 1;
           T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
           y += T.bh + 30;
         });
         H = Math.max(y + 26, hEcran);
       }
       el.style.height = H + 'px';
-      TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.w + 6 : T.bx - 6, y: T.by + T.th + 5 }; });
+      // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le médaillon est de ce côté : la
+      // tentacule arrive sous lui, et le souligné part du texte)
+      TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
       BRAS.forEach(a => a.t.poser(ox, oy, s));
       attribuer();
       dpr = Math.min(2, devicePixelRatio || 1);
@@ -5256,12 +5270,26 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
       });
       apres(false);
-      if (courantAvant) entrer(type);
+      if (courantAvant) { entrer(type); creature(type); }
     };
     // la première vue (et sous l'ouverture) sans transition ; ensuite, la page pousse (MOUVEMENT.transition)
     const premiere = !courant;
     if (premiere || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type, depuis });
     if (premiere) preparer();
+  }
+  // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois la
+  // page arrivée et les lettres du titre posées, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
+  let tCreature = 0;
+  function creature(type) {
+    if (typeof CREATURE === 'undefined' || !CREATURE.actif) return;
+    CREATURE.revenir();
+    const id = ++tCreature;
+    if (type !== 'spectacle') { CREATURE.reagir(type === 'onglet' ? 'clic' : type === 'retour' ? 'retour' : 'page'); return; }
+    setTimeout(() => {
+      const h = $('.u-titre', main);
+      if (id !== tCreature || !h || !motionOK()) return;
+      CREATURE.vers(h, { couleur: getComputedStyle(h).getPropertyValue('--u-vif').trim() || '#ffffff' });
+    }, 1150);
   }
   // la page qui pousse : <main> monte de 12 px (descend, au retour) ; avec un élément partagé, elle paraît autour de lui
   let entreeMain = null;
@@ -5328,6 +5356,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   if (MV) MV.presse(document);
   lire();
   cadre();
+  // la créature : la petite pieuvre de l'en-tête (la marque, posée par cadre()) vit, avec ses vraies tentacules ; elle prend la
+  // relève du dessin à la fin de l'ouverture. Ses moments sont joués par route() : chaque page, l'entrée dans un spectacle
+  if (typeof CREATURE !== 'undefined' && CREATURE.actif) CREATURE.habiter($('#marque'), { encre: '#ffffff' });
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
   addEventListener('hashchange', route);
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);
