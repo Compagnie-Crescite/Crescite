@@ -76,7 +76,7 @@ html[data-theme="nuit"] .u-arene .dos-h4,
 html[data-theme="nuit"] .u-arene .dos-fiche dt,
 html[data-theme="nuit"] .u-arene .dos-fiche-t { color: var(--u-vif); }
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--haut) + 16px); }
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; scroll-padding-top: calc(var(--haut) + 16px); }   /* (manipulation : pas de zoom au double toucher, qui sortait le menu fixe de l'écran ; le zoom à deux doigts reste) */
 body { margin: 0; background: var(--papier); color: var(--encre); font: 400 1.0625rem/1.6 var(--sans); }
 main { display: block; overflow-x: clip; min-height: 100svh; margin-top: 8px; }   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; (8 px sous le menu flottant) */
 a { color: inherit; }
