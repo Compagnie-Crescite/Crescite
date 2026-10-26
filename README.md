@@ -440,7 +440,9 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   programmer » se modifie dans Textes, et une action culturelle pas encore construite se masque d'une case.
 
 **L'espace de l'équipe** (`equipe/index.html`, en ligne dans `docs/equipe/`) est une application qu'on installe sur
-son téléphone (« Ajouter à l'écran d'accueil » ; sur iPhone : Partager → Sur l'écran d'accueil). En bas, les onglets
+son téléphone (« Ajouter à l'écran d'accueil » ; sur iPhone : Partager → Sur l'écran d'accueil). Au téléphone, dans le
+navigateur, un bouton « Installer » reste dans la barre du haut tant qu'elle n'est pas installée : l'invite du navigateur
+quand il en a une, sinon la marche à suivre. En bas, les onglets
 Saison, Feuilles, Planning, Spectacles et Moi, et les notifications dans la cloche en haut ; sur ordinateur, tout se
 range en colonne à gauche. On y trouve :
 - la prochaine date en grand, aux couleurs du spectacle, avec un compte à rebours ;

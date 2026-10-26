@@ -723,6 +723,15 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .bloc.fichiers h2 + .genre-docs, .bloc.fichiers .message + .genre-docs { margin-top: 6px; }
 .groupe-docs.compagnie { margin-top: 18px; }
 /* la cloche des notifications : en haut au téléphone (la barre du bas garde cinq onglets), dans la colonne à l'ordinateur */
+/* le bouton « Installer » de la barre, au téléphone, dans le navigateur : il reste tant que l'application n'est pas installée
+   (majInstallation le cache une fois l'application sur l'écran d'accueil ; à l'ordinateur, la carte de « Moi » suffit) */
+.installer-barre { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 36px; margin-right: 4px; padding: 0 12px 0 9px; border: 0; border-radius: 999px; background: var(--action); color: var(--sur-action); font: 700 .86rem/1 var(--sans); white-space: nowrap; cursor: pointer; box-shadow: 0 2px 8px -4px rgba(29, 20, 24, .4); }
+.installer-barre .ic { width: 18px; height: 18px; }
+.installer-barre:hover { background: var(--magenta-fonce); color: var(--sur-action); }
+.installer-barre:active { transform: scale(.96); }
+.modale-corps { line-height: 1.5; }
+.modale-corps p { margin: 0 0 10px; }
+@media (min-width: 760px) { .installer-barre { display: none; } }
 .cloche { position: relative; }
 .cloche .pastille-nb { top: -2px; left: auto; right: -4px; }
 .cloche[aria-current] { background: var(--magenta-doux); color: var(--magenta); }
