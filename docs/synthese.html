@@ -7907,14 +7907,27 @@ const PIEUVRE = (() => {
       let k2 = kk * .85, place = c.marge;
       if (prolonge && place != null) { place = Math.min(place, Math.max(40, Math.min(80, .25 * Math.abs(dy)))); k2 = Math.max(k2, 2.5 * place); }
       let corps;
+      const cub = (x0, y0, x1, y1, x2, y2, x3, y3, de) => { const pts = []; for (let j = de; j <= 64; j++) { const u = j / 64, b0 = (1 - u) ** 3, b1 = 3 * (1 - u) ** 2 * u, b2 = 3 * (1 - u) * u * u, b3 = u ** 3; pts.push([b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3, b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3]); } return pts; };
       // par le côté : vers le couloir (dans son sens, puis tout droit), le couloir descendu, le retour à plat sous le titre
       const rail = c.rail != null && du * (c.x - c.rail) > 20 && dy > 160;
-      if (rail) {
-        const cub = (x0, y0, x1, y1, x2, y2, x3, y3, de) => { const pts = []; for (let j = de; j <= 64; j++) { const u = j / 64, b0 = (1 - u) ** 3, b1 = 3 * (1 - u) ** 2 * u, b2 = 3 * (1 - u) * u * u, b3 = u ** 3; pts.push([b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3, b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3]); } return pts; };
-        // (kD : ce qu'elle continue dans son sens avant de s'infléchir ; une boucle qui part vers le haut monte un peu, pas plus)
-        const yM = py + Math.max(70, Math.min(140, dy * .4)), kA = Math.max(30, (yM - py) * .5), kD = Math.max(12, Math.min(36, (yM - py) * .3));
-        corps = cub(px, py, px + Math.cos(a0) * kD, py + Math.sin(a0) * kD, c.rail, yM - kA, c.rail, yM, 0)
-          .concat(cub(c.rail, yM, c.rail, yM + (c.y - yM) * .5, c.rail, c.y, c.x, c.y, 1));
+      if (c.mobile) {
+        // au téléphone, elle arrive sous le titre par un crochet arrondi : un quart de cercle de rayon R (la place qu'il y a
+        // entre le bout du texte et le bord de l'écran, 24 px au plus), à la fin d'une descente verticale à l'aplomb du crochet.
+        // Jamais d'épingle à cheveux : la courbe tourne au plus serré sur ce rayon. Par le côté (un titre lointain) : vers le
+        // couloir, le couloir descendu, puis un glissement en S jusqu'à l'aplomb du crochet ; sinon, depuis la racine, dans
+        // son sens, puis vers l'aplomb du crochet, en descendant
+        const R = Math.max(10, Math.min(24, place != null ? place - 2 : 24)), xr = c.x - du * R, yr = c.y - R;
+        const quart = cub(xr, yr, xr, yr + .552 * R, c.x - du * .552 * R, c.y, c.x, c.y, 1);
+        if (rail) {
+          // (kD : ce qu'elle continue dans son sens avant de s'infléchir ; une boucle qui part vers le haut monte un peu, pas plus)
+          const yM = Math.min(yr - 40, py + Math.max(70, Math.min(140, dy * .4))), kA = Math.max(30, (yM - py) * .5), kD = Math.max(12, Math.min(36, (yM - py) * .3));
+          corps = cub(px, py, px + Math.cos(a0) * kD, py + Math.sin(a0) * kD, c.rail, yM - kA, c.rail, yM, 0)
+            .concat(cub(c.rail, yM, c.rail, yM + (yr - yM) * .5, xr, yr - (yr - yM) * .35, xr, yr, 1))
+            .concat(quart);
+        } else {
+          const k1m = Math.min(kk, 70), kA = Math.max(8, Math.min(90, (yr - py) * .4));
+          corps = cub(px, py, px + Math.cos(a0) * k1m, py + Math.sin(a0) * k1m, xr, yr - kA, xr, yr, 0).concat(quart);
+        }
       } else {
         corps = courbe(k2);
         if (place != null) {
@@ -8065,13 +8078,15 @@ const PIEUVRE = (() => {
       if (Kb - Kr < 4 || k <= 0) return;
       k = Math.min(1, k);   // (une créature agitée ne flotte pas plus fort pour autant)
       let Lb = 0; for (let j = Kr; j < Kb; j++) Lb += P.ln[j];
-      const A = k * Math.min(this.cible.mobile ? 4 : 15, Math.max(2, Lb * .034));
+      const A = k * Math.min(this.cible.mobile ? 7 : 22, Math.max(3, Lb * .05));
       // (les tables du bras, pour ces bornes : la fenêtre, et les trois ondes en espace, décomposées pour que chaque image ne
       // coûte que des produits ; sin(a - uλ) = sin a cos uλ - cos a sin uλ)
       let H = this.houle;
       if (!H || H.Kr !== Kr || H.Kb !== Kb) {
         const n = Kb - Kr, w = new Float64Array(n), c1 = new Float64Array(n), s1 = new Float64Array(n), c2 = new Float64Array(n), s2 = new Float64Array(n), c3 = new Float64Array(n), s3 = new Float64Array(n);
-        for (let i = 1; i < n; i++) { const u = i / n; w[i] = Math.pow(Math.sin(Math.PI * u), 1.4); c1[i] = Math.cos(u * 3.6); s1[i] = Math.sin(u * 3.6); c2[i] = Math.cos(u * 6.5); s2[i] = Math.sin(u * 6.5); c3[i] = Math.cos(u * 1.2); s3[i] = Math.sin(u * 1.2); }
+        // (au téléphone, la houle est plus forte près de la tête, où les bras ont de la place, que le long du bord, où ils se serrent)
+        const serre = this.cible.mobile ? .65 : 0;
+        for (let i = 1; i < n; i++) { const u = i / n; w[i] = Math.pow(Math.sin(Math.PI * u), 1.4) * (1 - serre * u); c1[i] = Math.cos(u * 3.6); s1[i] = Math.sin(u * 3.6); c2[i] = Math.cos(u * 6.5); s2[i] = Math.sin(u * 6.5); c3[i] = Math.cos(u * 1.2); s3[i] = Math.sin(u * 1.2); }
         H = this.houle = { Kr, Kb, w, c1, s1, c2, s2, c3, s3 };
       }
       const a1 = t * .9 + ph, a2 = t * 1.7 + ph * 1.7, a3 = t * .45 + ph * .6;
@@ -8085,7 +8100,7 @@ const PIEUVRE = (() => {
       // autour de son départ et respire (sa spirale se desserre, se resserre)
       let Kc = Kb; while (Kc < M - 2 && Math.abs(norm(P.sg[Kc] - P.sg[Kb])) < .02) Kc++;
       if (M - Kc > 3) {
-        const dr = k * .12 * Math.sin(t * 1.25 + ph * 2.1), e = 1 + k * .16 * Math.sin(t * .8 + ph * 1.3);
+        const dr = k * .2 * Math.sin(t * 1.25 + ph * 2.1), e = 1 + k * .25 * Math.sin(t * .8 + ph * 1.3);
         let ang = P.sg[Kc] + dr, rel = 0, x = X[Kc], y = Y[Kc];
         for (let j = Kc; j < M; j++) {
           if (j > Kc) { rel += norm(P.sg[j] - P.sg[j - 1]); ang = P.sg[Kc] + dr + rel * e; }
@@ -8114,13 +8129,22 @@ const PIEUVRE = (() => {
       // (déployée, pas de taille de guêpe : le dessin s'effile au pied de l'arche ; le bras garde au moins la moitié de sa
       // largeur de racine, et s'amincit doucement vers la pointe)
       if (P.mu > .001 && this.N0 && this.att) { const f = this.N0 * s * (1 - .55 * u) * (1 - e) * P.mu; if (Math.abs(nn) < f) nn = (nv < 0 ? -1 : 1) * f; }
+      // (le raccord à la tête : déployée, la tentacule s'épaissit là où elle sort de la jambe de l'arche, à une vingtaine
+      // d'unités de sa racine, d'une bosse douce (la moitié de sa largeur en plus, éteinte à cinquante unités) : le coin entre
+      // le bras et l'arche se comble, comme la base charnue d'un bras ; rien au pied même, qui reste dans la jambe)
+      // (du côté qui regarde la tête, rien : la bosse ne ressort pas de l'autre bord de la jambe)
+      if (P.mu > .001 && this.att && sv > 0 && sv < 60 && nn * (-sa * (cx - this.ox - 771 * s) + ca * (cy - this.oy - 560 * s)) > 0) { const z = (sv - 22) / 16; nn *= 1 + .45 * Math.exp(-z * z) * P.mu; }
+      // (et son pied, entré dans la jambe de l'arche, se resserre : ses coins ne dépassent pas de la jambe quand le bras en sort
+      // de biais ; le resserrement est dans la jambe, blanc sur blanc, invisible)
+      if (P.mu > .001 && this.att && sv <= 0) nn *= 1 - .35 * P.mu;
       nn *= zk;   // (au loin, plus fine)
       out[0] = cx + tt * ca - nn * sa; out[1] = cy + tt * sa + nn * ca;
     }
     // le contour de la tentacule à l'écran : la peau, et des points ajoutés là où elle s'étire (pas plus de 2,5 px entre deux)
     contour() {
       if (this.poly) return this.poly;
-      const m = this.m, S = this.S, T = this.T, N = this.N, xs = [], ys = [], p = [0, 0], q = [0, 0], libre = this.libres(this.rac);
+      // (le jour : à partir d'un cinquième du bras seulement, loin de la tête, qu'il ne coupe pas)
+      const m = this.m, S = this.S, T = this.T, N = this.N, xs = [], ys = [], p = [0, 0], q = [0, 0], libre = this.libres(Math.max(this.rac, .2));
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       this.point(S[0], T[0], N[0], p);
       for (let k = 0; k < m; k++) {
@@ -8289,7 +8313,7 @@ const PIEUVRE = (() => {
     // la palmure : entre deux tentacules voisines sur la tête (du même côté, par ordre d'attache), un creux arrondi comble
     // l'angle de leurs racines, comme la membrane entre les bras d'une pieuvre. Elle paraît avec le déploiement (rien au
     // repos : le logo), et reste pour une tentacule collée à la tête. En px d'écran, avant les tentacules (qui la recouvrent)
-    palmure(g, ts, encre = '#fff', portee = 70) {
+    palmure(g, ts, encre = '#fff', portee = 90) {
       for (const cote of ['L', 'R']) {
         const B = ts.filter(t => t.att && t.cote === cote && !t.parent && t.pose).sort((a, b) => a.att.y - b.att.y);
         for (let i = 0; i + 1 < B.length; i++) {
@@ -8354,12 +8378,6 @@ const PIEUVRE = (() => {
         g.fill();
         if (o.teinte < .99) { g.globalAlpha = (1 - o.teinte) * al; g.fillStyle = o.encre; g.fill(); }
       } else { g.globalAlpha = al; g.fillStyle = o.encre; g.fill(); }
-      // l'articulation : déployée, la racine (glissée sur la tête) est ronde, de la largeur du bras : ni coupe nette de la
-      // jambe de l'arche ni coin de peau qui dépasse quand le pied pivote
-      if (mu > .01 && t.att && t.N0) {
-        const r = t.racine();
-        g.beginPath(); g.arc(r.x, r.y, (t.N0 + 1.5) * t.s, 0, TAU); g.fillStyle = o.encre; g.globalAlpha = al * Math.min(1, mu * 3); g.fill();
-      }
       g.globalAlpha = 1;
     },
   };
