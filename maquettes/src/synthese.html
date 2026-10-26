@@ -3924,7 +3924,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       theta = vT * (Math.sin(tVie * .7) * 2.2 + Math.sin(tVie * 1.9) * .8) * Math.PI / 180;
       dxT = vT * (Math.sin(tVie * .9) * 12 + Math.sin(tVie * 2.1) * 4);
       dyT = vT * (-8 * (.5 + .5 * Math.sin(tVie * 1.15)) + Math.sin(tVie * .5) * 3);
-      const ptT = [0, 0];
       for (const a of BRAS) {
         let voulu = null, g = null;
         // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; pendant la présentation, chacun va à son titre ;
@@ -3948,10 +3947,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           if (d < 260) { let df = Math.atan2(dy, dx) - a.dir; df = Math.atan2(Math.sin(df), Math.cos(df)); pv = clamp(df, -1.2, 1.2) * .22 * (1 - d / 260); }
         }
         a.penche += (pv - a.penche) * .08;
-        const wT = PIEUVRE.poids(a.t.RY[0]);
-        PIEUVRE.tete(a.t.RX[0], a.t.RY[0], wT, theta, dxT, dyT, ptT);
-        a.t.deplacer(ox + (ptT[0] - a.t.RX[0]) * s, oy + (ptT[1] - a.t.RY[0]) * s, s);
-        if (a.t.avancer(dt, { temps: tVie, onde, penche: a.penche, bob, tourne: theta * wT })) occupe = true;
+        const tT = a.t.suivreTete(ox, oy, s, theta, dxT, dyT);
+        if (a.t.avancer(dt, { temps: tVie, onde, penche: a.penche, bob, tourne: tT })) occupe = true;
         a.em = a.t.mouvement();
       }
       // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)

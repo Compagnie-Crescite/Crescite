@@ -14,9 +14,10 @@ de chaque côté, et quatre franges qui suivent leur spirale.
     au repos, les deux rubans se recouvrent sur la tige ; déployées, chacune emporte sa tige) ;
   - spiraleExt : la spirale extérieure du bas, de son bout intérieur à sa jonction avec la queue ; queue : la queue
     extérieure avec sa boucle en S, de sa pointe à la même jonction. Ce ruban-là ne touche pas la tête.
-  Les huit ont un point d'attache sur la tête (attache : x, y, direction en degrés), étagé sur la jambe de l'arche de
-  son côté (la queue le plus haut, la spirale le plus bas), vers lequel leur racine glisse quand elles se déploient, et
-  dont la direction oriente leur départ (pieuvre.js) : elles sortent de la tête chacune à sa place, sans se croiser ;
+  Les huit ont un point d'attache sur la tête (attache : x, y, direction en degrés), d'où elles partent en se déployant
+  (pieuvre.js) : la queue et la spirale extérieure, de chaque côté, sortent du flanc de la jambe de l'arche (la queue plus
+  haut), leur racine y glisse ; la spirale et la boucle prolongent la jambe gauche, ou la queue de l'œil à droite, depuis
+  leur racine du dessin et dans son sens (leur attache est leur racine : elles continuent le trait, sans raccord à faire) ;
   - frange : les deux tentacules courtes sous la tête, de chaque côté (contour pris dans le dessin, comme avant) ; elles
     sont enfants de leur spirale (parent) : leur racine suit l'épine de la spirale, où qu'elle aille.
 
@@ -67,19 +68,28 @@ PIED_G, PIED_D = (667, 598), (872, 604)           # les pieds de l'arche : là o
 RAC_G = (652, 560)                                # où les bras centraux gauches prennent racine, sur la jambe de l'arche (la tête finit là) ;
                                                   # à droite, la jambe de l'arche finit libre, en pointe : les bras partent de la queue de l'œil (PIED_D)
 JONC_G, JONC_D = (393, 716), (1149, 716)          # où la descente de la boucle en S entre dans la spirale fermée (traits extérieurs)
+# la tête (l'arche et l'œil), ce que pieuvre.js en peint : deux polygones. L'arche et ses jambes, la gauche coupée là où la
+# spirale et la boucle gauches prennent racine (RAC_G, en travers de la jambe, comme leur peau) ; l'œil, coupé le long de la tige
+# qui en descend (le bord de la peau de la spirale droite). Rien des places de repos des tentacules : pieuvre.js n'efface rien
+TETE = [[614, 330, 770, 330, 925, 330, 925, 470, 925, 602, 800, 602, 690, 602, 670, 554, 667.9, 554.9, 636.1, 565.1, 614, 572, 614, 450],
+        [755, 540, 880, 540, 881, 602.2, 879.8, 602.4, 863.2, 606.1, 864.7, 609.7, 865.3, 614.8, 865.2, 619.4, 864.8, 622.8, 864.1, 626.1, 863, 629.5, 861.6, 632.8, 860, 635.9, 858, 639.3, 855.8, 642.6, 853.3, 645.8, 850.6, 649.1, 849.3, 650.6, 755, 650.6]]
+# ce que la tête peint en plus au repos seulement, qui s'efface quand les tentacules nommées s'en vont : les bouts du dessin que
+# leur peau (un ruban) ne couvre pas tout à fait, un liseré le long de la boucle gauche, le coin où la tige droite rejoint sa boucle
+REPOS = [{"bras": ["boucleL"], "poly": [600, 520, 614, 520, 614, 602, 600, 602]},
+         {"bras": ["spiraleR", "boucleR"], "poly": [853.3, 645.8, 850.6, 649.1, 848.3, 655.7, 846.1, 659.5, 844, 663.1, 842.6, 665, 820, 665, 820, 647]}]
 TENTACULES = [
-    ("queueL", "tentacles-left", [(263, 717), (446, 598), JONC_G], 0, {"ruban": True, "attache": (643, 472, 165)}),
-    ("spiraleExtL", "tentacles-left", [(432, 699), (513, 818), (403, 856), (373, 792), JONC_G], 0, {"ruban": True, "bout": False, "attache": (641, 502, 150)}),
-    ("spiraleL", "tete", [(558, 713), (561, 821), (656, 881), (737, 800), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "bout": False, "attache": (652, 560, 100)}),
-    ("boucleL", "tete", [(525.5, 710.5), (552, 512), (558, 713), (656, 881), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "attache": (645, 532, 130)}),
+    ("queueL", "tentacles-left", [(263, 717), (446, 598), JONC_G], 0, {"ruban": True, "attache": (641.5, 482, 160)}),
+    ("spiraleExtL", "tentacles-left", [(432, 699), (513, 818), (403, 856), (373, 792), JONC_G], 0, {"ruban": True, "bout": False, "attache": (643.5, 526, 142)}),
+    ("spiraleL", "tete", [(558, 713), (561, 821), (656, 881), (737, 800), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "bout": False, "attache": (652, 560, 72.38)}),
+    ("boucleL", "tete", [(525.5, 710.5), (552, 512), (558, 713), (656, 881), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "attache": (652, 560, 72.56)}),
     ("frangeHL", "head-left", [(589, 730), (690, 640), 85], 12, {"parent": "spiraleL"}),
     ("frangeBL", "head-left", [(587, 792), (700, 650), 160], 12, {"parent": "spiraleL"}),
     ("frangeBR", "head-right", [(955, 792), (842, 650), 160], 12, {"parent": "spiraleR"}),
     ("frangeHR", "head-right", [(953, 730), (852, 640), 85], 12, {"parent": "spiraleR"}),
-    ("spiraleR", "head-right", [(948, 604), (986, 767), (882, 881), (800, 746), (850, 686), PIED_D], 0, {"ruban": True, "bout": False, "attache": (872, 604, 82)}),
-    ("boucleR", "head-right", [(1011, 710), (1028, 548), (948, 604), (882, 881), (850, 686), PIED_D], 0, {"ruban": True, "attache": (872, 604, 52)}),
-    ("spiraleExtR", "tentacles-right", [(1100, 703), (1017, 818), (1130, 856), (1160, 792), JONC_D], 0, {"ruban": True, "bout": False, "attache": (896, 502, 30)}),
-    ("queueR", "tentacles-right", [(1279, 712), (1096, 598), JONC_D], 0, {"ruban": True, "attache": (895, 472, 15)}),
+    ("spiraleR", "head-right", [(948, 604), (986, 767), (882, 881), (800, 746), (850, 686), PIED_D], 0, {"ruban": True, "bout": False, "attache": (871.5, 604.25, 77.62)}),
+    ("boucleR", "head-right", [(1011, 710), (1028, 548), (948, 604), (882, 881), (850, 686), PIED_D], 0, {"ruban": True, "attache": (871.5, 604.25, 77.62)}),
+    ("spiraleExtR", "tentacles-right", [(1100, 703), (1017, 818), (1130, 856), (1160, 792), JONC_D], 0, {"ruban": True, "bout": False, "attache": (893, 526, 38)}),
+    ("queueR", "tentacles-right", [(1279, 712), (1096, 598), JONC_D], 0, {"ruban": True, "attache": (895.5, 482, 20)}),
 ]
 
 
@@ -315,7 +325,7 @@ def main():
     out = {"_note": "Les tentacules du logo 2.0 : épine (de la racine à la pointe) et peau (s, t, d le long de l'épine), "
                     "coordonnées du dessin source ; attache : où la racine va sur la tête en se déployant ; parent : la "
                     "tentacule suivie. Fait par maquettes/pieuvre.py.",
-           "lisere": LISERE, "tete": [[600, 330, 310, 272], [755, 540, 140, 125]], "bras": bras}
+           "lisere": LISERE, "tete": TETE, "repos": REPOS, "bras": bras}
     SORTIE.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"écrit {SORTIE.relative_to(ROOT)} ({SORTIE.stat().st_size // 1024} Ko)")
     if "--voir" in sys.argv:
