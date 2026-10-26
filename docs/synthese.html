@@ -3226,6 +3226,15 @@ const EDITION = (() => {
   .ed-barre .ed-etat { font-weight: 700; margin-right: 4px; }
   .ed-barre .ed-etat::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ed-accent-d); margin-right: 7px; vertical-align: 1px; }
   .ed-barre .ed-nb { opacity: .72; font-size: 13px; }
+  .ed-barre.ed-sale .ed-etat::before { background: #e9a23b; }
+  .ed-barre.ed-ok .ed-etat::before { background: #2bb673; }
+  .ed-actif [data-edit] { transition: outline-color .2s, background-color .2s; }
+  @media (prefers-reduced-motion: no-preference) {
+    html:not(.still) .ed-barre.ed-sale .ed-etat::before { animation: ed-bat 1.6s ease-out infinite; }
+    @keyframes ed-bat { 0% { box-shadow: 0 0 0 0 rgba(233, 162, 59, .6); } 70%, 100% { box-shadow: 0 0 0 8px rgba(233, 162, 59, 0); } }
+    html:not(.still) .ed-barre.ed-ok .ed-etat::before { animation: ed-ok .5s cubic-bezier(.3, 1.6, .5, 1); }
+    @keyframes ed-ok { from { transform: scale(.4); } }
+  }
   .ed-bt { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ed-trait-d); background: var(--ed-fond-d); color: var(--ed-encre-d); border-radius: 999px; padding: 6px 13px; cursor: pointer; font-weight: 650; text-decoration: none; white-space: nowrap; }
   .ed-bt:hover { border-color: var(--ed-encre-d); }
   .ed-bt.ed-plein { background: var(--ed-accent-d); border-color: var(--ed-accent-d); color: var(--ed-sur-d); }
@@ -3391,6 +3400,7 @@ const EDITION = (() => {
   function majBarre() {
     if (!barre) return;
     const n = modifies.size;
+    barre.classList.toggle('ed-sale', n > 0);              // le point de la barre bat tant que des modifications attendent
     $('.ed-nb', barre).textContent = n ? `${n} modification${n > 1 ? 's' : ''} à enregistrer` : 'Cliquez un texte pour l’écrire, une date pour la modifier';
     $('[data-ed="enregistrer"]', barre).disabled = !n;
     $('[data-ed="annuler"]', barre).disabled = !n;
@@ -3470,6 +3480,7 @@ const EDITION = (() => {
       modifies.clear();
       $$('.ed-modifie').forEach(el => el.classList.remove('ed-modifie'));
       majBarre();
+      if (barre) { barre.classList.add('ed-ok'); setTimeout(() => barre?.classList.remove('ed-ok'), 1600); }   // vert un instant
       DONNEES.suspendre(false);
       await DONNEES.recharger({ force: true });
       annoncer('Enregistré : le site est à jour.');

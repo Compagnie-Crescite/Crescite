@@ -54,7 +54,10 @@ const MEMOIRE = {
 };
 const SESSION = { access_token: 'x', refresh_token: 'y', token_type: 'bearer', expires_in: 864000, expires_at: Math.floor(d0 / 1000) + 864000, user: { id: 'u-essai', email: 'camille@example.org', aud: 'authenticated' } };
 const INIT = `localStorage.setItem('crescite-equipe', ${JSON.stringify(JSON.stringify(SESSION))});
-localStorage.setItem('crescite-equipe-donnees', ${JSON.stringify(JSON.stringify(MEMOIRE))});`;
+localStorage.setItem('crescite-equipe-donnees', ${JSON.stringify(JSON.stringify(MEMOIRE))});
+window.__longues = []; window.__pret = 0;
+try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (window.__pret && e.startTime > window.__pret) window.__longues.push(Math.round(e.duration)); }).observe({ type: 'longtask', buffered: true }); } catch (e) {}
+`;
 
 const resultats = [];
 const ok = (nom, v, detail = '') => { resultats.push([v ? 'ok' : 'KO', nom, detail]); };
@@ -73,18 +76,20 @@ async function toucher(page, points, { pas = 8, dt = 16 } = {}) {
 }
 async function lacher(cdp) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await cdp.detach(); }
 
-async function ouvrir(navigateur, { reduit = false, hash = '#/saison' } = {}) {
-  const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: reduit ? 'reduce' : 'no-preference', locale: 'fr-FR', timezoneId: 'UTC' });
+async function ouvrir(navigateur, { reduit = false, hash = '#/saison', sombre = false } = {}) {
+  const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: reduit ? 'reduce' : 'no-preference', colorScheme: sombre ? 'dark' : 'light', locale: 'fr-FR', timezoneId: 'UTC' });
   await ctx.route(/supabase\.co|fonts\.g/, r => (/crescite_notifications/.test(r.request().url()) && r.request().method() === 'PATCH' ? r.fulfill({ status: 204, body: '' }) : r.abort()));
   const page = await ctx.newPage();
+  if (process.env.CPU) { const cdp = await ctx.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: +process.env.CPU }); }   // CPU=4 : un téléphone lent
   const erreurs = [];
   page.on('pageerror', e => erreurs.push(String(e.message || e)));
   page.on('console', m => { if (m.type() === 'error' && !/supabase|Failed to load resource|net::ERR/i.test(m.text())) erreurs.push(m.text()); });
   await page.clock.install({ time: d0 });
   await page.addInitScript(INIT);
-  await page.goto(`${URL0}${hash}`);
+  await page.goto(hash.startsWith('?') ? `${URL0}${hash}` : `${URL0}${hash}`);
   await page.waitForSelector('#app > .appli', { timeout: 15000 });
   await page.waitForSelector('#contenu .heros, #contenu .titre-vue', { timeout: 15000 });
+  await page.evaluate(() => { window.__pret = performance.now(); });
   return { ctx, page, erreurs };
 }
 
@@ -107,6 +112,10 @@ fs.mkdirSync(CAPT, { recursive: true });
   });
   ok('3 · le trait « maintenant » à mi-course (--avance 0,5)', frise.avance === '0.500', JSON.stringify(frise));
   ok('3 · « dans 1 h 35 » sous la prochaine étape', (frise.dans || '').replace(/ /g, ' ') === 'dans 1 h 35', frise.dans);
+  // 13. le bandeau d'état (hors connexion) entre, et ne se redessine pas tant qu'il ne change pas
+  const bandeau = await page.evaluate(() => { const m = document.querySelector('.bandeau-etat .message'); return { la: !!m, anim: m && getComputedStyle(m).animationName, h: !!document.querySelector('#bandeau-etat').dataset.h }; });
+  ok('13 · le bandeau d\'état entre une fois (monte) et garde sa signature', bandeau.la && bandeau.anim === 'monte' && bandeau.h, JSON.stringify(bandeau));
+  ok('15 · les mois de la saison restent en haut', await page.$eval('.o-suite .mois', e => getComputedStyle(e).position) === 'sticky');
   // 5. l'accueil garde le magenta
   ok('5 · accueil : pas de teinte', await page.$eval('.appli', e => !e.hasAttribute('data-teinte')));
   // 6. la carte : bras et lieux portent leurs dates ; survoler un billet allume son bras
@@ -175,6 +184,11 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.goto(`${URL0}#/saison`); await page.waitForSelector('#billet-102', { timeout: 8000 });
   await page.waitForTimeout(300);
   ok('4 · le talon du billet : règle :active sur .billet-pied', await page.evaluate(() => [...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.cssText.includes('.billet:has(.lien-etendu:active) .billet-pied')); } catch (e) { return false; } })));
+  // 14. la page d'un spectacle se pose : sa photo se cale puis dérive, ses lignes montent
+  await page.goto(`${URL0}#/spectacles/berenice`); await page.waitForSelector('.tete-spectacle', { timeout: 8000 });
+  await page.waitForTimeout(200);
+  const ts = await page.evaluate(() => ({ photo: getComputedStyle(document.querySelector('.ts-photo img')).animationName, corps: getComputedStyle(document.querySelector('.ts-corps > :nth-child(2)')).animationName, clip: getComputedStyle(document.querySelector('.ts-photo')).overflow }));
+  ok('14 · la page d\'un spectacle se pose (pose puis dérive, lignes qui montent, photo cadrée)', /pose/.test(ts.photo) && /derive/.test(ts.photo) && ts.corps === 'monte' && ts.clip === 'hidden', JSON.stringify(ts));
   // 9. les notifications : en-têtes épinglés, glisser pour lire, tout marquer lu
   await page.goto(`${URL0}#/notifications`);
   await page.waitForSelector('.liste-notifs .notif.non-lue', { timeout: 8000 });
@@ -195,12 +209,28 @@ fs.mkdirSync(CAPT, { recursive: true });
   const balaye = await page.evaluate(() => ({ balaye: document.querySelectorAll('.liste-notifs .notif.balaye').length, nonLues: document.querySelectorAll('.liste-notifs .notif.non-lue').length, anim: (x => x && getComputedStyle(x).animationName)(document.querySelector('.notif.balaye')) }));
   ok('9 · « tout marquer comme lu » : la dernière non lue s\'éteint (balaye)', balaye.balaye === 1 && balaye.nonLues === 0 && balaye.anim === 'balaye', JSON.stringify(balaye));
   await page.screenshot({ path: `${CAPT}/notifications.png`, fullPage: false });
+  // 12. la feuille de route en direct : une feuille fictive (le rendu de FEUILLE.html) posée dans la page, relue par majFrises
+  await page.evaluate(() => {
+    const j = new Date(), JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'], MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    const titre = `${JOURS[j.getDay()]} ${j.getDate() === 1 ? '1er' : j.getDate()} ${MOIS[j.getMonth()]}`;
+    document.querySelector('#contenu').insertAdjacentHTML('beforeend', `<div class="feuille-cadre"><article class="fdr"><h2 class="fdr-rub">Planning</h2><h3 class="fdr-jour">Lundi 2 mars</h3><p class="fdr-p">9h : montage</p>
+      <h3 class="fdr-jour">${titre.charAt(0).toUpperCase()}${titre.slice(1)}</h3><p class="fdr-p">9h30 : départ de Rouen</p><p class="fdr-p">12h30-13h30 : déjeuner</p><p class="fdr-p">déjeuner : tout le monde</p><p class="fdr-p"><span class="g">15h35 : représentation</span></p><p class="fdr-p">17h : démontage</p></article></div>`);
+  });
+  await page.clock.runFor(30 * 1000);
+  const direct = await page.evaluate(() => [...document.querySelectorAll('.feuille-cadre .fdr-p')].map(p => `${p.textContent.slice(0, 12)}|${p.className.replace('fdr-p', '').trim()}`));
+  ok('12 · la feuille de route en direct : à 14 h 31, le matin est passé, le déjeuner aussi, la représentation attend', JSON.stringify(direct) === JSON.stringify(['9h : montage|', '9h30 : dépar|passe', '12h30-13h30 |passe', 'déjeuner : t|passe', '15h35 : repr|', '17h : démont|']), JSON.stringify(direct));
+  await page.clock.runFor(70 * 60 * 1000);
+  const direct2 = await page.evaluate(() => [...document.querySelectorAll('.feuille-cadre .fdr-p')].map(p => p.className.replace('fdr-p', '').trim()));
+  ok('12 · à 15 h 41, la représentation se passe maintenant (« en ce moment »)', JSON.stringify(direct2) === JSON.stringify(['', 'passe', 'passe', 'passe', 'maintenant', '']) && await page.evaluate(() => getComputedStyle(document.querySelector('.fdr-p.maintenant'), '::after').content.includes('en ce moment')), JSON.stringify(direct2));
   // 7. l'heure changée : la classe fraiche n'est posée qu'avec une modification récente (ici aucune)
   await page.goto(`${URL0}#/date/101`); await page.waitForSelector('.bloc .horaires', { timeout: 8000 });
   ok('7 · sans changement récent, pas de lavis', await page.evaluate(() => !document.querySelector('.horaires li.fraiche')));
   // 8. la checklist : le bloc demande le septième script (absent hors ligne) ; la règle de la coche est en place
   ok('8 · la coche dessinée : règles en place', await page.evaluate(() => [...document.styleSheets].some(s => { try { return [...s.cssRules].some(r => r.cssText.includes('.camion-item.coche .coche-svg path')); } catch (e) { return false; } })));
   ok('erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  const longues = await page.evaluate(() => window.__longues);
+  console.log(`tâches longues (ms) : ${JSON.stringify(longues)}`);
+  ok('tâches longues après l\'ouverture : aucune au-delà de 200 ms', longues.every(d => d < 200), JSON.stringify(longues));
   await ctx.close();
 }
 
@@ -224,6 +254,28 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('réduit · pas de retour au doigt (le bouton Retour reste)', !pendant && redR.hash === '#/date/102', JSON.stringify({ pendant, redR }));
   ok('réduit · la teinte du spectacle reste (ce n\'est pas du mouvement)', redT === '#1f5f8b', JSON.stringify({ redT }));
   ok('réduit · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
+// ================================================================================ ?anim=0 : rien ne bouge, pas même la feuille de style
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '?anim=0#/saison' });
+  await page.waitForTimeout(300);
+  ok('?anim=0 · html.still, la lueur ne respire pas, le curseur des onglets ne glisse pas', await page.evaluate(() => document.documentElement.classList.contains('still') && getComputedStyle(document.querySelector('.heros-motif')).animationName === 'none' && getComputedStyle(document.querySelector('.nav-curseur')).transitionDuration.split(',').every(x => x.trim() === '0s')));
+  ok('?anim=0 · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
+// ================================================================================ la nuit : les mêmes vues, en mode sombre (captures)
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { sombre: true });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${CAPT}/accueil-nuit.png` });
+  await page.goto(`${URL0}#/date/102`); await page.waitForSelector('.heros-page', { timeout: 8000 }); await page.waitForTimeout(400);
+  await page.screenshot({ path: `${CAPT}/date-nuit.png` });
+  await page.goto(`${URL0}#/notifications`); await page.waitForSelector('.liste-notifs', { timeout: 8000 }); await page.waitForTimeout(300);
+  await page.screenshot({ path: `${CAPT}/notifications-nuit.png` });
+  ok('nuit · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   await ctx.close();
 }
 

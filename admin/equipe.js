@@ -906,7 +906,7 @@ function panneauPrevenir(zone, d) {
   if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); return; }
   const s = spectacle(d.spectacle_id), n = equipeDeLaDate(d).length;
   const p = document.createElement('div');
-  p.className = 'bloc'; p.id = 'd-prevenir-zone';
+  p.className = 'bloc ad-neuf'; p.id = 'd-prevenir-zone';
   p.innerHTML = `<h3>Prévenir l’équipe</h3>
     <p class="aide">Une notification à ${n ? `chacune des ${n} personnes de l’équipe de cette date` : 'l’équipe de cette date (personne pour l’instant)'} : dans son espace, et sur son téléphone si elle s’y est abonnée.</p>
     <div class="champ"><label for="pv-titre">Titre</label><input type="text" id="pv-titre" maxlength="120" value="${esc(`${s?.titre || 'Date'} · ${jourCourt(d.debut)}`)}"></div>
@@ -928,6 +928,7 @@ function panneauPrevenir(zone, d) {
       return erreur(error, 'Notification non envoyée');
     }
     p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false');
+    const b = $('#d-prevenir', zone); if (b && +data) { b.classList.add('sonne'); setTimeout(() => b.classList.remove('sonne'), 900); }   // la cloche sonne
     annoncer(+data ? `Notification envoyée à ${+data} personne${+data > 1 ? 's' : ''}.` : 'Personne à prévenir : l’équipe de cette date est vide.');
   });
 }
@@ -943,7 +944,11 @@ const texteACompleter = (n, forme) => (n ? (forme === 'nombre' ? String(n) : `${
 const resteFeuille = (dateId, forme = 'texte') => { const n = E.equipeInstallee ? aCompleter(dateId) : 0;
   return `<span class="badge option a-completer${forme === 'nombre' ? ' nombre' : ''}" data-a-completer="${dateId}" data-forme="${forme}"${forme === 'nombre' ? ' aria-hidden="true"' : ''}${n ? '' : ' hidden'}>${texteACompleter(n, forme)}</span>`; };
 function majACompleter() {
-  $$('[data-a-completer]').forEach(el => { const n = aCompleter(+el.dataset.aCompleter); el.hidden = !n; el.textContent = texteACompleter(n, el.dataset.forme); });
+  $$('[data-a-completer]').forEach(el => {
+    const n = aCompleter(+el.dataset.aCompleter), t = texteACompleter(n, el.dataset.forme);
+    if (!el.hidden && el.textContent !== t) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }   // le compte saute
+    el.hidden = !n; el.textContent = t;
+  });
   $$('[data-statut-feuille]').forEach(el => { const f = E.feuilles.find(x => x.date_id === +el.dataset.statutFeuille); el.textContent = f ? (f.statut === 'publiee' ? `v${f.version}` : 'brouillon') : ''; });
   ajusterPied();
 }
@@ -1124,7 +1129,7 @@ function dessinerFeuille(etat) {
   // remplit sans viser la page (petite, au téléphone). Ce qu'on y écrit prend la place de l'amorce, comme un clic sur elle
   // (« Annuler » de la barre le reprend) ; un téléphone, un contact, l'adresse du lieu iront dans leur fiche à l'enregistrement.
   const pm = $('#fr-manques', zone);
-  let signatureManques = null, manquesPrevus = 0;
+  let signatureManques = null, manquesPrevus = 0, nbManquesAvant = null;
   const blocsCourants = () => (etat.editeur ? etat.editeur.blocs() : F.contenu.blocs);
   const contexteManque = m => [m.jour, m.ligne.replace(/^[\s:–—-]+|[\s:–—-]+$/g, '') || m.rubrique].filter(Boolean).join(' · ');
   const exempleManque = m => /^téléphone/.test(m.texte) ? 'le numéro' : /^contact sur place/.test(m.texte) ? 'nom et numéro' : /^adresse/.test(m.texte) ? 'numéro, rue, code postal'
@@ -1145,6 +1150,8 @@ function dessinerFeuille(etat) {
     pm.innerHTML = xs.length ? `<details${etat.manquesFermes ? '' : ' open'}><summary><span class="fr-m-titre">À compléter</span><span class="badge option">${xs.length}</span><span class="aide">ce qui est encore en gris sur la page</span></summary>
       <ul class="fr-m-liste">${xs.map((m, i) => { const g = gardeDe(m), cle = `${m.id}|${m.k}`; return `<li data-m="${esc(cle)}"><label for="fr-m-${i}"><span class="fr-m-ctx">${esc(contexteManque(m))}</span> <span class="fr-m-q">${esc(m.texte)}</span>${g ? `<small class="fr-m-garde">${esc(g)}</small>` : ''}</label>
         <span class="fr-m-saisie"><input id="fr-m-${i}" type="${/^téléphone/.test(m.texte) ? 'tel' : 'text'}" autocomplete="off" enterkeyhint="done" value="${esc(saisies.get(cle) || '')}" placeholder="${esc(exempleManque(m))}"><button type="button" class="btn petit" data-m-ok>Écrire</button></span></li>`; }).join('')}</ul></details>` : '';
+    if (nbManquesAvant !== null && xs.length < nbManquesAvant) $('summary .badge', pm)?.classList.add('pop');   // le compte saute quand il baisse
+    nbManquesAvant = xs.length;
     if (focus !== null) { const ins = $$('li[data-m] input', pm); (ins[Math.min(focus, ins.length - 1)] || $('[data-enregistrer]', zone))?.focus(); }
     else if (actif) { const i = $$('li[data-m]', pm).find(li => li.dataset.m === actif.m)?.querySelector('input'); if (i) { i.focus(); i.setSelectionRange(actif.i, actif.i); } }
   }
@@ -1161,6 +1168,26 @@ function dessinerFeuille(etat) {
   };
   pm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.fr-m-saisie input')) { e.preventDefault(); ecrireManque(e.target.closest('li')); } });
   pm.addEventListener('click', e => { const b = e.target.closest('[data-m-ok]'); if (b) ecrireManque(b.closest('li')); });
+  // l'amorce visée depuis la liste s'allume sur la page (au survol, ou quand on écrit dans son champ) : le bloc par son id,
+  // l'amorce par son rang parmi les amorces du bloc (k : le rang du segment)
+  const amorceDe = li => {
+    const [id, k] = (li.dataset.m || '').split('|'), b = blocsCourants().find(x => x.id === id), el = $(`#a4-doc [data-id="${CSS.escape(id)}"]`);
+    if (!b || !el || !Array.isArray(b.segments)) return null;
+    return $$('.amorce', el)[b.segments.slice(0, +k).filter(s => s.amorce).length] || null;
+  };
+  const eteindreAmorce = () => $$('#a4-doc .amorce.visee').forEach(a => a.classList.remove('visee'));
+  const allumerAmorce = (e, defiler) => {
+    const li = e.target.closest && e.target.closest('li[data-m]');
+    eteindreAmorce();
+    const a = li && amorceDe(li);
+    if (!a) return;
+    a.classList.add('visee');
+    if (defiler) a.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+  pm.addEventListener('mouseover', e => allumerAmorce(e, false));
+  pm.addEventListener('mouseleave', eteindreAmorce);
+  pm.addEventListener('focusin', e => allumerAmorce(e, true));
+  pm.addEventListener('focusout', e => { if (!e.relatedTarget || !pm.contains(e.relatedTarget)) eteindreAmorce(); });
   pm.addEventListener('toggle', e => { if (e.target.tagName === 'DETAILS') etat.manquesFermes = !e.target.open; }, true);
   // ---- l'hébergement : de quelle feuille le reprendre (au même lieu, à défaut dans la même commune ; par défaut, la
   // dernière écrite : FEUILLE.hebergements). Le choix se lit dans la page (FEUILLE.origineHebergement) : un autre choix
@@ -1276,6 +1303,7 @@ async function enregistrerFeuille(etat, statut, bouton) {
   E.sale = false;
   if (etat.nettoyer) etat.nettoyer();
   dessinerFeuille(etat);
+  if (statut === 'publiee') $('.fr-badge .badge')?.classList.add('pop');
   annoncer(statut === 'publiee' ? (avant?.statut === 'publiee' ? `Mise à jour publiée : l’équipe voit la version ${r.data.version}.` : `Publiée pour l’équipe : version ${r.data.version}.`)
     : avant?.statut === 'publiee' ? 'Repassée en brouillon : l’équipe ne la voit plus.' : 'Brouillon enregistré : l’équipe ne le voit pas encore.');
   bravo();
@@ -1576,6 +1604,7 @@ ${FEUILLE.cssPage('.a4-doc')}
 .a4-doc .b-entete.base::after { display: none; }
 .a4-doc .amorce { color: #7c7c7c; font-style: italic; font-weight: 400; background: #eeeeee; border-radius: 3px; padding: 0 2px; cursor: pointer; user-select: none; -webkit-user-select: none; }
 .a4-doc .amorce:hover { background: #e0e0e0; color: #444; }
+.a4-doc .amorce.visee { background: var(--accent-doux); color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }   /* visée depuis « À compléter » */
 .a4-doc .b-saut { display: flex; align-items: center; gap: 8px; min-height: 0; height: 16px; color: #9a9a9a; font: 700 8pt/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; user-select: none; -webkit-user-select: none; white-space: nowrap; }
 .a4-doc .b-saut::before, .a4-doc .b-saut::after { content: ""; flex: 1; border-top: 1px dashed #bdbdbd; }
 .a4-doc .b-tableau td { outline: none; }
@@ -2728,6 +2757,8 @@ function vueEquipeFrais(tete, parties) {
   poserJustificatifs($('#table-frais'));
 }
 
+// la note de frais dont le statut vient de changer : son badge saute, une fois la liste redessinée
+const sauterStatutFrais = id => requestAnimationFrame(() => $(`[data-frais-id="${id}"] .badge`)?.classList.add('pop'));
 function brancherFraisAdmin() {
   $('#btn-export-csv-frais')?.addEventListener('click', exporterCsvFrais);
 
@@ -2745,7 +2776,7 @@ function brancherFraisAdmin() {
         const f = E.frais.find(x => x.id === id);
         if (f) { f.statut = 'valide'; f.valide_le = new Date().toISOString(); }
         annoncer('Note de frais validée.');
-        vueEquipe('frais');
+        vueEquipe('frais'); sauterStatutFrais(id);
       } catch (err) {
         erreur(err, 'Validation impossible');
         b.disabled = false;
@@ -2766,7 +2797,7 @@ function brancherFraisAdmin() {
         const f = E.frais.find(x => x.id === id);
         if (f) { f.statut = 'rembourse'; f.rembourse_le = new Date().toISOString(); }
         annoncer('Note de frais marquée remboursée.');
-        vueEquipe('frais');
+        vueEquipe('frais'); sauterStatutFrais(id);
       } catch (err) {
         erreur(err, 'Modification impossible');
         b.disabled = false;
@@ -2785,7 +2816,7 @@ function brancherFraisAdmin() {
         const f = E.frais.find(x => x.id === id);
         if (f) f.statut = 'refuse';
         annoncer('Note de frais refusée.');
-        vueEquipe('frais');
+        vueEquipe('frais'); sauterStatutFrais(id);
       } catch (err) {
         erreur(err, 'Refus impossible');
         b.disabled = false;
