@@ -668,6 +668,10 @@
   const avecSignaler = () => SONDES.signaler === 'ok';
   const avecChiffres = () => SONDES.chiffres === 'ok';
   const avecModifier = () => SONDES.modifier === 'ok';
+  // le « Modifier » d'une date (la boîte de l'équipe, crescite_modifier_date) : pour l'équipe ; un compte qui administre
+  // a ses propres feuilles d'un appui long (« Modifier la date… », « Les représentations… » : voir « modifier depuis le
+  // téléphone »), une seule voie, pas deux. Les fichiers d'un spectacle, eux, n'ont que la boîte de l'équipe : elle sert à tous
+  const modifierDateEnEquipe = () => avecModifier() && !E.admin;
 
   // en attendant la base : l'application, et la forme de ce qui arrive
   function squelette() {
@@ -1503,7 +1507,7 @@
     if (!passee && vive) {
       // seulement quand la base a leurs scripts (le neuvième, le quatorzième, le septième : voir sonder)
       if (avecSignaler()) gestes.push(`<button type="button" class="geste" data-retard="${d.id}">${ICONES.alerte}<span>Retard</span><span class="sr"> : signaler un retard ou un imprévu</span></button>`);
-      if (avecModifier()) gestes.push(`<button type="button" class="geste" data-modifier-date="${d.id}" aria-haspopup="dialog">${ICONES.crayon}<span>Modifier</span><span class="sr"> : l’horaire et les précisions de cette date</span></button>`);
+      if (modifierDateEnEquipe()) gestes.push(`<button type="button" class="geste" data-modifier-date="${d.id}" aria-haspopup="dialog">${ICONES.crayon}<span>Modifier</span><span class="sr"> : l’horaire et les précisions de cette date</span></button>`);
       if (avecIdeale()) gestes.push(`<a class="geste" href="#/frais?date=${d.id}">${ICONES.euro}<span>Frais</span><span class="sr"> : ajouter une note de frais pour cette date</span></a>`);
     }
     if (gestes.length) html += `<div class="gestes"${attrU(sp)}>${gestes.join('')}</div>`;
@@ -2812,8 +2816,10 @@
     || E.dates.some(d => memeId(d.spectacle?.id, id) && (d.fin || d.debut) >= aujourdhui()
       && E.equipes.some(e => memeId(e.date_id, d.id) && memeId(e.personne_id, E.moi) && e.present));
   // les documents que l'équipe d'un spectacle tient elle-même : ceux de l'équipe (pas les documents publics, ni ceux des salles,
-  // ni ceux de toute la compagnie, qui restent à l'administration), pour qui en est aujourd'hui
-  const documentEquipe = (x, id) => avecModifier() && (!x.pour || x.pour === 'equipe') && x.spectacle_id != null && memeId(x.spectacle_id, id) && membreActuel(id);
+  // ni ceux de toute la compagnie, qui restent à l'administration), pour qui en est aujourd'hui (et un compte qui
+  // administre, que la base laisse faire aussi)
+  const gereFichiers = id => avecModifier() && (E.admin || membreActuel(id));
+  const documentEquipe = (x, id) => (!x.pour || x.pour === 'equipe') && x.spectacle_id != null && memeId(x.spectacle_id, id) && gereFichiers(id);
   const messageLiens = () => (E.erreurLiens ? `<p class="message erreur" role="alert">Les fichiers ne peuvent pas s’ouvrir d’ici pour le moment (${esc(motsErreur(E.erreurLiens) || 'réessayez')}). Chacun sera redemandé quand vous l’ouvrirez.</p>` : '');
 
   function vueSpectacles(r, { focus }) {
@@ -2840,7 +2846,7 @@
   function vueSpectacle(r, { focus }) {
     const x = mesSpectacles().find(y => slugDe(y.sp) === r.slug);
     if (!x) return afficher(r, 'Spectacle', `<div class="titre-vue"><h1>Spectacle introuvable</h1></div>${etatVide('dossier', 'Ce spectacle n’est pas (ou plus) dans les vôtres', 'Retrouvez vos spectacles dans l’onglet Spectacles.', '<p><a class="btn" href="#/spectacles">Mes spectacles</a></p>')}`, { focus });
-    const { id, sp } = x, docs = documentsDe(id), roles = rolesDe(id), auj = aujourdhui(), photo = photoDe(sp), gerer = avecModifier() && membreActuel(id);
+    const { id, sp } = x, docs = documentsDe(id), roles = rolesDe(id), auj = aujourdhui(), photo = photoDe(sp), gerer = gereFichiers(id);
     const avenir = E.dates.filter(d => Number(d.spectacle?.id) === id && finDe(d) >= auj).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
     let html = `<article class="tete-spectacle${photo ? ' avec-photo' : ''}" style="${esc(styleH(sp))}" aria-labelledby="ts-titre">
         ${photo ? `<div class="ts-photo" aria-hidden="true"><img src="${esc(photo)}" alt="" decoding="async" crossorigin="anonymous" fetchpriority="high"></div>` : ''}
@@ -3170,6 +3176,10 @@
   // base prévient l'équipe concernée et l'administration, avec le nom de l'auteur, jamais lui, et garde chaque changement
   // au journal. Le reste (le jour, le public, l'annulation, la billetterie, les précisions qui portent un lien, le statut
   // d'une date, les documents publics) demeure à l'administration : la page ne le propose pas, et la base le refuse.
+  // Un compte qui administre modifie une date par ses propres feuilles, d'un appui long (« modifier depuis le
+  // téléphone ») : le « Modifier » d'une date ne se montre pas pour lui (modifierDateEnEquipe) ; les fichiers d'un
+  // spectacle, qu'aucune feuille ne couvre, passent par ces boîtes-ci pour tous. Boîte ouverte, les gestes de la page
+  // (← →, le balayage : ../admin/gestes.js) dorment.
 
   // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le reste de la page est inerte ; le focus revient
   // au geste qui l'a ouverte. avantFermer() : faux, la boîte reste (une écriture en cours, des changements à garder) ;
@@ -3410,7 +3420,7 @@
     const x = doc != null ? E.documents.find(y => y.id === doc) || null : null;
     const spId = x ? x.spectacle_id : spectacle;
     if (doc != null && (!x || !documentEquipe(x, spId))) return annoncer('Ce fichier n’est plus là, ou il reste à l’administration : actualisez la page.', { erreur: true });
-    if (doc == null && !membreActuel(spId)) return annoncer('Les fichiers de ce spectacle se changent par son équipe actuelle (sa distribution, ou l’équipe d’une date à venir) : demandez à l’administration.', { erreur: true });
+    if (doc == null && !gereFichiers(spId)) return annoncer('Les fichiers de ce spectacle se changent par son équipe actuelle (sa distribution, ou l’équipe d’une date à venir) : demandez à l’administration.', { erreur: true });
     const sp = E.spectacles.get(Number(spId)) || [...E.spectacles.values()].find(s => memeId(s.id, spId)) || {};
     const ajout = !x, retour = ajout ? `[data-ajouter-fichier="${spId}"]` : `[data-modifier-document="${x.id}"]`;
     const genre0 = x ? (GENRES_CONNUS.has(x.type) ? x.type : 'autre') : 'autre';
@@ -4082,7 +4092,7 @@
           d.feuille && outilFeuille() ? { libelle: 'PDF de la feuille de route', faire: () => telechargerPdf(faux('pdf', d.id)), icone: ICONES.pdf } : null,
           !passee && vive && evenementsAVenir(d.id).length ? { libelle: 'Ajouter à mon agenda', faire: () => telechargerAgenda(d.id), icone: ICONES.agenda } : null,
           !passee && vive && avecSignaler() ? { libelle: 'Signaler un retard', faire: () => ouvrirModaleRetard(d.id, el.querySelector('a, button') || el), icone: ICONES.alerte } : null,
-          !passee && vive && avecModifier() ? { libelle: 'Modifier la date', detail: 'l’horaire, les précisions', faire: () => ouvrirModaleDate(d.id, el.querySelector('a, button') || el), icone: ICONES.crayon } : null,
+          !passee && vive && modifierDateEnEquipe() ? { libelle: 'Modifier la date', detail: 'l’horaire, les précisions', faire: () => ouvrirModaleDate(d.id, el.querySelector('a, button') || el), icone: ICONES.crayon } : null,
           !passee && vive && avecIdeale() ? { libelle: 'Note de frais', href: `#/frais?date=${d.id}`, icone: ICONES.euro } : null,
           { separateur: true },
           { libelle: 'Partager la date', detail: 'le lien de cette page', icone: ICONES.partager, faire: () => partagerMaintenant({ title: `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`, text: `${d.spectacle?.titre || ''} ${quandTexte(d)}${l ? ` · ${l.nom || l.commune}` : ''}`.trim(), url: new URL(`#/date/${d.id}`, location.href).href }, 'Lien de la date copié') },

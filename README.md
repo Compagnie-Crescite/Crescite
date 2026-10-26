@@ -799,8 +799,11 @@ fichier envoyé mais jamais inscrit (un envoi interrompu) y reste aussi, sans qu
 ces restes sont bornés par la limite de vingt fichiers par heure et par compte, et l'administration les efface dans
 Storage (`crescite-equipe`) si besoin. Vingt modifications par heure et par compte (`crescite_modifications` garde
 chaque modification : son auteur la relit, l'administration toutes). Tant que le script n'est pas lancé, ces gestes ne se
-montrent pas. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1, 2, 3 et
-13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
+montrent pas. Un compte qui administre modifie une date par ses propres feuilles, d'un appui long (« Modifier depuis
+le téléphone ») : le « Modifier » de l'équipe ne s'y montre pas, une seule voie ; les fichiers d'un spectacle, qu'aucune
+feuille ne couvre, passent pour tous par les boîtes de l'équipe. Une boîte ouverte, les gestes de la page (← →, le
+balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
+2, 3 et 13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
