@@ -326,6 +326,10 @@ a.df-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px;
 .df-annonce, .df-bilan { margin: 0; font-size: 1.05rem; line-height: 1.45; }
 .df-bilan .gros { font-size: 1.7em; }
 .df-cta { margin: clamp(16px, 3vh, 30px) 0 0; }
+/* (la fiche est tout entière le lien vers l'univers du spectacle : au survol, « découvrir » répond comme sous le pointeur) */
+.df { cursor: pointer; }
+.ed-actif .df { cursor: auto; }
+@media (hover: hover) { .df:hover .df-cta .bu.plein { box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 25%, transparent), 0 0 40px var(--u-lueur); } }
 .df-cta .bu { letter-spacing: .06em; text-transform: uppercase; font-size: .86rem; }
 .df-credit { position: absolute; z-index: 2; right: 12px; bottom: 10px; max-width: 60%; margin: 0; padding: 2px 8px; border-radius: 3px; background: color-mix(in srgb, var(--u-fond) 78%, transparent);
   font: 400 .72rem/1.4 var(--sans); color: var(--u-texte2); text-align: right; }
@@ -3664,6 +3668,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (surPlace) pousser(svg); else pousserVu(svg);   // (la carte est loin sous le pli : ses bras poussent quand on y arrive)
     ecrans = $$('.df', main); dfM = null;
     $('.df-pile', main).addEventListener('focusin', e => { if (e.target.matches(':focus-visible')) requestAnimationFrame(() => placerEcran(e.target.closest('.df'))); });
+    // une fiche de spectacle est tout entière le lien vers son univers : une touche n'importe où y mène, comme « découvrir » (le
+    // lien lui-même, pour le clavier et les lecteurs d'écran), l'encre ouverte depuis la touche ; ses dates gardent leur lien
+    // de réservation. Un texte sélectionné, ou le mode édition, ne quittent pas la page
+    $('.df-pile', main).addEventListener('click', e => {
+      const df = e.target.closest && e.target.closest('.df'), a = df && $('.df-cta a', df);
+      if (!a || e.defaultPrevented || e.button || e.target.closest('a, button, input, select, textarea, summary, label')) return;
+      if (document.documentElement.classList.contains('ed-actif') || String(getSelection() || '').trim()) return;
+      dernierClic = { x: e.clientX, y: e.clientY, t: performance.now() };
+      location.hash = a.getAttribute('href');
+    });
     return { titre: S.accueil };
   }
 
