@@ -1164,15 +1164,22 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
    sous un voile de son univers, son titre dans sa police, son année, son état (« En création » ; « en tournée », qui respire)
    et sa prochaine date. On touche une tranche : l'affiche se déplie (la photo s'ouvre, le voile tourne, puis la fiche arrive
    en cascade : son sous-titre, son lieu et son temps, sa création, son action culturelle, son accroche, sa prochaine date, la
-   carte de sa tournée dont les bras poussent depuis Rouen, « découvrir ») ; une seule ouverte à la fois, la toucher encore la
-   replie. La hauteur se déplie en CSS (grid-template-rows, la hauteur de la tranche) : rien n'est mesuré. Au bureau, le
-   sommaire et son aperçu restent tels quels. Choisie parmi trois propositions (docs/spectacles-mobile.html). */
+   carte de sa tournée dont les bras poussent depuis Rouen) et « découvrir » se pose sur la photo ; l'affiche dépliée est tout
+   entière le lien vers sa page : une touche de plus, n'importe où, y mène. Une seule dépliée à la fois : toucher une autre
+   tranche replie la première. La hauteur se déplie en CSS (grid-template-rows, la hauteur de la tranche) : rien n'est
+   mesuré. Au bureau, le sommaire et son aperçu restent tels quels. Choisie parmi trois propositions
+   (docs/spectacles-mobile.html). */
 .tdm-g .pil-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0 10px; }
 .pil-tete h1 { font-size: 1.55rem; }
 .pil-sai { font: 700 .66rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--saison-texte); text-decoration: none; white-space: nowrap; }
 a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
 .pil { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 0 -6px; padding: 0 0 22px; }
-.pil-aff { border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
+.pil-aff { position: relative; border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
+/* l'affiche dépliée mène à sa page : « découvrir » posé sur la photo (le lien, pour le clavier et les lecteurs d'écran), et
+   toute la fiche répond au doigt */
+.pil-aller { position: absolute; z-index: 1; right: 12px; top: 12px; min-height: 40px; padding: 8px 14px; font-size: .8rem; letter-spacing: .06em; text-transform: uppercase; box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .7); opacity: 0; visibility: hidden; transition: opacity .25s, visibility 0s linear .25s; }
+.pil-aff.ouvert .pil-aller { opacity: 1; visibility: visible; transition: opacity .35s .3s, visibility 0s .3s; }
+.pil-aff.ouvert .pil-in { cursor: pointer; }
 .pil-h { margin: 0; }
 .pil-dos { position: relative; display: block; width: 100%; height: 72px; padding: 0; border: 0; background: var(--u-fond); color: var(--u-texte); font: inherit; text-align: left; cursor: pointer; overflow: hidden; transition: height .45s var(--mv-courbe); }
 .pil-dos:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -3px; }
@@ -1206,11 +1213,9 @@ a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
 .pil-date .k { font: 700 .68rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
 .pil-date .tdm-d { font-weight: 600; }
 .pil-fiche .tdm-carte { padding-top: 10px; }
-.pil-pied { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin: 0; }
-.pil-pied .bu { min-height: 44px; font-size: .86rem; letter-spacing: .06em; text-transform: uppercase; }
-.still :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img) { transition: none; }
+.still :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img, .pil-aller) { transition: none; }
 .still .pil-etat.vit::before { animation: none; }
-@media (prefers-reduced-motion: reduce) { :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img) { transition: none; } .pil-etat.vit::before { animation: none; } }
+@media (prefers-reduced-motion: reduce) { :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img, .pil-aller) { transition: none; } .pil-etat.vit::before { animation: none; } }
 
 /* la fiche « programmer » (la 05) : le catalogue de #/espace-pro/programmer. La photo à gauche, dans l'univers du spectacle ;
    à droite sa création, son titre dans sa police, le nombre de ses représentations en grand, ses faits en pièces, sa fiche,
@@ -10051,7 +10056,8 @@ const CREATURE = (() => {
      public (ou son annonce, en création) et le lien vers sa page. L'aperçu se relaie : un fondu, ses lignes arrivent l'une
      après l'autre (MOUVEMENT.cascade) et, la première fois qu'il paraît, les bras de sa carte poussent depuis Rouen. Au
      téléphone (jusqu'à 899 px), la pile d'affiches (afficheTdm, lierPile) : les huit tranches dans l'écran, l'affiche dépliée
-     d'une touche, avec sa fiche et la carte de sa tournée. Relu dans D à chaque rendu ; le spectacle de l'aperçu, comme
+     d'une touche, avec sa fiche et la carte de sa tournée ; une touche de plus, n'importe où sur elle, ouvre sa page. Relu dans
+     D à chaque rendu ; le spectacle de l'aperçu, comme
      l'affiche dépliée, sont gardés d'une visite à l'autre (et quand D change, la vue se refait sur eux). */
   let tdmChoisi = null;
   // (les polices de titre n'ont pas la même taille apparente : le coefficient de chacune, celui de la 08)
@@ -10114,19 +10120,22 @@ const CREATURE = (() => {
         <span class="pil-txt"><span class="pil-t"${edS(s, 'titre')}>${esc(s.titre)}</span>${s.annee ? `<span class="pil-an">${esc(s.annee)}</span>` : '<span></span>'}
           <span class="pil-sous">${badgeDe(s) ? `<span class="pil-etat${s.statut ? '' : ' vit'}">${badgeDe(s)}</span>` : ''}${d && !s.statut ? `<span class="pil-pro"${dateId(d)}>${esc(d.ligne)}</span>` : ''}</span></span>
       </button></h2>
+      <a class="pil-aller bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a>
       <div class="pil-corps" id="${id}-c" role="region" aria-labelledby="${id}-b"${ouvert ? '' : ' inert'}><div class="pil-in"><div class="pil-fiche">
         ${s.sousTitre ? `<p class="pil-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
         <p class="tdm-k">${petit(mo(s))}<span class="tdm-kl"><span class="tdm-kk">${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${s.creation ? `<span${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${A && A.type ? `<span${edS(s, 'actionCulturelle', 'type')}>${esc(A.type)}</span>` : ''}</span></span></p>
         ${s.accroche ? `<p class="pil-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
         ${suiteTdm(s, 'p', 'pil-date')}
         ${k ? `<figure class="tdm-carte" data-carte="${esc(s.slug)}" hidden></figure>` : ''}
-        <p class="pil-pied"><a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></p>
       </div></div></div>
     </li>`;
   }
   // une tranche touchée se déplie (sa carte se dessine à la première ouverture, ses bras poussent, sa fiche arrive en
-  // cascade, puis l'affiche vient en haut de l'écran) ; une seule dépliée à la fois, la toucher encore la replie. En mode
-  // édition, les textes, la photo et la date de la tranche s'éditent sans la déplier (EDITION arrête le clic avant nous)
+  // cascade, puis l'affiche vient en haut de l'écran) ; une seule dépliée à la fois, toucher une autre tranche replie la
+  // première. L'affiche dépliée est tout entière le lien vers sa page : une touche de plus, n'importe où (la tranche, la fiche,
+  // la carte), y mène, avec la transition d'un spectacle depuis l'affiche (dernierClic) ; « découvrir », posé sur la photo, est
+  // le lien lui-même (clavier, lecteurs d'écran). En mode édition, les textes, la photo et la date s'éditent sans déplier
+  // (EDITION arrête le clic avant nous), et une touche ailleurs sur l'affiche dépliée ne quitte pas la page
   function lierPile() {
     const pile = $('.pil', main); if (!pile) return;
     const affs = $$('.pil-aff', pile), haut = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--haut')) || 56;
@@ -10139,15 +10148,22 @@ const CREATURE = (() => {
       const svg = $('svg.carte', li);
       if (deja) { if (svg) pousser(svg); return; }
       if (svg) bientot(() => pousser(svg));
-      if (MV && motionOK()) MV.cascade($('.pil-fiche', li), { selecteur: '.pil-st, .tdm-k, .pil-acc, .pil-date, .tdm-carte, .pil-pied', pas: 40, duree: 300, decalage: 8 });
+      if (MV && motionOK()) MV.cascade($('.pil-fiche', li), { selecteur: '.pil-st, .tdm-k, .pil-acc, .pil-date, .tdm-carte', pas: 40, duree: 300, decalage: 8 });
       const aller = () => scrollTo({ top: Math.max(0, li.getBoundingClientRect().top + scrollY - haut() - 8), behavior: motionOK() ? 'smooth' : 'instant' });
       if (motionOK()) setTimeout(aller, 470); else aller();
     };
     pile.addEventListener('click', e => {
-      const b = e.target.closest && e.target.closest('.pil-dos'); if (!b) return;
-      const li = b.closest('.pil-aff'), etait = li.classList.contains('ouvert');
+      if (!e.target.closest || e.target.closest('.pil-aller')) return;        // le lien lui-même : la navigation ordinaire
+      const li = e.target.closest('.pil-aff'); if (!li) return;
+      if (li.classList.contains('ouvert')) {
+        if (document.documentElement.classList.contains('ed-actif')) return;
+        dernierClic = { el: li, t: performance.now() };
+        location.hash = lienSp(li.dataset.slug);
+        return;
+      }
+      if (!e.target.closest('.pil-dos')) return;
       affs.forEach(x => { if (x !== li && x.classList.contains('ouvert')) fermer(x); });
-      if (etait) fermer(li); else deplier(li, false);
+      deplier(li, false);
     });
     const deja = pileOuverte ? affs.find(x => x.dataset.slug === pileOuverte) : null;
     if (deja) deplier(deja, true);
