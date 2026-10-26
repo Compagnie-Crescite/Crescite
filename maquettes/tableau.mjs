@@ -106,9 +106,16 @@ const SESSION = { access_token: 'x', refresh_token: 'y', token_type: 'bearer', e
 const resultats = [];
 const ok = (nom, v, detail = '') => { resultats.push([v ? 'ok' : 'KO', nom, detail]); };
 
+// avant une capture : les transitions de vue et de survol finies, puis un souffle
+async function calme(page) {
+  await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished.catch(() => {})))).catch(() => {});
+  await page.waitForTimeout(400);
+}
+
 async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', sombre = false, prefsAbsentes = false } = {}) {
   const ctx = await navigateur.newContext({ viewport: { width: largeur, height: hauteur }, locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: sombre ? 'dark' : 'light', isMobile: largeur < 600, hasTouch: largeur < 600 });
   // la base simulée : REST lu depuis DB, les écritures de préférences gardées ; le temps réel ne répond jamais
+  await ctx.route(/fonts\.g(oogleapis|static)\.com/, r => r.abort());   // (hors ligne : les polices du système)
   await ctx.route(/supabase\.co\//, async route => {
     const req = route.request(), url = new URL(req.url()), table = url.pathname.split('/').pop(), objet = /pgrst\.object/.test(req.headers().accept || '');
     const json = (status, body, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
@@ -242,6 +249,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   const menuDevis = await page.$$eval('.gm-boite [data-gm]', xs => xs.map(x => x.querySelector('.gm-l').firstChild.textContent));
   ok('clic droit sur une demande de devis : ouvrir, écrire, les statuts à marquer, le lien', menuDevis.includes('Ouvrir la demande') && menuDevis.includes('Écrire à M. Dupont') && menuDevis.includes('Marquer « En cours »') && menuDevis.includes('Copier le lien'), menuDevis.join(' | '));
   ok('le premier élément du menu a le focus, le menu a un titre', await page.evaluate(() => document.activeElement?.matches('.gm-boite [data-gm]')) && (await page.$eval('.gm-boite', e => e.getAttribute('aria-label'))) === 'Salle des fêtes de Lisieux');
+  await page.waitForTimeout(350);
   await page.screenshot({ path: `${CAPT}/menu.png`, fullPage: false });
   await page.click('.gm-boite [data-gm]:has-text("Marquer « En cours »")');
   await page.waitForFunction(() => !document.querySelector('.gm-boite') && !document.querySelector('.tb-tuile[data-k="urgent"] a[data-devis="1"]'), null, { timeout: 4000 }).catch(() => {});
@@ -441,9 +449,38 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
   const s = await ouvrir(navigateur, { sombre: true, hash: '#/accueil' });
   await s.page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
-  ok('en sombre : le fond des tuiles suit le thème', (await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor)) === 'rgb(33, 27, 36)', await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor));
+  ok('en sombre : le fond des tuiles suit le thème', (await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor)) === 'rgb(34, 25, 35)', await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor));
   await s.page.screenshot({ path: `${CAPT}/sombre.png`, fullPage: false });
   await s.ctx.close();
+}
+
+// ================================================================================ l'habillage : des captures de plusieurs pages, en clair et en sombre
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900 });
+  await page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
+  ok('le bandeau du jour : bonjour, le prénom, trois chiffres, le titre de la page', /Bonjour|Bonsoir/.test(await texte(page, '.tb-bonjour')) && /Adrien/.test(await texte(page, '.tb-bonjour')) && (await compte(page, '.tb-salut-chiffres li')) === 3 && (await texte(page, 'main h1')) === 'Tableau de bord', await texte(page, '.tb-salut'));
+  ok('chaque tuile a son icône et sa couleur', (await compte(page, '.tb-tuile .tb-ico-t svg')) >= 10 && await page.$eval(tuile('urgent'), e => getComputedStyle(e).borderTopColor !== getComputedStyle(document.querySelector('.tb-tuile[data-k="prochaines"]')).borderTopColor));
+  ok('l’en-tête est de nuit, la rubrique courante en magenta', await page.$eval('.barre', e => getComputedStyle(e).backgroundImage !== 'none') && await page.$eval('.nav a[aria-current="page"]', e => getComputedStyle(e).color === 'rgb(255, 255, 255)'));
+  await calme(page); await page.screenshot({ path: `${CAPT}/habillage-tableau.png`, fullPage: false });
+  for (const [h, nom, attendre] of [['#/representations', 'representations', '.ligne'], ['#/representations/101', 'date', '#ed-date'], ['#/equipe', 'equipe', '.ligne, .bloc'], ['#/diffusion', 'diffusion', '.crm-colonne'], ['#/feuilles', 'feuilles', '.ligne, .bloc'], ['#/planning', 'planning', '.pl, .bloc'], ['#/journal', 'journal', '.journal-ligne, .vide']]) {
+    await page.goto(`${URL0}${h}`);
+    await page.waitForSelector(attendre, { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(700);
+    await calme(page); await page.screenshot({ path: `${CAPT}/habillage-${nom}.png`, fullPage: false });
+  }
+  await page.goto(`${URL0}#/accueil`); await page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
+  await page.keyboard.press('Control+k'); await page.waitForSelector('#recherche[open]', { timeout: 3000 }); await page.fill('#rch-q', 'bérénice'); await page.waitForTimeout(200);
+  await page.screenshot({ path: `${CAPT}/habillage-recherche.png`, fullPage: false });
+  await page.keyboard.press('Escape');
+  ok('habillage · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+  const s2 = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, sombre: true });
+  await s2.page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
+  await calme(s2.page); await s2.page.screenshot({ path: `${CAPT}/habillage-sombre.png`, fullPage: false });
+  await s2.page.goto(`${URL0}#/representations/101`); await s2.page.waitForSelector('#ed-date', { timeout: 15000 }).catch(() => {}); await s2.page.waitForTimeout(600);
+  await calme(s2.page); await s2.page.screenshot({ path: `${CAPT}/habillage-date-sombre.png`, fullPage: false });
+  ok('habillage sombre · aucune erreur de script', s2.erreurs.length === 0, s2.erreurs.join(' / '));
+  await s2.ctx.close();
 }
 
 // ================================================================================ les dix idées : traiter sur place, la file, la palette, les vues,

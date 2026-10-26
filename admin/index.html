@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <title>Crescite · administration</title>
+<!-- les polices de la compagnie (celles du site) : Ubuntu pour les titres, Open Sans pour le texte, Raleway pour les étiquettes ; sans réseau, le système -->
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Open+Sans:wght@400;500;600;700&family=Raleway:wght@600;700;800&display=swap" crossorigin>
 <style>
 :root {
   --fond: #f6f3f0; --carte: #ffffff; --encre: #1d1720; --gris: #675e6b; --trait: #e4dde3; --doux: #f1ecf0;
@@ -4085,5 +4089,7 @@ async function vueJournal() {
 <script src="tableau.js"></script>
 <!-- les menus contextuels de chaque liste, carte et tuile, le Kanban glissable, précédent/suivant dans les fiches -->
 <script src="menus.js"></script>
+<!-- l'habillage (les couleurs, les polices, les cartes, l'en-tête), chargé en dernier : rien que l'apparence -->
+<script src="habillage.js"></script>
 </body>
 </html>
