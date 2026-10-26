@@ -642,7 +642,10 @@ const PIEUVRE = (() => {
       }
       return ts.sort((a, b) => (a.parent ? 1 : 0) - (b.parent ? 1 : 0) || a.i - b.i);
     },
-    // l'ordre de déploiement, par vagues : les deux spirales (0), les boucles (1), les spirales extérieures (2), les queues (3)
+    // l'ordre de déploiement, par vagues : les deux spirales (0), les boucles (1), les spirales extérieures (2), les queues (3) ;
+    // VAGUE : l'écart entre deux vagues (ms) ; ATTENTE : à l'ouverture, ce que la pieuvre met à rejoindre sa place avant la
+    // première vague (ms après le geste)
+    VAGUE: 70, ATTENTE: 630,
     rang(cle) { const m = /^(spiraleExt|spirale|boucle|queue)/.exec(cle || ''); return m ? { spirale: 0, boucle: 1, spiraleExt: 2, queue: 3 }[m[1]] : 0; },
     // ce que la tête occupe, en unités du dessin (des rectangles [x, y, w, h]) : le corps vivant s'y limite
     TETE: (G && G.tete) || [[600, 330, 310, 272], [755, 540, 140, 125]],
