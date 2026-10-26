@@ -116,7 +116,13 @@ l'entrée, ou de l'univers du spectacle) ; ouvrir une saison ou un panneau la d�
 l'enroule autour du bouton. Rien n'est retardé : la page répond tout de suite, l'animation joue par-dessus. Chaque
 maquette l'habille à son style (`TENTACULES.regler`, variables `--tt-*`) : trait gravé pour la 01, filet de lumière pour
 la 07, ventouses pour la synthèse, fil pour la 08… Avec « réduire les animations », un fondu bref ; `?anim=0` dans
-l'adresse coupe tout.
+l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en plus une créature vivante
+(`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
+souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
+va souligner le titre à la couleur du spectacle, puis revient. Sur la page de la compagnie, la pieuvre de la troupe est
+une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo) : quand la
+lecture descend, elle rapetisse et nage dans la marge, par impulsions, et une tentacule attrape le médaillon du métier
+qu'on lit, qui s'anime.
 
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
@@ -128,7 +134,10 @@ adresses, la disparition de l'espace pro, la présence des contenus attendus de 
 (les prochaines dates d'abord, les saisons terminées fermées). Il vérifie la page des programmateurs (le contact, le
 téléchargement réel du dossier PDF, la fiche technique sur demande) et qu'un spectacle sans action culturelle n'a pas
 d'onglet établissement. Avec `EDITION=1`, il vérifie aussi le lien « Modifier le site » et les annotations de l'édition
-(`data-edit`, `data-date-id`, `data-agenda`).
+(`data-edit`, `data-date-id`, `data-agenda`). Il relève tout changement de page gelé (une transition qui attend plus
+d'une seconde la capture de l'ancienne page), sur toute la visite et depuis chaque page de spectacle défilée : une
+animation liée au défilement qui garde son état final hors de sa plage (`both`) gelait l'écran 4 s dans Chrome ; elles
+remplissent en `backwards` (règle 15 C du contrat).
 `maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
 dessous. « À propos » est le mode d'emploi de la maquette affichée, en six parties courtes avec leurs schémas :
 naviguer, trouver une date, modifier le site, l'administration et ses rubriques, les espaces réservés autour de la

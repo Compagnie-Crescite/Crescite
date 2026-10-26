@@ -157,7 +157,8 @@ def arms_data():
     return a
 
 
-# les pages qui ont la scène de la pieuvre (la 10 et la synthèse) : ses vraies tentacules s'y déploient (pieuvre.js, D.pieuvre)
+# les pages qui ont la scène de la pieuvre (la 10 et la synthèse) : ses vraies tentacules s'y déploient (pieuvre.js, D.pieuvre),
+# et la petite pieuvre de l'en-tête peut y vivre (creature.js, si la page l'appelle)
 PAGES_PIEUVRE = ("m10", "synthese")
 
 
@@ -756,7 +757,7 @@ def avec_outils(name, src):
     (donnees.js), la carte des tournées (carte.js) et l'ouverture sur le logo (intro.js)."""
     if DATA_LIGNE not in src:
         raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
-    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in outils() + (("pieuvre.js",) if name in PAGES_PIEUVRE else ()))
+    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in outils() + (("pieuvre.js", "creature.js") if name in PAGES_PIEUVRE else ()))
     src = src.replace(DATA_LIGNE, DATA_LIGNE + js, 1)
     # theme.js dans <head>, juste après les balises meta du début (avant les feuilles de style, qu'un script attendrait)
     tete = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS_TETE)
