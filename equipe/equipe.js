@@ -452,7 +452,7 @@
     finally {
       if (bouton.isConnected) {
         bouton.disabled = false; bouton.removeAttribute('aria-busy'); bouton.innerHTML = avant;
-        if (ok && !reduit()) { bouton.classList.add('fait'); setTimeout(() => bouton.classList.remove('fait'), 1400); }   // réussi : le bouton le dit un instant
+        if (ok) { vibrer(8); if (!reduit()) { bouton.classList.add('fait'); setTimeout(() => bouton.classList.remove('fait'), 1400); } }   // réussi : le bouton (et le téléphone) le dit un instant
       }
     }
   }

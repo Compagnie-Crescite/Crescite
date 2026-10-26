@@ -1168,6 +1168,26 @@ function dessinerFeuille(etat) {
   };
   pm.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.fr-m-saisie input')) { e.preventDefault(); ecrireManque(e.target.closest('li')); } });
   pm.addEventListener('click', e => { const b = e.target.closest('[data-m-ok]'); if (b) ecrireManque(b.closest('li')); });
+  // l'amorce visée depuis la liste s'allume sur la page (au survol, ou quand on écrit dans son champ) : le bloc par son id,
+  // l'amorce par son rang parmi les amorces du bloc (k : le rang du segment)
+  const amorceDe = li => {
+    const [id, k] = (li.dataset.m || '').split('|'), b = blocsCourants().find(x => x.id === id), el = $(`#a4-doc [data-id="${CSS.escape(id)}"]`);
+    if (!b || !el || !Array.isArray(b.segments)) return null;
+    return $$('.amorce', el)[b.segments.slice(0, +k).filter(s => s.amorce).length] || null;
+  };
+  const eteindreAmorce = () => $$('#a4-doc .amorce.visee').forEach(a => a.classList.remove('visee'));
+  const allumerAmorce = (e, defiler) => {
+    const li = e.target.closest && e.target.closest('li[data-m]');
+    eteindreAmorce();
+    const a = li && amorceDe(li);
+    if (!a) return;
+    a.classList.add('visee');
+    if (defiler) a.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
+  pm.addEventListener('mouseover', e => allumerAmorce(e, false));
+  pm.addEventListener('mouseleave', eteindreAmorce);
+  pm.addEventListener('focusin', e => allumerAmorce(e, true));
+  pm.addEventListener('focusout', e => { if (!e.relatedTarget || !pm.contains(e.relatedTarget)) eteindreAmorce(); });
   pm.addEventListener('toggle', e => { if (e.target.tagName === 'DETAILS') etat.manquesFermes = !e.target.open; }, true);
   // ---- l'hébergement : de quelle feuille le reprendre (au même lieu, à défaut dans la même commune ; par défaut, la
   // dernière écrite : FEUILLE.hebergements). Le choix se lit dans la page (FEUILLE.origineHebergement) : un autre choix
@@ -1584,6 +1604,7 @@ ${FEUILLE.cssPage('.a4-doc')}
 .a4-doc .b-entete.base::after { display: none; }
 .a4-doc .amorce { color: #7c7c7c; font-style: italic; font-weight: 400; background: #eeeeee; border-radius: 3px; padding: 0 2px; cursor: pointer; user-select: none; -webkit-user-select: none; }
 .a4-doc .amorce:hover { background: #e0e0e0; color: #444; }
+.a4-doc .amorce.visee { background: var(--accent-doux); color: var(--accent); outline: 2px solid var(--accent); outline-offset: 1px; }   /* visée depuis « À compléter » */
 .a4-doc .b-saut { display: flex; align-items: center; gap: 8px; min-height: 0; height: 16px; color: #9a9a9a; font: 700 8pt/1 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; user-select: none; -webkit-user-select: none; white-space: nowrap; }
 .a4-doc .b-saut::before, .a4-doc .b-saut::after { content: ""; flex: 1; border-top: 1px dashed #bdbdbd; }
 .a4-doc .b-tableau td { outline: none; }

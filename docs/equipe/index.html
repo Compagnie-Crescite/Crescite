@@ -952,6 +952,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   /* 15. ce qui arrive après la page (les chiffres, la liste de chargement, le planning) se pose ; le héros recule au défilement */
   .arrive, .arrive > .frise { animation: monte .4s cubic-bezier(.2, .8, .2, 1) both; }
   .photo-apercu, .jourj-badge { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }   /* l'aperçu du ticket, « aujourd'hui » sur une feuille */
+  details[open] > :not(summary) { animation: monte .25s cubic-bezier(.2, .8, .2, 1) both; }   /* ce qu'un pli ouvre se pose */
   @supports (animation-timeline: scroll()) {
     .heros-photo, .ts-photo { animation: recule linear both; animation-timeline: scroll(root); animation-range: 0 360px; }
     @keyframes recule { to { transform: translateY(-44px); } }
