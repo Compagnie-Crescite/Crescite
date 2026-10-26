@@ -889,9 +889,13 @@ const visite = async (n, tag, vp, mobile, partie) => {
               const liens = P.portes.map(p => ({ href: p.href, vus: [...document.querySelectorAll('main a[href]')].filter(a => a.getAttribute('href') === p.href && vis(a)).map(a => a.getAttribute('target') || '') }));
               const menuPro = [...document.querySelectorAll('header a[href="#/espace-pro"], nav a[href="#/espace-pro"]')].filter(a => !a.closest('main, footer') && n(a.textContent).includes(n(P.titre)));
               const pages = ['#/espace-pro/programmer', '#/espace-pro/etablissement'].map(h => [h, [...document.querySelectorAll(`main a[href="${h}"]`)].find(vis) || null]);
+              // l'ordre du client : « programmer » avant toute porte (l'accès des salles peut le suivre), les établissements avant
+              // l'équipe et l'administration
               const porte = [...document.querySelectorAll('main a[href]')].find(a => vis(a) && P.portes.some(p => p.href === a.getAttribute('href')));
+              const apresSalles = [...document.querySelectorAll('main a[href]')].find(a => vis(a) && P.portes.some(p => p.cle !== 'salles' && p.href === a.getAttribute('href')));
+              const avant = (a, b) => !!(a && b && (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING));
               return { h1ok: h1.includes(n(P.titre)), liens, menu: menuPro.length, pied: document.querySelectorAll('footer a[href="#/espace-pro"]').length,
-                pages: pages.filter(([, a]) => !a).map(([h]) => h), avant: pages.every(([, a]) => a && porte && !!(a.compareDocumentPosition(porte) & Node.DOCUMENT_POSITION_FOLLOWING)) };
+                pages: pages.filter(([, a]) => !a).map(([h]) => h), avant: avant(pages[0][1], porte) && avant(pages[1][1], apresSalles) };
             })() : null,
           };
           } finally { forcer.remove(); }
@@ -948,7 +952,7 @@ const visite = async (n, tag, vp, mobile, partie) => {
             if (!etat.pro.menu) log.push(`${tag} espace-pro : pas de lien « Espace pro » vers #/espace-pro dans le menu (règle 16)`);
             if (!etat.pro.pied) log.push(`${tag} espace-pro : pas de lien vers #/espace-pro dans le pied de page (règle 16)`);
             etat.pro.pages.forEach(h => log.push(`${tag} espace-pro : aucun lien visible vers sa page <a href="${h}"> (règle 21)`));
-            if (!etat.pro.pages.length && !etat.pro.avant) log.push(`${tag} espace-pro : ses deux pages (programmer, établissements scolaires) doivent précéder les trois portes (règle 21)`);
+            if (!etat.pro.pages.length && !etat.pro.avant) log.push(`${tag} espace-pro : l'ordre n'est pas programmateurs et salles, établissements scolaires, équipe, administration (règles 16 et 21)`);
           }
         }
         if (FRISES[vue] && etat.frises < FRISES[vue]) log.push(`${tag} ${vue} : ${etat.frises} frise(s) chronologique(s) (.frise[data-frise]) au lieu d'au moins ${FRISES[vue]} (règle 15 D)`);

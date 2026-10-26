@@ -812,7 +812,7 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-sep[data-mv="trace"].mv-attente { transition: transform var(--k-lent) var(--k-doux); }
 /* l'en-tête : l'aplat (la saison ; sur ses deux pages, la couleur du parcours, --e) */
 .ep-tete { position: relative; isolation: isolate; overflow: hidden; padding: clamp(36px, 4.6vw, 68px) 0 clamp(48px, 5.6vw, 84px); background: var(--e, var(--saison)); color: #fff; --ep-sep: #fff; }
-.ep-tete :focus-visible, .ep-aplat :focus-visible, .ep-cta :focus-visible, .ep-portes :focus-visible { outline-color: #fff; }
+.ep-tete :focus-visible, .ep-aplat :focus-visible, .ep-cta :focus-visible, .ep-groupes :focus-visible { outline-color: #fff; }
 .ep-tete-ph { position: absolute; top: 0; right: 0; bottom: 0; z-index: -1; width: min(48%, 680px); background: var(--e); }
 .ep-tete-ph img { width: 100%; height: 100%; object-fit: cover; }
 .ep-tete-ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, var(--e), color-mix(in srgb, var(--e) 0%, transparent) 62%); }
@@ -826,10 +826,17 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-rac { display: flex; flex-wrap: wrap; gap: 8px; margin: clamp(18px, 2.4vw, 28px) 0 0; padding: 0; list-style: none; }
 .ep-rac button { padding: 8px 15px; border: 1.5px solid rgba(255, 255, 255, .62); border-radius: 999px; background: transparent; color: #fff; font: 700 .72rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 .ep-rac button:hover { border-color: #fff; background: #fff; color: var(--e, var(--saison)); }
-/* ses deux pages : de grandes portes photographiques, la photo passée dans la couleur du parcours */
-.ep-pages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+/* ses quatre groupes, dans l'ordre : 1 programmateurs et directeurs de salle (leur page et leur espace réservé, côte à côte),
+   2 établissements scolaires (leur page, sur toute la largeur), 3 l'équipe et 4 l'administration (deux aplats côte à côte) */
+.ep-groupes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.ep-g { display: grid; min-width: 0; }
+.ep-g.avec-page { grid-column: 1 / -1; }
+.ep-g.duo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ep-g.duo > .ep, .ep-g:not(.avec-page) + .ep-g:not(.avec-page) > .ep { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
+/* ses pages : de grandes portes photographiques, la photo passée dans la couleur du parcours */
 .ep-porte { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; height: 100%; min-height: 230px;
   padding: clamp(22px, 2.4vw, 36px) clamp(20px, 2.4vw, 38px); background: var(--e); color: #fff; text-decoration: none; }
+.ep-porte > .ep-n { position: absolute; top: clamp(22px, 2.4vw, 36px); left: clamp(20px, 2.4vw, 38px); }
 .ep-porte-ph { position: absolute; inset: 0; z-index: -1; background: var(--e); }
 .ep-porte-ph img { width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-lent) var(--k-doux); }
 .ep-porte-ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, color-mix(in srgb, var(--e) 70%, #000) 0%, transparent 70%); mix-blend-mode: multiply; }
@@ -839,14 +846,11 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-porte:hover .ep-porte-ph img { scale: 1.05; }
 .ep-porte:is(:hover, :focus-visible) .fleche { translate: 6px 0; }
 .ep-porte:focus-visible { outline: 3px solid #fff; outline-offset: -8px; }
-.ep-pages li + li .ep-porte { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
 .ep:has(.ep-a.mv-presse) { scale: .985; transition: scale var(--k-presse); }
-/* les trois espaces réservés : trois aplats numérotés (la saison, la saison profonde, la nuit) ; au survol, un lavis clair
-   prend l'aplat, la flèche avance, souple */
-.ep-portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+/* les trois espaces réservés : des aplats (la saison profonde, la saison, la nuit) ; au survol, un lavis clair prend l'aplat,
+   la flèche avance, souple */
 .ep { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-height: clamp(300px, 46vh, 460px);
   padding: clamp(24px, 2.6vw, 40px); background: var(--ep); color: #fff; container-type: inline-size; }
-.ep + .ep { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
 .ep::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, .12); opacity: 0; transition: opacity var(--k-survol) var(--k-doux); pointer-events: none; }
 .ep:is(:hover, :focus-within)::before { opacity: 1; }
 .ep-n { font: 700 clamp(64px, 8vw, 128px)/.8 var(--titre); letter-spacing: -.04em; opacity: .28; }
@@ -900,14 +904,13 @@ html.ed-actif .ep-a::after { content: none; }
   .ep-act-ph { position: static; max-width: 560px; }
 }
 @media (max-width: 860px) {
-  .ep-portes { grid-template-columns: minmax(0, 1fr); }
   .ep { min-height: 220px; }
-  .ep + .ep { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
 }
 @media (max-width: 760px) {
-  .ep-pages { grid-template-columns: minmax(0, 1fr); }
-  .ep-porte { min-height: 130px; align-items: center; }
-  .ep-pages li + li .ep-porte { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
+  .ep-groupes, .ep-g.duo { grid-template-columns: minmax(0, 1fr); }
+  .ep-g.duo > .ep, .ep-g:not(.avec-page) + .ep-g:not(.avec-page) > .ep { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
+  .ep-porte { min-height: 130px; align-items: center; padding-left: 104px; }
+  .ep-porte > .ep-n { top: 50%; translate: 0 -50%; }
   .ep-tete-ph { width: 100%; opacity: .42; }
   .ep-tete-ph::after { background: linear-gradient(to top, var(--e), transparent); }
   .ep-rac { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gout)); padding: 2px var(--gout) 4px; scrollbar-width: none; }
@@ -5071,22 +5074,28 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $('form', main).addEventListener('submit', e => e.preventDefault());
     return { titre: nomC, menu: 'contact' };
   }
-  /* ---------- l'espace pro (règles 16 et 21), celui de la 05 : sur l'aplat de la saison, la grande capitale et son texte ; ses
-     deux pages (programmer, établissements scolaires) en grandes portes photographiques, chacune dans la couleur de son
-     parcours ; puis trois aplats numérotés vers les espaces réservés (equipe/, pro/, admin/, publiés à côté), dans le même
-     onglet ---------- */
+  /* ---------- l'espace pro (règles 16 et 21), celui de la 05 : sur l'aplat de la saison, la grande capitale et son texte ; puis
+     quatre groupes numérotés, dans l'ordre de la compagnie : 1 les programmateurs et les directeurs de salle (la page
+     « programmer », en grande porte photographique à la couleur de son parcours, et à côté l'aplat de leur espace réservé,
+     pro/), 2 les établissements scolaires (leur page), 3 l'équipe (equipe/), 4 l'administration (admin/) ; les espaces
+     réservés, publiés à côté, s'ouvrent dans le même onglet ---------- */
   function espacePro() {
     vue = 'espace-pro';
-    const P = S.espacePro, deux = ['programmer', 'etablissement'].map(k => E[k]).filter(e => e && e.href);
-    // (comédiens et techniciens : la saison ; programmateurs et directeurs de salle : la saison profonde ; administration : la nuit)
+    const P = S.espacePro;
+    // (programmateurs et directeurs de salle : la saison profonde ; comédiens et techniciens : la saison ; administration : la nuit)
     const aplats = { equipe: 'var(--saison)', salles: 'color-mix(in srgb, var(--saison) 66%, #000)', admin: 'color-mix(in srgb, var(--saison) 16%, var(--nuit))' };
+    const numero = n => `<span class="ep-n" aria-hidden="true">${n}</span>`;
+    const page = (e, n) => `<a class="ep-porte" href="${esc(e.href)}" style="--e:${esc(e.couleur)}"><span class="ep-porte-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="" loading="lazy">` : ''}</span>${n ? numero(n) : ''}<span class="ep-porte-t">${esc(e.court)}<small>${esc(e.texte)}</small></span>${FLECHE}</a>`;
+    const acces = (x, n) => { const i = P.portes.indexOf(x); return `<div class="ep" data-cle="${esc(x.cle)}" style="--ep:${aplats[x.cle] || 'var(--saison)'}">${n ? numero(n) : ''}
+        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
+        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>${FLECHE}</div>`; };
+    // chaque groupe : sa page (s'il en a une) et son espace réservé ; un espace que l'ordre ne nomme pas vient à la fin
+    const ORDRE = [['programmer', 'salles'], ['etablissement'], [null, 'equipe'], [null, 'admin']];
+    const groupes = [...ORDRE, ...P.portes.filter(x => !ORDRE.some(o => o[1] === x.cle)).map(x => [null, x.cle])]
+      .map(([pg, ac]) => ({ e: pg && E[pg] && E[pg].href ? E[pg] : null, x: ac ? P.portes.find(x => x.cle === ac) : null })).filter(g => g.e || g.x);
     main.innerHTML = `<section class="ep-tete" aria-labelledby="h-ep"><div class="wrap ep-c"><h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur"${ed('site.espacePro.titre')}>${esc(P.titre)}</span></h1>
         ${P.texte ? `<p class="ep-lead"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}</div></section>
-      ${deux.length ? `<ul class="ep-pages">${deux.map(e => `<li><a class="ep-porte" href="${esc(e.href)}" style="--e:${esc(e.couleur)}"><span class="ep-porte-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="" loading="lazy">` : ''}</span><span class="ep-porte-t">${esc(e.court)}<small>${esc(e.texte)}</small></span>${FLECHE}</a></li>`).join('')}</ul>` : ''}
-      <ul class="ep-portes">${P.portes.map((x, i) => `<li class="ep" data-cle="${esc(x.cle)}" style="--ep:${aplats[x.cle] || 'var(--saison)'}">
-        <span class="ep-n" aria-hidden="true">${i + 1}</span>
-        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
-        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>${FLECHE}</li>`).join('')}</ul>`;
+      <ol class="ep-groupes">${groupes.map((g, k) => `<li class="ep-g${g.e ? ' avec-page' : ''}${g.e && g.x ? ' duo' : ''}">${g.e ? page(g.e, k + 1) : ''}${g.x ? acces(g.x, g.e ? 0 : k + 1) : ''}</li>`).join('')}</ol>`;
     return { titre: P.titre, menu: 'espace-pro' };
   }
   function legal(chemin) {
@@ -5757,7 +5766,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $$('section.bloc:not(.sans-filet)', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
     $$('svg.trait', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'trace'); });
-    $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-pages, .ep-portes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
+    $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-groupes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
     $$('.u-faits .gros, .fp-rep .gros, .u-rep .gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
     if (MV) MV.reveler(main, { immediat: surPlace });
   }
