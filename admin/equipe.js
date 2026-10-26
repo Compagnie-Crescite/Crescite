@@ -235,7 +235,7 @@ function editeurPersonne(id) {
     <div class="bloc" id="pe-coord"><h3>Coordonnées (jamais publiées)</h3><div class="rangee">${SPEC_COORD.slice(0, 3).map(c => champ(c, P)).join('')}</div>${SPEC_COORD.slice(3).map(c => champ(c, P)).join('')}</div>
     <div class="bloc" id="pe-acces"></div>
     <div class="bloc" id="pe-suivi"><h3>Notes de suivi <span class="aide" style="font-weight:400">— jamais lues par la personne</span></h3>${champ({ k: 'notes', t: 'long', lignes: 4, ph: 'Contrats, disponibilités…' }, N)}</div>
-    ${p0 ? '<div class="bloc" id="pe-spectacles"></div><div class="bloc" id="pe-dates"></div>' : ''}
+    ${p0 ? '<div class="bloc" id="pe-spectacles"></div><div class="bloc" id="pe-dates"></div>' : ''}${p0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="pe-notes"></div>' : ''}
     ${pied(p0 ? 'Tout est enregistré' : 'Nouvelle fiche', p0 ? '<button type="button" class="btn danger" id="pe-suppr">Supprimer</button>' : '')}`;
   $('[data-chemin="email"]', zone).type = 'email';
   $('[data-chemin="telephone"]', zone).type = 'tel';
@@ -244,6 +244,7 @@ function editeurPersonne(id) {
   relier($('#pe-public', zone), F, [...SPEC_PERSONNE, ...SPEC_PHOTO_PERSONNE, SPEC_PUBLIE_PERSONNE]);
   relier($('#pe-coord', zone), P, SPEC_COORD);
   relier($('#pe-suivi', zone), N, [{ k: 'notes', t: 'long' }]);
+  if (p0 && typeof NOTES !== 'undefined') NOTES.bloc($('#pe-notes', zone), 'crescite_personnes', p0.id, { titre: 'Notes internes', aide: 'Jamais lues par la personne ; une mention la prévient dans son espace.' });
   const dessinerPhoto = () => {
     $('#pe-photo', zone).innerHTML = `${F.photo ? `<img${portraitPrive(F.photo) ? '' : ` src="${photoUrl(F.photo)}"`} alt="Photo de ${esc(nomDe(F))}">` : `<div class="sans">${avatar(F)}</div>`}
       <figcaption>${F.photo ? (F.photo_publique ? 'Publiée sur le site' : 'Pas publiée : accord à cocher') : 'Pas de photo'}</figcaption>
@@ -314,12 +315,12 @@ function editeurPersonne(id) {
       await enregistrerPersonne(etat, F, P, N);
       E.sale = false;
       annoncer(nouvelle ? 'Fiche créée.' : 'Fiche enregistrée.');
-      if (nouvelle) { history.replaceState(null, '', `#/equipe/${etat.p0.id}`); E.hash = location.hash; }
-      vueEquipe(etat.p0.id);
+      if (nouvelle) remplacerAdresse(`#/equipe/${etat.p0.id}`);
+      redessinerFiche(vueEquipe, etat.p0.id);
       bravo();
     } catch (err) {
       // la fiche est peut-être déjà créée : on reste sur elle, la saisie intacte
-      if (nouvelle && etat.p0) { history.replaceState(null, '', `#/equipe/${etat.p0.id}`); E.hash = location.hash; }
+      if (nouvelle && etat.p0) remplacerAdresse(`#/equipe/${etat.p0.id}`);
       erreur(err, err?.code === '23505' ? 'Cette adresse est déjà celle d’une autre fiche' : 'L’enregistrement a échoué');
     } finally { b.disabled = false; }
   });
@@ -380,15 +381,15 @@ async function enregistrerPersonne(etat, F, P, N) {
 async function supprimerPersonne(p) {
   const ds = E.distributions.filter(x => x.personne_id === p.id), eqs = E.equipes.filter(x => x.personne_id === p.id);
   const sort = [ds.length && `de ${ds.length} ligne${ds.length > 1 ? 's' : ''} de distribution`, eqs.length && `de ${eqs.length} équipe${eqs.length > 1 ? 's' : ''} de date`].filter(Boolean).join(' et ');
-  if (!confirm(`Supprimer la fiche de ${nomDe(p)} ?${sort ? ` Elle sort ${sort}.` : ''} Ses coordonnées et ses notes sont effacées ; son compte de connexion, s’il existe, reste dans Supabase.`)) return;
   const copie = { p: clone(p), pr: clone(priveeDe(p.id)), su: clone(E.suiviPersonnes.find(x => x.personne_id === p.id) || null), ds: clone(ds), eqs: clone(eqs) };
   const { error } = await sb.from('crescite_personnes').delete().eq('id', p.id);
   if (error) return erreur(error, 'Suppression impossible');
   E.personnes = E.personnes.filter(x => x.id !== p.id); E.privees = E.privees.filter(x => x.personne_id !== p.id); E.suiviPersonnes = E.suiviPersonnes.filter(x => x.personne_id !== p.id);
   E.distributions = E.distributions.filter(x => x.personne_id !== p.id); E.equipes = E.equipes.filter(x => x.personne_id !== p.id);
   E.sale = false;
-  location.hash = '#/equipe';
-  annoncer('Fiche supprimée.', { libelle: 'Annuler', delai: 9000, action: async () => {
+  quitterFiche('#/equipe');
+  if (typeof rafraichirListes === 'function') rafraichirListes();
+  annoncer(`Fiche supprimée : ${nomDe(p)}${sort ? `, sortie ${sort}` : ''}.`, { libelle: 'Annuler', delai: 9000, action: async () => {
     let r = await sb.from('crescite_personnes').insert(sansMeta(copie.p));
     if (!r.error && copie.pr) r = await sb.from('crescite_personnes_privees').insert(sansMeta(copie.pr));
     if (!r.error && copie.su) r = await sb.from('crescite_personnes_suivi').insert(sansMeta(copie.su));
@@ -485,7 +486,6 @@ function ongletDistribution(z, s) {
       return;
     }
     if (b.dataset.dr !== undefined) {
-      if (!confirm(`Retirer ${nomDe(p)} de la distribution${x.fonction ? ` (${x.fonction})` : x.role ? ` (${x.role})` : ''} ?`)) return;
       const { error } = await sb.from('crescite_distributions').delete().eq('id', x.id);
       if (error) return erreur(error, 'Retrait impossible');
       E.distributions = E.distributions.filter(y => y.id !== x.id);
@@ -566,6 +566,8 @@ function ongletDeroule(z, F) {
     if (b.dataset.fmRetirer !== undefined) { F.feuille_modele.splice(+b.closest('[data-fm]').dataset.fm, 1); marquerSale(); dessiner(); }
   });
   dessiner();
+  // les horaires habituels du spectacle (series.js), enregistrés à part, sous le déroulé
+  if (typeof SERIES !== 'undefined' && F.id) { const md = document.createElement('div'); md.id = 'modele-date'; md.style.marginTop = '16px'; z.append(md); SERIES.blocModele(md, F); }
 }
 
 // les documents d'un spectacle (s) ou de toute la compagnie (s = null) : un fichier du stockage privé, ou un lien
@@ -800,14 +802,16 @@ function documentsEditeur(z, s) {
       dessiner(); return;
     }
     if (b.dataset.docSuppr !== undefined) {
-      if (!confirm(`Supprimer « ${d.titre} » ?${d.fichier ? ' Le fichier est effacé du stockage.' : ''}${estSalles(d) ? ' Les salles invitées ne le verront plus.' : ''}`)) return;
-      const { error } = await sb.from('crescite_documents').delete().eq('id', d.id);
-      if (error) return erreur(error, 'Suppression impossible');
-      E.documents = E.documents.filter(x => x.id !== d.id);
-      // un fichier public peut servir deux documents (programmateurs et scolaires) : il reste tant que l'autre est là
-      const partage = estPublic(d) && E.documents.some(x => x.fichier === d.fichier && estPublic(x));
-      if (d.fichier && !partage) { const r = await sb.storage.from(stockageDe(d)).remove([d.fichier]); if (r.error) erreur(r.error, 'Document retiré, mais le fichier reste dans le stockage'); }
-      dessiner(); annoncer('Document supprimé.');
+      // sans confirmation : « Annuler » remet le document ; son fichier ne s'efface du stockage qu'une fois l'annonce passée
+      let annule = false;
+      await CORBEILLE.ligne({ table: 'crescite_documents', ligne: d, quoi: `Document supprimé : ${d.titre}.${estSalles(d) ? ' Les salles invitées ne le voient plus.' : ''}`, retabli: 'Document rétabli.',
+        apres: () => { E.documents = E.documents.filter(x => x.id !== d.id); dessiner(); }, apresRetour: x => { annule = true; E.documents.push(x); dessiner(); } });
+      setTimeout(async () => {
+        if (annule || !d.fichier) return;
+        // un fichier public peut servir deux documents (programmateurs et scolaires) : il reste tant que l'autre est là
+        const partage = estPublic(d) && E.documents.some(x => x.fichier === d.fichier && estPublic(x));
+        if (!partage) { const r = await sb.storage.from(stockageDe(d)).remove([d.fichier]); if (r.error) erreur(r.error, 'Document retiré, mais le fichier reste dans le stockage'); }
+      }, 9000);
     }
   });
   dessiner();
@@ -2615,10 +2619,8 @@ function editeurAcces(id) {
     $('#pro-actualiser', zone).addEventListener('click', async () => { if (await chargerAcces()) { dessinerActions(); $('#l-pro')?.rafraichir?.(); } journal(); });
     $('#pro-suppr', zone).addEventListener('click', async () => {
       const a = cur(); if (!a) return;
-      if (!confirm(`Supprimer l’invitation de « ${a.nom} » ? Son lien ne s’ouvrira plus et son journal sera effacé.`)) return;
-      const { error } = await sb.from('crescite_acces_pro').delete().eq('id', id);
-      if (error) return erreur(error, 'Suppression impossible');
-      E.acces = E.acces.filter(x => x.id !== id); E.sale = false; location.hash = '#/pro'; annoncer('Invitation supprimée.');
+      CORBEILLE.ligne({ table: 'crescite_acces_pro', ligne: a, quoi: `Invitation supprimée : ${a.nom}. Son lien ne s’ouvre plus.`, retabli: 'Invitation rétablie (son journal de visites est reparti de zéro).',
+        apres: () => { E.acces = E.acces.filter(x => x.id !== id); E.sale = false; location.hash = '#/pro'; }, apresRetour: async () => { await chargerAcces(); location.hash = `#/pro/${id}`; } });
     });
   }
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
@@ -2808,14 +2810,18 @@ function brancherFraisAdmin() {
   $$('[data-refuser-frais]').forEach(b => {
     b.addEventListener('click', async () => {
       const id = +b.dataset.refuserFrais;
-      if (!confirm('Refuser cette note de frais ?')) return;
       b.disabled = true;
       try {
         const { error } = await sb.from('crescite_notes_frais').update({ statut: 'refuse' }).eq('id', id);
         if (error) throw error;
         const f = E.frais.find(x => x.id === id);
         if (f) f.statut = 'refuse';
-        annoncer('Note de frais refusée.');
+        // sans confirmation : « Annuler » la remet en attente
+        annoncer('Note de frais refusée.', { libelle: 'Annuler', delai: 8000, action: async () => {
+          const r = await sb.from('crescite_notes_frais').update({ statut: 'en_attente' }).eq('id', id);
+          if (r.error) return erreur(r.error, 'Retour impossible');
+          if (f) f.statut = 'en_attente'; annoncer('Note de frais de nouveau en attente.'); if (location.hash === '#/equipe/frais') { vueEquipe('frais'); sauterStatutFrais(id); }
+        } });
         vueEquipe('frais'); sauterStatutFrais(id);
       } catch (err) {
         erreur(err, 'Refus impossible');
@@ -2977,15 +2983,11 @@ function ongletMateriel(z, s0) {
 
     $$('[data-suppr-mat]', z).forEach(btn => {
       btn.addEventListener('click', async () => {
-        const id = +btn.dataset.supprMat;
-        if (!confirm('Retirer cet élément de matériel ?')) return;
+        const id = +btn.dataset.supprMat, m = E.materiel.find(x => x.id === id);
+        if (!m) return;
         try {
-          const { error } = await sb.from('crescite_materiel').delete().eq('id', id);
-          if (error) throw error;
-          const idx = E.materiel.findIndex(x => x.id === id);
-          if (idx >= 0) E.materiel.splice(idx, 1);
-          dessiner();
-          annoncer('Matériel retiré.');
+          await CORBEILLE.ligne({ table: 'crescite_materiel', ligne: m, quoi: `Matériel retiré : ${m.intitule || 'un élément'}.`, retabli: 'Matériel remis.',
+            apres: () => { const idx = E.materiel.findIndex(x => x.id === id); if (idx >= 0) E.materiel.splice(idx, 1); dessiner(); }, apresRetour: x => { E.materiel.push(x); dessiner(); } });
         } catch (err) {
           erreur(err, 'Suppression impossible');
         }

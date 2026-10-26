@@ -434,6 +434,21 @@ BASE = "https://omekkqjinvppadsoinvj.supabase.co"
 CLE_PUBLIQUE = "sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB"     # la clé publique du site (lecture de ce qui est publié)
 
 
+def fond_carte():
+    """Le fond de la carte de tournée de l'administration (admin/tournee.js) : la France, la Belgique, le Luxembourg, Rouen
+    et la projection du site (prototype/src/map.json, projection), écrits dans admin/fond-carte.js. Même fond, même
+    projection que la carte du site : un lieu de la base se place au même endroit."""
+    mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
+    projection(mp["places"])
+    fond = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"], "rouen": mp["rouen"], "projection": projection.coefficients}
+    texte = ("'use strict';\n// Le fond de la carte de tournée (admin/tournee.js) : la France, la Belgique, le Luxembourg, Rouen, et la projection du site\n"
+             "// (une conique conforme de Lambert recalée sur les communes connues : maquettes/build.py, projection). Écrit par\n"
+             "// maquettes/build.py (fond_carte) depuis prototype/src/map.json : ne pas modifier à la main.\n"
+             f"const FOND_CARTE = {json.dumps(fond, ensure_ascii=False, separators=(',', ':'))};\n")
+    (ROOT / "admin" / "fond-carte.js").write_text(texte, encoding="utf-8")
+    return fond
+
+
 def photos_de_la_base():
     """Les photos publiées des personnes, telles que la base les donne au site : {slug: (chemin, crédit)}. Une photo déposée
     par l'administration y a son propre nom de fichier ; None si la base ne répond pas (on garde alors le registre privé)."""
@@ -812,10 +827,12 @@ def admin(dest):
     les outils communs qu'elle charge ou chargera : tentacules.js, frise.js (FRISE) et mouvement.js (MOUVEMENT)."""
     import shutil
     (dest / "admin" / "vendor").mkdir(parents=True, exist_ok=True)
+    fond_carte()
     shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
     # la feuille de route et le planning (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le
     # tableau de bord
-    for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js", "tableau.js", "gestes.js", "menus.js", "habillage.js"):
+    for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js", "tableau.js", "gestes.js", "menus.js", "corbeille.js", "tiroir.js", "selection.js",
+              "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "fond-carte.js", "tournee.js", "mobile.js", "habillage.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
