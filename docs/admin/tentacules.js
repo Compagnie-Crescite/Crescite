@@ -28,7 +28,7 @@
    Ce que la maquette fournit
    - data-pieuvre sur l'élément du logo de l'en-tête (le <span> ou <a> qui contient D.logo.mark, D.logo.octopus ou son
      propre dessin de la pieuvre). L'outil y retrouve les quatre tracés de D.logo.octopusPaths et les anime EN PLACE
-     (bras, tête) ; les bras de D.arms donnent le point de départ des tentacules (celui du spectacle visé, quand on va vers
+     (bras, tête) ; si la créature (creature.js) vit dans cet hôte, c'est elle qui réagit (CREATURE.reagir) ; les bras de D.arms donnent le point de départ des tentacules (celui du spectacle visé, quand on va vers
      sa page : D.arms.armOf). Hôte vide : l'outil y met la pieuvre (D.logo.octopus, ou un dessin neutre), même sans
      mouvement. Hôte sans tracé reconnu : il pulse en entier. Pas d'hôte visible : les tentacules partent du bord le plus proche.
    - TENTACULES.regler({ clic, pages, style, encre, accent, ventouse, neutre, epaisseur, duree, … }), à appeler une fois :
@@ -497,6 +497,8 @@ const TENTACULES = (() => {
     if (!pret() || reduit()) return null;
     const G = trouverGuide();
     if (!G) return null;
+    // la créature (creature.js) vit dans cet hôte : c'est elle qui réagit, avec ses vraies tentacules
+    if (typeof CREATURE !== 'undefined' && CREATURE.habite && CREATURE.habite(G.hote)) { CREATURE.reagir(genre, vers); return null; }
     arreterGuide();
     const [dur0, amp, serre, penche, sens] = BRAS[genre] || BRAS.clic, P = palette(G.hote), dur = dureeDe(dur0, P) + retard;
     const lean = vers ? clamp((vers[0] - G.cx) / Math.max(200, innerWidth * .4), -1, 1) * penche : 0;
