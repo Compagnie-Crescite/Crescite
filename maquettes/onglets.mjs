@@ -809,7 +809,7 @@ for (const n of names) {
         // la légende de ses spectacles, écrite tout près d'elle ; chaque saison passée annoncée avec sa carte, dans son bloc
         let ordre = null, saisons = null;
         if (location.hash === '#/saisons') {
-          const d0 = D.dates.find(d => !d.scolaire && (d.details || [])[0]);
+          const d0 = D.dates.find(d => !d.scolaire && !(d.precision === 'month' && (d.fin || d.iso || '') >= D.aujourdhui) && (d.details || [])[0]);   // (une date au jour encore à fixer : pas dans les saisons de la synthèse, règle 21 D)
           const a = d0 ? n(d0.details[0].texte) : '', b = n(D.site.saisons[D.site.saisons.length - 1].titre);
           const ia = a ? lu.indexOf(a) : -1, ib = lu.lastIndexOf(b);
           ordre = { ok: ia >= 0 && ib >= 0 && ia < ib, detail: `${ia} / ${ib}` };
