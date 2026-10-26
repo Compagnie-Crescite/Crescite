@@ -36,15 +36,17 @@ liste qui se redessine glisse, un élément qui s'en va se replie (`retirerLigne
   occupé est `aria-busy`, un chiffre roulant garde son texte entier.
 - **Le téléphone confirme** (`vibrer`) un geste qui a abouti : le retour au doigt, une notification lue, une case cochée,
   un bouton qui a réussi, le rafraîchissement.
-- **Le budget tient** : aucune tâche longue au-delà de 200 ms après l'ouverture (les bancs le mesurent), pas de
-  bibliothèque, pas d'image en plus.
+- **Le budget tient** : aucune tâche longue au-delà de 200 ms après l'ouverture, même sur un processeur quatre fois
+  plus lent (`CPU=4`, les bancs le mesurent : une cinquantaine de millisecondes au plus), pas de bibliothèque, pas
+  d'image en plus.
 
 ## Ce que les bancs vérifient
 
 ```sh
 python3 maquettes/build.py synthese        # d'abord : maquettes/dist/equipe et maquettes/dist/admin
-node maquettes/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (42 vérifications)
-node maquettes/mouvement-admin.mjs         # l'administration, sur une base fictive (29 vérifications)
+node maquettes/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (43 vérifications)
+node maquettes/mouvement-admin.mjs         # l'administration, sur une base fictive (30 vérifications)
+CPU=4 node maquettes/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
 ```
 
 Chacun ouvre l'application dans Chromium sans toucher à la vraie base (la session est gardée dans le navigateur ; les

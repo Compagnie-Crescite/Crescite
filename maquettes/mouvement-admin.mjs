@@ -69,6 +69,7 @@ async function ouvrir(navigateur, { reduit = false, hash = '#/representations', 
     return r.abort();
   });
   const page = await ctx.newPage();
+  if (process.env.CPU) { const cdp = await ctx.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: +process.env.CPU }); }   // CPU=4 : un téléphone lent
   const erreurs = [];
   page.on('pageerror', e => erreurs.push(String(e.message || e)));
   page.on('console', m => { if (m.type() === 'error' && !/supabase|Failed to load resource|net::ERR|WebSocket/i.test(m.text())) erreurs.push(m.text()); });
@@ -172,6 +173,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('la connexion refusée secoue le formulaire', await page.evaluate(() => { const f = document.querySelector('#f-connexion'); return f.classList.contains('secoue') && getComputedStyle(f).animationName === 'secoue'; }));
   ok('erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   const longues = await page.evaluate(() => window.__longues);
+  console.log(`tâches longues (ms) : ${JSON.stringify(longues)}`);
   ok('tâches longues après l\'ouverture : aucune au-delà de 200 ms', longues.every(d => d < 200), JSON.stringify(longues));
   await ctx.close();
 }
