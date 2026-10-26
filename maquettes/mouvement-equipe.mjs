@@ -76,8 +76,8 @@ async function toucher(page, points, { pas = 8, dt = 16 } = {}) {
 }
 async function lacher(cdp) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await cdp.detach(); }
 
-async function ouvrir(navigateur, { reduit = false, hash = '#/saison' } = {}) {
-  const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: reduit ? 'reduce' : 'no-preference', locale: 'fr-FR', timezoneId: 'UTC' });
+async function ouvrir(navigateur, { reduit = false, hash = '#/saison', sombre = false } = {}) {
+  const ctx = await navigateur.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: reduit ? 'reduce' : 'no-preference', colorScheme: sombre ? 'dark' : 'light', locale: 'fr-FR', timezoneId: 'UTC' });
   await ctx.route(/supabase\.co|fonts\.g/, r => (/crescite_notifications/.test(r.request().url()) && r.request().method() === 'PATCH' ? r.fulfill({ status: 204, body: '' }) : r.abort()));
   const page = await ctx.newPage();
   const erreurs = [];
@@ -261,6 +261,19 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(300);
   ok('?anim=0 · html.still, la lueur ne respire pas, le curseur des onglets ne glisse pas', await page.evaluate(() => document.documentElement.classList.contains('still') && getComputedStyle(document.querySelector('.heros-motif')).animationName === 'none' && getComputedStyle(document.querySelector('.nav-curseur')).transitionDuration.split(',').every(x => x.trim() === '0s')));
   ok('?anim=0 · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
+// ================================================================================ la nuit : les mêmes vues, en mode sombre (captures)
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { sombre: true });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${CAPT}/accueil-nuit.png` });
+  await page.goto(`${URL0}#/date/102`); await page.waitForSelector('.heros-page', { timeout: 8000 }); await page.waitForTimeout(400);
+  await page.screenshot({ path: `${CAPT}/date-nuit.png` });
+  await page.goto(`${URL0}#/notifications`); await page.waitForSelector('.liste-notifs', { timeout: 8000 }); await page.waitForTimeout(300);
+  await page.screenshot({ path: `${CAPT}/notifications-nuit.png` });
+  ok('nuit · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   await ctx.close();
 }
 

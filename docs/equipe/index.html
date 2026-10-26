@@ -953,6 +953,10 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   .arrive, .arrive > .frise { animation: monte .4s cubic-bezier(.2, .8, .2, 1) both; }
   .photo-apercu, .jourj-badge { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }   /* l'aperçu du ticket, « aujourd'hui » sur une feuille */
   details[open] > :not(summary) { animation: paraitre .25s ease-out both; }   /* ce qu'un pli ouvre paraît (sans transform : les billets qui glissent se mesurent) */
+  /* 16. la porte : elle se pose à l'ouverture, et secoue le formulaire d'une connexion refusée */
+  .seul .porte { animation: monte .4s cubic-bezier(.2, .8, .2, 1) both; }
+  .porte form.secoue { animation: secoue .4s cubic-bezier(.36, .07, .19, .97); }
+  @keyframes secoue { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-6px); } 40%, 60% { transform: translateX(6px); } }
   @supports (animation-timeline: scroll()) {
     .heros-photo, .ts-photo { animation: recule linear both; animation-timeline: scroll(root); animation-range: 0 360px; }
     @keyframes recule { to { transform: translateY(-44px); } }

@@ -461,7 +461,8 @@ de route se lit en direct le jour J (les lignes passées pâlissent, celle du mo
 bandeau d'une notification dit le temps qu'il lui reste, le bandeau d'état n'entre que s'il change, la page d'un
 spectacle se pose comme celle d'une date, une indisponibilité retirée se replie et la neuve se pose, ce qui arrive après
 la page (les chiffres, la liste de chargement, le planning) se pose, le héros recule au défilement, les mois de la
-saison restent en haut, ce qu'un pli ouvre se pose, le téléphone confirme un bouton qui a réussi. Tout ce
+saison restent en haut, ce qu'un pli ouvre se pose, le téléphone confirme un bouton qui a réussi, la porte se pose à
+l'ouverture et secoue une connexion refusée. Tout ce
 qui bouge en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations, ni
 avec `?anim=0`, la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
 ligne, sur une saison fictive.

@@ -55,8 +55,8 @@ window.__vt = []; const _svt = document.startViewTransition; if (_svt) document.
 const resultats = [];
 const ok = (nom, v, detail = '') => { resultats.push([v ? 'ok' : 'KO', nom, detail]); };
 
-async function ouvrir(navigateur, { reduit = false, hash = '#/representations', largeur = 1280 } = {}) {
-  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: 820 }, reducedMotion: reduit ? 'reduce' : 'no-preference', locale: 'fr-FR', timezoneId: 'UTC' });
+async function ouvrir(navigateur, { reduit = false, hash = '#/representations', largeur = 1280, sombre = false } = {}) {
+  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: 820 }, reducedMotion: reduit ? 'reduce' : 'no-preference', colorScheme: sombre ? 'dark' : 'light', locale: 'fr-FR', timezoneId: 'UTC' });
   await ctx.route(/supabase\.co|fonts\.g/, async r => {
     const u = new URL(r.request().url()), m = u.pathname.match(/\/rest\/v1\/([a-z_]+)/);
     if (m && r.request().method() === 'GET') {
@@ -195,6 +195,17 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(300);
   ok('?anim=0 · html.still, pas de main.entree, le curseur sans transition', await page.evaluate(() => document.documentElement.classList.contains('still') && !document.querySelector('#vue').classList.contains('entree') && getComputedStyle(document.querySelector('#l-dates .ligne')).transitionDuration.split(',').every(x => x.trim() === '0s')));
   ok('?anim=0 · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
+  await ctx.close();
+}
+
+// ================================================================================ la nuit : les mêmes vues, en mode sombre (captures)
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { sombre: true });
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${CAPT}/representations-nuit.png` });
+  await page.goto(`${URL0}#/representations/101`); await page.waitForFunction(() => document.querySelector('#ed-date .bloc'), null, { timeout: 8000 }); await page.waitForTimeout(400);
+  await page.screenshot({ path: `${CAPT}/date-nuit.png` });
+  ok('nuit · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' | ').slice(0, 300));
   await ctx.close();
 }
 

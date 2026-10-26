@@ -497,7 +497,7 @@
       if (!mdp.value) return erreurChamp(mdp, 'Indiquez votre mot de passe, ou demandez plus bas un lien de connexion.');
       dire('#c-msg', '');
       const { error } = await occupe($('#f-connexion button[type=submit]'), 'Connexion…', () => sb.auth.signInWithPassword({ email: v, password: mdp.value }));
-      if (error) { dire('#c-msg', `Connexion impossible : ${esc(motsErreur(error))}.`); if (error.code === 'invalid_credentials' || /Invalid login/i.test(error.message)) mdp.select(); }
+      if (error) { dire('#c-msg', `Connexion impossible : ${esc(motsErreur(error))}.`); const f = $('#f-connexion'); if (f && !reduit()) { f.classList.add('secoue'); setTimeout(() => f.classList.remove('secoue'), 500); } if (error.code === 'invalid_credentials' || /Invalid login/i.test(error.message)) mdp.select(); }
     });
     $('#b-lien').addEventListener('click', async e => {
       const v = adresse();
