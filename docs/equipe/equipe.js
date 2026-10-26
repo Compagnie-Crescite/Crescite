@@ -33,8 +33,8 @@
   'use strict';
 
   // ================================================================================================ réglages
-  const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
-  const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
+  const BASE = 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co';
+  const CLE = 'sb_publishable__SvO0qVI2BvcBK5vYgxjZQ_U-evgPKD';
   const SESSION = 'crescite-equipe';              // la session de l'équipe, à part de celle de l'administration
   const MEMOIRE = 'crescite-equipe-donnees';      // la dernière saison lue : relue sans réseau (effacée à la déconnexion)
   const MODIFS = 'crescite-equipe-modifs';        // les horaires changés depuis la lecture précédente, marqués trois jours
