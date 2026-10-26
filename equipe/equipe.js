@@ -408,7 +408,8 @@
   }
   function poserPieuvres() {
     if (TT) tt('pieuvre');
-    $$('[data-pieuvre]').forEach(h => { if (!h.firstElementChild) h.innerHTML = (self.CRESCITE_LOGO && self.CRESCITE_LOGO.logo && self.CRESCITE_LOGO.logo.octopus) || PIEUVRE_MARQUE; });
+    // data-pieuvre-tirer : la pieuvre de « tirer pour rafraîchir », que les tentacules ne prennent pas pour le guide
+    $$('[data-pieuvre], [data-pieuvre-tirer]').forEach(h => { if (!h.firstElementChild) h.innerHTML = (self.CRESCITE_LOGO && self.CRESCITE_LOGO.logo && self.CRESCITE_LOGO.logo.octopus) || PIEUVRE_MARQUE; });
   }
   function dire(cible, texteHtml, genre = 'erreur') {
     const el = typeof cible === 'string' ? $(cible) : cible;
@@ -804,7 +805,7 @@
         <div class="bandeau-etat" id="bandeau-etat"></div>
         <main id="contenu" tabindex="-1"></main>
       </div>
-      <div class="tirer" id="tirer" aria-hidden="true">${ICONES.actualiser}</div>
+      <div class="tirer" id="tirer" aria-hidden="true"><span class="pieuvre" data-pieuvre-tirer></span></div>
       <div class="zone-bandeau" id="bandeau-notif" aria-live="polite"></div>
     </div>`;
     poserPieuvres();
@@ -876,8 +877,9 @@
     coquille();
     majNav(r);
     majBarre(r, titre);
+    teinter(r);
     const c = $('#contenu');
-    c.className = large ? 'large' : '';
+    c.className = `${large ? 'large' : ''}${E.rafraichi ? ' rafraichi' : ''}`;
     c.innerHTML = html;
     E.titre = titre; majTitre();
     bandeauEtat();
@@ -889,6 +891,21 @@
     $$('#contenu figure[data-carte]').forEach(f => { dessinerCarte(f); if (RO_CARTES) RO_CARTES.observe(f); });
     animerChiffres();
     majFrises();
+  }
+  // la page d'une date, d'une feuille de route ou d'un spectacle met l'application à la couleur de son univers : le curseur
+  // des onglets, le retour, la marque (--accent et --accent-doux, lus par la feuille de style ; les autres vues gardent
+  // le magenta). Les couleurs sont celles de couleurs(sp), déjà ajustées pour se lire sur le papier et la nuit.
+  function teinter(r) {
+    const app = $('#app > .appli');
+    if (!app) return;
+    let sp = null;
+    if (r.k === 'date' || r.k === 'feuille') { const d = E.dates.find(x => x.id === r.id); sp = (d && d.spectacle) || null; }
+    else if (r.k === 'spectacle') sp = [...E.spectacles.values()].find(s => (s.slug || String(s.id)) === r.slug) || null;
+    if (!sp) { delete app.dataset.teinte; ['--teinte', '--teinte-s', '--teinte-douce', '--teinte-douce-s'].forEach(v => app.style.removeProperty(v)); return; }
+    const c = couleurs(sp);
+    app.dataset.teinte = c.u;
+    app.style.setProperty('--teinte', c.texte); app.style.setProperty('--teinte-s', c.texteS);
+    app.style.setProperty('--teinte-douce', c.fond); app.style.setProperty('--teinte-douce-s', c.fondS);
   }
   function bandeauEtat() {
     const el = $('#bandeau-etat');
@@ -936,7 +953,7 @@
     if (r.profondeur > 0) r.onglet = (E.pile.length && lireRoute(E.pile[0]).onglet) || (o.rafraichir && avant && avant.hash === r.hash ? avant.onglet : r.onglet);
     const partage = sens === 'avant' && avant && avant.k === 'saison' && r.k === 'date' ? { nom: `date-${r.id}`, avant: `.heros[data-date="${r.id}"], #billet-${r.id}`, apres: `.heros[data-date="${r.id}"]` }
       : sens === 'arriere' && avant && avant.k === 'date' && r.k === 'saison' ? { nom: `date-${avant.id}`, avant: `.heros[data-date="${avant.id}"]`, apres: `.heros[data-date="${avant.id}"], #billet-${avant.id}` } : null;
-    E.route = r; E.vue = r.k;
+    E.route = r; E.vue = r.k; E.rafraichi = !!o.rafraichir;
     const y = o.rafraichir ? window.scrollY : sens === 'arriere' || (r.profondeur === 0 && sens !== 'aucun') ? (E.defil[r.hash] || 0) : 0;
     const rendre = () => {
       try { VUES[r.k](r, { focus: !o.arrivee && !o.rafraichir && sens !== 'arriere' }); } catch (e) { console.error(e); }
@@ -954,6 +971,14 @@
   let transitionEnCours = null;
   function changerVue(maj, sens, partage) {
     const html = document.documentElement;
+    if (E.glisse) {
+      E.glisse = false;
+      maj();
+      const c = $('#contenu');
+      if (c) { c.classList.remove('glisse', 'glisse-fin'); c.style.transform = ''; c.style.opacity = ''; }
+      if (!reduit()) entree('arriere');
+      return;
+    }
     const peut = typeof document.startViewTransition === 'function' && !reduit() && document.visibilityState === 'visible' && sens !== 'aucun' && !!$('#app > .appli');
     if (!peut) { maj(); if (sens !== 'aucun' && !reduit()) entree(sens); return; }
     const source = partage ? $(partage.avant) : null;
@@ -1095,13 +1120,21 @@
     const m = minutesDe(r.heure) - min;
     if (m > 180) { const h = +r.heure.slice(0, 2); return { grand: h >= 18 ? 'Ce soir' : h >= 12 ? 'Cet après-midi' : 'Ce matin', petit: quand }; }
     if (m > 0) { const h = Math.floor(m / 60), mm = m % 60; return { avant: 'dans', grand: h ? `${h}\u00a0h\u00a0${deux(mm)}` : `${mm}\u00a0min`, petit: nat === 'representations' ? `lever de rideau ${quand}` : quand }; }
-    return { grand: nat === 'repetitions' ? 'En répétition' : nat === 'representations' ? 'En scène' : 'En cours', petit: `depuis ${heureTexte(r.heure)}` };
+    return { grand: nat === 'repetitions' ? 'En répétition' : nat === 'representations' ? 'En scène' : 'En cours', petit: `depuis ${heureTexte(r.heure)}`, direct: true };
   }
-  const decompteHtml = k => `${k.avant ? `<span class="dc-avant">${esc(k.avant)}</span> ` : ''}<b class="chiffre${/^\d/.test(k.grand) ? '' : ' mot'}">${esc(k.grand)}</b>${k.unite ? ` <span class="unite">${esc(k.unite)}</span>` : ''}${k.petit ? ` <span class="dc-petit">${esc(k.petit)}</span>` : ''}`;
+  // chaque chiffre dans son propre span : quand le compte change, ils roulent l'un après l'autre (--i) ; « En scène » a sa lampe
+  const chiffresRoulants = s => [...String(s)].map((c, i) => (/\d/.test(c) ? `<span class="d" style="--i:${i}">${c}</span>` : esc(c))).join('');
+  const decompteHtml = k => `${k.avant ? `<span class="dc-avant">${esc(k.avant)}</span> ` : ''}${k.direct ? '<span class="lampe" aria-hidden="true"></span>' : ''}<b class="chiffre${/^\d/.test(k.grand) ? '' : ' mot'}">${chiffresRoulants(k.grand)}</b>${k.unite ? ` <span class="unite">${esc(k.unite)}</span>` : ''}${k.petit ? ` <span class="dc-petit">${esc(k.petit)}</span>` : ''}`;
   function majDecomptes() {
     $$('[data-decompte]').forEach(el => {
       const d = E.dates.find(x => x.id === +el.dataset.decompte), k = d && compte(d);
-      if (k) { const h = decompteHtml(k); if (el.dataset.h !== h) { el.innerHTML = h; el.dataset.h = h; } }
+      if (k) {
+        const h = decompteHtml(k);
+        if (el.dataset.h === h) return;
+        const roule = el.dataset.h != null && !reduit();          // le premier passage pose le compte, les suivants le font rouler
+        el.innerHTML = h; el.dataset.h = h;
+        if (roule) { el.classList.remove('roule'); void el.offsetWidth; el.classList.add('roule'); }
+      }
     });
   }
   // le petit décompte des billets : « ce soir », « demain », « dans 3 jours », « dans 2 semaines »
@@ -1211,14 +1244,31 @@
   }
   function majFrises() {
     const auj = aujourdhui(), now = new Date(), m = now.getHours() * 60 + now.getMinutes();
-    $$('[data-frise] li[data-debut]').forEach(li => {
-      const j = li.dataset.jour, a = minutesDe(li.dataset.debut), b = minutesDe(li.dataset.fin);
-      let etat = '';
-      if (j && j < auj) etat = 'passe';
-      else if (j === auj && a != null) { const fin = b != null && b > a ? b : a + 45; etat = m >= fin ? 'passe' : m >= a ? 'maintenant' : ''; }
-      li.classList.toggle('passe', etat === 'passe');
-      li.classList.toggle('maintenant', etat === 'maintenant');
-      if (etat === 'maintenant') li.setAttribute('aria-current', 'time'); else li.removeAttribute('aria-current');
+    $$('[data-frise]').forEach(ol => {
+      let suivant = null;
+      $$('li[data-debut]', ol).forEach(li => {
+        const j = li.dataset.jour, a = minutesDe(li.dataset.debut), b = minutesDe(li.dataset.fin);
+        let etat = '';
+        if (j && j < auj) etat = 'passe';
+        else if (j === auj && a != null) {
+          const fin = b != null && b > a ? b : a + 45;
+          etat = m >= fin ? 'passe' : m >= a ? 'maintenant' : '';
+          // le trait « maintenant » descend le long de l'étape en cours (--avance, de 0 à 1) ; la prochaine étape des deux
+          // heures à venir dit dans combien de temps elle vient
+          if (etat === 'maintenant') li.style.setProperty('--avance', Math.min(1, (m - a) / (fin - a)).toFixed(3)); else li.style.removeProperty('--avance');
+          if (!etat && !suivant && a - m <= 120) suivant = { li, dans: a - m };
+        }
+        li.classList.toggle('passe', etat === 'passe');
+        li.classList.toggle('maintenant', etat === 'maintenant');
+        if (etat === 'maintenant') li.setAttribute('aria-current', 'time'); else li.removeAttribute('aria-current');
+      });
+      $$('.dans', ol).forEach(x => { if (!suivant || x.closest('li') !== suivant.li) x.remove(); });
+      if (suivant) {
+        const h = $('.h', suivant.li), n = suivant.dans, texte = n <= 0 ? 'à l’instant' : n < 60 ? `dans ${n}\u00a0min` : `dans ${Math.floor(n / 60)}\u00a0h\u00a0${deux(n % 60)}`;
+        let x = h && $('.dans', h);
+        if (h && !x) { x = document.createElement('span'); x.className = 'dans'; h.append(x); }
+        if (x && x.textContent !== texte) x.textContent = texte;
+      }
     });
   }
 
@@ -1243,9 +1293,10 @@
   // la feuille de style en tire une taille commune qui tient dans la tuile (« 15 100 » ne se coupe pas)
   const largeurChiffres = ns => Math.max(1.2, ...ns.map(n => [...nombre(n)].reduce((t, c) => t + (/\d/.test(c) ? 0.584 : 0.24), 0))).toFixed(2);
   function animerChiffres() {
-    const els = $$('#contenu [data-compter]');
-    if (!els.length || reduit() || E.chiffresVus) return;
-    E.chiffresVus = true;
+    // les chiffres de la saison ne se comptent qu'une fois par session ; les kilomètres d'une date (data-route), à chaque page
+    const els = $$('#contenu [data-compter]').filter(el => el.hasAttribute('data-route') || !E.chiffresVus);
+    if (!els.length || reduit()) return;
+    if (els.some(el => !el.hasAttribute('data-route'))) E.chiffresVus = true;
     const fin = els.map(el => +el.dataset.compter || 0), t0 = performance.now(), D = 900;
     const pas = t => {
       const u = Math.min(1, (t - t0) / D), e = 1 - (1 - u) ** 3;
@@ -1356,18 +1407,22 @@
     const loin = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]), tri = [...info.lieux].sort((a, b) => loin(b) - loin(a) || a.avenir - b.avenir);
     const anime = !zone.dataset.anime && !reduit(), id = `carte-${fig.dataset.carte}`, rayon = Math.round(Math.hypot(bw, bh) * 1.3);
     zone.dataset.anime = '1';
-    const bras = tri.map(x => `<path class="bras${x.avenir ? '' : ' passe'}" style="--c:${esc(x.couleur)}" d="${brasCarte(x.xy, (x.avenir ? 2.6 + Math.sqrt(x.n) * 1.3 : 1.6) * k, 0.5 * k)}"/>`).join('');
+    const ids = x => x.dates.map(d => d.id).join(' ');
+    const bras = tri.map(x => `<path class="bras${x.avenir ? '' : ' passe'}" style="--c:${esc(x.couleur)}" data-dates="${ids(x)}" d="${brasCarte(x.xy, (x.avenir ? 2.6 + Math.sqrt(x.n) * 1.3 : 1.6) * k, 0.5 * k)}"/>`).join('');
     const bouts = tri.filter(x => x.avenir && loin(x) > 18 * k).map(x => `<path class="bout" style="--c:${esc(x.couleur)};stroke-width:${(1.5 * k).toFixed(2)}px" d="${boutCarte(x.xy, 4.4 * k)}"/>`).join('');
+    // la carte d'une date : la route, en pointillé, avance de Rouen jusqu'au lieu le long du bras (pathLength : le tiret se
+    // règle sur cent unités quelle que soit la longueur)
+    const routes = info.mini ? tri.filter(x => x.avenir && loin(x) > 18 * k).map(x => { const [qx, qy] = controle(x.xy, R); return `<path class="route" pathLength="100" style="stroke-width:${(1.7 * k).toFixed(2)}px" d="M${R[0]} ${R[1]}Q${qx.toFixed(1)} ${qy.toFixed(1)} ${x.xy[0].toFixed(1)} ${x.xy[1].toFixed(1)}"/>`; }).join('') : '';
     const points = tri.map(x => {
       const lib = `${x.commune}${x.dep ? ` (${x.dep})` : ''}${x.nom && x.nom !== x.commune ? `, ${x.nom}` : ''} : ${x.dates.map(d => `${d.spectacle?.titre || ''}, ${quandTexte(d)}`).join(' ; ')}`;
-      return `<a class="lieu-carte${x.avenir ? '' : ' passe'}" href="#/date/${x.ref.id}" aria-label="${esc(lib)}"><circle class="cible" cx="${x.xy[0].toFixed(1)}" cy="${x.xy[1].toFixed(1)}" r="${(13 * k).toFixed(2)}"/>
+      return `<a class="lieu-carte${x.avenir ? '' : ' passe'}" href="#/date/${x.ref.id}" data-dates="${ids(x)}" aria-label="${esc(lib)}"><circle class="cible" cx="${x.xy[0].toFixed(1)}" cy="${x.xy[1].toFixed(1)}" r="${(13 * k).toFixed(2)}"/>
         <circle class="point" style="--c:${esc(x.couleur)};stroke-width:${((x.avenir ? 2.4 : 1.4) * k).toFixed(2)}px" cx="${x.xy[0].toFixed(1)}" cy="${x.xy[1].toFixed(1)}" r="${((x.avenir ? 4.6 : 2.8) * k).toFixed(2)}"/></a>`;
     }).join('');
     zone.innerHTML = `<svg viewBox="${bx} ${by} ${bw} ${bh}" role="group" aria-label="${esc(info.titre)}">
       <defs><clipPath id="${id}-clip"><circle cx="${R[0]}" cy="${R[1]}" r="${anime ? 0 : rayon}">${anime ? `<animate attributeName="r" from="0" to="${rayon}" dur="1.5s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".45 0 .2 1"/>` : ''}</circle></clipPath></defs>
       <path class="voisin" d="${FRANCE.belgique || ''}" style="stroke-width:${k.toFixed(2)}px"/><path class="voisin" d="${FRANCE.luxembourg || ''}" style="stroke-width:${k.toFixed(2)}px"/>
       <path class="pays" d="${FRANCE.contour}" style="stroke-width:${(1.2 * k).toFixed(2)}px"/>
-      <g clip-path="url(#${id}-clip)">${bras}${bouts}</g>${points}${nomsCarte(tri.filter(x => x.avenir), k, [bx, by, bw, bh], tri)}
+      <g clip-path="url(#${id}-clip)">${bras}${bouts}${routes}</g>${points}${nomsCarte(tri.filter(x => x.avenir), k, [bx, by, bw, bh], tri)}
       <circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="${(5.5 * k).toFixed(2)}" style="stroke-width:${(2 * k).toFixed(2)}px"/>
       <text class="rouen-nom" x="${(R[0] + 9 * k).toFixed(1)}" y="${(R[1] - 8 * k).toFixed(1)}" style="font-size:${(13 * k).toFixed(2)}px;stroke-width:${(4 * k).toFixed(2)}px" aria-hidden="true">Rouen</text>
     </svg>`;
@@ -1434,8 +1489,8 @@
     }
     const plusieursJours = new Set(reps.map(r => r.jour)).size > 1;
     return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="${sco ? 'Représentations' : 'Horaires'}">${lignes.map((r, i) => {
-      const modif = r.ids.some(id => E.modifs.reps.has(id));
-      const cls = [r.annulee && 'annulee', !r.heure && 'sans-heure', modif && 'modifiee'].filter(Boolean).join(' ');
+      const modif = r.ids.some(id => E.modifs.reps.has(id)), fraiche = modif && r.ids.some(id => Date.now() - E.modifs.reps.get(id) < 20000);
+      const cls = [r.annulee && 'annulee', !r.heure && 'sans-heure', modif && 'modifiee', fraiche && 'fraiche'].filter(Boolean).join(' ');
       return `<li${cls ? ` class="${cls}"` : ''}>
         ${plusieursJours ? `<span class="h-jour">${i && lignes[i - 1].jour === r.jour ? `<span class="sr">${esc(jourCourt(r.jour))}</span>` : esc(jourCourt(r.jour))}</span>` : ''}
         ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}${r.fin ? `<span class="h-fin">\u2009–\u2009${esc(heureTexte(r.fin))}</span>` : ''}</span>`
@@ -1494,7 +1549,7 @@
     }
     return `<section class="bloc bloc-lieu"${attrU(sp)} aria-labelledby="b-lieu"><h2 id="b-lieu">${ICONES.route}Le lieu</h2>
       <div class="lieu-grille"><div><p class="lieu-nom">${esc(l.nom || communeDe(l))}</p><p class="lieu-adresse">${lignes.map(esc).join('<br>')}</p>
-        ${km ? `<p class="aide">Environ ${nombre(km)}\u00a0km de Rouen par la route.</p>` : ''}
+        ${km ? `<p class="aide">Environ <span data-compter="${km}" data-route aria-hidden="true">${nombre(km)}</span><span class="sr">${nombre(km)}</span>\u00a0km de Rouen par la route.</p>` : ''}
         ${gps ? `<div class="nav-gps-grille">
           <a class="btn-gps" href="${esc(gps.google)}" target="_blank" rel="noopener">${ICONES.route} Google Maps</a>
           <a class="btn-gps" href="${esc(gps.waze)}" target="_blank" rel="noopener">${ICONES.waze} Waze</a>
@@ -1877,10 +1932,16 @@
     xs.forEach(x => { x.lue_le = quand; });
     vibrer(10);
     majNotifs();
+    balayer(xs.map(x => x.id));
     const { error } = await sb.from('crescite_notifications').update({ lue_le: quand }).eq('personne_id', E.moi).is('lue_le', null);
     if (error) { xs.forEach(x => { x.lue_le = null; }); majNotifs(); return annoncer(`Les notifications n’ont pas pu être marquées comme lues : ${motsErreur(error)}.`, { erreur: true }); }
     const b = $('[data-tout-lu]') || bouton;
     if (b && b.isConnected) tt('confirmer', b);
+  }
+  // « tout marquer comme lu » : les notifications s'éteignent l'une après l'autre (--i, le délai)
+  function balayer(ids) {
+    if (reduit()) return;
+    ids.forEach((id, i) => { const a = $(`.liste-notifs [data-notif="${id}"]`); if (a) { a.style.setProperty('--i', Math.min(i, 14)); a.classList.add('balaye'); } });
   }
   async function effacerLues(bouton) {
     const xs = E.notifs.filter(x => x.lue_le);
@@ -3068,7 +3129,7 @@
           <button type="button" class="camion-phase-btn${p.k === curPhase ? ' actif' : ''}" role="tab" aria-selected="${p.k === curPhase}" data-phase-camion="${p.k}" data-date-id="${dateId}">${p.l}</button>
         `).join('')}
       </div>
-      <div class="camion-jauge">
+      <div class="camion-jauge${phaseComplete ? ' complete' : ''}">
         <span>${nbCoches} / ${total} vérifiés${phaseComplete ? ' ✅' : ''}</span>
         <div class="camion-barre"><div class="camion-barre-fond" style="width: ${pct}%"></div></div>
       </div>
@@ -3079,6 +3140,7 @@
           return `
             <li class="camion-item${coche ? ' coche' : ''}" data-mat-id="${it.id}">
               <input type="checkbox" id="chk-${k}" ${coche ? 'checked' : ''} aria-label="${esc(it.intitule)}">
+              <label class="coche-svg" for="chk-${k}" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></label>
               <label class="camion-item-texte" for="chk-${k}">
                 <b>${esc(it.intitule)}</b>
                 ${it.notes ? `<small>${esc(it.notes)}</small>` : ''}
@@ -3107,7 +3169,7 @@
         try { localStorage.setItem(localKey, JSON.stringify(obj)); } catch (err) {}
 
         vibrer(8);
-        dessinerCamion(dateId);
+        majJaugeCamion(zone, curPhase);                 // la case cochée reste en place : sa coche se trace
 
         // Sauvegarder dans Supabase si matId est numérique (sinon, la liste par défaut : sur cet appareil seulement)
         if (/^\d+$/.test(String(matId))) {
@@ -3125,6 +3187,18 @@
     });
   }
 
+  // la jauge d'une phase, sans redessiner la liste : le compte, la barre ; complète, elle luit une fois
+  function majJaugeCamion(zone, curPhase) {
+    const j = $('.camion-jauge', zone);
+    if (!j) return;
+    const items = ETAT_CAMION.items || [], total = items.length;
+    const n = items.filter(it => ETAT_CAMION.coches.get(`${curPhase}_${it.id}`)).length, complet = total > 0 && n === total;
+    $('span', j).textContent = `${n} / ${total} vérifiés${complet ? ' ✅' : ''}`;
+    $('.camion-barre-fond', j).style.width = `${total ? Math.round((n / total) * 100) : 0}%`;
+    const etait = j.classList.contains('complete');
+    j.classList.toggle('complete', complet);
+    if (complet && !etait) { vibrer([12, 60, 24]); tt('confirmer', j); }
+  }
   // ================================================================================================ notes de frais
   // Une note de frais (quand la base a le septième script) : le jour de la dépense, sa catégorie, son montant, la date de
   // tournée, et le justificatif, déposé dans le stockage privé « crescite-frais », dans le dossier de sa fiche :
@@ -3284,13 +3358,14 @@
         });
         if (errNote) return sale(`La note de frais n’est pas enregistrée : ${motsErreur(errNote)}. Le justificatif est envoyé : réessayez, il ne repartira pas.`);
         envoye = null; fichierSelectionne = null;
+        envolerJustificatif(imgApercu, zoneApercu.hidden);
         f.reset();
         zoneApercu.hidden = true;
         etat.className = 'etat-form ok';
         etat.textContent = 'Note de frais enregistrée.';
         annoncer('Note de frais transmise à l’administration.');
         vibrer(15);
-        chargerNotesFrais();
+        chargerNotesFrais({ neuve: true });
       } catch (err) {
         sale(`La note de frais n’est pas enregistrée : ${motsErreur(err)}.`);
       } finally {
@@ -3301,7 +3376,21 @@
     chargerNotesFrais();
   }
 
-  async function chargerNotesFrais() {
+  // le ticket photographié rejoint la liste : son aperçu s'envole vers le total en attente
+  function envolerJustificatif(img, cache) {
+    const cible = $('#tot-attente');
+    if (cache || reduit() || !img || !img.src || !cible || typeof img.animate !== 'function') return;
+    const a = img.getBoundingClientRect(), b = cible.getBoundingClientRect();
+    if (!a.width || !b.width) return;
+    const clone = img.cloneNode();
+    clone.className = 'photo-envol'; clone.alt = ''; clone.removeAttribute('id');
+    Object.assign(clone.style, { left: `${a.left}px`, top: `${a.top}px`, width: `${a.width}px`, height: `${a.height}px` });
+    document.body.append(clone);
+    const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - (a.top + a.height / 2);
+    clone.animate([{ transform: 'none', opacity: 1 }, { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(.15)`, opacity: .35 }], { duration: 650, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' })
+      .finished.catch(() => {}).finally(() => clone.remove());
+  }
+  async function chargerNotesFrais({ neuve = false } = {}) {
     const zone = $('#liste-frais-zone');
     if (!zone) return;
     try {
@@ -3317,16 +3406,17 @@
         if (x.statut === 'rembourse' && saisonDe(iso(new Date(x.rembourse_le || x.cree_le))) === saison) totRembourse += m;
       });
       $('#tot-attente').textContent = euros(totAttente);
+      if (neuve && !reduit()) { const t = $('#tot-attente'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
       $('#tot-rembourse').textContent = euros(totRembourse);
       if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
 
-      zone.innerHTML = data.map(item => {
+      zone.innerHTML = data.map((item, i) => {
         const cat = CAT_FRAIS[item.categorie] || item.categorie;
         const stClass = STATUT_FRAIS[item.statut] ? item.statut : 'en_attente';
         const quand = estJour(item.date_depense) ? jourCourt(item.date_depense) : item.cree_le ? jourCourt(iso(new Date(item.cree_le))) : '';
         const d = item.date_id != null ? E.dates.find(x => x.id === Number(item.date_id)) : null;
         return `
-          <div class="frais-ligne">
+          <div class="frais-ligne${neuve && !i && !reduit() ? ' neuve' : ''}">
             <span class="badge-statut ${stClass}">${STATUT_FRAIS[stClass]}</span>
             <div>
               <b>${esc(cat)}</b> · <small>${esc(quand)}${d ? ` · ${esc(d.spectacle?.titre || 'Date')}${d.lieu?.commune ? `, ${esc(d.lieu.commune)}` : ''}` : ''}</small>
@@ -3450,7 +3540,7 @@
   function brancherTirer() {
     let y0 = null, dy = 0, actif = false;
     const ind = () => $('#tirer');
-    const remettre = () => { const t = ind(); if (!t) return; t.classList.remove('tire', 'pret', 'charge'); t.style.transform = ''; t.style.opacity = ''; };
+    const remettre = () => { const t = ind(); if (!t) return; t.classList.remove('tire', 'pret', 'charge'); t.style.transform = ''; t.style.opacity = ''; t.style.removeProperty('--etire'); };
     document.addEventListener('touchstart', e => {
       y0 = null;
       if (window.scrollY > 0 || E.rafraichit || !E.pret || !$('#app > .appli') || e.touches.length !== 1 || e.target.closest('input, textarea, select, .feuille-cadre, .carte-tournee')) return;
@@ -3460,13 +3550,14 @@
       if (y0 == null) return;
       dy = e.touches[0].clientY - y0;
       const t = ind();
-      if (!t || dy <= 0 || window.scrollY > 0) { if (actif) { actif = false; remettre(); } return; }
+      if (!t || dy <= 0 || window.scrollY > 0 || $('#contenu.glisse')) { if (actif) { actif = false; remettre(); } return; }   // pas pendant le retour au doigt
       actif = true;
       const d = Math.min(120, dy * 0.5);
       t.classList.add('tire');
       t.classList.toggle('pret', d >= 64);
       t.style.opacity = String(Math.min(1, d / 56));
-      t.style.transform = `translateY(${d - 56}px) rotate(${d * 3}deg)`;
+      t.style.transform = `translateY(${d - 56}px)`;
+      t.style.setProperty('--etire', (d / 120).toFixed(3));           // la pieuvre s'étire sous le doigt, puis ondule
     }, { passive: true });
     document.addEventListener('touchend', () => {
       if (y0 == null) return;
@@ -3480,6 +3571,134 @@
       t.style.transform = 'translateY(8px)'; t.style.opacity = '1';
       Promise.resolve(reessayer(true)).catch(() => {}).finally(() => setTimeout(remettre, 250));
     }, { passive: true });
+  }
+
+  // le retour au doigt : descendu d'un cran (une date, une feuille, un spectacle…), un glissé depuis le bord gauche emmène la
+  // vue avec le pouce ; assez loin, ou assez vite, elle part et la vue d'avant revient (revenir). Un défilement vertical, un
+  // élément qui défile de côté, la feuille de route et la carte ne le déclenchent pas.
+  function brancherRetour() {
+    let x0 = null, y0 = 0, t0 = 0, dx = 0, actif = false;
+    const contenu = () => $('#contenu'), seuil = () => Math.min(140, window.innerWidth * 0.35);
+    const defilant = el => { for (let n = el; n && n !== document.body; n = n.parentElement) { if (n.scrollWidth > n.clientWidth + 2) { const o = getComputedStyle(n).overflowX; if (o === 'auto' || o === 'scroll') return true; } } return false; };
+    const remettre = c => { c.classList.add('glisse-fin'); c.classList.remove('glisse'); c.style.transform = ''; c.style.opacity = ''; document.documentElement.style.removeProperty('--retour'); setTimeout(() => c.classList.remove('glisse-fin'), 260); };
+    document.addEventListener('touchstart', e => {
+      x0 = null;
+      if (reduit() || !E.pret || !E.route || !E.route.profondeur || E.rafraichit || e.touches.length !== 1 || $('.modale-fond')) return;
+      const t = e.touches[0];
+      if (t.clientX > 28 || !contenu() || !e.target.closest || e.target.closest('input, textarea, select, .feuille-cadre, .carte-tournee') || defilant(e.target)) return;
+      x0 = t.clientX; y0 = t.clientY; t0 = e.timeStamp; dx = 0; actif = false;
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (x0 == null) return;
+      const t = e.touches[0], c = contenu();
+      dx = t.clientX - x0;
+      const dy = t.clientY - y0;
+      if (!c) { x0 = null; return; }
+      if (!actif) {
+        if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { x0 = null; return; }      // c'est un défilement
+        if (dx < 10) return;
+        actif = true; c.classList.add('glisse');
+      }
+      const d = Math.max(0, dx);
+      c.style.transform = `translateX(${d}px)`;
+      c.style.opacity = String(Math.max(0.4, 1 - (d / window.innerWidth) * 0.6));
+      document.documentElement.style.setProperty('--retour', Math.min(1, d / seuil()).toFixed(2));
+    }, { passive: true });
+    const fin = e => {
+      if (x0 == null) return;
+      x0 = null;
+      if (!actif) return;
+      actif = false;
+      const c = contenu();
+      if (!c) return;
+      const vite = dx / Math.max(1, e.timeStamp - t0) > 0.5 && dx > 40;
+      if (dx < seuil() && !vite) return remettre(c);
+      vibrer(8);
+      c.classList.add('glisse-fin'); c.classList.remove('glisse');
+      c.style.transform = `translateX(${window.innerWidth}px)`; c.style.opacity = '0';
+      document.documentElement.style.removeProperty('--retour');
+      E.glisse = true;                                                  // changerVue : la vue d'avant entre sans glisser à nouveau
+      setTimeout(() => { if (revenir()) setTimeout(() => { E.glisse = false; }, 700); else { E.glisse = false; remettre(c); } }, 160);
+    };
+    document.addEventListener('touchend', fin, { passive: true });
+    document.addEventListener('touchcancel', fin, { passive: true });
+  }
+  // revenir d'un cran : comme le bouton « Retour » de la barre
+  function revenir() {
+    const r = E.route;
+    if (!r || !r.profondeur) return false;
+    const cible = parentDe(r), haut = E.pile[E.pile.length - 1];
+    if (haut && haut === cible && history.length > 1) history.back(); else location.hash = cible;
+    return true;
+  }
+  // les notifications au doigt : une notification non lue glissée vers la gauche (élastique : elle résiste de plus en plus)
+  // découvre « Lu » ; lâchée assez loin, elle part et se marque lue. Le toucher qui a glissé ne l'ouvre pas.
+  function brancherGlisserNotif() {
+    let a = null, x0 = 0, y0 = 0, dx = 0, actif = false;
+    document.addEventListener('touchstart', e => {
+      a = null;
+      if (reduit() || e.touches.length !== 1 || !e.target.closest) return;
+      const el = e.target.closest('.liste-notifs .notif.non-lue');
+      if (!el) return;
+      a = el; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; actif = false;
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (!a) return;
+      const t = e.touches[0], dy = t.clientY - y0;
+      dx = t.clientX - x0;
+      if (!actif) {
+        if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { a = null; return; }
+        if (dx > -10) return;
+        actif = true; a.classList.add('glisse'); a.parentElement.classList.add('glisse');
+      }
+      const d = Math.min(110, Math.sqrt(Math.max(0, -dx)) * 7);
+      a.style.transform = `translateX(${-d}px)`;
+      a.parentElement.classList.toggle('pret', d >= 72);
+    }, { passive: true });
+    const fin = () => {
+      if (!a) return;
+      const el = a, li = el.parentElement;
+      a = null;
+      if (!actif) return;
+      actif = false;
+      const lu = li.classList.contains('pret');
+      el.classList.remove('glisse'); el.classList.add('relache');
+      li.classList.remove('glisse', 'pret');
+      const bloquer = ev => { ev.preventDefault(); ev.stopPropagation(); };
+      el.addEventListener('click', bloquer, { capture: true, once: true });
+      setTimeout(() => el.removeEventListener('click', bloquer, { capture: true }), 500);
+      if (!lu) { el.style.transform = ''; setTimeout(() => el.classList.remove('relache'), 300); return; }
+      vibrer(10);
+      el.classList.add('lue-glisse');
+      setTimeout(() => marquerLue(Number(el.dataset.notif)), 180);
+    };
+    document.addEventListener('touchend', fin, { passive: true });
+    document.addEventListener('touchcancel', fin, { passive: true });
+  }
+  // la carte et les billets se répondent : survoler (ou cibler au clavier) un billet allume son bras et son point sur la carte,
+  // les autres bras s'effacent ; survoler un lieu de la carte allume ses billets (data-dates : les dates du lieu)
+  function brancherAllumage() {
+    let cle = null;
+    const eteindre = () => {
+      if (cle == null) return;
+      cle = null;
+      $$('#contenu .allume').forEach(x => x.classList.remove('allume'));
+      $$('#contenu .carte-tournee.cible-active').forEach(x => x.classList.remove('cible-active'));
+    };
+    const allumer = el => {
+      const billet = el.closest('.billet[id]'), lieu = billet ? null : el.closest('a.lieu-carte[data-dates]');
+      if (!billet && !lieu) return eteindre();
+      const k = billet ? billet.id : lieu.dataset.dates;
+      if (k === cle) return;
+      eteindre();
+      cle = k;
+      if (billet) $$(`#contenu .carte-tournee [data-dates~="${billet.id.replace('billet-', '')}"]`).forEach(x => x.classList.add('allume'));
+      else lieu.dataset.dates.split(' ').forEach(id => { const b = $(`#billet-${id}`); if (b) b.classList.add('allume'); });
+      $$('#contenu .carte-tournee').forEach(f => f.classList.toggle('cible-active', !!$('.allume', f)));
+    };
+    const sur = e => { if (!e.target.closest) return; const el = e.target.closest('.billet[id], a.lieu-carte'); if (el && el.closest('#contenu')) allumer(el); else eteindre(); };
+    document.addEventListener('mouseover', sur);
+    document.addEventListener('focusin', sur);
   }
 
   // ================================================================================================ actions
@@ -3542,10 +3761,30 @@
       if (!dv || !dv.feuille || dv.feuille.version === v.version) return bandeauEtat();
       E.feuilles.delete(v.id);
     }
-    const y = window.scrollY, ouvertes = $$('details.saison[open]').map(x => x.dataset.saison || x.className);
+    const y = window.scrollY, ouvertes = $$('details.saison[open]').map(x => x.dataset.saison || x.className), places = reperer();
     router({ rafraichir: true });
     ouvertes.forEach(s => { const det = $(`details.saison[data-saison="${CSS.escape(s)}"]`) || (s.includes('feuilles-passees') && $('details.feuilles-passees')); if (det) { det.open = true; if (det.dataset.saison) remplirSaison(det); } });
     window.scrollTo(0, y);
+    glisserVers(places);
+  }
+  // la vue se redessine après une lecture de la base : chaque billet (et le héros) qui a changé de place glisse de l'ancienne
+  // à la nouvelle plutôt que de sauter ; un billet neuf se pose. Les places se relèvent avant (reperer), en coordonnées de page.
+  function reperer() {
+    const m = new Map();
+    if (reduit() || typeof Element.prototype.animate !== 'function') return m;
+    $$('#contenu .billet[id], #contenu .heros[data-date]').forEach(el => { const r = el.getBoundingClientRect(); m.set(el.id || `h${el.dataset.date}`, [r.left, r.top + window.scrollY]); });
+    return m;
+  }
+  function glisserVers(avant) {
+    if (!avant.size || reduit()) return;
+    const doux = 'cubic-bezier(.2, .8, .2, 1)';
+    $$('#contenu .billet[id], #contenu .heros[data-date]').forEach(el => {
+      const a = avant.get(el.id || `h${el.dataset.date}`), r = el.getBoundingClientRect();
+      if (!a) { el.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], { duration: 380, easing: doux }); return; }
+      const dx = a[0] - r.left, dy = a[1] - (r.top + window.scrollY);
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.animate([{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: 'none' }], { duration: 420, easing: doux });
+    });
   }
   async function reessayer(voulu = false) {
     if (E.sansSession) {
@@ -3667,4 +3906,7 @@
   })();
   brancherSW();
   brancherTirer();
+  brancherRetour();
+  brancherGlisserNotif();
+  brancherAllumage();
 })();
