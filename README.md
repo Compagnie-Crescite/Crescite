@@ -168,6 +168,12 @@ d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.ht
 2.0 et les photos (rangées une seule fois dans `docs/photos/`) : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
 chacune demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet,
 noimageindex`), et leur adresse n'est donnée nulle part dans le dépôt (elle figure dans Settings → Pages). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
+Le même `docs/` est le site de la compagnie sur Cloudflare Pages, hors de GitHub : `python3 scripts/cloudflare.py` le
+publie (la clé, `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`, vient de l'environnement ; les adresses, du projet
+lui-même). Cloudflare lit `docs/_headers`, écrit par le build : la même consigne aux moteurs en en-tête, photos comprises,
+et ni type deviné ni affichage dans le cadre d'un autre site. Tous les liens du site sont relatifs, et les connexions
+reviennent à l'adresse d'où elles partent : il suffit d'ajouter la nouvelle adresse aux Redirect URLs de Supabase, et
+`SITE_URL` (secret des fonctions) donne celle des liens envoyés par courriel.
 **Réserver, regarder, la nuit, la troupe** (règles 17 à 20 : dans la synthèse et les dix maquettes, chacune à sa
 manière). Quatre outils communs, injectés dans chaque maquette :
 - `reserver.js` (RESERVER) : sur la page d'un spectacle, un bouton par date à venir (le jour, les heures, la ville), la
