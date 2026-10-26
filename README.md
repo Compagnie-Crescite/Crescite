@@ -293,10 +293,37 @@ compte du projet inscrit dans `crescite_admins`.
     « Réinitialiser ». Tout est gardé avec le compte (`crescite_preferences`, clé `accueil.tableau`, le script 6) : on
     retrouve son tableau sur tous ses appareils ; sans le script, sur l'appareil, et la disposition passe dans la base à
     la première ouverture qui suit.
+  - **Dix gestes de plus pour gérer sans quitter le tableau.** (1) **Traiter sur place** : l'éclair de chaque ligne « à
+    traiter » (ou « Traiter… » du clic droit) ouvre une feuille de modification en place (`GESTES.formulaire`) :
+    confirmer une option, fixer les horaires, suivre le contrat, publier ou composer la feuille de route, valider ou
+    refuser une note de frais, répondre à un devis, relancer, clore une proposition, prolonger une invitation, noter
+    un accord de portrait ; la base écrite, l'état se relit et la ligne disparaît. (2) **La file au clavier** : J et K
+    parcourent les lignes à traiter, Entrée ouvre la feuille de la ligne, Échap la referme et rend le focus ; une ligne
+    traitée, la suivante prend le focus. (3) **La barre de commande** (Ctrl K, la loupe) cherche aussi les actions
+    (« nouvelle date », « briefing », « personnaliser »), les vues, ce qui est à traiter (Entrée le traite sur place),
+    les notes de frais, les devis, la diffusion, les propositions, les séances ; le genre compte dans les mots (« frais
+    Camille », « lieu Le Volcan »). (4) **Des vues nommées** (« Lundi matin », « Veille de tournée »…) : chacune garde
+    une disposition (tuiles, ordre, tailles, réglages, colonnes), choisie dans l'en-tête ; une vue peut s'ouvrir
+    d'elle-même certains jours, le matin ou l'après-midi, ou quand une date confirmée est dans les trois jours (un choix
+    fait à la main tient six heures) ; « Vue par défaut » rend la disposition d'avant. (5) **Un ordre des urgences qui
+    apprend** : chaque ligne pèse (le coût du retard : un contrat non signé la veille pèse plus qu'un portrait sans
+    accord) et se pondère par son échéance ; « Par urgence » (réglage) les mêle en une liste ; le clic droit épingle une
+    ligne en haut ou la reporte (demain, lundi, dans une semaine : elle se cache jusque-là, « Montrer n lignes
+    reportées » la remontre). (6) **Les tuiles se parlent** : survoler une date allume ce qui la concerne dans les
+    autres tuiles (puis son spectacle) ; l'entonnoir d'un spectacle filtre tout le tableau sur lui, une pastille le
+    dit, Échap le lève. (7) **Les chiffres bougent** : dans « La saison en chiffres », les représentations, les
+    spectateurs et les recettes (le montant de cession du suivi) mois par mois, en barres ; un mois cliqué cherche ses
+    dates ; la saison d'avant au même point, en écart. (8) **Glisser-déposer entre tuiles** : une personne de « Qui part
+    bientôt » déposée sur une date l'y inscrit ; une proposition déposée sur « Prochaines dates » ouvre « Créer la
+    date » ; un fichier de l'ordinateur déposé sur un spectacle devient un document de son équipe. (9) **Le fil vivant** :
+    une modification de moins d'un quart d'heure a « Annuler » (la ligne revient comme avant, comme « Revenir » du
+    journal) ; survoler une ligne montre son diff, champ par champ. (10) **Le briefing** : le résumé des sept jours
+    (dates, horaires, lieu, feuille, qui part ; séances d'atelier ; ce qui manque ; échéances), à copier en texte dans un
+    message à l'équipe, ou à imprimer.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node maquettes/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (79 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    (115 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
     précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
