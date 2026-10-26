@@ -570,6 +570,23 @@ dans les puces des spectacles ; une date passée qui n'a gardé que son mois ou 
 la saison est simple : des pastilles à la couleur de leur spectacle (la liste dit « Scolaire »), deux couloirs au plus,
 sans légende sous elle : les puces des spectacles, juste au-dessus, la font (leur survol isole les dates du spectacle).
 
+Puis (octobre 2026) : « Rends la frise des saisons beaucoup plus claire, avec les dates, et la carte à côté qui zoome sur la
+ville en France où a lieu la représentation. Quand on clique dessus, ça agit comme un filtre, ça efface les autres dates,
+plutôt que de scroller tout en bas jusqu'à la date. Si on survole un mois, ça définit un filtre. Les filtres sur portable
+doivent être intuitifs, apparaître en bas. » Et : « Ne mets dans les filtres accessibles par saison que les spectacles
+concernés (pour la saison en cours, juste les spectacles en tournée) », en légende de la frise, à leur couleur.
+- La frise de la saison : les mois en colonnes (septembre à août, leurs noms courts `libelles.moisCourts`), chaque date sous
+  son mois, son jour écrit (des chiffres) dans une pastille à la couleur de son spectacle ; elle reste un `.frise[data-frise]`
+  et ses dates des `.frise-point` (`--fr-c`, `.est-residence`). Juste au-dessus, sa légende : les spectacles de la saison
+  seuls, à leur couleur, le nombre de leurs dates ; les saisons passées ont la leur.
+- À côté, la carte de la saison s'approche de la commune de la date survolée ou choisie (la loupe), cadre un mois, revient
+  à la France ; ses noms et ses ventouses gardent leur taille, rien ne change de taille dans la page.
+- Choisir une date est un filtre (ses lignes seules, sa carte de réservation ouverte ; le second choix la rend) ; survoler un
+  mois (la souris posée) le choisit, un clic le garde ; ces filtres ne portent que sur la saison en cours, les autres
+  (spectacle, commune, recherche) sur toute la page. Les filtres en cours s'effacent d'un geste (`libelles.effacerFiltres`).
+- Au téléphone : une barre en bas de l'écran (`libelles.filtres`, les filtres en cours, les mois) et un panneau qui monte du
+  bas (la recherche, les mois, les spectacles, les communes ; `libelles.voirLesDates` mène aux dates gardées).
+
 ## Règle 22 : les couleurs de la saison et des spectacles (demande d'Angelo Jossec, directeur artistique)
 « La couleur générale de cette saison, et cela jusqu'à la création de Cassandre, ça doit être le bleu. Voici les couleurs
 de chaque spectacle : Mon Royaume pour un cheval jaune, Bérénice violet, Cyrano gris anthracite, L'Imaginaire forcé vert
