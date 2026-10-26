@@ -3134,9 +3134,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      par-dessus), se déploient l'une après l'autre, en cadence (la présentation) : chacune se déroule vers un titre de
      spectacle, qui paraît quand elle l'atteint, de haut en bas, un côté puis l'autre (l'éventail s'ouvre) ; celles qui n'ont
      pas de titre (les longues) s'étirent à leur tour, au même rythme ; puis elles reviennent se lover dans le logo, dans le
-     même ordre, ondulent à peine, se penchent vers la souris. Au téléphone (les titres dessous), les deux grandes boucles
-     descendent de titre en titre, chacune de son côté, une à chaque temps ; ensuite une seule à la fois : celle du titre
-     qui passe au milieu de l'écran. Survoler ou choisir au clavier un titre, ou survoler une tentacule (au doigt : un premier
+     même ordre, ondulent à peine, se penchent vers la souris. Au téléphone (les titres dessous), les quatre longues
+     tentacules (les boucles, les queues) descendent chacune vers l'un des quatre premiers titres, une à chaque temps, et y
+     restent ; toucher une tentacule la rétracte (le corps a un sursaut), toucher un titre y envoie sa tentacule (un second
+     toucher y mène). Survoler ou choisir au clavier un titre, ou survoler une tentacule (au doigt : un premier
      toucher) : elle se déroule vers lui, le souligne et s'y enroule, et la photo du spectacle passe devant, à peine, derrière
      la pieuvre. Sinon les photos des spectacles s'enchaînent en fondu, chacune présentée par sa tentacule. Le
      bouton de pause arrête tout ce qui bouge de lui-même ; moins d'animations : rien ne bouge, les photos changent d'un
@@ -3155,7 +3156,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
     const easeOut = t => 1 - Math.pow(1 - t, 3);
     let W = 0, H = 0, dpr = 1, s = .38, ox = 0, oy = 0, mobile = false, gut = 24, ech = 1;
-    let raf = 0, visible = true, affiche = false, eveil = null, tPrec = 0, tVie = 0, sraf = 0, pres = null, presFaite = false, pause = false, repit = 0;
+    let raf = 0, visible = true, affiche = false, eveil = null, tPrec = 0, tVie = 0, pres = null, presFaite = false, pause = false, repit = 0;
     let survol = null, brasSurvol = null, pointeur = null, dernierPointeur = '', boite = null, LB = { x0: 0, y0: 0, x1: 0, y1: 0 }, tDessin = 0, actifAvant = null;
     let couches = new Map(), montre = null, iAuto = 0, tAuto = 0, dernierActif = null;
     const bob = { x: 0, y: 0 };
@@ -3163,7 +3164,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 
     // les tentacules : celles du logo, au service de tous les titres (aucune n'est à un spectacle : la pieuvre ne compte pas) ;
     // dir : le sens de sa pointe au repos (vers où elle se penche)
-    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, geste: null, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
+    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, geste: null, tenu: null, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
+    let secousse = 0;   // (au téléphone : l'instant où une tentacule a été lâchée, le corps sursaute)
     // la secousse d'un rebond : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant (comme la créature)
     const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? easeOut(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
     // les titres : un par spectacle, en nombre libre ; refaits quand D change
@@ -3181,7 +3183,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), q: $('.sc-q', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurScene(sh)) };
         ecouter(T); return T; });
       ul.setAttribute('aria-label', L.lesSpectacles);
-      BRAS.forEach(a => { a.but = null; a.geste = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
+      BRAS.forEach(a => { a.but = null; a.geste = null; a.tenu = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
       survol = null; brasSurvol = null; dernierActif = null;
       if (pres) pres.plan = null;
       diapo();
@@ -3209,7 +3211,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
     // plat de derrière le point d'accroche, dans la place qu'il y a jusqu'au bord de l'écran (marge : l'épine reste à 14 px du bord)
     const cibleDe = T => ({ cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
-      ...(mobile ? { racine: .7, corps: .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14 } : {}) });
+      ...(mobile ? { racine: .7, corps: .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4 } : {}) });
     // chaque titre a sa tentacule : dans l'ordre du tour de la pieuvre (titres et pointes rangés par leur angle autour de son
     // cœur), sans croisement ; s'il y a plus de titres que de tentacules, une tentacule en sert plusieurs
     function attribuer() {
@@ -3220,12 +3222,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       BRAS.forEach(a => { a.T = []; a.rang = 99; });
       const n = ts.length, m = bs.length;
       if (!n || !m) return;
-      // au téléphone, une seule tentacule sort à la fois : une grande boucle en S, la plus épaisse, qui descend du milieu du logo ;
-      // celle de gauche pour un titre souligné vers la droite (elle arrive par sa gauche), celle de droite pour l'autre sens
+      // au téléphone, les quatre longues tentacules (les boucles d'abord, puis les queues), prolongées depuis leur descente :
+      // celles de gauche pour un titre souligné vers la droite (elles arrivent par sa gauche), celles de droite pour l'autre
+      // sens, chacune au service d'un titre sur deux de son côté
       if (mobile) {
-        const S = { L: BRAS.find(a => a.cle === 'boucleL'), R: BRAS.find(a => a.cle === 'boucleR') };
-        if (S.L && S.R) {
-          TIT.forEach(T => { const a = T.dirU > 0 ? S.L : S.R; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
+        const S = { L: ['boucleL', 'queueL'], R: ['boucleR', 'queueR'] }, nb = { L: 0, R: 0 };
+        for (const c of 'LR') S[c] = S[c].map(cle => BRAS.find(a => a.cle === cle)).filter(Boolean);
+        if (S.L.length && S.R.length) {
+          TIT.forEach(T => { const c = T.dirU > 0 ? 'L' : 'R', a = S[c][nb[c]++ % S[c].length]; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
           return;
         }
       }
@@ -3337,7 +3341,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       LB = { x0: ox + x0 * s - 12, y0: oy + y0 * s - 12, x1: ox + x1 * s + 12, y1: oy + y1 * s + 12 };
       boite = null; TIT.forEach(T => { T.tr = T.op = T.on = null; }); actifAvant = undefined;
-      if (mobile) suivre();
       tPrec = 0; image(performance.now(), true);
     }
     const actif = () => survol || TIT.find(T => T.focus) || brasSurvol || null;
@@ -3349,9 +3352,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       TIT.forEach(T => { T.tPres = null; });
       let fin = P.t0;
       if (mobile) {
-        // les deux boucles, chacune de son côté, un titre à chaque temps (la précédente visite s'achève quand la suivante
-        // commence : la boucle passe de l'un à l'autre) ; les autres bras restent lovés (ils n'ont rien à atteindre)
-        TIT.forEach(T => { T.tPres = P.t0 + T.i * pas; const a = T.bras; if (!a) return; const v = V.get(a) || []; if (v.length) v[v.length - 1].fin = T.tPres; v.push({ t0: T.tPres, fin: T.tPres + 1400, T }); V.set(a, v); });
+        // chaque tentacule descend vers le premier de ses titres, une à chaque temps, et y reste (tenu) ; les titres suivants
+        // paraissent à leur temps, sans tentacule (la leur viendra quand on les touchera)
+        TIT.forEach(T => { T.tPres = P.t0 + T.i * pas; const a = T.bras; if (!a || V.has(a)) return; V.set(a, [{ t0: T.tPres, fin: Infinity, T }]); a.tenu = T; fin = Math.max(fin, T.tPres + 1100); });
       } else {
         // de haut en bas, un côté puis l'autre : l'éventail s'ouvre ; les bras sans titre s'étirent ensuite, à leur tour
         const avec = BRAS.filter(a => a.T.length).sort((x, y) => x.T[0].by - y.T[0].by), sans = BRAS.filter(a => !a.T.length);
@@ -3359,7 +3362,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         sans.filter(a => !/^frange/.test(a.cle)).forEach((a, k) => { const t0 = P.t0 + (avec.length + k) * pas; V.set(a, [{ t0, fin: t0 + 1400, c: gesteDe(a, t0) }]); });
         TIT.forEach((T, i) => { if (T.tPres === null) T.tPres = P.t0 + i * pas; });
       }
-      V.forEach(v => v.forEach(x => { fin = Math.max(fin, x.fin); }));
+      V.forEach(v => v.forEach(x => { if (isFinite(x.fin)) fin = Math.max(fin, x.fin); }));
       P.plan = V; P.fin = fin + 900;
     }
     // un geste (les longs bras seulement : les queues, les boucles) : le bras se déroule un peu dans le sens où il pointe,
@@ -3388,7 +3391,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const dt = Math.min(50, tPrec ? now - tPrec : 16); tPrec = now;
       if (pres && !pres.plan) presenter();
       if (pres && now > pres.fin) pres = null;
-      const vif = act || pres || (eveil !== null && now - eveil < 2600) || BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
+      const vif = act || pres || (eveil !== null && now - eveil < 2600) || (secousse && now - secousse < 700) || BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
+      const tenue = mobile && vivant && BRAS.some(a => a.tenu);
       // au repos (rien ne se tend, rien ne s'éveille), l'ondulation lente se contente de trente images par seconde (vingt au
       // téléphone)
       if (!une && !vif && vivant && now - tDessin < (mobile ? 46 : 30)) { raf = requestAnimationFrame(image); return; }
@@ -3411,10 +3415,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const visite = a => { const v = pres.plan.get(a); let r = null; if (v) for (const x of v) if (now >= x.t0 && now < x.fin) r = x; return r; };
       for (const a of BRAS) {
         let voulu = null, g = null;
-        // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; au téléphone, le titre au milieu de l'écran attend la
-        // fin de la présentation ; au bureau, la souris a toujours la main)
-        if (act && eveil !== null && !(pres && mobile)) voulu = act.bras === a ? act : null;
+        // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; au bureau, un seul bras tendu, celui du titre
+        // regardé ; au téléphone, chaque bras garde le titre qu'il tient)
+        if (eveil !== null && act && act.bras === a) voulu = act;
+        else if (eveil !== null && act && !mobile) voulu = null;
         else if (pres) { const v = visite(a); if (v) { if (v.T) voulu = v.T; else g = v.c; } }   // la présentation : chaque tentacule à son tour
+        else if (mobile && a.tenu) voulu = a.tenu;
         else if (autoT && autoT.bras === a) voulu = autoT;
         if (a.but !== voulu || a.geste !== g) {
           a.but = voulu; a.geste = g;
@@ -3438,7 +3444,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const b = { x0: LB.x0, y0: LB.y0, x1: LB.x1, y1: LB.y1 };
       for (const a of BRAS) { const r = a.t.boite(6); b.x0 = Math.min(b.x0, r.x0); b.y0 = Math.min(b.y0, r.y0); b.x1 = Math.max(b.x1, r.x1); b.y1 = Math.max(b.y1, r.y1); }
       // le rebond de la pose : à la relève, le corps se ramasse puis se détend, bras compris (ils ne partent qu'ensuite)
-      const kp = anime && eveil !== null ? 1 - .05 * choc((now - eveil) / 700) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
+      const kp = anime && eveil !== null ? (1 - .05 * choc((now - eveil) / 700)) * (secousse ? 1 - .035 * choc((now - secousse) / 520) : 1) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
       const u = boite && kp === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
       boite = b;
       const X0 = Math.max(0, Math.floor(u.x0 * dpr)), Y0 = Math.max(0, Math.floor(u.y0 * dpr)), Rw = Math.min(cv.width, Math.ceil(u.x1 * dpr)) - X0, Rh = Math.min(cv.height, Math.ceil(u.y1 * dpr)) - Y0;
@@ -3457,6 +3463,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere });
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
+          // au téléphone, une lueur court le long de chaque tentacule posée sur un titre, à la couleur du spectacle : elle invite à
+          // la toucher (elle se rétracte) ; rien en pause
+          if (mobile && vivant) for (const a of BRAS) {
+            if (!a.tenu || a.but !== a.tenu || a.t.mouvement() < .95) continue;
+            const t = a.t, kr = t.bornes(t.cible)[0], u = (tVie * .45 + a.i * .37) % 1, kk = Math.round(kr + (t.M - kr) * u), x = t.X[kk], y = t.Y[kk];
+            const g = ctx.createRadialGradient(x, y, 0, x, y, 10), E = a.col;
+            g.addColorStop(0, `rgba(255,255,255,.9)`); g.addColorStop(.45, `rgba(${E[0]},${E[1]},${E[2]},.45)`); g.addColorStop(1, `rgba(${E[0]},${E[1]},${E[2]},0)`);
+            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
+          }
           ctx.setTransform(1, 0, 0, 1, 0, 0);
           // elles passent sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes)
           for (const T of TIT) {
@@ -3467,22 +3482,29 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         }
       }
       for (const T of TIT) placer(T, allumes.has(T), now, anime);
-      if (pres || (eveil !== null && now - eveil < 2600)) occupe = true;
+      if (pres || tenue || (eveil !== null && now - eveil < 2600)) occupe = true;
       if (!une && occupe) raf = requestAnimationFrame(image);
       else if (une && occupe) reveil();
     }
     const reveil = () => { if (!raf && affiche && visible && !document.hidden) raf = requestAnimationFrame(image); };
 
     /* ---------- regarder un titre, survoler un bras ---------- */
-    // la tentacule sous la souris, à 14 px près (telle qu'elle est, ou à sa place dans le logo), si elle mène à un titre
-    function brasSous(p) {
-      let best = null, bd = 14;
+    // la tentacule sous la souris, à 14 px près (telle qu'elle est, ou à sa place dans le logo), si elle mène à un titre ; sous
+    // le doigt (tol 30 px), seulement une tentacule tendue
+    function brasSous(p, tol = 14, tendue = false) {
+      let best = null, bd = tol;
       for (const a of BRAS) {
-        if (!a.T.length) continue;
-        const d = a.t.distance(p.x, p.y, true);
+        if (!a.T.length || (tendue && !a.but)) continue;
+        const d = a.t.distance(p.x, p.y, !tendue);
         if (d < bd) { bd = d; best = a; }
       }
       return best;
+    }
+    // au téléphone, toucher une tentacule tendue la rétracte : elle lâche son titre (la pointe se love d'abord), le corps sursaute
+    function lacher(a) {
+      a.tenu = null;
+      if (survol && survol.bras === a) survol = null;
+      secousse = performance.now(); reveil();
     }
     function bouger(e) {
       if (e.pointerType !== 'mouse') return;
@@ -3498,8 +3520,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     }
     el.addEventListener('pointermove', bouger, { passive: true });
     el.addEventListener('pointerleave', () => { pointeur = null; if (brasSurvol) { brasSurvol = null; el.classList.remove('sur-bras'); } reveil(); });
-    // un bras survolé mène à son spectacle, comme son titre ; au doigt, toucher la scène hors d'un titre le relâche
-    el.addEventListener('click', e => { if (brasSurvol && !e.target.closest('a, button')) location.hash = brasSurvol.el.getAttribute('href'); });
+    // un bras survolé mène à son spectacle, comme son titre ; au téléphone, toucher une tentacule tendue la rétracte
+    el.addEventListener('click', e => {
+      if (e.target.closest('a, button')) return;
+      if (mobile) { const r = el.getBoundingClientRect(), a = brasSous({ x: e.clientX - r.left, y: e.clientY - r.top }, 30, true); if (a) { e.preventDefault(); lacher(a); } return; }
+      if (brasSurvol) location.hash = brasSurvol.el.getAttribute('href');
+    });
     el.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !mobile && survol && !e.target.closest('.sc-t')) { survol = null; reveil(); } }, { passive: true });
     function ecouter(T) {
       const a = T.el;
@@ -3512,24 +3538,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       a.addEventListener('click', e => {
         const touche = dernierPointeur === 'touch'; dernierPointeur = '';
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || document.documentElement.classList.contains('ed-actif')) return;
-        // au doigt, le premier toucher fait ce que fait le survol (le bras se tend, la photo passe devant) ; le second y mène
-        if (touche && actif() !== T) { e.preventDefault(); survol = T; reveil(); }
+        // au doigt, le premier toucher fait ce que fait le survol (le bras se tend, la photo passe devant) ; le second y mène ;
+        // au téléphone, le bras y reste (tenu), et un titre déjà tenu mène tout de suite à son spectacle
+        const tient = mobile && T.bras && T.bras.tenu === T && T.bras.but === T;
+        if (touche && actif() !== T && !tient) { e.preventDefault(); survol = T; if (mobile && T.bras) T.bras.tenu = T; reveil(); }
       });
       a.addEventListener('keydown', e => {
         const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
         if (d) { e.preventDefault(); TIT[(TIT.indexOf(T) + d + TIT.length) % TIT.length].el.focus(); }
       });
     }
-    // au téléphone, le titre qui passe au milieu de l'écran attire le bras le plus proche, et sa photo
-    function suivre() {
-      sraf = 0;
-      if (!mobile || !affiche) return;
-      const r = el.getBoundingClientRect(), mid = VH * .52;
-      let best = null, bd = 110;
-      for (const T of TIT) { const d = Math.abs(r.top + T.by + T.th / 2 - mid); if (d < bd) { bd = d; best = T; } }
-      if (best !== survol) { survol = best; reveil(); }
-    }
-    addEventListener('scroll', () => { if (mobile && affiche && !sraf) sraf = requestAnimationFrame(suivre); }, { passive: true });
     bPause.addEventListener('click', () => { pause = !pause; bPause.setAttribute('aria-pressed', String(pause)); tPrec = 0; planifier(); reveil(); });
     if ('ResizeObserver' in window) new ResizeObserver(() => { if (affiche) mise(); }).observe(el);
     if ('IntersectionObserver' in window) new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; if (visible) { tPrec = 0; reveil(); } }, { threshold: .01 }).observe(el);
@@ -3551,7 +3569,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       textes();
       // de retour sur l'accueil : chaque bras reprend sa souche ; les liens suivent la mémoire de l'entrée
       TIT.forEach(T => { T.focus = false; T.el.setAttribute('href', lienSp(T.slug)); });
-      BRAS.forEach(a => { a.but = null; a.teinte = 0; a.t.viser(null, 0); });
+      BRAS.forEach(a => { a.but = null; a.tenu = null; a.teinte = 0; a.t.viser(null, 0); });
       survol = null; brasSurvol = null; el.classList.remove('a-actif', 'sur-bras');
       mise();
       // sous l'ouverture, la pieuvre attend la relève ; sans mouvement, elle est là d'emblée, sous le fondu
@@ -5954,11 +5972,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   addEventListener('hashchange', routeEnsuite);
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);
   // l'ouverture de la 04, aux couleurs de la saison : le logo blanc sur le dégradé de la saison (calculé depuis
-  // D.site.couleurSaison, plus profond la nuit) ; au geste, il ne grossit plus : il devient la pieuvre du premier écran (il
-  // glisse à sa place, Scene.cible), puis ses bras vont chercher les spectacles (Scene.eveiller). Sans mouvement : un fondu
+  // D.site.couleurSaison, plus profond la nuit), vivant (ses vraies tentacules ondulent depuis leurs racines, INTRO vivante) ;
+  // au geste, il ne grossit plus : il devient la pieuvre du premier écran (il glisse à sa place d'un coup de nage, Scene.cible),
+  // puis ses bras vont chercher les spectacles (Scene.eveiller). Sans mouvement : un fondu
   const thO = themeSaison(), gO = typeof THEME !== 'undefined' && THEME.actuel() === 'nuit' ? thO.nuit : thO.jour;
   INTRO.ouvrir({
-    degrade: [[0, gO[0]], [.55, gO[1]], [1, gO[2]]], encre: '#ffffff', classe: 'intro-synthese',
+    degrade: [[0, gO[0]], [.55, gO[1]], [1, gO[2]]], encre: '#ffffff', classe: 'intro-synthese', vivante: true,
     sortie: motionOK() ? undefined : 'fondu', devient: () => Scene.cible(),
     apres: () => Scene.eveiller(),
   });
