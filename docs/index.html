@@ -3300,6 +3300,7 @@ const INTRO = (() => {
     s.id = 'intro-style';
     s.textContent = `
       html.intro-active, html.intro-active body { overflow: hidden !important; }
+      html.intro-active { scrollbar-gutter: stable; }   /* (la place de la barre de défilement reste prise : la page ne se décale pas d'un coup quand elle revient, à la fin) */
       .intro { position: fixed; inset: 0; z-index: 2147483000; color: #fff; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; }
       .intro-scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
       .intro-logo { position: absolute; border: 0; background: transparent; padding: 0; margin: 0; cursor: pointer; border-radius: 28px; color: inherit; }
@@ -7813,6 +7814,13 @@ const PIEUVRE = (() => {
       this.pose = null; this.depuis = null; this.q = 1;
     }
     deplacer(ox, oy, s) { this.ox = ox; this.oy = oy; this.s = s; this.pose_ = true; }
+    // la pieuvre est remise en page en route (une police qui arrive, une barre de défilement, la fenêtre) : la tentacule garde
+    // son trajet là où il en est, ses longueurs à la nouvelle échelle ; sa cible est relue à chaque image de toute façon
+    reposer(ox, oy, s) {
+      const k = this.s ? s / this.s : 1;
+      if (k !== 1) for (const P of [this.pose, this.depuis, this.but]) if (P && P.ln) for (let i = 0; i < P.ln.length; i++) P.ln[i] *= k;
+      this.deplacer(ox, oy, s);
+    }
     // la racine de cette image, en unités du dessin (par rapport à ox, oy), et l'angle dont la racine a pivoté : au repos, celle du
     // dessin ; en se déployant, glissée vers son attache sur la tête (et tournée vers sa direction), selon le mouvement
     // (collée : une fois déployée, la tentacule ne retourne plus à sa place du logo, à côté de la tête ; remontée, elle
@@ -10074,7 +10082,9 @@ const CREATURE = (() => {
       // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le bout tourné vers le bord de
       // l'écran : la tentacule arrive de là, et le souligné va vers le médaillon)
       TIT.forEach(T => { T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
-      BRAS.forEach(a => a.t.poser(ox, oy, s));
+      // (un bras en route, ou tendu, garde son trajet : une mise en page en plein déploiement, la barre de défilement qui revient
+      // à la fin de l'ouverture, une police qui arrive, ne le renvoie pas au repos pour repartir de zéro)
+      BRAS.forEach(a => (a.t.cible || a.t.q < 1 ? a.t.reposer(ox, oy, s) : a.t.poser(ox, oy, s)));
       attribuer(); tenirTous();
       if (pres) pres.plan = null;   // (la présentation se replanifie sur cette mise en page)
       dpr = Math.min(2, devicePixelRatio || 1);
