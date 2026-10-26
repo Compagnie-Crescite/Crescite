@@ -408,28 +408,28 @@
    35
   ]
  },
- "cassandres/av-1": {
+ "cassandres/partie-1": {
   "zone": [
-   5,
-   5,
-   97,
-   100
+   22,
+   10,
+   76,
+   80
   ],
   "point": [
-   48,
-   25
+   50,
+   40
   ]
  },
- "cassandres/av-2": {
+ "cassandres/partie-2": {
   "zone": [
-   15,
-   10,
-   95,
-   100
+   18,
+   28,
+   92,
+   95
   ],
   "point": [
-   34,
-   40
+   56,
+   66
   ]
  },
  "cassandres/av-5": {

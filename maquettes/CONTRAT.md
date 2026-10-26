@@ -625,9 +625,12 @@ Un message final court : la navigation par les saisons, comment les univers sont
   par saison puis mois par mois, chaque résidence marquée « Résidence », sans réservation ; le bilan d'un spectacle qui ne
   tourne plus les garde de même ; la frise de sa tournée les marque, et un repère passé ou de résidence mène à sa ligne de
   la page (il ouvre l'historique). Le vérificateur le contrôle pour la synthèse.
-- Les chiffres par saison (la diffusion d'un spectacle, celle de la compagnie, la page des saisons) comptent des dates (les
-  lignes, sans les résidences), jamais des représentations sous le mot « dates » : un spectacle n'a jamais plus de dates
-  qu'une saison de toute la compagnie.
+- Les chiffres (la diffusion d'un spectacle, celle de la compagnie, la page des saisons, l'historique et le bilan d'un
+  spectacle) comptent des représentations, partout (demande de la compagnie : « Je préfère les représentations partout ») :
+  celles d'une date dans la base (`nb_representations`, le dixième script), sinon ses séances, sinon une ; aucune pour une
+  résidence ni pour une date annulée. Tous les chiffres comptent de la même façon, sous le mot « Représentations »
+  (`D.site.libelles.representations`), jamais sous le mot « dates » : un spectacle n'en a jamais plus, sur une saison, que
+  toute la compagnie.
 
 ## Règle 24 : chaque photo cadrée sur sa zone d'intérêt (demande du client)
 « Veille à ce que les images soient correctement centrées et cadrées, en définissant des zones d'intérêt par image pour
