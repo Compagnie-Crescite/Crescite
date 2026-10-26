@@ -3856,9 +3856,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // temps (tPres : il paraît quand son bras l'atteint)
     function presenter() {
       const P = pres, V = new Map();
-      // chaque bras part à son instant (de 0 à 195 ms après le premier : ensemble, mais pas au cordeau) vers le premier de ses
-      // titres, et y reste ; chaque titre paraît quand son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
-      const depart = a => P.t0 + (a.i % 4) * 45 + (a.i % 2) * 60;
+      // chaque bras part à son instant, par vagues de 70 ms depuis la tête (les deux spirales, les boucles, les spirales
+      // extérieures, les queues : ensemble, mais lisible) vers le premier de ses titres, et y reste ; chaque titre paraît quand
+      // son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
+      const depart = a => P.t0 + PIEUVRE.rang(a.cle) * 70;
       let fin = P.t0;
       TIT.forEach(T => { T.tPres = P.t0; });
       for (const a of BRAS) {
@@ -3996,12 +3997,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
           }
           ctx.setTransform(1, 0, 0, 1, 0, 0);
-          // elles passent sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes)
+          // elles passent sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes) ; un titre
+          // qui paraît n'efface le bras qu'à mesure (un bras en route sous un titre encore invisible n'est pas haché)
+          ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = '#000';
           for (const T of TIT) {
             if (!T.ecrit || T.em <= 0) continue;
             const dy = (1 - T.em) * 12, date = mobile || allumes.has(T);
-            for (const [x, y, w, h, d] of T.ecrit) if (!d || date) ctx.clearRect((T.bx + x) * dpr, (T.by + dy + y) * dpr, w * dpr, h * dpr);
+            ctx.globalAlpha = Math.min(1, T.em);
+            for (const [x, y, w, h, d] of T.ecrit) if (!d || date) ctx.fillRect((T.bx + x) * dpr, (T.by + dy + y) * dpr, w * dpr, h * dpr);
           }
+          ctx.restore();
         }
       }
       for (const T of TIT) placer(T, allumes.has(T), now, anime);

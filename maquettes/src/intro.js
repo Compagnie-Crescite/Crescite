@@ -261,9 +261,11 @@ const INTRO = (() => {
     const ex0 = cx + (cible[0] - centre[0]) * s0, ey0 = cy + (cible[1] - centre[1]) * s0;
     const fondG = el.querySelector('.intro-scene > g[mask]'), passent = el.querySelectorAll('[data-role="dessin"] .i-mot, [data-role="dessin"] .i-tache');
     let c = place;
-    // (vivante, avec des cibles : dès le geste, chaque tentacule qui a une cible se déroule vers elle, en 1,5 s ; la cible est
+    // (vivante, avec des cibles : dès le geste, le bout des tentacules se colore ; la pieuvre rejoint d'abord sa place, puis,
+    // à partir de 630 ms, chaque tentacule qui a une cible se déroule vers elle, en 1,1 s, par vagues de 70 ms : les deux
+    // spirales, les boucles, les spirales extérieures, les queues (même ordre que la scène, qui prend le relais) ; la cible est
     // relue à chaque image, le trajet continue vers sa place du moment)
-    const viseur = vie && opts.cibles ? () => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; t.viser(x.cible, 1500); cols[x.cle] = x.col; } return cols; } : null;
+    const viseur = vie && opts.cibles ? now => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; cols[x.cle] = x.col; if (now - T0 >= 630 + PIEUVRE.rang(x.cle) * 70) t.viser(x.cible, 1100); } return cols; } : null;
     if (vie) { vie.t0 = T0; vie.teinte = 0; }
     const pas = now => {
       const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));
@@ -274,9 +276,10 @@ const INTRO = (() => {
       // (vivante : un coup de nage, les tentacules ramant à l'opposé du chemin, le corps contracté ; ses ondulations s'apaisent
       // pour que la pieuvre de la page la relaie telle quelle)
       if (vie) {
-        const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0, cols = viseur ? viseur() : null;
+        const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0, cols = viseur ? viseur(now) : null;
         vie.teinte = clamp((now - T0) / 700);
-        peindre(now, { onde: 1.3 * (1 - u), rame: .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat, teinte: vie.teinte, cols });
+        // (avec des cibles, pas de coup de nage : les tentacules vont se déployer, rien ne doit les agiter avant)
+        peindre(now, { onde: 1.3 * (1 - u), rame: viseur ? 0 : .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat, teinte: vie.teinte, cols });
       }
       passent.forEach(n => { n.style.opacity = String(1 - ease.out(clamp(v * 2.2))); });
       if (fondG) fondG.style.opacity = String(1 - ease.inOut(clamp((v - .2) / .65)));
