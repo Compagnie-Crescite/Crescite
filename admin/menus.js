@@ -62,10 +62,11 @@
     const l = lieu(d.lieu_id);
     if (l && itineraire(l)) xs.push({ libelle: 'Itinéraire', detail: l.nom ? `${l.nom}, ${l.commune}` : l.commune, href: itineraire(l), externe: true, icone: ICO.carte });
     if (l) xs.push({ libelle: 'Fiche du lieu', detail: l.nom || l.commune, href: `#/lieux/${l.id}` });
+    if (typeof MODELES !== 'undefined') xs.push({ libelle: 'Devis, contrat…', detail: 'un document à imprimer', faire: () => MODELES.generer({ date: d, type: 'devis' }), icone: ICO.feuille });
     xs.push({ separateur: true }, { libelle: 'Dupliquer', detail: 'une copie à enregistrer', faire: () => allerEtCliquer(href, '#d-dupliquer'), icone: ICO.dupliquer },
       { libelle: 'Voir dans le tableur', href: '#/representations/tableur' });
     xs.push(...liens(href));
-    xs.push({ separateur: true }, { libelle: 'Supprimer la date…', danger: true, icone: ICO.poubelle, faire: () => supprimerDate(d) });
+    xs.push({ separateur: true }, { libelle: 'Supprimer la date', detail: 'avec « Annuler »', danger: true, icone: ICO.poubelle, faire: () => supprimerDate(d) });
     return xs.filter(Boolean);
   }
   const aVenirDate = d => (d.fin || d.debut) >= AUJ;
@@ -98,20 +99,21 @@
   function actionsProspect(p, el) {
     const i = ETAPES_CRM.findIndex(e => e[0] === p.etape);
     const vers = (j, libelle) => (j >= 0 && j < ETAPES_CRM.length ? { libelle, detail: ETAPES_CRM[j][1], faire: () => deplacerProspect(p.id, ETAPES_CRM[j][0]), icone: j < i ? ICO.gauche : ICO.droite } : null);
-    return [vers(i + 1, 'Étape suivante'), vers(i - 1, 'Étape précédente'), { separateur: true },
+    return [typeof TIROIR !== 'undefined' ? ouvrirA(`#/diffusion/piste/${p.id}`, 'Ouvrir la piste') : null, vers(i + 1, 'Étape suivante'), vers(i - 1, 'Étape précédente'), { separateur: true },
       { libelle: 'Relance faite aujourd’hui', detail: 'prochaine relance dans 7 jours', icone: ICO.coche, faire: () => ecrire(sb.from('crescite_diffusion_prospects').update({ date_dernier_contact: AUJ, date_prochaine_relance: plusJours(AUJ, 7) }).eq('id', p.id), 'Relance notée : la prochaine dans 7 jours.', 'Relance non notée', () => { p.date_dernier_contact = AUJ; p.date_prochaine_relance = plusJours(AUJ, 7); if (location.hash === '#/diffusion') vueDiffusion(); }) },
       { libelle: 'Reporter la relance d’une semaine', icone: ICO.agenda, faire: () => { const base = p.date_prochaine_relance && p.date_prochaine_relance > AUJ ? p.date_prochaine_relance : AUJ, j = plusJours(base, 7); ecrire(sb.from('crescite_diffusion_prospects').update({ date_prochaine_relance: j }).eq('id', p.id), `Relance reportée au ${jourCourt(j)}.`, 'Relance non reportée', () => { p.date_prochaine_relance = j; if (location.hash === '#/diffusion') vueDiffusion(); }); } },
       ecrireA(p.contact_email, p.contact_nom || 'au contact'), appeler(p.contact_tel, p.contact_nom || 'le contact'),
       el?.querySelector('[data-crm-email]') ? { libelle: 'Courriel de relance…', faire: () => el.querySelector('[data-crm-email]').click(), icone: ICO.mel } : null,
+      typeof MODELES !== 'undefined' ? { libelle: 'Devis, contrat…', detail: 'un document à imprimer', faire: () => MODELES.generer({ prospect: p, type: 'devis' }), icone: ICO.feuille } : null,
       { separateur: true }, el?.querySelector('[data-crm-editer]') ? { libelle: 'Modifier…', faire: () => el.querySelector('[data-crm-editer]').click(), icone: ICO.reglages } : { libelle: 'Ouvrir la diffusion', href: '#/diffusion' },
-      el?.querySelector('[data-crm-supprimer]') ? { libelle: 'Supprimer…', danger: true, icone: ICO.poubelle, faire: () => el.querySelector('[data-crm-supprimer]').click() } : null];
+      el?.querySelector('[data-crm-supprimer]') ? { libelle: 'Supprimer', detail: 'avec « Annuler »', danger: true, icone: ICO.poubelle, faire: () => el.querySelector('[data-crm-supprimer]').click() } : null];
   }
   function actionsFrais(f) {
     const p = personne(f.personne_id), qui = p ? nomDe(p) : 'cette note';
     const changer = (statut, plus, succes) => ecrire(sb.from('crescite_notes_frais').update({ statut, ...plus }).eq('id', f.id), succes, 'Changement impossible', () => Object.assign(f, { statut }, plus));
     return [{ libelle: 'Notes de frais', detail: `${qui} · ${euros(f.montant_ttc)}`, href: '#/equipe/frais', icone: ICO.euro }, { separateur: true },
       f.statut === 'en_attente' ? { libelle: 'Valider', icone: ICO.coche, faire: () => changer('valide', { valide_le: maintenant(), valide_par: E.session.user.id }, 'Note de frais validée.') } : null,
-      f.statut === 'en_attente' ? { libelle: 'Refuser', danger: true, icone: ICO.croix, faire: () => { if (confirm(`Refuser la note de frais de ${qui} (${euros(f.montant_ttc)}) ?`)) changer('refuse', {}, 'Note de frais refusée.'); } } : null,
+      f.statut === 'en_attente' ? { libelle: 'Refuser', danger: true, icone: ICO.croix, faire: () => changer('refuse', {}, 'Note de frais refusée.') } : null,
       f.statut === 'valide' ? { libelle: 'Marquer remboursée', icone: ICO.coche, faire: () => changer('rembourse', { rembourse_le: maintenant() }, 'Note de frais marquée remboursée.') } : null,
       p ? { libelle: 'Fiche de la personne', detail: nomDe(p), href: `#/equipe/${p.id}` } : null];
   }

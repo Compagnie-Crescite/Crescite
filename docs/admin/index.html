@@ -930,7 +930,7 @@ function cadre(rubrique, contenu) {
 }
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
-  [/^#\/representations(?:\/(nouvelle|tableur|\d+))?$/, m => vueDates(m[1])],
+  [/^#\/representations(?:\/(nouvelle|tableur|carte|\d+))?$/, m => vueDates(m[1])],
   [/^#\/planning(?:\/(propositions|proposer|proposition\/\d+))?$/, m => vuePlanning(m[1])],
   [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
   [/^#\/spectacles(?:\/([a-z0-9-]+))?$/, m => vueSpectacles(m[1])],
@@ -943,6 +943,15 @@ const ROUTES = [
   [/^#\/journal$/, () => vueJournal()],
 ];
 const APRES_VUE = [];   // ce qui se pose une fois la vue dessinée (menus.js : précédent / suivant dans les fiches)
+// une fiche ouverte ailleurs qu'à sa place (depuis le tableau de bord, le Kanban, le planning…) s'ouvre dans un tiroir
+// (tiroir.js) : ces aides savent où elle est. racineActive : le tiroir ouvert, sinon la page
+const racineActive = () => (typeof TIROIR !== 'undefined' && TIROIR.racine()) || document;
+// l'adresse de la fiche change sans redessiner la vue (une date créée ou dupliquée, une fiche créée) ; dans un tiroir, l'adresse de la page reste la sienne
+function remplacerAdresse(h) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) return; history.replaceState(null, '', h); E.hash = location.hash; }
+// après un enregistrement : la fiche se redessine à sa place (sa vue), ou dans son tiroir
+function redessinerFiche(vue, id) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) TIROIR.redessiner(); else vue(id); }
+// après une suppression : retour à la liste, ou le tiroir se ferme
+function quitterFiche(h) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) TIROIR.fermer(); else location.hash = h; }
 const apresVue = () => APRES_VUE.forEach(f => { try { f(); } catch (e) { console.error(e); } });
 function router() {
   if (!E.pret) return;
@@ -997,7 +1006,7 @@ function viser() {
   visee = null;
   if (!k) return;
   requestAnimationFrame(() => {
-    const el = $(/^[#.[]/.test(k) ? k : `[data-chemin="${k}"]`, $('#vue') || document);
+    const el = $(/^[#.[]/.test(k) ? k : `[data-chemin="${k}"]`, (typeof TIROIR !== 'undefined' && TIROIR.racine()) || $('#vue') || document);
     if (!el || el.hidden) return;
     const cible = el.matches('input, select, textarea, button, a, [tabindex]') ? el : el.querySelector('summary') || el;
     if (cible.tagName === 'SUMMARY' && !cible.parentNode.open) cible.parentNode.open = true;
@@ -1013,7 +1022,7 @@ window.addEventListener('hashchange', () => {
 });
 window.addEventListener('beforeunload', e => { if (E.sale) { e.preventDefault(); e.returnValue = ''; } });
 document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]'); if (b) { e.preventDefault(); b.click(); } }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]', racineActive()); if (b) { e.preventDefault(); b.click(); } }
   if ((SUR_MAC ? e.metaKey : e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && E.pret) { e.preventDefault(); ouvrirRecherche(); }
 });
 
@@ -1069,6 +1078,7 @@ function indexRch() {
         faire: href === 'prospect' ? () => { window.addEventListener('hashchange', () => requestAnimationFrame(() => $('#b-nouveau-prospect')?.click()), { once: true }); location.hash = '#/diffusion'; } : null }, 'commande'); });
     mettre({ type: 'Action', titre: 'Tableau de bord', href: '#/accueil', ordre: 1 }, 'commande accueil');
     mettre({ type: 'Action', titre: 'Briefing de la semaine', sous: 'le résumé des sept jours, à copier ou à imprimer', faire: () => TABLEAU.ouvrirBriefing(), ordre: 1 }, 'commande résumé');
+    mettre({ type: 'Rubrique', titre: 'Corbeille', sous: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille' });
     mettre({ type: 'Action', titre: 'Personnaliser le tableau de bord', faire: () => { const aller = () => { if ($('#tb-personnaliser')?.getAttribute('aria-pressed') !== 'true') $('#tb-personnaliser')?.click(); }; if (location.hash === '#/accueil') aller(); else { window.addEventListener('hashchange', () => setTimeout(aller, 60), { once: true }); location.hash = '#/accueil'; } }, ordre: 1 }, 'commande tuiles');
     (TABLEAU.vues() || []).forEach(v => mettre({ type: 'Vue', titre: v.nom, sous: 'une vue du tableau de bord', faire: () => { if (location.hash === '#/accueil') TABLEAU.appliquerVue(v.nom); else { window.addEventListener('hashchange', () => setTimeout(() => TABLEAU.appliquerVue(v.nom), 60), { once: true }); location.hash = '#/accueil'; } } }, 'tableau commande'));
     try { TABLEAU.urgences().lignes.filter(x => !x.reporte).slice(0, 40).forEach(x => mettre({ type: 'À traiter', titre: x.titreTexte, sous: `${x.sujet}${sansBalises(x.sous) ? ` · ${sansBalises(x.sous)}` : ''}`, couleur: x.couleur, href: x.href,
@@ -1076,7 +1086,7 @@ function indexRch() {
   }
   (E.frais || []).forEach(f => { const p = personne(f.personne_id); mettre({ type: 'Note de frais', titre: `${p ? nomDe(p) : 'Une personne'} · ${eurosRch(f.montant_ttc)}`, sous: [typeof CAT_FRAIS !== 'undefined' ? CAT_FRAIS[f.categorie] || f.categorie : f.categorie, f.date_depense ? jourCourt(f.date_depense) : '', STATUTS_FRAIS_RCH[f.statut] || f.statut].filter(Boolean).join(' · '), href: '#/equipe/frais', ordre: f.statut === 'en_attente' ? 0 : 1 }, f.commentaire || ''); });
   (E.devis || []).forEach(v => mettre({ type: 'Devis', titre: v.structure_nom || 'Demande de devis', sous: [v.commune, spectacle(v.spectacle_id)?.titre, (STATUTS_DEVIS.find(x => x[0] === (v.statut || 'nouveau')) || [])[1]].filter(Boolean).join(' · '), href: `#/diffusion/devis/${v.id}` }, v.contact_nom || ''));
-  (E.prospects || []).forEach(p => mettre({ type: 'Diffusion', titre: p.structure || 'Piste', sous: [p.commune, spectacle(p.spectacle_id)?.titre, ((ETAPES_CRM.find(e => e[0] === p.etape) || [])[1] || '').replace(/^\d\.\s*/, '')].filter(Boolean).join(' · '), href: '#/diffusion' }, p.contact_nom || ''));
+  (E.prospects || []).forEach(p => mettre({ type: 'Diffusion', titre: p.structure || 'Piste', sous: [p.commune, spectacle(p.spectacle_id)?.titre, ((ETAPES_CRM.find(e => e[0] === p.etape) || [])[1] || '').replace(/^\d\.\s*/, '')].filter(Boolean).join(' · '), href: typeof TIROIR !== 'undefined' ? `#/diffusion/piste/${p.id}` : '#/diffusion' }, p.contact_nom || ''));
   (E.propositions || []).forEach(p => mettre({ type: 'Proposition', titre: p.titre || 'Proposition de dates', sous: p.statut === 'ouverte' ? 'proposition ouverte' : 'proposition close', href: `#/planning/proposition/${p.id}`, ordre: p.statut === 'ouverte' ? 0 : 1 }));
   (E.seances || []).forEach(s => { const a = (E.ateliers || []).find(x => x.id === s.atelier_id), l = lieu(s.lieu_id); mettre({ type: 'Séance', titre: a?.titre || 'Séance d’atelier', sous: `${jourCourt(s.jour)}${l ? ` · ${l.nom || l.commune}` : ''}${s.classe ? ` · ${s.classe}` : ''}`, href: `#/ateliers/seances/${s.id}`, ordre: s.jour >= AUJ ? Date.parse(`${s.jour}T12:00:00Z`) / 864e5 : 1e9 }, s.jour ? jourRch(s.jour) : ''); });
   return xs;
@@ -1204,9 +1214,9 @@ function glisserVers(avant, racine = $('[data-liste]')) {
 function marquerSale(oui = true) {
   const avant = E.sale;
   E.sale = oui;
-  const el = $('.etat-ed');
+  const el = $('.etat-ed', racineActive());
   if (el) { el.textContent = oui ? 'Modifications non enregistrées' : 'Tout est enregistré'; el.classList.toggle('sale', oui); el.closest('.pied-ed')?.classList.toggle('sale', oui); }
-  if (avant !== oui) ajusterPied();
+  if (avant !== oui) ajusterPied($('.pied-ed.a-plus', racineActive()));
 }
 
 // ===================================================================================================== formulaires
@@ -1440,6 +1450,7 @@ function formNouveauLieu(zone, texte, etablissement, fini) {
 // ===================================================================================================== représentations
 function vueDates(param) {
   if (param === 'tableur') return TABLEUR.vue();   // le tableur : une ligne par séance, branché sur la base
+  if (param === 'carte') { if (typeof TOURNEE !== 'undefined') return TOURNEE.vue(); location.replace('#/representations'); return; }   // la carte de tournée (tournee.js)
   const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {});
   const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
   cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('liste')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
@@ -1567,7 +1578,7 @@ function listeDates(zone, actif) {
       <span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${(d.fin && d.fin !== d.debut) ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
       <span class="corps"><span class="t">${esc(s?.titre || '?')}</span><span class="ou">${esc(l ? lieuTexte(l) : (d.intitule || '').split(' — ')[1] || 'Lieu à préciser')}</span>
       ${reps.length ? `<span class="reps">${reps.slice(0, 8).map(r => `<span class="rep${r.public === 'scolaire' ? ' sco' : ''}${r.annulee ? ' ann' : ''}">${jours.length > 1 ? `${+r.jour.slice(8, 10)}/${+r.jour.slice(5, 7)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}</span>`).join('')}${reps.length > 8 ? `<span class="rep">+${reps.length - 8}</span>` : ''}</span>` : ''}</span>
-      <span class="badges">${badges}</span></a>`;
+      <span class="badges">${badges}${typeof PARCOURS !== 'undefined' ? PARCOURS.points(d) : ''}</span></a>`;
   };
   const parMois = ds => { let m = '', h = ''; ds.forEach(d => { const k = d.debut.slice(0, 7); if (k !== m) { m = k; h += `<div class="mois">${AGENDA.MOIS[+k.slice(5) - 1]} ${k.slice(0, 4)}</div>`; } h += ligne(d); }); return h; };
   const saisonEnCours = AGENDA.saisonDe(AUJ);
@@ -1589,9 +1600,11 @@ function listeDates(zone, actif) {
 
 function nouvelleDate() {
   const sp = session.dates?.spectacle ? +session.dates.spectacle : (E.spectacles.find(s => s.page) || {}).id;
-  return { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true, nature: 'representations',
+  const F = { id: null, spectacle_id: sp, lieu_id: null, debut: '', fin: '', precision: 'jour', saison: null, public: 'tout_public', statut: 'confirmee', visible: true, nature: 'representations',
     intitule: null, details: [], lien: '', nb_representations: null, representations: [{ jour: '', heure: '20:00', fin: '', public: 'tout_public', annulee: false, lien: '', note: '' }], suivi: {}, equipe: [],
     chiffres: Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])) };
+  if (typeof SERIES !== 'undefined') SERIES.appliquerModele(F);   // les horaires habituels du spectacle (series.js)
+  return F;
 }
 function dateVersForm(d) {
   const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
@@ -1634,6 +1647,7 @@ function editeurDate(id, depart = null) {
   const libre = !!F.intitule;
   const dep = F.depuis;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/representations" title="Retour à la liste">←</a><h2 id="ed-titre"></h2></div>
+    ${d0 ? '<div id="d-parcours"></div>' : ''}<div id="d-gardefous"></div>
     ${dep ? `<p class="d-depuis" role="note">Depuis la proposition « ${esc(dep.titre)} » (${esc(dep.jour)})${E.equipeInstallee ? ` : l’équipe, ${dep.oui ? (dep.oui > 1 ? `les ${dep.oui} personnes qui ont répondu oui` : 'la personne qui a répondu oui') : 'personne pour l’instant (aucun oui ce jour-là)'}` : ''}. Enregistrée, la date ${dep.close ? 'se note dans la proposition' : 'clôt la proposition'}. <a href="#/planning/proposition/${dep.proposition}">Revoir la proposition</a></p>` : ''}
     <div class="bloc"><div class="rangee">
       <div class="champ"><label for="d-sp">Spectacle</label><select id="d-sp">${choixSpectacles().map(([v, t]) => `<option value="${v}"${String(F.spectacle_id) === v ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
@@ -1646,7 +1660,7 @@ function editeurDate(id, depart = null) {
 
     <div class="bloc"><h3 id="d-reps-titre">${(F.nature || 'representations') === 'representations' ? 'Représentations' : 'Séances'}</h3>
       <table class="reps"><thead><tr><th>Jour</th><th>Heure</th>${E.sql3 ? '<th>Fin</th>' : ''}<th>Public</th><th>Précision</th><th>Billetterie</th><th></th></tr></thead><tbody id="d-reps"></tbody></table>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn petit" id="d-meme-jour">＋ Le même jour</button><button type="button" class="btn petit" id="d-lendemain">＋ Le lendemain</button><button type="button" class="btn petit" id="d-vide">＋ Représentation</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button type="button" class="btn petit" id="d-meme-jour">＋ Le même jour</button><button type="button" class="btn petit" id="d-lendemain">＋ Le lendemain</button><button type="button" class="btn petit" id="d-vide">＋ Représentation</button>${typeof SERIES !== 'undefined' ? '<button type="button" class="btn petit" id="d-serie" title="Les mêmes heures chaque jour choisi, du premier au dernier">Série…</button>' : ''}</div>
       <div id="d-sans" style="margin-top:12px"></div></div>
 
     <div class="bloc"><h3>Sur le site</h3>
@@ -1664,6 +1678,7 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
+    ${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
     ${E.chiffresInstalles ? `<div class="bloc"><h3>Les chiffres <span class="aide" style="font-weight:400">— jamais publiés ; l’équipe les lit</span></h3><div class="rangee">
       ${CHIFFRES.map(([k, l, pas, max]) => `<div class="champ"><label for="c-${k}">${l}</label><input type="number" id="c-${k}" data-chiffre="${k}" min="0" max="${max}" step="${pas}" inputmode="${pas < 1 ? 'decimal' : 'numeric'}" value="${esc(F.chiffres?.[k] ?? '')}"></div>`).join('')}</div></div>` : ''}
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
@@ -1703,7 +1718,8 @@ function editeurDate(id, depart = null) {
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn petit" id="d-det-plus">＋ Précision</button><button type="button" class="btn petit" id="d-det-auto">Proposer d’après les représentations</button></div>
       <span class="aide">Vide : le site écrit lui-même « 14h et 20h : représentations au … ».</span></div>`;
   };
-  const changer = () => { marquerSale(JSON.stringify(F) !== initial || $('#d-libre').checked !== libre); apercu(); titre(); };
+  const parcours = () => { if (d0 && typeof PARCOURS !== 'undefined') PARCOURS.poser($('#d-parcours', zone), d0, F); if (typeof GARDEFOUS !== 'undefined') GARDEFOUS.poser(zone, F, d0); };
+  const changer = () => { marquerSale(JSON.stringify(F) !== initial || $('#d-libre').checked !== libre); apercu(); titre(); parcours(); };
   // le lieu de la date, tel que sa fiche le connaît (adresse, contact, jauge) : de quoi préparer la date sans changer d'écran
   const dessinerLieu = () => {
     const l = lieu(F.lieu_id), el = $('#d-lieu-fiche', zone);
@@ -1714,7 +1730,9 @@ function editeurDate(id, depart = null) {
       ${sl.jauge || sl.plateau ? `<span>${[sl.jauge && `Jauge : ${esc(sl.jauge)} places`, sl.plateau && `plateau : ${esc(sl.plateau)}`].filter(Boolean).join(' · ')}</span>` : ''}
       <a href="#/lieux/${l.id}">Fiche du lieu →</a></div>`;
   };
-  dessinerReps(); dessinerDetails(); titre(); dessinerLieu();
+  dessinerReps(); dessinerDetails(); titre(); dessinerLieu(); parcours();
+  if (d0 && typeof MODELES !== 'undefined') MODELES.bloc($('#d-documents', zone), { date: d0 });
+  if (d0 && typeof NOTES !== 'undefined') NOTES.bloc($('#d-notes', zone), 'crescite_dates', d0.id, { titre: 'Notes internes' });
   comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); dessinerLieu(); });
   sousChamp($('#s-org', zone), v => (d0 ? mentionAppris('crescite_dates_suivi', d0.id, 'organisateur', v) : ''));
   sousChamp($('#s-contact', zone), v => (d0 ? mentionAppris('crescite_dates_suivi', d0.id, 'contact', v) : ''));
@@ -1741,7 +1759,7 @@ function editeurDate(id, depart = null) {
   zone.addEventListener('change', e => {
     const t = e.target, tr = t.closest('tr[data-i]');
     if (tr && t.dataset.r) { const r = F.representations[+tr.dataset.i]; r[t.dataset.r] = t.type === 'checkbox' ? t.checked : t.value; }
-    else if (t.id === 'd-sp') F.spectacle_id = +t.value;
+    else if (t.id === 'd-sp') { F.spectacle_id = +t.value; if (!id && typeof SERIES !== 'undefined' && SERIES.appliquerModele(F)) dessinerReps(); }
     else if (t.id === 'd-visible') F.visible = t.checked;
     else if (t.id === 'd-prec') F.precision = t.value;
     else if (t.id === 's-contrat') F.suivi.contrat = t.value;
@@ -1786,7 +1804,8 @@ function editeurDate(id, depart = null) {
       F.details = AGENDA.precisions({ ...F, details: [] }, reps, lieu(F.lieu_id)).map(p => ({ texte: p.texte, lien: null }));
       dessinerDetails(); changer(); return;
     }
-    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); history.replaceState(null, '', '#/representations/nouvelle'); E.hash = location.hash; editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
+    if (t.id === 'd-serie') return SERIES.serie(F, () => { dessinerReps(); changer(); });
+    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); remplacerAdresse('#/representations/nouvelle'); editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
     if (t.id === 'd-suppr') return supprimerDate(d0);
     if (t.matches('[data-enregistrer]')) return enregistrerDate(F, d0, t);
   });
@@ -1836,15 +1855,15 @@ async function enregistrerDate(F, d0, bouton) {
   try { r = await ecrireDate(F, d0, { libre: $('#d-libre').checked }); } catch (e) { bouton.disabled = false; return erreur(e); }
   bouton.disabled = false;
   const { id, equipeOk } = r;
-  if (!equipeOk) { F.id = id; history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; return; }
+  if (!equipeOk) { F.id = id; remplacerAdresse(`#/representations/${id}`); return; }
   E.sale = false;
   const mot = F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.';
   // créée depuis une proposition : elle se clôt, et l'annonce le dit
   const clos = F.depuis && !d0 && typeof DISPONIBILITES !== 'undefined' ? await DISPONIBILITES.apresDate(F.depuis, id) : null;
   annoncer(clos ? `${mot} ${clos.texte}` : mot, clos?.erreur ? { erreur: true, delai: 9000 } : clos ? { delai: 8000, libelle: 'Voir', action: () => { location.hash = `#/planning/proposition/${F.depuis.proposition}`; } } : {});
-  if (!F.id) { history.replaceState(null, '', `#/representations/${id}`); E.hash = location.hash; }
+  if (!F.id) remplacerAdresse(`#/representations/${id}`);
   ouvertureMuette = true;
-  vueDates(id);
+  redessinerFiche(vueDates, id);
   bravo();
 }
 async function rechargerDate(id) {
@@ -1877,12 +1896,12 @@ async function effacerDate(d) {
 }
 async function supprimerDate(d) {
   const s = spectacle(d.spectacle_id);
-  if (!confirm(`Supprimer la date « ${s?.titre} · ${jourCourt(d.debut)} », ses représentations${avecFeuille(d.id) ? ' et sa feuille de route' : ''} ?`)) return;
   let retablir;
   try { retablir = await effacerDate(d); } catch (e) { return erreur(e, 'Suppression impossible'); }
   E.sale = false;
-  location.hash = '#/representations';
-  annoncer('Date supprimée.', { action: async () => {
+  quitterFiche('#/representations');
+  if (typeof rafraichirListes === 'function') rafraichirListes();
+  annoncer(`Date supprimée : ${s?.titre || ''} · ${jourCourt(d.debut)}${avecFeuille(d.id) ? ', avec sa feuille de route' : ''}.`, { action: async () => {
     try { const id = await retablir(); annoncer('Date rétablie.'); location.hash = `#/representations/${id}`; } catch (e) { erreur(e, 'Rétablissement impossible'); }
   }, libelle: 'Annuler', delai: 9000 });
 }
@@ -2111,7 +2130,7 @@ const TABLEUR = (() => {
     brancher();
   }
   // la liste ou le tableur (en tête de Représentations)
-  const choixVue = v => `<span class="seg tab-vue" role="group" aria-label="Vue"><a href="#/representations" aria-current="${v === 'liste' ? 'page' : 'false'}">Liste</a><a href="#/representations/tableur" aria-current="${v === 'tableur' ? 'page' : 'false'}">Tableur</a></span>`;
+  const choixVue = v => `<span class="seg tab-vue" role="group" aria-label="Vue"><a href="#/representations" aria-current="${v === 'liste' ? 'page' : 'false'}">Liste</a><a href="#/representations/tableur" aria-current="${v === 'tableur' ? 'page' : 'false'}">Tableur</a>${typeof TOURNEE !== 'undefined' ? `<a href="#/representations/carte" aria-current="${v === 'carte' ? 'page' : 'false'}">Carte</a>` : ''}</span>`;
 
   // ———— dessiner (et redessiner : la case active, le défilement et ce qui a changé ailleurs)
   const cleCase = (x, c) => `${x.cle}|${c.k}`;
@@ -2663,7 +2682,6 @@ const TABLEUR = (() => {
     const quoi = seul ? `${dateSeule ? 'la date' : 'la séance'} du ${jourCourt(seul.r?.jour || seul.d.debut)}${seul.r?.heure ? ` à ${heureT(seul.r.heure)}` : ''} (${spectacle(seul.d.spectacle_id)?.titre || ''}, ${ouDit(seul.d.lieu_id)})` : `${pl(nS || xs.length, 'séance')}`;
     const suite = dateSeule ? 'Elle n’a pas de séance : elle est supprimée, avec son équipe et sa feuille de route.'
       : entieres.length ? `${entieres.length > 1 ? `${entieres.length} dates n’auront` : 'Sa date n’aura'} plus de séance : ${entieres.length > 1 ? 'elles sont supprimées' : 'elle est supprimée'}, avec ${entieres.length > 1 ? 'leur' : 'son'} équipe et ${entieres.length > 1 ? 'leur' : 'sa'} feuille de route.` : '';
-    if (!confirm(`Supprimer ${quoi} ?${suite ? `\n\n${suite}` : ''}`)) return;
     etat('Suppression…', 'encours');
     const tache = T.file.then(async () => {
       const defaire = [];
@@ -3100,7 +3118,7 @@ function editeurSpectacle(slug) {
     const b = e.target.closest('[data-ph]');
     if (b) {
       const i = +b.dataset.i, xs = F.photos;
-      if (b.dataset.ph === 'retirer' && confirm('Retirer cette photo de la fiche ?')) xs.splice(i, 1);
+      if (b.dataset.ph === 'retirer') xs.splice(i, 1);
       if (b.dataset.ph === 'monter' && i > 0) [xs[i - 1], xs[i]] = [xs[i], xs[i - 1]];
       if (b.dataset.ph === 'descendre' && i < xs.length - 1) [xs[i + 1], xs[i]] = [xs[i], xs[i + 1]];
       marquerSale(); dessiner(); return;
@@ -3176,11 +3194,9 @@ function editeurAtelier(id) {
     ${SPEC_ATELIER.map(c => champ(c, F)).join('')}</div>${pied(a0 ? 'Tout est enregistré' : 'Nouvel atelier', a0 ? '<button type="button" class="btn danger" id="a-suppr">Supprimer</button>' : '')}`;
   relier(zone, F, SPEC_ATELIER);
   $('#a-sp').addEventListener('change', e => { F.spectacle_id = e.target.value ? +e.target.value : null; marquerSale(); });
-  $('#a-suppr')?.addEventListener('click', async () => {
-    if (!confirm('Supprimer cet atelier ? Les séances déjà notées le garderont sans lien.')) return;
-    const { error } = await sb.from('crescite_ateliers').delete().eq('id', a0.id);
-    if (error) return erreur(error); E.ateliers = E.ateliers.filter(x => x.id !== a0.id); E.sale = false; location.hash = '#/ateliers/catalogue'; annoncer('Atelier supprimé.');
-  });
+  $('#a-suppr')?.addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_ateliers', ligne: a0, quoi: `Atelier supprimé : ${a0.titre}. Les séances déjà notées le gardent sans lien.`, retabli: 'Atelier rétabli.',
+    apres: () => { E.ateliers = E.ateliers.filter(x => x.id !== a0.id); E.sale = false; location.hash = '#/ateliers/catalogue'; },
+    apresRetour: a => { E.ateliers.push(a); location.hash = `#/ateliers/catalogue/${a.id}`; } }));
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
     $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
     if (!F.titre.trim()) return annoncer('Donnez un titre à l’atelier.', { erreur: true });
@@ -3248,7 +3264,8 @@ function editeurSeance(id, depart = null) {
   const maj = e => { const x = lien[e.target.id]; if (!x) return; F[x[0]] = x[1](e.target.value); if (e.target.id === 'se-at' && F.atelier_id) { const a = E.ateliers.find(y => y.id === F.atelier_id); if (a?.spectacle_id && !F.spectacle_id) { F.spectacle_id = a.spectacle_id; $('#se-sp').value = String(a.spectacle_id); } } marquerSale(); };
   zone.addEventListener('input', maj); zone.addEventListener('change', maj);
   $('#se-dup')?.addEventListener('click', () => { const G = clone(F); delete G.id; delete G.modifie_le; delete G.modifie_par; G.statut = 'prevue'; history.replaceState(null, '', '#/ateliers/seances/nouvelle'); E.hash = location.hash; editeurSeance(null, G); marquerSale(true); annoncer('Copie prête : changez le jour ou la classe, puis enregistrez.'); });
-  $('#se-suppr')?.addEventListener('click', async () => { if (!confirm('Supprimer cette séance ?')) return; const { error } = await sb.from('crescite_seances').delete().eq('id', s0.id); if (error) return erreur(error); E.seances = E.seances.filter(x => x.id !== s0.id); E.sale = false; location.hash = '#/ateliers/seances'; annoncer('Séance supprimée.'); });
+  $('#se-suppr')?.addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_seances', ligne: s0, quoi: `Séance supprimée : ${jourCourt(s0.jour)}${s0.classe ? ` · ${s0.classe}` : ''}.`, retabli: 'Séance rétablie.',
+    apres: () => { E.seances = E.seances.filter(x => x.id !== s0.id); E.sale = false; location.hash = '#/ateliers/seances'; }, apresRetour: x => { E.seances.push(x); location.hash = `#/ateliers/seances/${x.id}`; } }));
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
     if (!F.jour) return annoncer('Indiquez le jour.', { erreur: true });
     if (F.heure_debut && F.heure_fin && F.heure_fin <= F.heure_debut) return annoncer('L’heure de fin doit suivre l’heure de début.', { erreur: true });
@@ -3313,10 +3330,11 @@ function editeurLieu(id) {
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
     <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button></div>
     <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
-    ${l0 ? datesDuLieu(id) : ''}
+    ${l0 ? datesDuLieu(id) : ''}${l0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="li-notes"></div>' : ''}
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
     ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '')}`;
   relier($('#li-f'), F, SPEC_LIEU); relier($('#li-s'), G, SPEC_LIEU_SUIVI);
+  if (l0 && typeof NOTES !== 'undefined') NOTES.bloc($('#li-notes', zone), 'crescite_lieux', id, { titre: 'Notes internes' });
   const ch = k => $(`[data-chemin="${k}"]`, zone), appris = (table, k) => v => (l0 ? mentionAppris(table, id, k, v) : '');
   sousChamp(ch('adresse'), v => `${v.trim() ? `<a href="${esc(FEUILLE.itineraire({ ...F, adresse: v }))}" target="_blank" rel="noopener">Itinéraire ↗</a>` : ''}${appris('crescite_lieux', 'adresse')(v)}`);
   sousChamp(ch('site_web'), v => (/^https?:\/\/\S+$/.test(v.trim()) ? `<a href="${esc(v.trim())}" target="_blank" rel="noopener">Ouvrir le site ↗</a>` : ''));
@@ -3343,7 +3361,8 @@ function editeurLieu(id) {
     E.dates.forEach(d => { if (d.lieu_id === id) d.lieu_id = cible; }); E.seances.forEach(s => { if (s.lieu_id === id) s.lieu_id = cible; }); E.lieux = E.lieux.filter(x => x.id !== id);
     E.sale = false; location.hash = `#/lieux/${cible}`; annoncer('Lieux fusionnés.');
   });
-  $('#li-suppr')?.addEventListener('click', async () => { if (!confirm('Supprimer ce lieu ?')) return; const { error } = await sb.from('crescite_lieux').delete().eq('id', id); if (error) return erreur(error); E.lieux = E.lieux.filter(x => x.id !== id); E.sale = false; location.hash = '#/lieux'; annoncer('Lieu supprimé.'); });
+  $('#li-suppr')?.addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_lieux', ligne: l0, quoi: `Lieu supprimé : ${lieuTexte(l0)}.`, retabli: 'Lieu rétabli.',
+    apres: () => { E.lieux = E.lieux.filter(x => x.id !== id); E.sale = false; quitterFiche('#/lieux'); }, apresRetour: async x => { E.lieux.push(x); if (S0.lieu_id) { const r = await sb.from('crescite_lieux_suivi').insert(sansMeta(S0)); if (!r.error) E.lieuxSuivi.push(S0); } location.hash = `#/lieux/${x.id}`; } }));
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
     if (!(F.commune || '').trim() || !(F.departement || '').trim()) return annoncer('La commune et le département sont nécessaires.', { erreur: true });
     const ligneLi = { nom: (F.nom || '').trim() || null, type: F.type, commune: F.commune.trim(), departement: String(F.departement).trim(), pays: F.pays || 'FR', code_insee: F.code_insee || null,
@@ -3357,7 +3376,7 @@ function editeurLieu(id) {
     const i = E.lieux.findIndex(x => x.id === r.data.id); if (i >= 0) E.lieux[i] = r.data; else E.lieux.push(r.data);
     E.lieuxSuivi = E.lieuxSuivi.filter(x => x.lieu_id !== r.data.id).concat([r2.data]);
     E.sale = false; annoncer('Lieu enregistré.');
-    if (!l0) location.hash = `#/lieux/${r.data.id}`; else vueLieux(id);
+    if (!l0) location.hash = `#/lieux/${r.data.id}`; else redessinerFiche(vueLieux, id);
     bravo();
   });
 }
@@ -3379,7 +3398,7 @@ const TEXTES = {
 };
 function vueTextes(cle) {
   const noms = Object.fromEntries(Object.entries(TEXTES).map(([k, v]) => [k, v[0]]));
-  const autres = E.textes.map(t => t.cle).filter(k => !noms[k]).sort();
+  const autres = E.textes.map(t => t.cle).filter(k => !noms[k] && !k.startsWith('modele-date:') && !k.startsWith('documents:')).sort();
   const nom = k => noms[k] || (k.startsWith('dossier:') ? `Dossier scolaire : ${k.slice(8)}` : k);
   cadre('textes', `<div class="tete"><h1>Textes du site</h1></div><div class="deux${cle ? ' edition' : ''}"><div class="liste">
       ${[...Object.keys(TEXTES).filter(k => E.textes.some(t => t.cle === k)), ...autres].map(k => `<a class="ligne" style="grid-template-columns:1fr" href="#/textes/${encodeURIComponent(k)}"${k === cle ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(nom(k))}</span></span></a>`).join('')}</div>
@@ -3565,20 +3584,13 @@ function brancherDiffusion() {
 
   $$('[data-crm-supprimer]').forEach(b => {
     b.addEventListener('click', async () => {
-      const id = +b.dataset.crmSupprimer;
-      if (!confirm('Supprimer cette opportunité du pipeline ?')) return;
+      const id = +b.dataset.crmSupprimer, p = E.prospects.find(x => x.id === id);
+      if (!p) return;
       b.disabled = true;
-      try {
-        const { error } = await sb.from('crescite_diffusion_prospects').delete().eq('id', id);
-        if (error) throw error;
-        const idx = E.prospects.findIndex(x => x.id === id);
-        if (idx >= 0) E.prospects.splice(idx, 1);
-        annoncer('Opportunité supprimée.');
-        vueDiffusion();
-      } catch (err) {
-        erreur(err, 'Suppression impossible');
-        b.disabled = false;
-      }
+      const fait = await CORBEILLE.ligne({ table: 'crescite_diffusion_prospects', ligne: p, quoi: `Opportunité supprimée : ${p.structure}.`, retabli: 'Opportunité rétablie.',
+        apres: () => { const idx = E.prospects.findIndex(x => x.id === id); if (idx >= 0) E.prospects.splice(idx, 1); if (location.hash === '#/diffusion') vueDiffusion(); },
+        apresRetour: x => { E.prospects.push(x); if (location.hash === '#/diffusion') vueDiffusion(); } });
+      if (!fait) b.disabled = false;
     });
   });
 }
@@ -3596,7 +3608,7 @@ function ouvrirModaleProspect(p) {
           <h2 style="margin:0;font-size:18px;">${nouveau ? 'Nouvelle opportunité' : 'Modifier l’opportunité'}</h2>
           <button type="button" class="btn petit" id="b-fermer-mod-crm">✕</button>
         </div>
-        <form id="f-prospect-crm" novalidate>
+        <form id="f-prospect-crm" novalidate${p ? ` data-piste-id="${p.id}"` : ''}>
           <div class="champ">
             <label for="crm-structure">Lieu / Structure / Festival *</label>
             <input type="text" id="crm-structure" value="${esc(p?.structure || '')}" required placeholder="Ex. Le Rayon Vert, Théâtre de Saint-Lô">
@@ -3827,12 +3839,8 @@ function editeurDevis(id) {
     <div class="bloc" id="dv-suivi"><h3>Le suivi <span class="aide" style="font-weight:400">— jamais montré au programmateur</span></h3>${SPEC.map(c => champ(c, F)).join('')}</div>
     ${pied('Tout est enregistré', '<button type="button" class="btn danger" id="dv-suppr">Supprimer</button>')}`;
   relier($('#dv-suivi', zone), F, SPEC);
-  $('#dv-suppr', zone).addEventListener('click', async () => {
-    if (!confirm(`Supprimer la demande de « ${d0.structure_nom} » ? Elle disparaît de la base.`)) return;
-    const { error } = await sb.from('crescite_devis_demandes').delete().eq('id', id);
-    if (error) return erreur(error, 'Suppression impossible');
-    E.devis = E.devis.filter(x => x.id !== id); E.sale = false; location.hash = '#/diffusion/devis'; annoncer('Demande supprimée.');
-  });
+  $('#dv-suppr', zone).addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_devis_demandes', ligne: d0, quoi: `Demande supprimée : ${d0.structure_nom}.`, retabli: 'Demande rétablie.',
+    apres: () => { E.devis = E.devis.filter(x => x.id !== id); E.sale = false; quitterFiche('#/diffusion/devis'); }, apresRetour: x => { E.devis.push(x); location.hash = `#/diffusion/devis/${x.id}`; } }));
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
     e.target.disabled = true;
     const { data, error } = await sb.from('crescite_devis_demandes').update({ statut: F.statut, notes_internes: (F.notes_internes || '').trim() || null })
@@ -3841,7 +3849,7 @@ function editeurDevis(id) {
     if (error) return erreur(error);
     const i = E.devis.findIndex(x => x.id === id); if (i >= 0) E.devis[i] = data;
     E.sale = false; annoncer('Demande enregistrée.');
-    vueDevis(id);
+    redessinerFiche(vueDevis, id);
     bravo();
   });
 }
@@ -3894,13 +3902,17 @@ function vueAlertes() {
     const id = +(b.dataset.alActif || b.dataset.alEffacer), a = E.alertes.find(x => x.id === id);
     if (!a) return;
     const effacer = b.hasAttribute('data-al-effacer');
-    if (effacer && !confirm(`Effacer l’alerte de ${a.email} (${secteurAlerte(a)}) ? Elle disparaît de la base, avec son adresse.`)) return;
     b.disabled = true;
-    const r = effacer ? await sb.from('crescite_alertes_tournee').delete().eq('id', id)
-      : await sb.from('crescite_alertes_tournee').update({ active: !a.active }).eq('id', id).select(COLS_ALERTES).single();
-    if (r.error) { b.disabled = false; return erreur(r.error, effacer ? 'Effacement impossible' : 'Changement impossible'); }
-    if (effacer) E.alertes = E.alertes.filter(x => x.id !== id); else Object.assign(a, r.data);
-    annoncer(effacer ? 'Alerte effacée, avec son adresse.' : a.active ? 'Alerte réactivée : elle reçoit de nouveau les dates de son secteur.' : 'Alerte désactivée : elle ne reçoit plus rien.');
+    if (effacer) {   // sans confirmation : « Annuler » la remet, avec son adresse (une alerte n'est pas dans le journal : le retour est immédiat ou jamais)
+      const fait = await CORBEILLE.ligne({ table: 'crescite_alertes_tournee', ligne: a, quoi: `Alerte effacée, avec son adresse : ${a.email}.`, retabli: 'Alerte rétablie.', echec: 'Effacement impossible',
+        apres: () => { E.alertes = E.alertes.filter(x => x.id !== id); zone.rafraichir(); }, apresRetour: () => lireAlertes().then(() => zone.rafraichir()) });
+      if (!fait) b.disabled = false;
+      return;
+    }
+    const r = await sb.from('crescite_alertes_tournee').update({ active: !a.active }).eq('id', id).select(COLS_ALERTES).single();
+    if (r.error) { b.disabled = false; return erreur(r.error, 'Changement impossible'); }
+    Object.assign(a, r.data);
+    annoncer(a.active ? 'Alerte réactivée : elle reçoit de nouveau les dates de son secteur.' : 'Alerte désactivée : elle ne reçoit plus rien.');
     zone.rafraichir();
     ($(`[data-al-actif="${id}"]`, zone) || $('#al-q'))?.focus();
   });
@@ -3981,7 +3993,7 @@ async function vueJournal() {
   };
   const option = (v, l, choisi) => `<option value="${esc(v)}"${choisi === v ? ' selected' : ''}>${esc(l)}</option>`;
   const auteurs = () => [...new Set([...E.admins.map(a => a.user_id), ...E.journal.map(j => j.qui ?? '')])].map(id => [id || '', qui(id || null)]).sort((a, b) => a[1].localeCompare(b[1], 'fr'));
-  cadre('journal', `<div class="tete"><h1>Journal</h1><span class="compte">« Revenir » remet une ligne telle qu’elle était juste avant la modification.</span></div>
+  cadre('journal', `<div class="tete"><h1>Journal</h1><span class="compte">« Revenir » remet une ligne telle qu’elle était juste avant la modification.</span><a class="btn" href="#/corbeille">Corbeille</a></div>
     <div class="filtres journal-filtres" role="search" aria-label="Filtrer le journal">
       <input type="search" id="j-q" placeholder="Chercher : un nom, un lieu, un numéro, un champ…" value="${esc(f.q)}" aria-label="Chercher dans le journal">
       <div class="j-choix">
@@ -4059,22 +4071,11 @@ async function vueJournal() {
   });
   zone.addEventListener('click', async e => {
     const b = e.target.closest('[data-j]'); if (!b) return;
-    const j = E.journal.find(x => x.id === +b.dataset.j), [, pk] = TABLES[j.table_nom] || TABLES_EQUIPE[j.table_nom] || TABLES_IDEALE[j.table_nom] || [null, 'id'];
-    const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
-    const ligne = (q, o) => [].concat(pk).reduce((q2, c) => q2.eq(c, o[c]), q);   // une clé d'une ou plusieurs colonnes
-    let r;
-    if (j.operation === 'INSERT') { if (!confirm('Retirer cette ligne ajoutée ?')) return; r = await ligne(sb.from(j.table_nom).delete(), j.apres); }
-    else if (j.operation === 'UPDATE') { if (!confirm('Remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await ligne(sb.from(j.table_nom).update(sans(j.avant)), j.avant); }
-    else {
-      if (!confirm('Rétablir cette ligne supprimée ?')) return;
-      r = await sb.from(j.table_nom).insert(sans(j.avant));
-      if (!r.error && j.table_nom === 'crescite_dates') {
-        const liees = E.journal.filter(x => x.operation === 'DELETE' && ['crescite_representations', 'crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes', 'crescite_feuilles'].includes(x.table_nom) && x.avant?.date_id === j.avant.id);
-        for (const x of liees) { const r2 = await sb.from(x.table_nom).insert(sans(x.avant)); if (r2.error) { r = r2; break; } }
-      }
-    }
-    if (r.error) return erreur(r.error, 'Retour impossible');
-    await chargerTout(); annoncer('C’est fait.'); zone.rafraichir();
+    const j = E.journal.find(x => x.id === +b.dataset.j); if (!j) return;
+    b.disabled = true;
+    // sans confirmation : la ligne revient comme avant, et l'annonce porte « Rétablir » (corbeille.js)
+    await CORBEILLE.inverser(j, { annonce: j.operation === 'INSERT' ? 'Ligne retirée.' : j.operation === 'UPDATE' ? 'La ligne est revenue comme avant la modification.' : 'Ligne rétablie.', apres: () => zone.rafraichir() });
+    b.disabled = false;
   });
 }
 </script>
@@ -4090,6 +4091,20 @@ async function vueJournal() {
 <script src="tableau.js"></script>
 <!-- les menus contextuels de chaque liste, carte et tuile, le Kanban glissable, précédent/suivant dans les fiches -->
 <script src="menus.js"></script>
+<!-- le niveau supérieur : la corbeille (supprimer sans confirmer, rétablir), les fiches en tiroir, la sélection multiple,
+     le parcours d'une date, les garde-fous à la saisie, les séries et modèles de dates, les documents générés, les notes
+     internes, la carte de tournée, le téléphone -->
+<script src="corbeille.js"></script>
+<script src="tiroir.js"></script>
+<script src="selection.js"></script>
+<script src="parcours.js"></script>
+<script src="gardefous.js"></script>
+<script src="series.js"></script>
+<script src="modeles.js"></script>
+<script src="notes.js"></script>
+<script src="fond-carte.js"></script>
+<script src="tournee.js"></script>
+<script src="mobile.js"></script>
 <!-- l'habillage (les couleurs, les polices, les cartes, l'en-tête), chargé en dernier : rien que l'apparence -->
 <script src="habillage.js"></script>
 </body>

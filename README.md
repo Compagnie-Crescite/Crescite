@@ -335,6 +335,62 @@ compte du projet inscrit dans `crescite_admins`.
   prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
   calendriers, les colonnes du Kanban colorées ; le sombre suit. `maquettes/tableau.mjs` en garde des captures de chaque
   page (`habillage-*.png`).
+- **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
+  - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
+    diffusion s'ouvrent dans un panneau qui glisse à droite, depuis n'importe où (le tableau de bord, le Kanban, le
+    planning, la recherche, une autre fiche), sans quitter la page ni changer son adresse ; les tiroirs s'empilent (une
+    date → son lieu), Échap ou le voile ferment le dernier, « Pleine page » va à la fiche. La fiche est la même qu'à sa
+    place (ses enregistrements redessinent le tiroir, ses suppressions le ferment). Dans sa rubrique (Représentations,
+    Lieux, Équipe), une fiche s'ouvre à côté de sa liste, comme avant. L'adresse `#/diffusion/piste/3` ouvre le Kanban
+    puis la piste ; une carte du Kanban cliquée fait de même.
+  - **La sélection multiple** (`admin/selection.js`) : Maj+clic (ou « Sélectionner » dans les filtres, ou la barre
+    d'espace) sur des dates, des personnes, des lieux, des cartes du Kanban ou des notes de frais, puis une barre
+    flottante : statut, publier ou masquer, écrire aux contacts, exporter en CSV, dupliquer vers…, devis, supprimer
+    (dates) ; écrire à toutes, publier ou masquer, exporter (personnes) ; écrire, exporter, supprimer sans date (lieux) ;
+    étape, relance faite, supprimer (pistes) ; valider, refuser, rembourser, exporter (notes de frais). Chaque action
+    groupée s'annonce avec « Annuler ». La sélection tient quand la liste se redessine.
+  - **Le parcours d'une date** (`admin/parcours.js`) : sous le titre d'une date, ses étapes calculées d'après la base,
+    confirmée, contrat (à envoyer, envoyé, signé), lieu complet (adresse, contact), équipe (qui part, les téléphones),
+    feuille de route (composée, publiée), bilan (les spectateurs, après la date) ; chaque étape dit où elle en est et
+    s'ouvre là où on la complète. Dans les listes et les prochaines dates du tableau de bord, des points colorés.
+  - **Annuler plutôt que confirmer** (`admin/corbeille.js`) : plus de « Êtes-vous sûr ? » pour supprimer (une date, un
+    lieu, une séance, un atelier, une piste, une demande de devis, une alerte, un document, une invitation, du matériel,
+    une note) ni pour revenir sur une ligne du journal : c'est fait tout de suite, et l'annonce porte « Annuler » (ou
+    « Rétablir ») pendant huit secondes. La **Corbeille** (`#/corbeille`, depuis le journal, la recherche et le téléphone)
+    montre ce qui a été supprimé ces trente derniers jours (le journal le garde) et le rétablit, une date avec ses
+    séances, son suivi, ses chiffres, son équipe et sa feuille.
+  - **Les garde-fous** (`admin/gardefous.js`) : dans la fiche d'une date, en direct, quelqu'un de l'équipe indisponible
+    ce jour-là (le planning, `crescite_indisponibilites`), le lieu qui accueille déjà une autre date, une autre date le
+    même jour à plus de 150 km, quelqu'un déjà sur une autre date ce jour-là, une date publiée sans horaire ou sans lieu,
+    un contrat signé pour une option, une option déjà passée ; dans la fenêtre d'une piste : une cession confirmée sans
+    montant, une relance passée, un doublon. Rien ne bloque ; chaque alerte mène où il faut.
+  - **La carte de tournée** (`#/representations/carte`, `admin/tournee.js`, le fond et la projection du site dans
+    `admin/fond-carte.js`, écrit par `maquettes/build.py`) : les lieux de la saison (ou d'un spectacle, ou à venir) sur la
+    carte de France, une pastille par lieu avec ses dates, le trajet dans l'ordre, et la tournée étape par étape avec la
+    distance à vol d'oiseau et le délai entre deux dates ; les enchaînements serrés se signalent ; « Autour des dates »
+    resserre le cadre ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés.
+  - **Les documents générés** (`admin/modeles.js`) : un devis, un contrat de cession, une facture, une fiche technique
+    d'accueil, depuis une date (ses séances, son lieu, son équipe en tournée) ou une piste (sa structure, son contact), à
+    partir des modèles de la compagnie (Textes du site → « Modèle : devis »…, créés avec un texte de départ à la première
+    demande, à relire), les coordonnées et le contact de la compagnie, le montant, la TVA (5,5 %) et les conditions
+    demandés dans un formulaire ; numérotés (DEV-2026-003…), en A4 avec le logo, imprimés ou enregistrés en PDF par le
+    navigateur, gardés dans la fiche (`crescite_textes`, `documents:generes`) et réimprimables.
+  - **Les séries et modèles de dates** (`admin/series.js`) : « Série… » dans une fiche pose d'un coup les séances du … au
+    …, les jours choisis, aux heures voulues (10:00, 14:30) ; « Dupliquer vers… » sur une sélection recopie les dates
+    décalées de n jours (364 : le même jour de la semaine l'an d'après), en option, avec « Annuler » ; chaque spectacle a
+    ses horaires habituels (Spectacles → Déroulé type), gardés dans `crescite_textes` (`modele-date:<slug>`), qui
+    préremplissent une nouvelle date.
+  - **Le téléphone** (`admin/mobile.js`, sous 640 px) : une barre d'onglets en bas (Tableau, Dates, Planning, Équipe,
+    Plus : les autres rubriques, la carte, la corbeille, la recherche), un bouton « + » flottant (une date, une fiche, un
+    lieu, une opportunité, une proposition, une séance), les rubriques de l'en-tête masquées, les fiches en plein écran,
+    leur pied et les annonces au-dessus de la barre.
+  - **Les notes internes** (`admin/notes.js`, le quinzième script `supabase/migrations/20261103_crescite_notes.sql`) :
+    un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
+    propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
+    pièce jointe dans le stockage privé de l'équipe (`notes/`). Le journal garde tout.
+  - `node maquettes/niveau.mjs` vérifie les dix idées dans Chromium, hors ligne, sur la base fictive commune
+    (`maquettes/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 57 vérifications, des captures dans
+    `maquettes/dist/shots-niveau/`.
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
@@ -837,6 +893,12 @@ le treizième deux fois, puis les scripts 1, 2, 3, 7, 11 et 12 relancés après 
 Les portraits qui attendent l'accord de publication ne sont plus dans le stockage public : l'administration les range
 dans le stockage privé de l'équipe (`crescite-equipe`, `portraits/…`) et les change de stockage quand l'accord change ;
 un portrait remplacé ou retiré est effacé.
+
+**Les notes internes (pas encore lancé).** Le quinzième script, `supabase/migrations/20261103_crescite_notes.sql`,
+crée `crescite_notes` (le fil de notes de chaque fiche de l'administration : texte, personnes mentionnées, pièce jointe,
+épinglée, auteur ; réservées aux administrateurs, journalisées) et prévient les personnes mentionnées dans leur espace
+(une notification « message », avec le lien de la date quand la note porte sur une date). Sans lui, le bloc « Notes
+internes » des fiches le dit et rien d'autre ne change.
 
 **L'équipe modifie (pas encore lancé).** Le quatorzième script, `supabase/migrations/20261102_crescite_equipe_modifie.sql`,
 s'exécute après les treize autres (il s'arrête et le dit si le treizième manque) et peut être relancé ; aucune fonction

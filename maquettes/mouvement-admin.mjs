@@ -107,11 +107,14 @@ fs.mkdirSync(CAPT, { recursive: true });
   });
   ok('la liste qui glisse : les deux lignes échangées s\'animent, les autres non', JSON.stringify(glisse) === JSON.stringify(['102:1', '101:1', '103:0', '104:0']), JSON.stringify(glisse));
   await page.waitForTimeout(450);
-  // le champ visé s'allume : « à compléter » mène au lieu du Havre (sans contact), sur son champ contact
+  // le champ visé s'allume : « à compléter » mène au lieu du Havre (sans contact), sur son champ contact ; depuis
+  // Représentations, le lieu s'ouvre en tiroir (tiroir.js), la liste reste
   await page.click('.avant li a[href="#/lieux/6"]');
-  await page.waitForFunction(() => location.hash === '#/lieux/6' && document.querySelector('.visee'), null, { timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => document.querySelector('.tiroir.la #ed-lieu .visee'), null, { timeout: 8000 }).catch(() => {});
   const visee = await page.evaluate(() => { const v = document.querySelector('.visee'); return { visee: !!v, chemin: v && v.dataset.chemin, focus: document.activeElement && document.activeElement.closest('.visee') === v, anim: v && getComputedStyle(v).animationName }; });
-  ok('le champ visé par « à compléter » s\'allume et prend le focus', visee.visee && visee.chemin === 'contact' && visee.focus && visee.anim === 'visee', JSON.stringify(visee));
+  ok('le champ visé par « à compléter » s\'allume et prend le focus (le lieu en tiroir, la liste reste)', visee.visee && visee.chemin === 'contact' && visee.focus && visee.anim === 'visee', JSON.stringify(visee));
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('.tiroir'), null, { timeout: 3000 }).catch(() => {});
   await page.goto(`${URL0}#/representations`);
   await page.waitForFunction(() => location.hash === '#/representations' && document.querySelector('#l-dates .ligne'), null, { timeout: 8000 });
   await page.evaluate(() => { window.__vt = []; });

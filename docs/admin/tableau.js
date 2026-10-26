@@ -106,7 +106,7 @@ const TABLEAU = (() => {
       lignes: () => (E.devis || []).filter(d => (d.statut || 'nouveau') === 'nouveau').map(d => ({ tri: String(d.cree_le), href: `#/diffusion/devis/${d.id}`, attrs: `data-devis="${d.id}"`, couleur: sp(d.spectacle_id) ? couleurSp(sp(d.spectacle_id)) : 'var(--option)',
         titre: esc(d.structure_nom), sous: esc([d.commune, sp(d.spectacle_id)?.titre, d.periode_souhaitee].filter(Boolean).join(' · ')), droite: `<span class="badge option">${esc(depuisTexte(d.cree_le))}</span>` })) },
     { k: 'relances', titre: 'Relances de diffusion en retard', tout: '#/diffusion', dispo: () => E.ideale,
-      lignes: () => (E.prospects || []).filter(p => p.date_prochaine_relance && p.date_prochaine_relance <= AUJ && !['bilan', 'refus', 'converti_en_date'].includes(p.etape)).map(p => ({ tri: p.date_prochaine_relance, href: '#/diffusion', attrs: `data-prospect="${p.id}"`, couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--alerte)',
+      lignes: () => (E.prospects || []).filter(p => p.date_prochaine_relance && p.date_prochaine_relance <= AUJ && !['bilan', 'refus', 'converti_en_date'].includes(p.etape)).map(p => ({ tri: p.date_prochaine_relance, href: typeof TIROIR !== 'undefined' ? `#/diffusion/piste/${p.id}` : '#/diffusion', attrs: `data-prospect="${p.id}"`, couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--alerte)',
         titre: esc(p.structure), sous: esc([p.commune, sp(p.spectacle_id)?.titre, p.contact_nom].filter(Boolean).join(' · ')), droite: `<span class="badge annulee">relance ${esc(p.date_prochaine_relance === AUJ ? 'aujourd’hui' : `le ${jourSansAn(p.date_prochaine_relance)}`)}</span>` })) },
     { k: 'frais', titre: 'Notes de frais à valider', tout: '#/equipe/frais', dispo: () => E.ideale && E.equipeInstallee,
       lignes: () => (E.frais || []).filter(f => (f.statut || 'en_attente') === 'en_attente').map(f => ({ tri: String(f.cree_le), href: '#/equipe/frais', attrs: `data-frais="${f.id}"`, couleur: 'var(--option)',
@@ -223,7 +223,7 @@ const TABLEAU = (() => {
       corps: r => {
         const xs = E.dates.filter(d => aVenir(d) && d.statut !== 'annulee' && (r.options || d.statut !== 'option') && (r.autres || (d.nature || 'representations') === 'representations')).sort(parDebut);
         return { html: xs.length ? xs.slice(0, r.n).map(d => ligne({ href: `#/representations/${d.id}`, attrs: `data-date="${d.id}" data-sp="${d.spectacle_id}"`, couleur: couleurDate(d), gauche: jj(d.debut), titre: esc(titreDate(d)), sous: `${esc(ouDe(d))}${d.fin && d.fin !== d.debut ? ` · jusqu’au ${esc(jourSansAn(d.fin))}` : ''}${heuresDe(d)}`,
-          droite: `<span class="compte">${esc(dansTexte(d.debut))}</span>${badgesDate(d)}${E.equipeInstallee ? resteFeuille(d.id) : ''}` })).join('') + plus(xs.length - r.n, '#/representations') : rien('Aucune date à venir.') };
+          droite: `<span class="compte">${esc(dansTexte(d.debut))}</span>${badgesDate(d)}${E.equipeInstallee ? resteFeuille(d.id) : ''}${typeof PARCOURS !== 'undefined' ? PARCOURS.points(d) : ''}` })).join('') + plus(xs.length - r.n, '#/representations') : rien('Aucune date à venir.') };
       } },
     chiffres: { titre: 'La saison en chiffres', description: 'Dates, représentations, lieux, séances d’atelier et spectateurs de la saison, à côté de la précédente.', taille: 'p', lien: () => ['#/representations', 'Représentations'],
       reglages: [{ k: 'saison', t: 'choix', l: 'Saison', choix: () => { const s = AGENDA.saisonDe(AUJ); return [['courante', `En cours (${s})`], ['precedente', `Précédente (${saisonDecalee(s, -1)})`], ['prochaine', `Prochaine (${saisonDecalee(s, 1)})`]]; }, defaut: 'courante' }],
@@ -1011,10 +1011,13 @@ const TABLEAU = (() => {
     const [, pk] = (typeof TABLES !== 'undefined' && TABLES[j.table_nom]) || (typeof TABLES_EQUIPE !== 'undefined' && TABLES_EQUIPE[j.table_nom]) || (typeof TABLES_IDEALE !== 'undefined' && TABLES_IDEALE[j.table_nom]) || [null, 'id'];
     const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
     const ligne = (q, o) => [].concat(pk).reduce((q2, c) => q2.eq(c, o[c]), q);
+    const relire = () => { T.journalLu = 0; lireJournal(true)?.then(() => { if (location.hash === '#/accueil') dessinerCorps('journal'); }); };
+    // sans confirmation : la ligne revient comme avant, et l'annonce porte « Rétablir » (corbeille.js) ; sans la corbeille, comme avant
+    if (typeof CORBEILLE !== 'undefined') { await CORBEILLE.inverser(j, { apres: () => { relire(); if (location.hash === '#/accueil') { dessinerCorps(); preparer(); appliquerFiltre(); } } }); return; }
     let r;
-    if (j.operation === 'INSERT') { if (!confirm('Annuler : retirer cette ligne ajoutée ?')) return; r = await ligne(sb.from(j.table_nom).delete(), j.apres); }
-    else if (j.operation === 'UPDATE') { if (!confirm('Annuler : remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await ligne(sb.from(j.table_nom).update(sans(j.avant)), j.avant); }
-    else { if (!confirm('Annuler : rétablir cette ligne supprimée ?')) return; r = await sb.from(j.table_nom).insert(sans(j.avant)); }
+    if (j.operation === 'INSERT') r = await ligne(sb.from(j.table_nom).delete(), j.apres);
+    else if (j.operation === 'UPDATE') r = await ligne(sb.from(j.table_nom).update(sans(j.avant)), j.avant);
+    else r = await sb.from(j.table_nom).insert(sans(j.avant));
     if (r.error) return erreur(r.error, 'Annulation impossible');
     T.journalLu = 0;
     await apresTraiter('Annulé : la ligne est revenue comme avant.');
@@ -1101,7 +1104,7 @@ const TABLEAU = (() => {
       { k: 'periode', t: 'choix', seg: true, l: 'À quel moment', choix: [['', 'Toute la journée'], ['matin', 'Le matin'], ['apres', 'L’après-midi']], valeur: a.periode || '' },
       { k: 'veille', t: 'case', l: 'Quand une date confirmée est dans les trois jours (veille de tournée)', valeur: !!a.veille },
       ...(v ? [{ k: 'maj', t: 'case', l: 'Remplacer sa disposition par celle du tableau actuel', valeur: false }] : []),
-    ], ok: v ? 'Enregistrer' : 'Enregistrer la vue', danger: v ? { libelle: 'Supprimer', faire: () => { if (confirm(`Supprimer la vue « ${v.nom} » ?`)) supprimerVue(v.nom); } } : null, note: 'Sans jour ni moment ni veille, la vue ne s’ouvre qu’à la main.', enregistrer: async x => {
+    ], ok: v ? 'Enregistrer' : 'Enregistrer la vue', danger: v ? { libelle: 'Supprimer', faire: () => { const copie = JSON.parse(JSON.stringify(v)); supprimerVue(v.nom); annoncer(`Vue supprimée : ${copie.nom}.`, { libelle: 'Annuler', delai: 8000, action: () => { const c = conf(); c.vues = [...vuesDe().filter(x => x.nom !== copie.nom), copie]; garder(true); dessiner(); annoncer('Vue rétablie.'); } }); } } : null, note: 'Sans jour ni moment ni veille, la vue ne s’ouvre qu’à la main.', enregistrer: async x => {
       const nom = String(x.nom || '').trim().slice(0, 40); if (!nom) return 'Un nom.';
       const auto = { jours: (x.jours || []).map(String), periode: x.periode || '', veille: !!x.veille };
       if (v) {
