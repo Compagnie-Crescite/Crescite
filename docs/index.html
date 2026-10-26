@@ -8004,12 +8004,6 @@ const PIEUVRE = (() => {
       let bouge = false;
       if (this.q < 1) { this.q = Math.min(1, this.q + dt / Math.max(1, this.duree)); bouge = true; }
       const B = this.cible ? this.but : repos;
-      // (tendue, elle vit encore : une onde légère court le long du bras, nulle à sa racine et à sa pointe, qui reste posée)
-      if (this.cible && o.onde) {
-        const M = this.M, [Kr] = this.bornes(this.cible), ph = this.i * 2.399, t = o.temps || 0, amp = o.onde * .011;
-        for (let k = Kr; k < M; k++) { const x = (k + .5) / M, f = Math.sin(Math.PI * x); B.sg[k] += amp * f * f * Math.sin(t * 1.1 + ph - x * 4); }
-        for (let k = Kr; k <= M; k++) { const x = k / M, f = Math.sin(Math.PI * x); B.th[k] += amp * f * f * Math.sin(t * 1.1 + ph - x * 4); }
-      }
       let P = B;
       if (this.q < 1 && this.depuis) {
         const A = this.depuis, M = this.M, brut = this.q;
@@ -8056,8 +8050,52 @@ const PIEUVRE = (() => {
       const X = this.X, Y = this.Y, [r0x, r0y] = this.racineEff();
       X[0] = this.ox + r0x * this.s + bob.x; Y[0] = this.oy + r0y * this.s + bob.y;
       for (let k = 0; k < this.M; k++) { X[k + 1] = X[k] + P.ln[k] * Math.cos(P.sg[k]); Y[k + 1] = Y[k] + P.ln[k] * Math.sin(P.sg[k]); }
+      // (posée sur un titre, elle flotte, portée par les remous : voir flotter ; pas en route, pas au repos)
+      if (this.cible && o.onde && P.mu > .6) this.flotter(P, o.onde * lisse(.6, 1, P.mu), o.temps || 0);
       this.poly = null;
       return bouge;
+    }
+    // la tentacule posée sur un titre flotte comme dans l'eau : deux houles lentes et une dérive plus lente encore la
+    // traversent de la tête au titre (un déplacement de travers, nul à la racine et au point d'accroche : sa pointe ne
+    // décolle pas du titre), et au-delà du titre, l'enroulement de la pointe se balance en bloc autour du point d'accroche.
+    // Chaque tentacule a sa phase : jamais deux en mesure. L'ampleur (k : 0 à 1) suit la longueur du bras, douze pixels au
+    // plus (quatre au téléphone, où le bras longe le bord de l'écran). La pose est relue sur la ligne obtenue
+    flotter(P, k, t) {
+      const M = this.M, [Kr, Kb] = this.bornes(this.cible), X = this.X, Y = this.Y, ph = this.i * 2.399;
+      if (Kb - Kr < 4 || k <= 0) return;
+      k = Math.min(1, k);   // (une créature agitée ne flotte pas plus fort pour autant)
+      let Lb = 0; for (let j = Kr; j < Kb; j++) Lb += P.ln[j];
+      const A = k * Math.min(this.cible.mobile ? 4 : 15, Math.max(2, Lb * .034));
+      // (les tables du bras, pour ces bornes : la fenêtre, et les trois ondes en espace, décomposées pour que chaque image ne
+      // coûte que des produits ; sin(a - uλ) = sin a cos uλ - cos a sin uλ)
+      let H = this.houle;
+      if (!H || H.Kr !== Kr || H.Kb !== Kb) {
+        const n = Kb - Kr, w = new Float64Array(n), c1 = new Float64Array(n), s1 = new Float64Array(n), c2 = new Float64Array(n), s2 = new Float64Array(n), c3 = new Float64Array(n), s3 = new Float64Array(n);
+        for (let i = 1; i < n; i++) { const u = i / n; w[i] = Math.pow(Math.sin(Math.PI * u), 1.4); c1[i] = Math.cos(u * 3.6); s1[i] = Math.sin(u * 3.6); c2[i] = Math.cos(u * 6.5); s2[i] = Math.sin(u * 6.5); c3[i] = Math.cos(u * 1.2); s3[i] = Math.sin(u * 1.2); }
+        H = this.houle = { Kr, Kb, w, c1, s1, c2, s2, c3, s3 };
+      }
+      const a1 = t * .9 + ph, a2 = t * 1.7 + ph * 1.7, a3 = t * .45 + ph * .6;
+      const S1 = .5 * Math.sin(a1), C1 = .5 * Math.cos(a1), S2 = .35 * Math.sin(a2), C2 = .35 * Math.cos(a2), S3 = .3 * Math.sin(a3), C3 = .3 * Math.cos(a3);
+      for (let j = Kr + 1; j < Kb; j++) {
+        const i = j - Kr, d = A * H.w[i] * (S1 * H.c1[i] - C1 * H.s1[i] + S2 * H.c2[i] - C2 * H.s2[i] + S3 * H.c3[i] - C3 * H.s3[i]);
+        const a = P.th[j];
+        X[j] -= d * Math.sin(a); Y[j] += d * Math.cos(a);
+      }
+      // l'enroulement du bout (après le souligné, qui reste droit sous le titre : là où l'épine se remet à tourner) se balance
+      // autour de son départ et respire (sa spirale se desserre, se resserre)
+      let Kc = Kb; while (Kc < M - 2 && Math.abs(norm(P.sg[Kc] - P.sg[Kb])) < .02) Kc++;
+      if (M - Kc > 3) {
+        const dr = k * .12 * Math.sin(t * 1.25 + ph * 2.1), e = 1 + k * .16 * Math.sin(t * .8 + ph * 1.3);
+        let ang = P.sg[Kc] + dr, rel = 0, x = X[Kc], y = Y[Kc];
+        for (let j = Kc; j < M; j++) {
+          if (j > Kc) { rel += norm(P.sg[j] - P.sg[j - 1]); ang = P.sg[Kc] + dr + rel * e; }
+          x += P.ln[j] * Math.cos(ang); y += P.ln[j] * Math.sin(ang); X[j + 1] = x; Y[j + 1] = y;
+        }
+      }
+      // (la pose relue sur la ligne obtenue, de la racine à la pointe ; la racine elle-même n'a pas bougé)
+      for (let j = Kr; j < M; j++) { const dx = X[j + 1] - X[j], dy = Y[j + 1] - Y[j]; P.sg[j] = Math.atan2(dy, dx); P.ln[j] = Math.hypot(dx, dy); }
+      P.th[M] = P.sg[M - 1];
+      for (let j = Math.max(1, Kr); j < M; j++) P.th[j] = P.sg[j - 1] + .5 * norm(P.sg[j] - P.sg[j - 1]);
     }
     // un point de la peau (abscisse, décalages) dans la pose en cours, à l'écran
     point(sv, tv, nv, out) {
@@ -10229,15 +10267,8 @@ const CREATURE = (() => {
           PIEUVRE.palmure(ctx, TS, ENCRE);
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
-          // une lueur court le long de chaque tentacule posée sur un titre, à la couleur du spectacle : elle invite à la
-          // remonter ; rien en pause
-          if (vivant) for (const a of BRAS) {
-            if (!a.tenu || a.but !== a.tenu || a.t.mouvement() < .95) continue;
-            const t = a.t, kr = t.bornes(t.cible)[0], u = (tVie * .45 + a.i * .37) % 1, kk = Math.round(kr + (t.M - kr) * u), x = t.X[kk], y = t.Y[kk];
-            const g = ctx.createRadialGradient(x, y, 0, x, y, 10), E = a.col;
-            g.addColorStop(0, `rgba(255,255,255,.9)`); g.addColorStop(.45, `rgba(${E[0]},${E[1]},${E[2]},.45)`); g.addColorStop(1, `rgba(${E[0]},${E[1]},${E[2]},0)`);
-            ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
-          }
+          // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
+          // remonter ; plus de lueur qui court dessus)
           ctx.setTransform(1, 0, 0, 1, 0, 0);
           // elles passent sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes) ; un titre
           // qui paraît n'efface le bras qu'à mesure (un bras en route sous un titre encore invisible n'est pas haché)
