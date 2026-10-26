@@ -99,11 +99,16 @@ img { display: block; max-width: 100%; }
    pièces de capitales espacées (les saisons, les spectacles, la compagnie, l'espace pro) : la pièce de la vue est une pastille
    blanche, celle dont on lit une page (un spectacle, une page de l'espace pro) un cadre. Une seule ligne à toutes les largeurs
    (les noms courts quand la place manque, ajuste()), détachée des bords, arrondie, son ombre dessous : elle flotte. Sur
-   l'accueil, elle est posée sous la pieuvre de la scène (Scene la place : la marge de l'en-tête, et <main> remonte d'autant) ;
-   on descend, elle monte avec la page et s'arrime en haut de l'écran (position: sticky, rien ne se calcule au défilement) ;
-   arrimée, sa marque se déplie et son ombre se creuse (.est-arrime, posée par un IntersectionObserver). Ailleurs, elle est
-   arrimée d'emblée. Au téléphone aussi, en haut : elle remplace la barre du bas. */
-body { display: flow-root; }   /* (la marge de l'en-tête reste dans le corps : sur l'accueil, elle pose le menu sous la pieuvre) */
+   l'accueil, elle est d'abord en bas, sous la liste des spectacles de la scène (Scene la place : la cale avant l'en-tête, et
+   <main> remonte d'autant) : au bas du premier écran ; au téléphone, où la liste dépasse l'écran, collée au bas de l'écran
+   tant que sa place est plus bas (sticky, bottom). On descend, ou on touche une de ses pièces (la page descend d'elle-même,
+   puis s'en va) : elle monte avec la page et s'arrime en haut de l'écran (position: sticky, rien ne se calcule au
+   défilement) ; arrimée, sa marque se déplie et son ombre se creuse (.est-arrime, posée par un IntersectionObserver).
+   Ailleurs, elle est arrimée d'emblée. Au téléphone aussi : elle remplace la barre du bas. */
+body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dans le corps : sur l'accueil, elles posent le menu sous la scène) */
+/* (la cale, et non une marge de l'en-tête : sa marge compte dans ce que sticky garde dans le corps, il ne pourrait plus monter
+   se coller au bas de l'écran) */
+.top-cale { height: 0; }
 .top { position: sticky; top: calc(8px + env(safe-area-inset-top)); z-index: 40; width: fit-content; max-width: calc(100% - 16px); margin: 8px auto 0;
   border-radius: 999px; background: var(--saison); color: #fff; --focus: #fff;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 26px -14px rgba(0, 0, 0, .8); transition: box-shadow var(--k-survol) var(--k-doux); }
@@ -116,7 +121,8 @@ body { display: flow-root; }   /* (la marge de l'en-tête reste dans le corps : 
 .marque .l { display: block; flex: none; width: 32px; transition: scale var(--k-survol) var(--k-souple); }
 .marque svg { width: 100%; height: auto; display: block; }
 .marque:hover .l { scale: 1.08; }
-/* sous la pieuvre de l'accueil, la marque est repliée (la grande pieuvre est juste au-dessus) ; arrimée, elle se déplie */
+/* sur l'accueil, en bas, la marque est repliée (la grande pieuvre est au-dessus) ; arrimée, elle se déplie */
+.top.sous-pieuvre { bottom: calc(8px + env(safe-area-inset-bottom)); }
 .top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque { max-width: 0; padding: 0; opacity: 0; }
 .top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque .l { width: 0; }   /* (la créature, qui mesure la marque, se tait) */
 .entrees { flex: none; display: flex; align-items: center; gap: 2px; }
@@ -221,8 +227,10 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .acc .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* le premier écran : la nuit bleue de la saison, la pieuvre au milieu (une toile), les titres autour ; derrière elle, à peine,
    les photos des spectacles qui s'enchaînent en fondu (celle du spectacle qu'on regarde passe devant) */
-/* (contain : la scène a sa hauteur à elle, posée par mise() ; ce qui change dedans ne remet en page qu'elle) */
-.scene { position: relative; isolation: isolate; overflow: hidden; min-height: 100svh; contain: size layout style; color: #fff; user-select: none; -webkit-user-select: none;
+/* (contain : la scène a sa hauteur à elle, posée par mise() ; ce qui change dedans ne remet en page qu'elle. overflow: clip,
+   pas hidden : pas un conteneur de défilement, la photo de fond (.sc-cadre, sticky) reste à l'écran le long d'une scène plus
+   haute que lui, la liste du téléphone) */
+.scene { position: relative; isolation: isolate; overflow: hidden; overflow: clip; min-height: 100svh; contain: size layout style; color: #fff; user-select: none; -webkit-user-select: none;
   background: radial-gradient(78% 88% at 50% 40%, var(--sc-a) 0%, var(--sc-b) 58%, var(--sc-c) 100%); }
 .scene.sur-bras { cursor: pointer; }
 .sc-diapo { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
@@ -2256,6 +2264,10 @@ article.u { --onglets: 58px; }
     animation: scene-voile linear backwards; animation-timeline: --scene; animation-range: exit 0% exit 100%; }
   @keyframes scene-part { from { translate: 0 0; } to { translate: 0 28svh; } }
   @keyframes scene-voile { from { opacity: 0; } to { opacity: .8; } }
+  /* (au téléphone, la scène est une liste plus haute que l'écran : rien n'y glisse, chaque titre se lit jusqu'à quitter
+     l'écran, et le voile ne vient qu'à la fin, quand le menu, sous le dernier titre, monte s'arrimer) */
+  html:not(.still) .scene.mobile :is(.sc-toile, .sc-h, .sc-t) { animation: none; }
+  html:not(.still) .scene.mobile::after { animation-range: exit 55% exit 100%; }
   /* 4. le spectacle suivant monte : au bout de la page d'un spectacle, la photo du suivant se lève avec son bandeau */
   html:not(.still) .suivant-fond img { animation: suivant-monte linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @keyframes suivant-monte { from { translate: 0 42%; opacity: 0; } to { translate: 0 0; opacity: .34; } }
@@ -2303,6 +2315,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 </head>
 <body>
 <a class="evitement" href="#main">Aller au contenu</a>
+<div class="top-cale" id="top-cale" aria-hidden="true"></div>
 <header class="top" id="top"><div class="top-in">
   <a class="marque" href="#/"><span class="l" id="marque" data-pieuvre aria-hidden="true"></span><span id="nom"></span></a>
   <nav class="entrees" id="entrees"></nav>
@@ -2395,13 +2408,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const vers0 = 'sur-place';
   let vue = '';
 
-  /* ---------- le menu flottant : posé sous la pieuvre de l'accueil, arrimé en haut de l'écran partout ailleurs ----------
-     Sur l'accueil, la scène le place (sousPieuvre : la marge de l'en-tête, et <main> remonte d'autant, sous lui) ; il monte avec
-     la page et s'arrime en haut (position: sticky). Arrimé (un IntersectionObserver : il touche le haut de l'écran), sa
-     marque se déplie et son ombre se creuse. D'une page à l'autre, s'il change de place, il y glisse (440 ms, souple) : il ne
-     saute jamais. */
+  /* ---------- le menu flottant : en bas de l'accueil, sous la liste des spectacles, arrimé en haut de l'écran ailleurs ----------
+     Sur l'accueil, la scène le place (sousPieuvre : la cale avant l'en-tête, et <main> remonte d'autant, sous lui), au moins au
+     bas du premier écran (collé au bas de l'écran tant que sa place est plus bas) ; il monte avec la page et s'arrime en haut
+     (position: sticky). Une de ses pièces touchée avant : la page descend d'elle-même jusqu'à l'arrimer, puis s'en va
+     (descendre). Arrimé (un IntersectionObserver : il touche le haut de l'écran), sa marque se déplie et son ombre se
+     creuse. D'une page à l'autre, s'il change de place, il y glisse (440 ms, souple) : il ne saute jamais. */
   const Menu = (() => {
-    const el = $('#top');
+    const el = $('#top'), cale = $('#top-cale');
     let y = null;
     const hauteur = () => (VW < 760 ? 44 : 48);
     if ('IntersectionObserver' in window) new IntersectionObserver(es => { const e = es[es.length - 1], arrime = e.intersectionRatio < 1 && e.boundingClientRect.top < VH / 2;
@@ -2410,10 +2424,25 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let vol = null;
     return {
       el,
-      sousPieuvre(v) { const n = Math.round(v); if (n === y && el.classList.contains('sous-pieuvre')) return; y = n; el.style.marginTop = `${y}px`; main.style.marginTop = `${-(y + hauteur())}px`; el.classList.add('sous-pieuvre'); },
-      enHaut() { if (y == null) return; y = null; el.style.marginTop = ''; main.style.marginTop = ''; el.classList.remove('sous-pieuvre'); },
+      sousPieuvre(v) { const n = Math.round(v); if (n === y && el.classList.contains('sous-pieuvre')) return; y = n; cale.style.height = `${Math.max(0, y - 8)}px`; main.style.marginTop = `${-(y + hauteur())}px`; el.classList.add('sous-pieuvre'); },
+      enHaut() { if (y == null) return; y = null; cale.style.height = ''; main.style.marginTop = ''; el.classList.remove('sous-pieuvre'); },
       // sa place à l'écran, la page tout en haut
       place: () => (y != null ? y : 8),
+      // sur l'accueil, avant qu'il soit arrimé : la page descend d'elle-même jusqu'à ce qu'il s'arrime en haut, puis fait()
+      // (arrivée, arrêtée par un doigt, ou trop longue : on y va quand même)
+      descendre(fait) {
+        const cible = y == null ? 0 : Math.max(0, y - (parseFloat(getComputedStyle(el).top) || 8));
+        if (!motionOK() || scrollY >= cible - 2) { fait(); return; }
+        const y0 = scrollY, t0 = performance.now();
+        let avant = y0, calme = 0;
+        scrollTo({ top: cible, left: 0, behavior: 'smooth' });
+        const voir = () => {
+          const yy = scrollY, t = performance.now() - t0;
+          calme = Math.abs(yy - avant) < .5 ? calme + 1 : 0; avant = yy;
+          if (Math.abs(yy - cible) < 2 || (calme > 5 && (yy !== y0 || t > 300)) || t > 1500) fait(); else requestAnimationFrame(voir);
+        };
+        requestAnimationFrame(voir);
+      },
       // d'une place à l'autre : il glisse depuis là où on le voyait
       glisser(depuis) {
         if (vol) { vol.cancel(); vol = null; }
@@ -2423,6 +2452,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       },
     };
   })();
+  // sur l'accueil, une pièce du menu touchée avant qu'il soit arrimé : la page descend d'abord (il monte s'arrimer en haut),
+  // puis s'en va
+  $('#entrees').addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="#/"]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (vue !== 'accueil' || !Menu.el.classList.contains('sous-pieuvre') || Menu.el.classList.contains('est-arrime')) return;
+    e.preventDefault();
+    const h = a.getAttribute('href');
+    Menu.descendre(() => { if (vue === 'accueil') location.hash = h; });
+  });
 
   /* ---------- l'encre : le second moment de la pieuvre ----------
      Entrer dans un spectacle : la page est déjà là, dessous ; l'encre de son univers couvre l'écran et s'ouvre aussitôt depuis
@@ -3211,12 +3250,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
     }
     // la mise en page : au bureau, la pieuvre au milieu du premier écran et les titres sur deux arcs, de part et d'autre, le menu
-    // juste sous elle ; au téléphone, la pieuvre en haut, le menu sous elle, puis les titres, de part et d'autre d'une ligne.
-    // Le menu flottant (Menu) est posé à sa place, dans la bande que la scène lui laisse (yMenu). Une tentacule rejoint un titre
-    // par son bout tourné vers la pieuvre, le souligne et s'enroule à l'autre bout : au bureau, c'est le bout intérieur, le
-    // médaillon au bout extérieur ; au téléphone, le médaillon est au bout intérieur (près de la ligne) : la tentacule arrive
-    // sous lui et souligne le texte vers l'extérieur (le bout extérieur touche le bord de l'écran : l'y faire venir l'en ferait
-    // sortir)
+    // en bas, sous eux ; au téléphone, la pieuvre en haut, les titres sous elle, de part et d'autre d'une ligne, puis le menu.
+    // Le menu flottant (Menu) est posé à sa place, dans la bande que la scène lui laisse (yMenu), au moins au bas du premier
+    // écran. Une tentacule rejoint un titre par son bout tourné vers la pieuvre, le souligne et s'enroule à l'autre bout : au
+    // bureau, c'est le bout intérieur, le médaillon au bout extérieur ; au téléphone, le médaillon est au bout intérieur (près
+    // de la ligne) : la tentacule arrive sous lui et souligne le texte vers l'extérieur (le bout extérieur touche le bord de
+    // l'écran : l'y faire venir l'en ferait sortir)
     let yMenu = 0;
     function mise() {
       const r = el.getBoundingClientRect();
@@ -3254,24 +3293,24 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const bas = Math.max(oh + 100 * ech, ...TIT.map(T => T.by + T.bh)), haut0 = Math.min(0, ...TIT.map(T => T.by));
         const dy = haut + 22 + Math.max(0, (hComp - haut - 52 - (bas - haut0)) / 2) - haut0;
         oy = dy - y0 * s; TIT.forEach(T => { T.by += dy; });
-        // le menu, juste sous la pieuvre (et dans le premier écran) ; les titres s'écartent de lui comme de la pieuvre
-        yMenu = Math.round(Math.min(dy + oh + 22 * ech, hEcran - hMenu - 18));
+        // le menu en bas du premier écran, sous les titres ; les titres s'écartent de lui comme de la pieuvre
+        yMenu = Math.round(hEcran - hMenu - 20);
         relacher(TIT, [{ x: W / 2 - ow / 2 - 24, y: dy - 14, w: ow + 48, h: oh + 36 }, { x: (W - lMenu) / 2 - 20, y: yMenu - 14, w: lMenu + 40, h: hMenu + 28 }], haut + 14);
-        H = Math.max(hEcran, ...TIT.map(T => T.by + T.bh + 40), dy + oh + 120 * ech, yMenu + hMenu + 24);
+        H = Math.max(hEcran, ...TIT.map(T => T.by + T.bh + 40), dy + oh + 120 * ech, yMenu + hMenu + 20);
       } else {
         s = clamp((W - 2 * gut) * .62 / bw, .19, .32); ech = s / .3;
         const oh = bh * s, oTop = haut + 18, IND = [0, 26, 10, 34, 4, 20, 30, 14];
         ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
-        // le menu sous la pieuvre, puis les titres
-        yMenu = Math.round(oTop + oh + 16 * ech);
-        let y = yMenu + hMenu + 40 * ech;
+        // les titres sous la pieuvre, puis le menu, sous le dernier (au moins au bas du premier écran)
+        let y = oTop + oh + 40 * ech;
         TIT.forEach((T, i) => {
           const g = i % 2 === 0, ind = IND[i % IND.length];
           T.droite = !g; T.dirU = g ? -1 : 1;
           T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
           y += T.bh + 30;
         });
-        H = Math.max(y + 26, hEcran);
+        yMenu = Math.round(Math.max(y, hEcran - hMenu - 20));
+        H = yMenu + hMenu + 24;
       }
       el.style.height = H + 'px';
       if (affiche) Menu.sousPieuvre(yMenu);
