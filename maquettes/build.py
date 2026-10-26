@@ -1038,7 +1038,9 @@ def pages(D, files, names):
     photo_urls = photos(files, base="photos/")
     for n in names:
         html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
-        (docs / "index.html" if n == "synthese" else docs / f"{n}.html").write_text(html, encoding="utf-8")
+        (docs / f"{n}.html").write_text(html, encoding="utf-8")
+        if n == "synthese":  # (admin, équipe et réponse y renvoient par synthese.html)
+            (docs / "index.html").write_text(html, encoding="utf-8")
     admin(docs)
     equipe(docs)
     pro(docs)

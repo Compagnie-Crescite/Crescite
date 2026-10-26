@@ -53,7 +53,15 @@ const TABLEAU = (() => {
   const ligne = ({ href, viser, couleur, gauche, titre, sous, droite, classe, externe, attrs = '' }) => `<a class="tb-l${gauche ? '' : ' sans-gauche'}${classe ? ` ${classe}` : ''}" href="${esc(href)}"${viser ? ` data-viser="${esc(viser)}"` : ''}${externe ? ' target="_blank" rel="noopener"' : ''}${couleur ? ` style="--c:${esc(couleur)}"` : ''}${attrs ? ` ${attrs}` : ''}>${gauche || ''}<span class="tb-l-corps"><span class="tb-l-t">${titre}</span>${sous ? `<span class="tb-l-s">${sous}</span>` : ''}</span>${droite ? `<span class="tb-l-d">${droite}</span>` : ''}</a>`;
   const rien = (texte, ok = false) => `<p class="tb-rien${ok ? ' ok' : ''}">${texte}</p>`;
   const plus = (n, href, texte = 'Tout voir') => (n > 0 ? `<a class="tb-plus" href="${esc(href)}">${n > 1 ? `Et ${n} autres` : 'Et une autre'} · ${texte} →</a>` : '');
-  const nomAdmin = id => { const a = E.admins.find(x => x.user_id === id); return a?.nom || (id === uid() ? E.session.user.email : id ? 'un administrateur' : 'import'); };
+  // l'auteur d'une modification, comme le journal : un administrateur (son nom), une personne de l'équipe qui a modifié
+  // depuis son espace (le quatorzième script : son nom, « équipe »), le compte connecté, sinon un import
+  const nomAdmin = id => {
+    const a = E.admins.find(x => x.user_id === id);
+    if (a?.nom) return a.nom;
+    const f = id ? (E.privees || []).find(x => x.user_id === id) : null, p = f ? personne(f.personne_id) : null;
+    if (p && nomDe(p)) return a ? nomDe(p) : `${nomDe(p)} (équipe)`;
+    return id === uid() ? E.session.user.email : id ? (a ? 'un administrateur' : 'un autre compte') : 'import';
+  };
   // le bilan d'une proposition de dates : combien de disponibles, de pas disponibles, de peut-être, sans réponse
   const reponseDe = (jour, pid) => (jour.reponses || []).find(r => String(r.personne_id) === String(pid))?.reponse || 'attente';
   const bilanDe = p => { const n = { oui: 0, non: 0, peut_etre: 0, attente: 0 }; for (const j of p.jours || []) for (const d of p.destinataires || []) n[reponseDe(j, d.personne_id)]++; return n; };

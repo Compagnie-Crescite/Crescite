@@ -24,6 +24,9 @@ const GESTES = (() => {
   const etroit = () => typeof matchMedia === 'function' && matchMedia('(max-width: 640px)').matches;
   const vibrer = (ms = 8) => { try { if (navigator.vibrate && !reduit() && tactile()) navigator.vibrate(ms); } catch (e) { /* refusé : tant pis */ } };
   const dansChamp = el => !!(el && el.closest && el.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"], dialog.recherche'));
+  // une boîte modale ouverte (une feuille du formulaire, une boîte de l'espace de l'équipe : [aria-modal="true"]) : les
+  // gestes qui mènent ailleurs (← →, le balayage) dorment ; ils ne changeraient pas la page derrière, en fermant la boîte
+  const modaleOuverte = () => !!document.querySelector('[aria-modal="true"]');
   const ico = d => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const ICO = {
     haut: ico('<path d="m6 15 6-6 6 6"/>'), bas: ico('<path d="m6 9 6 6 6-6"/>'), gauche: ico('<path d="m15 6-6 6 6 6"/>'), droite: ico('<path d="m9 6 6 6-6 6"/>'),
@@ -219,7 +222,7 @@ const GESTES = (() => {
     // les événements tactiles, pas les pointeurs : dès que la page défile, le navigateur annule le pointeur, le toucher non
     el.addEventListener('touchstart', e => {
       d = null;
-      if (e.touches.length !== 1 || dansChamp(e.target) || aIgnorer(e.target) || ouvert) return;
+      if (e.touches.length !== 1 || dansChamp(e.target) || aIgnorer(e.target) || ouvert || modaleOuverte()) return;
       const t = e.touches[0];
       if (t.clientX < bord || t.clientX > window.innerWidth - bord) return;   // le bord : le retour du navigateur, de l'application
       d = { x: t.clientX, y: t.clientY, dx: 0, dy: 0, t: Date.now() };
@@ -229,7 +232,7 @@ const GESTES = (() => {
       if (!d) return;
       const { dx, dy } = d, dt = Date.now() - d.t;
       d = null;
-      if (dt > 800 || Math.abs(dx) < seuil || Math.abs(dx) < Math.abs(dy) * 1.6 || ouvert) return;
+      if (dt > 800 || Math.abs(dx) < seuil || Math.abs(dx) < Math.abs(dy) * 1.6 || ouvert || modaleOuverte()) return;
       const f = dx < 0 ? gauche : droite;
       if (typeof f === 'function') { vibrer(6); f(e); }
     }, { passive: true });
@@ -260,7 +263,7 @@ const GESTES = (() => {
   // groupe précédent / suivant de la page
   function clavierPrecSuiv(racine = document, { modif = 'alt', portee = null } = {}) {
     racine.addEventListener('keydown', e => {
-      if (ouvert || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      if (ouvert || e.ctrlKey || e.metaKey || e.shiftKey || modaleOuverte()) return;
       if (modif === 'alt' ? !e.altKey : e.altKey) return;
       if (modif !== 'alt' && dansChamp(e.target)) return;
       const sens = { ArrowUp: -1, ArrowLeft: -1, ArrowDown: 1, ArrowRight: 1 }[e.key];
