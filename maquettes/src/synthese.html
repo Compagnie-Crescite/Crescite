@@ -4569,7 +4569,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
     let y = null, bouge = false, prise = null;
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.6, lueur: true,
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.6, onde: 5.5, rythme: 2.2, lueur: true,
       eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
       placer() {
         const g = troupeGeo;
@@ -4577,13 +4577,15 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         const r = tr.getBoundingClientRect();
         if (r.bottom < -60 || r.top > innerHeight + 60) { y = null; return null; }
         const mobile = innerWidth < 760;
-        // la place visée : à hauteur de lecture, entre sa place de repos (en tête) et le dernier médaillon ; elle y va en
-        // retard d'un rien (v : ce qu'elle avance à cette image, pour qu'elle se penche et rame dans ce sens)
-        const yTete = r.top + g.yc, yFin = r.top + g.yN, vise = clamp(innerHeight * .42, yTete, yFin);
+        // la place visée : à hauteur de lecture, entre sa place de repos (en tête) et le dernier médaillon, et jamais immobile :
+        // elle patrouille autour, de haut en bas et d'un bord à l'autre de la marge, et y va en retard d'un rien (v : ce
+        // qu'elle avance à cette image, pour qu'elle se penche et rame dans ce sens)
+        const t = performance.now() / 1000, yTete = r.top + g.yc, yFin = r.top + g.yN;
+        const vise = clamp(innerHeight * .42, yTete, yFin) + Math.sin(t * .9) * (mobile ? 34 : 48) + Math.sin(t * 2.3) * 6;
         if (y === null) y = vise;
         const d = vise - y, v = d * .1; y += v; bouge = Math.abs(d) > .4;
         // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 80 px) et gagne le milieu de la marge
-        const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, mobile ? 52 : 84, q), x = r.left + lerp(g.x0, g.xg, q);
+        const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, mobile ? 54 : 90, q), x = r.left + lerp(g.x0, g.xg, q) + Math.sin(t * .7 + 1) * (mobile ? 4 : 8) * q;
         // la tentacule attrape le médaillon le plus proche de son cœur (à portée), qui s'anime, et le lâche pour le suivant
         let proche = null, dp = 160;
         for (const ic of g.ics) { const b = ic.getBoundingClientRect(), dy = Math.abs(b.top + b.height / 2 - y); if (dy < dp) { dp = dy; proche = ic; } }
