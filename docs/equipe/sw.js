@@ -10,7 +10,7 @@
    d'abord par le réseau.
 
    Jamais gardés : l'authentification, la fonction d'envoi, les liens signés des documents, et toute écriture. */
-const VERSION = '4725dacc7cdf';
+const VERSION = '95024c063201';
 const DEV = VERSION.startsWith('__');
 const COQUILLE = `crescite-equipe-coquille-${VERSION}`;   // l'application elle-même, par version
 const OUTILS = 'crescite-equipe-outils';                  // ce qu'elle charge à la demande (pdfmake pour les PDF)
@@ -18,7 +18,7 @@ const DONNEES = 'crescite-equipe-donnees';                // les dernières rép
 const MEDIAS = 'crescite-equipe-medias';                  // les photos, les portraits, les polices
 const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
 const ESSENTIELS = ['./', 'equipe.js', 'manifest.webmanifest', '../admin/vendor/supabase.js'];
-const UTILES = ['carte.js', '../admin/agenda.js', '../admin/feuille.js', '../admin/logo.js', '../admin/tentacules.js', '../admin/planning.js',
+const UTILES = ['carte.js', '../admin/agenda.js', '../admin/feuille.js', '../admin/logo.js', '../admin/tentacules.js', '../admin/gestes.js', '../admin/planning.js',
   'icones/192.png', 'icones/512.png', 'icones/180.png', 'icones/masquable-512.png', 'icones/badge.png'];
 const MAX_MEDIAS = 120;
 const MAX_DONNEES = 30 * 864e5;                            // une réponse de la base gardée sert un mois au plus hors connexion

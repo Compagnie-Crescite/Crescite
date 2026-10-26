@@ -59,6 +59,8 @@ python3 maquettes/build.py              # les dix maquettes et la planche (maque
 python3 maquettes/build.py m06          # une seule maquette
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
 node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
+                                         # (en parties, 4 à la fois ; PARALLELE=1 une à une ; au-delà des cœurs
+                                         # de la machine, les attentes ne suffisent plus et de fausses anomalies sortent)
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
@@ -121,9 +123,12 @@ l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en 
 (`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
 souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
 va souligner le titre à la couleur du spectacle, puis revient. Sur la page de la compagnie, la pieuvre de la troupe est
-une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo) : quand la
-lecture descend, elle rapetisse et nage dans la marge, par impulsions, et une tentacule attrape le médaillon du métier
-qu'on lit, qui s'anime.
+une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo, et sa tête
+hoche et se tourne à part du corps, au bout d'un ressort) : quand la lecture descend, elle rapetisse et vit dans la
+marge, jamais sur la même ligne : elle choisit un point à sa portée (la marge, ou le vide sous le titre d'un métier), y
+file au galop (elle se ramasse, bondit étirée dans le sens du bond, un sillage derrière elle), y flotte, repart ; une
+tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelqu'un (un clic sur une de ses places) :
+elle sursaute, puis ses tentacules, lumineuses, vont tenir toutes ses places (`c.tenir`), à la place des fils des liens.
 
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
@@ -278,8 +283,28 @@ compte du projet inscrit dans `crescite_admins`.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node maquettes/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (60 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
-    l'appareil sans le script 6, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+    (79 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
+    précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+- **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
+  fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
+  carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
+  depuis le bas au téléphone (↑ ↓ Entrée Échap au clavier). Une date : ouvrir, confirmer une option, la feuille de route,
+  prévenir l'équipe, l'itinéraire, la fiche du lieu, dupliquer, le tableur, copier le lien, supprimer. Une personne :
+  appeler, écrire, copier le téléphone. Un lieu : l'itinéraire, appeler ou écrire au contact, une nouvelle date ici. Une
+  feuille : compléter, composer, la date. Une demande de devis : écrire, appeler, **changer son statut sans l'ouvrir**. Une
+  piste de diffusion : l'étape d'avant ou d'après, **relance faite aujourd'hui**, reporter la relance, le courriel,
+  modifier, supprimer ; la carte du Kanban **se glisse d'une colonne à l'autre** (ses flèches nomment l'étape visée). Une
+  note de frais : **valider, refuser, marquer remboursée** depuis le tableau de bord. Une invitation pro : prolonger de
+  trente jours, copier le lien de la salle, désactiver. Une proposition de dates : la clore. Une séance d'atelier :
+  dupliquer, supprimer. Une ligne du journal : revenir, ouvrir la fiche. Une tuile du tableau de bord : ses réglages,
+  la réduire, sa largeur, l'avancer, la reculer, la masquer ; une action rapide : la retirer. Un spectacle : ses dates,
+  une nouvelle date, l'avancer ou le reculer. Chaque action directe écrit dans la base et les listes se redessinent.
+  - **Précédent / suivant** dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
+    propositions, ateliers, séances, textes), dans une feuille de route et dans un spectacle : deux boutons dans le titre,
+    nommés d'après ce qu'ils ouvrent (« Précédent : Bérénice · mer. 4 nov. 2026 »), dans l'ordre de la liste et de ses filtres ;
+    **Alt+↑** et **Alt+↓** font de même. Dans toutes les listes, **↑ ↓** (← → aussi) passent d'une ligne à l'autre, Début
+    et Fin aux bouts.
 - **La recherche rapide** : Ctrl K (⌘K sur un Mac), ou la loupe de l'en-tête (au téléphone, au bout de la ligne du
   logo). Une date se trouve par son spectacle, son lieu, sa commune ou son jour (« 21 oct », « mardi », « 21/10 »),
   comme une personne, un lieu, un spectacle, une feuille de route ou une rubrique ; ↑ ↓ choisissent, Entrée ouvre,
@@ -489,6 +514,15 @@ range en colonne à gauche. On y trouve :
   voit quand ses partenaires sont pris ailleurs. « Toute l'équipe » et chaque personne sont dans la même liste ; le choix
   est gardé le temps de la session. Sans projet, le planning s'ouvre sur toute l'équipe ;
 - sa fiche, et un fichier agenda (.ics).
+- **Les gestes** (`../admin/gestes.js`) : un **appui long** sur un billet (ou le héros d'une date), avec une courte
+  vibration, ou un clic droit à l'ordinateur, ouvre une feuille d'actions depuis le bas : ouvrir la date, l'itinéraire, la
+  feuille de route et son PDF, l'ajouter à l'agenda, signaler un retard, une note de frais, partager la date ; sur une
+  notification : l'ouvrir, la marquer lue, tout marquer lu ; sur un document : l'ouvrir, le partager ; sur une
+  proposition : répondre. La page d'une date (et d'une feuille de route) a **date précédente / date suivante**, deux
+  boutons nommés, qu'un **balayage** du doigt vers la gauche ou la droite actionne aussi, comme **← →** au clavier ; le
+  planning se balaie de même d'une période à l'autre. Rien ne vibre si l'appareil demande moins d'animations.
+  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium, hors ligne (18 vérifications), après
+  `python3 maquettes/build.py synthese`.
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.

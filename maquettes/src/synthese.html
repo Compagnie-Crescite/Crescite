@@ -99,11 +99,16 @@ img { display: block; max-width: 100%; }
    pièces de capitales espacées (les saisons, les spectacles, la compagnie, l'espace pro) : la pièce de la vue est une pastille
    blanche, celle dont on lit une page (un spectacle, une page de l'espace pro) un cadre. Une seule ligne à toutes les largeurs
    (les noms courts quand la place manque, ajuste()), détachée des bords, arrondie, son ombre dessous : elle flotte. Sur
-   l'accueil, elle est posée sous la pieuvre de la scène (Scene la place : la marge de l'en-tête, et <main> remonte d'autant) ;
-   on descend, elle monte avec la page et s'arrime en haut de l'écran (position: sticky, rien ne se calcule au défilement) ;
-   arrimée, sa marque se déplie et son ombre se creuse (.est-arrime, posée par un IntersectionObserver). Ailleurs, elle est
-   arrimée d'emblée. Au téléphone aussi, en haut : elle remplace la barre du bas. */
-body { display: flow-root; }   /* (la marge de l'en-tête reste dans le corps : sur l'accueil, elle pose le menu sous la pieuvre) */
+   l'accueil, elle est d'abord en bas, sous la liste des spectacles de la scène (Scene la place : la cale avant l'en-tête, et
+   <main> remonte d'autant) : au bas du premier écran ; au téléphone, où la liste dépasse l'écran, collée au bas de l'écran
+   tant que sa place est plus bas (sticky, bottom). On descend, ou on touche une de ses pièces (la page descend d'elle-même,
+   puis s'en va) : elle monte avec la page et s'arrime en haut de l'écran (position: sticky, rien ne se calcule au
+   défilement) ; arrimée, sa marque se déplie et son ombre se creuse (.est-arrime, posée par un IntersectionObserver).
+   Ailleurs, elle est arrimée d'emblée. Au téléphone aussi : elle remplace la barre du bas. */
+body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dans le corps : sur l'accueil, elles posent le menu sous la scène) */
+/* (la cale, et non une marge de l'en-tête : sa marge compte dans ce que sticky garde dans le corps, il ne pourrait plus monter
+   se coller au bas de l'écran) */
+.top-cale { height: 0; }
 .top { position: sticky; top: calc(8px + env(safe-area-inset-top)); z-index: 40; width: fit-content; max-width: calc(100% - 16px); margin: 8px auto 0;
   border-radius: 999px; background: var(--saison); color: #fff; --focus: #fff;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 26px -14px rgba(0, 0, 0, .8); transition: box-shadow var(--k-survol) var(--k-doux); }
@@ -116,7 +121,8 @@ body { display: flow-root; }   /* (la marge de l'en-tête reste dans le corps : 
 .marque .l { display: block; flex: none; width: 32px; transition: scale var(--k-survol) var(--k-souple); }
 .marque svg { width: 100%; height: auto; display: block; }
 .marque:hover .l { scale: 1.08; }
-/* sous la pieuvre de l'accueil, la marque est repliée (la grande pieuvre est juste au-dessus) ; arrimée, elle se déplie */
+/* sur l'accueil, en bas, la marque est repliée (la grande pieuvre est au-dessus) ; arrimée, elle se déplie */
+.top.sous-pieuvre { bottom: calc(8px + env(safe-area-inset-bottom)); }
 .top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque { max-width: 0; padding: 0; opacity: 0; }
 .top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque .l { width: 0; }   /* (la créature, qui mesure la marque, se tait) */
 .entrees { flex: none; display: flex; align-items: center; gap: 2px; }
@@ -221,8 +227,10 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .acc .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* le premier écran : la nuit bleue de la saison, la pieuvre au milieu (une toile), les titres autour ; derrière elle, à peine,
    les photos des spectacles qui s'enchaînent en fondu (celle du spectacle qu'on regarde passe devant) */
-/* (contain : la scène a sa hauteur à elle, posée par mise() ; ce qui change dedans ne remet en page qu'elle) */
-.scene { position: relative; isolation: isolate; overflow: hidden; min-height: 100svh; contain: size layout style; color: #fff; user-select: none; -webkit-user-select: none;
+/* (contain : la scène a sa hauteur à elle, posée par mise() ; ce qui change dedans ne remet en page qu'elle. overflow: clip,
+   pas hidden : pas un conteneur de défilement, la photo de fond (.sc-cadre, sticky) reste à l'écran le long d'une scène plus
+   haute que lui, la liste du téléphone) */
+.scene { position: relative; isolation: isolate; overflow: hidden; overflow: clip; min-height: 100svh; contain: size layout style; color: #fff; user-select: none; -webkit-user-select: none;
   background: radial-gradient(78% 88% at 50% 40%, var(--sc-a) 0%, var(--sc-b) 58%, var(--sc-c) 100%); }
 .scene.sur-bras { cursor: pointer; }
 .sc-diapo { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
@@ -720,10 +728,13 @@ html.ed-actif .c-frise { display: none; }
    toutes ses places et les relie (TROUPE.relier, à la couleur de la saison). Sans mouvement, le dessin de la pieuvre reste
    en tête, immobile */
 section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsic-size: auto 1400px; }   /* hors de l'écran : ni style ni mise en page */
-.tr6 { --g: clamp(56px, 7vw, 100px); --troupe-lien: var(--saison-texte); --troupe-ic-fond: var(--papier); --troupe-ventouse-fond: var(--papier);
+.tr6 { --g: clamp(72px, 8vw, 120px); --troupe-lien: var(--saison-texte); --troupe-ic-fond: var(--papier); --troupe-ventouse-fond: var(--papier);
   position: relative; display: grid; gap: clamp(18px, 2.4vw, 30px); margin-top: 18px; padding-left: var(--g); }
 .tr6-coeur { position: relative; z-index: 2; width: clamp(104px, 12vw, 150px); margin-left: calc(var(--g) * -1 + 2px); margin-bottom: 30px; color: var(--saison-texte); }
 .tr6.est-vivante .tr6-coeur { visibility: hidden; }   /* la créature (CREATURE) dessine la pieuvre à sa place, puis se balade */
+/* la personne choisie : ce sont les tentacules de la créature, lumineuses, qui relient ses places ; les fils des liens se taisent */
+.troupe-liens { transition: opacity .35s; }
+.tr6.est-vivante.est-reliee .troupe-liens { opacity: 0; }
 /* le métier que la créature tient s'allume : son médaillon grandit d'un rien dans une auréole, son titre prend la couleur de la saison */
 .tr6-ic { transition: transform .45s cubic-bezier(.2, .7, .2, 1), box-shadow .45s; }
 .tr6-cat.est-tenue .tr6-ic { transform: scale(1.1); box-shadow: inset 0 0 0 2px var(--saison-texte), 0 0 0 5px color-mix(in srgb, var(--saison-texte) 26%, transparent); }
@@ -752,7 +763,7 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .tr6-p[aria-pressed="true"] .tr6-m { color: inherit; }
 @media (max-width: 700px) {
   section.bloc.troupe { contain-intrinsic-size: auto 3600px; }
-  .tr6 { --g: 56px; }
+  .tr6 { --g: 72px; }
   .tr6-coeur { width: 96px; }
   .tr6-cat { grid-template-columns: minmax(0, 1fr); }
   .tr6-ic { width: 44px; height: 44px; font-size: 11px; }
@@ -2256,6 +2267,10 @@ article.u { --onglets: 58px; }
     animation: scene-voile linear backwards; animation-timeline: --scene; animation-range: exit 0% exit 100%; }
   @keyframes scene-part { from { translate: 0 0; } to { translate: 0 28svh; } }
   @keyframes scene-voile { from { opacity: 0; } to { opacity: .8; } }
+  /* (au téléphone, la scène est une liste plus haute que l'écran : rien n'y glisse, chaque titre se lit jusqu'à quitter
+     l'écran, et le voile ne vient qu'à la fin, quand le menu, sous le dernier titre, monte s'arrimer) */
+  html:not(.still) .scene.mobile :is(.sc-toile, .sc-h, .sc-t) { animation: none; }
+  html:not(.still) .scene.mobile::after { animation-range: exit 55% exit 100%; }
   /* 4. le spectacle suivant monte : au bout de la page d'un spectacle, la photo du suivant se lève avec son bandeau */
   html:not(.still) .suivant-fond img { animation: suivant-monte linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @keyframes suivant-monte { from { translate: 0 42%; opacity: 0; } to { translate: 0 0; opacity: .34; } }
@@ -2303,6 +2318,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 </head>
 <body>
 <a class="evitement" href="#main">Aller au contenu</a>
+<div class="top-cale" id="top-cale" aria-hidden="true"></div>
 <header class="top" id="top"><div class="top-in">
   <a class="marque" href="#/"><span class="l" id="marque" data-pieuvre aria-hidden="true"></span><span id="nom"></span></a>
   <nav class="entrees" id="entrees"></nav>
@@ -2395,13 +2411,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const vers0 = 'sur-place';
   let vue = '';
 
-  /* ---------- le menu flottant : posé sous la pieuvre de l'accueil, arrimé en haut de l'écran partout ailleurs ----------
-     Sur l'accueil, la scène le place (sousPieuvre : la marge de l'en-tête, et <main> remonte d'autant, sous lui) ; il monte avec
-     la page et s'arrime en haut (position: sticky). Arrimé (un IntersectionObserver : il touche le haut de l'écran), sa
-     marque se déplie et son ombre se creuse. D'une page à l'autre, s'il change de place, il y glisse (440 ms, souple) : il ne
-     saute jamais. */
+  /* ---------- le menu flottant : en bas de l'accueil, sous la liste des spectacles, arrimé en haut de l'écran ailleurs ----------
+     Sur l'accueil, la scène le place (sousPieuvre : la cale avant l'en-tête, et <main> remonte d'autant, sous lui), au moins au
+     bas du premier écran (collé au bas de l'écran tant que sa place est plus bas) ; il monte avec la page et s'arrime en haut
+     (position: sticky). Une de ses pièces touchée avant : la page descend d'elle-même jusqu'à l'arrimer, puis s'en va
+     (descendre). Arrimé (un IntersectionObserver : il touche le haut de l'écran), sa marque se déplie et son ombre se
+     creuse. D'une page à l'autre, s'il change de place, il y glisse (440 ms, souple) : il ne saute jamais. */
   const Menu = (() => {
-    const el = $('#top');
+    const el = $('#top'), cale = $('#top-cale');
     let y = null;
     const hauteur = () => (VW < 760 ? 44 : 48);
     if ('IntersectionObserver' in window) new IntersectionObserver(es => { const e = es[es.length - 1], arrime = e.intersectionRatio < 1 && e.boundingClientRect.top < VH / 2;
@@ -2410,10 +2427,25 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let vol = null;
     return {
       el,
-      sousPieuvre(v) { const n = Math.round(v); if (n === y && el.classList.contains('sous-pieuvre')) return; y = n; el.style.marginTop = `${y}px`; main.style.marginTop = `${-(y + hauteur())}px`; el.classList.add('sous-pieuvre'); },
-      enHaut() { if (y == null) return; y = null; el.style.marginTop = ''; main.style.marginTop = ''; el.classList.remove('sous-pieuvre'); },
+      sousPieuvre(v) { const n = Math.round(v); if (n === y && el.classList.contains('sous-pieuvre')) return; y = n; cale.style.height = `${Math.max(0, y - 8)}px`; main.style.marginTop = `${-(y + hauteur())}px`; el.classList.add('sous-pieuvre'); },
+      enHaut() { if (y == null) return; y = null; cale.style.height = ''; main.style.marginTop = ''; el.classList.remove('sous-pieuvre'); },
       // sa place à l'écran, la page tout en haut
       place: () => (y != null ? y : 8),
+      // sur l'accueil, avant qu'il soit arrimé : la page descend d'elle-même jusqu'à ce qu'il s'arrime en haut, puis fait()
+      // (arrivée, arrêtée par un doigt, ou trop longue : on y va quand même)
+      descendre(fait) {
+        const cible = y == null ? 0 : Math.max(0, y - (parseFloat(getComputedStyle(el).top) || 8));
+        if (!motionOK() || scrollY >= cible - 2) { fait(); return; }
+        const y0 = scrollY, t0 = performance.now();
+        let avant = y0, calme = 0;
+        scrollTo({ top: cible, left: 0, behavior: 'smooth' });
+        const voir = () => {
+          const yy = scrollY, t = performance.now() - t0;
+          calme = Math.abs(yy - avant) < .5 ? calme + 1 : 0; avant = yy;
+          if (Math.abs(yy - cible) < 2 || (calme > 5 && (yy !== y0 || t > 300)) || t > 1500) fait(); else requestAnimationFrame(voir);
+        };
+        requestAnimationFrame(voir);
+      },
       // d'une place à l'autre : il glisse depuis là où on le voyait
       glisser(depuis) {
         if (vol) { vol.cancel(); vol = null; }
@@ -2423,6 +2455,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       },
     };
   })();
+  // sur l'accueil, une pièce du menu touchée avant qu'il soit arrimé : la page descend d'abord (il monte s'arrimer en haut),
+  // puis s'en va
+  $('#entrees').addEventListener('click', e => {
+    const a = e.target.closest && e.target.closest('a[href^="#/"]');
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (vue !== 'accueil' || !Menu.el.classList.contains('sous-pieuvre') || Menu.el.classList.contains('est-arrime')) return;
+    e.preventDefault();
+    const h = a.getAttribute('href');
+    Menu.descendre(() => { if (vue === 'accueil') location.hash = h; });
+  });
 
   /* ---------- l'encre : le second moment de la pieuvre ----------
      Entrer dans un spectacle : la page est déjà là, dessous ; l'encre de son univers couvre l'écran et s'ouvre aussitôt depuis
@@ -3083,11 +3125,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ${rac.length ? `<ul class="ep-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}${apres}</div></section>`;
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
-     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : il s'y pose, et huit de ses tentacules, les vraies, celles
-     du dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté par-dessus), se déroulent et vont chercher chacune
-     un titre de spectacle, autant qu'il y en a, posés de part et d'autre ; puis elles reviennent se lover dans le logo,
-     ondulent à peine, se penchent vers la souris. Au téléphone (les titres dessous), une seule à la fois : celle du titre qui
-     passe au milieu de l'écran. Survoler ou choisir au clavier un titre, ou survoler une tentacule (au doigt : un premier
+     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : il s'y pose d'un rebond (le corps se ramasse, se détend),
+     puis ses huit tentacules, les vraies, celles du dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté
+     par-dessus), se déploient l'une après l'autre, en cadence (la présentation) : chacune se déroule vers un titre de
+     spectacle, qui paraît quand elle l'atteint, de haut en bas, un côté puis l'autre (l'éventail s'ouvre) ; celles qui n'ont
+     pas de titre s'étirent à leur tour, au même rythme ; puis elles reviennent se lover dans le logo, dans le même ordre,
+     ondulent à peine, se penchent vers la souris. Au téléphone (les titres dessous), les deux grandes boucles descendent de
+     titre en titre, chacune de son côté, une à chaque temps, et les autres s'étirent entre deux ; ensuite une seule à la
+     fois : celle du titre qui passe au milieu de l'écran. Survoler ou choisir au clavier un titre, ou survoler une tentacule (au doigt : un premier
      toucher) : elle se déroule vers lui, le souligne et s'y enroule, et la photo du spectacle passe devant, à peine, derrière
      la pieuvre. Sinon les photos des spectacles s'enchaînent en fondu, chacune présentée par sa tentacule. Le
      bouton de pause arrête tout ce qui bouge de lui-même ; moins d'animations : rien ne bouge, les photos changent d'un
@@ -3114,7 +3159,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 
     // les tentacules : celles du logo, au service de tous les titres (aucune n'est à un spectacle : la pieuvre ne compte pas) ;
     // dir : le sens de sa pointe au repos (vers où elle se penche)
-    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
+    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, geste: null, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
+    // la secousse d'un rebond : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant (comme la créature)
+    const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? easeOut(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
     // les titres : un par spectacle, en nombre libre ; refaits quand D change
     let TIT = [], sig = '';
     const prochaine = sh => D.dates.find(x => x.slug === sh.slug && !x.scolaire) || D.dates.find(x => x.slug === sh.slug);
@@ -3130,8 +3177,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), q: $('.sc-q', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurScene(sh)) };
         ecouter(T); return T; });
       ul.setAttribute('aria-label', L.lesSpectacles);
-      BRAS.forEach(a => { a.but = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
+      BRAS.forEach(a => { a.but = null; a.geste = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
       survol = null; brasSurvol = null; dernierActif = null;
+      if (pres) pres.plan = null;
       diapo();
     }
     // le diaporama : une couche par spectacle, sa photo chargée au moment de paraître (et la suivante, d'avance)
@@ -3151,7 +3199,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // temps qu'on regarde un titre (il reprend ensuite depuis celui-là) ; jamais sans mouvement
     const roule = () => affiche && visible && !document.hidden && !pause && motionOK() && !document.documentElement.classList.contains('ed-actif') && TIT.length > 1;
     function planifier() { clearTimeout(tAuto); if (affiche && !pause && motionOK()) tAuto = setTimeout(avancer, 6500); }
-    function avancer() { if (roule() && !actif() && !(pres && performance.now() - pres.t0 < PRES + 1600)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
+    function avancer() { if (roule() && !actif() && !(pres && performance.now() < pres.fin)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
 
     // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur. Au téléphone, la boucle
     // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
@@ -3211,12 +3259,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
     }
     // la mise en page : au bureau, la pieuvre au milieu du premier écran et les titres sur deux arcs, de part et d'autre, le menu
-    // juste sous elle ; au téléphone, la pieuvre en haut, le menu sous elle, puis les titres, de part et d'autre d'une ligne.
-    // Le menu flottant (Menu) est posé à sa place, dans la bande que la scène lui laisse (yMenu). Une tentacule rejoint un titre
-    // par son bout tourné vers la pieuvre, le souligne et s'enroule à l'autre bout : au bureau, c'est le bout intérieur, le
-    // médaillon au bout extérieur ; au téléphone, le médaillon est au bout intérieur (près de la ligne) : la tentacule arrive
-    // sous lui et souligne le texte vers l'extérieur (le bout extérieur touche le bord de l'écran : l'y faire venir l'en ferait
-    // sortir)
+    // en bas, sous eux ; au téléphone, la pieuvre en haut, les titres sous elle, de part et d'autre d'une ligne, puis le menu.
+    // Le menu flottant (Menu) est posé à sa place, dans la bande que la scène lui laisse (yMenu), au moins au bas du premier
+    // écran. Une tentacule rejoint un titre par son bout tourné vers la pieuvre, le souligne et s'enroule à l'autre bout : au
+    // bureau, c'est le bout intérieur, le médaillon au bout extérieur ; au téléphone, le médaillon est au bout intérieur (près
+    // de la ligne) : la tentacule arrive sous lui et souligne le texte vers l'extérieur (le bout extérieur touche le bord de
+    // l'écran : l'y faire venir l'en ferait sortir)
     let yMenu = 0;
     function mise() {
       const r = el.getBoundingClientRect();
@@ -3254,24 +3302,24 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const bas = Math.max(oh + 100 * ech, ...TIT.map(T => T.by + T.bh)), haut0 = Math.min(0, ...TIT.map(T => T.by));
         const dy = haut + 22 + Math.max(0, (hComp - haut - 52 - (bas - haut0)) / 2) - haut0;
         oy = dy - y0 * s; TIT.forEach(T => { T.by += dy; });
-        // le menu, juste sous la pieuvre (et dans le premier écran) ; les titres s'écartent de lui comme de la pieuvre
-        yMenu = Math.round(Math.min(dy + oh + 22 * ech, hEcran - hMenu - 18));
+        // le menu en bas du premier écran, sous les titres ; les titres s'écartent de lui comme de la pieuvre
+        yMenu = Math.round(hEcran - hMenu - 20);
         relacher(TIT, [{ x: W / 2 - ow / 2 - 24, y: dy - 14, w: ow + 48, h: oh + 36 }, { x: (W - lMenu) / 2 - 20, y: yMenu - 14, w: lMenu + 40, h: hMenu + 28 }], haut + 14);
-        H = Math.max(hEcran, ...TIT.map(T => T.by + T.bh + 40), dy + oh + 120 * ech, yMenu + hMenu + 24);
+        H = Math.max(hEcran, ...TIT.map(T => T.by + T.bh + 40), dy + oh + 120 * ech, yMenu + hMenu + 20);
       } else {
         s = clamp((W - 2 * gut) * .62 / bw, .19, .32); ech = s / .3;
         const oh = bh * s, oTop = haut + 18, IND = [0, 26, 10, 34, 4, 20, 30, 14];
         ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
-        // le menu sous la pieuvre, puis les titres
-        yMenu = Math.round(oTop + oh + 16 * ech);
-        let y = yMenu + hMenu + 40 * ech;
+        // les titres sous la pieuvre, puis le menu, sous le dernier (au moins au bas du premier écran)
+        let y = oTop + oh + 40 * ech;
         TIT.forEach((T, i) => {
           const g = i % 2 === 0, ind = IND[i % IND.length];
           T.droite = !g; T.dirU = g ? -1 : 1;
           T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
           y += T.bh + 30;
         });
-        H = Math.max(y + 26, hEcran);
+        yMenu = Math.round(Math.max(y, hEcran - hMenu - 20));
+        H = yMenu + hMenu + 24;
       }
       el.style.height = H + 'px';
       if (affiche) Menu.sousPieuvre(yMenu);
@@ -3280,6 +3328,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
       BRAS.forEach(a => a.t.poser(ox, oy, s));
       attribuer();
+      if (pres) pres.plan = null;   // (la présentation se replanifie sur cette mise en page)
       dpr = Math.min(2, devicePixelRatio || 1);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
       LB = { x0: ox + x0 * s - 12, y0: oy + y0 * s - 12, x1: ox + x1 * s + 12, y1: oy + y1 * s + 12 };
@@ -3288,13 +3337,39 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       tPrec = 0; image(performance.now(), true);
     }
     const actif = () => survol || TIT.find(T => T.focus) || brasSurvol || null;
+    // la présentation : le plan des visites de chaque bras (un titre, ou un geste), en cadence (un temps par titre : de 150 à
+    // 240 ms au bureau selon leur nombre, 560 ms au téléphone, où les boucles descendent de titre en titre) ; chaque titre
+    // reçoit son temps (tPres : il paraît quand son bras l'atteint)
+    function presenter() {
+      const P = pres, pas = mobile ? 560 : clamp(1300 / Math.max(1, TIT.length), 150, 240), V = new Map();
+      TIT.forEach(T => { T.tPres = null; });
+      let fin = P.t0;
+      if (mobile) {
+        // les deux boucles, chacune de son côté, un titre à chaque temps (la précédente visite s'achève quand la suivante
+        // commence : la boucle passe de l'un à l'autre) ; les autres bras s'étirent entre deux temps
+        TIT.forEach(T => { T.tPres = P.t0 + T.i * pas; const a = T.bras; if (!a) return; const v = V.get(a) || []; if (v.length) v[v.length - 1].fin = T.tPres; v.push({ t0: T.tPres, fin: T.tPres + 1400, T }); V.set(a, v); });
+        let k = 0;
+        for (const a of BRAS) if (!V.has(a)) { const t0 = P.t0 + (k++ + .5) * pas; V.set(a, [{ t0, fin: t0 + 1100, c: gesteDe(a, t0) }]); }
+      } else {
+        // de haut en bas, un côté puis l'autre : l'éventail s'ouvre ; les bras sans titre s'étirent ensuite, à leur tour
+        const avec = BRAS.filter(a => a.T.length).sort((x, y) => x.T[0].by - y.T[0].by), sans = BRAS.filter(a => !a.T.length);
+        avec.forEach((a, k) => { const t0 = P.t0 + k * pas; a.T.forEach(T => { if (T.tPres === null) T.tPres = t0; }); V.set(a, [{ t0, fin: t0 + PRES, T: a.T[0] }]); });
+        sans.forEach((a, k) => { const t0 = P.t0 + (avec.length + k) * pas; V.set(a, [{ t0, fin: t0 + 1100, c: gesteDe(a, t0) }]); });
+        TIT.forEach((T, i) => { if (T.tPres === null) T.tPres = P.t0 + i * pas; });
+      }
+      V.forEach(v => v.forEach(x => { fin = Math.max(fin, x.fin); }));
+      P.plan = V; P.fin = fin + 900;
+    }
+    // un geste : le bras s'étire un peu vers où il pointe (d'autant plus qu'il est long), s'enroule, et reste dans l'écran
+    function gesteDe(a, t0) {
+      const p = a.t.pointe(), L = clamp(a.t.L0 * s * .35, 16, 70), ang = a.dir + ((a.i % 3) - 1) * .35;
+      const x = clamp(p.x + Math.cos(ang) * L, gut + 8, W - gut - 8), y = Math.max(LB.y0 - 10, p.y + Math.sin(ang) * L), sens = x >= p.x ? 1 : -1;
+      return { cle: 'geste' + a.cle + Math.round(t0), x, y, sens, U: 8, mobile, marge: sens > 0 ? x - gut : W - gut - x, racine: /^queue/.test(a.cle) ? .6 : undefined, epaisseur: 2, boucle: clamp(a.t.L0 * s / 200, .3, 1) };
+    }
     // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
     function placer(T, allume, now, anime) {
       let em = 0;
-      if (eveil !== null) {
-        const a = T.bras, viaBras = pres && a && a.T[0] === T;
-        em = !anime ? 1 : viaBras ? lisse(.45, .9, a.em) : lisse(0, 1, (now - eveil - 650 - T.i * 60) / 520);
-      }
+      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (pres && T.tPres != null ? T.tPres + 380 : eveil + 650 + T.i * 60)) / 460);
       T.em = Math.max(T.em, em);
       const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
       if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
@@ -3308,7 +3383,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (!une && now < repit) { raf = requestAnimationFrame(image); return; }
       const anime = motionOK(), vivant = anime && !pause, act = actif();
       const dt = Math.min(50, tPrec ? now - tPrec : 16); tPrec = now;
-      if (pres && now - pres.t0 > PRES + 12 * 120 + 900) pres = null;
+      if (pres && !pres.plan) presenter();
+      if (pres && now > pres.fin) pres = null;
       const vif = act || pres || (eveil !== null && now - eveil < 2600) || BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
       // au repos (rien ne se tend, rien ne s'éveille), l'ondulation lente se contente de trente images par seconde (vingt au
       // téléphone)
@@ -3328,13 +3404,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const autoT = !act && vivant && !mobile && eveil !== null && !pres && TIT.length > 1 ? TIT[iAuto % TIT.length] : null;
       // l'ondulation au repos : elle vient doucement après l'éveil ; ni en pause, ni sans mouvement
       const onde = vivant && eveil !== null ? lisse(0, 1, (now - eveil) / 1600) : 0;
+      // (la visite en cours d'un bras dans la présentation : un titre, ou un geste)
+      const visite = a => { const v = pres.plan.get(a); let r = null; if (v) for (const x of v) if (now >= x.t0 && now < x.fin) r = x; return r; };
       for (const a of BRAS) {
-        let voulu = null;
-        if (act) voulu = act.bras === a ? act : null;
-        else if (pres && a.T.length && now - pres.t0 < PRES + Math.min(a.rang, 12) * 120) voulu = a.T[0];   // l'éveil : chaque tentacule va chercher son titre
+        let voulu = null, g = null;
+        // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; au téléphone, le titre au milieu de l'écran attend la
+        // fin de la présentation ; au bureau, la souris a toujours la main)
+        if (act && eveil !== null && !(pres && mobile)) voulu = act.bras === a ? act : null;
+        else if (pres) { const v = visite(a); if (v) { if (v.T) voulu = v.T; else g = v.c; } }   // la présentation : chaque tentacule à son tour
         else if (autoT && autoT.bras === a) voulu = autoT;
-        if (a.but !== voulu) { a.but = voulu; if (voulu) a.col = voulu.col; a.t.viser(voulu ? cibleDe(voulu) : null, anime ? (voulu ? 820 : 760) : 0); }
-        else if (voulu) a.t.viser(cibleDe(voulu));      // (le titre a pu bouger : la forme visée le suit)
+        if (a.but !== voulu || a.geste !== g) {
+          a.but = voulu; a.geste = g;
+          if (voulu) { a.col = voulu.col; a.t.viser(cibleDe(voulu), anime ? 820 : 0); }
+          else if (g) a.t.viser(g, anime ? 640 : 0);
+          else a.t.viser(null, anime ? 760 : 0);
+        } else if (voulu) a.t.viser(cibleDe(voulu));      // (le titre a pu bouger : la forme visée le suit)
         const tv = a.but ? 1 : 0;
         if (Math.abs(a.teinte - tv) > .005) { a.teinte += (tv - a.teinte) * (anime ? .12 : 1); occupe = true; } else a.teinte = tv;
         // curieuse : au repos, les tentacules se penchent vers la souris
@@ -3350,7 +3434,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)
       const b = { x0: LB.x0, y0: LB.y0, x1: LB.x1, y1: LB.y1 };
       for (const a of BRAS) { const r = a.t.boite(6); b.x0 = Math.min(b.x0, r.x0); b.y0 = Math.min(b.y0, r.y0); b.x1 = Math.max(b.x1, r.x1); b.y1 = Math.max(b.y1, r.y1); }
-      const u = boite ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
+      // le rebond de la pose : à la relève, le corps se ramasse puis se détend, bras compris (ils ne partent qu'ensuite)
+      const kp = anime && eveil !== null ? 1 - .07 * choc((now - eveil) / 640) : 1, cxh = ox + bob.x + COEUR[0] * s, cyh = oy + bob.y + COEUR[1] * s;
+      const u = boite && kp === 1 ? { x0: Math.min(b.x0, boite.x0), y0: Math.min(b.y0, boite.y0), x1: Math.max(b.x1, boite.x1), y1: Math.max(b.y1, boite.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
       boite = b;
       const X0 = Math.max(0, Math.floor(u.x0 * dpr)), Y0 = Math.max(0, Math.floor(u.y0 * dpr)), Rw = Math.min(cv.width, Math.ceil(u.x1 * dpr)) - X0, Rh = Math.min(cv.height, Math.ceil(u.y1 * dpr)) - Y0;
       const allumes = new Set(act ? [act] : []);
@@ -3362,8 +3448,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         // l'éveil : c'est encore l'ouverture qui porte le logo
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(X0, Y0, Rw, Rh);
         if (eveil !== null) {
-          ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * (ox + bob.x), dpr * (oy + bob.y)); ctx.fillStyle = ENCRE; ctx.fill(CORPS, 'evenodd');
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          if (kp !== 1) { ctx.translate(cxh, cyh); ctx.scale(kp, kp); ctx.translate(-cxh, -cyh); }
+          ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y); ctx.fillStyle = ENCRE; ctx.fill(CORPS, 'evenodd'); ctx.restore();
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere });
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
@@ -3450,8 +3537,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     function eveiller() {
       if (eveil !== null) return;
       eveil = performance.now() - (motionOK() ? 0 : 5000);
-      // (au téléphone, pas toutes à la fois : celle du titre au milieu de l'écran y va seule)
-      if (motionOK() && !presFaite && TIT.length && !mobile) { pres = { t0: eveil }; presFaite = true; }
+      // (la présentation, une fois : elle commence après le rebond de la pose, et se planifie à la première image)
+      if (motionOK() && !presFaite && TIT.length) { pres = { t0: eveil + 260, plan: null, fin: eveil + 5000 }; presFaite = true; }
       tPrec = 0; image(performance.now(), true); reveil(); planifier();
     }
     function montrer(oui) {
@@ -4742,7 +4829,17 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const r0 = tr.getBoundingClientRect(), c = coeur.getBoundingClientRect(), ics = $$('.tr6-ic', tr);
     if (!r0.width || !ics.length) return;
     const xMin = Math.min(...ics.map(i => i.getBoundingClientRect().left - r0.left)), dernier = ics[ics.length - 1].getBoundingClientRect();
-    troupeGeo = { x0: c.left - r0.left + c.width * .5, yc: c.top - r0.top + c.height * .5, largeur: c.width, xg: Math.max(26, xMin / 2), yN: dernier.top - r0.top + dernier.height / 2, ics };
+    // (les zones où elle peut aussi se balader sans rien couvrir : sous le titre de chaque métier, quand la liste des places est à
+    // côté et laisse la colonne du titre vide ; par rapport à la troupe)
+    const zones = [];
+    for (const cat of $$('.tr6-cat', tr)) {
+      const t = $('.tr6-t', cat), pl = $('.tr6-places', cat); if (!t || !pl) continue;
+      const a = t.getBoundingClientRect(), b = cat.getBoundingClientRect(), q = pl.getBoundingClientRect();
+      if (q.left < a.right + 8) continue;   // (la liste est sous le titre : rien de vide)
+      const y0 = a.bottom - r0.top + 14, y1 = b.bottom - r0.top - 6;
+      if (y1 - y0 > 70) zones.push({ x0: a.left - r0.left, x1: a.right - r0.left, y0, y1 });
+    }
+    troupeGeo = { x0: c.left - r0.left + c.width * .5, yc: c.top - r0.top + c.height * .5, largeur: c.width, xg: Math.max(26, xMin / 2), yN: dernier.top - r0.top + dernier.height / 2, ics, zones };
     if (troupeCreature) troupeCreature.reveil();
   }
   // la troupe prend vie : les liens entre les places d'une personne (au clavier aussi), la créature, les icônes qui s'animent
@@ -4755,40 +4852,63 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (troupeCreature) { troupeCreature.arreter(); troupeCreature = null; }
     troupeGeo = null;
   }
-  // la pieuvre de la troupe galope : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre
-  // de tête, toujours en mouvement (ses tentacules battent, elle respire, se balance, un halo l'entoure) ; quand la lecture
-  // descend, elle quitte sa place, rapetisse de moitié et galope dans la marge de gauche autour de la hauteur de lecture : une
-  // impulsion toutes les 0,6 s, où elle bondit (le corps se contracte, les tentacules sont rejetées en arrière), puis un
-  // glissé, et elle patrouille sans cesse de haut en bas ; au passage, une tentacule attrape le médaillon du métier qu'on lit
-  // (qui s'anime), et le lâche pour le suivant. Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe
-  // pas (le dessin de tête reste)
+  // la pieuvre de la troupe : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre de tête,
+  // toujours en mouvement (ses tentacules battent, elle respire, se balance, sa tête hoche et se tourne au bout d'un ressort, un
+  // halo l'entoure). Quand la lecture descend, elle quitte sa place, rapetisse de moitié et vit dans la marge de gauche, autour
+  // de la hauteur de lecture : elle choisit un point à sa portée, y file au galop (une impulsion toutes les 0,85 s : elle se
+  // ramasse, bondit, étirée dans le sens du bond, le corps contracté, les tentacules rejetées en arrière, puis glisse, un sillage
+  // derrière elle), y flotte un moment (elle respire, regarde autour d'elle), puis repart ailleurs : jamais sur la même ligne.
+  // Au passage, une tentacule attrape le médaillon du métier qu'on lit (qui s'anime), et le lâche pour le suivant. Quand on
+  // choisit quelqu'un (troupeTenues), elle se poste à la hauteur de ses places et les tient toutes de ses tentacules, lumineuses.
+  // Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe pas (le dessin de tête reste)
+  let troupeTenues = [];
   function creatureTroupe(tr) {
     if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
-    let y = null, bouge = false, prise = null;
+    let x = null, y = null, bouge = false, prise = null, but = null, tBut = 0, tPrec = 0;
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.8, onde: 6, rythme: 2.6, lueur: true,
-      eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.4, onde: 4.5, rythme: 1.7, lueur: true, sillage: true,
+      eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante', 'est-reliee'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
       placer() {
         const g = troupeGeo;
         if (!g || !tr.isConnected) return null;
         const r = tr.getBoundingClientRect();
-        if (r.bottom < -60 || r.top > innerHeight + 60) { y = null; return null; }
-        const mobile = innerWidth < 760;
-        // la place visée : à hauteur de lecture, entre sa place de repos (en tête) et le dernier médaillon, et jamais immobile :
-        // elle patrouille autour, de haut en bas, et d'un bord à l'autre de la marge. Elle y va au galop : une impulsion
-        // toutes les 0,6 s (coup : elle monte vite, retombe), où elle bondit vers sa cible, d'autant plus loin qu'elle en est
-        // loin, puis un glissé (v : ce qu'elle avance à cette image, pour qu'elle se penche et rame dans ce sens)
-        const t = performance.now() / 1000, yTete = r.top + g.yc, yFin = r.top + g.yN;
-        const vise = clamp(innerHeight * .42, yTete, yFin) + Math.sin(t * 1.1) * (mobile ? 48 : 70) + Math.sin(t * 2.9) * 8;
-        if (y === null) y = vise;
-        const ph = (t % .6) / .6, coup = ph < .2 ? ph / .2 : Math.max(0, 1 - (ph - .2) / .55);
-        const d = vise - y, loin = Math.abs(d), v = Math.sign(d) * Math.min(loin, (.7 + 4.8 * coup) * (1 + loin / 140));
-        y += v; bouge = loin > .4;
-        // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 80 px) et gagne le milieu de la marge
-        const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, mobile ? 54 : 90, q), x = r.left + lerp(g.x0, g.xg, q) + Math.sin(t * 1.6 + 1) * (mobile ? 4 : 8) * q;
-        // la tentacule attrape le médaillon le plus proche de son cœur (à portée), qui s'anime, et le lâche pour le suivant
+        if (r.bottom < -60 || r.top > innerHeight + 60) { x = y = null; but = null; return null; }
+        const mobile = innerWidth < 760, t = performance.now() / 1000, dts = tPrec ? Math.min(.05, t - tPrec) : .016;
+        tPrec = t;
+        // la hauteur de lecture, entre sa place de repos (en tête) et le dernier médaillon ; la marge où elle vit : de part et
+        // d'autre de son milieu, autant qu'il y a de place (elle fait 54 ou 90 px de large). Quelqu'un est choisi : elle se
+        // poste à la hauteur de ses places visibles
+        const yTete = r.top + g.yc, yFin = r.top + g.yN, demi = (mobile ? 54 : 90) / 2, ampX = Math.max(0, g.xg - demi - 4), ampY = mobile ? 54 : 80;
+        const visibles = troupeTenues.filter(p => p.isConnected).map(p => p.getBoundingClientRect()).filter(b => b.bottom > 8 && b.top < innerHeight - 8);
+        let base = clamp(innerHeight * .42, yTete, yFin), tient = false;
+        if (visibles.length) { base = clamp(visibles.reduce((a, b) => a + b.top + b.height / 2, 0) / visibles.length, yTete, yFin); tient = true; }
+        // là où elle va : un point choisi à sa portée, gardé 1,2 à 3,4 s, puis un autre (en tenant quelqu'un, elle reste
+        // posée, et se balance à peine)
+        if (!but || t > tBut) {
+          const dy = (Math.random() * 2 - 1) * ampY, yr = base + dy - r.top, zone = g.zones.find(z => yr > z.y0 + demi && yr < z.y1 - demi);
+          // (une fois sur deux, s'il y a une zone vide à cette hauteur, elle y va : jusqu'au bord droit de la colonne du titre)
+          const xMax = zone && Math.random() < .55 ? zone.x1 - demi - g.xg : ampX;
+          but = { dx: -ampX + Math.random() * (ampX + xMax), dy }; tBut = t + 2 + Math.random() * 3.2;
+        }
+        const calme = tient ? .2 : 1;
+        const viseY = base + but.dy * calme + Math.sin(t * 2.9) * 5 * calme, viseX0 = but.dx * calme + Math.sin(t * 1.6 + 1) * 6 * calme;
+        if (y === null) { y = viseY; x = viseX0; }
+        // le galop : une impulsion toutes les 0,85 s (coup : elle monte vite, retombe) ; juste avant, elle se ramasse (etire < 0),
+        // puis bondit vers sa cible, étirée dans le sens du bond, d'autant plus loin qu'elle en est loin ; près du but, les
+        // impulsions se font petites : elle flotte
+        const ph = (t % .85) / .85, coup0 = ph < .18 ? ph / .18 : Math.max(0, 1 - (ph - .18) / .6);
+        const d = viseY - y, loin = Math.abs(d), force = clamp(loin / 60, .15, 1), coup = coup0 * force;
+        const v = Math.sign(d) * Math.min(loin, (.4 + 4.2 * coup0) * force * (1 + loin / 160) * dts * 60);
+        y += v; bouge = loin > .6;
+        const dxv = viseX0 - x, vx = Math.sign(dxv) * Math.min(Math.abs(dxv), (.25 + 2.4 * coup0) * clamp(Math.abs(dxv) / 20, .2, 1) * dts * 60);
+        x += vx;
+        const etire = ph < .14 ? -.7 * (ph / .14) * force : coup, ang = Math.atan2(v, vx || 1e-6);
+        // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 80 px) et gagne la marge
+        const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, demi * 2, q), px = r.left + lerp(g.x0, g.xg + x, q);
+        // la tentacule attrape le médaillon le plus proche de son cœur (à portée), qui s'anime, et le lâche pour le suivant (en
+        // tenant quelqu'un, elle n'a pas de main pour ça)
         let proche = null, dp = 160;
-        for (const ic of g.ics) { const b = ic.getBoundingClientRect(), dy = Math.abs(b.top + b.height / 2 - y); if (dy < dp) { dp = dy; proche = ic; } }
+        if (!tient) for (const ic of g.ics) { const b = ic.getBoundingClientRect(), dy = Math.abs(b.top + b.height / 2 - y); if (dy < dp) { dp = dy; proche = ic; } }
         if (proche !== prise) {
           if (prise) { const cat = prise.closest('.tr6-cat'); if (cat) cat.classList.remove('est-tenue'); }
           prise = proche;
@@ -4799,16 +4919,30 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             if (i) { i.classList.add('est-vivant'); setTimeout(() => i.classList.remove('est-vivant'), 1600); }
           } else c.revenir();
         }
-        return { x, y, largeur, bouge, v, coup };
+        return { x: px, y, largeur, bouge, v, coup, etire, ang };
       } });
     if (c) c.demarrer();
     return c;
+  }
+  // quelqu'un est choisi (un clic sur une de ses places) : la créature sursaute, se penche vers la place cliquée, puis ses
+  // tentacules, lumineuses, vont tenir toutes ses places ; les fils des liens se taisent. Personne : elle lâche tout
+  function tenirPersonne(slug, depuis) {
+    const tr = $('.tr6', main);
+    troupeTenues = slug && tr ? $$(`[data-troupe-place][data-troupe-personne="${slug}"]`, tr) : [];
+    if (!troupeCreature) return;
+    if (tr) tr.classList.toggle('est-reliee', troupeTenues.length > 0);
+    if (troupeTenues.length) {
+      const b = (depuis || troupeTenues[0]).getBoundingClientRect();
+      troupeCreature.reagir('prise', [b.left + b.width / 2, b.top + b.height / 2]);
+      troupeCreature.tenir(troupeTenues, { lumineux: true, prise: 'pastille' });
+    } else troupeCreature.lacher();
   }
   function vivreTroupe() {
     finirTroupe();
     const tr = $('.tr6', main);
     if (!tr || typeof TROUPE === 'undefined') return;
-    troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true });
+    troupeTenues = [];
+    troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true, surChoix: slug => tenirPersonne(slug, $('[data-troupe-place].est-source', tr)) });
     troupeCreature = creatureTroupe(tr);
     let largeur = 0;
     requestAnimationFrame(() => placerTroupe(tr));

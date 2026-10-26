@@ -197,7 +197,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   if (!out || !names.length) { console.error('usage : node maquettes/reactivite.mjs <dossier de sortie> m03 [m04 …] [--strict] [--dist <dossier>]'); process.exit(2); }
   mkdirSync(out, { recursive: true });
   const { chromium } = await import(PW);
-  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] });
   const rapport = {}, tous = [];
   let code = 0;
   fin: for (const n of names) {

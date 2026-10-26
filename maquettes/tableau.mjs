@@ -100,6 +100,7 @@ const DB = {
   crescite_preferences: [],
 };
 const ECRITURES = [];   // ce que l'administration écrit dans crescite_preferences
+const MODIFS = [];      // les autres écritures (les actions directes des menus)
 const SESSION = { access_token: 'x', refresh_token: 'y', token_type: 'bearer', expires_in: 864000, expires_at: Math.floor(Date.now() / 1000) + 864000, user: { id: UID, email: 'adrien@example.org', aud: 'authenticated' } };
 
 const resultats = [];
@@ -120,6 +121,15 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
       const limit = url.searchParams.get('limit'); if (limit) rows = rows.slice(0, +limit);
       if (objet) return rows.length ? json(200, rows[0]) : json(406, { code: 'PGRST116', details: 'The result contains 0 rows', message: 'JSON object requested, multiple (or no) rows returned' });
       return json(200, rows, { 'content-range': `0-${Math.max(0, rows.length - 1)}/*` });
+    }
+    if (req.method() === 'PATCH' && table in DB) {
+      const body = JSON.parse(req.postData() || '{}');
+      let rows = DB[table];
+      for (const [k, v] of url.searchParams) { const m = /^eq\.(.*)$/.exec(v); if (m) rows = rows.filter(r => String(r[k]) === m[1]); }
+      rows.forEach(r => Object.assign(r, body));
+      MODIFS.push({ table, body, n: rows.length });
+      if (objet) return rows.length ? json(200, rows[0]) : json(406, { code: 'PGRST116', details: 'The result contains 0 rows' });
+      return route.fulfill({ status: 204, body: '' });
     }
     if (req.method() === 'POST' && table === 'crescite_preferences') {
       const body = JSON.parse(req.postData() || '{}'), rows = Array.isArray(body) ? body : [body];
@@ -207,6 +217,78 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('la recherche rapide connaît la rubrique', await page.evaluate(() => indexRch().some(x => x.type === 'Rubrique' && x.href === '#/accueil')));
   await page.screenshot({ path: `${CAPT}/tableau.png`, fullPage: true });
 
+  // ---- les gestes : le clic droit sur une ligne ouvre ses actions ; une action directe écrit dans la base
+  await page.click(`${tuile('urgent')} a[data-devis="1"]`, { button: 'right' });
+  await page.waitForSelector('.gm-boite[role="menu"]', { timeout: 3000 });
+  const menuDevis = await page.$$eval('.gm-boite [data-gm]', xs => xs.map(x => x.querySelector('.gm-l').firstChild.textContent));
+  ok('clic droit sur une demande de devis : ouvrir, écrire, les statuts à marquer, le lien', menuDevis.includes('Ouvrir la demande') && menuDevis.includes('Écrire à M. Dupont') && menuDevis.includes('Marquer « En cours »') && menuDevis.includes('Copier le lien'), menuDevis.join(' | '));
+  ok('le premier élément du menu a le focus, le menu a un titre', await page.evaluate(() => document.activeElement?.matches('.gm-boite [data-gm]')) && (await page.$eval('.gm-boite', e => e.getAttribute('aria-label'))) === 'Salle des fêtes de Lisieux');
+  await page.screenshot({ path: `${CAPT}/menu.png`, fullPage: false });
+  await page.click('.gm-boite [data-gm]:has-text("Marquer « En cours »")');
+  await page.waitForFunction(() => !document.querySelector('.gm-boite') && !document.querySelector('.tb-tuile[data-k="urgent"] a[data-devis="1"]'), null, { timeout: 4000 }).catch(() => {});
+  ok('« Marquer En cours » écrit le statut dans la base et la demande quitte « À traiter » (badge 10)', MODIFS.some(m => m.table === 'crescite_devis_demandes' && m.body.statut === 'en_cours') && (await compte(page, `${tuile('urgent')} a[data-devis="1"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '10', JSON.stringify(MODIFS));
+  await page.click(`${tuile('urgent')} a[data-frais="1"]`, { button: 'right' });
+  await page.waitForSelector('.gm-boite [data-gm]:has-text("Valider")', { timeout: 3000 });
+  await page.click('.gm-boite [data-gm]:has-text("Valider")');
+  await page.waitForFunction(() => !document.querySelector('.tb-tuile[data-k="urgent"] a[data-frais="1"]'), null, { timeout: 4000 }).catch(() => {});
+  ok('« Valider » une note de frais depuis son menu : écrite validée, sortie de la liste', MODIFS.some(m => m.table === 'crescite_notes_frais' && m.body.statut === 'valide' && m.body.valide_par === 'u-essai') && (await compte(page, `${tuile('urgent')} a[data-frais="1"]`)) === 0);
+  // le clavier : Maj+F10 ouvre le menu de la ligne qui a le focus, Échap le ferme et rend le focus ; ↓ passe à la ligne d'après
+  await page.focus(`${tuile('prochaines')} .tb-l:first-child`);
+  await page.keyboard.press('Shift+F10');
+  await page.waitForSelector('.gm-boite', { timeout: 3000 });
+  const menuDate = await page.$$eval('.gm-boite [data-gm]', xs => xs.map(x => x.querySelector('.gm-l').firstChild.textContent));
+  ok('Maj+F10 sur une date : ouvrir, feuille de route, prévenir, itinéraire, dupliquer, tableur, supprimer', ['Ouvrir la date', 'Feuille de route', 'Prévenir l’équipe…', 'Itinéraire', 'Dupliquer', 'Voir dans le tableur', 'Supprimer la date…'].every(x => menuDate.includes(x)), menuDate.join(' | '));
+  await page.keyboard.press('Escape');
+  ok('Échap ferme le menu et rend le focus à la ligne', (await compte(page, '.gm-boite')) === 0 && await page.evaluate(() => document.activeElement?.matches('.tb-tuile[data-k="prochaines"] .tb-l:first-child')));
+  await page.keyboard.press('ArrowDown');
+  ok('↓ passe à la ligne suivante de la tuile', await page.evaluate(() => document.activeElement?.matches('.tb-tuile[data-k="prochaines"] .tb-l:nth-child(2)')));
+  await page.keyboard.press('ArrowUp');
+  ok('↑ revient', await page.evaluate(() => document.activeElement?.matches('.tb-tuile[data-k="prochaines"] .tb-l:first-child')));
+  // le menu d'une tuile : la réduire
+  await page.click(`${tuile('journal')} .tb-tete`, { button: 'right' });
+  await page.waitForSelector('.gm-boite [data-gm]:has-text("Réduire")', { timeout: 3000 });
+  await page.click('.gm-boite [data-gm]:has-text("Réduire")');
+  ok('clic droit sur l’en-tête d’une tuile → « Réduire » la replie', await page.$eval(tuile('journal'), e => e.classList.contains('replie')));
+  await page.click(`${tuile('journal')} .tb-tete`, { button: 'right' });
+  await page.waitForSelector('.gm-boite', { timeout: 3000 });
+  await page.click('.gm-boite [data-gm]:has-text("Déployer")');
+  // une action rapide se retire de son menu
+  await page.click(`${tuile('actions')} .tb-actions [data-action="tableur"]`, { button: 'right' });
+  await page.waitForSelector('.gm-boite [data-gm]:has-text("Retirer des actions rapides")', { timeout: 3000 });
+  await page.click('.gm-boite [data-gm]:has-text("Retirer des actions rapides")');
+  ok('« Retirer des actions rapides » ôte le bouton', (await compte(page, `${tuile('actions')} .tb-actions [data-action="tableur"]`)) === 0 && (await compte(page, `${tuile('actions')} .tb-actions > *`)) === 9);
+  await page.click(`${tuile('actions')} [data-tb-reglages]`);
+  await page.check(`${tuile('actions')} input[data-tb-reg="actions"][value="tableur"]`);
+  await page.click(`${tuile('actions')} [data-tb-reglages]`);
+
+  // ---- précédent / suivant dans une fiche à côté de sa liste : Alt+↓
+  await page.goto(`${URL0}#/representations/102`);
+  await page.waitForSelector('#ed-date .titre-ed .gps', { timeout: 15000 });
+  const gps = await page.$eval('#ed-date .titre-ed .gps', e => [...e.querySelectorAll('[data-gps]')].map(b => `${b.dataset.gps}:${b.disabled ? 'off' : b.dataset.href}:${b.title}`));
+  ok('la fiche d’une date a « précédent / suivant », nommés d’après la liste', gps[0].startsWith('-1:#/representations/101:Précédent : Bérénice') && gps[1].startsWith('1:#/representations/103:Suivant : Bérénice') && /Alt\+↓/.test(gps[1]), gps.join(' | '));
+  await page.keyboard.press('Alt+ArrowDown');
+  await page.waitForFunction(() => location.hash === '#/representations/103', null, { timeout: 5000 }).catch(() => {});
+  ok('Alt+↓ ouvre la date suivante', await page.evaluate(() => location.hash) === '#/representations/103', await page.evaluate(() => location.hash));
+  await page.waitForSelector('#ed-date .titre-ed .gps', { timeout: 5000 });
+  await page.click('#ed-date .titre-ed [data-gps="-1"]');
+  await page.waitForFunction(() => location.hash === '#/representations/102', null, { timeout: 5000 }).catch(() => {});
+  ok('le bouton « précédent » revient', await page.evaluate(() => location.hash) === '#/representations/102');
+
+  // ---- le Kanban : les flèches disent leur étape ; une carte se glisse d'une colonne à l'autre
+  await page.goto(`${URL0}#/diffusion`);
+  await page.waitForSelector('.crm-carte[data-prospect-id="3"]', { timeout: 15000 });
+  ok('les flèches d’une carte nomment l’étape visée', (await page.$eval('.crm-carte[data-prospect-id="3"] [data-crm-deplacer="1"]', e => e.title)) === 'Étape suivante : 2. Dossier / Devis');
+  await page.dragAndDrop('.crm-carte[data-prospect-id="3"] .crm-carte-structure', '.crm-colonne[data-colonne="option_discutee"] .crm-col-tete');
+  await page.waitForFunction(() => document.querySelector('.crm-colonne[data-colonne="option_discutee"] .crm-carte[data-prospect-id="3"]'), null, { timeout: 5000 }).catch(() => {});
+  ok('la carte glissée change de colonne, l’étape est écrite', (await compte(page, '.crm-colonne[data-colonne="option_discutee"] .crm-carte[data-prospect-id="3"]')) === 1 && MODIFS.some(m => m.table === 'crescite_diffusion_prospects' && m.body.etape === 'option_discutee'), JSON.stringify(MODIFS.filter(m => m.table === 'crescite_diffusion_prospects')));
+  await page.click('.crm-carte[data-prospect-id="1"]', { button: 'right' });
+  await page.waitForSelector('.gm-boite [data-gm]:has-text("Relance faite aujourd’hui")', { timeout: 3000 });
+  await page.click('.gm-boite [data-gm]:has-text("Relance faite aujourd’hui")');
+  await page.waitForTimeout(300);
+  ok('« Relance faite aujourd’hui » note la relance et la prochaine dans 7 jours', MODIFS.some(m => m.table === 'crescite_diffusion_prospects' && m.body.date_dernier_contact === plus(0) && m.body.date_prochaine_relance === plus(7)) && !(await page.$eval('.crm-carte[data-prospect-id="1"] .crm-carte-relance', e => e.classList.contains('retard'))));
+  await page.goto(`${URL0}#/accueil`);
+  await page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
+
   // ---- un lien vise le champ : l'option s'ouvre, le bouton « Confirmée » a le focus
   await page.click(`${tuile('urgent')} a[href="#/representations/105"]`);
   await page.waitForFunction(() => location.hash === '#/representations/105' && document.querySelector('#ed-date [data-statut="confirmee"]'), null, { timeout: 8000 });
@@ -252,7 +334,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('réglage « 30 prochains jours » : la répétition dans 50 jours sort, badge 4', (await texte(page, `${tuile('avant')} .tb-badge`)) === '4', await texte(page, `${tuile('avant')} .tb-badge`));
   await page.click(`${tuile('urgent')} [data-tb-reglages]`);
   await page.uncheck(`${tuile('urgent')} input[data-tb-reg="categories"][value="contrats"]`);
-  ok('« À traiter » sans les contrats : badge 9, le sujet disparaît', (await texte(page, `${tuile('urgent')} .tb-badge`)) === '9' && (await compte(page, `${tuile('urgent')} a[data-viser="#s-contrat"]`)) === 0);
+  ok('« À traiter » sans les contrats : badge 6 (le devis, la note de frais et la relance traités, les deux contrats écartés), le sujet disparaît', (await texte(page, `${tuile('urgent')} .tb-badge`)) === '6' && (await compte(page, `${tuile('urgent')} a[data-viser="#s-contrat"]`)) === 0, await texte(page, `${tuile('urgent')} .tb-badge`));
   // le mémo
   await page.fill(`${tuile('memo')} .tb-memo`, 'Rappeler le Volcan lundi');
   await page.waitForFunction(() => document.querySelector('.tb-memo-etat')?.textContent === 'Enregistré', null, { timeout: 6000 }).catch(() => {});
@@ -285,7 +367,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   const ordre = await page.$$eval('.tb-tuile', xs => xs.map(x => `${x.dataset.k}${x.classList.contains('taille-m') ? '*' : ''}${x.classList.contains('replie') ? '-' : ''}`));
   ok('la disposition du compte revient : ordre, tailles, tuile réduite, atelier masqué, trois colonnes', ordre.join(',') === 'chiffres,actions,avant,urgent*,prochaines*,equipe,diffusion,propositions,journal-,memo' && await page.$eval('#tb-grille', e => e.dataset.colonnes === '3'), ordre.join(','));
   ok('le mémo aussi', (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value)) === 'Rappeler le Volcan lundi');
-  ok('les réglages aussi (5 dates, sans les options ; sans les contrats)', (await compte(page, `${tuile('prochaines')} .tb-l`)) === 5 && (await compte(page, `${tuile('prochaines')} a[href="#/representations/105"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '9');
+  ok('les réglages aussi (5 dates, sans les options ; sans les contrats)', (await compte(page, `${tuile('prochaines')} .tb-l`)) === 5 && (await compte(page, `${tuile('prochaines')} a[href="#/representations/105"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '6', await texte(page, `${tuile('urgent')} .tb-badge`));
   await page.click('#tb-personnaliser');
   page.once('dialog', d => d.accept());
   await page.click('#tb-reinit');
@@ -321,6 +403,21 @@ fs.mkdirSync(CAPT, { recursive: true });
   const colonnes = await page.$eval('#tb-grille', e => getComputedStyle(e).gridTemplateColumns.split(' ').length);
   ok('au téléphone : une colonne, rien ne déborde', colonnes === 1 && await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `${colonnes} colonne(s), ${await page.evaluate(() => `${document.documentElement.scrollWidth}/${window.innerWidth}`)}`);
   await page.screenshot({ path: `${CAPT}/telephone.png`, fullPage: false });
+  // l'appui long sur une ligne : une feuille d'actions depuis le bas, qui se ferme en touchant le voile
+  const ligne = await page.$(`${tuile('urgent')} a[data-devis="2"], ${tuile('urgent')} a[data-frais], ${tuile('urgent')} a.tb-l`);
+  await ligne.scrollIntoViewIfNeeded();
+  const r = await ligne.boundingBox();
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: r.x + 40, y: r.y + r.height / 2 }] });
+  await page.waitForTimeout(650);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+  await page.waitForSelector('.gm.gm-feuille .gm-boite', { timeout: 3000 }).catch(() => {});
+  ok('au téléphone, l’appui long ouvre une feuille d’actions depuis le bas, avec le titre', (await compte(page, '.gm.gm-feuille .gm-boite[role="menu"]')) === 1 && (await compte(page, '.gm-feuille .gm-titre')) === 1 && (await compte(page, '.gm-feuille [data-gm]')) >= 2, await page.evaluate(() => location.hash));
+  await page.screenshot({ path: `${CAPT}/telephone-menu.png`, fullPage: false });
+  ok('la page n’a pas bougé (le clic qui suit l’appui est avalé)', await page.evaluate(() => location.hash) === '#/accueil');
+  await page.click('.gm-feuille .gm-voile', { position: { x: 10, y: 10 } });
+  ok('toucher le voile ferme la feuille', (await compte(page, '.gm-boite')) === 0);
   ok('aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
   const s = await ouvrir(navigateur, { sombre: true, hash: '#/accueil' });
