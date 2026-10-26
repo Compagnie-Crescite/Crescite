@@ -7,12 +7,14 @@
                      d'animations) ; la créature est dessinée exactement à sa place, et prend la relève du dessin à la fin
                      de l'ouverture (intro:fin), sans que rien ne saute. Si la page réécrit l'hôte, elle suit. encre : la
                      couleur de la pieuvre (défaut : la couleur du texte de l'hôte). → la créature (voir plus bas)
-   CREATURE.creer({ placer, encre, largeur, souris, courant })   une pieuvre à soi, placée par la maquette : placer() est
+   CREATURE.creer({ placer, encre, largeur, souris, courant, vie, lueur })   une pieuvre à soi, placée par la maquette : placer() est
                      appelée à chaque image et rend { x, y, s } (le cœur de la pieuvre à l'écran, en px, et l'échelle, px
                      par unité du dessin ; largeur : à défaut de s, la largeur du dessin en px) ou null (elle n'a pas lieu
                      d'être à l'écran : elle s'efface et se repose ; bouge: true tant qu'elle se déplace). placerChaqueImage :
                      placer() à chaque image (une pieuvre qui se déplace) et non quatre fois par seconde. souris (vrai par
-                     défaut) : elle se tourne vers la souris ; courant (vrai) : ses tentacules suivent le défilement. → la créature
+                     défaut) : elle se tourne vers la souris ; courant (vrai) : ses tentacules suivent le défilement. vie (1) :
+                     son entrain, de 1 (l'en-tête, discrète) à 2 ou 3 (une grande pieuvre, toujours en mouvement : ondulation
+                     ample, respiration, dérive et balancement) ; lueur : un halo autour d'elle. → la créature
 
    Sa vie, au repos, jamais pénible (lente, de quelques pixels, trente images par seconde au plus, rien quand l'onglet est
    caché) : ses tentacules ondulent, elle respire (son corps gonfle d'un rien), elle se penche vers la souris qui passe près
@@ -62,7 +64,7 @@ const CREATURE = (() => {
   // la secousse d'une réaction : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant
   const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? ease(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
   // [durée (ms), contraction, agitation des tentacules, penche (°)]
-  const GENRES = { clic: [420, .07, 1.8, 3], page: [680, .1, 2.6, 5], ouvre: [460, .05, 1.6, 2], ferme: [460, .07, 1.6, 2], enroule: [600, .06, 2, 0], retour: [480, .07, 1.8, 3] };
+  const GENRES = { clic: [420, .07, 1.8, 3], page: [680, .1, 2.6, 5], ouvre: [460, .05, 1.6, 2], ferme: [460, .07, 1.6, 2], enroule: [600, .06, 2, 0], retour: [480, .07, 1.8, 3], nage: [760, .05, 1.6, 0] };
 
   /* ---------- ce que toutes les créatures partagent : la souris, le défilement, l'onglet, le réglage ---------- */
   const toutes = new Set();
@@ -88,7 +90,7 @@ const CREATURE = (() => {
     constructor(o = {}) {
       this.o = o;
       this.encre = o.encre || '#ffffff'; this.ENCRE = rgb(this.encre) || [255, 255, 255];
-      this.souris = o.souris !== false; this.courant = o.courant !== false;
+      this.souris = o.souris !== false; this.courant = o.courant !== false; this.vie = o.vie || 1; this.lueur = !!o.lueur;
       const TS = PIEUVRE.creer();
       this.CORPS = PIEUVRE.corps(TS);
       // dir : le sens de la pointe au repos (vers où la tentacule se penche) ; col : la couleur vers laquelle elle se teinte
@@ -245,16 +247,19 @@ const CREATURE = (() => {
       this.tDessin = now; this.tVie += dt / 1000;
       const tVie = this.tVie;
       if (this === [...toutes][0]) vScroll *= Math.pow(.86, dt / 16);
-      // elle flotte, elle respire ; pas quand une tentacule est tendue (sa pointe resterait sur la cible)
-      const tendue = this.sortie(), bob = this.bob;
-      bob.x = Math.sin(tVie * .43) * .5 * (1 - tendue); bob.y = Math.sin(tVie * .9) * .7 * (1 - tendue);
-      const souffle = 1 + .035 * Math.sin(tVie * 1.15) * (1 - tendue), k = souffle * (1 - (R ? R.serre : 0) * imp * (1 - tendue));
+      // elle flotte et dérive, elle respire, elle se balance (d'autant plus qu'elle a d'entrain) ; une tentacule tendue retient
+      // la respiration et le balancement (sa pointe resterait sur la cible), pas la dérive : elle s'y accroche
+      const tendue = this.sortie(), bob = this.bob, vie = this.vie, plus = Math.max(0, vie - 1);
+      bob.x = Math.sin(tVie * .43) * .5 * vie + Math.sin(tVie * .29) * 1.6 * plus; bob.y = Math.sin(tVie * .9) * .7 * vie + Math.cos(tVie * .21) * 2.2 * plus;
+      const retenue = 1 - .6 * tendue;
+      const souffle = 1 + .03 * Math.min(vie, 1.6) * Math.sin(tVie * 1.15) * retenue, k = souffle * (1 - (R ? R.serre : 0) * imp * retenue);
+      const balance = Math.sin(tVie * .6) * 1.3 * plus;
       // la curiosité : elle se tourne un peu vers la souris qui passe près d'elle, ses tentacules s'y penchent ; et elles suivent
       // le courant quand la page défile
       const cx = ox + CENTRE[0] * s, cy = oy + CENTRE[1] * s, courant = this.courant ? clamp(Math.abs(vScroll) / 24, 0, 1) * .32 : 0;
       const pres = this.souris && pointeur ? Math.hypot(pointeur.x - cx, pointeur.y - cy) : Infinity, regard = pres < 240 ? clamp((pointeur.x - cx) / 120, -1, 1) * (1 - pres / 240) * 4 : 0;
       this.regard += (regard - this.regard) * .08;
-      const rot = (lean + this.regard) * Math.PI / 180 * (1 - tendue);
+      const rot = (lean + this.regard + balance) * Math.PI / 180 * retenue;
       for (const a of BRAS) {
         let pv = 0;
         if (!a.but) {
@@ -272,14 +277,14 @@ const CREATURE = (() => {
         a.penche += (pv - a.penche) * .08;
         const tv = a.but ? 1 : 0;
         if (Math.abs(a.teinte - tv) > .005) a.teinte += (tv - a.teinte) * .12; else a.teinte = tv;
-        a.t.avancer(dt, { temps: tVie, onde: 2 + agite, penche: a.penche, bob });
+        a.t.avancer(dt, { temps: tVie, onde: 2 * vie + agite, penche: a.penche, bob });
       }
       // la région à repeindre : la pieuvre et ses tentacules, cette image et la précédente, élargie de ce que la respiration,
       // la contraction et la penche déplacent
       const b = { x0: ox + 250 * s - 4, y0: oy + 340 * s - 4, x1: ox + 1292 * s + 4, y1: oy + 916 * s + 4 };
       for (const a of BRAS) { const r = a.t.boite(6); b.x0 = Math.min(b.x0, r.x0); b.y0 = Math.min(b.y0, r.y0); b.x1 = Math.max(b.x1, r.x1); b.y1 = Math.max(b.y1, r.y1); }
       const Rm = Math.max(Math.hypot(b.x0 - cx, b.y0 - cy), Math.hypot(b.x1 - cx, b.y1 - cy), Math.hypot(b.x0 - cx, b.y1 - cy), Math.hypot(b.x1 - cx, b.y0 - cy));
-      const marge = Rm * (Math.abs(k - 1) + Math.abs(rot)) + 3;
+      const marge = Rm * (Math.abs(k - 1) + Math.abs(rot)) + 3 + (this.lueur ? 22 : 0);
       b.x0 -= marge; b.y0 -= marge; b.x1 += marge; b.y1 += marge;
       const bo = this.boite, u = bo ? { x0: Math.min(b.x0, bo.x0), y0: Math.min(b.y0, bo.y0), x1: Math.max(b.x1, bo.x1), y1: Math.max(b.y1, bo.y1) } : { x0: 0, y0: 0, x1: W, y1: H };
       this.boite = b;
@@ -288,6 +293,8 @@ const CREATURE = (() => {
         ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(X0, Y0, Rw, Rh);
         // l'ensemble respire, se contracte et se penche autour de son cœur
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(k, k); ctx.translate(-cx, -cy);
+        // le halo, s'il y en a un (il respire avec elle)
+        if (this.lueur) { const E = this.ENCRE; ctx.shadowColor = `rgba(${E[0]},${E[1]},${E[2]},${(.38 + .12 * Math.sin(tVie * 1.15)).toFixed(3)})`; ctx.shadowBlur = 14; }
         // la tache de la marque, s'il y en a une ; le corps : le logo sans ses huit tentacules, qui se dessinent par-dessus,
         // celle qui sort en dernier
         ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y);
@@ -296,6 +303,7 @@ const CREATURE = (() => {
         const trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: this.encre, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere });
         for (const a of BRAS) if (a !== sortie) trace(a);
         if (sortie) trace(sortie);
+        ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
         ctx.setTransform(1, 0, 0, 1, 0, 0);
       }
       this.raf = requestAnimationFrame(t => this.image(t));
@@ -331,7 +339,7 @@ const CREATURE = (() => {
     const sv = h.matches && h.matches('svg') ? h : h.querySelector('svg');
     if (!sv) return null;
     hote = h; svg = sv;
-    tete = new Creature({ encre: o.encre || getComputedStyle(h).color || '#ffffff', placer: placeHote,
+    tete = new Creature({ encre: o.encre || getComputedStyle(h).color || '#ffffff', placer: placeHote, vie: 1.3,
       eveil: () => { if (svg) svg.style.visibility = 'hidden'; lireDessin(tete); },
       sommeil: () => { if (svg) svg.style.visibility = ''; } });
     if (intro()) attendreIntro(); else tete.demarrer();

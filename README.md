@@ -118,8 +118,9 @@ l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en 
 (`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
 souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
 va souligner le titre à la couleur du spectacle, puis revient. Sur la page de la compagnie, la pieuvre de la troupe est
-une créature aussi (`CREATURE.creer`) : quand la lecture descend, elle rapetisse et descend le long du tronc, en
-nageant, et une tentacule attrape le médaillon du métier qu'on lit.
+une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo) : quand la
+lecture descend, elle rapetisse et nage dans la marge, par impulsions, et une tentacule attrape le médaillon du métier
+qu'on lit, qui s'anime.
 
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
