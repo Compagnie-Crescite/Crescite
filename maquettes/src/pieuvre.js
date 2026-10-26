@@ -17,7 +17,7 @@
      t.poser(ox, oy, s)          l'origine du dessin à l'écran (px) et l'échelle (px par unité du dessin) ; le trajet en cours
                                  est oublié (elle est au repos)
      t.deplacer(ox, oy, s)       la même chose sans rien oublier : une pieuvre qui se déplace garde ses tentacules en route
-     t.viser(cible, duree)       cible : { cle, x, y, sens, U, mobile, marge, racine, corps, tension } (le point d'accroche d'un
+     t.viser(cible, duree, elastique) cible : { cle, x, y, sens, U, mobile, marge, racine, corps, tension } (le point d'accroche d'un
                                  titre, à l'écran ; sens 1 : la tentacule continue vers la droite sous le titre, -1 vers la
                                  gauche ; U : la longueur à souligner, en px ; marge : la place derrière le point d'accroche, en
                                  px, jusqu'au bord de l'écran : elle arrive à plat de derrière, d'autant plus loin qu'elle vient
@@ -28,7 +28,9 @@
                                  se voir : la partie déployée s'épaissit jusque-là, sa racine non) ; boucle : la taille de
                                  l'enroulement du bout, en fraction de la normale (1) ; tension, de 0 à 1 :
                                  la pointe se déroule) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
-                                 coup). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
+                                 coup) ; le mouvement part de la racine quand elle s'allonge, de la pointe quand elle revient ;
+                                 elastique : elle revient comme un ressort (la pointe se love un peu trop, se balance, se
+                                 pose). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
      t.avancer(dt, { temps, onde, penche, bob, tourne }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
                                  onde : son ampleur (0 : immobile, 1 : normale) ; penche : un angle, vers où elle se
                                  penche au repos ; bob : { x, y }, le flottement de toute la pieuvre, en px ; tourne : un
@@ -52,6 +54,7 @@ const PIEUVRE = (() => {
   const lerp = (a, b, t) => a + (b - a) * t;
   const lisse = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const ease = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+  const elas = t => (t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.exp(-5 * t) * Math.cos(7 * t));   // un ressort : dépasse, se balance, se pose
   const TAU = Math.PI * 2;
 
   class Tentacule {
@@ -205,9 +208,9 @@ const PIEUVRE = (() => {
       for (let k = 1; k < M; k++) th[k] = (sg[k - 1] + sg[k]) / 2;
       return { sg, th, ln, mu: 1, prolonge };
     }
-    viser(cible, duree = 600) {
+    viser(cible, duree = 600, elastique = false) {
       const meme = !!cible === !!this.cible && (!cible || (cible.cle === this.cible.cle));
-      this.cible = cible;
+      this.cible = cible; this.elastique = !!elastique;
       // (la racine de la dernière cible reste celle du liseré et de l'effilement, le temps qu'elle revienne au repos)
       if (cible) { this.derniere = cible; this.rac = cible.racine != null ? cible.racine : RAC; this.wmin = cible.epaisseur || 0; }
       if (!this.pose_ || (meme && this.pose)) return;   // la même cible (peut-être déplacée) : le trajet continue
@@ -234,15 +237,17 @@ const PIEUVRE = (() => {
         // revient : la pointe se love d'abord, puis tout rentre). Chaque segment suit la même courbe, décalée de sa place
         // sur l'épine (l'onde prend la moitié du trajet) : la forme reste lisse à chaque image, sans cassure de tangente ;
         // les longueurs suivent les angles de peu (ce qui se déroule s'étire ensuite ; ce qui rentre se rétracte d'abord)
-        const ONDE = .5, ens = !!(A.prolonge || B.prolonge), allonge = this.etire;
+        // (élastique : les angles dépassent la pose d'arrivée d'un dixième et s'y balancent : la pointe se love un peu trop
+        // serrée puis se détend, comme un ressort ; les longueurs, elles, ne dépassent jamais)
+        const ONDE = .5, ens = !!(A.prolonge || B.prolonge), allonge = this.etire, eA = this.elastique ? elas : ease;
         const sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M);
         const dec = Math.round((A.sg[0] - B.sg[0]) / TAU) * TAU;
         const avance = u => Math.min(1, Math.max(0, (q - (allonge ? u : 1 - u) * ONDE) / (1 - ONDE)));
         for (let k = 0; k < M; k++) {
-          const qk = avance((k + .5) / M), wA = ease(qk), wL = ens ? wA : allonge ? ease(Math.max(0, (qk - .25) / .75)) : ease(Math.min(1, qk / .75));
+          const qk = avance((k + .5) / M), wA = eA(qk), wL = ens ? ease(qk) : allonge ? ease(Math.max(0, (qk - .25) / .75)) : ease(Math.min(1, qk / .75));
           sg[k] = lerp(A.sg[k], B.sg[k] + dec, wA); ln[k] = lerp(A.ln[k], B.ln[k], wL);
         }
-        for (let k = 0; k <= M; k++) th[k] = lerp(A.th[k], B.th[k] + dec, ease(avance(k / M)));
+        for (let k = 0; k <= M; k++) th[k] = lerp(A.th[k], B.th[k] + dec, eA(avance(k / M)));
         P = { sg, th, ln, mu: lerp(A.mu, B.mu, ease(q)), prolonge: ens };
       }
       this.pose = P;
