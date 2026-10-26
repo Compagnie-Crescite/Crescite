@@ -118,6 +118,7 @@ body { display: flow-root; }   /* (la marge de l'en-tête reste dans le corps : 
 .marque:hover .l { scale: 1.08; }
 /* sous la pieuvre de l'accueil, la marque est repliée (la grande pieuvre est juste au-dessus) ; arrimée, elle se déplie */
 .top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque { max-width: 0; padding: 0; opacity: 0; }
+.top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque .l { width: 0; }   /* (la créature, qui mesure la marque, se tait) */
 .entrees { flex: none; display: flex; align-items: center; gap: 2px; }
 .entrees a { display: inline-flex; align-items: center; gap: 9px; height: 38px; padding: 0 15px 0 12px; border: 2px solid transparent; border-radius: 999px; color: #fff;
   text-decoration: none; font: 700 .76rem/1 var(--etiq); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
@@ -322,7 +323,8 @@ a.df-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px;
   font: 400 .72rem/1.4 var(--sans); color: var(--u-texte2); text-align: right; }
 .df[data-cote="droite"] .df-credit { right: auto; left: 12px; text-align: left; }
 /* les motifs de la 10, en grand, qui réagissent à la lecture (--m) : l'arène tourne, les jumeaux se rejoignent, les notes et le
-   fil s'écrivent, le nez s'allonge, les aiguilles tournent, le curseur file de 1850 à 2077 */
+   fil s'écrivent, les aiguilles tournent, le curseur file de 1850 à 2077 (Ci-gisait Cyrano : la lune seule, sans le dessin
+   du nez, à la demande du client) */
 .df-m { display: block; width: 100%; height: auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .df-m text { fill: currentColor; stroke: none; font: 600 17px var(--sans); letter-spacing: .04em; }
 .df-m * { transform-box: view-box; }
@@ -330,7 +332,6 @@ a.df-date:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px;
 .dm-g { transform: translateX(calc(var(--m) * 14px)); }
 .dm-d { transform: translateX(calc(var(--m) * -14px)); }
 .dm-ecrit { stroke-dasharray: 1; stroke-dashoffset: calc(1 - var(--m)); }
-.dm-nez { transform-origin: 114px 86px; transform: scale(calc(1 + var(--m) * .55), 1); }
 .dm-heure { transform-origin: 120px 120px; transform: rotate(calc(-50deg + var(--m) * 90deg)); }
 .dm-minute { transform-origin: 120px 120px; transform: rotate(calc(var(--m) * 720deg)); }
 .dm-curseur { transform: translateX(calc(var(--m) * 1120px)); }
@@ -357,9 +358,8 @@ html[data-theme="nuit"] .df[data-motif="arene"] .df-effet { color: var(--u-vif);
 .df[data-motif="paperboard"] .df-in > * { --e: clamp(0, calc(var(--p) * 3.33 - 1.9 - var(--k, 0) * .12), 1); }
 html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--uj-texte); --u-texte2: var(--uj-texte2); --u-vif: var(--uj-vif); --u-filet: color-mix(in srgb, var(--uj-texte) 15%, transparent); color: var(--u-texte); }
 .df[data-motif="paperboard"] .df-effet { width: min(28vw, 44vh); opacity: .7; }
-/* Ci-gisait Cyrano, le nez : la photo entre de profil, la lune se lève, le nez s'allonge */
+/* Ci-gisait Cyrano : la photo entre de profil, la lune se lève */
 .df[data-motif="nez"] .df-photo img { transform: translateX(calc((1 - var(--p)) * var(--sens) * 14%)) scale(calc(1.1 - var(--p) * .1)); }
-.df[data-motif="nez"] .df-effet { width: min(30vw, 46vh); opacity: .75; color: var(--u-texte); }
 .df-lune { position: absolute; z-index: -2; left: calc(var(--cx) + min(14vw, 22vh)); top: 12%; width: clamp(60px, 8vw, 120px); fill: var(--u-accent); opacity: .85; pointer-events: none; transform: translateY(calc((1 - var(--m)) * 34vh)); }
 .df[data-cote="droite"] .df-lune { left: calc(var(--cx) - min(14vw, 22vh) - clamp(60px, 8vw, 120px)); }
 /* La Folle Idée, l'horloge : le temps du huis clos, les aiguilles tournent avec la lecture */
@@ -401,7 +401,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
   .df-in, .df[data-cote="droite"] .df-in { width: 100%; margin-left: 0; }
   .df[data-motif="arene"] .df-photo img { clip-path: circle(calc(var(--p) * min(36vw, 21svh)) at 50% 25svh); }
   .df[data-motif="arene"] .df-effet { width: calc(min(36vw, 21svh) * 2.36); }
-  .df[data-motif="jumeaux"] .df-effet, .df[data-motif="annotations"] .df-effet, .df[data-motif="paperboard"] .df-effet, .df[data-motif="nez"] .df-effet, .df[data-motif="horloge"] .df-effet { width: min(52vw, 34svh); }
+  .df[data-motif="jumeaux"] .df-effet, .df[data-motif="annotations"] .df-effet, .df[data-motif="paperboard"] .df-effet, .df[data-motif="horloge"] .df-effet { width: min(52vw, 34svh); }
   .df-lune { left: auto; right: 6%; top: 4%; } .df[data-cote="droite"] .df-lune { left: auto; }
   .df-chrono { bottom: auto; top: calc(44svh - 34px); }
   .df-fil, .df[data-cote="droite"] .df-fil { -webkit-mask-image: linear-gradient(#000 30svh, transparent 42svh); mask-image: linear-gradient(#000 30svh, transparent 42svh); }
@@ -683,8 +683,10 @@ figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
    l'étape lue (.recit-vue.est-vue, posée par le script, ligne de lecture). Au téléphone, le panneau reste en haut, les étapes
    passent dessous. En édition sur place, la frise s'efface et la liste reste, annotée */
 .recit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 80px); align-items: start; margin-top: clamp(28px, 4vw, 48px); }
-.recit-panneau { position: sticky; top: calc(var(--haut) + 24px); display: grid; height: min(68svh, 640px); overflow: hidden; border-radius: 8px; background: var(--papier-2); isolation: isolate; }
-.recit-vue { grid-area: 1 / 1; position: relative; margin: 0; opacity: 0; transition: opacity var(--k-page) var(--k-doux); }
+.recit-panneau { position: sticky; top: calc(var(--haut) + 24px); display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); height: min(68svh, 640px); overflow: hidden; border-radius: 8px; background: var(--papier-2); isolation: isolate; }
+/* (une seule case, à la hauteur du panneau : sans elle, la case prenait la hauteur de la plus haute photo, chaque photo
+   débordait du panneau, qui n'en montrait que le haut, et son cadrage (CADRAGE) se calculait sur ce qu'on ne voyait pas) */
+.recit-vue { grid-area: 1 / 1; position: relative; min-height: 0; margin: 0; opacity: 0; transition: opacity var(--k-page) var(--k-doux); }
 .recit-vue.est-vue { opacity: 1; }
 .recit-vue img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; filter: saturate(.85); transform: scale(1.04); transition: transform .9s var(--k-doux); }
 .recit-vue.est-vue img { transform: none; }
@@ -1276,7 +1278,7 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
 /* les vidéos, lues dans la page (règle 18, LECTEUR) : l'affiche du spectacle, son titre, la lecture au geste ; « plein écran »
    et « assombrir » dessous. La page éteinte, la vidéo garde sa lumière : un filet de l'univers et sa lueur autour d'elle */
 .lc-cadre { border-radius: 6px; box-shadow: 0 34px 70px -34px rgba(0, 0, 0, .7), 0 0 0 1px var(--u-filet); transition: box-shadow var(--k-page) var(--k-doux); }
-.lc-affiche { filter: brightness(.55) saturate(.9); transition: scale var(--k-page) var(--k-doux), filter var(--k-survol) var(--k-doux), opacity var(--k-survol) var(--k-doux); }
+.lc-affiche { --cadre-y: .3; filter: brightness(.55) saturate(.9); transition: scale var(--k-page) var(--k-doux), filter var(--k-survol) var(--k-doux), opacity var(--k-survol) var(--k-doux); }   /* (le sujet au tiers haut, au-dessus du bouton de lecture : CADRAGE) */
 .lc-lire::after { content: ""; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgba(0, 0, 0, .78)); pointer-events: none; }
 .lc-lire:hover .lc-affiche { scale: 1.02; filter: brightness(.45) saturate(.9); }
 .lc-lire:focus-visible { outline: 3px solid var(--u-vif); outline-offset: -3px; }
@@ -1423,7 +1425,6 @@ article.u.sp-seul { --onglets: 0px; }
 .sp-motif .m-g { transform: translateX(calc(var(--p, 0) * 13px)); }
 .sp-motif .m-d { transform: translateX(calc(var(--p, 0) * -13px)); }
 .sp-motif .m-ecrit { stroke-dasharray: 1; stroke-dashoffset: calc(.55 - var(--p, 0) * .55); }
-.sp-motif .m-nez { transform-origin: 114px 86px; transform: scale(calc(1 + var(--p, 0) * .45), 1); }
 .sp-motif .m-heure { transform-origin: 120px 120px; transform: rotate(calc(-40deg + var(--p, 0) * 60deg)); }
 .sp-motif .m-minute { transform-origin: 120px 120px; transform: rotate(calc(var(--p, 0) * 540deg)); }
 .sp-motif .m-curseur { transform: translateX(calc(var(--p, 0) * 200px)); }
@@ -2181,7 +2182,9 @@ article.u { --onglets: 58px; }
    vérificateur), tout est posé. Ici les durées sont en hauteur d'écran : « entry » (ce qui entre par le bas), « exit » (ce qui
    sort par le haut), « cover » (toute la traversée) ; ce qu'un script pose au franchissement d'une ligne de lecture (la
    carte, les frises, le panneau de la compagnie) prend les courbes de la 10. Une animation liée au défilement ne garde jamais
-   son état final au-delà de sa plage (backwards, jamais both ni forwards, règle 15 C) : l'état de base est déjà l'état final. */
+   son état final au-delà de sa plage (backwards, jamais both ni forwards, règle 15 C) : l'état de base est déjà l'état final,
+   ou ce qui l'a passé est hors de l'écran ; et quand une animation composée garde son état final hors de sa plage, Chrome
+   n'arrive plus à capturer la page pour une transition (le changement de page gelait 4 s depuis une page défilée). */
 /* 1. l'encre prend à la lecture : affirmations, citations (.lit, --n mots) : chaque mot passe du gris à l'encre quand sa
    phrase traverse le milieu de l'écran, dans l'ordre, au rythme du lecteur ; en remontant, il pâlit */
 @property --lit { syntax: '<number>'; inherits: true; initial-value: 1; }   /* (la lecture du bloc, 0 → 1 ; posée à 1 : tout se lit) */
@@ -2295,7 +2298,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         défilement (defile) lit tout, puis écrit tout, une fois par image.
      7. Ce qui vit : « aujourd'hui », une goutte d'encre dont le cœur bat sur chaque frise ; « en tournée » respire comme une
         ventouse. La pieuvre n'a que ses moments (règle 15 A) : la scène de l'accueil (ses tentacules vivent, au repos ; un
-        geste les suspend) et l'encre d'un spectacle ; puis la troupe, dont les bras poussent une fois.
+        geste les suspend) et l'encre d'un spectacle ; puis la troupe, dont les bras poussent une fois. Et la petite pieuvre de
+        l'en-tête (CREATURE, creature.js), la marque du menu flottant : dessinée avec ses vraies tentacules, elle ondule et
+        respire, se penche vers la souris, suit le courant quand la page défile ; à chaque page elle se contracte ; l'encre
+        d'un spectacle qu'on quitte se resserre vers elle, et en y entrant, l'encre ouverte, sa tentacule va souligner le titre
+        à la couleur du spectacle, puis revient (le même moment). Lente et de quelques pixels ; repliée sous la pieuvre de
+        l'accueil, ou sans marque (le téléphone), elle se tait.
      Le menu flottant (Menu) : posé sous la pieuvre de l'accueil, il monte avec la page et s'arrime en haut de l'écran
      (sticky : rien ne se calcule au défilement) ; arrimé, sa marque se déplie ; sur la page d'un spectacle, la barre des
      entrées s'arrime sous lui.
@@ -2747,7 +2755,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const PETITS = {
     arene: () => `<circle cx="20" cy="20" r="16"/>${[0, 120, 240].map(a => `<path d="${arc(20, 20, 10.5, a + 14, a + 106)}" stroke-width="3.2"/>`).join('')}`,
     jumeaux: () => '<path d="M5 35V17a7.5 7.5 0 0 1 15 0v18M20 35V17a7.5 7.5 0 0 1 15 0v18"/>',
-    nez: () => '<path d="M14 3C8 6 7 13 9 18l1 3 20 4c1 .5.4 2.5-1.4 2.5L13 28c0 1.6 1.5 2.6.8 3.6-.8 1.3.7 2.5.2 3.9-.4 1.5-1.8 2.6-3 4"/>',
     horloge: () => '<circle cx="20" cy="20" r="16"/><path d="M20 20V9M20 20l7.5 4.5"/>',
     fil: () => '<path d="M2 30C9 4 17 36 23 17S35 6 38 22"/>',
     paperboard: () => '<rect x="8" y="8" width="24" height="27" rx="1.5"/><path d="M13 4.5h14M12 16h16M12 22h16M12 28h9"/>',
@@ -3090,8 +3097,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     function planifier() { clearTimeout(tAuto); if (affiche && !pause && motionOK()) tAuto = setTimeout(avancer, 6500); }
     function avancer() { if (roule() && !actif() && !(pres && performance.now() - pres.t0 < PRES + 1600)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
 
-    // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur
-    const cibleDe = T => ({ cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile });
+    // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur. Au téléphone, la boucle
+    // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
+    // plat de derrière le point d'accroche, dans la place qu'il y a jusqu'au bord de l'écran (marge : l'épine reste à 14 px du bord)
+    const cibleDe = T => ({ cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
+      ...(mobile ? { racine: .7, corps: .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14 } : {}) });
     // chaque titre a sa tentacule : dans l'ordre du tour de la pieuvre (titres et pointes rangés par leur angle autour de son
     // cœur), sans croisement ; s'il y a plus de titres que de tentacules, une tentacule en sert plusieurs
     function attribuer() {
@@ -3102,11 +3112,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       BRAS.forEach(a => { a.T = []; a.rang = 99; });
       const n = ts.length, m = bs.length;
       if (!n || !m) return;
-      // au téléphone, une seule tentacule sort à la fois : la grande boucle en S du côté du titre, la plus épaisse
+      // au téléphone, une seule tentacule sort à la fois : une grande boucle en S, la plus épaisse, qui descend du milieu du logo ;
+      // celle de gauche pour un titre souligné vers la droite (elle arrive par sa gauche), celle de droite pour l'autre sens
       if (mobile) {
         const S = { L: BRAS.find(a => a.cle === 'boucleL'), R: BRAS.find(a => a.cle === 'boucleR') };
         if (S.L && S.R) {
-          TIT.forEach(T => { const a = T.bx + T.w / 2 < W / 2 ? S.L : S.R; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
+          TIT.forEach(T => { const a = T.dirU > 0 ? S.L : S.R; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
           return;
         }
       }
@@ -3145,7 +3156,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     }
     // la mise en page : au bureau, la pieuvre au milieu du premier écran et les titres sur deux arcs, de part et d'autre, le menu
     // juste sous elle ; au téléphone, la pieuvre en haut, le menu sous elle, puis les titres, de part et d'autre d'une ligne.
-    // Le menu flottant (Menu) est posé à sa place, dans la bande que la scène lui laisse (yMenu)
+    // Le menu flottant (Menu) est posé à sa place, dans la bande que la scène lui laisse (yMenu). Une tentacule rejoint un titre
+    // par son bout tourné vers la pieuvre, le souligne et s'enroule à l'autre bout : au bureau, c'est le bout intérieur, le
+    // médaillon au bout extérieur ; au téléphone, le médaillon est au bout intérieur (près de la ligne) : la tentacule arrive
+    // sous lui et souligne le texte vers l'extérieur (le bout extérieur touche le bord de l'écran : l'y faire venir l'en ferait
+    // sortir)
     let yMenu = 0;
     function mise() {
       const r = el.getBoundingClientRect();
@@ -3160,8 +3175,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       TIT.forEach(T => { const rg = document.createRange(); rg.selectNodeContents(T.tt); const ls = [...rg.getClientRects()];
         if (ls.length > 1) T.tt.style.width = Math.ceil(Math.max(...ls.map(l => l.width)) + 1) + 'px'; });
       TIT.forEach(T => { T.w = T.el.offsetWidth; T.th = T.ttl.offsetHeight; T.U = Math.min(T.w, T.tt.getBoundingClientRect().width); T.bh = T.th + (mobile ? 30 : 36); });
-      // ce qui s'écrit dans chaque titre (ses lignes, sa date), par rapport à lui : les bras passent dessous (image())
-      TIT.forEach(T => { const r0 = T.el.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(T.tt);
+      // ce qui s'écrit dans chaque titre (ses lignes, sa date), par rapport à lui : les bras passent dessous (image()) ; et les
+      // deux bouts du texte (tx0, tx1), par rapport à lui aussi : c'est le texte que la tentacule souligne, pas le médaillon
+      TIT.forEach(T => { const r0 = T.el.getBoundingClientRect(), rt = T.tt.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(T.tt);
+        T.tx0 = rt.left - r0.left; T.tx1 = rt.right - r0.left;
         T.ecrit = [...rg.getClientRects()].map(l => [l.left - r0.left - 3, l.top - r0.top - 3, l.width + 6, l.height + 6]);
         if (T.q && T.q.offsetWidth) T.ecrit.push([T.q.offsetLeft - 3, T.q.offsetTop - 1, T.q.offsetWidth + 6, T.q.offsetHeight + 3, 1]); });
       if (!mobile) {
@@ -3194,7 +3211,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         let y = yMenu + hMenu + 40 * ech;
         TIT.forEach((T, i) => {
           const g = i % 2 === 0, ind = IND[i % IND.length];
-          T.droite = !g; T.dirU = g ? 1 : -1;
+          T.droite = !g; T.dirU = g ? -1 : 1;
           T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
           y += T.bh + 30;
         });
@@ -3202,7 +3219,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
       el.style.height = H + 'px';
       if (affiche) Menu.sousPieuvre(yMenu);
-      TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.w + 6 : T.bx - 6, y: T.by + T.th + 5 }; });
+      // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le médaillon est de ce côté : la
+      // tentacule arrive sous lui, et le souligné part du texte)
+      TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
       BRAS.forEach(a => a.t.poser(ox, oy, s));
       attribuer();
       dpr = Math.min(2, devicePixelRatio || 1);
@@ -3418,7 +3437,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      ou trois, tout public d'abord ; sans date, la phrase de son bilan dans D, ou son annonce s'il est en création) et le
      lien vers sa page. L'effet vient de son motif, ceux que la 10 fait déjà réagir au défilement : l'arène (la photo s'ouvre
      en cercle et l'arène tourne), les jumeaux (les deux moitiés se rejoignent), les annotations (le titre se souligne à la
-     main), le paperboard (la feuille tombe du chevalet), le nez (de profil, la lune se lève), l'horloge (les aiguilles
+     main), le paperboard (la feuille tombe du chevalet), Cyrano (la lune se lève : le dessin du nez est retiré), l'horloge (les aiguilles
      tournent), le fil (rouge, il traverse l'écran), la chronologie (la photo se découvre de 1850 à 2077). */
   const motif10 = m => {
     const svg = inner => `<svg class="df-m" viewBox="0 0 240 240" aria-hidden="true" focusable="false">${inner}</svg>`;
@@ -3426,7 +3445,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       case 'jumeaux': return svg('<g class="dm-g"><circle cx="94" cy="134" r="48"/><path d="M64 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g><g class="dm-d"><circle cx="146" cy="134" r="48"/><path d="M116 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g>');
       case 'annotations': return svg('<path class="dm-ecrit" pathLength="1" d="M26 58c8-7 15 7 23 0s15 7 23 0 15 7 23 0 15 7 23 0"/><path class="dm-ecrit" pathLength="1" d="M26 86c8-6 15 6 23 0s15 6 23 0 15 6 21 0"/><path class="dm-ecrit" pathLength="1" d="M26 114c8-6 15 6 23 0s15 6 23 0"/><path class="dm-ecrit" pathLength="1" d="M24 136c46 7 98 5 150-5"/><ellipse class="dm-ecrit" pathLength="1" cx="176" cy="76" rx="36" ry="22" transform="rotate(-8 176 76)"/><path class="dm-ecrit" pathLength="1" d="M120 196c22-26 46-38 76-44m-15-10 15 10-12 13"/>');
       case 'paperboard': return svg('<path d="M120 172v56M84 172l-26 58M156 172l26 58"/><rect x="52" y="34" width="136" height="138" rx="2"/><path d="M46 34h148" stroke-width="5"/><path class="dm-ecrit" pathLength="1" d="M120 146c-34-20-36-50-13-53 7-1 13 4 13 11 0-7 6-12 13-11 23 3 21 33-13 53z"/><path class="dm-ecrit" pathLength="1" d="M68 58h40M68 72h26"/><path class="dm-ecrit" pathLength="1" d="M150 52l20 22m0-22-20 22"/>');
-      case 'nez': return svg('<path d="M156 30c-24 4-40 22-42 54"/><g class="dm-nez"><path d="M114 84c-12 16-40 32-70 44 18 8 46 10 66 12"/></g><path d="M110 140c-4 7 5 11-3 17 8 4 2 10 4 15 2 15 11 23 24 25 4 13 2 23-1 31"/><path d="M134 108c6-3 12-3 16 0" stroke-width="2.4"/>');
       case 'horloge': return svg('<circle cx="120" cy="120" r="98"/><circle cx="120" cy="120" r="86" stroke-width="9" stroke-dasharray="1.6 43.43"/><g class="dm-heure"><path d="M120 120V74" stroke-width="5"/></g><g class="dm-minute"><path d="M120 120V46" stroke-width="2.6"/></g><circle cx="120" cy="120" r="5" fill="currentColor" stroke="none"/>');
     }
     return '';
@@ -3442,7 +3460,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const effetEcran = m => m === 'arene' ? `<div class="df-effet" aria-hidden="true">${ARENE()}</div>`
     : m === 'fil' ? `<div class="df-effet df-fil" aria-hidden="true">${FIL}</div>`
     : m === 'chronologie' ? `<div class="df-effet df-chrono" aria-hidden="true">${FRISE_CHRONO()}</div>`
-    : motif10(m) ? `<div class="df-effet" aria-hidden="true">${motif10(m)}</div>${m === 'nez' ? LUNE : ''}` : '';
+    : m === 'nez' ? LUNE   // (Ci-gisait Cyrano : la lune seule, sans le dessin du nez, à la demande du client)
+    : motif10(m) ? `<div class="df-effet" aria-hidden="true">${motif10(m)}</div>` : '';
   // une prochaine date, écrite comme dans l'agenda (le jour en grand, le mois, la commune) ; réservable, elle mène à sa carte
   // de réservation, sur la page du spectacle (règle 17)
   const dateEcran = (s, d, rang = 0) => { const [j, m] = coupe(d.ligneDate), k = RS && !d.scolaire ? RS.cle(d) : null, rv = k != null && !!RS.trouver(k);
@@ -4748,7 +4767,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     jumeaux: '<g class="m-g"><circle cx="94" cy="134" r="48"/><path d="M64 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g><g class="m-d"><circle cx="146" cy="134" r="48"/><path d="M116 88l9-24 11 15 10-21 10 21 11-15 9 24z"/></g>',
     annotations: '<path class="m-ecrit" pathLength="1" d="M26 58c8-7 15 7 23 0s15 7 23 0 15 7 23 0 15 7 23 0"/><path class="m-ecrit" pathLength="1" d="M26 86c8-6 15 6 23 0s15 6 23 0 15 6 21 0"/><path class="m-ecrit" pathLength="1" d="M26 114c8-6 15 6 23 0s15 6 23 0"/><path class="m-ecrit" pathLength="1" d="M24 136c46 7 98 5 150-5"/><ellipse class="m-ecrit" pathLength="1" cx="176" cy="76" rx="36" ry="22" transform="rotate(-8 176 76)"/><path class="m-ecrit" pathLength="1" d="M120 196c22-26 46-38 76-44m-15-10 15 10-12 13"/>',
     paperboard: '<path d="M120 172v56M84 172l-26 58M156 172l26 58"/><rect x="52" y="34" width="136" height="138" rx="2"/><path d="M46 34h148" stroke-width="5"/><path class="m-ecrit" pathLength="1" d="M120 146c-34-20-36-50-13-53 7-1 13 4 13 11 0-7 6-12 13-11 23 3 21 33-13 53z"/><path class="m-ecrit" pathLength="1" d="M68 58h40M68 72h26"/><path class="m-ecrit" pathLength="1" d="M150 52l20 22m0-22-20 22"/>',
-    nez: '<path d="M156 30c-24 4-40 22-42 54"/><g class="m-nez"><path d="M114 84c-12 16-40 32-70 44 18 8 46 10 66 12"/></g><path d="M110 140c-4 7 5 11-3 17 8 4 2 10 4 15 2 15 11 23 24 25 4 13 2 23-1 31"/><path d="M134 108c6-3 12-3 16 0" stroke-width="2.4"/>',
     horloge: '<circle cx="120" cy="120" r="98"/><circle cx="120" cy="120" r="86" stroke-width="9" stroke-dasharray="1.6 43.43"/><g class="m-heure"><path d="M120 120V74" stroke-width="5"/></g><g class="m-minute"><path d="M120 120V46" stroke-width="2.6"/></g><circle cx="120" cy="120" r="5" fill="currentColor" stroke="none"/>',
     fil: '<path class="m-ecrit" pathLength="1" d="M4 168C44 120 70 196 108 150c18-22 30-56 8-62s-30 32 2 42c30 10 44-30 70-26 22 3 30 30 48 18"/>',
     chronologie: '<path d="M20 140h200"/><path d="M20 126v28M60 132v16M100 132v16M140 132v16M180 132v16M220 126v28"/><text x="20" y="112">1850</text><text x="220" y="112" text-anchor="end">2077</text><circle class="m-curseur" cx="20" cy="140" r="8" fill="currentColor" stroke="none"/>',
@@ -5340,6 +5358,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     top.classList.add('mesure');
     for (const c of ['serre', 'compact', 'mince', 'fin']) { if (inn.scrollWidth <= inn.clientWidth + 1) break; top.classList.add(c); }
     top.classList.remove('mesure');
+    habiterCreature();
   }
   // l'élément du menu de la vue porte aria-current="page" ; celui dont elle dépend est mis en évidence (« true ») : les
   // spectacles pour la page d'un spectacle, l'espace pro pour ses deux pages (menuLu)
@@ -5405,7 +5424,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // ailleurs, la page fleurit (son titre se dépose, le bras d'encre arrive du bord de l'écran, le souligne et s'enroule). Le
   // menu flottant glisse s'il change de place. Un geste interrompt tout ; la première vue ne joue rien
   const pile = [];
-  let dernierClic = null;
+  let dernierClic = null, retourNav = false;
   document.addEventListener('click', e => {
     const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (!a) return;
     let x = e.clientX, y = e.clientY;
@@ -5414,6 +5433,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }, { capture: true, passive: true });
   function genre(a) {
     const h = '#/' + a.chemin, retour = pile.length > 1 && pile[pile.length - 2] === h;
+    retourNav = retour;
     if (retour) pile.pop(); else if (pile[pile.length - 1] !== h) pile.push(h);
     if (pile.length > 60) pile.splice(0, pile.length - 60);
     const sp = a.chemin.match(/^spectacle\/([\w-]+)(?:\/|$)/);
@@ -5499,6 +5519,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     } else requestAnimationFrame(poser);
     apres(false);
     if (premiere) preparer();
+    if (avant) creature(type === 'spectacle' || type === 'onglet' ? type : retourNav ? 'retour' : 'page');
     if (!vit) return;
     if (type === 'quitter' && bySlug[spAvant]) {
       const p = vue === 'accueil' ? Scene.coeur() : marque || { x: VW / 2, y: 32 };
@@ -5510,6 +5531,23 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // demandée l'emporte
   let NAV = 0;
   const routeEnsuite = () => { const j = ++NAV; ensuite(() => { if (j === NAV) route(); }); };
+  // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois
+  // l'encre ouverte et le titre posé, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
+  let tCreature = 0;
+  // (elle n'habite la marque que si le menu flottant lui laisse sa place : au téléphone, la ligne n'en a pas, rien ne s'y
+  // dessine ni n'y attend ; ajuste() la rappelle quand la place change)
+  function habiterCreature() { if (typeof CREATURE !== 'undefined' && CREATURE.actif && !$('#top').classList.contains('mince')) CREATURE.habiter($('#marque'), { encre: '#ffffff' }); }
+  function creature(type) {
+    if (typeof CREATURE === 'undefined' || !CREATURE.actif) return;
+    CREATURE.revenir();
+    const id = ++tCreature;
+    if (type !== 'spectacle') { CREATURE.reagir(type === 'onglet' ? 'clic' : type === 'retour' ? 'retour' : 'page'); return; }
+    setTimeout(() => {
+      const h = $('.u-titre', main);
+      if (id !== tCreature || !h || !motionOK()) return;
+      CREATURE.vers(h, { couleur: getComputedStyle(h).getPropertyValue('--u-vif').trim() || '#ffffff' });
+    }, 620);
+  }
   // pendant les temps morts, les calculs coûteux des autres vues sont faits d'avance (et refaits si D change)
   function preparer() {
     const plus_tard = f => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 300));
@@ -5597,6 +5635,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   if (MV) MV.presse(document);
   lire();
   cadre();
+  // la créature : la petite pieuvre de l'en-tête (la marque, posée par cadre()) vit, avec ses vraies tentacules ; elle prend la
+  // relève du dessin à la fin de l'ouverture. Ses moments sont joués par route() : chaque page, l'entrée dans un spectacle
+  habiterCreature();
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
   addEventListener('hashchange', routeEnsuite);
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);

@@ -650,6 +650,20 @@ for (const n of names) {
     const page = await ctx.newPage();
     page.on('pageerror', e => log.push(`${tag} erreur : ${e.message}`));
     page.on('console', m => { if (m.type() === 'error') log.push(`${tag} console : ${m.text()}`); });
+    // (règle 15 C) un changement de page aboutit tout de suite : une transition dont le rendu attend plus d'une seconde la
+    // capture de l'ancienne page est gelée (Chrome l'abandonne au bout de 4 s), relevée sur toute la visite
+    const gelees = [];
+    await page.exposeFunction('__transitionGelee', x => gelees.push(x));
+    await page.addInitScript(() => {
+      const svt = document.startViewTransition && document.startViewTransition.bind(document);
+      if (!svt || window.top !== window) return;
+      let de = location.hash;
+      addEventListener('hashchange', e => { de = new URL(e.oldURL).hash; });
+      document.startViewTransition = function (rendu, ...a) {
+        const t0 = performance.now(), depuis = `${de || '#/'} (y=${Math.round(scrollY)}) → ${location.hash}`;
+        return svt(typeof rendu === 'function' ? (...b) => { const t = performance.now() - t0; if (t > 1000) window.__transitionGelee(`${depuis} : ${Math.round(t)} ms`); return rendu(...b); } : rendu, ...a);
+      };
+    });
     // (règle 18 : le lecteur d'une vidéo, YouTube sans cookie ou Vimeo, n'est permis qu'après le geste qui la lance)
     page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fonts\.(googleapis|gstatic)\.com|omekkqjinvppadsoinvj\.supabase\.co/.test(u) && !(page.__geste18 && LECTEURS.test(u))) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
     // par défaut, l'instantané du dépôt (?base=0) : le contrôle ne dépend pas de l'état de la base ; BASE=1 pour la base.
@@ -971,6 +985,15 @@ for (const n of names) {
       await page.setViewportSize(vp);
       await page.waitForTimeout(300);
     }
+    // (règle 15 C) d'où qu'on parte : chaque page de spectacle quittée défilée au tiers de sa hauteur (l'ouverture est sortie
+    // de l'écran, le récit se lit), vers la suivante
+    const pagesSp = await page.evaluate(() => D.shows.map(s => s.enTournee || s.statut ? `#/spectacle/${s.slug}/voir` : `#/spectacle/${s.slug}`));
+    for (const h of [...pagesSp, '#/saisons']) {
+      await page.evaluate(h => { location.hash = h; }, h);
+      await page.waitForTimeout(1200);
+      await page.evaluate(() => scrollTo(0, Math.round(document.documentElement.scrollHeight / 3)));
+      await page.waitForTimeout(400);
+    }
     for (const [hash, attendu] of REDIRECTIONS) {
       await page.evaluate(h => { location.hash = h; }, hash);
       await page.waitForTimeout(700);
@@ -1005,6 +1028,7 @@ for (const n of names) {
         await page.waitForTimeout(450);
       }
     }
+    if (gelees.length) log.push(`${tag} : ${gelees.length} changement(s) de page gelé(s), la transition attend la capture de l'ancienne page (règle 15 C) : ${[...new Set(gelees)].slice(0, 6).join(' ; ')}`);
     await ctx.close();
   }
   // règle 15 C : les budgets de la réactivité (REACTIVITE=1)

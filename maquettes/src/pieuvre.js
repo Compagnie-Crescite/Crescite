@@ -9,12 +9,22 @@
    (ses premiers 12 %), part dans le même sens, rejoint le titre (le corps de la tentacule, étiré), passe dessous et
    s'enroule (ses derniers 30 %, qui s'effilent). D'une pose à l'autre, on mélange les angles : la tentacule se déroule
    et s'enroule, au lieu de glisser en ligne droite d'une forme à l'autre. La peau est reposée sur l'épine à chaque image.
+   Prolongée (racine : .7, au téléphone), une boucle reste entière et c'est sa descente qui s'étire : une courbe raide, aux
+   grands rayons, qui arrive à plat sur le titre ; angles et longueurs se mêlent alors ensemble, pour qu'aucune image du
+   trajet ne casse la tangente.
 
    PIEUVRE.creer() → les tentacules, dans l'ordre de D.pieuvre.bras : { cle, cote, i, ... }
      t.poser(ox, oy, s)          l'origine du dessin à l'écran (px) et l'échelle (px par unité du dessin)
-     t.viser(cible, duree)       cible : { cle, x, y, sens, U, mobile, tension } (le point d'accroche d'un titre, à l'écran ;
-                                 sens 1 : la tentacule continue vers la droite sous le titre, -1 vers la gauche ; U : la
-                                 longueur à souligner, en px ; tension, de 0 à 1 : la pointe se déroule) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
+     t.viser(cible, duree)       cible : { cle, x, y, sens, U, mobile, marge, racine, corps, tension } (le point d'accroche d'un
+                                 titre, à l'écran ; sens 1 : la tentacule continue vers la droite sous le titre, -1 vers la
+                                 gauche ; U : la longueur à souligner, en px ; marge : la place derrière le point d'accroche, en
+                                 px, jusqu'au bord de l'écran : elle arrive à plat de derrière, d'autant plus loin qu'elle vient
+                                 de loin, mais toute la courbe tient dans cette place ; racine et corps : les fractions de son
+                                 épine qui restent telles quelles dans le logo (.12 par défaut) et où commence la pointe (.7) :
+                                 racine: .7 garde une boucle entière et la prolonge depuis sa descente ; epaisseur : la largeur
+                                 au moins, en px, de ce qui sort du logo (une petite pieuvre a des tentacules trop fines pour
+                                 se voir : la partie déployée s'épaissit jusque-là, sa racine non) ; tension, de 0 à 1 :
+                                 la pointe se déroule) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
                                  coup). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
      t.avancer(dt, { temps, onde, penche, bob }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
                                  onde : son ampleur (0 : immobile, 1 : normale) ; penche : un angle, vers où elle se
@@ -44,8 +54,9 @@ const PIEUVRE = (() => {
       this.cle = b.cle; this.cote = b.cote; this.i = i; this.plat = !!b.plat;
       const E = b.epine, h = b.pas, n = E.length / 2 - 1;
       this.h = h; this.n = n; this.L0 = n * h;
-      // la pose a r fois plus de segments que l'épine (une tentacule courte étirée garde une courbe lisse)
-      const r = Math.max(1, Math.ceil(150 / n)), M = n * r;
+      // la pose a r fois plus de segments que l'épine (une tentacule étirée, ou dont une courte part se déploie, garde une
+      // courbe lisse jusque dans l'enroulement de sa pointe)
+      const r = Math.max(1, Math.ceil(450 / n)), M = n * r;
       this.r = r; this.M = M; this.Kr = Math.round(RAC * n) * r; this.Kb = Math.round(CORPS * n) * r;
       // l'épine au repos, raffinée : positions (unités du dessin) et angles (les angles aux points de l'épine, interpolés
       // linéairement, comme pieuvre.py les a pris pour noter la peau)
@@ -75,10 +86,7 @@ const PIEUVRE = (() => {
         const ca = Math.cos(a), sa = Math.sin(a);
         this.VX[k] = cx + this.T[k] * ca - this.N[k] * sa; this.VY[k] = cy + this.T[k] * sa + this.N[k] * ca;
       }
-      const sL = RAC * this.L0;
-      let k0 = 0; while (k0 < m && this.S[k0] < sL) k0++;
-      let k1 = m - 1; while (k1 > 0 && this.S[k1] < sL) k1--;
-      this.libre = [k0, k1];
+      this.rac = RAC; this.wmin = 0; this.libreRac = -1; this.libre = this.libres(RAC);
       // le repos dans le repère de l'écran : posé par poser()
       this.ox = 0; this.oy = 0; this.s = 1; this.pose_ = false;
       this.pose = null; this.depuis = null; this.but = null; this.q = 1; this.duree = 0; this.cible = null; this.bob = { x: 0, y: 0 };
@@ -91,6 +99,21 @@ const PIEUVRE = (() => {
       this.pose = null; this.depuis = null; this.q = 1;
     }
     racine() { return { x: this.ox + this.RX[0] * this.s, y: this.oy + this.RY[0] * this.s }; }
+    // la partie de la peau hors de la racine (le liseré ne coupe pas la tentacule de son corps), pour une racine de rac fois l'épine
+    libres(rac) {
+      if (rac === this.libreRac) return this.libre;
+      const sL = rac * this.L0, m = this.m;
+      let k0 = 0; while (k0 < m && this.S[k0] < sL) k0++;
+      let k1 = m - 1; while (k1 > 0 && this.S[k1] < sL) k1--;
+      this.libreRac = rac;
+      return this.libre = [k0, k1];
+    }
+    // les indices de la pose visée : la fin de la racine et le début de la pointe (ceux de la cible, sinon ceux du dessin)
+    bornes(c) {
+      const n = this.n, r = this.r, kr = Math.round((c && c.racine != null ? c.racine : RAC) * n) * r;
+      const kb = Math.round((c && c.corps != null ? c.corps : CORPS) * n) * r;
+      return [Math.min(kr, this.M - 2 * r), Math.max(Math.min(kb, this.M - r), kr + r)];
+    }
     pointe() { return { x: this.ox + this.RX[this.M] * this.s, y: this.oy + this.RY[this.M] * this.s }; }
     // une pose : l'angle (sg) et la longueur (ln) de chaque segment, l'angle aux points (th) ; mu : 0 au repos, 1 tendue
     reposPose(temps = 0, onde = 0, penche = 0) {
@@ -104,19 +127,40 @@ const PIEUVRE = (() => {
     }
     // vers un titre : la racine telle quelle, le corps jusqu'au point d'accroche, la pointe dessous puis enroulée
     viseePose(c, bob = { x: 0, y: 0 }) {
-      const M = this.M, Kr = this.Kr, Kb = this.Kb, s = this.s;
+      const M = this.M, [Kr, Kb] = this.bornes(c), s = this.s;
       const sg = new Float64Array(M), ln = new Float64Array(M), th = new Float64Array(M + 1);
       for (let k = 0; k < Kr; k++) { sg[k] = this.RS[k]; ln[k] = this.RL[k] * s; }
       const px = this.ox + this.RX[Kr] * s + bob.x, py = this.oy + this.RY[Kr] * s + bob.y, a0 = this.RS[Math.max(0, Kr - 1)];
       // le corps : une courbe qui part dans le sens de la racine et arrive à plat sur le titre
       const dx = c.x - px, dy = c.y - py, d = Math.hypot(dx, dy), kk = d * (c.mobile ? .5 : .42), du = c.sens < 0 ? -1 : 1;
-      // (au téléphone, elle ne part pas loin dans le sens de sa racine : elle resterait hors de l'écran)
-      const k1 = c.mobile ? Math.min(kk, 70) : kk;
-      const c1x = px + Math.cos(a0) * k1, c1y = py + Math.sin(a0) * k1, c2x = c.x - du * kk * .85, c2y = c.y;
-      const corps = [];
-      for (let j = 0; j <= 64; j++) {
-        const u = j / 64, b0 = (1 - u) ** 3, b1 = 3 * (1 - u) ** 2 * u, b2 = 3 * (1 - u) * u * u, b3 = u ** 3;
-        corps.push([b0 * px + b1 * c1x + b2 * c2x + b3 * c.x, b0 * py + b1 * c1y + b2 * c2y + b3 * c.y]);
+      const prolonge = c.racine != null;
+      // le bras de départ : au téléphone, depuis la racine du dessin, elle ne part pas loin dans son sens (elle resterait hors
+      // de l'écran) ; prolongée depuis une racine choisie, elle part dans le sens qu'elle a là et s'infléchit tôt
+      const k1 = prolonge ? kk * .66 : c.mobile ? Math.min(kk, 70) : kk;
+      const c1x = px + Math.cos(a0) * k1, c1y = py + Math.sin(a0) * k1;
+      const courbe = k2 => {
+        const c2x = c.x - du * k2, c2y = c.y, pts = [];
+        for (let j = 0; j <= 64; j++) {
+          const u = j / 64, b0 = (1 - u) ** 3, b1 = 3 * (1 - u) ** 2 * u, b2 = 3 * (1 - u) * u * u, b3 = u ** 3;
+          pts.push([b0 * px + b1 * c1x + b2 * c2x + b3 * c.x, b0 * py + b1 * c1y + b2 * c2y + b3 * c.y]);
+        }
+        return pts;
+      };
+      // elle arrive à plat, de derrière le point d'accroche, d'autant plus loin qu'elle vient de loin. Avec une marge (la place
+      // qu'il y a derrière, jusqu'au bord de l'écran), le recul se réduit jusqu'à ce que toute la courbe y tienne. Prolongée,
+      // elle prend au contraire toute la place qu'on lui laisse, jusqu'à une ampleur de 90 à 150 px selon la hauteur à
+      // descendre : une courbe raide, aux grands rayons, qui s'infléchit d'abord vers l'arrière puis balaie jusqu'au titre.
+      // Jamais moins de 12 px de recul : l'arrivée reste à plat, sans cassure de tangente avec le souligné
+      let k2 = kk * .85, place = c.marge;
+      if (prolonge && place != null) { place = Math.min(place, Math.max(90, Math.min(150, .45 * Math.abs(dy)))); k2 = Math.max(k2, 3 * place); }
+      let corps = courbe(k2);
+      if (place != null) {
+        const depasse = pts => pts.reduce((m, p) => Math.max(m, du * (c.x - p[0])), 0);
+        if (depasse(corps) > place) {
+          let bas = 0, haut = k2;
+          for (let i = 0; i < 9; i++) { const mi = (bas + haut) / 2; if (depasse(courbe(mi)) > place) haut = mi; else bas = mi; }
+          k2 = Math.max(12, bas); corps = courbe(k2);
+        }
       }
       // la pointe : sous le titre, puis elle s'enroule (sa courbure croît vers le bout)
       const U = Math.max(8, c.U || 0), pointe = [];
@@ -151,12 +195,13 @@ const PIEUVRE = (() => {
       reparti(pointe, M - Kb, Kb, p1);
       th[0] = sg[0]; th[M] = sg[M - 1];
       for (let k = 1; k < M; k++) th[k] = (sg[k - 1] + sg[k]) / 2;
-      return { sg, th, ln, mu: 1 };
+      return { sg, th, ln, mu: 1, prolonge };
     }
     viser(cible, duree = 600) {
       const meme = !!cible === !!this.cible && (!cible || (cible.cle === this.cible.cle));
       this.cible = cible;
-      if (cible) this.derniere = cible;
+      // (la racine de la dernière cible reste celle du liseré et de l'effilement, le temps qu'elle revienne au repos)
+      if (cible) { this.derniere = cible; this.rac = cible.racine != null ? cible.racine : RAC; this.wmin = cible.epaisseur || 0; }
       if (!this.pose_ || (meme && this.pose)) return;   // la même cible (peut-être déplacée) : le trajet continue
       this.depuis = this.pose || this.reposPose();
       this.but = cible ? this.viseePose(cible, this.bob) : null;
@@ -176,13 +221,14 @@ const PIEUVRE = (() => {
       if (this.q < 1 && this.depuis) {
         const A = this.depuis, q = this.q, M = this.M;
         const tot = ease(q), tot1 = ease(Math.min(1, q / .7)), tot2 = ease(Math.max(0, (q - .3) / .7));
-        const wA = this.etire ? tot1 : tot2, wL = this.etire ? tot2 : tot1;
+        // (prolongée, angles et longueurs vont ensemble : à chaque image une courbe lisse, sans cassure de tangente)
+        const ens = !!(A.prolonge || B.prolonge), wA = ens ? tot : this.etire ? tot1 : tot2, wL = ens ? tot : this.etire ? tot2 : tot1;
         // les angles, alignés sur ceux de départ (même tour), puis mêlés
         const sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M);
         const dec = Math.round((A.sg[0] - B.sg[0]) / TAU) * TAU;
         for (let k = 0; k < M; k++) { sg[k] = lerp(A.sg[k], B.sg[k] + dec, wA); ln[k] = lerp(A.ln[k], B.ln[k], wL); }
         for (let k = 0; k <= M; k++) th[k] = lerp(A.th[k], B.th[k] + dec, wA);
-        P = { sg, th, ln, mu: lerp(A.mu, B.mu, tot) };
+        P = { sg, th, ln, mu: lerp(A.mu, B.mu, tot), prolonge: ens };
       }
       this.pose = P;
       // l'épine à l'écran
@@ -197,15 +243,21 @@ const PIEUVRE = (() => {
       const P = this.pose, s = this.s, x = sv / this.h * this.r, M = this.M;
       const k = Math.min(M - 1, Math.max(0, Math.floor(x))), f = Math.min(1, Math.max(0, x - k));
       const cx = lerp(this.X[k], this.X[k + 1], f), cy = lerp(this.Y[k], this.Y[k + 1], f), a = lerp(P.th[k], P.th[k + 1], f);
-      // vers un titre, la pointe s'effile (un bout coupé net devient pointu)
-      const u = sv / this.L0, e = P.mu * lisse(.5, 1, u) * (this.plat ? .9 : .45);
-      const ca = Math.cos(a), sa = Math.sin(a), tt = tv * s * (1 - e * .8), nn = nv * s * (1 - e);
+      // vers un titre, la pointe s'effile (un bout coupé net devient pointu) : au-delà de la moitié, et hors de la racine
+      const u = sv / this.L0, e = P.mu * lisse(Math.max(.5, this.rac + .05), 1, u) * (this.plat ? .9 : .45);
+      const ca = Math.cos(a), sa = Math.sin(a), tt = tv * s * (1 - e * .8);
+      let nn = nv * s * (1 - e);
+      // (une largeur minimale, hors de la racine : la partie déployée d'une petite pieuvre reste visible)
+      if (this.wmin && P.mu > .001 && u > this.rac) {
+        const h = this.wmin / 2 * (1 - e * .6), b = Math.min(1, (u - this.rac) / .08) * P.mu;
+        if (Math.abs(nn) < h) nn = lerp(nn, (nv < 0 ? -1 : 1) * h, b);
+      }
       out[0] = cx + tt * ca - nn * sa; out[1] = cy + tt * sa + nn * ca;
     }
     // le contour de la tentacule à l'écran : la peau, et des points ajoutés là où elle s'étire (pas plus de 2,5 px entre deux)
     contour() {
       if (this.poly) return this.poly;
-      const m = this.m, S = this.S, T = this.T, N = this.N, xs = [], ys = [], p = [0, 0], q = [0, 0];
+      const m = this.m, S = this.S, T = this.T, N = this.N, xs = [], ys = [], p = [0, 0], q = [0, 0], libre = this.libres(this.rac);
       let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
       this.point(S[0], T[0], N[0], p);
       for (let k = 0; k < m; k++) {
@@ -219,8 +271,8 @@ const PIEUVRE = (() => {
           p[0] = q[0]; p[1] = q[1];
         }
         xs.push(p[0]); ys.push(p[1]);
-        if (k === this.libre[0]) this.debutLibre = xs.length - 1;
-        if (k === this.libre[1]) this.finLibre = xs.length - 1;
+        if (k === libre[0]) this.debutLibre = xs.length - 1;
+        if (k === libre[1]) this.finLibre = xs.length - 1;
       }
       for (let k = 0; k < xs.length; k++) { if (xs[k] < x0) x0 = xs[k]; if (xs[k] > x1) x1 = xs[k]; if (ys[k] < y0) y0 = ys[k]; if (ys[k] > y1) y1 = ys[k]; }
       this.bx = { x0, y0, x1, y1 };
