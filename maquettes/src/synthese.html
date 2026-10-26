@@ -2047,6 +2047,9 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 @keyframes fm7-respire { 0% { opacity: .55; scale: 1; } 70%, 100% { opacity: 0; scale: 3.2; } }
 /* les filtres en cours, sous la frise : chacun s'efface d'un geste, ou tous ensemble */
 .ft7 { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .9rem; min-height: 0; }
+/* (les filtres en cours vivent dans la barre du bas, gros, au bureau comme au téléphone : sous la frise, ils ne se
+   répètent pas) */
+.fs7 > .ft7 { display: none; }
 .ft7:empty { display: none; }
 .ft7 .s7-chip { --c: var(--saison-vive); min-height: 40px; border-color: color-mix(in srgb, var(--c) 70%, transparent); background: color-mix(in srgb, var(--c) 10%, transparent); color: var(--encre); }
 .ft7 .s7-chip i { background: var(--c); }
@@ -2057,8 +2060,8 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
    les puces du haut sont passées et jusqu'à l'alerte : « Filtres » et leur nombre, puis les filtres en cours (chacun s'efface
    d'un geste) et les mois de la saison, à choisir d'un doigt. « Filtres » ouvre le panneau, qui monte du bas (on le referme
    en le tirant vers le bas, d'un geste sur le voile, par sa croix ou Échap) : la recherche, les mois, les spectacles, les
-   communes, puis « Voir les dates » et leur nombre, qui le referme sur elles. Au bureau, rien de tout cela : la frise, ses
-   filtres et les puces sont à portée */
+   communes, puis « Voir les dates » et leur nombre, qui le referme sur elles. Au bureau, la barre ne porte que les filtres
+   en cours, dès qu'il y en a : la frise et les puces sont à portée */
 .bf7, .fe7 { display: none; }
 @media (max-width: 759px) {
   .bf7 { position: fixed; z-index: 38; left: 8px; right: 8px; bottom: calc(10px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 4px; height: 56px; padding: 6px; border-radius: 999px;
@@ -2076,8 +2079,6 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
     -webkit-mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 18px), transparent); mask-image: linear-gradient(90deg, transparent, #000 8px, #000 calc(100% - 18px), transparent); }
   .bf7-puces::-webkit-scrollbar { display: none; }
   .bf7-puces .s7-chip, .fe7 .s7-chip { flex: none; min-height: 44px; padding: .3rem .85rem; border-radius: 999px; }
-  .bf7-puces .s7-chip.est-actif { --c: var(--saison-vive); border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--encre); }
-  .bf7-puces .s7-chip.est-actif i { background: var(--c); }
   .bf7-puces .bf7-m { min-width: 52px; justify-content: center; font-family: var(--titre); font-weight: 500; font-size: .95rem; }
   .bf7-puces .bf7-m.est-passe { color: var(--gris); }
   .fe7:not([hidden]) { position: fixed; inset: 0; z-index: 60; display: block; }
@@ -2108,6 +2109,34 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .fe7-voir { flex: 1; justify-content: center; min-height: 50px; }
   .fe7-voir b { min-width: 1.6em; padding: 0 .4em; border-radius: 999px; background: rgba(255, 255, 255, .22); font-variant-numeric: tabular-nums; }
   html.fe7-ouvert { overflow: hidden; }
+}
+/* les filtres en cours, dans la barre du bas (au téléphone comme au bureau) : gros, teintés de leur couleur et cerclés
+   d'elle, leur croix dans une pastille claire ; ils appellent le geste qui les efface. Un filtre qui arrive bat deux fois
+   (une ventouse) ; à deux ou plus, « tout effacer » les suit */
+.bf7-puces .s7-chip.est-actif { --c: var(--saison-vive); flex: none; min-height: 46px; gap: .5rem; padding: .3rem .4rem .3rem .95rem; border: 2px solid var(--c); border-radius: 999px;
+  background: color-mix(in srgb, var(--c) 30%, var(--papier-2)); box-shadow: none; color: var(--encre); font: 600 1rem/1.15 var(--texte); }
+.bf7-puces .s7-chip.est-actif i { background: var(--c); }
+.bf7-puces .s7-chip.est-actif .croix { box-sizing: content-box; flex: none; width: 10px; height: 10px; padding: 7px; border-radius: 50%; background: var(--encre); stroke: var(--papier-2); stroke-width: 2.4;
+  transition: background-color var(--k-survol) var(--k-doux); }
+.bf7-puces .s7-chip.est-actif:is(:hover, :focus-visible) .croix { background: var(--c); }
+.bf7-tout { flex: none; min-height: 44px; padding: 0 .55rem; border: 0; background: none; color: var(--encre); font: 600 .875rem/1.2 var(--texte); text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; cursor: pointer; }
+.bf7-etiq { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.still) .bf7-puces .s7-chip.est-neuf { animation: bf7-appel 1.1s var(--k-doux) 2; }
+  @keyframes bf7-appel { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c) 70%, transparent); } 70%, 100% { box-shadow: 0 0 0 12px color-mix(in srgb, var(--c) 0%, transparent); } }
+}
+/* au bureau, les filtres en cours se collent aussi en bas de l'écran, au milieu, dès qu'il y en a (on les voit d'où que
+   l'on soit, on les efface de là) ; ni « Filtres » ni les mois : la frise, la recherche et les puces sont à portée */
+@media (min-width: 760px) {
+  .bf7 { position: fixed; z-index: 38; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 12px; max-width: min(980px, calc(100vw - 48px));
+    padding: 8px 10px 8px 22px; border-radius: 999px; background: color-mix(in srgb, var(--papier-2) 97%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--encre) 16%, transparent), 0 22px 44px -14px rgba(0, 0, 0, .95);
+    translate: -50% calc(100% + 44px); visibility: hidden; transition: translate .34s var(--k-doux), visibility 0s .34s; }
+  .bf7.est-visible.a-filtres { translate: -50% 0; visibility: visible; transition: translate .34s var(--k-doux); }
+  .bf7-ouvrir, .bf7 .bf7-m { display: none; }
+  .bf7-etiq { display: block; flex: none; font: 600 .75rem/1 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
+  .bf7-puces { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+  .bf7-puces::-webkit-scrollbar { display: none; }
 }
 .ag7 > .ag-listes { display: contents; }
 .ag7-proch { grid-area: proch; min-width: 0; }
@@ -2149,6 +2178,16 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
    anneau bat autour de la commune), cadre un mois ou un filtre, revient à la France ; sous elle, ce qu'elle montre */
 .ag7-carte { grid-area: carte; position: sticky; top: calc(var(--haut) + var(--sm7-h, 0px) + 12px); isolation: isolate; margin: 0; min-width: 0; }
 .ag7-carte::before { content: ""; position: absolute; inset: 0 -4% 22%; z-index: -1; background: radial-gradient(closest-side, color-mix(in srgb, var(--saison-vive) 9%, transparent), transparent); pointer-events: none; }
+.ag7-large { position: absolute; z-index: 2; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px 0 10px;
+  border: 1px solid color-mix(in srgb, var(--encre) 26%, transparent); border-radius: 999px; background: color-mix(in srgb, var(--papier-2) 88%, transparent); color: var(--encre);
+  font: 600 .8125rem/1 var(--texte); cursor: pointer; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.ag7-large[hidden] { display: none; }
+.ag7-large svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.ag7-large:hover { border-color: var(--saison-vive); }
+.ag7-large:focus-visible { outline: 2px solid var(--saison-vive); outline-offset: 2px; }
+.ag7-carte .carte.est-loupe { cursor: zoom-out; }
+.ag7-carte.est-large .carte { cursor: zoom-in; }
+.ag7-carte .carte-lieu { cursor: pointer; }
 .ag7-carte .carte { aspect-ratio: 800 / 780; max-height: calc(100svh - var(--haut) - var(--sm7-h, 0px) - 200px); overflow: hidden; border-radius: 18px; }
 .carte .bras-loupe { fill: none; stroke: var(--kc, var(--saison-texte)); stroke-width: 1.4px; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: 0; transition: opacity .3s var(--k-doux); }
 .carte :is(.bras, .bout) { transition: opacity .3s var(--k-doux); }
@@ -2182,6 +2221,9 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   /* (la loupe en carte, sous la frise : la France à gauche, ce qu'elle montre à droite) */
   .ag7-carte { position: relative; top: auto; display: grid; grid-template-columns: minmax(0, 40%) minmax(0, 1fr); align-items: center; gap: 1.25rem; padding: 12px;
     border: 1px solid var(--filet); border-radius: 22px; background: color-mix(in srgb, var(--papier-2) 70%, transparent); }
+  /* (au téléphone, la carte est petite : le bouton n'est que sa loupe, son nom pour les lecteurs d'écran) */
+  .ag7-large { top: 16px; left: 16px; width: 40px; padding: 0; justify-content: center; }
+  .ag7-large span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .ag7-carte::before { display: none; }
   .ag7-carte .carte { max-height: none; border-radius: 14px; background: color-mix(in srgb, var(--nuit) 30%, transparent); }
   .ag7-carte .s7-legende { margin: 0; }
@@ -2839,6 +2881,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const LECTURE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="plein-ico" d="M8 5.5v13l10.5-6.5z"/></svg>';
   const CROIX = '<svg class="croix" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
   const FILTRE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M7 12h10M10 17h4"/></svg>';
+  const LOUPE_MOINS = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20M7.5 10.5h6"/></svg>';
+  const LOUPE_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20M7.5 10.5h6M10.5 7.5v6"/></svg>';
   const ALERTE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.2v.3"/></svg>';
   const CRAYON = '<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4 16l1-4L13.5 3.5a1.8 1.8 0 0 1 2.5 0l.5.5a1.8 1.8 0 0 1 0 2.5L8 15z"/><path d="M11.5 5.5l3 3"/></svg>';
 
@@ -2939,7 +2983,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      loupe.sur(xy) · loupe.cadrer([xy…]) · loupe.france() : chacune rend le viewBox visé [x, y, l, h] */
   function LOUPE(svg) {
     if (!svg) return null;
-    const VB0 = cadreVB(), R = VB0[2] / VB0[3], RAPPROCHE = 230, MARGE = 46;
+    const VB0 = cadreVB(), R = VB0[2] / VB0[3], RAPPROCHE = 380, MARGE = 46;   // (de près : un peu moins de la moitié de la France)
     let cur = VB0.slice(), fin = VB0.slice(), raf = 0;
     const largeur = () => svg.__w || (svg.__w = svg.getBoundingClientRect().width || 0);
     const poser = vb => { cur = vb; svg.setAttribute('viewBox', vb.map(v => v.toFixed(1)).join(' ')); const w = largeur(); if (w) svg.style.setProperty('--k', (vb[2] / w).toFixed(3)); };
@@ -4749,7 +4793,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <div class="wrap">
         <div class="ag7">
           <div class="fs7"><div class="v-frise" id="v-frise"></div><div class="ft7" id="ft7"></div></div>
-          <figure class="ag7-carte">${carte({ lieux, passe: passeC, titre: S0.titre, couleurs: true, loupe: true })}<figcaption class="s7-legende" aria-hidden="true"></figcaption></figure>
+          <figure class="ag7-carte">${carte({ lieux, passe: passeC, titre: S0.titre, couleurs: true, loupe: true })}<button type="button" class="ag7-large" hidden></button><figcaption class="s7-legende" aria-hidden="true"></figcaption></figure>
           <div class="ag-listes" id="ag-listes">
             <div class="ag7-proch"><h3 class="s7-h">${esc(L.prochainesDates)}</h3><div class="ag-liste" id="ag-liste"></div></div>
             <div class="ag7-toutes"><h3 class="s7-h">${esc(L.toutesLesDates)}</h3><div class="ag-toutes" id="ag-toutes"></div></div>
@@ -4792,7 +4836,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           </form>
         </div>
       </div></section>
-      ${L.filtres ? `<div class="bf7" id="bf7"><button type="button" class="bf7-ouvrir" aria-haspopup="dialog" aria-expanded="false" aria-controls="fe7">${FILTRE}<span>${esc(L.filtres)}</span><span class="bf7-n"></span></button><div class="bf7-puces" role="group" aria-label="${esc(L.filtres)}"></div></div>
+      ${L.filtres ? `<div class="bf7" id="bf7"><button type="button" class="bf7-ouvrir" aria-haspopup="dialog" aria-expanded="false" aria-controls="fe7">${FILTRE}<span>${esc(L.filtres)}</span><span class="bf7-n"></span></button><span class="bf7-etiq" aria-hidden="true">${esc(L.filtres)}</span><div class="bf7-puces" role="group" aria-label="${esc(L.filtres)}"></div></div>
       <div class="fe7" id="fe7" role="dialog" aria-modal="true" aria-labelledby="fe7-t" hidden><div class="fe7-voile" data-fermer></div><div class="fe7-panneau"></div></div>` : ''}`;
     const svg = $('.ag7-carte svg'), liste = $('#ag-liste'), toutes = $('#ag-toutes'), listes = $('#ag-listes'), racine = $('#ag-saisons'), index = $('#ag-index'), legC = $('.s7-legende');
     // quand le filtre change, les saisons qui ont des résultats s'ouvrent ; quand il s'efface, les saisons reprennent leur état d'avant
@@ -5093,6 +5137,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // la loupe : ce qu'elle regarde (la date survolée, de près), sinon ce que les filtres gardent : la date choisie, le mois, la
     // commune, les communes des dates gardées ; sans filtre, la France
     const lp = LOUPE(svg);
+    // dézoomer : un clic sur la carte (hors d'une commune) ou son bouton « Toute la France » la rend à la France et l'y tient
+    // (la lecture et les filtres ne la rapprochent plus) ; un second geste (« Rapprocher ») lui rend sa loupe. Le bouton ne
+    // se montre que quand il y a de quoi faire : la carte approchée, ou tenue sur la France
+    let large = false, etatLarge = '';
+    const bLarge = L.touteLaFrance && L.rapprocher ? $('.ag7-large', main) : null, figure = svg && svg.closest('figure');
+    const majLarge = () => { if (!bLarge) return; const pres = svg.classList.contains('est-loupe'), e = `${large}${pres}`; if (e === etatLarge) return; etatLarge = e;
+      const t = large ? L.rapprocher : L.touteLaFrance;
+      bLarge.hidden = !large && !pres; bLarge.innerHTML = `${large ? LOUPE_PLUS : LOUPE_MOINS}<span>${esc(t)}</span>`; bLarge.setAttribute('aria-label', t);
+      if (figure) figure.classList.toggle('est-large', large); };
+    const basculerLarge = () => { large = !large; if (large) { lp.france(); viser(null); } else montrer(regard, true); majLarge(); };
+    if (bLarge && svg) {
+      bLarge.addEventListener('click', basculerLarge);
+      // (un clic sur la carte, hors d'une commune : comme le bouton, quand il y a de quoi faire)
+      svg.addEventListener('click', e => { if ((e.target.closest && e.target.closest('.carte-lieu')) || (!large && !svg.classList.contains('est-loupe'))) return; basculerLarge(); });
+      new MutationObserver(majLarge).observe(svg, { attributes: true, attributeFilter: ['class'] });
+    }
     const xyDe = l => { const x = parC.get(l); return x ? x.xy : CARTE.lieux[l] ? CARTE.lieux[l].xy : null; };
     // (la commune vue de près : son anneau bat, son nom s'écrit à côté d'elle, du côté où la loupe a de la place)
     const viser = (l, vb) => {
@@ -5109,6 +5169,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const repos = () => { const pj = jourChoisi(); if (pj) return { p: pj }; if (F.mois) return { mois: F.mois }; if (F.l !== null) return { l: F.l };
       const pl = !friseVue && lue && lue.isConnected && pts.find(x => x.j === lue.dataset.j); return pl ? { p: pl } : {}; };
     function montrer(c, zoom) {
+      zoom = zoom && !large;   // (tenue sur la France, la carte ne se rapproche plus ; la légende suit toujours)
       const x = c || repos();
       if (x.p) { legendeJour(x.p); if (zoom && lp) { const xy = xyDe(x.p.l); viser(x.p.l, xy ? lp.sur(xy) : null); } return; }
       if (x.mois) { const ps = pts.filter(p => dansMois(p.d0, p.d1, x.mois)); legendeMois(x.mois, ps); if (zoom && lp) { lp.cadrer(ps.map(p => xyDe(p.l)).filter(Boolean)); viser(null); } return; }
@@ -5200,7 +5261,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const fermerReservation = () => { const pj = jourChoisi(), k = pj && parFriseV.get(pj.id); if (k && rsVoir && rsVoir.cle() === k) rsVoir.choisir(null); };
     // une puce survolée : les dates de ce spectacle seules sur la frise (les puces font la légende de la frise)
     const isoler = b => { if (fSaison) fSaison.isoler(b ? b.dataset.s : null); };
-    /* au téléphone, les filtres en bas de l'écran : la barre (#bf7) paraît quand la recherche et les puces du haut sont passées,
+    /* les filtres en bas de l'écran (au bureau, seulement ceux en cours, dès qu'il y en a) ; au
+       téléphone, la barre (#bf7) paraît quand la recherche et les puces du haut sont passées,
        jusqu'à l'alerte ; elle porte les filtres en cours (un geste les efface) et les mois de la saison qui ont des dates (un
        geste en choisit un, et la page va à ses dates). « Filtres » ouvre le panneau (#fe7) : la recherche, les mois, les
        spectacles, les communes de la saison ; tout s'y applique sur l'instant, derrière lui ; « Voir les dates » le referme et
@@ -5217,12 +5279,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         io.observe(al); lecteurs.push(io);
       }
       const nb = k => pts.filter(p => dansMois(p.d0, p.d1, k)).length;
-      const puce = ([c, h, col]) => `<button type="button" class="s7-chip est-actif" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${h}${CROIX}</button>`;
+      let deja = new Set();
+      const puce = ([c, h, col]) => `<button type="button" class="s7-chip est-actif${deja.has(c) ? '' : ' est-neuf'}" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${h}${CROIX}</button>`;
       function dessinerBarre() {
         $('.bf7-n', bt).textContent = fs.length ? String(fs.length) : '';
+        bar.classList.toggle('a-filtres', fs.length > 0);
         const ms = moisSaison.filter(x => x.k !== F.mois && nb(x.k));
-        zone.innerHTML = fs.map(puce).join('') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
+        zone.innerHTML = fs.map(puce).join('') + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="bf7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
         // (les filtres en cours se voient d'abord ; sans eux, la bande se pose sur le premier mois à venir)
+        deja = new Set(fs.map(([c]) => c));
         if (fs.length) zone.scrollLeft = 0;
         else if (avant !== 0) requestAnimationFrame(() => { const b = $('.bf7-m:not(.est-passe)', zone); zone.scrollLeft = b && zone.scrollWidth > zone.clientWidth ? Math.max(0, b.offsetLeft - zone.offsetLeft - 6) : 0; });
         avant = fs.length;
