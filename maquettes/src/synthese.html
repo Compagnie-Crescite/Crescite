@@ -1306,6 +1306,14 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .lc-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 26px 20px; }
 .lc-grille .lc-titre { font-size: 1.05rem; }
 .lc-grille .lc-icone { width: 54px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 30%, transparent); }
+/* au téléphone (demande de la compagnie), le bouton de lecture en bas à gauche, à côté du titre de la vidéo : le centre de
+   l'affiche, où sont les visages, reste dégagé */
+@media (max-width: 899px) {
+  .lc-icone { left: 14px; top: auto; bottom: 14px; width: 48px; transform: none; box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 30%, transparent), 0 0 40px var(--u-lueur); }
+  .lc-titre { left: 76px; right: 14px; bottom: 14px; display: flex; align-items: center; min-height: 48px; }
+  .lc-grille .lc-icone { width: 42px; box-shadow: 0 0 0 5px color-mix(in srgb, var(--u-accent) 30%, transparent); }
+  .lc-grille .lc-titre { left: 68px; min-height: 42px; }
+}
 /* sous une petite vidéo, les deux boutons ne gardent que leur icône (leur libellé de D reste leur nom pour les lecteurs d'écran) */
 .lc-grille .lc-outils { gap: 6px; margin-top: 8px; }
 .lc-grille .lc-b { padding: 7px; }
@@ -2728,14 +2736,20 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     return sortes.length > 1 ? `<ul class="fr-legende">${sortes.map(([c, t]) => `<li class="fr-l-${c}"><i aria-hidden="true"></i>${esc(t)}</li>`).join('')}</ul>` : ''; };
   // une saison en bande de frise ; son nom court, sous la bande, vient de ses années (« 16-17 »)
   const bandeSaison = (k, n) => ({ id: k, debut: `${k.slice(0, 4)}-09-01`, fin: `${k.slice(5)}-08-31`, titre: D.saisons[k].titre, n, etiquette: `${k.slice(2, 4)}-${k.slice(7, 9)}` });
-  // le nombre de dates d'un groupe de D.saisons : ses lignes, sans les résidences (règle 23), comme la page des saisons les
-  // compte ; les chiffres d'un spectacle et ceux de la compagnie se comparent (une saison de représentations scolaires
-  // nombreuses ne fait pas plus de « dates » que toute la compagnie)
-  const nbDates = g => (g.dates || []).filter(dt => !dt.residence).length;
-  // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
+  // (demande de la compagnie) les représentations partout : toutes les frises et tous les bilans comptent ainsi, et les
+  // chiffres d'un spectacle se comparent à ceux de la compagnie (un spectacle seul ne la dépasse jamais). Une ligne de
+  // D.saisons en compte celui de la base (nb_representations, le dixième script), sinon ses séances, sinon une ; une ligne
+  // de suite (sans date à elle) n'en compte que si elle le dit ; une résidence (règle 23) et une date annulée, aucune
+  const nbRep = r => r.d.residence || annulee(r.d) ? 0 : r.d.nb_representations != null ? Math.max(0, +r.d.nb_representations || 0)
+    : r.d.representations && r.d.representations.length ? r.d.representations.length : r.suite ? 0 : 1;
+  const nbReps = rows => rows.reduce((a, r) => a + nbRep(r), 0);
+  // celles d'une saison, par spectacle (son slug) et en tout (calculées une fois par version de D)
+  const repsSaison = k => retenu(`reps:${k}`, () => { const m = { tout: 0 };
+    lignesSaison(k).forEach(r => { const n = nbRep(r), c = r.g.slug || ''; m.tout += n; m[c] = (m[c] || 0) + n; }); return m; });
+  // la diffusion d'un spectacle, saison par saison (le nombre de ses représentations), de sa première saison à la saison en cours
   function diffusion(s) {
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + nbDates(g), 0);
+    const n = k => repsSaison(k)[s.slug] || 0;
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
   }
@@ -2743,7 +2757,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   let ioDiffusion = null;
   function frisesDiffusion(racine) {
     const creer = c => { const s = bySlug[c.dataset.diffusion], bs = s ? diffusion(s) : [];
-      if (bs.length && c.isConnected && !c.firstElementChild) frise(c, { echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: `${s.titre} – ${L.dates}`, classe: 'frise-diffusion', anMin: 26 }); };
+      if (bs.length && c.isConnected && !c.firstElementChild) frise(c, { echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: `${s.titre} – ${L.representations}`, classe: 'frise-diffusion', anMin: 26 }); };
     const cs = $$('[data-diffusion]', racine);
     if (surPlaceRendu || !('IntersectionObserver' in window)) { cs.forEach(creer); return; }
     if (ioDiffusion) ioDiffusion.disconnect();
@@ -2829,7 +2843,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         ${P.actualite ? `<p class="fp-act"${edS(s, 'programmer', 'actualite')}>${esc(P.actualite)}</p>` : ''}
         ${P.equipeCreation && P.equipeCreation.length ? `<ul class="fp-equipe">${P.equipeCreation.map((l, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</li>`).join('')}</ul>`
           : fiche ? `<ul class="fp-fiche">${fiche}</ul>` : ''}
-        ${diffusion(s).some(b => b.n) ? `<div class="prog-frise"><p class="k">${esc(L.dates)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}
+        ${diffusion(s).some(b => b.n) ? `<div class="prog-frise"><p class="k">${esc(L.representations)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}
         ${P.lieux ? `<details class="fp-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}
         ${docs.length ? `<div class="fp-docs"><p class="k">${esc(L.aTelecharger)}</p><ul class="u-docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>` : ''}
         <p class="fp-liens">${dossierBouton(s.slug, 'bu plein')}<a class="bu plein" href="${href}" aria-label="${esc(`${s.titre} – ${L.decouvrir}`)}">${esc(L.decouvrir)}${FLECHE}</a>${lienVideo(s, 'boite')}</p>
@@ -3928,8 +3942,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const visibles = () => passe.map(s => ({ s, rows: s.rows.filter(garde) })).filter(x => x.rows.length);
     // la frise des saisons : chaque saison et sa densité (les dates que le filtre garde), la saison en cours comprise
     // (leur nom court sous l'arche, « 16-17 », comme la 04)
-    const bandesSaisons = () => [...passe.slice().reverse().map(s => ({ id: s.k, debut: `${s.k.slice(0, 4)}-09-01`, fin: `${s.k.slice(5)}-08-31`, titre: s.titre, n: s.rows.filter(r => jouee(r) && garde(r)).length, etiquette: `${s.k.slice(2, 4)}-${s.k.slice(7, 9)}` })),
-      { id: D.saison, debut: `${D.saison.slice(0, 4)}-09-01`, fin: `${D.saison.slice(5)}-08-31`, titre: S0.titre, n: lignes.filter(r => jouee(r) && garde(r)).length, etiquette: `${D.saison.slice(2, 4)}-${D.saison.slice(7, 9)}` }];
+    const bandesSaisons = () => [...passe.slice().reverse().map(s => ({ id: s.k, debut: `${s.k.slice(0, 4)}-09-01`, fin: `${s.k.slice(5)}-08-31`, titre: s.titre, n: nbReps(s.rows.filter(r => jouee(r) && garde(r))), etiquette: `${s.k.slice(2, 4)}-${s.k.slice(7, 9)}` })),
+      { id: D.saison, debut: `${D.saison.slice(0, 4)}-09-01`, fin: `${D.saison.slice(5)}-08-31`, titre: S0.titre, n: nbReps(lignes.filter(r => jouee(r) && garde(r))), etiquette: `${D.saison.slice(2, 4)}-${D.saison.slice(7, 9)}` }];
     // réserver (règle 17) : la date d'une ligne réservable est un bouton (son horaire écrit dessus) qui ouvre la carte de
     // réservation sous la ligne, dans l'univers de son spectacle ; une seule ouverte à la fois ; les dates annulées gardent leur date
     const resV = RS ? RS.dates() : [], resCles = new Set(resV.map(d => RS.cle(d))), parFriseV = new Map(resV.map(d => [cleProchaine(d), RS.cle(d)]));
@@ -4230,12 +4244,12 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const svg = $('.ep-diff-carte svg', main);
     bulleSur(svg, $('#bulle'), l => { const x = lieux.find(y => y.l === l);
       return x ? `<b>${esc(CARTE.nom(x))}</b><ul>${[...new Set(x.dates.map(d => d.spectacle))].map(t => `<li><span class="t">${esc(t)}</span></li>`).join('')}</ul>` : ''; });
-    // la diffusion de la compagnie, saison par saison (le nombre de ses dates) ; celle de chaque spectacle est dans sa fiche
+    // la diffusion de la compagnie, saison par saison (le nombre de ses représentations) ; celle de chaque spectacle est dans sa fiche
     // (sa largeur attendue : la colonne de gauche de l'aplat au bureau, toute la largeur au téléphone)
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
     const lDiff = innerWidth > 980 ? Math.round((largeurWrap() + 28 - Math.min(80, Math.max(32, innerWidth * .044))) * 5 / 12) - 28 : largeurWrap();
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', largeur: lDiff, anMin: 38,
-      bandes: ks.map(k => bandeSaison(k, D.saisons[k].spectacles.reduce((a, g) => a + nbDates(g), 0))) });
+      bandes: ks.map(k => bandeSaison(k, repsSaison(k).tout)) });
     frisesDiffusion(main);
     bientot(() => { pousser(svg); initSimulateurPro(); });
     return { titre: e.texte, entree: 'programmer' };
@@ -4825,23 +4839,23 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   // par saison, la plus récente d'abord, repliées sous leur titre ; la frise de sa tournée y mène
   function historiqueSp(s) {
     const G = datesPassees(s); if (!G.length || !L.historique) return '';
-    const n = G.reduce((a, g) => a + g.rows.filter(r => !r.suite).length, 0);
-    return `<details class="sp-historique"><summary>${esc(L.historique)} <small>${n}</small></summary><div class="u-bilan-dates dates-sp">${listeHistorique(G, s.slug)}</div></details>`;
+    const n = G.reduce((a, g) => a + nbReps(g.rows), 0);   // (ses représentations : les résidences n'en comptent pas)
+    return `<details class="sp-historique"><summary>${esc(L.historique)}${n ? ` <small>${n}</small>` : ''}</summary><div class="u-bilan-dates dates-sp">${listeHistorique(G, s.slug)}</div></details>`;
   }
   // les dates d'un spectacle, saison par saison (G, de datesPassees), puis mois par mois : une ligne ne dit que ses jours, son
   // mois est au-dessus (comme sur la page des saisons) ; une ligne de suite reste avec la sienne. compte : le nombre de ses
-  // dates (sans les résidences) à côté du nom de la saison, qui mène à la saison (le bilan)
+  // représentations à côté du nom de la saison, qui mène à la saison (le bilan)
   function listeHistorique(G, slug, compte = false) {
     const parMois = rows => rows.reduce((out, r) => { const m = r.suite && out.length ? out[out.length - 1].m : groupeDe(r);
       if (!out.length || out[out.length - 1].m !== m) out.push({ m, rows: [] }); out[out.length - 1].rows.push(r); return out; }, []);
-    return G.map(g => { const nb = g.rows.filter(r => !r.suite && !r.d.residence).length;
+    return G.map(g => { const nb = nbReps(g.rows);
       return `<section class="u-bilan-s"><h3 class="mois">${compte ? `<a href="#/saisons/${g.k}">${esc(g.titre)}</a>${nb ? ` <small>${nb}</small>` : ''}` : esc(g.titre)}</h3>${parMois(g.rows).map(x => `${x.m ? `<p class="u-mois">${esc(titreGroupe(x.m))}</p>` : ''}<ul class="dates" data-agenda="${esc(slug)}">${x.rows.map(r => ligneAgenda(r, '', true)).join('')}</ul>`).join('')}</section>`; }).join('');
   }
   function bilanSp(s, chap, G) {
     // (les chiffres ne comptent ni les dates annulées ni les résidences, règle 23 : elles paraissent dans ses dates, marquées)
     const jouee = r => !r.suite && !annulee(r.d) && !r.d.residence;
     const P = s.programmer || {}, jouees = G.flatMap(g => g.rows).filter(jouee), T = CARTE.spectacle(s.slug);
-    const chiffres = [[jouees.length, L.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes],
+    const chiffres = [[nbReps(jouees), L.representations], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes],
       [G.filter(g => g.rows.some(jouee)).length, L.saisons]].filter(([n, l]) => n && l);
     return chapitre(chap, 'bilan', L.bilan, `<div class="wrap">${titreChap(esc(L.bilan))}
         ${P.representations ? `<p class="u-bilan-rep"${edS(s, 'programmer', 'representations')}>${esc(P.representations)}</p>` : ''}
@@ -4890,7 +4904,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     h += chapitre(chap, 'lieux', L.lieuxDiffusion, `<div class="wrap">${titreChap(esc(L.lieuxDiffusion))}<div class="u-tournee"><div>
         ${P.representations ? `<p class="u-rep"${pr('representations')}>${nombre(P.representations)}</p>` : ''}${P.lieux ? `<p class="u-lieux"${pr('lieux')}>${esc(P.lieux)}</p>` : ''}
         ${s.statut && s.tournee && s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}
-        ${diffusion(s).some(b => b.n) ? `<div class="u-diff"><p class="k">${esc(L.dates)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}</div>
+        ${diffusion(s).some(b => b.n) ? `<div class="u-diff"><p class="k">${esc(L.representations)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}</div>
         <figure class="carte-sp">${carteTournee(s, sp.aVenir, sp.passe.filter(x => !vus.has(x.l)))}</figure></div></div>`);
     const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');
     // Bérénice : le détail du dossier, puis le PDF « fiche technique et plan » en lien
