@@ -306,7 +306,9 @@ visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une pr
 l'équipe » sonne une fois la notification partie ; dans la Diffusion, l'opportunité déplacée glisse jusqu'à sa nouvelle
 colonne ; dans une feuille de route, le compte « à compléter » saute quand il baisse ; le statut d'une note de frais
 qui change saute ; les photos ajoutées à un spectacle se posent ; les champs changent en douceur ; la première liste du
-journal se pose. Rien de tout cela si l'appareil
+journal se pose ; les menus (suggestions d'un lieu, export du tableur, « Plus » du pied) se posent. Sur le site en mode
+édition (`edition.js`), le point de la barre bat tant que des modifications attendent, et passe au vert un instant à
+l'enregistrement. Rien de tout cela si l'appareil
 demande moins d'animations, ni avec `?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
 une base fictive.
 

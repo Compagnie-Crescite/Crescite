@@ -548,6 +548,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
   @keyframes visee { 0%, 35% { box-shadow: 0 0 0 4px var(--accent-doux), 0 0 0 6px var(--accent); } }
   .ad-neuf { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
   .btn.sonne { transform-origin: 50% 0; animation: sonne .8s ease-in-out; }
+  .suggestions, .tab-export:not([hidden]), .pied-ed.a-plus.replie .pied-autres.ouvert { animation: ad-arrive .15s ease-out both; }   /* les menus se posent */
   @keyframes sonne { 15% { transform: rotate(-8deg); } 30% { transform: rotate(7deg); } 45% { transform: rotate(-5deg); } 60% { transform: rotate(3deg); } }
 }
 </style>
