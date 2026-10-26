@@ -101,14 +101,14 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 .nav-appli { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; display: flex; align-items: stretch; height: calc(var(--barre-bas) + var(--bs)); padding: 0 max(2px, var(--ds)) var(--bs) max(2px, var(--gs));
   background: color-mix(in srgb, var(--surface) 88%, transparent); -webkit-backdrop-filter: saturate(1.6) blur(18px); backdrop-filter: saturate(1.6) blur(18px); border-top: 1px solid var(--filet); }
 .nav-marque, .nav-pied { display: none; }
-.nav-curseur { position: absolute; left: 0; top: 0; z-index: 0; width: 56px; height: 30px; border-radius: 999px; background: var(--magenta-doux); opacity: 0; pointer-events: none;
-  transition: transform .42s cubic-bezier(.3, 1.4, .5, 1), width .42s cubic-bezier(.3, 1.4, .5, 1), height .3s, opacity .2s; }
+.nav-curseur { position: absolute; left: 0; top: 0; z-index: 0; width: 56px; height: 30px; border-radius: 999px; background: var(--accent-doux); opacity: 0; pointer-events: none;
+  transition: transform .42s cubic-bezier(.3, 1.4, .5, 1), width .42s cubic-bezier(.3, 1.4, .5, 1), height .3s, opacity .2s, background .35s; }
 .nav-item { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 0 4px; color: var(--gris); text-decoration: none; font: 600 .7rem/1.1 var(--sans); }
 .nav-item:hover { color: var(--encre); }
 .nav-icone { position: relative; display: grid; place-items: center; width: 56px; height: 30px; border-radius: 999px; transition: color .25s; }
 .nav-icone .ic { width: 24px; height: 24px; }
 .nav-item[aria-current] { color: var(--encre); }
-.nav-item[aria-current] .nav-icone { color: var(--magenta); background: var(--magenta-doux); }
+.nav-item[aria-current] .nav-icone { color: var(--accent); background: var(--accent-doux); }
 .nav-appli.curseur-pret .nav-item[aria-current] .nav-icone { background: none; }
 .nav-lib { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nav-lib-long { display: none; }
@@ -129,7 +129,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
   .nav-curseur { border-radius: 14px; }
   .nav-item { flex: none; flex-direction: row; justify-content: flex-start; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 14px; font-size: .97rem; }
   .nav-item:hover { background: var(--surface-2); }
-  .nav-item[aria-current] { background: var(--magenta-doux); color: var(--magenta); }
+  .nav-item[aria-current] { background: var(--accent-doux); color: var(--accent); }
   .nav-appli.curseur-pret .nav-item[aria-current] { background: none; }
   .nav-item[aria-current] .nav-icone, .nav-appli.curseur-pret .nav-item[aria-current] .nav-icone { background: none; color: inherit; }
   .nav-icone { position: static; width: 26px; height: 26px; }
@@ -214,7 +214,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 
 /* ———————————————— le héros : la prochaine date, en grand, une affiche dans l'univers du spectacle */
 .heros { position: relative; overflow: hidden; border-radius: 26px; background: var(--h-fond, #1d1418); color: var(--h-texte, #fff); box-shadow: var(--ombre-haute); isolation: isolate; }
-.heros-photo { position: absolute; inset: 0 0 auto 0; height: 200px; z-index: -2; }
+.heros-photo { position: absolute; inset: 0 0 auto 0; height: 200px; z-index: -2; overflow: hidden; }   /* la photo qui dérive (plus bas) reste dans son cadre */
 .heros-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 32%; }
 .heros-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--h-fond) 45%, transparent) 0%, transparent 32%, color-mix(in srgb, var(--h-fond) 72%, transparent) 72%, var(--h-fond) 100%); }
 .heros.annulee .heros-photo img, .heros.reportee .heros-photo img { filter: grayscale(1); }
@@ -490,7 +490,8 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 
 /* ———————————————— les notifications */
 .titre-notifs { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; }
-.notifs-jour { margin: 22px 4px 8px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
+.notifs-jour { position: sticky; top: calc(var(--haut) + var(--hs)); z-index: 2; margin: 14px 0 8px; padding: 6px 4px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--gris);
+  background: color-mix(in srgb, var(--papier) 86%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .notifs-groupe:first-of-type .notifs-jour { margin-top: 4px; }
 .liste-notifs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .notif { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 12px; align-items: start; padding: 14px 16px; border: 1px solid var(--filet); border-radius: var(--rayon-s); background: var(--surface); color: var(--encre); text-decoration: none; transition: transform .12s, background-color .2s; }
@@ -580,10 +581,11 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .tirer { position: fixed; z-index: 35; left: 50%; top: calc(var(--haut) + var(--hs) + 8px); width: 40px; height: 40px; margin-left: -20px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); box-shadow: var(--ombre-haute); color: var(--gris); opacity: 0; transform: translateY(-56px); pointer-events: none; transition: transform .25s, opacity .25s, color .2s; }
 .tirer .ic { width: 22px; height: 22px; }
 .tirer.tire { transition: color .2s; }
-.tirer.pret, .tirer.charge { color: var(--magenta); }
+.tirer.pret, .tirer.charge { color: var(--accent); }
+.tirer .pieuvre { width: 30px; height: 18px; color: inherit; transform-origin: 50% 12%; transform: scaleY(calc(1 + var(--etire, 0) * .45)); }
 @media (min-width: 760px) { .tirer { left: calc(50% + var(--rail) / 2); } }
 @keyframes tourne { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: no-preference) { .tirer.charge .ic, [data-actualiser].tourne .ic { animation: tourne .9s linear infinite; } }
+@media (prefers-reduced-motion: no-preference) { [data-actualiser].tourne .ic { animation: tourne .9s linear infinite; } }
 [data-actualiser].tourne { color: var(--magenta); }
 #annonces { position: fixed; z-index: 60; left: 50%; bottom: calc(var(--barre-bas) + var(--bs) + 12px); transform: translateX(-50%); display: grid; gap: 8px; width: min(480px, calc(100% - 24px)); pointer-events: none; }
 @media (min-width: 760px) { #annonces { bottom: 20px; left: calc(50% + var(--rail) / 2); } }
@@ -808,6 +810,108 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .camion-item-texte b { display: block; font: 600 0.95rem/1.2 var(--sans); color: var(--encre); }
 .camion-item-texte small { color: var(--gris); font-size: 0.82rem; }
 .camion-malle-badge { font: 700 0.74rem/1 var(--sans); padding: 4px 8px; border-radius: 6px; background: var(--surface-2); color: var(--encre); border: 1px solid var(--filet); margin-left: auto; white-space: nowrap; }
+
+/* ———————————————— le mouvement de l'espace de l'équipe : dix effets (equipe.js les déclenche). Rien de tout cela si
+   l'appareil demande moins d'animations (?anim=0 arrête ce que le script déclenche). Tout ce qui bouge en continu ne
+   touche que transform et opacity. */
+/* 5. l'application à la couleur du spectacle : --accent et --accent-doux, le magenta d'ordinaire ; sur la page d'une date,
+   d'une feuille de route ou d'un spectacle, la teinte de son univers (teinter, dans equipe.js : --teinte, --teinte-douce et
+   leur jeu de nuit). Le curseur des onglets, le retour et la marque la prennent, en trois dixièmes de seconde. */
+.appli { --accent: var(--magenta); --accent-doux: var(--magenta-doux); }
+.appli[data-teinte] { --accent: var(--teinte, var(--magenta)); --accent-doux: var(--teinte-douce, var(--magenta-doux)); }
+@media (prefers-color-scheme: dark) { .appli[data-teinte] { --accent: var(--teinte-s, var(--magenta)); --accent-doux: var(--teinte-douce-s, var(--magenta-doux)); } }
+.nav-icone { transition: color .3s, background-color .3s; }
+.barre-haut .retour { color: var(--accent); transition: color .3s, transform .15s, background-color .3s; }
+.barre-haut .retour:hover { background: var(--accent-doux); }
+.barre-haut.sous .marque-mini small, .appli[data-teinte] .marque-mini small { color: var(--accent); transition: color .3s; }
+/* 1. le retour au doigt : la vue suit le pouce (glisse), part ou revient en place (glisse-fin) ; le bouton « Retour » grandit
+   à mesure (--retour, de 0 à 1, posé sur html) */
+main.glisse { will-change: transform; border-radius: 18px 0 0 18px; box-shadow: -14px 0 32px -12px rgba(0, 0, 0, .28); }
+main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
+.barre-haut .retour { transform: scale(calc(1 + var(--retour, 0) * .3)); }
+.barre-haut .retour .ic { transition: transform .15s; transform: translateX(calc(var(--retour, 0) * -3px)); }
+/* 2. le compte à rebours qui roule : chaque chiffre (.d) monte à son tour quand le compte change (roule) ; la lampe « En
+   scène » bat ; la lueur du héros respire */
+.decompte-grand .d { display: inline-block; }
+.decompte-grand .lampe { align-self: center; width: 12px; height: 12px; border-radius: 50%; background: var(--h-accent); }
+/* 3. le jour J en direct : le trait « maintenant » descend le long de l'étape en cours (--avance, posé par majFrises) ; la
+   prochaine étape dit « dans 12 min » sous son heure */
+.frise li.maintenant::after { content: ""; position: absolute; left: 57px; top: calc(16px + (100% - 30px) * var(--avance, 0)); width: 20px; height: 3px; border-radius: 2px; background: var(--u, var(--magenta)); box-shadow: 0 0 0 2px var(--surface); }
+.frise .dans { display: block; margin-top: 1px; font: 600 .72rem/1.2 var(--sans); letter-spacing: .02em; color: var(--u-texte, var(--magenta)); white-space: nowrap; }
+/* 6. la route qui se trace : sur la carte d'une date, le chemin pointillé avance de Rouen au lieu, le long du bras ; le
+   billet survolé allume son bras et son point, les autres bras s'effacent ; le lieu survolé allume ses billets */
+.carte-tournee .route { fill: none; stroke: var(--surface); stroke-linecap: round; stroke-dasharray: 3 5; opacity: .9; }
+.carte-tournee .bras, .carte-tournee .point { transition: opacity .25s, fill .25s; }
+.carte-tournee.cible-active .bras:not(.allume) { opacity: .22; }
+.carte-tournee .bras.allume { opacity: 1; }
+.carte-tournee a.allume .point { fill: var(--c); }
+.billet.allume { box-shadow: var(--ombre-haute); outline: 2px solid var(--u, var(--magenta)); outline-offset: 2px; }
+.billet { transition: box-shadow .25s, outline-color .25s; }
+/* 8. la checklist qui coche : la case est dessinée (coche-svg), sa coche se trace ; la jauge complète luit une fois */
+.camion-item { position: relative; }
+.camion-item input[type=checkbox] { position: absolute; left: 14px; width: 24px; height: 24px; margin: 0; opacity: 0; }
+.camion-item .coche-svg { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border: 2px solid var(--bord-champ); border-radius: 8px; background: var(--surface); color: #fff; cursor: pointer; transition: background-color .2s, border-color .2s; }
+.camion-item .coche-svg svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.camion-item .coche-svg path { stroke-dasharray: 24; stroke-dashoffset: 24; }
+.camion-item.coche .coche-svg { background: var(--ok); border-color: var(--ok); }
+.camion-item.coche .coche-svg path { stroke-dashoffset: 0; }
+.camion-item:has(input:focus-visible) .coche-svg { outline: 3px solid var(--magenta); outline-offset: 2px; }
+.camion-jauge.complete .camion-barre-fond { box-shadow: 0 0 10px color-mix(in srgb, var(--ok) 70%, transparent); }
+.photo-envol { position: fixed; z-index: 90; border-radius: 10px; object-fit: cover; pointer-events: none; }
+/* 9. les notifications au doigt : « Lu » attend derrière la notification qu'on glisse vers la gauche */
+.liste-notifs li { position: relative; border-radius: var(--rayon-s); }
+.liste-notifs li::after { content: "Lu"; position: absolute; z-index: 0; inset: 0 0 0 auto; display: grid; place-items: center; width: 100px; border-radius: var(--rayon-s); background: var(--ok-doux); color: var(--ok); font: 700 .9rem/1 var(--sans); opacity: 0; pointer-events: none; transition: opacity .2s, background-color .2s; }
+.liste-notifs .notif { z-index: 1; }                                 /* au-dessus de « Lu » : la notification reste ce qu'on touche */
+.liste-notifs li.glisse::after { opacity: 1; }
+.liste-notifs li.pret::after { background: var(--ok); color: #fff; }
+.notif.glisse { transition: none; }
+.notif.relache { transition: transform .3s cubic-bezier(.3, 1.4, .5, 1); }
+.notif.lue-glisse { transition: transform .18s ease-in, opacity .18s ease-in; transform: translateX(-110%) !important; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  .decompte-grand.roule .d { animation: roule .55s cubic-bezier(.2, .9, .3, 1.15) calc(var(--i, 0) * 45ms) both; }
+  .decompte-grand.roule .mot { animation: roule .55s cubic-bezier(.2, .9, .3, 1.15) both; }
+  @keyframes roule { from { opacity: 0; transform: translateY(.45em); } }
+  .decompte-grand .lampe { animation: lampe 1.8s ease-out infinite; }
+  @keyframes lampe { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--h-accent) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 11px transparent; } }
+  .heros-motif { animation: respire 11s ease-in-out infinite alternate; }
+  @keyframes respire { to { transform: translate(-16px, -12px) scale(1.14); } }
+  .frise li.maintenant::after { transition: top 1.2s linear; }
+  /* 4. le billet qu'on déchire : pressé, son talon se décolle ; la page d'une date se pose (la photo se cale, les lignes montent),
+     sauf quand elle se redessine après une lecture de la base (main.rafraichi) */
+  .billet-pied { transform-origin: 0 0; transition: transform .12s ease-out; }
+  .billet:has(.lien-etendu:active) .billet-pied { transform: translateY(3px) rotate(-.7deg); }
+  main:not(.rafraichi) .heros-page .heros-corps > * { animation: monte .45s cubic-bezier(.2, .8, .2, 1) both; }
+  main:not(.rafraichi) .heros-page .heros-corps > :nth-child(2) { animation-delay: .06s; }
+  main:not(.rafraichi) .heros-page .heros-corps > :nth-child(3) { animation-delay: .12s; }
+  main:not(.rafraichi) .heros-page .heros-corps > :nth-child(4) { animation-delay: .18s; }
+  main:not(.rafraichi) .heros-page .heros-corps > :nth-child(n + 5) { animation-delay: .24s; }
+  /* 10. la photo du héros dérive, lentement ; sur la page d'une date, elle se cale d'abord */
+  .heros-photo img { animation: derive 26s ease-in-out infinite alternate; }
+  main:not(.rafraichi) .heros-page .heros-photo img { animation: pose 1.1s cubic-bezier(.2, .8, .2, 1) both, derive 26s 1.1s ease-in-out infinite alternate; }
+  @keyframes pose { from { transform: scale(1.12); } to { transform: scale(1.05); } }
+  @keyframes derive { from { transform: scale(1.05) translate(0, 0); } to { transform: scale(1.05) translate(-1.6%, 1.2%); } }
+  /* 6. la route avance quelques secondes à l'arrivée sur la page, puis se pose */
+  .carte-tournee .route { animation: roule-route 1.1s linear 8; }
+  @keyframes roule-route { to { stroke-dashoffset: -8; } }
+  /* 7. les horaires qui changent sous vos yeux : l'heure qui vient de changer (fraiche) se lave d'un jaune qui s'efface,
+     l'étiquette « modifié » surgit ; les billets glissent à leur place par equipe.js (glisserVers) */
+  .horaires li.fraiche .heure { animation: lavis 2.6s ease-out both; border-radius: 6px; }
+  @keyframes lavis { 0%, 30% { background: var(--option-doux); box-shadow: 0 0 0 6px var(--option-doux); } 100% { background: transparent; box-shadow: 0 0 0 6px transparent; } }
+  .horaires li.fraiche .modifie, .pop { animation: pop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+  @keyframes pop { from { transform: scale(.6); } }
+  /* 8. la coche se trace, la case saute un peu ; la jauge complète luit ; la note de frais qui vient d'arriver se pose */
+  .camion-item.coche .coche-svg path { transition: stroke-dashoffset .3s .05s ease-out; }
+  .camion-item.coche .coche-svg { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1); }
+  .camion-jauge.complete .camion-barre-fond { animation: luit .9s ease-out; }
+  @keyframes luit { 30% { filter: brightness(1.5); } }
+  .frais-ligne.neuve { animation: monte .45s cubic-bezier(.2, .8, .2, 1) both; }
+  .tirer.pret .pieuvre, .tirer.charge .pieuvre { animation: nage .7s ease-in-out infinite; }
+  .tirer.charge .pieuvre { animation-duration: .55s; }
+  @keyframes nage { 0%, 100% { transform: rotate(-7deg) scaleY(calc(1 + var(--etire, 0) * .45)); } 50% { transform: rotate(7deg) scaleY(calc(1.08 + var(--etire, 0) * .45)); } }
+  /* 9. « tout marquer comme lu » : les notifications s'éteignent l'une après l'autre */
+  .notif.balaye { animation: balaye .7s ease-out calc(var(--i, 0) * 50ms) both; }
+  @keyframes balaye { from { background: color-mix(in srgb, var(--magenta-doux) 60%, var(--surface)); border-color: color-mix(in srgb, var(--magenta) 32%, var(--filet)); } }
+}
 
 @media print {
   .nav-appli, .barre-haut, .evitement, #annonces, .bandeau-etat, .pied-vue, .barre-feuille, .tirer, .zone-bandeau, .gestes { display: none !important; }
