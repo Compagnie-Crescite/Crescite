@@ -812,7 +812,7 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-sep[data-mv="trace"].mv-attente { transition: transform var(--k-lent) var(--k-doux); }
 /* l'en-tête : l'aplat (la saison ; sur ses deux pages, la couleur du parcours, --e) */
 .ep-tete { position: relative; isolation: isolate; overflow: hidden; padding: clamp(36px, 4.6vw, 68px) 0 clamp(48px, 5.6vw, 84px); background: var(--e, var(--saison)); color: #fff; --ep-sep: #fff; }
-.ep-tete :focus-visible, .ep-aplat :focus-visible, .ep-cta :focus-visible, .ep-portes :focus-visible { outline-color: #fff; }
+.ep-tete :focus-visible, .ep-aplat :focus-visible, .ep-cta :focus-visible, .ep-groupes :focus-visible { outline-color: #fff; }
 .ep-tete-ph { position: absolute; top: 0; right: 0; bottom: 0; z-index: -1; width: min(48%, 680px); background: var(--e); }
 .ep-tete-ph img { width: 100%; height: 100%; object-fit: cover; }
 .ep-tete-ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to right, var(--e), color-mix(in srgb, var(--e) 0%, transparent) 62%); }
@@ -826,10 +826,17 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-rac { display: flex; flex-wrap: wrap; gap: 8px; margin: clamp(18px, 2.4vw, 28px) 0 0; padding: 0; list-style: none; }
 .ep-rac button { padding: 8px 15px; border: 1.5px solid rgba(255, 255, 255, .62); border-radius: 999px; background: transparent; color: #fff; font: 700 .72rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
 .ep-rac button:hover { border-color: #fff; background: #fff; color: var(--e, var(--saison)); }
-/* ses deux pages : de grandes portes photographiques, la photo passée dans la couleur du parcours */
-.ep-pages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+/* ses quatre groupes, dans l'ordre : 1 programmateurs et directeurs de salle (leur page et leur espace réservé, côte à côte),
+   2 établissements scolaires (leur page, sur toute la largeur), 3 l'équipe et 4 l'administration (deux aplats côte à côte) */
+.ep-groupes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+.ep-g { display: grid; min-width: 0; }
+.ep-g.avec-page { grid-column: 1 / -1; }
+.ep-g.duo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ep-g.duo > .ep, .ep-g:not(.avec-page) + .ep-g:not(.avec-page) > .ep { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
+/* ses pages : de grandes portes photographiques, la photo passée dans la couleur du parcours */
 .ep-porte { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; height: 100%; min-height: 230px;
   padding: clamp(22px, 2.4vw, 36px) clamp(20px, 2.4vw, 38px); background: var(--e); color: #fff; text-decoration: none; }
+.ep-porte > .ep-n { position: absolute; top: clamp(22px, 2.4vw, 36px); left: clamp(20px, 2.4vw, 38px); }
 .ep-porte-ph { position: absolute; inset: 0; z-index: -1; background: var(--e); }
 .ep-porte-ph img { width: 100%; height: 100%; object-fit: cover; transition: scale var(--k-lent) var(--k-doux); }
 .ep-porte-ph::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, color-mix(in srgb, var(--e) 70%, #000) 0%, transparent 70%); mix-blend-mode: multiply; }
@@ -839,14 +846,11 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-porte:hover .ep-porte-ph img { scale: 1.05; }
 .ep-porte:is(:hover, :focus-visible) .fleche { translate: 6px 0; }
 .ep-porte:focus-visible { outline: 3px solid #fff; outline-offset: -8px; }
-.ep-pages li + li .ep-porte { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
 .ep:has(.ep-a.mv-presse) { scale: .985; transition: scale var(--k-presse); }
-/* les trois espaces réservés : trois aplats numérotés (la saison, la saison profonde, la nuit) ; au survol, un lavis clair
-   prend l'aplat, la flèche avance, souple */
-.ep-portes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
+/* les trois espaces réservés : des aplats (la saison profonde, la saison, la nuit) ; au survol, un lavis clair prend l'aplat,
+   la flèche avance, souple */
 .ep { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 16px; min-height: clamp(300px, 46vh, 460px);
   padding: clamp(24px, 2.6vw, 40px); background: var(--ep); color: #fff; container-type: inline-size; }
-.ep + .ep { box-shadow: inset 2px 0 0 rgba(255, 255, 255, .55); }
 .ep::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, .12); opacity: 0; transition: opacity var(--k-survol) var(--k-doux); pointer-events: none; }
 .ep:is(:hover, :focus-within)::before { opacity: 1; }
 .ep-n { font: 700 clamp(64px, 8vw, 128px)/.8 var(--titre); letter-spacing: -.04em; opacity: .28; }
@@ -900,14 +904,13 @@ html.ed-actif .ep-a::after { content: none; }
   .ep-act-ph { position: static; max-width: 560px; }
 }
 @media (max-width: 860px) {
-  .ep-portes { grid-template-columns: minmax(0, 1fr); }
   .ep { min-height: 220px; }
-  .ep + .ep { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
 }
 @media (max-width: 760px) {
-  .ep-pages { grid-template-columns: minmax(0, 1fr); }
-  .ep-porte { min-height: 130px; align-items: center; }
-  .ep-pages li + li .ep-porte { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
+  .ep-groupes, .ep-g.duo { grid-template-columns: minmax(0, 1fr); }
+  .ep-g.duo > .ep, .ep-g:not(.avec-page) + .ep-g:not(.avec-page) > .ep { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
+  .ep-porte { min-height: 130px; align-items: center; padding-left: 104px; }
+  .ep-porte > .ep-n { top: 50%; translate: 0 -50%; }
   .ep-tete-ph { width: 100%; opacity: .42; }
   .ep-tete-ph::after { background: linear-gradient(to top, var(--e), transparent); }
   .ep-rac { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gout)); padding: 2px var(--gout) 4px; scrollbar-width: none; }
@@ -3131,15 +3134,18 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
      Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : il s'y pose d'un rebond (le corps se ramasse, se détend),
      puis ses huit tentacules, les vraies, celles du dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté
-     par-dessus), se déploient l'une après l'autre, en cadence (la présentation) : chacune se déroule vers un titre de
-     spectacle, qui paraît quand elle l'atteint, de haut en bas, un côté puis l'autre (l'éventail s'ouvre) ; celles qui n'ont
-     pas de titre (les longues) s'étirent à leur tour, au même rythme ; puis elles reviennent se lover dans le logo, dans le
-     même ordre, ondulent à peine, se penchent vers la souris. Au téléphone (les titres dessous), les quatre longues
-     tentacules (les boucles, les queues) descendent chacune vers l'un des quatre premiers titres, une à chaque temps, et y
-     restent ; toucher une tentacule la rétracte (le corps a un sursaut), toucher un titre y envoie sa tentacule (un second
-     toucher y mène). Survoler ou choisir au clavier un titre, ou survoler une tentacule (au doigt : un premier
-     toucher) : elle se déroule vers lui, le souligne et s'y enroule, et la photo du spectacle passe devant, à peine, derrière
-     la pieuvre. Sinon les photos des spectacles s'enchaînent en fondu, chacune présentée par sa tentacule. Le
+     par-dessus), se déploient ensemble, vite (chacune part à son instant, à quelques dixièmes près), et font paraître tous
+     les spectacles : chacun a sa tentacule, qui se déroule depuis sa racine jusqu'à son titre, le souligne et s'y enroule.
+     Au bureau, les titres sont posés sur deux arcs de part et d'autre ; au téléphone, dessous, de part et d'autre d'une
+     ligne, et les tentacules passent par les côtés : celles de gauche servent les titres de gauche, celles de droite ceux de
+     droite, chacune file vers le bord de l'écran, s'éloigne le long du bord (plus fine, plus pâle : au lointain, dans son
+     couloir, les courtes au plus près des titres, les longues au plus près du bord), puis revient en avant sous son titre,
+     par l'extérieur, et le souligne vers son médaillon : rien ne se croise. Une fois en place,
+     elles restent. Un clic sur un spectacle (son titre, ou sa tentacule) remonte sa tentacule d'un coup élastique (la pointe
+     se love d'abord, dépasse, se balance, et le corps a un sursaut) ; la photo du spectacle passe devant. Un clic sur un
+     autre spectacle redéploie la première et remonte la sienne ; un second clic sur le même mène à sa page (au clavier,
+     Entrée y mène tout de suite). Survoler un titre, ou sa tentacule, tire un peu dessus (sa pointe se déroule). Sinon les
+     photos des spectacles s'enchaînent en fondu. Le
      bouton de pause arrête tout ce qui bouge de lui-même ; moins d'animations : rien ne bouge, les photos changent d'un
      fondu bref. La scène est faite une fois et replacée dans l'accueil à chaque rendu : quand D change, rien ne se rejoue. */
   const Scene = (() => {
@@ -3152,7 +3158,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const cv = $('.sc-toile', el), ctx = cv.getContext('2d'), cadreD = $('.sc-cadre', el), ul = $('.sc-titres', el), tete = $('.sc-h', el), bPause = $('.sc-pause', el);
     // la pieuvre : le corps du logo et huit tentacules qui en partent (la marque : ni la base ni l'administration n'y touchent)
     const BOX = D.arms.box, TS = PIEUVRE.creer(), CORPS = PIEUVRE.corps(TS);
-    const INK = [255, 255, 255], ENCRE = 'rgb(255,255,255)', COEUR = [771, 640], PRES = 2900;
+    const INK = [255, 255, 255], ENCRE = 'rgb(255,255,255)', COEUR = [771, 640];
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
     const easeOut = t => 1 - Math.pow(1 - t, 3);
     let W = 0, H = 0, dpr = 1, s = .38, ox = 0, oy = 0, mobile = false, gut = 24, ech = 1;
@@ -3164,8 +3170,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
 
     // les tentacules : celles du logo, au service de tous les titres (aucune n'est à un spectacle : la pieuvre ne compte pas) ;
     // dir : le sens de sa pointe au repos (vers où elle se penche)
-    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, geste: null, tenu: null, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
-    let secousse = 0;   // (au téléphone : l'instant où une tentacule a été lâchée, le corps sursaute)
+    const BRAS = TS.map((t, i) => ({ t, cle: t.cle, i, cote: t.cote, rang: 99, but: null, geste: null, tenu: null, tension: 0, teinte: 0, penche: 0, em: 0, col: INK, T: [], dir: t.RS[t.M - 1] }));
+    let secousse = 0, remonte = null;   // l'instant où une tentacule a été remontée (le corps sursaute), et le spectacle remonté
     // la secousse d'un rebond : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant (comme la créature)
     const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? easeOut(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
     // les titres : un par spectacle, en nombre libre ; refaits quand D change
@@ -3184,7 +3190,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ecouter(T); return T; });
       ul.setAttribute('aria-label', L.lesSpectacles);
       BRAS.forEach(a => { a.but = null; a.geste = null; a.tenu = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
-      survol = null; brasSurvol = null; dernierActif = null;
+      survol = null; brasSurvol = null; dernierActif = null; remonte = null;
       if (pres) pres.plan = null;
       diapo();
     }
@@ -3206,12 +3212,25 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const roule = () => affiche && visible && !document.hidden && !pause && motionOK() && !document.documentElement.classList.contains('ed-actif') && TIT.length > 1;
     function planifier() { clearTimeout(tAuto); if (affiche && !pause && motionOK()) tAuto = setTimeout(avancer, 6500); }
     function avancer() { if (roule() && !actif() && !(pres && performance.now() < pres.fin)) { iAuto = (iAuto + 1) % TIT.length; reveil(); } planifier(); }
+    // chaque bras tient l'un de ses titres (le premier), sauf celui du spectacle remonté : à la mise en page, après
+    // l'attribution (un bras dont le titre a changé de bras en prend un autre), et quand on revient sur l'accueil
+    function tenirTous() {
+      if (eveil === null || pres) return;
+      BRAS.forEach(a => { if (!a.T.length) a.tenu = null; else if (!a.tenu) { if (!(remonte && remonte.bras === a)) a.tenu = a.T[0]; } else if (!a.T.includes(a.tenu)) a.tenu = a.T[0]; });
+    }
 
     // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur. Au téléphone, la boucle
     // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
     // plat de derrière le point d'accroche, dans la place qu'il y a jusqu'au bord de l'écran (marge : l'épine reste à 14 px du bord)
-    const cibleDe = T => ({ cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
-      ...(mobile ? { racine: .7, corps: .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4 } : {}) });
+    // (au téléphone, les boucles et les queues se prolongent depuis leur descente (racine .7), les franges, courtes, se
+    // déroulent presque entières (racine .15) ; chacune passe par un couloir le long du bord de son côté (rail : la queue au
+    // plus près du bord, puis la boucle, la frange haute, la frange basse), au lointain (loin))
+    const COULOIR = { queue: 0, boucle: 1, frangeH: 2, frangeB: 3 };
+    const cibleDe = T => {
+      const cle = mobile && T.bras ? T.bras.cle : '', fr = /^frange/.test(cle), voie = COULOIR[cle.replace(/[LR]$/, '')] || 0;
+      return { cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
+        ...(mobile ? { racine: fr ? .15 : .7, corps: fr ? .72 : .86, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4, rail: T.dirU > 0 ? 14 + voie * 6 : W - 14 - voie * 6, loin: .45 } : {}) };
+    };
     // chaque titre a sa tentacule : dans l'ordre du tour de la pieuvre (titres et pointes rangés par leur angle autour de son
     // cœur), sans croisement ; s'il y a plus de titres que de tentacules, une tentacule en sert plusieurs
     function attribuer() {
@@ -3222,11 +3241,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       BRAS.forEach(a => { a.T = []; a.rang = 99; });
       const n = ts.length, m = bs.length;
       if (!n || !m) return;
-      // au téléphone, les quatre longues tentacules (les boucles d'abord, puis les queues), prolongées depuis leur descente :
-      // celles de gauche pour un titre souligné vers la droite (elles arrivent par sa gauche), celles de droite pour l'autre
-      // sens, chacune au service d'un titre sur deux de son côté
+      // au téléphone, les huit tentacules : celles de gauche pour un titre de gauche (souligné vers la droite, depuis le bord :
+      // elles arrivent par le côté gauche), celles de droite pour l'autre côté ; de chaque côté, de la plus courte et la plus
+      // basse (une frange) à la plus longue (la queue), vers les titres du plus proche au plus lointain : leurs couloirs
+      // s'emboîtent sans se croiser
       if (mobile) {
-        const S = { L: ['boucleL', 'queueL'], R: ['boucleR', 'queueR'] }, nb = { L: 0, R: 0 };
+        const S = { L: ['frangeBL', 'frangeHL', 'boucleL', 'queueL'], R: ['frangeBR', 'frangeHR', 'boucleR', 'queueR'] }, nb = { L: 0, R: 0 };
         for (const c of 'LR') S[c] = S[c].map(cle => BRAS.find(a => a.cle === cle)).filter(Boolean);
         if (S.L.length && S.R.length) {
           TIT.forEach(T => { const c = T.dirU > 0 ? 'L' : 'R', a = S[c][nb[c]++ % S[c].length]; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
@@ -3320,9 +3340,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ox = W / 2 - (x0 + bw / 2) * s; oy = oTop - y0 * s;
         // les titres sous la pieuvre, puis le menu, sous le dernier (au moins au bas du premier écran)
         let y = oTop + oh + 40 * ech;
+        // (la tentacule arrive par l'extérieur, sous le bout du texte tourné vers le bord, et souligne vers le médaillon)
         TIT.forEach((T, i) => {
           const g = i % 2 === 0, ind = IND[i % IND.length];
-          T.droite = !g; T.dirU = g ? -1 : 1;
+          T.droite = !g; T.dirU = g ? 1 : -1;
           T.bx = g ? gut + 20 + ind : W - gut - 20 - ind - T.w; T.by = y;
           y += T.bh + 30;
         });
@@ -3331,11 +3352,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
       el.style.height = H + 'px';
       if (affiche) Menu.sousPieuvre(yMenu);
-      // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le médaillon est de ce côté : la
-      // tentacule arrive sous lui, et le souligné part du texte)
+      // le point d'accroche : au bout du texte d'où part le souligné, 6 px avant (au téléphone, le bout tourné vers le bord de
+      // l'écran : la tentacule arrive de là, et le souligné va vers le médaillon)
       TIT.forEach(T => { T.el.classList.toggle('droite', T.droite); T.ancre = { x: T.dirU < 0 ? T.bx + T.tx1 + 6 : T.bx + T.tx0 - 6, y: T.by + T.th + 5 }; });
       BRAS.forEach(a => a.t.poser(ox, oy, s));
-      attribuer();
+      attribuer(); tenirTous();
       if (pres) pres.plan = null;   // (la présentation se replanifie sur cette mise en page)
       dpr = Math.min(2, devicePixelRatio || 1);
       cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
@@ -3344,26 +3365,21 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       tPrec = 0; image(performance.now(), true);
     }
     const actif = () => survol || TIT.find(T => T.focus) || brasSurvol || null;
-    // la présentation : le plan des visites de chaque bras (un titre, ou un geste), en cadence (un temps par titre : de 220 à
-    // 360 ms au bureau selon leur nombre, 760 ms au téléphone, où les boucles descendent de titre en titre) ; chaque titre
-    // reçoit son temps (tPres : il paraît quand son bras l'atteint)
+    // la présentation : le plan des visites de chaque bras (un titre, ou un geste), toutes ensemble ; chaque titre reçoit son
+    // temps (tPres : il paraît quand son bras l'atteint)
     function presenter() {
-      const P = pres, pas = mobile ? 760 : clamp(2200 / Math.max(1, TIT.length), 220, 360), V = new Map();
-      TIT.forEach(T => { T.tPres = null; });
+      const P = pres, V = new Map();
+      // chaque bras part à son instant (de 0 à 195 ms après le premier : ensemble, mais pas au cordeau) vers le premier de ses
+      // titres, et y reste ; chaque titre paraît quand son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
+      const depart = a => P.t0 + (a.i % 4) * 45 + (a.i % 2) * 60;
       let fin = P.t0;
-      if (mobile) {
-        // chaque tentacule descend vers le premier de ses titres, une à chaque temps, et y reste (tenu) ; les titres suivants
-        // paraissent à leur temps, sans tentacule (la leur viendra quand on les touchera)
-        TIT.forEach(T => { T.tPres = P.t0 + T.i * pas; const a = T.bras; if (!a || V.has(a)) return; V.set(a, [{ t0: T.tPres, fin: Infinity, T }]); a.tenu = T; fin = Math.max(fin, T.tPres + 1100); });
-      } else {
-        // de haut en bas, un côté puis l'autre : l'éventail s'ouvre ; les bras sans titre s'étirent ensuite, à leur tour
-        const avec = BRAS.filter(a => a.T.length).sort((x, y) => x.T[0].by - y.T[0].by), sans = BRAS.filter(a => !a.T.length);
-        avec.forEach((a, k) => { const t0 = P.t0 + k * pas; a.T.forEach(T => { if (T.tPres === null) T.tPres = t0; }); V.set(a, [{ t0, fin: t0 + PRES, T: a.T[0] }]); });
-        sans.filter(a => !/^frange/.test(a.cle)).forEach((a, k) => { const t0 = P.t0 + (avec.length + k) * pas; V.set(a, [{ t0, fin: t0 + 1400, c: gesteDe(a, t0) }]); });
-        TIT.forEach((T, i) => { if (T.tPres === null) T.tPres = P.t0 + i * pas; });
+      TIT.forEach(T => { T.tPres = P.t0; });
+      for (const a of BRAS) {
+        const t0 = depart(a);
+        if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + 1100); }
+        else if (!mobile && !/^frange/.test(a.cle)) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
       }
-      V.forEach(v => v.forEach(x => { if (isFinite(x.fin)) fin = Math.max(fin, x.fin); }));
-      P.plan = V; P.fin = fin + 900;
+      P.plan = V; P.fin = fin + 300;
     }
     // un geste (les longs bras seulement : les queues, les boucles) : le bras se déroule un peu dans le sens où il pointe,
     // d'autant plus qu'il est long, sa pointe à peine enroulée, et reste dans l'écran
@@ -3375,7 +3391,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
     function placer(T, allume, now, anime) {
       let em = 0;
-      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (pres && T.tPres != null ? T.tPres + 600 : eveil + 650 + T.i * 60)) / 520);
+      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (pres && T.tPres != null ? T.tPres + 600 : eveil + 500)) / 520);
       T.em = Math.max(T.em, em);
       const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
       if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
@@ -3392,7 +3408,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (pres && !pres.plan) presenter();
       if (pres && now > pres.fin) pres = null;
       const vif = act || pres || (eveil !== null && now - eveil < 2600) || (secousse && now - secousse < 700) || BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
-      const tenue = mobile && vivant && BRAS.some(a => a.tenu);
+      const tenue = vivant && BRAS.some(a => a.tenu || Math.abs(a.tension) > .005);
       // au repos (rien ne se tend, rien ne s'éveille), l'ondulation lente se contente de trente images par seconde (vingt au
       // téléphone)
       if (!une && !vif && vivant && now - tDessin < (mobile ? 46 : 30)) { raf = requestAnimationFrame(image); return; }
@@ -3407,27 +3423,24 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (act) dernierActif = act; else if (dernierActif) { iAuto = dernierActif.i; dernierActif = null; planifier(); }
       const vise = act || TIT[iAuto % Math.max(1, TIT.length)];
       if (vise) montrerImage(vise.slug);
-      // le bras du spectacle montré le présente (au bureau, une fois l'éveil passé)
-      const autoT = !act && vivant && !mobile && eveil !== null && !pres && TIT.length > 1 ? TIT[iAuto % TIT.length] : null;
       // l'ondulation au repos : elle vient doucement après l'éveil ; ni en pause, ni sans mouvement
       const onde = vivant && eveil !== null ? lisse(0, 1, (now - eveil) / 1600) : 0;
       // (la visite en cours d'un bras dans la présentation : un titre, ou un geste)
       const visite = a => { const v = pres.plan.get(a); let r = null; if (v) for (const x of v) if (now >= x.t0 && now < x.fin) r = x; return r; };
       for (const a of BRAS) {
         let voulu = null, g = null;
-        // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; au bureau, un seul bras tendu, celui du titre
-        // regardé ; au téléphone, chaque bras garde le titre qu'il tient)
-        if (eveil !== null && act && act.bras === a) voulu = act;
-        else if (eveil !== null && act && !mobile) voulu = null;
-        else if (pres) { const v = visite(a); if (v) { if (v.T) voulu = v.T; else g = v.c; } }   // la présentation : chaque tentacule à son tour
-        else if (mobile && a.tenu) voulu = a.tenu;
-        else if (autoT && autoT.bras === a) voulu = autoT;
+        // (rien avant l'éveil : sous l'ouverture, les bras restent lovés ; pendant la présentation, chacun va à son titre ;
+        // ensuite chaque bras garde le titre qu'il tient, sauf celui qu'on a remonté)
+        if (pres) { const v = visite(a); if (v) { if (v.T) voulu = v.T; else g = v.c; } }
+        else if (eveil !== null && a.tenu) voulu = a.tenu;
+        // (on tire un peu sur le bras du titre regardé : sa pointe se déroule)
+        a.tension += ((act && voulu && act === voulu ? .55 : 0) - a.tension) * .15;
         if (a.but !== voulu || a.geste !== g) {
           a.but = voulu; a.geste = g;
-          if (voulu) { a.col = voulu.col; a.t.viser(cibleDe(voulu), anime ? 1100 : 0); }
+          if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? 1100 : 0); }
           else if (g) a.t.viser(g, anime ? 900 : 0);
-          else a.t.viser(null, anime ? 1000 : 0);
-        } else if (voulu) a.t.viser(cibleDe(voulu));      // (le titre a pu bouger : la forme visée le suit)
+          else a.t.viser(null, anime ? 760 : 0, true);   // (remontée : un ressort)
+        } else if (voulu) a.t.viser({ ...cibleDe(voulu), tension: a.tension });      // (le titre a pu bouger : la forme visée le suit)
         const tv = a.but ? 1 : 0;
         if (Math.abs(a.teinte - tv) > .005) { a.teinte += (tv - a.teinte) * (anime ? .12 : 1); occupe = true; } else a.teinte = tv;
         // curieuse : au repos, les tentacules se penchent vers la souris
@@ -3460,12 +3473,24 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
           if (kp !== 1) { ctx.translate(cxh, cyh); ctx.scale(kp, kp); ctx.translate(-cxh, -cyh); }
           ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y); ctx.fillStyle = ENCRE; ctx.fill(CORPS, 'evenodd'); ctx.restore();
-          const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere });
+          // (au téléphone, en route par le côté, la tentacule pâlit au loin : de l'encre en haut, à demi transparente au milieu du
+          // chemin, la couleur du spectacle au titre)
+          const degradeDe = a => {
+            if (!mobile || !a.but || a.teinte < .01) return null;
+            const y0 = oy + bob.y + 760 * s, y1 = a.but.ancre.y, E = a.col, k = a.teinte;
+            if (y1 - y0 < 120) return null;
+            const g = ctx.createLinearGradient(0, y0, 0, y1);
+            g.addColorStop(0, ENCRE); g.addColorStop(.45, `rgba(255,255,255,${(1 - .5 * k).toFixed(3)})`);
+            g.addColorStop(.85, `rgba(${Math.round(lerp(255, E[0], k))},${Math.round(lerp(255, E[1], k))},${Math.round(lerp(255, E[2], k))},${(1 - .1 * k).toFixed(3)})`);
+            g.addColorStop(1, `rgb(${Math.round(lerp(255, E[0], k))},${Math.round(lerp(255, E[1], k))},${Math.round(lerp(255, E[2], k))})`);
+            return g;
+          };
+          const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere, degrade: degradeDe(a) });
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
-          // au téléphone, une lueur court le long de chaque tentacule posée sur un titre, à la couleur du spectacle : elle invite à
-          // la toucher (elle se rétracte) ; rien en pause
-          if (mobile && vivant) for (const a of BRAS) {
+          // une lueur court le long de chaque tentacule posée sur un titre, à la couleur du spectacle : elle invite à la
+          // remonter ; rien en pause
+          if (vivant) for (const a of BRAS) {
             if (!a.tenu || a.but !== a.tenu || a.t.mouvement() < .95) continue;
             const t = a.t, kr = t.bornes(t.cible)[0], u = (tVie * .45 + a.i * .37) % 1, kk = Math.round(kr + (t.M - kr) * u), x = t.X[kk], y = t.Y[kk];
             const g = ctx.createRadialGradient(x, y, 0, x, y, 10), E = a.col;
@@ -3500,11 +3525,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
       return best;
     }
-    // au téléphone, toucher une tentacule tendue la rétracte : elle lâche son titre (la pointe se love d'abord), le corps sursaute
-    function lacher(a) {
-      a.tenu = null;
-      if (survol && survol.bras === a) survol = null;
-      secousse = performance.now(); reveil();
+    // remonter un spectacle : sa tentacule revient d'un coup élastique, le corps sursaute, sa photo passe devant ; celle du
+    // spectacle remonté avant se redéploie
+    function remonter(T) {
+      if (remonte && remonte !== T && remonte.bras && !remonte.bras.tenu && remonte.bras.T.includes(remonte)) remonte.bras.tenu = remonte;
+      if (T.bras) T.bras.tenu = null;
+      remonte = T; dernierActif = T; iAuto = T.i;
+      secousse = performance.now(); reveil(); planifier();
     }
     function bouger(e) {
       if (e.pointerType !== 'mouse') return;
@@ -3520,11 +3547,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     }
     el.addEventListener('pointermove', bouger, { passive: true });
     el.addEventListener('pointerleave', () => { pointeur = null; if (brasSurvol) { brasSurvol = null; el.classList.remove('sur-bras'); } reveil(); });
-    // un bras survolé mène à son spectacle, comme son titre ; au téléphone, toucher une tentacule tendue la rétracte
+    // un clic (un toucher) sur une tentacule tendue remonte son spectacle
     el.addEventListener('click', e => {
       if (e.target.closest('a, button')) return;
-      if (mobile) { const r = el.getBoundingClientRect(), a = brasSous({ x: e.clientX - r.left, y: e.clientY - r.top }, 30, true); if (a) { e.preventDefault(); lacher(a); } return; }
-      if (brasSurvol) location.hash = brasSurvol.el.getAttribute('href');
+      const r = el.getBoundingClientRect(), a = brasSous({ x: e.clientX - r.left, y: e.clientY - r.top }, mobile ? 30 : 16, true);
+      if (a && a.tenu) { e.preventDefault(); remonter(a.tenu); }
     });
     el.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !mobile && survol && !e.target.closest('.sc-t')) { survol = null; reveil(); } }, { passive: true });
     function ecouter(T) {
@@ -3536,12 +3563,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       a.addEventListener('focus', () => { if (a.matches(':focus-visible')) { T.focus = true; reveil(); } });
       a.addEventListener('blur', () => { if (T.focus) { T.focus = false; reveil(); } });
       a.addEventListener('click', e => {
-        const touche = dernierPointeur === 'touch'; dernierPointeur = '';
+        dernierPointeur = '';
         if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || document.documentElement.classList.contains('ed-actif')) return;
-        // au doigt, le premier toucher fait ce que fait le survol (le bras se tend, la photo passe devant) ; le second y mène ;
-        // au téléphone, le bras y reste (tenu), et un titre déjà tenu mène tout de suite à son spectacle
-        const tient = mobile && T.bras && T.bras.tenu === T && T.bras.but === T;
-        if (touche && actif() !== T && !tient) { e.preventDefault(); survol = T; if (mobile && T.bras) T.bras.tenu = T; reveil(); }
+        if (e.detail === 0) return;   // (au clavier, Entrée mène au spectacle)
+        // sa tentacule est déployée : le clic la remonte ; remontée (ou sans tentacule) : le lien mène au spectacle
+        if (T.bras && T.bras.tenu === T) { e.preventDefault(); remonter(T); }
       });
       a.addEventListener('keydown', e => {
         const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
@@ -3569,8 +3595,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       textes();
       // de retour sur l'accueil : chaque bras reprend sa souche ; les liens suivent la mémoire de l'entrée
       TIT.forEach(T => { T.focus = false; T.el.setAttribute('href', lienSp(T.slug)); });
-      BRAS.forEach(a => { a.but = null; a.tenu = null; a.teinte = 0; a.t.viser(null, 0); });
-      survol = null; brasSurvol = null; el.classList.remove('a-actif', 'sur-bras');
+      BRAS.forEach(a => { a.but = null; a.tenu = null; a.tension = 0; a.teinte = 0; a.t.viser(null, 0); });
+      survol = null; brasSurvol = null; remonte = null; el.classList.remove('a-actif', 'sur-bras');
       mise();
       // sous l'ouverture, la pieuvre attend la relève ; sans mouvement, elle est là d'emblée, sous le fondu
       if (eveil === null && (!INTRO.ouverte() || !motionOK())) eveiller();
@@ -3644,7 +3670,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     return '';
   }
   function ecranSp(s, i) {
-    const m = mo(s), ph = (s.photos || []).find(p => !p.etablissement && !p.atelier && D.photos[p.cle]), src = ph ? D.photos[ph.cle] : D.photos[s.slug];
+    // (sa photo : celle du spectacle, sa vignette partout ailleurs ; la première de son univers seulement s'il n'en a pas)
+    const m = mo(s), ph = D.photos[s.slug] ? null : (s.photos || []).find(p => !p.etablissement && !p.atelier && D.photos[p.cle]), src = ph ? D.photos[ph.cle] : D.photos[s.slug];
     const credit = ph ? creditDe(s, ph) : s.creditPhotos, kCredit = ph ? cleCredit(ph) : 'creditPhotos';
     const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null, lignes = tl || [s.titre];
     const titre = lignes.map((l, k) => `<span class="df-l"${tl ? edS(s, 'titreLignes', k) : edS(s, 'titre')}>${esc(l)}</span>`).join(' ');
@@ -5047,22 +5074,28 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $('form', main).addEventListener('submit', e => e.preventDefault());
     return { titre: nomC, menu: 'contact' };
   }
-  /* ---------- l'espace pro (règles 16 et 21), celui de la 05 : sur l'aplat de la saison, la grande capitale et son texte ; ses
-     deux pages (programmer, établissements scolaires) en grandes portes photographiques, chacune dans la couleur de son
-     parcours ; puis trois aplats numérotés vers les espaces réservés (equipe/, pro/, admin/, publiés à côté), dans le même
-     onglet ---------- */
+  /* ---------- l'espace pro (règles 16 et 21), celui de la 05 : sur l'aplat de la saison, la grande capitale et son texte ; puis
+     quatre groupes numérotés, dans l'ordre de la compagnie : 1 les programmateurs et les directeurs de salle (la page
+     « programmer », en grande porte photographique à la couleur de son parcours, et à côté l'aplat de leur espace réservé,
+     pro/), 2 les établissements scolaires (leur page), 3 l'équipe (equipe/), 4 l'administration (admin/) ; les espaces
+     réservés, publiés à côté, s'ouvrent dans le même onglet ---------- */
   function espacePro() {
     vue = 'espace-pro';
-    const P = S.espacePro, deux = ['programmer', 'etablissement'].map(k => E[k]).filter(e => e && e.href);
-    // (comédiens et techniciens : la saison ; programmateurs et directeurs de salle : la saison profonde ; administration : la nuit)
+    const P = S.espacePro;
+    // (programmateurs et directeurs de salle : la saison profonde ; comédiens et techniciens : la saison ; administration : la nuit)
     const aplats = { equipe: 'var(--saison)', salles: 'color-mix(in srgb, var(--saison) 66%, #000)', admin: 'color-mix(in srgb, var(--saison) 16%, var(--nuit))' };
+    const numero = n => `<span class="ep-n" aria-hidden="true">${n}</span>`;
+    const page = (e, n) => `<a class="ep-porte" href="${esc(e.href)}" style="--e:${esc(e.couleur)}"><span class="ep-porte-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="" loading="lazy">` : ''}</span>${n ? numero(n) : ''}<span class="ep-porte-t">${esc(e.court)}<small>${esc(e.texte)}</small></span>${FLECHE}</a>`;
+    const acces = (x, n) => { const i = P.portes.indexOf(x); return `<div class="ep" data-cle="${esc(x.cle)}" style="--ep:${aplats[x.cle] || 'var(--saison)'}">${n ? numero(n) : ''}
+        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
+        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>${FLECHE}</div>`; };
+    // chaque groupe : sa page (s'il en a une) et son espace réservé ; un espace que l'ordre ne nomme pas vient à la fin
+    const ORDRE = [['programmer', 'salles'], ['etablissement'], [null, 'equipe'], [null, 'admin']];
+    const groupes = [...ORDRE, ...P.portes.filter(x => !ORDRE.some(o => o[1] === x.cle)).map(x => [null, x.cle])]
+      .map(([pg, ac]) => ({ e: pg && E[pg] && E[pg].href ? E[pg] : null, x: ac ? P.portes.find(x => x.cle === ac) : null })).filter(g => g.e || g.x);
     main.innerHTML = `<section class="ep-tete" aria-labelledby="h-ep"><div class="wrap ep-c"><h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur"${ed('site.espacePro.titre')}>${esc(P.titre)}</span></h1>
         ${P.texte ? `<p class="ep-lead"${ed('site.espacePro.texte')}>${esc(P.texte)}</p>` : ''}</div></section>
-      ${deux.length ? `<ul class="ep-pages">${deux.map(e => `<li><a class="ep-porte" href="${esc(e.href)}" style="--e:${esc(e.couleur)}"><span class="ep-porte-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="" loading="lazy">` : ''}</span><span class="ep-porte-t">${esc(e.court)}<small>${esc(e.texte)}</small></span>${FLECHE}</a></li>`).join('')}</ul>` : ''}
-      <ul class="ep-portes">${P.portes.map((x, i) => `<li class="ep" data-cle="${esc(x.cle)}" style="--ep:${aplats[x.cle] || 'var(--saison)'}">
-        <span class="ep-n" aria-hidden="true">${i + 1}</span>
-        <h2 class="ep-t"><a class="ep-a" href="${esc(x.href)}"><span${ed(`site.espacePro.portes.${i}.titre`)}>${esc(x.titre)}</span></a></h2>
-        <p class="ep-x"${ed(`site.espacePro.portes.${i}.texte`)}>${esc(x.texte)}</p>${FLECHE}</li>`).join('')}</ul>`;
+      <ol class="ep-groupes">${groupes.map((g, k) => `<li class="ep-g${g.e ? ' avec-page' : ''}${g.e && g.x ? ' duo' : ''}">${g.e ? page(g.e, k + 1) : ''}${g.x ? acces(g.x, g.e ? 0 : k + 1) : ''}</li>`).join('')}</ol>`;
     return { titre: P.titre, menu: 'espace-pro' };
   }
   function legal(chemin) {
@@ -5733,7 +5766,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     $$('section.bloc:not(.sans-filet)', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
     $$('svg.trait', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'trace'); });
-    $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-pages, .ep-portes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
+    $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-groupes', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
     $$('.u-faits .gros, .fp-rep .gros, .u-rep .gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
     if (MV) MV.reveler(main, { immediat: surPlace });
   }

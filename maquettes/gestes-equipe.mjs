@@ -150,6 +150,8 @@ async function ouvrir(navigateur, { telephone = true, hash = '#/saison', base = 
   const erreurs = [];
   page.on('pageerror', e => erreurs.push(String(e.message || e)));
   page.on('console', m => { if (m.type() === 'error' && !/supabase|Failed to load resource|net::ERR/i.test(m.text())) erreurs.push(m.text()); });
+  const journal = []; page.on('console', m => journal.push(`${m.type()}: ${m.text().slice(0, 160)}`));
+  page.journal = journal;
   await page.addInitScript(INIT);
   await page.goto(`${URL0}${hash}`);
   await page.waitForSelector('#app > .appli', { timeout: 15000 });
@@ -323,6 +325,9 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.tap('.gf button[type="submit"]');
   await page.waitForFunction(() => !document.querySelector('.gf'), null, { timeout: 6000 }).catch(() => {});
   const prevenu = MODIFS.find(m => m.rpc === 'crescite_prevenir_equipe');
+  if (!prevenu) console.log('  [diagnostic prévenir]', JSON.stringify({ gf: await compte(page, '.gf'), h2: await texte(page, '.gf h2'), erreur: await page.$eval('.gf-erreur', e => `${e.hidden ? 'cachée' : 'visible'} ${e.textContent}`).catch(() => 'absente'),
+    titre: await page.$eval('.gf [name="titre"]', e => e.value).catch(() => null), texte: await page.$eval('.gf textarea[name="texte"]', e => e.value).catch(() => null), menu: await compte(page, '.gm-boite'), annonces: await texte(page, '#annonces'), hash: await page.evaluate(() => location.hash),
+    animations: await page.evaluate(() => document.getAnimations().length), journal: page.journal.slice(-8) }));
   ok('« Prévenir l’équipe… » appelle crescite_prevenir_equipe avec la date, le titre et le message', !!prevenu && prevenu.corps.d === 102 && prevenu.corps.texte_ === 'Rendez-vous 14 h au Volcan.' && /Message de l’administration/.test(prevenu.corps.titre_), JSON.stringify(prevenu));
   ok('et le dit', /Message envoyé à 2/.test(await texte(page, '#annonces')), await texte(page, '#annonces'));
   // une notification s'efface
