@@ -135,3 +135,22 @@ Ce qui change page par page :
 - Des effets sur le défilement horizontal (la bande des dates réservables) : elle défile déjà au doigt, aimantée.
 - Une tentacule qui suit la lecture : la règle 15 fait de la pieuvre un moment rare ; elle le reste.
 - Allumer mot à mot les paragraphes du récit : ils sont longs, le filet du pas suffit ; seules les phrases fortes s'allument.
+
+## 7. Dans la langue de la 10 (le mouvement de la synthèse, octobre 2026)
+
+Le scrollytelling est gardé tel quel dans son principe et parle maintenant la langue de la 10, l'organique rangé
+(voir le bloc « Mouvement » de `synthese.html`) :
+
+- **Le texte qui s'allume** : l'encre prend mot après mot (même mécanique, `--lit`) ; sans les animations liées au
+  défilement, la phrase fleurit d'un bloc à son arrivée.
+- **La scène qui se retire** : il n'y a plus de cartes de menu sous la pieuvre ; le menu est unique, posé sous elle, et il
+  monte s'arrimer en haut de l'écran pendant que la scène se retire. Ce qui glisse, ce sont la pieuvre (sa toile) et ses
+  titres, chacun son calque ; la scène pâlit sous un voile de la couleur de la page. Une scène entière en mouvement, ou
+  pâlie par son opacité, se recomposait à part avec la page sous elle à chaque image : 29 ms par image au compositeur, au
+  lieu de 16, au défilement et au premier geste de l'accueil.
+- **La tournée qui se dessine** : la carte se pose d'abord comme une tache d'encre ; puis, au fil des dates, le bras de chaque
+  commune s'étire depuis Rouen (courbe souple) et sa ventouse se pose au bout ; la ligne de lecture ne relit plus de style
+  (une carte est épinglée au-delà de 1000 px) et se pose à l'image d'après le rendu.
+- **L'histoire en chapitres** : les étapes pendent à un bras d'encre qui s'effile, chacune une ventouse (vide, puis pleine et
+  gonflée quand on la lit).
+- Les durées et les courbes sont les jetons de la 10 (`--k-doux`, `--k-souple`, `--k-survol`, `--k-page`, `--k-lent`).
