@@ -7820,7 +7820,8 @@ const PIEUVRE = (() => {
       const rail = c.rail != null && du * (c.x - c.rail) > 20 && dy > 160;
       if (rail) {
         const cub = (x0, y0, x1, y1, x2, y2, x3, y3, de) => { const pts = []; for (let j = de; j <= 64; j++) { const u = j / 64, b0 = (1 - u) ** 3, b1 = 3 * (1 - u) ** 2 * u, b2 = 3 * (1 - u) * u * u, b3 = u ** 3; pts.push([b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3, b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3]); } return pts; };
-        const yM = py + Math.max(70, Math.min(140, dy * .4)), kA = Math.max(30, (yM - py) * .5), kD = (yM - py) * .6;
+        // (kD : ce qu'elle continue dans son sens avant de s'infléchir ; une boucle qui part vers le haut monte un peu, pas plus)
+        const yM = py + Math.max(70, Math.min(140, dy * .4)), kA = Math.max(30, (yM - py) * .5), kD = Math.max(24, Math.min(56, (yM - py) * .45));
         corps = cub(px, py, px + Math.cos(a0) * kD, py + Math.sin(a0) * kD, c.rail, yM - kA, c.rail, yM, 0)
           .concat(cub(c.rail, yM, c.rail, yM + (c.y - yM) * .5, c.rail, c.y, c.x, c.y, 1));
       } else {
@@ -9642,8 +9643,8 @@ const CREATURE = (() => {
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
      Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : dès le geste, ses huit tentacules, les vraies, celles du
-     dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté par-dessus, et l'amorce de chaque boucle reste celle
-     du logo : le bras se déroule depuis sa descente, en courbe continue), se déroulent vers les spectacles (cibles),
+     dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté par-dessus), se déplient entières depuis la tête (leur
+     boucle du logo disparaît : le logo n'est que la forme de départ) vers les spectacles (cibles),
      leur bout se colorant en route, pendant que le logo glisse à sa place ; à la pose (un rebond : le corps se ramasse, se
      détend), chaque bras reprend le trajet de son double de l'ouverture où il en est (eveiller, INTRO.relais) et l'achève :
      un seul mouvement, du geste aux titres, qui paraissent en route. Sans ouverture (l'accueil rejoint autrement), les
@@ -9761,15 +9762,14 @@ const CREATURE = (() => {
     // ce qu'une tentacule vise : le point d'accroche d'un titre, le sens où elle le souligne, sa longueur. Au téléphone, la boucle
     // en S reste entière dans le logo et se prolonge depuis sa descente (racine .7), la pointe commence à .86 ; elle arrive à
     // plat de derrière le point d'accroche, dans la place qu'il y a jusqu'au bord de l'écran (marge : l'épine reste à 14 px du bord)
-    // (le bras garde l'amorce de sa boucle telle qu'elle est dans le logo et se déroule depuis sa descente, en courbe continue :
-    // au téléphone, les boucles et les queues depuis les six dixièmes (là où elles redescendent), les franges presque entières ;
-    // chacun passe par un couloir le long du bord de son côté (rail : la queue au plus près du bord, puis la boucle, la frange
-    // haute, la frange basse), au lointain (loin))
+    // (le bras se déplie entier depuis la tête : sa boucle du logo disparaît, il part dans le sens de sa racine et rejoint son
+    // titre en une seule courbe ; au téléphone, chacun passe par un couloir le long du bord de son côté (rail : la queue au plus
+    // près du bord, puis la boucle, la frange haute, la frange basse), au lointain (loin))
     const COULOIR = { queue: 0, boucle: 1, frangeH: 2, frangeB: 3 };
     const cibleDe = T => {
-      const cle = mobile && T.bras ? T.bras.cle : '', voie = COULOIR[cle.replace(/[LR]$/, '')] || 0, longue = /^(boucle|queue)/.test(cle);
+      const cle = mobile && T.bras ? T.bras.cle : '', voie = COULOIR[cle.replace(/[LR]$/, '')] || 0;
       return { cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
-        ...(mobile ? { racine: longue ? .6 : .12, corps: longue ? .8 : .7, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4, rail: T.dirU > 0 ? 14 + voie * 9 : W - 14 - voie * 9, loin: .45 } : {}) };
+        ...(mobile ? { racine: .12, corps: .7, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4, rail: T.dirU > 0 ? 14 + voie * 9 : W - 14 - voie * 9, loin: .45 } : {}) };
     };
     // chaque titre a sa tentacule : dans l'ordre du tour de la pieuvre (titres et pointes rangés par leur angle autour de son
     // cœur), sans croisement ; s'il y a plus de titres que de tentacules, une tentacule en sert plusieurs
