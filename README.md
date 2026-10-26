@@ -61,6 +61,7 @@ python3 maquettes/build.py --captures   # avec des captures de relecture (Playwr
 node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
+                                         # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 

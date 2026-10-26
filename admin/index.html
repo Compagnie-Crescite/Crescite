@@ -723,6 +723,7 @@ let versAdmin = false;     // l'écran de connexion a été montré : l'arrivée
 function ecranConnexion(message = '') {
   versAdmin = true;
   E.pret = false;     // déconnecté : ni les rubriques ni la recherche ne montrent ce qui reste en mémoire
+  E.hashVue = '';     // le prochain premier rendu paraîtra après le squelette
   $('#recherche')?.close();
   $('#app').innerHTML = `<div class="connexion"><form class="bloc${message ? ' secoue' : ''}" id="f-connexion">
     <h1>Crescite · administration</h1><p>Les spectacles, les dates, les ateliers et les textes du site de la compagnie.</p>
