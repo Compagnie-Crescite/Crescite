@@ -16,7 +16,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, la synthèse et la planche qui les compare. Chacune lit la base en direct et se modifie sur place. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
 | `supabase/` | La base de la compagnie : le script qui la crée (`migrations/20261020_crescite_base.sql`) et celui qui la remplit (`importer.py`). |
-| `admin/` | L'administration du site : spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
+| `admin/` | L'administration du site : tableau de bord, spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
 | `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle et celles de leurs univers, `dossiers/` les dossiers de la compagnie (scolaire de Bérénice, artistique 2027-2028). |
 
 ## Prototype
@@ -254,6 +254,30 @@ Ajouter `?base=0` à l'adresse d'une maquette la garde sur l'instantané.
 **L'administration** (`admin/index.html`, en ligne dans `docs/admin/`) : connexion par adresse et mot de passe d'un
 compte du projet inscrit dans `crescite_admins`.
 
+- **Le tableau de bord** (`#/accueil`, `admin/tableau.js`), la page d'ouverture : ce qui presse et ce qui vient, en un
+  écran, et le geste qui y mène en un clic (la fiche s'ouvre sur le champ à remplir). Des tuiles : les actions rapides
+  (nouvelle date, proposer des dates, nouvelle fiche, nouveau lieu, séance d'atelier, inviter une salle, opportunité de
+  diffusion, tableur, modifier sur le site, rechercher…) ; « À traiter » (les demandes de devis à répondre, les relances
+  de diffusion en retard, les notes de frais à valider, les options à confirmer, les dates sans horaire, les contrats à
+  suivre, les feuilles de route à publier, les propositions de dates en attente, les invitations pro qui échoient, et,
+  si on le veut, les portraits sans accord de publication) ; « À compléter avant la tournée » (le même compte que le bloc
+  de Représentations) ; les prochaines dates (horaires, lieu, feuille de route) ; la saison en chiffres (dates,
+  représentations, lieux, séances d'atelier, spectateurs, à côté de la saison d'avant) ; qui part bientôt (avec le
+  téléphone de chacun, à appeler d'un geste) ; la diffusion (pipeline, montants, devis, alertes de tournée) ; les
+  propositions de dates ; les séances d'atelier à venir ; les dernières modifications (chacune vers sa fiche) ; les
+  spectacles et un mémo (masqués d'office). Une tuile dont la base n'a pas les tables ne se montre pas.
+  - **Entièrement personnalisable**, « Personnaliser » : l'ordre (glisser une tuile par son titre, ou ← →), sa largeur
+    (une colonne, deux, ou toute la largeur), masquer ou remettre une tuile, la réduire (le chevron) ; les réglages de
+    chaque tuile (le rouage : la période, le nombre de lignes, ce qu'elle suit, les actions montrées) ; les colonnes de
+    la grille (auto, 2, 3 ou 4) ; la page d'ouverture de l'administration (le tableau de bord, ou Représentations) ;
+    « Réinitialiser ». Tout est gardé avec le compte (`crescite_preferences`, clé `accueil.tableau`, le script 6) : on
+    retrouve son tableau sur tous ses appareils ; sans le script, sur l'appareil, et la disposition passe dans la base à
+    la première ouverture qui suit.
+  - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
+    alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
+    en sombre comme en clair. `node maquettes/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
+    (60 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    l'appareil sans le script 6, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
 - **La recherche rapide** : Ctrl K (⌘K sur un Mac), ou la loupe de l'en-tête (au téléphone, au bout de la ligne du
   logo). Une date se trouve par son spectacle, son lieu, sa commune ou son jour (« 21 oct », « mardi », « 21/10 »),
   comme une personne, un lieu, un spectacle, une feuille de route ou une rubrique ; ↑ ↓ choisissent, Entrée ouvre,
