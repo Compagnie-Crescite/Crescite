@@ -282,8 +282,28 @@ compte du projet inscrit dans `crescite_admins`.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node maquettes/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (60 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
-    l'appareil sans le script 6, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+    (79 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
+    précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+- **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
+  fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
+  carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
+  depuis le bas au téléphone (↑ ↓ Entrée Échap au clavier). Une date : ouvrir, confirmer une option, la feuille de route,
+  prévenir l'équipe, l'itinéraire, la fiche du lieu, dupliquer, le tableur, copier le lien, supprimer. Une personne :
+  appeler, écrire, copier le téléphone. Un lieu : l'itinéraire, appeler ou écrire au contact, une nouvelle date ici. Une
+  feuille : compléter, composer, la date. Une demande de devis : écrire, appeler, **changer son statut sans l'ouvrir**. Une
+  piste de diffusion : l'étape d'avant ou d'après, **relance faite aujourd'hui**, reporter la relance, le courriel,
+  modifier, supprimer ; la carte du Kanban **se glisse d'une colonne à l'autre** (ses flèches nomment l'étape visée). Une
+  note de frais : **valider, refuser, marquer remboursée** depuis le tableau de bord. Une invitation pro : prolonger de
+  trente jours, copier le lien de la salle, désactiver. Une proposition de dates : la clore. Une séance d'atelier :
+  dupliquer, supprimer. Une ligne du journal : revenir, ouvrir la fiche. Une tuile du tableau de bord : ses réglages,
+  la réduire, sa largeur, l'avancer, la reculer, la masquer ; une action rapide : la retirer. Un spectacle : ses dates,
+  une nouvelle date, l'avancer ou le reculer. Chaque action directe écrit dans la base et les listes se redessinent.
+  - **Précédent / suivant** dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
+    propositions, ateliers, séances, textes), dans une feuille de route et dans un spectacle : deux boutons dans le titre,
+    nommés d'après ce qu'ils ouvrent (« Précédent : Bérénice · mer. 4 nov. 2026 »), dans l'ordre de la liste et de ses filtres ;
+    **Alt+↑** et **Alt+↓** font de même. Dans toutes les listes, **↑ ↓** (← → aussi) passent d'une ligne à l'autre, Début
+    et Fin aux bouts.
 - **La recherche rapide** : Ctrl K (⌘K sur un Mac), ou la loupe de l'en-tête (au téléphone, au bout de la ligne du
   logo). Une date se trouve par son spectacle, son lieu, sa commune ou son jour (« 21 oct », « mardi », « 21/10 »),
   comme une personne, un lieu, un spectacle, une feuille de route ou une rubrique ; ↑ ↓ choisissent, Entrée ouvre,
@@ -493,6 +513,15 @@ range en colonne à gauche. On y trouve :
   voit quand ses partenaires sont pris ailleurs. « Toute l'équipe » et chaque personne sont dans la même liste ; le choix
   est gardé le temps de la session. Sans projet, le planning s'ouvre sur toute l'équipe ;
 - sa fiche, et un fichier agenda (.ics).
+- **Les gestes** (`../admin/gestes.js`) : un **appui long** sur un billet (ou le héros d'une date), avec une courte
+  vibration, ou un clic droit à l'ordinateur, ouvre une feuille d'actions depuis le bas : ouvrir la date, l'itinéraire, la
+  feuille de route et son PDF, l'ajouter à l'agenda, signaler un retard, une note de frais, partager la date ; sur une
+  notification : l'ouvrir, la marquer lue, tout marquer lu ; sur un document : l'ouvrir, le partager ; sur une
+  proposition : répondre. La page d'une date (et d'une feuille de route) a **date précédente / date suivante**, deux
+  boutons nommés, qu'un **balayage** du doigt vers la gauche ou la droite actionne aussi, comme **← →** au clavier ; le
+  planning se balaie de même d'une période à l'autre. Rien ne vibre si l'appareil demande moins d'animations.
+  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium, hors ligne (18 vérifications), après
+  `python3 maquettes/build.py synthese`.
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
