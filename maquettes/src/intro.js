@@ -43,7 +43,7 @@ const INTRO = (() => {
   const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
   let el = null, etat = 'ferme', opts = {}, raf = 0, inertes = [];
   const COEUR = [771, 640];                          // le cœur de la pieuvre (comme la scène et la créature)
-  let vie = null;                                    // la pieuvre vivante : { cv, ctx, TS, CORPS, t, tPrec, dpr }
+  let vie = null;                                    // la pieuvre vivante : { cv, ctx, TS, t, tPrec, dpr }
 
   function css() {
     if (document.getElementById('intro-style')) return;
@@ -92,7 +92,7 @@ const INTRO = (() => {
     vie = null;
     if (o.vivante && mouvement() && typeof PIEUVRE !== 'undefined' && PIEUVRE.pret) {
       const TS = PIEUVRE.creer();
-      vie = { cv: null, ctx: null, TS, CORPS: PIEUVRE.corps(TS), t: 0, tPrec: 0, dpr: 1, encre };
+      vie = { cv: null, ctx: null, TS, t: 0, tPrec: 0, dpr: 1, encre };
     }
     el = document.createElement('div');
     el.className = 'intro' + (o.classe ? ' ' + o.classe : '');
@@ -185,13 +185,13 @@ const INTRO = (() => {
   // `vers` où elle va, d'autant plus vers leur pointe)
   function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0, teinte = 0, cols = null } = {}) {
     if (!vie || !geo || !geo.pose) return;
-    const { cv, ctx, TS, CORPS, dpr } = vie, { S, ox, oy } = geo.pose;
+    const { cv, ctx, TS, dpr } = vie, { S, ox, oy } = geo.pose;
     const dt = Math.min(50, vie.tPrec ? now - vie.tPrec : 16); vie.tPrec = now; vie.t += dt / 1000;
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
     const k = 1 - serre, cx = ox + COEUR[0] * S, cy = oy + COEUR[1] * S;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (k !== 1) { ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy); }
-    ctx.save(); ctx.transform(S, 0, 0, S, ox, oy); ctx.fillStyle = vie.encre; ctx.fill(CORPS, 'evenodd'); ctx.restore();
+    ctx.save(); ctx.transform(S, 0, 0, S, ox, oy); PIEUVRE.corpsVivant(ctx, TS, 0, 0, 0, vie.encre); ctx.restore();
     const arr = vers && rame ? Math.atan2(-vers[1], -vers[0]) : 0;
     for (const t of TS) {
       let penche = 0;

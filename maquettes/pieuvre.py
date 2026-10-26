@@ -3,10 +3,22 @@
     python3 maquettes/pieuvre.py            refait le fichier (il faut numpy, scipy, scikit-image, Pillow)
     python3 maquettes/pieuvre.py --voir F   et une image de contrôle (la pieuvre, ses tentacules en couleur, leurs épines)
 
-La pieuvre du logo est faite de quatre contours (tentacles-left, head-left, head-right, tentacles-right). Huit de ses
-tentacules peuvent quitter le dessin pour aller chercher un spectacle, quatre de chaque côté : la queue de la
-tentacule extérieure (avec sa boucle), la grande boucle en S, et les deux tentacules courtes sous la tête. Le reste (la
-tête, l'œil, les grandes boucles du bas) ne bouge pas.
+La pieuvre du logo est faite de quatre contours (tentacles-left, head-left, head-right, tentacles-right). Seule la tête
+(l'arche et l'œil) est fixe : tout le reste est tentacule, douze en tout, huit qui vont chercher les spectacles, quatre
+de chaque côté, et quatre franges qui suivent leur spirale.
+  - spirale : la tige qui descend de la tête et la grande spirale du bas, jusqu'à son bout intérieur ; sa racine est
+    sur la tête (à gauche sur la jambe de l'arche, RAC_G, qui se prolonge en tige ; à droite sur la queue de l'œil,
+    PIED_D : la jambe droite de l'arche finit libre, en pointe) ; sa peau est un ruban (la largeur du dessin le long de
+    l'épine) ;
+  - boucle : la grande boucle en U, par la tige qu'elle partage avec la spirale, jusqu'à la même racine (ruban aussi :
+    au repos, les deux rubans se recouvrent sur la tige ; déployées, chacune emporte sa tige) ;
+  - spiraleExt : la spirale extérieure du bas, de son bout intérieur à sa jonction avec la queue ; queue : la queue
+    extérieure avec sa boucle en S, de sa pointe à la même jonction. Ce ruban-là ne touche pas la tête.
+  Les huit ont un point d'attache sur la tête (attache : x, y, direction en degrés), étagé sur la jambe de l'arche de
+  son côté (la queue le plus haut, la spirale le plus bas), vers lequel leur racine glisse quand elles se déploient, et
+  dont la direction oriente leur départ (pieuvre.js) : elles sortent de la tête chacune à sa place, sans se croiser ;
+  - frange : les deux tentacules courtes sous la tête, de chaque côté (contour pris dans le dessin, comme avant) ; elles
+    sont enfants de leur spirale (parent) : leur racine suit l'épine de la spirale, où qu'elle aille.
 
 Pour chacune, on cherche l'axe médian de la forme (squelette d'une image du contour à 4 px par unité), le chemin de la
 pointe jusqu'à sa racine, qu'on lisse : c'est son épine, de la racine (fixe) à la pointe, un point toutes les 2 unités.
@@ -39,18 +51,35 @@ PAS = 2.0          # un point de l'épine et de la peau toutes les 2 unités
 DEBORD = 6.0       # la peau entre de 6 unités dans le corps, au-delà de la coupe
 LISERE = 2.5       # le jour entre deux parties du logo qui passent l'une sur l'autre (comme D.arms.gap)
 
-# (clé, contour, pointe, un point plus loin vers le corps, longueur de la racine à la pointe, bout aplati à retirer)
-# Les longueurs sont prises le long du squelette depuis la pointe ; « plat » : le bout est coupé net (les deux
-# tentacules courtes passent sous la grande boucle), on arrête l'épine 12 unités avant.
+# (clé, contour, jalons, bout aplati à retirer, options). Les jalons : la pointe, puis des points de passage, puis la racine ;
+# l'épine est le chemin dans le squelette de jalon en jalon (le plus court entre deux), de la pointe à la racine. Un jalon
+# peut aussi être une longueur (prise le long du squelette depuis la pointe) : l'épine s'arrête là. « plat » : le bout est
+# coupé net (les deux tentacules courtes passent sous la grande boucle), on arrête l'épine 12 unités avant. Options :
+# ruban (la peau est un ruban le long de l'épine, pas le contour), bout (la pointe doit être un bout du squelette ; False :
+# le point du squelette le plus proche), attache ((x, y, direction en degrés) sur la tête), parent (clé de la tentacule
+# suivie).
+# Le dessin : quatre traits. Le trait head-left va du bout droit de l'arche, par-dessus la tête, descend à gauche, spirale
+# (la grande spirale du bas, à gauche du centre), remonte jusqu'à la boucle en U et finit à sa pointe ; head-right part du
+# cœur de l'œil, spirale (à droite du centre), remonte à la boucle en U droite ; tentacles-left va de la pointe extérieure,
+# par la boucle en S, à une jonction d'où pend une spirale fermée ; tentacles-right pareil. La tête (fixe) : l'arche et
+# l'œil ; tout le reste est tentacule.
+PIED_G, PIED_D = (667, 598), (872, 604)           # les pieds de l'arche : là où les troncs des traits centraux commencent
+RAC_G = (652, 560)                                # où les bras centraux gauches prennent racine, sur la jambe de l'arche (la tête finit là) ;
+                                                  # à droite, la jambe de l'arche finit libre, en pointe : les bras partent de la queue de l'œil (PIED_D)
+JONC_G, JONC_D = (393, 716), (1149, 716)          # où la descente de la boucle en S entre dans la spirale fermée (traits extérieurs)
 TENTACULES = [
-    ("queueL", "tentacles-left", (263, 717), (420, 720), 450, 0),
-    ("boucleL", "head-left", (525.5, 710.5), (640, 890), 480, 0),
-    ("frangeHL", "head-left", (589, 730), (690, 640), 85, 12),
-    ("frangeBL", "head-left", (587, 792), (700, 650), 160, 12),
-    ("frangeBR", "head-right", (955, 792), (842, 650), 160, 12),
-    ("frangeHR", "head-right", (953, 730), (852, 640), 85, 12),
-    ("boucleR", "head-right", (1011, 710), (902, 890), 480, 0),
-    ("queueR", "tentacles-right", (1279, 712), (1122, 720), 450, 0),
+    ("queueL", "tentacles-left", [(263, 717), (446, 598), JONC_G], 0, {"ruban": True, "attache": (643, 472, 165)}),
+    ("spiraleExtL", "tentacles-left", [(432, 699), (513, 818), (403, 856), (373, 792), JONC_G], 0, {"ruban": True, "bout": False, "attache": (641, 502, 150)}),
+    ("spiraleL", "tete", [(558, 713), (561, 821), (656, 881), (737, 800), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "bout": False, "attache": (652, 560, 100)}),
+    ("boucleL", "tete", [(525.5, 710.5), (552, 512), (558, 713), (656, 881), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "attache": (645, 532, 130)}),
+    ("frangeHL", "head-left", [(589, 730), (690, 640), 85], 12, {"parent": "spiraleL"}),
+    ("frangeBL", "head-left", [(587, 792), (700, 650), 160], 12, {"parent": "spiraleL"}),
+    ("frangeBR", "head-right", [(955, 792), (842, 650), 160], 12, {"parent": "spiraleR"}),
+    ("frangeHR", "head-right", [(953, 730), (852, 640), 85], 12, {"parent": "spiraleR"}),
+    ("spiraleR", "head-right", [(948, 604), (986, 767), (882, 881), (800, 746), (850, 686), PIED_D], 0, {"ruban": True, "bout": False, "attache": (872, 604, 82)}),
+    ("boucleR", "head-right", [(1011, 710), (1028, 548), (948, 604), (882, 881), (850, 686), PIED_D], 0, {"ruban": True, "attache": (872, 604, 52)}),
+    ("spiraleExtR", "tentacles-right", [(1100, 703), (1017, 818), (1130, 856), (1160, 792), JONC_D], 0, {"ruban": True, "bout": False, "attache": (896, 502, 30)}),
+    ("queueR", "tentacles-right", [(1279, 712), (1096, 598), JONC_D], 0, {"ruban": True, "attache": (895, 472, 15)}),
 ]
 
 
@@ -101,11 +130,15 @@ class Partie:
     """Un contour du logo, son image (4 px par unité), sa distance au bord et son squelette."""
     K, X0, Y0, X1, Y1 = 4, 250, 330, 1300, 940
 
-    def __init__(self, contour):
+    def __init__(self, contour, *autres):
+        """Un contour, ou plusieurs réunis (la tête : l'arche et l'œil, qui se touchent au pied droit)."""
         self.O = contour
         im = Image.new("L", ((self.X1 - self.X0) * self.K, (self.Y1 - self.Y0) * self.K), 0)
-        ImageDraw.Draw(im).polygon([((x - self.X0) * self.K, (y - self.Y0) * self.K) for x, y in contour], fill=1)
+        for c in (contour, *autres):
+            ImageDraw.Draw(im).polygon([((x - self.X0) * self.K, (y - self.Y0) * self.K) for x, y in c], fill=1)
         m = np.array(im, dtype=bool)
+        if autres:   # (soudés : deux traits qui se touchent presque font un seul squelette)
+            m = ndi.binary_closing(m, structure=np.ones((7, 7), bool))
         self.dist = ndi.distance_transform_edt(m) / self.K
         self.sk = skeletonize(m)
         voisins = np.ones((3, 3), int)
@@ -177,13 +210,19 @@ def cadre(E, th, h, s):
     return E[i] * (1 - f) + E[i + 1] * f, th[i] * (1 - f) + th[i + 1] * f
 
 
-def tentacule(pa, pointe, vers, longueur, plat):
-    Q = pa.chemin(pa.proche(pointe, bout=True), pa.proche(vers))
+def tentacule(pa, jalons, plat, ruban=False, bout=True):
+    # le chemin de jalon en jalon, de la pointe vers la racine ; un dernier jalon numérique : une longueur depuis la pointe
+    pts = [j for j in jalons if not isinstance(j, (int, float))]
+    noeuds = [pa.proche(pts[0], bout=bout)] + [pa.proche(p) for p in pts[1:]]
+    Q = np.vstack([pa.chemin(a, b)[1:] if k else pa.chemin(a, b) for k, (a, b) in enumerate(zip(noeuds, noeuds[1:]))])
     cum = np.concatenate([[0], np.cumsum(np.hypot(*np.diff(Q, axis=0).T))])
-    E = Q[np.searchsorted(cum, plat):np.searchsorted(cum, longueur) + 1][::-1]        # de la racine à la pointe
+    fin = int(np.searchsorted(cum, jalons[-1])) if isinstance(jalons[-1], (int, float)) else len(Q) - 1
+    E = Q[np.searchsorted(cum, plat):fin + 1][::-1]        # de la racine à la pointe
     E = reechantillonner(lisser(reechantillonner(E, 0.5), 6.0), PAS)
     h = float(np.hypot(*np.diff(E, axis=0).T).mean())
     th = angles(E)
+    if ruban:
+        return ruban_peau(pa, E, h, th)
     # les deux coupes de la racine : là où sa normale rencontre le contour, de part et d'autre de l'épine
     O, n = pa.O, len(pa.O)
     T0 = np.array([math.cos(th[0]), math.sin(th[0])])
@@ -224,21 +263,59 @@ def tentacule(pa, pointe, vers, longueur, plat):
     return E, h, peau, V, ecart
 
 
+def ruban_peau(pa, E, h, th):
+    """La peau en ruban : de part et d'autre de l'épine, la demi-largeur du dessin (la distance au bord, lue sur l'axe médian,
+    un rien plus large), un demi-cercle à la pointe, et la racine prolongée de 6 unités dans le corps. Chaque point noté
+    (s, t, d) comme l'autre peau."""
+    n = len(E)
+    r = np.array([pa.rayon(p) for p in E])
+    r = gaussian_filter1d(r, 2.0) + 0.5
+    r[0] = max(r[0], r[1])
+    L = h * (n - 1)
+    peau = []
+    peau.append((0.0, -DEBORD, float(r[0])))                      # la racine, entrée dans le corps
+    for i in range(n):
+        peau.append((i * h, 0.0, float(r[i])))                       # le côté gauche
+    rp = float(r[-1])
+    for k in range(1, 12):                                           # la pointe, un demi-cercle
+        a = math.pi / 2 - math.pi * k / 12
+        peau.append((L, rp * math.cos(a), rp * math.sin(a)))
+    for i in range(n - 1, -1, -1):
+        peau.append((i * h, 0.0, -float(r[i])))                      # le côté droit
+    peau.append((0.0, -DEBORD, -float(r[0])))
+    peau = np.round(np.array(peau), 2)
+    V = []
+    for s, t, d in peau:
+        C, a = cadre(E, th, h, s)
+        V.append(C + t * np.array([math.cos(a), math.sin(a)]) + d * np.array([-math.sin(a), math.cos(a)]))
+    return E, h, peau, np.array(V), 0.0
+
+
 def main():
     svg = LOGO.read_text(encoding="utf-8")
-    parties = {k: Partie(aplatir(d)) for k, d in chemins(svg).items()}
+    cs = chemins(svg)
+    parties = {k: Partie(aplatir(d)) for k, d in cs.items()}
+    # (la tête d'un seul tenant : les bras centraux prennent racine sur les jambes de l'arche, que le trait de l'œil rejoint au pied droit)
+    parties["tete"] = Partie(aplatir(cs["head-left"]), aplatir(cs["head-right"]))
     bras, controle = [], []
-    for cle, partie, pointe, vers, longueur, plat in TENTACULES:
-        E, h, peau, V, ecart = tentacule(parties[partie], pointe, vers, longueur, plat)
+    for cle, partie, jalons, plat, opts in TENTACULES:
+        E, h, peau, V, ecart = tentacule(parties[partie], jalons, plat, ruban=opts.get("ruban", False), bout=opts.get("bout", True))
         if ecart > 0.05:
             raise SystemExit(f"{cle} : la peau ne retombe pas sur le logo (écart {ecart:.3f})")
-        bras.append({"cle": cle, "cote": cle[-1], "plat": bool(plat), "pas": round(h, 5),
-                     "epine": [round(float(x), 2) for x in E.ravel()], "peau": [float(x) for x in peau.ravel()]})
+        b = {"cle": cle, "cote": cle[-1], "plat": bool(plat), "pas": round(h, 5),
+             "epine": [round(float(x), 2) for x in E.ravel()], "peau": [float(x) for x in peau.ravel()]}
+        if "attache" in opts:
+            x, y, deg = opts["attache"]
+            b["attache"] = [x, y, round(math.radians(deg), 4)]
+        if "parent" in opts:
+            b["parent"] = opts["parent"]
+        bras.append(b)
         controle.append((V, E))
-        print(f"{cle:9s} {h * (len(E) - 1):6.1f} unités, {len(peau):4d} points de peau, écart {ecart:.4f}")
-    out = {"_note": "Les huit tentacules du logo 2.0 qui vont chercher les spectacles : épine (de la racine à la pointe) "
-                    "et peau (s, t, d le long de l'épine), coordonnées du dessin source. Fait par maquettes/pieuvre.py.",
-           "lisere": LISERE, "bras": bras}
+        print(f"{cle:12s} {h * (len(E) - 1):6.1f} unités, {len(peau):4d} points de peau, écart {ecart:.4f}, racine ({E[0][0]:.0f}, {E[0][1]:.0f})")
+    out = {"_note": "Les tentacules du logo 2.0 : épine (de la racine à la pointe) et peau (s, t, d le long de l'épine), "
+                    "coordonnées du dessin source ; attache : où la racine va sur la tête en se déployant ; parent : la "
+                    "tentacule suivie. Fait par maquettes/pieuvre.py.",
+           "lisere": LISERE, "tete": [[600, 330, 310, 272], [755, 540, 140, 125]], "bras": bras}
     SORTIE.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"écrit {SORTIE.relative_to(ROOT)} ({SORTIE.stat().st_size // 1024} Ko)")
     if "--voir" in sys.argv:
@@ -250,7 +327,7 @@ def main():
         P = lambda p: ((p[0] - vx) * k, (p[1] - vy) * k)
         for pa in parties.values():
             dr.polygon([P(p) for p in pa.O], fill=(80, 80, 80))
-        for (V, E), c in zip(controle, [(230, 80, 80), (80, 200, 120), (90, 150, 255), (240, 200, 60)] * 2):
+        for (V, E), c in zip(controle, [(230, 80, 80), (80, 200, 120), (90, 150, 255), (240, 200, 60), (200, 90, 220), (60, 200, 200)] * 2):
             dr.polygon([P(p) for p in V], fill=tuple(int(x * .6) for x in c), outline=c)
             dr.line([P(p) for p in E], fill=(255, 255, 255), width=1)
         im.save(f)
