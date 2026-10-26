@@ -549,10 +549,25 @@ range en colonne à gauche. On y trouve :
   la retirer. Sur une personne : ses **coordonnées** (téléphone, adresse électronique, ville, urgence), « ne part pas
   sur cette date », qui part. Sur une note de frais : la modifier (la sienne tant qu'elle attend ; toutes pour
   l'administration), la supprimer. Sur une notification : l'effacer. Sur une proposition ouverte : répondre d'un geste.
+  Sur un **document** : le modifier (titre, type, pour qui : l'équipe, l'administration seulement, ou le public du
+  site), **remplacer son fichier** depuis le téléphone, le supprimer (le fichier avec, s'il n'est pas partagé) ; sur
+  une date, un spectacle ou la section des documents : **ajouter un document**, un fichier envoyé depuis le téléphone
+  (une photo, un PDF…) ou un lien, rangé comme l'administration le ferait (le stockage privé « crescite-equipe » sous
+  le dossier du spectacle ; un PDF public dans « crescite », sous documents/). Sur une **feuille de route** lue, chaque
+  ligne porte son bloc (`data-bloc`, posé par `FEUILLE.html`) : un appui long y copie le texte, **modifie la ligne**
+  (texte, nature, gras ; elle n'est plus « de la base »), en **ajoute une après**, la **retire** ; sur la feuille
+  elle-même : une ligne à la fin, **mettre à jour depuis la base** (`FEUILLE.actualiser` sur `FEUILLE.composer`, avec
+  les mêmes sources que l'administration : équipe et téléphones, administration et régie générale, suivi de la date et
+  du lieu, documents de l'équipe, feuilles des autres dates), **repasser en brouillon** ; dans la liste des feuilles,
+  les mêmes ; sur une date sans feuille publiée, « Feuille de route… » **publie le brouillon** (mis à jour, ou tel
+  quel) ou **compose la feuille** depuis la base et la publie. La base passe une feuille publiée en version suivante
+  à chaque écriture et prévient l'équipe (`crescite_feuilles_avant`, `crescite_notif_feuilles`).
   Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
   feuille, sans rien perdre de la saisie.
-  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium (31 vérifications : hors ligne, puis sur une base
-  simulée en lecture-écriture où le compte administre), après `python3 maquettes/build.py synthese`.
+  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium (48 vérifications : hors ligne, puis sur une base
+  simulée en lecture-écriture, stockage compris, où le compte administre : la date, un horaire, une présence, le lieu,
+  prévenir, une notification, un document modifié puis un fichier ajouté, une ligne de feuille de route, la mise à
+  jour depuis la base, le brouillon, la publication, la composition), après `python3 maquettes/build.py synthese`.
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
@@ -813,9 +828,10 @@ ces restes sont bornés par la limite de vingt fichiers par heure et par compte,
 Storage (`crescite-equipe`) si besoin. Vingt modifications par heure et par compte (`crescite_modifications` garde
 chaque modification : son auteur la relit, l'administration toutes). Tant que le script n'est pas lancé, ces gestes ne se
 montrent pas. Un compte qui administre modifie une date par ses propres feuilles, d'un appui long (« Modifier depuis
-le téléphone ») : le « Modifier » de l'équipe ne s'y montre pas, une seule voie ; les fichiers d'un spectacle, qu'aucune
-feuille ne couvre, passent pour tous par les boîtes de l'équipe. Une boîte ouverte, les gestes de la page (← →, le
-balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
+le téléphone ») : le « Modifier » de l'équipe ne s'y montre pas, une seule voie ; pour les fichiers d'un spectacle, ses
+boutons « Ajouter un fichier » et « Modifier » ouvrent, pour ce compte, les feuilles de l'administration (titre, type,
+pour qui, remplacer le fichier, supprimer ; un document public, un lien, un document de la compagnie), et les boîtes de
+l'équipe pour les autres. Une boîte ouverte, les gestes de la page (← →, le balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
 2, 3 et 13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
