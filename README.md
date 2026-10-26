@@ -59,7 +59,8 @@ python3 maquettes/build.py              # les dix maquettes et la planche (maque
 python3 maquettes/build.py m06          # une seule maquette
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
 node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
-                                         # (4 visites à la fois ; PARALLELE=1 pour les faire une à une)
+                                         # (en parties, 4 à la fois ; PARALLELE=1 une à une ; au-delà des cœurs
+                                         # de la machine, les attentes ne suffisent plus et de fausses anomalies sortent)
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
