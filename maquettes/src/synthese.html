@@ -3644,7 +3644,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     return '';
   }
   function ecranSp(s, i) {
-    const m = mo(s), ph = (s.photos || []).find(p => !p.etablissement && !p.atelier && D.photos[p.cle]), src = ph ? D.photos[ph.cle] : D.photos[s.slug];
+    // (sa photo : celle du spectacle, sa vignette partout ailleurs ; la première de son univers seulement s'il n'en a pas)
+    const m = mo(s), ph = D.photos[s.slug] ? null : (s.photos || []).find(p => !p.etablissement && !p.atelier && D.photos[p.cle]), src = ph ? D.photos[ph.cle] : D.photos[s.slug];
     const credit = ph ? creditDe(s, ph) : s.creditPhotos, kCredit = ph ? cleCredit(ph) : 'creditPhotos';
     const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null, lignes = tl || [s.titre];
     const titre = lignes.map((l, k) => `<span class="df-l"${tl ? edS(s, 'titreLignes', k) : edS(s, 'titre')}>${esc(l)}</span>`).join(' ');
