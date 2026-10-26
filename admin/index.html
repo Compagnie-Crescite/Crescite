@@ -3741,7 +3741,16 @@ const OPS_JOURNAL = { INSERT: 'Ajout', UPDATE: 'Modification', DELETE: 'Suppress
 const valeurJournal = v => (v == null ? '' : typeof v === 'object' ? JSON.stringify(v).replace(/["{}\[\]]/g, ' ') : String(v)).slice(0, 1500);
 async function vueJournal() {
   const f = session.journal = Object.assign({ q: '', quoi: '', qui: '', periode: '', du: '', au: '' }, session.journal || {});
-  const qui = id => { const a = E.admins.find(x => x.user_id === id); return a?.nom || (id === E.session.user.id ? E.session.user.email : id ? 'un administrateur' : 'import'); };
+  // l'auteur d'une ligne : un administrateur (son nom), une personne de l'équipe qui a modifié depuis son espace (le
+  // quatorzième script : l'horaire d'une date, ses précisions, les fichiers d'un spectacle ; son nom, « équipe »), le
+  // compte connecté, sinon un import
+  const qui = id => {
+    const a = E.admins.find(x => x.user_id === id);
+    if (a?.nom) return a.nom;
+    const f = id ? (E.privees || []).find(x => x.user_id === id) : null, p = f && typeof personne === 'function' ? personne(f.personne_id) : null;
+    if (p && nomDe(p)) return a ? nomDe(p) : `${nomDe(p)} (équipe)`;
+    return id === E.session.user.id ? E.session.user.email : id ? (a ? 'un administrateur' : 'un autre compte') : 'import';
+  };
   const option = (v, l, choisi) => `<option value="${esc(v)}"${choisi === v ? ' selected' : ''}>${esc(l)}</option>`;
   const auteurs = () => [...new Set([...E.admins.map(a => a.user_id), ...E.journal.map(j => j.qui ?? '')])].map(id => [id || '', qui(id || null)]).sort((a, b) => a[1].localeCompare(b[1], 'fr'));
   cadre('journal', `<div class="tete"><h1>Journal</h1><span class="compte">« Revenir » remet une ligne telle qu’elle était juste avant la modification.</span></div>
