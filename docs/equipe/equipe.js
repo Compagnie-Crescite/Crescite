@@ -4617,7 +4617,7 @@
       sb.from('crescite_personnes').select('id, prenom, nom, metiers'),
       sb.from('crescite_personnes_privees').select('personne_id, telephone, email'),
       sb.from('crescite_dates_suivi').select('organisateur, contact, contrat, notes').eq('date_id', d.id).maybeSingle(),
-      lieuId != null ? sb.from('crescite_lieux_suivi').select('contact, jauge, plateau, acces, notes').eq('lieu_id', lieuId).maybeSingle() : { data: null },
+      lieuId != null ? sb.from('crescite_lieux_suivi').select('contact, jauge, plateau, notes').eq('lieu_id', lieuId).maybeSingle() : { data: null },
       spId != null ? sb.from('crescite_documents').select('id, titre, pour, spectacle_id').eq('pour', 'equipe').or(`spectacle_id.eq.${spId},spectacle_id.is.null`) : sb.from('crescite_documents').select('id, titre, pour, spectacle_id').eq('pour', 'equipe').is('spectacle_id', null),
       sb.from('crescite_feuilles').select('date_id, contenu, modifie_le, date:crescite_dates(debut, lieu_id, spectacle_id, lieu:crescite_lieux(nom, commune))').neq('date_id', d.id).order('modifie_le', { ascending: false }).limit(40),
       spId != null ? sb.from('crescite_spectacles').select('id, titre, slug, duree, feuille_modele, univers').eq('id', spId).maybeSingle() : { data: null },
