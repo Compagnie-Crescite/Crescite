@@ -2216,9 +2216,16 @@ article.u { --onglets: 58px; }
   @keyframes une-texte { from { translate: 0 0; opacity: 1; } to { translate: 0 -22%; opacity: .08; } }
   @keyframes une-lueur { from { opacity: 1; } to { opacity: 0; } }
   /* 3. la scène de l'accueil se retire : la pieuvre et ses titres glissent plus lentement que la page et pâlissent, pendant
-     que le menu, posé sous elle, monte s'arrimer en haut de l'écran */
-  html:not(.still) .scene { animation: scene-part linear backwards; animation-timeline: view(); animation-range: exit 0% exit 100%; }
-  @keyframes scene-part { from { translate: 0 0; opacity: 1; } to { translate: 0 28%; opacity: .2; } }
+     que le menu, posé sous elle, monte s'arrimer en haut de l'écran. Ce qui glisse, c'est la pieuvre (sa toile) et ses
+     titres, chacun son calque, et non toute la scène ; elle pâlit sous un voile de la couleur de la page (un seul calque),
+     et non par son opacité : une scène entière en mouvement ou pâlie se recompose à part, avec la page sous elle, à chaque
+     image (au défilement, et au premier geste de l'accueil) */
+  html:not(.still) .scene { view-timeline: --scene block; }
+  html:not(.still) :is(.sc-toile, .sc-h, .sc-t) { animation: scene-part linear backwards; animation-timeline: --scene; animation-range: exit 0% exit 100%; }
+  html:not(.still) .scene::after { content: ""; position: absolute; inset: 0; z-index: 9; background: var(--papier); opacity: 0; pointer-events: none;
+    animation: scene-voile linear backwards; animation-timeline: --scene; animation-range: exit 0% exit 100%; }
+  @keyframes scene-part { from { translate: 0 0; } to { translate: 0 28svh; } }
+  @keyframes scene-voile { from { opacity: 0; } to { opacity: .8; } }
   /* 4. le spectacle suivant monte : au bout de la page d'un spectacle, la photo du suivant se lève avec son bandeau */
   html:not(.still) .suivant-fond img { animation: suivant-monte linear backwards; animation-timeline: view(); animation-range: entry 0% entry 100%; }
   @keyframes suivant-monte { from { translate: 0 42%; opacity: 0; } to { translate: 0 0; opacity: .34; } }
@@ -2367,8 +2374,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const el = $('#top');
     let y = null;
     const hauteur = () => (VW < 760 ? 44 : 48);
-    if ('IntersectionObserver' in window) new IntersectionObserver(es => { const e = es[es.length - 1]; el.classList.toggle('est-arrime', e.intersectionRatio < 1 && e.boundingClientRect.top < VH / 2); },
-      { threshold: [0, 1], rootMargin: '-9px 0px 0px 0px' }).observe(el);
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => { const e = es[es.length - 1], arrime = e.intersectionRatio < 1 && e.boundingClientRect.top < VH / 2;
+      el.classList.toggle('est-arrime', arrime); if (arrime) habiterCreature(); }, { threshold: [0, 1], rootMargin: '-9px 0px 0px 0px' }).observe(el);
     else el.classList.add('est-arrime');
     let vol = null;
     return {
@@ -5589,6 +5596,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     } else requestAnimationFrame(poser);
     apres(false);
     if (premiere) preparer();
+    habiterCreature();
     if (avant) creature(type === 'spectacle' || type === 'onglet' ? type : retourNav ? 'retour' : 'page');
     if (!vit) return;
     if (type === 'quitter' && bySlug[spAvant]) {
@@ -5605,8 +5613,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // l'encre ouverte et le titre posé, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
   let tCreature = 0;
   // (elle n'habite la marque que si le menu flottant lui laisse sa place : au téléphone, la ligne n'en a pas, rien ne s'y
-  // dessine ni n'y attend ; ajuste() la rappelle quand la place change)
-  function habiterCreature() { if (typeof CREATURE !== 'undefined' && CREATURE.actif && !$('#top').classList.contains('mince')) CREATURE.habiter($('#marque'), { encre: '#ffffff' }); }
+  // dessine ni n'y attend ; sur l'accueil, tant que le menu est posé sous la pieuvre, sa marque est repliée : la créature
+  // n'existe pas encore, ni toile ni calcul au défilement, et naît quand il s'arrime. ajuste(), route() et l'arrimage la
+  // rappellent)
+  function habiterCreature() {
+    if (typeof CREATURE === 'undefined' || !CREATURE.actif || Menu.el.classList.contains('mince')) return;
+    if (!vue || (vue === 'accueil' && !Menu.el.classList.contains('est-arrime'))) return;   // (avant la première vue : route() la fera naître)
+    CREATURE.habiter($('#marque'), { encre: '#ffffff' });
+  }
   function creature(type) {
     if (typeof CREATURE === 'undefined' || !CREATURE.actif) return;
     CREATURE.revenir();
@@ -5706,8 +5720,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   lire();
   cadre();
   // la créature : la petite pieuvre de l'en-tête (la marque, posée par cadre()) vit, avec ses vraies tentacules ; elle prend la
-  // relève du dessin à la fin de l'ouverture. Ses moments sont joués par route() : chaque page, l'entrée dans un spectacle
-  habiterCreature();
+  // relève du dessin à la fin de l'ouverture. route() la fait naître (la vue connue) et joue ses moments : chaque page,
+  // l'entrée dans un spectacle
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
   addEventListener('hashchange', routeEnsuite);
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);

@@ -144,7 +144,10 @@ Le scrollytelling est gardé tel quel dans son principe et parle maintenant la l
 - **Le texte qui s'allume** : l'encre prend mot après mot (même mécanique, `--lit`) ; sans les animations liées au
   défilement, la phrase fleurit d'un bloc à son arrivée.
 - **La scène qui se retire** : il n'y a plus de cartes de menu sous la pieuvre ; le menu est unique, posé sous elle, et il
-  monte s'arrimer en haut de l'écran pendant que la scène se retire.
+  monte s'arrimer en haut de l'écran pendant que la scène se retire. Ce qui glisse, ce sont la pieuvre (sa toile) et ses
+  titres, chacun son calque ; la scène pâlit sous un voile de la couleur de la page. Une scène entière en mouvement, ou
+  pâlie par son opacité, se recomposait à part avec la page sous elle à chaque image : 29 ms par image au compositeur, au
+  lieu de 16, au défilement et au premier geste de l'accueil.
 - **La tournée qui se dessine** : la carte se pose d'abord comme une tache d'encre ; puis, au fil des dates, le bras de chaque
   commune s'étire depuis Rouen (courbe souple) et sa ventouse se pose au bout ; la ligne de lecture ne relit plus de style
   (une carte est épinglée au-delà de 1000 px) et se pose à l'image d'après le rendu.
