@@ -9535,8 +9535,30 @@ const CREATURE = (() => {
     // la couleur d'un spectacle sur la scène : sa couleur de scène, éclaircie jusqu'à se lire (AA) sur la nuit, photo comprise
     const couleurScene = sh => { const c = (sh.univers && sh.univers.couleurs) || {}, x = [c.scene, c.accent2, c.accent].find(h => HEX6.test(h || '')); return x ? eclaircir(x, themeSaison().repere) : '#ffffff'; };
     // la couleur de sa tentacule : la couleur de scène de son univers, telle quelle, éclaircie juste ce qu'il faut pour rester
-    // visible sur la nuit (un trait, pas un texte : un contraste de 2,4 suffit, la couleur reste la sienne)
-    const couleurTentacule = sh => { const c = (sh.univers && sh.univers.couleurs) || {}, x = [c.scene, c.accent2, c.accent].find(h => HEX6.test(h || '')); return x ? eclaircir(x, themeSaison().repere, 2.4) : '#ffffff'; };
+    // visible sur la nuit (un trait, pas un texte : un contraste de 2,4 suffit, la couleur reste la sienne). Deux spectacles
+    // de la même teinte (à 14° près) se confondraient : le second prend la couleur suivante de son univers (accent2, puis
+    // accent) si elle s'en distingue, sinon sa couleur de scène tournée d'un peu (16°, puis 32°, vers l'orange d'abord)
+    const hsl = h => { const [r, g, b] = rgb(h).map(v => v / 255), M = Math.max(r, g, b), m = Math.min(r, g, b), l = (M + m) / 2, d = M - m;
+      const S = d ? d / (1 - Math.abs(2 * l - 1)) : 0, H = !d ? 0 : M === r ? ((g - b) / d + 6) % 6 * 60 : M === g ? ((b - r) / d + 2) * 60 : ((r - g) / d + 4) * 60; return [H, S, l]; };
+    const hex = (H, S, l) => { const C = (1 - Math.abs(2 * l - 1)) * S, X = C * (1 - Math.abs((H / 60) % 2 - 1)), m = l - C / 2, k = Math.floor(((H % 360) + 360) % 360 / 60);
+      const [r, g, b] = [[C, X, 0], [X, C, 0], [0, C, X], [0, X, C], [X, 0, C], [C, 0, X]][k]; return '#' + [r, g, b].map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join(''); };
+    const tourne = (h, deg) => { const [H, S, l] = hsl(h); return hex(H + deg, S, l); };
+    const distinctes = (a, b) => { const [h1, s1, l1] = hsl(a), [h2, s2, l2] = hsl(b), dh = Math.abs(((h1 - h2) % 360 + 540) % 360 - 180);
+      return (s1 > .3) !== (s2 > .3) ? true : s1 > .3 ? dh >= 14 : Math.abs(l1 - l2) >= .1; };
+    let couleursT = null, couleursTSig = '';
+    const couleursTentacule = () => {
+      const sig = JSON.stringify(D.shows.map(x => [x.slug, x.univers && x.univers.couleurs])) + themeSaison().repere;
+      if (couleursT && couleursTSig === sig) return couleursT;
+      const rep = themeSaison().repere, pris = [], m = {};
+      for (const sh of D.shows) {
+        const c = (sh.univers && sh.univers.couleurs) || {}, base = [c.scene, c.accent2, c.accent].filter(h => HEX6.test(h || ''));
+        const cands = base.concat(base.length ? [-16, 16, -32, 32].map(d => tourne(base[0], d)) : []).map(h => eclaircir(h, rep, 2.4));
+        const x = cands.find(h => pris.every(p => distinctes(p, h))) || cands[0] || '#ffffff';
+        pris.push(x); m[sh.slug] = x;
+      }
+      couleursTSig = sig; return couleursT = m;
+    };
+    const couleurTentacule = sh => couleursTentacule()[sh.slug] || '#ffffff';
     const signature = () => JSON.stringify([D.shows.map(x => [x.slug, x.titre, meta(x), couleurScene(x), !!D.photos[x.slug]]), L.lesSpectacles]);
     function bati() {
       sig = signature();
