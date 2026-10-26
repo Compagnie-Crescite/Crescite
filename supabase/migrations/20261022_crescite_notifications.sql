@@ -268,13 +268,15 @@ begin
 end;
 $$;
 
--- des horaires qui changent (représentations, répétitions) : jour, heure, fin, annulation
+-- des horaires qui changent (représentations, répétitions) : jour, heure, fin, annulation. Une modification faite depuis
+-- l'espace de l'équipe (le quatorzième script) prévient elle-même, avec son auteur : ce déclencheur se tait alors
 create or replace function public.crescite_notif_horaires() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   d bigint := coalesce(new.date_id, old.date_id);
   nat text;
 begin
+  if current_setting('crescite.geste', true) = 'equipe' then return null; end if;
   if tg_op = 'UPDATE' and new.jour is not distinct from old.jour and new.heure is not distinct from old.heure
      and new.fin is not distinct from old.fin and new.annulee is not distinct from old.annulee then
     return null;
@@ -317,10 +319,12 @@ begin
 end;
 $$;
 
--- un document ajouté pour l'équipe d'un spectacle (ou de toute la compagnie)
+-- un document ajouté pour l'équipe d'un spectacle (ou de toute la compagnie). Ajouté depuis l'espace de l'équipe (le
+-- quatorzième script), il prévient lui-même, avec son auteur : ce déclencheur se tait alors
 create or replace function public.crescite_notif_documents() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
+  if current_setting('crescite.geste', true) = 'equipe' then return null; end if;
   if new.pour <> 'equipe' then return null; end if;
   perform public.crescite_notifier(array(
       select distinct di.personne_id from public.crescite_distributions di
