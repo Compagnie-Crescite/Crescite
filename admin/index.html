@@ -57,6 +57,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (min-width: 1940px) and (max-width: 2079px) { .barre.onze { flex-wrap: wrap; row-gap: 6px; } .barre.onze .nav { order: 3; flex-basis: 100%; } .barre.onze .qui { margin-left: auto; } .barre.onze .qui .moi, .barre.onze .chercher .mot { display: inline; } }
 @media (min-width: 2080px) and (max-width: 2219px) { .barre.onze .qui .moi { display: none; } }
 @media (min-width: 1101px) and (max-width: 1219px) { .barre.onze ~ main .deux > .liste { top: 142px; max-height: calc(100vh - 162px); } }
+/* douze rubriques (le tableau de bord et la Diffusion) : une seule ligne à partir de 2 220 px, l'adresse du compte à partir
+   de 2 360 px, et les rubriques sur deux rangs jusqu'à 1 339 px */
+@media (min-width: 1220px) and (max-width: 1339px) { .barre.douze .nav { flex-wrap: wrap; row-gap: 2px; overflow: visible; } .barre.douze ~ main .deux > .liste { top: 142px; max-height: calc(100vh - 162px); } }
+@media (min-width: 2080px) and (max-width: 2219px) { .barre.douze { flex-wrap: wrap; row-gap: 6px; } .barre.douze .nav { order: 3; flex-basis: 100%; } .barre.douze .qui { margin-left: auto; } .barre.douze .qui .moi, .barre.douze .chercher .mot { display: inline; } }
+@media (min-width: 2220px) and (max-width: 2359px) { .barre.douze .qui .moi { display: none; } }
 @media (max-width: 860px) { .qui .moi { display: none; } .barre { flex-wrap: wrap; gap: 8px 14px; padding: 8px 12px; } .nav { order: 3; flex-basis: 100%; padding-right: 28px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
 /* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
@@ -578,7 +583,10 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
    que la fiche d'une date (chargeDate, ecrireDate, effacerDate) ; exports Excel, CSV, Google Sheets ; import.
    La diffusion, les notes de frais et le matériel (le script « Compagnie Idéale ») se masquent quand la base n'a pas
    leurs tables (E.ideale). La Diffusion a trois parties : les pistes, les demandes de devis déposées sur le site (statut
-   et notes internes), et le résumé des alertes de tournée, qui demande aussi le onzième script (E.alertesInstallees). */
+   et notes internes), et le résumé des alertes de tournée, qui demande aussi le onzième script (E.alertesInstallees).
+   Le tableau de bord (#/accueil, admin/tableau.js : TABLEAU) ouvre l'administration : des tuiles sur ce qui presse et ce
+   qui vient, chacune menant au geste en un clic, entièrement personnalisables (ordre, taille, réglages, masquage), la
+   disposition gardée avec le compte (crescite_preferences, clé accueil.tableau). */
 const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
 const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
 const SITE = '../synthese.html';
@@ -783,7 +791,7 @@ async function demarrer() {
   try { await chargerTout(); } catch (e) { demarre = false; return ecranConnexion('Chargement impossible : ' + e.message); }
   E.pret = true;
   ecouter();
-  if (!location.hash || location.hash === '#') history.replaceState(null, '', '#/representations');
+  if (!location.hash || location.hash === '#') history.replaceState(null, '', typeof TABLEAU !== 'undefined' ? TABLEAU.depart() : '#/accueil');   // la page d'ouverture : le tableau de bord, ou Représentations si l'on l'a choisi
   E.hash = location.hash;
   router();
   if (versAdmin) { versAdmin = false; requestAnimationFrame(() => tt('page', getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#a8306f')); }
@@ -803,6 +811,7 @@ async function tout(table, ordre) {
 async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
+  const tableau = typeof TABLEAU !== 'undefined' ? TABLEAU.charger() : null;   // la disposition du tableau de bord (tableau.js) : ne lève jamais d'erreur
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
   const facultative = table => tout(table, 'id').then(x => { ideale = true; return x; }, () => []);   // (par id : des pages de 1 000 qui ne se chevauchent pas)
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
@@ -817,6 +826,7 @@ async function chargerTout() {
   const c = await chiffres;
   E.chiffres = c || []; E.chiffresInstalles = !!c;
   if (ideale) await lireAlertes();
+  await tableau;
 }
 // les alertes de tournée, avec leur confirmation (le onzième script, supabase/migrations/20261030_crescite_alertes.sql) :
 // sans leur jeton (les liens des courriels) ni rien d'autre que ce que le résumé montre. Sans le script (confirme_le
@@ -886,12 +896,13 @@ function changement(t, p) {
 }
 
 // ===================================================================================================== cadre et routes
-const RUBRIQUES = [['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['diffusion', 'Diffusion CRM'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
+const RUBRIQUES = [['accueil', 'Tableau de bord'], ['representations', 'Représentations'], ['planning', 'Planning'], ['feuilles', 'Feuilles de route'], ['spectacles', 'Spectacles'], ['equipe', 'Équipe'], ['diffusion', 'Diffusion CRM'], ['pro', 'Espace pro'], ['ateliers', 'Ateliers'], ['lieux', 'Lieux'], ['textes', 'Textes du site'], ['journal', 'Journal']];
 // la Diffusion n'est là que quand la base a ses tables (le script 20261026_crescite_ideale.sql) : sinon elle se masque
 const rubriquesVisibles = () => RUBRIQUES.filter(([k]) => k !== 'diffusion' || E.ideale);
 const idealeAbsente = titre => `<div class="bloc"><h3>${titre}</h3><p>Exécutez <code>supabase/migrations/20261026_crescite_ideale.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), puis rechargez cette page.</p><p class="aide">Le reste de l’administration marche comme avant.</p></div>`;
 function cadre(rubrique, contenu) {
-  $('#app').innerHTML = `<header class="barre${rubriquesVisibles().length > 10 ? ' onze' : ''}"><a class="marque" href="#/representations"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
+  const nRub = rubriquesVisibles().length;
+  $('#app').innerHTML = `<header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Crescite <small>administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true">${RACCOURCI_RCH}</kbd></button>
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
@@ -911,6 +922,7 @@ function cadre(rubrique, contenu) {
   tt('pieuvre');
 }
 const ROUTES = [
+  [/^#\/accueil$/, () => vueTableau()],
   [/^#\/representations(?:\/(nouvelle|tableur|\d+))?$/, m => vueDates(m[1])],
   [/^#\/planning(?:\/(propositions|proposer|proposition\/\d+))?$/, m => vuePlanning(m[1])],
   [/^#\/feuilles(?:\/(\d+))?$/, m => vueFeuilles(m[1])],
@@ -925,7 +937,7 @@ const ROUTES = [
 ];
 function router() {
   if (!E.pret) return;
-  const h = location.hash || '#/representations';
+  const h = location.hash || '#/accueil';
   for (const [re, f] of ROUTES) {
     const m = h.match(re);
     if (!m) continue;
@@ -933,7 +945,7 @@ function router() {
     changerVueAdmin(() => { f(m); viser(); }, sensVue(h));
     return;
   }
-  location.replace('#/representations');
+  location.replace('#/accueil');
 }
 // les vues s'enchaînent : avec les View Transitions, l'ancienne glisse et la nouvelle arrive (vers la gauche en entrant dans
 // une fiche, vers la droite en revenant à sa liste, en fondu d'une rubrique à l'autre) ; l'en-tête et les annonces
@@ -4037,5 +4049,7 @@ async function vueJournal() {
      les propositions de dates et leur suivi (script SQL 5) -->
 <script src="planning.js"></script>
 <script src="disponibilites.js"></script>
+<!-- le tableau de bord (#/accueil) : la page d'ouverture, ses tuiles et leur personnalisation -->
+<script src="tableau.js"></script>
 </body>
 </html>
