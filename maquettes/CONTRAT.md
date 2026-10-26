@@ -578,7 +578,12 @@ concernés (pour la saison en cours, juste les spectacles en tournée) », en l�
 - La frise de la saison : les mois en colonnes (septembre à août, leurs noms courts `libelles.moisCourts`), chaque date sous
   son mois, son jour écrit (des chiffres) dans une pastille à la couleur de son spectacle ; elle reste un `.frise[data-frise]`
   et ses dates des `.frise-point` (`--fr-c`, `.est-residence`). Juste au-dessus, sa légende : les spectacles de la saison
-  seuls, à leur couleur, le nombre de leurs dates ; les saisons passées ont la leur.
+  seuls, à leur couleur, le nombre de leurs dates ; les saisons passées ont la leur. Puis : « Que ça prenne une ligne. Ça
+  peut être un sous-menu, comme pour les univers de spectacle, et se snapper sous le menu principal en haut : les spectacles
+  de la saison avec une vignette et leur code couleur, et le fond qui change pour illustrer le spectacle sélectionné. » Cette
+  légende est donc le sous-menu de la saison : une ligne arrimée sous le menu (le nom de la saison paraît, arrimé), chaque
+  spectacle avec sa vignette (sa photo, `CADRAGE`) cerclée de sa couleur ; le spectacle choisi teinte la bande et donne au
+  fond de la saison sa photo, discrète, sous un voile de sa couleur (le texte reste AA).
 - À côté, la carte de la saison s'approche de la commune de la date survolée ou choisie (la loupe), cadre un mois, revient
   à la France ; ses noms et ses ventouses gardent leur taille, rien ne change de taille dans la page.
 - Choisir une date est un filtre (ses lignes seules, sa carte de réservation ouverte ; le second choix la rend) ; survoler un

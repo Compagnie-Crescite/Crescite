@@ -102,9 +102,11 @@ fermées au départ, chacune avec sa petite carte ; un index des saisons permet 
 filtre par spectacle comme la recherche par commune portent sur tout l'agenda, en ouvrant les saisons où ils trouvent
 quelque chose. `#/agenda/2019-2020` reste la page d'une saison.
 
-**La saison d'un regard (la synthèse).** Sur `#/saisons`, la saison en cours se lit dans un tableau : en haut, la légende
-de sa frise, les seuls spectacles qui tournent dans la saison (chacun sa couleur, celle de ses dates, et leur nombre ; le
-survoler isole ses dates, le choisir filtre la page ; les saisons passées ont leur propre rangée, de leurs spectacles) ; puis
+**La saison d'un regard (la synthèse).** Sur `#/saisons`, la saison en cours se lit dans un tableau : en haut, son
+sous-menu (comme celui des univers d'un spectacle), une seule ligne qui s'arrime sous le menu quand on descend : les seuls
+spectacles qui tournent dans la saison, chacun sa vignette (sa photo, cadrée), cerclée de sa couleur (celle de ses dates), et
+le nombre de ses dates ; le survoler isole ses dates, le choisir filtre la page, et le fond de la saison prend sa photo et sa
+couleur (les saisons passées ont leur propre rangée, de leurs spectacles) ; puis
 la frise des mois (`friseMois`), douze colonnes de septembre à août où chaque date est une ventouse à la couleur de son
 spectacle, son jour écrit dedans (vidée une fois jouée), « aujourd'hui » une goutte sur le bras de la saison ; à côté, la
 loupe (`LOUPE`), la carte de la saison, qui s'approche de la ville de la date survolée ou choisie, cadre les communes d'un
