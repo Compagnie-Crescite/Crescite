@@ -172,10 +172,13 @@ dans trois téléphones et avec les vraies données de la base, trois façons de
 poursuite** (lire : la ligne qu'on lit s'allume dans son univers, sa photo s'éclaire, un index épinglé des huit vignettes),
 **B. La pile d'affiches** (déplier : les huit tranches tiennent dans l'écran, une tranche touchée se déplie en affiche, avec
 sa fiche et la carte de sa tournée), **C. Le présentoir** (feuilleter : une affiche à la fois, qu'on fait glisser, la page
-prend son univers, la carte se redessine). La page d'aujourd'hui est chargée à côté pour comparer. Chaque proposition
-tient les règles du contrat (le texte vient de D, la nuit, « réduire les animations », 44 px, 360 px) ; rien n'est encore
-porté dans la synthèse. C'est une page annexe de `build.py` (`ANNEXES`) : construite avec les maquettes, publiée dans
-`docs/`, hors de la planche.
+prend son univers, la carte se redessine). La synthèse est chargée à côté pour comparer. Chaque proposition tient les
+règles du contrat (le texte vient de D, la nuit, « réduire les animations », 44 px, 360 px). C'est une page annexe de
+`build.py` (`ANNEXES`) : construite avec les maquettes, publiée dans `docs/`, hors de la planche. **La pile d'affiches a été
+retenue** (octobre 2026) et portée dans la synthèse : jusqu'à 899 px, `#/spectacles` est la pile (`afficheTdm`, `lierPile`,
+styles `.pil-*`) ; une tranche touchée se déplie, sa carte se dessine à la première ouverture, une seule dépliée à la fois,
+gardée quand D change ou que la fenêtre change de côté de 900 px ; au bureau, le sommaire et son aperçu sont inchangés.
+L'édition sur place porte sur chaque texte de la tranche et de la fiche, la photo et la date, sans déplier.
 
 ## Données
 
