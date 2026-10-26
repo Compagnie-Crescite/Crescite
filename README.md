@@ -13,7 +13,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | Dossier | Contenu |
 | --- | --- |
 | `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
-| `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, la synthèse et la planche qui les compare. Chacune lit la base en direct et se modifie sur place. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
+| `maquettes/` | La synthèse de la partie publique (les maquettes ont été retirées). Elle lit la base en direct et se modifie sur place. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
 | `supabase/` | La base de la compagnie : le script qui la crée (`migrations/20261020_crescite_base.sql`) et celui qui la remplit (`importer.py`). |
 | `admin/` | L'administration du site : tableau de bord, spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
@@ -55,16 +55,14 @@ animations » est respecté.
 ## Maquettes
 
 ```sh
-python3 maquettes/build.py              # les dix maquettes et la planche (maquettes/dist/, non versionné)
-python3 maquettes/build.py m06          # une seule maquette
+python3 maquettes/build.py              # la synthèse (maquettes/dist/, non versionné)
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
-node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
+node maquettes/onglets.mjs /tmp/x synthese # parcourt les vues de la synthèse et signale les anomalies
                                          # (en parties, 4 à la fois ; PARALLELE=1 une à une ; au-delà des cœurs
                                          # de la machine, les attentes ne suffisent plus et de fausses anomalies sortent)
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
-python3 maquettes/build.py spectacles-mobile   # la page des spectacles au téléphone, trois propositions (maquettes/dist/spectacles-mobile.html)
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 

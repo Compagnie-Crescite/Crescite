@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""Assemble les dix maquettes de la partie publique, la synthèse, et la planche qui les présente par onglets.
+"""Assemble la synthèse de la partie publique.
 
-Chaque maquette est un fichier maquettes/src/mNN.html qui lit ses contenus dans l'objet D : le texte exact de
-crescite.fr (D.site, D.shows, D.dates, D.saisons), le logo, les photos et la carte des tournées. Le script remplace
-/*__DATA__*/null par ces données et ajoute juste après les outils communs (OUTILS) : les lignes d'agenda, les données
-vivantes, la carte des tournées, l'ouverture sur le logo, l'édition sur place, le dossier PDF, les frises
-chronologiques, le mouvement et les tentacules (maquettes/src/*.js).
+La synthèse (maquettes/src/synthese.html) lit ses contenus dans l'objet D : le texte exact de crescite.fr (D.site, D.shows,
+D.dates, D.saisons), le logo, les photos et la carte des tournées. Le script remplace /*__DATA__*/null par ces données et
+ajoute juste après les outils communs (OUTILS, maquettes/src/*.js).
 
 Usage :
-  python3 maquettes/build.py              toutes les maquettes et la planche (maquettes/dist/)
-  python3 maquettes/build.py m03          une seule maquette : maquettes/dist/m03.html
-  python3 maquettes/build.py --captures   les maquettes, leurs captures (Playwright, maquettes/dist/shots/) et la planche
-  python3 maquettes/build.py --pages      en plus, le site GitHub Pages dans docs/ (planche en index, une page par maquette)
+  python3 maquettes/build.py              la synthèse (maquettes/dist/synthese.html)
+  python3 maquettes/build.py --captures   avec ses captures (Playwright, maquettes/dist/shots/)
+  python3 maquettes/build.py --pages      en plus, le site GitHub Pages dans docs/ (la synthèse en index)
 
 Les fichiers privés (logo 2.0, photos) sont lus dans private/ ; sans eux, des substituts neutres.
 """
@@ -159,7 +156,7 @@ def arms_data():
 
 # les pages qui ont la scène de la pieuvre (la 10 et la synthèse) : ses vraies tentacules s'y déploient (pieuvre.js, D.pieuvre),
 # et la petite pieuvre de l'en-tête peut y vivre (creature.js, si la page l'appelle)
-PAGES_PIEUVRE = ("m10", "synthese")
+PAGES_PIEUVRE = ("synthese",)
 
 
 def pieuvre_data():
@@ -744,9 +741,7 @@ OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "doss
 # Les outils de <head>, avant toute feuille de style : theme.js (THEME) pose le jour ou la nuit sur <html> avant le
 # premier dessin (règle 19 : pas d'éclair) ; il ne lit rien de D.
 OUTILS_TETE = ("theme.js",)
-# Les pages annexes : des prévisualisations à part (la page des spectacles au téléphone, en trois propositions), construites
-# et publiées comme les maquettes (D, les photos, la nuit) mais hors de la planche, avec les seuls outils qu'elles emploient.
-ANNEXES = {"spectacles-mobile": ("agenda.js", "donnees.js", "carte.js", "mouvement.js", "cadrage.js")}
+ANNEXES = {}
 
 
 def outils():
@@ -1027,10 +1022,9 @@ def reponse(dest):
     shutil.copytree(ROOT / "reponse", dest / "reponse", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
 
 
-def pages(D, files, names, annexes=()):
-    """Le site GitHub Pages (docs/) : la planche en index, chaque maquette en page à part, hors des moteurs de recherche,
-    et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune. Les pages
-    annexes (ANNEXES) sont publiées à côté, hors de la planche."""
+def pages(D, files, names):
+    """Le site GitHub Pages (docs/) : la synthèse en index, hors des moteurs de recherche, et les photos une seule fois
+    dans docs/photos/, que la page charge au lieu de les embarquer."""
     import shutil
     # jamais de site publié avec la pieuvre de substitution à la place du vrai logo
     if not fichier_marque(LOGO):
@@ -1045,17 +1039,18 @@ def pages(D, files, names, annexes=()):
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(octets)
     photo_urls = photos(files, base="photos/")
-    for n in list(names) + list(annexes):
+    for n in names:
         html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
-    build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
+        if n == "synthese":  # (admin, équipe et réponse y renvoient par synthese.html)
+            (docs / "index.html").write_text(html, encoding="utf-8")
     admin(docs)
     equipe(docs)
     pro(docs)
     reponse(docs)
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
-    print(f"pages : {len(names)} maquettes, {len(annexes)} page(s) annexe(s) et la planche dans docs/ ({size:.1f} Mo)")
+    print(f"pages : la synthèse dans docs/ ({size:.1f} Mo)")
 
 
 def main():
@@ -1063,11 +1058,8 @@ def main():
     photo_urls = photos(files)
     DIST.mkdir(parents=True, exist_ok=True)
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    names = args or sorted(p.stem for p in SRC.glob("m[0-9][0-9].html")) + (["synthese"] if (SRC / "synthese.html").exists() else [])
-    # (les pages annexes se construisent avec tout, ou seules par leur nom ; elles ne vont pas dans la planche)
-    annexes = [n for n in names if n in ANNEXES] if args else [n for n in ANNEXES if (SRC / f"{n}.html").exists()]
-    names = [n for n in names if n not in ANNEXES]
-    for n in names + annexes:
+    names = args or ["synthese"]
+    for n in names:
         out = DIST / f"{n}.html"
         out.write_text(assemble(n, D, photo_urls), encoding="utf-8")
         print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
@@ -1078,29 +1070,9 @@ def main():
     (DIST / "data.json").write_text(json.dumps(dict(D, photos={k: f"[photo {k}]" for k in photo_urls}), ensure_ascii=False, indent=1), encoding="utf-8")
     if "--captures" in sys.argv:
         captures(names)
-    planche = SRC / "planche.html"
-    if not args and planche.exists():
-        build_planche(D, photo_urls, names)
-        if "--pages" in sys.argv:
-            pages(D, files, names, annexes)
+    if "--pages" in sys.argv and not args:
+        pages(D, files, names)
 
-
-def build_planche(D, photo_urls, names, web=False, dest=None):
-    """La planche : une barre d'onglets en haut, chaque maquette chargée en plein écran dessous.
-    En fichier, elle embarque chaque maquette avec ses données ; en ligne (web), elle charge les pages publiées à côté d'elle."""
-    html = (SRC / "planche.html").read_text(encoding="utf-8")
-    if web:
-        data = {"web": True, "pages": names}
-    else:
-        data = {"D": dict(D, photos=photo_urls, pieuvre=pieuvre_data()), "sources": {n: avec_outils(n, (SRC / f"{n}.html").read_text(encoding="utf-8")) for n in names}}
-    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-    html = html.replace("/*__PLANCHE__*/null", payload)
-    html = html.replace("</head>", f"<style>:root {{ --saison: {theme()['couleur']}; }}</style>\n</head>", 1)
-    if web:
-        html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
-    out = dest or DIST / "maquettes.html"
-    out.write_text(html, encoding="utf-8")
-    print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
 
 if __name__ == "__main__":
     main()
