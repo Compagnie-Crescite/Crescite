@@ -12,8 +12,8 @@
    (essais, captures) coupe le mouvement, comme le réglage « moins d'animations » de l'appareil. */
 (() => {
   'use strict';
-  const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
-  const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';   // la clé publique du projet (celle du site)
+  const BASE = 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co';
+  const CLE = 'sb_publishable__SvO0qVI2BvcBK5vYgxjZQ_U-evgPKD';   // la clé publique du projet (celle du site)
   const FONCTION = `${BASE}/functions/v1/crescite-pro`;
   const PUBLIC = `${BASE}/storage/v1/object/public/crescite`;
   const SESSION = 'crescite-pro-jeton';

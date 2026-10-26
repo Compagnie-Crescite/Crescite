@@ -168,6 +168,12 @@ d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.ht
 2.0 et les photos (rangées une seule fois dans `docs/photos/`) : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
 chacune demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet,
 noimageindex`), et leur adresse n'est donnée nulle part dans le dépôt (elle figure dans Settings → Pages). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
+Le même `docs/` est le site de la compagnie sur Cloudflare Pages, hors de GitHub : `python3 scripts/cloudflare.py` le
+publie (la clé, `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`, vient de l'environnement ; les adresses, du projet
+lui-même). Cloudflare lit `docs/_headers`, écrit par le build : la même consigne aux moteurs en en-tête, photos comprises,
+et ni type deviné ni affichage dans le cadre d'un autre site. Tous les liens du site sont relatifs, et les connexions
+reviennent à l'adresse d'où elles partent : il suffit d'ajouter la nouvelle adresse aux Redirect URLs de Supabase, et
+`SITE_URL` (secret des fonctions) donne celle des liens envoyés par courriel.
 **Réserver, regarder, la nuit, la troupe** (règles 17 à 20 : dans la synthèse et les dix maquettes, chacune à sa
 manière). Quatre outils communs, injectés dans chaque maquette :
 - `reserver.js` (RESERVER) : sur la page d'un spectacle, un bouton par date à venir (le jour, les heures, la ville), la
@@ -931,6 +937,16 @@ boutons « Ajouter un fichier » et « Modifier » ouvrent, pour ce compte, les 
 pour qui, remplacer le fichier, supprimer ; un document public, un lien, un document de la compagnie), et les boîtes de
 l'équipe pour les autres. Une boîte ouverte, les gestes de la page (← →, le balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
 2, 3 et 13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
+
+**La base de la compagnie appelle ses propres fonctions (pas encore lancé).** Le dix-septième script,
+`supabase/migrations/20261105_crescite_projet_compagnie.sql`, se lance dans le projet de la compagnie
+(`fwjgyfzcbcmfyfkhhtuh`) seulement, et peut être relancé. Recopiée le 26 octobre 2026 depuis l'ancien projet
+(`omekkqjinvppadsoinvj`, celui d'adrienvada.fr), la base appelait encore les fonctions de celui-ci, qui lisent l'ancienne
+base : leur adresse est écrite dans quatre fonctions (`crescite_notif_envoyer`, `crescite_propositions_prevenir`,
+`crescite_renvoyer_courriel`, `crescite_alertes_demander`) et deux tâches planifiées (`crescite-agendas`,
+`crescite-alertes`). Le script les réécrit à l'identique, l'adresse remplacée (mêmes droits, mêmes noms, mêmes horaires),
+puis dit ce qui reste. Les scripts 3, 5 et 11 portent déjà la nouvelle adresse : une base neuve n'en a pas besoin.
+9 essais (`node projet.mjs` : les quinze scripts tels que recopiés, puis lui, deux fois).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

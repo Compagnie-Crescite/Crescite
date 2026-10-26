@@ -32,7 +32,7 @@ import urllib.request
 from pathlib import Path
 from urllib.parse import quote
 
-URL = os.environ.get("SUPABASE_URL", "https://omekkqjinvppadsoinvj.supabase.co")
+URL = os.environ.get("SUPABASE_URL", "https://fwjgyfzcbcmfyfkhhtuh.supabase.co")
 CLE = os.environ.get("SUPABASE_CLE_SERVICE")
 TABLE = re.compile(r"^crescite_[a-z0-9_]+$")
 STOCKAGES = {"crescite", "crescite-equipe", "crescite-pro"}

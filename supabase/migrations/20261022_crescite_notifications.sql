@@ -389,7 +389,7 @@ begin
   if jeton is null then return null; end if;
   begin
     perform net.http_post(
-      url := 'https://omekkqjinvppadsoinvj.supabase.co/functions/v1/crescite-push',
+      url := 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co/functions/v1/crescite-push',
       body := jsonb_build_object('notification_id', new.id),
       headers := jsonb_build_object('Content-Type', 'application/json', 'x-crescite-jeton', jeton));
   exception when others then

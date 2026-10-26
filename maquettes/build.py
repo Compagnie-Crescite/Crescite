@@ -429,9 +429,9 @@ def projection(places):
     return lambda lon, lat: [round(cx[0] * u + cx[1] * v + cx[2], 1), round(cy[0] * u + cy[1] * v + cy[2], 1)] if (u := lcc(lon, lat)[0]) is not None and (v := lcc(lon, lat)[1]) is not None else None
 
 
-STOCKAGE = "https://omekkqjinvppadsoinvj.supabase.co/storage/v1/object/public/crescite"
-BASE = "https://omekkqjinvppadsoinvj.supabase.co"
-CLE_PUBLIQUE = "sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB"     # la clé publique du site (lecture de ce qui est publié)
+STOCKAGE = "https://fwjgyfzcbcmfyfkhhtuh.supabase.co/storage/v1/object/public/crescite"
+BASE = "https://fwjgyfzcbcmfyfkhhtuh.supabase.co"
+CLE_PUBLIQUE = "sb_publishable__SvO0qVI2BvcBK5vYgxjZQ_U-evgPKD"     # la clé publique du site (lecture de ce qui est publié)
 
 
 def fond_carte():
@@ -820,6 +820,14 @@ def captures(names):
 # d'en-tête X-Robots-Tag, et un robots.txt dans un sous-dossier est ignoré (et bloquer l'exploration empêcherait
 # les robots de lire la consigne) : la consigne passe donc par une balise meta, dans le HTML initial de chaque page.
 NOINDEX = '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">'
+# Cloudflare Pages (le site de la compagnie) lit docs/_headers, lui : la même consigne en en-tête, qui couvre aussi les
+# photos, et deux protections que GitHub Pages ne permet pas (pas de type deviné, pas d'affichage dans le cadre d'un
+# autre site : l'administration et l'espace de l'équipe ne peuvent pas être habillés pour tromper un geste).
+ENTETES = """/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+"""
 
 
 def admin(dest):
@@ -1066,7 +1074,8 @@ def pages(D, files, names):
     pro(docs)
     reponse(docs)
     (docs / ".nojekyll").write_text("", encoding="utf-8")
-    size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
+    (docs / "_headers").write_text(ENTETES, encoding="utf-8")
+    size =sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
     print(f"pages : la synthèse dans docs/ ({size:.1f} Mo)")
 
 

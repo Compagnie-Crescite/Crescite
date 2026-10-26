@@ -236,7 +236,7 @@ begin
   if jeton is not null then
     begin
       perform net.http_post(
-        url := 'https://omekkqjinvppadsoinvj.supabase.co/functions/v1/crescite-courriel',
+        url := 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co/functions/v1/crescite-courriel',
         body := jsonb_build_object('destinataire_id', new.id),
         headers := jsonb_build_object('Content-Type', 'application/json', 'x-crescite-jeton', jeton));
     exception when others then
@@ -284,7 +284,7 @@ begin
   end if;
   select valeur into jeton from public.crescite_secrets where cle = 'jeton_push';
   perform net.http_post(
-    url := 'https://omekkqjinvppadsoinvj.supabase.co/functions/v1/crescite-courriel',
+    url := 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co/functions/v1/crescite-courriel',
     body := jsonb_build_object('destinataire_id', dest),
     headers := jsonb_build_object('Content-Type', 'application/json', 'x-crescite-jeton', jeton));
 end;
@@ -468,7 +468,7 @@ do $$ begin
     perform cron.unschedule(jobid) from cron.job where jobname = 'crescite-agendas';
     perform cron.schedule('crescite-agendas', '23 * * * *', $c$
       select net.http_post(
-        url := 'https://omekkqjinvppadsoinvj.supabase.co/functions/v1/crescite-agenda',
+        url := 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co/functions/v1/crescite-agenda',
         body := '{"synchro": true}'::jsonb,
         headers := jsonb_build_object('Content-Type', 'application/json',
                                       'x-crescite-jeton', (select valeur from public.crescite_secrets where cle = 'jeton_push')))

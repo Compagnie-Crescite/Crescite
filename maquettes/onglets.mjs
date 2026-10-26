@@ -673,14 +673,14 @@ const visite = async (n, tag, vp, mobile, partie) => {
       };
     });
     // (règle 18 : le lecteur d'une vidéo, YouTube sans cookie ou Vimeo, n'est permis qu'après le geste qui la lance)
-    page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fonts\.(googleapis|gstatic)\.com|omekkqjinvppadsoinvj\.supabase\.co/.test(u) && !(page.__geste18 && LECTEURS.test(u))) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
+    page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fonts\.(googleapis|gstatic)\.com|fwjgyfzcbcmfyfkhhtuh\.supabase\.co/.test(u) && !(page.__geste18 && LECTEURS.test(u))) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
     // par défaut, l'instantané du dépôt (?base=0) : le contrôle ne dépend pas de l'état de la base ; BASE=1 pour la base.
     // INSTANTANE=<dossier> : la page lit la base, servie par un instantané (un <table>.json par table : ce que le public y
     // lit) ; le contrôle porte alors sur les vraies données (leurs numéros de date, les résidences…), sans réseau. Une table
     // absente de l'instantané répond une liste vide.
     const INST = process.env.INSTANTANE;
     if (INST) {
-      await ctx.route('https://omekkqjinvppadsoinvj.supabase.co/rest/v1/**', route => {
+      await ctx.route('https://fwjgyfzcbcmfyfkhhtuh.supabase.co/rest/v1/**', route => {
         const u = new URL(route.request().url()), m = u.pathname.match(/\/rest\/v1\/(crescite_[a-z_]+)/);
         let rows = [];
         try { rows = m ? JSON.parse(readFileSync(`${INST}/${m[1]}.json`, 'utf8')) : []; } catch (e) { rows = []; }
@@ -688,7 +688,7 @@ const visite = async (n, tag, vp, mobile, partie) => {
         return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(rows.slice(off, off + lim)) });
       });
       // le temps réel de la base : fermé sur place (rien ne part vers la vraie base)
-      await ctx.routeWebSocket(/omekkqjinvppadsoinvj\.supabase\.co/, ws => ws.close());
+      await ctx.routeWebSocket(/fwjgyfzcbcmfyfkhhtuh\.supabase\.co/, ws => ws.close());
     }
     await page.goto(new URL(`${n}.html${process.env.BASE === '1' || INST ? '' : '?base=0'}`, dist).href, { waitUntil: 'load' });
     if (INST) await page.waitForFunction(() => { try { return Object.values(D.saisons || {}).some(S => S.spectacles.some(g => g.dates.some(d => d.id != null))); } catch (e) { return false; } }, null, { timeout: 30000 })

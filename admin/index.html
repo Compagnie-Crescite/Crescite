@@ -593,8 +593,8 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
    Le tableau de bord (#/accueil, admin/tableau.js : TABLEAU) ouvre l'administration : des tuiles sur ce qui presse et ce
    qui vient, chacune menant au geste en un clic, entièrement personnalisables (ordre, taille, réglages, masquage), la
    disposition gardée avec le compte (crescite_preferences, clé accueil.tableau). */
-const BASE = 'https://omekkqjinvppadsoinvj.supabase.co';
-const CLE = 'sb_publishable_TODW6NdmDly8eR9UxjG-6g_eyAa4gjB';
+const BASE = 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co';
+const CLE = 'sb_publishable__SvO0qVI2BvcBK5vYgxjZQ_U-evgPKD';
 const SITE = '../synthese.html';
 const sb = supabase.createClient(BASE, CLE, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'crescite-admin', detectSessionInUrl: true } });
 // les tentacules (tentacules.js) : courtes et près du bouton, jamais devant un champ ; absentes, rien ne change
@@ -3730,7 +3730,7 @@ function ouvrirModaleEmailRelance(p) {
     + `Je me permets de revenir vers vous suite à nos échanges concernant la possible programmation de notre spectacle « ${titreSp} » au sein de ${p.structure}.\n\n`
     + `Nous finalisons actuellement notre calendrier de tournée et serions ravis de collaborer avec votre équipe sur cette saison.\n\n`
     + `Vous pouvez consulter les extraits vidéos, la fiche technique et le dossier artistique sur notre espace professionnel dédié :\n`
-    + `https://crescite.fr/pro\n\n`
+    + `${new URL('../', location.href).href}#/espace-pro/programmer\n\n`
     + `Seriez-vous disponible cette semaine pour un court point téléphonique afin de faire le point sur vos créneaux et contraintes d'accueil ?\n\n`
     + `Bien chaleureusement,\n\n`
     + `L'équipe de diffusion\nCompagnie Crescite · Rouen\ncontact@crescite.fr`;

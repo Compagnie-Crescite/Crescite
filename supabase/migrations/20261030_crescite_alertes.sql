@@ -153,7 +153,7 @@ begin
   if jeton is null then return; end if;
   begin
     perform net.http_post(
-      url := 'https://omekkqjinvppadsoinvj.supabase.co/functions/v1/crescite-courriel',
+      url := 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co/functions/v1/crescite-courriel',
       body := jsonb_build_object('alerte_confirmation', alerte),
       headers := jsonb_build_object('Content-Type', 'application/json', 'x-crescite-jeton', jeton));
   exception when others then
@@ -467,7 +467,7 @@ do $$ begin
     perform cron.unschedule(jobid) from cron.job where jobname = 'crescite-alertes';
     perform cron.schedule('crescite-alertes', '17 7 * * *', $c$
       select net.http_post(
-        url := 'https://omekkqjinvppadsoinvj.supabase.co/functions/v1/crescite-courriel',
+        url := 'https://fwjgyfzcbcmfyfkhhtuh.supabase.co/functions/v1/crescite-courriel',
         body := '{"alertes": true}'::jsonb,
         headers := jsonb_build_object('Content-Type', 'application/json',
                                       'x-crescite-jeton', (select valeur from public.crescite_secrets where cle = 'jeton_push')),

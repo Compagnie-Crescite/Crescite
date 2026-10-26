@@ -178,7 +178,7 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
 .gm-boite, .gf-boite { border-radius: 14px; }
 .gf-tete h2 { font-family: var(--titres); }
 .gf-seg button[aria-pressed="true"] { background: var(--principal); border-color: transparent; color: #fff; }
-.avatar { background: linear-gradient(135deg, var(--accent-doux), var(--prune-doux)); color: var(--prune); font-family: var(--titres); box-shadow: 0 0 0 2px var(--carte), 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+.avatar { background: linear-gradient(135deg, var(--accent-doux), var(--prune-doux)) center/cover no-repeat; color: var(--prune); font-family: var(--titres); box-shadow: 0 0 0 2px var(--carte), 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
 .connexion form { border-top: 4px solid var(--accent); }
 .connexion h1 { font-size: 26px; }
 @media (prefers-reduced-motion: reduce) { .ligne, .tb-l, .btn, .tb-tuile { transition: none; } .ligne:hover, .tb-l:hover, .btn.principal:hover { transform: none; } }
