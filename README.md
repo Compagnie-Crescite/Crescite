@@ -927,9 +927,9 @@ Les portraits qui attendent l'accord de publication ne sont plus dans le stockag
 dans le stockage privé de l'équipe (`crescite-equipe`, `portraits/…`) et les change de stockage quand l'accord change ;
 un portrait remplacé ou retiré est effacé.
 
-**La tournée vue par l'équipe (pas encore lancé).** Le seizième script, `supabase/migrations/20261104_crescite_tournee.sql`,
-s'exécute après les autres (il s'appuie sur `crescite_moi`, `crescite_membre_date` et `crescite_est_admin`) et peut être
-relancé. Il crée `crescite_presences` (qui sera là, qui a lu la feuille de route et en quelle version), `crescite_fil`
+**La tournée vue par l'équipe.** Le seizième script, `supabase/migrations/20261104_crescite_tournee.sql`, s'exécute
+après les autres (il s'appuie sur `crescite_moi`, `crescite_membre_date` et `crescite_est_admin`) et peut être relancé ;
+il est lancé sur la base. Il crée `crescite_presences` (qui sera là, qui a lu la feuille de route et en quelle version), `crescite_fil`
 (les messages d'une date, leurs mentions, leur photo ; la base prévient l'équipe de la date), `crescite_trajets` (d'où,
 quand, comment, combien de places, qui monte : `crescite_trajet_monter`), `crescite_checklists` (ma check-list par date,
 mon modèle) et `crescite_creneaux` (mes créneaux libres, lus par l'administration) ; leurs règles (une personne ne lit
