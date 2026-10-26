@@ -3587,12 +3587,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const meta = sh => { const d = prochaine(sh); return d ? esc(d.ligne) : sh.statut ? `<span${edS(sh, 'statut')}>${esc(sh.statut)}</span>` : sh.creation ? `<span${edS(sh, 'creation')}>${esc(sh.creation)}</span>` : ''; };
     // la couleur d'un spectacle sur la scène : sa couleur de scène, éclaircie jusqu'à se lire (AA) sur la nuit, photo comprise
     const couleurScene = sh => { const c = (sh.univers && sh.univers.couleurs) || {}, x = [c.scene, c.accent2, c.accent].find(h => HEX6.test(h || '')); return x ? eclaircir(x, themeSaison().repere) : '#ffffff'; };
+    // la couleur de sa tentacule : la couleur de scène de son univers, telle quelle, éclaircie juste ce qu'il faut pour rester
+    // visible sur la nuit (un trait, pas un texte : un contraste de 2,4 suffit, la couleur reste la sienne)
+    const couleurTentacule = sh => { const c = (sh.univers && sh.univers.couleurs) || {}, x = [c.scene, c.accent2, c.accent].find(h => HEX6.test(h || '')); return x ? eclaircir(x, themeSaison().repere, 2.4) : '#ffffff'; };
     const signature = () => JSON.stringify([D.shows.map(x => [x.slug, x.titre, meta(x), couleurScene(x), !!D.photos[x.slug]]), L.lesSpectacles]);
     function bati() {
       sig = signature();
       ul.innerHTML = D.shows.map(sh => `<li><a class="sc-t" href="${lienSp(sh.slug)}" draggable="false" style="--c:${couleurScene(sh)}"><span class="sc-tl"><span class="sc-tt"${edS(sh, 'titre')}>${esc(sh.titre)}</span>${D.photos[sh.slug] ? `<span class="sc-med" aria-hidden="true"><img src="${D.photos[sh.slug]}" alt="" decoding="async"></span>` : ''}</span><span class="sc-q">${meta(sh)}</span></a></li>`).join('');
       TIT = $$('.sc-t', ul).map((a, i) => { const sh = D.shows[i];
-        const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), q: $('.sc-q', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurScene(sh)) };
+        const T = { el: a, tt: $('.sc-tt', a), ttl: $('.sc-tl', a), q: $('.sc-q', a), slug: sh.slug, i, bx: 0, by: 0, w: 0, th: 0, bh: 0, U: 0, dirU: 1, droite: false, ancre: { x: 0, y: 0 }, bras: null, focus: false, em: 0, col: rgb(couleurTentacule(sh)) };
         ecouter(T); return T; });
       ul.setAttribute('aria-label', L.lesSpectacles);
       BRAS.forEach(a => { a.but = null; a.geste = null; a.tenu = null; a.teinte = 0; a.T = []; a.t.viser(null, 0); });
@@ -3888,10 +3891,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             if (!mobile || !a.but || a.teinte < .01) return null;
             const y0 = oy + bob.y + 760 * s, y1 = a.but.ancre.y, E = a.col, k = a.teinte;
             if (y1 - y0 < 120) return null;
-            const g = ctx.createLinearGradient(0, y0, 0, y1);
-            g.addColorStop(0, ENCRE); g.addColorStop(.45, `rgba(255,255,255,${(1 - .5 * k).toFixed(3)})`);
-            g.addColorStop(.85, `rgba(${Math.round(lerp(255, E[0], k))},${Math.round(lerp(255, E[1], k))},${Math.round(lerp(255, E[2], k))},${(1 - .1 * k).toFixed(3)})`);
-            g.addColorStop(1, `rgb(${Math.round(lerp(255, E[0], k))},${Math.round(lerp(255, E[1], k))},${Math.round(lerp(255, E[2], k))})`);
+            const g = ctx.createLinearGradient(0, y0, 0, y1), C = [0, 1, 2].map(i => Math.round(lerp(255, E[i], k))), teinte = al => `rgba(${C[0]},${C[1]},${C[2]},${al.toFixed(3)})`;
+            g.addColorStop(0, ENCRE); g.addColorStop(.1, ENCRE); g.addColorStop(.3, teinte(1 - .45 * k)); g.addColorStop(.6, teinte(1 - .5 * k)); g.addColorStop(.86, teinte(1)); g.addColorStop(1, teinte(1));
             return g;
           };
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere, degrade: degradeDe(a) });

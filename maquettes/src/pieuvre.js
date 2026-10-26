@@ -49,7 +49,7 @@
      PIEUVRE.corps(ts)           le reste de la pieuvre (Path2D, unités du dessin, à remplir en 'evenodd') : le logo sans
                                  ces tentacules, qu'on dessine à part, par-dessus
      PIEUVRE.dessiner(g, t, { encre, vers, teinte, lisere, degrade })   la tentacule : son liseré (là où elle passe sur la
-                                 pieuvre), puis elle, de l'encre (vers la pointe, mêlée de la couleur vers, selon teinte ;
+                                 pieuvre), puis elle, de l'encre à sa racine, de la couleur vers dès qu'elle en sort (selon teinte ;
                                  ou d'un dégradé fourni, degrade : un CanvasGradient dans le repère de la page)
    Tout se dessine dans le repère de la page (px CSS) : le contexte g porte déjà l'échelle de l'écran (dpr). */
 const PIEUVRE = (() => {
@@ -375,7 +375,7 @@ const PIEUVRE = (() => {
       if (o.degrade) { g.fillStyle = o.degrade; g.globalAlpha = 1; g.fill(); }
       else if (o.vers && o.teinte > .01) {
         const r = t.racine(), c = t.cible || t.derniere || { x: r.x + 1, y: r.y }, gr = g.createLinearGradient(r.x, r.y, c.x, c.y);
-        gr.addColorStop(0, o.encre); gr.addColorStop(.35, o.encre); gr.addColorStop(1, o.vers);
+        gr.addColorStop(0, o.encre); gr.addColorStop(.18, o.encre); gr.addColorStop(.42, o.vers); gr.addColorStop(1, o.vers);
         g.fillStyle = gr; g.globalAlpha = 1;
         g.fill();
         if (o.teinte < .99) { g.globalAlpha = 1 - o.teinte; g.fillStyle = o.encre; g.fill(); g.globalAlpha = 1; }
