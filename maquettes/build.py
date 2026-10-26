@@ -283,7 +283,7 @@ LIBELLES = {
     "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison", "contact": "Contact",
     # les saisons (règle 21) et la page d'un spectacle qui n'est plus en tournée
     "saisonEnCours": "La saison en cours", "prochainesDates": "Les prochaines dates", "toutesLesDates": "Toutes les dates",
-    "saisonsPassees": "Les saisons passées", "bilan": "Le bilan des dates passées",
+    "saisonsPassees": "Les saisons passées", "bilan": "Le bilan des dates passées", "historique": "Historique",
     "actionsMenees": "Les actions culturelles menées",
     # les chiffres du bilan (le nombre de dates : « dates », de communes, de saisons)
     "communes": "Communes", "saisons": "Saisons",

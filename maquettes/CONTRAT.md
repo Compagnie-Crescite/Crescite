@@ -613,6 +613,16 @@ Un message final court : la navigation par les saisons, comment les univers sont
   (`D.shows[].enTournee`) d'abord, dans leur ordre, puis les autres.
 - Le vérificateur : `REGLE23=1`, avec `INSTANTANE=<dossier>` (un instantané de la base, un `<table>.json` par table, où sont
   les résidences : l'instantané du dépôt n'en a pas).
+- La synthèse (le site, demande de la compagnie, octobre 2026 : « Ne mets pas les résidences dans les saisons, mais dans
+  l'historique de chaque spectacle ») : aucune résidence sur `#/saisons` ni sur `#/saisons/<saison>` (ni ligne, ni repère
+  de frise, ni signe de légende). Elles sont dans l'historique de chaque spectacle : sur sa page, une liste repliée
+  « Historique » (`D.site.libelles.historique`) sous ses dates, ses dates passées et ses résidences (même à venir), saison
+  par saison puis mois par mois, chaque résidence marquée « Résidence », sans réservation ; le bilan d'un spectacle qui ne
+  tourne plus les garde de même ; la frise de sa tournée les marque, et un repère passé ou de résidence mène à sa ligne de
+  la page (il ouvre l'historique). Le vérificateur le contrôle pour la synthèse.
+- Les chiffres par saison (la diffusion d'un spectacle, celle de la compagnie, la page des saisons) comptent des dates (les
+  lignes, sans les résidences), jamais des représentations sous le mot « dates » : un spectacle n'a jamais plus de dates
+  qu'une saison de toute la compagnie.
 
 ## Règle 24 : chaque photo cadrée sur sa zone d'intérêt (demande du client)
 « Veille à ce que les images soient correctement centrées et cadrées, en définissant des zones d'intérêt par image pour
