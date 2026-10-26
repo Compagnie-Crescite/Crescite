@@ -405,6 +405,10 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 
 /* ———————————————— la page d'une date */
 .gestes { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin: 12px 0 0; }
+/* la date d'avant, celle d'après (navDates, equipe.js ; les boutons de gestes.js) : sous les gestes, deux boutons nommés */
+.nav-dates { margin: 12px 0 0; }
+.nav-dates .gps-b { min-height: 44px; padding: 8px 12px; }
+.nav-dates .gps-t { font-size: .92rem; }
 .geste { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 72px; padding: 10px 6px; border: 1px solid var(--filet); border-radius: 16px; background: var(--surface); color: var(--encre); font: 600 .86rem/1.2 var(--sans); text-align: center; text-decoration: none; cursor: pointer; transition: transform .12s, background-color .2s; }
 .geste:hover { background: color-mix(in srgb, var(--u-fond, var(--surface-2)) 60%, var(--surface)); color: var(--encre); }
 .geste:active { transform: scale(.96); }
@@ -732,6 +736,9 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .modale-corps { line-height: 1.5; }
 .modale-corps p { margin: 0 0 10px; }
 @media (min-width: 760px) { .installer-barre { display: none; } }
+/* au téléphone le plus étroit (360 px), la marque, « Installer », la cloche et l'actualisation ne tiennent pas ensemble :
+   tant que « Installer » est là, la marque garde sa pieuvre et son nom, et « équipe » s'efface (la page ne déborde pas) */
+@media (max-width: 400px) { .barre-haut:has(.installer-barre:not([hidden])) .marque-mini small { display: none; } }
 .cloche { position: relative; }
 .cloche .pastille-nb { top: -2px; left: auto; right: -4px; }
 .cloche[aria-current] { background: var(--magenta-doux); color: var(--magenta); }
@@ -777,6 +784,63 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .btn-choix { padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--filet); background: var(--surface-2); color: var(--encre); font-weight: 600; text-align: left; cursor: pointer; transition: border-color .15s, background-color .15s; }
 .btn-choix:hover { border-color: var(--magenta); }
 .btn-choix.actif { border-color: var(--alerte); background: var(--alerte-doux); color: var(--alerte); }
+
+/* ———————————————— l'équipe modifie (quatorzième script) : une date (l'horaire, les précisions), les fichiers d'un
+   spectacle. La boîte garde la page derrière elle immobile ; au téléphone elle monte du bas, et défile seule */
+html.modale-ouverte { overflow: hidden; }
+.modale-tete h2 { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.modale-tete h2 .ic { color: var(--magenta); }
+.modale-boite { overscroll-behavior: contain; }
+.form-modale > .intro { margin: 0 0 16px; color: var(--gris); }
+.form-modale > .intro b { color: var(--encre); }
+.form-modale section + section { margin-top: 18px; }
+.form-modale h3 { margin: 0 0 10px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.form-modale .aide + .aide { margin-top: 6px; }
+.seance-modif { min-width: 0; margin: 0 0 12px; padding: 10px 12px 0; border: 1px solid var(--filet); border-radius: var(--rayon-s); background: var(--papier); }
+.seance-modif legend { padding: 0 6px; margin-left: -6px; font-weight: 700; }
+.seance-modif .champ { margin-bottom: 12px; min-width: 0; }
+.heures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+.heures input { min-width: 0; }
+.facultatif { color: var(--gris); font-weight: 400; font-size: .9rem; }
+.liste-precisions { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 12px; }
+.liste-precisions:empty { display: none; }
+.precision-modif { display: grid; gap: 4px; min-width: 0; }
+.precision-modif textarea { min-height: 66px; }
+.precision-fixe { margin: 0; padding: 10px 12px; border: 1.5px dashed var(--filet); border-radius: 14px; }
+.precision-pied { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0; }
+.precision-pied .aide { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.precision-pied .ic { width: 16px; height: 16px; flex: none; }
+/* une précision qui porte un lien : en lecture seule, et la ligne qui dit qu'elle reste à l'administration */
+.precision-liee .aide { display: flex; align-items: flex-start; gap: 6px; margin: 0; min-width: 0; }
+.precision-liee .aide .ic { width: 16px; height: 16px; flex: none; margin-top: .2em; }
+.ajout-precision { margin: 0; }
+.aide.prevenus { display: flex; align-items: flex-start; gap: 8px; margin: 18px 0 12px; }
+.aide.prevenus .ic { width: 18px; height: 18px; margin-top: 1px; color: var(--magenta); }
+.form-modale select { width: 100%; min-width: 0; min-height: 48px; padding: 11px 14px; border: 1.5px solid var(--bord-champ); border-radius: 14px; background: var(--surface); color: var(--encre); font-size: 1rem; }
+.form-modale select:focus-visible { outline: 3px solid var(--magenta); outline-offset: 1px; border-color: var(--magenta); }
+.form-modale input[type=file] { width: 100%; min-width: 0; max-width: 100%; padding: 6px 0; }
+.form-modale input[type=file]:focus-visible { outline: 3px solid var(--magenta); outline-offset: 2px; border-radius: 6px; }
+.form-modale input[type=file][aria-invalid="true"] { color: var(--alerte); }
+.form-modale .msg-form .message { margin-bottom: 12px; }
+.form-modale .pied-form { margin-bottom: 0; }
+.btn.danger { border-color: color-mix(in srgb, var(--alerte) 40%, var(--filet)); color: var(--alerte); }
+.btn.danger:hover { background: var(--alerte-doux); border-color: var(--alerte); color: var(--alerte); }
+.pied-form .btn.danger { margin-left: auto; }
+/* les fichiers de travail : « Partager » et « Modifier » à droite du fichier ; au téléphone, sous lui, côte à côte, chacun
+   avec son nom (la ligne a la place : « Partager » n'y devient pas le bouton rond des autres fichiers) */
+.doc-actions { flex: none; display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+.doc-actions .btn { width: 100%; }
+@media (max-width: 559px) {
+  .doc-ligne:has(.doc-modifier) { flex-wrap: wrap; }
+  .doc-ligne:has(.doc-modifier) .doc { flex-basis: 100%; }
+  .doc-ligne:has(.doc-modifier) .doc-actions { flex: 1 1 100%; flex-direction: row; justify-content: flex-end; }
+  .doc-ligne:has(.doc-modifier) .doc-actions .btn { width: auto; min-height: 44px; padding: 6px 16px; border-radius: 999px; }
+  .doc-ligne:has(.doc-modifier) .doc-partager > span:not(.sr) { position: static !important; width: auto; height: auto; overflow: visible; clip-path: none; }
+}
+.bloc.fichiers .ajout-fichier { margin-top: 16px; }
+/* une notification d'une modification faite par l'équipe : le portrait de son auteur */
+.notif .ic-rond.auteur, .bandeau-notif .ic-rond.auteur { overflow: hidden; background: none; }
+.avatar.n-auteur { width: 42px; height: 42px; border-radius: 14px; font-size: .9rem; background: var(--magenta-doux); color: var(--magenta); }
 
 /* ———————————————— navigation 1-tap gps */
 .nav-gps-grille { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
@@ -997,6 +1061,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 <script src="../admin/feuille.js" defer></script>
 <script src="../admin/logo.js" defer></script>
 <script src="../admin/tentacules.js" defer></script>
+<script src="../admin/gestes.js" defer></script>
 <script src="../admin/planning.js" defer></script>
 <script src="carte.js" defer></script>
 <script src="equipe.js" defer></script>

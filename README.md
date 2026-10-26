@@ -59,6 +59,8 @@ python3 maquettes/build.py              # les dix maquettes et la planche (maque
 python3 maquettes/build.py m06          # une seule maquette
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
 node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
+                                         # (en parties, 4 à la fois ; PARALLELE=1 une à une ; au-delà des cœurs
+                                         # de la machine, les attentes ne suffisent plus et de fausses anomalies sortent)
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
@@ -136,9 +138,12 @@ l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en 
 (`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
 souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
 va souligner le titre à la couleur du spectacle, puis revient. Sur la page de la compagnie, la pieuvre de la troupe est
-une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo) : quand la
-lecture descend, elle rapetisse et nage dans la marge, par impulsions, et une tentacule attrape le médaillon du métier
-qu'on lit, qui s'anime.
+une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo, et sa tête
+hoche et se tourne à part du corps, au bout d'un ressort) : quand la lecture descend, elle rapetisse et vit dans la
+marge, jamais sur la même ligne : elle choisit un point à sa portée (la marge, ou le vide sous le titre d'un métier), y
+file au galop (elle se ramasse, bondit étirée dans le sens du bond, un sillage derrière elle), y flotte, repart ; une
+tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelqu'un (un clic sur une de ses places) :
+elle sursaute, puis ses tentacules, lumineuses, vont tenir toutes ses places (`c.tenir`), à la place des fils des liens.
 
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
@@ -293,8 +298,28 @@ compte du projet inscrit dans `crescite_admins`.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node maquettes/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (60 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
-    l'appareil sans le script 6, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+    (79 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
+    précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+- **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
+  fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
+  carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
+  depuis le bas au téléphone (↑ ↓ Entrée Échap au clavier). Une date : ouvrir, confirmer une option, la feuille de route,
+  prévenir l'équipe, l'itinéraire, la fiche du lieu, dupliquer, le tableur, copier le lien, supprimer. Une personne :
+  appeler, écrire, copier le téléphone. Un lieu : l'itinéraire, appeler ou écrire au contact, une nouvelle date ici. Une
+  feuille : compléter, composer, la date. Une demande de devis : écrire, appeler, **changer son statut sans l'ouvrir**. Une
+  piste de diffusion : l'étape d'avant ou d'après, **relance faite aujourd'hui**, reporter la relance, le courriel,
+  modifier, supprimer ; la carte du Kanban **se glisse d'une colonne à l'autre** (ses flèches nomment l'étape visée). Une
+  note de frais : **valider, refuser, marquer remboursée** depuis le tableau de bord. Une invitation pro : prolonger de
+  trente jours, copier le lien de la salle, désactiver. Une proposition de dates : la clore. Une séance d'atelier :
+  dupliquer, supprimer. Une ligne du journal : revenir, ouvrir la fiche. Une tuile du tableau de bord : ses réglages,
+  la réduire, sa largeur, l'avancer, la reculer, la masquer ; une action rapide : la retirer. Un spectacle : ses dates,
+  une nouvelle date, l'avancer ou le reculer. Chaque action directe écrit dans la base et les listes se redessinent.
+  - **Précédent / suivant** dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
+    propositions, ateliers, séances, textes), dans une feuille de route et dans un spectacle : deux boutons dans le titre,
+    nommés d'après ce qu'ils ouvrent (« Précédent : Bérénice · mer. 4 nov. 2026 »), dans l'ordre de la liste et de ses filtres ;
+    **Alt+↑** et **Alt+↓** font de même. Dans toutes les listes, **↑ ↓** (← → aussi) passent d'une ligne à l'autre, Début
+    et Fin aux bouts.
 - **La recherche rapide** : Ctrl K (⌘K sur un Mac), ou la loupe de l'en-tête (au téléphone, au bout de la ligne du
   logo). Une date se trouve par son spectacle, son lieu, sa commune ou son jour (« 21 oct », « mardi », « 21/10 »),
   comme une personne, un lieu, un spectacle, une feuille de route ou une rubrique ; ↑ ↓ choisissent, Entrée ouvre,
@@ -504,6 +529,32 @@ range en colonne à gauche. On y trouve :
   voit quand ses partenaires sont pris ailleurs. « Toute l'équipe » et chaque personne sont dans la même liste ; le choix
   est gardé le temps de la session. Sans projet, le planning s'ouvre sur toute l'équipe ;
 - sa fiche, et un fichier agenda (.ics).
+- **Les gestes** (`../admin/gestes.js`) : un **appui long** sur un billet (ou le héros d'une date), avec une courte
+  vibration, ou un clic droit à l'ordinateur, ouvre une feuille d'actions depuis le bas : ouvrir la date, l'itinéraire, la
+  feuille de route et son PDF, l'ajouter à l'agenda, signaler un retard, une note de frais, partager la date ; sur une
+  notification : l'ouvrir, la marquer lue, tout marquer lu ; sur un document : l'ouvrir, le partager ; sur une
+  proposition : répondre. La page d'une date (et d'une feuille de route) a **date précédente / date suivante**, deux
+  boutons nommés, qu'un **balayage** du doigt vers la gauche ou la droite actionne aussi, comme **← →** au clavier ; le
+  planning se balaie de même d'une période à l'autre. Rien ne vibre si l'appareil demande moins d'animations.
+  Un appui long sur un **horaire**, le **lieu**, une **personne** de « Qui part », une **note de frais**, une
+  **indisponibilité** ou la **feuille de route** a aussi ses actions (itinéraire, site, copier l'adresse, sa fiche,
+  le justificatif, modifier ou retirer l'indisponibilité, le PDF…).
+- **Modifier depuis le téléphone** : quand le compte connecté administre (`crescite_est_admin()`, sondé au
+  chargement et gardé hors ligne), ces mêmes appuis longs **modifient** presque tout, sans passer par l'administration,
+  dans une feuille de modification qui monte du bas (`GESTES.formulaire`, partagée avec l'administration) et dont
+  l'enregistrement relit la page : sur une date, son **statut**, sa nature, sa publication, son lien et ses précisions ;
+  **ses représentations** (jour, heure, fin, public, précision, annulée ; en ajouter, en retirer) ; **qui part** (toute
+  la distribution du spectacle à cocher, les remplaçants) ; **le lieu** (nom, adresse, site, jauge, plateau, contact,
+  accès et notes de suivi) ; **le suivi interne** (organisateur, contact, contrat, cachet, notes) ; **les chiffres**
+  (jauge, spectateurs, heures d'ateliers) ; **prévenir l'équipe** (une notification à chaque personne de la date, via
+  `crescite_prevenir_equipe`) ; **supprimer la date**. Sur un horaire : changer l'heure, annuler ou rétablir la séance,
+  la retirer. Sur une personne : ses **coordonnées** (téléphone, adresse électronique, ville, urgence), « ne part pas
+  sur cette date », qui part. Sur une note de frais : la modifier (la sienne tant qu'elle attend ; toutes pour
+  l'administration), la supprimer. Sur une notification : l'effacer. Sur une proposition ouverte : répondre d'un geste.
+  Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
+  feuille, sans rien perdre de la saisie.
+  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium (31 vérifications : hors ligne, puis sur une base
+  simulée en lecture-écriture où le compte administre), après `python3 maquettes/build.py synthese`.
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
@@ -737,6 +788,37 @@ le treizième deux fois, puis les scripts 1, 2, 3, 7, 11 et 12 relancés après 
 Les portraits qui attendent l'accord de publication ne sont plus dans le stockage public : l'administration les range
 dans le stockage privé de l'équipe (`crescite-equipe`, `portraits/…`) et les change de stockage quand l'accord change ;
 un portrait remplacé ou retiré est effacé.
+
+**L'équipe modifie (pas encore lancé).** Le quatorzième script, `supabase/migrations/20261102_crescite_equipe_modifie.sql`,
+s'exécute après les treize autres (il s'arrête et le dit si le treizième manque) et peut être relancé ; aucune fonction
+n'est à redéployer. Dans l'espace de l'équipe, le geste « Modifier » d'une date à venir (au jour de Paris) permet à son
+équipe (la distribution « en tournée », corrigée par l'équipe de la date) d'en changer l'heure et la fin des séances, la
+précision de chaque séance (« complet », « hors les murs… ») et les précisions de la date qui n'ont pas de lien ; une
+précision qui porte un lien (la billetterie, un plan) reste telle quelle, son texte avec son lien. Sur la page d'un
+spectacle, son équipe actuelle (sa distribution, ou l'équipe d'une de ses dates à venir : pas quelqu'un venu une fois il
+y a deux ans) ajoute, renomme, range, remplace et supprime les fichiers de travail. Le reste demeure à l'administration,
+et la base le refuse : le jour, le public, l'annulation et la billetterie d'une séance ; le statut, la visibilité, la
+nature, le lieu, la ligne d'agenda et les liens d'une date ; le suivi (contacts, contrat, montants), les chiffres,
+l'équipe d'une date, les feuilles de route ; les documents publics, ceux des salles, de l'administration et de toute la
+compagnie. Les textes de l'équipe sont du texte simple (ni lien, ni balise, ni caractère invisible qui cache ou retourne
+le texte). Chaque modification prévient une fois l'équipe concernée qui a un compte et les administrateurs qui ont une
+fiche, jamais son auteur, et dit qui l'a faite (« Lauren Toulin a changé l'horaire du 19 novembre à Eu »,
+« 20 h → 20 h 30 · Bérénice ») : dans l'application, avec son portrait, et sur les téléphones abonnés. Les déclencheurs
+« Horaires modifiés » et « Nouveau document » du troisième script se taisent pendant ce geste (le troisième script porte
+la même règle : relancé, il ne la défait pas) ; ils parlent comme avant quand l'administration modifie. Chaque changement
+va au journal avec son auteur : l'administration y lit son nom (« Lauren Toulin (équipe) ») et peut revenir en arrière.
+Un fichier part au chemin que la base prépare (`<spectacle>/<repère>-<nom>.<ext>`, une heure) : le stockage
+`crescite-equipe` n'accepte de l'équipe que cet envoi, à ce chemin ; elle n'y relit ni n'y efface rien. Un fichier
+remplacé ou supprimé par l'équipe reste donc dans le stockage : le document rétabli depuis le journal le retrouve. Un
+fichier envoyé mais jamais inscrit (un envoi interrompu) y reste aussi, sans que personne de l'équipe puisse le relire ;
+ces restes sont bornés par la limite de vingt fichiers par heure et par compte, et l'administration les efface dans
+Storage (`crescite-equipe`) si besoin. Vingt modifications par heure et par compte (`crescite_modifications` garde
+chaque modification : son auteur la relit, l'administration toutes). Tant que le script n'est pas lancé, ces gestes ne se
+montrent pas. Un compte qui administre modifie une date par ses propres feuilles, d'un appui long (« Modifier depuis
+le téléphone ») : le « Modifier » de l'équipe ne s'y montre pas, une seule voie ; les fichiers d'un spectacle, qu'aucune
+feuille ne couvre, passent pour tous par les boîtes de l'équipe. Une boîte ouverte, les gestes de la page (← →, le
+balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
+2, 3 et 13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

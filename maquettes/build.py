@@ -673,11 +673,13 @@ def build_data():
                                           "telephone": None}},
             # l'espace pro (#/espace-pro, dans le menu) : trois portes vers les espaces réservés, hors des maquettes
             # (href relatifs au site publié : equipe/, admin/ et pro/ sont à côté des maquettes dans docs/)
+            # (dans l'ordre de la compagnie : les salles, puis l'équipe, puis l'administration ; la synthèse place la page des
+            # établissements scolaires entre les salles et l'équipe)
             "espacePro": {"titre": "Espace pro", "texte": "Les espaces réservés de la compagnie.", "portes": [
-                {"cle": "equipe", "titre": "Comédiens et techniciens", "href": "equipe/",
-                 "texte": "Votre tournée, vos horaires, vos feuilles de route et vos documents."},
                 {"cle": "salles", "titre": "Programmateurs et directeurs de salle", "href": "pro/",
                  "texte": "Les captations et les documents que la compagnie vous a ouverts."},
+                {"cle": "equipe", "titre": "Comédiens et techniciens", "href": "equipe/",
+                 "texte": "Votre tournée, vos horaires, vos feuilles de route et vos documents."},
                 {"cle": "admin", "titre": "Administration", "href": "admin/",
                  "texte": "La gestion du site, des dates, de l’équipe et des feuilles de route."}]},
             # la troupe (#/compagnie, règle 20) : le titre de la section et les catégories de métiers (TROUPE)
@@ -818,7 +820,7 @@ def admin(dest):
     shutil.copyfile(ROOT / "admin" / "index.html", dest / "admin" / "index.html")
     # la feuille de route et le planning (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le
     # tableau de bord
-    for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js", "tableau.js"):
+    for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js", "tableau.js", "gestes.js", "menus.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():
         shutil.copyfile(f, dest / "admin" / "vendor" / f.name)
@@ -1000,7 +1002,7 @@ await navigateur.close();
         sw = out / "sw.js"
         h = hashlib.sha256()
         fichiers = sorted(f for f in out.rglob("*") if f.is_file() and f != sw)
-        fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js", "planning.js", "logo.js")]
+        fichiers += [dest / "admin" / x for x in ("vendor/supabase.js", "agenda.js", "feuille.js", "tentacules.js", "gestes.js", "planning.js", "logo.js")]
         for f in fichiers:
             if f.is_file():
                 h.update(str(f.relative_to(dest)).encode())

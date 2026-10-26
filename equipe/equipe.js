@@ -20,7 +20,11 @@
    l'administration, jamais ici : la page se connecte (mot de passe, lien de connexion, mot de passe oublié), relie le
    compte à sa fiche (crescite_rattacher), lit sa tournée (crescite_ma_tournee) et ce qui l'entoure, puis écoute ses
    notifications (crescite_notifications, en temps réel, sinon relues chaque minute). Sur un appareil abonné
-   (crescite_abonnements), la fonction crescite-push les pousse aussi quand l'application est fermée (sw.js).
+   (crescite_abonnements), la fonction crescite-push les pousse aussi quand l'application est fermée (sw.js). Quand la
+   base a le quatorzième script (20261102_crescite_equipe_modifie.sql), chacun change aussi ce qui le concerne : l'horaire
+   et les précisions sans lien de ses dates (le geste « Modifier » d'une date), les fichiers des spectacles dont il est
+   aujourd'hui (la page d'un spectacle) ; la base prévient toute l'équipe concernée, avec le nom de l'auteur (voir
+   « l'équipe modifie »).
 
    Chargés avant ce fichier : ../admin/vendor/supabase.js (supabase-js), ../admin/agenda.js (AGENDA), ../admin/feuille.js
    (FEUILLE), ../admin/tentacules.js (TENTACULES) et carte.js (CRESCITE_CARTE : la France et Rouen, écrit par
@@ -274,6 +278,8 @@
     waze: ic('<path d="M12 2a9 9 0 0 0-9 9c0 4 3 7 7 8.5V22l4-2.5c4.5-.5 7-3.5 7-8.5a9 9 0 0 0-9-9z"/><circle cx="9" cy="11" r="1.5" fill="currentColor"/><circle cx="15" cy="11" r="1.5" fill="currentColor"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/>'),
     apple: ic('<path d="M12 20.9c-.8 0-1.7-.5-2.6-.5-.9 0-1.8.5-2.6.5-1.5 0-3.3-1.6-4.5-4.1C1 14.1 1.7 10.6 3.6 9.6c.9-.5 2-.4 2.8.1.8.5 1.5.8 2.2.8.7 0 1.5-.3 2.3-.8 1-.6 2.3-.7 3.3.1.8.6 1.6 1.7 1.9 2.2-1.7.9-2 3.1-1.3 4.8.6 1.4 1.5 2.5 1.5 2.5-.4 1.1-.9 2.2-1.6 3.1-.7 1-1.6 2.2-2.7 2.2zM12.6 6.5c.5-.7.8-1.6.7-2.5-.8.1-1.8.6-2.3 1.3-.5.6-.9 1.5-.7 2.4.9.1 1.8-.4 2.3-1.2z"/>'),
     photo: ic('<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>'),
+    plus: ic('<path d="M12 5v14M5 12h14"/>'),
+    corbeille: ic('<path d="M4.5 7h15M10 11v6M14 11v6M6.5 7l1 12.5a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5l1-12.5M9.5 7V4.5h5V7"/>'),
   };
   const GENRES = {
     feuille: { ic: ICONES.feuille, lib: 'Feuille de route' }, horaires: { ic: ICONES.horloge, lib: 'Horaires' },
@@ -346,7 +352,7 @@
 
   // ================================================================================================ état
   const E = {
-    session: null, uid: null, moi: null, pret: false, ouverture: false,
+    session: null, uid: null, moi: null, pret: false, ouverture: false, admin: false,
     motDePasse: ARRIVEE.erreur ? '' : ARRIVEE.type === 'recovery' ? 'nouveau' : (ARRIVEE.type === 'invite' || ARRIVEE.type === 'signup') ? 'bienvenue' : '',
     personne: null, privee: null, dates: [], distributions: [], equipes: [], documents: [], spectacles: new Map(),
     feuilles: new Map(), liens: new Map(), erreurLiens: null, chargeLe: 0, horsLigne: 0, rafraichit: null,
@@ -606,7 +612,7 @@
       if (moi == null) { reinitialiser(); return ecranSansFiche(); }
       E.moi = moi;
       await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
-        chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder()]);
+        chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder(), sonderAdmin()]);
       if (n !== tour) return;
       E.horsLigne = 0;
       garder();
@@ -632,15 +638,16 @@
   }
 
   // ================================================================================================ ce que la base a déjà
-  // Trois scripts SQL ne sont pas encore lancés partout : le septième (20261026_crescite_ideale.sql : les notes de frais,
-  // le matériel, les listes de chargement), le neuvième (20261028_crescite_signaler.sql : l'alerte de retard) et le
-  // dixième (20261029_crescite_chiffres.sql : les chiffres des dates). Une lecture minimale de leur table le dit, une fois
-  // par chargement de la page, connecté (une base qui ne les a pas répond 404 : attendu). Tant que la réponse n'est pas
-  // venue (sans réseau aussi), ce qu'ils apportent reste masqué : le geste « Frais » d'une date, la carte « Notes de
-  // frais » de Moi, #/frais (qui mène à #/moi), la checklist du camion d'une date ; le geste « Retard » ; les chiffres
-  // d'une date.
-  const SONDES = { ideale: 'inconnu', signaler: 'inconnu', chiffres: 'inconnu' };
-  const TABLES_SONDES = { ideale: 'crescite_notes_frais', signaler: 'crescite_signalements', chiffres: 'crescite_dates_chiffres' };
+  // Quatre scripts SQL ne sont pas encore lancés partout : le septième (20261026_crescite_ideale.sql : les notes de frais,
+  // le matériel, les listes de chargement), le neuvième (20261028_crescite_signaler.sql : l'alerte de retard), le
+  // dixième (20261029_crescite_chiffres.sql : les chiffres des dates) et le quatorzième (20261102_crescite_equipe_modifie.sql :
+  // l'équipe modifie l'horaire et les précisions de ses dates, et les fichiers de ses spectacles). Une lecture minimale de
+  // leur table le dit, une fois par chargement de la page, connecté (une base qui ne les a pas répond 404 : attendu). Tant
+  // que la réponse n'est pas venue (sans réseau aussi), ce qu'ils apportent reste masqué : le geste « Frais » d'une date, la
+  // carte « Notes de frais » de Moi, #/frais (qui mène à #/moi), la checklist du camion d'une date ; le geste « Retard » ;
+  // les chiffres d'une date ; le geste « Modifier » d'une date, « Ajouter un fichier » et « Modifier » d'un fichier.
+  const SONDES = { ideale: 'inconnu', signaler: 'inconnu', chiffres: 'inconnu', modifier: 'inconnu' };
+  const TABLES_SONDES = { ideale: 'crescite_notes_frais', signaler: 'crescite_signalements', chiffres: 'crescite_dates_chiffres', modifier: 'crescite_modifications' };
   const COLONNE_SONDE = { chiffres: 'date_id' };     // (les autres tables ont un id)
   let sondage = null;
   function sonder() {
@@ -653,9 +660,18 @@
     })).then(() => { if (Object.values(SONDES).includes('inconnu')) sondage = null; });
     return sondage;
   }
+  // le compte administre-t-il la compagnie ? (crescite_est_admin) : alors l'appui long modifie (voir « modifier »)
+  async function sonderAdmin() {
+    try { const { data, error } = await sb.rpc('crescite_est_admin'); if (!error) E.admin = data === true; } catch (e) { /* hors ligne : ce qu'on savait */ }
+  }
   const avecIdeale = () => SONDES.ideale === 'ok';
   const avecSignaler = () => SONDES.signaler === 'ok';
   const avecChiffres = () => SONDES.chiffres === 'ok';
+  const avecModifier = () => SONDES.modifier === 'ok';
+  // le « Modifier » d'une date (la boîte de l'équipe, crescite_modifier_date) : pour l'équipe ; un compte qui administre
+  // a ses propres feuilles d'un appui long (« Modifier la date… », « Les représentations… » : voir « modifier depuis le
+  // téléphone »), une seule voie, pas deux. Les fichiers d'un spectacle, eux, n'ont que la boîte de l'équipe : elle sert à tous
+  const modifierDateEnEquipe = () => avecModifier() && !E.admin;
 
   // en attendant la base : l'application, et la forme de ce qui arrive
   function squelette() {
@@ -724,14 +740,14 @@
 
   // la mémoire de la dernière lecture (sans la fiche privée) : pour lire sa saison quand le réseau manque
   function garder() {
-    ecrireStock(MEMOIRE, { v: 2, uid: E.uid, moi: E.moi, quand: E.chargeLe, personne: E.personne,
+    ecrireStock(MEMOIRE, { v: 2, uid: E.uid, moi: E.moi, quand: E.chargeLe, personne: E.personne, admin: !!E.admin,
       dates: E.dates, distributions: E.distributions, equipes: E.equipes, documents: E.documents,
       spectacles: [...E.spectacles.values()], feuilles: [...E.feuilles.values()], notifs: E.notifs, notifsEtat: E.notifsEtat });
   }
   function reprendre(uid) { const m = lireStock(MEMOIRE); return m && (m.v === 1 || m.v === 2) && m.uid === uid ? m : null; }
   function oublier() { ecrireStock(MEMOIRE, null); ecrireStock(MODIFS, null); }
   function appliquer(m) {
-    Object.assign(E, { moi: m.moi, personne: m.personne, privee: null, dates: (m.dates || []).map(d => ({ ...d, nature: natureDe(d), representations: d.representations || [] })),
+    Object.assign(E, { moi: m.moi, personne: m.personne, admin: !!m.admin, privee: null, dates: (m.dates || []).map(d => ({ ...d, nature: natureDe(d), representations: d.representations || [] })),
       distributions: m.distributions || [], equipes: m.equipes || [], documents: m.documents || [],
       spectacles: new Map((m.spectacles || []).map(x => [x.id, x])), feuilles: new Map((m.feuilles || []).map(f => [Number(f.date_id), f])),
       liens: new Map(), erreurLiens: null, chargeLe: m.quand || 0, notifs: m.notifs || [], notifsEtat: m.notifsEtat || 'inconnu' });
@@ -1489,11 +1505,13 @@
     if (d.feuille && outilFeuille()) gestes.push(`<a class="geste" href="#/feuille/${d.id}">${ICONES.feuille}<span>Feuille de route</span></a>`, `<button type="button" class="geste" data-pdf="${d.id}">${ICONES.pdf}<span>PDF</span><span class="sr"> de la feuille de route</span></button>`);
     if (!passee && vive && evenementsAVenir(d.id).length) gestes.push(`<button type="button" class="geste" data-agenda="${d.id}">${ICONES.agenda}<span>Agenda</span><span class="sr"> : ajouter cette date à mon agenda</span></button>`);
     if (!passee && vive) {
-      // seulement quand la base a leurs scripts (le neuvième, le septième : voir sonder)
+      // seulement quand la base a leurs scripts (le neuvième, le quatorzième, le septième : voir sonder)
       if (avecSignaler()) gestes.push(`<button type="button" class="geste" data-retard="${d.id}">${ICONES.alerte}<span>Retard</span><span class="sr"> : signaler un retard ou un imprévu</span></button>`);
+      if (modifierDateEnEquipe()) gestes.push(`<button type="button" class="geste" data-modifier-date="${d.id}" aria-haspopup="dialog">${ICONES.crayon}<span>Modifier</span><span class="sr"> : l’horaire et les précisions de cette date</span></button>`);
       if (avecIdeale()) gestes.push(`<a class="geste" href="#/frais?date=${d.id}">${ICONES.euro}<span>Frais</span><span class="sr"> : ajouter une note de frais pour cette date</span></a>`);
     }
     if (gestes.length) html += `<div class="gestes"${attrU(sp)}>${gestes.join('')}</div>`;
+    html += navDates(d, 'date');
     const precisions = (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte);
     html += `<section class="bloc"${attrU(sp)} aria-labelledby="b-horaires"><h2 id="b-horaires">${ICONES.horloge}${nat === 'representations' ? 'Représentations' : 'Horaires'}</h2>${horaires(d, { complet: true })}
       ${precisions.length ? `<ul class="precisions">${precisions.map(x => { const u = x.lien && urlSure(x.lien); return `<li>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(x.texte)}<span class="sr"> (nouvel onglet)</span></a>` : esc(x.texte)}</li>`; }).join('')}</ul>` : ''}</section>`;
@@ -1528,10 +1546,10 @@
       if (l) { l.n++; l.ids.push(r.id); } else lignes.push({ ...r, n: 1, ids: [r.id] });
     }
     const plusieursJours = new Set(reps.map(r => r.jour)).size > 1;
-    return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="${sco ? 'Représentations' : 'Horaires'}">${lignes.map((r, i) => {
+    return `<ul class="horaires${plusieursJours ? ' jours' : ''}" aria-label="${sco ? 'Représentations' : 'Horaires'}" data-date="${d.id}">${lignes.map((r, i) => {
       const modif = r.ids.some(id => E.modifs.reps.has(id)), fraiche = modif && r.ids.some(id => Date.now() - E.modifs.reps.get(id) < 20000);
       const cls = [r.annulee && 'annulee', !r.heure && 'sans-heure', modif && 'modifiee', fraiche && 'fraiche'].filter(Boolean).join(' ');
-      return `<li${cls ? ` class="${cls}"` : ''}>
+      return `<li${cls ? ` class="${cls}"` : ''} data-reps="${r.ids.join(',')}">
         ${plusieursJours ? `<span class="h-jour">${i && lignes[i - 1].jour === r.jour ? `<span class="sr">${esc(jourCourt(r.jour))}</span>` : esc(jourCourt(r.jour))}</span>` : ''}
         ${r.heure ? `<span class="heure">${esc(heureTexte(r.heure))}${r.fin ? `<span class="h-fin">\u2009–\u2009${esc(heureTexte(r.fin))}</span>` : ''}</span>`
           : `<span class="heure vague">${r.n > 1 ? `${esc(quoiSeance(r.n, r.public, nat))}, heures à préciser` : 'heure à préciser'}</span>`}
@@ -1587,7 +1605,7 @@
       E.cartes.set(`d${d.id}`, { lieux: lieuxCarte([d]), mini: true, titre: `De Rouen à ${l.commune || l.nom}${km ? `, environ ${km} km par la route` : ''}` });
       mini = `<figure class="carte-tournee mini" data-carte="d${d.id}"><div class="carte-svg"></div></figure>`;
     }
-    return `<section class="bloc bloc-lieu"${attrU(sp)} aria-labelledby="b-lieu"><h2 id="b-lieu">${ICONES.route}Le lieu</h2>
+    return `<section class="bloc bloc-lieu"${attrU(sp)} aria-labelledby="b-lieu" data-lieu="${l.id}" data-date="${d.id}"><h2 id="b-lieu">${ICONES.route}Le lieu</h2>
       <div class="lieu-grille"><div><p class="lieu-nom">${esc(l.nom || communeDe(l))}</p><p class="lieu-adresse">${lignes.map(esc).join('<br>')}</p>
         ${km ? `<p class="aide">Environ <span data-compter="${km}" data-route aria-hidden="true">${nombre(km)}</span><span class="sr">${nombre(km)}</span>\u00a0km de Rouen par la route.</p>` : ''}
         ${gps ? `<div class="nav-gps-grille">
@@ -1651,7 +1669,7 @@
     const gens = vivante(d) ? quiPart(d) : [], sp = d.spectacle || {}, titre = passee ? 'L’équipe' : 'Qui part';
     if (!gens.length) return `<section class="bloc"${attrU(sp)} aria-labelledby="b-equipe"><h2 id="b-equipe">${ICONES.equipe}${titre}</h2><p class="aide">L’équipe de cette date n’est ${passee ? 'pas' : 'pas encore'} indiquée.</p></section>`;
     return `<section class="bloc"${attrU(sp)} aria-labelledby="b-equipe"><h2 id="b-equipe">${ICONES.equipe}${titre} <span class="compte-nb">· ${gens.length}</span></h2>
-      <ul class="portraits">${gens.map(g => `<li>${avatar(g.personne || { prenom: g.nom.split(' ')[0], nom: g.nom.split(' ').slice(1).join(' ') })}<span class="qui"><b>${esc(g.nom || 'Une personne de l’équipe')}${g.id === E.moi ? ' <span class="vous">vous</span>' : ''}</b>
+      <ul class="portraits" data-date="${d.id}">${gens.map(g => `<li data-personne="${g.id}">${avatar(g.personne || { prenom: g.nom.split(' ')[0], nom: g.nom.split(' ').slice(1).join(' ') })}<span class="qui"><b>${esc(g.nom || 'Une personne de l’équipe')}${g.id === E.moi ? ' <span class="vous">vous</span>' : ''}</b>
         ${g.fonctions.length ? `<span>${esc(g.fonctions.join(', '))}</span>` : ''} ${g.notes.length ? `<em>${esc(g.notes.join(' ; '))}</em>` : ''}</span></li>`).join('')}</ul></section>`;
   }
 
@@ -1805,7 +1823,7 @@
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
-    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
+    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
     // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
     const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
     $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
@@ -1859,10 +1877,24 @@
   };
   const nonLues = () => E.notifs.filter(x => !x.lue_le).length;
   const trierNotifs = xs => xs.sort((a, b) => new Date(b.cree_le) - new Date(a.cree_le));
+  // l'auteur d'une modification faite par l'équipe (quatorzième script : auteur_id) : son portrait, s'il est de nos
+  // spectacles ; sinon (un administrateur, une notification de la base) l'icône du genre. Son nom est dans le titre.
+  const personneConnue = pid => {
+    if (pid == null) return null;
+    if (memeId(pid, E.moi) && E.personne) return E.personne;
+    const x = E.distributions.find(y => memeId(y.personne_id, pid) && y.personne) || E.equipes.find(y => memeId(y.personne_id, pid) && y.personne);
+    return x ? x.personne : null;
+  };
+  const iconeNotif = n => {
+    const p = personneConnue(n.auteur_id);
+    return p ? `<span class="ic-rond auteur" aria-hidden="true">${avatar(p, { taille: 'n-auteur' })}</span>`
+      : `<span class="ic-rond" aria-hidden="true">${(GENRES[n.type] || GENRES.message).ic}</span>`;
+  };
 
   async function chargerNotifs({ signaler = false } = {}) {
     if (!E.moi || E.sansSession || !E.session) return;
-    const { data, error } = await sb.from('crescite_notifications').select('id, personne_id, type, titre, texte, date_id, spectacle_id, lien, cree_le, lue_le')
+    // (toutes les colonnes : auteur_id, l'auteur d'une modification de l'équipe, n'existe qu'avec le quatorzième script)
+    const { data, error } = await sb.from('crescite_notifications').select('*')
       .eq('personne_id', E.moi).order('cree_le', { ascending: false }).limit(NOTIFS_MAX);
     if (error) {
       if (tableAbsente(error)) { E.notifsEtat = 'absent'; E.notifs = []; majNotifs(); return; }
@@ -1949,8 +1981,7 @@
   function banniere(n) {
     const z = $('#bandeau-notif');
     if (!z) return;
-    const g = GENRES[n.type] || GENRES.message;
-    z.innerHTML = `<a class="bandeau-notif n-${esc(n.type)}" href="${esc(lienDe(n))}" data-notif="${n.id}"><span class="bn-temps" aria-hidden="true"></span><span class="ic-rond" aria-hidden="true">${g.ic}</span><span class="n-titre">${esc(n.titre)}</span>${n.texte ? `<span class="n-texte">${esc(n.texte)}</span>` : ''}</a>`;
+    z.innerHTML = `<a class="bandeau-notif n-${esc(n.type)}" href="${esc(lienDe(n))}" data-notif="${n.id}"><span class="bn-temps" aria-hidden="true"></span>${iconeNotif(n)}<span class="n-titre">${esc(n.titre)}</span>${n.texte ? `<span class="n-texte">${esc(n.texte)}</span>` : ''}</a>`;
     const a = z.firstElementChild;
     requestAnimationFrame(() => requestAnimationFrame(() => a.classList.add('visible')));
     clearTimeout(minuteurBanniere);
@@ -2007,9 +2038,8 @@
         for (const x of ns) {
           const j = jourNotif(x.cree_le);
           if (j !== jour) { if (ouvert) html += '</ul></section>'; html += `<section class="notifs-groupe" aria-label="${esc(j)}"><h2 class="notifs-jour">${esc(j)}</h2><ul class="liste-notifs">`; jour = j; ouvert = true; }
-          const g = GENRES[x.type] || GENRES.message;
           html += `<li><a class="notif n-${esc(x.type)}${x.lue_le ? '' : ' non-lue'}" href="${esc(lienDe(x))}" data-notif="${x.id}">
-            <span class="ic-rond" aria-hidden="true">${g.ic}</span><span class="n-titre">${esc(x.titre)}${x.lue_le ? '' : '<span class="sr"> (non lue)</span>'}</span>
+            ${iconeNotif(x)}<span class="n-titre">${esc(x.titre)}${x.lue_le ? '' : '<span class="sr"> (non lue)</span>'}</span>
             <span class="n-heure"><span class="sr">, </span>${esc(quandNotif(x.cree_le))}</span>${x.texte ? `<span class="n-texte">${esc(x.texte)}</span>` : ''}${x.lue_le ? '' : '<span class="point-non-lu" aria-hidden="true"></span>'}</a></li>`;
         }
         if (ouvert) html += '</ul></section>';
@@ -2777,7 +2807,19 @@
     return [...new Set(xs.filter(Boolean))];
   }
   const styleH = sp => { const c = couleurs(sp), f = police(sp); return `--h-fond:${c.hFond};--h-texte:${c.hTexte};--h-accent:${c.hAccent}${f ? `;--h-police:${f.famille};--h-graisse:${f.graisse}` : ''}`; };
-  const ligneFichier = x => `<li class="doc-ligne">${ligneDocument(x)}<button type="button" class="btn petit doc-partager" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button></li>`;
+  // un fichier de travail : l'ouvrir, le partager ; s'il est de l'équipe de ce spectacle (quatorzième script), le modifier
+  const ligneFichier = (x, modifiable = false) => `<li class="doc-ligne">${ligneDocument(x)}<span class="doc-actions"><button type="button" class="btn petit doc-partager" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>${modifiable === true
+    ?`<button type="button" class="btn petit doc-modifier" data-modifier-document="${x.id}" aria-haspopup="dialog">${ICONES.crayon}<span>Modifier</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</span></li>`;
+  // l'équipe actuelle d'un spectacle, comme la base la compte (crescite_membre_actuel) : sa distribution, ou présente dans
+  // l'équipe d'une de ses dates à venir. Elle seule en change les fichiers ; quelqu'un d'une date passée les lit encore
+  const membreActuel = id => E.distributions.some(x => memeId(x.spectacle_id, id) && memeId(x.personne_id, E.moi))
+    || E.dates.some(d => memeId(d.spectacle?.id, id) && (d.fin || d.debut) >= aujourdhui()
+      && E.equipes.some(e => memeId(e.date_id, d.id) && memeId(e.personne_id, E.moi) && e.present));
+  // les documents que l'équipe d'un spectacle tient elle-même : ceux de l'équipe (pas les documents publics, ni ceux des salles,
+  // ni ceux de toute la compagnie, qui restent à l'administration), pour qui en est aujourd'hui (et un compte qui
+  // administre, que la base laisse faire aussi)
+  const gereFichiers = id => avecModifier() && (E.admin || membreActuel(id));
+  const documentEquipe = (x, id) => (!x.pour || x.pour === 'equipe') && x.spectacle_id != null && memeId(x.spectacle_id, id) && gereFichiers(id);
   const messageLiens = () => (E.erreurLiens ? `<p class="message erreur" role="alert">Les fichiers ne peuvent pas s’ouvrir d’ici pour le moment (${esc(motsErreur(E.erreurLiens) || 'réessayez')}). Chacun sera redemandé quand vous l’ouvrirez.</p>` : '');
 
   function vueSpectacles(r, { focus }) {
@@ -2786,7 +2828,7 @@
     html += messageLiens();
     html += xs.length ? `<ul class="liste-spectacles">${xs.map(carteSpectacle).join('')}</ul>`
       : etatVide('dossier', 'Pas encore de spectacle', 'Quand l’administration vous inscrira dans une distribution, ou dans l’équipe d’une date, vos spectacles apparaîtront ici, avec leurs fichiers de travail.');
-    if (compagnie.length) html += `<section class="groupe-docs compagnie" aria-labelledby="t-compagnie"><h2 class="titre-section" id="t-compagnie">Toute la compagnie</h2><ul class="liste-docs">${compagnie.map(ligneFichier).join('')}</ul></section>`;
+    if (compagnie.length) html += `<section class="groupe-docs compagnie" aria-labelledby="t-compagnie"><h2 class="titre-section" id="t-compagnie">Toute la compagnie</h2><ul class="liste-docs">${compagnie.map(x => ligneFichier(x)).join('')}</ul></section>`;
     html += piedVue();
     afficher(r, TITRES.spectacles, html, { focus });
     preparerPartages(compagnie);
@@ -2804,7 +2846,7 @@
   function vueSpectacle(r, { focus }) {
     const x = mesSpectacles().find(y => slugDe(y.sp) === r.slug);
     if (!x) return afficher(r, 'Spectacle', `<div class="titre-vue"><h1>Spectacle introuvable</h1></div>${etatVide('dossier', 'Ce spectacle n’est pas (ou plus) dans les vôtres', 'Retrouvez vos spectacles dans l’onglet Spectacles.', '<p><a class="btn" href="#/spectacles">Mes spectacles</a></p>')}`, { focus });
-    const { id, sp } = x, docs = documentsDe(id), roles = rolesDe(id), auj = aujourdhui(), photo = photoDe(sp);
+    const { id, sp } = x, docs = documentsDe(id), roles = rolesDe(id), auj = aujourdhui(), photo = photoDe(sp), gerer = gereFichiers(id);
     const avenir = E.dates.filter(d => Number(d.spectacle?.id) === id && finDe(d) >= auj).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
     let html = `<article class="tete-spectacle${photo ? ' avec-photo' : ''}" style="${esc(styleH(sp))}" aria-labelledby="ts-titre">
         ${photo ? `<div class="ts-photo" aria-hidden="true"><img src="${esc(photo)}" alt="" decoding="async" crossorigin="anonymous" fetchpriority="high"></div>` : ''}
@@ -2818,11 +2860,16 @@
         return `<li><a class="ds-ligne" href="#/date/${d.id}"><span class="ds-quand">${esc(majuscule(quandTexte(d)))}</span><span class="ds-ou">${esc(ou)}</span>${nat !== 'representations' ? `<span class="etat nature">${esc(NATURES[nat])}</span>` : ''}${ETATS_COURTS[d.statut] ? `<span class="etat ${d.statut}">${ETATS_COURTS[d.statut]}</span>` : ''}${ICONES.chevron}</a></li>`;
       }).join('')}</ul>${avenir.length > 8 ? `<p class="aide">Et ${pluriel(avenir.length - 8, 'autre date', 'autres dates')} dans Ma saison.</p>` : ''}` : '<p class="aide">Pas de date à venir pour vous sur ce spectacle.</p>'}</section>`;
     html += `<section class="bloc fichiers"${attrU(sp)} aria-labelledby="ts-fichiers"><h2 id="ts-fichiers">${ICONES.dossier}Les fichiers de travail</h2>${messageLiens()}`;
-    if (!docs.length) html += '<p class="aide">Pas encore de fichier : l’administration les ajoute au fil de la saison (le texte, le dossier, la fiche technique, les plans…).</p>';
+    if (!docs.length) html += gerer ? '<p class="aide">Pas encore de fichier : ajoutez le premier (le texte, le dossier, la fiche technique, les plans…). Toute l’équipe du spectacle en sera prévenue.</p>'
+      : '<p class="aide">Pas encore de fichier : l’administration les ajoute au fil de la saison (le texte, le dossier, la fiche technique, les plans…).</p>';
     for (const [type, un, plusieurs] of GENRES_DOCS) {
       const xs = docs.filter(d => (type === 'autre' ? !GENRES_CONNUS.has(d.type) : d.type === type));
-      if (xs.length) html += `<h3 class="genre-docs">${esc(xs.length > 1 ? plusieurs : un)}</h3><ul class="liste-docs">${xs.map(ligneFichier).join('')}</ul>`;
+      if (xs.length) html += `<h3 class="genre-docs">${esc(xs.length > 1 ? plusieurs : un)}</h3><ul class="liste-docs">${xs.map(x => ligneFichier(x, documentEquipe(x, id))).join('')}</ul>`;
     }
+    // (quatorzième script) l'équipe actuelle du spectacle ajoute ses fichiers ; elle modifie ceux de l'équipe, pas les
+    // documents publics
+    if (gerer) html += `<p class="liens ajout-fichier"><button type="button" class="btn petit" data-ajouter-fichier="${id}" aria-haspopup="dialog">${ICONES.plus}Ajouter un fichier<span class="sr"> à ${esc(sp.titre || 'ce spectacle')}</span></button>
+      ${docs.some(x => !documentEquipe(x, id)) ? '<span class="aide">Les documents publics (programmateurs, établissements) restent à l’administration.</span>' : ''}</p>`;
     html += '</section>' + piedVue();
     afficher(r, sp.titre || 'Spectacle', html, { focus });
     preparerPartages(docs);
@@ -3116,6 +3163,370 @@
       annoncer(`Alerte envoyée : ${pluriel(n, 'personne prévenue', 'personnes prévenues')}.`);
       vibrer(25);
     });
+  }
+
+  // ================================================================================================ l'équipe modifie
+  // Quand la base a le quatorzième script (20261102_crescite_equipe_modifie.sql) : le geste « Modifier » d'une date change
+  // l'heure et la fin de ses séances, leur précision (« complet », « hors les murs… ») et les précisions de la date qui
+  // n'ont pas de lien (crescite_modifier_date) ; sur la page d'un spectacle dont on est aujourd'hui (sa distribution, ou
+  // l'équipe d'une de ses dates à venir : membreActuel), « Ajouter un fichier », et « Modifier » d'un fichier de l'équipe :
+  // son titre, son genre, une nouvelle version, ou le retirer. Un fichier part au chemin que la base prépare
+  // (crescite_preparer_fichier), puis s'inscrit ; la page n'efface jamais rien du stockage (elle ne le peut pas) : la
+  // version remplacée, le fichier retiré restent à l'administration, qui peut rétablir le document depuis le journal. La
+  // base prévient l'équipe concernée et l'administration, avec le nom de l'auteur, jamais lui, et garde chaque changement
+  // au journal. Le reste (le jour, le public, l'annulation, la billetterie, les précisions qui portent un lien, le statut
+  // d'une date, les documents publics) demeure à l'administration : la page ne le propose pas, et la base le refuse.
+  // Un compte qui administre modifie une date par ses propres feuilles, d'un appui long (« modifier depuis le
+  // téléphone ») : le « Modifier » d'une date ne se montre pas pour lui (modifierDateEnEquipe) ; les fichiers d'un
+  // spectacle, qu'aucune feuille ne couvre, passent par ces boîtes-ci pour tous. Boîte ouverte, les gestes de la page
+  // (← →, le balayage : ../admin/gestes.js) dorment.
+
+  // une boîte modale : le clavier y reste (Tab tourne), Échap la ferme, le reste de la page est inerte ; le focus revient
+  // au geste qui l'a ouverte. avantFermer() : faux, la boîte reste (une écriture en cours, des changements à garder) ;
+  // fermer(true) passe outre. Changer de vue la ferme.
+  function ouvrirModale({ id, titre, icone = '', corps, declencheur = null, avantFermer = null }) {
+    $(`#${id}`)?.remove();
+    const fond = document.createElement('div');
+    fond.className = 'modale-fond';
+    fond.id = id;
+    fond.innerHTML = `<div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="${id}-titre">
+      <div class="modale-tete"><h2 id="${id}-titre">${icone}<span>${esc(titre)}</span></h2>
+        <button type="button" class="modale-fermer" data-fermer-modale aria-label="Fermer">${ICONES.croix}</button></div>
+      ${corps}</div>`;
+    document.body.appendChild(fond);
+    const app = $('#app');
+    if (app) app.inert = true;
+    document.documentElement.classList.add('modale-ouverte');
+    const fermer = (force = false) => {
+      if (!fond.isConnected) return;
+      if (!force && avantFermer && avantFermer() === false) return;
+      fond.remove();
+      document.removeEventListener('keydown', clavier, true);
+      window.removeEventListener('hashchange', partir);
+      if (!$('.modale-fond')) { if (app) app.inert = false; document.documentElement.classList.remove('modale-ouverte'); }
+      if (declencheur && declencheur.isConnected) declencheur.focus({ preventScroll: true });
+    };
+    const partir = () => fermer(true);
+    function clavier(e) {
+      if (e.key === 'Escape') { e.preventDefault(); fermer(); return; }
+      if (e.key !== 'Tab') return;
+      const xs = $$('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]', fond).filter(x => x.getClientRects().length);
+      if (!xs.length) return;
+      const i = xs.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); xs[xs.length - 1].focus(); } else if (!e.shiftKey && (i === xs.length - 1 || i < 0)) { e.preventDefault(); xs[0].focus(); }
+    }
+    document.addEventListener('keydown', clavier, true);
+    window.addEventListener('hashchange', partir);
+    fond.addEventListener('click', e => { if (e.target === fond || e.target.closest('[data-fermer-modale]')) fermer(); });
+    return { fond, fermer };
+  }
+  // après une écriture : la base relue, la vue redessinée à sa place ; le focus revient sur le geste (cherché de nouveau : la
+  // vue a pu être redessinée entre-temps)
+  function relireApres(retour) {
+    rafraichir({ discret: true }).then(() => {
+      const el = retour && $(retour);
+      if (el && (document.activeElement === document.body || !document.activeElement)) el.focus({ preventScroll: true });
+    }).catch(() => {});
+  }
+  // ce que la base refuse dans un texte de l'équipe (crescite_lire_texte), dit avant d'envoyer : une balise, un caractère
+  // de contrôle ou invisible qui cache ou retourne le texte (trait d'union conditionnel, liants sans chasse, marques,
+  // enchâssements et isolats de sens d'écriture, gluon de mots, indicateur d'ordre des octets : les mêmes plages que la
+  // base), un lien. Les espaces insécables passent
+  const PLAGES_INVISIBLES = [[0x0, 0x1f], [0x7f, 0x9f], [0xad, 0xad], [0x61c, 0x61c], [0x200b, 0x200f], [0x202a, 0x202e], [0x2060, 0x2069], [0xfeff, 0xfeff]];
+  const invisible = t => [...String(t ?? '')].some(c => { const n = c.codePointAt(0); return PLAGES_INVISIBLES.some(([a, b]) => n >= a && n <= b); });
+  const texteRefuse = t => (/[<>]/.test(t) ? 'ni « < » ni « > », du texte seulement'
+    : invisible(t) ? 'pas de caractère invisible ou de contrôle (un texte collé d’ailleurs en cache parfois : retapez-le)'
+    : /(https?:|www\.|:\/\/)/i.test(t) ? 'pas de lien, l’administration les ajoute' : '');
+  const resserrer = t => String(t ?? '').replace(/\s+/g, ' ').trim();
+  // le message de la base, dans une phrase de la page : « Rien n’est enregistré : vingt modifications en une heure… »
+  const premiereMinuscule = m => (m ? m[0].toLowerCase() + m.slice(1) : m).replace(/\.$/, '');
+  function raisonModif(e, quoi = 'cette date') {
+    const code = String(e?.code || '');
+    if (code === 'PT429' || e?.status === 429) return premiereMinuscule(e?.message || 'Trop de modifications en une heure : réessayez plus tard');
+    if (code === 'PT409' || e?.status === 409) return 'quelqu’un vient de la modifier aussi : elle est relue, recommencez';
+    if (code === '42501' && /^(Ce champ reste|Les précisions|Les liens|Les fichiers|Ce document)/.test(e.message || '')) return premiereMinuscule(e.message);
+    if (code === '42501') return `vous n’êtes pas (ou plus) dans l’équipe de ${quoi}`;
+    if (code === '22023' && e.message) return premiereMinuscule(e.message);
+    return motsErreur(e);
+  }
+  const pasInstalle = (quoi, retour) => {
+    SONDES.modifier = 'absent';
+    if (E.route) router({ rafraichir: true });
+    annoncer(`${quoi} n’est pas encore installée dans la base de la compagnie : rien n’est enregistré. Prévenez l’administration.`, { erreur: true });
+    if (retour) $(retour)?.focus();
+  };
+  const prevenusTexte = n => (n ? ` : ${pluriel(n, 'personne prévenue', 'personnes prévenues')}, avec votre nom` : '');
+
+  // ———— une date : l'horaire de ses séances, leur précision, les précisions de la date
+  const MAX_NOTE = 120, MAX_PRECISION = 200, MAX_PRECISIONS = 8;
+  // une précision de la date : un texte, et son lien s'il en a un. Celle qui porte un lien (la billetterie, un plan) reste
+  // à l'administration, telle quelle, texte et lien : la page la montre sans la proposer (la base la refuserait changée,
+  // retirée ou doublée). Une précision mise en forme par l'administration (des balises) ne se réécrit pas non plus
+  const precisionsDe = d => (Array.isArray(d.details) ? d.details : [])
+    .map(x => (typeof x === 'string' ? { texte: x, lien: null } : x && typeof x === 'object' && typeof x.texte === 'string' ? { texte: x.texte, lien: x.lien || null } : null))
+    .filter(x => x && x.texte.trim());
+  const hoteDe = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return 'un lien'; } };
+
+  function ouvrirModaleDate(dateId, declencheur = null) {
+    const d = E.dates.find(x => x.id === dateId);
+    if (!d || !avecModifier()) return;
+    const sp = d.spectacle || {}, nat = natureDe(d), retour = `[data-modifier-date="${d.id}"]`;
+    const plusieursJours = new Set(d.representations.map(r => r.jour)).size > 1;
+    const seances = d.representations.filter(r => !r.annulee && r.id != null).sort((a, b) => (a.jour + h5(a.heure)).localeCompare(b.jour + h5(b.heure)));
+    const annulees = d.representations.filter(r => r.annulee).length;
+    const avant = precisionsDe(d);
+    const precisions = avant.map(x => ({ ...x, orig: x.texte, fixe: !!x.lien || /[<>]/.test(x.texte) }));
+    let enCours = false;
+    const nomSeance = r => [plusieursJours ? majuscule(jourSansAn(r.jour)) : '', r.heure ? heureTexte(r.heure) : 'heure à préciser',
+      nat === 'representations' ? PUBLICS[r.public] || '' : NATURES[nat].toLowerCase().replace(/s$/, '')].filter(Boolean).join(' · ');
+    const champSeance = r => `<fieldset class="seance-modif" data-rep="${r.id}"><legend>${esc(majuscule(nomSeance(r)))}</legend>
+        <div class="heures">
+          <div class="champ"><label for="sm-h-${r.id}">Heure</label><input type="time" id="sm-h-${r.id}" value="${esc(h5(r.heure))}"></div>
+          <div class="champ"><label for="sm-f-${r.id}">Fin <span class="facultatif">(facultatif)</span></label><input type="time" id="sm-f-${r.id}" value="${esc(h5(r.fin))}"></div>
+        </div>
+        <div class="champ"><label for="sm-n-${r.id}">Précision <span class="facultatif">(facultatif)</span></label><input type="text" id="sm-n-${r.id}" value="${esc(r.note || '')}" maxlength="${MAX_NOTE}" autocomplete="off" placeholder="complet, hors les murs…" aria-describedby="sm-aide-note"></div>
+      </fieldset>`;
+    // une précision à lien : son texte, et une ligne qui dit pourquoi elle ne se change pas (ni champ, ni « Retirer »)
+    const lignePrecision = (x, i) => (x.lien ? `<li class="precision-modif precision-liee">
+        <p class="precision-fixe">${esc(x.texte.replace(/<[^>]*>/g, ''))}</p>
+        <p class="aide">${ICONES.lien}<span>Avec son lien (${esc(hoteDe(x.lien))}), elle reste à l’administration.</span></p>
+      </li>` : `<li class="precision-modif">
+        ${x.fixe ? `<p class="precision-fixe">${esc(x.texte.replace(/<[^>]*>/g, ''))}</p><p class="aide">Mise en forme par l’administration : elle seule la change.</p>`
+          : `<label class="sr" for="pm-${i}">Précision ${i + 1}</label><textarea id="pm-${i}" rows="2" maxlength="${MAX_PRECISION}" data-precision="${i}" aria-describedby="pm-aide">${esc(x.texte)}</textarea>`}
+        <p class="precision-pied"><button type="button" class="lien-btn" data-retirer-precision="${i}">Retirer<span class="sr"> la précision ${i + 1}</span></button></p>
+      </li>`);
+    const corps = `<form class="form-modale" id="f-modif-date" novalidate>
+        <p class="intro"><b>${esc(sp.titre || 'Spectacle')}</b> · ${esc(majuscule(quandTexte(d)))}${d.lieu ? ` · ${esc(d.lieu.commune || d.lieu.nom || '')}` : ''}</p>
+        <section aria-labelledby="t-md-seances"><h3 id="t-md-seances">${nat === 'representations' ? 'Les représentations' : 'Les horaires'}</h3>
+          ${seances.length ? seances.map(champSeance).join('') : '<p class="aide">Pas encore de séance sur cette date : l’administration les ajoute (le jour, le public).</p>'}
+          ${annulees ? `<p class="aide">${pluriel(annulees, 'séance annulée', 'séances annulées')} : l’administration seule y touche.</p>` : ''}
+          ${seances.length ? '<p class="aide" id="sm-aide-note">La précision d’une séance se lit aussi sur le site : « complet », « audiodécrite », « hors les murs, au collège… ».</p>' : ''}
+        </section>
+        <section aria-labelledby="t-md-precisions"><h3 id="t-md-precisions">Les précisions de la date</h3>
+          <p class="aide" id="pm-aide">Sous la date, ici et sur le site de la compagnie : du texte seulement, ${MAX_PRECISION} caractères au plus. Celles qui portent un lien restent à l’administration.</p>
+          <ul class="liste-precisions" id="pm-liste">${precisions.map(lignePrecision).join('')}</ul>
+          <p class="ajout-precision"><button type="button" class="btn petit" data-ajouter-precision>${ICONES.plus}Ajouter une précision</button></p>
+        </section>
+        <p class="aide prevenus">${ICONES.cloche}<span>L’équipe de cette date et l’administration sont prévenues, avec votre nom. Le jour, le public, l’annulation et la billetterie restent à l’administration.</span></p>
+        <div class="msg-form" id="msg-modif-date"></div>
+        <div class="pied-form"><button type="submit" class="btn principal">${ICONES.coche}Enregistrer</button><button type="button" class="btn" data-fermer-modale>Annuler</button></div>
+      </form>`;
+    // ce que le formulaire change : les séances (seulement les champs changés, avec ce que la page avait lu), et la liste
+    // des précisions (entière) si elle a changé
+    const lire = fond => {
+      const reps = [];
+      for (const r of seances) {
+        const h = $(`#sm-h-${r.id}`, fond).value, f = $(`#sm-f-${r.id}`, fond).value, n = resserrer($(`#sm-n-${r.id}`, fond).value);
+        const x = { id: r.id }, av = {};
+        if (h !== h5(r.heure)) { x.heure = h || null; av.heure = r.heure || null; }
+        if (f !== h5(r.fin)) { x.fin = f || null; av.fin = r.fin || null; }
+        if (n !== resserrer(r.note)) { x.note = n || null; av.note = r.note || null; }
+        if (Object.keys(av).length) reps.push({ ...x, avant: av });
+      }
+      const nouv = precisions.map(p => ({ texte: p.texte === p.orig ? p.orig : resserrer(p.texte), lien: p.lien || null })).filter(p => p.texte || p.lien);
+      const change = JSON.stringify(nouv) !== JSON.stringify(avant.map(p => ({ texte: p.texte, lien: p.lien || null })));
+      return { reps, prec: change ? nouv : null };
+    };
+    const sale = fond => { const { reps, prec } = lire(fond); return reps.length > 0 || !!prec; };
+    const { fond, fermer } = ouvrirModale({ id: 'modale-date', titre: 'Modifier cette date', icone: ICONES.crayon, corps, declencheur,
+      avantFermer: () => {
+        if (enCours) { annoncer('Un instant : l’enregistrement est en cours.'); return false; }
+        return !sale(fond) || confirm('Vos modifications de cette date ne sont pas enregistrées. Les abandonner ?');
+      } });
+    const form = $('#f-modif-date', fond), zone = $('#msg-modif-date', fond);
+    const redessinerPrecisions = (focus = null) => {
+      $('#pm-liste', fond).innerHTML = precisions.map(lignePrecision).join('');
+      $('[data-ajouter-precision]', fond).disabled = precisions.length >= MAX_PRECISIONS;
+      if (focus) focus();
+    };
+    $('[data-ajouter-precision]', fond).disabled = precisions.length >= MAX_PRECISIONS;
+    form.addEventListener('input', e => {
+      const t = e.target;
+      if (t.matches('input, textarea')) effacerErreur(t);
+      if (t.dataset.precision != null) precisions[+t.dataset.precision].texte = t.value;
+    });
+    form.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      if (b.matches('[data-ajouter-precision]')) {
+        if (precisions.length >= MAX_PRECISIONS) return;
+        precisions.push({ texte: '', lien: null, orig: null, fixe: false });
+        redessinerPrecisions(() => $(`#pm-${precisions.length - 1}`, fond)?.focus());
+      } else if (b.matches('[data-retirer-precision]')) {
+        const i = +b.dataset.retirerPrecision;
+        precisions.splice(i, 1);
+        redessinerPrecisions(() => ($(`#pm-${Math.min(i, precisions.length - 1)}`, fond) || $('[data-ajouter-precision]', fond)).focus());
+      }
+    });
+    // ce que la base refuserait, dit tout de suite, à côté du champ
+    const valider = () => {
+      for (const r of seances) {
+        const h = $(`#sm-h-${r.id}`, fond), f = $(`#sm-f-${r.id}`, fond), n = $(`#sm-n-${r.id}`, fond);
+        if (f.value && !h.value) { erreurChamp(f, 'Une heure de fin demande une heure de début.'); return false; }
+        if (f.value && f.value === h.value) { erreurChamp(f, 'La fin est à l’heure du début.'); return false; }
+        const t = resserrer(n.value), refus = t !== resserrer(r.note) && texteRefuse(t);
+        if (refus) { erreurChamp(n, `La précision : ${refus}.`); return false; }
+      }
+      for (const [i, p] of precisions.entries()) {
+        if (p.fixe || p.texte === p.orig) continue;
+        const champ = $(`#pm-${i}`, fond), t = resserrer(p.texte);
+        const refus = texteRefuse(t);
+        if (refus) { erreurChamp(champ, `Une précision : ${refus}.`); return false; }
+      }
+      return true;
+    };
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      dire(zone, '');
+      if (!valider()) return;
+      const { reps, prec } = lire(fond);
+      if (!reps.length && !prec) return dire(zone, 'Rien n’a changé : modifiez une heure ou une précision, ou fermez.', 'info');
+      const changements = {};
+      if (reps.length) changements.representations = reps;
+      if (prec) changements.precisions = prec;
+      enCours = true;
+      let res;
+      try { res = await occupe($('button[type=submit]', form), 'Enregistrement…', () => sb.rpc('crescite_modifier_date', { d: d.id, changements })); }
+      catch (err) { res = { error: err }; }
+      finally { enCours = false; }
+      const { data, error } = res;
+      if (error) {
+        if (fonctionAbsente(error)) { fermer(true); return pasInstalle('La modification des dates'); }
+        if (String(error.code) === 'PT409') { fermer(true); annoncer(`Rien n’est enregistré : ${raisonModif(error)}.`, { erreur: true }); return relireApres(retour); }
+        return dire(zone, `Rien n’est enregistré : ${esc(raisonModif(error))}.`);
+      }
+      fermer(true);
+      const n = Number(data && data.prevenus) || 0;
+      annoncer(!data || !data.modifications ? 'Rien n’a changé.' : n ? `Enregistré${prevenusTexte(n)}.` : 'Enregistré. Personne d’autre n’a de compte sur cette date : prévenez l’équipe vous-même.');
+      relireApres(retour);
+    });
+    ($(seances.length ? `#sm-h-${seances[0].id}` : '[data-ajouter-precision]', fond) || $('.modale-fermer', fond)).focus();
+  }
+
+  // ———— les fichiers d'un spectacle : ajouter, renommer, ranger, remplacer, supprimer
+  const MO_DOC = 50;                                 // la limite du stockage « crescite-equipe »
+  const EXT_DOC = { pdf: 'application/pdf', odt: 'application/vnd.oasis.opendocument.text', txt: 'text/plain',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+  const ACCEPTE_DOC = `.${Object.keys(EXT_DOC).join(',.')},${[...new Set(Object.values(EXT_DOC))].join(',')}`;
+  const GENRES_CHOIX = [['texte', 'Texte'], ['dossier', 'Dossier'], ['fiche_technique', 'Fiche technique'], ['plan', 'Plan'], ['autre', 'Autre document']];
+  const extDe = f => ((/\.([a-z0-9]{1,5})$/i.exec(f.name || '') || [])[1] || '').toLowerCase();
+  // le titre et le genre tirés du nom d'un fichier : « fiche-technique_2026.pdf » → « Fiche technique 2026 », fiche technique
+  const titreDeFichier = n => majuscule(String(n || '').replace(/\.[^.]*$/, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()).slice(0, 120);
+  const genreDeFichier = n => { const s = sansAccent(n); return /fiche.?tech/.test(s) ? 'fiche_technique' : /plan/.test(s) ? 'plan' : /dossier/.test(s) ? 'dossier' : /texte|version|script/.test(s) ? 'texte' : 'autre'; };
+  const motsEnvoi = e => { const m = `${e?.message || ''} ${e?.statusCode || ''}`; return /size|large|exceed|413/i.test(m) ? `il dépasse ${MO_DOC} Mo` : /mime|type|415/i.test(m) ? 'le stockage n’accepte pas ce type de fichier' : motsErreur(e); };
+
+  function ouvrirModaleDocument({ spectacle = null, doc = null }, declencheur = null) {
+    if (!avecModifier()) return;
+    const x = doc != null ? E.documents.find(y => y.id === doc) || null : null;
+    const spId = x ? x.spectacle_id : spectacle;
+    if (doc != null && (!x || !documentEquipe(x, spId))) return annoncer('Ce fichier n’est plus là, ou il reste à l’administration : actualisez la page.', { erreur: true });
+    if (doc == null && !gereFichiers(spId)) return annoncer('Les fichiers de ce spectacle se changent par son équipe actuelle (sa distribution, ou l’équipe d’une date à venir) : demandez à l’administration.', { erreur: true });
+    const sp = E.spectacles.get(Number(spId)) || [...E.spectacles.values()].find(s => memeId(s.id, spId)) || {};
+    const ajout = !x, retour = ajout ? `[data-ajouter-fichier="${spId}"]` : `[data-modifier-document="${x.id}"]`;
+    const genre0 = x ? (GENRES_CONNUS.has(x.type) ? x.type : 'autre') : 'autre';
+    // { fichier, chemin } : déjà déposé, pas encore inscrit (l'inscription a échoué) ; un nouvel essai le reprend. Abandonné,
+    // il reste dans le stockage, que la page ne peut pas effacer (l'administration le fait)
+    let envoye = null;
+    let enCours = false, titreAuto = '';
+    const quoi = x ? (x.fichier ? (x.fichier.split('.').pop() || '').toUpperCase() || 'Fichier' : 'Lien') : '';
+    const corps = `<form class="form-modale" id="f-document" novalidate>
+        <p class="intro">${ajout ? `Dans les fichiers de travail de <b>${esc(sp.titre || 'ce spectacle')}</b>.` : `<b>${esc(x.titre)}</b> · ${esc(quoi)} · ${esc(sp.titre || '')}`}</p>
+        <div class="champ"><label for="fd-fichier">${ajout ? 'Le fichier' : 'Une nouvelle version <span class="facultatif">(facultatif)</span>'}</label>
+          <input type="file" id="fd-fichier" accept="${esc(ACCEPTE_DOC)}" aria-describedby="fd-fichier-aide">
+          <p class="aide" id="fd-fichier-aide">PDF, image (JPEG, PNG, WebP), texte, ODT ou DOCX ; ${MO_DOC} Mo au plus.${ajout ? '' : ' Elle remplace l’ancienne pour toute l’équipe (l’administration garde la précédente).'}</p></div>
+        <div class="champ"><label for="fd-titre">Titre</label><input type="text" id="fd-titre" maxlength="120" autocomplete="off" value="${esc(x ? x.titre : '')}"></div>
+        <div class="champ"><label for="fd-genre">Rangé avec</label><select id="fd-genre">${GENRES_CHOIX.map(([k, l]) => `<option value="${k}"${k === genre0 ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
+        <p class="aide prevenus">${ICONES.cloche}<span>L’équipe du spectacle et l’administration sont prévenues, avec votre nom.</span></p>
+        <div class="msg-form" id="msg-document"></div>
+        <div class="pied-form"><button type="submit" class="btn principal">${ajout ? `${ICONES.plus}Ajouter` : `${ICONES.coche}Enregistrer`}</button><button type="button" class="btn" data-fermer-modale>Annuler</button>
+          ${ajout ? '' : `<button type="button" class="btn danger" data-supprimer-document>${ICONES.corbeille}Supprimer<span class="sr"> ce fichier</span></button>`}</div>
+      </form>`;
+    const { fond, fermer } = ouvrirModale({ id: 'modale-document', titre: ajout ? 'Ajouter un fichier' : 'Modifier le fichier', icone: ajout ? ICONES.plus : ICONES.crayon, corps, declencheur,
+      avantFermer: () => {
+        if (enCours) { annoncer('Un instant : l’envoi est en cours.'); return false; }
+        return true;
+      } });
+    const form = $('#f-document', fond), zone = $('#msg-document', fond);
+    const inFichier = $('#fd-fichier', form), inTitre = $('#fd-titre', form), inGenre = $('#fd-genre', form);
+    inFichier.addEventListener('change', () => {
+      effacerErreur(inFichier);
+      const f = inFichier.files[0];
+      if (!f || !ajout) return;
+      // le titre (et le genre) suivent le fichier choisi, tant qu'on ne les a pas écrits soi-même
+      if (!inTitre.value.trim() || inTitre.value === titreAuto) { titreAuto = titreDeFichier(f.name); inTitre.value = titreAuto; effacerErreur(inTitre); }
+      if (inGenre.value === 'autre') inGenre.value = genreDeFichier(f.name);
+    });
+    inTitre.addEventListener('input', () => effacerErreur(inTitre));
+    const echec = (err, envoi = false) => {
+      if (fonctionAbsente(err)) { fermer(true); return pasInstalle('La modification des fichiers', retour); }
+      dire(zone, `${envoi ? `Le fichier n’a pas pu être envoyé : ${esc(motsEnvoi(err))}` : `Rien n’est enregistré : ${esc(raisonModif(err, 'ce spectacle'))}`}.${envoye ? ' Le fichier est déjà envoyé : réessayez, il ne repartira pas.' : ''}`);
+    };
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      dire(zone, '');
+      const f = inFichier.files[0] || null, titre = resserrer(inTitre.value), genre = inGenre.value;
+      if (ajout && !f) return erreurChamp(inFichier, 'Choisissez le fichier à ajouter.');
+      if (f && !EXT_DOC[extDe(f)]) return erreurChamp(inFichier, 'Ce type de fichier n’est pas accepté : PDF, image (JPEG, PNG, WebP), texte, ODT ou DOCX.');
+      if (f && f.size > MO_DOC * 1024 * 1024) return erreurChamp(inFichier, `Ce fichier pèse plus de ${MO_DOC} Mo : envoyez-en une version plus légère.`);
+      if (!titre) return erreurChamp(inTitre, 'Un fichier a besoin d’un titre.');
+      const refus = (!x || titre !== x.titre) && texteRefuse(titre);
+      if (refus) return erreurChamp(inTitre, `Le titre : ${refus}.`);
+      if (x && !f && titre === x.titre && genre === genre0) return dire(zone, 'Rien n’a changé : un autre titre, un autre rangement ou une nouvelle version, ou fermez.', 'info');
+      enCours = true;
+      let resultat = null, etape = 'envoi';
+      try {
+        await occupe($('button[type=submit]', form), f ? 'Envoi…' : 'Enregistrement…', async () => {
+          let chemin = null;
+          if (f) {
+            if (envoye && envoye.fichier === f) chemin = envoye.chemin;
+            else {
+              envoye = null;
+              // le chemin que la base prépare (une heure), puis le fichier, jamais par-dessus un autre (sans upsert : l'envoi
+              // seul, la base ne permet rien d'autre)
+              etape = 'inscription';
+              const p = await sb.rpc('crescite_preparer_fichier', { s: Number(spId), nom: f.name });
+              if (p.error) throw p.error;
+              etape = 'envoi';
+              const type = EXT_DOC[extDe(f)], corpsF = f.type === type ? f : f.slice(0, f.size, type);
+              const u = await sb.storage.from(SEAU).upload(p.data, corpsF, { contentType: type, cacheControl: '3600', upsert: false });
+              if (u.error) throw u.error;
+              chemin = p.data;
+              envoye = { fichier: f, chemin };
+            }
+          }
+          etape = 'inscription';
+          const r = ajout
+            ? await sb.rpc('crescite_ajouter_document', { s: Number(spId), document: { titre, type: genre, fichier: chemin } })
+            : await sb.rpc('crescite_modifier_document', { doc: x.id, changements: { ...(titre !== x.titre ? { titre } : {}), ...(genre !== genre0 ? { type: genre } : {}), ...(chemin ? { fichier: chemin } : {}) } });
+          if (r.error) throw r.error;
+          envoye = null;
+          resultat = r.data || {};
+        });
+      } catch (err) { enCours = false; return echec(err, etape === 'envoi'); }
+      enCours = false;
+      fermer(true);
+      const n = Number(resultat.prevenus) || 0;
+      annoncer(ajout ? `« ${titre} » est ajouté${prevenusTexte(n)}.` : resultat.modifications === 0 ? 'Rien n’a changé.' : `« ${titre} » est enregistré${prevenusTexte(n)}.`);
+      relireApres(retour);
+    });
+    $('[data-supprimer-document]', form)?.addEventListener('click', async ev => {
+      if (!confirm(`Supprimer « ${x.titre} » des fichiers de travail ? L’équipe du spectacle en est prévenue ; l’administration garde le fichier et peut le rétablir.`)) return;
+      enCours = true;
+      let r;
+      try { r = await occupe(ev.currentTarget, 'Suppression…', () => sb.rpc('crescite_supprimer_document', { doc: x.id })); }
+      catch (err) { r = { error: err }; }
+      finally { enCours = false; }
+      if (r.error) {
+        if (fonctionAbsente(r.error)) { fermer(true); return pasInstalle('La modification des fichiers', retour); }
+        return dire(zone, `Le fichier n’est pas supprimé : ${esc(raisonModif(r.error, 'ce spectacle'))}.`);
+      }
+      fermer(true);
+      E.documents = E.documents.filter(y => y.id !== x.id);   // tout de suite, la base relue ensuite
+      if (E.route && E.route.k === 'spectacle') router({ rafraichir: true });
+      annoncer(`« ${x.titre} » est supprimé${prevenusTexte(Number(r.data && r.data.prevenus) || 0)}.`);
+      relireApres(`[data-ajouter-fichier="${spId}"]`);
+    });
+    (ajout ? inFichier : inTitre).focus();
   }
 
   // ================================================================================================ checklist camion & matériel
@@ -3485,13 +3896,14 @@
       $('#tot-rembourse').textContent = euros(totRembourse);
       if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
 
+      E.fraisLus = data;
       zone.innerHTML = data.map((item, i) => {
         const cat = CAT_FRAIS[item.categorie] || item.categorie;
         const stClass = STATUT_FRAIS[item.statut] ? item.statut : 'en_attente';
         const quand = estJour(item.date_depense) ? jourCourt(item.date_depense) : item.cree_le ? jourCourt(iso(new Date(item.cree_le))) : '';
         const d = item.date_id != null ? E.dates.find(x => x.id === Number(item.date_id)) : null;
         return `
-          <div class="frais-ligne${neuve && !i && !reduit() ? ' neuve' : ''}">
+          <div class="frais-ligne${neuve && !i && !reduit() ? ' neuve' : ''}" data-frais="${item.id}">
             <span class="badge-statut ${stClass}">${STATUT_FRAIS[stClass]}</span>
             <div>
               <b>${esc(cat)}</b> · <small>${esc(quand)}${d ? ` · ${esc(d.spectacle?.titre || 'Date')}${d.lieu?.commune ? `, ${esc(d.lieu.commune)}` : ''}` : ''}</small>
@@ -3618,7 +4030,7 @@
     const remettre = () => { const t = ind(); if (!t) return; t.classList.remove('tire', 'pret', 'charge'); t.style.transform = ''; t.style.opacity = ''; t.style.removeProperty('--etire'); };
     document.addEventListener('touchstart', e => {
       y0 = null;
-      if (window.scrollY > 0 || E.rafraichit || !E.pret || !$('#app > .appli') || e.touches.length !== 1 || e.target.closest('input, textarea, select, .feuille-cadre, .carte-tournee')) return;
+      if (window.scrollY > 0 || E.rafraichit || !E.pret || !$('#app > .appli') || e.touches.length !== 1 || $('.modale-fond') || e.target.closest('input, textarea, select, .feuille-cadre, .carte-tournee')) return;
       y0 = e.touches[0].clientY; dy = 0; actif = false;
     }, { passive: true });
     document.addEventListener('touchmove', e => {
@@ -3651,6 +4063,364 @@
   // le retour au doigt : descendu d'un cran (une date, une feuille, un spectacle…), un glissé depuis le bord gauche emmène la
   // vue avec le pouce ; assez loin, ou assez vite, elle part et la vue d'avant revient (revenir). Un défilement vertical, un
   // élément qui défile de côté, la feuille de route et la carte ne le déclenchent pas.
+  // la date d'avant, celle d'après (toute la tournée, dans l'ordre ; sur une feuille de route, les dates qui en ont une) :
+  // deux boutons nommés sous la page, ← → au clavier, un balayage au doigt (brancherGestes)
+  function navDates(d, genre = 'date') {
+    if (typeof GESTES === 'undefined' || !GESTES) return '';
+    const xs = E.dates.filter(x => genre === 'date' || x.feuille).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
+    const i = xs.findIndex(x => x.id === d.id);
+    if (i < 0 || xs.length < 2) return '';
+    const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: `${jourCourt(x.debut)} · ${x.spectacle?.titre || 'Date'}` } : null);
+    return `<nav class="nav-dates">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
+  }
+  // les gestes (../admin/gestes.js) : un appui long ou un clic droit sur un billet, une notification, un document, une
+  // proposition ouvre ce qu'on peut en faire ; ← → et le balayage passent à la date (ou la feuille) d'avant, d'après
+  function brancherGestes() {
+    if (typeof GESTES === 'undefined' || !GESTES) return;
+    const G = GESTES;
+    const dateDe = el => E.dates.find(x => x.id === Number(el.dataset.date || String(el.id || '').replace('billet-', '')));
+    const faux = (attr, valeur) => { const b = document.createElement('button'); b.type = 'button'; b.dataset[attr] = valeur; return b; };
+    G.menu({ cible: '.billet[id^="billet-"], .heros[data-date]', titre: el => { const d = dateDe(el); return d ? `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}` : 'Date'; },
+      actions: el => {
+        const d = dateDe(el);
+        if (!d) return [];
+        const l = d.lieu, passee = finDe(d) < aujourdhui(), vive = vivante(d), ici = location.hash === `#/date/${d.id}`;
+        const I = G.ICO;
+        return [ici ? null : { libelle: 'Ouvrir la date', href: `#/date/${d.id}`, icone: ICONES.chevron },
+          l && itineraire(l) ? { libelle: 'Itinéraire', detail: l.nom || l.commune, href: itineraire(l), externe: true, icone: ICONES.route } : null,
+          d.feuille && outilFeuille() ? { libelle: 'Feuille de route', detail: `v${d.feuille.version || 1}`, href: `#/feuille/${d.id}`, icone: ICONES.feuille } : null,
+          d.feuille && outilFeuille() ? { libelle: 'PDF de la feuille de route', faire: () => telechargerPdf(faux('pdf', d.id)), icone: ICONES.pdf } : null,
+          !passee && vive && evenementsAVenir(d.id).length ? { libelle: 'Ajouter à mon agenda', faire: () => telechargerAgenda(d.id), icone: ICONES.agenda } : null,
+          !passee && vive && avecSignaler() ? { libelle: 'Signaler un retard', faire: () => ouvrirModaleRetard(d.id, el.querySelector('a, button') || el), icone: ICONES.alerte } : null,
+          !passee && vive && modifierDateEnEquipe() ? { libelle: 'Modifier la date', detail: 'l’horaire, les précisions', faire: () => ouvrirModaleDate(d.id, el.querySelector('a, button') || el), icone: ICONES.crayon } : null,
+          !passee && vive && avecIdeale() ? { libelle: 'Note de frais', href: `#/frais?date=${d.id}`, icone: ICONES.euro } : null,
+          { separateur: true },
+          { libelle: 'Partager la date', detail: 'le lien de cette page', icone: ICONES.partager, faire: () => partagerMaintenant({ title: `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`, text: `${d.spectacle?.titre || ''} ${quandTexte(d)}${l ? ` · ${l.nom || l.commune}` : ''}`.trim(), url: new URL(`#/date/${d.id}`, location.href).href }, 'Lien de la date copié') },
+          // le compte administre : modifier, ici même
+          ...(E.admin ? [{ separateur: true },
+            { libelle: 'Modifier la date…', detail: 'statut, nature, publication, lien, précisions', icone: I.reglages, faire: () => modifierDate(d) },
+            { libelle: natureDe(d) === 'representations' ? 'Les représentations…' : 'Les horaires…', detail: 'ajouter, changer, annuler une séance', icone: ICONES.horloge, faire: () => modifierHoraires(d) },
+            { libelle: 'Qui part…', detail: 'la distribution, les remplaçants', icone: ICONES.equipe, faire: () => modifierEquipe(d) },
+            l ? { libelle: 'Modifier le lieu…', detail: l.nom || l.commune, icone: I.carte, faire: () => modifierLieu(d) } : null,
+            { libelle: 'Suivi interne…', detail: 'organisateur, contact, contrat, notes', icone: I.feuille, faire: () => modifierSuivi(d) },
+            avecChiffres() ? { libelle: 'Les chiffres…', detail: 'jauge, spectateurs, heures d’ateliers', icone: ICONES.planning, faire: () => modifierChiffres(d) } : null,
+            !passee && vive ? { libelle: 'Prévenir l’équipe…', detail: 'un message à toute l’équipe de la date', icone: ICONES.message, faire: () => prevenirEquipe(d) } : null,
+            { libelle: 'Dans l’administration', detail: 'la fiche complète, la feuille de route', href: lienAdmin(`#/representations/${d.id}`), externe: true, icone: I.externe },
+            { separateur: true }, { libelle: 'Supprimer la date…', danger: true, icone: I.poubelle, faire: () => supprimerDate(d) }] : [])];
+      } });
+    // un horaire : changer, annuler, retirer la séance (le compte administre)
+    G.menu({ cible: '.horaires li[data-reps]', titre: el => { const d = E.dates.find(x => x.id === Number(el.closest('.horaires')?.dataset.date)); return d ? titreDate(d) : 'Séance'; }, actions: el => {
+      if (!E.admin) return [];
+      const d = E.dates.find(x => x.id === Number(el.closest('.horaires')?.dataset.date)); if (!d) return [];
+      const ids = String(el.dataset.reps || '').split(',').map(Number).filter(Boolean), annulee = el.classList.contains('annulee');
+      return [{ libelle: 'Changer l’heure…', detail: 'toutes les séances de la date', icone: ICONES.horloge, faire: () => modifierHoraires(d) },
+        { libelle: annulee ? 'Rétablir la séance' : 'Annuler la séance', icone: annulee ? ICONES.coche : ICONES.croix, faire: () => annulerSeances(d, ids, !annulee) },
+        { libelle: 'Retirer la séance…', danger: true, icone: G.ICO.poubelle, faire: () => retirerSeances(d, ids) }];
+    } });
+    // le lieu : l'itinéraire, le site, l'adresse ; le modifier (le compte administre)
+    G.menu({ cible: '.bloc-lieu[data-lieu]', titre: el => $('.lieu-nom', el)?.textContent || 'Le lieu', actions: el => {
+      const d = E.dates.find(x => x.id === Number(el.dataset.date)), l = d && d.lieu; if (!l) return [];
+      const site = l.site_web ? urlSure(l.site_web) : '';
+      return [itineraire(l) ? { libelle: 'Itinéraire', href: itineraire(l), externe: true, icone: ICONES.route } : null, site ? { libelle: 'Site du lieu', href: site, externe: true, icone: ICONES.lien } : null,
+        l.adresse ? { libelle: 'Copier l’adresse', icone: G.ICO.copier, faire: () => copier(`${l.nom ? `${l.nom}, ` : ''}${l.adresse}, ${l.commune || ''}`, '', 'Adresse copiée') } : null,
+        E.admin ? { libelle: 'Modifier le lieu…', detail: 'nom, adresse, site, contact, jauge, plateau', icone: G.ICO.reglages, faire: () => modifierLieu(d) } : null];
+    } });
+    // une personne de l'équipe de la date : sa fiche (vous) ; ses coordonnées, sa présence (le compte administre)
+    const nomPortrait = el => ($('.qui b', el)?.textContent || '').replace(/\s*vous\s*$/, '').trim();
+    G.menu({ cible: '.portraits li[data-personne]', titre: el => nomPortrait(el) || 'Une personne', actions: el => {
+      const d = E.dates.find(x => x.id === Number(el.closest('.portraits')?.dataset.date)), id = Number(el.dataset.personne), nom = nomPortrait(el) || 'cette personne';
+      if (!d) return [];
+      const moi = id === Number(E.moi);
+      return [moi ? { libelle: 'Ma fiche', detail: 'mes coordonnées', href: '#/moi', icone: ICONES.moi } : null,
+        E.admin && !moi ? { libelle: 'Coordonnées…', detail: 'téléphone, adresse électronique, ville', icone: G.ICO.tel, faire: () => modifierCoordonnees(id, nom) } : null,
+        E.admin ? { libelle: 'Ne part pas sur cette date', icone: G.ICO.croix, faire: () => basculerPresence(d, id) } : null,
+        E.admin ? { libelle: 'Qui part…', detail: 'toute l’équipe de la date', icone: ICONES.equipe, faire: () => modifierEquipe(d) } : null];
+    } });
+    // une note de frais : la modifier tant qu'elle attend (la sienne) ; la supprimer (le compte administre)
+    G.menu({ cible: '.frais-ligne[data-frais]', titre: 'Note de frais', actions: el => {
+      const item = (E.fraisLus || []).find(x => Number(x.id) === Number(el.dataset.frais)); if (!item) return [];
+      const mienne = Number(item.personne_id) === Number(E.moi), attente = (item.statut || 'en_attente') === 'en_attente';
+      return [(mienne && attente) || E.admin ? { libelle: 'Modifier…', icone: G.ICO.reglages, faire: () => modifierFrais(item) } : null,
+        item.photo_url ? { libelle: 'Voir le justificatif', icone: ICONES.doc, faire: () => $(`[data-justificatif="${CSS.escape(item.photo_url)}"]`)?.click() } : null,
+        E.admin ? { libelle: 'Supprimer…', danger: true, icone: G.ICO.poubelle, faire: () => supprimerFrais(item) } : null];
+    } });
+    // une indisponibilité : la modifier, la retirer
+    G.menu({ cible: '.indispo-ligne[data-indispo]:not(.agenda)', titre: el => $('.il-texte b', el)?.textContent || 'Indisponibilité', actions: el => [
+      { libelle: 'Modifier…', icone: ICONES.crayon, faire: () => $('[data-modifier-indispo]', el)?.click() }, { libelle: 'Retirer', danger: true, icone: ICONES.croix, faire: () => $('[data-retirer-indispo]', el)?.click() }] });
+    // la feuille de route : le PDF, la date ; la modifier dans l'administration (le compte administre)
+    G.menu({ cible: '.vue-feuille', titre: 'Feuille de route', actions: () => {
+      const m = location.hash.match(/^#\/feuille\/(\d+)$/); if (!m) return [];
+      return [{ libelle: 'Télécharger le PDF', icone: ICONES.pdf, faire: () => $('.barre-feuille [data-pdf]')?.click() }, { libelle: 'La date', href: `#/date/${m[1]}`, icone: ICONES.chevron },
+        E.admin ? { libelle: 'Modifier dans l’administration', detail: 'composer, compléter, republier', href: lienAdmin(`#/feuilles/${m[1]}`), externe: true, icone: G.ICO.externe } : null];
+    } });
+    G.menu({ cible: '.liste-notifs .notif[data-notif], .bandeau-notif[data-notif]', titre: 'Notification', actions: el => {
+      const n = E.notifs.find(x => x.id === Number(el.dataset.notif));
+      return [{ libelle: 'Ouvrir', href: el.getAttribute('href'), icone: ICONES.chevron },
+        n && !n.lue_le ? { libelle: 'Marquer comme lue', icone: ICONES.coche, faire: () => { vibrer(10); marquerLue(n.id); } } : null,
+        nonLues() > 0 ? { libelle: 'Tout marquer comme lu', icone: ICONES.coche, faire: () => toutMarquerLu($('[data-tout-lu]') || faux('toutLu', '1')) } : null,
+        n ? { separateur: true } : null, n ? { libelle: 'Effacer', danger: true, icone: ICONES.croix, faire: () => effacerNotif(n) } : null];
+    } });
+    G.menu({ cible: '.doc-ligne, .puces-docs li', titre: el => (el.querySelector('a, button')?.textContent || 'Document').trim(), actions: el => {
+      const a = el.querySelector('a[href]'), p = el.querySelector('[data-partager]'), m = el.querySelector('[data-modifier-document]');
+      return [a ? { libelle: 'Ouvrir', href: a.getAttribute('href'), externe: a.target === '_blank', icone: ICONES.doc } : null,
+        p ? { libelle: 'Partager', detail: 'un lien de trente jours', icone: ICONES.partager, faire: () => partager(p) } : null,
+        m ? { libelle: 'Modifier', detail: 'le titre, le rangement, une nouvelle version', icone: ICONES.crayon, faire: () => ouvrirModaleDocument({ doc: Number(m.dataset.modifierDocument) }, m) } : null];
+    } });
+    // une proposition : répondre d'un geste quand elle ne propose qu'un jour, sinon l'ouvrir
+    G.menu({ cible: 'a.carte-prop[href]', titre: el => (E.dispo.propositions || []).find(p => `#/proposition/${p.id}` === el.getAttribute('href'))?.titre || 'Proposition de dates', actions: el => {
+      const p = (E.dispo.propositions || []).find(x => `#/proposition/${x.id}` === el.getAttribute('href')), j = p && p.statut === 'ouverte' && p.jours.length === 1 ? p.jours[0] : null;
+      return [{ libelle: j ? 'Voir la proposition' : 'Répondre', href: el.getAttribute('href'), icone: ICONES.question },
+        ...(j ? [{ separateur: true }, ...Object.entries(REPONSES).map(([k, l]) => ({ libelle: l, detail: j.moi && j.moi.reponse === k ? 'votre réponse' : '', icone: k === 'oui' ? ICONES.coche : k === 'non' ? ICONES.croix : ICONES.question, faire: () => repondre(j.id, k, j.moi?.commentaire || null) }))] : []),
+        { libelle: 'Toutes mes propositions', href: '#/propositions', icone: ICONES.planning }];
+    } });
+    // ← → et le balayage : la date (ou la feuille) d'avant, d'après ; pas depuis le bord (le retour au doigt), ni sur ce qui défile de côté
+    G.clavierPrecSuiv(document, { modif: 'aucun', portee: '#contenu' });
+    G.glisser(document.body, { gauche: () => $('#contenu .nav-dates [data-gps="1"]:not([disabled])')?.click(), droite: () => $('#contenu .nav-dates [data-gps="-1"]:not([disabled])')?.click(),
+      ignorer: t => !!(t.closest && t.closest('[data-pl-defile], .carte-tournee, .frise, .feuille-cadre, .liste-notifs, [data-defile]')) });
+  }
+  // ================================================================================================ modifier depuis le téléphone
+  /* L'appui long (brancherGestes) modifie presque tout, quand le compte administre (E.admin) : la date (statut, nature,
+     publication, lien, précisions), chaque horaire (ajouter, changer, annuler, retirer une séance), le lieu (nom, adresse,
+     site, contact, jauge, plateau), qui part, le suivi interne, les chiffres, un message à l'équipe, les coordonnées
+     d'une personne, supprimer la date. Chacun modifie sa note de frais en attente, retire une notification, répond à une
+     proposition d'un geste. Chaque écriture va dans la base (ses règles d'accès décident : GESTES.formulaire le dit si
+     elle refuse), puis l'espace se relit. */
+  const MOD = {
+    STATUTS: [['confirmee', 'Confirmée'], ['option', 'Option'], ['annulee', 'Annulée'], ['reportee', 'Reportée']],
+    NATURES: [['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidence'], ['autre', 'Autre']],
+    PUBLICS: [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['mixte', 'Tout public et scolaire'], ['autre', 'Autre']],
+    CONTRATS: [['', '—'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']],
+  };
+  const F = () => (typeof GESTES !== 'undefined' && GESTES && typeof GESTES.formulaire === 'function' ? GESTES : null);
+  const titreDate = d => `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`;
+  const texteErreur = e => `${motsErreur(e) || 'la base a refusé'}`;
+  // après une écriture : l'espace se relit (discrètement), et le dit
+  async function apresModif(message) {
+    try { await rafraichir({ discret: true }); } catch (e) { /* l'actualisation le dira */ }
+    if (message) annoncer(message);
+  }
+  // les requêtes d'une écriture, l'une après l'autre ; la première erreur arrête et se dit dans la feuille
+  async function serie(requetes) {
+    for (const r of requetes) { const { error } = await r(); if (error) return texteErreur(error); }
+    return true;
+  }
+  function modifierDate(d) {
+    const G = F(); if (!G) return;
+    const publiable = n => n === 'representations' || n === 'residence';
+    G.formulaire({ titre: 'Modifier la date', sousTitre: titreDate(d), champs: [
+      { k: 'statut', t: 'choix', seg: true, l: 'Statut', choix: MOD.STATUTS, valeur: d.statut || 'confirmee' },
+      { k: 'nature', t: 'choix', seg: true, l: 'Nature', choix: MOD.NATURES, valeur: natureDe(d) },
+      { k: 'visible', t: 'case', l: 'Publiée sur le site', valeur: d.visible !== false && d.statut !== 'option', aide: 'Une option ou une répétition n’y va jamais.' },
+      { k: 'public', t: 'choix', l: 'Public', choix: MOD.PUBLICS, valeur: d.public || 'tout_public' },
+      { k: 'lien', t: 'url', l: 'Lien (billetterie ou page du lieu)', valeur: d.lien || '', ph: 'https://…' },
+      { k: 'details', t: 'long', l: 'Précisions affichées sous la ligne', valeur: (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte).map(x => `${x.texte}${x.lien ? ` | ${x.lien}` : ''}`).join('\n'), aide: 'Une par ligne ; « texte | lien » pour y joindre un lien.' },
+    ], enregistrer: async v => {
+      const details = String(v.details || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => { const [texte, lien] = l.split('|').map(x => x.trim()); return lien ? { texte, lien } : { texte }; });
+      const maj = { statut: v.statut, nature: v.nature, visible: !!v.visible && publiable(v.nature) && v.statut !== 'option', public: v.public, lien: v.lien || null, details };
+      const { error } = await sb.from('crescite_dates').update(maj).eq('id', d.id);
+      if (error) return texteErreur(error);
+      await apresModif('Date enregistrée.');
+      return true;
+    } });
+  }
+  function modifierHoraires(d) {
+    const G = F(); if (!G) return;
+    const reps = d.representations.map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', annulee: !!r.annulee, note: r.note || '' }));
+    const sco = natureDe(d) === 'representations';
+    G.formulaire({ titre: sco ? 'Les représentations' : 'Les horaires', sousTitre: titreDate(d), champs: [
+      { k: 'reps', t: 'groupe', l: sco ? 'Une ligne par représentation' : 'Une ligne par séance', ajout: sco ? 'Représentation' : 'Séance', valeur: reps,
+        neuf: () => ({ jour: (reps.length ? reps[reps.length - 1].jour : d.debut) || aujourdhui(), heure: sco ? '20:00' : '', fin: '', public: d.public && d.public !== 'mixte' ? d.public : 'tout_public', annulee: false, note: '' }),
+        champs: [{ k: 'jour', t: 'date', l: 'Jour', requis: true }, { k: 'heure', t: 'heure', l: 'Heure' }, { k: 'fin', t: 'heure', l: 'Fin' },
+          ...(sco ? [{ k: 'public', t: 'choix', l: 'Public', choix: [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']] }] : []),
+          { k: 'note', t: 'texte', l: 'Précision', ph: 'complet, audiodécrite…' }, { k: 'annulee', t: 'case', l: 'Annulée' }] },
+    ], note: 'Le début et la fin de la date suivent ses séances.', enregistrer: async v => {
+      const xs = (v.reps || []).filter(r => estJour(r.jour)), garder = new Set(), requetes = [];
+      for (const r of xs) {
+        const ligne = { jour: r.jour, heure: r.heure || null, fin: r.fin || null, public: r.public || 'tout_public', annulee: !!r.annulee, note: r.note || null };
+        if (r.id) {
+          garder.add(Number(r.id));
+          const avant = reps.find(x => String(x.id) === String(r.id));
+          if (avant && (avant.jour !== ligne.jour || avant.heure !== (ligne.heure || '') || avant.fin !== (ligne.fin || '') || avant.public !== ligne.public || avant.annulee !== ligne.annulee || (avant.note || '') !== (ligne.note || ''))) requetes.push(() => sb.from('crescite_representations').update(ligne).eq('id', Number(r.id)));
+        } else requetes.push(() => sb.from('crescite_representations').insert({ ...ligne, date_id: d.id }));
+      }
+      const retirer = reps.filter(r => !garder.has(Number(r.id))).map(r => Number(r.id));
+      if (retirer.length) requetes.push(() => sb.from('crescite_representations').delete().in('id', retirer));
+      if (!requetes.length) return true;
+      const r = await serie(requetes);
+      if (r !== true) return r;
+      await apresModif('Horaires enregistrés : l’équipe de la date est prévenue.');
+      return true;
+    } });
+  }
+  async function annulerSeances(d, ids, annulee) {
+    const { error } = await sb.from('crescite_representations').update({ annulee }).in('id', ids);
+    if (error) return annoncer(`Séance non changée : ${texteErreur(error)}.`, { erreur: true });
+    await apresModif(annulee ? 'Séance annulée : l’équipe est prévenue.' : 'Séance rétablie.');
+  }
+  async function retirerSeances(d, ids) {
+    if (!confirm(`Retirer ${ids.length > 1 ? 'ces séances' : 'cette séance'} de la date ?`)) return;
+    const { error } = await sb.from('crescite_representations').delete().in('id', ids);
+    if (error) return annoncer(`Séance non retirée : ${texteErreur(error)}.`, { erreur: true });
+    await apresModif('Séance retirée.');
+  }
+  async function modifierLieu(d) {
+    const G = F(), l = d.lieu; if (!G || !l) return;
+    let su = {};
+    try { const { data } = await sb.from('crescite_lieux_suivi').select('contact, jauge, plateau').eq('lieu_id', l.id).maybeSingle(); su = data || {}; } catch (e) { /* sans suivi */ }
+    G.formulaire({ titre: 'Modifier le lieu', sousTitre: l.nom ? `${l.nom}, ${l.commune}` : l.commune, champs: [
+      { k: 'nom', t: 'texte', l: 'Nom du lieu', valeur: l.nom || '' },
+      { k: 'adresse', t: 'texte', l: 'Adresse', valeur: l.adresse || '', ph: 'numéro, rue', aide: `À ${l.commune || ''}${l.departement ? ` (${l.departement})` : ''}.` },
+      { k: 'site_web', t: 'url', l: 'Site du lieu', valeur: l.site_web || '', ph: 'https://…' },
+      { k: 'contact', t: 'long', l: 'Contact du lieu', valeur: su.contact || '', lignes: 2, ph: 'Nom, rôle, téléphone, adresse électronique', aide: 'Jamais publié : pour l’équipe et les feuilles de route.' },
+      { k: 'jauge', t: 'nombre', l: 'Jauge (places)', valeur: su.jauge ?? '', min: 0, pas: 1 },
+      { k: 'plateau', t: 'texte', l: 'Plateau', valeur: su.plateau || '', ph: '12 × 10 m' },
+    ], enregistrer: async v => {
+      const r = await serie([
+        () => sb.from('crescite_lieux').update({ nom: v.nom.trim() || null, adresse: v.adresse.trim() || null, site_web: v.site_web.trim() || null }).eq('id', l.id),
+        () => sb.from('crescite_lieux_suivi').upsert({ lieu_id: l.id, contact: v.contact.trim() || null, jauge: v.jauge == null || v.jauge === '' ? null : Number(v.jauge), plateau: v.plateau.trim() || null }, { onConflict: 'lieu_id' }),
+      ]);
+      if (r !== true) return r;
+      await apresModif('Lieu enregistré.');
+      return true;
+    } });
+  }
+  // qui part : la distribution « en tournée » du spectacle, moins qui ne part pas, plus remplaçants et renforts
+  function candidatsEquipe(d) {
+    const sp = d.spectacle?.id, eq = E.equipes.filter(e => Number(e.date_id) === d.id);
+    const gens = new Map();
+    E.distributions.filter(x => x.spectacle_id === sp && x.en_tournee).forEach(x => { if (!gens.has(x.personne_id)) gens.set(x.personne_id, { id: x.personne_id, nom: nomDe(x.personne), distribution: true, fonction: x.categorie === 'jeu' ? (x.role ? `jeu (${x.role})` : 'jeu') : (x.fonction || CATEGORIES[x.categorie]) }); });
+    eq.forEach(e => { if (!gens.has(e.personne_id)) gens.set(e.personne_id, { id: e.personne_id, nom: nomDe(e.personne), distribution: false, fonction: e.fonction || '' }); });
+    E.distributions.forEach(x => { if (!gens.has(x.personne_id)) gens.set(x.personne_id, { id: x.personne_id, nom: nomDe(x.personne), distribution: false, fonction: '', autre: true }); });
+    const presents = new Set(quiPart(d).map(g => g.id));
+    return [...gens.values()].map(g => ({ ...g, date_id: d.id, part: presents.has(g.id), ligne: eq.find(e => Number(e.personne_id) === Number(g.id)) || null }));
+  }
+  // une personne part, ou ne part plus : la ligne d'écart de la date (crescite_equipes), ou son absence
+  function ecartPour(g, part) {
+    if (g.distribution) return part ? () => sb.from('crescite_equipes').delete().match({ date_id: g.date_id, personne_id: g.id }) : () => sb.from('crescite_equipes').upsert({ date_id: g.date_id, personne_id: g.id, present: false }, { onConflict: 'date_id,personne_id' });
+    return part ? () => sb.from('crescite_equipes').upsert({ date_id: g.date_id, personne_id: g.id, present: true, fonction: g.ligne?.fonction || null }, { onConflict: 'date_id,personne_id' }) : () => sb.from('crescite_equipes').delete().match({ date_id: g.date_id, personne_id: g.id });
+  }
+  function modifierEquipe(d) {
+    const G = F(); if (!G) return;
+    const xs = candidatsEquipe(d), tri = (a, b) => (b.part - a.part) || (b.distribution - a.distribution) || a.nom.localeCompare(b.nom, 'fr');
+    G.formulaire({ titre: 'Qui part', sousTitre: titreDate(d), champs: [
+      { k: 'part', t: 'cases', l: 'Sur cette date', choix: xs.slice().sort(tri).map(g => [String(g.id), g.nom, g.distribution ? `distribution · ${g.fonction}` : g.autre ? 'un autre spectacle' : g.fonction || 'renfort']), valeur: xs.filter(g => g.part).map(g => String(g.id)) },
+    ], note: 'La distribution « en tournée » part d’office ; décochez qui ne part pas, cochez un renfort ou un remplaçant.', enregistrer: async v => {
+      const voulus = new Set((v.part || []).map(String));
+      const requetes = xs.filter(g => voulus.has(String(g.id)) !== g.part).map(g => ecartPour(g, voulus.has(String(g.id))));
+      if (!requetes.length) return true;
+      const r = await serie(requetes);
+      if (r !== true) return r;
+      await apresModif('Équipe de la date enregistrée : les personnes concernées sont prévenues.');
+      return true;
+    } });
+  }
+  async function basculerPresence(d, personneId) {
+    const g = candidatsEquipe(d).find(x => Number(x.id) === Number(personneId));
+    if (!g) return;
+    const { error } = await ecartPour(g, !g.part)();
+    if (error) return annoncer(`Équipe non changée : ${texteErreur(error)}.`, { erreur: true });
+    await apresModif(g.part ? `${g.nom} ne part plus sur cette date.` : `${g.nom} part sur cette date.`);
+  }
+  async function modifierSuivi(d) {
+    const G = F(); if (!G) return;
+    let su = {};
+    try { const { data } = await sb.from('crescite_dates_suivi').select('organisateur, contact, contrat, notes').eq('date_id', d.id).maybeSingle(); su = data || {}; } catch (e) { /* sans suivi */ }
+    G.formulaire({ titre: 'Suivi interne', sousTitre: titreDate(d), champs: [
+      { k: 'organisateur', t: 'texte', l: 'Organisateur', valeur: su.organisateur || '' },
+      { k: 'contact', t: 'long', l: 'Contact', valeur: su.contact || '', lignes: 2, ph: 'Nom, téléphone, adresse électronique' },
+      { k: 'contrat', t: 'choix', seg: true, l: 'Contrat', choix: MOD.CONTRATS, valeur: su.contrat || '' },
+      { k: 'notes', t: 'long', l: 'Notes', valeur: su.notes || '', lignes: 4 },
+    ], note: 'Jamais publié, jamais montré à l’équipe.', enregistrer: async v => {
+      const { error } = await sb.from('crescite_dates_suivi').upsert({ date_id: d.id, organisateur: v.organisateur.trim() || null, contact: v.contact.trim() || null, contrat: v.contrat || null, notes: v.notes.trim() || null }, { onConflict: 'date_id' });
+      if (error) return texteErreur(error);
+      annoncer('Suivi enregistré.');
+      return true;
+    } });
+  }
+  async function modifierChiffres(d) {
+    const G = F(); if (!G) return;
+    let c = {};
+    try { const { data } = await sb.from('crescite_dates_chiffres').select('jauge, spectateurs, heures_ateliers').eq('date_id', d.id).maybeSingle(); c = data || {}; } catch (e) { /* sans chiffres */ }
+    G.formulaire({ titre: 'Les chiffres', sousTitre: titreDate(d), champs: [
+      { k: 'jauge', t: 'nombre', l: 'Jauge (places)', valeur: c.jauge ?? '', min: 0, pas: 1 }, { k: 'spectateurs', t: 'nombre', l: 'Spectateurs', valeur: c.spectateurs ?? '', min: 0, pas: 1 },
+      { k: 'heures_ateliers', t: 'nombre', l: 'Heures d’ateliers', valeur: c.heures_ateliers ?? '', min: 0, pas: 0.5 },
+    ], note: 'Jamais publiés ; l’équipe les lit.', enregistrer: async v => {
+      const n = k => (v[k] == null || v[k] === '' ? null : Number(v[k]));
+      const ligne = { date_id: d.id, jauge: n('jauge'), spectateurs: n('spectateurs'), heures_ateliers: n('heures_ateliers') };
+      const vide = ligne.jauge == null && ligne.spectateurs == null && ligne.heures_ateliers == null;
+      const { error } = vide ? await sb.from('crescite_dates_chiffres').delete().eq('date_id', d.id) : await sb.from('crescite_dates_chiffres').upsert(ligne, { onConflict: 'date_id' });
+      if (error) return texteErreur(error);
+      if (location.hash === `#/date/${d.id}`) chargerChiffres(d.id);
+      annoncer('Chiffres enregistrés.');
+      return true;
+    } });
+  }
+  function prevenirEquipe(d) {
+    const G = F(); if (!G) return;
+    G.formulaire({ titre: 'Prévenir l’équipe', sousTitre: titreDate(d), champs: [
+      { k: 'titre', t: 'texte', l: 'Titre', valeur: 'Message de l’administration', requis: true },
+      { k: 'texte', t: 'long', l: 'Message', valeur: '', lignes: 4, ph: 'Ce que l’équipe de la date doit savoir', requis: true },
+    ], ok: 'Envoyer', note: 'Une notification à chaque personne de l’équipe de cette date, dans son espace et sur son téléphone.', enregistrer: async v => {
+      if (!v.titre.trim() || !v.texte.trim()) return 'Un titre et un message.';
+      const { data, error } = await sb.rpc('crescite_prevenir_equipe', { d: d.id, titre_: v.titre.trim(), texte_: v.texte.trim() });
+      if (error) return texteErreur(error);
+      annoncer(`Message envoyé à ${pluriel(Number(data) || 0, 'personne')}.`);
+      return true;
+    } });
+  }
+  async function supprimerDate(d) {
+    if (!confirm(`Supprimer « ${titreDate(d)} », ses séances, son équipe et sa feuille de route ?`)) return;
+    const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
+    if (error) return annoncer(`Date non supprimée : ${texteErreur(error)}.`, { erreur: true });
+    if (location.hash === `#/date/${d.id}` || location.hash === `#/feuille/${d.id}`) location.hash = '#/saison';
+    await apresModif('Date supprimée.');
+  }
+  async function modifierCoordonnees(personneId, nom) {
+    const G = F(); if (!G) return;
+    if (Number(personneId) === Number(E.moi)) { location.hash = '#/moi'; return; }
+    let pv = {};
+    try { const { data } = await sb.from('crescite_personnes_privees').select('telephone, email, ville').eq('personne_id', personneId).maybeSingle(); pv = data || {}; } catch (e) { /* rien */ }
+    G.formulaire({ titre: 'Coordonnées', sousTitre: nom, champs: [
+      { k: 'telephone', t: 'tel', l: 'Téléphone', valeur: pv.telephone || '', ph: '06 12 34 56 78' }, { k: 'email', t: 'mel', l: 'Adresse électronique', valeur: pv.email || '' }, { k: 'ville', t: 'texte', l: 'Ville de départ', valeur: pv.ville || '' },
+    ], note: 'Jamais publié : pour l’équipe et les feuilles de route.', enregistrer: async v => {
+      const { error } = await sb.from('crescite_personnes_privees').upsert({ personne_id: Number(personneId), telephone: v.telephone.trim() || null, email: v.email.trim() || null, ville: v.ville.trim() || null }, { onConflict: 'personne_id' });
+      if (error) return texteErreur(error);
+      annoncer(`Coordonnées de ${nom} enregistrées.`);
+      return true;
+    } });
+  }
+  function modifierFrais(item) {
+    const G = F(); if (!G) return;
+    G.formulaire({ titre: 'Modifier la note de frais', sousTitre: `${CAT_FRAIS[item.categorie] || item.categorie} · ${euros(item.montant_ttc)}`, champs: [
+      { k: 'categorie', t: 'choix', seg: true, l: 'Catégorie', choix: Object.entries(CAT_FRAIS), valeur: item.categorie || 'autre' },
+      { k: 'montant_ttc', t: 'nombre', l: 'Montant TTC (€)', valeur: item.montant_ttc ?? '', min: 0, pas: 0.01, requis: true },
+      { k: 'date_depense', t: 'date', l: 'Jour de la dépense', valeur: item.date_depense || '' },
+      { k: 'commentaire', t: 'long', l: 'Commentaire', valeur: item.commentaire || '', lignes: 2 },
+    ], danger: E.admin ? { libelle: 'Supprimer', faire: () => supprimerFrais(item) } : null, enregistrer: async v => {
+      if (v.montant_ttc == null || !(Number(v.montant_ttc) > 0)) return 'Un montant.';
+      const { error } = await sb.from('crescite_notes_frais').update({ categorie: v.categorie, montant_ttc: Number(v.montant_ttc), date_depense: v.date_depense || null, commentaire: v.commentaire.trim() || null }).eq('id', item.id);
+      if (error) return texteErreur(error);
+      annoncer('Note de frais modifiée.');
+      if (E.route && E.route.k === 'frais') vueFrais(E.route, { focus: false });
+      return true;
+    } });
+  }
+  async function supprimerFrais(item) {
+    if (!confirm(`Supprimer cette note de frais (${euros(item.montant_ttc)}) ?`)) return;
+    const { error } = await sb.from('crescite_notes_frais').delete().eq('id', item.id);
+    if (error) return annoncer(`Note non supprimée : ${texteErreur(error)}.`, { erreur: true });
+    annoncer('Note de frais supprimée.');
+    if (E.route && E.route.k === 'frais') vueFrais(E.route, { focus: false });
+  }
+  async function effacerNotif(n) {
+    const { error } = await sb.from('crescite_notifications').delete().eq('id', n.id);
+    if (error) return annoncer(`Notification non effacée : ${texteErreur(error)}.`, { erreur: true });
+    E.notifs = E.notifs.filter(x => x.id !== n.id);
+    majNotifs();
+    annoncer('Notification effacée.');
+  }
+  const lienAdmin = h => new URL(`../admin/${h}`, location.href).href;
+
   function brancherRetour() {
     let x0 = null, y0 = 0, t0 = 0, dx = 0, actif = false;
     const contenu = () => $('#contenu'), seuil = () => Math.min(140, window.innerWidth * 0.35);
@@ -3808,7 +4578,7 @@
       let erreur = null;
       try {
         await Promise.all([charger(), chargerNotifs().catch(e => { if (!estReseau(e)) console.warn('notifications', e); }),
-          chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder()]);
+          chargerPropositions().catch(e => { if (!estReseau(e)) console.warn('propositions', e); }), sonder(), sonderAdmin()]);
         E.horsLigne = 0; garder();
         E.dispo.mesIndispos = null; E.dispo.agendas = null; E.planningCache = null;
       } catch (e) { erreur = e; }
@@ -3908,6 +4678,9 @@
     if (t.matches('[data-reessayer]')) return occupe(t, 'Un instant…', () => reessayer(true));
     if (t.matches('[data-actualiser]')) { vibrer(8); return reessayer(true); }
     if (t.matches('[data-retard]')) return ouvrirModaleRetard(Number(t.dataset.retard), t);
+    if (t.matches('[data-modifier-date]')) return ouvrirModaleDate(Number(t.dataset.modifierDate), t);
+    if (t.matches('[data-ajouter-fichier]')) return ouvrirModaleDocument({ spectacle: Number(t.dataset.ajouterFichier) }, t);
+    if (t.matches('[data-modifier-document]')) return ouvrirModaleDocument({ doc: Number(t.dataset.modifierDocument) }, t);
     if (t.matches('[data-justificatif]')) {
       // un justificatif de frais : le stockage est privé, un lien signé se demande au clic (une heure)
       e.preventDefault();
@@ -3986,4 +4759,5 @@
   brancherRetour();
   brancherGlisserNotif();
   brancherAllumage();
+  brancherGestes();
 })();

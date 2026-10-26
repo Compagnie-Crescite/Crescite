@@ -387,8 +387,11 @@ administration, un espace pour le directeur de salle pour leur partager certains
 - Le menu second (Spectacles, La compagnie, Contact) et le pied de page gagnent « Espace pro » (`D.site.espacePro.titre`),
   qui mène à `#/espace-pro`. Il reste discret, comme le reste du menu second : ce n'est pas une quatrième entrée.
 - `#/espace-pro` (h1 = `titre`) : le texte, puis les trois portes dans le style de ta maquette. Chaque porte a son titre,
-  son texte et un vrai `<a href>` vers son href, dans le même onglet. Ordre : comédiens et techniciens, programmateurs et
-  directeurs de salle, administration. Le mouvement de ta signature (règle 15) s'y applique.
+  son texte et un vrai `<a href>` vers son href, dans le même onglet. Ordre (demande du client) : programmateurs et
+  directeurs de salle, établissements scolaires, équipe (comédiens et techniciens), administration. Les portes suivent
+  cet ordre dans `D.site.espacePro.portes` (salles, equipe, admin) ; la synthèse le suit en quatre groupes numérotés (la
+  page « programmer » et l'accès des salles côte à côte, puis la page des établissements, l'équipe, l'administration).
+  Le mouvement de ta signature (règle 15) s'y applique.
 - L'ancienne redirection `#/espace-pro` → `#/programmer` disparaît : `#/espace-pro` est désormais cette page. « Espace pro »
   n'est plus un texte interdit ; « mot de passe » le reste.
 - Édition sur place : `data-edit="site.espacePro.titre"`, `.texte`, `.portes.<i>.titre`, `.portes.<i>.texte`.
@@ -550,6 +553,8 @@ Partout dans ce contrat, lis désormais `#/saisons` pour `#/voir`, `#/espace-pro
 - **`#/espace-pro`** (règle 16, étendue) : le h1 et le texte, puis DEUX pages pour les professionnels et les enseignants
   (avant les trois portes) : « Programmer » vers `#/espace-pro/programmer` et « Établissements scolaires » vers
   `#/espace-pro/etablissement` (titres : le `court` de `D.site.entrees` programmer et etablissement), puis les trois portes.
+  (Ordre du client, règle 16 : la page « programmer » vient avant toute porte, celle des établissements avant la porte de
+  l'équipe ; la synthèse glisse l'accès des salles juste après « programmer ».)
 - **`#/espace-pro/programmer`** (h1 = `texte` de l'entrée programmer) : le contenu de l'ancien `#/programmer` (règles 3 et
   13), sans les dates tout public, qui sont dans les saisons. **`#/espace-pro/etablissement`** (h1 = `texte` de l'entrée
   etablissement) : le contenu de l'ancien `#/etablissement` (règles 3 et 14).
