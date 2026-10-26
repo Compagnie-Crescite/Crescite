@@ -3582,9 +3582,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ${rac.length ? `<ul class="ep-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}${apres}</div></section>`;
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
-     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : dès le geste, ses huit tentacules, les vraies, celles du
-     dessin avec leur épaisseur (PIEUVRE, D.pieuvre : rien n'est ajouté par-dessus), se déplient entières depuis la tête (leur
-     boucle du logo disparaît : le logo n'est que la forme de départ) vers les spectacles (cibles),
+     Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : seule sa tête (l'arche, l'œil) est fixe ; tout le reste du
+     dessin, ce sont ses tentacules (PIEUVRE, D.pieuvre : douze, dont quatre franges qui suivent leur spirale), avec leur
+     épaisseur. Dès le geste, les huit grandes se déplient depuis la tête (leur boucle du logo disparaît : le logo n'est que
+     la forme de départ ; les deux rubans extérieurs, qui ne touchent pas la tête, y glissent leur racine en se déployant)
+     vers les spectacles (cibles),
      leur bout se colorant en route, pendant que le logo glisse à sa place ; à la pose (un rebond : le corps se ramasse, se
      détend), chaque bras reprend le trajet de son double de l'ouverture où il en est (eveiller, INTRO.relais) et l'achève :
      un seul mouvement, du geste aux titres, qui paraissent en route. Sans ouverture (l'accueil rejoint autrement), les
@@ -3612,6 +3614,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const cv = $('.sc-toile', el), ctx = cv.getContext('2d'), cadreD = $('.sc-cadre', el), ul = $('.sc-titres', el), tete = $('.sc-h', el), bPause = $('.sc-pause', el);
     // la pieuvre : le corps du logo et huit tentacules qui en partent (la marque : ni la base ni l'administration n'y touchent)
     const BOX = D.arms.box, TS = PIEUVRE.creer();
+    TS.forEach(t => { t.collant = true; });   // (déployée une fois, une tentacule reste accrochée à la tête : remontée, elle s'y enroule)
     const INK = [255, 255, 255], ENCRE = 'rgb(255,255,255)', COEUR = [771, 640];
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
     const easeOut = t => 1 - Math.pow(1 - t, 3);
@@ -3705,28 +3708,29 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (le bras se déplie entier depuis la tête : sa boucle du logo disparaît, il part dans le sens de sa racine et rejoint son
     // titre en une seule courbe ; au téléphone, chacun passe par un couloir le long du bord de son côté (rail : la queue au plus
     // près du bord, puis la boucle, la frange haute, la frange basse), au lointain (loin))
-    const COULOIR = { queue: 0, boucle: 1, frangeH: 2, frangeB: 3 };
+    const COULOIR = { queue: 0, spiraleExt: 1, boucle: 2, spirale: 3 };
     const cibleDe = T => {
-      const cle = mobile && T.bras ? T.bras.cle : '', voie = COULOIR[cle.replace(/[LR]$/, '')] || 0;
+      const cle = mobile && T.bras ? T.bras.cle : '', voie = COULOIR[cle.replace(/[LR]$/, '')] || 0;   // (la queue au bord, la spirale au plus près)
       return { cle: T.slug, x: T.ancre.x, y: T.ancre.y, sens: T.dirU, U: T.U + 8, mobile,
-        ...(mobile ? { racine: .12, corps: .7, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4, rail: T.dirU > 0 ? 14 + voie * 9 : W - 14 - voie * 9, loin: .45 } : {}) };
+        ...(mobile ? { racine: .05, corps: .7, marge: (T.dirU > 0 ? T.ancre.x : W - T.ancre.x) - 14, epaisseur: 3.4, rail: T.dirU > 0 ? 14 + voie * 9 : W - 14 - voie * 9, loin: .45 } : {}) };
     };
     // chaque titre a sa tentacule : dans l'ordre du tour de la pieuvre (titres et pointes rangés par leur angle autour de son
     // cœur), sans croisement ; s'il y a plus de titres que de tentacules, une tentacule en sert plusieurs
     function attribuer() {
       const c = [ox + COEUR[0] * s, oy + COEUR[1] * s];
       const angle = (x, y) => { let a = Math.atan2(y - c[1], x - c[0]) * 180 / Math.PI; if (a < -90) a += 360; return a; };
-      const bs = BRAS.map(a => { const p = a.t.pointe(); return { a, ang: angle(p.x, p.y) }; }).sort((x, y) => x.ang - y.ang);
+      // (chaque tentacule compte par là où elle sort de la tête, son attache : ni croisement ni détour sous la tête)
+      const bs = BRAS.filter(a => !a.t.parent).map(a => { const p = a.t.att ? { x: ox + a.t.att.x * s, y: oy + a.t.att.y * s } : a.t.pointe(); return { a, ang: angle(p.x, p.y) }; }).sort((x, y) => x.ang - y.ang);
       const ts = TIT.map(T => ({ T, ang: angle(T.ancre.x, T.ancre.y) })).sort((x, y) => x.ang - y.ang);
       BRAS.forEach(a => { a.T = []; a.rang = 99; });
       const n = ts.length, m = bs.length;
       if (!n || !m) return;
       // au téléphone, les huit tentacules : celles de gauche pour un titre de gauche (souligné vers la droite, depuis le bord :
-      // elles arrivent par le côté gauche), celles de droite pour l'autre côté ; de chaque côté, de la plus courte et la plus
-      // basse (une frange) à la plus longue (la queue), vers les titres du plus proche au plus lointain : leurs couloirs
-      // s'emboîtent sans se croiser
+      // elles arrivent par le côté gauche), celles de droite pour l'autre côté ; de chaque côté, de celle qui part le plus bas de
+      // la tête (la spirale) à celle qui part le plus haut (la queue), vers les titres du plus proche au plus lointain : leurs
+      // couloirs s'emboîtent sans se croiser
       if (mobile) {
-        const S = { L: ['frangeBL', 'frangeHL', 'boucleL', 'queueL'], R: ['frangeBR', 'frangeHR', 'boucleR', 'queueR'] }, nb = { L: 0, R: 0 };
+        const S = { L: ['spiraleL', 'boucleL', 'spiraleExtL', 'queueL'], R: ['spiraleR', 'boucleR', 'spiraleExtR', 'queueR'] }, nb = { L: 0, R: 0 };
         for (const c of 'LR') S[c] = S[c].map(cle => BRAS.find(a => a.cle === cle)).filter(Boolean);
         if (S.L.length && S.R.length) {
           TIT.forEach(T => { const c = T.dirU > 0 ? 'L' : 'R', a = S[c][nb[c]++ % S[c].length]; T.bras = a; a.T.push(T); if (a.rang === 99) a.rang = T.i; });
@@ -3860,7 +3864,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       for (const a of BRAS) {
         const t0 = depart(a);
         if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + 1100); }
-        else if (!mobile && !/^frange/.test(a.cle)) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
+        else if (!mobile && !a.t.parent) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
       }
       P.plan = V; P.fin = fin + 300;
     }
@@ -3972,13 +3976,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           // chemin, la couleur du spectacle au titre)
           const degradeDe = a => {
             if (!mobile || !a.but || a.teinte < .01) return null;
-            const y0 = oy + bob.y + 760 * s, y1 = a.but.ancre.y, E = a.col, k = a.teinte;
+            const y0 = oy + bob.y + 640 * s, y1 = a.but.ancre.y, E = a.col, k = a.teinte;
             if (y1 - y0 < 120) return null;
             const g = ctx.createLinearGradient(0, y0, 0, y1), C = [0, 1, 2].map(i => Math.round(lerp(255, E[i], k))), teinte = al => `rgba(${C[0]},${C[1]},${C[2]},${al.toFixed(3)})`;
             g.addColorStop(0, ENCRE); g.addColorStop(.1, ENCRE); g.addColorStop(.3, teinte(1 - .45 * k)); g.addColorStop(.6, teinte(1 - .5 * k)); g.addColorStop(.86, teinte(1)); g.addColorStop(1, teinte(1));
             return g;
           };
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere, degrade: degradeDe(a) });
+          PIEUVRE.palmure(ctx, TS, ENCRE);
           for (const a of BRAS) if (a !== ab) trace(a);
           if (ab) trace(ab);
           // une lueur court le long de chaque tentacule posée sur un titre, à la couleur du spectacle : elle invite à la
@@ -4085,7 +4090,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         for (const a of BRAS) {
           const d = relais.TS.find(x => x.cle === a.cle), T = d && d.cible && TIT.find(x => x.slug === d.cible.cle);
           if (!T) continue;
-          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne'];
+          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle'];
           for (const k of cles) t[k] = d[k];
           t.libreRac = -1; t.poly = null;
           a.but = T; a.tenu = T; a.col = T.col; a.teinte = relais.teinte; repris++;
@@ -4121,6 +4126,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // où l'ouverture doit poser le logo : l'origine du dessin à l'écran, et son échelle
       cible: () => { if (!affiche || !W || !el.isConnected) return null; const r = cv.getBoundingClientRect(); return { x: r.left + ox, y: r.top + oy, s }; },
       // ce que les tentacules de l'ouverture visent dès le geste : la cible de chaque titre (à l'écran), par tentacule
+      bras: () => BRAS,
       cibles: () => {
         if (!affiche || !W || !el.isConnected || !motionOK()) return [];
         const r = cv.getBoundingClientRect(), vus = new Set();
@@ -4132,6 +4138,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       suspendre(ms = 600) { repit = performance.now() + ms; },
     };
   })();
+  window.Scene = Scene;   // (pour les contrôles : l'état des tentacules se lit depuis l'extérieur)
 
   /* ---------- l'accueil, 2 : le menu (règle 21) est le menu flottant, posé sous la pieuvre (Menu, Scene) ---------- */
   const menuDe = cle => (S.menu || []).find(m => m && (m.cle === cle || m.id === cle)) || null;

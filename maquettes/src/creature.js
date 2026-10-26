@@ -72,7 +72,7 @@ const CREATURE = (() => {
   const CENTRE = [771, 640];   // le cœur de la pieuvre, en unités du dessin (comme la scène de l'accueil)
   const LARGEUR = 1042;        // la largeur du dessin de la pieuvre seule (D.logo.octopus), en unités
   const COU = PRET ? PIEUVRE.COU : 770, SOMMET = PRET ? PIEUVRE.SOMMET : 420;   // la tête : du cou (le corps ne bouge pas) au sommet
-  const ORDRE = ['queueL', 'queueR', 'boucleL', 'boucleR', 'frangeHL', 'frangeHR', 'frangeBL', 'frangeBR'];   // pour tenir : de la racine la plus haute à la plus basse
+  const ORDRE = ['queueL', 'queueR', 'spiraleExtL', 'spiraleExtR', 'boucleL', 'boucleR', 'spiraleL', 'spiraleR'];   // pour tenir : de la racine la plus haute à la plus basse
   const HEX6 = /^#[0-9a-f]{6}$/i;
   function rgb(c) {
     c = String(c || '').trim();
@@ -227,7 +227,7 @@ const CREATURE = (() => {
     tenir(els, o = {}) {
       this.lacher();
       if (!this.vivant || !els || !els.length) return;
-      const libres = ORDRE.map(cle => this.BRAS.find(a => a.cle === cle)).filter(a => a && !(this.moment && this.moment.bras === a));
+      const libres = ORDRE.map(cle => this.BRAS.find(a => a.cle === cle)).filter(a => a && !a.t.parent && !(this.moment && this.moment.bras === a));
       const couleur = (o.couleur && rgb(o.couleur)) || eclairci(this.ENCRE, .55);
       // (du plus haut au plus bas, chacun à la tentacule dont la racine est la plus haute parmi celles qui restent : elles ne se
       // croisent pas ; au-delà de ce qu'elle a de bras, les plus proches de son cœur)
@@ -265,7 +265,7 @@ const CREATURE = (() => {
     }
     // elle tâte autour d'elle : une tentacule libre (une queue, une frange) s'étire un peu vers où elle pointe, s'enroule, revient
     geste(now) {
-      const libres = this.BRAS.filter(a => !a.but && !a.geste && !a.prise && /^(queue|frange)/.test(a.cle));
+      const libres = this.BRAS.filter(a => !a.but && !a.geste && !a.prise && !a.t.parent && /^(queue|spirale)/.test(a.cle));
       if (!libres.length) return;
       const a = libres[Math.floor(Math.random() * libres.length)], p = a.t.pointe(), larg = LARGEUR * this.s, L = clamp(larg * .42, 16, 70);
       const ang = a.dir + (Math.random() - .5) * .9, cx = this.ox + CENTRE[0] * this.s;
