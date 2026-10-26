@@ -326,6 +326,15 @@ compte du projet inscrit dans `crescite_admins`.
     (115 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
     précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+- **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
+  les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, par Google Fonts ; sans
+  réseau, le système), le papier chaud et le magenta de la compagnie, un en-tête de nuit (la pieuvre en rose, la rubrique
+  courante en magenta), des cartes douces et un dégradé magenta-prune pour ce qui s'enregistre, chaque tuile du tableau
+  de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
+  pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
+  prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
+  calendriers, les colonnes du Kanban colorées ; le sombre suit. `maquettes/tableau.mjs` en garde des captures de chaque
+  page (`habillage-*.png`).
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille

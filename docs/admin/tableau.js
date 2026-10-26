@@ -434,7 +434,7 @@ const TABLEAU = (() => {
   function htmlTuile(t, i, n) {
     const def = TUILES[t.k], c = corpsDe(t.k), lien = def.lien ? def.lien() : null, regl = reglagesDe(t.k), ouvert = T.ouverts.has(t.k);
     return `<section class="tb-tuile taille-${t.taille}${t.replie ? ' replie' : ''}" data-k="${t.k}" aria-labelledby="tb-t-${t.k}"${T.edition ? ' draggable="true"' : ''}>
-      <header class="tb-tete"><h2 id="tb-t-${t.k}">${T.edition ? `<span class="tb-poignee" title="Glisser pour déplacer">${SVG.poignee}</span>` : ''}<span class="tb-titre">${esc(def.titre)}</span><span class="tb-badge">${badgeDe(c)}</span></h2>
+      <header class="tb-tete"><h2 id="tb-t-${t.k}">${T.edition ? `<span class="tb-poignee" title="Glisser pour déplacer">${SVG.poignee}</span>` : ''}<span class="tb-ico-t" aria-hidden="true">${ICONES_TUILE[t.k] || ''}</span><span class="tb-titre">${esc(def.titre)}</span><span class="tb-badge">${badgeDe(c)}</span></h2>
         ${lien ? `<a class="tb-lien" href="${esc(lien[0])}" title="Ouvrir : ${esc(lien[1])}" aria-label="Ouvrir : ${esc(lien[1])}"><span class="mot">${esc(lien[1])}</span> →</a>` : ''}
         ${regl.length ? `<button type="button" class="tb-ico" data-tb-reglages aria-expanded="${ouvert}" aria-controls="tb-r-${t.k}" title="Réglages de la tuile" aria-label="Réglages : ${esc(def.titre)}">${SVG.reglages}</button>` : ''}
         <span class="tb-outils" role="group" aria-label="Disposition de la tuile">
@@ -489,10 +489,38 @@ const TABLEAU = (() => {
     }
   }
 
+  // ===================================================================================================== le bandeau du jour
+  /* En haut du tableau : bonjour, le jour, ce qui attend une décision et la prochaine date, trois chiffres (à traiter, les
+     dates sous sept jours, qui part sous quatorze), et une tentacule en filigrane. */
+  const ORNEMENT = '<svg class="tb-salut-orne" viewBox="0 0 260 160" aria-hidden="true" focusable="false"><path d="M-10 150 C 40 150, 70 60, 130 50 C 185 41, 230 70, 232 110 C 234 140, 205 150, 195 132 C 186 116, 206 104, 214 118" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round"/><g fill="currentColor"><circle cx="48" cy="118" r="5"/><circle cx="72" cy="88" r="5"/><circle cx="100" cy="64" r="5"/><circle cx="135" cy="54" r="5"/><circle cx="170" cy="56" r="5"/><circle cx="203" cy="72" r="5"/><circle cx="224" cy="97" r="4.5"/><circle cx="222" cy="128" r="4"/></g></svg>';
+  function bandeau(jour) {
+    const h = new Date().getHours(), salut = h < 5 || h >= 18 ? 'Bonsoir' : 'Bonjour';
+    const nom = (E.admins || []).find(a => a.user_id === uid())?.nom || '', prenom = String(nom).trim().split(/\s+/)[0] || '';
+    let total = 0; try { total = urgences().total; } catch (e) { /* la tuile le dira */ }
+    const semaine = E.dates.filter(d => d.statut !== 'annulee' && !sansJour(d) && (d.fin || d.debut) >= AUJ && d.debut <= plusJours(AUJ, 7));
+    const partent = new Set();
+    if (E.equipeInstallee) E.dates.filter(d => d.statut === 'confirmee' && aVenir(d) && !sansJour(d) && dansJours(d.debut) <= 14).forEach(d => { try { equipeDeLaDate(d).forEach(x => partent.add(x.personne_id)); } catch (e) { /* sans équipe */ } });
+    const prochaine = E.dates.filter(d => aVenir(d) && d.statut !== 'annulee' && !sansJour(d)).sort(parDebut)[0];
+    const phrase = total ? `${pl(total, 'chose attend', 'choses attendent')} votre décision` : 'Rien ne presse : tout est à jour';
+    const suite = prochaine ? ` ; la prochaine date est ${dansTexte(prochaine.debut)}, ${titreDate(prochaine)}${lieu(prochaine.lieu_id) ? ` à ${ouDe(prochaine)}` : ''}.` : '.';
+    return `<section class="tb-salut" aria-label="Aujourd’hui"><div class="tb-salut-corps"><h1>Tableau de bord</h1><p class="tb-bonjour">${salut}${prenom ? `, <b>${esc(prenom)}</b>` : ''}</p><p class="tb-salut-jour">${esc(jour)}</p><p class="tb-salut-sous">${esc(phrase + suite)}</p></div>
+      <ul class="tb-salut-chiffres"><li><b>${total}</b><span>à traiter</span></li><li><b>${semaine.length}</b><span>${semaine.length > 1 ? 'dates' : 'date'} sous 7 jours</span></li>${E.equipeInstallee ? `<li><b>${partent.size}</b><span>${partent.size > 1 ? 'partent' : 'part'} sous 14 jours</span></li>` : ''}</ul>${ORNEMENT}</section>`;
+  }
+  // l'icône de chaque tuile (dans son en-tête)
+  const ic = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const ICONES_TUILE = {
+    actions: ic('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'), urgent: ic('<path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/>'),
+    avant: ic('<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2h6v2"/><path d="m9 13 2 2 4-4"/>'), prochaines: ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
+    chiffres: ic('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'), equipe: ic('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 5"/>'),
+    diffusion: ic('<path d="M3 10v4h3l7 4V6l-7 4z"/><path d="M17 9a4 4 0 0 1 0 6"/>'), propositions: ic('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M10.5 14.5a1.7 1.7 0 1 1 2.3 1.6c-.6.3-.8.6-.8 1.2M12 19.5h.01"/>'),
+    ateliers: ic('<path d="M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z"/><path d="M20 4h-7a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h8z"/>'), journal: ic('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
+    spectacles: ic('<path d="M4 5h7v6a3.5 3.5 0 0 1-7 0z"/><path d="M13 9h7v6a3.5 3.5 0 0 1-7 0z"/><path d="M6 8h1M9 8h1M15 12h1M18 12h1"/>'), memo: ic('<path d="m4 20 4-1L19 8l-3-3L5 16z"/><path d="m14 7 3 3"/>'),
+  };
+
   // ===================================================================================================== la vue
   function vue() {
     const jour = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    cadre('accueil', `<div class="tete tb-tete-page"><h1>Tableau de bord</h1><span class="compte tb-jour">${esc(jour[0].toUpperCase() + jour.slice(1))}</span>
+    cadre('accueil', `${bandeau(jour[0].toUpperCase() + jour.slice(1))}<div class="tete tb-tete-page">
       ${htmlVues()}<button type="button" class="btn" id="tb-briefing" aria-haspopup="dialog" title="Le résumé de la semaine, à copier ou à imprimer">Briefing</button>
       <button type="button" class="btn" id="tb-personnaliser" aria-pressed="${T.edition}" aria-controls="tb-panneau">${T.edition ? 'Terminer' : 'Personnaliser'}</button></div>
       <p class="tb-filtre" id="tb-filtre" hidden></p>
@@ -1307,6 +1335,25 @@ const TABLEAU = (() => {
 .tb-tuile.cible-avant { box-shadow: -5px 0 0 var(--accent); }
 .tb-tuile.cible-apres { box-shadow: 5px 0 0 var(--accent); }
 @media (max-width: 760px) { .tb-tuile.cible-avant { box-shadow: 0 -5px 0 var(--accent); } .tb-tuile.cible-apres { box-shadow: 0 5px 0 var(--accent); } .tb-pan-fin { margin-left: 0; } }
+/* le bandeau du jour */
+.tb-salut { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: center; margin: 2px 0 14px; padding: 22px 26px; border-radius: var(--rayon, 16px); background: linear-gradient(120deg, color-mix(in srgb, var(--accent-doux, #f7e6ef) 85%, var(--carte, #fff)) 0%, var(--carte, #fff) 58%, color-mix(in srgb, var(--ambre-doux, var(--option-doux, #f8efd9)) 70%, var(--carte, #fff)) 100%); border: 1px solid var(--trait); box-shadow: var(--ombre); }
+.tb-salut-corps { position: relative; min-width: 0; }
+.tb-salut h1 { margin: 0 0 4px; font: 700 12px/1.3 var(--etiq, inherit); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.tb-bonjour { margin: 0; font: 700 clamp(26px, 3vw, 34px)/1.1 var(--titres, inherit); letter-spacing: -.01em; }
+.tb-bonjour b { color: var(--accent); }
+.tb-salut-jour { margin: 6px 0 0; font-size: 11px; color: var(--gris); }
+.tb-salut-sous { margin: 6px 0 0; max-width: 60ch; font-size: 14.5px; color: var(--gris); }
+.tb-salut-chiffres { position: relative; display: flex; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.tb-salut-chiffres li { display: grid; gap: 2px; min-width: 104px; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--carte, #fff) 72%, transparent); border: 1px solid var(--trait); text-align: center; }
+.tb-salut-chiffres b { font: 700 28px/1.1 var(--titres, inherit); color: var(--encre); }
+.tb-salut-chiffres li:first-child b { color: var(--corail, var(--accent)); }
+.tb-salut-chiffres span { font-size: 10.5px; color: var(--gris); }
+.tb-salut-orne { position: absolute; right: -36px; bottom: -44px; width: 250px; height: 154px; color: var(--accent); opacity: .18; pointer-events: none; }
+.tb-tete-page { margin: 0 0 14px; justify-content: flex-end; }
+.tb-ico-t { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 7px; background: var(--doux); color: var(--accent); }
+.tb-ico-t svg { width: 14px; height: 14px; }
+.tb-ico-t:empty { display: none; }
+@media (max-width: 760px) { .tb-salut { grid-template-columns: minmax(0, 1fr); padding: 18px 16px; } .tb-salut-orne { display: none; } .tb-salut-chiffres li { flex: 1 1 0; min-width: 0; padding: 8px 6px; } .tb-salut-chiffres b { font-size: 22px; } }
 /* traiter sur place, la file, les épingles et les reports */
 .tb-lt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; align-items: stretch; }
 .tb-lt[hidden] { display: none; }
