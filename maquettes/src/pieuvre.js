@@ -144,7 +144,7 @@ const PIEUVRE = (() => {
       const prolonge = c.racine != null;
       // le bras de départ : au téléphone, depuis la racine du dessin, elle ne part pas loin dans son sens (elle resterait hors
       // de l'écran) ; prolongée depuis une racine choisie, elle part dans le sens qu'elle a là et s'infléchit tôt
-      const k1 = prolonge ? kk * .66 : c.mobile ? Math.min(kk, 70) : kk;
+      const k1 = prolonge ? kk * .8 : c.mobile ? Math.min(kk, 70) : kk;
       const c1x = px + Math.cos(a0) * k1, c1y = py + Math.sin(a0) * k1;
       const courbe = k2 => {
         const c2x = c.x - du * k2, c2y = c.y, pts = [];
@@ -156,11 +156,11 @@ const PIEUVRE = (() => {
       };
       // elle arrive à plat, de derrière le point d'accroche, d'autant plus loin qu'elle vient de loin. Avec une marge (la place
       // qu'il y a derrière, jusqu'au bord de l'écran), le recul se réduit jusqu'à ce que toute la courbe y tienne. Prolongée,
-      // elle prend au contraire toute la place qu'on lui laisse, jusqu'à une ampleur de 90 à 150 px selon la hauteur à
-      // descendre : une courbe raide, aux grands rayons, qui s'infléchit d'abord vers l'arrière puis balaie jusqu'au titre.
-      // Jamais moins de 12 px de recul : l'arrivée reste à plat, sans cassure de tangente avec le souligné
+      // le recul est mesuré (de 40 à 80 px selon la hauteur à descendre, et jamais plus que la marge) : elle descend, puis
+      // s'infléchit juste ce qu'il faut pour arriver à plat sous le titre, sans détour vers le bord de l'écran. Jamais moins
+      // de 12 px de recul : l'arrivée reste à plat, sans cassure de tangente avec le souligné
       let k2 = kk * .85, place = c.marge;
-      if (prolonge && place != null) { place = Math.min(place, Math.max(90, Math.min(150, .45 * Math.abs(dy)))); k2 = Math.max(k2, 3 * place); }
+      if (prolonge && place != null) { place = Math.min(place, Math.max(40, Math.min(80, .25 * Math.abs(dy)))); k2 = Math.max(k2, 2.5 * place); }
       let corps = courbe(k2);
       if (place != null) {
         const depasse = pts => pts.reduce((m, p) => Math.max(m, du * (c.x - p[0])), 0);
@@ -229,15 +229,21 @@ const PIEUVRE = (() => {
       let P = B;
       if (this.q < 1 && this.depuis) {
         const A = this.depuis, q = this.q, M = this.M;
-        const tot = ease(q), tot1 = ease(Math.min(1, q / .7)), tot2 = ease(Math.max(0, (q - .3) / .7));
-        // (prolongée, angles et longueurs vont ensemble : à chaque image une courbe lisse, sans cassure de tangente)
-        const ens = !!(A.prolonge || B.prolonge), wA = ens ? tot : this.etire ? tot1 : tot2, wL = ens ? tot : this.etire ? tot2 : tot1;
-        // les angles, alignés sur ceux de départ (même tour), puis mêlés
+        // le mouvement part de la racine : une onde parcourt la tentacule du pied à la pointe (quand elle s'allonge : elle se
+        // déroule, sa pointe encore lovée emportée au bout, puis déployée la dernière) ou de la pointe au pied (quand elle
+        // revient : la pointe se love d'abord, puis tout rentre). Chaque segment suit la même courbe, décalée de sa place
+        // sur l'épine (l'onde prend la moitié du trajet) : la forme reste lisse à chaque image, sans cassure de tangente ;
+        // les longueurs suivent les angles de peu (ce qui se déroule s'étire ensuite ; ce qui rentre se rétracte d'abord)
+        const ONDE = .5, ens = !!(A.prolonge || B.prolonge), allonge = this.etire;
         const sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M);
         const dec = Math.round((A.sg[0] - B.sg[0]) / TAU) * TAU;
-        for (let k = 0; k < M; k++) { sg[k] = lerp(A.sg[k], B.sg[k] + dec, wA); ln[k] = lerp(A.ln[k], B.ln[k], wL); }
-        for (let k = 0; k <= M; k++) th[k] = lerp(A.th[k], B.th[k] + dec, wA);
-        P = { sg, th, ln, mu: lerp(A.mu, B.mu, tot), prolonge: ens };
+        const avance = u => Math.min(1, Math.max(0, (q - (allonge ? u : 1 - u) * ONDE) / (1 - ONDE)));
+        for (let k = 0; k < M; k++) {
+          const qk = avance((k + .5) / M), wA = ease(qk), wL = ens ? wA : allonge ? ease(Math.max(0, (qk - .25) / .75)) : ease(Math.min(1, qk / .75));
+          sg[k] = lerp(A.sg[k], B.sg[k] + dec, wA); ln[k] = lerp(A.ln[k], B.ln[k], wL);
+        }
+        for (let k = 0; k <= M; k++) th[k] = lerp(A.th[k], B.th[k] + dec, ease(avance(k / M)));
+        P = { sg, th, ln, mu: lerp(A.mu, B.mu, ease(q)), prolonge: ens };
       }
       this.pose = P;
       // l'épine à l'écran
