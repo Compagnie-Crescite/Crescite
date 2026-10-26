@@ -1101,9 +1101,10 @@
     }).join('');
   }
   // une saison passée se dessine à l'ouverture
-  function remplirSaison(det) {
+  function remplirSaison(det, { entree = true } = {}) {
     const corps = $('.saison-corps', det);
     if (!corps || corps.childElementCount) return;
+    if (entree && !reduit()) { corps.classList.add('neuve'); setTimeout(() => corps.classList.remove('neuve'), 1200); }   // ses billets arrivent l'un après l'autre
     const s = det.dataset.saison, auj = aujourdhui();
     const ds = E.dates.filter(d => finDe(d) < auj && (d.saison || saisonDe(d.debut)) === s).reverse();
     corps.innerHTML = ds.map(d => billet(d, { passee: true })).join('');
@@ -3813,7 +3814,7 @@
     }
     const y = window.scrollY, ouvertes = $$('details.saison[open]').map(x => x.dataset.saison || x.className), places = reperer();
     router({ rafraichir: true });
-    ouvertes.forEach(s => { const det = $(`details.saison[data-saison="${CSS.escape(s)}"]`) || (s.includes('feuilles-passees') && $('details.feuilles-passees')); if (det) { det.open = true; if (det.dataset.saison) remplirSaison(det); } });
+    ouvertes.forEach(s => { const det = $(`details.saison[data-saison="${CSS.escape(s)}"]`) || (s.includes('feuilles-passees') && $('details.feuilles-passees')); if (det) { det.open = true; if (det.dataset.saison) remplirSaison(det, { entree: false }); } });
     window.scrollTo(0, y);
     glisserVers(places);
   }

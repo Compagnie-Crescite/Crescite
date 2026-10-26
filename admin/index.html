@@ -549,7 +549,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
   .ad-neuf { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
   .btn.sonne { transform-origin: 50% 0; animation: sonne .8s ease-in-out; }
   .suggestions, .tab-export:not([hidden]), .pied-ed.a-plus.replie .pied-autres.ouvert { animation: ad-arrive .15s ease-out both; }   /* les menus se posent */
-  details[open] > :not(summary) { animation: ad-arrive .22s ease-out both; }   /* ce qu'un pli ouvre se pose */
+  details[open] > :not(summary) { animation: ad-paraitre .22s ease-out both; }   /* ce qu'un pli ouvre paraît (sans transform : la liste qui glisse mesure ses lignes) */
   @keyframes sonne { 15% { transform: rotate(-8deg); } 30% { transform: rotate(7deg); } 45% { transform: rotate(-5deg); } 60% { transform: rotate(3deg); } }
 }
 </style>

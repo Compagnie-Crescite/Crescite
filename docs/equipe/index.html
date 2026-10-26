@@ -926,14 +926,14 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   @keyframes nage { 0%, 100% { transform: rotate(-7deg) scaleY(calc(1 + var(--etire, 0) * .45)); } 50% { transform: rotate(7deg) scaleY(calc(1.08 + var(--etire, 0) * .45)); } }
   /* 11. les saisons passées qui s'ouvrent : leurs billets arrivent l'un après l'autre ; la photo d'un spectacle s'approche au
      survol ; un bouton qui a réussi le dit (occupe) ; la réponse à une proposition saute */
-  details.saison[open] .saison-corps > .billet { animation: monte .35s cubic-bezier(.2, .8, .2, 1) both; }
-  details.saison[open] .saison-corps > .billet:nth-child(2) { animation-delay: 0.04s; }
-  details.saison[open] .saison-corps > .billet:nth-child(3) { animation-delay: 0.08s; }
-  details.saison[open] .saison-corps > .billet:nth-child(4) { animation-delay: 0.12s; }
-  details.saison[open] .saison-corps > .billet:nth-child(5) { animation-delay: 0.16s; }
-  details.saison[open] .saison-corps > .billet:nth-child(6) { animation-delay: 0.20s; }
-  details.saison[open] .saison-corps > .billet:nth-child(7) { animation-delay: 0.24s; }
-  details.saison[open] .saison-corps > .billet:nth-child(8) { animation-delay: 0.28s; }
+  .saison-corps.neuve > .billet { animation: monte .35s cubic-bezier(.2, .8, .2, 1) both; }   /* à l'ouverture d'une saison passée, pas quand la page se redessine */
+  .saison-corps.neuve > .billet:nth-child(2) { animation-delay: 0.04s; }
+  .saison-corps.neuve > .billet:nth-child(3) { animation-delay: 0.08s; }
+  .saison-corps.neuve > .billet:nth-child(4) { animation-delay: 0.12s; }
+  .saison-corps.neuve > .billet:nth-child(5) { animation-delay: 0.16s; }
+  .saison-corps.neuve > .billet:nth-child(6) { animation-delay: 0.20s; }
+  .saison-corps.neuve > .billet:nth-child(7) { animation-delay: 0.24s; }
+  .saison-corps.neuve > .billet:nth-child(8) { animation-delay: 0.28s; }
   .cs-photo img { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
   .carte-spectacle:hover .cs-photo img { transform: scale(1.06); }
   .btn.fait, .rep.pop { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1); }
@@ -952,7 +952,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   /* 15. ce qui arrive après la page (les chiffres, la liste de chargement, le planning) se pose ; le héros recule au défilement */
   .arrive, .arrive > .frise { animation: monte .4s cubic-bezier(.2, .8, .2, 1) both; }
   .photo-apercu, .jourj-badge { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }   /* l'aperçu du ticket, « aujourd'hui » sur une feuille */
-  details[open] > :not(summary) { animation: monte .25s cubic-bezier(.2, .8, .2, 1) both; }   /* ce qu'un pli ouvre se pose */
+  details[open] > :not(summary) { animation: paraitre .25s ease-out both; }   /* ce qu'un pli ouvre paraît (sans transform : les billets qui glissent se mesurent) */
   @supports (animation-timeline: scroll()) {
     .heros-photo, .ts-photo { animation: recule linear both; animation-timeline: scroll(root); animation-range: 0 360px; }
     @keyframes recule { to { transform: translateY(-44px); } }
