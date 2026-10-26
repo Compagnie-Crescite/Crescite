@@ -163,9 +163,14 @@ const GESTES = (() => {
       const actions = actionsDe(c.f, c.el, { source: 'appui', x: a.x, y: a.y });
       if (!actions.length) return;
       dernierAppui = Date.now();
+      // le clic que le doigt produit en se relevant est avalé ; pas celui, juste après, sur une action du menu
       const avaler = ev => { ev.preventDefault(); ev.stopPropagation(); };
+      const oublier = () => document.removeEventListener('click', avaler, { capture: true });
       document.addEventListener('click', avaler, { capture: true, once: true });
-      setTimeout(() => document.removeEventListener('click', avaler, { capture: true }), 800);
+      const releve = () => setTimeout(oublier, 150);
+      document.addEventListener('pointerup', releve, { capture: true, once: true });
+      document.addEventListener('pointercancel', releve, { capture: true, once: true });
+      setTimeout(oublier, 1500);
       rendre(c.el, c.f, actions, { x: a.x, y: a.y }, 'appui');
     }, 480);
     appui = a;
@@ -301,6 +306,7 @@ const GESTES = (() => {
             return `<div class="gf-champ gf-groupe" data-gf-groupe="${esc(nom)}" data-gf-modele="${esc(JSON.stringify(c.modele || {}))}"><span class="gf-lib">${esc(c.l || '')}</span><div class="gf-items">${xs.map((x, k) => item(c, x, nom, k)).join('')}</div>
               <button type="button" class="gf-ajout" data-gf-ajouter>${ICO.plus} ${esc(c.ajout || 'Ajouter')}</button>${aide}</div>`; }
           case 'nombre': return `<div class="gf-champ">${lib}<input type="number" ${attr} value="${esc(v ?? '')}"${c.min != null ? ` min="${c.min}"` : ''}${c.max != null ? ` max="${c.max}"` : ''} step="${c.pas || 'any'}" inputmode="${c.pas && c.pas < 1 ? 'decimal' : 'numeric'}">${aide}</div>`;
+          case 'fichier': return `<div class="gf-champ gf-fichier">${lib}<input type="file" ${attr}${c.accept ? ` accept="${esc(c.accept)}"` : ''}${c.capture ? ` capture="${esc(c.capture)}"` : ''}>${aide}</div>`;
           default: { const type = { tel: 'tel', url: 'url', mel: 'email', date: 'date', heure: 'time' }[c.t] || 'text';
             return `<div class="gf-champ${c.large ? ' gf-large' : ''}">${lib}<input type="${type}" ${attr} value="${esc(v ?? '')}"${c.ph ? ` placeholder="${esc(c.ph)}"` : ''}${type === 'text' ? ' autocomplete="off"' : ''}${c.t === 'tel' ? ' inputmode="tel"' : ''}>${aide}</div>`; }
         }
@@ -333,7 +339,7 @@ const GESTES = (() => {
           }
           const el = $(`[name="${CSS.escape(nom)}"]`, form);
           if (!el) return;
-          poser(nom, c.t === 'case' ? el.checked : c.t === 'nombre' ? (el.value === '' ? null : Number(el.value)) : el.value);
+          poser(nom, c.t === 'case' ? el.checked : c.t === 'nombre' ? (el.value === '' ? null : Number(el.value)) : c.t === 'fichier' ? ((el.files && el.files[0]) || null) : el.value);
         });
         return out;
       };
@@ -393,6 +399,8 @@ html.gf-ouvert { overflow: hidden; }
 .gf-aide, .gf-note { margin: 0; color: var(--gris, #777); font-size: 12.5px; }
 .gf input:not([type=checkbox]):not([type=hidden]), .gf select, .gf textarea { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--trait, var(--filet, #ccc)); border-radius: 10px; background: var(--carte, var(--surface, #fff)); color: inherit; font: inherit; font-size: 16px; }
 .gf textarea { min-height: 72px; resize: vertical; }
+.gf input[type=file] { padding: 9px 10px; font-size: 15px; }
+.gf input[type=file]::file-selector-button { margin-right: 10px; padding: 6px 12px; border: 1px solid var(--trait, var(--filet, #ccc)); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 14px; }
 .gf input:focus, .gf select:focus, .gf textarea:focus { outline: none; border-color: var(--accent, var(--magenta, #a8306f)); box-shadow: 0 0 0 3px var(--accent-doux, var(--magenta-doux, #f7e6ef)); }
 .gf-coche { display: flex; align-items: flex-start; gap: 10px; min-height: 40px; padding: 6px 0; font-weight: 600; cursor: pointer; }
 .gf-coche input { width: 20px; height: 20px; margin-top: 1px; flex: none; accent-color: var(--accent, var(--magenta, #a8306f)); }

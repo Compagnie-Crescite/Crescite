@@ -1037,7 +1037,7 @@ ${s} .s{background:${MISE.surligne}}`;
       const titre = !h1 && estTitre(b, ctx);
       if (titre) h1 = true;
       const tag = titre ? 'h1' : 'p';
-      return `<${tag} class="fdr-l${b.petit ? ' petit' : ''}">${htmlSegments(b.segments, ctx)}</${tag}>`;
+      return `<${tag} class="fdr-l${b.petit ? ' petit' : ''}" data-bloc="${esc(b.id)}">${htmlSegments(b.segments, ctx)}</${tag}>`;
     };
     const parties = [];
     if (tete.length) parties.push(`<header class="fdr-tete">${tete.map(ligneTete).join('')}</header>`);
@@ -1054,11 +1054,11 @@ ${s} .s{background:${MISE.surligne}}`;
       if (b.type === 'saut') continue;
       if (vide) { if (!videAvant) parties.push('<p class="fdr-vide" aria-hidden="true"></p>'); videAvant = true; continue; }
       videAvant = false;
-      if (b.type === 'puce') { puces.push(`<li>${corps}</li>`); continue; }
-      if (b.type === 'tableau') { parties.push(`<div class="fdr-tab"><table><tbody>${b.lignes.map(l => `<tr>${l.map(x => `<td>${htmlSegments(x, ctx)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
+      if (b.type === 'puce') { puces.push(`<li data-bloc="${esc(b.id)}">${corps}</li>`); continue; }
+      if (b.type === 'tableau') { parties.push(`<div class="fdr-tab" data-bloc="${esc(b.id)}"><table><tbody>${b.lignes.map(l => `<tr>${l.map(x => `<td>${htmlSegments(x, ctx)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`); continue; }
       const tag = { rubrique: 'h2', jour: 'h3', 'sous-titre': 'h4', entete: 'p' }[b.type] || 'p';
       const cls = { rubrique: 'fdr-rub', jour: 'fdr-jour', 'sous-titre': 'fdr-st', alerte: 'fdr-al', entete: 'fdr-p g' }[b.type] || 'fdr-p';
-      parties.push(`<${tag} class="${cls}">${corps}</${tag}>`);
+      parties.push(`<${tag} class="${cls}" data-bloc="${esc(b.id)}">${corps}</${tag}>`);
     }
     finirPuces();
     return `<style>${cssPolices()}${CSS_WEB}</style><article class="fdr" lang="fr">${parties.join('\n')}</article>`;
