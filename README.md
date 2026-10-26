@@ -938,6 +938,16 @@ pour qui, remplacer le fichier, supprimer ; un document public, un lien, un docu
 l'équipe pour les autres. Une boîte ouverte, les gestes de la page (← →, le balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
 2, 3 et 13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
 
+**La base de la compagnie appelle ses propres fonctions (pas encore lancé).** Le dix-septième script,
+`supabase/migrations/20261105_crescite_projet_compagnie.sql`, se lance dans le projet de la compagnie
+(`fwjgyfzcbcmfyfkhhtuh`) seulement, et peut être relancé. Recopiée le 26 octobre 2026 depuis l'ancien projet
+(`omekkqjinvppadsoinvj`, celui d'adrienvada.fr), la base appelait encore les fonctions de celui-ci, qui lisent l'ancienne
+base : leur adresse est écrite dans quatre fonctions (`crescite_notif_envoyer`, `crescite_propositions_prevenir`,
+`crescite_renvoyer_courriel`, `crescite_alertes_demander`) et deux tâches planifiées (`crescite-agendas`,
+`crescite-alertes`). Le script les réécrit à l'identique, l'adresse remplacée (mêmes droits, mêmes noms, mêmes horaires),
+puis dit ce qui reste. Les scripts 3, 5 et 11 portent déjà la nouvelle adresse : une base neuve n'en a pas besoin.
+9 essais (`node projet.mjs` : les quinze scripts tels que recopiés, puis lui, deux fois).
+
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
 d'atteinte), jamais sans filtre, avec un mode `--essai`. `effacer <stockage> <chemin>` efface un fichier d'un stockage de la compagnie. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;

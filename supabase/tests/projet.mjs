@@ -1,5 +1,5 @@
-// Le seizième script (la base de la compagnie appelle ses propres fonctions), dans un Postgres local (PGlite) : les quinze
-// scripts tels que recopiés de l'ancien projet (leurs adresses ramenées à omekkqjinvppadsoinvj), puis le seizième, deux
+// Le dix-septième script (la base de la compagnie appelle ses propres fonctions), dans un Postgres local (PGlite) : les
+// quinze scripts tels que recopiés de l'ancien projet (leurs adresses ramenées à omekkqjinvppadsoinvj), puis lui, deux
 // fois. Plus aucune fonction crescite_ ni aucune tâche crescite- n'appelle l'ancien projet ; les quatre fonctions et les
 // deux tâches appellent celui de la compagnie, sous le même nom, au même horaire, sans tâche doublée ; les fonctions
 // gardent leurs droits et leur security definer ; un appel réel part vers la nouvelle adresse ; le bilan dit « prêtes ».
@@ -14,7 +14,7 @@ const FICHIERS = ['20261020_crescite_base.sql', '20261021_crescite_equipe.sql', 
   '20261101_crescite_securite.sql', '20261102_crescite_equipe_modifie.sql', '20261103_crescite_notes.sql'].filter(f => existsSync(migration(f)));
 // (la copie du 26 octobre : les scripts tels qu'ils étaient passés dans l'ancien projet)
 const COPIE = FICHIERS.map(f => readFileSync(migration(f), 'utf8').replaceAll(NOUVEAU, ANCIEN));
-const SEIZIEME = readFileSync(migration('20261104_crescite_projet_compagnie.sql'), 'utf8');
+const DIX_SEPTIEME = readFileSync(migration('20261105_crescite_projet_compagnie.sql'), 'utf8');
 const ok = (c, m) => { if (!c) { console.log('ÉCHEC :', m); process.exitCode = 1; } else console.log('ok :', m); };
 
 const db = new PGlite();
@@ -69,8 +69,8 @@ ok(avant.fonctions.length === 4 && avant.fonctions.every(f => f.prosrc.includes(
    `avant : les quatre fonctions et les deux tâches appellent l'ancien projet (${avant.fonctions.map(f => f.proname).join(', ')})`);
 
 let bilan;
-try { bilan = await db.exec(SEIZIEME); } catch (e) { ok(false, `le seizième script passe (${e.message})`); }
-try { bilan = await db.exec(SEIZIEME); ok(true, 'le seizième script passe, et se relance sans erreur'); } catch (e) { ok(false, `le seizième script se relance (${e.message})`); }
+try { bilan = await db.exec(DIX_SEPTIEME); } catch (e) { ok(false, `le dix-septième script passe (${e.message})`); }
+try { bilan = await db.exec(DIX_SEPTIEME); ok(true, 'le dix-septième script passe, et se relance sans erreur'); } catch (e) { ok(false, `le dix-septième script se relance (${e.message})`); }
 
 const apres = await etat();
 // (hors pg_temp : la fonction de bilan du script cherche l'ancienne adresse, elle la contient donc)

@@ -1,4 +1,4 @@
--- Crescite : la base de la compagnie appelle ses propres fonctions (le seizième script). Le 26 octobre 2026, la base est
+-- Crescite : la base de la compagnie appelle ses propres fonctions (le dix-septième script). Le 26 octobre 2026, la base est
 -- passée du projet d'adrienvada.fr (omekkqjinvppadsoinvj) au projet de la compagnie (fwjgyfzcbcmfyfkhhtuh, « crescite.fr »),
 -- recopiée à l'identique. Mais la base appelle ses fonctions par leur adresse, écrite en toutes lettres dans quatre
 -- fonctions et deux tâches planifiées : recopiées telles quelles, elles appelaient encore les fonctions de l'ancien projet,
