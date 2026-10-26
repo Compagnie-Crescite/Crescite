@@ -39,7 +39,9 @@ const VUES = [
   // les saisons (règle 21) : le titre du menu, la saison en cours (ses prochaines dates, une date scolaire comprise et marquée ;
   // toutes ses dates), puis les saisons passées, la plus récente d'abord, fermées (leurs lignes ne se lisent pas tant qu'on ne
   // les ouvre pas : celles de 2023-2024 qu'on ne lit que là)
-  ['saisons', '#/saisons', D => { const L = D.site.libelles, pub = D.dates.find(d => !d.scolaire && (d.details || [])[0]), sco = D.dates.find(d => d.scolaire && (d.details || [])[0]);
+  // (une date au jour encore à fixer, « novembre 2026 », ne paraît pas dans les saisons de la synthèse : règle 21 D)
+  ['saisons', '#/saisons', D => { const L = D.site.libelles, fixe = d => !(d.precision === 'month' && (d.fin || d.iso || '') >= D.aujourdhui);
+    const pub = D.dates.find(d => !d.scolaire && fixe(d) && (d.details || [])[0]), sco = D.dates.find(d => d.scolaire && fixe(d) && (d.details || [])[0]);
     return [D.site.menu[0].texte, D.site.saisons[0].titre, L.prochainesDates, L.toutesLesDates, L.saisonsPassees, pub && pub.details[0].texte,
       sco && sco.details[0].texte, sco && L.scolaire, D.site.saisons.find(s => s.saison === '2019-2020').titre]; },
     () => window.__propres('2023-2024', 3)],
@@ -826,7 +828,10 @@ for (const n of names) {
           const titresS = [...new Set([...SA.spectacles.map(g => titreDe(g.slug) || g.titre), ...(D.dates || []).map(d => titreDe(d.slug) || d.titre)].filter(Boolean))];
           const legende = [];
           if (fr) { const R = fr.f.getBoundingClientRect();
-            titresS.forEach(x => { if (noeuds(x).some(t => { const r = boite(t); return r.width > 0 && r.bottom > R.top - 260 && r.top < R.bottom + 260; })) legende.push(x); }); }
+            titresS.forEach(x => { if (noeuds(x).some(t => { const r = boite(t); return r.width > 0 && r.bottom > R.top - 260 && r.top < R.bottom + 260; })) legende.push(x); });
+            // (règle 21 D, la synthèse) les puces des spectacles, qui filtrent la page juste au-dessus de la frise, en font la légende
+            const grp = [...main.querySelectorAll('[role="group"]')].find(g => vis(g) && g.getBoundingClientRect().bottom <= R.top + 1 && g.querySelectorAll('button[aria-pressed]').length >= 3);
+            if (grp && legende.length < Math.min(3, titresS.length)) { const t = n(grp.textContent || ''); titresS.forEach(x => { if (!legende.includes(x) && t.includes(n(x))) legende.push(x); }); } }
           const passees = (D.site.saisons || []).filter(x => x.saison < D.saison && ((D.saisons || {})[x.saison] || { spectacles: [] }).spectacles.some(g => (g.dates || []).length));
           const tous = passees.map(x => n(x.titre));
           const aSaCarte = x => noeuds(x.titre).some(t => { for (let el = t.parentElement; el && el !== main && el !== document.body; el = el.parentElement) {

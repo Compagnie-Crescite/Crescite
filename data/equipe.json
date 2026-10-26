@@ -1,5 +1,5 @@
 {
- "_note": "Les personnes de l'équipe et la distribution de chaque spectacle : les fiches publiées sur crescite.fr (avec, mise en scène, lumières, régie…). La distribution de Cassandres (dossier artistique 2027-2028), non publiée tant que la compagnie ne la confirme pas, n'est pas dans ce dépôt public : elle est dans private/equipe-privee.json, que supabase/equipe.py ajoute. Inès Chouquet, citée par le dossier artistique dans Mon Royaume et Ci-gisait Cyrano, a sa fiche sans distribution : la compagnie la place. Coordonnées et photos ne sont pas ici : elles vont dans la base (fiches privées, stockage), jamais dans ce dépôt public. Import : supabase/equipe.py.",
+ "_note": "Les personnes de l'équipe et la distribution de chaque spectacle : les fiches publiées sur crescite.fr (avec, mise en scène, lumières, régie…). La distribution de Cassandres (dossier artistique 2027-2028) est publiée depuis que la compagnie l'a confirmée (octobre 2026). Inès Chouquet, citée par le dossier artistique dans Mon Royaume et Ci-gisait Cyrano, a sa fiche sans distribution : la compagnie la place. Coordonnées et photos ne sont pas ici : elles vont dans la base (fiches privées, stockage), jamais dans ce dépôt public. Import : supabase/equipe.py.",
  "personnes": [
   {
    "slug": "johann-abiola",
@@ -331,6 +331,78 @@
   }
  ],
  "distributions": {
+  "cassandres": [
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Texte et mise en scène"
+   },
+   {
+    "personne": "remi-dessenoix",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "charline-porrone",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "jean-marc-talbot",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "lauren-toulin",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "adrien-vada",
+    "categorie": "jeu",
+    "fonction": ""
+   },
+   {
+    "personne": "emmanuelle-herondelle",
+    "categorie": "creation",
+    "fonction": "Scénographie"
+   },
+   {
+    "personne": "angelo-jossec",
+    "categorie": "creation",
+    "fonction": "Scénographie"
+   },
+   {
+    "personne": "olivier-leroy",
+    "categorie": "creation",
+    "fonction": "Scénographie"
+   },
+   {
+    "personne": "eric-guilbaud",
+    "categorie": "creation",
+    "fonction": "Création lumière"
+   },
+   {
+    "personne": "adrian-noguera",
+    "categorie": "creation",
+    "fonction": "Création lumière"
+   },
+   {
+    "personne": "william-langlois",
+    "categorie": "creation",
+    "fonction": "Création musicale"
+   },
+   {
+    "personne": "jane-avezou",
+    "categorie": "creation",
+    "fonction": "Création costumes"
+   },
+   {
+    "personne": "emmanuelle-herondelle",
+    "categorie": "creation",
+    "fonction": "Création accessoires"
+   }
+  ],
   "cleophene": [
    {
     "personne": "johann-abiola",
