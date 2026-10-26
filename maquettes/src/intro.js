@@ -3,7 +3,7 @@
    vitesse et le site apparaît à travers lui. Si le visiteur a demandé moins d'animations : un simple fondu.
    build.py l'ajoute après les données D ; chaque maquette l'habille dans son univers.
 
-   INTRO.ouvrir({ fond, degrade, image, encre, tache, mot, sortie, classe, apres, vivante })
+   INTRO.ouvrir({ fond, degrade, image, encre, tache, mot, sortie, classe, apres, vivante, cibles })
      à appeler une fois, au chargement ; l'ouverture ne s'affiche que si l'adresse est celle de l'accueil
      fond    : la couleur du fond (par défaut #14070f)
      degrade : un dégradé radial à la place du fond : [[0, '#3a1030'], [1, '#0d0710']] (du centre vers les bords)
@@ -22,6 +22,14 @@
                (au départ, elles rament une fois : un coup de nage dans le sens où elle va, le corps se contracte) ; aucune
                turbulence, aucune rotation en bloc. Le mot reste en SVG. Sans `devient` (sortie 'zoom'), le dessin SVG reprend
                pour le zoom. Sans mouvement, ou sans D.pieuvre : comme avant
+     cibles  : avec vivante et devient : une fonction qui rend, à chaque image du départ, ce que chaque tentacule doit
+               rejoindre : [{ cle, cible, col }] (cle : la clé de la tentacule, cible : ce que PIEUVRE vise, à l'écran, col :
+               [r, g, b] la couleur vers laquelle elle se teinte). Dès le geste, ces tentacules se déroulent vers leur
+               cible (en 1,5 s : plus que le glissement, qui dure 1,15 s), leur bout se colorant en route, pendant que le
+               logo glisse à sa place ; la page reprend leur trajet où il en est (INTRO.relais())
+   INTRO.relais()   pendant `apres` : { TS, teinte, t0 } les tentacules de l'ouverture (PIEUVRE), telles qu'elles sont (pose,
+               trajet en cours), la teinte atteinte, et l'instant du geste : la pieuvre de la page y copie leur état et
+               continue leur mouvement sans à-coup. null sans pieuvre vivante
      classe  : une classe en plus sur .intro, pour l'habiller en CSS (.intro, .intro-logo, .intro-indice)
      apres   : appelée quand le site est révélé (le focus va ensuite au titre h1 de la page)
    INTRO.ouverte()  vrai tant que l'ouverture est affichée ; l'évènement « intro:fin » est émis sur window à la fin
@@ -175,7 +183,7 @@ const INTRO = (() => {
   // la pieuvre vivante, une image : son corps (contracté de `serre` autour de son cœur, bras compris) et ses tentacules à la
   // place posée par poser(), qui ondulent depuis leurs racines (onde) et rament (rame : elles se penchent à l'opposé du sens
   // `vers` où elle va, d'autant plus vers leur pointe)
-  function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0 } = {}) {
+  function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0, teinte = 0, cols = null } = {}) {
     if (!vie || !geo || !geo.pose) return;
     const { cv, ctx, TS, CORPS, dpr } = vie, { S, ox, oy } = geo.pose;
     const dt = Math.min(50, vie.tPrec ? now - vie.tPrec : 16); vie.tPrec = now; vie.t += dt / 1000;
@@ -187,10 +195,11 @@ const INTRO = (() => {
     const arr = vers && rame ? Math.atan2(-vers[1], -vers[0]) : 0;
     for (const t of TS) {
       let penche = 0;
-      if (rame && vers) { let df = arr - t.RS[t.M - 1]; df = Math.atan2(Math.sin(df), Math.cos(df)); penche = clamp(df, -1.2, 1.2) * rame; }
+      if (rame && vers && !t.cible) { let df = arr - t.RS[t.M - 1]; df = Math.atan2(Math.sin(df), Math.cos(df)); penche = clamp(df, -1.2, 1.2) * rame; }
       t.deplacer(ox, oy, S);
       t.avancer(dt, { temps: vie.t, onde, penche });
-      PIEUVRE.dessiner(ctx, t, { encre: vie.encre, lisere: PIEUVRE.lisere });
+      const col = cols && cols[t.cle];
+      PIEUVRE.dessiner(ctx, t, { encre: vie.encre, lisere: PIEUVRE.lisere, vers: col ? `rgb(${col.join(',')})` : null, teinte: col ? teinte : 0 });
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
   }
@@ -252,6 +261,10 @@ const INTRO = (() => {
     const ex0 = cx + (cible[0] - centre[0]) * s0, ey0 = cy + (cible[1] - centre[1]) * s0;
     const fondG = el.querySelector('.intro-scene > g[mask]'), passent = el.querySelectorAll('[data-role="dessin"] .i-mot, [data-role="dessin"] .i-tache');
     let c = place;
+    // (vivante, avec des cibles : dès le geste, chaque tentacule qui a une cible se déroule vers elle, en 1,5 s ; la cible est
+    // relue à chaque image, le trajet continue vers sa place du moment)
+    const viseur = vie && opts.cibles ? () => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; t.viser(x.cible, 1500); cols[x.cle] = x.col; } return cols; } : null;
+    if (vie) { vie.t0 = T0; vie.teinte = 0; }
     const pas = now => {
       const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));
       c = opts.devient() || c;
@@ -260,7 +273,11 @@ const INTRO = (() => {
       poser({ aG: vie ? 0 : 7 * bat, aD: vie ? 0 : -7 * bat, ondes: vie ? 0 : 5 * (1 - u), flot: (now - T0) * .05, abs: { S, ex, ey } });
       // (vivante : un coup de nage, les tentacules ramant à l'opposé du chemin, le corps contracté ; ses ondulations s'apaisent
       // pour que la pieuvre de la page la relaie telle quelle)
-      if (vie) { const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0; peindre(now, { onde: 1.3 * (1 - u), rame: .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat }); }
+      if (vie) {
+        const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0, cols = viseur ? viseur() : null;
+        vie.teinte = clamp((now - T0) / 700);
+        peindre(now, { onde: 1.3 * (1 - u), rame: .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat, teinte: vie.teinte, cols });
+      }
       passent.forEach(n => { n.style.opacity = String(1 - ease.out(clamp(v * 2.2))); });
       if (fondG) fondG.style.opacity = String(1 - ease.inOut(clamp((v - .2) / .65)));
       if (v >= 1) return finir();
@@ -283,6 +300,7 @@ const INTRO = (() => {
     document.documentElement.classList.remove('intro-active');
     inertes.forEach(n => { n.inert = false; }); inertes = [];
     try { opts.apres && opts.apres(); } catch (err) { console.error(err); }
+    vie = null;
     dispatchEvent(new Event('intro:fin'));
     const h1 = document.querySelector('main h1, h1');
     if (h1 && !location.hash.replace(/^#\/?/, '')) { if (!h1.hasAttribute('tabindex')) h1.setAttribute('tabindex', '-1'); h1.focus({ preventScroll: true }); }
@@ -298,5 +316,5 @@ const INTRO = (() => {
     if (['Enter', ' ', 'Spacebar', 'ArrowDown', 'PageDown', 'End'].includes(e.key)) { e.preventDefault(); partir(); }
   }
 
-  return { ouvrir, ouverte: () => etat !== 'ferme', partir };
+  return { ouvrir, ouverte: () => etat !== 'ferme', partir, relais: () => (vie ? { TS: vie.TS, teinte: vie.teinte || 0, t0: vie.t0 || performance.now() } : null) };
 })();
