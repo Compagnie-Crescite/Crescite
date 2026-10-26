@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spectacles au téléphone · Crescite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&family=Instrument+Sans:wght@400;600;700&display=swap">
+<style>
+/* La page des spectacles au téléphone : trois propositions, jouables, avec les vraies données de la base (D), chacune dans
+   un téléphone, à côté de la page d'aujourd'hui (la synthèse, chargée telle quelle). Construite par maquettes/build.py
+   comme les maquettes (D, agenda.js, donnees.js, carte.js, mouvement.js, cadrage.js), publiée dans docs/ à côté d'elles.
+   La planche (le cadre autour des téléphones) parle le langage de maquettes/src/planche.html ; le site dans les
+   téléphones parle celui de la synthèse : ses variables, sa nuit, ses univers. */
+
+/* ———————————— la planche ———————————— */
+/* la planche : une barre de choix épinglée, les téléphones en rang (on les fait défiler quand ils ne tiennent pas), sous
+   chacun sa fiche ; au téléphone, un téléphone par écran, plein cadre */
+:root {
+  --nuit: #150a11; --nuit-2: #241720; --clair: #f7ecf1; --gris-clair: #c9b7c1; --magenta: #bc3e80; --magenta-vif: #f4a3cc;
+  --filet-p: rgba(255, 255, 255, .12);
+  --serif: "Bodoni Moda", Didot, "Bodoni 72", serif; --sans-p: "Instrument Sans", system-ui, sans-serif;
+  /* le site dans le téléphone : les variables de la synthèse, la nuit (règle 19 : le site public n'a que son thème sombre) */
+  --papier: #1b1117; --papier-2: #23171e; --carte: #2e2128; --encre: #f3eee9; --gris: #b7b0ae; --filet: #3b3036; --blanc: #24181f;
+  --titre: "Ubuntu", system-ui, sans-serif; --texte: "Open Sans", system-ui, sans-serif; --etiq: "Raleway", "Open Sans", system-ui, sans-serif;
+  --sans: var(--texte);
+  --haut: 56px; --gout: 16px; --choix: 52px; --mv-courbe: cubic-bezier(.2, .7, .2, 1);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+html, body { margin: 0; }
+body { background: var(--nuit); color: var(--clair); font: 400 1rem/1.5 var(--sans-p); }
+img { display: block; max-width: 100%; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--magenta-vif); outline-offset: 3px; }
+[tabindex="-1"]:focus { outline: none; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.choix { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 14px; min-height: var(--choix);
+  padding: 6px max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px));
+  background: color-mix(in srgb, var(--nuit) 86%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); border-bottom: 1px solid var(--filet-p); }
+.choix .titre { margin: 0; font: italic 500 1.05rem/1.2 var(--serif); white-space: nowrap; }
+.onglets { display: flex; gap: 2px; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.onglets::-webkit-scrollbar { display: none; }
+.onglets [role="tab"] { flex: none; display: inline-flex; align-items: baseline; gap: 7px; min-height: 40px; padding: 7px 12px; border: 0; border-radius: 8px; background: none; color: var(--gris-clair); font: 600 .9rem var(--sans-p); cursor: pointer; white-space: nowrap; }
+.onglets [role="tab"] b { font: italic 500 1.05rem/1 var(--serif); }
+.onglets [role="tab"]:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+.onglets [role="tab"][aria-selected="true"] { color: var(--nuit); background: var(--clair); }
+.onglets [role="tab"].act { margin-left: auto; color: var(--magenta-vif); }
+.onglets [role="tab"].act[aria-selected="true"] { color: #fff; background: var(--magenta); }
+
+.bandeau { max-width: 1320px; margin: 0 auto; padding: clamp(26px, 4.5vw, 56px) max(16px, env(safe-area-inset-right, 0px)) 6px max(16px, env(safe-area-inset-left, 0px)); }
+.bandeau .sur { margin: 0 0 10px; font: 700 .74rem/1.3 var(--sans-p); letter-spacing: .14em; text-transform: uppercase; color: var(--magenta-vif); }
+.bandeau h1 { margin: 0; max-width: 22ch; font: italic 500 clamp(2.1rem, 1.4rem + 2.8vw, 3.6rem)/1.04 var(--serif); text-wrap: balance; }
+.bandeau p { max-width: 72ch; margin: 16px 0 0; color: var(--gris-clair); font-size: 1.02rem; }
+.bandeau .gestes { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0 0; padding: 0; list-style: none; font-size: .95rem; color: var(--gris-clair); }
+.bandeau .gestes b { font: italic 500 1.15rem/1 var(--serif); color: var(--clair); margin-right: 6px; }
+
+.planche { position: relative; display: flex; gap: clamp(18px, 2.6vw, 40px); padding: 22px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px));
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 16px; scrollbar-width: thin; scrollbar-color: var(--nuit-2) transparent; }
+.poste { flex: none; width: 390px; max-width: 100%; scroll-snap-align: start; }
+.poste:first-child { margin-left: auto; }
+.poste:last-child { margin-right: auto; }
+/* le téléphone : un cadre de 390 × 844, l'écran d'un téléphone courant ; dedans, le site */
+.tel { position: relative; width: 100%; height: min(844px, calc(100svh - var(--choix) - 24px)); min-height: 560px; overflow: hidden;
+  border: 9px solid #090406; border-radius: 34px; background: var(--papier); color: var(--encre);
+  box-shadow: 0 34px 80px -20px rgba(0, 0, 0, .75), inset 0 0 0 1px rgba(255, 255, 255, .07); container: tel / size; }
+.tel iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--papier); }
+.tel .attente { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--gris); font-size: .95rem; }
+.fiche { padding: 22px 4px 0; }
+.fiche .en-tete { display: flex; align-items: baseline; gap: 14px; }
+.fiche .lettre { flex: none; font: italic 500 2.6rem/1 var(--serif); color: var(--magenta-vif); }
+.fiche h2 { margin: 0; font: italic 500 1.65rem/1.1 var(--serif); text-wrap: balance; }
+.fiche .geste { display: block; margin-top: 4px; font: 700 .72rem/1.3 var(--sans-p); letter-spacing: .14em; text-transform: uppercase; color: var(--gris-clair); }
+.fiche .geste b { color: var(--magenta-vif); }
+.fiche p { margin: 14px 0 0; color: var(--gris-clair); font-size: .95rem; line-height: 1.55; }
+.fiche p b { color: var(--clair); font-weight: 600; }
+.fiche dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--filet-p); font-size: .9rem; }
+.fiche dt { font: 700 .7rem/1.6 var(--sans-p); letter-spacing: .12em; text-transform: uppercase; color: var(--gris-clair); }
+.fiche dd { margin: 0; color: var(--gris-clair); }
+.fiche dd b { color: var(--clair); font-weight: 600; }
+.pied { max-width: 1320px; margin: 0 auto; padding: 8px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); border-top: 1px solid var(--filet-p); }
+.pied h2 { margin: 28px 0 0; font: italic 500 1.5rem/1.1 var(--serif); }
+.pied p, .pied li { max-width: 78ch; color: var(--gris-clair); font-size: .95rem; line-height: 1.55; }
+.pied ul { margin: 12px 0 0; padding-left: 1.1em; }
+.pied li { margin: 0 0 6px; }
+.pied li b, .pied p b { color: var(--clair); font-weight: 600; }
+@media (max-width: 520px) {
+  .choix .titre { display: none; }
+  .bandeau { padding-top: 22px; }
+  .planche { gap: 0; padding: 0; scroll-snap-type: x mandatory; scroll-padding-inline: 0; scrollbar-width: none; }
+  .poste { width: 100vw; scroll-snap-stop: always; }
+  .poste:first-child, .poste:last-child { margin: 0; }
+  .tel { height: calc(100svh - var(--choix)); min-height: 520px; border: 0; border-radius: 0; box-shadow: none; }
+  .fiche, .pied { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { .onglets, .planche { scroll-behavior: auto; } }
+
+/* ———————————— le site dans le téléphone ———————————— */
+/* l'en-tête et la barre du bas de la synthèse au téléphone (règle 21 : toute la navigation en bas, sur la saison profonde) ;
+   entre les deux, l'écran, qui défile */
+.site { display: grid; grid-template-rows: var(--haut) minmax(0, 1fr) auto; height: 100%; background: var(--papier); color: var(--encre); font: 400 1rem/1.5 var(--texte); }
+.top { position: relative; z-index: 3; display: flex; align-items: center; gap: 14px; padding: 0 16px; background: var(--saison); color: #fff; box-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
+.marque { display: inline-flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font: 700 1.15rem/1 var(--titre); letter-spacing: .01em; }
+.marque .l { display: block; width: 40px; }
+.marque svg { display: block; width: 100%; height: auto; }
+.ecran { position: relative; overflow: hidden auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ecran::-webkit-scrollbar { display: none; }
+@media (min-width: 521px) { .ecran { overscroll-behavior: contain; } }
+.barre { display: flex; gap: 6px; padding: 6px 6px 8px; background: color-mix(in srgb, var(--saison) 78%, #000); color: #fff; box-shadow: 0 -10px 26px rgba(0, 0, 0, .3); }
+.barre a { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 56px; padding: 6px 4px; border: 2px solid transparent; border-radius: 14px; color: #fff; text-decoration: none; text-align: center; font: 700 .64rem/1.15 var(--etiq); letter-spacing: .06em; text-transform: uppercase; }
+.barre .pt { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .45; box-shadow: 0 0 0 2px currentColor; }
+.barre a[aria-current] .pt { opacity: 1; }
+.barre a[aria-current="page"] { background: #fff; color: var(--saison); }
+
+/* les titres de page, le filet ondulé de la synthèse, le titre courant (la compagnie et la saison) */
+.h1 { margin: 0; font: 500 2.15rem/1.05 var(--titre); text-wrap: balance; }
+.h1.petit { font-size: 1.5rem; }
+.trait { display: block; width: 92px; height: 16px; margin-top: 10px; overflow: visible; }
+.trait path { fill: none; stroke: var(--saison-vive); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; animation: dessine 1.1s .15s cubic-bezier(.45, 0, .2, 1) both; }
+@keyframes dessine { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.mast { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 16px; margin: 18px 0 0; padding: 14px 0 8px; border-bottom: 1px solid var(--filet); font: 700 .72rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; }
+.mast .filets { position: absolute; left: 0; right: 0; top: 0; height: 7px; border-top: 3px solid var(--encre); border-bottom: 1px solid var(--encre); }
+.sai { color: var(--saison-vive); white-space: nowrap; }
+.sai.etiq { font: 700 .66rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; }
+@keyframes respire { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .55; transform: scale(.72); } }
+
+/* les univers (la synthèse) : les couleurs, la police de titre, la couleur vive lisible en petit texte ; --c est la couleur
+   du spectacle lisible sur le papier de la nuit */
+.u { --u-fond: #1a1016; --u-fond2: #24161f; --u-texte: #f7ecf1; --u-texte2: #c9b7c1; --u-accent: #bc3e80; --u-accent2: #f07ab6; --u-scene: #f07ab6;
+  --u-lueur: rgba(188, 62, 128, .3); --u-vif: #f07ab6; --u-sur-accent: #fff; --u-titre-f: var(--titre); --u-titre-g: 500; --u-corps: var(--texte); --u-etiq: var(--etiq);
+  --u-filet: color-mix(in srgb, var(--u-texte) 15%, transparent); }
+.u :focus-visible { outline-color: var(--u-vif); }
+.u-arene .ut { text-transform: uppercase; }
+.mo { display: block; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+.bu { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 18px; border: 1.5px solid color-mix(in srgb, var(--u-texte) 55%, transparent); border-radius: 999px; background: transparent; color: var(--u-texte); font: 600 .9rem/1.2 var(--sans); letter-spacing: .06em; text-transform: uppercase; text-decoration: none; cursor: pointer; }
+.bu.plein { background: var(--u-accent); border-color: var(--u-accent); color: var(--u-sur-accent); }
+.fleche { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+/* la ligne des mentions : le motif en petit, puis lieu et temps, création, action culturelle, séparés d'un point */
+.kl { display: flex; align-items: center; gap: 10px; margin: 0; font: 600 .72rem/1.5 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.kl .mo { flex: none; width: 22px; height: 22px; }
+.kk { flex: 1 1 auto; min-width: 0; display: flex; flex-wrap: wrap; row-gap: 2px; margin-left: -1.6em; overflow: hidden; }
+.kk > span::before { content: "·"; display: inline-block; width: 1.6em; text-align: center; color: var(--u-texte2); }
+.acc { margin: 0; font-size: 1.02rem; line-height: 1.5; color: var(--u-texte); text-wrap: pretty; }
+.date { display: flex; flex-direction: column; gap: 2px; margin: 0; color: var(--u-texte); }
+.date .k { font: 700 .68rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.date .d { font-weight: 600; }
+.etat { font: 700 .66rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); white-space: nowrap; }
+.etat.vit::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: .12em; animation: respire 2.4s ease-in-out infinite; }
+.pied-u { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; }
+
+/* la carte des tournées (carte.js) : la France sur le fond de l'univers, des bras effilés qui poussent depuis Rouen, une
+   spirale au bout ; les tournées passées en filets */
+.k { display: block; width: 100%; height: auto; max-height: 300px; overflow: visible; --k: 2.3; }
+.k:not(.pousse) { opacity: 0; }
+.k.pousse { transition: opacity .45s var(--mv-courbe); }
+.k .pays { fill: color-mix(in srgb, var(--u-texte) 12%, var(--u-fond)); }
+.k .voisin { fill: color-mix(in srgb, var(--u-texte) 6%, var(--u-fond)); }
+.k .encart { fill: none; stroke: var(--u-texte2); stroke-opacity: .5; stroke-dasharray: 3 4; }
+.k .passe path { fill: none; stroke: color-mix(in srgb, var(--u-texte) 26%, transparent); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.k .bras { fill: var(--u-vif); }
+.k .bras-trait { fill: none; stroke: var(--u-vif); stroke-width: 1.3px; vector-effect: non-scaling-stroke; stroke-linecap: round; opacity: .85; }
+.k .m { fill: none; stroke: #fff; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .9s cubic-bezier(.45, 0, .2, 1) var(--d, 0s); }
+.k.pousse .m { stroke-dashoffset: 0; }
+.k .bout { fill: none; stroke: var(--u-vif); stroke-width: 1.7; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; transition: stroke-dashoffset .5s ease-out calc(var(--d, 0s) + .7s); }
+.k.pousse .bout { stroke-dashoffset: 0; }
+.k .point { fill: var(--u-vif); stroke: var(--u-fond); stroke-width: 1.2; opacity: 0; transition: opacity .3s calc(var(--d, 0s) + .6s); }
+.k.pousse .point, .k.simple .point { opacity: 1; }
+.k.simple .point { transition: none; }
+.k .rouen { fill: var(--u-texte); }
+.k .rouen-nom { font: 500 calc(16px * var(--k, 1)) var(--titre); fill: var(--u-texte); paint-order: stroke; stroke: var(--u-fond); stroke-width: calc(4px * var(--k, 1)); stroke-linejoin: round; }
+
+/* ———— A. La poursuite : le sommaire d'aujourd'hui, et la ligne qu'on lit s'allume ———— */
+.a-tete { padding: 22px var(--gout) 0; }
+.a-index { position: sticky; top: 0; z-index: 2; display: flex; gap: 10px; margin: 0; padding: 10px var(--gout) 11px; overflow-x: auto; scrollbar-width: none;
+  background: color-mix(in srgb, var(--papier) 86%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--filet); }
+.a-index::-webkit-scrollbar { display: none; }
+.a-index button { position: relative; flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--papier-2); cursor: pointer; opacity: .55;
+  box-shadow: 0 0 0 2px transparent; transition: box-shadow .3s, scale .3s var(--mv-courbe), opacity .3s; }
+.a-index button img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.a-index button .pt { position: absolute; right: -1px; top: -1px; width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 2px var(--papier); }
+.a-index button.lit { opacity: 1; scale: 1.14; box-shadow: 0 0 0 2px var(--c); }
+.a-index button:focus-visible { outline-color: var(--c); outline-offset: 2px; }
+.a-l { list-style: none; margin: 0; padding: 0 0 28px; }
+.a-i { position: relative; border-bottom: 1px solid var(--filet); transition: background-color .5s var(--mv-courbe), box-shadow .5s var(--mv-courbe); }
+.a-i.lit { background: radial-gradient(120% 90% at 92% 0%, var(--u-lueur), transparent 62%), var(--u-fond); box-shadow: inset 3px 0 0 var(--u-vif); }
+.a-a { display: block; padding: 18px var(--gout) 22px; color: var(--encre); text-decoration: none; }
+.a-a:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -2px; }
+.a-ligne { display: flex; align-items: last baseline; justify-content: space-between; gap: 12px; }
+.a-t { font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: calc(1.9rem * var(--tk, 1)); line-height: 1.08; text-wrap: balance; overflow-wrap: anywhere; transition: color .45s; }
+.lit .a-t { color: var(--u-vif); }
+.a-an { flex: none; font: 600 .86rem/1 var(--texte); font-variant-numeric: tabular-nums; color: var(--gris); transition: color .45s; }
+.lit .a-an { color: var(--u-texte2); }
+.a-dek { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 14px; margin-top: 4px; font-size: .92rem; line-height: 1.45; color: var(--gris); transition: color .45s; }
+.lit .a-dek { color: var(--u-texte2); }
+.a-dek .etat { color: var(--c); }
+.lit .a-dek .etat { color: var(--u-vif); }
+.a-ph { position: relative; display: block; aspect-ratio: 16 / 7; margin: 14px 0 12px; overflow: hidden; border-radius: 6px; background: var(--papier-2); }
+.a-ph img { position: absolute; left: 0; top: -7%; width: 100%; height: 114%; object-fit: cover; filter: grayscale(.6) brightness(.48); transition: filter .6s var(--mv-courbe); }
+.lit .a-ph img { filter: none; }
+/* (la photo glisse dans sa bande au fil du défilement : une animation liée au défilement, composée hors du fil principal) */
+@supports (animation-timeline: view()) {
+  .a-ph img { animation: a-glisse linear both; animation-timeline: view(); animation-range: entry 0% exit 100%; }
+  @keyframes a-glisse { from { translate: 0 -5%; } to { translate: 0 5%; } }
+}
+.a-acc { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--gris); text-wrap: pretty; transition: color .45s; }
+.lit .a-acc { color: var(--u-texte); }
+.a-suite { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+.a-suite .k { font: 700 .68rem/1.4 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); transition: color .45s; }
+.lit .a-suite .k { color: var(--u-texte2); }
+.a-suite .d { font-weight: 600; transition: color .45s; }
+.lit .a-suite .d { color: var(--u-texte); }
+
+/* ———— B. La pile d'affiches : les huit tranches tiennent dans l'écran ; on en touche une, l'affiche se déplie ———— */
+.b-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px var(--gout) 8px; }
+.b-pile { display: flex; flex-direction: column; gap: 4px; padding: 0 10px 22px; }
+.b-aff { border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
+.b-h { margin: 0; }
+.b-dos { position: relative; display: block; width: 100%; height: 72px; padding: 0; border: 0; background: var(--u-fond); color: var(--u-texte); text-align: left; cursor: pointer; overflow: hidden; transition: height .45s var(--mv-courbe); }
+.b-dos:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -3px; }
+.ouvert .b-dos { height: 214px; }
+.b-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: scale .7s var(--mv-courbe); }
+.b-dos:hover .b-img { scale: 1.03; }
+.b-voile { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--u-fond) 94%, transparent) 36%, color-mix(in srgb, var(--u-fond) 55%, transparent) 72%, color-mix(in srgb, var(--u-fond) 30%, transparent)); transition: opacity .45s; }
+.b-voile2 { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 28%, color-mix(in srgb, var(--u-fond) 80%, transparent) 72%, var(--u-fond)); opacity: 0; transition: opacity .45s; }
+.ouvert .b-voile { opacity: 0; }
+.ouvert .b-voile2 { opacity: 1; }
+.b-txt { position: absolute; left: 14px; right: 14px; bottom: 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: last baseline; text-shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 2px 14px rgba(0, 0, 0, .5); }
+.b-t { min-width: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: calc(1.45rem * var(--tk, 1)); line-height: 1.02; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .45s var(--mv-courbe); }
+.ouvert .b-t { white-space: normal; font-size: calc(2.1rem * var(--tk, 1)); text-wrap: balance; }
+.b-an { font: 600 .8rem/1 var(--texte); color: var(--u-texte); font-variant-numeric: tabular-nums; }
+.b-sous { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; min-width: 0; margin-top: 3px; font-size: .82rem; line-height: 1.4; color: var(--u-texte); }
+.b-sous .etat { flex: none; }
+.b-sous .pro { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ouvert .b-sous .pro { display: none; }
+.b-corps { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--mv-courbe); }
+.ouvert .b-corps { grid-template-rows: 1fr; }
+.b-in { min-height: 0; overflow: hidden; }
+.b-fiche { display: flex; flex-direction: column; gap: 13px; padding: 14px 16px 18px; }
+.b-st { margin: -4px 0 0; font-size: .95rem; color: var(--u-texte2); }
+.b-carte { margin: 0; padding-top: 10px; border-top: 1px solid var(--u-filet); }
+
+/* ———— C. Le présentoir : une affiche à la fois, qu'on fait glisser ; la page prend son univers ———— */
+.c { position: relative; min-height: 100%; display: flex; flex-direction: column; background-color: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); transition: background-color .55s var(--mv-courbe), color .55s; }
+.c::before { content: ""; position: absolute; inset: 0 0 auto; height: 60%; background: radial-gradient(100% 60% at 50% 0%, var(--u-lueur), transparent 70%); pointer-events: none; }
+.c > * { position: relative; }
+.c-tete { display: flex; flex-direction: column; gap: 10px; padding: 14px var(--gout) 4px; }
+.c-l1 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.c-rail { display: flex; gap: 8px; margin: 0; }
+.c-rail button { position: relative; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: var(--u-fond2); cursor: pointer; opacity: .5; box-shadow: 0 0 0 2px transparent; transition: opacity .3s, scale .3s var(--mv-courbe), box-shadow .3s; }
+.c-rail button img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.c-rail button.cur { opacity: 1; scale: 1.2; box-shadow: 0 0 0 2px var(--u-vif); }
+.c-rail button:focus-visible { outline-offset: 3px; }
+.c-defile { position: relative; display: flex; gap: 12px; padding: 10px 7% 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: 7%; scrollbar-width: none; }
+.c-defile::-webkit-scrollbar { display: none; }
+.c-defile:focus-visible { outline-offset: -2px; }
+.c-aff { position: relative; flex: 0 0 86%; aspect-ratio: 4 / 5; max-width: 100%; scroll-snap-align: center; scroll-snap-stop: always; border-radius: 14px; overflow: hidden; background: var(--u-fond2); color: var(--u-texte); isolation: isolate;
+  box-shadow: 0 26px 50px -26px #000; transition: opacity .4s, scale .4s var(--mv-courbe); }
+.c-aff.loin { opacity: .62; scale: .96; }
+.c-aff img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.c-aff::after { content: ""; position: absolute; inset: 38% 0 0; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--u-fond) 88%, transparent) 62%, var(--u-fond)); }
+.c-txt { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 1; }
+.c-sur { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 8px; font: 700 .66rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); }
+.c-t { margin: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: calc(2.15rem * var(--tk, 1)); line-height: 1.02; text-wrap: balance; overflow-wrap: anywhere; }
+.c-st { margin: 6px 0 0; font-size: .9rem; line-height: 1.4; color: var(--u-texte2); }
+.c-fiche { display: flex; flex-direction: column; gap: 13px; padding: 14px var(--gout) 26px; transition: opacity .2s; }
+.c-fiche.change { opacity: 0; }
+.c-carte { margin: 0; padding-top: 10px; border-top: 1px solid var(--u-filet); }
+
+/* moins d'animations (le réglage de l'appareil, ou ?anim=0 dans l'adresse) : tout est là tout de suite */
+@media (prefers-reduced-motion: reduce) {
+  .trait path, .etat.vit::before, .a-ph img { animation: none !important; }
+  .a-i, .a-t, .a-an, .a-dek, .a-acc, .a-suite *, .a-ph img, .a-index button, .b-dos, .b-t, .b-voile, .b-voile2, .b-corps, .b-img, .c, .c-aff, .c-fiche, .c-rail button, .k, .k .m, .k .bout, .k .point { transition: none !important; }
+}
+html.still .trait path, html.still .etat.vit::before, html.still .a-ph img { animation: none !important; }
+html.still .a-i, html.still .a-t, html.still .a-an, html.still .a-dek, html.still .a-acc, html.still .a-suite *, html.still .a-ph img, html.still .a-index button, html.still .b-dos, html.still .b-t, html.still .b-voile, html.still .b-voile2, html.still .b-corps, html.still .b-img, html.still .c, html.still .c-aff, html.still .c-fiche, html.still .c-rail button, html.still .k, html.still .k .m, html.still .k .bout, html.still .k .point { transition: none !important; }
+</style>
+</head>
+<body>
+<nav class="choix" aria-label="Les propositions">
+  <p class="titre">Spectacles au téléphone</p>
+  <div class="onglets" role="tablist">
+    <button type="button" role="tab" aria-selected="true" data-id="a"><b>A</b> La poursuite</button>
+    <button type="button" role="tab" aria-selected="false" data-id="b"><b>B</b> La pile d’affiches</button>
+    <button type="button" role="tab" aria-selected="false" data-id="c"><b>C</b> Le présentoir</button>
+    <button type="button" role="tab" aria-selected="false" data-id="actuel" class="act">Dans la synthèse</button>
+  </div>
+</nav>
+
+<header class="bandeau">
+  <p class="sur">Compagnie Crescite · la synthèse · prévisualisation</p>
+  <h1>La page des spectacles, dans la main</h1>
+  <p>Au téléphone, la page des spectacles perdait ce qui fait sa force au bureau : l’aperçu dans l’univers de chaque spectacle, sa photo en grand, la carte de sa tournée. Il restait une liste. Voici les trois façons de la refaire qui ont été proposées, jouables ci-dessous avec les vraies données de la base, un geste chacune. <b>La pile d’affiches (B) a été retenue</b> et portée dans la synthèse, qu’on retrouve dans le quatrième téléphone.</p>
+  <ul class="gestes">
+    <li><b>A</b> lire : la liste s’allume sous le pouce</li>
+    <li><b>B</b> déplier : tout le répertoire dans l’écran, une affiche s’ouvre</li>
+    <li><b>C</b> feuilleter : une affiche à la fois, la page prend son univers</li>
+  </ul>
+</header>
+
+<main class="planche" id="planche" aria-label="Les téléphones">
+  <section class="poste" data-id="a" aria-labelledby="t-a">
+    <div class="tel" data-prop="a"></div>
+    <div class="fiche">
+      <div class="en-tete"><span class="lettre" aria-hidden="true">A</span><div><h2 id="t-a">La poursuite</h2><span class="geste">Le geste : <b>lire</b> · coût : petit</span></div></div>
+      <p>Le sommaire d’aujourd’hui, dans le même ordre, mais <b>la ligne qu’on lit s’allume</b> : une poursuite suit le pouce. La ligne qui passe au milieu de l’écran prend son univers (son fond, sa lueur, sa couleur), sa photo s’éclaire et glisse doucement dans sa bande ; les autres restent dans la pénombre.</p>
+      <p><b>Ce qui s’ajoute</b> : la photo en bande, pleine largeur, cadrée sur sa zone d’intérêt ; l’accroche ; un index épinglé sous l’en-tête, les huit vignettes, celle qu’on lit cerclée de sa couleur, les spectacles en tournée marqués d’un point. Toucher une vignette amène à sa ligne. Toute la ligne mène à la page du spectacle, comme aujourd’hui.</p>
+      <dl>
+        <dt>Mécanique</dt><dd>Une feuille de style et un observateur d’intersection (la ligne de lecture) ; la photo glisse par une animation liée au défilement, sans script.</dd>
+        <dt>À surveiller</dt><dd>La pénombre reste lisible (le gris du site, AA). La bande de photo allonge la page : huit écrans environ, contre sept aujourd’hui.</dd>
+      </dl>
+    </div>
+  </section>
+  <section class="poste" data-id="b" aria-labelledby="t-b">
+    <div class="tel" data-prop="b"></div>
+    <div class="fiche">
+      <div class="en-tete"><span class="lettre" aria-hidden="true">B</span><div><h2 id="t-b">La pile d’affiches</h2><span class="geste">Le geste : <b>déplier</b> · coût : moyen</span></div></div>
+      <p><b>Les huit spectacles tiennent dans l’écran</b>, sans défiler : chacun est une tranche d’affiche, sa photo cadrée sur les visages, son titre dans sa police, son année, son état et sa prochaine date. On embrasse tout le répertoire d’un regard, comme la table des matières du bureau.</p>
+      <p>On touche une tranche : <b>l’affiche se déplie</b>. La photo s’ouvre en grand, puis la fiche : lieu et temps, création, action culturelle, l’accroche, la prochaine date, la carte de sa tournée dont les bras poussent depuis Rouen, et « découvrir ». Une seule affiche ouverte à la fois ; la toucher encore la replie.</p>
+      <dl>
+        <dt>Mécanique</dt><dd>Un bouton par spectacle (<code>aria-expanded</code>), une hauteur qui se déplie en CSS (<code>grid-template-rows</code>), la carte dessinée à la première ouverture.</dd>
+        <dt>À surveiller</dt><dd>Les huit tranches tiennent dans un écran de 390 × 844 ; à 360 × 640, la pile dépasse d’un tiers et il faut défiler. Les titres longs sont coupés sur la tranche fermée, entiers une fois ouverte.</dd>
+      </dl>
+    </div>
+  </section>
+  <section class="poste" data-id="c" aria-labelledby="t-c">
+    <div class="tel" data-prop="c"></div>
+    <div class="fiche">
+      <div class="en-tete"><span class="lettre" aria-hidden="true">C</span><div><h2 id="t-c">Le présentoir</h2><span class="geste">Le geste : <b>feuilleter</b> · coût : moyen à grand</span></div></div>
+      <p><b>Une affiche à la fois, en grand</b>, qu’on fait glisser du pouce comme sur un présentoir ; les voisines dépassent des deux côtés. Toute la page prend l’univers de l’affiche posée : son fond, sa lueur, sa couleur, sa police.</p>
+      <p>Sous l’affiche, sa fiche : lieu et temps, création, action culturelle, l’accroche, la prochaine date, « découvrir », et <b>la carte de sa tournée, qui se redessine à chaque arrivée</b>. En haut, le rail des huit vignettes : où l’on en est, et un saut direct.</p>
+      <dl>
+        <dt>Mécanique</dt><dd>Un carrousel à crans (<code>scroll-snap</code>, sans bibliothèque), un observateur pour l’affiche posée, la fiche refaite à chaque changement ; au clavier, les flèches.</dd>
+        <dt>À surveiller</dt><dd>Le geste horizontal est moins attendu qu’une liste : le rail et les voisines qui dépassent le disent. La fiche est lue en « polite » par un lecteur d’écran.</dd>
+      </dl>
+    </div>
+  </section>
+  <section class="poste" data-id="actuel" aria-labelledby="t-actuel">
+    <div class="tel tel-cadre" data-prop="actuel"><p class="attente">La page d’aujourd’hui se charge quand on l’amène à l’écran.</p></div>
+    <div class="fiche">
+      <div class="en-tete"><span class="lettre" aria-hidden="true">·</span><div><h2 id="t-actuel">Dans la synthèse</h2><span class="geste">La page publiée, telle quelle</span></div></div>
+      <p>La page des spectacles de la synthèse, chargée ici telle quelle : au téléphone, <b>la pile d’affiches</b>, portée depuis la proposition B (les huit tranches, l’affiche dépliée avec sa fiche et la carte de sa tournée, l’édition sur place sur chaque texte). À partir de 900 px, le sommaire et son aperçu, inchangés. Avant ce portage, il n’y avait ici qu’une liste : vignette, création, lieu et temps, prochaine date.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="pied">
+  <h2>Ce qui ne change pas, dans les trois</h2>
+  <ul>
+    <li><b>Le site autour</b> : l’en-tête et la barre du bas de la synthèse, la nuit seule, les pages des spectacles où chaque proposition mène.</li>
+    <li><b>Le texte et les photos</b> viennent de la base, et de rien d’autre (règle 1) : titres, sous-titres, créations, lieux et temps, accroches, états, prochaines dates, libellés. La base en direct remet la page à jour.</li>
+    <li><b>Le bureau</b> garde le sommaire et son aperçu : les propositions ne valent que jusqu’à 899 px, la requête de la feuille de style d’aujourd’hui.</li>
+    <li><b>Les règles communes</b> : « réduire les animations » coupe tout mouvement ; cibles tactiles de 44 px ; contraste AA ; rien ne déborde à 360 px ; chaque geste a son équivalent au clavier.</li>
+  </ul>
+  <h2>Le choix</h2>
+  <p><b>B, la pile d’affiches, a été retenue</b> (octobre 2026) et portée dans la synthèse : tout le répertoire d’un coup, et l’on n’ouvre que ce qu’on veut ; c’est la table des matières du bureau, repliée dans la main. <b>A</b> aurait été le moins de changement : la liste reste la liste, elle gagne la photo, l’accroche et l’univers, pour le prix d’une feuille de style. <b>C</b> fait sentir les univers avant tout, un spectacle à la fois, au prix d’un geste moins courant. A et C restent jouables ici, et se combinent avec B si l’on y revient : l’index de A et le rail de C sont le même objet, la fiche dépliée de B et celle de C aussi.</p>
+</footer>
+
+<script>const D = /*__DATA__*/null;</script>
+<script>
+(() => {
+  'use strict';
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const MV = typeof MOUVEMENT !== 'undefined' ? MOUVEMENT : null;
+  const reduit = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+  const anime = () => (MV ? MV.permis() : !(reduit && reduit.matches));
+  document.documentElement.classList.toggle('still', !anime());
+  const bientot = f => (anime() ? requestAnimationFrame(() => requestAnimationFrame(f)) : f());
+  const S = () => D.site || {}, L = () => S().libelles || {};
+  const bySlug = slug => (D.shows || []).find(s => s.slug === slug) || null;
+
+  /* ---------- les couleurs des univers (la synthèse : uVarsCalcul, couleursSp) ---------- */
+  const hex = x => /^#[0-9a-f]{6}$/i.test(x || '');
+  const lum = h => { const f = c => (c <= .03928 ? c / 12.92 : ((c + .055) / 1.055) ** 2.4); const [r, g, b] = [1, 3, 5].map(i => f(parseInt(h.slice(i, i + 2), 16) / 255)); return .2126 * r + .7152 * g + .0722 * b; };
+  const contraste = (a, b) => { const x = lum(a) + .05, y = lum(b) + .05; return x > y ? x / y : y / x; };
+  const mix = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+  const eclaircie = (h, fond, cible = 4.6) => { let [r, g, b] = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), c = h;
+    for (let k = 0; k < 40 && contraste(c, fond) < cible; k++) { r += (255 - r) * .08; g += (255 - g) * .08; b += (255 - b) * .08; c = '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join(''); }
+    return c; };
+  const U0 = { fond: '#1a1016', fond2: '#24161f', texte: '#f7ecf1', texte2: '#c9b7c1', accent: '#bc3e80', accent2: '#f07ab6', scene: '#f07ab6', lueur: 'rgba(188,62,128,.3)' };
+  const P0 = { titre: 'Ubuntu', titreGraisse: 500, texte: 'Open Sans', etiquette: 'Raleway' };
+  const SANS = /^(Ubuntu|Open Sans|Raleway|Inter|Space Grotesk|Anton|Archivo|Montserrat|Roboto|Lato|Work Sans|DM Sans|Manrope|Nunito|Poppins|IBM Plex Sans|Source Sans 3|Instrument Sans)$/i;
+  // (les polices de titre n'ont pas la même taille apparente : le coefficient de chacune, celui du sommaire)
+  const TK = { 'Anton': .9, 'Space Grotesk': .9, 'Ubuntu': .92, 'Cormorant Garamond': 1.1, 'Bodoni Moda': .94, 'IM Fell English': 1.02, 'IM Fell French Canon': .98 };
+  const PAPIER_NUIT = '#1b1117';
+  const memoire = new Map();
+  function uVars(s) {
+    const cle = `u:${s.slug}:${s.couleur}:${JSON.stringify(s.univers || null)}`;
+    if (memoire.has(cle)) return memoire.get(cle);
+    const u = s.univers || {}, cu = u.couleurs || {}, p = { ...P0, ...(u.polices || {}) };
+    let c = Object.fromEntries(Object.entries(U0).map(([k, v]) => [k, cu[k] && (k === 'lueur' || hex(cu[k])) ? cu[k] : v]));
+    // la nuit d'un univers clair (règle 19) : ses couleurs retournées, comme dans la synthèse ; un univers sombre reste lui-même
+    if (u.clair) c = { ...c, fond: mix(c.texte, '#151014', .55), fond2: mix(c.texte, '#151014', .35), texte: c.fond, texte2: mix(c.fond, c.texte2, .25) };
+    const lisible = x => hex(x) && contraste(x, c.fond) >= 4.5 && contraste(x, c.fond2) >= 4.5;
+    const vif = (u.clair ? [cu.accent, cu.accent2, cu.scene] : [c.accent2, c.scene, c.accent]).find(lisible) || c.texte2;
+    const sur = contraste('#ffffff', c.accent) >= 4.5 ? '#ffffff' : contraste(c.fond, c.accent) >= contraste(c.texte, c.accent) ? c.fond : c.texte;
+    const titre = `'${p.titre}', ${SANS.test(p.titre) ? "'Open Sans', sans-serif" : 'Georgia, serif'}`;
+    const corps = p.texte === 'Cormorant Garamond' ? "'Cormorant Garamond', Georgia, serif" : 'var(--texte)';
+    const etiq = /mono/i.test(p.etiquette || '') ? "ui-monospace, 'SF Mono', Menlo, Consolas, monospace" : 'var(--etiq)';
+    const coul = hex(s.couleur) ? eclaircie(s.couleur, PAPIER_NUIT) : vif;
+    const v = `--u-fond:${c.fond};--u-fond2:${c.fond2};--u-texte:${c.texte};--u-texte2:${c.texte2};--u-accent:${c.accent};--u-accent2:${c.accent2};--u-scene:${c.scene};--u-lueur:${c.lueur};--u-vif:${vif};--u-sur-accent:${sur};--u-titre-f:${titre};--u-titre-g:${p.titreGraisse};--u-corps:${corps};--u-etiq:${etiq};--c:${coul};--tk:${TK[p.titre] || 1}`;
+    memoire.set(cle, v);
+    return v;
+  }
+  const mo = s => (s.univers && s.univers.motif) || s.motif || 'aucun';
+  const uClasse = s => `u u-${esc(mo(s))}`;
+
+  /* ---------- les motifs en petit (la synthèse) ---------- */
+  const arc = (cx, cy, r, a0, a1) => { const p = a => { const t = (a - 90) * Math.PI / 180; return `${(cx + r * Math.cos(t)).toFixed(1)} ${(cy + r * Math.sin(t)).toFixed(1)}`; }; return `M${p(a0)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${p(a1)}`; };
+  const PETITS = {
+    arene: () => `<circle cx="20" cy="20" r="16"/>${[0, 120, 240].map(a => `<path d="${arc(20, 20, 10.5, a + 14, a + 106)}" stroke-width="3.2"/>`).join('')}`,
+    jumeaux: () => '<path d="M5 35V17a7.5 7.5 0 0 1 15 0v18M20 35V17a7.5 7.5 0 0 1 15 0v18"/>',
+    nez: () => '<path d="M14 3C8 6 7 13 9 18l1 3 20 4c1 .5.4 2.5-1.4 2.5L13 28c0 1.6 1.5 2.6.8 3.6-.8 1.3.7 2.5.2 3.9-.4 1.5-1.8 2.6-3 4"/>',
+    horloge: () => '<circle cx="20" cy="20" r="16"/><path d="M20 20V9M20 20l7.5 4.5"/>',
+    fil: () => '<path d="M2 30C9 4 17 36 23 17S35 6 38 22"/>',
+    paperboard: () => '<rect x="8" y="8" width="24" height="27" rx="1.5"/><path d="M13 4.5h14M12 16h16M12 22h16M12 28h9"/>',
+    annotations: () => '<ellipse cx="20" cy="19" rx="16" ry="10.5" transform="rotate(-9 20 19)"/><path d="M5 34c6-2.5 13 1 20-1.5"/>',
+    chronologie: () => `<path d="M2 27H38"/>${[4, 12, 20, 28, 36].map((x, i) => `<path d="M${x} ${i % 2 ? 23 : 20}V31"/>`).join('')}<circle cx="36" cy="13" r="3"/>`,
+  };
+  const petit = m => (PETITS[m] ? `<svg class="mo" viewBox="0 0 40 40" aria-hidden="true" focusable="false">${PETITS[m]()}</svg>` : '');
+
+  /* ---------- ce que dit chaque spectacle (tout vient de D) ---------- */
+  const FLECHE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 12h15M13 6l6 6-6 6"/></svg>';
+  const TRAIT = '<svg class="trait" viewBox="0 0 120 20" aria-hidden="true"><path pathLength="1" d="M2 12 C 22 4, 38 4, 54 11 S 86 19, 100 10 C 108 5, 116 7, 115 13 C 114 17, 108 17, 107 13"/></svg>';
+  const menuSp = () => (S().menu || []).find(m => m && (m.cle === 'spectacles' || m.id === 'spectacles')) || { texte: L().lesSpectacles || L().spectacles || 'Spectacles' };
+  const saisonTitre = () => (((S().saisons || [])[0]) || {}).titre || '';
+  const fini = s => !s.enTournee && !s.statut;
+  const lien = s => `synthese.html#/spectacle/${encodeURIComponent(s.slug)}${fini(s) ? '' : '/voir'}`;
+  const badge = s => (s.statut ? esc(s.statut) : s.enTournee ? esc(L().enTournee || '') : '');
+  const etat = (s, cls = '') => (badge(s) ? `<span class="etat${s.statut ? '' : ' vit'}${cls ? ' ' + cls : ''}">${badge(s)}</span>` : '');
+  // la prochaine date tout public d'un spectacle, ou, en création, son annonce (s.tournee) : la règle du sommaire
+  const dateDe = s => (D.dates || []).find(x => x.slug === s.slug && !x.scolaire) || null;
+  function suite(s) {
+    const d = dateDe(s), T = s.tournee || {};
+    if (d) return { k: T.titre || L().actuellementEnTournee || '', ligne: d.ligne };
+    if (s.statut && T.titre) return { k: T.titre, ligne: T.texte || '' };
+    return null;
+  }
+  const dateBloc = (s, cls) => { const x = suite(s); return x ? `<p class="${cls}"><span class="k">${esc(x.k)}</span>${x.ligne ? `<span class="d">${esc(x.ligne)}</span>` : ''}</p>` : ''; };
+  const kLigne = s => { const A = s.actionCulturelle, parts = [s.lieuTemps, s.creation, A && A.type].filter(Boolean);
+    return `<p class="kl">${petit(mo(s))}<span class="kk">${parts.map(x => `<span>${esc(x)}</span>`).join('')}</span></p>`; };
+  const decouvrir = s => `<a class="bu plein" href="${lien(s)}" target="_blank" rel="noopener">${esc(L().decouvrir || '')}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a>`;
+  const photo = s => D.photos[s.slug] || '';
+
+  /* ---------- la carte des tournées d'un spectacle (carte.js) ----------
+     Ses communes à venir en bras pleins (et ses tournées passées en filets), sinon toutes celles où il a joué ; avec des
+     dates à venir, le cadre se serre sur elles, Rouen compris. Les bras poussent depuis Rouen quand la carte paraît. */
+  let nK = 0;
+  function carteDe(s) {
+    if (typeof CARTE === 'undefined' || !D.carte) return '';
+    const sp = CARTE.spectacle(s.slug), R = CARTE.rouen, dist = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]), loin = x => dist(x) >= 6;
+    const aVenir = sp.aVenir.some(loin), vus = new Set(sp.aVenir.map(x => x.l));
+    const lieux = aVenir ? sp.aVenir : sp.passe, passe = aVenir ? sp.passe.filter(x => !vus.has(x.l)) : [];
+    if (!lieux.length && !passe.length) return '';
+    const box = aVenir ? CARTE.cadre(lieux, { marge: 70, min: 320 }) : CARTE.viewBox, VB = box.split(/\s+/).map(Number);
+    const e = Math.max(VB[2], VB[3]) / 800, simple = lieux.length > 14, id = 'k' + (++nK), dmax = Math.max(80, ...lieux.map(dist));
+    const larg = x => Math.min(7.5, 2.2 + Math.sqrt(x.n || 1) * 1.15) * e, delai = x => (dist(x) / dmax * .6).toFixed(2);
+    const encart = [...lieux, ...passe].some(x => x.encart);
+    return `<svg class="k${simple ? ' simple' : ''}" viewBox="${box}" role="img" aria-label="${esc(s.titre)}">
+      <defs>${simple ? '' : lieux.map((x, i) => `<mask id="${id}m${i}"><path class="m" pathLength="1" style="--d:${delai(x)}s;stroke-width:${(18 * e).toFixed(1)}" d="${CARTE.trait(x.xy)}"/></mask>`).join('')}</defs>
+      <path class="voisin" d="${CARTE.fond.belgique}"/><path class="voisin" d="${CARTE.fond.luxembourg}"/><path class="pays" d="${CARTE.fond.pays}"/>
+      ${encart ? `<circle class="encart" cx="${CARTE.ENCART[0]}" cy="${CARTE.ENCART[1]}" r="${(24 * e).toFixed(1)}"/>` : ''}
+      <g class="passe">${passe.map(x => `<path d="${CARTE.trait(x.xy)}"/>`).join('')}</g>
+      <g class="lieux">${lieux.map((x, i) => { const [px, py] = x.xy, b = simple ? null : CARTE.bras(x.xy, { w0: larg(x), w1: .7 * e });
+        const bras = simple ? (loin(x) ? `<path class="bras-trait" d="${CARTE.trait(x.xy)}"/>` : '') : b ? `<path class="bras" mask="url(#${id}m${i})" d="${b}"/><path class="bout" pathLength="1" d="${CARTE.bout(x.xy, { r: 4.6 * e })}"/>` : '';
+        return `<g class="lieu" style="--d:${delai(x)}s">${bras}<circle class="point" cx="${px}" cy="${py}" r="${((simple ? 2.8 : 3.6) * e).toFixed(1)}"/></g>`; }).join('')}</g>
+      <circle class="rouen" cx="${R[0]}" cy="${R[1]}" r="${(5.5 * e).toFixed(1)}"/><text class="rouen-nom" x="${(R[0] + 9 * e).toFixed(1)}" y="${(R[1] - 9 * e).toFixed(1)}">Rouen</text>
+    </svg>`;
+  }
+  // le nom de Rouen garde la même taille à l'écran, quelle que soit la largeur de la carte ; les bras poussent
+  const mesure = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(x => { const vb = x.target.viewBox && x.target.viewBox.baseVal; if (x.contentRect.width && vb && vb.width) x.target.style.setProperty('--k', (vb.width / x.contentRect.width).toFixed(3)); })) : null;
+  function pousser(racine) {
+    $$('svg.k', racine).forEach(svg => { if (mesure && !svg.__k) { svg.__k = true; mesure.observe(svg); } if (!svg.classList.contains('pousse')) bientot(() => svg.classList.add('pousse')); });
+  }
+
+  /* ---------- le site autour : l'en-tête, l'écran, la barre du bas ---------- */
+  function chrome(contenu) {
+    const cs = S().couleurSaison || {}, menu = S().menu || [];
+    return `<div class="site" style="--saison:${esc(cs.couleur || '#1f3a73')};--saison-vive:${esc(cs.vive || '#7f9fe0')}">
+      <header class="top"><a class="marque" href="synthese.html#/" target="_blank" rel="noopener"><span class="l" aria-hidden="true">${D.logo && D.logo.octopus ? D.logo.octopus : ''}</span><span>${esc(S().titreSuffixe || S().nom || '')}</span></a></header>
+      <div class="ecran" tabindex="-1">${contenu}</div>
+      <nav class="barre" aria-label="${esc(L().menu || 'Menu')}">${menu.map(m => `<a href="synthese.html${esc(m.href)}" target="_blank" rel="noopener"${(m.cle || m.id) === 'spectacles' ? ' aria-current="page"' : ''}><span class="pt" aria-hidden="true"></span>${esc(m.court || m.texte)}</a>`).join('')}</nav>
+    </div>`;
+  }
+  const teteCompacte = () => `<h1 class="h1 petit">${esc(menuSp().texte)}</h1>${saisonTitre() ? `<span class="sai etiq">${esc(saisonTitre())}</span>` : ''}`;
+
+  /* ---------- A. La poursuite ---------- */
+  const etatA = { lit: 0 };
+  const ligneA = (s, i) => `<li class="a-i ${uClasse(s)}" style="${uVars(s)}" data-i="${i}">
+      <a class="a-a" href="${lien(s)}" target="_blank" rel="noopener">
+        <span class="a-ligne"><span class="a-t"><span class="ut">${esc(s.titre)}</span></span>${s.annee ? `<span class="a-an">${esc(s.annee)}</span>` : ''}</span>
+        <span class="a-dek">${s.sousTitre ? `<span>${s.sousTitre}</span>` : '<span></span>'}${etat(s)}</span>
+        <span class="a-ph"><img src="${photo(s)}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></span>
+        ${s.accroche ? `<span class="a-acc">${esc(s.accroche)}</span>` : ''}
+        ${dateBloc(s, 'a-suite').replace(/^<p/, '<span').replace(/<\/p>$/, '</span>')}
+      </a></li>`;
+  function rendreA(tel) {
+    const sh = D.shows || [];
+    tel.innerHTML = chrome(`<div class="a">
+      <header class="a-tete"><h1 class="h1">${esc(menuSp().texte)}</h1>${TRAIT}<p class="mast"><span class="filets" aria-hidden="true"></span><span>${esc(S().nom || '')}</span>${saisonTitre() ? `<span class="sai">${esc(saisonTitre())}</span>` : ''}</p></header>
+      <nav class="a-index" aria-label="${esc(menuSp().texte)}">${sh.map((s, i) => `<button type="button" data-i="${i}" style="${uVars(s)}" aria-label="${esc(s.titre)}"><img src="${photo(s)}" alt="">${s.enTournee && !s.statut ? '<span class="pt" aria-hidden="true"></span>' : ''}</button>`).join('')}</nav>
+      <ol class="a-l">${sh.map(ligneA).join('')}</ol></div>`);
+    const ecran = $('.ecran', tel), index = $('.a-index', tel), items = $$('.a-i', tel), boutons = $$('.a-index button', tel);
+    let lit = -1; const dedans = new Set();
+    const allumer = i => {
+      if (i === lit || !items[i]) return;
+      lit = i; etatA.lit = i;
+      items.forEach((el, k) => el.classList.toggle('lit', k === i));
+      boutons.forEach((b, k) => b.classList.toggle('lit', k === i));
+      const b = boutons[i];
+      index.scrollTo({ left: b.offsetLeft - index.clientWidth / 2 + b.offsetWidth / 2, behavior: anime() ? 'smooth' : 'auto' });
+    };
+    allumer(Math.min(etatA.lit, items.length - 1));
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(es => {
+        es.forEach(e => { const i = +e.target.dataset.i; if (e.isIntersecting) dedans.add(i); else dedans.delete(i); });
+        if (dedans.size) allumer(Math.min(...dedans));
+      }, { root: ecran, rootMargin: '-38% 0px -42% 0px', threshold: 0 });
+      items.forEach(el => io.observe(el));
+    }
+    boutons.forEach(b => b.addEventListener('click', () => { const el = items[+b.dataset.i]; if (el) ecran.scrollTo({ top: Math.max(0, el.offsetTop - index.offsetHeight - 6), behavior: anime() ? 'smooth' : 'auto' }); }));
+  }
+
+  /* ---------- B. La pile d'affiches ---------- */
+  const etatB = { ouvert: null };
+  const afficheB = (s, i) => { const x = suite(s), id = `b-${esc(s.slug)}`;
+    return `<article class="b-aff ${uClasse(s)}" style="${uVars(s)}" data-slug="${esc(s.slug)}">
+      <h2 class="b-h"><button type="button" class="b-dos" id="${id}-b" aria-expanded="false" aria-controls="${id}-c">
+        <img class="b-img" src="${photo(s)}" alt="" loading="${i < 8 ? 'eager' : 'lazy'}" decoding="async"><span class="b-voile" aria-hidden="true"></span><span class="b-voile2" aria-hidden="true"></span>
+        <span class="b-txt"><span class="b-t"><span class="ut">${esc(s.titre)}</span></span>${s.annee ? `<span class="b-an">${esc(s.annee)}</span>` : '<span></span>'}
+          <span class="b-sous">${etat(s)}${x && x.ligne && !s.statut ? `<span class="pro">${esc(x.ligne)}</span>` : ''}</span></span>
+      </button></h2>
+      <div class="b-corps" id="${id}-c" role="region" aria-labelledby="${id}-b" inert><div class="b-in"><div class="b-fiche">
+        ${s.sousTitre ? `<p class="b-st">${s.sousTitre}</p>` : ''}
+        ${kLigne(s)}
+        ${s.accroche ? `<p class="acc">${esc(s.accroche)}</p>` : ''}
+        ${dateBloc(s, 'date')}
+        <figure class="b-carte" data-carte="${esc(s.slug)}" hidden></figure>
+        <p class="pied-u">${decouvrir(s)}</p>
+      </div></div></div>
+    </article>`; };
+  function rendreB(tel) {
+    const sh = D.shows || [];
+    tel.innerHTML = chrome(`<div class="b"><header class="b-tete">${teteCompacte()}</header><div class="b-pile">${sh.map(afficheB).join('')}</div></div>`);
+    const ecran = $('.ecran', tel), affs = $$('.b-aff', tel);
+    const fermer = a => { a.classList.remove('ouvert'); $('.b-dos', a).setAttribute('aria-expanded', 'false'); $('.b-corps', a).setAttribute('inert', ''); if (etatB.ouvert === a.dataset.slug) etatB.ouvert = null; };
+    const ouvrir = (a, premier) => {
+      a.classList.add('ouvert'); etatB.ouvert = a.dataset.slug;
+      $('.b-dos', a).setAttribute('aria-expanded', 'true'); $('.b-corps', a).removeAttribute('inert');
+      const f = $('.b-carte', a);
+      if (f && !f.firstElementChild) { const html = carteDe(bySlug(a.dataset.slug) || {}); if (html) { f.innerHTML = html; f.hidden = false; } }
+      pousser(a);
+      if (premier) return;
+      if (MV && anime()) MV.cascade($('.b-fiche', a), { selecteur: '.b-st, .kl, .acc, .date, .b-carte, .pied-u', pas: 40, duree: 300, decalage: 8 });
+      // l'affiche dépliée vient en haut de l'écran (une fois sa hauteur prise)
+      const aller = () => ecran.scrollTo({ top: Math.max(0, a.offsetTop - 6), behavior: anime() ? 'smooth' : 'auto' });
+      if (anime()) setTimeout(aller, 470); else aller();
+    };
+    affs.forEach(a => $('.b-dos', a).addEventListener('click', () => {
+      const etait = a.classList.contains('ouvert');
+      affs.forEach(x => { if (x !== a && x.classList.contains('ouvert')) fermer(x); });
+      if (etait) fermer(a); else ouvrir(a, false);
+    }));
+    if (etatB.ouvert) { const a = affs.find(x => x.dataset.slug === etatB.ouvert); if (a) ouvrir(a, true); }
+  }
+
+  /* ---------- C. Le présentoir ---------- */
+  const etatC = { cur: 0 };
+  const afficheC = (s, i, cur) => `<article class="c-aff ${uClasse(s)}${cur ? '' : ' loin'}" style="${uVars(s)}" data-i="${i}" aria-label="${esc(s.titre)}">
+      <img src="${photo(s)}" alt="" loading="${Math.abs(i - etatC.cur) <= 1 ? 'eager' : 'lazy'}" decoding="async">
+      <div class="c-txt"><p class="c-sur">${s.creation ? `<span>${esc(s.creation)}</span>` : ''}${etat(s)}</p><h2 class="c-t"><span class="ut">${esc(s.titre)}</span></h2>${s.sousTitre ? `<p class="c-st">${s.sousTitre}</p>` : ''}</div>
+    </article>`;
+  const ficheC = s => `${kLigne(s)}${s.accroche ? `<p class="acc">${esc(s.accroche)}</p>` : ''}${dateBloc(s, 'date')}<p class="pied-u">${decouvrir(s)}</p>${(h => (h ? `<figure class="c-carte">${h}</figure>` : ''))(carteDe(s))}`;
+  function rendreC(tel) {
+    const sh = D.shows || [], i0 = Math.min(etatC.cur, Math.max(0, sh.length - 1));
+    if (!sh.length) { tel.innerHTML = chrome(''); return; }
+    tel.innerHTML = chrome(`<div class="c ${uClasse(sh[i0])}" style="${uVars(sh[i0])}">
+      <header class="c-tete"><div class="c-l1">${teteCompacte()}</div>
+        <nav class="c-rail" aria-label="${esc(menuSp().texte)}">${sh.map((s, i) => `<button type="button" data-i="${i}" style="${uVars(s)}" aria-label="${esc(s.titre)}"${i === i0 ? ' class="cur" aria-current="true"' : ''}><img src="${photo(s)}" alt=""></button>`).join('')}</nav></header>
+      <div class="c-defile" tabindex="0" role="group" aria-roledescription="carrousel" aria-label="${esc(menuSp().texte)}">${sh.map((s, i) => afficheC(s, i, i === i0)).join('')}</div>
+      <section class="c-fiche" aria-live="polite">${ficheC(sh[i0])}</section></div>`);
+    const c = $('.c', tel), defile = $('.c-defile', tel), affs = $$('.c-aff', defile), rail = $$('.c-rail button', tel), fiche = $('.c-fiche', tel);
+    let cur = i0, minuteur = 0;
+    pousser(fiche);
+    const poser = i => {
+      if (i === cur || !sh[i]) return;
+      cur = i; etatC.cur = i;
+      c.className = `c ${uClasse(sh[i])}`; c.style.cssText = uVars(sh[i]);
+      affs.forEach((a, k) => a.classList.toggle('loin', k !== i));
+      rail.forEach((b, k) => { b.classList.toggle('cur', k === i); if (k === i) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current'); });
+      clearTimeout(minuteur);
+      const remplacer = () => { fiche.innerHTML = ficheC(sh[i]); fiche.classList.remove('change'); pousser(fiche);
+        if (MV && anime()) MV.cascade(fiche, { selecteur: '.kl, .acc, .date, .pied-u, .c-carte', pas: 40, duree: 300, decalage: 8 }); };
+      if (anime()) { fiche.classList.add('change'); minuteur = setTimeout(remplacer, 190); } else remplacer();
+    };
+    const aller = (i, doux) => { const a = affs[i]; if (!a) return; defile.scrollTo({ left: a.offsetLeft - (defile.clientWidth - a.offsetWidth) / 2, behavior: doux && anime() ? 'smooth' : 'auto' }); };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting && e.intersectionRatio >= .6) poser(+e.target.dataset.i); }); }, { root: defile, threshold: [.6] });
+      affs.forEach(a => io.observe(a));
+    }
+    rail.forEach(b => b.addEventListener('click', () => aller(+b.dataset.i, true)));
+    defile.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight') { aller(Math.min(sh.length - 1, cur + 1), true); e.preventDefault(); }
+      else if (e.key === 'ArrowLeft') { aller(Math.max(0, cur - 1), true); e.preventDefault(); }
+      else if (e.key === 'Home') { aller(0, true); e.preventDefault(); }
+      else if (e.key === 'End') { aller(sh.length - 1, true); e.preventDefault(); }
+    });
+    if (i0) aller(i0, false);
+  }
+
+  /* ---------- la page d'aujourd'hui (la synthèse, chargée quand on l'amène à l'écran) ---------- */
+  function chargerActuel(tel) {
+    if (tel.dataset.charge) return;
+    tel.dataset.charge = '1';
+    const f = document.createElement('iframe');
+    f.title = 'La page des spectacles aujourd’hui'; f.loading = 'eager'; f.src = 'synthese.html#/spectacles';
+    f.addEventListener('load', () => { const a = $('.attente', tel); if (a) a.remove(); });
+    tel.appendChild(f);
+  }
+
+  /* ---------- la planche : les téléphones, le choix, l'adresse ---------- */
+  const planche = $('#planche'), postes = $$('.poste', planche), tabs = $$('.onglets [role="tab"]');
+  const tels = { a: $('.tel[data-prop="a"]'), b: $('.tel[data-prop="b"]'), c: $('.tel[data-prop="c"]'), actuel: $('.tel[data-prop="actuel"]') };
+  function rendre() { rendreA(tels.a); rendreB(tels.b); rendreC(tels.c); }
+  rendre();
+  if (typeof DONNEES !== 'undefined' && DONNEES.surChangement) DONNEES.surChangement(rendre);
+
+  let courant = 'a';
+  const choisir = id => { courant = id; tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.id === id))); if (id === 'actuel') chargerActuel(tels.actuel);
+    try { history.replaceState(null, '', '#' + id); } catch (e) { /* une adresse qu'on ne peut pas réécrire */ } };
+  const montrer = (id, doux) => { const p = postes.find(x => x.dataset.id === id); if (!p) return;
+    planche.scrollTo({ left: p.offsetLeft - parseFloat(getComputedStyle(planche).paddingLeft || '0'), behavior: doux && anime() ? 'smooth' : 'auto' }); choisir(id); };
+  tabs.forEach(t => t.addEventListener('click', () => montrer(t.dataset.id, true)));
+  if ('IntersectionObserver' in window) {
+    const vus = new Map();
+    const io = new IntersectionObserver(es => {
+      es.forEach(e => vus.set(e.target.dataset.id, e.intersectionRatio));
+      // (au bureau, plusieurs téléphones sont visibles : l'onglet est celui du plus à gauche visible ; au téléphone, celui qu'on voit)
+      const visibles = postes.filter(p => (vus.get(p.dataset.id) || 0) >= .55);
+      if (visibles.length) { const id = visibles[0].dataset.id; if (id !== courant) choisir(id); }
+      if ((vus.get('actuel') || 0) > .2) chargerActuel(tels.actuel);
+    }, { root: planche, threshold: [.2, .55, .9] });
+    postes.forEach(p => io.observe(p));
+  }
+  const h = (location.hash || '').replace(/^#/, '');
+  if (['a', 'b', 'c', 'actuel'].includes(h) && h !== 'a') montrer(h, false);
+})();
+</script>
+</body>
+</html>

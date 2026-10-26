@@ -739,6 +739,9 @@ OUTILS = ("agenda.js", "donnees.js", "carte.js", "intro.js", "edition.js", "doss
 # Les outils de <head>, avant toute feuille de style : theme.js (THEME) pose le jour ou la nuit sur <html> avant le
 # premier dessin (règle 19 : pas d'éclair) ; il ne lit rien de D.
 OUTILS_TETE = ("theme.js",)
+# Les pages annexes : des prévisualisations à part (la page des spectacles au téléphone, en trois propositions), construites
+# et publiées comme les maquettes (D, les photos, la nuit) mais hors de la planche, avec les seuls outils qu'elles emploient.
+ANNEXES = {"spectacles-mobile": ("agenda.js", "donnees.js", "carte.js", "mouvement.js", "cadrage.js")}
 
 
 def outils():
@@ -757,7 +760,8 @@ def avec_outils(name, src):
     (donnees.js), la carte des tournées (carte.js) et l'ouverture sur le logo (intro.js)."""
     if DATA_LIGNE not in src:
         raise SystemExit(f"{name}.html : la ligne {DATA_LIGNE} est absente")
-    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in outils() + (("pieuvre.js", "creature.js") if name in PAGES_PIEUVRE else ()))
+    fichiers = ANNEXES[name] if name in ANNEXES else outils() + (("pieuvre.js", "creature.js") if name in PAGES_PIEUVRE else ())
+    js = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in fichiers)
     src = src.replace(DATA_LIGNE, DATA_LIGNE + js, 1)
     # theme.js dans <head>, juste après les balises meta du début (avant les feuilles de style, qu'un script attendrait)
     tete = "".join(f"\n<script>\n{(SRC / f).read_text(encoding='utf-8')}</script>" for f in OUTILS_TETE)
@@ -1018,9 +1022,10 @@ def reponse(dest):
     shutil.copytree(ROOT / "reponse", dest / "reponse", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
 
 
-def pages(D, files, names):
+def pages(D, files, names, annexes=()):
     """Le site GitHub Pages (docs/) : la planche en index, chaque maquette en page à part, hors des moteurs de recherche,
-    et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune."""
+    et les photos une seule fois dans docs/photos/, que les pages chargent au lieu de les embarquer chacune. Les pages
+    annexes (ANNEXES) sont publiées à côté, hors de la planche."""
     import shutil
     # jamais de site publié avec la pieuvre de substitution à la place du vrai logo
     if not fichier_marque(LOGO):
@@ -1035,7 +1040,7 @@ def pages(D, files, names):
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(octets)
     photo_urls = photos(files, base="photos/")
-    for n in names:
+    for n in list(names) + list(annexes):
         html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
     build_planche(D, photo_urls, names, web=True, dest=docs / "index.html")
@@ -1045,7 +1050,7 @@ def pages(D, files, names):
     reponse(docs)
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     size = sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
-    print(f"pages : {len(names)} maquettes et la planche dans docs/ ({size:.1f} Mo)")
+    print(f"pages : {len(names)} maquettes, {len(annexes)} page(s) annexe(s) et la planche dans docs/ ({size:.1f} Mo)")
 
 
 def main():
@@ -1054,7 +1059,10 @@ def main():
     DIST.mkdir(parents=True, exist_ok=True)
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     names = args or sorted(p.stem for p in SRC.glob("m[0-9][0-9].html")) + (["synthese"] if (SRC / "synthese.html").exists() else [])
-    for n in names:
+    # (les pages annexes se construisent avec tout, ou seules par leur nom ; elles ne vont pas dans la planche)
+    annexes = [n for n in names if n in ANNEXES] if args else [n for n in ANNEXES if (SRC / f"{n}.html").exists()]
+    names = [n for n in names if n not in ANNEXES]
+    for n in names + annexes:
         out = DIST / f"{n}.html"
         out.write_text(assemble(n, D, photo_urls), encoding="utf-8")
         print(f"wrote {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.0f} Ko)")
@@ -1069,7 +1077,7 @@ def main():
     if not args and planche.exists():
         build_planche(D, photo_urls, names)
         if "--pages" in sys.argv:
-            pages(D, files, names)
+            pages(D, files, names, annexes)
 
 
 def build_planche(D, photo_urls, names, web=False, dest=None):

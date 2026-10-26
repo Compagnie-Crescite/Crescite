@@ -14,7 +14,9 @@
    trajet ne casse la tangente.
 
    PIEUVRE.creer() → les tentacules, dans l'ordre de D.pieuvre.bras : { cle, cote, i, ... }
-     t.poser(ox, oy, s)          l'origine du dessin à l'écran (px) et l'échelle (px par unité du dessin)
+     t.poser(ox, oy, s)          l'origine du dessin à l'écran (px) et l'échelle (px par unité du dessin) ; le trajet en cours
+                                 est oublié (elle est au repos)
+     t.deplacer(ox, oy, s)       la même chose sans rien oublier : une pieuvre qui se déplace garde ses tentacules en route
      t.viser(cible, duree)       cible : { cle, x, y, sens, U, mobile, marge, racine, corps, tension } (le point d'accroche d'un
                                  titre, à l'écran ; sens 1 : la tentacule continue vers la droite sous le titre, -1 vers la
                                  gauche ; U : la longueur à souligner, en px ; marge : la place derrière le point d'accroche, en
@@ -23,7 +25,8 @@
                                  épine qui restent telles quelles dans le logo (.12 par défaut) et où commence la pointe (.7) :
                                  racine: .7 garde une boucle entière et la prolonge depuis sa descente ; epaisseur : la largeur
                                  au moins, en px, de ce qui sort du logo (une petite pieuvre a des tentacules trop fines pour
-                                 se voir : la partie déployée s'épaissit jusque-là, sa racine non) ; tension, de 0 à 1 :
+                                 se voir : la partie déployée s'épaissit jusque-là, sa racine non) ; boucle : la taille de
+                                 l'enroulement du bout, en fraction de la normale (1) ; tension, de 0 à 1 :
                                  la pointe se déroule) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
                                  coup). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
      t.avancer(dt, { temps, onde, penche, bob }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
@@ -98,6 +101,7 @@ const PIEUVRE = (() => {
       this.ox = ox; this.oy = oy; this.s = s; this.pose_ = true;
       this.pose = null; this.depuis = null; this.q = 1;
     }
+    deplacer(ox, oy, s) { this.ox = ox; this.oy = oy; this.s = s; this.pose_ = true; }
     racine() { return { x: this.ox + this.RX[0] * this.s, y: this.oy + this.RY[0] * this.s }; }
     // la partie de la peau hors de la racine (le liseré ne coupe pas la tentacule de son corps), pour une racine de rac fois l'épine
     libres(rac) {
@@ -166,7 +170,7 @@ const PIEUVRE = (() => {
       const U = Math.max(8, c.U || 0), pointe = [];
       for (let j = 0; j <= 24; j++) pointe.push([c.x + du * U * j / 24, c.y]);
       // (tension : un titre qu'on tire déroule la pointe)
-      const Lc = c.mobile ? 34 : 46, NC = 30, dl = Lc / NC, sens = du < 0 ? 1 : -1, k0 = 1.5 * Math.PI * 2.3 / Lc * (1 - .92 * (c.tension || 0));
+      const Lc = (c.mobile ? 34 : 46) * (c.boucle || 1), NC = 30, dl = Lc / NC, sens = du < 0 ? 1 : -1, k0 = 1.5 * Math.PI * 2.3 / Lc * (1 - .92 * (c.tension || 0));
       let ang = du < 0 ? Math.PI : 0, x = c.x + du * U, y = c.y;
       for (let j = 1; j <= NC; j++) {
         const kap = k0 * Math.pow((j - .5) / NC, 1.3);

@@ -471,6 +471,92 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
 }
 /* au téléphone, les colonnes collées se resserrent : le reste du tableau garde de la place pour défiler */
 @media (max-width: 520px) { .tab-cadre { --w-jour: 86px; --w-spectacle: 98px; } .tableur th, .tableur td { padding: 5px 7px; } .tableur td.c-spectacle .pastille { display: none; } }
+/* ———————————————— le mouvement de l'administration : les vues qui s'enchaînent (changerVueAdmin), les listes et les
+   fiches qui arrivent (main.entree, le temps du premier rendu), le pied qui dit l'état, la liste « à compléter » qui se
+   vide, la recherche qui s'ouvre, la pastille « direct » qui bat, la case du tableur qui s'enregistre, la liste qui
+   glisse (glisserVers), le champ visé qui s'allume (visee). Rien de tout cela si l'appareil demande moins d'animations,
+   ni avec ?anim=0 (html.still) ; l'en-tête et les annonces restent en place pendant une transition. */
+html.still *, html.still *::before, html.still *::after { animation: none !important; transition: none !important; }
+.barre { view-transition-name: barre; }
+#annonces { view-transition-name: annonces; }
+::view-transition-old(barre), ::view-transition-old(annonces) { display: none; }
+::view-transition-new(barre), ::view-transition-new(annonces) { animation: none; }
+::view-transition-group(barre), ::view-transition-group(annonces) { animation: none; }
+.pied-ed::before { content: ""; position: absolute; left: 14px; right: 14px; top: -1px; height: 3px; border-radius: 0 0 3px 3px; background: var(--option); transform: scaleX(0); transform-origin: 0 50%; transition: transform .3s cubic-bezier(.2, .8, .2, 1), background-color .3s; }
+.pied-ed.sale::before { transform: scaleX(1); }
+.pied-ed.ok::before { transform: scaleX(1); background: var(--ok); }
+.pied-ed.sale [data-enregistrer] { box-shadow: 0 0 0 3px var(--accent-doux); }
+.avant-faits li.fait { overflow: hidden; background: var(--ok-doux); color: var(--ok); }
+.avant-faits li.fait .badge { margin-left: auto; }
+.onglets-ed button { transition: background-color .2s, color .2s, border-color .2s; }
+.carte-sp { transition: transform .2s, box-shadow .2s; }
+.carte-sp:hover { transform: translateY(-2px); box-shadow: 0 2px 6px rgba(30, 20, 30, .06), 0 16px 32px -16px rgba(30, 20, 30, .35); }
+.carte-sp .img::after { transition: height .2s; }
+.carte-sp:hover .img::after { height: 9px; }
+.ligne { transition: box-shadow .15s, border-color .15s; }
+.nav a, .seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
+.champ input, .champ select, .champ textarea, .riche, input[type=search], .filtres input, .filtres select { transition: border-color .15s, box-shadow .15s; }
+/* le squelette du chargement : la barre, une liste et une fiche, qui luisent (le contenu paraît ensuite, main.fondu) */
+.ad-squelette { --h: 16px; }
+.sq { position: relative; display: block; height: var(--h); border-radius: 8px; background: var(--doux); overflow: hidden; }
+.sq-barre { display: flex; align-items: center; gap: 18px; padding: 14px 20px; border-bottom: 1px solid var(--trait); background: var(--carte); }
+.sq-rond { width: 42px; height: 24px; border-radius: 999px; }
+.sq-main { display: grid; gap: 16px; max-width: 1500px; margin: 0 auto; padding: 20px; }
+.sq-deux { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 18px; }
+.sq-deux > div { display: grid; gap: 8px; align-content: start; }
+.sq-ligne { height: 64px; border-radius: 10px; }
+.sq-bloc { height: 320px; border-radius: 12px; }
+@media (max-width: 1100px) { .sq-deux { grid-template-columns: 1fr; } .sq-bloc { display: none; } }
+.btn:active:not([disabled]) { transform: scale(.97); }
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
+  html[data-sens="avant"]::view-transition-old(root) { animation-name: ad-sort-gauche; }
+  html[data-sens="avant"]::view-transition-new(root) { animation-name: ad-entre-droite; }
+  html[data-sens="arriere"]::view-transition-old(root) { animation-name: ad-sort-droite; }
+  html[data-sens="arriere"]::view-transition-new(root) { animation-name: ad-entre-gauche; }
+  @keyframes ad-sort-gauche { to { opacity: 0; transform: translateX(-16px); } }
+  @keyframes ad-entre-droite { from { opacity: 0; transform: translateX(22px); } }
+  @keyframes ad-sort-droite { to { opacity: 0; transform: translateX(16px); } }
+  @keyframes ad-entre-gauche { from { opacity: 0; transform: translateX(-22px); } }
+  main.fondu { animation: ad-paraitre .22s ease-out; }
+  .sq::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--carte) 85%, transparent), transparent); animation: sq-lueur 1.3s infinite; }
+  @keyframes sq-lueur { to { transform: translateX(100%); } }
+  @keyframes ad-paraitre { from { opacity: 0; } }
+  @keyframes ad-arrive { from { opacity: 0; transform: translateY(8px); } }
+  main.entree .ligne, main.entree .carte-sp, main.entree .editeur > .bloc, main.entree .avant, .editeur.onglet-neuf > .bloc, .editeur.onglet-neuf #eq-onglet > * { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
+  main.entree .ligne:nth-child(2), main.entree .cartes > :nth-child(2) > .carte-sp, main.entree .editeur > .bloc:nth-child(2) { animation-delay: 0.03s; }
+  main.entree .ligne:nth-child(3), main.entree .cartes > :nth-child(3) > .carte-sp, main.entree .editeur > .bloc:nth-child(3) { animation-delay: 0.06s; }
+  main.entree .ligne:nth-child(4), main.entree .cartes > :nth-child(4) > .carte-sp, main.entree .editeur > .bloc:nth-child(4) { animation-delay: 0.09s; }
+  main.entree .ligne:nth-child(5), main.entree .cartes > :nth-child(5) > .carte-sp, main.entree .editeur > .bloc:nth-child(5) { animation-delay: 0.12s; }
+  main.entree .ligne:nth-child(6), main.entree .cartes > :nth-child(6) > .carte-sp, main.entree .editeur > .bloc:nth-child(6) { animation-delay: 0.15s; }
+  main.entree .ligne:nth-child(7), main.entree .cartes > :nth-child(7) > .carte-sp, main.entree .editeur > .bloc:nth-child(7) { animation-delay: 0.18s; }
+  main.entree .ligne:nth-child(8), main.entree .cartes > :nth-child(8) > .carte-sp, main.entree .editeur > .bloc:nth-child(8) { animation-delay: 0.21s; }
+  main.entree .ligne:nth-child(9), main.entree .cartes > :nth-child(9) > .carte-sp, main.entree .editeur > .bloc:nth-child(9) { animation-delay: 0.24s; }
+  main.entree .ligne:nth-child(10), main.entree .cartes > :nth-child(10) > .carte-sp, main.entree .editeur > .bloc:nth-child(10) { animation-delay: 0.27s; }
+  dialog.recherche[open] { animation: rch-ouvre .2s cubic-bezier(.2, .8, .2, 1); }
+  dialog.recherche[open]::backdrop { animation: ad-paraitre .2s ease-out; }
+  @keyframes rch-ouvre { from { opacity: 0; transform: translateY(-10px) scale(.985); } }
+  .rch-liste.entree [role=option] { animation: ad-arrive .25s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
+  .direct.on.bat::before { animation: direct-bat .7s ease-out; }
+  @keyframes direct-bat { from { box-shadow: 0 0 0 3px rgba(43, 182, 115, .55); } to { box-shadow: 0 0 0 11px rgba(43, 182, 115, 0); } }
+  .pop { animation: ad-pop .45s cubic-bezier(.3, 1.6, .5, 1); }
+  @keyframes ad-pop { from { transform: scale(.6); } }
+  .connexion form.secoue { animation: secoue .4s cubic-bezier(.36, .07, .19, .97); }
+  @keyframes secoue { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-6px); } 40%, 60% { transform: translateX(6px); } }
+  .annonce.part { animation: ad-part .18s ease-in both; }
+  @keyframes ad-part { to { opacity: 0; transform: translateY(6px); } }
+  .tableur td.enregistree { animation: tab-ok 1.4s ease-out; }
+  @keyframes tab-ok { 0%, 25% { box-shadow: inset 0 0 0 2px var(--ok); } }
+  .avant-faits li.fait { animation: ad-fait .6s ease-out; }
+  @keyframes ad-fait { from { background: var(--ok); color: #fff; } }
+  .visee { animation: visee 1.6s ease-out; }
+  @keyframes visee { 0%, 35% { box-shadow: 0 0 0 4px var(--accent-doux), 0 0 0 6px var(--accent); } }
+  .ad-neuf { animation: ad-arrive .3s cubic-bezier(.2, .8, .2, 1) both; }
+  .btn.sonne { transform-origin: 50% 0; animation: sonne .8s ease-in-out; }
+  .suggestions, .tab-export:not([hidden]), .pied-ed.a-plus.replie .pied-autres.ouvert { animation: ad-arrive .15s ease-out both; }   /* les menus se posent */
+  details[open] > :not(summary) { animation: ad-paraitre .22s ease-out both; }   /* ce qu'un pli ouvre paraît (sans transform : la liste qui glisse mesure ses lignes) */
+  @keyframes sonne { 15% { transform: rotate(-8deg); } 30% { transform: rotate(7deg); } 45% { transform: rotate(-5deg); } 60% { transform: rotate(3deg); } }
+}
 </style>
 <style>:root { --pieuvre: #1f3a73; } @media (prefers-color-scheme: dark) { :root { --pieuvre: #7f9fe0; } }</style>
 </head>
@@ -511,7 +597,14 @@ const TT = typeof TENTACULES !== 'undefined' ? TENTACULES : null;
 if (TT) TT.regler({ profil: 'admin', style: 'encre', remontee: false, soulever: false });
 const tt = (f, ...a) => { if (TT && typeof TT[f] === 'function') { try { return TT[f](...a); } catch (e) { /* le décor ne doit rien casser */ } } };
 // un enregistrement réussi : la tentacule s'enroule autour du bouton (après l'enregistrement, jamais avant)
-const bravo = () => requestAnimationFrame(() => { const b = $('[data-enregistrer]'); if (b) tt('confirmer', b); });
+// moins d'animations : le réglage de l'appareil, ou ?anim=0 (captures et essais : html.still arrête aussi la feuille de style)
+const SANS_ANIM = /[?&]anim=0\b/.test(location.search);
+if (SANS_ANIM) document.documentElement.classList.add('still');
+const CALME_ADMIN = () => SANS_ANIM || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const bravo = () => requestAnimationFrame(() => {
+  const b = $('[data-enregistrer]'); if (b) tt('confirmer', b);
+  const p = $('.pied-ed'); if (p) { p.classList.remove('sale'); p.classList.add('ok'); setTimeout(() => p.classList.remove('ok'), 1600); }
+});
 
 // ===================================================================================================== état
 const E = { session: null, admin: false, pret: false, direct: false, sale: false, hash: location.hash,
@@ -568,7 +661,7 @@ function annoncer(msg, { erreur = false, action = null, libelle = 'Annuler', del
   el.innerHTML = `<span>${esc(msg)}</span>${action ? `<button type="button" data-tt="retour">${esc(libelle)}</button>` : ''}`;
   if (action) $('button', el).addEventListener('click', () => { el.remove(); action(); });
   $('#annonces').append(el);
-  setTimeout(() => el.remove(), erreur ? 9000 : delai);
+  setTimeout(() => { el.classList.add('part'); setTimeout(() => el.remove(), 200); }, erreur ? 9000 : delai);
 }
 const erreur = (e, quoi = 'L’enregistrement a échoué') => { console.error(e); annoncer(`${quoi} : ${e?.message || e}`, { erreur: true }); };
 // les coordonnées écrites dans un champ deviennent des liens : chaque numéro « Appeler le … » (tel:), chaque adresse
@@ -639,8 +732,9 @@ let versAdmin = false;     // l'écran de connexion a été montré : l'arrivée
 function ecranConnexion(message = '') {
   versAdmin = true;
   E.pret = false;     // déconnecté : ni les rubriques ni la recherche ne montrent ce qui reste en mémoire
+  E.hashVue = '';     // le prochain premier rendu paraîtra après le squelette
   $('#recherche')?.close();
-  $('#app').innerHTML = `<div class="connexion"><form class="bloc" id="f-connexion">
+  $('#app').innerHTML = `<div class="connexion"><form class="bloc${message ? ' secoue' : ''}" id="f-connexion">
     <h1>Crescite · administration</h1><p>Les spectacles, les dates, les ateliers et les textes du site de la compagnie.</p>
     ${message ? `<p role="alert" style="color:var(--alerte)">${esc(message)}</p>` : ''}
     <div class="champ"><label for="c-mel">Adresse électronique</label><input id="c-mel" type="email" autocomplete="username" required></div>
@@ -685,7 +779,8 @@ async function demarrer() {
   if (!E.session) { demarre = false; return ecranConnexion(); }
   if (demarre) return;
   demarre = true;
-  $('#app').innerHTML = '<p class="chargement">Chargement de la base…</p>';
+  $('#app').innerHTML = `<div class="ad-squelette" aria-hidden="true"><div class="sq-barre"><span class="sq sq-rond"></span><span class="sq" style="width:120px"></span><span class="sq" style="width:160px;margin-left:auto"></span></div>
+    <div class="sq-main"><span class="sq" style="width:220px;height:26px"></span><div class="sq-deux"><div>${'<span class="sq sq-ligne"></span>'.repeat(6)}</div><span class="sq sq-bloc"></span></div></div></div><p class="sr" role="status">Chargement de la base…</p>`;
   const { data, error } = await sb.from('crescite_admins').select('user_id').eq('user_id', E.session.user.id);
   if (error) { demarre = false; return ecranConnexion(/crescite_admins/.test(error.message) ? 'La base de la compagnie n’est pas encore installée.' : error.message); }
   if (!data.length) {
@@ -791,6 +886,7 @@ function ecouter() {
 }
 function changement(t, p) {
   const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t];
+  const pd = $('.direct.on'); if (pd) { pd.classList.remove('bat'); void pd.offsetWidth; pd.classList.add('bat'); }
   // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
   const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
   const i = coll.findIndex(x => cles.every(c => x[c] === ligne[c]));
@@ -812,7 +908,8 @@ function cadre(rubrique, contenu) {
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue">${contenu}</main>`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>`;
+  setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
   $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
   $('#b-mdp').addEventListener('click', () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Changer de mot de passe quand même ?')) { E.sale = false; ecranMotDePasse(true); } });
   $('#b-chercher').addEventListener('click', ouvrirRecherche);
@@ -842,8 +939,41 @@ const ROUTES = [
 function router() {
   if (!E.pret) return;
   const h = location.hash || '#/accueil';
-  for (const [re, f] of ROUTES) { const m = h.match(re); if (m) { E.sale = false; f(m); viser(); return; } }
+  for (const [re, f] of ROUTES) {
+    const m = h.match(re);
+    if (!m) continue;
+    E.sale = false;
+    changerVueAdmin(() => { f(m); viser(); }, sensVue(h));
+    return;
+  }
   location.replace('#/accueil');
+}
+// les vues s'enchaînent : avec les View Transitions, l'ancienne glisse et la nouvelle arrive (vers la gauche en entrant dans
+// une fiche, vers la droite en revenant à sa liste, en fondu d'une rubrique à l'autre) ; l'en-tête et les annonces
+// restent en place. Sans elles, la nouvelle paraît. Rien ne bouge si l'appareil demande moins d'animations, ni quand la
+// même adresse se redessine.
+function sensVue(h) {
+  const avant = E.hashVue || '';
+  E.hashVue = h;
+  if (avant === h) return 'aucun';
+  if (!avant) return 'fondu';                              // le premier rendu paraît (après le squelette)
+  const rub = x => (x.match(/^#\/([a-z]+)/) || [])[1] || '', prof = x => x.split('/').length;
+  if (rub(avant) !== rub(h)) return 'fondu';
+  return prof(h) > prof(avant) ? 'avant' : prof(h) < prof(avant) ? 'arriere' : 'fondu';
+}
+let transitionVue = null;
+function changerVueAdmin(maj, sens) {
+  const html = document.documentElement;
+  const peut = typeof document.startViewTransition === 'function' && !CALME_ADMIN() && document.visibilityState === 'visible' && sens !== 'aucun' && !!$('#vue');
+  if (!peut) { maj(); if (sens !== 'aucun' && !CALME_ADMIN()) $('#vue')?.classList.add('fondu'); return; }
+  html.dataset.sens = sens;
+  try { if (transitionVue) transitionVue.skipTransition(); } catch (e) { /* déjà finie */ }
+  let t;
+  try { t = document.startViewTransition(maj); } catch (e) { delete html.dataset.sens; maj(); return; }
+  transitionVue = t;
+  t.ready.catch(() => {});
+  t.updateCallbackDone.catch(e => console.error(e));
+  t.finished.catch(() => {}).finally(() => { if (transitionVue === t) { transitionVue = null; delete html.dataset.sens; } });
 }
 // un lien peut viser ce qu'il faut compléter dans ce qu'il ouvre (data-viser : le chemin d'un champ, « telephone », ou un
 // sélecteur, « #fr-manques ») : la page ouverte, la cible vient en vue et prend le focus (un panneau : son titre)
@@ -865,6 +995,7 @@ function viser() {
     if (cible.tagName === 'SUMMARY' && !cible.parentNode.open) cible.parentNode.open = true;
     el.scrollIntoView({ block: 'center' });
     cible.focus({ preventScroll: true });
+    el.classList.add('visee'); setTimeout(() => el.classList.remove('visee'), 1800);   // le champ visé s'allume
   });
 }
 window.addEventListener('hashchange', () => {
@@ -954,7 +1085,7 @@ function dialogueRch() {
     <p class="sr" aria-live="polite" id="rch-statut"></p></div>`;
   document.body.append(dlg);
   const q = $('#rch-q', dlg), liste = $('#rch-liste', dlg);
-  q.addEventListener('input', rendreRch);
+  q.addEventListener('input', () => { liste.classList.remove('entree'); rendreRch(); });
   q.addEventListener('keydown', e => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); activerRch(RCH.actif + (e.key === 'ArrowDown' ? 1 : -1)); }
     else if (e.key === 'PageDown' || e.key === 'PageUp') { e.preventDefault(); activerRch(Math.max(0, Math.min(RCH.vus.length - 1, RCH.actif + (e.key === 'PageDown' ? 6 : -6)))); }
@@ -971,6 +1102,7 @@ function ouvrirRecherche() {
   const dlg = dialogueRch(), q = $('#rch-q');
   RCH.index = indexRch();
   if (!dlg.open) { q.value = ''; dlg.showModal(); }
+  $('#rch-liste').classList.add('entree');
   rendreRch();
   q.focus(); q.select();
 }
@@ -987,7 +1119,7 @@ function rendreRch() {
   }
   RCH.vus = xs;
   $('#rch-entete').textContent = entete;
-  $('#rch-liste').innerHTML = xs.map((x, i) => `<li role="option" id="rch-o${i}" data-i="${i}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}</span><span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
+  $('#rch-liste').innerHTML = xs.map((x, i) => `<li role="option" id="rch-o${i}" data-i="${i}" style="--i:${Math.min(i, 10)}" aria-selected="false"><span class="pastille"${x.couleur ? ` style="--c:${esc(x.couleur)}"` : ''}></span><span class="rch-corps"><b>${surlignerRch(x.titre, mots)}</b>${x.sous ? `<small>${surlignerRch(x.sous, mots)}</small>` : ''}</span><span class="rch-type">${TYPES_RCH[x.rang][1]}</span></li>`).join('');
   q.setAttribute('aria-expanded', String(xs.length > 0));
   activerRch(0, false);
   $('#rch-liste').scrollTop = 0;
@@ -1010,13 +1142,37 @@ function allerRch(i) {
 }
 function rafraichirListes() {
   const l = $('[data-liste]');
-  if (l && typeof l.rafraichir === 'function') l.rafraichir();
+  if (!(l && typeof l.rafraichir === 'function')) return;
+  const places = reperer(l);
+  l.rafraichir();
+  glisserVers(places);
+}
+// la liste se redessine (le temps réel, un enregistrement) : une ligne ou une carte qui change de place glisse de l'ancienne
+// à la nouvelle plutôt que de sauter, une neuve se pose (en coordonnées de page ; rien si l'appareil demande moins d'animations)
+const CLE_FLIP = el => el.getAttribute('href') || el.dataset.prospectId || el.id || '';
+function reperer(racine) {
+  const m = new Map();
+  if (CALME_ADMIN() || typeof Element.prototype.animate !== 'function') return m;
+  $$('.ligne[href], .crm-carte[data-prospect-id]', racine).forEach(el => { const r = el.getBoundingClientRect(); if (r.width) m.set(CLE_FLIP(el), [r.left, r.top + window.scrollY]); });
+  return m;
+}
+function glisserVers(avant, racine = $('[data-liste]')) {
+  if (!racine || !avant.size || CALME_ADMIN()) return;
+  const doux = 'cubic-bezier(.2, .8, .2, 1)';
+  $$('.ligne[href], .crm-carte[data-prospect-id]', racine).forEach(el => {
+    const a = avant.get(CLE_FLIP(el)), r = el.getBoundingClientRect();
+    if (!r.width) return;
+    if (!a) { el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 320, easing: doux }); return; }
+    const dx = a[0] - r.left, dy = a[1] - (r.top + window.scrollY);
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    el.animate([{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: 'none' }], { duration: 380, easing: doux });
+  });
 }
 function marquerSale(oui = true) {
   const avant = E.sale;
   E.sale = oui;
   const el = $('.etat-ed');
-  if (el) { el.textContent = oui ? 'Modifications non enregistrées' : 'Tout est enregistré'; el.classList.toggle('sale', oui); }
+  if (el) { el.textContent = oui ? 'Modifications non enregistrées' : 'Tout est enregistré'; el.classList.toggle('sale', oui); el.closest('.pied-ed')?.classList.toggle('sale', oui); }
   if (avant !== oui) ajusterPied();
 }
 
@@ -1324,6 +1480,32 @@ function dessinerAvant(el) {
     ${section('Lieux', [...a.lieux.map(x => `<li><a href="#/lieux/${x.l.id}" data-viser="${x.manque[0]}">${esc(x.l.nom ? `${x.l.nom}, ${x.l.commune}` : x.l.commune)}</a><span class="compte">${x.manque.map(m => `sans ${m}`).join(', ')} · ${esc(quand(x.dates))}</span></li>`),
       ...a.sansLieu.map(d => `<li><a href="#/representations/${d.id}" data-viser="#d-lieu input">Lieu à préciser</a><span class="compte">${esc(spectacle(d.spectacle_id)?.titre || '?')} · le ${esc(jourSansAn(d.debut))}</span></li>`)])}
     ${section('Feuilles de route', a.feuilles.map(x => `<li><a href="#/feuilles/${x.d.id}" data-viser="${x.f ? '#fr-manques' : '#fr-composer'}">${esc(jourSansAn(x.d.debut))} · ${esc(ouDe(x.d))}</a><span class="compte">${esc(spectacle(x.d.spectacle_id)?.titre || '?')}</span>${x.f ? `<span class="badge option">${x.n} à compléter</span>` : '<span class="badge">à composer</span>'}</li>`))}</div></details>`;
+  listeQuiSeVide(el, r.jours);
+}
+// la liste se vide à mesure : ce qui vient d'être complété depuis le rendu précédent (à fenêtre de jours égale) reste un
+// instant, en vert, « complété », puis se retire ; le compte du titre saute
+let avantPrecedent = null;
+function listeQuiSeVide(el, jours) {
+  const details = $('details.avant', el), corps = $('.avant-corps', el), fenetre = $('.avant-fenetre', corps || el);
+  // une entrée par fiche (son adresse) : un lieu qui reçoit son adresse mais attend encore son contact reste dans la liste
+  const lis = $$('.avant li', el), actuel = new Map(lis.map(li => { const a = $('a', li); return [a?.getAttribute('href') || li.textContent, a ? a.textContent : li.textContent]; }));
+  const prec = avantPrecedent;
+  avantPrecedent = { jours, items: actuel };
+  if (!prec || prec.jours !== jours || !corps || !fenetre || !details?.open || CALME_ADMIN()) return;
+  const faits = [...prec.items].filter(([k]) => !actuel.has(k));
+  if (!faits.length || faits.length > 6) return;
+  if (prec.items.size > actuel.size) $('summary .badge', el)?.classList.add('pop');
+  const ul = document.createElement('ul');
+  ul.className = 'avant-faits';
+  ul.innerHTML = faits.map(([, texte]) => `<li class="fait"><span>${esc(texte)}</span><span class="badge ok">complété</span></li>`).join('');
+  fenetre.after(ul);
+  setTimeout(() => {
+    if (!ul.isConnected) return;
+    $$('li.fait', ul).forEach(li => {
+      const a = li.animate([{ height: `${li.offsetHeight}px`, opacity: 1 }, { height: '0px', opacity: 0, paddingTop: '0px', paddingBottom: '0px' }], { duration: 320, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' });
+      a.finished.catch(() => {}).finally(() => { li.remove(); if (!ul.children.length) ul.remove(); });
+    });
+  }, 1800);
 }
 function relierAvant(el) {
   if (!el) return;
@@ -1559,11 +1741,12 @@ function editeurDate(id, depart = null) {
       if (t.id === 'd-vide') { jour = ''; heure = '20:00'; }
       F.representations.push({ jour, heure, fin: t.id === 'd-lendemain' ? der?.fin || '' : '', public: der?.public || 'tout_public', annulee: false, lien: '', note: '' });
       dessinerReps(); changer();
+      $('#d-reps tr:last-child', zone)?.classList.add('ad-neuf');
       tt('ajouter', $('#d-reps tr:last-child', zone));
       $(`#d-reps tr:last-child [data-r="${t.id === 'd-vide' ? 'jour' : 'heure'}"]`, zone)?.focus();
       return;
     }
-    if (t.id === 'd-det-plus') { F.details.push({ texte: '', lien: null }); dessinerDetails(); changer(); tt('ajouter', $(`[data-det="${F.details.length - 1}"]`, zone)?.closest('.item')); $(`[data-det="${F.details.length - 1}"]`, zone)?.focus(); return; }
+    if (t.id === 'd-det-plus') { F.details.push({ texte: '', lien: null }); dessinerDetails(); changer(); $(`[data-det="${F.details.length - 1}"]`, zone)?.closest('.item')?.classList.add('ad-neuf'); tt('ajouter', $(`[data-det="${F.details.length - 1}"]`, zone)?.closest('.item')); $(`[data-det="${F.details.length - 1}"]`, zone)?.focus(); return; }
     if (t.dataset.detSuppr !== undefined) { F.details.splice(+t.dataset.detSuppr, 1); dessinerDetails(); changer(); return; }
     if (t.id === 'd-det-auto') {
       const reps = F.representations.filter(r => r.jour);
@@ -1930,7 +2113,8 @@ const TABLEUR = (() => {
       const maintenant = Date.now();
       T.lignes.forEach((x, i) => T.cols.forEach((c, j) => {
         const k = cleCase(x, c), avantT = anciens.get(k);
-        if (avantT !== undefined && avantT !== T.textes.get(k) && !(maintenant - (T.recents.get(x.d.id) || 0) < 4000)) cellule(i, j)?.classList.add('vient-d-ailleurs');
+        if (avantT === undefined || avantT === T.textes.get(k)) return;
+        cellule(i, j)?.classList.add(maintenant - (T.recents.get(x.d.id) || 0) < 4000 ? 'enregistree' : 'vient-d-ailleurs');
       }));
     }
     largeurs();
@@ -2860,7 +3044,7 @@ function editeurSpectacle(slug) {
   $$('[data-onglet]').forEach(b => b.addEventListener('click', () => {
     $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
     onglet = b.dataset.onglet; sessionStorage.setItem('crescite-onglet-sp', onglet);
-    $$('[data-onglet]').forEach(x => x.setAttribute('aria-selected', x === b)); dessiner(); if (E.sale) marquerSale();
+    $$('[data-onglet]').forEach(x => x.setAttribute('aria-selected', x === b)); zone.classList.add('onglet-neuf'); dessiner(); setTimeout(() => zone.classList.remove('onglet-neuf'), 400); if (E.sale) marquerSale();
   }));
   zone.addEventListener('change', async e => {
     const inp = e.target;
@@ -2875,6 +3059,8 @@ function editeurSpectacle(slug) {
         else F.photos.push({ id: chemin.split('/').pop().replace(/\.[^.]+$/, ''), fichier: chemin, legende: '', source: 'site' });
       }
       marquerSale(); dessiner(); annoncer('Photos ajoutées : enregistrez pour les publier.');
+      const minis = $$('.miniatures .mini', zone);                 // les photos arrivées se posent
+      (inp.dataset.photo === 'principale' ? [minis[0]] : inp.dataset.remplacer !== undefined ? [minis[+inp.dataset.remplacer + 1]] : minis.slice(-fichiers.length)).forEach(m => m && m.classList.add('ad-neuf'));
     } catch (err) { erreur(err, 'Envoi impossible'); }
   });
   zone.addEventListener('click', async e => {
@@ -3332,7 +3518,9 @@ function brancherDiffusion() {
           p.etape = nouvelleEtape;
           p.date_dernier_contact = aujourdhui();
           annoncer(`Opportunité déplacée vers « ${ETAPES_CRM[nextIdx][1]} ».`);
+          const places = reperer($('#kanban-zone') || document);   // la carte glisse jusqu'à sa nouvelle colonne
           vueDiffusion();
+          glisserVers(places, $('#kanban-zone'));
         } catch (err) {
           erreur(err, 'Déplacement impossible');
           b.disabled = false;
@@ -3800,11 +3988,13 @@ async function vueJournal() {
   const dessiner = () => {
     const mots = motsRch(f.q), filtre = !!(mots.length || f.quoi || f.qui || f.periode), xs = E.journal.filter(j => garde(j, mots));
     const total = E.journal.filter(j => j.operation !== 'UPDATE' || champsChanges(j).length).length;
+    const premier = !zone.querySelector('.journal-ligne');
     zone.innerHTML = xs.map(j => { const ch = champsChanges(j), ap = apprisDuJournal(j);
       return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
         <span class="quoi"><b>${OPS_JOURNAL[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${surlignerRch(resume(j) || '', mots)}${ch.length ? `<span class="diff"> — ${surlignerRch(ch.join(', '), mots)}</span>` : ''}${ap.length ? `<span class="diff appris"> — gardé dans les fiches : ${esc(ap.join(', '))}</span>` : ''}</span>
         <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('')
       || `<p class="vide">${total ? 'Aucune modification ne correspond.' : 'Rien encore.'}</p>`;
+    if (premier && !CALME_ADMIN()) zone.classList.add('ad-neuf');       // la première liste se pose
     const plusVieux = E.journal.length ? jourDe(E.journal[E.journal.length - 1]) : AUJ, de = debutPeriode();
     $('#j-compte').textContent = `${filtre ? `${xs.length} sur ${total}` : total} modification${total > 1 ? 's' : ''}${E.journalFin ? '' : `, depuis le ${jourCourt(plusVieux)}`}`;
     $('#j-effacer').hidden = !filtre;

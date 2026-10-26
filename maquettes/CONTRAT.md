@@ -563,6 +563,13 @@ plusieurs couleurs et la légende, le titre « Saison 2019-2020 » dans les sais
 sa carte ; la page de La Folle Idée sans onglets, avec son bilan et sa carte ; les sous-pages de l'espace pro ; les
 redirections.
 
+**D. La synthèse** (le site, demande de la compagnie, octobre 2026 : « N'affiche pas dans les saisons les dates « à
+définir ». Simplifie la timeline. ») : une date dont le jour n'est pas encore fixé (précision au mois, « novembre 2026 »)
+ne paraît pas sur `#/saisons` tant qu'elle n'est pas passée : ni dans les listes, ni sur la frise, ni sur la carte, ni
+dans les puces des spectacles ; une date passée qui n'a gardé que son mois ou son année reste dans l'histoire. La frise de
+la saison est simple : des pastilles à la couleur de leur spectacle (la liste dit « Scolaire »), deux couloirs au plus,
+sans légende sous elle : les puces des spectacles, juste au-dessus, la font (leur survol isole les dates du spectacle).
+
 ## Règle 22 : les couleurs de la saison et des spectacles (demande d'Angelo Jossec, directeur artistique)
 « La couleur générale de cette saison, et cela jusqu'à la création de Cassandre, ça doit être le bleu. Voici les couleurs
 de chaque spectacle : Mon Royaume pour un cheval jaune, Bérénice violet, Cyrano gris anthracite, L'Imaginaire forcé vert
