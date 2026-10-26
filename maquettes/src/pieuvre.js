@@ -76,6 +76,20 @@ const PIEUVRE = (() => {
   const elas = t => (t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.exp(-5 * t) * Math.cos(7 * t));   // un ressort : dépasse, se balance, se pose
   const TAU = Math.PI * 2;
 
+  // dans l'eau : une ligne de points qui ondoie de travers (de A px au plus, d'une houle de longueur d'onde lam, sa phase tenant
+  // à la place à l'écran : x0, y0, la référence ; sens, le côté où elle file), nulle et à plat à ses deux bouts
+  function ondoyer(pts, Amax, lam, phase, x0, y0, sens) {
+    const n = pts.length, cum = [0];
+    for (let j = 1; j < n; j++) cum.push(cum[j - 1] + Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]));
+    const L = cum[n - 1], E = Math.min(L * .3, 90), A = Math.min(Amax, L * .045);
+    if (L < 40 || A <= 0) return pts;
+    return pts.map((p, j) => {
+      const a = pts[Math.max(0, j - 1)], b = pts[Math.min(n - 1, j + 1)], tx = b[0] - a[0], ty = b[1] - a[1], tl = Math.hypot(tx, ty) || 1;
+      const d = A * lisse(0, E, cum[j]) * lisse(L, L - E, cum[j]) * Math.sin(TAU * (sens * (p[0] - x0) + (p[1] - y0)) / lam + phase);
+      return [p[0] - d * ty / tl, p[1] + d * tx / tl];
+    });
+  }
+
   // le contour du logo, finement aplati (un point par unité), rangé dans une grille de 8 unités : pour y recaler la peau
   let GRILLE = null;
   function grille() {
@@ -329,9 +343,18 @@ const PIEUVRE = (() => {
           }
         }
       }
-      // la pointe : sous le titre, puis elle s'enroule (sa courbure croît vers le bout)
-      const U = Math.max(8, c.U || 0), pointe = [];
-      for (let j = 0; j <= 24; j++) pointe.push([c.x + du * U * j / 24, c.y]);
+      // dans l'eau (ondule : { k, x0, y0 }, la scène de l'accueil) : le corps ondoie, d'une houle qui dérive lentement de la
+      // tête vers le titre, nulle et à plat aux deux bouts (la racine, l'arrivée sous le titre). Sa phase tient à la place à
+      // l'écran (x0, y0 : la référence de la scène) : au téléphone, les bras qui descendent côte à côte le long du bord ondulent
+      // ensemble, sans se croiser ; au bureau, chacun a la sienne
+      const O = c.ondule && c.ondule.k > 0 ? c.ondule : null, tps = this.tps || 0, ph = this.i * 1.3;
+      if (O) corps = ondoyer(corps, O.k * (c.mobile ? 5 : 18), c.mobile ? 170 : 200, (c.mobile ? 0 : ph) - tps * .7, O.x0 || 0, O.y0 || 0, du);
+      // la pointe : sous le titre, puis elle s'enroule (sa courbure croît vers le bout). Dans l'eau, le souligné ondule aussi,
+      // d'une vague qui le parcourt, vers le bas seulement (de quelques pixels : il ne monte pas sur le titre, qui l'efface, et
+      // ne touche pas la ligne dessous)
+      const U = Math.max(8, c.U || 0), pointe = [], aU = O ? O.k * (c.mobile ? 4 : 5.5) : 0, nU = Math.max(1, Math.round(U / 70));
+      for (let j = 0; j <= 24; j++) { const u = j / 24; pointe.push([c.x + du * U * u, c.y + aU * Math.sin(Math.PI * u) ** 2 * (.5 + .5 * Math.sin(TAU * nU * u - tps * 1.1 + ph))]); }
+      let Lu = 0; for (let j = 1; j <= 24; j++) Lu += Math.hypot(pointe[j][0] - pointe[j - 1][0], pointe[j][1] - pointe[j - 1][1]);
       // (tension : un titre qu'on tire déroule la pointe)
       const Lc = (c.mobile ? 34 : 46) * (c.boucle || 1), NC = 30, dl = Lc / NC, sens = du < 0 ? 1 : -1, k0 = 1.5 * Math.PI * 2.3 / Lc * (1 - .92 * (c.tension || 0));
       let ang = du < 0 ? Math.PI : 0, x = c.x + du * U, y = c.y;
@@ -367,7 +390,8 @@ const PIEUVRE = (() => {
       reparti(pointe, M - Kb, Kb, p1, null);
       th[0] = sg[0]; th[M] = sg[M - 1];
       for (let k = 1; k < M; k++) th[k] = (sg[k - 1] + sg[k]) / 2;
-      return { sg, th, ln, z, mu: 1, prolonge };
+      // (kc : où commence l'enroulement du bout, après le souligné)
+      return { sg, th, ln, z, mu: 1, prolonge, kc: Kb + Math.round((M - Kb) * Lu / (Lu + Lc)) };
     }
     viser(cible, duree = 600, elastique = false) {
       const meme = !!cible === !!this.cible && (!cible || (cible.cle === this.cible.cle));
@@ -384,7 +408,7 @@ const PIEUVRE = (() => {
     }
     mouvement() { return this.pose ? this.pose.mu : 0; }
     avancer(dt, o = {}) {
-      this.tourne = o.tourne || 0;
+      this.tourne = o.tourne || 0; this.tps = o.temps || 0;
       const bob = this.bob = o.bob || { x: 0, y: 0 };
       // (une enfant : sa racine est sur l'épine de son parent, là où elle y est au repos, et pivote avec elle ; le parent a avancé avant)
       if (this.parent) {
@@ -486,9 +510,10 @@ const PIEUVRE = (() => {
         const a = P.th[j];
         X[j] -= d * Math.sin(a); Y[j] += d * Math.cos(a);
       }
-      // l'enroulement du bout (après le souligné, qui reste droit sous le titre : là où l'épine se remet à tourner) se balance
+      // l'enroulement du bout (après le souligné : là où l'épine se remet à tourner, ou kc, noté par la pose visée) se balance
       // autour de son départ et respire (sa spirale se desserre, se resserre)
-      let Kc = Kb; while (Kc < M - 2 && Math.abs(norm(P.sg[Kc] - P.sg[Kb])) < .02) Kc++;
+      let Kc = P.kc != null ? P.kc : this.but && this.but.kc != null ? this.but.kc : -1;
+      if (Kc < 0) { Kc = Kb; while (Kc < M - 2 && Math.abs(norm(P.sg[Kc] - P.sg[Kb])) < .02) Kc++; }
       if (M - Kc > 3) {
         const dr = k * .2 * Math.sin(t * 1.25 + ph * 2.1), e = 1 + k * .25 * Math.sin(t * .8 + ph * 1.3);
         let ang = P.sg[Kc] + dr, rel = 0, x = X[Kc], y = Y[Kc];
