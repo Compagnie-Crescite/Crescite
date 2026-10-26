@@ -244,7 +244,9 @@ const CREATURE = (() => {
       if (!this.vivant || document.hidden) return;
       if (tailleSale) { toutes.forEach(c => c.dimensionner()); tailleSale = false; }
       const dt = Math.min(50, this.tPrec ? now - this.tPrec : 16); this.tPrec = now;
-      if (this.placeSale || now - this.tPlace > 250 || this.o.placerChaqueImage) {
+      // (sans place, elle la cherche à chaque réveil : réveillée par la souris ou une réaction moins de 250 ms après une place
+      // perdue, elle n'a rien où se dessiner)
+      if (!this.place || this.placeSale || now - this.tPlace > 250 || this.o.placerChaqueImage) {
         this.tPlace = now; this.placeSale = false;
         if (!this.placer()) return;
       }
