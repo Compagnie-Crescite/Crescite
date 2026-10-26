@@ -7607,7 +7607,9 @@ const PIEUVRE = (() => {
                      placer() est appelée à chaque image et rend { x, y, s, largeur, bouge, v } (le cœur de la pieuvre à
                      l'écran, en px ; s l'échelle, px par unité du dessin, ou largeur : la largeur du dessin en px ;
                      bouge : vrai tant qu'elle se déplace, v : sa vitesse verticale, px par image, pour qu'elle se penche
-                     et rame dans ce sens) ou null (elle n'a pas lieu d'être à l'écran : elle s'efface et se repose).
+                     et rame dans ce sens ; coup, de 0 à 1 : l'impulsion de nage de cette image, si c'est la maquette qui
+                     bat la mesure, un galop par exemple : le corps se contracte et les tentacules rament à ce rythme-là)
+                     ou null (elle n'a pas lieu d'être à l'écran : elle s'efface et se repose).
                      placerChaqueImage : placer() à chaque image (une pieuvre qui se déplace) et non quatre fois par
                      seconde. souris (vrai par défaut) : elle se tourne vers la souris ; courant (vrai) : ses tentacules
                      suivent le défilement. vie (1) : son entrain, de 1 (l'en-tête, discrète) à 2 ou 3 (une grande
@@ -7870,10 +7872,10 @@ const CREATURE = (() => {
       }
       // la nage : tant qu'elle se déplace, une impulsion toutes les 1,6 s (le corps se contracte, les tentacules rament : elles
       // sont emportées derrière elle), et elle se penche dans le sens où elle va
-      const v = this.place.v || 0, sens = v > 0 ? 1 : v < 0 ? -1 : 0;
-      if (this.enMouvement && now - this.tCoup > 1600 / this.rythme) this.tCoup = now;
-      const uc = (now - this.tCoup) / 760, coup = uc < 1 ? choc(uc) : 0;
-      this.penteNage += (sens * clamp(Math.abs(v) / 1.6, 0, 1) * 10 - this.penteNage) * .06;
+      const v = this.place.v || 0, sens = v > 0 ? 1 : v < 0 ? -1 : 0, mesure = this.place.coup != null;
+      if (!mesure && this.enMouvement && now - this.tCoup > 1600 / this.rythme) this.tCoup = now;
+      const uc = (now - this.tCoup) / 760, coup = mesure ? clamp(this.place.coup, 0, 1) : uc < 1 ? choc(uc) : 0;
+      this.penteNage += (sens * clamp(Math.abs(v) / 1.6, 0, 1) * (mesure ? 14 : 10) - this.penteNage) * (mesure ? .12 : .06);
       const enRoute = BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
       const vif = this.moment || this.reaction || this.enMouvement || coup > 0 || (this.souris && pointeur) || (this.courant && Math.abs(vScroll) > .4) || enRoute;
       // au repos (rien ne se tend, rien ne réagit, personne ne passe) : trente images par seconde suffisent
@@ -7885,7 +7887,7 @@ const CREATURE = (() => {
       const tendue = this.sortie(), bob = this.bob, plus = Math.max(0, vie - 1), retenue = 1 - .6 * tendue;
       bob.x = Math.sin(tVie * .43) * .5 * vie + Math.sin(tVie * .29) * 1.6 * plus; bob.y = Math.sin(tVie * .9) * .7 * vie + Math.cos(tVie * .21) * 2.2 * plus;
       const souffle = 1 + .03 * Math.min(vie, 1.6) * Math.sin(tVie * 1.15) * retenue;
-      const k = souffle * (1 - ((R ? R.serre : 0) * imp + .05 * coup) * retenue);
+      const k = souffle * (1 - ((R ? R.serre : 0) * imp + (mesure ? .09 : .05) * coup) * retenue);
       const balance = Math.sin(tVie * .6) * 2.2 * plus;
       // la curiosité : elle se tourne un peu vers la souris qui passe près d'elle, ses tentacules s'y penchent ; et elles suivent
       // le courant quand la page défile
@@ -7893,7 +7895,7 @@ const CREATURE = (() => {
       const pres = this.souris && pointeur ? Math.hypot(pointeur.x - cx, pointeur.y - cy) : Infinity, regard = pres < 240 ? clamp((pointeur.x - cx) / 120, -1, 1) * (1 - pres / 240) * 4 : 0;
       this.regard += (regard - this.regard) * .08;
       const rot = (lean + this.regard + balance + this.penteNage) * Math.PI / 180 * retenue;
-      const rame = coup * .55 * (sens || 1);
+      const rame = coup * (mesure ? .95 : .55) * (sens || 1);
       for (const a of BRAS) {
         let pv = 0;
         if (!a.but && !a.geste) {
@@ -7910,7 +7912,7 @@ const CREATURE = (() => {
         a.penche += (pv - a.penche) * .08;
         const tv = a.but ? 1 : 0;
         if (Math.abs(a.teinte - tv) > .005) a.teinte += (tv - a.teinte) * .12; else a.teinte = tv;
-        a.t.avancer(dt * this.rythme, { temps: tVie, onde: this.onde + agite + coup * 1.5, penche: a.penche, bob });
+        a.t.avancer(dt * this.rythme, { temps: tVie, onde: this.onde + agite + coup * (mesure ? 3 : 1.5), penche: a.penche, bob });
       }
       // la boîte à peindre : la pieuvre et ses tentacules, élargie de ce que la respiration, la contraction et la penche
       // déplacent, et du halo ; la toile la suit
@@ -10262,16 +10264,18 @@ const CREATURE = (() => {
     if (troupeCreature) { troupeCreature.arreter(); troupeCreature = null; }
     troupeGeo = null;
   }
-  // la pieuvre de la troupe se balade : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre
-  // de tête, toujours en mouvement (ses tentacules ondulent, elle respire, se balance, un halo l'entoure) ; quand la lecture
-  // descend, elle quitte sa place, rapetisse de moitié et nage dans la marge de gauche, à hauteur de lecture, en retard d'un
-  // rien, par impulsions ; au passage, une tentacule attrape le médaillon du métier qu'on lit (qui s'anime), et le lâche
-  // pour le suivant. Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe pas (le dessin de tête reste)
+  // la pieuvre de la troupe galope : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre
+  // de tête, toujours en mouvement (ses tentacules battent, elle respire, se balance, un halo l'entoure) ; quand la lecture
+  // descend, elle quitte sa place, rapetisse de moitié et galope dans la marge de gauche autour de la hauteur de lecture : une
+  // impulsion toutes les 0,6 s, où elle bondit (le corps se contracte, les tentacules sont rejetées en arrière), puis un
+  // glissé, et elle patrouille sans cesse de haut en bas ; au passage, une tentacule attrape le médaillon du métier qu'on lit
+  // (qui s'anime), et le lâche pour le suivant. Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe
+  // pas (le dessin de tête reste)
   function creatureTroupe(tr) {
     if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
     let y = null, bouge = false, prise = null;
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.6, onde: 5.5, rythme: 2.2, lueur: true,
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.8, onde: 6, rythme: 2.6, lueur: true,
       eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
       placer() {
         const g = troupeGeo;
@@ -10280,14 +10284,17 @@ const CREATURE = (() => {
         if (r.bottom < -60 || r.top > innerHeight + 60) { y = null; return null; }
         const mobile = innerWidth < 760;
         // la place visée : à hauteur de lecture, entre sa place de repos (en tête) et le dernier médaillon, et jamais immobile :
-        // elle patrouille autour, de haut en bas et d'un bord à l'autre de la marge, et y va en retard d'un rien (v : ce
-        // qu'elle avance à cette image, pour qu'elle se penche et rame dans ce sens)
+        // elle patrouille autour, de haut en bas, et d'un bord à l'autre de la marge. Elle y va au galop : une impulsion
+        // toutes les 0,6 s (coup : elle monte vite, retombe), où elle bondit vers sa cible, d'autant plus loin qu'elle en est
+        // loin, puis un glissé (v : ce qu'elle avance à cette image, pour qu'elle se penche et rame dans ce sens)
         const t = performance.now() / 1000, yTete = r.top + g.yc, yFin = r.top + g.yN;
-        const vise = clamp(innerHeight * .42, yTete, yFin) + Math.sin(t * .9) * (mobile ? 34 : 48) + Math.sin(t * 2.3) * 6;
+        const vise = clamp(innerHeight * .42, yTete, yFin) + Math.sin(t * 1.1) * (mobile ? 48 : 70) + Math.sin(t * 2.9) * 8;
         if (y === null) y = vise;
-        const d = vise - y, v = d * .1; y += v; bouge = Math.abs(d) > .4;
+        const ph = (t % .6) / .6, coup = ph < .2 ? ph / .2 : Math.max(0, 1 - (ph - .2) / .55);
+        const d = vise - y, loin = Math.abs(d), v = Math.sign(d) * Math.min(loin, (.7 + 4.8 * coup) * (1 + loin / 140));
+        y += v; bouge = loin > .4;
         // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 80 px) et gagne le milieu de la marge
-        const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, mobile ? 54 : 90, q), x = r.left + lerp(g.x0, g.xg, q) + Math.sin(t * .7 + 1) * (mobile ? 4 : 8) * q;
+        const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, mobile ? 54 : 90, q), x = r.left + lerp(g.x0, g.xg, q) + Math.sin(t * 1.6 + 1) * (mobile ? 4 : 8) * q;
         // la tentacule attrape le médaillon le plus proche de son cœur (à portée), qui s'anime, et le lâche pour le suivant
         let proche = null, dp = 160;
         for (const ic of g.ics) { const b = ic.getBoundingClientRect(), dy = Math.abs(b.top + b.height / 2 - y); if (dy < dp) { dp = dy; proche = ic; } }
@@ -10301,7 +10308,7 @@ const CREATURE = (() => {
             if (i) { i.classList.add('est-vivant'); setTimeout(() => i.classList.remove('est-vivant'), 1600); }
           } else c.revenir();
         }
-        return { x, y, largeur, bouge, v };
+        return { x, y, largeur, bouge, v, coup };
       } });
     if (c) c.demarrer();
     return c;
