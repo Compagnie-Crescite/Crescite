@@ -114,7 +114,10 @@ l'entrée, ou de l'univers du spectacle) ; ouvrir une saison ou un panneau la d�
 l'enroule autour du bouton. Rien n'est retardé : la page répond tout de suite, l'animation joue par-dessus. Chaque
 maquette l'habille à son style (`TENTACULES.regler`, variables `--tt-*`) : trait gravé pour la 01, filet de lumière pour
 la 07, ventouses pour la synthèse, fil pour la 08… Avec « réduire les animations », un fondu bref ; `?anim=0` dans
-l'adresse coupe tout.
+l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en plus une créature vivante
+(`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
+souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
+va souligner le titre à la couleur du spectacle, puis revient.
 
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble

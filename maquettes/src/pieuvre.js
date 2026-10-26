@@ -21,7 +21,9 @@
                                  px, jusqu'au bord de l'écran : elle arrive à plat de derrière, d'autant plus loin qu'elle vient
                                  de loin, mais toute la courbe tient dans cette place ; racine et corps : les fractions de son
                                  épine qui restent telles quelles dans le logo (.12 par défaut) et où commence la pointe (.7) :
-                                 racine: .7 garde une boucle entière et la prolonge depuis sa descente ; tension, de 0 à 1 :
+                                 racine: .7 garde une boucle entière et la prolonge depuis sa descente ; epaisseur : la largeur
+                                 au moins, en px, de ce qui sort du logo (une petite pieuvre a des tentacules trop fines pour
+                                 se voir : la partie déployée s'épaissit jusque-là, sa racine non) ; tension, de 0 à 1 :
                                  la pointe se déroule) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
                                  coup). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
      t.avancer(dt, { temps, onde, penche, bob }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
@@ -84,7 +86,7 @@ const PIEUVRE = (() => {
         const ca = Math.cos(a), sa = Math.sin(a);
         this.VX[k] = cx + this.T[k] * ca - this.N[k] * sa; this.VY[k] = cy + this.T[k] * sa + this.N[k] * ca;
       }
-      this.rac = RAC; this.libreRac = -1; this.libre = this.libres(RAC);
+      this.rac = RAC; this.wmin = 0; this.libreRac = -1; this.libre = this.libres(RAC);
       // le repos dans le repère de l'écran : posé par poser()
       this.ox = 0; this.oy = 0; this.s = 1; this.pose_ = false;
       this.pose = null; this.depuis = null; this.but = null; this.q = 1; this.duree = 0; this.cible = null; this.bob = { x: 0, y: 0 };
@@ -199,7 +201,7 @@ const PIEUVRE = (() => {
       const meme = !!cible === !!this.cible && (!cible || (cible.cle === this.cible.cle));
       this.cible = cible;
       // (la racine de la dernière cible reste celle du liseré et de l'effilement, le temps qu'elle revienne au repos)
-      if (cible) { this.derniere = cible; this.rac = cible.racine != null ? cible.racine : RAC; }
+      if (cible) { this.derniere = cible; this.rac = cible.racine != null ? cible.racine : RAC; this.wmin = cible.epaisseur || 0; }
       if (!this.pose_ || (meme && this.pose)) return;   // la même cible (peut-être déplacée) : le trajet continue
       this.depuis = this.pose || this.reposPose();
       this.but = cible ? this.viseePose(cible, this.bob) : null;
@@ -243,7 +245,13 @@ const PIEUVRE = (() => {
       const cx = lerp(this.X[k], this.X[k + 1], f), cy = lerp(this.Y[k], this.Y[k + 1], f), a = lerp(P.th[k], P.th[k + 1], f);
       // vers un titre, la pointe s'effile (un bout coupé net devient pointu) : au-delà de la moitié, et hors de la racine
       const u = sv / this.L0, e = P.mu * lisse(Math.max(.5, this.rac + .05), 1, u) * (this.plat ? .9 : .45);
-      const ca = Math.cos(a), sa = Math.sin(a), tt = tv * s * (1 - e * .8), nn = nv * s * (1 - e);
+      const ca = Math.cos(a), sa = Math.sin(a), tt = tv * s * (1 - e * .8);
+      let nn = nv * s * (1 - e);
+      // (une largeur minimale, hors de la racine : la partie déployée d'une petite pieuvre reste visible)
+      if (this.wmin && P.mu > .001 && u > this.rac) {
+        const h = this.wmin / 2 * (1 - e * .6), b = Math.min(1, (u - this.rac) / .08) * P.mu;
+        if (Math.abs(nn) < h) nn = lerp(nn, (nv < 0 ? -1 : 1) * h, b);
+      }
       out[0] = cx + tt * ca - nn * sa; out[1] = cy + tt * sa + nn * ca;
     }
     // le contour de la tentacule à l'écran : la peau, et des points ajoutés là où elle s'étire (pas plus de 2,5 px entre deux)

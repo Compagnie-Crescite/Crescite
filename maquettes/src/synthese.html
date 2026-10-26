@@ -2257,7 +2257,10 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      5. Pression : la pièce s'enfonce d'un rien dès le pointerdown (.mv-presse).
      6. Défilement (MOUVEMENT.reveler) : les filets se tracent de gauche à droite, les titres montent, les fiches arrivent
         l'une après l'autre, les chiffres comptent ; les bras de la carte poussent depuis Rouen.
-     7. Ce qui vit : « aujourd'hui » respire sur chaque frise, le point « en tournée » aussi.
+     7. Ce qui vit : « aujourd'hui » respire sur chaque frise, le point « en tournée » aussi ; et la petite pieuvre de
+        l'en-tête (CREATURE, creature.js) : dessinée avec ses vraies tentacules, elle ondule et respire, se penche vers la
+        souris, suit le courant quand la page défile ; à chaque page elle se contracte, et en entrant dans un spectacle une
+        tentacule va souligner le titre, à la couleur du spectacle, puis revient. Lente et de quelques pixels : jamais pénible.
      Les frises (FRISE) sont le calendrier de chaque page : la saison et les saisons passées sur #/saisons, la
      saison passée, la tournée d'un spectacle, les dates scolaires, la diffusion saison par saison, l'histoire de la
      compagnie ; survoler un repère allume sa ligne et sa commune, et inversement ; un clic y mène.
@@ -5266,12 +5269,26 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true });
       });
       apres(false);
-      if (courantAvant) entrer(type);
+      if (courantAvant) { entrer(type); creature(type); }
     };
     // la première vue (et sous l'ouverture) sans transition ; ensuite, la page pousse (MOUVEMENT.transition)
     const premiere = !courant;
     if (premiere || !MV || INTRO.ouverte()) faire(); else MV.transition(faire, { type, depuis });
     if (premiere) preparer();
+  }
+  // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois la
+  // page arrivée et les lettres du titre posées, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
+  let tCreature = 0;
+  function creature(type) {
+    if (typeof CREATURE === 'undefined' || !CREATURE.actif) return;
+    CREATURE.revenir();
+    const id = ++tCreature;
+    if (type !== 'spectacle') { CREATURE.reagir(type === 'onglet' ? 'clic' : type === 'retour' ? 'retour' : 'page'); return; }
+    setTimeout(() => {
+      const h = $('.u-titre', main);
+      if (id !== tCreature || !h || !motionOK()) return;
+      CREATURE.vers(h, { couleur: getComputedStyle(h).getPropertyValue('--u-vif').trim() || '#ffffff' });
+    }, 1150);
   }
   // la page qui pousse : <main> monte de 12 px (descend, au retour) ; avec un élément partagé, elle paraît autour de lui
   let entreeMain = null;
@@ -5338,6 +5355,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   if (MV) MV.presse(document);
   lire();
   cadre();
+  // la créature : la petite pieuvre de l'en-tête (la marque, posée par cadre()) vit, avec ses vraies tentacules ; elle prend la
+  // relève du dessin à la fin de l'ouverture. Ses moments sont joués par route() : chaque page, l'entrée dans un spectacle
+  if (typeof CREATURE !== 'undefined' && CREATURE.actif) CREATURE.habiter($('#marque'), { encre: '#ffffff' });
   document.body.insertAdjacentHTML('beforeend', `<svg class="defs" aria-hidden="true" focusable="false"><defs><path id="fr" d="${CARTE.fond.pays}"/></defs></svg>`);
   addEventListener('hashchange', route);
   if (typeof DONNEES !== 'undefined') DONNEES.surChangement(refaire);
