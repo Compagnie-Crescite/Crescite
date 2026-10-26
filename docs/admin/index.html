@@ -3973,11 +3973,13 @@ async function vueJournal() {
   const dessiner = () => {
     const mots = motsRch(f.q), filtre = !!(mots.length || f.quoi || f.qui || f.periode), xs = E.journal.filter(j => garde(j, mots));
     const total = E.journal.filter(j => j.operation !== 'UPDATE' || champsChanges(j).length).length;
+    const premier = !zone.querySelector('.journal-ligne');
     zone.innerHTML = xs.map(j => { const ch = champsChanges(j), ap = apprisDuJournal(j);
       return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
         <span class="quoi"><b>${OPS_JOURNAL[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${surlignerRch(resume(j) || '', mots)}${ch.length ? `<span class="diff"> — ${surlignerRch(ch.join(', '), mots)}</span>` : ''}${ap.length ? `<span class="diff appris"> — gardé dans les fiches : ${esc(ap.join(', '))}</span>` : ''}</span>
         <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('')
       || `<p class="vide">${total ? 'Aucune modification ne correspond.' : 'Rien encore.'}</p>`;
+    if (premier && !CALME_ADMIN()) zone.classList.add('ad-neuf');       // la première liste se pose
     const plusVieux = E.journal.length ? jourDe(E.journal[E.journal.length - 1]) : AUJ, de = debutPeriode();
     $('#j-compte').textContent = `${filtre ? `${xs.length} sur ${total}` : total} modification${total > 1 ? 's' : ''}${E.journalFin ? '' : `, depuis le ${jourCourt(plusVieux)}`}`;
     $('#j-effacer').hidden = !filtre;

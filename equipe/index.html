@@ -152,7 +152,8 @@ main.large { max-width: 1180px; }
 .titre-vue .sous { margin: 6px 0 0; color: var(--gris); }
 .titre-section { display: flex; align-items: center; gap: 10px; margin: 24px 0 12px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
 .titre-section::after { content: ""; flex: 1; height: 1px; background: var(--filet); }
-.mois { margin: 18px 4px 8px; font: 700 .92rem/1.2 var(--sans); color: var(--encre); text-transform: capitalize; }
+.mois { position: sticky; top: calc(var(--haut) + var(--hs)); z-index: 2; margin: 14px 0 8px; padding: 6px 4px; font: 700 .92rem/1.2 var(--sans); color: var(--encre); text-transform: capitalize;
+  background: color-mix(in srgb, var(--papier) 86%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }   /* le mois reste en haut pendant qu'on fait défiler ses dates */
 .titre-section + .mois { margin-top: 4px; }
 .pile { display: grid; gap: 12px; }
 .pied-vue { margin: 30px 0 0; color: var(--gris); font-size: .88rem; text-align: center; }
@@ -948,6 +949,12 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   main:not(.rafraichi) .tete-spectacle .ts-corps > :nth-child(2) { animation-delay: .06s; }
   main:not(.rafraichi) .tete-spectacle .ts-corps > :nth-child(n + 3) { animation-delay: .12s; }
   .indispo-ligne.neuve { animation: monte .35s cubic-bezier(.2, .8, .2, 1) both; }
+  /* 15. ce qui arrive après la page (les chiffres, la liste de chargement, le planning) se pose ; le héros recule au défilement */
+  .arrive, .arrive > .frise { animation: monte .4s cubic-bezier(.2, .8, .2, 1) both; }
+  @supports (animation-timeline: scroll()) {
+    .heros-photo, .ts-photo { animation: recule linear both; animation-timeline: scroll(root); animation-range: 0 360px; }
+    @keyframes recule { to { transform: translateY(-44px); } }
+  }
   @keyframes attend { to { opacity: .4; } }
   /* 9. « tout marquer comme lu » : les notifications s'éteignent l'une après l'autre */
   .notif.balaye { animation: balaye .7s ease-out calc(var(--i, 0) * 50ms) both; }

@@ -114,6 +114,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   // 13. le bandeau d'état (hors connexion) entre, et ne se redessine pas tant qu'il ne change pas
   const bandeau = await page.evaluate(() => { const m = document.querySelector('.bandeau-etat .message'); return { la: !!m, anim: m && getComputedStyle(m).animationName, h: !!document.querySelector('#bandeau-etat').dataset.h }; });
   ok('13 · le bandeau d\'état entre une fois (monte) et garde sa signature', bandeau.la && bandeau.anim === 'monte' && bandeau.h, JSON.stringify(bandeau));
+  ok('15 · les mois de la saison restent en haut', await page.$eval('.o-suite .mois', e => getComputedStyle(e).position) === 'sticky');
   // 5. l'accueil garde le magenta
   ok('5 · accueil : pas de teinte', await page.$eval('.appli', e => !e.hasAttribute('data-teinte')));
   // 6. la carte : bras et lieux portent leurs dates ; survoler un billet allume son bras

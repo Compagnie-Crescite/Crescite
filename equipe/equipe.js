@@ -1509,7 +1509,7 @@
       const b = location.hash === r.hash && $('#bloc-planning');
       if (!b) return;
       const lignes = lignesPlanning(d, x);
-      if (lignes.length) { $('.attente-bloc', b)?.replaceWith(document.createRange().createContextualFragment(frise(lignes))); majFrises(); } else b.remove();
+      if (lignes.length) { $('.attente-bloc', b)?.replaceWith(document.createRange().createContextualFragment(frise(lignes))); b.classList.add('arrive'); majFrises(); } else b.remove();
     }).catch(() => { const b = location.hash === r.hash && $('#bloc-planning .attente-bloc'); if (b) b.textContent = 'Le planning est dans la feuille de route, qui demande le réseau.'; });
   }
 
@@ -1611,7 +1611,7 @@
       data.heures_ateliers != null && `${nombre(data.heures_ateliers)}\u00a0h d’ateliers`].filter(Boolean);
     if (!morceaux.length) return;
     $('#chiffres-texte', bloc).textContent = morceaux.join(' · ');
-    bloc.hidden = false;
+    bloc.hidden = false; bloc.classList.add('arrive');                 // le bloc, lu après la page, se pose
   }
 
   // qui part sur une date : la distribution « en tournée » du spectacle, moins les absents de la date, plus ses renforts
@@ -3199,7 +3199,9 @@
         }).join('')}
       </ul>
     `;
+    const premier = !zone.firstElementChild;
     zone.innerHTML = h;
+    if (premier) zone.classList.add('arrive');                      // la liste, lue après la page, se pose
 
     // Attacher les écouteurs de case à cocher
     $$('.camion-item input[type=checkbox]', zone).forEach(inp => {

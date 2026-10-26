@@ -305,7 +305,8 @@ qui se redessine (le temps réel, un enregistrement) glisse ses lignes à leur n
 visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une précision ajoutée se pose ; la cloche de « Prévenir
 l'équipe » sonne une fois la notification partie ; dans la Diffusion, l'opportunité déplacée glisse jusqu'à sa nouvelle
 colonne ; dans une feuille de route, le compte « à compléter » saute quand il baisse ; le statut d'une note de frais
-qui change saute ; les photos ajoutées à un spectacle se posent ; les champs changent en douceur. Rien de tout cela si l'appareil
+qui change saute ; les photos ajoutées à un spectacle se posent ; les champs changent en douceur ; la première liste du
+journal se pose. Rien de tout cela si l'appareil
 demande moins d'animations, ni avec `?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
 une base fictive.
 
@@ -454,7 +455,9 @@ fondu du squelette au contenu, un bouton qui a réussi le dit un instant (`occup
 arrivent l'un après l'autre, la photo d'un spectacle s'approche au survol, la réponse à une proposition saute, la feuille
 de route se lit en direct le jour J (les lignes passées pâlissent, celle du moment se marque : `majFeuilleDirect`), le
 bandeau d'une notification dit le temps qu'il lui reste, le bandeau d'état n'entre que s'il change, la page d'un
-spectacle se pose comme celle d'une date, une indisponibilité retirée se replie et la neuve se pose. Tout ce
+spectacle se pose comme celle d'une date, une indisponibilité retirée se replie et la neuve se pose, ce qui arrive après
+la page (les chiffres, la liste de chargement, le planning) se pose, le héros recule au défilement, les mois de la
+saison restent en haut. Tout ce
 qui bouge en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations, ni
 avec `?anim=0`, la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
 ligne, sur une saison fictive.
