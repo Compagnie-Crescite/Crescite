@@ -717,7 +717,9 @@ html.ed-actif .c-frise { display: none; }
    de métier en métier, une branche vers chaque catégorie (son icône dans une ventouse, son titre) ; les personnes sont les
    ventouses du bras : une pastille, leur visage quand sa publication est accordée (sinon le nom seul), leur nom, leur métier
    précis. Survoler ou choisir une personne allume toutes ses places et les relie (TROUPE.relier, à la couleur de la saison) ;
-   les bras poussent une fois, quand la troupe arrive à l'écran (Web Animations sur le masque qui les découvre) */
+   les bras poussent une fois, quand la troupe arrive à l'écran (Web Animations sur le masque qui les découvre). La pieuvre
+   de tête est une créature (CREATURE.creer) : elle descend le long du tronc au fil du défilement et attrape le médaillon du
+   métier qu'on lit ; sans mouvement, le dessin reste en tête */
 section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsic-size: auto 1400px; }   /* hors de l'écran : ni style ni mise en page */
 .tr6 { --g: clamp(56px, 7vw, 100px); --troupe-lien: var(--saison-texte); --troupe-ic-fond: var(--papier); --troupe-ventouse-fond: var(--papier);
   position: relative; display: grid; gap: clamp(18px, 2.4vw, 30px); margin-top: 18px; padding-left: var(--g); }
@@ -725,7 +727,8 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .tr6-mq { fill: none; stroke: #fff; stroke-width: 44; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
 .tr6-b { fill: var(--saison-texte); }
 .tr6-vent { fill: var(--papier); stroke: var(--saison-texte); stroke-width: 1.6; }
-.tr6-coeur { position: relative; z-index: 2; width: clamp(104px, 12vw, 150px); margin-left: calc(var(--g) * -1 + 2px); color: var(--saison-texte); }
+.tr6-coeur { position: relative; z-index: 2; width: clamp(104px, 12vw, 150px); margin-left: calc(var(--g) * -1 + 2px); margin-bottom: 30px; color: var(--saison-texte); }
+.tr6.est-vivante .tr6-coeur { visibility: hidden; }   /* la créature (CREATURE) dessine la pieuvre à sa place, puis se balade */
 .tr6-coeur svg { display: block; width: 100%; height: auto; }
 .tr6-cat { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); gap: 10px 24px; align-items: start; }
 .tr6-t { display: flex; align-items: center; gap: 12px; margin: 0; font: 500 1.25rem/1.15 var(--titre); }
@@ -749,8 +752,8 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .tr6-p[aria-pressed="true"] .tr6-m { color: inherit; }
 @media (max-width: 700px) {
   section.bloc.troupe { contain-intrinsic-size: auto 3600px; }
-  .tr6 { --g: 44px; }
-  .tr6-coeur { width: 96px; margin-bottom: 6px; }
+  .tr6 { --g: 56px; }
+  .tr6-coeur { width: 96px; }
   .tr6-cat { grid-template-columns: minmax(0, 1fr); }
   .tr6-ic { width: 44px; height: 44px; font-size: 11px; }
   .tr6-p { min-width: 0; max-width: 100%; }
@@ -2306,12 +2309,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         défilement (defile) lit tout, puis écrit tout, une fois par image.
      7. Ce qui vit : « aujourd'hui », une goutte d'encre dont le cœur bat sur chaque frise ; « en tournée » respire comme une
         ventouse. La pieuvre n'a que ses moments (règle 15 A) : la scène de l'accueil (ses tentacules vivent, au repos ; un
-        geste les suspend) et l'encre d'un spectacle ; puis la troupe, dont les bras poussent une fois. Et la petite pieuvre de
-        l'en-tête (CREATURE, creature.js), la marque du menu flottant : dessinée avec ses vraies tentacules, elle ondule et
-        respire, se penche vers la souris, suit le courant quand la page défile ; à chaque page elle se contracte ; l'encre
-        d'un spectacle qu'on quitte se resserre vers elle, et en y entrant, l'encre ouverte, sa tentacule va souligner le titre
-        à la couleur du spectacle, puis revient (le même moment). Lente et de quelques pixels ; repliée sous la pieuvre de
-        l'accueil, ou sans marque (le téléphone), elle se tait.
+        geste les suspend) et l'encre d'un spectacle ; puis la troupe, dont les bras poussent une fois et dont la pieuvre
+        descend le tronc au fil de la lecture. Et la petite pieuvre de l'en-tête (CREATURE, creature.js), la marque du menu
+        flottant : dessinée avec ses vraies tentacules, elle ondule et respire, se penche vers la souris, suit le courant quand
+        la page défile ; à chaque page elle se contracte ; l'encre d'un spectacle qu'on quitte se resserre vers elle, et en y
+        entrant, l'encre ouverte, sa tentacule va souligner le titre à la couleur du spectacle, puis revient (le même moment).
+        Lente et de quelques pixels ; repliée sous la pieuvre de l'accueil, ou sans marque (le téléphone), elle se tait.
      Le menu flottant (Menu) : posé sous la pieuvre de l'accueil, il monte avec la page et s'arrime en haut de l'écran
      (sticky : rien ne se calcule au défilement) ; arrimé, sa marque se déplie ; sur la page d'un spectacle, la barre des
      entrées s'arrime sous lui.
@@ -2323,7 +2326,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      Les vidéos (LECTEUR, règle 18) arrivent en fondu quand elles sont prêtes ; « assombrir » éteint la page (440 ms), elle se
      rallume vite.
      La troupe (TROUPE, celle de la 06) : quand elle arrive à l'écran, le bras qui descend de la pieuvre pousse une fois, puis
-     ses branches, l'une après l'autre ; survoler une personne trace ses liens vers ses autres places.
+     ses branches, l'une après l'autre ; survoler une personne trace ses liens vers ses autres places. Sa pieuvre de tête est
+     une créature (CREATURE.creer) : quand la lecture descend, elle rapetisse, descend le long du tronc à hauteur de lecture,
+     en nageant, et une tentacule attrape le médaillon du métier qu'on lit, puis le lâche pour le suivant.
      L'espace pro (celui de la 05) : la ligne-tentacule se trace, les titres fleurissent, les portes et les fiches se
      déroulent ; au survol, la photo d'une porte s'approche, un lavis clair prend l'aplat d'un espace, la flèche avance.
      Moins d'animations demandé (ou ?anim=0) : tout est posé, rien ne bouge (les photos de la scène changent d'un fondu bref,
@@ -4637,33 +4642,83 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!svg || !coeur || typeof TROUPE === 'undefined' || !tr.isConnected) return;
     const r0 = tr.getBoundingClientRect(), W = r0.width, H = r0.height;
     if (!W || !H) return;
-    const c = coeur.getBoundingClientRect(), x0 = c.left - r0.left + c.width * .5, y0 = c.top - r0.top + c.height * .78;
+    // (le tronc sort du bas de la pieuvre, entre ses deux grandes boucles, droit vers le bas, puis rejoint le bord : jamais à
+    // travers ses tentacules)
+    const c = coeur.getBoundingClientRect(), x0 = c.left - r0.left + c.width * .5, y0 = c.top - r0.top + c.height * .96;
     const ics = $$('.tr6-ic', tr).map(i => { const r = i.getBoundingClientRect(); return [r.left - r0.left, r.top - r0.top + r.height / 2]; });
     if (!ics.length) return;
-    const xs = Math.max(10, Math.min(x0, ...ics.map(q => q[0])) - 30), yN = ics[ics.length - 1][1];
-    // le tronc a rejoint le bord avant la première branche
-    const yb = Math.max(y0 + 24, Math.min(y0 + 90, ics[0][1] - 34));
-    const tronc = TROUPE.lisse([[x0, y0], [x0 - (x0 - xs) * .5, y0 + (yb - y0) * .45], [xs, yb], [xs, Math.max(yN, yb + 1)]]);
+    const mobile = innerWidth < 700, xMin = Math.min(...ics.map(q => q[0])), yN = ics[ics.length - 1][1], yc = c.top - r0.top + c.height * .5;
+    // avec la créature (elle se pose sur le tronc, puis le descend) : un tronc droit, qui part de sous elle, tout près des
+    // médaillons au téléphone (elle tient entre le bord et eux) ; sans elle : il sort du bas du dessin, puis rejoint le bord
+    const vivante = !!troupeCreature, xs = vivante && mobile ? xMin - 22 : Math.max(10, Math.min(x0, xMin) - 30);
+    const yb = Math.max(y0 + 70, Math.min(y0 + 110, ics[0][1] - 30));
+    // (sans la créature : un S doux, du bas de la pieuvre au bord. Le tronc est jalonné de points réguliers : la courbe lissée
+    // passe par des points voisins, un dernier point très loin des autres la ferait partir en vrille)
+    const jalons = (y1, y2) => { const pts = []; for (let y = y1; y < y2 - 30; y += 60) pts.push([xs, y]); pts.push([xs, Math.max(y2, y1 + 1)]); return pts; };
+    const tronc = vivante ? TROUPE.lisse([[xs, yc], ...jalons(yc + 60, yN)])
+      : TROUPE.lisse([[x0, y0], [x0 - (x0 - xs) * .3, y0 + (yb - y0) * .4], [xs, yb], ...jalons(yb + 50, yN)]);
+    // ce que la créature de la troupe doit savoir pour se balader (par rapport à la troupe) : sa place de repos, le tronc, les médaillons
+    troupeGeo = { xs, yc, largeur: c.width, yN, ics: $$('.tr6-ic', tr) };
+    if (troupeCreature) troupeCreature.reveil();
     const branches = ics.map(([x, y]) => TROUPE.courbe([xs, y - 26], [x - 4, y], { courbe: .3 }));
     const f = n => n.toFixed(1);
     svg.setAttribute('viewBox', `0 0 ${f(W)} ${f(H)}`);
     svg.innerHTML = `<defs><mask id="tr6-masque" maskUnits="userSpaceOnUse" x="0" y="0" width="${f(W)}" height="${f(H)}">
         <path class="tr6-mq" pathLength="1" d="${tronc.d}"${mode === 'cache' ? ' style="stroke-dashoffset:1"' : ''}/>${branches.map(b => `<path class="tr6-mq" pathLength="1" d="${b.d}"${mode === 'cache' ? ' style="stroke-dashoffset:1"' : ''}/>`).join('')}</mask></defs>
-      <g mask="url(#tr6-masque)"><path class="tr6-b" d="${TROUPE.effile(tronc, { w0: 14, w1: 4 })}"/>${branches.map(b => `<path class="tr6-b" d="${TROUPE.effile(b, { w0: 5, w1: 2 })}"/>`).join('')}</g>
+      <g mask="url(#tr6-masque)">${vivante ? `<circle class="tr6-b" cx="${f(xs)}" cy="${f(yc)}" r="7"/>` : ''}<path class="tr6-b" d="${TROUPE.effile(tronc, { w0: 14, w1: 4 })}"/>${branches.map(b => `<path class="tr6-b" d="${TROUPE.effile(b, { w0: 5, w1: 2 })}"/>`).join('')}</g>
       ${ics.map(([x, y]) => `<circle class="tr6-vent" cx="${f(x - 4)}" cy="${f(y)}" r="3.4"/>`).join('')}`;
     if (mode !== 'pousse' || !svg.animate) return;
     $$('.tr6-mq', svg).forEach((m, i) => m.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: i ? 440 : 760, delay: i ? 240 + i * 70 : 0, easing: DOUX, fill: 'backwards' }));
   }
   // la troupe prend vie : les liens entre les places d'une personne (au clavier aussi), les bras qui poussent à l'arrivée, les
   // icônes qui s'animent une fois à leur arrivée dans l'écran
-  let troupeCtl = null, troupeIO = null, troupeRO = null;
-  function vivreTroupe() {
+  let troupeCtl = null, troupeIO = null, troupeRO = null, troupeCreature = null, troupeGeo = null;
+  function finirTroupe() {
     if (troupeCtl) { troupeCtl.detruire(); troupeCtl = null; }
     if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
     if (troupeRO) { troupeRO.disconnect(); troupeRO = null; }
+    if (troupeCreature) { troupeCreature.arreter(); troupeCreature = null; }
+    troupeGeo = null;
+  }
+  // la pieuvre de la troupe se balade : une créature (CREATURE.creer, les vraies tentacules) dessinée à la place de la pieuvre
+  // de tête ; quand la lecture descend, elle quitte sa place, rapetisse et descend le long du tronc, à hauteur de lecture, en
+  // retard d'un rien (elle nage) ; au passage, une tentacule attrape le médaillon du métier qu'on lit et le lâche pour le
+  // suivant. Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe pas (le dessin de tête reste)
+  function creatureTroupe(tr) {
+    if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
+    let y = null, bouge = false, prise = null;
+    const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true,
+      eveil: () => tr.classList.add('est-vivante'), sommeil: () => tr.classList.remove('est-vivante'),
+      placer() {
+        const g = troupeGeo;
+        if (!g || !tr.isConnected) return null;
+        const r = tr.getBoundingClientRect();
+        if (r.bottom < -60 || r.top > innerHeight + 60) { y = null; return null; }
+        const mobile = innerWidth < 760;
+        // la place visée : à hauteur de lecture, sur le tronc, entre sa place de repos (en tête) et le dernier médaillon ; elle y
+        // va en retard d'un rien
+        const yTete = r.top + g.yc, yFin = r.top + g.yN, vise = clamp(innerHeight * .42, yTete, yFin);
+        if (y === null) y = vise;
+        const d = vise - y; y += d * .11; bouge = Math.abs(d) > .4;
+        // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 70 px) : elle tient entre le bord et
+        // les médaillons
+        const q = lisse(0, 70, y - yTete), largeur = lerp(g.largeur, mobile ? 44 : 84, q), x = r.left + g.xs;
+        // la tentacule attrape le médaillon le plus proche de son cœur (à portée), et le lâche pour le suivant
+        let proche = null, dp = 160;
+        for (const ic of g.ics) { const b = ic.getBoundingClientRect(), dy = Math.abs(b.top + b.height / 2 - y); if (dy < dp) { dp = dy; proche = ic; } }
+        if (proche !== prise) { prise = proche; if (proche) c.vers(proche, { prise: 'medaillon', bras: 'boucleR', tenir: Infinity, duree: 760 }); else c.revenir(); }
+        return { x, y, largeur, bouge };
+      } });
+    if (c) c.demarrer();
+    return c;
+  }
+  function vivreTroupe() {
+    finirTroupe();
     const tr = $('.tr6', main);
     if (!tr || typeof TROUPE === 'undefined') return;
     troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true });
+    troupeCreature = creatureTroupe(tr);
     let vu = !motionOK() || surPlaceRendu || !('IntersectionObserver' in window), largeur = 0;
     const etat = () => (vu ? 'pose' : 'cache');
     requestAnimationFrame(() => brasTroupe(tr, etat()));
@@ -5395,6 +5450,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     frises.forEach(f => f.detruire()); frises = [];
     lecteurs.forEach(io => io.disconnect()); lecteurs = [];
     secs = []; chaps = []; ecrans = []; dfM = null; surPlaceRendu = !!surPlace;
+    finirTroupe();   // (la créature de la troupe s'arrête en quittant la compagnie ; la vue refaite la recrée)
     // la scène de l'accueil s'arrête en le quittant (refait en place, l'accueil la garde telle quelle)
     if (!(surPlace && vue === 'accueil')) Scene.montrer(false);
     try {

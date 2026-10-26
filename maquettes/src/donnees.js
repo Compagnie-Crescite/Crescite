@@ -58,10 +58,12 @@ const DONNEES = (() => {
     const arr = x => Math.round(x * 10) / 10;
     return [arr(P.cx[0] * u + P.cx[1] * v + P.cx[2]), arr(P.cy[0] * u + P.cy[1] * v + P.cy[2])];
   }
+  // la photo d'un fichier de la base : celle que la page a déjà (sa copie publiée, ou en data URL), sinon celle du stockage ;
+  // jamais le substitut neutre (un SVG) d'une page construite sans la photo, qui masquerait la vraie, déposée dans la base
   const photo = fichier => {
     if (!fichier) return null;
-    const cle = fichier.replace(/\.[a-z0-9]+$/i, '');
-    return S.photos[cle] || `${BASE}/storage/v1/object/public/crescite/${fichier.split('/').map(encodeURIComponent).join('/')}`;
+    const cle = fichier.replace(/\.[a-z0-9]+$/i, ''), ici = S.photos[cle];
+    return ici && !/^data:image\/svg/.test(ici) ? ici : `${BASE}/storage/v1/object/public/crescite/${fichier.split('/').map(encodeURIComponent).join('/')}`;
   };
 
   // le thème d'un spectacle (règle 22) : « couleur », assez sombre pour porter la pieuvre blanche du logo et un texte sur
