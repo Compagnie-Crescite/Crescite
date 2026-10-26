@@ -405,6 +405,10 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 
 /* ———————————————— la page d'une date */
 .gestes { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin: 12px 0 0; }
+/* la date d'avant, celle d'après (navDates, equipe.js ; les boutons de gestes.js) : sous les gestes, deux boutons nommés */
+.nav-dates { margin: 12px 0 0; }
+.nav-dates .gps-b { min-height: 44px; padding: 8px 12px; }
+.nav-dates .gps-t { font-size: .92rem; }
 .geste { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 72px; padding: 10px 6px; border: 1px solid var(--filet); border-radius: 16px; background: var(--surface); color: var(--encre); font: 600 .86rem/1.2 var(--sans); text-align: center; text-decoration: none; cursor: pointer; transition: transform .12s, background-color .2s; }
 .geste:hover { background: color-mix(in srgb, var(--u-fond, var(--surface-2)) 60%, var(--surface)); color: var(--encre); }
 .geste:active { transform: scale(.96); }
@@ -997,6 +1001,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 <script src="../admin/feuille.js" defer></script>
 <script src="../admin/logo.js" defer></script>
 <script src="../admin/tentacules.js" defer></script>
+<script src="../admin/gestes.js" defer></script>
 <script src="../admin/planning.js" defer></script>
 <script src="carte.js" defer></script>
 <script src="equipe.js" defer></script>

@@ -1494,6 +1494,7 @@
       if (avecIdeale()) gestes.push(`<a class="geste" href="#/frais?date=${d.id}">${ICONES.euro}<span>Frais</span><span class="sr"> : ajouter une note de frais pour cette date</span></a>`);
     }
     if (gestes.length) html += `<div class="gestes"${attrU(sp)}>${gestes.join('')}</div>`;
+    html += navDates(d, 'date');
     const precisions = (Array.isArray(d.details) ? d.details : []).filter(x => x && x.texte);
     html += `<section class="bloc"${attrU(sp)} aria-labelledby="b-horaires"><h2 id="b-horaires">${ICONES.horloge}${nat === 'representations' ? 'Représentations' : 'Horaires'}</h2>${horaires(d, { complet: true })}
       ${precisions.length ? `<ul class="precisions">${precisions.map(x => { const u = x.lien && urlSure(x.lien); return `<li>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(x.texte)}<span class="sr"> (nouvel onglet)</span></a>` : esc(x.texte)}</li>`; }).join('')}</ul>` : ''}</section>`;
@@ -1805,7 +1806,7 @@
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
-    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
+    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}${navDates(d, 'feuille')}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
     // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
     const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
     $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
@@ -3651,6 +3652,55 @@
   // le retour au doigt : descendu d'un cran (une date, une feuille, un spectacle…), un glissé depuis le bord gauche emmène la
   // vue avec le pouce ; assez loin, ou assez vite, elle part et la vue d'avant revient (revenir). Un défilement vertical, un
   // élément qui défile de côté, la feuille de route et la carte ne le déclenchent pas.
+  // la date d'avant, celle d'après (toute la tournée, dans l'ordre ; sur une feuille de route, les dates qui en ont une) :
+  // deux boutons nommés sous la page, ← → au clavier, un balayage au doigt (brancherGestes)
+  function navDates(d, genre = 'date') {
+    if (typeof GESTES === 'undefined' || !GESTES) return '';
+    const xs = E.dates.filter(x => genre === 'date' || x.feuille).sort((a, b) => (a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id));
+    const i = xs.findIndex(x => x.id === d.id);
+    if (i < 0 || xs.length < 2) return '';
+    const v = x => (x ? { href: `#/${genre}/${x.id}`, titre: `${jourCourt(x.debut)} · ${x.spectacle?.titre || 'Date'}` } : null);
+    return `<nav class="nav-dates">${GESTES.precSuiv({ prec: v(xs[i - 1]), suiv: v(xs[i + 1]), libelle: x => x.titre, classe: 'btn petit', axe: 'horizontal', texte: true, nom: genre === 'date' ? 'Date précédente, date suivante' : 'Feuille précédente, feuille suivante' })}</nav>`;
+  }
+  // les gestes (../admin/gestes.js) : un appui long ou un clic droit sur un billet, une notification, un document, une
+  // proposition ouvre ce qu'on peut en faire ; ← → et le balayage passent à la date (ou la feuille) d'avant, d'après
+  function brancherGestes() {
+    if (typeof GESTES === 'undefined' || !GESTES) return;
+    const G = GESTES;
+    const dateDe = el => E.dates.find(x => x.id === Number(el.dataset.date || String(el.id || '').replace('billet-', '')));
+    const faux = (attr, valeur) => { const b = document.createElement('button'); b.type = 'button'; b.dataset[attr] = valeur; return b; };
+    G.menu({ cible: '.billet[id^="billet-"], .heros[data-date]', titre: el => { const d = dateDe(el); return d ? `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}` : 'Date'; },
+      actions: el => {
+        const d = dateDe(el);
+        if (!d) return [];
+        const l = d.lieu, passee = finDe(d) < aujourdhui(), vive = vivante(d), ici = location.hash === `#/date/${d.id}`;
+        return [ici ? null : { libelle: 'Ouvrir la date', href: `#/date/${d.id}`, icone: ICONES.chevron },
+          l && itineraire(l) ? { libelle: 'Itinéraire', detail: l.nom || l.commune, href: itineraire(l), externe: true, icone: ICONES.route } : null,
+          d.feuille && outilFeuille() ? { libelle: 'Feuille de route', detail: `v${d.feuille.version || 1}`, href: `#/feuille/${d.id}`, icone: ICONES.feuille } : null,
+          d.feuille && outilFeuille() ? { libelle: 'PDF de la feuille de route', faire: () => telechargerPdf(faux('pdf', d.id)), icone: ICONES.pdf } : null,
+          !passee && vive && evenementsAVenir(d.id).length ? { libelle: 'Ajouter à mon agenda', faire: () => telechargerAgenda(d.id), icone: ICONES.agenda } : null,
+          !passee && vive && avecSignaler() ? { libelle: 'Signaler un retard', faire: () => ouvrirModaleRetard(d.id, el.querySelector('a, button') || el), icone: ICONES.alerte } : null,
+          !passee && vive && avecIdeale() ? { libelle: 'Note de frais', href: `#/frais?date=${d.id}`, icone: ICONES.euro } : null,
+          { separateur: true },
+          { libelle: 'Partager la date', detail: 'le lien de cette page', icone: ICONES.partager, faire: () => partagerMaintenant({ title: `${d.spectacle?.titre || 'Date'} · ${majuscule(quandTexte(d))}`, text: `${d.spectacle?.titre || ''} ${quandTexte(d)}${l ? ` · ${l.nom || l.commune}` : ''}`.trim(), url: new URL(`#/date/${d.id}`, location.href).href }, 'Lien de la date copié') }];
+      } });
+    G.menu({ cible: '.liste-notifs .notif[data-notif], .bandeau-notif[data-notif]', titre: 'Notification', actions: el => {
+      const n = E.notifs.find(x => x.id === Number(el.dataset.notif));
+      return [{ libelle: 'Ouvrir', href: el.getAttribute('href'), icone: ICONES.chevron },
+        n && !n.lue_le ? { libelle: 'Marquer comme lue', icone: ICONES.coche, faire: () => { vibrer(10); marquerLue(n.id); } } : null,
+        nonLues() > 0 ? { libelle: 'Tout marquer comme lu', icone: ICONES.coche, faire: () => toutMarquerLu($('[data-tout-lu]') || faux('toutLu', '1')) } : null];
+    } });
+    G.menu({ cible: '.doc-ligne, .puces-docs li', titre: el => (el.querySelector('a, button')?.textContent || 'Document').trim(), actions: el => {
+      const a = el.querySelector('a[href]'), p = el.querySelector('[data-partager]');
+      return [a ? { libelle: 'Ouvrir', href: a.getAttribute('href'), externe: a.target === '_blank', icone: ICONES.doc } : null,
+        p ? { libelle: 'Partager', detail: 'un lien de trente jours', icone: ICONES.partager, faire: () => partager(p) } : null];
+    } });
+    G.menu({ cible: 'a.carte-prop[href]', titre: 'Proposition de dates', actions: el => [{ libelle: 'Répondre', href: el.getAttribute('href'), icone: ICONES.question }, { libelle: 'Toutes mes propositions', href: '#/propositions', icone: ICONES.planning }] });
+    // ← → et le balayage : la date (ou la feuille) d'avant, d'après ; pas depuis le bord (le retour au doigt), ni sur ce qui défile de côté
+    G.clavierPrecSuiv(document, { modif: 'aucun', portee: '#contenu' });
+    G.glisser(document.body, { gauche: () => $('#contenu .nav-dates [data-gps="1"]:not([disabled])')?.click(), droite: () => $('#contenu .nav-dates [data-gps="-1"]:not([disabled])')?.click(),
+      ignorer: t => !!(t.closest && t.closest('[data-pl-defile], .carte-tournee, .frise, .feuille-cadre, .liste-notifs, [data-defile]')) });
+  }
   function brancherRetour() {
     let x0 = null, y0 = 0, t0 = 0, dx = 0, actif = false;
     const contenu = () => $('#contenu'), seuil = () => Math.min(140, window.innerWidth * 0.35);
@@ -3986,4 +4036,5 @@
   brancherRetour();
   brancherGlisserNotif();
   brancherAllumage();
+  brancherGestes();
 })();

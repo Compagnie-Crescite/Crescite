@@ -1154,6 +1154,11 @@ details.pl-alerte p { margin: 8px 0 0; }
       } else if (s.dataset.plFiltre) { S.filtre = { ...S.filtre, [s.dataset.plFiltre]: s.value === '' ? null : s.value }; dessiner(); signaler(); }
       if (s.dataset.plSemaines != null) { S.semaines = +s.value; charger(0); }
     });
+    // au doigt : un balayage vers la gauche avance d'une période, vers la droite recule (gestes.js) ; pas sur la grille
+    // qui défile de côté, ni depuis le bord
+    if (typeof GESTES !== 'undefined' && GESTES && typeof GESTES.glisser === 'function') {
+      GESTES.glisser(el, { gauche: () => deplacer(1), droite: () => deplacer(-1), ignorer: t => { const s = t.closest && t.closest('[data-pl-defile]'); return !!s && s.scrollWidth > s.clientWidth + 2; } });
+    }
     el.addEventListener('keydown', e => {
       if (e.key === 'Escape' && S.masqueesOuvertes && e.target.closest('.pl-masquees')) { e.preventDefault(); ouvrirMasquees(false, true); return; }
       if (e.key === 'Escape' && el.querySelector('.pl-detail.feuille')) { const p = S.selection; S.selection = null; dessiner({ garderFocus: p }); return; }

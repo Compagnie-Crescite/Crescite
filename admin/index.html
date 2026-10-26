@@ -566,6 +566,8 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 <script src="agenda.js"></script>
 <script src="logo.js"></script>
 <script src="tentacules.js"></script>
+<!-- les gestes communs (clic droit, appui long, flèches, balayage, précédent/suivant) : GESTES -->
+<script src="gestes.js"></script>
 <script>
 'use strict';
 /* L'administration du site de la compagnie Crescite : les spectacles, les dates et leurs représentations, les ateliers,
@@ -935,6 +937,8 @@ const ROUTES = [
   [/^#\/textes(?:\/(.+))?$/, m => vueTextes(m[1] && decodeURIComponent(m[1]))],
   [/^#\/journal$/, () => vueJournal()],
 ];
+const APRES_VUE = [];   // ce qui se pose une fois la vue dessinée (menus.js : précédent / suivant dans les fiches)
+const apresVue = () => APRES_VUE.forEach(f => { try { f(); } catch (e) { console.error(e); } });
 function router() {
   if (!E.pret) return;
   const h = location.hash || '#/accueil';
@@ -942,7 +946,7 @@ function router() {
     const m = h.match(re);
     if (!m) continue;
     E.sale = false;
-    changerVueAdmin(() => { f(m); viser(); }, sensVue(h));
+    changerVueAdmin(() => { f(m); viser(); apresVue(); }, sensVue(h));
     return;
   }
   location.replace('#/accueil');
@@ -3467,7 +3471,7 @@ function carteCrmHtml(p, auj) {
   const etapeIdx = ETAPES_CRM.findIndex(e => e[0] === p.etape);
 
   return `
-    <div class="crm-carte" data-prospect-id="${p.id}">
+    <div class="crm-carte" data-prospect-id="${p.id}" draggable="true">
       ${sp ? `<div class="crm-carte-spectacle"><span class="pastille" style="--c:${esc(coul)}"></span><b>${esc(sp.titre)}</b></div>` : ''}
       <div class="crm-carte-structure">${esc(p.structure)}</div>
       <div class="crm-carte-lieu">${esc(p.commune || '')} ${p.departement ? `(${esc(p.departement)})` : ''}</div>
@@ -3476,8 +3480,8 @@ function carteCrmHtml(p, auj) {
       <div class="crm-carte-pied">
         <span class="crm-carte-relance${enRetard ? ' retard' : ''}">${p.date_prochaine_relance ? (enRetard ? '⚠️ Relance en retard !' : `Relance le ${esc(p.date_prochaine_relance.split('-').reverse().join('/'))}`) : 'Pas de date de relance'}</span>
         <div class="crm-carte-actions">
-          ${etapeIdx > 0 ? `<button type="button" class="btn petit" data-crm-deplacer="-1" data-id="${p.id}" title="Étape précédente">◀</button>` : ''}
-          ${etapeIdx < ETAPES_CRM.length - 1 ? `<button type="button" class="btn petit" data-crm-deplacer="1" data-id="${p.id}" title="Étape suivante">▶</button>` : ''}
+          ${etapeIdx > 0 ? `<button type="button" class="btn petit" data-crm-deplacer="-1" data-id="${p.id}" title="${esc(`Étape précédente : ${ETAPES_CRM[etapeIdx - 1][1]}`)}" aria-label="${esc(`Étape précédente : ${ETAPES_CRM[etapeIdx - 1][1]}`)}">◀</button>` : ''}
+          ${etapeIdx < ETAPES_CRM.length - 1 ? `<button type="button" class="btn petit" data-crm-deplacer="1" data-id="${p.id}" title="${esc(`Étape suivante : ${ETAPES_CRM[etapeIdx + 1][1]}`)}" aria-label="${esc(`Étape suivante : ${ETAPES_CRM[etapeIdx + 1][1]}`)}">▶</button>` : ''}
           <button type="button" class="btn petit" data-crm-email="${p.id}" title="Générer un courriel de relance">✉</button>
           <button type="button" class="btn petit" data-crm-editer="${p.id}" title="Modifier">✎</button>
           <button type="button" class="btn petit danger" data-crm-supprimer="${p.id}" title="Supprimer">✕</button>
@@ -3487,6 +3491,20 @@ function carteCrmHtml(p, auj) {
   `;
 }
 
+// une piste passe à une autre étape (ses flèches, son menu, la carte glissée d'une colonne à l'autre : menus.js) ; la carte
+// glisse jusqu'à sa nouvelle colonne
+async function deplacerProspect(id, etape) {
+  const p = (E.prospects || []).find(x => x.id === id), e = ETAPES_CRM.find(x => x[0] === etape);
+  if (!p || !e || p.etape === etape) return false;
+  try {
+    const { error } = await sb.from('crescite_diffusion_prospects').update({ etape, date_dernier_contact: aujourdhui() }).eq('id', id);
+    if (error) throw error;
+    p.etape = etape; p.date_dernier_contact = aujourdhui();
+    annoncer(`Opportunité déplacée vers « ${e[1]} ».`);
+    if (location.hash === '#/diffusion') { const places = reperer($('#kanban-zone') || document); vueDiffusion(); glisserVers(places, $('#kanban-zone')); } else rafraichirListes();
+    return true;
+  } catch (err) { erreur(err, 'Déplacement impossible'); return false; }
+}
 function brancherDiffusion() {
   $('#b-nouveau-prospect')?.addEventListener('click', () => ouvrirModaleProspect(null));
 
@@ -3499,32 +3517,12 @@ function brancherDiffusion() {
 
   $$('[data-crm-deplacer]').forEach(b => {
     b.addEventListener('click', async () => {
-      const id = +b.dataset.id;
-      const sens = +b.dataset.crmDeplacer;
-      const p = E.prospects.find(x => x.id === id);
+      const p = E.prospects.find(x => x.id === +b.dataset.id);
       if (!p) return;
-      const curIdx = ETAPES_CRM.findIndex(e => e[0] === p.etape);
-      const nextIdx = curIdx + sens;
-      if (nextIdx >= 0 && nextIdx < ETAPES_CRM.length) {
-        const nouvelleEtape = ETAPES_CRM[nextIdx][0];
-        b.disabled = true;
-        try {
-          const { error } = await sb.from('crescite_diffusion_prospects').update({
-            etape: nouvelleEtape,
-            date_dernier_contact: aujourdhui()
-          }).eq('id', id);
-          if (error) throw error;
-          p.etape = nouvelleEtape;
-          p.date_dernier_contact = aujourdhui();
-          annoncer(`Opportunité déplacée vers « ${ETAPES_CRM[nextIdx][1]} ».`);
-          const places = reperer($('#kanban-zone') || document);   // la carte glisse jusqu'à sa nouvelle colonne
-          vueDiffusion();
-          glisserVers(places, $('#kanban-zone'));
-        } catch (err) {
-          erreur(err, 'Déplacement impossible');
-          b.disabled = false;
-        }
-      }
+      const i = ETAPES_CRM.findIndex(e => e[0] === p.etape) + +b.dataset.crmDeplacer;
+      if (i < 0 || i >= ETAPES_CRM.length) return;
+      b.disabled = true;
+      if (!(await deplacerProspect(p.id, ETAPES_CRM[i][0]))) b.disabled = false;
     });
   });
 
@@ -4051,5 +4049,7 @@ async function vueJournal() {
 <script src="disponibilites.js"></script>
 <!-- le tableau de bord (#/accueil) : la page d'ouverture, ses tuiles et leur personnalisation -->
 <script src="tableau.js"></script>
+<!-- les menus contextuels de chaque liste, carte et tuile, le Kanban glissable, précédent/suivant dans les fiches -->
+<script src="menus.js"></script>
 </body>
 </html>
