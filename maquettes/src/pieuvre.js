@@ -29,9 +29,11 @@
                                  l'enroulement du bout, en fraction de la normale (1) ; tension, de 0 à 1 :
                                  la pointe se déroule) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
                                  coup). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
-     t.avancer(dt, { temps, onde, penche, bob }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
+     t.avancer(dt, { temps, onde, penche, bob, tourne }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
                                  onde : son ampleur (0 : immobile, 1 : normale) ; penche : un angle, vers où elle se
-                                 penche au repos ; bob : { x, y }, le flottement de toute la pieuvre, en px
+                                 penche au repos ; bob : { x, y }, le flottement de toute la pieuvre, en px ; tourne : un
+                                 angle (radians) dont toute la tentacule pivote autour de sa racine (la tête qui bouge
+                                 l'emmène) : au repos entière, tendue sa racine seule, le reste rejoint sa cible
      t.pointe()                  le bout de la tentacule au repos, à l'écran (sans le flottement), { x, y }
      t.racine()                  sa racine à l'écran
      t.boite()                   sa boîte à l'écran, liseré compris : { x0, y0, x1, y1 }
@@ -89,7 +91,7 @@ const PIEUVRE = (() => {
         const ca = Math.cos(a), sa = Math.sin(a);
         this.VX[k] = cx + this.T[k] * ca - this.N[k] * sa; this.VY[k] = cy + this.T[k] * sa + this.N[k] * ca;
       }
-      this.rac = RAC; this.wmin = 0; this.libreRac = -1; this.libre = this.libres(RAC);
+      this.rac = RAC; this.wmin = 0; this.tourne = 0; this.libreRac = -1; this.libre = this.libres(RAC);
       // le repos dans le repère de l'écran : posé par poser()
       this.ox = 0; this.oy = 0; this.s = 1; this.pose_ = false;
       this.pose = null; this.depuis = null; this.but = null; this.q = 1; this.duree = 0; this.cible = null; this.bob = { x: 0, y: 0 };
@@ -120,21 +122,23 @@ const PIEUVRE = (() => {
     }
     pointe() { return { x: this.ox + this.RX[this.M] * this.s, y: this.oy + this.RY[this.M] * this.s }; }
     // une pose : l'angle (sg) et la longueur (ln) de chaque segment, l'angle aux points (th) ; mu : 0 au repos, 1 tendue
-    reposPose(temps = 0, onde = 0, penche = 0) {
+    reposPose(temps = 0, onde = 0, penche = 0, tourne = 0) {
       const M = this.M, sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M);
       for (let k = 0; k < M; k++) ln[k] = this.RL[k] * this.s;
       const ph = this.i * 2.399;
-      const dev = x => (onde ? onde * (0.075 * Math.pow(x, 1.4) * Math.sin(temps * 1.3 + ph - x * 3.4) + 0.03 * x * Math.sin(temps * .55 + ph * 1.7)) : 0) + penche * x;
+      const dev = x => (onde ? onde * (0.075 * Math.pow(x, 1.4) * Math.sin(temps * 1.3 + ph - x * 3.4) + 0.03 * x * Math.sin(temps * .55 + ph * 1.7)) : 0) + penche * x + tourne;
       for (let k = 0; k < M; k++) sg[k] = this.RS[k] + dev((k + .5) / M);
       for (let k = 0; k <= M; k++) th[k] = this.RT[k] + dev(k / M);
       return { sg, th, ln, mu: 0 };
     }
     // vers un titre : la racine telle quelle, le corps jusqu'au point d'accroche, la pointe dessous puis enroulée
     viseePose(c, bob = { x: 0, y: 0 }) {
-      const M = this.M, [Kr, Kb] = this.bornes(c), s = this.s;
+      const M = this.M, [Kr, Kb] = this.bornes(c), s = this.s, tourne = this.tourne || 0;
       const sg = new Float64Array(M), ln = new Float64Array(M), th = new Float64Array(M + 1);
-      for (let k = 0; k < Kr; k++) { sg[k] = this.RS[k]; ln[k] = this.RL[k] * s; }
-      const px = this.ox + this.RX[Kr] * s + bob.x, py = this.oy + this.RY[Kr] * s + bob.y, a0 = this.RS[Math.max(0, Kr - 1)];
+      for (let k = 0; k < Kr; k++) { sg[k] = this.RS[k] + tourne; ln[k] = this.RL[k] * s; }
+      // (la racine, pivotée de tourne autour de son pied : là où elle finit)
+      const r0x = this.RX[0], r0y = this.RY[0], ct = Math.cos(tourne), st = Math.sin(tourne), rx = this.RX[Kr] - r0x, ry = this.RY[Kr] - r0y;
+      const px = this.ox + (r0x + rx * ct - ry * st) * s + bob.x, py = this.oy + (r0y + rx * st + ry * ct) * s + bob.y, a0 = this.RS[Math.max(0, Kr - 1)] + tourne;
       // le corps : une courbe qui part dans le sens de la racine et arrive à plat sur le titre
       const dx = c.x - px, dy = c.y - py, d = Math.hypot(dx, dy), kk = d * (c.mobile ? .5 : .42), du = c.sens < 0 ? -1 : 1;
       const prolonge = c.racine != null;
@@ -216,7 +220,8 @@ const PIEUVRE = (() => {
     }
     mouvement() { return this.pose ? this.pose.mu : 0; }
     avancer(dt, o = {}) {
-      const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0), bob = this.bob = o.bob || { x: 0, y: 0 };
+      this.tourne = o.tourne || 0;
+      const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne), bob = this.bob = o.bob || { x: 0, y: 0 };
       if (this.cible) this.but = this.viseePose(this.cible, bob);
       let bouge = false;
       if (this.q < 1) { this.q = Math.min(1, this.q + dt / Math.max(1, this.duree)); bouge = true; }
