@@ -3510,9 +3510,11 @@ const INTRO = (() => {
     const ex0 = cx + (cible[0] - centre[0]) * s0, ey0 = cy + (cible[1] - centre[1]) * s0;
     const fondG = el.querySelector('.intro-scene > g[mask]'), passent = el.querySelectorAll('[data-role="dessin"] .i-mot, [data-role="dessin"] .i-tache');
     let c = place;
-    // (vivante, avec des cibles : dès le geste, chaque tentacule qui a une cible se déroule vers elle, en 1,5 s ; la cible est
+    // (vivante, avec des cibles : dès le geste, le bout des tentacules se colore ; la pieuvre rejoint d'abord sa place, puis,
+    // à partir de 630 ms, chaque tentacule qui a une cible se déroule vers elle, en 1,1 s, par vagues de 70 ms : les deux
+    // spirales, les boucles, les spirales extérieures, les queues (même ordre que la scène, qui prend le relais) ; la cible est
     // relue à chaque image, le trajet continue vers sa place du moment)
-    const viseur = vie && opts.cibles ? () => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; t.viser(x.cible, 1500); cols[x.cle] = x.col; } return cols; } : null;
+    const viseur = vie && opts.cibles ? now => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; cols[x.cle] = x.col; if (now - T0 >= 630 + PIEUVRE.rang(x.cle) * 70) t.viser(x.cible, 1100); } return cols; } : null;
     if (vie) { vie.t0 = T0; vie.teinte = 0; }
     const pas = now => {
       const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));
@@ -3523,9 +3525,10 @@ const INTRO = (() => {
       // (vivante : un coup de nage, les tentacules ramant à l'opposé du chemin, le corps contracté ; ses ondulations s'apaisent
       // pour que la pieuvre de la page la relaie telle quelle)
       if (vie) {
-        const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0, cols = viseur ? viseur() : null;
+        const vx = c.x + cible[0] * c.s - ex0, vy = c.y + cible[1] * c.s - ey0, cols = viseur ? viseur(now) : null;
         vie.teinte = clamp((now - T0) / 700);
-        peindre(now, { onde: 1.3 * (1 - u), rame: .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat, teinte: vie.teinte, cols });
+        // (avec des cibles, pas de coup de nage : les tentacules vont se déployer, rien ne doit les agiter avant)
+        peindre(now, { onde: 1.3 * (1 - u), rame: viseur ? 0 : .5 * bat * (Math.hypot(vx, vy) > 4 ? 1 : 0), vers: [vx, vy], serre: .05 * bat, teinte: vie.teinte, cols });
       }
       passent.forEach(n => { n.style.opacity = String(1 - ease.out(clamp(v * 2.2))); });
       if (fondG) fondG.style.opacity = String(1 - ease.inOut(clamp((v - .2) / .65)));
@@ -7695,6 +7698,9 @@ const PIEUVRE = (() => {
   const lisse = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const ease = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const norm = a => Math.atan2(Math.sin(a), Math.cos(a));   // (un angle ramené dans ]-π, π])
+  // de a à b (deux suites d'angles le long d'un bras), ce que chacun a à tourner, déroulé : le premier au plus court, chacun
+  // des suivants au plus près de ce que tourne son voisin
+  const deroule = (a, b, n) => { const d = new Float64Array(n); for (let k = 0; k < n; k++) { const r = b[k] - a[k]; d[k] = k ? d[k - 1] + norm(r - d[k - 1]) : norm(r); } return d; };
   const elas = t => (t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.exp(-5 * t) * Math.cos(7 * t));   // un ressort : dépasse, se balance, se pose
   const TAU = Math.PI * 2;
 
@@ -7793,6 +7799,8 @@ const PIEUVRE = (() => {
       // un fil de corps autour de la place de repos d'une tentacule partie ; recalée, découpe, repos et contour coïncident)
       recaler(this);
       this.rac = RAC; this.wmin = 0; this.tourne = 0; this.libreRac = -1; this.libre = this.libres(RAC);
+      // (la pointe : les derniers 12 % de la peau, de chaque côté ; le jour s'arrête avant, elle s'enroule sur elle-même)
+      { const sB = .88 * this.L0; let a = 0; while (a < m && this.S[a] < sB) a++; let b = m - 1; while (b > 0 && this.S[b] < sB) b--; this.bout = [a, b]; }
       // le repos dans le repère de l'écran : posé par poser()
       this.ox = 0; this.oy = 0; this.s = 1; this.pose_ = false;
       this.pose = null; this.depuis = null; this.but = null; this.q = 1; this.duree = 0; this.cible = null; this.bob = { x: 0, y: 0 };
@@ -7809,14 +7817,14 @@ const PIEUVRE = (() => {
     // dessin ; en se déployant, glissée vers son attache sur la tête (et tournée vers sa direction), selon le mouvement
     // (collée : une fois déployée, la tentacule ne retourne plus à sa place du logo, à côté de la tête ; remontée, elle
     // s'enroule contre la tête, depuis son attache, comme un bras d'une vraie créature)
-    racineEff(mu) {
-      if (!this.att || (mu <= 0 && !this.colle)) return [this.RX[0], this.RY[0], 0];
-      // (le glissement est fait aux trois cinquièmes du mouvement : la racine est sur la tête avant que le bras ne s'étire)
-      const g = this.colle ? 1 : ease(Math.min(1, mu / .6)), a = this.att;
+    // (gl : la part faite du glissement, 0 à sa place du logo, 1 sur son attache ; avancer la mène, avant le déroulement)
+    racineEff() {
+      const g = this.colle ? 1 : ease(Math.min(1, Math.max(0, this.gl || 0))), a = this.att;
+      if (!a || g <= 0) return [this.RX[0], this.RY[0], 0];
       let d = a.dir - this.RS[0]; d = Math.atan2(Math.sin(d), Math.cos(d));
       return [lerp(this.RX[0], a.x, g), lerp(this.RY[0], a.y, g), d * g];
     }
-    racine() { const [rx, ry] = this.racineEff(this.pose ? this.pose.mu : 0); return { x: this.ox + rx * this.s, y: this.oy + ry * this.s }; }
+    racine() { const [rx, ry] = this.racineEff(); return { x: this.ox + rx * this.s, y: this.oy + ry * this.s }; }
     // la partie de la peau hors de la racine (le liseré ne coupe pas la tentacule de son corps), pour une racine de rac fois l'épine
     libres(rac) {
       if (rac === this.libreRac) return this.libre;
@@ -7856,7 +7864,7 @@ const PIEUVRE = (() => {
     }
     // vers un titre : la racine telle quelle, le corps jusqu'au point d'accroche, la pointe dessous puis enroulée
     viseePose(c, bob = { x: 0, y: 0 }) {
-      const M = this.M, [Kr, Kb] = this.bornes(c), s = this.s, [r0x, r0y, glisse] = this.racineEff(this.pose ? this.pose.mu : 0);
+      const M = this.M, [Kr, Kb] = this.bornes(c), s = this.s, [r0x, r0y, glisse] = this.racineEff();
       let tourne = (this.tourne || 0) + (c.tourne || 0) + glisse;
       const sg = new Float64Array(M), ln = new Float64Array(M), th = new Float64Array(M + 1);
       // (la racine, pivotée de tourne autour de son pied : là où elle finit)
@@ -7977,7 +7985,12 @@ const PIEUVRE = (() => {
         }
       }
       // (le repos d'une tentacule glissée sur la tête : sa forme du logo, tournée dans le sens de son attache)
-      const glisseR = this.racineEff(this.pose ? this.pose.mu : 0)[2];
+      // (le glissement de la racine vers son attache précède le déroulement : la pièce du logo rejoint la tête, entière, puis
+      // se déplie depuis elle ; au retour, elle se replie, puis glisse. delai : la part du trajet que prend le glissement)
+      const delai = this.att && !this.colle ? Math.min(.35, Math.hypot(this.att.x - this.RX[0], this.att.y - this.RY[0]) / 800) : 0;
+      if (this.q < 1 && this.depuis) this.gl = !delai ? (this.cible || this.colle ? 1 : 0) : this.etire ? Math.min(1, this.q / delai) : Math.min(1, (1 - this.q) / delai);
+      else this.gl = this.cible || this.colle ? 1 : 0;
+      const glisseR = this.racineEff()[2];
       const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne + glisseR);
       if (this.cible) this.but = this.viseePose(this.cible, bob);
       let bouge = false;
@@ -7991,7 +8004,8 @@ const PIEUVRE = (() => {
       }
       let P = B;
       if (this.q < 1 && this.depuis) {
-        const A = this.depuis, q = this.q, M = this.M;
+        const A = this.depuis, M = this.M, brut = this.q;
+        const q = !delai ? brut : this.etire ? Math.max(0, (brut - delai) / (1 - delai)) : Math.min(1, brut / (1 - delai));
         // le mouvement part de la racine : une onde parcourt la tentacule du pied à la pointe (quand elle s'allonge : elle se
         // déroule, sa pointe encore lovée emportée au bout, puis déployée la dernière) ou de la pointe au pied (quand elle
         // revient : la pointe se love d'abord, puis tout rentre). Chaque segment suit la même courbe, décalée de sa place
@@ -8001,21 +8015,37 @@ const PIEUVRE = (() => {
         // serrée puis se détend, comme un ressort ; les longueurs, elles, ne dépassent jamais)
         const ONDE = .5, ens = !!(A.prolonge || B.prolonge), allonge = this.etire, eA = this.elastique ? elas : ease;
         const sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M);
-        const dec = Math.round((A.sg[0] - B.sg[0]) / TAU) * TAU;
         const avance = u => Math.min(1, Math.max(0, (q - (allonge ? u : 1 - u) * ONDE) / (1 - ONDE)));
-        for (let k = 0; k < M; k++) {
-          const qk = avance((k + .5) / M), wA = eA(qk), wL = ens ? ease(qk) : allonge ? ease(Math.max(0, (qk - .25) / .75)) : ease(Math.min(1, qk / .75));
-          sg[k] = lerp(A.sg[k], B.sg[k] + dec, wA); ln[k] = lerp(A.ln[k], B.ln[k], wL);
+        let qm = q;   // (la part du mouvement faite, pour mu)
+        // ce que chaque angle a à tourner, déroulé le long du bras (d'un segment au suivant, la rotation la plus proche de
+        // celle du voisin) : la forme reste continue à chaque image, sans cassure ; une boucle du logo se déroule en
+        // tournant, segment après segment, au lieu de se déchirer là où les angles repassent par ±π
+        const D = deroule(A.sg, B.sg, M), DT = deroule(A.th, B.th, M + 1);
+        if (this.cible && !this.elastique) {
+          // vers une cible, en deux temps, lisibles : la tentacule se ramasse d'abord (sa forme du logo rétrécit vers sa
+          // racine, le temps qu'elle glisse sur la tête : au moins 30 % du trajet), puis elle se déroule depuis la tête,
+          // de la racine à la pointe (l'onde) : chaque segment prend l'angle visé à son tour, ce qui reste de boucle
+          // emporté au bout, de plus en plus petit, comme une fougère. Rien ne pivote en grand, rien ne balaie l'écran
+          const Q1 = Math.max(.3, delai), K = lerp(1, .55, ease(Math.min(1, brut / Q1))), q2 = Math.max(0, (brut - Q1) / (1 - Q1));
+          const av = u => Math.min(1, Math.max(0, (q2 - u * ONDE) / (1 - ONDE)));
+          for (let k = 0; k < M; k++) { const w = ease(av((k + .5) / M)); sg[k] = A.sg[k] + w * D[k]; ln[k] = lerp(A.ln[k] * K, B.ln[k], w); }
+          for (let k = 0; k <= M; k++) th[k] = A.th[k] + ease(av(k / M)) * DT[k];
+          qm = q2;
+        } else {
+          for (let k = 0; k < M; k++) {
+            const qk = avance((k + .5) / M), wA = eA(qk), wL = ens ? ease(qk) : allonge ? ease(Math.max(0, (qk - .25) / .75)) : ease(Math.min(1, qk / .75));
+            sg[k] = A.sg[k] + wA * D[k]; ln[k] = lerp(A.ln[k], B.ln[k], wL);
+          }
+          for (let k = 0; k <= M; k++) th[k] = A.th[k] + eA(avance(k / M)) * DT[k];
         }
         const z = A.z || B.z ? new Float64Array(M + 1) : null;
-        for (let k = 0; k <= M; k++) { const w = eA(avance(k / M)); th[k] = lerp(A.th[k], B.th[k] + dec, w); if (z) z[k] = lerp(A.z ? A.z[k] : 1, B.z ? B.z[k] : 1, w); }
-        P = { sg, th, ln, z, mu: lerp(A.mu, B.mu, ease(q)), prolonge: ens };
+        if (z) for (let k = 0; k <= M; k++) { const w = eA(avance(k / M)); z[k] = lerp(A.z ? A.z[k] : 1, B.z ? B.z[k] : 1, w); }
+        P = { sg, th, ln, z, mu: lerp(A.mu, B.mu, ease(qm)), prolonge: ens };
       }
       this.pose = P;
       if (this.att && this.collant && P.mu > .999) this.colle = true;   // (collant : la pieuvre de l'accueil)
       // l'épine à l'écran, depuis la racine de cette image (glissée vers son attache en se déployant)
-      const X = this.X, Y = this.Y, [r0x, r0y, glisse] = this.racineEff(P.mu);
-      if (glisse && this.cible) { /* (le pivot de la racine glissée est déjà dans la pose visée) */ }
+      const X = this.X, Y = this.Y, [r0x, r0y] = this.racineEff();
       X[0] = this.ox + r0x * this.s + bob.x; Y[0] = this.oy + r0y * this.s + bob.y;
       for (let k = 0; k < this.M; k++) { X[k + 1] = X[k] + P.ln[k] * Math.cos(P.sg[k]); Y[k + 1] = Y[k] + P.ln[k] * Math.sin(P.sg[k]); }
       this.poly = null;
@@ -8060,6 +8090,8 @@ const PIEUVRE = (() => {
         xs.push(p[0]); ys.push(p[1]);
         if (k === libre[0]) this.debutLibre = xs.length - 1;
         if (k === libre[1]) this.finLibre = xs.length - 1;
+        if (k === this.bout[0]) this.debutBout = xs.length - 1;
+        if (k === this.bout[1]) this.finBout = xs.length - 1;
       }
       for (let k = 0; k < xs.length; k++) { if (xs[k] < x0) x0 = xs[k]; if (xs[k] > x1) x1 = xs[k]; if (ys[k] < y0) y0 = ys[k]; if (ys[k] > y1) y1 = ys[k]; }
       this.bx = { x0, y0, x1, y1 };
@@ -8241,6 +8273,8 @@ const PIEUVRE = (() => {
       }
       return ts.sort((a, b) => (a.parent ? 1 : 0) - (b.parent ? 1 : 0) || a.i - b.i);
     },
+    // l'ordre de déploiement, par vagues : les deux spirales (0), les boucles (1), les spirales extérieures (2), les queues (3)
+    rang(cle) { const m = /^(spiraleExt|spirale|boucle|queue)/.exec(cle || ''); return m ? { spirale: 0, boucle: 1, spiraleExt: 2, queue: 3 }[m[1]] : 0; },
     // ce que la tête occupe, en unités du dessin (des rectangles [x, y, w, h]) : le corps vivant s'y limite
     TETE: (G && G.tete) || [[600, 330, 310, 272], [755, 540, 140, 125]],
 
@@ -8249,12 +8283,18 @@ const PIEUVRE = (() => {
       const al = t.parent ? 1 - ease(t.parent.t.mouvement()) : 1;
       if (al < .02) return;
       const { xs, ys } = t.contour(), mu = t.mouvement();
-      // le liseré : là où elle passe sur la pieuvre, un jour la sépare (comme les tentacules du logo entre elles)
-      if (mu > .01 && t.debutLibre != null) {
-        g.save(); g.globalCompositeOperation = 'destination-out'; g.globalAlpha = Math.min(1, mu * 2) * al;
-        g.lineWidth = 2 * Math.max((o.lisere || 2.5) * t.s, 1.1); g.lineJoin = 'round'; g.lineCap = 'butt'; g.strokeStyle = '#000';
-        chemin(g, xs, ys, t.debutLibre, t.finLibre, false); g.stroke();
-        g.restore();
+      // le liseré : là où elle passe sur la pieuvre, un jour la sépare (comme les tentacules du logo entre elles) ; jamais plus
+      // d'un quart de la largeur du bras (un bras fin, au téléphone, ne se fait pas hacher par ceux qu'il croise en route), et
+      // pas autour de la pointe, qui s'enroule sur elle-même
+      if (mu > .01 && t.debutLibre != null && t.debutBout != null && t.debutBout > t.debutLibre && t.finBout < t.finLibre) {
+        const largeur = Math.min(2 * (t.N0 || 12) * t.s, t.wmin || Infinity), jour = Math.min(2 * Math.max((o.lisere || 2.5) * t.s, 1.1), .25 * largeur);
+        if (jour >= .4) {
+          g.save(); g.globalCompositeOperation = 'destination-out'; g.globalAlpha = Math.min(1, mu * 2) * al;
+          g.lineWidth = jour; g.lineJoin = 'round'; g.lineCap = 'butt'; g.strokeStyle = '#000';
+          chemin(g, xs, ys, t.debutLibre, t.debutBout, false); g.stroke();
+          chemin(g, xs, ys, t.finBout, t.finLibre, false); g.stroke();
+          g.restore();
+        }
       }
       chemin(g, xs, ys);
       if (o.degrade) { g.fillStyle = o.degrade; g.globalAlpha = al; g.fill(); }
@@ -10044,9 +10084,10 @@ const CREATURE = (() => {
     // temps (tPres : il paraît quand son bras l'atteint)
     function presenter() {
       const P = pres, V = new Map();
-      // chaque bras part à son instant (de 0 à 195 ms après le premier : ensemble, mais pas au cordeau) vers le premier de ses
-      // titres, et y reste ; chaque titre paraît quand son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
-      const depart = a => P.t0 + (a.i % 4) * 45 + (a.i % 2) * 60;
+      // chaque bras part à son instant, par vagues de 70 ms depuis la tête (les deux spirales, les boucles, les spirales
+      // extérieures, les queues : ensemble, mais lisible) vers le premier de ses titres, et y reste ; chaque titre paraît quand
+      // son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
+      const depart = a => P.t0 + PIEUVRE.rang(a.cle) * 70;
       let fin = P.t0;
       TIT.forEach(T => { T.tPres = P.t0; });
       for (const a of BRAS) {
@@ -10184,12 +10225,16 @@ const CREATURE = (() => {
             ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
           }
           ctx.setTransform(1, 0, 0, 1, 0, 0);
-          // elles passent sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes)
+          // elles passent sous ce qui s'écrit : les titres, et la date de ceux qui la montrent (au téléphone, toutes) ; un titre
+          // qui paraît n'efface le bras qu'à mesure (un bras en route sous un titre encore invisible n'est pas haché)
+          ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = '#000';
           for (const T of TIT) {
             if (!T.ecrit || T.em <= 0) continue;
             const dy = (1 - T.em) * 12, date = mobile || allumes.has(T);
-            for (const [x, y, w, h, d] of T.ecrit) if (!d || date) ctx.clearRect((T.bx + x) * dpr, (T.by + dy + y) * dpr, w * dpr, h * dpr);
+            ctx.globalAlpha = Math.min(1, T.em);
+            for (const [x, y, w, h, d] of T.ecrit) if (!d || date) ctx.fillRect((T.bx + x) * dpr, (T.by + dy + y) * dpr, w * dpr, h * dpr);
           }
+          ctx.restore();
         }
       }
       for (const T of TIT) placer(T, allumes.has(T), now, anime);
