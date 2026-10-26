@@ -1721,7 +1721,7 @@
     const xs = documentsDe(d.spectacle?.id), sp = d.spectacle || {};
     if (!xs.length) return '';
     const libelle = x => (TYPES[x.type] && xs.filter(y => y.type === x.type).length === 1 ? TYPES[x.type] : x.titre);
-    return `<section class="bloc"${attrU(sp)} aria-labelledby="b-docs"><h2 id="b-docs">${ICONES.dossier}Documents</h2><ul class="puces-docs">${xs.map(x => `<li>${lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span>${esc(libelle(x))}</span>`, 'puce-doc', libelle(x) !== x.titre ? x.titre : '')}${x.type === 'fiche_technique' ? ` <button type="button" class="puce-doc partage" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</li>`).join('')}</ul></section>`;
+    return `<section class="bloc"${attrU(sp)} aria-labelledby="b-docs"><h2 id="b-docs">${ICONES.dossier}Documents</h2><ul class="puces-docs">${xs.map(x => `<li data-doc="${x.id}">${lienDocument(x, `${x.url && !x.fichier ? ICONES.lien : ICONES.doc}<span>${esc(libelle(x))}</span>`, 'puce-doc', libelle(x) !== x.titre ? x.titre : '')}${x.type === 'fiche_technique' ? ` <button type="button" class="puce-doc partage" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</li>`).join('')}</ul></section>`;
   }
   // un document : un lien signé (fichier du stockage privé), un lien direct (public), ou un bouton qui demande le lien au clic
   function lienDocument(x, interieur, cls, titre = '') {
@@ -1758,7 +1758,7 @@
   }
   function itemFeuille(d, passee = false) {
     const sp = d.spectacle || {}, f = d.feuille, l = d.lieu, jourj = joursDe(d).includes(aujourdhui());
-    return `<li class="feuille-item${passee ? ' passee' : ''}" id="fi-${d.id}"${attrU(sp)}>
+    return `<li class="feuille-item${passee ? ' passee' : ''}" id="fi-${d.id}" data-date="${d.id}"${attrU(sp)}>
       <span class="ic-rond" aria-hidden="true">${ICONES.feuille}</span>
       <a class="lien-etendu fi-texte" href="#/feuille/${d.id}"><b>${esc(sp.titre || 'Spectacle')}${jourj ? ' <span class="jourj-badge">aujourd’hui</span>' : ''}</b>
         <span>${esc(majuscule(quandTexte(d)))}${l ? ` · ${esc(l.commune || l.nom)}` : ''}</span>
@@ -2808,7 +2808,8 @@
   }
   const styleH = sp => { const c = couleurs(sp), f = police(sp); return `--h-fond:${c.hFond};--h-texte:${c.hTexte};--h-accent:${c.hAccent}${f ? `;--h-police:${f.famille};--h-graisse:${f.graisse}` : ''}`; };
   // un fichier de travail : l'ouvrir, le partager ; s'il est de l'équipe de ce spectacle (quatorzième script), le modifier
-  const ligneFichier = (x, modifiable = false) => `<li class="doc-ligne">${ligneDocument(x)}<span class="doc-actions"><button type="button" class="btn petit doc-partager" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>${modifiable === true
+  // (data-doc : l'appui long, qui modifie aussi, autrement, quand le compte administre)
+  const ligneFichier = (x, modifiable = false) => `<li class="doc-ligne" data-doc="${x.id}">${ligneDocument(x)}<span class="doc-actions"><button type="button" class="btn petit doc-partager" data-partager="${x.id}">${ICONES.partager}<span>Partager</span><span class="sr"> : ${esc(x.titre)}</span></button>${modifiable === true
     ?`<button type="button" class="btn petit doc-modifier" data-modifier-document="${x.id}" aria-haspopup="dialog">${ICONES.crayon}<span>Modifier</span><span class="sr"> : ${esc(x.titre)}</span></button>` : ''}</span></li>`;
   // l'équipe actuelle d'un spectacle, comme la base la compte (crescite_membre_actuel) : sa distribution, ou présente dans
   // l'équipe d'une de ses dates à venir. Elle seule en change les fichiers ; quelqu'un d'une date passée les lit encore
@@ -4104,6 +4105,8 @@
             l ? { libelle: 'Modifier le lieu…', detail: l.nom || l.commune, icone: I.carte, faire: () => modifierLieu(d) } : null,
             { libelle: 'Suivi interne…', detail: 'organisateur, contact, contrat, notes', icone: I.feuille, faire: () => modifierSuivi(d) },
             avecChiffres() ? { libelle: 'Les chiffres…', detail: 'jauge, spectateurs, heures d’ateliers', icone: ICONES.planning, faire: () => modifierChiffres(d) } : null,
+            !d.feuille ? { libelle: 'Feuille de route…', detail: 'la composer, la publier', icone: ICONES.feuille, faire: () => feuilleDepuisTelephone(d) } : null,
+            { libelle: 'Ajouter un document…', detail: d.spectacle?.titre || 'un fichier ou un lien', icone: ICONES.dossier, faire: () => ajouterDocument(d.spectacle || null) },
             !passee && vive ? { libelle: 'Prévenir l’équipe…', detail: 'un message à toute l’équipe de la date', icone: ICONES.message, faire: () => prevenirEquipe(d) } : null,
             { libelle: 'Dans l’administration', detail: 'la fiche complète, la feuille de route', href: lienAdmin(`#/representations/${d.id}`), externe: true, icone: I.externe },
             { separateur: true }, { libelle: 'Supprimer la date…', danger: true, icone: I.poubelle, faire: () => supprimerDate(d) }] : [])];
@@ -4148,10 +4151,56 @@
     G.menu({ cible: '.indispo-ligne[data-indispo]:not(.agenda)', titre: el => $('.il-texte b', el)?.textContent || 'Indisponibilité', actions: el => [
       { libelle: 'Modifier…', icone: ICONES.crayon, faire: () => $('[data-modifier-indispo]', el)?.click() }, { libelle: 'Retirer', danger: true, icone: ICONES.croix, faire: () => $('[data-retirer-indispo]', el)?.click() }] });
     // la feuille de route : le PDF, la date ; la modifier dans l'administration (le compte administre)
+    // un document : l'ouvrir, le partager, copier son lien ; le modifier, remplacer son fichier, le supprimer (le compte administre)
+    G.menu({ cible: '.doc-ligne[data-doc], .puces-docs li[data-doc]', titre: el => (E.documents.find(y => y.id === Number(el.dataset.doc))?.titre || el.querySelector('a, button')?.textContent || 'Document').trim(), actions: el => {
+      const x = E.documents.find(y => y.id === Number(el.dataset.doc)), a = el.querySelector('a[href]'), b = el.querySelector('button[data-fichier]'), p = el.querySelector('[data-partager]'), m = el.querySelector('[data-modifier-document]');
+      const u = x && !documentPrive(x) ? urlDocument(x) : '';
+      return [a ? { libelle: 'Ouvrir', href: a.getAttribute('href'), externe: a.target === '_blank', icone: ICONES.doc } : b ? { libelle: 'Ouvrir', icone: ICONES.doc, faire: () => b.click() } : null,
+        p ? { libelle: 'Partager', detail: x && documentPrive(x) ? 'un lien de trente jours' : '', icone: ICONES.partager, faire: () => partager(p) } : null,
+        u ? { libelle: 'Copier le lien', icone: G.ICO.copier, faire: () => copier(u, '', 'Lien copié.') } : null,
+        // l'équipe du spectacle (quatorzième script) : la boîte de l'équipe ; un compte qui administre : les feuilles, plus bas
+        m && !E.admin ? { libelle: 'Modifier', detail: 'le titre, le rangement, une nouvelle version', icone: ICONES.crayon, faire: () => ouvrirModaleDocument({ doc: Number(m.dataset.modifierDocument) }, m) } : null,
+        ...(E.admin && x ? [{ separateur: true },
+          { libelle: 'Modifier…', detail: 'titre, type, pour qui', icone: ICONES.crayon, faire: () => modifierDocument(x) },
+          x.fichier ? { libelle: 'Remplacer le fichier…', detail: 'depuis le téléphone', icone: G.ICO.reglages, faire: () => remplacerFichierDocument(x) } : null,
+          { separateur: true }, { libelle: 'Supprimer…', danger: true, icone: G.ICO.poubelle, faire: () => supprimerDocument(x) }] : [])];
+    } });
+    // la section des documents d'une date, d'un spectacle, de la compagnie ; le haut de la page d'un spectacle : en ajouter un (le compte administre)
+    G.menu({ cible: 'section.bloc[aria-labelledby="b-docs"], .bloc.fichiers, .groupe-docs.compagnie, .tete-spectacle', titre: el => (el.classList.contains('tete-spectacle') ? $('.ts-titre', el)?.textContent || 'Spectacle' : 'Documents'), actions: el => {
+      if (!E.admin) return [];
+      const compagnie = el.classList.contains('compagnie'), r = E.route || {};
+      const sp = compagnie ? null : r.k === 'spectacle' ? mesSpectacles().find(y => slugDe(y.sp) === r.slug)?.sp : r.k === 'date' ? E.dates.find(x => x.id === r.id)?.spectacle : null;
+      return [{ libelle: 'Ajouter un document…', detail: sp ? sp.titre : 'pour toute la compagnie', icone: ICONES.dossier, faire: () => ajouterDocument(sp || null) }];
+    } });
+    // une ligne de la feuille de route lue : copier son texte ; la modifier, en ajouter une après, la retirer (le compte administre)
+    const feuilleLue = () => { const m = location.hash.match(/^#\/feuille\/(\d+)$/), d = m && E.dates.find(x => x.id === Number(m[1])); return d ? { d, f: E.feuilles.get(d.id) || null } : null; };
+    G.menu({ cible: '.feuille-cadre [data-bloc]', titre: el => (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 70) || 'Cette ligne', actions: el => {
+      const x = feuilleLue(); if (!x) return [];
+      const id = el.dataset.bloc, texte = (el.textContent || '').replace(/\s+/g, ' ').trim(), tableau = el.classList.contains('fdr-tab');
+      return [{ libelle: 'Copier le texte', icone: G.ICO.copier, faire: () => copier(texte, '', 'Texte copié.') },
+        ...(E.admin && x.f ? [{ separateur: true },
+          tableau ? null : { libelle: 'Modifier cette ligne…', icone: ICONES.crayon, faire: () => modifierLigneFeuille(x.d, x.f, id) },
+          { libelle: 'Ajouter une ligne après…', icone: G.ICO.plus, faire: () => ajouterLigneFeuille(x.d, x.f, id) },
+          { libelle: 'Retirer cette ligne', danger: true, icone: G.ICO.poubelle, faire: () => retirerLigneFeuille(x.d, x.f, id) }] : [])];
+    } });
+    // la feuille de route lue : le PDF, la date ; une ligne à la fin, la mise à jour depuis la base, l'administration, le brouillon (le compte administre)
     G.menu({ cible: '.vue-feuille', titre: 'Feuille de route', actions: () => {
-      const m = location.hash.match(/^#\/feuille\/(\d+)$/); if (!m) return [];
-      return [{ libelle: 'Télécharger le PDF', icone: ICONES.pdf, faire: () => $('.barre-feuille [data-pdf]')?.click() }, { libelle: 'La date', href: `#/date/${m[1]}`, icone: ICONES.chevron },
-        E.admin ? { libelle: 'Modifier dans l’administration', detail: 'composer, compléter, republier', href: lienAdmin(`#/feuilles/${m[1]}`), externe: true, icone: G.ICO.externe } : null];
+      const x = feuilleLue(); if (!x) return [];
+      const { d, f } = x;
+      return [{ libelle: 'Télécharger le PDF', icone: ICONES.pdf, faire: () => $('.barre-feuille [data-pdf]')?.click() }, { libelle: 'La date', href: `#/date/${d.id}`, icone: ICONES.chevron },
+        ...(E.admin && f ? [{ separateur: true },
+          { libelle: 'Ajouter une ligne à la fin…', icone: G.ICO.plus, faire: () => ajouterLigneFeuille(d, f, null) },
+          { libelle: 'Mettre à jour depuis la base', detail: 'horaires, lieu, équipe, contacts d’aujourd’hui', icone: ICONES.actualiser, faire: () => actualiserFeuille(d, f) },
+          { libelle: 'Modifier dans l’administration', detail: 'mettre en page, les tableaux', href: lienAdmin(`#/feuilles/${d.id}`), externe: true, icone: G.ICO.externe },
+          { separateur: true }, { libelle: 'Repasser en brouillon', detail: 'l’équipe ne la verra plus', danger: true, icone: G.ICO.poubelle, faire: () => depublierFeuille(d, f) }] : [])];
+    } });
+    // une feuille dans la liste : la lire, son PDF, sa date ; la mettre à jour, la repasser en brouillon (le compte administre)
+    G.menu({ cible: '.feuille-item[data-date]', titre: el => ($('.fi-texte b', el)?.textContent || 'Feuille de route').replace(/\s+/g, ' ').trim(), actions: el => {
+      const d = E.dates.find(x => x.id === Number(el.dataset.date)); if (!d) return [];
+      return [{ libelle: 'Lire la feuille de route', href: `#/feuille/${d.id}`, icone: ICONES.feuille }, { libelle: 'Télécharger le PDF', icone: ICONES.pdf, faire: () => $('[data-pdf]', el)?.click() }, { libelle: 'La date', href: `#/date/${d.id}`, icone: ICONES.chevron },
+        ...(E.admin ? [{ separateur: true },
+          { libelle: 'Mettre à jour depuis la base', icone: ICONES.actualiser, faire: () => avecFeuille(d, f => actualiserFeuille(d, f)) },
+          { libelle: 'Repasser en brouillon', danger: true, icone: G.ICO.poubelle, faire: () => avecFeuille(d, f => depublierFeuille(d, f)) }] : [])];
     } });
     G.menu({ cible: '.liste-notifs .notif[data-notif], .bandeau-notif[data-notif]', titre: 'Notification', actions: el => {
       const n = E.notifs.find(x => x.id === Number(el.dataset.notif));
@@ -4159,12 +4208,6 @@
         n && !n.lue_le ? { libelle: 'Marquer comme lue', icone: ICONES.coche, faire: () => { vibrer(10); marquerLue(n.id); } } : null,
         nonLues() > 0 ? { libelle: 'Tout marquer comme lu', icone: ICONES.coche, faire: () => toutMarquerLu($('[data-tout-lu]') || faux('toutLu', '1')) } : null,
         n ? { separateur: true } : null, n ? { libelle: 'Effacer', danger: true, icone: ICONES.croix, faire: () => effacerNotif(n) } : null];
-    } });
-    G.menu({ cible: '.doc-ligne, .puces-docs li', titre: el => (el.querySelector('a, button')?.textContent || 'Document').trim(), actions: el => {
-      const a = el.querySelector('a[href]'), p = el.querySelector('[data-partager]'), m = el.querySelector('[data-modifier-document]');
-      return [a ? { libelle: 'Ouvrir', href: a.getAttribute('href'), externe: a.target === '_blank', icone: ICONES.doc } : null,
-        p ? { libelle: 'Partager', detail: 'un lien de trente jours', icone: ICONES.partager, faire: () => partager(p) } : null,
-        m ? { libelle: 'Modifier', detail: 'le titre, le rangement, une nouvelle version', icone: ICONES.crayon, faire: () => ouvrirModaleDocument({ doc: Number(m.dataset.modifierDocument) }, m) } : null];
     } });
     // une proposition : répondre d'un geste quand elle ne propose qu'un jour, sinon l'ouvrir
     G.menu({ cible: 'a.carte-prop[href]', titre: el => (E.dispo.propositions || []).find(p => `#/proposition/${p.id}` === el.getAttribute('href'))?.titre || 'Proposition de dates', actions: el => {
@@ -4182,8 +4225,9 @@
   /* L'appui long (brancherGestes) modifie presque tout, quand le compte administre (E.admin) : la date (statut, nature,
      publication, lien, précisions), chaque horaire (ajouter, changer, annuler, retirer une séance), le lieu (nom, adresse,
      site, contact, jauge, plateau), qui part, le suivi interne, les chiffres, un message à l'équipe, les coordonnées
-     d'une personne, supprimer la date. Chacun modifie sa note de frais en attente, retire une notification, répond à une
-     proposition d'un geste. Chaque écriture va dans la base (ses règles d'accès décident : GESTES.formulaire le dit si
+     d'une personne, supprimer la date ; les documents (modifier, remplacer le fichier, supprimer, ajouter depuis le
+     téléphone) ; les feuilles de route (chaque ligne, la mise à jour depuis la base, publier, repasser en brouillon,
+     composer). Chacun modifie sa note de frais en attente, retire une notification, répond à une proposition d'un geste. Chaque écriture va dans la base (ses règles d'accès décident : GESTES.formulaire le dit si
      elle refuse), puis l'espace se relit. */
   const MOD = {
     STATUTS: [['confirmee', 'Confirmée'], ['option', 'Option'], ['annulee', 'Annulée'], ['reportee', 'Reportée']],
@@ -4418,6 +4462,290 @@
     E.notifs = E.notifs.filter(x => x.id !== n.id);
     majNotifs();
     annoncer('Notification effacée.');
+  }
+  // ------------------------------------------------------------------------------------ les documents, depuis le téléphone
+  // Un document se modifie (titre, type, pour qui), son fichier se remplace, il se supprime ; un autre s'ajoute, envoyé
+  // depuis le téléphone (photo, PDF…) ou collé en lien. Comme dans l'administration : un document public (programmateurs,
+  // établissements scolaires) est un PDF du stockage public « crescite », sous documents/<spectacle>/ ; ceux de l'équipe
+  // restent dans le stockage privé « crescite-equipe », sous <spectacle>/ ; « administration seulement » le retire d'ici.
+  MOD.TYPES_DOC = [['texte', 'Texte'], ['dossier', 'Dossier'], ['fiche_technique', 'Fiche technique'], ['plan', 'Plan'], ['autre', 'Autre']];
+  MOD.POUR_PRIVE = [['equipe', 'Pour l’équipe'], ['administration', 'Administration seulement']];
+  MOD.POUR_PUBLIC = [['pros', 'Pour les programmateurs (public)'], ['scolaires', 'Pour les établissements scolaires (public)'], ['tous', 'Pour les programmateurs et les scolaires (public)']];
+  MOD.MIMES_DOC = { pdf: 'application/pdf', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', txt: 'text/plain',
+    odt: 'application/vnd.oasis.opendocument.text', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' };
+  const docPublic = pour => pour === 'pros' || pour === 'scolaires' || pour === 'tous' || pour === 'pros_scolaires';
+  const seauDoc = pour => (docPublic(pour) ? 'crescite' : SEAU);
+  const slugDoc = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const extensionDe = f => (String(f.name || '').split('.').pop() || '').toLowerCase();
+  const spectacleDoc = x => (x.spectacle_id != null ? E.spectacles.get(Number(x.spectacle_id)) || { id: x.spectacle_id } : null);
+  // le fichier accepté, pour qui il est : un PDF de 25 Mo au plus pour le public ; PDF, image, texte, ODT ou DOCX, 50 Mo, pour l'équipe
+  function fichierRefuse(f, pour) {
+    if (!f) return 'Un fichier.';
+    const ext = extensionDe(f);
+    if (docPublic(pour)) {
+      if (ext !== 'pdf' && f.type !== 'application/pdf') return 'Un document public est un PDF.';
+      if (f.size > 25 * 1024 * 1024) return 'Fichier trop lourd : 25 Mo au plus.';
+    } else {
+      const type = MOD.MIMES_DOC[ext] || f.type;
+      if (!Object.values(MOD.MIMES_DOC).includes(type)) return 'Ce type de fichier n’est pas accepté : PDF, image, texte, ODT ou DOCX.';
+      if (f.size > 50 * 1024 * 1024) return 'Fichier trop lourd : 50 Mo au plus.';
+    }
+    return '';
+  }
+  // envoyer un fichier dans le stockage qui convient ; rend son chemin
+  async function envoyerDocument(f, pour, sp, { ecraser = false } = {}) {
+    const dossier = sp ? (sp.slug || slugDoc(sp.titre) || `spectacle-${sp.id}`) : 'compagnie', ext = extensionDe(f), base = f.name.replace(/\.[^.]+$/, '');
+    const pub = docPublic(pour), type = pub ? 'application/pdf' : (MOD.MIMES_DOC[ext] || f.type);
+    const nom = `${Date.now().toString(36)}-${slugDoc(base) || 'document'}`;
+    const chemin = pub ? `documents/${dossier}/${nom}.pdf` : `${dossier}/${nom}.${ext || 'bin'}`;
+    const { error } = await sb.storage.from(seauDoc(pour)).upload(chemin, f, { contentType: type, upsert: ecraser, cacheControl: '3600' });
+    if (error) throw error;
+    return chemin;
+  }
+  async function retirerFichier(pour, chemin) {
+    if (!chemin) return;
+    const r = await sb.storage.from(seauDoc(pour)).remove([chemin]);
+    if (r.error) console.warn('fichier non retiré', r.error);
+  }
+  const fichierPartage = (x, chemin) => E.documents.some(y => y.id !== x.id && y.fichier === chemin && docPublic(y.pour) === docPublic(x.pour));
+  const oublierLien = chemin => { E.liens.delete(chemin); E.partages.delete(chemin); };
+  const hoteDuLien = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+  function modifierDocument(x) {
+    const G = F(); if (!G) return;
+    const lien = !x.fichier, pub = docPublic(x.pour);
+    const pours = lien ? [...MOD.POUR_PRIVE, ...MOD.POUR_PUBLIC] : pub ? MOD.POUR_PUBLIC : MOD.POUR_PRIVE;
+    G.formulaire({ titre: 'Modifier le document', sousTitre: x.titre, champs: [
+      { k: 'titre', t: 'texte', l: 'Titre', valeur: x.titre || '', requis: true },
+      { k: 'type', t: 'choix', seg: true, l: 'Type', choix: MOD.TYPES_DOC, valeur: MOD.TYPES_DOC.some(([k]) => k === x.type) ? x.type : 'autre' },
+      { k: 'pour', t: 'choix', l: 'Pour qui', choix: pours, valeur: x.pour === 'pros_scolaires' ? 'tous' : (pours.some(([k]) => k === x.pour) ? x.pour : pours[0][0]),
+        aide: lien ? 'Un document public se télécharge sur le site ; « administration seulement » le retire de l’espace de l’équipe.' : pub ? 'Un fichier public reste public : il est dans le stockage du site.' : '« Administration seulement » le retire de l’espace de l’équipe.' },
+      ...(lien ? [{ k: 'url', t: 'url', l: 'Adresse du lien', valeur: x.url || '', requis: true, ph: 'https://…' }] : []),
+    ], danger: { libelle: 'Supprimer', faire: () => supprimerDocument(x) }, enregistrer: async v => {
+      const titre = String(v.titre || '').trim(), url = String(v.url || '').trim();
+      if (!titre) return 'Un titre.';
+      if (lien && !/^https?:\/\//i.test(url)) return 'Une adresse qui commence par https://';
+      const { error } = await sb.from('crescite_documents').update({ titre, type: v.type, pour: v.pour, ...(lien ? { url } : {}) }).eq('id', x.id);
+      if (error) return texteErreur(error);
+      await apresModif(v.pour === 'administration' ? 'Document gardé pour l’administration seulement : l’équipe ne le voit plus.' : 'Document modifié.');
+      return true;
+    } });
+  }
+  function remplacerFichierDocument(x) {
+    const G = F(); if (!G) return;
+    const pub = docPublic(x.pour);
+    G.formulaire({ titre: 'Remplacer le fichier', sousTitre: x.titre, champs: [
+      { k: 'fichier', t: 'fichier', l: 'Le nouveau fichier', accept: pub ? '.pdf,application/pdf' : '.pdf,.odt,.docx,.txt,image/*', requis: true, aide: pub ? 'Un PDF de 25 Mo au plus.' : 'PDF, image, texte, ODT ou DOCX, 50 Mo au plus.' },
+    ], ok: 'Envoyer', note: 'La version précédente est retirée du stockage.', enregistrer: async v => {
+      const refus = fichierRefuse(v.fichier, x.pour); if (refus) return refus;
+      let chemin;
+      try { chemin = await envoyerDocument(v.fichier, x.pour, spectacleDoc(x), { ecraser: true }); } catch (e) { return `Envoi impossible : ${texteErreur(e)}`; }
+      const ancien = x.fichier;
+      const { error } = await sb.from('crescite_documents').update({ fichier: chemin, url: null }).eq('id', x.id);
+      if (error) { await retirerFichier(x.pour, chemin); return texteErreur(error); }
+      if (ancien && ancien !== chemin && !fichierPartage(x, ancien)) await retirerFichier(x.pour, ancien);
+      if (ancien) oublierLien(ancien);
+      await apresModif('Fichier remplacé.');
+      return true;
+    } });
+  }
+  async function supprimerDocument(x) {
+    if (!confirm(`Supprimer « ${x.titre} »${x.fichier ? ' et son fichier' : ''} ?`)) return;
+    const { error } = await sb.from('crescite_documents').delete().eq('id', x.id);
+    if (error) return annoncer(`Document non supprimé : ${texteErreur(error)}.`, { erreur: true });
+    if (x.fichier && !fichierPartage(x, x.fichier)) await retirerFichier(x.pour, x.fichier);
+    if (x.fichier) oublierLien(x.fichier);
+    await apresModif('Document supprimé.');
+  }
+  // ajouter un document : un fichier envoyé depuis le téléphone, ou un lien ; pour un spectacle (sp), ou toute la compagnie
+  function ajouterDocument(sp) {
+    const G = F(); if (!G) return;
+    G.formulaire({ titre: 'Ajouter un document', sousTitre: sp ? sp.titre || 'Spectacle' : 'Toute la compagnie', champs: [
+      { k: 'titre', t: 'texte', l: 'Titre', valeur: '', ph: 'La fiche technique, le plan de feu…', aide: 'Sans titre, celui du fichier.' },
+      { k: 'type', t: 'choix', seg: true, l: 'Type', choix: MOD.TYPES_DOC, valeur: 'autre' },
+      { k: 'pour', t: 'choix', l: 'Pour qui', choix: [...MOD.POUR_PRIVE, ...MOD.POUR_PUBLIC], valeur: 'equipe', aide: 'Un document public se télécharge sur le site : un PDF.' },
+      { k: 'fichier', t: 'fichier', l: 'Le fichier', accept: '.pdf,.odt,.docx,.txt,image/*', aide: 'PDF, image, texte, ODT ou DOCX, 50 Mo au plus (public : un PDF de 25 Mo).' },
+      { k: 'url', t: 'url', l: 'Ou un lien', valeur: '', ph: 'https://…' },
+    ], ok: 'Ajouter', enregistrer: async v => {
+      const f = v.fichier || null, url = String(v.url || '').trim();
+      if (!f && !url) return 'Un fichier, ou un lien.';
+      if (!f && !/^https?:\/\//i.test(url)) return 'Une adresse qui commence par https://';
+      const nomBase = f ? f.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim() : '';
+      const titre = String(v.titre || '').trim() || (nomBase ? nomBase[0].toUpperCase() + nomBase.slice(1) : hoteDuLien(url) || 'Document');
+      let chemin = null;
+      if (f) {
+        const refus = fichierRefuse(f, v.pour); if (refus) return refus;
+        try { chemin = await envoyerDocument(f, v.pour, sp); } catch (e) { return `Envoi impossible : ${texteErreur(e)}`; }
+      }
+      const ordre = Math.max(0, ...E.documents.filter(x => (sp ? x.spectacle_id === sp.id : x.spectacle_id == null)).map(x => x.ordre || 0)) + 10;
+      const { error } = await sb.from('crescite_documents').insert({ spectacle_id: sp ? sp.id : null, type: v.type, titre, fichier: chemin, url: chemin ? null : url, pour: v.pour, ordre });
+      if (error) { if (chemin) await retirerFichier(v.pour, chemin); return texteErreur(error); }
+      await apresModif(v.pour === 'administration' ? 'Document ajouté, pour l’administration seulement.' : docPublic(v.pour) ? 'Document public ajouté : il se télécharge sur le site.' : 'Document ajouté.');
+      return true;
+    } });
+  }
+
+  // ------------------------------------------------------------------------------ les feuilles de route, depuis le téléphone
+  // Chaque ligne de la feuille lue se modifie, s'ajoute, se retire ; la feuille se met à jour depuis la base (ce que la
+  // base dit aujourd'hui remplace les lignes composées pas retouchées, admin/feuille.js), se repasse en brouillon ; une
+  // date sans feuille publiée publie son brouillon ou compose sa feuille depuis la base (FEUILLE.composer, avec les mêmes
+  // sources que l'administration). La base passe une feuille publiée en version suivante à chaque écriture et prévient
+  // l'équipe (crescite_notif_feuilles).
+  MOD.TYPES_BLOC = [['ligne', 'Ligne'], ['puce', 'Puce'], ['sous-titre', 'Sous-titre'], ['jour', 'Jour'], ['rubrique', 'Rubrique'], ['alerte', 'Alerte']];
+  MOD.MARQUES = ['gras', 'italique', 'rouge', 'surligne'];
+  MOD.DEPART = { commune: 'Rouen', latitude: 49.443232, longitude: 1.099971 };
+  const outilOuRien = () => { const Fo = outilFeuille(); if (!Fo) annoncer('L’outil des feuilles de route n’a pas pu être chargé. Rechargez la page.', { erreur: true }); return Fo; };
+  const texteDuBloc = (Fo, b) => String(Fo.texteBloc(b) || '').replace(/\s+/g, ' ').trim();
+  const noteVersion = f => (f.statut === 'publiee' ? `L’équipe verra la version ${(Number(f.version) || 1) + 1} et en sera prévenue.` : 'La feuille est en brouillon : l’équipe ne la voit pas encore.');
+  // la feuille d'une date, quel que soit son statut (le compte administre) ; null sans feuille
+  async function feuilleComplete(d) {
+    const { data, error } = await sb.from('crescite_feuilles').select('id, date_id, titre, contenu, statut, version, publiee_le').eq('date_id', d.id).maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+  // la feuille publiée d'une date, puis quoi en faire
+  function avecFeuille(d, faire) {
+    chargerFeuille(d.id).then(f => (f ? faire(f) : annoncer('Cette feuille de route n’est pas (ou plus) publiée.', { erreur: true })))
+      .catch(e => annoncer(`Feuille illisible : ${texteErreur(e)}.`, { erreur: true }));
+  }
+  // ce que la base sait de la date, pour composer sa feuille (les mêmes sources que l'administration : sourcesFeuille,
+  // admin/equipe.js) : l'équipe de la date et ses téléphones, l'administration et la régie générale de la compagnie, le
+  // suivi de la date et du lieu, les documents de l'équipe, les feuilles des autres dates
+  async function sourcesFeuille(d) {
+    const sp = d.spectacle || {}, spId = sp.id != null ? Number(sp.id) : null, lieuId = d.lieu?.id != null ? Number(d.lieu.id) : null;
+    const gens = quiPart(d);
+    const rs = await Promise.all([
+      sb.from('crescite_personnes').select('id, prenom, nom, metiers'),
+      sb.from('crescite_personnes_privees').select('personne_id, telephone, email'),
+      sb.from('crescite_dates_suivi').select('organisateur, contact, contrat, notes').eq('date_id', d.id).maybeSingle(),
+      lieuId != null ? sb.from('crescite_lieux_suivi').select('contact, jauge, plateau, notes').eq('lieu_id', lieuId).maybeSingle() : { data: null },
+      spId != null ? sb.from('crescite_documents').select('id, titre, pour, spectacle_id').eq('pour', 'equipe').or(`spectacle_id.eq.${spId},spectacle_id.is.null`) : sb.from('crescite_documents').select('id, titre, pour, spectacle_id').eq('pour', 'equipe').is('spectacle_id', null),
+      sb.from('crescite_feuilles').select('date_id, contenu, modifie_le, date:crescite_dates(debut, lieu_id, spectacle_id, lieu:crescite_lieux(nom, commune))').neq('date_id', d.id).order('modifie_le', { ascending: false }).limit(40),
+      spId != null ? sb.from('crescite_spectacles').select('id, titre, slug, duree, feuille_modele, univers').eq('id', spId).maybeSingle() : { data: null },
+      lieuId != null ? sb.from('crescite_lieux').select('*').eq('id', lieuId).maybeSingle() : { data: null },
+    ]);
+    const echec = rs.find(r => r && r.error); if (echec) throw echec.error;
+    const [pe, pv, sv, lv, dc, fe, s, l] = rs.map(r => r.data);
+    const personnes = pe || [], privees = new Map((pv || []).map(x => [Number(x.personne_id), x]));
+    const tel = id => privees.get(Number(id))?.telephone || '', mel = id => privees.get(Number(id))?.email || '';
+    const parId = new Map(personnes.map(p => [Number(p.id), p]));
+    const categories = pid => [...new Set(E.distributions.filter(x => Number(x.spectacle_id) === spId && Number(x.personne_id) === Number(pid)).map(x => x.categorie).filter(Boolean))];
+    const equipe = gens.map(g => ({ personne_id: g.id, prenom: g.personne?.prenom || parId.get(Number(g.id))?.prenom || String(g.nom || '').split(' ')[0] || '', nom: g.nom || nomDe(parId.get(Number(g.id))), fonction: g.fonctions[0] || '', categories: categories(g.id), telephone: tel(g.id) }));
+    const REGIE = /r[ée]gi(?:e|sseu(?:r|se))\s+g[ée]n[ée]ral/i, CONTACT = /administrat|r[ée]gie\s+g[ée]n[ée]rale|r[ée]gisseu(?:r|se)\s+g[ée]n[ée]ral/i;
+    const avecMetier = re => personnes.filter(p => (p.metiers || []).some(m => re.test(m)));
+    const regieDate = equipe.filter(x => REGIE.test(x.fonction || '')).map(x => parId.get(Number(x.personne_id)));
+    const regieDist = E.distributions.filter(x => Number(x.spectacle_id) === spId && REGIE.test(x.fonction || '')).map(x => parId.get(Number(x.personne_id)));
+    const regie = (regieDate.length ? regieDate : regieDist.length ? regieDist : avecMetier(REGIE)).filter(Boolean);
+    const compagnie = [...avecMetier(/administrat/i), ...regie].filter((p, i, xs) => xs.indexOf(p) === i);
+    const contacts = compagnie.map(p => ({ personne_id: p.id, nom: nomDe(p), prenom: p.prenom || '', role: (p.metiers || []).find(m => CONTACT.test(m)) || 'Régie générale', telephone: tel(p.id), email: mel(p.id) }));
+    const anterieures = (fe || []).filter(f => f && f.contenu && f.date && Number(f.date_id) !== d.id)
+      .map(f => ({ contenu: f.contenu, debut: f.date.debut, lieu_id: f.date.lieu_id, spectacle_id: f.date.spectacle_id, lieu: f.date.lieu || null, date_id: f.date_id, ecrit_le: f.modifie_le || null }));
+    const lieu = l || d.lieu || null;
+    return { date: { ...d, spectacle_id: spId, lieu_id: lieuId }, spectacle: { ...sp, ...(s || {}) }, lieu, representations: d.representations.map(r => ({ ...r, heure: h5(r.heure), fin: h5(r.fin) })),
+      equipe, contacts, depart: MOD.DEPART, suivi: { ...(sv || {}), lieu: lv || {} }, documents: dc || [], anterieures };
+  }
+  // une écriture de la feuille ; la page se relit (la feuille lue est oubliée, pour être relue dans sa nouvelle version)
+  async function ecrireFeuille(d, f, maj, message) {
+    const { error } = await sb.from('crescite_feuilles').update(maj).eq('id', f.id);
+    if (error) return texteErreur(error);
+    E.feuilles.delete(d.id); E.feuilleVue = null;
+    await apresModif(message);
+    return true;
+  }
+  function modifierLigneFeuille(d, f, id) {
+    const G = F(), Fo = outilOuRien(); if (!G || !Fo) return;
+    const c = Fo.contenu(f, contexte(d)), b = c.blocs.find(x => String(x.id) === String(id));
+    if (!b) return annoncer('Cette ligne n’est plus dans la feuille.', { erreur: true });
+    if (b.type === 'tableau') return annoncer('Un tableau se modifie dans l’administration.', { erreur: true });
+    const segs = (b.segments || []).filter(s => !s.amorce), texte0 = segs.map(s => s.texte).join('').replace(/\s+/g, ' ').trim(), gras0 = segs.length > 0 && segs.every(s => s.gras);
+    const type0 = MOD.TYPES_BLOC.some(([k]) => k === b.type) ? b.type : b.type;
+    G.formulaire({ titre: 'Modifier cette ligne', sousTitre: titreDate(d), champs: [
+      { k: 'texte', t: 'long', l: 'Texte', valeur: texte0, lignes: 3, requis: true },
+      ...(b.type === 'entete' ? [] : [{ k: 'type', t: 'choix', seg: true, l: 'Nature', choix: MOD.TYPES_BLOC, valeur: MOD.TYPES_BLOC.some(([k]) => k === b.type) ? b.type : 'ligne' }]),
+      { k: 'gras', t: 'case', l: 'En gras', valeur: gras0 },
+    ], note: noteVersion(f), danger: { libelle: 'Retirer', faire: () => retirerLigneFeuille(d, f, id) }, enregistrer: async v => {
+      const texte = String(v.texte || '').replace(/\s+/g, ' ').trim(), gras = !!v.gras, type = b.type === 'entete' ? 'entete' : (v.type || type0);
+      if (!texte) return 'Un texte.';
+      if (texte === texte0 && gras === gras0 && type === b.type) return true;
+      const n = { ...b, type };
+      if (texte !== texte0 || gras !== gras0) {
+        const voisin = segs[0] || {};
+        const marques = Object.fromEntries(MOD.MARQUES.filter(m => m !== 'gras' && voisin[m]).map(m => [m, true]));
+        n.segments = [{ texte, ...marques, ...(gras ? { gras: true } : {}) }];
+      }
+      delete n.source;
+      return ecrireFeuille(d, f, { contenu: { ...c, blocs: c.blocs.map(x => (x === b ? Fo.bloc(n) : x)) } }, 'Ligne modifiée.');
+    } });
+  }
+  function ajouterLigneFeuille(d, f, apres) {
+    const G = F(), Fo = outilOuRien(); if (!G || !Fo) return;
+    const c = Fo.contenu(f, contexte(d)), k = apres == null ? -1 : c.blocs.findIndex(x => String(x.id) === String(apres)), ref = k >= 0 ? c.blocs[k] : null;
+    G.formulaire({ titre: apres == null ? 'Ajouter une ligne à la fin' : 'Ajouter une ligne après', sousTitre: ref ? texteDuBloc(Fo, ref).slice(0, 70) || titreDate(d) : titreDate(d), champs: [
+      { k: 'texte', t: 'long', l: 'Texte', valeur: '', lignes: 3, requis: true, ph: '18h : repas au théâtre, offert par le lieu' },
+      { k: 'type', t: 'choix', seg: true, l: 'Nature', choix: MOD.TYPES_BLOC, valeur: ref && ref.type === 'puce' ? 'puce' : 'ligne' },
+      { k: 'gras', t: 'case', l: 'En gras', valeur: false },
+    ], ok: 'Ajouter', note: noteVersion(f), enregistrer: async v => {
+      const texte = String(v.texte || '').replace(/\s+/g, ' ').trim();
+      if (!texte) return 'Un texte.';
+      const blocs = c.blocs.slice();
+      blocs.splice(k >= 0 ? k + 1 : blocs.length, 0, Fo.bloc({ type: v.type, segments: [{ texte, ...(v.gras ? { gras: true } : {}) }] }));
+      return ecrireFeuille(d, f, { contenu: { ...c, blocs } }, 'Ligne ajoutée.');
+    } });
+  }
+  async function retirerLigneFeuille(d, f, id) {
+    const Fo = outilOuRien(); if (!Fo) return;
+    const c = Fo.contenu(f, contexte(d)), b = c.blocs.find(x => String(x.id) === String(id));
+    if (!b) return;
+    if (!confirm(`Retirer cette ligne de la feuille de route ?\n« ${texteDuBloc(Fo, b).slice(0, 80)} »`)) return;
+    const r = await ecrireFeuille(d, f, { contenu: { ...c, blocs: c.blocs.filter(x => x !== b), pages: (c.pages || []).filter(p => String(p) !== String(id)) } }, 'Ligne retirée.');
+    if (r !== true) annoncer(`Ligne non retirée : ${r}.`, { erreur: true });
+  }
+  // « Mettre à jour depuis la base » : horaires, lieu, équipe, contacts d'aujourd'hui dans les lignes composées pas
+  // retouchées ; ce qui a été écrit à la main ne change pas. publier : la feuille (un brouillon) est publiée du même coup.
+  async function actualiserFeuille(d, f, { publier = false } = {}) {
+    const Fo = outilOuRien(); if (!Fo) return;
+    let r;
+    try { r = Fo.actualiser(Fo.contenu(f, contexte(d)), Fo.composer(await sourcesFeuille(d))); }
+    catch (e) { console.error(e); return annoncer(`Mise à jour impossible : ${texteErreur(e)}.`, { erreur: true }); }
+    const n = r.ajoutes + r.modifies + r.retires + r.remplies, pl = (k, un, des) => `${k} ${k > 1 ? des : un}`;
+    if (!n && !publier) return annoncer('Rien n’a changé dans la base depuis la composition de la feuille.');
+    const detail = n ? [r.modifies && pl(r.modifies, 'ligne changée', 'lignes changées'), r.ajoutes && pl(r.ajoutes, 'ajoutée', 'ajoutées'), r.retires && pl(r.retires, 'retirée', 'retirées'),
+      r.remplies && pl(r.remplies, 'information qui manquait', 'informations qui manquaient')].filter(Boolean).join(', ') : 'rien de changé dans la base';
+    const res = await ecrireFeuille(d, f, { contenu: { ...r.contenu, format: 2 }, ...(publier ? { statut: 'publiee' } : {}) }, `${publier ? 'Feuille de route publiée' : 'Feuille mise à jour depuis la base'} : ${detail}. Ce qui avait été écrit n’a pas changé.`);
+    if (res !== true) annoncer(`Mise à jour impossible : ${res}.`, { erreur: true });
+  }
+  async function depublierFeuille(d, f) {
+    if (!confirm('Repasser la feuille de route en brouillon ? L’équipe ne la verra plus, jusqu’à sa republication.')) return;
+    const r = await ecrireFeuille(d, f, { statut: 'brouillon' }, 'Feuille repassée en brouillon : l’équipe ne la voit plus.');
+    if (r !== true) return annoncer(`Impossible : ${r}.`, { erreur: true });
+    if (location.hash === `#/feuille/${d.id}`) location.hash = `#/date/${d.id}`;
+  }
+  // une date sans feuille publiée : publier le brouillon qui existe, ou composer la feuille depuis la base
+  async function feuilleDepuisTelephone(d) {
+    const G = F(), Fo = outilOuRien(); if (!G || !Fo) return;
+    let f = null;
+    try { f = await feuilleComplete(d); } catch (e) { return annoncer(`Feuille illisible : ${texteErreur(e)}.`, { erreur: true }); }
+    if (f && f.statut === 'publiee') { location.hash = `#/feuille/${d.id}`; return; }
+    if (f) {
+      G.formulaire({ titre: 'Publier la feuille de route', sousTitre: titreDate(d), champs: [
+        { k: 'maj', t: 'choix', seg: true, l: 'Avant de publier', choix: [['maj', 'Mettre à jour depuis la base'], ['telle', 'Telle quelle']], valeur: 'maj', aide: 'Les horaires, le lieu, l’équipe et les contacts d’aujourd’hui ; ce qui a été écrit à la main ne change pas.' },
+      ], ok: 'Publier', note: `Un brouillon existe${Number(f.version) > 1 ? ` (version ${f.version})` : ''} : l’équipe recevra la feuille et en sera prévenue.`, enregistrer: async v => {
+        if (v.maj === 'maj') { await actualiserFeuille(d, f, { publier: true }); return true; }
+        return ecrireFeuille(d, f, { statut: 'publiee' }, 'Feuille de route publiée : l’équipe est prévenue.');
+      } });
+      return;
+    }
+    G.formulaire({ titre: 'Composer la feuille de route', sousTitre: titreDate(d), champs: [
+      { k: 'statut', t: 'choix', seg: true, l: 'Puis', choix: [['publiee', 'La publier'], ['brouillon', 'La garder en brouillon']], valeur: 'publiee' },
+    ], ok: 'Composer', note: 'Dans la forme des feuilles de la compagnie, avec tout ce que la base sait : horaires, lieu, itinéraire, équipe, contacts, documents ; repas, transports et hébergement repris des feuilles précédentes. Elle se complète ensuite ligne à ligne, ici ou dans l’administration.', enregistrer: async v => {
+      let contenu;
+      try { contenu = { ...Fo.composer(await sourcesFeuille(d)), format: 2 }; } catch (e) { console.error(e); return `Composition impossible : ${texteErreur(e)}`; }
+      const { error } = await sb.from('crescite_feuilles').insert({ date_id: d.id, titre: null, contenu, statut: v.statut });
+      if (error) return texteErreur(error);
+      E.feuilles.delete(d.id);
+      await apresModif(v.statut === 'publiee' ? 'Feuille de route composée et publiée : l’équipe est prévenue.' : 'Feuille de route composée, en brouillon : à publier quand elle sera prête.');
+      if (v.statut === 'publiee') location.hash = `#/feuille/${d.id}`;
+      return true;
+    } });
   }
   const lienAdmin = h => new URL(`../admin/${h}`, location.href).href;
 
@@ -4679,8 +5007,9 @@
     if (t.matches('[data-actualiser]')) { vibrer(8); return reessayer(true); }
     if (t.matches('[data-retard]')) return ouvrirModaleRetard(Number(t.dataset.retard), t);
     if (t.matches('[data-modifier-date]')) return ouvrirModaleDate(Number(t.dataset.modifierDate), t);
-    if (t.matches('[data-ajouter-fichier]')) return ouvrirModaleDocument({ spectacle: Number(t.dataset.ajouterFichier) }, t);
-    if (t.matches('[data-modifier-document]')) return ouvrirModaleDocument({ doc: Number(t.dataset.modifierDocument) }, t);
+    // (un compte qui administre : les feuilles de « modifier depuis le téléphone », une seule voie par compte)
+    if (t.matches('[data-ajouter-fichier]')) return E.admin ? ajouterDocument(E.spectacles.get(Number(t.dataset.ajouterFichier)) || { id: Number(t.dataset.ajouterFichier) }) : ouvrirModaleDocument({ spectacle: Number(t.dataset.ajouterFichier) }, t);
+    if (t.matches('[data-modifier-document]')) { const x = E.admin && E.documents.find(y => y.id === Number(t.dataset.modifierDocument)); return x ? modifierDocument(x) : ouvrirModaleDocument({ doc: Number(t.dataset.modifierDocument) }, t); }
     if (t.matches('[data-justificatif]')) {
       // un justificatif de frais : le stockage est privé, un lien signé se demande au clic (une heure)
       e.preventDefault();

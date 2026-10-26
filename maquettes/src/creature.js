@@ -71,7 +71,7 @@ const CREATURE = (() => {
   const actif = PRET && !COUPE;
   const CENTRE = [771, 640];   // le cœur de la pieuvre, en unités du dessin (comme la scène de l'accueil)
   const LARGEUR = 1042;        // la largeur du dessin de la pieuvre seule (D.logo.octopus), en unités
-  const COU = 770, SOMMET = 420, PIVOT = [771, 770];   // la tête : du cou (le corps ne bouge pas) au sommet (elle bouge tout entière)
+  const COU = PRET ? PIEUVRE.COU : 770, SOMMET = PRET ? PIEUVRE.SOMMET : 420;   // la tête : du cou (le corps ne bouge pas) au sommet
   const ORDRE = ['queueL', 'queueR', 'boucleL', 'boucleR', 'frangeHL', 'frangeHR', 'frangeBL', 'frangeBR'];   // pour tenir : de la racine la plus haute à la plus basse
   const HEX6 = /^#[0-9a-f]{6}$/i;
   function rgb(c) {
@@ -88,34 +88,6 @@ const CREATURE = (() => {
   const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? ease(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
   // [durée (ms), contraction, agitation des tentacules, penche (°)]
   const GENRES = { clic: [420, .07, 1.8, 3], page: [680, .1, 2.6, 5], ouvre: [460, .05, 1.6, 2], ferme: [460, .07, 1.6, 2], enroule: [600, .06, 2, 0], retour: [480, .07, 1.8, 3], nage: [760, .05, 1.6, 0], prise: [640, .1, 2.6, 4] };
-
-  /* ---------- le corps du dessin, en points (pour que la tête puisse bouger : on le déforme point par point) ---------- */
-  let CONTOURS = null;
-  function contours() {
-    if (CONTOURS) return CONTOURS;
-    CONTOURS = [];
-    const chemins = (typeof D !== 'undefined' && D.logo && D.logo.octopusPaths) || [];
-    for (const d of chemins) {
-      const toks = d.match(/[MLCZmlcz]|-?\d*\.?\d+(?:e-?\d+)?/g) || [], pts = [];
-      let i = 0, cmd = '', x = 0, y = 0, x0 = 0, y0 = 0;
-      const num = () => +toks[i++];
-      while (i < toks.length) {
-        if (/^[MLCZmlcz]$/.test(toks[i])) { cmd = toks[i++]; if (cmd === 'Z' || cmd === 'z') { x = x0; y = y0; } continue; }
-        if (cmd === 'M' || cmd === 'm') { x = num(); y = num(); x0 = x; y0 = y; pts.push(x, y); cmd = cmd === 'M' ? 'L' : 'l'; }
-        else if (cmd === 'L') { x = num(); y = num(); pts.push(x, y); }
-        else if (cmd === 'l') { x += num(); y += num(); pts.push(x, y); }
-        else if (cmd === 'C' || cmd === 'c') {
-          const r = cmd === 'c', ax = x, ay = y;
-          const x1 = (r ? ax : 0) + num(), y1 = (r ? ay : 0) + num(), x2 = (r ? ax : 0) + num(), y2 = (r ? ay : 0) + num(), x3 = (r ? ax : 0) + num(), y3 = (r ? ay : 0) + num();
-          const n = Math.max(2, Math.ceil((Math.hypot(x1 - ax, y1 - ay) + Math.hypot(x2 - x1, y2 - y1) + Math.hypot(x3 - x2, y3 - y2)) / 4));
-          for (let j = 1; j <= n; j++) { const u = j / n, v = 1 - u; pts.push(v * v * v * ax + 3 * v * v * u * x1 + 3 * v * u * u * x2 + u * u * u * x3, v * v * v * ay + 3 * v * v * u * y1 + 3 * v * u * u * y2 + u * u * u * y3); }
-          x = x3; y = y3;
-        } else i++;
-      }
-      if (pts.length >= 6) { const P = Float64Array.from(pts), W = new Float64Array(P.length / 2); for (let j = 0; j < W.length; j++) W[j] = lisse(COU, SOMMET, P[2 * j + 1]); CONTOURS.push({ P, W }); }
-    }
-    return CONTOURS;
-  }
 
   /* ---------- ce que toutes les créatures partagent : la souris, le défilement, l'onglet, le réglage ---------- */
   const toutes = new Set();
@@ -146,7 +118,7 @@ const CREATURE = (() => {
       this.souris = o.souris !== false; this.courant = o.courant !== false; this.vie = o.vie || 1; this.lueur = !!o.lueur; this.sillage = !!o.sillage;
       this.onde = o.onde || 2 * this.vie; this.rythme = o.rythme || 1; this.tete = o.tete != null ? !!o.tete : this.vie >= 1.5;
       const TS = PIEUVRE.creer();
-      this.CORPS = PIEUVRE.corps(TS); this.POINTS = contours();
+      this.POINTS = PIEUVRE.contours();
       // dir : le sens de la pointe au repos (vers où la tentacule se penche) ; col : la couleur vers laquelle elle se teinte
       this.BRAS = TS.map((t, i) => ({ t, i, cle: t.cle, but: null, teinte: 0, penche: 0, col: this.ENCRE, dir: t.RS[t.M - 1], geste: null, prise: null, wt: lisse(COU, SOMMET, t.RY[0]) }));
       this.cv = null; this.ctx = null; this.W = 0; this.H = 0; this.dpr = 1; this.cw = 0; this.ch = 0; this.cx0 = 0; this.cy0 = 0; this.tTaille = 0;
@@ -391,7 +363,7 @@ const CREATURE = (() => {
       }
       const theta = this.theta, ct = Math.cos(theta), st = Math.sin(theta), dxT = this.dxTete, dyT = this.dyTete;
       // (ce que la tête fait à un point du dessin : il tourne autour du cou, d'autant plus qu'il est haut)
-      const tete = (x, y, w, out) => { if (!w) { out[0] = x; out[1] = y; return; } const c = Math.cos(theta * w), si = Math.sin(theta * w), rx = x - PIVOT[0], ry = y - PIVOT[1]; out[0] = PIVOT[0] + rx * c - ry * si + dxT * w; out[1] = PIVOT[1] + rx * si + ry * c + dyT * w; };
+      const tete = (x, y, w, out) => PIEUVRE.tete(x, y, w, theta, dxT, dyT, out);
       const rame = coup * (mesure ? .95 : .55) * (sens || 1), pt = [0, 0];
       for (const a of BRAS) {
         let pv = 0;
@@ -429,47 +401,34 @@ const CREATURE = (() => {
       const dpr = this.dpr;
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
       ctx.setTransform(dpr, 0, 0, dpr, -this.cx0 * dpr, -this.cy0 * dpr);
-      // le sillage, avant elle : un trait qui s'efface et s'amincit vers l'arrière
-      const tr = this.trace, nT = tr.length / 2;
-      if (nT > 2) {
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        for (let i = 1; i < nT; i++) {
-          const u = i / nT; ctx.strokeStyle = rgba(this.ENCRE, .22 * u * u); ctx.lineWidth = LARGEUR * s * .16 * u;
-          ctx.beginPath(); ctx.moveTo(tr[2 * i - 2], tr[2 * i - 1]); ctx.lineTo(tr[2 * i], tr[2 * i + 1]); ctx.stroke();
-        }
-      }
       // l'ensemble respire, se contracte, se penche, s'étire dans le sens du bond, autour de son cœur
       ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(k, k);
       if (Math.abs(et) > .005) { const ang = this.place.ang || Math.PI / 2; ctx.rotate(ang); ctx.scale(1 + .16 * et, 1 - .1 * et); ctx.rotate(-ang); }
       ctx.translate(-cx, -cy);
+      // le corps d'abord : le logo sans ses huit tentacules (dont la place de repos suit leur racine), la tête déformée à part,
+      // peint, les places effacées ; puis, dessous (destination-over), la tache de la marque s'il y en a une, le halo, le
+      // sillage ; puis les tentacules par-dessus, celles qui luisent et celle qui sort en dernier
+      ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y);
+      PIEUVRE.corpsVivant(ctx, BRAS.map(a => a.t), this.tete ? theta : 0, this.tete ? dxT : 0, this.tete ? dyT : 0, this.encre);
+      ctx.globalCompositeOperation = 'destination-over';
+      if (this.tache) { ctx.fillStyle = this.tache.fond; ctx.fill(this.tache.chemin); }
+      ctx.restore();
+      ctx.save(); ctx.globalCompositeOperation = 'destination-over';
       // le halo, s'il y en a un : un dégradé, une seule forme (pas de flou, trop coûteux), qui respire avec elle
       if (this.lueur) {
         const E = this.ENCRE, r0 = LARGEUR * s * .62, g = ctx.createRadialGradient(cx + bob.x, cy + bob.y, r0 * .25, cx + bob.x, cy + bob.y, r0);
         g.addColorStop(0, rgba(E, .26 + .08 * Math.sin(tVie * 1.15))); g.addColorStop(1, rgba(E, 0));
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx + bob.x, cy + bob.y, r0, 0, TAU); ctx.fill();
       }
-      // la tache de la marque, s'il y en a une ; le corps : le logo sans ses huit tentacules (dont la place de repos suit leur
-      // racine), la tête déformée à part ; puis les tentacules par-dessus, celles qui luisent et celle qui sort en dernier
-      ctx.save(); ctx.transform(s, 0, 0, s, ox + bob.x, oy + bob.y);
-      if (this.tache) { ctx.fillStyle = this.tache.fond; ctx.fill(this.tache.chemin); }
-      ctx.fillStyle = this.encre;
-      if (!this.tete || !this.POINTS.length) ctx.fill(this.CORPS, 'evenodd');
-      else {
-        ctx.beginPath();
-        for (const { P, W } of this.POINTS) {
-          for (let i = 0, j = 0; i < P.length; i += 2, j++) { tete(P[i], P[i + 1], W[j], pt); if (i) ctx.lineTo(pt[0], pt[1]); else ctx.moveTo(pt[0], pt[1]); }
-          ctx.closePath();
+      // le sillage : un trait qui s'efface et s'amincit vers l'arrière (en coordonnées de la page : hors des transformations)
+      const tr = this.trace, nT = tr.length / 2;
+      if (nT > 2) {
+        ctx.setTransform(dpr, 0, 0, dpr, -this.cx0 * dpr, -this.cy0 * dpr);
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (let i = 1; i < nT; i++) {
+          const u = i / nT; ctx.strokeStyle = rgba(this.ENCRE, .22 * u * u); ctx.lineWidth = LARGEUR * s * .16 * u;
+          ctx.beginPath(); ctx.moveTo(tr[2 * i - 2], tr[2 * i - 1]); ctx.lineTo(tr[2 * i], tr[2 * i + 1]); ctx.stroke();
         }
-        for (const a of BRAS) {
-          const t = a.t, w = a.wt, c = Math.cos(theta * w), si = Math.sin(theta * w);
-          tete(t.RX[0], t.RY[0], w, pt);
-          const dx = pt[0] - t.RX[0], dy = pt[1] - t.RY[0], r0x = t.RX[0], r0y = t.RY[0];
-          let i0 = 0; while (i0 < t.m && t.S[i0] <= 0 && t.T[i0] < 0) i0++;
-          let i1 = t.m - 1; while (i1 > 0 && t.S[i1] <= 0 && t.T[i1] < 0) i1--;
-          for (let i = i0; i <= i1; i++) { const rx = t.VX[i] - r0x, ry = t.VY[i] - r0y, x = r0x + rx * c - ry * si + dx, y = r0y + rx * si + ry * c + dy; if (i === i0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-          ctx.closePath();
-        }
-        ctx.fill('evenodd');
       }
       ctx.restore();
       const trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: this.encre, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere });

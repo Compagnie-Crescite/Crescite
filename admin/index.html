@@ -1024,7 +1024,11 @@ const SUR_MAC = /mac|iphone|ipad|ipod/i.test(navigator.userAgentData?.platform |
 const RACCOURCI_RCH = SUR_MAC ? '⌘K' : 'Ctrl K';
 const LOUPE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>';
 const JOURS_RCH = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-const TYPES_RCH = [['Rubrique', 'Rubrique'], ['Spectacle', 'Spectacle'], ['Personne', 'Personne'], ['Lieu', 'Lieu'], ['Date', 'Date'], ['Feuille de route', 'Feuille']];
+const TYPES_RCH = [['Action', 'Action'], ['À traiter', 'À traiter'], ['Rubrique', 'Rubrique'], ['Spectacle', 'Spectacle'], ['Personne', 'Personne'], ['Lieu', 'Lieu'], ['Date', 'Date'], ['Feuille de route', 'Feuille'],
+  ['Vue', 'Vue'], ['Note de frais', 'Frais'], ['Devis', 'Devis'], ['Diffusion', 'Diffusion'], ['Proposition', 'Proposition'], ['Séance', 'Séance']];
+const STATUTS_FRAIS_RCH = { en_attente: 'en attente', valide: 'validée', refuse: 'refusée', rembourse: 'remboursée' };
+const eurosRch = n => `${(Number(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+const sansBalises = h => String(h || '').replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/g, ' ').replace(/\s+/g, ' ').trim();
 const RCH = { index: [], vus: [], actif: 0, minuteur: null };
 const cleRch = s => ` ${norm(s).replace(/[’‘`]/g, "'").replace(/[^a-z0-9'/]+/g, ' ').trim()} `;
 const motsRch = q => cleRch(q).trim().split(' ').filter(Boolean);
@@ -1033,7 +1037,8 @@ const jourRch = j => { const d = new Date(`${j}T12:00:00`), n = +j.slice(8, 10),
 function indexRch() {
   const xs = [], joursDe = new Map(), feuilles = new Map((E.feuilles || []).map(f => [f.date_id, f]));
   E.reps.forEach(r => { if (!r.jour) return; if (!joursDe.has(r.date_id)) joursDe.set(r.date_id, new Set()); joursDe.get(r.date_id).add(r.jour); });
-  const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.titre} ${o.sous || ''} ${plus}`) });
+  // (le genre compte dans les mots cherchés : « lieu volcan », « frais camille », « action nouvelle date »)
+  const mettre = (o, plus = '') => xs.push({ ordre: 0, sous: '', ...o, rang: TYPES_RCH.findIndex(t => t[0] === o.type), ct: cleRch(o.titre), c: cleRch(`${o.type} ${o.titre} ${o.sous || ''} ${plus}`) });
   rubriquesVisibles().forEach(([k, l], i) => mettre({ type: 'Rubrique', titre: l, href: `#/${k}`, ordre: i / 100 }));
   E.spectacles.forEach(s => mettre({ type: 'Spectacle', titre: s.titre, sous: s.page ? '' : 'Ancien spectacle', href: `#/spectacles/${s.slug}`, couleur: couleurSp(s), ordre: s.page ? 0 : 1 }));
   (E.personnes || []).forEach(p => mettre({ type: 'Personne', titre: nomDe(p) || 'Sans nom', sous: (p.metiers || []).join(', '), href: `#/equipe/${p.id}` }));
@@ -1051,6 +1056,24 @@ function indexRch() {
     const f = feuilles.get(d.id);
     if (f) mettre({ ...base, type: 'Feuille de route', sous: `${base.sous} · ${f.statut === 'publiee' ? `publiée (v${f.version})` : 'brouillon'}`, href: `#/feuilles/${d.id}` }, `feuille de route ${plus}`);
   });
+  // la barre de commande : les actions rapides et les commandes du tableau de bord (le briefing, personnaliser, les vues),
+  // ce qui est à traiter (Entrée le traite sur place), les notes de frais, les devis, la diffusion, les propositions, les séances
+  if (typeof TABLEAU !== 'undefined' && TABLEAU.ACTIONS) {
+    TABLEAU.ACTIONS.filter(a => !a[3] || a[3]()).forEach(([k, l, href, , externe]) => { if (k === 'recherche') return;
+      mettre({ type: 'Action', titre: l.replace(/^＋\s*/, '').replace(/\s*↗$/, ''), sous: externe ? 'sur le site' : '', href: href.startsWith('#') || externe ? href : '', externe: !!externe,
+        faire: href === 'prospect' ? () => { window.addEventListener('hashchange', () => requestAnimationFrame(() => $('#b-nouveau-prospect')?.click()), { once: true }); location.hash = '#/diffusion'; } : null }, 'commande'); });
+    mettre({ type: 'Action', titre: 'Tableau de bord', href: '#/accueil', ordre: 1 }, 'commande accueil');
+    mettre({ type: 'Action', titre: 'Briefing de la semaine', sous: 'le résumé des sept jours, à copier ou à imprimer', faire: () => TABLEAU.ouvrirBriefing(), ordre: 1 }, 'commande résumé');
+    mettre({ type: 'Action', titre: 'Personnaliser le tableau de bord', faire: () => { const aller = () => { if ($('#tb-personnaliser')?.getAttribute('aria-pressed') !== 'true') $('#tb-personnaliser')?.click(); }; if (location.hash === '#/accueil') aller(); else { window.addEventListener('hashchange', () => setTimeout(aller, 60), { once: true }); location.hash = '#/accueil'; } }, ordre: 1 }, 'commande tuiles');
+    (TABLEAU.vues() || []).forEach(v => mettre({ type: 'Vue', titre: v.nom, sous: 'une vue du tableau de bord', faire: () => { if (location.hash === '#/accueil') TABLEAU.appliquerVue(v.nom); else { window.addEventListener('hashchange', () => setTimeout(() => TABLEAU.appliquerVue(v.nom), 60), { once: true }); location.hash = '#/accueil'; } } }, 'tableau commande'));
+    try { TABLEAU.urgences().lignes.filter(x => !x.reporte).slice(0, 40).forEach(x => mettre({ type: 'À traiter', titre: x.titreTexte, sous: `${x.sujet}${sansBalises(x.sous) ? ` · ${sansBalises(x.sous)}` : ''}`, couleur: x.couleur, href: x.href,
+      faire: () => { if (!TABLEAU.traiter(x.cle)) location.hash = x.href; } }, 'urgent traiter')); } catch (e) { console.error(e); }
+  }
+  (E.frais || []).forEach(f => { const p = personne(f.personne_id); mettre({ type: 'Note de frais', titre: `${p ? nomDe(p) : 'Une personne'} · ${eurosRch(f.montant_ttc)}`, sous: [typeof CAT_FRAIS !== 'undefined' ? CAT_FRAIS[f.categorie] || f.categorie : f.categorie, f.date_depense ? jourCourt(f.date_depense) : '', STATUTS_FRAIS_RCH[f.statut] || f.statut].filter(Boolean).join(' · '), href: '#/equipe/frais', ordre: f.statut === 'en_attente' ? 0 : 1 }, f.commentaire || ''); });
+  (E.devis || []).forEach(v => mettre({ type: 'Devis', titre: v.structure_nom || 'Demande de devis', sous: [v.commune, spectacle(v.spectacle_id)?.titre, (STATUTS_DEVIS.find(x => x[0] === (v.statut || 'nouveau')) || [])[1]].filter(Boolean).join(' · '), href: `#/diffusion/devis/${v.id}` }, v.contact_nom || ''));
+  (E.prospects || []).forEach(p => mettre({ type: 'Diffusion', titre: p.structure || 'Piste', sous: [p.commune, spectacle(p.spectacle_id)?.titre, ((ETAPES_CRM.find(e => e[0] === p.etape) || [])[1] || '').replace(/^\d\.\s*/, '')].filter(Boolean).join(' · '), href: '#/diffusion' }, p.contact_nom || ''));
+  (E.propositions || []).forEach(p => mettre({ type: 'Proposition', titre: p.titre || 'Proposition de dates', sous: p.statut === 'ouverte' ? 'proposition ouverte' : 'proposition close', href: `#/planning/proposition/${p.id}`, ordre: p.statut === 'ouverte' ? 0 : 1 }));
+  (E.seances || []).forEach(s => { const a = (E.ateliers || []).find(x => x.id === s.atelier_id), l = lieu(s.lieu_id); mettre({ type: 'Séance', titre: a?.titre || 'Séance d’atelier', sous: `${jourCourt(s.jour)}${l ? ` · ${l.nom || l.commune}` : ''}${s.classe ? ` · ${s.classe}` : ''}`, href: `#/ateliers/seances/${s.id}`, ordre: s.jour >= AUJ ? Date.parse(`${s.jour}T12:00:00Z`) / 864e5 : 1e9 }, s.jour ? jourRch(s.jour) : ''); });
   return xs;
 }
 function chercherRch(index, mots) {
@@ -1082,7 +1105,7 @@ function dialogueRch() {
   dlg.id = 'recherche'; dlg.className = 'recherche'; dlg.setAttribute('aria-labelledby', 'rch-titre');
   dlg.innerHTML = `<div class="rch-boite"><h2 class="sr" id="rch-titre">Rechercher dans l’administration</h2>
     <div class="rch-tete">${LOUPE}<input type="text" id="rch-q" role="combobox" aria-expanded="false" aria-controls="rch-liste" aria-autocomplete="list" aria-describedby="rch-aide"
-      placeholder="Une date, une personne, un lieu, un spectacle…" aria-label="Rechercher" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><button type="button" class="btn petit" data-fermer>Fermer</button></div>
+      placeholder="Une date, une personne, un lieu, une action… (« frais Camille », « lieu Le Volcan »)" aria-label="Rechercher ou commander" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"><button type="button" class="btn petit" data-fermer>Fermer</button></div>
     <p class="rch-entete" id="rch-entete"></p><ul class="rch-liste" id="rch-liste" role="listbox" aria-labelledby="rch-entete"></ul>
     <p class="rch-aide" id="rch-aide"><span><kbd>↑</kbd> <kbd>↓</kbd> pour choisir</span><span><kbd>Entrée</kbd> pour ouvrir</span><span><kbd>Échap</kbd> pour fermer</span></p>
     <p class="sr" aria-live="polite" id="rch-statut"></p></div>`;
@@ -1114,7 +1137,7 @@ function rendreRch() {
   let xs, entete;
   if (!mots.length) {
     xs = RCH.index.filter(x => x.type === 'Date' && x.avenir).sort((a, b) => a.ordre - b.ordre).slice(0, 8);
-    entete = xs.length ? 'Prochaines dates' : 'Tapez un nom, une commune, un jour…';
+    entete = xs.length ? 'Prochaines dates' : 'Tapez un nom, une commune, un jour, une action…';
   } else {
     const tous = chercherRch(RCH.index, mots);
     xs = tous.slice(0, 50);
@@ -1141,7 +1164,9 @@ function allerRch(i) {
   const x = RCH.vus[i];
   if (!x) return;
   $('#recherche').close();
-  if (location.hash !== x.href) location.hash = x.href;
+  if (typeof x.faire === 'function') { try { x.faire(); } catch (e) { console.error(e); } return; }
+  if (x.externe && x.href) { window.open(x.href, '_blank', 'noopener'); return; }
+  if (x.href && location.hash !== x.href) location.hash = x.href;
 }
 function rafraichirListes() {
   const l = $('[data-liste]');

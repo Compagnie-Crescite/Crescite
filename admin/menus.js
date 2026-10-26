@@ -10,7 +10,8 @@
      frais : valider, refuser, marquer remboursée. Une invitation pro : prolonger de trente jours, copier le lien,
      écrire. Une proposition de dates : la clore. Une séance d'atelier : dupliquer, supprimer. Une ligne du journal :
      revenir, ouvrir la fiche. Une tuile du tableau de bord : ses réglages, la réduire, sa largeur, la déplacer, la
-     masquer, personnaliser ; une action rapide : la retirer. Un spectacle : ses dates, l'avancer, le reculer.
+     masquer, personnaliser ; une action rapide : la retirer. Un spectacle : ses dates, l'avancer, le reculer. Une ligne
+     « à traiter » : la traiter sur place, l'épingler, la reporter ; une ligne du fil : annuler la modification.
    - Précédent / suivant dans chaque fiche ouverte à côté de sa liste (dates, personnes, lieux, devis, invitations,
      propositions, ateliers, séances, textes), et dans une feuille de route ou un spectacle : deux boutons dans le titre,
      Alt+↑ et Alt+↓ (GESTES.precSuiv). Les flèches ↑ ↓ passent d'une ligne à l'autre dans toutes les listes. */
@@ -208,8 +209,24 @@
 
   // ===================================================================================================== les fournisseurs
   // les lignes des listes et du tableau de bord, les cartes des spectacles et du Kanban
-  G.menu({ cible: 'a.ligne[href], a.tb-l[href], a.carte-sp[href], .crm-carte[data-prospect-id]', titre: el => titreObjet(objetDe(el)),
-    actions: el => { const o = objetDe(el); if (o) return actionsObjet(o, el); const href = el.getAttribute('href'); return href && href.startsWith('#/') ? [ouvrirA(href), ...liens(href)] : []; } });
+  // une ligne « à traiter » du tableau de bord : la traiter sur place, l'épingler en haut, la reporter (demain, lundi, dans une semaine)
+  function actionsUrgence(el) {
+    const cle = el.dataset.cle; if (!cle || typeof TABLEAU === 'undefined' || !TABLEAU.traiter) return [];
+    const bloc = el.closest('.tb-lt'), epinglee = !!bloc?.classList.contains('epingle'), reportee = !!bloc?.classList.contains('reportee'), b = bloc?.querySelector('[data-traiter]');
+    return [b ? { libelle: 'Traiter…', detail: 'sans quitter le tableau', icone: ICO.coche, raccourci: 'Entrée', faire: () => TABLEAU.traiter(cle) } : null,
+      { libelle: epinglee ? 'Désépingler' : 'Épingler en haut', icone: epinglee ? ICO.moins : ICO.plus, faire: () => TABLEAU.epingler(cle) },
+      reportee ? { libelle: 'Ne plus reporter', icone: ICO.croix, faire: () => TABLEAU.reporter(cle, null) } : null,
+      ...TABLEAU.REPORTS().map(([, l, j]) => ({ libelle: `Me le rappeler ${l.toLowerCase()}`, detail: jourCourt(j), icone: ICO.agenda, faire: () => TABLEAU.reporter(cle, j) })),
+      { separateur: true }];
+  }
+  // une ligne du fil des modifications : annuler (un quart d'heure), le journal
+  function actionsFil(el) {
+    const id = el.dataset.j; if (!id || typeof TABLEAU === 'undefined') return [];
+    const b = el.closest('.tb-lt')?.querySelector('[data-tb-annuler]');
+    return [b ? { libelle: 'Annuler cette modification', detail: 'la ligne revient comme avant', icone: ICO.croix, danger: true, faire: () => TABLEAU.annulerJournal(id) } : null, { libelle: 'Le journal', href: '#/journal', icone: ICO.ouvrir }, { separateur: true }];
+  }
+  G.menu({ cible: 'a.ligne[href], a.tb-l[href], a.carte-sp[href], .crm-carte[data-prospect-id]', titre: el => titreObjet(objetDe(el)) || (el.dataset.j ? 'Modification' : ''),
+    actions: el => { const avant = [...actionsUrgence(el), ...actionsFil(el)]; const o = objetDe(el); if (o) return [...avant, ...actionsObjet(o, el)]; const href = el.getAttribute('href'); return [...avant, ...(href && href.startsWith('#/') ? [ouvrirA(href), ...liens(href)] : [])]; } });
   G.menu({ cible: '.journal-ligne', titre: 'Journal', actions: actionsJournal });
   G.menu({ cible: '.tb-tuile', titre: sec => (typeof TABLEAU !== 'undefined' && TABLEAU.TUILES[sec.dataset.k]?.titre) || 'Tuile',
     actions: (sec, infos) => { const b = infos && infos.x != null ? document.elementFromPoint(infos.x, infos.y) : null; return b && b.closest('.tb-actions .btn') ? actionsActionRapide(b.closest('.tb-actions .btn')) : b && b.closest('a.tb-l') ? [] : actionsTuile(sec); } });

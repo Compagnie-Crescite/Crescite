@@ -21,7 +21,8 @@ const TABLEAU = (() => {
   // ===================================================================================================== état
   const CLE_PREF = 'accueil.tableau', CLE_LOCAL = 'crescite-admin-tableau', VERSION = 1;
   const T = { conf: null, confDe: undefined, lecture: null, ecriture: Promise.resolve(), prefs: null, minuteur: null,
-    edition: false, journal: null, journalLu: 0, journalLecture: null, journalDiffere: null, propLecture: null, ouverts: new Set(), glisse: null, memoMinuteur: null };
+    edition: false, journal: null, journalLu: 0, journalLecture: null, journalDiffere: null, propLecture: null, ouverts: new Set(), glisse: null, memoMinuteur: null,
+    filtre: null, voirReportees: false, glisseObjet: null, fileIndex: 0, fileCle: null, vueAuto: '' };
   const absent = e => !!e && /PGRST202|PGRST205|42883|42P01|Could not find the (function|table)|does not exist|schema cache/i.test(`${e.code || ''} ${e.message || ''}`);
   const uid = () => E.session?.user?.id || null;
 
@@ -72,6 +73,8 @@ const TABLEAU = (() => {
     chevron: '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     poignee: '<svg viewBox="0 0 12 18" width="10" height="15" fill="currentColor" aria-hidden="true"><circle cx="3.5" cy="3" r="1.6"/><circle cx="8.5" cy="3" r="1.6"/><circle cx="3.5" cy="9" r="1.6"/><circle cx="8.5" cy="9" r="1.6"/><circle cx="3.5" cy="15" r="1.6"/><circle cx="8.5" cy="15" r="1.6"/></svg>',
     croix: '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+    eclair: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+    entonnoir: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>',
   };
 
   // ===================================================================================================== les tuiles
@@ -181,17 +184,26 @@ const TABLEAU = (() => {
           ? `<a class="btn${i === 0 ? ' principal' : ''}" href="${esc(href)}" data-action="${k}"${externe ? ' target="_blank" rel="noopener"' : ''}>${esc(l)}</a>`
           : `<button type="button" class="btn${i === 0 ? ' principal' : ''}" data-tb-action="${esc(href)}" data-action="${k}">${esc(l)}</button>`)).join('')}</div>` : rien('Aucune action choisie : cochez-en dans les réglages (⚙).') };
       } },
-    urgent: { titre: 'À traiter', description: 'Ce qui attend une réponse ou une décision : devis, relances, notes de frais, options, horaires, contrats, feuilles, propositions, invitations.', taille: 'm', lien: () => null,
+    urgent: { titre: 'À traiter', description: 'Ce qui attend une réponse ou une décision : devis, relances, notes de frais, options, horaires, contrats, feuilles, propositions, invitations. Chaque ligne se traite sur place (l’éclair), s’épingle ou se reporte (clic droit).', taille: 'm', lien: () => null,
       reglages: [{ k: 'categories', t: 'cases', l: 'Ce que la tuile suit', choix: () => CATEGORIES.filter(c => !c.dispo || c.dispo()).map(c => [c.k, c.titre]), defaut: CATEGORIES_DEFAUT },
+        { k: 'ordre', t: 'choix', l: 'Ordre', choix: [['sujet', 'Par sujet'], ['urgence', 'Par urgence (échéance et coût du retard)']], defaut: 'sujet' },
         { k: 'max', t: 'choix', l: 'Lignes par sujet', choix: [[3, '3'], [5, '5'], [10, '10']], defaut: 5 }],
       corps: r => {
-        let total = 0;
-        const parties = CATEGORIES.filter(c => r.categories.includes(c.k) && (!c.dispo || c.dispo())).map(c => {
-          const xs = c.lignes().sort((a, b) => String(a.tri).localeCompare(String(b.tri)));
-          total += xs.length;
-          return xs.length ? `<section class="tb-cat"><h3><a href="${esc(c.tout)}">${esc(c.titre)}</a><span class="badge option">${xs.length}</span></h3>${xs.slice(0, r.max).map(ligne).join('')}${plus(xs.length - r.max, c.tout)}</section>` : '';
-        }).join('');
-        return { n: total, ok: !total, html: parties || rien('Rien à traiter : tout est à jour.', true) };
+        const U = urgences(r), html = [];
+        const une = x => `<div class="tb-lt${x.epingle ? ' epingle' : ''}${x.reporte ? ' reportee' : ''}">${ligne({ ...x, attrs: `${x.attrs || ''} data-cle="${esc(x.cle)}"${x.sp ? ` data-sp="${x.sp}"` : ''}${x.date ? ` data-date="${x.date}"` : ''}`,
+          droite: `${x.epingle ? '<span class="tb-epingle" title="Épinglée en haut">📌</span>' : ''}${x.reporte ? `<span class="badge">reportée au ${esc(jourSansAn(x.reporte))}</span>` : ''}${x.droite || ''}` })}${TRAITER[x.k] ? `<button type="button" class="tb-traiter" data-traiter="${esc(x.cle)}" title="Traiter sans quitter le tableau" aria-label="Traiter : ${esc(x.titreTexte)}">${SVG.eclair}</button>` : ''}</div>`;
+        if (r.ordre === 'urgence') {
+          const xs = U.lignes.filter(x => !x.reporte || T.voirReportees);
+          html.push(xs.length ? `<section class="tb-cat tb-cat-plate">${xs.slice(0, r.max * 3).map(x => une({ ...x, sous: `<span class="tb-cat-tag">${esc(x.sujet)}</span> ${x.sous}` })).join('')}${plus(xs.length - r.max * 3, '#/representations', 'Tout voir')}</section>` : '');
+        } else {
+          for (const c of U.categories) {
+            const xs = c.lignes.filter(x => !x.reporte || T.voirReportees);
+            if (!xs.length) continue;
+            html.push(`<section class="tb-cat"><h3><a href="${esc(c.tout)}">${esc(c.titre)}</a><span class="badge option">${xs.length}</span></h3>${xs.slice(0, r.max).map(une).join('')}${plus(xs.length - r.max, c.tout)}</section>`);
+          }
+        }
+        if (U.reportees) html.push(`<p class="tb-note"><button type="button" class="lien-btn" data-tb-reportees aria-pressed="${T.voirReportees}">${T.voirReportees ? 'Cacher' : 'Montrer'} ${pl(U.reportees, 'ligne reportée', 'lignes reportées')}</button></p>`);
+        return { n: U.total, ok: !U.total, html: html.join('') || rien('Rien à traiter : tout est à jour.', true) };
       } },
     avant: { titre: 'À compléter avant la tournée', description: 'Pour les dates confirmées qui viennent : les téléphones de l’équipe, les adresses et contacts des lieux, les feuilles de route.', taille: 'p', lien: () => ['#/representations', 'Représentations'],
       reglages: [{ k: 'jours', t: 'choix', l: 'Les dates confirmées des', choix: [[30, '30 prochains jours'], [60, '60 prochains jours'], [90, '90 prochains jours']], defaut: 60 }],
@@ -201,8 +213,8 @@ const TABLEAU = (() => {
         const section = (titre, xs) => (xs.length ? `<section class="tb-cat"><h3>${titre}<span class="badge option">${xs.length}</span></h3>${xs.join('')}</section>` : '');
         const html = a.n ? section('Téléphones', a.pers.map(x => ligne({ href: `#/equipe/${x.p.id}`, viser: 'telephone', couleur: 'var(--option)', titre: esc(nomDe(x.p)), sous: `pas de téléphone · part ${esc(quand(x.dates))}` })))
           + section('Lieux', [...a.lieux.map(x => ligne({ href: `#/lieux/${x.l.id}`, viser: x.manque[0], couleur: 'var(--option)', titre: esc(x.l.nom ? `${x.l.nom}, ${x.l.commune}` : x.l.commune), sous: `${x.manque.map(m => `sans ${m}`).join(', ')} · ${esc(quand(x.dates))}` })),
-            ...a.sansLieu.map(d => ligne({ href: `#/representations/${d.id}`, viser: '#d-lieu input', couleur: couleurDate(d), titre: 'Lieu à préciser', sous: `${esc(titreDate(d))} · le ${esc(jourSansAn(d.debut))}` }))])
-          + section('Feuilles de route', a.feuilles.map(x => ligne({ href: `#/feuilles/${x.d.id}`, viser: x.f ? '#fr-manques' : '#fr-composer', couleur: couleurDate(x.d), titre: `${esc(jourSansAn(x.d.debut))} · ${esc(ouDe(x.d))}`, sous: esc(titreDate(x.d)), droite: x.f ? `<span class="badge option">${x.n} à compléter</span>` : '<span class="badge">à composer</span>' })))
+            ...a.sansLieu.map(d => ligne({ href: `#/representations/${d.id}`, viser: '#d-lieu input', attrs: `data-date="${d.id}" data-sp="${d.spectacle_id}"`, couleur: couleurDate(d), titre: 'Lieu à préciser', sous: `${esc(titreDate(d))} · le ${esc(jourSansAn(d.debut))}` }))])
+          + section('Feuilles de route', a.feuilles.map(x => ligne({ href: `#/feuilles/${x.d.id}`, viser: x.f ? '#fr-manques' : '#fr-composer', attrs: `data-date="${x.d.id}" data-sp="${x.d.spectacle_id}"`, couleur: couleurDate(x.d), titre: `${esc(jourSansAn(x.d.debut))} · ${esc(ouDe(x.d))}`, sous: esc(titreDate(x.d)), droite: x.f ? `<span class="badge option">${x.n} à compléter</span>` : '<span class="badge">à composer</span>' })))
           : rien(a.ds.length ? `Rien ne manque pour ${pl(a.ds.length, 'date confirmée')} : téléphones, lieux et feuilles de route sont complets.` : 'Aucune date confirmée dans cette période.', !!a.ds.length);
         return { n: a.n, ok: !a.n, html };
       } },
@@ -210,7 +222,7 @@ const TABLEAU = (() => {
       reglages: [{ k: 'n', t: 'choix', l: 'Montrer', choix: [[5, '5 dates'], [8, '8 dates'], [12, '12 dates'], [20, '20 dates']], defaut: 8 }, { k: 'options', t: 'case', l: 'Les options aussi', defaut: true }, { k: 'autres', t: 'case', l: 'Répétitions, résidences et autres dates', defaut: true }],
       corps: r => {
         const xs = E.dates.filter(d => aVenir(d) && d.statut !== 'annulee' && (r.options || d.statut !== 'option') && (r.autres || (d.nature || 'representations') === 'representations')).sort(parDebut);
-        return { html: xs.length ? xs.slice(0, r.n).map(d => ligne({ href: `#/representations/${d.id}`, attrs: `data-date="${d.id}"`, couleur: couleurDate(d), gauche: jj(d.debut), titre: esc(titreDate(d)), sous: `${esc(ouDe(d))}${d.fin && d.fin !== d.debut ? ` · jusqu’au ${esc(jourSansAn(d.fin))}` : ''}${heuresDe(d)}`,
+        return { html: xs.length ? xs.slice(0, r.n).map(d => ligne({ href: `#/representations/${d.id}`, attrs: `data-date="${d.id}" data-sp="${d.spectacle_id}"`, couleur: couleurDate(d), gauche: jj(d.debut), titre: esc(titreDate(d)), sous: `${esc(ouDe(d))}${d.fin && d.fin !== d.debut ? ` · jusqu’au ${esc(jourSansAn(d.fin))}` : ''}${heuresDe(d)}`,
           droite: `<span class="compte">${esc(dansTexte(d.debut))}</span>${badgesDate(d)}${E.equipeInstallee ? resteFeuille(d.id) : ''}` })).join('') + plus(xs.length - r.n, '#/representations') : rien('Aucune date à venir.') };
       } },
     chiffres: { titre: 'La saison en chiffres', description: 'Dates, représentations, lieux, séances d’atelier et spectateurs de la saison, à côté de la précédente.', taille: 'p', lien: () => ['#/representations', 'Représentations'],
@@ -226,7 +238,7 @@ const TABLEAU = (() => {
           ${kpi('Séances scolaires', entier(c.scolaires), c.scolaires || p.scolaires ? vs(c.scolaires, p.scolaires) : 'dates scolaires ou mixtes')}
           ${kpi('Séances d’atelier', entier(c.seances), c.heures ? `${entier(c.heures)} h d’éducation artistique` : vs(c.seances, p.seances), '#/ateliers/seances')}
           ${E.chiffresInstalles ? kpi('Spectateurs', entier(c.spectateurs), c.renseignees ? `sur ${pl(c.renseignees, 'date renseignée')}` : 'à renseigner dans chaque date') : kpi('Spectacles joués', entier(c.spectacles), vs(c.spectacles, p.spectacles), '#/spectacles')}
-        </div>` };
+        </div>${courbesSaison(S, c, p)}` };
       } },
     equipe: { titre: 'Qui part bientôt', description: 'Les personnes de l’équipe en tournée dans les jours qui viennent, avec leur téléphone.', taille: 'p', dispo: () => E.equipeInstallee, lien: () => ['#/equipe', 'Équipe'],
       reglages: [{ k: 'jours', t: 'choix', l: 'Dans les', choix: JOURS.slice(0, 3), defaut: 14 }],
@@ -236,7 +248,7 @@ const TABLEAU = (() => {
         ds.forEach(d => equipeDeLaDate(d).forEach(x => { const p = personne(x.personne_id); if (!p) return; if (!pers.has(p.id)) pers.set(p.id, { p, fonctions: new Set(), dates: [] }); const o = pers.get(p.id); if (x.fonction) o.fonctions.add(x.fonction); o.dates.push(d); }));
         const xs = [...pers.values()].sort((a, b) => parDebut(a.dates[0], b.dates[0]) || norm(nomDe(a.p)).localeCompare(norm(nomDe(b.p))));
         return { n: xs.length, html: xs.length ? xs.map(x => { const tel = (priveeDe(x.p.id)?.telephone || '').trim(), href = tel ? (jetonsContact(tel).find(j => j.genre === 'tel') || {}).href : '';
-          return ligne({ href: `#/equipe/${x.p.id}`, viser: tel ? '' : 'telephone', attrs: `data-personne="${x.p.id}"`, couleur: couleurDate(x.dates[0]), gauche: avatar(x.p, true), titre: esc(nomDe(x.p)), sous: `${esc([...x.fonctions].join(', ') || (x.p.metiers || []).join(', '))}${x.fonctions.size || (x.p.metiers || []).length ? ' · ' : ''}${esc(x.dates.slice(0, 3).map(d => `${jourSansAn(d.debut)} ${ouDe(d).split(',').pop().trim()}`).join(', '))}${x.dates.length > 3 ? ` +${x.dates.length - 3}` : ''}`,
+          return ligne({ href: `#/equipe/${x.p.id}`, viser: tel ? '' : 'telephone', attrs: `data-personne="${x.p.id}" data-sp="${x.dates[0].spectacle_id}" draggable="true"`, couleur: couleurDate(x.dates[0]), gauche: avatar(x.p, true), titre: esc(nomDe(x.p)), sous: `${esc([...x.fonctions].join(', ') || (x.p.metiers || []).join(', '))}${x.fonctions.size || (x.p.metiers || []).length ? ' · ' : ''}${esc(x.dates.slice(0, 3).map(d => `${jourSansAn(d.debut)} ${ouDe(d).split(',').pop().trim()}`).join(', '))}${x.dates.length > 3 ? ` +${x.dates.length - 3}` : ''}`,
             droite: tel && href ? `<span class="tb-tel" data-tel="${esc(href)}">${esc(typeof FEUILLE !== 'undefined' ? FEUILLE.telTexte(tel) : tel)}</span>` : '<span class="badge option">téléphone ?</span>' }); }).join('')
           : rien(ds.length ? 'Aucune équipe de tournée connue pour ces dates.' : 'Aucune date confirmée dans cette période.') };
       } },
@@ -267,7 +279,7 @@ const TABLEAU = (() => {
         if (!E.propositionsLues) return { html: `<p class="tb-rien" role="status">${E.sql5Erreur ? `Les propositions n’ont pas pu être lues (${esc(E.sql5Erreur)}) : rechargez la page dans un moment.` : 'Lecture des propositions…'}</p>` };
         const xs = E.propositions.filter(p => p.statut === 'ouverte').sort((a, b) => (a.cree_le < b.cree_le ? 1 : -1));
         const bouton = '<a class="btn petit tb-bouton" href="#/planning/proposer">＋ Proposer des dates</a>';
-        return { n: xs.length, html: (xs.length ? xs.slice(0, r.n).map(p => { const j0 = (p.jours || [])[0]; return ligne({ href: `#/planning/proposition/${p.id}`, couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--accent)', gauche: jj(j0 ? String(j0.debut).slice(0, 10) : ''), titre: esc(p.titre),
+        return { n: xs.length, html: (xs.length ? xs.slice(0, r.n).map(p => { const j0 = (p.jours || [])[0]; return ligne({ href: `#/planning/proposition/${p.id}`, attrs: `data-proposition="${p.id}"${p.spectacle_id ? ` data-sp="${p.spectacle_id}"` : ''} draggable="true"`, couleur: sp(p.spectacle_id) ? couleurSp(sp(p.spectacle_id)) : 'var(--accent)', gauche: jj(j0 ? String(j0.debut).slice(0, 10) : ''), titre: esc(p.titre),
           sous: `${esc(pl((p.destinataires || []).length, 'personne'))}${(p.jours || []).length > 1 ? ` · ${pl(p.jours.length, 'jour')}` : ''}${sp(p.spectacle_id) ? ` · ${esc(titreCourt(sp(p.spectacle_id)))}` : ''}<span class="dp-bilan">${bilanHtml(bilanDe(p))}</span>` }); }).join('') + plus(xs.length - r.n, '#/planning/propositions')
           : rien('Aucune proposition ouverte.')) + bouton };
       } },
@@ -277,7 +289,7 @@ const TABLEAU = (() => {
         const xs = E.seances.filter(s => s.jour >= AUJ && dansJours(s.jour) <= r.jours && s.statut !== 'annulee').sort((a, b) => (a.jour < b.jour ? -1 : a.jour > b.jour ? 1 : String(a.heure_debut || '').localeCompare(String(b.heure_debut || ''))));
         const heures = xs.reduce((n, s) => n + heuresSeance(s), 0);
         return { n: xs.length, html: xs.length ? xs.slice(0, 8).map(s => { const a = E.ateliers.find(x => x.id === s.atelier_id), l = lieu(s.lieu_id), spx = sp(s.spectacle_id || a?.spectacle_id);
-          return ligne({ href: `#/ateliers/seances/${s.id}`, attrs: `data-seance="${s.id}"`, couleur: couleurSp(spx), gauche: jj(s.jour), titre: esc(a?.titre || spx?.titre || 'Séance d’atelier'), sous: esc([l ? (l.nom || l.commune) : s.etablissement, s.classe, s.niveau, s.nb_eleves ? pl(s.nb_eleves, 'élève') : ''].filter(Boolean).join(' · ')),
+          return ligne({ href: `#/ateliers/seances/${s.id}`, attrs: `data-seance="${s.id}"${spx ? ` data-sp="${spx.id}"` : ''}`, couleur: couleurSp(spx), gauche: jj(s.jour), titre: esc(a?.titre || spx?.titre || 'Séance d’atelier'), sous: esc([l ? (l.nom || l.commune) : s.etablissement, s.classe, s.niveau, s.nb_eleves ? pl(s.nb_eleves, 'élève') : ''].filter(Boolean).join(' · ')),
             droite: `<span class="compte">${s.heure_debut ? esc(AGENDA.heureTexte(h5(s.heure_debut)) + (s.heure_fin ? `–${AGENDA.heureTexte(h5(s.heure_fin))}` : '')) : 'heure ?'}</span>${s.statut === 'option' ? '<span class="badge option">Option</span>' : ''}` }); }).join('')
           + plus(xs.length - 8, '#/ateliers/seances') + `<p class="tb-note">${pl(xs.length, 'séance')}${heures ? ` · ${entier(Math.round(heures * 10) / 10)} h d’éducation artistique` : ''}</p>` : rien('Aucune séance d’atelier dans cette période.') };
       } },
@@ -287,15 +299,15 @@ const TABLEAU = (() => {
       corps: r => {
         if (!T.journal) return { html: '<p class="tb-rien" role="status">Lecture du journal…</p>' };
         const xs = T.journal.filter(j => j.operation !== 'UPDATE' || champsChanges(j).length).slice(0, r.n);
-        return { html: xs.length ? xs.map(j => { const ch = champsChanges(j); return ligne({ href: lienJournal(j), couleur: j.operation === 'DELETE' ? 'var(--alerte)' : j.operation === 'INSERT' ? 'var(--ok)' : 'var(--trait)', titre: `${OPS_JOURNAL[j.operation] || j.operation} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}`,
-          sous: `${esc(resumeJournal(j))}${ch.length ? ` — ${esc(ch.slice(0, 4).join(', '))}${ch.length > 4 ? '…' : ''}` : ''}`, droite: `<span class="compte">${esc(depuisTexte(j.quand))}</span><span class="compte">${esc(nomAdmin(j.qui))}</span>` }); }).join('') : rien('Rien encore.') };
+        return { html: xs.length ? xs.map(j => { const ch = champsChanges(j), diff = diffDe(j); return `<div class="tb-lt">${ligne({ href: lienJournal(j), attrs: `data-j="${j.id}"${diff.length ? ` data-diff="${esc(JSON.stringify(diff))}"` : ''}`, couleur: j.operation === 'DELETE' ? 'var(--alerte)' : j.operation === 'INSERT' ? 'var(--ok)' : 'var(--trait)', titre: `${OPS_JOURNAL[j.operation] || j.operation} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}`,
+          sous: `${esc(resumeJournal(j))}${ch.length ? ` — ${esc(ch.slice(0, 4).join(', '))}${ch.length > 4 ? '…' : ''}` : ''}`, droite: `<span class="compte">${esc(depuisTexte(j.quand))}</span><span class="compte">${esc(nomAdmin(j.qui))}</span>` })}${recente(j) ? `<button type="button" class="btn petit tb-annuler" data-tb-annuler="${j.id}" title="Annuler cette modification (un quart d’heure)">Annuler</button>` : ''}</div>`; }).join('') : rien('Rien encore.') };
       } },
     spectacles: { titre: 'Spectacles', description: 'Chaque spectacle, ses dates à venir et la prochaine ; sa fiche et ses dates en un clic.', taille: 'p', visible: false, lien: () => ['#/spectacles', 'Spectacles'],
       corps: () => {
         const xs = E.spectacles.filter(s => s.page).sort((a, b) => a.ordre - b.ordre);
         return { html: xs.length ? xs.map(s => { const ds = E.dates.filter(d => d.spectacle_id === s.id && aVenir(d) && d.statut !== 'annulee' && (d.nature || 'representations') === 'representations').sort(parDebut), confirmees = ds.filter(d => d.statut === 'confirmee'), d0 = ds[0];
-          return `<div class="tb-sp" style="--c:${esc(couleurSp(s))}"><span class="pastille"></span><span class="tb-l-corps"><a class="tb-l-t" href="#/spectacles/${esc(s.slug)}">${esc(s.titre)}</a><span class="tb-l-s">${d0 ? `${esc(jourSansAn(d0.debut))} · ${esc(ouDe(d0))}${d0.statut === 'option' ? ' (option)' : ''}` : 'aucune date à venir'}${s.publie ? '' : ' · non publié'}</span></span>
-            <button type="button" class="btn petit" data-tb-sp="${s.id}" aria-label="Les dates de ${esc(s.titre)}">${confirmees.length}${ds.length > confirmees.length ? ` + ${ds.length - confirmees.length} opt.` : ''} date${confirmees.length > 1 ? 's' : ''}</button></div>`; }).join('') : rien('Aucun spectacle.') };
+          return `<div class="tb-sp" style="--c:${esc(couleurSp(s))}" data-sp="${s.id}"><span class="pastille"></span><span class="tb-l-corps"><a class="tb-l-t" href="#/spectacles/${esc(s.slug)}">${esc(s.titre)}</a><span class="tb-l-s">${d0 ? `${esc(jourSansAn(d0.debut))} · ${esc(ouDe(d0))}${d0.statut === 'option' ? ' (option)' : ''}` : 'aucune date à venir'}${s.publie ? '' : ' · non publié'}</span></span>
+            <span class="tb-sp-boutons"><button type="button" class="tb-ico" data-tb-filtre="${s.id}" aria-pressed="${T.filtre === s.id}" title="Filtrer le tableau sur ce spectacle" aria-label="Filtrer le tableau sur ${esc(s.titre)}">${SVG.entonnoir}</button><button type="button" class="btn petit" data-tb-sp="${s.id}" aria-label="Les dates de ${esc(s.titre)}">${confirmees.length}${ds.length > confirmees.length ? ` + ${ds.length - confirmees.length} opt.` : ''} date${confirmees.length > 1 ? 's' : ''}</button></span></div>`; }).join('') : rien('Aucun spectacle.') };
       } },
     memo: { titre: 'Mémo', description: 'Un bloc-notes à vous : à rappeler, à ne pas oublier. Gardé avec votre compte.', taille: 'p', visible: false, lien: () => null,
       corps: r => ({ html: `<textarea class="tb-memo" aria-label="Mémo" placeholder="À rappeler, à ne pas oublier…" rows="7">${esc(r.texte || '')}</textarea><p class="tb-memo-etat compte" aria-live="polite"></p>` }) },
@@ -305,12 +317,18 @@ const TABLEAU = (() => {
   const dispo = k => !!TUILES[k] && (!TUILES[k].dispo || TUILES[k].dispo());
 
   // ===================================================================================================== la disposition
-  const defauts = () => ({ v: VERSION, modifie: 0, colonnes: 'auto', depart: 'accueil', tuiles: Object.entries(TUILES).map(([k, t]) => ({ k, visible: t.visible !== false, taille: t.taille || 'p', replie: false, reglages: {} })) });
+  const defauts = () => ({ v: VERSION, modifie: 0, colonnes: 'auto', depart: 'accueil', tuiles: Object.entries(TUILES).map(([k, t]) => ({ k, visible: t.visible !== false, taille: t.taille || 'p', replie: false, reglages: {} })), urgent: { epingles: [], reports: {} }, vues: [], vue: null, manuelLe: 0 });
   // une disposition lue (de la base, de l'appareil, d'une autre version) remise d'équerre : les tuiles connues dans l'ordre
   // donné, les nouvelles ajoutées à la fin avec leurs défauts
   function normaliser(c) {
     const d = defauts(), vues = new Set();
-    const out = { v: VERSION, modifie: Number(c?.modifie) || 0, colonnes: ['auto', '2', '3', '4'].includes(String(c?.colonnes)) ? String(c.colonnes) : 'auto', depart: c?.depart === 'representations' ? 'representations' : 'accueil', tuiles: [] };
+    const out = { v: VERSION, modifie: Number(c?.modifie) || 0, colonnes: ['auto', '2', '3', '4'].includes(String(c?.colonnes)) ? String(c.colonnes) : 'auto', depart: c?.depart === 'representations' ? 'representations' : 'accueil', tuiles: [],
+      urgent: { epingles: Array.isArray(c?.urgent?.epingles) ? c.urgent.epingles.filter(x => typeof x === 'string').slice(0, 50) : [], reports: c?.urgent?.reports && typeof c.urgent.reports === 'object' ? Object.fromEntries(Object.entries(c.urgent.reports).filter(([, j]) => /^\d{4}-\d{2}-\d{2}$/.test(String(j)))) : {} },
+      vues: (Array.isArray(c?.vues) ? c.vues : []).filter(v => v && typeof v.nom === 'string' && v.nom.trim()).slice(0, 12).map(v => ({ nom: String(v.nom).trim().slice(0, 40), tuiles: Array.isArray(v.tuiles) ? v.tuiles : [], colonnes: ['auto', '2', '3', '4'].includes(String(v.colonnes)) ? String(v.colonnes) : 'auto',
+        auto: { jours: Array.isArray(v.auto?.jours) ? v.auto.jours.map(String).filter(x => /^[0-6]$/.test(x)) : [], periode: ['matin', 'apres'].includes(v.auto?.periode) ? v.auto.periode : '', veille: !!v.auto?.veille } })),
+      vue: typeof c?.vue === 'string' && c.vue ? c.vue : null, manuelLe: Number(c?.manuelLe) || 0,
+      base: c?.base && Array.isArray(c.base.tuiles) ? { tuiles: c.base.tuiles, colonnes: ['auto', '2', '3', '4'].includes(String(c.base.colonnes)) ? String(c.base.colonnes) : 'auto' } : null };
+    if (out.vue && !out.vues.some(v => v.nom === out.vue)) out.vue = null;
     for (const x of Array.isArray(c?.tuiles) ? c.tuiles : []) {
       if (!x || !TUILES[x.k] || vues.has(x.k)) continue;
       vues.add(x.k);
@@ -444,7 +462,9 @@ const TABLEAU = (() => {
     grille.classList.toggle('edition', T.edition);
     grille.innerHTML = xs.length ? xs.map((t, i) => htmlTuile(t, i, xs.length)).join('') : `<div class="bloc tb-vide">Toutes les tuiles sont masquées. ${T.edition ? 'Remettez-en depuis « Tuiles masquées », ci-dessus.' : '« Personnaliser » les remet.'}</div>`;
     const pan = $('#tb-panneau');
-    if (pan) { pan.hidden = !T.edition; pan.innerHTML = T.edition ? panneau() : ''; }
+    if (pan) { pan.hidden = !T.edition; pan.innerHTML = T.edition ? panneau() + panneauVues() : ''; }
+    const sel = $('#tb-vue'); if (sel) sel.outerHTML = htmlVues().replace(/^<label[^>]*>.*?<\/span>/, '').replace(/<\/label>$/, '');
+    appliquerFiltre();
     $('#tb-personnaliser')?.setAttribute('aria-pressed', String(T.edition));
     const b = $('#tb-personnaliser'); if (b) b.textContent = T.edition ? 'Terminer' : 'Personnaliser';
   }
@@ -459,6 +479,7 @@ const TABLEAU = (() => {
       $('.tb-corps', el).innerHTML = c.html;
       $('.tb-badge', el).innerHTML = badgeDe(c);
     }
+    appliquerFiltre();
   }
   // ce que des tuiles doivent lire avant de se montrer : les propositions, le journal ; la tuile se redessine ensuite
   function preparer(force = false) {
@@ -472,12 +493,15 @@ const TABLEAU = (() => {
   function vue() {
     const jour = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     cadre('accueil', `<div class="tete tb-tete-page"><h1>Tableau de bord</h1><span class="compte tb-jour">${esc(jour[0].toUpperCase() + jour.slice(1))}</span>
+      ${htmlVues()}<button type="button" class="btn" id="tb-briefing" aria-haspopup="dialog" title="Le résumé de la semaine, à copier ou à imprimer">Briefing</button>
       <button type="button" class="btn" id="tb-personnaliser" aria-pressed="${T.edition}" aria-controls="tb-panneau">${T.edition ? 'Terminer' : 'Personnaliser'}</button></div>
+      <p class="tb-filtre" id="tb-filtre" hidden></p>
       <div id="tb-panneau" class="bloc tb-panneau" hidden></div>
       <div class="tb-grille" id="tb-grille" data-liste aria-label="Tuiles du tableau de bord"></div>
       <p class="sr" id="tb-annonce" aria-live="polite"></p>`);
     const grille = $('#tb-grille');
     grille.rafraichir = () => { dessinerCorps(); preparer(); };
+    vueAutomatique();
     dessiner();
     brancher();
     preparer();
@@ -500,11 +524,31 @@ const TABLEAU = (() => {
   function brancher() {
     const vueEl = $('#vue');
     $('#tb-personnaliser').addEventListener('click', () => { T.edition = !T.edition; dessiner(); annoncerSr(T.edition ? 'Personnalisation : déplacez, redimensionnez, masquez les tuiles.' : 'Disposition enregistrée.'); });
+    $('#tb-briefing')?.addEventListener('click', ouvrirBriefing);
+    vueEl.addEventListener('change', e => {
+      if (e.target.id !== 'tb-vue') return;
+      const v = e.target.value;
+      if (v === '+') { e.target.value = conf().vue || ''; formVue(null); return; }
+      appliquerVue(v || null);
+    });
+    // survoler une date, un spectacle : ce qui les concerne s'allume ailleurs ; une ligne du fil montre son diff
+    vueEl.addEventListener('mouseover', e => { const el = e.target.closest?.('#tb-grille [data-date], #tb-grille [data-sp]'); if (el) lier(el); const j = e.target.closest?.('#tb-grille a.tb-l[data-diff]'); if (j && !$('#tb-diff')) montrerDiff(j); });
+    vueEl.addEventListener('mouseout', e => { const vers = e.relatedTarget; if (!vers || !vers.closest || !vers.closest('#tb-grille [data-date], #tb-grille [data-sp]')) delier(); if (!vers || !vers.closest || !vers.closest('#tb-grille a.tb-l[data-diff], #tb-diff')) cacherDiff(); });
+    vueEl.addEventListener('focusin', e => { const el = e.target.closest?.('#tb-grille [data-date], #tb-grille [data-sp]'); if (el) lier(el); else delier(); });
+    brancherGlisser(vueEl);
     vueEl.addEventListener('click', e => {
-      const t = e.target.closest('[data-tb-reglages], [data-tb-replier], [data-tb-masquer], [data-tb-deplacer], [data-tb-taille], [data-tb-montrer], [data-tb-colonnes], [data-tb-depart], #tb-reinit, #tb-fini, [data-tb-action], [data-tb-sp], .tb-tel');
+      const t = e.target.closest('[data-tb-reglages], [data-tb-replier], [data-tb-masquer], [data-tb-deplacer], [data-tb-taille], [data-tb-montrer], [data-tb-colonnes], [data-tb-depart], #tb-reinit, #tb-fini, [data-tb-action], [data-tb-sp], .tb-tel, [data-traiter], [data-tb-filtre], [data-tb-annuler], [data-tb-reportees], [data-tb-mois], [data-tb-vue-appliquer], [data-tb-vue-modifier], [data-tb-vue-nouvelle]');
       if (!t) return;
       const sec = t.closest('.tb-tuile'), k = sec?.dataset.k, tu = k && tuile(k);
-      if (t.matches('[data-tb-reglages]')) {
+      if (t.matches('[data-traiter]')) { T.fileIndex = lignesFile().indexOf(t.parentNode?.querySelector('a.tb-l')); traiter(t.dataset.traiter); }
+      else if (t.matches('[data-tb-filtre]')) { filtrer(t.dataset.tbFiltre === '' || (T.filtre != null && Number(t.dataset.tbFiltre) === T.filtre) ? null : t.dataset.tbFiltre); }
+      else if (t.matches('[data-tb-annuler]')) annulerJournal(t.dataset.tbAnnuler);
+      else if (t.matches('[data-tb-reportees]')) { T.voirReportees = !T.voirReportees; dessinerCorps('urgent'); appliquerFiltre(); $('[data-tb-reportees]')?.focus(); }
+      else if (t.matches('[data-tb-mois]')) chercherMois(t.dataset.tbMois);
+      else if (t.matches('[data-tb-vue-appliquer]')) appliquerVue(conf().vue === t.dataset.tbVueAppliquer ? null : t.dataset.tbVueAppliquer);
+      else if (t.matches('[data-tb-vue-modifier]')) formVue(vueNommee(t.dataset.tbVueModifier));
+      else if (t.matches('[data-tb-vue-nouvelle]')) formVue(null);
+      else if (t.matches('[data-tb-reglages]')) {
         const z = $('.tb-reglages', sec), ouvert = z.hidden;
         z.hidden = !ouvert; t.setAttribute('aria-expanded', String(ouvert));
         if (ouvert) { T.ouverts.add(k); $('select, input', z)?.focus(); } else T.ouverts.delete(k);
@@ -598,6 +642,559 @@ const TABLEAU = (() => {
   }
   // en quittant la page : la personnalisation se referme, et ce qui n'est pas encore écrit part
   window.addEventListener('hashchange', () => { if (location.hash !== '#/accueil') { T.edition = false; if (T.minuteur) ecrireMaintenant(); } });
+
+  // ===================================================================================================== à traiter : l'ordre, les épingles, les reports
+  /* Chaque ligne « à traiter » a une clé (catégorie:identifiant), un poids (ce que coûte le retard : un contrat non signé
+     à la veille pèse plus qu'un portrait sans accord) et un facteur d'échéance (ce qui vient dans trois jours, ce qui
+     attend depuis une semaine). Épinglée, elle passe en tête ; reportée (« me le rappeler lundi »), elle se cache jusqu'au
+     jour dit. Épingles et reports sont gardés avec la disposition (conf().urgent). */
+  const POIDS = { contrats: 5, heures: 4, options: 4, feuilles: 4, devis: 3, relances: 3, frais: 2, propositions: 2, pro: 2, portraits: 1 };
+  const SUJETS = { devis: 'Devis', relances: 'Relance', frais: 'Frais', options: 'Option', heures: 'Horaire', contrats: 'Contrat', feuilles: 'Feuille', propositions: 'Proposition', pro: 'Invitation', portraits: 'Portrait' };
+  const idLigne = x => { const m = /"(\d+)"/.exec(x.attrs || '') || /(\d+)(?:[?#]|$)/.exec(x.href || ''); return m ? +m[1] : null; };
+  const texteDe = h => String(h || '').replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/g, ' ').replace(/\s+/g, ' ').trim();
+  function facteur(x) {
+    const j = /^\d{4}-\d{2}-\d{2}/.test(String(x.tri)) ? dansJours(String(x.tri).slice(0, 10)) : null;
+    if (j == null) return 1;
+    if (j >= 0) return j <= 0 ? 4 : j <= 3 ? 3 : j <= 7 ? 2 : j <= 14 ? 1.5 : 1;   // une échéance qui vient
+    return -j >= 14 ? 2.5 : -j >= 7 ? 2 : -j >= 3 ? 1.5 : 1;                       // quelque chose qui attend
+  }
+  const urgentConf = () => { const c = conf(); if (!c.urgent || typeof c.urgent !== 'object') c.urgent = { epingles: [], reports: {} }; if (!Array.isArray(c.urgent.epingles)) c.urgent.epingles = []; if (!c.urgent.reports || typeof c.urgent.reports !== 'object') c.urgent.reports = {}; return c.urgent; };
+  // les lignes à traiter, enrichies : clé, sujet, poids, épingle, report, spectacle et date (pour les tuiles qui se parlent)
+  function urgences(r = valeurs('urgent')) {
+    const u = urgentConf(), reports = u.reports, categories = [];
+    let total = 0, reportees = 0;
+    // un report passé s'oublie
+    for (const [k, j] of Object.entries(reports)) if (!j || j <= AUJ) delete reports[k];
+    for (const c of CATEGORIES) {
+      if (!r.categories.includes(c.k) || (c.dispo && !c.dispo())) continue;
+      const lignes = c.lignes().map(x => {
+        const id = idLigne(x), cle = `${c.k}:${id}`, date = ['options', 'heures', 'contrats', 'feuilles'].includes(c.k) ? id : null, d = date ? E.dates.find(y => y.id === id) : null;
+        const epingle = u.epingles.includes(cle), reporte = reports[cle] || null;
+        return { ...x, k: c.k, id, cle, sujet: SUJETS[c.k] || c.titre, titreTexte: texteDe(x.titre), sp: d ? d.spectacle_id : (c.k === 'frais' ? (E.frais || []).find(f => f.id === id)?.date_id && E.dates.find(y => y.id === (E.frais || []).find(f => f.id === id).date_id)?.spectacle_id : null) || null,
+          date, epingle, reporte, score: (POIDS[c.k] || 1) * facteur(x) + (epingle ? 100 : 0) };
+      }).sort((a, b) => b.score - a.score || String(a.tri).localeCompare(String(b.tri)));
+      lignes.forEach(x => { if (x.reporte) reportees++; else total++; });
+      categories.push({ k: c.k, titre: c.titre, tout: c.tout, lignes });
+    }
+    const toutes = categories.flatMap(c => c.lignes).sort((a, b) => b.score - a.score || String(a.tri).localeCompare(String(b.tri)));
+    return { categories, lignes: toutes, total, reportees };
+  }
+  function epingler(cle, oui = null) {
+    const u = urgentConf(), deja = u.epingles.includes(cle);
+    if (oui === null) oui = !deja;
+    u.epingles = u.epingles.filter(k => k !== cle); if (oui) u.epingles.unshift(cle);
+    garder(); dessinerCorps('urgent'); appliquerFiltre(); annoncerSr(oui ? 'Épinglée en haut.' : 'Désépinglée.');
+  }
+  function reporter(cle, jour) {
+    const u = urgentConf();
+    if (jour) u.reports[cle] = jour; else delete u.reports[cle];
+    garder(); dessinerCorps('urgent'); appliquerFiltre(); annoncerSr(jour ? `Reportée au ${jourSansAn(jour)}.` : 'Report annulé.');
+  }
+  const lundiProchain = () => { const d = new Date(`${AUJ}T12:00:00`), n = (8 - d.getDay()) % 7 || 7; return plusJours(AUJ, n); };
+  const REPORTS = () => [['demain', 'Demain', plusJours(AUJ, 1)], ['lundi', 'Lundi', lundiProchain()], ['semaine', 'Dans une semaine', plusJours(AUJ, 7)]];
+
+  // ===================================================================================================== traiter sans quitter le tableau
+  /* L'éclair d'une ligne (ou Entrée dans la file, ou « Traiter… » du menu) ouvre une feuille de modification en place
+     (GESTES.formulaire) : confirmer une option, fixer un horaire, suivre un contrat, publier une feuille de route, valider
+     une note de frais, répondre à un devis, relancer, clore une proposition, prolonger une invitation, noter un accord. La
+     base écrite, l'état se relit (chargerTout) et le tableau se redessine ; dans la file, la ligne suivante prend le focus. */
+  const G = () => (typeof GESTES !== 'undefined' && GESTES && typeof GESTES.formulaire === 'function' ? GESTES : null);
+  const texteErreur = e => `${(e && e.message) || 'la base a refusé'}`;
+  async function apresTraiter(message, cle = null) {
+    try { await chargerTout(); } catch (e) { console.error(e); }
+    if (location.hash === '#/accueil') { dessinerCorps(); preparer(); appliquerFiltre(); } else rafraichirListes();
+    if (message) annoncer(message);
+    if (cle) refocaliserFile(cle);
+  }
+  const dateDe = id => E.dates.find(x => x.id === Number(id));
+  const titreDateLong = d => `${titreDate(d)} · ${jourCourt(d.debut)}${lieu(d.lieu_id) ? ` · ${ouDe(d)}` : ''}`;
+  const TRAITER = {
+    options: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
+      Gf.formulaire({ titre: 'Confirmer la date ?', sousTitre: titreDateLong(d), champs: [
+        { k: 'statut', t: 'choix', seg: true, l: 'Statut', choix: [['confirmee', 'Confirmée'], ['option', 'Toujours en option'], ['reportee', 'Reportée'], ['annulee', 'Annulée']], valeur: 'confirmee' },
+        { k: 'visible', t: 'case', l: 'Publiée sur le site', valeur: d.visible !== false, aide: 'Une option ou une date annulée n’y va jamais.' },
+      ], ok: 'Enregistrer', enregistrer: async v => {
+        const { error } = await sb.from('crescite_dates').update({ statut: v.statut, visible: !!v.visible && v.statut === 'confirmee' }).eq('id', d.id);
+        if (error) return texteErreur(error);
+        await apresTraiter({ confirmee: 'Date confirmée.', option: 'Toujours en option.', reportee: 'Date reportée.', annulee: 'Date annulée.' }[v.statut], cle); return true;
+      } }); },
+    heures: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
+      const reps = E.reps.filter(r => r.date_id === d.id).sort((a, b) => (a.jour + h5(a.heure)).localeCompare(b.jour + h5(b.heure))).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public || 'tout_public', annulee: !!r.annulee, note: r.note || '' }));
+      const sco = d.public === 'scolaire' || d.public === 'mixte';
+      Gf.formulaire({ titre: 'Les horaires', sousTitre: titreDateLong(d), champs: [
+        { k: 'reps', t: 'groupe', l: 'Une ligne par séance', ajout: 'Séance', valeur: reps, neuf: () => ({ jour: reps.length ? reps[reps.length - 1].jour : d.debut, heure: '20:00', fin: '', public: sco ? 'scolaire' : 'tout_public', annulee: false, note: '' }),
+          champs: [{ k: 'jour', t: 'date', l: 'Jour', requis: true }, { k: 'heure', t: 'heure', l: 'Heure' }, { k: 'fin', t: 'heure', l: 'Fin' },
+            ...(sco ? [{ k: 'public', t: 'choix', l: 'Public', choix: [['tout_public', 'Tout public'], ['scolaire', 'Scolaire'], ['autre', 'Autre']] }] : []), { k: 'note', t: 'texte', l: 'Précision', ph: 'complet, audiodécrite…' }, { k: 'annulee', t: 'case', l: 'Annulée' }] },
+      ], note: 'L’équipe de la date est prévenue des horaires changés.', enregistrer: async v => {
+        const avant = new Map(reps.map(r => [String(r.id), r])), gardes = new Set(), requetes = [];
+        for (const r of v.reps || []) {
+          if (!r.jour) return 'Un jour pour chaque séance.';
+          const l = { jour: r.jour, heure: r.heure || null, fin: r.fin || null, public: r.public || (sco ? 'scolaire' : 'tout_public'), annulee: !!r.annulee, note: (r.note || '').trim() || null };
+          if (r.id && avant.has(String(r.id))) { gardes.add(String(r.id)); const a = avant.get(String(r.id));
+            if (a.jour !== l.jour || a.heure !== (l.heure || '') || a.fin !== (l.fin || '') || a.public !== l.public || a.annulee !== l.annulee || (a.note || '') !== (l.note || '')) requetes.push(() => sb.from('crescite_representations').update(l).eq('id', Number(r.id))); }
+          else requetes.push(() => sb.from('crescite_representations').insert({ ...l, date_id: d.id }));
+        }
+        const retirees = reps.filter(r => !gardes.has(String(r.id))).map(r => Number(r.id));
+        if (retirees.length) requetes.push(() => sb.from('crescite_representations').delete().in('id', retirees));
+        for (const q of requetes) { const { error } = await q(); if (error) return texteErreur(error); }
+        await apresTraiter('Horaires enregistrés.', cle); return true;
+      } }); },
+    contrats: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
+      const su = E.suivis.find(s => s.date_id === d.id) || {};
+      Gf.formulaire({ titre: 'Le contrat', sousTitre: titreDateLong(d), champs: [
+        { k: 'contrat', t: 'choix', seg: true, l: 'Contrat', choix: [['', '—'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']], valeur: (su.contrat || '').trim() },
+        { k: 'organisateur', t: 'texte', l: 'Organisateur', valeur: su.organisateur || '' }, { k: 'contact', t: 'texte', l: 'Contact', valeur: su.contact || '', ph: 'nom, téléphone, courriel' },
+        { k: 'montant_cession', t: 'nombre', l: 'Montant de cession (€)', valeur: su.montant_cession ?? '', min: 0, pas: 0.01 },
+        { k: 'notes', t: 'long', l: 'Notes', valeur: su.notes || '', lignes: 2 },
+      ], enregistrer: async v => {
+        const ligne = { date_id: d.id, contrat: v.contrat || null, organisateur: v.organisateur.trim() || null, contact: v.contact.trim() || null, notes: v.notes.trim() || null, ...(v.montant_cession == null || v.montant_cession === '' ? {} : { montant_cession: Number(v.montant_cession) }) };
+        const { error } = await sb.from('crescite_dates_suivi').upsert(ligne, { onConflict: 'date_id' });
+        if (error) return texteErreur(error);
+        await apresTraiter(v.contrat === 'signé' ? 'Contrat signé : la date quitte « à traiter ».' : 'Suivi enregistré.', cle); return true;
+      } }); },
+    feuilles: (id, cle) => { const d = dateDe(id), Gf = G(); if (!d || !Gf) return;
+      const f = E.feuilles.find(x => x.date_id === d.id), peutComposer = typeof composerPour === 'function' && typeof FEUILLE !== 'undefined';
+      if (f) Gf.formulaire({ titre: 'Publier la feuille de route', sousTitre: titreDateLong(d), champs: [
+          { k: 'maj', t: 'choix', seg: true, l: 'Avant de publier', choix: [['maj', 'Mettre à jour depuis la base'], ['telle', 'Telle quelle']], valeur: 'maj', aide: 'Horaires, lieu, équipe et contacts d’aujourd’hui ; ce qui a été écrit à la main ne change pas.' },
+        ], ok: 'Publier', note: `Brouillon${f.version > 1 ? ` (version ${f.version})` : ''}${typeof aCompleter === 'function' && aCompleter(d.id) ? ` · ${pl(aCompleter(d.id), 'information à compléter', 'informations à compléter')}` : ''} : l’équipe recevra la feuille et en sera prévenue.`, enregistrer: async v => {
+          let contenu = f.contenu;
+          if (v.maj === 'maj' && peutComposer) { try { contenu = { ...FEUILLE.actualiser(FEUILLE.contenu(f, contexteFeuille(d)), composerPour(d)).contenu, format: 2 }; } catch (e) { console.error(e); } }
+          const { error } = await sb.from('crescite_feuilles').update({ contenu, statut: 'publiee' }).eq('id', f.id);
+          if (error) return texteErreur(error);
+          await apresTraiter('Feuille de route publiée : l’équipe est prévenue.', cle); return true;
+        } });
+      else Gf.formulaire({ titre: 'Composer la feuille de route', sousTitre: titreDateLong(d), champs: [
+          { k: 'statut', t: 'choix', seg: true, l: 'Puis', choix: [['publiee', 'La publier'], ['brouillon', 'La garder en brouillon']], valeur: 'publiee' },
+        ], ok: 'Composer', note: 'Dans la forme des feuilles de la compagnie, avec tout ce que la base sait ; elle se complète ensuite dans « Feuilles de route ».', enregistrer: async v => {
+          if (!peutComposer) return 'L’outil des feuilles de route n’est pas chargé.';
+          let contenu; try { contenu = { ...composerPour(d), format: 2 }; } catch (e) { console.error(e); return `Composition impossible : ${texteErreur(e)}`; }
+          const { error } = await sb.from('crescite_feuilles').insert({ date_id: d.id, titre: null, contenu, statut: v.statut });
+          if (error) return texteErreur(error);
+          await apresTraiter(v.statut === 'publiee' ? 'Feuille composée et publiée : l’équipe est prévenue.' : 'Feuille composée, en brouillon.', cle); return true;
+        } }); },
+    frais: (id, cle) => { const f = (E.frais || []).find(x => x.id === Number(id)), Gf = G(); if (!f || !Gf) return;
+      const p = personne(f.personne_id);
+      Gf.formulaire({ titre: 'Note de frais', sousTitre: `${p ? nomDe(p) : 'Une personne'} · ${CAT_FRAIS[f.categorie] || f.categorie} · ${euros(f.montant_ttc)}${f.date_depense ? ` · ${jourSansAn(f.date_depense)}` : ''}`, champs: [
+        { k: 'decision', t: 'choix', seg: true, l: 'Décision', choix: [['valide', 'Valider'], ['refuse', 'Refuser'], ['attente', 'Plus tard']], valeur: 'valide' },
+      ], note: f.commentaire ? `« ${f.commentaire} »` : '', enregistrer: async v => {
+        if (v.decision === 'attente') return true;
+        const maj = v.decision === 'valide' ? { statut: 'valide', valide_le: new Date().toISOString(), valide_par: uid() } : { statut: 'refuse' };
+        const { error } = await sb.from('crescite_notes_frais').update(maj).eq('id', f.id);
+        if (error) return texteErreur(error);
+        await apresTraiter(v.decision === 'valide' ? 'Note de frais validée.' : 'Note de frais refusée.', cle); return true;
+      } }); },
+    devis: (id, cle) => { const v0 = (E.devis || []).find(x => x.id === Number(id)), Gf = G(); if (!v0 || !Gf) return;
+      Gf.formulaire({ titre: 'Demande de devis', sousTitre: `${v0.structure_nom}${v0.commune ? ` · ${v0.commune}` : ''}${sp(v0.spectacle_id) ? ` · ${sp(v0.spectacle_id).titre}` : ''}`, champs: [
+        { k: 'statut', t: 'choix', seg: true, l: 'Statut', choix: STATUTS_DEVIS.map(([k, l]) => [k, l]), valeur: v0.statut || 'nouveau' },
+      ], note: [v0.contact_nom, v0.contact_email, v0.periode_souhaitee ? `période : ${v0.periode_souhaitee}` : '', v0.message ? `« ${String(v0.message).slice(0, 240)}${String(v0.message).length > 240 ? '…' : ''} »` : ''].filter(Boolean).join(' · '), enregistrer: async v => {
+        if ((v.statut || 'nouveau') === (v0.statut || 'nouveau')) return true;
+        const { error } = await sb.from('crescite_devis_demandes').update({ statut: v.statut }).eq('id', v0.id);
+        if (error) return texteErreur(error);
+        await apresTraiter(`Demande marquée « ${(STATUTS_DEVIS.find(s => s[0] === v.statut) || [])[1] || v.statut} ».`, cle); return true;
+      } }); },
+    relances: (id, cle) => { const p = (E.prospects || []).find(x => x.id === Number(id)), Gf = G(); if (!p || !Gf) return;
+      const i = ETAPES_CRM.findIndex(e => e[0] === p.etape), suivante = ETAPES_CRM[i + 1];
+      Gf.formulaire({ titre: 'Relance', sousTitre: `${p.structure}${p.commune ? ` · ${p.commune}` : ''}${sp(p.spectacle_id) ? ` · ${sp(p.spectacle_id).titre}` : ''}`, champs: [
+        { k: 'quoi', t: 'choix', seg: true, l: 'Aujourd’hui', choix: [['faite', 'Relance faite'], ['reporter', 'Reporter d’une semaine'], ...(suivante ? [['etape', `Étape suivante : ${suivante[1].replace(/^\d\.\s*/, '')}`]] : [])], valeur: 'faite' },
+        { k: 'notes', t: 'long', l: 'Note', valeur: '', lignes: 2, ph: 'ce qui s’est dit' },
+      ], enregistrer: async v => {
+        const notes = v.notes.trim() ? `${p.notes ? `${p.notes}\n` : ''}${jourSansAn(AUJ)} : ${v.notes.trim()}` : undefined;
+        const maj = v.quoi === 'faite' ? { date_dernier_contact: AUJ, date_prochaine_relance: plusJours(AUJ, 7) } : v.quoi === 'reporter' ? { date_prochaine_relance: plusJours(p.date_prochaine_relance && p.date_prochaine_relance > AUJ ? p.date_prochaine_relance : AUJ, 7) } : { etape: suivante[0], date_dernier_contact: AUJ, date_prochaine_relance: plusJours(AUJ, 7) };
+        const { error } = await sb.from('crescite_diffusion_prospects').update({ ...maj, ...(notes !== undefined ? { notes } : {}) }).eq('id', p.id);
+        if (error) return texteErreur(error);
+        await apresTraiter(v.quoi === 'faite' ? 'Relance notée, la prochaine dans 7 jours.' : v.quoi === 'reporter' ? 'Relance reportée d’une semaine.' : `Étape : ${suivante[1].replace(/^\d\.\s*/, '')}.`, cle); return true;
+      } }); },
+    propositions: (id, cle) => { const p = (E.propositions || []).find(x => +x.id === Number(id)), Gf = G(); if (!p || !Gf) return;
+      const n = bilanDe(p);
+      Gf.formulaire({ titre: 'Proposition de dates', sousTitre: p.titre, champs: [
+        { k: 'quoi', t: 'choix', seg: true, l: 'Que faire', choix: [['suivi', 'Ouvrir le suivi'], ['clore', 'Clore sans créer de date']], valeur: 'suivi' },
+      ], note: `${n.oui} disponible${n.oui > 1 ? 's' : ''}, ${n.non} pas disponible${n.non > 1 ? 's' : ''}, ${n.peut_etre} peut-être, ${n.attente} sans réponse.`, ok: 'Valider', enregistrer: async v => {
+        if (v.quoi === 'suivi') { location.hash = `#/planning/proposition/${p.id}`; return true; }
+        const { error } = await sb.from('crescite_propositions').update({ statut: 'close' }).eq('id', p.id);
+        if (error) return texteErreur(error);
+        if (typeof DISPONIBILITES !== 'undefined' && DISPONIBILITES.chargerPropositions) { E.propositionsLues = false; try { await DISPONIBILITES.chargerPropositions(); } catch (e) { /* la tuile le relira */ } }
+        await apresTraiter('Proposition close.', cle); return true;
+      } }); },
+    pro: (id, cle) => { const a = (E.acces || []).find(x => x.id === Number(id)), Gf = G(); if (!a || !Gf) return;
+      Gf.formulaire({ titre: 'Invitation pro', sousTitre: `${a.nom}${a.contact ? ` · ${a.contact}` : ''} · expire le ${jourSansAn(a.expire_le)}`, champs: [
+        { k: 'quoi', t: 'choix', seg: true, l: 'Que faire', choix: [['30', 'Prolonger de 30 jours'], ['90', 'Prolonger de 90 jours'], ['fin', 'Laisser expirer (désactiver)']], valeur: '30' },
+      ], ok: 'Valider', enregistrer: async v => {
+        const maj = v.quoi === 'fin' ? { actif: false } : { expire_le: plusJours(a.expire_le > AUJ ? a.expire_le : AUJ, +v.quoi), actif: true };
+        const { error } = await sb.from('crescite_acces_pro').update(maj).eq('id', a.id);
+        if (error) return texteErreur(error);
+        await apresTraiter(v.quoi === 'fin' ? 'Invitation désactivée.' : `Invitation prolongée jusqu’au ${jourSansAn(maj.expire_le)}.`, cle); return true;
+      } }); },
+    portraits: (id, cle) => { const p = (E.personnes || []).find(x => x.id === Number(id)), Gf = G(); if (!p || !Gf) return;
+      Gf.formulaire({ titre: 'Portrait', sousTitre: nomDe(p), champs: [
+        { k: 'accord', t: 'case', l: 'Accord de publication reçu : le portrait peut paraître sur le site', valeur: false },
+      ], enregistrer: async v => {
+        if (!v.accord) return true;
+        const { error } = await sb.from('crescite_personnes').update({ photo_publique: true }).eq('id', p.id);
+        if (error) return texteErreur(error);
+        await apresTraiter('Accord noté : le portrait paraît.', cle); return true;
+      } }); },
+  };
+  function traiter(cle) {
+    const [k, id] = String(cle).split(':');
+    if (!TRAITER[k]) return false;
+    T.fileCle = cle;
+    TRAITER[k](Number(id), cle);
+    return true;
+  }
+
+  // ===================================================================================================== la file au clavier
+  /* Sur le tableau de bord : J et K (ou ↓ ↑ sur une ligne) parcourent les lignes à traiter, Entrée ouvre la feuille de
+     traitement de la ligne (sinon sa fiche), Échap la referme et rend le focus à la ligne. Une ligne traitée disparaît :
+     la suivante prend le focus, pour vider la pile sans la souris. */
+  const lignesFile = () => $$('#tb-grille .tb-tuile[data-k="urgent"] .tb-lt:not([hidden]) a.tb-l');
+  function file(sens) {
+    const xs = lignesFile(); if (!xs.length) return;
+    const i = xs.indexOf(document.activeElement), j = i < 0 ? (sens > 0 ? 0 : xs.length - 1) : (i + sens + xs.length) % xs.length;
+    xs[j].focus(); xs[j].scrollIntoView({ block: 'nearest' });
+    T.fileCle = xs[j].dataset.cle || null;
+  }
+  function refocaliserFile(cle) {
+    if (!cle || location.hash !== '#/accueil') return;
+    const xs = lignesFile();
+    if (!xs.length) { $('#tb-grille .tb-tuile[data-k="urgent"] .tb-rien')?.setAttribute('tabindex', '-1'); annoncerSr('Plus rien à traiter.'); return; }
+    const i = Math.max(0, Math.min(xs.length - 1, T.fileIndex ?? 0));
+    xs[i].focus({ preventScroll: false }); T.fileCle = xs[i].dataset.cle || null;
+    annoncerSr(`${xs.length} à traiter.`);
+  }
+  function clavierFile(e) {
+    if (location.hash !== '#/accueil' || T.edition) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (document.querySelector('[aria-modal="true"], dialog[open]')) return;
+    const t = e.target;
+    if (t && t.closest && t.closest('input, textarea, select, [contenteditable=""], [contenteditable="true"]')) return;
+    if (e.key === 'j' || e.key === 'k') { e.preventDefault(); file(e.key === 'j' ? 1 : -1); return; }
+    if (e.key === 'Enter' && t && t.matches && t.matches('#tb-grille a.tb-l[data-cle]')) {
+      const b = t.parentNode?.querySelector('[data-traiter]');
+      if (b) { e.preventDefault(); T.fileIndex = lignesFile().indexOf(t); traiter(b.dataset.traiter); }
+      return;
+    }
+    if (e.key === 'Escape' && T.filtre != null) { filtrer(null); }
+  }
+
+  // ===================================================================================================== les tuiles qui se parlent
+  /* Survoler une date met en lumière ce qui la concerne dans les autres tuiles (la même date, puis son spectacle) ; un
+     spectacle survolé, ses dates. L'entonnoir d'un spectacle filtre tout le tableau sur lui : les lignes des autres
+     spectacles se cachent, une pastille le dit, Échap ou sa croix lève le filtre. */
+  function lier(el) {
+    delier();
+    if (!el) return;
+    const date = el.dataset.date, spx = el.dataset.sp;
+    if (date) $$(`#tb-grille [data-date="${CSS.escape(date)}"]`).forEach(x => { if (x !== el) x.classList.add('tb-lie'); });
+    if (spx) $$(`#tb-grille [data-sp="${CSS.escape(spx)}"]`).forEach(x => { if (x !== el && !x.classList.contains('tb-lie')) x.classList.add('tb-lie-sp'); });
+  }
+  const delier = () => $$('#tb-grille .tb-lie, #tb-grille .tb-lie-sp').forEach(x => x.classList.remove('tb-lie', 'tb-lie-sp'));
+  function filtrer(spId) {
+    T.filtre = spId == null ? null : Number(spId);
+    appliquerFiltre();
+    const s = T.filtre != null && sp(T.filtre);
+    annoncerSr(s ? `Tableau filtré sur ${s.titre}.` : 'Filtre levé.');
+  }
+  function appliquerFiltre() {
+    const grille = $('#tb-grille'), chip = $('#tb-filtre'); if (!grille) return;
+    const s = T.filtre != null ? sp(T.filtre) : null;
+    grille.classList.toggle('filtre', !!s);
+    $$('[data-sp]', grille).forEach(x => { const cache = !!s && Number(x.dataset.sp) !== s.id; const bloc = x.closest('.tb-lt') || x; bloc.hidden = cache; });
+    $$('[data-tb-filtre]', grille).forEach(b => b.setAttribute('aria-pressed', String(!!s && Number(b.dataset.tbFiltre) === s.id)));
+    if (chip) { chip.hidden = !s; chip.innerHTML = s ? `<span class="pastille" style="--c:${esc(couleurSp(s))}"></span>Filtré : <b>${esc(s.titre)}</b><button type="button" class="tb-ico" data-tb-filtre="" title="Lever le filtre (Échap)" aria-label="Lever le filtre">${SVG.croix}</button>` : ''; }
+  }
+
+  // ===================================================================================================== glisser-déposer entre tuiles
+  /* Une personne de « Qui part bientôt » déposée sur une date l'y inscrit ; une proposition de dates déposée sur
+     « Prochaines dates » ouvre « Créer la date » de son premier jour ; un fichier de l'ordinateur déposé sur un spectacle
+     devient un document de son équipe (comme « Envoyer un fichier » de sa fiche). */
+  async function inscrirePersonne(dateId, personneId) {
+    const d = dateDe(dateId), p = personne(Number(personneId)); if (!d || !p) return;
+    if (equipeDeLaDate(d).some(x => x.personne_id === p.id)) return annoncer(`${nomDe(p)} part déjà sur cette date.`);
+    const { error } = await sb.from('crescite_equipes').upsert({ date_id: d.id, personne_id: p.id, present: true }, { onConflict: 'date_id,personne_id' });
+    if (error) return erreur(error, 'Inscription impossible');
+    await apresTraiter(`${nomDe(p)} part sur ${titreDate(d)}, le ${jourSansAn(d.debut)}.`);
+  }
+  const typeDeNom = n => (/dossier/i.test(n) ? 'dossier' : /fiche.?tech|technique|rider/i.test(n) ? 'fiche_technique' : /\bplans?\b|implantation|feu/i.test(n) ? 'plan' : /texte|script|brochure|pi[eè]ce/i.test(n) ? 'texte' : 'autre');
+  async function deposerFichier(spId, f) {
+    const s = sp(Number(spId)); if (!s || !f) return;
+    const ext = (f.name.split('.').pop() || '').toLowerCase(), mimes = typeof MIMES_DOC !== 'undefined' ? MIMES_DOC : { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', txt: 'text/plain' };
+    const type = mimes[ext] || f.type;
+    if (!Object.values(mimes).includes(type)) return annoncer('Ce type de fichier n’est pas accepté : PDF, image, texte, ODT ou DOCX.', { erreur: true });
+    if (f.size > 50 * 1024 * 1024) return annoncer('Fichier trop lourd : 50 Mo au plus.', { erreur: true });
+    const base = f.name.replace(/\.[^.]+$/, ''), chemin = `${s.slug || slugifier(s.titre) || `spectacle-${s.id}`}/${Date.now().toString(36)}-${slugifier(base) || 'document'}.${ext}`;
+    annoncer(`Envoi de « ${f.name} »…`);
+    const up = await sb.storage.from('crescite-equipe').upload(chemin, f, { contentType: type, upsert: false });
+    if (up.error) return erreur(up.error, 'Envoi impossible');
+    const titre = base.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim(), ordre = Math.max(0, ...(E.documents || []).filter(x => x.spectacle_id === s.id).map(x => x.ordre || 0)) + 10;
+    const { error } = await sb.from('crescite_documents').insert({ spectacle_id: s.id, type: typeDeNom(base), titre: titre ? titre[0].toUpperCase() + titre.slice(1) : 'Document', fichier: chemin, pour: 'equipe', ordre });
+    if (error) { await sb.storage.from('crescite-equipe').remove([chemin]); return erreur(error, 'Document non enregistré'); }
+    await apresTraiter(`« ${f.name} » rangé dans les fichiers de ${s.titre}, pour son équipe.`);
+  }
+  function brancherGlisser(vueEl) {
+    const cibles = () => $$('#tb-grille .tb-cible').forEach(x => x.classList.remove('tb-cible'));
+    vueEl.addEventListener('dragstart', e => {
+      if (T.edition) return;
+      const a = e.target.closest?.('a.tb-l[data-personne], a.tb-l[data-proposition]'); if (!a) return;
+      T.glisseObjet = a.dataset.personne ? { type: 'personne', id: +a.dataset.personne } : { type: 'proposition', id: +a.dataset.proposition };
+      try { e.dataTransfer.setData('text/plain', `${T.glisseObjet.type}:${T.glisseObjet.id}`); e.dataTransfer.effectAllowed = 'copyLink'; } catch (err) { /* vieux navigateur */ }
+      a.classList.add('glisse');
+    });
+    const cibleDe = e => {
+      if (T.glisseObjet?.type === 'personne') return e.target.closest?.('a.tb-l[data-date]');
+      if (T.glisseObjet?.type === 'proposition') return e.target.closest?.('.tb-tuile[data-k="prochaines"]');
+      if (!T.glisseObjet && e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files')) return e.target.closest?.('.tb-sp[data-sp]');
+      return null;
+    };
+    vueEl.addEventListener('dragover', e => {
+      if (T.edition || T.glisse) return;
+      const c = cibleDe(e); cibles();
+      if (!c) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = T.glisseObjet ? 'link' : 'copy'; c.classList.add('tb-cible');
+    });
+    vueEl.addEventListener('dragleave', e => { if (!e.relatedTarget || !vueEl.contains(e.relatedTarget)) cibles(); });
+    vueEl.addEventListener('drop', e => {
+      if (T.edition || T.glisse) return;
+      const c = cibleDe(e); cibles();
+      if (!c) return;
+      e.preventDefault();
+      const o = T.glisseObjet; T.glisseObjet = null; $$('#tb-grille .glisse').forEach(x => x.classList.remove('glisse'));
+      if (o?.type === 'personne') return inscrirePersonne(+c.dataset.date, o.id);
+      if (o?.type === 'proposition') { const p = (E.propositions || []).find(x => +x.id === o.id), j = p && (p.jours || [])[0]; if (!p) return; return allerEtCliquer(`#/planning/proposition/${p.id}`, j ? `[data-dp="creer-date"][data-jour="${j.id}"]` : '[data-dp="creer-date"]'); }
+      const f = e.dataTransfer?.files?.[0]; if (f) deposerFichier(+c.dataset.sp, f);
+    });
+    vueEl.addEventListener('dragend', () => { T.glisseObjet = null; cibles(); $$('#tb-grille .glisse').forEach(x => x.classList.remove('glisse')); });
+  }
+  // aller à une page, puis cliquer un de ses boutons une fois qu'elle est là (menus.js a le même)
+  function allerEtCliquer(href, sel) {
+    const essayer = n => { const b = $(sel); if (b) { b.click(); return; } if (n > 0) requestAnimationFrame(() => essayer(n - 1)); };
+    if (location.hash === href) return essayer(40);
+    window.addEventListener('hashchange', () => setTimeout(() => essayer(40), 20), { once: true });
+    location.hash = href;
+  }
+
+  // ===================================================================================================== le fil : annuler, voir le diff
+  /* Une modification récente (moins d'un quart d'heure) a « Annuler » : la ligne revient comme avant (comme « Revenir »
+     du journal). Survoler une ligne montre ce qui a changé, champ par champ. */
+  const ANNULABLE = 15 * 60 * 1000;
+  const recente = j => Date.now() - Date.parse(j.quand) < ANNULABLE;
+  const diffDe = j => (j.operation === 'UPDATE' ? champsChanges(j).map(k => [k, valeurJournal(j.avant?.[k]), valeurJournal(j.apres?.[k])]) : []);
+  async function annulerJournal(id) {
+    const j = (T.journal || []).find(x => x.id === Number(id)); if (!j) return;
+    const [, pk] = (typeof TABLES !== 'undefined' && TABLES[j.table_nom]) || (typeof TABLES_EQUIPE !== 'undefined' && TABLES_EQUIPE[j.table_nom]) || (typeof TABLES_IDEALE !== 'undefined' && TABLES_IDEALE[j.table_nom]) || [null, 'id'];
+    const sans = o => { const x = { ...o }; delete x.modifie_le; delete x.modifie_par; return x; };
+    const ligne = (q, o) => [].concat(pk).reduce((q2, c) => q2.eq(c, o[c]), q);
+    let r;
+    if (j.operation === 'INSERT') { if (!confirm('Annuler : retirer cette ligne ajoutée ?')) return; r = await ligne(sb.from(j.table_nom).delete(), j.apres); }
+    else if (j.operation === 'UPDATE') { if (!confirm('Annuler : remettre cette ligne telle qu’elle était avant cette modification ?')) return; r = await ligne(sb.from(j.table_nom).update(sans(j.avant)), j.avant); }
+    else { if (!confirm('Annuler : rétablir cette ligne supprimée ?')) return; r = await sb.from(j.table_nom).insert(sans(j.avant)); }
+    if (r.error) return erreur(r.error, 'Annulation impossible');
+    T.journalLu = 0;
+    await apresTraiter('Annulé : la ligne est revenue comme avant.');
+    lireJournal(true)?.then(() => { if (location.hash === '#/accueil') dessinerCorps('journal'); });
+  }
+  function montrerDiff(el) {
+    cacherDiff();
+    let xs = []; try { xs = JSON.parse(el.dataset.diff || '[]'); } catch (e) { xs = []; }
+    if (!xs.length) return;
+    const box = document.createElement('div');
+    box.className = 'tb-diff'; box.id = 'tb-diff'; box.setAttribute('role', 'tooltip');
+    box.innerHTML = `<table>${xs.slice(0, 8).map(([k, a, b]) => `<tr><th>${esc(k)}</th><td><s>${esc(a || '—')}</s></td><td>${esc(b || '—')}</td></tr>`).join('')}${xs.length > 8 ? `<tr><td colspan="3">et ${xs.length - 8} autres</td></tr>` : ''}</table>`;
+    document.body.append(box);
+    const r = el.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+    let x = r.left, y = r.bottom + 6 + window.scrollY;
+    if (x + w > window.innerWidth - 8) x = Math.max(8, window.innerWidth - w - 8);
+    if (r.bottom + 6 + h > window.innerHeight) y = r.top - h - 6 + window.scrollY;
+    box.style.left = `${Math.round(x)}px`; box.style.top = `${Math.round(y)}px`;
+    el.setAttribute('aria-describedby', 'tb-diff');
+  }
+  const cacherDiff = () => { $('#tb-diff')?.remove(); $$('[aria-describedby="tb-diff"]').forEach(x => x.removeAttribute('aria-describedby')); };
+
+  // ===================================================================================================== les vues du tableau
+  /* Une vue : une disposition nommée (tuiles, ordre, tailles, réglages, colonnes), gardée avec le compte (conf().vues).
+     On la choisit dans l'en-tête ; une vue peut être automatique : certains jours, le matin ou l'après-midi, ou quand une
+     date est dans les trois jours (« Veille de tournée »). Le mémo ne change pas d'une vue à l'autre. */
+  const JOURS_SEMAINE = [['1', 'lun.'], ['2', 'mar.'], ['3', 'mer.'], ['4', 'jeu.'], ['5', 'ven.'], ['6', 'sam.'], ['0', 'dim.']];
+  const vuesDe = () => { const c = conf(); if (!Array.isArray(c.vues)) c.vues = []; return c.vues; };
+  const vueNommee = nom => vuesDe().find(v => v.nom === nom) || null;
+  const memoTexte = () => tuile('memo')?.reglages?.texte || '';
+  function photoVue() { return { tuiles: clone(conf().tuiles).map(t => { if (t.k === 'memo' && t.reglages) { const r = { ...t.reglages }; delete r.texte; t.reglages = r; } return t; }), colonnes: conf().colonnes }; }
+  function enregistrerVue(nom, { auto = null } = {}) {
+    nom = String(nom || '').trim().slice(0, 40); if (!nom) return null;
+    const vues = vuesDe(); let v = vueNommee(nom);
+    if (!v) { v = { nom, auto: auto || { jours: [], periode: '', veille: false } }; vues.push(v); }
+    Object.assign(v, photoVue()); if (auto) v.auto = auto;
+    if (!conf().vue) conf().base = photoVue();
+    conf().vue = nom; conf().manuelLe = Date.now();
+    garder(true); return v;
+  }
+  function appliquerVue(nom, { auto = false } = {}) {
+    const c = conf(), memo = memoTexte();
+    if (!nom) {   // la vue par défaut : la disposition d'avant la première vue nommée
+      if (c.base && Array.isArray(c.base.tuiles)) { c.tuiles = normaliser({ ...c, tuiles: clone(c.base.tuiles) }).tuiles; c.colonnes = ['auto', '2', '3', '4'].includes(String(c.base.colonnes)) ? String(c.base.colonnes) : c.colonnes; const m0 = tuile('memo'); if (m0) { m0.reglages = m0.reglages || {}; m0.reglages.texte = memo; } }
+      c.vue = null; T.vueAuto = ''; if (!auto) c.manuelLe = Date.now(); garder(); dessiner(); preparer(); appliquerFiltre(); annoncerSr('Vue par défaut.'); return true;
+    }
+    const v = vueNommee(nom); if (!v) return false;
+    if (!c.vue) c.base = photoVue();
+    c.tuiles = normaliser({ ...c, tuiles: clone(v.tuiles) }).tuiles; c.colonnes = ['auto', '2', '3', '4'].includes(String(v.colonnes)) ? String(v.colonnes) : c.colonnes;
+    const m = tuile('memo'); if (m) { m.reglages = m.reglages || {}; m.reglages.texte = memo; }
+    c.vue = nom; T.vueAuto = auto ? nom : ''; if (!auto) c.manuelLe = Date.now();
+    garder(); dessiner(); preparer(); appliquerFiltre();
+    annoncerSr(`Vue « ${nom} »${auto ? ', automatique' : ''}.`);
+    return true;
+  }
+  function supprimerVue(nom) {
+    const c = conf(); c.vues = vuesDe().filter(v => v.nom !== nom);
+    if (c.vue === nom) c.vue = null;
+    garder(true); dessiner();
+  }
+  // la vue que le moment appelle : ses jours, sa période (matin, après-midi), la veille d'une date confirmée
+  function vueDuMoment() {
+    const d = new Date(), jour = String(d.getDay()), h = d.getHours();
+    const veille = E.dates.some(x => x.statut === 'confirmee' && !sansJour(x) && x.debut >= AUJ && dansJours(x.debut) <= 3);
+    return vuesDe().find(v => { const a = v.auto || {}; const jours = Array.isArray(a.jours) ? a.jours.map(String) : [];
+      if (!jours.length && !a.periode && !a.veille) return false;
+      if (jours.length && !jours.includes(jour)) return false;
+      if (a.periode === 'matin' && h >= 13) return false; if (a.periode === 'apres' && h < 13) return false;
+      if (a.veille && !veille) return false;
+      return true; }) || null;
+  }
+  function vueAutomatique() {
+    const c = conf(), v = vueDuMoment();
+    if (!v || c.vue === v.nom) return;
+    if (c.manuelLe && Date.now() - c.manuelLe < 6 * 3600e3) return;   // un choix fait à la main tient six heures
+    appliquerVue(v.nom, { auto: true });
+  }
+  function formVue(v = null) {
+    const Gf = G(); if (!Gf) return;
+    const a = (v && v.auto) || { jours: [], periode: '', veille: false };
+    Gf.formulaire({ titre: v ? `La vue « ${v.nom} »` : 'Enregistrer la vue actuelle', sousTitre: v ? 'son nom, quand elle s’ouvre d’elle-même' : 'les tuiles, leur ordre, leurs tailles et leurs réglages, tels qu’ils sont', champs: [
+      { k: 'nom', t: 'texte', l: 'Nom', valeur: v ? v.nom : '', requis: true, ph: 'Lundi matin, Veille de tournée, Clôture de saison…' },
+      { k: 'jours', t: 'cases', l: 'S’ouvre d’elle-même ces jours', choix: JOURS_SEMAINE, valeur: (a.jours || []).map(String) },
+      { k: 'periode', t: 'choix', seg: true, l: 'À quel moment', choix: [['', 'Toute la journée'], ['matin', 'Le matin'], ['apres', 'L’après-midi']], valeur: a.periode || '' },
+      { k: 'veille', t: 'case', l: 'Quand une date confirmée est dans les trois jours (veille de tournée)', valeur: !!a.veille },
+      ...(v ? [{ k: 'maj', t: 'case', l: 'Remplacer sa disposition par celle du tableau actuel', valeur: false }] : []),
+    ], ok: v ? 'Enregistrer' : 'Enregistrer la vue', danger: v ? { libelle: 'Supprimer', faire: () => { if (confirm(`Supprimer la vue « ${v.nom} » ?`)) supprimerVue(v.nom); } } : null, note: 'Sans jour ni moment ni veille, la vue ne s’ouvre qu’à la main.', enregistrer: async x => {
+      const nom = String(x.nom || '').trim().slice(0, 40); if (!nom) return 'Un nom.';
+      const auto = { jours: (x.jours || []).map(String), periode: x.periode || '', veille: !!x.veille };
+      if (v) {
+        if (nom !== v.nom && vueNommee(nom)) return 'Une autre vue porte ce nom.';
+        if (conf().vue === v.nom) conf().vue = nom;
+        v.nom = nom; v.auto = auto; if (x.maj) Object.assign(v, photoVue());
+        garder(true); dessiner();
+      } else { if (vueNommee(nom)) return 'Une vue porte déjà ce nom : choisissez-en un autre, ou modifiez-la depuis « Personnaliser ».'; enregistrerVue(nom, { auto }); dessiner(); }
+      annoncerSr(`Vue « ${nom} » enregistrée.`);
+      return true;
+    } });
+  }
+  function htmlVues() {
+    const c = conf(), vues = vuesDe();
+    return `<label class="tb-vues"><span class="sr">Vue du tableau</span><select id="tb-vue" aria-label="Vue du tableau de bord"><option value=""${!c.vue ? ' selected' : ''}>Vue par défaut</option>${vues.map(v => `<option value="${esc(v.nom)}"${c.vue === v.nom ? ' selected' : ''}>${esc(v.nom)}${T.vueAuto === v.nom ? ' (automatique)' : ''}</option>`).join('')}<option value="+">Enregistrer la vue actuelle sous…</option></select></label>`;
+  }
+  function panneauVues() {
+    const vues = vuesDe();
+    return `<div class="tb-pan-l"><span class="lib">Vues</span>${vues.map(v => `<span class="tb-vue-puce"><button type="button" class="puce" data-tb-vue-appliquer="${esc(v.nom)}" aria-pressed="${conf().vue === v.nom}">${esc(v.nom)}</button><button type="button" class="tb-ico" data-tb-vue-modifier="${esc(v.nom)}" title="Modifier la vue (nom, ouverture automatique, disposition)" aria-label="Modifier la vue ${esc(v.nom)}">${SVG.reglages}</button></span>`).join('')}<button type="button" class="btn petit" data-tb-vue-nouvelle>＋ Enregistrer la vue actuelle</button>
+      <span class="compte">Une vue peut s’ouvrir d’elle-même certains jours, le matin ou l’après-midi, ou la veille d’une tournée.</span></div>`;
+  }
+
+  // ===================================================================================================== les chiffres qui bougent
+  /* Dans « La saison en chiffres » : mois par mois (de septembre à août), les représentations, les spectateurs et les
+     recettes (le montant de cession du suivi), en barres ; un mois cliqué cherche ses dates. Et la saison d'avant au même
+     point : ce qu'elle comptait à la même date. */
+  const MOIS_SAISON = [9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8];
+  const moisDe = (S, m) => { const a = +String(S).split('-')[0]; return `${m >= 9 ? a : a + 1}-${String(m).padStart(2, '0')}`; };
+  function seriesSaison(S) {
+    const confs = E.dates.filter(d => d.saison === S && (d.nature || 'representations') === 'representations' && d.statut === 'confirmee'), ids = new Set(confs.map(d => d.id));
+    const reps = new Map(), spect = new Map(), recettes = new Map();
+    const ajouter = (m, k, n) => m.set(k, (m.get(k) || 0) + n);
+    for (const d of confs) {
+      const rs = E.reps.filter(r => r.date_id === d.id && !r.annulee);
+      if (rs.length) rs.forEach(r => ajouter(reps, String(r.jour).slice(0, 7), 1)); else ajouter(reps, d.debut.slice(0, 7), Math.max(1, d.nb_representations || 1));
+      const c = E.chiffresInstalles ? (E.chiffres || []).find(x => x.date_id === d.id) : null; if (c && c.spectateurs != null) ajouter(spect, d.debut.slice(0, 7), Number(c.spectateurs) || 0);
+      const su = E.suivis.find(x => x.date_id === d.id); if (su && su.montant_cession != null) ajouter(recettes, d.debut.slice(0, 7), Number(su.montant_cession) || 0);
+    }
+    const mois = MOIS_SAISON.map(m => moisDe(S, m));
+    return { mois, reps: mois.map(k => reps.get(k) || 0), spect: mois.map(k => spect.get(k) || 0), recettes: mois.map(k => recettes.get(k) || 0), ids };
+  }
+  // ce que la saison comptait au même point : les représentations jouées jusqu'au jour de la saison équivalent à aujourd'hui
+  function auMemePoint(S) {
+    const debut = `${String(S).split('-')[0]}-09-01`, jours = Math.round((Date.parse(`${AUJ}T12:00:00Z`) - Date.parse(`${String(AGENDA.saisonDe(AUJ)).split('-')[0]}-09-01T12:00:00Z`)) / 864e5);
+    const limite = plusJours(debut, jours);
+    const confs = E.dates.filter(d => d.saison === S && (d.nature || 'representations') === 'representations' && d.statut === 'confirmee');
+    return confs.reduce((n, d) => { const rs = E.reps.filter(r => r.date_id === d.id && !r.annulee && r.jour <= limite); return n + (rs.length ? rs.length : d.debut <= limite ? Math.max(1, d.nb_representations || 1) : 0); }, 0);
+  }
+  function courbe(titre, xs, mois, { format = entier, unite = '' } = {}) {
+    const max = Math.max(1, ...xs), total = xs.reduce((a, b) => a + b, 0);
+    if (!total) return '';
+    return `<div class="tb-courbe"><span class="tb-courbe-t">${esc(titre)} <b>${format(total)}${unite}</b></span><span class="tb-barres" role="img" aria-label="${esc(`${titre}, mois par mois : ${xs.map((v, i) => `${MC[+mois[i].slice(5, 7) - 1]} ${format(v)}`).join(', ')}`)}">${xs.map((v, i) => `<button type="button" data-tb-mois="${esc(mois[i])}" style="--h:${Math.round(v / max * 100)}%" title="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}`)}" aria-label="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}, voir ses dates`)}"><i></i></button>`).join('')}</span><span class="tb-mois">${mois.map(k => `<small>${esc(MC[+k.slice(5, 7) - 1].replace('.', ''))}</small>`).join('')}</span></div>`;
+  }
+  function courbesSaison(S, c, p) {
+    const s = seriesSaison(S), ici = auMemePoint(S), avant = auMemePoint(saisonDecalee(S, -1));
+    const ecart = avant ? Math.round((ici - avant) / avant * 100) : null;
+    const point = AGENDA.saisonDe(AUJ) === S && (ici || avant) ? `<p class="tb-note">Au même point la saison passée : <b>${entier(avant)}</b> représentation${avant > 1 ? 's' : ''} ; cette saison : <b>${entier(ici)}</b>${ecart != null && ecart !== 0 ? ` <span class="${ecart > 0 ? 'tb-plus-pc' : 'tb-moins-pc'}">(${ecart > 0 ? '+' : ''}${ecart} %)</span>` : ''}.</p>` : '';
+    return `<div class="tb-courbes">${courbe('Représentations', s.reps, s.mois)}${E.chiffresInstalles ? courbe('Spectateurs', s.spect, s.mois) : ''}${courbe('Recettes', s.recettes, s.mois, { format: n => euros(n).replace(',00', ''), unite: '' })}</div>${point}`;
+  }
+  // un mois cliqué : la recherche rapide s'ouvre sur ses dates (« novembre 2026 »)
+  function chercherMois(ym) {
+    if (typeof ouvrirRecherche !== 'function') return;
+    ouvrirRecherche();
+    const q = $('#rch-q'); if (!q) return;
+    q.value = `${AGENDA.MOIS[+ym.slice(5, 7) - 1]} ${ym.slice(0, 4)}`;
+    if (typeof rendreRch === 'function') rendreRch();
+  }
+
+  // ===================================================================================================== le briefing
+  /* Le résumé de la semaine, lisible : les dates des sept jours qui viennent (horaires, lieu, feuille de route), qui part,
+     ce qui manque, les échéances ; à copier (texte), à imprimer. */
+  function briefing(jours = 7) {
+    const fin = plusJours(AUJ, jours), ds = E.dates.filter(d => d.statut !== 'annulee' && !sansJour(d) && (d.fin || d.debut) >= AUJ && d.debut <= fin).sort(parDebut);
+    const dates = ds.map(d => { const reps = repsDe(d.id).filter(r => !r.annulee).sort((a, b) => (a.jour + h5(a.heure)).localeCompare(b.jour + h5(b.heure))), f = E.feuilles.find(x => x.date_id === d.id), l = lieu(d.lieu_id);
+      return { d, titre: titreDate(d), quand: jourCourt(d.debut) + (d.fin && d.fin !== d.debut ? ` → ${jourCourt(d.fin)}` : ''), ou: ouDe(d), adresse: l && l.adresse ? `${l.adresse}, ${l.commune}` : '',
+        heures: reps.map(r => `${reps.some(x => x.jour !== r.jour) ? `${jourSansAn(r.jour)} ` : ''}${r.heure ? AGENDA.heureTexte(h5(r.heure)) : 'heure ?'}${r.public === 'scolaire' ? ' (scolaire)' : ''}`).join(', ') || (d.nature && d.nature !== 'representations' ? (NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || '' : 'horaires à fixer'),
+        feuille: !E.equipeInstallee ? '' : f ? (f.statut === 'publiee' ? `feuille de route publiée (v${f.version})` : 'feuille de route en brouillon') : 'feuille de route à composer', statut: d.statut === 'option' ? 'option' : '',
+        equipe: E.equipeInstallee ? equipeDeLaDate(d).map(x => { const p = personne(x.personne_id); return p ? `${nomDe(p)}${x.fonction ? ` (${x.fonction})` : ''}` : ''; }).filter(Boolean) : [] }; });
+    const a = typeof aCompleterAvant === 'function' ? aCompleterAvant(jours) : { n: 0, pers: [], lieux: [], sansLieu: [], feuilles: [] };
+    const manques = [...a.pers.map(x => `${nomDe(x.p)} : pas de téléphone`), ...a.lieux.map(x => `${x.l.nom || x.l.commune} : ${x.manque.map(m => `sans ${m}`).join(', ')}`), ...a.sansLieu.map(d => `${titreDate(d)} le ${jourSansAn(d.debut)} : lieu à préciser`), ...a.feuilles.map(x => `${titreDate(x.d)} le ${jourSansAn(x.d.debut)} : ${x.f ? 'feuille à compléter' : 'feuille à composer'}`)];
+    const U = urgences(), echeances = U.lignes.filter(x => !x.reporte).slice(0, 12).map(x => `${x.sujet} : ${x.titreTexte}${texteDe(x.sous) ? ` — ${texteDe(x.sous)}` : ''}${texteDe(x.droite) ? ` (${texteDe(x.droite)})` : ''}`);
+    const seances = E.seances.filter(s => s.jour >= AUJ && s.jour <= fin && s.statut !== 'annulee').sort((x, y) => x.jour.localeCompare(y.jour)).map(s => { const at = E.ateliers.find(x => x.id === s.atelier_id), l = lieu(s.lieu_id); return `${jourSansAn(s.jour)}${s.heure_debut ? ` ${AGENDA.heureTexte(h5(s.heure_debut))}` : ''} : ${at?.titre || 'séance d’atelier'}${l ? `, ${l.nom || l.commune}` : ''}${s.classe ? ` (${s.classe})` : ''}`; });
+    return { du: AUJ, au: fin, dates, manques, echeances, seances };
+  }
+  function texteBriefing(b) {
+    const L = [];
+    L.push(`Briefing du ${jourCourt(b.du)} au ${jourCourt(b.au)}`, '');
+    L.push(`DATES (${b.dates.length})`);
+    if (!b.dates.length) L.push('Aucune date cette semaine.');
+    b.dates.forEach(x => { L.push(`• ${x.quand} — ${x.titre}${x.statut ? ` (${x.statut})` : ''}`, `  ${x.ou}${x.adresse ? ` — ${x.adresse}` : ''}`, `  ${x.heures}${x.feuille ? ` · ${x.feuille}` : ''}`); if (x.equipe.length) L.push(`  Qui part : ${x.equipe.join(', ')}`); });
+    if (b.seances.length) { L.push('', `SÉANCES D’ATELIER (${b.seances.length})`); b.seances.forEach(s => L.push(`• ${s}`)); }
+    L.push('', `CE QUI MANQUE (${b.manques.length})`); if (!b.manques.length) L.push('Rien : téléphones, lieux et feuilles de route sont complets.'); b.manques.forEach(m => L.push(`• ${m}`));
+    L.push('', `ÉCHÉANCES (${b.echeances.length})`); if (!b.echeances.length) L.push('Rien à traiter.'); b.echeances.forEach(m => L.push(`• ${m}`));
+    return L.join('\n');
+  }
+  function htmlBriefing(b) {
+    const liste = (xs, vide) => (xs.length ? `<ul>${xs.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : `<p class="compte">${esc(vide)}</p>`);
+    return `<p class="tb-brief-sous">Du ${esc(jourCourt(b.du))} au ${esc(jourCourt(b.au))}</p>
+      <h3>Dates <span class="badge">${b.dates.length}</span></h3>${b.dates.length ? `<ul class="tb-brief-dates">${b.dates.map(x => `<li style="--c:${esc(couleurDate(x.d))}"><b>${esc(x.quand)}</b> — <a href="#/representations/${x.d.id}">${esc(x.titre)}</a>${x.statut ? ` <span class="badge option">${esc(x.statut)}</span>` : ''}<br><span>${esc(x.ou)}${x.adresse ? ` — ${esc(x.adresse)}` : ''}</span><br><span>${esc(x.heures)}${x.feuille ? ` · <a href="#/feuilles/${x.d.id}">${esc(x.feuille)}</a>` : ''}</span>${x.equipe.length ? `<br><span class="compte">Qui part : ${esc(x.equipe.join(', '))}</span>` : ''}</li>`).join('')}</ul>` : '<p class="compte">Aucune date cette semaine.</p>'}
+      ${b.seances.length ? `<h3>Séances d’atelier <span class="badge">${b.seances.length}</span></h3>${liste(b.seances, '')}` : ''}
+      <h3>Ce qui manque <span class="badge${b.manques.length ? ' option' : ' ok'}">${b.manques.length}</span></h3>${liste(b.manques, 'Rien : téléphones, lieux et feuilles de route sont complets.')}
+      <h3>Échéances <span class="badge${b.echeances.length ? ' option' : ' ok'}">${b.echeances.length}</span></h3>${liste(b.echeances, 'Rien à traiter.')}`;
+  }
+  function ouvrirBriefing() {
+    let dlg = $('#tb-brief');
+    if (!dlg) {
+      dlg = document.createElement('dialog'); dlg.id = 'tb-brief'; dlg.className = 'tb-brief'; dlg.setAttribute('aria-labelledby', 'tb-brief-titre');
+      document.body.append(dlg);
+      dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); const b = e.target.closest('button, a'); if (!b) return;
+        if (b.dataset.tbBriefFermer !== undefined) dlg.close();
+        else if (b.dataset.tbBriefCopier !== undefined) { navigator.clipboard?.writeText(dlg.dataset.texte || '').then(() => annoncer('Briefing copié : à coller dans un message à l’équipe.'), () => annoncer('Copie impossible dans ce navigateur.', { erreur: true })); }
+        else if (b.dataset.tbBriefImprimer !== undefined) { document.documentElement.classList.add('tb-impression'); const fin = () => { document.documentElement.classList.remove('tb-impression'); window.removeEventListener('afterprint', fin); }; window.addEventListener('afterprint', fin); window.print(); setTimeout(fin, 2000); }
+        else if (b.matches('a[href^="#/"]')) dlg.close(); });
+    }
+    const b = briefing();
+    dlg.dataset.texte = texteBriefing(b);
+    dlg.innerHTML = `<div class="tb-brief-boite"><div class="tb-brief-tete"><h2 id="tb-brief-titre">Briefing de la semaine</h2><span class="tb-brief-boutons"><button type="button" class="btn petit" data-tb-brief-copier>Copier le texte</button><button type="button" class="btn petit" data-tb-brief-imprimer>Imprimer</button><button type="button" class="btn petit principal" data-tb-brief-fermer>Fermer</button></span></div><div class="tb-brief-corps">${htmlBriefing(b)}</div></div>`;
+    if (!dlg.open) dlg.showModal();
+    $('[data-tb-brief-fermer]', dlg)?.focus();
+  }
+  document.addEventListener('keydown', clavierFile);
 
   // ===================================================================================================== styles
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-tableau">
@@ -710,6 +1307,67 @@ const TABLEAU = (() => {
 .tb-tuile.cible-avant { box-shadow: -5px 0 0 var(--accent); }
 .tb-tuile.cible-apres { box-shadow: 5px 0 0 var(--accent); }
 @media (max-width: 760px) { .tb-tuile.cible-avant { box-shadow: 0 -5px 0 var(--accent); } .tb-tuile.cible-apres { box-shadow: 0 5px 0 var(--accent); } .tb-pan-fin { margin-left: 0; } }
+/* traiter sur place, la file, les épingles et les reports */
+.tb-lt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px; align-items: stretch; }
+.tb-lt[hidden] { display: none; }
+.tb-lt > .tb-l { min-width: 0; }
+.tb-traiter { display: inline-grid; place-items: center; width: 34px; border: 1px solid var(--trait); border-radius: 9px; background: var(--carte); color: var(--accent); cursor: pointer; }
+.tb-traiter:hover, .tb-traiter:focus-visible { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tb-lt.epingle > .tb-l { background: color-mix(in srgb, var(--doux) 60%, var(--accent-doux)); }
+.tb-lt.reportee > .tb-l { opacity: .65; }
+.tb-epingle { font-size: 12px; }
+.tb-cat-tag { display: inline-block; margin-right: 4px; padding: 0 6px; border-radius: 999px; background: var(--carte); border: 1px solid var(--trait); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); }
+.tb-l:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* les tuiles qui se parlent, le filtre */
+.tb-grille .tb-lie { box-shadow: 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--doux) 40%, var(--accent-doux)); }
+.tb-grille .tb-lie-sp { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+.tb-sp .tb-sp-boutons { display: inline-flex; align-items: center; gap: 4px; }
+.tb-filtre { display: inline-flex; align-items: center; gap: 8px; margin: -6px 0 12px; padding: 6px 6px 6px 12px; border-radius: 999px; background: var(--accent-doux); color: var(--encre); font-size: 13.5px; }
+.tb-filtre[hidden] { display: none; }
+.tb-filtre .pastille { --c: var(--accent); }
+.tb-ico[data-tb-filtre][aria-pressed="true"] { background: var(--accent); color: #fff; }
+/* glisser-déposer entre tuiles */
+.tb-l[draggable="true"] { cursor: grab; }
+.tb-l.glisse { opacity: .45; }
+.tb-grille .tb-cible { outline: 2px dashed var(--accent); outline-offset: 2px; background: var(--accent-doux); }
+/* le fil : annuler, le diff */
+.tb-annuler { align-self: center; white-space: nowrap; }
+.tb-diff { position: absolute; z-index: 60; max-width: min(520px, calc(100vw - 16px)); padding: 8px 10px; border: 1px solid var(--trait); border-radius: 10px; background: var(--carte); color: var(--encre); box-shadow: 0 12px 36px rgba(20, 10, 20, .22); font-size: 12.5px; }
+.tb-diff table { border-collapse: collapse; }
+.tb-diff th { text-align: left; padding: 2px 10px 2px 0; color: var(--gris); font-weight: 650; white-space: nowrap; }
+.tb-diff td { padding: 2px 8px 2px 0; max-width: 220px; overflow-wrap: anywhere; }
+.tb-diff s { color: var(--alerte); }
+/* les vues */
+.tb-vues select { min-height: 36px; padding: 4px 28px 4px 10px; font-size: 13.5px; }
+.tb-vue-puce { display: inline-flex; align-items: center; gap: 2px; }
+.tb-vue-puce .puce[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+/* les chiffres qui bougent */
+.tb-courbes { display: grid; gap: 8px; margin-top: 8px; }
+.tb-courbe { display: grid; gap: 2px; }
+.tb-courbe-t { font-size: 12.5px; font-weight: 650; color: var(--gris); }
+.tb-courbe-t b { color: var(--encre); margin-left: 4px; }
+.tb-barres { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; align-items: end; height: 44px; }
+.tb-barres button { display: flex; align-items: flex-end; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.tb-barres button i { display: block; width: 100%; height: max(2px, var(--h)); border-radius: 3px 3px 0 0; background: color-mix(in srgb, var(--accent) 70%, var(--carte)); }
+.tb-barres button:hover i, .tb-barres button:focus-visible i { background: var(--accent); }
+.tb-mois { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 3px; font-size: 10px; color: var(--gris); text-align: center; }
+.tb-plus-pc { color: var(--ok); font-weight: 700; }
+.tb-moins-pc { color: var(--alerte); font-weight: 700; }
+/* le briefing */
+dialog.tb-brief { width: min(760px, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); margin: auto; padding: 0; border: 1px solid var(--trait); border-radius: 14px; background: var(--carte); color: var(--encre); box-shadow: 0 18px 60px rgba(20, 10, 20, .3); }
+dialog.tb-brief::backdrop { background: rgba(23, 15, 26, .4); }
+.tb-brief-boite { display: flex; flex-direction: column; max-height: calc(100dvh - 26px); }
+.tb-brief-tete { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--trait); }
+.tb-brief-tete h2 { margin: 0 auto 0 0; font-size: 18px; }
+.tb-brief-boutons { display: inline-flex; gap: 6px; }
+.tb-brief-corps { overflow: auto; padding: 6px 18px 18px; }
+.tb-brief-corps h3 { display: flex; align-items: center; gap: 8px; margin: 16px 0 6px; font-size: 14px; }
+.tb-brief-corps ul { margin: 0; padding-left: 18px; }
+.tb-brief-corps li { margin: 3px 0; }
+.tb-brief-sous { margin: 10px 0 0; color: var(--gris); }
+.tb-brief-dates { list-style: none; padding: 0 !important; display: grid; gap: 8px; }
+.tb-brief-dates li { padding: 8px 12px; border-radius: 9px; background: var(--doux); border-left: 3px solid var(--c, var(--trait)); }
+@media print { html.tb-impression body > :not(#tb-brief) { display: none !important; } html.tb-impression dialog.tb-brief { position: static; border: 0; box-shadow: none; max-height: none; width: auto; } html.tb-impression .tb-brief-boutons { display: none; } html.tb-impression .tb-brief-corps { overflow: visible; } }
 @media (prefers-reduced-motion: reduce) { .tb-replier svg { transition: none; } }
 </style>`);
 
@@ -720,7 +1378,7 @@ const TABLEAU = (() => {
     t.reglages.actions = valeurs('actions').actions.filter(x => x !== k);
     garder(); dessinerCorps('actions'); annoncerSr('Action retirée.');
   }
-  return { vue, charger, depart, TUILES, conf, normaliser, retirerAction, lienJournal };
+  return { vue, charger, depart, TUILES, conf, normaliser, retirerAction, lienJournal, ACTIONS, CATEGORIES, urgences, traiter, epingler, reporter, REPORTS, vues: vuesDe, appliquerVue, formVue, ouvrirBriefing, briefing, texteBriefing, chercherMois, annulerJournal, recente, filtrer };
 })();
 // la route de la rubrique (admin/index.html)
 function vueTableau() { return TABLEAU.vue(); }

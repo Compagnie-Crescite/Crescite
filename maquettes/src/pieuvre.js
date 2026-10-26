@@ -31,7 +31,9 @@
                                  côté d'où elle arrive : pour un titre bien plus bas qu'elle (160 px au moins), elle file
                                  d'abord vers ce couloir, le descend tout droit, puis revient à plat sous le titre (deux
                                  courbes, sans cassure de tangente) ; loin, de 0 à 1 : en route elle s'éloigne (plus fine
-                                 d'autant, au milieu du chemin) et revient en avant au titre) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
+                                 d'autant, au milieu du chemin) et revient en avant au titre ; tourne : un angle
+                                 (radians) dont sa racine pivote autour de son pied pour partir dans ce sens : la base du
+                                 bras se plie, le reste suit, sans cassure) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
                                  coup) ; le mouvement part de la racine quand elle s'allonge, de la pointe quand elle revient ;
                                  elastique : elle revient comme un ressort (la pointe se love un peu trop, se balance, se
                                  pose). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
@@ -48,8 +50,14 @@
      t.mouvement()               0 au repos, 1 tendue vers un titre
      PIEUVRE.corps(ts)           le reste de la pieuvre (Path2D, unités du dessin, à remplir en 'evenodd') : le logo sans
                                  ces tentacules, qu'on dessine à part, par-dessus
+     PIEUVRE.corpsVivant(g, ts, theta, dx, dy, encre)   le corps peint de l'encre, la tête déformée (elle tourne de theta
+                                 autour du cou, d'autant plus qu'on monte, et se déplace de dx, dy en unités), les places de
+                                 repos des tentacules effacées (ce qui doit rester dessous se peint ensuite en
+                                 'destination-over') ; les racines des tentacules suivent : PIEUVRE.tete(x, y, PIEUVRE.poids(y), theta, dx, dy, out)
+                                 donne la place d'un point du dessin emporté par la tête (la racine d'une tentacule, à
+                                 déplacer, avec tourne = theta × PIEUVRE.poids(sa racine))
      PIEUVRE.dessiner(g, t, { encre, vers, teinte, lisere, degrade })   la tentacule : son liseré (là où elle passe sur la
-                                 pieuvre), puis elle, de l'encre (vers la pointe, mêlée de la couleur vers, selon teinte ;
+                                 pieuvre), puis elle, de l'encre à sa racine, de la couleur vers dès qu'elle en sort (selon teinte ;
                                  ou d'un dégradé fourni, degrade : un CanvasGradient dans le repère de la page)
    Tout se dessine dans le repère de la page (px CSS) : le contexte g porte déjà l'échelle de l'écran (dpr). */
 const PIEUVRE = (() => {
@@ -61,6 +69,55 @@ const PIEUVRE = (() => {
   const ease = t => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
   const elas = t => (t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.exp(-5 * t) * Math.cos(7 * t));   // un ressort : dépasse, se balance, se pose
   const TAU = Math.PI * 2;
+
+  // le contour du logo, finement aplati (un point par unité), rangé dans une grille de 8 unités : pour y recaler la peau
+  let GRILLE = null;
+  function grille() {
+    if (GRILLE) return GRILLE;
+    const segs = [], cases = new Map(), cle = (x, y) => (Math.floor(x / 8) * 4096 + Math.floor(y / 8));
+    for (const { P, segs: sg } of contours()) {
+      let x = 0, y = 0;
+      const ligne = (x1, y1) => { segs.push(x, y, x1, y1); x = x1; y = y1; };
+      for (const g of sg) {
+        if (g[0] === 'M') { x = P[2 * g[1]]; y = P[2 * g[1] + 1]; }
+        else if (g[0] === 'L') ligne(P[2 * g[1]], P[2 * g[1] + 1]);
+        else {
+          const ax = x, ay = y, x1 = P[2 * g[1]], y1 = P[2 * g[1] + 1], x2 = P[2 * g[2]], y2 = P[2 * g[2] + 1], x3 = P[2 * g[3]], y3 = P[2 * g[3] + 1];
+          const n = Math.max(2, Math.ceil(Math.hypot(x1 - ax, y1 - ay) + Math.hypot(x2 - x1, y2 - y1) + Math.hypot(x3 - x2, y3 - y2)));
+          for (let j = 1; j <= n; j++) { const u = j / n, v = 1 - u; ligne(v * v * v * ax + 3 * v * v * u * x1 + 3 * v * u * u * x2 + u * u * u * x3, v * v * v * ay + 3 * v * v * u * y1 + 3 * v * u * u * y2 + u * u * u * y3); }
+        }
+      }
+    }
+    for (let i = 0; i < segs.length; i += 4) {
+      const k = cle((segs[i] + segs[i + 2]) / 2, (segs[i + 1] + segs[i + 3]) / 2);
+      if (!cases.has(k)) cases.set(k, []);
+      cases.get(k).push(i);
+    }
+    return GRILLE = { segs, cases, cle };
+  }
+  function recaler(t) {
+    if (typeof D === 'undefined' || !D.logo || !D.logo.octopusPaths) return;
+    const { segs, cases, cle } = grille(), h = t.h, r = t.r, M = t.M;
+    for (let k = 0; k < t.m; k++) {
+      if (t.S[k] <= 0) continue;   // (la part entrée dans le corps n'est pas sur le contour)
+      const x = t.VX[k], y = t.VY[k];
+      let best = 1.44, bx = 0, by = 0;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        const liste = cases.get(cle(x + dx * 8, y + dy * 8)); if (!liste) continue;
+        for (const i of liste) {
+          const ax = segs[i], ay = segs[i + 1], vx = segs[i + 2] - ax, vy = segs[i + 3] - ay, l = vx * vx + vy * vy;
+          const u = l ? Math.min(1, Math.max(0, ((x - ax) * vx + (y - ay) * vy) / l)) : 0, px = ax + u * vx, py = ay + u * vy, dd = (x - px) ** 2 + (y - py) ** 2;
+          if (dd < best) { best = dd; bx = px; by = py; }
+        }
+      }
+      if (best >= 1.44) continue;
+      // (le point recalé, puis ses décalages dans le repère de l'épine, pour que la peau dessinée soit la même)
+      const xk = t.S[k] / h * r, kk = Math.min(M - 1, Math.max(0, Math.floor(xk))), f = xk - kk;
+      const cx = lerp(t.RX[kk], t.RX[kk + 1], f), cy = lerp(t.RY[kk], t.RY[kk + 1], f), a = lerp(t.RT[kk], t.RT[kk + 1], f), ca = Math.cos(a), sa = Math.sin(a);
+      const ddx = bx - cx, ddy = by - cy;
+      t.T[k] = ddx * ca + ddy * sa; t.N[k] = -ddx * sa + ddy * ca; t.VX[k] = bx; t.VY[k] = by;
+    }
+  }
 
   class Tentacule {
     constructor(b, i) {
@@ -99,6 +156,9 @@ const PIEUVRE = (() => {
         const ca = Math.cos(a), sa = Math.sin(a);
         this.VX[k] = cx + this.T[k] * ca - this.N[k] * sa; this.VY[k] = cy + this.T[k] * sa + this.N[k] * ca;
       }
+      // (la peau est recalée sur le contour du logo : reconstruite depuis l'épine, elle en dévie d'un demi-point, ce qui laisse
+      // un fil de corps autour de la place de repos d'une tentacule partie ; recalée, découpe, repos et contour coïncident)
+      recaler(this);
       this.rac = RAC; this.wmin = 0; this.tourne = 0; this.libreRac = -1; this.libre = this.libres(RAC);
       // le repos dans le repère de l'écran : posé par poser()
       this.ox = 0; this.oy = 0; this.s = 1; this.pose_ = false;
@@ -141,7 +201,7 @@ const PIEUVRE = (() => {
     }
     // vers un titre : la racine telle quelle, le corps jusqu'au point d'accroche, la pointe dessous puis enroulée
     viseePose(c, bob = { x: 0, y: 0 }) {
-      const M = this.M, [Kr, Kb] = this.bornes(c), s = this.s, tourne = this.tourne || 0;
+      const M = this.M, [Kr, Kb] = this.bornes(c), s = this.s, tourne = (this.tourne || 0) + (c.tourne || 0);
       const sg = new Float64Array(M), ln = new Float64Array(M), th = new Float64Array(M + 1);
       for (let k = 0; k < Kr; k++) { sg[k] = this.RS[k] + tourne; ln[k] = this.RL[k] * s; }
       // (la racine, pivotée de tourne autour de son pied : là où elle finit)
@@ -174,7 +234,8 @@ const PIEUVRE = (() => {
       const rail = c.rail != null && du * (c.x - c.rail) > 20 && dy > 160;
       if (rail) {
         const cub = (x0, y0, x1, y1, x2, y2, x3, y3, de) => { const pts = []; for (let j = de; j <= 64; j++) { const u = j / 64, b0 = (1 - u) ** 3, b1 = 3 * (1 - u) ** 2 * u, b2 = 3 * (1 - u) * u * u, b3 = u ** 3; pts.push([b0 * x0 + b1 * x1 + b2 * x2 + b3 * x3, b0 * y0 + b1 * y1 + b2 * y2 + b3 * y3]); } return pts; };
-        const yM = py + Math.max(70, Math.min(140, dy * .4)), kA = Math.max(30, (yM - py) * .5), kD = (yM - py) * .6;
+        // (kD : ce qu'elle continue dans son sens avant de s'infléchir ; une boucle qui part vers le haut monte un peu, pas plus)
+        const yM = py + Math.max(70, Math.min(140, dy * .4)), kA = Math.max(30, (yM - py) * .5), kD = Math.max(24, Math.min(56, (yM - py) * .45));
         corps = cub(px, py, px + Math.cos(a0) * kD, py + Math.sin(a0) * kD, c.rail, yM - kA, c.rail, yM, 0)
           .concat(cub(c.rail, yM, c.rail, yM + (c.y - yM) * .5, c.rail, c.y, c.x, c.y, 1));
       } else {
@@ -249,6 +310,12 @@ const PIEUVRE = (() => {
       let bouge = false;
       if (this.q < 1) { this.q = Math.min(1, this.q + dt / Math.max(1, this.duree)); bouge = true; }
       const B = this.cible ? this.but : repos;
+      // (tendue, elle vit encore : une onde légère court le long du bras, nulle à sa racine et à sa pointe, qui reste posée)
+      if (this.cible && o.onde) {
+        const M = this.M, [Kr] = this.bornes(this.cible), ph = this.i * 2.399, t = o.temps || 0, amp = o.onde * .011;
+        for (let k = Kr; k < M; k++) { const x = (k + .5) / M, f = Math.sin(Math.PI * x); B.sg[k] += amp * f * f * Math.sin(t * 1.1 + ph - x * 4); }
+        for (let k = Kr; k <= M; k++) { const x = k / M, f = Math.sin(Math.PI * x); B.th[k] += amp * f * f * Math.sin(t * 1.1 + ph - x * 4); }
+      }
       let P = B;
       if (this.q < 1 && this.depuis) {
         const A = this.depuis, q = this.q, M = this.M;
@@ -343,9 +410,122 @@ const PIEUVRE = (() => {
     if (ferme) g.closePath();
   };
 
+  /* la tête vivante : le corps du logo en points (ses courbes aplaties), chacun avec son poids de tête (0 au cou, 1 au sommet) ;
+     déformé, la tête tourne autour du cou d'autant que le point est haut, et se déplace de (dx, dy) × poids ; les places de
+     repos des tentacules suivent leurs racines, emportées rigidement (chaque tentacule reçoit tourne = theta × le poids de sa
+     racine, et sa racine déplacée) : le corps et ses bras restent d'un seul tenant */
+  const COU = 770, SOMMET = 420, PIVOT = [771, 770];
+  const poids = y => lisse(COU, SOMMET, y);
+  let CONTOURS = null;
+  // les tracés du logo, courbe par courbe (M, L, C, en absolu) : chaque sous-tracé { pts, segs } : pts, tous ses points (de départ,
+  // de contrôle, d'arrivée) à plat, segs, ses segments [genre, indices des points] ; et pour chaque point son poids de tête (W)
+  function contours(chemins = (typeof D !== 'undefined' && D.logo && D.logo.octopusPaths) || []) {
+    if (CONTOURS) return CONTOURS;
+    CONTOURS = [];
+    for (const d of chemins) {
+      const toks = d.match(/[MLCZmlcz]|-?\d*\.?\d+(?:e-?\d+)?/g) || [], pts = [], segs = [];
+      let i = 0, cmd = '', x = 0, y = 0, x0 = 0, y0 = 0;
+      const num = () => +toks[i++], ajoute = (px, py) => { pts.push(px, py); return pts.length / 2 - 1; };
+      while (i < toks.length) {
+        if (/^[MLCZmlcz]$/.test(toks[i])) { cmd = toks[i++]; if (cmd === 'Z' || cmd === 'z') { x = x0; y = y0; } continue; }
+        if (cmd === 'M' || cmd === 'm') { x = num(); y = num(); x0 = x; y0 = y; segs.push(['M', ajoute(x, y)]); cmd = cmd === 'M' ? 'L' : 'l'; }
+        else if (cmd === 'L') { x = num(); y = num(); segs.push(['L', ajoute(x, y)]); }
+        else if (cmd === 'l') { x += num(); y += num(); segs.push(['L', ajoute(x, y)]); }
+        else if (cmd === 'C' || cmd === 'c') {
+          const r = cmd === 'c', ax = x, ay = y;
+          const x1 = (r ? ax : 0) + num(), y1 = (r ? ay : 0) + num(), x2 = (r ? ax : 0) + num(), y2 = (r ? ay : 0) + num(), x3 = (r ? ax : 0) + num(), y3 = (r ? ay : 0) + num();
+          segs.push(['C', ajoute(x1, y1), ajoute(x2, y2), ajoute(x3, y3)]);
+          x = x3; y = y3;
+        } else i++;
+      }
+      if (segs.length > 1) { const P = Float64Array.from(pts), W = new Float64Array(P.length / 2); for (let j = 0; j < W.length; j++) W[j] = poids(P[2 * j + 1]); CONTOURS.push({ P, W, segs }); }
+    }
+    return CONTOURS;
+  }
+  // à qui appartient chaque point du contour du logo : les points sur le bord d'une tentacule (à 1,2 unité de sa place de repos)
+  // la suivent, rigidement avec sa racine, comme la place de repos elle-même : une courbe dont les deux bouts sont à la même
+  // tentacule est transformée rigidement tout entière (une transformation affine conserve une courbe de Bézier), et la découpe
+  // reste exacte quand la tête bouge et que la tentacule est partie ; le reste (la tête) se déforme point par point. Calculé
+  // une fois (la géométrie est celle du dessin)
+  let PROPRIO = null;
+  function proprietaires(ts) {
+    if (PROPRIO) return PROPRIO;
+    const C = contours(), trous = ts.map(t => {
+      let i0 = 0; while (i0 < t.m && t.S[i0] <= 0 && t.T[i0] < 0) i0++;
+      let i1 = t.m - 1; while (i1 > 0 && t.S[i1] <= 0 && t.T[i1] < 0) i1--;
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (let i = i0; i <= i1; i++) { x0 = Math.min(x0, t.VX[i]); x1 = Math.max(x1, t.VX[i]); y0 = Math.min(y0, t.VY[i]); y1 = Math.max(y1, t.VY[i]); }
+      return { t, i0, i1, x0: x0 - 2, y0: y0 - 2, x1: x1 + 2, y1: y1 + 2 };
+    });
+    const d2 = (x, y, ax, ay, bx, by) => { const vx = bx - ax, vy = by - ay, l = vx * vx + vy * vy, u = l ? Math.min(1, Math.max(0, ((x - ax) * vx + (y - ay) * vy) / l)) : 0; const dx = x - ax - u * vx, dy = y - ay - u * vy; return dx * dx + dy * dy; };
+    PROPRIO = C.map(({ P }) => {
+      const O = new Int8Array(P.length / 2).fill(-1);
+      for (let j = 0; j < O.length; j++) {
+        const x = P[2 * j], y = P[2 * j + 1];
+        let best = 1.44, qui = -1;
+        trous.forEach((h, k) => {
+          if (x < h.x0 || x > h.x1 || y < h.y0 || y > h.y1) return;
+          const t = h.t;
+          for (let i = h.i0; i < h.i1; i++) { const dd = d2(x, y, t.VX[i], t.VY[i], t.VX[i + 1], t.VY[i + 1]); if (dd < best) { best = dd; qui = k; } }
+        });
+        O[j] = qui;
+      }
+      return O;
+    });
+    return PROPRIO;
+  }
+  // un point du dessin, emporté par la tête (poids w) : out = [x, y]
+  function tete(x, y, w, theta, dx, dy, out) {
+    if (!w) { out[0] = x; out[1] = y; return out; }
+    const c = Math.cos(theta * w), si = Math.sin(theta * w), rx = x - PIVOT[0], ry = y - PIVOT[1];
+    out[0] = PIVOT[0] + rx * c - ry * si + dx * w; out[1] = PIVOT[1] + rx * si + ry * c + dy * w;
+    return out;
+  }
+
   return {
     pret: !!(G && G.bras && G.bras.length),
     lisere: (G && G.lisere) || 2.5,
+    COU, SOMMET, poids, contours, tete,
+    // le corps vivant, peint dans g (en unités du dessin, le repère déjà posé), de l'encre : le logo déformé par la tête (theta
+    // en radians, dx, dy en unités), puis les places de repos des tentacules, emportées avec leurs racines, effacées (le fond
+    // de la page s'y voit : ce qui doit rester dessous, une tache, un halo, se peint ensuite en 'destination-over'), élargies
+    // d'un pixel : deux bords superposés dans un même tracé laissent un fil d'anticrénelage, pas un effacement qui déborde
+    corpsVivant(g, ts, theta, dx, dy, encre = '#fff') {
+      const pt = [0, 0], p1 = [0, 0], p2 = [0, 0], C = contours(), O = proprietaires(ts);
+      // (le mouvement rigide de chaque tentacule : sa racine emportée par la tête, le reste pivoté d'autant autour d'elle)
+      const R = ts.map(t => { const w = poids(t.RY[0]); tete(t.RX[0], t.RY[0], w, theta, dx, dy, pt); return { c: Math.cos(theta * w), si: Math.sin(theta * w), r0x: t.RX[0], r0y: t.RY[0], ddx: pt[0] - t.RX[0], ddy: pt[1] - t.RY[0] }; });
+      const rigide = (r, x, y, out) => { const rx = x - r.r0x, ry = y - r.r0y; out[0] = r.r0x + rx * r.c - ry * r.si + r.ddx; out[1] = r.r0y + rx * r.si + ry * r.c + r.ddy; };
+      g.beginPath();
+      C.forEach(({ P, W, segs }, n) => {
+        const o = O[n], place = (j, qui, out) => (qui >= 0 ? rigide(R[qui], P[2 * j], P[2 * j + 1], out) : tete(P[2 * j], P[2 * j + 1], W[j], theta, dx, dy, out));
+        let prec = -1;
+        for (const sg of segs) {
+          if (sg[0] === 'M') { place(sg[1], o[sg[1]], pt); g.moveTo(pt[0], pt[1]); prec = sg[1]; }
+          else if (sg[0] === 'L') { place(sg[1], o[sg[1]], pt); g.lineTo(pt[0], pt[1]); prec = sg[1]; }
+          else {
+            // (les deux bouts à la même tentacule : toute la courbe la suit ; sinon ses points de contrôle suivent chacun leur sort)
+            const qui = prec >= 0 && o[prec] >= 0 && o[prec] === o[sg[3]] ? o[prec] : -2;
+            place(sg[1], qui === -2 ? o[sg[1]] : qui, p1); place(sg[2], qui === -2 ? o[sg[2]] : qui, p2); place(sg[3], o[sg[3]], pt);
+            g.bezierCurveTo(p1[0], p1[1], p2[0], p2[1], pt[0], pt[1]); prec = sg[3];
+          }
+        }
+        g.closePath();
+      });
+      g.fillStyle = encre; g.fill('evenodd');
+      g.save(); g.globalCompositeOperation = 'destination-out'; g.beginPath();
+      ts.forEach((t, k) => {
+        const { c, si, r0x, r0y, ddx, ddy } = R[k];
+        let i0 = 0; while (i0 < t.m && t.S[i0] <= 0 && t.T[i0] < 0) i0++;
+        let i1 = t.m - 1; while (i1 > 0 && t.S[i1] <= 0 && t.T[i1] < 0) i1--;
+        for (let i = i0; i <= i1; i++) { const rx = t.VX[i] - r0x, ry = t.VY[i] - r0y, x = r0x + rx * c - ry * si + ddx, y = r0y + rx * si + ry * c + ddy; if (i === i0) g.moveTo(x, y); else g.lineTo(x, y); }
+        g.closePath();
+      });
+      // (élargi d'un pixel d'écran au moins : les pixels du bord, à demi couverts, s'effacent entièrement ; douze unités au plus,
+      // pour une petite pieuvre)
+      const m = g.getTransform(), k = Math.hypot(m.a, m.b) || 1;
+      g.fillStyle = '#000'; g.fill(); g.lineWidth = Math.min(2.4 / k, 12); g.lineJoin = 'round'; g.strokeStyle = '#000'; g.stroke();
+      g.restore();
+    },
     creer() { return this.pret ? G.bras.map((b, i) => new Tentacule(b, i)) : []; },
     // le corps de la pieuvre : le logo sans la place de repos de ces tentacules (en unités du dessin, à remplir en
     // 'evenodd'). Leurs contours sont ceux du logo : les bords communs s'annulent dans le même tracé, sans laisser de trace,
@@ -375,7 +555,7 @@ const PIEUVRE = (() => {
       if (o.degrade) { g.fillStyle = o.degrade; g.globalAlpha = 1; g.fill(); }
       else if (o.vers && o.teinte > .01) {
         const r = t.racine(), c = t.cible || t.derniere || { x: r.x + 1, y: r.y }, gr = g.createLinearGradient(r.x, r.y, c.x, c.y);
-        gr.addColorStop(0, o.encre); gr.addColorStop(.35, o.encre); gr.addColorStop(1, o.vers);
+        gr.addColorStop(0, o.encre); gr.addColorStop(.18, o.encre); gr.addColorStop(.42, o.vers); gr.addColorStop(1, o.vers);
         g.fillStyle = gr; g.globalAlpha = 1;
         g.fill();
         if (o.teinte < .99) { g.globalAlpha = 1 - o.teinte; g.fillStyle = o.encre; g.fill(); g.globalAlpha = 1; }

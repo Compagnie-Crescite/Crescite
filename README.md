@@ -13,7 +13,7 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 | Dossier | Contenu |
 | --- | --- |
 | `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
-| `maquettes/` | Dix maquettes de la partie publique, de la plus sobre à la plus évoluée, la synthèse et la planche qui les compare. Chacune lit la base en direct et se modifie sur place. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
+| `maquettes/` | La synthèse de la partie publique (les maquettes ont été retirées). Elle lit la base en direct et se modifie sur place. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
 | `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
 | `supabase/` | La base de la compagnie : le script qui la crée (`migrations/20261020_crescite_base.sql`) et celui qui la remplit (`importer.py`). |
 | `admin/` | L'administration du site : tableau de bord, spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
@@ -55,16 +55,14 @@ animations » est respecté.
 ## Maquettes
 
 ```sh
-python3 maquettes/build.py              # les dix maquettes et la planche (maquettes/dist/, non versionné)
-python3 maquettes/build.py m06          # une seule maquette
+python3 maquettes/build.py              # la synthèse (maquettes/dist/, non versionné)
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
-node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
+node maquettes/onglets.mjs /tmp/x synthese # parcourt les vues de la synthèse et signale les anomalies
                                          # (en parties, 4 à la fois ; PARALLELE=1 une à une ; au-delà des cœurs
                                          # de la machine, les attentes ne suffisent plus et de fausses anomalies sortent)
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                          # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
-python3 maquettes/build.py spectacles-mobile   # la page des spectacles au téléphone, trois propositions (maquettes/dist/spectacles-mobile.html)
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 
@@ -103,6 +101,21 @@ dates publiées depuis 2016, saison par saison, de la plus récente à la plus a
 fermées au départ, chacune avec sa petite carte ; un index des saisons permet de sauter de l'une à l'autre, et le
 filtre par spectacle comme la recherche par commune portent sur tout l'agenda, en ouvrant les saisons où ils trouvent
 quelque chose. `#/agenda/2019-2020` reste la page d'une saison.
+
+**La saison d'un regard (la synthèse).** Sur `#/saisons`, la saison en cours se lit dans un tableau : en haut, son
+sous-menu (comme celui des univers d'un spectacle), une seule ligne qui s'arrime sous le menu quand on descend : les seuls
+spectacles qui tournent dans la saison, chacun sa vignette (sa photo, cadrée), cerclée de sa couleur (celle de ses dates), et
+le nombre de ses dates ; le survoler isole ses dates, le choisir filtre la page, et le fond de la saison prend sa photo et sa
+couleur (les saisons passées ont leur propre rangée, de leurs spectacles) ; puis
+la frise des mois (`friseMois`), douze colonnes de septembre à août où chaque date est une ventouse à la couleur de son
+spectacle, son jour écrit dedans (vidée une fois jouée), « aujourd'hui » une goutte sur le bras de la saison ; à côté, la
+loupe (`LOUPE`), la carte de la saison, qui s'approche de la ville de la date survolée ou choisie, cadre les communes d'un
+mois et revient à la France, la date écrite sous elle. Choisir une date ne garde qu'elle dans les listes, juste sous la
+frise, et ouvre sa carte de réservation (rien ne défile) ; survoler un mois le choisit (un clic le garde) ; les filtres en
+cours s'effacent sous la frise (un à un, ou « Tout effacer »), Échap aussi. Au téléphone, la frise défile au doigt, posée sur
+le mois en cours, la loupe est une carte sous elle, et les filtres sont en bas de l'écran : une barre (les filtres en cours,
+les mois à choisir d'un doigt) et « Filtres », un panneau qui monte du bas (la recherche, les mois, les spectacles de la
+saison, ceux des saisons passées, les communes ; « Voir les dates » y mène).
 
 **Modifier sur place.** « Modifier le site », au pied de chaque page, ouvre l'édition (`maquettes/src/edition.js`,
 commun aux onze) : après connexion avec un compte administrateur, chaque texte venu de la base se clique et s'écrit
@@ -280,10 +293,37 @@ compte du projet inscrit dans `crescite_admins`.
     « Réinitialiser ». Tout est gardé avec le compte (`crescite_preferences`, clé `accueil.tableau`, le script 6) : on
     retrouve son tableau sur tous ses appareils ; sans le script, sur l'appareil, et la disposition passe dans la base à
     la première ouverture qui suit.
+  - **Dix gestes de plus pour gérer sans quitter le tableau.** (1) **Traiter sur place** : l'éclair de chaque ligne « à
+    traiter » (ou « Traiter… » du clic droit) ouvre une feuille de modification en place (`GESTES.formulaire`) :
+    confirmer une option, fixer les horaires, suivre le contrat, publier ou composer la feuille de route, valider ou
+    refuser une note de frais, répondre à un devis, relancer, clore une proposition, prolonger une invitation, noter
+    un accord de portrait ; la base écrite, l'état se relit et la ligne disparaît. (2) **La file au clavier** : J et K
+    parcourent les lignes à traiter, Entrée ouvre la feuille de la ligne, Échap la referme et rend le focus ; une ligne
+    traitée, la suivante prend le focus. (3) **La barre de commande** (Ctrl K, la loupe) cherche aussi les actions
+    (« nouvelle date », « briefing », « personnaliser »), les vues, ce qui est à traiter (Entrée le traite sur place),
+    les notes de frais, les devis, la diffusion, les propositions, les séances ; le genre compte dans les mots (« frais
+    Camille », « lieu Le Volcan »). (4) **Des vues nommées** (« Lundi matin », « Veille de tournée »…) : chacune garde
+    une disposition (tuiles, ordre, tailles, réglages, colonnes), choisie dans l'en-tête ; une vue peut s'ouvrir
+    d'elle-même certains jours, le matin ou l'après-midi, ou quand une date confirmée est dans les trois jours (un choix
+    fait à la main tient six heures) ; « Vue par défaut » rend la disposition d'avant. (5) **Un ordre des urgences qui
+    apprend** : chaque ligne pèse (le coût du retard : un contrat non signé la veille pèse plus qu'un portrait sans
+    accord) et se pondère par son échéance ; « Par urgence » (réglage) les mêle en une liste ; le clic droit épingle une
+    ligne en haut ou la reporte (demain, lundi, dans une semaine : elle se cache jusque-là, « Montrer n lignes
+    reportées » la remontre). (6) **Les tuiles se parlent** : survoler une date allume ce qui la concerne dans les
+    autres tuiles (puis son spectacle) ; l'entonnoir d'un spectacle filtre tout le tableau sur lui, une pastille le
+    dit, Échap le lève. (7) **Les chiffres bougent** : dans « La saison en chiffres », les représentations, les
+    spectateurs et les recettes (le montant de cession du suivi) mois par mois, en barres ; un mois cliqué cherche ses
+    dates ; la saison d'avant au même point, en écart. (8) **Glisser-déposer entre tuiles** : une personne de « Qui part
+    bientôt » déposée sur une date l'y inscrit ; une proposition déposée sur « Prochaines dates » ouvre « Créer la
+    date » ; un fichier de l'ordinateur déposé sur un spectacle devient un document de son équipe. (9) **Le fil vivant** :
+    une modification de moins d'un quart d'heure a « Annuler » (la ligne revient comme avant, comme « Revenir » du
+    journal) ; survoler une ligne montre son diff, champ par champ. (10) **Le briefing** : le résumé des sept jours
+    (dates, horaires, lieu, feuille, qui part ; séances d'atelier ; ce qui manque ; échéances), à copier en texte dans un
+    message à l'équipe, ou à imprimer.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node maquettes/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (79 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    (115 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
     précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
@@ -536,10 +576,25 @@ range en colonne à gauche. On y trouve :
   la retirer. Sur une personne : ses **coordonnées** (téléphone, adresse électronique, ville, urgence), « ne part pas
   sur cette date », qui part. Sur une note de frais : la modifier (la sienne tant qu'elle attend ; toutes pour
   l'administration), la supprimer. Sur une notification : l'effacer. Sur une proposition ouverte : répondre d'un geste.
+  Sur un **document** : le modifier (titre, type, pour qui : l'équipe, l'administration seulement, ou le public du
+  site), **remplacer son fichier** depuis le téléphone, le supprimer (le fichier avec, s'il n'est pas partagé) ; sur
+  une date, un spectacle ou la section des documents : **ajouter un document**, un fichier envoyé depuis le téléphone
+  (une photo, un PDF…) ou un lien, rangé comme l'administration le ferait (le stockage privé « crescite-equipe » sous
+  le dossier du spectacle ; un PDF public dans « crescite », sous documents/). Sur une **feuille de route** lue, chaque
+  ligne porte son bloc (`data-bloc`, posé par `FEUILLE.html`) : un appui long y copie le texte, **modifie la ligne**
+  (texte, nature, gras ; elle n'est plus « de la base »), en **ajoute une après**, la **retire** ; sur la feuille
+  elle-même : une ligne à la fin, **mettre à jour depuis la base** (`FEUILLE.actualiser` sur `FEUILLE.composer`, avec
+  les mêmes sources que l'administration : équipe et téléphones, administration et régie générale, suivi de la date et
+  du lieu, documents de l'équipe, feuilles des autres dates), **repasser en brouillon** ; dans la liste des feuilles,
+  les mêmes ; sur une date sans feuille publiée, « Feuille de route… » **publie le brouillon** (mis à jour, ou tel
+  quel) ou **compose la feuille** depuis la base et la publie. La base passe une feuille publiée en version suivante
+  à chaque écriture et prévient l'équipe (`crescite_feuilles_avant`, `crescite_notif_feuilles`).
   Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
   feuille, sans rien perdre de la saisie.
-  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium (31 vérifications : hors ligne, puis sur une base
-  simulée en lecture-écriture où le compte administre), après `python3 maquettes/build.py synthese`.
+  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium (48 vérifications : hors ligne, puis sur une base
+  simulée en lecture-écriture, stockage compris, où le compte administre : la date, un horaire, une présence, le lieu,
+  prévenir, une notification, un document modifié puis un fichier ajouté, une ligne de feuille de route, la mise à
+  jour depuis la base, le brouillon, la publication, la composition), après `python3 maquettes/build.py synthese`.
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
@@ -800,9 +855,10 @@ ces restes sont bornés par la limite de vingt fichiers par heure et par compte,
 Storage (`crescite-equipe`) si besoin. Vingt modifications par heure et par compte (`crescite_modifications` garde
 chaque modification : son auteur la relit, l'administration toutes). Tant que le script n'est pas lancé, ces gestes ne se
 montrent pas. Un compte qui administre modifie une date par ses propres feuilles, d'un appui long (« Modifier depuis
-le téléphone ») : le « Modifier » de l'équipe ne s'y montre pas, une seule voie ; les fichiers d'un spectacle, qu'aucune
-feuille ne couvre, passent pour tous par les boîtes de l'équipe. Une boîte ouverte, les gestes de la page (← →, le
-balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
+le téléphone ») : le « Modifier » de l'équipe ne s'y montre pas, une seule voie ; pour les fichiers d'un spectacle, ses
+boutons « Ajouter un fichier » et « Modifier » ouvrent, pour ce compte, les feuilles de l'administration (titre, type,
+pour qui, remplacer le fichier, supprimer ; un document public, un lien, un document de la compagnie), et les boîtes de
+l'équipe pour les autres. Une boîte ouverte, les gestes de la page (← →, le balayage) dorment. 168 essais (`node modifier.mjs` : les treize scripts, le quatorzième deux fois, puis les scripts 1,
 2, 3 et 13 relancés après lui, et le quatorzième relancé sur une base où sa première version était passée).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
