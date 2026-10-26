@@ -74,6 +74,7 @@
   const MOINS = mq('(prefers-reduced-motion: reduce)');
   const CALME = /[?&]anim=0\b/.test(location.search);                    // captures et essais : rien ne bouge
   const reduit = () => MOINS.matches || CALME;
+  if (CALME) document.documentElement.classList.add('still');    // la feuille de style arrête aussi tout ce qu'elle anime
   const installee = () => mq('(display-mode: standalone)').matches || mq('(display-mode: fullscreen)').matches || navigator.standalone === true;
   const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   // un léger retour au doigt, sur les téléphones qui le permettent, et seulement après un premier geste
@@ -451,7 +452,14 @@
   async function occupe(bouton, texte, f) {
     const avant = bouton.innerHTML;
     bouton.disabled = true; bouton.setAttribute('aria-busy', 'true'); bouton.textContent = texte;
-    try { return await f(); } finally { if (bouton.isConnected) { bouton.disabled = false; bouton.removeAttribute('aria-busy'); bouton.innerHTML = avant; } }
+    let ok = false;
+    try { const r = await f(); ok = !(r && r.error); return r; }
+    finally {
+      if (bouton.isConnected) {
+        bouton.disabled = false; bouton.removeAttribute('aria-busy'); bouton.innerHTML = avant;
+        if (ok) { vibrer(8); if (!reduit()) { bouton.classList.add('fait'); setTimeout(() => bouton.classList.remove('fait'), 1400); } }   // réussi : le bouton (et le téléphone) le dit un instant
+      }
+    }
   }
 
   function ecranConnexion() {
@@ -494,7 +502,7 @@
       if (!mdp.value) return erreurChamp(mdp, 'Indiquez votre mot de passe, ou demandez plus bas un lien de connexion.');
       dire('#c-msg', '');
       const { error } = await occupe($('#f-connexion button[type=submit]'), 'Connexion…', () => sb.auth.signInWithPassword({ email: v, password: mdp.value }));
-      if (error) { dire('#c-msg', `Connexion impossible : ${esc(motsErreur(error))}.`); if (error.code === 'invalid_credentials' || /Invalid login/i.test(error.message)) mdp.select(); }
+      if (error) { dire('#c-msg', `Connexion impossible : ${esc(motsErreur(error))}.`); const f = $('#f-connexion'); if (f && !reduit()) { f.classList.add('secoue'); setTimeout(() => f.classList.remove('secoue'), 500); } if (error.code === 'invalid_credentials' || /Invalid login/i.test(error.message)) mdp.select(); }
     });
     $('#b-lien').addEventListener('click', async e => {
       const v = adresse();
@@ -807,7 +815,7 @@
           <a class="bouton-rond retour" href="#/saison" data-retour data-tt="retour" hidden>${ICONES.retour}<span class="sr">Retour</span></a>
           <a class="marque-mini" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-nom">Crescite</span> <small>équipe</small></a>
           <p class="barre-titre" aria-hidden="true"></p>
-          <div class="barre-actions"><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
+          <div class="barre-actions"><button type="button" class="installer-barre" data-installer-barre hidden>${ICONES.installer}<span>Installer<span class="sr"> l’application</span></span></button><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
         </header>
         <div class="bandeau-etat" id="bandeau-etat"></div>
         <main id="contenu" tabindex="-1"></main>
@@ -817,6 +825,7 @@
     </div>`;
     poserPieuvres();
     majCoquille();
+    majInstallation();
     if (window.ResizeObserver) new ResizeObserver(() => placerCurseur(true)).observe($('.nav-appli'));
     return true;
   }
@@ -917,8 +926,10 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    el.innerHTML = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
+    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
+    if (el.dataset.h === html) return;                     // le bandeau ne se redessine (et n'entre) que s'il change
+    el.dataset.h = html; el.innerHTML = html;
   }
 
   // ================================================================================================ les adresses et les transitions
@@ -956,7 +967,7 @@
       if (E.pile.length && E.pile[E.pile.length - 1] === r.hash) { E.pile.pop(); sens = 'arriere'; }
       else if (r.profondeur === 0) { E.pile = []; const i = ONGLETS.indexOf(avant.onglet), j = ONGLETS.indexOf(r.onglet); sens = j > i ? 'avant' : j < i ? 'arriere' : avant.profondeur > 0 ? 'arriere' : 'fondu'; }
       else { E.pile.push(avant.hash); E.declencheur[avant.hash] = r.hash; sens = 'avant'; }
-    } else if (o.arrivee) E.pile = [];
+    } else if (o.arrivee) { E.pile = []; if ($('#contenu .squelette')) sens = 'fondu'; }      // du squelette au contenu, en fondu
     if (r.profondeur > 0) r.onglet = (E.pile.length && lireRoute(E.pile[0]).onglet) || (o.rafraichir && avant && avant.hash === r.hash ? avant.onglet : r.onglet);
     const partage = sens === 'avant' && avant && avant.k === 'saison' && r.k === 'date' ? { nom: `date-${r.id}`, avant: `.heros[data-date="${r.id}"], #billet-${r.id}`, apres: `.heros[data-date="${r.id}"]` }
       : sens === 'arriere' && avant && avant.k === 'date' && r.k === 'saison' ? { nom: `date-${avant.id}`, avant: `.heros[data-date="${avant.id}"]`, apres: `.heros[data-date="${avant.id}"], #billet-${avant.id}` } : null;
@@ -1098,9 +1109,10 @@
     }).join('');
   }
   // une saison passée se dessine à l'ouverture
-  function remplirSaison(det) {
+  function remplirSaison(det, { entree = true } = {}) {
     const corps = $('.saison-corps', det);
     if (!corps || corps.childElementCount) return;
+    if (entree && !reduit()) { corps.classList.add('neuve'); setTimeout(() => corps.classList.remove('neuve'), 1200); }   // ses billets arrivent l'un après l'autre
     const s = det.dataset.saison, auj = aujourdhui();
     const ds = E.dates.filter(d => finDe(d) < auj && (d.saison || saisonDe(d.debut)) === s).reverse();
     corps.innerHTML = ds.map(d => billet(d, { passee: true })).join('');
@@ -1249,8 +1261,36 @@
     if (unJour || groupes.length === 1) return ol(lignes);
     return groupes.map(g => `<h3 class="jour-frise">${esc(g.jour ? majuscule(jourSansAn(g.jour)) : 'Jour à préciser')}</h3>${ol(g.lignes)}`).join('');
   }
+  // la feuille de route en direct : le jour J, dans la feuille publiée, les lignes du planning déjà passées pâlissent et
+  // celle qui se passe maintenant se marque (comme la frise). Le jour se reconnaît à son titre (« mardi 27 octobre »),
+  // l'heure au début de la ligne (« 9h30 : », « 10h-11h : ») ; une ligne sans heure (le déjeuner) suit la précédente.
+  const RE_HEURE_LIGNE = /^\s*(\d{1,2})h(\d{2})?(?:\s*-\s*(\d{1,2})h(\d{2})?)?\s*:/;
+  function majFeuilleDirect(auj, m) {
+    const fdr = $('.feuille-cadre .fdr');
+    if (!fdr) return;
+    $$('.passe, .maintenant', fdr).forEach(x => { x.classList.remove('passe', 'maintenant'); x.removeAttribute('aria-current'); });
+    const titreJour = jourLong(auj).replace(/ \d{4}$/, '').toLowerCase();
+    let dedans = false;
+    const lignes = [];
+    for (const el of fdr.children) {
+      if (el.matches('h3.fdr-jour')) { dedans = el.textContent.trim().toLowerCase().startsWith(titreJour); continue; }
+      if (el.matches('h2, header')) { dedans = false; continue; }
+      if (!dedans || !el.matches('p.fdr-p')) continue;
+      const x = RE_HEURE_LIGNE.exec(el.textContent);
+      lignes.push({ el, a: x ? +x[1] * 60 + +(x[2] || 0) : null, b: x && x[3] ? +x[3] * 60 + +(x[4] || 0) : null });
+    }
+    let etat = '';
+    lignes.forEach((l, i) => {
+      if (l.a == null) { if (etat === 'passe') l.el.classList.add('passe'); return; }
+      const s = lignes.slice(i + 1).find(y => y.a != null), fin = l.b != null && l.b > l.a ? l.b : s ? s.a : l.a + 45;
+      etat = m >= fin ? 'passe' : m >= l.a ? 'maintenant' : '';
+      if (etat) l.el.classList.add(etat);
+      if (etat === 'maintenant') l.el.setAttribute('aria-current', 'time');
+    });
+  }
   function majFrises() {
     const auj = aujourdhui(), now = new Date(), m = now.getHours() * 60 + now.getMinutes();
+    majFeuilleDirect(auj, m);
     $$('[data-frise]').forEach(ol => {
       let suivant = null;
       $$('li[data-debut]', ol).forEach(li => {
@@ -1479,7 +1519,7 @@
       const b = location.hash === r.hash && $('#bloc-planning');
       if (!b) return;
       const lignes = lignesPlanning(d, x);
-      if (lignes.length) { $('.attente-bloc', b)?.replaceWith(document.createRange().createContextualFragment(frise(lignes))); majFrises(); } else b.remove();
+      if (lignes.length) { $('.attente-bloc', b)?.replaceWith(document.createRange().createContextualFragment(frise(lignes))); b.classList.add('arrive'); majFrises(); } else b.remove();
     }).catch(() => { const b = location.hash === r.hash && $('#bloc-planning .attente-bloc'); if (b) b.textContent = 'Le planning est dans la feuille de route, qui demande le réseau.'; });
   }
 
@@ -1581,7 +1621,7 @@
       data.heures_ateliers != null && `${nombre(data.heures_ateliers)}\u00a0h d’ateliers`].filter(Boolean);
     if (!morceaux.length) return;
     $('#chiffres-texte', bloc).textContent = morceaux.join(' · ');
-    bloc.hidden = false;
+    bloc.hidden = false; bloc.classList.add('arrive');                 // le bloc, lu après la page, se pose
   }
 
   // qui part sur une date : la distribution « en tournée » du spectacle, moins les absents de la date, plus ses renforts
@@ -1773,7 +1813,7 @@
     if (!corps) return afficher(r, 'Feuille de route', `${tete}${barre}<p class="message erreur" role="alert">La feuille de route n’a pas pu être mise en page ici. Le PDF reste à votre disposition.</p>`, { focus });
     // la feuille porte d'ordinaire son titre (h1) ; sinon, la page en donne un, pour les lecteurs d'écran
     const titrePage = /<h1[\s>]/i.test(corps) ? '' : `<h1 class="sr">Feuille de route : ${esc(d.spectacle?.titre || '')}, ${esc(quandTexte(d))}</h1>`;
-    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}<div class="feuille-cadre">${corps}</div></div>`, { focus });
+    afficher(r, 'Feuille de route', `<div class="vue-feuille">${titrePage}${barre}<div class="feuille-cadre"${attrU(d.spectacle || {})}>${corps}</div></div>`, { focus });
     // les fichiers que la feuille cite : leur lien signé se redemande au clic s'il a vieilli
     const parUrl = new Map([...E.liens.entries()].map(([chemin, x]) => [x.url, chemin]));
     $$('.feuille-cadre a[href]').forEach(a => { const c = parUrl.get(a.href); if (c) a.dataset.fichier = c; });
@@ -1931,7 +1971,7 @@
   function banniere(n) {
     const z = $('#bandeau-notif');
     if (!z) return;
-    z.innerHTML = `<a class="bandeau-notif n-${esc(n.type)}" href="${esc(lienDe(n))}" data-notif="${n.id}">${iconeNotif(n)}<span class="n-titre">${esc(n.titre)}</span>${n.texte ? `<span class="n-texte">${esc(n.texte)}</span>` : ''}</a>`;
+    z.innerHTML = `<a class="bandeau-notif n-${esc(n.type)}" href="${esc(lienDe(n))}" data-notif="${n.id}"><span class="bn-temps" aria-hidden="true"></span>${iconeNotif(n)}<span class="n-titre">${esc(n.titre)}</span>${n.texte ? `<span class="n-texte">${esc(n.texte)}</span>` : ''}</a>`;
     const a = z.firstElementChild;
     requestAnimationFrame(() => requestAnimationFrame(() => a.classList.add('visible')));
     clearTimeout(minuteurBanniere);
@@ -2350,7 +2390,7 @@
     if (E.dispo.mesIndispos) E.dispo.mesIndispos = E.dispo.mesIndispos.filter(y => y.id !== x.id);
     annoncer(silencieux ? 'C’est annulé.' : `C’est noté : vous êtes libre ${texteJours(x)}.`);
     apresEcriture();
-    if (E.vue === 'indisponibilites') majListeIndispos();
+    if (E.vue === 'indisponibilites') { await retirerLigne($(`[data-indispo="${x.id}"]`)); majListeIndispos(); }
   }
 
   // ———— mes indisponibilités
@@ -2368,11 +2408,20 @@
     brancherFormIndispo(edition);
     if (xs == null) chargerMesIndispos().then(() => majListeIndispos()).catch(e => { const z = $('#zone-indispos'); if (z && E.vue === 'indisponibilites') z.innerHTML = `<p class="message erreur" role="alert">Vos indisponibilités n’ont pas pu être lues : ${esc(motsErreur(e) || 'réessayez')}.</p>`; });
   }
+  // une ligne qui s'en va se replie (puis la liste se redessine sans elle)
+  async function retirerLigne(el) {
+    if (!el || reduit() || typeof el.animate !== 'function') return;
+    el.style.overflow = 'hidden';
+    await el.animate([{ height: `${el.offsetHeight}px`, opacity: 1 }, { height: '0px', opacity: 0, paddingTop: '0px', paddingBottom: '0px', marginTop: '0px', marginBottom: '0px' }], { duration: 260, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' }).finished.catch(() => {});
+  }
   function majListeIndispos() {
     const z = $('#zone-indispos');
     if (!z || E.vue !== 'indisponibilites') return;
     if (E.dispo.mesIndispos == null) { chargerMesIndispos().then(() => { if (E.dispo.mesIndispos) majListeIndispos(); }).catch(() => {}); return; }
+    const deja = z.dataset.rendu === '1', avant = new Set($$('[data-indispo]', z).map(x => x.dataset.indispo));
     z.innerHTML = listeIndispos(E.dispo.mesIndispos);
+    z.dataset.rendu = '1';
+    if (deja && !reduit()) $$('[data-indispo]', z).forEach(li => { if (!avant.has(li.dataset.indispo)) li.classList.add('neuve'); });   // la neuve se pose
   }
   function formIndispo(x, b) {
     const type = x ? (x.journee ? (joursPeriode(x).length > 1 ? 'jours' : 'jour') : 'heures') : (b && b.type) || 'jour';
@@ -2447,7 +2496,7 @@
     const miennes = venir.filter(x => x.source !== 'agenda'), lues = venir.filter(x => x.source === 'agenda');
     const ligne = x => {
       const t = majuscule(texteJours(x)), agenda = x.source === 'agenda';
-      return `<li class="indispo-ligne${agenda ? ' agenda' : ''}"><span class="hach" aria-hidden="true"></span><span class="il-texte"><b>${esc(t)}</b>${x.motif || agenda ? `<small>${esc([x.motif, agenda ? 'd’après votre agenda relié' : ''].filter(Boolean).join(' · '))}</small>` : ''}</span>
+      return `<li class="indispo-ligne${agenda ? ' agenda' : ''}" data-indispo="${x.id}"><span class="hach" aria-hidden="true"></span><span class="il-texte"><b>${esc(t)}</b>${x.motif || agenda ? `<small>${esc([x.motif, agenda ? 'd’après votre agenda relié' : ''].filter(Boolean).join(' · '))}</small>` : ''}</span>
         ${agenda ? '' : `<span class="il-gestes"><button type="button" class="bouton-rond" data-modifier-indispo="${x.id}">${ICONES.crayon}<span class="sr">Modifier : ${esc(t)}</span></button><button type="button" class="bouton-rond" data-retirer-indispo="${x.id}">${ICONES.croix}<span class="sr">Retirer : ${esc(t)}</span></button></span>`}</li>`;
     };
     let html = `<section class="carte" aria-labelledby="t-liste-i"><h2 id="t-liste-i">À venir</h2>`;
@@ -2693,6 +2742,7 @@
       const actif = document.activeElement && s.contains(document.activeElement) ? document.activeElement : null;
       s.outerHTML = jourProposition(p, j);
       const b = $(`[data-jour-prop="${jourId}"] [data-reponse="${reponse}"]`);
+      if (b && !reduit()) b.classList.add('pop');
       if (b && (depuisBouton || actif)) { if (depuisBouton) b.focus({ preventScroll: true }); requestAnimationFrame(() => tt('confirmer', b)); }
     }
     annoncer(`C’est noté : ${REPONSES[reponse].toLowerCase()} ${texteJours(j)}.`);
@@ -2874,13 +2924,36 @@
     if (ou === 'moi') return '<p class="aide">Dans le menu de votre navigateur, choisissez « Installer l’application » ou « Ajouter à l’écran d’accueil ». Ce navigateur ne le propose pas ? Ouvrez cette page dans Chrome, Edge ou Safari.</p>';
     return '';
   }
-  function majInstallation() { $$('[data-zone-installation]').forEach(z => { z.innerHTML = zoneInstallation(z.dataset.zoneInstallation); }); }
+  function majInstallation() {
+    $$('[data-zone-installation]').forEach(z => { z.innerHTML = zoneInstallation(z.dataset.zoneInstallation); });
+    $$('[data-installer-barre]').forEach(b => { b.hidden = installee(); });   // la barre : tant que l'application n'est pas installée
+  }
   async function installer() {
     const p = E.installer;
     if (!p) return;
     E.installer = null;
     try { p.prompt(); const { outcome } = await p.userChoice; if (outcome !== 'accepted') E.installer = null; } catch (e) { /* refusé */ }
     majInstallation();
+  }
+  // le bouton « Installer » de la barre (au téléphone, dans le navigateur, en permanence) : l'invite du navigateur quand il
+  // en a une (installer), sinon la marche à suivre, dans une fenêtre
+  function ouvrirModaleInstallation(declencheur = null) {
+    $('#modale-installation')?.remove();
+    const fond = document.createElement('div');
+    fond.className = 'modale-fond'; fond.id = 'modale-installation';
+    const corps = IOS ? `<p>Elle s’ouvre en un geste depuis l’écran d’accueil, même sans réseau, et reçoit les notifications.</p>${ETAPES_IOS}`
+      : '<p>Elle s’ouvre en un geste depuis l’écran d’accueil, même sans réseau.</p><p>Dans le menu de votre navigateur, choisissez <b>Installer l’application</b> ou <b>Ajouter à l’écran d’accueil</b>. Ce navigateur ne le propose pas ? Ouvrez cette page dans Chrome, Edge ou Safari.</p>';
+    fond.innerHTML = `<div class="modale-boite" role="dialog" aria-modal="true" aria-labelledby="t-mod-inst">
+        <div class="modale-tete"><h2 id="t-mod-inst">${ICONES.installer} Installer l’application</h2><button type="button" class="modale-fermer" data-fermer-modale aria-label="Fermer">${ICONES.croix}</button></div>
+        <div class="modale-corps">${corps}</div>
+        <div class="pied-form"><button type="button" class="btn principal" data-fermer-modale>Compris</button></div></div>`;
+    document.body.appendChild(fond);
+    const surTouche = e => { if (e.key === 'Escape') fermer(); };
+    const fermer = () => { fond.remove(); document.removeEventListener('keydown', surTouche); if (declencheur && declencheur.isConnected) declencheur.focus(); };
+    $$('[data-fermer-modale]', fond).forEach(b => b.addEventListener('click', fermer));
+    fond.addEventListener('click', e => { if (e.target === fond) fermer(); });
+    document.addEventListener('keydown', surTouche);
+    $('.modale-fermer', fond).focus();
   }
 
   // ================================================================================================ moi
@@ -3291,7 +3364,6 @@
       fermer(true);
       const n = Number(data && data.prevenus) || 0;
       annoncer(!data || !data.modifications ? 'Rien n’a changé.' : n ? `Enregistré${prevenusTexte(n)}.` : 'Enregistré. Personne d’autre n’a de compte sur cette date : prévenez l’équipe vous-même.');
-      vibrer(15);
       relireApres(retour);
     });
     ($(seances.length ? `#sm-h-${seances[0].id}` : '[data-ajouter-precision]', fond) || $('.modale-fermer', fond)).focus();
@@ -3401,7 +3473,6 @@
       fermer(true);
       const n = Number(resultat.prevenus) || 0;
       annoncer(ajout ? `« ${titre} » est ajouté${prevenusTexte(n)}.` : resultat.modifications === 0 ? 'Rien n’a changé.' : `« ${titre} » est enregistré${prevenusTexte(n)}.`);
-      vibrer(15);
       relireApres(retour);
     });
     $('[data-supprimer-document]', form)?.addEventListener('click', async ev => {
@@ -3420,7 +3491,6 @@
       E.documents = E.documents.filter(y => y.id !== x.id);   // tout de suite, la base relue ensuite
       if (E.route && E.route.k === 'spectacle') router({ rafraichir: true });
       annoncer(`« ${x.titre} » est supprimé${prevenusTexte(Number(r.data && r.data.prevenus) || 0)}.`);
-      vibrer(15);
       relireApres(`[data-ajouter-fichier="${spId}"]`);
     });
     (ajout ? inFichier : inTitre).focus();
@@ -3532,7 +3602,9 @@
         }).join('')}
       </ul>
     `;
+    const premier = !zone.firstElementChild;
     zone.innerHTML = h;
+    if (premier) zone.classList.add('arrive');                      // la liste, lue après la page, se pose
 
     // Attacher les écouteurs de case à cocher
     $$('.camion-item input[type=checkbox]', zone).forEach(inp => {
@@ -4144,7 +4216,7 @@
     }
     const y = window.scrollY, ouvertes = $$('details.saison[open]').map(x => x.dataset.saison || x.className), places = reperer();
     router({ rafraichir: true });
-    ouvertes.forEach(s => { const det = $(`details.saison[data-saison="${CSS.escape(s)}"]`) || (s.includes('feuilles-passees') && $('details.feuilles-passees')); if (det) { det.open = true; if (det.dataset.saison) remplirSaison(det); } });
+    ouvertes.forEach(s => { const det = $(`details.saison[data-saison="${CSS.escape(s)}"]`) || (s.includes('feuilles-passees') && $('details.feuilles-passees')); if (det) { det.open = true; if (det.dataset.saison) remplirSaison(det, { entree: false }); } });
     window.scrollTo(0, y);
     glisserVers(places);
   }
@@ -4253,6 +4325,7 @@
       try { await repondre(id, t.dataset.reponse, c ? c.value.trim() : '', { depuisBouton: true }); } finally { if (t.isConnected) t.disabled = false; }
       return;
     }
+    if (t.matches('[data-installer-barre]')) { vibrer(6); return E.installer ? installer() : ouvrirModaleInstallation(t); }
     if (t.matches('[data-installer]')) return installer();
     if (t.matches('[data-fermer-install]')) { garderPref('installFermee', true); majInstallation(); return; }
     if (t.matches('[data-aide-ios]')) { const z = document.getElementById(t.getAttribute('aria-controls')), ouvrir = t.getAttribute('aria-expanded') !== 'true'; if (z) z.hidden = !ouvrir; t.setAttribute('aria-expanded', String(ouvrir)); return; }
@@ -4261,6 +4334,7 @@
       if (t.tagName === 'A' && lienFrais(chemin)) return;     // le lien signé est encore bon : le navigateur l'ouvre
       e.preventDefault();
       const w = window.open('', '_blank');                      // ouvert pendant le clic, pour ne pas être bloqué
+      t.classList.add('attend');                                // le temps de signer le lien
       try {
         const url = await signerUn(chemin);
         if (w) { w.opener = null; w.location.href = url; } else location.href = url;
@@ -4268,7 +4342,7 @@
       } catch (err) {
         if (w) w.close();
         annoncer(`Le document ne s’ouvre pas : ${motsErreur(err)}.`, { erreur: true });
-      }
+      } finally { t.classList.remove('attend'); }
     }
   });
   // un portrait qui ne se charge pas : ses initiales restent

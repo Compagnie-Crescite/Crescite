@@ -563,6 +563,13 @@ plusieurs couleurs et la légende, le titre « Saison 2019-2020 » dans les sais
 sa carte ; la page de La Folle Idée sans onglets, avec son bilan et sa carte ; les sous-pages de l'espace pro ; les
 redirections.
 
+**D. La synthèse** (le site, demande de la compagnie, octobre 2026 : « N'affiche pas dans les saisons les dates « à
+définir ». Simplifie la timeline. ») : une date dont le jour n'est pas encore fixé (précision au mois, « novembre 2026 »)
+ne paraît pas sur `#/saisons` tant qu'elle n'est pas passée : ni dans les listes, ni sur la frise, ni sur la carte, ni
+dans les puces des spectacles ; une date passée qui n'a gardé que son mois ou son année reste dans l'histoire. La frise de
+la saison est simple : des pastilles à la couleur de leur spectacle (la liste dit « Scolaire »), deux couloirs au plus,
+sans légende sous elle : les puces des spectacles, juste au-dessus, la font (leur survol isole les dates du spectacle).
+
 ## Règle 22 : les couleurs de la saison et des spectacles (demande d'Angelo Jossec, directeur artistique)
 « La couleur générale de cette saison, et cela jusqu'à la création de Cassandre, ça doit être le bleu. Voici les couleurs
 de chaque spectacle : Mon Royaume pour un cheval jaune, Bérénice violet, Cyrano gris anthracite, L'Imaginaire forcé vert
@@ -625,9 +632,12 @@ Un message final court : la navigation par les saisons, comment les univers sont
   par saison puis mois par mois, chaque résidence marquée « Résidence », sans réservation ; le bilan d'un spectacle qui ne
   tourne plus les garde de même ; la frise de sa tournée les marque, et un repère passé ou de résidence mène à sa ligne de
   la page (il ouvre l'historique). Le vérificateur le contrôle pour la synthèse.
-- Les chiffres par saison (la diffusion d'un spectacle, celle de la compagnie, la page des saisons) comptent des dates (les
-  lignes, sans les résidences), jamais des représentations sous le mot « dates » : un spectacle n'a jamais plus de dates
-  qu'une saison de toute la compagnie.
+- Les chiffres (la diffusion d'un spectacle, celle de la compagnie, la page des saisons, l'historique et le bilan d'un
+  spectacle) comptent des représentations, partout (demande de la compagnie : « Je préfère les représentations partout ») :
+  celles d'une date dans la base (`nb_representations`, le dixième script), sinon ses séances, sinon une ; aucune pour une
+  résidence ni pour une date annulée. Tous les chiffres comptent de la même façon, sous le mot « Représentations »
+  (`D.site.libelles.representations`), jamais sous le mot « dates » : un spectacle n'en a jamais plus, sur une saison, que
+  toute la compagnie.
 
 ## Règle 24 : chaque photo cadrée sur sa zone d'intérêt (demande du client)
 « Veille à ce que les images soient correctement centrées et cadrées, en définissant des zones d'intérêt par image pour

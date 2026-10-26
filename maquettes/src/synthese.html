@@ -720,19 +720,22 @@ html.ed-actif .c-frise { display: none; }
   .frise-l > li { min-height: 30svh; padding: 5vh 0 5vh 26px; }
   .recit-an { font-size: clamp(2.4rem, 10vw, 3.6rem); }
 }
-/* la troupe (règle 20, TROUPE), celle de la 06 : la pieuvre de la compagnie en tête ; un bras effilé descend d'elle et pousse,
-   de métier en métier, une branche vers chaque catégorie (son icône dans une ventouse, son titre) ; les personnes sont les
-   ventouses du bras : une pastille, leur visage quand sa publication est accordée (sinon le nom seul), leur nom, leur métier
-   précis. Survoler ou choisir une personne allume toutes ses places et les relie (TROUPE.relier, à la couleur de la saison) ;
-   les bras poussent une fois, quand la troupe arrive à l'écran (Web Animations sur le masque qui les découvre) */
+/* la troupe (règle 20, TROUPE) : la pieuvre de la compagnie, vivante (CREATURE.creer, ses vraies tentacules), en tête de la
+   troupe ; quand la lecture descend, elle nage dans la marge de gauche, à hauteur de lecture, et une tentacule attrape le
+   médaillon du métier qu'on lit (son icône dans un rond, son titre) ; les personnes sont des pastilles : leur visage quand
+   sa publication est accordée (sinon le nom seul), leur nom, leur métier précis. Survoler ou choisir une personne allume
+   toutes ses places et les relie (TROUPE.relier, à la couleur de la saison). Sans mouvement, le dessin de la pieuvre reste
+   en tête, immobile */
 section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsic-size: auto 1400px; }   /* hors de l'écran : ni style ni mise en page */
 .tr6 { --g: clamp(56px, 7vw, 100px); --troupe-lien: var(--saison-texte); --troupe-ic-fond: var(--papier); --troupe-ventouse-fond: var(--papier);
   position: relative; display: grid; gap: clamp(18px, 2.4vw, 30px); margin-top: 18px; padding-left: var(--g); }
-.tr6-bras { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; z-index: 0; }
-.tr6-mq { fill: none; stroke: #fff; stroke-width: 44; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 0; }
-.tr6-b { fill: var(--saison-texte); }
-.tr6-vent { fill: var(--papier); stroke: var(--saison-texte); stroke-width: 1.6; }
-.tr6-coeur { position: relative; z-index: 2; width: clamp(104px, 12vw, 150px); margin-left: calc(var(--g) * -1 + 2px); color: var(--saison-texte); }
+.tr6-coeur { position: relative; z-index: 2; width: clamp(104px, 12vw, 150px); margin-left: calc(var(--g) * -1 + 2px); margin-bottom: 30px; color: var(--saison-texte); }
+.tr6.est-vivante .tr6-coeur { visibility: hidden; }   /* la créature (CREATURE) dessine la pieuvre à sa place, puis se balade */
+/* le métier que la créature tient s'allume : son médaillon grandit d'un rien dans une auréole, son titre prend la couleur de la saison */
+.tr6-ic { transition: transform .45s cubic-bezier(.2, .7, .2, 1), box-shadow .45s; }
+.tr6-cat.est-tenue .tr6-ic { transform: scale(1.1); box-shadow: inset 0 0 0 2px var(--saison-texte), 0 0 0 5px color-mix(in srgb, var(--saison-texte) 26%, transparent); }
+.tr6-t > span:last-child { transition: color .45s; }
+.tr6-cat.est-tenue .tr6-t > span:last-child { color: var(--saison-texte); }
 .tr6-coeur svg { display: block; width: 100%; height: auto; }
 .tr6-cat { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); gap: 10px 24px; align-items: start; }
 .tr6-t { display: flex; align-items: center; gap: 12px; margin: 0; font: 500 1.25rem/1.15 var(--titre); }
@@ -757,8 +760,8 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .tr6-p[aria-pressed="true"] .tr6-m { color: inherit; }
 @media (max-width: 700px) {
   section.bloc.troupe { contain-intrinsic-size: auto 3600px; }
-  .tr6 { --g: 44px; }
-  .tr6-coeur { width: 96px; margin-bottom: 6px; }
+  .tr6 { --g: 56px; }
+  .tr6-coeur { width: 96px; }
   .tr6-cat { grid-template-columns: minmax(0, 1fr); }
   .tr6-ic { width: 44px; height: 44px; font-size: 11px; }
   .tr6-p { min-width: 0; max-width: 100%; }
@@ -1056,8 +1059,8 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
    tournée », qui respire) à la couleur du spectacle ; la ligne survolée, choisie au clavier ou montrée prend cette couleur
    et le filet souligne son titre. À droite, épinglé, l'aperçu qui la suit, dans l'univers du spectacle (ses couleurs, sa
    lueur, son motif, sa police de titre) : sa photo et la carte de ses tournées, son lieu et son temps, sa création, son
-   action culturelle, son accroche, sa prochaine date (ou son annonce) et le lien vers sa page. Jusqu'à 899 px, la liste
-   seule : chaque ligne avec sa vignette, sa création, son lieu et son temps, sa prochaine date. */
+   action culturelle, son accroche, sa prochaine date (ou son annonce) et le lien vers sa page. Jusqu'à 899 px, la pile
+   d'affiches (plus bas, .pil-*) : les huit tranches dans l'écran, l'affiche dépliée d'une touche. */
 .tdm { display: grid; grid-template-columns: minmax(0, 45fr) minmax(0, 55fr); min-height: calc(100svh - var(--haut)); }
 .tdm-g { min-width: 0; padding: 0 var(--gout) clamp(40px, 6vw, 72px); }
 .tdm-g .page-titre { padding-bottom: clamp(20px, 2.6vw, 32px); }
@@ -1082,7 +1085,6 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 .tdm-dek { grid-area: dek; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 18px; min-width: 0; font-size: .9rem; line-height: 1.45; color: var(--gris); }
 .tdm-tag { margin-left: auto; font: 700 .68rem/1.4 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--c); white-space: nowrap; }
 .tdm-tag.vit::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: .12em; animation: respire 2.4s ease-in-out infinite; }
-.tdm-x { display: none; }
 /* (Bérénice, l'arène : ses titres en capitales, comme sur sa page) */
 .tdm-i[data-motif="arene"] .tdm-t, .u-arene .tdm-pt { text-transform: uppercase; }
 .tdm-a:is(:hover, :focus-visible, .est-actif) { background: linear-gradient(90deg, color-mix(in srgb, var(--c) 11%, transparent), transparent 88%); box-shadow: inset 3px 0 0 var(--c); }
@@ -1130,23 +1132,60 @@ html .ed-annonce { background: var(--encre); border-left: 3px solid var(--magent
 @media (max-width: 899px) {
   .tdm { display: block; min-height: 0; }
   .tdm-pv { display: none; }
-  .tdm-a { grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "ligne ligne" "dek dek" "v x"; align-items: start; column-gap: 14px; row-gap: 4px; margin: 0; padding: 18px 0 20px; }
-  .tdm-a:is(:hover, .est-actif):not(:focus-visible) { background: none; box-shadow: none; }
-  .tdm-a:is(:hover, .est-actif):not(:focus-visible) .tdm-t { color: inherit; }
-  .tdm-a:is(:hover, .est-actif):not(:focus-visible) .tt { background-size: 0 2px; }
-  .tdm-fil { display: none; }
-  .tdm-ligne { justify-content: space-between; }
-  .tdm-t { font-size: calc(1.9rem * var(--tk, 1)); line-height: 1.08; }
-  .tdm-v { width: 112px; height: auto; aspect-ratio: 3 / 2; margin-top: 10px; border-radius: 4px; }
-  .tdm-x { grid-area: x; display: flex; flex-direction: column; gap: 5px; min-width: 0; margin-top: 10px; font-size: .95rem; line-height: 1.45; }
-  .tdm-x > span, .tdm-suite .k { display: block; }
-  .tdm-cr { font: 700 .7rem/1.5 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--c); }
-  .tdm-suite .k { margin-bottom: 1px; font: 700 .68rem/1.4 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--gris); }
 }
-@media (max-width: 599px) {
-  .tdm-dek { flex-direction: column; align-items: flex-start; gap: 2px; }
-  .tdm-tag { margin-left: 0; }
-}
+
+/* ———— la page des spectacles au téléphone (jusqu'à 899 px) : la pile d'affiches ————
+   Les huit spectacles tiennent dans l'écran, une tranche d'affiche chacun : sa photo cadrée sur sa zone d'intérêt (CADRAGE)
+   sous un voile de son univers, son titre dans sa police, son année, son état (« En création » ; « en tournée », qui respire)
+   et sa prochaine date. On touche une tranche : l'affiche se déplie (la photo s'ouvre, le voile tourne, puis la fiche arrive
+   en cascade : son sous-titre, son lieu et son temps, sa création, son action culturelle, son accroche, sa prochaine date, la
+   carte de sa tournée dont les bras poussent depuis Rouen, « découvrir ») ; une seule ouverte à la fois, la toucher encore la
+   replie. La hauteur se déplie en CSS (grid-template-rows, la hauteur de la tranche) : rien n'est mesuré. Au bureau, le
+   sommaire et son aperçu restent tels quels. Choisie parmi trois propositions (docs/spectacles-mobile.html). */
+.tdm-g .pil-tete { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 14px 0 10px; }
+.pil-tete h1 { font-size: 1.55rem; }
+.pil-sai { font: 700 .66rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--saison-texte); text-decoration: none; white-space: nowrap; }
+a.pil-sai:hover { text-decoration: underline; text-underline-offset: .3em; }
+.pil { list-style: none; display: flex; flex-direction: column; gap: 4px; margin: 0 -6px; padding: 0 0 22px; }
+.pil-aff { border-radius: 10px; overflow: hidden; background: var(--u-fond); color: var(--u-texte); font-family: var(--u-corps); box-shadow: 0 12px 26px -20px #000; }
+.pil-h { margin: 0; }
+.pil-dos { position: relative; display: block; width: 100%; height: 72px; padding: 0; border: 0; background: var(--u-fond); color: var(--u-texte); font: inherit; text-align: left; cursor: pointer; overflow: hidden; transition: height .45s var(--mv-courbe); }
+.pil-dos:focus-visible { outline: 2px solid var(--u-vif); outline-offset: -3px; }
+.pil-aff.ouvert .pil-dos { height: 214px; }
+.pil-ph { position: absolute; inset: 0; display: block; }
+.pil-ph img { width: 100%; height: 100%; object-fit: cover; transition: scale .7s var(--mv-courbe); }
+.pil-dos:hover .pil-ph img { scale: 1.03; }
+.pil-voile, .pil-voile2 { position: absolute; inset: 0; transition: opacity .45s; }
+.pil-voile { background: linear-gradient(90deg, color-mix(in srgb, var(--u-fond) 94%, transparent) 36%, color-mix(in srgb, var(--u-fond) 55%, transparent) 72%, color-mix(in srgb, var(--u-fond) 30%, transparent)); }
+.pil-voile2 { background: linear-gradient(180deg, transparent 28%, color-mix(in srgb, var(--u-fond) 80%, transparent) 72%, var(--u-fond)); opacity: 0; }
+.pil-aff.ouvert .pil-voile { opacity: 0; }
+.pil-aff.ouvert .pil-voile2 { opacity: 1; }
+.pil-txt { position: absolute; left: 14px; right: 14px; bottom: 10px; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: last baseline; text-shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 2px 14px rgba(0, 0, 0, .5); }
+.pil-t { min-width: 0; font-family: var(--u-titre-f); font-weight: var(--u-titre-g); font-size: calc(1.45rem * var(--tk, 1)); line-height: 1.02; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: font-size .45s var(--mv-courbe); }
+.pil-aff.ouvert .pil-t { white-space: normal; font-size: calc(2.1rem * var(--tk, 1)); text-wrap: balance; }
+.u-arene .pil-t { text-transform: uppercase; }
+.pil-an { font: 600 .8rem/1 var(--texte); font-variant-numeric: tabular-nums; }
+.pil-sous { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 12px; min-width: 0; margin-top: 3px; font-size: .82rem; line-height: 1.4; }
+.pil-etat { flex: none; font: 700 .66rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-vif); white-space: nowrap; }
+.pil-etat.vit::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 8px; border-radius: 50%; background: currentColor; vertical-align: .12em; animation: respire 2.4s ease-in-out infinite; }
+.pil-pro { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pil-aff.ouvert .pil-pro { display: none; }
+.pil-corps { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s var(--mv-courbe); }
+.pil-aff.ouvert .pil-corps { grid-template-rows: 1fr; }
+.pil-in { min-height: 0; overflow: hidden; }
+.pil-fiche { display: flex; flex-direction: column; gap: 13px; padding: 14px 16px 18px; }
+.pil-st { margin: -4px 0 0; font-size: .95rem; color: var(--u-texte2); }
+.pil-fiche .tdm-k { font-size: .72rem; }
+.pil-acc { margin: 0; font-size: 1.02rem; line-height: 1.5; color: var(--u-texte); text-wrap: pretty; }
+.pil-date { display: flex; flex-direction: column; gap: 2px; margin: 0; color: var(--u-texte); }
+.pil-date .k { font: 700 .68rem/1.4 var(--u-etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--u-texte2); }
+.pil-date .tdm-d { font-weight: 600; }
+.pil-fiche .tdm-carte { padding-top: 10px; }
+.pil-pied { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; margin: 0; }
+.pil-pied .bu { min-height: 44px; font-size: .86rem; letter-spacing: .06em; text-transform: uppercase; }
+.still :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img) { transition: none; }
+.still .pil-etat.vit::before { animation: none; }
+@media (prefers-reduced-motion: reduce) { :is(.pil-dos, .pil-t, .pil-voile, .pil-voile2, .pil-corps, .pil-ph img) { transition: none; } .pil-etat.vit::before { animation: none; } }
 
 /* la fiche « programmer » (la 05) : le catalogue de #/espace-pro/programmer. La photo à gauche, dans l'univers du spectacle ;
    à droite sa création, son titre dans sa police, le nombre de ses représentations en grand, ses faits en pièces, sa fiche,
@@ -1306,6 +1345,14 @@ html:not(.still):not(.sur-place) .apparait.vu { opacity: 1; transform: none; tra
 .lc-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 26px 20px; }
 .lc-grille .lc-titre { font-size: 1.05rem; }
 .lc-grille .lc-icone { width: 54px; box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 30%, transparent); }
+/* au téléphone (demande de la compagnie), le bouton de lecture en bas à gauche, à côté du titre de la vidéo : le centre de
+   l'affiche, où sont les visages, reste dégagé */
+@media (max-width: 899px) {
+  .lc-icone { left: 14px; top: auto; bottom: 14px; width: 48px; transform: none; box-shadow: 0 0 0 6px color-mix(in srgb, var(--u-accent) 30%, transparent), 0 0 40px var(--u-lueur); }
+  .lc-titre { left: 76px; right: 14px; bottom: 14px; display: flex; align-items: center; min-height: 48px; }
+  .lc-grille .lc-icone { width: 42px; box-shadow: 0 0 0 5px color-mix(in srgb, var(--u-accent) 30%, transparent); }
+  .lc-grille .lc-titre { left: 68px; min-height: 42px; }
+}
 /* sous une petite vidéo, les deux boutons ne gardent que leur icône (leur libellé de D reste leur nom pour les lecteurs d'écran) */
 .lc-grille .lc-outils { gap: 6px; margin-top: 8px; }
 .lc-grille .lc-b { padding: 7px; }
@@ -1855,14 +1902,6 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7 .frise[data-frise].est-filtre .frise-point:not(.est-sp) { opacity: .14; }
 /* la légende : chaque spectacle, sa lampe, son titre et le nombre de ses dates (un spectacle écarté s'éteint) ; le losange des
    dates scolaires, le carré évidé des résidences */
-.fs7-leg { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem 1.6rem; margin: .4rem 0 0; padding: 0; font: 400 .9375rem/1.4 var(--texte); }
-.fs7-l { display: inline-flex; align-items: flex-start; gap: .55rem; color: color-mix(in srgb, var(--encre) 86%, transparent); cursor: default; }
-.fs7-l i { flex: none; width: .6rem; height: .6rem; margin-top: calc((1lh - .6rem) / 2); border-radius: 50%; background: var(--c); box-shadow: 0 0 10px 2px color-mix(in srgb, var(--c) 45%, transparent); }
-.fs7-l b { margin-left: .2em; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--gris); }
-.fs7-l.est-vide { color: var(--gris); }
-.fs7-l.est-vide i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--c); }
-.fs7-sc i { width: .55rem; height: .55rem; border-radius: 1px; rotate: 45deg; background: var(--encre); box-shadow: none; }
-.fs7-rs i { border-radius: 1px; background: transparent; box-shadow: inset 0 0 0 1.5px var(--encre); }
 /* les prochaines dates, puis toutes les dates de la saison, à côté de sa carte (qui suit la lecture) */
 .ag7 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); grid-template-areas: "proch carte" "toutes carte"; grid-template-rows: auto 1fr; gap: 3rem clamp(2rem, 5vw, 5rem);
   align-items: start; margin-top: clamp(2rem, 4vw, 3rem); }
@@ -1919,7 +1958,6 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
   .s7-chip, .s7-chips #choix-lieu { flex: none; }
   .s7-cherche { max-width: none; }
   .d7 { grid-template-columns: minmax(0, 1fr); padding-left: 1.4rem; }
-  .fs7-leg { gap: .45rem 1.1rem; font-size: .875rem; }
   .ag7-carte .carte { max-height: 36vh; }
   .s7-legende { min-height: 0; }
 }
@@ -2274,10 +2312,11 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      la vidéo garde un filet et la lueur de son univers ; la page se rallume vite.
      La pieuvre : un seul moment, quand le dossier PDF d'un spectacle est prêt (la tentacule s'enroule autour du bouton).
      8. Le jour et la nuit (THEME) : la nuit s'ouvre en cercle depuis le bouton du menu (420 ms), la lune creuse le soleil.
-     9. La troupe (TROUPE, la compagnie, celle de la 06) : quand elle arrive à l'écran, le bras qui descend de la pieuvre
-        pousse une fois, puis ses branches vers les métiers, l'une après l'autre (Web Animations sur le masque qui les
-        découvre) ; survoler une personne trace ses liens vers ses autres places, une lueur y court (offset-path) ; les
-        icônes des métiers s'animent à leur arrivée et au survol.
+     9. La troupe (TROUPE, la compagnie) : la pieuvre de tête est une créature (CREATURE), toujours en mouvement : ses
+        tentacules ondulent, elle respire, se balance, un halo l'entoure ; quand la lecture descend, elle rapetisse et nage
+        dans la marge à hauteur de lecture, par impulsions, et une tentacule attrape le médaillon du métier qu'on lit, qui
+        s'anime, puis le lâche pour le suivant. Survoler une personne trace ses liens vers ses autres places, une lueur y
+        court (offset-path) ; les icônes des métiers s'animent à leur arrivée et au survol.
      10. L'espace pro (celui de la 05) : la ligne-tentacule se trace, les grandes capitales montent, les portes et les fiches
         arrivent l'une après l'autre ; au survol, la photo d'une porte s'approche, un voile clair balaie l'aplat d'un espace
         réservé et sa capitale se serre, la flèche avance ; la porte cliquée devient l'en-tête de sa page (élément partagé).
@@ -2728,14 +2767,20 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     return sortes.length > 1 ? `<ul class="fr-legende">${sortes.map(([c, t]) => `<li class="fr-l-${c}"><i aria-hidden="true"></i>${esc(t)}</li>`).join('')}</ul>` : ''; };
   // une saison en bande de frise ; son nom court, sous la bande, vient de ses années (« 16-17 »)
   const bandeSaison = (k, n) => ({ id: k, debut: `${k.slice(0, 4)}-09-01`, fin: `${k.slice(5)}-08-31`, titre: D.saisons[k].titre, n, etiquette: `${k.slice(2, 4)}-${k.slice(7, 9)}` });
-  // le nombre de dates d'un groupe de D.saisons : ses lignes, sans les résidences (règle 23), comme la page des saisons les
-  // compte ; les chiffres d'un spectacle et ceux de la compagnie se comparent (une saison de représentations scolaires
-  // nombreuses ne fait pas plus de « dates » que toute la compagnie)
-  const nbDates = g => (g.dates || []).filter(dt => !dt.residence).length;
-  // la diffusion d'un spectacle, saison par saison (le nombre de ses dates), de sa première saison à la saison en cours
+  // (demande de la compagnie) les représentations partout : toutes les frises et tous les bilans comptent ainsi, et les
+  // chiffres d'un spectacle se comparent à ceux de la compagnie (un spectacle seul ne la dépasse jamais). Une ligne de
+  // D.saisons en compte celui de la base (nb_representations, le dixième script), sinon ses séances, sinon une ; une ligne
+  // de suite (sans date à elle) n'en compte que si elle le dit ; une résidence (règle 23) et une date annulée, aucune
+  const nbRep = r => r.d.residence || annulee(r.d) ? 0 : r.d.nb_representations != null ? Math.max(0, +r.d.nb_representations || 0)
+    : r.d.representations && r.d.representations.length ? r.d.representations.length : r.suite ? 0 : 1;
+  const nbReps = rows => rows.reduce((a, r) => a + nbRep(r), 0);
+  // celles d'une saison, par spectacle (son slug) et en tout (calculées une fois par version de D)
+  const repsSaison = k => retenu(`reps:${k}`, () => { const m = { tout: 0 };
+    lignesSaison(k).forEach(r => { const n = nbRep(r), c = r.g.slug || ''; m.tout += n; m[c] = (m[c] || 0) + n; }); return m; });
+  // la diffusion d'un spectacle, saison par saison (le nombre de ses représentations), de sa première saison à la saison en cours
   function diffusion(s) {
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
-    const n = k => (D.saisons[k].spectacles || []).filter(g => g.slug === s.slug).reduce((a, g) => a + nbDates(g), 0);
+    const n = k => repsSaison(k)[s.slug] || 0;
     const premiere = ks.find(k => n(k));
     return premiere ? ks.filter(k => k >= premiere).map(k => bandeSaison(k, n(k))) : [];
   }
@@ -2743,7 +2788,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   let ioDiffusion = null;
   function frisesDiffusion(racine) {
     const creer = c => { const s = bySlug[c.dataset.diffusion], bs = s ? diffusion(s) : [];
-      if (bs.length && c.isConnected && !c.firstElementChild) frise(c, { echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: `${s.titre} – ${L.dates}`, classe: 'frise-diffusion', anMin: 26 }); };
+      if (bs.length && c.isConnected && !c.firstElementChild) frise(c, { echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: `${s.titre} – ${L.representations}`, classe: 'frise-diffusion', anMin: 26 }); };
     const cs = $$('[data-diffusion]', racine);
     if (surPlaceRendu || !('IntersectionObserver' in window)) { cs.forEach(creer); return; }
     if (ioDiffusion) ioDiffusion.disconnect();
@@ -2829,7 +2874,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         ${P.actualite ? `<p class="fp-act"${edS(s, 'programmer', 'actualite')}>${esc(P.actualite)}</p>` : ''}
         ${P.equipeCreation && P.equipeCreation.length ? `<ul class="fp-equipe">${P.equipeCreation.map((l, i) => `<li${edS(s, 'programmer', 'equipeCreation', i)}>${esc(l)}</li>`).join('')}</ul>`
           : fiche ? `<ul class="fp-fiche">${fiche}</ul>` : ''}
-        ${diffusion(s).some(b => b.n) ? `<div class="prog-frise"><p class="k">${esc(L.dates)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}
+        ${diffusion(s).some(b => b.n) ? `<div class="prog-frise"><p class="k">${esc(L.representations)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}
         ${P.lieux ? `<details class="fp-lieux"><summary>${esc(L.lieuxDiffusion)}</summary><p${edS(s, 'programmer', 'lieux')}>${esc(P.lieux)}</p></details>` : ''}
         ${docs.length ? `<div class="fp-docs"><p class="k">${esc(L.aTelecharger)}</p><ul class="u-docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>` : ''}
         <p class="fp-liens">${dossierBouton(s.slug, 'bu plein')}<a class="bu plein" href="${href}" aria-label="${esc(`${s.titre} – ${L.decouvrir}`)}">${esc(L.decouvrir)}${FLECHE}</a>${lienVideo(s, 'boite')}</p>
@@ -3823,11 +3868,18 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   function voir(q, surPlace, ouvrir = null) {
     vue = 'saisons';
     const M0 = menuDe('saisons') || { texte: L.saisons, href: '#/saisons' }, S0 = S.saisons[0];
+    // (demande de la compagnie) une date dont le jour n'est pas encore fixé (« novembre 2026 ») ne paraît pas dans les saisons
+    // tant qu'elle n'est pas passée : ni dans les listes, ni sur la frise, ni sur la carte ; elle attend son jour. Une date
+    // passée qui n'a gardé que son mois ou son année reste dans l'histoire
+    const aDefinir = d => !!d && d.precision === 'month' && (d.fin || d.iso || '') >= D.aujourdhui;
+    const datesFixees = D.dates.filter(d => !aDefinir(d));
+    const sansADefinir = rows => { let hors = false; return rows.filter(r => { if (!r.suite) hors = aDefinir(r.d); return !hors; }); };
     // la carte de la saison : ses communes à venir, en avant ; celles où elle est déjà passée, en retrait
-    const lieux = CARTE.aVenir(), vusC = new Set(lieux.map(x => x.l)), passeC = CARTE.saison(D.saison).filter(x => !vusC.has(x.l));
+    const lieux = CARTE.aVenir().map(x => { const ds = x.dates.filter(d => !aDefinir(d)); return ds.length === x.dates.length ? x : { ...x, dates: ds, n: ds.length }; }).filter(x => x.dates.length);
+    const vusC = new Set(lieux.map(x => x.l)), passeC = CARTE.saison(D.saison).filter(x => !vusC.has(x.l));
     const tout = retenu('agendaPasse', agendaPasse), passe = tout.filter(s => s.k !== D.saison);
-    const lignes = retenu('lignesEnCours', lignesEnCours), puces = spectaclesAgenda(D.dates, tout);
-    const proch = D.dates.map(d => ({ d, cle: d.slug, l: d.l, id: cleProchaine(d), txt: norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')} ${CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) }));
+    const lignes = sansADefinir(retenu('lignesEnCours', lignesEnCours)), puces = spectaclesAgenda(datesFixees, tout);
+    const proch = datesFixees.map(d => ({ d, cle: d.slug, l: d.l, id: cleProchaine(d), txt: norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')} ${CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) }));
     if (!surPlace || !etat.voir) { const l0 = q.get('l'); etat.voir = { q: '', slug: null, l: l0 !== null && [...lieux, ...passeC].some(x => x.l === +l0) ? +l0 : null, ouv: new Set(ouvrir ? [ouvrir] : []), avant: null, date: q.get('date') }; }
     else if (ouvrir) etat.voir.ouv.add(ouvrir);
     const F = etat.voir;
@@ -3849,21 +3901,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     // [[ligne, repère]] : la légende compte les repères de chaque spectacle
     const ptsSaison = g => [...proch.filter(g).map(r => [r, repereProchaine(r.d)]),
       ...lignes.filter(r => !r.suite && g(r) && (r.d.residence || (r.k && r.k < D.aujourdhui))).map(r => [r, repereLigne(r.d, D.saison, r.i, r.g.slug, r.titre)])].filter(([, p]) => p);
-    const reperesSaison = () => ptsSaison(garde).map(([, p]) => p);
-    // la légende de la frise (la 07) : chaque spectacle de la saison, dans l'ordre des filtres (ceux qui tournent d'abord),
-    // sa lampe, son titre et le nombre de ses dates que le filtre garde (un spectacle écarté s'éteint ; ses résidences ne
-    // comptent pas : un spectacle qui n'a qu'elles paraît sans nombre) ; puis le losange des dates scolaires et le carré
-    // évidé des résidences, quand la saison en a
-    function legende() {
-      const tous = ptsSaison(() => true), n = new Map(), rs = new Map(), vus = new Map();
-      ptsSaison(garde).forEach(([r, p]) => { const m = p.residence ? rs : n; m.set(r.cle, (m.get(r.cle) || 0) + 1); });
-      tous.forEach(([r, p]) => { if (!vus.has(r.cle)) vus.set(r.cle, { cle: r.cle, titre: r.titre || r.d.titre, couleur: p.couleur }); });
-      const rang = c => { const j = puces.findIndex(x => x.cle === c); return j < 0 ? 999 : j; };
-      return [...vus.values()].sort((a, b) => rang(a.cle) - rang(b.cle)).map(x => { const k = n.get(x.cle) || 0, vide = !k && !rs.get(x.cle);
-        return `<li class="fs7-l${vide ? ' est-vide' : ''}" data-cle="${esc(x.cle)}" style="--c:${x.couleur}"><i aria-hidden="true"></i><span>${esc(x.titre)}${k || vide ? `&nbsp;<b>${k}</b>` : ''}</span></li>`; }).join('')
-        + (tous.some(([, p]) => p.scolaire) && L.scolaire ? `<li class="fs7-l fs7-sc"><i aria-hidden="true"></i><span>${esc(L.scolaire)}</span></li>` : '')
-        + (tous.some(([, p]) => p.residence) && L.residence ? `<li class="fs7-l fs7-rs"><i aria-hidden="true"></i><span>${esc(L.residence)}</span></li>` : '');
-    }
+    // (demande de la compagnie : une frise plus simple) des pastilles seules, à la couleur de leur spectacle : la liste dit
+    // « Scolaire » ; deux couloirs au plus, sans légende sous la frise (les puces des spectacles, juste au-dessus, la font)
+    const reperesSaison = () => ptsSaison(garde).map(([, p]) => (p.scolaire ? { ...p, scolaire: false } : p));
     main.innerHTML = `<header class="s7-entete mv-principal" data-mv-nom="entree-saisons"><div class="wrap">
         <p class="s7-sur"${ed('site.nom')}>${esc(S.nom)}</p>
         <h1 class="s7-titre" tabindex="-1">${esc(M0.texte)}</h1>
@@ -3875,7 +3915,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       </div>
       <section class="s7" id="v-saison" aria-labelledby="h-saison"><div class="wrap">
         <header class="s7-tete"><h2 class="s7-t" id="h-saison" data-mv="monte">${esc(S0.titre)}</h2><p class="s7-k"><span class="s7-gel" aria-hidden="true"></span>${esc(L.saisonEnCours)}</p></header>
-        <div class="fs7"><div class="v-frise" id="v-frise"></div><ul class="fs7-leg" aria-label="${esc(L.spectacles)}">${legende()}</ul></div>
+        <div class="fs7"><div class="v-frise" id="v-frise"></div></div>
         <div class="ag7">
           <div class="ag-listes" id="ag-listes">
             <div class="ag7-proch"><h3 class="s7-h">${esc(L.prochainesDates)}</h3><div class="ag-liste" id="ag-liste"></div></div>
@@ -3919,7 +3959,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
           </form>
         </div>
       </div></section>`;
-    const svg = $('.ag7-carte svg'), liste = $('#ag-liste'), toutes = $('#ag-toutes'), listes = $('#ag-listes'), racine = $('#ag-saisons'), index = $('#ag-index'), legC = $('.s7-legende'), fs7 = $('.fs7');
+    const svg = $('.ag7-carte svg'), liste = $('#ag-liste'), toutes = $('#ag-toutes'), listes = $('#ag-listes'), racine = $('#ag-saisons'), index = $('#ag-index'), legC = $('.s7-legende');
     // quand le filtre change, les saisons qui ont des résultats s'ouvrent ; quand il s'efface, les saisons reprennent leur état d'avant
     function recompte() {
       if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
@@ -3928,8 +3968,8 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const visibles = () => passe.map(s => ({ s, rows: s.rows.filter(garde) })).filter(x => x.rows.length);
     // la frise des saisons : chaque saison et sa densité (les dates que le filtre garde), la saison en cours comprise
     // (leur nom court sous l'arche, « 16-17 », comme la 04)
-    const bandesSaisons = () => [...passe.slice().reverse().map(s => ({ id: s.k, debut: `${s.k.slice(0, 4)}-09-01`, fin: `${s.k.slice(5)}-08-31`, titre: s.titre, n: s.rows.filter(r => jouee(r) && garde(r)).length, etiquette: `${s.k.slice(2, 4)}-${s.k.slice(7, 9)}` })),
-      { id: D.saison, debut: `${D.saison.slice(0, 4)}-09-01`, fin: `${D.saison.slice(5)}-08-31`, titre: S0.titre, n: lignes.filter(r => jouee(r) && garde(r)).length, etiquette: `${D.saison.slice(2, 4)}-${D.saison.slice(7, 9)}` }];
+    const bandesSaisons = () => [...passe.slice().reverse().map(s => ({ id: s.k, debut: `${s.k.slice(0, 4)}-09-01`, fin: `${s.k.slice(5)}-08-31`, titre: s.titre, n: nbReps(s.rows.filter(r => jouee(r) && garde(r))), etiquette: `${s.k.slice(2, 4)}-${s.k.slice(7, 9)}` })),
+      { id: D.saison, debut: `${D.saison.slice(0, 4)}-09-01`, fin: `${D.saison.slice(5)}-08-31`, titre: S0.titre, n: nbReps(lignes.filter(r => jouee(r) && garde(r))), etiquette: `${D.saison.slice(2, 4)}-${D.saison.slice(7, 9)}` }];
     // réserver (règle 17) : la date d'une ligne réservable est un bouton (son horaire écrit dessus) qui ouvre la carte de
     // réservation sous la ligne, dans l'univers de son spectacle ; une seule ouverte à la fois ; les dates annulées gardent leur date
     const resV = RS ? RS.dates() : [], resCles = new Set(resV.map(d => RS.cle(d))), parFriseV = new Map(resV.map(d => [cleProchaine(d), RS.cle(d)]));
@@ -4057,7 +4097,6 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
       $('#choix-lieu').innerHTML = F.l !== null ? `<button class="s7-chip s7-chip--lieu" type="button" aria-pressed="true">${esc(CARTE.nom(CARTE.lieux[F.l]))}${CROIX}</button>` : '';
       $$('[data-s]', main).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.s === F.slug)));
       if ($('#cherche').value !== F.q) $('#cherche').value = F.q;
-      const lg = $('.fs7-leg', main); if (lg) lg.innerHTML = legende();
     }
     let fSaison = null, fSaisons = null;
     let agenda = false;   // les saisons passées, sous le pli, sont dessinées dans la tâche qui suit le premier rendu (le visible d'abord)
@@ -4154,22 +4193,25 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     // ligne, sa commune et l'écrit sous la carte ; un clic choisit sa date (ou mène à sa ligne)
     function poserFrise() {
       if (fSaison || !racine.isConnected) return;
-      fSaison = frise($('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: S0.titre, regrouper: 0, couloirs: 4, moisMin: 84, classe: 'frise-saison',
+      fSaison = frise($('#v-frise'), { echelle: 'saison', saison: D.saison, points: reperesSaison(), libelle: S0.titre, regrouper: 0, couloirs: 2, moisMin: 84, classe: 'frise-saison',
         relier: { liste: main, carte: l => { survolCarte(svg, l == null ? F.l : l); legendeCarte(l); } },
         choix: p => { const k = parFriseV.get(p.id); if (k && rsVoir && rsVoir.cle() !== k) rsVoir.choisir(k); allerLigne(p.id); } });
       if (fSaison) lierCarte(svg, { survol: l => { if (l == null) fSaison.eteindre(); else fSaison.allumer({ l }); } });
     }
-    // la légende survolée : les dates de ce spectacle seules sur la frise
+    // une puce survolée : les dates de ce spectacle seules sur la frise (les puces font la légende de la frise)
     let legOn = null;
-    const isoler = li => {
-      if (li === legOn || !fSaison) return;
-      legOn = li;
-      const el = fSaison.el; el.classList.toggle('est-filtre', !!li);
-      const ids = li ? new Set(ptsSaison(garde).filter(([r]) => r.cle === li.dataset.cle).map(([, p]) => String(p.id))) : null;
+    const isoler = b => {
+      if (b === legOn || !fSaison) return;
+      legOn = b;
+      const el = fSaison.el; el.classList.toggle('est-filtre', !!b);
+      const ids = b ? new Set(ptsSaison(garde).filter(([r]) => r.cle === b.dataset.s).map(([, p]) => String(p.id))) : null;
       $$('.frise-point', el).forEach(x => x.classList.toggle('est-sp', !!ids && ids.has(x.dataset.id)));
     };
-    fs7.addEventListener('pointerover', e => isoler(e.target.closest && e.target.closest('.fs7-l[data-cle]')), { passive: true });
-    fs7.addEventListener('pointerleave', () => isoler(null), { passive: true });
+    const puces7 = $('.s7-chips', main);
+    if (puces7) {
+      puces7.addEventListener('pointerover', e => isoler(e.target.closest && e.target.closest('.s7-chip[data-s]')), { passive: true });
+      puces7.addEventListener('pointerleave', () => isoler(null), { passive: true });
+    }
     // la frise est dans le premier écran : posée tout de suite (rien ne saute) ; le reste, sous le pli (toutes les dates, les
     // saisons passées), dans la tâche suivante, sauf quand la vue se refait en place (D a changé), qu'un filtre est actif ou
     // qu'une saison est demandée (#/saisons/<saison>)
@@ -4230,12 +4272,12 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     const svg = $('.ep-diff-carte svg', main);
     bulleSur(svg, $('#bulle'), l => { const x = lieux.find(y => y.l === l);
       return x ? `<b>${esc(CARTE.nom(x))}</b><ul>${[...new Set(x.dates.map(d => d.spectacle))].map(t => `<li><span class="t">${esc(t)}</span></li>`).join('')}</ul>` : ''; });
-    // la diffusion de la compagnie, saison par saison (le nombre de ses dates) ; celle de chaque spectacle est dans sa fiche
+    // la diffusion de la compagnie, saison par saison (le nombre de ses représentations) ; celle de chaque spectacle est dans sa fiche
     // (sa largeur attendue : la colonne de gauche de l'aplat au bureau, toute la largeur au téléphone)
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
     const lDiff = innerWidth > 980 ? Math.round((largeurWrap() + 28 - Math.min(80, Math.max(32, innerWidth * .044))) * 5 / 12) - 28 : largeurWrap();
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', largeur: lDiff, anMin: 38,
-      bandes: ks.map(k => bandeSaison(k, D.saisons[k].spectacles.reduce((a, g) => a + nbDates(g), 0))) });
+      bandes: ks.map(k => bandeSaison(k, repsSaison(k).tout)) });
     frisesDiffusion(main);
     bientot(() => { pousser(svg); initSimulateurPro(); });
     return { titre: e.texte, entree: 'programmer' };
@@ -4304,8 +4346,9 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
      la carte de ses tournées, son lieu et son temps, sa création, son action culturelle, son accroche, sa prochaine date tout
      public (ou son annonce, en création) et le lien vers sa page. L'aperçu se relaie : un fondu, ses lignes arrivent l'une
      après l'autre (MOUVEMENT.cascade) et, la première fois qu'il paraît, les bras de sa carte poussent depuis Rouen. Au
-     téléphone, la liste seule, chaque ligne avec sa vignette, sa création, son lieu et son temps, sa prochaine date. Relu dans
-     D à chaque rendu ; le spectacle de l'aperçu est gardé d'une visite à l'autre (et quand D change, la vue se refait sur lui). */
+     téléphone (jusqu'à 899 px), la pile d'affiches (afficheTdm, lierPile) : les huit tranches dans l'écran, l'affiche dépliée
+     d'une touche, avec sa fiche et la carte de sa tournée. Relu dans D à chaque rendu ; le spectacle de l'aperçu, comme
+     l'affiche dépliée, sont gardés d'une visite à l'autre (et quand D change, la vue se refait sur eux). */
   let tdmChoisi = null;
   // (les polices de titre n'ont pas la même taille apparente : le coefficient de chacune, celui de la 08)
   const TK = { 'Anton': .9, 'Space Grotesk': .9, 'Ubuntu': .92, 'Cormorant Garamond': 1.1, 'Bodoni Moda': .94, 'IM Fell English': 1.02, 'IM Fell French Canon': .98 };
@@ -4333,20 +4376,14 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     f.innerHTML = carte({ lieux, passe, titre: s.titre, interactif: false, simple: lieux.length > 14 });
     echelle();
   }
-  // (la fenêtre s'élargit sur la page : l'aperçu se fait, sur la ligne montrée)
-  ETROIT_TDM.addEventListener('change', () => {
-    const pv = vue === 'spectacles' && largeTdm() ? $('.tdm-pv-in', main) : null;
-    if (!pv) return;
-    const i0 = Math.max(0, $$('.tdm-a', main).findIndex(a => a.classList.contains('est-actif')));
-    if (!pv.firstElementChild) pv.innerHTML = D.shows.map((s, i) => apercuTdm(s, i, i === i0)).join('');
-    montrerTdm(i0, false);
-  });
+  // (la fenêtre passe d'un côté à l'autre de 900 px sur la page : la vue se refait en place, le sommaire et son aperçu sur la
+  // ligne montrée, ou la pile sur l'affiche dépliée)
+  ETROIT_TDM.addEventListener('change', () => { if (vue === 'spectacles') refaire(); });
   const ligneTdm = (s, i, actif) => `<li class="tdm-i" data-motif="${esc(mo(s))}" data-mv-nom="sp-${esc(s.slug)}" style="${styleTdm(s)}">
       <a class="tdm-a${actif ? ' est-actif' : ''}" href="${lienSp(s.slug)}" data-i="${i}" data-slug="${esc(s.slug)}">
         <span class="tdm-v"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" width="112" height="75" loading="lazy" decoding="async"></span>
         <span class="tdm-ligne"><span class="tdm-t"><span class="tt"${edS(s, 'titre')}>${esc(s.titre)}</span></span><span class="tdm-fil" aria-hidden="true"></span>${s.annee ? `<span class="tdm-an">${esc(s.annee)}</span>` : ''}</span>
         <span class="tdm-dek">${s.sousTitre ? `<span class="tdm-st"${edS(s, 'sousTitre')}>${s.sousTitre}</span>` : ''}${badgeDe(s) ? `<span class="tdm-tag${s.statut ? '' : ' vit'}">${badgeDe(s)}</span>` : ''}</span>
-        <span class="tdm-x">${s.creation ? `<span class="tdm-cr"${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${suiteTdm(s, 'span', 'tdm-suite')}</span>
       </a></li>`;
   function apercuTdm(s, i, actif) {
     const A = s.actionCulturelle, L0 = lieuxTdm(s), k = L0.lieux.length + L0.passe.length > 0;
@@ -4361,10 +4398,68 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
         <div class="tdm-pied">${suiteTdm(s, 'p', 'tdm-date') || '<span></span>'}<a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></div>
       </div>`;
   }
+  // la pile d'affiches (au téléphone) : une tranche par spectacle, l'affiche dépliée d'une touche ; l'affiche dépliée est
+  // gardée d'un rendu à l'autre (D qui change, la fenêtre qui se resserre)
+  let pileOuverte = null;
+  function afficheTdm(s) {
+    const d = D.dates.find(x => x.slug === s.slug && !x.scolaire), A = s.actionCulturelle, id = `pil-${s.slug}`, ouvert = pileOuverte === s.slug;
+    const L0 = lieuxTdm(s), k = L0.lieux.length + L0.passe.length > 0;
+    return `<li class="pil-aff ${uClasse(s)}${ouvert ? ' ouvert' : ''}" style="${styleTdm(s)}" data-slug="${esc(s.slug)}" data-mv-nom="sp-${esc(s.slug)}">
+      <h2 class="pil-h"><button type="button" class="pil-dos" id="${id}-b" aria-expanded="${ouvert}" aria-controls="${id}-c">
+        <span class="pil-ph"${edP(s, 'photo')}><img src="${D.photos[s.slug]}" alt="" decoding="async"></span><span class="pil-voile" aria-hidden="true"></span><span class="pil-voile2" aria-hidden="true"></span>
+        <span class="pil-txt"><span class="pil-t"${edS(s, 'titre')}>${esc(s.titre)}</span>${s.annee ? `<span class="pil-an">${esc(s.annee)}</span>` : '<span></span>'}
+          <span class="pil-sous">${badgeDe(s) ? `<span class="pil-etat${s.statut ? '' : ' vit'}">${badgeDe(s)}</span>` : ''}${d && !s.statut ? `<span class="pil-pro"${dateId(d)}>${esc(d.ligne)}</span>` : ''}</span></span>
+      </button></h2>
+      <div class="pil-corps" id="${id}-c" role="region" aria-labelledby="${id}-b"${ouvert ? '' : ' inert'}><div class="pil-in"><div class="pil-fiche">
+        ${s.sousTitre ? `<p class="pil-st"${edS(s, 'sousTitre')}>${s.sousTitre}</p>` : ''}
+        <p class="tdm-k">${petit(mo(s))}<span class="tdm-kl"><span class="tdm-kk">${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}${s.creation ? `<span${edS(s, 'creation')}>${esc(s.creation)}</span>` : ''}${A && A.type ? `<span${edS(s, 'actionCulturelle', 'type')}>${esc(A.type)}</span>` : ''}</span></span></p>
+        ${s.accroche ? `<p class="pil-acc"${edS(s, 'accroche')}>${esc(s.accroche)}</p>` : ''}
+        ${suiteTdm(s, 'p', 'pil-date')}
+        ${k ? `<figure class="tdm-carte" data-carte="${esc(s.slug)}" hidden></figure>` : ''}
+        <p class="pil-pied"><a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></p>
+      </div></div></div>
+    </li>`;
+  }
+  // une tranche touchée se déplie (sa carte se dessine à la première ouverture, ses bras poussent, sa fiche arrive en
+  // cascade, puis l'affiche vient en haut de l'écran) ; une seule dépliée à la fois, la toucher encore la replie. En mode
+  // édition, les textes, la photo et la date de la tranche s'éditent sans la déplier (EDITION arrête le clic avant nous)
+  function lierPile() {
+    const pile = $('.pil', main); if (!pile) return;
+    const affs = $$('.pil-aff', pile), haut = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--haut')) || 56;
+    const fermer = li => { li.classList.remove('ouvert'); $('.pil-dos', li).setAttribute('aria-expanded', 'false'); $('.pil-corps', li).setAttribute('inert', ''); if (pileOuverte === li.dataset.slug) pileOuverte = null; };
+    const deplier = (li, deja) => {
+      li.classList.add('ouvert'); pileOuverte = li.dataset.slug;
+      $('.pil-dos', li).setAttribute('aria-expanded', 'true'); $('.pil-corps', li).removeAttribute('inert');
+      const f = $('.tdm-carte[data-carte]', li);
+      if (f) { carteTdm(li); f.hidden = false; }
+      const svg = $('svg.carte', li);
+      if (deja) { if (svg) pousser(svg); return; }
+      if (svg) bientot(() => pousser(svg));
+      if (MV && motionOK()) MV.cascade($('.pil-fiche', li), { selecteur: '.pil-st, .tdm-k, .pil-acc, .pil-date, .tdm-carte, .pil-pied', pas: 40, duree: 300, decalage: 8 });
+      const aller = () => scrollTo({ top: Math.max(0, li.getBoundingClientRect().top + scrollY - haut() - 8), behavior: motionOK() ? 'smooth' : 'instant' });
+      if (motionOK()) setTimeout(aller, 470); else aller();
+    };
+    pile.addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('.pil-dos'); if (!b) return;
+      const li = b.closest('.pil-aff'), etait = li.classList.contains('ouvert');
+      affs.forEach(x => { if (x !== li && x.classList.contains('ouvert')) fermer(x); });
+      if (etait) fermer(li); else deplier(li, false);
+    });
+    const deja = pileOuverte ? affs.find(x => x.dataset.slug === pileOuverte) : null;
+    if (deja) deplier(deja, true);
+  }
   function spectacles() {
     vue = 'spectacles';
     const sh = D.shows, i0 = Math.max(0, sh.findIndex(s => s.slug === tdmChoisi)), S0 = (S.saisons || [])[0] || {}, ms = menuDe('saisons');
     tdmChoisi = sh[i0] ? sh[i0].slug : null;
+    if (!largeTdm()) {
+      main.innerHTML = `<section class="tdm"><div class="tdm-g">
+        <div class="page-titre pil-tete"><h1 id="tdm-h" tabindex="-1">${esc(MENU.spectacles.texte)}</h1>${S0.titre ? (ms ? `<a class="pil-sai" href="${esc(ms.href)}">${esc(S0.titre)}</a>` : `<span class="pil-sai">${esc(S0.titre)}</span>`) : ''}</div>
+        <ol class="pil" aria-labelledby="tdm-h">${sh.map(afficheTdm).join('')}</ol>
+      </div></section>`;
+      lierPile();
+      return { titre: MENU.spectacles.texte, menu: 'spectacles' };
+    }
     main.innerHTML = `<section class="tdm">
       <div class="tdm-g">
         <div class="page-titre"><h1 id="tdm-h" tabindex="-1">${esc(MENU.spectacles.texte)}</h1>${trait()}</div>
@@ -4437,60 +4532,91 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     return `<section class="bloc sans-filet troupe" aria-labelledby="h-troupe"><div class="wrap">
       <h2 class="titre-bloc" id="h-troupe"${ed('site.troupe.titre')}>${esc(TROUPE.titre())}</h2>${trait()}
       <div class="tr6" data-troupe>
-        <svg class="tr6-bras" aria-hidden="true" focusable="false"></svg>
         <div class="tr6-coeur" aria-hidden="true">${D.logo.octopus}</div>
         ${ordre.map(c => `<section class="tr6-cat${c === jeu ? ' tr6-jeu' : ''}" data-troupe-categorie="${esc(c.cle)}" aria-labelledby="tr6-h-${esc(c.cle)}">
           <h3 class="tr6-t" id="tr6-h-${esc(c.cle)}"><span class="tr6-ic">${TROUPE.icone(c.cle)}</span><span${ed(`site.troupe.categories.${c.i}.titre`)}>${esc(c.titre)}</span></h3>
           <ul class="tr6-places">${[...c.places.filter(aPhoto), ...c.places.filter(x => !aPhoto(x))].map(placeTroupe).join('')}</ul></section>`).join('')}
       </div></div></section>`;
   }
-  // les bras : un tronc qui descend de la pieuvre le long du bord, une branche vers l'icône de chaque catégorie ; tracés d'après
-  // la mise en page (lue à l'image qui suit, puis quand la troupe change de largeur), découverts par un masque. mode : 'pousse'
-  // (ils poussent), 'cache' (pas encore à l'écran : masqués, en attendant de pousser), sinon posés
-  function brasTroupe(tr, mode) {
-    const svg = $('.tr6-bras', tr), coeur = $('.tr6-coeur', tr);
-    if (!svg || !coeur || typeof TROUPE === 'undefined' || !tr.isConnected) return;
-    const r0 = tr.getBoundingClientRect(), W = r0.width, H = r0.height;
-    if (!W || !H) return;
-    const c = coeur.getBoundingClientRect(), x0 = c.left - r0.left + c.width * .5, y0 = c.top - r0.top + c.height * .78;
-    const ics = $$('.tr6-ic', tr).map(i => { const r = i.getBoundingClientRect(); return [r.left - r0.left, r.top - r0.top + r.height / 2]; });
-    if (!ics.length) return;
-    const xs = Math.max(10, Math.min(x0, ...ics.map(q => q[0])) - 30), yN = ics[ics.length - 1][1];
-    // le tronc a rejoint le bord avant la première branche
-    const yb = Math.max(y0 + 24, Math.min(y0 + 90, ics[0][1] - 34));
-    const tronc = TROUPE.lisse([[x0, y0], [x0 - (x0 - xs) * .5, y0 + (yb - y0) * .45], [xs, yb], [xs, Math.max(yN, yb + 1)]]);
-    const branches = ics.map(([x, y]) => TROUPE.courbe([xs, y - 26], [x - 4, y], { courbe: .3 }));
-    const f = n => n.toFixed(1);
-    svg.setAttribute('viewBox', `0 0 ${f(W)} ${f(H)}`);
-    svg.innerHTML = `<defs><mask id="tr6-masque" maskUnits="userSpaceOnUse" x="0" y="0" width="${f(W)}" height="${f(H)}">
-        <path class="tr6-mq" pathLength="1" d="${tronc.d}"${mode === 'cache' ? ' style="stroke-dashoffset:1"' : ''}/>${branches.map(b => `<path class="tr6-mq" pathLength="1" d="${b.d}"${mode === 'cache' ? ' style="stroke-dashoffset:1"' : ''}/>`).join('')}</mask></defs>
-      <g mask="url(#tr6-masque)"><path class="tr6-b" d="${TROUPE.effile(tronc, { w0: 14, w1: 4 })}"/>${branches.map(b => `<path class="tr6-b" d="${TROUPE.effile(b, { w0: 5, w1: 2 })}"/>`).join('')}</g>
-      ${ics.map(([x, y]) => `<circle class="tr6-vent" cx="${f(x - 4)}" cy="${f(y)}" r="3.4"/>`).join('')}`;
-    if (mode !== 'pousse' || !svg.animate) return;
-    $$('.tr6-mq', svg).forEach((m, i) => m.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: i ? 520 : 900, delay: i ? 260 + i * 90 : 0, easing: 'cubic-bezier(.2, .7, .2, 1)', fill: 'backwards' }));
+  // ce que la créature de la troupe doit savoir pour se balader, par rapport à la troupe (lu à l'image qui suit le rendu, puis
+  // quand la troupe change de largeur) : sa place de repos (le centre du dessin de tête), le milieu de la marge où elle nage,
+  // le dernier médaillon, les médaillons
+  function placerTroupe(tr) {
+    const coeur = $('.tr6-coeur', tr);
+    if (!coeur || !tr.isConnected) return;
+    const r0 = tr.getBoundingClientRect(), c = coeur.getBoundingClientRect(), ics = $$('.tr6-ic', tr);
+    if (!r0.width || !ics.length) return;
+    const xMin = Math.min(...ics.map(i => i.getBoundingClientRect().left - r0.left)), dernier = ics[ics.length - 1].getBoundingClientRect();
+    troupeGeo = { x0: c.left - r0.left + c.width * .5, yc: c.top - r0.top + c.height * .5, largeur: c.width, xg: Math.max(26, xMin / 2), yN: dernier.top - r0.top + dernier.height / 2, ics };
+    if (troupeCreature) troupeCreature.reveil();
   }
-  // la troupe prend vie : les liens entre les places d'une personne (au clavier aussi), les bras qui poussent à l'arrivée, les
-  // icônes qui s'animent une fois à leur arrivée dans l'écran
-  let troupeCtl = null, troupeIO = null, troupeRO = null;
-  function vivreTroupe() {
+  // la troupe prend vie : les liens entre les places d'une personne (au clavier aussi), la créature, les icônes qui s'animent
+  // une fois à leur arrivée dans l'écran
+  let troupeCtl = null, troupeIO = null, troupeRO = null, troupeCreature = null, troupeGeo = null;
+  function finirTroupe() {
     if (troupeCtl) { troupeCtl.detruire(); troupeCtl = null; }
     if (troupeIO) { troupeIO.disconnect(); troupeIO = null; }
     if (troupeRO) { troupeRO.disconnect(); troupeRO = null; }
+    if (troupeCreature) { troupeCreature.arreter(); troupeCreature = null; }
+    troupeGeo = null;
+  }
+  // la pieuvre de la troupe se balade : une créature (CREATURE.creer, les vraies tentacules), dessinée à la place de la pieuvre
+  // de tête, toujours en mouvement (ses tentacules ondulent, elle respire, se balance, un halo l'entoure) ; quand la lecture
+  // descend, elle quitte sa place, rapetisse de moitié et nage dans la marge de gauche, à hauteur de lecture, en retard d'un
+  // rien, par impulsions ; au passage, une tentacule attrape le médaillon du métier qu'on lit (qui s'anime), et le lâche
+  // pour le suivant. Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe pas (le dessin de tête reste)
+  function creatureTroupe(tr) {
+    if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
+    let y = null, bouge = false, prise = null;
+    const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.6, lueur: true,
+      eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
+      placer() {
+        const g = troupeGeo;
+        if (!g || !tr.isConnected) return null;
+        const r = tr.getBoundingClientRect();
+        if (r.bottom < -60 || r.top > innerHeight + 60) { y = null; return null; }
+        const mobile = innerWidth < 760;
+        // la place visée : à hauteur de lecture, entre sa place de repos (en tête) et le dernier médaillon ; elle y va en
+        // retard d'un rien (v : ce qu'elle avance à cette image, pour qu'elle se penche et rame dans ce sens)
+        const yTete = r.top + g.yc, yFin = r.top + g.yN, vise = clamp(innerHeight * .42, yTete, yFin);
+        if (y === null) y = vise;
+        const d = vise - y, v = d * .1; y += v; bouge = Math.abs(d) > .4;
+        // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 80 px) et gagne le milieu de la marge
+        const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, mobile ? 52 : 84, q), x = r.left + lerp(g.x0, g.xg, q);
+        // la tentacule attrape le médaillon le plus proche de son cœur (à portée), qui s'anime, et le lâche pour le suivant
+        let proche = null, dp = 160;
+        for (const ic of g.ics) { const b = ic.getBoundingClientRect(), dy = Math.abs(b.top + b.height / 2 - y); if (dy < dp) { dp = dy; proche = ic; } }
+        if (proche !== prise) {
+          if (prise) { const cat = prise.closest('.tr6-cat'); if (cat) cat.classList.remove('est-tenue'); }
+          prise = proche;
+          if (proche) {
+            c.vers(proche, { prise: 'medaillon', bras: 'boucleR', tenir: Infinity, duree: 760 });
+            const cat = proche.closest('.tr6-cat'), i = $('.troupe-icone', proche);
+            if (cat) cat.classList.add('est-tenue');
+            if (i) { i.classList.add('est-vivant'); setTimeout(() => i.classList.remove('est-vivant'), 1600); }
+          } else c.revenir();
+        }
+        return { x, y, largeur, bouge, v };
+      } });
+    if (c) c.demarrer();
+    return c;
+  }
+  function vivreTroupe() {
+    finirTroupe();
     const tr = $('.tr6', main);
     if (!tr || typeof TROUPE === 'undefined') return;
     troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true });
-    let vu = !motionOK() || surPlaceRendu || !('IntersectionObserver' in window), largeur = 0;
-    const etat = () => (vu ? 'pose' : 'cache');
-    requestAnimationFrame(() => brasTroupe(tr, etat()));
+    troupeCreature = creatureTroupe(tr);
+    let largeur = 0;
+    requestAnimationFrame(() => placerTroupe(tr));
     if ('ResizeObserver' in window) {
-      troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => brasTroupe(tr, etat())); } });
+      troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => placerTroupe(tr)); } });
       troupeRO.observe(tr);
     }
-    if (!vu) {
+    if (motionOK() && !surPlaceRendu && 'IntersectionObserver' in window) {
       troupeIO = new IntersectionObserver(es => es.forEach(x => { if (!x.isIntersecting) return;
-        if (x.target === tr) { troupeIO.unobserve(tr); if (!vu) { vu = true; brasTroupe(tr, 'pousse'); } }
-        else { troupeIO.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); } }), { rootMargin: '0px 0px -12% 0px' });
-      troupeIO.observe(tr);
+        troupeIO.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
       $$('.troupe-icone', tr).forEach(i => troupeIO.observe(i));
     }
     tr.addEventListener('error', e => {
@@ -4825,23 +4951,23 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   // par saison, la plus récente d'abord, repliées sous leur titre ; la frise de sa tournée y mène
   function historiqueSp(s) {
     const G = datesPassees(s); if (!G.length || !L.historique) return '';
-    const n = G.reduce((a, g) => a + g.rows.filter(r => !r.suite).length, 0);
-    return `<details class="sp-historique"><summary>${esc(L.historique)} <small>${n}</small></summary><div class="u-bilan-dates dates-sp">${listeHistorique(G, s.slug)}</div></details>`;
+    const n = G.reduce((a, g) => a + nbReps(g.rows), 0);   // (ses représentations : les résidences n'en comptent pas)
+    return `<details class="sp-historique"><summary>${esc(L.historique)}${n ? ` <small>${n}</small>` : ''}</summary><div class="u-bilan-dates dates-sp">${listeHistorique(G, s.slug)}</div></details>`;
   }
   // les dates d'un spectacle, saison par saison (G, de datesPassees), puis mois par mois : une ligne ne dit que ses jours, son
   // mois est au-dessus (comme sur la page des saisons) ; une ligne de suite reste avec la sienne. compte : le nombre de ses
-  // dates (sans les résidences) à côté du nom de la saison, qui mène à la saison (le bilan)
+  // représentations à côté du nom de la saison, qui mène à la saison (le bilan)
   function listeHistorique(G, slug, compte = false) {
     const parMois = rows => rows.reduce((out, r) => { const m = r.suite && out.length ? out[out.length - 1].m : groupeDe(r);
       if (!out.length || out[out.length - 1].m !== m) out.push({ m, rows: [] }); out[out.length - 1].rows.push(r); return out; }, []);
-    return G.map(g => { const nb = g.rows.filter(r => !r.suite && !r.d.residence).length;
+    return G.map(g => { const nb = nbReps(g.rows);
       return `<section class="u-bilan-s"><h3 class="mois">${compte ? `<a href="#/saisons/${g.k}">${esc(g.titre)}</a>${nb ? ` <small>${nb}</small>` : ''}` : esc(g.titre)}</h3>${parMois(g.rows).map(x => `${x.m ? `<p class="u-mois">${esc(titreGroupe(x.m))}</p>` : ''}<ul class="dates" data-agenda="${esc(slug)}">${x.rows.map(r => ligneAgenda(r, '', true)).join('')}</ul>`).join('')}</section>`; }).join('');
   }
   function bilanSp(s, chap, G) {
     // (les chiffres ne comptent ni les dates annulées ni les résidences, règle 23 : elles paraissent dans ses dates, marquées)
     const jouee = r => !r.suite && !annulee(r.d) && !r.d.residence;
     const P = s.programmer || {}, jouees = G.flatMap(g => g.rows).filter(jouee), T = CARTE.spectacle(s.slug);
-    const chiffres = [[jouees.length, L.dates], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes],
+    const chiffres = [[nbReps(jouees), L.representations], [new Set(jouees.map(r => r.d.l).filter(l => l != null)).size, L.communes],
       [G.filter(g => g.rows.some(jouee)).length, L.saisons]].filter(([n, l]) => n && l);
     return chapitre(chap, 'bilan', L.bilan, `<div class="wrap">${titreChap(esc(L.bilan))}
         ${P.representations ? `<p class="u-bilan-rep"${edS(s, 'programmer', 'representations')}>${esc(P.representations)}</p>` : ''}
@@ -4890,7 +5016,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     h += chapitre(chap, 'lieux', L.lieuxDiffusion, `<div class="wrap">${titreChap(esc(L.lieuxDiffusion))}<div class="u-tournee"><div>
         ${P.representations ? `<p class="u-rep"${pr('representations')}>${nombre(P.representations)}</p>` : ''}${P.lieux ? `<p class="u-lieux"${pr('lieux')}>${esc(P.lieux)}</p>` : ''}
         ${s.statut && s.tournee && s.tournee.texte ? `<p class="u-annonce"${edS(s, 'tournee', 'texte')}>${esc(s.tournee.texte)}</p>` : ''}
-        ${diffusion(s).some(b => b.n) ? `<div class="u-diff"><p class="k">${esc(L.dates)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}</div>
+        ${diffusion(s).some(b => b.n) ? `<div class="u-diff"><p class="k">${esc(L.representations)}</p><div data-diffusion="${esc(s.slug)}"></div></div>` : ''}</div>
         <figure class="carte-sp">${carteTournee(s, sp.aVenir, sp.passe.filter(x => !vus.has(x.l)))}</figure></div></div>`);
     const fts = docsDe(s, 'pros').filter(x => x.type === 'fiche_technique');
     // Bérénice : le détail du dossier, puis le PDF « fiche technique et plan » en lien
@@ -5180,6 +5306,7 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
     frises.forEach(f => f.detruire()); frises = [];
     lecteurs.forEach(io => io.disconnect()); lecteurs = [];
     secs = []; chaps = []; ecrans = []; dfM = null; surPlaceRendu = !!surPlace;
+    finirTroupe();   // (la créature de la troupe s'arrête en quittant la compagnie ; la vue refaite la recrée)
     // la scène de l'accueil s'arrête en le quittant (refait en place, l'accueil la garde telle quelle)
     if (!(surPlace && vue === 'accueil')) Scene.montrer(false);
     try {

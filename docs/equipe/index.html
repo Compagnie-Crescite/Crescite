@@ -58,6 +58,8 @@
 }
 [data-u] { --u-fond: var(--ul-fond); --u-texte: var(--ul-texte); }
 @media (prefers-color-scheme: dark) { [data-u] { --u-fond: var(--us-fond); --u-texte: var(--us-texte); } }
+/* ?anim=0 (captures et essais) : rien ne bouge, ni ce que le script déclenche ni ce que la feuille de style anime */
+html.still *, html.still *::before, html.still *::after { animation: none !important; transition: none !important; }
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--haut) + var(--hs) + 12px); scroll-padding-bottom: calc(var(--barre-bas) + var(--bs) + 12px); -webkit-tap-highlight-color: transparent; }
@@ -150,7 +152,8 @@ main.large { max-width: 1180px; }
 .titre-vue .sous { margin: 6px 0 0; color: var(--gris); }
 .titre-section { display: flex; align-items: center; gap: 10px; margin: 24px 0 12px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
 .titre-section::after { content: ""; flex: 1; height: 1px; background: var(--filet); }
-.mois { margin: 18px 4px 8px; font: 700 .92rem/1.2 var(--sans); color: var(--encre); text-transform: capitalize; }
+.mois { position: sticky; top: calc(var(--haut) + var(--hs)); z-index: 2; margin: 14px 0 8px; padding: 6px 4px; font: 700 .92rem/1.2 var(--sans); color: var(--encre); text-transform: capitalize;
+  background: color-mix(in srgb, var(--papier) 86%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }   /* le mois reste en haut pendant qu'on fait défiler ses dates */
 .titre-section + .mois { margin-top: 4px; }
 .pile { display: grid; gap: 12px; }
 .pied-vue { margin: 30px 0 0; color: var(--gris); font-size: .88rem; text-align: center; }
@@ -180,6 +183,7 @@ input[type=email], input[type=password], input[type=text], input[type=tel], inpu
 textarea { min-height: 84px; resize: vertical; line-height: 1.45; }
 input:focus-visible, textarea:focus-visible { outline: 3px solid var(--magenta); outline-offset: 1px; border-color: var(--magenta); border-radius: 14px; }
 input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--alerte); }
+input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .erreur-champ { color: var(--alerte); font-size: .92rem; font-weight: 600; margin: 0; }
 .mdp { position: relative; }
 .mdp input { padding-right: 96px; }
@@ -699,7 +703,7 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .cs-pied .ic { width: 16px; height: 16px; color: var(--h-accent); }
 .carte-spectacle > .chevron { flex: none; margin-right: 14px; color: var(--h-accent); }
 .tete-spectacle { position: relative; overflow: hidden; margin: 0 0 16px; border-radius: 26px; background: var(--h-fond, #1d1418); color: var(--h-texte, #fff); box-shadow: var(--ombre-haute); isolation: isolate; }
-.ts-photo { position: absolute; inset: 0 0 auto 0; height: 200px; z-index: -1; }
+.ts-photo { position: absolute; inset: 0 0 auto 0; height: 200px; z-index: -1; overflow: hidden; }
 .ts-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
 .ts-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--h-fond) 40%, transparent) 0%, transparent 30%, color-mix(in srgb, var(--h-fond) 75%, transparent) 72%, var(--h-fond) 100%); }
 .ts-corps { position: relative; display: grid; gap: 6px; padding: 18px 20px 20px; }
@@ -719,6 +723,15 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .bloc.fichiers h2 + .genre-docs, .bloc.fichiers .message + .genre-docs { margin-top: 6px; }
 .groupe-docs.compagnie { margin-top: 18px; }
 /* la cloche des notifications : en haut au téléphone (la barre du bas garde cinq onglets), dans la colonne à l'ordinateur */
+/* le bouton « Installer » de la barre, au téléphone, dans le navigateur : il reste tant que l'application n'est pas installée
+   (majInstallation le cache une fois l'application sur l'écran d'accueil ; à l'ordinateur, la carte de « Moi » suffit) */
+.installer-barre { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 36px; margin-right: 4px; padding: 0 12px 0 9px; border: 0; border-radius: 999px; background: var(--action); color: var(--sur-action); font: 700 .86rem/1 var(--sans); white-space: nowrap; cursor: pointer; box-shadow: 0 2px 8px -4px rgba(29, 20, 24, .4); }
+.installer-barre .ic { width: 18px; height: 18px; }
+.installer-barre:hover { background: var(--magenta-fonce); color: var(--sur-action); }
+.installer-barre:active { transform: scale(.96); }
+.modale-corps { line-height: 1.5; }
+.modale-corps p { margin: 0 0 10px; }
+@media (min-width: 760px) { .installer-barre { display: none; } }
 .cloche { position: relative; }
 .cloche .pastille-nb { top: -2px; left: auto; right: -4px; }
 .cloche[aria-current] { background: var(--magenta-doux); color: var(--magenta); }
@@ -811,9 +824,9 @@ input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--
 .camion-item-texte small { color: var(--gris); font-size: 0.82rem; }
 .camion-malle-badge { font: 700 0.74rem/1 var(--sans); padding: 4px 8px; border-radius: 6px; background: var(--surface-2); color: var(--encre); border: 1px solid var(--filet); margin-left: auto; white-space: nowrap; }
 
-/* ———————————————— le mouvement de l'espace de l'équipe : dix effets (equipe.js les déclenche). Rien de tout cela si
-   l'appareil demande moins d'animations (?anim=0 arrête ce que le script déclenche). Tout ce qui bouge en continu ne
-   touche que transform et opacity. */
+/* ———————————————— le mouvement de l'espace de l'équipe : dix effets (equipe.js les déclenche), et leur suite. Rien de
+   tout cela si l'appareil demande moins d'animations, ni avec ?anim=0. Tout ce qui bouge en continu ne touche que
+   transform et opacity. */
 /* 5. l'application à la couleur du spectacle : --accent et --accent-doux, le magenta d'ordinaire ; sur la page d'une date,
    d'une feuille de route ou d'un spectacle, la teinte de son univers (teinter, dans equipe.js : --teinte, --teinte-douce et
    leur jeu de nuit). Le curseur des onglets, le retour et la marque la prennent, en trois dixièmes de seconde. */
@@ -858,6 +871,18 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 .camion-item:has(input:focus-visible) .coche-svg { outline: 3px solid var(--magenta); outline-offset: 2px; }
 .camion-jauge.complete .camion-barre-fond { box-shadow: 0 0 10px color-mix(in srgb, var(--ok) 70%, transparent); }
 .photo-envol { position: fixed; z-index: 90; border-radius: 10px; object-fit: cover; pointer-events: none; }
+.btn.fait { border-color: var(--ok); color: var(--ok); }
+/* 12. la feuille de route en direct (majFeuilleDirect) : le jour J, les lignes passées pâlissent, celle du moment se marque ;
+   un document qui s'ouvre attend son lien */
+.feuille-cadre .fdr .fdr-p.passe { opacity: .55; transition: opacity .4s; }
+.feuille-cadre .fdr .fdr-p.maintenant { padding-left: 9px; border-left: 3px solid var(--u, var(--magenta)); border-radius: 4px; background: color-mix(in srgb, var(--u, var(--magenta)) 8%, transparent); }
+.feuille-cadre .fdr .fdr-p.maintenant::after { content: " · en ce moment"; color: var(--u-texte, var(--magenta)); font-weight: 700; }
+.attend { cursor: progress; }
+/* 13. le bandeau d'une notification dit le temps qu'il reste (bn-temps) ; le bandeau d'état entre quand il change */
+.bandeau-notif .bn-temps { position: absolute; left: 16px; right: 16px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--n-encre, var(--magenta)); opacity: .55; transform-origin: 0 50%; transform: scaleX(0); }
+.puce-doc { transition: border-color .2s, transform .15s; }
+.puce-doc:active { transform: scale(.97); }
+.btn.principal.fait { background: var(--ok); border-color: var(--ok); color: #fff; }
 /* 9. les notifications au doigt : « Lu » attend derrière la notification qu'on glisse vers la gauche */
 .liste-notifs li { position: relative; border-radius: var(--rayon-s); }
 .liste-notifs li::after { content: "Lu"; position: absolute; z-index: 0; inset: 0 0 0 auto; display: grid; place-items: center; width: 100px; border-radius: var(--rayon-s); background: var(--ok-doux); color: var(--ok); font: 700 .9rem/1 var(--sans); opacity: 0; pointer-events: none; transition: opacity .2s, background-color .2s; }
@@ -908,6 +933,44 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   .tirer.pret .pieuvre, .tirer.charge .pieuvre { animation: nage .7s ease-in-out infinite; }
   .tirer.charge .pieuvre { animation-duration: .55s; }
   @keyframes nage { 0%, 100% { transform: rotate(-7deg) scaleY(calc(1 + var(--etire, 0) * .45)); } 50% { transform: rotate(7deg) scaleY(calc(1.08 + var(--etire, 0) * .45)); } }
+  /* 11. les saisons passées qui s'ouvrent : leurs billets arrivent l'un après l'autre ; la photo d'un spectacle s'approche au
+     survol ; un bouton qui a réussi le dit (occupe) ; la réponse à une proposition saute */
+  .saison-corps.neuve > .billet { animation: monte .35s cubic-bezier(.2, .8, .2, 1) both; }   /* à l'ouverture d'une saison passée, pas quand la page se redessine */
+  .saison-corps.neuve > .billet:nth-child(2) { animation-delay: 0.04s; }
+  .saison-corps.neuve > .billet:nth-child(3) { animation-delay: 0.08s; }
+  .saison-corps.neuve > .billet:nth-child(4) { animation-delay: 0.12s; }
+  .saison-corps.neuve > .billet:nth-child(5) { animation-delay: 0.16s; }
+  .saison-corps.neuve > .billet:nth-child(6) { animation-delay: 0.20s; }
+  .saison-corps.neuve > .billet:nth-child(7) { animation-delay: 0.24s; }
+  .saison-corps.neuve > .billet:nth-child(8) { animation-delay: 0.28s; }
+  .cs-photo img { transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+  .carte-spectacle:hover .cs-photo img { transform: scale(1.06); }
+  .btn.fait, .rep.pop { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1); }
+  .attend { animation: attend .9s ease-in-out infinite alternate; }
+  .bandeau-notif.visible .bn-temps { animation: bn-temps 6.5s linear forwards; }
+  .bandeau-notif:hover .bn-temps { animation-play-state: paused; }
+  @keyframes bn-temps { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  .bandeau-etat > .message { animation: monte .3s cubic-bezier(.2, .8, .2, 1) both; }
+  /* 14. la page d'un spectacle se pose comme celle d'une date ; une indisponibilité neuve se pose */
+  .ts-photo img { animation: derive 26s ease-in-out infinite alternate; }
+  main:not(.rafraichi) .tete-spectacle .ts-photo img { animation: pose 1.1s cubic-bezier(.2, .8, .2, 1) both, derive 26s 1.1s ease-in-out infinite alternate; }
+  main:not(.rafraichi) .tete-spectacle .ts-corps > * { animation: monte .45s cubic-bezier(.2, .8, .2, 1) both; }
+  main:not(.rafraichi) .tete-spectacle .ts-corps > :nth-child(2) { animation-delay: .06s; }
+  main:not(.rafraichi) .tete-spectacle .ts-corps > :nth-child(n + 3) { animation-delay: .12s; }
+  .indispo-ligne.neuve { animation: monte .35s cubic-bezier(.2, .8, .2, 1) both; }
+  /* 15. ce qui arrive après la page (les chiffres, la liste de chargement, le planning) se pose ; le héros recule au défilement */
+  .arrive, .arrive > .frise { animation: monte .4s cubic-bezier(.2, .8, .2, 1) both; }
+  .photo-apercu, .jourj-badge { animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }   /* l'aperçu du ticket, « aujourd'hui » sur une feuille */
+  details[open] > :not(summary) { animation: paraitre .25s ease-out both; }   /* ce qu'un pli ouvre paraît (sans transform : les billets qui glissent se mesurent) */
+  /* 16. la porte : elle se pose à l'ouverture, et secoue le formulaire d'une connexion refusée */
+  .seul .porte { animation: monte .4s cubic-bezier(.2, .8, .2, 1) both; }
+  .porte form.secoue { animation: secoue .4s cubic-bezier(.36, .07, .19, .97); }
+  @keyframes secoue { 10%, 90% { transform: translateX(-2px); } 20%, 80% { transform: translateX(4px); } 30%, 50%, 70% { transform: translateX(-6px); } 40%, 60% { transform: translateX(6px); } }
+  @supports (animation-timeline: scroll()) {
+    .heros-photo, .ts-photo { animation: recule linear both; animation-timeline: scroll(root); animation-range: 0 360px; }
+    @keyframes recule { to { transform: translateY(-44px); } }
+  }
+  @keyframes attend { to { opacity: .4; } }
   /* 9. « tout marquer comme lu » : les notifications s'éteignent l'une après l'autre */
   .notif.balaye { animation: balaye .7s ease-out calc(var(--i, 0) * 50ms) both; }
   @keyframes balaye { from { background: color-mix(in srgb, var(--magenta-doux) 60%, var(--surface)); border-color: color-mix(in srgb, var(--magenta) 32%, var(--filet)); } }

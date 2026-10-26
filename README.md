@@ -60,6 +60,9 @@ python3 maquettes/build.py m06          # une seule maquette
 python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
 node maquettes/onglets.mjs /tmp/x m01 m06 # parcourt les vues de chaque maquette et signale les anomalies
 node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
+node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
+                                         # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
+python3 maquettes/build.py spectacles-mobile   # la page des spectacles au téléphone, trois propositions (maquettes/dist/spectacles-mobile.html)
 python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
 ```
 
@@ -117,7 +120,10 @@ la 07, ventouses pour la synthèse, fil pour la 08… Avec « réduire les anima
 l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en plus une créature vivante
 (`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
 souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
-va souligner le titre à la couleur du spectacle, puis revient.
+va souligner le titre à la couleur du spectacle, puis revient. Sur la page de la compagnie, la pieuvre de la troupe est
+une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo) : quand la
+lecture descend, elle rapetisse et nage dans la marge, par impulsions, et une tentacule attrape le médaillon du métier
+qu'on lit, qui s'anime.
 
 De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
 en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
@@ -167,6 +173,20 @@ manière). Quatre outils communs, injectés dans chaque maquette :
 Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> m01 synthese`…
 Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
 réactivité, la réservation, les vidéos, la nuit seule, la troupe, le cadrage des photos) sont dans `maquettes/CONTRAT.md`.
+
+**La page des spectacles au téléphone** (prévisualisation, `maquettes/src/spectacles-mobile.html`, en ligne dans
+`docs/spectacles-mobile.html`). Au téléphone, `#/spectacles` de la synthèse se réduit à une liste ; cette page met côte à côte,
+dans trois téléphones et avec les vraies données de la base, trois façons de la refaire, un geste chacune : **A. La
+poursuite** (lire : la ligne qu'on lit s'allume dans son univers, sa photo s'éclaire, un index épinglé des huit vignettes),
+**B. La pile d'affiches** (déplier : les huit tranches tiennent dans l'écran, une tranche touchée se déplie en affiche, avec
+sa fiche et la carte de sa tournée), **C. Le présentoir** (feuilleter : une affiche à la fois, qu'on fait glisser, la page
+prend son univers, la carte se redessine). La synthèse est chargée à côté pour comparer. Chaque proposition tient les
+règles du contrat (le texte vient de D, la nuit, « réduire les animations », 44 px, 360 px). C'est une page annexe de
+`build.py` (`ANNEXES`) : construite avec les maquettes, publiée dans `docs/`, hors de la planche. **La pile d'affiches a été
+retenue** (octobre 2026) et portée dans la synthèse : jusqu'à 899 px, `#/spectacles` est la pile (`afficheTdm`, `lierPile`,
+styles `.pil-*`) ; une tranche touchée se déplie, sa carte se dessine à la première ouverture, une seule dépliée à la fois,
+gardée quand D change ou que la fenêtre change de côté de 900 px ; au bureau, le sommaire et son aperçu sont inchangés.
+L'édition sur place porte sur chaque texte de la tranche et de la fiche, la photo et la date, sans déplier.
 
 ## Données
 
@@ -295,6 +315,29 @@ compte du projet inscrit dans `crescite_admins`.
   remonte pas assez).
 - **Modifier sur le site ↗** ouvre la synthèse en mode édition : les mêmes droits, dans la page publique.
 
+**Son mouvement.** L'administration s'ouvre sur un squelette qui luit le temps de lire la base, puis le contenu paraît.
+Les vues s'enchaînent (les View Transitions : la fiche glisse vers la gauche en s'ouvrant, la liste
+revient par la droite, une autre rubrique arrive en fondu ; l'en-tête et les annonces restent en place : `changerVueAdmin`,
+`sensVue`) ; au premier rendu d'une vue, ses lignes, ses cartes et ses blocs arrivent l'un après l'autre (`main.entree`,
+retiré au bout d'une seconde : les rafraîchissements du temps réel ne rejouent rien) ; le pied d'une fiche dit l'état
+d'une barre, ambre quand elle est modifiée, verte un instant quand elle est enregistrée ; « À compléter avant la tournée »
+se vide à mesure : ce qui vient d'être complété reste un instant en vert, « complété », puis se retire
+(`listeQuiSeVide`) ; la recherche rapide s'ouvre et ses premiers résultats arrivent l'un après l'autre ; la pastille
+« direct » bat quand un changement arrive ; dans le tableur, la case qu'on vient d'écrire s'encadre de vert ; l'onglet
+choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les annonces s'en vont en douceur ; les
+compteurs « n à compléter » et le badge d'une feuille publiée sautent ; dans le planning, aujourd'hui se pose ; une liste
+qui se redessine (le temps réel, un enregistrement) glisse ses lignes à leur nouvelle place (`glisserVers`) ; le champ
+visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une précision ajoutée se pose ; la cloche de « Prévenir
+l'équipe » sonne une fois la notification partie ; dans la Diffusion, l'opportunité déplacée glisse jusqu'à sa nouvelle
+colonne ; dans une feuille de route, le compte « à compléter » saute quand il baisse ; le statut d'une note de frais
+qui change saute ; les photos ajoutées à un spectacle se posent ; les champs changent en douceur ; la première liste du
+journal se pose ; les menus (suggestions d'un lieu, export du tableur, « Plus » du pied) et ce qu'un pli ouvre se posent ;
+dans l'éditeur A4 d'une feuille de route, l'amorce visée depuis « À compléter » s'allume sur la page. Sur le site en mode
+édition (`edition.js`), le point de la barre bat tant que des modifications attendent, et passe au vert un instant à
+l'enregistrement. Rien de tout cela si l'appareil
+demande moins d'animations, ni avec `?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
+une base fictive.
+
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
 suivi, ni les séances), seuls les administrateurs écrivent. Le script a été vérifié sur un PostgreSQL local avec les
 rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrement d'une date, journal). Les onze maquettes ont
@@ -397,7 +440,9 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   programmer » se modifie dans Textes, et une action culturelle pas encore construite se masque d'une case.
 
 **L'espace de l'équipe** (`equipe/index.html`, en ligne dans `docs/equipe/`) est une application qu'on installe sur
-son téléphone (« Ajouter à l'écran d'accueil » ; sur iPhone : Partager → Sur l'écran d'accueil). En bas, les onglets
+son téléphone (« Ajouter à l'écran d'accueil » ; sur iPhone : Partager → Sur l'écran d'accueil). Au téléphone, dans le
+navigateur, un bouton « Installer » reste dans la barre du haut tant qu'elle n'est pas installée : l'invite du navigateur
+quand il en a une, sinon la marche à suivre. En bas, les onglets
 Saison, Feuilles, Planning, Spectacles et Moi, et les notifications dans la cloche en haut ; sur ordinateur, tout se
 range en colonne à gauche. On y trouve :
 - la prochaine date en grand, aux couleurs du spectacle, avec un compte à rebours ;
@@ -435,9 +480,17 @@ sur la carte (`brancherAllumage`) ; les billets qui glissent à leur nouvelle pl
 et l'heure qui vient de changer, lavée de jaune ; la coche de la liste de chargement qui se trace, la jauge qui luit à
 100 %, le ticket photographié qui s'envole vers le total des notes de frais ; les notifications qu'on glisse pour les
 marquer lues (`brancherGlisserNotif`), leurs jours épinglés, « tout marquer comme lu » qui les éteint l'une après
-l'autre ; la pieuvre qui s'étire et nage quand on tire pour rafraîchir, la photo du héros qui dérive. Tout ce qui bouge
-en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations (`?anim=0`
-arrête ce que le script déclenche), la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
+l'autre ; la pieuvre qui s'étire et nage quand on tire pour rafraîchir, la photo du héros qui dérive ; et encore : l'arrivée en
+fondu du squelette au contenu, un bouton qui a réussi le dit un instant (`occupe`), les billets d'une saison passée
+arrivent l'un après l'autre, la photo d'un spectacle s'approche au survol, la réponse à une proposition saute, la feuille
+de route se lit en direct le jour J (les lignes passées pâlissent, celle du moment se marque : `majFeuilleDirect`), le
+bandeau d'une notification dit le temps qu'il lui reste, le bandeau d'état n'entre que s'il change, la page d'un
+spectacle se pose comme celle d'une date, une indisponibilité retirée se replie et la neuve se pose, ce qui arrive après
+la page (les chiffres, la liste de chargement, le planning) se pose, le héros recule au défilement, les mois de la
+saison restent en haut, ce qu'un pli ouvre se pose, le téléphone confirme un bouton qui a réussi, la porte se pose à
+l'ouverture et secoue une connexion refusée. Tout ce
+qui bouge en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations, ni
+avec `?anim=0`, la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
 ligne, sur une saison fictive.
 
 **Les notifications.** Le troisième script, `supabase/migrations/20261022_crescite_notifications.sql`, s'exécute
