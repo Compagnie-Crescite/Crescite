@@ -14,7 +14,9 @@
    trajet ne casse la tangente.
 
    PIEUVRE.creer() → les tentacules, dans l'ordre de D.pieuvre.bras : { cle, cote, i, ... }
-     t.poser(ox, oy, s)          l'origine du dessin à l'écran (px) et l'échelle (px par unité du dessin)
+     t.poser(ox, oy, s)          l'origine du dessin à l'écran (px) et l'échelle (px par unité du dessin) ; le trajet en cours
+                                 est oublié (elle est au repos)
+     t.deplacer(ox, oy, s)       la même chose sans rien oublier : une pieuvre qui se déplace garde ses tentacules en route
      t.viser(cible, duree)       cible : { cle, x, y, sens, U, mobile, marge, racine, corps, tension } (le point d'accroche d'un
                                  titre, à l'écran ; sens 1 : la tentacule continue vers la droite sous le titre, -1 vers la
                                  gauche ; U : la longueur à souligner, en px ; marge : la place derrière le point d'accroche, en
@@ -98,6 +100,7 @@ const PIEUVRE = (() => {
       this.ox = ox; this.oy = oy; this.s = s; this.pose_ = true;
       this.pose = null; this.depuis = null; this.q = 1;
     }
+    deplacer(ox, oy, s) { this.ox = ox; this.oy = oy; this.s = s; this.pose_ = true; }
     racine() { return { x: this.ox + this.RX[0] * this.s, y: this.oy + this.RY[0] * this.s }; }
     // la partie de la peau hors de la racine (le liseré ne coupe pas la tentacule de son corps), pour une racine de rac fois l'épine
     libres(rac) {
