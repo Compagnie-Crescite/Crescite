@@ -25,7 +25,8 @@
                                  épine qui restent telles quelles dans le logo (.12 par défaut) et où commence la pointe (.7) :
                                  racine: .7 garde une boucle entière et la prolonge depuis sa descente ; epaisseur : la largeur
                                  au moins, en px, de ce qui sort du logo (une petite pieuvre a des tentacules trop fines pour
-                                 se voir : la partie déployée s'épaissit jusque-là, sa racine non) ; tension, de 0 à 1 :
+                                 se voir : la partie déployée s'épaissit jusque-là, sa racine non) ; boucle : la taille de
+                                 l'enroulement du bout, en fraction de la normale (1) ; tension, de 0 à 1 :
                                  la pointe se déroule) ou null (le repos). Elle y va depuis où elle en est, en duree ms (0 : d'un
                                  coup). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
      t.avancer(dt, { temps, onde, penche, bob }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
@@ -169,7 +170,7 @@ const PIEUVRE = (() => {
       const U = Math.max(8, c.U || 0), pointe = [];
       for (let j = 0; j <= 24; j++) pointe.push([c.x + du * U * j / 24, c.y]);
       // (tension : un titre qu'on tire déroule la pointe)
-      const Lc = c.mobile ? 34 : 46, NC = 30, dl = Lc / NC, sens = du < 0 ? 1 : -1, k0 = 1.5 * Math.PI * 2.3 / Lc * (1 - .92 * (c.tension || 0));
+      const Lc = (c.mobile ? 34 : 46) * (c.boucle || 1), NC = 30, dl = Lc / NC, sens = du < 0 ? 1 : -1, k0 = 1.5 * Math.PI * 2.3 / Lc * (1 - .92 * (c.tension || 0));
       let ang = du < 0 ? Math.PI : 0, x = c.x + du * U, y = c.y;
       for (let j = 1; j <= NC; j++) {
         const kap = k0 * Math.pow((j - .5) / NC, 1.3);

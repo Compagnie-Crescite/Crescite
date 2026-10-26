@@ -731,6 +731,11 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
   position: relative; display: grid; gap: clamp(18px, 2.4vw, 30px); margin-top: 18px; padding-left: var(--g); }
 .tr6-coeur { position: relative; z-index: 2; width: clamp(104px, 12vw, 150px); margin-left: calc(var(--g) * -1 + 2px); margin-bottom: 30px; color: var(--saison-texte); }
 .tr6.est-vivante .tr6-coeur { visibility: hidden; }   /* la créature (CREATURE) dessine la pieuvre à sa place, puis se balade */
+/* le métier que la créature tient s'allume : son médaillon grandit d'un rien dans une auréole, son titre prend la couleur de la saison */
+.tr6-ic { transition: transform .45s cubic-bezier(.2, .7, .2, 1), box-shadow .45s; }
+.tr6-cat.est-tenue .tr6-ic { transform: scale(1.1); box-shadow: inset 0 0 0 2px var(--saison-texte), 0 0 0 5px color-mix(in srgb, var(--saison-texte) 26%, transparent); }
+.tr6-t > span:last-child { transition: color .45s; }
+.tr6-cat.est-tenue .tr6-t > span:last-child { color: var(--saison-texte); }
 .tr6-coeur svg { display: block; width: 100%; height: auto; }
 .tr6-cat { position: relative; z-index: 2; display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); gap: 10px 24px; align-items: start; }
 .tr6-t { display: flex; align-items: center; gap: 12px; margin: 0; font: 500 1.25rem/1.15 var(--titre); }
@@ -4485,33 +4490,37 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
   // pour le suivant. Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe pas (le dessin de tête reste)
   function creatureTroupe(tr) {
     if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
-    let y = null, bouge = false, prise = null, tNage = 0;
+    let y = null, bouge = false, prise = null;
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.2, lueur: true,
-      eveil: () => tr.classList.add('est-vivante'), sommeil: () => tr.classList.remove('est-vivante'),
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.6, lueur: true,
+      eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
       placer() {
         const g = troupeGeo;
         if (!g || !tr.isConnected) return null;
         const r = tr.getBoundingClientRect();
         if (r.bottom < -60 || r.top > innerHeight + 60) { y = null; return null; }
-        const mobile = innerWidth < 760, now = performance.now();
+        const mobile = innerWidth < 760;
         // la place visée : à hauteur de lecture, entre sa place de repos (en tête) et le dernier médaillon ; elle y va en
-        // retard d'un rien, et nage par impulsions tant qu'elle se déplace
+        // retard d'un rien (v : ce qu'elle avance à cette image, pour qu'elle se penche et rame dans ce sens)
         const yTete = r.top + g.yc, yFin = r.top + g.yN, vise = clamp(innerHeight * .42, yTete, yFin);
         if (y === null) y = vise;
-        const d = vise - y; y += d * .1; bouge = Math.abs(d) > .4;
-        if (bouge && now - tNage > 1700) { tNage = now; c.reagir('nage'); }
+        const d = vise - y, v = d * .1; y += v; bouge = Math.abs(d) > .4;
         // dès qu'elle quitte sa place de repos, elle rapetisse (la moitié de sa taille en 80 px) et gagne le milieu de la marge
         const q = lisse(0, 80, y - yTete), largeur = lerp(g.largeur, mobile ? 52 : 84, q), x = r.left + lerp(g.x0, g.xg, q);
         // la tentacule attrape le médaillon le plus proche de son cœur (à portée), qui s'anime, et le lâche pour le suivant
         let proche = null, dp = 160;
         for (const ic of g.ics) { const b = ic.getBoundingClientRect(), dy = Math.abs(b.top + b.height / 2 - y); if (dy < dp) { dp = dy; proche = ic; } }
         if (proche !== prise) {
+          if (prise) { const cat = prise.closest('.tr6-cat'); if (cat) cat.classList.remove('est-tenue'); }
           prise = proche;
-          if (proche) { c.vers(proche, { prise: 'medaillon', bras: 'boucleR', tenir: Infinity, duree: 760 }); const i = $('.troupe-icone', proche); if (i) { i.classList.add('est-vivant'); setTimeout(() => i.classList.remove('est-vivant'), 1600); } }
-          else c.revenir();
+          if (proche) {
+            c.vers(proche, { prise: 'medaillon', bras: 'boucleR', tenir: Infinity, duree: 760 });
+            const cat = proche.closest('.tr6-cat'), i = $('.troupe-icone', proche);
+            if (cat) cat.classList.add('est-tenue');
+            if (i) { i.classList.add('est-vivant'); setTimeout(() => i.classList.remove('est-vivant'), 1600); }
+          } else c.revenir();
         }
-        return { x, y, largeur, bouge };
+        return { x, y, largeur, bouge, v };
       } });
     if (c) c.demarrer();
     return c;
