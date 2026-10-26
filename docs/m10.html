@@ -2162,6 +2162,15 @@ const EDITION = (() => {
   .ed-barre .ed-etat { font-weight: 700; margin-right: 4px; }
   .ed-barre .ed-etat::before { content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ed-accent-d); margin-right: 7px; vertical-align: 1px; }
   .ed-barre .ed-nb { opacity: .72; font-size: 13px; }
+  .ed-barre.ed-sale .ed-etat::before { background: #e9a23b; }
+  .ed-barre.ed-ok .ed-etat::before { background: #2bb673; }
+  .ed-actif [data-edit] { transition: outline-color .2s, background-color .2s; }
+  @media (prefers-reduced-motion: no-preference) {
+    html:not(.still) .ed-barre.ed-sale .ed-etat::before { animation: ed-bat 1.6s ease-out infinite; }
+    @keyframes ed-bat { 0% { box-shadow: 0 0 0 0 rgba(233, 162, 59, .6); } 70%, 100% { box-shadow: 0 0 0 8px rgba(233, 162, 59, 0); } }
+    html:not(.still) .ed-barre.ed-ok .ed-etat::before { animation: ed-ok .5s cubic-bezier(.3, 1.6, .5, 1); }
+    @keyframes ed-ok { from { transform: scale(.4); } }
+  }
   .ed-bt { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ed-trait-d); background: var(--ed-fond-d); color: var(--ed-encre-d); border-radius: 999px; padding: 6px 13px; cursor: pointer; font-weight: 650; text-decoration: none; white-space: nowrap; }
   .ed-bt:hover { border-color: var(--ed-encre-d); }
   .ed-bt.ed-plein { background: var(--ed-accent-d); border-color: var(--ed-accent-d); color: var(--ed-sur-d); }
@@ -2327,6 +2336,7 @@ const EDITION = (() => {
   function majBarre() {
     if (!barre) return;
     const n = modifies.size;
+    barre.classList.toggle('ed-sale', n > 0);              // le point de la barre bat tant que des modifications attendent
     $('.ed-nb', barre).textContent = n ? `${n} modification${n > 1 ? 's' : ''} à enregistrer` : 'Cliquez un texte pour l’écrire, une date pour la modifier';
     $('[data-ed="enregistrer"]', barre).disabled = !n;
     $('[data-ed="annuler"]', barre).disabled = !n;
@@ -2406,6 +2416,7 @@ const EDITION = (() => {
       modifies.clear();
       $$('.ed-modifie').forEach(el => el.classList.remove('ed-modifie'));
       majBarre();
+      if (barre) { barre.classList.add('ed-ok'); setTimeout(() => barre?.classList.remove('ed-ok'), 1600); }   // vert un instant
       DONNEES.suspendre(false);
       await DONNEES.recharger({ force: true });
       annoncer('Enregistré : le site est à jour.');
@@ -6501,7 +6512,7 @@ const PIEUVRE = (() => {
                      d'animations) ; la créature est dessinée exactement à sa place, et prend la relève du dessin à la fin
                      de l'ouverture (intro:fin), sans que rien ne saute. Si la page réécrit l'hôte, elle suit. encre : la
                      couleur de la pieuvre (défaut : la couleur du texte de l'hôte). → la créature (voir plus bas)
-   CREATURE.creer({ placer, encre, largeur, souris, courant, vie, lueur })   une pieuvre à soi, placée par la maquette :
+   CREATURE.creer({ placer, encre, largeur, souris, courant, vie, onde, rythme, lueur })   une pieuvre à soi, placée par la maquette :
                      placer() est appelée à chaque image et rend { x, y, s, largeur, bouge, v } (le cœur de la pieuvre à
                      l'écran, en px ; s l'échelle, px par unité du dessin, ou largeur : la largeur du dessin en px ;
                      bouge : vrai tant qu'elle se déplace, v : sa vitesse verticale, px par image, pour qu'elle se penche
@@ -6510,8 +6521,9 @@ const PIEUVRE = (() => {
                      seconde. souris (vrai par défaut) : elle se tourne vers la souris ; courant (vrai) : ses tentacules
                      suivent le défilement. vie (1) : son entrain, de 1 (l'en-tête, discrète) à 2 ou 3 (une grande
                      pieuvre, toujours en mouvement : ondulation ample, respiration, dérive, balancement ; à partir de
-                     1,5 elle tâte autour d'elle d'une tentacule, de temps en temps) ; lueur : un halo autour d'elle.
-                     → la créature
+                     1,5 elle tâte autour d'elle d'une tentacule, de temps en temps) ; onde : l'ampleur de l'ondulation
+                     des tentacules (2 × vie par défaut ; 5 ou 6 : elles battent franchement) ; rythme : la vitesse de tout
+                     ce qui vit (1 ; 2 : deux fois plus vif) ; lueur : un halo autour d'elle. → la créature
 
    Sa vie, au repos, jamais pénible (lente, trente images par seconde au plus, rien quand l'onglet est caché) : ses
    tentacules ondulent, elle respire (son corps gonfle d'un rien), elle se penche vers la souris qui passe près d'elle,
@@ -6592,6 +6604,7 @@ const CREATURE = (() => {
       this.o = o;
       this.encre = o.encre || '#ffffff'; this.ENCRE = rgb(this.encre) || [255, 255, 255];
       this.souris = o.souris !== false; this.courant = o.courant !== false; this.vie = o.vie || 1; this.lueur = !!o.lueur;
+      this.onde = o.onde || 2 * this.vie; this.rythme = o.rythme || 1;
       const TS = PIEUVRE.creer();
       this.CORPS = PIEUVRE.corps(TS);
       // dir : le sens de la pointe au repos (vers où la tentacule se penche) ; col : la couleur vers laquelle elle se teinte
@@ -6755,7 +6768,7 @@ const CREATURE = (() => {
       }
       // les gestes : elle tâte de temps en temps (avec de l'entrain), et chaque geste revient à son heure
       for (const a of BRAS) if (a.geste && now > a.geste.fin) { a.geste = null; a.t.viser(null, 820); }
-      if (vie >= 1.5 && now > this.tGeste) { if (this.tGeste) this.geste(now); this.tGeste = now + 2400 + Math.random() * 2800; }
+      if (vie >= 1.5 && now > this.tGeste) { if (this.tGeste) this.geste(now); this.tGeste = now + (1800 + Math.random() * 2600) / this.rythme; }
       // la réaction : l'impulsion
       let imp = 0, lean = 0, agite = 0;
       const R = this.reaction;
@@ -6767,14 +6780,14 @@ const CREATURE = (() => {
       // la nage : tant qu'elle se déplace, une impulsion toutes les 1,6 s (le corps se contracte, les tentacules rament : elles
       // sont emportées derrière elle), et elle se penche dans le sens où elle va
       const v = this.place.v || 0, sens = v > 0 ? 1 : v < 0 ? -1 : 0;
-      if (this.enMouvement && now - this.tCoup > 1600) this.tCoup = now;
+      if (this.enMouvement && now - this.tCoup > 1600 / this.rythme) this.tCoup = now;
       const uc = (now - this.tCoup) / 760, coup = uc < 1 ? choc(uc) : 0;
-      this.penteNage += (sens * clamp(Math.abs(v) / 2.5, 0, 1) * 7 - this.penteNage) * .06;
+      this.penteNage += (sens * clamp(Math.abs(v) / 1.6, 0, 1) * 10 - this.penteNage) * .06;
       const enRoute = BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
       const vif = this.moment || this.reaction || this.enMouvement || coup > 0 || (this.souris && pointeur) || (this.courant && Math.abs(vScroll) > .4) || enRoute;
       // au repos (rien ne se tend, rien ne réagit, personne ne passe) : trente images par seconde suffisent
       if (!vif && now - this.tDessin < 30) { this.raf = requestAnimationFrame(t => this.image(t)); return; }
-      this.tDessin = now; this.tVie += dt / 1000;
+      this.tDessin = now; this.tVie += dt / 1000 * this.rythme;
       const tVie = this.tVie;
       // elle flotte et dérive, elle respire, elle se balance (d'autant plus qu'elle a d'entrain) ; la tentacule d'un moment,
       // tendue, retient la respiration et le balancement (sa pointe resterait sur la cible), pas la dérive : elle s'y accroche
@@ -6782,7 +6795,7 @@ const CREATURE = (() => {
       bob.x = Math.sin(tVie * .43) * .5 * vie + Math.sin(tVie * .29) * 1.6 * plus; bob.y = Math.sin(tVie * .9) * .7 * vie + Math.cos(tVie * .21) * 2.2 * plus;
       const souffle = 1 + .03 * Math.min(vie, 1.6) * Math.sin(tVie * 1.15) * retenue;
       const k = souffle * (1 - ((R ? R.serre : 0) * imp + .05 * coup) * retenue);
-      const balance = Math.sin(tVie * .6) * 1.3 * plus;
+      const balance = Math.sin(tVie * .6) * 2.2 * plus;
       // la curiosité : elle se tourne un peu vers la souris qui passe près d'elle, ses tentacules s'y penchent ; et elles suivent
       // le courant quand la page défile
       const cx = ox + CENTRE[0] * s, cy = oy + CENTRE[1] * s, courant = this.courant ? clamp(Math.abs(vScroll) / 24, 0, 1) * .32 : 0;
@@ -6806,7 +6819,7 @@ const CREATURE = (() => {
         a.penche += (pv - a.penche) * .08;
         const tv = a.but ? 1 : 0;
         if (Math.abs(a.teinte - tv) > .005) a.teinte += (tv - a.teinte) * .12; else a.teinte = tv;
-        a.t.avancer(dt, { temps: tVie, onde: 2 * vie + agite + coup * 1.5, penche: a.penche, bob });
+        a.t.avancer(dt * this.rythme, { temps: tVie, onde: this.onde + agite + coup * 1.5, penche: a.penche, bob });
       }
       // la boîte à peindre : la pieuvre et ses tentacules, élargie de ce que la respiration, la contraction et la penche
       // déplacent, et du halo ; la toile la suit
@@ -6868,7 +6881,7 @@ const CREATURE = (() => {
     const sv = h.matches && h.matches('svg') ? h : h.querySelector('svg');
     if (!sv) return null;
     hote = h; svg = sv;
-    tete = new Creature({ encre: o.encre || getComputedStyle(h).color || '#ffffff', placer: placeHote, vie: 1.3,
+    tete = new Creature({ encre: o.encre || getComputedStyle(h).color || '#ffffff', placer: placeHote, vie: 1.4, rythme: 1.3,
       eveil: () => { if (svg) svg.style.visibility = 'hidden'; lireDessin(tete); },
       sommeil: () => { if (svg) svg.style.visibility = ''; } });
     if (intro()) attendreIntro(); else tete.demarrer();
