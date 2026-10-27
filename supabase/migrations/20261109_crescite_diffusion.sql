@@ -1,4 +1,4 @@
--- Crescite : la diffusion reliée (le vingt-et-unième script). À exécuter après les précédents, de la même façon (SQL
+-- Crescite : la diffusion reliée (le vingt-deuxième script). À exécuter après les précédents, de la même façon (SQL
 -- Editor → New query → coller → Run). Il peut être relancé sans dommage et ne touche qu'à ce qui commence par crescite_.
 --
 -- Ce que le script ajoute :

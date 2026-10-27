@@ -41,7 +41,7 @@ const PARCOURS = (() => {
       const rempli = c !== '' && c != null;
       xs.push({ k: 'bilan', l: 'Bilan', etat: rempli ? 'fait' : passee(d) ? 'afaire' : 'attente', detail: rempli ? `${nombreFr(c)} spectateurs` : passee(d) ? 'spectateurs à noter' : 'après la date', viser: '#c-spectateurs' });
     }
-    // la facture (les documents émis, le dix-neuvième script) : émise, payée ; en retard, elle le dit
+    // la facture (les documents émis, le vingtième script) : émise, payée ; en retard, elle le dit
     if (avecContrat({ nature }) && E.docsInstalles && d) {
       const fs = (E.docsGeneres || []).filter(x => x.type === 'facture' && !x.annule_le && (x.date_id === d.id || (x.dates || []).map(Number).includes(Number(d.id))));
       const payee = fs.find(x => x.paye_le), due = fs.find(x => !x.paye_le), retard = due && due.echeance && due.echeance < AUJ;

@@ -31,6 +31,8 @@ node site/onglets.mjs /tmp/x index # parcourt les vues du site et signale les an
 node site/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node site/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                    # le vocabulaire de ce mouvement : site/MOUVEMENT.md
+node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
+AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
 ```
 
@@ -118,6 +120,19 @@ tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelq
 sa fiche s'ouvre par-dessus sa photo (plus bas) ; la pieuvre sursaute, puis ses tentacules, lumineuses, vont tenir la
 fiche et ses autres places (`c.tenir`), à la place des fils des liens.
 
+**Le rideau et la page qui se compose.** Ouvrir une page par le menu (ou arriver sur le site ailleurs que par l'ouverture
+de l'accueil) fait tomber un court noir, le rideau (`Rideau`, dans `index.html`) : la pieuvre y nage au milieu, une
+créature aux vraies tentacules, à la couleur de la saison. Après 420 ms, le rideau s'ouvre en deux comme au théâtre
+(480 ms), la pieuvre remonte à sa place dans le menu, et la page, déjà là dessous (son titre a le focus), se compose
+(`composer`) : un trait de lumière descend l'écran et chaque ligne s'écrit quand il l'atteint, de gauche à droite (un
+paragraphe se découvre de haut en bas, ligne à ligne), les cadres se posent juste avant leur texte,
+les photos sortent du flou. Seulement ce qui est à l'écran ; ce qui a déjà son propre mouvement (le titre qui fleurit, ce
+qui paraît au défilement) le garde, et ne part qu'à l'ouverture du rideau. Ni rideau en entrant dans un spectacle (l'encre
+de son univers l'ouvre) ni d'un onglet à l'autre d'un spectacle. Un geste (un clic, une touche, la molette, le doigt)
+ouvre le rideau aussitôt, et la page est alors là sans se composer ; de même sur un appareil trop lent pour la composer
+en douceur (le rideau compte ses images pendant le noir : moins de vingt-cinq par seconde, pas de composition). Moins d'animations, ou `?anim=0` : ni l'un ni l'autre.
+Ces animations portent l'id `rideau` ou `compose` : `onglets.mjs` les finit avant de lire une page.
+
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
 le menu (à portée sur chaque vue, un seul élément marqué comme courant), les redirections des anciennes adresses,
 la page de l'espace pro, la présence des contenus attendus de chaque vue et l'ordre de l'agenda
@@ -160,7 +175,12 @@ par `build.py` :
   nom, ses métiers, ses spectacles (sa fonction, son rôle, son alternance, « En tournée » ou son statut), chacun menant à sa
   page, et les prochaines dates de ceux qui tournent, s'il y en a (cinq au plus, puis « Toutes les dates »). Rien que D
   (`ficheHTML`, dans `index.html`). Elle se ferme quand la personne est relâchée (un second clic, Échap, un clic ailleurs,
-  sa croix) et rend le focus à sa place.
+  sa croix) et rend le focus à sa place. **La même fiche s'ouvre partout sur le site public** : un clic sur un portrait de
+  la distribution d'un spectacle, ou sur le nom d'une personne écrit dans une page (la fiche d'un spectacle, l'équipe de
+  création, « avec : … », la présentation de la compagnie…). `nommer` repère, après le rendu et au repos, chaque nom complet
+  d'une personne publiée de D dans le texte et en fait un bouton (`.nomme`, souligné de points), le texte inchangé ; ni dans
+  les liens, les boutons, les titres de page, la troupe, les pages légales, ni en mode édition. La fiche vit dans la couche
+  du dessus (popover) : rien ne la coupe, elle suit ce qui l'a ouverte quand la page défile et se ferme en changeant de page.
 - `cadrage.js` (CADRAGE) : chaque photo des spectacles garde dans son cadre sa zone d'intérêt (les comédiens, pas le
   noir du plateau), sur ordinateur comme sur téléphone ; les zones sont dans `data/cadrages.json` (une par photo, posée
   à l'œil sur chacune), et une photo ajoutée y reçoit la sienne.
@@ -363,7 +383,7 @@ compte du projet inscrit dans `crescite_admins`.
     partir des modèles de la compagnie (Textes du site → « Modèle : devis »…, créés avec un texte de départ à la première
     demande, à relire), les coordonnées et le contact de la compagnie, le montant, la TVA (5,5 %) et les conditions
     demandés dans un formulaire (et l'échéance d'une facture) ; en A4 avec le logo, imprimés ou enregistrés en PDF par le
-    navigateur. Chacun est émis par la base (`crescite_documents_generes`, le dix-neuvième script, réservé à
+    navigateur. Chacun est émis par la base (`crescite_documents_generes`, le vingtième script, réservé à
     l'administration) : elle donne le numéro (DEV-2026-003…, le suivant de l'année pour ce type, sous un verrou) et garde
     la page telle qu'émise, que « Imprimer » reproduit à l'identique ; un document émis ne change plus, une facture ne
     se supprime pas. Sans le script, rien n'est émis. **La chaîne commerciale** : le montant de cession HT se saisit
@@ -996,7 +1016,20 @@ leur public) et donne au pied le lien de la page Facebook de la compagnie (`FACE
 Normandie). Tant qu'il n'est pas lancé, le site montre les textes de la base, donc les anciens. 15 essais
 (`node textes.mjs` : le premier script, les textes de l'import, puis lui, deux fois).
 
-**Les documents générés à l'abri (pas encore lancé, urgent).** Le dix-neuvième script,
+**Le code d'accès des salles (pas encore lancé).** Le dix-neuvième script,
+`supabase/migrations/20261107_crescite_pro_code.sql`, se lance dans le projet de la compagnie et peut être relancé ; puis
+redéployer la fonction `crescite-pro`, qui accepte désormais un code de dix caractères à côté du jeton. Chaque invitation
+de l'espace des salles reçoit un code court (dix caractères sans I, L, O, 0 ni 1, montré « K7QM4-TZPXW »), unique,
+qu'on lit, qu'on dicte et qu'on tape : le programmateur le saisit dans « Code d'accès » de `pro/` (minuscules, tiret et
+espaces admis) ; le lien `…/pro/#<jeton>` marche toujours. Dans l'administration (Espace pro, une invitation), le code
+est écrit en grand, avec « Copier le code », « Copier le message » (le code, l'adresse de l'espace, le lien, la date de
+fin), « Partager… » là où le navigateur partage et « Par SMS » au téléphone ; le courriel de « Écrire » le donne. Les
+codes essayés en vain sont comptés : au-delà de 60 en dix minutes, plus aucun code ne s'ouvre pendant ce temps (le lien
+si). Relancer le quatrième script après lui rend aux salles le seul jeton : relancer alors le dix-neuvième. 18 essais
+(`node pro-code.mjs`), et `node site/code-salles.mjs` (22 vérifications, administration fictive) et
+`site/salles-reponse.mjs` (le code tapé) dans Chromium.
+
+**Les documents générés à l'abri (pas encore lancé, urgent).** Le vingtième script,
 `supabase/migrations/20261107_crescite_documents_generes.sql`, se lance dans le projet de la compagnie et peut être
 relancé. Les devis, contrats, factures et fiches techniques étaient gardés dans `crescite_textes`, que le site public lit
 en entier : ils vont dans `crescite_documents_generes`, que seule l'administration lit, et la base les numérote
@@ -1004,7 +1037,7 @@ en entier : ils vont dans `crescite_documents_generes`, que seule l'administrati
 script de base, qu'une relance ne rouvre donc pas). Tant qu'il n'est pas lancé, l'administration n'émet aucun document.
 19 essais (`node documents_generes.mjs` : tous les scripts, un devis gardé à l'ancienne, puis lui, deux fois).
 
-**Les correctifs de l'audit (pas encore lancé).** Le vingtième script, `supabase/migrations/20261108_crescite_correctifs.sql`,
+**Les correctifs de l'audit (pas encore lancé).** Le vingt-et-unième script, `supabase/migrations/20261108_crescite_correctifs.sql`,
 se lance dans le projet de la compagnie et peut être relancé ; il ne change aucune table. Un « Prévenir l'équipe » ne
 remplace plus le précédent (chacun part sur les téléphones) ; deux propositions de dates, ou les réponses de deux
 personnes, ne se fondent plus ; une feuille republiée pour une date passée se tait, retirée elle le dit ; l'absent posé à
@@ -1014,13 +1047,13 @@ au journal ; les notes internes se datent. 17 essais (`node correctifs.mjs`). La
 redéployer : elle ignore désormais, à la relecture d'un agenda relié, les dates de la compagnie qu'on y a importées (sans
 quoi chacune était en conflit avec elle-même).
 
-**La diffusion reliée (pas encore lancé).** Le vingt-et-unième script, `supabase/migrations/20261109_crescite_diffusion.sql`,
+**La diffusion reliée (pas encore lancé).** Le vingt-deuxième script, `supabase/migrations/20261109_crescite_diffusion.sql`,
 se lance dans le projet de la compagnie et peut être relancé. Une piste de diffusion connaît son lieu (`lieu_id`), une
 invitation à l'espace pro et une demande de devis leur piste (`prospect_id`) ; les étapes d'une piste (dont `refus`, une
 piste perdue) et les statuts d'une demande sont tenus par la base. 7 essais (`node diffusion.mjs`). Sans lui,
 l'administration ne propose pas ces liens et marche comme avant.
 
-**L'équipe d'une date et le carnet des lieux (pas encore lancé).** Le vingt-deuxième script,
+**L'équipe d'une date et le carnet des lieux (pas encore lancé).** Le vingt-troisième script,
 `supabase/migrations/20261110_crescite_carnet.sql`, se lance dans le projet de la compagnie et peut être relancé. La vue
 `crescite_equipe_date` dit qui part sur une date (et avec quelle fonction) ; `crescite_membres_date` (qui prévenir) et
 `crescite_membre_date` (qui lit quoi) la lisent désormais, sans rien changer à ce qu'elles rendent. Les tables

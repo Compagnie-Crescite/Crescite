@@ -1,4 +1,4 @@
-// Les correctifs de l'audit (le vingtième script), dans un Postgres local (PGlite) : tous les scripts, puis lui, deux
+// Les correctifs de l'audit (le vingt-et-unième script), dans un Postgres local (PGlite) : tous les scripts, puis lui, deux
 // fois. Deux « Prévenir l'équipe » coup sur coup font deux notifications, chacune envoyée ; deux propositions ou deux
 // réponses ne se fondent plus ; une feuille republiée pour une date passée se tait, retirée elle prévient ; l'absent
 // posé à la création d'une date n'apprend pas qu'il « ne part plus » ; une date déplacée prévient ; on ne répond plus à

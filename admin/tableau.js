@@ -127,7 +127,7 @@ const TABLEAU = (() => {
       lignes: () => E.dates.filter(d => ['confirmee', 'option'].includes(d.statut) && aVenir(d) && !sansJour(d) && dansJours(d.debut) <= 60).flatMap(d => {
         let xs = []; try { xs = GARDEFOUS.alertes(dateVersForm(d), d).filter(a => a.niveau === 'alerte' && !/contrat/i.test(a.texte)); } catch (e) { xs = []; }
         return xs.map(a => ({ tri: d.debut, href: `#/representations/${d.id}`, couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(a.texte)}`, droite: `<span class="badge annulee">${esc(dansTexte(d.debut))}</span>` })); }) },
-    // les factures (le dix-neuvième script) : en retard passé leur échéance ; les dates jouées, cession convenue, sans facture
+    // les factures (le vingtième script) : en retard passé leur échéance ; les dates jouées, cession convenue, sans facture
     { k: 'paiements', titre: 'Factures en retard', tout: '#/representations', dispo: () => E.docsInstalles && typeof MODELES !== 'undefined',
       lignes: () => MODELES.enRetard().map(x => { const d = E.dates.find(y => y.id === x.date_id); return { tri: x.echeance, href: d ? `#/representations/${d.id}` : '#/diffusion', viser: '#d-documents', couleur: d ? couleurDate(d) : 'var(--alerte)',
         titre: `${esc(x.numero)} · ${esc(x.structure || '')}`, sous: esc([x.montant_ttc != null ? `${euros(x.montant_ttc)} TTC` : '', d ? titreDate(d) : ''].filter(Boolean).join(' · ')), droite: `<span class="badge annulee">échue le ${esc(jourSansAn(x.echeance))}</span>` }; }) },

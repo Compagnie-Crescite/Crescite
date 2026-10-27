@@ -1,4 +1,4 @@
--- Crescite : les correctifs de l'audit du 27 octobre 2026 (le vingtième script). À exécuter après les précédents, de la
+-- Crescite : les correctifs de l'audit du 27 octobre 2026 (le vingt-et-unième script). À exécuter après les précédents, de la
 -- même façon (SQL Editor → New query → coller → Run). Il peut être relancé sans dommage et ne touche qu'à ce qui
 -- commence par crescite_. Il redéfinit des fonctions et des déclencheurs ; il ne change aucune table.
 --

@@ -5,7 +5,7 @@
    contact du suivi) ou depuis la piste de diffusion (la structure, le contact), le montant, la TVA (5,5 % pour un
    spectacle vivant) et les conditions demandés dans un formulaire. Numérotés (DEV-2026-003…), mis en page en A4 avec le
    logo et les coordonnées de la compagnie, imprimés ou enregistrés en PDF par le navigateur. Chaque document est émis par
-   la base (crescite_documents_generes, le dix-neuvième script, réservé à l'administration) : elle donne le numéro, le
+   la base (crescite_documents_generes, le vingtième script, réservé à l'administration) : elle donne le numéro, le
    suivant de l'année pour ce type, et garde la page telle qu'émise, que « Imprimer » reproduit à l'identique ; un
    document émis ne change plus, une facture ne se supprime pas. Sans le script, rien n'est émis (les documents ne vont
    plus dans les textes publics du site). Les modèles sont un texte de départ : la compagnie les relit et les adapte dans
@@ -73,13 +73,13 @@ const MODELES = (() => {
     return v;
   }
   const generes = () => (Array.isArray(E.docsGeneres) ? E.docsGeneres : []).slice().sort((a, b) => b.id - a.id);
-  const absent = () => annoncer(`Les documents ne s’émettent plus tant que le dix-neuvième script manque : exécutez ${SCRIPT} dans Supabase (SQL Editor), puis rechargez la page.`, { erreur: true, delai: 15000 });
+  const absent = () => annoncer(`Les documents ne s’émettent plus tant que le vingtième script manque : exécutez ${SCRIPT} dans Supabase (SQL Editor), puis rechargez la page.`, { erreur: true, delai: 15000 });
   // la page telle qu'émise ; un document repris de l'ancienne liste n'en a pas : elle est recomposée (et le dit)
   async function pageEmise(x, ctx) {
     const { data, error } = await sb.from('crescite_documents_generes').select('html').eq('id', x.id).single();
     if (error) { erreur(error, 'Document introuvable'); return null; }
     if (data.html) return data.html;
-    annoncer('Ce document date d’avant le dix-neuvième script : sa page est recomposée d’après la base d’aujourd’hui.');
+    annoncer('Ce document date d’avant le vingtième script : sa page est recomposée d’après la base d’aujourd’hui.');
     return page(x.type, await modele(x.type), champs({ ...ctx, valeurs: x.valeurs || { numero: x.numero } }));
   }
   const euros = n => `${(Number(n) || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;

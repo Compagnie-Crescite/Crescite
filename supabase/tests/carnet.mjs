@@ -1,4 +1,4 @@
-// L'équipe d'une date et le carnet des lieux (le vingt-deuxième script), dans un Postgres local (PGlite) : tous les
+// L'équipe d'une date et le carnet des lieux (le vingt-troisième script), dans un Postgres local (PGlite) : tous les
 // scripts, puis lui, deux fois. La vue dit qui part (la distribution en tournée, moins les retirés, plus les renforts ;
 // la fonction de la date remplace celle de la distribution) ; les deux fonctions de toujours la lisent et rendent ce
 // qu'elles rendaient avant, date par date ; le carnet (contacts, hébergements) n'est qu'à l'administration, va au

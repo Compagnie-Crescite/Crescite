@@ -1,7 +1,7 @@
 // La base fictive de l’administration, commune aux harnais (tableau.mjs, niveau.mjs) : un petit serveur qui sert
 // admin/ et site/src/, les lectures et écritures REST de Supabase simulées (DB, MODIFS, ECRITURES), la session posée
 // dans le stockage du navigateur, le temps réel coupé, les polices coupées. Aucune donnée réelle, aucun appel à la base.
-// ouvrir(navigateur, { largeur, hauteur, hash, sombre, prefsAbsentes }) → { ctx, page, erreurs } ; ok(nom, v, detail) note une
+// ouvrir(navigateur, { largeur, hauteur, hash, sombre, prefsAbsentes, tactile, latence }) → { ctx, page, erreurs } ; ok(nom, v, detail) note une
 // vérification ; bilan(CAPT) les imprime, ferme le serveur et sort en erreur si une manque.
 import http from 'node:http';
 import fs from 'node:fs';
@@ -79,7 +79,7 @@ const DB = {
   ],
   crescite_equipes: [], crescite_documents: [], crescite_documents_generes: [],
   crescite_feuilles: [{ id: 1, date_id: 101, titre: 'Caen', contenu: {}, statut: 'brouillon', version: 1, publiee_le: null }],
-  crescite_acces_pro: [{ id: 1, nom: 'Le Volcan', contact: 'Mme Leroux', courriel: 'l@volcan.fr', jeton: 'abc', spectacles: [1], expire_le: plus(7), actif: true, visites: 2, derniere_visite: ilYA(300), cree_le: ilYA(3000) },
+  crescite_acces_pro: [{ id: 1, nom: 'Le Volcan', contact: 'Mme Leroux', courriel: 'l@volcan.fr', jeton: 'abc', code: 'K7QM4TZPXW', spectacles: [1], expire_le: plus(7), actif: true, visites: 2, derniere_visite: ilYA(300), cree_le: ilYA(3000) },
     { id: 2, nom: 'Festival d’Avignon', contact: null, jeton: 'def', spectacles: [], expire_le: plus(60), actif: true, visites: 0, cree_le: ilYA(4000) }],
   crescite_diffusion_prospects: [
     { id: 1, spectacle_id: 1, structure: 'Théâtre de Flers', commune: 'Flers', departement: '61', contact_nom: 'M. Petit', etape: 'dossier_envoye', date_dernier_contact: plus(-10), date_prochaine_relance: plus(-3), montant_estime: 3200, cree_le: ilYA(20000) },
@@ -118,8 +118,8 @@ async function calme(page) {
   await page.waitForTimeout(400);
 }
 
-async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', sombre = false, prefsAbsentes = false } = {}) {
-  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: hauteur }, locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: sombre ? 'dark' : 'light', isMobile: largeur < 600, hasTouch: largeur < 600 });
+async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', sombre = false, prefsAbsentes = false, tactile = largeur < 600, latence = 0 } = {}) {
+  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: hauteur }, locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: sombre ? 'dark' : 'light', isMobile: tactile, hasTouch: tactile });
   // la base simulée : REST lu depuis DB, les écritures de préférences gardées ; le temps réel ne répond jamais
   await ctx.route(/fonts\.g(oogleapis|static)\.com/, r => r.abort());   // (hors ligne : les polices du système)
   await ctx.route(/supabase\.co\//, async route => {
@@ -132,6 +132,7 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
       return json(200, {});
     }
     if (!url.pathname.startsWith('/rest/v1/')) return route.abort();
+    if (latence) await new Promise(r => setTimeout(r, latence));   // une base lente (latence, en ms, à chaque lecture)
     // un document émis : la base donne le numéro (le suivant de l'année pour ce type) et le pose dans la page
     if (table === 'crescite_emettre_document') {
       const c = JSON.parse(req.postData() || '{}'), an = new Date().getFullYear(), pre = { devis: 'DEV', contrat: 'CES', facture: 'FAC', fiche_technique: 'FT' }[c.type_];

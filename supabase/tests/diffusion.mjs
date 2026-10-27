@@ -1,4 +1,4 @@
-// La diffusion reliée (le vingt-et-unième script), dans un Postgres local (PGlite) : tous les scripts, une piste à
+// La diffusion reliée (le vingt-deuxième script), dans un Postgres local (PGlite) : tous les scripts, une piste à
 // l'ancienne, puis lui, deux fois. Une piste connaît son lieu, une invitation pro et une demande de devis leur piste ; un
 // lieu ou une piste supprimés délient sans rien perdre ; les étapes et les statuts sont tenus par la base ; le public
 // ne pose pas ces liens. Données fictives.

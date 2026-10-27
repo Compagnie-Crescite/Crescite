@@ -275,7 +275,7 @@ const GESTES = (() => {
       const long = x ? `${q} : ${nomLong ? nomLong(x) : l}` : `${q} : ${quoi?.aucun || 'aucun'}`;
       const icone = vertical ? (sens < 0 ? ICO.haut : ICO.bas) : (sens < 0 ? ICO.gauche : ICO.droite);
       const corps = !texte ? '' : quoi
-        ? `<span class="gps-t"><span class="gps-quoi">${esc(q)}${r ? `<kbd class="gps-touche" aria-hidden="true">${esc(r)}</kbd>` : ''}</span><span class="gps-l">${esc(x ? l : quoi.aucun || 'aucun')}</span></span>`
+        ? `<span class="gps-t"><span class="gps-quoi">${esc(q)}${r ? `<kbd class="gps-touche" aria-hidden="true">${esc(r)}</kbd>` : ''}</span> <span class="gps-l">${esc(x ? l : quoi.aucun || 'aucun')}</span></span>`
         : `<span class="gps-t">${esc(x ? l : q)}</span>`;
       return `<button type="button" class="${esc(classe)} gps-b gps-${sens < 0 ? 'prec' : 'suiv'}${quoi && texte ? ' gps-deux' : ''}" data-gps="${sens}"${x && x.href ? ` data-href="${esc(x.href)}"` : ''}${x ? '' : ' disabled'} aria-label="${esc(long)}${r ? ` (${r})` : ''}" title="${esc(long)}${r ? ` (${r})` : ''}">${sens < 0 ? icone : ''}${corps}${sens > 0 ? icone : ''}</button>`;
     };

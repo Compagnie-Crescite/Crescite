@@ -191,7 +191,9 @@ const CREATURE = (() => {
       if (!p) { if (this.place) this.sommeille(); this.place = null; return false; }
       const s = p.s || (p.largeur || this.o.largeur || 40) / LARGEUR, ox = p.x - CENTRE[0] * s, oy = p.y + this.bond(performance.now()) - CENTRE[1] * s;
       if (Math.abs(s - this.s) > 1e-7 || Math.abs(ox - this.ox) > .01 || Math.abs(oy - this.oy) > .01) { this.s = s; this.ox = ox; this.oy = oy; }
-      if (!this.place) { this.reagir('page'); this.trace.length = 0; }   // (elle paraît : elle s'éveille d'une secousse)
+      // (elle paraît : elle s'éveille d'une secousse, ses tentacules au repos autour d'elle, là où elle est : une pieuvre qui
+      // reparaît ailleurs que là où elle s'est endormie ne traîne pas ses tentacules depuis son ancienne place)
+      if (!this.place) { this.BRAS.forEach(a => a.t.poser(ox, oy, s)); this.reagir('page'); this.trace.length = 0; }
       this.place = p; this.enMouvement = !!p.bouge;
       return true;
     }
@@ -627,6 +629,6 @@ const CREATURE = (() => {
   }
   const habite = el => !!(tete && tete.vivant && hote && el && (el === hote || hote.contains(el) || el.contains(hote)));
 
-  return { actif, habiter, habite, suspendre: (ms = 40) => { repit = performance.now() + ms; }, creer: o => (actif ? new Creature(o) : null), reagir: (genre, vers) => { if (tete) tete.reagir(genre, vers); },
+  return { actif, habiter, habite, suspendre: (ms = 40) => { repit = Math.max(repit, performance.now() + ms); }, creer: o => (actif ? new Creature(o) : null), reagir: (genre, vers) => { if (tete) tete.reagir(genre, vers); },
     vers: (el, o) => (tete ? tete.vers(el, o) : Promise.resolve(false)), revenir: () => { if (tete) tete.revenir(); }, sortie: () => (tete ? tete.sortie() : 0), arreter: () => { if (tete) tete.arreter(); } };
 })();

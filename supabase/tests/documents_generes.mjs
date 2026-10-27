@@ -1,4 +1,4 @@
-// Les documents générés (le dix-neuvième script), dans un Postgres local (PGlite) : tous les scripts, avec un devis encore
+// Les documents générés (le vingtième script), dans un Postgres local (PGlite) : tous les scripts, avec un devis encore
 // gardé à l'ancienne dans crescite_textes, puis lui, deux fois. Le public ne lit plus ni les documents ni les modèles (il
 // lit toujours les textes du site) ; la base donne les numéros, à la suite par type et par année ; un document émis ne
 // change plus, sauf ce qui le suit (paiement, échéance, annulation) ; une facture ne se supprime pas ; seule

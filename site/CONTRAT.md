@@ -502,6 +502,12 @@ imaginatif. Dans le style de chaque maquette. »
   sa page, puis les prochaines dates de ces spectacles quand il y en a (`D.dates`), et rien d'autre que D et les libellés
   (`lesSpectacles`, `prochainesDates`, `toutesLesDates`, `fermer`). Relâcher la personne la ferme ; Échap rend le focus à
   sa place. Elle reste dans la troupe et dans l'écran, à 360 px comme au bureau.
+- La fiche partout (demande du client, octobre 2026 : « On doit pouvoir accéder à la fiche n'importe où sur le site public,
+  dès que les comédiens et techniciens et autres sont mentionnés dans un spectacle par exemple, dans sa distribution
+  notamment ») : chaque portrait de la distribution porte un bouton qui l'ouvre (`.u-pt-ouvrir[data-personne]`), et chaque
+  nom complet d'une personne publiée écrit dans une page devient un bouton (`.nomme[data-personne]`), au texte inchangé.
+  Pas en mode édition (le clic y modifie le texte ou la photo), ni dans les pages légales. La fiche ([data-fiche-personne])
+  est dans la couche du dessus, gardée dans l'écran à l'ouverture ; Échap la ferme et rend le focus à ce qui l'a ouverte.
 
 ## Règle 21 : la navigation par les saisons (v4, demande du client ; remplace les règles 2 et 3 là où elles diffèrent)
 « Le menu, ça doit être les saisons, au pluriel, où tu as la saison en cours, les prochaines dates, évidemment, avec un
@@ -697,3 +703,23 @@ smartphone : celle de Cyrano, c'est le plus souvent noir. Il faut sélectionner 
   d'un spectacle par écran, du côté libre de sa colonne de texte).
 - Une photo ajoutée reçoit sa zone dans `data/cadrages.json` ; sans zone, elle garde la position de sa feuille de style ;
   `data-cadre="non"` l'exclut.
+
+## Règle 25 : le rideau, puis la page qui se compose (demande du client, octobre 2026)
+« Au chargement d'un onglet, il y a un court chargement au noir avec l'octopus animé, puis la page se charge avec chaque
+élément qui prend sa place de façon animée (les spectacles : ils doivent s'inscrire rapidement, avec un mouvement, ligne par
+ligne, comme un programme qui se compose de façon magique). »
+- Le rideau (`Rideau`) : à chaque page ouverte par le menu, et à la première page hors de l'ouverture de l'accueil, un noir
+  plein écran (le menu compris) où nage la pieuvre (`CREATURE.creer`, à la couleur vive de la saison ; sans créature, le
+  dessin du logo qui flotte). 420 ms, puis il s'ouvre en deux (480 ms) et la pieuvre rejoint la marque du menu. Pas en
+  entrant dans un spectacle (l'encre), ni d'un onglet à l'autre d'un spectacle, ni sur la même adresse.
+- Rien n'attend le rideau : la page est rendue dessous dès le geste (son titre, son focus, sa place), le rideau ne fait que
+  couvrir ; les budgets de la règle 15 C restent ceux du geste. Un geste pendant le noir ouvre le rideau aussitôt ; ouvert,
+  il laisse passer les clics.
+- La composition (`composer`), à l'ouverture du rideau : ce qui est à l'écran s'inscrit ligne à ligne de haut en bas en
+  460 ms, au passage d'un trait de lumière ; une ligne de texte s'écrit de gauche à droite (clip-path ; pas de filtre
+  sur le texte, repeint à chaque image), un texte haut se découvre de haut en bas, un cadre se pose, une photo sort du flou. Web Animations
+  sur translate, scale, opacity, clip-path et filter : rien ne change de place dans la page (CLS 0). Ce qui a son propre
+  mouvement ([data-mv], le titre qui fleurit) n'est pas composé, et ne part qu'à l'ouverture du rideau.
+- Moins d'animations, `?anim=0`, un geste qui ouvre le rideau, un appareil trop lent (moins de vingt-cinq images par
+  seconde pendant le noir) : la page est là, sans composition.
+- Le vérificateur finit les animations d'id `rideau` et `compose` avant de lire une page.

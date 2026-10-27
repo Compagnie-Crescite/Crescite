@@ -1,4 +1,4 @@
--- Crescite : les documents générés à l'abri (le dix-neuvième script). À exécuter après les précédents, de la même façon
+-- Crescite : les documents générés à l'abri (le vingtième script). À exécuter après les précédents, de la même façon
 -- (SQL Editor → New query → coller → Run). Il peut être relancé sans dommage et ne touche qu'à ce qui commence par
 -- crescite_.
 --

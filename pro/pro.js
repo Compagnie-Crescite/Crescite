@@ -34,8 +34,11 @@
   const annoncer = m => { const a = $('#annonce'); a.textContent = ''; setTimeout(() => { a.textContent = m; }, 30); };
 
   // ---------------------------------------------------------------------------------------------- le jeton
-  // un code collé tel quel, ou le lien entier
-  const jetonDe = t => { const s = txt(t), m = /#([A-Za-z0-9_-]{32,128})$/.exec(s) || /^([A-Za-z0-9_-]{32,128})$/.exec(s); return m ? m[1] : null; };
+  // le lien entier, son jeton collé tel quel, ou le code court de l'invitation (dix caractères sans lettre ambiguë,
+  // « K7QM4-TZPXW » : tapé en minuscules, avec ou sans tiret ni espaces, il est ramené à sa forme)
+  const CODE = /^[A-HJKMNP-Z2-9]{10}$/;
+  const codeDe = t => { const c = String(t || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); return CODE.test(c) ? c : null; };
+  const jetonDe = t => { const s = txt(t), m = /#([A-Za-z0-9_-]{32,128})$/.exec(s) || /^([A-Za-z0-9_-]{32,128})$/.exec(s); return m ? m[1] : codeDe(s); };
   const lireSession = () => { try { return sessionStorage.getItem(SESSION); } catch (e) { return null; } };
   const garder = j => { try { if (j) sessionStorage.setItem(SESSION, j); else sessionStorage.removeItem(SESSION); } catch (e) { /* navigation privée */ } };
   let jeton = null;
@@ -132,12 +135,12 @@
       <p class="sur">Sur invitation</p>
       <h1 id="titre-porte">Espace des salles</h1>
       <p>Les captations et les documents de nos spectacles, pour les salles et les festivals que nous invitons.</p>
-      ${refuse ? '<p class="message" role="alert" style="margin-top:14px">Ce lien n’est plus valable : écrivez-nous pour le renouveler.</p>' : ''}
+      ${refuse ? `<p class="message" role="alert" style="margin-top:14px">${refuse === 'code' ? 'Ce code n’ouvre aucun espace : vérifiez-le (dix caractères), ou écrivez-nous pour le renouveler.' : 'Ce lien n’est plus valable : écrivez-nous pour le renouveler.'}</p>` : ''}
       ${panne ? '<p class="message neutre" role="alert" style="margin-top:14px">L’espace ne répond pas pour le moment. Réessayez dans un instant.</p>' : ''}
       <form id="form-code" novalidate>
         <label for="code">Code d’accès</label>
-        <div class="ligne"><input id="code" name="code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="text" aria-describedby="code-aide"><button class="bouton" type="submit">Entrer</button></div>
-        <p class="aide" id="code-aide">Il est dans le lien que nous vous avons envoyé : collez le lien entier ou le code seul.</p>
+        <div class="ligne"><input id="code" class="code" name="code" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" inputmode="text" placeholder="XXXXX-XXXXX" aria-describedby="code-aide"><button class="bouton" type="submit">Entrer</button></div>
+        <p class="aide" id="code-aide">Les dix caractères que nous vous avons donnés (les tirets et les minuscules ne comptent pas), ou le lien reçu par courriel, collé en entier.</p>
         <p class="message" id="code-erreur" role="alert" hidden></p>
       </form>
       <div class="demander"><p>Pas encore d’accès ?</p><a class="bouton second" href="${esc(demande)}">Demander un accès</a></div>
@@ -147,7 +150,7 @@
       e.preventDefault();
       const j = jetonDe($('#code').value);
       const err = $('#code-erreur');
-      if (!j) { err.textContent = 'Ce code n’est pas complet : vérifiez qu’il est bien collé en entier.'; err.hidden = false; $('#code').focus(); return; }
+      if (!j) { err.textContent = 'Ce code n’est pas complet : il compte dix caractères, lettres et chiffres (jamais O, I ni L, ni 0 ni 1). Vérifiez-le, ou collez le lien entier.'; err.hidden = false; $('#code').setAttribute('aria-invalid', 'true'); $('#code').focus(); return; }
       jeton = j; garder(j); ouvrirEspace(true);
     });
     if (!refuse && !panne) $('#code').focus({ preventScroll: true });
@@ -159,7 +162,7 @@
     montrer('<p class="chargement" role="status">Ouverture de votre espace…</p>');
     let r;
     try { r = await appeler({ jeton }); } catch (e) { return porte(false, true); }
-    if (r.statut === 404 && r.x?.erreur === 'acces') { jeton = null; garder(null); return porte(true); }
+    if (r.statut === 404 && r.x?.erreur === 'acces') { const code = CODE.test(jeton); jeton = null; garder(null); return porte(code ? 'code' : true); }
     if (r.statut !== 200 || !r.x || !Array.isArray(r.x.spectacles)) return porte(false, true);
     espace = r.x;
     rendre(espace, await contact, focus);

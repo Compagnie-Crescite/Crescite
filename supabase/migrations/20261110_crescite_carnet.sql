@@ -1,4 +1,4 @@
--- Crescite : l'équipe d'une date en un seul endroit, et le carnet des lieux (le vingt-deuxième script). À exécuter après
+-- Crescite : l'équipe d'une date en un seul endroit, et le carnet des lieux (le vingt-troisième script). À exécuter après
 -- les précédents, de la même façon (SQL Editor → New query → coller → Run). Il peut être relancé sans dommage et ne
 -- touche qu'à ce qui commence par crescite_.
 --

@@ -521,6 +521,65 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
 }
 
+// ================================================================================ l'en-tête sur une ou deux lignes (rangerBarre)
+// de 641 à 1 440 px : jamais plus de deux lignes, rien ne déborde ; ce qui ne tient pas est dans « Plus » (les rubriques,
+// le compte), qui s'ouvre au clavier et se referme par Échap ; au téléphone couché, une ligne arrimée de 64 px au plus
+for (const [largeur, hauteur, tactile] of [[700, 900, false], [1000, 900, false], [1120, 820, false], [1366, 768, false], [1440, 900, false], [844, 390, true], [667, 375, true]]) {
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/accueil', tactile });
+  await page.waitForTimeout(300);
+  const t = await page.evaluate(() => {
+    const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), nav = b.querySelector('.nav');
+    // les lignes : les milieux des éléments visibles, regroupés quand ils sont à moins de 14 px l'un de l'autre
+    const milieux = [...b.querySelectorAll('.marque, .chercher, .qui > *, .nav > :not([hidden])')].filter(e => e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; }).sort((x, y) => x - y);
+    const lignes = milieux.filter((y, i) => !i || y - milieux[i - 1] > 14).length;
+    return { h: Math.round(b.getBoundingClientRect().height), lignes, position: getComputedStyle(b).position, deborde: document.documentElement.scrollWidth > innerWidth || nav.scrollWidth > nav.clientWidth + 1,
+      caches: nav.querySelectorAll(':scope > a[hidden]').length, plus: !b.querySelector('.nav-plus').hidden, courante: !!nav.querySelector('a[aria-current="page"]:not([hidden])'), compte: b.classList.contains('r-compte'), haut: m.top };
+  });
+  const bas = hauteur <= 500;
+  ok(`en-tête (${largeur}×${hauteur}) : ${bas ? 'une ligne arrimée, 64 px au plus' : 'une ou deux lignes'}, rien ne déborde, la rubrique courante en vue, « Plus » dès qu’une chose n’y tient pas`,
+    t.lignes <= (bas ? 1 : 2) && !t.deborde && t.courante && (!bas || (t.h <= 64 && t.position === 'sticky')) && t.plus === (t.caches > 0 || t.compte), JSON.stringify(t));
+  if (t.plus) {
+    await page.focus('.nav-plus'); await page.keyboard.press('Enter'); await page.waitForTimeout(150);
+    const m = await page.evaluate(() => { const x = document.querySelector('#nav-autres'), r = x.getBoundingClientRect(), it = [...x.querySelectorAll('.na-item')];
+      return { ouvert: x.classList.contains('ouvert'), n: it.length, rub: it.filter(a => a.matches('a[href^="#/"]')).length, focus: document.activeElement?.classList.contains('na-item'), dedans: r.left >= 0 && r.right <= innerWidth + 1, cible: Math.min(...it.map(a => a.getBoundingClientRect().height)) }; });
+    await page.keyboard.press('ArrowDown');
+    const second = await page.evaluate(() => document.activeElement === document.querySelectorAll('#nav-autres .na-item')[1]);
+    await page.keyboard.press('Escape');
+    const ferme = await page.evaluate(() => !document.querySelector('#nav-autres').classList.contains('ouvert') && document.activeElement?.classList.contains('nav-plus'));
+    ok(`en-tête (${largeur}×${hauteur}) : « Plus » s’ouvre au clavier sur ce qui n’a pas tenu (${t.caches} rubrique${t.caches > 1 ? 's' : ''}${t.compte ? ', le compte' : ''}), cibles de 44 px, ↓ puis Échap rend le focus`,
+      m.ouvert && m.rub === t.caches && m.focus && m.dedans && m.cible >= 44 && second && ferme, JSON.stringify({ m, second, ferme }));
+    if (largeur === 1120 || largeur === 844) { await page.click('.nav-plus'); await page.waitForTimeout(250); await page.screenshot({ path: `${CAPT}/entete-plus-${largeur}.png` }); await page.keyboard.press('Escape'); }
+  }
+  ok(`en-tête (${largeur}×${hauteur}) : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ la recherche rapide : tout ce qui a une adresse
+// les fiches ouvertes reviennent champ vide (puis les prochaines dates) ; un téléphone, un contact, une partie de rubrique,
+// un texte du site, une invitation se trouvent ; le passage trouvé hors du titre se montre, souligné ; le clavier ouvre
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/accueil' });
+  for (const h of ['#/lieux/6', '#/equipe/1']) { await page.evaluate(x => { location.hash = x; }, h); await page.waitForTimeout(400); }
+  await page.keyboard.press('Control+k'); await page.waitForSelector('dialog.recherche[open]');
+  const vide = await page.evaluate(() => ({ entete: document.querySelector('#rch-entete').textContent, groupes: [...document.querySelectorAll('.rch-groupe')].map(x => x.textContent),
+    titres: [...document.querySelectorAll('#rch-liste [role=option] b')].slice(0, 2).map(b => b.textContent) }));
+  ok('recherche · champ vide : les fiches ouvertes en dernier (la plus récente d’abord), puis les prochaines dates', vide.entete === 'Ouvertes récemment' && vide.titres[0] === 'Camille Essai' && vide.titres[1] === 'Le Volcan' && vide.groupes[0] === 'Prochaines dates', JSON.stringify(vide));
+  const chercher = async q => { await page.fill('#rch-q', q); await page.waitForTimeout(80); return page.evaluate(() => [...document.querySelectorAll('#rch-liste [role=option]')].map(o => ({ type: o.querySelector('.rch-type').textContent, titre: o.querySelector('b').textContent, passage: o.querySelector('.rch-passage')?.textContent || '', marques: [...o.querySelectorAll('.rch-passage mark')].map(m => m.textContent) }))); };
+  const tel = await chercher('06 12');
+  ok('recherche · un numéro trouve la personne, et le passage trouvé (« Téléphone : 06 12 34 56 78 ») se montre souligné', tel.length === 1 && tel[0].titre === 'Camille Essai' && /^Téléphone : 06 12 34 56 78/.test(tel[0].passage) && tel[0].marques.join(' ') === '06 12', JSON.stringify(tel));
+  const regie = await chercher('régie');
+  ok('recherche · un contact trouve le lieu et la date qu’il suit', regie.some(x => x.type === 'Lieu' && x.titre === 'Théâtre de Caen' && /^Contact/.test(x.passage)) && regie.some(x => x.type === 'Date'), JSON.stringify(regie));
+  const parties = [];
+  for (const q of ['carte de tournée', 'propositions', 'coordonnées', 'volcan', 'préparation', 'mot de passe']) parties.push([q, (await chercher(q)).map(x => `${x.type}:${x.titre}`)]);
+  const a = Object.fromEntries(parties);
+  ok('recherche · les parties des rubriques, les textes du site, les invitations, les ateliers, le compte se trouvent', a['carte de tournée'].includes('Rubrique:Carte de tournée') && a.propositions.includes('Rubrique:Propositions') && a['coordonnées'].includes('Texte:Coordonnées')
+    && a.volcan.includes('Invitation:Le Volcan') && a['préparation'].includes('Atelier:Atelier de préparation') && a['mot de passe'].includes('Compte:Mot de passe'), JSON.stringify(a));
+  await page.fill('#rch-q', 'carte de tournée'); await page.waitForTimeout(80); await page.keyboard.press('Enter'); await page.waitForTimeout(300);
+  ok('recherche · Entrée ouvre la partie trouvée', await page.evaluate(() => location.hash) === '#/representations/carte');
+  ok('recherche · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
 // ================================================================================ les repères (axe-core : landmark-one-main, region)
 // l'en-tête, le menu des rubriques (nommé, la rubrique ouverte marquée), le contenu, le pied ; « Aller au contenu » en
 // premier arrêt du clavier, qui pose le focus sur le titre sans changer l'adresse ; la porte a aussi son repère principal
