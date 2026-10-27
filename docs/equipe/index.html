@@ -10,7 +10,7 @@
      la feuille de style, sous data-theme="jour" seulement -->
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#1b1117">
-<!-- l'application : installable (manifest.webmanifest, sw.js) ; ses icônes sont faites par maquettes/build.py (equipe(dest)) -->
+<!-- l'application : installable (manifest.webmanifest, sw.js) ; ses icônes sont faites par site/build.py (equipe(dest)) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icones/192.png" type="image/png">
 <link rel="apple-touch-icon" href="icones/180.png">
@@ -28,7 +28,7 @@
 /* L'espace de l'équipe, en application. D'abord pour le téléphone (on le lit en tournée, sur un quai de gare) : une barre
    d'onglets en bas ; à l'ordinateur, une colonne à gauche. Aussi clair qu'un billet de train, à la charte du site public :
    ses polices (Ubuntu, Open Sans, Raleway), ses neutres, sa nuit, et pour accent la couleur de la saison (règle 22 du
-   contrat : --saison-*, que maquettes/build.py pose après cette feuille ; sans lui, un gris neutre) ; la couleur de
+   contrat : --saison-*, que site/build.py pose après cette feuille ; sans lui, un gris neutre) ; la couleur de
    l'univers de chaque spectacle en accent. data-u (posé par equipe.js) donne à un élément --u (la couleur telle quelle,
    pour les filets) et, selon la nuit ou le jour, --u-fond et --u-texte (la même, ajustée jusqu'à un contraste de 4,6:1).
    La nuit par défaut, quel que soit l'appareil ; le jour sous data-theme="jour" seulement. */
@@ -1076,7 +1076,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
   main { padding: 0; max-width: none; }
 }
 </style>
-<style id="couleurs-saison">/* écrit par maquettes/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
+<style id="couleurs-saison">/* écrit par site/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
 </head>
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
@@ -1084,7 +1084,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 <div id="annonces" aria-live="polite"></div>
 <noscript><p class="chargement">Cette page a besoin de JavaScript pour se connecter à la base de la compagnie.</p></noscript>
 <!-- le client de la base, l'outil des lignes d'agenda, les feuilles de route et les tentacules : ceux de l'administration ;
-     carte.js (la France et Rouen, pour la carte de la tournée) est écrit par maquettes/build.py -->
+     carte.js (la France et Rouen, pour la carte de la tournée) est écrit par site/build.py -->
 <script src="../admin/vendor/supabase.js" defer></script>
 <script src="../admin/agenda.js" defer></script>
 <script src="../admin/feuille.js" defer></script>

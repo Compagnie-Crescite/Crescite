@@ -9,7 +9,7 @@
      la feuille de style, sous data-theme="jour" seulement -->
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#1b1117">
-<!-- l'icône d'onglet : celle des espaces réservés, à la couleur de la saison (faite par maquettes/build.py, equipe(dest)) -->
+<!-- l'icône d'onglet : celle des espaces réservés, à la couleur de la saison (faite par site/build.py, equipe(dest)) -->
 <link rel="icon" href="../equipe/icones/192.png" type="image/png">
 <link rel="apple-touch-icon" href="../equipe/icones/180.png">
 <meta name="format-detection" content="telephone=no">
@@ -23,7 +23,7 @@
    personne. Elle lit la proposition et enregistre les réponses par la fonction crescite-courriel. Un lien de courriel
    n'enregistre rien tout seul : le choix arrive prêt, on le confirme d'un bouton. À la charte du site public, comme
    l'espace des salles : ses polices, ses neutres, l'accent à la couleur de la saison (--saison-*, posées par
-   maquettes/build.py ; sans lui, un gris neutre), la nuit par défaut (le jour sous data-theme="jour" seulement).
+   site/build.py ; sans lui, un gris neutre), la nuit par défaut (le jour sous data-theme="jour" seulement).
    Les alertes de tournée (reponse/?alerte=<jeton>&action=confirmer|arreter, le onzième script SQL) : la page montre
    l'alerte (son secteur, jamais l'adresse) et fait confirmer d'un bouton, ou arrêter (l'alerte s'efface, ou toutes
    celles de l'adresse) ; là non plus, ouvrir le lien ne fait rien tout seul. */
@@ -122,7 +122,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .confirmer .actions:first-child { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) { .choix button { transition: none; } .choix button:active { transform: none; } }
 </style>
-<style id="couleurs-saison">/* écrit par maquettes/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
+<style id="couleurs-saison">/* écrit par site/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
 </head>
 <body>
 <header class="barre">
@@ -281,7 +281,7 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   // au bas de chaque courriel d'alerte). La page montre l'alerte, le bouton agit ; ouvrir le lien ne fait rien
   const jetonAlerte = q.get('alerte') || '';
   const actionAlerte = q.get('action') === 'arreter' ? 'arreter' : 'confirmer';
-  const DATES = '../synthese.html#/saisons';   // les dates de la compagnie, sur le site
+  const DATES = '../#/saisons';   // les dates de la compagnie, sur le site
   let va = null;                               // l'alerte vue par son jeton : { alerte, attente, autres }
   let faitAlerte = null;                       // ce qui vient d'être fait : { action, n, liste, tout }
   const secteurs = xs => `<ul class="secteurs">${xs.map(a => `<li>${esc(a.secteur)}<span>${esc(a.spectacle || 'Tous les spectacles')}</span></li>`).join('')}</ul>`;

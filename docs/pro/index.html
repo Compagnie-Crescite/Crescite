@@ -10,7 +10,7 @@
      la feuille de style, sous data-theme="jour" seulement -->
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#1b1117">
-<!-- l'icône d'onglet : celle des espaces réservés, à la couleur de la saison (faite par maquettes/build.py, equipe(dest)) -->
+<!-- l'icône d'onglet : celle des espaces réservés, à la couleur de la saison (faite par site/build.py, equipe(dest)) -->
 <link rel="icon" href="../equipe/icones/192.png" type="image/png">
 <link rel="apple-touch-icon" href="../equipe/icones/180.png">
 <meta name="format-detection" content="telephone=no">
@@ -23,7 +23,7 @@
 /* L'espace des salles (pro/) : les programmateurs et les directeurs de salle invités y trouvent les captations et les
    documents des spectacles que la compagnie leur ouvre. Sobre, à la charte du site public : ses polices (Ubuntu, Open
    Sans, Raleway), ses neutres, sa nuit, et pour accent la couleur de la saison (règle 22 du contrat : --saison-*, que
-   maquettes/build.py pose après cette feuille ; sans lui, un gris neutre) ; chaque spectacle dans la police et la couleur
+   site/build.py pose après cette feuille ; sans lui, un gris neutre) ; chaque spectacle dans la police et la couleur
    de son univers. La nuit par défaut, quel que soit l'appareil ; le jour sous data-theme="jour" seulement. */
 :root {
   --saison: #4f4850; --saison-vive: #b7b0ae; --saison-porteur: #5c545d; --saison-profond: #2b272c; --saison-texte: #4f4850;
@@ -173,7 +173,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 8px calc(20px + var(--ds)) 40
   .secours { margin-left: 0; }
 }
 </style>
-<style id="couleurs-saison">/* écrit par maquettes/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
+<style id="couleurs-saison">/* écrit par site/build.py : les couleurs de la saison (cassandres) */ :root { --saison: #1f3a73; --saison-vive: #7f9fe0; --saison-porteur: #45629f; --saison-profond: #11203f; --saison-texte: #1f3a73; --saison-fonce: #192e5c; --saison-doux: #e4e6e9; --saison-texte-nuit: #7f9fe0; --saison-fonce-nuit: #a5bce9; --saison-doux-nuit: #313043; }</style>
 </head>
 <body>
 <a class="evitement" href="#contenu">Aller au contenu</a>
