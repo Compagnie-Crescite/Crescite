@@ -4352,7 +4352,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const df = e.target.closest && e.target.closest('.df'), a = df && $('.df-cta a', df);
       if (!a || e.defaultPrevented || e.button || e.target.closest('a, button, input, select, textarea, summary, label')) return;
       if (document.documentElement.classList.contains('ed-actif') || String(getSelection() || '').trim()) return;
-      dernierClic = { x: e.clientX, y: e.clientY, t: performance.now() };
+      dernierClic = { x: e.clientX, y: e.clientY, t: performance.now(), lien: a };
       location.hash = a.getAttribute('href');
     });
     return { titre: S.accueil };
@@ -5693,7 +5693,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (document.documentElement.classList.contains('ed-actif')) return;
         let x = e.clientX, y = e.clientY;
         if (!x && !y) { const r = li.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; }
-        dernierClic = { x, y, t: performance.now() };   // (l'encre du spectacle s'ouvre de la touche)
+        dernierClic = { x, y, t: performance.now(), lien: $('.pil-aller', li) };   // (l'encre du spectacle s'ouvre de la touche ; au retour, le focus revient à son lien)
         location.hash = lienSp(li.dataset.slug);
         return;
       }
@@ -6714,8 +6714,51 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const a = e.target.closest && e.target.closest('a[href^="#/"]'); if (!a) return;
     let x = e.clientX, y = e.clientY;
     if (!x && !y) { const r = a.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top + r.height / 2; }   // (au clavier : son milieu)
-    dernierClic = { x, y, t: performance.now() };
+    dernierClic = { x, y, t: performance.now(), lien: a };
   }, { capture: true, passive: true });
+  // le retour arrière : chaque entrée de l'historique a sa clé (history.state.k) ; en la quittant, on retient où l'on en était
+  // de sa lecture et le lien d'où l'on est parti (celui qu'on a choisi, sinon celui qui avait le focus) ; y revenir par le
+  // navigateur (précédent, suivant) rend cette position et ce focus, au lieu du haut de la page. Une adresse nouvelle a une
+  // clé nouvelle : elle s'ouvre en haut, comme avant
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';   // (le routeur pose la page lui-même)
+  const lectures = new Map();
+  let cleCourante = null;
+  const cleEntree = () => { const st = history.state; if (st && st.k) return st.k;
+    const k = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    try { history.replaceState(Object.assign({}, st, { k }), ''); } catch (e) { return null; }
+    return k; };
+  // (le lien retrouvé : par son adresse et son rang parmi les liens de même adresse de la page)
+  const repereLien = el => { const a = el && el.closest && el.closest('a[href]'); if (!a || !main.contains(a)) return null;
+    const h = a.getAttribute('href'); return { h, i: $$('a[href]', main).filter(x => x.getAttribute('href') === h).indexOf(a) }; };
+  const lienDe = r => r ? $$('a[href]', main).filter(x => x.getAttribute('href') === r.h)[r.i] || null : null;
+  function retenirLecture(clic) {
+    if (!cleCourante) return;
+    const el = (clic && clic.lien && main.contains(clic.lien)) ? clic.lien : document.activeElement, lien = repereLien(el);
+    lectures.set(cleCourante, { y: scrollY, lien, haut: lien ? el.closest('a[href]').getBoundingClientRect().top : null });
+    if (lectures.size > 60) lectures.delete(lectures.keys().next().value);
+  }
+  // la position rendue : la page s'allonge encore dans les images qui suivent (ce qui se dessine après le premier rendu, sous
+  // le pli) ; pendant une seconde, sauf si le visiteur bouge, le lien de départ est remis à la hauteur où on l'a laissé (dès
+  // qu'il existe ; avant lui, la position retenue), le navigateur ne déplaçant pas la page de lui-même pendant ce temps
+  // (overflow-anchor) ; il prend le focus dès qu'il paraît (sans lui, le titre de la page)
+  function rendreLecture(m, b) {
+    const t0 = performance.now(), html = document.documentElement;
+    let bouge = false, pris = false;
+    const geste = () => { bouge = true; }, gestes = ['wheel', 'touchstart', 'keydown', 'pointerdown'];
+    gestes.forEach(t => addEventListener(t, geste, { passive: true, once: true }));
+    html.style.overflowAnchor = 'none';
+    const fin = () => { gestes.forEach(t => removeEventListener(t, geste)); html.style.overflowAnchor = '';
+      if (!pris && courant === b && !main.contains(document.activeElement)) ($('h1[tabindex="-1"]', main) || main).focus({ preventScroll: true }); };
+    const viser = () => {
+      if (courant !== b) return fin();
+      const l = lienDe(m.lien);
+      if (!bouge) { const y = Math.max(0, Math.round(l && m.haut != null ? l.getBoundingClientRect().top + scrollY - m.haut : m.y));
+        if (Math.abs(scrollY - y) > 1) scrollTo({ top: y, left: 0, behavior: 'instant' }); }
+      if (l && !pris) { pris = true; l.focus({ preventScroll: true }); }
+      if (!bouge && performance.now() - t0 < 1000) requestAnimationFrame(viser); else fin();
+    };
+    viser();
+  }
   function genre(a) {
     const h = '#/' + a.chemin, retour = pile.length > 1 && pile[pile.length - 2] === h;
     retourNav = retour;
@@ -6769,6 +6812,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if ((m = a.chemin.match(/^saisons\/([\d-]+)$/)) && m[1] === D.saison) { location.replace(saisons); return; }
     const type = genre(a), clic = dernierClic && performance.now() - dernierClic.t < 1200 ? dernierClic : null;
     dernierClic = null;
+    // (la page qu'on quitte est encore là : on retient sa lecture ; celle où l'on arrive, si on l'a déjà lue, rend la sienne)
+    retenirLecture(clic);
+    cleCourante = cleEntree();
+    const relue = cleCourante && lectures.get(cleCourante);
     const avant = courant, premiere = !avant, spAvant = avant && (avant.chemin.match(/^spectacle\/([\w-]+)/) || [])[1];
     // (lu avant le rendu, la mise en page encore propre : la route suit une image)
     const yMenu = avant ? Menu.el.getBoundingClientRect().top : 0;
@@ -6790,6 +6837,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // haut, son titre prend le focus ; #/saisons/<saison>, sa saison ; un onglet, sous les menus. Sous l'encre qui s'ouvre, la
     // page ne se peint qu'à l'image d'après (la première n'a que l'encre à peindre) ; elle prend alors le focus
     const poser = () => {
+      if (relue) { rendreLecture(relue, b); return; }
       const x = r.ancre && document.getElementById(r.ancre);
       if (x) { x.scrollIntoView({ block: 'start', behavior: 'instant' }); ($('summary', x) || x).focus({ preventScroll: true }); return; }
       if (type === 'onglet' && sousLesMenus()) return;
