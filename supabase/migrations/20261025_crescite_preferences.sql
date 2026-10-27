@@ -27,6 +27,11 @@
 --                           route à l'ordinateur seulement (jamais au téléphone) ; lue par le lien « Représentations » du menu
 --                           latéral et par la page d'ouverture (admin/index.html). Absente tant qu'on n'a pas ouvert le tableur
 --                           ou la carte : l'adresse nue #/representations reste la liste. Avant ce script, sur l'appareil.
+--   theme                   'nuit' (par défaut), 'jour' ou 'appareil' : le thème de l'administration (admin/cadre.js). Le jour ne
+--                           change que le contenu des pages ; « appareil » suit le réglage du système. Avant ce script, sur
+--                           l'appareil seulement (crescite-admin-apparence:<compte>, que lit la page avant son premier dessin).
+--   densite                 'confortable' (par défaut) ou 'compacte' : la densité de l'administration à l'ordinateur (lignes, champs et
+--                           texte resserrés, à la souris seulement). Sur l'appareil avant ce script, comme le thème.
 -- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;

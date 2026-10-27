@@ -11,7 +11,7 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Geste | Durée | Courbe | Où |
 | --- | --- | --- | --- |
 | Paraître (un bloc, un menu, un contenu lu après la page) | 150 à 450 ms | `cubic-bezier(.2, .8, .2, 1)`, le « doux » | `monte`, `ad-arrive`, `arrive`, `ad-neuf`, `neuve` |
-| Sauter (un compte, un badge, une coche, un bouton qui a réussi) | 450 ms | `cubic-bezier(.3, 1.6, .5, 1)`, le ressort | `pop`, `ad-pop`, `fait` |
+| Sauter (un compte, un badge, une coche, un bouton qui a réussi, l'icône du thème ou de la densité qu'on vient de choisir) | 450 ms | `cubic-bezier(.3, 1.6, .5, 1)`, le ressort | `pop`, `ad-pop`, `fait` |
 | Glisser à sa place (une ligne, un billet, une carte qui change de rang) | 380 à 420 ms | le doux, par l'API Web Animations (FLIP) | `glisserVers`, `reperer` |
 | Suivre le doigt (le retour, une notification, tirer pour rafraîchir) | le temps du geste, puis 180 à 300 ms | linéaire sous le doigt, le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer` |
 | Passer d'une vue à l'autre | 220 à 300 ms | le doux, par les View Transitions | `changerVue`, `changerVueAdmin` |
@@ -32,7 +32,9 @@ liste qui se redessine glisse, un élément qui s'en va se replie (`retirerLigne
 
 Deux petites choses du menu latéral n'ont pas de ligne à elles : le témoin « G… » qui attend la lettre d'une séquence de
 touches (G puis D) paraît et s'efface en 120 ms d'opacité, linéaire, comme les libellés du menu qui se replie, et ne
-bouge pas du tout sous « moins d'animations » ; les badges (« 12 » à traiter) sont posés sans mouvement, la pastille
+bouge pas du tout sous « moins d'animations » ; le changement de thème (nuit, jour, appareil) est instantané : aucune
+transition de couleur ne se lance (`html.bascule` les coupe le temps d'un recalcul de style : un fondu sur toute la page
+coûterait cher), et seule l'icône choisie saute (`pop`, le ressort, 450 ms) ; les badges (« 12 » à traiter) sont posés sans mouvement, la pastille
 change de chiffre sans rouler (`cadre.mjs` en vérifie le calcul : aucune tâche de plus de 200 ms à `CPU=4`).
 
 ## Les règles
@@ -72,11 +74,14 @@ manque.
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil),
 `tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la coque, le menu
 latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le bandeau
-« Modifiée ailleurs », qui paraît en `ad-arrive`) et `vues-dates.mjs` (les trois vues de Représentations : la pilule, les
-filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C). Ils ne touchent
-presque pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
+« Modifiée ailleurs », qui paraît en `ad-arrive`), `vues-dates.mjs` (les trois vues de Représentations : la pilule, les
+filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C) et `theme.mjs` (le
+thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié). Ils ne touchent presque
+pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
 d'animations », et que le compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le
-passage entre les trois vues est un fondu ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
+passage entre les trois vues est un fondu ; `theme.mjs`, qu'aucune transition de couleur ne se lance au changement de
+thème, que l'icône choisie saute en 450 ms au ressort, que rien ne bouge sous « moins d'animations » ou `?anim=0`, et
+qu'à `CPU=4` aucune tâche ne dépasse 200 ms ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
 
 ## Ce qui a été écarté
 

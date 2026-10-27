@@ -39,6 +39,7 @@ node site/icones.mjs               # la bibliothèque d'icônes de l'administrat
 node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
 node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
 node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
+node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -203,8 +204,9 @@ réservation, les vidéos, la nuit seule, la troupe, les couleurs de la saison, 
 L'administration, l'espace de l'équipe, l'espace des salles et la page de réponse ont les polices du site (Ubuntu, Open
 Sans, Raleway pour les étiquettes), ses neutres (le papier `#1b1117`, la carte `#2e2128`, l'encre `#f3eee9`…) et sa nuit
 par défaut, quel que soit l'appareil : `data-theme="nuit"` sur `<html>` dans la page même, `theme-color` et manifeste de
-nuit ; les palettes de jour restent dans les feuilles de style, sous `data-theme="jour"` seulement (aucun bouton), et ce
-qui testait le thème en script lit cet attribut (le planning se redessine quand il change). Leur accent n'est plus le
+nuit ; les palettes de jour restent dans les feuilles de style, sous `data-theme="jour"` ; l'équipe, les salles et la page
+de réponse n'ont aucun bouton pour y passer, l'administration a sa pilule au menu (« L'apparence », plus bas) ; ce qui
+testait le thème en script lit cet attribut (le planning se redessine quand il change). Leur accent n'est plus le
 magenta : c'est la couleur de la saison (règle 22). Les sources n'en ont qu'un gris neutre (`--saison-*` par défaut) ;
 `build.py` porte ce qu'il faut de `themeSaison` (`theme(complet=True)` : la couleur, la vive, le porteur d'un texte
 blanc, le texte lisible le jour et la nuit, leurs nuances) et `poser_saison` l'écrit dans un `<style id="couleurs-saison">`
@@ -355,8 +357,9 @@ compte du projet inscrit dans `crescite_admins`.
   de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
   prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
-  calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"`. `site/tableau.mjs` en garde des captures de chaque
-  page (`habillage-*.png`). Les icônes n'y sont dessinées qu'une fois : `admin/icones.js` (chargé avant les gestes) est la
+  calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"` (un choix du menu : voir
+  « L'apparence », plus bas ; la densité compacte y est aussi, dans les dernières règles du fichier). `site/tableau.mjs` en garde des captures de chaque
+  page (`habillage-*.png`), `site/theme.mjs` des mêmes pages en jour (`jour-*.png`). Les icônes n'y sont dessinées qu'une fois : `admin/icones.js` (chargé avant les gestes) est la
   bibliothèque, un nom par dessin (`ICONES.svg('calendrier', { taille: 22 })`), que l'en-tête, la barre du téléphone, les
   tuiles, les menus et le planning de l'administration reprennent ; l'espace de l'équipe garde ses tracés. La page
   `#/essai/icones` les montre toutes en grille, le nom sous chacune (hors du menu et de la recherche).
@@ -558,10 +561,32 @@ compte du projet inscrit dans `crescite_admins`.
   - **Le téléphone** (640 px et moins) n'a pas de menu latéral : la barre du bas en tient lieu, et rien n'a bougé. Le
     compte, le mot de passe, l'aide et la déconnexion restent dans l'en-tête.
   - **À l'impression**, seul le contenu sort (ni l'en-tête, ni le menu, ni le pied).
+  - **L'apparence : la nuit, le jour, l'appareil, la densité.** En bas du menu, sous « Replier », une pilule de trois petites
+    icônes (la lune, le soleil, le moniteur) et une quatrième icône pour la densité, chacune de 44 px, avec son nom en
+    infobulle et pour les lecteurs d'écran ; menu replié, les quatre font une colonne. Le **jour** met le contenu des pages
+    sur du papier clair ; l'en-tête et le menu restent de nuit, dans les deux thèmes. **Appareil** suit le réglage du système
+    (clair ou sombre) et le suit tout seul quand il change. La **nuit** est le réglage de départ, quel que soit l'appareil ;
+    le téléphone (640 px et moins), qui n'a pas ce menu, reste toujours de nuit, comme avant.
+    Les flèches passent d'une icône de la pilule à l'autre et choisissent ; la recherche (**Ctrl K**) offre les mêmes
+    gestes : « Mode jour », « Mode nuit », « Compact ». La **densité compacte** resserre les lignes (celles du menu passent de 44 à 36 px),
+    les champs (d'environ 40 à 32 px) et le texte courant (de 15 à 14 px) : à la souris seulement, jamais au doigt, où rien ne
+    change (les cibles gardent leurs 44 px) ; les titres, les étiquettes et les feuilles de gestes ne bougent pas.
+    Le choix est gardé avec le compte (`theme`, `densite`, voir « Les préférences ») et sur l'appareil, et posé par un petit
+    script du `<head>` avant le premier dessin : en jour, la page ne clignote pas en sombre à la réouverture. Une
+    annonce le dit (« Thème : jour. », puis, la première fois, où le réglage est gardé). Le changement est instantané (aucune
+    transition de couleur : un fondu sur toute la page coûterait cher), seule l'icône choisie saute ; le planning se redessine
+    seul, la tentacule de la page remonte à la couleur du nouveau thème (sous « moins d'animations », elle garde ses couleurs
+    jusqu'à la prochaine arrivée : rien ne bouge). Les valeurs de la densité (`--pas`, `--h-champ`,
+    `--pad-champ`, `--h-ligne-menu`) sont déclarées dans le `:root` d'`admin/index.html`, la compacte dans `admin/habillage.js`,
+    et les composants qui suivent (le tableur Simple, par exemple) les lisent. `node site/theme.mjs` vérifie tout cela (la nuit
+    par défaut, la pilule et son contraste, le jour, le rechargement sans clignotement, « appareil » qui suit le système, la
+    compacte à la souris et sans effet au doigt, un second onglet, la première ouverture sur un appareil, sans le sixième script,
+    la recherche, le menu replié, « moins d'animations », `CPU=4`, le jour sur sept pages et le tableau de bord ;
+    captures `jour.png`, `nuit.png`, `compacte.png` et `jour-*.png` dans `site/dist/shots-theme/`).
   - `node site/cadre.mjs` vérifie tout cela dans Chromium, hors ligne, sur la base fictive commune : l'en-tête sur une
     ligne et le menu déplié à 1 440 px, le menu collé au défilement, les annonces centrées, la coque construite une seule
     fois (et de nouveau après l'écran du mot de passe), le repli d'office à 1 280 px sans rien écrire, le repli et le dépli
-    (la colonne qui s'anime, la clé écrite, l'état retrouvé dès le premier dessin, le second onglet, sans le script SQL 6,
+    (la colonne qui s'anime, la clé écrite, l'état retrouvé dès le premier dessin, le second onglet, sans le sixième script,
     sous « moins d'animations »), le téléphone tel qu'avant, l'impression et l'ordre du clavier, puis les raccourcis (Alt+M au
     Mac comme au clavier français, les douze « G puis une lettre », le témoin, ce qui les fait dormir, dont les boîtes
     natives sans `aria-modal` (la question, le briefing), la file J / K du tableau de bord qui ne bouge pas, l'aide « ? »)
@@ -1014,13 +1039,14 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Cinq clés servent aujourd'hui : `accueil.tableau` (la
+l'administration comprise ; le public n'y a aucun droit. Sept clés servent aujourd'hui : `accueil.tableau` (la
 disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
 l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
-ou 90 jours) et `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
-ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral ») ; `representations.vue`
+ou 90 jours), `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
+ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »), `representations.vue`
 (la dernière vue de Représentations, `liste`, `tableur` ou `carte` : écrite à l'ordinateur seulement, voir
-Représentations). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
+Représentations), `theme` (`nuit`, `jour` ou `appareil` ; la nuit tant qu'on n'a pas choisi) et `densite` (`confortable`
+ou `compacte` ; voir « L'apparence »). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
 version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
 requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
 tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),

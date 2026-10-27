@@ -1269,7 +1269,7 @@ const TABLEAU = (() => {
 @media (max-width: 760px) { .tb-grille, .tb-grille[data-colonnes] { grid-template-columns: minmax(0, 1fr); } .tb-tuile.taille-m, .tb-tuile.taille-g { grid-column: auto; } }
 @media (min-width: 761px) and (max-width: 1100px) { .tb-grille[data-colonnes="3"], .tb-grille[data-colonnes="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .tb-vide { grid-column: 1 / -1; text-align: center; color: var(--gris); }
-.tb-tete { display: flex; align-items: center; gap: 4px; padding: 10px 8px 9px 14px; border-bottom: 1px solid var(--trait); }
+.tb-tete { display: flex; align-items: center; gap: 4px; padding: var(--pas, 10px) 8px calc(var(--pas, 10px) - 1px) 14px; border-bottom: 1px solid var(--trait); }
 .tb-tete h2 { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; margin: 0 4px 0 0; font-size: 15px; line-height: 1.25; }
 .tb-tete h2 .tb-titre { min-width: 0; overflow-wrap: anywhere; }
 .tb-tete .badge { font-size: 11px; }

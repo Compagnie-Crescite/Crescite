@@ -4,14 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
-<!-- la nuit par défaut, quel que soit l'appareil (data-theme="nuit" sur <html>, comme le site public) ; le jour reste dans
-     la feuille de style, sous data-theme="jour" seulement -->
+<!-- la nuit par défaut, quel que soit l'appareil (data-theme="nuit" sur <html>, comme le site public) ; le jour et la nuit
+     se choisissent dans le menu (cadre.js), le jour reste dans la feuille de style, sous data-theme="jour" seulement. Le
+     script « apparence » ci-dessous pose le thème retenu avant le premier dessin, et aligne sur lui ces deux balises :
+     color-scheme (les champs et les barres de défilement du navigateur) et theme-color (la barre de l'appareil) -->
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#1b1117">
-<!-- l'apparence retenue (aujourd'hui le menu latéral, replié ou déplié ; le thème et la densité viendront ici) : posée avant
-     le premier dessin pour que rien ne saute. Elle se lit dans le miroir du compte (crescite-admin-apparence:<compte>, que
-     cadre.js tient à jour) ; sous 1 340 px, un menu déplié exprès se lit dans l'onglet (sessionStorage). Sans compte gardé,
-     sans stockage : rien, et la feuille de style choisit selon la largeur -->
+<!-- l'apparence retenue (le menu latéral, replié ou déplié ; le thème, nuit, jour ou celui de l'appareil ; la densité,
+     confortable ou compacte) : posée avant le premier dessin pour que rien ne saute, ni le menu, ni la page qui clignoterait
+     en sombre avant de passer au jour. Elle se lit dans le miroir du compte (crescite-admin-apparence:<compte>, que cadre.js
+     tient à jour) ; sous 1 340 px, un menu déplié exprès se lit dans l'onglet (sessionStorage). « Appareil » se résout ici
+     (le réglage du système) en nuit ou en jour : la feuille de style ne connaît que data-theme. Sans compte gardé, sans
+     stockage : rien, la nuit, le confortable, et la feuille de style choisit le menu selon la largeur -->
 <script id="apparence">
 (function () {
   try {
@@ -21,6 +25,14 @@
     var etroit = window.matchMedia && window.matchMedia('(max-width: 1339px)').matches, deplie = false;
     try { deplie = etroit && sessionStorage.getItem('crescite-admin-menu') === 'deplie'; } catch (e) { /* onglet sans stockage */ }
     if (deplie) h.classList.add('menu-deplie'); else if (a['menu.replie'] === true) h.classList.add('menu-replie');
+    var t = a.theme;
+    if (t === 'appareil') t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches === false ? 'jour' : 'nuit';
+    if (t === 'jour' && !(window.matchMedia && window.matchMedia('(max-width: 640px)').matches)) {     // (au téléphone, toujours la nuit : il ne change pas)
+      h.setAttribute('data-theme', 'jour');
+      var meta = function (nom, valeur) { var m = document.querySelector('meta[name="' + nom + '"]'); if (m) m.setAttribute('content', valeur); };
+      meta('color-scheme', 'light'); meta('theme-color', '#f6f2eb');
+    }
+    if (a.densite === 'compacte') h.setAttribute('data-densite', 'compacte');
   } catch (e) { /* stockage fermé, miroir illisible : les défauts de la feuille de style */ }
 })();
 </script>
@@ -49,6 +61,7 @@
   --fond: #f6f2eb; --carte: #fffdf9; --encre: #1d1418; --gris: #5f565a; --trait: #dcd3c6; --doux: #ece5da;
   --accent: var(--saison-texte); --accent-fonce: var(--saison-fonce); --accent-doux: var(--saison-doux); --sur-accent: #fff; --ok: #1d6f47; --ok-doux: #e3f3ea;
   --alerte: #b3261e; --alerte-doux: #fbe7e5; --option: #7a5a10; --option-doux: #f8efd9; --ombre: 0 1px 2px rgba(30, 20, 30, .06), 0 4px 18px rgba(30, 20, 30, .06);
+  --pas: 10px; --h-champ: 38px; --pad-champ: 8px; --h-ligne-menu: 44px;   /* la densité (confortable) ; la compacte, à la souris seulement, est dans habillage.js */
   --rayon: 12px; --police: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --titres: "Ubuntu", "Open Sans", system-ui, sans-serif; --etiq: "Raleway", "Open Sans", system-ui, sans-serif;
   color-scheme: light;
@@ -179,7 +192,7 @@ html.menu-replie { --large-menu: 64px; }
 .menu { grid-column: 1; grid-row: 1; position: sticky; top: var(--haut-barre, 0px); z-index: 10; align-self: start; display: flex; flex-direction: column;
   min-height: calc(100vh - var(--haut-barre, 0px)); max-height: calc(100vh - var(--haut-barre, 0px)); overflow: auto; overscroll-behavior: contain; scrollbar-width: none; container: menu / inline-size; }
 .menu .nav { display: flex; flex-direction: column; gap: 2px; flex: none; padding: 10px 0 6px; }
-.menu .nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; margin: 0 8px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; transition: background-color .15s, color .15s; }
+.menu .nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: var(--h-ligne-menu); margin: 0 8px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; transition: background-color .15s, color .15s; }
 .menu .nav a .ico { --ico: 20px; }
 .menu-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; transition: opacity .12s linear; }
 .menu-badge { flex: none; }
@@ -188,14 +201,21 @@ html.menu-replie { --large-menu: 64px; }
 .menu-badge:not([data-n]) { display: none; }
 .menu-badge[data-n]::after { content: attr(data-n); }
 .menu-replier { display: flex; align-items: center; gap: 12px; min-height: 44px; margin: auto 8px 8px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--gris); font: inherit; font-weight: 600; text-align: left; white-space: nowrap; cursor: pointer; }
-.menu-reglages { flex: none; }
+.menu-reglages { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 0 8px 10px; }
 .menu-reglages:empty { display: none; }
+/* l'apparence (CADRE.reglages) : la pilule du thème (nuit, jour, appareil) et le bouton de la densité, des cibles de 44 px ;
+   replié, une colonne de quatre icônes. Les couleurs sont celles de la bande de nuit (habillage.js) */
+.reg-apparence { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.reg-theme { display: inline-flex; border-radius: 999px; }
+.reg-theme button, .reg-densite { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 999px; background: none; font: inherit; cursor: pointer; }
+.reg-theme button:focus-visible, .reg-densite:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
 .menu a:focus-visible, .menu-replier:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
 /* replié (la colonne a moins de 120 px) : chaque lien garde son libellé pour les lecteurs d'écran (.menu-l passe en .sr) et
    son infobulle ; le badge devient un point sur l'icône (habillage.js) */
 @container menu (max-width: 120px) {
   .menu-l { position: absolute; width: 1px; height: 1px; flex: none; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; opacity: 0; }
   .menu .nav a, .menu-replier { justify-content: center; gap: 0; padding: 0; }
+  .reg-apparence, .reg-theme { flex-direction: column; }
 }
 /* au téléphone (640 px et moins, le seuil de mobile.js), pas de menu : la barre du bas en tient lieu */
 @media (max-width: 640px) { .menu { display: none; } }
@@ -248,7 +268,7 @@ dialog.recherche::backdrop { background: rgba(23, 15, 26, .4); }
 .champ > label, .champ > .lib { font-weight: 650; font-size: 13.5px; }
 .champ .aide { color: var(--gris); font-size: 12.5px; }
 input[type=text], input[type=email], input[type=password], input[type=url], input[type=search], input[type=date], input[type=time], input[type=number], select, textarea, .riche {
-  width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); min-height: 38px; }
+  width: 100%; padding: var(--pad-champ) 10px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); min-height: var(--h-champ); }
 textarea { min-height: 76px; resize: vertical; }
 .riche { min-height: 60px; line-height: 1.55; }
 .riche:empty::before { content: attr(data-vide); color: var(--gris); }
@@ -256,7 +276,7 @@ input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--ac
 .case { display: flex; align-items: center; gap: 9px; font-weight: 600; cursor: pointer; }
 .case input { width: 18px; height: 18px; accent-color: var(--accent); }
 .rangee { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-.bloc { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 18px 20px; box-shadow: var(--ombre); }
+.bloc { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); padding: calc(var(--pas) + 8px) 20px; box-shadow: var(--ombre); }
 .bloc + .bloc { margin-top: 16px; }
 .bloc h3 { margin: 0 0 12px; font-size: 15px; }
 .outils-riche { display: flex; gap: 4px; margin-bottom: 4px; }
@@ -296,7 +316,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 #l-journal .j-jour { margin: 0; padding: 9px 12px 7px; background: color-mix(in srgb, var(--carte) 94%, transparent); border-bottom: 1px solid var(--trait); }
 #l-journal .j-jour:first-child { border-radius: var(--rayon) var(--rayon) 0 0; }
 @media (max-width: 1100px) { .deux > .liste { overflow: visible; } .deux > .liste .mois { position: sticky; top: var(--haut-barre, 0px); z-index: 3; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
-.ligne { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); border-left: 4px solid var(--c, var(--accent)); }
+.ligne { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: start; padding: var(--pas) 12px; margin-bottom: 6px; border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); border-left: 4px solid var(--c, var(--accent)); }
 .ligne:hover { border-color: var(--gris); border-left-color: var(--c, var(--accent)); }
 .ligne[aria-current="true"] { box-shadow: 0 0 0 3px var(--accent-doux); border-color: var(--accent); }
 .ligne .jj { font-weight: 800; font-size: 13px; line-height: 1.2; text-align: center; color: var(--gris); }
@@ -2082,6 +2102,13 @@ function indexRch() {
     .filter(Boolean).forEach(([href, titre, rub]) => mettre({ type: 'Rubrique', titre, sous: rub, href, ordre: .5 }));
   mettre({ type: 'Compte', titre: 'Mot de passe', sous: E.session?.user?.email || '', faire: () => $('#b-mdp')?.click() }, 'changer réglages');
   mettre({ type: 'Compte', titre: 'Raccourcis clavier', sous: 'les gestes et les touches de l’administration', faire: () => { if (typeof ouvrirAide === 'function') ouvrirAide($('#b-chercher')); } }, 'aide réglages');
+  // l'apparence (cadre.js) : les mêmes commandes que les boutons du menu, qui servent aussi quand le menu est masqué
+  if (typeof CADRE !== 'undefined') {
+    const ap = CADRE.apparence();
+    mettre({ type: 'Compte', titre: 'Mode jour', sous: ap.theme === 'jour' ? 'le thème actuel' : 'le contenu des pages sur du papier clair', faire: () => CADRE.theme('jour') }, 'thème apparence clair papier');
+    mettre({ type: 'Compte', titre: 'Mode nuit', sous: ap.theme === 'nuit' ? 'le thème actuel' : 'le contenu des pages sur fond sombre', faire: () => CADRE.theme('nuit') }, 'thème apparence sombre');
+    mettre({ type: 'Compte', titre: 'Compact', sous: ap.densite === 'compacte' ? 'actif : Entrée revient au confortable' : 'resserre les lignes et les champs (à la souris seulement)', faire: () => CADRE.densite() }, 'densité apparence serré confortable');
+  }
   // les textes du site (comme leur liste), les ateliers du catalogue, les invitations des salles, les documents
   clesTextes().forEach(k => mettre({ type: 'Texte du site', titre: nomTexte(k), href: `#/textes/${encodeURIComponent(k)}` }, 'réglages'));
   (E.ateliers || []).forEach(a => mettre({ type: 'Atelier', titre: a.titre || 'Atelier', sous: [spectacle(a.spectacle_id)?.titre, a.public, a.publie ? '' : 'non publié'].filter(Boolean).join(' · '), href: `#/ateliers/catalogue/${a.id}`, couleur: couleurSp(spectacle(a.spectacle_id)) }));

@@ -3392,7 +3392,7 @@ function ongletMateriel(z, s0) {
 document.head.insertAdjacentHTML('beforeend', `<style id="styles-equipe">
 /* les aides, hors des champs : le gris discret de l'administration */
 #eq-onglet .aide, #ed-feuille .aide, #ed-personne .aide, #d-equipe .aide, .eq-docs-compagnie .aide { color: var(--gris); font-size: 13px; }
-input[type=tel] { width: 100%; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); min-height: 38px; }
+input[type=tel] { width: 100%; padding: var(--pad-champ, 8px) 10px; border: 1px solid var(--trait); border-radius: 8px; background: var(--carte); min-height: var(--h-champ, 38px); }
 input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-doux); }
 .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--doux) center/cover no-repeat; display: inline-grid; place-items: center; flex: none; font-size: 13px; font-weight: 800; color: var(--gris); border: 1px solid var(--trait); }
 .avatar.petit { width: 30px; height: 30px; font-size: 11px; }

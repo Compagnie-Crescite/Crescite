@@ -68,6 +68,11 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 .menu .nav a[aria-current="page"] { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 3px 0 0 var(--saison-texte-nuit), 0 6px 16px -6px color-mix(in srgb, var(--saison) 80%, transparent); }
 .menu a:focus-visible, .menu-replier:focus-visible { outline-color: #fff; }
 .menu-replier { margin: auto 8px 8px; border-radius: 10px; transition: background .15s, color .15s; }
+.reg-theme { background: rgba(255, 255, 255, .1); }
+.reg-theme button, .reg-densite { color: rgba(255, 255, 255, .72); }   /* (aucune transition de couleur : le thème change d'un coup) */
+.reg-theme button:hover, .reg-densite:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.reg-theme button[aria-checked="true"], .reg-densite[aria-pressed="true"] { background: rgba(255, 255, 255, .2); color: #fff; box-shadow: inset 0 0 0 1.5px var(--saison-texte-nuit); }
+.reg-theme button:focus-visible, .reg-densite:focus-visible { outline-color: #fff; }
 .menu-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f28a6c; color: #2a1218; font: 800 11px/18px var(--police); letter-spacing: 0; text-align: center; text-transform: none; }
 @container menu (max-width: 120px) {
   .menu-badge { position: absolute; top: 8px; right: 9px; min-width: 0; width: 8px; height: 8px; padding: 0; overflow: hidden; font-size: 0; }
@@ -233,6 +238,20 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
   .tb-lien, .tb-cat a, .avant-corps a, a.coord, a.manque-tel, a.eq-feuille, .liste-simple a, .sous-champ a, .lieu-resume a, .eq-date a, .acces a { display: inline-flex; align-items: center; min-height: 44px; }
   .doc-boutons, .crm-carte-actions { gap: 8px; }
 }
+
+/* ===================================================================================================== la densité
+   Confortable par défaut (les valeurs sont dans le :root d'index.html : --pas, --h-champ et --pad-champ, --h-ligne-menu). La
+   compacte, choisie dans le menu (data-densite="compacte" sur <html>), ne vaut qu'à la souris : au doigt, rien ne change,
+   les cibles gardent leurs 44 px. Le texte courant passe à 14 px (la taille est fixée en px sur body : une font-size sur
+   html n'y changerait rien) ; les titres, les étiquettes et les composants à taille propre ne bougent pas. Les feuilles
+   des gestes (.gf) restent à 44 px : elles servent aussi l'espace de l'équipe. */
+@media screen and (pointer: fine) {
+  html[data-densite="compacte"] { --pas: 6px; --h-champ: 32px; --pad-champ: 4px; --h-ligne-menu: 36px; }
+  html[data-densite="compacte"] body { font-size: 14px; }
+}
+/* le changement de thème est instantané : aucune transition de couleur ne se lance (un fondu sur toute la page coûte cher).
+   cadre.js pose html.bascule le temps d'un recalcul de style, puis la retire */
+html.bascule *, html.bascule *::before, html.bascule *::after { transition: none !important; }
 
 /* ===================================================================================================== l'impression
    Une liste (Représentations, Lieux, Équipe, Diffusion…), une fiche ou le planning, sur papier : en blanc et noir, sans
