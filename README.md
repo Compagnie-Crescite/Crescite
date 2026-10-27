@@ -98,7 +98,9 @@ en-tête) et, dans le texte, « les Crescite » ou « la compagnie Crescite » :
 accords compris, les phrases des sources qui disaient « le Théâtre des Crescite » ; les mentions légales gardent cette
 dénomination entre parenthèses. Les mentions légales et la politique de confidentialité sont celles du site tel qu'il est
 (`data/textes-legaux.json` : Cloudflare Pages, la base Supabase, ce que le site recueille, ses services tiers), à la place
-de celles de l'ancien WordPress que garde le relevé ; le dix-huitième script SQL les met dans la base.
+de celles de l'ancien WordPress que garde le relevé ; le dix-huitième script SQL les met dans la base. Les libellés ont
+une seule casse (« En tournée » comme « En création », « Découvrir »), l'apostrophe typographique, un seul verbe par
+action (`RETOUCHES`), et le pied mène à la page Facebook de la compagnie.
 
 **Pour les programmateurs.** « Je souhaite programmer » donne d'abord à qui parler : le contact diffusion
 (l'administratrice, le courriel de la compagnie, son téléphone s'il est saisi dans la base, « Conditions financières sur
@@ -968,8 +970,11 @@ puis dit ce qui reste. Les scripts 3, 5 et 11 portent déjà la nouvelle adresse
 remplace les mentions légales et la politique de confidentialité de l'ancien WordPress (l'hébergeur « WP serveur »,
 Google Analytics, Gravatar, les commentaires) par celles de `data/textes-legaux.json`, mot pour mot, et récrit les
 phrases du « Théâtre des Crescite » (`NOMS`) dans les présentations des spectacles et le dossier de Bérénice. L'ancien
-texte reste au journal. Tant qu'il n'est pas lancé, le site montre les textes de la base, donc les anciens. 9 essais
-(`node legal.mjs` : le premier script, les textes de l'import, puis lui, deux fois).
+texte reste au journal. Il harmonise aussi les textes courts (`RETOUCHES` : « Écrire à la compagnie » partout,
+« Envoyer », l'apostrophe typographique, « conventionnée par la Ville de Rouen », les cartes de l'espace pro nommées par
+leur public) et donne au pied le lien de la page Facebook de la compagnie (`FACEBOOK`, celui de sa fiche à l'ODIA
+Normandie). Tant qu'il n'est pas lancé, le site montre les textes de la base, donc les anciens. 15 essais
+(`node textes.mjs` : le premier script, les textes de l'import, puis lui, deux fois).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

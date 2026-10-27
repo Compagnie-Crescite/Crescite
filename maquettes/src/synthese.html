@@ -6525,7 +6525,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       entrees: M.map(lien).join(''),
       second: '',
       pied: `<div><p><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong></p><p>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</p>
-        <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
+        <p class="liens"><a href="${S.ecrire.href}">${esc(S.ecrire.texte)}</a>${S.facebook ? (S.facebook.href ? `<a href="${esc(S.facebook.href)}" rel="noopener">${esc(S.facebook.texte)}</a>` : `<span>${esc(S.facebook.texte)}</span>`) : ''}</p></div>
         <div><p${ed('site.partenaires')}>${S.partenaires}</p></div>
         <div><p class="petit">${co.legal.map((x, i) => `<span${ed(`site.coordonnees.legal.${i}`)}>${esc(x)}</span>`).join('<br>')}</p><p class="liens">${S.espacePro ? `<a href="#/espace-pro">${esc(S.espacePro.titre)}</a>` : ''}${S.liensLegaux.map(x => `<a href="${x.href}">${esc(x.texte)}</a>`).join('')}${typeof EDITION !== 'undefined' && L.modifierSite ? `<button type="button" class="modifier" data-modifier>${CRAYON}${esc(L.modifierSite)}</button>` : ''}</p></div>`,
     };

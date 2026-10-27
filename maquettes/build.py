@@ -275,6 +275,7 @@ MENU = [
     {"cle": "espacePro", "id": "espace-pro", "texte": "Espace pro", "court": "Espace pro", "href": "#/espace-pro"},
 ]
 # Les anciennes adresses, à rediriger (#/agenda/<saison> mène à #/saisons/<saison>, par le code des maquettes).
+FACEBOOK = "https://www.facebook.com/TheatreDesCrescite"
 # Les mentions légales et la politique de confidentialité (data/textes-legaux.json), celles du site tel qu'il est
 LEGAL = json.loads((ROOT / "data" / "textes-legaux.json").read_text(encoding="utf-8"))
 # Le nom de la compagnie (demande du client, octobre 2026 : « par défaut les Crescite, ou la Compagnie Crescite ») : les
@@ -286,6 +287,36 @@ NOMS = [("Le Théâtre des Crescite revendique", "Les Crescite revendiquent"),
         ("le Théâtre des Crescite cherche", "les Crescite cherchent"),
         ("du Théâtre des Crescite est d'offrir", "de la compagnie Crescite est d'offrir"),
         ("Le Théâtre des Crescite est conventionné par", "La compagnie Crescite est conventionnée par")]
+
+
+# Les textes courts du site (le pied, le contact, l'espace pro), harmonisés (demande du client, octobre 2026) : une seule
+# casse, l'apostrophe typographique, un seul verbe par action (« Écrire à la compagnie », partout), et les cartes de
+# l'espace pro nommées toutes par leur public. [(clé de crescite_textes, chemin, valeur)] : build_data les pose dans
+# D.site, le dix-huitième script SQL dans la base.
+RETOUCHES = [
+    ("ecrire", ["texte"], "Écrire à la compagnie"),
+    ("contact", ["bouton"], "Envoyer"),
+    ("contact", ["consentement"], "J’accepte la politique de confidentialité"),
+    ("coordonnees", ["adresse", 0], "72 boulevard d’Orléans"),
+    ("coordonnees", ["legal", 2], "Licence L-R-24-002837 – Catégorie 2"),
+    ("partenaires", [], "La compagnie Crescite est conventionnée par la Ville de Rouen, et est régulièrement soutenue par la "
+                        "DRAC et la Région Normandie,<br/>le Département de Seine-Maritime et l’ODIA Normandie / Office de "
+                        "Diffusion et d’Information Artistique"),
+    ("espacePro", ["portes", 0, "titre"], "Programmateurs et directeurs de salle"),
+]
+
+
+def retoucher(site):
+    """D.site, ses textes courts harmonisés selon RETOUCHES."""
+    for cle, chemin, valeur in RETOUCHES:
+        if not chemin:
+            site[cle] = valeur
+            continue
+        o = site[cle]
+        for k in chemin[:-1]:
+            o = o[k]
+        o[chemin[-1]] = valeur
+    return site
 
 
 def nommer(o):
@@ -305,8 +336,8 @@ REDIRECTIONS = {"#/voir": "#/saisons", "#/agenda": "#/saisons", "#/programmer": 
                 "#/etablissement": "#/espace-pro/etablissement", "#/actions-culturelles": "#/espace-pro/etablissement"}
 # Les seuls libellés écrits pour les maquettes : la navigation et les intitulés de rubrique des trois entrées.
 LIBELLES = {
-    "enTournee": "EN TOURNÉE", "decouvrir": "découvrir", "actuellementEnTournee": "Actuellement en tournée",
-    "menu": "Menu", "rechercher": "Rechercher …", "spectacles": "Spectacles", "saison": "Saison", "contact": "Contact",
+    "enTournee": "En tournée", "decouvrir": "Découvrir", "actuellementEnTournee": "Actuellement en tournée",
+    "menu": "Menu", "rechercher": "Rechercher…", "spectacles": "Spectacles", "saison": "Saison", "contact": "Contact",
     # les saisons (règle 21) et la page d'un spectacle qui n'est plus en tournée
     "saisonEnCours": "La saison en cours", "prochainesDates": "Les prochaines dates", "toutesLesDates": "Toutes les dates",
     "saisonsPassees": "Les saisons passées", "bilan": "Le bilan des dates passées", "historique": "Historique",
@@ -385,7 +416,7 @@ LIBELLES = {
     "devisStructure": "Structure et ville", "devisContact": "Nom du contact", "devisCourriel": "Courriel",
     "devisTelephone": "Téléphone", "devisPeriode": "Période ou saison envisagée", "devisPrecisions": "Précisions",
     # la convention d'action culturelle (chantier 4)
-    "genererConvention": "Convention d'action culturelle (PDF)",
+    "genererConvention": "Convention d’action culturelle (PDF)",
 }
 # La troupe (règle 20, TROUPE) : toutes les personnes publiées de l'équipe, sur la page de la compagnie, rangées par
 # catégories de métiers. Chaque personne paraît dans chaque catégorie de ses métiers. Un métier absent de ces listes (les
@@ -729,7 +760,9 @@ def build_data():
             # la troupe (#/compagnie, règle 20) : le titre de la section et les catégories de métiers (TROUPE)
             "troupe": TROUPE,
             "coordonnees": a["coordonnees"], "ecrire": {"texte": a["ecrire"]["texte"], "href": "#/contact"},
-            "facebook": {"texte": a["facebook"]["texte"], "href": None} if a.get("facebook") else None,
+            # la page Facebook de la compagnie : l'ancien site n'en donnait que l'icône, sans lien ; l'adresse est celle que
+            # donne la fiche de la compagnie à l'ODIA Normandie (odianormandie.com, artiste C874)
+            "facebook": {"texte": a["facebook"]["texte"], "href": FACEBOOK} if a.get("facebook") else None,
             "partenaires": a["pied"]["partenaires"],
             "liensLegaux": [{"texte": "Mentions légales", "href": "#/mentions-legales"},
                             {"texte": "Politique de confidentialité", "href": "#/politique-de-confidentialite"}],
@@ -755,6 +788,7 @@ def build_data():
         "documents": documents_publics(),
     }
     D = nommer(D)
+    retoucher(D["site"])
     fichiers = photo_files(D["shows"])
     # la zone d'intérêt de chaque photo (data/cadrages.json, règle 24) : celles des photos que les pages ont
     D["cadrages"] = {k: cadrages[k] for k in fichiers if k in cadrages}

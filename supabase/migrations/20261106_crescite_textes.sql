@@ -11,6 +11,10 @@
 --    de Macbeth et de Mon Royaume et le dossier scolaire de Bérénice disent encore « le Théâtre des Crescite ». Chaque
 --    phrase est récrite, accords compris (la liste NOMS de maquettes/build.py, qui fait de même pour le site construit),
 --    dans crescite_spectacles (texte, affirmations, action_culturelle) et crescite_textes.
+-- 3. Les textes courts du site, harmonisés (la liste RETOUCHES de maquettes/build.py) : « Écrire à la compagnie » partout
+--    (le pied disait « nous écrire »), « Envoyer », l'apostrophe typographique, le tiret de la licence, « conventionnée
+--    par la Ville de Rouen » (le « par » manquait), les cartes de l'espace pro nommées par leur public ; et le lien de la
+--    page Facebook de la compagnie (celui de sa fiche à l'ODIA Normandie : l'ancien site n'en donnait que l'icône).
 --
 -- À exécuter dans le projet de la compagnie (fwjgyfzcbcmfyfkhhtuh), de la même façon (SQL Editor → New query → coller →
 -- Run). Il peut être relancé sans dommage : il ne touche qu'à ces lignes, et une phrase déjà récrite ne change plus.
@@ -90,6 +94,15 @@ begin
   end loop;
 end $$;
 
+update public.crescite_textes set valeur = jsonb_set(valeur, '{texte}', to_jsonb($t$Écrire à la compagnie$t$::text)) where cle = 'ecrire' and valeur #> '{texte}' is distinct from to_jsonb($t$Écrire à la compagnie$t$::text);
+update public.crescite_textes set valeur = jsonb_set(valeur, '{bouton}', to_jsonb($t$Envoyer$t$::text)) where cle = 'contact' and valeur #> '{bouton}' is distinct from to_jsonb($t$Envoyer$t$::text);
+update public.crescite_textes set valeur = jsonb_set(valeur, '{consentement}', to_jsonb($t$J’accepte la politique de confidentialité$t$::text)) where cle = 'contact' and valeur #> '{consentement}' is distinct from to_jsonb($t$J’accepte la politique de confidentialité$t$::text);
+update public.crescite_textes set valeur = jsonb_set(valeur, '{adresse,0}', to_jsonb($t$72 boulevard d’Orléans$t$::text)) where cle = 'coordonnees' and valeur #> '{adresse,0}' is distinct from to_jsonb($t$72 boulevard d’Orléans$t$::text);
+update public.crescite_textes set valeur = jsonb_set(valeur, '{legal,2}', to_jsonb($t$Licence L-R-24-002837 – Catégorie 2$t$::text)) where cle = 'coordonnees' and valeur #> '{legal,2}' is distinct from to_jsonb($t$Licence L-R-24-002837 – Catégorie 2$t$::text);
+update public.crescite_textes set valeur = to_jsonb($t$La compagnie Crescite est conventionnée par la Ville de Rouen, et est régulièrement soutenue par la DRAC et la Région Normandie,<br/>le Département de Seine-Maritime et l’ODIA Normandie / Office de Diffusion et d’Information Artistique$t$::text) where cle = 'partenaires' and valeur is distinct from to_jsonb($t$La compagnie Crescite est conventionnée par la Ville de Rouen, et est régulièrement soutenue par la DRAC et la Région Normandie,<br/>le Département de Seine-Maritime et l’ODIA Normandie / Office de Diffusion et d’Information Artistique$t$::text);
+update public.crescite_textes set valeur = jsonb_set(valeur, '{portes,0,titre}', to_jsonb($t$Programmateurs et directeurs de salle$t$::text)) where cle = 'espacePro' and valeur #> '{portes,0,titre}' is distinct from to_jsonb($t$Programmateurs et directeurs de salle$t$::text);
+update public.crescite_textes set valeur = jsonb_set(valeur, '{href}', to_jsonb($t$https://www.facebook.com/TheatreDesCrescite$t$::text)) where cle = 'facebook' and valeur #> '{href}' is distinct from to_jsonb($t$https://www.facebook.com/TheatreDesCrescite$t$::text);
+
 select 'mentions légales' as "élément",
   case when (select valeur -> 'mentions-legales' -> 'blocs' ->> 3 from public.crescite_textes where cle = 'legal') like '%Cloudflare%'
     then 'à jour : Cloudflare Pages et Supabase, plus de WordPress' else 'à refaire : relancez ce script' end as "état"
@@ -103,4 +116,9 @@ select 'le nom de la compagnie',
                     where (texte::text || affirmations::text || action_culturelle::text) like '%Théâtre des Crescite%')
          or exists (select 1 from public.crescite_textes where cle <> 'legal' and valeur::text like '%Théâtre des Crescite%')
     then 'reste « Théâtre des Crescite » ailleurs que dans les mentions légales : à récrire depuis l''administration'
-    else 'à jour : les Crescite, ou la compagnie Crescite' end;
+    else 'à jour : les Crescite, ou la compagnie Crescite' end
+union all
+select 'les textes courts et Facebook',
+  case when (select valeur ->> 'texte' from public.crescite_textes where cle = 'ecrire') = 'Écrire à la compagnie'
+        and (select valeur ->> 'href' from public.crescite_textes where cle = 'facebook') like 'https://www.facebook.com/%'
+    then 'à jour : « Écrire à la compagnie », la page Facebook' else 'à refaire : relancez ce script' end;
