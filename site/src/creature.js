@@ -54,6 +54,8 @@
      CREATURE.habite(el)                vrai si la créature de l'en-tête vit dans cet élément : tentacules.js lui confie alors
                      les réactions du guide (ses tentacules fines, elles, partent toujours des bras du dessin)
      CREATURE.reagir(genre, vers)       la créature de l'en-tête réagit (rien sans elle)
+     CREATURE.suspendre(ms)             toutes les créatures laissent passer leurs images ms durant (40 par défaut) : une page
+                                        neuve se met en page sans elles
      CREATURE.actif                     faux avec ?anim=0 ou sans D.pieuvre : alors rien ne vit
    Moins d'animations demandé : rien ne vit ; la créature attend que le réglage change. */
 const CREATURE = (() => {
@@ -277,6 +279,8 @@ const CREATURE = (() => {
     image(now) {
       this.raf = 0;
       if (!this.vivant || document.hidden) return;
+      // (une page qui change : les créatures laissent passer ses premières images, la mise en page de la page neuve, CREATURE.suspendre)
+      if (now < repit) { this.raf = requestAnimationFrame(t => this.image(t)); return; }
       if (tailleSale) { toutes.forEach(c => c.dimensionner()); tailleSale = false; }
       const dt = Math.min(50, this.tPrec ? now - this.tPrec : 16); this.tPrec = now;
       // (sans place, elle la cherche à chaque réveil : réveillée par la souris ou une réaction moins de 250 ms après une place
@@ -455,7 +459,7 @@ const CREATURE = (() => {
   }
 
   /* ---------- la créature de l'en-tête : à la place du dessin de l'hôte ---------- */
-  let tete = null, hote = null, svg = null, attend = false;
+  let tete = null, hote = null, svg = null, attend = false, repit = 0;
   // le dessin de l'hôte : la marque peut poser la pieuvre sur sa tache (D.logo.mark) : la tache se redessine sous elle, telle quelle
   function lireDessin(c) {
     const t = svg && svg.querySelector('.logo-tache');
@@ -491,6 +495,6 @@ const CREATURE = (() => {
   }
   const habite = el => !!(tete && tete.vivant && hote && el && (el === hote || hote.contains(el) || el.contains(hote)));
 
-  return { actif, habiter, habite, creer: o => (actif ? new Creature(o) : null), reagir: (genre, vers) => { if (tete) tete.reagir(genre, vers); },
+  return { actif, habiter, habite, suspendre: (ms = 40) => { repit = performance.now() + ms; }, creer: o => (actif ? new Creature(o) : null), reagir: (genre, vers) => { if (tete) tete.reagir(genre, vers); },
     vers: (el, o) => (tete ? tete.vers(el, o) : Promise.resolve(false)), revenir: () => { if (tete) tete.revenir(); }, sortie: () => (tete ? tete.sortie() : 0), arreter: () => { if (tete) tete.arreter(); } };
 })();

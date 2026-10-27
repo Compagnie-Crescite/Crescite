@@ -5870,7 +5870,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (!anime) saisons();
       else if (!suite) { suite = true; requestAnimationFrame(() => setTimeout(saisons, 0)); }
     }
-    // toutes les dates de la saison, puis (l'image d'après, sauf maintenant) les saisons passées et leur frise
+    // toutes les dates de la saison, puis (dans la tâche d'après, sauf maintenant) les saisons passées et leur frise
     function dessineAgenda(maintenant = false) {
       if (!racine.isConnected) return;
       if (!tard) { tard = true; dessineToutes(); }
@@ -5881,7 +5881,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         morceau(() => { if (!racine.isConnected || fSaisons) return; fSaisons = frise($('#idx-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
           libelle: L.saisonsPassees, classe: 'frise-saisons', anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) }); });
       };
-      if (maintenant) saisons(); else ensuite(saisons);
+      if (maintenant) saisons(); else morceau(saisons);
     }
     // ouvrir une saison (à la main, depuis la bande ou la frise des saisons, ou tout ouvrir) : son arche s'encre, ses lignes se
     // déroulent l'une après l'autre
@@ -6247,7 +6247,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // saisons passées), dans la tâche suivante, sauf quand la vue se refait en place (D a changé), qu'un filtre est actif ou
     // qu'une saison est demandée (#/saisons/<saison>)
     poserFrise();
-    if (surPlace || actif() || ouvrir) { dessineProchaines(true); dessineAgenda(true); poserAlerte(); } else ensuite(() => ensuite(() => { dessineAgenda(); morceau(() => morceau(poserAlerte)); }));
+    if (surPlace || actif() || ouvrir) { dessineProchaines(true); dessineAgenda(true); poserAlerte(); } else ensuite(() => morceau(() => { dessineAgenda(); morceau(() => morceau(poserAlerte)); }));
     bientot(() => { pousser(svg); arrimer(index); arrimer($('#sm7', main)); if (ouvrir && !surPlace) montrerOnglet(ouvrir); });
     // #/saisons/<saison> : quand les polices arrivent après le saut, ce qui est au-dessus de la saison se recompose ; elle est
     // recalée sous la bande, si l'on n'a pas bougé entre-temps
@@ -6848,13 +6848,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!tr || typeof TROUPE === 'undefined') return;
     troupeTenues = [];
     troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true, surChoix: slug => tenirPersonne(slug, $('[data-troupe-place].est-source', tr)) });
-    troupeCreature = creatureTroupe(tr);
+    // (la créature et la géométrie de la troupe naissent quand la troupe approche de l'écran : les lire à l'arrivée sur la page
+    // forçait la mise en forme de la troupe, encore hors de l'écran (content-visibility), dans la tâche de la page : plus de 50 ms)
     let largeur = 0;
-    requestAnimationFrame(() => placerTroupe(tr));
-    if ('ResizeObserver' in window) {
-      troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => placerTroupe(tr)); } });
-      troupeRO.observe(tr);
-    }
+    const naitre = () => {
+      if (!tr.isConnected || troupeRO || troupeCreature) return;
+      troupeCreature = creatureTroupe(tr);
+      requestAnimationFrame(() => placerTroupe(tr));
+      if ('ResizeObserver' in window) {
+        troupeRO = new ResizeObserver(es => { const w = Math.round(es[0].contentRect.width); if (w !== largeur) { largeur = w; requestAnimationFrame(() => placerTroupe(tr)); } });
+        troupeRO.observe(tr);
+      }
+    };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(es => { if (!es.some(x => x.isIntersecting)) return; io.disconnect(); naitre(); }, { rootMargin: '60% 0px' });
+      io.observe(tr); lecteurs.push(io);
+    } else naitre();
     if (motionOK() && !surPlaceRendu && 'IntersectionObserver' in window) {
       troupeIO = new IntersectionObserver(es => es.forEach(x => { if (!x.isIntersecting) return;
         troupeIO.unobserve(x.target); x.target.classList.add('est-vivant'); setTimeout(() => x.target.classList.remove('est-vivant'), 1600); }), { rootMargin: '0px 0px -12% 0px' });
@@ -8033,6 +8042,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const marque = avant && type === 'quitter' ? centreDe($('.marque .l', Menu.el)) || centreDe(Menu.el) : null;
     const ong = type === 'onglet' ? $('.u-onglets a[aria-current="page"]', main) : null, q0 = ong ? ong.getBoundingClientRect() : null;
     Encre.arreter();
+    // (les créatures, celle de l'en-tête et celle de la troupe, laissent la première image à la page neuve : son dessin, chaque
+    // image, alourdissait celle de la mise en page au-delà de 50 ms)
+    if (typeof CREATURE !== 'undefined' && CREATURE.suspendre) CREATURE.suspendre(40);
     Range.rendre();
     CHERCHE.fermer(false);   // (le retour du navigateur, la boîte ouverte : elle se referme, la page prend le focus)
     document.documentElement.classList.remove(vers0);
