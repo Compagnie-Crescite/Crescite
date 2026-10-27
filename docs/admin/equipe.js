@@ -1149,10 +1149,11 @@ function blocEquipeDate(zone, F, changer) {
     const ajouts = F.equipe.filter(x => x.present && !ids.has(x.personne_id));
     const absents = tournee.filter(x => ecart(x.personne_id)?.present === false);
     el.innerHTML = `<h3>Équipe de cette date</h3>
-      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const part = ecart(x.personne_id)?.present !== false; return `<li${part ? '' : ' class="absent"'}><label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nomDe(personne(x.personne_id)))}</label><span class="compte">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span>${part ? telEquipe(x.personne_id) : ''}</li>`; }).join('')}</ul>`
+      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const part = ecart(x.personne_id)?.present !== false; return `<li${part ? '' : ' class="absent"'}><label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nomDe(personne(x.personne_id)))}</label><span class="compte">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span>${part ? telEquipe(x.personne_id) : ''}${part ? `<input type="text" class="eq-note" data-eqd-note="${x.personne_id}" value="${esc(ecart(x.personne_id)?.note || '')}" placeholder="Note pour cette date (train de 14h12, dort sur place…)" aria-label="Note pour ${esc(nomDe(personne(x.personne_id)))} sur cette date">` : ''}</li>`; }).join('')}</ul>`
         : `<p class="aide">${spectacle(sp) ? 'Personne n’est « en tournée » dans la distribution de ce spectacle (Spectacles → Distribution).' : 'Choisissez d’abord le spectacle.'}</p>`}
       ${ajouts.length ? `<div class="eq-ajouts"><span class="lib">Remplaçants et renforts</span>${ajouts.map(x => `<div class="eq-ajout" data-eqd-ajout="${x.personne_id}">${avatar(personne(x.personne_id), true)}<a class="eq-nom" href="#/equipe/${x.personne_id}" title="Sa fiche">${esc(nomDe(personne(x.personne_id)))}</a>
         <input type="text" data-eqd-fonction value="${esc(x.fonction || '')}" placeholder="${esc(absents.length ? `Remplace ${nomDe(personne(absents[0].personne_id))}` : 'Renfort régie, remplaçant…')}" aria-label="Fonction sur cette date">
+        <input type="text" class="eq-note" data-eqd-note="${x.personne_id}" value="${esc(x.note || '')}" placeholder="Note (train, hébergement…)" aria-label="Note pour cette date">
         <button type="button" class="btn petit danger" data-eqd-retirer title="Retirer de cette date" aria-label="Retirer de cette date">✕</button></div>`).join('')}</div>` : ''}
       <div class="champ eq-ajouter"><span class="lib">Ajouter quelqu’un</span><div id="eqd-combo"></div><span class="aide">Un remplaçant ou un renfort, pour cette date seulement, avec sa fonction.</span></div>`;
     comboPersonne($('#eqd-combo', el), { placeholder: 'Nom de la personne…', creer: true, avant: distributionDe(sp).map(x => x.personne_id),
@@ -1169,9 +1170,18 @@ function blocEquipeDate(zone, F, changer) {
   el.addEventListener('change', e => {
     const t = e.target; if (!t.dataset.eqdPart) return;
     const pid = +t.dataset.eqdPart, x = ecart(pid);
-    if (t.checked) { if (x) enlever(x); } else if (x) x.present = false; else F.equipe.push({ personne_id: pid, present: false, fonction: '', note: null });
+    if (t.checked) { if (x && (x.note || '').trim()) x.present = true; else if (x) enlever(x); } else if (x) x.present = false; else F.equipe.push({ personne_id: pid, present: false, fonction: '', note: null });
     dessiner(); changer();
     $(`[data-eqd-part="${pid}"]`, el)?.focus();
+  });
+  // la note d'une personne sur cette date (crescite_equipes.note, que son espace montre) : pour la distribution, une ligne
+  // « présente » qui ne porte que la note ; vidée, la ligne s'en va
+  el.addEventListener('input', e => {
+    const t = e.target; if (t.dataset.eqdNote === undefined) return;
+    const pid = +t.dataset.eqdNote, v = t.value; let x = ecart(pid);
+    if (!x && v.trim()) { x = { personne_id: pid, present: true, fonction: '', note: v }; F.equipe.push(x); }
+    else if (x) { x.note = v; if (!v.trim() && x.present && !(x.fonction || '').trim() && distributionDe(+F.spectacle_id).some(y => y.en_tournee && y.personne_id === pid)) enlever(x); }
+    changer();
   });
   el.addEventListener('input', e => { const t = e.target; if (t.dataset.eqdFonction === undefined) return; const x = ecart(+t.closest('[data-eqd-ajout]').dataset.eqdAjout); if (x) { x.fonction = t.value; changer(); } });
   el.addEventListener('click', e => { const b = e.target.closest('[data-eqd-retirer]'); if (!b) return; const x = ecart(+b.closest('[data-eqd-ajout]').dataset.eqdAjout); if (x) enlever(x); dessiner(); changer(); });
@@ -1186,8 +1196,8 @@ async function enregistrerEquipeDate(dateId, F) {
   F.equipe.forEach(x => { if (x.present || tournee.has(x.personne_id)) { const i = voulus.findIndex(y => y.personne_id === x.personne_id); if (i >= 0) voulus.splice(i, 1); voulus.push(x); } });
   const actuels = E.equipes.filter(x => x.date_id === dateId);
   const aRetirer = actuels.filter(a => !voulus.some(v => v.personne_id === a.personne_id)).map(a => a.personne_id);
-  const aEcrire = voulus.filter(v => { const a = actuels.find(x => x.personne_id === v.personne_id); return !a || a.present !== !!v.present || (a.fonction || '') !== (v.fonction || '').trim(); })
-    .map(v => ({ date_id: dateId, personne_id: v.personne_id, present: !!v.present, fonction: (v.fonction || '').trim() || null, note: v.note ?? null }));
+  const aEcrire = voulus.filter(v => { const a = actuels.find(x => x.personne_id === v.personne_id); return !a || a.present !== !!v.present || (a.fonction || '') !== (v.fonction || '').trim() || (a.note || '') !== (v.note || '').trim(); })
+    .map(v => ({ date_id: dateId, personne_id: v.personne_id, present: !!v.present, fonction: (v.fonction || '').trim() || null, note: (v.note || '').trim() || null }));
   try {
     if (aRetirer.length) { const { error } = await sb.from('crescite_equipes').delete().eq('date_id', dateId).in('personne_id', aRetirer); if (error) throw error; }
     if (aEcrire.length) { const { error } = await sb.from('crescite_equipes').upsert(aEcrire, { onConflict: 'date_id,personne_id' }); if (error) throw error; }
@@ -1343,9 +1353,22 @@ function sourcesFeuille(d) {
     const x = E.dates.find(y => y.id === f.date_id);
     return x && x.statut !== 'annulee' && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null, date_id: f.date_id, ecrit_le: f.modifie_le || null };
   }).filter(Boolean);
-  return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: DEPART,
+  return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: departDe(d),
     suivi: { ...(E.suivis.find(x => x.date_id === d.id) || {}), lieu: E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id) || {} },
     documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe'), anterieures };
+}
+// d'où part l'équipe : du lieu de la date de la veille quand deux dates du spectacle s'enchaînent (la tournée), sinon de Rouen
+function departDe(d) {
+  const veille = E.dates.filter(x => x.id !== d.id && x.spectacle_id === d.spectacle_id && x.statut === 'confirmee' && (x.fin || x.debut) < d.debut
+    && (x.fin || x.debut) >= plusJours(d.debut, -1) && lieu(x.lieu_id)?.latitude != null).sort((a, b) => ((a.fin || a.debut) < (b.fin || b.debut) ? 1 : -1))[0];
+  const l = veille ? lieu(veille.lieu_id) : null;
+  return l && l.id !== d.lieu_id ? { commune: l.commune, latitude: l.latitude, longitude: l.longitude, veille: true } : DEPART;
+}
+// les régimes alimentaires de l'équipe de la date, à transmettre à l'accueil (fiches privées : jamais dans la feuille publiée)
+function regimesDe(d) {
+  const par = new Map();
+  equipeDeLaDate(d).forEach(x => { const r = (priveeDe(x.personne_id)?.regime || '').trim(); if (!r) return; const k = norm(r); if (!par.has(k)) par.set(k, { r, qui: [] }); par.get(k).qui.push(personne(x.personne_id)); });
+  return [...par.values()];
 }
 const contexteFeuille = d => {
   const s = spectacle(d.spectacle_id) || {};
@@ -1390,6 +1413,13 @@ function alertesFeuille(d, F) {
   if (!repsDe(d.id).length) out.push('Cette date n’a pas de représentation détaillée (jour et heure) : le planning restera vide.');
   if (s && (d.nature || 'representations') === 'representations' && !FEUILLE.dureeMinutes(s.duree)) out.push(`La durée du spectacle n’est pas indiquée (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Général">Spectacles → Général → Durée</a>) : les étapes d’après le spectacle (démontage) restent sans heure.`);
   if (s && (d.nature || 'representations') === 'representations' && !(s.feuille_modele || []).length) out.push(`${esc(s.titre)} n’a pas de déroulé type (<a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Déroulé type">Spectacles → Déroulé type</a>) : le planning ne contient que les représentations.`);
+  // les conflits d'équipe de la date (gardefous.js) : quelqu'un indisponible ou déjà sur une autre date
+  if (typeof GARDEFOUS !== 'undefined' && typeof dateVersForm === 'function') {
+    try { GARDEFOUS.alertes(dateVersForm(d), d).filter(a => a.niveau === 'alerte' && !/contrat|accueille/i.test(a.texte)).forEach(a => out.push(`${esc(a.texte)} <a href="${esc(a.href || `#/representations/${d.id}`)}">${esc(a.lien || 'Voir')}</a>`)); } catch (e) { /* rien */ }
+  }
+  // les régimes : à dire à l'accueil, pas à écrire dans la feuille que toute l'équipe lit
+  const rg = regimesDe(d);
+  if (rg.length) out.push(`À transmettre à l’accueil pour les repas (fiches privées, pas dans la feuille) : ${rg.map(x => `${esc(x.r)} (${x.qui.map(p => esc(p?.prenom || nomDe(p))).join(', ')})`).join(' · ')}.`);
   if (F && horairesChanges(d, F.contenu)) out.push('Les horaires de la date ont changé depuis la composition de cette feuille. <button type="button" class="btn lien" data-fr-maj>Mettre à jour depuis la base</button>');
   // ce qui manque (en gris) et que la base sait maintenant : un téléphone gardé depuis une autre feuille, une adresse…
   const avant = F ? FEUILLE.manques(F.contenu.blocs) : [];
@@ -3352,6 +3382,7 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .a-completer[hidden] { display: none; }
 #d-feuille .a-completer { margin-left: 2px; }
 .dist-cat { margin-top: 16px; }
+.eq-date li .eq-note, .eq-ajout .eq-note { flex: 1 1 220px; min-height: 32px; padding: 4px 8px; font-size: 13px; }
 .dist-l.dist-entete { margin: 12px 0 -8px; padding-top: 0; padding-bottom: 0; border: 0; background: none; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--gris); }
 .dist-entete .dist-champs > span { padding-left: 9px; }
 .dist-entete .dist-cases, .dist-entete .dist-outils { font-size: 10.5px; letter-spacing: 0; text-transform: none; line-height: 1.2; }

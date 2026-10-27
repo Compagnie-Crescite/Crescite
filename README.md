@@ -563,6 +563,19 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   demande si elles le gardent. La fiche de la personne dit aussi ce qu'elle a joué, et quand. Rien ne change dans la
   base : ce sont les écarts de `crescite_equipes`, comme ceux de l'historique importé. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
   remplaçant).
+- **Ce que la base sait, montré là où l'on agit** (l'audit du 27 octobre 2026) : la fiche d'un lieu fait son bilan (les
+  représentations jouées, depuis quand, les spectateurs, le remplissage, les cessions ; saison par saison ; ses
+  organisateurs successifs ; les pistes et les demandes de devis du lieu ou de sa commune) et montre toutes ses dates ;
+  la fiche d'une date a son budget (la cession, les notes de frais qui la concernent, ce qui reste, ce qui est facturé et
+  encaissé) et, « Côté équipe », qui a lu la feuille de route publiée (et qui ne la reçoit pas : sans compte, sans
+  téléphone abonné), les retards signalés et les changements faits depuis l'espace de l'équipe ; chacun y a sa note
+  logistique pour la date (« train de 14h12 », que son espace montre). « La saison en chiffres » ajoute le remplissage,
+  les cessions, les élèves en atelier et les kilomètres, et se détaille par spectacle, par département, par dispositif.
+  « À traiter » relève les conflits d'équipe des soixante jours qui viennent ; « À compléter avant la tournée », qui ne
+  sera pas prévenu (sans compte, agenda relié en erreur). La feuille de route dit les conflits, les régimes à
+  transmettre à l'accueil (jamais dans la feuille), et son trajet part du lieu de la veille quand deux dates
+  s'enchaînent. La liste des dates se filtre par nature, département, contrat et période, montre la nature, et la
+  recherche (la liste comme Ctrl K) trouve une date par son organisateur ou son contact.
 - **Feuilles de route** : la feuille d'une date s'écrit directement sur une page A4 à l'écran, dans la forme des
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
   Calibri, les jours en gras, les personnes surlignées en jaune, les alertes en rouge). La barre d'outils est courte :

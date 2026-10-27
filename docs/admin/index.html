@@ -364,6 +364,10 @@ table.reps td:first-child { padding-left: 0; }
 .journal-ligne .diff { color: var(--gris); font-size: 13px; }
 @media (max-width: 700px) { .journal-ligne { grid-template-columns: 1fr; } }
 table.simple { width: 100%; border-collapse: collapse; background: var(--carte); border-radius: var(--rayon); overflow: hidden; }
+.f-periode { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--gris); } .f-periode label { display: inline-flex; gap: 4px; align-items: center; } .f-periode input { min-height: 34px; padding: 4px 6px; }
+.lieu-bilan { margin: 0 0 10px; } .lieu-saisons { margin: 4px 0 12px; } .lieu-plus summary { cursor: pointer; margin: 8px 0; font-weight: 650; }
+.budget-l { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; margin: 0; } .budget-l dt { color: var(--gris); } .budget-l dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.budget-l .total { font-weight: 800; border-top: 1px solid var(--trait); padding-top: 4px; }
 table.simple th, table.simple td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--trait); vertical-align: top; }
 table.simple th { font-size: 12.5px; color: var(--gris); }
 table.simple tr.cliquable { cursor: pointer; }
@@ -1076,6 +1080,14 @@ async function chargerTout() {
   const c = await chiffres;
   E.chiffres = c || []; E.chiffresInstalles = !!c;
   if (ideale) await lireAlertes();
+  // les indisponibilités, pour les conflits d'équipe du tableau de bord (gardefous.js) : lues sans attendre, puis on redessine
+  if (E.equipeInstallee && typeof GARDEFOUS !== 'undefined') GARDEFOUS.charger().then(() => { if (E.pret && !E.sale) rafraichirListes(); });
+  // qui reçoit quoi : les téléphones abonnés aux notifications, les agendas reliés qui ne se relisent plus (le cinquième script)
+  if (E.equipeInstallee) {
+    const [ab, ag] = await Promise.all([sb.from('crescite_abonnements').select('personne_id'), sb.from('crescite_agendas_lies').select('personne_id,nom,erreur,derniere_synchro').not('erreur', 'is', null)]);
+    E.abonnes = new Set(ab.error ? [] : (ab.data || []).map(x => x.personne_id)); E.abonnesLus = !ab.error;
+    E.agendasErreur = ag.error ? [] : ag.data || [];
+  }
   // la diffusion reliée (le vingt-et-unième script) : une piste a son lieu, une invitation pro sa piste
   E.diffusionReliee = ideale ? !(await sb.from('crescite_diffusion_prospects').select('lieu_id').limit(1)).error : false;
   await tableau;
@@ -1551,7 +1563,8 @@ function indexRch() {
     const etat = { option: 'option', annulee: 'annulée', reportee: 'reportée' }[d.statut];
     const jours = new Set(joursDe.get(d.id) || []);
     if (d.precision !== 'mois' && d.precision !== 'saison') for (let j = d.debut, n = 0; j <= fin && n < 62; j = plusJours(j, 1), n++) jours.add(j);
-    const plus = `${l ? `${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${(NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || ''} ${[...jours].map(jourRch).join(' ')}`;
+    const su = (E.suivis || []).find(x => x.date_id === d.id) || {};   // (l'organisateur, son contact, les notes du suivi : une date se retrouve par son programmateur)
+    const plus = `${l ? `${l.commune} ${l.departement || ''}` : ''} ${d.intitule || ''} ${(NATURES_DATE.find(x => x[0] === d.nature) || [])[1] || ''} ${su.organisateur || ''} ${su.contact || ''} ${su.notes || ''} ${[...jours].map(jourRch).join(' ')}`;
     const base = { titre: s?.titre || 'Spectacle à préciser', couleur: couleurSp(s), ordre: avenir ? t : 1e9 - t, avenir, sous: `${quand} · ${ou}${etat ? ` · ${etat}` : ''}` };
     mettre({ ...base, type: 'Date', href: `#/representations/${d.id}` }, plus);
     const f = feuilles.get(d.id);
@@ -1938,13 +1951,18 @@ function formNouveauLieu(zone, texte, etablissement, fini) {
 function vueDates(param) {
   if (param === 'tableur') return TABLEUR.vue();   // le tableur : une ligne par séance, branché sur la base
   if (param === 'carte') { if (typeof TOURNEE !== 'undefined') return TOURNEE.vue(); location.replace('#/representations'); return; }   // la carte de tournée (tournee.js)
-  const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', q: '', ouvertes: [] }, session.dates || {});
+  const f = session.dates = Object.assign({ spectacle: '', public: '', statut: '', nature: '', dep: '', contrat: '', du: '', au: '', q: '', ouvertes: [] }, session.dates || {});
+  const deps = [...new Set(E.dates.map(d => lieu(d.lieu_id)?.departement).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'fr', { numeric: true }));
   const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();
   cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('liste')}<a class="btn principal" href="#/representations/nouvelle">＋ Nouvelle date</a></div>
     <div class="deux${param ? ' edition' : ''}"><div class="liste"><div id="avant"></div><div class="filtres">
       <input type="search" id="f-q" placeholder="Chercher un lieu, une commune, un spectacle" value="${esc(f.q)}" aria-label="Chercher">
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><select id="f-saison" aria-label="Aller à la saison"><option value="">Aller à une saison…</option>${saisons.map(s => `<option value="${s}">Saison ${s}</option>`).join('')}</select>
       <select id="f-public" aria-label="Public"><option value="">Tous publics</option><option value="tout_public"${f.public === 'tout_public' ? ' selected' : ''}>Tout public</option><option value="scolaire"${f.public === 'scolaire' ? ' selected' : ''}>Scolaire</option></select>
+      <select id="f-nature" aria-label="Nature"><option value="">Toutes natures</option>${[['representations', 'Représentations'], ['repetitions', 'Répétitions'], ['residence', 'Résidences']].map(([k, l]) => `<option value="${k}"${f.nature === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <select id="f-dep" aria-label="Département"><option value="">Tous départements</option>${deps.map(k => `<option value="${esc(k)}"${f.dep === k ? ' selected' : ''}>${esc(k)}</option>`).join('')}</select>
+      <select id="f-contrat" aria-label="Contrat"><option value="">Tous contrats</option>${[['aucun', 'Sans contrat'], ['à envoyer', 'À envoyer'], ['envoyé', 'Envoyé'], ['signé', 'Signé']].map(([k, l]) => `<option value="${k}"${f.contrat === k ? ' selected' : ''}>${l}</option>`).join('')}</select>
+      <span class="f-periode"><label>du <input type="date" id="f-du" value="${esc(f.du)}"></label><label>au <input type="date" id="f-au" value="${esc(f.au)}"></label></span>
       <select id="f-statut" aria-label="Statut"><option value="">Tous statuts</option>${[['option', 'Options'], ['confirmee', 'Confirmées'], ['annulee', 'Annulées'], ['reportee', 'Reportées'], ['masquee', 'Masquées']].map(([k, l]) => `<option value="${k}"${f.statut === k ? ' selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="puces" role="group" aria-label="Spectacle">${E.spectacles.filter(s => s.page).map(s => `<button type="button" class="puce" data-sp="${s.id}" style="--c:${couleurSp(s)}" aria-pressed="${String(f.spectacle) === String(s.id)}"><span class="pastille"></span>${esc(s.titre.split(' – ')[0])}</button>`).join('')}</div>
       <span class="compte" id="f-compte"></span></div><div data-liste id="l-dates"></div></div>
@@ -1963,6 +1981,7 @@ function vueDates(param) {
   });
   $('#f-public').addEventListener('change', e => { f.public = e.target.value; maj(); });
   $('#f-statut').addEventListener('change', e => { f.statut = e.target.value; maj(); });
+  [['f-nature', 'nature'], ['f-dep', 'dep'], ['f-contrat', 'contrat'], ['f-du', 'du'], ['f-au', 'au']].forEach(([i, k]) => $(`#${i}`)?.addEventListener('change', e => { f[k] = e.target.value; maj(); }));
   $$('[data-sp]').forEach(b => b.addEventListener('click', () => { f.spectacle = String(f.spectacle) === b.dataset.sp ? '' : b.dataset.sp; $$('[data-sp]').forEach(x => x.setAttribute('aria-pressed', String(f.spectacle) === x.dataset.sp)); maj(); }));
   // une nouvelle date pré-remplie ailleurs (« Créer la date » d'une proposition : E.dateDepart) : à enregistrer
   const depart = param === 'nouvelle' ? E.dateDepart || null : null;
@@ -1984,9 +2003,12 @@ const jourSansAn = j => jourCourt(j).replace(/ \d{4}$/, '');
 function aCompleterAvant(jours) {
   const fin = plusJours(AUJ, jours);
   const ds = E.dates.filter(d => (d.fin || d.debut) >= AUJ && d.debut <= fin && !['annulee', 'reportee', 'option'].includes(d.statut)).sort((a, b) => a.debut.localeCompare(b.debut) || a.id - b.id);
-  const pers = new Map(), lieux = new Map(), sansLieu = [], feuilles = [];
+  const pers = new Map(), lieux = new Map(), sansLieu = [], feuilles = [], joint = new Map();
   ds.forEach(d => {
     if (E.equipeInstallee) {
+      // qui ne sera pas prévenu : sans compte (ni feuille de route ni notification), ou son agenda relié ne se relit plus
+      equipeDeLaDate(d).forEach(x => { const p = personne(x.personne_id); if (!p) return; const sansCompte = !priveeDe(x.personne_id)?.user_id, agenda = (E.agendasErreur || []).find(a => a.personne_id === x.personne_id);
+        if (!sansCompte && !agenda) return; if (!joint.has(p.id)) joint.set(p.id, { p, sansCompte, agenda, dates: [] }); joint.get(p.id).dates.push(d); });
       equipeDeLaDate(d).forEach(x => { if (!(priveeDe(x.personne_id)?.telephone || '').trim() && personne(x.personne_id)) { if (!pers.has(x.personne_id)) pers.set(x.personne_id, { p: personne(x.personne_id), dates: [] }); pers.get(x.personne_id).dates.push(d); } });
       const f = E.feuilles.find(x => x.date_id === d.id), n = f ? aCompleter(d.id) : 0;
       if (!f || n) feuilles.push({ d, f, n });
@@ -1996,7 +2018,7 @@ function aCompleterAvant(jours) {
     const manque = [!(l.adresse || '').trim() && 'adresse', !(E.lieuxSuivi.find(x => x.lieu_id === l.id)?.contact || '').trim() && 'contact'].filter(Boolean);
     if (manque.length) { if (!lieux.has(l.id)) lieux.set(l.id, { l, manque, dates: [] }); lieux.get(l.id).dates.push(d); }
   });
-  return { ds, pers: [...pers.values()], lieux: [...lieux.values()], sansLieu, feuilles, n: pers.size + lieux.size + sansLieu.length + feuilles.length };
+  return { ds, pers: [...pers.values()], lieux: [...lieux.values()], sansLieu, feuilles, joignables: [...joint.values()], n: pers.size + lieux.size + sansLieu.length + feuilles.length + joint.size };
 }
 function dessinerAvant(el) {
   if (!el) return;
@@ -2010,6 +2032,7 @@ function dessinerAvant(el) {
     ${section('Téléphones', a.pers.map(x => `<li><a href="#/equipe/${x.p.id}" data-viser="telephone">${esc(nomDe(x.p))}</a><span class="compte">pas de téléphone · part ${esc(quand(x.dates))}</span></li>`))}
     ${section('Lieux', [...a.lieux.map(x => `<li><a href="#/lieux/${x.l.id}" data-viser="${x.manque[0]}">${esc(x.l.nom ? `${x.l.nom}, ${x.l.commune}` : x.l.commune)}</a><span class="compte">${x.manque.map(m => `sans ${m}`).join(', ')} · ${esc(quand(x.dates))}</span></li>`),
       ...a.sansLieu.map(d => `<li><a href="#/representations/${d.id}" data-viser="#d-lieu input">Lieu à préciser</a><span class="compte">${esc(spectacle(d.spectacle_id)?.titre || '?')} · le ${esc(jourSansAn(d.debut))}</span></li>`)])}
+    ${section('Qui ne sera pas prévenu', a.joignables.map(x => `<li><a href="#/equipe/${x.p.id}" data-viser="email">${esc(nomDe(x.p))}</a><span class="compte">${x.sansCompte ? 'pas de compte : ni feuille de route ni notification' : `son agenda « ${esc(x.agenda.nom || 'relié')} » ne se relit plus`} · part ${esc(quand(x.dates))}</span></li>`))}
     ${section('Feuilles de route', a.feuilles.map(x => `<li><a href="#/feuilles/${x.d.id}" data-viser="${x.f ? '#fr-manques' : '#fr-composer'}">${esc(jourSansAn(x.d.debut))} · ${esc(ouDe(x.d))}</a><span class="compte">${esc(spectacle(x.d.spectacle_id)?.titre || '?')}</span>${x.f ? `<span class="badge option">${x.n} à compléter</span>` : '<span class="badge">à composer</span>'}</li>`))}</div></details>`;
   listeQuiSeVide(el, r.jours);
 }
@@ -2044,12 +2067,17 @@ function relierAvant(el) {
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
 function listeDates(zone, actif) {
-  const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut);
+  const f = session.dates, q = norm(f.q).trim(), cherche = !!(q || f.spectacle || f.public || f.statut || f.nature || f.dep || f.contrat || f.du || f.au);
   const xs = E.dates.filter(d => {
     if (f.spectacle && String(d.spectacle_id) !== String(f.spectacle)) return false;
+    if (f.nature && (d.nature || 'representations') !== f.nature) return false;
+    if (f.dep && lieu(d.lieu_id)?.departement !== f.dep) return false;
+    if (f.contrat) { const c = (E.suivis.find(x => x.date_id === d.id)?.contrat || '').trim(); if (f.contrat === 'aucun' ? c : c !== f.contrat) return false; }
+    if (f.du && (d.fin || d.debut) < f.du) return false;
+    if (f.au && d.debut > f.au) return false;
     if (f.public && !(d.public === f.public || (d.public === 'mixte'))) return false;
     if (f.statut === 'masquee' ? d.visible : f.statut && d.statut !== f.statut) return false;
-    if (q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id); if (!norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''}`).includes(q)) return false; }
+    if (q) { const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), su = E.suivis.find(x => x.date_id === d.id) || {}; if (!norm(`${s?.titre} ${l?.nom} ${l?.commune} ${d.intitule || ''} ${su.organisateur || ''} ${su.contact || ''}`).includes(q)) return false; }
     return true;
   });
   const avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
@@ -2059,7 +2087,8 @@ function listeDates(zone, actif) {
     const s = spectacle(d.spectacle_id), l = lieu(d.lieu_id), reps = repsDe(d.id);
     const badges = [d.statut === 'option' && '<span class="badge option">Option</span>', d.statut === 'annulee' && '<span class="badge annulee">Annulée</span>',
       d.statut === 'reportee' && '<span class="badge option">Reportée</span>', !d.visible && '<span class="badge masquee">Masquée</span>',
-      d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>'].filter(Boolean).join('');
+      d.public === 'scolaire' && '<span class="badge sco">Scolaire</span>', d.public === 'mixte' && '<span class="badge sco">Mixte</span>',
+      d.nature === 'repetitions' && '<span class="badge">Répétitions</span>', d.nature === 'residence' && '<span class="badge">Résidence</span>'].filter(Boolean).join('');
     const jours = [...new Set(reps.map(r => r.jour))];
     return `<a class="ligne" href="#/representations/${d.id}" style="--c:${couleurSp(s)}"${String(actif) === String(d.id) ? ' aria-current="true"' : ''}>
       <span class="jj"><b>${+d.debut.slice(8, 10)}</b>${MC[+d.debut.slice(5, 7) - 1]}${(d.fin && d.fin !== d.debut) ? `<br>→ ${+d.fin.slice(8, 10)}` : ''}</span>
@@ -2163,6 +2192,7 @@ function editeurDate(id, depart = null) {
       <div class="champ"><label for="d-lien">Lien (billetterie ou page du lieu)</label><input type="url" id="d-lien" value="${esc(F.lien)}" placeholder="https://…"></div></div>
 
     <div class="bloc" id="d-equipe"></div>
+    ${d0 && E.equipeInstallee ? '<div class="bloc" id="d-retours" hidden></div>' : ''}
 
     <div class="bloc"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3><div class="rangee">
       <div class="champ"><label for="s-org">Organisateur</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
@@ -2170,7 +2200,7 @@ function editeurDate(id, depart = null) {
       ${E.ideale ? `<div class="champ"><label for="s-montant">Montant de cession HT (€)</label><input type="number" id="s-montant" min="0" step="0.01" inputmode="decimal" value="${esc(F.suivi.montant_cession ?? '')}" placeholder="Repris dans le devis, le contrat, la facture"></div>` : ''}</div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
-    ${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
+    ${d0 && E.ideale ? '<div class="bloc" id="d-budget"></div>' : ''}${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
     ${E.chiffresInstalles ? `<div class="bloc"><h3>Les chiffres <span class="aide" style="font-weight:400">— jamais publiés ; l’équipe les lit</span></h3><div class="rangee">
       ${CHIFFRES.map(([k, l, pas, max]) => `<div class="champ"><label for="c-${k}">${l}</label><input type="number" id="c-${k}" data-chiffre="${k}" min="0" max="${max}" step="${pas}" inputmode="${pas < 1 ? 'decimal' : 'numeric'}" value="${esc(F.chiffres?.[k] ?? '')}"></div>`).join('')}</div></div>` : ''}
     ${pied(id ? 'Tout est enregistré' : 'Nouvelle date', `${id ? `${boutonFeuille(id)}${boutonPrevenir(id)}<button type="button" class="btn" id="d-dupliquer">Dupliquer</button><button type="button" class="btn danger" id="d-suppr">Supprimer</button>` : ''}`, { replier: true, marque: id && E.equipeInstallee ? resteFeuille(id, 'nombre') : '' })}`;
@@ -2224,6 +2254,48 @@ function editeurDate(id, depart = null) {
   };
   dessinerReps(); dessinerDetails(); titre(); dessinerLieu(); parcours();
   if (d0 && typeof MODELES !== 'undefined') MODELES.bloc($('#d-documents', zone), { date: d0 });
+  // le budget de la date : sa cession, les notes de frais qui la concernent, ce qui reste ; ce qui est facturé et encaissé
+  const dessinerBudget = () => {
+    const el = $('#d-budget', zone); if (!el) return;
+    const cession = F.suivi.montant_cession === '' || F.suivi.montant_cession == null ? null : Number(F.suivi.montant_cession);
+    const frais = (E.frais || []).filter(x => x.date_id === d0.id && x.statut !== 'refuse'), totalFrais = frais.reduce((t, x) => t + (Number(x.montant_ttc) || 0), 0);
+    const fac = typeof MODELES !== 'undefined' && E.docsInstalles ? MODELES.generes().filter(x => x.type === 'facture' && !x.annule_le && (x.date_id === d0.id || (x.dates || []).map(Number).includes(Number(d0.id)))) : [];
+    const facture = fac.reduce((t, x) => t + (Number(x.montant_ttc) || 0), 0), encaisse = fac.filter(x => x.paye_le).reduce((t, x) => t + (Number(x.montant_ttc) || 0), 0);
+    const ligne = (l, v, cls = '') => `<dt class="${cls}">${l}</dt><dd class="${cls}">${v}</dd>`;
+    el.innerHTML = `<h3>Budget <span class="aide" style="font-weight:400">— jamais publié</span></h3>
+      ${cession == null && !frais.length && !fac.length ? '<p class="aide">Indiquez le montant de cession dans le suivi : le budget de la date s’en tire, avec les notes de frais qui la concernent.</p>' : `<dl class="budget-l">
+        ${ligne('Cession HT', cession != null ? eurosCourt(cession) : '<span class="manque">à indiquer</span>')}
+        ${ligne(`Notes de frais (${frais.length})`, frais.length ? `− ${eurosCourt(totalFrais)}` : '—')}
+        ${cession != null ? ligne('Reste', eurosCourt(cession - totalFrais), 'total') : ''}
+        ${fac.length ? ligne('Facturé TTC', `${eurosCourt(facture)}${encaisse ? ` · encaissé ${eurosCourt(encaisse)}` : ' · rien d’encaissé'}`) : ''}</dl>`}
+      ${frais.length ? `<p class="aide">${frais.map(x => `${esc(nomDe(personne(x.personne_id)) || 'Quelqu’un')} : ${esc(eurosCourt(x.montant_ttc))}${x.statut === 'en_attente' ? ' (à valider)' : ''}`).join(' · ')} — <a href="#/equipe/frais">les frais</a></p>` : ''}`;
+  };
+  dessinerBudget();
+  // ce que l'équipe a fait de la date : qui a lu la feuille de route publiée (et qui ne la reçoit pas : sans compte, sans
+  // téléphone abonné), les retards et imprévus signalés, les changements faits depuis son espace (lus à l'ouverture)
+  (async () => {
+    const el = $('#d-retours', zone); if (!el) return;
+    const [nf, sg, mo] = await Promise.all([
+      sb.from('crescite_notifications').select('personne_id,lue_le,cree_le,titre').eq('date_id', d0.id).eq('type', 'feuille').order('cree_le', { ascending: false }).limit(200),
+      sb.from('crescite_signalements').select('personne_id,texte,cree_le,prevenus').eq('date_id', d0.id).order('cree_le', { ascending: false }).limit(50),
+      sb.from('crescite_modifications').select('personne_id,titre,texte,cree_le').eq('date_id', d0.id).order('cree_le', { ascending: false }).limit(50)]);
+    if (!el.isConnected) return;
+    const f = E.feuilles.find(x => x.date_id === d0.id), eq = equipeDeLaDate(d0).map(x => x.personne_id), parts = [];
+    const quand = t => new Date(t).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const nom = id => esc(nomDe(personne(id)) || 'Quelqu’un');
+    if (f && f.statut === 'publiee' && !nf.error) {
+      const der = new Map(); (nf.data || []).forEach(n => { if (!der.has(n.personne_id)) der.set(n.personne_id, n); });
+      const lus = eq.filter(id => der.get(id)?.lue_le), nonLus = eq.filter(id => der.has(id) && !der.get(id).lue_le), sansCompte = eq.filter(id => !priveeDe(id)?.user_id);
+      const sansTel = E.abonnesLus ? eq.filter(id => priveeDe(id)?.user_id && !E.abonnes.has(id)) : [];
+      parts.push(`<p><b>Feuille de route v${f.version || 1}</b> : ${lus.length ? `lue par ${lus.map(id => `${nom(id)} <span class="compte">(${esc(quand(der.get(id).lue_le))})</span>`).join(', ')}` : 'lue par personne encore'}${nonLus.length ? ` · pas encore : ${nonLus.map(nom).join(', ')}` : ''}${sansCompte.length ? ` · <span class="manque">sans compte, ne la reçoit pas : ${sansCompte.map(nom).join(', ')}</span>` : ''}${sansTel.length ? ` · <span class="aide">pas de téléphone abonné : ${sansTel.map(nom).join(', ')}</span>` : ''}</p>`);
+    }
+    if (!sg.error && (sg.data || []).length) parts.push(`<h4>Signalé par l’équipe</h4><ul class="liste-simple">${sg.data.map(x => `<li><b>${x.personne_id ? nom(x.personne_id) : 'L’administration'}</b><span>${esc(x.texte)}</span><span class="compte">${esc(quand(x.cree_le))}${x.prevenus ? ` · ${x.prevenus} prévenu${x.prevenus > 1 ? 's' : ''}` : ''}</span></li>`).join('')}</ul>`);
+    if (!mo.error && (mo.data || []).length) parts.push(`<h4>Changé depuis l’espace de l’équipe</h4><ul class="liste-simple">${mo.data.map(x => `<li><b>${x.personne_id ? nom(x.personne_id) : 'L’administration'}</b><span>${esc(x.titre)}${x.texte ? ` : ${esc(x.texte)}` : ''}</span><span class="compte">${esc(quand(x.cree_le))}</span></li>`).join('')}</ul>`);
+    if (!parts.length) return;
+    el.innerHTML = `<h3>Côté équipe</h3>${parts.join('')}`;
+    el.hidden = false;
+  })();
+  zone.addEventListener('input', e => { if (e.target.id === 's-montant') { F.suivi.montant_cession = e.target.value; dessinerBudget(); } });
   if (d0 && typeof NOTES !== 'undefined') NOTES.bloc($('#d-notes', zone), 'crescite_dates', d0.id, { titre: 'Notes internes' });
   comboLieu(zone, 'd-lieu', F.lieu_id, idl => { F.lieu_id = idl; changer(); dessinerLieu(); });
   sousChamp($('#s-org', zone), v => (d0 ? mentionAppris('crescite_dates_suivi', d0.id, 'organisateur', v) : ''));
@@ -3848,12 +3920,40 @@ const SPEC_LIEU = [
 ];
 const SPEC_LIEU_SUIVI = [{ k: 'contact', t: 'texte', l: 'Contact' }, { k: 'jauge', t: 'nombre', l: 'Jauge' }, { k: 'plateau', t: 'texte', l: 'Plateau' }, { k: 'notes', t: 'long', l: 'Notes' }];
 // les dates d'un lieu, à venir d'abord, puis les plus récentes, avec leur feuille de route
+// ce que la compagnie sait d'un lieu : son bilan (les représentations confirmées : combien, depuis quand, les spectateurs, le
+// remplissage, les recettes), ses saisons, ses organisateurs successifs, les pistes et les demandes de devis du même lieu ou
+// de la même commune, puis toutes ses dates (les douze premières, le reste se déplie)
+const jaugeDe = d => { const c = (E.chiffres || []).find(x => x.date_id === d.id); const j = c && c.jauge != null && c.jauge !== '' ? Number(c.jauge) : Number(E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id)?.jauge) || null; return j || null; };
+const spectateursDe = d => { const v = (E.chiffres || []).find(x => x.date_id === d.id)?.spectateurs; return v == null || v === '' ? null : Number(v); };
+const cessionDe = d => { const v = E.suivis.find(x => x.date_id === d.id)?.montant_cession; return v == null || v === '' ? null : Number(v); };
+// remplissage d'un ensemble de dates : spectateurs ÷ jauge, sur celles qui ont les deux (null sinon)
+function remplissage(ds) {
+  const xs = ds.map(d => ({ s: spectateursDe(d), j: jaugeDe(d), n: Math.max(1, repsDe(d.id).filter(r => !r.annulee).length) })).filter(x => x.s != null && x.j);
+  if (!xs.length) return null;
+  return Math.round(100 * xs.reduce((t, x) => t + x.s, 0) / xs.reduce((t, x) => t + x.j * x.n, 0));
+}
+const eurosCourt = n => `${Math.round(Number(n) || 0).toLocaleString('fr-FR')} €`;
 function datesDuLieu(id) {
-  const xs = E.dates.filter(d => d.lieu_id === id), avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut.localeCompare(b.debut));
-  const vues = [...avenir, ...xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => b.debut.localeCompare(a.debut))].slice(0, 12);
-  return `<div class="bloc"><h3>Ses dates <span class="compte">${xs.length || ''}</span></h3>${vues.length ? `<ul class="liste-simple">${vues.map(d => `<li><b class="eq-jour">${esc(jourCourt(d.debut))}</b><a href="#/representations/${d.id}">${esc(spectacle(d.spectacle_id)?.titre || '?')}</a>
-    ${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : ''}${E.equipeInstallee ? `<a href="#/feuilles/${d.id}" class="eq-feuille" data-viser="#fr-manques"><span class="sr">Feuille de route du ${esc(jourCourt(d.debut))} : </span>${badgeFeuille(d.id)}${resteFeuille(d.id)}</a>` : ''}</li>`).join('')}</ul>
-    ${xs.length > vues.length ? `<p class="aide">Et ${xs.length - vues.length} autres, dans Représentations.</p>` : ''}` : '<p class="aide">Aucune date dans ce lieu pour l’instant.</p>'}</div>`;
+  const l = lieu(id), xs = E.dates.filter(d => d.lieu_id === id), avenir = xs.filter(d => (d.fin || d.debut) >= AUJ).sort((a, b) => a.debut.localeCompare(b.debut));
+  const tri = [...avenir, ...xs.filter(d => (d.fin || d.debut) < AUJ).sort((a, b) => b.debut.localeCompare(a.debut))];
+  const ligne = d => `<li><b class="eq-jour">${esc(jourCourt(d.debut))}</b><a href="#/representations/${d.id}">${esc(spectacle(d.spectacle_id)?.titre || '?')}</a>
+    ${d.statut === 'option' ? '<span class="badge option">Option</span>' : d.statut === 'annulee' ? '<span class="badge annulee">Annulée</span>' : d.statut === 'reportee' ? '<span class="badge">Reportée</span>' : ''}${(d.nature || 'representations') !== 'representations' ? `<span class="badge">${d.nature === 'residence' ? 'Résidence' : 'Répétitions'}</span>` : ''}${E.equipeInstallee ? `<a href="#/feuilles/${d.id}" class="eq-feuille" data-viser="#fr-manques"><span class="sr">Feuille de route du ${esc(jourCourt(d.debut))} : </span>${badgeFeuille(d.id)}${resteFeuille(d.id)}</a>` : ''}</li>`;
+  // le bilan : les représentations confirmées, passées
+  const jouees = xs.filter(d => d.statut === 'confirmee' && (d.nature || 'representations') === 'representations' && (d.fin || d.debut) < AUJ);
+  const spect = jouees.reduce((t, d) => t + (spectateursDe(d) || 0), 0), recettes = jouees.reduce((t, d) => t + (cessionDe(d) || 0), 0), taux = remplissage(jouees);
+  const saisons = [...new Set(jouees.map(d => d.saison).filter(Boolean))].sort().reverse();
+  const orgs = [];
+  [...jouees].sort((a, b) => b.debut.localeCompare(a.debut)).forEach(d => { const o = (E.suivis.find(x => x.date_id === d.id)?.organisateur || '').trim(); if (o && !orgs.some(x => norm(x.o) === norm(o))) orgs.push({ o, an: d.debut.slice(0, 4) }); });
+  const pistes = (E.prospects || []).filter(p => p.lieu_id === id || (l && norm(p.commune || '') === norm(l.commune)));
+  const demandes = (E.devis || []).filter(q => q.lieu_id === id || (l && norm(q.commune || '') === norm(l.commune)));
+  const bilan = jouees.length ? `<p class="lieu-bilan"><b>${jouees.length} représentation${jouees.length > 1 ? 's' : ''}</b> depuis ${esc(jouees.map(d => d.debut).sort()[0].slice(0, 4))}${spect ? ` · <b>${spect.toLocaleString('fr-FR')}</b> spectateurs` : ''}${taux != null ? ` · remplissage <b>${taux} %</b>` : ''}${recettes ? ` · <b>${eurosCourt(recettes)}</b> HT de cessions` : ''}</p>` : '';
+  const parSaison = saisons.length > 1 ? `<table class="simple lieu-saisons"><thead><tr><th>Saison</th><th>Dates</th><th>Spectateurs</th><th>Remplissage</th><th>Cessions HT</th></tr></thead><tbody>${saisons.map(S => { const ds = jouees.filter(d => d.saison === S), sp = ds.reduce((t, d) => t + (spectateursDe(d) || 0), 0), r = ds.reduce((t, d) => t + (cessionDe(d) || 0), 0), tx = remplissage(ds);
+    return `<tr><td>${esc(S)}</td><td>${ds.length}</td><td>${sp ? sp.toLocaleString('fr-FR') : '—'}</td><td>${tx != null ? `${tx} %` : '—'}</td><td>${r ? eurosCourt(r) : '—'}</td></tr>`; }).join('')}</tbody></table>` : '';
+  const autour = [orgs.length ? `<p><span class="aide">Organisateurs :</span> ${orgs.map(x => `${esc(x.o)} <span class="compte">(${esc(x.an)})</span>`).join(', ')}</p>` : '',
+    pistes.length ? `<p><span class="aide">Pistes de diffusion :</span> ${pistes.map(p => `<a href="#/diffusion/piste/${p.id}">${esc(p.structure)}</a> <span class="compte">(${esc(etapeLib(p.etape))})</span>`).join(', ')}</p>` : '',
+    demandes.length ? `<p><span class="aide">Demandes de devis :</span> ${demandes.map(q => `<a href="#/diffusion/devis/${q.id}">${esc(q.structure_nom)}</a>`).join(', ')}</p>` : ''].join('');
+  return `<div class="bloc"><h3>Ses dates <span class="compte">${xs.length || ''}</span></h3>${bilan}${parSaison}${autour}${tri.length ? `<ul class="liste-simple">${tri.slice(0, 12).map(ligne).join('')}</ul>
+    ${tri.length > 12 ? `<details class="lieu-plus"><summary>Les ${tri.length - 12} autres</summary><ul class="liste-simple">${tri.slice(12).map(ligne).join('')}</ul></details>` : ''}` : '<p class="aide">Aucune date dans ce lieu pour l’instant.</p>'}</div>`;
 }
 function editeurLieu(id) {
   const l0 = id ? lieu(id) : null;
