@@ -5852,11 +5852,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // depuis l'endroit où elles sont
     let suite = false;
     // (saisonSeule : un filtre de la frise, qui ne touche que la saison en cours : ses deux listes glissent ensemble, la loupe suit)
+    let jFriseMaj = 0;
     function dessine(anime, saisonSeule = false) {
       pts = pointsSaison(); jAllume = null;
       if (F.jour && !pts.some(p => p.j === F.jour)) F.jour = null;
       annoncer();
-      const faire = () => { if (!saisonSeule) recompte(); dessineProchaines(); majOutils(); if (fSaison) { fSaison.maj(pts); fSaison.etat({ mois: F.mois, jour: F.jour }); } if (saisonSeule && tard) dessineToutes(); };
+      // (au geste, la frise glisse dans la tâche d'après celle des listes : ensemble, leurs deux glissements tenaient la page plus
+      // de 50 ms ; la dernière demandée l'emporte)
+      const majFrise = () => { if (fSaison) { fSaison.maj(pts); fSaison.etat({ mois: F.mois, jour: F.jour }); } };
+      const jF = ++jFriseMaj;
+      const faire = () => { if (!saisonSeule) recompte(); dessineProchaines(); majOutils(); if (anime) setTimeout(() => { if (jF === jFriseMaj && racine.isConnected) majFrise(); }, 0); else majFrise(); if (saisonSeule && tard) dessineToutes(); };
       // (seules les prochaines dates glissent, ou les deux listes de la saison pour un filtre de la frise : le reste est sous le
       // pli, ou se refait plus loin)
       if (anime && MV) MV.flip(saisonSeule ? listes : liste, faire, { cle: '[data-mv-cle]' }); else faire();
@@ -8259,12 +8264,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       n.replaceWith(f);
     });
   }
+  // (au vrai repos, quatre secondes au plus : jamais en plein geste, et ni la page ni sa lecture n'attendent)
+  const auCalme = f => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 4000 }) : setTimeout(f, 600));
   { const aLire = new Set(); let tLangues = 0;
+    // (par petites tranches du temps de repos : un geste qui arrive n'attend pas la relecture d'une longue liste)
+    const lireLangues = dl => {
+      tLangues = 0;
+      for (const x of aLire) { aLire.delete(x); marquerLangues(x); if (dl && dl.timeRemaining && !dl.didTimeout && dl.timeRemaining() < 3) break; }
+      if (aLire.size) tLangues = auCalme(lireLangues);
+    };
     new MutationObserver(ms => {
       ms.forEach(m => m.addedNodes.forEach(n => { const x = n.nodeType === 1 ? n : n.parentElement; if (x) aLire.add(x); }));
-      if (aLire.size && !tLangues) tLangues = auRepos(() => { tLangues = 0; const xs = [...aLire]; aLire.clear(); xs.forEach(marquerLangues); });
+      if (aLire.size && !tLangues) tLangues = auCalme(lireLangues);
     }).observe(document.body, { childList: true, subtree: true });
-    auRepos(() => marquerLangues(document.body)); }
+    aLire.add(document.body); tLangues = auCalme(lireLangues); }
   lire();
   cadre();
   // le retour en haut d'une page longue (hors de <main> : il survit aux pages) : il paraît après deux écrans lus, remonte la
