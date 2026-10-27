@@ -25,7 +25,7 @@ const DISPONIBILITES = (() => {
   // ===================================================================================================== état
   Object.assign(E, { sql5: null, sql5Erreur: '', propositions: [], propositionsLues: false });
   const DP = { planning: null, calendrier: null, lectures: [], canal: null, brouillon: null, sonde: null, renvois: new Map(),
-    masques: undefined, masquesDe: null, prefs: null, lectureMasques: null, ecritureMasques: null };
+    masques: undefined, masquesDe: null, lectureMasques: null };
 
   // ===================================================================================================== outils
   const PLN = () => (typeof PLANNING !== 'undefined' && PLANNING && typeof PLANNING.monter === 'function' ? PLANNING : null);
@@ -87,38 +87,28 @@ const DISPONIBILITES = (() => {
     return data;
   }
   const lectureDe = j => DP.lectures.find(x => x.de <= j && x.a >= j) || null;
-  // les personnes masquées du planning : gardées avec le compte (crescite_preferences, script SQL 6, clé planning.masques) ;
-  // sans le script, sur cet appareil (localStorage). La liste de l'appareil passe une fois dans la base quand le script est
-  // là. Une table absente ne se dit pas : le planning marche pareil.
+  // les personnes masquées du planning : gardées avec le compte (crescite_preferences, script SQL 6, clé planning.masques),
+  // par PREFS (prefs.js), qui les garde sur l'appareil tant que le script manque (dans crescite-planning-masques, que
+  // partage l'espace de l'équipe) et les passe dans la base dès qu'il est là. Une table absente ne se dit pas : le planning
+  // marche pareil. Sans prefs.js dans la page, le repli d'avant : l'appareil seul.
   const PREF_MASQUES = 'planning.masques', LOCAL_MASQUES = 'crescite-planning-masques';
+  const PR = () => (typeof PREFS !== 'undefined' ? PREFS : null);
   const masquesIci = () => { try { const v = JSON.parse(localStorage.getItem(LOCAL_MASQUES) || 'null'); return Array.isArray(v) ? v : null; } catch { return null; } };
-  const garderIci = ids => { try { if (ids) localStorage.setItem(LOCAL_MASQUES, JSON.stringify(ids)); else localStorage.removeItem(LOCAL_MASQUES); } catch { /* stockage interdit */ } };
-  const ecrirePreference = async (cle, valeur) => (await sb.from('crescite_preferences').upsert({ user_id: E.session.user.id, cle, valeur }, { onConflict: 'user_id,cle' })).error;
+  const garderIci = ids => { try { localStorage.setItem(LOCAL_MASQUES, JSON.stringify(ids)); } catch { /* stockage interdit */ } };
+  const masquesLus = () => { const v = PR() ? PR().lire(PREF_MASQUES, []) : masquesIci(); return Array.isArray(v) ? v : []; };
   function lireMasques() {
     const uid = E.session?.user?.id || null;
-    if (DP.masquesDe !== uid) Object.assign(DP, { masquesDe: uid, masques: undefined, prefs: null, lectureMasques: null });
-    if (!DP.lectureMasques) DP.lectureMasques = (async () => {
-      const locaux = masquesIci() || [];
-      const { data, error } = await sb.from('crescite_preferences').select('valeur').eq('user_id', uid).eq('cle', PREF_MASQUES).maybeSingle();
-      if (DP.masquesDe !== uid) return;                            // un autre compte entre-temps : sa lecture est la sienne
-      if (error) { DP.prefs = absent(error) ? 'absent' : 'erreur'; DP.masques = locaux; return; }
-      DP.prefs = 'ok';
-      if (data) { DP.masques = Array.isArray(data.valeur) ? data.valeur : []; return; }
-      DP.masques = locaux;
-      if (locaux.length) ecrirePreference(PREF_MASQUES, locaux).then(err => { if (!err) garderIci(null); }, () => {});
-    })().catch(() => { if (DP.masques === undefined) DP.masques = masquesIci() || []; });
+    if (DP.masquesDe !== uid) Object.assign(DP, { masquesDe: uid, masques: undefined, lectureMasques: null });
+    if (!DP.lectureMasques) DP.lectureMasques = (PR() ? PR().charger() : Promise.resolve())
+      .then(() => { if (DP.masquesDe === uid) DP.masques = masquesLus(); })     // (un autre compte entre-temps : sa lecture est la sienne)
+      .catch(() => { if (DP.masques === undefined) DP.masques = masquesIci() || []; });
     return DP.lectureMasques;
   }
-  // chaque changement s'enregistre, dans l'ordre
+  // chaque changement s'enregistre tout de suite (un clic), dans l'ordre
   function garderMasques(ids) {
     DP.masques = ids;
-    DP.ecritureMasques = (DP.ecritureMasques || Promise.resolve()).then(async () => {
-      if (DP.prefs === 'absent') return garderIci(ids);
-      const err = await ecrirePreference(PREF_MASQUES, ids);
-      if (!err) { DP.prefs = 'ok'; return; }
-      if (absent(err)) { DP.prefs = 'absent'; garderIci(ids); return; }
-      erreur(err, 'Les personnes masquées ne sont pas enregistrées');
-    }).catch(() => {});
+    if (PR()) PR().ecrire(PREF_MASQUES, ids, { aussitot: true });
+    else garderIci(ids);
   }
   // les indisponibilités se voient en direct (la seule table du script 5 dans le temps réel)
   function ecouter() {

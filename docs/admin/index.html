@@ -1167,6 +1167,7 @@ async function tout(table, ordre) {
 async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
+  const prefs = typeof PREFS !== 'undefined' ? PREFS.charger() : null;         // les préférences du compte (prefs.js) : ne lève jamais d'erreur ; le tableau de bord et le planning s'en servent
   const tableau = typeof TABLEAU !== 'undefined' ? TABLEAU.charger() : null;   // la disposition du tableau de bord (tableau.js) : ne lève jamais d'erreur
   const documents = typeof MODELES !== 'undefined' ? MODELES.charger() : null;   // les documents générés (modeles.js) : ne lève jamais d'erreur
   const carnet = typeof CARNET !== 'undefined' ? CARNET.charger() : null;      // le carnet des lieux (carnet.js) : ne lève jamais d'erreur
@@ -1194,6 +1195,7 @@ async function chargerTout() {
   }
   // la diffusion reliée (le vingt-deuxième script) : une piste a son lieu, une invitation pro sa piste
   E.diffusionReliee = ideale ? !(await sb.from('crescite_diffusion_prospects').select('lieu_id').limit(1)).error : false;
+  await prefs;
   await tableau;
   await documents;
   await carnet;
@@ -1337,7 +1339,8 @@ async function actualiser({ discret = false } = {}) {
   E.relit = (async () => {
     await null;      // (E.relit posé d'abord : le témoin dit « Mise à jour… » dès le départ, pas « À jour »)
     majTemoin();
-    try { await chargerTout(); } catch (e) {
+    const prefsRelues = typeof PREFS !== 'undefined' ? PREFS.charger({ relire: true }) : null;   // (un réglage encore à envoyer n'est pas écrasé)
+    try { await chargerTout(); await prefsRelues; } catch (e) {
       Object.assign(E, savait);
       if (erreurReseau(e)) E.horsLigne = true;
       if (E.relitDire) annoncer(`Lecture impossible : ${erreurReseau(e) ? 'le réseau ne répond pas' : e?.message || e}.`, { erreur: true });
@@ -2253,8 +2256,18 @@ function vueDates(param) {
    champ visé prend le focus (data-viser) ; la liste se refait avec la vue et à chaque changement de la base : elle se
    vide à mesure. Les options, les dates annulées ou reportées n'y sont pas. */
 const JOURS_AVANT = [30, 60, 90];
-const reglagesAvant = () => { let r = {}; try { r = JSON.parse(localStorage.getItem('crescite-admin-avant') || '{}') || {}; } catch { r = {}; } return { ouvert: r.ouvert !== false, jours: JOURS_AVANT.includes(r.jours) ? r.jours : 60 }; };
-const garderAvant = r => { try { localStorage.setItem('crescite-admin-avant', JSON.stringify(r)); } catch { /* navigation privée */ } };
+// (gardés par PREFS, clé representations.avant : avec le compte, ou sur l'appareil tant que le script 6 manque ; sans prefs.js dans la page, l'appareil seul)
+const reglagesAvant = () => {
+  let r = {};
+  if (typeof PREFS !== 'undefined') r = PREFS.lire('representations.avant', {});
+  else { try { r = JSON.parse(localStorage.getItem('crescite-admin-avant') || '{}'); } catch { r = {}; } }
+  if (!r || typeof r !== 'object' || Array.isArray(r)) r = {};
+  return { ouvert: r.ouvert !== false, jours: JOURS_AVANT.includes(r.jours) ? r.jours : 60 };
+};
+const garderAvant = r => {
+  if (typeof PREFS !== 'undefined') PREFS.ecrire('representations.avant', r, { aussitot: true });
+  else { try { localStorage.setItem('crescite-admin-avant', JSON.stringify(r)); } catch { /* navigation privée */ } }
+};
 const jourSansAn = j => jourCourt(j).replace(/ \d{4}$/, '');
 function aCompleterAvant(jours) {
   const fin = plusJours(AUJ, jours);
@@ -2319,7 +2332,7 @@ function listeQuiSeVide(el, jours) {
 }
 function relierAvant(el) {
   if (!el) return;
-  el.addEventListener('toggle', e => { if (e.target.matches('details.avant')) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);
+  el.addEventListener('toggle', e => { if (e.target.matches('details.avant') && e.target.open !== reglagesAvant().ouvert) garderAvant({ ...reglagesAvant(), ouvert: e.target.open }); }, true);   // (le navigateur dit « toggle » aussi au premier dessin d'un panneau ouvert : rien à garder)
   el.addEventListener('change', e => { if (e.target.id !== 'avant-jours') return; garderAvant({ ...reglagesAvant(), jours: +e.target.value }); dessinerAvant(el); $('#avant-jours', el)?.focus(); });
 }
 function listeDates(zone, actif) {
@@ -5131,6 +5144,9 @@ async function vueJournal() {
   });
 }
 </script>
+<!-- les préférences du compte (PREFS) : ce que chacun règle une fois et retrouve sur tous ses appareils ; lues par le tableau
+     de bord, le planning et la rubrique Représentations -->
+<script src="prefs.js"></script>
 <!-- la feuille de route (commune avec l'espace de l'équipe) et l'équipe : rubriques Équipe et Feuilles de route,
      distribution, déroulé type et documents des spectacles, équipe de chaque date -->
 <script src="feuille.js"></script>

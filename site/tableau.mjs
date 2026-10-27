@@ -20,7 +20,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForSelector(`${tuile('journal')} .tb-l, ${tuile('journal')} .tb-rien:not([role])`, { timeout: 15000 }).catch(() => {});
   await page.waitForSelector(`${tuile('propositions')} .tb-l`, { timeout: 15000 }).catch(() => {});
   ok('l’administration s’ouvre sur le tableau de bord', await page.evaluate(() => location.hash) === '#/accueil' && (await texte(page, 'main h1')) === 'Tableau de bord', await page.evaluate(() => location.hash));
-  ok('la rubrique « Tableau de bord » est la rubrique courante, douze rubriques dans l’en-tête', (await texte(page, '.nav a[aria-current="page"]')) === 'Tableau de bord' && await page.$eval('.barre', e => e.classList.contains('douze')));
+  // (le menu des rubriques se cherche par son nom, où qu'il soit : dans l'en-tête aujourd'hui, à côté du contenu plus tard)
+  ok('la rubrique « Tableau de bord » est la rubrique courante, douze rubriques au moins dans le menu', (await texte(page, 'nav[aria-label="Rubriques"] a[aria-current="page"]')) === 'Tableau de bord' && (await compte(page, 'nav[aria-label="Rubriques"] a[href^="#/"]')) >= 12);
   const ordre = await page.$$eval('.tb-tuile', xs => xs.map(x => x.dataset.k));
   ok('les dix tuiles par défaut, dans l’ordre ; Spectacles et Mémo masquées', ordre.join(',') === 'actions,urgent,avant,prochaines,chiffres,equipe,diffusion,propositions,ateliers,journal', ordre.join(','));
   ok('les réglages des tuiles sont repliés ; le rouage les ouvre', await page.$$eval('.tb-reglages', xs => xs.every(x => getComputedStyle(x).display === 'none')) && (await compte(page, '[data-tb-reglages][aria-expanded="false"]')) >= 8);
@@ -238,8 +239,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   const defaut = await page.$$eval('.tb-tuile', xs => xs.map(x => x.dataset.k));
   ok('« Réinitialiser » remet la disposition d’origine, tout de suite, sans « Êtes-vous sûr ? »', natifsReinit === 0 && defaut.join(',') === 'actions,urgent,avant,prochaines,chiffres,equipe,diffusion,propositions,ateliers,journal' && await page.$eval('#tb-grille', e => e.dataset.colonnes === 'auto'), defaut.join(','));
   // l'annonce porte « Annuler » : la disposition d'avant revient, tuiles, tailles, colonnes et mémo
-  ok('« Réinitialiser » : l’annonce porte « Annuler »', /Disposition d’origine remise/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce [data-tt="retour"]')) === 1, await texte(page, '.annonce'));
-  await page.click('.annonce [data-tt="retour"]');
+  ok('« Réinitialiser » : l’annonce porte « Annuler »', /Disposition d’origine remise/.test(await texte(page, '.annonce:last-of-type')) && (await compte(page, '.annonce:last-of-type [data-tt="retour"]')) === 1, await texte(page, '.annonce:last-of-type'));
+  await page.click('.annonce:last-of-type [data-tt="retour"]');
   await page.waitForTimeout(250);
   const revenue = await page.$$eval('.tb-tuile', xs => xs.map(x => `${x.dataset.k}${x.classList.contains('taille-m') ? '*' : ''}${x.classList.contains('replie') ? '-' : ''}`));
   ok('« Annuler » remet la disposition d’avant, et le mémo', revenue.join(',') === 'chiffres,actions,avant,urgent*,prochaines*,equipe,diffusion,propositions,journal-,memo' && await page.$eval('#tb-grille', e => e.dataset.colonnes === '3') && (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value).catch(() => '')) === 'Rappeler le Volcan lundi', revenue.join(','));
@@ -256,8 +257,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.click(`${tuile('equipe')} [data-tb-masquer]`);
   ok('sans crescite_preferences, le panneau le dit : gardée sur cet appareil', /gardée sur cet appareil/.test(await texte(page, '#tb-panneau .aide')), await texte(page, '#tb-panneau .aide'));
   await page.waitForTimeout(1200);
-  const local = await page.evaluate(() => JSON.parse(localStorage.getItem('crescite-admin-tableau') || 'null'));
-  ok('la disposition est dans le stockage de l’appareil', local && local.tuiles.find(t => t.k === 'equipe').visible === false, JSON.stringify(local).slice(0, 120));
+  const local = await page.evaluate(() => JSON.parse(localStorage.getItem('crescite-prefs:u-essai') || 'null')?.valeurs?.['accueil.tableau'] || null);
+  ok('la disposition est dans le stockage de l’appareil', local && local.tuiles.find(t => t.k === 'equipe').visible === false && await page.evaluate(() => localStorage.getItem('crescite-admin-tableau') === null), JSON.stringify(local).slice(0, 120));
   await page.reload();
   await page.waitForSelector('.tb-tuile', { timeout: 15000 });
   ok('et revient au rechargement', (await compte(page, tuile('equipe'))) === 0 && (await compte(page, '.tb-tuile')) === 9);
@@ -528,16 +529,19 @@ for (const [largeur, hauteur, tactile] of [[700, 900, false], [1000, 900, false]
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/accueil', tactile });
   await page.waitForTimeout(300);
   const t = await page.evaluate(() => {
-    const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), nav = b.querySelector('.nav');
+    // le menu des rubriques est cherché par son nom accessible : dans l'en-tête aujourd'hui, dans la colonne de gauche (la coque)
+    // une fois le lot 3 passé ; ce qui ne vaut que pour une nav d'en-tête (« Plus », les rubriques cachées) devient facultatif
+    const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), nav = document.querySelector('nav[aria-label="Rubriques"]');
+    const dansBarre = !!nav && b.contains(nav), np = b.querySelector('.nav-plus');
     // les lignes : les milieux des éléments visibles, regroupés quand ils sont à moins de 14 px l'un de l'autre
-    const milieux = [...b.querySelectorAll('.marque, .chercher, .qui > *, .nav > :not([hidden])')].filter(e => e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; }).sort((x, y) => x - y);
+    const milieux = [...b.querySelectorAll('.marque, .chercher, .qui > *' + (dansBarre ? ', nav[aria-label="Rubriques"] > :not([hidden])' : ''))].filter(e => e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; }).sort((x, y) => x - y);
     const lignes = milieux.filter((y, i) => !i || y - milieux[i - 1] > 14).length;
-    return { h: Math.round(b.getBoundingClientRect().height), lignes, position: getComputedStyle(b).position, deborde: document.documentElement.scrollWidth > innerWidth || nav.scrollWidth > nav.clientWidth + 1,
-      caches: nav.querySelectorAll(':scope > a[hidden]').length, plus: !b.querySelector('.nav-plus').hidden, courante: !!nav.querySelector('a[aria-current="page"]:not([hidden])'), compte: b.classList.contains('r-compte'), haut: m.top };
+    return { h: Math.round(b.getBoundingClientRect().height), lignes, position: getComputedStyle(b).position, deborde: document.documentElement.scrollWidth > innerWidth || (dansBarre && nav.scrollWidth > nav.clientWidth + 1),
+      caches: dansBarre ? nav.querySelectorAll(':scope > a[hidden]').length : 0, plus: !!np && !np.hidden, courante: !!nav && !!nav.querySelector('a[aria-current="page"]:not([hidden])'), compte: b.classList.contains('r-compte'), dansBarre, haut: m.top };
   });
   const bas = hauteur <= 500;
   ok(`en-tête (${largeur}×${hauteur}) : ${bas ? 'une ligne arrimée, 64 px au plus' : 'une ou deux lignes'}, rien ne déborde, la rubrique courante en vue, « Plus » dès qu’une chose n’y tient pas`,
-    t.lignes <= (bas ? 1 : 2) && !t.deborde && t.courante && (!bas || (t.h <= 64 && t.position === 'sticky')) && t.plus === (t.caches > 0 || t.compte), JSON.stringify(t));
+    t.lignes <= (bas ? 1 : 2) && !t.deborde && t.courante && (!bas || (t.h <= 64 && t.position === 'sticky')) && (!t.dansBarre || t.plus === (t.caches > 0 || t.compte)), JSON.stringify(t));
   if (t.plus) {
     await page.focus('.nav-plus'); await page.keyboard.press('Enter'); await page.waitForTimeout(150);
     const m = await page.evaluate(() => { const x = document.querySelector('#nav-autres'), r = x.getBoundingClientRect(), it = [...x.querySelectorAll('.na-item')];
@@ -587,13 +591,14 @@ for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'télé
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/representations' });
   await page.waitForSelector('main#vue h1', { timeout: 15000 });
   const reperes = await page.evaluate(() => {
-    const hors = [...document.querySelectorAll('#app > *')].filter(e => !e.matches('header, main, footer, .evitement'));
-    return { mains: document.querySelectorAll('main').length, tete: !!document.querySelector('#app > header .marque'), nav: document.querySelector('header nav[aria-label="Rubriques"] a[aria-current="page"]')?.textContent,
+    const hors = [...document.querySelectorAll('#app > *')].filter(e => !e.matches('header, main, footer, .evitement, .coque'));   // (.coque : le menu et le contenu côte à côte)
+    const nav = document.querySelector('nav[aria-label="Rubriques"]');
+    return { mains: document.querySelectorAll('main').length, tete: !!document.querySelector('#app > header .marque'), navPresente: !!nav && nav.getClientRects().length > 0, nav: nav?.querySelector('a[aria-current="page"]')?.textContent,
       pied: !!document.querySelector('#app > footer'), hors: hors.map(e => e.className || e.tagName) };
   });
-  ok(`repères (${nom}) : un en-tête, le menu des rubriques (Représentations marquée), un contenu, un pied, rien hors d’eux`, reperes.mains === 1 && reperes.tete && reperes.nav === 'Représentations' && reperes.pied && !reperes.hors.length, JSON.stringify(reperes));
+  ok(`repères (${nom}) : un en-tête, le menu des rubriques (Représentations marquée), un contenu, un pied, rien hors d’eux`, reperes.mains === 1 && reperes.tete && (reperes.nav === 'Représentations' || (nom === 'téléphone' && !reperes.navPresente)) && reperes.pied && !reperes.hors.length, JSON.stringify(reperes));
   await page.keyboard.press('Tab');
-  const lien = await page.evaluate(() => { const a = document.activeElement; return { texte: a.textContent, classe: a.className, haut: Math.round(a.getBoundingClientRect().top) }; });
+  const lien = await page.evaluate(() => { const a = document.activeElement; return { texte: a.textContent, classe: a.classList.contains('evitement') ? 'evitement' : a.className, haut: Math.round(a.getBoundingClientRect().top) }; });
   ok(`« Aller au contenu » (${nom}) : le premier arrêt du clavier, visible quand il a le focus`, lien.texte === 'Aller au contenu' && lien.classe === 'evitement' && lien.haut >= 0, JSON.stringify(lien));
   if (nom === 'bureau') await page.screenshot({ path: `${CAPT}/evitement.png` });
   await page.keyboard.press('Enter');

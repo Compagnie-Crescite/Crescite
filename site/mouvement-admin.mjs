@@ -132,9 +132,9 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.click('#ed-date a[href="#/representations"]');
   await page.waitForFunction(() => location.hash === '#/representations', null, { timeout: 8000 });
   await page.waitForTimeout(400);
-  await page.click('.nav a[href="#/spectacles"]');
+  await page.click('nav[aria-label="Rubriques"] a[href="#/spectacles"]');
   await page.waitForFunction(() => location.hash === '#/spectacles' && document.querySelector('.carte-sp'), null, { timeout: 8000 });
-  await page.waitForTimeout(400);
+  await page.waitForFunction(() => !document.documentElement.dataset.sens, null, { timeout: 4000 }).catch(() => {});   // (la transition finie, plutôt qu'un délai à l'aveugle)
   const vt = await page.evaluate(() => window.__vt);
   ok('les vues s\'enchaînent : avant (la fiche), arrière (la liste), fondu (une autre rubrique)', JSON.stringify(vt) === JSON.stringify(['avant', 'arriere', 'fondu']), JSON.stringify(vt));
   ok('… et html[data-sens] est retiré après', await page.evaluate(() => !document.documentElement.dataset.sens));

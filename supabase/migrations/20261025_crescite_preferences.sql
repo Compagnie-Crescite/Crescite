@@ -6,14 +6,21 @@
 -- Ce que le script ajoute :
 --   crescite_preferences    une préférence par compte et par clé, sa valeur en JSON. Chacun ne lit et n'écrit que les
 --                           siennes, l'administration comprise ; le public n'y a aucun droit.
--- Les clés en usage :
+-- Les clés en usage (toutes passent par admin/prefs.js, PREFS) :
 --   planning.masques        [id…] les personnes masquées du planning par une administratrice (dans l'administration, et
---                           dans l'espace de l'équipe quand son compte administre) ; « Masquées » les fait revenir.
---                           Avant ce script, la liste reste sur l'appareil ; elle passe dans la base à la première
---                           ouverture du planning qui suit.
+--                           dans l'espace de l'équipe quand son compte administre) ; « Masquées » les fait revenir. Sa
+--                           forme est celle d'une liste brute : l'espace de l'équipe la lit telle quelle.
+--                           Avant ce script, la liste reste sur l'appareil, dans crescite-planning-masques (la clé que
+--                           partagent l'administration et l'espace de l'équipe) ; elle passe dans la base à la première
+--                           ouverture qui suit, et l'administration efface alors la clé de l'appareil.
 --   accueil.tableau         la disposition du tableau de bord de l'administration (admin/tableau.js) : l'ordre, la
 --                           taille et les réglages des tuiles, les colonnes, la page d'ouverture, le mémo. Avant ce
---                           script, elle reste sur l'appareil ; elle passe dans la base à la première ouverture qui suit.
+--                           script, elle reste sur l'appareil (crescite-prefs:<compte>, et l'ancienne clé
+--                           crescite-admin-tableau) ; elle passe dans la base à la première ouverture qui suit.
+--   representations.avant   le panneau « À compléter avant la tournée » de la rubrique Représentations : { ouvert, jours }
+--                           (ouvert ou fermé, 30, 60 ou 90 jours). Avant ce script, sur l'appareil, comme les autres ;
+--                           l'ancienne clé de l'appareil (crescite-admin-avant) passe dans la base puis s'efface.
+-- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;
 

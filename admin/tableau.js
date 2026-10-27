@@ -1,6 +1,6 @@
 'use strict';
 /* Le tableau de bord de l'administration (#/accueil), sa page d'ouverture : ce qui presse et ce qui vient, en un écran,
-   et le geste qui y mène en un clic. Chargé après index.html, equipe.js et disponibilites.js, dont il reprend l'état (E),
+   et le geste qui y mène en un clic. Chargé après index.html, prefs.js, equipe.js et disponibilites.js, dont il reprend l'état (E),
    le client (sb) et les outils (cadre, annoncer, aCompleterAvant, resteFeuille, equipeDeLaDate…).
    - Des tuiles (TUILES), chacune sur ce que l'administration a déjà en mémoire : les actions rapides ; à traiter (les
      demandes de devis à répondre, les relances en retard, les notes de frais à valider, les options à confirmer, les dates
@@ -12,18 +12,17 @@
    - Entièrement personnalisable, « Personnaliser » : l'ordre (glisser une tuile par son titre, ou ← →), la taille (une,
      deux colonnes ou toute la largeur), masquer ou remettre une tuile, la réduire ; les réglages de chaque tuile (⚙ : la
      période, le nombre de lignes, ce qu'elle suit) ; les colonnes de la grille ; la page d'ouverture de l'administration.
-   - Tout est gardé avec le compte (crescite_preferences, script SQL 6, clé accueil.tableau) : on retrouve son tableau sur
-     tous ses appareils. Sans le script, sur cet appareil (localStorage) ; la disposition de l'appareil passe dans la base
-     à la première ouverture qui suit.
+   - Tout est gardé avec le compte (crescite_preferences, script SQL 6, clé accueil.tableau, par PREFS : prefs.js) : on
+     retrouve son tableau sur tous ses appareils. Sans le script, sur cet appareil ; la disposition de l'appareil passe
+     dans la base à la première ouverture qui suit.
    - Le temps réel de la base redessine les tuiles (rafraichir sur la grille, [data-liste]) ; le journal se relit alors,
      au plus toutes les cinq secondes. */
 const TABLEAU = (() => {
   // ===================================================================================================== état
   const CLE_PREF = 'accueil.tableau', CLE_LOCAL = 'crescite-admin-tableau', VERSION = 1;
-  const T = { conf: null, confDe: undefined, lecture: null, ecriture: Promise.resolve(), prefs: null, minuteur: null,
+  const T = { conf: null, confDe: undefined, lecture: null,
     edition: false, journal: null, journalLu: 0, journalLecture: null, journalDiffere: null, propLecture: null, ouverts: new Set(), glisse: null, memoMinuteur: null,
     filtre: null, voirReportees: false, glisseObjet: null, fileIndex: 0, fileCle: null, vueAuto: '' };
-  const absent = e => !!e && /PGRST202|PGRST205|42883|42P01|Could not find the (function|table)|does not exist|schema cache/i.test(`${e.code || ''} ${e.message || ''}`);
   const uid = () => E.session?.user?.id || null;
 
   // ===================================================================================================== outils
@@ -383,7 +382,10 @@ const TABLEAU = (() => {
     d.tuiles.forEach(x => { if (!vues.has(x.k)) out.tuiles.push(x); });
     return out;
   }
-  const conf = () => T.conf || (T.conf = normaliser(local()));
+  // les préférences du compte passent par PREFS (prefs.js) ; si ce module manquait à la page, le repli d'avant : l'appareil seul
+  const PR = () => (typeof PREFS !== 'undefined' ? PREFS : null);
+  const lireConf = () => { const p = PR(); if (!p) return normaliser(local()); p.normaliser(CLE_PREF, normaliser); return p.lire(CLE_PREF, null) || normaliser(null); };
+  const conf = () => T.conf || (T.conf = lireConf());
   const tuile = k => conf().tuiles.find(t => t.k === k);
   // la valeur d'un réglage d'une tuile : celle choisie si elle est permise, sinon la valeur par défaut
   function valeurs(k) {
@@ -400,48 +402,23 @@ const TABLEAU = (() => {
   }
   const local = () => { try { const v = JSON.parse(localStorage.getItem(CLE_LOCAL) || 'null'); return v && typeof v === 'object' ? v : null; } catch { return null; } };
   const garderLocal = c => { try { if (c) localStorage.setItem(CLE_LOCAL, JSON.stringify(c)); else localStorage.removeItem(CLE_LOCAL); } catch { /* navigation privée */ } };
-  const ecrirePref = async c => (await sb.from('crescite_preferences').upsert({ user_id: uid(), cle: CLE_PREF, valeur: c }, { onConflict: 'user_id,cle' })).error;
+  // « avec votre compte » ou « sur cet appareil » : ce que PREFS a trouvé dans la base (sans prefs.js, toujours l'appareil)
+  const surAppareil = () => (PR() ? PR().etat() === 'absent' : true);
   // la disposition du compte, lue une fois par session (chargerTout l'attend : la page d'ouverture en dépend) ; sans le
-  // script 6, celle de l'appareil, qui passe dans la base dès que le script est là
+  // script 6, celle de l'appareil, qui passe dans la base dès que le script est là (PREFS s'en charge)
   function charger() {
     const u = uid();
-    if (T.confDe !== u) Object.assign(T, { confDe: u, conf: null, lecture: null, prefs: null });
-    if (!T.lecture) T.lecture = (async () => {
-      const ici = local();
-      if (!u) { T.conf = normaliser(ici); return; }
-      const { data, error } = await sb.from('crescite_preferences').select('valeur').eq('user_id', u).eq('cle', CLE_PREF).maybeSingle();
-      if (T.confDe !== u) return;
-      if (error) { T.prefs = absent(error) ? 'absent' : 'erreur'; T.conf = normaliser(ici); return; }
-      T.prefs = 'ok';
-      // la base, sauf si l'appareil a une disposition plus récente qu'elle n'a pas reçue (une écriture coupée)
-      if (data && data.valeur && typeof data.valeur === 'object' && !(ici && (Number(ici.modifie) || 0) > (Number(data.valeur.modifie) || 0))) { T.conf = normaliser(data.valeur); garderLocal(null); return; }
-      T.conf = normaliser(ici);
-      if (ici) ecrirePref(T.conf).then(err => { if (!err) garderLocal(null); }, () => {});
-    })().catch(() => { if (!T.conf) T.conf = normaliser(local()); });
+    if (T.confDe !== u) Object.assign(T, { confDe: u, conf: null, lecture: null });
+    if (!T.lecture) T.lecture = (PR() ? PR().charger() : Promise.resolve()).then(() => { if (T.confDe === u) T.conf = lireConf(); }).catch(() => { if (!T.conf) T.conf = normaliser(local()); });
     return T.lecture;
   }
-  // chaque changement s'enregistre, un peu après le dernier geste, dans l'ordre
+  // chaque changement s'enregistre, un peu après le dernier geste, dans l'ordre (PREFS : l'appareil tout de suite, la base 700 ms après)
   function garder(aussitot = false) {
     const c = conf();
     c.modifie = Date.now();
-    garderLocal(c);          // sur l'appareil tout de suite ; la base un peu après le dernier geste
-    clearTimeout(T.minuteur);
-    T.minuteur = setTimeout(ecrireMaintenant, aussitot ? 0 : 700);
+    if (PR()) PR().ecrire(CLE_PREF, c, { aussitot, muet: true });      // (muet : le panneau « Personnaliser » dit déjà où c'est gardé)
+    else garderLocal(c);
   }
-  function ecrireMaintenant() {
-    clearTimeout(T.minuteur); T.minuteur = null;
-    const c = T.conf;
-    if (!c) return;
-    T.ecriture = T.ecriture.then(async () => {
-      if (T.prefs === 'absent' || !uid()) return garderLocal(c);
-      const err = await ecrirePref(c);
-      if (!err) { T.prefs = 'ok'; garderLocal(null); return; }
-      garderLocal(c);
-      if (absent(err)) { T.prefs = 'absent'; return; }
-      erreur(err, 'La disposition du tableau de bord n’est pas enregistrée dans votre compte (elle reste sur cet appareil)');
-    }).catch(() => {});
-  }
-  window.addEventListener('pagehide', () => { if (T.minuteur) ecrireMaintenant(); });
   const depart = () => `#/${conf().depart === 'representations' ? 'representations' : 'accueil'}`;
 
   // ===================================================================================================== lire plus
@@ -498,7 +475,7 @@ const TABLEAU = (() => {
       <span class="tb-pan-g"><span class="lib">À l’ouverture de l’administration</span><span class="seg" role="group" aria-label="Page d’ouverture">${[['accueil', 'Tableau de bord'], ['representations', 'Représentations']].map(([k, l]) => `<button type="button" data-tb-depart="${k}" aria-pressed="${c.depart === k}">${l}</button>`).join('')}</span></span>
       <span class="tb-pan-fin"><button type="button" class="btn petit" id="tb-reinit">Réinitialiser</button><button type="button" class="btn petit principal" id="tb-fini">Terminer</button></span></div>
       <div class="tb-pan-l"><span class="lib">Tuiles masquées</span>${xs.length ? xs.map(t => `<button type="button" class="puce" data-tb-montrer="${t.k}" title="${esc(TUILES[t.k].description)}">＋ ${esc(TUILES[t.k].titre)}</button>`).join('') : '<span class="compte">toutes les tuiles sont affichées</span>'}</div>
-      <p class="aide">Glissez une tuile par son titre pour la déplacer, ou servez-vous des flèches ; chaque tuile se règle (le rouage), se réduit (le chevron), change de largeur (1, 2, ou toute la largeur) ou se masque (la croix). ${T.prefs === 'absent' ? 'La disposition est gardée sur cet appareil.' : 'La disposition est gardée avec votre compte, sur tous vos appareils.'}</p>`;
+      <p class="aide">Glissez une tuile par son titre pour la déplacer, ou servez-vous des flèches ; chaque tuile se règle (le rouage), se réduit (le chevron), change de largeur (1, 2, ou toute la largeur) ou se masque (la croix). ${surAppareil() ? 'La disposition est gardée sur cet appareil.' : 'La disposition est gardée avec votre compte, sur tous vos appareils.'}</p>`;
   }
   function dessiner() {
     const grille = $('#tb-grille');
@@ -688,7 +665,7 @@ const TABLEAU = (() => {
       const etat = $('.tb-memo-etat', e.target.parentNode); if (etat) etat.textContent = 'Enregistrement…';
       garder();
       clearTimeout(T.memoMinuteur);
-      T.memoMinuteur = setTimeout(() => { T.ecriture.then(() => { const x = $('.tb-memo-etat'); if (x) x.textContent = T.prefs === 'absent' ? 'Gardé sur cet appareil' : 'Enregistré'; }); }, 900);
+      T.memoMinuteur = setTimeout(() => { (PR() ? PR().attendre() : Promise.resolve()).then(() => { const x = $('.tb-memo-etat'); if (x) x.textContent = surAppareil() ? 'Gardé sur cet appareil' : 'Enregistré'; }); }, 900);
     });
     // glisser-déposer des tuiles (en personnalisation) : une tuile glissée se pose avant ou après celle qu'on survole
     vueEl.addEventListener('dragstart', e => {
@@ -721,7 +698,7 @@ const TABLEAU = (() => {
     vueEl.addEventListener('dragend', () => { T.glisse = null; $$('.tb-tuile.glisse, .tb-tuile.cible-avant, .tb-tuile.cible-apres').forEach(x => x.classList.remove('glisse', 'cible-avant', 'cible-apres')); });
   }
   // en quittant la page : la personnalisation se referme, et ce qui n'est pas encore écrit part
-  window.addEventListener('hashchange', () => { if (location.hash !== '#/accueil') { T.edition = false; if (T.minuteur) ecrireMaintenant(); } });
+  window.addEventListener('hashchange', () => { if (location.hash !== '#/accueil') T.edition = false; });
 
   // ===================================================================================================== à traiter : l'ordre, les épingles, les reports
   /* Chaque ligne « à traiter » a une clé (catégorie:identifiant), un poids (ce que coûte le retard : un contrat non signé

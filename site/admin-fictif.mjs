@@ -1,8 +1,24 @@
 // La base fictive de l’administration, commune aux harnais (tableau.mjs, niveau.mjs) : un petit serveur qui sert
 // admin/ et site/src/, les lectures et écritures REST de Supabase simulées (DB, MODIFS, ECRITURES), la session posée
 // dans le stockage du navigateur, le temps réel coupé, les polices coupées. Aucune donnée réelle, aucun appel à la base.
-// ouvrir(navigateur, { largeur, hauteur, hash, sombre, prefsAbsentes, tactile, latence }) → { ctx, page, erreurs } ; ok(nom, v, detail) note une
-// vérification ; bilan(CAPT) les imprime, ferme le serveur et sort en erreur si une manque.
+// ouvrir(navigateur, { largeur, hauteur, hash, sombre, prefsAbsentes, tactile, latence, reduit, polices, uid, cpu, longues, refuser,
+// capacites }) → { ctx, page, erreurs } ; ok(nom, v, detail) note une vérification ; bilan(CAPT) les imprime, ferme le serveur et
+// sort en erreur si une manque. Les options d'ouvrir (toutes facultatives ; sans elles, rien ne change) :
+//   largeur, hauteur, hash   la fenêtre (1 600 × 1 000) et l'adresse d'ouverture
+//   sombre                   le réglage du système (colorScheme), pas le thème de l'administration
+//   reduit                   prefers-reduced-motion: reduce
+//   polices                  ne pas couper les polices de Google (coupées par défaut : hors ligne, celles du système)
+//   prefsAbsentes            la base n'a pas crescite_preferences (le script SQL 6 n'est pas passé)
+//   tactile                  hasTouch et isMobile (par défaut sous 600 px de large, forçable à toute largeur)
+//   latence                  une base lente : ce nombre de ms à chaque lecture
+//   uid                      la session clonée sous cet identifiant (ajouté à DB.crescite_admins s'il n'y est pas)
+//   cpu                      un processeur ralenti de ce facteur (Emulation.setCPUThrottlingRate), 4 : un téléphone lent
+//   longues                  l'observateur de tâches longues : window.__longues (durées en ms), après window.__pret
+//   refuser                  { rpc, status, message } : cette fonction répond une fois par une erreur
+//   capacites                ce que le rpc crescite_capacites répond (null sinon)
+// Exportés pour les bancs : DB (la base fictive), ECRITURES (crescite_preferences écrites), MODIFS (les autres écritures, rpc
+// compris), LECTURES (chaque lecture : { table, searchParams }), et order=col.asc|desc[.nullsfirst|nullslast][,…] appliqué
+// en mémoire, colonne par colonne, avant limit.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -107,6 +123,20 @@ const DB = {
 };
 const ECRITURES = [];   // ce que l'administration écrit dans crescite_preferences
 const MODIFS = [];      // les autres écritures (les actions directes des menus)
+const LECTURES = [];    // chaque lecture REST : { table, searchParams } (les bancs comptent les requêtes)
+// order=col.asc|desc[.nullsfirst|nullslast][,…] : le tri de la base, en mémoire (nulls en dernier à la montée, en premier à la descente, comme PostgreSQL)
+function trier(rows, ordre) {
+  const cles = String(ordre || '').split(',').filter(Boolean).map(c => { const [col, sens = 'asc', nulls] = c.split('.'); return { col, desc: sens === 'desc', nullsAvant: nulls ? nulls === 'nullsfirst' : sens === 'desc' }; });
+  if (!cles.length) return rows;
+  return rows.map((r, i) => [r, i]).sort(([a, i], [b, j]) => {
+    for (const { col, desc, nullsAvant } of cles) {
+      const x = a[col], y = b[col], nx = x === null || x === undefined, ny = y === null || y === undefined;
+      if (nx || ny) { if (nx && ny) continue; return (nx ? -1 : 1) * (nullsAvant ? 1 : -1); }
+      if (x !== y) return (x < y ? -1 : 1) * (desc ? -1 : 1);
+    }
+    return i - j;
+  }).map(([r]) => r);
+}
 const SESSION = { access_token: 'x', refresh_token: 'y', token_type: 'bearer', expires_in: 864000, expires_at: Math.floor(Date.now() / 1000) + 864000, user: { id: UID, email: 'adrien@example.org', aud: 'authenticated' } };
 
 const resultats = [];
@@ -118,10 +148,12 @@ async function calme(page) {
   await page.waitForTimeout(400);
 }
 
-async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', sombre = false, prefsAbsentes = false, tactile = largeur < 600, latence = 0 } = {}) {
-  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: hauteur }, locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: sombre ? 'dark' : 'light', isMobile: tactile, hasTouch: tactile });
+async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', sombre = false, prefsAbsentes = false, tactile = largeur < 600, latence = 0, reduit = false, polices = false, uid = UID, cpu = 0, longues = false, refuser = null, capacites = null } = {}) {
+  const ctx = await navigateur.newContext({ viewport: { width: largeur, height: hauteur }, locale: 'fr-FR', timezoneId: 'Europe/Paris', colorScheme: sombre ? 'dark' : 'light', reducedMotion: reduit ? 'reduce' : 'no-preference', isMobile: tactile, hasTouch: tactile });
+  if (!DB.crescite_admins.some(a => a.user_id === uid)) DB.crescite_admins.push({ user_id: uid, nom: uid });
+  let refus = refuser;   // (une seule réponse d'erreur)
   // la base simulée : REST lu depuis DB, les écritures de préférences gardées ; le temps réel ne répond jamais
-  await ctx.route(/fonts\.g(oogleapis|static)\.com/, r => r.abort());   // (hors ligne : les polices du système)
+  if (!polices) await ctx.route(/fonts\.g(oogleapis|static)\.com/, r => r.abort());   // (hors ligne : les polices du système)
   await ctx.route(/supabase\.co\//, async route => {
     const req = route.request(), url = new URL(req.url()), table = url.pathname.split('/').pop(), objet = /pgrst\.object/.test(req.headers().accept || '');
     const json = (status, body, headers = {}) => route.fulfill({ status, contentType: 'application/json', headers, body: JSON.stringify(body) });
@@ -133,6 +165,7 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
     }
     if (!url.pathname.startsWith('/rest/v1/')) return route.abort();
     if (latence) await new Promise(r => setTimeout(r, latence));   // une base lente (latence, en ms, à chaque lecture)
+    if (refus && table === refus.rpc && url.pathname.startsWith('/rest/v1/rpc/')) { const r = refus; refus = null; MODIFS.push({ rpc: table, corps: JSON.parse(req.postData() || '{}'), refuse: r.status }); return json(r.status || 400, { code: r.code || String(r.status || 400), message: r.message || 'refusé' }); }
     // un document émis : la base donne le numéro (le suivant de l'année pour ce type) et le pose dans la page
     if (table === 'crescite_emettre_document') {
       const c = JSON.parse(req.postData() || '{}'), an = new Date().getFullYear(), pre = { devis: 'DEV', contrat: 'CES', facture: 'FAC', fiche_technique: 'FT' }[c.type_];
@@ -156,12 +189,14 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
       MODIFS.push({ rpc: table, corps: c });
       return json(200, x.id);
     }
-    if (url.pathname.startsWith('/rest/v1/rpc/')) { MODIFS.push({ rpc: table, corps: JSON.parse(req.postData() || '{}') }); return json(200, table === 'crescite_prevenir_equipe' ? 2 : null); }
+    if (url.pathname.startsWith('/rest/v1/rpc/')) { MODIFS.push({ rpc: table, corps: JSON.parse(req.postData() || '{}') }); return json(200, table === 'crescite_prevenir_equipe' ? 2 : table === 'crescite_capacites' ? capacites : null); }
     if (prefsAbsentes && table === 'crescite_preferences') return json(404, { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` });
     if (req.method() === 'GET') {
       if (!(table in DB)) return json(404, { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` });
+      LECTURES.push({ table, searchParams: url.searchParams });
       let rows = DB[table];
       for (const [k, v] of url.searchParams) { const m = /^eq\.(.*)$/.exec(v); if (m && !['select', 'order', 'limit', 'offset'].includes(k)) rows = rows.filter(r => String(r[k]) === m[1]); }
+      if (url.searchParams.get('order')) rows = trier(rows, url.searchParams.get('order'));
       const limit = url.searchParams.get('limit'); if (limit) rows = rows.slice(0, +limit);
       if (objet) return rows.length ? json(200, rows[0]) : json(406, { code: 'PGRST116', details: 'The result contains 0 rows', message: 'JSON object requested, multiple (or no) rows returned' });
       return json(200, rows, { 'content-range': `0-${Math.max(0, rows.length - 1)}/*` });
@@ -200,7 +235,11 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
   const erreurs = [];
   page.on('pageerror', e => erreurs.push(String(e.message || e)));
   page.on('console', m => { if (m.type() === 'error' && !/supabase|Failed to load resource|net::ERR|WebSocket/i.test(m.text())) erreurs.push(m.text()); });
-  await page.addInitScript(`localStorage.setItem('crescite-admin', ${JSON.stringify(JSON.stringify(SESSION))});`);
+  if (cpu) await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: cpu });
+  const session = uid === UID ? SESSION : { ...SESSION, user: { ...SESSION.user, id: uid } };
+  await page.addInitScript(`localStorage.setItem('crescite-admin', ${JSON.stringify(JSON.stringify(session))});`);
+  // les tâches longues (> 50 ms) depuis window.__pret, que le banc pose quand la page est prête (comme mouvement-admin.mjs)
+  if (longues) await page.addInitScript(`window.__longues = []; window.__pret = 0; try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (window.__pret && e.startTime > window.__pret) window.__longues.push(Math.round(e.duration)); }).observe({ type: 'longtask', buffered: true }); } catch (e) {}`);
   await page.goto(`${URL0}${hash}`);
   await page.waitForSelector('main#vue', { timeout: 20000 });
   return { ctx, page, erreurs };
@@ -217,4 +256,4 @@ function bilan(CAPT) {
   console.log(`\n${resultats.length - ko} vérification${resultats.length - ko > 1 ? 's' : ''} sur ${resultats.length} · captures dans ${path.relative(ROOT, CAPT)}/`);
   process.exit(ko ? 1 : 0);
 }
-export { chromium, ICI, ROOT, serveur, URL0, iso, plus, saisonDe, ilYA, UID, DB, ECRITURES, MODIFS, SESSION, resultats, ok, calme, ouvrir, texte, compte, tuile, bilan };
+export { chromium, ICI, ROOT, serveur, URL0, iso, plus, saisonDe, ilYA, UID, DB, ECRITURES, MODIFS, LECTURES, SESSION, resultats, ok, calme, ouvrir, texte, compte, tuile, bilan };

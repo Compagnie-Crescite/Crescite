@@ -44,15 +44,21 @@ liste qui se redessine glisse, un élément qui s'en va se replie (`retirerLigne
 
 ```sh
 python3 site/build.py        # d'abord : site/dist/equipe et site/dist/admin
-node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (43 vérifications)
-node site/mouvement-admin.mjs         # l'administration, sur une base fictive (30 vérifications)
+node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (51 vérifications)
+node site/mouvement-admin.mjs         # l'administration, sur une base fictive (31 vérifications)
 CPU=4 node site/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
+bash site/bancs-admin.sh              # le build, puis tous les bancs de l'administration, dont mouvement-admin.mjs
 ```
 
-Chacun ouvre l'application dans Chromium sans toucher à la vraie base (la session est gardée dans le navigateur ; les
-lectures de tables reçoivent des lignes inventées ; les écritures répondent vide ou sont coupées), au téléphone et à
-l'ordinateur, à une heure figée, puis avec le mouvement réduit et avec `?anim=0`. Les captures vont dans
-`site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un banc sort en erreur dès qu'une vérification manque.
+Chacun des deux bancs du mouvement ouvre l'application dans Chromium sans toucher à la vraie base (la session est
+gardée dans le navigateur ; les lectures de tables reçoivent des lignes inventées ; les écritures répondent vide ou sont
+coupées), au téléphone et à l'ordinateur, à une heure figée, puis avec le mouvement réduit et avec `?anim=0`. Les
+captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un banc sort en erreur dès qu'une vérification
+manque.
+
+`bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil) et
+`tableur.mjs` (le tableur des représentations). Le second ne mesure aucune durée : il ne touche pas à ce vocabulaire, il
+veille à ce qu'une refonte ne casse rien.
 
 ## Ce qui a été écarté
 

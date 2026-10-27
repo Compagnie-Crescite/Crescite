@@ -31,6 +31,12 @@ node site/onglets.mjs /tmp/x index # parcourt les vues du site et signale les an
 node site/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
 node site/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
                                    # le vocabulaire de ce mouvement : site/MOUVEMENT.md
+node site/tableau.mjs              # le tableau de bord et l'en-tête de l'administration, dans Chromium, sur la même base fictive
+node site/niveau.mjs               # les dix idées de l'administration, dans Chromium, sur la même base fictive
+node site/adresses-admin.mjs       # les adresses et les garde-fous de l'administration, sur la même base fictive
+node site/tableur.mjs              # le tableur des représentations, dans Chromium, sur la même base fictive (après le build)
+bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
+                                   # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
 AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
@@ -331,9 +337,9 @@ compte du projet inscrit dans `crescite_admins`.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node site/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (115 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    (163 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
-    précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `site/dist/shots-tableau/`).
+    précédent / suivant, le Kanban glissé, le téléphone, le sombre, les repères de la page ; captures dans `site/dist/shots-tableau/`).
 - **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
   les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, par Google Fonts ; sans
   réseau, le système), les neutres du site et la couleur de la saison, un en-tête de nuit (la pieuvre et la rubrique
@@ -417,8 +423,24 @@ compte du projet inscrit dans `crescite_admins`.
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
     pièce jointe dans le stockage privé de l'équipe (`notes/`). Le journal garde tout.
   - `node site/niveau.mjs` vérifie les dix idées dans Chromium, hors ligne, sur la base fictive commune
-    (`site/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 57 vérifications, des captures dans
+    (`site/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 65 vérifications, des captures dans
     `site/dist/shots-niveau/`.
+  - `node site/adresses-admin.mjs` vérifie, sur la même base fictive, qu'on ne perd rien en partant et que chaque chose a
+    son adresse : une fiche, un tiroir, une feuille de modification ou une note commencés posent la question dans la boîte
+    de la charte (jamais `confirm()`) quand on change de rubrique, revient en arrière, annule ou appuie sur Échap, et ne
+    la posent pas quand rien n'a changé ; un tiroir a son adresse (`?tiroir=…`) que le précédent, le suivant et un
+    rechargement respectent ; le fil d'Ariane d'une fiche ; l'état d'une liste (`?statut=…&q=…`) gardé dans l'adresse ; la
+    liste vide qui propose « Effacer les filtres » ; les titres (mois, jour, colonnes du Kanban) qui restent en vue ; le
+    témoin de la connexion (« À jour », « Hors ligne · lu à l'instant ») ; l'aide « ? » : 116 vérifications, des
+    captures dans `site/dist/shots-adresses/`.
+  - `node site/tableur.mjs` garde le tableur des représentations (`#/representations/tableur`) tel qu'il est, avant
+    qu'il change de place : il n'ouvre que la page, jamais le source. Le rendu (une ligne par séance, les rôles et les
+    comptes de la grille, les colonnes vides repliées, Jour et Spectacle collées à gauche quand on défile, la case d'une
+    date répétée sur ses séances), les filtres et le tri, le clavier (flèches, Ctrl+flèches, Maj+flèches, Ctrl+A, Tab,
+    Entrée, F2, Échap, taper pour écrire), une case qui vaut pour toute la date (la date est enregistrée une fois avec
+    ses séances, les deux lignes se marquent), le collage d'un texte de tableur et Ctrl+C, Ctrl+Z, la fenêtre de la
+    distribution et « Étendre à… » (son aperçu, son application, leur annulation), l'import, l'export CSV et Excel :
+    86 vérifications, des captures dans `site/dist/shots-tableur/` (`tableur-1600.png`, `tableur-1280.png`).
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
@@ -719,7 +741,7 @@ range en colonne à gauche. On y trouve :
   à chaque écriture et prévient l'équipe (`crescite_feuilles_avant`, `crescite_notif_feuilles`).
   Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
   feuille, sans rien perdre de la saisie.
-  `node site/gestes-equipe.mjs` le vérifie dans Chromium (48 vérifications : hors ligne, puis sur une base
+  `node site/gestes-equipe.mjs` le vérifie dans Chromium (99 vérifications : hors ligne, puis sur une base
   simulée en lecture-écriture, stockage compris, où le compte administre : la date, un horaire, une présence, le lieu,
   prévenir, une notification, un document modifié puis un fichier ajouté, une ligne de feuille de route, la mise à
   jour depuis la base, le brouillon, la publication, la composition), après `python3 site/build.py`.
@@ -832,9 +854,22 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Pour commencer, une clé : `planning.masques`, les personnes
-masquées du planning. Tant que le script n'est pas passé, la liste reste sur l'appareil (sans message) ; elle passe dans
-la base à la première ouverture du planning qui suit. 22 essais (`node preferences.mjs`).
+l'administration comprise ; le public n'y a aucun droit. Trois clés servent aujourd'hui : `accueil.tableau` (la
+disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
+l'espace de l'équipe) et `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
+ou 90 jours). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
+version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
+requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
+tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),
+puis envoyé à la base un instant après le dernier geste (immédiatement pour un clic) ; fermer la page envoie ce qui reste.
+Deux onglets du même navigateur se préviennent, sauf pendant une saisie. Quand l'appareil et la base ne disent pas la même
+chose, ce qui n'est pas encore parti l'emporte, sinon la base. Les anciennes clés de l'appareil
+(`crescite-admin-tableau`, `crescite-planning-masques`, `crescite-admin-avant`) passent dans la base à l'ouverture qui suit,
+puis s'effacent. Tant que le script n'est pas passé, rien ne s'affiche à l'écran de travers : les réglages restent sur
+l'appareil (la liste des personnes masquées dans `crescite-planning-masques`, que partage l'espace de l'équipe) et le
+panneau du tableau de bord le dit. Une seule annonce par session dit où un réglage est gardé (« Gardé avec votre compte »
+ou « Gardé sur cet appareil »), au premier réglage hors du tableau de bord. 56 vérifications (`node site/prefs.mjs`, captures
+dans `site/dist/shots-prefs/`) ; les 22 essais du script restent `node preferences.mjs` (dans `supabase/tests/`).
 
 **« Compagnie Idéale » (lancé le 25 octobre 2026).** Le septième script, `supabase/migrations/20261026_crescite_ideale.sql`,
 s'exécute après les six autres et peut être relancé. Il ajoute les alertes de tournée et les demandes de devis (le public
@@ -1003,7 +1038,8 @@ base : leur adresse est écrite dans quatre fonctions (`crescite_notif_envoyer`,
 `crescite_renvoyer_courriel`, `crescite_alertes_demander`) et deux tâches planifiées (`crescite-agendas`,
 `crescite-alertes`). Le script les réécrit à l'identique, l'adresse remplacée (mêmes droits, mêmes noms, mêmes horaires),
 puis dit ce qui reste. Les scripts 3, 5 et 11 portent déjà la nouvelle adresse : une base neuve n'en a pas besoin.
-9 essais (`node projet.mjs` : les quinze scripts tels que recopiés, puis lui, deux fois).
+9 essais (`node projet.mjs` : les quinze scripts tels que recopiés, puis lui, deux fois). Il n'y a pas de seizième
+script : le fichier 20261104 n'a jamais existé, et le dix-septième suit directement le quinzième.
 
 **Les textes du site d'aujourd'hui (pas encore lancé).** Le dix-huitième script,
 `supabase/migrations/20261106_crescite_textes.sql`, se lance dans le projet de la compagnie et peut être relancé. Il
