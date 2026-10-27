@@ -603,8 +603,14 @@ const TABLEAU = (() => {
         conf().depart = t.dataset.tbDepart; garder();
         $$('[data-tb-depart]').forEach(b => b.setAttribute('aria-pressed', String(b === t)));
       } else if (t.id === 'tb-reinit') {
-        if (!confirm('Revenir à la disposition d’origine du tableau de bord ? Les réglages des tuiles et le mémo seront effacés.')) return;
-        T.conf = defauts(); T.ouverts.clear(); garder(true); dessiner(); preparer(); annoncerSr('Disposition d’origine remise.');
+        // tout de suite, sans question : l'annonce porte « Annuler », qui remet la disposition d'avant (tuiles, réglages, mémo)
+        const avant = clone(T.conf);
+        T.conf = defauts(); T.ouverts.clear(); garder(true); dessiner(); preparer();
+        annoncer('Disposition d’origine remise : les réglages des tuiles et le mémo sont effacés.', { libelle: 'Annuler', delai: 8000, action: () => {
+          T.conf = avant; garder(true);
+          if ($('#tb-grille')) { dessiner(); preparer(); }
+          annoncer('La disposition d’avant est revenue.');
+        } });
       } else if (t.id === 'tb-fini') {
         T.edition = false; dessiner(); $('#tb-personnaliser')?.focus();
       } else if (t.matches('[data-tb-action]')) {

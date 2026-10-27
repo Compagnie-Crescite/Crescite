@@ -231,11 +231,18 @@ fs.mkdirSync(CAPT, { recursive: true });
   ok('le mémo aussi', (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value)) === 'Rappeler le Volcan lundi');
   ok('les réglages aussi (5 dates, sans les options ; sans les contrats)', (await compte(page, `${tuile('prochaines')} .tb-l`)) === 5 && (await compte(page, `${tuile('prochaines')} a[href="#/representations/105"]`)) === 0 && (await texte(page, `${tuile('urgent')} .tb-badge`)) === '6', await texte(page, `${tuile('urgent')} .tb-badge`));
   await page.click('#tb-personnaliser');
-  page.once('dialog', d => d.accept());
+  let natifsReinit = 0;
+  page.on('dialog', d => { natifsReinit++; d.dismiss().catch(() => {}); });
   await page.click('#tb-reinit');
   await page.waitForTimeout(200);
   const defaut = await page.$$eval('.tb-tuile', xs => xs.map(x => x.dataset.k));
-  ok('« Réinitialiser » remet la disposition d’origine', defaut.join(',') === 'actions,urgent,avant,prochaines,chiffres,equipe,diffusion,propositions,ateliers,journal' && await page.$eval('#tb-grille', e => e.dataset.colonnes === 'auto'), defaut.join(','));
+  ok('« Réinitialiser » remet la disposition d’origine, tout de suite, sans « Êtes-vous sûr ? »', natifsReinit === 0 && defaut.join(',') === 'actions,urgent,avant,prochaines,chiffres,equipe,diffusion,propositions,ateliers,journal' && await page.$eval('#tb-grille', e => e.dataset.colonnes === 'auto'), defaut.join(','));
+  // l'annonce porte « Annuler » : la disposition d'avant revient, tuiles, tailles, colonnes et mémo
+  ok('« Réinitialiser » : l’annonce porte « Annuler »', /Disposition d’origine remise/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce button')) === 1, await texte(page, '.annonce'));
+  await page.click('.annonce button');
+  await page.waitForTimeout(250);
+  const revenue = await page.$$eval('.tb-tuile', xs => xs.map(x => `${x.dataset.k}${x.classList.contains('taille-m') ? '*' : ''}${x.classList.contains('replie') ? '-' : ''}`));
+  ok('« Annuler » remet la disposition d’avant, et le mémo', revenue.join(',') === 'chiffres,actions,avant,urgent*,prochaines*,equipe,diffusion,propositions,journal-,memo' && await page.$eval('#tb-grille', e => e.dataset.colonnes === '3') && (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value).catch(() => '')) === 'Rappeler le Volcan lundi', revenue.join(','));
   ok('aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }

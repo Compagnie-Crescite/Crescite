@@ -297,11 +297,21 @@ function editeurPersonne(id) {
     if (b.id === 'pe-sans-photo') { F.photo = null; marquerSale(); dessinerPhoto(); return; }
     if (b.id === 'pe-copier') return copier((priveeDe(etat.p0.id)?.email || '').trim(), 'Adresse');
     if (b.id === 'pe-copier-lien') return copier(new URL('../equipe/', location.href).href, 'Adresse de son espace');
+    // détacher le compte : tout de suite, sans question ; l'annonce porte « Annuler », qui le rattache de nouveau
     if (b.id === 'pe-detacher') {
-      if (!confirm(`Détacher le compte de ${nomDe(etat.p0)} ? ${nomDe(etat.p0)} ne verra plus son espace tant qu’un compte ne s’y rattache pas de nouveau.`)) return;
-      const { data, error } = await sb.from('crescite_personnes_privees').update({ user_id: null }).eq('personne_id', etat.p0.id).select().single();
+      const p0 = etat.p0, avant = priveeDe(p0.id)?.user_id;
+      const ecrireCompte = v => sb.from('crescite_personnes_privees').update({ user_id: v }).eq('personne_id', p0.id).select().single();
+      const { data, error } = await ecrireCompte(null);
       if (error) return erreur(error);
-      remplacerLigne(E.privees, data, 'personne_id'); dessinerAcces(); annoncer('Compte détaché.'); return;
+      remplacerLigne(E.privees, data, 'personne_id'); dessinerAcces();
+      annoncer(`Compte détaché : ${nomDe(p0)} ne verra plus son espace tant qu’un compte ne s’y rattache pas de nouveau.`, { libelle: 'Annuler', delai: 8000, action: avant ? async () => {
+        const r = await ecrireCompte(avant);
+        if (r.error) return erreur(r.error, 'Rattachement impossible');
+        remplacerLigne(E.privees, r.data, 'personne_id');
+        if (zone.isConnected && etat.p0 === p0) dessinerAcces();
+        annoncer('Compte rattaché de nouveau.');
+      } : null });
+      return;
     }
     if (b.id === 'pe-suppr') return supprimerPersonne(etat.p0);
     if (!b.matches('[data-enregistrer]')) return;
