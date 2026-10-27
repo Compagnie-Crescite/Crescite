@@ -268,7 +268,7 @@ const DISPONIBILITES = (() => {
         <span class="corps"><span class="t">${esc(p.titre)}</span><span class="ou">${j0 ? esc(jourCourtDe(j0)) : 'Aucun jour'}${p.jours.length > 1 ? ` et ${pl(p.jours.length - 1, 'autre')}` : ''} · ${pl(p.destinataires.length, 'personne')}${sp ? ` · ${esc(titreCourt(sp))}` : ''}</span>
         <span class="dp-bilan">${bilanHtml(bilan(p))}</span></span>
         <span class="badges"><span class="badge${close ? '' : ' ok'}">${close ? 'Close' : 'Ouverte'}</span>${prev && !close ? `<span class="badge option">${pl(prev, 'courriel')} à revoir</span>` : ''}</span></a>`;
-    }).join('') || `<p class="vide">${E.propositions.length ? 'Aucune proposition ne correspond.' : 'Aucune proposition pour l’instant.'}</p>`;
+    }).join('') || listeVide(E.propositions.length > 0, { rien: 'Aucune proposition ne correspond.', aucun: 'Aucune proposition pour l’instant.', ajouter: ['#/planning/proposer', '＋ Proposer des dates'] });
   }
   function accueilPropositions() {
     const nonConf = E.propositions.some(p => p.destinataires.some(d => d.courriel_statut === 'non_configure'));

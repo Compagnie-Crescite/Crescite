@@ -1823,7 +1823,7 @@
     let html = `<div class="titre-vue"><h1>Feuilles de route</h1><p class="sous">Une par date : le planning, le trajet, l’hébergement, les contacts. Celles à venir se lisent aussi hors connexion.</p></div>`;
     if (!outilFeuille() && avec.length) html += '<p class="message erreur" role="alert">Les feuilles de route ne peuvent pas s’afficher pour le moment : l’outil qui les met en page n’a pas pu être chargé. Rechargez la page.</p>';
     if (avenir.length) html += `<ul class="liste-feuilles">${avenir.map(d => itemFeuille(d)).join('')}</ul>`;
-    else html += etatVide('feuille', 'Aucune feuille de route à venir', sans ? `${pluriel(sans, 'date à venir', 'dates à venir')} : l’administration publie chaque feuille quelques jours avant le départ. Elle apparaîtra ici.` : 'Dès qu’une feuille de route sera publiée pour l’une de vos dates, elle apparaîtra ici.');
+    else html += etatVide('feuille', 'Aucune feuille de route à venir', sans ? `${pluriel(sans, 'date à venir', 'dates à venir')} : l’administration publie chaque feuille quelques jours avant le départ. Elle apparaîtra ici.` : 'Dès qu’une feuille de route sera publiée pour l’une de vos dates, elle apparaîtra ici.', sans ? '<p><a class="btn" href="#/saison">Ma saison</a></p>' : '');
     if (sans && avenir.length) html += `<p class="aide note-feuilles">Et ${pluriel(sans, 'date à venir', 'dates à venir')} dont la feuille de route est en préparation.</p>`;
     if (passees.length) html += `<details class="saison feuilles-passees"><summary><span class="s-texte"><span class="s-nom">Feuilles passées</span> <span class="s-compte">${pluriel(passees.length, 'feuille')}</span></span></summary><div class="saison-corps"><ul class="liste-feuilles">${passees.map(d => itemFeuille(d, true)).join('')}</ul></div></details>`;
     html += piedVue();
@@ -3995,7 +3995,12 @@
       $('#tot-attente').textContent = euros(totAttente);
       if (neuve && !reduit()) { const t = $('#tot-attente'); t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop'); }
       $('#tot-rembourse').textContent = euros(totRembourse);
-      if (!data || !data.length) { zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p>'; return; }
+      // rien encore : la phrase, et le geste utile, le formulaire juste au-dessus (au téléphone, il est loin)
+      if (!data || !data.length) {
+        zone.innerHTML = '<p class="aide">Aucune note de frais pour le moment.</p><p><button type="button" class="btn petit" data-vers-frais>Ajouter un justificatif</button></p>';
+        $('[data-vers-frais]', zone).addEventListener('click', () => { const c = $('#nf-date'); if (!c) return; c.scrollIntoView({ block: 'center', behavior: reduit() ? 'auto' : 'smooth' }); c.focus({ preventScroll: true }); });
+        return;
+      }
 
       E.fraisLus = data;
       zone.innerHTML = data.map((item, i) => {
