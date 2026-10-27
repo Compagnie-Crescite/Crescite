@@ -13,7 +13,8 @@
    Un tiroir a son adresse : la page garde la sienne (#/accueil…), le tiroir s'ajoute dans ?tiroir=lieux/5 (plusieurs :
    ?tiroir=representations/101,lieux/5). Chaque tiroir ouvert est un pas de l'historique : le bouton précédent du
    navigateur referme le dernier, le suivant le rouvre ; l'adresse se recharge et se partage entre administrateurs (la
-   page, puis ses tiroirs). Fermer un tiroir à la main revient d'un pas. Le titre de l'onglet nomme le tiroir ouvert.
+   page, puis ses tiroirs). Fermer un tiroir à la main revient d'un pas. Le titre de l'onglet nomme le tiroir ouvert ;
+   son en-tête, à l'ordinateur, la rubrique de sa fiche en lien (« Lieux › Théâtre de Caen », le fil d'Ariane).
    TIROIR.ouvrir(href, { viser, depuis })   TIROIR.fermer()   TIROIR.fermerTout()   TIROIR.ouvert()   TIROIR.racine()
    TIROIR.redessiner(id)                     TIROIR.peut(href) : ce lien s'ouvrirait-il en tiroir ici ?
    TIROIR.restaurer() (à l'ouverture de l'administration)   TIROIR.surAdresse() (index.html, à chaque changement d'adresse)
@@ -29,8 +30,14 @@ const TIROIR = (() => {
     { genre: 'lieu', nom: 'Lieu', re: /^#\/lieux\/(\d+)$/, zone: 'ed-lieu', href: id => `#/lieux/${id}`, peut: () => existe('editeurLieu'), dessiner: id => editeurLieu(id), titre: id => lieuTexte(lieu(id)) || 'Lieu' },
     { genre: 'personne', nom: 'Personne', re: /^#\/equipe\/(\d+)$/, zone: 'ed-personne', href: id => `#/equipe/${id}`, peut: () => existe('editeurPersonne') && E.equipeInstallee, dessiner: id => editeurPersonne(id), titre: id => nomDe(personne(id)) || 'Personne' },
     { genre: 'devis', nom: 'Demande de devis', re: /^#\/diffusion\/devis\/(\d+)$/, zone: 'ed-devis', href: id => `#/diffusion/devis/${id}`, peut: () => existe('editeurDevis') && E.ideale, dessiner: id => editeurDevis(id), titre: id => (E.devis || []).find(x => x.id === id)?.structure_nom || 'Demande' },
-    { genre: 'piste', nom: 'Opportunité de diffusion', re: /^#\/diffusion\/piste\/(\d+)$/, zone: 'ed-piste', href: id => `#/diffusion/piste/${id}`, pleine: () => '#/diffusion', peut: () => E.ideale, dessiner: id => dessinerPiste(id), titre: id => (E.prospects || []).find(x => x.id === id)?.structure || 'Opportunité' },
+    { genre: 'piste', nom: 'Opportunité de diffusion', re: /^#\/diffusion\/piste\/(\d+)$/, zone: 'ed-piste', href: id => `#/diffusion/piste/${id}`, pleine: () => '#/diffusion', parent: () => '#/diffusion', peut: () => E.ideale, dessiner: id => dessinerPiste(id), titre: id => (E.prospects || []).find(x => x.id === id)?.structure || 'Opportunité' },
   ];
+  // l'en-tête d'un tiroir dit où est sa fiche : à l'ordinateur, les niveaux au-dessus en liens (« Lieux › », le fil
+  // d'Ariane d'index.html, niveauxAuDessus), puis son nom ; au téléphone, son genre (« Lieu »), le ← y ramène
+  const filDe = (f, id) => {
+    const xs = typeof niveauxAuDessus === 'function' ? niveauxAuDessus(f.parent ? f.parent(id) : f.href(id).replace(/\/\d+$/, '')) : [];
+    return xs.length ? `<nav class="tg-fil" aria-label="Fil d’Ariane">${xs.map(x => `<a href="${esc(x.href)}">${esc(x.nom)}</a>`).join('<span class="tg-sep" aria-hidden="true">›</span>')}<span class="tg-sep" aria-hidden="true">›</span></nav>` : '';
+  };
   const ficheDe = href => { for (const f of FICHES) { const m = (href || '').match(f.re); if (m) return { f, id: +m[1] }; } return null; };
   // ce lien s'ouvrirait-il en tiroir ici ? Oui s'il mène à une fiche connue, que la page n'a pas sa place (#ed-date…) et
   // que la fiche n'est pas déjà celle du dernier tiroir
@@ -71,7 +78,7 @@ const TIROIR = (() => {
     el.className = 'tiroir'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', f.nom);
     el.style.setProperty('--tiroir-largeur', LARGEUR);
     el.innerHTML = `<header class="tiroir-tete"><button type="button" class="btn petit" data-tiroir-fermer title="Fermer (Échap)" aria-label="Fermer">←</button>
-      <span class="tiroir-fil"><span class="tiroir-genre">${esc(f.nom)}</span><span class="tiroir-titre"></span></span>
+      <span class="tiroir-fil"><span class="tiroir-genre"><span class="tg-nom">${esc(f.nom)}</span>${filDe(f, id)}</span><span class="tiroir-titre"></span></span>
       <a class="btn petit" data-tiroir-pleine href="${esc((f.pleine || f.href)(id))}" title="Ouvrir à sa place, dans sa rubrique">Pleine page</a>
       <button type="button" class="btn petit" data-tiroir-fermer aria-label="Fermer">✕</button></header>
       <div class="tiroir-corps"><section class="editeur" id="${f.zone}"></section></div>`;
@@ -253,6 +260,11 @@ const TIROIR = (() => {
 .tiroir-tete { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--carte); border-bottom: 1px solid var(--trait); }
 .tiroir-fil { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.2; }
 .tiroir-genre { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.tiroir-genre .tg-nom { display: none; }
+.tg-fil { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; }
+.tg-fil a { color: var(--accent); text-decoration: none; border-radius: 4px; }
+.tg-fil a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.tg-sep { color: var(--gris); font-weight: 700; }
 .tiroir-titre { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tiroir-corps { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 16px 18px 24px; }
 .tiroir-corps .editeur .titre-ed [data-tt="retour"] { display: none; }
@@ -263,6 +275,7 @@ html.tiroir-ouvert body { overflow: hidden; }
 .tiroir-etapes li.courante .btn { background: var(--accent); border-color: var(--accent); color: var(--sur-accent, #fff); }
 .manque { color: var(--alerte); font-weight: 700; }
 @media (max-width: 640px) { .tiroir { width: 100vw; border-left: 0; } .tiroir-corps { padding: 12px 12px 20px; } .tiroir.la { transform: none; } }
+@media (max-width: 640px), (pointer: coarse) { .tiroir-genre .tg-nom { display: inline; } .tg-fil { display: none; } }
 @media (prefers-reduced-motion: reduce) { .tiroir, .tiroir-voile { transition: none; } }`;
   document.head.append(style);
   return { ouvrir, fermer, fermerTout, ouvert, racine, redessiner, peut, restaurer, surAdresse, titre, pile: () => pile.slice() };

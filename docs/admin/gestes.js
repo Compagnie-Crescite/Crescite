@@ -19,6 +19,9 @@
      formulaire changée, un formulaire gardé : une note, une fenêtre) ne se perd pas en silence ; la question se pose dans
      une boîte de la charte (« Rester », « Quitter sans enregistrer »), jamais par confirm(), et seulement si quelque chose
      a changé.
+   - Supprimer sans trembler (GESTES.confirmer) : une action qui détruit (supprimer, retirer, fusionner, délier…) et
+     qu'on ne peut pas annuler après coup se demande dans la même boîte : le bouton dangereux nommé par son action
+     (« Supprimer la date »), à la couleur d'alerte ; « Annuler » a le focus (Échap, le voile y mènent aussi).
    Rien ne vibre ni ne s'anime si l'appareil demande moins d'animations (prefers-reduced-motion, html.still, ?anim=0). */
 const GESTES = (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -414,14 +417,24 @@ const GESTES = (() => {
   function oublier(dans = document) { fermerFormulaire(); gardes(dans).forEach(garder); }
   let question = null;
   function quitter({ titre = 'Quitter sans enregistrer ?', texte = 'Des modifications ne sont pas enregistrées.', ok = 'Quitter sans enregistrer', rester = 'Rester' } = {}) {
+    return boite({ titre, texte, ok, rester, danger: true });
+  }
+  /* confirmer({ titre, texte, ok, annuler, danger }) : la même boîte avant une action qui ne se rattrape pas ; ok nomme
+     l'action (« Supprimer la date »), à la couleur d'alerte (danger faux : une action qui ne détruit rien, renvoyer un
+     courriel), « Annuler » a le focus ; résout vrai pour agir. */
+  function confirmer({ titre, texte = '', ok, annuler = 'Annuler', danger = true } = {}) {
+    return boite({ titre, texte, ok, rester: annuler, danger, genre: 'confirmer' });
+  }
+  function boite({ titre, texte, ok, rester, danger = true, genre = 'quitter' }) {
     if (question) return question.promesse;
     const declencheur = document.activeElement;
     const dlg = document.createElement('dialog');
-    dlg.className = `gq${reduit() ? ' gq-calme' : ''}`;
+    dlg.className = `gq gq-${genre}${danger ? ' gq-danger' : ''}${reduit() ? ' gq-calme' : ''}`;
     dlg.setAttribute('role', 'alertdialog');
-    dlg.setAttribute('aria-labelledby', 'gq-titre'); dlg.setAttribute('aria-describedby', 'gq-texte');
-    dlg.innerHTML = `<div class="gq-boite"><span class="gm-poignee" aria-hidden="true"></span><h2 id="gq-titre">${esc(titre)}</h2><p id="gq-texte">${esc(texte)}</p>
-      <div class="gq-pied"><button type="button" class="gf-btn gq-quitter" data-gq="oui">${esc(ok)}</button><button type="button" class="gf-btn principal" data-gq="non">${esc(rester)}</button></div></div>`;
+    dlg.setAttribute('aria-labelledby', 'gq-titre');
+    if (texte) dlg.setAttribute('aria-describedby', 'gq-texte');
+    dlg.innerHTML = `<div class="gq-boite"><span class="gm-poignee" aria-hidden="true"></span><h2 id="gq-titre">${esc(titre)}</h2>${texte ? `<p id="gq-texte">${esc(texte)}</p>` : ''}
+      <div class="gq-pied"><button type="button" class="gf-btn ${danger ? 'gq-quitter' : 'gq-agir'}" data-gq="oui">${esc(ok)}</button><button type="button" class="gf-btn principal" data-gq="non">${esc(rester)}</button></div></div>`;
     document.body.append(dlg);
     let finir;
     const promesse = new Promise(r => { finir = r; });
@@ -458,7 +471,9 @@ dialog.gq::backdrop { background: rgba(23, 15, 26, .5); }
 .gq p { margin: 0 0 16px; color: var(--gris, #777); }
 .gq-pied { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .gq-pied .gf-btn { flex: 1 1 auto; }
-.gq .gf-btn.gq-quitter { color: var(--alerte, #b3261e); }
+.gq .gf-btn.gq-quitter { color: var(--alerte, #b3261e); border-color: color-mix(in srgb, var(--alerte, #b3261e) 55%, transparent); }
+.gq .gf-btn.gq-quitter:hover { background: var(--alerte-doux, #fbe7e5); border-color: var(--alerte, #b3261e); }
+.gq h2 + .gq-pied { margin-top: 16px; }
 .gq .gf-btn.principal { background: var(--accent, var(--action, var(--magenta, #5f565a))); border-color: var(--accent, var(--action, var(--magenta, #5f565a))); color: var(--sur-accent, var(--sur-action, #fff)); }
 .gq .gf-btn:focus-visible { outline: 3px solid var(--accent, var(--magenta, #5f565a)); outline-offset: 2px; }
 @media (min-width: 641px) { dialog.gq { width: min(460px, calc(100vw - 32px)); margin: auto; border-radius: 18px; border-bottom: 1px solid var(--trait, var(--filet, #ddd)); } .gq-boite { padding: 20px 22px 18px; } .gq .gm-poignee { display: none; } .gq-pied .gf-btn { flex: 0 0 auto; } }
@@ -545,5 +560,5 @@ html.gf-ouvert { overflow: hidden; }
 .gps-texte .gps-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>`);
 
-  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };
+  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };
 })();
