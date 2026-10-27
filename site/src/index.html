@@ -6066,6 +6066,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // geste (un filtre qui referme les saisons passées), cherchait son repère 30 ms dans l'image même, au-delà de 50 ms
     let ancrage = null;
     function tenirAncrage() {
+      // (une lettre tapée dans la recherche : on lit le haut de la page, où est le champ ; le repère n'y sert à rien, et le
+      // chercher à chaque lettre retenait la suivante au téléphone)
+      const act = document.activeElement; if (act && act.matches && act.matches('input[type="search"]')) return;
       const html = document.documentElement;
       if (ancrage) { ancrage.t = performance.now(); return; }
       const haut = (parseFloat(getComputedStyle(html).getPropertyValue('--haut')) || 56) + 40;

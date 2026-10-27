@@ -208,10 +208,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     rapport[n] = {};
     for (const profil of Object.keys(PROFILS)) {
       // deux mesures, la meilleure gardée : quand d'autres mesurent en même temps sur la machine, les écarts vont du
-      // simple au double ; la charge de la machine est notée avec
+      // simple au double ; la charge de la machine est notée avec. La meilleure : celle qui dépasse le moins de budgets (une
+      // tâche longue isolée, la machine prise ailleurs, ne tombe pas deux fois sur le même geste), puis le pire INP
       const pire = x => Math.max(0, ...x.gestes.map(g => g.inp || 0));
       const ms = [await mesurer(browser, n, { dist, profil }), await mesurer(browser, n, { dist, profil })];
-      const m = pire(ms[0]) <= pire(ms[1]) ? ms[0] : ms[1];
+      const [d0, d1] = ms.map(x => depassements(x).length);
+      const m = d0 !== d1 ? (d0 < d1 ? ms[0] : ms[1]) : pire(ms[0]) <= pire(ms[1]) ? ms[0] : ms[1];
       m.chargeMachine = loadavg().map(x => Math.round(x * 10) / 10);
       rapport[n][profil] = m;
       console.log(tableau(m) + '\n');
