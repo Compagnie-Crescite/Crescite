@@ -94,6 +94,7 @@ async function cibler(page, quoi) {
     let el = null;
     if (quoi.entree) el = premier([`header a[href="${quoi.entree}"]`, `nav a[href="${quoi.entree}"]`, `a[href="${quoi.entree}"]`]);
     else if (quoi === 'spectacle') el = premier(['main a[href^="#/spectacle/"]']);
+    else if (quoi === 'tranche') el = premier(['main .pil-aff:not(.ouvert) .pil-dos']);
     else if (quoi === 'saison') el = premier(['main details:not([open]) > summary', 'main [aria-expanded="false"]:not(header *)']);
     else if (quoi === 'date') el = premier(['main button[data-reserver][aria-pressed="false"]']);
     else if (quoi === 'filtre') el = premier(['main button[aria-pressed="false"]:not([data-reserver])']);
@@ -140,8 +141,11 @@ export async function mesurer(browser, n, { dist, profil = 'bureau' } = {}) {
   for (const h of menu.length ? menu : ['#/saisons', '#/spectacles', '#/compagnie', '#/espace-pro']) {
     await geste(`menu ${h.slice(2)}`, async () => { if (!(await cibler(page, { entree: h }))) return false; await toucher(); });
   }
-  // une carte de spectacle
+  // une carte de spectacle ; au téléphone, la page des spectacles est une pile d'affiches : son lien « Découvrir » ne se
+  // touche qu'une fois l'affiche dépliée (il est caché, visibility: hidden, sur une tranche repliée). Une tranche se déplie
+  // d'abord, hors mesure, et le geste mesuré est le toucher de ce lien
   await aller(page, '#/spectacles', P.repos);
+  if (!(await cibler(page, 'spectacle')) && (await cibler(page, 'tranche'))) { await toucher(); await page.waitForTimeout(P.repos); }
   await geste('carte de spectacle', async () => { if (!(await cibler(page, 'spectacle'))) return false; await toucher(); });
   // les saisons : choisir une date (sa carte de réservation s'ouvre sur place), ouvrir une saison passée, filtrer par
   // spectacle, chercher

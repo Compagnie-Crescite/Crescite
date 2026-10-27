@@ -2357,6 +2357,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .ag7 { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); grid-template-areas: "frise carte" "proch carte" "toutes carte"; grid-template-rows: auto auto 1fr;
   gap: 2.75rem clamp(2rem, 4vw, 4rem); align-items: start; margin-top: clamp(1.25rem, 2.5vw, 2rem); }
 .fs7 { grid-area: frise; min-width: 0; }
+.s7 [data-tard], main > [data-tard] { display: none; }
 /* le sous-menu de la saison (comme celui des univers d'un spectacle) : une seule ligne, arrimée sous le menu flottant quand on
    descend ; chaque spectacle qui tourne dans la saison (et lui seul), sa vignette (sa photo, cadrée sur sa zone d'intérêt)
    cerclée de sa couleur, celle de ses dates sur la frise, son titre et le nombre de ses dates. En survoler un isole ses dates,
@@ -5684,6 +5685,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const poserAlerte = () => { const bx = $('.alerte-boite', main); if (!bx || !bx.isConnected || $('#f-alerte', bx)) return; bx.insertAdjacentHTML('beforeend', formAlerte()); initAlerteTournee(); };
     // (la tête, resserrée pour que la saison en cours, sa rangée et le haut de sa frise tiennent dans le premier écran : le
     // titre, puis sur une ligne ses raccourcis et la recherche ; au téléphone, la recherche à côté du titre)
+    // (la première image de la page n'a que le premier écran : la tête, la rangée, la frise, la carte. Les listes de dates, les
+    // saisons passées et l'alerte, sous le pli, attendent la tâche d'après, data-tard (display: none) : leur mise en forme
+    // portait cette image au-delà de 50 ms au bureau (règle 15 C). Rien ne bouge à l'écran : ils sont dessous, et la carte,
+    // sur trois rangées, ne change pas la hauteur de la frise. Une adresse qui vise une saison, une date, un filtre, la vue refaite
+    // sur place ou le retour arrière (la position de lecture se rend d'un coup) les posent tout de suite)
+    const tot = !surPlace && !ouvrir && !actif() && !F.date && !F.mois && !relecture, tard7 = tot ? ' data-tard' : '';
     main.innerHTML = `<header class="s7-entete"><div class="wrap s7-e">
         <h1 class="s7-titre" tabindex="-1"><span class="fleur">${esc(M0.texte)}</span></h1>
         <ul class="s7-rac">${[['v-saison', S0.titre], ['v-agenda', L.saisonsPassees], ['v-alerte', nAlerte]].map(([id, t]) => `<li><button type="button" data-va="${id}"><span class="s7-lampe" aria-hidden="true"></span>${esc(t)}</button></li>`).join('')}</ul>
@@ -5698,19 +5705,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           <div class="fs7"><div class="v-frise" id="v-frise"></div><div class="ft7" id="ft7"></div></div>
           <figure class="ag7-carte">${carte({ lieux, passe: passeC, titre: S0.titre, couleurs: true, loupe: true })}<button type="button" class="ag7-large" hidden></button><figcaption class="s7-legende" aria-hidden="true"></figcaption></figure>
           <div class="ag-listes" id="ag-listes">
-            <div class="ag7-proch"><h3 class="s7-h">${esc(L.prochainesDates)}</h3><div class="ag-liste" id="ag-liste"></div></div>
-            <div class="ag7-toutes"><h3 class="s7-h">${esc(L.toutesLesDates)}</h3><div class="ag-toutes" id="ag-toutes"></div></div>
+            <div class="ag7-proch"${tard7}><h3 class="s7-h">${esc(L.prochainesDates)}</h3><div class="ag-liste" id="ag-liste"></div></div>
+            <div class="ag7-toutes"${tard7}><h3 class="s7-h">${esc(L.toutesLesDates)}</h3><div class="ag-toutes" id="ag-toutes"></div></div>
           </div>
         </div>
       </div></section>
-      <section class="p4" id="v-agenda" aria-labelledby="h-agenda"><div class="sf7" aria-hidden="true"></div><div class="wrap">
+      <section class="p4" id="v-agenda" aria-labelledby="h-agenda"${tard7}><div class="sf7" aria-hidden="true"></div><div class="wrap">
         <h2 class="p4-titre" id="h-agenda" data-mv="monte">${esc(L.saisonsPassees)}</h2>
         ${spPasses.length ? `<div class="sm7 sm7--passe"><div class="sm7-in">${sousMenu(spPasses, nPasses)}</div></div>` : ''}
         <div class="p4-frise" id="idx-frise"></div>
         <nav class="ag-index p4-index" id="ag-index" aria-labelledby="h-agenda"></nav>
         <div class="saisons-ag" id="ag-saisons"></div>
       </div></section>
-      <section class="bloc" id="v-alerte" aria-labelledby="h-alerte"><div class="wrap">
+      <section class="bloc" id="v-alerte" aria-labelledby="h-alerte"${tard7}><div class="wrap">
         <div class="alerte-boite">
           ${L.alerteBadge ? `<span class="alerte-badge">${esc(L.alerteBadge)}</span>` : ''}
           <h2 class="titre-bloc" id="h-alerte">${esc(L.alerteTournee || 'Être prévenu du prochain passage')}</h2>
@@ -5773,6 +5780,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // dans la tâche d'après, sous eux (rien ne bouge à l'écran) ; tous d'un coup quand l'adresse nomme une date
     // (la suite, image après image : chaque morceau se met en page dans sa propre image, aucune ne retient la page)
     const ensuite = f => requestAnimationFrame(() => setTimeout(f, 0));
+    // (ce qui attendait sous le pli paraît, avant tout ce que la vue a demandé pour la suite : la lecture au fil des dates, les
+    // saisons passées les trouvent mises en page)
+    if (tot) ensuite(() => $$('[data-tard]', main).forEach(e => e.removeAttribute('data-tard')));
     let suiteListe = 0;
     function dessineProchaines(tout = false) {
       const Ls = proch.filter(gardeS), groupes = [];
@@ -8114,7 +8124,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // clé nouvelle : elle s'ouvre en haut, comme avant
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';   // (le routeur pose la page lui-même)
   const lectures = new Map();
-  let cleCourante = null;
+  let cleCourante = null, relecture = false;   // (relecture : la vue qui se rend est celle d'une lecture retenue)
   const cleEntree = () => { const st = history.state; if (st && st.k) return st.k;
     const k = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
     try { history.replaceState(Object.assign({}, st, { k }), ''); } catch (e) { return null; }
@@ -8221,7 +8231,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     CHERCHE.fermer(false);   // (le retour du navigateur, la boîte ouverte : elle se referme, la page prend le focus)
     document.documentElement.classList.remove(vers0);
     cadre();
+    relecture = !!relue;
     let r = rendre(a, false), b = a;
+    relecture = false;
     if (!r) { r = introuvable(); }   // (une adresse inconnue : sa page, l'adresse gardée)
     courant = b;
     decorer(false);
