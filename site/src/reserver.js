@@ -177,10 +177,14 @@ const RESERVER = (() => {
     return `<div class="rs-seances"><p class="rs-k">${esc(Lb.representations)}</p><ul class="rs-liste">${ss.map(x => {
       const j = plusieurs && x.jour ? court(x.jour) : null;
       const q = `${j ? `<span class="rs-sj"><span>${esc(j.semaine)}</span> ${esc(j.jour)} <span>${esc(j.mois)}</span></span>` : ''}<b class="rs-sh${x.heure ? '' : ' rs-sh--sans'}">${esc(x.heure || (x.scolaire ? '' : Lb.horaireAPreciser))}</b>${x.scolaire ? `<em class="rs-scol">${esc(Lb.scolaire)}</em>` : ''}`;
-      return `<li>${x.lien ? `<a class="rs-seance" href="${esc(x.lien)}" target="_blank" rel="noopener">${q}</a>` : `<span class="rs-seance${x.scolaire ? ' est-scolaire' : ''}">${q}</span>`}</li>`;
+      return `<li>${x.lien ? `<a class="rs-seance" href="${esc(x.lien)}" target="_blank" rel="noopener">${q}${EXT}${DEHORS()}</a>` : `<span class="rs-seance${x.scolaire ? ' est-scolaire' : ''}">${q}</span>`}</li>`;
     }).join('')}</ul></div>`;
   }
   const FLECHE = '<svg class="rs-fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17L17 7M9 7h8v8"/></svg>';
+  // un lien vers la billetterie s'ouvre dans un nouvel onglet : la flèche qui sort (celle du site, .ext ; le bouton de
+  // réservation a la sienne, en grand) et, pour les lecteurs d'écran, « (nouvel onglet) »
+  const DEHORS = () => (L().nouvelOnglet ? `<span class="rs-masque"> ${esc(L().nouvelOnglet)}</span>` : '');
+  const EXT = '<svg class="ext" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7"/></svg>';
   function carte(d, o = {}) {
     const Lb = L(), s = show(d.slug), ou = lieu(d), href = lien(d), ph = o.photo === false ? null : photo(s), pr = precisions(d);
     const titre = s ? s.titre : d.titre;
@@ -191,7 +195,7 @@ const RESERVER = (() => {
       + (pr.length ? `<ul class="rs-det">${pr.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '')
       + seancesHTML(d, Lb)
       + `<p class="rs-action">${href
-        ? `<a class="rs-reserver" href="${esc(href)}" target="_blank" rel="noopener"><span class="rs-r"><span class="rs-r1">${esc(Lb.reserver)}</span><span class="rs-r2"><span>${esc(Lb.surLeSiteDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><span>${esc(ou)}</span>` : ''}</span></span>${FLECHE}</a>`
+        ? `<a class="rs-reserver" href="${esc(href)}" target="_blank" rel="noopener"><span class="rs-r"><span class="rs-r1">${esc(Lb.reserver)}</span><span class="rs-r2"><span>${esc(Lb.surLeSiteDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><span>${esc(ou)}</span>` : ''}</span></span>${FLECHE}${DEHORS()}</a>`
         : `<span class="rs-aupres"><span>${esc(Lb.reservationAupresDuLieu)}</span>${ou ? `<span class="rs-sep"> · </span><b>${esc(ou)}</b>` : ''}</span>`}</p>`
       + (Lb.ajouterAgenda && agendaPermis(d) ? `<p class="rs-plus"><button type="button" class="rs-agenda" data-reserver-ics="${esc(cle(d))}">${AGENDA_ICONE}<span>${esc(Lb.ajouterAgenda)}</span></button></p>` : '')
       + '</div>';
@@ -363,6 +367,8 @@ const RESERVER = (() => {
 :where(.rs-bande) > :where(*) { flex: none; scroll-snap-align: start; }
 :where(.rs-date) { position: relative; display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 :where(.rs-date .rs-sep) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+:where(.rs-seance .ext) { display: inline-block; width: .72em; height: .72em; margin-left: .3em; fill: none; stroke: currentColor; stroke-width: 1.6; }
+:where(.rs-masque) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 :where(.rs-carte) { position: relative; isolation: isolate; overflow: hidden; background: var(--rs-fond2, #fff); color: var(--rs-texte, inherit); }
 :where(.rs-photo) { position: absolute; z-index: -1; inset: 0 0 0 auto; width: 55%; height: 100%; object-fit: cover; opacity: .3; pointer-events: none; }
 :where(.rs-liste) { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; }

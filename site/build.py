@@ -470,6 +470,9 @@ LIBELLES = {
     # la page d'un spectacle : partager son adresse (le partage de l'appareil, sinon l'adresse copiée), et ses voisins dans
     # l'ordre des spectacles, au pied de la page
     "partager": "Partager", "lienCopie": "Lien copié",
+    # un lien qui s'ouvre dans un nouvel onglet (une billetterie, un document, un autre site) : sa petite flèche, et ce texte
+    # masqué pour les lecteurs d'écran
+    "nouvelOnglet": "(nouvel onglet)",
     "spectaclePrecedent": "Spectacle précédent", "spectacleSuivant": "Spectacle suivant",
     # une adresse qui ne mène à aucune vue : sa page, et d'où repartir
     "introuvable": "Page introuvable", "introuvableTexte": "Cette adresse ne mène à aucune page du site.",

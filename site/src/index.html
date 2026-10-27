@@ -596,7 +596,8 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .dl-ou { font-weight: 600; line-height: 1.4; }
 .dl-ou a { text-decoration: none; }
 .dl-ou a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.dl-ext { display: inline-block; margin-left: 5px; font-size: .85em; }
+/* (la flèche d'un lien qui s'ouvre dans un nouvel onglet : petite, de la couleur du lien, collée à son dernier mot) */
+.ext { display: inline-block; flex: none; width: .72em; height: .72em; margin-left: .3em; vertical-align: .02em; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .dl .dl-quoi { margin-top: 2px; }
 .dl-quoi a, .dl-sp { font: 400 1.3rem/1.25 var(--titre); text-decoration: none; }
 .dl-quoi a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .2em; }
@@ -3145,6 +3146,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const HAUT = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 15l6-6 6 6"/></svg>';
   const LECTURE = '<svg class="fleche" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path class="plein-ico" d="M8 5.5v13l10.5-6.5z"/></svg>';
   const CROIX = '<svg class="croix" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l8 8M10 2l-8 8"/></svg>';
+  // un lien qui s'ouvre dans un nouvel onglet (target="_blank", rel="noopener" : une billetterie, un document, la vidéo d'un
+  // autre site) : la même petite flèche qui sort, et « (nouvel onglet) » pour les lecteurs d'écran ; ceux qui restent dans
+  // l'onglet n'ont rien
+  const DEHORS = () => `<svg class="ext" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7"/></svg>${L.nouvelOnglet ? `<span class="sr"> ${esc(L.nouvelOnglet)}</span>` : ''}`;
   const FILTRE = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M7 12h10M10 17h4"/></svg>';
   const LOUPE_MOINS = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20M7.5 10.5h6"/></svg>';
   const LOUPE_PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20M7.5 10.5h6M10.5 7.5v6"/></svg>';
@@ -3166,7 +3171,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const moisDe = ligne => (String(ligne || '').match(RE_MOIS) || [])[2] || '';
   const quand = (ligneDate, iso) => { const [j, m] = coupe(ligneDate); return `<time${iso ? ` datetime="${iso}"` : ''}><b>${esc(j)}</b>${m ? `<small>${esc(m)}</small>` : ''}</time>`; };
   const details = Ls => Ls && Ls.length ? `<ul class="det">${Ls.map(x => { const t = typeof x === 'string' ? x : x.texte, h = typeof x === 'string' ? null : x.lien;
-    return `<li>${h ? `<a href="${esc(h)}" target="_blank" rel="noopener">${esc(t)}</a>` : esc(t)}</li>`; }).join('')}</ul>` : '';
+    return `<li>${h ? `<a href="${esc(h)}" target="_blank" rel="noopener">${esc(t)}${DEHORS()}</a>` : esc(t)}</li>`; }).join('')}</ul>` : '';
 
   /* ---------- la carte : un bras par commune, de Rouen jusqu'à elle ---------- */
   const cadreVB = () => CARTE.viewBox.split(/\s+/).map(Number);
@@ -3470,7 +3475,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // dans un catalogue loin de toute vidéo, elle s'ouvre dans une boîte) ; une adresse qui n'est ni YouTube ni Vimeo reste un lien
   const LC = typeof LECTEUR !== 'undefined' ? LECTEUR : null;
   const lisible = v => !!(v && LC && LC.source(v.url));
-  const lienVideo = (s, vers) => !s.video ? '' : !lisible(s.video) ? `<a class="bu" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LECTURE}${esc(L.bandeAnnonce)}</a>`
+  const lienVideo = (s, vers) => !s.video ? '' : !lisible(s.video) ? `<a class="bu" href="${esc(s.video.url)}" target="_blank" rel="noopener">${LECTURE}${esc(L.bandeAnnonce)}${DEHORS()}</a>`
     : `<button type="button" class="bu" ${vers === 'boite' ? `data-lecteur-ouvrir="${esc(s.slug)}"` : `data-lecteur-va="lc-${esc(s.slug)}"`}>${LECTURE}${esc(L.bandeAnnonce)}</button>`;
   // le chapitre des vidéos d'un spectacle : sa bande-annonce, puis ses autres vidéos (ses médias), par groupe ; leurs affiches
   // sont ses photos (D), jamais une image venue de YouTube ou de Vimeo
@@ -3792,7 +3797,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
   const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
-  const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}</a>`;
+  const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}${DEHORS()}</a>`;
   // le contact diffusion : le nom, le rôle, le courriel (lien mailto:, avec l'objet), le téléphone s'il existe ; sur un spectacle : en bande
   function contactHTML(s) {
     const c = contactPrg(); if (!c) return '';
@@ -4692,7 +4697,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const ligneAgenda = (r, pre = '', sansTitre = false) => {
     const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne);
     const titre = r.suite || sansTitre ? '' : sp ? `<a class="t" href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="t">${esc(r.titre)}</span>`;
-    const lieu = p.lieu ? (d.lien ? `<a class="ou" href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}</a>` : `<span class="ou">${esc(p.lieu)}</span>`) : '';
+    const lieu = p.lieu ? (d.lien ? `<a class="ou" href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${DEHORS()}</a>` : `<span class="ou">${esc(p.lieu)}</span>`) : '';
     return `<li data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(pre + r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''}${r.suite ? ' class="suite"' : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<time${d.iso ? ` datetime="${d.iso}"` : ''}><b>${esc(p.jour)}</b>${p.heure ? `<small>${esc(p.heure)}</small>` : ''}</time>`}<div class="qui">${titre}${d.scolaire ? `<em class="tag">${esc(L.scolaire)}</em>` : ''}${d.residence ? `<em class="tag">${esc(L.residence)}</em>` : ''}${d.etat ? `<em class="etat">${esc(d.etat)}</em>` : ''}${lieu}${details(d.details)}</div></li>`;
   };
 
@@ -5190,7 +5195,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // le lieu, les précisions ; une date déjà jouée, éteinte
     const ligneToute = r => {
       const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne), passee = !!(r.k && r.k < D.aujourdhui);
-      const lieu = p.lieu ? `<p class="d7-lieu">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}</a>` : esc(p.lieu)}</p>` : '';
+      const lieu = p.lieu ? `<p class="d7-lieu">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${DEHORS()}</a>` : esc(p.lieu)}</p>` : '';
       const marques = `${d.scolaire ? `<p class="d7-tag">${esc(L.scolaire)}</p>` : ''}${d.residence && L.residence ? `<p class="d7-tag d7-tag--rs">${esc(L.residence)}</p>` : ''}${d.etat ? `<p class="d7-etat">${esc(d.etat)}</p>` : ''}`
         + (passee && !r.suite && !d.residence && !d.etat && L.jouee ? `<p class="sr">${esc(L.jouee)}</p>` : '');   // (éteinte à l'œil : jouée, à l'oreille)
       const attrs = `data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-j="${esc(r.j)}" data-mv-cle="${esc('t:' + r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''} style="${esc(`--c:${couleurDe(g.slug)}${police(g.slug)}`)}"`;
@@ -5206,7 +5211,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const etiq = `${d.scolaire ? `<span class="p4-etiq">${esc(L.scolaire)}</span>` : ''}${d.residence && L.residence ? `<span class="p4-etiq p4-res"><i aria-hidden="true"></i>${esc(L.residence)}</span>` : ''}`;
       const quoi = r.suite ? (etiq ? `<p class="dl-quoi">${etiq}</p>` : '')
         : `<p class="dl-quoi"><i class="dl-porte" aria-hidden="true"></i>${sp ? `<a href="${lienSp(g.slug, 'voir')}">${esc(r.titre)}</a>` : `<span class="dl-sp">${esc(r.titre)}</span>`}${etiq}</p>`;
-      const lieu = p.lieu ? `<p class="dl-ou">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}<span class="dl-ext" aria-hidden="true">↗</span></a>` : esc(p.lieu)}</p>` : '';
+      const lieu = p.lieu ? `<p class="dl-ou">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}${DEHORS()}</a>` : esc(p.lieu)}</p>` : '';
       return `<li class="dl${r.suite ? ' suite' : ''}${d.etat ? ' annule' : ''}${d.residence ? ' est-res' : ''}" data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-mv-cle="${esc(r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''} style="--c:${couleurDe(g.slug)}">${r.suite ? '' : `<p class="dl-quand"><span class="dl-jour">${esc(p.jour)}</span>${p.heure ? `<span class="dl-heure">${esc(p.heure)}</span>` : ''}</p>`}<div class="dl-c">${lieu}${quoi}${d.etat ? `<p class="dl-etat">${esc(d.etat)}</p>` : ''}${details(d.details)}</div></li>`;
     };
     // les prochaines dates, par mois : tout public (un bouton de réservation quand la date en a une), scolaires (marquées).
