@@ -537,6 +537,10 @@ on conflict (id) do update set public = true;
 drop policy if exists crescite_photos_ajout on storage.objects;
 drop policy if exists crescite_photos_modification on storage.objects;
 drop policy if exists crescite_photos_suppression on storage.objects;
+drop policy if exists crescite_photos_lecture on storage.objects;
+-- le site lit par l'adresse publique ; l'administration lit aussi par l'API (déplacer un portrait, remplacer un fichier)
+create policy crescite_photos_lecture on storage.objects for select to authenticated
+  using (bucket_id = 'crescite' and (select public.crescite_est_admin()));
 create policy crescite_photos_ajout on storage.objects for insert to authenticated
   with check (bucket_id = 'crescite' and (select public.crescite_est_admin()));
 create policy crescite_photos_modification on storage.objects for update to authenticated
