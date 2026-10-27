@@ -4,6 +4,9 @@ Dépôt de travail pour la reprise en main du site [crescite.fr](https://crescit
 L'audit complet, les 10 évolutions proposées et la feuille de route sont dans le document privé
 « Audit crescite.fr et Crescite 2.0 » (Claude Docs). Ce dépôt contient les pièces techniques publiables.
 
+**En cas de panne** (le site ne répond plus, la base est injoignable, les courriels ne partent plus), ou pour
+l'éviter : [`PANNE.md`](PANNE.md).
+
 > Ce dépôt est **public**. Le logo 2.0 et les photos des spectacles (droits des photographes) n'y sont
 > volontairement pas versionnés : ils vont dans `private/`, dossier exclu par `.gitignore`. L'audit (avec ses
 > constats de sécurité) reste dans le document privé.
