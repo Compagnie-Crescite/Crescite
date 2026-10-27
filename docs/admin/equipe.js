@@ -1355,7 +1355,8 @@ function sourcesFeuille(d) {
   }).filter(Boolean);
   return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: departDe(d),
     suivi: { ...(E.suivis.find(x => x.date_id === d.id) || {}), lieu: E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id) || {} },
-    documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe'), anterieures };
+    documents: E.documents.filter(x => (x.spectacle_id === d.spectacle_id || x.spectacle_id == null) && x.pour === 'equipe'), anterieures,
+    carnet: typeof CARNET !== 'undefined' ? CARNET.pourFeuille(d) : null };
 }
 // d'où part l'équipe : du lieu de la date de la veille quand deux dates du spectacle s'enchaînent (la tournée), sinon de Rouen
 function departDe(d) {
@@ -1548,7 +1549,7 @@ function dessinerFeuille(etat) {
   // remplace la rubrique (« Annuler » le reprend) ; retouchée à la main, la liste le dit.
   const hebs = FEUILLE.hebergements(sourcesFeuille(d)), pr = $('#fr-reprise', zone);
   const ecriteLe = x => (x.ecrit_le && !isNaN(new Date(x.ecrit_le)) ? `, écrite le ${new Date(x.ecrit_le).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}` : '');
-  const libelleHeb = x => `repris de la feuille du ${FEUILLE.jourLong(x.debut)}${x.memeLieu ? '' : ` (${x.lieu?.nom || x.lieu?.commune || 'un autre lieu'})`}${ecriteLe(x)}`;
+  const libelleHeb = x => x.carnet ? `du carnet du lieu : ${x.nom}${x.memeLieu ? '' : ` (${x.lieu?.nom || x.lieu?.commune || 'un autre lieu'})`}` : `repris de la feuille du ${FEUILLE.jourLong(x.debut)}${x.memeLieu ? '' : ` (${x.lieu?.nom || x.lieu?.commune || 'un autre lieu'})`}${ecriteLe(x)}`;
   let repriseVue = null;
   function dessinerReprise() {
     if (!hebs.length) return;

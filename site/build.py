@@ -807,7 +807,8 @@ def build_data():
             "univers": u, "lieuTemps": uv["lieuTemps"], "accroche": uv["accroche"], "affirmations": uv["affirmations"],
             "citations": uv["citations"], "video": video,
             "photo": f"{slug}.webp",
-            "photos": [dict(p, cle=f"{slug}/{p['id']}", fichier=f"{slug}/{p['id']}.webp") for p in uv["photos"]], "creditPhotos": uv["credit"] or extra["credit"],
+            # (une photo « usage interne » : ses droits ne permettent pas de la publier, elle reste hors du site)
+            "photos": [dict(p, cle=f"{slug}/{p['id']}", fichier=f"{slug}/{p['id']}.webp") for p in uv["photos"] if p.get("droits") != "interne"], "creditPhotos": uv["credit"] or extra["credit"],
             "creditDossier": uv.get("creditDossier"),
             # une action culturelle vide ou « masquee » (pas encore construite, comme celle de Cassandres) n'est pas publiée :
             # null pour les maquettes, qui n'en montrent alors rien (règle 14 du contrat)
@@ -1114,7 +1115,7 @@ def admin(dest):
     # la feuille de route et le planning (communs avec equipe/), l'équipe, la rubrique Planning (propositions de dates), le
     # tableau de bord
     for f in ("feuille.js", "equipe.js", "planning.js", "disponibilites.js", "tableau.js", "gestes.js", "menus.js", "corbeille.js", "tiroir.js", "selection.js",
-              "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "fond-carte.js", "tournee.js", "mobile.js", "habillage.js",
+              "parcours.js", "gardefous.js", "series.js", "modeles.js", "notes.js", "carnet.js", "fond-carte.js", "tournee.js", "mobile.js", "habillage.js",
               "manifest.webmanifest", "sw.js"):
         shutil.copyfile(ROOT / "admin" / f, dest / "admin" / f)
     for f in (ROOT / "admin" / "vendor").iterdir():

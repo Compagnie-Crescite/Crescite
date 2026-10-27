@@ -204,7 +204,9 @@ const DONNEES = (() => {
       const u = s.univers || {}, c = u.couleurs || {};
       const mine = dates.filter(d => d.slug === s.slug);
       if (s.photo) photos[s.slug] = photo(s.photo);
-      const ph = (s.photos || []).map(p => { const cle = (p.fichier || '').replace(/\.[a-z0-9]+$/i, ''); photos[cle] = photo(p.fichier); return { ...p, cle }; });
+      // (une photo « usage interne » n'est pas publiée : ses droits ne le permettent pas ; son crédit à elle, s'il est écrit,
+      // passe devant celui du spectacle)
+      const ph = (s.photos || []).filter(p => p && p.droits !== 'interne').map(p => { const cle = (p.fichier || '').replace(/\.[a-z0-9]+$/i, ''); photos[cle] = photo(p.fichier); return { ...p, cle }; });
       return {
         id: s.id,                     // le numéro du spectacle dans la base (une alerte, une demande de devis le portent)
         slug: s.slug, titre: s.titre, titreLignes: s.titre_lignes || [s.titre], creation: s.creation,

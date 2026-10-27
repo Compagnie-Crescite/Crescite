@@ -240,6 +240,7 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .badge.annulee, .badge.masquee { background: var(--alerte-doux); color: var(--alerte); }
 .badge.sco { background: #e6f0fb; color: #1e4f8a; }
 .badge.ok { background: var(--ok-doux); color: var(--ok); }
+.mini.ph-interne img { opacity: .45; filter: grayscale(1); }
 .vide { padding: 30px 16px; text-align: center; color: var(--gris); }
 /* une liste vide dit pourquoi (listeVide) : une phrase, puis le geste utile (« Effacer les filtres », « ＋ Nouvelle date ») */
 .vide.liste-vide { display: grid; justify-items: center; gap: 12px; margin: 0; }
@@ -767,6 +768,9 @@ const TABLES_CHIFFRES = { crescite_dates_chiffres: ['chiffres', 'date_id'] };
 // les documents générés (le dix-neuvième script, modeles.js) : E.docsGeneres, sans leur page
 const TABLES_DOCUMENTS = { crescite_documents_generes: ['docsGeneres', 'id'] };
 NOMS_TABLES.crescite_documents_generes = 'Document généré';
+// le carnet des lieux (le vingt-deuxième script, carnet.js) : E.contacts, E.hebergements
+const TABLES_CARNET = { crescite_contacts: ['contacts', 'id'], crescite_hebergements: ['hebergements', 'id'] };
+NOMS_TABLES.crescite_contacts = 'Contact d’un lieu'; NOMS_TABLES.crescite_hebergements = 'Hébergement près d’un lieu';
 NOMS_TABLES.crescite_dates_chiffres = 'Chiffres d’une date';
 
 // ===================================================================================================== outils
@@ -1066,6 +1070,7 @@ async function chargerTout() {
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
   const tableau = typeof TABLEAU !== 'undefined' ? TABLEAU.charger() : null;   // la disposition du tableau de bord (tableau.js) : ne lève jamais d'erreur
   const documents = typeof MODELES !== 'undefined' ? MODELES.charger() : null;   // les documents générés (modeles.js) : ne lève jamais d'erreur
+  const carnet = typeof CARNET !== 'undefined' ? CARNET.charger() : null;      // le carnet des lieux (carnet.js) : ne lève jamais d'erreur
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
   const facultative = table => tout(table, 'id').then(x => { ideale = true; return x; }, () => []);   // (par id : des pages de 1 000 qui ne se chevauchent pas)
   const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
@@ -1092,6 +1097,7 @@ async function chargerTout() {
   E.diffusionReliee = ideale ? !(await sb.from('crescite_diffusion_prospects').select('lieu_id').limit(1)).error : false;
   await tableau;
   await documents;
+  await carnet;
 }
 // les alertes de tournée, avec leur confirmation (le onzième script, supabase/migrations/20261030_crescite_alertes.sql) :
 // sans leur jeton (les liens des courriels) ni rien d'autre que ce que le résumé montre. Sans le script (confirme_le
@@ -1154,6 +1160,11 @@ function ecouter() {
     const cd = sb.channel('crescite-admin-documents');
     Object.keys(TABLES_DOCUMENTS).forEach(t => cd.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
     cd.subscribe();
+  }
+  if (E.carnetInstalle) {
+    const cn = sb.channel('crescite-admin-carnet');
+    Object.keys(TABLES_CARNET).forEach(t => cn.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
+    cn.subscribe();
   }
   if (E.chiffresInstalles) {
     const cc = sb.channel('crescite-admin-chiffres');
@@ -1249,7 +1260,7 @@ setInterval(() => { if (document.visibilityState === 'visible') majTemoin(); }, 
 document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible' || !E.pret) return; majTemoin(); if (!E.direct && !E.horsLigne && Date.now() - (E.luLe || 0) > 900000) actualiser({ discret: true }); });
 
 function changement(t, p) {
-  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t] || TABLES_DOCUMENTS[t];
+  const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t] || TABLES_DOCUMENTS[t] || TABLES_CARNET[t];
   const pd = $('.direct.on'); if (pd) { pd.classList.remove('bat'); void pd.offsetWidth; pd.classList.add('bat'); }
   // la clé : une colonne, ou plusieurs (l'équipe d'une date : date_id et personne_id)
   const coll = E[k], ligne = p.eventType === 'DELETE' ? p.old : p.new, cles = [].concat(pk);
@@ -2015,7 +2026,7 @@ function aCompleterAvant(jours) {
     }
     const l = lieu(d.lieu_id);
     if (!l) { sansLieu.push(d); return; }
-    const manque = [!(l.adresse || '').trim() && 'adresse', !(E.lieuxSuivi.find(x => x.lieu_id === l.id)?.contact || '').trim() && 'contact'].filter(Boolean);
+    const manque = [!(l.adresse || '').trim() && 'adresse', !(E.lieuxSuivi.find(x => x.lieu_id === l.id)?.contact || '').trim() && !(E.contacts || []).some(x => x.lieu_id === l.id) && 'contact'].filter(Boolean);
     if (manque.length) { if (!lieux.has(l.id)) lieux.set(l.id, { l, manque, dates: [] }); lieux.get(l.id).dates.push(d); }
   });
   return { ds, pers: [...pers.values()], lieux: [...lieux.values()], sansLieu, feuilles, joignables: [...joint.values()], n: pers.size + lieux.size + sansLieu.length + feuilles.length + joint.size };
@@ -2248,7 +2259,10 @@ function editeurDate(id, depart = null) {
     if (!l) { el.innerHTML = ''; return; }
     const sl = E.lieuxSuivi.find(x => x.lieu_id === l.id) || {};
     el.innerHTML = `<div class="lieu-resume"><span>${l.adresse ? `${esc([l.adresse, l.commune].join(', '))} · <a href="${esc(FEUILLE.itineraire(l))}" target="_blank" rel="noopener">Itinéraire ↗</a>` : '<span class="manque">Adresse à compléter dans la fiche du lieu</span>'}</span>
-      <span>${sl.contact ? `Contact du lieu : ${texteEnLiens(sl.contact)}` : '<span class="manque">Pas de contact dans la fiche du lieu</span>'}</span>
+      ${(() => { const cs = typeof CARNET !== 'undefined' ? CARNET.contacts(l.id) : [], hs = typeof CARNET !== 'undefined' ? CARNET.hebergements(l.id) : [];
+        return `<span>${sl.contact ? `Contact du lieu : ${texteEnLiens(sl.contact)}` : cs.length ? '' : '<span class="manque">Pas de contact dans la fiche du lieu</span>'}</span>
+        ${cs.length ? `<span>${cs.slice(0, 3).map(c => `${esc(c.nom)}${c.role ? ` (${esc(c.role)})` : ''}${c.telephone ? ` : ${texteEnLiens(c.telephone)}` : ''}`).join(' · ')}${cs.length > 3 ? ` · +${cs.length - 3}` : ''}</span>` : ''}
+        ${hs.length ? `<span>Hébergement : ${hs.slice(0, 2).map(h => esc(h.nom)).join(', ')}${hs.length > 2 ? ` · +${hs.length - 2}` : ''}</span>` : ''}`; })()}
       ${sl.jauge || sl.plateau ? `<span>${[sl.jauge && `Jauge : ${esc(sl.jauge)} places`, sl.plateau && `plateau : ${esc(sl.plateau)}`].filter(Boolean).join(' · ')}</span>` : ''}
       <a href="#/lieux/${l.id}">Fiche du lieu →</a></div>`;
   };
@@ -3734,6 +3748,7 @@ function editeurSpectacle(slug) {
     if (!e.target.matches('[data-enregistrer]')) return;
     $$('.riche', zone).forEach(ed => ecrire(F, ed.dataset.chemin, valeur(ed)));
     $$('[data-legende]', zone).forEach(t => { F.photos[+t.dataset.legende].legende = t.value.trim() || null; });
+    $$('[data-ph-k]', zone).forEach(t => { const p = F.photos[+t.dataset.i]; if (!p) return; const v = t.value.trim(); if (v) p[t.dataset.phK] = v; else delete p[t.dataset.phK]; });
     if (F.video && !(F.video.url || '').trim()) F.video = null;
     if (F.avec && !texteSeul(F.avec.valeur).trim()) F.avec = null;
     if (F.tournee && !(F.tournee.titre || '').trim() && !(F.tournee.texte || '').trim()) F.tournee = null;
@@ -3750,14 +3765,33 @@ function editeurSpectacle(slug) {
     bravo();
   });
   zone.addEventListener('input', e => { if (e.target.dataset.legende !== undefined) { F.photos[+e.target.dataset.legende].legende = e.target.value; marquerSale(); } });
+  // les droits de chaque photo : son crédit, ce qu'on peut en faire, à quelles conditions
+  const droitsPhoto = e => {
+    const t = e.target; if (t.dataset.phK === undefined) return;
+    const p = F.photos[+t.dataset.i]; if (!p) return;
+    if (t.value.trim()) p[t.dataset.phK] = t.value; else delete p[t.dataset.phK];
+    if (t.dataset.phK === 'droits') { t.closest('.mini')?.classList.toggle('ph-interne', t.value === 'interne'); const n = $('#ph-a-verifier', zone); if (n) n.outerHTML = photosAVerifier(F); }
+    marquerSale();
+  };
+  zone.addEventListener('input', droitsPhoto);
+  zone.addEventListener('change', droitsPhoto);
+}
+// les photos de la page dont les droits ne sont pas encore écrits
+const DROITS_PHOTO = [['', 'Droits à vérifier'], ['accordes', 'Droits accordés : site et dossier'], ['interne', 'Usage interne : pas sur le site']];
+function photosAVerifier(F) {
+  const n = (F.photos || []).filter(p => !p.droits).length, k = (F.photos || []).filter(p => p.droits === 'interne').length;
+  return `<p class="aide" id="ph-a-verifier">${n ? `<span class="badge alerte">${n} photo${n > 1 ? 's' : ''} : droits à vérifier</span> ` : ''}${k ? `${k} en usage interne, hors du site. ` : ''}Le crédit d’une photo passe devant celui du spectacle (${esc(F.credit_photos || 'non écrit')}).</p>`;
 }
 function ongletPhotos(F) {
   F.photos = F.photos || [];
   return `<div class="bloc"><h3>Photo principale</h3><div class="miniatures"><div class="mini">${F.photo ? `<img src="${photoUrl(F.photo)}" alt="">` : '<div style="height:110px"></div>'}
       <div style="padding:8px"><label class="btn petit">Remplacer<input type="file" accept="image/*" data-photo="principale" hidden></label></div></div></div></div>
-    <div class="bloc"><h3>Photos de la page</h3><p class="aide">Dans l’ordre d’affichage. Les photos envoyées sont allégées (2 000 px, WebP) avant l’envoi.</p>
-      <div class="miniatures">${F.photos.map((p, i) => `<div class="mini"><img src="${photoUrl(p.fichier)}" alt="" loading="lazy">
+    <div class="bloc"><h3>Photos de la page</h3><p class="aide">Dans l’ordre d’affichage. Les photos envoyées sont allégées (2 000 px, WebP) avant l’envoi.</p>${F.photos.length ? photosAVerifier(F) : ''}
+      <div class="miniatures">${F.photos.map((p, i) => `<div class="mini${p.droits === 'interne' ? ' ph-interne' : ''}"><img src="${photoUrl(p.fichier)}" alt="" loading="lazy">
         <div style="padding:8px;display:grid;gap:6px"><textarea data-legende="${i}" rows="2" placeholder="Légende" aria-label="Légende">${esc(p.legende || '')}</textarea>
+        <input data-ph-k="credit" data-i="${i}" value="${esc(p.credit || '')}" placeholder="Crédit : © photographe" aria-label="Crédit de la photo">
+        <select data-ph-k="droits" data-i="${i}" aria-label="Droits de la photo">${DROITS_PHOTO.map(([v, l]) => `<option value="${v}"${(p.droits || '') === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
+        <input data-ph-k="conditions" data-i="${i}" value="${esc(p.conditions || '')}" placeholder="Conditions : presse seulement, jusqu’en 2027…" aria-label="Conditions d’utilisation">
         <div style="display:flex;gap:4px;flex-wrap:wrap">${i > 0 ? `<button type="button" class="btn petit" data-ph="monter" data-i="${i}" title="Avancer">←</button>` : ''}${i < F.photos.length - 1 ? `<button type="button" class="btn petit" data-ph="descendre" data-i="${i}" title="Reculer">→</button>` : ''}
         <label class="btn petit">Remplacer<input type="file" accept="image/*" data-remplacer="${i}" hidden></label><button type="button" class="btn petit danger" data-ph="retirer" data-i="${i}" title="Retirer">✕</button></div></div></div>`).join('')}</div>
       <p style="margin-top:12px"><label class="btn">＋ Ajouter des photos<input type="file" accept="image/*" multiple hidden></label></p></div>`;
@@ -3966,11 +4000,12 @@ function editeurLieu(id) {
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/lieux">←</a><h2>${esc(l0 ? lieuTexte(l0) : 'Nouveau lieu')}</h2></div>
     <div class="bloc" id="li-f">${SPEC_LIEU.map(c => champ(c, F)).join('')}<p class="aide">Astuce : la commune se cherche avec « Trouver la commune » ; département et position suivent.</p><button type="button" class="btn petit" id="li-geo">Trouver la commune</button></div>
     <div class="bloc" id="li-s"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3>${SPEC_LIEU_SUIVI.map(c => champ(c, G)).join('')}</div>
-    ${l0 ? datesDuLieu(id) : ''}${l0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="li-notes"></div>' : ''}
+    ${l0 && typeof CARNET !== 'undefined' ? '<div class="bloc" id="li-carnet"></div>' : ''}${l0 ? datesDuLieu(id) : ''}${l0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="li-notes"></div>' : ''}
     ${l0 ? `<div class="bloc"><h3>Fusionner</h3><p class="aide">Ce lieu fait doublon ? Ses ${nb} date${nb > 1 ? 's' : ''} et ses séances passent sur le lieu choisi, puis il disparaît.</p><div id="li-fusion"></div></div>` : ''}
     ${pied(l0 ? 'Tout est enregistré' : 'Nouveau lieu', l0 ? `<button type="button" class="btn danger" id="li-suppr"${nb ? ' disabled title="Ce lieu a des dates : fusionnez-le plutôt"' : ''}>Supprimer</button>` : '')}`;
   relier($('#li-f'), F, SPEC_LIEU); relier($('#li-s'), G, SPEC_LIEU_SUIVI);
   if (l0 && typeof NOTES !== 'undefined') NOTES.bloc($('#li-notes', zone), 'crescite_lieux', id, { titre: 'Notes internes' });
+  if (l0 && typeof CARNET !== 'undefined') CARNET.bloc($('#li-carnet', zone), id);
   const ch = k => $(`[data-chemin="${k}"]`, zone), appris = (table, k) => v => (l0 ? mentionAppris(table, id, k, v) : '');
   sousChamp(ch('adresse'), v => `${v.trim() ? `<a href="${esc(FEUILLE.itineraire({ ...F, adresse: v }))}" target="_blank" rel="noopener">Itinéraire ↗</a>` : ''}${appris('crescite_lieux', 'adresse')(v)}`);
   sousChamp(ch('site_web'), v => (/^https?:\/\/\S+$/.test(v.trim()) ? `<a href="${esc(v.trim())}" target="_blank" rel="noopener">Ouvrir le site ↗</a>` : ''));
@@ -3989,7 +4024,7 @@ function editeurLieu(id) {
   if (l0) comboLieu(zone, 'li-fusion', null, async cible => {
     if (cible === id) return;
     const c = lieu(cible);
-    if (!(await confirmerAction({ titre: `Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`, texte: `Ses dates, ses séances, son suivi (contact, jauge, plateau, notes : ce que « ${lieuTexte(c)} » n’a pas encore) et ses notes internes passent à « ${lieuTexte(c)} », puis « ${lieuTexte(l0)} » est supprimé.`, ok: 'Fusionner les lieux' }))) return;
+    if (!(await confirmerAction({ titre: `Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`, texte: `Ses dates, ses séances, son suivi (contact, jauge, plateau, notes : ce que « ${lieuTexte(c)} » n’a pas encore), son carnet et ses notes internes passent à « ${lieuTexte(c)} », puis « ${lieuTexte(l0)} » est supprimé.`, ok: 'Fusionner les lieux' }))) return;
     // le suivi : chaque champ vide du lieu gardé prend celui du lieu absorbé ; deux notes se mettent bout à bout
     const sa = E.lieuxSuivi.find(x => x.lieu_id === id), sc = E.lieuxSuivi.find(x => x.lieu_id === cible);
     let suivi = null;
@@ -4006,9 +4041,11 @@ function editeurLieu(id) {
     const r2 = r1.error ? r1 : await sb.from('crescite_seances').update({ lieu_id: cible }).eq('lieu_id', id);
     const r2b = r2.error || !suivi ? r2 : await sb.from('crescite_lieux_suivi').upsert(suivi, { onConflict: 'lieu_id' });
     const r2c = r2b.error ? r2b : await sb.from('crescite_notes').update({ cible_id: cible }).eq('cible_table', 'crescite_lieux').eq('cible_id', id).then(r => (r.error && /crescite_notes/.test(r.error.message || '') ? { error: null } : r));
-    const r3 = r2c.error ? r2c : await sb.from('crescite_lieux').delete().eq('id', id);
+    const r2d = r2c.error || !E.carnetInstalle ? r2c : await sb.from('crescite_contacts').update({ lieu_id: cible }).eq('lieu_id', id).then(r => (r.error ? r : sb.from('crescite_hebergements').update({ lieu_id: cible }).eq('lieu_id', id)));
+    const r3 = r2d.error ? r2d : await sb.from('crescite_lieux').delete().eq('id', id);
     if (r3.error) return erreur(r3.error, 'Fusion incomplète');
     E.dates.forEach(d => { if (d.lieu_id === id) d.lieu_id = cible; }); E.seances.forEach(s => { if (s.lieu_id === id) s.lieu_id = cible; }); E.lieux = E.lieux.filter(x => x.id !== id);
+    [...(E.contacts || []), ...(E.hebergements || [])].forEach(x => { if (x.lieu_id === id) x.lieu_id = cible; });
     E.lieuxSuivi = E.lieuxSuivi.filter(x => x.lieu_id !== id && x.lieu_id !== cible).concat(suivi ? [suivi] : sc ? [sc] : []);
     E.sale = false; location.hash = `#/lieux/${cible}`; annoncer('Lieux fusionnés.');
   });
@@ -4734,7 +4771,7 @@ const champsChanges = j => j.avant && j.apres ? Object.keys(j.apres).filter(k =>
 // session. « Lire plus ancien » ajoute 300 modifications ; quand une période remonte plus loin que ce qui est lu, le dit.
 const RUBRIQUES_JOURNAL = [['representations', 'Représentations', ['crescite_dates', 'crescite_representations', 'crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes']],
   ['feuilles', 'Feuilles de route', ['crescite_feuilles']], ['spectacles', 'Spectacles', ['crescite_spectacles', 'crescite_distributions', 'crescite_documents']],
-  ['equipe', 'Équipe', ['crescite_personnes']], ['ateliers', 'Ateliers', ['crescite_ateliers', 'crescite_seances']], ['lieux', 'Lieux', ['crescite_lieux', 'crescite_lieux_suivi']],
+  ['equipe', 'Équipe', ['crescite_personnes']], ['ateliers', 'Ateliers', ['crescite_ateliers', 'crescite_seances']], ['lieux', 'Lieux', ['crescite_lieux', 'crescite_lieux_suivi', 'crescite_contacts', 'crescite_hebergements']],
   ['diffusion', 'Diffusion', ['crescite_diffusion_prospects', 'crescite_devis_demandes', 'crescite_documents_generes', 'crescite_acces_pro']],
   ['planning', 'Planning', ['crescite_propositions']], ['frais', 'Frais et matériel', ['crescite_notes_frais', 'crescite_materiel']], ['notes', 'Notes internes', ['crescite_notes']],
   ['textes', 'Textes du site', ['crescite_textes']]];
@@ -4861,7 +4898,7 @@ async function vueJournal() {
 <script src="menus.js"></script>
 <!-- le niveau supérieur : la corbeille (supprimer sans confirmer, rétablir), les fiches en tiroir, la sélection multiple,
      le parcours d'une date, les garde-fous à la saisie, les séries et modèles de dates, les documents générés, les notes
-     internes, la carte de tournée, le téléphone -->
+     internes, le carnet des lieux, la carte de tournée, le téléphone -->
 <script src="corbeille.js"></script>
 <script src="tiroir.js"></script>
 <script src="selection.js"></script>
@@ -4870,6 +4907,7 @@ async function vueJournal() {
 <script src="series.js"></script>
 <script src="modeles.js"></script>
 <script src="notes.js"></script>
+<script src="carnet.js"></script>
 <script src="fond-carte.js"></script>
 <script src="tournee.js"></script>
 <script src="mobile.js"></script>

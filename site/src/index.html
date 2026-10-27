@@ -3841,8 +3841,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // une animation liée au défilement) ; sans elle, la phrase fleurit d'un bloc quand elle arrive à l'écran (.ecrit)
   const mots = t => String(t || '').split(/[ \n\t]+/).filter(Boolean);
   const ecrit = (t, i0 = 0) => mots(t).map((w, i) => `<span class="w" style="--w:${i0 + i}">${esc(w)}</span>`).join(' ');
-  const creditDe = (s, p) => p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
+  // le crédit d'une photo : le sien (photos[i].credit), sinon celui du spectacle pour sa source ; edCredit, de quoi l'écrire
+  // en place (le mode édition)
+  const creditDe = (s, p) => p && p.credit ? p.credit : p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
   const cleCredit = p => p && p.source === 'dossier' ? 'creditDossier' : 'creditPhotos';
+  const edCredit = (s, p) => (p && p.credit && (s.photos || []).indexOf(p) >= 0 ? edS(s, 'photos', s.photos.indexOf(p), 'credit') : edS(s, cleCredit(p)));
   /* le texte de remplacement d'une photo de contenu (un spectacle) : sa légende de D quand elle n'est pas écrite à côté d'elle ;
      écrite à côté (une figcaption), rien (alt="" : le lecteur d'écran ne l'entend pas deux fois) ; sans légende, le titre du
      spectacle qu'elle montre. Une photo décorative (un fond, une vignette dans un bouton ou un lien qui dit déjà son nom, la photo
@@ -4951,7 +4954,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         ${datesEcran(s)}
         <p class="df-cta" style="--k:4"><a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></p>
       </div></div>
-      ${credit ? `<p class="df-credit"${edS(s, kCredit)}>${esc(credit)}</p>` : ''}
+      ${credit ? `<p class="df-credit"${ph ? edCredit(s, ph) : edS(s, kCredit)}>${esc(credit)}</p>` : ''}
       <div class="df-voile" aria-hidden="true"></div>
     </article>`;
   }
@@ -7332,10 +7335,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // les photos du récit : la principale d'abord, puis les autres de la scène, dans l'ordre de D (pas celles d'un atelier ni
   // d'un établissement ; la principale, quand la liste la reprend, n'y revient pas)
   function photosRecit(s) {
-    const p0 = D.photos[s.slug], out = p0 ? [{ src: p0, attr: edP(s, 'photo'), credit: s.creditPhotos || s.credit, kc: s.creditPhotos ? 'creditPhotos' : 'credit' }] : [];
+    const p0 = D.photos[s.slug], out = p0 ? [{ src: p0, attr: edP(s, 'photo'), credit: s.creditPhotos || s.credit, ka: edS(s, s.creditPhotos ? 'creditPhotos' : 'credit') }] : [];
     (s.photos || []).forEach((p, i) => {
       const src = D.photos[p.cle]; if (!src || p.etablissement || p.atelier || src === p0 || p.id === 'principale') return;
-      out.push({ src, attr: edP(s, 'photos', i), p, i, credit: creditDe(s, p), kc: cleCredit(p) });
+      out.push({ src, attr: edP(s, 'photos', i), p, i, credit: creditDe(s, p), ka: edCredit(s, p) });
     });
     return out;
   }
@@ -7351,7 +7354,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     (s.citations || []).forEach((c, ic) => pas.push(citationSp(s, c, ic)));
     const phs = photosRecit(s);
     if (!pas.length) return '';
-    const legende = x => (x.p && x.p.legende) || x.credit ? `<figcaption>${x.p && x.p.legende ? `<span${edS(s, 'photos', x.i, 'legende')}>${esc(x.p.legende)}</span>` : ''}${x.credit ? `<small${edS(s, x.kc)}>${esc(x.credit)}</small>` : ''}</figcaption>` : '';
+    const legende = x => (x.p && x.p.legende) || x.credit ? `<figcaption>${x.p && x.p.legende ? `<span${edS(s, 'photos', x.i, 'legende')}>${esc(x.p.legende)}</span>` : ''}${x.credit ? `<small${x.ka}>${esc(x.credit)}</small>` : ''}</figcaption>` : '';
     return chapitre(chap, 'spectacle', L.leSpectacle, `${titreChap(esc(L.leSpectacle))}
       <div class="rc${phs.length ? '' : ' rc--seul'}" data-scrolly data-fx="recit">
         <div class="rc-pas">${pas.map((h, i) => `<div class="rc-p${i ? '' : ' on'}"><div class="rc-in apparait">${h}</div></div>`).join('')}</div>
@@ -7363,10 +7366,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   function photosSp(s, chap) {
     const phs = (s.photos || []).map((p, i) => ({ p, i })).filter(({ p }) => !p.etablissement && !p.atelier && D.photos[p.cle]);
     if (!phs.length) return '';
+    // (les crédits, une fois chacun : celui de chaque photo qui a le sien, sinon celui du spectacle pour sa source)
     const credits = [];
-    phs.forEach(({ p }) => { const k = cleCredit(p); if (s[k] && !credits.some(c => s[c] === s[k])) credits.push(k); });
+    phs.forEach(({ p }) => { const t = creditDe(s, p); if (t && !credits.some(c => c.t === t)) credits.push({ t, a: edCredit(s, p) }); });
     return chapitre(chap, 'photos', L.photos, `<div class="wrap">${titreChap(esc(L.photos))}<div class="cartons7" data-mv="cascade">${phs.map(({ p, i }) => `<figure class="carton7"${edP(s, 'photos', i)}><img src="${D.photos[p.cle]}" alt="${esc(altPh(s, p))}" loading="lazy" decoding="async">${p.legende ? `<figcaption${edS(s, 'photos', i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
-      ${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div>`);
+      ${credits.map(c => `<p class="u-credit"${c.a}>${esc(c.t)}</p>`).join('')}</div>`);
   }
   // la présentation d'un spectacle qui n'est plus en tournée (la 10) : l'ouverture (le cadre, les affirmations), le spectacle
   // (son texte, ses citations), les photos, la vidéo

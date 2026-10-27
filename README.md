@@ -576,6 +576,17 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   transmettre à l'accueil (jamais dans la feuille), et son trajet part du lieu de la veille quand deux dates
   s'enchaînent. La liste des dates se filtre par nature, département, contrat et période, montre la nature, et la
   recherche (la liste comme Ctrl K) trouve une date par son organisateur ou son contact.
+- **Le carnet des lieux et les droits des photos** : la fiche d'un lieu a son carnet, jamais publié : ses contacts
+  (direction, régie, accueil des compagnies…, chacun son rôle, son téléphone, son courriel) et les hébergements à côté
+  (hôtel, gîte, chez l'habitant ; adresse, prix, ce qu'il faut savoir). Un contact coché « sur la feuille de route »
+  s'écrit dans la rubrique « Adresses et contacts » des feuilles des dates de ce lieu ; un hébergement du carnet se
+  propose comme rubrique Hébergement (après les feuilles déjà écrites au même lieu ; ceux des autres lieux de la commune
+  en dernier). La fiche d'une date montre les contacts et l'hébergement de son lieu ; une fusion de lieux emporte le
+  carnet. Chaque photo d'un spectacle a son crédit (qui passe devant celui du spectacle sur le site), ses droits
+  (accordés, à vérifier, ou « usage interne » : la photo reste hors du site, de la base comme de l'instantané) et ses
+  conditions d'utilisation. L'équipe d'une date suit partout la même règle : la distribution « en tournée », moins les
+  retirés, plus les renforts, la fonction écrite pour la date remplaçant celle de la distribution (l'administration,
+  l'espace de l'équipe, et la base, qui la tient dans une vue).
 - **Feuilles de route** : la feuille d'une date s'écrit directement sur une page A4 à l'écran, dans la forme des
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
   Calibri, les jours en gras, les personnes surlignées en jaune, les alertes en rouge). La barre d'outils est courte :
@@ -1008,6 +1019,13 @@ se lance dans le projet de la compagnie et peut être relancé. Une piste de dif
 invitation à l'espace pro et une demande de devis leur piste (`prospect_id`) ; les étapes d'une piste (dont `refus`, une
 piste perdue) et les statuts d'une demande sont tenus par la base. 7 essais (`node diffusion.mjs`). Sans lui,
 l'administration ne propose pas ces liens et marche comme avant.
+
+**L'équipe d'une date et le carnet des lieux (pas encore lancé).** Le vingt-deuxième script,
+`supabase/migrations/20261110_crescite_carnet.sql`, se lance dans le projet de la compagnie et peut être relancé. La vue
+`crescite_equipe_date` dit qui part sur une date (et avec quelle fonction) ; `crescite_membres_date` (qui prévenir) et
+`crescite_membre_date` (qui lit quoi) la lisent désormais, sans rien changer à ce qu'elles rendent. Les tables
+`crescite_contacts` et `crescite_hebergements` (le carnet des lieux) ne se lisent que dans l'administration et vont au
+journal. 21 essais (`node carnet.mjs`). Sans lui, la fiche d'un lieu dit que le carnet attend son script.
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
