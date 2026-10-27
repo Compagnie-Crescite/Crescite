@@ -1844,6 +1844,23 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
   .sp .rs-photo { position: relative; display: block; inset: auto; width: 100%; height: 150px; opacity: .65; -webkit-mask-image: linear-gradient(0deg, transparent, #000 70%); mask-image: linear-gradient(0deg, transparent, #000 70%); }
   .sp .rs-c { margin-top: -40px; padding: 0 18px 22px; }
 }
+/* de la place pour lire au téléphone (Range) : sur la page d'un spectacle, quand on descend, le menu flottant se range
+   au-dessus de l'écran (html.menu-range) et la rangée des entrées arrimée monte à sa place, ce qui s'arrime sous elle aussi
+   (--range : la place qu'il rend) ; il revient quand on remonte. Seules les places des pièces arrimées changent (aucune
+   hauteur : la page ne bouge pas) ; moins d'animations, rien ne glisse. Au bureau, rien de tout cela */
+:root { --range: 0px; }
+@media (max-width: 759px) {
+  html.menu-range { --range: calc(var(--haut) - 8px); scroll-padding-top: calc(var(--haut) + 16px - var(--range)); }
+  html.menu-range .top { translate: 0 calc(-100% - 20px - env(safe-area-inset-top)); box-shadow: none; }
+  html.menu-range .u-onglets { top: calc(var(--haut) - 8px - var(--range)); }
+  html.menu-range .u-onglets::before { opacity: 0; }
+  .u-onglets::before { bottom: 100%; }   /* (sans filet au téléphone : le fond monte d'aplomb, aucune ligne de texte ne passe entre) */
+  html.menu-range :is(.recit-panneau, .rc-vis) { top: calc(var(--haut) + var(--onglets) - var(--range)); }
+  html.menu-range .carte-sp { top: calc(var(--haut) + var(--onglets) + 16px - var(--range)); }
+  html.menu-range .u-faits { top: calc(var(--haut) + var(--onglets) + 20px - var(--range)); }
+  html:not(.still) .top { transition: box-shadow var(--k-survol) var(--k-doux), translate .3s var(--k-doux); }
+  html:not(.still) :is(.u-onglets, .recit-panneau, .rc-vis, .carte-sp, .u-faits) { transition: top .3s var(--k-doux); }
+}
 @media (max-width: 640px) {
   .cartons7 { grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .carton7:first-child:not(:last-child) img { aspect-ratio: 3 / 2; }
@@ -7003,6 +7020,33 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     secs.forEach(x => { x.__h = 0; }); const o = $('.u-onglets', main); if (o) o.__haut = undefined; if (psom) psom.__haut = undefined;
     if (secs.length || chaps.length || ecrans.length || psom) defile(); }); });
 
+  /* ---------- de la place pour lire au téléphone ----------
+     Sur la page d'un spectacle au téléphone, le menu flottant et la rangée des entrées arrimée prenaient ensemble le haut de
+     l'écran. Quand on descend, la rangée arrimée (.colle, posée par defile), le menu se range au-dessus de l'écran
+     (html.menu-range) et la rangée monte à sa place ; il revient dès qu'on remonte d'un rien, qu'on revient en haut de la page,
+     que le focus y va, et à chaque page. Le défilement ne fait que lire scrollY (une fois par image) ; au bureau, rien. */
+  const ETROIT_MENU = matchMedia('(max-width: 759px)');
+  const Range = (() => {
+    const html = document.documentElement;
+    let y0 = scrollY, cumul = 0, raf = 0;
+    const poser = oui => { if (html.classList.contains('menu-range') === oui) return; html.classList.toggle('menu-range', oui); const o = $('.u-onglets', main); if (o) o.__haut = undefined; };
+    const lire = () => {
+      raf = 0;
+      const y = scrollY, d = y - y0; y0 = y;
+      const ong = vue === 'spectacle' && ETROIT_MENU.matches ? $('.u-onglets', main) : null;
+      if (!ong || !ong.classList.contains('colle') || y < 40 || Menu.el.contains(document.activeElement)) { cumul = 0; poser(false); return; }
+      // (un sens tenu : 24 px vers le bas le range, 10 px vers le haut le rend)
+      cumul = (d > 0) === (cumul > 0) ? cumul + d : d;
+      if (cumul > 24) poser(true); else if (cumul < -10) poser(false);
+    };
+    addEventListener('scroll', () => { if (!raf && (html.classList.contains('menu-range') || vue === 'spectacle')) raf = requestAnimationFrame(lire); }, { passive: true });
+    Menu.el.addEventListener('focusin', () => { cumul = 0; poser(false); });
+    ETROIT_MENU.addEventListener('change', () => poser(false));
+    // (à chaque page : rendu d'un coup, sans glisser, la place des pièces arrimées se lit juste aussitôt — sousLesMenus)
+    return { rendre() { y0 = scrollY; cumul = 0; if (!html.classList.contains('menu-range')) return;
+      html.classList.add('sans-glisse'); poser(false); void html.offsetWidth; html.classList.remove('sans-glisse'); } };
+  })();
+
   // les phrases s'écrivent et les photos apparaissent quand elles arrivent à l'écran
   let io = null;
   function ecrire(surPlace) {
@@ -7271,6 +7315,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const marque = avant && type === 'quitter' ? centreDe($('.marque .l', Menu.el)) || centreDe(Menu.el) : null;
     const ong = type === 'onglet' ? $('.u-onglets a[aria-current="page"]', main) : null, q0 = ong ? ong.getBoundingClientRect() : null;
     Encre.arreter();
+    Range.rendre();
     document.documentElement.classList.remove(vers0);
     cadre();
     let r = rendre(a, false), b = a;
