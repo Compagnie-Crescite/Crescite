@@ -89,10 +89,10 @@ const libelleCategorie = c => (CATEGORIES.find(x => x[0] === c) || [c, c])[1];
 const distributionDe = spId => E.distributions.filter(x => x.spectacle_id === spId).sort((a, b) => rangCategorie(a.categorie) - rangCategorie(b.categorie) || a.ordre - b.ordre || a.id - b.id);
 const fonctionDistribution = x => x.categorie === 'jeu' ? `${x.fonction || 'Jeu'}${x.role ? ` (${x.role})` : ''}` : x.fonction || libelleCategorie(x.categorie);
 const slugPersonne = texte => { const b = slugifier(texte) || 'personne'; let s = b, n = 2; while (E.personnes.some(p => p.slug === s)) s = `${b}-${n++}`; return s; };
-const copier = async (texte, quoi) => {
+const copier = async (texte, quoi, message) => {
   try { await navigator.clipboard.writeText(texte); }
   catch { const t = document.createElement('textarea'); t.value = texte; t.style.cssText = 'position:fixed;opacity:0'; document.body.append(t); t.select(); document.execCommand('copy'); t.remove(); }
-  annoncer(`${quoi} copiée : ${texte}`);
+  annoncer(message || `${quoi} copiée : ${texte}`);
 };
 // l'équipe d'une date : la distribution « en tournée » du spectacle, moins qui ne part pas, plus remplaçants et renforts
 function equipeDate(spectacleId, ecarts) {
@@ -2460,6 +2460,14 @@ const plusJours = (j, n) => { const d = new Date(`${j}T12:00:00`); d.setDate(d.g
 const quandTexte = q => new Date(q).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
 // le lien de l'invitation : l'espace des salles est publié à côté de l'administration
 const lienPro = a => `${new URL('../pro/', location.href).href}#${a.jeton}`;
+// le code court de l'invitation (le dix-neuvième script : dix caractères sans lettre ambiguë), qu'on lit, qu'on dicte et
+// qu'on tape dans « Code d'accès » de l'espace des salles ; montré en deux groupes de cinq
+const adressePro = () => new URL('../pro/', location.href).href;
+const codeLisible = c => c ? `${c.slice(0, 5)}-${c.slice(5)}` : '';
+// le message tout prêt, pour un SMS, une messagerie ou le partage du téléphone
+const messageCode = a => [`Compagnie Crescite : votre code d’accès à l’espace des salles est ${codeLisible(a.code)}`,
+  `À saisir sur ${adressePro()} (« Code d’accès »), ou directement : ${lienPro(a)}`,
+  `Valable jusqu’au ${jourLong(a.expire_le)}.`].join('\n');
 const titreCourt = s => String(s?.titre || '').split(' – ')[0];
 const listeEt = xs => xs.length > 1 ? `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}` : xs.join('');
 // les spectacles qu'une invitation ouvre : ceux qu'elle nomme ; sinon, tous ceux qui ont des documents réservés aux salles
@@ -2478,6 +2486,7 @@ function courrielAcces(a) {
   const sps = spectaclesAcces(a).map(titreCourt), moi = E.admins.find(x => x.user_id === E.session?.user?.id)?.nom;
   const corps = [`Bonjour${a.contact ? ` ${a.contact}` : ''},`, '',
     `Voici le lien de votre espace, où vous trouverez les captations et les documents ${sps.length ? `que nous vous ouvrons pour ${listeEt(sps)}` : 'de nos spectacles'} :`, lienPro(a), '',
+    ...(a.code ? [`Vous pouvez aussi y entrer depuis ${adressePro()} avec votre code d’accès : ${codeLisible(a.code)}`, ''] : []),
     `Il reste ouvert jusqu’au ${jourLong(a.expire_le)}. Ce lien vous est réservé : merci de ne pas le transférer.`, '',
     'Bien à vous,', ...(moi ? [moi] : []), 'Compagnie Crescite'].join('\r\n');
   return `mailto:${a.courriel ? encodeURIComponent(a.courriel.trim()).replace(/%40/g, '@') : ''}?subject=${encodeURIComponent('Compagnie Crescite : captations et documents')}&body=${encodeURIComponent(corps)}`;
@@ -2529,9 +2538,9 @@ function listeAcces(zone, actif) {
 // sans invitation choisie : ce qu'est l'espace pro, et ce que chaque spectacle y montre
 function accueilPro() {
   const sps = E.spectacles.filter(s => s.page || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || estPros(d)))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
-  return `<div class="bloc"><h3>Inviter une salle</h3><p>Une invitation ouvre à une salle ou à un festival l’espace pro : les captations et les documents des spectacles choisis, jusqu’à une date. On lui envoie son lien ; chaque visite et chaque document ouvert s’inscrivent dans son journal.</p>
+  return `<div class="bloc"><h3 aria-level="2">Inviter une salle</h3><p>Une invitation ouvre à une salle ou à un festival l’espace pro : les captations et les documents des spectacles choisis, jusqu’à une date. On lui envoie son lien ; chaque visite et chaque document ouvert s’inscrivent dans son journal.</p>
       <p class="aide">Le lien mène à pro/, une page du site qui demande les documents à la fonction <code>crescite-pro</code> de Supabase (supabase/functions/crescite-pro) : elle doit y être déployée.</p></div>
-    <div class="bloc"><h3>Ce que les salles y trouvent</h3>${sps.length ? `<ul class="liste-simple pro-docs">${sps.map(s => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><b>${esc(s.titre)}</b><span class="compte">${esc(compteDocsSalles(s.id))}</span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Documents">Documents</a></li>`).join('')}</ul>` : '<p class="aide">Aucun spectacle.</p>'}
+    <div class="bloc"><h3 aria-level="2">Ce que les salles y trouvent</h3>${sps.length ? `<ul class="liste-simple pro-docs">${sps.map(s => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><b>${esc(s.titre)}</b><span class="compte">${esc(compteDocsSalles(s.id))}</span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Documents">Documents</a></li>`).join('')}</ul>` : '<p class="aide">Aucun spectacle.</p>'}
       <p class="aide">Les documents réservés aux salles se déposent dans chaque spectacle, onglet Documents ; les dossiers et fiches techniques des programmateurs s’y ajoutent.</p></div>`;
 }
 function editeurAcces(id) {
@@ -2556,7 +2565,7 @@ function editeurAcces(id) {
         <span class="aide">Une durée à partir d’aujourd’hui, ou une date. Ensuite, le lien ne s’ouvre plus.</span></div>
       ${champ(SPEC_ACCES[3], F)}
     </div>
-    ${a0 ? '<div class="bloc"><div class="pro-journal-tete"><h3>Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal"><p class="aide">Chargement…</p></div></div>' : ''}
+    ${a0 ? `<div class="bloc"><div class="pro-journal-tete"><h3 aria-level="2">Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal">${typeof attenteLignes === 'function' ? attenteLignes(3, 44) : '<p class="aide">Chargement…</p>'}</div></div>` : ''}
     ${pied(a0 ? 'Tout est enregistré' : 'Nouvelle invitation', a0 ? '<button type="button" class="btn danger" id="pro-suppr">Supprimer</button>' : '')}`;
   const courriel = $('[data-chemin="courriel"]', zone);
   if (courriel) { courriel.type = 'email'; courriel.autocomplete = 'off'; }
@@ -2583,10 +2592,18 @@ function editeurAcces(id) {
   const actions = () => {
     const a = cur(); if (!a) return '';
     const st = etatAcces(a);
+    // le code en grand, d'abord (s'il existe : le dix-neuvième script le donne), et de quoi le transmettre d'un geste
+    const code = a.code ? `<div class="pro-code" role="group" aria-labelledby="pro-code-t">
+        <p class="pro-code-t" id="pro-code-t">Code d’accès</p>
+        <p class="pro-code-v"><span aria-hidden="true">${esc(codeLisible(a.code))}</span><span class="sr">${esc(a.code.split('').join(' '))}</span></p>
+        <p class="pro-code-ou">À saisir sur <b>${esc(adressePro().replace(/^https?:\/\//, ''))}</b>, dans « Code d’accès ».</p>
+        <div class="fm-boutons"><button type="button" class="btn principal" data-pro="copier-code">Copier le code</button><button type="button" class="btn" data-pro="copier-message">Copier le message</button>${navigator.share ? '<button type="button" class="btn" data-pro="partager">Partager…</button>' : ''}<a class="btn pro-sms" data-pro="sms" href="${esc(`sms:?&body=${encodeURIComponent(messageCode(a))}`)}">Par SMS</a></div>
+      </div>` : '';
     return `<div class="pro-etat-l"><span class="badge ${st.classe}">${esc(st.texte)}</span><span class="compte">${esc(visitesTexte(a))}</span></div>
+      ${code}
       <div class="acces"><code id="pro-url">${esc(lienPro(a))}</code></div>
-      <div class="fm-boutons"><button type="button" class="btn principal" data-pro="copier">Copier le lien</button><a class="btn" data-pro="ecrire" href="${esc(courrielAcces(a))}">Écrire${a.courriel ? '' : ' (sans adresse)'}</a><button type="button" class="btn" data-pro="prolonger" title="${PROLONGER_PRO} jours de plus, après la date de fin (ou après aujourd’hui si elle est passée)">Prolonger de ${PROLONGER_PRO} jours</button><button type="button" class="btn" data-pro="actif">${a.actif ? 'Désactiver' : 'Réactiver'}</button></div>
-      <p class="aide">« Écrire » prépare un courriel au contact, avec le lien et la date de fin. ${a.actif ? 'Désactivée, l’invitation garde son lien et son journal, mais le lien ne s’ouvre plus.' : 'Tant qu’elle est désactivée, le lien ne s’ouvre plus.'}</p>`;
+      <div class="fm-boutons"><button type="button" class="btn${a.code ? '' : ' principal'}" data-pro="copier">Copier le lien</button><a class="btn" data-pro="ecrire" href="${esc(courrielAcces(a))}">Écrire${a.courriel ? '' : ' (sans adresse)'}</a><button type="button" class="btn" data-pro="prolonger" title="${PROLONGER_PRO} jours de plus, après la date de fin (ou après aujourd’hui si elle est passée)">Prolonger de ${PROLONGER_PRO} jours</button><button type="button" class="btn" data-pro="actif">${a.actif ? 'Désactiver' : 'Réactiver'}</button></div>
+      <p class="aide">« Écrire » prépare un courriel au contact, avec le lien${a.code ? ', le code' : ''} et la date de fin. ${a.actif ? 'Désactivée, l’invitation garde son lien et son journal, mais le lien ne s’ouvre plus.' : 'Tant qu’elle est désactivée, le lien ne s’ouvre plus.'}</p>`;
   };
   const dessinerActions = () => { const el = $('#pro-actions', zone); if (el) el.innerHTML = actions(); };
   if (a0) { dessinerActions(); $('#pro-actions', zone).rafraichir = dessinerActions; }
@@ -2602,6 +2619,13 @@ function editeurAcces(id) {
     const a = cur(); if (!a) return;
     const k = b.dataset.pro;
     if (k === 'copier') return copier(lienPro(a), 'Adresse de l’invitation');
+    if (k === 'copier-code') return copier(codeLisible(a.code), 'Code', `Code d’accès copié : ${codeLisible(a.code)}`);
+    if (k === 'copier-message') return copier(messageCode(a), 'Message', 'Message copié : le code, l’adresse de l’espace et la date de fin.');
+    if (k === 'partager') {
+      if (E.sale) return annoncer('Enregistrez d’abord l’invitation : le message reprend ce qui est enregistré.', { erreur: true });
+      return navigator.share({ title: 'Espace des salles · Compagnie Crescite', text: messageCode(a) }).catch(() => {});
+    }
+    if (k === 'sms' && E.sale) { e.preventDefault(); return annoncer('Enregistrez d’abord l’invitation : le message reprend ce qui est enregistré.', { erreur: true }); }
     if (k === 'ecrire') {
       if (E.sale) { e.preventDefault(); return annoncer('Enregistrez d’abord l’invitation : le courriel reprend ce qui est enregistré.', { erreur: true }); }
       b.href = courrielAcces(a);   // le logiciel de courriel s'ouvre sur ce brouillon
@@ -2718,7 +2742,7 @@ function vueEquipeFrais(tete, parties) {
     </div>
     <div class="bloc">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-        <h3 style="margin:0">Notes de frais soumises par l’équipe</h3>
+        <h3 style="margin:0" aria-level="2">Notes de frais soumises par l’équipe</h3>
         <button type="button" class="btn principal" id="btn-export-csv-frais">📥 Exporter en CSV comptable</button>
       </div>
       <div class="frais-defile" data-defile tabindex="0" role="region" aria-label="Notes de frais (le tableau défile de côté)">
@@ -3146,6 +3170,16 @@ input[type=tel]:focus { border-color: var(--accent); outline: none; box-shadow: 
 .ligne .vu { display: block; margin-top: 2px; color: var(--gris); font-size: 12.5px; }
 .pro-etat-l { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .pro-actions .acces { margin: 10px 0 0; }
+/* le code d'accès en grand : il se lit d'un coup d'œil, se dicte au téléphone et se recopie sans erreur */
+.pro-code { margin: 12px 0 4px; padding: 16px 18px 14px; border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--trait)); border-radius: var(--rayon); background: color-mix(in srgb, var(--accent) 10%, var(--carte)); }
+.pro-code-t { margin: 0; color: var(--gris); font: 700 11.5px/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
+.pro-code-v { margin: 6px 0 4px; color: var(--encre); font: 700 clamp(30px, 7vw, 46px)/1.1 var(--titres); letter-spacing: .1em; font-variant-numeric: tabular-nums; white-space: nowrap; user-select: all; }
+.pro-code-ou { margin: 0; color: var(--gris); font-size: 13px; }
+.pro-code-ou b { color: var(--encre); font-weight: 600; overflow-wrap: anywhere; }
+.pro-code .fm-boutons { margin-top: 12px; }
+/* le SMS n'a de sens que sur un appareil qui en envoie */
+@media (hover: hover) and (pointer: fine) { .pro-sms { display: none; } }
+@media (pointer: coarse) { .pro-actions .btn { min-height: 44px; } }
 .pro-actions .acces code { font-size: 12.5px; line-height: 1.45; }
 .pro-actions .fm-boutons { margin-top: 10px; }
 .pro-actions .aide { margin: 10px 0 0; }
