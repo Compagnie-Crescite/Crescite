@@ -102,8 +102,8 @@ const DOSSIER = (() => {
     // la distribution
     const equipe = s.equipe || [], P = D.personnes || {};
     const nomDe = x => { const p = P[x.personne] || {}; return [p.prenom, p.nom].filter(Boolean).join(' '); };
-    // (ceux qui ne partent plus en tournée, quand d'autres partent : la distribution d'aujourd'hui)
-    const partent = equipe.some(x => x.enTournee !== false), sesLignes = x => equipe.filter(y => y.personne === x.personne);
+    // (sans ceux qui ne partent plus en tournée, quand d'autres comédiens partent : la distribution d'aujourd'hui)
+    const partent = equipe.some(x => x.categorie === 'jeu' && x.enTournee !== false), sesLignes = x => equipe.filter(y => y.personne === x.personne);
     const jeu = equipe.filter(x => x.categorie === 'jeu' && !(partent && sesLignes(x).every(y => y.enTournee === false)));
     // un spectacle en création n'a parfois que l'équipe de création annoncée (« Mise en scène : … ») : elle remplace la fiche
     const creation = (s.programmer && s.programmer.equipeCreation) || [];
