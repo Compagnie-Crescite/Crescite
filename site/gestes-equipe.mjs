@@ -2,7 +2,7 @@
 // l'appui long sur un billet (une feuille d'actions depuis le bas), la date d'avant et d'après (les boutons, le balayage
 // au doigt, ← → au clavier), le clic droit sur une notification ; ne rien perdre en partant ; supprimer dans la boîte de
 // la charte (jamais confirm()), un retard signalé et un mot pour l'administration commencés protégés du départ ; le
-// témoin de la connexion (à jour, hors ligne, le retour).
+// témoin de la connexion (à jour, hors ligne, le retour) ; l'aide « ? » (les raccourcis, au doigt les gestes).
 //   python3 site/build.py && node site/gestes-equipe.mjs
 // Même saison fictive que mouvement-equipe.mjs (aucune donnée réelle, la base coupée). Demande Playwright et Chromium.
 import http from 'node:http';
@@ -606,6 +606,42 @@ fs.mkdirSync(CAPT, { recursive: true });
   const e3 = await etat();
   ok('témoin (ordinateur) · le réseau revient : l’espace se relit, « À jour », « Connexion rétablie »', e3.etat === 'ajour' && !e3.bandeau && /^Connexion rétablie/.test(e3.sr), JSON.stringify(e3));
   ok('témoin (ordinateur) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ l'aide « ? » : les raccourcis, au doigt les gestes
+{
+  // au téléphone : « Gestes et raccourcis », au bas de « Moi »
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/moi' });
+  await page.waitForSelector('.moi-aide [data-aide]', { timeout: 8000 });
+  await page.tap('.moi-aide [data-aide]');
+  await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 }).catch(() => {});
+  const a = await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide[open]'); return d && { titre: d.querySelector('h2').textContent, gestes: [...d.querySelectorAll('.gq-geste')].map(x => x.textContent), kbd: d.querySelectorAll('kbd').length }; });
+  ok('aide (téléphone) · « Gestes et raccourcis », au bas de « Moi » : l’appui long, tirer vers le bas, balayer ; pas de touches', a && a.titre === 'Gestes et raccourcis' && ['Appui long', 'Tirer vers le bas', 'Balayer', 'Glisser depuis le bord gauche'].every(g => a.gestes.includes(g)) && a.kbd === 0, JSON.stringify(a));
+  await page.waitForTimeout(300); await page.screenshot({ path: `${CAPT}/aide-telephone.png`, fullPage: false });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  ok('aide (téléphone) · Échap la ferme, le focus revient au bouton', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.matches('.moi-aide [data-aide]')));
+  ok('aide (téléphone) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+{
+  // à l'ordinateur : la touche « ? », « Raccourcis » au pied de la colonne
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { telephone: false, hash: '#/date/102' });
+  await page.waitForSelector('#contenu .nav-dates', { timeout: 10000 }).catch(() => {});
+  await page.keyboard.press('?');
+  await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 }).catch(() => {});
+  const a = await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide[open]'); return d && { titre: d.querySelector('h2').textContent, ici: d.querySelector('section h3')?.textContent, kbd: [...d.querySelectorAll('kbd')].map(k => k.textContent) }; });
+  ok('aide (ordinateur) · « ? » : les raccourcis, la date d’abord (← →, « ici »), Échap, Maj F10', a && a.titre === 'Raccourcis clavier' && /Une date/.test(a.ici) && /ici/.test(a.ici) && ['←', '→', 'Échap', 'F10', '?'].every(k => a.kbd.includes(k)), JSON.stringify(a));
+  await page.keyboard.press('ArrowRight'); await page.waitForTimeout(300);
+  ok('aide (ordinateur) · ouverte, → ne change pas de date', (await hash(page)) === '#/date/102', await hash(page));
+  await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+  await page.click('.nav-pied [data-aide]');
+  await page.waitForSelector('dialog.gq-aide[open]', { timeout: 3000 }).catch(() => {});
+  ok('aide (ordinateur) · « Raccourcis », au pied de la colonne, l’ouvre aussi', (await compte(page, 'dialog.gq-aide[open]')) === 1);
+  await page.waitForTimeout(400); await page.click('dialog.gq-aide [data-gq-fermer]'); await page.waitForTimeout(300);
+  ok('aide (ordinateur) · « Fermer » la ferme, le focus revient à « Raccourcis »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.matches('.nav-pied [data-aide]')));
+  ok('aide (ordinateur) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 

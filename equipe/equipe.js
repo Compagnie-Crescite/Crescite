@@ -845,7 +845,7 @@
         ${onglet('spectacles', ICONES.spectacle, 'Spectacles')}
         ${onglet('notifications', ICONES.cloche, 'Notifs', 'Notifications')}
         ${onglet('moi', `<span class="nav-avatar">${ICONES.moi}</span>`, 'Moi')}
-        <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button></p>
+        <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button><button type="button" class="lien-btn nav-aide" data-aide aria-keyshortcuts="?">Raccourcis <kbd aria-hidden="true">?</kbd></button></p>
       </nav>
       <div class="colonne">
         <header class="barre-haut" id="barre-haut">
@@ -3141,7 +3141,8 @@
         <div class="pied-form"><button type="submit" class="btn">Changer le mot de passe</button><p class="etat-form" id="etat-mdp" role="status"></p></div>
       </form>
       <section class="carte" aria-labelledby="t-sortir"><h2 id="t-sortir">Se déconnecter</h2><p class="intro">Ferme la session sur cet appareil, qui ne reçoit plus vos notifications. Vos autres appareils restent connectés.</p>
-        <p><button type="button" class="btn" data-sortir>${ICONES.sortir}Se déconnecter</button></p></section>`;
+        <p><button type="button" class="btn" data-sortir>${ICONES.sortir}Se déconnecter</button></p></section>
+      <p class="moi-aide"><button type="button" class="lien-btn" data-aide>Gestes et raccourcis</button></p>`;
     afficher(r, TITRES.moi, html, { focus });
     E.ficheSale = false;
     majCartePush();
@@ -4372,6 +4373,47 @@
     G.clavierPrecSuiv(document, { modif: 'aucun', portee: '#contenu' });
     G.glisser(document.body, { gauche: () => $('#contenu .nav-dates [data-gps="1"]:not([disabled])')?.click(), droite: () => $('#contenu .nav-dates [data-gps="-1"]:not([disabled])')?.click(),
       ignorer: t => !!(t.closest && t.closest('[data-pl-defile], .carte-tournee, .frise, .feuille-cadre, .liste-notifs, [data-defile]')) });
+    document.addEventListener('keydown', e => { if (G.toucheAide(e) && E.pret) { e.preventDefault(); ouvrirAide(); } });
+  }
+  // ---- l'aide (« ? ») : les raccourcis de l'espace, rangés par contexte, d'après ce qui existe (ici et dans gestes.js,
+  // planning.js) ; au doigt, les gestes à la place (le retour depuis le bord et la notification glissée seulement quand
+  // l'appareil ne demande pas moins d'animations : ils dorment sinon). La touche « ? » hors d'un champ, « Raccourcis » au
+  // pied de la colonne à l'ordinateur, « Gestes et raccourcis » au bas de « Moi ». Le contexte ouvert vient d'abord.
+  function ouvrirAide() {
+    if (typeof GESTES === 'undefined' || !GESTES || !GESTES.aide) return;
+    const r = E.route || {}, date = r.k === 'date' || r.k === 'feuille', planning = r.onglet === 'planning';
+    if (GESTES.tactile()) return GESTES.aide({ titre: 'Gestes et raccourcis', intro: 'Au doigt, dans votre espace :', groupes: [
+      { titre: 'Partout', lignes: [
+        { g: 'Appui long', d: `Sur un billet, un horaire, le lieu, une personne, un document, une notification : ce qu’on peut en faire${E.admin ? ', et le modifier' : ''}` },
+        { g: 'Tirer vers le bas', d: 'En haut de la page : relire votre espace' },
+        reduit() ? null : { g: 'Glisser depuis le bord gauche', d: 'Revenir à la page d’avant' },
+        { g: 'La pastille', d: 'En haut : votre espace est-il à jour ? La toucher le relit' }] },
+      { titre: 'Une date, une feuille de route', ici: date, lignes: [
+        { g: 'Balayer', d: 'Vers la gauche : la date suivante ; vers la droite : la précédente' }] },
+      { titre: 'Le planning', ici: planning, lignes: [
+        { g: 'Balayer', d: 'Vers la gauche : la période suivante ; vers la droite : la précédente' }] },
+      { titre: 'Les notifications', ici: r.k === 'notifications', lignes: [
+        reduit() ? null : { g: 'Glisser de côté', d: 'Marquer une notification comme lue' },
+        { g: 'Appui long', d: 'L’ouvrir, la marquer lue, tout marquer lu, l’effacer' }] },
+    ] });
+    GESTES.aide({ titre: 'Raccourcis clavier', groupes: [
+      { titre: 'Partout', lignes: [
+        { t: [['?']], d: 'Montrer ces raccourcis' },
+        { t: [['Échap']], d: 'Fermer une boîte, un menu, une feuille' },
+        { t: [['Maj', 'F10'], ['Menu']], d: 'Les actions de l’élément choisi, comme le clic droit' },
+        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' }] },
+      { titre: 'Une date, une feuille de route', ici: date, lignes: [
+        { t: [['←'], ['→']], d: 'La date précédente, la suivante' }] },
+      { titre: 'Le planning', ici: planning, lignes: [
+        { t: [['←'], ['→'], ['↑'], ['↓']], d: 'D’un jour à l’autre dans la grille' },
+        { t: [['Page ↑'], ['Page ↓']], d: 'La période précédente, la suivante' },
+        { t: [['Entrée']], d: 'Les actions du jour choisi' },
+        { t: [['Échap']], d: 'Refermer le détail' }] },
+      { titre: 'Un menu', lignes: [
+        { t: [['↑'], ['↓']], d: 'D’une action à l’autre (Début, Fin aux bouts)' },
+        { t: [['Entrée']], d: 'Faire l’action' },
+        { t: [['Échap']], d: 'Fermer ; le focus revient où il était' }] },
+    ] });
   }
   // ================================================================================================ modifier depuis le téléphone
   /* L'appui long (brancherGestes) modifie presque tout, quand le compte administre (E.admin) : la date (statut, nature,
@@ -5207,6 +5249,7 @@
       try { await repondre(id, t.dataset.reponse, c ? c.value.trim() : '', { depuisBouton: true }); } finally { if (t.isConnected) t.disabled = false; }
       return;
     }
+    if (t.matches('[data-aide]')) return ouvrirAide();
     if (t.matches('[data-installer-barre]')) { vibrer(6); return E.installer ? installer() : ouvrirModaleInstallation(t); }
     if (t.matches('[data-installer]')) return installer();
     if (t.matches('[data-fermer-install]')) { garderPref('installFermee', true); majInstallation(); return; }

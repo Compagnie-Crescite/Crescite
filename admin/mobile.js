@@ -5,8 +5,8 @@
    recherche et le témoin du direct restent, sur une seule ligne), les fiches en plein écran (comme avant), leur pied et
    les annonces au-dessus de la barre. Le compte (voir le site, le modifier, le mot de passe, la déconnexion) passe dans
    « Plus » : l'en-tête, arrimé en haut, tenait sur trois lignes (126 px sur 844, avec la barre du bas plus d'un écran
-   sur cinq). Le témoin de la connexion y reste, réduit à sa pastille sur l'icône qui relit la base. Rien ne change à
-   l'ordinateur. Chargé après tiroir.js et corbeille.js.
+   sur cinq). Le témoin de la connexion y reste, réduit à sa pastille sur l'icône qui relit la base. « Plus » mène aussi
+   aux gestes et raccourcis (l'aide de menus.js). Rien ne change à l'ordinateur. Chargé après tiroir.js et corbeille.js.
    MOBILE.feuille(titre, items)   MOBILE.actif() */
 const MOBILE = (() => {
   const MQ = '(max-width: 640px)';
@@ -69,7 +69,7 @@ const MOBILE = (() => {
   function feuillePlus() {
     const tabs = new Set(ONGLETS.map(o => o[0])), r = rubrique(), carte = location.hash.startsWith('#/representations/carte');
     const items = rubriquesVisibles().filter(([k]) => !tabs.has(k)).map(([k, l]) => ({ libelle: l, href: `#/${k}`, demi: true, courant: k === r }));
-    items.push({ libelle: 'Carte de tournée', href: '#/representations/carte', demi: true, courant: carte }, { libelle: 'Corbeille', detail: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille', courant: r === 'corbeille' }, { libelle: 'Rechercher', detail: 'une date, une personne, un lieu…', faire: () => ouvrirRecherche() });
+    items.push({ libelle: 'Carte de tournée', href: '#/representations/carte', demi: true, courant: carte }, { libelle: 'Gestes et raccourcis', demi: true, faire: () => { if (typeof ouvrirAide === 'function') ouvrirAide($('.ob-barre [data-ob="plus"]')); } }, { libelle: 'Corbeille', detail: 'ce qui a été supprimé ces trente derniers jours', href: '#/corbeille', courant: r === 'corbeille' }, { libelle: 'Rechercher', detail: 'une date, une personne, un lieu…', faire: () => ouvrirRecherche() });
     if ($('#b-sortir')) items.push({ groupe: 'Compte' }, { libelle: 'Voir le site', href: SITE, nouvel: true, demi: true }, { libelle: 'Modifier sur le site', href: `${SITE}?edition`, nouvel: true, demi: true },
       { libelle: 'Mot de passe', demi: true, faire: () => $('#b-mdp')?.click() }, { libelle: 'Déconnexion', demi: true, faire: () => $('#b-sortir')?.click() });
     feuille('Les autres rubriques', items);

@@ -96,6 +96,8 @@ main.ad-chargement { padding: 0; max-width: none; }
 /* hors ligne ou à la reconnexion, le témoin prend la place de l'adresse du compte (l'en-tête garde ses lignes) */
 .qui:has(.temoin:is([data-etat="horsligne"], [data-etat="reconnexion"])) .moi { display: none !important; }
 @media (max-width: 860px) { .temoin-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .temoin { padding: 4px 8px; } .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-ic { display: none; } }
+/* l'aide (« ? ») : un bouton discret dans l'en-tête, à l'ordinateur */
+.barre .aide-b { min-width: 32px; padding-left: 0; padding-right: 0; font-weight: 800; }
 /* dix rubriques et la recherche : sous 2 080 px l'adresse du compte se retire ; sous 1 940 px les rubriques passent sur
    une seconde ligne ; entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique
    courante en vue) */
@@ -1174,7 +1176,7 @@ function cadre(rubrique, contenu) {
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
     <div class="qui">${temoinHtml()}
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
   majTemoin();
   poserHautBarre();
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);

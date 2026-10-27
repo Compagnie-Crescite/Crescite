@@ -19,6 +19,8 @@
      formulaire changée, un formulaire gardé : une note, une fenêtre) ne se perd pas en silence ; la question se pose dans
      une boîte de la charte (« Rester », « Quitter sans enregistrer »), jamais par confirm(), et seulement si quelque chose
      a changé.
+   - L'aide (GESTES.aide, GESTES.toucheAide) : la touche « ? » (ou un bouton discret) ouvre dans la même boîte les
+     raccourcis de l'espace, rangés par contexte ; au doigt, les gestes à la place.
    - Supprimer sans trembler (GESTES.confirmer) : une action qui détruit (supprimer, retirer, fusionner, délier…) et
      qu'on ne peut pas annuler après coup se demande dans la même boîte : le bouton dangereux nommé par son action
      (« Supprimer la date »), à la couleur d'alerte ; « Annuler » a le focus (Échap, le voile y mènent aussi).
@@ -469,6 +471,51 @@ const GESTES = (() => {
   }
   window.addEventListener('keydown', e => { if (question && (e.key === 'Escape' || e.key === 'Tab') && document.querySelector('dialog.gq[open]')) { e.stopImmediatePropagation(); if (e.key === 'Escape') { e.preventDefault(); $('dialog.gq [data-gq="non"]')?.click(); } } }, true);
 
+  /* aide({ titre, intro, groupes }) : les raccourcis (ou, au doigt, les gestes) de l'espace, dans la même boîte de la
+     charte (une <dialog> modale, depuis le bas au téléphone, au centre à l'ordinateur), rangés par contexte : chaque
+     groupe { titre, ici, lignes: [{ t, d }] } ; t est une liste de touches possibles, chacune une combinaison
+     (['Ctrl', 'K'] : des <kbd> liés par +), ou un geste en mots (g : « Appui long ») ; d dit ce que ça fait. Le groupe
+     marqué ici (le contexte ouvert) vient d'abord. « Fermer » a le focus ; Échap, le voile, « Fermer » la referment et
+     le focus revient à ce qui l'a ouverte (ou à rendre). Ouverte, une seconde demande la referme. */
+  let aideOuverte = null;
+  const fleche = t => t.length === 1 && /^[←→↑↓]$/.test(t[0]);     // (des flèches seules se suivent sans « ou »)
+  const toucheHtml = t => t.map(x => `<kbd>${esc(x)}</kbd>`).join('<span class="gq-plus" aria-hidden="true">+</span>');
+  function aide({ titre = 'Raccourcis', intro = '', groupes = [], rendre = null } = {}) {
+    if (aideOuverte) { aideOuverte(); return; }
+    if (question) return;
+    const declencheur = rendre || document.activeElement;     // (rendre : où revenir quand ce qui l'a ouverte s'en va, une feuille)
+    const dlg = document.createElement('dialog');
+    dlg.className = `gq gq-aide${reduit() ? ' gq-calme' : ''}`;
+    dlg.setAttribute('aria-labelledby', 'gq-aide-titre');
+    dlg.setAttribute('aria-modal', 'true');        // (les gestes qui mènent ailleurs dorment : modaleOuverte)
+    const ordre = [...groupes.filter(g => g && g.ici), ...groupes.filter(g => g && !g.ici)].filter(g => g.lignes && g.lignes.some(Boolean));
+    const ligne = l => `<div class="gq-aide-l"><dt>${l.g ? `<span class="gq-geste">${esc(l.g)}</span>` : l.t.map((x, i) => (i ? (fleche(x) && fleche(l.t[i - 1]) ? ' ' : '<span class="gq-ou"> ou </span>') : '') + toucheHtml(x)).join('')}</dt><dd>${esc(l.d)}</dd></div>`;
+    dlg.innerHTML = `<div class="gq-boite"><span class="gm-poignee" aria-hidden="true"></span><h2 id="gq-aide-titre">${esc(titre)}</h2>${intro ? `<p>${esc(intro)}</p>` : ''}
+      <div class="gq-aide-corps">${ordre.map((g, i) => `<section aria-labelledby="gq-aide-g${i}"><h3 id="gq-aide-g${i}">${esc(g.titre)}${g.ici ? ' <span class="gq-ici">ici</span>' : ''}</h3><dl>${g.lignes.filter(Boolean).map(ligne).join('')}</dl></section>`).join('')}</div>
+      <div class="gq-pied"><button type="button" class="gf-btn principal" data-gq-fermer>Fermer</button></div></div>`;
+    document.body.append(dlg);
+    const ouverteLe = performance.now();
+    const fermer = () => {
+      if (aideOuverte !== fermer) return;
+      aideOuverte = null;
+      try { dlg.close(); } catch (e) { /* déjà fermée */ }
+      dlg.remove();
+      if (declencheur && declencheur.isConnected && typeof declencheur.focus === 'function') declencheur.focus({ preventScroll: true });
+    };
+    aideOuverte = fermer;
+    dlg.addEventListener('cancel', e => { e.preventDefault(); fermer(); });
+    dlg.addEventListener('close', fermer);
+    dlg.addEventListener('click', e => { if (performance.now() - ouverteLe < 350 && e.detail !== 0) return; if (e.target === dlg || e.target.closest('[data-gq-fermer]')) fermer(); });
+    // Échap reste à la boîte (le tiroir, la sélection, les filtres du tableau ne le voient pas) ; « ? » la referme aussi
+    dlg.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key === 'Tab') e.stopPropagation(); if (e.key === '?') { e.preventDefault(); e.stopPropagation(); fermer(); } });
+    dlg.showModal();
+    $('[data-gq-fermer]', dlg).focus();
+    return fermer;
+  }
+  // la touche « ? » hors d'un champ, sans Ctrl ni Alt, quand rien de modal n'est ouvert (ni menu, ni feuille, ni boîte)
+  const toucheAide = e => e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.defaultPrevented && !dansChamp(e.target) && !ouvert && !ouvertF && !question && !aideOuverte
+    && !document.querySelector('dialog[open], [aria-modal="true"]');
+
   // ===================================================================================================== styles
   document.head.insertAdjacentHTML('beforeend', `<style id="styles-gestes">
 /* la question avant de perdre une saisie (GESTES.quitter) : une <dialog> modale, depuis le bas au téléphone, au centre à l'ordinateur */
@@ -486,6 +533,25 @@ dialog.gq::backdrop { background: rgba(23, 15, 26, .5); }
 .gq .gf-btn:focus-visible { outline: 3px solid var(--accent, var(--magenta, #5f565a)); outline-offset: 2px; }
 @media (min-width: 641px) { dialog.gq { width: min(460px, calc(100vw - 32px)); margin: auto; border-radius: 18px; border-bottom: 1px solid var(--trait, var(--filet, #ddd)); } .gq-boite { padding: 20px 22px 18px; } .gq .gm-poignee { display: none; } .gq-pied .gf-btn { flex: 0 0 auto; } }
 @media (prefers-reduced-motion: no-preference) { dialog.gq:not(.gq-calme)[open] { animation: gm-monte .22s cubic-bezier(.2, .8, .2, 1); } dialog.gq:not(.gq-calme)[open]::backdrop { animation: gm-paraitre .2s ease-out; } }
+/* l'aide (GESTES.aide) : la même boîte, plus large, ses groupes qui défilent entre le titre et « Fermer » */
+dialog.gq-aide[open] { display: flex; flex-direction: column; overflow: hidden; }
+dialog.gq-aide .gq-boite { display: flex; flex-direction: column; min-height: 0; }
+.gq-aide-corps { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; margin: 0 -20px; padding: 0 20px 4px; }
+.gq-aide h3 { display: flex; align-items: center; gap: 8px; margin: 14px 0 4px; font: 700 11.5px/1.3 var(--etiq, Raleway, 'Open Sans', system-ui, sans-serif); letter-spacing: .12em; text-transform: uppercase; color: var(--gris, #777); }
+.gq-aide section:first-child h3 { margin-top: 4px; }
+.gq-ici { padding: 1px 7px; border-radius: 999px; background: var(--accent-doux, var(--doux, #eee)); color: var(--encre, #222); letter-spacing: .06em; }
+.gq-aide dl { margin: 0; }
+.gq-aide-l { display: grid; grid-template-columns: minmax(118px, 38%) 1fr; gap: 4px 14px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--trait, var(--filet, #ddd)); }
+.gq-aide-l:first-child { border-top: 0; }
+.gq-aide dt { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin: 0; color: var(--gris, #777); font-size: 13px; }
+.gq-aide dd { margin: 0; font-size: 14.5px; }
+.gq-aide kbd { display: inline-block; min-width: 22px; padding: 3px 6px 2px; border: 1px solid var(--trait, var(--filet, #ddd)); border-bottom-width: 2px; border-radius: 6px; background: var(--doux, var(--surface-2, #f5f5f5)); color: var(--encre, #222); font: 650 12px/1.2 var(--police, var(--sans, system-ui, sans-serif)); text-align: center; white-space: nowrap; }
+.gq-plus { color: var(--gris, #777); font-size: 12px; }
+.gq-ou { color: var(--gris, #777); font-size: 12px; padding: 0 2px; }
+.gq-geste { font-weight: 700; color: var(--encre, #222); }
+.gq-aide .gq-pied { padding-top: 12px; border-top: 1px solid var(--trait, var(--filet, #ddd)); margin-top: 6px; }
+@media (max-width: 420px) { .gq-aide-l { grid-template-columns: 1fr; gap: 2px; } }
+@media (min-width: 641px) { dialog.gq-aide { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); } .gq-aide-corps { margin: 0 -22px; padding: 0 22px 4px; } }
 /* le formulaire (GESTES.formulaire) : une feuille depuis le bas au téléphone, au centre à l'ordinateur */
 html.gf-ouvert { overflow: hidden; }
 .gf { position: fixed; inset: 0; z-index: 92; font: 15px/1.4 var(--police, var(--sans, system-ui, sans-serif)); color: var(--encre, #222); }
@@ -578,5 +644,5 @@ html.gf-ouvert { overflow: hidden; }
 @media (hover: hover) and (pointer: fine) { .gps-touche { display: inline-block; } }
 </style>`);
 
-  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };
+  return { menu, ouvrir, fermer, fleches, glisser, precSuiv, clavierPrecSuiv, formulaire, fermerFormulaire, garder, saisie, quitter, confirmer, aide, toucheAide, oublier, vibrer, reduit, tactile, etroit, ICO, ouvert: () => !!ouvert, question: () => !!question };
 })();

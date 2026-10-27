@@ -14,7 +14,8 @@
 // - les titres restent visibles : le mois des Feuilles de route, le jour du Journal, le nom des colonnes du Kanban (et au
 //   téléphone le mois de Représentations), collés sous l'en-tête quand la page défile ;
 // - le témoin de la connexion : « À jour », « Hors ligne · lu à l'instant » quand le réseau tombe (les lecteurs d'écran
-//   l'entendent), la base relue à son retour, le bouton qui la relit.
+//   l'entendent), la base relue à son retour, le bouton qui la relit ;
+// - l'aide « ? » : les raccourcis par contexte (la touche, le bouton de l'en-tête), au téléphone les gestes (« Plus »).
 //   python3 site/build.py && node site/adresses-admin.mjs
 // Captures dans site/dist/shots-adresses/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
@@ -395,6 +396,47 @@ for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'télé
   await attendre(page, () => [...document.querySelectorAll('#annonces .annonce')].some(a => /La base est relue/.test(a.textContent)), 6000);
   ok(`témoin (${nom}) · le toucher relit la base et le dit`, await page.evaluate(() => [...document.querySelectorAll('#annonces .annonce')].some(a => /La base est relue/.test(a.textContent))));
   ok(`témoin (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
+// ================================================================================ l'aide « ? » : les raccourcis, au doigt les gestes
+for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
+  const tel = largeur < 600;
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/accueil' });
+  await page.waitForSelector('[data-temoin]', { timeout: 15000 });
+  if (tel) await page.waitForSelector('.ob-barre', { timeout: 8000 });     // (la barre du téléphone se pose juste après la page)
+  // l'aide : « ? » (au bureau, la touche et le bouton de l'en-tête ; au téléphone, « Gestes et raccourcis » dans « Plus »)
+  if (!tel) {
+    await page.focus('#b-aide');
+    await page.keyboard.press('?');
+    await attendre(page, () => !!document.querySelector('dialog.gq-aide[open]'), 3000);
+    const a = await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide[open]'); return d && { titre: d.querySelector('h2').textContent, ici: d.querySelector('section h3')?.textContent, kbd: [...d.querySelectorAll('kbd')].map(k => k.textContent), focus: document.activeElement?.textContent }; });
+    ok('aide (bureau) · « ? » ouvre les raccourcis clavier, le tableau de bord d’abord (« ici »), Ctrl K, J, Alt, « Fermer » a le focus', a && a.titre === 'Raccourcis clavier' && /Le tableau de bord/.test(a.ici) && /ici/.test(a.ici) && ['Ctrl', 'K', 'J', 'Alt', 'Échap'].every(k => a.kbd.includes(k)) && a.focus === 'Fermer', JSON.stringify(a));
+    await calme(page);
+    await page.screenshot({ path: path.join(CAPT, 'aide-bureau.png') });
+    await page.keyboard.press('Escape');
+    await attendre(page, () => !document.querySelector('dialog.gq-aide'), 2000);
+    ok('aide (bureau) · Échap la ferme, le focus revient au bouton « ? »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.id === 'b-aide'));
+    await page.evaluate(() => { location.hash = '#/journal'; });
+    await page.waitForSelector('#j-q', { timeout: 8000 });
+    await page.focus('#j-q'); await page.keyboard.type('?');
+    ok('aide (bureau) · « ? » tapé dans un champ reste un « ? »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.querySelector('#j-q').value === '?'));
+    await page.fill('#j-q', '');
+  } else {
+    await page.click('.ob-barre [data-ob="plus"]');
+    await page.waitForSelector('.ob-voile.la .ob-feuille', { timeout: 3000 });
+    await page.waitForTimeout(300);
+    await page.click('.ob-item:has-text("Gestes et raccourcis")');
+    await attendre(page, () => !!document.querySelector('dialog.gq-aide[open]'), 3000);
+    const a = await page.evaluate(() => { const d = document.querySelector('dialog.gq-aide[open]'); return d && { titre: d.querySelector('h2').textContent, gestes: [...d.querySelectorAll('.gq-geste')].map(x => x.textContent), kbd: d.querySelectorAll('kbd').length, bas: Math.round(d.getBoundingClientRect().bottom) }; });
+    ok('aide (téléphone) · « Plus » → « Gestes et raccourcis » : les gestes à la place des touches, depuis le bas', a && a.titre === 'Gestes et raccourcis' && a.gestes.includes('Appui long') && a.gestes.includes('« + »') && a.kbd === 0 && a.bas >= 840, JSON.stringify(a));
+    await calme(page);
+    await page.screenshot({ path: path.join(CAPT, 'aide-telephone.png') });
+    await page.click('dialog.gq-aide [data-gq-fermer]');
+    await attendre(page, () => !document.querySelector('dialog.gq-aide'), 2000);
+    ok('aide (téléphone) · « Fermer » la ferme, le focus revient à « Plus »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.dataset.ob === 'plus'));
+  }
+  ok(`aide (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
 
