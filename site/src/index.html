@@ -467,6 +467,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .puce.choisi { background: var(--magenta); border-color: var(--magenta); color: #fff; }
 .ag-corps, .sa-corps, .e-dates { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 56px); align-items: start; }
 .ag-carte, .sa-carte, .e-carte { position: sticky; top: calc(var(--haut) + 16px); margin: 0; }
+.e-carte { top: calc(var(--haut) + var(--onglets) + 16px); }
 .ag-carte .carte, .sa-carte .carte, .e-carte .carte { max-height: calc(100svh - var(--haut) - 40px); }
 .mois { margin: 30px 0 8px; font: 500 1.55rem/1.2 var(--titre); }
 .mois::first-letter { text-transform: uppercase; }
@@ -669,7 +670,7 @@ html:not(.ed-actif) .ct-tel.vide { display: none; }
 .ep-prose li + li { margin-top: .55em; }
 .ep-prose li::marker { color: var(--saison-texte); }
 .ep-prose a { color: var(--saison-texte); }
-.ep-act-ph { position: sticky; top: calc(var(--haut) + 24px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
+.ep-act-ph { position: sticky; top: calc(var(--haut) + var(--onglets) + 24px); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0; }
 .ep-act-ph > span { display: block; overflow: hidden; border-radius: 3px; background: var(--carte); }
 .ep-act-ph .g { grid-column: 1 / -1; aspect-ratio: 4 / 5; }
 .ep-act-ph .p { aspect-ratio: 1; }
@@ -696,7 +697,7 @@ figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
    l'étape lue (.recit-vue.est-vue, posée par le script, ligne de lecture). Au téléphone, le panneau reste en haut, les étapes
    passent dessous. En édition sur place, la frise s'efface et la liste reste, annotée */
 .recit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 80px); align-items: start; margin-top: clamp(28px, 4vw, 48px); }
-.recit-panneau { position: sticky; top: calc(var(--haut) + 24px); display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); height: min(68svh, 640px); overflow: hidden; border-radius: 8px; background: var(--papier-2); isolation: isolate; }
+.recit-panneau { position: sticky; top: calc(var(--haut) + var(--onglets) + 24px); display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); height: min(68svh, 640px); overflow: hidden; border-radius: 8px; background: var(--papier-2); isolation: isolate; }
 /* (une seule case, à la hauteur du panneau : sans elle, la case prenait la hauteur de la plus haute photo, chaque photo
    débordait du panneau, qui n'en montrait que le haut, et son cadrage (CADRAGE) se calculait sur ce qu'on ne voyait pas) */
 .recit-vue { grid-area: 1 / 1; position: relative; min-height: 0; margin: 0; opacity: 0; transition: opacity var(--k-page) var(--k-doux); }
@@ -722,7 +723,7 @@ figcaption { margin-top: 6px; font-size: .8rem; color: var(--gris); }
 html.ed-actif .c-frise { display: none; }
 @media (max-width: 899px) {
   .recit { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .recit-panneau { top: var(--haut); z-index: 3; height: 34svh; border-radius: 0 0 8px 8px; }
+  .recit-panneau { top: calc(var(--haut) + var(--onglets)); z-index: 3; height: 34svh; border-radius: 0 0 8px 8px; }
   .frise-l > li { min-height: 30svh; padding: 5vh 0 5vh 26px; }
   .recit-an { font-size: clamp(2.4rem, 10vw, 3.6rem); }
 }
@@ -830,10 +831,42 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
 .ep-retour:hover { text-decoration: underline; text-underline-offset: 4px; }
 .ep-h1 { max-width: min(100%, 1100px); margin: 0; font: 700 min(clamp(38px, 6.6vw, 104px), 11.6cqi)/.94 var(--titre); letter-spacing: -.01em; text-transform: uppercase; text-wrap: balance; }
 .ep-lead { max-width: 40ch; margin: 18px 0 0; font: 400 clamp(1.15rem, 1rem + .6vw, 1.45rem)/1.45 var(--texte); }
-/* ses raccourcis : des pièces blanches sur l'aplat */
-.ep-rac { display: flex; flex-wrap: wrap; gap: 8px; margin: clamp(18px, 2.4vw, 28px) 0 0; padding: 0; list-style: none; }
-.ep-rac button { padding: 8px 15px; border: 1.5px solid rgba(255, 255, 255, .62); border-radius: 999px; background: transparent; color: #fff; font: 700 .72rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
-.ep-rac button:hover { border-color: #fff; background: #fff; color: var(--e, var(--saison)); }
+/* le sommaire d'une page longue (les deux pages de l'espace pro, la compagnie), comme le sous-menu d'un spectacle : une ligne
+   de pièces, une par section, juste sous l'en-tête ; on descend, elle s'arrime sous le menu flottant (.colle : elle prend le
+   haut de l'écran derrière lui, et le titre de la page paraît à gauche au bureau), la section lue pleine (aria-current) ; au
+   téléphone, la rangée défile au doigt, un fondu à chaque bord où il reste à voir (.a-gauche, .a-droite). Sur l'espace pro,
+   elle prolonge l'aplat du parcours (--e) ; sur la compagnie, le papier et l'encre de la saison. Un fond plein, sans flou */
+.psom { --ps-fond: var(--papier); --ps-encre: var(--encre); --ps-trait: color-mix(in srgb, var(--encre) 34%, transparent); --ps-plein: var(--saison-vive); --ps-sur: var(--nuit);
+  position: sticky; top: calc(var(--haut) - 8px); z-index: 25; background: var(--ps-fond); color: var(--ps-encre); border-bottom: 1px solid var(--filet); }
+.psom--ep { --ps-fond: var(--e, var(--saison)); --ps-encre: #fff; --ps-trait: rgba(255, 255, 255, .62); --ps-plein: #fff; --ps-sur: var(--e, var(--saison)); border-bottom: 0; }
+.psom::before { content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: calc(var(--haut) - 8px); background: inherit; opacity: 0; transition: opacity var(--k-survol) var(--k-doux); pointer-events: none; }
+.psom.colle::before { opacity: 1; }
+.psom.colle { box-shadow: 0 10px 22px -18px rgba(0, 0, 0, .9); }
+.psom-in { display: flex; align-items: center; min-height: 56px; }
+.psom-t { flex: none; max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; font: 700 1rem/1.2 var(--titre); transition: max-width var(--k-page) var(--k-doux), margin var(--k-page) var(--k-doux), opacity var(--k-survol) var(--k-doux); }
+.psom.colle .psom-t { max-width: 22rem; margin-right: clamp(12px, 2vw, 28px); opacity: 1; }
+.psom--ep .psom-t { text-transform: uppercase; letter-spacing: .02em; }
+.psom-cadre { flex: 1; }
+.psom .sm7-f { border-color: color-mix(in srgb, var(--ps-encre) 40%, transparent); background: var(--ps-fond); color: var(--ps-encre); }
+.psom .sm7-f:hover { border-color: var(--ps-encre); background: var(--ps-fond); }
+.psom-l { --sm7-fondu: 32px; display: flex; gap: 8px; margin: 0 -2px; padding: 6px 2px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent); mask-image: linear-gradient(90deg, transparent, #000 var(--sm7-fg), #000 calc(100% - var(--sm7-fd)), transparent);
+  transition: --sm7-fg var(--k-survol) var(--k-doux), --sm7-fd var(--k-survol) var(--k-doux); }
+.psom-l::-webkit-scrollbar { display: none; }
+.psom-l.a-gauche { --sm7-fg: var(--sm7-fondu); }
+.psom-l.a-droite { --sm7-fd: var(--sm7-fondu); }
+.psom-l li { flex: none; }
+.psom-l button { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1.5px solid var(--ps-trait); border-radius: 999px; background: transparent; color: var(--ps-encre);
+  font: 700 .72rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; cursor: pointer;
+  transition: background-color var(--k-survol) var(--k-doux), color var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux); }
+.psom-l button:hover { border-color: var(--ps-plein); }
+.psom-l button[aria-current] { border-color: var(--ps-plein); background: var(--ps-plein); color: var(--ps-sur); }
+.psom-l button:focus-visible { outline: 2px solid var(--ps-plein); outline-offset: 2px; }
+.psom--ep :focus-visible { outline-color: #fff; }
+@media (prefers-reduced-motion: reduce) { .psom-l { transition: none; } }
+/* (arrimé, ce qu'il prend sous le menu : les ancres s'arrêtent sous lui, le focus aussi, et ce qui s'épingle descend d'autant) */
+html:has(main > .psom) { --onglets: 57px; scroll-padding-top: calc(var(--haut) + var(--onglets) + 12px); }
+.ep-tete:has(+ .psom) { padding-bottom: clamp(24px, 3vw, 40px); }
 /* ses deux étages : les deux pages ouvertes à tous, côte à côte sur toute la largeur ; puis les espaces réservés, trois
    fiches sur le papier, plus petites, marquées d'un cadenas */
 .ep-groupes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
@@ -920,9 +953,10 @@ html.ed-actif .ep-a::after { content: none; }
   .ep { min-height: 0; }
   .ep-tete-ph { width: 100%; opacity: .42; }
   .ep-tete-ph::after { background: linear-gradient(to top, var(--e), transparent); }
-  .ep-rac { flex-wrap: nowrap; overflow-x: auto; margin-inline: calc(-1 * var(--gout)); padding: 2px var(--gout) 4px; scrollbar-width: none; }
-  .ep-rac::-webkit-scrollbar { display: none; }
-  .ep-rac li { flex: none; }
+  .psom-in { gap: 0; min-height: 52px; }
+  .psom-t { display: none; }
+  .psom-l { --sm7-fondu: 28px; margin-inline: calc(-1 * var(--gout)); padding-inline: var(--gout); scroll-padding-inline: var(--gout); }
+  html:has(main > .psom) { --onglets: 53px; }
   .ep-tete .ct-prg { padding: 18px 18px 16px; }
   .ep-cta-in { justify-content: center; }
 }
@@ -1887,9 +1921,9 @@ section.bloc { position: relative; border-top: 0; }
 /* la pression : une ventouse se pose sous le doigt (.succion, à la couleur de ce qu'on presse), la pièce s'enfonce d'un rien */
 .succion { position: fixed; z-index: 95; left: 0; top: 0; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; pointer-events: none;
   border: 2.5px solid var(--sc, var(--saison-vive)); box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--sc, var(--saison-vive)) 22%, transparent); opacity: 0; }
-:is(.bouton, .bu, .puce, .idx-tout, .idx, .som-b, .entrees a, .dos-bt, .fu-a, .suivant, .u-onglets a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .s7-chip, .s7-rac button, .ep-bt, .ep-rac button) {
+:is(.bouton, .bu, .puce, .idx-tout, .idx, .som-b, .entrees a, .dos-bt, .fu-a, .suivant, .u-onglets a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .s7-chip, .s7-rac button, .ep-bt, .psom-l button) {
   transition-property: background-color, color, border-color, box-shadow, scale; transition-duration: var(--k-survol), var(--k-survol), var(--k-survol), var(--k-survol), .12s; transition-timing-function: var(--k-doux); }
-:is(.bouton, .bu, .puce, .idx-tout, .idx, .som-b, .entrees a, .dos-bt, .u-onglets a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .s7-chip, .s7-rac button, .ep-bt, .ep-rac button, .tr6-p).mv-presse { scale: .96; transition-duration: var(--k-presse); }
+:is(.bouton, .bu, .puce, .idx-tout, .idx, .som-b, .entrees a, .dos-bt, .u-onglets a, .rs-date, .rs-reserver, .rs-seance, .lc-b, .s7-chip, .s7-rac button, .ep-bt, .psom-l button, .tr6-p).mv-presse { scale: .96; transition-duration: var(--k-presse); }
 :is(.fu-a, .tdm-a, .ep-porte, .fp-ph, .ac-ph, .dos-appel, .sai > summary).mv-presse { scale: .985; transition: scale var(--k-presse); }
 .voisin--ap.mv-presse .fleche { translate: 6px 0; }
 .voisin--av.mv-presse .fleche { translate: -6px 0; }
@@ -3769,7 +3803,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const tetePro = (e, rac, apres = '') => `<section class="ep-tete" style="--e:${esc(e.couleur)}" aria-labelledby="h-ep">
       <div class="ep-tete-ph" aria-hidden="true">${photoEntree(e.cle) ? `<img src="${photoEntree(e.cle)}" alt="">` : ''}</div>
       <div class="wrap ep-c">${S.espacePro ? `<a class="ep-retour" href="#/espace-pro">${FLECHE}${esc(S.espacePro.titre)}</a>` : ''}<h1 class="ep-h1" id="h-ep" tabindex="-1"><span class="fleur">${esc(e.texte)}</span></h1>
-        ${rac.length ? `<ul class="ep-rac">${rac.map(([id, t]) => `<li><button type="button" data-va="${id}">${esc(t)}</button></li>`).join('')}</ul>` : ''}${apres}</div></section>`;
+        ${apres}</div></section>${sommairePage(rac, e.court, 'psom--ep', `--e:${esc(e.couleur)}`)}`;
+  // le sommaire d'une page longue (les deux pages de l'espace pro, la compagnie) : une pièce par section ([id, titre]), arrimée
+  // sous le menu quand on descend, la section lue marquée (aria-current, lierSommairePage et defile) ; titre : le nom de la
+  // page, qui paraît à côté une fois arrimé (au bureau ; sans lui, rien : la compagnie, dont la première pièce le redit). Un bouton par section : il y mène et y pose le focus
+  const sommairePage = (items, titre, classe = '', style = '') => items.length < 2 ? '' : `<nav class="psom${classe ? ' ' + classe : ''}" id="psom" aria-label="${esc(L.sommaire || titre)}"${style ? ` style="${style}"` : ''}><div class="wrap psom-in">${titre ? `<span class="psom-t" aria-hidden="true">${esc(titre)}</span>` : ''}<div class="sm7-cadre psom-cadre"><ul class="psom-l">${items.map(([id, t]) => `<li><button type="button" data-va="${esc(id)}" data-som="${esc(id)}">${esc(t)}</button></li>`).join('')}</ul>`
+    + `<button type="button" class="sm7-f" data-sens="-1" tabindex="-1" aria-hidden="true">${GAUCHE}</button><button type="button" class="sm7-f" data-sens="1" tabindex="-1" aria-hidden="true">${DROITE}</button></div></div></nav>`;
 
   /* ---------- l'accueil, 1 : le premier écran, la pieuvre vivante, rangée (la scène de la 10) ----------
      Le logo de l'ouverture devient cette pieuvre (INTRO, devient) : seule sa tête (l'arche, l'œil) est fixe ; tout le reste du
@@ -5649,6 +5688,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', largeur: lDiff, anMin: 38,
       bandes: ks.map(k => bandeSaison(k, repsSaison(k).tout)) });
     frisesDiffusion(main);
+    lierSommairePage();
     bientot(() => { pousser(svg); initSimulateurPro(); });
     return { titre: e.texte, entree: 'programmer' };
   }
@@ -5705,6 +5745,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       pousserVu(svg);
       auFil(liste, svg, fSco);   // (scrollytelling) les dates scolaires se dessinent au fil de la lecture
     }
+    lierSommairePage();
     bientot(() => { initEspaceScolaire(); });
     return { titre: e.texte, entree: 'etablissement' };
   }
@@ -6071,11 +6112,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     vue = 'compagnie';
     const C = S.compagnie, Dr = C.directeur;
     const spDe = d => D.shows.find(x => String(x.annee) === String(d.annee));
+    // (son sommaire, arrimé sous le menu : la présentation, la troupe, les dates, le directeur artistique, dans l'ordre de la page)
+    const tr = troupeHTML(), som = [['c-pres', C.titre], ...(tr ? [['h-troupe', TROUPE.titre()]] : []), ...(C.dates.length ? [['h-reperes', C.datesTitre]] : []), ...(Dr ? [['h-dir', Dr.titre]] : [])];
     main.innerHTML = `<div class="wrap page-titre"><h1 tabindex="-1"><span class="fleur"${ed('site.compagnie.titre')}>${esc(C.titre)}</span></h1></div>
-      <section class="bloc sans-filet"><div class="wrap compagnie">
+      ${sommairePage(som, '')}
+      <section class="bloc sans-filet" id="c-pres" aria-label="${esc(C.titre)}"><div class="wrap compagnie">
         <div class="paragraphes">${C.paragraphes.map((p, i) => bloc(p, `site.compagnie.paragraphes.${i}`)).join('')}</div>
       </div></section>
-      ${troupeHTML()}
+      ${tr}
       <section class="bloc" aria-labelledby="h-reperes"><div class="wrap">
         <h2 class="titre-bloc" id="h-reperes"${ed('site.compagnie.datesTitre')}>${esc(C.datesTitre)}</h2>
         <div class="c-frise" id="c-frise"></div>
@@ -6094,6 +6138,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       libelle: C.datesTitre, points: C.dates.map((d, i) => { const s = spDe(d); return { id: `c${i}`, annee: d.annee, titre: d.titre, lien: s ? lienSp(s.slug) : null, couleur: s ? couleurDe(s.slug) : 'var(--saison-texte)' }; }) });
     vivreRecit($('#c-recit', main));   // (scrollytelling) le récit : l'étape lue allume le panneau
     vivreTroupe();
+    lierSommairePage();
     return { titre: C.titre, menu: 'compagnie' };
   }
   function contact() {
@@ -6594,6 +6639,32 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
 
   let secs = [], chaps = [], chapK = -1, sraf = 0, ouvDeja = false;
+  // le sommaire arrimé d'une page longue (sommairePage) : sa barre, ses boutons, les sections qu'ils visent, la section lue
+  let psom = null, psomB = [], psomC = [], psomK = -2;
+  // (la rangée défile au doigt : le fondu de chaque bord où il reste à voir ; le bouton qui prend le focus vient tout entier
+  // dans la rangée, hors de ses fondus)
+  function lierSommairePage() {
+    psom = $('#psom', main); psomK = -2;
+    psomB = psom ? $$('[data-som]', psom) : []; psomC = psomB.map(b => document.getElementById(b.dataset.som));
+    const l = psom && $('.psom-l', psom); if (!l) return;
+    let raf = 0;
+    const [g, d] = $$('.sm7-f', psom);
+    const maj = () => { raf = 0; const max = l.scrollWidth - l.clientWidth, x = Math.abs(l.scrollLeft), av = x > 4, ap = max > 4 && x < max - 4;
+      l.classList.toggle('a-gauche', av); l.classList.toggle('a-droite', ap);
+      if (g) g.classList.toggle('est-visible', av); if (d) d.classList.toggle('est-visible', ap); };
+    // (au bureau, deux flèches rondes sur les bords où il reste à voir, pour la souris : le clavier va de pièce en pièce)
+    psom.addEventListener('click', e => { const b = e.target.closest('.sm7-f'); if (b) l.scrollBy({ left: +b.dataset.sens * l.clientWidth * .8, behavior: motionOK() ? 'smooth' : 'instant' }); });
+    const plusTard = () => { if (!raf) raf = requestAnimationFrame(maj); };
+    l.addEventListener('scroll', plusTard, { passive: true });
+    if ('ResizeObserver' in window) { const ro = new ResizeObserver(plusTard); ro.observe(l); lecteurs.push(ro); }
+    plusTard();
+    l.addEventListener('focusin', e => { const b = e.target.closest('button'); if (b) montrerDans(l, b); });
+  }
+  const montrerDans = (l, b) => {
+    const q = l.getBoundingClientRect(), r = b.getBoundingClientRect(), m = parseFloat(getComputedStyle(l).getPropertyValue('--sm7-fondu')) || 0;
+    const dx = r.left < q.left + m ? r.left - q.left - m : r.right > q.right - m ? r.right - q.right + m : 0;
+    if (Math.abs(dx) > 1) l.scrollBy({ left: dx, behavior: motionOK() ? 'smooth' : 'instant' });
+  };
   function spectacle(slug, entree, surPlace, q) {
     vue = 'spectacle';
     // d'un onglet à l'autre du même spectacle (ou une vue refaite en place) : l'ouverture est déjà là, son titre ne se réécrit pas
@@ -6715,12 +6786,26 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (art && bas != null) art.classList.toggle('une-vu', bas > vh * .45);
       });
     }
+    // le sommaire d'une page longue : la section lue est la dernière dont le haut a passé le premier tiers de l'écran (sous la
+    // barre arrimée) ; au bas de la page, la dernière ; avant la première, aucune. Arrimée, la barre prend le haut de l'écran
+    if (psom && psom.isConnected) {
+      const haut = psom.__haut ?? (psom.__haut = parseFloat(getComputedStyle(psom).top) || 0), y = haut + vh * .3;
+      let k = -1; psomC.forEach((c, i) => { if (c && c.getBoundingClientRect().top <= y) k = i; });
+      if (k >= 0 && scrollY + vh >= document.documentElement.scrollHeight - 4) k = psomC.length - 1;
+      const colle = psom.getBoundingClientRect().top <= haut + 1;
+      ecrire.push(() => {
+        psom.classList.toggle('colle', colle);
+        if (k === psomK) return;
+        psomK = k; psomB.forEach((b, i) => { if (i === k) b.setAttribute('aria-current', 'location'); else b.removeAttribute('aria-current'); });
+        const l = $('.psom-l', psom); if (k >= 0 && l && l.scrollWidth > l.clientWidth + 2) montrerDans(l, psomB[k]);
+      });
+    }
     ecrire.forEach(f => { if (f) f(); });
   }
-  addEventListener('scroll', () => { if ((secs.length || chaps.length || ecrans.length) && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
+  addEventListener('scroll', () => { if ((secs.length || chaps.length || ecrans.length || psom) && !sraf) sraf = requestAnimationFrame(defile); }, { passive: true });
   addEventListener('resize', () => { requestAnimationFrame(() => { echelle(); ajuste(); dfM = null;
-    secs.forEach(x => { x.__h = 0; }); const o = $('.u-onglets', main); if (o) o.__haut = undefined;
-    if (secs.length || chaps.length || ecrans.length) defile(); }); });
+    secs.forEach(x => { x.__h = 0; }); const o = $('.u-onglets', main); if (o) o.__haut = undefined; if (psom) psom.__haut = undefined;
+    if (secs.length || chaps.length || ecrans.length || psom) defile(); }); });
 
   // les phrases s'écrivent et les photos apparaissent quand elles arrivent à l'écran
   let io = null;
@@ -6749,7 +6834,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   };
   const fermerSommaire = () => { const l = $('#som-l'), b = $('.som-b'); if (l) l.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); };
   main.addEventListener('click', e => {
-    const va = e.target.closest('[data-va]'); if (va) { vers(va.dataset.va); return; }
+    const va = e.target.closest('[data-va]');
+    // (une pièce du sommaire d'une page : la page y va, et la section prend le focus : le clavier continue de là)
+    if (va) { vers(va.dataset.va); if (va.closest('.psom')) { const t = document.getElementById(va.dataset.va); if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } } return; }
     const sb = e.target.closest('.som-b'); if (sb) { const l = $('#som-l'), o = l.hidden; l.hidden = !o; sb.setAttribute('aria-expanded', String(o)); if (o && MV) MV.cascade(l, { decalage: 6 }); return; }
     // un chapitre du sommaire : la page y va, et son titre prend le focus (le clavier continue de là)
     const c = e.target.closest('[data-c]'); if (c) { fermerSommaire(); vers('c-' + c.dataset.c); const t = $(`#c-${CSS.escape(c.dataset.c)} [tabindex="-1"]`, main); if (t) t.focus({ preventScroll: true }); }
@@ -6820,7 +6907,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const { chemin, q } = a; let m;
     frises.forEach(f => f.detruire()); frises = [];
     lecteurs.forEach(io => io.disconnect()); lecteurs = [];
-    secs = []; chaps = []; ecrans = []; dfM = null; surPlaceRendu = !!surPlace;
+    secs = []; chaps = []; ecrans = []; dfM = null; surPlaceRendu = !!surPlace; psom = null; psomB = []; psomC = [];
     finirTroupe();   // (la créature de la troupe s'arrête en quittant la compagnie ; la vue refaite la recrée)
     // la scène de l'accueil s'arrête en le quittant (refait en place, l'accueil la garde telle quelle)
     if (!(surPlace && vue === 'accueil')) Scene.montrer(false);

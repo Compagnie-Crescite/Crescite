@@ -473,6 +473,8 @@ LIBELLES = {
     "planDuSite": "Plan du site",
     # la page lue sans JavaScript (le <noscript> de la page assemblée) : ce qu'il lui faut
     "sansScript": "Ce site a besoin de JavaScript pour afficher ses pages.",
+    # le sommaire arrimé d'une page longue (les deux pages de l'espace pro, la compagnie) : son nom pour les lecteurs d'écran
+    "sommaire": "Sommaire",
     # les vidéos lues dans le site (règle 18, LECTEUR)
     "lire": "Lire la vidéo", "pleinEcran": "Plein écran", "assombrir": "Assombrir", "rallumer": "Rallumer", "fermer": "Fermer",
     # le jour et la nuit (règle 19, THEME) : le nom du bouton du menu (lecteurs d'écran, bulle), et les deux thèmes
