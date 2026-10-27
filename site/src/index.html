@@ -109,6 +109,7 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 /* (la cale, et non une marge de l'en-tête : sa marge compte dans ce que sticky garde dans le corps, il ne pourrait plus monter
    se coller au bas de l'écran) */
 .top-cale { height: 0; }
+.sans-glisse, .sans-glisse * { transition: none !important; }   /* (une bande posée arrimée d'emblée : coller()) */
 .top { position: sticky; top: calc(8px + env(safe-area-inset-top)); z-index: 40; width: fit-content; max-width: calc(100% - 16px); margin: 8px auto 0;
   border-radius: 999px; background: var(--saison); color: #fff; --focus: #fff;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, .14), 0 10px 26px -14px rgba(0, 0, 0, .8); transition: box-shadow var(--k-survol) var(--k-doux); }
@@ -1419,7 +1420,9 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: 96px; }
 .u-texte .chapo { font-family: inherit; font-size: clamp(1.25rem, 1.05rem + .5vw, 1.45rem); line-height: 1.55; }
 .u-texte a, .u-mention a, .u-disp a, .u-prod a { color: var(--u-vif); }
 .u-fig { position: relative; margin: 0; }
-.u-fig img { width: 100%; border-radius: 3px; }
+/* (une photo de récit sans dimensions écrites : sa place est réservée, 3:2, tant qu'elle arrive ; arrivée, elle prend sa propre
+   proportion. Sans cela, elle naissait haute de 0 et poussait la page en arrivant) */
+.u-fig img { width: 100%; height: auto; aspect-ratio: auto 3 / 2; border-radius: 3px; }
 .u-credit { margin: 0; font-size: .8rem; color: var(--u-texte2); }
 /* les vidéos, lues dans la page (règle 18, LECTEUR) : l'affiche du spectacle, son titre, la lecture au geste ; « plein écran »
    et « assombrir » dessous. La page éteinte, la vidéo garde sa lumière : un filet de l'univers et sa lueur autour d'elle */
@@ -1889,7 +1892,7 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
 .etape p { margin: 0; }
 .atelier ul { margin: .6em 0 0; padding-left: 1.1em; }
 .atelier li { margin-bottom: .5em; line-height: 1.55; }
-.atelier-ph img { width: 100%; border-radius: 8px; }
+.atelier-ph img { width: 100%; height: auto; aspect-ratio: auto 3 / 2; border-radius: 8px; }
 .dos-accueil { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: start; }
 .dos-fiche-t { margin: 0 0 10px !important; font: 700 1.3rem/1.2 var(--u-titre-f); color: var(--u-accent); text-transform: uppercase; }
 .dos-alerte { display: flex; gap: 14px; align-items: flex-start; margin: 0 0 22px; padding: 18px 20px; border: 2px solid var(--u-accent); border-radius: 8px; background: var(--u-fond2); }
@@ -3309,10 +3312,17 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   let lecteurs = [];
   // une bande collante (position: sticky) arrimée en haut de l'écran : .colle, posée par un IntersectionObserver (rien ne se
   // calcule au défilement) ; retiré avec les lignes de lecture quand la vue change
+  // (une bande arrimée dès son premier état lu, une vue refaite sur place quand la base répond, un retour qui rend la lecture,
+  // l'est sans glisser : son titre ne s'y déroule pas, la rangée ne se décale pas ; ensuite, au fil du défilement, elle glisse)
+  const coller = (el, oui) => {
+    if (el.__colle === oui) return;
+    const premier = el.__colle === undefined; el.__colle = oui;
+    if (premier && oui) { el.classList.add('sans-glisse', 'colle'); void el.offsetWidth; el.classList.remove('sans-glisse'); } else el.classList.toggle('colle', oui);
+  };
   function arrimer(el) {
     if (!el || !el.isConnected || !('IntersectionObserver' in window)) return;
     const haut = parseFloat(getComputedStyle(el).top) || 0;
-    const io = new IntersectionObserver(es => { const e = es[es.length - 1]; el.classList.toggle('colle', e.intersectionRatio < 1 && e.boundingClientRect.top <= haut + 1); },
+    const io = new IntersectionObserver(es => { const e = es[es.length - 1]; coller(el, e.intersectionRatio < 1 && e.boundingClientRect.top <= haut + 1); },
       { rootMargin: `-${Math.ceil(haut + 1)}px 0px 0px 0px`, threshold: [1] });
     io.observe(el); lecteurs.push(io);
   }
@@ -6933,7 +6943,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       ecrire.push(() => {
         if (k !== chapK) { chapK = k; majSommaire(k); }
         if (ra) { const v = clamp(-ra.top / Math.max(1, ra.height - vh), 0, 1).toFixed(3); if (prog.__v !== v) { prog.__v = v; prog.style.transform = `scaleX(${v})`; } }
-        if (ong) ong.classList.toggle('colle', colle);
+        if (ong) coller(ong, colle);
         // (tant que l'ouverture tient l'écran, le sommaire flottant s'efface : il couvrirait son appel)
         if (art && bas != null) art.classList.toggle('une-vu', bas > vh * .45);
       });
@@ -6946,7 +6956,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (k >= 0 && scrollY + vh >= document.documentElement.scrollHeight - 4) k = psomC.length - 1;
       const colle = psom.getBoundingClientRect().top <= haut + 1;
       ecrire.push(() => {
-        psom.classList.toggle('colle', colle);
+        coller(psom, colle);
         if (k === psomK) return;
         psomK = k; psomB.forEach((b, i) => { if (i === k) b.setAttribute('aria-current', 'location'); else b.removeAttribute('aria-current'); });
         const l = $('.psom-l', psom); if (k >= 0 && l && l.scrollWidth > l.clientWidth + 2) montrerPiece(l, psomB[k]);
@@ -7037,7 +7047,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     top.classList.remove('serre', 'compact', 'mince', 'fin');
     top.classList.add('mesure');
     for (const c of ['serre', 'compact', 'mince', 'fin']) { if (inn.scrollWidth <= inn.clientWidth + 1) break; top.classList.add(c); }
+    // (rien ne saute : sur l'accueil, la marque repliée a été mesurée dépliée ; sans cela, en se repliant de nouveau, elle
+    // glissait de toute sa largeur en 300 ms, et le menu centré avec elle, à chaque police arrivée et quand la base répondait)
+    const mq = $('.marque', top);
+    mq.style.transition = 'none';
     top.classList.remove('mesure');
+    void mq.offsetWidth;
+    mq.style.transition = '';
     habiterCreature();
   }
   // l'élément du menu de la vue porte aria-current="page" ; celui dont elle dépend est mis en évidence (« true ») : les
@@ -7312,6 +7328,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
   // D a changé (la base de la compagnie) : la vue courante se refait en place, sans remonter, sans voler le focus,
   // sans rejouer l'ouverture ni les animations d'entrée
+  // les blocs mis en page à la demande (content-visibility: auto) : leur hauteur, lue avant que la vue se refasse, rendue
+  // ensuite aux blocs neufs de même place (la même classe, le même rang) comme taille d'attente
+  const DIFFERES = '.df, .acc > section.bloc, section.bloc.troupe, .fp, .ac, article.u .chap', ARRIMEES = '.sm7, .psom, .ag-index, .u-onglets';
+  function taillesDiffere(avant) {
+    const rang = new Map(), cle = e => { const c = `${e.tagName}.${e.classList[0] || ''}#${e.id}`, n = rang.get(c) || 0; rang.set(c, n + 1); return `${c}:${n}`; };
+    const es = $$(DIFFERES, main), bs = $$(ARRIMEES, main);
+    // (la taille d'attente est celle du contenu : la hauteur lue, moins le rembourrage et les bords ; et les bandes arrimées le
+    // restent, sans glisser, sans attendre que leur observateur les retrouve)
+    const contenu = e => { const c = getComputedStyle(e); return e.getBoundingClientRect().height - ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth'].reduce((t, k) => t + (parseFloat(c[k]) || 0), 0); };
+    if (!avant) { const m = new Map(es.map(e => [cle(e), contenu(e)])); bs.forEach(e => m.set(cle(e), e.classList.contains('colle'))); return m; }
+    es.forEach(e => { const h = avant.get(cle(e)); if (h > 0) e.style.containIntrinsicBlockSize = `auto ${Math.round(h)}px`; });
+    bs.forEach(e => { if (avant.get(cle(e)) === true) coller(e, true); });
+    return avant;
+  }
   function refaire() {
     if (!courant) return;
     versionD++;
@@ -7324,6 +7354,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const repere = dans ? (act.id ? { id: act.id } : { i: focusables().indexOf(act) }) : null;
     const sel = dans && typeof act.selectionStart === 'number' ? [act.selectionStart, act.selectionEnd] : null;
     const ouverts = $$('details[open]', main).map(d => $$('details', main).indexOf(d));
+    // (rien ne saute quand la base répond : les blocs mis en page à la demande, content-visibility: auto, gardent la hauteur
+    // qu'ils avaient ; neufs, ils reprendraient leur taille d'attente, 900 ou 1400 px, le temps d'être lus, et tout ce qui
+    // est dessous sauterait d'autant)
+    const tailles = taillesDiffere();
     document.documentElement.classList.add(vers0);
     cadre();
     const r = rendre(courant, true);
@@ -7333,6 +7367,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     marquerNav(r);
     mettreAJourSchemaOrg();
     ouverts.forEach(i => { const d = $$('details', main)[i]; if (d) d.open = true; });
+    taillesDiffere(tailles);
     scrollTo({ top: y, left: 0, behavior: 'instant' });
     if (repere) { const el = repere.id ? document.getElementById(repere.id) : focusables()[repere.i];
       if (el && el !== document.activeElement) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) { /* champ sans sélection */ } } } }
