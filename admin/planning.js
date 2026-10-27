@@ -342,8 +342,8 @@ const PLANNING = (() => {
   // ================================================================================================ le style
   const CSS = `
 .pl { --pl-fond: var(--surface, var(--carte, #fffdf9)); --pl-papier: var(--papier, var(--fond, #f6f2eb)); --pl-texte: var(--encre, #1d1720);
-  --pl-sourd: var(--gris, #675e6b); --pl-filet: var(--filet, var(--trait, #e4dde3)); --pl-accent: var(--magenta, var(--accent, #a3306b));
-  --pl-doux: var(--magenta-doux, var(--accent-doux, #f5e4ec)); --pl-alerte: var(--alerte, #b3261e); --pl-ok: var(--ok, #1d6f47);
+  --pl-sourd: var(--gris, #675e6b); --pl-filet: var(--filet, var(--trait, #e4dde3)); --pl-accent: var(--magenta, var(--accent, #5f565a));
+  --pl-doux: var(--magenta-doux, var(--accent-doux, #ece5da)); --pl-alerte: var(--alerte, #b3261e); --pl-ok: var(--ok, #1d6f47);
   --pl-nom: 168px; --pl-col: 36px; --pl-ligne: 40px; --pl-rayon: 12px;
   --pl-hachure: color-mix(in srgb, var(--pl-texte) 34%, transparent); --pl-we: color-mix(in srgb, var(--pl-texte) 4%, transparent);
   --pl-courbe: cubic-bezier(.2, .7, .2, 1);
@@ -1204,8 +1204,10 @@ details.pl-alerte p { margin: 8px 0 0; }
     });
     const surMq = () => { if (!S.detruit) dessiner(); };
     if (mq && mq.addEventListener) mq.addEventListener('change', surMq);
-    const mqSombre = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
-    if (mqSombre && mqSombre.addEventListener) mqSombre.addEventListener('change', surMq);
+    // le thème de la page (la nuit par défaut, le jour par data-theme="jour" sur <html>) : un changement d'attribut redessine,
+    // les teintes se recalculent sur le nouveau fond
+    const mqSombre = typeof MutationObserver === 'function' ? new MutationObserver(surMq) : null;
+    if (mqSombre) mqSombre.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     S.id = `pl${Math.random().toString(36).slice(2, 8)}`;
     const premiere = periode(S.vue, S.jour, S.semaines);
@@ -1228,7 +1230,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       detruire() {
         S.detruit = true; clearTimeout(minuteur);
         if (mq && mq.removeEventListener) mq.removeEventListener('change', surMq);
-        if (mqSombre && mqSombre.removeEventListener) mqSombre.removeEventListener('change', surMq);
+        if (mqSombre) mqSombre.disconnect();
         document.removeEventListener('pointerdown', dehors, true); document.removeEventListener('focusin', dehors);
         racine.innerHTML = '';
       },

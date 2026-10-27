@@ -718,7 +718,7 @@ const DISPONIBILITES = (() => {
 .dp-absent p { margin: 0; }
 #ed-dispo .aide, .dp-page .aide { color: var(--gris); font-size: 13px; }
 .dp-p { margin: 10px 0 0; }
-.dp-nb { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 5px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 11.5px; font-weight: 800; }
+.dp-nb { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 5px; padding: 0 6px; border-radius: 999px; background: var(--accent); color: var(--sur-accent, #fff); font-size: 11.5px; font-weight: 800; }
 .seg button[aria-pressed="true"] .dp-nb { background: var(--carte); color: var(--accent); }
 .ligne.dp-prop { grid-template-columns: minmax(0, 1fr) auto; }
 .ligne.dp-prop.close { border-left-color: var(--trait); }

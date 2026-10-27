@@ -284,9 +284,17 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
   const s = await ouvrir(navigateur, { sombre: true, hash: '#/accueil' });
   await s.page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
-  ok('en sombre : le fond des tuiles suit le thème', (await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor)) === 'rgb(34, 25, 35)', await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor));
+  ok('en sombre : le fond des tuiles suit le thème', (await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor)) === 'rgb(46, 33, 40)', await s.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor));
   await s.page.screenshot({ path: `${CAPT}/sombre.png`, fullPage: false });
   await s.ctx.close();
+  // la nuit par défaut : l'appareil réglé en clair n'y change rien ; data-theme="jour" seul rend le jour
+  const c = await ouvrir(navigateur, { sombre: false, hash: '#/accueil' });
+  await c.page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
+  const fondTuile = () => c.page.$eval('.tb-tuile', e => getComputedStyle(e).backgroundColor);
+  ok('appareil en clair : la nuit quand même (data-theme="nuit", les tuiles de nuit)', (await c.page.evaluate(() => document.documentElement.dataset.theme)) === 'nuit' && (await fondTuile()) === 'rgb(46, 33, 40)', await fondTuile());
+  await c.page.evaluate(() => { document.documentElement.dataset.theme = 'jour'; });
+  ok('data-theme="jour" : le jour (les tuiles claires)', (await fondTuile()) === 'rgb(255, 253, 249)', await fondTuile());
+  await c.ctx.close();
 }
 
 // ================================================================================ l'habillage : des captures de plusieurs pages, en clair et en sombre
@@ -295,7 +303,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForSelector(`${tuile('journal')} .tb-l`, { timeout: 15000 });
   ok('le bandeau du jour : bonjour, le prénom, trois chiffres, le titre de la page', /Bonjour|Bonsoir/.test(await texte(page, '.tb-bonjour')) && /Adrien/.test(await texte(page, '.tb-bonjour')) && (await compte(page, '.tb-salut-chiffres li')) === 3 && (await texte(page, 'main h1')) === 'Tableau de bord', await texte(page, '.tb-salut'));
   ok('chaque tuile a son icône et sa couleur', (await compte(page, '.tb-tuile .tb-ico-t svg')) >= 10 && await page.$eval(tuile('urgent'), e => getComputedStyle(e).borderTopColor !== getComputedStyle(document.querySelector('.tb-tuile[data-k="prochaines"]')).borderTopColor));
-  ok('l’en-tête est de nuit, la rubrique courante en magenta', await page.$eval('.barre', e => getComputedStyle(e).backgroundImage !== 'none') && await page.$eval('.nav a[aria-current="page"]', e => getComputedStyle(e).color === 'rgb(255, 255, 255)'));
+  ok('l’en-tête est de nuit, la rubrique courante à la couleur de la saison', await page.$eval('.barre', e => getComputedStyle(e).backgroundImage !== 'none') && await page.$eval('.nav a[aria-current="page"]', e => getComputedStyle(e).color === 'rgb(255, 255, 255)'));
   await calme(page); await page.screenshot({ path: `${CAPT}/habillage-tableau.png`, fullPage: false });
   for (const [h, nom, attendre] of [['#/representations', 'representations', '.ligne'], ['#/representations/101', 'date', '#ed-date'], ['#/equipe', 'equipe', '.ligne, .bloc'], ['#/diffusion', 'diffusion', '.crm-colonne'], ['#/feuilles', 'feuilles', '.ligne, .bloc'], ['#/planning', 'planning', '.pl, .bloc'], ['#/journal', 'journal', '.journal-ligne, .vide']]) {
     await page.goto(`${URL0}${h}`);

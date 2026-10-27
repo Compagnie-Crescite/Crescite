@@ -86,10 +86,12 @@ def _lum(h):
     return .2126 * r + .7152 * g + .0722 * b
 
 
-def theme():
+def theme(complet=False):
     """Le thème du site (règle 22 du contrat) : la création la plus récente colore tout le site, logo compris (« le
     dernier spectacle de la saison colore le thème complet », Angelo Jossec ; aujourd'hui Cassandres). → {slug, couleur
-    (assez sombre pour un texte sur fond clair et une pieuvre blanche dessus : la tache du logo), vive (sur fond sombre)}."""
+    (assez sombre pour un texte sur fond clair et une pieuvre blanche dessus : la tache du logo), vive (sur fond sombre)}.
+    complet=True y ajoute les accents qu'en tirent les espaces réservés (administration, équipe, salles, réponse), portés
+    de themeSaison (synthese.html) : porteur, texte, texteNuit, et leurs nuances (fonce, doux, profond, de jour et de nuit)."""
     site = json.loads((ROOT / "data" / "site-crescite.json").read_text(encoding="utf-8"))
     cass = json.loads((ROOT / "data" / "cassandres.json").read_text(encoding="utf-8"))
     U = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))["spectacles"]
@@ -108,7 +110,35 @@ def theme():
             if contraste(couleur) >= 4.5 or k < .2: break
             k -= .02
     vive = next((x for x in (c["scene"], c["accent2"], c["accent"]) if (_lum(x) + .05) / (_lum("#14070f") + .05) >= 4.5), c["texte"])
-    return {"slug": slug, "couleur": couleur, "vive": vive}
+    t = {"slug": slug, "couleur": couleur, "vive": vive}
+    if not complet:
+        return t
+    # Les accents des espaces réservés, comme themeSaison les tire pour le site public : deux couleurs mêlées ; une couleur
+    # éclaircie, ou assombrie, jusqu'à se lire (AA) sur un fond. Les fonds visés sont les plus défavorables des espaces :
+    # la carte du jour (#e4dccf), la surface la plus claire de la nuit (#33262d, sous la carte #2e2128 et le filet).
+    mel = lambda a, b, k: "#" + "".join(f"{round(int(a[i:i + 2], 16) * (1 - k) + int(b[i:i + 2], 16) * k):02x}" for i in (1, 3, 5))
+    def vers(h, fond, cible, b):
+        for _ in range(40):
+            if contrast(h, fond) >= cible: break
+            h = mel(h, b, .08)
+        return h
+    # la nuit, la couleur qui porte un texte blanc (AA) et se détache encore du papier de la nuit (3:1) : la couleur,
+    # éclaircie vers la vive juste ce qu'il faut (les boutons pleins, la rubrique courante)
+    porteur = couleur
+    for k in range(1, 21):
+        if contrast(porteur, "#151014") >= 3: break
+        x = mel(couleur, vive, k / 20)
+        if contrast("#ffffff", x) < 4.5: break
+        porteur = x
+    texte = vers(couleur, "#e4dccf", 4.6, "#000000")
+    texte_nuit = vers(vive, "#33262d", 4.6, "#ffffff")
+    # les teintes douces (le fond d'un élément choisi, d'un message) : la couleur à peine posée sur le papier ; la nuit, la
+    # vive sur le papier de la nuit, assez peu pour que le texte de la nuit et l'encre s'y lisent encore (4,5:1)
+    doux_nuit = next((x for x in (mel("#1b1117", vive, k / 100) for k in range(22, 4, -2))
+                      if contrast(texte_nuit, x) >= 4.5 and contrast("#f3eee9", x) >= 4.5), "#23171e")
+    return dict(t, porteur=porteur, profond=mel(couleur, "#000000", .45), texte=texte, fonce=mel(texte, "#000000", .2),
+                doux=mel(couleur, "#fffdf9", .88), texteNuit=texte_nuit, fonceNuit=mel(texte_nuit, "#ffffff", .3),
+                douxNuit=doux_nuit)
 
 
 def logo_variants():
@@ -784,8 +814,16 @@ def avec_outils(name, src):
     return src[:m.end()] + tete + src[m.end():] if m else src.replace(DATA_LIGNE, DATA_LIGNE + tete, 1)
 
 
+# l'icône d'onglet du site public : celle des espaces réservés, à la couleur de la saison (faite par equipe(dest), à côté)
+ICONE_SITE = '<link rel="icon" href="equipe/icones/192.png" type="image/png">\n<link rel="apple-touch-icon" href="equipe/icones/180.png">'
+
+
 def assemble(name, D, photo_urls):
     src = avec_outils(name, (SRC / f"{name}.html").read_text(encoding="utf-8"))
+    if 'rel="icon"' not in src:
+        m = re.search(r'<meta name="viewport"[^>]*>', src)
+        if m:
+            src = src[:m.end()] + "\n" + ICONE_SITE + src[m.end():]
     data = dict(D, photos=photo_urls)
     if name in PAGES_PIEUVRE:
         data["pieuvre"] = pieuvre_data()
@@ -830,6 +868,28 @@ ENTETES = """/*
 """
 
 
+# Les espaces réservés (administration, équipe, salles, réponse) à la charte du site public : ses polices, ses neutres, sa
+# nuit par défaut (data-theme="nuit" sur <html>, le jour par data-theme="jour" seulement), et ses accents à la couleur de
+# la saison (règle 22). Leurs sources n'ont pour accent qu'un gris neutre (--saison-* par défaut) : le build pose après
+# leur feuille de style les couleurs de la saison (theme(complet=True)), que chaque espace lit sous ses propres noms
+# (--accent, --magenta…, et la pieuvre --pieuvre). Une nouvelle création recolore tout, rien n'est écrit dans les sources.
+SAISON_VARS = (("saison", "couleur"), ("saison-vive", "vive"), ("saison-porteur", "porteur"), ("saison-profond", "profond"),
+               ("saison-texte", "texte"), ("saison-fonce", "fonce"), ("saison-doux", "doux"),
+               ("saison-texte-nuit", "texteNuit"), ("saison-fonce-nuit", "fonceNuit"), ("saison-doux-nuit", "douxNuit"))
+
+
+def poser_saison(page):
+    """Ajoute à la fin du <head> d'une page d'espace réservé le <style> des couleurs de la saison (après sa feuille de
+    style, qui ne donne que les défauts neutres ; l'habillage de l'administration, posé ensuite, n'en redéfinit aucune)."""
+    th = theme(complet=True)
+    style = ('<style id="couleurs-saison">/* écrit par maquettes/build.py : les couleurs de la saison (' + th["slug"] + ") */ :root { "
+             + "; ".join(f"--{n}: {th[k]}" for n, k in SAISON_VARS) + "; }</style>\n</head>")
+    html = page.read_text(encoding="utf-8")
+    if "</head>" not in html:
+        raise ValueError(f"{page.name} : pas de </head>")
+    page.write_text(html.replace("</head>", style, 1), encoding="utf-8")
+
+
 def admin(dest):
     """L'administration (admin/index.html, son client Supabase et l'outil des lignes d'agenda), à côté des maquettes, avec
     les outils communs qu'elle charge ou chargera : tentacules.js, frise.js (FRISE) et mouvement.js (MOUVEMENT)."""
@@ -854,14 +914,11 @@ def admin(dest):
         "/* Écrit par maquettes/build.py (admin) : le logo 2.0 (sa pieuvre, ses quatre tracés, ses bras) pour l'administration\n"
         "   et l'espace de l'équipe ; tentacules.js le pose dans l'en-tête (data-pieuvre). */\n"
         f"self.CRESCITE_LOGO = {json.dumps(partage, ensure_ascii=False, separators=(',', ':'))};\n", encoding="utf-8")
-    # la pieuvre de l'en-tête à la couleur du thème (règle 22), comme dans l'espace de l'équipe
+    # les accents et la pieuvre de l'en-tête à la couleur de la saison (règle 22), comme les trois autres espaces
     try:
-        th, page = theme(), dest / "admin" / "index.html"
-        html = page.read_text(encoding="utf-8")
-        page.write_text(html.replace("</head>", f"<style>:root {{ --pieuvre: {th['couleur']}; }} "
-                                     f"@media (prefers-color-scheme: dark) {{ :root {{ --pieuvre: {th['vive']}; }} }}</style>\n</head>", 1), encoding="utf-8")
+        poser_saison(dest / "admin" / "index.html")
     except Exception as e:
-        print(f"admin : pieuvre au magenta (couleur du thème non posée : {e})")
+        print(f"admin : accents au gris neutre (couleurs de la saison non posées : {e})")
     # les frises et le mouvement (règle 15) : l'administration et l'espace de l'équipe s'en serviront
     for f in ("frise.js", "mouvement.js"):
         shutil.copyfile(SRC / f, dest / "admin" / f)
@@ -883,9 +940,11 @@ def equipe(dest):
       carte.js   la France, la Belgique, le Luxembourg, Rouen et la projection des maquettes (prototype/src/map.json), pour
                  la carte de la tournée ;
       icones/    les icônes de l'application (192, 512, 512 « maskable », 180 pour l'iPhone, et le badge des notifications),
-                 tirées du logo 2.0 dès que sa source privée est là (private/brand), quel que soit dest : la source ne va
-                 jamais dans le dépôt, le dessin produit va, comme le logo des maquettes, dans maquettes/dist et dans le
-                 site publié (docs/, publication décidée par la compagnie). Sans la source privée, la pieuvre de
+                 à la couleur de la saison, la seule série d'icônes du site : le site public, l'administration, les salles
+                 et la réponse y renvoient aussi (icon et apple-touch-icon) ; tirées du logo 2.0 dès que sa source
+                 privée est là (private/brand), quel que soit dest : la source ne va jamais dans le dépôt, le dessin
+                 produit va, comme le logo des maquettes, dans maquettes/dist et dans le site publié (docs/,
+                 publication décidée par la compagnie). Sans la source privée, la pieuvre de
                  substitution. SVG → PNG par cairosvg, rsvg-convert ou Chromium (Playwright : PLAYWRIGHT_MODULE,
                  CHROMIUM), gardées dans le dossier temporaire tant que le logo ne change pas ; sans aucun d'eux, une
                  pastille unie ;
@@ -904,18 +963,12 @@ def equipe(dest):
     def avertir(quoi, e):
         print(f"equipe : {quoi} ({type(e).__name__} : {e}) ; l'espace de l'équipe marche sans")
 
-    # ———— la pieuvre à la couleur du thème (règle 22 du contrat), comme les icônes : --pieuvre, sombre sur le papier,
-    # vive la nuit (la page la lit, sinon garde le magenta)
+    # ———— les accents et la pieuvre à la couleur de la saison (règle 22 du contrat), comme les icônes (sans elles, la
+    # page garde son gris neutre)
     try:
-        th, page = theme(), out / "index.html"
-        style = (f"<style>:root {{ --pieuvre: {th['couleur']}; }} "
-                 f"@media (prefers-color-scheme: dark) {{ :root {{ --pieuvre: {th['vive']}; }} }}</style>\n</head>")
-        html = page.read_text(encoding="utf-8")
-        if "</head>" not in html:
-            raise ValueError("pas de </head>")
-        page.write_text(html.replace("</head>", style, 1), encoding="utf-8")
+        poser_saison(out / "index.html")
     except Exception as e:
-        avertir("pieuvre au magenta (couleur du thème non posée)", e)
+        avertir("accents au gris neutre (couleurs de la saison non posées)", e)
 
     # ———— la carte de la tournée
     try:
@@ -930,7 +983,7 @@ def equipe(dest):
         avertir("carte de la tournée non écrite", e)
 
     # ———— les icônes
-    def png_uni(f, n, rond, couleur=(188, 62, 128)):
+    def png_uni(f, n, rond, couleur):
         """Une pastille (ronde) ou un carré, d'une couleur, en PNG : le dernier recours, sans aucun convertisseur."""
         lignes = []
         for y in range(n):
@@ -951,8 +1004,9 @@ def equipe(dest):
         pieuvre = "".join(f'<path d="{d}"/>' for d in bras if d)
         carre = lambda cx, cy, c: f"{cx - c / 2:.1f} {cy - c / 2:.1f} {c:.1f} {c:.1f}"
         svg = lambda vb, corps: f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{vb}" width="{{n}}" height="{{n}}">{corps}</svg>'
-        # la marque (tache magenta, pieuvre blanche) sur fond transparent ; la pieuvre blanche sur un carré magenta plein
-        # (dans la zone sûre des icônes « maskable » : 62 % de la largeur) ; la pieuvre seule, blanche, pour le badge
+        # la marque (la tache à la couleur de la saison, la pieuvre blanche) sur fond transparent ; la pieuvre blanche sur
+        # un carré plein de la même couleur (dans la zone sûre des icônes « maskable » : 62 % de la largeur) ; la pieuvre
+        # seule, blanche, pour le badge
         coul = theme()["couleur"]
         marque = svg(carre(767, 767.5, 1408 * 1.06), f'<path fill="{coul}" d="{tache}"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
         pleine = lambda part: svg(carre(771, 628, 1042 / part), f'<rect x="-2000" y="-2000" width="6000" height="6000" fill="{coul}"/><g fill="#fff" fill-rule="evenodd">{pieuvre}</g>')
@@ -1006,7 +1060,7 @@ await navigateur.close();
                         pass
             if not fait:
                 for f, n, _, rond in travaux:
-                    png_uni(garde / f, n, rond, (255, 255, 255) if f == "badge.png" else (188, 62, 128))
+                    png_uni(garde / f, n, rond, (255, 255, 255) if f == "badge.png" else tuple(int(coul[i:i + 2], 16) for i in (1, 3, 5)))
                 fait = "pastilles unies (aucun convertisseur SVG)"
             print(f"equipe : icônes de l'application faites par {fait}{'' if prive else ', d’après la pieuvre de substitution'}")
         for f, *_ in travaux:
@@ -1035,16 +1089,26 @@ await navigateur.close();
 
 def pro(dest):
     """L'espace des salles (pro/ : les programmateurs et les directeurs de salle invités y trouvent captations et
-    documents), à côté de l'administration : son logo est celui des feuilles de route, ../admin/logo-feuille.svg."""
+    documents), à côté de l'administration : la pieuvre de son en-tête vient de ../admin/logo.js et ../admin/tentacules.js,
+    ses icônes de ../equipe/icones/, ses accents de la saison (poser_saison)."""
     import shutil
     shutil.copytree(ROOT / "pro", dest / "pro", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
+    try:
+        poser_saison(dest / "pro" / "index.html")
+    except Exception as e:
+        print(f"pro : accents au gris neutre (couleurs de la saison non posées : {e})")
 
 
 def reponse(dest):
     """La page de réponse aux propositions de dates (reponse/), où mènent les liens des courriels : Supabase ne sert pas
-    de page web depuis l'adresse d'une fonction, la page lit et enregistre par la fonction crescite-courriel."""
+    de page web depuis l'adresse d'une fonction, la page lit et enregistre par la fonction crescite-courriel. Sa marque,
+    ses icônes et ses accents : comme l'espace des salles."""
     import shutil
     shutil.copytree(ROOT / "reponse", dest / "reponse", dirs_exist_ok=True, ignore=shutil.ignore_patterns(".*", "__pycache__"))
+    try:
+        poser_saison(dest / "reponse" / "index.html")
+    except Exception as e:
+        print(f"reponse : accents au gris neutre (couleurs de la saison non posées : {e})")
 
 
 def pages(D, files, names):

@@ -186,8 +186,7 @@ manière). Quatre outils communs, injectés dans chaque maquette :
   « Assombrir » éteint le reste de la page (Échap ou « Rallumer ») ; une seule vidéo à la fois.
 - `theme.js` (THEME, dans le `<head>`) : le site public n'a que son thème sombre (décision de la compagnie, octobre 2026) :
   `data-theme="nuit"` sur `<html>` avant le premier dessin, quel que soit le réglage de l'appareil, et plus de bouton
-  jour/nuit. Le jour et la nuit restent à l'administration et aux espaces de l'équipe et des salles, qui suivent le
-  réglage de l'appareil.
+  jour/nuit. Les espaces réservés aussi sont de nuit par défaut (plus bas).
 - `troupe.js` (TROUPE) : sur la page de la compagnie, toutes les personnes des équipes, par catégories de métiers (le jeu,
   la mise en scène, l'écriture, les décors et costumes, la lumière et le son, la production), une vignette seulement pour
   une photo publiée ; survoler ou choisir une personne allume toutes ses places et les relie par des bras.
@@ -197,6 +196,26 @@ manière). Quatre outils communs, injectés dans chaque maquette :
 Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> m01 synthese`…
 Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
 réactivité, la réservation, les vidéos, la nuit seule, la troupe, le cadrage des photos) sont dans `maquettes/CONTRAT.md`.
+
+**Les espaces réservés, à la charte du site** (octobre 2026 : « Uniformise », « Mettre tout en mode nuit par défaut »).
+L'administration, l'espace de l'équipe, l'espace des salles et la page de réponse ont les polices du site (Ubuntu, Open
+Sans, Raleway pour les étiquettes), ses neutres (le papier `#1b1117`, la carte `#2e2128`, l'encre `#f3eee9`…) et sa nuit
+par défaut, quel que soit l'appareil : `data-theme="nuit"` sur `<html>` dans la page même, `theme-color` et manifeste de
+nuit ; les palettes de jour restent dans les feuilles de style, sous `data-theme="jour"` seulement (aucun bouton), et ce
+qui testait le thème en script lit cet attribut (le planning se redessine quand il change). Leur accent n'est plus le
+magenta : c'est la couleur de la saison (règle 22). Les sources n'en ont qu'un gris neutre (`--saison-*` par défaut) ;
+`build.py` porte ce qu'il faut de `themeSaison` (`theme(complet=True)` : la couleur, la vive, le porteur d'un texte
+blanc, le texte lisible le jour et la nuit, leurs nuances) et `poser_saison` l'écrit dans un `<style id="couleurs-saison">`
+à la fin du `<head>` de chaque espace publié, que chacun lit sous ses noms (`--accent`, `--magenta`…, la pieuvre
+`--pieuvre`) : une nouvelle création les recolore tous. Les quatre en-têtes ont la même marque, la pieuvre (`data-pieuvre`,
+posée par `tentacules.js` avec `admin/logo.js`), « Compagnie Crescite » et le nom de l'espace dessous ; dans les salles et
+la réponse elle mène au site (`../`), l'administration et l'équipe ont « Le site » dans leur pied. Le pied, commun aux
+quatre et en fin de contenu (jamais fixé : au téléphone, les barres d'onglets restent seules en bas) : « Compagnie
+Crescite », « Écrire à la compagnie », « Mentions légales », « Politique de confidentialité » (celles du site). Une seule
+série d'icônes, à la couleur de la saison (`equipe/icones/`, faite par `equipe(dest)`), sert d'icône d'onglet au site
+public (posée par `assemble`), à l'administration, à l'équipe, aux salles et à la réponse. Les onglets s'intitulent
+« Administration · Compagnie Crescite », « Équipe · Compagnie Crescite », « Espace des salles · Compagnie Crescite »,
+« Des dates vous sont proposées · Compagnie Crescite » ; l'application installée, « Les Crescite ».
 
 **La page des spectacles au téléphone** (prévisualisation, `maquettes/src/spectacles-mobile.html`, en ligne dans
 `docs/spectacles-mobile.html`). Au téléphone, `#/spectacles` de la synthèse se réduit à une liste ; cette page met côte à côte,
@@ -334,12 +353,12 @@ compte du projet inscrit dans `crescite_admins`.
     précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
 - **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
   les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, par Google Fonts ; sans
-  réseau, le système), le papier chaud et le magenta de la compagnie, un en-tête de nuit (la pieuvre en rose, la rubrique
-  courante en magenta), des cartes douces et un dégradé magenta-prune pour ce qui s'enregistre, chaque tuile du tableau
+  réseau, le système), les neutres du site et la couleur de la saison, un en-tête de nuit (la pieuvre et la rubrique
+  courante à la couleur de la saison), des cartes douces et un dégradé de la saison pour ce qui s'enregistre, chaque tuile du tableau
   de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
   prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
-  calendriers, les colonnes du Kanban colorées ; le sombre suit. `maquettes/tableau.mjs` en garde des captures de chaque
+  calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"`. `maquettes/tableau.mjs` en garde des captures de chaque
   page (`habillage-*.png`).
 - **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
   - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
@@ -670,7 +689,7 @@ range en colonne à gauche. On y trouve :
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
 L'application garde la dernière saison lue pour la consulter sans réseau, prévient quand une nouvelle version est
-disponible et suit le mode sombre du téléphone. Ses icônes sont tirées du logo à la construction.
+disponible et s'ouvre de nuit, comme le site. Ses icônes sont tirées du logo à la construction, à la couleur de la saison.
 
 **Son mouvement.** Dix effets, dans `equipe/index.html` (la feuille de style, section « le mouvement de l'espace de
 l'équipe ») et `equipe.js` : le retour au doigt (depuis le bord gauche, la vue suit le pouce et la précédente revient :
