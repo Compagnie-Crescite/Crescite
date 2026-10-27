@@ -47,10 +47,12 @@ const NOTES = (() => {
           <div class="nt-pied"><label class="btn petit">📎 Pièce jointe<input type="file" hidden accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"></label><span class="compte nt-fichier-nom"></span><button type="submit" class="btn principal petit">Noter</button></div></form>`;
     };
     el.innerHTML = `<h3>${esc(titre)}</h3><p class="aide">Chargement…</p>`;
-    lire(table, id).then(dessiner);
+    // une note commencée ne se perd pas en quittant la fiche (GESTES.garder : la question de l'administration, index.html)
+    const garder = () => { const f = $('form.nt-form', el); if (f && typeof GESTES !== 'undefined') GESTES.garder(f); };
+    lire(table, id).then(xs => { dessiner(xs); garder(); });
     if (el.dataset.ntRelie) return;
     el.dataset.ntRelie = '1';
-    const relire = async () => dessiner(await lire(table, id, { relire: true }));
+    const relire = async () => { dessiner(await lire(table, id, { relire: true })); garder(); };
     // l'autocomplétion des mentions : « @ » puis des lettres, au curseur
     el.addEventListener('input', e => {
       const ta = e.target; if (ta.tagName !== 'TEXTAREA') return;

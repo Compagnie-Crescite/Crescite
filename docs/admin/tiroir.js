@@ -10,8 +10,14 @@
    diffusion se lit en résumé, avec ses actions. Changer de page ferme les tiroirs (après la question des modifications
    non enregistrées, comme pour une fiche). Chargé après corbeille.js ; sans les éditeurs (equipe.js absent), le lien
    navigue comme avant.
+   Un tiroir a son adresse : la page garde la sienne (#/accueil…), le tiroir s'ajoute dans ?tiroir=lieux/5 (plusieurs :
+   ?tiroir=representations/101,lieux/5). Chaque tiroir ouvert est un pas de l'historique : le bouton précédent du
+   navigateur referme le dernier, le suivant le rouvre ; l'adresse se recharge et se partage entre administrateurs (la
+   page, puis ses tiroirs). Fermer un tiroir à la main revient d'un pas. Le titre de l'onglet nomme le tiroir ouvert.
    TIROIR.ouvrir(href, { viser, depuis })   TIROIR.fermer()   TIROIR.fermerTout()   TIROIR.ouvert()   TIROIR.racine()
-   TIROIR.redessiner(id)                     TIROIR.peut(href) : ce lien s'ouvrirait-il en tiroir ici ? */
+   TIROIR.redessiner(id)                     TIROIR.peut(href) : ce lien s'ouvrirait-il en tiroir ici ?
+   TIROIR.restaurer() (à l'ouverture de l'administration)   TIROIR.surAdresse() (index.html, à chaque changement d'adresse)
+   TIROIR.titre() : le nom du tiroir du haut et sa rubrique, pour le titre de l'onglet */
 const TIROIR = (() => {
   const pile = [];
   const LARGEUR = 'min(780px, 94vw)';
@@ -37,7 +43,22 @@ const TIROIR = (() => {
   }
   const ouvert = () => pile.length > 0;
   const racine = () => (pile.length ? pile[pile.length - 1].el : null);
-  function ouvrir(href, { viser: cible = '', depuis = null } = {}) {
+  // ---- l'adresse des tiroirs : ?tiroir=…, et l'état de l'historique { tiroirs, sur } (la page sous les tiroirs)
+  const cleDe = t => t.f.href(t.id).replace(/^#\//, '');
+  const liste = () => pile.map(cleDe);
+  const urlAvec = xs => {
+    const q = new URLSearchParams(location.search);
+    if (xs.length) q.set('tiroir', xs.join(',')); else q.delete('tiroir');
+    const s = q.toString().replace(/%2F/gi, '/').replace(/%2C/gi, ',');
+    return `${location.pathname}${s ? `?${s}` : ''}${location.hash}`;
+  };
+  // pas : le rang dans l'historique (index.html, noterAdresse) ; un tiroir ouvert prend le rang suivant
+  const etat = (pas = 0) => ({ tiroirs: liste(), sur: location.hash, n: (typeof E.n === 'number' ? E.n : 0) + pas });
+  // les tiroirs que veut cette entrée de l'historique (le précédent, le suivant) : seulement sur la page où ils s'ouvraient
+  const voulus = () => { const st = history.state; return st && Array.isArray(st.tiroirs) && st.sur === location.hash ? st.tiroirs.filter(x => typeof x === 'string') : []; };
+  const noter = () => { if (typeof noterAdresse === 'function') noterAdresse(); if (typeof majTitreAdmin === 'function') majTitreAdmin(); };
+  let ignorerPop = false;
+  function ouvrir(href, { viser: cible = '', depuis = null, histoire = true } = {}) {
     const x = ficheDe(href); if (!x || !x.f.peut()) { location.hash = href; return null; }
     const { f, id } = x;
     const haut = pile[pile.length - 1];
@@ -54,13 +75,16 @@ const TIROIR = (() => {
       <a class="btn petit" data-tiroir-pleine href="${esc((f.pleine || f.href)(id))}" title="Ouvrir à sa place, dans sa rubrique">Pleine page</a>
       <button type="button" class="btn petit" data-tiroir-fermer aria-label="Fermer">✕</button></header>
       <div class="tiroir-corps"><section class="editeur" id="${f.zone}"></section></div>`;
-    t.el = el; t.voile = voile;
+    t.el = el; t.voile = voile; t.pousse = histoire;
     pile.push(t);
     document.body.append(voile, el);
     pile.slice(0, -1).forEach((p, i) => { p.el.style.setProperty('--tiroir-recul', `${(pile.length - 1 - i) * 28}px`); p.el.setAttribute('aria-hidden', 'true'); p.el.inert = true; });
     dessiner(t);
     requestAnimationFrame(() => { el.classList.add('la'); voile.classList.add('la'); });
     if (cible) { visee = cible; viser(); } else requestAnimationFrame(() => $('[data-tiroir-fermer]', el)?.focus({ preventScroll: true }));
+    // un pas de l'historique : l'adresse de la page, et le tiroir dans ?tiroir=…
+    if (histoire) history.pushState(etat(1), '', urlAvec(liste()));
+    noter();
     return t;
   }
   function dessiner(t) {
@@ -75,9 +99,14 @@ const TIROIR = (() => {
     if (id != null && Number.isFinite(+id)) t.id = +id;
     dessiner(t);
   }
-  function fermer({ demander = true } = {}) {
+  // fermer le tiroir du haut ; des modifications pas enregistrées : la question d'abord (une boîte de la charte), et le tiroir
+  // se ferme si l'on quitte. histoire : l'historique suit (fermé à la main, on revient du pas que le tiroir avait fait)
+  function fermer({ demander = true, histoire = true } = {}) {
     const t = pile[pile.length - 1]; if (!t) return false;
-    if (demander && E.sale && !confirm('Des modifications ne sont pas enregistrées. Fermer quand même ?')) return false;
+    if (demander && typeof saisieEnCours === 'function' && saisieEnCours(t.el)) {
+      partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer', dans: t.el }).then(oui => { if (oui && pile[pile.length - 1] === t) fermer({ demander: false, histoire }); });
+      return false;
+    }
     pile.pop();
     t.el.classList.remove('la'); t.voile.classList.remove('la');
     const retirer = () => { t.el.remove(); t.voile.remove(); };
@@ -88,9 +117,68 @@ const TIROIR = (() => {
     else document.documentElement.classList.remove('tiroir-ouvert');
     marquerSale(E.sale);
     const d = t.depuis; if (d && d.isConnected && typeof d.focus === 'function') d.focus({ preventScroll: true }); else haut?.el.querySelector('[data-tiroir-fermer]')?.focus({ preventScroll: true });
+    if (histoire) {
+      const st = history.state;
+      // l'entrée présente est celle que ce tiroir avait ajoutée : on en revient (le précédent du navigateur, sans rien redessiner)
+      if (t.pousse && st && Array.isArray(st.tiroirs) && st.sur === location.hash && st.tiroirs.length === pile.length + 1) { ignorerPop = true; history.back(); }
+      else history.replaceState(etat(), '', urlAvec(liste()));
+    }
+    noter();
     return true;
   }
-  function fermerTout({ demander = false } = {}) { while (pile.length) { if (!fermer({ demander })) return false; } return true; }
+  function fermerTout({ demander = false, histoire = true } = {}) { while (pile.length) { if (!fermer({ demander, histoire })) return false; } return true; }
+  // les tiroirs suivent l'entrée de l'historique : ceux en trop se ferment (la question d'abord, s'il y a des modifications),
+  // ceux qui manquent se rouvrent
+  function accorder(xs) {
+    const actuels = liste();
+    let n = 0; while (n < actuels.length && n < xs.length && actuels[n] === xs[n]) n++;
+    const aFermer = pile.slice(n);
+    if (aFermer.length && aFermer.some((t, i) => (i === aFermer.length - 1 && E.sale) || (typeof GESTES !== 'undefined' && GESTES.saisie(t.el)))) {
+      // on revient où l'on était (le tiroir reste), puis la question ; « Fermer sans enregistrer » refait le pas
+      const vers = location.search + location.hash, pas = revenir();
+      partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer', dans: aFermer[aFermer.length - 1].el }).then(oui => { if (oui) { E.sale = false; refaire(pas, vers); } });
+      return;
+    }
+    while (pile.length > n) fermer({ demander: false, histoire: false });
+    xs.slice(n).forEach(x => { const h = `#/${x}`; if (ficheDe(h)?.f.peut()) { const t = ouvrir(h, { histoire: false }); if (t) t.pousse = true; } });
+    const reste = liste();
+    if (reste.join(',') !== xs.join(',')) history.replaceState(etat(), '', urlAvec(reste));
+    noter();
+  }
+  // à l'ouverture de l'administration : les tiroirs de l'adresse (un lien partagé, un rechargement), par-dessus la page
+  function restaurer() {
+    const q = new URLSearchParams(location.search).get('tiroir');
+    if (!q) return;
+    q.split(',').map(x => x.trim()).filter(x => /^[a-z]+(\/[a-z]+)?\/\d+$/.test(x)).slice(0, 6).forEach(x => { const h = `#/${x}`; if (peut(h)) ouvrir(h, { histoire: false }); });
+    history.replaceState(etat(), '', urlAvec(liste()));
+    noter();
+  }
+  // index.html, à chaque changement d'adresse accepté (la question déjà posée) : la même page, seuls les tiroirs changent
+  // (vrai : rien à redessiner) ; une autre page, les tiroirs se ferment, et ceux de cette entrée se rouvrent après elle
+  let aRouvrir = null;
+  function surAdresse() {
+    const xs = voulus();
+    if (!pile.length && !xs.length) { if (new URLSearchParams(location.search).has('tiroir')) { history.replaceState(history.state, '', urlAvec([])); if (typeof noterAdresse === 'function') noterAdresse(); } return false; }
+    if (pile.length && location.hash === E.hashVue) { accorder(xs); return true; }
+    while (pile.length) fermer({ demander: false, histoire: false });
+    if (xs.length) aRouvrir = xs; else history.replaceState(history.state, '', urlAvec([]));
+    if (typeof noterAdresse === 'function') noterAdresse();
+    return false;
+  }
+  if (typeof APRES_VUE !== 'undefined') APRES_VUE.push(() => { const xs = aRouvrir; aRouvrir = null; if (xs && xs.length) requestAnimationFrame(() => accorder(xs)); });
+  // le précédent et le suivant entre deux pas d'une même page (seul ?tiroir= change : pas de hashchange)
+  window.addEventListener('popstate', () => {
+    if (location.search + location.hash === E.adresse) return;     // revenu où l'on était (la question posée)
+    if (location.hash !== E.hash) { ignorerPop = false; return; }   // la page change : hashchange suit (index.html)
+    if (ignorerPop) { ignorerPop = false; noter(); return; }
+    accorder(voulus());
+  });
+  // le titre de l'onglet : le tiroir du haut (« Théâtre de Caen »), et la rubrique de sa fiche
+  function titre() {
+    const t = pile[pile.length - 1]; if (!t) return null;
+    let nom = ''; try { nom = t.f.titre(t.id); } catch (e) { nom = ''; }
+    return { nom: nom || t.f.nom, rubrique: cleDe(t).split('/')[0] };
+  }
 
   // une piste de diffusion, en résumé : ce que la carte du Kanban dit, et ses actions (le Kanban la modifie)
   const ETAPES = () => (typeof ETAPES_CRM !== 'undefined' ? ETAPES_CRM : []);
@@ -127,7 +215,7 @@ const TIROIR = (() => {
   }
 
   // l'adresse d'une piste (#/diffusion/piste/3) : le Kanban, puis la piste en tiroir ; une carte du Kanban cliquée (hors boutons) s'ouvre de même
-  if (typeof ROUTES !== 'undefined') ROUTES.unshift([/^#\/diffusion\/piste\/(\d+)$/, m => { vueDiffusion(); requestAnimationFrame(() => ouvrir(`#/diffusion/piste/${m[1]}`)); }]);
+  if (typeof ROUTES !== 'undefined') ROUTES.unshift([/^#\/diffusion\/piste\/(\d+)$/, m => { vueDiffusion(); requestAnimationFrame(() => ouvrir(`#/diffusion/piste/${m[1]}`, { histoire: false })); }]);   // (l'adresse est déjà la sienne)
   document.addEventListener('click', e => {
     if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
     const c = e.target.closest('.crm-carte[data-prospect-id]'); if (!c || e.target.closest('button, a, input, select, textarea')) return;
@@ -151,8 +239,7 @@ const TIROIR = (() => {
     const t = e.target; if (t && t.matches && t.matches('input, textarea, select, [contenteditable="true"]') && t.closest('.tiroir') && t.value && t.type === 'search') return;
     e.preventDefault(); fermer();
   });
-  // changer de page ferme les tiroirs (index.html a déjà posé la question des modifications non enregistrées)
-  window.addEventListener('hashchange', () => { if (pile.length && location.hash === E.hashVue) fermerTout(); });
+  // changer de page ferme les tiroirs : index.html pose la question des modifications non enregistrées, puis surAdresse()
 
   const style = document.createElement('style');
   style.id = 'styles-tiroir';
@@ -178,5 +265,5 @@ html.tiroir-ouvert body { overflow: hidden; }
 @media (max-width: 640px) { .tiroir { width: 100vw; border-left: 0; } .tiroir-corps { padding: 12px 12px 20px; } .tiroir.la { transform: none; } }
 @media (prefers-reduced-motion: reduce) { .tiroir, .tiroir-voile { transition: none; } }`;
   document.head.append(style);
-  return { ouvrir, fermer, fermerTout, ouvert, racine, redessiner, peut, pile: () => pile.slice() };
+  return { ouvrir, fermer, fermerTout, ouvert, racine, redessiner, peut, restaurer, surAdresse, titre, pile: () => pile.slice() };
 })();
