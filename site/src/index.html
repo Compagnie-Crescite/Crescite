@@ -8096,7 +8096,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // une adresse nouvelle : la page change à l'image d'après (le geste se voit d'abord : sa pression, sa ventouse), la dernière
   // demandée l'emporte
   let NAV = 0;
-  const routeEnsuite = () => { const j = ++NAV; ensuite(() => { if (j === NAV) route(); }); };
+  // (l'élément du menu de l'adresse demandée se marque tout de suite : le geste se voit à l'image qui suit, avant que la page
+  // se fasse ; marquerNav le confirme ensuite)
+  const marquerTot = () => { const h = location.hash.split('?')[0], a = $$('#entrees a').find(x => x.getAttribute('href') === h);
+    if (a && a.getAttribute('aria-current') !== 'page') { $$('#entrees a[aria-current]').forEach(x => x.removeAttribute('aria-current')); a.setAttribute('aria-current', 'page'); } };
+  const routeEnsuite = () => { const j = ++NAV; marquerTot(); ensuite(() => { if (j === NAV) route(); }); };
   // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois
   // l'encre ouverte et le titre posé, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
   let tCreature = 0;
