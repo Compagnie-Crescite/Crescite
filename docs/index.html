@@ -2291,8 +2291,10 @@ html { view-transition-name: none; }
 .encre-page.couvre { pointer-events: auto; }
 /* le rideau (Rideau) : à chaque page qu'on ouvre par le menu, un court noir où la pieuvre nage (la créature, ses vraies
    tentacules), puis le rideau s'ouvre en deux, comme au théâtre, et la pieuvre remonte à sa place dans le menu ; la page,
-   déjà là dessous, se compose alors ligne à ligne (composer). Au-dessus de tout (le menu compris), sous la pieuvre */
+   déjà là dessous, se compose alors ligne à ligne (composer). Au-dessus de tout, sauf le menu (le haut, et au téléphone la
+   barre du bas, qu'il porte), qui reste là, à sa place, tant qu'il est fermé (html.rideau-ferme) ; sous la pieuvre */
 .rideau { position: fixed; inset: 0; z-index: 2147483002; pointer-events: auto; overflow: hidden; contain: strict; }
+html.rideau-ferme :is(.top, .entrees.en-bas) { z-index: 2147483003; }   /* (au téléphone, la barre du bas est sortie du haut : top.after) */
 .rideau.leve { pointer-events: none; }
 .rideau > i { position: absolute; top: 0; bottom: 0; width: 50.5%; background: #0b0709; }
 .rideau > .rideau-g { left: 0; }
@@ -3631,7 +3633,9 @@ const DONNEES = (() => {
       const u = s.univers || {}, c = u.couleurs || {};
       const mine = dates.filter(d => d.slug === s.slug);
       if (s.photo) photos[s.slug] = photo(s.photo);
-      const ph = (s.photos || []).map(p => { const cle = (p.fichier || '').replace(/\.[a-z0-9]+$/i, ''); photos[cle] = photo(p.fichier); return { ...p, cle }; });
+      // (une photo « usage interne » n'est pas publiée : ses droits ne le permettent pas ; son crédit à elle, s'il est écrit,
+      // passe devant celui du spectacle)
+      const ph = (s.photos || []).filter(p => p && p.droits !== 'interne').map(p => { const cle = (p.fichier || '').replace(/\.[a-z0-9]+$/i, ''); photos[cle] = photo(p.fichier); return { ...p, cle }; });
       return {
         id: s.id,                     // le numéro du spectacle dans la base (une alerte, une demande de devis le portent)
         slug: s.slug, titre: s.titre, titreLignes: s.titre_lignes || [s.titre], creation: s.creation,
@@ -10561,6 +10565,7 @@ const CREATURE = (() => {
       }
       pans.forEach(a => a.cancel()); pans = [];   // (ses pans d'avant, gardés : rien à demander au navigateur, aucun style à recalculer)
       el.classList.remove('leve'); el.hidden = false;
+      document.documentElement.classList.add('rideau-ferme');
       const b = bestiole();
       const p = el.querySelector('.rideau-pieuvre');
       if (!b && !p) el.insertAdjacentHTML('beforeend', `<div class="rideau-pieuvre">${D.logo.octopus}</div>`);
@@ -10593,13 +10598,13 @@ const CREATURE = (() => {
       const a = dr.animate([{ translate: '0 0' }, { translate: '101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' });
       pans = [g.animate([{ translate: '0 0' }, { translate: '-101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' }), a];
       const fini = etat;
-      a.onfinish = () => { if (etat !== fini) return; etat = null; el.hidden = true; };
+      a.onfinish = () => { if (etat !== fini) return; etat = null; el.hidden = true; document.documentElement.classList.remove('rideau-ferme'); };
       const f = suite, lent = (tLeve - fini.t0) / Math.max(1, fini.images) > 40;
       suite = null;
       if (f) f(vite || lent);
     }
     // (une page refaite, un rideau qu'on ne veut plus, un geste pendant qu'il s'ouvre : il s'efface d'un coup, la pieuvre avec)
-    function oter() { if (!etat) return; clearTimeout(tFin); gestes.forEach(t => removeEventListener(t, geste, { capture: true })); etat = null; suite = null; pans.forEach(a => a.cancel()); pans = []; if (el) el.hidden = true; }
+    function oter() { if (!etat) return; clearTimeout(tFin); gestes.forEach(t => removeEventListener(t, geste, { capture: true })); etat = null; suite = null; pans.forEach(a => a.cancel()); pans = []; if (el) el.hidden = true; document.documentElement.classList.remove('rideau-ferme'); }
     // (au repos, après la première page : la pieuvre du rideau est prête pour le suivant)
     const preparer = () => { bestiole(); };
     return { fermer, lever, oter, preparer, ouvert: () => !!etat };
@@ -11145,8 +11150,11 @@ const CREATURE = (() => {
   // une animation liée au défilement) ; sans elle, la phrase fleurit d'un bloc quand elle arrive à l'écran (.ecrit)
   const mots = t => String(t || '').split(/[ \n\t]+/).filter(Boolean);
   const ecrit = (t, i0 = 0) => mots(t).map((w, i) => `<span class="w" style="--w:${i0 + i}">${esc(w)}</span>`).join(' ');
-  const creditDe = (s, p) => p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
+  // le crédit d'une photo : le sien (photos[i].credit), sinon celui du spectacle pour sa source ; edCredit, de quoi l'écrire
+  // en place (le mode édition)
+  const creditDe = (s, p) => p && p.credit ? p.credit : p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
   const cleCredit = p => p && p.source === 'dossier' ? 'creditDossier' : 'creditPhotos';
+  const edCredit = (s, p) => (p && p.credit && (s.photos || []).indexOf(p) >= 0 ? edS(s, 'photos', s.photos.indexOf(p), 'credit') : edS(s, cleCredit(p)));
   /* le texte de remplacement d'une photo de contenu (un spectacle) : sa légende de D quand elle n'est pas écrite à côté d'elle ;
      écrite à côté (une figcaption), rien (alt="" : le lecteur d'écran ne l'entend pas deux fois) ; sans légende, le titre du
      spectacle qu'elle montre. Une photo décorative (un fond, une vignette dans un bouton ou un lien qui dit déjà son nom, la photo
@@ -12302,7 +12310,7 @@ const CREATURE = (() => {
         ${datesEcran(s)}
         <p class="df-cta" style="--k:4"><a class="bu plein" href="${lienSp(s.slug)}">${esc(L.decouvrir)}<span class="sr"> ${esc(s.titre)}</span>${FLECHE}</a></p>
       </div></div>
-      ${credit ? `<p class="df-credit"${edS(s, kCredit)}>${esc(credit)}</p>` : ''}
+      ${credit ? `<p class="df-credit"${ph ? edCredit(s, ph) : edS(s, kCredit)}>${esc(credit)}</p>` : ''}
       <div class="df-voile" aria-hidden="true"></div>
     </article>`;
   }
@@ -14923,10 +14931,10 @@ const CREATURE = (() => {
   // les photos du récit : la principale d'abord, puis les autres de la scène, dans l'ordre de D (pas celles d'un atelier ni
   // d'un établissement ; la principale, quand la liste la reprend, n'y revient pas)
   function photosRecit(s) {
-    const p0 = D.photos[s.slug], out = p0 ? [{ src: p0, attr: edP(s, 'photo'), credit: s.creditPhotos || s.credit, kc: s.creditPhotos ? 'creditPhotos' : 'credit' }] : [];
+    const p0 = D.photos[s.slug], out = p0 ? [{ src: p0, attr: edP(s, 'photo'), credit: s.creditPhotos || s.credit, ka: edS(s, s.creditPhotos ? 'creditPhotos' : 'credit') }] : [];
     (s.photos || []).forEach((p, i) => {
       const src = D.photos[p.cle]; if (!src || p.etablissement || p.atelier || src === p0 || p.id === 'principale') return;
-      out.push({ src, attr: edP(s, 'photos', i), p, i, credit: creditDe(s, p), kc: cleCredit(p) });
+      out.push({ src, attr: edP(s, 'photos', i), p, i, credit: creditDe(s, p), ka: edCredit(s, p) });
     });
     return out;
   }
@@ -14942,7 +14950,7 @@ const CREATURE = (() => {
     (s.citations || []).forEach((c, ic) => pas.push(citationSp(s, c, ic)));
     const phs = photosRecit(s);
     if (!pas.length) return '';
-    const legende = x => (x.p && x.p.legende) || x.credit ? `<figcaption>${x.p && x.p.legende ? `<span${edS(s, 'photos', x.i, 'legende')}>${esc(x.p.legende)}</span>` : ''}${x.credit ? `<small${edS(s, x.kc)}>${esc(x.credit)}</small>` : ''}</figcaption>` : '';
+    const legende = x => (x.p && x.p.legende) || x.credit ? `<figcaption>${x.p && x.p.legende ? `<span${edS(s, 'photos', x.i, 'legende')}>${esc(x.p.legende)}</span>` : ''}${x.credit ? `<small${x.ka}>${esc(x.credit)}</small>` : ''}</figcaption>` : '';
     return chapitre(chap, 'spectacle', L.leSpectacle, `${titreChap(esc(L.leSpectacle))}
       <div class="rc${phs.length ? '' : ' rc--seul'}" data-scrolly data-fx="recit">
         <div class="rc-pas">${pas.map((h, i) => `<div class="rc-p${i ? '' : ' on'}"><div class="rc-in apparait">${h}</div></div>`).join('')}</div>
@@ -14954,10 +14962,11 @@ const CREATURE = (() => {
   function photosSp(s, chap) {
     const phs = (s.photos || []).map((p, i) => ({ p, i })).filter(({ p }) => !p.etablissement && !p.atelier && D.photos[p.cle]);
     if (!phs.length) return '';
+    // (les crédits, une fois chacun : celui de chaque photo qui a le sien, sinon celui du spectacle pour sa source)
     const credits = [];
-    phs.forEach(({ p }) => { const k = cleCredit(p); if (s[k] && !credits.some(c => s[c] === s[k])) credits.push(k); });
+    phs.forEach(({ p }) => { const t = creditDe(s, p); if (t && !credits.some(c => c.t === t)) credits.push({ t, a: edCredit(s, p) }); });
     return chapitre(chap, 'photos', L.photos, `<div class="wrap">${titreChap(esc(L.photos))}<div class="cartons7" data-mv="cascade">${phs.map(({ p, i }) => `<figure class="carton7"${edP(s, 'photos', i)}><img src="${D.photos[p.cle]}" alt="${esc(altPh(s, p))}" loading="lazy" decoding="async">${p.legende ? `<figcaption${edS(s, 'photos', i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
-      ${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div>`);
+      ${credits.map(c => `<p class="u-credit"${c.a}>${esc(c.t)}</p>`).join('')}</div>`);
   }
   // la présentation d'un spectacle qui n'est plus en tournée (la 10) : l'ouverture (le cadre, les affirmations), le spectacle
   // (son texte, ses citations), les photos, la vidéo
