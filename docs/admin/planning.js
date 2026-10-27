@@ -480,6 +480,8 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-o-x { z-index: 4; align-self: end; justify-self: start; margin: 0 0 2px 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--pl-alerte);
   color: var(--pl-fond); font-size: .62rem; font-weight: 800; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--pl-fond); }
 .pl-vide { padding: 22px 14px; text-align: center; color: var(--pl-sourd); }
+/* dans la grille, aux rangs de hauteur fixe (--pl-ligne), la phrase prend deux rangs, centrée : elle était coupée à mi-hauteur */
+.pl-grille-e > .pl-vide { grid-row: span 2; display: grid; place-items: center; padding: 0 14px; }
 
 /* ———— la vue Mois */
 .pl-mois-grille { border: 1px solid var(--pl-filet); border-radius: var(--pl-rayon); background: var(--pl-fond); overflow: hidden; }

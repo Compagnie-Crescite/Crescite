@@ -1113,7 +1113,7 @@ function dessinerFeuille(etat) {
     : etat.f0 ? `<span class="badge option">Brouillon</span><span class="compte">l’équipe ne la voit pas encore${etat.f0.publiee_le ? ` (la version ${etat.f0.version} a été retirée)` : ''}</span>` : '<span class="badge option">Pas encore enregistrée</span>';
   const bouton = (cmd, lib, titre, extra = '') => `<button type="button" class="a4-b" data-a4="${cmd}" title="${esc(titre)}"${extra}>${lib}</button>`;
   zone.innerHTML = `<div class="bloc fr-etat"><div class="fr-etat-l"><span class="fr-badge">${badge}</span>
-      <span class="fr-actions"><button type="button" class="btn petit" id="fr-maj" title="L’en-tête, les horaires, l’équipe, les contacts : ce qui vient de la base et n’a pas été retouché. Ce que vous avez écrit ne change pas.">Mettre à jour depuis la base</button><button type="button" class="btn petit" id="fr-pdf">Télécharger le PDF</button><button type="button" class="btn petit" id="fr-imprimer">Imprimer</button></span></div>
+      <span class="fr-actions"><button type="button" class="btn petit" id="fr-maj" title="L’en-tête, les horaires, l’équipe, les contacts : ce qui vient de la base et n’a pas été retouché. Ce que vous avez écrit ne change pas.">Mettre à jour depuis la base</button><button type="button" class="btn petit" id="fr-pdf"><svg class="ic-btn" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19.5h14"/></svg>Télécharger le PDF</button><button type="button" class="btn petit" id="fr-imprimer">Imprimer</button></span></div>
       ${alertesFeuille(d, F)}<p class="fr-reprise" id="fr-reprise" hidden></p></div>
     <div class="bloc fr-manques" id="fr-manques" hidden></div><p class="sr" id="fr-m-annonce" role="status"></p>
     <div class="a4-outils" role="toolbar" aria-label="Mise en forme de la feuille" aria-controls="a4-doc">
@@ -1291,10 +1291,10 @@ function dessinerFeuille(etat) {
     const b = e.target.closest('button'); if (!b || outils.contains(b)) return;
     if (b.id === 'fr-maj' || b.dataset.frMaj !== undefined) return mettreAJour();
     if (b.id === 'fr-pdf') {
-      const lib = b.textContent; b.disabled = true; b.textContent = 'Préparation du PDF…';
+      const lib = b.innerHTML; b.disabled = true; b.textContent = 'Préparation du PDF…';
       try { await FEUILLE.telecharger(feuilleCourante(etat), contexteFeuille(d)); annoncer(sale() ? 'PDF téléchargé (avec les modifications pas encore enregistrées).' : 'PDF téléchargé.'); }
       catch (err) { erreur(err, 'PDF impossible'); }
-      finally { b.disabled = false; b.textContent = lib; }
+      finally { b.disabled = false; b.innerHTML = lib; }
       return;
     }
     if (b.id === 'fr-imprimer') return imprimerFeuille(feuilleCourante(etat), contexteFeuille(d));

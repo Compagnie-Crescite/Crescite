@@ -169,6 +169,23 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
   .barre-haut { padding-left: max(16px, var(--gs)); }
   .barre-haut .marque-mini { display: none; }
 }
+/* le téléphone couché (760 px de large et plus, 500 de haut au plus) : la colonne de 236 px prenait plus du quart de la
+   largeur et ses six rubriques ne tenaient pas en hauteur (« Moi », le pied, sous le bord). Un rail étroit à la place :
+   la pieuvre, chaque rubrique en icône sur son nom court, comme la barre du bas ; « Se déconnecter » et les gestes
+   restent dans « Moi ». L'encoche, à gauche ou à droite, est évitée (--gs, --ds). */
+@media (min-width: 760px) and (max-height: 500px) {
+  :root { --rail: calc(84px + var(--gs)); }
+  .nav-appli { gap: 2px; padding: calc(6px + var(--hs)) 6px 6px max(6px, var(--gs)); overflow-y: auto; scrollbar-width: none; }
+  .nav-marque { justify-content: center; margin: 0 0 4px; }
+  .nav-marque .pieuvre { width: 44px; height: 26px; }
+  .nav-marque-texte, .nav-pied { display: none; }
+  .nav-item { flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; padding: 4px 2px; font-size: .7rem; }
+  .nav-item .nav-lib { flex: none; }
+  .nav-lib-court { display: inline; }
+  .nav-lib-long { display: none; }
+  .nav-icone { position: relative; width: 26px; height: 24px; }
+  .pastille-nb { top: -4px; right: auto; left: calc(50% + 5px); transform: none; box-shadow: 0 0 0 2px var(--surface); }
+}
 
 main { display: block; max-width: 860px; margin: 0 auto; padding: 8px max(var(--gout), var(--ds)) 24px max(var(--gout), var(--gs)); }
 main.large { max-width: 1180px; }
