@@ -1002,6 +1002,9 @@
   const modaleChangee = () => $$('.modale-fond').some(f => typeof f.modaleChangee === 'function' && f.modaleChangee());
   const saisieEnCours = () => !!((E.vue === 'moi' && E.ficheSale) || (GG() && GG().saisie && GG().saisie()) || modaleChangee());
   function oublierSaisies() { E.ficheSale = false; if (GG() && GG().oublier) GG().oublier(); $$('.modale-fond').forEach(f => { if (typeof f.fermerModale === 'function') f.fermerModale(true); }); }
+  // une action qui détruit (supprimer une date, retirer une ligne, délier un agenda…) : la boîte de la charte
+  // (GESTES.confirmer), jamais confirm() : le bouton nommé par son action, à la couleur d'alerte ; « Annuler » a le focus
+  async function confirmerAction(o) { const g = GG(); return g && g.confirmer ? g.confirmer(o) : confirm([o.titre, o.texte].filter(Boolean).join('\n')); }
   async function partirSansPerdre({ titre = 'Quitter sans enregistrer ?', texte = 'Vos modifications ne sont pas enregistrées : elles seront perdues.', ok = 'Quitter sans enregistrer' } = {}) {
     if (!saisieEnCours()) return true;
     const g = GG();
@@ -2693,7 +2696,7 @@
   }
   async function delierAgenda(id) {
     const a = (E.dispo.agendas || []).find(x => Number(x.id) === Number(id));
-    if (!confirm(`Délier « ${a ? a.nom : 'cet agenda'} » ? Les moments occupés lus dans cet agenda disparaîtront du planning.`)) return;
+    if (!(await confirmerAction({ titre: `Délier « ${a ? a.nom : 'cet agenda'} » ?`, texte: 'Les moments occupés lus dans cet agenda disparaîtront du planning.', ok: 'Délier l’agenda' }))) return;
     const { error } = await sb.from('crescite_agendas_lies').delete().eq('id', id).eq('personne_id', E.moi);
     if (error) return annoncer(`L’agenda n’est pas délié : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
     E.dispo.agendas = (E.dispo.agendas || []).filter(x => Number(x.id) !== Number(id));
@@ -2727,7 +2730,7 @@
     } catch (e) { /* hors connexion : rien à dire */ }
   }
   async function nouvelleCle() {
-    if (!confirm('Changer la clé ? L’ancien lien cessera de marcher : il faudra ajouter le nouveau dans votre agenda.')) return;
+    if (!(await confirmerAction({ titre: 'Changer la clé ?', texte: 'L’ancien lien cessera de marcher : il faudra ajouter le nouveau dans votre agenda.', ok: 'Changer la clé' }))) return;
     const { data, error } = await sb.rpc('crescite_nouveau_jeton_agenda');
     if (error) return annoncer(`La clé n’a pas changé : ${motsErreur(error) || 'la base a refusé'}.`, { erreur: true });
     E.dispo.jeton = data; E.dispo.fluxVerifie = null;
@@ -3590,10 +3593,11 @@
       relireApres(retour);
     });
     $('[data-supprimer-document]', form)?.addEventListener('click', async ev => {
-      if (!confirm(`Supprimer « ${x.titre} » des fichiers de travail ? L’équipe du spectacle en est prévenue ; l’administration garde le fichier et peut le rétablir.`)) return;
+      const bouton = ev.currentTarget;
+      if (!(await confirmerAction({ titre: `Supprimer « ${x.titre} » des fichiers de travail ?`, texte: 'L’équipe du spectacle en est prévenue ; l’administration garde le fichier et peut le rétablir.', ok: 'Supprimer le fichier' }))) return;
       enCours = true;
       let r;
-      try { r = await occupe(ev.currentTarget, 'Suppression…', () => sb.rpc('crescite_supprimer_document', { doc: x.id })); }
+      try { r = await occupe(bouton, 'Suppression…', () => sb.rpc('crescite_supprimer_document', { doc: x.id })); }
       catch (err) { r = { error: err }; }
       finally { enCours = false; }
       if (r.error) {
@@ -4381,7 +4385,7 @@
     await apresModif(annulee ? 'Séance annulée : l’équipe est prévenue.' : 'Séance rétablie.');
   }
   async function retirerSeances(d, ids) {
-    if (!confirm(`Retirer ${ids.length > 1 ? 'ces séances' : 'cette séance'} de la date ?`)) return;
+    if (!(await confirmerAction({ titre: `Retirer ${ids.length > 1 ? 'ces séances' : 'cette séance'} de la date ?`, ok: ids.length > 1 ? 'Retirer les séances' : 'Retirer la séance' }))) return;
     const { error } = await sb.from('crescite_representations').delete().in('id', ids);
     if (error) return annoncer(`Séance non retirée : ${texteErreur(error)}.`, { erreur: true });
     await apresModif('Séance retirée.');
@@ -4492,7 +4496,7 @@
     } });
   }
   async function supprimerDate(d) {
-    if (!confirm(`Supprimer « ${titreDate(d)} », ses séances, son équipe et sa feuille de route ?`)) return;
+    if (!(await confirmerAction({ titre: `Supprimer « ${titreDate(d)} » ?`, texte: 'Ses séances, son équipe et sa feuille de route partent avec elle.', ok: 'Supprimer la date' }))) return;
     const { error } = await sb.from('crescite_dates').delete().eq('id', d.id);
     if (error) return annoncer(`Date non supprimée : ${texteErreur(error)}.`, { erreur: true });
     if (location.hash === `#/date/${d.id}` || location.hash === `#/feuille/${d.id}`) location.hash = '#/saison';
@@ -4529,7 +4533,7 @@
     } });
   }
   async function supprimerFrais(item) {
-    if (!confirm(`Supprimer cette note de frais (${euros(item.montant_ttc)}) ?`)) return;
+    if (!(await confirmerAction({ titre: `Supprimer cette note de frais (${euros(item.montant_ttc)}) ?`, ok: 'Supprimer la note de frais' }))) return;
     const { error } = await sb.from('crescite_notes_frais').delete().eq('id', item.id);
     if (error) return annoncer(`Note non supprimée : ${texteErreur(error)}.`, { erreur: true });
     annoncer('Note de frais supprimée.');
@@ -4628,7 +4632,7 @@
     } });
   }
   async function supprimerDocument(x) {
-    if (!confirm(`Supprimer « ${x.titre} »${x.fichier ? ' et son fichier' : ''} ?`)) return;
+    if (!(await confirmerAction({ titre: `Supprimer « ${x.titre} »${x.fichier ? ' et son fichier' : ''} ?`, ok: 'Supprimer le document' }))) return;
     const { error } = await sb.from('crescite_documents').delete().eq('id', x.id);
     if (error) return annoncer(`Document non supprimé : ${texteErreur(error)}.`, { erreur: true });
     if (x.fichier && !fichierPartage(x, x.fichier)) await retirerFichier(x.pour, x.fichier);
@@ -4774,7 +4778,7 @@
     const Fo = outilOuRien(); if (!Fo) return;
     const c = Fo.contenu(f, contexte(d)), b = c.blocs.find(x => String(x.id) === String(id));
     if (!b) return;
-    if (!confirm(`Retirer cette ligne de la feuille de route ?\n« ${texteDuBloc(Fo, b).slice(0, 80)} »`)) return;
+    if (!(await confirmerAction({ titre: 'Retirer cette ligne de la feuille de route ?', texte: `« ${texteDuBloc(Fo, b).slice(0, 80)} »`, ok: 'Retirer la ligne' }))) return;
     const r = await ecrireFeuille(d, f, { contenu: { ...c, blocs: c.blocs.filter(x => x !== b), pages: (c.pages || []).filter(p => String(p) !== String(id)) } }, 'Ligne retirée.');
     if (r !== true) annoncer(`Ligne non retirée : ${r}.`, { erreur: true });
   }
@@ -4793,7 +4797,7 @@
     if (res !== true) annoncer(`Mise à jour impossible : ${res}.`, { erreur: true });
   }
   async function depublierFeuille(d, f) {
-    if (!confirm('Repasser la feuille de route en brouillon ? L’équipe ne la verra plus, jusqu’à sa republication.')) return;
+    if (!(await confirmerAction({ titre: 'Repasser la feuille de route en brouillon ?', texte: 'L’équipe ne la verra plus, jusqu’à sa republication.', ok: 'Repasser en brouillon' }))) return;
     const r = await ecrireFeuille(d, f, { statut: 'brouillon' }, 'Feuille repassée en brouillon : l’équipe ne la voit plus.');
     if (r !== true) return annoncer(`Impossible : ${r}.`, { erreur: true });
     if (location.hash === `#/feuille/${d.id}`) location.hash = `#/date/${d.id}`;

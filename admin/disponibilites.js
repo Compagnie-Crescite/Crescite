@@ -336,7 +336,7 @@ const DISPONIBILITES = (() => {
         return attendreCourriels(id);
       }
       if (k === 'relancer') {
-        if (!confirm(`Renvoyer le courriel ${sansReponse.length > 1 ? `aux ${sansReponse.length} personnes qui n’ont pas répondu` : 'à la personne qui n’a pas répondu'} ?`)) return;
+        if (!(await confirmerAction({ titre: `Renvoyer le courriel ${sansReponse.length > 1 ? `aux ${sansReponse.length} personnes qui n’ont pas répondu` : 'à la personne qui n’a pas répondu'} ?`, ok: 'Renvoyer le courriel', danger: false }))) return;
         b.disabled = true;
         let n = 0;
         for (const d of sansReponse) { const { error } = await sb.rpc('crescite_renvoyer_courriel', { dest: d.id }); if (!error) { n++; DP.renvois.set(d.id, Date.now()); } }
@@ -344,18 +344,23 @@ const DISPONIBILITES = (() => {
         suivi(zone, id);
         return attendreCourriels(id);
       }
+      // clore se fait tout de suite, sans question : l'annonce porte « Annuler », qui la rouvre (la base n'a rien perdu)
       if (k === 'clore' || k === 'rouvrir') {
-        const statut = k === 'clore' ? 'close' : 'ouverte';
-        if (statut === 'close' && !confirm(`Clore « ${p.titre} » ? Plus personne ne pourra répondre.`)) return;
         b.disabled = true;
-        const { data, error } = await sb.from('crescite_propositions').update({ statut }).eq('id', p.id).select('id, statut').single();
-        if (error) { b.disabled = false; return erreur(error); }
-        p.statut = data.statut;
-        annoncer(statut === 'close' ? 'Proposition close : les réponses sont arrêtées.' : 'Proposition rouverte : chacun peut de nouveau répondre.');
-        suivi(zone, id);
-        $('#l-propositions')?.rafraichir?.();
+        if (!(await statutProposition(p, k === 'clore' ? 'close' : 'ouverte'))) b.disabled = false;
       }
     };
+    async function statutProposition(p, statut, { retour = false } = {}) {
+      const { data, error } = await sb.from('crescite_propositions').update({ statut }).eq('id', p.id).select('id, statut').single();
+      if (error) { erreur(error); return false; }
+      p.statut = data.statut;
+      const ici = location.hash === `#/planning/proposition/${p.id}` && zone.isConnected;
+      if (ici) suivi(zone, p.id);
+      $('#l-propositions')?.rafraichir?.();
+      if (statut === 'close' && !retour) annoncer('Proposition close : les réponses sont arrêtées.', { libelle: 'Annuler', delai: 8000, action: () => statutProposition(p, 'ouverte', { retour: true }) });
+      else annoncer(statut === 'close' ? 'Proposition close : les réponses sont arrêtées.' : 'Proposition rouverte : chacun peut de nouveau répondre.');
+      return true;
+    }
   }
   // « Créer la date » depuis un jour de la proposition : le formulaire d'une nouvelle date (Représentations), pré-rempli :
   // le spectacle, le jour (ou les jours) et ses heures, le lieu quand on le connaît (la date liée à la proposition, sinon un

@@ -126,9 +126,15 @@
       a.actif ? { libelle: 'Désactiver', danger: true, icone: ICO.cache, faire: () => ecrire(sb.from('crescite_acces_pro').update({ actif: false }).eq('id', a.id).select().single(), 'Invitation désactivée.', 'Changement impossible', data => remplacerLigne(E.acces, data)) }
         : { libelle: 'Réactiver', icone: ICO.oeil, faire: () => prolonger(0) }, ...liens(href)];
   }
+  // clore une proposition : tout de suite, sans question ; l'annonce porte « Annuler », qui la rouvre
+  async function clore(p) {
+    const statut = v => sb.from('crescite_propositions').update({ statut: v }).eq('id', p.id);
+    if (!(await ecrire(statut('close'), null, 'Clôture impossible', () => { p.statut = 'close'; }))) return;
+    annoncer('Proposition close : les réponses sont arrêtées.', { libelle: 'Annuler', delai: 8000, action: () => ecrire(statut('ouverte'), 'Proposition rouverte : chacun peut de nouveau répondre.', 'Réouverture impossible', () => { p.statut = 'ouverte'; }) });
+  }
   function actionsProposition(p) {
     const href = `#/planning/proposition/${p.id}`;
-    return [location.hash === href ? null : ouvrirA(href, 'Ouvrir le suivi'), p.statut === 'ouverte' ? { libelle: 'Clore la proposition', detail: 'sans créer de date', icone: ICO.croix, faire: () => { if (confirm(`Clore « ${p.titre} » ?`)) ecrire(sb.from('crescite_propositions').update({ statut: 'close' }).eq('id', p.id), 'Proposition close.', 'Clôture impossible', () => { p.statut = 'close'; }); } } : null,
+    return [location.hash === href ? null : ouvrirA(href, 'Ouvrir le suivi'), p.statut === 'ouverte' ? { libelle: 'Clore la proposition', detail: 'sans créer de date', icone: ICO.croix, faire: () => clore(p) } : null,
       { libelle: 'Proposer d’autres dates…', href: '#/planning/proposer', icone: ICO.plus }, ...liens(href)];
   }
   function actionsSeance(s) {

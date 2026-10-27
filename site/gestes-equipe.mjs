@@ -1,6 +1,7 @@
 // Les gestes de l'espace de l'équipe (equipe/equipe.js avec ../admin/gestes.js), vérifiés dans Chromium, hors ligne :
 // l'appui long sur un billet (une feuille d'actions depuis le bas), la date d'avant et d'après (les boutons, le balayage
-// au doigt, ← → au clavier), le clic droit sur une notification.
+// au doigt, ← → au clavier), le clic droit sur une notification ; ne rien perdre en partant ; repasser une feuille en
+// brouillon dans la boîte de la charte (jamais confirm()).
 //   python3 site/build.py && node site/gestes-equipe.mjs
 // Même saison fictive que mouvement-equipe.mjs (aucune donnée réelle, la base coupée). Demande Playwright et Chromium.
 import http from 'node:http';
@@ -397,6 +398,11 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForTimeout(500);
   await menuSur(page, '.feuille-item[data-date="102"]', 'Repasser en brouillon');
   await page.tap('.gm-feuille [data-gm]:has-text("Repasser en brouillon")');
+  // la question dans la boîte de la charte (jamais confirm()) : le bouton nommé par son action, « Annuler » a le focus
+  await page.waitForSelector('dialog.gq[open] [data-gq="oui"]', { timeout: 4000 }).catch(() => {}); await page.waitForTimeout(400);
+  const boiteBrouillon = await page.evaluate(() => ({ ok: document.querySelector('dialog.gq[open] [data-gq="oui"]')?.textContent, focus: document.activeElement?.dataset?.gq, danger: !!document.querySelector('dialog.gq.gq-danger[open]') }));
+  ok('« Repasser en brouillon » : la boîte de la charte, « Repasser en brouillon » à la couleur d’alerte, « Annuler » a le focus', boiteBrouillon.ok === 'Repasser en brouillon' && boiteBrouillon.focus === 'non' && boiteBrouillon.danger, JSON.stringify(boiteBrouillon));
+  await page.tap('dialog.gq [data-gq="oui"]').catch(() => {});
   await page.waitForFunction(() => !document.querySelector('.feuille-item[data-date="102"]'), null, { timeout: 10000 }).catch(() => {});
   ok('dans la liste, « Repasser en brouillon » (après confirmation) : la feuille n’est plus publiée, la liste la retire', MODIFS.some(m => m.table === 'crescite_feuilles' && m.patch && m.patch.statut === 'brouillon') && base.DB.crescite_feuilles.find(f => f.id === 7).statut === 'brouillon' && (await compte(page, '.feuille-item[data-date="102"]')) === 0);
   await page.goto(`${URL0}#/date/102`);

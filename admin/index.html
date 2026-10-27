@@ -1103,6 +1103,11 @@ async function partirSansPerdre({ titre, texte, ok, dans = document, avecFiche =
   if (oui) { if (avecFiche) E.sale = false; if (typeof GESTES !== 'undefined') GESTES.oublier(dans); if (dans === document) $$('dialog[data-garde][open]').forEach(d => d.close()); }
   return oui;
 }
+// Supprimer sans trembler : ce qui se rattrape (une ligne de la base, une proposition close, un compte détaché, la
+// disposition du tableau de bord) se fait tout de suite et s'annonce avec « Annuler » (corbeille.js) ; ce qui ne se
+// rattrape pas simplement (deux lieux fusionnés) se demande avant, dans la boîte de la charte (GESTES.confirmer : le
+// bouton nommé par son action, à la couleur d'alerte ; « Annuler » a le focus), jamais par confirm()
+const confirmerAction = o => (typeof GESTES !== 'undefined' && GESTES.confirmer ? GESTES.confirmer(o) : Promise.resolve(confirm([o.titre, o.texte].filter(Boolean).join('\n'))));
 window.addEventListener('hashchange', () => {
   const vers = location.search + location.hash;
   if (vers === E.adresse) return;                         // revenu à l'adresse acceptée (la question posée) : rien à refaire
@@ -3461,7 +3466,7 @@ function editeurLieu(id) {
   if (l0) comboLieu(zone, 'li-fusion', null, async cible => {
     if (cible === id) return;
     const c = lieu(cible);
-    if (!confirm(`Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`)) return;
+    if (!(await confirmerAction({ titre: `Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`, texte: `Ses dates et ses séances passent à « ${lieuTexte(c)} », puis « ${lieuTexte(l0)} » est supprimé.`, ok: 'Fusionner les lieux' }))) return;
     const r1 = await sb.from('crescite_dates').update({ lieu_id: cible }).eq('lieu_id', id);
     const r2 = r1.error ? r1 : await sb.from('crescite_seances').update({ lieu_id: cible }).eq('lieu_id', id);
     const r3 = r2.error ? r2 : await sb.from('crescite_lieux').delete().eq('id', id);
