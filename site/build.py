@@ -941,6 +941,15 @@ def avec_outils(name, src):
 
 # l'icône d'onglet du site public : celle des espaces réservés, à la couleur de la saison (faite par equipe(dest), à côté)
 ICONE_SITE = '<link rel="icon" href="equipe/icones/192.png" type="image/png">\n<link rel="apple-touch-icon" href="equipe/icones/180.png">'
+# l'aperçu d'un lien partagé (une messagerie, un courriel, un réseau) : le nom de la compagnie et sa phrase de présentation
+# (celle que le site donne déjà aux moteurs, schema.org) ; la barre du navigateur du téléphone à la nuit du site ; la
+# connexion à la base préparée avant que le script la demande
+APERCU = ('<meta name="description" content="{d}">\n<meta property="og:type" content="website">\n'
+          '<meta property="og:site_name" content="{n}">\n<meta property="og:title" content="{n}">\n'
+          '<meta property="og:description" content="{d}">\n<meta property="og:locale" content="fr_FR">\n'
+          '<meta name="twitter:card" content="summary">\n<meta name="theme-color" content="#1b1117">\n'
+          '<link rel="preconnect" href="' + BASE + '" crossorigin>')
+PRESENTATION = "Compagnie de théâtre professionnelle basée à Rouen, dirigée par Angelo Jossec."
 
 
 def assemble(name, D, photo_urls):
@@ -949,6 +958,10 @@ def assemble(name, D, photo_urls):
         m = re.search(r'<meta name="viewport"[^>]*>', src)
         if m:
             src = src[:m.end()] + "\n" + ICONE_SITE + src[m.end():]
+    if 'property="og:title"' not in src:
+        m = re.search(r'<meta name="viewport"[^>]*>', src)
+        if m:
+            src = src[:m.end()] + "\n" + APERCU.format(n=D["site"]["nom"], d=PRESENTATION) + src[m.end():]
     data = dict(D, photos=photo_urls)
     if name in PAGES_PIEUVRE:
         data["pieuvre"] = pieuvre_data()
