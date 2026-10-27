@@ -3293,6 +3293,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const COLLATION = new Intl.Collator('fr');   // (l'ordre alphabétique du français, un seul comparateur pour toute la page)
   const norm = s => String(s || '').replace(/<[^>]+>/g, ' ').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[’‘]/g, "'").toLowerCase();
   // ce que la recherche a trouvé, surligné : le texte échappé, le premier passage qui répond à t (déjà passé par norm : sans
   // accents ni capitales) dans un <mark>. La correspondance se lit lettre à lettre, chacune normée à part (une lettre accentuée
@@ -6059,7 +6060,34 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let suite = false;
     // (saisonSeule : un filtre de la frise, qui ne touche que la saison en cours : ses deux listes glissent ensemble, la loupe suit)
     let jFriseMaj = 0;
+    // l'ancrage du défilement, tenu à la main le temps qu'un geste refasse la page : la ligne lue en haut de l'écran reste à sa
+    // hauteur, image après image, 600 ms (sauf si le visiteur fait défiler lui-même), le navigateur ne déplaçant pas la page de
+    // lui-même pendant ce temps (overflow-anchor: none). Le sien, sur une page de milliers de lignes qui s'effondre sous le
+    // geste (un filtre qui referme les saisons passées), cherchait son repère 30 ms dans l'image même, au-delà de 50 ms
+    let ancrage = null;
+    function tenirAncrage() {
+      const html = document.documentElement;
+      if (ancrage) { ancrage.t = performance.now(); return; }
+      const haut = (parseFloat(getComputedStyle(html).getPropertyValue('--haut')) || 56) + 40;
+      let el = document.elementFromPoint(innerWidth / 2, Math.min(innerHeight - 1, haut));
+      // (le repère : la partie de la page qui ne se refait pas, celle où l'on lit, la tête, la saison, ses deux listes, les saisons
+      // passées, l'alerte ; ce qui change au-dessus d'elle ne la déplace pas, ce qui change en elle se lit à sa place)
+      el = el && el.closest && el.closest('.ag7-proch, .ag7-toutes, .ag7-carte, .fs7, #v-agenda, #v-alerte, .s7-entete, .s7');
+      if (!el || !main.contains(el)) return;
+      const a = ancrage = { el, top: el.getBoundingClientRect().top, t: performance.now(), bouge: false };
+      const geste = () => { a.bouge = true; }, gestes = ['wheel', 'touchstart', 'keydown'];
+      gestes.forEach(t => addEventListener(t, geste, { passive: true, once: true }));
+      html.style.overflowAnchor = 'none';
+      const suivre = () => {
+        if (ancrage !== a) return;
+        if (!a.bouge && a.el.isConnected && a.el.getClientRects().length) { const d = a.el.getBoundingClientRect().top - a.top; if (Math.abs(d) > 1) scrollBy({ top: d, left: 0, behavior: 'instant' }); }
+        if (!a.bouge && racine.isConnected && performance.now() - a.t < 600) requestAnimationFrame(suivre);
+        else { ancrage = null; html.style.overflowAnchor = ''; gestes.forEach(t => removeEventListener(t, geste)); }
+      };
+      requestAnimationFrame(suivre);
+    }
     function dessine(anime, saisonSeule = false) {
+      if (anime) tenirAncrage();
       pts = pointsSaison(); jAllume = null;
       if (F.jour && !pts.some(p => p.j === F.jour)) F.jour = null;
       annoncer();
@@ -6155,7 +6183,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const dessiner = () => {
         const t = norm(input.value).trim();
         if (!t) { fermer(); return; }
-        const tri = xs => xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || a.n.localeCompare(b.n, 'fr'));
+        // (l'ordre alphabétique par un seul comparateur, COLLATION : localeCompare(…, 'fr') en refaisait un à chaque comparaison,
+        // 14 ms par lettre tapée au bureau)
+        const tri = xs => xs.filter(x => x.n.includes(t)).sort((a, b) => (b.n.startsWith(t) - a.n.startsWith(t)) || COLLATION.compare(a.n, b.n));
         const sp = tri(puces.map(x => ({ type: 's', v: x.cle, t: x.titre, n: norm(x.titre), c: x.slug ? couleurDe(x.slug) : '' }))).slice(0, 5);
         const co = tri(communesDe().map(([l, nom]) => ({ type: 'l', v: l, t: nom, n: norm(nom) }))).slice(0, 6);
         if (!sp.length && !co.length) { fermer(); return; }
@@ -6372,7 +6402,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (t) requestAnimationFrame(() => { const y = t.getBoundingClientRect().top - dessous(id === 'ag-listes'); if (Math.abs(y) > 8) scrollBy({ top: y, behavior: motionOK() ? 'smooth' : 'auto' }); }); };
       // le panneau
       const communes = () => [...new Map(ptsSaison(() => true).map(([r, x]) => [x.l, lieuDe(x.l)]).filter(([l, n]) => l != null && n)).entries()]
-        .sort((a, b) => a[1].localeCompare(b[1], 'fr'));
+        .sort((a, b) => COLLATION.compare(a[1], b[1]));
       let ouvert = false, retour = null;
       function dessinerPanneau() {
         const { n } = nVoir();
@@ -7878,7 +7908,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const enCours = new Set([...CARTE.aVenir(), ...CARTE.saison(D.saison)].map(x => x.l));
       const co = retenu('tout', () => CARTE.tout()).map(x => { const d = D.dates.find(y => y.l === x.l), nom = CARTE.nom(x);
         return { t: nom, s: d ? `${d.ligneDate} · ${d.titre}` : compte(x.n, L.uneDate, L.nDates), h: enCours.has(x.l) ? `${saisons}?l=${x.l}` : `${saisons}?recherche=${encodeURIComponent(x.c)}`, n: norm(nom) }; })
-        .sort((a, b) => a.t.localeCompare(b.t, 'fr'));
+        .sort((a, b) => COLLATION.compare(a.t, b.t));
       const ep = S.espacePro && S.espacePro.titre;
       const pg = [...(S.menu || []).filter(x => x && x.href).map(x => ({ t: x.texte, h: x.href })),
         ...['programmer', 'etablissement'].filter(k => E[k]).map(k => ({ t: E[k].texte, s: ep || '', h: `#/espace-pro/${k}` })),
