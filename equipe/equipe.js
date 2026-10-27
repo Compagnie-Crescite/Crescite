@@ -845,14 +845,14 @@
         ${onglet('spectacles', ICONES.spectacle, 'Spectacles')}
         ${onglet('notifications', ICONES.cloche, 'Notifs', 'Notifications')}
         ${onglet('moi', `<span class="nav-avatar">${ICONES.moi}</span>`, 'Moi')}
-        <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button></p>
+        <p class="nav-pied"><span class="nav-nom"></span> <button type="button" class="lien-btn" data-sortir>Se déconnecter</button><button type="button" class="lien-btn nav-aide" data-aide aria-keyshortcuts="?">Raccourcis <kbd aria-hidden="true">?</kbd></button></p>
       </nav>
       <div class="colonne">
         <header class="barre-haut" id="barre-haut">
           <a class="bouton-rond retour" href="#/saison" data-retour data-tt="retour" hidden>${ICONES.retour}<span class="sr">Retour</span></a>
           <a class="marque-mini" href="#/saison"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Équipe</small></span></a>
           <p class="barre-titre" aria-hidden="true"></p>
-          <div class="barre-actions"><button type="button" class="installer-barre" data-installer-barre title="Installer l’application" hidden>${ICONES.installer}<span>Installer<span class="sr"> l’application</span></span></button><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="bouton-rond" data-actualiser title="Actualiser">${ICONES.actualiser}<span class="sr">Actualiser</span></button></div>
+          <div class="barre-actions"><button type="button" class="installer-barre" data-installer-barre title="Installer l’application" hidden>${ICONES.installer}<span>Installer<span class="sr"> l’application</span></span></button><a class="bouton-rond cloche" href="#/notifications" data-cloche>${ICONES.cloche}<span class="pastille-nb" data-n="0" aria-hidden="true"></span><span class="sr">Notifications<span class="nb-sr"></span></span></a><button type="button" class="temoin" data-actualiser data-temoin><span class="temoin-point" aria-hidden="true"></span><span class="temoin-texte"><span class="temoin-mot"></span><span class="temoin-detail"></span></span><span class="sr"> · Actualiser</span>${ICONES.actualiser}</button></div>
         </header>
         <div class="bandeau-etat" id="bandeau-etat"></div>
         <main id="contenu" tabindex="-1"></main>
@@ -874,6 +874,7 @@
     if (av && E.personne) av.innerHTML = avatar(E.personne, { taille: 'nav' });
     majBadge();
     majBadgePlanning();
+    majTemoin();
   }
   // le curseur des onglets : la pastille glisse d'un onglet à l'autre (sous l'icône au téléphone, sur la ligne à l'ordinateur)
   function placerCurseur(sansAnimation = false) {
@@ -970,10 +971,52 @@
   function bandeauEtat() {
     const el = $('#bandeau-etat');
     if (!el) return;
-    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors connexion : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
+    const html = E.provisoire && !E.horsLigne ? '<p class="attente" role="status">Mise à jour en cours…</p>' : E.horsLigne ? `<p class="message horsligne" role="status"><span>Hors ligne : voici votre espace tel qu’il était ${esc(momentTexte(E.horsLigne))}. La fiche et les documents demandent le réseau${E.sansSession ? ' ; la connexion se renouvellera dès son retour' : ''}.</span>
       <button type="button" class="lien-btn" data-reessayer>Réessayer</button></p>` : '';
+    majTemoin();
     if (el.dataset.h === html) return;                     // le bandeau ne se redessine (et n'entre) que s'il change
     el.dataset.h = html; el.innerHTML = html;
+  }
+  // ---- le témoin de la barre : la connexion et la fraîcheur, de la même façon que dans l'administration (une pastille, un
+  // mot, et le bouton lui-même relit la base). « À jour » : le temps réel des notifications est relié (ce qui change pour
+  // vous arrive aussitôt), ou la lecture a moins de deux minutes ; sinon « Lu il y a 12 min » ; « Mise à jour… » pendant
+  // une lecture ; « Hors ligne · lu il y a 3 h » quand le réseau manque (le bandeau dit le reste) ; « Reconnexion… » quand
+  // il revient et que l'espace se relit. Au téléphone, la pastille sur l'icône, le mot quand il y a lieu de s'inquiéter.
+  // Les lecteurs d'écran entendent le passage hors ligne et le retour (une région polie, hors de l'application).
+  function depuisTexte(t) {   // « à l'instant », « il y a 12 min », « il y a 3 h », « hier à 18 h 05 », « le 25 octobre »
+    const d = new Date(t), s = (Date.now() - d) / 1000, hier = new Date(); hier.setDate(hier.getDate() - 1);
+    if (Number.isNaN(d.getTime())) return '';
+    if (s < 60) return 'à l’instant';
+    if (s < 3600) return `il y a ${Math.floor(s / 60)}\u00a0min`;
+    if (d.toDateString() === new Date().toDateString()) return `il y a ${Math.floor(s / 3600)}\u00a0h`;
+    if (d.toDateString() === hier.toDateString()) return `hier à ${heureCourte(d)}`;
+    return momentTexte(d).replace(/ à .*$/, '');
+  }
+  function etatConnexion() {
+    const lu = E.horsLigne > 1 ? E.horsLigne : E.chargeLe;
+    if (E.reconnexion && (E.horsLigne || E.sansSession)) return { k: 'reconnexion', mot: 'Reconnexion…', detail: '', long: 'Le réseau revient : votre espace se relit.' };
+    if (E.horsLigne || E.sansSession || navigator.onLine === false) return { k: 'horsligne', mot: 'Hors ligne', detail: lu ? `lu ${depuisTexte(lu)}` : '', long: `Hors ligne : votre espace tel qu’il a été lu${lu ? ` ${depuisTexte(lu)}` : ''}.` };
+    if (E.rafraichit || E.provisoire || E.ouverture) return { k: 'lecture', mot: 'Mise à jour…', detail: '', long: 'Votre espace se relit.' };
+    if (E.tempsReel === 'SUBSCRIBED') return { k: 'direct', mot: 'À jour', detail: '', long: 'À jour : ce qui change pour vous arrive en direct.' };
+    if (lu && Date.now() - lu < 120000) return { k: 'ajour', mot: 'À jour', detail: '', long: `À jour : lu à ${heureCourte(lu)}.` };
+    return { k: 'lu', mot: lu ? `Lu ${depuisTexte(lu)}` : 'Actualiser', detail: '', long: lu ? `Lu à ${heureCourte(lu)}.` : '' };
+  }
+  let etatAnnonce = null;
+  function majTemoin() {
+    const x = etatConnexion();
+    $$('[data-temoin]').forEach(b => {
+      b.dataset.etat = x.k;
+      $('.temoin-mot', b).textContent = x.mot;
+      $('.temoin-detail', b).textContent = x.detail ? ` · ${x.detail}` : '';
+      b.title = `${x.long ? `${x.long} ` : ''}Actualiser.`;
+    });
+    const hors = x.k === 'horsligne';
+    if (etatAnnonce !== null && hors !== etatAnnonce && x.k !== 'reconnexion') {
+      let r = document.getElementById('sr-connexion');
+      if (!r) { r = document.createElement('p'); r.id = 'sr-connexion'; r.className = 'sr'; r.setAttribute('role', 'status'); document.body.append(r); }
+      r.textContent = hors ? `Connexion perdue. ${x.long}` : 'Connexion rétablie : votre espace est à jour.';
+    }
+    if (E.pret && x.k !== 'reconnexion' && x.k !== 'lecture') etatAnnonce = hors;
   }
 
   // ================================================================================================ les adresses et les transitions
@@ -1987,12 +2030,13 @@
     try {
       E.canal = sb.channel(`equipe-notifs-${moi}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'crescite_notifications', filter: `personne_id=eq.${moi}` }, p => { if (E.moi === moi) recevoir(p); })
-        .subscribe(statut => { E.tempsReel = statut; });
+        .subscribe(statut => { E.tempsReel = statut; majTemoin(); });
     } catch (e) { console.warn('temps réel', e); E.canal = null; }
   }
   function arreterTempsReel() {
     const c = E.canal;
     E.canal = null; E.tempsReel = '';
+    majTemoin();
     if (c) { try { sb.removeChannel(c); } catch (e) { /* déjà fermé */ } }
   }
   function recevoir(p) {
@@ -3097,7 +3141,8 @@
         <div class="pied-form"><button type="submit" class="btn">Changer le mot de passe</button><p class="etat-form" id="etat-mdp" role="status"></p></div>
       </form>
       <section class="carte" aria-labelledby="t-sortir"><h2 id="t-sortir">Se déconnecter</h2><p class="intro">Ferme la session sur cet appareil, qui ne reçoit plus vos notifications. Vos autres appareils restent connectés.</p>
-        <p><button type="button" class="btn" data-sortir>${ICONES.sortir}Se déconnecter</button></p></section>`;
+        <p><button type="button" class="btn" data-sortir>${ICONES.sortir}Se déconnecter</button></p></section>
+      <p class="moi-aide"><button type="button" class="lien-btn" data-aide>Gestes et raccourcis</button></p>`;
     afficher(r, TITRES.moi, html, { focus });
     E.ficheSale = false;
     majCartePush();
@@ -4328,6 +4373,47 @@
     G.clavierPrecSuiv(document, { modif: 'aucun', portee: '#contenu' });
     G.glisser(document.body, { gauche: () => $('#contenu .nav-dates [data-gps="1"]:not([disabled])')?.click(), droite: () => $('#contenu .nav-dates [data-gps="-1"]:not([disabled])')?.click(),
       ignorer: t => !!(t.closest && t.closest('[data-pl-defile], .carte-tournee, .frise, .feuille-cadre, .liste-notifs, [data-defile]')) });
+    document.addEventListener('keydown', e => { if (G.toucheAide(e) && E.pret) { e.preventDefault(); ouvrirAide(); } });
+  }
+  // ---- l'aide (« ? ») : les raccourcis de l'espace, rangés par contexte, d'après ce qui existe (ici et dans gestes.js,
+  // planning.js) ; au doigt, les gestes à la place (le retour depuis le bord et la notification glissée seulement quand
+  // l'appareil ne demande pas moins d'animations : ils dorment sinon). La touche « ? » hors d'un champ, « Raccourcis » au
+  // pied de la colonne à l'ordinateur, « Gestes et raccourcis » au bas de « Moi ». Le contexte ouvert vient d'abord.
+  function ouvrirAide() {
+    if (typeof GESTES === 'undefined' || !GESTES || !GESTES.aide) return;
+    const r = E.route || {}, date = r.k === 'date' || r.k === 'feuille', planning = r.onglet === 'planning';
+    if (GESTES.tactile()) return GESTES.aide({ titre: 'Gestes et raccourcis', intro: 'Au doigt, dans votre espace :', groupes: [
+      { titre: 'Partout', lignes: [
+        { g: 'Appui long', d: `Sur un billet, un horaire, le lieu, une personne, un document, une notification : ce qu’on peut en faire${E.admin ? ', et le modifier' : ''}` },
+        { g: 'Tirer vers le bas', d: 'En haut de la page : relire votre espace' },
+        reduit() ? null : { g: 'Glisser depuis le bord gauche', d: 'Revenir à la page d’avant' },
+        { g: 'La pastille', d: 'En haut : votre espace est-il à jour ? La toucher le relit' }] },
+      { titre: 'Une date, une feuille de route', ici: date, lignes: [
+        { g: 'Balayer', d: 'Vers la gauche : la date suivante ; vers la droite : la précédente' }] },
+      { titre: 'Le planning', ici: planning, lignes: [
+        { g: 'Balayer', d: 'Vers la gauche : la période suivante ; vers la droite : la précédente' }] },
+      { titre: 'Les notifications', ici: r.k === 'notifications', lignes: [
+        reduit() ? null : { g: 'Glisser de côté', d: 'Marquer une notification comme lue' },
+        { g: 'Appui long', d: 'L’ouvrir, la marquer lue, tout marquer lu, l’effacer' }] },
+    ] });
+    GESTES.aide({ titre: 'Raccourcis clavier', groupes: [
+      { titre: 'Partout', lignes: [
+        { t: [['?']], d: 'Montrer ces raccourcis' },
+        { t: [['Échap']], d: 'Fermer une boîte, un menu, une feuille' },
+        { t: [['Maj', 'F10'], ['Menu']], d: 'Les actions de l’élément choisi, comme le clic droit' },
+        { t: [['Tab']], d: 'En tête de page : « Aller au contenu »' }] },
+      { titre: 'Une date, une feuille de route', ici: date, lignes: [
+        { t: [['←'], ['→']], d: 'La date précédente, la suivante' }] },
+      { titre: 'Le planning', ici: planning, lignes: [
+        { t: [['←'], ['→'], ['↑'], ['↓']], d: 'D’un jour à l’autre dans la grille' },
+        { t: [['Page ↑'], ['Page ↓']], d: 'La période précédente, la suivante' },
+        { t: [['Entrée']], d: 'Les actions du jour choisi' },
+        { t: [['Échap']], d: 'Refermer le détail' }] },
+      { titre: 'Un menu', lignes: [
+        { t: [['↑'], ['↓']], d: 'D’une action à l’autre (Début, Fin aux bouts)' },
+        { t: [['Entrée']], d: 'Faire l’action' },
+        { t: [['Échap']], d: 'Fermer ; le focus revient où il était' }] },
+    ] });
   }
   // ================================================================================================ modifier depuis le téléphone
   /* L'appui long (brancherGestes) modifie presque tout, quand le compte administre (E.admin) : la date (statut, nature,
@@ -5029,7 +5115,8 @@
       await redessiner();
       if (!discret) annoncer('Votre espace est à jour.');
     })();
-    try { await E.rafraichit; } finally { E.rafraichit = null; if (bouton) bouton.classList.remove('tourne'); }
+    majTemoin();
+    try { await E.rafraichit; } finally { E.rafraichit = null; if (bouton) bouton.classList.remove('tourne'); majTemoin(); }
   }
   // la vue ouverte, redessinée avec les données relues, sans perdre sa place : défilement, saisons ouvertes
   async function redessiner() {
@@ -5073,13 +5160,20 @@
       // Après un échec, supabase-js ne redemande pas avant une minute (lastRefreshFailure) : ce geste voulu passe outre.
       if (sb.auth && 'lastRefreshFailure' in sb.auth) sb.auth.lastRefreshFailure = null;
       const { error } = await sb.auth.getSession();
-      if (error && voulu) annoncer(`Toujours hors connexion : ${motsErreur(error)}.`, { erreur: true });
+      if (error && voulu) annoncer(`Toujours hors ligne : ${motsErreur(error)}.`, { erreur: true });
       return;
     }
     if (!E.pret) { E.uid = null; return demarrer(); }
     return rafraichir({ discret: !voulu });
   }
-  window.addEventListener('online', () => { if (E.horsLigne) reessayer(); });
+  // le réseau tombe : l'espace le dit tout de suite (le bandeau, le témoin), sans attendre qu'une lecture échoue ; il revient :
+  // « Reconnexion… », l'espace se relit, puis « À jour »
+  window.addEventListener('offline', () => { if (E.pret && !E.horsLigne) { E.horsLigne = E.chargeLe || Date.now(); bandeauEtat(); } else majTemoin(); });
+  window.addEventListener('online', async () => {
+    if (!E.horsLigne && !E.sansSession) return majTemoin();
+    E.reconnexion = true; majTemoin();
+    try { await reessayer(); } finally { E.reconnexion = false; majTemoin(); }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
     majDecomptes(); majFrises();
@@ -5087,7 +5181,7 @@
     else if (E.pret && !E.sansSession && E.session && E.notifsEtat === 'ok') chargerNotifs({ signaler: true }).catch(() => {});
   });
   // le temps qui passe : décomptes et frises chaque demi-minute ; les notifications chaque minute si le temps réel manque
-  setInterval(() => { if (document.visibilityState === 'visible') { majDecomptes(); majFrises(); } }, 30000);
+  setInterval(() => { if (document.visibilityState === 'visible') { majDecomptes(); majFrises(); majTemoin(); } }, 30000);
   setInterval(() => {
     if (document.visibilityState !== 'visible' || !E.pret || E.sansSession || !E.session || E.notifsEtat !== 'ok' || E.tempsReel === 'SUBSCRIBED') return;
     chargerNotifs({ signaler: true }).catch(() => {});
@@ -5155,6 +5249,7 @@
       try { await repondre(id, t.dataset.reponse, c ? c.value.trim() : '', { depuisBouton: true }); } finally { if (t.isConnected) t.disabled = false; }
       return;
     }
+    if (t.matches('[data-aide]')) return ouvrirAide();
     if (t.matches('[data-installer-barre]')) { vibrer(6); return E.installer ? installer() : ouvrirModaleInstallation(t); }
     if (t.matches('[data-installer]')) return installer();
     if (t.matches('[data-fermer-install]')) { garderPref('installFermee', true); majInstallation(); return; }

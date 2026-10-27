@@ -75,8 +75,29 @@ main.ad-chargement { padding: 0; max-width: none; }
 .nav a[aria-current="page"] { background: var(--accent); color: var(--sur-accent, #fff); }
 .qui { display: flex; align-items: center; gap: 10px; color: var(--gris); font-size: 13px; white-space: nowrap; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
-.direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; }
+.direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; flex: none; }
 .direct.on::before { background: #2bb673; box-shadow: 0 0 0 3px rgba(43, 182, 115, .18); }
+/* le témoin de la connexion (majTemoin) : la pastille (à jour, lu il y a…, reconnexion, hors ligne), le mot, l'icône ;
+   le tout est le bouton qui relit la base. L'en-tête est de nuit : des couleurs qui s'y lisent */
+.temoin { min-height: 32px; padding: 4px 9px 4px 10px; border: 1px solid transparent; border-radius: 999px; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.temoin:hover { border-color: rgba(255, 255, 255, .25); color: #fff; }
+.temoin-ic { flex: none; opacity: .75; }
+.temoin[data-etat="ajour"]::before { background: #4fd68e; }
+.temoin[data-etat="lu"]::before { background: #e9c46a; }
+.temoin[data-etat="horsligne"] { color: #f2d48c; border-color: rgba(233, 196, 106, .45); }
+.temoin[data-etat="horsligne"]::before { background: transparent; box-shadow: inset 0 0 0 2px #e9c46a; }
+.temoin[data-etat="reconnexion"]::before, .temoin[data-etat="lecture"]::before { background: #e9c46a; }
+@media (prefers-reduced-motion: no-preference) {
+  .temoin:is([data-etat="reconnexion"], [data-etat="lecture"])::before { animation: temoin-cherche 1.2s ease-in-out infinite; }
+  .temoin[data-etat="lecture"] .temoin-ic { animation: temoin-tourne .9s linear infinite; }
+  @keyframes temoin-cherche { 50% { opacity: .3; } }
+  @keyframes temoin-tourne { to { transform: rotate(360deg); } }
+}
+/* hors ligne ou à la reconnexion, le témoin prend la place de l'adresse du compte (l'en-tête garde ses lignes) */
+.qui:has(.temoin:is([data-etat="horsligne"], [data-etat="reconnexion"])) .moi { display: none !important; }
+@media (max-width: 860px) { .temoin-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .temoin { padding: 4px 8px; } .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-ic { display: none; } }
+/* l'aide (« ? ») : un bouton discret dans l'en-tête, à l'ordinateur */
+.barre .aide-b { min-width: 32px; padding-left: 0; padding-right: 0; font-weight: 800; }
 /* dix rubriques et la recherche : sous 2 080 px l'adresse du compte se retire ; sous 1 940 px les rubriques passent sur
    une seconde ligne ; entre 861 et 1 099 px, elles s'y rangent sur deux rangs ; au téléphone, elles défilent (la rubrique
    courante en vue) */
@@ -181,6 +202,14 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 /* au bureau, une longue liste qui défile à côté de sa fiche garde en vue l'en-tête de ce qu'on parcourt : le mois (ou « À
    venir »), collé en haut de la liste jusqu'au suivant */
 @media (min-width: 1101px) { .deux > .liste .mois { position: sticky; top: 0; z-index: 2; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
+/* une liste qui défile avec la page (les Feuilles de route, le Journal ; jusqu'à 1 100 px et au téléphone, celles qui sont
+   d'habitude à côté de leur fiche) garde de même son mois, ou son jour, en vue : collé sous l'en-tête arrimé, dont
+   --haut-barre est la hauteur mesurée (poserHautBarre) */
+.fr-liste [data-liste] .mois, #l-journal .j-jour { position: sticky; top: var(--haut-barre, 0px); z-index: 3; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.fr-liste [data-liste] .mois:not(:first-child) { margin-top: 8px; }
+#l-journal .j-jour { margin: 0; padding: 9px 12px 7px; background: color-mix(in srgb, var(--carte) 94%, transparent); border-bottom: 1px solid var(--trait); }
+#l-journal .j-jour:first-child { border-radius: var(--rayon) var(--rayon) 0 0; }
+@media (max-width: 1100px) { .deux > .liste { overflow: visible; } .deux > .liste .mois { position: sticky; top: var(--haut-barre, 0px); z-index: 3; margin: 0 0 6px; padding: 10px 4px 6px; background: color-mix(in srgb, var(--fond) 92%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); } }
 .ligne { display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; margin-bottom: 6px; border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); text-decoration: none; color: var(--encre); border-left: 4px solid var(--c, var(--accent)); }
 .ligne:hover { border-color: var(--gris); border-left-color: var(--c, var(--accent)); }
 .ligne[aria-current="true"] { box-shadow: 0 0 0 3px var(--accent-doux); border-color: var(--accent); }
@@ -364,6 +393,13 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .crm-tableau { display: grid; grid-template-columns: repeat(5, minmax(260px, 1fr)); gap: 14px; overflow-x: auto; padding-bottom: 16px; }
 .crm-colonne { background: var(--doux); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 12px; display: flex; flex-direction: column; min-height: 480px; }
 .crm-col-tete { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; font-weight: 700; font-size: 14px; }
+/* le Kanban suit la page, sans cadre qui défile de côté (un cadre qui défile garderait pour lui le nom des colonnes) : les
+   cinq colonnes côte à côte quand elles tiennent, sinon sur plusieurs rangs, puis l'une sous l'autre au téléphone ; le nom
+   de chaque colonne reste collé sous l'en-tête arrimé pendant qu'on fait défiler ses cartes */
+.crm-tableau { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); overflow: visible; }
+.crm-col-tete { position: sticky; top: var(--haut-barre, 0px); z-index: 2; margin: -12px -12px 12px; padding: 12px 12px 7px; background: inherit; border-radius: var(--rayon) var(--rayon) 0 0; }
+@media (max-width: 640px) { .crm-tableau { grid-template-columns: minmax(0, 1fr); } .crm-colonne { min-height: 0; } }
+.crm-carte-pied { flex-wrap: wrap; }
 .crm-badge-nb { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: var(--carte); color: var(--gris); }
 .crm-cartes { display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .crm-carte { background: var(--carte); border: 1.5px solid var(--trait); border-radius: 10px; padding: 12px; box-shadow: var(--ombre); transition: transform .15s, border-color .15s; }
@@ -929,6 +965,7 @@ async function demarrer() {
     return;
   }
   try { await chargerTout(); } catch (e) { demarre = false; return ecranConnexion('Chargement impossible : ' + e.message); }
+  E.luLe = Date.now();
   E.pret = true;
   ecouter();
   if (!location.hash || location.hash === '#') history.replaceState(null, '', typeof TABLEAU !== 'undefined' ? TABLEAU.depart() : '#/accueil');   // la page d'ouverture : le tableau de bord, ou Représentations si l'on l'a choisi
@@ -960,7 +997,7 @@ async function chargerTout() {
     tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
     tout('crescite_textes'), tout('crescite_admins'),
     ...Object.keys(TABLES_IDEALE).map(facultative),
-  ]);
+  ]).catch(async e => { await equipe; throw e; });   // (une lecture qui échoue attend l'équipe : actualiser rend ce qu'on en savait)
   Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad,
     prospects: pr, frais: fr, materiel: mt, devis: dv, ideale });
   await equipe;
@@ -1011,7 +1048,15 @@ function ecouter() {
   ecouter.fait = true;
   const ch = sb.channel('crescite-admin');
   Object.keys(TABLES).forEach(t => ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, p => changement(t, p)));
-  ch.subscribe(st => { E.direct = st === 'SUBSCRIBED'; const d = $('.direct'); if (d) { d.classList.toggle('on', E.direct); d.title = E.direct ? 'Connecté en temps réel' : 'Temps réel interrompu'; } });
+  ch.subscribe(st => {
+    const avant = E.direct;
+    E.direct = st === 'SUBSCRIBED';
+    // le direct tombe : ce qui est à l'écran était juste jusque-là ; il revient après une coupure : ce qui a changé
+    // pendant ce temps n'est pas arrivé, l'administration se relit d'elle-même
+    if (avant && !E.direct) { E.luLe = Date.now(); E.directPerdu = true; }
+    if (E.direct && E.directPerdu) { E.directPerdu = false; actualiser({ discret: true }); }
+    majTemoin();
+  });
   ecouterEquipe();
   if (E.ideale) {
     const ci = sb.channel('crescite-admin-ideale');
@@ -1024,6 +1069,89 @@ function ecouter() {
     cc.subscribe();
   }
 }
+
+/* Le témoin de l'en-tête (majTemoin), le même que dans l'espace de l'équipe : une pastille et un mot disent la connexion et
+   la fraîcheur de ce qu'on lit, et le bouton lui-même relit la base (actualiser). « À jour » : le direct est relié, ou la
+   lecture a moins de deux minutes ; « Lu il y a 12 min » : le direct n'est pas relié, rien n'est arrivé depuis ;
+   « Reconnexion… » : le réseau est là, le direct revient ; « Hors ligne · lu il y a 3 h » : plus de réseau, l'écran reste
+   tel qu'il a été lu (un enregistrement échouerait) ; « Lecture… » pendant que la base se relit. Au téléphone, la pastille
+   et l'icône seules, le mot quand il y a lieu de s'inquiéter. Le passage hors ligne et le retour s'entendent (une région
+   polie, hors de #app, que cadre() ne refait pas). Au retour du réseau ou du direct, la base se relit d'elle-même : ce qui
+   a changé pendant la coupure ne passe pas par le temps réel. */
+const ICONE_ACTUALISER = '<svg class="temoin-ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
+const heureCourteAd = t => { const d = new Date(t); return `${d.getHours()} h ${String(d.getMinutes()).padStart(2, '0')}`; };
+// « à l'instant », « il y a 12 min », « il y a 3 h », « hier à 18 h 05 », « le 25 oct. »
+function depuisTexte(t) {
+  const s = (Date.now() - t) / 1000, d = new Date(t), hier = new Date(); hier.setDate(hier.getDate() - 1);
+  if (s < 60) return 'à l’instant';
+  if (s < 3600) return `il y a ${Math.floor(s / 60)} min`;
+  if (d.toDateString() === new Date().toDateString()) return `il y a ${Math.floor(s / 3600)} h`;
+  if (d.toDateString() === hier.toDateString()) return `hier à ${heureCourteAd(t)}`;
+  return `le ${d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`;
+}
+function etatConnexion() {
+  const lu = E.luLe || Date.now();
+  if (E.horsLigne || navigator.onLine === false) return { k: 'horsligne', mot: 'Hors ligne', detail: `lu ${depuisTexte(lu)}`, long: `Hors ligne : l’écran montre la base telle qu’elle a été lue ${depuisTexte(lu)} ; un enregistrement échouera jusqu’au retour du réseau.` };
+  if (E.relit) return { k: 'lecture', mot: 'Lecture…', detail: '', long: 'La base se relit.' };
+  if (E.directPerdu) return { k: 'reconnexion', mot: 'Reconnexion…', detail: `lu ${depuisTexte(lu)}`, long: `Le direct s’est interrompu ${depuisTexte(lu)} : il se rétablit.` };
+  if (E.direct) return { k: 'direct', mot: 'À jour', detail: '', long: 'À jour : chaque changement arrive en direct.' };
+  if (Date.now() - lu < 120000) return { k: 'ajour', mot: 'À jour', detail: '', long: `À jour : la base a été lue à ${heureCourteAd(lu)}.` };
+  return { k: 'lu', mot: `Lu ${depuisTexte(lu)}`, detail: '', long: `La base a été lue à ${heureCourteAd(lu)} ; le direct n’est pas relié.` };
+}
+const temoinHtml = () => `<button type="button" class="direct temoin" id="b-temoin" data-temoin><span class="temoin-mot"></span><span class="temoin-detail"></span><span class="sr"> · Actualiser</span>${ICONE_ACTUALISER}</button>`;
+let etatAnnonce = null;
+function majTemoin() {
+  const x = etatConnexion();
+  $$('[data-temoin]').forEach(b => {
+    b.dataset.etat = x.k;
+    b.classList.toggle('on', !!E.direct && x.k === 'direct');
+    $('.temoin-mot', b).textContent = x.mot;
+    $('.temoin-detail', b).textContent = x.detail ? ` · ${x.detail}` : '';
+    b.title = `${x.long} Actualiser.`;
+    b.setAttribute('aria-busy', String(x.k === 'lecture'));
+  });
+  // les lecteurs d'écran : le passage hors ligne, puis le retour (pas l'état d'ouverture, que l'écran dit déjà)
+  const hors = x.k === 'horsligne';
+  if (etatAnnonce !== null && hors !== etatAnnonce) {
+    let r = $('#sr-connexion');
+    if (!r) { r = document.createElement('p'); r.id = 'sr-connexion'; r.className = 'sr'; r.setAttribute('role', 'status'); document.body.append(r); }
+    r.textContent = hors ? `Connexion perdue. ${x.long}` : 'Connexion rétablie : la base se relit.';
+  }
+  if (E.pret) etatAnnonce = hors;
+}
+const erreurReseau = e => navigator.onLine === false || /fetch|network|réseau|load failed|timeout/i.test(String(e?.message || e || ''));
+// relire toute la base (le bouton du témoin, le retour du réseau, le retour du direct) et redessiner la page à sa place ;
+// une saisie en cours n'est pas touchée : seules les listes se redessinent, comme au temps réel
+async function actualiser({ discret = false } = {}) {
+  if (!E.pret) return false;
+  if (E.relit) return E.relit;
+  if (navigator.onLine === false) { E.horsLigne = true; majTemoin(); if (!discret) annoncer('Hors ligne : la base se relira au retour du réseau.', { erreur: true }); return false; }
+  // une lecture qui échoue ne dit rien de ce que la base a (chargerEquipe la croirait sans l'équipe) : ce qu'on en savait reste
+  const savait = Object.fromEntries(['equipeInstallee', 'equipeErreur', 'sql3', 'sql4', 'sql4Erreur'].map(k => [k, E[k]]));
+  E.relit = (async () => {
+    majTemoin();
+    try { await chargerTout(); } catch (e) {
+      Object.assign(E, savait);
+      if (erreurReseau(e)) E.horsLigne = true;
+      if (!discret) annoncer(`Lecture impossible : ${erreurReseau(e) ? 'le réseau ne répond pas' : e?.message || e}.`, { erreur: true });
+      return false;
+    }
+    Object.assign(E, { luLe: Date.now(), horsLigne: false });
+    if (saisieEnCours()) rafraichirListes();
+    else { const y = window.scrollY; router(); window.scrollTo(0, y); if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) TIROIR.redessiner(); }
+    if (!discret) annoncer('La base est relue : tout est à jour.');
+    return true;
+  })();
+  try { return await E.relit; } finally { E.relit = null; majTemoin(); }
+}
+window.addEventListener('offline', () => { if (E.pret) { E.luLe = E.direct || !E.luLe ? Date.now() : E.luLe; E.horsLigne = true; majTemoin(); } });
+window.addEventListener('online', () => { if (!E.pret) return; E.horsLigne = false; majTemoin(); actualiser({ discret: true }); });
+document.addEventListener('click', e => { if (e.target.closest?.('[data-temoin]')) actualiser(); });
+// le temps passe : « lu il y a 12 min » se tient à jour, la page visible ; au retour sur l'onglet, une base lue il y a plus
+// d'un quart d'heure sans le direct se relit d'elle-même
+setInterval(() => { if (document.visibilityState === 'visible') majTemoin(); }, 30000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState !== 'visible' || !E.pret) return; majTemoin(); if (!E.direct && !E.horsLigne && Date.now() - (E.luLe || 0) > 900000) actualiser({ discret: true }); });
+
 function changement(t, p) {
   const [k, pk] = TABLES[t] || TABLES_EQUIPE[t] || TABLES_IDEALE[t] || TABLES_CHIFFRES[t];
   const pd = $('.direct.on'); if (pd) { pd.classList.remove('bat'); void pd.offsetWidth; pd.classList.add('bat'); }
@@ -1046,9 +1174,11 @@ function cadre(rubrique, contenu) {
   $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a><header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true" data-touche="${RACCOURCI_RCH}"></kbd></button>
     <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
-    <div class="qui"><span class="direct${E.direct ? ' on' : ''}" title="${E.direct ? 'Connecté en temps réel' : 'Temps réel en cours de connexion'}"><span class="mot">direct</span></span>
+    <div class="qui">${temoinHtml()}
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
+  majTemoin();
+  poserHautBarre();
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
   $('#b-sortir').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' })) await sb.auth.signOut(); });
   $('#b-mdp').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Changer de mot de passe sans enregistrer ?', ok: 'Continuer' })) ecranMotDePasse(true); });
@@ -1061,6 +1191,14 @@ function cadre(rubrique, contenu) {
     else if (r.left < n.left) nav.scrollLeft -= n.left - r.left + 4;
   }
   tt('pieuvre');
+}
+// la hauteur de l'en-tête arrimé (une, deux ou trois lignes selon la largeur ; 56 px au téléphone) : --haut-barre, sous
+// lequel collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
+const RO_BARRE = typeof ResizeObserver === 'function' ? new ResizeObserver(() => poserHautBarre(false)) : null;
+function poserHautBarre(observer = true) {
+  const b = $('.barre');
+  document.documentElement.style.setProperty('--haut-barre', `${b ? Math.round(b.getBoundingClientRect().height) : 0}px`);
+  if (observer && RO_BARRE && b) { RO_BARRE.disconnect(); RO_BARRE.observe(b); }
 }
 const ROUTES = [
   [/^#\/accueil$/, () => vueTableau()],
@@ -4298,8 +4436,14 @@ async function vueJournal() {
     const mots = motsRch(f.q), filtre = !!(mots.length || f.quoi || f.qui || f.periode), xs = E.journal.filter(j => garde(j, mots));
     const total = E.journal.filter(j => j.operation !== 'UPDATE' || champsChanges(j).length).length;
     const premier = !zone.querySelector('.journal-ligne');
+    // les modifications rangées par jour (« Aujourd'hui », « Hier », « mardi 20 octobre 2026 ») : l'en-tête du jour reste
+    // en vue pendant qu'on fait défiler ses lignes
+    let jourVu = '';
+    const hier = plusJours(AUJ, -1);
+    const enTeteJour = j => { const k = jourDe(j); if (k === jourVu) return ''; jourVu = k;
+      return `<div class="mois j-jour">${k === AUJ ? 'Aujourd’hui' : k === hier ? 'Hier' : esc(new Date(j.quand).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</div>`; };
     zone.innerHTML = xs.map(j => { const ch = champsChanges(j), ap = apprisDuJournal(j);
-      return `<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
+      return `${enTeteJour(j)}<div class="journal-ligne"><span class="quand">${new Date(j.quand).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })}<br>${esc(qui(j.qui))}</span>
         <span class="quoi"><b>${OPS_JOURNAL[j.operation]} · ${esc(NOMS_TABLES[j.table_nom] || j.table_nom)}</b>${surlignerRch(resume(j) || '', mots)}${ch.length ? `<span class="diff"> — ${surlignerRch(ch.join(', '), mots)}</span>` : ''}${ap.length ? `<span class="diff appris"> — gardé dans les fiches : ${esc(ap.join(', '))}</span>` : ''}</span>
         <span>${j.operation === 'INSERT' ? `<button class="btn petit" data-j="${j.id}" data-tt="retour">Retirer</button>` : `<button class="btn petit" data-j="${j.id}" data-tt="retour">Revenir</button>`}</span></div>`; }).join('')
       || listeVide(total > 0, { rien: 'Aucune modification ne correspond.', aucun: 'Rien encore.' });
