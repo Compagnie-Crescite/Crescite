@@ -68,6 +68,7 @@ const TIROIR = (() => {
   function ouvrir(href, { viser: cible = '', depuis = null, histoire = true } = {}) {
     const x = ficheDe(href); if (!x || !x.f.peut()) { location.hash = href; return null; }
     const { f, id } = x;
+    if (typeof noterRecente === 'function') noterRecente(f.href(id));     // (la recherche rapide la proposera, champ vide)
     const haut = pile[pile.length - 1];
     if (haut && haut.genre === f.genre && haut.id === id) { if (cible) { visee = cible; viser(); } return haut; }
     if (!pile.length) document.documentElement.classList.add('tiroir-ouvert');

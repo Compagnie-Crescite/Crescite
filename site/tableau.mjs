@@ -554,6 +554,32 @@ for (const [largeur, hauteur, tactile] of [[700, 900, false], [1000, 900, false]
   await ctx.close();
 }
 
+// ================================================================================ la recherche rapide : tout ce qui a une adresse
+// les fiches ouvertes reviennent champ vide (puis les prochaines dates) ; un téléphone, un contact, une partie de rubrique,
+// un texte du site, une invitation se trouvent ; le passage trouvé hors du titre se montre, souligné ; le clavier ouvre
+{
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/accueil' });
+  for (const h of ['#/lieux/6', '#/equipe/1']) { await page.evaluate(x => { location.hash = x; }, h); await page.waitForTimeout(400); }
+  await page.keyboard.press('Control+k'); await page.waitForSelector('dialog.recherche[open]');
+  const vide = await page.evaluate(() => ({ entete: document.querySelector('#rch-entete').textContent, groupes: [...document.querySelectorAll('.rch-groupe')].map(x => x.textContent),
+    titres: [...document.querySelectorAll('#rch-liste [role=option] b')].slice(0, 2).map(b => b.textContent) }));
+  ok('recherche · champ vide : les fiches ouvertes en dernier (la plus récente d’abord), puis les prochaines dates', vide.entete === 'Ouvertes récemment' && vide.titres[0] === 'Camille Essai' && vide.titres[1] === 'Le Volcan' && vide.groupes[0] === 'Prochaines dates', JSON.stringify(vide));
+  const chercher = async q => { await page.fill('#rch-q', q); await page.waitForTimeout(80); return page.evaluate(() => [...document.querySelectorAll('#rch-liste [role=option]')].map(o => ({ type: o.querySelector('.rch-type').textContent, titre: o.querySelector('b').textContent, passage: o.querySelector('.rch-passage')?.textContent || '', marques: [...o.querySelectorAll('.rch-passage mark')].map(m => m.textContent) }))); };
+  const tel = await chercher('06 12');
+  ok('recherche · un numéro trouve la personne, et le passage trouvé (« Téléphone : 06 12 34 56 78 ») se montre souligné', tel.length === 1 && tel[0].titre === 'Camille Essai' && /^Téléphone : 06 12 34 56 78/.test(tel[0].passage) && tel[0].marques.join(' ') === '06 12', JSON.stringify(tel));
+  const regie = await chercher('régie');
+  ok('recherche · un contact trouve le lieu et la date qu’il suit', regie.some(x => x.type === 'Lieu' && x.titre === 'Théâtre de Caen' && /^Contact/.test(x.passage)) && regie.some(x => x.type === 'Date'), JSON.stringify(regie));
+  const parties = [];
+  for (const q of ['carte de tournée', 'propositions', 'coordonnées', 'volcan', 'préparation', 'mot de passe']) parties.push([q, (await chercher(q)).map(x => `${x.type}:${x.titre}`)]);
+  const a = Object.fromEntries(parties);
+  ok('recherche · les parties des rubriques, les textes du site, les invitations, les ateliers, le compte se trouvent', a['carte de tournée'].includes('Rubrique:Carte de tournée') && a.propositions.includes('Rubrique:Propositions') && a['coordonnées'].includes('Texte:Coordonnées')
+    && a.volcan.includes('Invitation:Le Volcan') && a['préparation'].includes('Atelier:Atelier de préparation') && a['mot de passe'].includes('Compte:Mot de passe'), JSON.stringify(a));
+  await page.fill('#rch-q', 'carte de tournée'); await page.waitForTimeout(80); await page.keyboard.press('Enter'); await page.waitForTimeout(300);
+  ok('recherche · Entrée ouvre la partie trouvée', await page.evaluate(() => location.hash) === '#/representations/carte');
+  ok('recherche · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
 // ================================================================================ les repères (axe-core : landmark-one-main, region)
 // l'en-tête, le menu des rubriques (nommé, la rubrique ouverte marquée), le contenu, le pied ; « Aller au contenu » en
 // premier arrêt du clavier, qui pose le focus sur le titre sans changer l'adresse ; la porte a aussi son repère principal
