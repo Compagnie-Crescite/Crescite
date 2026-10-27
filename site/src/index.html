@@ -81,7 +81,7 @@ body { margin: 0; background: var(--papier); color: var(--encre); font: 400 1.06
 main { display: block; overflow-x: clip; min-height: 100svh; margin-top: 8px; }   /* sa place est gardée pendant la lecture de D : le pied de page ne saute pas ; (8 px sous le menu flottant) */
 a { color: inherit; }
 img { display: block; max-width: 100%; }
-:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--saison-vive, var(--magenta)); outline-offset: 3px; }   /* (la vive de la saison : 3:1 au moins sur la nuit ; --magenta, la saison sombre, n’y était qu’à 2,9:1) */
 [tabindex="-1"]:focus { outline: none; }
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 80; background: #fff; padding: 8px 14px; border-radius: 6px; }
 .evitement:focus { top: 8px; }
@@ -117,13 +117,15 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 .top :focus-visible { outline-color: #fff; outline-offset: 2px; }
 .marque { flex: none; display: inline-flex; align-items: center; gap: 8px; max-width: 14rem; height: 38px; padding: 0 12px 0 6px; overflow: hidden; border-radius: 999px; color: #fff;
   text-decoration: none; font: 700 1.05rem/1 var(--titre); letter-spacing: .01em;
-  transition: max-width .3s var(--k-doux), padding .3s var(--k-doux), opacity var(--k-survol) var(--k-doux); }
+  transition: max-width .3s var(--k-doux), padding .3s var(--k-doux), opacity var(--k-survol) var(--k-doux), visibility 0s; }
 .marque .l { display: block; flex: none; width: 32px; transition: scale var(--k-survol) var(--k-souple); }
 .marque svg { width: 100%; height: auto; display: block; }
 .marque:hover .l { scale: 1.08; }
 /* sur l'accueil, en bas, la marque est repliée (la grande pieuvre est au-dessus) ; arrimée, elle se déplie */
 .top.sous-pieuvre { bottom: calc(8px + env(safe-area-inset-bottom)); }
-.top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque { max-width: 0; padding: 0; opacity: 0; }
+/* (repliée, elle n'est plus une escale de la touche Tab : le focus s'y posait sans rien montrer ; la pieuvre de la scène, au-dessus,
+   mène déjà à l'accueil) */
+.top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque { max-width: 0; padding: 0; opacity: 0; visibility: hidden; transition-delay: 0s, 0s, 0s, var(--k-survol); }
 .top.sous-pieuvre:not(.est-arrime):not(.mesure) .marque .l { width: 0; }   /* (la créature, qui mesure la marque, se tait) */
 .entrees { flex: none; display: flex; align-items: center; gap: 2px; }
 .entrees a { display: inline-flex; align-items: center; gap: 9px; height: 38px; padding: 0 15px 0 12px; border: 2px solid transparent; border-radius: 999px; color: #fff;
@@ -1392,6 +1394,10 @@ html:not(.still):not(.sur-place) :is(.ecrit, .apparait).vu { transition: opacity
 .haut-page.sur-som { --hp-bas: 68px; }
 body:has(.bf7.est-visible.a-filtres) .haut-page { --hp-bas: 86px; }
 body:has(#som-l:not([hidden])) .haut-page, html.intro-active .haut-page { opacity: 0; visibility: hidden; }
+/* (ce qui prend le focus au clavier s'arrête au-dessus de ce qui occupe le bas de l'écran : le bouton du haut de page, la barre
+   des filtres des saisons au téléphone, l'indicateur de section d'un spectacle) */
+html:has(.haut-page.est-visible), html:has(main .som) { scroll-padding-bottom: 72px; }
+html:has(.bf7.est-visible) { scroll-padding-bottom: 96px; }
 @media (max-width: 759px) {
   .haut-page { --hp-bas: 14px; right: 12px; }
   .haut-page.sur-som { --hp-bas: 64px; }
@@ -3156,7 +3162,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // (la largeur de chaque carte arrive par ResizeObserver, après la mise en page : aucune lecture forcée)
   const k = (svg, w) => { const vb = svg.viewBox && svg.viewBox.baseVal; if (w) svg.__w = w; if (w && vb && vb.width) svg.style.setProperty('--k', (vb.width / w).toFixed(3)); };
   const mesureCartes = 'ResizeObserver' in window ? new ResizeObserver(es => es.forEach(x => k(x.target, x.contentRect.width))) : null;
-  function echelle() { $$('svg.carte').forEach(svg => { if (svg.__k) return; svg.__k = true; if (mesureCartes) mesureCartes.observe(svg); else k(svg, svg.getBoundingClientRect().width); }); }
+  function echelle() { $$('svg.carte').forEach(svg => { if (svg.__k) return; svg.__k = true; uneSeuleEscale(svg); if (mesureCartes) mesureCartes.observe(svg); else k(svg, svg.getBoundingClientRect().width); }); }
+  // au clavier, une carte est une seule escale de la touche Tab (la carte des saisons a près de quarante communes, qu'il fallait
+  // toutes traverser) : sa première commune, ou la dernière touchée, prend le focus ; ←, →, ↑, ↓, Début et Fin vont d'une
+  // commune à l'autre (dans l'ordre de la carte), Entrée la choisit
+  // (la carte elle-même n'est pas une escale : Chrome rend focalisable un SVG qui écoute le focus, celui de ses communes)
+  const uneSeuleEscale = svg => { if (!svg.hasAttribute('tabindex')) svg.setAttribute('tabindex', '-1');
+    const gs = $$('.carte-lieu[tabindex]', svg); if (gs.length > 1) gs.forEach((g, i) => { g.tabIndex = i ? -1 : 0; }); };
+  document.addEventListener('focusin', e => { const g = e.target.closest && e.target.closest('svg.carte .carte-lieu[tabindex]'); if (!g || g.tabIndex === 0) return;
+    $$('.carte-lieu[tabindex]', g.closest('svg')).forEach(x => { x.tabIndex = x === g ? 0 : -1; }); });
+  document.addEventListener('keydown', e => {
+    const g = e.target.closest && e.target.closest('svg.carte .carte-lieu[tabindex]'); if (!g || e.altKey || e.ctrlKey || e.metaKey) return;
+    const gs = $$('.carte-lieu[tabindex]', g.closest('svg')), i = gs.indexOf(g);
+    const j = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: gs.length - 1 }[e.key];
+    if (j === undefined) return;
+    e.preventDefault(); const x = gs[Math.max(0, Math.min(gs.length - 1, j))]; if (x && x !== g) x.focus({ preventScroll: true });
+  });
   // les communes d'une carte (g.carte-lieu[data-l]) : survol, focus, clic, Entrée ; des écouteurs posés sur la carte
   // seulement (délégation), comme CARTE.lier, mais un seul jeu pour toutes les communes
   function lierCarte(svg, { survol = () => {}, choix = () => {} } = {}) {
@@ -6668,9 +6689,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     l.addEventListener('scroll', plusTard, { passive: true });
     if ('ResizeObserver' in window) { const ro = new ResizeObserver(plusTard); ro.observe(l); lecteurs.push(ro); }
     plusTard();
-    l.addEventListener('focusin', e => { const b = e.target.closest('button'); if (b) montrerDans(l, b); });
+    l.addEventListener('focusin', e => { const b = e.target.closest('button'); if (b) montrerPiece(l, b); });
   }
-  const montrerDans = (l, b) => {
+  const montrerPiece = (l, b) => {
     const q = l.getBoundingClientRect(), r = b.getBoundingClientRect(), m = parseFloat(getComputedStyle(l).getPropertyValue('--sm7-fondu')) || 0;
     const dx = r.left < q.left + m ? r.left - q.left - m : r.right > q.right - m ? r.right - q.right + m : 0;
     if (Math.abs(dx) > 1) l.scrollBy({ left: dx, behavior: motionOK() ? 'smooth' : 'instant' });
@@ -6807,7 +6828,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         psom.classList.toggle('colle', colle);
         if (k === psomK) return;
         psomK = k; psomB.forEach((b, i) => { if (i === k) b.setAttribute('aria-current', 'location'); else b.removeAttribute('aria-current'); });
-        const l = $('.psom-l', psom); if (k >= 0 && l && l.scrollWidth > l.clientWidth + 2) montrerDans(l, psomB[k]);
+        const l = $('.psom-l', psom); if (k >= 0 && l && l.scrollWidth > l.clientWidth + 2) montrerPiece(l, psomB[k]);
       });
     }
     ecrire.forEach(f => { if (f) f(); });
@@ -6847,7 +6868,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const va = e.target.closest('[data-va]');
     // (une pièce du sommaire d'une page : la page y va, et la section prend le focus : le clavier continue de là)
     if (va) { vers(va.dataset.va); if (va.closest('.psom')) { const t = document.getElementById(va.dataset.va); if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } } return; }
-    const sb = e.target.closest('.som-b'); if (sb) { const l = $('#som-l'), o = l.hidden; l.hidden = !o; sb.setAttribute('aria-expanded', String(o)); if (o && MV) MV.cascade(l, { decalage: 6 }); return; }
+    // (le sommaire flottant d'un spectacle : sa liste est au-dessus du bouton, avant lui dans la page ; ouverte au clavier, le
+    // focus y entre, sur le chapitre lu ; Échap la ferme et rend le focus au bouton, le focus qui en sort la ferme)
+    const sb = e.target.closest('.som-b'); if (sb) { const l = $('#som-l'), o = l.hidden; l.hidden = !o; sb.setAttribute('aria-expanded', String(o)); if (o && MV) MV.cascade(l, { decalage: 6 });
+      if (o && e.detail === 0) { const c = $('[aria-current]', l) || $('button', l); if (c) c.focus(); } return; }
     // un chapitre du sommaire : la page y va, et son titre prend le focus (le clavier continue de là)
     const c = e.target.closest('[data-c]'); if (c) { fermerSommaire(); vers('c-' + c.dataset.c); const t = $(`#c-${CSS.escape(c.dataset.c)} [tabindex="-1"]`, main); if (t) t.focus({ preventScroll: true }); }
   });
@@ -7201,6 +7225,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const l = $('#som-l'); if (l && !l.hidden) { fermerSommaire(); $('.som-b').focus(); }
   });
   document.addEventListener('click', e => { if (!e.target.closest('.som')) fermerSommaire(); });
+  main.addEventListener('focusout', e => { const s = e.target.closest && e.target.closest('.som'); if (s && e.relatedTarget && !s.contains(e.relatedTarget)) fermerSommaire(); });
+  // le focus du clavier toujours à l'écran : les chapitres d'un spectacle (content-visibility : auto) attendent à leur taille
+  // d'attente ; celui d'avant, mis en page en approchant, grandit et repousse hors de l'écran ce qui vient de prendre le focus.
+  // Pendant 700 ms (sauf si le visiteur fait défiler la page lui-même), ce qui a le focus au clavier y est ramené
+  let gesteDefile = 0;
+  for (const t of ['wheel', 'touchstart']) addEventListener(t, () => { gesteDefile = performance.now(); }, { passive: true });
+  document.addEventListener('focusin', e => {
+    const el = e.target; if (!el || !el.matches || !main.contains(el) || !el.closest('.chap')) return;
+    const t0 = performance.now();
+    const suivre = () => {
+      if (document.activeElement !== el || !el.matches(':focus-visible') || gesteDefile > t0) return;
+      const r = el.getBoundingClientRect(); if (r.top >= innerHeight || r.bottom <= 0) el.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      if (performance.now() - t0 < 700) requestAnimationFrame(suivre);
+    };
+    requestAnimationFrame(suivre);
+  });
   $('.evitement').addEventListener('click', e => { e.preventDefault(); main.focus(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { ajuste(); echelle(); });
 
