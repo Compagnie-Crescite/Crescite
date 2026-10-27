@@ -4322,6 +4322,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let W = 0, H = 0, dpr = 1, s = .38, ox = 0, oy = 0, mobile = false, gut = 24, ech = 1;
     let raf = 0, visible = true, affiche = false, eveil = null, tPrec = 0, tVie = 0, pres = null, presFaite = false, pause = false, repit = 0;
     let survol = null, brasSurvol = null, pointeur = null, dernierPointeur = '', boite = null, LB = { x0: 0, y0: 0, x1: 0, y1: 0 }, tDessin = 0, actifAvant = null;
+    let tCadence = 0, retard = 0, coutCadre = 0, dessinee = false;   // (la cadence des images, ce que l'une d'elles coûte, lissé)
     let couches = new Map(), montre = null, iAuto = 0, tAuto = 0, dernierActif = null;
     const bob = { x: 0, y: 0 };
     const rgb = h => HEX6.test(h || '') ? [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)) : INK;
@@ -4594,6 +4595,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     }
     function image(now, une) {
       if (!une) raf = 0;
+      // (ce que l'image d'avant a tenu le fil principal, calcul, peinture et le reste compris : l'écart jusqu'à celle-ci)
+      if (!une && dessinee) { const d = now - tDessin; coutCadre = coutCadre ? coutCadre * .7 + d * .3 : d; }
+      if (!une) dessinee = false;
       if (!affiche || (!une && (!visible || document.hidden))) return;
       // un geste en cours : la pieuvre lui laisse la main un instant (suspendre), elle reprend là où elle était
       if (!une && now < repit) { raf = requestAnimationFrame(image); return; }
@@ -4604,10 +4608,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const vif = act || pres || (eveil !== null && now - eveil < 2600) || (secousse && now - secousse < 700) || BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
       const tenue = vivant && BRAS.some(a => a.tenu || Math.abs(a.tension) > .005);
       // au repos (rien ne se tend, rien ne s'éveille), l'ondulation lente se contente de trente images par seconde (vingt au
-      // téléphone)
-      if (!une && !vif && vivant && now - tDessin < (mobile ? 46 : 30)) { raf = requestAnimationFrame(image); return; }
-      tDessin = now;
-      if (vivant) tVie += dt / 1000;   // (le temps de la pieuvre : il s'arrête en pause, elle se fige là où elle était)
+      // téléphone). Et elle laisse toujours au fil principal le temps d'un geste : sur un appareil lent (un téléphone modeste,
+      // le processeur ralenti ×4), une image de la pieuvre tient le fil principal 60 à 110 ms (40 de calcul, le reste à
+      // peindre), et les images se suivaient sans répit ; le toucher attendait leur fin, 150 à 200 ms, avant d'être seulement
+      // lu. Ses images s'espacent donc selon ce qu'elles coûtent (coutCadre, lissé) : au repos, plus de la moitié du temps
+      // reste libre ; en plein mouvement, plus d'un tiers. Une machine qui suit (une image en moins de 40 ms, tout
+      // compris : le bureau, un téléphone ordinaire) n'y voit aucun changement ; la lente garde tout le mouvement, en moins d'images, à la
+      // même allure : l'image qui attend garde son temps (retard), celle qui suit le rattrape (tCadence : l'image que la
+      // cadence d'avant aurait dessinée, et son pas de temps, tels qu'ils étaient)
+      if (!une && !vif && vivant && now - tCadence < (mobile ? 46 : 30)) { raf = requestAnimationFrame(image); return; }
+      tCadence = now;
+      if (!une && vivant && coutCadre > 40 && now - tDessin < coutCadre * (vif ? 1.6 : 2.2)) { retard += dt; raf = requestAnimationFrame(image); return; }
+      const dtI = Math.min(250, dt + retard);
+      retard = 0; tDessin = now;
+      if (vivant) tVie += dtI / 1000;   // (le temps de la pieuvre : il s'arrête en pause, elle se fige là où elle était)
       let occupe = vivant;
       // elle flotte, doucement, une fois posée (la relève de l'ouverture se fait sans ce flottement)
       const fl = anime && eveil !== null ? lisse(0, 1, (now - eveil) / 1600) : 0;
@@ -4651,7 +4665,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         }
         a.penche += (pv - a.penche) * .08;
         const tT = a.t.suivreTete(ox, oy, s, theta, dxT, dyT);
-        if (a.t.avancer(dt, { temps: tVie, onde, penche: a.penche, bob, tourne: tT })) occupe = true;
+        if (a.t.avancer(dtI, { temps: tVie, onde, penche: a.penche, bob, tourne: tT })) occupe = true;
         a.em = a.t.mouvement();
       }
       // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)
@@ -4698,6 +4712,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         }
       }
       for (const T of TIT) placer(T, allumes.has(T), now, anime);
+      if (!une) dessinee = true;
       if (pres || tenue || (eveil !== null && now - eveil < 2600)) occupe = true;
       if (!une && occupe) raf = requestAnimationFrame(image);
       else if (une && occupe) reveil();
@@ -5622,7 +5637,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const html = gs => gs.map(g => `<div class="d7-mois"><h4 class="d7-mois-t" data-mv-cle="m:${esc(g.m)}">${esc(g.m)}</h4><ol class="d7s" data-agenda="">${g.rs.map(ligneProchaine).join('')}</ol></div>`).join('');
       const n = tout || F.date ? groupes.length : 2, jeton = ++suiteListe;
       liste.innerHTML = html(groupes.slice(0, n));
-      if (groupes.length > n) ensuite(() => { if (jeton !== suiteListe || !liste.isConnected) return; liste.insertAdjacentHTML('beforeend', html(groupes.slice(n))); if (rsVoir) rsVoir.dessiner(); lireSaison(); });
+      // (la suite se met en forme dans sa propre tâche, comme les morceaux des saisons passées : laissée à l'image d'après, elle
+      // la tenait 150 ms au téléphone ralenti, et ce qui s'y présentait, la mise à jour du survol après la page neuve, attendait)
+      if (groupes.length > n) ensuite(() => { if (jeton !== suiteListe || !liste.isConnected) return; liste.insertAdjacentHTML('beforeend', html(groupes.slice(n))); if (rsVoir) rsVoir.dessiner(); lireSaison(); void liste.offsetHeight; });
       if (rsVoir) rsVoir.dessiner();
       lireSaison();
     }
@@ -8260,13 +8277,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!racine || !racine.isConnected || !ANGLAIS.test(racine.textContent || '')) return;
     const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT, { acceptNode: n => (ANGLAIS.test(n.data) && n.parentElement && !n.parentElement.closest(horsLangue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
     const ns = []; for (let n = w.nextNode(); n; n = w.nextNode()) ns.push(n);
-    ns.forEach(n => {
-      const t = n.data, f = document.createDocumentFragment(); let i = 0, m;
-      ANGLAIS_G.lastIndex = 0;
-      while ((m = ANGLAIS_G.exec(t))) { if (m.index > i) f.append(t.slice(i, m.index)); const s = document.createElement('span'); s.lang = 'en'; s.textContent = m[0]; f.append(s); i = m.index + m[0].length; }
-      if (i < t.length) f.append(t.slice(i));
-      n.replaceWith(f);
-    });
+    ns.forEach(marquerTexte);
+  }
+  function marquerTexte(n) {
+    const t = n.data, f = document.createDocumentFragment(); let i = 0, m;
+    ANGLAIS_G.lastIndex = 0;
+    while ((m = ANGLAIS_G.exec(t))) { if (m.index > i) f.append(t.slice(i, m.index)); const s = document.createElement('span'); s.lang = 'en'; s.textContent = m[0]; f.append(s); i = m.index + m[0].length; }
+    if (i < t.length) f.append(t.slice(i));
+    n.replaceWith(f);
   }
   // (au vrai repos, quatre secondes au plus : jamais en plein geste, et ni la page ni sa lecture n'attendent)
   const auCalme = f => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 4000 }) : setTimeout(f, 600));
@@ -8274,7 +8292,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (par petites tranches du temps de repos : un geste qui arrive n'attend pas la relecture d'une longue liste)
     const lireLangues = dl => {
       tLangues = 0;
-      for (const x of aLire) { aLire.delete(x); marquerLangues(x); if (dl && dl.timeRemaining && !dl.didTimeout && dl.timeRemaining() < 3) break; }
+      // (un grand morceau, la page entière au premier passage, se lit par ses enfants, chacun à son tour : lue d'un coup,
+      // l'accueil tenait le fil principal 100 ms au téléphone ralenti, et un toucher qui tombait dessus l'attendait)
+      for (const x of aLire) { aLire.delete(x);
+        if (x.childElementCount > 1 && x.isConnected && (x.textContent || '').length > 3000) {
+          for (const n of [...x.childNodes]) { if (n.nodeType === 1) aLire.add(n); else if (n.nodeType === 3 && ANGLAIS.test(n.data) && !x.closest(horsLangue)) marquerTexte(n); }
+        } else marquerLangues(x);
+        if (dl && dl.timeRemaining && !dl.didTimeout && dl.timeRemaining() < 3) break; }
       if (aLire.size) tLangues = auCalme(lireLangues);
     };
     new MutationObserver(ms => {
