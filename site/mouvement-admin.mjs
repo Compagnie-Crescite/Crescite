@@ -216,10 +216,24 @@ fs.mkdirSync(CAPT, { recursive: true });
   await (await ctx.newCDPSession(page)).send('Emulation.setCPUThrottlingRate', { rate: 4 });
   await page.waitForTimeout(600);
   await page.evaluate(() => { window.__longues.length = 0; window.__pret = performance.now(); });
-  const fin = () => page.evaluate(async () => { const xs = document.getAnimations().filter(a => a.transitionProperty === '--large-menu'); await Promise.all(xs.map(a => a.finished.catch(() => {}))); return xs.length; });
+  // les transitions de la colonne se comptent par leurs événements, posés avant le clic (transitionrun, puis transitionend) :
+  // lire getAnimations() juste après le clic la manquait quand la machine est chargée (pas encore partie, ou déjà finie)
+  const armer = () => page.evaluate(() => {
+    const h = document.documentElement;
+    window.__colonne = { n: 0, fin: null };
+    window.__colonne.fin = new Promise(fini => {
+      const part = e => { if (e.target === h && e.propertyName === '--large-menu') window.__colonne.n++; };
+      const finie = e => { if (e.target === h && e.propertyName === '--large-menu') { h.removeEventListener('transitionrun', part); h.removeEventListener('transitionend', finie); fini(); } };
+      h.addEventListener('transitionrun', part); h.addEventListener('transitionend', finie);
+      setTimeout(fini, 5000);
+    });
+  });
+  const fin = () => page.evaluate(async () => { await window.__colonne.fin; return window.__colonne.n; });
+  await armer();
   await page.click('.menu-replier');
   const n1 = await fin();
   const replie = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--large-menu').trim());
+  await armer();
   await page.click('.menu-replier');
   const n2 = await fin();
   const deplie = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--large-menu').trim());
