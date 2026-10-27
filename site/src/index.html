@@ -2322,6 +2322,12 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 .s7-h::after { content: ""; flex: 1; height: 1px; background: var(--filet); }
 .d7-mois + .d7-mois { margin-top: 2.5rem; }
 .d7-mois-t { margin: 0; padding-bottom: .8rem; font: 600 .875rem/1.3 var(--etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--gris); }
+/* « Toutes les dates » garde son mois : l'intertitre reste arrimé en haut de l'écran, sous le menu et le sous-menu de la
+   saison, tant qu'on lit ses dates (arrimé dans son mois, il part avec lui et le suivant prend sa place) ; dans une saison
+   passée ouverte, sous la bande des saisons (--p4-idx : sa hauteur, mesurée). Un fond plein, et son filet du bas ; la page
+   ne bouge pas d'un pixel (la marge rend ce que le fond prend au-dessus) */
+.d7-mois-t { position: sticky; top: calc(var(--haut) - 8px + var(--sm7-h, 0px)); z-index: 3; margin-top: -.5rem; padding-top: .5rem; background: var(--papier); box-shadow: 0 1px 0 var(--filet); }
+.p4-mois { position: sticky; top: calc(var(--haut) + var(--p4-idx, 61px)); z-index: 3; margin-top: -8px; padding-top: 8px; background: var(--papier); }
 .d7s { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--filet); }
 .d7 { position: relative; display: grid; grid-template-columns: minmax(0, 12.5rem) minmax(0, 1fr); gap: .3rem 2rem; padding: 1.25rem 0 1.3rem 1.6rem; border-bottom: 1px solid var(--filet); transition: background-color var(--k-survol) var(--k-doux); }
 .d7::before { content: ""; position: absolute; left: 0; top: 1.62rem; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle, var(--c) 0 2.4px, var(--papier) 2.9px 3.9px, var(--c) 4.4px);
@@ -5174,6 +5180,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       ${L.filtres ? `<div class="bf7" id="bf7"><button type="button" class="bf7-ouvrir" aria-haspopup="dialog" aria-expanded="false" aria-controls="fe7">${FILTRE}<span>${esc(L.filtres)}</span><span class="bf7-n"></span></button><span class="bf7-etiq" aria-hidden="true">${esc(L.filtres)}</span><div class="bf7-puces" role="group" aria-label="${esc(L.filtres)}"></div></div>
       <div class="fe7" id="fe7" role="dialog" aria-modal="true" aria-labelledby="fe7-t" hidden><div class="fe7-voile" data-fermer></div><div class="fe7-panneau"></div></div>` : ''}`;
     const svg = $('.ag7-carte svg'), liste = $('#ag-liste'), toutes = $('#ag-toutes'), listes = $('#ag-listes'), racine = $('#ag-saisons'), index = $('#ag-index'), legC = $('.s7-legende');
+    // (la hauteur de la bande des saisons, sous laquelle s'arriment les mois d'une saison passée ouverte)
+    if (index && 'ResizeObserver' in window) { const p4 = index.closest('.p4'), ro = new ResizeObserver(() => { if (index.offsetHeight) p4.style.setProperty('--p4-idx', `${index.offsetHeight}px`); }); ro.observe(index); lecteurs.push(ro); }
     // quand le filtre change, les saisons qui ont des résultats s'ouvrent ; quand il s'efface, les saisons reprennent leur état d'avant
     function recompte() {
       if (actif()) { if (!F.avant) F.avant = new Set(F.ouv); F.ouv = new Set(passe.filter(s => s.rows.some(garde)).map(s => s.k)); }
