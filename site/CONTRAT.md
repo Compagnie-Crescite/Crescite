@@ -716,5 +716,6 @@ ligne, comme un programme qui se compose de façon magique). »
   sur le texte, repeint à chaque image), un texte haut se découvre de haut en bas, un cadre se pose, une photo sort du flou. Web Animations
   sur translate, scale, opacity, clip-path et filter : rien ne change de place dans la page (CLS 0). Ce qui a son propre
   mouvement ([data-mv], le titre qui fleurit) n'est pas composé, et ne part qu'à l'ouverture du rideau.
-- Moins d'animations, `?anim=0`, un geste qui ouvre le rideau : la page est là, sans composition.
+- Moins d'animations, `?anim=0`, un geste qui ouvre le rideau, un appareil trop lent (moins de vingt-cinq images par
+  seconde pendant le noir) : la page est là, sans composition.
 - Le vérificateur finit les animations d'id `rideau` et `compose` avant de lire une page.

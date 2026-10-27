@@ -127,7 +127,8 @@ paragraphe se découvre de haut en bas, ligne à ligne), les cadres se posent ju
 les photos sortent du flou. Seulement ce qui est à l'écran ; ce qui a déjà son propre mouvement (le titre qui fleurit, ce
 qui paraît au défilement) le garde, et ne part qu'à l'ouverture du rideau. Ni rideau en entrant dans un spectacle (l'encre
 de son univers l'ouvre) ni d'un onglet à l'autre d'un spectacle. Un geste (un clic, une touche, la molette, le doigt)
-ouvre le rideau aussitôt, et la page est alors là sans se composer. Moins d'animations, ou `?anim=0` : ni l'un ni l'autre.
+ouvre le rideau aussitôt, et la page est alors là sans se composer ; de même sur un appareil trop lent pour la composer
+en douceur (le rideau compte ses images pendant le noir : moins de vingt-cinq par seconde, pas de composition). Moins d'animations, ou `?anim=0` : ni l'un ni l'autre.
 Ces animations portent l'id `rideau` ou `compose` : `onglets.mjs` les finit avant de lire une page.
 
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi

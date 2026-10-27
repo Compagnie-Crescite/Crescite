@@ -3449,7 +3449,11 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       else if (b && p) p.remove();
       // (un rideau déjà fermé qu'une autre page rappelle : le noir reprend, la page d'avant ne se compose pas)
       clearTimeout(tFin);
-      etat = { t0: performance.now(), leve: false, vers: null };
+      etat = { t0: performance.now(), leve: false, vers: null, images: 0 };
+      // (ses images comptées pendant le noir : un appareil qui n'en tient pas vingt-cinq par seconde n'a pas de quoi composer la
+      // page en douceur ; elle y paraît d'un coup à l'ouverture)
+      const e0 = etat, compter = () => { if (etat !== e0 || e0.leve) return; e0.images++; requestAnimationFrame(compter); };
+      requestAnimationFrame(compter);
       suite = apres || null;
       // (la pieuvre naît à l'image d'après : la première, celle du geste, n'a que la page neuve et le noir à peindre)
       if (b) { const e = etat; requestAnimationFrame(() => setTimeout(() => { if (etat !== e) return; b.demarrer(); b.placeSale = true; b.reveil(); }, 0)); }
@@ -3472,8 +3476,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       pans = [g.animate([{ translate: '0 0' }, { translate: '-101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' }), a];
       const fini = etat;
       a.onfinish = () => { if (etat !== fini) return; etat = null; el.hidden = true; };
-      const f = suite; suite = null;
-      if (f) f(vite);
+      const f = suite, lent = (tLeve - fini.t0) / Math.max(1, fini.images) > 40;
+      suite = null;
+      if (f) f(vite || lent);
     }
     // (une page refaite, un rideau qu'on ne veut plus, un geste pendant qu'il s'ouvre : il s'efface d'un coup, la pieuvre avec)
     function oter() { if (!etat) return; clearTimeout(tFin); gestes.forEach(t => removeEventListener(t, geste, { capture: true })); etat = null; suite = null; pans.forEach(a => a.cancel()); pans = []; if (el) el.hidden = true; }
@@ -8502,7 +8507,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       && Rideau.fermer(vite => {
         if (courant !== a) return;
         if (MV) MV.reveler(main, { immediat: false });
-        // (un geste a ouvert le rideau : la page est là tout de suite, sans se composer sous le doigt)
+        // (un geste a ouvert le rideau, ou l'appareil est trop lent pour la composer en douceur : la page est là tout de suite)
         if (vite) return;
         if (!premiere && motionOK()) fleurir();
         composer();
