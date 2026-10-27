@@ -4132,6 +4132,16 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const ONDE = '<svg class="onde" viewBox="0 0 120 10" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path pathLength="1" d="M2 6C22 1 38 1 54 5S86 10 100 5C108 2 116 3 118 6"/></svg>';
   const contactPrg = () => ((D.site || {}).programmation || {}).contact || null;
   const mailPrg = objet => { const c = contactPrg(); return c && c.email ? `mailto:${c.email}?subject=${encodeURIComponent(objet)}` : ''; };
+  // l'objet d'un courriel à la compagnie dit d'où l'on écrit : d'un spectacle, son entrée et son titre (« Programmation –
+  // Bérénice », « Établissement scolaire – Cléophène », « Voir un spectacle – Macbeth – Fatum ») ; d'une page de l'espace pro,
+  // son entrée seule ; ailleurs, l'objet simple (« Contact »). Les mots viennent de D : objetProgrammation, le nom court des
+  // entrées, le titre du spectacle
+  const objetDepuis = (entree, s) => { const t = entree === 'programmer' ? L.objetProgrammation : entree && E[entree] ? E[entree].court : '';
+    return t && s ? `${t} – ${s.titre}` : t || (s && s.titre) || L.contact; };
+  // « Écrire à la compagnie » mène à la page de contact ; d'un spectacle ou d'une page pro, son adresse dit d'où l'on vient
+  // (?depuis=<entrée>&spectacle=<slug>), et le courriel de la page de contact en prend l'objet
+  const ecrireDepuis = (entree, s) => { const q = new URLSearchParams(); if (entree) q.set('depuis', entree); if (s) q.set('spectacle', s.slug);
+    return `${S.ecrire.href}${q.toString() ? '?' + q : ''}`; };
   const docsDe = (s, pour) => (D.documents || []).filter(x => x.spectacle === s.slug && (x.pour === pour || x.pour === 'tous' || x.pour === 'pros_scolaires') && x.url);
   const lienDoc = x => `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.titre)}${DEHORS()}</a>`;
   // le contact diffusion : le nom, le rôle, le courriel (lien mailto:, avec l'objet), le téléphone s'il existe ; sur un spectacle : en bande
@@ -6283,7 +6293,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <div class="ep-diff-t"><p class="ep-k"${ed('site.nom')}>${esc(S.nom)}</p><h2 class="ep-sec-t" id="h-lieux" data-mv="monte">${esc(L.lieuxDiffusion)}</h2>${SEP}
           <div class="p-diff" id="p-diff"></div>
           ${S.compagnie && S.compagnie.paragraphes && S.compagnie.paragraphes[1] ? bloc(S.compagnie.paragraphes[1], 'site.compagnie.paragraphes.1') : ''}
-          <p class="ep-ecrire" id="p-ecrire"><a class="ep-bt" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a></p></div>
+          <p class="ep-ecrire" id="p-ecrire"><a class="ep-bt" href="${esc(ecrireDepuis('programmer'))}">${esc(L.ecrire)}${FLECHE}</a></p></div>
         <figure class="ep-diff-carte">${retenu(`carte-tout-${motionOK()}`, () => carte({ lieux, titre: L.lieuxDiffusion, classe: 'tout', simple: true, fin: .5 }))}<figcaption class="bulle" id="bulle"></figcaption></figure>
       </div></section>`;
     const svg = $('.ep-diff-carte svg', main);
@@ -6346,7 +6356,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <div><ul class="dates" id="e-liste" data-agenda="">${sco.map(d => `<li${dateId(d)} data-frise-id="${esc(cleProchaine(d))}" data-l="${d.l}" style="--c:${couleurDe(d.slug)}">${quand(d.ligneDate, d.iso)}<div class="qui">${titreDate(d, 'etablissement')}<span class="ou">${esc(d.ligneLieu)}</span>${details(d.details)}</div></li>`).join('')}</ul></div>
         <figure class="e-carte ep-carte">${carte({ lieux, titre: L.enEtablissement, serre: true })}</figure>
       </div></section>` : ''}
-      <section class="ep-cta" id="e-ecrire" aria-label="${esc(L.ecrire)}"><div class="wrap ep-cta-in"><span class="ep-cta-logo" aria-hidden="true">${D.logo.octopusWord}</span><a class="ep-bt grand" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
+      <section class="ep-cta" id="e-ecrire" aria-label="${esc(L.ecrire)}"><div class="wrap ep-cta-in"><span class="ep-cta-logo" aria-hidden="true">${D.logo.octopusWord}</span><a class="ep-bt grand" href="${esc(ecrireDepuis('etablissement'))}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
     const svg = $('.e-carte svg', main), liste = $('#e-liste', main);
     if (svg && liste) {
       relier(svg, liste, l => { const li = $(`li[data-l="${l}"]`, liste); if (li) li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' }); });
@@ -6890,7 +6900,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     lierSommairePage();
     return { titre: C.titre, menu: 'compagnie' };
   }
-  function contact() {
+  function contact(q) {
     vue = 'contact';
     const C = S.contact, co = S.coordonnees, mot = 'politique de confidentialité', k = C.consentement.indexOf(mot);
     const politique = (S.liensLegaux.find(x => /confidentialit/.test(x.href)) || {}).href || '#/politique-de-confidentialite';
@@ -6900,11 +6910,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // d'abord où écrire : les coordonnées et le courriel du contact diffusion (D.site.programmation.contact), puis le formulaire
     // (au bureau, les coordonnées dans la colonne d'à côté) ; le formulaire n'envoie rien (décision de la compagnie)
     const cp = contactPrg(), courriel = cp && cp.email;
+    // (l'objet du courriel : d'où l'on vient, ?depuis= et ?spectacle= de l'adresse, s'ils sont connus de D ; sinon l'objet simple)
+    const depuis = q && q.get('depuis'), spD = q && bySlug[q.get('spectacle')];
+    const objet = objetDepuis(E[depuis] ? depuis : null, spD || null);
     main.innerHTML = `<div class="wrap page-titre"><p class="surtitre">${esc(nomC)}</p><h1 tabindex="-1"><span class="fleur"${ed('site.contact.titre')}>${esc(C.titre)}</span></h1></div>
       <section class="bloc sans-filet"><div class="wrap contact">
         <div class="ct-coord">
           <address class="coord"><strong${ed('site.coordonnees.nom')}>${esc(co.nom)}</strong><br>${co.adresse.map((x, i) => `<span${ed(`site.coordonnees.adresse.${i}`)}>${esc(x)}</span>`).join('<br>')}</address>
-          ${courriel ? `<p class="ct-ecrire"><a class="bouton e" href="mailto:${esc(courriel)}" style="--ec:var(--saison)"><span>${esc(S.ecrire.texte)}</span></a><span class="ct-courriel"${ed('site.programmation.contact.email')}>${esc(courriel)}</span></p>` : ''}
+          ${courriel ? `<p class="ct-ecrire"><a class="bouton e" href="${esc(`mailto:${courriel}?subject=${encodeURIComponent(objet)}`)}" style="--ec:var(--saison)"><span>${esc(S.ecrire.texte)}</span></a><span class="ct-courriel"${ed('site.programmation.contact.email')}>${esc(courriel)}</span></p>` : ''}
         </div>
         <form class="formulaire" novalidate>
           ${C.champs.map((c, i) => i === C.champs.length - 1 ? `<p class="champ large"><label for="f${i}">${esc(c)}</label><textarea id="f${i}" rows="6"></textarea></p>`
@@ -7062,8 +7075,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       // prochaine date et l'invitation à réserver (elle mène à la bande des dates, règle 17) ; la bande-annonce se lit plus bas
       const res = entree === 'voir' && !s.statut && RS ? RS.dates(s.slug) : [], prochaine = entree === 'voir' && !s.statut ? res[0] || pub[0] : null;
       const cta = (entree === 'voir' ? `${res.length ? `<button type="button" class="bu plein" data-va="rs-zone">${esc(L.reserver)}${BAS}</button>` : `<button type="button" class="bu plein" data-va="c-dates">${esc(!s.statut && !pub.length ? L.lieuxDiffusion : L.dates)}${BAS}</button>`}${lienVideo(s)}`
-        : entree === 'programmer' ? `<a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>${lienVideo(s)}`
-        : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a>`) + partage();
+        : entree === 'programmer' ? `<a class="bu plein" href="${esc(ecrireDepuis('programmer', s))}">${esc(L.ecrire)}${FLECHE}</a>${lienVideo(s)}`
+        : `${s.dossier ? `<button type="button" class="bu plein" data-va="c-dossier">${esc(L.dossierScolaire)}${BAS}</button>` : ''}<a class="bu${s.dossier ? '' : ' plein'}" href="${esc(ecrireDepuis(entree, s))}">${esc(L.ecrire)}${FLECHE}</a>`) + partage();
       const etat = s.statut ? `<p class="une-statut"${edS(s, 'statut')}>${esc(s.statut)}</p>` : s.enTournee ? `<p class="une-statut">${esc(L.enTournee)}</p>` : '';
       // (en tête, le retour discret à la liste des spectacles, comme celui des pages de l'espace pro)
       texte = `<a class="une-retour" href="${esc(sp.href)}">${FLECHE}<span>${esc(sp.texte)}</span></a><p class="une-sur"><span${edS(s, 'creation')}>${esc(s.creation)}</span>${s.lieuTemps ? `<span${edS(s, 'lieuTemps')}>${esc(s.lieuTemps)}</span>` : ''}</p>${titre}${etat}${st}${acc}
@@ -7133,7 +7146,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       </div></div>
     </div>`);
   }
-  const appel = s => `<section class="u-appel"><div class="wrap"><p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p><a class="bu plein" href="${S.ecrire.href}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
+  const appel = (s, entree) => `<section class="u-appel"><div class="wrap"><p class="u-signe"${ed('site.nom')}>${esc(S.nom)}</p><a class="bu plein" href="${esc(ecrireDepuis(entree, s))}">${esc(L.ecrire)}${FLECHE}</a></div></section>`;
   const carteTournee = (s, lieux, passe) => lieux.length || passe.length ? carte({ lieux, passe, titre: s.titre }) : carte({ titre: s.titre, classe: 'attente', interactif: false });
 
   // le texte du spectacle, paragraphe par paragraphe (le premier, court, en chapeau) ; ses citations (un vers par ligne, ou une
@@ -7317,7 +7330,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     }
     h += chapitre(chap, 'telecharger', L.aTelecharger, `<div class="wrap">${titreChap(esc(L.aTelecharger))}
       <ul class="u-docs"><li>${dossierBouton(s.slug, 'bu')}</li>${docsDe(s, 'pros').map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
-    return h + appel(s);
+    return h + appel(s, 'programmer');
   }
   function ongletEtablissement(s, chap) {
     const A = s.actionCulturelle || {}, sco = D.dates.filter(d => d.slug === s.slug && d.scolaire), B = s.dossier && (D.dossiers || {})[s.dossier];
@@ -7335,7 +7348,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (docs.length) h += chapitre(chap, 'documents', L.documentsScolaires, `<div class="wrap">${titreChap(esc(L.documentsScolaires))}<ul class="u-docs">${docs.map(x => `<li>${PDF}${lienDoc(x)}</li>`).join('')}</ul></div>`);
     if (B) h += dossier(s, chap, B);
     else h += distribution(s, chap, 'etablissement');
-    return h + appel(s);
+    return h + appel(s, 'etablissement');
   }
   // le dossier scolaire, à la charte de la compagnie : pourquoi, programmes, présentation, consignes, ateliers, accueil
   function dossier(s, chap, B) {
