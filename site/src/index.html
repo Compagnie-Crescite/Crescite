@@ -2673,6 +2673,63 @@ html.still *, html.still *::before, html.still *::after { transition: none !impo
 .intro.intro-synthese .intro-indice { color: var(--saison-vive); opacity: .9; }
 @media (prefers-reduced-motion: reduce) { .sc-image { transition: opacity .35s ease !important; } }
 html.still .sc-image { transition: opacity .35s ease !important; }
+/* l'impression : la page d'un spectacle et les saisons, lisibles sur le papier. Fond blanc, encre noire ; ni le menu, ni le
+   pied, ni les boutons d'action, ni ce qui bouge, ni les toiles (la pieuvre, l'encre), ni les cartes et les frises (leurs
+   dates sont dans les listes) ; tout ce qui attend l'écran ou la lecture est posé ; l'adresse d'un lien de réservation est
+   écrite après lui ; les photos réduites ; une date, une carte de réservation, une fiche ne se coupent pas */
+@media print {
+  @page { margin: 14mm 12mm; }
+  html { color-scheme: light !important; --papier: #fff; --papier-2: #fff; --carte: #fff; --encre: #000; --gris: #333; --filet: #aaa; --nuit: #fff; }
+  html, body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+  *, *::before, *::after { animation: none !important; transition: none !important; text-shadow: none !important; box-shadow: none !important; filter: none !important;
+    content-visibility: visible !important; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
+  main, main *, main *::before, main *::after { color: #000 !important; background: transparent !important; border-color: #aaa !important; }
+  main [data-mv], main .mv-attente, main .mv-attente > *, main .apparait, main .ecrit, main .lit, main .lit *, main .rc-in, main .rc-p, main .u-titre .ligne { opacity: 1 !important; transform: none !important; translate: none !important; clip-path: none !important; visibility: visible !important; }
+  /* ce qui ne s'imprime pas */
+  .evitement, .top-cale, #top, footer, .haut-page, .succion, canvas, .intro, svg.defs, .ed-barre, .ed-panneau,
+  main button:not(.rs-date), main .u-onglets, main .sp-som, main .som, main .u-cta, main .une-retour, main .une-ariane, main .une-motif, main .une-lueur, main .une-ombre,
+  main .voisins, main .rc-vis, main .rc-fil, main #c-video, main [data-lecteur], main .filet, main svg.trait, main .rs-tete, main .rs-defile, main .rs-plus, main .rs-photo, main .rs-tache,
+  main svg.carte, main .carte-sp, main .ag7-carte, main .frise, main [data-frise], main .u-frise, main .v-frise, main .fs7, main .p4-frise, main .ft7, main .fr-legende,
+  main .s7-outils, main .s7-rac, main .sm7, main .sf7, main .ag-index, main #v-alerte, main .bf7, main .fe7, main .s7-gel { display: none !important; }
+  main { padding: 0 !important; }
+  main .wrap { width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
+  main section, main .chap, main .bloc { padding-top: 0 !important; margin-top: 0 !important; min-height: 0 !important; }
+  main .chap + .chap, main section + section { margin-top: 10mm !important; }
+  /* l'ouverture d'un spectacle : son titre, son accroche, puis sa photo, réduite */
+  main .sp-une { display: flex !important; flex-direction: column; justify-content: flex-start !important; min-height: 0 !important; overflow: visible !important; }
+  main .une-corps { padding: 0 !important; }
+  main .une-ph { position: static !important; order: 2; display: block; height: auto !important; margin: 4mm 0 0; background: transparent !important; }
+  main .une-credit { order: 3; }
+  main .une-sur::before, main .une-statut::before { display: none !important; }
+  main .une-ph img { position: static !important; width: auto !important; max-width: 100%; height: auto !important; max-height: 7cm; object-fit: contain; transform: none !important; }
+  main .une-credit { position: static !important; writing-mode: horizontal-tb; transform: none; margin: 1mm 0 0; font-size: 8pt; }
+  main .sp-une .u-titre { font-size: 30pt !important; margin: 0 0 3mm; }
+  main .chap-t, main .s7-titre, main .s7-t, main .p4-titre { font-size: 18pt !important; margin: 0 0 4mm !important; break-after: avoid; }
+  main h1, main h2, main h3, main .s7-h, main .d7-mois-t, main .p4-mois { break-after: avoid; }
+  /* le reste de la page coule d'une colonne : rien n'est épinglé, les grilles se posent l'une sous l'autre */
+  main .sp-grille, main .rc, main .ag7, main .u-tournee, main .rs-corps { display: block !important; }
+  main [class*="rc-"], main .sp-chaps, main .ag-listes { position: static !important; height: auto !important; min-height: 0 !important; }
+  main img { max-height: 6cm; width: auto !important; max-width: 100%; object-fit: contain; break-inside: avoid; }
+  main figure { break-inside: avoid; }
+  /* les dates : une date ne se coupe pas ; ses boutons deviennent du texte ; la carte de réservation de la date choisie
+     reste, son lien écrit en clair */
+  main li, main .rs-carte, main .rs-ici, main .u-pt, main .fp, main .ac, main tr { break-inside: avoid; }
+  main .rs-bande { display: flex !important; flex-wrap: wrap; gap: 2mm 4mm; overflow: visible !important; }
+  main .rs-date { border: 1px solid #aaa !important; border-radius: 0 !important; padding: 1.5mm 3mm !important; min-width: 0 !important; }
+  main .rs-date::after, main .rs-date::before { display: none !important; }
+  main .rs-carte { min-height: 0 !important; margin: 4mm 0 !important; border: 1px solid #aaa !important; border-radius: 0 !important; }
+  main .rs-c { max-width: none !important; padding: 4mm !important; }
+  main .rs-reserver { display: inline !important; padding: 0 !important; font-weight: 700; text-decoration: none; }
+  main .rs-reserver .rs-fleche { display: none; }
+  main .rs-reserver::after, main a.rs-seance::after, main .d7-lieu a::after, main .dl-ou a::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 9pt; overflow-wrap: anywhere; }
+  main .rs-r { display: inline !important; }
+  main .rs-r1, main .rs-r2 { display: inline; font-size: 11pt !important; }
+  main .rs-r2::before { content: " · "; }
+  main .rs-ici[hidden], main .sai-corps:empty { display: none !important; }
+  main .rs-date--ligne { border: 0 !important; padding: 0 !important; margin: 0 !important; }
+  main details:not([open]) > :not(summary) { display: none; }
+  main a { text-decoration: underline; }
+}
 </style>
 </head>
 <body>
