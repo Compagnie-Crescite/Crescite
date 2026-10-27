@@ -53,10 +53,11 @@ button, input, select, textarea { font: inherit; color: inherit; }
 main.ad-chargement { padding: 0; max-width: none; }
 
 /* le pied commun des espaces réservés (PIED) : sobre, en fin de contenu */
-.pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
+.pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
 .pied-espace .pied-nom { margin: 0; font-family: var(--titres); font-weight: 500; color: var(--encre); }
-.pied-espace nav { display: flex; flex-wrap: wrap; gap: 4px 18px; }
-.pied-espace a { color: var(--gris); text-underline-offset: .2em; }
+.pied-espace nav { display: flex; flex-wrap: wrap; gap: 0 18px; }
+/* chaque lien du pied, une cible de 44 px (la ligne reste sobre : la hauteur ne se voit pas) */
+.pied-espace a { display: inline-flex; align-items: center; min-height: 44px; color: var(--gris); text-underline-offset: .2em; }
 .pied-espace a:hover { color: var(--accent); }
 .connexion:has(+ .pied-espace) { min-height: calc(100vh - 80px); }
 .connexion + .pied-espace, .connexion + .pied-espace nav { justify-content: center; margin-top: 0; border-top: 0; text-align: center; }
@@ -833,8 +834,9 @@ async function demarrer() {
   E.pret = true;
   ecouter();
   if (!location.hash || location.hash === '#') history.replaceState(null, '', typeof TABLEAU !== 'undefined' ? TABLEAU.depart() : '#/accueil');   // la page d'ouverture : le tableau de bord, ou Représentations si l'on l'a choisi
-  E.hash = location.hash;
+  noterAdresse();
   router();
+  if (typeof TIROIR !== 'undefined') requestAnimationFrame(() => TIROIR.restaurer());   // une fiche partagée en tiroir (?tiroir=…)
   if (versAdmin) { versAdmin = false; requestAnimationFrame(() => tt('page', getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#5f565a')); }
 }
 
@@ -950,8 +952,8 @@ function cadre(rubrique, contenu) {
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
     <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-3px"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M16.5 6.5l3 3M14.5 8.5l2 2"/></svg><span class="long"> Mot de passe</span></button><button class="btn petit" type="button" id="b-sortir">Déconnexion</button></div></header><main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
   setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
-  $('#b-sortir').addEventListener('click', async () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Se déconnecter quand même ?')) { E.sale = false; await sb.auth.signOut(); } });
-  $('#b-mdp').addEventListener('click', () => { if (!E.sale || confirm('Des modifications ne sont pas enregistrées. Changer de mot de passe quand même ?')) { E.sale = false; ecranMotDePasse(true); } });
+  $('#b-sortir').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' })) await sb.auth.signOut(); });
+  $('#b-mdp').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Changer de mot de passe sans enregistrer ?', ok: 'Continuer' })) ecranMotDePasse(true); });
   $('#b-chercher').addEventListener('click', ouvrirRecherche);
   // au téléphone, les rubriques défilent : la rubrique courante est amenée en vue (hors du fondu de droite)
   const nav = $('.nav'), courante = $('.nav a[aria-current="page"]');
@@ -981,12 +983,49 @@ const APRES_VUE = [];   // ce qui se pose une fois la vue dessinée (menus.js : 
 // (tiroir.js) : ces aides savent où elle est. racineActive : le tiroir ouvert, sinon la page
 const racineActive = () => (typeof TIROIR !== 'undefined' && TIROIR.racine()) || document;
 // l'adresse de la fiche change sans redessiner la vue (une date créée ou dupliquée, une fiche créée) ; dans un tiroir, l'adresse de la page reste la sienne
-function remplacerAdresse(h) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) return; history.replaceState(null, '', h); E.hash = location.hash; }
+function remplacerAdresse(h) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) return; history.replaceState({ n: E.n }, '', h); noterAdresse(); }
+// l'adresse acceptée (la rubrique, la fiche ; un tiroir dans ?tiroir=…), et son rang dans l'historique (history.state.n :
+// une entrée neuve, celle d'un lien suivi, prend le rang suivant) ; on y revient quand on choisit de rester
+function noterAdresse() {
+  let st = history.state;
+  if (!st || typeof st !== 'object' || typeof st.n !== 'number') { st = { ...(st && typeof st === 'object' ? st : {}), n: typeof E.n === 'number' ? E.n + 1 : 0 }; history.replaceState(st, '', location.href); }
+  E.n = st.n; E.hash = location.hash; E.adresse = location.search + location.hash; E.etatHistoire = st;
+}
+// revenir à l'adresse acceptée sans rien redessiner : le pas inverse dans l'historique (un lien suivi : on en revient ; le
+// précédent ou le suivant : on refait le chemin à l'envers), l'historique reste entier. Rend le pas, que refaire() rejoue
+// si l'on quitte quand même.
+function revenir() {
+  const st = history.state, n = st && typeof st.n === 'number' ? st.n : null;
+  const pas = n == null ? -1 : E.n - n;
+  if (pas) history.go(pas); else history.replaceState(E.etatHistoire ?? null, '', `${location.pathname}${E.adresse}`);
+  return pas;
+}
+function refaire(pas, vers) { if (pas) history.go(-pas); else { history.pushState(null, '', `${location.pathname}${vers}`); window.dispatchEvent(new HashChangeEvent('hashchange')); } }
 // après un enregistrement : la fiche se redessine à sa place (sa vue), ou dans son tiroir
 function redessinerFiche(vue, id) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) TIROIR.redessiner(); else vue(id); }
 // après une suppression : retour à la liste, ou le tiroir se ferme
 function quitterFiche(h) { if (typeof TIROIR !== 'undefined' && TIROIR.ouvert()) TIROIR.fermer(); else location.hash = h; }
 const apresVue = () => APRES_VUE.forEach(f => { try { f(); } catch (e) { console.error(e); } });
+// le titre de l'onglet dit ce qui est ouvert : « Bérénice · Spectacles · Administration · Compagnie Crescite » ; une
+// date, « Bérénice · ven. 30 oct. 2026 · Représentations · … » ; un tiroir ouvert, sa fiche et la rubrique de celle-ci
+// (l'historique du navigateur, les onglets épinglés, les favoris s'y retrouvent)
+const NOM_ESPACE = 'Administration · Compagnie Crescite';
+function nomFiche(h) {
+  let m;
+  if ((m = h.match(/^#\/(?:representations|feuilles)\/(\d+)$/))) { const d = E.dates.find(x => x.id === +m[1]); return d ? `${spectacle(d.spectacle_id)?.titre || 'Date'} · ${jourCourt(d.debut)}` : ''; }
+  if ((m = h.match(/^#\/spectacles\/([a-z0-9-]+)$/))) return E.spectacles.find(s => s.slug === m[1])?.titre || '';
+  if (h.split('/').length < 3) return '';
+  return ($('#vue .titre-ed h2')?.textContent || '').trim();
+}
+function majTitreAdmin() {
+  if (!E.pret) return;
+  const rub = k => (RUBRIQUES.find(r => r[0] === k) || [])[1] || '';
+  const h = location.hash || '#/accueil', k = (h.match(/^#\/([a-z]+)/) || [])[1] || 'accueil';
+  const t = typeof TIROIR !== 'undefined' && TIROIR.titre ? TIROIR.titre() : null;
+  const morceaux = t ? [t.nom, rub(t.rubrique)] : [nomFiche(h), rub(k)];
+  document.title = [...morceaux.filter(Boolean), NOM_ESPACE].join(' · ');
+}
+APRES_VUE.push(() => requestAnimationFrame(majTitreAdmin));
 function router() {
   if (!E.pret) return;
   const h = location.hash || '#/accueil';
@@ -1049,12 +1088,36 @@ function viser() {
     el.classList.add('visee'); setTimeout(() => el.classList.remove('visee'), 1800);   // le champ visé s'allume
   });
 }
+// Ne rien perdre en partant : une fiche pas enregistrée (E.sale), une feuille de modification changée, une note commencée,
+// une fenêtre gardée (GESTES.garder : l'opportunité, les lignes collées). Changer de rubrique, le bouton précédent, un
+// lien : l'adresse revient d'abord à la sienne, puis une boîte de la charte pose la question (GESTES.quitter, jamais
+// confirm()) ; « Quitter sans enregistrer » mène où l'on allait. Rien n'a changé : on part sans question. Fermer ou
+// recharger l'onglet : la question du navigateur (beforeunload).
+// (dans : une zone, un tiroir, une fenêtre ; avecFiche faux : une fenêtre hors de la fiche, que E.sale ne regarde pas)
+const saisieEnCours = (dans = document, avecFiche = true) => (avecFiche && E.sale) || (typeof GESTES !== 'undefined' && GESTES.saisie(dans));
+async function partirSansPerdre({ titre, texte, ok, dans = document, avecFiche = true } = {}) {
+  if (!saisieEnCours(dans, avecFiche)) return true;
+  const oui = typeof GESTES !== 'undefined' && GESTES.quitter
+    ? await GESTES.quitter({ titre, texte: texte || 'Des modifications ne sont pas enregistrées : elles seront perdues.', ok })
+    : confirm(texte || 'Des modifications ne sont pas enregistrées. Quitter quand même ?');
+  if (oui) { if (avecFiche) E.sale = false; if (typeof GESTES !== 'undefined') GESTES.oublier(dans); if (dans === document) $$('dialog[data-garde][open]').forEach(d => d.close()); }
+  return oui;
+}
 window.addEventListener('hashchange', () => {
-  if (E.sale && !confirm('Des modifications ne sont pas enregistrées. Quitter cette fiche quand même ?')) { visee = null; history.replaceState(null, '', E.hash); return; }
-  E.hash = location.hash;
+  const vers = location.search + location.hash;
+  if (vers === E.adresse) return;                         // revenu à l'adresse acceptée (la question posée) : rien à refaire
+  if (saisieEnCours()) {
+    visee = null;
+    const pas = revenir();
+    partirSansPerdre({ titre: 'Quitter sans enregistrer ?' }).then(oui => { if (oui) refaire(pas, vers); });
+    return;
+  }
+  noterAdresse();
+  // changer de page ferme les tiroirs ; le bouton précédent d'un tiroir revient à la page sans la redessiner (tiroir.js)
+  if (typeof TIROIR !== 'undefined' && TIROIR.surAdresse()) return;
   router();
 });
-window.addEventListener('beforeunload', e => { if (E.sale) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if (saisieEnCours()) { e.preventDefault(); e.returnValue = ''; } });
 // « Aller au contenu » : le titre de la rubrique reçoit le focus, sans toucher à l'adresse (#vue n'est pas une route)
 document.addEventListener('click', e => {
   if (!e.target.closest?.('.evitement')) return;
@@ -2964,7 +3027,11 @@ const TABLEUR = (() => {
       $('#tab-im-ok', dlg).disabled = !bons.length;
     };
     $('#tab-im-texte', dlg).addEventListener('input', apercu);
-    $('#tab-im-non', dlg).addEventListener('click', () => dlg.close());
+    // des lignes collées ne se perdent pas d'un Échap : Fermer et Échap posent la question si le texte a changé
+    if (typeof GESTES !== 'undefined') GESTES.garder(dlg);
+    const fermerImport = async () => { if (await partirSansPerdre({ titre: 'Fermer sans importer ?', texte: 'Les lignes collées seront perdues.', ok: 'Fermer', dans: dlg, avecFiche: false })) dlg.close(); };
+    $('#tab-im-non', dlg).addEventListener('click', fermerImport);
+    dlg.addEventListener('cancel', e => { if (typeof GESTES !== 'undefined' && GESTES.saisie(dlg)) { e.preventDefault(); fermerImport(); } });
     dlg.addEventListener('close', () => { dlg.remove(); $('#tab-importer')?.focus(); });
     $('#tab-im-ok', dlg).addEventListener('click', async () => {
       const b = $('#tab-im-ok', dlg), xs = lu.lignes.filter(x => x.ok), faits = [];
@@ -3304,7 +3371,7 @@ function editeurSeance(id, depart = null) {
     'se-st': ['statut', v => v], 'se-date': ['date_id', v => v ? +v : null], 'se-notes': ['notes', v => v] };
   const maj = e => { const x = lien[e.target.id]; if (!x) return; F[x[0]] = x[1](e.target.value); if (e.target.id === 'se-at' && F.atelier_id) { const a = E.ateliers.find(y => y.id === F.atelier_id); if (a?.spectacle_id && !F.spectacle_id) { F.spectacle_id = a.spectacle_id; $('#se-sp').value = String(a.spectacle_id); } } marquerSale(); };
   zone.addEventListener('input', maj); zone.addEventListener('change', maj);
-  $('#se-dup')?.addEventListener('click', () => { const G = clone(F); delete G.id; delete G.modifie_le; delete G.modifie_par; G.statut = 'prevue'; history.replaceState(null, '', '#/ateliers/seances/nouvelle'); E.hash = location.hash; editeurSeance(null, G); marquerSale(true); annoncer('Copie prête : changez le jour ou la classe, puis enregistrez.'); });
+  $('#se-dup')?.addEventListener('click', () => { const G = clone(F); delete G.id; delete G.modifie_le; delete G.modifie_par; G.statut = 'prevue'; remplacerAdresse('#/ateliers/seances/nouvelle'); editeurSeance(null, G); marquerSale(true); annoncer('Copie prête : changez le jour ou la classe, puis enregistrez.'); });
   $('#se-suppr')?.addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_seances', ligne: s0, quoi: `Séance supprimée : ${jourCourt(s0.jour)}${s0.classe ? ` · ${s0.classe}` : ''}.`, retabli: 'Séance rétablie.',
     apres: () => { E.seances = E.seances.filter(x => x.id !== s0.id); E.sale = false; location.hash = '#/ateliers/seances'; }, apresRetour: x => { E.seances.push(x); location.hash = `#/ateliers/seances/${x.id}`; } }));
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
@@ -3712,7 +3779,9 @@ function ouvrirModaleProspect(p) {
     </div>
   `;
 
-  const fermer = () => { zone.innerHTML = ''; };
+  // une opportunité commencée ne se perd pas : ✕, Annuler, changer de rubrique posent la question si un champ a changé
+  if (typeof GESTES !== 'undefined') GESTES.garder($('#f-prospect-crm'));
+  const fermer = async () => { if (await partirSansPerdre({ titre: 'Fermer sans enregistrer ?', ok: 'Fermer sans enregistrer', dans: zone, avecFiche: false })) zone.innerHTML = ''; };
   $('#b-fermer-mod-crm')?.addEventListener('click', fermer);
   $('#b-annuler-crm')?.addEventListener('click', fermer);
 
@@ -3750,7 +3819,7 @@ function ouvrirModaleProspect(p) {
         if (error) throw error;
         Object.assign(p, donnes);
       }
-      fermer();
+      zone.innerHTML = '';
       annoncer('Opportunité enregistrée.');
       vueDiffusion();
     } catch (err) {

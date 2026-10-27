@@ -147,7 +147,6 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
 // ================================================================================ 8 · les séries et modèles, 7 · les documents générés, 10 · les notes
 {
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur: 1440, hauteur: 900, hash: '#/representations/nouvelle' });
-  page.on('dialog', d => d.accept());   // « Des modifications ne sont pas enregistrées » en quittant la série non enregistrée
   await page.waitForSelector('#d-serie', { timeout: 15000 });
   await page.click('#d-serie');
   await page.waitForSelector('.gf [role="dialog"]', { timeout: 5000 });
@@ -160,6 +159,10 @@ const attendre = (page, fn, ms = 6000) => page.waitForFunction(fn, null, { timeo
   const reps = await page.$$eval('#d-reps tr', xs => xs.map(x => `${x.querySelector('[data-r="jour"]').value} ${x.querySelector('[data-r="heure"]').value} ${x.querySelector('[data-r="public"]').value}`));
   ok('8 · « Série… » pose les séances d’un coup : une semaine du lundi au vendredi à 10 h et 14 h 30, scolaires', reps.length === 10 && reps.every(r => /scolaire$/.test(r)) && reps.filter(r => / 10:00 /.test(r)).length === 5, reps.join(' | '));
   await page.goto(`${URL0}#/spectacles/berenice`);
+  // la série n'est pas enregistrée : la boîte de la charte pose la question (GESTES.quitter), on quitte quand même
+  await page.waitForSelector('dialog.gq[open] [data-gq="oui"]', { timeout: 5000 });
+  await page.waitForTimeout(400);   // (la boîte ignore les clics de ses 350 premières ms : un appui qui l'a ouverte)
+  await page.click('dialog.gq [data-gq="oui"]');
   await page.waitForSelector('[data-onglet="Déroulé type"]', { timeout: 15000 });
   await page.click('[data-onglet="Déroulé type"]');
   await page.waitForSelector('#md-heures', { timeout: 5000 });
