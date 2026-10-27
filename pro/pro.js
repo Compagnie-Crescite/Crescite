@@ -113,6 +113,9 @@
     return `font-family:'${fam}', var(--serif);font-weight:${g}`;
   }
   const photo = f => f ? `${PUBLIC}/${String(f).split('/').map(encodeURIComponent).join('/')}` : '';
+  // un spectacle sans photo : son cadre prend la couleur de son univers (celle de la saison, sans univers) et la pieuvre
+  // de la compagnie (../admin/logo.js), décorative, sans texte ; sans logo, la couleur seule
+  const pieuvreCadre = () => { const o = self.CRESCITE_LOGO?.logo?.octopus; return o ? `<span class="pieuvre-cadre">${String(o).replace(/\s(role|aria-label)="[^"]*"/g, '')}</span>` : ''; };
 
   // ---------------------------------------------------------------------------------------------- les vues
   function montrer(html, focus = false) {
@@ -170,7 +173,7 @@
         return `<li><button type="button" class="doc" data-doc="${esc(d.id)}"><span class="pastille">${ICONES[g.icone]}</span><span class="texte"><span class="titre">${esc(d.titre)}</span><span class="genre">${esc(g.mot)} · ${d.lien ? 'en ligne' : 'à télécharger'}</span></span><span class="aller">${d.lien ? ICONES.aller : ICONES.telecharger}</span><span class="sr"> (${esc(s.titre)}, nouvel onglet)</span></button><div class="secours" hidden></div></li>`;
       }).join('')}</ul></div>` : '';
       return `<article class="spectacle parait" style="--i:${i};${couleurs(s)}" aria-labelledby="sp-${esc(s.id)}">
-        <div class="photo">${s.photo ? `<img src="${esc(photo(s.photo))}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async">` : ''}</div>
+        ${s.photo ? `<div class="photo"><img src="${esc(photo(s.photo))}" alt="" loading="${i < 2 ? 'eager' : 'lazy'}" decoding="async"></div>` : `<div class="photo sans-photo" aria-hidden="true">${pieuvreCadre()}</div>`}
         <div class="corps"><h2 id="sp-${esc(s.id)}" style="${police(s)}">${esc(s.titre)}</h2>
           ${txt(s.sous_titre) ? `<p class="sous">${riche(s.sous_titre)}</p>` : ''}${txt(s.creation) ? `<p class="creation">${esc(maj(txt(s.creation)))}</p>` : ''}
           ${liste('Réservé aux salles', salles)}${liste('Dossiers et fiches techniques', pros)}
