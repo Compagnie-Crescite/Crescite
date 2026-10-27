@@ -121,6 +121,16 @@ const TABLEAU = (() => {
       lignes: () => E.dates.filter(d => d.statut === 'confirmee' && aVenir(d) && !sansJour(d) && (d.nature || 'representations') === 'representations' && dansJours(d.debut) <= 90)
         .map(d => ({ d, c: (E.suivis.find(s => s.date_id === d.id)?.contrat || '').trim() })).filter(x => x.c !== 'signé')
         .map(({ d, c }) => ({ tri: d.debut, href: `#/representations/${d.id}`, viser: '#s-contrat', couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(ouDe(d))}`, droite: `<span class="badge${c ? ' option' : ''}">${esc(c ? `contrat ${c}` : 'contrat ?')}</span>` })) },
+    // les factures (le dix-neuvième script) : en retard passé leur échéance ; les dates jouées, cession convenue, sans facture
+    { k: 'paiements', titre: 'Factures en retard', tout: '#/representations', dispo: () => E.docsInstalles && typeof MODELES !== 'undefined',
+      lignes: () => MODELES.enRetard().map(x => { const d = E.dates.find(y => y.id === x.date_id); return { tri: x.echeance, href: d ? `#/representations/${d.id}` : '#/diffusion', viser: '#d-documents', couleur: d ? couleurDate(d) : 'var(--alerte)',
+        titre: `${esc(x.numero)} · ${esc(x.structure || '')}`, sous: esc([x.montant_ttc != null ? `${euros(x.montant_ttc)} TTC` : '', d ? titreDate(d) : ''].filter(Boolean).join(' · ')), droite: `<span class="badge annulee">échue le ${esc(jourSansAn(x.echeance))}</span>` }; }) },
+    { k: 'factures', titre: 'Dates jouées sans facture', tout: '#/representations', dispo: () => E.docsInstalles && typeof MODELES !== 'undefined',
+      lignes: () => { const facturees = new Set(MODELES.generes().filter(x => x.type === 'facture' && !x.annule_le).flatMap(x => [x.date_id, ...(x.dates || [])].filter(v => v != null).map(Number)));
+        return E.dates.filter(d => d.statut === 'confirmee' && (d.nature || 'representations') === 'representations' && !aVenir(d) && !sansJour(d) && dansJours(d.fin || d.debut) >= -120 && !facturees.has(Number(d.id)))
+          .map(d => ({ d, su: E.suivis.find(s => s.date_id === d.id) || {} })).filter(({ su }) => (su.contrat || '').trim() === 'signé' || Number(su.montant_cession) > 0)
+          .map(({ d, su }) => ({ tri: d.debut, href: `#/representations/${d.id}`, viser: '#d-documents', couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(ouDe(d))}`,
+            droite: su.montant_cession ? `<b>${esc(euros(su.montant_cession))} HT</b>` : '<span class="badge option">à facturer</span>' })); } },
     { k: 'feuilles', titre: 'Feuilles de route à publier', tout: '#/feuilles', dispo: () => E.equipeInstallee,
       lignes: () => E.dates.filter(d => d.statut === 'confirmee' && aVenir(d) && !sansJour(d) && dansJours(d.debut) <= 21).map(d => ({ d, f: E.feuilles.find(x => x.date_id === d.id) })).filter(x => !x.f || x.f.statut !== 'publiee')
         .map(({ d, f }) => ({ tri: d.debut, href: `#/feuilles/${d.id}`, viser: f ? '#fr-manques' : '#fr-composer', couleur: couleurDate(d), titre: esc(titreDate(d)), sous: `${esc(jourSansAn(d.debut))} · ${esc(ouDe(d))}`, droite: f ? `<span class="badge option">brouillon${aCompleter(d.id) ? ` · ${aCompleter(d.id)} à compléter` : ''}</span>` : '<span class="badge">à composer</span>' })) },

@@ -366,7 +366,19 @@ compte du projet inscrit dans `crescite_admins`.
     navigateur. Chacun est émis par la base (`crescite_documents_generes`, le dix-neuvième script, réservé à
     l'administration) : elle donne le numéro (DEV-2026-003…, le suivant de l'année pour ce type, sous un verrou) et garde
     la page telle qu'émise, que « Imprimer » reproduit à l'identique ; un document émis ne change plus, une facture ne
-    se supprime pas. Sans le script, rien n'est émis.
+    se supprime pas. Sans le script, rien n'est émis. **La chaîne commerciale** : le montant de cession HT se saisit
+    dans la fiche d'une date (et dans le tableur, et à l'import) et préremplit le devis, le contrat, la facture ; un
+    document émis fait suivre le reste sans rien écraser (la cession d'une date encore vide, un contrat « à envoyer »
+    qui devient « envoyé », une piste au premier contact qui passe à « Dossier / Devis », une demande du site qui a son
+    devis) ; une facture a son échéance, se note payée, un document s'annule (il reste numéroté). Le parcours d'une date
+    a son étape « Facture » ; le tableau de bord, « Factures en retard » et « Dates jouées sans facture ». Une sélection
+    de dates fait un seul devis pour la tournée, une ligne par séance et son lieu. Dans la Diffusion : une piste se
+    marque perdue (« Pistes perdues », elle se rouvre), a son lieu, son téléphone, la date de son dernier contact (qui ne
+    se remet plus à aujourd'hui à chaque correction) ; « Cession confirmée » propose de créer la date, pré-remplie, que
+    la piste retient ; la relance est signée du contact diffusion et donne le lien personnel de l'invitation reliée,
+    « Relance faite » note la suivante à quinze jours ; la piste dit ce que la compagnie sait (son lieu, ses dates, ses
+    spectateurs, sa dernière cession, les visites de l'invitation). Une demande de devis devient piste, fiche de lieu
+    et devis d'un geste.
   - **Les séries et modèles de dates** (`admin/series.js`) : « Série… » dans une fiche pose d'un coup les séances du … au
     …, les jours choisis, aux heures voulues (10:00, 14:30) ; « Dupliquer vers… » sur une sélection recopie les dates
     décalées de n jours (364 : le même jour de la semaine l'an d'après), en option, avec « Annuler » ; chaque spectacle a
@@ -977,6 +989,12 @@ proposition close ni pour un jour passé ; pistes, demandes de devis, frais, mat
 au journal ; les notes internes se datent. 17 essais (`node correctifs.mjs`). La fonction `crescite-agenda` est à
 redéployer : elle ignore désormais, à la relecture d'un agenda relié, les dates de la compagnie qu'on y a importées (sans
 quoi chacune était en conflit avec elle-même).
+
+**La diffusion reliée (pas encore lancé).** Le vingt-et-unième script, `supabase/migrations/20261109_crescite_diffusion.sql`,
+se lance dans le projet de la compagnie et peut être relancé. Une piste de diffusion connaît son lieu (`lieu_id`), une
+invitation à l'espace pro et une demande de devis leur piste (`prospect_id`) ; les étapes d'une piste (dont `refus`, une
+piste perdue) et les statuts d'une demande sont tenus par la base. 7 essais (`node diffusion.mjs`). Sans lui,
+l'administration ne propose pas ces liens et marche comme avant.
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

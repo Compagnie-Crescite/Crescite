@@ -2846,8 +2846,10 @@ function editeurAcces(id) {
   const cur = () => (id ? E.acces.find(x => x.id === id) : null) || null;
   const a0 = cur();
   if (id && !a0) { zone.innerHTML = '<div class="vide bloc">Cette invitation n’existe plus.</div>'; return; }
-  const F = a0 ? { nom: a0.nom || '', contact: a0.contact || '', courriel: a0.courriel || '', spectacles: (a0.spectacles || []).map(Number), expire_le: a0.expire_le, notes: a0.notes || '' }
-    : { nom: '', contact: '', courriel: '', spectacles: [], expire_le: plusJours(AUJ, 90), notes: '' };
+  const F = a0 ? { nom: a0.nom || '', contact: a0.contact || '', courriel: a0.courriel || '', spectacles: (a0.spectacles || []).map(Number), expire_le: a0.expire_le, notes: a0.notes || '', prospect_id: a0.prospect_id ?? null }
+    : { nom: '', contact: '', courriel: '', spectacles: [], expire_le: plusJours(AUJ, 90), notes: '', prospect_id: null };
+  // la piste de diffusion de cette salle (le vingt-et-unième script) : ses visites remontent dans la piste, sa relance donne ce lien
+  const pistes = E.diffusionReliee ? (E.prospects || []).filter(p => p.etape !== 'refus' || p.id === F.prospect_id).sort((x, y) => norm(x.structure).localeCompare(norm(y.structure))) : [];
   const choix = E.spectacles.filter(s => s.page || F.spectacles.includes(s.id) || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || estPros(d)))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
   nChamp = 0;
   zone.innerHTML = `<div class="titre-ed"><a class="btn petit" data-tt="retour" href="#/pro" aria-label="Retour aux invitations">←</a><h2>${esc(a0 ? a0.nom : 'Nouvelle invitation')}</h2></div>
@@ -2861,6 +2863,8 @@ function editeurAcces(id) {
       <div class="champ"><label for="pro-fin">Accès ouvert jusqu’au</label>
         <div class="pro-duree"><input type="date" id="pro-fin" value="${esc(F.expire_le)}" min="${AUJ}"><div class="seg" role="group" aria-label="Durée à partir d’aujourd’hui">${DUREES_PRO.map(n => `<button type="button" data-jours="${n}">${n} jours</button>`).join('')}</div></div>
         <span class="aide">Une durée à partir d’aujourd’hui, ou une date. Ensuite, le lien ne s’ouvre plus.</span></div>
+      ${E.diffusionReliee ? `<div class="champ"><label for="pro-piste">Piste de diffusion</label><select id="pro-piste"><option value="">— Aucune —</option>${pistes.map(p => `<option value="${p.id}"${F.prospect_id === p.id ? ' selected' : ''}>${esc(`${p.structure} · ${p.commune}`)}</option>`).join('')}</select>
+        <span class="aide">Ses visites et les documents ouverts apparaissent dans la piste ; la relance de la piste donne ce lien.</span></div>` : ''}
       ${champ(SPEC_ACCES[3], F)}
     </div>
     ${a0 ? '<div class="bloc"><div class="pro-journal-tete"><h3>Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal"><p class="aide">Chargement…</p></div></div>' : ''}
@@ -2880,6 +2884,7 @@ function editeurAcces(id) {
     const t = e.target;
     if (t.dataset.sp) { const v = +t.dataset.sp; F.spectacles = t.checked ? [...new Set([...F.spectacles, v])] : F.spectacles.filter(x => x !== v); majSps(); marquerSale(); }
     if (t.id === 'pro-fin') { F.expire_le = t.value; majDuree(); marquerSale(); }
+    if (t.id === 'pro-piste') { F.prospect_id = t.value ? +t.value : null; marquerSale(); }
   });
   $('#pro-f', zone).addEventListener('click', e => {
     const b = e.target.closest('[data-jours]'); if (!b) return;
@@ -2950,7 +2955,7 @@ function editeurAcces(id) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(F.expire_le || '')) { $('#pro-fin', zone).focus(); return annoncer('Choisissez la date de fin de l’accès.', { erreur: true }); }
     const ordre = x => E.spectacles.findIndex(s => s.id === x);
     const ligneA = { nom, contact: (F.contact || '').trim() || null, courriel: mel || null, spectacles: F.spectacles.length ? [...F.spectacles].sort((x, y) => ordre(x) - ordre(y)) : null,
-      expire_le: F.expire_le, notes: (F.notes || '').trim() || null };
+      expire_le: F.expire_le, notes: (F.notes || '').trim() || null, ...(E.diffusionReliee ? { prospect_id: F.prospect_id } : {}) };
     e.target.disabled = true;
     const r = a0 ? await sb.from('crescite_acces_pro').update(ligneA).eq('id', id).select().single() : await sb.from('crescite_acces_pro').insert(ligneA).select().single();
     e.target.disabled = false;

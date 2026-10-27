@@ -1075,6 +1075,8 @@ async function chargerTout() {
   const c = await chiffres;
   E.chiffres = c || []; E.chiffresInstalles = !!c;
   if (ideale) await lireAlertes();
+  // la diffusion reliée (le vingt-et-unième script) : une piste a son lieu, une invitation pro sa piste
+  E.diffusionReliee = ideale ? !(await sb.from('crescite_diffusion_prospects').select('lieu_id').limit(1)).error : false;
   await tableau;
   await documents;
 }
@@ -2094,12 +2096,12 @@ function nouvelleDate() {
 function dateVersForm(d) {
   const reps = repsDe(d.id).map(r => ({ id: r.id, jour: r.jour, heure: h5(r.heure), fin: h5(r.fin), public: r.public, annulee: r.annulee, lien: r.lien || '', note: r.note || '' }));
   const su = E.suivis.find(x => x.date_id === d.id) || {};
-  return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
+  return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '', montant_cession: su.montant_cession ?? '' },
     equipe: ecartsDate(d.id), chiffres: chiffresVersForm(d.id) };
 }
 // une copie de date (Dupliquer, Dupliquer vers…) garde l'organisateur et son contact, pas le contrat ni les notes de l'autre
 // date (un contrat « signé » l'an d'après serait un contrat fantôme), ni ses chiffres
-const suiviPourCopie = su => ({ organisateur: su?.organisateur || '', contact: su?.contact || '', contrat: '', notes: '' });
+const suiviPourCopie = su => ({ organisateur: su?.organisateur || '', contact: su?.contact || '', contrat: '', notes: '', montant_cession: '' });
 // les chiffres d'une date (le dixième script) : la jauge, les spectateurs, les heures d'ateliers ; dans le formulaire, des
 // nombres ou '' (vide)
 const CHIFFRES = [['jauge', 'Jauge (places)', 1, 100000], ['spectateurs', 'Spectateurs', 1, 1000000], ['heures_ateliers', 'Heures d’ateliers', .5, 100000]];
@@ -2163,7 +2165,8 @@ function editeurDate(id, depart = null) {
 
     <div class="bloc"><h3>Suivi interne <span class="aide" style="font-weight:400">— jamais publié</span></h3><div class="rangee">
       <div class="champ"><label for="s-org">Organisateur</label><input type="text" id="s-org" value="${esc(F.suivi.organisateur)}"></div>
-      <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
+      <div class="champ"><label for="s-contrat">Contrat</label><select id="s-contrat">${['', 'à envoyer', 'envoyé', 'signé'].map(x => `<option${F.suivi.contrat === x ? ' selected' : ''}>${x}</option>`).join('')}</select></div>
+      ${E.ideale ? `<div class="champ"><label for="s-montant">Montant de cession HT (€)</label><input type="number" id="s-montant" min="0" step="0.01" inputmode="decimal" value="${esc(F.suivi.montant_cession ?? '')}" placeholder="Repris dans le devis, le contrat, la facture"></div>` : ''}</div>
       <div class="champ"><label for="s-contact">Contact</label><input type="text" id="s-contact" value="${esc(F.suivi.contact)}" placeholder="Nom, téléphone, adresse électronique"></div>
       <div class="champ"><label for="s-notes">Notes</label><textarea id="s-notes">${esc(F.suivi.notes)}</textarea></div></div>
     ${d0 && typeof MODELES !== 'undefined' ? '<div class="bloc" id="d-documents"></div>' : ''}${d0 && typeof NOTES !== 'undefined' ? '<div class="bloc" id="d-notes"></div>' : ''}
@@ -2251,6 +2254,7 @@ function editeurDate(id, depart = null) {
     else if (t.id === 'd-visible') F.visible = t.checked;
     else if (t.id === 'd-prec') F.precision = t.value;
     else if (t.id === 's-contrat') F.suivi.contrat = t.value;
+    else if (t.id === 's-montant') F.suivi.montant_cession = t.value;
     else if (t.id === 'd-libre') { $('#d-intitule-zone').hidden = !t.checked; if (t.checked) { F.intitule = $('#d-intitule').value; $('#d-intitule').focus(); } else F.intitule = null; }
     else return;
     changer();
@@ -2331,9 +2335,21 @@ async function ecrireDate(F, d0, { libre } = {}) {
   const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: chargeDate(F, d0, libre) });
   if (error) throw error;
   await ecrireChiffres(id, F);
+  await ecrireMontant(id, F);
   const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
   return { id, equipeOk };
+}
+// le montant de cession (le script « Compagnie Idéale ») : à côté de crescite_enregistrer_date, qui ne le connaît pas ;
+// seulement s'il a changé
+async function ecrireMontant(id, F) {
+  if (!E.ideale || !F.suivi || !('montant_cession' in F.suivi)) return;
+  const v = F.suivi.montant_cession === '' || F.suivi.montant_cession == null ? null : Math.round(Number(F.suivi.montant_cession) * 100) / 100;
+  if (v != null && !(Number.isFinite(v) && v >= 0)) return;
+  const avant = E.suivis.find(x => x.date_id === id)?.montant_cession ?? null;
+  if ((avant == null ? null : Number(avant)) === v) return;
+  const { error } = await sb.from('crescite_dates_suivi').upsert({ date_id: id, montant_cession: v }, { onConflict: 'date_id' });
+  if (error) erreur(error, 'La date est enregistrée, mais pas son montant');
 }
 async function enregistrerDate(F, d0, bouton) {
   const manque = manqueDate(F);
@@ -2346,6 +2362,11 @@ async function enregistrerDate(F, d0, bouton) {
   if (!equipeOk) { F.id = id; remplacerAdresse(`#/representations/${id}`); return; }
   E.sale = false;
   const mot = F.statut === 'option' || !F.visible ? 'Enregistré (non publié sur le site).' : 'Enregistré : le site est à jour.';
+  // créée depuis une piste de diffusion : la piste la retient
+  if (F.depuisPiste && !d0) {
+    const r = await sb.from('crescite_diffusion_prospects').update({ date_convertie_id: id }).eq('id', F.depuisPiste);
+    if (!r.error) { const p = (E.prospects || []).find(x => x.id === F.depuisPiste); if (p) p.date_convertie_id = id; } else erreur(r.error, 'La piste n’a pas retenu sa date');
+  }
   // créée depuis une proposition : elle se clôt, et l'annonce le dit
   const clos = F.depuis && !d0 && typeof DISPONIBILITES !== 'undefined' ? await DISPONIBILITES.apresDate(F.depuis, id) : null;
   annoncer(clos ? `${mot} ${clos.texte}` : mot, clos?.erreur ? { erreur: true, delai: 9000 } : clos ? { delai: 8000, libelle: 'Voir', action: () => { location.hash = `#/planning/proposition/${F.depuis.proposition}`; } } : {});
@@ -2550,6 +2571,10 @@ const TABLEUR = (() => {
     { k: 'contact', l: 'Contact', niveau: 'date', type: 'texte', val: x => suiviDe(x.d).contact || '', texte: x => suiviDe(x.d).contact || '', lire: t => String(t ?? '').trim(), vider: true, ecrire: (F, x, v) => { F.suivi.contact = v; } },
     { k: 'contrat', l: 'Contrat', niveau: 'date', type: 'choix', choix: () => [['', '—'], ...CONTRATS], val: x => suiviDe(x.d).contrat || '', texte: x => libelleDe(CONTRATS, suiviDe(x.d).contrat || ''),
       lire: t => (String(t ?? '').trim() ? lireChoix(CONTRATS)(t) : ''), vider: true, ecrire: (F, x, v) => { F.suivi.contrat = v; } },
+    { k: 'montant', l: 'Cession HT (€)', niveau: 'date', type: 'texte', nombre: true, si: () => !!E.ideale,
+      val: x => suiviDe(x.d).montant_cession ?? '', texte: x => { const v = suiviDe(x.d).montant_cession; return v == null || v === '' ? '' : nombreFr(v); },
+      lire: t => { const n = String(t ?? '').trim().replace(/\s|€/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n); return Number.isFinite(v) && v >= 0 && v < 1e7 ? Math.round(v * 100) / 100 : undefined; },
+      vider: true, ecrire: (F, x, v) => { F.suivi.montant_cession = v; } },
     { k: 'notes', l: 'Notes', niveau: 'date', type: 'long', val: x => suiviDe(x.d).notes || '', texte: x => suiviDe(x.d).notes || '', lire: t => String(t ?? '').trim(), vider: true, ecrire: (F, x, v) => { F.suivi.notes = v; } },
     // les chiffres (le dixième script) : jamais publiés ; des nombres (« 12,5 » s'écrit aussi), vides quand on ne sait pas
     ...CHIFFRES.map(([k, l, pas, max]) => ({ k: `chiffre-${k}`, l: l.replace(' (places)', ''), niveau: 'date', type: 'texte', nombre: true, si: () => !!E.chiffresInstalles,
@@ -3351,7 +3376,7 @@ const TABLEUR = (() => {
     ['lieu', /^(lieu|salle|theatre|structure|lieu de representation)$/], ['commune', /^(commune|ville|localite)$/], ['public', /^(public|type de public)$/], ['statut', /^(statut|etat)$/],
     ['nature', /^(nature|type)$/], ['distribution', /^(distribution|comediens|comediennes|equipe|artistes|interpretes)$/], ['billetterie', /^(billetterie|lien|reservation|reservations)$/],
     ['precisions', /^(precisions?|remarques?)$/], ['organisateur', /^(organisateur|organisatrice|programmateur|programmatrice)$/], ['contact', /^(contact|contacts)$/],
-    ['contrat', /^contrat$/], ['notes', /^(notes?|commentaires?)$/], ['annulee', /^(seance annulee|annulee|annule)$/], ['site', /^site$/]];
+    ['contrat', /^contrat$/], ['montant', /^(cession( ht)?|montant( de cession)?( ht)?|prix( de cession)?)( \(?(€|eur)\)?)?$/], ['notes', /^(notes?|commentaires?)$/], ['annulee', /^(seance annulee|annulee|annule)$/], ['site', /^site$/]];
   const ORDRE_EXPORT = COLONNES.map(c => c.k);
   function lireImport(texte) {
     const m = lireTsv(texte);
@@ -3386,7 +3411,8 @@ const TABLEUR = (() => {
         seance: { jour, heure: heure || '', fin: fin || '', spectacle_id: sp, lieu_id: lieuId,
           seance: { public: pub || 'tout_public', note: v.precisions || '', annulee: colonne('annulee').lire(v.annulee || '') === true },
           date: { ...(statut ? { statut } : {}), ...(nat ? { nature: nat } : {}), ...(v.billetterie && colonne('billetterie').lire(v.billetterie) ? { lien: colonne('billetterie').lire(v.billetterie) } : {}) },
-          suivi: { ...(v.organisateur ? { organisateur: v.organisateur } : {}), ...(v.contact ? { contact: v.contact } : {}), ...(contrat ? { contrat } : {}), ...(v.notes ? { notes: v.notes } : {}) },
+          suivi: { ...(v.organisateur ? { organisateur: v.organisateur } : {}), ...(v.contact ? { contact: v.contact } : {}), ...(contrat ? { contrat } : {}), ...(v.notes ? { notes: v.notes } : {}),
+            ...(v.montant && E.ideale && colonne('montant').lire(v.montant) !== undefined && colonne('montant').lire(v.montant) !== '' ? { montant_cession: colonne('montant').lire(v.montant) } : {}) },
           equipe: equipe || null } };
     });
     return { lignes, cles: cles.filter(Boolean), avecTete };
@@ -3963,6 +3989,21 @@ const ETAPES_CRM = [
   ['contrat_signe', '4. Cession confirmée'],
   ['bilan', '5. Bilan / Clôturé']
 ];
+// une piste perdue (refus) sort du pipeline, dans la liste « Pistes perdues » sous le Kanban ; elle se rouvre
+const ETAPE_PERDUE = ['refus', 'Perdue'];
+const etapeLib = e => (ETAPES_CRM.find(x => x[0] === e) || (e === 'refus' ? ETAPE_PERDUE : null) || [e, e])[1];
+// la piste devient une date (« Cession confirmée ») : le formulaire d'une nouvelle date, pré-rempli (le spectacle, le
+// lieu, l'organisateur, le contact, la cession) ; enregistrée, la piste la retient (date_convertie_id)
+function creerDateDepuisPiste(p) {
+  const G = nouvelleDate();
+  if (p.spectacle_id != null && spectacle(p.spectacle_id)) G.spectacle_id = p.spectacle_id;
+  if (p.lieu_id != null && lieu(p.lieu_id)) G.lieu_id = p.lieu_id;
+  G.statut = 'confirmee';
+  G.suivi = { ...G.suivi, organisateur: p.structure || '', contact: [p.contact_nom, p.contact_tel, p.contact_email].filter(Boolean).join(', '), montant_cession: p.montant_estime ?? '' };
+  G.depuisPiste = p.id;
+  E.dateDepart = G;
+  location.hash = '#/representations/nouvelle';
+}
 
 // la Diffusion en trois parties : les pistes (#/diffusion, le pipeline), les demandes de devis déposées sur le site
 // (#/diffusion/devis, #/diffusion/devis/<id>), les alertes de tournée (#/diffusion/alertes : seulement quand la base a le
@@ -4028,6 +4069,9 @@ function vueDiffusion(partie, id) {
         `;
       }).join('')}
     </div>
+    ${(() => { const perdues = prospects.filter(p => p.etape === 'refus'); return perdues.length ? `<details class="bloc crm-perdues"><summary>Pistes perdues <span class="crm-badge-nb">${perdues.length}</span></summary>
+      <ul class="liste-simple">${perdues.map(p => `<li><b>${esc(p.structure)}</b><span class="compte">${esc([p.commune, spectacle(p.spectacle_id)?.titre, p.date_dernier_contact ? `dernier contact le ${jourCourt(p.date_dernier_contact)}` : ''].filter(Boolean).join(' · '))}</span>
+        <button type="button" class="btn petit" data-crm-rouvrir="${p.id}" style="margin-left:auto">Rouvrir</button></li>`).join('')}</ul></details>` : ''; })()}
     <div id="crm-modale-zone"></div>
   `;
 
@@ -4047,7 +4091,8 @@ function carteCrmHtml(p, auj) {
     <div class="crm-carte" data-prospect-id="${p.id}" draggable="true">
       ${sp ? `<div class="crm-carte-spectacle"><span class="pastille" style="--c:${esc(coul)}"></span><b>${esc(sp.titre)}</b></div>` : ''}
       <div class="crm-carte-structure">${esc(p.structure)}</div>
-      <div class="crm-carte-lieu">${esc(p.commune || '')} ${p.departement ? `(${esc(p.departement)})` : ''}</div>
+      <div class="crm-carte-lieu">${p.lieu_id && lieu(p.lieu_id) ? `<a href="#/lieux/${p.lieu_id}" title="La fiche du lieu">${esc(p.commune || lieu(p.lieu_id).commune)}</a>` : esc(p.commune || '')} ${p.departement ? `(${esc(p.departement)})` : ''}</div>
+      ${p.date_convertie_id && E.dates.some(d => d.id === p.date_convertie_id) ? `<div class="crm-carte-date"><a href="#/representations/${p.date_convertie_id}">Date du ${esc(jourCourt(E.dates.find(d => d.id === p.date_convertie_id).debut))}</a></div>` : ''}
       ${p.contact_nom || p.contact_email ? `<div class="crm-carte-contact">👤 ${esc(p.contact_nom || '')} ${p.contact_email ? `· <a href="mailto:${esc(p.contact_email)}" class="btn lien" style="padding:0;font-size:12px">${esc(p.contact_email)}</a>` : ''}</div>` : ''}
       ${montantTxt ? `<div class="crm-carte-cession">${montantTxt}</div>` : ''}
       <div class="crm-carte-pied">
@@ -4056,6 +4101,8 @@ function carteCrmHtml(p, auj) {
           ${etapeIdx > 0 ? `<button type="button" class="btn petit" data-crm-deplacer="-1" data-id="${p.id}" title="${esc(`Étape précédente : ${ETAPES_CRM[etapeIdx - 1][1]}`)}" aria-label="${esc(`Étape précédente : ${ETAPES_CRM[etapeIdx - 1][1]}`)}">◀</button>` : ''}
           ${etapeIdx < ETAPES_CRM.length - 1 ? `<button type="button" class="btn petit" data-crm-deplacer="1" data-id="${p.id}" title="${esc(`Étape suivante : ${ETAPES_CRM[etapeIdx + 1][1]}`)}" aria-label="${esc(`Étape suivante : ${ETAPES_CRM[etapeIdx + 1][1]}`)}">▶</button>` : ''}
           <button type="button" class="btn petit" data-crm-email="${p.id}" title="Générer un courriel de relance">✉</button>
+          ${p.etape === 'contrat_signe' && !p.date_convertie_id ? `<button type="button" class="btn petit" data-crm-date="${p.id}" title="Créer la date de cette cession">＋ Date</button>` : ''}
+          <button type="button" class="btn petit" data-crm-perdue="${p.id}" title="Marquer perdue : la piste sort du pipeline (elle se rouvre)">Perdue</button>
           <button type="button" class="btn petit" data-crm-editer="${p.id}" title="Modifier">✎</button>
           <button type="button" class="btn petit danger" data-crm-supprimer="${p.id}" title="Supprimer">✕</button>
         </div>
@@ -4067,13 +4114,14 @@ function carteCrmHtml(p, auj) {
 // une piste passe à une autre étape (ses flèches, son menu, la carte glissée d'une colonne à l'autre : menus.js) ; la carte
 // glisse jusqu'à sa nouvelle colonne
 async function deplacerProspect(id, etape) {
-  const p = (E.prospects || []).find(x => x.id === id), e = ETAPES_CRM.find(x => x[0] === etape);
+  const p = (E.prospects || []).find(x => x.id === id), e = ETAPES_CRM.find(x => x[0] === etape) || (etape === 'refus' ? ETAPE_PERDUE : null);
   if (!p || !e || p.etape === etape) return false;
   try {
     const { error } = await sb.from('crescite_diffusion_prospects').update({ etape, date_dernier_contact: aujourdhui() }).eq('id', id);
     if (error) throw error;
     p.etape = etape; p.date_dernier_contact = aujourdhui();
-    annoncer(`Opportunité déplacée vers « ${e[1]} ».`);
+    if (etape === 'contrat_signe' && !p.date_convertie_id) annoncer(`Cession confirmée : ${p.structure}.`, { libelle: 'Créer la date', delai: 12000, action: () => creerDateDepuisPiste(p) });
+    else annoncer(etape === 'refus' ? `Piste perdue : ${p.structure} (elle reste dans « Pistes perdues »).` : `Opportunité déplacée vers « ${e[1]} ».`);
     if (location.hash === '#/diffusion') { const places = reperer($('#kanban-zone') || document); vueDiffusion(); glisserVers(places, $('#kanban-zone')); } else rafraichirListes();
     return true;
   } catch (err) { erreur(err, 'Déplacement impossible'); return false; }
@@ -4098,6 +4146,10 @@ function brancherDiffusion() {
       if (!(await deplacerProspect(p.id, ETAPES_CRM[i][0]))) b.disabled = false;
     });
   });
+
+  $$('[data-crm-perdue]').forEach(b => b.addEventListener('click', async () => { b.disabled = true; if (!(await deplacerProspect(+b.dataset.crmPerdue, 'refus'))) b.disabled = false; }));
+  $$('[data-crm-rouvrir]').forEach(b => b.addEventListener('click', async () => { b.disabled = true; if (!(await deplacerProspect(+b.dataset.crmRouvrir, 'contact_pris'))) b.disabled = false; }));
+  $$('[data-crm-date]').forEach(b => b.addEventListener('click', () => { const p = E.prospects.find(x => x.id === +b.dataset.crmDate); if (p) creerDateDepuisPiste(p); }));
 
   $$('[data-crm-email]').forEach(b => {
     b.addEventListener('click', () => {
@@ -4158,7 +4210,7 @@ function ouvrirModaleProspect(p) {
             <div class="champ">
               <label for="crm-etape">Étape dans le pipeline</label>
               <select id="crm-etape">
-                ${ETAPES_CRM.map(([code, lib]) => `<option value="${code}"${p && p.etape === code ? ' selected' : ''}>${esc(lib)}</option>`).join('')}
+                ${[...ETAPES_CRM, ETAPE_PERDUE].map(([code, lib]) => `<option value="${code}"${p && p.etape === code ? ' selected' : ''}>${esc(lib)}</option>`).join('')}
               </select>
             </div>
           </div>
@@ -4173,6 +4225,16 @@ function ouvrirModaleProspect(p) {
             </div>
           </div>
           <div class="rangee">
+            ${E.diffusionReliee ? `<div class="champ">
+              <label for="crm-lieu">Lieu (sa fiche)</label>
+              <select id="crm-lieu"><option value="">— Pas encore de fiche —</option>${E.lieux.slice().sort((a, b) => norm(a.commune).localeCompare(norm(b.commune)) || norm(a.nom || '').localeCompare(norm(b.nom || ''))).map(l => `<option value="${l.id}"${p && p.lieu_id === l.id ? ' selected' : ''}>${esc(`${l.commune} — ${l.nom || 'lieu sans nom'}`)}</option>`).join('')}</select>
+            </div>` : ''}
+            <div class="champ">
+              <label for="crm-dernier">Dernier contact</label>
+              <input type="date" id="crm-dernier" value="${p?.date_dernier_contact || aujourdhui()}">
+            </div>
+          </div>
+          <div class="rangee">
             <div class="champ">
               <label for="crm-contact-nom">Nom du contact</label>
               <input type="text" id="crm-contact-nom" value="${esc(p?.contact_nom || '')}" placeholder="Prénom Nom">
@@ -4181,6 +4243,10 @@ function ouvrirModaleProspect(p) {
               <label for="crm-contact-email">Email du contact</label>
               <input type="email" id="crm-contact-email" value="${esc(p?.contact_email || '')}" placeholder="direction@theatre.fr">
             </div>
+          </div>
+          <div class="champ">
+            <label for="crm-contact-tel">Téléphone du contact</label>
+            <input type="tel" id="crm-contact-tel" value="${esc(p?.contact_tel || '')}" placeholder="02 35 00 00 00">
           </div>
           <div class="champ">
             <label for="crm-notes">Notes de suivi & échanges</label>
@@ -4224,8 +4290,11 @@ function ouvrirModaleProspect(p) {
       date_prochaine_relance: $('#crm-prochaine').value || null,
       contact_nom: ($('#crm-contact-nom').value || '').trim() || null,
       contact_email: ($('#crm-contact-email').value || '').trim() || null,
+      contact_tel: ($('#crm-contact-tel').value || '').trim() || null,
       notes: ($('#crm-notes').value || '').trim() || null,
-      date_dernier_contact: aujourdhui()
+      // (le dernier contact : ce que dit le champ ; corriger une faute ne le remet plus à aujourd'hui)
+      date_dernier_contact: $('#crm-dernier').value || aujourdhui(),
+      ...($('#crm-lieu') ? { lieu_id: $('#crm-lieu').value ? +$('#crm-lieu').value : null } : {})
     };
 
     try {
@@ -4239,7 +4308,9 @@ function ouvrirModaleProspect(p) {
         Object.assign(p, donnes);
       }
       zone.innerHTML = '';
-      annoncer('Opportunité enregistrée.');
+      const cible = nouveau ? E.prospects[E.prospects.length - 1] : p;
+      if (donnes.etape === 'contrat_signe' && (nouveau || p.etape !== 'contrat_signe') && cible && !cible.date_convertie_id) annoncer('Opportunité enregistrée : cession confirmée.', { libelle: 'Créer la date', delai: 12000, action: () => creerDateDepuisPiste(cible) });
+      else annoncer('Opportunité enregistrée.');
       vueDiffusion();
     } catch (err) {
       erreur(err, 'Enregistrement impossible');
@@ -4255,15 +4326,20 @@ function ouvrirModaleEmailRelance(p) {
   const sp = E.spectacles.find(s => s.id === p.spectacle_id);
   const titreSp = sp ? sp.titre : 'notre création';
   const prenomContact = (p.contact_nom || '').split(' ')[0] || 'Madame, Monsieur';
+  // signé par le contact diffusion de la compagnie (Textes du site → programmation) ; avec le lien personnel de l'invitation
+  // à l'espace pro reliée à la piste, quand il y en a une, encore valable
+  const pr = (E.textes.find(t => t.cle === 'programmation')?.valeur || {}).contact || {};
+  const inv = (E.acces || []).find(a => a.prospect_id === p.id && a.actif && a.expire_le >= aujourdhui());
+  const lien = inv && typeof lienPro === 'function' ? lienPro(inv) : `${new URL('../', location.href).href}#/espace-pro/programmer`;
   const objet = `Compagnie Crescite · Tournée « ${titreSp} »`;
   const corps = `Bonjour ${prenomContact},\n\n`
     + `Je me permets de revenir vers vous suite à nos échanges concernant la possible programmation de notre spectacle « ${titreSp} » au sein de ${p.structure}.\n\n`
     + `Nous finalisons actuellement notre calendrier de tournée et serions ravis de collaborer avec votre équipe sur cette saison.\n\n`
-    + `Vous pouvez consulter les extraits vidéos, la fiche technique et le dossier artistique sur notre espace professionnel dédié :\n`
-    + `${new URL('../', location.href).href}#/espace-pro/programmer\n\n`
+    + (inv ? `Les captations, la fiche technique et le dossier artistique vous attendent dans votre espace personnel :\n` : `Vous pouvez consulter les extraits vidéos, la fiche technique et le dossier artistique sur notre espace professionnel dédié :\n`)
+    + `${lien}\n\n`
     + `Seriez-vous disponible cette semaine pour un court point téléphonique afin de faire le point sur vos créneaux et contraintes d'accueil ?\n\n`
     + `Bien chaleureusement,\n\n`
-    + `L'équipe de diffusion\nCompagnie Crescite · Rouen\ncontact@crescite.fr`;
+    + `${pr.nom ? `${pr.nom}${pr.role ? `, ${pr.role}` : ''}` : 'L’équipe de diffusion'}\nCompagnie Crescite · Rouen\n${pr.email || 'contact@crescite.fr'}${pr.telephone ? ` · ${pr.telephone}` : ''}`;
 
   zone.innerHTML = `
     <div style="position:fixed;inset:0;z-index:90;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:16px;">
@@ -4287,6 +4363,7 @@ function ouvrirModaleEmailRelance(p) {
         <div style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px;">
           <button type="button" class="btn" id="b-copier-mel">📋 Copier le texte</button>
           ${p.contact_email ? `<a class="btn principal" id="b-mailto-mel" href="mailto:${encodeURIComponent(p.contact_email)}?subject=${encodeURIComponent(objet)}&body=${encodeURIComponent(corps)}" target="_blank" rel="noopener">✉ Ouvrir dans ma messagerie</a>` : ''}
+          <button type="button" class="btn" id="b-relance-faite" title="Dernier contact : aujourd’hui ; prochaine relance dans quinze jours">Relance faite</button>
           <button type="button" class="btn" id="b-fermer-mel">Fermer</button>
         </div>
       </div>
@@ -4296,6 +4373,13 @@ function ouvrirModaleEmailRelance(p) {
   const fermer = () => { zone.innerHTML = ''; };
   $('#b-fermer-mod-mel')?.addEventListener('click', fermer);
   $('#b-fermer-mel')?.addEventListener('click', fermer);
+  $('#b-relance-faite')?.addEventListener('click', async () => {
+    const maj = { date_dernier_contact: aujourdhui(), date_prochaine_relance: AGENDA.iso(new Date(Date.now() + 15 * 864e5)) };
+    const { error } = await sb.from('crescite_diffusion_prospects').update(maj).eq('id', p.id);
+    if (error) return erreur(error);
+    Object.assign(p, maj); fermer(); annoncer(`Relance notée : prochaine le ${jourCourt(maj.date_prochaine_relance)}.`);
+    if (location.hash === '#/diffusion') vueDiffusion();
+  });
   $('#b-copier-mel')?.addEventListener('click', () => {
     const texte = $('#mel-corps')?.value || '';
     navigator.clipboard.writeText(texte).then(() => {
@@ -4365,9 +4449,55 @@ function editeurDevis(id) {
       ${fiche('Période', esc(d0.periode_souhaitee || ''))}
       ${fiche('Contact', `${esc(d0.contact_nom)}<span class="sous-champ">${liensCoordonnees([d0.contact_email, d0.contact_tel].filter(Boolean).join(' '))}</span>`)}
     </dl>${d0.message ? `<p class="dv-message">${esc(d0.message)}</p>` : ''}</div>
+    <div class="bloc" id="dv-suite"></div>
+    ${typeof MODELES !== 'undefined' ? '<div class="bloc" id="dv-documents"></div>' : ''}
     <div class="bloc" id="dv-suivi"><h3>Le suivi <span class="aide" style="font-weight:400">— jamais montré au programmateur</span></h3>${SPEC.map(c => champ(c, F)).join('')}</div>
     ${pied('Tout est enregistré', '<button type="button" class="btn danger" id="dv-suppr">Supprimer</button>')}`;
   relier($('#dv-suivi', zone), F, SPEC);
+  // la suite d'une demande, d'un geste : la piste de diffusion qu'elle devient, la fiche de son lieu, le devis (modeles.js)
+  const piste = () => (d0.prospect_id ? (E.prospects || []).find(p => p.id === d0.prospect_id) : null);
+  const dessinerSuite = () => {
+    const p = piste(), l = d0.lieu_id != null ? lieu(d0.lieu_id) : null;
+    $('#dv-suite', zone).innerHTML = `<h3>Et ensuite</h3><div class="fm-boutons">
+      ${p ? `<a class="btn" href="#/diffusion/piste/${p.id}">La piste : ${esc(etapeLib(p.etape))}</a>` : `<button type="button" class="btn principal" data-dv="piste">Créer la piste de diffusion</button>`}
+      ${l ? `<a class="btn" href="#/lieux/${l.id}">Le lieu : ${esc(l.nom || l.commune)}</a>` : `<button type="button" class="btn" data-dv="lieu">Créer la fiche du lieu</button>`}</div>
+      <p class="aide">La piste reprend la structure, le contact, le spectacle et la demande ; le lieu, sa commune et son type. Le devis se génère ci-dessous, rempli depuis la demande.</p>`;
+  };
+  dessinerSuite();
+  if ($('#dv-documents', zone)) MODELES.bloc($('#dv-documents', zone), { demande: d0 });
+  $('#dv-suite', zone).addEventListener('click', async e => {
+    const b = e.target.closest('[data-dv]'); if (!b) return;
+    b.disabled = true;
+    try {
+      if (b.dataset.dv === 'piste') {
+        const ligne = { structure: d0.structure_nom, commune: d0.commune, departement: d0.departement || null, spectacle_id: d0.spectacle_id ?? null, contact_nom: d0.contact_nom || null,
+          contact_email: d0.contact_email || null, contact_tel: d0.contact_tel || null, etape: 'contact_pris', date_dernier_contact: aujourdhui(),
+          notes: [`Demande de devis du ${d0.cree_le ? jourCourt(String(d0.cree_le).slice(0, 10)) : 'site'}.`, d0.periode_souhaitee ? `Période : ${d0.periode_souhaitee}.` : '', d0.message || ''].filter(Boolean).join(' '),
+          ...(E.diffusionReliee && d0.lieu_id != null ? { lieu_id: d0.lieu_id } : {}) };
+        const { data: p, error } = await sb.from('crescite_diffusion_prospects').insert(ligne).select().single();
+        if (error) throw error;
+        E.prospects.push(p);
+        const maj = { ...(E.diffusionReliee ? { prospect_id: p.id } : {}), ...((d0.statut || 'nouveau') === 'nouveau' ? { statut: 'en_cours' } : {}) };
+        if (Object.keys(maj).length) { const r = await sb.from('crescite_devis_demandes').update(maj).eq('id', d0.id); if (r.error) throw r.error; Object.assign(d0, maj); F.statut = d0.statut; }
+        annoncer(`Piste créée : ${p.structure}.`, { libelle: 'Voir', action: () => { location.hash = `#/diffusion/piste/${p.id}`; } });
+      } else {
+        if (!(d0.departement || '').trim()) { annoncer('La demande ne dit pas le département : créez le lieu dans Lieux.', { erreur: true }); b.disabled = false; return; }
+        const type = { etablissement: 'etablissement', theatre: 'salle', polyvalente: 'salle', exterieur: 'autre', autre: 'autre' }[d0.type_lieu] || 'salle';
+        let l = E.lieux.find(x => norm(x.commune) === norm(d0.commune) && norm(x.nom || '') === norm(d0.structure_nom));
+        if (!l) {
+          const { data, error } = await sb.from('crescite_lieux').insert({ nom: d0.structure_nom, type, commune: d0.commune, departement: String(d0.departement).trim() }).select().single();
+          if (error) throw error;
+          l = data; E.lieux.push(l);
+        }
+        if (E.diffusionReliee) {
+          const r = await sb.from('crescite_devis_demandes').update({ lieu_id: l.id }).eq('id', d0.id); if (r.error) throw r.error; d0.lieu_id = l.id;
+          const p = piste(); if (p && p.lieu_id == null) { const r2 = await sb.from('crescite_diffusion_prospects').update({ lieu_id: l.id }).eq('id', p.id); if (!r2.error) p.lieu_id = l.id; }
+        }
+        annoncer(`Fiche du lieu : ${l.nom || l.commune}. Complétez son adresse et sa position.`, { libelle: 'Ouvrir', action: () => { location.hash = `#/lieux/${l.id}`; } });
+      }
+    } catch (err) { erreur(err); }
+    dessinerSuite();
+  });
   $('#dv-suppr', zone).addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_devis_demandes', ligne: d0, quoi: `Demande supprimée : ${d0.structure_nom}.`, retabli: 'Demande rétablie.',
     apres: () => { E.devis = E.devis.filter(x => x.id !== id); E.sale = false; quitterFiche('#/diffusion/devis'); }, apresRetour: x => { E.devis.push(x); location.hash = `#/diffusion/devis/${x.id}`; } }));
   $('[data-enregistrer]', zone).addEventListener('click', async e => {
