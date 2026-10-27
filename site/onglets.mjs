@@ -518,8 +518,9 @@ async function regle23(page, tag, log, n = '') {
 // dans chaque catégorie de ses métiers ([data-troupe-place][data-troupe-personne]), son nom visible à son arrivée dans
 // l'écran, une vignette (img de sa photo) seulement si sa photo est publiée, et ni silhouette ni initiales sinon (rien que
 // son nom et ses métiers) ; une personne à plusieurs places : la survoler allume toutes ses places et les relie ; au
-// clavier, un arrêt par catégorie, les flèches d'une personne à l'autre, Entrée la choisit, Échap la relâche ; à 360 px,
-// rien ne déborde. Une photo publiée introuvable (le fichier manque) est signalée, sans être une anomalie de la maquette.
+// clavier, un arrêt par catégorie, les flèches d'une personne à l'autre, Entrée la choisit et ouvre sa fiche (son nom, un
+// lien vers chacun de ses spectacles, le focus dedans), Échap la relâche, ferme la fiche et rend le focus à sa place ; à
+// 360 px, rien ne déborde. Une photo publiée introuvable (le fichier manque) est signalée, sans être une anomalie de la maquette.
 async function regle20(page, tag, log) {
   const pfx = `${tag} règle 20`;
   await page.evaluate(() => { location.hash = '#/compagnie'; });
@@ -622,10 +623,23 @@ async function regle20(page, tag, log) {
     await page.waitForTimeout(250);
     const choisi = await page.evaluate(s => [...document.querySelectorAll(`main [data-troupe-personne="${s}"]`)].every(x => x.getAttribute('aria-pressed') === 'true'), f1.slug);
     if (!choisi) log.push(`${pfx} : au clavier, Entrée ne choisit pas la personne (aria-pressed)`);
+    // sa fiche s'ouvre par-dessus sa place, avec son nom et ses spectacles, le focus dedans ; Échap la ferme et rend le focus
+    const fiche = await page.evaluate(s => { const f = document.querySelector(`main [data-troupe] [data-troupe-fiche="${s}"]`), p = (D.personnes || {})[s], n = x => String(x || '').replace(/\s+/g, ' ').trim();
+      const sps = (D.shows || []).filter(x => (x.equipe || []).some(e => e.personne === s));
+      return { ouverte: !!f, nom: !!f && !!p && n(f.querySelector('#trf-nom')?.textContent) === n(`${p.prenom} ${p.nom}`), focus: !!f && f.contains(document.activeElement),
+        spectacles: !!f && sps.every(x => [...f.querySelectorAll('.trf-l a')].some(a => a.getAttribute('href').includes(`/spectacle/${x.slug}`))) }; }, f1.slug);
+    if (!fiche.ouverte) log.push(`${pfx} : choisir ${f1.slug} n'ouvre pas sa fiche ([data-troupe-fiche])`);
+    else {
+      if (!fiche.nom) log.push(`${pfx} : la fiche de ${f1.slug} ne porte pas son nom`);
+      if (!fiche.spectacles) log.push(`${pfx} : la fiche de ${f1.slug} ne mène pas à chacun de ses spectacles`);
+      if (!fiche.focus) log.push(`${pfx} : la fiche de ${f1.slug} ne prend pas le focus`);
+    }
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(400);
     const relache = await page.evaluate(() => !document.querySelector('main [data-troupe-place][aria-pressed="true"]'));
     if (!relache) log.push(`${pfx} : au clavier, Échap ne relâche pas la personne choisie`);
+    const rendu = await page.evaluate(s => !document.querySelector('main [data-troupe-fiche]') && !!document.activeElement && document.activeElement.getAttribute('data-troupe-personne') === s, f1.slug);
+    if (!rendu) log.push(`${pfx} : au clavier, Échap ne ferme pas la fiche ou ne rend pas le focus à la place`);
     await page.keyboard.press('Tab');
     const f2 = await page.evaluate(() => { const a = document.activeElement, d = document.querySelector('[data-r20]'); return !(a && d && a.closest('[data-troupe-categorie]') === d.closest('[data-troupe-categorie]')); });
     if (!f2) log.push(`${pfx} : au clavier, Tab ne passe pas à la catégorie suivante`);

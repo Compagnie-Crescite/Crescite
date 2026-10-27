@@ -491,6 +491,13 @@ imaginatif. Dans le style de chaque maquette. »
 - Où : sur la page de la compagnie (`#/compagnie`), entre la présentation et les repères. Outil commun
   `site/src/troupe.js` (TROUPE) : les catégories, les places des personnes, les liens entre leurs places, les icônes.
 - Édition sur place : `data-edit="site.troupe.titre"` et les titres des catégories.
+- La fiche d'une personne (demande du client, octobre 2026 : « Lorsqu'on clique sur une personne dans la troupe, cela doit
+  ouvrir par-dessus sa photo une fiche avec ses spectacles, ses prochaines dates si c'est pertinent, etc. ») : la choisir
+  ouvre, posée sur sa place, une fiche ([data-troupe-fiche], role="dialog", le focus dedans) : son portrait s'il est publié,
+  son nom, ses métiers, ses spectacles (`show.equipe` : fonction, rôle, alternance ; le badge du spectacle), chacun menant à
+  sa page, puis les prochaines dates de ces spectacles quand il y en a (`D.dates`), et rien d'autre que D et les libellés
+  (`lesSpectacles`, `prochainesDates`, `toutesLesDates`, `fermer`). Relâcher la personne la ferme ; Échap rend le focus à
+  sa place. Elle reste dans la troupe et dans l'écran, à 360 px comme au bureau.
 
 ## Règle 21 : la navigation par les saisons (v4, demande du client ; remplace les règles 2 et 3 là où elles diffèrent)
 « Le menu, ça doit être les saisons, au pluriel, où tu as la saison en cours, les prochaines dates, évidemment, avec un
