@@ -3521,26 +3521,27 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // le rythme : le trait de lumière descend de la première ligne à la dernière en DESCENTE ms ; chaque élément s'écrit quand
     // il l'atteint (ce qui est sur la même ligne, ensemble) ; un texte haut (un paragraphe) se découvre de haut en bas, au même
     // pas que le trait : ligne à ligne
+    const anims = [];   // (gardées : les finir ne demande rien au navigateur, aucun style à recalculer)
     const DESCENTE = 460, doux = 'cubic-bezier(.2, .8, .2, 1)';
     const y0 = Math.max(0, Math.min(...pris.map(x => x.r.top))), y1 = Math.min(H, Math.max(...pris.map(x => x.r.bottom))), V = DESCENTE / Math.max(120, y1 - y0);
     const quand = y => Math.round(Math.max(0, Math.min(y1, y) - y0) * V);
     pris.forEach(({ el, genre, r }) => {
       const delay = quand(r.top);
-      if (genre === 'cadre') el.animate([{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: Math.max(0, delay - 40), easing: doux, fill: 'backwards', id: 'compose' });
-      else if (genre === 'media') el.animate([{ opacity: 0, scale: '.94', filter: 'blur(8px) brightness(1.6)' }, { opacity: 1, scale: '1', filter: 'blur(0) brightness(1)' }], { duration: 440, delay, easing: doux, fill: 'backwards', id: 'compose' });
-      else if (r.height > 64) el.animate([{ opacity: .2, clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, clipPath: 'inset(0 0 0% 0)' }],
-        { duration: Math.max(300, quand(r.bottom) - delay + 120), delay, easing: 'linear', fill: 'backwards', id: 'compose' });
-      else el.animate([{ opacity: 0, translate: '0 7px', clipPath: 'inset(0 100% 0 0)' },
+      if (genre === 'cadre') anims.push(el.animate([{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: Math.max(0, delay - 40), easing: doux, fill: 'backwards', id: 'compose' }));
+      else if (genre === 'media') anims.push(el.animate([{ opacity: 0, scale: '.94', filter: 'blur(8px) brightness(1.6)' }, { opacity: 1, scale: '1', filter: 'blur(0) brightness(1)' }], { duration: 440, delay, easing: doux, fill: 'backwards', id: 'compose' }));
+      else if (r.height > 64) anims.push(el.animate([{ opacity: .2, clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, clipPath: 'inset(0 0 0% 0)' }],
+        { duration: Math.max(300, quand(r.bottom) - delay + 120), delay, easing: 'linear', fill: 'backwards', id: 'compose' }));
+      else anims.push(el.animate([{ opacity: 0, translate: '0 7px', clipPath: 'inset(0 100% 0 0)' },
         { opacity: 1, offset: .35 },
-        { opacity: 1, translate: '0 0', clipPath: 'inset(0 0% 0 0)' }], { duration: 380, delay, easing: doux, fill: 'backwards', id: 'compose' });
+        { opacity: 1, translate: '0 0', clipPath: 'inset(0 0% 0 0)' }], { duration: 380, delay, easing: doux, fill: 'backwards', id: 'compose' }));
     });
     // le trait de lumière : de la première ligne à la dernière
     if (!composeTrait) { composeTrait = document.createElement('i'); composeTrait.className = 'compose-trait'; composeTrait.setAttribute('aria-hidden', 'true'); document.body.appendChild(composeTrait); }
     // (un geste pendant la composition la finit : la page est là, le geste trouve un fil libre ; le rideau qui s'ouvre aussi)
-    const finir = () => { gestesCompo.forEach(t => removeEventListener(t, finir, { capture: true })); Rideau.oter(); document.getAnimations().forEach(a => { if (a.id === 'compose') a.finish(); }); };
+    const finir = () => { gestesCompo.forEach(t => removeEventListener(t, finir, { capture: true })); Rideau.oter(); anims.forEach(a => a.finish()); };
     gestesCompo.forEach(t => addEventListener(t, finir, { capture: true, passive: true, once: true }));
     setTimeout(() => gestesCompo.forEach(t => removeEventListener(t, finir, { capture: true })), quand(y1) + 500);
-    composeTrait.animate([{ translate: `0 ${y0}px`, opacity: 0 }, { opacity: 1, offset: .08 }, { opacity: 1, offset: .86 }, { translate: `0 ${y1}px`, opacity: 0 }], { duration: quand(y1) + 60, easing: 'linear', id: 'compose' });
+    anims.push(composeTrait.animate([{ translate: `0 ${y0}px`, opacity: 0 }, { opacity: 1, offset: .08 }, { opacity: 1, offset: .86 }, { translate: `0 ${y1}px`, opacity: 0 }], { duration: quand(y1) + 60, easing: 'linear', id: 'compose' }));
   }
   /* ---------- l'encre : le second moment de la pieuvre ----------
      Entrer dans un spectacle : la page est déjà là, dessous ; l'encre de son univers couvre l'écran et s'ouvre aussitôt depuis
