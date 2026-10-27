@@ -159,9 +159,10 @@ spectacle » (`aVenir('public')`), « Je souhaite programmer » (`tout()`), les 
 
 ## Règle 7 : commun
 Clarté, accessibilité (contrastes AA, focus visible, tableaux en vrai `<table>`), prefers-reduced-motion, 360 à 1600 px sans
-débordement, aucune requête hors Google Fonts (pas d'iframe). Polices : celles de ta maquette, plus, sur les pages et
-fiches de spectacles, la police de titre de chaque univers (`univers.polices.titre`, toutes sur Google Fonts : charge-les
-dans un seul `<link>` avec `display=swap`, une ou deux graisses chacune).
+débordement, aucune requête vers un autre site (pas d'iframe, pas même Google Fonts). Polices : celles de ta maquette,
+plus, sur les pages et fiches de spectacles, la police de titre de chaque univers (`univers.polices.titre`), toutes
+rangées à côté du site (`site/polices/`, `display=swap`, une ou deux graisses chacune) : une nouvelle s'ajoute à
+`FAMILLES` dans `scripts/polices.py`, qu'on relance avant le build.
 
 ## Règle 8 : un univers par spectacle, pour une communication de compagnie
 - Inspirations : le dossier scolaire de Bérénice (la charte de la compagnie : crème `#fbefe9`, rouge `#cf3723`, bordeaux

@@ -18,10 +18,9 @@
 <meta name="apple-mobile-web-app-title" content="Admin Crescite">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Administration · Compagnie Crescite</title>
-<!-- les polices de la compagnie (celles du site) : Ubuntu pour les titres, Open Sans pour le texte, Raleway pour les étiquettes ; sans réseau, le système -->
-<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Open+Sans:wght@400;500;600;700&family=Raleway:wght@600;700;800&display=swap" crossorigin>
+<!-- les polices de la compagnie (celles du site) : Ubuntu pour les titres, Open Sans pour le texte, Raleway pour les étiquettes ;
+     rangées à côté du site, dans polices/ (scripts/polices.py) -->
+<link rel="stylesheet" href="../polices/polices.css">
 <style>
 /* La charte du site public (site/src/index.html) : ses neutres (le papier, l'encre, le filet), ses polices, sa
    nuit par défaut ; l'accent est la couleur de la saison (règle 22 du contrat), que site/build.py pose après cette
@@ -3843,7 +3842,7 @@ const SPEC_SPECTACLE = {
     { k: 'univers.couleurs.texte', t: 'couleur', l: 'Texte' }, { k: 'univers.couleurs.texte2', t: 'couleur', l: 'Texte secondaire' },
     { k: 'univers.couleurs.accent', t: 'couleur', l: 'Accent' }, { k: 'univers.couleurs.accent2', t: 'couleur', l: 'Accent pour du texte' },
     { k: 'univers.couleurs.scene', t: 'couleur', l: 'Couleur de scène (cartes, listes)' }, { k: 'univers.couleurs.lueur', t: 'texte', l: 'Lueur', ph: 'rgba(207,55,35,0.22)' },
-    { k: 'univers.polices.titre', t: 'texte', l: 'Police des titres', aide: 'Une police Google Fonts : Ubuntu, Cormorant Garamond…' },
+    { k: 'univers.polices.titre', t: 'texte', l: 'Police des titres', aide: 'Une police rangée dans le site : Ubuntu, Cormorant Garamond, Anton, Bodoni Moda… (une nouvelle s’y ajoute par scripts/polices.py)' },
     { k: 'univers.polices.titreGraisse', t: 'nombre', l: 'Graisse des titres', ph: '700' },
     { k: 'univers.polices.texte', t: 'texte', l: 'Police du texte' }, { k: 'univers.polices.etiquette', t: 'texte', l: 'Police des étiquettes' },
   ],

@@ -715,7 +715,7 @@ const visite = async (n, tag, vp, mobile, partie) => {
       };
     });
     // (règle 18 : le lecteur d'une vidéo, YouTube sans cookie ou Vimeo, n'est permis qu'après le geste qui la lance)
-    page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fonts\.(googleapis|gstatic)\.com|fwjgyfzcbcmfyfkhhtuh\.supabase\.co/.test(u) && !(page.__geste18 && LECTEURS.test(u))) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
+    page.on('request', r => { const u = r.url(); if (!/^(file|data|blob|about):/.test(u) && !/fwjgyfzcbcmfyfkhhtuh\.supabase\.co/.test(u) && !(page.__geste18 && LECTEURS.test(u))) log.push(`${tag} requête externe : ${u.slice(0, 90)}`); });
     // par défaut, l'instantané du dépôt (?base=0) : le contrôle ne dépend pas de l'état de la base ; BASE=1 pour la base.
     // INSTANTANE=<dossier> : la page lit la base, servie par un instantané (un <table>.json par table : ce que le public y
     // lit) ; le contrôle porte alors sur les vraies données (leurs numéros de date, les résidences…), sans réseau. Une table

@@ -4,14 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Compagnie Crescite</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- les polices (Google Fonts, font-display: swap) : leur feuille ne retient plus le premier rendu (media="print", puis
-     "all" une fois chargée ; sans script, la feuille ordinaire). Elles ne sont pas demandées plus tôt que le texte qui
-     les emploie : en 4G lente, la police des titres préchargée prenait sa bande passante à la page elle-même (le HTML
-     fini 150 ms plus tard, le plus grand rendu 250 à 550 ms plus tard) -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Raleway:wght@600;700&family=Space+Grotesk:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Bodoni+Moda:wght@700&family=Anton&family=Grenze+Gotisch:wght@600&family=IM+Fell+English:ital@0;1&family=IM+Fell+French+Canon:ital@0;1&display=swap"></noscript>
+<!-- les polices, rangées à côté du site (polices/, écrites par scripts/polices.py ; aucune requête vers Google Fonts,
+     font-display: swap) : leur feuille ne retient pas le premier rendu (media="print", puis "all" une fois chargée ; sans
+     script, la feuille ordinaire). Elles ne sont pas demandées plus tôt que le texte qui les emploie : en 4G lente, la
+     police des titres préchargée prenait sa bande passante à la page elle-même (le HTML fini 150 ms plus tard, le plus
+     grand rendu 250 à 550 ms plus tard) -->
+<link rel="stylesheet" href="polices/polices.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="polices/polices.css"></noscript>
 <style>
 /* La synthèse : l'accueil et les cartes de la 06 (la tentacule comme thème), l'agenda de la 03 relié à la carte, les
    trois entrées nées des portes de la 04, et pour chaque spectacle un univers de compagnie (le dossier scolaire de

@@ -34,7 +34,13 @@ node site/mouvement-admin.mjs      # le mouvement de l'administration, dans Chro
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
 AXE=<axe.min.js> node site/passe-site.mjs       # la passe finale : axe, 360 px, erreurs, nuit, sur chaque route
 python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
+python3 scripts/polices.py         # télécharge de nouveau les polices dans site/polices/ (seulement pour en ajouter une)
 ```
+
+**Les polices** sont rangées dans le site (`site/polices/` : woff2, latin et latin étendu, avec leurs licences ; le build
+les copie dans `polices/` à côté des pages) : aucune page ne demande rien à Google Fonts, et le site marche tel quel chez
+n'importe quel hébergeur. Une nouvelle police (celle du titre d'un nouvel univers) s'ajoute à `FAMILLES` dans
+`scripts/polices.py`, qu'on relance avant le build ; absente de la liste, elle laisse sa place à la police de secours.
 
 Un seul site, celui de la compagnie (les dix maquettes et le premier prototype qui l'ont précédé ont été retirés en
 octobre 2026 ; ils restent dans l'historique du dépôt). Son texte vient des sources et de rien d'autre : le texte de
@@ -341,8 +347,8 @@ compte du projet inscrit dans `crescite_admins`.
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
     précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `site/dist/shots-tableau/`).
 - **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
-  les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, par Google Fonts ; sans
-  réseau, le système), les neutres du site et la couleur de la saison, un en-tête de nuit (la pieuvre et la rubrique
+  les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, rangées à côté du site dans
+  `polices/` ; sans elles, le système), les neutres du site et la couleur de la saison, un en-tête de nuit (la pieuvre et la rubrique
   courante à la couleur de la saison), des cartes douces et un dégradé de la saison pour ce qui s'enregistre, chaque tuile du tableau
   de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
