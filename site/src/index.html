@@ -669,6 +669,7 @@ html[data-theme="nuit"] .df[data-motif="paperboard"] .df-in { --u-texte: var(--u
 .sai[open] .p4-arche::after { opacity: 1; }
 .sai > summary.mv-presse .p4-arche { scale: .96; transition: scale var(--k-presse); }
 .p4-mini { display: block; width: 100%; height: auto; overflow: hidden; }
+.p4-arche { content-visibility: auto; }   /* (la petite carte d'une saison, loin sous le pli : mise en forme quand elle arrive à l'écran ; l'arche garde sa taille, son rapport 4 / 5) */
 .p4-mini use { fill: color-mix(in srgb, var(--encre) 9%, transparent); stroke: color-mix(in srgb, var(--encre) 30%, transparent); stroke-width: 1px; vector-effect: non-scaling-stroke; }
 .p4-mini path { fill: var(--saison-vive); opacity: .7; transition: opacity var(--k-survol) var(--k-doux); }
 .p4-mini .p4-v { fill: var(--saison-vive); stroke: var(--nuit); stroke-width: 3; transform-box: fill-box; transform-origin: center; transition: scale var(--k-survol) var(--k-souple); }
@@ -5724,17 +5725,20 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const montrerOnglet = k => { const ul = $('ul', index), b = k && $(`[data-k="${k}"]`, index); if (!ul || !b) return;
       const rb = b.getBoundingClientRect(), ru = ul.getBoundingClientRect();
       if (rb.left < ru.left || rb.right > ru.right) ul.scrollLeft += rb.left - ru.left - 12; };
-    // (la première fois, quand aucune n'est ouverte, les saisons se posent par morceaux de trois, une image chacun : toutes
-    // d'un coup, leur mise en forme tenait la page plus de 50 ms ; elles sont loin sous le pli, rien ne bouge à l'écran)
+    // (la première fois, quand aucune n'est ouverte, les saisons se posent en deux morceaux, une tâche chacun, qui met
+    // en forme son morceau avant de rendre la main (morceau) : toutes d'un coup, leur mise en forme tenait la page plus de
+    // 50 ms. Elles sont loin sous le pli, rien ne bouge à l'écran ; les tâches se suivent sans attendre les images, la page
+    // ne reste pas inachevée sur une machine chargée)
+    const morceau = f => setTimeout(() => { f(); if (racine.isConnected) void racine.offsetHeight; }, 0);
     let jSaisons = 0;
     function dessineSaisons(morceaux = false) {
       const vis = visibles(), j = ++jSaisons;
       const html = xs => xs.map(({ s, rows }) => `<details class="sai" id="sai-${s.k}" data-saison="${s.k}" data-frise-id="${s.k}" data-mv-cle="s:${s.k}"${F.ouv.has(s.k) ? ' open' : ''}>
         <summary>${vignette(s, rows)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n">${((n) => n ? `<b>${n}</b>` : '')(nbReps(rows.filter(jouee)))}${CHEVRON}</span></summary>
         <div class="sai-corps">${F.ouv.has(s.k) ? corpsSaison(s, rows) : ''}</div></details>`).join('');
-      const pas = morceaux && !vis.some(({ s }) => F.ouv.has(s.k)) ? 3 : vis.length;
+      const pas = morceaux && !vis.some(({ s }) => F.ouv.has(s.k)) ? 8 : vis.length;
       racine.innerHTML = html(vis.slice(0, pas));
-      const suite = i => { if (i >= vis.length) return; ensuite(() => { if (j !== jSaisons || !racine.isConnected) return; racine.insertAdjacentHTML('beforeend', html(vis.slice(i, i + pas))); suite(i + pas); }); };
+      const suite = i => { if (i >= vis.length) return; morceau(() => { if (j !== jSaisons || !racine.isConnected) return; racine.insertAdjacentHTML('beforeend', html(vis.slice(i, i + pas))); suite(i + pas); }); };
       suite(pas);
       vis.forEach(({ s }) => { if (F.ouv.has(s.k)) lierSaison($(`#sai-${s.k}`, racine), s); });
       dessineIndex(vis);
@@ -5874,7 +5878,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         if (agenda || !racine.isConnected) return;
         agenda = true;
         dessineSaisons(true);
-        ensuite(() => { if (!racine.isConnected || fSaisons) return; fSaisons = frise($('#idx-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
+        morceau(() => { if (!racine.isConnected || fSaisons) return; fSaisons = frise($('#idx-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
           libelle: L.saisonsPassees, classe: 'frise-saisons', anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) }); });
       };
       if (maintenant) saisons(); else ensuite(saisons);
@@ -6243,7 +6247,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // saisons passées), dans la tâche suivante, sauf quand la vue se refait en place (D a changé), qu'un filtre est actif ou
     // qu'une saison est demandée (#/saisons/<saison>)
     poserFrise();
-    if (surPlace || actif() || ouvrir) { dessineProchaines(true); dessineAgenda(true); poserAlerte(); } else ensuite(() => ensuite(() => { dessineAgenda(); ensuite(() => ensuite(poserAlerte)); }));
+    if (surPlace || actif() || ouvrir) { dessineProchaines(true); dessineAgenda(true); poserAlerte(); } else ensuite(() => ensuite(() => { dessineAgenda(); morceau(() => morceau(poserAlerte)); }));
     bientot(() => { pousser(svg); arrimer(index); arrimer($('#sm7', main)); if (ouvrir && !surPlace) montrerOnglet(ouvrir); });
     // #/saisons/<saison> : quand les polices arrivent après le saut, ce qui est au-dessus de la saison se recompose ; elle est
     // recalée sous la bande, si l'on n'a pas bougé entre-temps
