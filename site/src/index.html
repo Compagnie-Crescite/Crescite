@@ -5772,9 +5772,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (s.statut && T.titre) return `<${t} class="${cls}"><span class="k"${edS(s, 'tournee', 'titre')}>${esc(T.titre)}</span>${T.texte ? `<span${edS(s, 'tournee', 'texte')}>${esc(T.texte)}</span>` : ''}</${t}>`;
     return '';
   }
-  // la carte de ses tournées : ses communes à venir (et ses tournées passées en filets), sinon toutes celles où il a joué
+  // la carte de ses tournées : ses communes à venir (et ses tournées passées en filets), sinon toutes celles où il a joué.
+  // Un spectacle en création (statut) sans date à venir n'a pas encore de tournée : ses étapes de création (des résidences,
+  // des présentations, autour de Rouen) feraient une carte de France vide, Rouen seul ; il n'a pas de carte, son texte et sa
+  // photo prennent la place
   function lieuxTdm(s) {
     const sp = CARTE.spectacle(s.slug), R = CARTE.rouen, loin = x => Math.hypot(x.xy[0] - R[0], x.xy[1] - R[1]) >= 6;
+    if (s.statut && !sp.aVenir.length) return { lieux: [], passe: [] };
     const aVenir = sp.aVenir.some(loin), vus = new Set(sp.aVenir.map(x => x.l));
     return { lieux: aVenir ? sp.aVenir : sp.passe, passe: aVenir ? sp.passe.filter(x => !vus.has(x.l)) : [] };
   }
