@@ -276,6 +276,12 @@ function editeurPersonne(id) {
       <span class="compte">${libelleCategorie(x.categorie)}${x.categorie === 'jeu' ? (x.role ? ` (${esc(x.role)})` : '') : x.fonction ? ` : ${esc(x.fonction)}` : ''}${x.en_tournee ? '' : ', ne part pas en tournée'}</span>
       <button type="button" class="btn petit danger" data-pe-retirer="${x.id}" title="Retirer de la distribution" aria-label="Retirer de la distribution de ${esc(s.titre)}">✕</button></li>` : ''; }).join('')}</ul>`
       : '<p class="aide">Dans aucune distribution pour l’instant.</p>'}
+      ${(() => {
+        // les périodes où elle a joué, spectacle par spectacle (d'après l'équipe de chaque date) ; « Régler » mène à l'onglet
+        const joues = [...E.spectacles].sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0)).map(s => ({ s, pers: periodesDe(p.id, presences(s.id)) })).filter(x => x.pers.length);
+        return joues.length ? `<h4 class="pe-joue-t">A joué</h4><ul class="liste-simple pe-joue">${joues.map(({ s, pers }) => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Distribution" title="Régler ses périodes dans « Qui a joué quand »">${esc(s.titre)}</a>
+          <span class="compte">${esc(pers.map(periodeTexte).join(' ; '))}</span></li>`).join('')}</ul>` : '';
+      })()}
       <div class="pe-dist-ajout"><select id="pe-dist-sp" aria-label="Spectacle"><option value="">Ajouter à un spectacle…</option>${sps.map(s => `<option value="${s.id}">${esc(s.titre)}</option>`).join('')}</select>
         <select id="pe-dist-cat" aria-label="Catégorie">${CATEGORIES.map(([k, l]) => `<option value="${k}"${k === cat ? ' selected' : ''}>${l}</option>`).join('')}</select>
         <button type="button" class="btn petit" id="pe-dist-ok">＋ Ajouter</button></div>
@@ -316,7 +322,7 @@ function editeurPersonne(id) {
     }
     if (b.dataset.peRetirer) {
       const x = E.distributions.find(y => y.id === +b.dataset.peRetirer);
-      if (x) await retirerDeDistribution(x, () => { if (zone.isConnected) { dessinerSpectacles(); dessinerDates(); } });
+      if (x) await retirerAvecHistoire(x, () => { if (zone.isConnected) { dessinerSpectacles(); dessinerDates(); } }, b);
       return;
     }
     if (b.id === 'pe-copier') return copier((priveeDe(etat.p0.id)?.email || '').trim(), 'Adresse');
@@ -483,33 +489,36 @@ async function ajouterADistribution(spId, pid, cat) {
   return data;
 }
 // retirer une ligne, tout de suite ; l'annonce porte « Annuler », qui la remet ; apres() redessine
-async function retirerDeDistribution(x, apres) {
+async function retirerDeDistribution(x, apres, defaireAussi = null) {
   const { error } = await sb.from('crescite_distributions').delete().eq('id', x.id);
   if (error) return erreur(error, 'Retrait impossible');
   E.distributions = E.distributions.filter(y => y.id !== x.id);
   apres();
-  annoncer(`Retiré de la distribution de ${spectacle(x.spectacle_id)?.titre || 'ce spectacle'} : ${nomDe(personne(x.personne_id))}.`, { libelle: 'Annuler', action: async () => {
+  annoncer(`Retiré de la distribution de ${spectacle(x.spectacle_id)?.titre || 'ce spectacle'} : ${nomDe(personne(x.personne_id))}${defaireAussi ? ' (ses dates passées le gardent)' : ''}.`, { libelle: 'Annuler', action: async () => {
     const r = await sb.from('crescite_distributions').insert(sansMeta(x)).select().single();
     if (r.error) return erreur(r.error, 'Rétablissement impossible');
-    E.distributions.push(r.data); apres();
+    E.distributions.push(r.data);
+    if (defaireAussi) await defaireAussi();
+    apres();
   } });
 }
 // « Ajouter à la distribution » : toute la troupe (les fiches de la rubrique Équipe), à chercher par nom, métier ou
 // spectacle, ceux dont le métier va avec la catégorie en tête. Un geste ajoute ; la fenêtre reste ouverte pour en ajouter
-// d'autres, et qui y est déjà est coché. Une personne qui n'a pas encore de fiche : on la crée au vol.
-function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres = () => {} } = {}) {
+// d'autres, et qui y est déjà est coché. Une personne qui n'a pas encore de fiche : on la crée au vol. Avec onChoix,
+// on choisit seulement quelqu'un (sans catégorie, sans l'ajouter) : la fenêtre se ferme et onChoix(id) suit.
+function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres = () => {}, titre = null, aide = null, onChoix = null } = {}) {
   $('#troupe-choix')?.remove();
   let cat = categorie, q = '';
   const ajoutes = [];
   const dlg = document.createElement('dialog');
   dlg.id = 'troupe-choix'; dlg.className = 'tab-dialogue large troupe-choix'; dlg.setAttribute('aria-labelledby', 'tc-titre');
   dlg.innerHTML = `<div class="tab-dialogue-boite">
-      <div class="tc-tete"><h2 id="tc-titre">Ajouter à la distribution de ${esc(s.titre)}</h2><button type="button" class="btn principal petit" data-tc-fermer>Terminé</button></div>
-      <div class="tc-cat"><span id="tc-cat-lib">Pour</span><div class="seg" role="group" aria-labelledby="tc-cat-lib">${CATEGORIES.map(([k, l]) => `<button type="button" data-tc-cat="${k}" aria-pressed="${k === cat}">${l}</button>`).join('')}</div></div>
+      <div class="tc-tete"><h2 id="tc-titre">${esc(titre || `Ajouter à la distribution de ${s.titre}`)}</h2><button type="button" class="btn ${onChoix ? '' : 'principal '}petit" data-tc-fermer>${onChoix ? 'Fermer' : 'Terminé'}</button></div>
+      ${onChoix ? '' : `<div class="tc-cat"><span id="tc-cat-lib">Pour</span><div class="seg" role="group" aria-labelledby="tc-cat-lib">${CATEGORIES.map(([k, l]) => `<button type="button" data-tc-cat="${k}" aria-pressed="${k === cat}">${l}</button>`).join('')}</div></div>`}
       <input type="search" id="tc-q" placeholder="Rechercher dans la troupe : nom, métier, spectacle…" aria-label="Rechercher dans la troupe" autocomplete="off">
       <ul class="tc-liste" id="tc-liste"></ul>
       <p class="tc-msg" role="status" aria-live="polite"></p>
-      <p class="aide">Chaque personne a une seule fiche, dans la rubrique Équipe : l’ajouter ici l’inscrit aussitôt dans « Ses spectacles » sur sa fiche, sur la page du spectacle, et dans l’équipe des dates si elle part en tournée.</p>
+      <p class="aide">${esc(aide || 'Chaque personne a une seule fiche, dans la rubrique Équipe : l’ajouter ici l’inscrit aussitôt dans « Ses spectacles » sur sa fiche, sur la page du spectacle, et dans l’équipe des dates si elle part en tournée.')}</p>
     </div>`;
   const liste = $('#tc-liste', dlg), champ = $('#tc-q', dlg), msg = $('.tc-msg', dlg);
   const dessiner = () => {
@@ -518,11 +527,11 @@ function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres =
       .sort((a, b) => pourCategorie(b, cat) - pourCategorie(a, cat) || norm(a.nom).localeCompare(norm(b.nom)) || norm(a.prenom).localeCompare(norm(b.prenom)));
     const creer = q.trim() && !E.personnes.some(p => norm(nomDe(p)) === nq);
     liste.innerHTML = xs.map(p => {
-      const ds = ici(p.id), deja = ds.some(x => x.categorie === cat), sps = spectaclesDe(p.id);
+      const ds = ici(p.id), deja = !onChoix && ds.some(x => x.categorie === cat), sps = spectaclesDe(p.id);
       return `<li><button type="button" class="tc-p" data-p="${p.id}"${deja ? ' aria-disabled="true"' : ''}>${avatar(p, true)}<span class="tc-nom"><b>${esc(nomDe(p))}</b>
         <small>${esc((p.metiers || []).join(', ') || 'Métier à préciser')}${sps.length ? ` · ${esc(sps.map(t => t.titre.split(' – ')[0]).join(', '))}` : ''}</small></span>
-        <span class="tc-etat">${deja ? `✓ ${esc(libelleCategorie(cat))}` : `＋ Ajouter${ds.length ? `<small>déjà : ${esc(ds.map(x => libelleCategorie(x.categorie)).join(', '))}</small>` : ''}`}</span></button></li>`;
-    }).join('') + (creer ? `<li><button type="button" class="tc-p tc-creer" data-tc-creer><span class="avatar petit" aria-hidden="true">＋</span><span class="tc-nom"><b>Nouvelle fiche : ${esc(q.trim())}</b><small>créée dans Équipe, puis ajoutée ${A_CATEGORIE[cat]}</small></span><span class="tc-etat">＋ Créer</span></button></li>` : '')
+        <span class="tc-etat">${onChoix ? 'Choisir' : deja ? `✓ ${esc(libelleCategorie(cat))}` : `＋ Ajouter${ds.length ? `<small>déjà : ${esc(ds.map(x => libelleCategorie(x.categorie)).join(', '))}</small>` : ''}`}</span></button></li>`;
+    }).join('') + (creer ? `<li><button type="button" class="tc-p tc-creer" data-tc-creer><span class="avatar petit" aria-hidden="true">＋</span><span class="tc-nom"><b>Nouvelle fiche : ${esc(q.trim())}</b><small>créée dans Équipe${onChoix ? '' : `, puis ajoutée ${A_CATEGORIE[cat]}`}</small></span><span class="tc-etat">＋ Créer</span></button></li>` : '')
       || `<li class="aide tc-vide">${E.personnes.length ? 'Personne ne correspond.' : 'La troupe est vide pour l’instant : tapez un nom pour créer la première fiche.'}</li>`;
   };
   const ajouter = async b => {
@@ -534,11 +543,13 @@ function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres =
       try { pid = (await creerPersonne(q.trim(), cat === 'jeu' ? ['Jeu'] : [])).id; } catch (e) { delete b.dataset.occupe; return erreur(e, 'Fiche non créée'); }
       q = ''; champ.value = '';
     }
+    if (onChoix) { delete b.dataset.occupe; dlg.close(); onChoix(pid); return; }
     const x = await ajouterADistribution(s.id, pid, cat);
     delete b.dataset.occupe;
     if (!x) return;
     ajoutes.push(x); apres(x);
-    msg.textContent = `Ajouté ${A_CATEGORIE[cat]} : ${nomDe(personne(pid))}. Sa fiche est à jour.`;
+    const avant = x.en_tournee && datesDuSpectacle(s.id).some(d => (d.fin || d.debut) < AUJ);
+    msg.textContent = `Ajouté ${A_CATEGORIE[cat]} : ${nomDe(personne(pid))}. Sa fiche est à jour.${avant ? ' Elle compte aussi sur les dates passées : sa période se règle dans « Qui a joué quand ».' : ''}`;
     dessiner();
     ($(`.tc-p[data-p="${pid}"]`, liste) || champ).focus();
   };
@@ -572,6 +583,166 @@ function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres =
   champ.focus();
 }
 
+// ———— qui a joué quand : l'équipe de chaque date du spectacle (la distribution « en tournée », corrigée date par date dans
+// crescite_equipes), lue en périodes. Une période se règle d'un coup : on écrit, date par date, les écarts qu'elle change
+// (comme l'import de l'historique, supabase/equipe.py) ; rien d'autre ne change dans la base, et tout ce qui lit l'équipe
+// d'une date (feuilles de route, espace de l'équipe, notifications, agendas) suit.
+const datesDuSpectacle = spId => E.dates.filter(d => d.spectacle_id === spId && d.statut !== 'annulee').sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
+const finDe = d => d.fin || d.debut;
+const jourEntier = j => { if (!j) return ''; const d = new Date(`${j}T12:00:00`); return `${d.getDate() === 1 ? '1er' : d.getDate()} ${MC[d.getMonth()]} ${d.getFullYear()}`; };
+// les dates du spectacle et, pour chacune, qui en est
+function presences(spId) {
+  const ds = datesDuSpectacle(spId);
+  return { ds, qui: ds.map(d => new Set(equipeDeLaDate(d).map(x => x.personne_id))) };
+}
+// les périodes d'une personne : ses dates consécutives (dans l'ordre des dates du spectacle) → [{ du, au, n, aVenir }]
+function periodesDe(pid, P) {
+  const out = []; let cur = null;
+  P.ds.forEach((d, i) => {
+    if (!P.qui[i].has(pid)) { cur = null; return; }
+    if (!cur) out.push(cur = { du: d.debut, au: finDe(d), n: 0, aVenir: 0 });
+    cur.au = finDe(d); cur.n++; if (finDe(d) >= AUJ) cur.aVenir++;
+  });
+  return out;
+}
+const periodeTexte = p => `${p.du === p.au ? `le ${jourEntier(p.du)}` : `du ${jourEntier(p.du)} au ${jourEntier(p.au)}`} · ${p.n} date${p.n > 1 ? 's' : ''}${p.aVenir ? ` (dont ${p.aVenir} à venir)` : ''}`;
+const enTourneeDans = (spId, pid) => E.distributions.some(x => x.spectacle_id === spId && x.personne_id === pid && x.en_tournee);
+// écrire la présence voulue d'une personne sur des dates (Map date_id → vrai/faux), en écarts à la distribution : rien
+// pour qui suit la distribution, present: vrai pour qui s'y ajoute, faux pour qui n'en est pas. → les lignes d'avant, pour
+// « Annuler » (retablirEcarts)
+async function ecrireEcarts(pid, voulu, { dansDist, fonction = '' }) {
+  const avant = clone(E.equipes.filter(x => x.personne_id === pid && voulu.has(x.date_id)));
+  const aSupprimer = [], aEcrire = [];
+  voulu.forEach((la, dateId) => {
+    const e = E.equipes.find(x => x.date_id === dateId && x.personne_id === pid);
+    if (la === dansDist) { if (e && !(la && e.present)) aSupprimer.push(dateId); }   // la distribution suffit (une fonction propre à la date reste)
+    else if (!e || e.present !== la) aEcrire.push({ date_id: dateId, personne_id: pid, present: la, fonction: la ? (e?.fonction || fonction || null) : null, note: e?.note ?? null });
+  });
+  for (let i = 0; i < aSupprimer.length; i += 200) { const { error } = await sb.from('crescite_equipes').delete().eq('personne_id', pid).in('date_id', aSupprimer.slice(i, i + 200)); if (error) throw error; }
+  for (let i = 0; i < aEcrire.length; i += 200) { const { error } = await sb.from('crescite_equipes').upsert(aEcrire.slice(i, i + 200), { onConflict: 'date_id,personne_id' }); if (error) throw error; }
+  await relireEcarts(pid);
+  return { avant, dates: [...voulu.keys()] };
+}
+async function relireEcarts(pid) {
+  const { data, error } = await sb.from('crescite_equipes').select('*').eq('personne_id', pid);
+  if (error) throw error;
+  E.equipes = E.equipes.filter(x => x.personne_id !== pid).concat(data);
+}
+async function retablirEcarts(pid, { avant, dates }) {
+  for (let i = 0; i < dates.length; i += 200) { const { error } = await sb.from('crescite_equipes').delete().eq('personne_id', pid).in('date_id', dates.slice(i, i + 200)); if (error) throw error; }
+  if (avant.length) { const { error } = await sb.from('crescite_equipes').insert(avant.map(sansMeta)); if (error) throw error; }
+  await relireEcarts(pid);
+}
+// « Régler sa période » : la personne compte sur les dates du … au … (vide : depuis la première, jusqu'à la dernière, à
+// venir comprises), et sur aucune autre. L'aperçu dit ce qui change avant d'appliquer ; « Annuler » remet tout.
+function reglerPeriode(s, pid, { declencheur = null, apres = () => {} } = {}) {
+  $('#periode-choix')?.remove();
+  const p = personne(pid), P = presences(s.id), pers = periodesDe(pid, P), dist = E.distributions.filter(x => x.spectacle_id === s.id && x.personne_id === pid);
+  const dansDist = enTourneeDans(s.id, pid), derniere = P.ds[P.ds.length - 1];
+  const du0 = pers[0]?.du || '', au0 = pers.length && finDe(derniere) !== pers[pers.length - 1].au ? pers[pers.length - 1].au : '';
+  const fonction0 = dist[0] ? fonctionDistribution(dist[0]) : (p?.metiers || [])[0] || '';
+  const dlg = document.createElement('dialog');
+  dlg.id = 'periode-choix'; dlg.className = 'tab-dialogue periode-choix'; dlg.setAttribute('aria-labelledby', 'pp-titre');
+  dlg.innerHTML = `<form method="dialog" class="tab-dialogue-boite">
+      <h2 id="pp-titre">${esc(nomDe(p))} dans ${esc(s.titre)}</h2>
+      <p class="aide">Aujourd’hui : ${pers.length ? esc(pers.map(periodeTexte).join(' ; ')) : 'sur aucune date'}${dansDist ? ' · dans la distribution actuelle' : ''}.</p>
+      <div class="pp-dates"><label>A joué à partir du<input type="date" id="pp-du" value="${esc(du0)}"></label><label>jusqu’au<input type="date" id="pp-au" value="${esc(au0)}"></label></div>
+      <p class="aide">Vide : depuis la toute première date, ou jusqu’à la dernière (à venir comprises). Hors de cette période, ${P.ds.length > 1 ? `les ${P.ds.length} dates du spectacle ne la comptent plus` : 'la date du spectacle ne la compte plus'} ; une date se corrige encore à la main, dans Représentations.</p>
+      ${dansDist ? '' : `<label class="pp-fonction">Ce qu’elle y faisait<input type="text" id="pp-fonction" value="${esc(fonction0)}" placeholder="Jeu (rôle), Régie générale…"></label>`}
+      ${dansDist ? '<label class="case pp-quitter"><input type="checkbox" id="pp-quitter"> Elle ne fait plus partie de la distribution : la retirer (les prochaines dates ne la compteront plus ; ses dates de la période la gardent)</label>' : ''}
+      <p class="pp-apercu" aria-live="polite"></p>
+      <div class="fm-boutons"><button type="submit" class="btn principal" id="pp-ok">Appliquer</button><button type="button" class="btn" data-pp-fermer>Fermer</button></div>
+    </form>`;
+  const du = $('#pp-du', dlg), au = $('#pp-au', dlg), quitter = $('#pp-quitter', dlg), apercu = $('.pp-apercu', dlg), ok = $('#pp-ok', dlg);
+  const voulu = () => new Map(P.ds.map(d => [d.id, (!du.value || finDe(d) >= du.value) && (!au.value || d.debut <= au.value)]));
+  const changements = () => { const v = voulu(); return P.ds.filter((d, i) => v.get(d.id) !== P.qui[i].has(pid)); };
+  const montrer = () => {
+    if (du.value && au.value && au.value < du.value) { apercu.textContent = 'La fin vient avant le début.'; ok.disabled = true; return; }
+    const v = voulu(), n = [...v.values()].filter(Boolean).length, ch = changements(), futurs = ch.filter(d => finDe(d) >= AUJ).length;
+    const prochaines = dansDist && !(quitter && quitter.checked) && au.value && au.value < finDe(derniere);
+    ok.disabled = !ch.length && !(quitter && quitter.checked);
+    apercu.textContent = `Elle comptera sur ${n} des ${P.ds.length} date${P.ds.length > 1 ? 's' : ''} du spectacle. ${ch.length ? `${ch.length} date${ch.length > 1 ? 's changent' : ' change'}${futurs ? `, dont ${futurs} à venir : elle en sera prévenue si elle a un compte` : ''}.` : 'Rien ne change.'}${prochaines ? ' Encore dans la distribution, elle comptera sur les dates créées plus tard : cochez la case pour la retirer.' : ''}`;
+  };
+  dlg.addEventListener('input', montrer);
+  dlg.addEventListener('click', e => { if (e.target === dlg || e.target.closest('[data-pp-fermer]')) dlg.close(); });
+  dlg.addEventListener('close', () => { dlg.remove(); if (declencheur?.isConnected) declencheur.focus(); });
+  $('form', dlg).addEventListener('submit', async e => {
+    e.preventDefault();
+    ok.disabled = true; ok.textContent = 'Un instant…';
+    const sort = quitter && quitter.checked, fonction = ($('#pp-fonction', dlg)?.value || fonction0).trim();
+    const v = voulu(), retires = sort ? clone(dist) : [];
+    // sans la distribution, chaque date de la période doit la porter elle-même
+    const cible = sort ? new Map(P.ds.map(d => [d.id, v.get(d.id)])) : new Map(changements().map(d => [d.id, v.get(d.id)]));
+    let trace;
+    try {
+      trace = await ecrireEcarts(pid, cible, { dansDist: dansDist && !sort, fonction });
+      if (sort) {
+        const { error } = await sb.from('crescite_distributions').delete().eq('spectacle_id', s.id).eq('personne_id', pid);
+        if (error) throw error;
+        E.distributions = E.distributions.filter(x => !(x.spectacle_id === s.id && x.personne_id === pid));
+      }
+    } catch (err) { ok.disabled = false; ok.textContent = 'Appliquer'; return erreur(err, 'Période non enregistrée'); }
+    dlg.close();
+    apres();
+    annoncer(`Période de ${nomDe(p)} enregistrée${sort ? ', et retirée de la distribution' : ''}.`, { libelle: 'Annuler', delai: 9000, action: async () => {
+      try {
+        if (retires.length) { const r = await sb.from('crescite_distributions').insert(retires.map(sansMeta)).select(); if (r.error) throw r.error; E.distributions.push(...r.data); }
+        await retablirEcarts(pid, trace);
+        apres();
+      } catch (err) { erreur(err, 'Rétablissement impossible'); }
+    } });
+  });
+  document.body.append(dlg);
+  montrer();
+  dlg.showModal();
+  du.focus();
+}
+// le bloc « Qui a joué quand » de l'onglet Distribution
+function blocHistorique(s) {
+  const P = presences(s.id);
+  const ids = new Set(P.qui.flatMap(x => [...x]));
+  distributionDe(s.id).filter(x => x.en_tournee).forEach(x => ids.add(x.personne_id));
+  const gens = [...ids].map(pid => ({ pid, p: personne(pid), pers: periodesDe(pid, P) })).filter(x => x.p)
+    .sort((a, b) => (a.pers[0]?.du || '9') < (b.pers[0]?.du || '9') ? -1 : (a.pers[0]?.du || '9') > (b.pers[0]?.du || '9') ? 1 : norm(a.p.nom).localeCompare(norm(b.p.nom)));
+  const etendue = P.ds.length ? `${P.ds.length} date${P.ds.length > 1 ? 's' : ''}, du ${jourEntier(P.ds[0].debut)} au ${jourEntier(finDe(P.ds[P.ds.length - 1]))}` : 'aucune date pour l’instant';
+  return `<div class="bloc dist-histo"><div class="dist-tete"><h3>Qui a joué quand</h3><button type="button" class="btn" data-histo-ajouter>＋ Quelqu’un qui a joué avant</button></div>
+    <p class="aide">D’après l’équipe de chaque date (${esc(etendue)}). Quand la distribution a changé, réglez la période de chacun : « Régler sa période » écrit d’un coup les dates qu’elle change. Le détail d’une date se corrige dans Représentations.</p>
+    ${gens.length ? `<ul class="histo-l">${gens.map(({ pid, p, pers }) => `<li data-histo="${pid}">${avatar(p, true)}<span class="dist-nom"><a href="#/equipe/${pid}" title="Ouvrir sa fiche">${esc(nomDe(p))}</a><small>${enTourneeDans(s.id, pid) ? 'Distribution actuelle' : 'Ne fait plus partie de la distribution'}</small></span>
+      <span class="histo-periodes">${pers.length ? pers.map(x => `<span class="histo-periode">${esc(periodeTexte(x))}</span>`).join('') : '<span class="aide">Sur aucune date</span>'}</span>
+      <button type="button" class="btn petit" data-histo-regler="${pid}">Régler sa période</button></li>`).join('')}</ul>` : '<p class="aide">Personne pour l’instant.</p>'}</div>`;
+}
+// retirer quelqu'un de la distribution : s'il a joué des dates passées sans y être marqué un par un, on demande si elles le
+// gardent (le plus souvent : il a joué, il ne joue plus) ; sinon tout de suite
+function retirerAvecHistoire(x, apres, declencheur = null) {
+  const pid = x.personne_id, p = personne(pid), s = spectacle(x.spectacle_id);
+  const autre = E.distributions.some(y => y.id !== x.id && y.spectacle_id === x.spectacle_id && y.personne_id === pid && y.en_tournee);
+  const passees = x.en_tournee && !autre ? datesDuSpectacle(x.spectacle_id).filter(d => finDe(d) < AUJ && equipeDeLaDate(d).some(y => y.personne_id === pid)
+    && !E.equipes.some(e => e.date_id === d.id && e.personne_id === pid && e.present)) : [];
+  if (!passees.length) return retirerDeDistribution(x, apres);
+  $('#retrait-choix')?.remove();
+  const dlg = document.createElement('dialog');
+  dlg.id = 'retrait-choix'; dlg.className = 'tab-dialogue'; dlg.setAttribute('aria-labelledby', 'rc-titre');
+  dlg.innerHTML = `<div class="tab-dialogue-boite"><h2 id="rc-titre">Retirer ${esc(nomDe(p))} de la distribution</h2>
+      <p>${esc(nomDe(p))} compte sur ${passees.length} date${passees.length > 1 ? 's' : ''} passée${passees.length > 1 ? 's' : ''} de ${esc(s?.titre || 'ce spectacle')} (du ${jourEntier(passees[0].debut)} au ${jourEntier(finDe(passees[passees.length - 1]))}).</p>
+      <div class="fm-boutons rc-choix"><button type="button" class="btn principal" data-rc="garder">Retirer, en gardant ses dates passées</button><button type="button" class="btn" data-rc="partout">Retirer aussi des dates passées</button><button type="button" class="btn" data-rc="fermer">Fermer</button></div></div>`;
+  dlg.addEventListener('close', () => { dlg.remove(); if (declencheur?.isConnected) declencheur.focus(); });
+  dlg.addEventListener('click', async e => {
+    if (e.target === dlg) return dlg.close();
+    const b = e.target.closest('[data-rc]'); if (!b) return;
+    const c = b.dataset.rc;
+    dlg.close();
+    if (c === 'partout') return retirerDeDistribution(x, apres);
+    if (c !== 'garder') return;
+    let trace;
+    try { trace = await ecrireEcarts(pid, new Map(passees.map(d => [d.id, true])), { dansDist: false, fonction: fonctionDistribution(x) }); }
+    catch (err) { return erreur(err, 'Retrait impossible'); }
+    await retirerDeDistribution(x, apres, async () => { try { await retablirEcarts(pid, trace); } catch (err) { erreur(err, 'Dates passées non rétablies'); } });
+  });
+  document.body.append(dlg);
+  dlg.showModal();
+  $('[data-rc="garder"]', dlg).focus();
+}
+
 function ongletDistribution(z, s) {
   const etat = t => { const el = $('#dist-etat', z); if (el) el.textContent = t; };
   const renumeroter = renumeroterDistribution;
@@ -590,7 +761,8 @@ function ongletDistribution(z, s) {
       <p class="aide">Qui fait quoi dans ce spectacle, choisi parmi les fiches de la troupe (rubrique Équipe) : chacun y retrouve ce spectacle dans « Ses spectacles ». « En tournée » : la personne part sur chaque date (l’équipe se règle ensuite date par date, dans Représentations). « Publiée » : elle apparaît sur la page du spectacle. Chaque changement est enregistré aussitôt. <span id="dist-etat" class="dist-etat" aria-live="polite"></span></p>
       <div class="dist-l dist-entete" aria-hidden="true"><span></span><span></span><span class="dist-champs"><span>Fonction</span><span>Rôle</span><span>Alternance</span><span>Catégorie</span></span><span class="dist-cases"><span>Part en tournée, apparaît sur le site</span></span><span class="dist-outils"><span>Ordre</span></span></div>
       ${CATEGORIES.map(([k, l]) => { const ys = xs.filter(x => x.categorie === k); return `<div class="dist-cat" data-cat="${k}"><h4>${l}${ys.length ? ` <span class="badge">${ys.length}</span>` : ''}</h4>${ys.map((x, i) => ligne(x, i, ys.length)).join('') || '<p class="aide dist-vide">Personne pour l’instant.</p>'}
-        <button type="button" class="btn lien petit dist-ajouter-cat" data-dist-ajouter="${k}">＋ Ajouter ${A_CATEGORIE[k]}</button></div>`; }).join('')}</div>`;
+        <button type="button" class="btn lien petit dist-ajouter-cat" data-dist-ajouter="${k}">＋ Ajouter ${A_CATEGORIE[k]}</button></div>`; }).join('')}</div>
+      ${blocHistorique(s)}`;
   };
   const ouvrirChoix = b => choisirDansLaTroupe(s, { categorie: b.dataset.distAjouter || 'jeu', declencheur: b,
     apres: x => { dessiner(); const l = $(`[data-di="${x.id}"]`, z); if (l) tt('ajouter', l); } });
@@ -610,6 +782,14 @@ function ongletDistribution(z, s) {
   z.addEventListener('click', async e => {
     const a = e.target.closest('[data-dist-ajouter]');
     if (a) { ouvrirChoix(a); return; }
+    const h = e.target.closest('[data-histo-regler]');
+    if (h) { reglerPeriode(s, +h.dataset.histoRegler, { declencheur: h, apres: () => { if (z.isConnected) dessiner(); } }); return; }
+    if (e.target.closest('[data-histo-ajouter]')) {
+      const b0 = e.target.closest('[data-histo-ajouter]');
+      choisirDansLaTroupe(s, { declencheur: b0, titre: `Qui a joué ${s.titre} ?`, aide: 'Choisissez la personne, puis la période où elle a joué : ses dates la compteront, sans l’ajouter à la distribution actuelle.',
+        onChoix: pid => reglerPeriode(s, pid, { apres: () => { if (z.isConnected) dessiner(); } }) });
+      return;
+    }
     const b = e.target.closest('button'), l = b?.closest('[data-di]'); if (!l) return;
     const x = E.distributions.find(y => y.id === +l.dataset.di); if (!x) return;
     const p = personne(x.personne_id);
@@ -623,7 +803,7 @@ function ongletDistribution(z, s) {
       $(`[data-di="${x.id}"] [data-dm="${b.dataset.dm}"]:not([disabled])`, z)?.focus();
       return;
     }
-    if (b.dataset.dr !== undefined) await retirerDeDistribution(x, () => { if (z.isConnected) dessiner(); });
+    if (b.dataset.dr !== undefined) await retirerAvecHistoire(x, () => { if (z.isConnected) dessiner(); }, b);
   });
   dessiner();
 }
@@ -3203,6 +3383,20 @@ dialog.troupe-choix[open] { display: flex; }
 .tc-msg:empty { min-height: 0; }
 .pe-dist li { display: grid; grid-template-columns: auto minmax(0, auto) minmax(0, 1fr) auto; align-items: center; }
 .pe-dist li > button { justify-self: end; }
+.dist-histo { margin-top: 14px; }
+.histo-l { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
+.histo-l li { display: grid; grid-template-columns: 30px minmax(130px, 200px) minmax(0, 1fr) auto; gap: 8px 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--trait); border-radius: 10px; background: var(--carte); }
+.histo-periodes { display: flex; flex-wrap: wrap; gap: 4px 6px; min-width: 0; }
+.histo-periode { padding: 3px 9px; border-radius: 999px; background: var(--accent-doux); color: var(--encre); font-size: 12.5px; font-weight: 600; }
+@media (max-width: 760px) { .histo-l li { grid-template-columns: 30px minmax(0, 1fr) auto; } .histo-periodes { grid-column: 1 / -1; } }
+.periode-choix .pp-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.periode-choix label { display: grid; gap: 4px; font-weight: 650; font-size: 13.5px; }
+.periode-choix label.case { display: flex; align-items: flex-start; gap: 8px; font-weight: 500; }
+.periode-choix input[type="date"], .periode-choix input[type="text"] { min-height: 40px; }
+.pp-apercu { padding: 9px 12px; border-radius: 10px; background: var(--doux); font-weight: 600; }
+.fm-boutons.rc-choix { flex-wrap: wrap; }
+.pe-joue-t { margin: 14px 0 6px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
+@media (max-width: 560px) { .periode-choix .pp-dates { grid-template-columns: 1fr; } }
 .pe-dist-ajout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(110px, 1fr) auto; gap: 8px; margin-top: 10px; }
 @media (max-width: 560px) {
   .pe-dist-ajout { grid-template-columns: 1fr 1fr; } .pe-dist-ajout #pe-dist-sp { grid-column: 1 / -1; }

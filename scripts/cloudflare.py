@@ -54,7 +54,9 @@ def empreinte(octets):
 
 def servi(url):
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers={"Cache-Control": "no-cache"}), timeout=30) as r:
+        # (Cloudflare répond 403 au User-Agent par défaut de Python)
+        req = urllib.request.Request(url, headers={"Cache-Control": "no-cache", "User-Agent": "crescite-publication"})
+        with urllib.request.urlopen(req, timeout=30) as r:
             return empreinte(r.read())
     except Exception as e:
         return f"injoignable ({e})"
