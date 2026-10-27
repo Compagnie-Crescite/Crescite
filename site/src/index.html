@@ -1629,6 +1629,18 @@ html:has(.bf7.est-visible) { scroll-padding-bottom: calc(96px + var(--tab)); }
 .sp-historique[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
 .sp-historique > summary small { font: 600 .74rem var(--u-corps); letter-spacing: 0; text-transform: none; color: var(--u-texte2); }
 .sp-historique .u-bilan-dates { padding-bottom: 8px; }
+/* (ouvert : l'index de ses saisons, des puces à la couleur de l'univers, et le nombre de représentations de chacune ; l'en-tête
+   de la saison qu'on lit arrimé sous les menus, sur le fond de l'univers — dans le bilan d'un spectacle qui n'est plus en
+   tournée aussi) */
+.hist-idx ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 22px; padding: 0; list-style: none; }
+.hist-idx button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 14px; border: 1px solid var(--u-filet); border-radius: 999px; background: none; color: var(--u-texte);
+  font: 500 .9rem/1.2 var(--u-corps); cursor: pointer; transition: background-color var(--k-survol) var(--k-doux), border-color var(--k-survol) var(--k-doux); }
+.hist-idx button:hover { border-color: var(--u-vif); background: color-mix(in srgb, var(--u-vif) 12%, transparent); }
+.hist-idx small { font: 700 .74rem/1 var(--u-etiq); font-variant-numeric: tabular-nums; color: var(--u-vif); }
+.sp .u-bilan-s .mois { position: sticky; top: calc(var(--haut) - 8px); z-index: 2; background: var(--u-fond); box-shadow: 0 1px 0 var(--u-filet); }
+.sp-tournee .u-bilan-s .mois { top: calc(var(--haut) - 8px + var(--onglets) - var(--range)); }
+.sp-tournee .u-bilan-s { scroll-margin-top: calc(var(--onglets) + 4px); }
+.u-bilan-s .mois:focus-visible { outline-offset: -2px; }
 .u-bilan-s .u-mois { margin: 18px 0 2px; font: 600 .72rem/1.3 var(--u-etiq); letter-spacing: .16em; text-transform: uppercase; color: var(--u-texte2); }
 .u-bilan-s .mois + .u-mois { margin-top: 8px; }
 .u-bilan-s .mois small { margin-left: 8px; font: 600 .8rem var(--u-etiq); color: var(--u-texte2); }
@@ -1990,7 +2002,7 @@ html:not(.still) .une-ph img { transform: translateY(calc(var(--p, 0) * 8%)) sca
   html.menu-range .carte-sp { top: calc(var(--haut) + var(--onglets) + 16px - var(--range)); }
   html.menu-range .u-faits { top: calc(var(--haut) + var(--onglets) + 20px - var(--range)); }
   html:not(.still) .top { transition: box-shadow var(--k-survol) var(--k-doux), background-color var(--k-survol) var(--k-doux), translate .3s var(--k-doux); }
-  html:not(.still) :is(.u-onglets, .recit-panneau, .rc-vis, .carte-sp, .u-faits) { transition: top .3s var(--k-doux); }
+  html:not(.still) :is(.u-onglets, .recit-panneau, .rc-vis, .carte-sp, .u-faits, .u-bilan-s .mois) { transition: top .3s var(--k-doux); }
 }
 @media (max-width: 640px) {
   .cartons7 { grid-template-columns: minmax(0, 1fr); gap: 28px; }
@@ -6938,20 +6950,24 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       rows: lignesSaison(k).filter(r => r.g.slug === s.slug && (!r.k || r.k < D.aujourdhui || r.d.residence)).sort(plusRecente) })).filter(x => x.rows.length);
   }
   // l'historique d'un spectacle (règle 23, demande de la compagnie) : ses dates passées et ses semaines de résidence, saison
-  // par saison, la plus récente d'abord, repliées sous leur titre ; la frise de sa tournée y mène
+  // par saison, la plus récente d'abord, repliées sous leur titre ; la frise de sa tournée y mène. Il peut compter soixante
+  // lignes : ouvert, il commence par l'index de ses saisons (chacune et le nombre de ses représentations), qui mène à chacune
+  // (le focus va à son titre), et l'en-tête de la saison qu'on lit reste arrimé sous les menus
   function historiqueSp(s) {
     const G = datesPassees(s); if (!G.length || !L.historique) return '';
     const n = G.reduce((a, g) => a + nbReps(g.rows), 0);   // (ses représentations : les résidences n'en comptent pas)
-    return `<details class="sp-historique"><summary>${esc(L.historique)}${n ? ` <small>${n}</small>` : ''}</summary><div class="u-bilan-dates dates-sp">${listeHistorique(G, s.slug)}</div></details>`;
+    const idx = G.length >= 3 ? `<nav class="hist-idx" aria-label="${esc(L.saisons)}"><ul>${G.map(g => { const nb = nbReps(g.rows);
+      return `<li><button type="button" data-va="hist-${esc(g.k)}"><span>${esc(g.titre)}</span>${nb ? `<small>${nb}<span class="sr"> ${esc(L.representations)}</span></small>` : ''}</button></li>`; }).join('')}</ul></nav>` : '';
+    return `<details class="sp-historique"><summary>${esc(L.historique)}${n ? ` <small>${n}</small>` : ''}</summary>${idx}<div class="u-bilan-dates dates-sp">${listeHistorique(G, s.slug, false, 'hist-')}</div></details>`;
   }
   // les dates d'un spectacle, saison par saison (G, de datesPassees), puis mois par mois : une ligne ne dit que ses jours, son
   // mois est au-dessus (comme sur la page des saisons) ; une ligne de suite reste avec la sienne. compte : le nombre de ses
   // représentations à côté du nom de la saison, qui mène à la saison (le bilan)
-  function listeHistorique(G, slug, compte = false) {
+  function listeHistorique(G, slug, compte = false, ids = '') {
     const parMois = rows => rows.reduce((out, r) => { const m = r.suite && out.length ? out[out.length - 1].m : groupeDe(r);
       if (!out.length || out[out.length - 1].m !== m) out.push({ m, rows: [] }); out[out.length - 1].rows.push(r); return out; }, []);
     return G.map(g => { const nb = nbReps(g.rows);
-      return `<section class="u-bilan-s"><h3 class="mois">${compte ? `<a href="#/saisons/${g.k}">${esc(g.titre)}</a>${nb ? ` <small>${nb}</small>` : ''}` : esc(g.titre)}</h3>${parMois(g.rows).map(x => `${x.m ? `<p class="u-mois">${esc(titreGroupe(x.m))}</p>` : ''}<ul class="dates" data-agenda="${esc(slug)}">${x.rows.map(r => ligneAgenda(r, '', true)).join('')}</ul>`).join('')}</section>`; }).join('');
+      return `<section class="u-bilan-s"${ids ? ` id="${ids}${esc(g.k)}"` : ''}><h3 class="mois"${ids ? ' tabindex="-1"' : ''}>${compte ? `<a href="#/saisons/${g.k}">${esc(g.titre)}</a>${nb ? ` <small>${nb}</small>` : ''}` : esc(g.titre)}</h3>${parMois(g.rows).map(x => `${x.m ? `<p class="u-mois">${esc(titreGroupe(x.m))}</p>` : ''}<ul class="dates" data-agenda="${esc(slug)}">${x.rows.map(r => ligneAgenda(r, '', true)).join('')}</ul>`).join('')}</section>`; }).join('');
   }
   function bilanSp(s, chap, G) {
     // (les chiffres ne comptent ni les dates annulées ni les résidences, règle 23 : elles paraissent dans ses dates, marquées)
@@ -7437,6 +7453,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (va) { vers(va.dataset.va); if (va.closest('.psom')) { const t = document.getElementById(va.dataset.va); if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.focus({ preventScroll: true }); } }
       // (un titre du catalogue d'un regard : le focus va au titre de sa fiche, le lien de sa page)
       else if (va.closest('.rec')) { const t = document.getElementById(va.dataset.va), f = t && $('.fp-t a', t); if (f) f.focus({ preventScroll: true }); }
+      // (l'index des saisons de l'historique d'un spectacle : le focus va au titre de la saison)
+      else if (va.closest('.hist-idx')) { const t = document.getElementById(va.dataset.va), h = t && $('.mois', t); if (h) h.focus({ preventScroll: true }); }
       return; }
     // (le sommaire flottant d'un spectacle : sa liste est au-dessus du bouton, avant lui dans la page ; ouverte au clavier, le
     // focus y entre, sur le chapitre lu ; Échap la ferme et rend le focus au bouton, le focus qui en sort la ferme)
