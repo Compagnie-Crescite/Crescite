@@ -199,6 +199,27 @@ main { padding: 20px; max-width: 1500px; margin: 0 auto; }
 .vide { padding: 30px 16px; text-align: center; color: var(--gris); }
 .compte { color: var(--gris); font-size: 13px; }
 
+/* le fil d'Ariane d'une fiche (poserFil) : les niveaux au-dessus en liens, la fiche en dernier ; au téléphone, le seul
+   retour vers le niveau d'au-dessus, une cible de 44 px, à la place du bouton ← */
+.fil-ariane { margin: 0 0 6px; font: 600 12.5px/1.35 var(--etiq); letter-spacing: .02em; color: var(--gris); }
+.fil-ariane ol { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 0; margin: 0; padding: 0; list-style: none; }
+.fil-ariane li { display: inline-flex; align-items: center; min-width: 0; }
+.fil-ariane li + li::before { content: "›"; content: "›" / ""; margin: 0 7px; color: var(--gris); opacity: .8; }
+.fil-ariane a { display: inline-flex; align-items: center; gap: 2px; color: var(--accent); text-decoration: none; border-radius: 6px; }
+.fil-ariane a:hover span, .fil-ariane li:not(.fil-parent) a:hover { text-decoration: underline; text-underline-offset: .18em; }
+.fil-ariane a svg { display: none; }
+.fil-ariane .fil-ici { color: var(--encre); overflow: hidden; }
+.fil-ariane .fil-ici span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (pointer: coarse) { .fil-ariane a { min-height: 44px; } }
+@media (max-width: 640px) {
+  .fil-ariane { margin: -6px 0 2px; font-size: 14px; }
+  .fil-ariane li { display: none; }
+  .fil-ariane li.fil-parent { display: inline-flex; }
+  .fil-ariane li + li::before { content: none; }
+  .fil-ariane a { min-height: 44px; padding: 0 10px 0 0; }
+  .fil-ariane a svg { display: block; margin-left: -4px; }
+  .avec-fil > a[data-tt="retour"] { display: none; }
+}
 /* éditeur */
 .editeur .titre-ed { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 14px; }
 .editeur h2 { margin: 0; font-size: 20px; line-height: 1.25; flex: 1; }
@@ -1026,6 +1047,45 @@ function majTitreAdmin() {
   document.title = [...morceaux.filter(Boolean), NOM_ESPACE].join(' · ');
 }
 APRES_VUE.push(() => requestAnimationFrame(majTitreAdmin));
+// Se situer : une fiche ouverte (une date, un spectacle, un lieu, une personne…) dit où l'on est par un fil d'Ariane
+// court, en tête, qui suit l'adresse et le titre de l'onglet : « Spectacles › Bérénice », « Représentations › ven. 30
+// oct. 2026 · Bérénice » ; chaque niveau au-dessus est un lien. Au téléphone, il se réduit au retour vers le niveau
+// d'au-dessus (« ‹ Représentations »), qui prend la place du bouton ←. Le niveau d'au-dessus est celui où mène ce bouton ;
+// un tiroir nomme le sien dans son en-tête (tiroir.js).
+const SOUS_RUBRIQUES = { '#/planning/propositions': 'Propositions', '#/ateliers/seances': 'Séances', '#/ateliers/catalogue': 'Ateliers proposés', '#/diffusion/devis': 'Demandes de devis' };
+// les niveaux au-dessus d'une fiche, d'après l'adresse de sa liste : la rubrique, et sa partie quand la liste en est une
+function niveauxAuDessus(parent) {
+  const k = (String(parent || '').match(/^#\/([a-z]+)/) || [])[1], rub = k && (RUBRIQUES.find(r => r[0] === k) || [])[1];
+  if (!rub) return [];
+  return [{ nom: rub, href: `#/${k}` }, ...(parent !== `#/${k}` && SOUS_RUBRIQUES[parent] ? [{ nom: SOUS_RUBRIQUES[parent], href: parent }] : [])];
+}
+// le nom de la fiche : une date par son jour puis son spectacle (comme dans la liste), un spectacle par son titre, sinon
+// le titre de la fiche
+function nomFil(h, tete) {
+  let m;
+  if ((m = h.match(/^#\/(?:representations|feuilles)\/(\d+)$/))) { const d = E.dates.find(x => x.id === +m[1]); if (d) return `${jourCourt(d.debut)} · ${spectacle(d.spectacle_id)?.titre || 'Date'}`; }
+  if ((m = h.match(/^#\/spectacles\/([a-z0-9-]+)$/))) { const sp = E.spectacles.find(x => x.slug === m[1]); if (sp) return sp.titre; }
+  return ($('h1, h2', tete)?.textContent || '').replace(/\s+/g, ' ').trim();
+}
+const CHEVRON_FIL = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>';
+function poserFil() {
+  const vue = $('#vue'); if (!vue || !E.pret) return;
+  const retour = $('.titre-ed > a[data-tt="retour"][href], .tete > a[data-tt="retour"][href]', vue), ancien = $('.fil-ariane', vue);
+  const tete = retour && retour.parentElement, xs = retour ? niveauxAuDessus(retour.getAttribute('href')) : [], nom = tete ? nomFil(location.hash, tete) : '';
+  if (!xs.length || !nom) { if (ancien) ancien.remove(); $$('.avec-fil', vue).forEach(x => x.classList.remove('avec-fil')); return; }
+  const cle = `${xs.map(x => `${x.href}=${x.nom}`).join('|')}|${nom}`;
+  if (ancien && ancien.dataset.cle === cle && ancien.nextElementSibling === tete) return;
+  if (ancien) ancien.remove();
+  const nav = document.createElement('nav');
+  nav.className = 'fil-ariane'; nav.setAttribute('aria-label', 'Fil d’Ariane'); nav.dataset.cle = cle;
+  nav.innerHTML = `<ol>${xs.map((x, i) => (i === xs.length - 1 ? `<li class="fil-parent"><a href="${esc(x.href)}" data-tt="retour">${CHEVRON_FIL}<span>${esc(x.nom)}</span></a></li>` : `<li><a href="${esc(x.href)}">${esc(x.nom)}</a></li>`)).join('')}<li class="fil-ici"><span aria-current="page">${esc(nom)}</span></li></ol>`;
+  tete.before(nav);
+  tete.classList.add('avec-fil');
+}
+APRES_VUE.push(() => requestAnimationFrame(poserFil));
+// une fiche dessinée plus tard (lue de la base, enregistrée, son titre changé) : le fil la suit
+let minuteurFil = null;
+new MutationObserver(() => { if (!E.pret) return; clearTimeout(minuteurFil); minuteurFil = setTimeout(poserFil, 80); }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
 function router() {
   if (!E.pret) return;
   const h = location.hash || '#/accueil';

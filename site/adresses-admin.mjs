@@ -5,7 +5,9 @@
 //   l'adresse, « Quitter sans enregistrer » mène où l'on allait ; rien de changé, aucune question ; fermer l'onglet, la
 //   question du navigateur ;
 // - un tiroir a son adresse (?tiroir=…) : le précédent du navigateur le referme sans redessiner la page, le suivant le
-//   rouvre, un rechargement (un lien partagé) le rouvre ; le titre de l'onglet dit ce qui est ouvert.
+//   rouvre, un rechargement (un lien partagé) le rouvre ; le titre de l'onglet dit ce qui est ouvert ;
+// - une fiche ouverte dit où l'on est par un fil d'Ariane cliquable (« Spectacles › Bérénice »), réduit au téléphone au
+//   retour vers le niveau d'au-dessus ; l'en-tête d'un tiroir nomme sa rubrique, en lien.
 //   python3 site/build.py && node site/adresses-admin.mjs
 // Captures dans site/dist/shots-adresses/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
@@ -204,6 +206,54 @@ const adresse = page => page.evaluate(() => location.search + location.hash);
   ok('feuille · « Quitter sans enregistrer » ferme la feuille et change de rubrique', await attendre(page, () => !document.querySelector('.gf') && location.hash === '#/spectacles') && natifs === 0);
   ok('aucune erreur de script (téléphone)', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
+}
+
+// ================================================================================ se situer : le fil d'Ariane
+{
+  const fil = page => page.evaluate(() => { const n = document.querySelector('#vue .fil-ariane'); if (!n) return null;
+    const vus = [...n.querySelectorAll('li')].filter(li => li.getClientRects().length);
+    return { tout: [...n.querySelectorAll('li')].map(li => li.textContent.trim()), vus: vus.map(li => li.textContent.trim()), liens: [...n.querySelectorAll('a')].map(a => a.getAttribute('href')),
+      ici: n.querySelector('[aria-current="page"]')?.textContent, nom: n.getAttribute('aria-label'), avant: n.nextElementSibling?.matches('.titre-ed, .tete'),
+      retourVu: !!document.querySelector('#vue .avec-fil > a[data-tt="retour"]')?.getClientRects().length, haut: Math.round(vus[vus.length - 1]?.querySelector('a')?.getBoundingClientRect().height || 0) }; });
+  for (const [largeur, hauteur, nom] of [[1440, 900, 'bureau'], [390, 844, 'téléphone']]) {
+    const tel = largeur < 600;
+    const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/spectacles/berenice' });
+    await page.waitForSelector('[data-onglet]', { timeout: 15000 });
+    await attendre(page, () => !!document.querySelector('#vue .fil-ariane'));
+    const f1 = await fil(page);
+    ok(`fil (${nom}) · un spectacle : « Spectacles › Bérénice », nommé, en tête, le dernier marqué`, !!f1 && f1.tout.join(' › ') === 'Spectacles › Bérénice' && f1.liens.join() === '#/spectacles' && f1.ici === 'Bérénice' && f1.nom === 'Fil d’Ariane' && f1.avant, JSON.stringify(f1));
+    if (tel) ok('fil (téléphone) · réduit au retour « Spectacles », une cible de 44 px, à la place du bouton ←', f1.vus.join() === 'Spectacles' && f1.haut >= 44 && !f1.retourVu, JSON.stringify(f1));
+    else ok('fil (bureau) · tout le chemin se voit, le bouton ← reste', f1.vus.length === 2 && f1.retourVu, JSON.stringify(f1));
+    await page.evaluate(() => { location.hash = '#/representations/101'; });
+    await attendre(page, () => /Représentations/.test(document.querySelector('#vue .fil-ariane')?.textContent || '') && document.querySelector('#ed-date .titre-ed'));
+    const f2 = await fil(page);
+    ok(`fil (${nom}) · une date : « Représentations › ven. 30 oct. 2026 · Bérénice » (le jour, puis le spectacle), comme le titre de l’onglet`, !!f2 && f2.tout[0] === 'Représentations' && /^\S+ \d+ \S+ \d{4} · Bérénice$/.test(f2.ici || '') && f2.liens.join() === '#/representations' && /^Bérénice · /.test(await page.title()), `${JSON.stringify(f2)} · ${await page.title()}`);
+    await calme(page);
+    await page.screenshot({ path: path.join(CAPT, `fil-date-${tel ? 'telephone' : 'bureau'}.png`) });
+    await page.click('#vue .fil-ariane .fil-parent a');
+    await attendre(page, () => location.hash === '#/representations' && !document.querySelector('#ed-date .titre-ed'));
+    ok(`fil (${nom}) · le niveau d’au-dessus ramène à la liste, le fil s’en va`, await page.evaluate(() => location.hash === '#/representations' && !document.querySelector('#vue .fil-ariane')), await adresse(page));
+    await page.evaluate(() => { location.hash = '#/planning/proposition/1'; });
+    await attendre(page, () => /Propositions/.test(document.querySelector('#vue .fil-ariane')?.textContent || ''));
+    const f3 = await fil(page);
+    ok(`fil (${nom}) · une proposition : « Planning › Propositions › Option : Théâtre de Flers »`, !!f3 && f3.tout.join(' › ') === 'Planning › Propositions › Option : Théâtre de Flers' && f3.liens.join() === '#/planning,#/planning/propositions' && (!tel || f3.vus.join() === 'Propositions'), JSON.stringify(f3));
+    // un tiroir : son en-tête nomme sa rubrique, en lien à l'ordinateur ; au téléphone, son genre (le ← y ramène)
+    await page.evaluate(() => { location.hash = '#/accueil'; });
+    await page.waitForSelector('.tb-tuile', { timeout: 15000 });
+    await page.evaluate(() => TIROIR.ouvrir('#/lieux/5'));
+    await attendre(page, () => document.querySelector('.tiroir.la #ed-lieu .titre-ed'));
+    const t = await page.evaluate(() => { const lien = document.querySelector('.tiroir .tg-fil a'); return { lien: lien && lien.getClientRects().length ? `${lien.textContent}=${lien.getAttribute('href')}` : null, nom: document.querySelector('.tiroir .tg-nom')?.getClientRects().length ? document.querySelector('.tiroir .tg-nom').textContent : null, titre: document.querySelector('.tiroir .tiroir-titre')?.textContent, page: !!document.querySelector('#vue .fil-ariane') }; });
+    ok(`fil (${nom}) · un tiroir : ${tel ? 'son genre, « Lieu »' : 'sa rubrique en lien, « Lieux »'}, puis le nom de la fiche`, (tel ? t.nom === 'Lieu' && !t.lien : t.lien === 'Lieux=#/lieux' && !t.nom) && t.titre === 'Théâtre de Caen — Caen (14)' && !t.page, JSON.stringify(t));
+    await calme(page);
+    await page.screenshot({ path: path.join(CAPT, `fil-tiroir-${tel ? 'telephone' : 'bureau'}.png`) });
+    if (!tel) {
+      await page.click('.tiroir .tg-fil a');
+      await attendre(page, () => location.hash === '#/lieux' && !document.querySelector('.tiroir'));
+      ok('fil (bureau) · le lien du tiroir mène à la rubrique, le tiroir se ferme', await page.evaluate(() => location.hash === '#/lieux' && !document.querySelector('.tiroir') && !new URLSearchParams(location.search).has('tiroir')), await adresse(page));
+    }
+    ok(`fil (${nom}) · aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
+    await ctx.close();
+  }
 }
 
 await navigateur.close();
