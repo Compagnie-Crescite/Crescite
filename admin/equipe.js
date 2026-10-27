@@ -903,11 +903,11 @@ async function retablirEquipeDate(c) {
 const avecFeuille = dateId => E.feuilles.some(x => x.date_id === dateId);
 // prévenir l'équipe d'une date : une notification dans l'espace de chacun, et sur son téléphone s'il s'est abonné
 // (crescite_prevenir_equipe, troisième script SQL)
-const boutonPrevenir = dateId => E.sql3 && E.equipeInstallee ? '<button type="button" class="btn" id="d-prevenir" aria-controls="d-prevenir-zone">Prévenir l’équipe</button>' : '';
+const boutonPrevenir = dateId => E.sql3 && E.equipeInstallee ? '<button type="button" class="btn" id="d-prevenir" aria-expanded="false">Prévenir l’équipe</button>' : '';
 function panneauPrevenir(zone, d) {
   if (!d) return;
   const ouvert = $('#d-prevenir-zone', zone);
-  if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); return; }
+  if (ouvert) { ouvert.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls'); return; }
   const s = spectacle(d.spectacle_id), n = equipeDeLaDate(d).length;
   const p = document.createElement('div');
   p.className = 'bloc ad-neuf'; p.id = 'd-prevenir-zone';
@@ -917,10 +917,10 @@ function panneauPrevenir(zone, d) {
     <div class="champ"><label for="pv-texte">Message</label><textarea id="pv-texte" rows="3" maxlength="600" placeholder="La représentation de jeudi commence à 20h30 au lieu de 20h."></textarea><span class="aide">Facultatif : sans message, la notification donne la date et le lieu.</span></div>
     <div class="fm-boutons"><button type="button" class="btn principal" id="pv-envoyer"${n ? '' : ' disabled'}>Envoyer</button><button type="button" class="btn" id="pv-annuler">Annuler</button></div>`;
   ($('#d-equipe', zone) || $('.pied-ed', zone)).after(p);
-  $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'true');
+  $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'true'); $('#d-prevenir', zone)?.setAttribute('aria-controls', 'd-prevenir-zone');
   p.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   $('#pv-texte', p).focus();
-  $('#pv-annuler', p).addEventListener('click', () => { p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.focus(); });
+  $('#pv-annuler', p).addEventListener('click', () => { p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls'); $('#d-prevenir', zone)?.focus(); });
   $('#pv-envoyer', p).addEventListener('click', async e => {
     const titre = $('#pv-titre', p).value.trim(), texte = $('#pv-texte', p).value.trim();
     if (!titre) return annoncer('Donnez un titre à la notification.', { erreur: true });
@@ -931,7 +931,7 @@ function panneauPrevenir(zone, d) {
       if (/PGRST202|42883|Could not find the function|does not exist/i.test(`${error.code || ''} ${error.message || ''}`)) return annoncer('Les notifications ne sont pas encore installées : il manque le troisième script SQL.', { erreur: true });
       return erreur(error, 'Notification non envoyée');
     }
-    p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false');
+    p.remove(); $('#d-prevenir', zone)?.setAttribute('aria-expanded', 'false'); $('#d-prevenir', zone)?.removeAttribute('aria-controls');
     const b = $('#d-prevenir', zone); if (b && +data) { b.classList.add('sonne'); setTimeout(() => b.classList.remove('sonne'), 900); }   // la cloche sonne
     annoncer(+data ? `Notification envoyée à ${+data} personne${+data > 1 ? 's' : ''}.` : 'Personne à prévenir : l’équipe de cette date est vide.');
   });
