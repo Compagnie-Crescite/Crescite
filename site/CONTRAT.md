@@ -712,8 +712,8 @@ ligne, comme un programme qui se compose de façon magique). »
   couvrir ; les budgets de la règle 15 C restent ceux du geste. Un geste pendant le noir ouvre le rideau aussitôt ; ouvert,
   il laisse passer les clics.
 - La composition (`composer`), à l'ouverture du rideau : ce qui est à l'écran s'inscrit ligne à ligne de haut en bas en
-  460 ms, au passage d'un trait de lumière ; une ligne de texte s'écrit de gauche à droite (clip-path, un éclat de
-  lumière qui s'éteint), un texte haut se découvre de haut en bas, un cadre se pose, une photo sort du flou. Web Animations
+  460 ms, au passage d'un trait de lumière ; une ligne de texte s'écrit de gauche à droite (clip-path ; pas de filtre
+  sur le texte, repeint à chaque image), un texte haut se découvre de haut en bas, un cadre se pose, une photo sort du flou. Web Animations
   sur translate, scale, opacity, clip-path et filter : rien ne change de place dans la page (CLS 0). Ce qui a son propre
   mouvement ([data-mv], le titre qui fleurit) n'est pas composé, et ne part qu'à l'ouverture du rideau.
 - Moins d'animations, `?anim=0`, un geste qui ouvre le rideau : la page est là, sans composition.
