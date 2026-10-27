@@ -652,6 +652,35 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
 }
 
+// ================================================================================ la première ouverture, sur une base lente
+// rien en mémoire, chaque lecture attend 1,2 s : le squelette a la forme de la vue (la saison à l'ordinateur : main.large,
+// le héros et la colonne d'à côté ; le pied attend le contenu), puis le contenu prend sa place sans rien pousser (CLS)
+for (const [telephone, h] of [[false, '#/saison'], [true, '#/moi']]) {
+  const nom = telephone ? 'téléphone, Moi' : 'ordinateur, la saison';
+  const base = baseSimulee();
+  const ctx = await navigateur.newContext(telephone ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: 'fr-FR', timezoneId: 'UTC' } : { viewport: { width: 1440, height: 900 }, locale: 'fr-FR', timezoneId: 'UTC' });
+  await ctx.route(/supabase\.co/, async r => { await new Promise(x => setTimeout(x, 1200)); return base.route(r); });
+  await ctx.route(/fonts\.g/, r => r.abort()); await ctx.routeWebSocket(/realtime/, () => {});
+  const page = await ctx.newPage();
+  const erreurs = []; page.on('pageerror', e => erreurs.push(String(e.message || e)));
+  await page.addInitScript(`localStorage.setItem('crescite-equipe', ${JSON.stringify(JSON.stringify(SESSION))});
+    window.__cls = 0; try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value; }).observe({ type: 'layout-shift', buffered: true }); } catch (e) {}`);
+  await page.goto(`${URL0}${h}`);
+  await page.waitForSelector('#contenu .squelettes', { timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  const sq = await page.evaluate(() => ({ large: document.querySelector('#contenu').classList.contains('large'), heros: !!document.querySelector('#contenu .squelettes .accueil .o-heros .squelette'), cote: !!document.querySelector('#contenu .squelettes .col-cote .sq-chiffres'),
+    pied: getComputedStyle(document.querySelector('.pied-espace')).display, statut: document.querySelector('#contenu [role="status"]')?.textContent || '' }));
+  await page.screenshot({ path: path.join(CAPT, `ouverture-squelette-${telephone ? 'telephone' : 'ordinateur'}.png`) });
+  await page.waitForFunction(() => !document.querySelector('#contenu .squelettes') && document.querySelector('#contenu h1'), null, { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  const apres = await page.evaluate(() => ({ cls: +window.__cls.toFixed(4), large: document.querySelector('#contenu').classList.contains('large'), pied: getComputedStyle(document.querySelector('.pied-espace')).display }));
+  ok(`ouverture lente (${nom}) · le squelette a la forme de la vue${telephone ? '' : ' (main.large, le héros, la colonne d’à côté)'}, le pied attend, « Ouverture de votre espace… » est dit`,
+    (telephone || (sq.large && sq.heros && sq.cote)) && sq.pied === 'none' && /Ouverture de votre espace/.test(sq.statut), JSON.stringify(sq));
+  ok(`ouverture lente (${nom}) · le contenu prend sa place sans saut (CLS < 0,01), dans la même largeur`, apres.cls < 0.01 && apres.large === sq.large && apres.pied !== 'none', JSON.stringify(apres));
+  ok(`ouverture lente (${nom}) · erreurs de page : aucune`, erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+}
+
 await navigateur.close();
 serveur.close();
 let ko = 0;

@@ -50,7 +50,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* le lien d'évitement, comme sur le site et dans l'équipe : hors de l'écran, il paraît au premier Tab */
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--carte); font-weight: 600; text-decoration: none; }
 .evitement:focus { top: 8px; }
-main.ad-chargement { padding: 0; max-width: none; }
 
 /* le pied commun des espaces réservés (PIED) : sobre, en fin de contenu */
 .pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
@@ -386,7 +385,8 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .connexion form { width: min(400px, 100%); }
 .connexion h1 { font-size: 22px; margin: 0 0 4px; }
 .connexion p { color: var(--gris); margin: 0 0 18px; }
-.chargement { padding: 60px 20px; text-align: center; color: var(--gris); }
+/* (avant que les scripts ne soient là : le mot n'apparaît qu'au bout de 0,6 s, sans marge qui décale la page ensuite) */
+.chargement { margin: 0; padding: 60px 20px; text-align: center; color: var(--gris); animation: sq-attend 0s linear .6s both; }
 
 /* annonces */
 #annonces { position: fixed; z-index: 50; left: 50%; bottom: 18px; transform: translateX(-50%); display: grid; gap: 8px; width: min(460px, calc(100% - 24px)); }
@@ -628,18 +628,39 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .ligne { transition: box-shadow .15s, border-color .15s; }
 .nav a, .seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
 .champ input, .champ select, .champ textarea, .riche, input[type=search], .filtres input, .filtres select { transition: border-color .15s, box-shadow .15s; }
-/* le squelette du chargement : la barre, une liste et une fiche, qui luisent (le contenu paraît ensuite, main.fondu) */
-.ad-squelette { --h: 16px; }
+/* le squelette du chargement (squeletteAdmin) : l'en-tête tel qu'il sera, puis la vue à sa forme, aux mesures de la page
+   (le titre et ses boutons de 41 px, le bandeau du tableau de bord, les lignes d'une liste, les cartes…), qui luisent ; le
+   contenu paraît ensuite à sa place (main.fondu). Il attend 0,15 s avant de paraître, sans mouvement si l'appareil en
+   demande moins (une base rapide ne le fait pas clignoter) */
+.ad-squelette { --h: 16px; animation: sq-attend 0s linear .15s both; }
+@keyframes sq-attend { from { visibility: hidden; } }
 .sq { position: relative; display: block; height: var(--h); border-radius: 8px; background: var(--doux); overflow: hidden; }
-.sq-barre { display: flex; align-items: center; gap: 18px; padding: 14px 20px; border-bottom: 1px solid var(--trait); background: var(--carte); }
-.sq-rond { width: 42px; height: 24px; border-radius: 999px; }
-.sq-main { display: grid; gap: 16px; max-width: 1500px; margin: 0 auto; padding: 20px; }
-.sq-deux { display: grid; grid-template-columns: minmax(340px, 460px) 1fr; gap: 18px; }
-.sq-deux > div { display: grid; gap: 8px; align-content: start; }
+.sq-tete { min-height: 41px; }
+.sq-titre { height: 34px; max-width: 60%; margin-right: auto; border-radius: 9px; }
+.sq-pilule { height: 41px; max-width: 100%; border-radius: 10px; }
+.sq-tb-outils { justify-content: flex-end; }
+.sq-tb-outils .sq-pilule:first-child { margin-right: 0; }
+.sq-salut { height: 175px; margin-bottom: 14px; border-radius: 22px; }
+.sq-tuiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.sq-tuile { height: 490px; border-radius: var(--rayon); }
+.sq-tuile-g { grid-column: 1 / -1; height: 171px; }
+.sq-tuile-m { grid-column: span 2; }
+.sq-deux { display: grid; grid-template-columns: minmax(340px, 460px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sq-pile { display: grid; gap: 8px; align-content: start; }
 .sq-ligne { height: 64px; border-radius: 10px; }
-.sq-bloc { height: 320px; border-radius: 12px; }
-@media (max-width: 1100px) { .sq-deux { grid-template-columns: 1fr; } .sq-bloc { display: none; } }
-.btn:active:not([disabled]) { transform: scale(.97); }
+.sq-fiche { height: 84px; border-radius: var(--rayon); }
+.sq-filtres { height: 149px; margin-bottom: 10px; border-radius: var(--rayon); }
+.sq-etroit { max-width: 920px; }
+.sq-zone { padding: 8px; }
+.sq-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.sq-carte { height: 234px; border-radius: var(--rayon); }
+.sq-grille { height: 320px; border-radius: var(--rayon); }
+.sq-kpi { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 17px; }
+.sq-chiffre { height: 82px; border-radius: var(--rayon); }
+.sq-colonnes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.sq-colonne { height: 480px; border-radius: var(--rayon); }
+@media (max-width: 1100px) { .sq-deux { grid-template-columns: 1fr; } .sq-fiche { display: none; } .sq-tuiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .sq-tuiles, .sq-kpi, .sq-colonnes { grid-template-columns: 1fr; } .sq-tuile-m { grid-column: auto; } .sq-salut { height: 283px; } .sq-tuile-g { height: 591px; } .sq-filtres { height: 243px; } .sq-colonne { height: 220px; } }.btn:active:not([disabled]) { transform: scale(.97); }
 @media (prefers-reduced-motion: no-preference) {
   ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: cubic-bezier(.2, .8, .2, 1); }
   html[data-sens="avant"]::view-transition-old(root) { animation-name: ad-sort-gauche; }
@@ -975,6 +996,40 @@ function ecranMotDePasse(depuisLaBarre = false) {
   });
 }
 
+// en attendant la base : l'en-tête tel qu'il sera (inerte), et la vue de l'adresse dessinée à sa forme, qui luit. Le
+// tableau de bord : le bandeau, ses boutons, la grande tuile puis les autres ; une rubrique à liste : son titre, la liste
+// et la place de la fiche ; le journal : ses filtres et ses lignes ; les spectacles : leurs cartes ; le planning, sa grille ;
+// la diffusion : ses chiffres et ses colonnes. Les mêmes marges que la page : le contenu prend la place du squelette sans
+// pousser l'en-tête ni le titre. Le squelette ne paraît qu'au bout de 0,15 s (une base rapide ne le fait pas clignoter).
+const SQ = (cls, style = '') => `<span class="sq ${cls}"${style ? ` style="${style}"` : ''}></span>`;
+const sqTete = (boutons = 1, titre = 200) => `<div class="tete sq-tete">${SQ('sq-titre', `width:${titre}px`)}${Array.from({ length: boutons }, (_, i) => SQ('sq-pilule', `width:${i ? 110 : 150}px`)).join('')}</div>`;
+const sqLignes = n => SQ('sq-ligne').repeat(n);
+// une zone qui attend sa lecture (le journal, la corbeille, un fil de notes, le journal d'une invitation) : ses lignes en
+// squelette, et « Chargement… » pour les lecteurs d'écran
+const attenteLignes = (n = 4, hauteur = 58) => `<div class="ad-squelette sq-pile sq-zone" aria-hidden="true">${SQ('sq-ligne', `height:${hauteur}px`).repeat(n)}</div><p class="sr" role="status">Chargement…</p>`;
+function corpsSquelette(rub) {
+  switch (rub) {
+    case 'accueil': return `${SQ('sq-salut')}<div class="tete sq-tete sq-tb-outils">${SQ('sq-pilule', 'width:272px')}${SQ('sq-pilule', 'width:87px')}${SQ('sq-pilule', 'width:130px')}</div>
+      <div class="sq-tuiles">${SQ('sq-tuile sq-tuile-g')}${SQ('sq-tuile sq-tuile-m')}${SQ('sq-tuile')}${SQ('sq-tuile')}</div>`;
+    case 'journal': return `${sqTete(1, 98)}${SQ('sq-filtres')}<div class="sq-pile">${sqLignes(7)}</div>`;
+    case 'spectacles': return `${sqTete(1, 144)}<div class="sq-cartes">${SQ('sq-carte').repeat(5)}</div>`;
+    case 'planning': return `${sqTete(2, 113)}${SQ('sq-grille')}`;
+    case 'diffusion': return `${sqTete(2, 300)}<div class="sq-kpi">${SQ('sq-chiffre').repeat(3)}</div><div class="sq-colonnes">${SQ('sq-colonne').repeat(5)}</div>`;
+    case 'feuilles': return `${sqTete(0, 212)}<div class="sq-etroit">${SQ('sq-filtres')}<div class="sq-pile">${sqLignes(6)}</div></div>`;
+    default: return `${sqTete(rub === 'textes' ? 0 : 1)}<div class="sq-deux"><div class="sq-pile">${sqLignes(7)}</div>${SQ('sq-fiche')}</div>`;
+  }
+}
+function squeletteAdmin() {
+  const k = (location.hash.match(/^#\/([a-z]+)/) || [])[1], rub = RUBRIQUES.some(r => r[0] === k) ? k : 'accueil';
+  $('#app').innerHTML = `${barreHtml(rub, true)}<main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true">${corpsSquelette(rub)}</div><p class="sr" role="status">Chargement de la base…</p></main>`;
+  majTemoin();
+  tt('pieuvre');     // (la marque a sa pieuvre, comme dans la page : l'en-tête garde sa largeur)
+  rangerBarre();
+  // au téléphone, l'en-tête du squelette est déjà celui du téléphone (la marque, le témoin, la loupe : mobile.js) ;
+  // la barre du bas viendra avec la page
+  if (typeof MOBILE !== 'undefined' && MOBILE.actif()) document.documentElement.classList.add('ob-actif');
+  poserHautBarre();
+}
 let demarre = false;
 async function demarrer() {
   // feuille.js et equipe.js se chargent après ce script : on les attend
@@ -982,8 +1037,7 @@ async function demarrer() {
   if (!E.session) { demarre = false; return ecranConnexion(); }
   if (demarre) return;
   demarre = true;
-  $('#app').innerHTML = `<main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true"><div class="sq-barre"><span class="sq sq-rond"></span><span class="sq" style="width:120px"></span><span class="sq" style="width:160px;margin-left:auto"></span></div>
-    <div class="sq-main"><span class="sq" style="width:220px;height:26px"></span><div class="sq-deux"><div>${'<span class="sq sq-ligne"></span>'.repeat(6)}</div><span class="sq sq-bloc"></span></div></div></div><p class="sr" role="status">Chargement de la base…</p></main>`;
+  squeletteAdmin();
   const { data, error } = await sb.from('crescite_admins').select('user_id').eq('user_id', E.session.user.id);
   if (error) { demarre = false; return ecranConnexion(/crescite_admins/.test(error.message) ? 'La base de la compagnie n’est pas encore installée.' : error.message); }
   if (!data.length) {
@@ -4613,7 +4667,7 @@ async function vueJournal() {
       </div>
       <p class="j-compte"><span class="compte" id="j-compte"></span><button type="button" class="btn lien petit" id="j-effacer" hidden>Tout montrer</button></p>
     </div>
-    <div class="bloc" style="padding:0" data-liste id="l-journal"><p class="vide">Chargement…</p></div><p class="j-plus" id="j-plus-zone"></p><p class="sr" id="j-annonce" aria-live="polite"></p>`);
+    <div class="bloc" style="padding:0" data-liste id="l-journal">${attenteLignes(6, 58)}</div><p class="j-plus" id="j-plus-zone"></p><p class="sr" id="j-annonce" aria-live="polite"></p>`);
   const zone = $('#l-journal');
   const remplirAuteurs = () => { $('#j-qui').innerHTML = `<option value="">Tous les auteurs</option>${auteurs().map(([id, l]) => option(`u:${id}`, l, f.qui)).join('')}`; };
   remplirAuteurs();

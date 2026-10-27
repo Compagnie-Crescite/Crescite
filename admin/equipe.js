@@ -2556,7 +2556,7 @@ function editeurAcces(id) {
         <span class="aide">Une durée à partir d’aujourd’hui, ou une date. Ensuite, le lien ne s’ouvre plus.</span></div>
       ${champ(SPEC_ACCES[3], F)}
     </div>
-    ${a0 ? '<div class="bloc"><div class="pro-journal-tete"><h3>Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal"><p class="aide">Chargement…</p></div></div>' : ''}
+    ${a0 ? `<div class="bloc"><div class="pro-journal-tete"><h3>Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal">${typeof attenteLignes === 'function' ? attenteLignes(3, 44) : '<p class="aide">Chargement…</p>'}</div></div>` : ''}
     ${pied(a0 ? 'Tout est enregistré' : 'Nouvelle invitation', a0 ? '<button type="button" class="btn danger" id="pro-suppr">Supprimer</button>' : '')}`;
   const courriel = $('[data-chemin="courriel"]', zone);
   if (courriel) { courriel.type = 'email'; courriel.autocomplete = 'off'; }

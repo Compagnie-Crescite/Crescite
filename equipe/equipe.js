@@ -322,10 +322,13 @@
     const texte = estReseau(e) ? `${quoi.enLigne} : vérifiez votre connexion, puis réessayez.` : `${quoi.erreur} : ${motsErreur(e) || 'réessayez dans un instant'}.`;
     return `<div class="message erreur echec-lecture" role="alert"><p>${esc(texte)}</p><button type="button" class="btn" data-relire>${ICONES.actualiser}Réessayer</button></div>`;
   }
+  // une lecture en cours dans une vue : la forme de ce qui vient (des cartes, des lignes, la page d'une feuille) qui luit ;
+  // ce qu'on attend (« Lecture de vos indisponibilités… ») reste dit aux lecteurs d'écran, et c'est elle que l'échec remplace
+  const enLecture = (texte, { n = 3, h = 88 } = {}) => `<div class="chargement en-lecture" role="status"><span class="sr">${esc(texte)}</span><div class="squelettes pile" aria-hidden="true">${`<div class="squelette" style="height:${h}px"></div>`.repeat(n)}</div></div>`;
   // la lecture en attente d'une zone (son « Lecture… ») cède la place à l'échec, si la vue est toujours là
   function poserEchec(zone, quoi, e, vue) {
     if (vue && E.vue !== vue) return;
-    const z = typeof zone === 'string' ? $(zone) : zone, attente = z && (z.matches('p.chargement') ? z : $('p.chargement', z));
+    const z = typeof zone === 'string' ? $(zone) : zone, attente = z && (z.matches('.chargement') ? z : $('.chargement', z));
     if (attente) attente.outerHTML = echecLecture(quoi, e);
   }
   const LECTURES = {
@@ -704,17 +707,29 @@
   // téléphone »), une seule voie, pas deux. Les fichiers d'un spectacle, eux, n'ont que la boîte de l'équipe : elle sert à tous
   const modifierDateEnEquipe = () => avecModifier() && !E.admin;
 
-  // en attendant la base : l'application, et la forme de ce qui arrive
+  // en attendant la base : l'application, et la forme de ce qui arrive, vue par vue, dans la même largeur que la vue
+  // (main.large pour la saison et le planning) : la saison, son héros, puis à côté (à l'ordinateur) ou dessous (au
+  // téléphone, dans l'ordre de la page) ses chiffres et sa carte ; le planning, ses boutons et sa grille ; une date, une
+  // feuille, un spectacle, leur affiche puis leurs blocs ; ailleurs, le titre et des cartes. Le contenu prend sa place
+  // sans pousser la page, ni changer sa largeur.
   function squelette() {
     coquille();
     const r = lireRoute();
     majNav(r.redirige ? { onglet: 'saison', profondeur: 0 } : r);
+    if (!r.redirige) try { majBarre(r, ''); } catch (e) { /* (le retour d'une vue plus loin qu'un onglet : posé avec la vue) */ }
+    const k = r.redirige ? (r.redirige === '#/moi' ? 'moi' : 'saison') : r.k;
     const c = $('#contenu');
-    c.className = '';
-    c.innerHTML = `<p class="sr" role="status">Ouverture de votre espace…</p><div aria-hidden="true">
-      <div class="titre-vue"><div class="squelette ligne" style="width:52%;height:30px"></div><div class="squelette ligne" style="width:38%"></div></div>
-      <div class="squelette" style="height:360px;border-radius:26px"></div>
-      <div class="pile" style="margin-top:18px">${'<div class="squelette" style="height:118px"></div>'.repeat(3)}</div></div>`;
+    c.className = k === 'saison' || k === 'planning' ? 'large' : '';
+    const sq = (style, cls = '') => `<div class="squelette${cls ? ` ${cls}` : ''}" style="${style}"></div>`;
+    const titre = (l = 52) => `<div class="titre-vue">${sq(`width:${l}%;height:30px`, 'ligne')}${sq('width:38%', 'ligne')}</div>`;
+    const cartes = n => `<div class="pile">${sq('height:118px').repeat(n)}</div>`;
+    let corps;
+    if (k === 'saison') corps = `${titre()}<div class="accueil"><div class="col-principale"><div class="o-heros">${sq('height:362px;border-radius:26px')}</div><div class="o-suite">${cartes(2)}</div></div>
+      <div class="col-cote"><div class="o-chiffres">${sq('width:46%', 'ligne')}<div class="sq-chiffres">${sq('height:97px').repeat(3)}</div></div><div class="o-carte">${sq('width:40%', 'ligne')}${sq('height:434px')}</div></div></div>`;
+    else if (k === 'planning') corps = `${titre(30)}<div class="sq-boutons">${sq('height:44px;width:200px;border-radius:999px')}${sq('height:44px;width:160px;border-radius:999px')}</div>${sq('height:420px')}`;
+    else if (k === 'date' || k === 'feuille' || k === 'spectacle' || k === 'proposition') corps = `${titre(60)}${sq('height:300px;border-radius:26px')}<div style="margin-top:16px">${cartes(2)}</div>`;
+    else corps = `${titre()}${cartes(4)}`;
+    c.innerHTML = `<p class="sr" role="status">Ouverture de votre espace…</p><div class="squelettes" aria-hidden="true">${corps}</div>`;
   }
 
   const NATURES = { representations: 'Représentations', repetitions: 'Répétitions', residence: 'Résidence', autre: 'Rendez-vous' };
@@ -1612,7 +1627,7 @@
       // une date toute neuve (une notification y mène) : la base est relue une fois
       if (!E.cherche.has(r.id) && E.session && !E.sansSession && !E.horsLigne) {
         E.cherche.add(r.id);
-        afficher(r, 'Date', '<p class="chargement" role="status">Recherche de cette date…</p>', { focus: false });
+        afficher(r, 'Date', enLecture('Recherche de cette date…', { n: 3, h: 118 }), { focus: false });
         rafraichir({ discret: true }).then(() => { if (location.hash === r.hash && E.dates.some(x => x.id === r.id)) router({ rafraichir: true }); else if (location.hash === r.hash) vueDate(r, { focus }); });
         return;
       }
@@ -1639,7 +1654,7 @@
     if (d.feuille || joursDe(d).includes(auj)) {
       const lignes = f || !d.feuille ? lignesPlanning(d, f) : null;
       if (!lignes || lignes.length) html += `<section class="bloc" id="bloc-planning"${attrU(sp)} aria-labelledby="b-planning"><h2 id="b-planning">${ICONES.feuille}${joursDe(d).includes(auj) ? 'Le jour J' : 'Le planning'}</h2>
-        ${lignes ? frise(lignes) : '<p class="attente-bloc" role="status">Lecture du planning…</p>'}</section>`;
+        ${lignes ? frise(lignes) : `<div class="attente-bloc" role="status"><span class="sr">Lecture du planning…</span><div class="squelettes pile" aria-hidden="true">${'<div class="squelette" style="height:40px"></div>'.repeat(3)}</div></div>`}</section>`;
     }
     html += blocLieu(d) + (avecChiffres() ? blocChiffres(d) : '') + (avecIdeale() ? blocCamion(d) : '') + blocEquipe(d, passee) + blocDocuments(d) + navDates(d, 'date', 'bas');
     afficher(r, sp.titre || 'Date', html, { focus });
@@ -1916,7 +1931,7 @@
       <p><b>${esc(majuscule(quandTexte(d)))}</b>${l ? ` · ${esc(l.nom || l.commune)}${l.nom ? `, ${esc(l.commune)}` : ''}` : ''}</p></div>`;
     const f = E.feuilles.get(id);
     if (f) return montrerFeuille(r, d, f, { focus, tete });
-    afficher(r, 'Feuille de route', `${tete}<p class="chargement" role="status">Chargement de la feuille de route…</p>`, { focus: false });
+    afficher(r, 'Feuille de route', `${tete}${enLecture('Chargement de la feuille de route…', { n: 1, h: 560 })}`, { focus: false });
     chargerFeuille(id).then(x => {
       if (!ici()) return;
       if (!x) return afficher(r, 'Feuille de route', `${tete}<p class="message erreur" role="alert">Cette feuille de route n’est pas (ou plus) publiée. L’administration la publiera dès qu’elle sera prête.</p>`, { focus });
@@ -1931,7 +1946,7 @@
     let corps = '';
     try { corps = F.html(f, contexte(d)); } catch (e) { console.error(e); }
     if (corps && typeof corps.then === 'function') {
-      afficher(r, 'Feuille de route', `${tete}<p class="chargement" role="status">Mise en page de la feuille de route…</p>`, { focus: false });
+      afficher(r, 'Feuille de route', `${tete}${enLecture('Mise en page de la feuille de route…', { n: 1, h: 560 })}`, { focus: false });
       corps.then(c => { if (location.hash === `#/feuille/${d.id}`) poserFeuille(r, d, f, c, { focus, tete, version }); })
         .catch(e => { console.error(e); if (location.hash === `#/feuille/${d.id}`) poserFeuille(r, d, f, '', { focus, tete, version }); });
       return;
@@ -2559,7 +2574,7 @@
     const edition = E.dispo.modifier != null && xs ? xs.find(x => x.id === E.dispo.modifier && x.source !== 'agenda') || null : null;
     const brouillon = E.dispo.brouillon;
     E.dispo.modifier = null; E.dispo.brouillon = null;
-    const html = `${entete}${formIndispo(edition, brouillon)}<div id="zone-indispos">${xs == null ? '<p class="chargement" role="status">Lecture de vos indisponibilités…</p>' : listeIndispos(xs)}</div>
+    const html = `${entete}${formIndispo(edition, brouillon)}<div id="zone-indispos">${xs == null ? enLecture('Lecture de vos indisponibilités…', { n: 3, h: 72 }) : listeIndispos(xs)}</div>
       <section class="carte-action" aria-labelledby="t-relier-i"><span class="ic-rond" aria-hidden="true">${ICONES.relier}</span><div class="ca-texte"><h2 id="t-relier-i">Votre agenda le sait déjà ?</h2>
         <p class="aide">Reliez Google Agenda, Apple ou Outlook : vos heures occupées s’y lisent toutes seules, sans titre ni lieu.</p></div><a class="btn petit" href="#/agendas">Relier mon agenda</a></section>`;
     afficher(r, TITRES.indisponibilites, html, { focus });
@@ -2690,7 +2705,7 @@
   }
   function blocAgendas() {
     const xs = E.dispo.agendas;
-    if (xs == null) return '<p class="chargement" role="status">Lecture de vos agendas…</p>';
+    if (xs == null) return enLecture('Lecture de vos agendas…', { n: 2, h: 72 });
     if (!xs.length) return '';
     return `<section class="carte" aria-labelledby="t-lies"><h2 id="t-lies">${xs.length > 1 ? 'Mes agendas reliés' : 'Mon agenda relié'}</h2><ul class="agendas-lies">${xs.map(a => {
       const e = etatAgenda(a);
@@ -2783,7 +2798,7 @@
   function blocFlux() {
     const j = E.dispo.jeton;
     const intro = '<h2 id="t-flux">Mes dates de la compagnie dans mon agenda</h2><p class="intro">Abonnez votre agenda à vos dates (représentations, répétitions, résidences) : elles s’y ajoutent, avec les horaires et les lieux, et s’y mettent à jour d’elles-mêmes. Les dates que l’administration vous propose y paraissent aussi, « à confirmer », jusqu’à ce que vous répondiez non ou que la proposition soit close.</p>';
-    if (j === undefined) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="chargement" role="status">Lecture de votre lien…</p></section>`;
+    if (j === undefined) return `<section class="carte" aria-labelledby="t-flux">${intro}${enLecture('Lecture de votre lien…', { n: 1, h: 44 })}</section>`;
     if (!j) return `<section class="carte" aria-labelledby="t-flux">${intro}<p class="message conseil">Votre lien personnel n’est pas encore prêt : la compagnie met le service en place.</p></section>`;
     return `<section class="carte flux" aria-labelledby="t-flux">${intro}
       <div class="flux-boutons"><a class="btn principal" href="${esc(lienGoogle(j))}" target="_blank" rel="noopener">${ICONES.agenda}Ajouter à Google Agenda<span class="sr"> (nouvel onglet)</span></a>
@@ -2845,7 +2860,7 @@
     const carte = p => { const rep = p.jours.filter(j => j.moi && j.moi.reponse).length; return `<li><a class="carte-prop" href="#/proposition/${p.id}"><span class="ic-rond" aria-hidden="true">${ICONES.question}</span>
       <span class="cp-texte"><b>${esc(p.titre)}</b><small>${esc([p.spectacle?.titre, p.jours.length === 1 ? texteJours(p.jours[0]) : `${pluriel(p.jours.length, 'jour')}`, p.statut === 'close' ? 'close' : rep === p.jours.length ? 'répondu' : `${rep}/${p.jours.length} répondu${rep > 1 ? 's' : ''}`].filter(Boolean).join(' · '))}</small></span>
       ${aRepondre(p) ? '<span class="etiquette a-repondre">Répondre</span>' : ''}${ICONES.chevron}</a></li>`; };
-    const html = `${entete}${!E.dispo.propositionsLues ? '<p class="chargement" role="status">Lecture des propositions…</p>' : !xs.length ? etatVide('calendrier', 'Aucune proposition pour l’instant', 'Quand l’administration vous proposera des dates, elles arriveront ici et par courriel.') : ''}
+    const html = `${entete}${!E.dispo.propositionsLues ? enLecture('Lecture des propositions…', { n: 2, h: 88 }) : !xs.length ? etatVide('calendrier', 'Aucune proposition pour l’instant', 'Quand l’administration vous proposera des dates, elles arriveront ici et par courriel.') : ''}
       ${att.length ? `<section aria-labelledby="t-att"><h2 class="titre-section" id="t-att">À répondre</h2><ul class="liste-props">${att.map(carte).join('')}</ul></section>` : ''}
       ${autres.length ? `<section aria-labelledby="t-aut"><h2 class="titre-section" id="t-aut">${att.length ? 'Les autres' : 'Répondues ou closes'}</h2><ul class="liste-props">${autres.map(carte).join('')}</ul></section>` : ''}`;
     afficher(r, TITRES.propositions, html, { focus });
@@ -2856,7 +2871,7 @@
     const p = (E.dispo.propositions || []).find(x => x.id === r.id);
     if (!p) {
       if (!E.dispo.propositionsLues || !E.dispo.relu) {
-        afficher(r, TITRES.proposition, '<div class="titre-vue"><h1>Proposition de dates</h1></div><p class="chargement" role="status">Lecture de la proposition…</p>', { focus });
+        afficher(r, TITRES.proposition, `<div class="titre-vue"><h1>Proposition de dates</h1></div>${enLecture('Lecture de la proposition…', { n: 3, h: 88 })}`, { focus });
         E.dispo.relu = true;
         chargerPropositions().then(() => { if (E.route && E.route.hash === r.hash) vueProposition(r, { focus: false }); }).catch(e => { if (E.route && E.route.hash === r.hash) poserEchec('#contenu', LECTURES.proposition, e); });
         return;
@@ -3157,7 +3172,7 @@
       ${sectionPlanningMoi()}
       ${avecIdeale() ? `<section class="carte" aria-labelledby="t-frais"><h2 id="t-frais">Notes de frais</h2><p class="intro">Déposez vos justificatifs de tournée (repas, carburant, billets, nuitées) et suivez vos remboursements.</p><p><a class="btn" href="#/frais">${ICONES.euro}Mes notes de frais</a></p></section>` : ''}
       <section class="carte" aria-labelledby="t-app"><h2 id="t-app">L’application</h2><div data-zone-installation="moi">${zoneInstallation('moi')}</div></section>`;
-    if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? '<p class="chargement" role="status">Lecture de vos coordonnées…</p>'
+    if (!E.privee) html += `<section class="carte"><h2>Mes coordonnées</h2>${E.provisoire && !E.horsLigne ? enLecture('Lecture de vos coordonnées…', { n: 3, h: 44 })
       : '<p class="message horsligne" role="status">Vos coordonnées se lisent et s’enregistrent en ligne : reconnectez-vous au réseau, puis actualisez.</p>'}</section>`;
     else html += `<form class="carte" id="f-fiche" novalidate aria-labelledby="t-coord"><h2 id="t-coord">Mes coordonnées</h2>
         <p class="intro">Elles servent aux feuilles de route, aux réservations et aux repas. Seules l’administration et vous les lisez.</p>
@@ -3891,7 +3906,7 @@
 
   async function vueFrais(r, { focus } = {}) {
     // à l'ouverture, la base n'a pas encore dit si elle a les notes de frais (voir router)
-    if (!avecIdeale()) return afficher(r, TITRES.frais, '<div class="titre-vue"><h1>Notes de frais</h1></div><p class="chargement" role="status">Lecture de vos notes de frais…</p>', { focus });
+    if (!avecIdeale()) return afficher(r, TITRES.frais, `<div class="titre-vue"><h1>Notes de frais</h1></div>${enLecture('Lecture de vos notes de frais…', { n: 3, h: 72 })}`, { focus });
     const m = location.hash.match(/[?&]date=(\d+)/);
     const datePre = m ? +m[1] : null;
 
@@ -3952,7 +3967,7 @@
       </form>
       <section class="carte" aria-labelledby="t-mes-frais">
         <h2 id="t-mes-frais">Mes notes de frais</h2>
-        <div id="liste-frais-zone"><p class="chargement" role="status">Lecture de vos notes de frais…</p></div>
+        <div id="liste-frais-zone">${enLecture('Lecture de vos notes de frais…', { n: 3, h: 72 })}</div>
       </section>
     `;
     afficher(r, 'Notes de frais', html, { focus });

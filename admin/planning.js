@@ -380,6 +380,16 @@ const PLANNING = (() => {
 .pl-legende .l-prop { border: 2px dashed var(--pl-accent); }
 .pl-legende .l-conflit { width: 16px; height: 16px; border-radius: 50%; background: var(--pl-alerte); }
 .pl-corps { position: relative; }
+/* la grille qui attend sa première lecture : l'en-tête des jours puis des lignes, aux mesures de la grille (--pl-ligne) */
+.pl-attente { display: grid; gap: 4px; }
+.pl-attente i { position: relative; display: block; height: var(--pl-ligne); overflow: hidden; border-radius: 8px; background: var(--pl-doux); }
+.pl-attente i:first-child { height: calc(var(--pl-ligne) * 1.6); }
+.pl[data-vue="mois"] .pl-attente i { height: calc(var(--pl-ligne) * 2); }
+.pl-corps[aria-busy="true"] .pl-vue:has(.pl-attente) { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .pl-attente i::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--pl-fond) 70%, transparent), transparent); animation: pl-lueur 1.3s infinite; }
+  @keyframes pl-lueur { to { transform: translateX(100%); } }
+}
 .pl-corps[aria-busy="true"]::before { content: ""; position: absolute; z-index: 9; left: 0; right: 0; top: -6px; height: 3px; border-radius: 3px;
   background: linear-gradient(90deg, transparent, var(--pl-accent), transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: pl-charge 1s linear infinite; }
 .pl-corps[aria-busy="true"] .pl-vue { opacity: .55; transition: opacity .2s; }
@@ -954,7 +964,9 @@ details.pl-alerte p { margin: 8px 0 0; }
         return;
       }
       if (!S.D) {
-        parts.push('<div class="pl-corps" aria-busy="true"><div class="pl-vue"><p class="pl-vide">Lecture du planning…</p></div></div>');
+        // en attendant la première lecture : la grille à sa forme (l'en-tête des jours, des lignes de personnes) qui luit, et
+        // « Lecture du planning… » pour les lecteurs d'écran ; les données prennent sa place sans pousser la page
+        parts.push(`<div class="pl-corps" aria-busy="true"><div class="pl-vue"><div class="pl-attente" aria-hidden="true">${'<i></i>'.repeat(S.vue === 'equipe' ? 6 : 5)}</div><p class="pl-sr" role="status">Lecture du planning…</p></div></div>`);
         el.innerHTML = parts.join('');
         return;
       }
