@@ -2774,6 +2774,12 @@ a.rs-seance:focus-visible { outline: 2px solid var(--u-vif); outline-offset: 2px
 .rs-ici { --rs-bg: var(--u-fond); grid-column: 1 / -1; margin: 10px 0 6px; min-height: 300px; transform-origin: 50% 0; }
 /* sur la carte de France, la commune de la date choisie */
 .carte .carte-lieu.est-choisi .point { stroke: var(--u-texte, var(--encre)); stroke-width: 2.6; }
+/* (la commune filtrée sur les saisons : sa ventouse grossie et cerclée de l'encre, d'un anneau de la vive de la saison, son nom
+   écrit ; elle reste en évidence quand on survole les autres) */
+.carte .carte-lieu.est-filtre .point { scale: 1.7; stroke: var(--encre); stroke-width: 2.6; }
+.carte .carte-lieu.est-filtre .halo { opacity: 1; fill: none; stroke: var(--saison-vive); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.carte.surligne .carte-lieu.est-filtre:not(.on) { opacity: .7; }
+.carte .nom.est-filtre { display: inline; }
 .carte .nom.est-choisi { display: inline; }
 .rs-ici .rs-c { max-width: 27rem; }
 @media (max-width: 1000px) {
@@ -5284,7 +5290,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const sansADefinir = rows => { let hors = false; return rows.filter(r => { if (!r.suite) hors = aDefinir(r.d); return !hors; }); };
     // la carte de la saison : ses communes à venir, en avant ; celles où elle est déjà passée, en retrait
     const lieux = CARTE.aVenir().map(x => { const ds = x.dates.filter(d => !aDefinir(d)); return ds.length === x.dates.length ? x : { ...x, dates: ds, n: ds.length }; }).filter(x => x.dates.length);
-    const vusC = new Set(lieux.map(x => x.l)), passeC = CARTE.saison(D.saison).filter(x => !vusC.has(x.l));
+    // (une commune de la saison dont les seules dates attendent leur jour n'y est pas non plus : choisie, elle filtrait la
+    // page sur des listes vides)
+    const vusC = new Set(lieux.map(x => x.l)), passeC = CARTE.saison(D.saison).filter(x => !vusC.has(x.l))
+      .map(x => { const ds = x.dates.filter(d => !aDefinir(d)); return ds.length === x.dates.length ? x : { ...x, dates: ds, n: ds.length }; }).filter(x => x.dates.length);
     const tout = retenu('agendaPasse', agendaPasse), passe = tout.filter(s => s.k !== D.saison);
     const lignes = sansADefinir(retenu('lignesEnCours', lignesEnCours)), puces = spectaclesAgenda(datesFixees, tout);
     const proch = datesFixees.map(d => ({ d, cle: d.slug, l: d.l, id: cleProchaine(d), txt: norm(`${d.titre} ${d.ligne} ${(d.details || []).map(x => x.texte).join(' ')} ${CARTE.lieux[d.l] ? CARTE.nom(CARTE.lieux[d.l]) : ''}`) }));
@@ -5542,6 +5551,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const sv = $('.sai-carte svg', dt), ul = $('.sai-liste', dt);
       if (!sv) return;
       relier(sv, ul, l => { const li = $(`li[data-l="${l}"]`, ul); if (li) li.scrollIntoView({ behavior: motionOK() ? 'smooth' : 'auto', block: 'center' }); });
+      marquerCommune(dt);
       bientot(() => { pousser(sv); echelle(); });
       auFil(ul, sv);   // (scrollytelling) la saison passée se dessine au fil de ses dates
     }
@@ -5588,6 +5598,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       majFiltres();
       fond();
       adresseFiltres();
+      marquerCommune();
+    }
+    // la carte et la liste se répondent : choisir une commune sur la carte (clic, Entrée) la filtre, la choisir encore la rend ;
+    // la commune filtrée reste en évidence sur les cartes de la page (la loupe et celles des saisons passées ouvertes), quoi
+    // qu'on survole : sa ventouse cerclée, son nom écrit ; sur la loupe, ses communes sont des boutons à bascule (aria-pressed)
+    function marquerCommune(dans = main) {
+      $$('svg.carte .carte-lieu[data-l]', dans).forEach(g => { const on = F.l !== null && +g.dataset.l === F.l; g.classList.toggle('est-filtre', on);
+        if (g.getAttribute('role') === 'button' && g.closest('.ag7-carte')) g.setAttribute('aria-pressed', String(on)); });
+      $$('svg.carte .nom[data-l]', dans).forEach(t => t.classList.toggle('est-filtre', F.l !== null && +t.dataset.l === F.l));
     }
     // les filtres en cours vont dans l'adresse, après la route, à la manière de ?date= (que RESERVER y garde) : le spectacle, le
     // mois choisi d'un clic (un mois survolé ne fait que passer), la commune, la recherche ; une adresse filtrée se partage, et
