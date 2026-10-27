@@ -78,6 +78,9 @@
   if (CALME) document.documentElement.classList.add('still');    // la feuille de style arrête aussi tout ce qu'elle anime
   const installee = () => mq('(display-mode: standalone)').matches || mq('(display-mode: fullscreen)').matches || navigator.standalone === true;
   const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // sur l'iPhone, l'installation passe par Safari : ouverte ailleurs (le lien du courriel s'ouvre souvent dans la
+  // messagerie, ou dans Chrome), la page le dit d'abord
+  const HORS_SAFARI = IOS && (!/Safari\//.test(navigator.userAgent) || /CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|FBAN|FBAV|Instagram|Line\//.test(navigator.userAgent));
   // un léger retour au doigt, sur les téléphones qui le permettent, et seulement après un premier geste
   function vibrer(ms = 8) {
     try { if (navigator.vibrate && !CALME && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) navigator.vibrate(ms); } catch (e) { /* rien */ }
@@ -1209,9 +1212,11 @@
       <div class="ca-texte"><h2 id="t-agenda">Dans votre agenda</h2><p class="aide">${evs.length ? `${esc(majuscule(quoi))}, avec l’adresse : un fichier .ics pour votre téléphone ou votre messagerie.` : 'Aucune séance à venir à ajouter pour l’instant.'}</p></div>
       <button type="button" class="btn" id="b-agenda"${evs.length ? '' : ' disabled'}>Ajouter à mon agenda</button></section>`);
     cote.push(`<div class="o-install" data-zone-installation="accueil">${zoneInstallation('accueil')}</div>`);
+    if (!PREF.pushFermee && E.notifsEtat !== 'absent') cote.push(`<div class="o-push" data-zone-push="accueil"${E.push.etat !== 'inconnu' ? ` data-etat="${E.push.etat}"` : ''}>${E.push.etat !== 'inconnu' ? cartePush(E.push.etat, 'accueil') : ''}</div>`);
     const html = `<div class="titre-vue"><h1>${esc(salut())}${prenom ? ` ${esc(prenom)}` : ''}</h1><p class="sous">${esc(resume)}</p></div>
       <div class="accueil"><div class="col-principale">${principal.join('')}</div><div class="col-cote">${cote.join('')}</div></div>${piedVue()}`;
     afficher(r, TITRES.saison, html, { focus, large: true });
+    majCartePush();
   }
 
   function parMois(dates) {
@@ -2225,7 +2230,12 @@
     vibrer(10);
     try {
       const p = await permission;
-      if (p !== 'granted') { E.push.etat = p === 'denied' ? 'bloque' : 'inactif'; return majCartePush(); }
+      if (p !== 'granted') {
+        E.push.etat = p === 'denied' ? 'bloque' : 'inactif';
+        // refusées : l'invitation de l'accueil s'efface, la page dit où les autoriser plus tard
+        if (p === 'denied') annoncer('Les notifications sont refusées sur cet appareil. Elles restent lisibles dans l’application ; « Moi » dit comment les autoriser.');
+        return majCartePush();
+      }
       const cle = await clePublique();
       if (!cle) { E.push.etat = 'indisponible'; return majCartePush(); }
       const reg = await swPret();
@@ -2277,19 +2287,40 @@
       $$('[data-zone-push]').forEach(z => { z.dataset.etat = etat; z.innerHTML = cartePush(etat, z.dataset.zonePush); });
     });
   }
-  const ETAPES_IOS = `<ol class="etapes"><li>Dans Safari, touchez <b>Partager</b> <span class="ic-texte">${ICONES.partager}</span> en bas de l’écran.</li><li>Choisissez <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvrez l’application <b>Les Crescite</b> depuis son icône.</li></ol>`;
+  const ETAPES_IOS = `<ol class="etapes">${HORS_SAFARI ? '<li>Ouvrez d’abord cette page dans <b>Safari</b> : depuis une autre application, l’iPhone ne l’installe pas. <button type="button" class="lien-btn" data-copier-adresse>Copier son adresse</button>, puis collez-la dans Safari.</li>' : ''}<li>Dans Safari, touchez <b>Partager</b> <span class="ic-texte">${ICONES.partager}</span> en bas de l’écran.</li><li>Choisissez <b>Sur l’écran d’accueil</b>, puis <b>Ajouter</b>.</li><li>Ouvrez l’application <b>Les Crescite</b> depuis son icône.</li></ol>`;
+  // ce qui suit « Activer » : la demande du navigateur, annoncée avant qu'elle paraisse
+  const ACCORD = 'Votre navigateur vous demandera votre accord.';
+  // où se lève un blocage, selon l'appareil
+  function debloquer() {
+    const ua = navigator.userAgent;
+    if (IOS) return 'Sur l’iPhone : <b>Réglages</b> → <b>Notifications</b> → <b>Les Crescite</b> → <b>Autoriser les notifications</b>.';
+    if (/Android/.test(ua)) return installee() ? 'Sur Android : un appui long sur l’icône des Crescite → <b>Infos sur l’appli</b> → <b>Notifications</b> → les autoriser.'
+      : 'Sur Android : le cadenas (ou l’icône des réglages) à gauche de l’adresse → <b>Autorisations</b> ou <b>Notifications</b> → <b>Autoriser</b>.';
+    return 'Sur l’ordinateur : l’icône à gauche de l’adresse (le cadenas, ou les réglages du site) → <b>Notifications</b> → <b>Autoriser</b> ; rechargez ensuite la page.';
+  }
   function cartePush(etat, ou) {
     const bascule = actif => `<div class="interrupteur"><span class="lib"><span id="lib-push">Recevoir les notifications sur cet appareil</span><small id="aide-push">${actif ? 'Activées : elles arrivent même application fermée.' : 'Feuilles de route, horaires changés, nouvelles dates : même application fermée.'}</small></span>
       <button type="button" role="switch" class="bascule" aria-checked="${actif}" aria-labelledby="lib-push" aria-describedby="aide-push" data-push></button></div>`;
+    // l'accueil : une invitation, tant que cet appareil peut les recevoir sans les avoir activées (et qu'on ne l'a pas fermée)
+    if (ou === 'accueil') {
+      if (etat !== 'inactif' || PREF.pushFermee) return '';
+      return `<section class="carte-action push-proposition push-accueil" aria-labelledby="t-push-accueil"><span class="ic-rond" aria-hidden="true">${ICONES.cloche}</span>
+        <div class="ca-texte"><h2 id="t-push-accueil">Les notifications sur cet appareil</h2><p class="aide">Une feuille de route publiée, des horaires changés, une nouvelle date : même application fermée. ${ACCORD}</p></div>
+        <button type="button" class="btn petit principal" data-push-activer>Activer</button><button type="button" class="bouton-rond fermer-install" data-fermer-push>${ICONES.croix}<span class="sr">Ne plus proposer les notifications</span></button></section>`;
+    }
     if (ou === 'notifs') {
+      if (etat === 'bloque') return `<section class="carte-action push-proposition" aria-label="Notifications sur cet appareil"><span class="ic-rond" aria-hidden="true">${ICONES.cloche}</span>
+        <div class="ca-texte"><b>Les notifications sont bloquées sur cet appareil</b><p class="aide">Elles restent lisibles ici. Pour les recevoir aussi sur l’appareil, autorisez-les dans ses réglages.</p></div>
+        <a class="btn petit" href="#/moi">Comment faire</a></section>`;
       if (etat !== 'inactif' && etat !== 'ios') return '';
       return `<section class="carte-action push-proposition" aria-label="Notifications sur cet appareil"><span class="ic-rond" aria-hidden="true">${ICONES.cloche}</span>
-        <div class="ca-texte"><b>Recevez-les aussi sur ${IOS ? 'votre iPhone' : 'cet appareil'}</b><p class="aide">${etat === 'ios' ? 'Installez d’abord l’application sur l’écran d’accueil : les notifications s’activent ensuite dans « Moi ».' : 'Même application fermée : une feuille de route publiée, des horaires changés.'}</p></div>
+        <div class="ca-texte"><b>Recevez-les aussi sur ${IOS ? 'votre iPhone' : 'cet appareil'}</b><p class="aide">${etat === 'ios' ? 'Installez d’abord l’application sur l’écran d’accueil : les notifications s’activent ensuite dans « Moi ».' : `Même application fermée : une feuille de route publiée, des horaires changés. ${ACCORD}`}</p></div>
         ${etat === 'ios' ? '<a class="btn petit" href="#/moi">Comment faire</a>' : '<button type="button" class="btn petit principal" data-push-activer>Activer</button>'}</section>`;
     }
     if (etat === 'actif' || etat === 'inactif') return bascule(etat === 'actif');
     if (etat === 'ios') return `<p>Sur iPhone et iPad, les notifications n’arrivent qu’à l’application installée sur l’écran d’accueil.</p>${ETAPES_IOS}<p class="aide">Puis revenez ici, dans « Moi », pour les activer.</p>`;
-    if (etat === 'bloque') return '<p class="message conseil">Les notifications sont bloquées pour cette application dans les réglages du navigateur (ou du téléphone). Autorisez-les, puis revenez ici.</p>';
+    if (etat === 'bloque') return `<p class="message conseil">Les notifications sont bloquées pour cette application dans les réglages du navigateur (ou du téléphone). Autorisez-les, puis revenez ici.</p>
+      <p class="aide">${debloquer()}</p><p><button type="button" class="btn petit" data-push-verifier>Vérifier à nouveau</button></p>`;
     if (etat === 'indisponible') return `<p class="aide">${E.notifsEtat === 'absent' ? 'Les notifications arrivent bientôt : dans l’application, onglet Notifications, et sur l’appareil.'
       : 'Les notifications sur l’appareil arrivent bientôt. En attendant, elles s’affichent ici, dans l’application.'}</p>`;
     if (etat === 'non') return '<p class="aide">Ce navigateur ne sait pas recevoir de notifications. Elles restent lisibles dans l’application, onglet Notifications.</p>';
@@ -5253,6 +5284,8 @@
     if (t.matches('[data-installer-barre]')) { vibrer(6); return E.installer ? installer() : ouvrirModaleInstallation(t); }
     if (t.matches('[data-installer]')) return installer();
     if (t.matches('[data-fermer-install]')) { garderPref('installFermee', true); majInstallation(); return; }
+    if (t.matches('[data-fermer-push]')) { garderPref('pushFermee', true); $$('[data-zone-push="accueil"]').forEach(z => z.remove()); return; }
+    if (t.matches('[data-copier-adresse]')) return copier(`${location.origin}${location.pathname}`, '', 'Adresse copiée : collez-la dans Safari.');
     if (t.matches('[data-aide-ios]')) { const z = document.getElementById(t.getAttribute('aria-controls')), ouvrir = t.getAttribute('aria-expanded') !== 'true'; if (z) z.hidden = !ouvrir; t.setAttribute('aria-expanded', String(ouvrir)); return; }
     if (t.matches('[data-fichier]')) {
       const chemin = t.dataset.fichier;

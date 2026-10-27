@@ -236,6 +236,8 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .col-principale, .col-cote { display: contents; }
 .o-heros { order: 1; } .o-jourj { order: 2; } .o-chiffres { order: 3; } .o-carte { order: 4; } .o-agenda { order: 5; } .o-install { order: 6; } .o-suite { order: 7; } .o-passees { order: 8; }
 .o-install:empty { display: none; }
+/* l'invitation aux notifications (cartePush, « accueil ») : à côté de l'installation, absente une fois réglée ou fermée */
+.o-push { order: 6; } .o-push:empty { display: none; } .o-push .push-proposition { margin: 0; }
 .accueil .titre-section { margin: 10px 0 12px; }
 @media (min-width: 1100px) {
   .accueil { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 26px; align-items: start; }
@@ -351,8 +353,8 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .carte-action .ic-rond { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 14px; background: var(--magenta-doux); color: var(--magenta); }
 .ca-texte { flex: 1 1 200px; min-width: 0; }
 .ca-texte h2, .ca-texte > b { display: block; margin: 0 0 2px; font: 600 1.06rem/1.25 var(--serif); }
-.carte-action .fermer-install { position: absolute; top: 4px; right: 4px; width: 36px; height: 36px; color: var(--gris); }
-.carte-action.installation { padding-right: 40px; }
+.carte-action .fermer-install { position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; color: var(--gris); }
+.carte-action.installation, .carte-action.push-accueil { padding-right: 48px; }
 .push-proposition { margin: 0 0 16px; }
 .etapes { margin: 10px 0 0; padding-left: 22px; }
 .etapes li { margin: 5px 0; }
