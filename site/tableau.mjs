@@ -522,27 +522,28 @@ fs.mkdirSync(CAPT, { recursive: true });
   await ctx.close();
 }
 
-// ================================================================================ l'en-tête sur une ou deux lignes (rangerBarre)
-// de 641 à 1 440 px : jamais plus de deux lignes, rien ne déborde ; ce qui ne tient pas est dans « Plus » (les rubriques,
-// le compte), qui s'ouvre au clavier et se referme par Échap ; au téléphone couché, une ligne arrimée de 64 px au plus
+// ================================================================================ l'en-tête sur une ligne (rangerBarre)
+// de 641 à 1 440 px : une seule ligne, rien ne déborde ; les rubriques sont dans le menu latéral, pas dans l'en-tête ; ce qui
+// ne tient pas se replie, et le compte passe dans « Plus », qui s'ouvre au clavier et se referme par Échap ; au téléphone
+// couché, une ligne arrimée de 64 px au plus. (Le menu latéral lui-même est vérifié par site/cadre.mjs.)
+let plusVu = 0;
 for (const [largeur, hauteur, tactile] of [[700, 900, false], [1000, 900, false], [1120, 820, false], [1366, 768, false], [1440, 900, false], [844, 390, true], [667, 375, true]]) {
   const { ctx, page, erreurs } = await ouvrir(navigateur, { largeur, hauteur, hash: '#/accueil', tactile });
   await page.waitForTimeout(300);
   const t = await page.evaluate(() => {
-    // le menu des rubriques est cherché par son nom accessible : dans l'en-tête aujourd'hui, dans la colonne de gauche (la coque)
-    // une fois le lot 3 passé ; ce qui ne vaut que pour une nav d'en-tête (« Plus », les rubriques cachées) devient facultatif
-    const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), nav = document.querySelector('nav[aria-label="Rubriques"]');
-    const dansBarre = !!nav && b.contains(nav), np = b.querySelector('.nav-plus');
+    const b = document.querySelector('.barre'), m = b.querySelector('.marque').getBoundingClientRect(), np = b.querySelector('.nav-plus');
     // les lignes : les milieux des éléments visibles, regroupés quand ils sont à moins de 14 px l'un de l'autre
-    const milieux = [...b.querySelectorAll('.marque, .chercher, .qui > *' + (dansBarre ? ', nav[aria-label="Rubriques"] > :not([hidden])' : ''))].filter(e => e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; }).sort((x, y) => x - y);
+    const milieux = [...b.querySelectorAll('.marque, .chercher, .qui > *')].filter(e => e.getBoundingClientRect().width > 0).map(e => { const r = e.getBoundingClientRect(); return (r.top + r.bottom) / 2; }).sort((x, y) => x - y);
     const lignes = milieux.filter((y, i) => !i || y - milieux[i - 1] > 14).length;
-    return { h: Math.round(b.getBoundingClientRect().height), lignes, position: getComputedStyle(b).position, deborde: document.documentElement.scrollWidth > innerWidth || (dansBarre && nav.scrollWidth > nav.clientWidth + 1),
-      caches: dansBarre ? nav.querySelectorAll(':scope > a[hidden]').length : 0, plus: !!np && !np.hidden, courante: !!nav && !!nav.querySelector('a[aria-current="page"]:not([hidden])'), compte: b.classList.contains('r-compte'), dansBarre, haut: m.top };
+    const courante = document.querySelector('nav[aria-label="Rubriques"] a[aria-current="page"]');
+    return { h: Math.round(b.getBoundingClientRect().height), lignes, position: getComputedStyle(b).position, deborde: document.documentElement.scrollWidth > innerWidth || b.scrollWidth > b.clientWidth + 1,
+      plus: !!np && !np.hidden, compte: b.classList.contains('r-compte'), liensCompte: [...b.querySelectorAll('#b-mdp, #b-sortir')].filter(a => a.getClientRects().length).length, navDansBarre: !!b.querySelector('nav'), courante: !!courante && courante.getClientRects().length > 0, haut: m.top };
   });
   const bas = hauteur <= 500;
-  ok(`en-tête (${largeur}×${hauteur}) : ${bas ? 'une ligne arrimée, 64 px au plus' : 'une ou deux lignes'}, rien ne déborde, la rubrique courante en vue, « Plus » dès qu’une chose n’y tient pas`,
-    t.lignes <= (bas ? 1 : 2) && !t.deborde && t.courante && (!bas || (t.h <= 64 && t.position === 'sticky')) && (!t.dansBarre || t.plus === (t.caches > 0 || t.compte)), JSON.stringify(t));
+  ok(`en-tête (${largeur}×${hauteur}) : ${bas ? 'une ligne arrimée, 64 px au plus' : 'une ligne'}, rien ne déborde, pas de rubriques dans l’en-tête (elles sont dans le menu, la courante en vue), « Plus » dès que le compte ne tient plus (ses liens, mesurés : aucun visible avec « Plus », tous visibles sans)`,
+    t.lignes === 1 && !t.deborde && !t.navDansBarre && t.courante && (!bas || (t.h <= 64 && t.position === 'sticky')) && t.plus === t.compte && t.liensCompte === (t.plus ? 0 : 2), JSON.stringify(t));
   if (t.plus) {
+    plusVu++;
     await page.focus('.nav-plus'); await page.keyboard.press('Enter'); await page.waitForTimeout(150);
     const m = await page.evaluate(() => { const x = document.querySelector('#nav-autres'), r = x.getBoundingClientRect(), it = [...x.querySelectorAll('.na-item')];
       return { ouvert: x.classList.contains('ouvert'), n: it.length, rub: it.filter(a => a.matches('a[href^="#/"]')).length, focus: document.activeElement?.classList.contains('na-item'), dedans: r.left >= 0 && r.right <= innerWidth + 1, cible: Math.min(...it.map(a => a.getBoundingClientRect().height)) }; });
@@ -550,13 +551,14 @@ for (const [largeur, hauteur, tactile] of [[700, 900, false], [1000, 900, false]
     const second = await page.evaluate(() => document.activeElement === document.querySelectorAll('#nav-autres .na-item')[1]);
     await page.keyboard.press('Escape');
     const ferme = await page.evaluate(() => !document.querySelector('#nav-autres').classList.contains('ouvert') && document.activeElement?.classList.contains('nav-plus'));
-    ok(`en-tête (${largeur}×${hauteur}) : « Plus » s’ouvre au clavier sur ce qui n’a pas tenu (${t.caches} rubrique${t.caches > 1 ? 's' : ''}${t.compte ? ', le compte' : ''}), cibles de 44 px, ↓ puis Échap rend le focus`,
-      m.ouvert && m.rub === t.caches && m.focus && m.dedans && m.cible >= 44 && second && ferme, JSON.stringify({ m, second, ferme }));
-    if (largeur === 1120 || largeur === 844) { await page.click('.nav-plus'); await page.waitForTimeout(250); await page.screenshot({ path: `${CAPT}/entete-plus-${largeur}.png` }); await page.keyboard.press('Escape'); }
+    ok(`en-tête (${largeur}×${hauteur}) : « Plus » s’ouvre au clavier sur le compte (5 lignes, aucune rubrique), cibles de 44 px, ↓ puis Échap rend le focus`,
+      m.ouvert && m.n === 5 && m.rub === 0 && m.focus && m.dedans && m.cible >= 44 && second && ferme, JSON.stringify({ m, second, ferme }));
+    if (largeur === 700 || largeur === 844) { await page.click('.nav-plus'); await page.waitForTimeout(250); await page.screenshot({ path: `${CAPT}/entete-plus-${largeur}.png` }); await page.keyboard.press('Escape'); }
   }
   ok(`en-tête (${largeur}×${hauteur}) : aucune erreur de script`, erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }
+ok('en-tête : « Plus » (le compte) se montre au moins à une des largeurs essayées, et il est essayé au clavier', plusVu >= 1, String(plusVu));
 
 // ================================================================================ la recherche rapide : tout ce qui a une adresse
 // les fiches ouvertes reviennent champ vide (puis les prochaines dates) ; un téléphone, un contact, une partie de rubrique,

@@ -36,6 +36,7 @@ node site/niveau.mjs               # les dix idées de l'administration, dans Ch
 node site/adresses-admin.mjs       # les adresses et les garde-fous de l'administration, sur la même base fictive
 node site/tableur.mjs              # le tableur des représentations, dans Chromium, sur la même base fictive (après le build)
 node site/icones.mjs               # la bibliothèque d'icônes de l'administration et ses consommateurs, dans Chromium (après le build)
+node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis et ses badges, dans Chromium, sur la même base fictive (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -338,12 +339,12 @@ compte du projet inscrit dans `crescite_admins`.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
     en sombre comme en clair. `node site/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
-    (163 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
+    (161 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
     précédent / suivant, le Kanban glissé, le téléphone, le sombre, les repères de la page ; captures dans `site/dist/shots-tableau/`).
 - **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
   les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, par Google Fonts ; sans
-  réseau, le système), les neutres du site et la couleur de la saison, un en-tête de nuit (la pieuvre et la rubrique
+  réseau, le système), les neutres du site et la couleur de la saison, un en-tête et un menu latéral de nuit (la pieuvre et la rubrique
   courante à la couleur de la saison), des cartes douces et un dégradé de la saison pour ce qui s'enregistre, chaque tuile du tableau
   de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
@@ -416,7 +417,7 @@ compte du projet inscrit dans `crescite_admins`.
     préremplissent une nouvelle date.
   - **Le téléphone** (`admin/mobile.js`, sous 640 px) : une barre d'onglets en bas (Tableau, Dates, Planning, Équipe,
     Plus : les autres rubriques, la carte, la corbeille, la recherche), un bouton « + » flottant (une date, une fiche, un
-    lieu, une opportunité, une proposition, une séance), les rubriques de l'en-tête masquées, les fiches en plein écran,
+    lieu, une opportunité, une proposition, une séance), le menu latéral masqué, les fiches en plein écran,
     leur pied et les annonces au-dessus de la barre. L'administration **s'installe sur le téléphone** comme l'espace de
     l'équipe (`admin/manifest.webmanifest`, `admin/sw.js`, ses icônes) : « Installer », en tête de « Plus », donne
     l'invite du navigateur, ou sur l'iPhone la marche à suivre dans Safari ; installée, elle s'ouvre en plein écran
@@ -451,6 +452,55 @@ compte du projet inscrit dans `crescite_admins`.
     téléphone et du planning comparés à un tableau en dur, les tailles d'avant (le fil d'Ariane 18 px, les tuiles 15 px,
     le témoin), l'espace de l'équipe qui garde ses tracés, la vue d'essai `#/essai/icones` : 45 vérifications, une capture
     dans `site/dist/shots-icones/` (`icones.png`).
+- **Le cadre et le menu latéral** (`admin/cadre.js` ; la coque elle-même, `poserCoque` et `cadre`, est dans
+  `admin/index.html`) : l'en-tête tient sur une ligne, à toutes les largeurs ; ce qui n'y tient pas se replie, dans cet
+  ordre (l'adresse du compte, le mot « Rechercher », les mots longs, les liens du compte, qui passent alors dans « Plus »,
+  « Administration » sous le nom, la loupe seule). Les rubriques sont à gauche, dans une bande de nuit de 240 px qui
+  prolonge l'en-tête : douze lignes de 44 px (onze tant que la Diffusion n'est pas installée), chacune avec son icône et son
+  nom en petites capitales, la rubrique où l'on est en blanc avec un filet à la couleur de la saison. La bande reste collée
+  sous l'en-tête quand la page défile. En bas, « ‹ Replier » : le menu passe à 64 px d'icônes (le nom en infobulle, et dit
+  par les lecteurs d'écran), le contenu s'élargit, et la colonne glisse d'une largeur à l'autre (rien ne bouge si l'appareil
+  demande moins d'animations). Les flèches ↑ ↓ passent d'une rubrique à l'autre. Les annonces et la barre de sélection se
+  centrent sur le contenu, non sur la fenêtre.
+  - **Les raccourcis.** **Alt+M** replie ou déplie le menu (Option+M sur un Mac). **G puis une lettre** va à une
+    rubrique : G puis T le Tableau de bord, D les Représentations (les dates), P le Planning, F les Feuilles de route, S les
+    Spectacles, E l'Équipe, C la Diffusion (seulement quand la base l'a), O l'Espace pro, A les Ateliers, L les Lieux, X les
+    Textes du site, J le Journal. Après G, un petit « G… » en bas à gauche du contenu dit qu'on attend la lettre ; il
+    s'efface au bout d'une seconde, ou si la lettre ne mène nulle part. Rien ne part quand on écrit dans un champ, dans une
+    case du tableur, dans une boîte ouverte (l'aide, une question, le briefing, la recherche) ou dans un menu ouvert, ni
+    pendant qu'on dispose les tuiles du tableau de bord (« Personnaliser »). La séquence s'écrit dans
+    l'infobulle de chaque lien du menu (« Représentations (G puis D) ») et dans l'aide : « **?** » les liste, sous « Partout »
+    (Alt+M) et « Aller à une rubrique ». Elles sont déclarées une fois, dans un registre (`RACCOURCIS`, dans le script
+    principal d'`admin/index.html`) qu'un seul écouteur du clavier lit ; l'aide (`admin/menus.js`) en tire ses lignes, et un
+    module qui veut un raccourci le déclare là (`RACCOURCIS.declarer({ id, touches, groupe, d, quand, faire })`) au lieu
+    d'écouter le clavier de son côté. Seul le bouton de repli porte `aria-keyshortcuts="Alt+M"` : une suite de touches n'est
+    pas un raccourci de rechange pour les lecteurs d'écran, la séquence va dans l'infobulle et dans l'aide.
+  - **Les badges.** Trois rubriques disent ce qui attend, par une pastille corail (un point sur l'icône quand le menu est
+    replié) : le **Tableau de bord** (le nombre de lignes « à traiter » de la tuile, hors reportées : le même que la tuile),
+    la **Diffusion** (les demandes de devis nouvelles) et l'**Équipe** (les notes de frais en attente). La Diffusion et
+    l'Équipe comptent leurs catégories quels que soient les réglages de la tuile « À traiter ». Le lien du menu dit son
+    compte aux lecteurs d'écran (« Diffusion CRM, 3 devis à traiter »). Le compte se fait quand la page est au repos (jamais
+    pendant qu'une vue se dessine), se garde 30 secondes, et se refait un instant après un changement reçu en direct, un
+    report, un épinglage ou une relecture de la base : le badge suit la tuile sans attendre les 30 secondes.
+  - **Où le choix est gardé.** À partir de 1 340 px de large, le menu naît déplié. En dessous, il naît replié sans que ce soit
+    retenu comme un choix. Dès qu'on le replie ou le déplie soi-même sur un grand écran, il reste comme on l'a laissé : le
+    choix est gardé avec le compte (`menu.replie`, voir « Les préférences »), retrouvé sur les autres appareils et au
+    premier dessin de la page (un petit script du `<head>` le lit dans la copie de l'appareil avant que rien ne paraisse), et
+    un second onglet se replie avec le premier ; l'annonce dit une fois où le choix est gardé. Sous 1 340 px, déplier le
+    menu ne vaut que pour l'onglet (il est oublié à la fermeture), et rien n'est écrit dans le compte.
+  - **Le téléphone** (640 px et moins) n'a pas de menu latéral : la barre du bas en tient lieu, et rien n'a bougé. Le
+    compte, le mot de passe, l'aide et la déconnexion restent dans l'en-tête.
+  - **À l'impression**, seul le contenu sort (ni l'en-tête, ni le menu, ni le pied).
+  - `node site/cadre.mjs` vérifie tout cela dans Chromium, hors ligne, sur la base fictive commune : l'en-tête sur une
+    ligne et le menu déplié à 1 440 px, le menu collé au défilement, les annonces centrées, la coque construite une seule
+    fois (et de nouveau après l'écran du mot de passe), le repli d'office à 1 280 px sans rien écrire, le repli et le dépli
+    (la colonne qui s'anime, la clé écrite, l'état retrouvé dès le premier dessin, le second onglet, sans le script SQL 6,
+    sous « moins d'animations »), le téléphone tel qu'avant, l'impression et l'ordre du clavier, puis les raccourcis (Alt+M au
+    Mac comme au clavier français, les douze « G puis une lettre », le témoin, ce qui les fait dormir, dont les boîtes
+    natives sans `aria-modal` (la question, le briefing), la file J / K du tableau de bord qui ne bouge pas, l'aide « ? »)
+    et les badges (les comptes, ce que lisent les lecteurs d'écran, le point du menu replié, le mémo de 30 s, le calcul
+    différé, un changement en direct, une ligne reportée que le badge suit sans attendre, des catégories imposées, aucune
+    tâche de plus de 200 ms à `CPU=4`) : 120 vérifications, des captures dans `site/dist/shots-cadre/`.
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
@@ -533,14 +583,15 @@ compte du projet inscrit dans `crescite_admins`.
 
 **Son mouvement.** L'administration s'ouvre sur un squelette qui luit le temps de lire la base, puis le contenu paraît.
 Les vues s'enchaînent (les View Transitions : la fiche glisse vers la gauche en s'ouvrant, la liste
-revient par la droite, une autre rubrique arrive en fondu ; l'en-tête et les annonces restent en place : `changerVueAdmin`,
+revient par la droite, une autre rubrique arrive en fondu ; l'en-tête, le menu latéral et les annonces restent en place : `changerVueAdmin`,
 `sensVue`) ; au premier rendu d'une vue, ses lignes, ses cartes et ses blocs arrivent l'un après l'autre (`main.entree`,
 retiré au bout d'une seconde : les rafraîchissements du temps réel ne rejouent rien) ; le pied d'une fiche dit l'état
 d'une barre, ambre quand elle est modifiée, verte un instant quand elle est enregistrée ; « À compléter avant la tournée »
 se vide à mesure : ce qui vient d'être complété reste un instant en vert, « complété », puis se retire
 (`listeQuiSeVide`) ; la recherche rapide s'ouvre et ses premiers résultats arrivent l'un après l'autre ; la pastille
 « direct » bat quand un changement arrive ; dans le tableur, la case qu'on vient d'écrire s'encadre de vert ; l'onglet
-choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les annonces s'en vont en douceur ; les
+choisi d'un spectacle arrive ; une connexion refusée secoue le formulaire ; les annonces s'en vont en douceur ; le menu latéral se replie en
+glissant d'une largeur à l'autre (la colonne elle-même s'anime, le contenu suit) ; les
 compteurs « n à compléter » et le badge d'une feuille publiée sautent ; dans le planning, aujourd'hui se pose ; une liste
 qui se redessine (le temps réel, un enregistrement) glisse ses lignes à leur nouvelle place (`glisserVers`) ; le champ
 visé par un lien « à compléter » s'allume (`visee`) ; une séance ou une précision ajoutée se pose ; la cloche de « Prévenir
@@ -751,7 +802,7 @@ range en colonne à gauche. On y trouve :
   à chaque écriture et prévient l'équipe (`crescite_feuilles_avant`, `crescite_notif_feuilles`).
   Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
   feuille, sans rien perdre de la saisie.
-  `node site/gestes-equipe.mjs` le vérifie dans Chromium (99 vérifications : hors ligne, puis sur une base
+  `node site/gestes-equipe.mjs` le vérifie dans Chromium (100 vérifications : hors ligne, puis sur une base
   simulée en lecture-écriture, stockage compris, où le compte administre : la date, un horaire, une présence, le lieu,
   prévenir, une notification, un document modifié puis un fichier ajouté, une ligne de feuille de route, la mise à
   jour depuis la base, le brouillon, la publication, la composition), après `python3 site/build.py`.
@@ -864,10 +915,11 @@ fait de même quand le compte connecté administre. Trois fonctions, à déploye
 **Les préférences.** Le sixième script, `supabase/migrations/20261025_crescite_preferences.sql`, s'exécute après les cinq
 autres, de la même façon, et peut être relancé. Il ajoute `crescite_preferences` : ce que chacun règle une fois et
 retrouve sur tous ses appareils, une valeur par compte et par clé. Chacun ne lit et n'écrit que les siennes,
-l'administration comprise ; le public n'y a aucun droit. Trois clés servent aujourd'hui : `accueil.tableau` (la
+l'administration comprise ; le public n'y a aucun droit. Quatre clés servent aujourd'hui : `accueil.tableau` (la
 disposition du tableau de bord), `planning.masques` (les personnes masquées du planning, en liste brute, que lit aussi
-l'espace de l'équipe) et `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
-ou 90 jours). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
+l'espace de l'équipe), `representations.avant` (le panneau « À compléter avant la tournée » : ouvert ou fermé, 30, 60
+ou 90 jours) et `menu.replie` (le menu latéral de l'administration, replié ou déplié : vrai ou faux, absente tant qu'on
+ne l'a pas choisi ; elle ne se garde que sur un grand écran, voir « Le cadre et le menu latéral »). Une clé nouvelle se nomme `rubrique.reglage`, en minuscules, et sa valeur garde la même forme d'une
 version à l'autre. Tous les modules passent par un seul outil, `admin/prefs.js` (`PREFS`), qui lit le compte en une
 requête à l'ouverture, répond ensuite sans attendre, et écrit sans faire attendre : le réglage est gardé sur l'appareil
 tout de suite (sous `crescite-prefs:<compte>` : une copie par compte, rien ne se mélange sur un ordinateur partagé),

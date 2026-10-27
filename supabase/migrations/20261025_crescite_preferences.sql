@@ -20,6 +20,9 @@
 --   representations.avant   le panneau « À compléter avant la tournée » de la rubrique Représentations : { ouvert, jours }
 --                           (ouvert ou fermé, 30, 60 ou 90 jours). Avant ce script, sur l'appareil, comme les autres ;
 --                           l'ancienne clé de l'appareil (crescite-admin-avant) passe dans la base puis s'efface.
+--   menu.replie             true ou false : le menu latéral de l'administration (admin/cadre.js) replié ou déplié, choisi sur un
+--                           écran de 1 340 px et plus (absente tant qu'on n'a pas choisi : le menu suit la largeur). Avant ce script,
+--                           sur l'appareil, comme les autres.
 -- Rien à migrer dans la base : les clés sont des lignes, pas des colonnes.
 
 begin;

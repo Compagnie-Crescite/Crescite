@@ -419,6 +419,7 @@ const TABLEAU = (() => {
     c.modifie = Date.now();
     if (PR()) PR().ecrire(CLE_PREF, c, { aussitot, muet: true });      // (muet : le panneau « Personnaliser » dit déjà où c'est gardé)
     else garderLocal(c);
+    if (typeof CADRE !== 'undefined') CADRE.perimer();      // (un report, un épinglage, un réglage de la tuile : le badge du menu suit)
   }
   const depart = () => `#/${conf().depart === 'representations' ? 'representations' : 'accueil'}`;
 

@@ -648,6 +648,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.waitForSelector('dialog.gq-aide[open][data-pret]', { timeout: 3000 }).catch(() => {}); await page.click('dialog.gq-aide [data-gq-fermer]');
   await page.waitForFunction(() => !document.querySelector('dialog.gq-aide'), null, { timeout: 3000 }).catch(() => {});
   ok('aide (ordinateur) · « Fermer » la ferme, le focus revient à « Raccourcis »', await page.evaluate(() => !document.querySelector('dialog.gq-aide') && document.activeElement?.matches('.nav-pied [data-aide]')));
+  ok('espace de l’équipe · <html> ne porte pas la classe « admin » et aucune .poignee n’y est (les poignées des modules partagés sont pour l’administration)', await page.evaluate(() => !document.documentElement.classList.contains('admin') && !document.querySelector('.poignee')));
   ok('aide (ordinateur) · erreurs de page : aucune', erreurs.length === 0, erreurs.join(' / '));
   await ctx.close();
 }

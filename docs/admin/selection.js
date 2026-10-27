@@ -177,7 +177,7 @@ const SELECTION = (() => {
   window.addEventListener('hashchange', () => { if (S.mode) vider(); });
   const style = document.createElement('style');
   style.textContent = `
-.sel-barre { position: fixed; left: 50%; bottom: 18px; z-index: 55; transform: translateX(-50%); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; max-width: calc(100vw - 24px); padding: 8px 10px; border-radius: 14px; background: var(--carte); border: 1px solid var(--trait); box-shadow: 0 14px 40px -12px rgba(0, 0, 0, .35); }
+.sel-barre { position: fixed; left: calc(50% + var(--large-menu, 0px) / 2); bottom: 18px; z-index: 55; transform: translateX(-50%); display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; max-width: calc(100vw - var(--large-menu, 0px) - 24px); padding: 8px 10px; border-radius: 14px; background: var(--carte); border: 1px solid var(--trait); box-shadow: 0 14px 40px -12px rgba(0, 0, 0, .35); }
 .sel-barre .sel-compte { font-weight: 800; padding: 0 6px; }
 .sel-barre .sel-actions { display: flex; flex-wrap: wrap; gap: 6px; padding-left: 6px; border-left: 1px solid var(--trait); }
 .sel-barre .sel-actions:empty { display: none; }

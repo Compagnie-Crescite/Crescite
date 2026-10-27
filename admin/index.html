@@ -8,6 +8,22 @@
      la feuille de style, sous data-theme="jour" seulement -->
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#1b1117">
+<!-- l'apparence retenue (aujourd'hui le menu latéral, replié ou déplié ; le thème et la densité viendront ici) : posée avant
+     le premier dessin pour que rien ne saute. Elle se lit dans le miroir du compte (crescite-admin-apparence:<compte>, que
+     cadre.js tient à jour) ; sous 1 340 px, un menu déplié exprès se lit dans l'onglet (sessionStorage). Sans compte gardé,
+     sans stockage : rien, et la feuille de style choisit selon la largeur -->
+<script id="apparence">
+(function () {
+  try {
+    var h = document.documentElement, s = JSON.parse(localStorage.getItem('crescite-admin') || 'null'), uid = s && s.user && s.user.id;
+    if (!uid) return;
+    var a = JSON.parse(localStorage.getItem('crescite-admin-apparence:' + uid) || 'null') || {};
+    var etroit = window.matchMedia && window.matchMedia('(max-width: 1339px)').matches, deplie = false;
+    try { deplie = etroit && sessionStorage.getItem('crescite-admin-menu') === 'deplie'; } catch (e) { /* onglet sans stockage */ }
+    if (deplie) h.classList.add('menu-deplie'); else if (a['menu.replie'] === true) h.classList.add('menu-replie');
+  } catch (e) { /* stockage fermé, miroir illisible : les défauts de la feuille de style */ }
+})();
+</script>
 <!-- l'icône d'onglet : celle des espaces réservés, à la couleur de la saison (faite par site/build.py, equipe(dest)) -->
 <link rel="icon" href="../equipe/icones/192.png" type="image/png">
 <link rel="apple-touch-icon" href="../equipe/icones/180.png">
@@ -66,6 +82,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 /* le pied commun des espaces réservés (PIED) : sobre, en fin de contenu */
 .pied-espace { display: flex; flex-wrap: wrap; align-items: center; gap: 0 22px; max-width: 1500px; margin: 8px auto 0; padding: 18px 20px 26px; border-top: 1px solid var(--trait); color: var(--gris); font-size: 13px; }
+/* sous la coque, il s'aligne sur la colonne du contenu (à droite du menu, centré dans 1 500 px comme le contenu), pas sur toute la largeur */
+.coque + .pied-espace { --marge-pied: max(0px, calc((100% - var(--large-menu, 0px) - 1500px) / 2)); margin-left: calc(var(--large-menu, 0px) + var(--marge-pied)); margin-right: var(--marge-pied); }
 .pied-espace .pied-nom { margin: 0; font-family: var(--titres); font-weight: 500; color: var(--encre); }
 .pied-espace nav { display: flex; flex-wrap: wrap; gap: 0 18px; }
 /* chaque lien du pied, une cible de 44 px (la ligne reste sobre : la hauteur ne se voit pas) */
@@ -81,10 +99,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .marque .pieuvre { display: inline-block; flex: none; align-self: center; width: 42px; height: 24px; color: var(--pieuvre, var(--accent)); }
 .marque .pieuvre:empty { display: none; }
 .marque .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; }
-.nav a { padding: 7px 12px; border-radius: 999px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; }
-.nav a:hover { background: var(--doux); color: var(--encre); }
-.nav a[aria-current="page"] { background: var(--accent); color: var(--sur-accent, #fff); }
 .qui { display: flex; align-items: center; gap: 10px; color: var(--gris); font-size: 13px; white-space: nowrap; }
 .direct { display: inline-flex; align-items: center; gap: 6px; }
 .direct::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b9b0bb; flex: none; }
@@ -110,32 +124,27 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @media (max-width: 860px) { .temoin-detail { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; } .temoin { padding: 4px 8px; } .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-ic { display: none; } }
 /* l'aide (« ? ») : un bouton discret dans l'en-tête, à l'ordinateur */
 .barre .aide-b { min-width: 32px; padding-left: 0; padding-right: 0; font-weight: 800; }
-/* L'en-tête tient sur une ligne, ou sur deux, à toutes les largeurs (rangerBarre le mesure, à chaque rendu et quand la
-   fenêtre change) : la marque, la recherche, les rubriques, le compte. Quand tout ne tient pas sur une ligne, les rubriques
-   passent sur la seconde (.deux-lignes). Ce qui ne tient pas encore se replie, dans cet ordre : l'adresse du compte
+/* L'en-tête tient sur une ligne à toutes les largeurs (rangerBarre le mesure, à chaque rendu et quand la fenêtre change) :
+   la marque, la recherche, le témoin, les deux liens vers le site, l'adresse et les boutons du compte. Les rubriques sont
+   dans le menu latéral (.menu, plus bas). Quand tout ne tient pas, ça se replie dans cet ordre : l'adresse du compte
    (.r-moi), le mot « Rechercher » (.r-mot), les mots longs (.r-long), les liens du compte, qui passent dans « Plus »
-   (.r-compte), « Administration » sous le nom (.r-marque), la loupe seule (.r-loupe) ; les rubriques qui ne tiennent pas
-   sur leur ligne passent dans « Plus », comme au téléphone, la rubrique courante restant en vue. Un écran bas (500 px de
-   haut au plus : un téléphone couché) garde une seule ligne, arrimée si elle tient dans 64 px (sinon .defile : elle défile
-   avec la page). Au téléphone en portrait (mobile.js), les rubriques sont dans la barre du bas. */
-/* (les rubriques ne débordent jamais : overflow coupe au cas où ; un peu d'air autour garde l'ombre de la rubrique
-   courante et l'anneau du focus, sans changer la hauteur) */
-.barre .nav { flex: 1 1 auto; min-width: 0; overflow: hidden; align-items: center; padding: 6px 4px 12px; margin: -6px -4px -12px; }
+   (.r-compte), « Administration » sous le nom (.r-marque), la loupe seule (.r-loupe). Un écran bas (500 px de haut au
+   plus : un téléphone couché) est arrimé s'il tient dans 64 px (sinon .defile : il défile avec la page). Au téléphone en
+   portrait (mobile.js), les rubriques sont dans la barre du bas. */
 .barre .qui { margin-left: auto; }
-.barre.deux-lignes { flex-wrap: wrap; row-gap: 6px; }
-.barre.deux-lignes .nav { order: 3; flex-basis: 100%; }
 .barre.defile { position: relative; }
 .barre.r-moi .qui .moi, .barre.r-mot .chercher .mot, .barre.r-long .long, .barre.r-loupe .chercher kbd { display: none; }
-.barre.r-compte .qui > :not(.direct) { display: none; }
+.barre.r-compte .qui > :not(.direct):not(.nav-plus) { display: none; }
 .barre.r-marque .marque { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 2px; line-height: 1.1; }
 .barre.r-marque .marque .pieuvre { grid-row: span 2; }
 .barre.r-marque .marque small { font-size: 10.5px; }
 .barre.r-loupe .chercher { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 50%; }
-/* au doigt (une tablette, un téléphone couché), chaque rubrique et « Plus » sont des cibles de 44 px */
-@media (pointer: coarse) { .barre .nav a, .barre .nav-plus { display: inline-flex; align-items: center; min-height: 44px; } .barre.r-loupe .chercher { width: 44px; height: 44px; } }
-/* « Plus » : au bout des rubriques, il ouvre sous lui les rubriques qui n'ont pas tenu, puis le compte (.r-compte) */
+/* au doigt (une tablette, un téléphone couché), « Plus » et la loupe sont des cibles de 44 px */
+@media (pointer: coarse) { .barre .nav-plus { display: inline-flex; align-items: center; min-height: 44px; } .barre.r-loupe .chercher { width: 44px; height: 44px; } }
+/* « Plus » : dans le compte, il ouvre sous lui le compte (les liens vers le site, le mot de passe, les raccourcis, la
+   déconnexion) quand il ne tient plus dans l'en-tête (.r-compte) */
 .nav-plus { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-left: 2px; padding: 7px 12px; border: 0; border-radius: 999px; background: none; color: inherit; font: inherit; font-weight: 600; white-space: nowrap; cursor: pointer; }
-.barre .nav > [hidden] { display: none !important; }
+.nav-plus[hidden] { display: none !important; }
 .nav-plus svg { transition: transform .15s; }
 .nav-plus[aria-expanded="true"] svg { transform: rotate(180deg); }
 .nav-autres { position: absolute; z-index: 40; display: none; flex-direction: column; gap: 2px; width: max-content; min-width: 230px; max-width: calc(100vw - 16px); overflow: auto; overscroll-behavior: contain; padding: 6px; background: var(--carte); color: var(--encre); border: 1px solid var(--trait); border-radius: 12px; box-shadow: 0 14px 40px rgba(10, 5, 10, .35); text-transform: none; letter-spacing: 0; }
@@ -146,9 +155,50 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav-autres .na-moi { margin: 0 12px 4px; font-size: 12.5px; color: var(--gris); overflow-wrap: anywhere; }
 .nav-autres .na-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 12px; border: 0; border-radius: 9px; background: none; color: var(--encre); font: inherit; font-weight: 650; text-align: left; text-decoration: none; cursor: pointer; }
 .nav-autres .na-item:hover, .nav-autres .na-item:focus-visible { background: var(--doux); }
-.nav-autres .na-item[aria-current="page"] { background: var(--accent-doux); color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
 @media (max-width: 860px) { .barre { gap: 8px 14px; padding: 8px 12px; } }
 @media (max-width: 520px) { .qui { gap: 10px; font-size: 12.5px; } .qui .long, .direct .mot { display: none; } }
+/* La coque : le menu latéral et le contenu côte à côte (poserCoque dans le script principal ; admin/cadre.js dessine et tient
+   le menu). La largeur du menu se DÉCLARE (--large-menu), elle ne se mesure pas : la colonne de la grille et l'aside la lisent
+   tous deux, et un ResizeObserver sur l'aside, dont la largeur suivrait la colonne, qui suivrait l'aside, tournerait en rond.
+   À partir de 1 340 px le menu est déplié (240 px) ; de 641 à 1 339 px il est replié (64 px : des icônes), sauf si on l'a
+   déplié exprès (html.menu-deplie) ; html.menu-replie dit un repli voulu ; à 640 px et moins il est masqué par cette feuille
+   (le même seuil que mobile.js, pour qu'il ne paraisse pas 50 ms avant que mobile.js pose html.ob-actif : le téléphone a sa
+   barre du bas). Le repli anime la colonne elle-même (@property : la largeur passe de l'une à l'autre, le contenu suit par la
+   grille), sauf si l'appareil demande moins d'animations ou avec ?anim=0 (html.still). */
+@property --large-menu { syntax: '<length>'; inherits: true; initial-value: 240px; }
+html { --large-menu: 240px; }
+html.menu-replie { --large-menu: 64px; }
+@media (max-width: 1339px) { html:not(.menu-deplie) { --large-menu: 64px; } }
+@media (max-width: 640px) { html, html:not(.menu-deplie), html.menu-replie, html.menu-deplie { --large-menu: 0px; } }
+@media (prefers-reduced-motion: no-preference) { html:not(.still) { transition: --large-menu .22s cubic-bezier(.2, .8, .2, 1); } }
+.coque { display: grid; grid-template-columns: var(--large-menu) minmax(0, 1fr); }
+.coque > main { grid-column: 2; width: 100%; }
+/* l'aside colle sous l'en-tête : align-self: start et max-height font le collage dans la grille (sans eux il s'étirerait sur
+   toute la hauteur de la page et n'aurait plus rien à coller) ; son pied (le bouton de repli) reste en bas de l'écran. Il est
+   sous l'en-tête (20), les annonces (50), la barre de sélection (55) et le tiroir (60-61) */
+.menu { grid-column: 1; grid-row: 1; position: sticky; top: var(--haut-barre, 0px); z-index: 10; align-self: start; display: flex; flex-direction: column;
+  min-height: calc(100vh - var(--haut-barre, 0px)); max-height: calc(100vh - var(--haut-barre, 0px)); overflow: auto; overscroll-behavior: contain; scrollbar-width: none; container: menu / inline-size; }
+.menu .nav { display: flex; flex-direction: column; gap: 2px; flex: none; padding: 10px 0 6px; }
+.menu .nav a { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; margin: 0 8px; padding: 0 12px; border-radius: 10px; text-decoration: none; color: var(--gris); font-weight: 600; white-space: nowrap; transition: background-color .15s, color .15s; }
+.menu .nav a .ico { --ico: 20px; }
+.menu-l { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; transition: opacity .12s linear; }
+.menu-badge { flex: none; }
+/* le chiffre du badge n'est pas dans le texte du lien (le nom du lien reste « Tableau de bord ») : il est dans data-n, que ce
+   ::after écrit ; sans data-n, pas de badge */
+.menu-badge:not([data-n]) { display: none; }
+.menu-badge[data-n]::after { content: attr(data-n); }
+.menu-replier { display: flex; align-items: center; gap: 12px; min-height: 44px; margin: auto 8px 8px; padding: 0 12px; border: 0; border-radius: 10px; background: none; color: var(--gris); font: inherit; font-weight: 600; text-align: left; white-space: nowrap; cursor: pointer; }
+.menu-reglages { flex: none; }
+.menu-reglages:empty { display: none; }
+.menu a:focus-visible, .menu-replier:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; }
+/* replié (la colonne a moins de 120 px) : chaque lien garde son libellé pour les lecteurs d'écran (.menu-l passe en .sr) et
+   son infobulle ; le badge devient un point sur l'icône (habillage.js) */
+@container menu (max-width: 120px) {
+  .menu-l { position: absolute; width: 1px; height: 1px; flex: none; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; opacity: 0; }
+  .menu .nav a, .menu-replier { justify-content: center; gap: 0; padding: 0; }
+}
+/* au téléphone (640 px et moins, le seuil de mobile.js), pas de menu : la barre du bas en tient lieu */
+@media (max-width: 640px) { .menu { display: none; } }
 /* la recherche rapide : le bouton de l'en-tête (la loupe, « Rechercher », le raccourci Ctrl K ou ⌘K) et sa fenêtre.
    La loupe, le mot et le raccourci, tant qu'ils tiennent (rangerBarre : .r-mot, .r-loupe) ; au téléphone, la loupe seule,
    au bout de la ligne de la marque */
@@ -407,7 +457,7 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .chargement { margin: 0; padding: 60px 20px; text-align: center; color: var(--gris); animation: sq-attend 0s linear .6s both; }
 
 /* annonces */
-#annonces { position: fixed; z-index: 50; left: 50%; bottom: 18px; transform: translateX(-50%); display: grid; gap: 8px; width: min(460px, calc(100% - 24px)); }
+#annonces { position: fixed; z-index: 50; left: calc(50% + var(--large-menu, 0px) / 2); bottom: 18px; transform: translateX(-50%); display: grid; gap: 8px; width: min(460px, calc(100% - 24px)); }
 .annonce { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 11px; background: #1d1720; color: #fff; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
 .annonce.erreur { background: #8c1d16; }
 .annonce button { margin-left: auto; border: 1px solid rgba(255, 255, 255, .4); background: none; color: #fff; border-radius: 7px; padding: 3px 10px; cursor: pointer; font-weight: 700; }
@@ -418,6 +468,12 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .annonce [data-tt="retour"] + .annonce-fermer { margin-left: -4px; }
 .annonce .annonce-fermer:hover, .annonce .annonce-fermer:focus-visible { background: rgba(255, 255, 255, .14); color: #fff; }
 @media (prefers-reduced-motion: no-preference) { .annonce { animation: monte .2s ease-out; } @keyframes monte { from { transform: translateY(8px); opacity: 0; } } }
+/* le témoin d'une séquence de touches (« G… » : on attend la lettre) : une touche flottante, en bas à gauche du contenu, sous les
+   annonces ; vide, elle ne se voit pas (mais reste dans la page, pour que sa zone polie annonce le premier « G… ») */
+.rac-temoin { position: fixed; z-index: 56; left: calc(var(--large-menu, 0px) + 18px); bottom: 18px; padding: 7px 12px 6px; border: 1px solid rgba(255, 255, 255, .35); border-bottom-width: 2px; border-radius: 8px; background: #1d1720; color: #fff; font: 800 15px/1 var(--police); letter-spacing: .04em; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); pointer-events: none; }
+.rac-temoin:empty { opacity: 0; }
+@media (prefers-reduced-motion: no-preference) { html:not(.still) .rac-temoin { transition: opacity .12s linear; } }
+@media (max-width: 640px) { .rac-temoin { display: none; } }
 
 /* à compléter avant la tournée (en tête de Représentations) */
 .avant { margin-bottom: 10px; background: var(--carte); border: 1px solid var(--trait); border-left: 4px solid var(--option); border-radius: var(--rayon); }
@@ -464,7 +520,7 @@ table.simple tr.cliquable:hover td { background: var(--doux); }
 .crm-carte-pied { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--trait); }
 .crm-carte-relance { font-size: 11.5px; color: var(--gris); }
 .crm-carte-relance.retard { color: var(--alerte); font-weight: 700; }
-.crm-carte-actions { display: flex; gap: 4px; }
+.crm-carte-actions { display: flex; flex-wrap: wrap; gap: 4px; }     /* (les sept gestes d'une carte passent sur deux rangs quand la colonne se resserre : le menu latéral prend 240 px) */
 .crm-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
 .crm-kpi-boite { background: var(--carte); border: 1px solid var(--trait); border-radius: var(--rayon); padding: 14px; box-shadow: var(--ombre); }
 .crm-kpi-boite span { font-size: 12.5px; color: var(--gris); font-weight: 600; display: block; }
@@ -631,13 +687,14 @@ dialog.tab-dialogue::backdrop { background: rgba(23, 15, 26, .4); }
    fiches qui arrivent (main.entree, le temps du premier rendu), le pied qui dit l'état, la liste « à compléter » qui se
    vide, la recherche qui s'ouvre, la pastille « direct » qui bat, la case du tableur qui s'enregistre, la liste qui
    glisse (glisserVers), le champ visé qui s'allume (visee). Rien de tout cela si l'appareil demande moins d'animations,
-   ni avec ?anim=0 (html.still) ; l'en-tête et les annonces restent en place pendant une transition. */
+   ni avec ?anim=0 (html.still) ; l'en-tête, le menu latéral et les annonces restent en place pendant une transition. */
 html.still *, html.still *::before, html.still *::after { animation: none !important; transition: none !important; }
 .barre { view-transition-name: barre; }
+.menu:not(.menu-attente) { view-transition-name: menu; }
 #annonces { view-transition-name: annonces; }
-::view-transition-old(barre), ::view-transition-old(annonces) { display: none; }
-::view-transition-new(barre), ::view-transition-new(annonces) { animation: none; }
-::view-transition-group(barre), ::view-transition-group(annonces) { animation: none; }
+::view-transition-old(barre), ::view-transition-old(menu), ::view-transition-old(annonces) { display: none; }
+::view-transition-new(barre), ::view-transition-new(menu), ::view-transition-new(annonces) { animation: none; }
+::view-transition-group(barre), ::view-transition-group(menu), ::view-transition-group(annonces) { animation: none; }
 .pied-ed::before { content: ""; position: absolute; left: 14px; right: 14px; top: -1px; height: 3px; border-radius: 0 0 3px 3px; background: var(--option); transform: scaleX(0); transform-origin: 0 50%; transition: transform .3s cubic-bezier(.2, .8, .2, 1), background-color .3s; }
 .pied-ed.sale::before { transform: scaleX(1); }
 .pied-ed.ok::before { transform: scaleX(1); background: var(--ok); }
@@ -650,7 +707,7 @@ html.still *, html.still *::before, html.still *::after { animation: none !impor
 .carte-sp .img::after { transition: height .2s; }
 .carte-sp:hover .img::after { height: 9px; }
 .ligne { transition: box-shadow .15s, border-color .15s; }
-.nav a, .seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
+.seg button, .puce { transition: background-color .2s, color .2s, border-color .2s; }
 .champ input, .champ select, .champ textarea, .riche, input[type=search], .filtres input, .filtres select { transition: border-color .15s, box-shadow .15s; }
 /* le squelette du chargement (squeletteAdmin) : l'en-tête tel qu'il sera, puis la vue à sa forme, aux mesures de la page
    (le titre et ses boutons de 41 px, le bandeau du tableau de bord, les lignes d'une liste, les cartes…), qui luisent ; le
@@ -784,6 +841,7 @@ const tt = (f, ...a) => { if (TT && typeof TT[f] === 'function') { try { return 
 // moins d'animations : le réglage de l'appareil, ou ?anim=0 (captures et essais : html.still arrête aussi la feuille de style)
 const SANS_ANIM = /[?&]anim=0\b/.test(location.search);
 if (SANS_ANIM) document.documentElement.classList.add('still');
+document.documentElement.classList.add('admin');     // l'administration (l'espace de l'équipe ne la pose jamais) : sous html.admin, les modules partagés allument leurs poignées
 const CALME_ADMIN = () => SANS_ANIM || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
 const bravo = () => requestAnimationFrame(() => {
   const b = $('[data-enregistrer]'); if (b) tt('confirmer', b);
@@ -919,7 +977,7 @@ function teteImpression() {
   if (!t) { t = document.createElement('div'); t.id = 'imp-tete'; t.setAttribute('aria-hidden', 'true'); document.body.prepend(t); }
   if (!vue) { t.innerHTML = ''; return; }
   const net = s => String(s || '').replace(/\s+/g, ' ').trim();
-  const rubrique = net($('.tete h1', vue)?.innerText) || net($('.barre .nav [aria-current="page"]')?.textContent);
+  const rubrique = net($('.tete h1', vue)?.innerText) || net($('.menu .nav [aria-current="page"] .menu-l')?.textContent);
   const fiche = $('.deux.edition .editeur h2, .titre-ed h2', vue);
   const zones = $$('.filtres, .journal-filtres, .tab-filtres, .pl-vues, .pl-filtres', vue).filter(z => !(fiche && z.closest('.liste')));
   const mots = [];
@@ -1121,7 +1179,8 @@ function corpsSquelette(rub) {
 }
 function squeletteAdmin() {
   const k = (location.hash.match(/^#\/([a-z]+)/) || [])[1], rub = RUBRIQUES.some(r => r[0] === k) ? k : 'accueil';
-  $('#app').innerHTML = `${barreHtml(rub, true)}<main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true">${corpsSquelette(rub)}</div><p class="sr" role="status">Chargement de la base…</p></main>`;
+  // (la coque aussi : un aside inerte de la même largeur, pour que le premier cadre() ne décale pas le contenu)
+  $('#app').innerHTML = `${barreHtml(true)}<div class="coque attente"><aside class="menu menu-attente" aria-hidden="true" inert></aside><main class="ad-chargement" aria-busy="true"><div class="ad-squelette" aria-hidden="true">${corpsSquelette(rub)}</div><p class="sr" role="status">Chargement de la base…</p></main></div>`;
   majTemoin();
   tt('pieuvre');     // (la marque a sa pieuvre, comme dans la page : l'en-tête garde sa largeur)
   rangerBarre();
@@ -1208,6 +1267,7 @@ async function chargerTout() {
   await tableau;
   await documents;
   await carnet;
+  if (typeof CADRE !== 'undefined') CADRE.perimer();     // (les badges du menu : ce qu'on vient de lire a pu changer les comptes)
 }
 // les alertes de tournée, avec leur confirmation (le onzième script, supabase/migrations/20261030_crescite_alertes.sql) :
 // sans leur jeton (les liens des courriels) ni rien d'autre que ce que le résumé montre. Sans le script (confirme_le
@@ -1381,6 +1441,7 @@ function changement(t, p) {
   if (t === 'crescite_feuilles') majACompleter();     // « n à compléter » des dates ouvertes ailleurs (equipe.js)
   clearTimeout(rendrePlusTard);
   rendrePlusTard = setTimeout(() => { if (!E.sale) rafraichirListes(); }, 200);
+  APRES_CHANGEMENT.forEach(f => { try { f(); } catch (e) { console.error(e); } });     // (cadre.js : les badges du menu)
 }
 
 // ===================================================================================================== cadre et routes
@@ -1389,28 +1450,42 @@ const RUBRIQUES = [['accueil', 'Tableau de bord'], ['representations', 'Représe
 const rubriquesVisibles = () => RUBRIQUES.filter(([k]) => k !== 'diffusion' || E.ideale);
 const idealeAbsente = titre => `<div class="bloc"><h3>${titre}</h3><p>Exécutez <code>supabase/migrations/20261026_crescite_ideale.sql</code> dans Supabase (SQL Editor → New query → coller le fichier → Run), puis rechargez cette page.</p><p class="aide">Le reste de l’administration marche comme avant.</p></div>`;
 // l'en-tête : celui de la page, et celui du squelette du chargement (attente : le même, inerte, pour que rien ne bouge
-// quand la page arrive)
-function barreHtml(rubrique, attente = false) {
-  const nRub = rubriquesVisibles().length;
-  return `<header class="barre${nRub > 11 ? ' onze douze' : nRub > 10 ? ' onze' : ''}${attente ? ' attente" inert aria-hidden="true' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
+// quand la page arrive). Les rubriques n'y sont plus : elles sont dans le menu latéral (cadre.js). « Plus » ne porte que le
+// compte, quand il ne tient plus dans l'en-tête (rangerBarre)
+function barreHtml(attente = false) {
+  return `<header class="barre${attente ? ' attente" inert aria-hidden="true' : ''}"><a class="marque" href="#/accueil" title="Tableau de bord"><span class="pieuvre" data-pieuvre aria-hidden="true"></span>Compagnie Crescite <small>Administration</small></a>
     <button type="button" class="chercher" id="b-chercher" aria-label="Rechercher" aria-haspopup="dialog" aria-keyshortcuts="${SUR_MAC ? 'Meta+K' : 'Control+K'}" title="Rechercher une date, une personne, un lieu… (${RACCOURCI_RCH})">${LOUPE}<span class="mot" aria-hidden="true">Rechercher</span><kbd aria-hidden="true" data-touche="${RACCOURCI_RCH}"></kbd></button>
-    <nav class="nav" aria-label="Rubriques">${rubriquesVisibles().map(([k, l]) => `<a href="#/${k}"${k === rubrique ? ' aria-current="page"' : ''}>${l}</a>`).join('')}<button type="button" class="nav-plus" aria-expanded="false" aria-controls="nav-autres" hidden>Plus<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></nav><div class="nav-autres" id="nav-autres" role="group" aria-label="Autres rubriques et compte"></div>
-    <div class="qui">${temoinHtml()}
+    <div class="qui">${temoinHtml()}<button type="button" class="nav-plus" aria-expanded="false" aria-controls="nav-autres" hidden>Plus<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <a href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a href="${SITE}?edition" target="_blank" rel="noopener" title="Écrire les textes et les dates dans la page elle-même">Modifier<span class="long"> sur le site</span> ↗</a><span class="moi">${esc(E.session.user.email)}</span>
-    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe">${ICONES.svg('cle', { taille: 15 })}<span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div></header>`;
+    <button class="btn petit" type="button" id="b-mdp" aria-label="Mot de passe" title="Changer mon mot de passe">${ICONES.svg('cle', { taille: 15 })}<span class="long"> Mot de passe</span></button><button class="btn petit aide-b" type="button" id="b-aide" data-aide aria-label="Raccourcis clavier" aria-keyshortcuts="?" title="Raccourcis clavier (?)">?</button><button class="btn petit" type="button" id="b-sortir">Se déconnecter</button></div><div class="nav-autres" id="nav-autres" role="group" aria-label="Compte"></div></header>`;
 }
-function cadre(rubrique, contenu) {
-  $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a>${barreHtml(rubrique)}<main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>${PIED}`;
-  majTemoin();
-  rangerBarre();
-  poserHautBarre();
-  setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
+// La coque : l'en-tête, le menu latéral et le contenu côte à côte. Elle se construit une fois (poserCoque) et se garde d'une
+// route à l'autre, l'aside avec ; cadre() ne refait que le contenu. Elle se reconstruit quand #app a été effacé (la porte, le
+// nouveau mot de passe, « Accès réservé ») ou n'a que la coque inerte du squelette du chargement. Le numéro data-coque dit
+// laquelle est là : le même après dix routes, un autre après une reconstruction.
+let coquesPosees = 0;
+function poserCoque(rubrique) {
+  if ($('#app > .coque[data-coque]')) return;
+  $('#app').innerHTML = `<a class="evitement" href="#vue">Aller au contenu</a>${barreHtml()}<div class="coque" data-coque="${++coquesPosees}"><aside class="menu" id="menu" aria-label="Menu"></aside><main id="vue" tabindex="-1"></main></div>${PIED}`;
   $('#b-sortir').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Se déconnecter sans enregistrer ?', ok: 'Se déconnecter' })) await sb.auth.signOut(); });
   $('#b-mdp').addEventListener('click', async () => { if (await partirSansPerdre({ titre: 'Changer de mot de passe sans enregistrer ?', ok: 'Continuer' })) ecranMotDePasse(true); });
   $('#b-chercher').addEventListener('click', ouvrirRecherche);
+  majTemoin();
+  rangerBarre();
+  poserHautBarre();
   tt('pieuvre');
+  if (typeof CADRE !== 'undefined') CADRE.poser(rubrique);
 }
-// la hauteur de l'en-tête arrimé (une ou deux lignes selon la largeur ; 56 px au téléphone) : --haut-barre, sous lequel
+function cadre(rubrique, contenu) {
+  poserCoque(rubrique);
+  // (un nouvel élément à chaque route, comme avant : ni classes, ni écouteurs de la vue d'avant)
+  $('#vue').outerHTML = `<main id="vue" tabindex="-1"${ouvertureMuette || CALME_ADMIN() ? '' : ' class="entree"'}>${contenu}</main>`;
+  majTemoin();
+  poserHautBarre();
+  setTimeout(() => $('#vue')?.classList.remove('entree'), 900);
+  if (typeof CADRE !== 'undefined') CADRE.marquer(rubrique);
+}
+// la hauteur de l'en-tête arrimé (une ligne ; 56 px au téléphone) : --haut-barre, sous lequel
 // collent les en-têtes des listes qui défilent avec la page (le mois, le jour) et la barre d'outils d'une feuille
 const RO_BARRE = typeof ResizeObserver === 'function' ? new ResizeObserver(() => poserHautBarre(false)) : null;
 function poserHautBarre(observer = true) {
@@ -1418,50 +1493,38 @@ function poserHautBarre(observer = true) {
   document.documentElement.style.setProperty('--haut-barre', `${arrime ? Math.round(b.getBoundingClientRect().height) : 0}px`);
   if (observer && RO_BARRE && b) { RO_BARRE.disconnect(); RO_BARRE.observe(b); }
 }
-// l'en-tête sur une ligne ou deux (la feuille de style dit l'ordre des replis) : on part de tout déplié, on essaie une
-// ligne, puis deux, en repliant une chose de plus tant que ça ne tient pas ; puis les rubriques en trop passent dans
-// « Plus », de la dernière à la première, la rubrique courante gardée. Tout se mesure dans le même tour, avant que la page
-// se peigne : rien ne saute. Un écran bas (500 px de haut au plus) garde une seule ligne, et ne s'arrime que dans 64 px.
+// l'en-tête sur une ligne (la feuille de style dit l'ordre des replis) : on part de tout déplié, et tant que ça ne tient pas
+// on replie une chose de plus ; quand le compte lui-même se replie, « Plus » le porte. Tout se mesure dans le même tour,
+// avant que la page se peigne : rien ne saute. Un écran bas (500 px de haut au plus) ne s'arrime que dans 64 px. Les
+// rubriques ne sont plus de la partie : elles sont dans le menu latéral (cadre.js).
 const REPLIS_BARRE = ['r-moi', 'r-mot', 'r-long', 'r-compte', 'r-marque', 'r-loupe'];
 // (la hauteur se lit par une requête média : au téléphone, innerHeight grandit le temps qu'un essai déborde de l'écran)
 const BARRE_BASSE = '(max-height: 500px)', BARRE_ARRIMEE = 64;
 function rangerBarre() {
-  const b = $('.barre'), nav = b && $('.nav', b), plus = nav && $('.nav-plus', nav);
+  const b = $('.barre'), plus = b && $('.nav-plus', b);
   if (!plus) return;
   fermerNavPlus();
-  const liens = $$(':scope > a', nav), tel = typeof MOBILE !== 'undefined' && MOBILE.actif(), bas = typeof matchMedia === 'function' && matchMedia(BARRE_BASSE).matches;
-  b.classList.remove('deux-lignes', 'defile', ...REPLIS_BARRE);
-  liens.forEach(a => { a.hidden = false; });
+  const tel = typeof MOBILE !== 'undefined' && MOBILE.actif(), bas = typeof matchMedia === 'function' && matchMedia(BARRE_BASSE).matches;
+  b.classList.remove('defile', ...REPLIS_BARRE);
   plus.hidden = true;
   // le téléphone en portrait : les rubriques et le compte sont dans la barre du bas (mobile.js), l'en-tête n'a plus que la
   // marque, le témoin et la loupe
   if (tel) { b.classList.add(...REPLIS_BARRE); MOBILE.poser(); return; }
-  const large = () => b.scrollWidth <= b.clientWidth + 1, deborde = () => nav.scrollWidth > nav.clientWidth + 1;
-  const marque = $('.marque', b), qui = $('.qui', b);
-  // tout sur une ligne (rien n'y déborde) ; deux lignes : le compte reste sur la ligne de la marque
-  const tient = deux => large() && (deux ? qui.getBoundingClientRect().top < marque.getBoundingClientRect().bottom : !deborde());
-  const replier = deux => { for (const r of REPLIS_BARRE) { if (tient(deux)) return; b.classList.add(r); } };
-  if (bas) replier(false);              // une ligne, coûte que coûte : le compte, la marque et la loupe se replient avant les rubriques
-  else if (!tient(false)) { b.classList.add('deux-lignes'); replier(true); }
-  if (deborde() || b.classList.contains('r-compte')) {
-    plus.hidden = false;
-    const courante = liens.find(a => a.hasAttribute('aria-current'));
-    for (let i = liens.length - 1; i >= 0 && deborde(); i--) if (liens[i] !== courante) liens[i].hidden = true;
-    if (deborde() && courante) courante.hidden = true;
-  }
+  for (const r of REPLIS_BARRE) { if (b.scrollWidth <= b.clientWidth + 1) break; b.classList.add(r); }
+  plus.hidden = !b.classList.contains('r-compte');
   if (bas && b.getBoundingClientRect().height > BARRE_ARRIMEE) b.classList.add('defile');
 }
-// « Plus » : ce qui n'a pas tenu (les rubriques, dans leur ordre ; le compte), sous le bouton. Il s'ouvre au clic, à Entrée
-// ou à l'espace (le focus sur la première ligne) ; ↑ ↓ Début Fin entre les lignes ; Échap le ferme et rend le focus au
-// bouton ; un choix, un clic à côté, le focus ailleurs ou la fenêtre qui change le ferment aussi
+// « Plus » : le compte (les liens vers le site, le mot de passe, les raccourcis, la déconnexion), sous le bouton, quand il ne
+// tient plus dans l'en-tête. Il s'ouvre au clic, à Entrée ou à l'espace (le focus sur la première ligne) ; ↑ ↓ Début Fin
+// entre les lignes ; Échap le ferme et rend le focus au bouton ; un choix, un clic à côté, le focus ailleurs ou la fenêtre
+// qui change le ferment aussi
 const navAutres = () => $('#nav-autres');
 function ouvrirNavPlus() {
   const b = $('.barre'), plus = $('.nav-plus', b), m = navAutres();
   if (!plus || !m) return;
-  const caches = $$('.nav > a[hidden]', b), compte = b.classList.contains('r-compte');
-  m.innerHTML = `${caches.length ? `<p class="na-titre" aria-hidden="true">Rubriques</p>${caches.map(a => `<a class="na-item" href="${esc(a.getAttribute('href'))}"${a.hasAttribute('aria-current') ? ' aria-current="page"' : ''}>${esc(a.textContent)}</a>`).join('')}` : ''}${compte ? `<p class="na-titre" aria-hidden="true">Compte</p><p class="na-moi">${esc(E.session?.user?.email || '')}</p>
+  m.innerHTML = `<p class="na-titre" aria-hidden="true">Compte</p><p class="na-moi">${esc(E.session?.user?.email || '')}</p>
     <a class="na-item" href="${SITE}" target="_blank" rel="noopener">Voir le site ↗</a><a class="na-item" href="${SITE}?edition" target="_blank" rel="noopener">Modifier sur le site ↗</a>
-    <button type="button" class="na-item" data-na="mdp">Mot de passe</button><button type="button" class="na-item" data-na="aide">Raccourcis clavier</button><button type="button" class="na-item" data-na="sortir">Se déconnecter</button>` : ''}`;
+    <button type="button" class="na-item" data-na="mdp">Mot de passe</button><button type="button" class="na-item" data-na="aide">Raccourcis clavier</button><button type="button" class="na-item" data-na="sortir">Se déconnecter</button>`;
   const rb = b.getBoundingClientRect(), rp = plus.getBoundingClientRect(), haut = Math.round(rp.bottom - rb.top + 6);
   m.style.top = `${haut}px`;
   m.style.maxHeight = `${Math.max(160, innerHeight - Math.max(0, rb.top) - haut - 10)}px`;
@@ -1529,6 +1592,7 @@ const ROUTES = [
   [/^#\/journal$/, () => vueJournal()],
   [/^#\/essai\/icones$/, () => vueEssaiIcones()],
 ];
+const APRES_CHANGEMENT = [];   // ce qui suit un changement reçu en direct (changement() : cadre.js y met les badges du menu)
 const APRES_VUE = [ecrireFiltres];   // ce qui se pose une fois la vue dessinée (ses filtres dans l'adresse ; menus.js : précédent / suivant dans les fiches)
 // une fiche ouverte ailleurs qu'à sa place (depuis le tableau de bord, le Kanban, le planning…) s'ouvre dans un tiroir
 // (tiroir.js) : ces aides savent où elle est. racineActive : le tiroir ouvert, sinon la page
@@ -1737,9 +1801,103 @@ document.addEventListener('click', e => {
   const h = $('#vue h1') || $('#vue');
   if (h) { if (h !== $('#vue')) h.setAttribute('tabindex', '-1'); h.focus(); }
 });
+// ===================================================================================================== les raccourcis
+/* Le registre des raccourcis du clavier : chacun se déclare une fois, ici ou dans un module (RACCOURCIS.declarer), et trois
+   choses en découlent : l'écouteur unique plus bas le fait marcher, l'aide « ? » (menus.js, par groupes()) le liste, et le
+   menu l'écrit dans l'infobulle de ses liens (libelle()) et dans aria-keyshortcuts (keyshortcuts()).
+   RACCOURCIS.declarer({ id, touches, groupe, d, quand, faire }) :
+   - touches: ['Alt+M'] est un accord (tout d'un coup) ; ['G', 'D'] est une séquence (G, puis D dans les 900 ms ; un témoin
+     « G… » dit qu'on attend la lettre). Un accord avec Alt se reconnaît à la lettre tapée (le M d'un clavier français est à
+     une autre place que celui d'un clavier américain : e.code y dirait la virgule), et à la touche physique quand la touche
+     tape autre chose que du latin de base (Option+M tape « µ » sur un Mac) ; les lettres d'une séquence, à ce qu'elles tapent.
+   - groupe, d : le titre du groupe de l'aide et ce que fait le raccourci ; quand() : vrai quand il existe (la Diffusion n'a
+     son G puis C que si la base l'a) ; faire() : ce qu'il fait.
+   Rien ne part dans un champ, une boîte ouverte (modale ou non : la question de confirmation, le briefing, l'aide, la
+   recherche… tout <dialog> ouvert), un menu ouvert, ni dans la grille du tableur (une lettre y ouvre la case) ; aucune
+   séquence non plus quand le tableau de bord est en disposition (« Personnaliser », comme la file J / K) ;
+   la seconde touche d'une séquence arrête la propagation avant d'agir (sur le tableau de bord, la file J / K écoute aussi
+   le document : « G puis J » ne doit pas la faire bouger).
+   RACCOURCIS.groupes() rend les raccourcis qui existent, rangés par groupe, au format de l'aide ; RACCOURCIS.libelle(id) les
+   écrit (« G puis D », « Alt+M ») ; RACCOURCIS.keyshortcuts(id) ne rend une valeur que pour un accord (dans WAI-ARIA, l'espace
+   d'aria-keyshortcuts sépare des raccourcis de rechange, pas les touches d'une suite : une séquence va dans le title et l'aide). */
+const RACCOURCIS = (() => {
+  const liste = [], FENETRE = 900;
+  let attente = null;                         // la première touche d'une séquence : { touche, minuteur }
+  const marche = r => { try { return !r.quand || !!r.quand(); } catch (e) { return false; } };
+  const accordDe = t => { const p = t.split('+'), lettre = p.pop().toLowerCase(); return { alt: p.includes('Alt'), ctrl: p.includes('Ctrl'), maj: p.includes('Maj'), lettre }; };
+  const estAccord = (e, a) => {
+    if (e.altKey !== a.alt || e.ctrlKey !== a.ctrl || e.shiftKey !== a.maj || e.metaKey) return false;
+    const k = String(e.key || '').toLowerCase();
+    return /^[\x00-\x7f]$/.test(k) ? k === a.lettre : e.code === 'Key' + a.lettre.toUpperCase();      // (Option+M : « µ », hors du latin de base : la touche physique, KeyM)
+  };
+  const nomTouche = t => (t === 'Alt' && SUR_MAC ? 'Option' : t);
+  function declarer(r) {
+    if (!r || !r.id || !Array.isArray(r.touches) || !r.touches.length || typeof r.faire !== 'function') return;
+    const neuf = { ...r, accord: r.touches.length === 1 ? accordDe(r.touches[0]) : null };
+    const i = liste.findIndex(x => x.id === r.id);
+    if (i >= 0) liste[i] = neuf; else liste.push(neuf);
+  }
+  function groupes() {
+    const rangs = [];
+    liste.filter(marche).forEach(r => {
+      let g = rangs.find(x => x.titre === r.groupe);
+      if (!g) rangs.push(g = { titre: r.groupe, lignes: [] });
+      g.lignes.push(r.accord ? { t: [r.touches[0].split('+').map(nomTouche)], d: r.d } : { g: r.touches.join(' puis '), d: r.d });
+    });
+    return rangs;
+  }
+  const trouver = id => liste.find(x => x.id === id);
+  const libelle = id => { const r = trouver(id); return !r ? '' : r.accord ? r.touches[0].split('+').map(nomTouche).join('+') : r.touches.join(' puis '); };
+  const keyshortcuts = id => { const r = trouver(id); return r && r.accord ? r.touches[0].replace(/\bCtrl\b/, 'Control').replace(/\bMaj\b/, 'Shift') : ''; };
+
+  // le témoin « G… » : une touche flottante, dont la zone polie existe avant le premier texte
+  function preparerTemoin() {
+    if (document.getElementById('rac-temoin') || !document.body) return;
+    const t = document.createElement('kbd');
+    t.id = 'rac-temoin'; t.className = 'rac-temoin'; t.setAttribute('aria-live', 'polite'); t.setAttribute('aria-atomic', 'true');
+    document.body.append(t);
+  }
+  function oublier() {
+    if (attente) { clearTimeout(attente.minuteur); attente = null; }
+    const t = document.getElementById('rac-temoin'); if (t) t.textContent = '';
+  }
+  function attendre(touche) {
+    preparerTemoin();
+    attente = { touche, minuteur: setTimeout(oublier, FENETRE) };
+    const t = document.getElementById('rac-temoin'); if (t) t.textContent = `${touche.toUpperCase()}…`;
+  }
+  const MODIFICATEURS = ['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock'];
+  function surTouche(e) {
+    if (e.defaultPrevented || e.isComposing || !E.pret || MODIFICATEURS.includes(e.key)) return;
+    if (typeof GESTES !== 'undefined' && (GESTES.dansChamp(e.target) || GESTES.modaleOuverte() || GESTES.ouvert() || GESTES.question())) return;
+    if (document.querySelector('dialog[open]')) return;                      // (les boîtes natives, sans aria-modal : la question, le briefing, l'équipe, le tableur, la recherche)
+    if (document.activeElement?.closest?.('[role="grid"]')) return;          // (le tableur : une lettre y ouvre la case)
+    const k = String(e.key || '').toLowerCase(), nu = !e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey && !$('#tb-grille.edition');   // (nu : aucune séquence en pleine disposition des tuiles du tableau de bord, comme la file J / K)
+    if (attente) {
+      const premiere = attente.touche;
+      oublier();
+      const suite = nu && liste.find(r => r.touches.length === 2 && r.touches[0].toLowerCase() === premiere && r.touches[1].toLowerCase() === k && marche(r));
+      if (suite) { e.preventDefault(); e.stopImmediatePropagation(); suite.faire(); return; }
+    }
+    const accord = liste.find(r => r.accord && estAccord(e, r.accord) && marche(r));
+    if (accord) { e.preventDefault(); accord.faire(); return; }
+    if (nu && !e.repeat && k.length === 1 && liste.some(r => r.touches.length === 2 && r.touches[0].toLowerCase() === k && marche(r))) attendre(k);
+  }
+  if (document.body) preparerTemoin(); else document.addEventListener('DOMContentLoaded', preparerTemoin);
+  return { liste, declarer, groupes, keyshortcuts, libelle, surTouche };
+})();
+// les douze rubriques : « G » puis la lettre (T tableau de bord, D dates, P planning, F feuilles, S spectacles, E équipe, C
+// diffusion, O pro, A ateliers, L lieux, X textes, J journal) ; la Diffusion n'existe que si la base l'a (E.ideale)
+const TOUCHES_RUBRIQUES = { accueil: 'T', representations: 'D', planning: 'P', feuilles: 'F', spectacles: 'S', equipe: 'E', diffusion: 'C', pro: 'O', ateliers: 'A', lieux: 'L', textes: 'X', journal: 'J' };
+// (une rubrique sans lettre n'a pas de raccourci : le registre ne lit que celles qui en ont)
+RUBRIQUES.forEach(([k, nom]) => TOUCHES_RUBRIQUES[k] && RACCOURCIS.declarer({ id: `rubrique.${k}`, touches: ['G', TOUCHES_RUBRIQUES[k]], groupe: 'Aller à une rubrique', d: nom, quand: () => rubriquesVisibles().some(r => r[0] === k), faire: () => { location.hash = `#/${k}`; } }));
+// replier ou déplier le menu latéral (cadre.js) : seulement quand on le voit (pas au téléphone)
+RACCOURCIS.declarer({ id: 'menu.replier', touches: ['Alt+M'], groupe: 'Partout', d: 'Replier ou déplier le menu', quand: () => typeof CADRE !== 'undefined' && !!document.getElementById('menu')?.getClientRects().length, faire: () => CADRE.basculer() });
+
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { const b = $('[data-enregistrer]', racineActive()); if (b) { e.preventDefault(); b.click(); } }
   if ((SUR_MAC ? e.metaKey : e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && E.pret) { e.preventDefault(); ouvrirRecherche(); }
+  RACCOURCIS.surTouche(e);
 });
 
 // ===================================================================================================== la recherche rapide
@@ -4142,6 +4300,8 @@ async function vueJournal() {
 <script src="carnet.js"></script>
 <script src="fond-carte.js"></script>
 <script src="tournee.js"></script>
+<!-- le cadre : le menu latéral (les rubriques, le repli), tenu par CADRE ; poserCoque, dans le script principal, le pose -->
+<script src="cadre.js"></script>
 <script src="mobile.js"></script>
 <!-- l'habillage (les couleurs, les polices, les cartes, l'en-tête), chargé en dernier : rien que l'apparence -->
 <script src="habillage.js"></script>

@@ -7,7 +7,8 @@
    tableau.js et disponibilites.js, dont il reprend l'état (E.session) et les outils (sb, annoncer, saisieEnCours).
    - Les clés en usage : accueil.tableau (la disposition du tableau de bord, tableau.js), planning.masques (les personnes
      masquées du planning, disponibilites.js ; l'espace de l'équipe, equipe/equipe.js, lit la même clé en tableau brut :
-     sa forme ne change pas), representations.avant (le panneau « À compléter avant la tournée », index.html).
+     sa forme ne change pas), representations.avant (le panneau « À compléter avant la tournée », index.html),
+     menu.replie (le menu latéral replié ou déplié, cadre.js).
    - La lecture est synchrone : PREFS.charger() lit tout le compte en une requête (select cle, valeur, modifie_le), après
      quoi PREFS.lire(cle, defaut) répond depuis la mémoire, puis depuis le miroir de l'appareil, puis le défaut. Les
      modules attendent charger() (chargerTout) ; actualiser le rejoue avec { relire: true } sans écraser un réglage encore

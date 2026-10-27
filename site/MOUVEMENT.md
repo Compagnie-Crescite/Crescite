@@ -15,17 +15,24 @@ Quatre durées, trois courbes, et rien qui bouge sans raison.
 | Glisser à sa place (une ligne, un billet, une carte qui change de rang) | 380 à 420 ms | le doux, par l'API Web Animations (FLIP) | `glisserVers`, `reperer` |
 | Suivre le doigt (le retour, une notification, tirer pour rafraîchir) | le temps du geste, puis 180 à 300 ms | linéaire sous le doigt, le doux pour revenir | `brancherRetour`, `brancherGlisserNotif`, `brancherTirer` |
 | Passer d'une vue à l'autre | 220 à 300 ms | le doux, par les View Transitions | `changerVue`, `changerVueAdmin` |
+| Replier le menu latéral (la colonne passe de 240 à 64 px, ou l'inverse) | 220 ms ; les libellés en 120 ms d'opacité | le doux, par la propriété déclarée `--large-menu` (`@property`) : la grille et l'aside la lisent, le contenu suit | `--large-menu` (`html`) |
 | Respirer (une lueur, une lampe, une photo qui dérive) | 1,6 à 26 s, en continu | ease-in-out | `respire`, `lampe`, `derive`, `bn-temps` |
 
 Ce qui bouge en continu ne touche que `transform` et `opacity` (le compositeur) ; une boîte qui change de taille
-s'anime par l'API, jamais par une transition de hauteur en continu. Un chiffre qui change roule (`chiffresRoulants`), une
+s'anime par l'API, jamais par une transition de hauteur en continu (seule exception : le repli du menu latéral, un geste
+unique de 220 ms, dont `mouvement-admin.mjs` mesure qu'aucune tâche ne dépasse 200 ms à `CPU=4`). Un chiffre qui change roule (`chiffresRoulants`), une
 liste qui se redessine glisse, un élément qui s'en va se replie (`retirerLigne`, `listeQuiSeVide`) : rien ne saute d'un
 état à l'autre sans que l'œil puisse suivre.
+
+Deux petites choses du menu latéral n'ont pas de ligne à elles : le témoin « G… » qui attend la lettre d'une séquence de
+touches (G puis D) paraît et s'efface en 120 ms d'opacité, linéaire, comme les libellés du menu qui se replie, et ne
+bouge pas du tout sous « moins d'animations » ; les badges (« 12 » à traiter) sont posés sans mouvement, la pastille
+change de chiffre sans rouler (`cadre.mjs` en vérifie le calcul : aucune tâche de plus de 200 ms à `CPU=4`).
 
 ## Les règles
 
 - **Rien ne bouge si l'appareil demande moins d'animations** (`prefers-reduced-motion: reduce`), ni avec `?anim=0`
-  (`html.still`, qui arrête aussi la feuille de style). La teinte du spectacle sur la page d'une date reste : ce n'est pas
+  (`html.still`, qui arrête aussi la feuille de style) : le menu latéral se replie alors d'un coup (`cadre.mjs` y regarde). La teinte du spectacle sur la page d'une date reste : ce n'est pas
   du mouvement.
 - **Une entrée ne se rejoue pas** quand la page se redessine après une lecture de la base : `main.entree` (administration)
   ne dure qu'une seconde, `main.rafraichi` (équipe) garde la page immobile, les saisons passées n'arrivent en cascade qu'à
@@ -45,7 +52,7 @@ liste qui se redessine glisse, un élément qui s'en va se replie (`retirerLigne
 ```sh
 python3 site/build.py        # d'abord : site/dist/equipe et site/dist/admin
 node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (51 vérifications)
-node site/mouvement-admin.mjs         # l'administration, sur une base fictive (31 vérifications)
+node site/mouvement-admin.mjs         # l'administration, sur une base fictive (34 vérifications)
 CPU=4 node site/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
 bash site/bancs-admin.sh              # le build, puis tous les bancs de l'administration, dont mouvement-admin.mjs
 ```
@@ -57,8 +64,11 @@ captures vont dans `site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un ban
 manque.
 
 `bash site/bancs-admin.sh` enchaîne aussi `prefs.mjs` (où chaque réglage est gardé : avec le compte ou sur l'appareil) et
-`tableur.mjs` (le tableur des représentations) et `icones.mjs` (la bibliothèque d'icônes). Les deux derniers ne mesurent
-aucune durée : ils ne touchent pas à ce vocabulaire, ils veillent à ce qu'une refonte ne casse rien.
+`tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes) et `cadre.mjs` (la coque, le menu
+latéral, ses raccourcis et ses badges). Les trois derniers ne touchent presque pas à ce vocabulaire : ils mesurent
+seulement que le repli anime la colonne une fois, et rien sous « moins d'animations » (`cadre.mjs`), et que le compte des
+badges ne tient jamais la page plus de 200 ms à `CPU=4` (`cadre.mjs` encore) ; pour le reste, ils veillent à ce qu'une
+refonte ne casse rien.
 
 ## Ce qui a été écarté
 

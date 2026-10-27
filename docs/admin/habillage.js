@@ -1,7 +1,7 @@
 'use strict';
 /* L'habillage de l'administration : la charte du site public (Ubuntu pour les titres, Open Sans pour le texte, Raleway
    pour les étiquettes en capitales espacées ; ses neutres, sa nuit par défaut ; l'accent à la couleur de la saison, que
-   site/build.py pose dans index.html : --saison-*, jamais écrites ici), un en-tête de nuit, des cartes douces et
+   site/build.py pose dans index.html : --saison-*, jamais écrites ici), un en-tête et un menu latéral de nuit, des cartes douces et
    colorées, des tuiles à icônes, des boutons en dégradé. Chargé en dernier : ses règles passent après celles d'index.html
    et des modules (equipe.js, planning.js, disponibilites.js, tableau.js, gestes.js, menus.js), qui gardent la structure
    et le comportement ; ici, rien que l'apparence, la nuit (par défaut) comme le jour (data-theme="jour"), aux couleurs
@@ -29,6 +29,7 @@
      saison ; les boutons pleins, de la couleur de la saison vers sa nuit (le blanc s'y lit, 4,5:1 au moins) ; la pieuvre de
      l'en-tête, à la couleur lisible sur la nuit */
   --barre-fond: linear-gradient(90deg, #150d12 0%, #1b1117 45%, color-mix(in srgb, var(--saison) 34%, #1b1117) 100%);
+  --menu-fond: linear-gradient(180deg, #150d12 0%, #1b1117 45%, color-mix(in srgb, var(--saison) 34%, #1b1117) 100%);
   --principal: linear-gradient(135deg, var(--saison) 0%, var(--saison-profond) 120%);
   --pieuvre: var(--saison-texte-nuit);
 }
@@ -42,6 +43,7 @@
   --ombre: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 32px -14px rgba(0, 0, 0, .6);
   --bord-champ: #8a8085; --indice: #9a9093;
   --barre-fond: linear-gradient(90deg, #120b0f 0%, #170e14 45%, color-mix(in srgb, var(--saison) 30%, #170e14) 100%);
+  --menu-fond: linear-gradient(180deg, #120b0f 0%, #170e14 45%, color-mix(in srgb, var(--saison) 30%, #170e14) 100%);
   --principal: linear-gradient(135deg, var(--saison-porteur) 0%, var(--saison-profond) 120%);
 }
 /* deux halos en haut de page (la couleur de la saison à gauche, ambre à droite), une fois : sans répétition sous les pages courtes */
@@ -53,9 +55,23 @@ body { min-height: 100%; background: radial-gradient(1100px 540px at -5% -10%, c
 .marque { color: #fff; font-family: var(--titres); font-weight: 700; }
 .marque small { color: rgba(255, 255, 255, .72); font-family: var(--etiq); font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .marque .pieuvre { color: var(--pieuvre); }
-.nav a, .nav-plus { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 8px 12px; transition: background .15s, color .15s; }
-.nav a:hover, .nav-plus:hover, .nav-plus[aria-expanded="true"] { background: rgba(255, 255, 255, .12); color: #fff; }
-.nav a[aria-current="page"] { color: #fff; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--saison) 80%, transparent); }
+.nav-plus { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: 8px 12px; transition: background .15s, color .15s; }
+.nav-plus:hover, .nav-plus[aria-expanded="true"] { background: rgba(255, 255, 255, .12); color: #fff; }
+/* le menu latéral : une bande de nuit qui prolonge l'en-tête (le même fond, à la verticale, de nuit dans les deux thèmes) ;
+   les rubriques en Raleway capitales, la courante en blanc sur du blanc à 14 % avec un filet à la couleur de la saison
+   (comme les rubriques de la feuille du téléphone), le badge en corail ; replié, le badge devient un point sur l'icône */
+.menu { background: var(--menu-fond); color: rgba(255, 255, 255, .8); }
+.menu .nav { gap: 0; }
+.menu .nav a, .menu-replier { color: rgba(255, 255, 255, .8); font-family: var(--etiq); font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.menu .nav a { margin: 2px 8px; border-radius: 10px; transition: background .15s, color .15s, box-shadow .15s; }
+.menu .nav a:hover, .menu-replier:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.menu .nav a[aria-current="page"] { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 3px 0 0 var(--saison-texte-nuit), 0 6px 16px -6px color-mix(in srgb, var(--saison) 80%, transparent); }
+.menu a:focus-visible, .menu-replier:focus-visible { outline-color: #fff; }
+.menu-replier { margin: auto 8px 8px; border-radius: 10px; transition: background .15s, color .15s; }
+.menu-badge { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #f28a6c; color: #2a1218; font: 800 11px/18px var(--police); letter-spacing: 0; text-align: center; text-transform: none; }
+@container menu (max-width: 120px) {
+  .menu-badge { position: absolute; top: 8px; right: 9px; min-width: 0; width: 8px; height: 8px; padding: 0; overflow: hidden; font-size: 0; }
+}
 .qui { color: rgba(255, 255, 255, .72); }
 .qui a { color: #fff; }
 .barre .btn { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .22); color: #fff; }
@@ -102,7 +118,7 @@ table.simple th, table.reps th { font-size: 11px; }
 /* ===================================================================================================== les boutons, les badges, les champs */
 .btn { border-radius: 10px; border-color: var(--trait); background: var(--carte); font-weight: 600; transition: transform .12s, box-shadow .12s, border-color .12s, background .12s, filter .12s; }
 .btn:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--trait)); background: color-mix(in srgb, var(--accent-doux) 55%, var(--carte)); }
-.btn.principal, .gf-btn.principal, .seg button[aria-pressed="true"], .seg a[aria-current="page"], .nav a[aria-current="page"], .puce[aria-pressed="true"]:not([style*="--c"]) { background: var(--principal); border-color: transparent; color: #fff; }
+.btn.principal, .gf-btn.principal, .seg button[aria-pressed="true"], .seg a[aria-current="page"], .puce[aria-pressed="true"]:not([style*="--c"]) { background: var(--principal); border-color: transparent; color: #fff; }
 .btn.principal { box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--accent) 80%, transparent); }
 .btn.principal:hover, .gf-btn.principal:hover { background: var(--principal); filter: brightness(1.08); transform: translateY(-1px); color: #fff; }
 .btn.danger:hover { border-color: var(--alerte); background: var(--alerte-doux); color: var(--alerte); }
@@ -236,8 +252,10 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
   }
   html:not(.tb-impression), html:not(.tb-impression) body { background: #fff !important; color: #000 !important; }
   html:not(.tb-impression) body { font-size: 10pt; line-height: 1.4; }
-  /* rien que la vue : ni l'en-tête, ni le pied, ni les annonces, les menus, les tiroirs, les fenêtres, la barre du téléphone */
-  html:not(.tb-impression) body > :not(#app):not(#imp-tete), html:not(.tb-impression) #app > :not(#vue) { display: none !important; }
+  /* rien que la vue : ni l'en-tête, ni le menu latéral, ni le pied, ni les annonces, les menus, les tiroirs, les fenêtres, la
+     barre du téléphone ; la coque reste (elle porte la vue), sans sa grille */
+  html:not(.tb-impression) body > :not(#app):not(#imp-tete), html:not(.tb-impression) #app > :not(.coque), html:not(.tb-impression) .coque > :not(#vue) { display: none !important; }
+  html:not(.tb-impression) .coque { display: block; }
   html:not(.tb-impression) #imp-tete { display: block; margin: 0 0 12pt; padding: 0 0 6pt; border-bottom: 1pt solid #000; color: #000; }
   #imp-tete p { margin: 0; }
   #imp-tete .imp-quoi { font: 700 15pt/1.25 var(--titres); }

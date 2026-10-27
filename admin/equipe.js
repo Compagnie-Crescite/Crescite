@@ -1574,7 +1574,7 @@ function dessinerFeuille(etat) {
   dessinerManques();
   // la barre d'outils colle sous l'en-tête de l'administration
   const barre = $('.barre');
-  const hauteurBarre = () => document.documentElement.style.setProperty('--haut-barre', `${barre ? barre.offsetHeight : 0}px`);
+  const hauteurBarre = () => (typeof poserHautBarre === 'function' ? poserHautBarre(false) : document.documentElement.style.setProperty('--haut-barre', `${barre ? barre.offsetHeight : 0}px`));
   hauteurBarre();
   const montrer = () => {
     const z = $('#fr-vue', zone);

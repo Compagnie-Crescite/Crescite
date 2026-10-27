@@ -1,7 +1,7 @@
 'use strict';
 /* Le téléphone (moins de 640 px de large) : une barre d'onglets en bas de l'écran, à portée du pouce (Tableau, Dates,
    Planning, Équipe, Plus : les autres rubriques dans une feuille), un bouton « + » flottant (une date, une fiche, un lieu,
-   une opportunité, une proposition de dates, une séance d'atelier), les rubriques de l'en-tête masquées (la marque, la
+   une opportunité, une proposition de dates, une séance d'atelier), le menu latéral masqué (index.html, sous 640 px) et l'en-tête réduit (la marque, la
    recherche et le témoin du direct restent, sur une seule ligne), les fiches en plein écran (comme avant), leur pied et
    les annonces au-dessus de la barre. Le compte (voir le site, le modifier, le mot de passe, la déconnexion) passe dans
    « Plus » : l'en-tête, arrimé en haut, tenait sur trois lignes (126 px sur 844, avec la barre du bas plus d'un écran
@@ -112,7 +112,6 @@ const MOBILE = (() => {
   const style = document.createElement('style');
   style.textContent = `
 @media (max-width: 640px) {
-  html.ob-actif .barre .nav { display: none; }
   /* l'en-tête sur une ligne : la marque (« Administration » sous le nom, comme l'équipe), le témoin du direct, la loupe */
   html.ob-actif .barre { flex-wrap: nowrap; gap: 10px; min-height: 56px; padding: 6px 10px 6px 12px; }
   html.ob-actif .barre .marque { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 3px; min-width: 0; min-height: 44px; align-content: center; justify-content: start; line-height: 1.1; }
@@ -133,7 +132,7 @@ const MOBILE = (() => {
   html.ob-actif .barre .temoin:is([data-etat="horsligne"], [data-etat="reconnexion"]) .temoin-ic { display: none; }
   html.ob-actif main { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
   /* le pied commun après le contenu : c'est lui qui laisse la place à la barre */
-  html.ob-actif main:has(+ .pied-espace) { padding-bottom: 20px; }
+  html.ob-actif .coque:has(+ .pied-espace) > main { padding-bottom: 20px; }
   html.ob-actif .pied-espace { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   html.ob-actif .pied-ed { bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   html.ob-actif #annonces { bottom: calc(82px + env(safe-area-inset-bottom, 0px)); }

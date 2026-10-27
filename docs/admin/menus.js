@@ -312,10 +312,22 @@
   /* Les raccourcis de l'administration, rangés par contexte, d'après ce qui existe (index.html, gestes.js, tableau.js,
      selection.js, tiroir.js, planning.js) : la touche « ? » hors d'un champ, le bouton « ? » de l'en-tête, « Gestes et
      raccourcis » dans « Plus » au téléphone. Le contexte ouvert (le tableau de bord, une liste, une fiche, le tableur, le
-     planning, la diffusion) vient d'abord, marqué « ici ». Au doigt (un écran tactile), les gestes à la place des touches. */
+     planning, la diffusion) vient d'abord, marqué « ici ». Au doigt (un écran tactile), les gestes à la place des touches.
+     Ce qui se déclare dans le registre RACCOURCIS (index.html) s'y ajoute de lui-même : Alt+M, « G puis une lettre » par rubrique. */
   const CMD = typeof SUR_MAC !== 'undefined' && SUR_MAC ? '⌘' : 'Ctrl';
+  // les raccourcis du registre (RACCOURCIS, index.html : Alt+M, G puis une lettre…) se rangent dans les groupes du même titre
+  // (« Partout »), les autres viennent juste après
+  function avecRegistre(groupes) {
+    const reg = typeof RACCOURCIS !== 'undefined' ? RACCOURCIS.groupes() : [];
+    let apres = 1;
+    reg.forEach(g => {
+      const meme = groupes.find(x => x.titre === g.titre);
+      if (meme) meme.lignes.push(...g.lignes); else groupes.splice(apres++, 0, g);
+    });
+    return groupes;
+  }
   function groupesClavier(h, fiche, liste) {
-    return [
+    return avecRegistre([
       { titre: 'Partout', lignes: [
         { t: [[CMD, 'K']], d: 'Chercher une date, une personne, un lieu, une action' },
         { t: [['?']], d: 'Montrer ces raccourcis' },
@@ -356,7 +368,7 @@
         { t: [['↑'], ['↓']], d: 'D’une action à l’autre (Début, Fin aux bouts)' },
         { t: [['Entrée']], d: 'Faire l’action' },
         { t: [['Échap']], d: 'Fermer ; le focus revient où il était' }] },
-    ];
+    ]);
   }
   function groupesDoigt(h) {
     return [
