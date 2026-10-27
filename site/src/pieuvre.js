@@ -147,7 +147,7 @@ const PIEUVRE = (() => {
       // (prolonge : elle sort du bas de la tête, à la coupe de la jambe ou de la queue de l'œil, dans leur sens ; attN0, posé par
       // creer() : la demi-largeur du trait qu'elle prolonge là, qu'une tentacule plus large n'y déborde pas)
       this.att = b.attache ? { x: b.attache[0], y: b.attache[1], dir: b.attache[2], prolonge: !!b.prolonge } : null; this.colle = false; this.attN0 = 0;
-      this.parentCle = b.parent || null; this.parent = null;
+      this.parentCle = b.parent || null; this.parent = null; this.decor = !!b.decor;
       const E = b.epine, h = b.pas, n = E.length / 2 - 1;
       this.h = h; this.n = n; this.L0 = n * h;
       // la pose a r fois plus de segments que l'épine (une tentacule étirée, ou dont une courte part se déploie, garde une
@@ -450,7 +450,7 @@ const PIEUVRE = (() => {
       this.q = duree > 0 ? 0 : 1; this.duree = duree;
     }
     mouvement() { return this.pose ? this.pose.mu : 0; }
-    // combien elle a quitté sa place du logo, pour ce qui s'efface quand elle part (une frange, un liseré du dessin) : dès le
+    // combien elle a quitté sa place du logo, pour ce qui s'efface quand elle part (une enfant, un liseré du dessin) : dès le
     // début de son trajet vers une cible (son premier douzième), sinon selon son mouvement (au retour, ils reviennent avec elle)
     partie() { return Math.max(ease(this.mouvement()), this.cible && this.q < 1 ? lisse(0, .08, this.q) : 0); }
     // sa profondeur moyenne : 1 au premier plan, moins quand elle s'enfonce (pour la pâlir, et la dessiner derrière les autres)
@@ -1062,7 +1062,6 @@ const PIEUVRE = (() => {
     creer() {
       if (!this.pret) return [];
       const ts = G.bras.map((b, i) => new Tentacule(b, i));
-      for (const t of ts) t.freres = ts;   // (une frange regarde toute la pieuvre : dessiner)
       // (une tentacule qui sort du bas de la tête à la racine d'une autre en prend la largeur là)
       for (const t of ts) if (t.att && t.att.prolonge) { const o = ts.find(x => Math.hypot(x.RX[0] - t.att.x, x.RY[0] - t.att.y) < 1); if (o && o !== t) t.attN0 = o.N0; }
       for (const t of ts) {
@@ -1082,6 +1081,18 @@ const PIEUVRE = (() => {
     // autres aient bougé) ; ATTENTE : à l'ouverture, ce que la pieuvre met à rejoindre sa place avant le départ (ms après le geste)
     // DEPLOI : la durée du premier dépliement, du logo jusqu'aux titres (ms) : lent, qu'on le suive
     VAGUE: 0, ATTENTE: 630, DEPLOI: 1900,
+    // les tentacules décoratives (les franges : decor) : quand la pieuvre se déploie, elles se déploient avec elle et restent
+    // suspendues sous la tête, de part et d'autre de son milieu, leur pointe enroulée vers l'extérieur. Leur cible, en unités du
+    // dessin : DECOR[cle] = [x, y, sens] ; decor(t, ox, oy, s, theta, dx, dy, o) la remplit (o, ou un objet neuf) en px, la tête
+    // vivante comprise (le même objet, mis à jour à chaque image : le trajet continue, il suit la tête)
+    DECOR: { frangeHL: [690, 712, 1], frangeBL: [708, 792, 1], frangeHR: [840, 722, -1], frangeBR: [822, 800, -1] },
+    decor(t, ox, oy, s, theta = 0, dx = 0, dy = 0, o = null) {
+      const d = this.DECOR[t.cle]; if (!d) return null;
+      const pt = tete(d[0], d[1], poids(d[1]), theta, dx, dy, [0, 0]);
+      o = o || { cle: 'decor-' + t.cle, sens: d[2], U: 4, boucle: .7, epaisseur: 2 };
+      o.x = ox + pt[0] * s; o.y = oy + pt[1] * s;
+      return o;
+    },
     rang(cle) { const m = /^(spiraleExt|spirale|boucle|queue)/.exec(cle || ''); return m ? { spirale: 0, boucle: 1, spiraleExt: 2, queue: 3 }[m[1]] : 0; },
     // ce que la tête occupe, en unités du dessin : le corps vivant s'y limite. Des polygones [x, y, x, y…] (ou des rectangles
     // [x, y, w, h]) : l'arche et ses jambes, coupées là où les tentacules qui les prolongent prennent racine (comme leur peau),
@@ -1091,13 +1102,10 @@ const PIEUVRE = (() => {
     REPOS: (G && G.repos) || [],
 
     dessiner(g, t, o = {}) {
-      // (une frange s'efface dès que sa spirale part, au tout début de son trajet : elle n'en reste pas un morceau qui flotte, à
-      // demi transparent, à côté des huit tentacules. Elle ne revient qu'avec le logo entier : les rayures n'ont de sens que
-      // dans le dessin complet ; dans une spirale repliée seule, au milieu des autres tendues, ce sont des bouts en trop)
+      // (une enfant s'efface dès que son parent part, au tout début de son trajet : elle n'en reste pas un morceau qui flotte ;
+      // elle revient avec lui)
       // (enfoncée, elle pâlit : elle passe derrière le corps)
-      let fr = 1;
-      if (t.parent) for (const x of t.freres || [t.parent.t]) if (!x.parent) fr = Math.min(fr, 1 - x.partie());
-      const zm = t.profondeur(), al = fr * (zm < 1 ? .3 + .7 * zm : 1);
+      const zm = t.profondeur(), al = (t.parent ? 1 - t.parent.t.partie() : 1) * (zm < 1 ? .3 + .7 * zm : 1);
       if (al < .02) return;
       const { xs, ys } = t.contour(), mu = t.mouvement();
       // le liseré : là où elle passe sur la pieuvre, un jour la sépare (comme les tentacules du logo entre elles) ; jamais plus
