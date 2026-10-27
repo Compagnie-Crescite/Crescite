@@ -16,11 +16,15 @@
   --etiq: "Raleway", "Open Sans", system-ui, sans-serif;
   --fond: #f6f2eb; --carte: #fffdf9; --encre: #1d1418; --gris: #5f565a; --trait: #dcd3c6; --doux: #ece5da;
   --accent: var(--saison-texte); --accent-fonce: var(--saison-fonce); --accent-doux: var(--saison-doux);
-  --prune: #6b2c64; --prune-doux: #f2e4f0; --corail: #d8573a; --corail-doux: #fbe7e1; --ambre: #c4861b; --ambre-doux: #fbf0d8;
-  --sauge: #3a8a68; --sauge-doux: #e2f2ea; --indigo: #4456b2; --indigo-doux: #e6e9f8; --ciel: #2b7db5; --ciel-doux: #e1effa;
-  --ok: #2b7f56; --ok-doux: #e1f3e8; --alerte: #b73226; --alerte-doux: #fbe6e3; --option: #8a6413; --option-doux: #f9efd6;
+  /* le jour : des tons assez sombres pour un texte (4,5:1 sur la carte comme sur leur fond doux) et pour porter du blanc */
+  --prune: #6b2c64; --prune-doux: #f2e4f0; --corail: #b3422a; --corail-doux: #fbe7e1; --ambre: #946010; --ambre-doux: #fbf0d8;
+  --sauge: #2f7658; --sauge-doux: #e2f2ea; --indigo: #4456b2; --indigo-doux: #e6e9f8; --ciel: #2a6fa3; --ciel-doux: #e1effa;
+  --ok: #24704b; --ok-doux: #e1f3e8; --alerte: #a92d22; --alerte-doux: #fbe6e3; --option: #8a6413; --option-doux: #f9efd6;
   --ombre: 0 1px 2px rgba(70, 30, 55, .05), 0 12px 32px -14px rgba(70, 30, 55, .22);
   --rayon: 16px;
+  /* le cadre d'un champ (3:1 contre la carte et le papier : un champ se voit sans son contenu) et l'indication qu'il porte
+     tant qu'il est vide (placeholder, 4,5:1), comme dans l'équipe et l'espace des salles */
+  --bord-champ: #8c8085; --indice: #6f6669;
   /* l'en-tête, de nuit dans les deux thèmes : le papier de la nuit, qui prend vers la droite un peu de la couleur de la
      saison ; les boutons pleins, de la couleur de la saison vers sa nuit (le blanc s'y lit, 4,5:1 au moins) ; la pieuvre de
      l'en-tête, à la couleur lisible sur la nuit */
@@ -36,6 +40,7 @@
   --sauge: #82d1aa; --sauge-doux: #1d3329; --indigo: #9cabf0; --indigo-doux: #232a44; --ciel: #7fc2ec; --ciel-doux: #1d2f3e;
   --ok: #6fd3a0; --ok-doux: #1d3329; --alerte: #ff8a80; --alerte-doux: #3a1f1d; --option: #e9c46a; --option-doux: #352b17;
   --ombre: 0 1px 2px rgba(0, 0, 0, .35), 0 12px 32px -14px rgba(0, 0, 0, .6);
+  --bord-champ: #8a8085; --indice: #9a9093;
   --barre-fond: linear-gradient(90deg, #120b0f 0%, #170e14 45%, color-mix(in srgb, var(--saison) 30%, #170e14) 100%);
   --principal: linear-gradient(135deg, var(--saison-porteur) 0%, var(--saison-profond) 120%);
 }
@@ -88,6 +93,9 @@ table.simple th, table.reps th { font-size: 11px; }
 .tb-jj:empty::before { display: none; }
 .ligne .t, .tb-l-t { font-weight: 700; }
 .pastille { box-shadow: 0 0 0 2px color-mix(in srgb, var(--c, var(--accent)) 25%, transparent); }
+/* la nuit, les couleurs des spectacles (leur scène, souvent sombre) se perdent sur la carte : un liseré clair dessine la
+   pastille (3:1), sa couleur reste celle du spectacle */
+:where(:root:not([data-theme="jour"])) .pastille { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--encre) 50%, transparent); }
 .liste-simple li { background: var(--carte); border: 1px solid var(--trait); }
 .vide, .tb-rien { font-family: var(--titres); font-size: 14.5px; font-weight: 500; }
 .tb-rien.ok { color: var(--ok); }
@@ -109,7 +117,8 @@ table.simple th, table.reps th { font-size: 11px; }
 .seg { border-radius: 10px; }
 .seg button { transition: background .12s, color .12s; }
 .onglets-ed button[aria-selected="true"] { background: var(--encre); color: var(--carte); }
-input[type=text], input[type=email], input[type=password], input[type=url], input[type=search], input[type=date], input[type=time], input[type=number], select, textarea, .riche { border-radius: 10px; background: var(--carte); border: 1px solid var(--trait); transition: border-color .12s, box-shadow .12s; }
+input[type=text], input[type=email], input[type=tel], input[type=password], input[type=url], input[type=search], input[type=date], input[type=time], input[type=number], select, textarea, .riche { border-radius: 10px; background: var(--carte); border: 1px solid var(--bord-champ); transition: border-color .12s, box-shadow .12s; }
+::placeholder { color: var(--indice); opacity: 1; }
 input:focus, select:focus, textarea:focus, .riche:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-doux); }
 .case input { accent-color: var(--accent); }
 kbd { font-family: var(--etiq); }

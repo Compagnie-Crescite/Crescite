@@ -110,7 +110,10 @@ h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 .choix button { min-height: 48px; padding: 6px 8px; border-radius: 14px; border: 1.5px solid var(--magenta); background: transparent; font-weight: 600; line-height: 1.2; cursor: pointer; transition: background-color .15s, color .15s, transform .12s; }
 .choix button[aria-pressed="true"] { background: var(--magenta); color: var(--sur-magenta); }
 .choix button:active { transform: scale(.96); }
-.choix button:disabled { opacity: .5; cursor: default; transform: none; }
+/* une proposition close : les boutons ne répondent plus, mais la réponse donnée se lit encore (pas de voile : un cadre
+   en tirets, le gris pour les autres choix ; le choix fait garde sa couleur) */
+.choix button:disabled { cursor: default; transform: none; border-style: dashed; color: var(--gris); }
+.choix button[aria-pressed="true"]:disabled { border-style: solid; color: var(--sur-magenta); }
 .choix button.en-cours { opacity: .7; }
 .note { margin-top: 8px; color: var(--magenta); font-weight: 600; font-size: .94rem; }
 .note:empty { display: none; }

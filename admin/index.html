@@ -490,8 +490,8 @@ table.tableur { border-collapse: separate; border-spacing: 0; width: max-content
 .tableur tbody tr.b0 td { background: var(--carte); }
 .tableur tbody tr.b1 td { background: color-mix(in srgb, var(--doux) 60%, var(--carte)); }
 .tableur tbody tr.premier:not(:first-child) td { border-top: 1px solid color-mix(in srgb, var(--gris) 45%, transparent); }
-.tableur td.repete { color: color-mix(in srgb, var(--gris) 80%, var(--carte)); }
-.tableur td.repete .pastille, .tableur td.repete .badge, .tableur td.repete .tab-pastille { opacity: .6; }
+.tableur td.repete { color: color-mix(in srgb, var(--gris) 90%, var(--carte)); }
+.tableur td.repete .pastille, .tableur td.repete .badge, .tableur td.repete .tab-pastille { opacity: .72; }
 .tableur td.choisie { background: var(--accent-doux) !important; }
 .tableur td.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .tableur td.c-spectacle.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent), 2px 0 0 var(--trait); }
@@ -3911,7 +3911,7 @@ function vueDiffusion(partie, id) {
 
 function carteCrmHtml(p, auj) {
   const sp = E.spectacles.find(s => s.id === p.spectacle_id);
-  const coul = sp?.univers?.couleurs?.accent || 'var(--accent)';
+  const coul = sp ? couleurSp(sp) : 'var(--accent)';   // la couleur du spectacle, comme partout ailleurs (sa scène)
   const enRetard = p.date_prochaine_relance && p.date_prochaine_relance < auj;
   const montantTxt = p.montant_estime ? `${Number(p.montant_estime).toLocaleString('fr-FR')} €` : '';
   const etapeIdx = ETAPES_CRM.findIndex(e => e[0] === p.etape);

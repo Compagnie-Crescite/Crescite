@@ -36,7 +36,7 @@
   --saison: #4f4850; --saison-vive: #b7b0ae; --saison-porteur: #5c545d; --saison-profond: #2b272c; --saison-texte: #4f4850;
   --saison-fonce: #3f3940; --saison-doux: #efebe6; --saison-texte-nuit: #b7b0ae; --saison-fonce-nuit: #d0cbc9; --saison-doux-nuit: #2e2629;
   --papier: #f6f2eb; --surface: #fffdf9; --surface-2: #ece5da; --surface-3: #e4dccf; --encre: #1d1418; --gris: #5f565a;
-  --filet: #dcd3c6; --bord-champ: #8c8085;
+  --filet: #dcd3c6; --bord-champ: #8c8085; --indice: #6f6669;
   --magenta: var(--saison-texte); --magenta-fonce: var(--saison-fonce); --magenta-doux: var(--saison-doux); --magenta-vif: var(--saison);
   --action: var(--saison-texte); --sur-action: #fff; --pieuvre: var(--saison);
   --option: #7a5a10; --option-doux: #f8efd9; --alerte: #a4231b; --alerte-doux: #fbe7e5; --ok: #1d6f47; --ok-doux: #e3f3ea;
@@ -57,7 +57,7 @@
 :root:not([data-theme="jour"]) {
   color-scheme: dark;
   --papier: #1b1117; --surface: #2e2128; --surface-2: #23171e; --surface-3: #3b3036; --encre: #f3eee9; --gris: #b7b0ae;
-  --filet: #3b3036; --bord-champ: #8a8085;
+  --filet: #3b3036; --bord-champ: #8a8085; --indice: #9a9093;
   --magenta: var(--saison-texte-nuit); --magenta-fonce: var(--saison-fonce-nuit); --magenta-doux: var(--saison-doux-nuit); --magenta-vif: var(--saison-texte-nuit);
   --action: var(--saison-texte-nuit); --sur-action: #1b1117; --pieuvre: var(--saison-texte-nuit);
   --option: #f0c66b; --option-doux: #3a2f17; --alerte: #ff8f86; --alerte-doux: #3d1f1d; --ok: #74d6a6; --ok-doux: #19352a;
@@ -66,6 +66,8 @@
   --ombre-haute: 0 2px 6px rgba(0, 0, 0, .35), 0 24px 48px -24px rgba(0, 0, 0, .85);
 }
 :root[data-theme="jour"] { color-scheme: light; }
+/* l'indication d'un champ vide (placeholder) : 4,5:1 sur la surface, plus discrète que ce qu'on y écrit */
+::placeholder { color: var(--indice); opacity: 1; }
 [data-u] { --u-fond: var(--ul-fond); --u-texte: var(--ul-texte); }
 :where(:root:not([data-theme="jour"])) [data-u] { --u-fond: var(--us-fond); --u-texte: var(--us-texte); }
 /* ?anim=0 (captures et essais) : rien ne bouge, ni ce que le script déclenche ni ce que la feuille de style anime */
@@ -301,11 +303,12 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .frise .t { font-weight: 600; line-height: 1.35; }
 .frise .s { display: block; color: var(--gris); font-size: .9rem; font-weight: 400; }
 .frise .jusqu { color: var(--gris); font-weight: 500; font-size: .9rem; white-space: nowrap; }
-.frise li.accent::before { border-color: var(--u, var(--magenta)); }
+/* les points de la frise : à la couleur du spectacle qui se lit sur le fond (--u-texte : sa nuit, la nuit), 3:1 au moins */
+.frise li.accent::before { border-color: var(--u-texte, var(--magenta)); }
 .frise li.accent .t { color: var(--u-texte, var(--magenta)); }
 .frise li.passe { opacity: .55; }
 .frise li.passe::before { background: var(--filet); }
-.frise li.maintenant::before { background: var(--u, var(--magenta)); border-color: var(--u, var(--magenta)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--u, var(--magenta)) 22%, transparent); }
+.frise li.maintenant::before { background: var(--u-texte, var(--magenta)); border-color: var(--u-texte, var(--magenta)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--u-texte, var(--magenta)) 22%, transparent); }
 .frise li.maintenant .t::after { content: " · en ce moment"; color: var(--u-texte, var(--magenta)); font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) { .frise li.maintenant::before { animation: battement 1.8s ease-in-out infinite; } @keyframes battement { 50% { box-shadow: 0 0 0 9px transparent; } } }
 .jour-frise { margin: 14px 0 6px 80px; font: 700 .78rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
@@ -339,6 +342,8 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .carte-tournee figcaption { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 8px 4px 2px; color: var(--gris); font-size: .86rem; }
 .legende { display: inline-flex; align-items: center; gap: 6px; }
 .legende i { width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--gris)); }
+/* la nuit, la couleur d'un spectacle (sa scène, souvent sombre) se perd sur la carte : un liseré clair dessine la pastille */
+:where(:root:not([data-theme="jour"])) .legende i { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--encre) 50%, transparent); }
 .legende.passe i { background: var(--gris); opacity: .45; }
 
 /* ———————————————— les cartes d'action : l'agenda, l'installation, les notifications sur l'appareil */
@@ -436,7 +441,10 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .nav-dates-bas { margin: 18px 0 0; }
 .nav-dates .gps-b { min-height: 52px; padding: 8px 14px; border-radius: var(--rayon-s); }
 .nav-dates .gps-t { font-size: .92rem; }
-.nav-dates .gps-quoi { font-family: var(--etiq); color: var(--magenta); opacity: 1; }
+/* l'étiquette en entier (gestes.js la voile à .78 : la couleur de la saison y tombait sous 4,5:1) ; sans date d'avant
+   ou d'après, le bouton reste lisible (« aucune » est une information) : un cadre en tirets, le gris, pas de voile */
+.nav-dates .gps-deux .gps-quoi { font-family: var(--etiq); color: var(--magenta); opacity: 1; }
+.nav-dates .gps .gps-b[disabled] { opacity: 1; border-style: dashed; color: var(--gris); }
 .nav-dates .gps-b[disabled] .gps-quoi { color: var(--gris); }
 /* au téléphone, le jour et le lieu passent sur deux lignes plutôt que de se couper */
 @media (max-width: 520px) { .nav-dates .gps-deux .gps-l { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; } }
@@ -994,7 +1002,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 .decompte-grand .lampe { align-self: center; width: 12px; height: 12px; border-radius: 50%; background: var(--h-accent); }
 /* 3. le jour J en direct : le trait « maintenant » descend le long de l'étape en cours (--avance, posé par majFrises) ; la
    prochaine étape dit « dans 12 min » sous son heure */
-.frise li.maintenant::after { content: ""; position: absolute; left: 57px; top: calc(16px + (100% - 30px) * var(--avance, 0)); width: 20px; height: 3px; border-radius: 2px; background: var(--u, var(--magenta)); box-shadow: 0 0 0 2px var(--surface); }
+.frise li.maintenant::after { content: ""; position: absolute; left: 57px; top: calc(16px + (100% - 30px) * var(--avance, 0)); width: 20px; height: 3px; border-radius: 2px; background: var(--u-texte, var(--magenta)); box-shadow: 0 0 0 2px var(--surface); }
 .frise .dans { display: block; margin-top: 1px; font: 600 .72rem/1.2 var(--sans); letter-spacing: .02em; color: var(--u-texte, var(--magenta)); white-space: nowrap; }
 /* 6. la route qui se trace : sur la carte d'une date, le chemin pointillé avance de Rouen au lieu, le long du bras ; le
    billet survolé allume son bras et son point, les autres bras s'effacent ; le lieu survolé allume ses billets */
