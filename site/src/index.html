@@ -6611,6 +6611,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
   // l'élément du menu de la vue porte aria-current="page" ; celui dont elle dépend est mis en évidence (« true ») : les
   // spectacles pour la page d'un spectacle, l'espace pro pour ses deux pages (menuLu)
+  // le titre de l'onglet : « Page · Compagnie Crescite », et sur l'accueil le nom de la compagnie seul
+  const titreDoc = r => (vue === 'accueil' ? S.titreSuffixe : `${r.titre} · ${S.titreSuffixe}`);
   function marquerNav(r) {
     const lu = r.menuLu || (vue === 'spectacle' ? 'spectacles' : null);
     $$('#entrees a').forEach(a => { a.removeAttribute('aria-current');
@@ -6746,7 +6748,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!r) { history.replaceState(null, '', '#/'); b = { chemin: '', qs: '', q: new URLSearchParams() }; r = rendre(b, false); }   // une adresse inconnue mène à l'accueil
     courant = b;
     decorer(false);
-    document.title = `${r.titre} · ${S.titreSuffixe}`;
+    document.title = titreDoc(r);
     marquerNav(r);
     mettreAJourSchemaOrg();
     const vit = !!avant && motionOK() && !INTRO.ouverte(), spNeuf = vue === 'spectacle' ? bySlug[(b.chemin.match(/^spectacle\/([\w-]+)/) || [])[1]] : null;
@@ -6847,7 +6849,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const r = rendre(courant, true);
     if (!r) { route(); return; }
     decorer(true);
-    document.title = `${r.titre} · ${S.titreSuffixe}`;
+    document.title = titreDoc(r);
     marquerNav(r);
     mettreAJourSchemaOrg();
     ouverts.forEach(i => { const d = $$('details', main)[i]; if (d) d.open = true; });
