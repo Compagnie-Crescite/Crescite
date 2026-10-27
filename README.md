@@ -43,7 +43,10 @@ contact), plus Cassandres, création 2027, **le dossier scolaire de Bérénice**
 son action culturelle** (`data/univers-spectacles.json`, repris des pages d'adrienvada.fr et du dossier artistique
 2027-2028) ; s'ajoutent seulement la **carte des tournées** (`site/src/carte.js`) et quelques intitulés de rubrique
 (`D.site.libelles`). Il **s'ouvre sur le logo en grand** (`site/src/intro.js`) : au clic, à la molette ou en glissant
-vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. La page de chaque spectacle prend son
+vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. D'ici là, la pieuvre joue avec le
+pointeur : elle le regarde, une queue vient le tâter quand il s'arrête près d'elle, elle sursaute quand il fonce sur
+elle ; on peut l'attraper et la tirer (lâchée assez loin, ou d'un coup sec, elle part ; sinon elle revient d'un ressort),
+et une lampe la suit derrière elle. La page de chaque spectacle prend son
 univers (couleurs, police de titre, motif, photos, citations) et se lit selon trois entrées, ses onglets : « Je viens voir
 un spectacle », « Je souhaite programmer », « Je représente un établissement scolaire » (`#/spectacle/berenice/voir`,
 `…/programmer`, `…/etablissement`) ; la dernière entrée choisie sert de défaut. Les anciennes adresses (`#/voir`,

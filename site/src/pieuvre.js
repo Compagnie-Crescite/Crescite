@@ -39,9 +39,10 @@
                                  coup) ; le mouvement part de la racine quand elle s'allonge, de la pointe quand elle revient ;
                                  elastique : elle revient comme un ressort (la pointe se love un peu trop, se balance, se
                                  pose). La même cible (même clé) redonnée, déplacée : le trajet continue vers sa nouvelle place.
-     t.avancer(dt, { temps, onde, penche, bob, tourne }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
+     t.avancer(dt, { temps, onde, penche, bout, bob, tourne }) → vrai tant qu'elle se déplace. temps : en secondes (l'ondulation) ;
                                  onde : son ampleur (0 : immobile, 1 : normale) ; penche : un angle, vers où elle se
-                                 penche au repos ; bob : { x, y }, le flottement de toute la pieuvre, en px ; tourne : un
+                                 penche au repos ; bout : un angle dont sa pointe seule (son dernier cinquième) se courbe
+                                 au repos ; bob : { x, y }, le flottement de toute la pieuvre, en px ; tourne : un
                                  angle (radians) dont toute la tentacule pivote autour de sa racine (la tête qui bouge
                                  l'emmène) : au repos entière, tendue sa racine seule, le reste rejoint sa cible
      t.pointe()                  le bout de la tentacule au repos, à l'écran (sans le flottement), { x, y }
@@ -302,11 +303,12 @@ const PIEUVRE = (() => {
       return { x: X[this.M], y: Y[this.M], k: this.M - 1 };
     }
     // une pose : l'angle (sg) et la longueur (ln) de chaque segment, l'angle aux points (th) ; mu : 0 au repos, 1 tendue
-    reposPose(temps = 0, onde = 0, penche = 0, tourne = 0) {
+    // (bout : un angle dont seule la pointe se courbe, son dernier cinquième, le reste tel quel)
+    reposPose(temps = 0, onde = 0, penche = 0, tourne = 0, bout = 0) {
       const M = this.M, sg = new Float64Array(M), th = new Float64Array(M + 1), ln = new Float64Array(M);
       for (let k = 0; k < M; k++) ln[k] = this.RL[k] * this.s;
       const ph = this.i * 2.399;
-      const dev = x => (onde ? onde * (0.075 * Math.pow(x, 1.4) * Math.sin(temps * 1.3 + ph - x * 3.4) + 0.03 * x * Math.sin(temps * .55 + ph * 1.7)) : 0) + penche * x + tourne;
+      const dev = x => (onde ? onde * (0.075 * Math.pow(x, 1.4) * Math.sin(temps * 1.3 + ph - x * 3.4) + 0.03 * x * Math.sin(temps * .55 + ph * 1.7)) : 0) + penche * x + tourne + (bout ? bout * lisse(.78, 1, x) : 0);
       for (let k = 0; k < M; k++) sg[k] = this.RS[k] + dev((k + .5) / M);
       for (let k = 0; k <= M; k++) th[k] = this.RT[k] + dev(k / M);
       return { sg, th, ln, mu: 0 };
@@ -481,12 +483,12 @@ const PIEUVRE = (() => {
       if (this.q < 1 && this.depuis) this.gl = !delai ? (this.cible || this.colle ? 1 : 0) : this.etire ? Math.min(1, this.q / delai) : Math.min(1, (1 - this.q) / delai);
       else this.gl = this.cible || this.colle ? 1 : 0;
       const glisseR = this.racineEff()[2];
-      const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne + glisseR);
+      const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne + glisseR, o.bout || 0);
       // (reliée : la pièce ne tourne pas. Collée, une tentacule dont la place du logo est loin de son attache (la queue, la
       // spirale extérieure) revient à cette place, d'un seul tenant, son pied restant sur la tête (reliePose) : sa forme du
       // logo tournée dans le sens de l'attache tombait dans la tête)
       const loinTete = this.att && Math.hypot(this.att.x - this.RX[0], this.att.y - this.RY[0]) > 40;
-      const repos0 = this.relie || (this.colle && loinTete) ? this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne) : repos;
+      const repos0 = this.relie || (this.colle && loinTete) ? this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne, o.bout || 0) : repos;
       const reposB = this.colle && loinTete ? this.reliePose(1, repos0) : repos;
       if (this.cible) this.but = this.viseePose(this.cible, bob);
       let bouge = false;
