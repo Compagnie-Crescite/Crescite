@@ -3735,8 +3735,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const ecrit = (t, i0 = 0) => mots(t).map((w, i) => `<span class="w" style="--w:${i0 + i}">${esc(w)}</span>`).join(' ');
   const creditDe = (s, p) => p && p.source === 'dossier' ? s.creditDossier : s.creditPhotos;
   const cleCredit = p => p && p.source === 'dossier' ? 'creditDossier' : 'creditPhotos';
+  /* le texte de remplacement d'une photo de contenu (un spectacle) : sa légende de D quand elle n'est pas écrite à côté d'elle ;
+     écrite à côté (une figcaption), rien (alt="" : le lecteur d'écran ne l'entend pas deux fois) ; sans légende, le titre du
+     spectacle qu'elle montre. Une photo décorative (un fond, une vignette dans un bouton ou un lien qui dit déjà son nom, la photo
+     de l'ouverture sous son titre) a alt="" ; un portrait, le nom de la personne, sauf quand il est écrit dessous */
+  const altPh = (s, p, aCote = true) => (p && p.legende ? (aCote ? '' : p.legende) : s.titre);
   const fig = (s, p, cls = '') => { if (!p) return ''; const i = rangPh(s, p);
-    return `<figure class="u-fig apparait${cls ? ' ' + cls : ''}"${i >= 0 ? edP(s, 'photos', i) : ''}><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy">${p.legende ? `<figcaption${i >= 0 ? edS(s, 'photos', i, 'legende') : ''}>${esc(p.legende)}</figcaption>` : ''}</figure>`; };
+    return `<figure class="u-fig apparait${cls ? ' ' + cls : ''}"${i >= 0 ? edP(s, 'photos', i) : ''}><img src="${D.photos[p.cle]}" alt="${esc(altPh(s, p))}" loading="lazy">${p.legende ? `<figcaption${i >= 0 ? edS(s, 'photos', i, 'legende') : ''}>${esc(p.legende)}</figcaption>` : ''}</figure>`; };
   const nombre = t => { const m = String(t || '').match(/^(\d[\d   ]*?)(\s+\D[\s\S]*)$/); return m ? `<b class="gros">${esc(m[1])}</b>${esc(m[2])}` : esc(t); };
   // les vidéos se lisent dans la page (règle 18, LECTEUR) : un bouton « Bande-annonce » y mène et la lance (vers : 'boite',
   // dans un catalogue loin de toute vidéo, elle s'ouvre dans une boîte) ; une adresse qui n'est ni YouTube ni Vimeo reste un lien
@@ -4812,7 +4817,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const tl = s.titreLignes && s.titreLignes.length ? s.titreLignes : null, lignes = tl || [s.titre];
     const titre = lignes.map((l, k) => `<span class="df-l"${tl ? edS(s, 'titreLignes', k) : edS(s, 'titre')}>${esc(l)}</span>`).join(' ');
     const long = lignes.length > 2 || lignes.join(' ').length > 26, badge = badgeDe(s);
-    const img = (cls = '') => src ? `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="" loading="lazy" decoding="async">` : '';
+    // (la photo d'un écran de l'accueil : sa légende, si elle en a une, qui ne s'écrit pas ici ; sinon, sous le titre du spectacle,
+    // décorative ; son jumeau, toujours)
+    const img = (cls = '') => src ? `<img${cls ? ` class="${cls}"` : ''} src="${src}" alt="${cls ? '' : esc(ph && ph.legende ? altPh(s, ph, false) : '')}" loading="lazy" decoding="async">` : '';
     return `<article class="df ${uClasse(s)}" style="${uVars(s)}" data-motif="${esc(m)}" data-cote="${i % 2 ? 'droite' : 'gauche'}" aria-labelledby="df-t-${esc(s.slug)}">
       <div class="df-photo"${ph ? edP(s, 'photos', rangPh(s, ph)) : edP(s, 'photo')}>${img()}${m === 'jumeaux' ? img('df-jumeau') : ''}</div>
       ${effetEcran(m)}
@@ -7013,8 +7020,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
   const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
   const portrait = ({ e, p, lignes }, credits) => {
-    const nom = nomDe(p), k = `personnes.${e.personne}`;
-    return `<figure class="u-pt"><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="${esc(nom)}" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+    const k = `personnes.${e.personne}`;   // (le portrait a alt="" : le nom est écrit dessous, altPh)
+    return `<figure class="u-pt"><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
       <figcaption>${credits ? `<small class="u-pt-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="u-pt-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${lignes.map(l => `${l.alternance ? `<span class="u-pt-alt">${esc(l.alternance)}</span>` : ''}${l.role ? `<span class="u-pt-role">${esc(l.role)}</span>` : ''}`).join('')}</figcaption></figure>`;
   };
   function portraits(s) {
@@ -7086,7 +7093,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     return chapitre(chap, 'spectacle', L.leSpectacle, `${titreChap(esc(L.leSpectacle))}
       <div class="rc${phs.length ? '' : ' rc--seul'}" data-scrolly data-fx="recit">
         <div class="rc-pas">${pas.map((h, i) => `<div class="rc-p${i ? '' : ' on'}"><div class="rc-in apparait">${h}</div></div>`).join('')}</div>
-        ${phs.length ? `<div class="rc-vis"><div class="rc-photos">${phs.map((x, j) => `<figure class="rc-ph${j ? '' : ' on'}"${x.attr}><img src="${x.src}" alt=""${j ? ' loading="lazy"' : ''} decoding="async">${legende(x)}</figure>`).join('')}</div>
+        ${phs.length ? `<div class="rc-vis"><div class="rc-photos">${phs.map((x, j) => `<figure class="rc-ph${j ? '' : ' on'}"${x.attr}><img src="${x.src}" alt="${esc(altPh(s, x.p))}"${j ? ' loading="lazy"' : ''} decoding="async">${legende(x)}</figure>`).join('')}</div>
           ${phs.length > 1 ? `<div class="rc-fil" aria-hidden="true">${phs.map(() => '<i></i>').join('')}</div>` : ''}</div>` : ''}
       </div>`, 'rc-chap');
   }
@@ -7096,7 +7103,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     if (!phs.length) return '';
     const credits = [];
     phs.forEach(({ p }) => { const k = cleCredit(p); if (s[k] && !credits.some(c => s[c] === s[k])) credits.push(k); });
-    return chapitre(chap, 'photos', L.photos, `<div class="wrap">${titreChap(esc(L.photos))}<div class="cartons7" data-mv="cascade">${phs.map(({ p, i }) => `<figure class="carton7"${edP(s, 'photos', i)}><img src="${D.photos[p.cle]}" alt="${esc(p.legende || s.titre)}" loading="lazy" decoding="async">${p.legende ? `<figcaption${edS(s, 'photos', i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
+    return chapitre(chap, 'photos', L.photos, `<div class="wrap">${titreChap(esc(L.photos))}<div class="cartons7" data-mv="cascade">${phs.map(({ p, i }) => `<figure class="carton7"${edP(s, 'photos', i)}><img src="${D.photos[p.cle]}" alt="${esc(altPh(s, p))}" loading="lazy" decoding="async">${p.legende ? `<figcaption${edS(s, 'photos', i, 'legende')}>${esc(p.legende)}</figcaption>` : ''}</figure>`).join('')}</div>
       ${credits.map(k => `<p class="u-credit"${edS(s, k)}>${esc(s[k])}</p>`).join('')}</div>`);
   }
   // la présentation d'un spectacle qui n'est plus en tournée (la 10) : l'ouverture (le cadre, les affirmations), le spectacle
