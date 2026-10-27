@@ -344,7 +344,8 @@ compte du projet inscrit dans `crescite_admins`.
   - **Annuler plutôt que confirmer** (`admin/corbeille.js`) : plus de « Êtes-vous sûr ? » pour supprimer (une date, un
     lieu, une séance, un atelier, une piste, une demande de devis, une alerte, un document, une invitation, du matériel,
     une note) ni pour revenir sur une ligne du journal : c'est fait tout de suite, et l'annonce porte « Annuler » (ou
-    « Rétablir ») pendant huit secondes. La **Corbeille** (`#/corbeille`, depuis le journal, la recherche et le téléphone)
+    « Rétablir ») pendant huit secondes. Toute annonce se renvoie avant l'heure, d'une croix ou d'un geste (la glisser
+    de côté ou vers le bas) quand elle couvre un bouton ; survolée ou tenue sous le doigt, elle attend. La **Corbeille** (`#/corbeille`, depuis le journal, la recherche et le téléphone)
     montre ce qui a été supprimé ces trente derniers jours (le journal le garde) et le rétablit, une date avec ses
     séances, son suivi, ses chiffres, son équipe et sa feuille.
   - **Les garde-fous** (`admin/gardefous.js`) : dans la fiche d'une date, en direct, quelqu'un de l'équipe indisponible
@@ -534,7 +535,12 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
 - **Équipe** : les fiches (publiques, coordonnées, accès, notes), et les documents de toute la compagnie ; la liste
   trouve aussi les fiches « Sans téléphone », à compléter.
 - **Dans chaque spectacle** : la distribution, le déroulé type d'une journée de représentation et les documents. **Dans
-  chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
+  la distribution**, « Ajouter quelqu'un de la troupe » (ou « Ajouter au jeu », « à la technique »… sous chaque catégorie)
+  ouvre toute la troupe, à chercher par nom, métier ou spectacle, ceux dont le métier va avec la catégorie en tête : un
+  geste ajoute, la fenêtre reste ouverte pour en ajouter d'autres, une personne sans fiche se crée au vol. C'est la même
+  ligne que « Ses spectacles » sur la fiche de la personne, où l'on peut aussi l'ajouter à un spectacle ou l'en retirer ;
+  tout s'enregistre aussitôt. L'onglet « Fiche artistique » (l'ancien « Équipe ») ne garde que le texte libre de la page
+  et du dossier. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
   remplaçant).
 - **Feuilles de route** : la feuille d'une date s'écrit directement sur une page A4 à l'écran, dans la forme des
   feuilles de la compagnie (le logo rond noir, la police FdR Sans, dérivée de Carlito et métriquement identique à
