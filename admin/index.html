@@ -490,8 +490,8 @@ table.tableur { border-collapse: separate; border-spacing: 0; width: max-content
 .tableur tbody tr.b0 td { background: var(--carte); }
 .tableur tbody tr.b1 td { background: color-mix(in srgb, var(--doux) 60%, var(--carte)); }
 .tableur tbody tr.premier:not(:first-child) td { border-top: 1px solid color-mix(in srgb, var(--gris) 45%, transparent); }
-.tableur td.repete { color: color-mix(in srgb, var(--gris) 80%, var(--carte)); }
-.tableur td.repete .pastille, .tableur td.repete .badge, .tableur td.repete .tab-pastille { opacity: .6; }
+.tableur td.repete { color: color-mix(in srgb, var(--gris) 90%, var(--carte)); }
+.tableur td.repete .pastille, .tableur td.repete .badge, .tableur td.repete .tab-pastille { opacity: .72; }
 .tableur td.choisie { background: var(--accent-doux) !important; }
 .tableur td.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent); }
 .tableur td.c-spectacle.meme-date { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent), 2px 0 0 var(--trait); }
@@ -3445,12 +3445,26 @@ function vueSpectacles(slug) {
     while (E.spectacles.some(s => s.slug === slug)) slug += '-2';
     const ordre = Math.max(0, ...E.spectacles.filter(s => s.page).map(s => s.ordre)) + 10;
     const { data, error } = await sb.from('crescite_spectacles').insert({ slug, titre, titre_lignes: [titre], ordre, publie: false, page: true,
-      univers: { nom: '', clair: false, motif: '', couleurs: { fond: '#151018', fond2: '#221a26', texte: '#f3eef4', texte2: '#b9adbd', accent: '#a8306f', accent2: '#e27ab3', scene: '#e27ab3', lueur: 'rgba(168,48,111,0.3)' }, polices: {} } }).select().single();
+      univers: universSaison() }).select().single();
     if (error) return erreur(error, 'Spectacle non créé');
     E.spectacles.push(data);
     location.hash = `#/spectacles/${slug}`;
     annoncer('Spectacle créé (non publié) : complétez sa fiche, puis cochez « Publié sur le site ».');
   });
+}
+// l'univers d'un spectacle qui naît : neutre, aux couleurs de la saison (les --saison* que site/build.py pose dans la
+// page, lues au moment de la création ; sans le build, le gris neutre des sources) ; un fond de nuit à peine teinté de
+// sa couleur profonde, un texte neutre ; comme l'ancien univers par défaut, l'accent à la couleur qui porte un texte
+// blanc (--saison-porteur), l'accent pour du texte et la scène à sa couleur vive (lisible sur ce fond), la lueur à
+// l'accent. L'administration le change ensuite comme avant (Univers).
+function universSaison() {
+  const cs = getComputedStyle(document.documentElement);
+  const lire = (v, defaut) => { const x = cs.getPropertyValue(v).trim(); return /^#[0-9a-f]{6}$/i.test(x) ? x.toLowerCase() : defaut; };
+  const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const mele = (a, b, t) => `#${rgb(a).map((v, i) => Math.round(v * t + rgb(b)[i] * (1 - t)).toString(16).padStart(2, '0')).join('')}`;
+  const profond = lire('--saison-profond', '#2b272c'), vive = lire('--saison-vive', '#b7b0ae'), porteur = lire('--saison-porteur', '#5c545d');
+  return { nom: '', clair: false, motif: '', couleurs: { fond: mele(profond, '#141114', .25), fond2: mele(profond, '#201b20', .4), texte: '#efebe7', texte2: '#b9b3ae',
+    accent: porteur, accent2: vive, scene: vive, lueur: `rgba(${rgb(porteur).join(',')},0.3)` }, polices: {} };
 }
 function editeurSpectacle(slug) {
   const s0 = E.spectacles.find(s => s.slug === slug);
@@ -3911,7 +3925,7 @@ function vueDiffusion(partie, id) {
 
 function carteCrmHtml(p, auj) {
   const sp = E.spectacles.find(s => s.id === p.spectacle_id);
-  const coul = sp?.univers?.couleurs?.accent || 'var(--accent)';
+  const coul = sp ? couleurSp(sp) : 'var(--accent)';   // la couleur du spectacle, comme partout ailleurs (sa scène)
   const enRetard = p.date_prochaine_relance && p.date_prochaine_relance < auj;
   const montantTxt = p.montant_estime ? `${Number(p.montant_estime).toLocaleString('fr-FR')} €` : '';
   const etapeIdx = ETAPES_CRM.findIndex(e => e[0] === p.etape);

@@ -370,7 +370,7 @@ const PLANNING = (() => {
 .pl-vues button[aria-pressed="true"] { background: var(--pl-fond); color: var(--pl-texte); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .pl-filtres { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .pl-filtres label { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--pl-sourd); }
-.pl-filtres select { min-height: 38px; max-width: 13.5rem; padding: 0 30px 0 10px; border-radius: 10px; border: 1px solid var(--pl-filet); background: var(--pl-fond); color: var(--pl-texte); font-size: .88rem; }
+.pl-filtres select { min-height: 38px; max-width: 13.5rem; padding: 0 30px 0 10px; border-radius: 10px; border: 1px solid var(--bord-champ, var(--pl-filet)); background: var(--pl-fond); color: var(--pl-texte); font-size: .88rem; }
 .pl-legende { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 10px; padding: 0; list-style: none; font-size: .8rem; color: var(--pl-sourd); }
 .pl-legende li { display: inline-flex; align-items: center; gap: 6px; }
 .pl-legende i { display: inline-block; width: 18px; height: 12px; border-radius: 3px; }
