@@ -7452,7 +7452,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
      une page (nommer, plus bas) l'ouvrent par-dessus ce qu'on a choisi ; son portrait se pose sur la photo (la vignette grandit,
      la fiche s'ouvre autour d'elle, en cercle). Son nom, ses métiers, le crédit de sa photo ; ses spectacles (sa fonction, son
      rôle, son alternance, « En tournée » ou son statut), chacun menant à sa page ; les prochaines dates de ceux qui tournent,
-     s'il y en a (jusqu'à cinq, puis « Toutes les dates »). Rien que D, relue à chaque ouverture. Dans la couche du dessus
+     s'il y en a (jusqu'à cinq, puis « Toutes les dates ») ; qui ne part plus avec un spectacle qui tourne (ancienDans) le garde
+     dans ses spectacles, marqué « Ancienne distribution », sans « En tournée » ni ses dates. Rien que D, relue à chaque ouverture. Dans la couche du dessus
      (popover : rien ne la coupe, ni la mise en page différée des sections, ni l'univers d'un spectacle), attachée à ce qui l'a
      ouverte quand la page défile, gardée dans l'écran à l'ouverture. Elle se ferme d'un second clic, d'Échap, d'un clic ailleurs
      ou de sa croix, et rend le focus à ce qui l'a ouverte ; une autre page la ferme */
@@ -7461,10 +7462,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const p = (D.personnes || {})[slug];
     if (!p) return '';
     const jeu = ((S.troupe && S.troupe.categories) || []).find(c => c.cle === 'jeu'), jouer = jeu && jeu.metiers && jeu.metiers[0];
-    const sps = D.shows.filter(s => (s.equipe || []).some(e => e.personne === slug)), miens = new Set(sps.map(s => s.slug));
+    const sps = D.shows.filter(s => (s.equipe || []).some(e => e.personne === slug)), miens = new Set(sps.filter(s => !ancienDans(s, slug)).map(s => s.slug));
     // dans chaque spectacle, ce qu'elle y fait : sa fonction (le jeu, sans fonction écrite : son métier), son rôle, son alternance
     const fait = s => [...new Set((s.equipe || []).filter(e => e.personne === slug).flatMap(e => [e.fonction || (e.categorie === 'jeu' ? jouer : ''), e.role, e.alternance]).filter(Boolean))];
-    const spectacle = s => { const ph = D.photos[s.slug], badge = s.statut || (s.enTournee ? L.enTournee : ''), f = fait(s);
+    const spectacle = s => { const ph = D.photos[s.slug], ancien = ancienDans(s, slug), badge = s.statut || (s.enTournee && !ancien ? L.enTournee : ''), f = ancien ? [...fait(s), L.ancienneDistribution] : fait(s);
       return `<li style="--c:${couleurDe(s.slug)}"><a href="${lienSp(s.slug)}"><span class="trf-ph">${ph ? `<img src="${ph}" alt="" width="88" height="88" loading="lazy" decoding="async">` : ''}</span>
         <span class="trf-sp"><b>${esc(s.titre)}${badge ? ` <em class="tag">${esc(badge)}</em>` : ''}</b>${f.length ? `<small>${f.map(x => `<span>${esc(x)}</span>`).join('')}</small>` : ''}</span></a></li>`; };
     const ds = D.dates.filter(d => miens.has(d.slug)), vues = ds.slice(0, FICHE_DATES);
@@ -7934,10 +7935,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       <ol class="som-l" id="som-l" hidden>${chap.map((c, i) => `<li><button type="button" data-c="${c.id}"><span class="n">${i + 1}</span>${esc(c.nom)}</button></li>`).join('')}</ol>
       <button type="button" class="som-b" aria-expanded="false" aria-controls="som-l"><span class="n" id="som-n">1/${chap.length}</span><span id="som-nom">${esc(chap[0].nom)}</span>${HAUT}</button>
     </nav>`;
-  /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes ; relus à chaque rendu */
+  /* la distribution en portraits : les comédiens (categorie « jeu ») de show.equipe, avec leur fiche D.personnes, sans ceux qui ne
+     partent plus (ancienDans) ; relus à chaque rendu */
   const nomDe = p => `${p.prenom} ${p.nom}`;
   const initiales = p => [p.prenom, p.nom].map(x => [...String(x || '').trim()][0] || '').join('');
-  const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
+  // qui ne part plus avec le spectacle : aucune de ses lignes « en tournée », au moins une de jeu ou de technique (celles qui
+  // partent d'ordinaire), quand d'autres partent ; l'équipe de création qui ne part pas n'en est pas
+  const ancienDans = (s, slug) => { const eq = s.equipe || [], siennes = eq.filter(e => e.personne === slug);
+    return siennes.length > 0 && siennes.every(e => e.enTournee === false) && siennes.some(e => e.categorie === 'jeu' || e.categorie === 'technique') && eq.some(e => e.enTournee !== false); };
+  const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p || ancienDans(s, e.personne)) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
   const portrait = ({ e, p, lignes }, credits) => {
     const k = `personnes.${e.personne}`;   // (le portrait a alt="" : le nom est écrit dessous, altPh)
     return `<figure class="u-pt"><button type="button" class="u-pt-ouvrir" data-personne="${esc(e.personne)}" aria-haspopup="dialog" aria-expanded="false" aria-label="${esc(nomDe(p))}"></button><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
