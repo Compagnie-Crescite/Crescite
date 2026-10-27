@@ -1188,16 +1188,27 @@ function blocEquipeDate(zone, F, changer) {
   $('#d-sp', zone)?.addEventListener('change', () => setTimeout(dessiner, 0));
   dessiner();
 }
-// après crescite_enregistrer_date : on écrit les écarts (et seulement eux) ; vrai si tout est passé
-async function enregistrerEquipeDate(dateId, F) {
-  if (!E.equipeInstallee || !Array.isArray(F.equipe)) return true;
+// la distribution voulue pour une date : les écarts de la fiche (F.equipe) réduits à une ligne par personne (la dernière
+// l'emporte), en ne gardant que les présentes et celles de la distribution en tournée du spectacle, chaque ligne nette
+// ({ personne_id, present, fonction, note } ; vide : null) ; null quand la base n'a pas l'équipe ou que F n'en dit rien.
+// C'est le seul calcul de ce que doit devenir l'équipe : enregistrerEquipeDate (écritures séparées) et chargeDate (la
+// charge de crescite_enregistrer_date en version 3, qui l'écrit dans le même appel) s'en servent toutes deux
+function equipeVoulue(F) {
+  if (!E.equipeInstallee || !Array.isArray(F.equipe)) return null;
   const tournee = new Set(distributionDe(+F.spectacle_id).filter(x => x.en_tournee).map(x => x.personne_id));
   const voulus = [];
   F.equipe.forEach(x => { if (x.present || tournee.has(x.personne_id)) { const i = voulus.findIndex(y => y.personne_id === x.personne_id); if (i >= 0) voulus.splice(i, 1); voulus.push(x); } });
+  return voulus.map(v => ({ personne_id: v.personne_id, present: !!v.present, fonction: (v.fonction || '').trim() || null, note: (v.note || '').trim() || null }));
+}
+// après crescite_enregistrer_date, quand la base n'a pas le vingt-quatrième script (sinon la date porte son équipe) : on écrit
+// les écarts (et seulement eux) ; vrai si tout est passé
+async function enregistrerEquipeDate(dateId, F) {
+  const voulus = equipeVoulue(F);
+  if (!voulus) return true;
   const actuels = E.equipes.filter(x => x.date_id === dateId);
   const aRetirer = actuels.filter(a => !voulus.some(v => v.personne_id === a.personne_id)).map(a => a.personne_id);
-  const aEcrire = voulus.filter(v => { const a = actuels.find(x => x.personne_id === v.personne_id); return !a || a.present !== !!v.present || (a.fonction || '') !== (v.fonction || '').trim() || (a.note || '') !== (v.note || '').trim(); })
-    .map(v => ({ date_id: dateId, personne_id: v.personne_id, present: !!v.present, fonction: (v.fonction || '').trim() || null, note: (v.note || '').trim() || null }));
+  const aEcrire = voulus.filter(v => { const a = actuels.find(x => x.personne_id === v.personne_id); return !a || a.present !== v.present || (a.fonction || '') !== (v.fonction || '') || (a.note || '') !== (v.note || ''); })
+    .map(v => ({ date_id: dateId, ...v }));
   try {
     if (aRetirer.length) { const { error } = await sb.from('crescite_equipes').delete().eq('date_id', dateId).in('personne_id', aRetirer); if (error) throw error; }
     if (aEcrire.length) { const { error } = await sb.from('crescite_equipes').upsert(aEcrire, { onConflict: 'date_id,personne_id' }); if (error) throw error; }

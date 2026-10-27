@@ -15,7 +15,10 @@
 //   cpu                      un processeur ralenti de ce facteur (Emulation.setCPUThrottlingRate), 4 : un téléphone lent
 //   longues                  l'observateur de tâches longues : window.__longues (durées en ms), après window.__pret
 //   refuser                  { rpc, status, message } : cette fonction répond une fois par une erreur
-//   capacites                ce que le rpc crescite_capacites répond (null sinon)
+//   capacites                ce que le rpc crescite_capacites répond (null sinon : la base d'avant le vingt-quatrième script) ; c'est
+//                            une lecture, elle ne laisse rien dans MODIFS. Avec enregistrer_date >= 3, la simulation de
+//                            crescite_enregistrer_date applique aussi suivi.montant_cession, chiffres et equipe (la version 3),
+//                            sauf ce que capacites dit absent (montant_cession, chiffres, equipe : false)
 // Exportés pour les bancs : DB (la base fictive), ECRITURES (crescite_preferences écrites), MODIFS (les autres écritures, rpc
 // compris), LECTURES (chaque lecture : { table, searchParams }), et order=col.asc|desc[.nullsfirst|nullslast][,…] appliqué
 // en mémoire, colonne par colonne, avant limit.
@@ -185,11 +188,28 @@ async function ouvrir(navigateur, { largeur = 1600, hauteur = 1000, hash = '', s
       if (Array.isArray(d.representations)) {
         DB.crescite_representations = DB.crescite_representations.filter(r => r.date_id !== x.id).concat(d.representations.map((r, i) => ({ id: r.id || 9700 + DB.crescite_representations.length + i, date_id: x.id, jour: r.jour, heure: r.heure || null, fin: r.fin || null, public: r.public || 'tout_public', annulee: !!r.annulee, lien: r.lien || null, note: r.note || null })));
       }
-      if (d.suivi) { let su = DB.crescite_dates_suivi.find(y => y.date_id === x.id); if (!su) { su = { date_id: x.id }; DB.crescite_dates_suivi.push(su); } ['organisateur', 'contact', 'contrat', 'notes'].forEach(k => { if (k in d.suivi) su[k] = d.suivi[k] || null; }); }
+      const v3 = capacites?.enregistrer_date >= 3;   // la version 3 (le vingt-quatrième script) : le montant de cession, les chiffres et l'équipe dans le même appel
+      if (d.suivi) {
+        let su = DB.crescite_dates_suivi.find(y => y.date_id === x.id); if (!su) { su = { date_id: x.id }; DB.crescite_dates_suivi.push(su); }
+        ['organisateur', 'contact', 'contrat', 'notes'].forEach(k => { if (k in d.suivi) su[k] = d.suivi[k] || null; });
+        if (v3 && capacites.montant_cession !== false && 'montant_cession' in d.suivi) su.montant_cession = d.suivi.montant_cession === '' ? null : d.suivi.montant_cession;
+      }
+      if (v3 && d.chiffres && capacites.chiffres !== false) {   // une clé absente garde la valeur ; les trois nombres et la source vides : la ligne s'en va (comme ecrireChiffres)
+        const ligne = { ...(DB.crescite_dates_chiffres.find(y => y.date_id === x.id) || { date_id: x.id, jauge: null, spectateurs: null, heures_ateliers: null, source: null }) };
+        ['jauge', 'spectateurs', 'heures_ateliers', 'source'].forEach(k => { if (k in d.chiffres) ligne[k] = d.chiffres[k] === '' ? null : d.chiffres[k]; });
+        DB.crescite_dates_chiffres = DB.crescite_dates_chiffres.filter(y => y.date_id !== x.id);
+        if (ligne.jauge != null || ligne.spectateurs != null || ligne.heures_ateliers != null || ligne.source != null) DB.crescite_dates_chiffres.push(ligne);
+      }
+      if (v3 && Array.isArray(d.equipe) && capacites.equipe !== false) {   // la liste voulue : les autres personnes sont retirées de la date
+        const voulus = d.equipe.map(e => e.personne_id);
+        DB.crescite_equipes = DB.crescite_equipes.filter(y => y.date_id !== x.id || voulus.includes(y.personne_id));
+        d.equipe.forEach(e => { const l = { date_id: x.id, personne_id: e.personne_id, present: e.present ?? true, fonction: e.fonction || null, note: e.note || null }, i = DB.crescite_equipes.findIndex(y => y.date_id === x.id && y.personne_id === e.personne_id); if (i >= 0) Object.assign(DB.crescite_equipes[i], l); else DB.crescite_equipes.push(l); });
+      }
       MODIFS.push({ rpc: table, corps: c });
       return json(200, x.id);
     }
-    if (url.pathname.startsWith('/rest/v1/rpc/')) { MODIFS.push({ rpc: table, corps: JSON.parse(req.postData() || '{}') }); return json(200, table === 'crescite_prevenir_equipe' ? 2 : table === 'crescite_capacites' ? capacites : null); }
+    if (table === 'crescite_capacites') return json(200, capacites);   // la sonde est une lecture : elle ne laisse rien dans MODIFS (des bancs comptent les écritures)
+    if (url.pathname.startsWith('/rest/v1/rpc/')) { MODIFS.push({ rpc: table, corps: JSON.parse(req.postData() || '{}') }); return json(200, table === 'crescite_prevenir_equipe' ? 2 : null); }
     if (prefsAbsentes && table === 'crescite_preferences') return json(404, { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` });
     if (req.method() === 'GET') {
       if (!(table in DB)) return json(404, { code: 'PGRST205', message: `Could not find the table 'public.${table}' in the schema cache` });

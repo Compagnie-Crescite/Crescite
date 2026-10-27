@@ -2,8 +2,8 @@
 /* Le tableur des représentations (#/representations/tableur), à côté de la liste : une ligne par séance (jour et heure),
    comme le tableur où la compagnie récapitule ses représentations ; les séances d'une même date se suivent, en bande.
    Branché sur la base dans les deux sens : écrire dans une case enregistre aussitôt, par le même chemin que la fiche d'une
-   date (ecrireDate : crescite_enregistrer_date, puis l'équipe ; les mêmes déclencheurs, notifications et journal), avec
-   « Annuler » et Ctrl+Z ; ce qui change ailleurs arrive en direct (le temps réel redessine les lignes, la case active
+   date (ecrireDate : crescite_enregistrer_date, puis l'équipe, ou, avec le vingt-quatrième script, l'équipe dans le même
+   appel ; les mêmes déclencheurs, notifications et journal), avec « Annuler » et Ctrl+Z ; ce qui change ailleurs arrive en direct (le temps réel redessine les lignes, la case active
    reste, ce qui a changé clignote). Une case « de la date » (spectacle, lieu, statut, nature, distribution, billetterie,
    suivi) vaut pour toutes les séances de la date : les autres lignes de la date la répètent en gris et s'éclairent avec
    elle. Ce qui est vide reste vide ; une colonne vide sur toute la vue se replie (« Colonnes vides » la montre). Filtres :
@@ -21,9 +21,9 @@
    chiffres (jauge, spectateurs, heures d'ateliers : quand la base a le dixième script), leur équipe, et, depuis l'audit
    de la chaîne commerciale, le montant de cession HT (colonne « Cession HT (€) », niveau « date », présente quand la base
    a le script de la compagnie idéale : E.ideale). Il le lit dans le suivi de la date (E.suivis, montant_cession) et le
-   remet à ecrireDate dans F.suivi.montant_cession ; c'est ecrireDate, dans le script principal, qui l'écrit par un
-   upsert de crescite_dates_suivi, après le RPC (le même chemin que le champ « Montant de cession HT » de la fiche d'une
-   date). À l'import, une colonne « cession », « montant » ou « prix » le reprend de la même façon. Rien d'autre.
+   remet à ecrireDate dans F.suivi.montant_cession ; c'est ecrireDate, dans le script principal, qui l'écrit : dans le
+   suivi du même appel quand la base a le vingt-quatrième script, sinon par un upsert de crescite_dates_suivi, après le
+   RPC (le même chemin que le champ « Montant de cession HT » de la fiche d'une date). À l'import, une colonne « cession », « montant » ou « prix » le reprend de la même façon. Rien d'autre.
 
    Après quoi il se charge : ce module est un script classique, chargé après tableau.js et avant menus.js (admin/index.html),
    donc après le script principal et après agenda.js, gestes.js, feuille.js, equipe.js et planning.js. Il ne lit rien de ce

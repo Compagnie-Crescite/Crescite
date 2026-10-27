@@ -860,7 +860,7 @@ const bravo = () => requestAnimationFrame(() => {
 // ===================================================================================================== état
 const E = { session: null, admin: false, pret: false, direct: false, sale: false, hash: location.hash,
   spectacles: [], lieux: [], dates: [], reps: [], suivis: [], lieuxSuivi: [], ateliers: [], seances: [], textes: [], admins: [], journal: [],
-  prospects: [], frais: [], materiel: [], devis: [], alertes: [], alertesInstallees: false };
+  prospects: [], frais: [], materiel: [], devis: [], alertes: [], alertesInstallees: false, capacites: null };   // capacites : ce que la base sait faire (lireCapacites)
 const TABLES = {
   crescite_spectacles: ['spectacles', 'id'], crescite_lieux: ['lieux', 'id'], crescite_dates: ['dates', 'id'],
   crescite_representations: ['reps', 'id'], crescite_dates_suivi: ['suivis', 'date_id'], crescite_lieux_suivi: ['lieuxSuivi', 'lieu_id'],
@@ -1251,6 +1251,16 @@ async function tout(table, ordre) {
     if (data.length < 1000) return out;
   }
 }
+// ce que la base sait faire (le vingt-quatrième script : crescite_capacites) → { enregistrer_date: 3 | 2, montant_cession, equipe,
+// chiffres }. Sans le script (la fonction n'existe pas : PGRST202 ou 404), null : la base écrit une date en plusieurs fois
+// (version 2). Toute autre erreur est levée : un réseau qui flanche ne vaut jamais « version 2 » (le client retomberait sur
+// les écritures séparées sans que personne ne le sache) ; chargerTout lève alors et actualiser garde ce qu'il savait
+async function lireCapacites() {
+  const { data, error, status } = await sb.rpc('crescite_capacites');
+  if (!error) return data || null;
+  if (error.code === 'PGRST202' || status === 404) return null;
+  throw error;
+}
 async function chargerTout() {
   const equipe = chargerEquipe();   // l'équipe (equipe.js) : ne lève jamais d'erreur, même quand la base ne l'a pas encore
   const chiffres = tout('crescite_dates_chiffres').then(x => x, () => null);   // null : la base n'a pas encore le dixième script
@@ -1260,14 +1270,14 @@ async function chargerTout() {
   const carnet = typeof CARNET !== 'undefined' ? CARNET.charger() : null;      // le carnet des lieux (carnet.js) : ne lève jamais d'erreur
   let ideale = false;               // la base a les tables de TABLES_IDEALE (une au moins se lit)
   const facultative = table => tout(table, 'id').then(x => { ideale = true; return x; }, () => []);   // (par id : des pages de 1 000 qui ne se chevauchent pas)
-  const [sp, li, da, re, su, ls, at, se, tx, ad, pr, fr, mt, dv] = await Promise.all([
+  const [sp, li, da, re, su, ls, at, se, tx, ad, cap, pr, fr, mt, dv] = await Promise.all([
     tout('crescite_spectacles', 'ordre'), tout('crescite_lieux', 'id'), tout('crescite_dates', 'debut'), tout('crescite_representations', 'jour'),
     tout('crescite_dates_suivi'), tout('crescite_lieux_suivi'), tout('crescite_ateliers', 'ordre'), tout('crescite_seances', 'jour'),
-    tout('crescite_textes'), tout('crescite_admins'),
+    tout('crescite_textes'), tout('crescite_admins'), lireCapacites(),
     ...Object.keys(TABLES_IDEALE).map(facultative),
   ]).catch(async e => { await equipe; throw e; });   // (une lecture qui échoue attend l'équipe : actualiser rend ce qu'on en savait)
   Object.assign(E, { spectacles: sp, lieux: li, dates: da, reps: re, suivis: su, lieuxSuivi: ls, ateliers: at, seances: se, textes: tx, admins: ad,
-    prospects: pr, frais: fr, materiel: mt, devis: dv, ideale });
+    prospects: pr, frais: fr, materiel: mt, devis: dv, ideale, capacites: cap });
   await equipe;
   const c = await chiffres;
   E.chiffres = c || []; E.chiffresInstalles = !!c;
@@ -1422,7 +1432,7 @@ async function actualiser({ discret = false } = {}) {
   if (E.relit) { if (!discret) E.relitDire = true; return E.relit; }
   if (navigator.onLine === false) { E.horsLigne = true; majTemoin(); if (!discret) annoncer('Hors ligne : la base se relira au retour du réseau.', { erreur: true }); return false; }
   // une lecture qui échoue ne dit rien de ce que la base a (chargerEquipe la croirait sans l'équipe) : ce qu'on en savait reste
-  const savait = Object.fromEntries(['equipeInstallee', 'equipeErreur', 'sql3', 'sql4', 'sql4Erreur'].map(k => [k, E[k]]));
+  const savait = Object.fromEntries(['equipeInstallee', 'equipeErreur', 'sql3', 'sql4', 'sql4Erreur', 'capacites'].map(k => [k, E[k]]));
   E.relitDire = !discret;
   E.relit = (async () => {
     await null;      // (E.relit posé d'abord : le témoin dit « Mise à jour… » dès le départ, pas « À jour »)
@@ -1452,10 +1462,13 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // « Modifiée à 14h32 par Barbara — Recharger / Garder mes changements » : en tête de la fiche d'une date (la page, chaque
 // tiroir du haut) quand la ligne de cette date vient d'être mise à jour par un autre compte identifié, que la fiche soit
-// sale ou non (le temps réel ne redessine jamais la fiche). Une fiche cachée sous un autre tiroir n'en a pas. Le rpc met la ligne de crescite_dates à jour à chaque enregistrement, avec
-// l'auteur (modifie_par, posé par le déclencheur) : les écritures directes du suivi, des chiffres ou de l'équipe ne la
-// touchent pas, et le bandeau ne les voit pas. Le dernier qui enregistre l'emporte : « Garder mes changements » ne fait
-// que retirer le bandeau.
+// sale ou non (le temps réel ne redessine jamais la fiche). Une fiche cachée sous un autre tiroir n'en a pas. Le rpc met
+// la ligne de crescite_dates à jour, avec l'auteur (modifie_par, posé par le déclencheur), quand la date elle-même change :
+// les écritures directes du suivi, des chiffres ou de l'équipe ne la touchent pas, et le bandeau ne les voit pas. Avec le
+// vingt-quatrième script (E.capacites), un enregistrement qui ne change que le suivi, le montant, les chiffres ou l'équipe
+// ne touche pas non plus la ligne de la date (la base ne réécrit que ce qui diffère) : le bandeau se tait alors, et la
+// fiche ouverte reste ce qu'elle était. Le dernier qui enregistre l'emporte : « Garder mes changements » ne fait que
+// retirer le bandeau.
 function bandeauAilleurs(p) {
   const l = p.new;
   if (p.eventType !== 'UPDATE' || !l || !l.modifie_par || l.modifie_par === E.session?.user?.id) return;   // (sans auteur : un import, un compte inconnu, rien à dire)
@@ -2644,12 +2657,14 @@ const nombreFr = n => Number(n).toLocaleString('fr-FR', { maximumFractionDigits:
 // chaque chiffre dans son propre span : quand le compte change, ils roulent l'un après l'autre (--i) ; le texte reste entier
 // pour les lecteurs d'écran (recopié de l'espace de l'équipe, equipe/equipe.js)
 const chiffresRoulants = s => [...String(s)].map((c, i) => (/\d/.test(c) ? `<span class="d" style="--i:${i}">${c}</span>` : esc(c))).join('');
+// les trois nombres d'une saisie de chiffres (vide ou illisible : null), pour la ligne de crescite_dates_chiffres comme pour la
+// charge de la version 3
+const nombresChiffres = c => Object.fromEntries(CHIFFRES.map(([k]) => [k, c[k] === '' || c[k] == null || !Number.isFinite(Number(c[k])) ? null : Number(c[k])]));
 // les écrire (l'administration seule) : rien quand ils n'ont pas changé, la ligne effacée quand les trois nombres et la
 // source sont vides (une source absente de F.chiffres reste ce qu'elle était)
 async function ecrireChiffres(id, F) {
   if (!E.chiffresInstalles || !F.chiffres) return;
-  const avant = chiffresVersForm(id), ligne = { date_id: id };
-  CHIFFRES.forEach(([k]) => { const v = F.chiffres[k]; ligne[k] = v === '' || v == null || !Number.isFinite(Number(v)) ? null : Number(v); });
+  const avant = chiffresVersForm(id), ligne = { date_id: id, ...nombresChiffres(F.chiffres) };
   ligne.source = 'source' in F.chiffres ? String(F.chiffres.source ?? '').trim() || null : avant.source || null;
   if (CHIFFRES.every(([k]) => (avant[k] === '' ? null : avant[k]) === ligne[k]) && (avant.source || null) === ligne.source) return;
   const vide = CHIFFRES.every(([k]) => ligne[k] == null) && ligne.source == null;
@@ -2812,6 +2827,7 @@ const SCHEMA_DATE = (() => {
       lire: t => (String(t ?? '').trim() ? TABLEUR.lecteurs.choix(CONTRATS_DATE)(t) : '') }),
     suiviCol('notes', 'Notes', { type: 'long' }),
     // le montant de cession : la seule colonne vivante du suivi commercial (les autres : voir plus haut), écrite par ecrireMontant
+    // (avec le vingt-quatrième script, dans le suivi du même appel)
     { k: 'montant', l: 'Montant de cession HT (€)', court: 'Cession HT (€)', aide: 'Repris dans le devis, le contrat, la facture', table: 'dates_suivi', col: 'montant_cession', niveau: 'diffusion', type: 'nombre', min: 0, max: 1e7, pas: .01,
       confidentiel: true, jeux: ['diffusion'], colonne: {}, si: () => !!E.ideale, val: x => suiviDe(x.d).montant_cession ?? '', texte: x => { const v = suiviDe(x.d).montant_cession; return v == null || v === '' ? '' : nombreFr(v); },
       lire: t => { const n = String(t ?? '').trim().replace(/\s|€/g, '').replace(',', '.'); if (!n) return ''; const v = Number(n); return Number.isFinite(v) && v >= 0 && v < 1e7 ? Math.round(v * 100) / 100 : undefined; },
@@ -3089,7 +3105,7 @@ function editeurDate(id, depart = null) {
 // ce que crescite_enregistrer_date reçoit d'une date : la date, toutes ses séances (celles qui manquent sont retirées) et
 // son suivi. Le même chemin pour la fiche d'une date et pour le tableur : les mêmes règles, déclencheurs, notifications
 // et journal. libre : la ligne d'agenda écrite à la main est gardée (sinon le site la compose)
-function chargeDate(F, d0, libre = !!(F.intitule || '').trim()) {
+function chargeDate(F, d0, libre = !!(F.intitule || '').trim(), capacites = E.capacites) {   // (capacites : ecrireDate la fixe avant l'appel, pour que la charge et la suite lisent la même version)
   const reps = F.representations.filter(r => r.jour);
   const js = reps.map(r => r.jour).sort();
   const debut = js[0] || F.debut;
@@ -3107,6 +3123,22 @@ function chargeDate(F, d0, libre = !!(F.intitule || '').trim()) {
     ...(E.sql3 ? { nature: F.nature || 'representations' } : {}),
   };
   if (E.sql3 && !PUBLIABLE(charge.nature)) charge.visible = false;
+  // la version 3 (le vingt-quatrième script) range tout dans le même appel, donc la même transaction : le montant de cession
+  // dans le suivi (écarté s'il est illisible, la base garde alors le sien), les chiffres (leur source seulement si la saisie
+  // en parle), l'équipe voulue (equipe.js) ; chaque morceau seulement quand la base l'a
+  if (capacites?.enregistrer_date >= 3) {
+    if (charge.suivi) {
+      charge.suivi = { ...charge.suivi };
+      const m = montantDe(charge.suivi);
+      if (m === undefined || !capacites.montant_cession) delete charge.suivi.montant_cession; else charge.suivi.montant_cession = m;
+    }
+    if (E.chiffresInstalles && F.chiffres) {
+      charge.chiffres = nombresChiffres(F.chiffres);
+      if ('source' in F.chiffres) charge.chiffres.source = String(F.chiffres.source ?? '').trim() || null;
+    }
+    const equipe = equipeVoulue(F);
+    if (equipe) charge.equipe = equipe;
+  }
   return charge;
 }
 // ce qui manque à une date pour s'enregistrer (une phrase), ou ''
@@ -3116,23 +3148,33 @@ const manqueDate = F => !F.spectacle_id ? 'Choisissez le spectacle.'
 // écrire une date : la date et ses séances (crescite_enregistrer_date), puis ses chiffres, son montant de cession, son
 // équipe (ce qui change de la distribution en tournée), puis la relire. → { id, equipeOk, montantOk } ; une erreur de la
 // base est levée. C'est le seul chemin vers la base pour une date : la fiche, le tableur, les séries et ecrireChamps
-// (le rail des écritures champ par champ, plus bas) y passent tous
+// (le rail des écritures champ par champ, plus bas) y passent tous. Avec le vingt-quatrième script (E.capacites), un seul
+// appel porte tout (chargeDate) : tout passe ou rien, une seule erreur possible, plus d'écriture « partielle » ; sans lui,
+// les quatre écritures d'avant, et leurs messages (« La date est enregistrée, mais pas ses chiffres »…)
 async function ecrireDate(F, d0, { libre } = {}) {
-  const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: chargeDate(F, d0, libre) });
+  const capacites = E.capacites;   // lue une seule fois : une relecture en arrière-plan pendant l'appel ne doit pas changer de version entre la charge et la suite
+  const { data: id, error } = await sb.rpc('crescite_enregistrer_date', { d: chargeDate(F, d0, libre, capacites) });
   if (error) throw error;
+  if (capacites?.enregistrer_date >= 3) { await rechargerDate(id); return { id, equipeOk: true, montantOk: true }; }
   await ecrireChiffres(id, F);
   const montantOk = await ecrireMontant(id, F);
   const equipeOk = await enregistrerEquipeDate(id, F);
   await rechargerDate(id);
   return { id, equipeOk, montantOk };
 }
-// le montant de cession (le script « Compagnie Idéale ») : à côté de crescite_enregistrer_date, qui ne le connaît pas ;
-// seulement s'il a changé. Un échec ne lève pas : une annonce le dit, et ecrireMontant rend faux (ecrireDate le rend en
-// montantOk, ecrireChamps le dit dans sa phrase)
+// le montant d'une saisie de suivi, au centime : un nombre, null (vidé), ou undefined (absent ou illisible : on n'y touche pas)
+function montantDe(suivi) {
+  if (!suivi || !('montant_cession' in suivi)) return undefined;
+  const v = suivi.montant_cession === '' || suivi.montant_cession == null ? null : Math.round(Number(suivi.montant_cession) * 100) / 100;
+  return v != null && !(Number.isFinite(v) && v >= 0) ? undefined : v;
+}
+// le montant de cession (le script « Compagnie Idéale »), quand la base n'a pas le vingt-quatrième script (sinon le suivi de la
+// date le porte) : à côté de crescite_enregistrer_date, qui ne le connaît pas ; seulement s'il a changé. Un échec ne lève pas :
+// une annonce le dit, et ecrireMontant rend faux (ecrireDate le rend en montantOk, ecrireChamps le dit dans sa phrase)
 async function ecrireMontant(id, F) {
-  if (!E.ideale || !F.suivi || !('montant_cession' in F.suivi)) return true;
-  const v = F.suivi.montant_cession === '' || F.suivi.montant_cession == null ? null : Math.round(Number(F.suivi.montant_cession) * 100) / 100;
-  if (v != null && !(Number.isFinite(v) && v >= 0)) return true;
+  if (!E.ideale) return true;
+  const v = montantDe(F.suivi);
+  if (v === undefined) return true;
   const avant = E.suivis.find(x => x.date_id === id)?.montant_cession ?? null;
   if ((avant == null ? null : Number(avant)) === v) return true;
   const { error } = await sb.from('crescite_dates_suivi').upsert({ date_id: id, montant_cession: v }, { onConflict: 'date_id' });
@@ -3153,8 +3195,8 @@ async function ecrireMontant(id, F) {
 //   partiel : la date est écrite mais pas son équipe ou son montant (ok reste vrai : l'appelant relit et ferme sa feuille,
 //   une annonce d'erreur a déjà dit ce qui manque) ; defaire est la fonction qu'« Annuler » appelle (une séance retirée
 //   par le geste revient, recréée). Deux raccourcis : l'équipe seule passe par enregistrerEquipeDate, les
-//   chiffres seuls par ecrireChiffres (aucun appel au rpc). Le montant de cession s'écrit par ecrireMontant, après le rpc :
-//   son échec est dit dans la phrase.
+//   chiffres seuls par ecrireChiffres (aucun appel au rpc). Le montant de cession s'écrit par ecrireMontant, après le rpc
+//   (avec le vingt-quatrième script, dans le même appel) : son échec est dit dans la phrase.
 async function ecrireChamps(dateId, modifs, { dire = null, annulable = true } = {}) {
   const raté = phrase => ({ ok: false, phrase, defaire: null });
   const d = E.dates.find(x => x.id === dateId);

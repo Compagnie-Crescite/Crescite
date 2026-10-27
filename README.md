@@ -394,20 +394,36 @@ compte du projet inscrit dans `crescite_admins`.
     piste depuis le script 22, plus sur la date, dont il ne reste que le montant de cession, toujours dans « Suivi
     interne ». « Les chiffres » dit d'où ils viennent (la source). *Un seul chemin d'écriture* : `ecrireChamps(date,
     champs)` part de la date entière, y pose chaque champ par son geste du schéma, puis la fait passer par `ecrireDate`
-    (l'enregistrement de la date, ses chiffres, le montant de cession, l'équipe, la relecture) : les mêmes règles, déclencheurs, notifications
-    et journal que la fiche, et jamais d'envoi partiel. Un champ de séance sans séance est refusé (il en créerait une
-    fantôme), « Annuler » rejoue l'état d'avant. Deux écritures restent hors de ce chemin, par choix : la sélection
-    groupée (`selection.js`) et la pose d'un contrat « envoyé » quand un document est émis (`modeles.js`). *« Modifiée à
-    14h32 par Barbara »* : si un autre compte enregistre la date qu'on a sous les yeux, un bandeau le dit, en tête de la
-    fiche (sale ou non), avec « Recharger » et « Garder mes changements » ; le dernier qui enregistre l'emporte, et le
-    bandeau ne voit que l'enregistrement de la date elle-même : le suivi, les chiffres et l'équipe s'écrivent à part et
-    ne le déclenchent pas. `node site/champs.mjs` le vérifie, dans Chromium sur la base fictive : « aucun champ oublié »
-    (chaque colonne de `supabase/tests/champs-date.json` a son champ ou une raison d'être écartée ; l'essai sait échouer),
-    la feuille « Horaires » du tableau de bord (un seul enregistrement de la date, le lien de billetterie gardé, « Annuler » qui
-    remet une séance retirée), le rail (un seul enregistrement, jamais un envoi partiel, le montant après lui, un montant
-    qui s'efface, le refus sans séance, l'échec de l'équipe ou du montant dit sans rouvrir la feuille), les puces, la jauge et « Compléter » (même sur une date neuve), la piste, la source des chiffres, le bandeau (pas de bandeau sans
-    auteur) :
-    60 vérifications, des captures dans `site/dist/shots-champs/`.
+    (l'enregistrement de la date, ses chiffres, le montant de cession, l'équipe, la relecture) : les mêmes règles,
+    déclencheurs, notifications et journal que la fiche, et jamais d'envoi partiel.
+    *Un appel, ou quatre* : au chargement, l'administration demande à la base ce qu'elle sait faire
+    (`crescite_capacites()`, le vingt-quatrième script ; `lireCapacites` dans `admin/index.html`). Avec ce script, la
+    date, son montant de cession, ses chiffres et son équipe partent dans un seul appel (`chargeDate`, l'équipe calculée
+    par `equipeVoulue`, `admin/equipe.js`) : tout passe ou rien, « La date est enregistrée, mais pas ses chiffres » ne
+    peut plus arriver, et la date relue rapporte aussi ses chiffres et son équipe. Sans lui (la fonction n'existe pas),
+    les quatre écritures d'avant et leurs messages. Si la question posée à la base échoue autrement (le réseau, la
+    base), la relecture échoue : l'administration ne conclut jamais que le script manque, elle garde ce qu'elle savait.
+    Un champ de séance sans séance est refusé (il en créerait une fantôme), « Annuler » rejoue l'état d'avant. Deux
+    écritures restent hors de ce chemin, par choix : la sélection groupée (`selection.js`) et la pose d'un contrat
+    « envoyé » quand un document est émis (`modeles.js`).
+    *« Modifiée à 14h32 par Barbara »* : si un autre compte enregistre la date qu'on a sous les yeux, un bandeau le dit,
+    en tête de la fiche (sale ou non), avec « Recharger » et « Garder mes changements » ; le dernier qui enregistre
+    l'emporte. Le bandeau ne voit que la ligne de la date elle-même : les écritures du suivi, des chiffres et de
+    l'équipe ne le déclenchent pas. Avec le vingt-quatrième script, la ligne de la date n'est touchée que si la date
+    elle-même change : un autre compte qui n'a changé que le suivi, le montant, les chiffres ou l'équipe ne fait donc
+    pas paraître le bandeau, et la fiche ouverte reste ce qu'elle était (son enregistrement suivant renvoie alors ces
+    valeurs et écrase le travail de l'autre).
+    `node site/champs.mjs` vérifie tout cela, dans Chromium sur la base fictive : « aucun champ oublié » (chaque colonne
+    de `supabase/tests/champs-date.json` a son champ ou une raison d'être écartée ; l'essai sait échouer), la feuille
+    « Horaires » du tableau de bord (un seul enregistrement de la date, le lien de billetterie gardé, « Annuler » qui
+    remet une séance retirée), le rail (un seul enregistrement, jamais un envoi partiel, le montant après lui, un
+    montant qui s'efface, le refus sans séance, l'échec de l'équipe ou du montant dit sans rouvrir la feuille), les
+    puces, la jauge et « Compléter » (même sur une date neuve), la piste, la source des chiffres, le bandeau (pas de
+    bandeau sans auteur) ; puis, avec le vingt-quatrième script (la base fictive répond `crescite_capacites` sans rien
+    écrire), un seul appel par geste (la fiche, un geste qui mêle date, équipe, montant et chiffres, la feuille
+    « Horaires », une case du tableur), une source de chiffres gardée même sans nombre, la question posée à la base qui
+    échoue sans jamais valoir « sans le script », la fonction absente qui ramène aux quatre écritures, la base qui
+    refuse : 83 vérifications, des captures dans `site/dist/shots-champs/`.
   - **Annuler plutôt que confirmer** (`admin/corbeille.js`) : plus de « Êtes-vous sûr ? » pour supprimer (une date, un
     lieu, une séance, un atelier, une piste, une demande de devis, une alerte, un document, une invitation, du matériel,
     une note) ni pour revenir sur une ligne du journal : c'est fait tout de suite, et l'annonce porte « Annuler » (ou
@@ -581,7 +597,8 @@ compte du projet inscrit dans `crescite_admins`.
   annulée, site. Ce qui est vide reste vide, et une colonne vide sur toute la vue se replie (« Colonnes vides » la
   montre). Filtres : saison, spectacle, à venir ou passées, recherche ; tri par date.
   - Branché sur la base dans les deux sens. Écrire dans une case enregistre aussitôt, par le même chemin que la fiche
-    d'une date (`crescite_enregistrer_date`, puis l'équipe : les mêmes déclencheurs, notifications et journal) ; l'état
+    d'une date (`crescite_enregistrer_date` ; avec le vingt-quatrième script, les chiffres et l'équipe dans le même appel,
+    sinon l'équipe ensuite : les mêmes déclencheurs, notifications et journal) ; l'état
     le dit, « Annuler » ou Ctrl+Z le reprend. Ce qui change ailleurs (une autre administratrice, la fiche d'une date, le
     site en édition) arrive en direct, et la case clignote. Une case de la date (spectacle, lieu, statut, nature,
     distribution, billetterie, suivi) vaut pour toutes ses séances : les autres lignes la répètent en gris et s'éclairent
@@ -615,7 +632,7 @@ compte du projet inscrit dans `crescite_admins`.
   un champ, jusque dans les valeurs changées), au téléphone comme à l'ordinateur ; il lit les 300 dernières
   modifications, « Lire 300 modifications plus anciennes » remonte plus loin (et la liste dit quand ce qui est lu ne
   remonte pas assez). Enregistrer les horaires d'une date (la fiche, le tableur, le tableau de bord) écrit une ligne du
-  Journal par séance, même pour celles qui n'ont pas changé : le script de l'enregistrement en une fois y mettra bon ordre.
+  Journal par séance, même pour celles qui n'ont pas changé : le vingt-quatrième script (l'enregistrement en une fois) y met bon ordre.
 - **Modifier sur le site ↗** ouvre le site en mode édition : les mêmes droits, dans la page publique.
 
 **Son mouvement.** L'administration s'ouvre sur un squelette qui luit le temps de lire la base, puis le contenu paraît.
@@ -672,7 +689,8 @@ Une personne connectée ne lit que sa fiche, ses dates (options comprises), les 
 feuilles de route publiées de ses dates ; un fichier privé ne s'ouvre que par un lien signé, si son document se lit. Le
 public ne lit que les fiches publiées et la distribution des spectacles publiés. Les règles sont vérifiées par 37 essais
 sur PostgreSQL (`supabase/tests/` : `npm install`, puis `node base.mjs`, `node equipe.mjs` et `node notifications.mjs` ; `node champs.mjs` y
-écrit les colonnes d'une date dans `champs-date.json`, que `site/champs.mjs` compare au schéma de la date). Le script se termine par
+écrit les colonnes d'une date dans `champs-date.json`, que `site/champs.mjs` compare au schéma de la date ; l'enregistrement d'une
+date en une seule fois, avec le vingt-quatrième script, a les siens : `node enregistrer3.mjs`). Le script se termine par
 une vérification : les tables du projet, hors compagnie, qu'un compte connecté pourrait lire. Les comptes de ce projet
 sont aussi ceux du site adrienvada.fr.
 
@@ -1195,6 +1213,39 @@ l'administration ne propose pas ces liens et marche comme avant.
 `crescite_membre_date` (qui lit quoi) la lisent désormais, sans rien changer à ce qu'elles rendent. Les tables
 `crescite_contacts` et `crescite_hebergements` (le carnet des lieux) ne se lisent que dans l'administration et vont au
 journal. 21 essais (`node carnet.mjs`). Sans lui, la fiche d'un lieu dit que le carnet attend son script.
+
+**L'enregistrement d'une date en une seule fois (pas encore lancé).** Le vingt-quatrième script,
+`supabase/migrations/20261111_crescite_enregistrer_date_3.sql`, se lance dans le projet de la compagnie après les
+précédents et peut être relancé ; il ne change aucune table. `crescite_enregistrer_date`, que la fiche d'une date et le tableur appellent, garde désormais
+ce qu'on ne lui envoie pas : avant, une clé absente effaçait la valeur (l'édition sur place du site public, qui ne
+renvoie pas l'heure de fin des séances, la faisait disparaître) ; maintenant une clé absente ne change rien. Deux
+familles de colonnes. Celles qui peuvent rester vides (le lieu, la fin, l'intitulé, le lien, le nombre de séances ; dans
+une séance, l'heure, la fin, le lien, la note) : clé absente = gardée, clé présente à vide = effacée. Celles qui ne le
+peuvent pas (le spectacle, le début, la précision, la saison, le public, le statut, la case « visible », les précisions,
+la nature ; dans une séance, le public et « annulée ») : clé absente ou vide = gardée ; elles ne sont obligatoires qu'à la
+création d'une date. La liste des séances, quand elle est envoyée, remplace toutes les séances de la date (dans chacune,
+seul le jour est obligatoire) ; absente, les séances restent. Ce qui n'a pas changé n'est pas réécrit : ni ligne de
+journal pour rien, ni fausse notification « Date déplacée » (la date elle-même non plus : un enregistrement qui ne change
+que son suivi, ses chiffres ou son équipe ne la touche pas, et le bandeau « Modifiée ailleurs », qui suit la ligne de la
+date, ne le voit donc pas). Trois clés neuves, écrites dans le même appel donc dans la
+même transaction (tout passe, ou rien : « La date est enregistrée, mais pas ses chiffres » ne peut plus arriver) :
+`suivi.montant_cession` (le montant de cession, qui s'ajoute à l'organisateur, au contact, au contrat et aux notes ; il ne
+se lit que dans l'administration), `chiffres` (`jauge`, `spectateurs`, `heures_ateliers`, `source` ; la ligne est
+supprimée quand la jauge, les spectateurs, les heures et la source sont vides, comme dans l'administration) et `equipe` (`[{ personne_id, present, fonction,
+note }]`, la liste voulue pour la date : les autres personnes en sont retirées). Les quatre colonnes de diffusion du suivi
+(`etape_crm`, `date_dernier_contact`, `date_prochaine_relance`, `notes_diffusion`) ne sont pas touchées : la piste de
+diffusion porte ce suivi. Le script ajoute aussi `crescite_capacites()`, que l'administration interroge au chargement :
+`{ enregistrer_date: 3 ou 2, montant_cession, equipe, chiffres }`. Le « 3 » est lu dans le texte de la fonction
+d'enregistrement, jamais fixé : **relancer le troisième script (`20261022_crescite_notifications.sql`) remet la version 2
+de l'enregistrement, et aussi les anciennes fonctions de notification du vingt-et-unième script et la lecture de
+l'équipe d'une date du vingt-troisième ; il faut alors relancer ensuite le vingt-et-unième, le vingt-troisième et celui-ci.**
+Le script se termine par un état qui le dit (« à refaire : relancez ce script »). Sans lui, tout marche comme avant :
+la base est seulement écrite en quatre fois (la date, son suivi, ses chiffres, son équipe) au lieu d'une. 53 essais
+(`node enregistrer3.mjs` : les vingt-deux scripts, le vingt-quatrième deux fois ; une clé absente qui garde la fin d'une
+date, ses séances, le spectacle, le début et la case « visible » ; deux enregistrements identiques et le journal ; le
+montant de cession et ses droits ; les chiffres et l'équipe dans la transaction ; les essais de `base.mjs` et de
+`notifications.mjs` rejoués sur la version 3 ; puis les scripts 1, 2, 3, 7, 10 et 14 relancés après lui, la sonde qui dit
+2, et le vingt-quatrième relancé qui remet 3).
 
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors

@@ -8,7 +8,9 @@
 // place » du tableau de bord envoient la date entière au rpc (jamais un PATCH de la ligne), le montant de cession passe
 // après lui, une modification de séance sans séance est refusée, « Annuler » rejoue l'instantané. Puis la fiche : les
 // puces « calculé tout seul », la jauge et « Compléter », la piste de diffusion, la source des chiffres, le bandeau
-// « Modifiée à 14h32 par Barbara ». Les captures vont dans site/dist/shots-champs/. Sort en erreur si une vérification manque.
+// « Modifiée à 14h32 par Barbara ». Enfin le bloc « avec v3 » : quand la base répond crescite_capacites (le vingt-quatrième
+// script), un seul rpc par geste, sans écriture séparée du suivi, des chiffres ou de l'équipe ; sans elle, les quatre écritures.
+// Les captures vont dans site/dist/shots-champs/. Sort en erreur si une vérification manque.
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, ICI, plus, DB, MODIFS, ok, calme, ouvrir, texte, compte, tuile, bilan } from './admin-fictif.mjs';
@@ -324,6 +326,118 @@ function comparer(colonnes, champs) {
   ok('5 bis · aucune erreur de script', tir.erreurs.length === 0, tir.erreurs.join(' / '));
   await tir.ctx.close();
   DB.crescite_admins.pop();
+}
+
+// ================================================================================ 6 · avec la version 3 : un seul appel par geste
+// Le vingt-quatrième script rend crescite_capacites() : { enregistrer_date: 3, … }. Alors une date s'écrit en UN appel
+// (crescite_enregistrer_date porte aussi le montant de cession, les chiffres et l'équipe : tout passe ou rien) ; sans lui
+// (la sonde répond rien, ou la fonction n'existe pas), les quatre écritures d'avant. La sonde est une lecture : elle ne
+// laisse rien dans MODIFS. Une sonde qui échoue autrement n'est jamais prise pour « version 2 ».
+{
+  const CAP3 = { enregistrer_date: 3, montant_cession: true, equipe: true, chiffres: true };
+  const gardees = Object.fromEntries(['crescite_dates', 'crescite_representations', 'crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes'].map(t => [t, structuredClone(DB[t])]));
+  const SEPARES = ['crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes'];
+  const separees = ms => ms.filter(m => SEPARES.includes(m.table));
+  const rpcs = ms => ms.filter(m => m.rpc === 'crescite_enregistrer_date');
+  const { ctx, page, erreurs } = await ouvrir(navigateur, { hash: '#/representations/101', largeur: 1440, hauteur: 1000, capacites: CAP3 });
+  await page.waitForSelector('#ed-date #s-org', { timeout: 15000 });
+  ok('avec v3 · le chargement sonde crescite_capacites : E.capacites porte la réponse de la base', JSON.stringify(await page.evaluate(() => E.capacites)) === JSON.stringify(CAP3));
+  ok('avec v3 · la sonde est une lecture : aucune entrée rpc crescite_capacites dans MODIFS, même après un chargement', !MODIFS.some(m => m.rpc === 'crescite_capacites'));
+  const n0 = MODIFS.length;
+  // 1 · la fiche : les chiffres, leur source et le montant partent avec la date, dans le même appel
+  await page.fill('#c-jauge', '420');
+  await page.fill('#c-source', 'Billetterie, version 3');
+  await page.fill('#s-montant', '3100');
+  let n = MODIFS.length;
+  await page.click('#ed-date [data-enregistrer]');
+  await attendre(page, () => document.querySelector('#ed-date .etat-ed:not(.sale)'), 6000);
+  let r = rpcs(MODIFS.slice(n)), d = r[0]?.corps.d;
+  ok('avec v3 · la fiche enregistre en un seul rpc, qui porte le montant (suivi), les chiffres (avec leur source) et l’équipe', r.length === 1 && d.id === 101 && d.suivi.montant_cession === 3100 && d.chiffres.jauge === 420 && d.chiffres.source === 'Billetterie, version 3' && Array.isArray(d.equipe), JSON.stringify(d));
+  ok('avec v3 · la fiche n’écrit ni crescite_dates_suivi, ni crescite_dates_chiffres, ni crescite_equipes à côté', separees(MODIFS.slice(n)).length === 0, JSON.stringify(separees(MODIFS.slice(n))));
+  const relu = await page.evaluate(() => ({ jauge: (E.chiffres || []).find(x => x.date_id === 101)?.jauge, montant: E.suivis.find(x => x.date_id === 101)?.montant_cession }));
+  ok('avec v3 · la date relue porte les chiffres et le montant que la base vient d’enregistrer', relu.jauge === 420 && Number(relu.montant) === 3100, JSON.stringify(relu));
+  // 2 · le rail : un geste qui mêle la date, l'équipe, le montant et les chiffres
+  await page.evaluate(() => document.querySelectorAll('.annonce').forEach(a => a.remove()));
+  n = MODIFS.length;
+  const mixte = await page.evaluate(async () => { const x = await ecrireChamps(101, { statut: 'confirmee', 'chiffre-jauge': 510, montant: 4200, equipe: [{ personne_id: 3, present: true, fonction: 'Renfort', note: null }] }, { dire: 'Geste mêlé.' }); return { ok: x.ok, partiel: x.partiel, equipe: E.equipes.filter(y => y.date_id === 101).map(y => y.personne_id), jauge: (E.chiffres || []).find(y => y.date_id === 101)?.jauge }; });
+  r = rpcs(MODIFS.slice(n)); d = r[0]?.corps.d;
+  ok('avec v3 · un geste qui mêle date, équipe, montant et chiffres : un seul rpc, aucune écriture séparée, ok sans partiel', mixte.ok && !mixte.partiel && r.length === 1 && d.suivi.montant_cession === 4200 && d.chiffres.jauge === 510 && d.equipe.some(e => e.personne_id === 3 && e.fonction === 'Renfort') && separees(MODIFS.slice(n)).length === 0, JSON.stringify({ mixte, d }));
+  ok('avec v3 · …et la page relue a l’équipe et les chiffres de la base', mixte.equipe.includes(3) && mixte.jauge === 510, JSON.stringify(mixte));
+  // 3 · la feuille « Horaires » du tableau de bord
+  await page.evaluate(() => document.querySelectorAll('.annonce').forEach(a => a.remove()));
+  await page.evaluate(() => { location.hash = '#/accueil'; });
+  await page.waitForSelector(`${tuile('urgent')} .tb-l`, { timeout: 15000 });
+  await page.evaluate(() => TABLEAU.traiter('heures:103'));
+  await page.waitForSelector('.gf [data-gf-groupe="reps"] [data-gf-item]', { timeout: 5000 }).catch(() => {});
+  await page.fill('.gf [data-gf-item]:nth-of-type(1) input[name$=".heure"]', '09:45');
+  n = MODIFS.length;
+  await page.click('.gf button[type="submit"]');
+  await attendre(page, () => !document.querySelector('.gf'), 10000);
+  r = rpcs(MODIFS.slice(n));
+  ok('avec v3 · la feuille « Horaires » : un seul rpc (les deux séances), aucune écriture séparée', r.length === 1 && r[0].corps.d.representations.some(x => x.heure === '09:45') && separees(MODIFS.slice(n)).length === 0 && !MODIFS.slice(n).some(m => m.table === 'crescite_representations'), JSON.stringify(MODIFS.slice(n)));
+  ok('avec v3 · du début à la fin, une entrée rpc par geste (trois) et jamais d’écriture séparée', rpcs(MODIFS.slice(n0)).length === 3 && separees(MODIFS.slice(n0)).length === 0, `${rpcs(MODIFS.slice(n0)).length} · ${JSON.stringify(separees(MODIFS.slice(n0)))}`);
+  // 4 · une sonde qui échoue n'est pas « version 2 » : la relecture échoue, le client garde ce qu'il savait
+  await page.evaluate(() => document.querySelectorAll('.annonce').forEach(a => a.remove()));
+  const sonde = reponse => page.evaluate(async rep => {
+    const propre = Object.prototype.hasOwnProperty.call(sb, 'rpc'), vrai = sb.rpc;
+    sb.rpc = function (nom, ...a) { return nom === 'crescite_capacites' ? Promise.resolve(rep) : vrai.call(this, nom, ...a); };
+    const relue = await actualiser();
+    if (propre) sb.rpc = vrai; else delete sb.rpc;
+    return { relue, version: E.capacites?.enregistrer_date ?? null };
+  }, reponse);
+  const panne = await sonde({ data: null, error: { message: 'TypeError: Failed to fetch', code: '' }, status: 0 });
+  ok('avec v3 · la sonde en panne (réseau) fait échouer la relecture, et le client garde « version 3 » (jamais un retour silencieux aux écritures séparées)', panne.relue === false && panne.version === 3, JSON.stringify(panne));
+  const refus500 = await sonde({ data: null, error: { message: 'erreur interne', code: 'XX000' }, status: 500 });
+  ok('avec v3 · une erreur de la base (500) n’est pas une absence : la relecture échoue, « version 3 » est gardée', refus500.relue === false && refus500.version === 3, JSON.stringify(refus500));
+  ok('avec v3 · la relecture réussie garde la version 3', (await page.evaluate(() => actualiser())) === true && (await page.evaluate(() => E.capacites?.enregistrer_date)) === 3);
+  // 5 · la fonction absente (PGRST202, 404) : version 2, les quatre écritures
+  const absente = await sonde({ data: null, error: { message: 'Could not find the function public.crescite_capacites without parameters in the schema cache', code: 'PGRST202' }, status: 404 });
+  ok('sans v3 · la fonction absente (PGRST202, 404) vaut null : la relecture réussit et E.capacites est null', absente.relue === true && absente.version === null, JSON.stringify(absente));
+  n = MODIFS.length;
+  const separe = await page.evaluate(async () => { const x = await ecrireChamps(101, { statut: 'confirmee', 'chiffre-jauge': 530, montant: 4300, equipe: [{ personne_id: 2, present: true, fonction: 'Régie', note: null }] }, { dire: 'Geste mêlé, sans v3.' }); return { ok: x.ok, partiel: x.partiel }; });
+  const apres = MODIFS.slice(n), iRpc = apres.findIndex(m => m.rpc === 'crescite_enregistrer_date');
+  ok('sans v3 · le même geste fait les quatre écritures : le rpc (sans chiffres ni équipe), puis le montant, les chiffres et l’équipe',
+    separe.ok && !separe.partiel && iRpc === 0 && !apres[iRpc].corps.d.chiffres && !apres[iRpc].corps.d.equipe && apres.some(m => m.table === 'crescite_dates_suivi' && m.post && m.post[0].montant_cession === 4300) && apres.some(m => m.table === 'crescite_dates_chiffres' && m.post && m.post[0].jauge === 530)
+      && apres.some(m => m.table === 'crescite_equipes' && m.post && m.post[0].personne_id === 2), JSON.stringify(apres));
+  // une source saisie sans aucun nombre reste (la ligne ne s'en va que si les trois nombres et la source sont vides) ; la fonction
+  // absente du geste d'avant a ramené E.capacites à null : une relecture le remet à la version 3
+  await page.evaluate(() => actualiser());
+  ok('avec v3 · …la sonde relue remet la version 3 après la fonction absente', (await page.evaluate(() => E.capacites?.enregistrer_date)) === 3);
+  n = MODIFS.length;
+  const seule = await page.evaluate(async () => { const d = E.dates.find(x => x.id === 105), F = dateVersForm(d); F.chiffres = { jauge: '', spectateurs: '', heures_ateliers: '', source: 'Relevé de la salle' }; await ecrireDate(F, d); return { ligne: (E.chiffres || []).find(x => x.date_id === 105) || null }; });
+  ok('avec v3 · une source de chiffres saisie sans aucun nombre est gardée (la ligne reste, un seul rpc)', seule.ligne?.source === 'Relevé de la salle' && DB.crescite_dates_chiffres.find(x => x.date_id === 105)?.source === 'Relevé de la salle' && rpcs(MODIFS.slice(n)).length === 1 && separees(MODIFS.slice(n)).length === 0, JSON.stringify({ seule, chiffres: DB.crescite_dates_chiffres }));
+  n = MODIFS.length;
+  const videe = await page.evaluate(async () => { const d = E.dates.find(x => x.id === 105), F = dateVersForm(d); F.chiffres = { jauge: '', spectateurs: '', heures_ateliers: '', source: '' }; await ecrireDate(F, d); return (E.chiffres || []).some(x => x.date_id === 105); });
+  ok('avec v3 · …et la ligne s’en va quand les trois nombres et la source sont vides', videe === false && !DB.crescite_dates_chiffres.some(x => x.date_id === 105) && separees(MODIFS.slice(n)).length === 0);
+  ok('avec v3 · aucune erreur de script', erreurs.length === 0, erreurs.join(' / '));
+  await ctx.close();
+  // le tableur : une case de la date s'écrit aussi en un seul appel (ecrireDate est son seul chemin)
+  const tab = await ouvrir(navigateur, { hash: '#/representations/tableur', largeur: 1600, hauteur: 1000, capacites: CAP3 });
+  await tab.page.waitForSelector('table[role=grid] #tab-corps tr[data-l]', { timeout: 15000 });
+  n = MODIFS.length;
+  await tab.page.click('#tab-corps tr[data-l="0"] td.c-organisateur');
+  await tab.page.keyboard.press('Enter');
+  await tab.page.keyboard.type('Association Version 3');
+  await tab.page.keyboard.press('Enter');
+  await attendre(tab.page, () => /^(Enregistré|Pas enregistré)/.test(document.querySelector('#tab-etat')?.textContent || ''), 8000);
+  r = rpcs(MODIFS.slice(n));
+  ok('avec v3 · le tableur enregistre une case en un seul rpc, sans écriture séparée', r.length === 1 && r[0].corps.d.suivi?.organisateur === 'Association Version 3' && separees(MODIFS.slice(n)).length === 0, JSON.stringify(MODIFS.slice(n)));
+  ok('avec v3 · le tableur : aucune erreur de script', tab.erreurs.length === 0, tab.erreurs.join(' / '));
+  await tab.ctx.close();
+  // 6 · la base refuse : une seule erreur, rien d'écrit à côté
+  const ref = await ouvrir(navigateur, { hash: '#/representations/101', largeur: 1440, hauteur: 1000, capacites: CAP3, refuser: { rpc: 'crescite_enregistrer_date', status: 400, message: 'refusé par la base' } });
+  await ref.page.waitForSelector('#ed-date #s-org', { timeout: 15000 });
+  await ref.page.fill('#c-jauge', '999');
+  await ref.page.fill('#s-montant', '9999');
+  n = MODIFS.length;
+  await ref.page.click('#ed-date [data-enregistrer]');
+  await attendre(ref.page, () => /refusé par la base/.test(document.body.textContent), 6000);
+  const dit = await texte(ref.page, '.annonce');
+  ok('avec v3 · la base refuse : une seule erreur (« L’enregistrement a échoué »), pas de « la date est enregistrée, mais pas… », et rien d’écrit à côté', /L’enregistrement a échoué : refusé par la base/.test(dit) && !/est enregistrée, mais pas/.test(dit) && separees(MODIFS.slice(n)).length === 0 && MODIFS.slice(n).filter(m => m.rpc).length === 1, `${dit} · ${JSON.stringify(MODIFS.slice(n))}`);
+  ok('avec v3 · après le refus, la base garde ses chiffres (la saisie reste dans la fiche)', DB.crescite_dates_chiffres.find(x => x.date_id === 101)?.jauge !== 999);
+  ok('6 · aucune erreur de script (hors le refus que le banc provoque)', ref.erreurs.filter(e => !/refusé par la base/.test(e)).length === 0, ref.erreurs.join(' / '));
+  await ref.ctx.close();
+  Object.assign(DB, gardees);
 }
 
 await navigateur.close();
