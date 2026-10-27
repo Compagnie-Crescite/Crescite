@@ -469,7 +469,10 @@ const FRISE = (() => {
       const bande = (x, k) => {
         const b = x.b, n = +b.n || 0, passe = isFinite(auj) && x.z < auj;
         const nomB = b.etiquette != null ? String(b.etiquette) : `${new Date(x.a * 864e5).getUTCFullYear()}-${new Date((x.z) * 864e5).getUTCFullYear()}`;
-        const att = `class="frise-repere" tabindex="${k === bandes.length - 1 ? '0' : '-1'}" aria-label="${esc([b.titre || nomB, n ? String(n) : ''].filter(Boolean).join(' : '))}"`;
+        // (son nom contient ce qu'on lit sur elle, son nom court « 16-17 », après son titre : on la désigne de la voix comme on
+        // la voit)
+        const titreB = b.titre && b.titre !== nomB && !String(b.titre).includes(nomB) ? `${b.titre} (${nomB})` : b.titre || nomB;
+        const att = `class="frise-repere" tabindex="${k === bandes.length - 1 ? '0' : '-1'}" aria-label="${esc([titreB, n ? String(n) : ''].filter(Boolean).join(' : '))}"`;
         const dedans = `<span class="frise-bande-barre"></span>${n ? `<span class="frise-bande-n">${n}</span>` : ''}<span class="frise-bande-nom">${esc(nomB)}</span>`;
         return `<li class="frise-bande${passe ? ' est-passe' : ''}" data-frise-cle="b:${esc(b.id ?? x.i)}"${b.id != null ? ` data-id="${esc(b.id)}"` : ''} style="--fr-x:${f3(pct(x.a))};--fr-w:${f3((x.z + 1 - x.a) / span * 100)};--fr-d:${f3(n / nMax)};--fr-t:${f3(bandes.length > 1 ? k / (bandes.length - 1) : 0)}${b.couleur ? `;--fr-c:${esc(b.couleur)}` : ''}">${b.lien ? `<a ${att} href="${esc(b.lien)}">${dedans}</a>` : `<button type="button" ${att}>${dedans}</button>`}</li>`;
       };

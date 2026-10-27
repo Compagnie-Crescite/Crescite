@@ -4070,7 +4070,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         const ps = parM.get(x.k), courant = x.k === kAuj, passe = x.k < kAuj;
         const xa = courant ? `;--x:${((jourDu(auj) - .5) / nbJours(x.a, x.m) * 100).toFixed(1)}%` : '';
         return `<li class="fm7-m${passe ? ' est-passe' : ''}${courant ? ' est-courant' : ''}${ps.length ? '' : ' est-vide'}" data-m="${x.k}" style="--i:${x.i}${xa}">`
-          + `<button class="fm7-tete" type="button" data-mois="${x.k}" aria-pressed="false" tabindex="-1" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}"${ps.length ? '' : ' aria-disabled="true"'}><span class="fm7-nom">${esc(MC[x.m] || MOIS_NOMS[x.m])}</span><span class="fm7-sous"><span class="fm7-an">${x.i === 0 || x.m === 0 ? x.a : ''}</span>${ps.length ? `<span class="fm7-n">${ps.length}</span>` : ''}</span></button>`
+          + `<button class="fm7-tete" type="button" data-mois="${x.k}" aria-pressed="false" tabindex="-1" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}${ps.length && L.uneDate && L.nDates ? `, ${ps.length === 1 ? L.uneDate : L.nDates.replace('{n}', ps.length)}` : ''}`)}"${ps.length ? '' : ' aria-disabled="true"'}><span class="fm7-nom">${esc(MC[x.m] || MOIS_NOMS[x.m])}</span><span class="fm7-sous"><span class="fm7-an">${x.i === 0 || x.m === 0 ? x.a : ''}</span>${ps.length ? `<span class="fm7-n">${ps.length}</span>` : ''}</span></button>`
           + `<span class="fm7-axe" aria-hidden="true">${courant ? `<span class="fm7-auj"><span class="fm7-souffle"></span>${L.aujourdhui ? `<span class="fm7-auj-nom">${esc(L.aujourdhui)}</span>` : ''}</span>` : ''}</span>`
           + `<ol class="fm7-jours">${ps.map(p => `<li class="frise-point${p.passe ? ' est-passe' : ''}${p.residence ? ' est-residence' : ''}${p.annulee ? ' est-annule' : ''}" data-id="${esc(p.id)}" data-j="${esc(p.j)}" data-mv-cle="${esc('j:' + p.id)}" style="--fr-c:${p.couleur};--t:${n > 1 ? (p.rang / (n - 1)).toFixed(3) : 0}"><button class="fm7-d" type="button" aria-pressed="false" tabindex="-1" aria-label="${esc(nom(p))}">${esc(ecrit(p))}</button></li>`).join('')}</ol></li>`;
       }).join('')}</ol></div>`;
@@ -5652,7 +5652,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             <div class="alerte-champs">
               <div class="alerte-geo-grp">
                 <input type="text" id="alerte-cp" placeholder="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" aria-label="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" autocomplete="postal-code" required>
-                <button type="button" class="btn-geo" id="btn-geo" title="${esc(L.meGeolocaliser || 'Me géolocaliser')}">
+                <button type="button" class="btn-geo" id="btn-geo">
                   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="2"/></svg>
                   <span>${esc(L.meGeolocaliser || 'Me géolocaliser')}</span>
                 </button>
@@ -5867,7 +5867,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     function dessineIndex(vis) {
       const tousOuverts = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
       const actifs = [terme() && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l !== null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
-      index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPassees)}">${tousOuverts ? DOUBLE_HAUT : DOUBLE}</button>
+      index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPassees)}" title="${esc(L.saisonsPassees)}">${tousOuverts ? DOUBLE_HAUT : DOUBLE}</button>
         <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${retirer()}${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => { const n = nbReps(rows.filter(jouee));   // (ses représentations, comme la frise au-dessus)
           return `<li><button type="button" class="idx" data-k="${s.k}" aria-controls="sai-${s.k}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}${n ? `<small>${n}</small>` : ''}</button></li>`; }).join('')}</ul>`;
     }
@@ -6301,7 +6301,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         $('.bf7-n', bt).textContent = fs.length ? String(fs.length) : '';
         bar.classList.toggle('a-filtres', fs.length > 0);
         const ms = moisSaison.filter(x => x.k !== F.mois && nb(x.k));
-        zone.innerHTML = fs.map(puce).join('') + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="bf7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
+        zone.innerHTML = fs.map(puce).join('') + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="bf7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '') + ms.map(x => `<button type="button" class="s7-chip bf7-m${x.k < D.aujourdhui.slice(0, 7) ? ' est-passe' : ''}" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}${nb(x.k) && L.uneDate && L.nDates ? `, ${nb(x.k) === 1 ? L.uneDate : L.nDates.replace('{n}', nb(x.k))}` : ''}`)}">${esc(MC[x.m] || MOIS_NOMS[x.m])}</button>`).join('');
         // (les filtres en cours se voient d'abord ; sans eux, la bande se pose sur le premier mois à venir)
         deja = new Set(fs.map(([c]) => c));
         if (fs.length) zone.scrollLeft = 0;
@@ -6319,10 +6319,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       function dessinerPanneau() {
         const { n } = nVoir();
         pan.innerHTML = `<div class="fe7-prise"><span class="fe7-poignee" aria-hidden="true"></span>
-          <div class="fe7-tete"><h2 class="fe7-t" id="fe7-t" tabindex="-1">${esc(L.filtres)}</h2><button type="button" class="fe7-x" data-fermer aria-label="${esc(L.fermer || '')}">${CROIX}</button></div></div>
+          <div class="fe7-tete"><h2 class="fe7-t" id="fe7-t" tabindex="-1">${esc(L.filtres)}</h2><button type="button" class="fe7-x" data-fermer aria-label="${esc(L.fermer || '')}" title="${esc(L.fermer || '')}">${CROIX}</button></div></div>
           <div class="fe7-corps">
             <div class="s7-cherche-c"><label class="s7-cherche"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input type="search" id="fe7-q" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label></div>
-            <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}`)}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
+            <section aria-labelledby="fe7-hm"><h3 class="fe7-h" id="fe7-hm">${esc(S0.titre)}</h3><div class="fe7-mois">${moisSaison.map(x => `<button type="button" class="fe7-m" data-mois="${x.k}" aria-pressed="false" aria-label="${esc(`${MOIS_NOMS[x.m]} ${x.a}${nb(x.k) && L.uneDate && L.nDates ? `, ${nb(x.k) === 1 ? L.uneDate : L.nDates.replace('{n}', nb(x.k))}` : ''}`)}"><b>${esc(MC[x.m] || MOIS_NOMS[x.m])}</b><small></small></button>`).join('')}</div></section>
             ${spSaison.length ? `<section aria-labelledby="fe7-hs"><h3 class="fe7-h" id="fe7-hs">${esc(L.spectacles)}</h3><div class="fe7-puces fe7-lg">${spSaison.map(x => puceSp(x, nSaison.get(x.cle))).join('')}</div></section>` : ''}
             ${spPasses.some(x => !nSaison.has(x.cle)) ? `<section aria-labelledby="fe7-hp"><h3 class="fe7-h" id="fe7-hp">${esc(L.saisonsPassees)}</h3><div class="fe7-puces" data-passe>${spPasses.filter(x => !nSaison.has(x.cle)).map(x => puceSp(x)).join('')}</div></section>` : ''}
             ${L.communes ? `<section aria-labelledby="fe7-hl"><h3 class="fe7-h" id="fe7-hl">${esc(L.communes)}</h3><div class="fe7-puces">${communes().map(([l, t]) => `<button class="s7-chip" type="button" data-l="${l}" aria-pressed="false">${esc(t)}</button>`).join('')}</div></section>` : ''}
@@ -7870,7 +7870,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       if (ouverte()) { champ.focus(); champ.select(); return; }
       $('#cs-t', boite).textContent = L.chercherSite;
       champ.placeholder = L.rechercher; champ.setAttribute('aria-label', L.chercherSite); liste.setAttribute('aria-label', L.chercherSite);
-      $('.cs-x', boite).setAttribute('aria-label', L.fermer || '');
+      $('.cs-x', boite).setAttribute('aria-label', L.fermer || ''); $('.cs-x', boite).title = L.fermer || '';
       tout = lister(); retour = document.activeElement;
       inertes = [...document.body.children].filter(x => x !== boite && !x.inert && !/^(SCRIPT|STYLE|CANVAS)$/.test(x.tagName));
       inertes.forEach(x => { x.inert = true; });
@@ -8449,7 +8449,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // page (en glissant, si le mouvement est permis) et pose le focus sur son titre, d'où le clavier repart
   const hautPage = document.createElement('button');
   hautPage.type = 'button'; hautPage.className = 'haut-page'; hautPage.innerHTML = HAUT;
-  hautPage.setAttribute('aria-label', L.hautDePage);
+  hautPage.setAttribute('aria-label', L.hautDePage); hautPage.title = L.hautDePage;
   document.body.appendChild(hautPage);
   // (l'indicateur de section d'un spectacle ne se montre qu'à certains moments de la lecture : le bouton se pose au-dessus de
   // lui quand on le voit, relu au défilement et juste après, quand son fondu est fini ; les filtres des saisons : en CSS)
