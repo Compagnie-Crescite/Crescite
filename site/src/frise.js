@@ -226,6 +226,16 @@ const FRISE = (() => {
 :where(.frise[data-frise].frise--v.est-vue:not(.est-immobile)) :where(.frise-axe) { animation-name: fr-trace-v; }
 @keyframes fr-trace-v { from { transform: scale(1, 0); } to { transform: none; } }
 :where(.frise[data-frise].est-immobile) *, :where(.frise[data-frise].est-immobile) *::before, :where(.frise[data-frise].est-immobile) *::after { animation: none !important; transition: none !important; }
+/* au doigt (WCAG 2.5.8, 44 px) : la prise d'un repère s'élargit autour de son point, qui ne bouge pas */
+@media (pointer: coarse) {
+  :where(.frise[data-frise]) :where(.frise-point:not(.est-duree)) > :where(.frise-repere) { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  /* (une période : son trait garde sa longueur, la prise déborde de part et d'autre jusqu'à 44 px ; les pourcentages des marges
+     se lisent sur la largeur de la période) */
+  :where(.frise[data-frise]) :where(.frise-point.est-duree) > :where(.frise-repere) { box-sizing: content-box; height: 44px; margin-top: -22px;
+    padding-inline: max(0px, calc((44px - 100%) / 2)); margin-left: min(0px, calc((100% - 44px) / 2)); }
+  /* (une bande, une saison : sa prise monte au-dessus de sa barre jusqu'à 44 px ; l'option anMin lui donne sa largeur) */
+  :where(.frise[data-frise]) :where(.frise-bande) > :where(.frise-repere) { height: max(44px, var(--fr-bande-h)); margin-top: calc(-1 * max(44px, var(--fr-bande-h))); }
+}
 @media (prefers-reduced-motion: reduce) { :where(.frise[data-frise]) *, :where(.frise[data-frise]) *::before, :where(.frise[data-frise]) *::after { animation: none !important; transition: none !important; } }`;
   function styles() {
     if (document.getElementById('frise-style')) return;

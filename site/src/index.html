@@ -3036,6 +3036,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
    pied, ni les boutons d'action, ni ce qui bouge, ni les toiles (la pieuvre, l'encre), ni les cartes et les frises (leurs
    dates sont dans les listes) ; tout ce qui attend l'écran ou la lecture est posé ; l'adresse d'un lien de réservation est
    écrite après lui ; les photos réduites ; une date, une carte de réservation, une fiche ne se coupent pas */
+/* les cibles au doigt (la charte, WCAG 2.5.8) : au toucher, chaque cible fait 44 px de haut au moins. Les liens des listes
+   (le titre d'une date, ses précisions, son lieu, ceux des saisons passées et du bilan), du pied de page, le retour de
+   l'espace pro, la saison de « Les spectacles », la bande des saisons, les pastilles de la frise de la saison et la case du
+   consentement ; leur texte reste où il était, centré dans sa hauteur. Les communes des cartes ont une prise de 24 px au
+   moins (leur cercle « cible », invisible) ; serrées, elles s'atteignent aussi par la liste à côté et par la loupe */
+@media (pointer: coarse) {
+  .d7-t a, .det a, .d7-lieu a, .dl-ou a, .dl-quoi a, .dates a.ou, .dates .t, footer .liens a, footer .modifier, .ep-retour, a.pil-sai {
+    display: inline-flex; align-items: center; min-height: 44px; }
+  .det a, .dl-ou a, .dates a.ou { flex-wrap: wrap; }
+  .d7-t, .dl-quoi { line-height: 1.1; }
+  .idx { min-height: 44px; }
+  .idx-tout { width: 44px; height: 44px; }
+  .fm7-d { min-width: 44px; height: 44px; }
+  .case input { width: 24px; height: 24px; margin-top: 0; }
+  .carte .cible, .carte.est-loupe .cible { r: calc(12.5px * var(--k, 1)); }
+}
 @media print {
   @page { margin: 14mm 12mm; }
   html { color-scheme: light !important; --papier: #fff; --papier-2: #fff; --carte: #fff; --encre: #000; --gris: #333; --filet: #aaa; --nuit: #fff; }
@@ -3201,6 +3217,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   let VW = innerWidth, VH = innerHeight;
   addEventListener('resize', () => { VW = innerWidth; VH = innerHeight; }, { passive: true });
   const DOUX = 'cubic-bezier(.22, .8, .24, 1)', SOUPLE = 'cubic-bezier(.3, 1.25, .5, 1)';
+  // (au doigt : les cibles prennent 44 px, les frises de la diffusion donnent 44 px à chaque année)
+  const DOIGT = matchMedia('(pointer: coarse)');
   const main = $('#main');
   const vers0 = 'sur-place';
   let vue = '';
@@ -3919,7 +3937,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   let ioDiffusion = null;
   function frisesDiffusion(racine) {
     const creer = c => { const s = bySlug[c.dataset.diffusion], bs = s ? diffusion(s) : [];
-      if (bs.length && c.isConnected && !c.firstElementChild) frise(c, { echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: `${s.titre} – ${L.representations}`, classe: 'frise-diffusion', anMin: 26 }); };
+      if (bs.length && c.isConnected && !c.firstElementChild) frise(c, { echelle: 'annees', debut: bs[0].id, fin: bs[bs.length - 1].id, bandes: bs, libelle: `${s.titre} – ${L.representations}`, classe: 'frise-diffusion', anMin: DOIGT.matches ? 46 : 26 }); };
     const cs = $$('[data-diffusion]', racine);
     if (surPlaceRendu || !('IntersectionObserver' in window)) { cs.forEach(creer); return; }
     if (ioDiffusion) ioDiffusion.disconnect();
@@ -6245,7 +6263,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (sa largeur attendue : la colonne de gauche de l'aplat au bureau, toute la largeur au téléphone)
     const ks = Object.keys(D.saisons || {}).filter(k => /^\d{4}-\d{4}$/.test(k) && k <= D.saison).sort();
     const lDiff = VW > 980 ? Math.round((largeurWrap() + 28 - Math.min(80, Math.max(32, VW * .044))) * 5 / 12) - 28 : largeurWrap();
-    if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', largeur: lDiff, anMin: 38,
+    if (ks.length) frise($('#p-diff'), { echelle: 'annees', debut: ks[0], fin: ks[ks.length - 1], libelle: L.lieuxDiffusion, classe: 'frise-diffusion frise-compagnie', largeur: lDiff, anMin: DOIGT.matches ? 46 : 38,
       bandes: ks.map(k => bandeSaison(k, repsSaison(k).tout)) });
     frisesDiffusion(main);
     lierSommairePage();
