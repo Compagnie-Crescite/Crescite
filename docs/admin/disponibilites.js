@@ -365,8 +365,9 @@ const DISPONIBILITES = (() => {
   // « Créer la date » depuis un jour de la proposition : le formulaire d'une nouvelle date (Représentations), pré-rempli :
   // le spectacle, le jour (ou les jours) et ses heures, le lieu quand on le connaît (la date liée à la proposition, sinon un
   // lieu dont le titre ou le message donne le nom), la nature d'après le titre (des répétitions, une résidence : jamais sur
-  // le site), et l'équipe : celles et ceux qui ont répondu oui ce jour-là (la distribution en tournée moins les autres, plus
-  // les renforts). La proposition se clôt une fois la date enregistrée (apresDate) ; quitter le formulaire n'y touche pas.
+  // le site), et l'équipe : la distribution en tournée, moins les destinataires qui n'ont pas répondu oui ce jour-là (qui
+  // n'a pas été sollicité reste : proposer un jour à une seule remplaçante ne vide pas l'équipe), plus les renforts qui ont
+  // dit oui. La proposition se clôt une fois la date enregistrée (apresDate) ; quitter le formulaire n'y touche pas.
   function dateDepuis(p, j) {
     const G = nouvelleDate(), js = PLN().joursDe(j);
     if (!js.length) return null;
@@ -378,8 +379,8 @@ const DISPONIBILITES = (() => {
     G.lieu_id = liee?.lieu_id ?? nomme?.id ?? null;
     if (E.sql3) { G.nature = /repetition/.test(t) ? 'repetitions' : /residence/.test(t) ? 'residence' : 'representations'; if (G.nature !== 'representations') G.visible = false; }
     const oui = new Set((j.reponses || []).filter(r => r.reponse === 'oui').map(r => Number(r.personne_id)));
-    const base = E.equipeInstallee ? equipeDate(G.spectacle_id, []) : [];
-    G.equipe = [...base.filter(x => !oui.has(x.personne_id)).map(x => ({ personne_id: x.personne_id, present: false, fonction: '', note: null })),
+    const base = E.equipeInstallee ? equipeDate(G.spectacle_id, []) : [], sollicites = new Set((p.destinataires || []).map(d => Number(d.personne_id)));
+    G.equipe = [...base.filter(x => sollicites.has(Number(x.personne_id)) && !oui.has(Number(x.personne_id))).map(x => ({ personne_id: x.personne_id, present: false, fonction: '', note: null })),
       ...[...oui].filter(id => personne(id) && !base.some(x => x.personne_id === id)).map(id => ({ personne_id: id, present: true, fonction: '', note: null }))];
     G.depuis = { proposition: p.id, titre: p.titre, jour: PLN().texteJours(j), close: p.statut === 'close', oui: oui.size };
     return G;
@@ -499,7 +500,7 @@ const DISPONIBILITES = (() => {
           out.push({ type: 'indispo', texte: `pas libre ${u ? jourC(u.jour) : ''}${u && !u.entier ? ` ${heuresDe(u)}` : ''}${i.motif ? ` (${i.motif})` : ''}`.replace(/\s+/g, ' ').trim(), court: u && !u.entier ? heuresDe(u) : (i.motif || '') });
         }
         for (const d of D.dates || []) {
-          if (vus.has(`d${d.id}`) || !(d.equipe || []).some(x => memeId(x, pid))) continue;
+          if (vus.has(`d${d.id}`) || d.statut === 'reportee' || !(d.equipe || []).some(x => memeId(x, pid))) continue;
           const commun = joursDate(d).find(x => jours.has(x));
           if (!commun) continue;
           vus.add(`d${d.id}`);

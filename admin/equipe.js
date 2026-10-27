@@ -316,7 +316,8 @@ function editeurPersonne(id) {
       if (!x) return;
       dessinerSpectacles(); dessinerDates();
       const s = spectacle(sp);
-      annoncer(`Ajouté à la distribution de ${s?.titre || 'ce spectacle'} (${libelleCategorie(cat)}).`, { libelle: 'Voir la distribution', action: () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Distribution'); } catch { /* navigation privée */ } location.hash = `#/spectacles/${s.slug}`; } });
+      const avant = x.en_tournee && datesDuSpectacle(sp).some(d => finDe(d) < AUJ);
+      annoncer(`Ajouté à la distribution de ${s?.titre || 'ce spectacle'} (${libelleCategorie(cat)}).${avant ? ' Il compte aussi sur ses dates passées : sa période se règle dans « Qui a joué quand ».' : ''}`, { libelle: 'Voir la distribution', delai: avant ? 9000 : 5000, action: () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Distribution'); } catch { /* navigation privée */ } location.hash = `#/spectacles/${s.slug}`; } });
       $('#pe-dist-ok', zone)?.focus();
       return;
     }
@@ -587,7 +588,8 @@ function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres =
 // crescite_equipes), lue en périodes. Une période se règle d'un coup : on écrit, date par date, les écarts qu'elle change
 // (comme l'import de l'historique, supabase/equipe.py) ; rien d'autre ne change dans la base, et tout ce qui lit l'équipe
 // d'une date (feuilles de route, espace de l'équipe, notifications, agendas) suit.
-const datesDuSpectacle = spId => E.dates.filter(d => d.spectacle_id === spId && d.statut !== 'annulee').sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
+// (ce qu'on a joué : les représentations confirmées ; ni les options, ni les reports, ni les répétitions ou résidences)
+const datesDuSpectacle = spId => E.dates.filter(d => d.spectacle_id === spId && d.statut === 'confirmee' && (d.nature || 'representations') === 'representations').sort((a, b) => a.debut < b.debut ? -1 : a.debut > b.debut ? 1 : a.id - b.id);
 const finDe = d => d.fin || d.debut;
 const jourEntier = j => { if (!j) return ''; const d = new Date(`${j}T12:00:00`); return `${d.getDate() === 1 ? '1er' : d.getDate()} ${MC[d.getMonth()]} ${d.getFullYear()}`; };
 // les dates du spectacle et, pour chacune, qui en est
@@ -1339,7 +1341,7 @@ function sourcesFeuille(d) {
   // les feuilles des autres dates : repas, transports, hébergement s'en recopient
   const anterieures = E.feuilles.filter(f => f.date_id !== d.id && f.contenu).map(f => {
     const x = E.dates.find(y => y.id === f.date_id);
-    return x && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null, date_id: f.date_id, ecrit_le: f.modifie_le || null };
+    return x && x.statut !== 'annulee' && { contenu: f.contenu, debut: x.debut, lieu_id: x.lieu_id, spectacle_id: x.spectacle_id, lieu: lieu(x.lieu_id) || null, date_id: f.date_id, ecrit_le: f.modifie_le || null };
   }).filter(Boolean);
   return { date: d, spectacle: spectacle(d.spectacle_id), lieu: lieu(d.lieu_id), representations: repsDe(d.id), equipe, contacts, depart: DEPART,
     suivi: { ...(E.suivis.find(x => x.date_id === d.id) || {}), lieu: E.lieuxSuivi.find(x => x.lieu_id === d.lieu_id) || {} },
@@ -1354,8 +1356,12 @@ const contexteFeuille = d => {
 const composerPour = d => FEUILLE.composer(sourcesFeuille(d));
 // les prénoms à surligner : l'équipe de la date
 const nomsDeLaDate = d => [...new Set(equipeDeLaDate(d).map(x => personne(x.personne_id)?.prenom).filter(Boolean))];
-const horairesChanges = (d, c) => Array.isArray(c?.instantane) && c.instantane.length > 0
-  && c.instantane.map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|') !== repsDe(d.id).map(r => `${r.jour} ${h5(r.heure)} ${!!r.annulee}`).sort().join('|');
+// (l'heure de fin compte aussi, pour les feuilles composées depuis qu'elle est gardée : une répétition « 9h-18h »)
+const horairesChanges = (d, c) => {
+  if (!Array.isArray(c?.instantane) || !c.instantane.length) return false;
+  const avecFin = c.instantane.some(r => 'fin' in r), cle = r => `${r.jour} ${h5(r.heure)}${avecFin ? ` ${h5(r.fin)}` : ''} ${!!r.annulee}`;
+  return c.instantane.map(cle).sort().join('|') !== repsDe(d.id).map(cle).sort().join('|');
+};
 const feuilleVersForm = (f, d) => ({ titre: f.titre || '', contenu: FEUILLE.contenu(f, contexteFeuille(d)), statut: f.statut, version: f.version, publiee_le: f.publiee_le });
 const signatureFeuille = F => F ? JSON.stringify([F.titre, F.contenu.blocs, F.contenu.composees]) : 'null';
 

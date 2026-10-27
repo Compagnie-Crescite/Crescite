@@ -28,7 +28,8 @@ const GARDEFOUS = (() => {
 
   function alertes(F, d0) {
     const xs = [], js = joursForm(F), mien = d0 ? d0.id : null, l = lieu(F.lieu_id);
-    const autres = E.dates.filter(d => d.id !== mien && d.statut !== 'annulee');
+    // (une date reportée n'occupe plus son jour : comme le planning, on l'écarte, avec les annulées)
+    const autres = E.dates.filter(d => d.id !== mien && !['annulee', 'reportee'].includes(d.statut));
     const memeJour = autres.map(d => ({ d, js: joursDate(d).filter(j => js.includes(j)) })).filter(x => x.js.length);
     // le lieu déjà pris
     if (l) memeJour.filter(x => x.d.lieu_id === l.id).forEach(x => xs.push({ niveau: 'alerte', texte: `${l.nom || l.commune} accueille déjà ${titreDe(x.d)} ${quand(x.js)}${x.d.statut === 'option' ? ' (en option)' : ''}.`, href: `#/representations/${x.d.id}`, lien: 'Voir cette date' }));

@@ -66,7 +66,7 @@ const SERIES = (() => {
       const G = dateVersForm(d); G.id = null; G.saison = null; G.intitule = null; G.statut = v.statut; G.visible = v.visible && PUBLIABLE(G.nature); G.chiffres = Object.fromEntries(CHIFFRES.map(([k]) => [k, '']));
       G.representations = G.representations.map(r => ({ ...r, id: undefined, jour: plusJours(r.jour, v.n), annulee: false }));
       G.debut = plusJours(d.debut, v.n); G.fin = d.fin ? plusJours(d.fin, v.n) : G.debut;
-      G.equipe = (G.equipe || []).filter(x => x.present === false || x.present);   // les écarts suivent (un absent, un renfort)
+      G.suivi = suiviPourCopie(G.suivi);   // l'organisateur et son contact suivent, pas le contrat ni les notes
       try { const r = await ecrireDate(G, null, { libre: false }); crees.push(r.id); } catch (e) { erreur(e, `Copie impossible : ${jourCourt(d.debut)}`); break; }
     }
     rafraichirListes();

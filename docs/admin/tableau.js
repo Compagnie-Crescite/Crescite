@@ -235,7 +235,7 @@ const TABLEAU = (() => {
           ${kpi('Dates confirmées', entier(c.dates), c.dates ? `${c.passees} jouée${c.passees > 1 ? 's' : ''}, ${c.avenir} à venir` : vs(c.dates, p.dates), '#/representations')}
           ${kpi('Représentations', entier(c.reps), vs(c.reps, p.reps))}
           ${kpi('Lieux', entier(c.lieux), c.deps ? `dans ${pl(c.deps, 'département')}` : vs(c.lieux, p.lieux), '#/lieux')}
-          ${kpi('Séances scolaires', entier(c.scolaires), c.scolaires || p.scolaires ? vs(c.scolaires, p.scolaires) : 'dates scolaires ou mixtes')}
+          ${kpi('Dates scolaires', entier(c.scolaires), c.scolaires || p.scolaires ? vs(c.scolaires, p.scolaires) : 'dates scolaires ou mixtes')}
           ${kpi('Séances d’atelier', entier(c.seances), c.heures ? `${entier(c.heures)} h d’éducation artistique` : vs(c.seances, p.seances), '#/ateliers/seances')}
           ${E.chiffresInstalles ? kpi('Spectateurs', entier(c.spectateurs), c.renseignees ? `sur ${pl(c.renseignees, 'date renseignée')}` : 'à renseigner dans chaque date') : kpi('Spectacles joués', entier(c.spectacles), vs(c.spectacles, p.spectacles), '#/spectacles')}
         </div>${courbesSaison(S, c, p)}` };

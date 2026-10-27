@@ -655,7 +655,7 @@ ${s} .s{background:${MISE.surligne}}`;
     const out = blocs.map(bloc);
     return {
       format: 2, blocs: out, composees: out.filter(b => b.cle).map(b => b.cle), pages: [],
-      instantane: seances.map(r => ({ jour: r.jour, heure: r.heure, annulee: r.annulee })), compose_le: new Date().toISOString(),
+      instantane: seances.map(r => ({ jour: r.jour, heure: r.heure, fin: r.fin ?? null, annulee: r.annulee })), compose_le: new Date().toISOString(),
     };
   }
   // les blocs d'une rubrique d'une autre feuille (repas, transports…), repris comme écrits à la main

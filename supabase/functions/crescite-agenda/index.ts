@@ -258,6 +258,9 @@ export function lireAgenda(contenu: string, maintenant = Date.now()): { periodes
       const dt = ve.getFirstProperty('dtstart');
       if (!dt) continue;
       const uid = String(ve.getFirstPropertyValue('uid') || `sans-uid-${dt.toICALString()}`).trim();
+      // les dates de la compagnie elles-mêmes (ce flux, ou le fichier .ics de l'espace de l'équipe, importés dans l'agenda) :
+      // ce ne sont pas des indisponibilités, sans quoi chaque date serait en conflit avec elle-même
+      if (/@crescite\.fr$/i.test(uid)) continue;
       let g = groupes.get(uid);
       if (!g) groupes.set(uid, g = { maitre: null, exceptions: [] });
       if (ve.hasProperty('recurrence-id')) g.exceptions.push(ve);

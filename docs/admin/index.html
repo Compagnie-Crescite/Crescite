@@ -755,7 +755,8 @@ const NOMS_TABLES = { crescite_spectacles: 'Spectacle', crescite_lieux: 'Lieu', 
   crescite_dates_suivi: 'Suivi d’une date', crescite_lieux_suivi: 'Suivi d’un lieu', crescite_ateliers: 'Atelier', crescite_seances: 'Séance d’atelier', crescite_textes: 'Texte du site',
   crescite_personnes: 'Fiche d’une personne', crescite_personnes_privees: 'Coordonnées d’une personne', crescite_personnes_suivi: 'Notes sur une personne',
   crescite_distributions: 'Distribution', crescite_equipes: 'Équipe d’une date', crescite_documents: 'Document', crescite_feuilles: 'Feuille de route',
-  crescite_diffusion_prospects: 'Opportunité de diffusion', crescite_notes_frais: 'Note de frais', crescite_materiel: 'Matériel de tournée', crescite_devis_demandes: 'Demande de devis' };
+  crescite_diffusion_prospects: 'Opportunité de diffusion', crescite_notes_frais: 'Note de frais', crescite_materiel: 'Matériel de tournée', crescite_devis_demandes: 'Demande de devis',
+  crescite_acces_pro: 'Invitation à l’espace pro', crescite_propositions: 'Proposition de dates', crescite_notes: 'Note interne' };
 // les chiffres des dates (la jauge, les spectateurs, les heures d'ateliers : supabase/migrations/20261029_crescite_chiffres.sql),
 // jamais publiés : lus et écoutés à part, et seulement quand la base les a (E.chiffresInstalles)
 const TABLES_CHIFFRES = { crescite_dates_chiffres: ['chiffres', 'date_id'] };
@@ -2097,6 +2098,9 @@ function dateVersForm(d) {
   return { ...clone(d), nature: d.nature || 'representations', lien: d.lien || '', representations: reps, suivi: { organisateur: su.organisateur || '', contact: su.contact || '', contrat: su.contrat || '', notes: su.notes || '' },
     equipe: ecartsDate(d.id), chiffres: chiffresVersForm(d.id) };
 }
+// une copie de date (Dupliquer, Dupliquer vers…) garde l'organisateur et son contact, pas le contrat ni les notes de l'autre
+// date (un contrat « signé » l'an d'après serait un contrat fantôme), ni ses chiffres
+const suiviPourCopie = su => ({ organisateur: su?.organisateur || '', contact: su?.contact || '', contrat: '', notes: '' });
 // les chiffres d'une date (le dixième script) : la jauge, les spectateurs, les heures d'ateliers ; dans le formulaire, des
 // nombres ou '' (vide)
 const CHIFFRES = [['jauge', 'Jauge (places)', 1, 100000], ['spectateurs', 'Spectateurs', 1, 1000000], ['heures_ateliers', 'Heures d’ateliers', .5, 100000]];
@@ -2290,7 +2294,7 @@ function editeurDate(id, depart = null) {
       dessinerDetails(); changer(); return;
     }
     if (t.id === 'd-serie') return SERIES.serie(F, () => { dessinerReps(); changer(); });
-    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); remplacerAdresse('#/representations/nouvelle'); editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
+    if (t.id === 'd-dupliquer') { const G = clone(F); G.id = null; G.intitule = null; G.representations.forEach(r => delete r.id); G.suivi = suiviPourCopie(G.suivi); G.chiffres = Object.fromEntries(CHIFFRES.map(([k]) => [k, ''])); remplacerAdresse('#/representations/nouvelle'); editeurDate(null, G); marquerSale(true); annoncer('Copie prête : changez les jours ou le lieu, puis enregistrez.'); return; }
     if (t.id === 'd-suppr') return supprimerDate(d0);
     if (t.matches('[data-enregistrer]')) return enregistrerDate(F, d0, t);
   });
@@ -3066,7 +3070,7 @@ const TABLEUR = (() => {
   // ———— ajouter une séance : à la date du même spectacle au même lieu qui touche ce jour (le même, la veille ou le
   // lendemain), sinon à une nouvelle date. → { id (la date), nouvelle, texte } ; une erreur de la base est levée
   const ecartJours = (d, j) => (j < d.debut ? (Date.parse(d.debut) - Date.parse(j)) : j > (d.fin || d.debut) ? (Date.parse(j) - Date.parse(d.fin || d.debut)) : 0) / 864e5;
-  const dateVoisine = (sp, lieuId, jour) => E.dates.filter(d => d.spectacle_id === sp && (d.lieu_id ?? null) === (lieuId ?? null) && ecartJours(d, jour) <= 1).sort((a, b) => ecartJours(a, jour) - ecartJours(b, jour))[0] || null;
+  const dateVoisine = (sp, lieuId, jour) => E.dates.filter(d => d.spectacle_id === sp && d.statut !== 'annulee' && (d.lieu_id ?? null) === (lieuId ?? null) && ecartJours(d, jour) <= 1).sort((a, b) => ecartJours(a, jour) - ecartJours(b, jour))[0] || null;
   const ouDit = lieuId => { const l = lieu(lieuId); return l ? `${l.nom ? `${l.nom}, ` : ''}${l.commune}` : 'lieu à préciser'; };
   async function ajouterSeance({ jour, heure = '', fin = '', spectacle_id, lieu_id = null, seance = {}, date = {}, suivi = {}, equipe = null }) {
     const d = dateVoisine(spectacle_id, lieu_id, jour);
@@ -3079,7 +3083,9 @@ const TABLEUR = (() => {
       T.recents.set(d.id, Date.now());
       await ecrireDate(F, d, { libre: !!(d.intitule || '').trim() });
       const nouvelle = E.reps.find(r => r.date_id === d.id && !ids.has(r.id));
-      return { id: d.id, nouvelle: false, rep: nouvelle?.id, texte: `séance ajoutée à la date du ${jourCourt(d.debut)}${d.fin && d.fin !== d.debut ? ` au ${jourCourt(d.fin)}` : ''} (${ouDit(lieu_id)})` };
+      // (ce que la ligne disait de la date elle-même, son statut, son suivi, son équipe, ne remplace pas celle qui existe : on le dit)
+      const ignore = Object.keys(date).length || Object.values(suivi).some(v => v != null && v !== '') || (Array.isArray(equipe) && equipe.length);
+      return { id: d.id, nouvelle: false, rep: nouvelle?.id, texte: `séance ajoutée à la date du ${jourCourt(d.debut)}${d.fin && d.fin !== d.debut ? ` au ${jourCourt(d.fin)}` : ''} (${ouDit(lieu_id)})${ignore ? ' ; le statut, le suivi et l’équipe de la ligne ne sont pas repris : la date existait, ils se règlent dans sa fiche' : ''}` };
     }
     const F = Object.assign(nouvelleDate(), { spectacle_id, lieu_id, debut: jour, fin: jour, representations: [rep] }, date);
     F.suivi = { ...F.suivi, ...suivi };
@@ -3514,7 +3520,7 @@ const SPEC_SPECTACLE = {
 function vueSpectacles(slug) {
   if (slug) return editeurSpectacle(slug);
   const pages = E.spectacles.filter(s => s.page).sort((a, b) => a.ordre - b.ordre), anciens = E.spectacles.filter(s => !s.page);
-  const avenir = id => E.dates.filter(d => d.spectacle_id === id && (d.fin || d.debut) >= AUJ && d.statut !== 'option').length;
+  const avenir = id => E.dates.filter(d => d.spectacle_id === id && (d.fin || d.debut) >= AUJ && d.statut === 'confirmee' && (d.nature || 'representations') === 'representations').length;
   const carte = (s, i, n) => { const c = s.univers?.couleurs || {}; return `<div><a class="carte-sp" href="#/spectacles/${s.slug}" style="--c:${couleurSp(s)};--fondU:${c.fond || '#333'}">
       <span class="img" style="${s.photo ? `background-image:url('${photoUrl(s.photo)}')` : ''}"></span>
       <span class="txt"><b>${esc(s.titre)}</b><span class="compte">${esc(s.creation || '')}</span>
@@ -3799,7 +3805,7 @@ function vueLieux(param) {
     const q = norm(f.q).trim();
     const n = new Map(); E.dates.forEach(d => n.set(d.lieu_id, (n.get(d.lieu_id) || 0) + 1));
     const xs = E.lieux.filter(l => (!f.type || l.type === f.type) && (!q || norm(`${l.nom || ''} ${l.commune} ${l.departement}`).includes(q))).sort((a, b) => norm(a.commune).localeCompare(norm(b.commune)) || norm(a.nom).localeCompare(norm(b.nom)));
-    $('#li-compte').textContent = `${xs.length} lieu${xs.length > 1 ? 'x' : ''}`;
+    $('#li-compte').textContent = `${xs.length} lieu${xs.length > 1 ? 'x' : ''}${xs.length > 400 ? ' · les 400 premiers montrés : affinez la recherche' : ''}`;
     zone.innerHTML = xs.slice(0, 400).map(l => `<a class="ligne" style="grid-template-columns:1fr auto" href="#/lieux/${l.id}"${String(param) === String(l.id) ? ' aria-current="true"' : ''}><span class="corps"><span class="t">${esc(l.nom || l.commune)}</span><span class="ou">${esc(l.commune)} (${esc(l.departement)})${l.latitude == null ? ' · sans position sur la carte' : ''}</span></span><span class="badges"><span class="badge">${n.get(l.id) || 0} date${(n.get(l.id) || 0) > 1 ? 's' : ''}</span>${l.type === 'etablissement' ? '<span class="badge sco">Établissement</span>' : ''}</span></a>`).join('') || listeVide(!!(q || f.type), { rien: 'Aucun lieu ne correspond à ces filtres.', aucun: 'Aucun lieu pour l’instant.', ajouter: ['#/lieux/nouveau', '＋ Nouveau lieu'] });
   };
   zone.rafraichir();
@@ -3857,12 +3863,27 @@ function editeurLieu(id) {
   if (l0) comboLieu(zone, 'li-fusion', null, async cible => {
     if (cible === id) return;
     const c = lieu(cible);
-    if (!(await confirmerAction({ titre: `Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`, texte: `Ses dates et ses séances passent à « ${lieuTexte(c)} », puis « ${lieuTexte(l0)} » est supprimé.`, ok: 'Fusionner les lieux' }))) return;
+    if (!(await confirmerAction({ titre: `Fusionner « ${lieuTexte(l0)} » dans « ${lieuTexte(c)} » ?`, texte: `Ses dates, ses séances, son suivi (contact, jauge, plateau, notes : ce que « ${lieuTexte(c)} » n’a pas encore) et ses notes internes passent à « ${lieuTexte(c)} », puis « ${lieuTexte(l0)} » est supprimé.`, ok: 'Fusionner les lieux' }))) return;
+    // le suivi : chaque champ vide du lieu gardé prend celui du lieu absorbé ; deux notes se mettent bout à bout
+    const sa = E.lieuxSuivi.find(x => x.lieu_id === id), sc = E.lieuxSuivi.find(x => x.lieu_id === cible);
+    let suivi = null;
+    if (sa) {
+      suivi = { ...(sc || {}), lieu_id: cible };
+      Object.keys(sa).filter(k => !['lieu_id', 'modifie_le', 'modifie_par'].includes(k)).forEach(k => {
+        const a = sa[k], b = sc ? sc[k] : null, vide = v => v == null || String(v).trim() === '';
+        if (k === 'notes' && !vide(a) && !vide(b) && String(a).trim() !== String(b).trim()) suivi.notes = `${String(b).trim()}\n\n(${lieuTexte(l0)}) ${String(a).trim()}`;
+        else if (vide(b) && !vide(a)) suivi[k] = a;
+      });
+      delete suivi.modifie_le; delete suivi.modifie_par;
+    }
     const r1 = await sb.from('crescite_dates').update({ lieu_id: cible }).eq('lieu_id', id);
     const r2 = r1.error ? r1 : await sb.from('crescite_seances').update({ lieu_id: cible }).eq('lieu_id', id);
-    const r3 = r2.error ? r2 : await sb.from('crescite_lieux').delete().eq('id', id);
+    const r2b = r2.error || !suivi ? r2 : await sb.from('crescite_lieux_suivi').upsert(suivi, { onConflict: 'lieu_id' });
+    const r2c = r2b.error ? r2b : await sb.from('crescite_notes').update({ cible_id: cible }).eq('cible_table', 'crescite_lieux').eq('cible_id', id).then(r => (r.error && /crescite_notes/.test(r.error.message || '') ? { error: null } : r));
+    const r3 = r2c.error ? r2c : await sb.from('crescite_lieux').delete().eq('id', id);
     if (r3.error) return erreur(r3.error, 'Fusion incomplète');
     E.dates.forEach(d => { if (d.lieu_id === id) d.lieu_id = cible; }); E.seances.forEach(s => { if (s.lieu_id === id) s.lieu_id = cible; }); E.lieux = E.lieux.filter(x => x.id !== id);
+    E.lieuxSuivi = E.lieuxSuivi.filter(x => x.lieu_id !== id && x.lieu_id !== cible).concat(suivi ? [suivi] : sc ? [sc] : []);
     E.sale = false; location.hash = `#/lieux/${cible}`; annoncer('Lieux fusionnés.');
   });
   $('#li-suppr')?.addEventListener('click', () => CORBEILLE.ligne({ table: 'crescite_lieux', ligne: l0, quoi: `Lieu supprimé : ${lieuTexte(l0)}.`, retabli: 'Lieu rétabli.',
@@ -4484,6 +4505,8 @@ const champsChanges = j => j.avant && j.apres ? Object.keys(j.apres).filter(k =>
 const RUBRIQUES_JOURNAL = [['representations', 'Représentations', ['crescite_dates', 'crescite_representations', 'crescite_dates_suivi', 'crescite_dates_chiffres', 'crescite_equipes']],
   ['feuilles', 'Feuilles de route', ['crescite_feuilles']], ['spectacles', 'Spectacles', ['crescite_spectacles', 'crescite_distributions', 'crescite_documents']],
   ['equipe', 'Équipe', ['crescite_personnes']], ['ateliers', 'Ateliers', ['crescite_ateliers', 'crescite_seances']], ['lieux', 'Lieux', ['crescite_lieux', 'crescite_lieux_suivi']],
+  ['diffusion', 'Diffusion', ['crescite_diffusion_prospects', 'crescite_devis_demandes', 'crescite_documents_generes', 'crescite_acces_pro']],
+  ['planning', 'Planning', ['crescite_propositions']], ['frais', 'Frais et matériel', ['crescite_notes_frais', 'crescite_materiel']], ['notes', 'Notes internes', ['crescite_notes']],
   ['textes', 'Textes du site', ['crescite_textes']]];
 const PERIODES_JOURNAL = [['', 'Toute la période'], ['jour', 'Aujourd’hui'], ['7', 'Les 7 derniers jours'], ['30', 'Les 30 derniers jours'], ['choisir', 'Choisir les dates…']];
 const OPS_JOURNAL = { INSERT: 'Ajout', UPDATE: 'Modification', DELETE: 'Suppression' };

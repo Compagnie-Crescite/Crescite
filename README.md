@@ -968,6 +968,16 @@ en entier : ils vont dans `crescite_documents_generes`, que seule l'administrati
 script de base, qu'une relance ne rouvre donc pas). Tant qu'il n'est pas lancé, l'administration n'émet aucun document.
 19 essais (`node documents_generes.mjs` : tous les scripts, un devis gardé à l'ancienne, puis lui, deux fois).
 
+**Les correctifs de l'audit (pas encore lancé).** Le vingtième script, `supabase/migrations/20261108_crescite_correctifs.sql`,
+se lance dans le projet de la compagnie et peut être relancé ; il ne change aucune table. Un « Prévenir l'équipe » ne
+remplace plus le précédent (chacun part sur les téléphones) ; deux propositions de dates, ou les réponses de deux
+personnes, ne se fondent plus ; une feuille republiée pour une date passée se tait, retirée elle le dit ; l'absent posé à
+la création d'une date n'apprend pas qu'il « ne part plus » ; une date déplacée prévient ; on ne répond plus à une
+proposition close ni pour un jour passé ; pistes, demandes de devis, frais, matériel, invitations pro et propositions vont
+au journal ; les notes internes se datent. 17 essais (`node correctifs.mjs`). La fonction `crescite-agenda` est à
+redéployer : elle ignore désormais, à la relecture d'un agenda relié, les dates de la compagnie qu'on y a importées (sans
+quoi chacune était en conflit avec elle-même).
+
 **Écrire dans la base.** `python3 supabase/ecrire.py` est le seul outil par lequel Claude modifie la base quand on le lui
 demande : les tables `crescite_` et les stockages de la compagnie seulement (les tables d'adrienvada.fr restent hors
 d'atteinte), jamais sans filtre, avec un mode `--essai`. `effacer <stockage> <chemin>` efface un fichier d'un stockage de la compagnie. `lot <fichier.json>` applique une liste d'opérations dans l'ordre et s'arrête à la première erreur ;
