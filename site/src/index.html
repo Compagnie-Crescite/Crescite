@@ -3205,8 +3205,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   /* ---------- le menu flottant : en bas de l'accueil, sous la liste des spectacles, arrimé en haut de l'écran ailleurs ----------
      Sur l'accueil, la scène le place (sousPieuvre : la cale avant l'en-tête, et <main> remonte d'autant, sous lui), au moins au
      bas du premier écran (collé au bas de l'écran tant que sa place est plus bas) ; il monte avec la page et s'arrime en haut
-     (position: sticky). Une de ses pièces touchée avant : la page descend d'elle-même jusqu'à l'arrimer, puis s'en va
-     (descendre). Arrimé (un IntersectionObserver : il touche le haut de l'écran), sa marque se déplie et son ombre se
+     (position: sticky). Une de ses pièces touchée avant : la page change aussitôt et il monte de là où on le voyait jusqu'à
+     sa place en haut (glisser, plus bas : le contenu n'attend plus la descente de la page, règle 15 C). Arrimé (un IntersectionObserver : il touche le haut de l'écran), sa marque se déplie et son ombre se
      creuse. D'une page à l'autre, s'il change de place, il y glisse (440 ms, souple) : il ne saute jamais. */
   const Menu = (() => {
     const el = $('#top'), cale = $('#top-cale');
@@ -3226,21 +3226,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       surScene() { if (y === 8 && !el.classList.contains('sous-pieuvre')) return; y = 8; cale.style.height = ''; main.style.marginTop = `${-(8 + hauteur())}px`; el.classList.remove('sous-pieuvre'); },
       // sa place à l'écran, la page tout en haut
       place: () => (y != null ? y : 8),
-      // sur l'accueil, avant qu'il soit arrimé : la page descend d'elle-même jusqu'à ce qu'il s'arrime en haut, puis fait()
-      // (arrivée, arrêtée par un doigt, ou trop longue : on y va quand même)
-      descendre(fait) {
-        const cible = y == null ? 0 : Math.max(0, y - (parseFloat(getComputedStyle(el).top) || 8));
-        if (!motionOK() || scrollY >= cible - 2) { fait(); return; }
-        const y0 = scrollY, t0 = performance.now();
-        let avant = y0, calme = 0;
-        scrollTo({ top: cible, left: 0, behavior: 'smooth' });
-        const voir = () => {
-          const yy = scrollY, t = performance.now() - t0;
-          calme = Math.abs(yy - avant) < .5 ? calme + 1 : 0; avant = yy;
-          if (Math.abs(yy - cible) < 2 || (calme > 5 && (yy !== y0 || t > 300)) || t > 1500) fait(); else requestAnimationFrame(voir);
-        };
-        requestAnimationFrame(voir);
-      },
       // d'une place à l'autre : il glisse depuis là où on le voyait
       glisser(depuis) {
         if (vol) { vol.cancel(); vol = null; }
@@ -3250,17 +3235,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       },
     };
   })();
-  // sur l'accueil, une pièce du menu touchée avant qu'il soit arrimé : la page descend d'abord (il monte s'arrimer en haut),
-  // puis s'en va
-  $('#entrees').addEventListener('click', e => {
-    const a = e.target.closest && e.target.closest('a[href^="#/"]');
-    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    if (vue !== 'accueil' || !Menu.el.classList.contains('sous-pieuvre') || Menu.el.classList.contains('est-arrime')) return;
-    e.preventDefault();
-    const h = a.getAttribute('href');
-    Menu.descendre(() => { if (vue === 'accueil') location.hash = h; });
-  });
-
   /* ---------- l'ordre du clavier sur l'accueil, celui de l'œil ----------
      Le menu flottant vient avant <main> dans la page (il s'arrime en haut de l'écran partout), mais sur l'accueil l'œil le
      trouve en bas du premier écran, sous la scène. La touche Tab suit l'œil : « Aller au contenu », la scène (son nom, la
@@ -5461,6 +5435,32 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // (la rangée dans son cadre, avec ses deux flèches de défilement, pour la souris : le clavier va de vignette en vignette)
     const sousMenu = (xs, n) => `<div class="sm7-cadre"><div class="sm7-l" role="group" aria-label="${esc(L.spectacles)}">${xs.map(x => itemSp(x, n.get(x.cle))).join('')}</div>`
       + `<button type="button" class="sm7-f" data-sens="-1" tabindex="-1" aria-hidden="true">${GAUCHE}</button><button type="button" class="sm7-f" data-sens="1" tabindex="-1" aria-hidden="true">${DROITE}</button></div>`;
+    // le formulaire de l'alerte (loin sous le pli) : posé après les saisons passées, dans une tâche à lui ; ses champs (une
+    // liste déroulante, trois saisies) tenaient la première image de la page au-delà de 50 ms (règle 15 C). Une adresse qui
+    // vise une saison, un filtre ou la page refaite sur place le posent tout de suite
+    const formAlerte = () => `<form id="f-alerte" class="alerte-form" onsubmit="return false;">
+            <div class="alerte-champs">
+              <div class="alerte-geo-grp">
+                <input type="text" id="alerte-cp" placeholder="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" aria-label="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" autocomplete="postal-code" required>
+                <button type="button" class="btn-geo" id="btn-geo" title="${esc(L.meGeolocaliser || 'Me géolocaliser')}">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="2"/></svg>
+                  <span>${esc(L.meGeolocaliser || 'Me géolocaliser')}</span>
+                </button>
+              </div>
+              <select id="alerte-spectacle" aria-label="${esc(L.spectacles || 'Spectacles')}">
+                <option value="">${esc(L.tousSpectacles || 'Tous les spectacles')}</option>
+                ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
+              </select>
+              <input type="email" id="alerte-email" placeholder="${esc(L.adresseElectronique || '')}" aria-label="${esc(L.adresseElectronique || '')}" maxlength="254" required>
+              <button type="submit" class="bouton e" id="btn-inscrire-alerte" style="--ec:var(--saison)">
+                <span>${esc(L.mInscrire || 'M’inscrire à l’alerte')}</span>
+                ${FLECHE}
+              </button>
+            </div>
+            <p class="alerte-usage">${esc(L.alerteUsage || 'Votre adresse ne sert qu’à cette alerte, et chaque courriel contient un lien pour vous désinscrire.')}</p>
+            <div id="alerte-msg" class="alerte-msg" hidden aria-live="polite"></div>
+          </form>`;
+    const poserAlerte = () => { const bx = $('.alerte-boite', main); if (!bx || !bx.isConnected || $('#f-alerte', bx)) return; bx.insertAdjacentHTML('beforeend', formAlerte()); initAlerteTournee(); };
     // (la tête, resserrée pour que la saison en cours, sa rangée et le haut de sa frise tiennent dans le premier écran : le
     // titre, puis sur une ligne ses raccourcis et la recherche ; au téléphone, la recherche à côté du titre)
     main.innerHTML = `<header class="s7-entete"><div class="wrap s7-e">
@@ -5494,28 +5494,6 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           ${L.alerteBadge ? `<span class="alerte-badge">${esc(L.alerteBadge)}</span>` : ''}
           <h2 class="titre-bloc" id="h-alerte">${esc(L.alerteTournee || 'Être prévenu du prochain passage')}</h2>
           <p class="alerte-desc">${esc(L.alerteTourneeDesc || 'Recevez un courriel dès qu’une représentation est confirmée près de chez vous.')}</p>
-          <form id="f-alerte" class="alerte-form" onsubmit="return false;">
-            <div class="alerte-champs">
-              <div class="alerte-geo-grp">
-                <input type="text" id="alerte-cp" placeholder="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" aria-label="${esc(L.codePostalOuCommune || 'Code postal ou ville')}" autocomplete="postal-code" required>
-                <button type="button" class="btn-geo" id="btn-geo" title="${esc(L.meGeolocaliser || 'Me géolocaliser')}">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/><circle cx="12" cy="12" r="2"/></svg>
-                  <span>${esc(L.meGeolocaliser || 'Me géolocaliser')}</span>
-                </button>
-              </div>
-              <select id="alerte-spectacle" aria-label="${esc(L.spectacles || 'Spectacles')}">
-                <option value="">${esc(L.tousSpectacles || 'Tous les spectacles')}</option>
-                ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
-              </select>
-              <input type="email" id="alerte-email" placeholder="${esc(L.adresseElectronique || '')}" aria-label="${esc(L.adresseElectronique || '')}" maxlength="254" required>
-              <button type="submit" class="bouton e" id="btn-inscrire-alerte" style="--ec:var(--saison)">
-                <span>${esc(L.mInscrire || 'M’inscrire à l’alerte')}</span>
-                ${FLECHE}
-              </button>
-            </div>
-            <p class="alerte-usage">${esc(L.alerteUsage || 'Votre adresse ne sert qu’à cette alerte, et chaque courriel contient un lien pour vous désinscrire.')}</p>
-            <div id="alerte-msg" class="alerte-msg" hidden aria-live="polite"></div>
-          </form>
         </div>
       </div></section>
       ${L.filtres ? `<div class="bf7" id="bf7"><button type="button" class="bf7-ouvrir" aria-haspopup="dialog" aria-expanded="false" aria-controls="fe7">${FILTRE}<span>${esc(L.filtres)}</span><span class="bf7-n"></span></button><span class="bf7-etiq" aria-hidden="true">${esc(L.filtres)}</span><div class="bf7-puces" role="group" aria-label="${esc(L.filtres)}"></div></div>
@@ -5685,11 +5663,18 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const montrerOnglet = k => { const ul = $('ul', index), b = k && $(`[data-k="${k}"]`, index); if (!ul || !b) return;
       const rb = b.getBoundingClientRect(), ru = ul.getBoundingClientRect();
       if (rb.left < ru.left || rb.right > ru.right) ul.scrollLeft += rb.left - ru.left - 12; };
-    function dessineSaisons() {
-      const vis = visibles();
-      racine.innerHTML = vis.map(({ s, rows }) => `<details class="sai" id="sai-${s.k}" data-saison="${s.k}" data-frise-id="${s.k}" data-mv-cle="s:${s.k}"${F.ouv.has(s.k) ? ' open' : ''}>
+    // (la première fois, quand aucune n'est ouverte, les saisons se posent par morceaux de trois, une image chacun : toutes
+    // d'un coup, leur mise en forme tenait la page plus de 50 ms ; elles sont loin sous le pli, rien ne bouge à l'écran)
+    let jSaisons = 0;
+    function dessineSaisons(morceaux = false) {
+      const vis = visibles(), j = ++jSaisons;
+      const html = xs => xs.map(({ s, rows }) => `<details class="sai" id="sai-${s.k}" data-saison="${s.k}" data-frise-id="${s.k}" data-mv-cle="s:${s.k}"${F.ouv.has(s.k) ? ' open' : ''}>
         <summary>${vignette(s, rows)}<span class="sai-c"><h3 class="sai-t">${esc(s.titre)}</h3><span class="sai-sp">${s.titres.map(t => `<span>${esc(t)}</span>`).join(' ')}</span></span><span class="sai-n">${((n) => n ? `<b>${n}</b>` : '')(nbReps(rows.filter(jouee)))}${CHEVRON}</span></summary>
         <div class="sai-corps">${F.ouv.has(s.k) ? corpsSaison(s, rows) : ''}</div></details>`).join('');
+      const pas = morceaux && !vis.some(({ s }) => F.ouv.has(s.k)) ? 3 : vis.length;
+      racine.innerHTML = html(vis.slice(0, pas));
+      const suite = i => { if (i >= vis.length) return; ensuite(() => { if (j !== jSaisons || !racine.isConnected) return; racine.insertAdjacentHTML('beforeend', html(vis.slice(i, i + pas))); suite(i + pas); }); };
+      suite(pas);
       vis.forEach(({ s }) => { if (F.ouv.has(s.k)) lierSaison($(`#sai-${s.k}`, racine), s); });
       dessineIndex(vis);
       // (la saison dont la carte vient de filtrer la page : sa carte revient où elle était à l'écran, la commune choisie et
@@ -5827,9 +5812,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const saisons = () => {
         if (agenda || !racine.isConnected) return;
         agenda = true;
-        dessineSaisons();
-        fSaisons = frise($('#idx-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
-          libelle: L.saisonsPassees, classe: 'frise-saisons', anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) });
+        dessineSaisons(true);
+        ensuite(() => { if (!racine.isConnected || fSaisons) return; fSaisons = frise($('#idx-frise'), { echelle: 'annees', debut: passe.length ? passe[passe.length - 1].k : D.saison, fin: D.saison, bandes: bandesSaisons(),
+          libelle: L.saisonsPassees, classe: 'frise-saisons', anMin: 54, relier: { liste: racine }, choix: b => ouvrirSaison(b.id) }); });
       };
       if (maintenant) saisons(); else ensuite(saisons);
     }
@@ -6197,8 +6182,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // saisons passées), dans la tâche suivante, sauf quand la vue se refait en place (D a changé), qu'un filtre est actif ou
     // qu'une saison est demandée (#/saisons/<saison>)
     poserFrise();
-    if (surPlace || actif() || ouvrir) { dessineProchaines(true); dessineAgenda(true); } else ensuite(() => ensuite(() => dessineAgenda()));
-    bientot(() => { pousser(svg); initAlerteTournee(); arrimer(index); arrimer($('#sm7', main)); if (ouvrir && !surPlace) montrerOnglet(ouvrir); });
+    if (surPlace || actif() || ouvrir) { dessineProchaines(true); dessineAgenda(true); poserAlerte(); } else ensuite(() => ensuite(() => { dessineAgenda(); ensuite(() => ensuite(poserAlerte)); }));
+    bientot(() => { pousser(svg); arrimer(index); arrimer($('#sm7', main)); if (ouvrir && !surPlace) montrerOnglet(ouvrir); });
     // #/saisons/<saison> : quand les polices arrivent après le saut, ce qui est au-dessus de la saison se recompose ; elle est
     // recalée sous la bande, si l'on n'a pas bougé entre-temps
     if (ouvrir && !surPlace && document.fonts && document.fonts.status === 'loading') {
@@ -8012,8 +7997,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     } else requestAnimationFrame(poser);
     apres(false);
     if (premiere) preparer();
-    habiterCreature();
-    if (avant) creature(type === 'spectacle' || type === 'onglet' ? type : retourNav ? 'retour' : 'page');
+    // (la créature de l'en-tête, après la première image de la page : la naître lit la place de la marque, ce qui forçait la
+    // mise en page de toute la page neuve dans la tâche de la route, plus de 50 ms ; une image après, la page est posée)
+    const retour = retourNav;
+    ensuite(() => { if (courant !== b) return; habiterCreature(); if (avant) creature(type === 'spectacle' || type === 'onglet' ? type : retour ? 'retour' : 'page'); });
     if (!vit) return;
     if (type === 'quitter' && bySlug[spAvant]) {
       const p = vue === 'accueil' ? Scene.coeur() : marque || { x: VW / 2, y: 32 };
