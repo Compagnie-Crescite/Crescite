@@ -1,40 +1,69 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="nuit">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="no-referrer">
-<meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f6f2eb" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141016" media="(prefers-color-scheme: dark)">
+<!-- la nuit par défaut, quel que soit l'appareil (data-theme="nuit" sur <html>, comme le site public) ; le jour reste dans
+     la feuille de style, sous data-theme="jour" seulement -->
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#1b1117">
+<!-- l'icône d'onglet : celle des espaces réservés, à la couleur de la saison (faite par site/build.py, equipe(dest)) -->
+<link rel="icon" href="../equipe/icones/192.png" type="image/png">
+<link rel="apple-touch-icon" href="../equipe/icones/180.png">
 <meta name="format-detection" content="telephone=no">
-<title>Crescite · Des dates vous sont proposées</title>
+<title>Des dates vous sont proposées · Compagnie Crescite</title>
 <link rel="preconnect" href="https://fwjgyfzcbcmfyfkhhtuh.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600;700&display=swap" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Raleway:wght@600;700&display=swap" crossorigin>
 <style>
 /* La page de réponse aux propositions de dates (reponse/?r=…) : les liens des courriels y mènent, avec la clé de la
    personne. Elle lit la proposition et enregistre les réponses par la fonction crescite-courriel. Un lien de courriel
-   n'enregistre rien tout seul : le choix arrive prêt, on le confirme d'un bouton. Papier, encre et magenta, comme
-   l'espace des salles ; le mode sombre suit le réglage de l'appareil.
+   n'enregistre rien tout seul : le choix arrive prêt, on le confirme d'un bouton. À la charte du site public, comme
+   l'espace des salles : ses polices, ses neutres, l'accent à la couleur de la saison (--saison-*, posées par
+   site/build.py ; sans lui, un gris neutre), la nuit par défaut (le jour sous data-theme="jour" seulement).
    Les alertes de tournée (reponse/?alerte=<jeton>&action=confirmer|arreter, le onzième script SQL) : la page montre
    l'alerte (son secteur, jamais l'adresse) et fait confirmer d'un bouton, ou arrêter (l'alerte s'efface, ou toutes
    celles de l'adresse) ; là non plus, ouvrir le lien ne fait rien tout seul. */
 :root {
-  --papier: #f6f2eb; --surface: #fffdf9; --encre: #1d1418; --gris: #5f565a; --filet: #ded4c6;
-  --magenta: #a3306b; --magenta-fonce: #87245a; --magenta-doux: #f5e4ec; --sur-magenta: #fff;
-  --serif: "Spectral", Georgia, "Times New Roman", serif;
-  --sans: "Work Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --saison: #4f4850; --saison-vive: #b7b0ae; --saison-porteur: #5c545d; --saison-profond: #2b272c; --saison-texte: #4f4850;
+  --saison-fonce: #3f3940; --saison-doux: #efebe6; --saison-texte-nuit: #b7b0ae; --saison-fonce-nuit: #d0cbc9; --saison-doux-nuit: #2e2629;
+  --papier: #f6f2eb; --surface: #fffdf9; --encre: #1d1418; --gris: #5f565a; --filet: #dcd3c6;
+  --magenta: var(--saison-texte); --magenta-fonce: var(--saison-fonce); --magenta-doux: var(--saison-doux); --sur-magenta: #fff; --pieuvre: var(--saison);
+  --serif: "Ubuntu", "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sans: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --etiq: "Raleway", "Open Sans", system-ui, sans-serif;
   --gs: env(safe-area-inset-left, 0px); --ds: env(safe-area-inset-right, 0px);
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --papier: #141016; --surface: #1f1921; --encre: #f4eef2; --gris: #b9aeb6; --filet: #3a3140;
-    --magenta: #f08cc0; --magenta-fonce: #f7aed3; --magenta-doux: #3a1f30; --sur-magenta: #1d1418;
-  }
+/* la nuit, par défaut (data-theme="nuit", ou rien) ; le jour seulement sous data-theme="jour" */
+:root:not([data-theme="jour"]) {
+  color-scheme: dark;
+  --papier: #1b1117; --surface: #2e2128; --encre: #f3eee9; --gris: #b7b0ae; --filet: #3b3036;
+  --magenta: var(--saison-texte-nuit); --magenta-fonce: var(--saison-fonce-nuit); --magenta-doux: var(--saison-doux-nuit); --sur-magenta: #1b1117; --pieuvre: var(--saison-texte-nuit);
 }
+:root[data-theme="jour"] { color-scheme: light; }
+.sr { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip: rect(0 0 0 0) !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
+/* l'en-tête et le pied, comme l'espace des salles */
+.barre { max-width: 600px; margin: 0 auto; padding: 18px calc(20px + var(--ds)) 0 calc(20px + var(--gs)); }
+.pied-espace { max-width: 600px; margin: 0 auto; padding: 14px calc(20px + var(--ds)) 30px calc(20px + var(--gs)); }
+/* la marque de l'en-tête, comme dans l'administration et l'espace de l'équipe : la pieuvre (../admin/tentacules.js la pose
+   dans [data-pieuvre], d'après ../admin/logo.js), « Compagnie Crescite », et dessous le nom de l'espace ; elle mène au site */
+.marque { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; color: var(--encre); text-decoration: none; min-width: 0; }
+.marque:hover { color: var(--encre); }
+.marque .pieuvre { display: inline-block; flex: none; width: 46px; height: 26px; color: var(--pieuvre); }
+.marque .pieuvre:empty { display: none; }
+.marque .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.marque-texte { display: grid; gap: 4px; line-height: 1.1; min-width: 0; }
+.marque-nom { font: 500 1.12rem/1.1 var(--serif); }
+.marque small { font: 700 .66rem/1 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--magenta); }
+/* le pied commun des espaces réservés : sobre, en fin de contenu */
+.pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
+.pied-espace .pied-nom { margin: 0; font: 500 .95rem/1.3 var(--serif); color: var(--encre); }
+.pied-espace nav { display: flex; flex-wrap: wrap; gap: 2px 16px; }
+.pied-espace a { display: inline-block; padding: 6px 0; color: var(--gris); }
+.pied-espace a:hover { color: var(--magenta); }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; }
@@ -46,9 +75,9 @@ button { font: inherit; color: inherit; }
 [hidden] { display: none !important; }
 h1, p { margin: 0; }
 
-main { max-width: 600px; margin: 0 auto; padding: 28px calc(20px + var(--ds)) 48px calc(20px + var(--gs)); }
-.sur { color: var(--magenta); font-weight: 700; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; }
-h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; letter-spacing: -.01em; }
+main { max-width: 600px; margin: 0 auto; padding: 18px calc(20px + var(--ds)) 40px calc(20px + var(--gs)); }
+.sur { color: var(--magenta); font: 700 .78rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; }
+h1 { font: 500 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; letter-spacing: -.01em; }
 .spectacle { font: italic 500 1.12rem/1.3 var(--serif); color: var(--gris); }
 .bonjour { margin-top: 18px; }
 .message { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: var(--magenta-doux); white-space: pre-line; }
@@ -95,9 +124,15 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 </style>
 </head>
 <body>
+<header class="barre">
+  <a class="marque" href="../"><span class="pieuvre" data-pieuvre aria-hidden="true"></span><span class="marque-texte"><span class="marque-nom">Compagnie Crescite</span><small>Vos réponses</small></span><span class="sr"> : le site de la compagnie</span></a>
+</header>
 <main id="page" tabindex="-1" aria-busy="true">
   <p class="chargement">Chargement de la proposition…</p>
 </main>
+<footer class="pied-espace"><p class="pied-nom">Compagnie Crescite</p><nav aria-label="La compagnie"><a href="mailto:contact@crescite.fr">Écrire à la compagnie</a><a href="../#/mentions-legales">Mentions légales</a><a href="../#/politique-de-confidentialite">Politique de confidentialité</a></nav></footer>
+<script src="../admin/logo.js" defer></script>
+<script src="../admin/tentacules.js" defer></script>
 <script>
 (() => {
   'use strict';
@@ -136,13 +171,13 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   }
 
   function introuvable() {
-    document.title = 'Crescite · Lien expiré';
-    main.innerHTML = `<p class="sur">Compagnie Crescite</p><h1>Ce lien n’est plus valable</h1>
+    document.title = 'Lien expiré · Compagnie Crescite';
+    main.innerHTML = `<p class="sur">Proposition de dates</p><h1>Ce lien n’est plus valable</h1>
       <p class="bonjour">Écrivez-nous pour recevoir de nouveau la proposition : <a href="mailto:${CONTACT}">${CONTACT}</a>.</p>`;
   }
 
   function panne(fn, titre = 'La proposition n’a pas pu s’ouvrir') {
-    main.innerHTML = `<p class="sur">Compagnie Crescite</p><h1>${titre}</h1>
+    main.innerHTML = `<p class="sur">Vos réponses</p><h1>${titre}</h1>
       <p class="bonjour">Vérifiez la connexion, puis réessayez.</p>
       <p class="bonjour"><button class="principal" type="button" data-reessayer>Réessayer</button></p>`;
     main.querySelector('[data-reessayer]').addEventListener('click', fn);
@@ -154,8 +189,8 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
     const cible = jours.find(j => String(j.id) === vise.j);
     const aConfirmer = !close && cible && CHOIX[vise.c] && cible.reponse !== vise.c;
     if (cible && cible.reponse === vise.c && !message) message = `C’est déjà noté : ${CHOIX[vise.c].toLowerCase()}, ${jourTexte(cible.debut, cible.fin, cible.journee).toLowerCase()}.`;
-    document.title = `Crescite · ${p.titre}`;
-    main.innerHTML = `<p class="sur">Compagnie Crescite</p>
+    document.title = `${p.titre} · Compagnie Crescite`;
+    main.innerHTML = `<p class="sur">Des dates vous sont proposées</p>
       <h1>${esc(p.titre)}</h1>
       ${p.spectacle ? `<p class="spectacle">${esc(p.spectacle)}</p>` : ''}
       <p class="bonjour">Bonjour ${esc(v.prenom)}, la compagnie vous propose ${jours.length > 1 ? 'ces dates' : 'cette date'}. Êtes-vous disponible ?</p>
@@ -245,15 +280,15 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   // au bas de chaque courriel d'alerte). La page montre l'alerte, le bouton agit ; ouvrir le lien ne fait rien
   const jetonAlerte = q.get('alerte') || '';
   const actionAlerte = q.get('action') === 'arreter' ? 'arreter' : 'confirmer';
-  const DATES = '../synthese.html#/saisons';   // les dates de la compagnie, sur le site
+  const DATES = '../#/saisons';   // les dates de la compagnie, sur le site
   let va = null;                               // l'alerte vue par son jeton : { alerte, attente, autres }
   let faitAlerte = null;                       // ce qui vient d'être fait : { action, n, liste, tout }
   const secteurs = xs => `<ul class="secteurs">${xs.map(a => `<li>${esc(a.secteur)}<span>${esc(a.spectacle || 'Tous les spectacles')}</span></li>`).join('')}</ul>`;
   const piedAlerte = () => `<div class="pied"><p><a href="${DATES}">Les dates de la compagnie</a></p><p>Une question ? <a href="mailto:${CONTACT}">${CONTACT}</a></p></div>`;
 
   function alerteIntrouvable() {
-    document.title = 'Crescite · Lien expiré';
-    main.innerHTML = `<p class="sur">Compagnie Crescite</p><h1 tabindex="-1">Ce lien n’est plus valable</h1>
+    document.title = 'Lien expiré · Compagnie Crescite';
+    main.innerHTML = `<p class="sur">Alerte de tournée</p><h1 tabindex="-1">Ce lien n’est plus valable</h1>
       <p class="bonjour">L’alerte a peut-être déjà été arrêtée, ou effacée faute de confirmation dans les 30 jours.
       Pour en créer une nouvelle : <a href="${DATES}">les dates de la compagnie</a>.</p>${piedAlerte()}`;
     main.removeAttribute('aria-busy');
@@ -261,7 +296,7 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
 
   function rendreAlerte(texte = '') {
     const a = va.alerte, attente = va.attente || [], autres = va.autres || 0, plus = attente.length > 1;
-    document.title = 'Crescite · Alerte de tournée';
+    document.title = 'Alerte de tournée · Compagnie Crescite';
     let corps;
     if (faitAlerte && faitAlerte.action === 'arreter') {
       corps = faitAlerte.tout
@@ -289,7 +324,7 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
       corps = `<h1 tabindex="-1">Cette alerte est désactivée</h1><p class="bonjour">La compagnie l’a désactivée : elle ne vous écrit plus.
         Pour en créer une nouvelle : <a href="${DATES}">les dates de la compagnie</a>.</p>`;
     }
-    main.innerHTML = `<p class="sur">Compagnie Crescite · Alerte de tournée</p>${corps}
+    main.innerHTML = `<p class="sur">Alerte de tournée</p>${corps}
       <p class="etat" role="status" aria-live="polite" tabindex="-1">${esc(texte)}</p>${piedAlerte()}`;
     main.removeAttribute('aria-busy');
   }
@@ -326,7 +361,7 @@ h1 { font: 600 clamp(1.6rem, 6vw, 2.3rem)/1.15 var(--serif); margin: 8px 0 4px; 
   async function chargerAlerte() {
     main.setAttribute('aria-busy', 'true');
     main.innerHTML = '<p class="chargement">Chargement de votre alerte…</p>';
-    document.title = 'Crescite · Alerte de tournée';
+    document.title = 'Alerte de tournée · Compagnie Crescite';
     if (jetonAlerte.length < 32) return alerteIntrouvable();
     try {
       const w = await appeler({ alerte: jetonAlerte });

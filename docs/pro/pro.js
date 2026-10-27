@@ -31,11 +31,6 @@
   if (new URLSearchParams(location.search).get('anim') === '0') document.documentElement.classList.add('sans-mouvement');
   const annoncer = m => { const a = $('#annonce'); a.textContent = ''; setTimeout(() => { a.textContent = m; }, 30); };
 
-  // ---------------------------------------------------------------------------------------------- le logo
-  const logo = $('.logo');
-  const badge = () => { const b = document.createElement('span'); b.className = 'logo badge-logo'; b.setAttribute('aria-hidden', 'true'); b.textContent = 'crescite'; logo.replaceWith(b); };
-  if (logo.complete && !logo.naturalWidth) badge(); else logo.addEventListener('error', badge, { once: true });
-
   // ---------------------------------------------------------------------------------------------- le jeton
   // un code collé tel quel, ou le lien entier
   const jetonDe = t => { const s = txt(t), m = /#([A-Za-z0-9_-]{32,128})$/.exec(s) || /^([A-Za-z0-9_-]{32,128})$/.exec(s); return m ? m[1] : null; };
@@ -103,7 +98,9 @@
     }
     return sombre ? '#ffffff' : '#1d1418';
   }
-  const couleurs = s => { const c = s?.univers?.couleurs || {}, u = [c.scene, c.accent, c.texte].find(hexa) || '#a3306b'; return `--ul:${lisible(u, '#fffdf9')};--us:${lisible(u, '#1f1921')}`; };
+  // (sur les cartes du jour et de la nuit, celles d'index.html ; sans univers, la couleur de la saison, posée par le build)
+  const saison = () => getComputedStyle(document.documentElement).getPropertyValue('--saison').trim();
+  const couleurs = s => { const c = s?.univers?.couleurs || {}, u = [c.scene, c.accent, c.texte, saison()].find(hexa) || '#5f565a'; return `--ul:${lisible(u, '#fffdf9')};--us:${lisible(u, '#2e2128')}`; };
   // la police du titre (celle de son univers), chargée pour ce seul titre
   function police(s) {
     const p = s?.univers?.polices, fam = txt(p?.titre);
@@ -127,7 +124,7 @@
     const c = await contact;
     const demande = mailto(c, 'Demande d’accès à l’espace des salles', 'Bonjour,\n\nJe souhaiterais accéder à l’espace des salles de la compagnie Crescite.\nStructure : \nSpectacle(s) : \n\nMerci.');
     montrer(`<section class="porte parait" aria-labelledby="titre-porte">
-      <p class="sur">Compagnie Crescite</p>
+      <p class="sur">Sur invitation</p>
       <h1 id="titre-porte">Espace des salles</h1>
       <p>Les captations et les documents de nos spectacles, pour les salles et les festivals que nous invitons.</p>
       ${refuse ? '<p class="message" role="alert" style="margin-top:14px">Ce lien n’est plus valable : écrivez-nous pour le renouveler.</p>' : ''}
@@ -194,7 +191,7 @@
         <p class="coords"><a href="${esc(mailto(c, `${txt(a.nom) || 'Espace des salles'} : une question`))}">${esc(c.email)}</a>${tel ? `<a href="tel:${esc(tel.replace(/[^\d+]/g, '').replace(/^0(\d{9})$/, '+33$1'))}">${esc(tel)}</a>` : ''}</p>
         <p class="reserve">Ces documents vous sont réservés : merci de ne pas les diffuser.</p>
       </section>`, focus);
-    document.title = `Crescite · Espace des salles${txt(a.nom) ? ` · ${a.nom}` : ''}`;
+    document.title = `${txt(a.nom) ? `${a.nom} · ` : ''}Espace des salles · Compagnie Crescite`;
   }
 
   // ---------------------------------------------------------------------------------------------- ouvrir un document

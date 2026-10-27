@@ -1,5 +1,5 @@
 // Le mouvement de l'administration (admin/index.html, equipe.js, planning.js), vérifié dans Chromium.
-//   python3 maquettes/build.py synthese && node maquettes/mouvement-admin.mjs
+//   python3 site/build.py && node site/mouvement-admin.mjs
 // L'administration s'ouvre sur une base fictive : une session gardée dans le navigateur, et chaque lecture de table
 // (rest/v1/…) reçoit quelques lignes inventées ; rien ne part vers la vraie base, qui est coupée (les écritures
 // répondent vide). On vérifie les vues qui s'enchaînent, les listes qui arrivent, le pied qui dit l'état, la liste « à
@@ -14,7 +14,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ICI, 'dist');
 const CAPT = path.join(DIST, 'shots-admin');
-if (!fs.existsSync(path.join(DIST, 'admin', 'index.html'))) { console.error('maquettes/dist/admin manque : python3 maquettes/build.py synthese d’abord'); process.exit(2); }
+if (!fs.existsSync(path.join(DIST, 'admin', 'index.html'))) { console.error('site/dist/admin manque : python3 site/build.py d’abord'); process.exit(2); }
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const serveur = http.createServer((req, res) => {
   const p = path.join(DIST, decodeURIComponent(new URL(req.url, 'http://x').pathname));

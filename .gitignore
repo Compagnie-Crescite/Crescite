@@ -2,11 +2,8 @@
 # route, audit de sécurité). Le logo 2.0 est dans marque/ et les photos publiées dans docs/photos/ : toute copie du dépôt
 # construit le vrai site.
 private/
-# Prototype assemblé : il embarque les fichiers privés quand ils sont présents
-prototype/dist/
-
-# Maquettes assemblées : elles embarquent le logo et les photos quand private/ est présent
-maquettes/dist/
+# Le site assemblé : il embarque le logo et les photos quand private/ est présent
+site/dist/
 
 # Guide assemblé (la pieuvre du logo y est injectée)
 guide/dist/

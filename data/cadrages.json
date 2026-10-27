@@ -1,5 +1,5 @@
 {
- "_note": "La zone d'intérêt de chaque photo des spectacles, en pourcentage de l'image : « zone » [gauche, haut, droite, bas], ce qui doit rester dans le cadre quand il le peut (les comédiens, pas le noir du plateau) ; « point », ce que le cadre garde quand il est plus petit que la zone (un visage). maquettes/src/cadrage.js en tire la position de chaque photo dans son cadre, sur ordinateur comme sur téléphone ; « focale » de chaque spectacle (D.shows) est l'abscisse du point de sa photo principale. Clé : celle de D.photos.",
+ "_note": "La zone d'intérêt de chaque photo des spectacles, en pourcentage de l'image : « zone » [gauche, haut, droite, bas], ce qui doit rester dans le cadre quand il le peut (les comédiens, pas le noir du plateau) ; « point », ce que le cadre garde quand il est plus petit que la zone (un visage). site/src/cadrage.js en tire la position de chaque photo dans son cadre, sur ordinateur comme sur téléphone ; « focale » de chaque spectacle (D.shows) est l'abscisse du point de sa photo principale. Clé : celle de D.photos.",
  "ci-gisait-cyrano": {
   "zone": [
    66,

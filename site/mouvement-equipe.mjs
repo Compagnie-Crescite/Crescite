@@ -1,9 +1,9 @@
 // Le mouvement de l'espace de l'équipe (equipe/index.html, equipe.js) : les dix effets, vérifiés dans Chromium.
-//   python3 maquettes/build.py synthese && node maquettes/mouvement-equipe.mjs
+//   python3 site/build.py && node site/mouvement-equipe.mjs
 // L'application s'ouvre hors ligne, sur une saison fictive gardée en cache (la session et la mémoire que equipe.js relit :
 // aucune donnée réelle, aucun appel à la base, qui est coupée) ; au téléphone (tactile), à une heure figée (14 h,
 // aujourd'hui : une séance en cours, une autre dans 1 h 35), puis avec le mouvement réduit, puis à l'ordinateur. Chaque
-// vérification dit ce qu'elle regarde ; les captures vont dans maquettes/dist/shots-equipe/. Sort en erreur si une
+// vérification dit ce qu'elle regarde ; les captures vont dans site/dist/shots-equipe/. Sort en erreur si une
 // vérification manque. Demande Playwright et Chromium (PLAYWRIGHT_MODULE, CHROMIUM, comme onglets.mjs).
 import http from 'node:http';
 import fs from 'node:fs';
@@ -14,7 +14,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(ICI, 'dist');
 const CAPT = path.join(DIST, 'shots-equipe');
-if (!fs.existsSync(path.join(DIST, 'equipe', 'index.html'))) { console.error('maquettes/dist/equipe manque : python3 maquettes/build.py synthese d’abord'); process.exit(2); }
+if (!fs.existsSync(path.join(DIST, 'equipe', 'index.html'))) { console.error('site/dist/equipe manque : python3 site/build.py d’abord'); process.exit(2); }
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.css': 'text/css', '.svg': 'image/svg+xml' };
 const serveur = http.createServer((req, res) => {
   const p = path.join(DIST, decodeURIComponent(new URL(req.url, 'http://x').pathname));
@@ -124,7 +124,7 @@ fs.mkdirSync(CAPT, { recursive: true });
   await page.keyboard.press('Escape');
   await page.waitForTimeout(100);
   ok('« Installer » reste dans la barre au téléphone, ouvre la marche à suivre, Échap la ferme et rend le focus', inst.la && inst.largeur > 70 && /Installer/.test(inst.texte) && modale.la && /Installer l’application/.test(modale.titre) && modale.focus && await page.evaluate(() => !document.querySelector('#modale-installation') && document.activeElement === document.querySelector('[data-installer-barre]')), JSON.stringify({ inst, modale }));
-  // 5. l'accueil garde le magenta
+  // 5. l'accueil garde la couleur de la saison
   ok('5 · accueil : pas de teinte', await page.$eval('.appli', e => !e.hasAttribute('data-teinte')));
   // 6. la carte : bras et lieux portent leurs dates ; survoler un billet allume son bras
   await page.waitForSelector('.o-carte .carte-tournee svg .bras[data-dates]', { timeout: 5000 }).catch(() => {});

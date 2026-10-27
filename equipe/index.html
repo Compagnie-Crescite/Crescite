@@ -1,63 +1,73 @@
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-theme="nuit">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="description" content="L’espace de l’équipe de la compagnie Crescite : la tournée, les horaires, les feuilles de route, les documents et les notifications.">
-<meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f6f2eb" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141016" media="(prefers-color-scheme: dark)">
-<!-- l'application : installable (manifest.webmanifest, sw.js) ; ses icônes sont faites par maquettes/build.py (equipe(dest)) -->
+<!-- la nuit par défaut, quel que soit l'appareil (data-theme="nuit" sur <html>, comme le site public) ; le jour reste dans
+     la feuille de style, sous data-theme="jour" seulement -->
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#1b1117">
+<!-- l'application : installable (manifest.webmanifest, sw.js) ; ses icônes sont faites par site/build.py (equipe(dest)) -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icones/192.png" type="image/png">
 <link rel="apple-touch-icon" href="icones/180.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Crescite">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Les Crescite">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="format-detection" content="telephone=no">
-<title>Crescite · Équipe</title>
+<title>Équipe · Compagnie Crescite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fwjgyfzcbcmfyfkhhtuh.supabase.co" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Work+Sans:wght@400;500;600;700;800&display=swap" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,400;0,500;0,700;1,500&family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Raleway:wght@600;700;800&display=swap" crossorigin>
 <style>
 /* L'espace de l'équipe, en application. D'abord pour le téléphone (on le lit en tournée, sur un quai de gare) : une barre
-   d'onglets en bas ; à l'ordinateur, une colonne à gauche. Aussi clair qu'un billet de train : papier, encre et magenta de
-   la compagnie ; la couleur de l'univers de chaque spectacle en accent. data-u (posé par equipe.js) donne à un élément
-   --u (la couleur telle quelle, pour les filets) et, selon le mode clair ou sombre, --u-fond et --u-texte (la même,
-   ajustée jusqu'à un contraste de 4,6:1). Le mode sombre suit le réglage de l'appareil. */
+   d'onglets en bas ; à l'ordinateur, une colonne à gauche. Aussi clair qu'un billet de train, à la charte du site public :
+   ses polices (Ubuntu, Open Sans, Raleway), ses neutres, sa nuit, et pour accent la couleur de la saison (règle 22 du
+   contrat : --saison-*, que site/build.py pose après cette feuille ; sans lui, un gris neutre) ; la couleur de
+   l'univers de chaque spectacle en accent. data-u (posé par equipe.js) donne à un élément --u (la couleur telle quelle,
+   pour les filets) et, selon la nuit ou le jour, --u-fond et --u-texte (la même, ajustée jusqu'à un contraste de 4,6:1).
+   La nuit par défaut, quel que soit l'appareil ; le jour sous data-theme="jour" seulement. */
 :root {
-  --papier: #f6f2eb; --surface: #fffdf9; --surface-2: #efe8dd; --surface-3: #e3d9cb; --encre: #1d1418; --gris: #5f565a;
-  --filet: #ded4c6; --bord-champ: #8c8085;
-  --magenta: #a3306b; --magenta-fonce: #87245a; --magenta-doux: #f5e4ec; --magenta-vif: #bc3e80; --action: #a3306b; --sur-action: #fff;
+  --saison: #4f4850; --saison-vive: #b7b0ae; --saison-porteur: #5c545d; --saison-profond: #2b272c; --saison-texte: #4f4850;
+  --saison-fonce: #3f3940; --saison-doux: #efebe6; --saison-texte-nuit: #b7b0ae; --saison-fonce-nuit: #d0cbc9; --saison-doux-nuit: #2e2629;
+  --papier: #f6f2eb; --surface: #fffdf9; --surface-2: #ece5da; --surface-3: #e4dccf; --encre: #1d1418; --gris: #5f565a;
+  --filet: #dcd3c6; --bord-champ: #8c8085;
+  --magenta: var(--saison-texte); --magenta-fonce: var(--saison-fonce); --magenta-doux: var(--saison-doux); --magenta-vif: var(--saison);
+  --action: var(--saison-texte); --sur-action: #fff; --pieuvre: var(--saison);
   --option: #7a5a10; --option-doux: #f8efd9; --alerte: #a4231b; --alerte-doux: #fbe7e5; --ok: #1d6f47; --ok-doux: #e3f3ea;
   --sco: #1e4f8a; --sco-doux: #e6eefa;
-  --serif: "Spectral", Georgia, "Times New Roman", serif;
-  --sans: "Work Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --serif: "Ubuntu", "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --sans: "Open Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --etiq: "Raleway", "Open Sans", system-ui, sans-serif;
   --rayon: 18px; --rayon-s: 13px;
   --ombre: 0 1px 2px rgba(29, 20, 24, .05), 0 10px 28px -18px rgba(29, 20, 24, .3);
   --ombre-haute: 0 2px 6px rgba(29, 20, 24, .08), 0 24px 48px -24px rgba(29, 20, 24, .5);
   --gout: 16px; --barre-bas: 64px; --rail: 236px; --haut: 56px;
   --hs: env(safe-area-inset-top, 0px); --bs: env(safe-area-inset-bottom, 0px); --gs: env(safe-area-inset-left, 0px); --ds: env(safe-area-inset-right, 0px);
-  /* les tentacules (../admin/tentacules.js) : à l'encre, empreintes et confirmations au magenta */
+  /* les tentacules (../admin/tentacules.js) : à l'encre, empreintes et confirmations à la couleur de la saison */
   --tt-encre: var(--encre); --tt-accent: var(--magenta); --tt-neutre: var(--gris); --tt-fond: var(--surface); --tt-epaisseur: 2.2;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --papier: #141016; --surface: #1f1921; --surface-2: #2a222d; --surface-3: #3a3040; --encre: #f4eef2; --gris: #b9aeb6;
-    --filet: #3a3140; --bord-champ: #8a7f8c;
-    --magenta: #f08cc0; --magenta-fonce: #f7aed3; --magenta-doux: #3a1f30; --magenta-vif: #e05a9f; --action: #f08cc0; --sur-action: #1a1014;
-    --option: #f0c66b; --option-doux: #3a2f17; --alerte: #ff8f86; --alerte-doux: #3d1f1d; --ok: #74d6a6; --ok-doux: #19352a;
-    --sco: #8db8f0; --sco-doux: #1c2a3d;
-    --ombre: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 30px -18px rgba(0, 0, 0, .7);
-    --ombre-haute: 0 2px 6px rgba(0, 0, 0, .35), 0 24px 48px -24px rgba(0, 0, 0, .85);
-  }
+/* la nuit, par défaut (data-theme="nuit", ou rien) ; le jour seulement sous data-theme="jour". Ce qui suivait le mode
+   sombre de l'appareil se lit sous :where(:root:not([data-theme="jour"])), qui ne change rien à la priorité des règles */
+:root:not([data-theme="jour"]) {
+  color-scheme: dark;
+  --papier: #1b1117; --surface: #2e2128; --surface-2: #23171e; --surface-3: #3b3036; --encre: #f3eee9; --gris: #b7b0ae;
+  --filet: #3b3036; --bord-champ: #8a8085;
+  --magenta: var(--saison-texte-nuit); --magenta-fonce: var(--saison-fonce-nuit); --magenta-doux: var(--saison-doux-nuit); --magenta-vif: var(--saison-texte-nuit);
+  --action: var(--saison-texte-nuit); --sur-action: #1b1117; --pieuvre: var(--saison-texte-nuit);
+  --option: #f0c66b; --option-doux: #3a2f17; --alerte: #ff8f86; --alerte-doux: #3d1f1d; --ok: #74d6a6; --ok-doux: #19352a;
+  --sco: #8db8f0; --sco-doux: #1c2a3d;
+  --ombre: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 30px -18px rgba(0, 0, 0, .7);
+  --ombre-haute: 0 2px 6px rgba(0, 0, 0, .35), 0 24px 48px -24px rgba(0, 0, 0, .85);
 }
+:root[data-theme="jour"] { color-scheme: light; }
 [data-u] { --u-fond: var(--ul-fond); --u-texte: var(--ul-texte); }
-@media (prefers-color-scheme: dark) { [data-u] { --u-fond: var(--us-fond); --u-texte: var(--us-texte); } }
+:where(:root:not([data-theme="jour"])) [data-u] { --u-fond: var(--us-fond); --u-texte: var(--us-texte); }
 /* ?anim=0 (captures et essais) : rien ne bouge, ni ce que le script déclenche ni ce que la feuille de style anime */
 html.still *, html.still *::before, html.still *::after { animation: none !important; transition: none !important; }
 
@@ -77,10 +87,19 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 .evitement { position: absolute; left: 8px; top: -80px; z-index: 90; padding: 10px 14px; border-radius: 10px; background: var(--encre); color: var(--papier); font-weight: 600; }
 .evitement:focus { top: calc(8px + var(--hs)); color: var(--papier); }
 .ic { width: 20px; height: 20px; flex: none; }
-/* la pieuvre : à la couleur du thème du site (--pieuvre, que maquettes/build.py pose : règle 22 du contrat), sinon au magenta */
-.pieuvre { display: inline-block; flex: none; width: 40px; height: 23px; color: var(--pieuvre, var(--magenta-vif)); }
+/* la pieuvre : à la couleur de la saison (--pieuvre : la couleur sur le papier, sa version lisible la nuit ; règle 22) */
+.pieuvre { display: inline-block; flex: none; width: 40px; height: 23px; color: var(--pieuvre); }
 .pieuvre:empty { display: none; }
 .pieuvre svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+/* le pied commun des espaces réservés (PIED, dans equipe.js) : sobre, en fin de contenu, jamais fixé */
+.pied-espace { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; max-width: 760px; margin: 32px auto 0; padding: 18px max(var(--gout), var(--ds)) 8px max(var(--gout), var(--gs)); border-top: 1px solid var(--filet); color: var(--gris); font-size: .84rem; }
+.pied-espace .pied-nom { margin: 0; font: 500 .95rem/1.3 var(--serif); color: var(--encre); }
+.pied-espace nav { display: flex; flex-wrap: wrap; gap: 2px 16px; }
+.pied-espace a { display: inline-block; padding: 6px 0; color: var(--gris); }
+.pied-espace a:hover { color: var(--magenta); }
+.seul + .pied-espace { margin-top: 0; padding-bottom: calc(18px + var(--bs)); justify-content: center; border-top: 0; text-align: center; }
+.seul + .pied-espace nav { justify-content: center; }
 
 /* ———————————————— la coquille : la navigation (en bas au téléphone, à gauche à l'ordinateur), la barre du haut, le contenu */
 .colonne { min-height: 100dvh; padding-bottom: calc(var(--barre-bas) + var(--bs) + 28px); }
@@ -89,8 +108,11 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 .barre-haut.defile, .barre-haut.sous { border-bottom-color: var(--filet); }
 .marque-mini { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; color: var(--encre); text-decoration: none; }
 .marque-mini:hover { color: var(--encre); }
-.marque-nom { font: 600 1.2rem/1 var(--serif); }
-.marque-mini small, .porte-marque small, .nav-marque small { font: 700 .66rem/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--magenta); }
+.marque-nom { font: 500 1.2rem/1 var(--serif); }
+/* la marque : la pieuvre, « Compagnie Crescite » et, dessous, le nom de l'espace (comme les trois autres espaces) */
+.marque-texte { display: grid; gap: 4px; min-width: 0; }
+.marque-mini .marque-nom { font-size: 1.04rem; white-space: nowrap; }
+.marque-mini small, .porte-marque small, .nav-marque small { font: 700 .66rem/1 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--magenta); }
 .barre-titre { flex: 1; min-width: 0; margin: 0 4px; font: 600 1.04rem/1.2 var(--sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transform: translateY(6px); transition: opacity .2s, transform .2s; }
 .barre-haut.defile .barre-titre, .barre-haut.sous .barre-titre { opacity: 1; transform: none; }
 .barre-haut.sous .marque-mini { display: none; }
@@ -116,7 +138,7 @@ h1, h2, h3, h4 { margin: 0; line-height: 1.2; }
 .nav-lib-long { display: none; }
 .nav-avatar { display: grid; place-items: center; }
 .pastille-nb { position: absolute; top: -4px; left: calc(50% + 5px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--alerte); color: #fff; font: 700 .68rem/18px var(--sans); text-align: center; box-shadow: 0 0 0 2px var(--surface); }
-@media (prefers-color-scheme: dark) { .pastille-nb { color: #1a1014; } }
+:where(:root:not([data-theme="jour"])) .pastille-nb { color: #1b1117; }
 .pastille-nb[data-n="0"] { display: none; }
 @media (prefers-reduced-motion: no-preference) { .pastille-nb.nouvelle { animation: pastille .55s cubic-bezier(.3, 1.7, .5, 1); } @keyframes pastille { from { transform: scale(.2); } } }
 
@@ -150,7 +172,7 @@ main.large { max-width: 1180px; }
 .titre-vue { margin: 6px 0 18px; }
 .titre-vue h1 { font: 600 clamp(1.8rem, 7.4vw, 2.4rem)/1.08 var(--serif); letter-spacing: -.01em; }
 .titre-vue .sous { margin: 6px 0 0; color: var(--gris); }
-.titre-section { display: flex; align-items: center; gap: 10px; margin: 24px 0 12px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.titre-section { display: flex; align-items: center; gap: 10px; margin: 24px 0 12px; font: 700 .76rem/1.2 var(--etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
 .titre-section::after { content: ""; flex: 1; height: 1px; background: var(--filet); }
 .mois { position: sticky; top: calc(var(--haut) + var(--hs)); z-index: 2; margin: 14px 0 8px; padding: 6px 4px; font: 700 .92rem/1.2 var(--sans); color: var(--encre); text-transform: capitalize;
   background: color-mix(in srgb, var(--papier) 86%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }   /* le mois reste en haut pendant qu'on fait défiler ses dates */
@@ -227,7 +249,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .heros.avec-photo .heros-corps { padding-top: 142px; }
 .heros-haut { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
 .heros.avec-photo .heros-haut { position: absolute; top: 14px; left: 16px; right: 16px; }
-.etiquette-verre { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--h-fond) 84%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--h-texte); font: 700 .72rem/1 var(--sans); letter-spacing: .12em; text-transform: uppercase; }
+.etiquette-verre { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--h-fond) 84%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--h-texte); font: 700 .72rem/1 var(--etiq); letter-spacing: .12em; text-transform: uppercase; }
 .etiquette-verre.etat-option::before, .etiquette-verre.etat-annulee::before, .etiquette-verre.etat-reportee::before, .etiquette-verre.modifiee::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--h-accent); }
 .heros-titre { margin: 0; font-family: var(--h-police, var(--serif)); font-weight: var(--h-graisse, 600); font-size: clamp(2.1rem, 9.6vw, 3.1rem); line-height: 1.02; letter-spacing: -.01em; color: var(--h-texte); text-wrap: balance; }
 .heros .lien-etendu { color: inherit; text-decoration: none; }
@@ -266,7 +288,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 
 /* ———————————————— le jour J : le planning du jour, en frise */
 .jourj { padding: 16px 18px 6px; border-radius: var(--rayon); background: var(--surface); border: 1px solid var(--filet); box-shadow: var(--ombre); }
-.jourj h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 700 .78rem/1.3 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--u-texte, var(--magenta)); }
+.jourj h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 700 .78rem/1.3 var(--etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--u-texte, var(--magenta)); }
 .jourj .liens { margin: 2px 0 12px; }
 .frise { position: relative; list-style: none; margin: 0 0 6px; padding: 0; }
 .frise::before { content: ""; position: absolute; left: 66px; top: 8px; bottom: 8px; width: 2px; border-radius: 2px; background: var(--filet); }
@@ -283,7 +305,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .frise li.maintenant::before { background: var(--u, var(--magenta)); border-color: var(--u, var(--magenta)); box-shadow: 0 0 0 5px color-mix(in srgb, var(--u, var(--magenta)) 22%, transparent); }
 .frise li.maintenant .t::after { content: " · en ce moment"; color: var(--u-texte, var(--magenta)); font-weight: 700; }
 @media (prefers-reduced-motion: no-preference) { .frise li.maintenant::before { animation: battement 1.8s ease-in-out infinite; } @keyframes battement { 50% { box-shadow: 0 0 0 9px transparent; } } }
-.jour-frise { margin: 14px 0 6px 80px; font: 700 .78rem/1.2 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
+.jour-frise { margin: 14px 0 6px 80px; font: 700 .78rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
 .bloc > .jour-frise:first-of-type { margin-top: 0; }
 
 /* ———————————————— la saison en chiffres, la carte de la tournée */
@@ -380,7 +402,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .billet-pied::before { left: -11px; clip-path: inset(0 0 0 50%); }
 .billet-pied::after { right: -11px; clip-path: inset(0 50% 0 0); }
 .f-court { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.f-lib { font: 700 .72rem/1.3 var(--sans); letter-spacing: .11em; text-transform: uppercase; color: var(--gris); }
+.f-lib { font: 700 .72rem/1.3 var(--etiq); letter-spacing: .11em; text-transform: uppercase; color: var(--gris); }
 .f-version { color: var(--gris); font-size: .9rem; }
 .mini-equipe { display: inline-flex; align-items: center; margin-left: auto; padding-left: 8px; }
 .mini-equipe .avatar { margin-left: -5px; box-shadow: 0 0 0 2px var(--surface); }
@@ -414,7 +436,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .geste:active { transform: scale(.96); }
 .geste .ic { width: 24px; height: 24px; color: var(--u-texte, var(--magenta)); }
 .bloc { margin: 12px 0 0; padding: 16px 18px; border-radius: var(--rayon); background: var(--surface); border: 1px solid var(--filet); }
-.bloc > h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 700 .78rem/1.2 var(--sans); letter-spacing: .11em; text-transform: uppercase; color: var(--gris); }
+.bloc > h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font: 700 .78rem/1.2 var(--etiq); letter-spacing: .11em; text-transform: uppercase; color: var(--gris); }
 .bloc > h2 .ic { width: 18px; height: 18px; color: var(--u-texte, var(--magenta)); }
 .bloc .horaires { margin-top: 0; }
 .bloc .liens { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 12px 0 0; }
@@ -466,7 +488,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .feuille-tete { position: relative; overflow: hidden; margin: 6px 0 18px; padding: 16px 18px 16px 24px; background: var(--surface); border: 1px solid var(--filet); border-radius: var(--rayon); }
 .feuille-tete::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--u, var(--magenta)); }
 .feuille-tete h1 { font: 600 clamp(1.5rem, 5.6vw, 1.95rem)/1.15 var(--serif); }
-.feuille-tete .sur { margin: 0 0 4px; font: 700 .74rem/1.3 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--u-texte, var(--magenta)); }
+.feuille-tete .sur { margin: 0 0 4px; font: 700 .74rem/1.3 var(--etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--u-texte, var(--magenta)); }
 .feuille-tete p { margin: 6px 0 0; }
 .feuille-cadre { min-width: 0; }
 
@@ -482,7 +504,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .doc:active { transform: scale(.985); }
 .doc .ic { width: 24px; height: 24px; color: var(--u-texte, var(--magenta)); }
 .doc-texte { display: grid; gap: 1px; min-width: 0; }
-.doc-type { font: 700 .72rem/1.3 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
+.doc-type { font: 700 .72rem/1.3 var(--etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--gris); }
 .doc-titre { font-weight: 600; line-height: 1.3; }
 .doc-src { color: var(--gris); font-size: .86rem; white-space: nowrap; }
 .doc-partager { flex: none; align-self: center; }
@@ -498,7 +520,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 
 /* ———————————————— les notifications */
 .titre-notifs { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px; }
-.notifs-jour { position: sticky; top: calc(var(--haut) + var(--hs)); z-index: 2; margin: 14px 0 8px; padding: 6px 4px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--gris);
+.notifs-jour { position: sticky; top: calc(var(--haut) + var(--hs)); z-index: 2; margin: 14px 0 8px; padding: 6px 4px; font: 700 .76rem/1.2 var(--etiq); letter-spacing: .1em; text-transform: uppercase; color: var(--gris);
   background: color-mix(in srgb, var(--papier) 86%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .notifs-groupe:first-of-type .notifs-jour { margin-top: 4px; }
 .liste-notifs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
@@ -564,7 +586,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .seul { max-width: 460px; margin: 0 auto; padding: calc(max(28px, 6vh) + var(--hs)) max(var(--gout), var(--ds)) 40px max(var(--gout), var(--gs)); }
 .porte-marque { display: flex; align-items: center; gap: 10px; margin: 0 0 26px; }
 .porte-marque .pieuvre { width: 58px; height: 32px; }
-.porte-marque .marque-nom { font-size: 1.6rem; }
+.porte-marque .marque-nom { font-size: 1.5rem; }
 .porte h1 { font: 600 clamp(1.75rem, 7vw, 2.2rem)/1.12 var(--serif); margin: 0 0 10px; }
 .porte .intro { margin: 0 0 24px; color: var(--gris); font-size: 1.04rem; }
 .ou { display: flex; align-items: center; gap: 12px; margin: 22px 0; color: var(--gris); font-size: .9rem; }
@@ -723,7 +745,7 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .ds-quand { font-weight: 650; }
 .ds-ou { flex: 1 1 8rem; min-width: 0; color: var(--gris); }
 .ds-ligne > .chevron { margin-left: auto; color: var(--gris); }
-.genre-docs { margin: 18px 0 6px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.genre-docs { margin: 18px 0 6px; font: 700 .76rem/1.2 var(--etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
 .bloc.fichiers h2 + .genre-docs, .bloc.fichiers .message + .genre-docs { margin-top: 6px; }
 .groupe-docs.compagnie { margin-top: 18px; }
 /* la cloche des notifications : en haut au téléphone (la barre du bas garde cinq onglets), dans la colonne à l'ordinateur */
@@ -736,9 +758,16 @@ input, textarea, select { transition: border-color .15s, box-shadow .15s; }
 .modale-corps { line-height: 1.5; }
 .modale-corps p { margin: 0 0 10px; }
 @media (min-width: 760px) { .installer-barre { display: none; } }
-/* au téléphone le plus étroit (360 px), la marque, « Installer », la cloche et l'actualisation ne tiennent pas ensemble :
-   tant que « Installer » est là, la marque garde sa pieuvre et son nom, et « équipe » s'efface (la page ne déborde pas) */
-@media (max-width: 400px) { .barre-haut:has(.installer-barre:not([hidden])) .marque-mini small { display: none; } }
+/* au téléphone (jusqu'à 430 px), la marque, « Installer », la cloche et l'actualisation tiennent juste ensemble : tant que
+   « Installer » est là, la marque se resserre (son nom plus petit, « Équipe » dessous) ; au plus étroit (360 px), le nom
+   seul sous la pieuvre (la page ne déborde pas) */
+@media (max-width: 430px) {
+  .barre-haut:has(.installer-barre:not([hidden])) .marque-mini { gap: 6px; padding: 0 4px; min-width: 0; }
+  .barre-haut:has(.installer-barre:not([hidden])) .marque-mini .pieuvre { width: 32px; height: 19px; }
+  .barre-haut:has(.installer-barre:not([hidden])) .marque-mini .marque-nom { font-size: .86rem; }
+  .barre-haut:has(.installer-barre:not([hidden])) .installer-barre { padding: 0 10px 0 8px; margin-right: 0; }
+}
+@media (max-width: 374px) { .barre-haut:has(.installer-barre:not([hidden])) .marque-mini small { display: none; } }
 .cloche { position: relative; }
 .cloche .pastille-nb { top: -2px; left: auto; right: -4px; }
 .cloche[aria-current] { background: var(--magenta-doux); color: var(--magenta); }
@@ -794,7 +823,7 @@ html.modale-ouverte { overflow: hidden; }
 .form-modale > .intro { margin: 0 0 16px; color: var(--gris); }
 .form-modale > .intro b { color: var(--encre); }
 .form-modale section + section { margin-top: 18px; }
-.form-modale h3 { margin: 0 0 10px; font: 700 .76rem/1.2 var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
+.form-modale h3 { margin: 0 0 10px; font: 700 .76rem/1.2 var(--etiq); letter-spacing: .12em; text-transform: uppercase; color: var(--gris); }
 .form-modale .aide + .aide { margin-top: 6px; }
 .seance-modif { min-width: 0; margin: 0 0 12px; padding: 10px 12px 0; border: 1px solid var(--filet); border-radius: var(--rayon-s); background: var(--papier); }
 .seance-modif legend { padding: 0 6px; margin-left: -6px; font-weight: 700; }
@@ -859,7 +888,7 @@ html.modale-ouverte { overflow: hidden; }
 .frais-ligne { display: grid; grid-template-columns: auto 1fr auto; gap: 10px 14px; align-items: center; padding: 12px 14px; border: 1px solid var(--filet); border-radius: var(--rayon-s); background: var(--surface); margin-bottom: 8px; }
 .frais-ligne .montant { font: 800 1.15rem/1.1 var(--sans); text-align: right; white-space: nowrap; }
 @media (max-width: 480px) { .frais-ligne { grid-template-columns: 1fr auto; } .frais-ligne .badge-statut { grid-column: 1 / -1; justify-self: start; } }
-.badge-statut { display: inline-block; padding: 2px 8px; border-radius: 999px; font: 700 0.72rem/1.5 var(--sans); text-transform: uppercase; letter-spacing: 0.05em; }
+.badge-statut { display: inline-block; padding: 2px 8px; border-radius: 999px; font: 700 0.72rem/1.5 var(--etiq); text-transform: uppercase; letter-spacing: 0.05em; }
 .badge-statut.en_attente { background: var(--option-doux); color: var(--option); }
 .badge-statut.valide { background: var(--sco-doux); color: var(--sco); }
 .badge-statut.rembourse { background: var(--ok-doux); color: var(--ok); }
@@ -891,12 +920,12 @@ html.modale-ouverte { overflow: hidden; }
 /* ———————————————— le mouvement de l'espace de l'équipe : dix effets (equipe.js les déclenche), et leur suite. Rien de
    tout cela si l'appareil demande moins d'animations, ni avec ?anim=0. Tout ce qui bouge en continu ne touche que
    transform et opacity. */
-/* 5. l'application à la couleur du spectacle : --accent et --accent-doux, le magenta d'ordinaire ; sur la page d'une date,
+/* 5. l'application à la couleur du spectacle : --accent et --accent-doux, la couleur de la saison d'ordinaire ; sur la page d'une date,
    d'une feuille de route ou d'un spectacle, la teinte de son univers (teinter, dans equipe.js : --teinte, --teinte-douce et
    leur jeu de nuit). Le curseur des onglets, le retour et la marque la prennent, en trois dixièmes de seconde. */
 .appli { --accent: var(--magenta); --accent-doux: var(--magenta-doux); }
 .appli[data-teinte] { --accent: var(--teinte, var(--magenta)); --accent-doux: var(--teinte-douce, var(--magenta-doux)); }
-@media (prefers-color-scheme: dark) { .appli[data-teinte] { --accent: var(--teinte-s, var(--magenta)); --accent-doux: var(--teinte-douce-s, var(--magenta-doux)); } }
+:where(:root:not([data-theme="jour"])) .appli[data-teinte] { --accent: var(--teinte-s, var(--magenta)); --accent-doux: var(--teinte-douce-s, var(--magenta-doux)); }
 .nav-icone { transition: color .3s, background-color .3s; }
 .barre-haut .retour { color: var(--accent); transition: color .3s, transform .15s, background-color .3s; }
 .barre-haut .retour:hover { background: var(--accent-doux); }
@@ -1054,7 +1083,7 @@ main.glisse-fin { transition: transform .18s ease-out, opacity .18s ease-out; }
 <div id="annonces" aria-live="polite"></div>
 <noscript><p class="chargement">Cette page a besoin de JavaScript pour se connecter à la base de la compagnie.</p></noscript>
 <!-- le client de la base, l'outil des lignes d'agenda, les feuilles de route et les tentacules : ceux de l'administration ;
-     carte.js (la France et Rouen, pour la carte de la tournée) est écrit par maquettes/build.py -->
+     carte.js (la France et Rouen, pour la carte de la tournée) est écrit par site/build.py -->
 <script src="../admin/vendor/supabase.js" defer></script>
 <script src="../admin/agenda.js" defer></script>
 <script src="../admin/feuille.js" defer></script>
