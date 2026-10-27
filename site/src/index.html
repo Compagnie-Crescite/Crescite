@@ -3445,7 +3445,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       clearTimeout(tFin);
       etat = { t0: performance.now(), leve: false, vers: null };
       suite = apres || null;
-      if (b) { b.demarrer(); b.placeSale = true; b.reveil(); }
+      // (la pieuvre naît à l'image d'après : la première, celle du geste, n'a que la page neuve et le noir à peindre)
+      if (b) { const e = etat; requestAnimationFrame(() => setTimeout(() => { if (etat !== e) return; b.demarrer(); b.placeSale = true; b.reveil(); }, 0)); }
       gestes.forEach(t => addEventListener(t, geste, { capture: true, passive: true }));
       tFin = setTimeout(() => lever(false), NOIR);
       return true;
