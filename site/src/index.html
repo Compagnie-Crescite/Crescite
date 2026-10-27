@@ -373,6 +373,11 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
 .scene { position: relative; isolation: isolate; overflow: hidden; overflow: clip; min-height: 100svh; contain: size layout style; color: #fff; user-select: none; -webkit-user-select: none;
   background: radial-gradient(78% 88% at 50% 40%, var(--sc-a) 0%, var(--sc-b) 58%, var(--sc-c) 100%); }
 .scene.sur-bras { cursor: pointer; }
+/* (le jeu : la tentacule qu'on tire ; la lampe qui suit le pointeur, derrière la pieuvre, sur la photo : un calque déplacé sans
+   être repeint, absent tant qu'elle est éteinte) */
+.scene.tire, .scene.tire * { cursor: grabbing !important; }
+.sc-lampe { position: absolute; left: 0; top: 0; z-index: -1; display: none; pointer-events: none; border-radius: 50%; will-change: transform, opacity; mix-blend-mode: screen;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--lampe) 55%, transparent), color-mix(in srgb, var(--lampe) 22%, transparent) 50%, transparent); }
 .sc-diapo { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 .sc-cadre { position: sticky; top: 0; height: 100svh; max-height: 100%; overflow: hidden; }
 .sc-image { position: absolute; inset: 0; opacity: 0; transition: opacity 1.4s var(--k-doux); }
@@ -4628,7 +4633,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const faireScene = () => {
     const el = document.createElement('section');
     el.className = 'scene'; el.id = 'scene'; el.setAttribute('aria-labelledby', 'scene-h');
-    el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><canvas class="sc-toile" aria-hidden="true"></canvas>
+    el.innerHTML = `<div class="sc-diapo" aria-hidden="true"><div class="sc-cadre"></div></div><div class="sc-lampe" aria-hidden="true"></div><canvas class="sc-toile" aria-hidden="true"></canvas>
       <h1 class="sc-h" id="scene-h" tabindex="-1" data-edit="site.nom"></h1>
       <button type="button" class="sc-pause" aria-pressed="false"><svg class="i-p" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z"/></svg><svg class="i-l" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.5 2.2l9.2 5.8-9.2 5.8z"/></svg></button>
       <ul class="sc-titres"></ul>`;
@@ -4656,6 +4661,13 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     let secousse = 0, remonte = null;   // l'instant où une tentacule a été remontée (le corps sursaute), et le spectacle remonté
     let relaye = false;                  // (l'éveil a pris le relais de l'ouverture : la pieuvre est déjà posée, en mouvement, sans rebond)
     let theta = 0, dxT = 0, dyT = 0;     // la tête vivante : son angle, son déplacement (unités du dessin)
+    // le jeu, comme à l'ouverture (INTRO) : elle regarde le pointeur (la tête se tourne un peu vers lui, en plus de sa vie) ; il
+    // fonce sur elle : elle sursaute (le corps se ramasse, la tête recule, ses tentacules s'agitent), puis se rassure ; une
+    // lampe la suit, derrière elle. On attrape une tentacule tendue et on la tire : elle s'étire jusqu'au pointeur, de plus en
+    // plus dur, puis revient tenir son titre d'un ressort (au doigt, après un appui tenu : sinon c'est la page qui défile)
+    const JEU = { v: 0, tP: 0, rT: 0, vR: 0, rx: 0, ry: 0, peur: null, tPeur: -1e9, tire: null, avale: 0, lampe: { x: 0, y: 0, a: 0, vue: false, dit: '', R: 0 } };
+    const lampeEl = $('.sc-lampe', el);
+    lampeEl.style.setProperty('--lampe', themeSaison().v);   // (la couleur vive de la saison)
     // la secousse d'un rebond : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant (comme la créature)
     const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? easeOut(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
     // les titres : un par spectacle, en nombre libre ; refaits quand D change
@@ -4965,6 +4977,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       theta = vT * (Math.sin(tVie * .7) * 2.2 + Math.sin(tVie * 1.9) * .8) * Math.PI / 180;
       dxT = vT * (Math.sin(tVie * .9) * 12 + Math.sin(tVie * 2.1) * 4);
       dyT = vT * (-8 * (.5 + .5 * Math.sin(tVie * 1.15)) + Math.sin(tVie * .5) * 3);
+      // (le jeu : le regard et le sursaut s'ajoutent à sa vie ; le sursaut agite ses tentacules)
+      const pe = vivant && eveil !== null ? jouer(now, dtI) : 0;
+      theta += JEU.rT; dxT += JEU.rx; dyT += JEU.ry;
+      const ondeJ = onde + 2.2 * pe;
       // (la pieuvre ouverte : un de ses bras tient un titre, ou fait un geste ; ses tentacules décoratives se déploient alors)
       const ouverte = eveil !== null && BRAS.some(b => !b.t.decor && (b.but || b.geste));
       for (const a of BRAS) {
@@ -4973,6 +4989,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         // ensuite chaque bras garde le titre qu'il tient, sauf celui qu'on a remonté)
         if (pres) { const v = visite(a); if (v) { if (v.T) voulu = v.T; else g = v.c; } }
         else if (eveil !== null && a.tenu) voulu = a.tenu;
+        // (la tentacule qu'on tire : elle vise le pointeur, de plus en plus dur ; lâchée, elle revient à son titre d'un ressort)
+        const J = JEU.tire;
+        if (J && J.actif && J.a === a && voulu && anime) { tirer(a, voulu, J); a.t.avancer(dtI, { temps: tVie, onde: ondeJ, bob, tourne: a.t.suivreTete(ox, oy, s, theta, dxT, dyT) }); a.em = a.t.mouvement(); occupe = true; continue; }
+        if (J && J.lache && J.a === a) { J.lache = false; JEU.tire = null; if (voulu) { a.but = voulu; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, 950, true); } }
         // (une décorative : déployée avec la pieuvre, suspendue sous la tête, sa cible emportée par la tête ; repliée avec elle)
         if (a.t.decor) g = ouverte ? (a.deco = PIEUVRE.decor(a.t, ox + bob.x, oy + bob.y, s, theta, dxT, dyT, a.deco)) : null;
         // (on tire un peu sur le bras du titre regardé : sa pointe se déroule)
@@ -4994,7 +5014,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         }
         a.penche += (pv - a.penche) * .08;
         const tT = a.t.suivreTete(ox, oy, s, theta, dxT, dyT);
-        if (a.t.avancer(dtI, { temps: tVie, onde, penche: a.penche, bob, tourne: tT })) occupe = true;
+        if (a.t.avancer(dtI, { temps: tVie, onde: ondeJ, penche: a.penche, bob, tourne: tT })) occupe = true;
         a.em = a.t.mouvement();
       }
       // la région à repeindre : les bras et le logo de cette image, et ceux de la précédente (en px de la toile)
@@ -5042,12 +5062,94 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         }
       }
       for (const T of TIT) placer(T, allumes.has(T), now, anime);
+      if (eclairer(vivant)) occupe = true;
       if (!une) dessinee = true;
       if (pres || tenue || (eveil !== null && now - eveil < 2600)) occupe = true;
       if (!une && occupe) raf = requestAnimationFrame(image);
       else if (une && occupe) reveil();
     }
     const reveil = () => { if (!raf && affiche && visible && !document.hidden) raf = requestAnimationFrame(image); };
+
+    /* ---------- le jeu (voir JEU) ---------- */
+    // le regard et le sursaut, une image : la tête (JEU.rT, rx, ry, ajoutés à theta, dxT, dyT) ; rend l'ampleur du sursaut
+    function jouer(now, dt) {
+      const dts = dt / 1000, cx = ox + bob.x + COEUR[0] * s, cy = oy + bob.y + COEUR[1] * s, L = 1042 * s, p = JEU.tire && JEU.tire.actif ? null : pointeur;
+      JEU.v *= Math.pow(.86, dt / 16);
+      if (p && JEU.v > 1.5 && now - JEU.tPeur > 1100 && Math.hypot(p.x - cx, p.y - cy) < L * .7) {
+        const d = Math.hypot(cx - p.x, cy - p.y) || 1;
+        JEU.peur = { t0: now, ux: (cx - p.x) / d, uy: (cy - p.y) / d }; JEU.tPeur = now; secousse = now;
+      }
+      let pe = 0;
+      if (JEU.peur) { const u = (now - JEU.peur.t0) / 1000; if (u >= 1) JEU.peur = null; else pe = u < .08 ? u / .08 : Math.pow(1 - (u - .08) / .92, 2); }
+      const nx = p ? clamp((p.x - cx) / (W * .38), -1, 1) : 0, ny = p ? clamp((p.y - cy) / (H * .38), -1, 1) : 0, ux = JEU.peur ? JEU.peur.ux : 0, uy = JEU.peur ? JEU.peur.uy : 0;
+      const tV = (nx * 4 - ux * 6 * pe) * Math.PI / 180, xV = nx * 12 + ux * 26 * pe, yV = ny * 8 + uy * 16 * pe - 10 * pe;
+      JEU.vR += (40 * (tV - JEU.rT) - 5 * JEU.vR) * dts; JEU.rT += JEU.vR * dts;
+      JEU.rx += (xV - JEU.rx) * Math.min(1, dt / 90); JEU.ry += (yV - JEU.ry) * Math.min(1, dt / 90);
+      return pe;
+    }
+    // la tentacule qu'on tire : elle quitte son titre pour le pointeur, là où on l'a prise, puis le suit, de plus en plus dur
+    // (un élastique : loin, elle ne suit plus qu'à peine)
+    function tirer(a, T, J) {
+      const R = Math.max(120, Math.min(320, W * .22)), dx = J.x - J.x0, dy = J.y - J.y0, d = Math.hypot(dx, dy), k = d ? R * (1 - Math.exp(-d / R)) / d : 0;
+      a.t.viser({ ...cibleDe(T), cle: 'tire:' + T.slug, x: J.x0 + dx * k, y: J.y0 + dy * k, U: 10, rail: undefined, marge: undefined, loin: 0, boucle: .45, tension: .8 }, 260);
+    }
+    // la lampe : elle suit le pointeur avec un peu de retard, s'allume quand il est là, s'éteint quand il s'en va ; rend vrai
+    // tant qu'elle bouge (il faut une autre image)
+    function eclairer(vivant) {
+      const A = JEU.lampe, p = vivant ? pointeur : null, R = Math.round(Math.max(W, Math.min(H, innerHeight)) * .36);
+      if (p) { if (!A.vue) { A.x = p.x; A.y = p.y; A.vue = true; } A.x += (p.x - A.x) * .14; A.y += (p.y - A.y) * .14; }
+      A.a += ((p ? 1 : 0) - A.a) * (p ? .06 : .03);
+      if (A.R !== R) { A.R = R; lampeEl.style.width = lampeEl.style.height = `${2 * R}px`; }
+      const etat = A.a < .003 ? '0' : `translate3d(${(A.x - R).toFixed(1)}px, ${(A.y - R).toFixed(1)}px, 0)|${A.a.toFixed(3)}`;
+      if (etat === A.dit) return false;
+      A.dit = etat;
+      // (éteinte, elle n'est plus là du tout : un calque en mode écran coûte, même transparent)
+      if (etat === '0') { lampeEl.style.display = ''; return false; }
+      const [tr, op] = etat.split('|');
+      lampeEl.style.transform = tr; lampeEl.style.opacity = op; lampeEl.style.display = 'block';
+      return true;
+    }
+    // attraper une tentacule tendue : à la souris (au stylet), dès qu'on bouge en appuyant ; au doigt, après un appui tenu
+    // (320 ms sans bouger) : un doigt qui glisse tout de suite fait défiler la page, comme avant
+    el.addEventListener('pointerdown', e => {
+      if (!e.isPrimary || e.button > 0 || e.target.closest('a, button') || eveil === null || !motionOK() || pause) return;
+      const r = el.getBoundingClientRect(), p = { x: e.clientX - r.left, y: e.clientY - r.top }, a = brasSous(p, mobile ? 30 : 16, true);
+      if (!a || !a.tenu || a.but !== a.tenu) return;
+      const J = JEU.tire = { a, id: e.pointerId, genre: e.pointerType, x0: p.x, y0: p.y, x: p.x, y: p.y, actif: false, lache: false, minuteur: 0 };
+      if (e.pointerType === 'touch') J.minuteur = setTimeout(() => { if (JEU.tire === J && !J.actif) prendre(J); }, 320);
+    });
+    function prendre(J) {
+      J.actif = true; el.classList.add('tire');
+      try { el.setPointerCapture(J.id); } catch (err) { /* (sans capture : le geste continue sur la scène) */ }
+      if (J.genre === 'touch' && navigator.vibrate) { try { navigator.vibrate(8); } catch (err) { /* (refusé : rien) */ } }
+      reveil();
+    }
+    el.addEventListener('pointermove', e => {
+      const J = JEU.tire;
+      if (e.pointerType === 'mouse') {   // (la vitesse de la souris : le sursaut)
+        const now = e.timeStamp, r = el.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        if (JEU.tP && JEU.px != null) JEU.v = Math.max(JEU.v * .5, Math.hypot(x - JEU.px, y - JEU.py) / Math.max(4, now - JEU.tP));
+        JEU.px = x; JEU.py = y; JEU.tP = now;
+      }
+      if (!J || e.pointerId !== J.id) return;
+      const r = el.getBoundingClientRect(); J.x = e.clientX - r.left; J.y = e.clientY - r.top;
+      const loin = Math.hypot(J.x - J.x0, J.y - J.y0);
+      if (!J.actif) { if (J.genre === 'touch') { if (loin > 8) { clearTimeout(J.minuteur); JEU.tire = null; } } else if (loin > 6) prendre(J); }
+      else reveil();
+    }, { passive: true });
+    // (tenue au doigt, la tentacule prend le geste : la page ne défile pas)
+    el.addEventListener('touchmove', e => { if (JEU.tire && JEU.tire.actif && e.cancelable) e.preventDefault(); }, { passive: false });
+    const lacher = e => {
+      const J = JEU.tire;
+      if (!J || e.pointerId !== J.id) return;
+      clearTimeout(J.minuteur);
+      if (!J.actif) { JEU.tire = null; return; }
+      J.actif = false; J.lache = true; el.classList.remove('tire');
+      JEU.avale = performance.now();   // (le clic qui suit ne remonte pas la tentacule)
+      reveil();
+    };
+    el.addEventListener('pointerup', lacher);
+    el.addEventListener('pointercancel', lacher);
 
     /* ---------- regarder un titre, survoler un bras ---------- */
     // la tentacule sous la souris, à 14 px près (telle qu'elle est, ou à sa place dans le logo), si elle mène à un titre ; sous
@@ -5086,6 +5188,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // un clic (un toucher) sur une tentacule tendue remonte son spectacle
     el.addEventListener('click', e => {
       if (e.target.closest('a, button')) return;
+      if (performance.now() - JEU.avale < 500) { JEU.avale = 0; return; }
       const r = el.getBoundingClientRect(), a = brasSous({ x: e.clientX - r.left, y: e.clientY - r.top }, mobile ? 30 : 16, true);
       if (a && a.tenu) { e.preventDefault(); remonter(a.tenu); }
     });
