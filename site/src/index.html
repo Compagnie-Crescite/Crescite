@@ -6110,6 +6110,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const suivre = e => { const a = e.target.closest && e.target.closest('.tdm-a'); if (a) choisir(+a.dataset.i); };
     liste.addEventListener('mouseover', suivre, { passive: true });
     liste.addEventListener('focusin', suivre);
+    // (au clavier, une liste de liens : les flèches haut et bas vont d'un spectacle à l'autre, Début et Fin au premier et au
+    // dernier, l'aperçu suit le focus ; Entrée ouvre la page, Tab sort de la liste comme d'habitude)
+    liste.addEventListener('keydown', e => {
+      const a = e.target.closest && e.target.closest('.tdm-a'); if (!a || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const i = +a.dataset.i, n = liens.length, j = e.key === 'ArrowDown' ? Math.min(n - 1, i + 1) : e.key === 'ArrowUp' ? Math.max(0, i - 1) : e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : null;
+      if (j == null) return;
+      e.preventDefault();
+      if (j !== i) liens[j].focus();
+    });
   }
   // l'aperçu qui prend le relais : ses lignes arrivent l'une après l'autre ; la première fois, les bras de sa carte poussent
   function relayerTdm(c) {
