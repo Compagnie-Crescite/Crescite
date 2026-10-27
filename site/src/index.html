@@ -226,7 +226,8 @@ section.bloc.sans-filet { border-top: 0; padding-top: clamp(28px, 4vw, 48px); }
    la nuit bleue de la scène (--sc-a, --sc-b, --sc-c ; --sc-terne : le blanc atténué, qui reste AA, photo comprise). Rien
    n'est écrit en dur : une nouvelle création colore l'accueil sans toucher au code. Dans l'accueil, plus de magenta. */
 .acc { --magenta: var(--saison-texte); --magenta-texte: var(--saison-texte); --magenta-vif: var(--saison-vive); }
-.acc .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* (un texte pour les lecteurs d'écran seuls : ce que l'œil lit ailleurs, une coche, une teinte, un nombre) */
+.sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* le premier écran : la nuit bleue de la saison, la pieuvre au milieu (une toile), les titres autour ; derrière elle, à peine,
    les photos des spectacles qui s'enchaînent en fondu (celle du spectacle qu'on regarde passe devant) */
 /* (contain : la scène a sa hauteur à elle, posée par mise() ; ce qui change dedans ne remet en page qu'elle. overflow: clip,
@@ -3596,7 +3597,10 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // nom court de son mois
     const ecrit = p => { if (p.precision === 'month' || !/^\d{4}-\d{2}-\d{2}/.test(p.jour || '')) return MC[+String(p.jour).slice(5, 7) - 1] || '•';
       const a = jourDu(p.jour), b = p.fin && p.fin !== p.jour ? jourDu(p.fin) : a; return b !== a ? `${a}–${b}` : String(a); };
-    const nom = p => [p.quand, p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : ''].filter(Boolean).join(', ');
+    // (ce que la pastille montre, le lecteur d'écran l'entend : « Scolaire », « Résidence », l'état, et une date jouée, vidée
+    // et cochée, « jouée »)
+    const nom = p => [p.quand, p.titre, p.l != null && CARTE.lieux[p.l] ? CARTE.nom(CARTE.lieux[p.l]) : '', p.scolaire && L.scolaire, p.residence && L.residence,
+      p.etat || (p.passe && !p.residence && !p.annulee && L.jouee)].filter(Boolean).join(', ');
     const el = document.createElement('div');
     el.className = 'frise fm7';
     el.dataset.frise = 'mois';
@@ -5041,6 +5045,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         <h1 class="s7-titre" tabindex="-1"><span class="fleur">${esc(M0.texte)}</span></h1>
         <ul class="s7-rac">${[['v-saison', S0.titre], ['v-agenda', L.saisonsPassees], ['v-alerte', nAlerte]].map(([id, t]) => `<li><button type="button" data-va="${id}"><span class="s7-lampe" aria-hidden="true"></span>${esc(t)}</button></li>`).join('')}</ul>
         <label class="s7-cherche s7-outils"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg><input id="cherche" type="search" placeholder="${esc(L.rechercher)}" aria-label="${esc(L.rechercher)}" autocomplete="off" value="${esc(F.q)}"></label>
+        <p class="sr" id="s7-annonce" role="status"></p>
       </div></header>
       <section class="s7" id="v-saison" aria-labelledby="h-saison"><div class="sf7" aria-hidden="true"></div><div class="wrap">
         <header class="s7-tete"><h2 class="s7-t" id="h-saison" data-mv="monte">${esc(S0.titre)}</h2><p class="s7-k"><span class="s7-gel" aria-hidden="true"></span>${esc(L.saisonEnCours)}</p></header></div>
@@ -5122,7 +5127,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const ligneToute = r => {
       const { d, g } = r, sp = g.slug && bySlug[g.slug], p = decoupe(d.ligne), passee = !!(r.k && r.k < D.aujourdhui);
       const lieu = p.lieu ? `<p class="d7-lieu">${d.lien ? `<a href="${esc(d.lien)}" target="_blank" rel="noopener">${esc(p.lieu)}</a>` : esc(p.lieu)}</p>` : '';
-      const marques = `${d.scolaire ? `<p class="d7-tag">${esc(L.scolaire)}</p>` : ''}${d.residence && L.residence ? `<p class="d7-tag d7-tag--rs">${esc(L.residence)}</p>` : ''}${d.etat ? `<p class="d7-etat">${esc(d.etat)}</p>` : ''}`;
+      const marques = `${d.scolaire ? `<p class="d7-tag">${esc(L.scolaire)}</p>` : ''}${d.residence && L.residence ? `<p class="d7-tag d7-tag--rs">${esc(L.residence)}</p>` : ''}${d.etat ? `<p class="d7-etat">${esc(d.etat)}</p>` : ''}`
+        + (passee && !r.suite && !d.residence && !d.etat && L.jouee ? `<p class="sr">${esc(L.jouee)}</p>` : '');   // (éteinte à l'œil : jouée, à l'oreille)
       const attrs = `data-date-id="${esc(d.id ?? '')}" data-frise-id="${esc(r.fid)}" data-j="${esc(r.j)}" data-mv-cle="${esc('t:' + r.fid)}"${d.l != null ? ` data-l="${d.l}"` : ''} style="${esc(`--c:${couleurDe(g.slug)}${police(g.slug)}`)}"`;
       const cls = `d7${r.suite ? ' d7--suite' : ''}${passee ? ' est-passe' : ''}${d.residence ? ' est-residence' : ''}`;
       if (r.suite) return `<li class="${cls}" ${attrs}><div class="d7-b">${lieu}${marques}${details(d.details)}</div></li>`;
@@ -5231,7 +5237,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const tousOuverts = vis.length > 0 && vis.every(({ s }) => F.ouv.has(s.k));
       const actifs = [terme() && ['q', F.q.trim()], F.slug && ['s', (puces.find(x => x.cle === F.slug) || {}).titre], F.l !== null && ['l', CARTE.nom(CARTE.lieux[F.l])]].filter(Boolean);
       index.innerHTML = `<button type="button" class="idx-tout" aria-expanded="${tousOuverts}" aria-label="${esc(L.saisonsPassees)}">${tousOuverts ? DOUBLE_HAUT : DOUBLE}</button>
-        <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => { const n = nbReps(rows.filter(jouee));   // (ses représentations, comme la frise au-dessus)
+        <ul>${actifs.map(([c, t]) => `<li><button type="button" class="idx idx-actif" data-eff="${c}">${retirer()}${esc(t)}${CROIX}</button></li>`).join('')}${vis.map(({ s, rows }) => { const n = nbReps(rows.filter(jouee));   // (ses représentations, comme la frise au-dessus)
           return `<li><button type="button" class="idx" data-k="${s.k}" aria-controls="sai-${s.k}" aria-expanded="${F.ouv.has(s.k)}">${esc(s.k)}${n ? `<small>${n}</small>` : ''}</button></li>`; }).join('')}</ul>`;
     }
     // l'onglet d'une saison ouverte se voit dans la bande (au téléphone, la bande défile)
@@ -5288,12 +5294,26 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const filtresEnCours = () => { const pj = jourChoisi(), sp = F.slug && puces.find(x => x.cle === F.slug);
       return [pj && ['j', `<i aria-hidden="true"></i>${esc(pj.quand)}`, pj.couleur], F.mois && ['m', `<span>${nomMois(F.mois)}</span>`], sp && ['s', `<i aria-hidden="true"></i>${esc(sp.titre)}`, sp.slug ? couleurDe(sp.slug) : ''],
         F.l !== null && CARTE.lieux[F.l] && ['l', esc(CARTE.nom(CARTE.lieux[F.l]))], terme() && ['q', esc(F.q.trim())]].filter(Boolean); };
-    const htmlFiltres = fs => fs.map(([c, h, col]) => `<button type="button" class="s7-chip" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${h}${CROIX}</button>`).join('')
+    // (une étiquette de filtre en cours l'efface : le lecteur d'écran l'entend, « Retirer le filtre Bérénice »)
+    const retirer = () => (L.retirerFiltre ? `<span class="sr">${esc(L.retirerFiltre)} </span>` : '');
+    const htmlFiltres = fs => fs.map(([c, h, col]) => `<button type="button" class="s7-chip" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${retirer()}${h}${CROIX}</button>`).join('')
       + (fs.length > 1 && L.effacerFiltres ? `<button type="button" class="ft7-tout" data-eff="tout">${esc(L.effacerFiltres)}</button>` : '');
     function majFiltres() {
       const fs = filtresEnCours(), h = htmlFiltres(fs), ft = $('#ft7');
       if (ft && ft.__h !== h) { ft.__h = h; ft.innerHTML = h; }
       if (barre) barre.maj(fs);
+    }
+    // le nombre de dates que gardent les filtres (celui de « Voir les dates ») : celles de la saison en cours, sinon celles des
+    // saisons passées ; dit au lecteur d'écran quand les filtres changent (une annonce polie, un instant après le dernier geste :
+    // une recherche qu'on tape ne parle qu'une fois), jamais à l'arrivée ni quand la page se refait sur place
+    const nGardees = () => { const n = pts.filter(gardeP).length; return n || actifF() ? n : visibles().reduce((a, x) => a + x.rows.filter(jouee).length, 0); };
+    const sigFiltres = () => [F.q.trim(), F.slug, F.l, F.mois, F.jour].join('|');
+    let sigAnnonce = sigFiltres(), tAnnonce = 0;
+    function annoncer() {
+      const sg = sigFiltres(); if (sg === sigAnnonce) return;
+      sigAnnonce = sg; clearTimeout(tAnnonce);
+      tAnnonce = setTimeout(() => { const el = $('#s7-annonce', main); if (!el || !L.nDates) return; const n = nGardees();
+        el.textContent = n === 0 ? L.aucuneDate || '0' : n === 1 ? L.uneDate || '1' : L.nDates.replace('{n}', String(n)); }, 500);
     }
     // effacer un filtre (ou tous) : la page se refait, en glissant
     function effacer(c) {
@@ -5315,6 +5335,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     function dessine(anime, saisonSeule = false) {
       pts = pointsSaison(); jAllume = null;
       if (F.jour && !pts.some(p => p.j === F.jour)) F.jour = null;
+      annoncer();
       const faire = () => { if (!saisonSeule) recompte(); dessineProchaines(); majOutils(); if (fSaison) { fSaison.maj(pts); fSaison.etat({ mois: F.mois, jour: F.jour }); } if (saisonSeule && tard) dessineToutes(); };
       // (seules les prochaines dates glissent, ou les deux listes de la saison pour un filtre de la frise : le reste est sous le
       // pli, ou se refait plus loin)
@@ -5549,7 +5570,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       }
       const nb = k => pts.filter(p => dansMois(p.d0, p.d1, k)).length;
       let deja = new Set();
-      const puce = ([c, h, col]) => `<button type="button" class="s7-chip est-actif${deja.has(c) ? '' : ' est-neuf'}" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${h}${CROIX}</button>`;
+      const puce = ([c, h, col]) => `<button type="button" class="s7-chip est-actif${deja.has(c) ? '' : ' est-neuf'}" data-eff="${c}"${col ? ` style="--c:${col}"` : ''}>${retirer()}${h}${CROIX}</button>`;
       function dessinerBarre() {
         $('.bf7-n', bt).textContent = fs.length ? String(fs.length) : '';
         bar.classList.toggle('a-filtres', fs.length > 0);
@@ -5562,7 +5583,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         avant = fs.length;
       }
       // la page va aux dates gardées : celles de la saison en cours, sinon celles des saisons passées
-      const nVoir = () => { const n = pts.filter(gardeP).length; return n || actifF() ? { n, id: 'ag-listes' } : { n: visibles().reduce((a, x) => a + x.rows.filter(jouee).length, 0), id: 'v-agenda' }; };
+      const nVoir = () => ({ n: nGardees(), id: pts.some(gardeP) || actifF() ? 'ag-listes' : 'v-agenda' });
       const allerAuxDates = () => { const { id } = nVoir(), t = id === 'ag-listes' ? $('.ag7-proch:not([hidden]), .ag7-toutes:not([hidden])', main) : document.getElementById(id);
         if (t) requestAnimationFrame(() => { const y = t.getBoundingClientRect().top - dessous(id === 'ag-listes'); if (Math.abs(y) > 8) scrollBy({ top: y, behavior: motionOK() ? 'smooth' : 'auto' }); }); };
       // le panneau

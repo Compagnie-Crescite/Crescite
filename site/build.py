@@ -432,6 +432,10 @@ LIBELLES = {
     # les filtres des saisons (la synthèse) : effacer ceux en cours, et au téléphone, leur barre en bas de l'écran et leur
     # panneau, qui mène aux dates gardées
     "filtres": "Filtres", "effacerFiltres": "Tout effacer", "voirLesDates": "Voir les dates", "touteLaFrance": "Toute la France", "rapprocher": "Rapprocher",
+    # ce que l'œil voit, dit aux lecteurs d'écran (texte masqué) : une date déjà jouée (vidée et cochée sur la frise, éteinte
+    # dans la liste), le geste d'une étiquette de filtre en cours (elle l'efface), et le nombre de dates que gardent les
+    # filtres, annoncé quand ils changent ({n} : le nombre)
+    "jouee": "jouée", "retirerFiltre": "Retirer le filtre", "nDates": "{n} dates", "uneDate": "1 date", "aucuneDate": "Aucune date",
     "actionsMenees": "Les actions culturelles menées",
     # les chiffres du bilan (le nombre de dates : « dates », de communes, de saisons)
     "communes": "Communes", "saisons": "Saisons",
