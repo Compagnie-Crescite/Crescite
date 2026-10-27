@@ -1,4 +1,4 @@
-/* Les vraies tentacules du logo (D.pieuvre, fait par maquettes/pieuvre.py) : huit tentacules du dessin quittent la
+/* Les vraies tentacules du logo (D.pieuvre, fait par site/pieuvre.py) : huit tentacules du dessin quittent la
    pieuvre pour aller chercher un spectacle, avec leur épaisseur, de la racine à la pointe ; le reste de la pieuvre (la
    tête, l'œil, les grandes boucles du bas) ne bouge pas. Au repos, chaque tentacule retombe exactement sur le logo, et
    ondule à peine. build.py l'ajoute aux pages qui ont la scène de la pieuvre (la 10 et la synthèse).

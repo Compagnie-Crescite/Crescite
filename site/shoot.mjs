@@ -1,6 +1,6 @@
 // Captures d'une ou plusieurs maquettes : accueil (écran et page entière), page spectacle, les saisons (l'agenda, règle 21),
 // téléphone.
-// Usage : node maquettes/shoot.mjs <dossier de sortie> m03 [m04 …]
+// Usage : node site/shoot.mjs <dossier de sortie> m03 [m04 …]
 // Variables : PLAYWRIGHT_MODULE (chemin du module playwright), CHROMIUM (exécutable), PARALLELE (captures à la fois).
 const PW = process.env.PLAYWRIGHT_MODULE || '/opt/node22/lib/node_modules/playwright/index.mjs';
 const { chromium } = await import(PW);

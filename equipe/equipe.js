@@ -28,7 +28,7 @@
 
    Chargés avant ce fichier : ../admin/vendor/supabase.js (supabase-js), ../admin/agenda.js (AGENDA), ../admin/feuille.js
    (FEUILLE), ../admin/tentacules.js (TENTACULES) et carte.js (CRESCITE_CARTE : la France et Rouen, écrit par
-   maquettes/build.py). Sans AGENDA, FEUILLE, TENTACULES ni la carte, la page marche et dit ce qui manque. */
+   site/build.py). Sans AGENDA, FEUILLE, TENTACULES ni la carte, la page marche et dit ce qui manque. */
 (() => {
   'use strict';
 
@@ -192,7 +192,7 @@
   }
   // les surfaces où l'univers se lit (la carte du jour, celle de la nuit : index.html, la charte du site public)
   const PAPIER = '#fffdf9', NUIT = '#2e2128';
-  // la couleur de la saison (posée par maquettes/build.py), pour ce qui n'a pas d'univers ; sans elle, le gris
+  // la couleur de la saison (posée par site/build.py), pour ce qui n'a pas d'univers ; sans elle, le gris
   const couleurSaison = () => getComputedStyle(document.documentElement).getPropertyValue('--saison').trim() || '#5f565a';
   const COULEURS = new Map();
   // u : la couleur de l'univers ; fond et texte pour le mode clair, fondS et texteS pour le mode sombre ; et le héros :
@@ -1371,7 +1371,7 @@
 
   // ================================================================================================ la carte de la tournée
   // la France, et un bras de Rouen jusqu'à chaque lieu (comme la carte des maquettes) : à la couleur du spectacle pour les
-  // lieux à venir, en retrait pour ceux déjà joués. La projection est celle de maquettes/build.py (conique conforme de
+  // lieux à venir, en retrait pour ceux déjà joués. La projection est celle de site/build.py (conique conforme de
   // Lambert, recalée sur les communes connues).
   function projeter(lat, lon) {
     const P = FRANCE && FRANCE.projection;

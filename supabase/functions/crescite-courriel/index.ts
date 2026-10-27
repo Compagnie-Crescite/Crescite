@@ -52,8 +52,9 @@ const RESEND = Deno.env.get('RESEND_API_KEY');
 const EXPEDITEUR = Deno.env.get('COURRIEL_EXPEDITEUR') || 'contact@crescite.fr';
 const NOM = 'Compagnie Crescite';
 const SITE = (Deno.env.get('SITE_URL') || 'https://adrienvada.fr/Crescite').replace(/\/$/, '');
-// les pages du site où mènent les courriels d'alerte : les dates et les spectacles (la synthèse des maquettes)
-const PAGES = `${SITE}/synthese.html`;
+// les pages du site où mènent les courriels d'alerte : les dates et les spectacles (son index ; l'ancienne adresse,
+// synthese.html, y mène aussi)
+const PAGES = `${SITE}/`;
 // l'adresse de cette fonction (le désabonnement d'un geste des messageries)
 const FONCTION = `${(Deno.env.get('SUPABASE_URL') || '').replace(/\/$/, '')}/functions/v1/crescite-courriel`;
 const PLAFOND = 200;                    // courriels par passage du matin, confirmations comprises

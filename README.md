@@ -12,78 +12,42 @@ L'audit complet, les 10 évolutions proposées et la feuille de route sont dans 
 
 | Dossier | Contenu |
 | --- | --- |
-| `prototype/` | Démonstrateur interactif, en onglets : la pieuvre (les huit bras du logo mènent aux spectacles), un univers par spectacle, trois portes d’entrée, agenda, carte de tournée, compagnie, espace troupe. Sources dans `prototype/src/`, assemblage par `prototype/build.py`. |
-| `maquettes/` | La synthèse de la partie publique (les maquettes ont été retirées). Elle lit la base en direct et se modifie sur place. Sources dans `maquettes/src/`, assemblage par `maquettes/build.py`. |
-| `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques du site (`site-crescite.json`, relevé par `site_crescite.py`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`). |
-| `supabase/` | La base de la compagnie : le script qui la crée (`migrations/20261020_crescite_base.sql`) et celui qui la remplit (`importer.py`). |
-| `admin/` | L'administration du site : tableau de bord, spectacles, dates et représentations, ateliers, lieux, textes, journal. En ligne à côté des maquettes (`docs/admin/`). |
+| `site/` | Le site de la compagnie, une seule page (`site/src/index.html`) et ses outils communs (`site/src/*.js`), assemblés par `site/build.py` ; il lit la base en direct et se modifie sur place. Les contrôles (`onglets.mjs`, `mouvement-*.mjs`, `tableau.mjs`…) et les règles du site (`CONTRAT.md`, `MOUVEMENT.md`, `SCROLLYTELLING.md`) sont à côté. |
+| `admin/` | L'administration du site : tableau de bord, spectacles, dates et représentations, ateliers, lieux, textes, journal. |
+| `equipe/`, `pro/`, `reponse/` | L'espace de l'équipe (une application installable), l'espace des salles (sur invitation), la page de réponse aux propositions de dates et aux alertes. |
+| `data/` | Relevé des dates publiées sur crescite.fr de 2016 à 2027 : 464 lignes géolocalisées, en JSON et en CSV. Texte exact des pages publiques de l'ancien site (`site-crescite.json`, relevé par `site_crescite.py`), mentions légales et politique de confidentialité d'aujourd'hui (`textes-legaux.json`), fiche de Cassandres (`cassandres.json`), dossier scolaire de Bérénice (`berenice-dossier.json`), univers et action culturelle de chaque spectacle (`univers-spectacles.json`), zone d'intérêt de chaque photo (`cadrages.json`), projection de la carte des tournées (`carte-projection.json`). |
+| `marque/` | Le logo 2.0 et le tracé de ses bras et de ses tentacules. |
+| `supabase/` | La base de la compagnie : ses scripts (`migrations/`), ses fonctions (`functions/`), ses essais (`tests/`), l'import (`importer.py`) et l'outil d'écriture (`ecrire.py`). |
+| `docs/` | Le site publié (`docs/index.html`), et à côté `admin/`, `equipe/`, `pro/`, `reponse/` et les photos. |
 | `private/` (non versionné) | `brand/` logo 2.0 en SVG et le tracé de ses huit bras, `photos/` une photo par spectacle et celles de leurs univers, `dossiers/` les dossiers de la compagnie (scolaire de Bérénice, artistique 2027-2028). |
 
-## Prototype
+## Le site
 
 ```sh
-python3 prototype/build.py            # écrit prototype/dist/index.html (non versionné)
-python3 prototype/build.py --public   # écrit prototype/dist/index-public.html, version du dépôt public
+python3 site/build.py              # le site (site/dist/index.html) et les espaces réservés à côté (non versionné)
+python3 site/build.py --captures   # avec des captures de relecture (Playwright et Chromium, site/dist/shots/)
+python3 site/build.py --pages      # en plus, le site publié dans docs/
+node site/onglets.mjs /tmp/x index # parcourt les vues du site et signale les anomalies
+node site/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
+node site/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
+                                   # le vocabulaire de ce mouvement : site/MOUVEMENT.md
+python3 data/site_crescite.py      # relève de nouveau le texte de l'ancien crescite.fr (data/site-crescite.json)
 ```
 
-Ouvrir ensuite le fichier dans un navigateur récent. Avec le dossier `private/` en place, le prototype est complet
-(logo 2.0, tracé des bras, photos) ; sans lui, il est construit avec des substituts neutres.
-Toutes les dates, y compris celles de l’exemple d’espace troupe, viennent du relevé public du site.
-
-Ce que montre le prototype :
-
-- **La pieuvre.** Le logo 2.0 est dessiné tel quel ; chacun de ses huit bras se prolonge vers un spectacle,
-  part de l’extrémité exacte du bras, passe sous les autres traits, souligne le titre et s’enroule. Au repos rien
-  ne bouge ; on tire un titre (ou on le choisit au clavier) et la pieuvre ramène le bras vers elle.
-- **Un univers par spectacle.** Couleurs, typographie, motif et un effet signature au défilement : les jumeaux
-  (*Cléophène*), la tirade du nez (*Ci-gisait Cyrano*), le cercle (*Bérénice*), le paperboard (*Mon Royaume
-  pour un cheval*), les annotations (*L’imaginaire forcé*), l’horloge (*La Folle Idée*), le fil rouge
-  (*Macbeth – Fatum*), les heures (*Actions culturelles*). Chaque page a son adresse : `#/spectacles/berenice`.
-- **Trois portes.** « Je viens voir », « Je programme », « Je fais venir dans mon établissement » : une page
-  chacune, et la porte choisie colore la lecture de tout le site (cartes, agenda, page d’un spectacle).
-- **Des onglets.** Accueil, Spectacles, Agenda (liste, calendrier, carte), Tournée, La compagnie, Espace troupe ;
-  sur téléphone, une barre d’onglets en bas d’écran.
-
-Ce qui est réel : textes, distributions et photos des spectacles (repris de crescite.fr), dates publiées, logo 2.0.
-Ce qui est proposé : les univers, les textes marqués « proposition ». Ce qui est à compléter est marqué
-« à fournir » ou « exemple » dans l’interface (fiches techniques, dossiers, tarifs, contacts, adresses exactes).
-
-Accessibilité : chaque titre de la pieuvre est un bouton (Tab, flèches, Entrée), « Mode calme » coupe les
-animations et l’épinglage des pages, la carte a une version tableau, le réglage système « réduire les
-animations » est respecté.
-
-## Maquettes
-
-```sh
-python3 maquettes/build.py              # la synthèse (maquettes/dist/, non versionné)
-python3 maquettes/build.py --captures   # avec des captures de relecture (Playwright et Chromium, maquettes/dist/shots/)
-node maquettes/onglets.mjs /tmp/x synthese # parcourt les vues de la synthèse et signale les anomalies
-                                         # (en parties, 4 à la fois ; PARALLELE=1 une à une ; au-delà des cœurs
-                                         # de la machine, les attentes ne suffisent plus et de fausses anomalies sortent)
-node maquettes/mouvement-equipe.mjs     # les dix effets de l'espace de l'équipe, dans Chromium, hors ligne (après le build)
-node maquettes/mouvement-admin.mjs      # le mouvement de l'administration, dans Chromium, sur une base fictive (après le build)
-                                         # le vocabulaire de ce mouvement : maquettes/MOUVEMENT.md
-python3 data/site_crescite.py               # relève de nouveau le texte de crescite.fr (data/site-crescite.json)
-```
-
-Dix façons de montrer le même contenu : **le texte de crescite.fr**, page par page (spectacles, onze saisons de
-dates, présentation de la compagnie, actions culturelles, contact, mentions légales), plus Cassandres, création 2027,
-**le dossier scolaire de Bérénice** et, pour chaque spectacle, **son univers et son action culturelle**
-(`data/univers-spectacles.json`, repris des pages d'adrienvada.fr et du dossier artistique 2027-2028). Rien n'y est
-inventé ; s'ajoutent seulement la **carte des tournées**, dessinée dans l'univers de chaque maquette avec l'outil
-commun `maquettes/src/carte.js`, et quelques intitulés de rubrique (`D.site.libelles`). Chacune **s'ouvre sur le
-logo en grand** (`maquettes/src/intro.js`) : au clic, à la molette ou en glissant vers le bas, ses tentacules
-ondulent, il grossit et le site apparaît à travers lui.
-
-Chacune se lit ensuite par **trois entrées**, la navigation première : « Je viens voir un spectacle » (`#/voir` : les
-dates tout public de la saison et leur carte), « Je souhaite programmer » (`#/programmer` : le contact diffusion, le
-catalogue, le dossier et la fiche technique de chaque spectacle, voir plus bas), « Je représente un établissement
-scolaire » (`#/etablissement` : le type d'action culturelle de chaque spectacle, les actions culturelles du site, le
-dossier scolaire de Bérénice). Spectacles, La compagnie et Contact viennent en second. La page de chaque spectacle prend son
-univers (couleurs, police de titre, motif, photos, citations ; Bérénice à la charte de son dossier) et se lit dans
-l'une des trois entrées : `#/spectacle/berenice/voir`, `…/programmer`, `…/etablissement` ; la dernière entrée choisie
-sert de défaut. L'espace pro à mot de passe a disparu : ses anciennes adresses mènent à « Je souhaite programmer »,
-celles de l'agenda et des actions culturelles aux deux autres entrées. La pieuvre ne compte pas les spectacles.
+Un seul site, celui de la compagnie (les dix maquettes et le premier prototype qui l'ont précédé ont été retirés en
+octobre 2026 ; ils restent dans l'historique du dépôt). Son texte vient des sources et de rien d'autre : le texte de
+crescite.fr, page par page (spectacles, onze saisons de dates, présentation de la compagnie, actions culturelles,
+contact), plus Cassandres, création 2027, **le dossier scolaire de Bérénice** et, pour chaque spectacle, **son univers et
+son action culturelle** (`data/univers-spectacles.json`, repris des pages d'adrienvada.fr et du dossier artistique
+2027-2028) ; s'ajoutent seulement la **carte des tournées** (`site/src/carte.js`) et quelques intitulés de rubrique
+(`D.site.libelles`). Il **s'ouvre sur le logo en grand** (`site/src/intro.js`) : au clic, à la molette ou en glissant
+vers le bas, ses tentacules ondulent, il grossit et le site apparaît à travers lui. La page de chaque spectacle prend son
+univers (couleurs, police de titre, motif, photos, citations) et se lit selon trois entrées, ses onglets : « Je viens voir
+un spectacle », « Je souhaite programmer », « Je représente un établissement scolaire » (`#/spectacle/berenice/voir`,
+`…/programmer`, `…/etablissement`) ; la dernière entrée choisie sert de défaut. Les anciennes adresses (`#/voir`,
+`#/agenda`, `#/programmer`, `#/etablissement`, `#/actions-culturelles`) mènent aux saisons et à l'espace pro, et
+l'ancienne adresse du site, `synthese.html` (celle des courriels déjà envoyés), mène à l'index, la suite de l'adresse
+gardée. La pieuvre ne compte pas les spectacles.
 
 **Le menu d'aujourd'hui** (règle 21 du contrat) : Saisons, Les spectacles, La compagnie, Espace pro ; les trois entrées
 restent les onglets de la page d'un spectacle. `#/espace-pro` se lit sur deux étages, du plus ouvert au plus réservé :
@@ -94,7 +58,7 @@ reprend la couleur d'un spectacle, hors « Je viens voir », qui est celle de la
 ambre cuivré (`#94501a`, vive `#eda466`), plus l'or que l'on confondait avec le jaune de Mon Royaume pour un cheval.
 
 **Le nom et les textes légaux.** Le site dit « Compagnie Crescite » (titres d'onglet « Saisons · Compagnie Crescite »,
-en-tête) et, dans le texte, « les Crescite » ou « la compagnie Crescite » : `NOMS` (`maquettes/build.py`) récrit dans D,
+en-tête) et, dans le texte, « les Crescite » ou « la compagnie Crescite » : `NOMS` (`site/build.py`) récrit dans D,
 accords compris, les phrases des sources qui disaient « le Théâtre des Crescite » ; les mentions légales gardent cette
 dénomination entre parenthèses. Les mentions légales et la politique de confidentialité sont celles du site tel qu'il est
 (`data/textes-legaux.json` : Cloudflare Pages, la base Supabase, ce que le site recueille, ses services tiers), à la place
@@ -105,7 +69,7 @@ action (`RETOUCHES`), et le pied mène à la page Facebook de la compagnie.
 **Pour les programmateurs.** « Je souhaite programmer » donne d'abord à qui parler : le contact diffusion
 (l'administratrice, le courriel de la compagnie, son téléphone s'il est saisi dans la base, « Conditions financières sur
 demande »). Puis, pour chaque spectacle, un dossier PDF composé à la demande à partir des données du site, donc toujours
-à jour (`maquettes/src/dossier.js` : couverture et photos, présentation, distribution, conditions d'accueil et fiche
+à jour (`site/src/dossier.js` : couverture et photos, présentation, distribution, conditions d'accueil et fiche
 technique, représentations et lieux de diffusion, production, contact ; pdfmake chargé au premier clic). Sur la page
 d'un spectacle : la fiche technique (celle du dossier de Bérénice ; un fichier déposé par l'administration ; sinon
 « Fiche technique sur demande », qui écrit à l'administratrice) et « À télécharger » (le dossier, les documents déposés
@@ -113,13 +77,7 @@ pour les pros). Les documents déposés pour les scolaires s'ajoutent à l'ongle
 Cassandres n'est pas encore construite : elle reste dans les données et dans la base, masquée (`masquee`), et le site
 ne la montre pas (ni sur la page des établissements, ni en onglet).
 
-**L'agenda complet.** « Je viens voir un spectacle » donne d'abord les prochaines dates tout public, puis toutes les
-dates publiées depuis 2016, saison par saison, de la plus récente à la plus ancienne. Les saisons terminées sont
-fermées au départ, chacune avec sa petite carte ; un index des saisons permet de sauter de l'une à l'autre, et le
-filtre par spectacle comme la recherche par commune portent sur tout l'agenda, en ouvrant les saisons où ils trouvent
-quelque chose. `#/agenda/2019-2020` reste la page d'une saison.
-
-**La saison d'un regard (la synthèse).** Sur `#/saisons`, la saison en cours se lit dans un tableau : en haut, son
+**La saison d'un regard.** Sur `#/saisons`, la saison en cours se lit dans un tableau : en haut, son
 sous-menu (comme celui des univers d'un spectacle), une seule ligne qui s'arrime sous le menu quand on descend : les seuls
 spectacles qui tournent dans la saison, chacun sa vignette (sa photo, cadrée), cerclée de sa couleur (celle de ses dates), et
 le nombre de ses dates ; le survoler isole ses dates, le choisir filtre la page, et le fond de la saison prend sa photo et sa
@@ -134,23 +92,22 @@ le mois en cours, la loupe est une carte sous elle, et les filtres sont en bas d
 les mois à choisir d'un doigt) et « Filtres », un panneau qui monte du bas (la recherche, les mois, les spectacles de la
 saison, ceux des saisons passées, les communes ; « Voir les dates » y mène).
 
-**Modifier sur place.** « Modifier le site », au pied de chaque page, ouvre l'édition (`maquettes/src/edition.js`,
-commun aux onze) : après connexion avec un compte administrateur, chaque texte venu de la base se clique et s'écrit
+**Modifier sur place.** « Modifier le site », au pied de chaque page, ouvre l'édition (`site/src/edition.js`, commun
+au site et à l'administration) : après connexion avec un compte administrateur, chaque texte venu de la base se clique et s'écrit
 dans la page même (gras, italique, lien, paragraphe ajouté ou retiré) ; une photo de spectacle se remplace d'un clic ;
 une date de l'agenda, à venir ou passée, s'ouvre dans un panneau (lieu, représentations et leurs heures, statut,
 visibilité, précisions, lien) et « Ajouter une date » se place en tête de chaque agenda. « Enregistrer » écrit dans
-la base : les pages ouvertes ailleurs se mettent à jour. Chaque maquette habille la barre et les panneaux à son style
+la base : les pages ouvertes ailleurs se mettent à jour. La barre et les panneaux prennent le style du site
 (variables `--ed-*`). `?edition` à la fin de l'adresse ouvre directement l'édition.
 
-**La pieuvre guide.** Chaque clic lui répond (`maquettes/src/tentacules.js`, commun aux onze et à l'administration) :
+**La pieuvre guide.** Chaque clic lui répond (`site/src/tentacules.js`, commun au site et aux espaces réservés) :
 ses bras se contractent et une tentacule fine part du logo de l'en-tête jusqu'au point cliqué, où elle laisse
 l'empreinte d'une ventouse. Chaque changement de page « remonte » une tentacule à la couleur de la destination (celle de
 l'entrée, ou de l'univers du spectacle) ; ouvrir une saison ou un panneau la déroule, fermer l'enroule, enregistrer
-l'enroule autour du bouton. Rien n'est retardé : la page répond tout de suite, l'animation joue par-dessus. Chaque
-maquette l'habille à son style (`TENTACULES.regler`, variables `--tt-*`) : trait gravé pour la 01, filet de lumière pour
-la 07, ventouses pour la synthèse, fil pour la 08… Avec « réduire les animations », un fondu bref ; `?anim=0` dans
-l'adresse coupe tout. Dans la synthèse, la petite pieuvre de l'en-tête est en plus une créature vivante
-(`maquettes/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
+l'enroule autour du bouton. Rien n'est retardé : la page répond tout de suite, l'animation joue par-dessus. Le site
+l'habille de ventouses (`TENTACULES.regler`, variables `--tt-*`). Avec « réduire les animations », un fondu bref ; `?anim=0` dans
+l'adresse coupe tout. La petite pieuvre de l'en-tête est en plus une créature vivante
+(`site/src/creature.js`, sur les vraies tentacules de `pieuvre.js`) : elle ondule et respire, se tourne vers la
 souris, suit le courant quand la page défile, se contracte à chaque page, et en entrant dans un spectacle une tentacule
 va souligner le titre à la couleur du spectacle, puis revient. Sur la page de la compagnie, la pieuvre de la troupe est
 une créature aussi (`CREATURE.creer`), toujours en mouvement (ondulation, respiration, balancement, halo, et sa tête
@@ -160,13 +117,9 @@ file au galop (elle se ramasse, bondit étirée dans le sens du bond, un sillage
 tentacule attrape le médaillon du métier qu'on lit, qui s'anime. Choisir quelqu'un (un clic sur une de ses places) :
 elle sursaute, puis ses tentacules, lumineuses, vont tenir toutes ses places (`c.tenir`), à la place des fils des liens.
 
-De la 01 (« Le programme de salle », typographie seule) à la 10 (« La pieuvre vivante, rangée », le prototype remis
-en ordre) ; la 06 (« Les bras de la tournée ») fait de la tentacule un thème. `maquettes/src/synthese.html` assemble
-la proposition retenue : l’accueil et les cartes de la 06, l’agenda de la 03 relié à la carte, les portes de la 04
-devenues les trois entrées, et les univers de spectacle les plus aboutis.
 `onglets.mjs` compare chaque texte affiché aux sources et signale tout texte qui n'en vient pas ; il vérifie aussi
-les trois entrées (à portée dans le premier écran, une seule marquée comme courante), les redirections des anciennes
-adresses, la disparition de l'espace pro, la présence des contenus attendus de chaque vue et l'ordre de l'agenda
+le menu (à portée sur chaque vue, un seul élément marqué comme courant), les redirections des anciennes adresses,
+la page de l'espace pro, la présence des contenus attendus de chaque vue et l'ordre de l'agenda
 (les prochaines dates d'abord, les saisons terminées fermées). Il vérifie la page des programmateurs (le contact, le
 téléchargement réel du dossier PDF, la fiche technique sur demande) et qu'un spectacle sans action culturelle n'a pas
 d'onglet établissement. Avec `EDITION=1`, il vérifie aussi le lien « Modifier le site » et les annotations de l'édition
@@ -174,25 +127,20 @@ d'onglet établissement. Avec `EDITION=1`, il vérifie aussi le lien « Modifier
 d'une seconde la capture de l'ancienne page), sur toute la visite et depuis chaque page de spectacle défilée : une
 animation liée au défilement qui garde son état final hors de sa plage (`both`) gelait l'écran 4 s dans Chrome ; elles
 remplissent en `backwards` (règle 15 C du contrat).
-`maquettes/dist/maquettes.html` est la planche : une barre d’onglets en haut, qui charge chaque maquette juste en
-dessous. « À propos » est le mode d'emploi de la maquette affichée, en six parties courtes avec leurs schémas :
-naviguer, trouver une date, modifier le site, l'administration et ses rubriques, les espaces réservés autour de la
-base, la planche elle-même ; les nouveautés (réserver, vidéos, jour et nuit, troupe) n'y paraissent que pour les
-maquettes qui les ont en ligne (`AVEC`, dans `planche.html`).
 
-**En ligne.** `python3 maquettes/build.py --pages` écrit le site GitHub Pages dans `docs/` : la planche en page
-d'accueil et chaque maquette en page à part (`docs/m06.html`, `docs/synthese.html`…). Ces pages embarquent le logo
-2.0 et les photos (rangées une seule fois dans `docs/photos/`) : leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées :
-chacune demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet,
-noimageindex`), et leur adresse n'est donnée nulle part dans le dépôt (elle figure dans Settings → Pages). Chaque fichier de `maquettes/src/` lit ses contenus dans l’objet `D` que le script injecte.
-Le même `docs/` est le site de la compagnie sur Cloudflare Pages, hors de GitHub : `python3 scripts/cloudflare.py` le
-publie (la clé, `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`, vient de l'environnement ; les adresses, du projet
-lui-même). Cloudflare lit `docs/_headers`, écrit par le build : la même consigne aux moteurs en en-tête, photos comprises,
-et ni type deviné ni affichage dans le cadre d'un autre site. Tous les liens du site sont relatifs, et les connexions
-reviennent à l'adresse d'où elles partent : il suffit d'ajouter la nouvelle adresse aux Redirect URLs de Supabase, et
-`SITE_URL` (secret des fonctions) donne celle des liens envoyés par courriel.
-**Réserver, regarder, la nuit, la troupe** (règles 17 à 20 : dans la synthèse et les dix maquettes, chacune à sa
-manière). Quatre outils communs, injectés dans chaque maquette :
+**En ligne.** `python3 site/build.py --pages` écrit le site publié dans `docs/` : `docs/index.html`, et à côté
+l'administration, les espaces de l'équipe et des salles, la page de réponse et les photos (rangées une seule fois dans
+`docs/photos/`) ; leur publication a été décidée par la compagnie. Elles ne sont pas faites pour être trouvées : chacune
+demande aux moteurs de recherche de ne pas l'indexer (`noindex, nofollow, noarchive, nosnippet, noimageindex`).
+`docs/` est le site de la compagnie sur Cloudflare Pages, hors de GitHub : `python3 scripts/cloudflare.py` le publie (la
+clé, `CLOUDFLARE_API_TOKEN` et `CLOUDFLARE_ACCOUNT_ID`, vient de l'environnement ; les adresses, du projet lui-même) ; il
+est aussi servi par GitHub Pages. Cloudflare lit `docs/_headers`, écrit par le build : la même consigne aux moteurs en
+en-tête, photos comprises, et ni type deviné ni affichage dans le cadre d'un autre site. Tous les liens du site sont
+relatifs, et les connexions reviennent à l'adresse d'où elles partent : il suffit d'ajouter la nouvelle adresse aux
+Redirect URLs de Supabase, et `SITE_URL` (secret des fonctions) donne celle des liens envoyés par courriel.
+
+**Réserver, regarder, la nuit, la troupe, le cadrage** (règles 17 à 20 et 24). Les outils communs, injectés dans le site
+par `build.py` :
 - `reserver.js` (RESERVER) : sur la page d'un spectacle, un bouton par date à venir (le jour, les heures, la ville), la
   prochaine choisie d'avance ; la date choisie ouvre sa carte dans l'univers du spectacle (le lieu, les séances, une
   séance scolaire signalée sans bouton) et un seul bouton « Réserver » vers la billetterie du théâtre (le lien de la
@@ -210,9 +158,10 @@ manière). Quatre outils communs, injectés dans chaque maquette :
 - `cadrage.js` (CADRAGE) : chaque photo des spectacles garde dans son cadre sa zone d'intérêt (les comédiens, pas le
   noir du plateau), sur ordinateur comme sur téléphone ; les zones sont dans `data/cadrages.json` (une par photo, posée
   à l'œil sur chacune), et une photo ajoutée y reçoit la sienne.
-Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node maquettes/onglets.mjs <sortie> m01 synthese`…
-Les règles que suit chaque maquette (le texte, les trois entrées, l'édition sur place, le mouvement, les budgets de
-réactivité, la réservation, les vidéos, la nuit seule, la troupe, le cadrage des photos) sont dans `maquettes/CONTRAT.md`.
+Les contrôles : `REGLE17=1 REGLE18=1 REGLE19=1 REGLE20=1 EDITION=1 node site/onglets.mjs <sortie> index`.
+Les règles que suit le site (le texte, le menu, l'édition sur place, le mouvement, les budgets de réactivité, la
+réservation, les vidéos, la nuit seule, la troupe, les couleurs de la saison, le cadrage des photos) sont dans
+`site/CONTRAT.md`.
 
 **Les espaces réservés, à la charte du site** (octobre 2026 : « Uniformise », « Mettre tout en mode nuit par défaut »).
 L'administration, l'espace de l'équipe, l'espace des salles et la page de réponse ont les polices du site (Ubuntu, Open
@@ -234,21 +183,12 @@ public (posée par `assemble`), à l'administration, à l'équipe, aux salles et
 « Administration · Compagnie Crescite », « Équipe · Compagnie Crescite », « Espace des salles · Compagnie Crescite »,
 « Des dates vous sont proposées · Compagnie Crescite » ; l'application installée, « Les Crescite ».
 
-**La page des spectacles au téléphone** (prévisualisation, `maquettes/src/spectacles-mobile.html`, en ligne dans
-`docs/spectacles-mobile.html`). Au téléphone, `#/spectacles` de la synthèse se réduit à une liste ; cette page met côte à côte,
-dans trois téléphones et avec les vraies données de la base, trois façons de la refaire, un geste chacune : **A. La
-poursuite** (lire : la ligne qu'on lit s'allume dans son univers, sa photo s'éclaire, un index épinglé des huit vignettes),
-**B. La pile d'affiches** (déplier : les huit tranches tiennent dans l'écran, une tranche touchée se déplie en affiche, avec
-sa fiche et la carte de sa tournée), **C. Le présentoir** (feuilleter : une affiche à la fois, qu'on fait glisser, la page
-prend son univers, la carte se redessine). La synthèse est chargée à côté pour comparer. Chaque proposition tient les
-règles du contrat (le texte vient de D, la nuit, « réduire les animations », 44 px, 360 px). C'est une page annexe de
-`build.py` (`ANNEXES`) : construite avec les maquettes, publiée dans `docs/`, hors de la planche. **La pile d'affiches a été
-retenue** (octobre 2026) et portée dans la synthèse : jusqu'à 899 px, `#/spectacles` est la pile (`afficheTdm`, `lierPile`,
-styles `.pil-*`) ; une tranche touchée se déplie, sa carte se dessine à la première ouverture, « découvrir » se pose sur sa
-photo et l'affiche dépliée est tout entière le lien vers sa page (une touche de plus, n'importe où, y mène) ; une seule
-dépliée à la fois, gardée quand D change ou que la fenêtre change de côté de 900 px ; au bureau, le sommaire et son aperçu
-sont inchangés.
-L'édition sur place porte sur chaque texte de la tranche et de la fiche, la photo et la date, sans déplier.
+**La page des spectacles au téléphone.** Jusqu'à 899 px, `#/spectacles` est une pile d'affiches (`afficheTdm`,
+`lierPile`, styles `.pil-*`) : les huit tranches tiennent dans l'écran, une tranche touchée se déplie en affiche, avec sa
+fiche et la carte de sa tournée (dessinée à la première ouverture) ; « Découvrir » se pose sur sa photo et l'affiche
+dépliée est tout entière le lien vers sa page. Une seule dépliée à la fois, gardée quand D change ou que la fenêtre change
+de côté de 900 px ; au bureau, le sommaire et son aperçu. L'édition sur place porte sur chaque texte de la tranche et de
+la fiche, la photo et la date, sans déplier.
 
 ## Données
 
@@ -260,7 +200,7 @@ quand il est indiqué, texte d'origine et page source. Le classement scolaire / 
 Ce relevé ne contient que les dates **publiées** sur le site : une ligne peut couvrir plusieurs représentations,
 et beaucoup de représentations n'y figurent pas. Le dossier artistique 2027-2028 de la compagnie compte plus de
 1 500 représentations depuis 2011 (au moins 86 par an depuis 2014), quand le site en liste 460 lignes depuis 2016,
-soit environ un tiers. Les maquettes ne calculent aucun total à partir du relevé, qui ne sert qu'à placer les dates
+soit environ un tiers. Le site ne calcule aucun total à partir du relevé, qui ne sert qu'à placer les dates
 sur les cartes : le nombre de représentations de chaque spectacle, dans « Je souhaite programmer », est celui que
 donne le dossier artistique.
 
@@ -304,14 +244,14 @@ spectacles et ceux des saisons passées, 303 lieux, les 524 lignes d'agenda publ
 représentations, les ateliers et les textes), et `python3 supabase/importer.py --admin <adresse>` donne les droits
 d'administration à un compte du projet. L'import refuse une base déjà remplie.
 
-**Le site lit la base en direct.** Chaque maquette s'affiche d'abord avec l'instantané du dépôt, puis
-`maquettes/src/donnees.js` lit la base, recompose ses données et s'abonne au temps réel : chaque enregistrement fait
+**Le site lit la base en direct.** Le site s'affiche d'abord avec l'instantané du dépôt, puis
+`site/src/donnees.js` lit la base, recompose ses données et s'abonne au temps réel : chaque enregistrement fait
 dans l'administration change les pages ouvertes dans la seconde, sans recharger. Le temps réel passe par le client
 officiel de Supabase (`admin/vendor/supabase.js`, supabase-js 2.118.0, licence MIT), chargé à la demande ; s'il
 manque, la page demande à la base toutes les minutes, et à chaque retour sur l'onglet, si quelque chose a changé. Une ligne d'agenda écrite à la main
 (celles reprises de l'ancien site gardent leur texte d'origine) s'affiche telle quelle ; sinon elle se compose à
-partir des jours, des heures et du lieu (`maquettes/src/agenda.js`, commun au site et à l'administration).
-Ajouter `?base=0` à l'adresse d'une maquette la garde sur l'instantané.
+partir des jours, des heures et du lieu (`site/src/agenda.js`, commun au site et à l'administration).
+Ajouter `?base=0` à l'adresse du site le garde sur l'instantané.
 
 **L'administration** (`admin/index.html`, en ligne dans `docs/admin/`) : connexion par adresse et mot de passe d'un
 compte du projet inscrit dans `crescite_admins`.
@@ -364,10 +304,10 @@ compte du projet inscrit dans `crescite_admins`.
     message à l'équipe, ou à imprimer.
   - Le temps réel de la base redessine les tuiles (un mémo en cours d'écriture n'est pas touché) ; le journal se relit
     alors. Fait pour l'écran d'ordinateur (trois ou quatre colonnes à 1 600 px, `.tb-grille`), une colonne au téléphone,
-    en sombre comme en clair. `node maquettes/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
+    en sombre comme en clair. `node site/tableau.mjs` le vérifie dans Chromium, hors ligne, sur une base fictive
     (115 vérifications : les tuiles et leurs comptes, les liens visés, la personnalisation et sa persistance, le repli sur
     l'appareil sans le script 6, les menus (clic droit, appui long, Maj+F10) et leurs actions directes, les flèches,
-    précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `maquettes/dist/shots-tableau/`).
+    précédent / suivant, le Kanban glissé, le téléphone, le sombre ; captures dans `site/dist/shots-tableau/`).
 - **L'habillage** (`admin/habillage.js`, chargé en dernier : rien que l'apparence) : les polices du site (Ubuntu pour
   les titres, Open Sans pour le texte, Raleway pour les étiquettes en capitales espacées, par Google Fonts ; sans
   réseau, le système), les neutres du site et la couleur de la saison, un en-tête de nuit (la pieuvre et la rubrique
@@ -375,7 +315,7 @@ compte du projet inscrit dans `crescite_admins`.
   de bord avec son icône et sa couleur (corail pour ce qui attend, ambre pour la tournée, indigo pour les dates, sauge
   pour les chiffres, prune pour l'équipe, ciel pour la diffusion), un bandeau du jour en tête du tableau (bonjour, le
   prénom, ce qui attend, la prochaine date, trois chiffres, une tentacule en filigrane), les jours des listes en petits
-  calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"`. `maquettes/tableau.mjs` en garde des captures de chaque
+  calendriers, les colonnes du Kanban colorées ; la nuit par défaut, le jour sous `data-theme="jour"`. `site/tableau.mjs` en garde des captures de chaque
   page (`habillage-*.png`).
 - **Le niveau supérieur** (dix modules chargés après les menus, chacun dans son fichier) :
   - **Les fiches en tiroir** (`admin/tiroir.js`) : une date, un lieu, une personne, une demande de devis ou une piste de
@@ -407,7 +347,7 @@ compte du projet inscrit dans `crescite_admins`.
     un contrat signé pour une option, une option déjà passée ; dans la fenêtre d'une piste : une cession confirmée sans
     montant, une relance passée, un doublon. Rien ne bloque ; chaque alerte mène où il faut.
   - **La carte de tournée** (`#/representations/carte`, `admin/tournee.js`, le fond et la projection du site dans
-    `admin/fond-carte.js`, écrit par `maquettes/build.py`) : les lieux de la saison (ou d'un spectacle, ou à venir) sur la
+    `admin/fond-carte.js`, écrit par `site/build.py`) : les lieux de la saison (ou d'un spectacle, ou à venir) sur la
     carte de France, une pastille par lieu avec ses dates, le trajet dans l'ordre, et la tournée étape par étape avec la
     distance à vol d'oiseau et le délai entre deux dates ; les enchaînements serrés se signalent ; « Autour des dates »
     resserre le cadre ; une pastille ouvre le lieu en tiroir ; les lieux sans position sont listés.
@@ -430,9 +370,9 @@ compte du projet inscrit dans `crescite_admins`.
     un fil sur chaque date, lieu, personne et piste ; `@Prénom Nom` mentionne quelqu'un de l'équipe (l'autocomplétion
     propose les fiches) et la base le prévient dans son espace ; épingler, modifier, supprimer avec « Annuler » ; une
     pièce jointe dans le stockage privé de l'équipe (`notes/`). Le journal garde tout.
-  - `node maquettes/niveau.mjs` vérifie les dix idées dans Chromium, hors ligne, sur la base fictive commune
-    (`maquettes/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 57 vérifications, des captures dans
-    `maquettes/dist/shots-niveau/`.
+  - `node site/niveau.mjs` vérifie les dix idées dans Chromium, hors ligne, sur la base fictive commune
+    (`site/admin-fictif.mjs`, partagée avec `tableau.mjs`) : 57 vérifications, des captures dans
+    `site/dist/shots-niveau/`.
 - **Les gestes** (`admin/gestes.js`, commun avec l'espace de l'équipe ; `admin/menus.js` pour ce que l'administration en
   fait) : un **clic droit**, un **appui long** (au doigt, avec une courte vibration) ou **Maj+F10** sur une ligne, une
   carte ou une tuile ouvrent ce qu'on peut en faire sans ouvrir la fiche, près du pointeur à l'ordinateur, en feuille
@@ -511,7 +451,7 @@ compte du projet inscrit dans `crescite_admins`.
   un champ, jusque dans les valeurs changées), au téléphone comme à l'ordinateur ; il lit les 300 dernières
   modifications, « Lire 300 modifications plus anciennes » remonte plus loin (et la liste dit quand ce qui est lu ne
   remonte pas assez).
-- **Modifier sur le site ↗** ouvre la synthèse en mode édition : les mêmes droits, dans la page publique.
+- **Modifier sur le site ↗** ouvre le site en mode édition : les mêmes droits, dans la page publique.
 
 **Son mouvement.** L'administration s'ouvre sur un squelette qui luit le temps de lire la base, puis le contenu paraît.
 Les vues s'enchaînent (les View Transitions : la fiche glisse vers la gauche en s'ouvrant, la liste
@@ -533,13 +473,13 @@ journal se pose ; les menus (suggestions d'un lieu, export du tableur, « Plus �
 dans l'éditeur A4 d'une feuille de route, l'amorce visée depuis « À compléter » s'allume sur la page. Sur le site en mode
 édition (`edition.js`), le point de la barre bat tant que des modifications attendent, et passe au vert un instant à
 l'enregistrement. Rien de tout cela si l'appareil
-demande moins d'animations, ni avec `?anim=0`. `node maquettes/mouvement-admin.mjs` le vérifie dans Chromium, sur
+demande moins d'animations, ni avec `?anim=0`. `node site/mouvement-admin.mjs` le vérifie dans Chromium, sur
 une base fictive.
 
 Les règles d'accès sont dans la base : le public lit ce qui est publié (ni les options, ni les dates masquées, ni le
 suivi, ni les séances), seuls les administrateurs écrivent. Le script a été vérifié sur un PostgreSQL local avec les
-rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrement d'une date, journal). Les onze maquettes ont
-ensuite été essayées de bout en bout sur la base réelle : chacune la lit en moins d'une seconde, affiche sans recharger
+rôles de Supabase (droits de lecture et d'écriture, déclencheurs, enregistrement d'une date, journal). Le site a
+ensuite été essayé de bout en bout sur la base réelle : il la lit en moins d'une seconde, affiche sans recharger
 une précision ajoutée dans la base, ouvre l'édition après connexion d'un compte administrateur, enregistre dans la base
 un paragraphe écrit dans la page, et ouvre une date passée dans le panneau de modification.
 
@@ -698,10 +638,10 @@ range en colonne à gauche. On y trouve :
   à chaque écriture et prévient l'équipe (`crescite_feuilles_avant`, `crescite_notif_feuilles`).
   Les écritures passent par les mêmes tables et les mêmes règles RLS que l'administration ; une erreur se lit dans la
   feuille, sans rien perdre de la saisie.
-  `node maquettes/gestes-equipe.mjs` le vérifie dans Chromium (48 vérifications : hors ligne, puis sur une base
+  `node site/gestes-equipe.mjs` le vérifie dans Chromium (48 vérifications : hors ligne, puis sur une base
   simulée en lecture-écriture, stockage compris, où le compte administre : la date, un horaire, une présence, le lieu,
   prévenir, une notification, un document modifié puis un fichier ajouté, une ligne de feuille de route, la mise à
-  jour depuis la base, le brouillon, la publication, la composition), après `python3 maquettes/build.py synthese`.
+  jour depuis la base, le brouillon, la publication, la composition), après `python3 site/build.py`.
 
 Les notifications arrivent en direct, avec un badge sur l'icône, et sur le téléphone même quand l'application est
 fermée, une fois la fonction `crescite-push` déployée. Un geste sur une notification ouvre la bonne page.
@@ -729,7 +669,7 @@ la page (les chiffres, la liste de chargement, le planning) se pose, le héros r
 saison restent en haut, ce qu'un pli ouvre se pose, le téléphone confirme un bouton qui a réussi, la porte se pose à
 l'ouverture et secoue une connexion refusée. Tout ce
 qui bouge en continu ne touche que `transform` et `opacity` ; rien ne bouge si l'appareil demande moins d'animations, ni
-avec `?anim=0`, la teinte du spectacle exceptée. `node maquettes/mouvement-equipe.mjs` les vérifie dans Chromium, hors
+avec `?anim=0`, la teinte du spectacle exceptée. `node site/mouvement-equipe.mjs` les vérifie dans Chromium, hors
 ligne, sur une saison fictive.
 
 **Les notifications.** Le troisième script, `supabase/migrations/20261022_crescite_notifications.sql`, s'exécute
@@ -907,7 +847,7 @@ onzième relancé, le septième et le troisième relancés après lui ; la fonct
 `supabase/migrations/20261031_crescite_residences.sql`, change une seule règle : jusqu'ici une date qui n'était pas une
 représentation était masquée d'office ; désormais une résidence se montre ou non, comme une représentation (sa case
 « Publiée sur le site », que l'administration laisse cocher), et les répétitions et les dates « autre » restent pour
-l'équipe. Lancé le 26 octobre 2026 ; les 47 résidences sont montrées (`ecrire.py`). Sur le site (la synthèse), elles ne
+l'équipe. Lancé le 26 octobre 2026 ; les 47 résidences sont montrées (`ecrire.py`). Sur le site, elles ne
 sont pas dans les saisons mais dans l'historique de chaque spectacle (règle 23 : « Résidence », sans réservation, hors
 des cartes et des chiffres). Les alertes de tournée ne prennent toujours que des représentations ; montrer une
 résidence passée ne prévient personne. 11 essais (`node residences.mjs` : les dix premiers scripts et le douzième, relancé

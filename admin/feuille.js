@@ -50,7 +50,7 @@
    maintenant ce qu'elle demande (actualiser(…).remplies).
    Retirés : FEUILLE.SECTIONS, FEUILLE.fusionner, FEUILLE.vue et FEUILLE.css (l'ancien formulaire).
    La police FdR Sans (vendor/fdr-sans-*.ttf) est Carlito réduite au latin et renommée (Carlito a un nom réservé) ; le
-   logo (logo-feuille.svg, à côté de ce fichier) est écrit par maquettes/build.py dans le site construit (sa source
+   logo (logo-feuille.svg, à côté de ce fichier) est écrit par site/build.py dans le site construit (sa source
    reste privée) : sans lui, un badge « crescite » à sa place.
 
    Le planning pose le déroulé type du spectacle (spectacle.feuille_modele : [{avant_min, quoi, qui, fin?, jours?}])
@@ -1089,7 +1089,7 @@ ${s} .s{background:${MISE.surligne}}`;
     }
     return policesPdf;
   }
-  // le logo (noir), écrit à côté de ce fichier par maquettes/build.py ; sans lui, un badge
+  // le logo (noir), écrit à côté de ce fichier par site/build.py ; sans lui, un badge
   let logoCharge = null;
   function logo() {
     if (!logoCharge) {

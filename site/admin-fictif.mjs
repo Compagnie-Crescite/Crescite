@@ -1,5 +1,5 @@
 // La base fictive de l’administration, commune aux harnais (tableau.mjs, niveau.mjs) : un petit serveur qui sert
-// admin/ et maquettes/src/, les lectures et écritures REST de Supabase simulées (DB, MODIFS, ECRITURES), la session posée
+// admin/ et site/src/, les lectures et écritures REST de Supabase simulées (DB, MODIFS, ECRITURES), la session posée
 // dans le stockage du navigateur, le temps réel coupé, les polices coupées. Aucune donnée réelle, aucun appel à la base.
 // ouvrir(navigateur, { largeur, hauteur, hash, sombre, prefsAbsentes }) → { ctx, page, erreurs } ; ok(nom, v, detail) note une
 // vérification ; bilan(CAPT) les imprime, ferme le serveur et sort en erreur si une manque.
@@ -12,7 +12,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || '/opt/node22/
 const ICI = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(ICI, '..');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.ttf': 'font/ttf', '.png': 'image/png' };
 // admin/ tel qu'il est publié : ses fichiers, et les outils communs que build.py copie à côté (agenda.js, tentacules.js…) ;
-// après le build, ce qu'il écrit lui-même vient de maquettes/dist/ : la page (les couleurs de la saison posées), le logo et
+// après le build, ce qu'il écrit lui-même vient de site/dist/ : la page (les couleurs de la saison posées), le logo et
 // les icônes ; le reste, des sources
 const DIST = path.join(ICI, 'dist');
 const serveur = http.createServer((req, res) => {

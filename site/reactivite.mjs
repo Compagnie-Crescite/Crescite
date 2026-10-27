@@ -1,8 +1,8 @@
 // La réactivité d'une maquette, mesurée (règle 15 C du contrat) : chaque geste se voit à l'image suivante, une page
 // nouvelle montre son contenu tout de suite, rien ne bloque, rien ne saute.
-// Usage : node maquettes/reactivite.mjs <dossier de sortie> m03 [m04 …] [--strict] [--dist <dossier des maquettes>]
+// Usage : node site/reactivite.mjs <dossier de sortie> m03 [m04 …] [--strict] [--dist <dossier des maquettes>]
 //   --strict  sort en erreur (code 1) au premier budget dépassé
-//   --dist    un autre dossier que maquettes/dist (pour mesurer une version d'avant, par exemple)
+//   --dist    un autre dossier que site/dist (pour mesurer une version d'avant, par exemple)
 // Pour chaque maquette (<dist>/<n>.html?base=0&intro=0) : le bureau (1440×900), puis le téléphone (390×844, tactile)
 // avec le processeur ralenti ×4 (CDP Emulation.setCPUThrottlingRate). On mesure le premier rendu (FCP, LCP), le
 // décalage de mise en page (CLS, par fenêtres de session) et les longues tâches du chargement ; puis on rejoue les
@@ -194,7 +194,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const iDist = args.indexOf('--dist');
   const dist = iDist >= 0 ? pathToFileURL(args[iDist + 1].replace(/\/?$/, '/')) : new URL('./dist/', import.meta.url);
   const [out, ...names] = args.filter((a, i) => !a.startsWith('--') && !(iDist >= 0 && i === iDist + 1));
-  if (!out || !names.length) { console.error('usage : node maquettes/reactivite.mjs <dossier de sortie> m03 [m04 …] [--strict] [--dist <dossier>]'); process.exit(2); }
+  if (!out || !names.length) { console.error('usage : node site/reactivite.mjs <dossier de sortie> m03 [m04 …] [--strict] [--dist <dossier>]'); process.exit(2); }
   mkdirSync(out, { recursive: true });
   const { chromium } = await import(PW);
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined, args: ['--no-sandbox'] });

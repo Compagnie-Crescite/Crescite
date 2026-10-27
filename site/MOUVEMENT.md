@@ -43,16 +43,16 @@ liste qui se redessine glisse, un élément qui s'en va se replie (`retirerLigne
 ## Ce que les bancs vérifient
 
 ```sh
-python3 maquettes/build.py synthese        # d'abord : maquettes/dist/equipe et maquettes/dist/admin
-node maquettes/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (43 vérifications)
-node maquettes/mouvement-admin.mjs         # l'administration, sur une base fictive (30 vérifications)
-CPU=4 node maquettes/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
+python3 site/build.py        # d'abord : site/dist/equipe et site/dist/admin
+node site/mouvement-equipe.mjs        # l'espace de l'équipe, hors ligne, sur une saison fictive (43 vérifications)
+node site/mouvement-admin.mjs         # l'administration, sur une base fictive (30 vérifications)
+CPU=4 node site/mouvement-equipe.mjs  # la même chose sur un téléphone quatre fois plus lent (le budget du contrat)
 ```
 
 Chacun ouvre l'application dans Chromium sans toucher à la vraie base (la session est gardée dans le navigateur ; les
 lectures de tables reçoivent des lignes inventées ; les écritures répondent vide ou sont coupées), au téléphone et à
 l'ordinateur, à une heure figée, puis avec le mouvement réduit et avec `?anim=0`. Les captures vont dans
-`maquettes/dist/shots-equipe/` et `maquettes/dist/shots-admin/`. Un banc sort en erreur dès qu'une vérification manque.
+`site/dist/shots-equipe/` et `site/dist/shots-admin/`. Un banc sort en erreur dès qu'une vérification manque.
 
 ## Ce qui a été écarté
 

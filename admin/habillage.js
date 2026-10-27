@@ -1,7 +1,7 @@
 'use strict';
 /* L'habillage de l'administration : la charte du site public (Ubuntu pour les titres, Open Sans pour le texte, Raleway
    pour les étiquettes en capitales espacées ; ses neutres, sa nuit par défaut ; l'accent à la couleur de la saison, que
-   maquettes/build.py pose dans index.html : --saison-*, jamais écrites ici), un en-tête de nuit, des cartes douces et
+   site/build.py pose dans index.html : --saison-*, jamais écrites ici), un en-tête de nuit, des cartes douces et
    colorées, des tuiles à icônes, des boutons en dégradé. Chargé en dernier : ses règles passent après celles d'index.html
    et des modules (equipe.js, planning.js, disponibilites.js, tableau.js, gestes.js, menus.js), qui gardent la structure
    et le comportement ; ici, rien que l'apparence, la nuit (par défaut) comme le jour (data-theme="jour"), aux couleurs

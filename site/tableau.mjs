@@ -1,9 +1,9 @@
 // Le tableau de bord de l'administration (admin/index.html, admin/tableau.js), vérifié dans Chromium, hors ligne.
-//   node maquettes/tableau.mjs
+//   node site/tableau.mjs
 // L'administration s'ouvre sur une base fictive : les lectures REST de Supabase sont simulées (une poignée de dates,
 // personnes, lieux, devis, frais, propositions…), la session est posée dans le stockage du navigateur, le temps réel est
 // coupé. Aucune donnée réelle, aucun appel à la base. À l'ordinateur (1 600 px), puis au téléphone ; chaque vérification
-// dit ce qu'elle regarde ; les captures vont dans maquettes/dist/shots-tableau/. Sort en erreur si une vérification
+// dit ce qu'elle regarde ; les captures vont dans site/dist/shots-tableau/. Sort en erreur si une vérification
 // manque. Demande Playwright et Chromium (PLAYWRIGHT_MODULE, CHROMIUM, comme onglets.mjs).
 import fs from 'node:fs';
 import path from 'node:path';

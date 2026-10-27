@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""Assemble la synthèse de la partie publique.
+"""Assemble le site de la compagnie.
 
-La synthèse (maquettes/src/synthese.html) lit ses contenus dans l'objet D : le texte exact de crescite.fr (D.site, D.shows,
+Le site (site/src/index.html) lit ses contenus dans l'objet D : le texte exact de crescite.fr (D.site, D.shows,
 D.dates, D.saisons), le logo, les photos et la carte des tournées. Le script remplace /*__DATA__*/null par ces données et
-ajoute juste après les outils communs (OUTILS, maquettes/src/*.js).
+ajoute juste après les outils communs (OUTILS, site/src/*.js).
 
 Usage :
-  python3 maquettes/build.py              la synthèse (maquettes/dist/synthese.html)
-  python3 maquettes/build.py --captures   avec ses captures (Playwright, maquettes/dist/shots/)
-  python3 maquettes/build.py --pages      en plus, le site GitHub Pages dans docs/ (la synthèse en index)
+  python3 site/build.py              le site (site/dist/index.html) et les espaces réservés, à côté
+  python3 site/build.py --captures   avec ses captures (Playwright, site/dist/shots/)
+  python3 site/build.py --pages      en plus, le site publié dans docs/ (GitHub Pages et Cloudflare Pages)
 
 Les fichiers privés (logo 2.0, photos) sont lus dans private/ ; sans eux, des substituts neutres.
 """
 import base64
-import importlib.util
 import json
 import re
 import sys
@@ -23,8 +22,8 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "maquettes" / "src"
-DIST = ROOT / "maquettes" / "dist"
+SRC = ROOT / "site" / "src"
+DIST = ROOT / "site" / "dist"
 PRIVATE = ROOT / "private"
 # la marque (le logo 2.0 et le tracé de ses bras) est versionnée dans marque/ : toute copie du dépôt (un agent, un autre
 # poste) construit et publie le vrai logo. private/brand/ reste lu si marque/ manque.
@@ -48,9 +47,68 @@ def fichier_photo(rel):
             return d / rel
     return None
 
-_spec = importlib.util.spec_from_file_location("proto_build", ROOT / "prototype" / "build.py")
-proto = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(proto)
+# (repris du premier prototype, retiré en octobre 2026 : la pieuvre et les photos de substitution, quand le logo ou les
+# photos manquent)
+# Assignation des spectacles aux huit bras de la pieuvre (voir la scène dans app.js)
+ARM_OF = {
+    "cleophene": "A1outerL", "ci-gisait-cyrano": "A1outerR",
+    "imaginaire-force": "A1innerL", "la-folle-idee": "A1innerR",
+    "macbeth-fatum": "A2L", "actions-culturelles": "A2R",
+    "berenice": "C1L", "mon-royaume": "C1R",
+}
+# Sorties des bras (coordonnées du dessin 1536 px) : seules valeurs nécessaires au substitut public
+FALLBACK_EXITS = {
+    "A1outerL": ((257, 715), (-0.949, -0.316)), "A1outerR": ((1284, 708), (0.876, -0.483)),
+    "A1innerL": ((325, 778), (-0.5, 0.866)), "A1innerR": ((1211, 778), (0.5, 0.866)),
+    "A2L": ((536, 882), (-0.05, 1.0)), "A2R": ((1000, 882), (0.05, 1.0)),
+    "C1L": ((615, 916), (0.04, 1.0)), "C1R": ((921, 916), (-0.04, 1.0)),
+}
+
+
+def _poly(points):
+    return "M " + " L ".join(f"{x:.1f} {y:.1f}" for x, y in points) + " Z"
+
+
+def fallback_logo_and_arms():
+    """Pieuvre de substitution (dépôt public, sans le logo 2.0) : une tête et huit bras simples."""
+    import math
+    head = [(771 + 150 * math.cos(a / 40 * 2 * math.pi), 560 + 205 * math.sin(a / 40 * 2 * math.pi)) for a in range(40)]
+    arms, groups = {}, {"tentacles-left": [], "head-left": [_poly(head)], "head-right": [], "tentacles-right": []}
+    for key, ((ex, ey), (dx, dy)) in FALLBACK_EXITS.items():
+        left = key.endswith("L")
+        bx, by = (720 if left else 822), 700
+        cx_, cy_ = (bx + ex) / 2 + (-60 if left else 60), max(by, ey) + 60
+        tx, ty = ex - dx * 26, ey - dy * 26          # le bras dessiné s'arrête un peu avant la sortie
+        cl = []
+        for i in range(31):
+            t = i / 30
+            x = (1 - t) ** 2 * bx + 2 * (1 - t) * t * cx_ + t * t * tx
+            y = (1 - t) ** 2 * by + 2 * (1 - t) * t * cy_ + t * t * ty
+            cl.append((x, y))
+        L, R = [], []
+        for i, (x, y) in enumerate(cl):
+            a, b = cl[max(0, i - 1)], cl[min(30, i + 1)]
+            nx, ny = -(b[1] - a[1]), b[0] - a[0]
+            n = math.hypot(nx, ny) or 1
+            w = (34 * (1 - i / 30) + 7 * (i / 30)) / 2
+            L.append((x + nx / n * w, y + ny / n * w)); R.append((x - nx / n * w, y - ny / n * w))
+        groups["tentacles-left" if left else "tentacles-right"].append(_poly(L + R[::-1]))
+        pts = [(tx - dx * 10 + dx * k * 2, ty - dy * 10 + dy * k * 2) for k in range(24)]
+        arms[key] = {"pts": [[round(x, 1), round(y, 1)] for x, y in pts], "own": 6, "exitdir": [dx, dy]}
+    paths = "".join(f'<path id="{gid}" fill="#fff" d="{" ".join(ds)}"/>' for gid, ds in groups.items())
+    svg = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="63 65 1408 1405" role="img" aria-labelledby="t"><title id="t">Crescite</title>'
+           '<path id="blob" fill="#BC3E80" d="M767 75c387 0 697 310 697 697s-310 697-697 697S70 1159 70 772 380 75 767 75z"/>'
+           + paths + '<path id="wordmark" fill="#fff" d="M0 0"/></svg>')
+    return svg, {"box": [263, 351, 1279, 903], "width": 6.5, "gap": 2.5, "arms": arms}
+
+
+def placeholder_photo(title: str) -> str:
+    """Neutral stand-in when the company photos are not available (public repository)."""
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750"><defs><radialGradient id="g" cx="50%" cy="40%" r="75%">'
+           f'<stop offset="0" stop-color="#5c1640"/><stop offset="1" stop-color="#13080e"/></radialGradient></defs>'
+           f'<rect width="1200" height="750" fill="url(#g)"/><text x="600" y="400" text-anchor="middle" font-family="serif" '
+           f'font-style="italic" font-size="84" fill="#f7ecf1" opacity=".55">{title}</text></svg>')
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode()
 
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
 MOISC = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
@@ -91,7 +149,7 @@ def theme(complet=False):
     dernier spectacle de la saison colore le thème complet », Angelo Jossec ; aujourd'hui Cassandres). → {slug, couleur
     (assez sombre pour un texte sur fond clair et une pieuvre blanche dessus : la tache du logo), vive (sur fond sombre)}.
     complet=True y ajoute les accents qu'en tirent les espaces réservés (administration, équipe, salles, réponse), portés
-    de themeSaison (synthese.html) : porteur, texte, texteNuit, et leurs nuances (fonce, doux, profond, de jour et de nuit)."""
+    de themeSaison (site/src/index.html) : porteur, texte, texteNuit, et leurs nuances (fonce, doux, profond, de jour et de nuit)."""
     site = json.loads((ROOT / "data" / "site-crescite.json").read_text(encoding="utf-8"))
     cass = json.loads((ROOT / "data" / "cassandres.json").read_text(encoding="utf-8"))
     U = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))["spectacles"]
@@ -146,7 +204,7 @@ def logo_variants():
     if path:
         s = path.read_text(encoding="utf-8")
     else:
-        s, _ = proto.fallback_logo_and_arms()
+        s, _ = fallback_logo_and_arms()
     paths = {k: v for k, v in re.findall(r'<path id="([^"]+)"([^>]*)/>', s)}
     def d_of(k):
         m = re.search(r'd="([^"]+)"', paths.get(k, ""))
@@ -179,18 +237,18 @@ def arms_data():
         a = json.loads(f.read_text(encoding="utf-8"))
         a.pop("_note", None)
     else:
-        _, a = proto.fallback_logo_and_arms()
-    a["armOf"] = proto.ARM_OF
+        _, a = fallback_logo_and_arms()
+    a["armOf"] = ARM_OF
     return a
 
 
 # les pages qui ont la scène de la pieuvre (la 10 et la synthèse) : ses vraies tentacules s'y déploient (pieuvre.js, D.pieuvre),
 # et la petite pieuvre de l'en-tête peut y vivre (creature.js, si la page l'appelle)
-PAGES_PIEUVRE = ("synthese",)
+PAGES_PIEUVRE = ("index",)
 
 
 def pieuvre_data():
-    """Les huit tentacules du logo, prêtes à se déployer (faites par maquettes/pieuvre.py) ; None sans le fichier (les pages
+    """Les huit tentacules du logo, prêtes à se déployer (faites par site/pieuvre.py) ; None sans le fichier (les pages
     gardent alors le logo entier, immobile)."""
     f = fichier_marque("crescite-logo-2.0-tentacules.json")
     if not f:
@@ -220,7 +278,7 @@ def photos(files, base=None):
     out = {}
     for k, (f, titre) in files.items():
         if f is None:
-            out[k] = proto.placeholder_photo(titre)
+            out[k] = placeholder_photo(titre)
         elif base is not None:
             out[k] = f"{base}{k}.webp"
         else:
@@ -529,14 +587,14 @@ CLE_PUBLIQUE = "sb_publishable__SvO0qVI2BvcBK5vYgxjZQ_U-evgPKD"     # la clé pu
 
 def fond_carte():
     """Le fond de la carte de tournée de l'administration (admin/tournee.js) : la France, la Belgique, le Luxembourg, Rouen
-    et la projection du site (prototype/src/map.json, projection), écrits dans admin/fond-carte.js. Même fond, même
+    et la projection du site (data/carte-projection.json, projection), écrits dans admin/fond-carte.js. Même fond, même
     projection que la carte du site : un lieu de la base se place au même endroit."""
-    mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
+    mp = json.loads((ROOT / "data" / "carte-projection.json").read_text(encoding="utf-8"))
     projection(mp["places"])
     fond = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"], "rouen": mp["rouen"], "projection": projection.coefficients}
     texte = ("'use strict';\n// Le fond de la carte de tournée (admin/tournee.js) : la France, la Belgique, le Luxembourg, Rouen, et la projection du site\n"
-             "// (une conique conforme de Lambert recalée sur les communes connues : maquettes/build.py, projection). Écrit par\n"
-             "// maquettes/build.py (fond_carte) depuis prototype/src/map.json : ne pas modifier à la main.\n"
+             "// (une conique conforme de Lambert recalée sur les communes connues : site/build.py, projection). Écrit par\n"
+             "// site/build.py (fond_carte) depuis data/carte-projection.json : ne pas modifier à la main.\n"
              f"const FOND_CARTE = {json.dumps(fond, ensure_ascii=False, separators=(',', ':'))};\n")
     (ROOT / "admin" / "fond-carte.js").write_text(texte, encoding="utf-8")
     return fond
@@ -588,7 +646,7 @@ def build_data():
     U = json.loads((ROOT / "data" / "univers-spectacles.json").read_text(encoding="utf-8"))
     cadrages = {k: v for k, v in json.loads((ROOT / "data" / "cadrages.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
     rows = json.loads((ROOT / "data" / "representations-site-2016-2027.json").read_text(encoding="utf-8"))
-    mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
+    mp = json.loads((ROOT / "data" / "carte-projection.json").read_text(encoding="utf-8"))
     today = date.today().isoformat()
     proj = projection(mp["places"])
 
@@ -908,7 +966,7 @@ def captures(names):
     shots = DIST / "shots"
     shots.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
-        subprocess.run(["node", str(ROOT / "maquettes" / "shoot.mjs"), tmp, *names], check=True)
+        subprocess.run(["node", str(ROOT / "site" / "shoot.mjs"), tmp, *names], check=True)
         for n in names:
             for view, width in (("home", 1200), ("show", 1200), ("agenda", 1200), ("mobile", 390), ("mshow", 390), ("full", 640)):
                 f = Path(tmp) / f"{n}-{view}.png"
@@ -949,7 +1007,7 @@ def poser_saison(page):
     """Ajoute à la fin du <head> d'une page d'espace réservé le <style> des couleurs de la saison (après sa feuille de
     style, qui ne donne que les défauts neutres ; l'habillage de l'administration, posé ensuite, n'en redéfinit aucune)."""
     th = theme(complet=True)
-    style = ('<style id="couleurs-saison">/* écrit par maquettes/build.py : les couleurs de la saison (' + th["slug"] + ") */ :root { "
+    style = ('<style id="couleurs-saison">/* écrit par site/build.py : les couleurs de la saison (' + th["slug"] + ") */ :root { "
              + "; ".join(f"--{n}: {th[k]}" for n, k in SAISON_VARS) + "; }</style>\n</head>")
     html = page.read_text(encoding="utf-8")
     if "</head>" not in html:
@@ -978,7 +1036,7 @@ def admin(dest):
     v = logo_variants()
     partage = {"logo": {"octopus": v["octopus"], "octopusPaths": v["octopusPaths"]}, "arms": arms_data()}
     (dest / "admin" / "logo.js").write_text(
-        "/* Écrit par maquettes/build.py (admin) : le logo 2.0 (sa pieuvre, ses quatre tracés, ses bras) pour l'administration\n"
+        "/* Écrit par site/build.py (admin) : le logo 2.0 (sa pieuvre, ses quatre tracés, ses bras) pour l'administration\n"
         "   et l'espace de l'équipe ; tentacules.js le pose dans l'en-tête (data-pieuvre). */\n"
         f"self.CRESCITE_LOGO = {json.dumps(partage, ensure_ascii=False, separators=(',', ':'))};\n", encoding="utf-8")
     # les accents et la pieuvre de l'en-tête à la couleur de la saison (règle 22), comme les trois autres espaces
@@ -991,7 +1049,7 @@ def admin(dest):
         shutil.copyfile(SRC / f, dest / "admin" / f)
     # le logo des feuilles de route (admin/feuille.js le lit à côté de lui) : la tache noire, la pieuvre et le mot en blanc,
     # tirés du logo privé (private/brand). Sa source ne va jamais dans le dépôt ; le dessin produit à la construction va,
-    # comme le logo des maquettes, dans maquettes/dist et dans le site publié (docs/ : publication décidée par la
+    # comme le logo des maquettes, dans site/dist et dans le site publié (docs/ : publication décidée par la
     # compagnie). Sans le logo privé, la feuille montre un badge à sa place.
     logo = dest / "admin" / "logo-feuille.svg"
     if fichier_marque(LOGO):
@@ -1004,13 +1062,13 @@ def equipe(dest):
     """L'espace de l'équipe (equipe/), une application installable, à côté de l'administration : il charge par ../admin/ le
     client Supabase, l'outil des lignes d'agenda, la feuille de route et les tentacules, que admin(dest) copie.
     En plus de la copie, trois choses écrites dans dest seulement (jamais dans equipe/) :
-      carte.js   la France, la Belgique, le Luxembourg, Rouen et la projection des maquettes (prototype/src/map.json), pour
+      carte.js   la France, la Belgique, le Luxembourg, Rouen et la projection des maquettes (data/carte-projection.json), pour
                  la carte de la tournée ;
       icones/    les icônes de l'application (192, 512, 512 « maskable », 180 pour l'iPhone, et le badge des notifications),
                  à la couleur de la saison, la seule série d'icônes du site : le site public, l'administration, les salles
                  et la réponse y renvoient aussi (icon et apple-touch-icon) ; tirées du logo 2.0 dès que sa source
                  privée est là (private/brand), quel que soit dest : la source ne va jamais dans le dépôt, le dessin
-                 produit va, comme le logo des maquettes, dans maquettes/dist et dans le site publié (docs/,
+                 produit va, comme le logo des maquettes, dans site/dist et dans le site publié (docs/,
                  publication décidée par la compagnie). Sans la source privée, la pieuvre de
                  substitution. SVG → PNG par cairosvg, rsvg-convert ou Chromium (Playwright : PLAYWRIGHT_MODULE,
                  CHROMIUM), gardées dans le dossier temporaire tant que le logo ne change pas ; sans aucun d'eux, une
@@ -1039,12 +1097,12 @@ def equipe(dest):
 
     # ———— la carte de la tournée
     try:
-        mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
+        mp = json.loads((ROOT / "data" / "carte-projection.json").read_text(encoding="utf-8"))
         projection(mp["places"])
         carte = {"viewBox": mp["viewBox"], "contour": mp["outline"], "belgique": mp["belgium"], "luxembourg": mp["lux"],
                  "rouen": mp["rouen"], "projection": projection.coefficients}
         (out / "carte.js").write_text(
-            "/* Écrit par maquettes/build.py (equipe) : la France et Rouen, pour la carte de la tournée de l'espace de l'équipe. */\n"
+            "/* Écrit par site/build.py (equipe) : la France et Rouen, pour la carte de la tournée de l'espace de l'équipe. */\n"
             f"self.CRESCITE_CARTE = {json.dumps(carte, ensure_ascii=False, separators=(',', ':'))};\n", encoding="utf-8")
     except Exception as e:
         avertir("carte de la tournée non écrite", e)
@@ -1178,8 +1236,19 @@ def reponse(dest):
         print(f"reponse : accents au gris neutre (couleurs de la saison non posées : {e})")
 
 
+# docs/index.html, l'ancienne adresse du site : elle mène à l'index, la suite de l'adresse (#/spectacle/…, ?date=…)
+# gardée, sans rien charger d'autre
+ANCIENNE_ADRESSE = (
+    '<!doctype html>\n<html lang="fr">\n<head>\n<meta charset="utf-8">\n'
+    '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">\n'
+    '<title>Compagnie Crescite</title>\n'
+    '<script>location.replace("./" + location.search + location.hash);</script>\n'
+    '<meta http-equiv="refresh" content="0; url=./">\n'
+    '</head>\n<body><p><a href="./">Compagnie Crescite</a></p></body>\n</html>\n')
+
+
 def pages(D, files, names):
-    """Le site GitHub Pages (docs/) : la synthèse en index, hors des moteurs de recherche, et les photos une seule fois
+    """Le site publié (docs/) : l'index, hors des moteurs de recherche, et les photos une seule fois
     dans docs/photos/, que la page charge au lieu de les embarquer."""
     import shutil
     # jamais de site publié avec la pieuvre de substitution à la place du vrai logo
@@ -1198,8 +1267,8 @@ def pages(D, files, names):
     for n in names:
         html = assemble(n, D, photo_urls).replace('<meta charset="utf-8">', '<meta charset="utf-8">\n' + NOINDEX, 1)
         (docs / f"{n}.html").write_text(html, encoding="utf-8")
-        if n == "synthese":  # (admin, équipe et réponse y renvoient par synthese.html)
-            (docs / "index.html").write_text(html, encoding="utf-8")
+    # l'ancienne adresse du site (docs/index.html, celle des courriels déjà envoyés) mène à l'index, son adresse gardée
+    (docs / "synthese.html").write_text(ANCIENNE_ADRESSE, encoding="utf-8")
     admin(docs)
     equipe(docs)
     pro(docs)
@@ -1207,7 +1276,7 @@ def pages(D, files, names):
     (docs / ".nojekyll").write_text("", encoding="utf-8")
     (docs / "_headers").write_text(ENTETES, encoding="utf-8")
     size =sum(f.stat().st_size for f in docs.rglob("*") if f.is_file()) / 1024 / 1024
-    print(f"pages : la synthèse dans docs/ ({size:.1f} Mo)")
+    print(f"pages : le site dans docs/ ({size:.1f} Mo)")
 
 
 def main():
@@ -1215,7 +1284,7 @@ def main():
     photo_urls = photos(files)
     DIST.mkdir(parents=True, exist_ok=True)
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    names = args or ["synthese"]
+    names = args or ["index"]
     for n in names:
         out = DIST / f"{n}.html"
         out.write_text(assemble(n, D, photo_urls), encoding="utf-8")

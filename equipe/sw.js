@@ -3,7 +3,7 @@
    connectée seulement), et reçoit les notifications que pousse la fonction crescite-push : il les montre, et un geste
    sur l'une d'elles ouvre l'application à la bonne vue.
 
-   VERSION est posée par maquettes/build.py (equipe(dest)) : une empreinte de tout ce que ce service garde (la page, ses
+   VERSION est posée par site/build.py (equipe(dest)) : une empreinte de tout ce que ce service garde (la page, ses
    scripts, ceux de l'administration qu'elle charge, la carte, les icônes). Une nouvelle version s'installe à côté et
    attend : la page annonce « Nouvelle version disponible » et, sur un geste, lui demande de prendre la main (skipWaiting).
    Servi sans build (le dossier equipe/ tel quel), VERSION garde son gabarit (deux soulignés devant) : tout passe alors
