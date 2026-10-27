@@ -39,7 +39,7 @@ const TOURNEE = (() => {
   }
   const quandTexte = j => j < 0 ? 'en même temps' : j === 0 ? 'le même jour' : j === 1 ? 'le lendemain' : j < 14 ? `${j} jours après` : j < 60 ? `${Math.round(j / 7)} semaines après` : `${Math.round(j / 30)} mois après`;
   function vue() {
-    if (!F) { cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('carte')}</div><div class="vide bloc">Le fond de carte manque (admin/fond-carte.js : maquettes/build.py l’écrit).</div>`); return; }
+    if (!F) { cadre('representations', `<div class="tete"><h1>Représentations</h1>${TABLEUR.choixVue('carte')}</div><div class="vide bloc">Le fond de carte manque (admin/fond-carte.js : site/build.py l’écrit).</div>`); return; }
     const saisonCourante = AGENDA.saisonDe(AUJ);
     const f = session.tournee = Object.assign({ saison: saisonCourante, spectacle: '', avenir: false, serre: false }, session.tournee || {});
     const saisons = [...new Set(E.dates.map(d => d.saison))].sort().reverse();

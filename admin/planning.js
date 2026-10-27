@@ -342,8 +342,8 @@ const PLANNING = (() => {
   // ================================================================================================ le style
   const CSS = `
 .pl { --pl-fond: var(--surface, var(--carte, #fffdf9)); --pl-papier: var(--papier, var(--fond, #f6f2eb)); --pl-texte: var(--encre, #1d1720);
-  --pl-sourd: var(--gris, #675e6b); --pl-filet: var(--filet, var(--trait, #e4dde3)); --pl-accent: var(--magenta, var(--accent, #a3306b));
-  --pl-doux: var(--magenta-doux, var(--accent-doux, #f5e4ec)); --pl-alerte: var(--alerte, #b3261e); --pl-ok: var(--ok, #1d6f47);
+  --pl-sourd: var(--gris, #675e6b); --pl-filet: var(--filet, var(--trait, #e4dde3)); --pl-accent: var(--magenta, var(--accent, #5f565a));
+  --pl-doux: var(--magenta-doux, var(--accent-doux, #ece5da)); --pl-alerte: var(--alerte, #b3261e); --pl-ok: var(--ok, #1d6f47);
   --pl-nom: 168px; --pl-col: 36px; --pl-ligne: 40px; --pl-rayon: 12px;
   --pl-hachure: color-mix(in srgb, var(--pl-texte) 34%, transparent); --pl-we: color-mix(in srgb, var(--pl-texte) 4%, transparent);
   --pl-courbe: cubic-bezier(.2, .7, .2, 1);
@@ -370,7 +370,7 @@ const PLANNING = (() => {
 .pl-vues button[aria-pressed="true"] { background: var(--pl-fond); color: var(--pl-texte); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .pl-filtres { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .pl-filtres label { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--pl-sourd); }
-.pl-filtres select { min-height: 38px; max-width: 13.5rem; padding: 0 30px 0 10px; border-radius: 10px; border: 1px solid var(--pl-filet); background: var(--pl-fond); color: var(--pl-texte); font-size: .88rem; }
+.pl-filtres select { min-height: 38px; max-width: 13.5rem; padding: 0 30px 0 10px; border-radius: 10px; border: 1px solid var(--bord-champ, var(--pl-filet)); background: var(--pl-fond); color: var(--pl-texte); font-size: .88rem; }
 .pl-legende { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 10px; padding: 0; list-style: none; font-size: .8rem; color: var(--pl-sourd); }
 .pl-legende li { display: inline-flex; align-items: center; gap: 6px; }
 .pl-legende i { display: inline-block; width: 18px; height: 12px; border-radius: 3px; }
@@ -480,6 +480,8 @@ details.pl-alerte p { margin: 8px 0 0; }
 .pl-o-x { z-index: 4; align-self: end; justify-self: start; margin: 0 0 2px 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--pl-alerte);
   color: var(--pl-fond); font-size: .62rem; font-weight: 800; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--pl-fond); }
 .pl-vide { padding: 22px 14px; text-align: center; color: var(--pl-sourd); }
+/* dans la grille, aux rangs de hauteur fixe (--pl-ligne), la phrase prend deux rangs, centrée : elle était coupée à mi-hauteur */
+.pl-grille-e > .pl-vide { grid-row: span 2; display: grid; place-items: center; padding: 0 14px; }
 
 /* ———— la vue Mois */
 .pl-mois-grille { border: 1px solid var(--pl-filet); border-radius: var(--pl-rayon); background: var(--pl-fond); overflow: hidden; }
@@ -1204,8 +1206,10 @@ details.pl-alerte p { margin: 8px 0 0; }
     });
     const surMq = () => { if (!S.detruit) dessiner(); };
     if (mq && mq.addEventListener) mq.addEventListener('change', surMq);
-    const mqSombre = typeof matchMedia === 'function' ? matchMedia('(prefers-color-scheme: dark)') : null;
-    if (mqSombre && mqSombre.addEventListener) mqSombre.addEventListener('change', surMq);
+    // le thème de la page (la nuit par défaut, le jour par data-theme="jour" sur <html>) : un changement d'attribut redessine,
+    // les teintes se recalculent sur le nouveau fond
+    const mqSombre = typeof MutationObserver === 'function' ? new MutationObserver(surMq) : null;
+    if (mqSombre) mqSombre.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     S.id = `pl${Math.random().toString(36).slice(2, 8)}`;
     const premiere = periode(S.vue, S.jour, S.semaines);
@@ -1228,7 +1232,7 @@ details.pl-alerte p { margin: 8px 0 0; }
       detruire() {
         S.detruit = true; clearTimeout(minuteur);
         if (mq && mq.removeEventListener) mq.removeEventListener('change', surMq);
-        if (mqSombre && mqSombre.removeEventListener) mqSombre.removeEventListener('change', surMq);
+        if (mqSombre) mqSombre.disconnect();
         document.removeEventListener('pointerdown', dehors, true); document.removeEventListener('focusin', dehors);
         racine.innerHTML = '';
       },

@@ -3,14 +3,14 @@
    connectée seulement), et reçoit les notifications que pousse la fonction crescite-push : il les montre, et un geste
    sur l'une d'elles ouvre l'application à la bonne vue.
 
-   VERSION est posée par maquettes/build.py (equipe(dest)) : une empreinte de tout ce que ce service garde (la page, ses
+   VERSION est posée par site/build.py (equipe(dest)) : une empreinte de tout ce que ce service garde (la page, ses
    scripts, ceux de l'administration qu'elle charge, la carte, les icônes). Une nouvelle version s'installe à côté et
    attend : la page annonce « Nouvelle version disponible » et, sur un geste, lui demande de prendre la main (skipWaiting).
    Servi sans build (le dossier equipe/ tel quel), VERSION garde son gabarit (deux soulignés devant) : tout passe alors
    d'abord par le réseau.
 
    Jamais gardés : l'authentification, la fonction d'envoi, les liens signés des documents, et toute écriture. */
-const VERSION = 'c9dec83d30f7';
+const VERSION = '636be38fa08f';
 const DEV = VERSION.startsWith('__');
 const COQUILLE = `crescite-equipe-coquille-${VERSION}`;   // l'application elle-même, par version
 const OUTILS = 'crescite-equipe-outils';                  // ce qu'elle charge à la demande (pdfmake pour les PDF)
@@ -133,7 +133,7 @@ async function base(req) {
 self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { texte: e.data ? e.data.text() : '' }; }
-  const titre = String(d.titre || d.title || 'Crescite');
+  const titre = String(d.titre || d.title || 'Compagnie Crescite');
   const texte = String(d.texte || d.body || '');
   const brut = d.lien || d.url || '';
   const lien = typeof brut === 'string' && LIENS_SURS.test(brut) ? brut : d.date_id ? `#/date/${d.date_id}` : '#/notifications';

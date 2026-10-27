@@ -3,7 +3,7 @@
 // le public dépose des alertes et des demandes de devis dans un débit (par origine, une empreinte de l'adresse IP, et
 // par jour en tout), n'écrit que les champs de ses formulaires, ne lit des lieux que ceux d'une date qu'il voit (sans
 // leur adresse) et des fiches que ce que le site montre ; les abonnements ne vont qu'aux services de notification
-// connus. Les requêtes du site (donnees.js, synthese.html) passent telles quelles. Toutes les adresses sont fictives.
+// connus. Les requêtes du site (donnees.js, index.html) passent telles quelles. Toutes les adresses sont fictives.
 import { PGlite } from '@electric-sql/pglite';
 import { readFileSync, existsSync } from 'node:fs';
 const migration = f => new URL(`../migrations/${f}`, import.meta.url);
@@ -115,7 +115,7 @@ const deposer = (table, ligne, ip, role = 'anon', sub = '') => {
     ks.map(k => ligne[k]), ip ? { 'x-forwarded-for': `${ip}, 10.0.0.1` } : {});
 };
 let n = 0;
-// ce qu'envoient les formulaires du site (synthese.html), tels quels
+// ce qu'envoient les formulaires du site (index.html), tels quels
 const alerte = () => ({ email: `public${++n}@exemple.fr`, code_postal: '76000', commune: 'Rouen', departement: '76', spectacle_id: null,
   lat: null, lon: null, confirme_le: null });
 const devis = () => ({ spectacle_id: SP.berenice, type_lieu: 'theatre', dimensions_plateau: '10m x 8m x 6m (theatre)', structure_nom: `Théâtre ${++n}`,

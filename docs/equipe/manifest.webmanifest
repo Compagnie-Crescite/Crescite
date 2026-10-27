@@ -1,6 +1,6 @@
 {
-  "name": "Crescite · Équipe",
-  "short_name": "Crescite",
+  "name": "Équipe · Compagnie Crescite",
+  "short_name": "Les Crescite",
   "description": "L’espace de l’équipe de la compagnie Crescite : la tournée, les horaires, les feuilles de route, les documents et les notifications.",
   "lang": "fr",
   "dir": "ltr",
@@ -9,8 +9,8 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f6f2eb",
-  "theme_color": "#f6f2eb",
+  "background_color": "#1b1117",
+  "theme_color": "#1b1117",
   "categories": ["productivity", "entertainment"],
   "icons": [
     { "src": "icones/192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

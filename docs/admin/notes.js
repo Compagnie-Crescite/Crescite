@@ -43,14 +43,16 @@ const NOTES = (() => {
           <div class="nt-corps"><div class="nt-tete"><b>${esc(n.auteur_nom || 'Administration')}</b><span class="compte" title="${n.cree_le ? esc(new Date(n.cree_le).toLocaleString('fr-FR')) : ''}">${esc(depuis(n.cree_le))}${n.modifie_le && n.modifie_le !== n.cree_le ? ' · modifiée' : ''}</span>${n.epingle ? '<span class="badge option">Épinglée</span>' : ''}</div>
           <p class="nt-texte">${texteHtml(n.texte, n.mentions)}</p>${n.fichier ? `<a class="nt-fichier" href="#" data-nt-fichier="${esc(n.fichier)}">📎 ${esc(n.fichier_nom || n.fichier.split('/').pop())}</a>` : ''}</div>
           <span class="nt-outils"><button type="button" class="btn petit" data-nt-epingler="${n.id}" title="${n.epingle ? 'Désépingler' : 'Épingler en haut'}">${n.epingle ? '📌' : '📍'}</button><button type="button" class="btn petit" data-nt-modifier="${n.id}" title="Modifier">✎</button><button type="button" class="btn petit danger" data-nt-supprimer="${n.id}" title="Supprimer">✕</button></span></article>`).join('')}</div>
-        <form class="nt-form" novalidate><div class="nt-saisie"><textarea rows="2" placeholder="Une note… @ pour mentionner quelqu’un de l’équipe" aria-label="Nouvelle note"></textarea><div class="nt-propositions" hidden role="listbox"></div></div>
+        <form class="nt-form" novalidate><div class="nt-saisie"><textarea rows="2" placeholder="Une note… @ pour mentionner quelqu’un de l’équipe" aria-label="Nouvelle note"></textarea><div class="nt-propositions" hidden role="listbox" aria-label="Mentionner"></div></div>
           <div class="nt-pied"><label class="btn petit">📎 Pièce jointe<input type="file" hidden accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"></label><span class="compte nt-fichier-nom"></span><button type="submit" class="btn principal petit">Noter</button></div></form>`;
     };
     el.innerHTML = `<h3>${esc(titre)}</h3><p class="aide">Chargement…</p>`;
-    lire(table, id).then(dessiner);
+    // une note commencée ne se perd pas en quittant la fiche (GESTES.garder : la question de l'administration, index.html)
+    const garder = () => { const f = $('form.nt-form', el); if (f && typeof GESTES !== 'undefined') GESTES.garder(f); };
+    lire(table, id).then(xs => { dessiner(xs); garder(); });
     if (el.dataset.ntRelie) return;
     el.dataset.ntRelie = '1';
-    const relire = async () => dessiner(await lire(table, id, { relire: true }));
+    const relire = async () => { dessiner(await lire(table, id, { relire: true })); garder(); };
     // l'autocomplétion des mentions : « @ » puis des lettres, au curseur
     el.addEventListener('input', e => {
       const ta = e.target; if (ta.tagName !== 'TEXTAREA') return;

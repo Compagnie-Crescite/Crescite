@@ -1,6 +1,6 @@
 """Remplit la base de la compagnie (tables crescite_ du projet Supabase) à partir du dépôt.
 
-    python3 supabase/importer.py --essai              ce qui serait écrit, sans rien écrire (détail dans maquettes/dist/)
+    python3 supabase/importer.py --essai              ce qui serait écrit, sans rien écrire (détail dans site/dist/)
     python3 supabase/importer.py                      écrit tout, si la base est vide
     python3 supabase/importer.py --photos             envoie aussi les photos (private/photos) dans le stockage
     python3 supabase/importer.py --admin <courriel>   donne les droits d'administration à un compte existant
@@ -157,7 +157,7 @@ def type_de_lieu(nom):
 def preparer():
     D, fichiers = build.build_data()
     rows = json.loads((ROOT / "data" / "representations-site-2016-2027.json").read_text(encoding="utf-8"))
-    mp = json.loads((ROOT / "prototype" / "src" / "map.json").read_text(encoding="utf-8"))
+    mp = json.loads((ROOT / "data" / "carte-projection.json").read_text(encoding="utf-8"))
     base = {(r["saison"], build._norm(r["intitule_original"])): r for r in rows}
     places = {(build._norm(p["c"]), p["dep"]): p for p in mp["places"]}
     en_plus = {(build._norm(k.split("|")[0]), k.split("|")[1]): v for k, v in build.COMMUNES_EN_PLUS.items()}

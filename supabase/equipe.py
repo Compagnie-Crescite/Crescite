@@ -1,6 +1,6 @@
 """Remplit l'équipe dans la base (après 20261021_crescite_equipe.sql) à partir du dépôt et du dossier privé.
 
-    python3 supabase/equipe.py --essai       ce qui serait écrit, sans rien écrire (détail dans maquettes/dist/)
+    python3 supabase/equipe.py --essai       ce qui serait écrit, sans rien écrire (détail dans site/dist/)
     python3 supabase/equipe.py               les fiches, les distributions, les déroulés types et les liens vers les textes
     python3 supabase/equipe.py --photos      aussi les photos de private/photos/equipe (registre.json) : stockage « crescite »
                                              si elles peuvent être publiées, sinon « crescite-equipe » (privé)

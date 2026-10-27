@@ -260,7 +260,7 @@ const TABLEAU = (() => {
         const retard = ps.filter(p => p.date_prochaine_relance && p.date_prochaine_relance < AUJ && !['bilan', 'refus', 'converti_en_date'].includes(p.etape)).length;
         const devis = (E.devis || []), nouveaux = devis.filter(d => (d.statut || 'nouveau') === 'nouveau').length, enCours = devis.filter(d => ['en_cours', 'devis_envoye'].includes(d.statut)).length;
         const alertes = E.alertesInstallees ? E.alertes.filter(a => a.active && a.confirme_le).length : null, attente = E.alertesInstallees ? E.alertes.filter(a => a.active && !a.confirme_le).length : 0;
-        const etapes = ETAPES_CRM.map(([k, l], i) => [k, l.replace(/^\d\.\s*/, ''), ps.filter(p => p.etape === k).length, `color-mix(in srgb, var(--accent) ${35 + i * 16}%, var(--carte))`]);
+        const etapes = ETAPES_CRM.map(([k, l], i) => [k, l.replace(/^\d\.\s*/, ''), ps.filter(p => p.etape === k).length, `color-mix(in srgb, var(--accent) ${70 + i * 7}%, var(--carte))`]);
         const total = etapes.reduce((n, e) => n + e[2], 0);
         const kpi = (l, v, sous, href, classe = '') => `<a href="${esc(href)}"${classe ? ` class="${classe}"` : ''}><span>${l}</span><b>${v}</b>${sous ? `<small>${sous}</small>` : ''}</a>`;
         return { n: nouveaux + retard, html: `<div class="tb-kpi">
@@ -603,8 +603,14 @@ const TABLEAU = (() => {
         conf().depart = t.dataset.tbDepart; garder();
         $$('[data-tb-depart]').forEach(b => b.setAttribute('aria-pressed', String(b === t)));
       } else if (t.id === 'tb-reinit') {
-        if (!confirm('Revenir à la disposition d’origine du tableau de bord ? Les réglages des tuiles et le mémo seront effacés.')) return;
-        T.conf = defauts(); T.ouverts.clear(); garder(true); dessiner(); preparer(); annoncerSr('Disposition d’origine remise.');
+        // tout de suite, sans question : l'annonce porte « Annuler », qui remet la disposition d'avant (tuiles, réglages, mémo)
+        const avant = clone(T.conf);
+        T.conf = defauts(); T.ouverts.clear(); garder(true); dessiner(); preparer();
+        annoncer('Disposition d’origine remise : les réglages des tuiles et le mémo sont effacés.', { libelle: 'Annuler', delai: 8000, action: () => {
+          T.conf = avant; garder(true);
+          if ($('#tb-grille')) { dessiner(); preparer(); }
+          annoncer('La disposition d’avant est revenue.');
+        } });
       } else if (t.id === 'tb-fini') {
         T.edition = false; dessiner(); $('#tb-personnaliser')?.focus();
       } else if (t.matches('[data-tb-action]')) {
@@ -1156,7 +1162,7 @@ const TABLEAU = (() => {
   function courbe(titre, xs, mois, { format = entier, unite = '' } = {}) {
     const max = Math.max(1, ...xs), total = xs.reduce((a, b) => a + b, 0);
     if (!total) return '';
-    return `<div class="tb-courbe"><span class="tb-courbe-t">${esc(titre)} <b>${format(total)}${unite}</b></span><span class="tb-barres" role="img" aria-label="${esc(`${titre}, mois par mois : ${xs.map((v, i) => `${MC[+mois[i].slice(5, 7) - 1]} ${format(v)}`).join(', ')}`)}">${xs.map((v, i) => `<button type="button" data-tb-mois="${esc(mois[i])}" style="--h:${Math.round(v / max * 100)}%" title="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}`)}" aria-label="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}, voir ses dates`)}"><i></i></button>`).join('')}</span><span class="tb-mois">${mois.map(k => `<small>${esc(MC[+k.slice(5, 7) - 1].replace('.', ''))}</small>`).join('')}</span></div>`;
+    return `<div class="tb-courbe"><span class="tb-courbe-t">${esc(titre)} <b>${format(total)}${unite}</b></span><span class="tb-barres" role="group" aria-label="${esc(`${titre}, mois par mois : ${xs.map((v, i) => `${MC[+mois[i].slice(5, 7) - 1]} ${format(v)}`).join(', ')}`)}">${xs.map((v, i) => `<button type="button" data-tb-mois="${esc(mois[i])}" style="--h:${Math.round(v / max * 100)}%" title="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}`)}" aria-label="${esc(`${MC[+mois[i].slice(5, 7) - 1]} ${mois[i].slice(0, 4)} : ${format(v)}${unite}, voir ses dates`)}"><i></i></button>`).join('')}</span><span class="tb-mois">${mois.map(k => `<small>${esc(MC[+k.slice(5, 7) - 1].replace('.', ''))}</small>`).join('')}</span></div>`;
   }
   function courbesSaison(S, c, p) {
     const s = seriesSaison(S), ici = auMemePoint(S), avant = auMemePoint(saisonDecalee(S, -1));
@@ -1304,7 +1310,7 @@ const TABLEAU = (() => {
 .tb-kpi > .ok b { color: var(--ok); }
 .tb-kpi > .alerte b { color: var(--alerte); }
 .tb-kpi small { font-size: 12px; color: var(--gris); }
-.tb-pipe { display: flex; height: 10px; margin-top: 4px; border-radius: 999px; overflow: hidden; background: var(--doux); }
+.tb-pipe { display: flex; gap: 2px; height: 10px; margin-top: 4px; border-radius: 999px; overflow: hidden; background: var(--doux); }
 .tb-pipe span { display: block; min-width: 3px; }
 .tb-legende { display: flex; flex-wrap: wrap; gap: 3px 12px; margin: 0; font-size: 12.5px; color: var(--gris); }
 .tb-legende span { display: inline-flex; align-items: center; gap: 5px; }
@@ -1339,7 +1345,7 @@ const TABLEAU = (() => {
 .tb-tuile.cible-apres { box-shadow: 5px 0 0 var(--accent); }
 @media (max-width: 760px) { .tb-tuile.cible-avant { box-shadow: 0 -5px 0 var(--accent); } .tb-tuile.cible-apres { box-shadow: 0 5px 0 var(--accent); } .tb-pan-fin { margin-left: 0; } }
 /* le bandeau du jour */
-.tb-salut { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: center; margin: 2px 0 14px; padding: 22px 26px; border-radius: var(--rayon, 16px); background: linear-gradient(120deg, color-mix(in srgb, var(--accent-doux, #f7e6ef) 85%, var(--carte, #fff)) 0%, var(--carte, #fff) 58%, color-mix(in srgb, var(--ambre-doux, var(--option-doux, #f8efd9)) 70%, var(--carte, #fff)) 100%); border: 1px solid var(--trait); box-shadow: var(--ombre); }
+.tb-salut { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; align-items: center; margin: 2px 0 14px; padding: 22px 26px; border-radius: var(--rayon, 16px); background: linear-gradient(120deg, color-mix(in srgb, var(--accent-doux, #ece5da) 85%, var(--carte, #fff)) 0%, var(--carte, #fff) 58%, color-mix(in srgb, var(--ambre-doux, var(--option-doux, #f8efd9)) 70%, var(--carte, #fff)) 100%); border: 1px solid var(--trait); box-shadow: var(--ombre); }
 .tb-salut-corps { position: relative; min-width: 0; }
 .tb-salut h1 { margin: 0 0 4px; font: 700 12px/1.3 var(--etiq, inherit); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
 .tb-bonjour { margin: 0; font: 700 clamp(26px, 3vw, 34px)/1.1 var(--titres, inherit); letter-spacing: -.01em; }
@@ -1362,7 +1368,7 @@ const TABLEAU = (() => {
 .tb-lt[hidden] { display: none; }
 .tb-lt > .tb-l { min-width: 0; }
 .tb-traiter { display: inline-grid; place-items: center; width: 34px; border: 1px solid var(--trait); border-radius: 9px; background: var(--carte); color: var(--accent); cursor: pointer; }
-.tb-traiter:hover, .tb-traiter:focus-visible { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tb-traiter:hover, .tb-traiter:focus-visible { background: var(--accent); color: var(--sur-accent, #fff); border-color: var(--accent); }
 .tb-lt.epingle > .tb-l { background: color-mix(in srgb, var(--doux) 60%, var(--accent-doux)); }
 .tb-lt.reportee > .tb-l { opacity: .65; }
 .tb-epingle { font-size: 12px; }
@@ -1375,7 +1381,7 @@ const TABLEAU = (() => {
 .tb-filtre { display: inline-flex; align-items: center; gap: 8px; margin: -6px 0 12px; padding: 6px 6px 6px 12px; border-radius: 999px; background: var(--accent-doux); color: var(--encre); font-size: 13.5px; }
 .tb-filtre[hidden] { display: none; }
 .tb-filtre .pastille { --c: var(--accent); }
-.tb-ico[data-tb-filtre][aria-pressed="true"] { background: var(--accent); color: #fff; }
+.tb-ico[data-tb-filtre][aria-pressed="true"] { background: var(--accent); color: var(--sur-accent, #fff); }
 /* glisser-déposer entre tuiles */
 .tb-l[draggable="true"] { cursor: grab; }
 .tb-l.glisse { opacity: .45; }
@@ -1390,7 +1396,7 @@ const TABLEAU = (() => {
 /* les vues */
 .tb-vues select { min-height: 36px; padding: 4px 28px 4px 10px; font-size: 13.5px; }
 .tb-vue-puce { display: inline-flex; align-items: center; gap: 2px; }
-.tb-vue-puce .puce[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.tb-vue-puce .puce[aria-pressed="true"] { background: var(--accent); color: var(--sur-accent, #fff); border-color: var(--accent); }
 /* les chiffres qui bougent */
 .tb-courbes { display: grid; gap: 8px; margin-top: 8px; }
 .tb-courbe { display: grid; gap: 2px; }

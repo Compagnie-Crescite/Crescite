@@ -88,7 +88,7 @@ const GARDEFOUS = (() => {
 .gardefous li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-size: 14px; background: var(--option-doux); border: 1px solid color-mix(in srgb, var(--option) 40%, transparent); }
 .gardefous li.gf-alerte { background: var(--alerte-doux); border-color: color-mix(in srgb, var(--alerte) 40%, transparent); }
 .gardefous li > span:nth-child(2) { flex: 1; }
-.gardefous .gf-ico { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--option); color: #fff; font-weight: 900; font-size: 13px; flex: none; }
+.gardefous .gf-ico { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--option); color: var(--sur-accent, #fff); font-weight: 900; font-size: 13px; flex: none; }
 .gardefous li.gf-alerte .gf-ico { background: var(--alerte); }
 #crm-gardefous { margin: 6px 0 12px; }
 #crm-gardefous .gardefous { margin: 0; }`;
