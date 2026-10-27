@@ -998,6 +998,64 @@ section.bloc.troupe { padding-top: 0; content-visibility: auto; contain-intrinsi
   .tr6-p { min-width: 0; max-width: 100%; }
   .tr6-qui { min-width: 0; overflow-wrap: anywhere; }
 }
+/* la fiche d'une personne (une place de la troupe, un portrait, son nom dans une page) : posée par-dessus, son portrait sur la
+   photo, dont elle naît (un cercle qui s'ouvre) ; ses métiers, ses spectacles, les prochaines dates de ceux qui tournent.
+   Dans la couche du dessus (popover), gardée dans l'écran utile (--fiche-marges : le menu arrimé, la barre du bas) */
+.trf { position: fixed; inset: auto; left: 0; top: 0; width: min(360px, calc(100vw - 24px)); height: auto; max-height: min(620px, calc(100dvh - var(--fiche-marges, 120px))); margin: 0; overflow: auto; overscroll-behavior: contain;
+  box-sizing: border-box; padding: 16px 18px 18px; border: 0; border-radius: 24px; background: var(--blanc); color: var(--encre); text-align: left;
+  font: 400 1rem/1.5 var(--texte); letter-spacing: normal; text-transform: none;
+  box-shadow: 0 0 0 1.5px var(--saison-texte), 0 26px 60px -24px rgb(0 0 0 / .55); }
+.trf-sans-popover { z-index: 2147483005; }
+.trf:focus { outline: none; }
+.trf:focus-visible { outline: 2px solid var(--saison-texte); outline-offset: 3px; }
+.trf-x { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; color: var(--encre); cursor: pointer; transition: background-color var(--k-survol) var(--k-doux); }
+.trf-x .croix { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+@media (hover: hover) { .trf-x:hover { background: var(--carte); } }
+.trf-x:focus-visible { outline: 2px solid var(--saison-texte); outline-offset: 1px; }
+.trf-tete { display: flex; align-items: center; gap: 14px; min-height: 40px; padding-right: 32px; }
+.trf-v { flex: none; width: 88px; height: 88px; overflow: hidden; border-radius: 50%; background: var(--carte); box-shadow: 0 0 0 2px var(--blanc), 0 0 0 4px var(--saison-texte); }
+.trf-v img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.trf-qui { min-width: 0; overflow-wrap: anywhere; }
+.trf-nom { margin: 0; font: 500 1.35rem/1.15 var(--titre); }
+.trf-m { margin: 4px 0 0; font-size: .85rem; line-height: 1.35; color: var(--gris); }
+.trf-m span + span::before { content: " · "; }
+.trf-cr { display: block; margin-top: 4px; font-size: .7rem; color: var(--gris); }
+.trf-k { margin: 18px 0 8px; font: 600 .7rem/1.3 var(--etiq); letter-spacing: .14em; text-transform: uppercase; color: var(--saison-texte); }
+.trf-l { list-style: none; display: grid; gap: 4px; margin: 0; padding: 0; }
+.trf-l a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 4px 8px 4px 4px; border-radius: 12px; color: inherit; text-decoration: none;
+  transition: background-color var(--k-survol) var(--k-doux); }
+@media (hover: hover) { .trf-l a:hover { background: color-mix(in srgb, var(--c, var(--saison-texte)) 12%, var(--blanc)); } }
+.trf-l a:focus-visible { outline: 2px solid var(--c, var(--saison-texte)); outline-offset: 0; }
+.trf-ph { flex: none; width: 44px; height: 44px; overflow: hidden; border-radius: 10px; background: var(--c); }
+.trf-ph img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.trf-sp { display: grid; min-width: 0; line-height: 1.25; }
+.trf-sp b { font: 600 .95rem/1.25 var(--texte); color: var(--c); }
+.trf-sp b .tag { color: var(--encre); }
+.trf-sp small { font-size: .78rem; color: var(--gris); }
+.trf-sp small span + span::before { content: " · "; }
+.trf-q { flex: none; display: grid; place-items: center; align-content: center; width: 78px; padding: 3px 2px; box-sizing: border-box; min-height: 44px; border-radius: 10px; text-align: center;
+  background: color-mix(in srgb, var(--c) 16%, var(--blanc)); box-shadow: inset 3px 0 0 var(--c); }
+.trf-q b { font: 600 .82rem/1.15 var(--titre); }
+.trf-q small { font-size: .66rem; color: var(--gris); }
+.trf-tout { margin: 10px 0 0; font-size: .85rem; }
+.trf-tout a { color: var(--saison-texte); }
+.trf-tout .fleche { width: 14px; height: 14px; margin-left: 4px; vertical-align: -2px; }
+/* ce qui l'ouvre ailleurs que dans la troupe : un nom écrit dans une page (le même texte, souligné de points, à la couleur du
+   texte), un portrait de la distribution (tout le portrait) ; en mode édition, le texte et la photo reprennent le clic */
+.nomme { display: inline; margin: 0; padding: 0; border: 0; border-radius: 2px; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: inherit;
+  cursor: pointer; text-decoration: underline dotted 1.5px; text-decoration-color: color-mix(in srgb, currentColor 55%, transparent); text-underline-offset: .2em;
+  transition: text-decoration-color var(--k-survol) var(--k-doux); }
+@media (hover: hover) { .nomme:hover { text-decoration-style: solid; text-decoration-color: currentColor; } }
+.nomme[aria-expanded="true"] { text-decoration-style: solid; text-decoration-color: currentColor; }
+.nomme:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.ed-actif .nomme { pointer-events: none; text-decoration: none; }
+.u-pt { position: relative; }
+.u-pt-ouvrir { position: absolute; inset: 0; z-index: 1; width: 100%; margin: 0; padding: 0; border: 0; border-radius: 3px; background: none; cursor: pointer; }
+.u-pt-ouvrir:focus-visible { outline: 2px solid var(--u-vif, currentColor); outline-offset: 4px; }
+.u-pt-cadre img { transition: scale .45s var(--k-doux); }
+@media (hover: hover) { .u-pt:has(.u-pt-ouvrir:hover) .u-pt-cadre img { scale: 1.04; } }
+.ed-actif .u-pt-ouvrir { display: none; }
 
 /* ———— le contact, les pages légales ———— */
 .champ { margin: 0 0 16px; }
@@ -2195,10 +2253,31 @@ html { view-transition-name: none; }
 /* l'encre d'un spectacle (Encre) : une toile fixe au-dessus de tout ; tant qu'elle couvre l'écran, c'est elle qu'on touche */
 .encre-page { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
 .encre-page.couvre { pointer-events: auto; }
+/* le rideau (Rideau) : à chaque page qu'on ouvre par le menu, un court noir où la pieuvre nage (la créature, ses vraies
+   tentacules), puis le rideau s'ouvre en deux, comme au théâtre, et la pieuvre remonte à sa place dans le menu ; la page,
+   déjà là dessous, se compose alors ligne à ligne (composer). Au-dessus de tout (le menu compris), sous la pieuvre */
+.rideau { position: fixed; inset: 0; z-index: 2147483002; pointer-events: auto; overflow: hidden; contain: strict; }
+.rideau.leve { pointer-events: none; }
+.rideau > i { position: absolute; top: 0; bottom: 0; width: 50.5%; background: #0b0709; }
+.rideau > .rideau-g { left: 0; }
+.rideau > .rideau-d { right: 0; }
+/* (le bord de chaque pan, là où ils se rejoignent : un mince liseré à la couleur de la saison, peu de chose à peindre) */
+.rideau > i::after { content: ""; position: absolute; top: 0; bottom: 0; width: 3px; background: color-mix(in srgb, var(--saison-vive) 30%, #0b0709); }
+.rideau > .rideau-g::after { right: 0; }
+.rideau > .rideau-d::after { left: 0; }
+/* (sans créature : le dessin de la pieuvre, qui flotte et respire au milieu) */
+.rideau-pieuvre { position: absolute; left: 50%; top: 50%; width: min(150px, 36vw); margin: 0; translate: -50% -50%; color: var(--saison-vive); animation: rideau-nage .62s ease-in-out infinite alternate; }
+.rideau-pieuvre svg { display: block; width: 100%; height: auto; }
+.rideau.leve .rideau-pieuvre { opacity: 0; transition: opacity .2s; }
+@keyframes rideau-nage { from { transform: translateY(6px) scale(1.04, .94); } to { transform: translateY(-8px) scale(.96, 1.05); } }
+/* la page qui se compose : un trait de lumière descend l'écran, à la ligne qui s'écrit */
+.compose-trait { position: fixed; left: 0; right: 0; top: 0; z-index: 89; height: 2px; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--saison-vive) 70%, transparent) 30%, #fff 50%, color-mix(in srgb, var(--saison-vive) 70%, transparent) 70%, transparent);
+  box-shadow: 0 0 18px 2px color-mix(in srgb, var(--saison-vive) 55%, transparent); }
 /* une page qui arrive : son titre fleurit (il se dépose), le bras d'encre arrive du bord de l'écran, le souligne et s'enroule */
-.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1) */
-.fleur::after { content: ""; position: absolute; left: -100vw; right: 29px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
-.fleur::before { content: ""; position: absolute; right: 0; bottom: -1px; width: 30px; height: 30px; background: var(--trait);
+.fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1 ; la boucle est à son échelle 1:1, son trait de 3 px au bas du bloc, dans l'axe du bras) */
+.fleur::after { content: ""; position: absolute; left: -100vw; right: 31px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
+.fleur::before { content: ""; position: absolute; right: 0; bottom: 0; width: 32px; height: 32px; background: var(--trait);
   -webkit-mask: var(--boucle) 0 0 / 100% 100% no-repeat; mask: var(--boucle) 0 0 / 100% 100% no-repeat; }
 main.arrive .fleur { animation: k-fleurit .36s var(--k-doux) both; }
 main.arrive .fleur::after { transform-origin: 0 50%; animation: k-bras .42s var(--k-doux) .02s both; }
@@ -2306,7 +2385,7 @@ article.u .chap { content-visibility: auto; contain-intrinsic-size: auto 1000px;
 @media (max-width: 759px) {
   .s7-e { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "titre cherche" "rac rac"; align-items: end; gap: 6px 18px; }
   .s7-titre { font-size: 2.5rem; }
-  .s7-titre .fleur { padding-bottom: 14px; }
+  .s7-titre .fleur { padding-bottom: 20px; }   /* (de quoi loger la boucle, 32 px, sous le mot sans qu'elle le touche) */
   .s7-e .s7-cherche { margin-bottom: 8px; }
   .s7-rac { gap: 0 18px; }
   .s7-rac button { font-size: .875rem; }
@@ -3142,7 +3221,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main [data-mv], main .mv-attente, main .mv-attente > *, main .apparait, main .ecrit, main .lit, main .lit *, main .rc-in, main .rc-p, main .u-titre .ligne { opacity: 1 !important; transform: none !important; translate: none !important; clip-path: none !important; visibility: visible !important; }
   /* ce qui ne s'imprime pas */
   .evitement, .top-cale, #top, #entrees, footer, .haut-page, .succion, canvas, .intro, svg.defs, .ed-barre, .ed-panneau,
-  main button:not(.rs-date), main .u-onglets, main .sp-som, main .som, main .u-cta, main .une-retour, main .une-ariane, main .une-motif, main .une-lueur, main .une-ombre,
+  main button:not(.rs-date):not(.nomme), .trf, main .u-onglets, main .sp-som, main .som, main .u-cta, main .une-retour, main .une-ariane, main .une-motif, main .une-lueur, main .une-ombre,
   main .voisins, main .rc-vis, main .rc-fil, main #c-video, main [data-lecteur], main .filet, main svg.trait, main .rs-tete, main .rs-defile, main .rs-plus, main .rs-photo, main .rs-tache,
   main svg.carte, main .carte-sp, main .ag7-carte, main .frise, main [data-frise], main .u-frise, main .v-frise, main .fs7, main .p4-frise, main .ft7, main .fr-legende,
   main .s7-outils, main .s7-rac, main .sm7, main .sf7, main .ag-index, main #v-alerte, main .bf7, main .fe7, main .s7-gel { display: none !important; }
@@ -3395,6 +3474,156 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     vers.focus();
   });
 
+  /* ---------- le rideau : le premier moment d'une page ----------
+     Ouvrir une page par le menu (ou arriver sur le site ailleurs que sur l'ouverture de l'accueil) : un court noir, le
+     rideau, où la pieuvre nage au milieu (la créature, ses vraies tentacules, à la couleur de la saison) ; puis le rideau
+     s'ouvre en deux, comme au théâtre, la pieuvre remonte à sa place dans le menu, et la page, déjà là dessous (son titre a
+     le focus), se compose ligne à ligne (composer). Le noir dure 420 ms, l'ouverture 480 : rien n'attend le rideau, il ne fait
+     que couvrir. Un geste (un clic, une touche, la molette, le doigt) l'ouvre aussitôt ; ouvert, il laisse passer les clics.
+     Moins d'animations, ou ?anim=0 : ni rideau ni composition. */
+  const Rideau = (() => {
+    const NOIR = 420, OUVRE = 480;
+    let el = null, bete = null, etat = null, tLeve = 0, tFin = 0, suite = null, pans = [];
+    const lisse = u => u * u * (3 - 2 * u);
+    // la pieuvre du rideau : une créature, faite une fois (au premier rideau, ou au repos) ; au milieu, elle nage sur place (une
+    // impulsion toutes les 0,62 s) ; à l'ouverture, elle file vers la marque du menu en rapetissant, puis s'efface
+    function bestiole() {
+      if (bete || typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return bete;
+      const encre = themeSaison().v;
+      // (au téléphone, ni halo ni sillage : chaque image se dessine en moins de temps)
+      const tel = matchMedia('(max-width: 759px)').matches;
+      bete = CREATURE.creer({ encre, couleurs: [encre, '#ffffff'], placerChaqueImage: true, souris: false, courant: false, vie: 2.6, onde: 5.5, rythme: 1.9, lueur: !tel, sillage: !tel,
+        placer() {
+          if (!etat) return null;
+          const now = performance.now(), W = innerWidth, H = innerHeight, l0 = Math.min(230, W * .46), t = (now - etat.t0) / 1000;
+          if (!etat.leve) {
+            const ph = (t % .62) / .62, coup = ph < .2 ? ph / .2 : Math.max(0, 1 - (ph - .2) / .5);
+            return { x: W / 2, y: H / 2 + Math.sin(t * 5) * 4 - coup * 6, largeur: l0, bouge: true, v: -coup * 2.2, coup, etire: ph < .14 ? -.5 * ph / .14 : coup * .6, ang: -Math.PI / 2 };
+          }
+          const u = Math.min(1, (now - tLeve) / (OUVRE * .9));
+          if (u >= 1) return null;
+          const m = etat.vers, e = lisse(u), x = W / 2 + (m.x - W / 2) * e, y = H / 2 + (m.y - H / 2) * e;
+          return { x, y, largeur: l0 + (m.l - l0) * e, bouge: true, v: (m.y - H / 2) / 40 * (1 - u), coup: 1 - u, etire: .8 * (1 - u), ang: Math.atan2(m.y - H / 2, m.x - W / 2) };
+        } });
+      return bete;
+    }
+    const gestes = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    const geste = () => lever(true);
+    function fermer(apres) {
+      if (!motionOK()) return false;
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'rideau'; el.setAttribute('aria-hidden', 'true');
+        el.innerHTML = '<i class="rideau-g"></i><i class="rideau-d"></i>';
+        document.body.appendChild(el);
+      }
+      pans.forEach(a => a.cancel()); pans = [];   // (ses pans d'avant, gardés : rien à demander au navigateur, aucun style à recalculer)
+      el.classList.remove('leve'); el.hidden = false;
+      const b = bestiole();
+      const p = el.querySelector('.rideau-pieuvre');
+      if (!b && !p) el.insertAdjacentHTML('beforeend', `<div class="rideau-pieuvre">${D.logo.octopus}</div>`);
+      else if (b && p) p.remove();
+      // (un rideau déjà fermé qu'une autre page rappelle : le noir reprend, la page d'avant ne se compose pas)
+      clearTimeout(tFin);
+      etat = { t0: performance.now(), leve: false, vers: null, images: 0 };
+      // (ses images comptées pendant le noir : un appareil qui n'en tient pas vingt-cinq par seconde n'a pas de quoi composer la
+      // page en douceur ; elle y paraît d'un coup à l'ouverture)
+      const e0 = etat, compter = () => { if (etat !== e0 || e0.leve) return; e0.images++; requestAnimationFrame(compter); };
+      requestAnimationFrame(compter);
+      suite = apres || null;
+      // (la pieuvre naît à l'image d'après : la première, celle du geste, n'a que la page neuve et le noir à peindre)
+      if (b) { const e = etat; requestAnimationFrame(() => setTimeout(() => { if (etat !== e) return; b.demarrer(); b.placeSale = true; b.reveil(); }, 0)); }
+      gestes.forEach(t => addEventListener(t, geste, { capture: true, passive: true }));
+      tFin = setTimeout(() => lever(false), NOIR);
+      return true;
+    }
+    // le rideau s'ouvre : ses deux pans glissent de côté, la pieuvre rejoint la marque, la page se compose (suite)
+    function lever(vite) {
+      if (!etat || etat.leve) return;
+      clearTimeout(tFin);
+      gestes.forEach(t => removeEventListener(t, geste, { capture: true }));
+      const m = $('#marque'), r = m && m.getClientRects().length ? m.getBoundingClientRect() : null;
+      etat.leve = true; etat.vers = r && r.width ? { x: r.left + r.width / 2, y: r.top + r.height / 2, l: r.width } : { x: innerWidth / 2, y: -60, l: 40 };
+      tLeve = performance.now();
+      el.classList.add('leve');
+      const d = vite ? 220 : OUVRE, courbe = 'cubic-bezier(.7, 0, .25, 1)';
+      const [g, dr] = el.querySelectorAll(':scope > i');
+      const a = dr.animate([{ translate: '0 0' }, { translate: '101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' });
+      pans = [g.animate([{ translate: '0 0' }, { translate: '-101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' }), a];
+      const fini = etat;
+      a.onfinish = () => { if (etat !== fini) return; etat = null; el.hidden = true; };
+      const f = suite, lent = (tLeve - fini.t0) / Math.max(1, fini.images) > 40;
+      suite = null;
+      if (f) f(vite || lent);
+    }
+    // (une page refaite, un rideau qu'on ne veut plus, un geste pendant qu'il s'ouvre : il s'efface d'un coup, la pieuvre avec)
+    function oter() { if (!etat) return; clearTimeout(tFin); gestes.forEach(t => removeEventListener(t, geste, { capture: true })); etat = null; suite = null; pans.forEach(a => a.cancel()); pans = []; if (el) el.hidden = true; }
+    // (au repos, après la première page : la pieuvre du rideau est prête pour le suivant)
+    const preparer = () => { bestiole(); };
+    return { fermer, lever, oter, preparer, ouvert: () => !!etat };
+  })();
+  /* ---------- la page qui se compose ----------
+     Quand le rideau s'ouvre, ce que l'écran montre de la page s'inscrit ligne à ligne, de haut en bas, vite : chaque ligne
+     (un titre, un texte, une étiquette, une date) s'écrit de gauche à droite, une photo sort d'un flou lumineux,
+     les cadres (une fiche, une tranche, un bouton) se posent juste avant leur texte, et un trait de lumière descend l'écran à
+     la ligne qui s'écrit. Rangées par leur hauteur à l'écran : ce qui est sur la même ligne s'écrit ensemble. Seulement ce qui
+     est à l'écran (le reste paraît au défilement, MOUVEMENT.reveler) ; ni ce qui a déjà son propre mouvement (un titre qui
+     fleurit, [data-mv]), ni la fiche d'une personne. Web Animations sur translate, scale, opacity, clip-path et filter : rien
+     ne change de place dans la page, et tout est fini en moins d'une seconde ; pas de filtre sur le texte (repeint à chaque
+     image, il alourdissait un geste qui tombait pendant la composition) ; quatre-vingts éléments au plus (ces animations, et celles du rideau, portent l'id
+     « compose » et « rideau » : le vérificateur les finit avant de lire la page) */
+  const HORS_COMPO = 'script, style, template, link, meta, br, wbr, canvas, [hidden], .sr, .filet, .trf, .rideau, .compose-trait';
+  const MEDIA_COMPO = /^(IMG|SVG|PICTURE|VIDEO|IFRAME|svg)$/;
+  let composeTrait = null;
+  const gestesCompo = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+  function composer() {
+    if (!motionOK() || !main.animate) return;
+    const H = innerHeight, W = innerWidth, pris = [];
+    const aTexte = el => { for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue.trim()) return true; return false; };
+    const opaque = c => { const m = /rgba?\(([^)]+)\)/.exec(c || ''); if (!m) return false; const q = m[1].split(/[\s,\/]+/).filter(Boolean); return q.length < 4 || +q[3] > .05; };
+    const peint = c => { const st = getComputedStyle(c); return st.backgroundImage !== 'none' || opaque(st.backgroundColor) || (parseFloat(st.borderTopWidth) > 0 && opaque(st.borderTopColor)) || (parseFloat(st.borderLeftWidth) > 0 && opaque(st.borderLeftColor)) || st.boxShadow !== 'none'; };
+    const bouge = c => c.matches('[data-mv], [data-mv="cascade"] > *') || (c.getAnimations && c.getAnimations().length > 0);
+    const visiter = el => {
+      for (const c of el.children) {
+        if (pris.length >= 80) return;
+        if (c.matches(HORS_COMPO)) continue;
+        const r = c.getBoundingClientRect();
+        if (!r.width && !r.height) { if (getComputedStyle(c).display === 'contents') visiter(c); continue; }
+        if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W) continue;
+        const libre = !bouge(c);
+        if (MEDIA_COMPO.test(c.tagName)) { if (libre) pris.push({ el: c, r, genre: 'media' }); continue; }
+        if (aTexte(c) || c.matches('input, select, textarea')) { if (libre) pris.push({ el: c, r, genre: 'texte' }); continue; }
+        if (libre && r.height < H * .7 && r.width < W * .96 && peint(c)) pris.push({ el: c, r, genre: 'cadre' });
+        visiter(c);
+      }
+    };
+    visiter(main);
+    if (!pris.length) return;
+    // le rythme : le trait de lumière descend de la première ligne à la dernière en DESCENTE ms ; chaque élément s'écrit quand
+    // il l'atteint (ce qui est sur la même ligne, ensemble) ; un texte haut (un paragraphe) se découvre de haut en bas, au même
+    // pas que le trait : ligne à ligne
+    const anims = [];   // (gardées : les finir ne demande rien au navigateur, aucun style à recalculer)
+    const DESCENTE = 460, doux = 'cubic-bezier(.2, .8, .2, 1)';
+    const y0 = Math.max(0, Math.min(...pris.map(x => x.r.top))), y1 = Math.min(H, Math.max(...pris.map(x => x.r.bottom))), V = DESCENTE / Math.max(120, y1 - y0);
+    const quand = y => Math.round(Math.max(0, Math.min(y1, y) - y0) * V);
+    pris.forEach(({ el, genre, r }) => {
+      const delay = quand(r.top);
+      if (genre === 'cadre') anims.push(el.animate([{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: Math.max(0, delay - 40), easing: doux, fill: 'backwards', id: 'compose' }));
+      else if (genre === 'media') anims.push(el.animate([{ opacity: 0, scale: '.94', filter: 'blur(8px) brightness(1.6)' }, { opacity: 1, scale: '1', filter: 'blur(0) brightness(1)' }], { duration: 440, delay, easing: doux, fill: 'backwards', id: 'compose' }));
+      else if (r.height > 64) anims.push(el.animate([{ opacity: .2, clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, clipPath: 'inset(0 0 0% 0)' }],
+        { duration: Math.max(300, quand(r.bottom) - delay + 120), delay, easing: 'linear', fill: 'backwards', id: 'compose' }));
+      else anims.push(el.animate([{ opacity: 0, translate: '0 7px', clipPath: 'inset(0 100% 0 0)' },
+        { opacity: 1, offset: .35 },
+        { opacity: 1, translate: '0 0', clipPath: 'inset(0 0% 0 0)' }], { duration: 380, delay, easing: doux, fill: 'backwards', id: 'compose' }));
+    });
+    // le trait de lumière : de la première ligne à la dernière
+    if (!composeTrait) { composeTrait = document.createElement('i'); composeTrait.className = 'compose-trait'; composeTrait.setAttribute('aria-hidden', 'true'); document.body.appendChild(composeTrait); }
+    // (un geste pendant la composition la finit : la page est là, le geste trouve un fil libre ; le rideau qui s'ouvre aussi)
+    const finir = () => { gestesCompo.forEach(t => removeEventListener(t, finir, { capture: true })); Rideau.oter(); anims.forEach(a => a.finish()); };
+    gestesCompo.forEach(t => addEventListener(t, finir, { capture: true, passive: true, once: true }));
+    setTimeout(() => gestesCompo.forEach(t => removeEventListener(t, finir, { capture: true })), quand(y1) + 500);
+    anims.push(composeTrait.animate([{ translate: `0 ${y0}px`, opacity: 0 }, { opacity: 1, offset: .08 }, { opacity: 1, offset: .86 }, { translate: `0 ${y1}px`, opacity: 0 }], { duration: quand(y1) + 60, easing: 'linear', id: 'compose' }));
+  }
   /* ---------- l'encre : le second moment de la pieuvre ----------
      Entrer dans un spectacle : la page est déjà là, dessous ; l'encre de son univers couvre l'écran et s'ouvre aussitôt depuis
      le point choisi, un anneau de sa couleur au bord (440 ms). En sortir : l'encre, d'abord partout, se resserre vers la
@@ -4651,15 +4880,15 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // temps (tPres : il paraît quand son bras l'atteint)
     function presenter() {
       const P = pres, V = new Map();
-      // chaque bras part à son instant, par vagues de 70 ms depuis la tête (les deux spirales, les boucles, les spirales
-      // extérieures, les queues : ensemble, mais lisible) vers le premier de ses titres, et y reste ; chaque titre paraît quand
-      // son bras arrive ; les bras sans titre (les longs) s'étirent, puis reviennent
+      // chaque bras part à son instant (PIEUVRE.VAGUE après le précédent, par rang : nul, tous ensemble) vers le premier de
+      // ses titres, et y reste ; chaque titre paraît quand son bras arrive ; les bras sans titre (les longs) s'étirent, puis
+      // reviennent
       const depart = a => P.t0 + PIEUVRE.rang(a.cle) * PIEUVRE.VAGUE;
       let fin = P.t0;
       TIT.forEach(T => { T.tPres = P.t0; });
       for (const a of BRAS) {
         const t0 = depart(a);
-        if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + 1100); }
+        if (a.T.length) { V.set(a, [{ t0, fin: Infinity, T: a.T[0] }]); a.tenu = a.T[0]; a.T.forEach(T => { T.tPres = t0; }); fin = Math.max(fin, t0 + PIEUVRE.DEPLOI); }
         else if (!mobile && !a.t.parent) { V.set(a, [{ t0, fin: t0 + 1500, c: gesteDe(a, t0) }]); fin = Math.max(fin, t0 + 1500); }
       }
       P.plan = V; P.fin = fin + 300;
@@ -4674,7 +4903,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // un titre n'est réécrit que s'il a changé ; il paraît avec son bras (l'éveil), ou à son tour
     function placer(T, allume, now, anime) {
       let em = 0;
-      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (T.tPres != null ? T.tPres + 600 : eveil + 500)) / 520);
+      // (le titre paraît quand son bras arrive à lui : aux deux tiers du dépliement)
+      if (eveil !== null) em = !anime ? 1 : lisse(0, 1, (now - (T.tPres != null ? T.tPres + PIEUVRE.DEPLOI * .62 : eveil + 500)) / 520);
       T.em = Math.max(T.em, em);
       const tr = `translate(${T.bx.toFixed(1)}px, ${(T.by + (1 - T.em) * 12).toFixed(1)}px)`, op = T.em.toFixed(3);
       if (T.tr !== tr) { T.el.style.transform = tr; T.tr = tr; }
@@ -4739,7 +4969,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         a.tension += ((act && voulu && act === voulu ? .55 : 0) - a.tension) * .15;
         if (a.but !== voulu || a.geste !== g) {
           a.but = voulu; a.geste = g;
-          if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? 1100 : 0); }
+          // (le premier dépliement, celui de la présentation, est lent : PIEUVRE.DEPLOI ; les suivants, au geste, plus vifs)
+          if (voulu) { a.col = voulu.col; a.t.viser({ ...cibleDe(voulu), tension: a.tension }, anime ? (pres ? PIEUVRE.DEPLOI : 1100) : 0); }
           else if (g) a.t.viser(g, anime ? 900 : 0);
           else a.t.viser(null, anime ? 760 : 0, true);   // (remontée : un ressort)
         } else if (voulu) a.t.viser({ ...cibleDe(voulu), tension: a.tension });      // (le titre a pu bouger : la forme visée le suit)
@@ -4790,7 +5021,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           };
           const ab = act && act.bras, trace = a => PIEUVRE.dessiner(ctx, a.t, { encre: ENCRE, vers: `rgb(${a.col.join(',')})`, teinte: a.teinte, lisere: PIEUVRE.lisere, degrade: degradeDe(a) });
           PIEUVRE.palmure(ctx, TS, ENCRE);
-          for (const a of BRAS) if (a !== ab) trace(a);
+          // (les plus enfoncées d'abord : elles passent derrière les autres ; celle qu'on regarde, devant tout)
+          for (const a of [...BRAS].sort((x, y) => x.t.profondeur() - y.t.profondeur())) if (a !== ab) trace(a);
           if (ab) trace(ab);
           // (les tentacules posées flottent, portées par les remous (PIEUVRE, flotter) : c'est ce mouvement qui invite à les
           // remonter ; plus de lueur qui court dessus)
@@ -4887,7 +5119,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         for (const a of BRAS) {
           const d = relais.TS.find(x => x.cle === a.cle), T = d && d.cible && TIT.find(x => x.slug === d.cible.cle);
           if (!T) continue;
-          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle'];
+          const t = a.t, cles = ['pose', 'depuis', 'but', 'q', 'duree', 'cible', 'derniere', 'etire', 'elastique', 'rac', 'wmin', 'tourne', 'colle', 'relie'];
           for (const k of cles) t[k] = d[k];
           t.libreRac = -1; t.poly = null;
           a.but = T; a.tenu = T; a.col = T.col; a.teinte = relais.teinte; repris++;
@@ -7011,13 +7243,22 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // derrière elle), y flotte un moment (elle respire, regarde autour d'elle), puis repart ailleurs : jamais sur la même ligne.
   // Au passage, une tentacule attrape le médaillon du métier qu'on lit (qui s'anime), et le lâche pour le suivant. Quand on
   // choisit quelqu'un (troupeTenues), elle se poste à la hauteur de ses places et les tient toutes de ses tentacules, lumineuses.
+  // On peut la toucher (un doigt, un clic) : elle exulte, bondit, lance ses tentacules et une gerbe de bulles (CREATURE, joie).
   // Hors de l'écran, elle s'efface et se repose ; sans mouvement, elle n'existe pas (le dessin de tête reste)
   let troupeTenues = [];
   function creatureTroupe(tr) {
     if (typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return null;
     let x = null, y = null, bouge = false, prise = null, but = null, tBut = 0, tPrec = 0;
     const lerp = (a, b, t) => a + (b - a) * t, lisse = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.4, onde: 4.5, rythme: 1.7, lueur: true, sillage: true,
+    // (on peut la toucher : elle exulte, ses bulles aux couleurs des spectacles ; dès la troisième touche rapprochée, les médaillons
+    // des métiers s'animent à leur tour, en vague, du plus proche d'elle au plus lointain)
+    const couleurs = D.shows.map(sh => { const c = (sh.univers && sh.univers.couleurs) || {}, h = [c.scene, c.accent2, c.accent].find(x => HEX6.test(x || '')); return h ? eclaircir(h, themeSaison().repere, 2.4) : null; }).filter(Boolean);
+    const vague = n => {
+      if (n !== 3) return;
+      const yc = y === null ? innerHeight / 2 : y, ics = $$('.troupe-icone', tr).map(i => ({ i, d: Math.abs(i.getBoundingClientRect().top - yc) })).sort((a, b) => a.d - b.d);
+      ics.forEach(({ i }, k) => setTimeout(() => { if (!i.isConnected) return; i.classList.remove('est-vivant'); void i.offsetWidth; i.classList.add('est-vivant'); setTimeout(() => i.classList.remove('est-vivant'), 1600); }, Math.min(900, k * 70)));
+    };
+    const c = CREATURE.creer({ encre: getComputedStyle($('.tr6-coeur', tr) || tr).color, placerChaqueImage: true, vie: 2.4, onde: 4.5, rythme: 1.7, lueur: true, sillage: true, toucher: vague, couleurs,
       eveil: () => tr.classList.add('est-vivante'), sommeil: () => { tr.classList.remove('est-vivante', 'est-reliee'); $$('.tr6-cat.est-tenue', tr).forEach(e => e.classList.remove('est-tenue')); prise = null; },
       placer() {
         const g = troupeGeo;
@@ -7077,9 +7318,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   }
   // quelqu'un est choisi (un clic sur une de ses places) : la créature sursaute, se penche vers la place cliquée, puis ses
   // tentacules, lumineuses, vont tenir toutes ses places ; les fils des liens se taisent. Personne : elle lâche tout
+  // (sa fiche ouverte, elle la tient aussi, avec celles de ses places que la fiche ne couvre pas)
   function tenirPersonne(slug, depuis) {
-    const tr = $('.tr6', main);
+    const tr = $('.tr6', main), f = fiche && fiche.troupe && fiche.el.isConnected ? fiche.el : null;
     troupeTenues = slug && tr ? $$(`[data-troupe-place][data-troupe-personne="${slug}"]`, tr) : [];
+    if (f && troupeTenues.length) {
+      const b = f.getBoundingClientRect();
+      troupeTenues = [f, ...troupeTenues.filter(p => { const r = p.getBoundingClientRect(); return r.right < b.left || r.left > b.right || r.bottom < b.top || r.top > b.bottom; })];
+    }
     if (!troupeCreature) return;
     if (tr) tr.classList.toggle('est-reliee', troupeTenues.length > 0);
     if (troupeTenues.length) {
@@ -7088,12 +7334,208 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       troupeCreature.tenir(troupeTenues, { lumineux: true, prise: 'pastille' });
     } else troupeCreature.lacher();
   }
+  /* la fiche d'une personne, partout sur le site : une place de la troupe, un portrait de la distribution, son nom écrit dans
+     une page (nommer, plus bas) l'ouvrent par-dessus ce qu'on a choisi ; son portrait se pose sur la photo (la vignette grandit,
+     la fiche s'ouvre autour d'elle, en cercle). Son nom, ses métiers, le crédit de sa photo ; ses spectacles (sa fonction, son
+     rôle, son alternance, « En tournée » ou son statut), chacun menant à sa page ; les prochaines dates de ceux qui tournent,
+     s'il y en a (jusqu'à cinq, puis « Toutes les dates »). Rien que D, relue à chaque ouverture. Dans la couche du dessus
+     (popover : rien ne la coupe, ni la mise en page différée des sections, ni l'univers d'un spectacle), attachée à ce qui l'a
+     ouverte quand la page défile, gardée dans l'écran à l'ouverture. Elle se ferme d'un second clic, d'Échap, d'un clic ailleurs
+     ou de sa croix, et rend le focus à ce qui l'a ouverte ; une autre page la ferme */
+  const FICHE_DATES = 5;
+  function ficheHTML(slug) {
+    const p = (D.personnes || {})[slug];
+    if (!p) return '';
+    const jeu = ((S.troupe && S.troupe.categories) || []).find(c => c.cle === 'jeu'), jouer = jeu && jeu.metiers && jeu.metiers[0];
+    const sps = D.shows.filter(s => (s.equipe || []).some(e => e.personne === slug)), miens = new Set(sps.map(s => s.slug));
+    // dans chaque spectacle, ce qu'elle y fait : sa fonction (le jeu, sans fonction écrite : son métier), son rôle, son alternance
+    const fait = s => [...new Set((s.equipe || []).filter(e => e.personne === slug).flatMap(e => [e.fonction || (e.categorie === 'jeu' ? jouer : ''), e.role, e.alternance]).filter(Boolean))];
+    const spectacle = s => { const ph = D.photos[s.slug], badge = s.statut || (s.enTournee ? L.enTournee : ''), f = fait(s);
+      return `<li style="--c:${couleurDe(s.slug)}"><a href="${lienSp(s.slug)}"><span class="trf-ph">${ph ? `<img src="${ph}" alt="" width="88" height="88" loading="lazy" decoding="async">` : ''}</span>
+        <span class="trf-sp"><b>${esc(s.titre)}${badge ? ` <em class="tag">${esc(badge)}</em>` : ''}</b>${f.length ? `<small>${f.map(x => `<span>${esc(x)}</span>`).join('')}</small>` : ''}</span></a></li>`; };
+    const ds = D.dates.filter(d => miens.has(d.slug)), vues = ds.slice(0, FICHE_DATES);
+    const date = d => { const s = bySlug[d.slug], [j, m] = coupe(d.ligneDate), k = RS && !d.scolaire ? RS.cle(d) : null, rv = k != null && !!RS.trouver(k);
+      return `<li${dateId(d)} style="--c:${couleurDe(d.slug)}"><a href="${rv ? `#/spectacle/${esc(d.slug)}/voir?date=${encodeURIComponent(k)}` : lienSp(d.slug, 'voir')}"><span class="trf-q"><b>${esc(j)}</b>${m ? `<small>${esc(m)}</small>` : ''}</span>
+        <span class="trf-sp"><b>${esc(s ? s.titre : d.titre)}</b><small><span>${esc(d.ligneLieu)}</span>${d.scolaire ? `<span>${esc(L.scolaire)}</span>` : ''}${d.etat ? `<span>${esc(d.etat)}</span>` : ''}</small></span></a></li>`; };
+    const m = menuDe('saisons') || { href: '#/saisons' };
+    return `<div class="trf-tete">${aPhoto(p) ? `<span class="trf-v"><img src="${esc(p.photo)}" alt="" width="176" height="176" decoding="async" onerror="this.remove()"></span>` : ''}
+        <div class="trf-qui"><h3 class="trf-nom" id="trf-nom">${esc(nomDe(p))}</h3>${(p.metiers || []).length ? `<p class="trf-m">${p.metiers.map(x => `<span>${esc(x)}</span>`).join('')}</p>` : ''}${aPhoto(p) && p.credit ? `<small class="trf-cr">${esc(p.credit)}</small>` : ''}</div></div>
+      ${sps.length ? `<h4 class="trf-k">${esc(L.lesSpectacles)}</h4><ul class="trf-l">${sps.map(spectacle).join('')}</ul>` : ''}
+      ${vues.length ? `<h4 class="trf-k">${esc(L.prochainesDates)}</h4><ul class="trf-l">${vues.map(date).join('')}</ul>${ds.length > vues.length ? `<p class="trf-tout"><a href="${esc(m.href)}">${esc(L.toutesLesDates)}${FLECHE}</a></p>` : ''}` : ''}`;
+  }
+  // la fiche ouverte : { el, slug, ancre (la photo, la vignette ou le nom sur lequel elle se pose), declencheur (ce qui l'a
+  // ouverte, qui reprend le focus), troupe, surFermer, dx, dy (son écart à l'ancre, gardé quand la page défile), fin() }
+  let fiche = null;
+  // l'écran utile : sous le menu (et le sommaire) arrimés en haut, au-dessus de la barre d'onglets du bas au téléphone
+  function margesFiche() {
+    const haut = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 80, eb = $('#entrees.en-bas');
+    const r = eb && eb.getClientRects().length ? eb.getBoundingClientRect() : null;
+    return [haut, r && r.top < innerHeight && r.top > innerHeight / 2 ? innerHeight - r.top + 12 : 12];
+  }
+  // la poser : son portrait (sinon son coin) sur le centre de l'ancre, gardée dans l'écran (premiere), puis à la même distance
+  // de l'ancre ; rend le point d'où elle s'ouvre, dans la fiche
+  function placerFiche(F, premiere) {
+    const f = F.el, a = F.ancre.getBoundingClientRect(), cx = a.left + a.width / 2, cy = a.top + a.height / 2;
+    if (premiere) {
+      const [haut, bas] = margesFiche();
+      f.style.setProperty('--fiche-marges', `${Math.round(haut + bas)}px`);
+      const v = $('.trf-v', f), ox = v ? v.offsetLeft + v.offsetWidth / 2 : 30, oy = v ? v.offsetTop + v.offsetHeight / 2 : 34, W = f.offsetWidth, H = f.offsetHeight;
+      const x = clamp(cx - ox, 12, Math.max(12, innerWidth - 12 - W)), y = clamp(cy - oy, haut, Math.max(haut, innerHeight - bas - H));
+      F.dx = x - a.left; F.dy = y - a.top;
+    }
+    const x = a.left + F.dx, y = a.top + F.dy;
+    f.style.left = `${Math.round(x)}px`; f.style.top = `${Math.round(y)}px`;
+    return [clamp(cx - x, 0, f.offsetWidth), clamp(cy - y, 0, f.offsetHeight)];
+  }
+  function ouvrirFiche(slug, { ancre, declencheur = ancre, hote = document.body, troupe = false, surFermer = null } = {}) {
+    const html = ficheHTML(slug);
+    fermerFiche({ anime: false, rendre: false });
+    if (!html || !ancre || !ancre.isConnected) return;
+    const f = document.createElement('div');
+    f.className = 'trf';
+    f.setAttribute('data-fiche-personne', slug);
+    if (troupe) f.setAttribute('data-troupe-fiche', slug);
+    f.setAttribute('role', 'dialog');
+    f.setAttribute('aria-labelledby', 'trf-nom');
+    f.tabIndex = -1;
+    f.innerHTML = `<button type="button" class="trf-x" data-trf-fermer aria-label="${esc(L.fermer || '')}">${CROIX}</button>${html}`;
+    // (dans la couche du dessus ; sans popover, posée sur la page, tout en haut)
+    const haut = typeof f.showPopover === 'function';
+    if (haut) f.popover = 'manual'; else f.classList.add('trf-sans-popover');
+    (haut ? hote : document.body).appendChild(f);
+    if (haut) f.showPopover();
+    const F = fiche = { el: f, slug, ancre, declencheur, troupe, surFermer, dx: 0, dy: 0 };
+    if (declencheur && declencheur.hasAttribute('aria-expanded')) declencheur.setAttribute('aria-expanded', 'true');
+    const [ox, oy] = placerFiche(F, true);
+    f.focus({ preventScroll: true });
+    // elle suit ce qui l'a ouverte quand la page défile ; Échap, sa croix, un clic ailleurs la ferment
+    let raf = 0;
+    const suivre = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; if (fiche !== F) return; if (!F.ancre.isConnected) fermerFiche({ anime: false, rendre: false }); else placerFiche(F, false); }); };
+    const reposer = () => { if (fiche === F && F.ancre.isConnected) placerFiche(F, true); };
+    const touche = e => { if (e.key === 'Escape' && fiche === F) { e.preventDefault(); fermerFiche(); } };
+    const clic = e => {
+      if (fiche !== F) return;
+      const t = e.target;
+      if (t && t.closest && t.closest('[data-trf-fermer]') && f.contains(t)) { fermerFiche(); return; }
+      if (t && (f.contains(t) || (declencheur && declencheur.contains(t)))) return;
+      fermerFiche({ rendre: false });
+    };
+    addEventListener('scroll', suivre, { passive: true, capture: true });
+    addEventListener('resize', reposer, { passive: true });
+    document.addEventListener('keydown', touche);
+    document.addEventListener('click', clic, true);
+    F.fin = () => { cancelAnimationFrame(raf); removeEventListener('scroll', suivre, { capture: true }); removeEventListener('resize', reposer); document.removeEventListener('keydown', touche); document.removeEventListener('click', clic, true); };
+    if (motionOK() && f.animate) {
+      const W = f.offsetWidth, H = f.offsetHeight, r0 = Math.max(6, Math.min(48, Math.min(ancre.offsetWidth || 12, ancre.offsetHeight || 12) / 2)), r1 = Math.hypot(Math.max(ox, W - ox), Math.max(oy, H - oy)) + 2;
+      f.animate([{ clipPath: `circle(${r0}px at ${ox}px ${oy}px)` }, { clipPath: `circle(${r1}px at ${ox}px ${oy}px)` }], { duration: 440, easing: 'cubic-bezier(.22, .8, .24, 1)' });
+      const v = $('.trf-v', f);
+      if (v) v.animate([{ transform: `scale(${Math.min(1, r0 * 2 / v.offsetWidth).toFixed(3)})` }, { transform: 'none' }], { duration: 440, easing: 'cubic-bezier(.3, 1.25, .5, 1)' });
+      $$('.trf-qui, .trf-k, .trf-l > li, .trf-tout', f).forEach((e, i) => e.animate([{ opacity: 0, transform: 'translateY(var(--k-monte))' }, { opacity: 1, transform: 'none' }],
+        { duration: 320, delay: 120 + Math.min(i, 10) * 34, easing: 'cubic-bezier(.22, .8, .24, 1)', fill: 'backwards' }));
+    }
+  }
+  // la fermer : elle se referme sur son ancre ; rendre : le focus revient à ce qui l'a ouverte (s'il était dans la fiche) ;
+  // surFermer prévient qui l'a ouverte (la troupe relâche la personne)
+  function fermerFiche({ anime = true, rendre = true } = {}) {
+    const F = fiche;
+    fiche = null;
+    if (!F) return;
+    F.fin && F.fin();
+    const f = F.el, dedans = f.contains(document.activeElement);
+    f.removeAttribute('data-fiche-personne'); f.removeAttribute('data-troupe-fiche');
+    const h = $('#trf-nom', f); if (h) h.removeAttribute('id');
+    if (F.declencheur && F.declencheur.hasAttribute('aria-expanded')) F.declencheur.setAttribute('aria-expanded', 'false');
+    if (rendre && dedans && F.declencheur && F.declencheur.isConnected) F.declencheur.focus({ preventScroll: true });
+    if (F.surFermer) F.surFermer();
+    const ote = () => { try { if (f.matches(':popover-open')) f.hidePopover(); } catch (e) { /* sans popover */ } f.remove(); };
+    if (!f.isConnected) return;
+    if (!anime || !motionOK() || !f.animate || !F.ancre.isConnected) { ote(); return; }
+    f.style.pointerEvents = 'none';
+    const [ox, oy] = placerFiche(F, false), W = f.offsetWidth, H = f.offsetHeight;
+    f.animate([{ clipPath: `circle(${Math.hypot(Math.max(ox, W - ox), Math.max(oy, H - oy)) + 2}px at ${ox}px ${oy}px)`, opacity: 1 }, { clipPath: `circle(14px at ${ox}px ${oy}px)`, opacity: 0 }],
+      { duration: 240, easing: 'cubic-bezier(.4, 0, .6, 1)', fill: 'forwards' }).onfinish = ote;
+  }
+  // un portrait de la distribution, un nom écrit dans une page ([data-personne]) : sa fiche (pas en mode édition : le clic y
+  // modifie le texte ou la photo) ; un second clic la referme
+  document.addEventListener('click', e => {
+    const b = e.target && e.target.closest ? e.target.closest('[data-personne]') : null;
+    if (!b || !main.contains(b) || (typeof EDITION !== 'undefined' && EDITION.actif)) return;
+    e.preventDefault();
+    if (fiche && fiche.declencheur === b) { fermerFiche(); return; }
+    const ancre = b.classList.contains('u-pt-ouvrir') ? b.parentNode.querySelector('.u-pt-cadre') || b : b;
+    ouvrirFiche(b.getAttribute('data-personne'), { ancre, declencheur: b });
+  });
+  /* les personnes nommées dans les pages : chaque nom complet d'une personne publiée de D (« Prénom Nom »), écrit dans le texte
+     d'une page (la fiche d'un spectacle, sa distribution, « avec : … », l'équipe de création, la présentation de la compagnie…),
+     devient un bouton qui ouvre sa fiche ; le texte reste le même, mot pour mot. Ni dans les liens, les boutons, les titres de
+     page, la troupe (elle a ses places), les portraits (ils ont le leur), les pages légales ; ni en mode édition (armé, un texte
+     reprend sa valeur de D). Après le rendu, au repos, puis pour ce qui s'ajoute à la page */
+  const HORS_NOMS = 'a, button, input, select, textarea, label, script, style, svg, h1, nav, [aria-hidden="true"], [contenteditable], [data-troupe], .u-pt, .trf, .ed-boite';
+  let motifNoms = null, cleNoms = null;
+  function noms() {
+    const ps = Object.entries(D.personnes || {}).map(([slug, p]) => [slug, nomDe(p).replace(/\s+/g, ' ').trim()]).filter(([, n]) => n.includes(' '));
+    const cle = ps.map(x => x.join('=')).join('|');
+    if (cle === cleNoms) return motifNoms;
+    cleNoms = cle;
+    const parNom = new Map(ps.map(([s, n]) => [n, s])), alt = [...parNom.keys()].sort((a, b) => b.length - a.length).map(n => n.split(' ').map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+'));
+    // (un navigateur sans lookbehind, Safari avant 16.4 : les noms restent du texte)
+    try { motifNoms = alt.length ? { re: new RegExp(`(?<![\\p{L}\\p{N}])(?:${alt.join('|')})(?![\\p{L}\\p{N}])`, 'gu'), parNom } : null; } catch (e) { motifNoms = null; }
+    return motifNoms;
+  }
+  function nommer(racine) {
+    const M = noms();
+    if (!M || !racine || !racine.isConnected || vue === 'legal' || (typeof EDITION !== 'undefined' && EDITION.actif)) return;
+    if (racine.nodeType === 1 && racine.closest(HORS_NOMS)) return;
+    const w = document.createTreeWalker(racine, NodeFilter.SHOW_TEXT, { acceptNode: t => (t.nodeValue.length > 4 && t.parentElement && !t.parentElement.closest(HORS_NOMS) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+    const ts = [];
+    for (let t; (t = w.nextNode());) { M.re.lastIndex = 0; if (M.re.test(t.nodeValue)) ts.push(t); }
+    ts.forEach(t => {
+      const v = t.nodeValue, frag = document.createDocumentFragment();
+      let i = 0;
+      M.re.lastIndex = 0;
+      for (let m; (m = M.re.exec(v));) {
+        const slug = M.parNom.get(m[0].replace(/\s+/g, ' '));
+        if (!slug) continue;
+        frag.append(v.slice(i, m.index));
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'nomme'; b.textContent = m[0];
+        b.setAttribute('data-personne', slug); b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-expanded', 'false');
+        frag.append(b);
+        i = m.index + m[0].length;
+      }
+      if (!i) return;
+      frag.append(v.slice(i));
+      t.replaceWith(frag);
+    });
+  }
+  // ce qui s'ajoute à la page après le rendu (une liste remplie plus tard, une section refaite) : nommé au repos
+  let aNommer = new Set(), nommage = 0;
+  if ('MutationObserver' in window) new MutationObserver(ms => {
+    for (const m of ms) for (const n of m.addedNodes) if (n.nodeType === 1 ? !n.classList.contains('nomme') && !n.classList.contains('trf') : n.nodeType === 3 && n.parentElement) aNommer.add(n.nodeType === 1 ? n : n.parentElement);
+    if (aNommer.size && !nommage) nommage = auRepos(() => { nommage = 0; const xs = [...aNommer]; aNommer = new Set(); xs.forEach(x => { if (!xs.some(y => y !== x && y.contains(x))) nommer(x); }); });
+  }).observe(main, { childList: true, subtree: true });
   function vivreTroupe() {
     finirTroupe();
     const tr = $('.tr6', main);
     if (!tr || typeof TROUPE === 'undefined') return;
     troupeTenues = [];
-    troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true, surChoix: slug => tenirPersonne(slug, $('[data-troupe-place].est-source', tr)) });
+    // la place cliquée (ou validée au clavier) : la fiche s'ouvre sur elle (sa vignette, sinon son point) ; la fermer relâche la
+    // personne
+    let cliquee = null;
+    tr.addEventListener('click', e => { cliquee = e.target.closest ? e.target.closest('[data-troupe-place]') : null; }, true);
+    const placeDe = slug => { const ps = $$(`[data-troupe-place][data-troupe-personne="${slug}"]`, tr);
+      return ps.find(p => p === cliquee) || ps.find(p => p.classList.contains('est-source')) || ps[0] || null; };
+    troupeCtl = TROUPE.relier(tr, { liens: true, clavier: true, surChoix: slug => {
+      if (!slug) { if (fiche && fiche.troupe) fermerFiche(); tenirPersonne(null); return; }
+      const place = placeDe(slug);
+      // (la fiche et les tentacules après l'image : le geste se voit d'abord, règle 15 C)
+      troupeCtl.apresImage(() => {
+        if (!troupeCtl || troupeCtl.choisi() !== slug || !place) return;
+        ouvrirFiche(slug, { ancre: place.querySelector('[data-troupe-ancre]') || place, declencheur: place, hote: tr, troupe: true,
+          surFermer: () => { if (troupeCtl && troupeCtl.choisi() === slug) troupeCtl.choisir(null); } });
+        tenirPersonne(slug, place);
+      });
+    } });
     // (la créature et la géométrie de la troupe naissent quand la troupe approche de l'écran : les lire à l'arrivée sur la page
     // forçait la mise en forme de la troupe, encore hors de l'écran (content-visibility), dans la tâche de la page : plus de 50 ms)
     let largeur = 0;
@@ -7384,7 +7826,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   const comediens = s => { const vus = new Map(); (s.equipe || []).forEach(e => { const p = (D.personnes || {})[e.personne]; if (e.categorie !== 'jeu' || !p) return; if (vus.has(e.personne)) vus.get(e.personne).lignes.push(e); else vus.set(e.personne, { e, p, lignes: [e] }); }); return [...vus.values()]; };   // un portrait par personne, même avec deux lignes de jeu
   const portrait = ({ e, p, lignes }, credits) => {
     const k = `personnes.${e.personne}`;   // (le portrait a alt="" : le nom est écrit dessous, altPh)
-    return `<figure class="u-pt"><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
+    return `<figure class="u-pt"><button type="button" class="u-pt-ouvrir" data-personne="${esc(e.personne)}" aria-haspopup="dialog" aria-expanded="false" aria-label="${esc(nomDe(p))}"></button><span class="u-pt-cadre" data-edit-photo="${esc(k)}.photo"><span class="u-pt-mono" aria-hidden="true"><b>${esc(initiales(p))}</b></span>${p.photo ? `<img src="${esc(p.photo)}" alt="" width="320" height="400" loading="lazy" decoding="async" onerror="this.remove()">` : ''}</span>
       <figcaption>${credits ? `<small class="u-pt-cr">${p.photo && p.credit ? esc(p.credit) : ''}</small>` : ''}<b class="u-pt-nom"><span data-edit="${esc(k)}.prenom">${esc(p.prenom)}</span> <span data-edit="${esc(k)}.nom">${esc(p.nom)}</span></b>${lignes.map(l => `${l.alternance ? `<span class="u-pt-alt">${esc(l.alternance)}</span>` : ''}${l.role ? `<span class="u-pt-role">${esc(l.role)}</span>` : ''}`).join('')}</figcaption></figure>`;
   };
   function portraits(s) {
@@ -8149,6 +8591,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     frises.forEach(f => f.detruire()); frises = [];
     lecteurs.forEach(io => io.disconnect()); lecteurs = [];
     secs = []; chaps = []; ecrans = []; dfM = null; surPlaceRendu = !!surPlace; psom = null; psomB = []; psomC = [];
+    fermerFiche({ anime: false, rendre: false });   // (la fiche d'une personne ne survit pas à sa page)
     finirTroupe();   // (la créature de la troupe s'arrête en quittant la compagnie ; la vue refaite la recrée)
     // la scène de l'accueil s'arrête en le quittant (refait en place, l'accueil la garde telle quelle)
     if (!(surPlace && vue === 'accueil')) Scene.montrer(false);
@@ -8176,13 +8619,14 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     'espace-pro/etablissement': sousMenu(etablissement, null, 'espace-pro'), spectacles, compagnie, contact }, S.espacePro ? { 'espace-pro': espacePro } : {});
   // les filets se tracent, les titres montent, les fiches arrivent l'une après l'autre, les chiffres comptent ; posé avant
   // toute lecture de mise en page (le focus du titre en force une : une seule, sur la page finie)
-  function decorer(surPlace) {
+  function decorer(surPlace, rideau = false) {
+    auRepos(() => nommer(main));   // (les personnes nommées dans la page ouvrent leur fiche)
     $$('section.bloc:not(.sans-filet)', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
     $$('svg.trait', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'trace'); });
     $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-groupes, .ep-acces', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
     $$('.u-faits .gros, .fp-rep .gros, .u-rep .gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
-    if (MV) MV.reveler(main, { immediat: surPlace });
+    if (MV && !rideau) MV.reveler(main, { immediat: surPlace });   // (sous le rideau : à son ouverture)
   }
   function apres(surPlace) {
     ecrire(surPlace);
@@ -8337,11 +8781,25 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     document.documentElement.classList.remove(vers0);
     cadre();
     relecture = !!relue;
+    // (le rideau : une page ouverte par le menu, ou la première hors de l'ouverture de l'accueil ; pas d'un onglet à l'autre
+    // d'un spectacle ni en entrant dans un spectacle, que l'encre de son univers ouvre)
+    // (fermé avant que la page se fasse : ses changements et ceux de la page se calculent ensemble, à l'image suivante) ; il
+    // couvre la page neuve, déjà posée ; il s'ouvre et elle se compose (ses titres, ses filets, ce qui paraît au défilement ne
+    // partent qu'alors)
+    const avecRideau = motionOK() && !INTRO.ouverte() && (premiere || type === 'page' || type === 'quitter') && !(avant && avant.chemin === a.chemin)
+      && Rideau.fermer(vite => {
+        if (courant !== a) return;
+        if (MV) MV.reveler(main, { immediat: false });
+        // (un geste a ouvert le rideau, ou l'appareil est trop lent pour la composer en douceur : la page est là tout de suite)
+        if (vite) return;
+        if (!premiere && motionOK()) fleurir();
+        composer();
+      });
     let r = rendre(a, false), b = a;
     relecture = false;
     if (!r) { r = introuvable(a.chemin); }   // (une adresse inconnue : sa page, l'adresse gardée)
     courant = b;
-    decorer(false);
+    decorer(false, avecRideau);
     document.title = titreDoc(r);
     marquerNav(r);
     mettreAJourSchemaOrg();
@@ -8373,6 +8831,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     // mise en page de toute la page neuve dans la tâche de la route, plus de 50 ms ; une image après, la page est posée)
     const retour = retourNav;
     ensuite(() => { if (courant !== b) return; habiterCreature(); if (avant) creature(type === 'spectacle' || type === 'onglet' ? type : retour ? 'retour' : 'page'); });
+    if (avecRideau) return;
+    Rideau.oter();
     if (!vit) return;
     if (type === 'quitter' && bySlug[spAvant]) {
       const p = vue === 'accueil' ? Scene.coeur() : marque || { x: VW / 2, y: 32 };
@@ -8439,6 +8899,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   function preparer() {
     const plus_tard = f => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 300));
     plus_tard(() => retenu('agendaPasse', agendaPasse));
+    plus_tard(Rideau.preparer);
     plus_tard(polices);
     plus_tard(alleger);
     plus_tard(() => { const lieux = retenu('tout', () => CARTE.tout()); retenu(`carte-tout-${motionOK()}`, () => carte({ lieux, titre: L.lieuxDiffusion, classe: 'tout', simple: true, fin: .5 })); });

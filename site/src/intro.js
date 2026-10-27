@@ -25,7 +25,7 @@
      cibles  : avec vivante et devient : une fonction qui rend, à chaque image du départ, ce que chaque tentacule doit
                rejoindre : [{ cle, cible, col }] (cle : la clé de la tentacule, cible : ce que PIEUVRE vise, à l'écran, col :
                [r, g, b] la couleur vers laquelle elle se teinte). Dès le geste, ces tentacules se déroulent vers leur
-               cible (en 1,5 s : plus que le glissement, qui dure 1,15 s), leur bout se colorant en route, pendant que le
+               cible (en PIEUVRE.DEPLOI : 1,9 s, plus que le glissement, qui dure 1,15 s), leur bout se colorant en route, pendant que le
                logo glisse à sa place ; la page reprend leur trajet où il en est (INTRO.relais())
    INTRO.relais()   pendant `apres` : { TS, teinte, t0 } les tentacules de l'ouverture (PIEUVRE), telles qu'elles sont (pose,
                trajet en cours), la teinte atteinte, et l'instant du geste : la pieuvre de la page y copie leur état et
@@ -188,26 +188,47 @@ const INTRO = (() => {
 
   // la pieuvre vivante, une image : son corps (contracté de `serre` autour de son cœur, bras compris) et ses tentacules à la
   // place posée par poser(), qui ondulent depuis leurs racines (onde) et rament (rame : elles se penchent à l'opposé du sens
-  // `vers` où elle va, d'autant plus vers leur pointe)
+  // `vers` où elle va, d'autant plus vers leur pointe). Tant qu'aucune tentacule ne quitte sa place, c'est le logo même qui
+  // ondule (PIEUVRE.logo : au repos exactement le dessin, croisements et bouts coupés compris, d'un seul tenant quand il
+  // ondule) ; dès que l'une part vers sa cible, chacune se dessine elle-même (PIEUVRE.dessiner), le relais pris en fondu
+  // enchaîné, en 260 ms, au début du déroulement (où les deux dessins se confondent encore)
+  const FONDU = 260;
   function peindre(now, { onde = 0, rame = 0, vers = null, serre = 0, teinte = 0, cols = null } = {}) {
     if (!vie || !geo || !geo.pose) return;
     const { cv, ctx, TS, dpr } = vie, { S, ox, oy } = geo.pose;
     const dt = Math.min(50, vie.tPrec ? now - vie.tPrec : 16); vie.tPrec = now; vie.t += dt / 1000;
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-    const k = 1 - serre, cx = ox + COEUR[0] * S, cy = oy + COEUR[1] * S;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    if (k !== 1) { ctx.translate(cx, cy); ctx.scale(k, k); ctx.translate(-cx, -cy); }
-    ctx.save(); ctx.transform(S, 0, 0, S, ox, oy); PIEUVRE.corpsVivant(ctx, TS, 0, 0, 0, vie.encre); ctx.restore();
     const arr = vers && rame ? Math.atan2(-vers[1], -vers[0]) : 0;
     for (const t of TS) {
       let penche = 0;
       if (rame && vers && !t.cible) { let df = arr - t.RS[t.M - 1]; df = Math.atan2(Math.sin(df), Math.cos(df)); penche = clamp(df, -1.2, 1.2) * rame; }
       t.deplacer(ox, oy, S);
       t.avancer(dt, { temps: vie.t, onde, penche });
-      const col = cols && cols[t.cle];
-      PIEUVRE.dessiner(ctx, t, { encre: vie.encre, lisere: PIEUVRE.lisere, vers: col ? `rgb(${col.join(',')})` : null, teinte: col ? teinte : 0 });
     }
+    if (vie.tFondu == null && TS.some(t => t.cible || t.mouvement() > .001)) vie.tFondu = now;
+    const f = vie.tFondu == null ? 0 : clamp((now - vie.tFondu) / FONDU);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    const k = 1 - serre, cx = ox + COEUR[0] * S, cy = oy + COEUR[1] * S;
+    const repere = g => { g.setTransform(dpr, 0, 0, dpr, 0, 0); if (k !== 1) { g.translate(cx, cy); g.scale(k, k); g.translate(-cx, -cy); } };
+    // (les tentacules, chacune la sienne ; pendant le fondu, sur une toile à part, ajoutée à celle du logo qui s'efface : une
+    // encre ajoutée à elle-même ne pâlit pas où les deux dessins se recouvrent)
+    const corps = g => {
+      repere(g);
+      g.save(); g.transform(S, 0, 0, S, ox, oy); PIEUVRE.corpsVivant(g, TS, 0, 0, 0, vie.encre); g.restore();
+      // (les plus enfoncées d'abord : elles passent derrière les autres)
+      for (const t of [...TS].sort((a, b) => a.profondeur() - b.profondeur())) { const col = cols && cols[t.cle]; PIEUVRE.dessiner(g, t, { encre: vie.encre, lisere: PIEUVRE.lisere, vers: col ? `rgb(${col.join(',')})` : null, teinte: col ? teinte : 0 }); }
+      g.setTransform(1, 0, 0, 1, 0, 0);
+    };
+    if (f >= 1) { corps(ctx); return; }
+    repere(ctx); ctx.globalAlpha = 1 - f; PIEUVRE.logo(ctx, TS, { ox, oy, s: S }, vie.encre); ctx.globalAlpha = 1;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (f > 0) {
+      const a = vie.aux || (vie.aux = document.createElement('canvas'));
+      if (a.width !== cv.width || a.height !== cv.height) { a.width = cv.width; a.height = cv.height; }
+      const g = a.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, a.width, a.height);
+      corps(g);
+      ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = f; ctx.drawImage(a, 0, 0); ctx.restore();
+    }
   }
   // au repos : la pieuvre respire ; vivante, ses tentacules ondulent doucement depuis leurs racines ; sinon elles respirent en
   // bloc et des ondes passent lentement
@@ -268,10 +289,10 @@ const INTRO = (() => {
     const fondG = el.querySelector('.intro-scene > g[mask]'), passent = el.querySelectorAll('[data-role="dessin"] .i-mot, [data-role="dessin"] .i-tache');
     let c = place;
     // (vivante, avec des cibles : dès le geste, le bout des tentacules se colore ; la pieuvre rejoint d'abord sa place, puis,
-    // à partir de 630 ms, chaque tentacule qui a une cible se déroule vers elle, en 1,1 s, par vagues de 70 ms : les deux
-    // spirales, les boucles, les spirales extérieures, les queues (même ordre que la scène, qui prend le relais) ; la cible est
-    // relue à chaque image, le trajet continue vers sa place du moment)
-    const viseur = vie && opts.cibles ? now => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; cols[x.cle] = x.col; if (now - T0 >= PIEUVRE.ATTENTE + PIEUVRE.rang(x.cle) * PIEUVRE.VAGUE) t.viser(x.cible, 1100); } return cols; } : null;
+    // à partir de 630 ms (PIEUVRE.ATTENTE), toutes les tentacules qui ont une cible se déplient vers elle ensemble, en
+    // PIEUVRE.DEPLOI (PIEUVRE.VAGUE : nul, comme la scène, qui prend le relais) ; la cible est relue à chaque image, le trajet
+    // continue vers sa place du moment)
+    const viseur = vie && opts.cibles ? now => { const cols = {}; for (const x of opts.cibles() || []) { const t = vie.TS.find(y => y.cle === x.cle); if (!t) continue; cols[x.cle] = x.col; if (now - T0 >= PIEUVRE.ATTENTE + PIEUVRE.rang(x.cle) * PIEUVRE.VAGUE) t.viser(x.cible, PIEUVRE.DEPLOI); } return cols; } : null;
     if (vie) { vie.t0 = T0; vie.teinte = 0; }
     const pas = now => {
       const v = clamp((now - T0) / TD), u = ease.inOut(v), bat = Math.sin(Math.PI * clamp(v * 1.3));

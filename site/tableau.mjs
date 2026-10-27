@@ -238,8 +238,8 @@ fs.mkdirSync(CAPT, { recursive: true });
   const defaut = await page.$$eval('.tb-tuile', xs => xs.map(x => x.dataset.k));
   ok('« Réinitialiser » remet la disposition d’origine, tout de suite, sans « Êtes-vous sûr ? »', natifsReinit === 0 && defaut.join(',') === 'actions,urgent,avant,prochaines,chiffres,equipe,diffusion,propositions,ateliers,journal' && await page.$eval('#tb-grille', e => e.dataset.colonnes === 'auto'), defaut.join(','));
   // l'annonce porte « Annuler » : la disposition d'avant revient, tuiles, tailles, colonnes et mémo
-  ok('« Réinitialiser » : l’annonce porte « Annuler »', /Disposition d’origine remise/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce button')) === 1, await texte(page, '.annonce'));
-  await page.click('.annonce button');
+  ok('« Réinitialiser » : l’annonce porte « Annuler »', /Disposition d’origine remise/.test(await texte(page, '.annonce')) && (await compte(page, '.annonce [data-tt="retour"]')) === 1, await texte(page, '.annonce'));
+  await page.click('.annonce [data-tt="retour"]');
   await page.waitForTimeout(250);
   const revenue = await page.$$eval('.tb-tuile', xs => xs.map(x => `${x.dataset.k}${x.classList.contains('taille-m') ? '*' : ''}${x.classList.contains('replie') ? '-' : ''}`));
   ok('« Annuler » remet la disposition d’avant, et le mémo', revenue.join(',') === 'chiffres,actions,avant,urgent*,prochaines*,equipe,diffusion,propositions,journal-,memo' && await page.$eval('#tb-grille', e => e.dataset.colonnes === '3') && (await page.$eval(`${tuile('memo')} .tb-memo`, e => e.value).catch(() => '')) === 'Rappeler le Volcan lundi', revenue.join(','));

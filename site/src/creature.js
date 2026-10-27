@@ -24,7 +24,10 @@
                      l'ampleur de l'ondulation des tentacules (2 × vie par défaut ; 5 ou 6 : elles battent franchement) ;
                      rythme : la vitesse de tout ce qui vit (1 ; 2 : deux fois plus vif) ; lueur : un halo autour d'elle ;
                      sillage : une traînée derrière elle quand elle se déplace ; tete (vrai par défaut dès que vie ≥ 1,5) :
-                     sa tête bouge, à part du corps (elle hoche, se tourne, mène le mouvement). → la créature
+                     sa tête bouge, à part du corps (elle hoche, se tourne, mène le mouvement) ; toucher : on peut la
+                     toucher (un doigt, un clic sur son corps ou ses tentacules) : elle exulte (c.joie), et le clic ne va pas
+                     à ce qu'il y a dessous ; une fonction : appelée à chaque fois avec le nombre de touches rapprochées ;
+                     couleurs : les couleurs de ses bulles (défaut : son encre). → la créature
 
    Sa vie, au repos, jamais pénible (lente, trente images par seconde au plus, rien quand l'onglet est caché) : ses
    tentacules ondulent, elle respire (son corps gonfle d'un rien), elle se penche vers la souris qui passe près d'elle,
@@ -47,6 +50,11 @@
      c.tient()                          vrai tant qu'elle tient quelque chose (tenir)
      c.reagir(genre, vers)              la pieuvre se contracte et ses tentacules s'agitent un instant ('page', 'clic',
                      'ouvre', 'ferme', 'enroule', 'retour', 'nage') ; vers : un point [x, y] vers lequel elle se penche
+     c.joie(x, y, genre)                on l'a touchée en (x, y) ('mouse', 'touch', 'pen') : elle se tasse et rebondit en
+                     l'air, tremble comme une gelée, lance ses tentacules tout autour puis les replie d'un ressort, son
+                     halo s'allume, une gerbe de bulles et une onde partent d'elle (un téléphone vibre d'un rien). Les
+                     touches rapprochées (moins d'une seconde) font monter la joie : plus haut, plus de bulles, et dès la
+                     troisième elle tourbillonne sur elle-même. Rend le nombre de touches rapprochées
      c.sortie()                         0 au repos, 1 quand la tentacule d'un moment est tendue
      c.cible()                          l'élément que sa tentacule vise, ou null
      c.arreter()                        tout s'arrête (l'en-tête retrouve son dessin)
@@ -87,11 +95,13 @@ const CREATURE = (() => {
   // la secousse d'une réaction : une impulsion qui monte vite, puis une détente qui se balance en s'éteignant
   const choc = v => (v <= 0 || v >= 1 ? 0 : v < .22 ? ease(v / .22) : Math.cos(((v - .22) / .78) * Math.PI * 1.6) * Math.pow(1 - (v - .22) / .78, 1.5));
   // [durée (ms), contraction, agitation des tentacules, penche (°)]
-  const GENRES = { clic: [420, .07, 1.8, 3], page: [680, .1, 2.6, 5], ouvre: [460, .05, 1.6, 2], ferme: [460, .07, 1.6, 2], enroule: [600, .06, 2, 0], retour: [480, .07, 1.8, 3], nage: [760, .05, 1.6, 0], prise: [640, .1, 2.6, 4] };
+  const GENRES = { clic: [420, .07, 1.8, 3], page: [680, .1, 2.6, 5], ouvre: [460, .05, 1.6, 2], ferme: [460, .07, 1.6, 2], enroule: [600, .06, 2, 0], retour: [480, .07, 1.8, 3], nage: [760, .05, 1.6, 0], prise: [640, .1, 2.6, 4], joie: [900, .18, 5, 6] };
 
   /* ---------- ce que toutes les créatures partagent : la souris, le défilement, l'onglet, le réglage ---------- */
   const toutes = new Set();
-  let pointeur = null, vScroll = 0, yScroll = 0, tScroll = 0, branche = false, tailleSale = true, tDecrue = 0, nPrises = 0;
+  let pointeur = null, vScroll = 0, yScroll = 0, tScroll = 0, branche = false, tailleSale = true, tDecrue = 0, nPrises = 0, avalee = null, main = false;
+  // (une créature qu'on peut toucher sous ce point : la plus haute, la dernière créée)
+  const touchee = (x, y, genre) => { let r = null; for (const c of toutes) if (c.o.toucher && c.touche(x, y, genre)) r = c; return r; };
   function brancher() {
     if (branche) return;
     branche = true;
@@ -102,7 +112,25 @@ const CREATURE = (() => {
       yScroll = y; tScroll = now;
       toutes.forEach(c => { c.placeSale = true; c.reveil(); });
     }, { passive: true });
-    addEventListener('pointermove', e => { if (e.pointerType !== 'mouse') return; pointeur = { x: e.clientX, y: e.clientY }; toutes.forEach(c => c.reveil()); }, { passive: true });
+    addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse') return;
+      pointeur = { x: e.clientX, y: e.clientY }; toutes.forEach(c => c.reveil());
+      // (au-dessus d'une créature qu'on peut toucher, la main)
+      const sur = !!touchee(e.clientX, e.clientY, 'mouse');
+      if (sur !== main) { main = sur; document.documentElement.style.cursor = sur ? 'pointer' : ''; }
+    }, { passive: true });
+    // on la touche : elle exulte ; le clic qui suit ne va pas à ce qu'il y a sous elle (un médaillon, un lien)
+    document.addEventListener('pointerdown', e => {
+      if (e.button > 0 || !e.isPrimary) return;
+      const c = touchee(e.clientX, e.clientY, e.pointerType);
+      if (!c) return;
+      c.joie(e.clientX, e.clientY, e.pointerType);
+      avalee = { x: e.clientX, y: e.clientY, t: performance.now() };
+    }, { capture: true, passive: true });
+    document.addEventListener('click', e => {
+      const a = avalee; avalee = null;
+      if (a && performance.now() - a.t < 900 && Math.hypot(e.clientX - a.x, e.clientY - a.y) < 30) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
     document.addEventListener('pointerleave', () => { pointeur = null; }, { passive: true });
     document.addEventListener('visibilitychange', () => toutes.forEach(c => { if (document.hidden) c.pause(); else c.reveil(); }));
     if (mq && mq.addEventListener) mq.addEventListener('change', () => toutes.forEach(c => { if (reduit()) c.dormir(); else c.demarrer(); }));
@@ -126,6 +154,9 @@ const CREATURE = (() => {
       this.s = 0; this.ox = 0; this.oy = 0; this.place = null; this.placeSale = true; this.tPlace = 0; this.tache = null; this.enMouvement = false;
       this.reaction = null; this.moment = null; this.regard = 0; this.penteNage = 0; this.tCoup = -1e9; this.tGeste = 0; this.bob = { x: 0, y: 0 }; this.promesses = [];
       this.theta = 0; this.vTheta = 0; this.dxTete = 0; this.dyTete = 0; this.trace = []; this.etire = 0;
+      // la joie (joie) : le bond, la gelée, le tourbillon, l'éclat du halo, les bulles et les ondes, les touches rapprochées
+      this.saut = null; this.gelee = null; this.tour = null; this.eclat = null; this.bulles = []; this.ondes = []; this.combo = 0; this.tJoie = 0;
+      this.COULEURS = (o.couleurs || []).map(rgb).filter(Boolean);
       toutes.add(this);
       brancher();
     }
@@ -158,15 +189,18 @@ const CREATURE = (() => {
     placer() {
       const p = this.o.placer ? this.o.placer() : null;
       if (!p) { if (this.place) this.sommeille(); this.place = null; return false; }
-      const s = p.s || (p.largeur || this.o.largeur || 40) / LARGEUR, ox = p.x - CENTRE[0] * s, oy = p.y - CENTRE[1] * s;
+      const s = p.s || (p.largeur || this.o.largeur || 40) / LARGEUR, ox = p.x - CENTRE[0] * s, oy = p.y + this.bond(performance.now()) - CENTRE[1] * s;
       if (Math.abs(s - this.s) > 1e-7 || Math.abs(ox - this.ox) > .01 || Math.abs(oy - this.oy) > .01) { this.s = s; this.ox = ox; this.oy = oy; }
-      if (!this.place) { this.reagir('page'); this.trace.length = 0; }   // (elle paraît : elle s'éveille d'une secousse)
+      // (elle paraît : elle s'éveille d'une secousse, ses tentacules au repos autour d'elle, là où elle est : une pieuvre qui
+      // reparaît ailleurs que là où elle s'est endormie ne traîne pas ses tentacules depuis son ancienne place)
+      if (!this.place) { this.BRAS.forEach(a => a.t.poser(ox, oy, s)); this.reagir('page'); this.trace.length = 0; }
       this.place = p; this.enMouvement = !!p.bouge;
       return true;
     }
     // (pas de place à l'écran : elle s'efface, lâche ce qu'elle tenait, et attend qu'on la réveille)
     sommeille() {
       this.cacher();
+      this.saut = this.gelee = this.tour = this.eclat = null; this.bulles.length = 0; this.ondes.length = 0;
       this.BRAS.forEach(a => { a.but = null; a.teinte = 0; a.geste = null; a.t.viser(null, 0); });
       if (this.moment) { this.moment = null; while (this.promesses.length) this.promesses.shift()(false); }
     }
@@ -199,6 +233,65 @@ const CREATURE = (() => {
       const lean = vers && isFinite(vers[0]) ? clamp((vers[0] - cx) / Math.max(200, this.W * .4), -1, 1) * g[3] : 0;
       this.reaction = { t0: performance.now(), duree: g[0], serre: g[1], agite: g[2], lean };
       this.reveil();
+    }
+    // est-elle sous ce point (px écran) ? Son corps (une ellipse autour de l'arche et des racines), ou l'une de ses tentacules ;
+    // au doigt, avec une marge : une petite pieuvre reste facile à toucher
+    touche(x, y, genre) {
+      if (!this.vivant || this.cache || !this.place || !this.s) return false;
+      const s = this.s, bx = this.ox + this.bob.x, by = this.oy + this.bob.y, marge = genre === 'mouse' ? 8 : 14;
+      const ex = (x - bx - 771 * s) / (240 * s + marge), ey = (y - by - 590 * s) / (270 * s + marge);
+      if (ex * ex + ey * ey <= 1) return true;
+      if (Math.hypot(x - bx - CENTRE[0] * s, y - by - CENTRE[1] * s) > LARGEUR * s * 1.5 + 40) return false;
+      const d = Math.max(4, 14 * s) + marge * .6;
+      // (seulement celles qui restent autour d'elle : une tentacule tendue vers un médaillon ou un nom passe sur ce qu'on veut
+      // toucher, elle ne le prend pas)
+      return this.BRAS.some(a => !a.t.parent && !a.but && !a.prise && a.t.mouvement() < .5 && a.t.distance(x, y) < d);
+    }
+    // on l'a touchée : voir l'en-tête du fichier
+    joie(x, y, genre = 'mouse') {
+      if (!this.vivant) return 0;
+      const now = performance.now(), n = this.combo = now - this.tJoie < 1000 ? Math.min(6, this.combo + 1) : 1;
+      this.tJoie = now;
+      const s = this.s, L = LARGEUR * s, cx = this.ox + CENTRE[0] * s + this.bob.x, cy = this.oy + CENTRE[1] * s + this.bob.y, cote = x < cx ? 1 : -1;
+      // le corps : il se tasse (plus fort à chaque touche rapprochée), recule du doigt, puis se balance en s'apaisant
+      this.reaction = { t0: now, duree: 900, serre: .14 + .03 * Math.min(n, 4), agite: 4 + 1.5 * n, lean: cote * (4 + n) };
+      // le bond (plus haut à chaque touche), la gelée (elle tremble en long, en large), le halo qui s'allume ; dès la troisième, un tourbillon
+      this.saut = { t0: now, h: Math.min(170, L * (.5 + .14 * Math.min(n, 5))) };
+      this.gelee = { t0: now, a: .09 + .025 * Math.min(n, 4) };
+      this.eclat = { t0: now, f: .55 + .1 * Math.min(n, 4) };
+      if (n >= 3 && (!this.tour || now - this.tour.t0 > 700)) this.tour = { t0: now, sens: cote };
+      this.vTheta += cote * (4 + n);
+      // les tentacules libres : lancées tout autour d'elle, d'un coup, puis repliées d'un ressort
+      for (const a of this.BRAS) {
+        if (a.t.parent || a.but || a.prise || (this.moment && this.moment.bras === a)) continue;
+        const p = a.t.pointe(), ang = Math.atan2(p.y - cy, p.x - cx) + (Math.random() - .5) * .5, R = L * (.6 + .07 * Math.min(n, 4)) * (.85 + Math.random() * .3);
+        const tx = cx + Math.cos(ang) * R, ty = cy + Math.sin(ang) * R;
+        a.geste = { fin: now + 260 + Math.random() * 140, eclat: true };
+        a.t.viser({ cle: 'joie' + now + a.i, x: tx, y: ty, sens: tx >= p.x ? 1 : -1, U: 6, mobile: this.W < 760, racine: /^queue/.test(a.cle) ? .6 : undefined, epaisseur: 2, boucle: .45, tension: .8 }, 240);
+      }
+      // la gerbe de bulles, depuis le doigt et le cœur, et une onde qui part d'elle (deux, dès la troisième touche)
+      const nb = 12 + 5 * Math.min(n, 5), taille = clamp(L / 80, 1, 2), C = this.COULEURS.length ? this.COULEURS : [this.ENCRE];
+      for (let i = 0; i < nb; i++) {
+        const ang = Math.random() * TAU, v = (90 + Math.random() * 190) * (1 + .12 * Math.min(n, 5)) * Math.sqrt(taille), dePres = Math.random() < .5;
+        this.bulles.push({ x: dePres ? x : cx, y: dePres ? y : cy, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v - 50, r: (2.4 + Math.random() * 5) * taille,
+          t0: now, vie: 900 + Math.random() * 900, col: C[Math.floor(Math.random() * C.length)], plein: Math.random() < .35, ph: Math.random() * TAU });
+      }
+      if (this.bulles.length > 120) this.bulles.splice(0, this.bulles.length - 120);
+      this.ondes.push({ x: cx, y: cy, t0: now, r1: L * (.9 + .12 * Math.min(n, 4)), vie: 700 });
+      if (n >= 3) this.ondes.push({ x: cx, y: cy, t0: now + 120, r1: L * 1.25, vie: 800 });
+      // (au doigt, le téléphone vibre d'un rien ; un peu plus à la troisième)
+      if (genre !== 'mouse' && navigator.vibrate) { try { navigator.vibrate(n >= 3 ? [14, 40, 22] : 12); } catch (e) { /* (refusé : rien) */ } }
+      if (typeof this.o.toucher === 'function') this.o.toucher(n);
+      this.reveil();
+      return n;
+    }
+    // le bond de la joie : de combien elle est en l'air (px, vers le haut), à cet instant ; elle saute, retombe, rebondit deux fois
+    bond(now) {
+      const S = this.saut;
+      if (!S) return 0;
+      const u = (now - S.t0) / 860;
+      if (u >= 1) { this.saut = null; return 0; }
+      return -S.h * (u < .55 ? Math.sin(Math.PI * u / .55) : u < .8 ? .22 * Math.sin(Math.PI * (u - .55) / .25) : .07 * Math.sin(Math.PI * (u - .8) / .2));
     }
     vers(cible, o = {}) {
       if (!this.vivant || reduit()) return Promise.resolve(false);
@@ -285,7 +378,7 @@ const CREATURE = (() => {
       const dt = Math.min(50, this.tPrec ? now - this.tPrec : 16); this.tPrec = now;
       // (sans place, elle la cherche à chaque réveil : réveillée par la souris ou une réaction moins de 250 ms après une place
       // perdue, elle n'a rien où se dessiner)
-      if (!this.place || this.placeSale || now - this.tPlace > 250 || this.o.placerChaqueImage) {
+      if (!this.place || this.placeSale || now - this.tPlace > 250 || this.o.placerChaqueImage || this.saut) {
         this.tPlace = now; this.placeSale = false;
         if (!this.placer()) return;
       }
@@ -315,7 +408,8 @@ const CREATURE = (() => {
         else { const premiere = !a.but; a.but = c; if (premiere) a.t.viser(c, 820); else a.t.viser(c); }
       }
       // les gestes : elle tâte de temps en temps (avec de l'entrain, et les mains libres), et chaque geste revient à son heure
-      for (const a of BRAS) if (a.geste && now > a.geste.fin) { a.geste = null; a.t.viser(null, 820); }
+      // (lancées par la joie, elles reviennent d'un ressort : la pointe se love un peu trop, se balance, se pose)
+      for (const a of BRAS) if (a.geste && now > a.geste.fin) { const e = a.geste.eclat; a.geste = null; a.t.viser(null, e ? 1150 : 820, !!e); }
       if (vie >= 1.5 && !tient && now > this.tGeste) { if (this.tGeste) this.geste(now); this.tGeste = now + (1800 + Math.random() * 2600) / this.rythme; }
       // la réaction : l'impulsion
       let imp = 0, lean = 0, agite = 0;
@@ -333,7 +427,8 @@ const CREATURE = (() => {
       this.penteNage += (sens * clamp(Math.abs(v) / 1.6, 0, 1) * (mesure ? 14 : 10) - this.penteNage) * (mesure ? .12 : .06);
       this.etire += ((this.place.etire || 0) - this.etire) * .35;
       const enRoute = BRAS.some(a => a.t.q < 1 || Math.abs(a.teinte - (a.but ? 1 : 0)) > .005);
-      const vif = this.moment || tient || this.reaction || this.enMouvement || coup > 0 || this.etire > .01 || (this.souris && pointeur) || (this.courant && Math.abs(vScroll) > .4) || enRoute;
+      const joie = this.saut || this.gelee || this.tour || this.eclat || this.bulles.length || this.ondes.length;
+      const vif = this.moment || tient || this.reaction || this.enMouvement || coup > 0 || this.etire > .01 || (this.souris && pointeur) || (this.courant && Math.abs(vScroll) > .4) || enRoute || joie;
       // au repos (rien ne se tend, rien ne réagit, personne ne passe) : trente images par seconde suffisent
       if (!vif && now - this.tDessin < 30) { this.raf = requestAnimationFrame(t => this.image(t)); return; }
       this.tDessin = now; this.tVie += dt / 1000 * this.rythme;
@@ -393,6 +488,20 @@ const CREATURE = (() => {
       const b = { x0: ox + 250 * s - 4, y0: oy + 340 * s - 4, x1: ox + 1292 * s + 4, y1: oy + 916 * s + 4 };
       for (const a of BRAS) { const r = a.t.boite(a.prise && a.prise.lumineux ? 16 : 6); b.x0 = Math.min(b.x0, r.x0); b.y0 = Math.min(b.y0, r.y0); b.x1 = Math.max(b.x1, r.x1); b.y1 = Math.max(b.y1, r.y1); }
       for (let i = 0; i < this.trace.length; i += 2) { b.x0 = Math.min(b.x0, this.trace[i] - 8); b.x1 = Math.max(b.x1, this.trace[i] + 8); b.y0 = Math.min(b.y0, this.trace[i + 1] - 8); b.y1 = Math.max(b.y1, this.trace[i + 1] + 8); }
+      // les bulles de la joie montent et s'écartent (freinées par l'eau, portées vers le haut), puis éclatent ; les ondes s'élargissent
+      const bulles = this.bulles, ondes = this.ondes, dts = dt / 1000;
+      for (let i = bulles.length - 1; i >= 0; i--) {
+        const p = bulles[i];
+        if (now - p.t0 > p.vie) { bulles.splice(i, 1); continue; }
+        const fr = Math.pow(.18, dts);
+        p.vx *= fr; p.vy = p.vy * fr - 90 * dts; p.x += (p.vx + Math.sin(Math.max(0, now - p.t0) / 140 + p.ph) * 14) * dts; p.y += p.vy * dts;
+        const r = p.r * 2 + 2; b.x0 = Math.min(b.x0, p.x - r); b.x1 = Math.max(b.x1, p.x + r); b.y0 = Math.min(b.y0, p.y - r); b.y1 = Math.max(b.y1, p.y + r);
+      }
+      for (let i = ondes.length - 1; i >= 0; i--) {
+        const o = ondes[i];
+        if (now - o.t0 > o.vie) { ondes.splice(i, 1); continue; }
+        b.x0 = Math.min(b.x0, o.x - o.r1 - 4); b.x1 = Math.max(b.x1, o.x + o.r1 + 4); b.y0 = Math.min(b.y0, o.y - o.r1 - 4); b.y1 = Math.max(b.y1, o.y + o.r1 + 4);
+      }
       const Rm = Math.max(Math.hypot(b.x0 - cx, b.y0 - cy), Math.hypot(b.x1 - cx, b.y1 - cy), Math.hypot(b.x0 - cx, b.y1 - cy), Math.hypot(b.x1 - cx, b.y0 - cy));
       const et = this.etire * retenue, marge = Rm * (Math.abs(k - 1) + Math.abs(rot) + Math.abs(et) * .2) + 4 + (this.lueur ? LARGEUR * s * .35 : 0) + LARGEUR * s * .08;
       b.x0 -= marge; b.y0 -= marge; b.x1 += marge; b.y1 += marge;
@@ -401,7 +510,11 @@ const CREATURE = (() => {
       ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
       ctx.setTransform(dpr, 0, 0, dpr, -this.cx0 * dpr, -this.cy0 * dpr);
       // l'ensemble respire, se contracte, se penche, s'étire dans le sens du bond, autour de son cœur
-      ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(k, k);
+      // (la joie : un tour complet sur elle-même, qui file puis se pose ; elle tremble comme une gelée, en long puis en large)
+      let tourne = 0, gx = 0;
+      if (this.tour) { const u = (now - this.tour.t0) / 820; if (u >= 1) this.tour = null; else tourne = this.tour.sens * TAU * (1 - Math.pow(1 - u, 3)); }
+      if (this.gelee) { const u = (now - this.gelee.t0) / 760; if (u >= 1) this.gelee = null; else gx = this.gelee.a * Math.sin(u * Math.PI * 5) * Math.pow(1 - u, 1.4); }
+      ctx.translate(cx, cy); ctx.rotate(rot + tourne); ctx.scale(k * (1 + gx), k * (1 - gx));
       if (Math.abs(et) > .005) { const ang = this.place.ang || Math.PI / 2; ctx.rotate(ang); ctx.scale(1 + .16 * et, 1 - .1 * et); ctx.rotate(-ang); }
       ctx.translate(-cx, -cy);
       // le corps d'abord : le logo sans ses huit tentacules (dont la place de repos suit leur racine), la tête déformée à part,
@@ -414,9 +527,12 @@ const CREATURE = (() => {
       ctx.restore();
       ctx.save(); ctx.globalCompositeOperation = 'destination-over';
       // le halo, s'il y en a un : un dégradé, une seule forme (pas de flou, trop coûteux), qui respire avec elle
-      if (this.lueur) {
-        const E = this.ENCRE, r0 = LARGEUR * s * .62, g = ctx.createRadialGradient(cx + bob.x, cy + bob.y, r0 * .25, cx + bob.x, cy + bob.y, r0);
-        g.addColorStop(0, rgba(E, .26 + .08 * Math.sin(tVie * 1.15))); g.addColorStop(1, rgba(E, 0));
+      // (la joie l'allume : plus clair, plus large, puis il s'apaise)
+      let fl = 0;
+      if (this.eclat) { const u = (now - this.eclat.t0) / 950; if (u >= 1) this.eclat = null; else fl = this.eclat.f * Math.pow(1 - u, 2); }
+      if (this.lueur || fl > .01) {
+        const E = this.ENCRE, r0 = LARGEUR * s * .62 * (1 + .45 * fl), g = ctx.createRadialGradient(cx + bob.x, cy + bob.y, r0 * .25, cx + bob.x, cy + bob.y, r0);
+        g.addColorStop(0, rgba(E, Math.min(.9, (this.lueur ? .26 + .08 * Math.sin(tVie * 1.15) : 0) + .45 * fl))); g.addColorStop(1, rgba(E, 0));
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx + bob.x, cy + bob.y, r0, 0, TAU); ctx.fill();
       }
       // le sillage : un trait qui s'efface et s'amincit vers l'arrière (en coordonnées de la page : hors des transformations)
@@ -451,6 +567,24 @@ const CREATURE = (() => {
           const g = ctx.createRadialGradient(x, y, 0, x, y, 11);
           g.addColorStop(0, rgba(eclairci(E, .8), .85)); g.addColorStop(.4, rgba(E, .4)); g.addColorStop(1, rgba(E, 0));
           ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 11, 0, TAU); ctx.fill();
+        }
+      }
+      // la joie, par-dessus : les ondes (un cercle qui s'élargit et pâlit), les bulles (un rond clair, un reflet ; certaines pleines),
+      // qui éclatent à la fin (un anneau qui s'ouvre et s'efface)
+      if (ondes.length || bulles.length) {
+        ctx.setTransform(dpr, 0, 0, dpr, -this.cx0 * dpr, -this.cy0 * dpr);
+        for (const o of ondes) {
+          const u = (now - o.t0) / o.vie;
+          if (u < 0) continue;
+          ctx.strokeStyle = rgba(this.ENCRE, .5 * Math.pow(1 - u, 1.5)); ctx.lineWidth = Math.max(.6, LARGEUR * s * .05 * (1 - u));
+          ctx.beginPath(); ctx.arc(o.x, o.y, o.r1 * (.3 + .7 * (1 - Math.pow(1 - u, 2.4))), 0, TAU); ctx.stroke();
+        }
+        for (const p of bulles) {
+          const u = Math.max(0, (now - p.t0) / p.vie), eclate = u > .84, v = eclate ? (u - .84) / .16 : 0, r = p.r * (Math.min(1, u * 6) + v * 1.2), al = eclate ? .85 * (1 - v) : .85;
+          ctx.strokeStyle = rgba(p.col, al); ctx.lineWidth = eclate ? Math.max(.4, 1.6 * (1 - v)) : 1.6;
+          ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU);
+          if (p.plein && !eclate) { ctx.fillStyle = rgba(p.col, .55); ctx.fill(); } else ctx.stroke();
+          if (!eclate && r > 2) { ctx.fillStyle = rgba(eclairci(p.col, .7), .9); ctx.beginPath(); ctx.arc(p.x - r * .35, p.y - r * .35, r * .22, 0, TAU); ctx.fill(); }
         }
       }
       ctx.setTransform(1, 0, 0, 1, 0, 0);

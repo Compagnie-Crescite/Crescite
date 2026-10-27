@@ -15,9 +15,10 @@ de chaque côté, et quatre franges qui suivent leur spirale.
   - spiraleExt : la spirale extérieure du bas, de son bout intérieur à sa jonction avec la queue ; queue : la queue
     extérieure avec sa boucle en S, de sa pointe à la même jonction. Ce ruban-là ne touche pas la tête.
   Les huit ont un point d'attache sur la tête (attache : x, y, direction en degrés), d'où elles partent en se déployant
-  (pieuvre.js) : la queue et la spirale extérieure, de chaque côté, sortent du flanc de la jambe de l'arche (la queue plus
-  haut), leur racine y glisse ; la spirale et la boucle prolongent la jambe gauche, ou la queue de l'œil à droite, depuis
-  leur racine du dessin et dans son sens (leur attache est leur racine : elles continuent le trait, sans raccord à faire) ;
+  (pieuvre.js) : toutes sortent du bas de la tête (prolonge), les quatre de gauche du pied de la jambe gauche (RAC_G), les
+  quatre de droite du bout de la queue de l'œil (PIED_D), dans le sens du trait : la spirale et la boucle y ont leur racine
+  du dessin, la queue et la spirale extérieure y glissent ; elles continuent le trait, puis s'écartent (à un dixième
+  d'unité près les unes des autres : la queue, la plus haute, va au titre le plus haut sur l'ordinateur) ;
   - frange : les deux tentacules courtes sous la tête, de chaque côté (contour pris dans le dessin, comme avant) ; elles
     sont enfants de leur spirale (parent) : leur racine suit l'épine de la spirale, où qu'elle aille.
 
@@ -78,18 +79,18 @@ TETE = [[614, 330, 770, 330, 925, 330, 925, 470, 925, 602, 800, 602, 690, 602, 6
 REPOS = [{"bras": ["boucleL"], "poly": [600, 520, 614, 520, 614, 602, 600, 602]},
          {"bras": ["spiraleR", "boucleR"], "poly": [853.3, 645.8, 850.6, 649.1, 848.3, 655.7, 846.1, 659.5, 844, 663.1, 842.6, 665, 820, 665, 820, 647]}]
 TENTACULES = [
-    ("queueL", "tentacles-left", [(263, 717), (446, 598), JONC_G], 0, {"ruban": True, "attache": (641.5, 482, 160)}),
-    ("spiraleExtL", "tentacles-left", [(432, 699), (513, 818), (403, 856), (373, 792), JONC_G], 0, {"ruban": True, "bout": False, "attache": (643.5, 526, 142)}),
-    ("spiraleL", "tete", [(558, 713), (561, 821), (656, 881), (737, 800), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "bout": False, "attache": (652, 560, 72.38)}),
-    ("boucleL", "tete", [(525.5, 710.5), (552, 512), (558, 713), (656, 881), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "attache": (652, 560, 72.56)}),
+    ("queueL", "tentacles-left", [(263, 717), (446, 598), JONC_G], 0, {"ruban": True, "attache": (652, 559.7, 72.38), "prolonge": True}),
+    ("spiraleExtL", "tentacles-left", [(432, 699), (513, 818), (403, 856), (373, 792), JONC_G], 0, {"ruban": True, "bout": False, "attache": (652, 559.8, 72.38), "prolonge": True}),
+    ("spiraleL", "tete", [(558, 713), (561, 821), (656, 881), (737, 800), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "bout": False, "attache": (652, 560, 72.38), "prolonge": True}),
+    ("boucleL", "tete", [(525.5, 710.5), (552, 512), (558, 713), (656, 881), (708, 702), PIED_G, RAC_G], 0, {"ruban": True, "attache": (652, 559.9, 72.56), "prolonge": True}),
     ("frangeHL", "head-left", [(589, 730), (690, 640), 85], 12, {"parent": "spiraleL"}),
     ("frangeBL", "head-left", [(587, 792), (700, 650), 160], 12, {"parent": "spiraleL"}),
     ("frangeBR", "head-right", [(955, 792), (842, 650), 160], 12, {"parent": "spiraleR"}),
     ("frangeHR", "head-right", [(953, 730), (852, 640), 85], 12, {"parent": "spiraleR"}),
-    ("spiraleR", "head-right", [(948, 604), (986, 767), (882, 881), (800, 746), (850, 686), PIED_D], 0, {"ruban": True, "bout": False, "attache": (871.5, 604.25, 77.62)}),
-    ("boucleR", "head-right", [(1011, 710), (1028, 548), (948, 604), (882, 881), (850, 686), PIED_D], 0, {"ruban": True, "attache": (871.5, 604.25, 77.62)}),
-    ("spiraleExtR", "tentacles-right", [(1100, 703), (1017, 818), (1130, 856), (1160, 792), JONC_D], 0, {"ruban": True, "bout": False, "attache": (893, 526, 38)}),
-    ("queueR", "tentacles-right", [(1279, 712), (1096, 598), JONC_D], 0, {"ruban": True, "attache": (895.5, 482, 20)}),
+    ("spiraleR", "head-right", [(948, 604), (986, 767), (882, 881), (800, 746), (850, 686), PIED_D], 0, {"ruban": True, "bout": False, "attache": (871.5, 604.25, 77.62), "prolonge": True}),
+    ("boucleR", "head-right", [(1011, 710), (1028, 548), (948, 604), (882, 881), (850, 686), PIED_D], 0, {"ruban": True, "attache": (871.5, 604.2, 77.62), "prolonge": True}),
+    ("spiraleExtR", "tentacles-right", [(1100, 703), (1017, 818), (1130, 856), (1160, 792), JONC_D], 0, {"ruban": True, "bout": False, "attache": (871.5, 604.1, 77.62), "prolonge": True}),
+    ("queueR", "tentacles-right", [(1279, 712), (1096, 598), JONC_D], 0, {"ruban": True, "attache": (871.5, 604.0, 77.62), "prolonge": True}),
 ]
 
 
@@ -317,6 +318,8 @@ def main():
         if "attache" in opts:
             x, y, deg = opts["attache"]
             b["attache"] = [x, y, round(math.radians(deg), 4)]
+        if opts.get("prolonge"):
+            b["prolonge"] = True
         if "parent" in opts:
             b["parent"] = opts["parent"]
         bras.append(b)
