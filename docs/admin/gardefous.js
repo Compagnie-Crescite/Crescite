@@ -6,7 +6,9 @@
    Chaque alerte mène où il faut (l'autre date s'ouvre en tiroir, le champ se vise). Dans la fenêtre d'une piste de
    diffusion : une cession confirmée sans montant, une relance dans le passé. Rien ne bloque : on enregistre quand même.
    Chargé après parcours.js (l'équipe du formulaire) et tiroir.js.
-   GARDEFOUS.poser(zone, F, d0)   GARDEFOUS.alertes(F, d0)   GARDEFOUS.piste(form) */
+   GARDEFOUS.poser(zone, F, d0)   GARDEFOUS.alertes(F, d0)   GARDEFOUS.piste(form)
+   GARDEFOUS.indisposDe(pid, jours) : les indisponibilités à venir d'une personne qui touchent ces jours (la matrice de la
+   distribution, distribution.js) ; vide tant que charger() n'a pas répondu, ou sans le cinquième script */
 const GARDEFOUS = (() => {
   const LOIN = 150;   // km, à vol d'oiseau
   let indispos = null, chargement = null;
@@ -25,6 +27,8 @@ const GARDEFOUS = (() => {
   const quand = js => js.length === 1 ? `le ${jourCourt(js[0]).replace(/ \d{4}$/, '')}` : `les ${js.slice(0, 3).map(j => jourCourt(j).replace(/ \d{4}$/, '')).join(', ')}${js.length > 3 ? '…' : ''}`;
   const equipeDe = F => { try { return (typeof PARCOURS !== 'undefined' && PARCOURS.equipeDuForm) ? PARCOURS.equipeDuForm(F) : []; } catch (e) { return []; } };
   const jourTz = t => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  // les jours que couvre une indisponibilité : du jour de son début au jour de sa fin (exclusive quand elle est « journée »)
+  const joursIndispo = i => ({ du: jourTz(i.debut), au: i.journee ? plusJours(jourTz(i.fin), -1) : jourTz(i.fin) });
 
   function alertes(F, d0) {
     const xs = [], js = joursForm(F), mien = d0 ? d0.id : null, l = lieu(F.lieu_id);
@@ -38,7 +42,7 @@ const GARDEFOUS = (() => {
     eq.forEach(x => {
       const p = personne(x.personne_id); if (!p) return;
       (indispos || []).filter(i => i.personne_id === p.id).forEach(i => {
-        const d1 = jourTz(i.debut), f1 = i.journee ? plusJours(jourTz(i.fin), -1) : jourTz(i.fin), touche = js.filter(j => j >= d1 && j <= f1);
+        const { du, au } = joursIndispo(i), touche = js.filter(j => j >= du && j <= au);
         if (touche.length) xs.push({ niveau: 'alerte', texte: `${nomDe(p)} est indisponible ${quand(touche)}${i.motif ? ` (${i.motif})` : ''}.`, href: `#/equipe/${p.id}`, lien: 'Sa fiche' });
       });
       memeJour.forEach(x => { if (x.d.spectacle_id === +F.spectacle_id && x.d.lieu_id === F.lieu_id) return; let la = []; try { la = equipeDeLaDate(x.d); } catch (e) { la = []; } if (la.some(y => y.personne_id === p.id)) xs.push({ niveau: 'alerte', texte: `${nomDe(p)} est aussi sur ${titreDe(x.d)} ${quand(x.js)}.`, href: `#/representations/${x.d.id}`, lien: 'Voir cette date' }); });
@@ -52,6 +56,13 @@ const GARDEFOUS = (() => {
     if (F.statut === 'option' && js.length && js[js.length - 1] < AUJ) xs.push({ niveau: 'info', texte: 'Cette option est passée : à confirmer, annuler ou reporter.', viser: '[data-statut]' });
     if (F.visible && PUBLIABLE(F.nature) && F.statut === 'confirmee' && !l && !(F.intitule || '').trim()) xs.push({ niveau: 'info', texte: 'Publiée sans lieu : le site dira « lieu à préciser ».', viser: '#d-lieu input' });
     return xs;
+  }
+  // les indisponibilités d'une personne qui touchent ces jours (AAAA-MM-JJ) → [{ jours: les jours touchés, motif }]. Seules
+  // les indisponibilités à venir sont lues (charger) : une date passée n'en montre jamais. Vide tant que la lecture n'est
+  // pas arrivée (l'appelant redessine après charger()) et sans le cinquième script (E.sql5 === false)
+  function indisposDe(pid, jours) {
+    if (!indispos || E.sql5 === false) return [];
+    return indispos.filter(i => i.personne_id === pid).map(i => { const { du, au } = joursIndispo(i); return { jours: (jours || []).filter(j => j >= du && j <= au), motif: i.motif || '' }; }).filter(x => x.jours.length);
   }
   function html(xs) {
     if (!xs.length) return '';
@@ -94,5 +105,5 @@ const GARDEFOUS = (() => {
 #crm-gardefous { margin: 6px 0 12px; }
 #crm-gardefous .gardefous { margin: 0; }`;
   document.head.append(style);
-  return { poser, alertes, piste, charger, km };
+  return { poser, alertes, piste, charger, km, indisposDe };
 })();

@@ -252,6 +252,17 @@ dialog.recherche, dialog.tab-dialogue, dialog.tb-brief { border-radius: var(--ra
 /* le changement de thème est instantané : aucune transition de couleur ne se lance (un fondu sur toute la page coûte cher).
    cadre.js pose html.bascule le temps d'un recalcul de style, puis la retire */
 html.bascule *, html.bascule *::before, html.bascule *::after { transition: none !important; }
+/* ===================================================================================================== la distribution (admin/distribution.js)
+   le liseré de chaque métier (jeu prune, création indigo, technique ambre, production sauge) : les jetons des deux thèmes,
+   assez clairs la nuit et assez sombres le jour pour tenir 3:1 contre la carte ; un métier qu'on ne reconnaît pas : le gris */
+.m-jeu { --m: var(--prune); --m-doux: var(--prune-doux); }
+.m-creation { --m: var(--indigo); --m-doux: var(--indigo-doux); }
+.m-technique { --m: var(--ambre); --m-doux: var(--ambre-doux); }
+.m-production { --m: var(--sauge); --m-doux: var(--sauge-doux); }
+.m-neutre { --m: var(--gris); --m-doux: var(--doux); }
+.avatar.mini { background: var(--m-doux, var(--doux)); color: var(--encre); font-family: var(--titres); }
+.avatar.mini.absent { background: var(--doux); }
+.eq-av .avatar { box-shadow: none; }
 
 /* ===================================================================================================== l'impression
    Une liste (Représentations, Lieux, Équipe, Diffusion…), une fiche ou le planning, sur papier : en blanc et noir, sans

@@ -316,7 +316,7 @@ function editeurPersonne(id) {
       if (!x) return;
       dessinerSpectacles(); dessinerDates();
       const s = spectacle(sp);
-      const avant = x.en_tournee && datesDuSpectacle(sp).some(d => finDe(d) < AUJ);
+      const avant = x.en_tournee && comptePassees(sp, x.personne_id);
       annoncer(`Ajouté à la distribution de ${s?.titre || 'ce spectacle'} (${libelleCategorie(cat)}).${avant ? ' Il compte aussi sur ses dates passées : sa période se règle dans « Qui a joué quand ».' : ''}`, { libelle: 'Voir la distribution', delai: avant ? 9000 : 5000, action: () => { try { sessionStorage.setItem('crescite-onglet-sp', 'Distribution'); } catch { /* navigation privée */ } location.hash = `#/spectacles/${s.slug}`; } });
       $('#pe-dist-ok', zone)?.focus();
       return;
@@ -483,9 +483,16 @@ async function ajouterADistribution(spId, pid, cat) {
   if (E.distributions.some(y => y.spectacle_id === spId && y.personne_id === pid && y.categorie === cat)) { annoncer(`${nomDe(p)} est déjà dans la distribution (${libelleCategorie(cat)}).`, { erreur: true }); return null; }
   const fonction = cat === 'jeu' ? '' : ((p?.metiers || []).find(m => !/^jeu$/i.test(m.trim())) || '');
   const xs = distributionDe(spId), dernier = [...xs].reverse().find(x => rangCategorie(x.categorie) <= rangCategorie(cat));
-  const { data, error } = await sb.from('crescite_distributions').insert({ spectacle_id: spId, personne_id: pid, categorie: cat, fonction, en_tournee: cat === 'jeu' || cat === 'technique', publie: true, ordre: (dernier?.ordre || 0) + 5 }).select().single();
+  const enTournee = cat === 'jeu' || cat === 'technique';
+  // qui part en tournée compte sur les dates du spectacle : une seule boîte dit lesquelles changent (et propose de n'en rien
+  // changer avant aujourd'hui) avant qu'on écrive
+  const choix = enTournee ? await DISTRIBUTION.impact(spId, { pid, sens: 'ajout', geste: 'ajouter' }) : { limiter: false, passees: [] };
+  if (!choix) return null;
+  const { data, error } = await sb.from('crescite_distributions').insert({ spectacle_id: spId, personne_id: pid, categorie: cat, fonction, en_tournee: enTournee, publie: true, ordre: (dernier?.ordre || 0) + 5 }).select().single();
   if (error) { erreur(error, 'Ajout impossible'); return null; }
   E.distributions.push(data);
+  // (la distribution d'abord, les écarts ensuite : il ne partait pas, il ne compte pas sur les dates d'avant)
+  if (choix.limiter && choix.passees.length) { try { await ecrireEcarts(pid, new Map(choix.passees.map(d => [d.id, false])), { dansDist: true }); } catch (e) { erreur(e, 'Dates passées non écrites'); } }
   try { await renumeroterDistribution(distributionDe(spId)); } catch (e) { erreur(e, 'Ordre non enregistré'); }
   return data;
 }
@@ -549,7 +556,7 @@ function choisirDansLaTroupe(s, { categorie = 'jeu', declencheur = null, apres =
     delete b.dataset.occupe;
     if (!x) return;
     ajoutes.push(x); apres(x);
-    const avant = x.en_tournee && datesDuSpectacle(s.id).some(d => (d.fin || d.debut) < AUJ);
+    const avant = x.en_tournee && comptePassees(s.id, pid);
     msg.textContent = `Ajouté ${A_CATEGORIE[cat]} : ${nomDe(personne(pid))}. Sa fiche est à jour.${avant ? ' Elle compte aussi sur les dates passées : sa période se règle dans « Qui a joué quand ».' : ''}`;
     dessiner();
     ($(`.tc-p[data-p="${pid}"]`, liste) || champ).focus();
@@ -609,6 +616,9 @@ function periodesDe(pid, P) {
 }
 const periodeTexte = p => `${p.du === p.au ? `le ${jourEntier(p.du)}` : `du ${jourEntier(p.du)} au ${jourEntier(p.au)}`} · ${p.n} date${p.n > 1 ? 's' : ''}${p.aVenir ? ` (dont ${p.aVenir} à venir)` : ''}`;
 const enTourneeDans = (spId, pid) => E.distributions.some(x => x.spectacle_id === spId && x.personne_id === pid && x.en_tournee);
+// la personne compte-t-elle sur une date passée du spectacle ? (« Il compte aussi sur ses dates passées », après un ajout
+// qu'on n'a pas limité à partir d'aujourd'hui)
+const comptePassees = (spId, pid) => datesDuSpectacle(spId).some(d => finDe(d) < AUJ && equipeDeLaDate(d).some(y => y.personne_id === pid));
 // écrire la présence voulue d'une personne sur des dates (Map date_id → vrai/faux), en écarts à la distribution : rien
 // pour qui suit la distribution, present: vrai pour qui s'y ajoute, faux pour qui n'en est pas. → les lignes d'avant, pour
 // « Annuler » (retablirEcarts)
@@ -716,36 +726,19 @@ function blocHistorique(s) {
       <span class="histo-periodes">${pers.length ? pers.map(x => `<span class="histo-periode">${esc(periodeTexte(x))}</span>`).join('') : '<span class="aide">Sur aucune date</span>'}</span>
       <button type="button" class="btn petit" data-histo-regler="${pid}">Régler sa période</button></li>`).join('')}</ul>` : '<p class="aide">Personne pour l’instant.</p>'}</div>`;
 }
-// retirer quelqu'un de la distribution : s'il a joué des dates passées sans y être marqué un par un, on demande si elles le
-// gardent (le plus souvent : il a joué, il ne joue plus) ; sinon tout de suite
-function retirerAvecHistoire(x, apres, declencheur = null) {
-  const pid = x.personne_id, p = personne(pid), s = spectacle(x.spectacle_id);
-  const autre = E.distributions.some(y => y.id !== x.id && y.spectacle_id === x.spectacle_id && y.personne_id === pid && y.en_tournee);
-  const passees = x.en_tournee && !autre ? datesDuSpectacle(x.spectacle_id).filter(d => finDe(d) < AUJ && equipeDeLaDate(d).some(y => y.personne_id === pid)
-    && !E.equipes.some(e => e.date_id === d.id && e.personne_id === pid && e.present)) : [];
-  if (!passees.length) return retirerDeDistribution(x, apres);
-  $('#retrait-choix')?.remove();
-  const dlg = document.createElement('dialog');
-  dlg.id = 'retrait-choix'; dlg.className = 'tab-dialogue'; dlg.setAttribute('aria-labelledby', 'rc-titre');
-  dlg.innerHTML = `<div class="tab-dialogue-boite"><h2 id="rc-titre">Retirer ${esc(nomDe(p))} de la distribution</h2>
-      <p>${esc(nomDe(p))} compte sur ${passees.length} date${passees.length > 1 ? 's' : ''} passée${passees.length > 1 ? 's' : ''} de ${esc(s?.titre || 'ce spectacle')} (du ${jourEntier(passees[0].debut)} au ${jourEntier(finDe(passees[passees.length - 1]))}).</p>
-      <div class="fm-boutons rc-choix"><button type="button" class="btn principal" data-rc="garder">Retirer, en gardant ses dates passées</button><button type="button" class="btn" data-rc="partout">Retirer aussi des dates passées</button><button type="button" class="btn" data-rc="fermer">Fermer</button></div></div>`;
-  dlg.addEventListener('close', () => { dlg.remove(); if (declencheur?.isConnected) declencheur.focus(); });
-  dlg.addEventListener('click', async e => {
-    if (e.target === dlg) return dlg.close();
-    const b = e.target.closest('[data-rc]'); if (!b) return;
-    const c = b.dataset.rc;
-    dlg.close();
-    if (c === 'partout') return retirerDeDistribution(x, apres);
-    if (c !== 'garder') return;
-    let trace;
-    try { trace = await ecrireEcarts(pid, new Map(passees.map(d => [d.id, true])), { dansDist: false, fonction: fonctionDistribution(x) }); }
-    catch (err) { return erreur(err, 'Retrait impossible'); }
-    await retirerDeDistribution(x, apres, async () => { try { await retablirEcarts(pid, trace); } catch (err) { erreur(err, 'Dates passées non rétablies'); } });
-  });
-  document.body.append(dlg);
-  dlg.showModal();
-  $('[data-rc="garder"]', dlg).focus();
+// retirer quelqu'un de la distribution : une seule boîte (DISTRIBUTION.impact) dit les dates à venir qui changent d'équipe
+// et propose, coché d'office, de limiter le retrait à partir d'aujourd'hui (il a joué, il ne joue plus : ses dates passées
+// le gardent) ; sans date qui change, tout de suite. Les écarts d'abord, la distribution ensuite : le déclencheur calcule la
+// présence par défaut depuis crescite_distributions au moment d'écrire, l'inverse enverrait « Vous partez » à tort
+async function retirerAvecHistoire(x, apres, declencheur = null) {
+  const pid = x.personne_id;
+  const choix = await DISTRIBUTION.impact(x.spectacle_id, { pid, sens: 'retrait', ligne: x, geste: 'retirer', declencheur });
+  if (!choix) return;
+  if (!choix.limiter || !choix.passees.length) return retirerDeDistribution(x, apres);
+  let trace;
+  try { trace = await ecrireEcarts(pid, new Map(choix.passees.map(d => [d.id, true])), { dansDist: false, fonction: fonctionDistribution(x) }); }
+  catch (err) { return erreur(err, 'Retrait impossible'); }
+  await retirerDeDistribution(x, apres, async () => { try { await retablirEcarts(pid, trace); } catch (err) { erreur(err, 'Dates passées non rétablies'); } });
 }
 
 function ongletDistribution(z, s) {
@@ -778,9 +771,22 @@ function ongletDistribution(z, s) {
     const remettre = () => { if (t.type === 'checkbox') t.checked = !t.checked; else t.value = x[k] ?? ''; };
     if ((k === 'fonction' || k === 'categorie') && E.distributions.some(y => y.id !== x.id && y.spectacle_id === x.spectacle_id && y.personne_id === x.personne_id
       && y.categorie === (k === 'categorie' ? v : x.categorie) && (y.fonction || '') === (k === 'fonction' ? v : x.fonction || ''))) { remettre(); return annoncer('Cette personne a déjà cette ligne dans la distribution.', { erreur: true }); }
+    // « en tournée » (cochée ou décochée) change l'équipe de toutes les dates sans écart, à venir comme passées : la boîte
+    // d'impact avant d'écrire, et l'on renonce en remettant la case
+    let choix = null, trace = null;
+    if (k === 'en_tournee') {
+      choix = await DISTRIBUTION.impact(s.id, { pid: x.personne_id, sens: v ? 'ajout' : 'retrait', ligne: x, geste: v ? 'cocher' : 'decocher', declencheur: t });
+      if (!choix) { remettre(); return; }
+      // (la personne s'en va : ses dates passées la gardent d'abord ; elle arrive : les écarts viennent après la distribution)
+      if (!v && choix.limiter && choix.passees.length) {
+        try { trace = await ecrireEcarts(x.personne_id, new Map(choix.passees.map(d => [d.id, true])), { dansDist: false, fonction: fonctionDistribution(x) }); }
+        catch (err) { remettre(); return erreur(err, 'Dates passées non gardées'); }
+      }
+    }
     const { data, error } = await sb.from('crescite_distributions').update({ [k]: v }).eq('id', x.id).select().single();
-    if (error) { remettre(); return erreur(error); }
+    if (error) { remettre(); if (trace) { try { await retablirEcarts(x.personne_id, trace); } catch (err) { erreur(err, 'Dates passées non rétablies'); } } return erreur(error); }
     remplacerLigne(E.distributions, data);
+    if (v && choix?.limiter && choix.passees.length) { try { await ecrireEcarts(x.personne_id, new Map(choix.passees.map(d => [d.id, false])), { dansDist: true }); } catch (err) { erreur(err, 'Dates passées non écrites'); } }
     if (k === 'categorie') { try { await renumeroter(distributionDe(s.id)); } catch (err) { erreur(err, 'Ordre non enregistré'); } dessiner(); }
     etat(`Enregistré à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h')}.`);
   });
@@ -1142,35 +1148,50 @@ function blocEquipeDate(zone, F, changer) {
   F.equipe = F.equipe || [];
   const ecart = pid => F.equipe.find(x => x.personne_id === pid);
   const enlever = x => F.equipe.splice(F.equipe.indexOf(x), 1);
+  let dernierAbsent = null;   // la dernière personne décochée ici : « Remplace … » la vise
+  // qui sera prévenu si l'on enregistre : la règle du déclencheur, la même que partout (DISTRIBUTION.prevenus)
+  const resume = () => {
+    const p = $('#eqd-prevenus', el); if (!p) return;
+    const js = (F.representations || []).filter(r => r.jour).map(r => r.jour).sort();   // (les jours des séances, sinon ceux de la date)
+    p.textContent = DISTRIBUTION.phrase(DISTRIBUTION.prevenus({ id: F.id, spectacle_id: +F.spectacle_id, debut: js[0] || F.debut, fin: js.length ? js[js.length - 1] : F.fin }, equipeVoulue(F) || []));
+  };
   const dessiner = () => {
     const sp = +F.spectacle_id, tournee = [];
     distributionDe(sp).filter(x => x.en_tournee).forEach(x => { const f = fonctionDistribution(x) + (x.alternance ? `, ${x.alternance}` : ''), o = tournee.find(y => y.personne_id === x.personne_id); if (o) o.fonctions.push(f); else tournee.push({ personne_id: x.personne_id, fonctions: [f] }); });
     const ids = new Set(tournee.map(x => x.personne_id));
     const ajouts = F.equipe.filter(x => x.present && !ids.has(x.personne_id));
     const absents = tournee.filter(x => ecart(x.personne_id)?.present === false);
+    // « Remplace X » vise la personne décochée à l'instant, sinon la première absente
+    const cible = absents.some(x => x.personne_id === dernierAbsent) ? dernierAbsent : absents[0]?.personne_id;
+    // (la tournée est déjà rangée par métier : jeu, création, technique, production ; chacun porte le liseré de son métier)
+    const avatarDe = (pid, fonction = '') => `<span class="eq-av m-${DISTRIBUTION.metier(sp, pid, fonction) || 'neutre'}">${avatar(personne(pid), true)}</span>`;
     el.innerHTML = `<h3>Équipe de cette date</h3>
-      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const part = ecart(x.personne_id)?.present !== false; return `<li${part ? '' : ' class="absent"'}><label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nomDe(personne(x.personne_id)))}</label><span class="compte">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span>${part ? telEquipe(x.personne_id) : ''}${part ? `<input type="text" class="eq-note" data-eqd-note="${x.personne_id}" value="${esc(ecart(x.personne_id)?.note || '')}" placeholder="Note pour cette date (train de 14h12, dort sur place…)" aria-label="Note pour ${esc(nomDe(personne(x.personne_id)))} sur cette date">` : ''}</li>`; }).join('')}</ul>`
+      ${tournee.length ? `<p class="aide">La distribution « en tournée » part sur chaque date : décochez qui ne vient pas.</p><ul class="eq-date">${tournee.map(x => { const e = ecart(x.personne_id), part = e?.present !== false, nom = nomDe(personne(x.personne_id)); return `<li${part ? '' : ' class="absent"'}>${avatarDe(x.personne_id)}<label class="case"><input type="checkbox" data-eqd-part="${x.personne_id}"${part ? ' checked' : ''}> ${esc(nom)}</label><span class="compte eq-badge">${esc(x.fonctions.join(', '))}${part ? '' : ' · ne part pas sur cette date'}</span>${part ? telEquipe(x.personne_id) : ''}${part ? `<input type="text" class="eq-fonction" data-eqd-fonction-membre="${x.personne_id}" value="${esc(e?.fonction || '')}" placeholder="Fonction sur cette date (sinon celle de la distribution)" aria-label="Fonction de ${esc(nom)} sur cette date"><input type="text" class="eq-note" data-eqd-note="${x.personne_id}" value="${esc(e?.note || '')}" placeholder="Note pour cette date (train de 14h12, dort sur place…)" aria-label="Note pour ${esc(nom)} sur cette date">` : ''}</li>`; }).join('')}</ul>`
         : `<p class="aide">${spectacle(sp) ? 'Personne n’est « en tournée » dans la distribution de ce spectacle (Spectacles → Distribution).' : 'Choisissez d’abord le spectacle.'}</p>`}
-      ${ajouts.length ? `<div class="eq-ajouts"><span class="lib">Remplaçants et renforts</span>${ajouts.map(x => `<div class="eq-ajout" data-eqd-ajout="${x.personne_id}">${avatar(personne(x.personne_id), true)}<a class="eq-nom" href="#/equipe/${x.personne_id}" title="Sa fiche">${esc(nomDe(personne(x.personne_id)))}</a>
-        <input type="text" data-eqd-fonction value="${esc(x.fonction || '')}" placeholder="${esc(absents.length ? `Remplace ${nomDe(personne(absents[0].personne_id))}` : 'Renfort régie, remplaçant…')}" aria-label="Fonction sur cette date">
+      ${ajouts.length ? `<div class="eq-ajouts"><span class="lib">Remplaçants et renforts</span>${ajouts.map(x => `<div class="eq-ajout" data-eqd-ajout="${x.personne_id}">${avatarDe(x.personne_id, x.fonction)}<a class="eq-nom" href="#/equipe/${x.personne_id}" title="Sa fiche">${esc(nomDe(personne(x.personne_id)))}</a>
+        <span class="eq-fonction-zone"><input type="text" data-eqd-fonction value="${esc(x.fonction || '')}" placeholder="Renfort régie, remplaçant…" aria-label="Fonction sur cette date">${cible ? `<button type="button" class="btn lien petit eq-remplace" data-eqd-remplace="${cible}"${(x.fonction || '').trim() ? ' hidden' : ''}>Remplace ${esc(nomDe(personne(cible)))}</button>` : ''}</span>
         <input type="text" class="eq-note" data-eqd-note="${x.personne_id}" value="${esc(x.note || '')}" placeholder="Note (train, hébergement…)" aria-label="Note pour cette date">
         <button type="button" class="btn petit danger" data-eqd-retirer title="Retirer de cette date" aria-label="Retirer de cette date">✕</button></div>`).join('')}</div>` : ''}
+      <p class="aide eq-prevenus" id="eqd-prevenus" aria-live="polite"></p>
       <div class="champ eq-ajouter"><span class="lib">Ajouter quelqu’un</span><div id="eqd-combo"></div><span class="aide">Un remplaçant ou un renfort, pour cette date seulement, avec sa fonction.</span></div>`;
     comboPersonne($('#eqd-combo', el), { placeholder: 'Nom de la personne…', creer: true, avant: distributionDe(sp).map(x => x.personne_id),
       exclure: pid => (ids.has(pid) && ecart(pid)?.present !== false) || ajouts.some(x => x.personne_id === pid),
-      onChoix: ajouter, onCreer: async texte => { try { const p = await creerPersonne(texte); ajouter(p.id); annoncer(`Fiche créée pour ${nomDe(p)} : complétez-la dans Équipe.`); } catch (e) { erreur(e, 'Fiche non créée'); } } });
+      onChoix: pid => ajouter(pid), onCreer: async texte => { try { const p = await creerPersonne(texte); ajouter(p.id); annoncer(`Fiche créée pour ${nomDe(p)} : complétez-la dans Équipe.`); } catch (e) { erreur(e, 'Fiche non créée'); } } });
+    resume();
   };
-  const ajouter = pid => {
+  // ajouter quelqu'un à la date, avec sa fonction quand on la connaît
+  const ajouter = (pid, fonction = '') => {
     const x = ecart(pid);
-    if (x && x.present === false) enlever(x);   // quelqu'un de la distribution qu'on avait retiré : il repart
-    else if (!x) F.equipe.push({ personne_id: pid, present: true, fonction: '', note: null });
+    if (x && x.present === false) { enlever(x); if (fonction) F.equipe.push({ personne_id: pid, present: true, fonction, note: x.note ?? null }); }   // quelqu'un de la distribution qu'on avait retiré : il repart
+    else if (!x) F.equipe.push({ personne_id: pid, present: true, fonction, note: null });
     dessiner(); changer();
     const l = $(`[data-eqd-ajout="${pid}"]`, el); if (l) { tt('ajouter', l); $('input', l).focus(); }
   };
   el.addEventListener('change', e => {
     const t = e.target; if (!t.dataset.eqdPart) return;
     const pid = +t.dataset.eqdPart, x = ecart(pid);
-    if (t.checked) { if (x && (x.note || '').trim()) x.present = true; else if (x) enlever(x); } else if (x) x.present = false; else F.equipe.push({ personne_id: pid, present: false, fonction: '', note: null });
+    if (t.checked) { if (x && ((x.note || '').trim() || (x.fonction || '').trim())) x.present = true; else if (x) enlever(x); }
+    else { dernierAbsent = pid; if (x) x.present = false; else F.equipe.push({ personne_id: pid, present: false, fonction: '', note: null }); }
     dessiner(); changer();
     $(`[data-eqd-part="${pid}"]`, el)?.focus();
   });
@@ -1183,9 +1204,34 @@ function blocEquipeDate(zone, F, changer) {
     else if (x) { x.note = v; if (!v.trim() && x.present && !(x.fonction || '').trim() && distributionDe(+F.spectacle_id).some(y => y.en_tournee && y.personne_id === pid)) enlever(x); }
     changer();
   });
-  el.addEventListener('input', e => { const t = e.target; if (t.dataset.eqdFonction === undefined) return; const x = ecart(+t.closest('[data-eqd-ajout]').dataset.eqdAjout); if (x) { x.fonction = t.value; changer(); } });
-  el.addEventListener('click', e => { const b = e.target.closest('[data-eqd-retirer]'); if (!b) return; const x = ecart(+b.closest('[data-eqd-ajout]').dataset.eqdAjout); if (x) enlever(x); dessiner(); changer(); });
+  // la fonction d'un membre de la tournée sur cette date (elle remplace celle de la distribution) : comme la note, une ligne
+  // « présente » qui ne porte que la fonction ; vidée, et sans note, la ligne s'en va. Le renfort a son champ plus bas
+  el.addEventListener('input', e => {
+    const t = e.target; if (t.dataset.eqdFonctionMembre === undefined) return;
+    const pid = +t.dataset.eqdFonctionMembre, v = t.value; let x = ecart(pid);
+    if (!x && v.trim()) { x = { personne_id: pid, present: true, fonction: v, note: null }; F.equipe.push(x); }
+    else if (x) { x.fonction = v; if (!v.trim() && x.present && !(x.note || '').trim()) enlever(x); }
+    changer();
+  });
+  el.addEventListener('input', e => {
+    const t = e.target; if (t.dataset.eqdFonction === undefined) return;
+    const l = t.closest('[data-eqd-ajout]'), x = ecart(+l.dataset.eqdAjout);
+    if (x) { x.fonction = t.value; changer(); }
+    const lien = $('[data-eqd-remplace]', l); if (lien) lien.hidden = !!t.value.trim();
+  });
+  el.addEventListener('click', e => {
+    const r = e.target.closest('[data-eqd-remplace]');
+    if (r) {   // « Remplace X » remplit la fonction du renfort et vise la personne décochée
+      const l = r.closest('[data-eqd-ajout]'), x = ecart(+l.dataset.eqdAjout), champ = $('[data-eqd-fonction]', l);
+      if (x) { x.fonction = `Remplace ${nomDe(personne(+r.dataset.eqdRemplace))}`; champ.value = x.fonction; r.hidden = true; changer(); champ.focus(); }
+      return;
+    }
+    const b = e.target.closest('[data-eqd-retirer]'); if (!b) return;
+    const x = ecart(+b.closest('[data-eqd-ajout]').dataset.eqdAjout); if (x) enlever(x); dessiner(); changer();
+  });
   $('#d-sp', zone)?.addEventListener('change', () => setTimeout(dessiner, 0));
+  // (les jours de la date décident si une présence prévient : le résumé se relit quand autre chose que l'équipe change)
+  zone.addEventListener('change', e => { if (!el.contains(e.target)) resume(); });
   dessiner();
 }
 // la distribution voulue pour une date : les écarts de la fiche (F.equipe) réduits à une ligne par personne (la dernière
@@ -3475,7 +3521,6 @@ dialog.troupe-choix[open] { display: flex; }
 .periode-choix label.case { display: flex; align-items: flex-start; gap: 8px; font-weight: 500; }
 .periode-choix input[type="date"], .periode-choix input[type="text"] { min-height: 40px; }
 .pp-apercu { padding: 9px 12px; border-radius: 10px; background: var(--doux); font-weight: 600; }
-.fm-boutons.rc-choix { flex-wrap: wrap; }
 .pe-joue-t { margin: 14px 0 6px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--gris); }
 @media (max-width: 560px) { .periode-choix .pp-dates { grid-template-columns: 1fr; } }
 .pe-dist-ajout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(110px, 1fr) auto; gap: 8px; margin-top: 10px; }
@@ -3554,6 +3599,16 @@ dialog.troupe-choix[open] { display: flex; }
 .eq-date .manque-tel { color: var(--gris); font-style: italic; font-weight: 500; }
 .eq-ajout .eq-nom { font-weight: 700; color: var(--encre); text-decoration: none; }
 .eq-ajout .eq-nom:hover { text-decoration: underline; }
+/* la fiche d'une date : chacun porte le liseré de son métier (jeu prune, création indigo, technique ambre, production sauge) */
+.eq-av { display: inline-flex; flex: none; align-self: center; border-radius: 50%; box-shadow: 0 0 0 2px var(--carte), 0 0 0 4px var(--m, var(--gris)); margin: 0 6px 0 3px; }
+.eq-ajout .eq-av { margin: 0; }
+.eq-date li .eq-fonction { flex: 1 1 200px; min-height: 32px; padding: 4px 8px; font-size: 13px; }
+.eq-date .eq-badge { font-size: 12.5px; }
+.eq-fonction-zone { display: grid; gap: 2px; min-width: 0; }
+.eq-remplace { justify-self: start; font-size: 12.5px; }
+.eq-remplace[hidden] { display: none; }
+.eq-prevenus:empty { display: none; }
+.eq-prevenus { margin: 10px 0 0; }
 #pe-coord .rangee > .champ { align-content: start; }
 /* l'espace pro : les invitations des salles, leur lien, leur journal ; les documents réservés aux salles */
 #ed-pro .aide, #l-pro .aide { color: var(--gris); font-size: 13px; }

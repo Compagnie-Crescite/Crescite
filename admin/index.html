@@ -681,6 +681,17 @@ textarea.tab-ed { width: max(100%, 320px); min-height: 130px; resize: both; }
 .tableur .c-nature { width: 136px; min-width: 136px; max-width: 136px; }
 .tableur .c-distribution { width: 250px; min-width: 250px; max-width: 250px; }
 .tab-pastille.plus { background: none; border: 1px solid var(--trait); color: var(--gris); }
+/* la cellule Distribution (admin/distribution.js) : des pastilles rondes de 24 px aux initiales, qui se chevauchent ; le
+   liseré est celui du métier (les couleurs vont avec les jetons, dans habillage.js), un anneau pointillé pour un remplaçant
+   ou un renfort, gris et barré pour qui ne part pas ; « −n » et « +n » en bout de rangée ; rien n'y bouge */
+.dist-cell { display: inline-flex; align-items: center; vertical-align: middle; white-space: nowrap; }
+.dist-av { display: inline-flex; align-items: center; padding-left: 5px; }
+.avatar.mini { box-sizing: border-box; width: 24px; height: 24px; margin-left: -5px; border: 2px solid var(--m, var(--gris)); font-size: 9.5px; line-height: 1; letter-spacing: 0; box-shadow: none; }
+.avatar.mini.remplacant { border-style: dashed; border-color: var(--ambre); }
+.avatar.mini.absent { opacity: .55; filter: grayscale(1); text-decoration: line-through; border-color: var(--gris); }
+.dist-moins, .dist-plus { margin-left: 6px; padding: 0 6px; border-radius: 999px; font-size: 11.5px; font-weight: 700; line-height: 18px; }
+.dist-moins { background: var(--corail-doux); color: var(--corail); }
+.dist-plus { background: none; border: 1px solid var(--trait); color: var(--gris); }
 .tableur .c-billetterie { width: 190px; min-width: 190px; max-width: 190px; }
 .tableur .c-precisions { width: 180px; min-width: 180px; max-width: 180px; }
 .tableur .c-organisateur { width: 180px; min-width: 180px; max-width: 180px; }
@@ -4834,6 +4845,9 @@ async function vueJournal() {
      distribution, déroulé type et documents des spectacles, équipe de chaque date -->
 <script src="feuille.js"></script>
 <script src="equipe.js"></script>
+<!-- la distribution à l'écran (DISTRIBUTION) : la cellule d'une date aux pastilles rondes, qui sera prévenu, l'impact d'un
+     changement de distribution (après equipe.js, dont il lit l'état) -->
+<script src="distribution.js"></script>
 <!-- le planning commun avec l'espace de l'équipe (PLANNING), puis la rubrique Planning : le planning de toute l'équipe,
      les propositions de dates et leur suivi (script SQL 5) -->
 <script src="planning.js"></script>

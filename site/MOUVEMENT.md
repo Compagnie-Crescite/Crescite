@@ -75,13 +75,18 @@ manque.
 `tableur.mjs` (le tableur des représentations), `icones.mjs` (la bibliothèque d'icônes), `cadre.mjs` (la coque, le menu
 latéral, ses raccourcis et ses badges), `champs.mjs` (la fiche d'une date : le schéma de ses champs, la jauge, le bandeau
 « Modifiée ailleurs », qui paraît en `ad-arrive`), `vues-dates.mjs` (les trois vues de Représentations : la pilule, les
-filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C) et `theme.mjs` (le
-thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié). Ils ne touchent presque
+filtres communs, le fondu, le focus, la ligne visée, la vue retenue et les touches V puis L / T / C), `theme.mjs` (le
+thème et la densité : le jour, « appareil » qui suit le système, la compacte, le menu replié) et `distribution.mjs` (la
+distribution à l'écran : la cellule d'une date, qui sera prévenu, la boîte d'impact, la fiche d'une date). Ils ne touchent presque
 pas à ce vocabulaire : `cadre.mjs` mesure seulement que le repli anime la colonne une fois, et rien sous « moins
 d'animations », et que le compte des badges ne tient jamais la page plus de 200 ms à `CPU=4` ; `vues-dates.mjs`, que le
 passage entre les trois vues est un fondu ; `theme.mjs`, qu'aucune transition de couleur ne se lance au changement de
 thème, que l'icône choisie saute en 450 ms au ressort, que rien ne bouge sous « moins d'animations » ou `?anim=0`, et
-qu'à `CPU=4` aucune tâche ne dépasse 200 ms ; pour le reste, ils veillent à ce qu'une refonte ne casse rien.
+qu'à `CPU=4` aucune tâche ne dépasse 200 ms ; `distribution.mjs`, que les pastilles de la cellule (qui se chevauchent, un anneau pointillé pour un
+remplaçant, grises et barrées pour qui ne part pas) n'animent rien (ni animation ni transition, d'après le style calculé), que le HTML de 120 dates de huit personnes se fabrique en moins de
+100 ms, et qu'un écran de 30 dates se pose et se met en page en moins de 100 ms à `CPU=4` (les 120 d'un coup, 960 pastilles, coûtent plus de 100 ms de
+mise en page : le tableur les dessinera par tranches) ; pour le reste, ils veillent à ce qu'une refonte ne casse rien. (La case de la matrice qui saute, `ad-pop`,
+vient avec le mode Distribution du tableur.)
 
 ## Ce qui a été écarté
 

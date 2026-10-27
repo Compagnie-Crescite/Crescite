@@ -40,6 +40,7 @@ node site/cadre.mjs                # la coque, le menu latéral, ses raccourcis 
 node site/champs.mjs               # la fiche d'une date : le schéma de ses champs, le rail d'écriture, les puces, la jauge (après le build)
 node site/vues-dates.mjs           # les trois vues de Représentations (pilule, filtres communs, ligne visée), dans Chromium (après le build)
 node site/theme.mjs                # le thème (nuit, jour, appareil) et la densité, dans Chromium, sur la même base fictive (après le build)
+node site/distribution.mjs         # la distribution à l'écran : la cellule d'une date, qui sera prévenu, la fiche, l'impact, dans Chromium (après le build)
 bash site/bancs-admin.sh           # le build, puis tous les bancs de l'administration l'un après l'autre ; --tout y joint
                                    # ceux de l'espace de l'équipe (sinon, seulement si gestes.js, planning.js ou feuille.js changent)
 node site/reactivite.mjs /tmp/x index --strict  # les budgets de réactivité du site, au bureau et au téléphone ralenti ×4
@@ -521,6 +522,16 @@ compte du projet inscrit dans `crescite_admins`.
     carte ne la change pas) et les touches V puis L / T / C (y compris leur silence dans un champ et dans la grille du
     tableur) : 111 vérifications, des captures dans `site/dist/shots-vues-dates/` (`vue-liste.png`, `vue-tableur.png`,
     `vue-carte.png`, `selecteur-1000.png`).
+  - `node site/distribution.mjs` garde la distribution à l'écran (`admin/distribution.js`) : la cellule d'une date rendue à part
+    (pastilles rondes aux initiales, jamais de photo, liseré du métier tenu à 3:1 la nuit comme le jour, anneau pointillé d'un
+    renfort, barré pour qui ne part pas, « −n », « +n », aucune animation, le HTML de 120 dates de huit personnes en moins de 100 ms et un écran de 30 dates posé
+    dans la page en moins de 100 ms à `CPU=4` ; un portrait public n'entre jamais dans la grille), qui sera prévenu (un
+    compte, une date à venir, une présence qui change), `GARDEFOUS.indisposDe`, la fiche d'une date (la tournée par métier, la
+    fonction et la note de chacun, « Remplace X » en lien qui disparaît de l'écran dès qu'une fonction est saisie et revient si on la vide,
+    le résumé, l'enregistrement) et l'impact dans Spectacles → Distribution (une seule boîte, limiter à aujourd'hui, renoncer, l'ordre
+    des écritures, par « Ajouter quelqu'un de la troupe » comme depuis la fiche d'une personne, pour ajouter comme pour retirer) :
+    82 vérifications, des captures dans
+    `site/dist/shots-distribution/` (`distribution-cellule.png`, `distribution-fiche.png`, `distribution-impact.png`).
 - **Le cadre et le menu latéral** (`admin/cadre.js` ; la coque elle-même, `poserCoque` et `cadre`, est dans
   `admin/index.html`) : l'en-tête tient sur une ligne, à toutes les largeurs ; ce qui n'y tient pas se replie, dans cet
   ordre (l'adresse du compte, le mot « Rechercher », les mots longs, les liens du compte, qui passent alors dans « Plus »,
@@ -787,9 +798,26 @@ Bérénice dans le stockage privé. L'import n'écrase jamais le travail de l'ad
   date, jusqu'à la dernière) écrit d'un coup les écarts des dates qu'elle change, avec un aperçu (combien de dates, dont
   combien à venir, dont la personne sera prévenue) et « Annuler » ; « Quelqu'un qui a joué avant » fait de même pour une
   personne qui n'est plus dans la distribution. Retirer de la distribution quelqu'un qui a joué des dates passées
-  demande si elles le gardent. La fiche de la personne dit aussi ce qu'elle a joué, et quand. Rien ne change dans la
-  base : ce sont les écarts de `crescite_equipes`, comme ceux de l'historique importé. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas, on ajoute un
-  remplaçant).
+  demande si elles le gardent : c'est le même choix que celui de l'impact. **L'impact** : avant d'ajouter quelqu'un à la
+  distribution (sur un spectacle, ou depuis sa fiche), de la retirer, ou de cocher ou décocher sa case « en tournée » (ce qui change
+  l'équipe de toutes les dates où rien n'est dit pour elle, à venir comme passées), une seule boîte dit « 2 dates à venir
+  changent d'équipe (dont 1 représentation confirmée) » (les dates annulées ou reportées ne comptent pas ; les options et les
+  répétitions comptent, la base les change aussi) et propose, coché d'office, de « limiter à partir d'aujourd'hui » : les dates
+  passées ne changent pas (celui qu'on retire y reste, celui qu'on ajoute n'y est pas). On peut renoncer
+  (« Annuler », Échap) : rien ne change et la case revient. Rien ne surveille la distribution : **personne n'est prévenu
+  automatiquement**, la boîte le dit, et « Prévenir l'équipe », dans la fiche de chaque date, le fait à la main. Les écarts des
+  dates passées sont écrits avant le retrait (ou après l'ajout) : jamais de « Vous partez » envoyé à tort. La fiche de la personne
+  dit aussi ce qu'elle a joué, et quand. Rien ne change dans la base : ce sont les écarts de `crescite_equipes`, comme ceux de
+  l'historique importé. **Dans chaque date** : son équipe (la distribution « en tournée » cochée ; on décoche qui ne part pas,
+  on ajoute un remplaçant ou un renfort) ; chacun y a son portrait rond au liseré de son métier (jeu prune, création indigo,
+  technique ambre, production sauge), rangé par métier, avec sa fonction (« Jeu (Bérénice) »), son téléphone, un champ fonction
+  et un champ note pour cette date seule ; quand on décoche quelqu'un, le renfort propose « Remplace Jean Durand », un lien qui
+  remplit sa fonction (il vise la dernière personne décochée) ; et un résumé dit qui sera prévenu à l'enregistrement : « 1 personne
+  sera prévenue (Jean Durand : « vous partez »). » : les personnes dont la présence change sur une date à venir et qui ont un compte
+  (un changement de fonction ou de note ne prévient personne ; sur une date qu'on crée, qui ne part pas n'est pas prévenu). Le
+  module `admin/distribution.js` (`DISTRIBUTION`) porte cette règle, l'impact et la cellule d'une date (des pastilles rondes de
+  24 px aux initiales, jamais de photo dans une grille : le tableur s'y branchera) ; `GARDEFOUS.indisposDe(pid, jours)` donne les
+  indisponibilités à venir d'une personne sur des jours.
 - **Ce que la base sait, montré là où l'on agit** (l'audit du 27 octobre 2026) : la fiche d'un lieu fait son bilan (les
   représentations jouées, depuis quand, les spectateurs, le remplissage, les cessions ; saison par saison ; ses
   organisateurs successifs ; les pistes et les demandes de devis du lieu ou de sa commune) et montre toutes ses dates ;
