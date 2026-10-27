@@ -1202,7 +1202,7 @@ html.ed-actif .ep-a::after { content: none; }
 .alerte-usage { margin: 12px 0 0; font-size: .92rem; color: var(--gris); max-width: 65ch; }
 /* la nuit : les champs de l'alerte et du simulateur sur le papier de la nuit (blancs, leur encre claire ne se lisait pas),
    et les réponses dans un vert et un rouge clairs (AA sur la nuit) */
-html[data-theme="nuit"] :is(.alerte-champs select, .alerte-champs input[type="email"], .alerte-champs input[type="text"], .champ-simu input, .champ-simu select) { background: var(--blanc); }
+html[data-theme="nuit"] :is(.alerte-champs select, .alerte-champs input[type="email"], .alerte-champs input[type="text"], .champ-simu input, .champ-simu select, .conv-champs input, .conv-champs select) { background: var(--blanc); }
 html[data-theme="nuit"] .alerte-msg.ok { color: #7fd6a4; border-color: #7fd6a4; }
 html[data-theme="nuit"] .alerte-msg.err { color: #ff9d94; border-color: #ff9d94; }
 
@@ -1235,7 +1235,15 @@ html[data-theme="nuit"] .alerte-msg.err { color: #ff9d94; border-color: #ff9d94;
 .conv-modal { margin-top: 24px; padding: 22px; border-radius: 10px; background: var(--papier); border: 1.5px solid var(--filet); }
 .conv-modal h3 { margin: 0 0 14px; font: 500 1.4rem/1.2 var(--titre); }
 .conv-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.conv-champs input, .conv-champs select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 .95rem var(--sans); }
+.conv-champs input, .conv-champs select { width: 100%; padding: 10px 12px; border: 1.5px solid var(--filet); border-radius: 6px; background: #fff; font: 400 .95rem var(--sans); color: var(--encre); }
+.cv-champ label { display: block; margin-bottom: 6px; font-weight: 600; font-size: .9rem; }
+/* l'erreur d'un champ, sous lui (verifier) : la couleur de l'erreur du site, un signe devant (pas la couleur seule) ; le champ
+   bordé de même */
+.champ-err { display: block; flex-basis: 100%; grid-column: 1 / -1; margin: 6px 0 0; color: #b3261e; font: 600 .88rem/1.4 var(--texte); }
+.champ-err::before { content: "! " / ""; font-weight: 700; }
+html[data-theme="nuit"] .champ-err { color: #ff9d94; }
+:is(input, select, textarea)[aria-invalid="true"] { border-color: #b3261e; box-shadow: inset 0 0 0 1px #b3261e; }
+.case:has(.champ-err), .calcul:has(.champ-err) { flex-wrap: wrap; }
 
 
 /* ———— le pied de page ———— */
@@ -5245,8 +5253,47 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // SQL, la fonction crescite-courriel) ; la page le dit, et ne promet rien d'autre. Le secteur : la position (« Me
   // géolocaliser » : l'alerte vaut alors dans un rayon autour d'elle) avec sa commune, ou un code postal, ou une commune
   // cherchée par son nom (geo.api.gouv.fr) ; la base en déduit le département
+  /* le dernier mot des formulaires publics (l'alerte, la demande de proposition de cession, le contact) : à l'envoi, chaque
+     champ qui ne va pas le dit sous lui (L.champRequis, L.courrielInvalide, L.caseRequise, L.calculFaux ; sinon ce que dit le
+     navigateur), relié à lui (aria-describedby) et marqué (aria-invalid) ; le focus va au premier, qui se lit avec son
+     erreur ; le message part dès que le champ est retouché. Les bulles du navigateur se taisent (noValidate) : une seule
+     façon de dire. Rien ne change de ce que le formulaire envoie. regles : [{ el, ok: el => vrai, msg }] en plus */
+  function verifier(form, regles = []) {
+    form.noValidate = true;
+    let premier = null;
+    for (const el of form.elements) {
+      if (!el.matches || !el.matches('input:not([type="hidden"]), select, textarea') || el.disabled) continue;
+      const v = el.validity, r = regles.find(x => x.el === el);
+      const m = v.valueMissing ? (el.type === 'checkbox' ? L.caseRequise : L.champRequis) || el.validationMessage
+        : v.typeMismatch && el.type === 'email' ? L.courrielInvalide || el.validationMessage
+        : !v.valid ? el.validationMessage
+        : r && !r.ok(el) ? r.msg : '';
+      erreurChamp(el, m);
+      if (m && !premier) premier = el;
+    }
+    if (premier) premier.focus();
+    return !premier;
+  }
+  function erreurChamp(el, m) {
+    const id = `${el.id}-err`;
+    let p = document.getElementById(id);
+    const desc = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(x => x && x !== id);
+    if (!m) { if (p) p.remove(); el.removeAttribute('aria-invalid'); if (desc.length) el.setAttribute('aria-describedby', desc.join(' ')); else el.removeAttribute('aria-describedby'); return; }
+    if (!p) {
+      p = document.createElement('span'); p.className = 'champ-err'; p.id = id;
+      // (sous le champ : dans son bloc, sinon juste après lui, ou après son groupe)
+      const bloc = el.closest('.champ, .case, .calcul, .champ-simu');
+      if (bloc) bloc.appendChild(p); else (el.closest('.alerte-geo-grp') || el).insertAdjacentElement('afterend', p);
+      el.addEventListener('input', () => erreurChamp(el, ''), { once: true });
+      el.addEventListener('change', () => erreurChamp(el, ''), { once: true });
+    }
+    p.textContent = m;
+    el.setAttribute('aria-invalid', 'true');
+    el.setAttribute('aria-describedby', [...desc, id].join(' '));
+  }
   function initAlerteTournee() {
     const f = $('#f-alerte'); if (!f) return;
+    f.noValidate = true;
     const btnGeo = $('#btn-geo'), cp = $('#alerte-cp'), email = $('#alerte-email'), sp = $('#alerte-spectacle'), msg = $('#alerte-msg');
     let ici = null;      // la position prise, sa commune, son code postal, son département et le texte écrit dans le champ
     const geoTexte = t => { if (btnGeo) btnGeo.querySelector('span').textContent = t; };
@@ -5299,6 +5346,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     };
     f.addEventListener('submit', async e => {
       e.preventDefault();
+      if (!verifier(f)) return;
       const mailVal = email.value.trim(), cpVal = cp.value.trim(), spVal = sp.value;
       if (!mailVal || !cpVal) return;
       const btnSub = $('#btn-inscrire-alerte');
@@ -5307,7 +5355,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
       const s = spVal && bySlug[spVal] ? bySlug[spVal] : null;
       const secteur = ici ? { code_postal: ici.code_postal, commune: ici.commune, departement: ici.departement } : await secteurEcrit(cpVal);
       if (!secteur) {
-        dire('err', esc(L.alerteSecteurInconnu || 'Ce secteur est introuvable : indiquez un code postal (5 chiffres), ou utilisez « Me géolocaliser ».'));
+        // (dit sous le champ du secteur, qui reprend le focus)
+        erreurChamp(cp, L.alerteSecteurInconnu || 'Ce secteur est introuvable : indiquez un code postal (5 chiffres), ou utilisez « Me géolocaliser ».');
         if (btnSub) btnSub.disabled = false;
         cp.focus();
         return;
@@ -5355,7 +5404,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     const choisi = () => bySlug[spSelect.value] || null, nomChoisi = () => (choisi() || {}).titre || spSelect.value;
     spSelect.addEventListener('change', () => { panneau.innerHTML = accueilSp(choisi()); const h = $('#simu-form-devis h3'); if (h) h.textContent = `${L.demandeCession} — ${nomChoisi()}`; });
     if (!btnOuvrir || !zoneForm) return;
-    const champ = (id, cle, { type = 'text', requis = false, max = 200, auto = '' } = {}) => `<div class="champ"><label for="${id}">${esc(L[cle])}${requis ? '<span aria-hidden="true"> *</span>' : ''}</label><input type="${type}" id="${id}"${requis ? ' required' : ''} maxlength="${max}"${auto ? ` autocomplete="${auto}"` : ''}></div>`;
+    const champ = (id, cle, { type = 'text', requis = false, max = 200, auto = '' } = {}) => `<div class="champ"><label for="${id}">${esc(L[cle])}${requis ? '<span aria-hidden="true"> *</span>' : ''}</label><input type="${type}" id="${id}"${requis ? ' required' : ''} maxlength="${max}"${auto ? ` autocomplete="${auto}"` : ''}${type === 'email' ? ' autocapitalize="off" spellcheck="false"' : ''}></div>`;
     btnOuvrir.addEventListener('click', () => {
       zoneForm.hidden = !zoneForm.hidden;
       btnOuvrir.setAttribute('aria-expanded', String(!zoneForm.hidden));
@@ -5369,7 +5418,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
             <span id="dev-status" class="alerte-msg" hidden></span>
           </div>
         </form>`;
+      $('#f-devis').noValidate = true;
       $('#f-devis').addEventListener('submit', async () => {
+        if (!verifier($('#f-devis'))) return;
         const st = $('#dev-status'), btnEnv = $('#btn-envoyer-devis');
         btnEnv.disabled = true;
         st.hidden = true;
@@ -5410,6 +5461,9 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     });
   }
 
+  // un champ de la convention : son nom au-dessus de lui (l'indication sans son exemple ; pré-rempli, le champ ne montrait
+  // jamais son indication, et rien ne disait ce qu'il attendait), l'exemple gardé en indication
+  const cvChamp = ([id, ph, val, auto]) => `<div class="cv-champ"><label for="${id}">${esc(ph.replace(/\s*\(ex\.[^)]*\)$/, ''))}</label><input type="text" id="${id}" placeholder="${esc(ph)}" value="${esc(val)}" autocomplete="${auto}"></div>`;
   function initEspaceScolaire() {
     const btnConv = $('#btn-ouvrir-conv'), convModal = $('#conv-modal');
     if (btnConv && convModal) {
@@ -5419,14 +5473,12 @@ html.still .sc-image { transition: opacity .35s ease !important; }
           convModal.innerHTML = `<h3>Générateur de Convention de Partenariat Scolaire</h3>
             <p style="color:var(--gris); margin-bottom:16px;">Générez en un clic la convention officielle d’accueil et d’action culturelle pour signature par le chef d'établissement et vote en Conseil d'Administration.</p>
             <div class="conv-champs">
-              <input type="text" id="cv-etab" placeholder="Nom de l’établissement (ex. Lycée Corneille)" value="Lycée Pierre Corneille">
-              <input type="text" id="cv-ville" placeholder="Commune (ex. Rouen)" value="Rouen (76)">
-              <input type="text" id="cv-chef" placeholder="Nom du Chef d’établissement" value="Le Proviseur">
-              <select id="cv-spectacle">
+              ${[['cv-etab', 'Nom de l’établissement (ex. Lycée Corneille)', 'Lycée Pierre Corneille', 'organization'], ['cv-ville', 'Commune (ex. Rouen)', 'Rouen (76)', 'address-level2'], ['cv-chef', 'Nom du Chef d’établissement', 'Le Proviseur', 'off']]
+                .map(cvChamp).join('')}
+              <div class="cv-champ"><label for="cv-spectacle">${esc(L.devisSpectacle || L.spectacles)}</label><select id="cv-spectacle">
                 ${D.shows.filter(s => s.actionCulturelle).map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
-              </select>
-              <input type="text" id="cv-classes" placeholder="Classes concernées (ex. 3 classes de 2nde)" value="3 classes de 2nde et 1re">
-              <input type="text" id="cv-ateliers" placeholder="Volume ateliers (ex. 6 ateliers de 1h)" value="6 ateliers d’initiation (6h)">
+              </select></div>
+              ${[['cv-classes', 'Classes concernées (ex. 3 classes de 2nde)', '3 classes de 2nde et 1re', 'off'], ['cv-ateliers', 'Volume ateliers (ex. 6 ateliers de 1h)', '6 ateliers d’initiation (6h)', 'off']].map(cvChamp).join('')}
             </div>
             <button type="button" class="bouton e" id="btn-telecharger-conv" style="--ec:${esc((E.etablissement || {}).couleur || 'var(--saison)')}">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -5609,7 +5661,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
                 <option value="">${esc(L.tousSpectacles || 'Tous les spectacles')}</option>
                 ${D.shows.map(s => `<option value="${esc(s.slug)}">${esc(s.titre)}</option>`).join('')}
               </select>
-              <input type="email" id="alerte-email" placeholder="${esc(L.adresseElectronique || '')}" aria-label="${esc(L.adresseElectronique || '')}" maxlength="254" required>
+              <input type="email" id="alerte-email" placeholder="${esc(L.adresseElectronique || '')}" aria-label="${esc(L.adresseElectronique || '')}" maxlength="254" autocomplete="email" autocapitalize="off" spellcheck="false" required>
               <button type="submit" class="bouton e" id="btn-inscrire-alerte" style="--ec:var(--saison)">
                 <span>${esc(L.mInscrire || 'M’inscrire à l’alerte')}</span>
                 ${FLECHE}
@@ -7037,13 +7089,17 @@ html.still .sc-image { transition: opacity .35s ease !important; }
         </div>
         <form class="formulaire" novalidate>
           ${C.champs.map((c, i) => i === C.champs.length - 1 ? `<p class="champ large"><label for="f${i}">${esc(c)}</label><textarea id="f${i}" rows="6"></textarea></p>`
-            : `<p class="champ"><label for="f${i}">${esc(c)}</label><input id="f${i}" type="${(types[c] || ['text'])[0]}"${types[c] ? ` autocomplete="${types[c][1]}"` : ''}></p>`).join('')}
-          <p class="case"><input id="f-ok" type="checkbox"><label for="f-ok">${k >= 0 ? `${esc(C.consentement.slice(0, k))}<a href="${politique}">${esc(mot)}</a>${esc(C.consentement.slice(k + mot.length))}` : esc(C.consentement)}</label></p>
-          <p class="calcul"><label for="f-calc">${esc(C.calcul)}</label><input id="f-calc" inputmode="numeric" maxlength="2"></p>
+            : `<p class="champ"><label for="f${i}">${esc(c)}</label><input id="f${i}" type="${(types[c] || ['text'])[0]}"${types[c] ? ` autocomplete="${types[c][1]}"` : ''}${(types[c] || [])[0] === 'email' ? ' autocapitalize="off" spellcheck="false"' : ''}></p>`).join('')}
+          <p class="case"><input id="f-ok" type="checkbox" required><label for="f-ok">${k >= 0 ? `${esc(C.consentement.slice(0, k))}<a href="${politique}">${esc(mot)}</a>${esc(C.consentement.slice(k + mot.length))}` : esc(C.consentement)}</label></p>
+          <p class="calcul"><label for="f-calc">${esc(C.calcul)}</label><input id="f-calc" inputmode="numeric" pattern="[0-9]*" maxlength="2" autocomplete="off" required></p>
           <p class="envoi"><button class="bouton" type="submit">${esc(C.bouton)}</button></p>
         </form>
       </div></section>`;
-    $('form', main).addEventListener('submit', e => e.preventDefault());
+    // (le calcul de la question, lu dans son texte, « 2 + 6 = » : la réponse se vérifie avant tout envoi)
+    const op = /(\d+)\s*([+−-]|[×x*])\s*(\d+)/.exec(C.calcul || ''), attendu = op ? (op[2] === '+' ? +op[1] + +op[3] : /[×x*]/.test(op[2]) ? op[1] * op[3] : op[1] - op[3]) : null;
+    const calc = $('#f-calc', main);
+    $('form', main).addEventListener('submit', e => { e.preventDefault();
+      verifier(e.currentTarget, attendu == null ? [] : [{ el: calc, ok: el => +el.value.trim() === attendu, msg: L.calculFaux }]); });
     return { titre: nomC, menu: 'contact' };
   }
   /* ---------- l'espace pro (règles 16 et 21) : sur l'aplat de la saison, la grande capitale et son chapeau ; puis deux

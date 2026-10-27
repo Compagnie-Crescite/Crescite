@@ -506,6 +506,9 @@ LIBELLES = {
     # saisons), et celle du clavier, quand un titre de la pieuvre a le focus
     "indiceScene": "Choisissez un spectacle : une fois pour le voir, deux pour ouvrir sa page.",
     "indiceClavier": "Flèches : d'un spectacle à l'autre · Entrée : ouvrir sa page",
+    # l'erreur d'un champ des formulaires publics, dite sous lui à l'envoi (l'alerte, la demande de cession, le contact)
+    "champRequis": "Ce champ est à remplir.", "courrielInvalide": "Cette adresse électronique n'est pas complète.",
+    "caseRequise": "Cette case est à cocher pour envoyer.", "calculFaux": "Ce n'est pas le bon résultat.",
     # alertes de proximité (chantier 1)
     "alerteTournee": "Être prévenu du prochain passage",
     "alerteTourneeDesc": "Recevez un courriel dès qu’une représentation est confirmée près de chez vous.",
