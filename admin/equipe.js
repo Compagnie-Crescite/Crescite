@@ -2538,9 +2538,9 @@ function listeAcces(zone, actif) {
 // sans invitation choisie : ce qu'est l'espace pro, et ce que chaque spectacle y montre
 function accueilPro() {
   const sps = E.spectacles.filter(s => s.page || E.documents.some(d => d.spectacle_id === s.id && (estSalles(d) || estPros(d)))).sort((a, b) => (b.page - a.page) || a.ordre - b.ordre);
-  return `<div class="bloc"><h3>Inviter une salle</h3><p>Une invitation ouvre à une salle ou à un festival l’espace pro : les captations et les documents des spectacles choisis, jusqu’à une date. On lui envoie son lien ; chaque visite et chaque document ouvert s’inscrivent dans son journal.</p>
+  return `<div class="bloc"><h3 aria-level="2">Inviter une salle</h3><p>Une invitation ouvre à une salle ou à un festival l’espace pro : les captations et les documents des spectacles choisis, jusqu’à une date. On lui envoie son lien ; chaque visite et chaque document ouvert s’inscrivent dans son journal.</p>
       <p class="aide">Le lien mène à pro/, une page du site qui demande les documents à la fonction <code>crescite-pro</code> de Supabase (supabase/functions/crescite-pro) : elle doit y être déployée.</p></div>
-    <div class="bloc"><h3>Ce que les salles y trouvent</h3>${sps.length ? `<ul class="liste-simple pro-docs">${sps.map(s => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><b>${esc(s.titre)}</b><span class="compte">${esc(compteDocsSalles(s.id))}</span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Documents">Documents</a></li>`).join('')}</ul>` : '<p class="aide">Aucun spectacle.</p>'}
+    <div class="bloc"><h3 aria-level="2">Ce que les salles y trouvent</h3>${sps.length ? `<ul class="liste-simple pro-docs">${sps.map(s => `<li><span class="pastille" style="--c:${couleurSp(s)}"></span><b>${esc(s.titre)}</b><span class="compte">${esc(compteDocsSalles(s.id))}</span><a href="#/spectacles/${esc(s.slug)}" data-onglet-sp="Documents">Documents</a></li>`).join('')}</ul>` : '<p class="aide">Aucun spectacle.</p>'}
       <p class="aide">Les documents réservés aux salles se déposent dans chaque spectacle, onglet Documents ; les dossiers et fiches techniques des programmateurs s’y ajoutent.</p></div>`;
 }
 function editeurAcces(id) {
@@ -2565,7 +2565,7 @@ function editeurAcces(id) {
         <span class="aide">Une durée à partir d’aujourd’hui, ou une date. Ensuite, le lien ne s’ouvre plus.</span></div>
       ${champ(SPEC_ACCES[3], F)}
     </div>
-    ${a0 ? `<div class="bloc"><div class="pro-journal-tete"><h3>Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal">${typeof attenteLignes === 'function' ? attenteLignes(3, 44) : '<p class="aide">Chargement…</p>'}</div></div>` : ''}
+    ${a0 ? `<div class="bloc"><div class="pro-journal-tete"><h3 aria-level="2">Journal</h3><button type="button" class="btn petit" id="pro-actualiser">Actualiser</button></div><div id="pro-journal">${typeof attenteLignes === 'function' ? attenteLignes(3, 44) : '<p class="aide">Chargement…</p>'}</div></div>` : ''}
     ${pied(a0 ? 'Tout est enregistré' : 'Nouvelle invitation', a0 ? '<button type="button" class="btn danger" id="pro-suppr">Supprimer</button>' : '')}`;
   const courriel = $('[data-chemin="courriel"]', zone);
   if (courriel) { courriel.type = 'email'; courriel.autocomplete = 'off'; }
