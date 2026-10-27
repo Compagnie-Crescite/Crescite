@@ -3144,7 +3144,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main .voisins, main .rc-vis, main .rc-fil, main #c-video, main [data-lecteur], main .filet, main svg.trait, main .rs-tete, main .rs-defile, main .rs-plus, main .rs-photo, main .rs-tache,
   main svg.carte, main .carte-sp, main .ag7-carte, main .frise, main [data-frise], main .u-frise, main .v-frise, main .fs7, main .p4-frise, main .ft7, main .fr-legende,
   main .s7-outils, main .s7-rac, main .sm7, main .sf7, main .ag-index, main #v-alerte, main .bf7, main .fe7, main .s7-gel { display: none !important; }
-  main { padding: 0 !important; }
+  main { padding: 0 !important; min-height: 0 !important; }   /* (à l’écran, un écran au moins : sur le papier, une page blanche de plus) */
   main .wrap { width: auto !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
   main section, main .chap, main .bloc { padding-top: 0 !important; margin-top: 0 !important; min-height: 0 !important; }
   main .chap + .chap, main section + section { margin-top: 10mm !important; }
@@ -3174,7 +3174,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main .rs-c { max-width: none !important; padding: 4mm !important; }
   main .rs-reserver { display: inline !important; padding: 0 !important; font-weight: 700; text-decoration: none; }
   main .rs-reserver .rs-fleche { display: none; }
-  main .rs-reserver::after, main a.rs-seance::after, main .d7-lieu a::after, main .dl-ou a::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 9pt; overflow-wrap: anywhere; }
+  main .rs-reserver::after, main a.rs-seance::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 9pt; overflow-wrap: anywhere; }
   main .rs-r { display: inline !important; }
   main .rs-r1, main .rs-r2 { display: inline; font-size: 11pt !important; }
   main .rs-r2::before { content: " · "; }
@@ -3182,6 +3182,19 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   main .rs-date--ligne { border: 0 !important; padding: 0 !important; margin: 0 !important; }
   main details:not([open]) > :not(summary) { display: none; }
   main a { text-decoration: underline; }
+  /* les légendes sous leur photo (à l'écran, elles chevauchent son bas), les flèches et les chevrons des boutons, qui ne
+     mènent nulle part sur le papier ; les liens vers un autre site écrits en clair (une seule fois, ceux des dates compris) */
+  main figcaption { position: static !important; inset: auto !important; width: auto !important; max-width: none !important; margin: 1.5mm 0 0 !important; padding: 0 !important; border: 0 !important; white-space: normal !important; font-size: 9pt; }
+  main svg.fleche, main svg.chev, main svg.ext { display: none !important; }
+  main a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 9pt; overflow-wrap: anywhere; }
+  main .rs-reserver::after, main a.rs-seance::after { content: " (" attr(href) ")" !important; }
+  /* le contact : les coordonnées et le courriel ; le formulaire, qui ne s'envoie pas d'une feuille, reste à l'écran */
+  main .contact { display: block !important; }
+  main .formulaire { display: none !important; }
+  main .ct-ecrire .bouton { display: inline !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; font-weight: 700; text-decoration: none; }
+  main .ct-ecrire .bouton::after { content: " :"; }
+  main .ct-courriel { font-weight: 700; }
+  main address, main .ct-coord { break-inside: avoid; }
 }
 </style>
 </head>
