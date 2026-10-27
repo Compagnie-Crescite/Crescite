@@ -8724,7 +8724,8 @@ const PIEUVRE = (() => {
       for (let k = 0; k <= M; k++) { const l = k * h; th[k] = l < lc ? L.en(L.L - lc + l)[2] : sur(R.th, (l - lc) / this.L0 * M, M); }
       for (let k = 1; k < M; k++) sg[k] = sg[k - 1] + norm(sg[k] - sg[k - 1]);
       for (let k = 1; k <= M; k++) th[k] = th[k - 1] + norm(th[k] - th[k - 1]);
-      return { sg, th, ln, mu: 0, kl: lc / tot * M };   // (kl : où finit le pied, en segments)
+      // (un rien en retrait (z) : son pied passe sous les boucles des autres, comme dans le logo, sans pâlir)
+      return { sg, th, ln, mu: 0, z: new Float64Array(M + 1).fill(.995), kl: lc / tot * M };   // (kl : où finit le pied, en segments)
     }
     racine() { const [rx, ry] = this.racineEff(); return { x: this.ox + rx * this.s, y: this.oy + ry * this.s }; }
     // la partie de la peau hors de la racine (le liseré ne coupe pas la tentacule de son corps), pour une racine de rac fois l'épine
@@ -8935,11 +8936,16 @@ const PIEUVRE = (() => {
       else this.gl = this.cible || this.colle ? 1 : 0;
       const glisseR = this.racineEff()[2];
       const repos = this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne + glisseR);
-      const repos0 = this.relie ? this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne) : repos;   // (reliée : la pièce ne tourne pas)
+      // (reliée : la pièce ne tourne pas. Collée, une tentacule dont la place du logo est loin de son attache (la queue, la
+      // spirale extérieure) revient à cette place, d'un seul tenant, son pied restant sur la tête (reliePose) : sa forme du
+      // logo tournée dans le sens de l'attache tombait dans la tête)
+      const loinTete = this.att && Math.hypot(this.att.x - this.RX[0], this.att.y - this.RY[0]) > 40;
+      const repos0 = this.relie || (this.colle && loinTete) ? this.reposPose(o.temps || 0, o.onde || 0, o.penche || 0, this.tourne) : repos;
+      const reposB = this.colle && loinTete ? this.reliePose(1, repos0) : repos;
       if (this.cible) this.but = this.viseePose(this.cible, bob);
       let bouge = false;
       if (this.q < 1) { this.q = Math.min(1, this.q + dt / Math.max(1, this.duree)); bouge = true; }
-      const B = this.cible ? this.but : repos;
+      const B = this.cible ? this.but : reposB;
       let P = B;
       if (this.q < 1 && this.depuis) {
         let A = this.depuis;
@@ -9510,6 +9516,7 @@ const PIEUVRE = (() => {
     creer() {
       if (!this.pret) return [];
       const ts = G.bras.map((b, i) => new Tentacule(b, i));
+      for (const t of ts) t.freres = ts;   // (une frange regarde toute la pieuvre : dessiner)
       // (une tentacule qui sort du bas de la tête à la racine d'une autre en prend la largeur là)
       for (const t of ts) if (t.att && t.att.prolonge) { const o = ts.find(x => Math.hypot(x.RX[0] - t.att.x, x.RY[0] - t.att.y) < 1); if (o && o !== t) t.attN0 = o.N0; }
       for (const t of ts) {
@@ -9539,9 +9546,12 @@ const PIEUVRE = (() => {
 
     dessiner(g, t, o = {}) {
       // (une frange s'efface dès que sa spirale part, au tout début de son trajet : elle n'en reste pas un morceau qui flotte, à
-      // demi transparent, à côté des huit tentacules ; elle revient avec elle)
+      // demi transparent, à côté des huit tentacules. Elle ne revient qu'avec le logo entier : les rayures n'ont de sens que
+      // dans le dessin complet ; dans une spirale repliée seule, au milieu des autres tendues, ce sont des bouts en trop)
       // (enfoncée, elle pâlit : elle passe derrière le corps)
-      const zm = t.profondeur(), al = (t.parent ? 1 - t.parent.t.partie() : 1) * (zm < 1 ? .3 + .7 * zm : 1);
+      let fr = 1;
+      if (t.parent) for (const x of t.freres || [t.parent.t]) if (!x.parent) fr = Math.min(fr, 1 - x.partie());
+      const zm = t.profondeur(), al = fr * (zm < 1 ? .3 + .7 * zm : 1);
       if (al < .02) return;
       const { xs, ys } = t.contour(), mu = t.mouvement();
       // le liseré : là où elle passe sur la pieuvre, un jour la sépare (comme les tentacules du logo entre elles) ; jamais plus
