@@ -144,7 +144,9 @@ const PIEUVRE = (() => {
       this.cle = b.cle; this.cote = b.cote; this.i = i; this.plat = !!b.plat;
       // l'attache : où sa racine va sur la tête quand elle se déploie (x, y, direction), pour une tentacule dont la place de
       // repos ne touche pas la tête ; le parent : la clé de la tentacule dont elle suit l'épine (posé par creer())
-      this.att = b.attache ? { x: b.attache[0], y: b.attache[1], dir: b.attache[2] } : null; this.colle = false;
+      // (prolonge : elle sort du bas de la tête, à la coupe de la jambe ou de la queue de l'œil, dans leur sens ; attN0, posé par
+      // creer() : la demi-largeur du trait qu'elle prolonge là, qu'une tentacule plus large n'y déborde pas)
+      this.att = b.attache ? { x: b.attache[0], y: b.attache[1], dir: b.attache[2], prolonge: !!b.prolonge } : null; this.colle = false; this.attN0 = 0;
       this.parentCle = b.parent || null; this.parent = null;
       const E = b.epine, h = b.pas, n = E.length / 2 - 1;
       this.h = h; this.n = n; this.L0 = n * h;
@@ -552,6 +554,12 @@ const PIEUVRE = (() => {
       // Une tentacule qui prolonge la jambe ou la queue de l'œil garde son pied presque entier, il continue le trait : seul ce
       // qui remonte dans la jambe, derrière la coupe, se resserre un peu, que son coin ne dépasse pas du bord de la jambe)
       if (P.mu > .001 && this.att && sv <= 0) { if (this.bordTete()) nn *= 1 - .35 * P.mu; else if (tv < 0) nn *= 1 - .06 * P.mu; }
+      // (sortie du bas de la tête par un trait plus fin qu'elle, la queue de l'œil : elle y a sa largeur, puis prend la sienne
+      // sur quarante-cinq unités ; d'autant qu'elle a glissé jusque-là)
+      if (this.attN0 && this.attN0 < this.N0) {
+        const g = this.colle ? 1 : Math.min(1, Math.max(0, this.gl || 0));
+        if (g > 0) nn *= 1 - g * (1 - this.attN0 / this.N0) * (1 - lisse(0, 45, sv));
+      }
       nn *= zk;   // (au loin, plus fine)
       out[0] = cx + tt * ca - nn * sa; out[1] = cy + tt * sa + nn * ca;
     }
@@ -592,7 +600,7 @@ const PIEUVRE = (() => {
       if (this.bordT !== undefined) return this.bordT;
       const a = this.att;
       this.bordT = null;
-      if (!a || Math.hypot(a.x - this.RX[0], a.y - this.RY[0]) < 2 || typeof D === 'undefined' || !D.logo || !D.logo.octopusPaths) return null;
+      if (!a || a.prolonge || Math.hypot(a.x - this.RX[0], a.y - this.RY[0]) < 2 || typeof D === 'undefined' || !D.logo || !D.logo.octopusPaths) return null;
       const { segs } = grille(), dx = Math.cos(a.dir), dy = Math.sin(a.dir);
       // (chaque rayon part de douze unités derrière l'attache, au fond de la jambe : il en trouve le bord même là où elle tourne)
       const rayon = o => {
@@ -968,6 +976,8 @@ const PIEUVRE = (() => {
     creer() {
       if (!this.pret) return [];
       const ts = G.bras.map((b, i) => new Tentacule(b, i));
+      // (une tentacule qui sort du bas de la tête à la racine d'une autre en prend la largeur là)
+      for (const t of ts) if (t.att && t.att.prolonge) { const o = ts.find(x => Math.hypot(x.RX[0] - t.att.x, x.RY[0] - t.att.y) < 1); if (o && o !== t) t.attN0 = o.N0; }
       for (const t of ts) {
         if (!t.parentCle) continue;
         const p = ts.find(x => x.cle === t.parentCle); if (!p) continue;
