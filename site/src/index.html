@@ -144,7 +144,7 @@ body { display: flow-root; }   /* (la cale et la marge de l'en-tête restent dan
 .top.compact .entrees a { gap: 7px; padding: 0 11px 0 9px; letter-spacing: .07em; }
 .top.mince .entrees .pt { display: none; }
 .top.mince .entrees a { padding: 0 9px; letter-spacing: .05em; }
-.top.mince .marque { display: none; }
+@media (min-width: 760px) { .top.mince .marque { display: none; } }
 .top.fin .top-in, .top.fin .entrees { gap: 0; }
 .top.fin .top-in { padding: 0 3px; }
 .top.fin .entrees a { padding: 0 7px; font-size: .64rem; letter-spacing: .02em; }
@@ -2447,12 +2447,15 @@ article.u { --onglets: 58px; }
   .dos-appel-ph { min-height: 200px; }
 }
 @media (max-width: 759px) {
-  /* (au téléphone, le menu flottant a les noms courts, une ligne de 44 px ; la pieuvre seule y fait la marque) */
+  /* (au téléphone, le menu flottant a les noms courts, une ligne de 44 px ; la pieuvre seule y fait la marque, à toutes les
+     largeurs, sans le nom : le lien de l'accueil, une cible de 44 px au début de la ligne ; à 360 px, les pièces se serrent
+     d'un rien pour lui laisser sa place) */
   :root { --haut: 60px; --barre-h: 44px; }
   .top-in { padding: 0 4px; }
   #nom { display: none; }
-  .marque { height: 36px; padding: 0 4px; }
-  .marque .l { width: 28px; }
+  .marque, .top.compact .marque { justify-content: center; width: 44px; height: 44px; padding: 0; }
+  .marque .l { width: 30px; }
+  .top.fin .entrees a { padding: 0 5px; }
   .entrees .long { display: none; }
   .entrees .court { display: inline; }
   .entrees a { gap: 6px; height: 36px; padding: 0 9px 0 8px; font-size: .68rem; letter-spacing: .06em; }
@@ -6544,7 +6547,7 @@ html.still .sc-image { transition: opacity .35s ease !important; }
     ajuste();
   }
   // une seule ligne, à toutes les largeurs : le texte entier des pièces si la place le permet, sinon leur nom court, puis plus
-  // serrées, puis sans leurs ventouses ni la marque, puis d'une lettre plus petite (360 px) ; mesuré marque dépliée (celle qu'il a, arrimé), quand le menu change, quand
+  // serrées, puis sans leurs ventouses ni (au bureau) la marque, puis d'une lettre plus petite (360 px) ; mesuré marque dépliée (celle qu'il a, arrimé), quand le menu change, quand
   // la largeur change et quand les polices arrivent (jamais au fil d'un rendu)
   function ajuste() {
     const top = $('#top'), inn = $('.top-in', top);
@@ -6730,8 +6733,8 @@ html.still .sc-image { transition: opacity .35s ease !important; }
   // la créature de l'en-tête, à chaque page : elle se contracte, ses tentacules s'agitent ; en entrant dans un spectacle, une fois
   // l'encre ouverte et le titre posé, sa tentacule va souligner le titre, à la couleur vive du spectacle, puis revient
   let tCreature = 0;
-  // (elle n'habite la marque que si le menu flottant lui laisse sa place : au téléphone, la ligne n'en a pas, rien ne s'y
-  // dessine ni n'y attend ; sur l'accueil, tant que le menu est posé sous la pieuvre, sa marque est repliée : la créature
+  // (elle n'habite la marque que si le menu flottant lui laisse sa place : au téléphone, la ligne serrée garde la pieuvre
+  // dessinée, immobile, rien ne s'y anime ni n'y attend ; sur l'accueil, tant que le menu est posé sous la pieuvre, sa marque est repliée : la créature
   // n'existe pas encore, ni toile ni calcul au défilement, et naît quand il s'arrime. ajuste(), route() et l'arrimage la
   // rappellent)
   function habiterCreature() {
