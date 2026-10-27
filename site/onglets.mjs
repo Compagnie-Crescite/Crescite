@@ -785,6 +785,8 @@ const visite = async (n, tag, vp, mobile, partie) => {
         const etat = await page.evaluate(([att, int, DISPARUS, LARGEUR]) => {
           // le contenu hors de l'écran (content-visibility: auto) et ce qui apparaît au défilement (MOUVEMENT.reveler :
           // .mv-attente) se lisent aussi : on les montre dans leur état final le temps de la lecture
+          // (le rideau et la page qui se compose, Rideau et composer : finis, la page telle qu'elle se pose)
+          document.getAnimations().forEach(a => { if (a.id === 'compose' || a.id === 'rideau') a.finish(); });
           const forcer = document.createElement('style');
           forcer.textContent = '*, *::before, *::after { content-visibility: visible !important; transition: none !important; } .mv-attente, .mv-attente > * { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; animation: none !important; }';
           document.head.appendChild(forcer);

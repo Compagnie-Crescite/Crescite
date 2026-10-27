@@ -2241,6 +2241,27 @@ html { view-transition-name: none; }
 /* l'encre d'un spectacle (Encre) : une toile fixe au-dessus de tout ; tant qu'elle couvre l'écran, c'est elle qu'on touche */
 .encre-page { position: fixed; inset: 0; z-index: 90; width: 100%; height: 100%; pointer-events: none; }
 .encre-page.couvre { pointer-events: auto; }
+/* le rideau (Rideau) : à chaque page qu'on ouvre par le menu, un court noir où la pieuvre nage (la créature, ses vraies
+   tentacules), puis le rideau s'ouvre en deux, comme au théâtre, et la pieuvre remonte à sa place dans le menu ; la page,
+   déjà là dessous, se compose alors ligne à ligne (composer). Au-dessus de tout (le menu compris), sous la pieuvre */
+.rideau { position: fixed; inset: 0; z-index: 2147483002; pointer-events: auto; overflow: hidden; contain: strict; }
+.rideau.leve { pointer-events: none; }
+.rideau > i { position: absolute; top: 0; bottom: 0; width: 50.5%; background: #0b0709; }
+.rideau > .rideau-g { left: 0; }
+.rideau > .rideau-d { right: 0; }
+/* (le bord de chaque pan, là où ils se rejoignent : un mince liseré à la couleur de la saison, peu de chose à peindre) */
+.rideau > i::after { content: ""; position: absolute; top: 0; bottom: 0; width: 3px; background: color-mix(in srgb, var(--saison-vive) 30%, #0b0709); }
+.rideau > .rideau-g::after { right: 0; }
+.rideau > .rideau-d::after { left: 0; }
+/* (sans créature : le dessin de la pieuvre, qui flotte et respire au milieu) */
+.rideau-pieuvre { position: absolute; left: 50%; top: 50%; width: min(150px, 36vw); margin: 0; translate: -50% -50%; color: var(--saison-vive); animation: rideau-nage .62s ease-in-out infinite alternate; }
+.rideau-pieuvre svg { display: block; width: 100%; height: auto; }
+.rideau.leve .rideau-pieuvre { opacity: 0; transition: opacity .2s; }
+@keyframes rideau-nage { from { transform: translateY(6px) scale(1.04, .94); } to { transform: translateY(-8px) scale(.96, 1.05); } }
+/* la page qui se compose : un trait de lumière descend l'écran, à la ligne qui s'écrit */
+.compose-trait { position: fixed; left: 0; right: 0; top: 0; z-index: 89; height: 2px; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--saison-vive) 70%, transparent) 30%, #fff 50%, color-mix(in srgb, var(--saison-vive) 70%, transparent) 70%, transparent);
+  box-shadow: 0 0 18px 2px color-mix(in srgb, var(--saison-vive) 55%, transparent); }
 /* une page qui arrive : son titre fleurit (il se dépose), le bras d'encre arrive du bord de l'écran, le souligne et s'enroule */
 .fleur { position: relative; display: inline-block; max-width: 100%; padding-bottom: 22px; --trait: var(--saison-vive); }   /* (max-width : un mot trop long s'y coupe, voir h1 ; la boucle est à son échelle 1:1, son trait de 3 px au bas du bloc, dans l'axe du bras) */
 .fleur::after { content: ""; position: absolute; left: -100vw; right: 31px; bottom: 2px; height: 3px; border-radius: 2px; background: var(--trait); }
@@ -9788,7 +9809,9 @@ const CREATURE = (() => {
       if (!p) { if (this.place) this.sommeille(); this.place = null; return false; }
       const s = p.s || (p.largeur || this.o.largeur || 40) / LARGEUR, ox = p.x - CENTRE[0] * s, oy = p.y + this.bond(performance.now()) - CENTRE[1] * s;
       if (Math.abs(s - this.s) > 1e-7 || Math.abs(ox - this.ox) > .01 || Math.abs(oy - this.oy) > .01) { this.s = s; this.ox = ox; this.oy = oy; }
-      if (!this.place) { this.reagir('page'); this.trace.length = 0; }   // (elle paraît : elle s'éveille d'une secousse)
+      // (elle paraît : elle s'éveille d'une secousse, ses tentacules au repos autour d'elle, là où elle est : une pieuvre qui
+      // reparaît ailleurs que là où elle s'est endormie ne traîne pas ses tentacules depuis son ancienne place)
+      if (!this.place) { this.BRAS.forEach(a => a.t.poser(ox, oy, s)); this.reagir('page'); this.trace.length = 0; }
       this.place = p; this.enMouvement = !!p.bouge;
       return true;
     }
@@ -10398,6 +10421,156 @@ const CREATURE = (() => {
     vers.focus();
   });
 
+  /* ---------- le rideau : le premier moment d'une page ----------
+     Ouvrir une page par le menu (ou arriver sur le site ailleurs que sur l'ouverture de l'accueil) : un court noir, le
+     rideau, où la pieuvre nage au milieu (la créature, ses vraies tentacules, à la couleur de la saison) ; puis le rideau
+     s'ouvre en deux, comme au théâtre, la pieuvre remonte à sa place dans le menu, et la page, déjà là dessous (son titre a
+     le focus), se compose ligne à ligne (composer). Le noir dure 420 ms, l'ouverture 480 : rien n'attend le rideau, il ne fait
+     que couvrir. Un geste (un clic, une touche, la molette, le doigt) l'ouvre aussitôt ; ouvert, il laisse passer les clics.
+     Moins d'animations, ou ?anim=0 : ni rideau ni composition. */
+  const Rideau = (() => {
+    const NOIR = 420, OUVRE = 480;
+    let el = null, bete = null, etat = null, tLeve = 0, tFin = 0, suite = null, pans = [];
+    const lisse = u => u * u * (3 - 2 * u);
+    // la pieuvre du rideau : une créature, faite une fois (au premier rideau, ou au repos) ; au milieu, elle nage sur place (une
+    // impulsion toutes les 0,62 s) ; à l'ouverture, elle file vers la marque du menu en rapetissant, puis s'efface
+    function bestiole() {
+      if (bete || typeof CREATURE === 'undefined' || !CREATURE.actif || !motionOK()) return bete;
+      const encre = themeSaison().v;
+      // (au téléphone, ni halo ni sillage : chaque image se dessine en moins de temps)
+      const tel = matchMedia('(max-width: 759px)').matches;
+      bete = CREATURE.creer({ encre, couleurs: [encre, '#ffffff'], placerChaqueImage: true, souris: false, courant: false, vie: 2.6, onde: 5.5, rythme: 1.9, lueur: !tel, sillage: !tel,
+        placer() {
+          if (!etat) return null;
+          const now = performance.now(), W = innerWidth, H = innerHeight, l0 = Math.min(230, W * .46), t = (now - etat.t0) / 1000;
+          if (!etat.leve) {
+            const ph = (t % .62) / .62, coup = ph < .2 ? ph / .2 : Math.max(0, 1 - (ph - .2) / .5);
+            return { x: W / 2, y: H / 2 + Math.sin(t * 5) * 4 - coup * 6, largeur: l0, bouge: true, v: -coup * 2.2, coup, etire: ph < .14 ? -.5 * ph / .14 : coup * .6, ang: -Math.PI / 2 };
+          }
+          const u = Math.min(1, (now - tLeve) / (OUVRE * .9));
+          if (u >= 1) return null;
+          const m = etat.vers, e = lisse(u), x = W / 2 + (m.x - W / 2) * e, y = H / 2 + (m.y - H / 2) * e;
+          return { x, y, largeur: l0 + (m.l - l0) * e, bouge: true, v: (m.y - H / 2) / 40 * (1 - u), coup: 1 - u, etire: .8 * (1 - u), ang: Math.atan2(m.y - H / 2, m.x - W / 2) };
+        } });
+      return bete;
+    }
+    const gestes = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+    const geste = () => lever(true);
+    function fermer(apres) {
+      if (!motionOK()) return false;
+      if (!el) {
+        el = document.createElement('div');
+        el.className = 'rideau'; el.setAttribute('aria-hidden', 'true');
+        el.innerHTML = '<i class="rideau-g"></i><i class="rideau-d"></i>';
+        document.body.appendChild(el);
+      }
+      pans.forEach(a => a.cancel()); pans = [];   // (ses pans d'avant, gardés : rien à demander au navigateur, aucun style à recalculer)
+      el.classList.remove('leve'); el.hidden = false;
+      const b = bestiole();
+      const p = el.querySelector('.rideau-pieuvre');
+      if (!b && !p) el.insertAdjacentHTML('beforeend', `<div class="rideau-pieuvre">${D.logo.octopus}</div>`);
+      else if (b && p) p.remove();
+      // (un rideau déjà fermé qu'une autre page rappelle : le noir reprend, la page d'avant ne se compose pas)
+      clearTimeout(tFin);
+      etat = { t0: performance.now(), leve: false, vers: null, images: 0 };
+      // (ses images comptées pendant le noir : un appareil qui n'en tient pas vingt-cinq par seconde n'a pas de quoi composer la
+      // page en douceur ; elle y paraît d'un coup à l'ouverture)
+      const e0 = etat, compter = () => { if (etat !== e0 || e0.leve) return; e0.images++; requestAnimationFrame(compter); };
+      requestAnimationFrame(compter);
+      suite = apres || null;
+      // (la pieuvre naît à l'image d'après : la première, celle du geste, n'a que la page neuve et le noir à peindre)
+      if (b) { const e = etat; requestAnimationFrame(() => setTimeout(() => { if (etat !== e) return; b.demarrer(); b.placeSale = true; b.reveil(); }, 0)); }
+      gestes.forEach(t => addEventListener(t, geste, { capture: true, passive: true }));
+      tFin = setTimeout(() => lever(false), NOIR);
+      return true;
+    }
+    // le rideau s'ouvre : ses deux pans glissent de côté, la pieuvre rejoint la marque, la page se compose (suite)
+    function lever(vite) {
+      if (!etat || etat.leve) return;
+      clearTimeout(tFin);
+      gestes.forEach(t => removeEventListener(t, geste, { capture: true }));
+      const m = $('#marque'), r = m && m.getClientRects().length ? m.getBoundingClientRect() : null;
+      etat.leve = true; etat.vers = r && r.width ? { x: r.left + r.width / 2, y: r.top + r.height / 2, l: r.width } : { x: innerWidth / 2, y: -60, l: 40 };
+      tLeve = performance.now();
+      el.classList.add('leve');
+      const d = vite ? 220 : OUVRE, courbe = 'cubic-bezier(.7, 0, .25, 1)';
+      const [g, dr] = el.querySelectorAll(':scope > i');
+      const a = dr.animate([{ translate: '0 0' }, { translate: '101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' });
+      pans = [g.animate([{ translate: '0 0' }, { translate: '-101% 0' }], { duration: d, easing: courbe, fill: 'forwards', id: 'rideau' }), a];
+      const fini = etat;
+      a.onfinish = () => { if (etat !== fini) return; etat = null; el.hidden = true; };
+      const f = suite, lent = (tLeve - fini.t0) / Math.max(1, fini.images) > 40;
+      suite = null;
+      if (f) f(vite || lent);
+    }
+    // (une page refaite, un rideau qu'on ne veut plus, un geste pendant qu'il s'ouvre : il s'efface d'un coup, la pieuvre avec)
+    function oter() { if (!etat) return; clearTimeout(tFin); gestes.forEach(t => removeEventListener(t, geste, { capture: true })); etat = null; suite = null; pans.forEach(a => a.cancel()); pans = []; if (el) el.hidden = true; }
+    // (au repos, après la première page : la pieuvre du rideau est prête pour le suivant)
+    const preparer = () => { bestiole(); };
+    return { fermer, lever, oter, preparer, ouvert: () => !!etat };
+  })();
+  /* ---------- la page qui se compose ----------
+     Quand le rideau s'ouvre, ce que l'écran montre de la page s'inscrit ligne à ligne, de haut en bas, vite : chaque ligne
+     (un titre, un texte, une étiquette, une date) s'écrit de gauche à droite, une photo sort d'un flou lumineux,
+     les cadres (une fiche, une tranche, un bouton) se posent juste avant leur texte, et un trait de lumière descend l'écran à
+     la ligne qui s'écrit. Rangées par leur hauteur à l'écran : ce qui est sur la même ligne s'écrit ensemble. Seulement ce qui
+     est à l'écran (le reste paraît au défilement, MOUVEMENT.reveler) ; ni ce qui a déjà son propre mouvement (un titre qui
+     fleurit, [data-mv]), ni la fiche d'une personne. Web Animations sur translate, scale, opacity, clip-path et filter : rien
+     ne change de place dans la page, et tout est fini en moins d'une seconde ; pas de filtre sur le texte (repeint à chaque
+     image, il alourdissait un geste qui tombait pendant la composition) ; quatre-vingts éléments au plus (ces animations, et celles du rideau, portent l'id
+     « compose » et « rideau » : le vérificateur les finit avant de lire la page) */
+  const HORS_COMPO = 'script, style, template, link, meta, br, wbr, canvas, [hidden], .sr, .filet, .trf, .rideau, .compose-trait';
+  const MEDIA_COMPO = /^(IMG|SVG|PICTURE|VIDEO|IFRAME|svg)$/;
+  let composeTrait = null;
+  const gestesCompo = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+  function composer() {
+    if (!motionOK() || !main.animate) return;
+    const H = innerHeight, W = innerWidth, pris = [];
+    const aTexte = el => { for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue.trim()) return true; return false; };
+    const opaque = c => { const m = /rgba?\(([^)]+)\)/.exec(c || ''); if (!m) return false; const q = m[1].split(/[\s,\/]+/).filter(Boolean); return q.length < 4 || +q[3] > .05; };
+    const peint = c => { const st = getComputedStyle(c); return st.backgroundImage !== 'none' || opaque(st.backgroundColor) || (parseFloat(st.borderTopWidth) > 0 && opaque(st.borderTopColor)) || (parseFloat(st.borderLeftWidth) > 0 && opaque(st.borderLeftColor)) || st.boxShadow !== 'none'; };
+    const bouge = c => c.matches('[data-mv], [data-mv="cascade"] > *') || (c.getAnimations && c.getAnimations().length > 0);
+    const visiter = el => {
+      for (const c of el.children) {
+        if (pris.length >= 80) return;
+        if (c.matches(HORS_COMPO)) continue;
+        const r = c.getBoundingClientRect();
+        if (!r.width && !r.height) { if (getComputedStyle(c).display === 'contents') visiter(c); continue; }
+        if (r.bottom < 0 || r.top > H || r.right < 0 || r.left > W) continue;
+        const libre = !bouge(c);
+        if (MEDIA_COMPO.test(c.tagName)) { if (libre) pris.push({ el: c, r, genre: 'media' }); continue; }
+        if (aTexte(c) || c.matches('input, select, textarea')) { if (libre) pris.push({ el: c, r, genre: 'texte' }); continue; }
+        if (libre && r.height < H * .7 && r.width < W * .96 && peint(c)) pris.push({ el: c, r, genre: 'cadre' });
+        visiter(c);
+      }
+    };
+    visiter(main);
+    if (!pris.length) return;
+    // le rythme : le trait de lumière descend de la première ligne à la dernière en DESCENTE ms ; chaque élément s'écrit quand
+    // il l'atteint (ce qui est sur la même ligne, ensemble) ; un texte haut (un paragraphe) se découvre de haut en bas, au même
+    // pas que le trait : ligne à ligne
+    const anims = [];   // (gardées : les finir ne demande rien au navigateur, aucun style à recalculer)
+    const DESCENTE = 460, doux = 'cubic-bezier(.2, .8, .2, 1)';
+    const y0 = Math.max(0, Math.min(...pris.map(x => x.r.top))), y1 = Math.min(H, Math.max(...pris.map(x => x.r.bottom))), V = DESCENTE / Math.max(120, y1 - y0);
+    const quand = y => Math.round(Math.max(0, Math.min(y1, y) - y0) * V);
+    pris.forEach(({ el, genre, r }) => {
+      const delay = quand(r.top);
+      if (genre === 'cadre') anims.push(el.animate([{ opacity: 0, translate: '0 12px' }, { opacity: 1, translate: '0 0' }], { duration: 300, delay: Math.max(0, delay - 40), easing: doux, fill: 'backwards', id: 'compose' }));
+      else if (genre === 'media') anims.push(el.animate([{ opacity: 0, scale: '.94', filter: 'blur(8px) brightness(1.6)' }, { opacity: 1, scale: '1', filter: 'blur(0) brightness(1)' }], { duration: 440, delay, easing: doux, fill: 'backwards', id: 'compose' }));
+      else if (r.height > 64) anims.push(el.animate([{ opacity: .2, clipPath: 'inset(0 0 100% 0)' }, { opacity: 1, clipPath: 'inset(0 0 0% 0)' }],
+        { duration: Math.max(300, quand(r.bottom) - delay + 120), delay, easing: 'linear', fill: 'backwards', id: 'compose' }));
+      else anims.push(el.animate([{ opacity: 0, translate: '0 7px', clipPath: 'inset(0 100% 0 0)' },
+        { opacity: 1, offset: .35 },
+        { opacity: 1, translate: '0 0', clipPath: 'inset(0 0% 0 0)' }], { duration: 380, delay, easing: doux, fill: 'backwards', id: 'compose' }));
+    });
+    // le trait de lumière : de la première ligne à la dernière
+    if (!composeTrait) { composeTrait = document.createElement('i'); composeTrait.className = 'compose-trait'; composeTrait.setAttribute('aria-hidden', 'true'); document.body.appendChild(composeTrait); }
+    // (un geste pendant la composition la finit : la page est là, le geste trouve un fil libre ; le rideau qui s'ouvre aussi)
+    const finir = () => { gestesCompo.forEach(t => removeEventListener(t, finir, { capture: true })); Rideau.oter(); anims.forEach(a => a.finish()); };
+    gestesCompo.forEach(t => addEventListener(t, finir, { capture: true, passive: true, once: true }));
+    setTimeout(() => gestesCompo.forEach(t => removeEventListener(t, finir, { capture: true })), quand(y1) + 500);
+    anims.push(composeTrait.animate([{ translate: `0 ${y0}px`, opacity: 0 }, { opacity: 1, offset: .08 }, { opacity: 1, offset: .86 }, { translate: `0 ${y1}px`, opacity: 0 }], { duration: quand(y1) + 60, easing: 'linear', id: 'compose' }));
+  }
   /* ---------- l'encre : le second moment de la pieuvre ----------
      Entrer dans un spectacle : la page est déjà là, dessous ; l'encre de son univers couvre l'écran et s'ouvre aussitôt depuis
      le point choisi, un anneau de sa couleur au bord (440 ms). En sortir : l'encre, d'abord partout, se resserre vers la
@@ -15215,14 +15388,14 @@ const CREATURE = (() => {
     'espace-pro/etablissement': sousMenu(etablissement, null, 'espace-pro'), spectacles, compagnie, contact }, S.espacePro ? { 'espace-pro': espacePro } : {});
   // les filets se tracent, les titres montent, les fiches arrivent l'une après l'autre, les chiffres comptent ; posé avant
   // toute lecture de mise en page (le focus du titre en force une : une seule, sur la page finie)
-  function decorer(surPlace) {
+  function decorer(surPlace, rideau = false) {
     auRepos(() => nommer(main));   // (les personnes nommées dans la page ouvrent leur fiche)
     $$('section.bloc:not(.sans-filet)', main).forEach(sec => { if (!sec.querySelector(':scope > .filet')) sec.insertAdjacentHTML('afterbegin', '<span class="filet" data-mv="trace" aria-hidden="true"></span>'); });
     $$('.titre-bloc, .u-eti, .rubrique, .u-h2:not(.ecrit)', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'monte'); });
     $$('svg.trait', main).forEach(e => { if (!e.closest('[data-mv]')) e.setAttribute('data-mv', 'trace'); });
     $$('.fus, .ep-cat, .acs, .u-cast, .dos-ateliers, .galerie, .ep-groupes, .ep-acces', main).forEach(e => e.setAttribute('data-mv', 'cascade'));
     $$('.u-faits .gros, .fp-rep .gros, .u-rep .gros', main).forEach(e => e.setAttribute('data-mv', 'compte'));
-    if (MV) MV.reveler(main, { immediat: surPlace });
+    if (MV && !rideau) MV.reveler(main, { immediat: surPlace });   // (sous le rideau : à son ouverture)
   }
   function apres(surPlace) {
     ecrire(surPlace);
@@ -15354,10 +15527,24 @@ const CREATURE = (() => {
     CHERCHE.fermer(false);   // (le retour du navigateur, la boîte ouverte : elle se referme, la page prend le focus)
     document.documentElement.classList.remove(vers0);
     cadre();
+    // (le rideau : une page ouverte par le menu, ou la première hors de l'ouverture de l'accueil ; pas d'un onglet à l'autre
+    // d'un spectacle ni en entrant dans un spectacle, que l'encre de son univers ouvre)
+    // (fermé avant que la page se fasse : ses changements et ceux de la page se calculent ensemble, à l'image suivante) ; il
+    // couvre la page neuve, déjà posée ; il s'ouvre et elle se compose (ses titres, ses filets, ce qui paraît au défilement ne
+    // partent qu'alors)
+    const avecRideau = motionOK() && !INTRO.ouverte() && (premiere || type === 'page' || type === 'quitter') && !(avant && avant.chemin === a.chemin)
+      && Rideau.fermer(vite => {
+        if (courant !== a) return;
+        if (MV) MV.reveler(main, { immediat: false });
+        // (un geste a ouvert le rideau, ou l'appareil est trop lent pour la composer en douceur : la page est là tout de suite)
+        if (vite) return;
+        if (!premiere && motionOK()) fleurir();
+        composer();
+      });
     let r = rendre(a, false), b = a;
     if (!r) { r = introuvable(); }   // (une adresse inconnue : sa page, l'adresse gardée)
     courant = b;
-    decorer(false);
+    decorer(false, avecRideau);
     document.title = titreDoc(r);
     marquerNav(r);
     mettreAJourSchemaOrg();
@@ -15386,6 +15573,8 @@ const CREATURE = (() => {
     // mise en page de toute la page neuve dans la tâche de la route, plus de 50 ms ; une image après, la page est posée)
     const retour = retourNav;
     ensuite(() => { if (courant !== b) return; habiterCreature(); if (avant) creature(type === 'spectacle' || type === 'onglet' ? type : retour ? 'retour' : 'page'); });
+    if (avecRideau) return;
+    Rideau.oter();
     if (!vit) return;
     if (type === 'quitter' && bySlug[spAvant]) {
       const p = vue === 'accueil' ? Scene.coeur() : marque || { x: VW / 2, y: 32 };
@@ -15428,6 +15617,7 @@ const CREATURE = (() => {
   function preparer() {
     const plus_tard = f => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 300));
     plus_tard(() => retenu('agendaPasse', agendaPasse));
+    plus_tard(Rideau.preparer);
     plus_tard(polices);
     plus_tard(alleger);
     plus_tard(() => { const lieux = retenu('tout', () => CARTE.tout()); retenu(`carte-tout-${motionOK()}`, () => carte({ lieux, titre: L.lieuxDiffusion, classe: 'tout', simple: true, fin: .5 })); });

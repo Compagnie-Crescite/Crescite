@@ -191,7 +191,9 @@ const CREATURE = (() => {
       if (!p) { if (this.place) this.sommeille(); this.place = null; return false; }
       const s = p.s || (p.largeur || this.o.largeur || 40) / LARGEUR, ox = p.x - CENTRE[0] * s, oy = p.y + this.bond(performance.now()) - CENTRE[1] * s;
       if (Math.abs(s - this.s) > 1e-7 || Math.abs(ox - this.ox) > .01 || Math.abs(oy - this.oy) > .01) { this.s = s; this.ox = ox; this.oy = oy; }
-      if (!this.place) { this.reagir('page'); this.trace.length = 0; }   // (elle paraît : elle s'éveille d'une secousse)
+      // (elle paraît : elle s'éveille d'une secousse, ses tentacules au repos autour d'elle, là où elle est : une pieuvre qui
+      // reparaît ailleurs que là où elle s'est endormie ne traîne pas ses tentacules depuis son ancienne place)
+      if (!this.place) { this.BRAS.forEach(a => a.t.poser(ox, oy, s)); this.reagir('page'); this.trace.length = 0; }
       this.place = p; this.enMouvement = !!p.bouge;
       return true;
     }
